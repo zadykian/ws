@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/zadykian/ws/engine/core/resource/file"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -12,7 +13,6 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/git"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
@@ -41,15 +41,15 @@ func gitStep(m *effecttest.Machine, look func(string) (string, error)) *git.Git 
 func prereqs(p step.Plan) []step.Change {
 	var cs []step.Change
 	for _, c := range p.Changes {
-		if run, ok := c.(change.Run); ok {
-			cs = append(cs, run)
+		if step.KindOf(c) == step.Install {
+			cs = append(cs, c)
 		}
 	}
 	return cs
 }
 
 func TestGitWithoutNameLeavesGitAlone(t *testing.T) {
-	p, err := (&git.Git{M: effecttest.NewMachine(), Out: &effecttest.Out{}}).Plan(context.Background())
+	p, err := (&git.Git{M: effecttest.NewMachine(), Out: &effecttest.Out{}}).Step().Plan(context.Background())
 	if err != nil || len(p.Changes) != 0 {
 		t.Errorf("Plan = %v, %v; want nothing", p.Changes, err)
 	}
@@ -75,7 +75,7 @@ func TestGitPlansGh(t *testing.T) {
 		m := effecttest.NewMachine()
 		m.Results["brew --prefix"] = effecttest.Result{Out: []byte("/opt\n")}
 		m.Files[gitPub] = []byte(gitKey)
-		p, err := gitStep(m, tc.look).Plan(context.Background())
+		p, err := gitStep(m, tc.look).Step().Plan(context.Background())
 		if (err == nil) != (tc.err == "") || (err != nil && !strings.Contains(err.Error(), tc.err)) {
 			t.Errorf("%s: err = %v, want %q", name, err, tc.err)
 		} else if len(prereqs(p)) != tc.want {
@@ -87,10 +87,17 @@ func TestGitPlansGh(t *testing.T) {
 func TestGitApplyInstallsGh(t *testing.T) {
 	m, _ := gitReady()
 	m.Results["brew install gh"] = effecttest.Result{}
-	install := change.Run{Name: "brew", Args: []string{"install", "gh"}}
-	err := gitStep(m, nil).Apply(context.Background(), step.Plan{Changes: []step.Change{install}})
-	if err != nil || m.Calls[0] != "run brew install gh" {
-		t.Errorf("Apply = %v, calls %q; want brew install gh first", err, m.Calls)
+	g := gitStep(m, func(n string) (string, error) {
+		if n == "gh" {
+			return "", errors.New("not found")
+		}
+		return "/opt/bin/" + n, nil
+	})
+	m.Results["brew --prefix"] = effecttest.Result{Out: []byte("/opt\n")}
+	install := prereqs(mustPlan(t, g))
+	err := g.Step().Apply(context.Background(), step.Plan{Changes: install})
+	if err != nil || !slices.Contains(m.Calls, "run brew install gh") {
+		t.Errorf("Apply = %v, calls %q; want brew install gh", err, m.Calls)
 	}
 }
 
@@ -119,11 +126,11 @@ func gitReady() (*effecttest.Machine, *git.Git) {
 
 func TestGitWritesAllowedSignersAndGitconfig(t *testing.T) {
 	m, g := gitReady()
-	p, err := g.Plan(context.Background())
+	p, err := g.Step().Plan(context.Background())
 	if err != nil || len(p.Changes) != 3 {
 		t.Fatalf("Plan = %v, %v; want two writes and the line", p.Changes, err)
 	}
-	if err := g.Apply(context.Background(), p); err != nil {
+	if err := g.Step().Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
 	dir := gitHome + "/.config/ws/"
@@ -134,7 +141,7 @@ func TestGitWritesAllowedSignersAndGitconfig(t *testing.T) {
 		!strings.Contains(got, "helper = !/opt/bin/gh auth git-credential") {
 		t.Errorf("gitconfig = %q", got)
 	}
-	if again, err := g.Plan(context.Background()); err != nil || len(again.Changes) != 0 {
+	if again, err := g.Step().Plan(context.Background()); err != nil || len(again.Changes) != 0 {
 		t.Errorf("Plan after Apply = %v, %v; want nothing", again.Changes, err)
 	}
 }
@@ -142,16 +149,16 @@ func TestGitWritesAllowedSignersAndGitconfig(t *testing.T) {
 func TestGitFixesAModeAndMakesDirectories(t *testing.T) {
 	m, g := gitReady()
 	delete(m.Dirs, gitHome+"/.config/ws")
-	p, err := g.Plan(context.Background())
+	p, err := g.Step().Plan(context.Background())
 	if err != nil || len(p.Changes) != 4 || p.Changes[0].String() != "would make "+gitHome+"/.config/ws, mode 700" {
 		t.Fatalf("Plan = %v, %v; want the directory and two writes", p.Changes, err)
 	}
 	m, g = gitReady()
-	if err := g.Apply(context.Background(), mustPlan(t, g)); err != nil {
+	if err := g.Step().Apply(context.Background(), mustPlan(t, g)); err != nil {
 		t.Fatal(err)
 	}
 	m.Modes[gitHome+"/.config/ws/gitconfig"] = 0o600
-	if p, err := g.Plan(context.Background()); err != nil || len(p.Changes) != 2 {
+	if p, err := g.Step().Plan(context.Background()); err != nil || len(p.Changes) != 2 {
 		t.Errorf("Plan with a wrong mode = %v, %v; want one change", p.Changes, err)
 	}
 }
@@ -162,14 +169,14 @@ func TestGitTrustsSecretivesKeyThroughItsScript(t *testing.T) {
 	g.Conf.GitSigningPubKey = pub
 	m.Files[pub] = []byte(gitKey)
 	m.Results["ssh-keygen -l -f "+pub] = effecttest.Result{}
-	p, err := g.Plan(context.Background())
+	p, err := g.Step().Plan(context.Background())
 	if err != nil || len(p.Changes) != 4 || !strings.Contains(p.Changes[0].String(), "secretive-ssh-keygen") {
 		t.Errorf("Plan = %v, %v; want the script, allowed signers and gitconfig", p.Changes, err)
 	}
 }
 
 func mustPlan(t *testing.T, g *git.Git) step.Plan {
-	p, err := g.Plan(context.Background())
+	p, err := g.Step().Plan(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -190,7 +197,7 @@ func gitWithConfig(text, paths, names string) (*effecttest.Machine, *effecttest.
 
 func TestGitStopsAtAnIncludeBelowSettings(t *testing.T) {
 	_, _, g := gitWithConfig("x", gitHome+"/.config/ws/gitconfig\n", "user.name\ninclude.path\n")
-	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "below its own settings") {
+	if _, err := g.Step().Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "below its own settings") {
 		t.Errorf("err = %v; want an include below the file's settings", err)
 	}
 }
@@ -199,11 +206,11 @@ func TestGitStopsAtALinkAndAtGitConfigFailing(t *testing.T) {
 	m, _, g := gitWithConfig("x", "", "user.name\n")
 	m.Links[gitConfigFile] = "/dotfiles/gitconfig"
 	m.Files["/dotfiles/gitconfig"] = []byte("x")
-	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "is a link to /dotfiles/gitconfig") {
+	if _, err := g.Step().Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "is a link to /dotfiles/gitconfig") {
 		t.Errorf("a link: err = %v", err)
 	}
 	m.Results["git config --file "+gitConfigFile+" --name-only --list"] = effecttest.Result{Err: errors.New("bad")}
-	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "git config cannot read") {
+	if _, err := g.Step().Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "git config cannot read") {
 		t.Errorf("git config failing: err = %v", err)
 	}
 }
@@ -214,7 +221,7 @@ func TestGitSaysToOpenSecretiveForADeniedPub(t *testing.T) {
 	in := mactest.AgentData + "/PublicKeys/a.pub"
 	m.Root[in] = m.Root[mactest.AgentSock]
 	g.Home, g.Conf.GitSigningPubKey = mactest.AgentHome, in
-	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "open Secretive") {
+	if _, err := g.Step().Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "open Secretive") {
 		t.Errorf("err = %v, want the word to open Secretive", err)
 	}
 }
@@ -224,7 +231,7 @@ func TestGitRefusesAnAgentKeyOfATypeWsLacks(t *testing.T) {
 	m := mactest.AgentMachine(effecttest.NewMachine(), line)
 	g := gitStep(m, nil)
 	g.Home, g.Conf.GitSigningPubKey = mactest.AgentHome, mactest.CopyOf(line)
-	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "which ws's OpenSSH lacks") {
+	if _, err := g.Step().Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "which ws's OpenSSH lacks") {
 		t.Errorf("err = %v, want a type that ws's OpenSSH lacks", err)
 	}
 }
@@ -232,14 +239,14 @@ func TestGitRefusesAnAgentKeyOfATypeWsLacks(t *testing.T) {
 func TestGitSetsTheModeOfWsDirectoryAndWarnsOfALinkedOne(t *testing.T) {
 	m, g := gitReady()
 	m.Dirs[gitHome+"/.config/ws"] = 0o755
-	p, err := g.Plan(context.Background())
+	p, err := g.Step().Plan(context.Background())
 	if err != nil || len(p.Changes) != 4 || p.Changes[0].(file.UserChmod).Path != gitHome+"/.config/ws" {
 		t.Fatalf("Plan = %v, %v; want the mode and two writes", p.Changes, err)
 	}
 	m, g = gitReady()
 	out := g.Out.(*effecttest.Out)
 	m.Dirs["/dots"], m.Links[gitHome+"/.config"] = 0o755, "/dots"
-	if _, err := g.Plan(context.Background()); err != nil || !strings.Contains(strings.Join(out.Lines, "\n"),
+	if _, err := g.Step().Plan(context.Background()); err != nil || !strings.Contains(strings.Join(out.Lines, "\n"),
 		gitHome+"/.config is a link to /dots: ws's files go there") {
 		t.Errorf("Plan = %v, out %v; want the warning", err, out.Lines)
 	}

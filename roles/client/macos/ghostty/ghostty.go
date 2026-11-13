@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/brew"
 )
@@ -50,7 +51,10 @@ func (*Ghostty) WaitsOn() string { return "" }
 
 // casks is the cask code that Ghostty shares with Zed, built from the step's fields.
 func (g *Ghostty) casks() brew.Casks {
-	return brew.Casks{M: g.M, Out: g.Out, LookPath: g.LookPath, Failed: g.failed}
+	if g.failed == nil {
+		g.failed = map[string]bool{}
+	}
+	return brew.Casks{M: g.M, Out: g.Out, LookPath: g.LookPath, Failed: g.failed, App: "ghostty"}
 }
 
 // Plan plans the app, then the font where the app is there or comes, and the files.
@@ -72,13 +76,10 @@ func (g *Ghostty) Plan(ctx context.Context) (step.Plan, error) {
 	return step.Plan{Changes: append(append(app, font...), files...)}, nil
 }
 
-// Apply installs the casks. A failed install is a warning, and the next run tries again; where
-// the app's fails, the files wait for it.
+// Apply applies the plan as a group does. A failed cask install is a warning, and the next run
+// tries again; where the app's fails, the files wait for it.
 func (g *Ghostty) Apply(ctx context.Context, p step.Plan) error {
-	if g.failed == nil {
-		g.failed = map[string]bool{}
-	}
-	return g.casks().Install(ctx, p, "ghostty")
+	return resource.Group{}.Apply(ctx, p)
 }
 
 // conf returns the config file that Ghostty's menu opens: the first of ghosttyConfigs that holds

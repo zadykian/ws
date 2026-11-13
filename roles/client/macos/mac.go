@@ -39,7 +39,7 @@ func (m Mac) steps(check bool) []step.Step {
 	return []step.Step{
 		m.ssh(false),
 		cable.Cable{Conf: m.Conf, M: m.M, Out: m.Out},
-		&git.Git{Conf: m.Conf, Home: m.Home, XDG: m.XDG, M: m.M, Out: m.Out},
+		(&git.Git{Conf: m.Conf, Home: m.Home, XDG: m.XDG, M: m.M, Out: m.Out}).Step(),
 		&ghostty.Ghostty{Home: m.Home, Settings: ghostty.Settings, M: m.M, Out: m.Out},
 		&zed.Zed{Home: m.Home, Settings: zed.Settings, Keymap: zed.Keymap, M: m.M, Out: m.Out},
 		&cld.Cld{Home: m.Home, M: m.M, Out: m.Out, Check: check},

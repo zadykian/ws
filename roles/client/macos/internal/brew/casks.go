@@ -1,17 +1,15 @@
-// Package brew plans and installs the Homebrew casks of an app and its font, for the roles that
+// Package brew plans the Homebrew casks of an app and its font, for the roles that
 // set up an app.
 package brew
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/zadykian/ws/engine/core/resource/file"
-	"os/exec"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 const (
@@ -23,14 +21,38 @@ const (
 	FontGone = "no " + FontFile + " is in ~/Library/Fonts or /Library/Fonts"
 )
 
-// Casks plans and installs an app's Homebrew cask and the font's, for the steps that set up an
+// Casks plans an app's Homebrew cask and the font's, for the steps that set up an
 // app. A step builds it per call from its own fields, and the Failed map is shared with the step.
 type Casks struct {
 	M        effect.Machine
 	Out      effect.Out
 	LookPath func(string) (string, error)
 	Failed   map[string]bool // the casks whose install failed, so the plan skips them for the run
+	App      string          // the app's cask: the changes after it wait where its install fails
 }
+
+// Install is a cask's install. A failure is a warning, not an error, and the next run tries again.
+type Install struct {
+	resource.Command
+	Out    effect.Out
+	Failed map[string]bool
+	Name   string
+	Holds  bool
+}
+
+// Apply says the install, runs it, and on a failure warns and marks the cask failed for the run.
+func (i Install) Apply(ctx context.Context) error {
+	i.Out.Say("installing %s", i.Name)
+	err := i.Command.Apply(ctx)
+	if err != nil {
+		i.Out.Warn("brew install --cask %s failed", i.Name)
+		i.Failed[i.Name] = true
+	}
+	return err
+}
+
+// Warned is Holds: the changes after the app's install wait for it.
+func (i Install) Warned() bool { return i.Holds }
 
 // Has reports whether the first of the files is there. An app's cask puts it in /Applications or
 // ~/Applications, and a font's in ~/Library/Fonts or /Library/Fonts.
@@ -44,27 +66,24 @@ func (b Casks) Has(name string, dirs ...string) bool {
 }
 
 // Cask plans Homebrew's cask where there is none of its files, and says whether they are there,
-// or would be after the plan. Where Homebrew has the cask but its files are gone, it warns instead:
-// brew install would upgrade the cask. Without Homebrew it stops.
+// or would be after the plan. See Cask.Plan.
 func (b Casks) Cask(ctx context.Context, name string, there bool, missing string) ([]step.Change, bool, error) {
-	if there {
-		return nil, true, nil
+	changes, ok, err := b.Resource(name, there, missing).plan(ctx)
+	return asSteps(changes), ok, err
+}
+
+func asSteps(changes []resource.Change) []step.Change {
+	cs := make([]step.Change, len(changes))
+	for i, c := range changes {
+		cs[i] = c
 	}
-	if b.Failed[name] {
-		return nil, false, nil
-	}
-	look := b.LookPath
-	if look == nil {
-		look = exec.LookPath
-	}
-	if _, err := look("brew"); err != nil {
-		return nil, false, errors.New("install Homebrew first: https://brew.sh")
-	}
-	if _, err := b.M.Run(ctx, "brew", "list", "--cask", name); err != nil {
-		return []step.Change{change.Run{Name: "brew", Args: []string{"install", "--cask", name}}}, true, nil
-	}
-	b.Out.Warn("%s", CaskGone(name, missing))
-	return nil, false, nil
+	return cs
+}
+
+// Resource is the cask as a resource. The app's cask holds the changes after it.
+func (b Casks) Resource(name string, there bool, missing string) Cask {
+	return Cask{M: b.M, Out: b.Out, LookPath: b.LookPath, Failed: b.Failed, Name: name, There: there,
+		Missing: missing, Holds: name == b.App}
 }
 
 // CaskGone says why a cask that Homebrew has is missing from the Mac.
@@ -73,18 +92,9 @@ func CaskGone(name, missing string) string {
 		name, missing, name)
 }
 
-// Item says how the cask stands, as cask reads it. brew is asked of one cask, and only where its
-// files are gone: a report covers what ws manages, never all that Homebrew holds.
+// Item says how the cask stands. See Cask.Report.
 func (b Casks) Item(ctx context.Context, name string, there bool, missing string) step.Item {
-	item := step.Item{Kind: step.PackageItem, Name: name, Want: file.StateInstalled, Found: file.StateInstalled}
-	if there {
-		return item
-	}
-	item.Found = file.StateMissing
-	if _, err := b.M.Run(ctx, "brew", "list", "--cask", name); err == nil {
-		item.Conflict = CaskGone(name, missing)
-	}
-	return item
+	return b.Resource(name, there, missing).item(ctx)
 }
 
 // Report says how an app's cask and the font's stand.
@@ -96,31 +106,13 @@ func (b Casks) Report(ctx context.Context, name, app, home string) file.Fixed {
 	}
 }
 
-// Font plans the font's cask where its file is missing.
-func (b Casks) Font(ctx context.Context, home string) ([]step.Change, error) {
-	c, _, err := b.Cask(ctx, Font, b.Has(FontFile, home+"/Library/Fonts", "/Library/Fonts"), FontGone)
-	return c, err
+// FontResource is the font's cask, which holds nothing back.
+func (b Casks) FontResource(home string) Cask {
+	return b.Resource(Font, b.Has(FontFile, home+"/Library/Fonts", "/Library/Fonts"), FontGone)
 }
 
-// Install applies a plan's changes. A failed cask install is a warning, and the next run tries
-// again; where the app's fails, the other changes wait for it.
-func (b Casks) Install(ctx context.Context, p step.Plan, app string) error {
-	for _, c := range p.Changes {
-		if r, ok := c.(change.Run); ok {
-			cask := r.Args[len(r.Args)-1]
-			b.Out.Say("installing %s", cask)
-			if err := change.Apply(ctx, b.M, b.Out, c); err != nil {
-				b.Out.Warn("brew install --cask %s failed", cask)
-				b.Failed[cask] = true
-			}
-			continue
-		}
-		if b.Failed[app] {
-			continue
-		}
-		if err := change.Apply(ctx, b.M, b.Out, c); err != nil {
-			return err
-		}
-	}
-	return nil
+// Font plans the font's cask where its file is missing.
+func (b Casks) Font(ctx context.Context, home string) ([]step.Change, error) {
+	changes, err := b.FontResource(home).Plan(ctx)
+	return asSteps(changes), err
 }

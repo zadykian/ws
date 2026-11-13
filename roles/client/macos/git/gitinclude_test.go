@@ -14,7 +14,7 @@ func TestGitWarnsOfOwnSettingsBelowTheInclude(t *testing.T) {
 	m.Results["git config --file "+gitConfigFile+" --type path --get-all include.path"] =
 		effecttest.Result{Err: mactest.ExitOne(t)}
 	m.Results["cp -p "+gitConfigFile+" "+gitConfigFile+".20260102030405~"] = effecttest.Result{}
-	if err := g.Apply(context.Background(), mustPlan(t, g)); err != nil {
+	if err := g.Step().Apply(context.Background(), mustPlan(t, g)); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(strings.Join(out.Lines, "\n"), "own settings of user.name, below the include") {

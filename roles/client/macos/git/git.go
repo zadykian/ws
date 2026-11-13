@@ -9,7 +9,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 )
 
@@ -40,12 +39,6 @@ type Git struct {
 	added bool
 }
 
-// Name is git.
-func (*Git) Name() string { return "git" }
-
-// WaitsOn is nothing.
-func (*Git) WaitsOn() string { return "" }
-
 func (g *Git) look(name string) (string, error) {
 	if g.LookPath != nil {
 		return g.LookPath(name)
@@ -53,8 +46,8 @@ func (g *Git) look(name string) (string, error) {
 	return exec.LookPath(name)
 }
 
-// Plan reads the signing key and gh, and plans to install gh.
-func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
+// plan reads the signing key and gh, and plans to install gh.
+func (g *Git) plan(ctx context.Context) (step.Plan, error) {
 	if g.Conf.GitName == "" {
 		return step.Plan{}, nil
 	}
@@ -88,46 +81,7 @@ func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 	if reg != nil {
 		cs = append(cs, *reg)
 	} else if waits != "" {
-		cs = append(cs, change.Remark(waits))
+		cs = append(cs, waiting{g, key, gh, waits})
 	}
 	return step.Plan{Changes: g.withNotes(cs)}, nil
-}
-
-// Apply installs gh first, plans again with it there, then applies the rest.
-func (g *Git) Apply(ctx context.Context, p step.Plan) error {
-	n := 0
-	for ; n < len(p.Changes); n++ {
-		c, ok := p.Changes[n].(change.Run)
-		if !ok {
-			break
-		}
-		g.Out.Say("installing gh")
-		if err := change.Apply(ctx, g.M, g.Out, c); err != nil {
-			return err
-		}
-	}
-	if n > 0 {
-		var err error
-		if p, err = g.Plan(ctx); err != nil {
-			return err
-		}
-		n = 0
-	}
-	for _, c := range p.Changes[n:] {
-		switch c := c.(type) {
-		case Known:
-			g.tell(string(c))
-			continue
-		case Notice:
-			g.say(string(c))
-			continue
-		case Register:
-			g.add(ctx, c)
-			continue
-		}
-		if err := change.Apply(ctx, g.M, g.Out, c); err != nil {
-			return err
-		}
-	}
-	return nil
 }

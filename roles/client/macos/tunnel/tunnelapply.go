@@ -18,7 +18,7 @@ func (t *Tunnel) Apply(ctx context.Context, p step.Plan) error {
 		case Install:
 			err = t.install(ctx, c)
 		case launchd.Launchctl:
-			err = launchd.Run(ctx, t.M, t.Out, t.sleep, c)
+			err = c.Apply(ctx)
 		case KeyMake:
 			err = t.makeKey(ctx)
 		default:

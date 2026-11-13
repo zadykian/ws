@@ -19,7 +19,11 @@ const Dir = "/etc/ws-tunnel"
 
 // Launchctl has launchd run or signal the daemon, through sudo.
 type Launchctl struct {
-	Args []string
+	M   effect.Machine
+	Out effect.Out
+	// Sleep waits between the tries of a bootstrap. Nil means time.Sleep.
+	Sleep func(time.Duration)
+	Args  []string
 	// Signal marks `kill SIGHUP`, which a daemon that is not running refuses: kickstart starts it
 	// then, and it reads tunnel.conf as it starts.
 	Signal bool
@@ -33,21 +37,25 @@ func (l Launchctl) String() string { return "would run launchctl " + strings.Joi
 // Kind is restart.
 func (Launchctl) Kind() step.ChangeKind { return step.Restart }
 
-// Run runs the action. A bootstrap right after a bootout may find the service still on its
+// Apply runs the action. A bootstrap right after a bootout may find the service still on its
 // way out, so it tries for 10 s.
-func Run(ctx context.Context, m effect.Machine, out effect.Out, sleep func(time.Duration), l Launchctl) error {
+func (l Launchctl) Apply(ctx context.Context) error {
+	sleep := l.Sleep
+	if sleep == nil {
+		sleep = time.Sleep
+	}
 	var err error
 	for tries := 1; ; tries++ {
-		_, err = m.RunRoot(ctx, "launchctl", l.Args...)
+		_, err = l.M.RunRoot(ctx, "launchctl", l.Args...)
 		if err == nil {
 			break
 		}
 		if l.Routes {
-			out.Warn("cannot signal %s, which reads routes.d when it next starts", Label)
+			l.Out.Warn("cannot signal %s, which reads routes.d when it next starts", Label)
 			return nil
 		}
 		if l.Signal {
-			return Run(ctx, m, out, sleep, Launchctl{Args: []string{"kickstart", "-k", "system/" + Label}})
+			return Launchctl{M: l.M, Out: l.Out, Args: []string{"kickstart", "-k", "system/" + Label}}.Apply(ctx)
 		}
 		if l.Args[0] != "bootstrap" || tries >= 10 {
 			return fmt.Errorf("launchctl %s failed: %w; is ws-tunnel on under System Settings › "+
@@ -55,6 +63,6 @@ func Run(ctx context.Context, m effect.Machine, out effect.Out, sleep func(time.
 		}
 		sleep(time.Second)
 	}
-	out.Say("ran launchctl %s", strings.Join(l.Args, " "))
+	l.Out.Say("ran launchctl %s", strings.Join(l.Args, " "))
 	return nil
 }

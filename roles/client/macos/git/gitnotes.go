@@ -1,6 +1,7 @@
 package git
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/zadykian/ws/engine/core/step"
@@ -8,16 +9,34 @@ import (
 
 // Notice is a warning that a plan carries after its changes, so that it prints after them: --check
 // lists it last, and Apply says it once the changes are made.
-type Notice string
+type Notice struct {
+	Git  *Git
+	Text string
+}
 
-func (n Notice) String() string { return "warning: " + string(n) }
+func (n Notice) String() string { return "warning: " + n.Text }
+
+// Apply warns once in a run.
+func (n Notice) Apply(context.Context) error {
+	n.Git.say(n.Text)
+	return nil
+}
 
 // Known is a line that says what Plan found there already, such as a key on GitHub. A plan carries
 // it after its changes like a Notice, and only where it holds others: else a run would not be the
 // one that changes nothing.
-type Known string
+type Known struct {
+	Git  *Git
+	Text string
+}
 
-func (k Known) String() string { return string(k) }
+func (k Known) String() string { return k.Text }
+
+// Apply says the line once in a run.
+func (k Known) Apply(context.Context) error {
+	k.Git.tell(k.Text)
+	return nil
+}
 
 // know keeps a line for what Plan found there already.
 func (g *Git) know(text string) { g.known = append(g.known, text) }
@@ -42,10 +61,10 @@ func (g *Git) withNotes(cs []step.Change) []step.Change {
 		return cs
 	}
 	for _, k := range known {
-		cs = append(cs, Known(k))
+		cs = append(cs, Known{g, k})
 	}
 	for _, n := range notes {
-		cs = append(cs, Notice(n))
+		cs = append(cs, Notice{g, n})
 	}
 	return cs
 }

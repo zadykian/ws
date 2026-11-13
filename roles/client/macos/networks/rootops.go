@@ -3,7 +3,6 @@ package networks
 import (
 	"context"
 	"github.com/zadykian/ws/engine/core/resource/file"
-	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
@@ -17,7 +16,7 @@ func applyInOrder(ctx context.Context, m effect.Machine, out effect.Out, p step.
 	for _, c := range p.Changes {
 		var err error
 		if l, ok := c.(launchd.Launchctl); ok {
-			err = launchd.Run(ctx, m, out, time.Sleep, l)
+			err = l.Apply(ctx)
 		} else {
 			err = change.Apply(ctx, m, out, c)
 		}

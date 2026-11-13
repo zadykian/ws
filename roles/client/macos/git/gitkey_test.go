@@ -26,7 +26,7 @@ func TestGitSignsWithTheCopyOfTheAgentsKey(t *testing.T) {
 	in := data + "/PublicKeys/" + key.Name
 	m.Root[in] = m.Root[socket]
 	g.Conf.GitSigningPubKey = in
-	p, err := g.Plan(context.Background())
+	p, err := g.Step().Plan(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}

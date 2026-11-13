@@ -1,11 +1,17 @@
 package ssh
 
 import (
-	"github.com/zadykian/ws/engine/core/resource/file"
+	"bytes"
+	"context"
+	"fmt"
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/internal/keys"
+	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
 // The modes of ssh's files.
@@ -49,5 +55,68 @@ func sshDirs(m effect.Machine, out effect.Out, home string) file.UserDirs {
 	return file.UserDirs{
 		{M: m, Out: out, Path: home + "/.ssh", Mode: sshDirMode},
 		{M: m, Out: out, Path: home + "/.ssh/config.d", Mode: sshDirMode, Fix: true},
+	}
+}
+
+// refusal is a part that plans no change: it stops a plan, or warns, as a report never does.
+type refusal func(ctx context.Context) error
+
+// Plan runs the refusal.
+func (r refusal) Plan(ctx context.Context) ([]resource.Change, error) { return nil, r(ctx) }
+
+// parts reads ~/.ssh and the Mac, and returns the parts of the step in the order of its changes.
+func (s SSH) parts(ctx context.Context) ([]resource.Resource, error) {
+	f, err := s.read(ctx)
+	if err != nil {
+		return nil, err
+	}
+	key, err := keys.ReadKey(ctx, s.M, s.Conf, s.Home, keys.LoginKey)
+	if err != nil {
+		return nil, err
+	}
+	text := s.config(ctx, f, key)
+	include := f.Include
+	if own := sshcfg.OwnHosts(string(f.UserConfig.Text), "ws"); len(own) > 0 && include.Conflict == "" {
+		include.Conflict = fmt.Sprintf("line %d sets its own values for ws: those in config.d/ws, read "+
+			"first, win where both set a key", own[0].Line)
+	}
+	seen := reports{sshDirs(s.M, s.Out, s.Home), s.wsFile(text), file.Fixed{include}}
+	if keys.Copied(key.File, key.Text, s.Home) {
+		seen = append(seen, keys.CopyDirs(s.M, s.Out, s.Home))
+	}
+	seen = append(seen, keys.CopyReport(s.M, s.Out, key.File, key.Text, s.Home)...)
+	copied, err := keys.PlanCopy(s.M, s.Out, key.File, key.Text, s.Home)
+	return []resource.Resource{
+		s.refusal(f, text),
+		resource.Planned{Changes: copied, Err: err},
+		resource.Planned{Changes: sshChanges(f, text), Seen: seen},
+	}, nil
+}
+
+// reports is the files that the step reports, in order.
+type reports []step.Reporter
+
+// Report gathers the items of the files.
+func (r reports) Report(ctx context.Context) ([]step.Item, error) { return file.Gather(ctx, r...) }
+
+// refusal stops where ssh can't take the files, and warns of what the run leaves to the user.
+func (s SSH) refusal(f sshFacts, text []byte) refusal {
+	return func(ctx context.Context) error {
+		if f.Stop != nil {
+			return f.Stop
+		}
+		if err := s.validate(ctx, f, text); err != nil {
+			return err
+		}
+		if f.DirLink.Path == s.Home+"/.ssh/config.d" && !bytes.Equal(f.Ws.Text, text) {
+			s.Out.Warn("~/.ssh/config.d is a link to %s: config.d/ws goes there", f.DirLink.To)
+		}
+		// The line is counted in the text the run leaves, so that the runner's second Plan names the
+		// same line and the warning shows once.
+		for _, h := range sshcfg.OwnHosts(string(s.configLines().After(f.UserConfig, f.IncludeLine > 0)), "ws") {
+			s.Out.Warn("line %d of ~/.ssh/config, %s, sets its own values for %s: those in config.d/ws, "+
+				"read first, win where both set a key", h.Line, h.Text, h.Names)
+		}
+		return nil
 	}
 }
