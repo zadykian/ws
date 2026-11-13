@@ -18,12 +18,12 @@ draw [the run screen](tui.md#the-run-screen) and end on `would change: none`. Th
 the container's NET_ADMIN, checks the outbound table the run wrote and the users it names, and a
 find that the user owns its home. The Zed wrapper's [checks](../.github/zed-terminal-checks.sh) run
 on the files it installed, and Fresh's on the config it loaded. Root's leg has no table. The run
-leaves out its own check ([Outbound](security.md#outbound)). Its `/etc/ws/host_vars.yml` gives a
+leaves out its own check ([Outbound](../roles/server/ubuntu/security/README.md#outbound)). Its `/etc/ws/host_vars.yml` gives a
 swap file of 64 MiB, as the runner's disk has no room for one of its RAM's size. With no NVIDIA GPU,
 `nvidia` checks its names alone, and with no MSI board, `fans` leaves its fans alone. With no VPN
 profile, `ikeward` does nothing. `ws server ubuntu wizard --check --plain` then asks nothing, as the
 values name both its keys, and its run skips, with no booted systemd ([The server's
-wizard](server-wizard.md)).
+wizard](../roles/server/ubuntu/stages/README.md)).
 
 ## The install script
 
@@ -72,7 +72,7 @@ leads, with its own host key. A fresh `--check` must show the Host key stage aft
 apply`. The first run must warn that ws faces the internet, and add ws's key to `known_hosts`, as
 `WS_HOST_KEY` gives its fingerprint. Without that line, a run with no terminal must stop without
 `WS_HOST_KEY` and with another fingerprint, and `--check` must show the line, or stop at a link, as
-a run must. With a `mac.conf` of no way to ws, a run must stop, naming [The router](router.md).
+a run must. With a `mac.conf` of no way to ws, a run must stop, naming [The router](../roles/server/ubuntu/network/router.md).
 Where `WS_REMOTE` doesn't answer, ws's address must come from `WS_FIRST_ADDRESS`, and the closing
 list name `WS_PORT` and no lease's address. On a cloud VM, it must name `mac.conf`'s way, not the lease.
 

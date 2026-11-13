@@ -4,7 +4,7 @@
 opens them at a terminal, and `--plain` or no terminal keeps its lines. `--check` goes straight to
 its run, on the run screen. `--update` runs ahead of any screen, on lines, as the new ws takes this
 one's place and opens them itself. `ws server ubuntu wizard` opens one list, `ws`, where every stage
-runs, by the same rules ([The server's wizard](server-wizard.md)). Its `configure` button opens `ws
+runs, by the same rules ([The server's wizard](../roles/server/ubuntu/stages/README.md)). Its `configure` button opens `ws
 server ubuntu configure`'s forms, and its `s` reads ws on ws.
 
 The wizard's stages are one queue, shown as two lists side by side: `Mac` and `ws`, by the machine

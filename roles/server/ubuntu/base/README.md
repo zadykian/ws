@@ -6,12 +6,12 @@ The `base` role sets up the ground every machine stands on. It runs as Go steps 
 - the packages every machine gets;
 - the locale `en_US.UTF-8` and the timezone UTC;
 - unattended-upgrades as Ubuntu ships it, which installs Ubuntu's security updates daily, and gh's
-  releases, which [devtools](devtools.md#gh) allows;
+  releases, which [devtools](../devtools/README.md#gh) allows;
 - a swap file, `/swapfile`, the size of the RAM rounded up to a whole GiB.
 
 Its steps are Packages, Locale, Timezone, Upgrades, Swap and Swappiness, in that order. Each plans
 from reads alone, so that `--check` prints what a run would change. The values are `base_packages`,
-`base_locale`, `base_timezone`, `base_swap_size_mb` and `base_swappiness` of the values file ([the README](../README.md#running-it-again)).
+`base_locale`, `base_timezone`, `base_swap_size_mb` and `base_swappiness` of the values file ([the README](../../../../README.md#running-it-again)).
 
 A step that needs a booted systemd skips without one, as in CI's container, and says so: the
 units of Upgrades, `swapon` and `swapoff` of Swap, and `systemd-sysctl` of Swappiness.

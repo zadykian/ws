@@ -23,9 +23,9 @@ They share:
 
 lazygit's `roles/server/ubuntu/lazygit/files/config.yml` takes the theme's colours too, each beside
 the Zed key it comes from, so a change of theme goes to it as well
-([lazygit](../../docs/lazygit.md#the-theme)).
+([lazygit](../../roles/server/ubuntu/lazygit/README.md#the-theme)).
 
-Fresh spells its keys as follows ([Fresh](../../docs/fresh.md#the-keys)):
+Fresh spells its keys as follows ([Fresh](../../roles/server/ubuntu/fresh/README.md#the-keys)):
 
 - A stroke with Shift and a sign gets two forms: tmux sends the sign without Shift, and a direct
   terminal sends the key with Shift.

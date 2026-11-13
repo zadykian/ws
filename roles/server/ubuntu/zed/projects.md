@@ -1,11 +1,11 @@
 # A project's `.zed/settings.json`
 
 A project commits `.zed/settings.json` at its root. Zed on the Mac and its server on ws both read
-it, above ws's own `~/.config/zed/settings.json` ([zed](zed.md)). Arrays replace the lower layers'
+it, above ws's own `~/.config/zed/settings.json` ([zed](README.md)). Arrays replace the lower layers'
 and objects merge key by key. Zed reads the file as JSONC, so comments are allowed.
 
 Zed applies no project settings until the worktree is trusted
-([Trust each project](zed.md#trust-each-project)). Open the project's root itself, not its parent.
+([Trust each project](README.md#trust-each-project)). Open the project's root itself, not its parent.
 
 ## A SQL Server project
 

@@ -1,7 +1,7 @@
 # git on the Mac
 
 With `WS_GIT_NAME` and `WS_GIT_EMAIL` in `mac.conf`, `ws client macos apply` sets up git on the Mac
-([The Mac](mac.md)), as the `shell` role does on ws ([Signing](shell.md#signing)). It writes
+([The Mac](mac.md)), as the `shell` role does on ws ([Signing](../roles/server/ubuntu/shell/README.md#signing)). It writes
 `~/.config/ws/gitconfig`: the author, and each commit signed with `WS_GIT_SIGNING_PUB_KEY`, which
 `~/.config/ws/allowed_signers` trusts for the email in `git verify-commit`. It names gh's credential
 command too, as `gh auth setup-git` does, so that pushes to GitHub take gh's login, and installs

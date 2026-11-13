@@ -1,7 +1,7 @@
 # nvidia
 
 The `nvidia` role installs NVIDIA's headless driver from Ubuntu's archive, on a machine with an
-NVIDIA GPU. [ws-fans](fans.md) reads the GPU's temperature by its `nvidia-smi`. Its steps, in
+NVIDIA GPU. [ws-fans](../fans/README.md) reads the GPU's temperature by its `nvidia-smi`. Its steps, in
 `roles/server/ubuntu/nvidia`, are the GPU's check, the packages, and the driver's note of a reboot.
 It runs before `fans`, and takes no values.
 
@@ -30,7 +30,7 @@ newer one would pull a newer kernel without its headers, and DKMS would build no
 A machine with none of the four fails the run. As Canonical signs the modules, Secure Boot needs
 no key.
 
-Unattended upgrades move the driver, as `resolute-security` carries it ([base](base.md)), and no
+Unattended upgrades move the driver, as `resolute-security` carries it ([base](../base/README.md)), and no
 package is held. The role sets no persistence mode, as ws-fans' `nvidia-smi` holds the GPU open.
 CUDA and the container toolkit, from NVIDIA's own repository, are not here.
 

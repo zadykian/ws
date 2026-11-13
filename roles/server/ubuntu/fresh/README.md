@@ -26,7 +26,7 @@ CI's container.
 `Fresh config` writes `~/.config/fresh/config.json` for `ws_user`, from the template
 `files/config.json.tmpl`, which fills in the user's home for the language servers' paths. A
 run replaces a change made to it by hand and keeps the old file beside the new one, as
-[zed](zed.md) does for its settings.
+[zed](../zed/README.md) does for its settings.
 `gotest` holds the render to checks in `roles/server/ubuntu/fresh`: a config that does not parse makes
 Fresh load its defaults and exit 0.
 

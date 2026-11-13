@@ -51,13 +51,13 @@ for the default bridge, and `default-network-opts` for each network created afte
 created before keeps publishing on every address until created again, as by
 `docker compose down` and `up`. The default bridge takes `ip` when Docker starts with no container
 running, as after a reboot. Docker's published ports get past ufw:
-[SSH and the firewall](security.md#ssh-and-the-firewall).
+[SSH and the firewall](../security/README.md#ssh-and-the-firewall).
 
 ## Outbound
 
 Unless `security_outbound` is false, a container reaches no host of the LAN, the cable or `wg0`,
 nor of another private network around the server. The `security` role's table drops what it
-starts there, so a TCP connect hangs ([Outbound](security.md#outbound)).
+starts there, so a TCP connect hangs ([Outbound](../security/README.md#outbound)).
 
 ## Build cache
 

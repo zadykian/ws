@@ -10,12 +10,12 @@ and DNS.
 ws turns SSH's passwords off: everyone logs in by key. Where `ws_user` is another user, root
 cannot log in at all, and `ws_user` takes root by `sudo` with its password. Where `ws_user` is
 root, a cloud VM's, root logs in by key. ufw then lets in
-SSH on port 22 and WireGuard on UDP port 51820 ([wireguard](wireguard.md)). It lets in DNS lookups
-from Docker's bridges to the host's resolver too ([docker](docker.md)), and nothing else. fail2ban
+SSH on port 22 and WireGuard on UDP port 51820 ([wireguard](../wireguard/README.md)). It lets in DNS lookups
+from Docker's bridges to the host's resolver too ([docker](../docker/README.md)), and nothing else. fail2ban
 bans an address for an hour after 5 failed logins in 10 minutes. sshd's own penalties slow one
 that keeps failing. Both hold on every network, with no peer or network exempt. SSH takes only the
 keys imported from the GitHub account during Ubuntu's install; a cloud VM has no installer
-([A new machine](../README.md#a-new-machine)). Over SSH, keep the session that ran ws open until a
+([A new machine](../../../../README.md#a-new-machine)). Over SSH, keep the session that ran ws open until a
 new one logs in. The steps stop before they turn passwords off if `ws_user` has no key to log in
 with, or a file of keys that sshd passes over, outside a container. sshd's drop-in lands only after
 `sshd -G` accepts it, and sshd reloads after a change.
@@ -30,14 +30,14 @@ the user a password and remove the rule by hand.
 The step "lxd" takes `ws_user` out of the `lxd` group, which is root, and purges `lxd-installer`.
 
 Docker's published ports get past ufw, so Docker publishes a port that names no address on
-`127.0.0.1` ([docker](docker.md)): reach it through an SSH tunnel. A port published on another
+`127.0.0.1` ([docker](../docker/README.md)): reach it through an SSH tunnel. A port published on another
 address, as in `-p 0.0.0.0:8080:80`, is open to every network the host is on.
 
 ## Outbound
 
 Unless `security_outbound` is false, as below, an nftables table of ws's own, `inet ws`, keeps
 what the server and Docker's containers start to the internet and to `ikeward0`, ikeward's VPN
-([ikeward](ikeward.md)). Elsewhere, only what the list below names passes.
+([ikeward](../ikeward/README.md)). Elsewhere, only what the list below names passes.
 `security-outbound.service` loads the table from `/usr/local/lib/ws/security/outbound.nft` at
 boot, before the network comes up. `ufw status verbose` still shows outgoing traffic allowed.
 
@@ -51,7 +51,7 @@ These pass:
   the table never sees;
 - IPv6's router and neighbour discovery and MLD reports, to any address, whoever sends them;
 - lookups to port 53 by resolved's user, `systemd-resolve`, to resolved's own DNS servers. resolved
-  asks them for the server and its containers ([Names](docker.md#names)).
+  asks them for the server and its containers ([Names](../docker/README.md#names)).
 
 Any other new packet drops where it goes to a private, shared, link-local, multicast or broadcast
 address:
@@ -99,7 +99,7 @@ passes.
 What a container sends out of the server drops alike, but where it leaves by `ikeward0` or a
 bridge. A container on the host's network meets the table as the server's own processes do. What
 comes in by any other link, as the Mac's packets from `wg0` to `ikeward0`, is ufw's to judge
-([Forwarding](ikeward.md#forwarding)).
+([Forwarding](../ikeward/README.md#forwarding)).
 
 The caveats:
 
@@ -107,12 +107,12 @@ The caveats:
   delete the table, or send by AF_PACKET, which the table never sees. So can any user who can
   become root: the `sudo` group's members, as the installer's user or a cloud image's `ubuntu`,
   and the `docker` group's. `ws_user` is `zadykian` by default
-  ([values.go](../roles/server/ubuntu/values/values.go)), and has a rootless daemon, not that group
-  ([The rootless daemon](docker.md#the-rootless-daemon)). The table binds the other users and the
+  ([values.go](../values/values.go)), and has a rootless daemon, not that group
+  ([The rootless daemon](../docker/README.md#the-rootless-daemon)). The table binds the other users and the
   bridged containers.
 - The router answers at its public address too, which the table takes for the internet: the
   packet leaves by the same gateway. A rule on the router drops it for a machine on the LAN
-  ([The router](router.md)).
+  ([The router](../network/router.md)).
 - A private DNS server of resolved's, as the router, hears only resolved's lookups. A program that
   asks it for names itself, not resolved at `127.0.0.53`, gets no answer. chrony, which the `base`
   role installs, keeps time from Ubuntu's pools on the internet.
@@ -140,7 +140,7 @@ The caveats:
   which it left out in `journalctl -u security-resolvers`. `systemctl stop security-outbound`
   removes this table alone, until the next boot or run.
 - A dry run, `--check`, writes nothing, so it checks neither the table nor sshd's drop-in
-  ([Dry runs](../README.md#dry-runs)).
+  ([Dry runs](../../../../README.md#dry-runs)).
 
 A run checks the file with `nft -c` before it lands. It then loads the file in a network namespace
 of its own, as the unit loads it, and compares that table with the kernel's, as
@@ -150,12 +150,12 @@ its sets in one transaction, with no gap. So it does where systemd failed to loa
 table's, or hasn't read it since it changed. That covers a run cut short before the reload, and a
 table or set flushed or deleted by hand. In a container, where systemd is not running, the run writes
 the files, but skips the check, the comparison, the units and ufw. CI checks the file after its runs
-([The `playbook` job](checks.md#the-playbook-job)).
+([The `playbook` job](../../../../docs/checks.md#the-playbook-job)).
 
 `security_outbound`, true by default, turns the table on. A cloud VM wants it false: the table
 drops the cloud's metadata service at `169.254.169.254`, which cloud-init, the guest agent and
 instance credentials need. On a new machine, name it in `/etc/ws/host_vars.yml` before the first
-run ([The direct link](network.md#the-direct-link)):
+run ([The direct link](../network/README.md#the-direct-link)):
 
 ```yaml
 ---
@@ -163,7 +163,7 @@ security_outbound: false
 ```
 
 The Mac's wizard writes the line before the run where `mac.conf` has `WS_TARGET=cloud`
-([ws's run](mac-wizard.md#wss-run)). A run with `security_outbound` false stops the table's units
+([ws's run](../../../../docs/mac-wizard.md#wss-run)). A run with `security_outbound` false stops the table's units
 by D-Bus, and resets one that failed, even where its file is gone. It then removes the units, their
 links, `/usr/local/lib/ws/security` and the table, even one loaded by hand. `--check` shows each
 removal. Off leaves:
@@ -171,7 +171,7 @@ removal. Off leaves:
 - ufw's default, which allows every outgoing connection;
 - the `wireguard` role's chain `WS-MAC`, which drops what Docker's containers send through `wg0`
   or the cable, but for replies to the Mac's own connections
-  ([The firewall](wireguard.md#the-firewall)).
+  ([The firewall](../wireguard/README.md#the-firewall)).
 
 So Docker's containers reach a cloud's metadata service, and the VPC or the LAN, too. Only the
 table's `containers` chain drops what they forward: Docker forwards it ahead of ufw's rules, and

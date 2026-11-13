@@ -11,7 +11,7 @@ them by hand. A machine's own settings go in files they read where they exist:
 - `~/.config/git/local`, which `~/.gitconfig` includes last, so that its settings win.
 
 A link at a file the role writes as root fails the step of that file alone. So does a link at a
-directory between the home and that file ([Links under the home](security.md#links-under-the-home)).
+directory between the home and that file ([Links under the home](../security/README.md#links-under-the-home)).
 
 An installer that appends to `~/.bashrc` or `~/.profile`, a line that adds its directory to
 `PATH`, say, loses that line on the next run: move it to `~/.bash_aliases`.
@@ -28,7 +28,7 @@ be a URL, which names a host. A real run keeps the old file beside the new one, 
 `~/.gitconfig` signs each commit with an SSH key of the machine's own: `ws_git_signing_key`
 in the values file, `~/.ssh/id_ed25519_signing` by default. The key lies below `ws_home`, or the
 run fails. The role makes it once, an ed25519 key with no passphrase, as tools and claude commit
-unattended. The key only signs. The role does not register it with GitHub: [The signing key](devtools.md#the-signing-key).
+unattended. The key only signs. The role does not register it with GitHub: [The signing key](../devtools/README.md#the-signing-key).
 
 To revoke the key, delete it in the account's settings on GitHub, then delete
 `~/.ssh/id_ed25519_signing` and its `.pub`. The next run makes a new key. The Mac's wizard
@@ -58,7 +58,7 @@ With it set, the role makes `~/.secrets` 0700 and writes `env` 0600, both owned 
 The file opens with a `# Written by github.com/zadykian/ws` line, then `export NAME=VALUE` for
 each name, the value quoted for the shell. Each run replaces the file, so a change goes in
 `[env]`. The `otelcol` role reads the file later in the same run:
-[claude's metrics elsewhere](otelcol.md#claudes-metrics-elsewhere).
+[claude's metrics elsewhere](../otelcol/README.md#claudes-metrics-elsewhere).
 
 - A name takes letters, digits and underscores, and starts with no digit. The run refuses any
   other, and its message names no value.
@@ -75,11 +75,11 @@ removes `~/.secrets/env`, if ws wrote it.
 
 `ws server ubuntu apply --secrets FILE` takes the secrets of the roles from a TOML file that age
 encrypts, in armor. `ws` decrypts it in its process with an X25519 identity. A run without
-`--secrets`, as CI's, has no secrets. [ws's secrets](mac-secrets.md) says the file's tables, its
+`--secrets`, as CI's, has no secrets. [ws's secrets](../../../../docs/mac-secrets.md) says the file's tables, its
 references and its values.
 
 The identity stays in ws's credential, made by `ws server ubuntu secrets init`, or by `ws client
-macos secrets init` from the Mac ([ws's file](mac-secrets.md#wss-file)). `ws server ubuntu apply`
+macos secrets init` from the Mac ([ws's file](../../../../docs/mac-secrets.md#wss-file)). `ws server ubuntu apply`
 reads it from the systemd credential `ws-secrets`, in `$CREDENTIALS_DIRECTORY`, for `--secrets` and
 `--check` alike. Without the credential it fails and names `LoadCredential`. It reads no standard
 input and no terminal. The wizard starts the run as a unit with
@@ -96,7 +96,7 @@ The roles read these tables, and ws refuses any other key:
 - `[env]`: names to values, as [Secrets](#secrets) says;
 - `[git."URL"]`: the entries of [Git credentials](#git-credentials);
 - `[file]` and `[password]`: the ikeward profile's files and the `.p12`'s password
-  ([The profile](ikeward.md#the-profile)).
+  ([The profile](../ikeward/README.md#the-profile)).
 
 No message, `--check` included, shows a value. Nothing plain reaches the disk but the
 files that the roles write.
@@ -138,7 +138,7 @@ empty by default. Each entry takes:
 Each repository is cloned as `ws_user`, after the tokens are written, where its `dest` is missing.
 A run never pulls, resets or removes a clone, and leaves alone a `dest` that exists, clone or not.
 A private server may sit behind the VPN of the `ikeward` role, which runs before `shell`
-([A run](ikeward.md#a-run)). A clone that fails, as from a server out of reach, fails the run, and
+([A run](../ikeward/README.md#a-run)). A clone that fails, as from a server out of reach, fails the run, and
 the next run tries again.
 
 A dry run lists each missing `dest` without reaching the server. A URL of `http://` or `https://`

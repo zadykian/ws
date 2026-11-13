@@ -2,7 +2,7 @@
 
 The `devtools` role installs Node, the .NET SDKs, gh, glow, the libraries headless Chromium needs,
 Go, gopls, Delve, roslyn-language-server, the SQL and Docker servers and rustup. It runs as Go
-steps in [roles/server/ubuntu/devtools](../roles/server/ubuntu/devtools): the repositories, the packages,
+steps in [roles/server/ubuntu/devtools](.): the repositories, the packages,
 Go, the servers and rustup, in this order.
 
 Node comes from NodeSource's apt repository, glow from Charm's and gh from GitHub CLI's. Each .NET
@@ -69,7 +69,7 @@ A project's `postgres-language-server.jsonc` holds `db` fields, never a `connect
   `PGPASSWORD`, which reaches every libpq client.
 - Code actions that run statements stay off until `db.allowStatementExecutionsAgainst` names
   schemas.
-- ws drops new connections to private ranges ([outbound](security.md#outbound)): a database on
+- ws drops new connections to private ranges ([outbound](../security/README.md#outbound)): a database on
   the LAN hangs for `db.connTimeoutSecs`, 10 by default. Loopback, Docker and `ikeward0` work.
 - To bump a pin, read the digests with the `gh api` command in `binaries.go` and check a download
   with `sha256sum`. A bumped postgres-language-server may need its daemon stopped.
@@ -114,7 +114,7 @@ signs. The role pins both. `/etc/apt/apt.conf.d/52unattended-upgrades-github-cli
 repository's origin, so unattended-upgrades installs each release of gh within a day.
 
 A step after the packages logs gh in to github.com as the user, by `token.github` in the secrets file
-([The secrets file](shell.md#the-secrets-file)). It compares `gh auth token -h github.com` with the
+([The secrets file](../shell/README.md#the-secrets-file)). It compares `gh auth token -h github.com` with the
 token. Where they differ, it runs `gh auth login -h github.com -p https --insecure-storage
 --with-token`, the token on stdin. ws has no keyring, so gh writes `~/.config/gh/hosts.yml`, mode
 0600. `--check` says "log gh in by token.github", never which token. gh's refusal fails the run. With
@@ -127,8 +127,8 @@ off".
 
 ## The signing key
 
-The role does not register the key that signs the machine's commits ([Signing](shell.md#signing)).
+The role does not register the key that signs the machine's commits ([Signing](../shell/README.md#signing)).
 ws's gh holds a token with repository permissions alone, which cannot add a signing key. The Mac's
-wizard adds it with the Mac's gh ([Signing key](mac-wizard.md#signing-key)), or add the `.pub` by
+wizard adds it with the Mac's gh ([Signing key](../../../../docs/mac-wizard.md#signing-key)), or add the `.pub` by
 hand in the account's settings on GitHub, as a signing key. Until then, GitHub shows the machine's
 commits as unverified, and the ruleset on `main` refuses them.

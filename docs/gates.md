@@ -31,7 +31,7 @@ check files take `FILES`, as in `make vale FILES=README.md`:
   `govulncheck` is the module's `tool` directive, so go.mod pins it. `gotest` runs
   `go test -race -count=1 ./...`, and cgo is on for the race detector alone, as ws builds with
   `CGO_ENABLED=0`. `LAZYGIT_SCHEMA` names lazygit's config schema, for
-  [the lazygit role's test](lazygit.md#the-config).
+  [the lazygit role's test](../roles/server/ubuntu/lazygit/README.md#the-config).
 
 `tools/sizecheck` leaves out the files nobody writes here. Those are foundryctl's compose files and
 lock, which yamllint leaves out too, and Vale's vendored styles. Data files, such

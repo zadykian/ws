@@ -6,7 +6,7 @@ sets up its end of the cable ([The cable](#the-cable)), git ([git on the Mac](ma
 ([Zed on the Mac](mac-zed.md)) and one host for ssh, `ws`. It goes through a WireGuard tunnel that
 ends on ws, at `10.99.0.1` whichever way the Mac connects. The sessions of `ssh ws` and Zed stay
 open as the Mac moves between the cable, the LAN and elsewhere, with a pause of a few seconds
-([Zed](zed.md#when-the-connection-drops)). What it gives up: `ssh ws` fails where UDP is blocked and
+([Zed](../roles/server/ubuntu/zed/README.md#when-the-connection-drops)). What it gives up: `ssh ws` fails where UDP is blocked and
 while the tunnel is down, and bulk copies run at wireguard-go's speed. To reach ws by hand, give ssh
 a direct way: `ssh -o HostName=ADDRESS -o Port=PORT ws`, as ufw lets SSH in on every interface.
 `WS_REMOTE_PORT` and the router's forward stay for that and for setup.
@@ -65,7 +65,7 @@ address inside it, the router's static lease for it. The script stops on one out
 LAN's network or broadcast address. `WS_REMOTE` is the router's name on the internet, and
 `WS_REMOTE_PORT` the port it forwards to ws's 22. The tunnel takes UDP 51820 every way, which the
 router forwards too; `WS_PORT` sets another. A way without its values is left out. The router's
-side is in [The router](router.md). `WS_PUBLIC_KEY` goes in last, once ws has the Mac's key, in the
+side is in [The router](../roles/server/ubuntu/network/router.md). `WS_PUBLIC_KEY` goes in last, once ws has the Mac's key, in the
 order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE` names the network service of the
 display's adapter, in quotes where it holds a blank, and `WS_CABLE_PORT` ws's port of the cable:
 [The cable](#the-cable). `WS_GIT_NAME` and `WS_GIT_EMAIL`, which go together, are the author of
@@ -152,7 +152,7 @@ hour. `ssh -o HostName=ADDRESS -o Port=PORT ws` comes from another address, and 
 `fail2ban-client set sshd unbanip 10.99.0.2` lifts the ban.
 
 Unless `security_outbound` is false, ws opens no connection to the Mac over the cable, the LAN or
-the tunnel ([The firewall](wireguard.md#the-firewall), [Outbound](security.md#outbound)). That
+the tunnel ([The firewall](../roles/server/ubuntu/wireguard/README.md#the-firewall), [Outbound](../roles/server/ubuntu/security/README.md#outbound)). That
 holds for its bridged containers and its users, but those who can become root. On a VM on the Mac,
 DHCP and DNS still go to the Mac, which serves them.
 
@@ -180,7 +180,7 @@ still shows other settings after `-setmanual`, the script names them and stops. 
 by hand. In System Settings › Network, pick it › Details › TCP/IP, and Configure IPv4 Manually: the
 IP address `10.77.0.2`, the subnet mask `255.255.255.252`, no router. Or empty the key.
 
-Set the key once ws's end is up ([network](network.md)). Then, docked, check once that the uplink
+Set the key once ws's end is up ([network](../roles/server/ubuntu/network/README.md)). Then, docked, check once that the uplink
 keeps the default route:
 
 ```sh
@@ -225,7 +225,7 @@ General › Login Items & Extensions, its "Allow in the Background" must stay on
 
 The tunnel's end on the Mac is `10.99.0.2`, on a utun of wireguard-go's, and ws's is `10.99.0.1`.
 The daemon fixes both, and `mac.conf` sets neither. So a run of the `wireguard` role stops where its
-variables give either end another address ([The tunnel](wireguard.md#the-tunnel)). The daemon
+variables give either end another address ([The tunnel](../roles/server/ubuntu/wireguard/README.md#the-tunnel)). The daemon
 points the Mac's end at the first of these that answers, each on UDP 51820:
 
 - the cable, `10.77.0.1`, where one of the Mac's addresses lies in `10.77.0.0/30`;
@@ -290,7 +290,7 @@ domain's names to nameservers behind it. It calls `ws`, which changes only what 
 With no network or address, each removes its file, `ws client macos resolver` only a file it wrote.
 The files outlive the daemon. While the daemon is stopped, the routes go with its utun, and the
 domain's lookups go out by the Mac's own network and fail. ufw on ws forwards from the tunnel only
-ping, and what the `ikeward` role lets through to its VPN ([Forwarding](ikeward.md#forwarding)). Any
+ping, and what the `ikeward` role lets through to its VPN ([Forwarding](../roles/server/ubuntu/ikeward/README.md#forwarding)). Any
 other network behind ws needs its side set up on ws too. A network the Mac is on, inside one sent
 into the tunnel, keeps its part off the tunnel: macOS routes the narrower network to the Mac's own
 interface.

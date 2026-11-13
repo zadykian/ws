@@ -7,7 +7,7 @@ outbound table on a cloud VM.
 
 ## A machine on the LAN
 
-`WS_TARGET=lan`, the default, is a machine at home, behind [The router](router.md), with a cable to
+`WS_TARGET=lan`, the default, is a machine at home, behind [The router](../roles/server/ubuntu/network/router.md), with a cable to
 the Mac's display, if any:
 
 - `WS_LAN` is the home LAN, `10.88.0.0/24` by default, and `WS_LAN_ADDRESS` ws's static lease
@@ -53,7 +53,7 @@ the Mac's display, if any:
   ([ssh's hosts](mac.md#sshs-hosts)). Else the Host key stage stops, and says to start the VM.
 - The wizard asks no `WS_REMOTE`, as only the Mac reaches the VM.
 - The outbound table stays on: ws's DHCP and DNS go to the Mac, which the table lets through
-  ([Outbound](security.md#outbound)).
+  ([Outbound](../roles/server/ubuntu/security/README.md#outbound)).
 - The wizard skips the Cable stage.
 
 ## A move to another target

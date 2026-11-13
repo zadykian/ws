@@ -64,7 +64,7 @@ button or Ctrl+X in its terminal, which undoes the changes if the session drops:
   `public-address` must be the WAN's own: behind the ISP's NAT, neither forward reaches the router.
 - A drop of what ws sends to the router's own addresses but `10.88.0.1`, such as its public one,
   ahead of the default firewall's accepts. ws's table takes the public address for the internet
-  ([Outbound](security.md#outbound)), and the default firewall lets the LAN reach every address of
+  ([Outbound](../security/README.md#outbound)), and the default firewall lets the LAN reach every address of
   the router's. DNS and DHCP, to `10.88.0.1` or by broadcast, still pass:
 
   ```routeros

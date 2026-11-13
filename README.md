@@ -8,37 +8,37 @@ Running it again is safe, and `--check` shows how a machine differs from the rep
 
 Each role has a page of its own. A role is Go steps of ws:
 
-- [`base`](docs/base.md): packages, the locale, the timezone, security updates and a swap file,
+- [`base`](roles/server/ubuntu/base): packages, the locale, the timezone, security updates and a swap file,
   as Go steps.
-- [`security`](docs/security.md): SSH by key only, ufw and fail2ban, and a table that keeps what
+- [`security`](roles/server/ubuntu/security): SSH by key only, ufw and fail2ban, and a table that keeps what
   ws starts to the internet and ikeward, but what the network needs, such as DHCP and DNS. The
   table is off where `security_outbound` is false, as a cloud VM wants.
-- [`network`](docs/network.md): the server's end of a cable to the Mac, as Go steps.
-- [`wireguard`](docs/wireguard.md): `wg0`, the server's end of a WireGuard tunnel for the Mac.
-- [`ikeward`](docs/ikeward.md): ikeward's IKEv2 VPN, where a profile is given, and the WireGuard
+- [`network`](roles/server/ubuntu/network): the server's end of a cable to the Mac, as Go steps.
+- [`wireguard`](roles/server/ubuntu/wireguard): `wg0`, the server's end of a WireGuard tunnel for the Mac.
+- [`ikeward`](roles/server/ubuntu/ikeward): ikeward's IKEv2 VPN, where a profile is given, and the WireGuard
   peers' way into it.
-- [`nvidia`](docs/nvidia.md): NVIDIA's headless driver from Ubuntu's archive, on a machine with an
+- [`nvidia`](roles/server/ubuntu/nvidia): NVIDIA's headless driver from Ubuntu's archive, on a machine with an
   NVIDIA GPU.
-- [`fans`](docs/fans.md): fan curves for the board's headers, and the driver that sets them.
-- [`shell`](docs/shell.md): `~/.bashrc`, `~/.profile`, `~/.gitconfig`, `~/.secrets/env` from the
+- [`fans`](roles/server/ubuntu/fans): fan curves for the board's headers, and the driver that sets them.
+- [`shell`](roles/server/ubuntu/shell): `~/.bashrc`, `~/.profile`, `~/.gitconfig`, `~/.secrets/env` from the
   secrets file, a key that signs commits, git's tokens for servers besides GitHub, and clones of
   repositories.
-- [`tmux`](docs/tmux.md): tmux from Ubuntu's archive.
-- [`lazygit`](docs/lazygit.md): lazygit from Ubuntu's archive, in JetBrains Dark, with the
+- [`tmux`](roles/server/ubuntu/tmux): tmux from Ubuntu's archive.
+- [`lazygit`](roles/server/ubuntu/lazygit): lazygit from Ubuntu's archive, in JetBrains Dark, with the
   repository and its branch in the terminal's title.
-- [`devtools`](docs/devtools.md): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go,
+- [`devtools`](roles/server/ubuntu/devtools): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go,
   gopls, Delve, roslyn-language-server, the SQL, Docker and npm language servers, and rustup.
-- [`docker`](docs/docker.md): Docker Engine, its `daemon.json`, a slice for its containers and
+- [`docker`](roles/server/ubuntu/docker): Docker Engine, its `daemon.json`, a slice for its containers and
   `ws_user`'s rootless daemon.
-- [`claude`](docs/claude.md): claude, its user settings and telemetry, its sessions after a reboot,
+- [`claude`](roles/server/ubuntu/claude): claude, its user settings and telemetry, its sessions after a reboot,
   and plugin marketplaces from a list.
-- [`signoz`](docs/signoz.md): SigNoz in Docker, which keeps the machine's telemetry for 90 days.
-- [`otelcol`](docs/otelcol.md): the OpenTelemetry Collector on the host, which feeds SigNoz.
-- [`fresh`](docs/fresh.md): the Fresh editor, from the .deb of a pinned release, with the plain keys,
+- [`signoz`](roles/server/ubuntu/signoz): SigNoz in Docker, which keeps the machine's telemetry for 90 days.
+- [`otelcol`](roles/server/ubuntu/otelcol): the OpenTelemetry Collector on the host, which feeds SigNoz.
+- [`fresh`](roles/server/ubuntu/fresh): the Fresh editor, from the .deb of a pinned release, with the plain keys,
   JetBrains Dark and the language servers.
-- [`zed`](docs/zed.md): the settings of Zed's server for Go, C#, SQL, Docker, Ansible and HTML, the
+- [`zed`](roles/server/ubuntu/zed): the settings of Zed's server for Go, C#, SQL, Docker, Ansible and HTML, the
   terminals' tmux wrapper, and the open-file limit that it needs.
-  [A project's settings](docs/zed-projects.md) cover SQL Server and Ansible.
+  [A project's settings](roles/server/ubuntu/zed/projects.md) cover SQL Server and Ansible.
 
 `roles/client/macos/` sets up the Mac that works on the server, and Ghostty and Zed on it: [The Mac](docs/mac.md).
 
@@ -72,7 +72,7 @@ sudo ws server ubuntu apply
 
 It runs the roles in order. Then do what stays by hand, below. Over plain ssh, `sudo ws server
 ubuntu wizard` asks ws's values and runs `ws server ubuntu apply` in a unit, which goes on where the
-login drops ([The server's wizard](docs/server-wizard.md)).
+login drops ([The server's wizard](roles/server/ubuntu/stages)).
 
 ## Running it again
 
@@ -90,13 +90,13 @@ role, or a step of it by the name a run shows, as in `--only 'docker/Docker grou
 role's other steps are planned and left out. A step that waits on one of them with changes is
 skipped, and says so, and `--check` shows what the same run would change. A left-out step whose plan
 fails warns, and the run goes on. `--secrets FILE` gives the roles their secrets, and `ws server
-ubuntu secrets` edits ws's file ([The secrets file](docs/shell.md#the-secrets-file)). The values of
+ubuntu secrets` edits ws's file ([The secrets file](roles/server/ubuntu/shell/README.md#the-secrets-file)). The values of
 a machine go in `/etc/ws/host_vars.yml`, which only root reads, and every run reads them. `ws_user:
 NAME` sets up the user NAME instead of `zadykian`, the default, whose account must exist. `ws_user:
 root` sets up a cloud VM with no other user. `ws_home` follows the user as `/home/NAME`; `ws_home:
 DIR` sets another home. `ws_git_signing_key` and `shell_git_allowed_signers` lie below it, or the
 run fails. A cloud VM names `security_outbound: false` there before its first run
-([Outbound](docs/security.md#outbound)). `ws server ubuntu values set KEY VALUE` writes one key, and
+([Outbound](roles/server/ubuntu/security/README.md#outbound)). `ws server ubuntu values set KEY VALUE` writes one key, and
 an empty VALUE gives its default back. On ws, `sudo ws server ubuntu configure` writes them on a
 form, and so does `ws client macos configure` from the Mac ([The Configure
 screen](docs/tui-configure.md)). ws's last line names the roles that changed, `changed: none` on a
@@ -160,23 +160,23 @@ checks that `WS_USER` logs in and installs its own ws on ws and runs `ws server 
 the secrets file on ws. Then it adds ws's signing key to GitHub, logs claude in there, and gives
 `wg0` the Mac's key. Without the wizard, the claude login and the Mac's key stay manual. ws's gh
 takes a fine-grained personal access token, which `ws server ubuntu apply` logs gh in with, from the
-secrets file's `token.github` ([gh](docs/devtools.md#gh)). Its permissions are the account's
+secrets file's `token.github` ([gh](roles/server/ubuntu/devtools/README.md#gh)). Its permissions are the account's
 selected repositories; Metadata and Actions read; Contents, Pull requests, Issues and Workflows read
 and write; and no account permission. These stay manual:
 
-- other peers' public keys on the server, as in [The tunnel](docs/wireguard.md#the-tunnel);
+- other peers' public keys on the server, as in [The tunnel](roles/server/ubuntu/wireguard/README.md#the-tunnel);
 - another device's SSH key on the server: `ssh-import-id gh:LOGIN`, run as `ws_user`
-  ([SSH and the firewall](docs/security.md#ssh-and-the-firewall));
+  ([SSH and the firewall](roles/server/ubuntu/security/README.md#ssh-and-the-firewall));
 - the VPN's profile, age-encrypted on the server, and the `ikeward` role's variables, as in
-  [The profile](docs/ikeward.md#the-profile);
-- with Secure Boot on, DKMS's key, enrolled at the console: [Secure Boot](docs/fans.md#secure-boot);
+  [The profile](roles/server/ubuntu/ikeward/README.md#the-profile);
+- with Secure Boot on, DKMS's key, enrolled at the console: [Secure Boot](roles/server/ubuntu/fans/README.md#secure-boot);
 - Fresh's trust, once per repository: press T, then Enter
-  ([Trust each project](docs/fresh.md#trust-each-project));
+  ([Trust each project](roles/server/ubuntu/fresh/README.md#trust-each-project));
 - the local list of words: set the secret `FORBIDDEN_WORDS` on GitHub, and place
   `~/.config/ws/forbidden-words`, mode 600, on each machine that commits
   ([The hooks](docs/checks.md#the-hooks)).
 
-The router takes a few steps once, by hand: [The router](docs/router.md).
+The router takes a few steps once, by hand: [The router](roles/server/ubuntu/network/router.md).
 
 ## Checks
 

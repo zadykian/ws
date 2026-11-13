@@ -11,7 +11,7 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 - `roles/server/ubuntu/NAME`: a role per directory, as Go steps, with its page, `docs/NAME.md`,
   and a line in the README. `roles/server/ubuntu` lists the roles in the order they run, and
   `roles/server/ubuntu/values` types the machine's values: `/etc/ws/host_vars.yml`, on the machine
-  alone, such as the cable's port ([The direct link](docs/network.md#the-direct-link)). Each role
+  alone, such as the cable's port ([The direct link](roles/server/ubuntu/network/README.md#the-direct-link)). Each role
   holds its pins, and embeds its templates and files. ws-fans, the fans' service, is
   `ws server ubuntu fans`, in `roles/server/ubuntu/fans/daemon`.
 - `go.mod`, `go.sum` and `.golangci.yml`: the Go module `github.com/zadykian/ws`, at the root.
@@ -109,18 +109,18 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   [update.go](engine/core/update/update.go)), and so are yamllint
   ([lint-requirements.in](.github/lint-requirements.in)) and Homebrew's `.pkg`, with its signer
   ([homebrew.go](roles/client/macos/stages/tools/homebrew.go)). Go is checked against the
-  SHA-256 its publisher lists ([devtools](docs/devtools.md)). The postgres-language-server and
+  SHA-256 its publisher lists ([devtools](roles/server/ubuntu/devtools/README.md)). The postgres-language-server and
   docker-language-server are checked against their SHA-256
   ([binaries.go](roles/server/ubuntu/devtools/binaries.go)). gopls and Delve are built through Go's
   checksum database. roslyn-language-server is pinned by version alone
   ([pins.go](roles/server/ubuntu/devtools/pins.go)). The npm servers are checked against the sha512
-  `integrity` of their lockfile ([devtools](docs/devtools.md#the-npm-servers)). Zed's other
+  `integrity` of their lockfile ([devtools](roles/server/ubuntu/devtools/README.md#the-npm-servers)). Zed's other
   downloads on ws are outside the rule
-  ([zed](docs/zed.md#zeds-downloads-outside-the-sha-256-rule)).
+  ([zed](roles/server/ubuntu/zed/README.md#zeds-downloads-outside-the-sha-256-rule)).
 - foundryctl forges SigNoz's compose files, `roles/server/ubuntu/signoz/deployment/` and
   `casting.yaml.lock`, from `casting.yaml`. Change the casting and forge again, never the files by
   hand: CI's `signoz` job fails where they differ
-  ([The compose files](docs/signoz.md#the-compose-files)).
+  ([The compose files](roles/server/ubuntu/signoz/README.md#the-compose-files)).
 - Secrets are never in this repository ([By hand](README.md#by-hand)).
 - ws is public. No word of the local list, `~/.config/ws/forbidden-words`, goes into it. That
   holds for its files, the names of files and branches, the commit messages, and the text of pull

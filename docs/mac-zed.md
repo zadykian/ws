@@ -78,10 +78,10 @@ server to every YAML file, Ansible's too.
   with it on, a venv in the directory has Zed type its activation line into every new tab, which
   reaches a reattached tmux session and whatever runs there.
 - `terminal.toolbar.breadcrumbs` shows a title that a program in the terminal sets, such as
-  [lazygit's](lazygit.md#the-title), above it. Zed's tab takes none.
+  [lazygit's](../roles/server/ubuntu/lazygit/README.md#the-title), above it. Zed's tab takes none.
 - `terminal.line_height` is Zed's default. Nerd glyphs may look misaligned all the same (zed#4746,
   open), and no setting helps.
-- [Zed's page for the server](zed.md#when-the-connection-drops) says what to do when the
+- [Zed's page for the server](../roles/server/ubuntu/zed/README.md#when-the-connection-drops) says what to do when the
   connection drops.
 
 ## The keymap
@@ -123,7 +123,7 @@ Zed on macOS, with a US layout:
 ### Two keys of the file's own
 
 Zed has no default key to restart a language server or to reload Zed. They are the remedies after
-a reconnect ([When the connection drops](zed.md#when-the-connection-drops)). Both keys are free
+a reconnect ([When the connection drops](../roles/server/ubuntu/zed/README.md#when-the-connection-drops)). Both keys are free
 in Zed's defaults:
 
 - Ctrl+Shift+R is `editor::RestartLanguageServer`, in `Editor && mode == full`.

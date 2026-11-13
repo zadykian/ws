@@ -14,7 +14,7 @@ as in CI's container, the unit, networkd, ufw and the wait skip and say so.
 ## The tunnel
 
 The Mac reaches the server through a WireGuard tunnel whichever way it connects: over the cable,
-the home LAN, or the internet through the router's forward ([The router](router.md)). Inside the
+the home LAN, or the internet through the router's forward ([The router](../network/router.md)). Inside the
 tunnel the server keeps one address. WireGuard knows a peer by its key, not by the address its
 packets come from, so the Mac's sessions outlive a move from one way to another.
 
@@ -41,7 +41,7 @@ ws server ubuntu apply --only wireguard
 ```
 
 The Mac's scripts fix the peer's name, `mac`, and the tunnel's addresses: `10.99.0.1` for the
-server and `10.99.0.2` for the Mac ([The Mac's tunnel](mac.md#the-macs-tunnel)). So where
+server and `10.99.0.2` for the Mac ([The Mac's tunnel](../../../../docs/mac.md#the-macs-tunnel)). So where
 `wireguard_peers` holds `mac`, the run stops unless `wireguard_address` is `10.99.0.1/24` and
 `mac`'s address `10.99.0.2`.
 
@@ -68,7 +68,7 @@ systemd-networkd isn't running, as on Ubuntu Desktop, whose NetworkManager does 
 ufw lets in UDP port 51820 on every interface, and a run removes the rule of a port it let in
 before. Inside the tunnel ufw takes `wg0` as any other interface: it lets in SSH and ping. It
 forwards from `wg0` only ping, as from any interface, and what the `ikeward` role lets through to
-its VPN ([Forwarding](ikeward.md#forwarding)).
+its VPN ([Forwarding](../ikeward/README.md#forwarding)).
 
 Docker forwards its containers' packets ahead of ufw, and gives them the server's address on the
 way out. Through `wg0` or the cable, the Mac would take them for the server's own, and any container
@@ -84,4 +84,4 @@ without them, and `systemctl status wireguard-docker-user` shows why.
 The drops take a change of `network_direct_link_interface` as the `wireguard` role next runs, so run
 `ws server ubuntu apply --only network,wireguard` after one. Unless `security_outbound` is false,
 they are a second layer: the `security` role's table drops what the containers start through `wg0`
-or the cable too ([Outbound](security.md#outbound)).
+or the cable too ([Outbound](../security/README.md#outbound)).

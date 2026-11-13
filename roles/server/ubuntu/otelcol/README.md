@@ -55,14 +55,14 @@ enables it again once the role's config is in place.
 ## claude's metrics elsewhere
 
 `~/.secrets/env` is the file of secrets the shell reads, which the `shell` role writes from
-the secrets file's `[env]` table ([Secrets](shell.md#secrets)). The role reads it as it plans. Where it sets
+the secrets file's `[env]` table ([Secrets](../shell/README.md#secrets)). The role reads it as it plans. Where it sets
 `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT`, the collector sends claude's metrics there as well, over
 OTLP/gRPC. The value is a URL, `http://HOST:PORT` for gRPC without TLS or `https://HOST:PORT`. The
 role refuses any other. It refuses one that leads back to the collector's own receiver on
 `127.0.0.1:4317` too, which would send the metrics around without end. Unless
 `security_outbound` is false, the host can't be on the LAN, the cable, `wg0` or another private
 network around the server. The `security` role's table drops the collector's connection there
-([Outbound](security.md#outbound)). Only the metrics whose resource has `service.name`
+([Outbound](../security/README.md#outbound)). Only the metrics whose resource has `service.name`
 `claude-code` go, as claude sends them, without the host's name. claude's traces and logs, with
 the prompts' and responses' text and the tools' details and output, stay in SigNoz.
 

@@ -29,10 +29,10 @@ finds tmux. The next run updates it, after a change to that `PATH` or to the com
 ## Telemetry
 
 claude sends its metrics, logs and traces to the host's collector on `127.0.0.1:4317`
-([otelcol](otelcol.md)), with what it leaves out by default. The role sets the keys for that in the
+([otelcol](../otelcol/README.md)), with what it leaves out by default. The role sets the keys for that in the
 `env` of `~/.claude/settings.json` and removes each signal's own endpoint and protocol. It removes
 `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE`, so that claude sends its counters as deltas,
-its default, which the Claude dashboard counts ([signoz](signoz.md#the-dashboards)). It leaves every
+its default, which the Claude dashboard counts ([signoz](../signoz/README.md#the-dashboards)). It leaves every
 other key untouched, and writes the file only where `env` changes. The role edits the file as an
 ordered walk of its JSON, so that every other key keeps its place. It writes the file as claude
 does: two spaces, a member a line, a new key at the end. `--check` lists the keys it would set or
@@ -50,15 +50,15 @@ Four of the keys add content to the logs and traces:
   text a Write wrote go too. claude cuts each at 60 KB.
 
 So SigNoz holds what each session was asked and answered, and what it ran and read, for 90 days
-([Retention](signoz.md#retention)). That includes a secret a command printed or a file held. The
+([Retention](../signoz/README.md#retention)). That includes a secret a command printed or a file held. The
 logs and traces stay on the server: the collector sends only claude's metrics elsewhere. SigNoz's
 UI listens on loopback alone. A copy of `claude_telemetry_env` without these keys stops the role
 setting them, and leaves them in `env` until removed by hand.
 
 The role replaces an endpoint already in `env`. To keep sending claude's metrics to a remote
 collector, set its endpoint first as `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT` in the secrets file's `[env]`
-table ([Secrets](shell.md#secrets)). The `shell` role writes it to `~/.secrets/env`, which the `otelcol`
-role reads: [claude's metrics elsewhere](otelcol.md#claudes-metrics-elsewhere).
+table ([Secrets](../shell/README.md#secrets)). The `shell` role writes it to `~/.secrets/env`, which the `otelcol`
+role reads: [claude's metrics elsewhere](../otelcol/README.md#claudes-metrics-elsewhere).
 claude reads the keys as it starts, so a session started before keeps sending where it did. A key
 the role removes still applies where the shell exports it, as from `~/.secrets/env`.
 
@@ -78,8 +78,8 @@ claude_marketplaces:
 
 A source that names a private server stays out of this repository: its list goes in the machine's
 `host_vars.yml`. A private source needs the VPN of the `ikeward` role
-([A run](ikeward.md#a-run)), and a token for its host from the `shell` role
-([Git credentials](shell.md#git-credentials)). Both roles run before `claude`.
+([A run](../ikeward/README.md#a-run)), and a token for its host from the `shell` role
+([Git credentials](../shell/README.md#git-credentials)). Both roles run before `claude`.
 The sessions' unit needs a booted systemd, so in CI's container the restore step skips.
 
 The role adds each name that `claude plugin marketplace list` lacks, so the next run finds it and

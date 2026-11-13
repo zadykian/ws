@@ -53,7 +53,7 @@ files script, here on `sh`'s standard input. The secrets form, now first, reads 
 With no terminal, or under `--plain`, it refuses: `ws server ubuntu secrets` and `ws server ubuntu
 values set` edit the same files on lines. `e` and the `configure` button of `ws server ubuntu
 wizard`'s list open it, and the list comes back to a new scan ([The server's
-wizard](server-wizard.md)).
+wizard](../roles/server/ubuntu/stages/README.md)).
 
 ## After a save
 

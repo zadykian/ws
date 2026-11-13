@@ -2,7 +2,7 @@
 
 The `zed` role is Go steps in `roles/server/ubuntu/zed`. Zed itself runs on the Mac, which opens ws
 over ssh. The role writes the settings that Zed's server on ws reads, and raises the open-file limit
-that the server needs. The Mac's side is [Zed on the Mac](mac-zed.md).
+that the server needs. The Mac's side is [Zed on the Mac](../../../../docs/mac-zed.md).
 
 `~/.config/zed/settings.json` is owned by `ws_user`. A run replaces a change made to it by hand
 and keeps the old file beside the new one. The key
@@ -41,15 +41,15 @@ to ws's terminal wrapper. A program set in the Mac's
 - Zed's own JSON, CSS and YAML servers, and Prettier, which Zed fetches at their latest. The
   pinned `vscode-langservers-extracted` also ships the JSON and CSS servers. Linking their bins
   onto PATH would serve Zed's adapters, which ws does not do.
-- Zed's Node is not on the list. It uses ws's Node 24 from PATH ([devtools](devtools.md)), and
+- Zed's Node is not on the list. It uses ws's Node 24 from PATH ([devtools](../devtools/README.md)), and
   downloads its own only where it finds no Node 22 or newer.
 
 A pin of Zed's server gains nothing, so `upload_binary_over_ssh` stays off. Zed replaces and cleans
 the server, and the Mac's Zed updates itself about twice a week. A pin would need the Mac's Zed
 pinned too, with auto-update off and a checked download in the Mac's steps, and a commit as often.
-ws has the internet ([outbound](security.md#outbound)), so the download works.
+ws has the internet ([outbound](../security/README.md#outbound)), so the download works.
 
-The gopls, Delve and Roslyn that ws pins are not on the list ([devtools](devtools.md)). Nor are
+The gopls, Delve and Roslyn that ws pins are not on the list ([devtools](../devtools/README.md)). Nor are
 postgres-language-server and docker-language-server, which `devtools` checks against a SHA-256.
 Nor are the npm servers, which `devtools` checks against the sha512 `integrity` of a lockfile.
 
@@ -72,7 +72,7 @@ tasks for projects and solutions. `.sln` opens as plain text.
 
 For Go, the shim and `dlv` run on ws, and the Mac forwards the debug port over ssh. The sshd
 drop-in restricts no forwarding, and the outbound table accepts loopback
-([security](security.md#outbound)). `ws_user` is `zadykian` by default, so Yama's `ptrace_scope` stops an
+([security](../security/README.md#outbound)). `ws_user` is `zadykian` by default, so Yama's `ptrace_scope` stops an
 attach to a process that is not its child. Launching under `dlv` works.
 
 Zed has no C# debugger (csharp#12), no Razor (csharp#41) and no C# test runnables.
@@ -86,9 +86,9 @@ There is no msbuild-lsp yet. Its v0.7.0 of 2026-07-24 is the latest release, and
 ## Secrets in ssh's arguments
 
 `~/.bashrc` sources `~/.secrets/env` above its interactive guard, so that non-interactive shells
-get the values too ([shell](shell.md)). Zed captures each project's environment with the login
+get the values too ([shell](../shell/README.md)). Zed captures each project's environment with the login
 shell, `bash -l -i -c 'cd DIR; zed --printenv'`. So the capture holds every value of the
-`[env]` table of the secrets file ([Secrets](shell.md#secrets)).
+`[env]` table of the secrets file ([Secrets](../shell/README.md#secrets)).
 
 A Zed terminal or task on the Mac then goes out as `ssh -t ws "cd DIR && exec env 'NAME=VALUE' ...
 PROGRAM"`. The values are arguments of the Mac's `ssh`, visible to `ps` there while the terminal
@@ -142,11 +142,11 @@ tab leaves its session for the next tab, and `exit` ends it. `tmux -L zed ls` li
   scrollback.
 - tmux has no prefix, so Fresh gets Ctrl+B, and no status line. `/usr/local/lib/ws/zed/tmux.conf`
   has the rest.
-- tmux passes on a title that a program sets, for the toolbar of [the Mac's settings](mac-zed.md).
+- tmux passes on a title that a program sets, for the toolbar of [the Mac's settings](../../../../docs/mac-zed.md).
   Where none is set, the title is empty, not tmux's default, the host's name.
 - Without tmux on the `PATH` the tab runs a login shell.
 - A task ignores the wrapper.
-- Keep `terminal.detect_venv` `off`, as [the Mac's settings](mac-zed.md) do.
+- Keep `terminal.detect_venv` `off`, as [the Mac's settings](../../../../docs/mac-zed.md) do.
 
 ## When the connection drops
 
@@ -203,7 +203,7 @@ clock.
 | An agent's read or grep never ends (zed#65338) | Stop the turn and send it again |
 | New tabs start new sessions while old tmux clients stay attached | `tmux -L zed detach-client -s =NAME`, then a new tab |
 | The Disconnected overlay | Reconnect, at the cost of a new daemon |
-| `ssh ws` fails at once for an hour | fail2ban banned the tunnel address: [lift the ban](mac.md#sshs-hosts) |
+| `ssh ws` fails at once for an hour | fail2ban banned the tunnel address: [lift the ban](../../../../docs/mac.md#sshs-hosts) |
 
 Neither command has a default key. Release builds register `remote_debug::SimulateDisconnect`,
 `SimulateTimeout` and `SimulateTimeoutExhausted` in a remote project's workspace. They reproduce
@@ -221,7 +221,7 @@ each path above except the stale proxy.
 
 ## Limits
 
-A project's own `.zed/settings.json` is in [zed-projects](zed-projects.md).
+A project's own `.zed/settings.json` is in [zed-projects](projects.md).
 
 - The project panel may not refresh when files change on ws (zed#29242).
 - There is no `zed FILE` from ws's terminal (zed#56057), and files outside the project cannot be

@@ -7,7 +7,7 @@ JetBrains Dark.
 ## The install
 
 `Lazygit` installs the package `lazygit`, 0.57.0 in the universe of Ubuntu 26.04, as the
-[tmux role](tmux.md) installs tmux. apt checks it, and updates it with the archive. It installs
+[tmux role](../tmux/README.md) installs tmux. apt checks it, and updates it with the archive. It installs
 `git-delta`, delta 0.18.2, from the universe too, for lazygit's diffs.
 
 The role needs no other role and no secret. No step needs a booted systemd, so it runs whole in
@@ -33,7 +33,7 @@ the package's `/usr/bin/lazygit` on every `PATH` of Ubuntu's.
 Where the title shows:
 
 - Ghostty's tab, through `ssh ws` with no tmux on ws.
-- Zed's terminal toolbar, as [Zed's tmux](zed.md#terminals-in-tmux) passes it on. Zed's tab takes
+- Zed's terminal toolbar, as [Zed's tmux](../zed/README.md#terminals-in-tmux) passes it on. Zed's tab takes
   no title.
 - Not past cld's tmux, which leaves `set-titles` off. A status line that names `#{pane_title}`, as
   tmux's default does, shows it.
@@ -55,7 +55,7 @@ run replaces a change made to it by hand, and keeps the old file beside the new 
   default. So the config empties the prefix and leaves `w` unbound.
 - `overrideGpg` signs a commit in place. Without it, lazygit leaves its screen for each commit,
   amend or rebase, as git signs each one, and ws's key asks for no passphrase.
-- `e` and lazygit's other edits open Fresh, through [its wrapper](fresh.md#the-wrapper), in
+- `e` and lazygit's other edits open Fresh, through [its wrapper](../fresh/README.md#the-wrapper), in
   lazygit's terminal, at the line where lazygit names one. lazygit comes back when Fresh ends, with
   no Enter to press, unless the command failed.
 - A copy goes to the Mac's clipboard by OSC 52, which Ghostty's `clipboard-write` allows. In tmux,
@@ -71,14 +71,14 @@ run replaces a change made to it by hand, and keeps the old file beside the new 
 
 lazygit loads a key it lacks, or a value of another kind, with no error. So
 `TestTheConfigMeetsLazygitsSchema` holds the config to the schema of 0.57.0, which `make gotest`
-downloads ([The gates](gates.md)).
+downloads ([The gates](../../../../docs/gates.md)).
 
 ## The theme
 
-The theme is JetBrains Dark, which Zed's `theme.dark` and [Fresh's theme](fresh.md#the-theme)
+The theme is JetBrains Dark, which Zed's `theme.dark` and [Fresh's theme](../fresh/README.md#the-theme)
 name. Each colour is Zed's, from the same commit of `artemevsevev/zed-theme-jetbrains`, and the Zed
 key it comes from is beside it in `config.yml`. A change of theme goes to all three
-([editors](../.claude/rules/editors.md)).
+([editors](../../../../.claude/rules/editors.md)).
 
 - lazygit's 12 theme keys each take one colour, as `#rrggbb`.
 - No alpha: the search border takes Zed's match colour opaque.

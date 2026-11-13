@@ -22,8 +22,8 @@ What each document holds. How to write them is in the `writing` skill and [writi
   wizard. [mac-targets.md](../../docs/mac-targets.md) is the wizard's targets, and
   [mac-ghostty.md](../../docs/mac-ghostty.md) its Ghostty and cld,
   [mac-zed.md](../../docs/mac-zed.md) its Zed, and [mac-secrets.md](../../docs/mac-secrets.md) the
-  secrets file. [server-wizard.md](../../docs/server-wizard.md) is `ws server ubuntu wizard`, the
-  stages run on ws. [router.md](../../docs/router.md) is the router's steps, taken once by hand.
+  secrets file. [server-wizard.md](../../roles/server/ubuntu/stages/README.md) is `ws server ubuntu wizard`, the
+  stages run on ws. [router.md](../../roles/server/ubuntu/network/router.md) is the router's steps, taken once by hand.
 - [tui.md](../../docs/tui.md) is the terminal UI: its modes, `--plain`, the layout and the keys.
   [tui-configure.md](../../docs/tui-configure.md) is its Configure screen, and
   [tui-wizard.md](../../docs/tui-wizard.md) the wizard's two lists.
@@ -33,8 +33,8 @@ What each document holds. How to write them is in the `writing` skill and [writi
   `.githooks` and Claude's hooks do.
   [checks-mac-cld.md](../../docs/checks-mac-cld.md) says what the job `mac-cld` checks.
   [checks-rootless.md](../../docs/checks-rootless.md) says what `rootless` checks.
-- [zed.md](../../docs/zed.md) is the page of the `zed` role: what runs on ws, Zed's downloads, trust
-  and the limits. [zed-projects.md](../../docs/zed-projects.md) is a project's `.zed/settings.json`,
+- [zed.md](../../roles/server/ubuntu/zed/README.md) is the page of the `zed` role: what runs on ws, Zed's downloads, trust
+  and the limits. [zed-projects.md](../../roles/server/ubuntu/zed/projects.md) is a project's `.zed/settings.json`,
   for SQL Server and Ansible.
 - [The dashboards](../../roles/server/ubuntu/signoz/internal/dashboards/dashboards/README.md) says what each dashboard reads,
   and how to refresh them from SigNoz.

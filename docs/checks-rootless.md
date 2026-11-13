@@ -24,7 +24,7 @@ The firewall must hold under the rootless daemon:
   is off.
 - Root reaches a system container's address and the user doesn't, though the user reaches a port
   published on loopback.
-- A link at `~/.bashrc` is refused ([Shell](shell.md)).
+- A link at `~/.bashrc` is refused ([Shell](../roles/server/ubuntu/shell/README.md)).
 
 Then ws's secrets. `ws server ubuntu secrets init` makes the credential, root's 600 in root's 700,
 and the file, root's 600. `set` takes a value on standard input, and `keys` names it but never
@@ -38,7 +38,7 @@ Last, `ws server ubuntu wizard`. With no terminal it stops where host_vars lacks
 `ws server ubuntu values set` changes host_vars starts one. The unit's ws is a stand-in that adds
 `--only shell` to apply, so that a full run, as its stamp has it, fits the job. The user's claude
 is a stand-in too, with a login
-([The server's wizard](server-wizard.md)).
+([The server's wizard](../roles/server/ubuntu/stages/README.md)).
 
 The runner has Azure's routes, so only CI proves them. `.github/actionlint.yaml` names the label
 `ubuntu-26.04`, as actionlint 1.7.12 doesn't know it yet. It goes once a release lists the label.

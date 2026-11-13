@@ -5,14 +5,14 @@ The `ikeward` role keeps the server on an IKEv2 VPN with
 makes. It lets the WireGuard peers it names reach the VPN through the server too. Its steps are Go
 code in `roles/server/ubuntu/ikeward`. Without a profile, it does nothing, as in CI's container. Unless
 `security_outbound` is false, the `security` role keeps what the server and its containers start off
-the LAN, but what the network needs, such as DHCP and DNS. It leaves `ikeward0` open to them ([Outbound](security.md#outbound)).
+the LAN, but what the network needs, such as DHCP and DNS. It leaves `ikeward0` open to them ([Outbound](../security/README.md#outbound)).
 
 ## The profile
 
 ikeward reads two of the profile's files, `NAME.p12` and `NAME.sswan`, as
 [its page on the profile](https://github.com/zadykian/ikeward/blob/v0.3.0/docs/profile.md) says.
 They hold the client's key, so they stay out of this repository, age-encrypted, on the server. The
-role's variables go in the machine's `host_vars.yml` ([Values](../README.md#running-it-again)):
+role's variables go in the machine's `host_vars.yml` ([Values](../../../../README.md#running-it-again)):
 
 ```yaml
 ikeward_profile: /root/vpn/vpnclient    # vpnclient.p12 and vpnclient.sswan
@@ -22,9 +22,9 @@ ikeward_floors: [10.20.0.0/16]          # the ranges kept off the uplink from bo
 ikeward_forward_from: [10.99.0.2]       # the WireGuard peers that reach the VPN: the Mac
 ```
 
-Put the two files in [the secrets file](shell.md#the-secrets-file), whole. Add the `.p12`'s
-password, left out where it has none ([ws's secrets](mac-secrets.md#editing)). Run the wizard,
-which runs `--secrets` ([The run](mac-secrets.md#the-run)). Then remove the plain files, which hold
+Put the two files in [the secrets file](../shell/README.md#the-secrets-file), whole. Add the `.p12`'s
+password, left out where it has none ([ws's secrets](../../../../docs/mac-secrets.md#editing)). Run the wizard,
+which runs `--secrets` ([The run](../../../../docs/mac-secrets.md#the-run)). Then remove the plain files, which hold
 the client's key:
 
 ```sh
@@ -90,8 +90,8 @@ ufw's default rules forward pings from any interface. So with forwarding on, any
 the VPN, as ikeward's page on
 [NAT](https://github.com/zadykian/ikeward/blob/v0.3.0/docs/nat.md#networks-the-server-forwards)
 says. The Mac sends the VPN's networks and domains into the tunnel with `WS_TUNNEL_NETWORKS` and
-`WS_RESOLVERS` in [mac.conf](mac.md#macconf), or with a private repository's script
-([Routes and resolvers of another repository](mac.md#routes-and-resolvers-of-another-repository)).
+`WS_RESOLVERS` in [mac.conf](../../../../docs/mac.md#macconf), or with a private repository's script
+([Routes and resolvers of another repository](../../../../docs/mac.md#routes-and-resolvers-of-another-repository)).
 
 ## Dry runs
 
