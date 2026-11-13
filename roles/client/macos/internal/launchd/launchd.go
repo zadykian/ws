@@ -11,10 +11,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-// Label is the LaunchDaemon of the tunnel.
-const Label = "com.github.zadykian.ws-tunnel"
-
-// Dir holds the Mac's key, tunnel.conf and routes.d, which only root can write.
+// Dir holds the Mac's key and routes.d, and a directory of tunnel.conf per server, which only root can write.
 const Dir = "/etc/ws-tunnel"
 
 // Launchctl has launchd run or signal the daemon, through sudo.

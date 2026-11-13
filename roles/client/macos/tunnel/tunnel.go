@@ -183,12 +183,14 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 		parts = append(parts, file.WsDirs(t.M, t.Out, t.Home), t.pub())
 	}
 	if t.Conf.PublicKey != "" {
-		daemon := step.Item{Kind: step.ServiceItem, Name: launchd.Label, Want: "loaded", Found: "not loaded"}
-		if _, err := t.M.Run(ctx, "launchctl", "print", "system/"+launchd.Label); err == nil {
+		d := launchd.For(t.Server)
+		daemon := step.Item{Kind: step.ServiceItem, Name: d.Label, Want: "loaded", Found: "not loaded"}
+		if _, err := t.M.Run(ctx, "launchctl", "print", "system/"+d.Label); err == nil {
 			daemon.Found = daemon.Want
 		}
-		parts = append(parts, file.File{M: t.M, Path: launchd.Dir + "/tunnel.conf", Content: []byte(tunnelConf(t.Conf)), Mode: 0o600},
-			file.File{M: t.M, Path: tunnelPlist, Content: t.plist(), Mode: 0o644}, file.Fixed{daemon})
+		parts = append(parts, file.Dir{M: t.M, Path: d.Dir, Mode: 0o700},
+			file.File{M: t.M, Path: d.Conf, Content: []byte(tunnelConf(t.Conf)), Mode: 0o600},
+			file.File{M: t.M, Path: d.Plist, Content: t.plist(), Mode: 0o644}, file.Fixed{daemon})
 	}
 	return file.Gather(ctx, parts...)
 }
