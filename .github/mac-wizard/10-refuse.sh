@@ -4,6 +4,8 @@
 # an unknown one, and a removed op of the files script, run as root as on ws. -h prints the help.
 
 set -u
+# shellcheck source=.github/mac-conf.sh
+. "$(dirname "$0")/../mac-conf.sh"
 
 wsbin=$HOME/.local/bin/ws
 lock=${TMPDIR:-/tmp}
@@ -38,10 +40,10 @@ mkdir "$lock"
 refused "another run holds $lock" "$wsbin" client macos wizard --check
 [ -d "$lock" ] || error 'a refused run removed the lock it found'
 rmdir "$lock"
-echo WS_HOOK=example/Ws >"$RUNNER_TEMP/refuse.conf"
+echo WS_HOOK=example/Ws | conf_write "$RUNNER_TEMP/confs/refuse/mac.conf"
 refused 'line 1: unknown key WS_HOOK' \
-    env WS_CONF="$RUNNER_TEMP/refuse.conf" "$wsbin" client macos wizard --check
-rm "$RUNNER_TEMP/refuse.conf"
+    env WS_CONF="$RUNNER_TEMP/confs/refuse/mac.conf" "$wsbin" client macos wizard --check
+rm -r "$RUNNER_TEMP/confs/refuse"
 refused "unknown op 'stage'" \
     sudo sh "$HOME/repository/ws/roles/server/ubuntu/session/wizard-remote-files.sh" stage
 exit "$fail"
