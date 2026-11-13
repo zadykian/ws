@@ -21,7 +21,7 @@ import (
 func macSide(p enginecli.Env, server *string) engine.Side {
 	return engine.Side{
 		Stages: func(e engine.WizardEffects, o engine.WizardOptions) []step.Step {
-			return wizardStages(effectsOf(p, e), o)
+			return wizardStages(effectsOf(p, e), o, *server)
 		},
 		Pid: p.Pid, Change: macChange, Local: stage.Mac, NewSudo: func() any { return &host.Sudo{} }, Nested: nestedRows, WsRun: ubuntucli.WsRunSide(p),
 		Read: func(side string, sudo any) (tui.StateReader, func(context.Context)) {

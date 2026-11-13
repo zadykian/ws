@@ -7,6 +7,7 @@ import (
 	"github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"slices"
 	"strings"
 	"testing"
 
@@ -51,7 +52,9 @@ func TestWizardCommandRuns(t *testing.T) {
 		!strings.Contains(stderr, "ws client macos wizard: Answers: no terminal to ask WS_TARGET: set WS_TARGET") {
 		t.Errorf("status = %d, stderr = %q; want the refusal to ask with no terminal", status, stderr)
 	}
-	if calls := p.Machine.(*effecttest.Machine).Calls; len(calls) == 0 || calls[0] != "mkdir /t/ws-wizard.lock 700" {
+	// The server is named first, by a read of the directory of servers alone.
+	calls := slices.DeleteFunc(slices.Clone(p.Machine.(*effecttest.Machine).Calls), func(c string) bool { return strings.HasPrefix(c, "readdir ") })
+	if len(calls) == 0 || calls[0] != "mkdir /t/ws-wizard.lock 700" {
 		t.Errorf("calls = %v; want the lock first", calls)
 	}
 }
@@ -141,7 +144,7 @@ func TestWizardUpdateCheckInstallsNothing(t *testing.T) {
 func TestWizardStagesStateTheirSides(t *testing.T) {
 	var out strings.Builder
 	stages := wizardStages(wizardEffects{p: fakeProcess(), prog: "ws client macos wizard", text: &out, hand: &wizard.Hand{},
-		sudo: &host.Sudo{}}, engine.WizardOptions{})
+		sudo: &host.Sudo{}}, engine.WizardOptions{}, "ws")
 	onWs := 0
 	for _, s := range stages {
 		m, ok := wizard.SideOf(s)
