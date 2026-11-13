@@ -38,6 +38,24 @@ func TestRunSetsUpTheUtun(t *testing.T) {
 	}
 }
 
+func TestRunSetsUpTheUtunAtTheSlot(t *testing.T) {
+	r := newRig("WS_SLOT=1\n")
+	if err := r.play(); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		"ifconfig utun4 inet 10.99.1.2/32 10.99.1.2 alias",
+		"route -q -n add -inet 10.99.1.1/32 -interface utun4",
+	} {
+		if !slices.Contains(r.m.runs, want) {
+			t.Errorf("commands = %q, want %q", r.m.runs, want)
+		}
+	}
+	if got := r.lines()[0]; got != "started on utun4, 10.99.1.2" {
+		t.Errorf("log = %q", r.lines())
+	}
+}
+
 func TestRunFailsToStart(t *testing.T) {
 	tests := []struct {
 		name  string

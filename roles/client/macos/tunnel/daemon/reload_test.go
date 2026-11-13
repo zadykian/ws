@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/uapi"
 	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
+	"github.com/zadykian/ws/roles/internal/slot"
 )
 
 func TestReloadChangesTheRoutesInPlace(t *testing.T) {
@@ -19,7 +20,7 @@ func TestReloadChangesTheRoutesInPlace(t *testing.T) {
 	if got := added(r); len(got) != 1 {
 		t.Errorf("endpoints = %q, want the session kept", got)
 	}
-	want, _ := uapi.SetAllowed(peerKey, r.allowed.IPs())
+	want, _ := uapi.SetAllowed(peerKey, r.allowed.IPs(slot.Slot(0).Server()))
 	if got := r.dev.sets[len(r.dev.sets)-1]; got != want || !strings.Contains(want, "172.16.0.0/12") {
 		t.Errorf("last set = %q, want AllowedIPs with the office %q", got, want)
 	}
@@ -83,5 +84,17 @@ func TestReloadRoutesTheNetworkOfAFailedTier(t *testing.T) {
 	r.reload(ctx)
 	if got := r.dev.sets[len(r.dev.sets)-1]; !strings.Contains(got, "192.168.1.0/24") {
 		t.Errorf("last set = %q, want AllowedIPs with the LAN, as the endpoint in use is the name", got)
+	}
+}
+
+func TestReloadStopsWhereTheSlotMoves(t *testing.T) {
+	r := onTheCable(t)
+	r.m.Files[dir+"/tunnel.conf"] = []byte("WS_PUBLIC_KEY=" + peerKey + "\nWS_SLOT=1\n" + confAll)
+	if !r.reload(context.Background()) {
+		t.Fatal("reload kept the daemon running, want a stop for launchd to restart it")
+	}
+	want := "tunnel.conf moves the tunnel to 10.99.1.0/24; stops, for launchd to start it there"
+	if got := r.lines()[len(r.lines())-1]; got != want {
+		t.Errorf("log = %q, want %q", got, want)
 	}
 }
