@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/form"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/internal/wizard"
 )
@@ -72,7 +73,7 @@ func confSheet(form wizard.ConfForm) tui.Sheet {
 }
 
 // fieldSpecs is a form's fields on the screen. A key that takes one of a few is a choice.
-func fieldSpecs(fields []wizard.Field) []tui.FieldSpec {
+func fieldSpecs(fields []form.Field) []tui.FieldSpec {
 	specs := make([]tui.FieldSpec, 0, len(fields))
 	for _, f := range fields {
 		spec := tui.FieldSpec{Label: f.Key, Help: f.Text, Value: f.Value, Default: f.Default,

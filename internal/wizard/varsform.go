@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/zadykian/ws/engine/core/form"
 	"github.com/zadykian/ws/engine/core/remote"
 	"maps"
 	"slices"
@@ -35,12 +36,12 @@ func (f VarsForm) Load(ctx context.Context) (VarsForm, error) {
 
 // Fields is each key with what it reads as. A field holds no default, as an empty one takes the key
 // out of the file, and its help names the default in place of a list's whole length.
-func (f VarsForm) Fields() []Field {
+func (f VarsForm) Fields() []form.Field {
 	defaults := values.Default()
 	keys := values.Keys()
-	fields := make([]Field, 0, len(keys))
+	fields := make([]form.Field, 0, len(keys))
 	for _, k := range keys {
-		field := Field{Key: k.Name, Text: k.Kind.String(), Value: f.file.Text(k), Valid: k.Check}
+		field := form.Field{Key: k.Name, Text: k.Kind.String(), Value: f.file.Text(k), Valid: k.Check}
 		if value := defaults.Text(k); value != "" && k.Kind != values.List {
 			field.Text += ", default " + value
 		}

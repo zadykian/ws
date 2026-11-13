@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/form"
 )
 
 // farVars returns the form of a ws whose file is file.
@@ -19,9 +20,9 @@ func farVars(file string) (VarsForm, *effecttest.Machine) {
 }
 
 // varsField returns the field of that key.
-func varsField(t *testing.T, f VarsForm, key string) Field {
+func varsField(t *testing.T, f VarsForm, key string) form.Field {
 	fields := f.Fields()
-	at := slices.IndexFunc(fields, func(field Field) bool { return field.Key == key })
+	at := slices.IndexFunc(fields, func(field form.Field) bool { return field.Key == key })
 	if at < 0 {
 		t.Fatalf("no field %s", key)
 	}

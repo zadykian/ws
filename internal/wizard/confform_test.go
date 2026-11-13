@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/form"
 )
 
 // formOf returns the form of mac.conf's text.
@@ -40,7 +41,7 @@ func TestConfFormLoadRefusesABadLine(t *testing.T) {
 }
 
 // keysOf lists the keys that show.
-func keysOf(fields []Field) []string {
+func keysOf(fields []form.Field) []string {
 	keys := make([]string, 0, len(fields))
 	for _, f := range fields {
 		keys = append(keys, f.Key)
@@ -63,9 +64,9 @@ func TestConfFormShowsTheKeysOfATarget(t *testing.T) {
 }
 
 // fieldOf finds the key's field.
-func fieldOf(t *testing.T, fields []Field, key string) Field {
+func fieldOf(t *testing.T, fields []form.Field, key string) form.Field {
 	t.Helper()
-	at := slices.IndexFunc(fields, func(f Field) bool { return f.Key == key })
+	at := slices.IndexFunc(fields, func(f form.Field) bool { return f.Key == key })
 	if at < 0 {
 		t.Fatalf("no field of %s in %v", key, keysOf(fields))
 	}

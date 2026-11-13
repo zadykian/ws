@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/form"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
@@ -19,17 +20,6 @@ var targets = []string{"lan", "cloud", "mac-vm"}
 // wayKeys are the keys that an edit can hide. conf refuses one past the edit that hid it, as
 // WS_LAN on a cloud VM, and a key that doesn't show has no field to clear it by.
 var wayKeys = []string{"WS_LAN", "WS_LAN_ADDRESS", "WS_REMOTE", "WS_REMOTE_PORT", "WS_GIT_EMAIL"}
-
-// Field is a key of mac.conf as the Configure screen shows it.
-type Field struct {
-	Key, Text string
-	// Value is what the file holds, and Default what an empty field gives.
-	Value, Default string
-	// Options are the values of a key that takes one of a few, and nil for a line.
-	Options []string
-	// Valid says why mac.conf can't take a value. Valid is pure, as it runs on each edit.
-	Valid func(string) error
-}
 
 // ConfForm is mac.conf as a form: the keys that the Answers stage would ask where the file lacked
 // them all, as the edits so far lead it. A key that the stage never asks stays the file's.
@@ -94,11 +84,11 @@ func fieldValue(q question, raw string) string {
 }
 
 // Fields returns the keys that show under the edits, in the order that the stage asks them.
-func (f ConfForm) Fields(edits map[string]string) []Field {
+func (f ConfForm) Fields(edits map[string]string) []form.Field {
 	asked, vals := f.walk(edits)
-	fields := make([]Field, 0, len(asked))
+	fields := make([]form.Field, 0, len(asked))
 	for _, q := range asked {
-		field := Field{Key: q.key, Text: q.text, Value: f.file.Value(q.key), Valid: func(raw string) error {
+		field := form.Field{Key: q.key, Text: q.text, Value: f.file.Value(q.key), Valid: func(raw string) error {
 			if why := q.refusal(fieldValue(q, raw), vals["WS_LAN"]); why != "" {
 				return errors.New(why)
 			}
