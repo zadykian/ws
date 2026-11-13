@@ -16,25 +16,25 @@ import (
 // newMacSecretsCmd returns ws client macos secrets, which edits ws's secrets file. Each command
 // runs its own of ws server ubuntu secrets on ws as root, over the wizard's ssh, with a value on
 // ssh's stdin.
-func newMacSecretsCmd(p enginecli.Env) *cobra.Command {
+func newMacSecretsCmd(p enginecli.Env, server *string) *cobra.Command {
 	c := enginecli.Group("secrets", "edit ws's secrets file, over ssh", ubuntucli.Secrets(p, nil)...)
 	for _, sub := range c.Commands() {
 		if sub.Name() == "init" {
 			sub.Short, sub.Long = "make ws's age identity and an empty secrets file on ws", ""
 		}
 	}
-	forward(c, p)
+	forward(c, p, server)
 	return c
 }
 
 // forward has each command under c, but a group, run its own on ws.
-func forward(c *cobra.Command, p enginecli.Env) {
+func forward(c *cobra.Command, p enginecli.Env, server *string) {
 	for _, sub := range c.Commands() {
 		if sub.HasSubCommands() {
-			forward(sub, p)
+			forward(sub, p, server)
 			continue
 		}
-		sub.RunE = func(c *cobra.Command, args []string) error { return runFar(c, p, args) }
+		sub.RunE = func(c *cobra.Command, args []string) error { return runFar(c, p, server, args) }
 	}
 }
 
@@ -44,7 +44,7 @@ func forward(c *cobra.Command, p enginecli.Env) {
 // alone. At a terminal, it reaches root on ws before it asks a value, so that a value is asked only
 // where it can go. Else it reads stdin first, and sudo's password, where ws's sudo asks one, comes
 // from /dev/tty.
-func runFar(c *cobra.Command, p enginecli.Env, args []string) error {
+func runFar(c *cobra.Command, p enginecli.Env, server *string, args []string) error {
 	if why := wizardRefusal(p); why != "" {
 		return errors.New(why)
 	}
@@ -67,7 +67,11 @@ func runFar(c *cobra.Command, p enginecli.Env, args []string) error {
 			}
 		}
 	}
-	r := &varsReach{p: p}
+	name, err := pickServer(p, server)
+	if err != nil {
+		return err
+	}
+	r := &varsReach{p: p, server: name}
 	defer r.close(c.Context())
 	ws, err := r.reachOn(c.Context(), p.Machine, talk)
 	if err != nil {
