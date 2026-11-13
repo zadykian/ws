@@ -43,18 +43,22 @@ func TestGhosttyFailedInstallIsAWarningAndStopsTheRun(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	s := ghosttyStep(m, out)
 	delete(m.Dirs, "/h/Applications/Ghostty.app")
+	delete(m.Files, "/h/Library/Fonts/JetBrainsMonoNerdFontMono-Regular.ttf")
 	m.Results["brew list --cask ghostty"] = effecttest.Result{Err: errors.New("no")}
 	m.Results["brew list --cask font-jetbrains-mono-nerd-font"] = effecttest.Result{Err: errors.New("no")}
 	m.Results["brew install --cask ghostty"] = effecttest.Result{Err: errors.New("down")}
 	p, err := s.Plan(context.Background())
-	if err != nil || len(p.Changes) != 4 {
-		t.Fatalf("Plan = %v, %v; want the install and the files", p.Changes, err)
+	if err != nil || len(p.Changes) != 5 {
+		t.Fatalf("Plan = %v, %v; want the installs and the files", p.Changes, err)
 	}
 	if err := s.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
 	if _, ok := m.Files[ghosttyDir+"/ws.ghostty"]; ok || !slices.Contains(out.Lines, "warn: brew install --cask ghostty failed") {
 		t.Errorf("ws.ghostty written %v, out %q; want a warning and the files held", ok, out.Lines)
+	}
+	if !slices.Contains(m.Calls, "run brew install --cask font-jetbrains-mono-nerd-font") {
+		t.Errorf("calls %v; want the font's cask installed after the app's failure", m.Calls)
 	}
 	if p, err = s.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
 		t.Errorf("second Plan = %v, %v; want none", p.Changes, err)
