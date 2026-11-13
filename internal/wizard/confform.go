@@ -55,7 +55,7 @@ func (f ConfForm) walk(edits map[string]string) ([]conf.Question, map[string]str
 			asked = append(asked, q)
 			return f.wanted(q, edits), nil
 		},
-		Role: (&Answers{Defaults: f.Defaults}).role,
+		Role: func(name string) string { return conf.Default(f.Defaults, name) },
 	}
 	_ = s.Run() // ask returns no error, which is what would stop the walk.
 	return asked, s.Vals

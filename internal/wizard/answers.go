@@ -6,7 +6,6 @@ import (
 	"fmt"
 	guided "github.com/zadykian/ws/engine/core/wizard"
 	"path"
-	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
@@ -56,20 +55,10 @@ func (a *Answers) file() conf.File {
 // at.
 func (a *Answers) load() (string, conf.Conf, error) { return a.file().Load() }
 
-// role gives the shell role's default of that name, as the role's file has it, or nothing.
-func (a *Answers) role(name string) string {
-	for _, l := range strings.Split(string(a.Defaults), "\n") {
-		if v, ok := strings.CutPrefix(l, name+":"); ok {
-			return strings.TrimLeft(v, " ")
-		}
-	}
-	return ""
-}
-
 // sequence returns the walk over the keys, which gets the value of a key that mac.conf lacks from ask.
 func (a *Answers) sequence(c conf.Conf, text string, ask func(conf.Question) (string, error)) *conf.Sequence {
 	vals := map[string]string{"WS_TARGET": c.Target, "WS_LAN": c.LAN, "WS_GIT_NAME": c.GitName, "WS_REMOTE": c.Remote}
-	return &conf.Sequence{Vals: vals, Lacks: func(key string) bool { return !conf.HasLine(text, key) }, Ask: ask, Role: a.role}
+	return &conf.Sequence{Vals: vals, Lacks: func(key string) bool { return !conf.HasLine(text, key) }, Ask: ask, Role: func(name string) string { return conf.Default(a.Defaults, name) }}
 }
 
 // Plan finds the first key that mac.conf lacks, or that mac.conf with all its keys is refused.

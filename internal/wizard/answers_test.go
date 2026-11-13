@@ -30,13 +30,6 @@ func TestAnswersLoadRefusesABadLine(t *testing.T) {
 	}
 }
 
-func TestAnswersRole(t *testing.T) {
-	a, _ := newAnswers(t, "")
-	if got := a.role("shell_git_email"); got != "ada@example.com" || a.role("shell_other") != "" {
-		t.Errorf("role = %q", got)
-	}
-}
-
 func TestAnswersPlan(t *testing.T) {
 	const all = "WS_TARGET=lan\nWS_LAN=\nWS_REMOTE=\nWS_GIT_NAME=\nWS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
 	for name, tc := range map[string]struct{ text, want string }{
