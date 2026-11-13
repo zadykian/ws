@@ -19,9 +19,9 @@ import (
 // applies. It stops as the run does, and leaves out the steps that left names.
 func wizardSetup(e wizardEffects, left func(parent, name string) bool, file string) *tools.Setup {
 	p := e.p
-	s := &tools.Setup{Conf: file, M: p.machine}
+	s := &tools.Setup{Conf: file, M: p.Machine}
 	s.Run = func(ctx context.Context, check bool) (bool, error) {
-		text, err := p.machine.ReadFile(file)
+		text, err := p.Machine.ReadFile(file)
 		if err != nil {
 			return false, err
 		}
@@ -33,7 +33,7 @@ func wizardSetup(e wizardEffects, left func(parent, name string) bool, file stri
 		if c.PublicKey != "" {
 			w = e.text
 		}
-		return macOf(p, c, p.machine, e.out, w).Run(ctx, macos.Options{Options: step.Options{
+		return macOf(p, c, p.Machine, e.out, w).Run(ctx, macos.Options{Options: step.Options{
 			Observer: e.obs, Check: check, Parent: s.Name(), Stop: e.stop, LeftOut: left,
 		}})
 	}

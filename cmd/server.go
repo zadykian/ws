@@ -11,6 +11,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine"
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/core/effect/units"
@@ -58,13 +60,13 @@ func serverRefusal(euid int, osRelease []byte) string {
 
 // newServerCmd returns ws server, the group of the server's systems. It builds everywhere, so that
 // the tests run anywhere. Only its entry in the groups is built for Linux alone.
-func newServerCmd(p process) *cobra.Command {
-	return group("server", "the server's systems", newUbuntuCmd(p))
+func newServerCmd(p cli.Env) *cobra.Command {
+	return cli.Group("server", "the server's systems", newUbuntuCmd(p))
 }
 
 // newUbuntuCmd returns ws server ubuntu, the commands that set up an Ubuntu server.
-func newUbuntuCmd(p process) *cobra.Command {
-	return group("ubuntu", "the commands for an Ubuntu server", newApplyCmd(p), newStateCmd(p), newFansCmd(p),
+func newUbuntuCmd(p cli.Env) *cobra.Command {
+	return cli.Group("ubuntu", "the commands for an Ubuntu server", newApplyCmd(p), newStateCmd(p), newFansCmd(p),
 		newValuesCmd(p), newServerSecretsCmd(p), newServerWizardCmd(p), newServerConfigureCmd(p))
 }
 
@@ -76,7 +78,7 @@ type applyOptions struct {
 }
 
 // newApplyCmd returns ws server ubuntu apply.
-func newApplyCmd(p process) *cobra.Command {
+func newApplyCmd(p cli.Env) *cobra.Command {
 	var opts applyOptions
 	var asJSON bool
 	c := &cobra.Command{
@@ -107,49 +109,49 @@ type serverRun struct {
 	list   []role.Role
 	values values.Values
 	term   *effect.Terminal
-	out    progOut
+	out    engine.Lines
 }
 
 // prepareServer checks where the command runs, then loads the values and the secrets that the
 // roles read. The steps of --only follow the values, so they are checked last.
-func prepareServer(c *cobra.Command, p process, opts applyOptions) (serverRun, error) {
+func prepareServer(c *cobra.Command, p cli.Env, opts applyOptions) (serverRun, error) {
 	if c.Flags().Changed("only") && len(opts.Only) == 0 {
-		return serverRun{}, usageError{errors.New("--only names no role")}
+		return serverRun{}, engine.UsageError{Err: errors.New("--only names no role")}
 	}
 	_, err := role.Select(ubuntu.Roles(values.Values{}, secrets.Secrets{}), opts.Only)
 	if err != nil {
-		return serverRun{}, usageError{err}
+		return serverRun{}, engine.UsageError{Err: err}
 	}
-	text, err := p.machine.ReadFile(osRelease)
+	text, err := p.Machine.ReadFile(osRelease)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return serverRun{}, err
 	}
-	if why := serverRefusal(p.euid, text); why != "" {
+	if why := serverRefusal(p.Euid, text); why != "" {
 		return serverRun{}, errors.New(why)
 	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
-	out := progOut{term, c.CommandPath(), map[string]bool{}}
-	v, err := values.Load(p.machine, serverVars)
+	out := linesOf(term, c.CommandPath())
+	v, err := values.Load(p.Machine, serverVars)
 	if err != nil {
 		return serverRun{}, err
 	}
 	// ws_home is known now: the machine's writes under it stay inside it.
-	if m, ok := p.machine.(local.OSMachine); ok {
+	if m, ok := p.Machine.(local.OSMachine); ok {
 		m.Confine = v.Home
-		p.machine = m
+		p.Machine = m
 	}
-	sec, err := loadSecrets(p.machine, opts.Secrets, p.getenv)
+	sec, err := loadSecrets(p.Machine, opts.Secrets, p.Getenv)
 	if err != nil {
 		return serverRun{}, err
 	}
-	cfg := role.Config{Options: opts.Options, M: p.machine, U: units.OSUnits{}, Out: out, Observer: out,
-		Prepare: prepareSteps(p.machine, out)}
+	cfg := role.Config{Options: opts.Options, M: p.Machine, U: units.OSUnits{}, Out: out, Observer: out,
+		Prepare: prepareSteps(p.Machine, out)}
 	r := serverRun{cfg: cfg, values: v, term: term, out: out}
 	if r.list, err = r.roles(sec); err != nil {
-		return serverRun{}, usageError{err}
+		return serverRun{}, engine.UsageError{Err: err}
 	}
 	if err := cfg.CheckSteps(r.list); err != nil {
-		return serverRun{}, usageError{err}
+		return serverRun{}, engine.UsageError{Err: err}
 	}
 	return r, nil
 }
@@ -160,7 +162,7 @@ func (r serverRun) roles(s secrets.Secrets) ([]role.Role, error) {
 }
 
 // runApply sets the server up as opts say.
-func runApply(c *cobra.Command, p process, opts applyOptions, asJSON bool) error {
+func runApply(c *cobra.Command, p cli.Env, opts applyOptions, asJSON bool) error {
 	r, err := prepareServer(c, p, opts)
 	if err != nil {
 		return err
@@ -171,13 +173,13 @@ func runApply(c *cobra.Command, p process, opts applyOptions, asJSON bool) error
 			return err
 		}
 	}
-	var events *jsonEvents
+	var events *engine.JSONEvents
 	if asJSON {
-		events = newJSONEvents(c.OutOrStdout(), r.out)
+		events = engine.NewJSONEvents(c.OutOrStdout(), r.out)
 		r.cfg.Observer = events
 	}
 	var changed []string
-	if drawsScreen(c, p) {
+	if engine.DrawsScreen(cli.CallOf(c, p)) {
 		changed, err = applyOnScreen(c, p, r.cfg, r.list)
 	} else {
 		changed, err = role.Run(c.Context(), r.cfg, r.list)
@@ -186,8 +188,8 @@ func runApply(c *cobra.Command, p process, opts applyOptions, asJSON bool) error
 	if err != nil {
 		return err
 	}
-	if events != nil && events.err != nil {
-		return events.err
+	if events != nil && events.Err() != nil {
+		return events.Err()
 	}
 	r.out.Say("%s", role.Summary(changed, r.cfg.Check))
 	return nil
@@ -211,10 +213,11 @@ func onScreen(cfg role.Config, b *tui.Bridge) role.Config {
 
 // applyOnScreen is role.Run under the run screen. cfg's steps name the screen's rows, and the run
 // builds them again on the screen's effects. The roles it returns are those of a run that ended.
-func applyOnScreen(c *cobra.Command, p process, cfg role.Config, list []role.Role) ([]string, error) {
+func applyOnScreen(c *cobra.Command, p cli.Env, cfg role.Config, list []role.Role) ([]string, error) {
 	var changed []string
-	p.machine = cfg.M // ws_home confines it.
-	err := drawRun(c, p, runTitle(c, cfg.Check), serverGroups(cfg, list), func(ctx context.Context, b *tui.Bridge) error {
+	p.Machine = cfg.M // ws_home confines it.
+	call := cli.CallOf(c, p)
+	err := engine.DrawRun(c.Context(), call, engine.RunTitle(call, cfg.Check), serverGroups(cfg, list), func(ctx context.Context, b *tui.Bridge) error {
 		run := onScreen(cfg, b)
 		var err error
 		changed, err = role.Run(ctx, run, list)

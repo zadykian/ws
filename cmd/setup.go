@@ -12,6 +12,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine"
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
@@ -19,64 +21,31 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
-// progOut prefixes a line with the path of the command that prints it, and says each warning once,
-// as a step plans again after it applies.
-type progOut struct {
-	effect.Out
-	prog string
-	seen map[string]bool
-}
-
-// Say prints the line after the prefix.
-func (o progOut) Say(format string, a ...any) {
-	o.Out.Say("%s: "+format, append([]any{o.prog}, a...)...)
-}
-
-// Observe prints a run's events as the runner's lines once did, but for the line that a step is
-// applying. The step's own lines follow that line: a plan under --check, what a step is behind,
-// and a left-out step's failed plan.
-func (o progOut) Observe(e step.Event) {
-	switch {
-	case e.Kind == step.Skipped && e.Err != nil:
-		o.Warn("left out: %v", e.Err)
-	case e.LeftOut:
-	case e.Kind == step.Planned && e.Check:
-		for _, c := range e.Changes {
-			o.sayChange(c)
-		}
-	case e.Kind == step.Skipped && e.After != "":
-		o.Say("%s: after %s", e.Step, e.After)
-	}
-}
-
-// sayChange prints a change under --check. ws client macos apply printed a diff as diff -u does,
-// with no prefix and no blank line after it, and said nothing of the backup of a file.
-func (o progOut) sayChange(c step.Change) {
+// macChange says the Mac's changes under --check. ws client macos apply printed a diff as diff -u
+// does, with no prefix and no blank line after it, and said nothing of the backup of a file.
+func macChange(c step.Change) (string, bool) {
 	switch c := c.(type) {
 	case macos.Write:
-		o.Out.Say("%s", strings.TrimSuffix(c.String(), "\n"))
+		return strings.TrimSuffix(c.String(), "\n"), true
 	case macos.Backup:
-	default:
-		o.Out.Say("%s: %v", o.prog, c)
+		return "", true
 	}
+	return "", false
 }
 
-func (o progOut) Warn(format string, a ...any) {
-	line := fmt.Sprintf(format, a...)
-	if !o.seen[line] {
-		o.seen[line] = true
-		o.Out.Say("%s: warning: %s", o.prog, line)
-	}
+// linesOf returns the lines that the command at path prints on out.
+func linesOf(out effect.Out, path string) engine.Lines {
+	return engine.Lines{Out: out, Prog: path, Seen: map[string]bool{}, Change: macChange}
 }
 
 // macOf returns the Mac's steps over the process's environment and the effects given to it.
 // No other function builds a Mac. text takes what a run prints on stdout.
-func macOf(p process, c conf.Conf, m effect.Machine, out effect.Out, text io.Writer) macos.Mac {
-	return macos.Mac{Conf: c, Home: p.getenv("HOME"), XDG: p.getenv("XDG_CONFIG_HOME"), M: m, Out: out, Text: text}
+func macOf(p cli.Env, c conf.Conf, m effect.Machine, out effect.Out, text io.Writer) macos.Mac {
+	return macos.Mac{Conf: c, Home: p.Getenv("HOME"), XDG: p.Getenv("XDG_CONFIG_HOME"), M: m, Out: out, Text: text}
 }
 
 // newMacApplyCmd returns ws client macos apply.
-func newMacApplyCmd(p process) *cobra.Command {
+func newMacApplyCmd(p cli.Env) *cobra.Command {
 	var check bool
 	var only []string
 	names := macos.Names()
@@ -97,17 +66,17 @@ func newMacApplyCmd(p process) *cobra.Command {
 }
 
 // loadMacConf refuses root and reads mac.conf: the commands that act on the Mac's own files share it.
-func loadMacConf(p process) (settings conf.Conf, err error) {
-	if p.euid == 0 {
+func loadMacConf(p cli.Env) (settings conf.Conf, err error) {
+	if p.Euid == 0 {
 		// As root, with HOME kept, it would leave root's files in the user's ~/.ssh, and run the
 		// user's ~/.local/bin/cld.
 		return conf.Conf{}, errors.New("run it as yourself, not root: it asks sudo where it needs root")
 	}
-	file := p.getenv("WS_CONF")
+	file := p.Getenv("WS_CONF")
 	if file == "" {
-		file = filepath.Join(p.getenv("HOME"), confFile)
+		file = filepath.Join(p.Getenv("HOME"), confFile)
 	}
-	text, err := p.machine.ReadFile(file)
+	text, err := p.Machine.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
 		return conf.Conf{}, fmt.Errorf("%s is missing: docs/mac.md says what goes in it", file)
 	}
@@ -132,13 +101,13 @@ type setupRun func(ctx context.Context, m effect.Machine, out effect.Out, text i
 
 // runMacApply runs the steps that only names, or every step, from mac.conf. Under check it prints
 // each change and makes none.
-func runMacApply(c *cobra.Command, p process, only []string, check bool) error {
+func runMacApply(c *cobra.Command, p cli.Env, only []string, check bool) error {
 	if c.Flags().Changed("only") && len(only) == 0 {
-		return usageError{errors.New("--only names no step")}
+		return engine.UsageError{Err: errors.New("--only names no step")}
 	}
 	for _, name := range only {
 		if !slices.Contains(macos.Names(), name) {
-			return usageError{fmt.Errorf("no step is named %q", name)}
+			return engine.UsageError{Err: fmt.Errorf("no step is named %q", name)}
 		}
 	}
 	settings, err := loadMacConf(p)
@@ -147,7 +116,7 @@ func runMacApply(c *cobra.Command, p process, only []string, check bool) error {
 	}
 	var run setupRun = func(ctx context.Context, m effect.Machine, out effect.Out, text io.Writer, o step.Options) error {
 		_, err := macOf(p, settings, m, out, text).Run(ctx, macos.Options{Options: o, Only: only})
-		return unwrapStep(err)
+		return engine.Cause(err)
 	}
 	rowsOf := func(check bool) tui.Group {
 		o := macos.Options{Options: step.Options{Check: check}, Only: only}
@@ -160,12 +129,12 @@ func runMacApply(c *cobra.Command, p process, only []string, check bool) error {
 		}
 		return setupOnScreen(c, p, rowsOf(chosen.Check), run, chosen)
 	}
-	if drawsScreen(c, p) {
+	if engine.DrawsScreen(cli.CallOf(c, p)) {
 		return setupOnScreen(c, p, rowsOf(check), run, step.Options{Check: check})
 	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
-	out := progOut{term, c.CommandPath(), map[string]bool{}}
-	err = run(c.Context(), p.machine, out, c.OutOrStdout(), step.Options{Observer: out, Check: check})
+	out := linesOf(term, c.CommandPath())
+	err = run(c.Context(), p.Machine, out, c.OutOrStdout(), step.Options{Observer: out, Check: check})
 	term.Flush()
 	return err
 }
@@ -173,18 +142,10 @@ func runMacApply(c *cobra.Command, p process, only []string, check bool) error {
 // setupOnScreen is a run of ws client macos apply under the run screen. The rows name the screen's
 // steps, and the run acts on the screen's effects. What a run prints on stdout waits for the
 // screen's end, as it would paint over the screen at a terminal.
-func setupOnScreen(c *cobra.Command, p process, rows tui.Group, run setupRun, o step.Options) error {
-	return drawRun(c, p, runTitle(c, o.Check), []tui.Group{rows}, func(ctx context.Context, b *tui.Bridge) error {
+func setupOnScreen(c *cobra.Command, p cli.Env, rows tui.Group, run setupRun, o step.Options) error {
+	call := cli.CallOf(c, p)
+	return engine.DrawRun(c.Context(), call, engine.RunTitle(call, o.Check), []tui.Group{rows}, func(ctx context.Context, b *tui.Bridge) error {
 		e := b.Effects()
 		return run(ctx, e.M, b, e.Text, b.Options(o))
 	})
-}
-
-// unwrapStep returns the error of a step, without the step and stage that the runner names before
-// it: the command names itself.
-func unwrapStep(err error) error {
-	if inner := errors.Unwrap(err); inner != nil {
-		return inner
-	}
-	return err
 }

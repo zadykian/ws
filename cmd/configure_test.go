@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos/conf"
@@ -28,8 +29,8 @@ func TestMacConfigureWritesWhatAFormSaves(t *testing.T) {
 	defer func() { _ = keys.Close() }()
 	ended := make(chan int, 1)
 	go func() {
-		root := newRoot(p, newMacCmd(p), newServerCmd(p))
-		ended <- execute(context.Background(), root, []string{"client", "macos", "configure"}, in, io.Discard, io.Discard)
+		root := cli.Root(p, newMacCmd(p), newServerCmd(p))
+		ended <- cli.Execute(context.Background(), root, []string{"client", "macos", "configure"}, in, io.Discard, io.Discard)
 	}()
 	if _, err := keys.Write([]byte("\t\tr.example\x13")); err != nil {
 		t.Fatal(err)
@@ -67,16 +68,16 @@ func TestConfSheetDrawsWhatTheFormGives(t *testing.T) {
 
 func TestMacConfigureRefusals(t *testing.T) {
 	away, _ := macTerminal()
-	away.tty = false
+	away.TTY = false
 	linux, _ := macTerminal()
-	linux.goos = "linux"
+	linux.GOOS = "linux"
 	root, _ := macTerminal()
-	root.euid = 0
+	root.Euid = 0
 	bad, badFiles := macTerminal()
 	badFiles.Files["/h/.config/ws/mac.conf"] = []byte("no line\n")
 	plain, _ := macTerminal()
 	for name, tc := range map[string]struct {
-		p    process
+		p    cli.Env
 		args []string
 		want string
 	}{

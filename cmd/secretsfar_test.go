@@ -18,7 +18,7 @@ import (
 func runFarSecrets(m *effecttest.Machine, err error, stdin string, args ...string) (int, string, string) {
 	p, mac := macTerminal()
 	mac.Files["/p12"] = []byte{0, 1, 2}
-	p.machine = wsSecrets{farWs: newFarWs(mac, ""), ws: m, err: err}
+	p.Machine = wsSecrets{farWs: newFarWs(mac, ""), ws: m, err: err}
 	return runWs(p, stdin, append([]string{"client", "macos", "secrets"}, args...)...)
 }
 
@@ -92,15 +92,15 @@ func (w sudoWs) RunInput(ctx context.Context, in []byte, name string, args ...st
 func TestMacSecretsAskSudoAtTheTerminalPastStdin(t *testing.T) {
 	m, id := credFixture()
 	p, mac := macTerminal()
-	p.machine, p.tty = sudoWs{wsSecrets{farWs: newFarWs(mac, ""), ws: m}}, false
+	p.Machine, p.TTY = sudoWs{wsSecrets{farWs: newFarWs(mac, ""), ws: m}}, false
 	tty := &effecttest.Prompt{T: t, Hidden: []string{"pw"}}
-	p.openTTY = func() (effect.Hidden, func(), error) { return tty, func() {}, nil }
+	p.OpenTTY = func() (effect.Hidden, func(), error) { return tty, func() {}, nil }
 	status, _, errs := runWs(p, "dummy-value\n", "client", "macos", "secrets", "set", "env", "A")
 	if s, err := secrets.Load(m, secrets.FilePath, id); status != 0 || err != nil || s.Env["A"] != "dummy-value" {
 		t.Errorf("status %d, stderr %q, secrets %+v, %v; want A set", status, errs, s, err)
 	}
 	p, mac = macTerminal()
-	p.machine, p.tty = sudoWs{wsSecrets{farWs: newFarWs(mac, ""), ws: m}}, false
+	p.Machine, p.TTY = sudoWs{wsSecrets{farWs: newFarWs(mac, ""), ws: m}}, false
 	if status, _, errs := runWs(p, "dummy-value\n", "client", "macos", "secrets", "set", "env", "A"); status != 1 ||
 		!strings.Contains(errs, "no terminal") {
 		t.Errorf("status %d, stderr %q; want 1 naming no terminal", status, errs)

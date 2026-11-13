@@ -12,6 +12,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/remote"
 	"github.com/zadykian/ws/engine/core/step"
@@ -34,7 +35,7 @@ type wizardOptions struct {
 }
 
 // newWizardCmd returns ws client macos wizard.
-func newWizardCmd(p process) *cobra.Command {
+func newWizardCmd(p cli.Env) *cobra.Command {
 	var o wizardOptions
 	c := &cobra.Command{
 		Use:   "wizard",
@@ -53,11 +54,11 @@ func newWizardCmd(p process) *cobra.Command {
 
 // wizardRefusal returns why ws client macos wizard does not run here, or an empty string. It names
 // the system as uname -s does.
-func wizardRefusal(p process) string {
+func wizardRefusal(p cli.Env) string {
 	switch {
-	case p.goos != "darwin":
-		return "it sets up a Mac, not " + strings.ToUpper(p.goos[:1]) + p.goos[1:]
-	case p.euid == 0:
+	case p.GOOS != "darwin":
+		return "it sets up a Mac, not " + strings.ToUpper(p.GOOS[:1]) + p.GOOS[1:]
+	case p.Euid == 0:
 		return "run it as yourself, not root: it asks sudo where it needs root"
 	}
 	return ""
@@ -66,7 +67,7 @@ func wizardRefusal(p process) string {
 // wizardEffects is what the stages act through: a plain run's terminal, or a screen's Bridge.
 type wizardEffects struct {
 	// p holds the machine that the stages act on.
-	p      process
+	p      cli.Env
 	prog   string
 	talks  effect.Foreground
 	ask    effect.Prompt
@@ -89,8 +90,8 @@ type wizardEffects struct {
 func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	p, ask, out, prog, hand := e.p, e.ask, e.out, e.prog, e.hand
 	check := o.check
-	conf := confPath(p.getenv, p.pwd)
-	lock := wizard.LockPath(p.lockDir())
+	conf := confPath(p.Getenv, p.Pwd)
+	lock := wizard.LockPath(p.LockDir())
 	scratch := lock + "/mac.conf"
 	// Under --check the stages after Answers read the mac.conf that it would write, a file in the lock,
 	// as the old script pointed WS_CONF there.
@@ -98,31 +99,31 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	if check {
 		later = scratch
 	}
-	ghStage := &gh.Gh{CLI: gh.CLI{Conf: later, Home: p.getenv("HOME"), M: p.machine, Out: out}, Tty: p.tty, F: e.talks}
-	hostKey := &host.Key{Conf: later, Lock: lock, Tty: p.tty, Check: check, Env: p.lookup,
-		SSH: remote.SSH{M: p.machine, F: e.talks, Lock: lock, Home: p.getenv("HOME"),
-			Ways: host.MacWays{M: p.machine, Conf: later}}, M: p.machine, P: ask, Out: out}
+	ghStage := &gh.Gh{CLI: gh.CLI{Conf: later, Home: p.Getenv("HOME"), M: p.Machine, Out: out}, Tty: p.TTY, F: e.talks}
+	hostKey := &host.Key{Conf: later, Lock: lock, Tty: p.TTY, Check: check, Env: p.Lookup,
+		SSH: remote.SSH{M: p.Machine, F: e.talks, Lock: lock, Home: p.Getenv("HOME"),
+			Ways: host.MacWays{M: p.Machine, Conf: later}}, M: p.Machine, P: ask, Out: out}
 	sudo := e.sudo
 	ws := session.New(host.MacReach{SSH: hostKey.SSH, Sudo: sudo, Conf: later, Out: out},
 		session.Scripts{Remote: session.RemoteScript, Files: session.RemoteFilesScript, Events: e.events})
-	sudo.SSH, sudo.Tty, sudo.Check, sudo.P, sudo.Out = hostKey.SSH, p.tty, check, e.hidden, out
-	install := &tools.WsInstall{Ws: ws, Version: p.version, URL: p.releases, Out: out}
-	run := &stages.WsRun{Ws: ws, Await: install.Name(), Check: check, Out: out, Version: p.version, Update: o.update, Only: o.only}
+	sudo.SSH, sudo.Tty, sudo.Check, sudo.P, sudo.Out = hostKey.SSH, p.TTY, check, e.hidden, out
+	install := &tools.WsInstall{Ws: ws, Version: p.Version, URL: p.Releases, Out: out}
+	run := &stages.WsRun{Ws: ws, Await: install.Name(), Check: check, Out: out, Version: p.Version, Update: o.update, Only: o.only}
 	hand.Late(ws.Hand)
 	hand.Late(ghStage.Hand)
 	setup := wizardSetup(e, o.left, later)
-	login := &host.Login{SSH: hostKey.SSH, Ws: ws, Gh: ghStage.CLI, Tty: p.tty, Check: check, Env: p.lookup, P: ask, Out: out}
+	login := &host.Login{SSH: hostKey.SSH, Ws: ws, Gh: ghStage.CLI, Tty: p.TTY, Check: check, Env: p.Lookup, P: ask, Out: out}
 	cable := &link.Cable{Ws: ws, SSH: hostKey.SSH, Conf: later, Check: check, RunDone: run.RunDone,
-		MacApply: setup.Run, Env: p.lookup, P: ask, Prog: prog, Tty: p.tty, M: p.machine, Out: out}
+		MacApply: setup.Run, Env: p.Lookup, P: ask, Prog: prog, Tty: p.TTY, M: p.Machine, Out: out}
 	hand.Late(cable.Hand)
 	return []step.Step{
-		&tools.Tools{M: p.machine, Out: out, Sleep: time.Sleep},
-		&tools.Homebrew{Lock: lock, M: p.machine, Out: out},
+		&tools.Tools{M: p.Machine, Out: out, Sleep: time.Sleep},
+		&tools.Homebrew{Lock: lock, M: p.Machine, Out: out},
 		&answers.Answers{Conf: conf, Defaults: shellDefaults(),
-			Prog: prog, Tty: p.tty, Check: check, Scratch: scratch, M: p.machine, P: ask, Out: out, Env: p.lookup},
-		&keys.MacKey{Conf: later, Home: p.getenv("HOME"),
-			Lock: lock, Tty: p.tty,
-			M: p.machine, P: ask, Out: out, Sleep: time.Sleep},
+			Prog: prog, Tty: p.TTY, Check: check, Scratch: scratch, M: p.Machine, P: ask, Out: out, Env: p.Lookup},
+		&keys.MacKey{Conf: later, Home: p.Getenv("HOME"),
+			Lock: lock, Tty: p.TTY,
+			M: p.Machine, P: ask, Out: out, Sleep: time.Sleep},
 		ghStage,
 		setup,
 		hostKey,
@@ -130,31 +131,31 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 		sudo,
 		install,
 		run,
-		&stages.WsClaude{Ws: ws, Tty: p.tty},
+		&stages.WsClaude{Ws: ws, Tty: p.TTY},
 		&stages.Signing{Ws: ws, GitHub: &gh.MacGitHub{Gh: ghStage.CLI, Lock: lock, Check: check}},
-		&link.Tunnel{SSH: hostKey.SSH, Ws: ws, Conf: later, Check: check, MacApply: setup.Run, Hand: hand, Home: p.getenv("HOME"),
-			Sleep: time.Sleep, M: p.machine, Out: out},
+		&link.Tunnel{SSH: hostKey.SSH, Ws: ws, Conf: later, Check: check, MacApply: setup.Run, Hand: hand, Home: p.Getenv("HOME"),
+			Sleep: time.Sleep, M: p.Machine, Out: out},
 		cable,
 	}
 }
 
 // runWizard runs ws client macos wizard: its stages under a lock, and what stays by hand after a
 // run in which a stage acted. Under --check it prints what each stage would do and changes nothing.
-func runWizard(c *cobra.Command, p process, o wizardOptions) error {
+func runWizard(c *cobra.Command, p cli.Env, o wizardOptions) error {
 	if why := wizardRefusal(p); why != "" {
 		return errors.New(why)
 	}
 	// Homebrew's bin comes first in PATH, as a shell started before its install lacks it, and WS_CONF
 	// is set for the scripts that stages run.
-	_ = p.setenv("PATH", "/opt/homebrew/bin:"+p.getenv("PATH"))
-	_ = p.setenv("WS_CONF", confPath(p.getenv, p.pwd))
+	_ = p.Setenv("PATH", "/opt/homebrew/bin:"+p.Getenv("PATH"))
+	_ = p.Setenv("WS_CONF", confPath(p.Getenv, p.Pwd))
 	var before []func(effect.Out) step.Step
 	if o.update {
 		// Its own run, before the lock: the new ws takes the place of this process, which would leave the
 		// lock held. It runs before the screen too, on lines, or the new ws would find a terminal left raw.
 		before = append(before, func(out effect.Out) step.Step {
-			return &tools.MacUpdate{M: p.machine, Out: out, Version: p.version, URL: p.releases,
-				Home: p.getenv("HOME"), Args: p.argv}
+			return &tools.MacUpdate{M: p.Machine, Out: out, Version: p.Version, URL: p.Releases,
+				Home: p.Getenv("HOME"), Args: p.Argv}
 		})
 	}
 	return wizardRun{c, p, macSide(c, p), o}.start(before...)

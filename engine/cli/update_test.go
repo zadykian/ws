@@ -1,4 +1,4 @@
-package cmd
+package cli_test
 
 import (
 	"crypto/sha256"
@@ -10,11 +10,13 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/zadykian/ws/engine/cli"
+	"github.com/zadykian/ws/engine/cli/clitest"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 // updateProcess returns a process of ws v1.0.0 in /h/.local/bin, with v1.1.0 the latest release.
-func updateProcess(t *testing.T) (process, *effecttest.Machine) {
+func updateProcess(t *testing.T) (cli.Env, *effecttest.Machine) {
 	t.Helper()
 	body := []byte("new ws")
 	sum := sha256.Sum256(body)
@@ -30,18 +32,18 @@ func updateProcess(t *testing.T) (process, *effecttest.Machine) {
 		_, _ = w.Write(files[r.URL.Path])
 	}))
 	t.Cleanup(srv.Close)
-	p := fakeProcess()
-	m := p.machine.(*effecttest.Machine)
+	p := clitest.Env()
+	m := p.Machine.(*effecttest.Machine)
 	m.Files["/h/.local/bin/ws"] = []byte("old ws")
 	m.Results["/h/.local/bin/.ws.7 version"] = effecttest.Result{Out: []byte("v1.1.0\n")}
 	m.Results["rm -f /h/.local/bin/.ws.7"] = effecttest.Result{}
-	p.version, p.releases = "v1.0.0", srv.URL
+	p.Version, p.Releases = "v1.0.0", srv.URL
 	return p, m
 }
 
 func TestUpdate(t *testing.T) {
 	p, m := updateProcess(t)
-	status, stdout, stderr := runWs(p, "", "update")
+	status, stdout, stderr := runWs(p, "update")
 	if status != 0 || stdout != "Updated ws v1.0.0 to v1.1.0: /h/.local/bin/ws\n" || stderr != "" {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
@@ -52,8 +54,8 @@ func TestUpdate(t *testing.T) {
 
 func TestUpdateAtTheLatest(t *testing.T) {
 	p, m := updateProcess(t)
-	p.version = "v1.1.0"
-	status, stdout, stderr := runWs(p, "", "update")
+	p.Version = "v1.1.0"
+	status, stdout, stderr := runWs(p, "update")
 	if status != 0 || stdout != "ws v1.1.0 is the latest release\n" || stderr != "" || len(m.Calls) != 0 {
 		t.Errorf("status = %d, stdout = %q, stderr = %q, calls = %v", status, stdout, stderr, m.Calls)
 	}
@@ -61,8 +63,8 @@ func TestUpdateAtTheLatest(t *testing.T) {
 
 func TestUpdateRefusesABuild(t *testing.T) {
 	p, m := updateProcess(t)
-	p.version = "devel"
-	status, stdout, stderr := runWs(p, "", "update")
+	p.Version = "devel"
+	status, stdout, stderr := runWs(p, "update")
 	if status != 1 || stdout != "" || !strings.HasPrefix(stderr, "ws update: this ws is devel, not a release") || len(m.Calls) != 0 {
 		t.Errorf("status = %d, stdout = %q, stderr = %q, calls = %v", status, stdout, stderr, m.Calls)
 	}
@@ -70,8 +72,8 @@ func TestUpdateRefusesABuild(t *testing.T) {
 
 func TestUpdateWithoutItsFile(t *testing.T) {
 	p, _ := updateProcess(t)
-	p.self = func() (string, error) { return "", errors.New("no such file") }
-	status, _, stderr := runWs(p, "", "update")
+	p.Self = func() (string, error) { return "", errors.New("no such file") }
+	status, _, stderr := runWs(p, "update")
 	if status != 1 || stderr != "ws update: finding the file ws runs from: no such file\n" {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
@@ -86,12 +88,12 @@ func TestUpdateSignal(t *testing.T) {
 	}))
 	defer srv.Close()
 	p, m := updateProcess(t)
-	p.releases = srv.URL
+	p.Releases = srv.URL
 	go func() {
 		<-started
 		_ = syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
 	}()
-	status, _, stderr := runWs(p, "", "update")
+	status, _, stderr := runWs(p, "update")
 	if status != 128+int(syscall.SIGTERM) || stderr != "" || string(m.Files["/h/.local/bin/ws"]) != "old ws" {
 		t.Errorf("status = %d, stderr = %q, file %q", status, stderr, m.Files["/h/.local/bin/ws"])
 	}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine/cli"
 	fans "github.com/zadykian/ws/roles/server/ubuntu/fans/daemon"
 )
 
@@ -17,7 +18,7 @@ const fansConfig = "/etc/ws-fans.json"
 
 // newFansCmd returns ws server ubuntu fans: the board's fans on the curves of the config, until
 // SIGTERM or SIGINT, then back on the board's own curves. Its log goes to stderr, the journal's.
-func newFansCmd(p process) *cobra.Command {
+func newFansCmd(p cli.Env) *cobra.Command {
 	return &cobra.Command{
 		Use:   "fans [CONFIG]",
 		Short: "drive the board's fans on the curves of CONFIG until SIGTERM",
@@ -28,7 +29,7 @@ func newFansCmd(p process) *cobra.Command {
 			if len(args) == 1 {
 				path = args[0]
 			}
-			data, err := p.machine.ReadFile(path)
+			data, err := p.Machine.ReadFile(path)
 			if err != nil {
 				return err
 			}

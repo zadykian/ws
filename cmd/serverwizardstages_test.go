@@ -5,14 +5,15 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 // wizardProcess returns a root process on a machine that holds vars as host_vars, booted or not,
 // whose remote script reports status as host_vars' ws_user reads it.
-func wizardProcess(vars string, booted bool, status string) (process, *effecttest.Machine) {
+func wizardProcess(vars string, booted bool, status string) (cli.Env, *effecttest.Machine) {
 	p, m := valuesProcess(vars)
-	p.goos = "linux"
+	p.GOOS = "linux"
 	if booted {
 		m.Dirs["/run/systemd/system"] = 0o755
 	}

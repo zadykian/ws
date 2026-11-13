@@ -6,17 +6,17 @@ import (
 	"github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
-	"os"
 	"strings"
 	"testing"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/remote"
 )
 
 // testWizardProcess returns the process of a Mac whose Command Line Tools and Homebrew are there, and
 // its environment.
-func testWizardProcess(goos string, uid int) (process, map[string]string) {
+func testWizardProcess(goos string, uid int) (cli.Env, map[string]string) {
 	env := map[string]string{"TMPDIR": "/t/"}
 	m := effecttest.NewMachine()
 	m.Results["xcode-select -p"] = effecttest.Result{Out: []byte("/clt\n")}
@@ -24,7 +24,7 @@ func testWizardProcess(goos string, uid int) (process, map[string]string) {
 	m.Modes["/clt/usr/bin/git"] = 0o755
 	m.Results["/opt/homebrew/bin/brew --version"] = effecttest.Result{}
 	p := withEnv(fakeProcess(), env)
-	p.goos, p.euid, p.machine = goos, uid, m
+	p.GOOS, p.Euid, p.Machine = goos, uid, m
 	return p, env
 }
 
@@ -50,7 +50,7 @@ func TestWizardCommandRuns(t *testing.T) {
 		!strings.Contains(stderr, "ws client macos wizard: Answers: no terminal to ask WS_TARGET: set WS_TARGET") {
 		t.Errorf("status = %d, stderr = %q; want the refusal to ask with no terminal", status, stderr)
 	}
-	if calls := p.machine.(*effecttest.Machine).Calls; len(calls) == 0 || calls[0] != "mkdir /t/ws-wizard.lock 700" {
+	if calls := p.Machine.(*effecttest.Machine).Calls; len(calls) == 0 || calls[0] != "mkdir /t/ws-wizard.lock 700" {
 		t.Errorf("calls = %v; want the lock first", calls)
 	}
 }
@@ -74,25 +74,14 @@ func TestWizardCheckShowsTheAnswersDiff(t *testing.T) {
 	if status != 0 || !strings.Contains(stderr, "+WS_TARGET=cloud") {
 		t.Errorf("status = %d, stderr = %q; want the diff of mac.conf", status, stderr)
 	}
-	if got := string(p.machine.(*effecttest.Machine).Files["/t/ws-wizard.lock/mac.conf"]); !strings.HasPrefix(got, "WS_TARGET=cloud\n") {
+	if got := string(p.Machine.(*effecttest.Machine).Files["/t/ws-wizard.lock/mac.conf"]); !strings.HasPrefix(got, "WS_TARGET=cloud\n") {
 		t.Errorf("scratch mac.conf = %q", got)
-	}
-}
-
-func TestIsTerminalIsNotDevNull(t *testing.T) {
-	null, err := os.Open(os.DevNull)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = null.Close() }()
-	if isTerminal(null) {
-		t.Error("isTerminal(/dev/null) = true")
 	}
 }
 
 func TestWizardCheckOnANewMacStopsAtHomebrew(t *testing.T) {
 	p, _ := testWizardProcess("darwin", 501)
-	m := p.machine.(*effecttest.Machine)
+	m := p.Machine.(*effecttest.Machine)
 	m.Results["xcode-select -p"] = effecttest.Result{Err: errors.New("exit status 2")}
 	m.Results["/opt/homebrew/bin/brew --version"] = effecttest.Result{Err: errors.New("no brew")}
 	status, _, stderr := runWs(p, "", "client", "macos", "wizard", "--check")
@@ -109,8 +98,8 @@ func TestWizardCheckOnANewMacStopsAtHomebrew(t *testing.T) {
 
 func TestWizardUpdateRunsTheNewWs(t *testing.T) {
 	p, env := testWizardProcess("darwin", 501)
-	m := p.machine.(*effecttest.Machine)
-	p.version, p.releases, p.argv = "v1.0.0", "http://127.0.0.1:22080", []string{"client", "macos", "wizard", "--update"}
+	m := p.Machine.(*effecttest.Machine)
+	p.Version, p.Releases, p.Argv = "v1.0.0", "http://127.0.0.1:22080", []string{"client", "macos", "wizard", "--update"}
 	env["HOME"] = "/h"
 	m.Results["curl -fsS -o /dev/null -w %{redirect_url} http://127.0.0.1:22080/latest"] =
 		effecttest.Result{Out: []byte("http://127.0.0.1:22080/tag/v1.1.0")}
@@ -130,8 +119,8 @@ func TestWizardUpdateRunsTheNewWs(t *testing.T) {
 
 func TestWizardUpdateCheckInstallsNothing(t *testing.T) {
 	p, _ := testWizardProcess("darwin", 501)
-	m := p.machine.(*effecttest.Machine)
-	p.version, p.releases = "v1.0.0", "http://127.0.0.1:22080"
+	m := p.Machine.(*effecttest.Machine)
+	p.Version, p.Releases = "v1.0.0", "http://127.0.0.1:22080"
 	m.Results["curl -fsS -o /dev/null -w %{redirect_url} http://127.0.0.1:22080/latest"] =
 		effecttest.Result{Out: []byte("http://127.0.0.1:22080/tag/v1.1.0")}
 	_, _, stderr := runWs(p, "", "client", "macos", "wizard", "--check", "--update")
@@ -182,10 +171,10 @@ func TestWizardReadsWhatServerStatePrints(t *testing.T) {
 	if status != 0 {
 		t.Fatalf("status = %d", status)
 	}
-	m := wsOverSSH{effecttest.NewMachine(), []byte("ws " + p.version + "\n"), []byte(stdout)}
+	m := wsOverSSH{effecttest.NewMachine(), []byte("ws " + p.Version + "\n"), []byte(stdout)}
 	ws := session.New(host.MacReach{SSH: remote.SSH{M: m, Lock: "/t/l"}},
 		session.Scripts{Remote: session.RemoteScript})
-	roles, err := ws.State(context.Background(), p.version)
+	roles, err := ws.State(context.Background(), p.Version)
 	if err != nil {
 		t.Fatal(err)
 	}

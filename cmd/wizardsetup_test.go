@@ -26,7 +26,7 @@ func TestWizardSetupPassesTheObserverOn(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/h/mac.conf"] = []byte("WS_USER=ada\n")
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
-	p.machine = m
+	p.Machine = m
 	var got lastEvents
 	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}, obs: &got}, nil, "/h/mac.conf")
 	// The fake machine fails ssh's plan, and each step ends all the same.
@@ -57,7 +57,7 @@ func setupOf(t *testing.T, e wizardEffects, left func(parent, name string) bool)
 	m := effecttest.NewMachine()
 	m.Files["/h/mac.conf"] = []byte("WS_USER=ada\n")
 	e.p = withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
-	e.p.machine, e.text, e.out = m, io.Discard, &effecttest.Out{}
+	e.p.Machine, e.text, e.out = m, io.Discard, &effecttest.Out{}
 	return wizardSetup(e, left, "/h/mac.conf")
 }
 

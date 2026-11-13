@@ -36,7 +36,7 @@ func TestConfCommand(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			env["WS_CONF"] = tt.wsConf
 			p := withEnv(fakeProcess(), env)
-			p.machine = m
+			p.Machine = m
 			got, stdout, stderr := runWs(p, "", append([]string{"client", "macos", "conf"}, tt.args...)...)
 			if got != tt.wantStatus {
 				t.Errorf("status = %d, want %d", got, tt.wantStatus)
@@ -55,10 +55,18 @@ func TestConfReportsEachLineOfARefusedFile(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{})
 	m := effecttest.NewMachine()
 	m.Files["/bad"] = []byte("WS_NOPE=1\nWS_NOPE2=1\n")
-	p.machine = m
+	p.Machine = m
 	status, _, stderr := runWs(p, "", "client", "macos", "conf", "/bad")
 	want := "ws client macos conf: /bad, line 1: unknown key WS_NOPE\nws client macos conf: /bad, line 2: unknown key WS_NOPE2\n"
 	if status != 1 || stderr != want {
 		t.Errorf("status = %d, stderr = %q; want 1, %q", status, stderr, want)
+	}
+}
+
+func TestConfPath(t *testing.T) {
+	for conf, want := range map[string]string{"": "/h/.config/ws/mac.conf", "/x/m.conf": "/x/m.conf", "m.conf": "/w/m.conf"} {
+		if got := confPath(func(k string) string { return map[string]string{"HOME": "/h", "WS_CONF": conf}[k] }, "/w"); got != want {
+			t.Errorf("WS_CONF=%q: confPath = %q, want %q", conf, got, want)
+		}
 	}
 }

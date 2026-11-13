@@ -11,7 +11,7 @@ import (
 
 func TestTunnelLoadedFollowsLaunchd(t *testing.T) {
 	p := fakeProcess()
-	m := p.machine.(*effecttest.Machine)
+	m := p.Machine.(*effecttest.Machine)
 	m.Results["launchctl print system/com.github.zadykian.ws-tunnel"] = effecttest.Result{Err: errors.New("not loaded")}
 	if status, _, stderr := runWs(p, "", "client", "macos", "tunnel", "loaded"); status != 1 ||
 		stderr != "ws client macos tunnel loaded: launchd has not loaded the daemon com.github.zadykian.ws-tunnel\n" {
@@ -25,7 +25,7 @@ func TestTunnelLoadedFollowsLaunchd(t *testing.T) {
 
 func TestTunnelRoutesCheckShowsTheFileAndWritesNothing(t *testing.T) {
 	p := fakeProcess()
-	m := p.machine.(*effecttest.Machine)
+	m := p.Machine.(*effecttest.Machine)
 	m.Root["/etc/ws-tunnel/routes.d"] = effect.Attrs{Mode: 0o755}
 	status, _, stderr := runWs(p, "", "client", "macos", "tunnel", "routes", "--check", "test", "198.51.100.0/24")
 	if status != 0 || !strings.Contains(stderr, "+198.51.100.0/24") {

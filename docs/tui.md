@@ -27,7 +27,7 @@ and a case of the `mac` job does so with `ws client macos apply --check` ([The
 Mac](checks.md#the-mac)).
 
 The screen draws on stderr, where ws's lines go. Stdout and the exit codes stay what they were.
-The mode is chosen in `cmd/screen.go`.
+The mode is chosen in `engine/screen.go`.
 
 ## Colors
 

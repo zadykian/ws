@@ -6,6 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine"
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/networks"
@@ -14,14 +16,14 @@ import (
 const daemonLabel = "com.github.zadykian.ws-tunnel"
 
 // newTunnelLoadedCmd returns ws client macos tunnel loaded.
-func newTunnelLoadedCmd(p process) *cobra.Command {
+func newTunnelLoadedCmd(p cli.Env) *cobra.Command {
 	return &cobra.Command{
 		Use:   "loaded",
 		Short: "succeed where launchd has the tunnel's daemon loaded",
 		Long:  "Anyone may read launchd's system domain, so it needs no sudo.",
 		Args:  cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error {
-			if _, err := p.machine.Run(c.Context(), "launchctl", "print", "system/"+daemonLabel); err != nil {
+			if _, err := p.Machine.Run(c.Context(), "launchctl", "print", "system/"+daemonLabel); err != nil {
 				return fmt.Errorf("launchd has not loaded the daemon %s", daemonLabel)
 			}
 			return nil
@@ -30,7 +32,7 @@ func newTunnelLoadedCmd(p process) *cobra.Command {
 }
 
 // newTunnelRoutesCmd returns ws client macos tunnel routes.
-func newTunnelRoutesCmd(p process) *cobra.Command {
+func newTunnelRoutesCmd(p cli.Env) *cobra.Command {
 	var check bool
 	c := &cobra.Command{
 		Use:   "routes NAME [CIDR...]",
@@ -39,7 +41,7 @@ func newTunnelRoutesCmd(p process) *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(c *cobra.Command, args []string) error {
 			return runRoute(c, check, func(out effect.Out) step.Step {
-				return &networks.Routes{Set: args[0], Networks: args[1:], M: p.machine, Out: out, Check: check, Alone: true}
+				return &networks.Routes{Set: args[0], Networks: args[1:], M: p.Machine, Out: out, Check: check, Alone: true}
 			})
 		},
 	}
@@ -48,7 +50,7 @@ func newTunnelRoutesCmd(p process) *cobra.Command {
 }
 
 // newResolverCmd returns ws client macos resolver.
-func newResolverCmd(p process) *cobra.Command {
+func newResolverCmd(p cli.Env) *cobra.Command {
 	var check bool
 	c := &cobra.Command{
 		Use:   "resolver DOMAIN [ADDRESS...]",
@@ -57,7 +59,7 @@ func newResolverCmd(p process) *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(c *cobra.Command, args []string) error {
 			return runRoute(c, check, func(out effect.Out) step.Step {
-				return &networks.Resolver{Domain: args[0], Addresses: args[1:], M: p.machine, Out: out}
+				return &networks.Resolver{Domain: args[0], Addresses: args[1:], M: p.Machine, Out: out}
 			})
 		},
 	}
@@ -70,7 +72,7 @@ func newResolverCmd(p process) *cobra.Command {
 func runRoute(c *cobra.Command, check bool, build func(effect.Out) step.Step) error {
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
 	defer term.Flush()
-	out := progOut{term, c.CommandPath(), map[string]bool{}}
+	out := linesOf(term, c.CommandPath())
 	_, err := step.RunWith(c.Context(), []step.Step{build(out)}, step.Options{Observer: out, Check: check})
-	return unwrapStep(err)
+	return engine.Cause(err)
 }

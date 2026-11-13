@@ -1,4 +1,4 @@
-package cmd
+package cli
 
 import (
 	"runtime/debug"
@@ -15,14 +15,14 @@ func versionOf(info *debug.BuildInfo, ok bool) string {
 	return info.Main.Version
 }
 
-// newVersionCmd returns ws version, which prints this binary's version.
-func newVersionCmd(p process) *cobra.Command {
+// Version returns ws version, which prints this binary's version.
+func Version(p Env) *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
 		Short: "print the version of this ws",
 		Args:  cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error {
-			_, err := c.OutOrStdout().Write([]byte(p.version + "\n"))
+			_, err := c.OutOrStdout().Write([]byte(p.Version + "\n"))
 			return err
 		},
 	}

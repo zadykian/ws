@@ -25,7 +25,7 @@ func credFixture() (*effecttest.Machine, *age.X25519Identity) {
 
 func runServerSecrets(m *effecttest.Machine, euid int, stdin string, args ...string) (int, string, string) {
 	p := fakeProcess()
-	p.machine, p.euid = m, euid
+	p.Machine, p.Euid = m, euid
 	return runWs(p, stdin, append([]string{"server", "ubuntu", "secrets"}, args...)...)
 }
 

@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zadykian/ws/engine"
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/effect/local"
@@ -26,7 +28,7 @@ func keyed(m *effecttest.Machine) {
 
 // macTerminal returns a process with a terminal, as the Mac's user, with a mac.conf and what ssh's
 // step looks at.
-func macTerminal() (process, *effecttest.Machine) {
+func macTerminal() (cli.Env, *effecttest.Machine) {
 	m := effecttest.NewMachine()
 	keyed(m)
 	m.Results["mktemp -d"] = effecttest.Result{Out: []byte("/tmp/x\n")}
@@ -35,7 +37,7 @@ func macTerminal() (process, *effecttest.Machine) {
 		m.Results["ssh -G -F /tmp/x/"+file+" ws"] = effecttest.Result{}
 	}
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h", "TERM": "xterm"})
-	p.machine, p.tty, p.errTTY = m, true, true
+	p.Machine, p.TTY, p.ErrTTY = m, true, true
 	return p, m
 }
 
@@ -68,7 +70,7 @@ func TestMacApplyDrawsNothingWithPlain(t *testing.T) {
 
 func TestSetupOnScreenRunsOnTheScreensEffects(t *testing.T) {
 	p, _ := macTerminal()
-	p.machine = local.OSMachine{}
+	p.Machine = local.OSMachine{}
 	c, _ := screenCommand(t, "")
 	var machines []effect.Machine
 	var outs []effect.Out
@@ -133,7 +135,7 @@ func TestSetupOnScreenStopsPastTheCurrentStep(t *testing.T) {
 		return err
 	}
 	err := setupOnScreen(c, p, tui.NewGroup("", nil), run, step.Options{Check: true})
-	if !errors.Is(err, signalExit{syscall.SIGINT}) || reached {
+	if !errors.Is(err, engine.SignalExit{Sig: syscall.SIGINT}) || reached {
 		t.Errorf("err = %v, the next step reached = %v", err, reached)
 	}
 }

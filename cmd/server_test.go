@@ -12,8 +12,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/effect/units"
-	"github.com/zadykian/ws/engine/core/role"
-	"github.com/zadykian/ws/engine/core/step"
 )
 
 func TestServerRefusal(t *testing.T) {
@@ -52,8 +50,8 @@ func TestServerApplyRefusesOtherArgs(t *testing.T) {
 
 func TestServerApplyRefusesNonRoot(t *testing.T) {
 	p := fakeProcess()
-	m := p.machine.(*effecttest.Machine)
-	p.euid = 1000
+	m := p.Machine.(*effecttest.Machine)
+	p.Euid = 1000
 	m.Files["/etc/os-release"] = []byte("ID=ubuntu\nVERSION_ID=\"26.04\"\n")
 	status, _, stderr := runWs(p, "", "server", "ubuntu", "apply")
 	if status != 1 || stderr != "ws server ubuntu apply: run it as root\n" {
@@ -113,7 +111,7 @@ func TestLoadSecrets(t *testing.T) {
 
 func TestServerFansRefusesAConfigThatFailsItsCheck(t *testing.T) {
 	p := fakeProcess()
-	p.machine.(*effecttest.Machine).Files["/ws-fans.json"] = []byte(`{"interval": 0}`)
+	p.Machine.(*effecttest.Machine).Files["/ws-fans.json"] = []byte(`{"interval": 0}`)
 	status, _, stderr := runWs(p, "", "server", "ubuntu", "fans", "/ws-fans.json")
 	if status != 1 || !strings.HasPrefix(stderr, "ws server ubuntu fans: /ws-fans.json: ") || !strings.Contains(stderr, "interval") {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
@@ -130,8 +128,8 @@ func noEnv(string) string { return "" }
 
 func TestServerStateRefusesNonRootAndOtherArgs(t *testing.T) {
 	p := fakeProcess()
-	m := p.machine.(*effecttest.Machine)
-	p.euid = 1000
+	m := p.Machine.(*effecttest.Machine)
+	p.Euid = 1000
 	m.Files["/etc/os-release"] = []byte("ID=ubuntu\nVERSION_ID=\"26.04\"\n")
 	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "state", "--json")
 	if status != 1 || stdout != "" || stderr != "ws server ubuntu state: run it as root\n" {
@@ -163,48 +161,9 @@ func TestServerStateHelp(t *testing.T) {
 	}
 }
 
-func TestWriteState(t *testing.T) {
-	states := []role.RoleState{{Role: "base", Steps: []step.Report{
-		{Step: "Packages", Items: []step.Item{{Kind: step.PackageItem, Name: "git", Want: "installed", Found: "missing"}},
-			Changes: []step.Pending{{Kind: step.Install, Text: "install git"}}},
-		{Step: "Config", Items: []step.Item{{Kind: step.FileItem, Name: "/etc/x", Want: "written", Found: "differs",
-			Conflict: "changed by hand", Diff: "-a\n+b\n"}}, Changes: []step.Pending{{Text: "write /etc/x\n-a\n+b\n"}}},
-		{Step: "Later", After: "Config"},
-	}}}
-	var b bytes.Buffer
-	if err := writeState(&b, states); err != nil {
-		t.Fatal(err)
-	}
-	want := `base
-  Packages
-    package git: found missing, want installed
-    pending: install git
-  Config
-    file /etc/x: found differs, want written
-      conflict: changed by hand
-      -a
-      +b
-    pending: write /etc/x
-  Later
-    not read: after Config
-`
-	if b.String() != want {
-		t.Errorf("got\n%s\nwant\n%s", b.String(), want)
-	}
-}
-
-func TestRoleSectionsNameTheRoles(t *testing.T) {
-	reports := []step.Report{{Step: "Packages"}}
-	got := roleSections([]role.RoleState{{Role: "base", Steps: reports}, {Role: "docker"}})
-	if len(got) != 2 || got[0].Name != "base" || len(got[0].Reports) != 1 || got[0].Reports[0].Step != "Packages" ||
-		got[1].Name != "docker" {
-		t.Errorf("sections = %+v", got)
-	}
-}
-
 func TestServerStateDrawsTheScreenAtATerminal(t *testing.T) {
 	p, _ := serverTerminal()
-	p.outTTY = true
+	p.OutTTY = true
 	status, stdout, stderr := runWs(p, "q", "server", "ubuntu", "state", "--only", "tmux")
 	if status != 0 || stdout != "" || !strings.Contains(stderr, enterScreen) {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)

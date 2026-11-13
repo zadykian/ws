@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
@@ -12,13 +13,13 @@ import (
 
 func TestServerConfigureRefusals(t *testing.T) {
 	user, _ := wizardProcess("", false, "")
-	user.euid = 1000
+	user.Euid = 1000
 	away, _ := wizardProcess("", false, "")
 	plain, _ := wizardProcess("", false, "")
 	plain = withEnv(plain, map[string]string{"TERM": "xterm"})
-	plain.tty, plain.errTTY = true, true
+	plain.TTY, plain.ErrTTY = true, true
 	for name, tc := range map[string]struct {
-		p    process
+		p    cli.Env
 		args []string
 		want string
 	}{
@@ -38,13 +39,13 @@ func TestServerSecretsSheetSetsOnWs(t *testing.T) {
 	ctx := context.Background()
 	m, id := credFixture()
 	p := fakeProcess()
-	p.machine, p.euid = m, 0
+	p.Machine, p.Euid = m, 0
 	armored, err := secrets.Encrypt([]byte("[git.\"https://git.example\"]\nusername = \"ada\"\n"), id.Recipient())
 	if err != nil {
 		t.Fatal(err)
 	}
 	m.Files[secrets.FilePath] = armored
-	sheet, err := serverSecretsSheet(p).Open(ctx, tui.Offscreen(p.machine))
+	sheet, err := serverSecretsSheet(p).Open(ctx, tui.Offscreen(p.Machine))
 	if err != nil || !strings.HasPrefix(sheet.Fields(nil)[0].Help, "not set") {
 		t.Fatalf("open: %v, fields %+v", err, sheet.Fields(nil))
 	}
@@ -63,7 +64,7 @@ func TestServerSecretsSheetSetsOnWs(t *testing.T) {
 func TestServerVarsSheetReadsOnWs(t *testing.T) {
 	p, m := wizardProcess("---\nws_user: ada\n", false, "")
 	m.Results["env SUDO_USER=ada sh -s -- values"] = effecttest.Result{Out: []byte("ws_user: ada\n")}
-	sheet, err := hostVarsSheet(serverOpen).Open(context.Background(), tui.Offscreen(p.machine))
+	sheet, err := hostVarsSheet(serverOpen).Open(context.Background(), tui.Offscreen(p.Machine))
 	if err != nil {
 		t.Fatal(err)
 	}

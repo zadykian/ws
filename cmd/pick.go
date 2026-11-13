@@ -7,6 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine"
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
@@ -14,21 +16,21 @@ import (
 
 // opensList says that a run opens the list of steps first: it draws a screen, and neither a
 // selection nor --check is given. Either of those goes straight to the run.
-func opensList(c *cobra.Command, p process, selected bool) bool {
+func opensList(c *cobra.Command, p cli.Env, selected bool) bool {
 	check, _ := c.Flags().GetBool("check")
-	return drawsScreen(c, p) && !selected && !check
+	return engine.DrawsScreen(cli.CallOf(c, p)) && !selected && !check
 }
 
 // pickSteps draws the list of groups over scan and returns the choice. A choice that names no step
 // is a maintainer who left.
-func pickSteps(c *cobra.Command, p process, groups []tui.Group, scan tui.Work) (tui.Choice, error) {
-	return tui.Pick(c.Context(), screenConfig(c, p), c.CommandPath(), groups, scan)
+func pickSteps(c *cobra.Command, p cli.Env, groups []tui.Group, scan tui.Work) (tui.Choice, error) {
+	return tui.Pick(c.Context(), engine.ScreenConfig(cli.CallOf(c, p)), c.CommandPath(), groups, scan)
 }
 
 // pickServer opens the list of the roles' steps, scanned by a check, and returns cfg and the roles
 // as the choice sets them. The roles are nil where the maintainer left.
-func pickServer(c *cobra.Command, p process, cfg role.Config, list []role.Role) (role.Config, []role.Role, error) {
-	p.machine = cfg.M // ws_home confines it.
+func pickServer(c *cobra.Command, p cli.Env, cfg role.Config, list []role.Role) (role.Config, []role.Role, error) {
+	p.Machine = cfg.M // ws_home confines it.
 	scan := func(ctx context.Context, b *tui.Bridge) error {
 		look := onScreen(cfg, b)
 		look.Check, look.Only = true, nil
@@ -46,7 +48,7 @@ func pickServer(c *cobra.Command, p process, cfg role.Config, list []role.Role) 
 
 // pickSetup opens the list of ws client macos apply's steps, scanned by a check. It returns the
 // options that the choice sets, and false where the maintainer left.
-func pickSetup(c *cobra.Command, p process, rows tui.Group, run setupRun) (step.Options, bool, error) {
+func pickSetup(c *cobra.Command, p cli.Env, rows tui.Group, run setupRun) (step.Options, bool, error) {
 	scan := func(ctx context.Context, b *tui.Bridge) error {
 		return run(ctx, b.Effects().M, b, io.Discard, b.Options(step.Options{Check: true}))
 	}

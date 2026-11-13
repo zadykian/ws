@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zadykian/ws/engine"
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/role"
@@ -25,10 +27,10 @@ const (
 
 // serverTerminal returns a process with a terminal, as root on the one system that ws server ubuntu
 // apply takes, with ca-certificates and tmux installed.
-func serverTerminal() (process, *effecttest.Machine) {
+func serverTerminal() (cli.Env, *effecttest.Machine) {
 	p := withEnv(fakeProcess(), map[string]string{"TERM": "xterm"})
-	p.tty, p.errTTY, p.euid = true, true, 0
-	m := p.machine.(*effecttest.Machine)
+	p.TTY, p.ErrTTY, p.Euid = true, true, 0
+	m := p.Machine.(*effecttest.Machine)
 	m.Files["/etc/os-release"] = []byte("ID=ubuntu\nVERSION_ID=\"26.04\"\n")
 	m.Packages = effecttest.Packages{"ca-certificates": {Version: "1", Status: "ii"}, "tmux": {Version: "3.5", Status: "ii"}}
 	return p, m
@@ -87,7 +89,7 @@ func roleOf(name string, makes func(effect.Machine, effect.Out) step.Step) role.
 // The run takes cfg's machine, which ws_home confines, not p's.
 func TestApplyOnScreenRunsTheRolesOnTheScreensEffects(t *testing.T) {
 	p, m := serverTerminal()
-	p.machine = effecttest.NewMachine()
+	p.Machine = effecttest.NewMachine()
 	c, drawn := screenCommand(t, "")
 	var made []effect.Out
 	var on effect.Machine
@@ -136,7 +138,7 @@ func TestApplyOnScreenStopsPastTheCurrentStep(t *testing.T) {
 		return stepOf{"two", func(context.Context) error { reached = true; return nil }}
 	})
 	_, err := applyOnScreen(c, p, role.Config{M: m, Out: &effecttest.Out{}}, []role.Role{waits, next})
-	if !errors.Is(err, signalExit{syscall.SIGINT}) || reached {
+	if !errors.Is(err, engine.SignalExit{Sig: syscall.SIGINT}) || reached {
 		t.Errorf("err = %v, the next role reached = %v", err, reached)
 	}
 }

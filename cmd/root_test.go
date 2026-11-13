@@ -2,113 +2,45 @@ package cmd
 
 import (
 	"bytes"
-	"context"
-	"errors"
 	"strings"
-	"syscall"
 	"testing"
 
 	"github.com/spf13/cobra"
 
-	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/cli"
+	"github.com/zadykian/ws/engine/cli/clitest"
 )
 
-// fakeProcess returns a process that touches nothing of the test's own.
-func fakeProcess() process {
-	return process{
-		machine: effecttest.NewMachine(), getenv: noEnv, lookup: func(string) (string, bool) { return "", false },
-		setenv: func(string, string) error { return nil }, euid: 501, pid: 7, goos: "darwin", goarch: "arm64", pwd: "/p", version: "v1.2.3",
-		self: func() (string, error) { return "/h/.local/bin/ws", nil },
-	}
+// fakeProcess returns an Env that touches nothing of the test's own.
+func fakeProcess() cli.Env { return clitest.Env() }
+
+// withEnv returns p with the environment env, for Getenv, Lookup and Setenv.
+func withEnv(p cli.Env, env map[string]string) cli.Env { return clitest.WithEnv(p, env) }
+
+// screenCommand returns a command that keys type on, and what it draws.
+func screenCommand(t *testing.T, keys string) (*cobra.Command, *bytes.Buffer) {
+	var drawn bytes.Buffer
+	c := &cobra.Command{Use: "apply"}
+	c.SetContext(t.Context())
+	c.SetIn(strings.NewReader(keys))
+	c.SetErr(&drawn)
+	return c, &drawn
 }
 
-// withEnv returns p with the environment env, for getenv, lookup and setenv.
-func withEnv(p process, env map[string]string) process {
-	p.getenv = func(k string) string { return env[k] }
-	p.lookup = func(k string) (string, bool) { v, ok := env[k]; return v, ok }
-	p.setenv = func(k, v string) error { env[k] = v; return nil }
-	return p
-}
-
-// runWs runs args on the root of the groups that p serves, with stdin, and returns the status,
-// stdout and stderr.
-func runWs(p process, stdin string, args ...string) (status int, stdout, stderr string) {
-	var out, errs bytes.Buffer
-	root := newRoot(p, newMacCmd(p), newServerCmd(p))
-	status = execute(context.Background(), root, args, strings.NewReader(stdin), &out, &errs)
-	return status, out.String(), errs.String()
+// runWs runs args on the root of both groups, with stdin, and returns the status, stdout and stderr.
+func runWs(p cli.Env, stdin string, args ...string) (status int, stdout, stderr string) {
+	return clitest.Run(p, []*cobra.Command{newMacCmd(p), newServerCmd(p)}, stdin, args...)
 }
 
 // runGroups is runWs on the groups of this system.
-func runGroups(p process, args ...string) (status int, stdout, stderr string) {
-	var out, errs bytes.Buffer
-	status = execute(context.Background(), newRoot(p, groups(p)...), args, strings.NewReader(""), &out, &errs)
-	return status, out.String(), errs.String()
-}
-
-func TestExecuteExitsAsAShellReportsASignal(t *testing.T) {
-	root := newRoot(fakeProcess())
-	root.AddCommand(&cobra.Command{Use: "cut", RunE: func(*cobra.Command, []string) error {
-		return signalExit{syscall.SIGTERM}
-	}})
-	var out, errs bytes.Buffer
-	status := execute(context.Background(), root, []string{"cut"}, strings.NewReader(""), &out, &errs)
-	if status != 143 || errs.Len() != 0 {
-		t.Errorf("status = %d, stderr = %q; want 143 and nothing printed", status, errs.String())
-	}
-}
-
-func TestRun(t *testing.T) {
-	tests := []struct {
-		name       string
-		args       []string
-		wantStatus int
-		wantOut    string
-		wantErr    string
-	}{
-		{"no command", nil, 0, "Available Commands:", ""},
-		{"help", []string{"help"}, 0, "Available Commands:", ""},
-		{"flag", []string{"-h"}, 0, "Available Commands:", ""},
-		{"version", []string{"version"}, 0, "v1.2.3\n", ""},
-		{"unknown", []string{"nope"}, 2, "", "ws: unknown command \"nope\" for \"ws\"\nRun 'ws --help' for usage.\n"},
-		{"unknown flag", []string{"--nope"}, 2, "", "ws: unknown flag: --nope\nRun 'ws --help' for usage.\n"},
-		{"version takes no argument", []string{"version", "x"}, 2, "", "ws version: unknown command \"x\" for \"ws version\"\nRun 'ws version --help' for usage.\n"},
-		{"update takes no argument", []string{"update", "x"}, 2, "", "ws update: unknown command \"x\" for \"ws update\"\nRun 'ws update --help' for usage.\n"},
-		{"old setup", []string{"setup", "ssh"}, 2, "", `unknown command "setup"`},
-		{"old tunnel", []string{"tunnel", "status"}, 2, "", `unknown command "tunnel"`},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			status, stdout, stderr := runWs(fakeProcess(), "", tt.args...)
-			if status != tt.wantStatus {
-				t.Errorf("status = %d, want %d", status, tt.wantStatus)
-			}
-			if !strings.Contains(stdout, tt.wantOut) {
-				t.Errorf("stdout = %q, want it to contain %q", stdout, tt.wantOut)
-			}
-			if !strings.Contains(stderr, tt.wantErr) {
-				t.Errorf("stderr = %q, want it to contain %q", stderr, tt.wantErr)
-			}
-		})
-	}
-}
-
-func TestExecuteFailure(t *testing.T) {
-	fail := &cobra.Command{Use: "fail", Args: cobra.NoArgs, RunE: func(*cobra.Command, []string) error {
-		return errors.Join(errors.New("one"), errors.New("two"))
-	}}
-	var out, errs bytes.Buffer
-	root := newRoot(fakeProcess(), fail)
-	if got := execute(context.Background(), root, []string{"fail"}, strings.NewReader(""), &out, &errs); got != 1 ||
-		errs.String() != "ws fail: one\nws fail: two\n" {
-		t.Errorf("fail: status = %d, stderr = %q", got, errs.String())
-	}
+func runGroups(p cli.Env, args ...string) (status int, stdout, stderr string) {
+	return clitest.Run(p, groups(p), "", args...)
 }
 
 func TestEveryCommandSetsArgs(t *testing.T) {
 	p := fakeProcess()
-	for _, group := range []*cobra.Command{newRoot(p), newMacCmd(p), newServerCmd(p)} {
-		walk(group, func(c *cobra.Command) {
+	for _, group := range []*cobra.Command{cli.Root(p), newMacCmd(p), newServerCmd(p)} {
+		cli.Walk(group, func(c *cobra.Command) {
 			if c.Args == nil {
 				t.Errorf("%s: Args is nil", c.CommandPath())
 			}

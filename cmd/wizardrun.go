@@ -12,6 +12,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine"
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
@@ -20,7 +22,7 @@ import (
 // wizardRun is a wizard's run at a terminal, over its side: the Mac's or ws's.
 type wizardRun struct {
 	c    *cobra.Command
-	p    process
+	p    cli.Env
 	side wizardSide
 	o    wizardOptions
 }
@@ -33,17 +35,17 @@ func (w wizardRun) start(before ...func(effect.Out) step.Step) error {
 	ctx, stop := signal.NotifyContext(w.c.Context(), syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	term := effect.NewTerminal(w.c.InOrStdin(), w.c.ErrOrStderr())
-	out := progOut{term, w.c.CommandPath(), map[string]bool{}}
+	out := linesOf(term, w.c.CommandPath())
 	if len(before) > 0 {
 		steps := make([]step.Step, len(before))
 		for i, build := range before {
 			steps[i] = build(out)
 		}
 		if _, err := step.RunWith(ctx, steps, step.Options{Observer: out, Check: w.o.check}); err != nil {
-			return unwrapStep(err)
+			return engine.Cause(err)
 		}
 	}
-	if drawsScreen(w.c, w.p) {
+	if engine.DrawsScreen(cli.CallOf(w.c, w.p)) {
 		stop() // The screen takes the signals, and asks before a signal ends a run.
 		return w.draw()
 	}
@@ -51,19 +53,19 @@ func (w wizardRun) start(before ...func(effect.Out) step.Step) error {
 }
 
 // lines is the plain run: the stages under the lock, then what stays by hand.
-func (w wizardRun) lines(ctx context.Context, term *effect.Terminal, out progOut) error {
+func (w wizardRun) lines(ctx context.Context, term *effect.Terminal, out engine.Lines) error {
 	hand := &wizard.Hand{}
 	closing := func(ctx context.Context) {
 		hand.Close(ctx, w.c.OutOrStdout())
 		term.Flush()
 	}
-	talks, _ := w.p.machine.(effect.Foreground)
+	talks, _ := w.p.Machine.(effect.Foreground)
 	stages := w.side.stages(wizardEffects{p: w.p, prog: w.c.CommandPath(), talks: talks, ask: signalPrompt{term},
 		hidden: term, out: out, text: w.c.OutOrStdout(), obs: out, hand: hand, sudo: &host.Sudo{}}, w.o)
-	_, err := wizard.Run(ctx, w.p.machine, step.Options{Observer: out, Check: w.o.check}, stages, w.p.lockDir(),
+	_, err := wizard.Run(ctx, w.p.Machine, step.Options{Observer: out, Check: w.o.check}, stages, w.p.LockDir(),
 		w.side.pid, closing)
 	// The runner names the stage before the stage's own message.
-	return unwrapStep(err)
+	return engine.Cause(err)
 }
 
 // draw opens the lists over a scan and runs what they choose, or goes straight to the run under
@@ -94,9 +96,9 @@ func (w wizardRun) round() tui.Round {
 }
 
 // config is what the wizard's screens draw with. A signal ends a plain wizard through its context,
-// with status 1, so here too a signal is an error of the run, not signalExit.
+// with status 1, so here too a signal is an error of the run, not engine.SignalExit.
 func (w wizardRun) config() tui.Config {
-	cfg := screenConfig(w.c, w.p)
+	cfg := engine.ScreenConfig(cli.CallOf(w.c, w.p))
 	cfg.Cut = func(s syscall.Signal) error { return fmt.Errorf("stopped by %v", s) }
 	return cfg
 }
@@ -109,7 +111,7 @@ func (w wizardRun) plainStages() []step.Step {
 // effects returns the stages' effects on b, whose stdout waits for the screen's end.
 func (w wizardRun) effects(b *tui.Bridge, sudo *host.Sudo) wizardEffects {
 	p, on := w.p, b.Effects()
-	p.machine = on.M
+	p.Machine = on.M
 	return wizardEffects{p: p, prog: w.c.CommandPath(), talks: on.Talks, ask: b, hidden: b, out: b, text: on.Text, obs: b,
 		hand: &wizard.Hand{}, sudo: sudo, stop: b.Options(step.Options{}).Stop}
 }
@@ -125,12 +127,12 @@ func (w wizardRun) scan(sudo *host.Sudo) tui.Work {
 		o := b.Options(step.Options{Check: true})
 		if run := wsRunOf(stages); run != nil {
 			o.Observer = afterStage{b, run.WaitsOn(), func() {
-				states, err := run.Ws.State(ctx, w.p.version)
+				states, err := run.Ws.State(ctx, w.p.Version)
 				reportRoles(run.Name(), states, err, b.Report)
 			}}
 		}
-		_, err := wizard.Run(ctx, e.p.machine, o, stages, w.p.lockDir(), w.side.pid, nil)
-		return unwrapStep(err)
+		_, err := wizard.Run(ctx, e.p.Machine, o, stages, w.p.LockDir(), w.side.pid, nil)
+		return engine.Cause(err)
 	}
 }
 
@@ -168,15 +170,15 @@ func (w wizardRun) work(o wizardOptions, sudo *host.Sudo) tui.Work {
 		e.events = b
 		closing := func(ctx context.Context) { e.hand.Close(ctx, e.text) }
 		so := b.Options(step.Options{Check: o.check, LeftOut: o.left})
-		_, err := wizard.Run(ctx, e.p.machine, so, w.side.stages(e, o), w.p.lockDir(), w.side.pid, closing)
-		return unwrapStep(err)
+		_, err := wizard.Run(ctx, e.p.Machine, so, w.side.stages(e, o), w.p.LockDir(), w.side.pid, closing)
+		return engine.Cause(err)
 	}
 }
 
 // running gives draw a run's config and the work of o. The run's stdout prints past the screen,
 // which it would paint over.
 func (w wizardRun) running(o wizardOptions, sudo *host.Sudo, draw func(tui.Config, tui.Work) error) error {
-	cfg, done := runConfig(w.c, w.p, w.config())
+	cfg, done := engine.RunConfig(cli.CallOf(w.c, w.p), w.config())
 	defer done()
 	return draw(cfg, w.work(o, sudo))
 }
@@ -184,7 +186,7 @@ func (w wizardRun) running(o wizardOptions, sudo *host.Sudo, draw func(tui.Confi
 // whole runs every stage, on the run screen of their names.
 func (w wizardRun) whole() error {
 	return w.running(w.o, &host.Sudo{}, func(cfg tui.Config, work tui.Work) error {
-		screen := tui.NewRunScreen(runTitle(w.c, w.o.check), cfg.Theme, tui.NewGroup("", w.plainStages()))
+		screen := tui.NewRunScreen(engine.RunTitle(cli.CallOf(w.c, w.p), w.o.check), cfg.Theme, tui.NewGroup("", w.plainStages()))
 		return tui.Run(w.c.Context(), cfg, screen, work)
 	})
 }
@@ -205,7 +207,7 @@ func (w wizardRun) optionsOf(choice tui.QueueChoice, run string) wizardOptions {
 func (w wizardRun) chosen(choice tui.QueueChoice, run string, sudo *host.Sudo) error {
 	o := w.optionsOf(choice, run)
 	return w.running(o, sudo, func(cfg tui.Config, work tui.Work) error {
-		screen := tui.NewQueueRun(runTitle(w.c, o.check), cfg.Theme, choice)
+		screen := tui.NewQueueRun(engine.RunTitle(cli.CallOf(w.c, w.p), o.check), cfg.Theme, choice)
 		return tui.Run(w.c.Context(), cfg, screen, work)
 	})
 }
