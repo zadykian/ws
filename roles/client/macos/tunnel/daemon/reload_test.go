@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/uapi"
 	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
+	"github.com/zadykian/ws/roles/internal/slot"
 )
 
 func TestReloadChangesTheRoutesInPlace(t *testing.T) {
@@ -19,7 +20,7 @@ func TestReloadChangesTheRoutesInPlace(t *testing.T) {
 	if got := added(r); len(got) != 1 {
 		t.Errorf("endpoints = %q, want the session kept", got)
 	}
-	want, _ := uapi.SetAllowed(peerKey, r.allowed.IPs())
+	want, _ := uapi.SetAllowed(peerKey, r.allowed.IPs(slot.Slot(0).Server()))
 	if got := r.dev.sets[len(r.dev.sets)-1]; got != want || !strings.Contains(want, "172.16.0.0/12") {
 		t.Errorf("last set = %q, want AllowedIPs with the office %q", got, want)
 	}
