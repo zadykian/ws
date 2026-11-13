@@ -95,7 +95,7 @@ option, with the first, or the default, as its answer when empty.
 
 ## The run screen
 
-`RunScreen` follows a run. It takes the run's `Group`s, so it lists every step before the first
+`run.Screen` follows a run. It takes the run's `Group`s, so it lists every step before the first
 one starts. `Bridge.Observe` is the run's `step.Observer`, and sends it the run's events.
 
 The title's right side holds the steps ended, a bar of them and the elapsed time. One pane lists
