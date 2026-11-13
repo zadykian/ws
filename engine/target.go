@@ -16,6 +16,27 @@ type Target struct {
 	Prepare func(ctx context.Context, c Call) (Run, error)
 	// Change says a change under --check in the side's way. Nil prints each as "PATH: change".
 	Change func(step.Change) (string, bool)
+	// State readies the report of state. Its errors are the command's own.
+	State func(ctx context.Context, c Call) (Report, error)
+	// Sheets gives the forms of configure, and done, which lets go of what they hold once the
+	// screen has ended. Done may be nil.
+	Sheets func(ctx context.Context, c Call) (sheets []tui.Sheet, done func(context.Context), err error)
+	// Refuse says why configure does not run here, or "" to let it.
+	Refuse func(c Call) string
+	// NoScreen is what configure says where no screen draws: a form has no lines to fall back on.
+	NoScreen string
+	// Wizard is the guided run of the side.
+	Wizard Side
+}
+
+// Report is a prepared state: what the roles report, on the screen or in text.
+type Report struct {
+	// M is the machine of the screen's read, where the side confines it. Nil keeps the call's.
+	M effect.Machine
+	// Read is the state screen's read.
+	Read tui.StateReader
+	// Print reads the machine and prints the report on c.Out, as JSON where c.JSON.
+	Print func(ctx context.Context, c Call) error
 }
 
 // Run is a prepared apply.

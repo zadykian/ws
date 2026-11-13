@@ -2,21 +2,15 @@ package cmd
 
 import (
 	"context"
-	"errors"
-	"io"
 	"slices"
 	"strings"
-	"syscall"
 	"testing"
-	"time"
 
-	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/engine/tui"
 )
 
 const (
@@ -86,74 +80,6 @@ func roleOf(name string, makes func(effect.Machine, effect.Out) step.Step) role.
 	}}
 }
 
-// The run takes cfg's machine, which ws_home confines, not p's.
-func TestApplyOnScreenRunsTheRolesOnTheScreensEffects(t *testing.T) {
-	p, m := serverTerminal()
-	p.Machine = effecttest.NewMachine()
-	c, drawn := screenCommand(t, "")
-	var made []effect.Out
-	var on effect.Machine
-	r := roleOf("a", func(machine effect.Machine, out effect.Out) step.Step {
-		made, on = append(made, out), machine
-		return stepOf{"one", func(context.Context) error { return nil }}
-	})
-	lines := &effecttest.Out{}
-	cfg := role.Config{Options: role.Options{Check: true}, M: m, Out: lines, Observer: step.Printer{Out: lines}}
-	changed, err := applyOnScreen(c, p, cfg, []role.Role{r})
-	if err != nil || !slices.Equal(changed, []string{"a"}) {
-		t.Fatalf("changed = %q, err = %v", changed, err)
-	}
-	if !strings.Contains(drawn.String(), enterScreen) || !strings.Contains(drawn.String(), leaveScreen) {
-		t.Errorf("no whole screen in %q", drawn.String())
-	}
-	if len(made) != 2 || made[0] != effect.Out(lines) {
-		t.Fatalf("the steps were made on %v, want the plain effects first, for their names", made)
-	}
-	if _, ok := made[1].(*tui.Bridge); !ok || on != effect.Machine(m) {
-		t.Errorf("the run's steps got %T on %p, want the screen's bridge on cfg's machine", made[1], on)
-	}
-	if len(lines.Lines) != 0 {
-		t.Errorf("a run on the screen printed %q", lines.Lines)
-	}
-}
-
-func TestApplyOnScreenStopsPastTheCurrentStep(t *testing.T) {
-	p, m := serverTerminal()
-	c, _ := screenCommand(t, "")
-	keys, press := io.Pipe()
-	t.Cleanup(func() { _ = press.Close() })
-	c.SetIn(keys)
-	var reached bool
-	waits := roleOf("a", func(_ effect.Machine, out effect.Out) step.Step {
-		return stepOf{"one", func(context.Context) error {
-			stopped := out.(*tui.Bridge).Options(step.Options{}).Stop
-			_, _ = io.WriteString(press, "\x03\r")
-			for stopped() == nil {
-				time.Sleep(time.Millisecond)
-			}
-			return nil
-		}}
-	})
-	next := roleOf("b", func(effect.Machine, effect.Out) step.Step {
-		return stepOf{"two", func(context.Context) error { reached = true; return nil }}
-	})
-	_, err := applyOnScreen(c, p, role.Config{M: m, Out: &effecttest.Out{}}, []role.Role{waits, next})
-	if !errors.Is(err, engine.SignalExit{Sig: syscall.SIGINT}) || reached {
-		t.Errorf("err = %v, the next role reached = %v", err, reached)
-	}
-}
-
-func TestServerGroupsNameEveryStepOfARun(t *testing.T) {
-	r := roleOf("a", func(effect.Machine, effect.Out) step.Step { return stepOf{name: "one"} })
-	cfg := role.Config{M: effecttest.NewMachine(), Prepare: []step.Step{stepOf{name: "first"}}}
-	got := serverGroups(cfg, []role.Role{r})
-	want := []tui.Group{{Name: role.Prepare, Steps: []string{"first"}}, {Name: "a", Steps: []string{"one"}}}
-	if len(got) != 2 || got[0].Name != want[0].Name || !slices.Equal(got[0].Steps, want[0].Steps) ||
-		got[1].Name != want[1].Name || !slices.Equal(got[1].Steps, want[1].Steps) {
-		t.Errorf("groups = %+v, want %+v", got, want)
-	}
-}
-
 // A role's steps follow the machine's values, so the check reads those first, and runs no step. A
 // step's name holds a space, and --only keeps it whole.
 func TestServerApplyRefusesAStepItsRoleLacks(t *testing.T) {
@@ -174,24 +100,6 @@ func TestServerApplyTakesAStepByName(t *testing.T) {
 	status, _, stderr := runWs(p, "", "server", "ubuntu", "apply", "--plain", "--check", "--only", "tmux/Tmux")
 	if status != 0 || !strings.HasSuffix(stderr, "ws server ubuntu apply: would change: none\n") {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
-	}
-}
-
-func TestApplyOnScreenChecksTheStepsNamed(t *testing.T) {
-	p, m := serverTerminal()
-	c, drawn := screenCommand(t, "")
-	r := role.Role{Name: "a", Steps: func(effect.Machine, effect.Units, effect.Out) []step.Step {
-		plan := func(context.Context) error { return nil }
-		return []step.Step{stepOf{"one", plan}, stepOf{"two", plan}}
-	}}
-	cfg := role.Config{Options: role.Options{Check: true, Only: []string{"a/two"}}, M: m, Out: &effecttest.Out{}}
-	changed, err := applyOnScreen(c, p, cfg, []role.Role{r})
-	if err != nil || !slices.Equal(changed, []string{"a"}) {
-		t.Fatalf("changed = %q, err = %v", changed, err)
-	}
-	past := drawn.String()[strings.LastIndex(drawn.String(), leaveScreen):]
-	if !strings.Contains(past, "a: two: x") || strings.Contains(past, "a: one: x") {
-		t.Errorf("after the screen: %q, want the change of two alone", past)
 	}
 }
 

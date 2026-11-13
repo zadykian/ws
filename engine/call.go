@@ -22,4 +22,6 @@ type Call struct {
 	Getenv          func(string) string
 	// TTY, ErrTTY and OutTTY tell whether stdin, stderr and stdout are terminals.
 	TTY, ErrTTY, OutTTY bool
+	// LockDir holds the wizards' lock.
+	LockDir string
 }

@@ -12,7 +12,6 @@ import (
 
 	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/cli"
-	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
@@ -93,34 +92,6 @@ func TestServerApplyOpensTheListAndLeavesWithQ(t *testing.T) {
 	}
 	if strings.Contains(stderr, "changed:") {
 		t.Errorf("a run began: %q", stderr)
-	}
-}
-
-func TestPickSetupReturnsTheStepsChosen(t *testing.T) {
-	p, _ := macTerminal()
-	c, _ := screenCommand(t, "")
-	keys := newAfterScan("n \r")
-	c.SetIn(keys)
-	c.SetErr(keys)
-	var checks []bool
-	steps := []step.Step{
-		stepOf{"one", func(context.Context) error { return nil }},
-		stepOf{"two", func(context.Context) error { return nil }},
-	}
-	run := func(ctx context.Context, _ effect.Machine, _ effect.Out, _ io.Writer, o step.Options) error {
-		checks = append(checks, o.Check)
-		_, err := step.RunWith(ctx, steps, o)
-		return err
-	}
-	o, ok, err := pickSetup(c, p, tui.NewGroup("", steps), run)
-	if err != nil || !ok || o.Check || o.LeftOut == nil {
-		t.Fatalf("options = %+v, ok = %v, err = %v", o, ok, err)
-	}
-	if o.LeftOut("", "one") || !o.LeftOut("", "two") {
-		t.Error("the choice leaves out a step it chose, or keeps one it didn't")
-	}
-	if len(checks) == 0 || slices.Contains(checks, false) {
-		t.Errorf("the list scanned with checks %v, want a check each time", checks)
 	}
 }
 

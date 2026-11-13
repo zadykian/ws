@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/core/wizard"
 	"slices"
 	"testing"
@@ -26,7 +27,7 @@ func wizardProcess(vars string, booted bool, status string) (cli.Env, *effecttes
 // the signing key wait on the run.
 func TestServerWizardStagesReadHostVars(t *testing.T) {
 	p, m := wizardProcess("---\nsecurity_outbound: false\nws_user: root\n", false, "")
-	stages := serverWizardStages(wizardEffects{p: p, hand: &wizard.Hand{}}, wizardOptions{})
+	stages := serverWizardStages(wizardEffects{p: p, hand: &wizard.Hand{}}, engine.WizardOptions{})
 	var got []string
 	for _, s := range stages {
 		got = append(got, s.Name()+" < "+s.WaitsOn())

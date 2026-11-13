@@ -3,7 +3,6 @@ package cmd
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -80,7 +79,6 @@ type applyOptions struct {
 // newApplyCmd returns ws server ubuntu apply.
 func newApplyCmd(p cli.Env) *cobra.Command {
 	var opts applyOptions
-	var asJSON bool
 	c := &cobra.Command{
 		Use:   "apply",
 		Short: "set the server up, each role as Go steps",
@@ -93,11 +91,11 @@ func newApplyCmd(p cli.Env) *cobra.Command {
 			"or skipped, with the step, the first line of each change and the error. ws's own lines stay on " +
 			"stderr, and no screen is drawn.",
 		Args: cobra.NoArgs,
-		RunE: func(c *cobra.Command, _ []string) error { return runApply(c, p, opts, asJSON) },
+		RunE: cli.Apply(serverTarget(p, &opts), p),
 	}
 	f := c.Flags()
-	f.BoolVar(&asJSON, "json", false, "print each event of the run as a line of JSON on stdout")
-	f.BoolVar(&opts.Check, "check", false, "plan the steps and apply none")
+	f.Bool("json", false, "print each event of the run as a line of JSON on stdout")
+	f.Bool("check", false, "plan the steps and apply none")
 	f.StringSliceVar(&opts.Only, "only", nil, "run the named roles and ROLE/STEPs alone, as a list or by repeating the flag")
 	f.StringVar(&opts.Secrets, "secrets", "", "read the secrets from the age-encrypted `FILE`")
 	return c
@@ -114,8 +112,8 @@ type serverRun struct {
 
 // prepareServer checks where the command runs, then loads the values and the secrets that the
 // roles read. The steps of --only follow the values, so they are checked last.
-func prepareServer(c *cobra.Command, p cli.Env, opts applyOptions) (serverRun, error) {
-	if c.Flags().Changed("only") && len(opts.Only) == 0 {
+func prepareServer(call engine.Call, p cli.Env, opts applyOptions) (serverRun, error) {
+	if call.Selected && len(opts.Only) == 0 {
 		return serverRun{}, engine.UsageError{Err: errors.New("--only names no role")}
 	}
 	_, err := role.Select(ubuntu.Roles(values.Values{}, secrets.Secrets{}), opts.Only)
@@ -129,8 +127,8 @@ func prepareServer(c *cobra.Command, p cli.Env, opts applyOptions) (serverRun, e
 	if why := serverRefusal(p.Euid, text); why != "" {
 		return serverRun{}, errors.New(why)
 	}
-	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
-	out := linesOf(term, c.CommandPath())
+	term := effect.NewTerminal(strings.NewReader(""), call.Err)
+	out := linesOf(term, call.Path)
 	v, err := values.Load(p.Machine, serverVars)
 	if err != nil {
 		return serverRun{}, err
@@ -161,40 +159,6 @@ func (r serverRun) roles(s secrets.Secrets) ([]role.Role, error) {
 	return role.Select(ubuntu.Roles(r.values, s), r.cfg.Only)
 }
 
-// runApply sets the server up as opts say.
-func runApply(c *cobra.Command, p cli.Env, opts applyOptions, asJSON bool) error {
-	r, err := prepareServer(c, p, opts)
-	if err != nil {
-		return err
-	}
-	if opensList(c, p, c.Flags().Changed("only")) {
-		if r.cfg, r.list, err = pickServer(c, p, r.cfg, r.list); err != nil || r.list == nil {
-			r.term.Flush()
-			return err
-		}
-	}
-	var events *engine.JSONEvents
-	if asJSON {
-		events = engine.NewJSONEvents(c.OutOrStdout(), r.out)
-		r.cfg.Observer = events
-	}
-	var changed []string
-	if engine.DrawsScreen(cli.CallOf(c, p)) {
-		changed, err = applyOnScreen(c, p, r.cfg, r.list)
-	} else {
-		changed, err = role.Run(c.Context(), r.cfg, r.list)
-	}
-	r.term.Flush()
-	if err != nil {
-		return err
-	}
-	if events != nil && events.Err() != nil {
-		return events.Err()
-	}
-	r.out.Say("%s", role.Summary(changed, r.cfg.Check))
-	return nil
-}
-
 // prepareSteps is what every role needs: ca-certificates serves the steps' downloads over HTTPS.
 func prepareSteps(m effect.Machine, out effect.Out) []step.Step {
 	return []step.Step{resource.Group{Title: "Packages", Parts: []resource.Resource{apt.Packages{
@@ -209,36 +173,6 @@ func onScreen(cfg role.Config, b *tui.Bridge) role.Config {
 	cfg.M, cfg.Observer, cfg.Stop = e.M, o.Observer, o.Stop
 	cfg.Out, cfg.Prepare = b, prepareSteps(e.M, b)
 	return cfg
-}
-
-// applyOnScreen is role.Run under the run screen. cfg's steps name the screen's rows, and the run
-// builds them again on the screen's effects. The roles it returns are those of a run that ended.
-func applyOnScreen(c *cobra.Command, p cli.Env, cfg role.Config, list []role.Role) ([]string, error) {
-	var changed []string
-	p.Machine = cfg.M // ws_home confines it.
-	call := cli.CallOf(c, p)
-	err := engine.DrawRun(c.Context(), call, engine.RunTitle(call, cfg.Check), serverGroups(cfg, list), func(ctx context.Context, b *tui.Bridge) error {
-		run := onScreen(cfg, b)
-		var err error
-		changed, err = role.Run(ctx, run, list)
-		if err == nil { // A plain run prints the summary after the screen, and the log holds it.
-			b.Log(role.Summary(changed, cfg.Check))
-		}
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-	return changed, nil
-}
-
-// serverGroups names the steps of a run, so that its screen lists each one before the first starts.
-func serverGroups(cfg role.Config, list []role.Role) []tui.Group {
-	groups := []tui.Group{tui.NewGroup(role.Prepare, cfg.Prepare)}
-	for _, r := range list {
-		groups = append(groups, tui.NewGroup(r.Name, cfg.Steps(r)))
-	}
-	return groups
 }
 
 // loadSecrets reads the identity from the unit's credential and decrypts the file, or returns no

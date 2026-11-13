@@ -30,8 +30,8 @@ func screenWanted(plain, asJSON, stdinTTY, stderrTTY bool, term string) bool {
 	return !plain && !asJSON && stdinTTY && stderrTTY && term != "" && term != "dumb"
 }
 
-// RunTitle is a run screen's title: the command, with --check where it makes no change.
-func RunTitle(c Call, check bool) string {
+// runTitle is a run screen's title: the command, with --check where it makes no change.
+func runTitle(c Call, check bool) string {
 	if check {
 		return c.Path + " --check"
 	}
@@ -47,18 +47,18 @@ func ScreenConfig(c Call) tui.Config {
 	}
 }
 
-// DrawRun runs work beside a run screen of groups, on stderr, where the lines go, and returns once
+// drawRun runs work beside a run screen of groups, on stderr, where the lines go, and returns once
 // the terminal is back. work gives its steps Bridge.Options. A run cut short ends with the
 // status of a signal, for execute to report.
-func DrawRun(ctx context.Context, c Call, title string, groups []tui.Group, work tui.Work) error {
-	cfg, done := RunConfig(c, ScreenConfig(c))
+func drawRun(ctx context.Context, c Call, title string, groups []tui.Group, work tui.Work) error {
+	cfg, done := runConfig(c, ScreenConfig(c))
 	defer done()
 	return tui.Run(ctx, cfg, tui.NewRunScreen(title, cfg.Theme, groups...), work)
 }
 
-// RunConfig returns cfg as a run draws it: it asks before it stops, and keeps a log, which done
+// runConfig returns cfg as a run draws it: it asks before it stops, and keeps a log, which done
 // closes once the run has ended.
-func RunConfig(c Call, cfg tui.Config) (tui.Config, func()) {
+func runConfig(c Call, cfg tui.Config) (tui.Config, func()) {
 	log, path := openLog(c, time.Now())
 	cfg.LogPath = path
 	if log == nil { // A nil *os.File in the interface would not be nil.

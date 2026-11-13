@@ -1,46 +1,26 @@
-package cmd
+package engine
 
 import (
-	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/core/wizard"
-	"github.com/zadykian/ws/roles/client/macos"
-	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/roles/client/macos/stages/stage"
-	"github.com/zadykian/ws/roles/client/macos/stages/tools"
-	"github.com/zadykian/ws/roles/server/ubuntu"
 )
 
-// wizardQueue returns the stages as the lists show them, each on its machine, with the stage that
+// WizardQueue returns the stages as the lists show them, each on its machine, with the stage that
 // picking it locks. ws client macos apply's steps stand under their stage, and ws's roles too, by
 // name, until ws reports their steps.
-func wizardQueue(stages []step.Step) []tui.Stage {
+func WizardQueue(side Side, stages []step.Step) []tui.Stage {
 	queue := make([]tui.Stage, len(stages))
 	for i, s := range stages {
-		queue[i] = tui.Stage{Name: s.Name(), Side: string(stage.Mac), Waits: wizard.Locks(s), Nested: nestedRows(s.Name())}
+		queue[i] = tui.Stage{Name: s.Name(), Side: string(side.Local), Waits: wizard.Locks(s), Nested: side.Nested(s.Name())}
 		if m, ok := wizard.SideOf(s); ok {
 			queue[i].Side = string(m)
 		}
 	}
 	return queue
-}
-
-// nestedRows returns the groups that the stage named runs, as the lists show them under it.
-func nestedRows(stage string) []tui.Group {
-	var groups []tui.Group
-	switch stage {
-	case (&tools.Setup{}).Name():
-		groups = []tui.Group{{Name: stage, Steps: macos.Names()}}
-	case (&stages.WsRun{}).Name():
-		for _, name := range ubuntu.Names() {
-			groups = append(groups, tui.Group{Name: name})
-		}
-	}
-	return groups
 }
 
 // wizardLeft is the run's LeftOut for choice. It leaves out a stage that choice doesn't name with
@@ -67,7 +47,7 @@ func reportRoles(stage string, states []role.RoleState, err error, report func(s
 		report(stage, nil, err.Error())
 		return
 	}
-	report(stage, slices.DeleteFunc(engine.RoleSections(states), func(s tui.StateSection) bool {
+	report(stage, slices.DeleteFunc(RoleSections(states), func(s tui.StateSection) bool {
 		return s.Name == role.Prepare
 	}), "")
 }
