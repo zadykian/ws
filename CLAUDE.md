@@ -14,7 +14,7 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   alone, such as the cable's port ([The direct link](roles/server/ubuntu/network/README.md#the-direct-link)). Each role
   holds its pins, and embeds its templates and files. ws-fans, the fans' service, is
   `ws server ubuntu fans`, in `roles/server/ubuntu/fans/daemon`.
-- `go.mod`, `go.sum` and `.golangci.yml`: the Go module `github.com/zadykian/ws`, at the root.
+- `go.mod` and `go.sum`: the Go module `github.com/zadykian/ws`, at the root.
   `main.go` runs `cmd`, which composes the root, `--plain` and the exit codes with the two sides'
   commands. `engine/cli` builds the root, `--plain` and the exit codes. `engine/core` holds `step`,
   `effect`, with `effect/effecttest`, `effect/local` and `effect/units`, and `resource`, with
@@ -32,7 +32,8 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   `.github/workflows/README.md` CI.
 - `.tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
   caps them. `build` builds ws for a target, and `vale-comments` runs Vale on files' comments. Go's
-  `./...` leaves out a dot directory, so the Go gates name the tools' packages too.
+  `./...` leaves out a dot directory, so the Go gates name the tools' packages too. `lint/` holds
+  the linters' configs, which the Makefile passes by flag.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
 - `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook`, `rootless`, `install` and
   `signoz`;
@@ -137,13 +138,13 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
 - Fix a finding, or justify it in place with its linter's own mechanism and a reason:
   `//nolint:NAME // reason`, `# yamllint disable-line rule:NAME` or
   `# shellcheck disable=SCNNNN`, each with the reason beside it. Never lower a severity, add an
-  exclusion or keep a baseline: every file passes every gate outright, and `.yamllint`,
-  `.golangci.yml` and `.vale.ini` are never weakened.
+  exclusion or keep a baseline: every file passes every gate outright. The linters' configs in
+  `.tools/lint/`, yamllint's, golangci-lint's, Vale's and rumdl's, are never weakened.
 - ws's layers import downward: cobra lives in `cmd`, the `cli` packages and `.tools/`;
   `engine/core` imports itself alone; a role imports `engine/core`, `roles/internal` and its own
   side, but not that side's `cli`. The Mac imports the server's `values`, `secrets`, `session`,
   `stages` and `cli` alone.
-  depguard's lists in [.golangci.yml](.golangci.yml) fail an import across them.
+  depguard's lists in [golangci.yml](.tools/lint/golangci.yml) fail an import across them.
 - The caps are those of the
   [writing](https://github.com/zadykian/toolkit/blob/main/skills/writing/SKILL.md#the-caps-and-vale)
   skill, which `make sizecheck`, `make vale` and `make rumdl` check.

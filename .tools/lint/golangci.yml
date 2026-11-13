@@ -1,6 +1,11 @@
 ---
 version: "2"
 
+# The file sits in .tools/lint, so ${base-path}, in depguard's files, is the module's root, where
+# go.mod is, rather than the file's directory.
+run:
+  relative-path-mode: gomod
+
 linters:
   default: standard
   enable:

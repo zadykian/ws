@@ -8,7 +8,7 @@
 # templates. Data files, such as TOML, JSON, conf files and licenses, are of no kind it caps.
 # Generated and vendored files are exempt, as they are not written here. These are foundryctl's
 # compose files in roles/server/ubuntu/signoz/deployment/ and its casting.yaml.lock, which yamllint
-# leaves out too. So are the Vale styles in .vale/styles/, errata-ai's word lists. Each
+# leaves out too. So are the Vale styles in .tools/lint/vale/styles/, errata-ai's word lists. Each
 # finding goes to stdout as PATH: message, and any fails the check. Run it from the root.
 
 set -eu
@@ -20,7 +20,7 @@ max=300
 exempt() {
     case $1 in
     roles/server/ubuntu/signoz/deployment/* | roles/server/ubuntu/signoz/casting.yaml.lock) return 0 ;;
-    .vale/styles/*) return 0 ;;
+    .tools/lint/vale/styles/*) return 0 ;;
     esac
     return 1
 }

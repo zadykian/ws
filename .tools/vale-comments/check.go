@@ -17,7 +17,7 @@ import (
 // valeCommand runs the pinned Vale, which .tools/run fetches on its first run. A test swaps it.
 var valeCommand = []string{".tools/run", "vale"}
 
-// check returns the alerts of Vale, with .vale.ini, on the comments of the files.
+// check returns the alerts of Vale, with .tools/lint/vale.ini, on the comments of the files.
 func check(files []string, stderr io.Writer) ([]finding, error) {
 	dir, err := os.MkdirTemp("", "vale-comments")
 	if err != nil {
@@ -37,7 +37,7 @@ func check(files []string, stderr io.Writer) ([]finding, error) {
 	if len(mirrors) == 0 {
 		return nil, nil
 	}
-	args := slices.Concat(valeCommand[1:], []string{"--config=.vale.ini", "--output=JSON"}, slices.Sorted(maps.Keys(mirrors)))
+	args := slices.Concat(valeCommand[1:], []string{"--config=.tools/lint/vale.ini", "--output=JSON"}, slices.Sorted(maps.Keys(mirrors)))
 	cmd := exec.Command(valeCommand[0], args...) //nolint:gosec // the command is the pinned Vale's
 	cmd.Stderr = stderr
 	out, err := cmd.Output()

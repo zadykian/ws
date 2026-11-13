@@ -31,7 +31,8 @@ export CGO_ENABLED = 0
 # Go's ./... leaves out a directory whose name starts with a dot, and so the tools in .tools. The
 # Go gates name each directory of .tools that holds a Go file too, found at each run, so that a
 # new tool needs no edit here. A pattern that starts with ./ is a directory to Go.
-TOOLS_GO := $(patsubst %/,./%,$(sort $(dir $(shell find .tools -name '*.go' ! -path '*/testdata/*'))))
+TOOLS_GO := $(patsubst %/,./%,$(sort $(dir \
+	$(shell find .tools -name '*.go' ! -path '*/testdata/*'))))
 
 .PHONY: lint shell yamllint sizecheck vale lychee rumdl actionlint zizmor \
 	gitleaks gofmt govet golangci-lint govulncheck gotest lint-file lint-tree
@@ -65,19 +66,20 @@ shell:
 	@set -ef; files=$$(.tools/files sh $(FILES)); [ -z "$$files" ] || { \
 		.tools/run shellcheck -x $$files && .tools/run shfmt -d -i 4 $$files; }
 
-# yamllint finds the YAML files itself, and leaves out those .yamllint ignores.
+# yamllint finds the YAML files itself, and leaves out those .tools/lint/yamllint.yml ignores.
 yamllint: $(PIP_STAMP)
 	@set -ef; if [ -z "$(FILES)" ]; then files=.; else files=$$(.tools/files yaml $(FILES)); fi; \
-		[ -z "$$files" ] || $(VENV)/bin/yamllint --strict $$files
+		[ -z "$$files" ] || $(VENV)/bin/yamllint --strict -c .tools/lint/yamllint.yml $$files
 
 # The size cap: 300 lines a file.
 sizecheck:
 	.tools/sizecheck $(FILES)
 
-# Vale (.vale.ini) on the Markdown files git lists, new ones included. Vale would read any other
-# file whole, so .tools/vale-comments mirrors its comments as Markdown for Vale.
+# Vale (.tools/lint/vale.ini) on the Markdown files git lists, new ones included. Vale would read
+# any other file whole, so .tools/vale-comments mirrors its comments as Markdown for Vale.
 vale:
-	@set -ef; files=$$(.tools/files md $(FILES)); [ -z "$$files" ] || .tools/run vale $$files; \
+	@set -ef; files=$$(.tools/files md $(FILES)); \
+		[ -z "$$files" ] || .tools/run vale --config=.tools/lint/vale.ini $$files; \
 		go=$$(.tools/run -path go); "$$go" run ./.tools/vale-comments $(FILES)
 
 # Links to files and their headings in the Markdown files.
@@ -85,9 +87,10 @@ lychee:
 	@set -ef; files=$$(.tools/files md $(FILES)); [ -z "$$files" ] || \
 		.tools/run lychee --offline --include-fragments --no-progress $$files
 
-# rumdl (.rumdl.toml) on the Markdown files.
+# rumdl (.tools/lint/rumdl.toml) on the Markdown files.
 rumdl:
-	@set -ef; files=$$(.tools/files md $(FILES)); [ -z "$$files" ] || .tools/run rumdl check $$files
+	@set -ef; files=$$(.tools/files md $(FILES)); [ -z "$$files" ] || \
+		.tools/run rumdl check --config .tools/lint/rumdl.toml $$files
 
 # The workflows' shell scripts go through the pinned ShellCheck.
 actionlint:
@@ -114,7 +117,7 @@ govet:
 
 golangci-lint:
 	@set -ef; go=$$(.tools/run -path go); lint=$$(.tools/run -path golangci-lint); \
-		PATH="$${go%/go}:$$PATH" "$$lint" run ./... $(TOOLS_GO)
+		PATH="$${go%/go}:$$PATH" "$$lint" run --config .tools/lint/golangci.yml ./... $(TOOLS_GO)
 
 # govulncheck is the module's tool directive, at the version go.mod pins.
 govulncheck:
