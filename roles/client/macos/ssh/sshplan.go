@@ -19,6 +19,8 @@ const includeLine = "Include config.d/ws"
 
 // sshFacts is what the ssh step read of the Mac.
 type sshFacts struct {
+	M    effect.Machine
+	Out  effect.Out
 	Home string
 	// Dirs plans ~/.ssh and ~/.ssh/config.d, and DirLink is the last of them that is a link.
 	Dirs       []step.Change
@@ -38,7 +40,7 @@ type sshFacts struct {
 func sshChanges(f sshFacts, text []byte) []step.Change {
 	cs := append([]step.Change(nil), f.Dirs...)
 	dir := f.Home + "/.ssh"
-	cs = append(cs, userfile.File{Path: dir + "/config.d/ws", Text: text, Mode: sshFileMode}.Change(f.Ws)...)
+	cs = append(cs, userfile.File{M: f.M, Out: f.Out, Path: dir + "/config.d/ws", Text: text, Mode: sshFileMode}.Change(f.Ws)...)
 	return append(cs, f.Config...)
 }
 

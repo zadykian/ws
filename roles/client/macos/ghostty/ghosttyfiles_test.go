@@ -46,9 +46,10 @@ func TestGhosttyFileChangesSetTheModeOfAFileThatMatches(t *testing.T) {
 func TestGhosttyKeepsTheOldConfigAsTheTimeStamped(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/h/.config/ghostty/config"] = []byte("theme = x\n")
-	g := &Ghostty{M: m, Home: "/h", Now: func() time.Time { return time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC) }}
+	out := &effecttest.Out{}
+	g := &Ghostty{M: m, Out: out, Home: "/h", Now: func() time.Time { return time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC) }}
 	cs, err := g.configLines("/h/.config/ghostty/config", "/h/.config/ghostty/ws.ghostty").Plan(t.Context())
-	want := file.UserBackup{Path: "/h/.config/ghostty/config", To: "/h/.config/ghostty/config.20260102030405~"}
+	want := file.UserBackup{M: m, Out: out, Path: "/h/.config/ghostty/config", To: "/h/.config/ghostty/config.20260102030405~"}
 	if err != nil || len(cs) != 2 || cs[0] != step.Change(want) {
 		t.Errorf("changes = %v, %v; want %v first", cs, err, want)
 	}

@@ -23,25 +23,23 @@ func Apply(ctx context.Context, m effect.Machine, out effect.Out, c step.Change)
 	case Remark:
 		return nil
 	case file.UserWrite:
-		if err := m.WriteFile(c.Path, c.After, c.Mode); err != nil {
+		if err := c.Apply(ctx); err != nil {
 			return fmt.Errorf("cannot write %s: %w", c.Path, err)
 		}
-		out.Say("wrote %s", c.Path)
 	case KeyCopy:
 		return applyCopy(m, out, c)
 	case file.UserMkdir:
-		if err := m.Mkdir(c.Path, c.Mode); err != nil {
+		if err := c.Apply(ctx); err != nil {
 			return fmt.Errorf("cannot make %s: %w", c.Path, err)
 		}
 	case file.UserChmod:
-		if err := m.Chmod(c.Path, c.Mode); err != nil {
+		if err := c.Apply(ctx); err != nil {
 			return fmt.Errorf("cannot set %s's mode: %w", c.Path, err)
 		}
 	case file.UserBackup:
-		if _, err := m.Run(ctx, "cp", "-p", c.Path, c.To); err != nil {
+		if err := c.Apply(ctx); err != nil {
 			return fmt.Errorf("cannot keep %s as %s: %w", c.Path, c.To, err)
 		}
-		out.Say("kept the old %s as %s", c.Path, c.To)
 	case Run:
 		if err := m.Pass(ctx, c.Root, c.Name, c.Args...); err != nil {
 			return fmt.Errorf("%s failed: %w", c.Line(), err)

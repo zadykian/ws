@@ -16,7 +16,7 @@ import (
 // where ~/.ssh/config can't take the Include.
 func (s SSH) read(ctx context.Context) (sshFacts, error) {
 	dir := s.Home + "/.ssh"
-	f := sshFacts{Home: s.Home}
+	f := sshFacts{M: s.M, Out: s.Out, Home: s.Home}
 	var err error
 	if f.Dirs, f.DirLink, err = sshDirs(s.M, s.Out, s.Home).Plan(); err != nil {
 		return f, err

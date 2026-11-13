@@ -140,9 +140,9 @@ func (f File) Change(found Found) []step.Change {
 	}
 	switch {
 	case !found.Exists || !bytes.Equal(found.Text, f.Text):
-		return []step.Change{file.UserWrite{Path: f.Path, Before: found.Text, After: f.Text, Exists: found.Exists, Mode: mode}}
+		return []step.Change{file.UserWrite{M: f.M, Out: f.Out, Path: f.Path, Before: found.Text, After: f.Text, Exists: found.Exists, Mode: mode}}
 	case f.Mode != 0 && found.Mode.Perm() != f.Mode:
-		return []step.Change{file.UserChmod{Path: f.Path, Mode: f.Mode}}
+		return []step.Change{file.UserChmod{M: f.M, Path: f.Path, Mode: f.Mode}}
 	}
 	return nil
 }

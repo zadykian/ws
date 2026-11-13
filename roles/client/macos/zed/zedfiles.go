@@ -40,7 +40,7 @@ func (z *Zed) files() ([]step.Change, error) {
 		cs = append(cs, planned...)
 	}
 	if _, err := z.M.Stat(dir + "/settings.json"); err != nil {
-		cs = append(cs, file.UserWrite{Path: dir + "/settings.json", Before: nil, After: []byte(zedSeed), Exists: false, Mode: 0o644})
+		cs = append(cs, file.UserWrite{M: z.M, Out: z.Out, Path: dir + "/settings.json", Before: nil, After: []byte(zedSeed), Exists: false, Mode: 0o644})
 	}
 	link.Warn(z.Out, len(cs), "Zed's files go there")
 	return cs, nil

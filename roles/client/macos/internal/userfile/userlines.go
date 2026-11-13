@@ -108,11 +108,11 @@ func (l Lines) Changes(found Found, link string, holds bool, err error) ([]step.
 	case holds:
 		return nil, nil
 	case !found.Exists:
-		return []step.Change{file.UserWrite{Path: l.Path, Before: nil, After: l.After(found, false), Exists: false, Mode: l.Mode}}, nil
+		return []step.Change{file.UserWrite{M: l.M, Out: l.Out, Path: l.Path, Before: nil, After: l.After(found, false), Exists: false, Mode: l.Mode}}, nil
 	case link != "":
 		return nil, linesError{ErrLinked, fmt.Sprintf("%s is a link to %s: %s", l.Path, link, l.remedy())}
 	}
-	return []step.Change{Keep(l.Path, l.Now), file.UserWrite{Path: l.Path, Before: found.Text, After: l.After(found, false), Exists: true, Mode: found.Mode.Perm()}}, nil
+	return []step.Change{Keep(l.M, l.Out, l.Path, l.Now), file.UserWrite{M: l.M, Out: l.Out, Path: l.Path, Before: found.Text, After: l.After(found, false), Exists: true, Mode: found.Mode.Perm()}}, nil
 }
 
 // Plan writes the lines where missing: none, a new file, or the old file kept and rewritten.
@@ -143,9 +143,9 @@ func (l Lines) Report(ctx context.Context) ([]step.Item, error) {
 }
 
 // Keep copies the old file to PATH.TIME~. This is the one stamp of the copies.
-func Keep(path string, now func() time.Time) file.UserBackup {
+func Keep(m effect.Machine, out effect.Out, path string, now func() time.Time) file.UserBackup {
 	if now == nil {
 		now = time.Now
 	}
-	return file.UserBackup{Path: path, To: path + "." + now().Format("20060102150405") + "~"}
+	return file.UserBackup{M: m, Out: out, Path: path, To: path + "." + now().Format("20060102150405") + "~"}
 }

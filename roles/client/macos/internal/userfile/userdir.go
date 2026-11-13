@@ -48,9 +48,9 @@ func (d Dir) read() (found Found, info effect.Info, err error) {
 func (d Dir) change(found Found) []step.Change {
 	switch {
 	case !found.Exists:
-		return []step.Change{file.UserMkdir{Path: d.Path, Mode: d.Mode}}
+		return []step.Change{file.UserMkdir{M: d.M, Path: d.Path, Mode: d.Mode}}
 	case d.Fix && found.Mode.Perm() != d.Mode:
-		return []step.Change{file.UserChmod{Path: d.Path, Mode: d.Mode}}
+		return []step.Change{file.UserChmod{M: d.M, Path: d.Path, Mode: d.Mode}}
 	}
 	return nil
 }

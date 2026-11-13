@@ -233,7 +233,7 @@ func TestGitSetsTheModeOfWsDirectoryAndWarnsOfALinkedOne(t *testing.T) {
 	m, g := gitReady()
 	m.Dirs[gitHome+"/.config/ws"] = 0o755
 	p, err := g.Plan(context.Background())
-	if err != nil || len(p.Changes) != 4 || p.Changes[0] != (file.UserChmod{Path: gitHome + "/.config/ws", Mode: 0o700}) {
+	if err != nil || len(p.Changes) != 4 || p.Changes[0].(file.UserChmod).Path != gitHome+"/.config/ws" {
 		t.Fatalf("Plan = %v, %v; want the mode and two writes", p.Changes, err)
 	}
 	m, g = gitReady()

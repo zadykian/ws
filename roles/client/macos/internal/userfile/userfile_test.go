@@ -47,7 +47,7 @@ func TestUserFilePlanAgreesWithReport(t *testing.T) {
 			got = "not ws's"
 		case planErr != nil:
 			got = "fails"
-		case len(cs) == 1 && cs[0] == file.UserChmod{Path: target, Mode: c.mode}:
+		case len(cs) == 1 && cs[0] == file.UserChmod{M: m, Path: target, Mode: c.mode}:
 			got = "mode"
 		case len(cs) == 1:
 			got = "write"

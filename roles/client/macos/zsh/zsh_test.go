@@ -23,11 +23,12 @@ func zshStep(m *effecttest.Machine, out *effecttest.Out) *zsh.Zsh {
 // The second plan finds roles/client/macos/zsh/files/zshrc's header, so the hook that ws embeds is its own.
 func TestZshMakesTheHookAndZshrcThenNothing(t *testing.T) {
 	m := effecttest.NewMachine()
-	s := zshStep(m, &effecttest.Out{})
+	out := &effecttest.Out{}
+	s := zshStep(m, out)
 	p, err := s.Plan(context.Background())
-	want := []step.Change{file.UserMkdir{Path: "/h/.config", Mode: 0o755}, file.UserMkdir{Path: "/h/.config/ws", Mode: 0o700},
-		file.UserWrite{Path: "/h/.config/ws/zshrc", After: zsh.Hook, Mode: 0o644},
-		file.UserWrite{Path: "/h/.zshrc", After: []byte(zshSource), Mode: 0o644}}
+	want := []step.Change{file.UserMkdir{M: m, Path: "/h/.config", Mode: 0o755}, file.UserMkdir{M: m, Path: "/h/.config/ws", Mode: 0o700},
+		file.UserWrite{M: m, Out: out, Path: "/h/.config/ws/zshrc", After: zsh.Hook, Mode: 0o644},
+		file.UserWrite{M: m, Out: out, Path: "/h/.zshrc", After: []byte(zshSource), Mode: 0o644}}
 	if err != nil || !reflect.DeepEqual(p.Changes, want) {
 		t.Fatalf("Plan = %v, %v; want %v", p.Changes, err, want)
 	}

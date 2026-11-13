@@ -94,7 +94,7 @@ func TestUserLinesKeepTheOldFile(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/h/f"] = []byte("a\n")
 	cs, err := linesIn(m, true).Plan(context.Background())
-	want := file.UserBackup{Path: "/h/f", To: "/h/f.20260102030405~"}
+	want := file.UserBackup{M: m, Path: "/h/f", To: "/h/f.20260102030405~"}
 	if err != nil || len(cs) != 2 || cs[0] != step.Change(want) {
 		t.Errorf("changes = %v, %v; want %v first", cs, err, want)
 	}

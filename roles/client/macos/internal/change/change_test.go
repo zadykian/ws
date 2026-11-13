@@ -14,10 +14,10 @@ func TestApply(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	m.Results["cp -p /a /a~"] = effecttest.Result{}
 	for _, c := range []interface{ String() string }{
-		file.UserMkdir{Path: "/d", Mode: 0o700},
-		file.UserWrite{Path: "/d/f", After: []byte("x\n"), Mode: 0o600},
-		file.UserChmod{Path: "/d/f", Mode: 0o644},
-		file.UserBackup{Path: "/a", To: "/a~"},
+		file.UserMkdir{M: m, Path: "/d", Mode: 0o700},
+		file.UserWrite{M: m, Out: out, Path: "/d/f", After: []byte("x\n"), Mode: 0o600},
+		file.UserChmod{M: m, Path: "/d/f", Mode: 0o644},
+		file.UserBackup{M: m, Out: out, Path: "/a", To: "/a~"},
 		change.Remark("a line"),
 	} {
 		if err := change.Apply(context.Background(), m, out, c); err != nil {
