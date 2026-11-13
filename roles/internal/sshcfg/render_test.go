@@ -50,3 +50,38 @@ func TestConfigCldTabs(t *testing.T) {
 		t.Errorf("Config lacks cld's lines:\n%s", got)
 	}
 }
+
+func TestConfigOneHostRendersItsWholeBlock(t *testing.T) {
+	want := "# ws through the tunnel. One known_hosts entry, ws's. 30 s between checks, 3 of them unanswered\n" +
+		"# before ssh gives up.\nHost ws\n    HostName 10.99.0.1\n    Port 22\n    User me\n    HostKeyAlias ws\n" +
+		"    IdentityFile ~/.ssh/id_ed25519\n    IdentitiesOnly yes\n    UseKeychain yes\n    AddKeysToAgent yes\n" +
+		"    ServerAliveInterval 30\n"
+	if got := sshcfg.Config(inputs()); !strings.HasSuffix(got, "\n\n"+want) {
+		t.Errorf("Config does not end with today's block:\n%s", got)
+	}
+}
+
+func TestConfigTwoHostsInNameOrder(t *testing.T) {
+	in := inputs()
+	in.CldTabs = true
+	in.Hosts = []sshcfg.Host{
+		{Name: "ws", Addr: netip.MustParseAddr("10.99.0.1"), User: "me"},
+		{Name: "lab", Addr: netip.MustParseAddr("10.99.1.1"), User: "root"},
+	}
+	got := sshcfg.Config(in)
+	lab, ws := strings.Index(got, "\nHost lab\n"), strings.Index(got, "\nHost ws\n")
+	if lab < 0 || ws < lab {
+		t.Fatalf("Config does not put lab before ws:\n%s", got)
+	}
+	for _, want := range []string{
+		"Host lab\n    HostName 10.99.1.1\n    Port 22\n    User root\n    HostKeyAlias lab\n",
+		"# lab through the tunnel. One known_hosts entry, lab's.",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("Config lacks %q:\n%s", want, got)
+		}
+	}
+	if n := strings.Count(got, "PermitLocalCommand yes"); n != 2 {
+		t.Errorf("Config holds cld's lines %d times, want once a host:\n%s", n, got)
+	}
+}
