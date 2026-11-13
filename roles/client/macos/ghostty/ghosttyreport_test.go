@@ -1,6 +1,7 @@
 package ghostty_test
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -51,4 +52,14 @@ func TestGhosttyReportShowsWsLinesAloneOfAUsersFile(t *testing.T) {
 	s := ghosttyStep(m, &effecttest.Out{})
 	m.Files["/h/.config/ghostty/config"] = []byte(mactest.UsersText)
 	mactest.CheckUsersFile(t, s, "+config-file = ?ws.ghostty")
+}
+
+// A report warns of nothing: a plan says the warnings, and a report only reads.
+func TestGhosttyReportWarnsNothing(t *testing.T) {
+	m, out := effecttest.NewMachine(), &effecttest.Out{}
+	s := ghosttyStep(m, out)
+	m.Files[ghosttyDir+"/ws.ghostty"] = []byte("not ws's\n")
+	if _, err := s.Report(context.Background()); err != nil || len(out.Lines) != 0 {
+		t.Errorf("Report = %v, said %q; want no warning", err, out.Lines)
+	}
 }
