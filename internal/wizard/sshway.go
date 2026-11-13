@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
-	"io/fs"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -72,15 +70,12 @@ func (s SSH) Way(ctx context.Context) (Way, error) {
 	return w, nil
 }
 
-// noWay says why no way leads to ws: a mac.conf that is missing or refused gives none, and it names
-// that rather than ssh.
+// noWay says why no way leads to ws: the side's Ways names its own reason, else ssh finds none.
 func (s SSH) noWay() error {
-	_, err := macConf(s.M, s.Conf)
-	switch {
-	case errors.Is(err, fs.ErrNotExist):
-		return fmt.Errorf("ws is out of reach: no mac.conf at %s; the wizard or ws client macos configure writes it", s.Conf)
-	case err != nil:
-		return fmt.Errorf("ws is out of reach: mac.conf leaves no way: %w", err)
+	if s.Ways != nil {
+		if err := s.Ways.Missing(); err != nil {
+			return err
+		}
 	}
 	return errNoWay
 }

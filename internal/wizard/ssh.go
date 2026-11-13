@@ -21,8 +21,8 @@ type SSH struct {
 	Lock string
 	// Home is the user's, which a ~/ in known_hosts' path means.
 	Home string
-	// Conf is mac.conf's path, which the direct way to ws comes from.
-	Conf string
+	// Ways finds the direct way to ws. Nil means none, and ssh leads through config.d/ws.
+	Ways Ways
 }
 
 // First returns the address that the Host key stage asked, or an empty string.
@@ -34,11 +34,20 @@ func (s SSH) First() string {
 	return strings.TrimSpace(string(b))
 }
 
-// way finds the direct way to ws from mac.conf and the Mac's addresses. The address that the Host
-// key stage asked takes the place of the way's host. With no way and that address, the port stays
-// ssh's own.
+// Ways finds the direct way to ws, which the transport leaves to the side that has one.
+type Ways interface {
+	// Direct returns the host and port that ssh reaches ws at, and false where no way is given.
+	Direct(ctx context.Context) (host, port string, ok bool)
+	// Missing returns why no way leads to ws, or nil where it has no reason of its own to give.
+	Missing() error
+}
+
+// way finds the direct way to ws from Ways. The address that the Host key stage asked takes the place
+// of the way's host. With no way and that address, the port stays ssh's own.
 func (s SSH) way(ctx context.Context) (host, port string, found bool) {
-	host, port, found = MacWays{M: s.M, Conf: s.Conf}.Direct(ctx)
+	if s.Ways != nil {
+		host, port, found = s.Ways.Direct(ctx)
+	}
 	if first := s.First(); first != "" {
 		host, found = first, true
 	}

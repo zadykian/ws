@@ -23,7 +23,7 @@ func newHost(env map[string]string) (*HostKey, *effecttest.Machine) {
 	m := effecttest.NewMachine()
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + wayConf)
 	m.Dirs["/l"] = 0o700
-	s := SSH{M: m, Lock: "/l", Home: "/h", Conf: "/h/mac.conf"}
+	s := SSH{M: m, Lock: "/l", Home: "/h", Ways: MacWays{M: m, Conf: "/h/mac.conf"}}
 	m.Results[wayCall(s)] = effecttest.Result{Out: []byte("user root\nhostname 10.1.1.2\nport 22\n" +
 		"userknownhostsfile ~/.ssh/known_hosts\n")}
 	m.Results["ssh-keygen -F ws -f "+hostsOf] = effecttest.Result{Err: errors.New("none")}

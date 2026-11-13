@@ -2,6 +2,9 @@ package wizard
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"io/fs"
 	"net/netip"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -42,4 +45,17 @@ func tunnelConf(c conf.Conf) tunnel.Conf {
 	t.LAN, _ = netip.ParsePrefix(c.LAN)
 	t.LANServer, _ = netip.ParseAddr(c.LANAddress)
 	return t
+}
+
+// Missing says why no way leads to ws: a mac.conf that is missing or refused gives none, and it
+// names that rather than ssh. It returns nil where mac.conf is sound.
+func (w MacWays) Missing() error {
+	_, err := macConf(w.M, w.Conf)
+	switch {
+	case errors.Is(err, fs.ErrNotExist):
+		return fmt.Errorf("ws is out of reach: no mac.conf at %s; the wizard or ws client macos configure writes it", w.Conf)
+	case err != nil:
+		return fmt.Errorf("ws is out of reach: mac.conf leaves no way: %w", err)
+	}
+	return nil
 }

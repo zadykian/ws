@@ -69,7 +69,7 @@ func (r *varsReach) reachOn(ctx context.Context, m effect.Machine, t rootTalk) (
 		return nil, err
 	}
 	conf := confPath(r.p.getenv, r.p.pwd)
-	ssh := wizard.SSH{M: m, Lock: lock, Home: r.p.getenv("HOME"), Conf: conf}
+	ssh := wizard.SSH{M: m, Lock: lock, Home: r.p.getenv("HOME"), Ways: wizard.MacWays{M: m, Conf: conf}}
 	sudo := cmp.Or(r.sudo, &wizard.Sudo{})
 	// A kept one holds the effects of a screen that has ended.
 	ws := wizard.NewSession(wizard.MacReach{SSH: ssh, Sudo: sudo, Conf: conf, Out: t},
