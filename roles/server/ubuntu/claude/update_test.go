@@ -5,7 +5,11 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/host"
 )
+
+// cldUser is the user that cld's tests run as.
+var cldUser = host.User{Name: "root", Home: "/root"}
 
 func TestUpdatePlan(t *testing.T) {
 	cases := []struct {
@@ -20,7 +24,7 @@ func TestUpdatePlan(t *testing.T) {
 		m := effecttest.NewMachine()
 		m.Files["/root/.local/bin/cld"] = nil
 		m.Results["env HOME=/root /root/.local/bin/cld --version"] = effecttest.Result{Out: []byte(c.have + "\n")}
-		got, err := Update{M: m, User: root, URL: releases(t, c.tag)}.Plan(context.Background())
+		got, err := Update{M: m, User: cldUser, URL: releases(t, c.tag)}.Plan(context.Background())
 		switch {
 		case err != nil:
 			t.Errorf("%s: %v", c.name, err)
@@ -34,13 +38,13 @@ func TestUpdateRefusesABuildFromSource(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/root/.local/bin/cld"] = nil
 	m.Results["env HOME=/root /root/.local/bin/cld --version"] = effecttest.Result{Out: []byte("cld dev\n")}
-	if _, err := (Update{M: m, User: root, URL: releases(t, "v1.0.0")}).Plan(context.Background()); err == nil {
+	if _, err := (Update{M: m, User: cldUser, URL: releases(t, "v1.0.0")}).Plan(context.Background()); err == nil {
 		t.Error("a build from source is compared with a release")
 	}
 }
 
 func TestUpdateWithoutCldPlansNothing(t *testing.T) {
-	got, err := Update{M: effecttest.NewMachine(), User: root}.Plan(context.Background())
+	got, err := Update{M: effecttest.NewMachine(), User: cldUser}.Plan(context.Background())
 	if err != nil || len(got) != 0 {
 		t.Errorf("%v, %v", got, err)
 	}
@@ -51,7 +55,7 @@ func TestUpdateRunsCldUpdate(t *testing.T) {
 	m.Files["/root/.local/bin/cld"] = nil
 	m.Results["env HOME=/root /root/.local/bin/cld --version"] = effecttest.Result{Out: []byte("cld 0.1.0\n")}
 	m.Results["env HOME=/root /root/.local/bin/cld update"] = effecttest.Result{}
-	got, err := Update{M: m, User: root, URL: releases(t, "v0.2.0")}.Plan(context.Background())
+	got, err := Update{M: m, User: cldUser, URL: releases(t, "v0.2.0")}.Plan(context.Background())
 	if err != nil || len(got) != 1 {
 		t.Fatalf("%v, %v", got, err)
 	}

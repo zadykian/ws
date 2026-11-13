@@ -20,7 +20,7 @@ func newSettings(report string) (*effecttest.Machine, UserSettings) {
 	m.Results["env HOME=/root mktemp -d"] = effecttest.Result{Out: []byte("/tmp/x\n")}
 	m.Results["env HOME=/root rm -rf -- /tmp/x"] = effecttest.Result{}
 	m.Results["env HOME=/root env CLAUDE_CONFIG_DIR=/tmp/x "+cldBin+" "+userArgs] = effecttest.Result{Out: []byte(report)}
-	return m, UserSettings{M: m, User: root, Permissions: "read-only"}
+	return m, UserSettings{M: m, User: rootUser, Permissions: "read-only"}
 }
 
 func TestUserSettingsPlan(t *testing.T) {
