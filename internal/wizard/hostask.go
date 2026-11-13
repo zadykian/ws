@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/internal/check"
+	"github.com/zadykian/ws/engine/core/check"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // firstQuestion asks ws's address now, for the Host key stage and the Login stage, each from its

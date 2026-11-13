@@ -1,0 +1,25 @@
+package otelcol
+
+import (
+	"testing"
+
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
+)
+
+func machine(have effecttest.Package) *effecttest.Machine {
+	m := effecttest.NewMachine()
+	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
+	m.Packages = effecttest.Packages{}
+	if have.Status != "" {
+		m.Packages["otelcol-contrib"] = have
+	}
+	return m
+}
+
+func TestTheURLIsTheReleasesDeb(t *testing.T) {
+	want := "https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/" +
+		"v" + version + "/otelcol-contrib_" + version + "_linux_arm64.deb"
+	if got := debURL(version, "arm64"); got != want {
+		t.Errorf("got %s", got)
+	}
+}

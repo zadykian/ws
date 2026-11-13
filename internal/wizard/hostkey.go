@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/internal/conf"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // hostStage names the stage in its messages.

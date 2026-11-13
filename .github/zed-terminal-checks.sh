@@ -3,14 +3,14 @@
 # outer tmux stand for Zed's terminal tabs, and both servers keep their sockets in a directory of
 # their own. Run it from the repository's root, with the directory that holds the two files:
 #
-#   sh .github/zed-terminal-checks.sh [DIR]    # DIR is internal/server/zed/files by default
+#   sh .github/zed-terminal-checks.sh [DIR]    # DIR is roles/server/ubuntu/zed/files by default
 #
 # Each case prints ok or FAIL. Any FAIL makes the exit status 1.
 
 # shellcheck disable=SC2329 # the cases call these functions through until_ok and result
 set -eu
 
-dir=$(cd "${1:-internal/server/zed/files}" && pwd -P)
+dir=$(cd "${1:-roles/server/ubuntu/zed/files}" && pwd -P)
 work=$(mktemp -d)
 cleanup() {
     tmux -L outer kill-server 2>/dev/null || true

@@ -4,7 +4,7 @@ import (
 	"cmp"
 	"context"
 
-	"github.com/zadykian/ws/internal/conf"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // done tells whether ws's last full run, by this version, exited 0 and no run's unit runs there. On

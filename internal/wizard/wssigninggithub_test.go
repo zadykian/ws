@@ -6,7 +6,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 const loginCmd = "runuser -l ada -c gh api user --jq .login 2>/dev/null || git config --global github.user"

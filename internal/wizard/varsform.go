@@ -7,8 +7,8 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // VarsForm is ws's host_vars as a form: the keys that a line holds, with what the file gives each.

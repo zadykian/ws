@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // WsGitHub is GitHub's API, from ws, for ws server wizard. It lists a login's signing keys with no

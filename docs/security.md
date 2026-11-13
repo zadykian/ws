@@ -1,6 +1,6 @@
 # security
 
-The `security` role, Go steps in `internal/server/security`, sets up an sshd drop-in that lets
+The `security` role, Go steps in `roles/server/ubuntu/security`, sets up an sshd drop-in that lets
 everyone log in by key only, ufw, and fail2ban for SSH. By default, it keeps what the server and
 its containers start to the internet and ikeward's VPN, but what the network needs, such as DHCP
 and DNS.
@@ -107,7 +107,7 @@ The caveats:
   delete the table, or send by AF_PACKET, which the table never sees. So can any user who can
   become root: the `sudo` group's members, as the installer's user or a cloud image's `ubuntu`,
   and the `docker` group's. `ws_user` is `zadykian` by default
-  ([values.go](../internal/server/values/values.go)), and has a rootless daemon, not that group
+  ([values.go](../roles/server/ubuntu/values/values.go)), and has a rootless daemon, not that group
   ([The rootless daemon](docker.md#the-rootless-daemon)). The table binds the other users and the
   bridged containers.
 - The router answers at its public address too, which the table takes for the internet: the

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/internal/check"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/check"
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // macUpdateStage names the stage in its messages.

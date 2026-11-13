@@ -1,6 +1,6 @@
 package wizard
 
-import "github.com/zadykian/ws/internal/conf"
+import "github.com/zadykian/ws/roles/client/macos/conf"
 
 // sequence asks the keys of the Answers stage in order. The machine that ws runs on comes first, as
 // the ways to ws follow it.

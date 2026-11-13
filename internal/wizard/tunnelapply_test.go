@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zadykian/ws/effect/effecttest"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 func TestTunnelApply(t *testing.T) {

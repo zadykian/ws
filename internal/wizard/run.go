@@ -4,8 +4,8 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // Run runs the stages in order under the run's lock. It keeps the Mac from idle sleep until it

@@ -1,6 +1,6 @@
 # network
 
-The `network` role, Go steps in `internal/server/network`, sets up the server's end of a cable to
+The `network` role, Go steps in `roles/server/ubuntu/network`, sets up the server's end of a cable to
 the Mac, `10.77.0.1/30` on the port `network_direct_link_interface` names, from a netplan file.
 
 ## The direct link

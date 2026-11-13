@@ -10,8 +10,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // Homebrew's release: its Homebrew.pkg, that file's SHA-256, and its signer, as pkgutil names it.

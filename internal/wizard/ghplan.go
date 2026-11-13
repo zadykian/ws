@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // Plan finds what gh lacks: its install, a login with the scopes, and the Mac's key for ws among

@@ -1,7 +1,7 @@
 # The terminal UI
 
 ws draws a full-screen display on a terminal, with Bubble Tea, Bubbles and Lip Gloss. Its code is
-`internal/tui`. `ws server apply` and `ws mac apply` draw [the run screen](#the-run-screen),
+`engine/tui`. `ws server apply` and `ws mac apply` draw [the run screen](#the-run-screen),
 `ws server state` and `ws mac state` draw [the state screen](#the-state-screen), and
 `ws mac configure` and `ws server configure` draw [the Configure screen](tui-configure.md). `ws mac wizard` draws
 [two lists](tui-wizard.md), which lead to the other two, and `ws server wizard` one. The rest, such
@@ -24,7 +24,7 @@ ws, which reads the last line of a run. The wizard's cases in `.github/mac-wizar
 a case of the `mac` job does so with `ws mac apply --check` ([The Mac](checks.md#the-mac)).
 
 The screen draws on stderr, where ws's lines go. Stdout and the exit codes stay what they were.
-The mode is chosen in `cmd/ws/screen.go`.
+The mode is chosen in `cmd/screen.go`.
 
 ## Colors
 

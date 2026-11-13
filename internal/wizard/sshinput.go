@@ -3,7 +3,7 @@ package wizard
 import (
 	"context"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // talk runs a command, never as root, that talks to the maintainer: by f, which gives it the terminal, or by m's

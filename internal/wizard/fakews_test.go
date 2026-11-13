@@ -6,7 +6,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 // fakeWs is a Shell that plays ws on a test machine. The scripts' command, sh -s -- OP ARG..., runs

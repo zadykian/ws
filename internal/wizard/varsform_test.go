@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 // farVars returns the form of a ws whose file is file.

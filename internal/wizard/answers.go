@@ -7,9 +7,9 @@ import (
 	"path"
 	"strings"
 
-	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/internal/conf"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // errMissing stops Plan's walk over the keys at the first that mac.conf lacks.

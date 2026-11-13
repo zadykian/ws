@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // sudoStage names the stage in its messages.

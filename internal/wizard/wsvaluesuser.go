@@ -5,7 +5,7 @@ import (
 	"errors"
 	"regexp"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // userName is the form of a user's name that Ubuntu's adduser takes.

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/effect/effecttest"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // callsWith returns the calls of m that hold word.

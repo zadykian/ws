@@ -9,7 +9,7 @@ import (
 	"io/fs"
 	"strings"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // LockName is the lock's name, a directory in the temporary directory that holds a run's own files.

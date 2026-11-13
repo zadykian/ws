@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/effect/effecttest"
-	"github.com/zadykian/ws/internal/setup"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/internal/sshcfg"
+	"github.com/zadykian/ws/roles/client/macos/setup"
 )
 
 const (

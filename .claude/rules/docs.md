@@ -17,7 +17,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   mean by each.
 - `docs/NAME.md` is the page of the role NAME: what it sets up and the values that change it.
   It gives the role's caveats too, such as what a run replaces or what a dry run shows.
-- [mac.md](../../docs/mac.md) is the Mac's side, `mac/` and the ws CLI. [mac-git.md](../../docs/mac-git.md) is its
+- [mac.md](../../docs/mac.md) is the Mac's side, `roles/client/macos/` and the ws CLI. [mac-git.md](../../docs/mac-git.md) is its
   git, and [mac-wizard.md](../../docs/mac-wizard.md) its wizard. [mac-targets.md](../../docs/mac-targets.md) is the wizard's targets, and
   [mac-ghostty.md](../../docs/mac-ghostty.md) its Ghostty and cld, [mac-zed.md](../../docs/mac-zed.md) its Zed, and
   [mac-secrets.md](../../docs/mac-secrets.md) the secrets file.
@@ -35,7 +35,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
 - [zed.md](../../docs/zed.md) is the page of the `zed` role: what runs on ws, Zed's downloads, trust
   and the limits. [zed-projects.md](../../docs/zed-projects.md) is a project's `.zed/settings.json`,
   for SQL Server and Ansible.
-- [The dashboards](../../internal/server/signoz/dashboards/README.md) says what each dashboard reads,
+- [The dashboards](../../roles/server/ubuntu/signoz/dashboards/README.md) says what each dashboard reads,
   and how to refresh them from SigNoz.
 - ws is public, and names no server ([mac.conf](../../docs/mac.md#macconf)). So no doc holds a
   server's address, a secret or a word of the local list (CLAUDE.md).

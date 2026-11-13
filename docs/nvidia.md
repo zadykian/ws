@@ -2,8 +2,8 @@
 
 The `nvidia` role installs NVIDIA's headless driver from Ubuntu's archive, on a machine with an
 NVIDIA GPU. [ws-fans](fans.md) reads the GPU's temperature by its `nvidia-smi`. Its steps, in
-`internal/server/nvidia`, are the GPU's check, the packages, and the driver's note of a reboot. It
-runs before `fans`, and takes no values.
+`roles/server/ubuntu/nvidia`, are the GPU's check, the packages, and the driver's note of a reboot.
+It runs before `fans`, and takes no values.
 
 ## The GPU
 

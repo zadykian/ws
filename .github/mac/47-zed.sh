@@ -1,5 +1,5 @@
 #!/bin/bash
-# ws mac apply writes Zed's global_settings.json, which is mac/zed's file whole, and
+# ws mac apply writes Zed's global_settings.json, which is roles/client/macos/mac/zed's file whole, and
 # settings.json, the seed, where none exists. A settings.json that is there is left byte for
 # byte.
 
@@ -12,9 +12,9 @@ head -n 1 "$dir/global_settings.json" | grep -qxF '// Written by ws mac apply: i
         echo '::error::global_settings.json has no ws header'
         fail=1
     }
-cmp -s "$dir/global_settings.json" mac/zed/global_settings.json ||
+cmp -s "$dir/global_settings.json" roles/client/macos/mac/zed/global_settings.json ||
     {
-        echo '::error::global_settings.json is not mac/zed/global_settings.json'
+        echo '::error::global_settings.json is not roles/client/macos/mac/zed/global_settings.json'
         fail=1
     }
 tail -n +2 "$dir/global_settings.json" | jq -e . >/dev/null ||

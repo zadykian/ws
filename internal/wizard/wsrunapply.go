@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // Apply runs ws server apply in a unit of its own through the remote script, or follows the run

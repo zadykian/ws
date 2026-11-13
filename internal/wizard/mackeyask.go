@@ -8,10 +8,10 @@ import (
 	"path"
 	"strings"
 
-	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/internal/conf"
-	"github.com/zadykian/ws/internal/setup"
+	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/internal/sshcfg"
+	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/setup"
 )
 
 // newKey, the default option, has the user make a key in Secretive's app, so that a keypress never

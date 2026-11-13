@@ -1,6 +1,6 @@
 # fresh
 
-The `fresh` role is Go steps in `internal/server/fresh`. It installs the Fresh editor on ws from
+The `fresh` role is Go steps in `roles/server/ubuntu/fresh`. It installs the Fresh editor on ws from
 the `.deb` of a pinned release. Fresh runs in a terminal, and its config is a plain template.
 
 ## The install
@@ -27,13 +27,13 @@ CI's container.
 `files/config.json.tmpl`, which fills in the user's home for the language servers' paths. A
 run replaces a change made to it by hand and keeps the old file beside the new one, as
 [zed](zed.md) does for its settings.
-`gotest` holds the render to checks in `internal/server/fresh`: a config that does not parse makes
+`gotest` holds the render to checks in `roles/server/ubuntu/fresh`: a config that does not parse makes
 Fresh load its defaults and exit 0.
 
 - Updates, telemetry and the session daemon are off: `check_for_updates`, `self_update` and
   `auto_attach` are false. Fresh reads a missing key as its default, so the render writes each.
-- The ruler, visible whitespace and auto-save match Zed's `mac/zed/global_settings.json`, and a
-  test holds them equal.
+- The ruler, visible whitespace and auto-save match Zed's
+  `roles/client/macos/mac/zed/global_settings.json`, and a test holds them equal.
 - A `//` comment in the template gives the reason for a quirk, and a block at its end lists the
   keys left out. Fresh skips the comments.
 - The file starts with a comment that says ws wrote it. Fresh reads JSONC.
@@ -71,7 +71,7 @@ it, so ws cannot. A folder with no marker is trusted at once.
 2. From the tag's source, take every name of `define_action_str_mapping!` in
    `crates/fresh-editor/src/input/keybindings.rs`, and the handler names of `registerCommand` at
    the top level of `plugins/`, leaving out `plugins/examples`.
-3. Write them to `internal/server/fresh/files/actions.txt`, under its first line with the new
+3. Write them to `roles/server/ubuntu/fresh/files/actions.txt`, under its first line with the new
    version. `TestTheActionListNamesThePinnedVersion` fails until then, and
    `TestEveryBindingNamesAnActionOfFresh` names any target that is gone.
 4. Leave out `unbind`, a config word, and the plugin commands made at run time: 65 of those in

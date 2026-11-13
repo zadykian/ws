@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/effect/effecttest"
-	"github.com/zadykian/ws/internal/conf"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // macSession returns the Mac's session over ssh, whose remote script answers status on m with the

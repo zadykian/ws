@@ -1,6 +1,6 @@
 # shell
 
-The `shell` role, Go steps in `internal/server/shell`, writes `~/.bashrc` with ble.sh and
+The `shell` role, Go steps in `roles/server/ubuntu/shell`, writes `~/.bashrc` with ble.sh and
 bash-completion, `PATH` in `~/.profile`, and `~/.gitconfig`. Each run replaces any change made to
 them by hand. A machine's own settings go in files they read where they exist:
 

@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/zadykian/ws/internal/server/apply"
+	"github.com/zadykian/ws/roles/server/ubuntu/apply"
 )
 
 // ErrOtherWs says that ws holds another version of ws, or none, as before the stage that installs

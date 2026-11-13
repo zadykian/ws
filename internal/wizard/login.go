@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // loginStop is the change that stops the run with what to do: the stage adds no key.

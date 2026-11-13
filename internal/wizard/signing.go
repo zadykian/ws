@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // signingStage names the stage in its messages.

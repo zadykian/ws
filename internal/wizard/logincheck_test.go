@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 const loginCall = "ssh -o ControlMaster=auto -o ControlPath=/l/direct -o ControlPersist=30m " +

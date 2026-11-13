@@ -231,7 +231,7 @@ jobs:
       - name: The cases
         run: .github/install-checks.sh
 
-  # SigNoz's compose files in internal/server/signoz are foundryctl's, forged from the casting
+  # SigNoz's compose files in roles/server/ubuntu/signoz are foundryctl's, forged from the casting
   # there. Forged again into an empty directory, as foundryctl never removes a file, they must be
   # the same.
   # Only what it forges is compared, so the package may keep other files beside them.
@@ -264,11 +264,11 @@ jobs:
         run: |
           forged="$RUNNER_TEMP/forged"
           mkdir "$forged"
-          cp internal/server/signoz/casting.yaml "$forged"
+          cp roles/server/ubuntu/signoz/casting.yaml "$forged"
           foundryctl forge --no-ledger --no-updater -f "$forged/casting.yaml" -p "$forged"
           status=0
           for file in "$forged"/*; do
-              diff -r "internal/server/signoz/${file##*/}" "$file" || status=1
+              diff -r "roles/server/ubuntu/signoz/${file##*/}" "$file" || status=1
           done
           if [ "$status" -ne 0 ]; then
               echo '::error::foundryctl forges other files from casting.yaml: forge them again.'

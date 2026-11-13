@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/internal/conf"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 func TestMacHand(t *testing.T) {

@@ -2,7 +2,7 @@
 
 The `fans` role drives the server's fans on curves of its own. It builds the board's fan driver
 with DKMS, and runs `ws-fans`, a service of its own, on the curves of its variables. Its steps,
-in `internal/server/fans`, are the board's check, the packages, the driver's source, DKMS, the
+in `roles/server/ubuntu/fans`, are the board's check, the packages, the driver's source, DKMS, the
 modules, and the service with its config.
 
 ## The driver
@@ -10,7 +10,7 @@ modules, and the service with its config.
 The board is MSI's, with a Nuvoton NCT6687D for its fan headers. Linux's own `nct6683` reads that
 chip but sets none of its fans on MSI's boards. So the role builds `nct6687`, from
 [Fred78290/nct6687d](https://github.com/Fred78290/nct6687d), with DKMS. That repository tags no
-releases: `internal/server/fans/pins.go` pins a commit, and the SHA-256 of GitHub's tarball of it.
+releases: `roles/server/ubuntu/fans/pins.go` pins a commit, and the SHA-256 of GitHub's tarball of it.
 
 The role downloads the tarball against that SHA-256 and unpacks it beside
 `/usr/src/nct6687d-COMMIT`. It moves the tree in whole, so that a run cut short leaves no half
@@ -72,7 +72,7 @@ curves.
 
 ## The defaults
 
-`internal/server/values/default_fans.go` sets these sensors:
+`roles/server/ubuntu/values/default_fans.go` sets these sensors:
 
 - `cpu`: coretemp's `Package id 0`, the CPU package's temperature;
 - `gpu`: GPU 0's temperature;

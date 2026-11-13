@@ -38,7 +38,7 @@ that they install, update and refuse what they should
 ## SigNoz's compose files
 
 CI forges SigNoz's compose files again from their casting, with foundryctl pinned by its checksum,
-and fails where they differ from the repository's, in `internal/server/signoz`.
+and fails where they differ from the repository's, in `roles/server/ubuntu/signoz`.
 
 ## The Mac's wizard
 
@@ -90,28 +90,27 @@ at Sudo. At a terminal, it takes the right one after a wrong one, and neither sh
 cloud target with no `WS_USER` logs in as root, with no `sudo`. A `LocalCommand` that touches a file
 must run for a plain ssh to ws, not for the wizard's.
 
-The wizard's remote script, `mac/wizard-remote.sh`, runs as root on that `sshd`, through `sudo`,
-sent as the wizard sends it. `ws.sh` roots its paths in a directory of its own, and puts the
-stand-ins of [ws-standin.sh](../.github/mac-wizard/ws-standin.sh) for ws's programs first on its
-`PATH`. `status` must print the stamps and the stand-ins' states. Those are `wg0`'s key, the Mac's
-key for it and as its peer, and ws's signing key or `none`. They are also its hostname, claude's
-login, Secure Boot that refuses the fans' driver, and `host_vars.yml`'s `ws_user` and outbound
-table. `state` must print ws's report and exit with its status. Like a full `run`, it has root's
-`HOME` and a UTF-8 locale. A full `run` must run `ws server apply` with `--json` alone in a unit of
-its own. It must print the log, event lines too. It must stamp ws's version, `-` here, 0, `on`,
-and `-` for the sums of the secrets file and `host_vars.yml`. After its `outbound` writes the line,
-which stops on a link, it stamps `off` and that file's sum. A tagged run after it must start its own
-unit and leave that stamp. A run must follow a full unit or
-one of its steps, and refuse another's. A full run cut off must remove the last stamp, so the next
-starts a unit. The files script, `mac/wizard-remote-files.sh`: its `link` must list the wired ports,
-`user NAME` name `ws_user`, `values` print `host_vars.yml` and `values PAIR...` run `ws server
-values set` on each. `link PORT` must name one there, mode 600 in a 755 directory, once, which
-`status` names once the roles give `10.77.0.1`. With ws's secrets file and its credential, a run
-must start a unit that loads the credential and runs `--secrets` on that file, and stamp its
-SHA-256. A second run must start none, a changed file one, and the file without the credential one
-with no secrets, then none. `ws mac secrets` must run its own of `ws server secrets` there, with a
-value on stdin alone, which no argument or log holds
-([61-secrets.sh](../.github/mac-wizard/61-secrets.sh)).
+The wizard's remote script, `roles/client/macos/mac/wizard-remote.sh`, runs as root on that `sshd`,
+through `sudo`, sent as the wizard sends it. `ws.sh` roots its paths in a directory of its own, and
+puts the stand-ins of [ws-standin.sh](../.github/mac-wizard/ws-standin.sh) for ws's programs first
+on its `PATH`. `status` must print the stamps and the stand-ins' states. Those are `wg0`'s key, the
+Mac's key for it and as its peer, and ws's signing key or `none`. They are also its hostname,
+claude's login, Secure Boot that refuses the fans' driver, and `host_vars.yml`'s `ws_user` and
+outbound table. `state` must print ws's report and exit with its status. Like a full `run`, it has
+root's `HOME` and a UTF-8 locale. A full `run` must run `ws server apply` with `--json` alone in a
+unit of its own. It must print the log, event lines too. It must stamp ws's version, `-` here, 0,
+`on`, and `-` for the sums of the secrets file and `host_vars.yml`. After its `outbound` writes the
+line, which stops on a link, it stamps `off` and that file's sum. A tagged run after it must start
+its own unit and leave that stamp. A run must follow a full unit or one of its steps, and refuse
+another's. A full run cut off must remove the last stamp, so the next starts a unit. The files
+script, `roles/client/macos/mac/wizard-remote-files.sh`: its `link` must list the wired ports, `user
+NAME` name `ws_user`, `values` print `host_vars.yml` and `values PAIR...` run `ws server values set`
+on each. `link PORT` must name one there, mode 600 in a 755 directory, once, which `status` names
+once the roles give `10.77.0.1`. With ws's secrets file and its credential, a run must start a unit
+that loads the credential and runs `--secrets` on that file, and stamp its SHA-256. A second run
+must start none, a changed file one, and the file without the credential one with no secrets, then
+none. `ws mac secrets` must run its own of `ws server secrets` there, with a value on stdin alone,
+which no argument or log holds ([61-secrets.sh](../.github/mac-wizard/61-secrets.sh)).
 
 The stand-in ws holds a `curl` that writes a release's `install.sh`, which sets the version of its
 `ws`. The first run must install v0.0.0, which the job's clone is tagged as, once. With v0.0.9,
@@ -173,11 +172,12 @@ which the case never runs.
 
 ## The Mac
 
-Case 47 checks [Zed's files](mac-zed.md): `global_settings.json` must be `mac/zed/`'s whole, and a
-`settings.json` there must stay byte for byte. Case 48 checks `keymap.json`: `mac/zed/`'s whole, a
-foreign one left with a warning, and ws's back once it goes. Case 87 checks [the zsh
-hook](mac-ghostty.md#the-zsh-hook): `zsh -i` must reset at each prompt, and the alternate screen
-after a 255 from `ssh`, or from `cld` with `--host`, alone.
+Case 47 checks [Zed's files](mac-zed.md): `global_settings.json` must be
+`roles/client/macos/mac/zed/`'s whole, and a `settings.json` there must stay byte for byte. Case 48
+checks `keymap.json`: `roles/client/macos/mac/zed/`'s whole, a foreign one left with a warning, and
+ws's back once it goes. Case 87 checks [the zsh hook](mac-ghostty.md#the-zsh-hook): `zsh -i` must
+reset at each prompt, and the alternate screen after a 255 from `ssh`, or from `cld` with `--host`,
+alone.
 
 CI also sets up a Mac, by [its cases](../.github/mac), in the order of [The Mac](mac.md). First, `ws
 mac apply --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config` or

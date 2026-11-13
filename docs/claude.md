@@ -1,6 +1,6 @@
 # claude
 
-The `claude` role is Go steps in `internal/server/claude`. It installs claude, from its native
+The `claude` role is Go steps in `roles/server/ubuntu/claude`. It installs claude, from its native
 installer, and cld, from its latest release's `install.sh`, both in `~/.local/bin`, and cld's
 completion in bash.
 

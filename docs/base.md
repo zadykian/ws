@@ -1,7 +1,7 @@
 # base
 
 The `base` role sets up the ground every machine stands on. It runs as Go steps of ws, in
-`internal/server/base`, first of the roles:
+`roles/server/ubuntu/base`, first of the roles:
 
 - the packages every machine gets;
 - the locale `en_US.UTF-8` and the timezone UTC;

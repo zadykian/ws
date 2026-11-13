@@ -3,7 +3,7 @@ package wizard
 import (
 	"strings"
 
-	"github.com/zadykian/ws/internal/conf"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // refusal says why mac.conf can't take the value for the key, or is empty where it can. lan is the

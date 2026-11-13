@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 	"io/fs"
 	"strings"
 )
