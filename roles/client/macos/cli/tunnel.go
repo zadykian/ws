@@ -25,20 +25,6 @@ import (
 // errNotRoot is the refusal of the commands that read root's files.
 var errNotRoot = errors.New("run it as root, with sudo")
 
-// stateFile is what the daemon writes for status, and removes where it stops.
-const stateFile = "/var/run/ws-tunnel.state"
-
-// logFile is launchd's file for the daemon's output, which the daemon starts anew past a size.
-const logFile = "/var/log/ws-tunnel.log"
-
-// daemonPaths names the daemon's files.
-func daemonPaths() settings.Paths {
-	return settings.Paths{
-		Conf: launchd.Dir + "/tunnel.conf", Key: launchd.Dir + "/private.key", Routes: launchd.Dir + "/routes.d",
-		State: stateFile, Log: logFile,
-	}
-}
-
 // watchWait is how long the watch of network changes waits before it starts notifyutil again.
 const watchWait = 5 * time.Second
 
@@ -48,28 +34,35 @@ const statusWait = 5 * time.Second
 // newTunnelCmd returns ws client macos tunnel.
 func newTunnelCmd(p enginecli.Env, server *string) *cobra.Command {
 	return enginecli.Group("tunnel", "the Mac's tunnel to ws",
-		newTunnelRunCmd(p), newTunnelStatusCmd(p), newTunnelKeyCmd(p), newTunnelLoadedCmd(p, server), newTunnelRoutesCmd(p))
+		newTunnelRunCmd(p, server), newTunnelStatusCmd(p, server), newTunnelKeyCmd(p), newTunnelLoadedCmd(p, server),
+		newTunnelRoutesCmd(p))
 }
 
 // newTunnelRunCmd returns ws client macos tunnel run.
-func newTunnelRunCmd(_ enginecli.Env) *cobra.Command {
+func newTunnelRunCmd(p enginecli.Env, server *string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "run",
-		Short: "keep the tunnel to ws up, as root",
+		Short: "keep the tunnel to a server up, as root",
 		Long:  "The daemon logs to stdout, launchd's log file. SIGHUP reads the settings again, and SIGTERM stops it.",
 		Args:  cobra.NoArgs,
-		RunE:  func(c *cobra.Command, _ []string) error { return tunnelRun(c.Context(), c.OutOrStdout()) },
+		RunE: func(c *cobra.Command, _ []string) error {
+			d, err := daemonOf(p.Machine, *server)
+			if err != nil {
+				return err
+			}
+			return tunnelRun(c.Context(), d, c.OutOrStdout())
+		},
 	}
 }
 
 // newTunnelStatusCmd returns ws client macos tunnel status.
-func newTunnelStatusCmd(p enginecli.Env) *cobra.Command {
+func newTunnelStatusCmd(p enginecli.Env, server *string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
 		Short: "print the way in use and the peer, as root",
 		Args:  cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error {
-			text, err := tunnelStatus(c.Context(), p)
+			text, err := tunnelStatus(c.Context(), p, *server)
 			if err != nil {
 				return err
 			}
@@ -99,7 +92,7 @@ func newTunnelKeyCmd(p enginecli.Env) *cobra.Command {
 
 // tunnelRun keeps the tunnel up as root: the device on a utun, and the daemon's loop, which logs to
 // stdout, launchd's log file. SIGHUP reads the settings again, and SIGTERM stops.
-func tunnelRun(ctx context.Context, stdout io.Writer) error {
+func tunnelRun(ctx context.Context, srv launchd.Daemon, stdout io.Writer) error {
 	// Subscribe before anything else: launchd gives each signal its default action, which ends the
 	// daemon on a SIGHUP.
 	sigs := make(chan os.Signal, 4)
@@ -109,7 +102,7 @@ func tunnelRun(ctx context.Context, stdout io.Writer) error {
 		return err
 	}
 	defer tn.Close()
-	d := daemon.New(local.OSMachine{}, tn, tn.Name(), daemonPaths(), stdout)
+	d := daemon.New(local.OSMachine{}, tn, tn.Name(), daemonPaths(srv), stdout)
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	go d.Signals(ctx, sigs)
@@ -120,13 +113,17 @@ func tunnelRun(ctx context.Context, stdout io.Writer) error {
 
 // tunnelStatus returns the way in use and the peer's handshake and bytes. The state file and the
 // device's socket are root's, so it needs root, as ws-tunnel status did.
-func tunnelStatus(ctx context.Context, p enginecli.Env) (string, error) {
+func tunnelStatus(ctx context.Context, p enginecli.Env, server string) (string, error) {
 	if p.Euid != 0 {
 		return "", errNotRoot
 	}
+	d, err := daemonOf(p.Machine, server)
+	if err != nil {
+		return "", err
+	}
 	ctx, cancel := context.WithTimeout(ctx, statusWait)
 	defer cancel()
-	return settings.Status(ctx, p.Machine, uapi.Get, daemonPaths(), time.Now())
+	return settings.Status(ctx, p.Machine, uapi.Get, daemonPaths(d), time.Now())
 }
 
 // tunnelKey makes the Mac's private key where none is, and returns the public key. The private key
@@ -135,5 +132,5 @@ func tunnelKey(ctx context.Context, p enginecli.Env) (string, error) {
 	if p.Euid != 0 {
 		return "", errNotRoot
 	}
-	return settings.Key(ctx, p.Machine, rand.Reader, daemonPaths().Key)
+	return settings.Key(ctx, p.Machine, rand.Reader, launchd.Dir+"/private.key")
 }

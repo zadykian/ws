@@ -278,7 +278,7 @@ Available Commands:
   key         make the Mac's key where none is, and print the public key, as root
   loaded      succeed where launchd has the tunnel's daemon loaded
   routes      route the networks into the tunnel, or drop NAME
-  run         keep the tunnel to ws up, as root
+  run         keep the tunnel to a server up, as root
   status      print the way in use and the peer, as root
 
 Flags:
