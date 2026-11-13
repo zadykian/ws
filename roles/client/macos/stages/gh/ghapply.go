@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/zadykian/ws/engine/core/remote"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
@@ -14,6 +15,8 @@ func (g *Gh) Apply(ctx context.Context, p step.Plan) error {
 	for _, c := range p.Changes {
 		var err error
 		switch c := c.(type) {
+		case *resource.Command:
+			err = g.install(ctx, c)
 		case ghLogin:
 			err = g.login(ctx, c)
 		case ghAdd:
@@ -24,6 +27,15 @@ func (g *Gh) Apply(ctx context.Context, p step.Plan) error {
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// install runs the install that ghPath plans where PATH has no gh. The login after it runs gh at
+// the path Homebrew gives it.
+func (g *Gh) install(ctx context.Context, c *resource.Command) error {
+	if err := c.Apply(ctx); err != nil {
+		return fmt.Errorf("%s: %s failed", stage.GitHub, c.Line())
 	}
 	return nil
 }
