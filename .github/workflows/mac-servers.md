@@ -9,7 +9,7 @@ default, and a case that works on a second one sets it, then sets it back to `ws
 A server's file that `conf_write` makes gets `WS_SLOT=0` first, unless the lines hold it, as the
 wizard writes it. So a case that compares a file with the wizard's lines lists no slot.
 
-Two cases check `--server`, one a job:
+Two cases check `--server`, one a job. A third checks the tunnel's pairs:
 
 - `mac/22-server.sh` makes a second server's file, `lab`, at slot 1, beside ws's. Then `ws client macos
   apply --check` must stop, naming both servers. `--server box`, which has no file, and `--server
@@ -19,3 +19,6 @@ Two cases check `--server`, one a job:
   stop it. On a `mac.conf` with no server, a run with no terminal and no name must stop and ask for
   `--server`. There `--check` with a name must show that server's file headed by `WS_SLOT=0`, and
   write none.
+- `mac-wizard/38-slot.sh` sets `WS_SLOT=1` and `WS_PORT=51821` in ws's file. Then `--check` must
+  plan ws's run after naming `wireguard_address` and `wireguard_port` in host_vars, and write
+  nothing. The case sets both back.
