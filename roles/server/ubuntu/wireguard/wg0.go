@@ -2,6 +2,7 @@ package wireguard
 
 import (
 	"context"
+	"embed"
 	"errors"
 	"io/fs"
 	"strings"
@@ -9,6 +10,11 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 )
+
+// wg0Files are networkd's two files for wg0.
+//
+//go:embed files/60-wg0.netdev.tmpl files/60-wg0.network.tmpl
+var wg0Files embed.FS
 
 // wg0 puts the files in force. networkd creates a missing wg0, and sets up again the links whose
 // files are new or changed, and no other. A peer's change updates wg0 in place, but networkd

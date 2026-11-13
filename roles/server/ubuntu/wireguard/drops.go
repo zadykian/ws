@@ -2,7 +2,7 @@ package wireguard
 
 import "embed"
 
-//go:embed files
+//go:embed files/docker-user.sh files/wireguard-docker-user.service.tmpl
 var files embed.FS
 
 const (

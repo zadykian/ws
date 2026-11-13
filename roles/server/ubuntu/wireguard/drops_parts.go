@@ -5,7 +5,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // drops are the resources of the script and the unit that keep Docker's containers off the Mac.
@@ -14,18 +13,18 @@ import (
 // starts. Where Docker runs already, the restart puts them in force at once. Docker's daemon.json
 // leaves it on its iptables backend, which docker-user.sh needs. WantedBy=docker.service: Docker's
 // start, at boot too, starts the unit first.
-func drops(m effect.Machine, u effect.Units, out effect.Out, v values.Values) func(context.Context) ([]host.Resource, error) {
+func drops(m effect.Machine, u effect.Units, out effect.Out, cable string) func(context.Context) ([]host.Resource, error) {
 	return func(context.Context) ([]host.Resource, error) {
-		return dropResources(m, u, out, v)
+		return dropResources(m, u, out, cable)
 	}
 }
 
-func dropResources(m effect.Machine, u effect.Units, out effect.Out, v values.Values) ([]host.Resource, error) {
+func dropResources(m effect.Machine, u effect.Units, out effect.Out, cable string) ([]host.Resource, error) {
 	script, err := DropsScript()
 	if err != nil {
 		return nil, err
 	}
-	service, err := DropsService(MacInterfaces(v.Network.DirectLinkInterface))
+	service, err := DropsService(MacInterfaces(cable))
 	if err != nil {
 		return nil, err
 	}
