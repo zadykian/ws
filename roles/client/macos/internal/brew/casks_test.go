@@ -39,3 +39,29 @@ func TestAFailedInstallWarnsAndMarksTheCask(t *testing.T) {
 		t.Errorf("Apply = %v, failed %v, said %q; want the cause, marked, warned", err, b.Failed, out.Lines)
 	}
 }
+
+func TestACaskThatIsThereOrFailedPlansNothing(t *testing.T) {
+	m := effecttest.NewMachine()
+	for _, c := range []brew.Cask{{M: m, Name: "zed", There: true}, {M: m, Name: "zed", Failed: map[string]bool{"zed": true}}} {
+		if cs, err := c.Plan(context.Background()); err != nil || len(cs) != 0 {
+			t.Errorf("%+v: Plan = %v, %v; want none", c, cs, err)
+		}
+	}
+	if len(m.Calls) != 0 {
+		t.Errorf("ran %q; want no brew", m.Calls)
+	}
+}
+
+func TestACaskStopsWithoutHomebrewAndWarnsWhereBrewHasIt(t *testing.T) {
+	m, out := effecttest.NewMachine(), &effecttest.Out{}
+	c := brew.Cask{M: m, Out: out, Name: "zed", Missing: "no Zed.app is there",
+		LookPath: func(string) (string, error) { return "", errors.New("none") }}
+	if _, err := c.Plan(context.Background()); err == nil {
+		t.Error("Plan without Homebrew: want an error")
+	}
+	m.Results["brew list --cask zed"] = effecttest.Result{}
+	c.LookPath = func(string) (string, error) { return "brew", nil }
+	if cs, err := c.Plan(context.Background()); err != nil || len(cs) != 0 || len(out.Lines) != 1 {
+		t.Errorf("Plan = %v, %v, said %q; want a warning alone", cs, err, out.Lines)
+	}
+}
