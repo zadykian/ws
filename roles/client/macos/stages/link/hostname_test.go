@@ -6,8 +6,12 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/stages/host"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 )
 
 // hostWord returns the host that a recorded ssh or ssh-keygen call names. For ssh, the first
@@ -90,5 +94,41 @@ func TestStagesNameTheServerInEachSSHCall(t *testing.T) {
 			t.Errorf("Plan = %v; want the stop that names lab", err)
 		}
 		namesTheServer(t, "login", m)
+	})
+	t.Run("sudo", func(t *testing.T) {
+		h, m := newHostNamed("lab", nil)
+		m.Results[wayCall(h.SSH)] = effecttest.Result{Out: []byte("user ada\nhostname 10.1.1.2\nport 22\n" +
+			"userknownhostsfile ~/.ssh/known_hosts\n")}
+		s := &host.Sudo{SSH: h.SSH, Tty: true, P: &effecttest.Prompt{T: t, Hidden: []string{"pw"}}, Out: h.Out}
+		p, err := s.Plan(ctx)
+		if err == nil {
+			_ = s.Apply(ctx, p)
+		}
+		if !slices.ContainsFunc(m.Calls, func(c string) bool { return strings.Contains(c, "sudo -k -S") }) {
+			t.Errorf("no password check in %q", m.Calls)
+		}
+		namesTheServer(t, "sudo", m)
+	})
+	t.Run("claude login", func(t *testing.T) {
+		h, m := newHostNamed("lab", nil)
+		_ = host.MacReach{SSH: h.SSH, Conf: "/h/mac.conf", Out: h.Out}.Claude(ctx)
+		namesTheServer(t, "claude login", m)
+	})
+	t.Run("a command as root", func(t *testing.T) {
+		h, m := newHostNamed("lab", nil)
+		_, _ = host.MacReach{SSH: h.SSH, Conf: "/h/mac.conf", Out: h.Out}.Shell().Run(ctx, nil, "true")
+		namesTheServer(t, "a command as root", m)
+	})
+	t.Run("tunnel", func(t *testing.T) {
+		tun, m := newTunnel(keyB, session.Status{WgKey: keyB, Peered: true, MacKey: keyA}, false)
+		tun.SSH.Host = "lab"
+		m.Results["ssh -G lab"] = effecttest.Result{Out: []byte("user root\nhostname 10.99.0.1\n")}
+		m.Results[libexec+" client macos tunnel status"] = effecttest.Result{Out: []byte("latest handshake: 5 s ago\n")}
+		m.Results[tunnelCall(tun.SSH, "-o", "BatchMode=yes", "lab", "echo", "ok")] = effecttest.Result{Out: []byte("ok\n")}
+		tun.Sleep = func(time.Duration) {}
+		if err := tun.handshake(ctx, conf.Conf{}, false); err != nil {
+			t.Errorf("handshake = %v", err)
+		}
+		namesTheServer(t, "tunnel", m)
 	})
 }
