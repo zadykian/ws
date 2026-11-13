@@ -1,0 +1,132 @@
+---
+version: "2"
+
+# The file sits in .tools/lint, so ${base-path}, in depguard's files, is the module's root, where
+# go.mod is, rather than the file's directory.
+run:
+  relative-path-mode: gomod
+
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - depguard
+    - errorlint
+    - gocritic
+    - gosec
+    - misspell
+    - nolintlint
+    - revive
+    - unparam
+  settings:
+    depguard:
+      rules:
+        cobra:
+          files:
+            - "$all"
+            - "!${base-path}/cmd/**"
+            - "!${base-path}/engine/cli/**"
+            - "!${base-path}/roles/*/*/cli/**"
+            - "!${base-path}/.tools/**"
+          deny:
+            - pkg: github.com/spf13/cobra
+              desc: cobra lives in cmd, the cli packages and .tools/ alone
+            - pkg: github.com/spf13/pflag
+              desc: cobra's flags live in cmd, the cli packages and .tools/ alone
+        core:
+          list-mode: lax
+          files:
+            - "${base-path}/engine/core/**"
+          allow:
+            - github.com/zadykian/ws/engine/core/
+          deny:
+            - pkg: github.com/zadykian/ws/
+              desc: engine/core imports engine/core alone, as the layer below the sides
+        engine:
+          files:
+            - "${base-path}/engine/**"
+            - "!${base-path}/engine/core/**"
+          deny:
+            - pkg: github.com/zadykian/ws/cmd
+              desc: the engine composes no command, as cmd composes the engine
+            - pkg: github.com/zadykian/ws/roles
+              desc: the engine names no side, as a side's cli package hands it the side
+        roles:
+          files:
+            - "${base-path}/roles/**"
+            - "!${base-path}/roles/*/*/cli/**"
+          deny:
+            - pkg: github.com/zadykian/ws/cmd
+              desc: a role reaches no command, as cmd composes the roles
+            - pkg: github.com/zadykian/ws/engine$
+              desc: a role imports engine/core, as its side's cli package runs the engine
+            - pkg: github.com/zadykian/ws/engine/cli
+              desc: a role builds no command, as its side's cli package does
+            - pkg: github.com/zadykian/ws/engine/tui
+              desc: a role draws no screen, as its steps report events that engine/tui draws
+            - pkg: github.com/zadykian/ws/roles/client/macos/cli
+              desc: a role reaches no command, as its side's cli package wires the role
+            - pkg: github.com/zadykian/ws/roles/server/ubuntu/cli
+              desc: a role reaches no command, as its side's cli package wires the role
+        roleimports:
+          list-mode: lax
+          files:
+            - "${base-path}/roles/**"
+            - "!${base-path}/roles/*/*/cli/**"
+          allow:
+            - github.com/zadykian/ws/engine/core/
+            - github.com/zadykian/ws/roles/
+          deny:
+            - pkg: github.com/zadykian/ws/
+              desc: a role imports engine/core and roles alone, as the rest sits above the roles
+        client:
+          list-mode: lax
+          files:
+            - "${base-path}/roles/client/**"
+          allow:
+            - github.com/zadykian/ws/roles/server/ubuntu/cli
+            - github.com/zadykian/ws/roles/server/ubuntu/secrets
+            - github.com/zadykian/ws/roles/server/ubuntu/session
+            - github.com/zadykian/ws/roles/server/ubuntu/stages
+            - github.com/zadykian/ws/roles/server/ubuntu/values
+          deny:
+            - pkg: github.com/zadykian/ws/roles/server
+              desc: the Mac imports the server's values, secrets, session, stages and cli alone
+        server:
+          files:
+            - "${base-path}/roles/server/**"
+          deny:
+            - pkg: github.com/zadykian/ws/roles/client
+              desc: the server imports nothing of the Mac, so that the sides change apart
+        shared:
+          files:
+            - "${base-path}/roles/internal/**"
+          deny:
+            - pkg: github.com/zadykian/ws/roles/client
+              desc: roles/internal holds what both sides share, and names neither side
+            - pkg: github.com/zadykian/ws/roles/server
+              desc: roles/internal holds what both sides share, and names neither side
+        cmd:
+          list-mode: lax
+          files:
+            - "${base-path}/cmd/**"
+          allow:
+            - github.com/zadykian/ws/engine/cli
+            - github.com/zadykian/ws/engine/core/effect/local$
+            - github.com/zadykian/ws/roles/client/macos/cli
+            - github.com/zadykian/ws/roles/server/ubuntu/cli
+          deny:
+            - pkg: github.com/zadykian/ws/
+              desc: cmd composes the cli packages, and effect/local's machine at the root
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+      allow-unused: false
+
+formatters:
+  enable:
+    - gofmt
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

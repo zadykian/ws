@@ -1,7 +1,7 @@
 #!/bin/bash
 # A stand-in ws.
-# A second wireguard-go, with its own key, listening on 51820 with the Mac's key, as ws mac apply
-# printed it, as its peer. It has no address in the tunnel, so the daemon's pings go
+# A second wireguard-go, with its own key, listening on 51820 with the Mac's key, as ws client macos
+# apply printed it, as its peer. It has no address in the tunnel, so the daemon's pings go
 # unanswered and the steps below read handshakes instead.
 
 set -eo pipefail

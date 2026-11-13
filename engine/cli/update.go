@@ -1,0 +1,74 @@
+package cli
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"syscall"
+
+	"github.com/spf13/cobra"
+
+	"github.com/zadykian/ws/engine"
+	"github.com/zadykian/ws/engine/core/update"
+)
+
+// runningFile returns the file this ws runs from, the file a symbolic link leads to.
+func runningFile() (string, error) {
+	file, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+	return filepath.EvalSymlinks(file)
+}
+
+// Update returns ws update, which replaces this ws and changes nothing else, as cld update
+// does for cld. It runs on any system that ws is released for, as any user who may write the file.
+func Update(p Env) *cobra.Command {
+	return &cobra.Command{
+		Use:   "update",
+		Short: "update ws to the latest release",
+		Long: "Downloads the latest release's ws for this system, checks it against the release's " +
+			"ws.sha256 and that it runs, then replaces the file ws runs from, the file a symbolic " +
+			"link leads to.\n\nWhere ws is the latest release already, or newer, nothing changes. " +
+			"A ws built from a clone is refused.",
+		Args: cobra.NoArgs,
+		RunE: func(c *cobra.Command, _ []string) error { return runUpdate(c, p) },
+	}
+}
+
+// runUpdate runs the update until it returns. A signal before the replace cancels it, and leaves
+// this ws unchanged. One after the replace changes nothing.
+func runUpdate(c *cobra.Command, p Env) error {
+	file, err := p.Self()
+	if err != nil {
+		return fmt.Errorf("finding the file ws runs from: %w", err)
+	}
+	ctx, cancel := context.WithCancelCause(c.Context())
+	defer cancel(nil)
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
+	defer signal.Stop(signals)
+	go func() {
+		select {
+		case s := <-signals:
+			cancel(engine.SignalExit{Sig: s.(syscall.Signal)}) //nolint:forcetypeassert // Notify's signals are syscall.Signal
+		case <-ctx.Done():
+		}
+	}()
+	u := update.Updater{M: p.Machine, Version: p.Version, URL: p.Releases, File: file,
+		Binary: "ws-" + p.GOOS + "-" + p.GOARCH, PID: p.Pid}
+	r, err := u.Run(ctx)
+	if err != nil {
+		var cut engine.SignalExit
+		if errors.As(context.Cause(ctx), &cut) {
+			return cut
+		}
+		return err
+	}
+	_, err = io.WriteString(c.OutOrStdout(), r.Report())
+	return err
+}

@@ -6,16 +6,16 @@
 #   sh .github/mac-cld-checks.sh watch LOG
 #   sh .github/mac-cld-checks.sh quiet
 #
-# With lines, ssh -G gives ws the two lines of ws mac apply ssh with yes, and neither with no.
-# With watch, ssh -G ws's LocalCommand, run by zsh and by sh as ssh runs it, must start the watcher
-# in a Ghostty pane alone. The job's stub cld writes a line to LOG at each start. Elsewhere, and
-# without cld, the line must start none and exit 0. With quiet, ws mac apply, and its --check,
-# must print nothing. Each failure is an ::error::, and the status 1.
+# With lines, ssh -G gives ws the two lines of ws client macos apply --only ssh with yes, and
+# neither with no. With watch, ssh -G ws's LocalCommand, run by zsh and by sh as ssh runs it, must
+# start the watcher in a Ghostty pane alone. The job's stub cld writes a line to LOG at each start.
+# Elsewhere, and without cld, the line must start none and exit 0. With quiet, ws client macos
+# apply, and its --check, must print nothing. Each failure is an ::error::, and the status 1.
 
 set -u
 
 fail=0
-# The LocalCommand that ws mac apply ssh writes, as ssh -G prints it.
+# The LocalCommand that the ssh step of ws client macos apply writes, as ssh -G prints it.
 # shellcheck disable=SC2016 # the line's $TERM_PROGRAM is for the shell that ssh runs
 want='[ "$TERM_PROGRAM" != ghostty ] || [ ! -x %d/.local/bin/cld ] ||'
 want="$want %d/.local/bin/cld restore tabs --watch"
@@ -82,13 +82,14 @@ watch() {
     rmdir "$empty"
 }
 
-# quiet runs ws mac apply, then ws mac apply --check, each of which must print nothing.
+# quiet runs ws client macos apply, then ws client macos apply --check, each of which must print
+# nothing.
 quiet() {
     for args in '' --check; do
-        if ! out=$(ws mac apply ${args:+"$args"} 2>&1); then
-            error "ws mac apply${args:+ $args} failed:"
+        if ! out=$(ws client macos apply ${args:+"$args"} 2>&1); then
+            error "ws client macos apply${args:+ $args} failed:"
         elif [ -n "$out" ]; then
-            error "ws mac apply${args:+ $args} printed what it should not:"
+            error "ws client macos apply${args:+ $args} printed what it should not:"
         else
             continue
         fi

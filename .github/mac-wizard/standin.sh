@@ -5,9 +5,9 @@
 set -eu
 
 sw_vers
-# ws mac apply stops where a directory above root's copies isn't root's alone, as on a Mac whose
-# /usr/local an old Homebrew took. Where the runner's image gave /usr/local or its libexec to its
-# user, they become root's, as in mac.yml: their contents stay as they are.
+# ws client macos apply stops where a directory above root's copies isn't root's alone, as on a Mac
+# whose /usr/local an old Homebrew took. Where the runner's image gave /usr/local or its libexec to
+# its user, they become root's, as in mac.yml: their contents stay as they are.
 for dir in /usr/local /usr/local/libexec; do
     [ -d "$dir" ] || continue
     if [ "$(stat -f '%u %Lp' "$dir")" != "0 755" ]; then
@@ -98,8 +98,8 @@ printf '%s\n' 'ListenAddress 127.0.0.1:22022' "HostKey $ws/host_key" "PidFile $w
 # stops as that command does, since sshd's ForceCommand runs in its place. It puts ws's programs
 # first on PATH, and roots the paths of the wizard's scripts on ws, each a line NAME=PATH of their
 # own, in root here. So it roots a command's path from /root or the wizard's state alone, with its
-# arguments, or after the script of sh -c. It roots ws's binary too, which ws mac secrets runs, bare
-# or past sudo's options.
+# arguments, or after the script of sh -c. It roots ws's binary too, which ws client macos secrets
+# runs, bare or past sudo's options.
 cat >"$ws/ws.sh" <<'EOF'
 #!/bin/sh
 run=${SSH_ORIGINAL_COMMAND#sudo -n }
@@ -175,15 +175,15 @@ touch "$ws/claude"
 # sudo asks no password until a case removes sudo.open.
 touch "$ws/sudo.open"
 # ssh first on the wizard's PATH, as the stand-in ws's wg0 has no address in the tunnel. The Tunnel
-# stage logs in to ws through it with ssh ws echo ok, which goes to the stand-in's sshd where ws mac
-# tunnel has a handshake. It lands in tunnel.log. A direct call, which carries AddressFamily=inet,
-# as Login's login, and any other call is the runner's ssh.
+# stage logs in to ws through it with ssh ws echo ok, which goes to the stand-in's sshd where ws
+# client macos tunnel has a handshake. It lands in tunnel.log. A direct call, which carries
+# AddressFamily=inet, as Login's login, and any other call is the runner's ssh.
 cat >/opt/homebrew/bin/ssh <<EOF
 #!/bin/sh
 case " \$* " in
 *' AddressFamily=inet '*) ;;
 *' ws echo ok ')
-    sudo /usr/local/libexec/ws-tunnel/ws mac tunnel status 2>/dev/null |
+    sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status 2>/dev/null |
         grep -q '^latest handshake: [0-9]' ||
         { echo 'ssh: no handshake in the tunnel' >&2 && exit 255; }
     echo "\$*" >>'$ws/tunnel.log'
@@ -194,12 +194,12 @@ exec /usr/bin/ssh "\$@"
 EOF
 chmod 755 /opt/homebrew/bin/ssh
 # nc next, for the Tunnel stage's check of ws's SSH port through the tunnel, by its arguments. It
-# goes to the stand-in's sshd, by the runner's nc, where ws mac tunnel has a handshake.
+# goes to the stand-in's sshd, by the runner's nc, where ws client macos tunnel has a handshake.
 rm -f /opt/homebrew/bin/nc
 cat >/opt/homebrew/bin/nc <<'EOF'
 #!/bin/sh
 [ "$*" = '-z -G 3 -w 3 10.99.0.1 22' ] || exec /usr/bin/nc "$@"
-sudo /usr/local/libexec/ws-tunnel/ws mac tunnel status 2>/dev/null |
+sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status 2>/dev/null |
     grep -q '^latest handshake: [0-9]' && exec /usr/bin/nc -z -G 3 -w 3 127.0.0.1 22022
 EOF
 chmod 755 /opt/homebrew/bin/nc
@@ -215,7 +215,7 @@ cp ~/.local/bin/ws "$releases/download/v0.0.0/ws-darwin-arm64"
 cp ~/repository/ws/install.sh "$releases/download/v0.0.0/install.sh"
 (cd "$releases/download/v0.0.0" && shasum -a 256 ws-darwin-arm64 >ws.sha256)
 echo v0.0.0 >"$releases/latest"
-(cd ~/repository/ws && "$(sh tools/run -path go)" build -o "$RUNNER_TEMP/serve-releases" ./tools/serve-releases)
+(cd ~/repository/ws && "$(sh .tools/run -path go)" build -o "$RUNNER_TEMP/serve-releases" ./.tools/serve-releases)
 nohup "$RUNNER_TEMP/serve-releases" "$releases" 22080 >"$RUNNER_TEMP/releases.log" 2>&1 &
 for _ in $(seq 50); do
     curl -fsS -o /dev/null -w '%{redirect_url}' http://127.0.0.1:22080/latest >/dev/null 2>&1 && break

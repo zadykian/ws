@@ -1,0 +1,177 @@
+package git_test
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"os/exec"
+	"slices"
+	"strings"
+	"testing"
+
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/git"
+	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
+)
+
+const gitAdd = "gh ssh-key add " + gitPub + " --type signing --title mac"
+
+func exitFour(t *testing.T) error {
+	err := exec.Command("sh", "-c", "exit 4").Run()
+	if err == nil {
+		t.Fatal("sh -c 'exit 4' succeeded")
+	}
+	return err
+}
+
+func TestGitAddsTheKeyToGh(t *testing.T) {
+	_, g := gitReady()
+	g.M.(*effecttest.Machine).Results[gitList] = effecttest.Result{}
+	p, err := g.Step().Plan(context.Background())
+	if err != nil || len(p.Changes) != 3 || p.Changes[2].String() != "would run "+gitAdd {
+		t.Fatalf("Plan = %v, %v; want two writes and the add", p.Changes, err)
+	}
+}
+
+func TestGitWaitsForGhBeforeAddingTheKey(t *testing.T) {
+	m, g := gitReady()
+	g.LookPath = func(n string) (string, error) {
+		if n == "gh" {
+			return "", errors.New("none")
+		}
+		return "/opt/bin/" + n, nil
+	}
+	m.Results["brew --prefix"] = effecttest.Result{Out: []byte("/opt\n")}
+	p, err := g.Step().Plan(context.Background())
+	last := p.Changes[len(p.Changes)-1].String()
+	if err != nil || !strings.HasSuffix(last, gitAdd+" once gh is installed, where it has a login that lacks the key") {
+		t.Errorf("Plan = %v, %v; want the wait on gh last", p.Changes, err)
+	}
+}
+
+func TestGitAppliesTheWaitingAddAfterGhIsInstalled(t *testing.T) {
+	m, g := gitReady()
+	g.LookPath = func(n string) (string, error) {
+		if n == "gh" {
+			return "", errors.New("none")
+		}
+		return "/opt/bin/" + n, nil
+	}
+	m.Results["brew --prefix"] = effecttest.Result{Out: []byte("/opt\n")}
+	m.Results["brew install gh"] = effecttest.Result{}
+	m.Results[gitList] = effecttest.Result{}
+	m.Results["/opt/bin/gh ssh-key add "+gitPub+" --type signing --title mac"] = effecttest.Result{}
+	p, err := g.Step().Plan(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := g.Step().Apply(context.Background(), p); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Contains(m.Calls, "run /opt/bin/gh ssh-key add "+gitPub+" --type signing --title mac") {
+		t.Errorf("calls %q; want the add after the install", m.Calls)
+	}
+}
+
+func TestGitWarnsWhereGhCannotRegister(t *testing.T) {
+	for name, tc := range map[string]struct {
+		err  error
+		want string
+	}{
+		"no login": {exitFour(t), "gh has no login"},
+		"other":    {errors.New("boom"), "gh failed: boom"},
+	} {
+		m, g := gitReady()
+		out := g.Out.(*effecttest.Out)
+		m.Results[gitList] = effecttest.Result{Err: tc.err}
+		p, err := g.Step().Plan(context.Background())
+		if err != nil || len(p.Changes) != 3 || len(out.Lines) != 0 {
+			t.Fatalf("%s: Plan = %v, %v, lines %q; want two writes and a warning, said later", name, p.Changes, err, out.Lines)
+		}
+		if w := p.Changes[2].String(); !strings.Contains(w, tc.want) || !strings.Contains(w, "unverified") {
+			t.Errorf("%s: last change = %q; want the warning", name, w)
+		}
+		if err := g.Step().Apply(context.Background(), p); err != nil {
+			t.Fatal(err)
+		}
+		if n := len(out.Lines); n != 3 || !strings.Contains(out.Lines[2], tc.want) {
+			t.Errorf("%s: lines = %q; want the warning after the two writes", name, out.Lines)
+		}
+	}
+}
+
+func TestGitChecksThatGhListsTheKeyItAdded(t *testing.T) {
+	m, g := gitReady()
+	out := g.Out.(*effecttest.Out)
+	m.Results[gitList] = effecttest.Result{}
+	m.Results["/opt/bin/gh ssh-key add "+gitPub+" --type signing --title mac"] = effecttest.Result{}
+	if err := g.Step().Apply(context.Background(), step.Plan{Changes: []step.Change{git.Register{
+		Git: g, Gh: "/opt/bin/gh", Pub: gitPub, Public: "ssh-ed25519 AAAAC3Nz", Title: "mac"}}}); err != nil {
+		t.Fatal(err)
+	}
+	if len(out.Lines) != 1 || !strings.Contains(out.Lines[0], "lacks the key after "+gitAdd) {
+		t.Errorf("lines = %q; want a warning that the list lacks the key", out.Lines)
+	}
+}
+
+func TestGitGoesOnWhereGhCannotAddTheKey(t *testing.T) {
+	m, g := gitReady()
+	out := g.Out.(*effecttest.Out)
+	m.Results[gitList] = effecttest.Result{}
+	m.Results["/opt/bin/gh ssh-key add "+gitPub+" --type signing --title mac"] = effecttest.Result{Err: errors.New("boom")}
+	if _, err := step.Run(context.Background(), []step.Step{g.Step()}, out, false); err != nil {
+		t.Errorf("Run = %v; want the step to warn and go on", err)
+	}
+	if n := strings.Count(strings.Join(out.Lines, "\n"), "unverified"); n != 1 {
+		t.Errorf("lines = %q; want one warning", out.Lines)
+	}
+}
+
+func TestGitSaysWhereGhListsTheKey(t *testing.T) {
+	const line = "git's key is among GitHub's signing keys already"
+	_, g := gitReady()
+	p, err := g.Step().Plan(context.Background())
+	if last := p.Changes[len(p.Changes)-1].String(); err != nil || last != line {
+		t.Errorf("Plan = %v, %v; want the line after the writes", p.Changes, err)
+	}
+	if out := g.Out.(*effecttest.Out); len(out.Lines) != 0 {
+		t.Errorf("Plan said %q; want the line with the changes", out.Lines)
+	}
+}
+
+func TestGitSaysNoAlreadyAfterItsAdd(t *testing.T) {
+	m, g := gitReady()
+	m.Results["/opt/bin/gh ssh-key add "+gitPub+" --type signing --title mac"] = effecttest.Result{}
+	if err := g.Step().Apply(context.Background(), step.Plan{Changes: []step.Change{git.Register{
+		Git: g, Gh: "/opt/bin/gh", Pub: gitPub, Public: "ssh-ed25519 AAAAC3Nz", Title: "mac"}}}); err != nil {
+		t.Fatal(err)
+	}
+	if p, err := g.Step().Plan(context.Background()); err != nil || strings.Contains(fmt.Sprint(p.Changes), "already") {
+		t.Errorf("Plan after the add = %v, %v; want no line that the key was there already", p.Changes, err)
+	}
+}
+
+func TestGitWarnsOfTheIncludeBeforeTheRegistrationAfterGhIsInstalled(t *testing.T) {
+	m, out, g := gitWithConfig("[user]\n    name = X\n", "", "user.name\n")
+	g.LookPath = func(n string) (string, error) {
+		if n == "gh" {
+			return "", errors.New("none")
+		}
+		return "/opt/bin/" + n, nil
+	}
+	m.Results["brew --prefix"] = effecttest.Result{Out: []byte("/opt\n")}
+	m.Results["brew install gh"] = effecttest.Result{}
+	m.Results["git config --file "+gitConfigFile+" --type path --get-all include.path"] = effecttest.Result{Err: mactest.ExitOne(t)}
+	m.Results["cp -p "+gitConfigFile+" "+gitConfigFile+".20260102030405~"] = effecttest.Result{}
+	m.Results[gitList] = effecttest.Result{Err: errors.New("boom")}
+	if err := g.Step().Apply(context.Background(), mustPlan(t, g)); err != nil {
+		t.Fatal(err)
+	}
+	at := func(text string) int {
+		return slices.IndexFunc(out.Lines, func(l string) bool { return strings.Contains(l, text) })
+	}
+	if inc, reg := at("below the include"), at("unverified"); inc < 0 || reg < 0 || inc > reg {
+		t.Errorf("lines = %q; want the include's warning before the registration's", out.Lines)
+	}
+}

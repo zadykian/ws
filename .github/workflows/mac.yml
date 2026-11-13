@@ -1,7 +1,7 @@
 name: mac
 
-# mac/ on macOS, in a workflow of its own beside ci.yml, on the same events: every pull request,
-# whatever its base, and on main each pull request's merge. release.yml calls it on a tag, where
+# The Mac runs on macOS, in a workflow of its own beside ci.yml. It runs on every pull request,
+# whatever its base, and on main at each pull request's merge. release.yml calls it on a tag, where
 # the event is the push and stack is null, so that mac runs in the call as it runs on a push.
 on:
   pull_request:
@@ -19,14 +19,15 @@ concurrency:
 permissions: {}
 
 jobs:
-  # The Mac's side on macOS, in docs/mac.md's order. ws mac apply without ws's key makes the Mac's
-  # key and installs no daemon. With a stand-in ws's key it installs the daemon. Then a second run
-  # and --check must print nothing, and --check under script must draw the run screen. ssh -G must
-  # give ws the tunnel's end. A stand-in ws is a second wireguard-go on the runner, with the Mac's
-  # key as its peer. It answers the tunnel's handshakes on loopback, as the LAN (127.0.0.0/8) and
-  # as WS_REMOTE (localhost). The daemon's status must show each in turn. Last, ws mac tunnel
-  # routes and ws mac resolver, then mac.conf's. A stand-in that makes no utun fails the job, as
-  # the daemon's device makes one too. Gated as ci.yml's playbook job.
+  # The Mac's side on macOS, in roles/client/macos/README.md's order. ws client macos apply without
+  # ws's key makes the Mac's key and installs no daemon. With a stand-in ws's key it installs the
+  # daemon. Then a second run and --check must print nothing, and --check under script must draw the
+  # run screen. ssh -G must give ws the tunnel's end. A stand-in ws is a second wireguard-go on the
+  # runner, with the Mac's key as its peer. It answers the tunnel's handshakes on loopback, as the
+  # LAN (127.0.0.0/8) and as WS_REMOTE (localhost). The daemon's status must show each in turn.
+  # Last, ws client macos tunnel routes and ws client macos resolver, then mac.conf's. A stand-in
+  # that makes no utun fails the job, as the daemon's device makes one too. Gated as ci.yml's
+  # playbook job.
   mac:
     if: >-
       (github.event.action != 'opened' || !github.event.pull_request.draft) &&
@@ -35,8 +36,8 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
-    # bash with pipefail, rather than the default bash -e, so that a failing ws mac apply fails its
-    # step through a tee too. The cases set the same options.
+    # bash with pipefail, rather than the default bash -e, so that a failing ws client macos apply
+    # fails its step through a tee too. The cases set the same options.
     defaults:
       run:
         shell: bash
@@ -50,10 +51,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # ws, built into ~/.local/bin by tools/build, which the cases run as ws mac apply.
+      # ws, built into ~/.local/bin by .tools/build, which the cases run as ws client macos apply.
       - name: Build ws
         run: |
-          sh tools/build darwin arm64 ~/.local/bin/ws
+          sh .tools/build darwin arm64 ~/.local/bin/ws
           echo ~/.local/bin >>"$GITHUB_PATH"
       # The cases, in .github/mac, run in order from the clone: a new step adds a case there and
       # nothing here.
@@ -62,5 +63,5 @@ jobs:
       - name: The daemon's status and log
         if: always()
         run: |
-          sudo "$TUNNEL" mac tunnel status || true
+          sudo "$TUNNEL" client macos tunnel status || true
           sudo cat /var/log/ws-tunnel.log || true

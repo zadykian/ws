@@ -24,7 +24,7 @@ concurrency:
 permissions: {}
 
 jobs:
-  # make lint, the one gate, with the tools it pins. They are tools/run's binaries, and the Python
+  # make lint, the one gate, with the tools it pins. They are .tools/run's binaries, and the Python
   # tools of .github/lint-requirements.txt on the runner's Python, of 3.12 to 3.14 as make asks.
   # Any finding fails it, warnings included.
   lint:
@@ -50,11 +50,11 @@ jobs:
           # zizmor's online audits, which look the actions up on GitHub, need a token.
           GH_TOKEN: ${{ github.token }}
 
-  # ws server apply as on a new machine, but in a container rather than a booted system, so without
-  # the steps that need a booted systemd. It runs twice, and the second run must change nothing.
-  # In a stack, it runs on the top pull request alone, which holds every change below it. So do
-  # mac.yml's, mac-cld.yml's and mac-wizard.yml's jobs. Run on each of a stack of 20, these jobs
-  # kept its pull requests waiting for runners past 50 minutes. A stack's pull requests open as
+  # ws server ubuntu apply as on a new machine, but in a container rather than a booted system, so
+  # without the steps that need a booted systemd. It runs twice, and the second run must change
+  # nothing. In a stack, it runs on the top pull request alone, which holds every change below it.
+  # So do mac.yml's, mac-cld.yml's and mac-wizard.yml's jobs. Run on each of a stack of 20, these
+  # jobs kept its pull requests waiting for runners past 50 minutes. A stack's pull requests open as
   # drafts, before gh stack link joins them, so a draft's opened event has no stack and these
   # jobs skip it. No event follows the link: ready_for_review, once done, is the first to
   # name the stack. Outside a stack, and on a push, stack is null, and null == null holds.
@@ -88,7 +88,7 @@ jobs:
       WS_USER: ${{ matrix.user }}
       OUTBOUND: ${{ matrix.outbound }}
     steps:
-      # curl fetches the Go that tools/build needs, and ca-certificates serves
+      # curl fetches the Go that .tools/build needs, and ca-certificates serves
       # their HTTPS. There is no git, so the checkout has no .git and the build is devel.
       - name: Install curl
         env:
@@ -101,7 +101,7 @@ jobs:
           persist-credentials: false
       # CI builds ws from the tree, never from a release.
       - name: Build ws
-        run: tools/build linux amd64 /usr/local/bin/ws
+        run: .tools/build linux amd64 /usr/local/bin/ws
       # The account as Ubuntu's installer leaves it. ws makes no user.
       - name: Make the user
         if: matrix.user != 'root'
@@ -119,15 +119,16 @@ jobs:
       # rest on the directory it starts in.
       - name: Apply
         working-directory: /root
-        run: ws server apply
+        run: ws server ubuntu apply
       # ws's last line names the roles that changed. The second run must name none.
       - name: Apply again, changing nothing
         shell: bash
         working-directory: /root
         run: |
-          ws server apply 2>&1 | tee "$RUNNER_TEMP/again.log"
-          if [ "$(tail -n 1 "$RUNNER_TEMP/again.log")" != 'ws server apply: changed: none' ]; then
-              echo '::error::The second run of ws server apply changed something.'
+          ws server ubuntu apply 2>&1 | tee "$RUNNER_TEMP/again.log"
+          last=$(tail -n 1 "$RUNNER_TEMP/again.log")
+          if [ "$last" != 'ws server ubuntu apply: changed: none' ]; then
+              echo '::error::The second run of ws server ubuntu apply changed something.'
               exit 1
           fi
       # The server's wizard over the values that the job wrote: it asks nothing, and its run skips,
@@ -135,9 +136,9 @@ jobs:
       - name: Check the server's wizard
         shell: bash
         run: |
-          ws server wizard --check --plain 2>&1 | tee "$RUNNER_TEMP/wizard.log"
+          ws server ubuntu wizard --check --plain 2>&1 | tee "$RUNNER_TEMP/wizard.log"
           if ! grep -qF "isn't booted" "$RUNNER_TEMP/wizard.log"; then
-              echo '::error::ws server wizard --check did not skip its run.'
+              echo '::error::ws server ubuntu wizard --check did not skip its run.'
               exit 1
           fi
       # script gives ws a terminal, so that the run screen draws every role's steps. The screen's
@@ -148,12 +149,12 @@ jobs:
         env:
           TERM: xterm
         run: |
-          script -qec 'stty cols 100 rows 30; ws server apply --check' /dev/null \
+          script -qec 'stty cols 100 rows 30; ws server ubuntu apply --check' /dev/null \
               </dev/null >"$RUNNER_TEMP/screen.log"
           last="$(tail -n 1 "$RUNNER_TEMP/screen.log" | tr -d '\r')"
           if ! grep -qF $'\e[?1049h' "$RUNNER_TEMP/screen.log" ||
-              [[ "$last" != *'ws server apply: would change: none' ]]; then
-              echo '::error::ws server apply --check drew no screen, or found a change.'
+              [[ "$last" != *'ws server ubuntu apply: would change: none' ]]; then
+              echo '::error::ws server ubuntu apply --check drew no screen, or found a change.'
               exit 1
           fi
       # The wrapper and tmux.conf that the zed step installed, run against the container's tmux. The
@@ -202,7 +203,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Build ws
-        run: tools/build linux amd64 "$RUNNER_TEMP/ws"
+        run: .tools/build linux amd64 "$RUNNER_TEMP/ws"
       - name: Install ws
         run: sudo install -m 755 "$RUNNER_TEMP/ws" /usr/local/bin/ws
       - name: The cases
@@ -217,7 +218,7 @@ jobs:
   # install.sh against releases laid out in a temporary directory and served on loopback, in the
   # order of .github/install-checks.sh. The latest and a named release install, and a second run
   # updates. A wrong checksum and a binary of another version are refused, and root installs to
-  # /usr/local/bin. The releases are of the tree, built by tools/build.
+  # /usr/local/bin. The releases are of the tree, built by .tools/build.
   install:
     if: github.event.action != 'ready_for_review'
     runs-on: ubuntu-latest
@@ -231,7 +232,7 @@ jobs:
       - name: The cases
         run: .github/install-checks.sh
 
-  # SigNoz's compose files in internal/server/signoz are foundryctl's, forged from the casting
+  # SigNoz's compose files in roles/server/ubuntu/signoz are foundryctl's, forged from the casting
   # there. Forged again into an empty directory, as foundryctl never removes a file, they must be
   # the same.
   # Only what it forges is compared, so the package may keep other files beside them.
@@ -264,11 +265,11 @@ jobs:
         run: |
           forged="$RUNNER_TEMP/forged"
           mkdir "$forged"
-          cp internal/server/signoz/casting.yaml "$forged"
+          cp roles/server/ubuntu/signoz/casting.yaml "$forged"
           foundryctl forge --no-ledger --no-updater -f "$forged/casting.yaml" -p "$forged"
           status=0
           for file in "$forged"/*; do
-              diff -r "internal/server/signoz/${file##*/}" "$file" || status=1
+              diff -r "roles/server/ubuntu/signoz/${file##*/}" "$file" || status=1
           done
           if [ "$status" -ne 0 ]; then
               echo '::error::foundryctl forges other files from casting.yaml: forge them again.'

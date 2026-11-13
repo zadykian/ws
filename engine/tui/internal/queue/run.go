@@ -1,0 +1,65 @@
+package queue
+
+import (
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/list"
+	"github.com/zadykian/ws/engine/tui/internal/run"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
+)
+
+// RunScreen follows a run of a queue on the lists that chose it, over what the run prints. The
+// run's bar and clock count stages, and each step's mark moves in its list. A run of the stages
+// names them by their places in the queue, and Bridge.Observe sends this what it sends a run.Screen.
+type RunScreen struct {
+	run  run.Screen
+	list queue
+	at   map[string]widget.Cursor
+}
+
+// NewRunScreen returns the screen of what choice runs, under the choice's boxes.
+func NewRunScreen(title string, theme widget.Theme, choice Choice) RunScreen {
+	var stages list.Group
+	for _, s := range choice.left.list.stages {
+		stages.Steps = append(stages.Steps, s.row.Name)
+	}
+	run := run.NewRunScreen(title, theme, stages).OutputIn(func(window widget.Size) widget.Size {
+		return inside(stripSize(window))
+	})
+	return RunScreen{run, choice.left.list.filtered(""), choice.left.at}
+}
+
+// Init starts the clock.
+func (q RunScreen) Init() tea.Cmd {
+	return q.run.Init()
+}
+
+// Update moves the lists by a run's events, and leaves the rest to the run's own screen, which fits
+// the output to the strip.
+func (q RunScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if e, ok := msg.(step.Event); ok {
+		var side string
+		var line int
+		if q.list, side, line = q.list.follow(e); line >= 0 {
+			q.list.side, q.at = side, withCursor(q.at, side, widget.Cursor(line))
+		}
+	}
+	var cmd tea.Cmd
+	q.run, cmd = q.run.Updated(msg)
+	return q, cmd
+}
+
+// layout is the run's screen with the lists in place of its panes, and its output in the strip.
+func (q RunScreen) layout() widget.Layout {
+	l := q.run.Layout()
+	output := widget.Pane{Title: l.Panes[1].Title, Body: q.run.Output().View(), Focused: true}
+	l.Panes, l.Below = q.list.panes(), strip(q.run.Theme(), output, q.run.Window())
+	return l
+}
+
+// View draws the screen.
+func (q RunScreen) View() tea.View {
+	l := q.list.drawn(q.layout(), q.run.Theme(), q.run.Window(), q.at)
+	return l.View(q.run.Theme(), q.run.Window().Width, q.run.Window().Height)
+}

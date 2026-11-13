@@ -21,11 +21,11 @@ if [ ! -e "$marker" ]; then
     fail=1
 fi
 rm -f "$marker"
-out=$("$wsbin" mac wizard </dev/null 2>&1)
+out=$("$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
 if [ "$status" != 0 ]; then
-    echo "::error::ws mac wizard exited $status"
+    echo "::error::ws client macos wizard exited $status"
     fail=1
 fi
 if [ -e "$marker" ]; then

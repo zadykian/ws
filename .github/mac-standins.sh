@@ -1,17 +1,18 @@
 #!/bin/sh
 # The stand-ins of the mac and mac-wizard jobs (.github/workflows/mac.yml, mac-wizard/standin.sh),
-# made before their first run of ws mac apply. They spare each run the downloads, which mac-cld.yml
-# makes for real, so that the jobs' many runs that must print nothing touch no network:
+# made before their first run of ws client macos apply. They spare each run the downloads, which
+# mac-cld.yml makes for real, so that the jobs' many runs that must print nothing touch no network:
 #
 #   sh .github/mac-standins.sh
 #
-# - Ghostty.app and Zed.app, empty directories in ~/Applications, and the
-#   regular style of their font, an empty file in ~/Library/Fonts, which spare their casks. ws mac
-#   apply writes ws.ghostty, as on a Mac with Ghostty;
+# - Ghostty.app and Zed.app, empty directories in ~/Applications, and the regular style of their
+#   font, an empty file in ~/Library/Fonts, which spare their casks. ws client macos apply writes
+#   ws.ghostty, as on a Mac with Ghostty;
 # - wireguard-tools from Homebrew where missing, whose wg and wireguard-go make the stand-in ws.
 #   The daemon needs neither, so this is the one download, a small formula, that the jobs make;
-# - ~/.local/bin/cld, whose version names no release, so that ws mac apply neither installs nor updates
-#   it, as a cld built from a clone. It lacks restore tabs, so ssh's hosts get no LocalCommand.
+# - ~/.local/bin/cld, whose version names no release, so that ws client macos apply neither installs
+#   nor updates it, as a cld built from a clone. It lacks restore tabs, so ssh's hosts get no
+#   LocalCommand.
 
 set -eu
 

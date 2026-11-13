@@ -1,0 +1,82 @@
+package host
+
+import (
+	"context"
+	"errors"
+	"github.com/zadykian/ws/engine/core/remote"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"github.com/zadykian/ws/roles/server/ubuntu/session/sessiontest"
+	"strings"
+	"testing"
+
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
+)
+
+// secretsLine is the ssh command line that runs cmd as root on ws, through sudo's password.
+func secretsLine(sh remote.SSHShell, cmd string) string {
+	return "ssh " + strings.Join(sh.SSH.Argv(context.Background(),
+		[]string{"-o", "BatchMode=yes", "ws", "sudo", "-k", "-S", "-p", "''", session.WsPath, "server", "ubuntu", "secrets"}), " ") + " " + cmd
+}
+
+// shellReach is a Reach whose shell is sh.
+type shellReach struct {
+	session.Reach
+	sh remote.Shell
+}
+
+func (r shellReach) Shell() remote.Shell { return r.sh }
+
+// secretsSession returns a session that reaches ws through sh.
+func secretsSession(sh remote.Shell) *session.Session {
+	return session.New(shellReach{sh: sh}, session.Scripts{Remote: []byte("echo\n")})
+}
+
+func TestSessionSecretsSendsTheValueOnStdin(t *testing.T) {
+	m := effecttest.NewMachine()
+	sh := remote.SSHShell{SSH: remote.SSH{M: m, Lock: "/t/l"}, Root: &Sudo{way: sudoAsked, password: "pw"}}
+	r := secretsSession(sh)
+	m.Results[secretsLine(sh, `set env 'A'\''B'`)] = effecttest.Result{Out: []byte("set\n")}
+	out, err := r.Secrets(context.Background(), []byte("dummy-value\n"), "set", "env", "A'B")
+	if err != nil || string(out) != "set\n" {
+		t.Fatalf("Secrets = %q, %v", out, err)
+	}
+	if got := m.Inputs[0]; got != "pw\ndummy-value\n" {
+		t.Errorf("stdin = %q, want the password, then the value", got)
+	}
+	if strings.Contains(strings.Join(m.Calls, " "), "dummy-value") {
+		t.Error("an argument holds the value")
+	}
+}
+
+func TestSessionSecretsErrors(t *testing.T) {
+	for _, tt := range []struct{ err, want string }{
+		{"[ssh]: exit status 255: \nssh: connect to host ws: No route to host\n", "ws is out of reach: ssh to ws failed: ssh: connect"},
+		{"[ssh]: exit status 1: \nws server ubuntu secrets keys: run it as root\n", "ws server ubuntu secrets keys: run it as root"},
+	} {
+		m := effecttest.NewMachine()
+		sh := remote.SSHShell{SSH: remote.SSH{M: m, Lock: "/t/l"}}
+		r := secretsSession(sh)
+		m.Results["ssh "+strings.Join(sh.SSH.Argv(context.Background(),
+			[]string{"-o", "BatchMode=yes", "ws", session.WsPath, "server", "ubuntu", "secrets", "keys"}), " ")] = effecttest.Result{Err: errors.New(tt.err)}
+		if _, err := r.Secrets(context.Background(), nil, "keys"); err == nil || !strings.HasPrefix(err.Error(), tt.want) {
+			t.Errorf("err = %v, want %q", err, tt.want)
+		}
+	}
+}
+
+// The status stays stale after Secrets, which no table row covers.
+func TestSessionSecretsLeavesTheStatusStale(t *testing.T) {
+	ctx := context.Background()
+	m := effecttest.NewMachine()
+	ws := session.New(sessiontest.Reach{Reach: MacReach{}, M: m}, session.Scripts{Remote: []byte("x")})
+	m.Results[sessiontest.Op("status")] = effecttest.Result{Out: sessiontest.Text(session.Status{})}
+	m.Results[session.WsPath+" server ubuntu secrets keys"] = effecttest.Result{}
+	ws.Status(ctx)
+	if _, err := ws.Secrets(ctx, nil, "keys"); err != nil {
+		t.Fatal(err)
+	}
+	ws.Status(ctx)
+	if got := strings.Count(strings.Join(m.Calls, "\n"), sessiontest.Op("status")); got != 2 {
+		t.Errorf("status read %d times, want 2", got)
+	}
+}

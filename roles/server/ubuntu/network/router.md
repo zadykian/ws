@@ -1,0 +1,79 @@
+# The router
+
+The router, a MikroTik on RouterOS 7, takes these steps once. Take each in Safe Mode, WinBox's
+button or Ctrl+X in its terminal, which undoes the changes if the session drops:
+
+- The LAN on `10.88.0.0/24`, clear of the cable's `10.77.0.0/30`, the tunnel's `10.99.0.0/24` and
+  Docker's `172.16.0.0/12`. It stays off RouterOS's default, `192.168.88.0/24`, which cafés and
+  other homes use too. Run these from WinBox connected by MAC address, which the change doesn't
+  drop, once `/export` has shown the names these commands find:
+
+  ```routeros
+  /ip address set [find address="192.168.88.1/24"] address=10.88.0.1/24
+  /ip pool set default-dhcp ranges=10.88.0.100-10.88.0.254
+  /ip dhcp-server network set [find address="192.168.88.0/24"] address=10.88.0.0/24 \
+      gateway=10.88.0.1 dns-server=10.88.0.1
+  /ip dns static set [find name=router.lan] address=10.88.0.1
+  ```
+
+  A client keeps its lease of the old range, whose gateway no longer answers, as its renewal goes
+  to the router's old address. It moves only once it rebinds, at 7/8 of the lease time, or
+  reconnects. So reconnect the other clients, and have ws take a new lease, from its console or
+  over the cable, UPLINK being its port to the router, as `ip route` names it:
+
+  ```sh
+  networkctl reconfigure UPLINK
+  ```
+
+  Or, a whole lease time ahead of the change, shorten the DHCP server's lease, so that every client
+  rebinds within minutes, once `print` has shown the lease time to restore:
+
+  ```routeros
+  /ip dhcp-server print
+  /ip dhcp-server set [find] lease-time=5m
+  ```
+
+  Once every client has moved, set it back, here to RouterOS 7's default of 30 minutes:
+
+  ```routeros
+  /ip dhcp-server set [find] lease-time=30m
+  ```
+
+- The server's lease, made static at `10.88.0.10`, HOST being the host name its lease shows:
+
+  ```routeros
+  /ip dhcp-server lease make-static [find host-name=HOST]
+  /ip dhcp-server lease set [find host-name=HOST] address=10.88.0.10
+  ```
+
+  ws takes the address as it next renews, or at once with `networkctl reconfigure UPLINK` again.
+- Two forwards from the internet to the server: UDP 51820, the tunnel's, and TCP 22022 to its SSH,
+  for networks that block UDP. The default firewall's rule that drops what comes in from the WAN
+  without a dst-nat lets both through:
+
+  ```routeros
+  /ip firewall nat add chain=dstnat in-interface-list=WAN protocol=udp dst-port=51820 \
+      action=dst-nat to-addresses=10.88.0.10 to-ports=51820
+  /ip firewall nat add chain=dstnat in-interface-list=WAN protocol=tcp dst-port=22022 \
+      action=dst-nat to-addresses=10.88.0.10 to-ports=22
+  ```
+
+- A name for the router's public address: `/ip cloud set ddns-enabled=yes`, as `auto`, the default
+  since RouterOS 7.17, enables it only with Back To Home. `/ip cloud print` shows its `dns-name`,
+  `SERIAL.sn.mynetname.net`, for a CNAME at your domain's DNS; its records live 60 seconds. Its
+  `public-address` must be the WAN's own: behind the ISP's NAT, neither forward reaches the router.
+- A drop of what ws sends to the router's own addresses but `10.88.0.1`, such as its public one,
+  ahead of the default firewall's accepts. ws's table takes the public address for the internet
+  ([Outbound](../security/README.md#outbound)), and the default firewall lets the LAN reach every address of
+  the router's. DNS and DHCP, to `10.88.0.1` or by broadcast, still pass:
+
+  ```routeros
+  /ip firewall filter add chain=input src-address=10.88.0.10 dst-address=!10.88.0.1 \
+      dst-address-type=local action=drop place-before=([find where chain=input dynamic=no]->0)
+  ```
+
+  It needs a static rule in the input chain to go before, such as the default firewall's: on a
+  chain with none, `place-before` fails with "no such item". The rule is IPv4's alone. Once the
+  LAN has an IPv6 prefix, it needs a twin in `/ipv6 firewall filter`, as ws's table passes the
+  router's routed IPv6 addresses too. It misses a VM on the Mac, whose packets reach the router
+  from the Mac's address, through the Mac's NAT.

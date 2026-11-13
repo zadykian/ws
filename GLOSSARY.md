@@ -63,18 +63,20 @@ _Avoid_: remote, connection
 **User's directory**:
 A directory below the Mac's home that a step writes under, such as `~/.ssh`. A run makes it where
 missing, and stops where the path is no directory. It leaves the mode of one that exists, but for
-ws's directory and ssh's `config.d`.
+ws's directory and ssh's `config.d`. Core's `file.UserDir` holds it.
 _Avoid_: folder
 
 **User's file**:
 A whole file below the Mac's home that ws writes as the user, not root, such as
-`~/.config/ws/gitconfig`. A plan and a report read it alike. On the server, root writes a home file.
+`~/.config/ws/gitconfig`. A plan and a report read it alike. Core's `file.UserFile` holds it. On the
+server, root writes a home file.
 _Avoid_: dotfile
 
 **User's lines**:
 ws's lines in a user's file that holds other text too, such as `Include config.d/ws` at the top of
 `~/.ssh/config`. A run adds them once, at the top or the end, and keeps the old file as
 `PATH.TIME~`. At a link that lacks them, or lines out of place, the step warns or stops.
+Core's `file.UserLines` hold them.
 _Avoid_: include line
 
 **ws's directory**:

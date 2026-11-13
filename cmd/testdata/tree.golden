@@ -1,0 +1,638 @@
+== ws
+set up the server and the Mac that works on it
+
+Usage:
+  ws [flags]
+  ws [command]
+
+Available Commands:
+  client      the client's systems
+  help        Help about any command
+  server      the server's systems
+  update      update ws to the latest release
+  version     print the version of this ws
+
+Flags:
+  -h, --help    help for ws
+      --plain   print lines, with no full-screen display
+
+Use "ws [command] --help" for more information about a command.
+== ws client
+the client's systems
+
+Usage:
+  ws client [flags]
+  ws client [command]
+
+Available Commands:
+  macos       the commands for a Mac
+
+Flags:
+  -h, --help   help for client
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+
+Use "ws client [command] --help" for more information about a command.
+== ws client macos
+the commands for a Mac
+
+Usage:
+  ws client macos [flags]
+  ws client macos [command]
+
+Available Commands:
+  apply       set the Mac up from mac.conf
+  conf        print mac.conf's checked settings as shell assignments
+  configure   edit mac.conf, the secrets and ws's host_vars on forms
+  resolver    send DOMAIN's names to the nameservers, or drop it
+  secrets     edit ws's secrets file, over ssh
+  state       report what the Mac's steps would change
+  tunnel      the Mac's tunnel to ws
+  wizard      set the Mac up in stages
+
+Flags:
+  -h, --help   help for macos
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+
+Use "ws client macos [command] --help" for more information about a command.
+== ws client macos apply
+It runs the steps it names, from mac.conf, in this order: ssh, cable, git, ghostty, zed, cld, zsh, tunnel, networks. With no --only, it runs every step, and ssh again, whose plan is empty unless cld changed ssh's file. It asks sudo where it needs root.
+
+Usage:
+  ws client macos apply [flags]
+
+Flags:
+      --check          print each change and make none
+  -h, --help           help for apply
+      --only strings   run the named steps alone, as a list or by repeating the flag
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws client macos conf
+It reads FILE, else $WS_CONF, else ~/.config/ws/mac.conf, and prints the checked settings as shell assignments, or the errors of a file it refuses.
+
+Usage:
+  ws client macos conf [FILE] [flags]
+
+Flags:
+  -h, --help    help for conf
+      --lines   check each line alone, as a wizard checks an answer before the file holds its key
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws client macos configure
+It shows the keys that ws client macos wizard would ask, by WS_TARGET, with what mac.conf holds, and writes them on Ctrl-S. Ctrl-N goes to ws's secrets, which show as set or not, never their values, then to ws's host_vars, both read over ssh. It needs a terminal: anywhere else, edit the file by hand.
+
+Usage:
+  ws client macos configure [flags]
+
+Flags:
+  -h, --help   help for configure
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws client macos resolver
+It has macOS ask the nameservers for DOMAIN, or drop the file of DOMAIN where it gets none.
+
+Usage:
+  ws client macos resolver DOMAIN [ADDRESS...] [flags]
+
+Flags:
+      --check   print each change and make none
+  -h, --help    help for resolver
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws client macos secrets
+edit ws's secrets file, over ssh
+
+Usage:
+  ws client macos secrets [flags]
+  ws client macos secrets [command]
+
+Available Commands:
+  init        make ws's age identity and an empty secrets file on ws
+  keys        print each entry as KIND NAME, never a value
+  set         set an entry, whose value never goes in an argument
+  unset       drop an entry
+
+Flags:
+  -h, --help   help for secrets
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+
+Use "ws client macos secrets [command] --help" for more information about a command.
+== ws client macos secrets init
+make ws's age identity and an empty secrets file on ws
+
+Usage:
+  ws client macos secrets init [flags]
+
+Flags:
+  -h, --help   help for init
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws client macos secrets keys
+print each entry as KIND NAME, never a value
+
+Usage:
+  ws client macos secrets keys [flags]
+
+Flags:
+  -h, --help   help for keys
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws client macos secrets set
+set an entry, whose value never goes in an argument
+
+Usage:
+  ws client macos secrets set [flags]
+  ws client macos secrets set [command]
+
+Available Commands:
+  env         set the env NAME, from a prompt with no echo or from stdin
+  file        set a profile file (vpn_p12, vpn_sswan) from the file at PATH, or from stdin
+  git         set a git server's token, from a prompt with no echo or from stdin
+  password    set the password NAME, from a prompt with no echo or from stdin
+  token       set the token NAME, from a prompt with no echo or from stdin
+
+Flags:
+  -h, --help   help for set
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+
+Use "ws client macos secrets set [command] --help" for more information about a command.
+== ws client macos secrets set env
+set the env NAME, from a prompt with no echo or from stdin
+
+Usage:
+  ws client macos secrets set env NAME [flags]
+
+Flags:
+  -h, --help   help for env
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws client macos secrets set file
+set a profile file (vpn_p12, vpn_sswan) from the file at PATH, or from stdin
+
+Usage:
+  ws client macos secrets set file NAME [PATH] [flags]
+
+Flags:
+  -h, --help   help for file
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws client macos secrets set git
+set a git server's token, from a prompt with no echo or from stdin
+
+Usage:
+  ws client macos secrets set git URL [flags]
+
+Flags:
+  -h, --help              help for git
+      --proactive-auth    send the token before the server asks for it, else as the entry does
+      --username string   the user name that git sends with the token, else the entry's
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws client macos secrets set password
+set the password NAME, from a prompt with no echo or from stdin
+
+Usage:
+  ws client macos secrets set password NAME [flags]
+
+Flags:
+  -h, --help   help for password
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws client macos secrets set token
+set the token NAME, from a prompt with no echo or from stdin
+
+Usage:
+  ws client macos secrets set token NAME [flags]
+
+Flags:
+  -h, --help   help for token
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws client macos secrets unset
+drop an entry
+
+Usage:
+  ws client macos secrets unset KIND NAME [flags]
+
+Flags:
+  -h, --help   help for unset
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws client macos state
+It reads alone and applies nothing, as ws client macos apply --check does, and needs what it needs: mac.conf, and not root. The Mac's steps report the packages, services and files ws manages there, and a step that fails stands in the report as a check. The exit code stays 0. A report holds no secret.
+
+At a terminal it draws the state screen on stderr, where sudo's password comes through a question. --plain prints the report as text, and so does a pipe. The text is on stdout and ws's own lines on stderr. --json prints the version of ws, then each step with its items and changes.
+
+Usage:
+  ws client macos state [flags]
+
+Flags:
+  -h, --help   help for state
+      --json   print the report as JSON
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws client macos tunnel
+the Mac's tunnel to ws
+
+Usage:
+  ws client macos tunnel [flags]
+  ws client macos tunnel [command]
+
+Available Commands:
+  key         make the Mac's key where none is, and print the public key, as root
+  loaded      succeed where launchd has the tunnel's daemon loaded
+  routes      route the networks into the tunnel, or drop NAME
+  run         keep the tunnel to ws up, as root
+  status      print the way in use and the peer, as root
+
+Flags:
+  -h, --help   help for tunnel
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+
+Use "ws client macos tunnel [command] --help" for more information about a command.
+== ws client macos tunnel key
+The private key stays in root's file, which only root can write, so setup runs this through sudo.
+
+Usage:
+  ws client macos tunnel key [flags]
+
+Flags:
+  -h, --help   help for key
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws client macos tunnel loaded
+Anyone may read launchd's system domain, so it needs no sudo.
+
+Usage:
+  ws client macos tunnel loaded [flags]
+
+Flags:
+  -h, --help   help for loaded
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws client macos tunnel routes
+It has the tunnel take the networks of NAME, or drop the file of NAME where it gets none.
+
+Usage:
+  ws client macos tunnel routes NAME [CIDR...] [flags]
+
+Flags:
+      --check   print each change and make none
+  -h, --help    help for routes
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws client macos tunnel run
+The daemon logs to stdout, launchd's log file. SIGHUP reads the settings again, and SIGTERM stops it.
+
+Usage:
+  ws client macos tunnel run [flags]
+
+Flags:
+  -h, --help   help for run
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws client macos tunnel status
+print the way in use and the peer, as root
+
+Usage:
+  ws client macos tunnel status [flags]
+
+Flags:
+  -h, --help   help for status
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws client macos wizard
+At a terminal the stages open as two lists, by the machine each runs on, and the ones chosen run. The stages run under a lock, and what stays by hand is listed after a run in which a stage acted. Under --check each stage prints what it would do and changes nothing.
+
+Usage:
+  ws client macos wizard [flags]
+
+Flags:
+      --check    print what each stage would do and change nothing
+  -h, --help     help for wizard
+      --update   install the latest ws first, and run it in place of this one
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws server
+the server's systems
+
+Usage:
+  ws server [flags]
+  ws server [command]
+
+Available Commands:
+  ubuntu      the commands for an Ubuntu server
+
+Flags:
+  -h, --help   help for server
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+
+Use "ws server [command] --help" for more information about a command.
+== ws server ubuntu
+the commands for an Ubuntu server
+
+Usage:
+  ws server ubuntu [flags]
+  ws server ubuntu [command]
+
+Available Commands:
+  apply       set the server up, each role as Go steps
+  configure   edit ws's secrets and host_vars on forms, on ws
+  fans        drive the board's fans on the curves of CONFIG until SIGTERM
+  secrets     keep ws's secrets file, with its identity as a systemd credential
+  state       report what the server holds of what ws manages, and what apply would change
+  values      edit the machine's values
+  wizard      set ws up from its own shell, in stages
+
+Flags:
+  -h, --help   help for ubuntu
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+
+Use "ws server ubuntu [command] --help" for more information about a command.
+== ws server ubuntu apply
+--secrets reads an age-encrypted TOML file with the secrets. The X25519 identity comes from the unit's credential ws-secrets (systemd's LoadCredential), in $CREDENTIALS_DIRECTORY.
+
+--only names a role, or a step of it as ROLE/STEP, by the name that the run shows. A role's other steps are planned and left out, and a step that waits on one of them with changes is skipped.
+
+The last line names the roles that changed.
+
+--json prints each event of the run as a line of JSON on stdout: planned, started, done, failed or skipped, with the step, the first line of each change and the error. ws's own lines stay on stderr, and no screen is drawn.
+
+Usage:
+  ws server ubuntu apply [flags]
+
+Flags:
+      --check          plan the steps and apply none
+  -h, --help           help for apply
+      --json           print each event of the run as a line of JSON on stdout
+      --only strings   run the named roles and ROLE/STEPs alone, as a list or by repeating the flag
+      --secrets FILE   read the secrets from the age-encrypted FILE
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws server ubuntu configure
+The forms of ws client macos configure that edit ws, read and written here as root, with no ssh. ws's secrets show as set or not, never their values. Ctrl-N goes to host_vars. Ctrl-S writes a form. It needs a terminal: anywhere else, run ws server ubuntu secrets and ws server ubuntu values set.
+
+Usage:
+  ws server ubuntu configure [flags]
+
+Flags:
+  -h, --help   help for configure
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws server ubuntu fans
+CONFIG is the file that the fans role writes, /etc/ws-fans.json by default.
+
+Usage:
+  ws server ubuntu fans [CONFIG] [flags]
+
+Flags:
+  -h, --help   help for fans
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws server ubuntu secrets
+keep ws's secrets file, with its identity as a systemd credential
+
+Usage:
+  ws server ubuntu secrets [flags]
+  ws server ubuntu secrets [command]
+
+Available Commands:
+  init        make ws's age identity and an empty secrets file
+  keys        print each entry as KIND NAME, never a value
+  set         set an entry, whose value never goes in an argument
+  unset       drop an entry
+
+Flags:
+  -h, --help   help for secrets
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+
+Use "ws server ubuntu secrets [command] --help" for more information about a command.
+== ws server ubuntu secrets init
+It makes ws's age identity in memory, which systemd-creds encrypts by the host's key as the credential /etc/credstore.encrypted/ws-secrets, for a unit's LoadCredentialEncrypted=ws-secrets. It makes an empty /etc/ws/secrets.age, root's and 600. A credential or a file that is there stays.
+
+Usage:
+  ws server ubuntu secrets init [flags]
+
+Flags:
+  -h, --help   help for init
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws server ubuntu secrets keys
+print each entry as KIND NAME, never a value
+
+Usage:
+  ws server ubuntu secrets keys [flags]
+
+Flags:
+  -h, --help   help for keys
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws server ubuntu secrets set
+set an entry, whose value never goes in an argument
+
+Usage:
+  ws server ubuntu secrets set [flags]
+  ws server ubuntu secrets set [command]
+
+Available Commands:
+  env         set the env NAME, from a prompt with no echo or from stdin
+  file        set a profile file (vpn_p12, vpn_sswan) from the file at PATH, or from stdin
+  git         set a git server's token, from a prompt with no echo or from stdin
+  password    set the password NAME, from a prompt with no echo or from stdin
+  token       set the token NAME, from a prompt with no echo or from stdin
+
+Flags:
+  -h, --help   help for set
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+
+Use "ws server ubuntu secrets set [command] --help" for more information about a command.
+== ws server ubuntu secrets set env
+set the env NAME, from a prompt with no echo or from stdin
+
+Usage:
+  ws server ubuntu secrets set env NAME [flags]
+
+Flags:
+  -h, --help   help for env
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws server ubuntu secrets set file
+set a profile file (vpn_p12, vpn_sswan) from the file at PATH, or from stdin
+
+Usage:
+  ws server ubuntu secrets set file NAME [PATH] [flags]
+
+Flags:
+  -h, --help   help for file
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws server ubuntu secrets set git
+set a git server's token, from a prompt with no echo or from stdin
+
+Usage:
+  ws server ubuntu secrets set git URL [flags]
+
+Flags:
+  -h, --help              help for git
+      --proactive-auth    send the token before the server asks for it, else as the entry does
+      --username string   the user name that git sends with the token, else the entry's
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws server ubuntu secrets set password
+set the password NAME, from a prompt with no echo or from stdin
+
+Usage:
+  ws server ubuntu secrets set password NAME [flags]
+
+Flags:
+  -h, --help   help for password
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws server ubuntu secrets set token
+set the token NAME, from a prompt with no echo or from stdin
+
+Usage:
+  ws server ubuntu secrets set token NAME [flags]
+
+Flags:
+  -h, --help   help for token
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws server ubuntu secrets unset
+drop an entry
+
+Usage:
+  ws server ubuntu secrets unset KIND NAME [flags]
+
+Flags:
+  -h, --help   help for unset
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws server ubuntu state
+It reads alone and applies nothing. It needs what --check needs: root, on Ubuntu 26.04. It reports what ws manages and not the rest of the machine: the packages, services and files of the steps, what stands against them, and the changes that apply would make. A step that fails stands in the report as a check, and the exit code stays 0. It takes no secrets, so a report holds none and says nothing of what they write.
+
+At a terminal it draws the state screen on stderr, where the tabs, a filter and r to read again are. --plain prints the report as text, and so does a pipe. The text is on stdout and ws's own lines on stderr. --json prints the version of ws, then each role with its steps, items and changes.
+
+Usage:
+  ws server ubuntu state [flags]
+
+Flags:
+  -h, --help           help for state
+      --json           print the report as JSON
+      --only strings   report the named roles and ROLE/STEPs alone, as a list or by repeating the flag
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws server ubuntu values
+edit the machine's values
+
+Usage:
+  ws server ubuntu values [flags]
+  ws server ubuntu values [command]
+
+Available Commands:
+  set         write one key of /etc/ws/host_vars.yml
+
+Flags:
+  -h, --help   help for values
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+
+Use "ws server ubuntu values [command] --help" for more information about a command.
+== ws server ubuntu values set
+An empty VALUE takes the key's line out, which gives its default back. A list's VALUE is split by commas. A table, such as fans_curves, stays the file's to edit by hand.
+
+The next ws server ubuntu apply takes the key.
+
+Usage:
+  ws server ubuntu values set KEY VALUE [flags]
+
+Flags:
+  -h, --help   help for set
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws server ubuntu wizard
+The stages of ws client macos wizard that act on ws, run as root on ws: ws's values, which it asks where host_vars lacks them, then ws server ubuntu apply, in a unit of its own that goes on where the login drops, then claude's login, and ws's signing key on GitHub. Either wizard follows the other's unit, and after the other's run, with nothing changed, runs no apply. At a terminal the stages open as ws's list, and the ones chosen run: e opens ws server ubuntu configure's forms. Under --check each stage prints what it would do and changes nothing.
+
+Usage:
+  ws server ubuntu wizard [flags]
+
+Flags:
+      --check   print what each stage would do and change nothing
+  -h, --help    help for wizard
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws update
+Downloads the latest release's ws for this system, checks it against the release's ws.sha256 and that it runs, then replaces the file ws runs from, the file a symbolic link leads to.
+
+Where ws is the latest release already, or newer, nothing changes. A ws built from a clone is refused.
+
+Usage:
+  ws update [flags]
+
+Flags:
+  -h, --help   help for update
+
+Global Flags:
+      --plain   print lines, with no full-screen display
+== ws version
+print the version of this ws
+
+Usage:
+  ws version [flags]
+
+Flags:
+  -h, --help   help for version
+
+Global Flags:
+      --plain   print lines, with no full-screen display

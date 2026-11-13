@@ -1,0 +1,28 @@
+---
+extends: default
+
+# Plans, worktrees and the tools' cache are local and untracked. SigNoz's compose files are
+# foundryctl's, in its style: CI forges them again instead.
+ignore: |
+  .cache/
+  .claude/
+  .git/
+  roles/server/ubuntu/signoz/deployment/
+
+rules:
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: false
+  braces:
+    max-spaces-inside: 1
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true
+  # GitHub's workflows start with no document marker, and key their triggers by `on`.
+  document-start:
+    ignore: |
+      .github/
+  truthy:
+    check-keys: false
+  line-length:
+    max: 100

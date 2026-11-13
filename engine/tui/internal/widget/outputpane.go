@@ -1,0 +1,135 @@
+package widget
+
+import (
+	"strings"
+	"unicode"
+
+	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
+)
+
+// LineKind says which call of effect.Out made a Line, as a screen draws each apart.
+type LineKind int
+
+// The kinds of Line, by where the line came from.
+const (
+	Said LineKind = iota
+	Warned
+	Copied
+	Diffed
+	// Piped is what a step's commands print, which reaches no call of effect.Out.
+	Piped
+)
+
+// Line is a line of a run, sent to the screen. Text is what a plain run prints, less the last
+// newline, so that a warning reads as one under NO_COLOR and a log can hold the same words.
+type Line struct {
+	Kind LineKind
+	Text string
+}
+
+const (
+	// outputCap is the lines that a pane keeps, as a first run prints more than memory should hold.
+	outputCap = 10_000
+	// outputSlack is how far past outputCap the lines grow before the oldest go, as that draws the
+	// rest again.
+	outputSlack = 2_000
+)
+
+// Clean leaves what a pane can draw of a line of a run. A step's output and a file's diff hold what
+// a screen must not pass on. A code would move the cursor, and a control character would shift the
+// frame. Of a line that \r overwrote, the last state stays, as a terminal would show it.
+func Clean(line string) string {
+	line = strings.TrimRight(line, "\r")
+	line = line[strings.LastIndexByte(line, '\r')+1:]
+	line = strings.ReplaceAll(line, "\t", "    ")
+	line = ansi.Strip(strings.ToValidUTF8(line, "�"))
+	return strings.Map(func(r rune) rune {
+		if unicode.IsControl(r) {
+			return -1
+		}
+		return r
+	}, line)
+}
+
+// style is how l draws. A diff's line goes by its first characters, which show under NO_COLOR too.
+func (l Line) style(theme Theme) lipgloss.Style {
+	switch l.Kind {
+	case Warned:
+		return theme.Warn
+	case Piped:
+		return theme.Muted
+	case Diffed:
+		switch {
+		case strings.HasPrefix(l.Text, "+++"), strings.HasPrefix(l.Text, "---"), strings.HasPrefix(l.Text, "@@"):
+			return theme.Muted
+		case strings.HasPrefix(l.Text, "+"):
+			return theme.Good
+		case strings.HasPrefix(l.Text, "-"):
+			return theme.Bad
+		}
+	case Said, Copied:
+	}
+	return lipgloss.NewStyle()
+}
+
+// OutputPane is a window on what a run prints. It follows the end until a key moves it, and then
+// holds still as lines arrive. rows are the lines as drawn, wrapped to the pane, as a pane cuts
+// what is wider. Each is styled alone, so that no color crosses a line's end.
+type OutputPane struct {
+	Theme Theme
+	lines []Line
+	Rows  []string
+	Size  Size
+	// Back is the rows between the last one in sight and the end.
+	Back int
+}
+
+// Add puts l's lines at the end.
+func (o OutputPane) Add(l Line) OutputPane {
+	for text := range strings.SplitSeq(l.Text, "\n") {
+		line := Line{l.Kind, Clean(text)}
+		drawn := o.draw(line)
+		o.lines, o.Rows = append(o.lines, line), append(o.Rows, drawn...)
+		if o.Back > 0 {
+			o.Back += len(drawn)
+		}
+	}
+	if len(o.lines) > outputCap+outputSlack {
+		o.lines = o.lines[len(o.lines)-outputCap:]
+		return o.Fit(o.Size)
+	}
+	return o
+}
+
+// draw returns l's rows at the pane's width.
+func (o OutputPane) draw(l Line) []string {
+	style := l.style(o.Theme)
+	rows := strings.Split(lipgloss.Wrap(l.Text, o.Size.Width, ""), "\n")
+	for i, row := range rows {
+		rows[i] = style.Render(row)
+	}
+	return rows
+}
+
+// Fit draws the lines for a pane of size.
+func (o OutputPane) Fit(size Size) OutputPane {
+	o.Size = size
+	o.Rows = make([]string, 0, len(o.lines))
+	for _, l := range o.lines {
+		o.Rows = append(o.Rows, o.draw(l)...)
+	}
+	return o.Move(0)
+}
+
+// Move goes back by rows, or towards the end where they are negative, as far as there is to see.
+func (o OutputPane) Move(rows int) OutputPane {
+	o.Back = min(max(o.Back+rows, 0), max(len(o.Rows)-o.Size.Height, 0))
+	return o
+}
+
+// View draws the rows in sight.
+func (o OutputPane) View() string {
+	end := len(o.Rows) - o.Back
+	return strings.Join(o.Rows[max(end-o.Size.Height, 0):end], "\n")
+}

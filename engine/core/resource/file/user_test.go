@@ -1,0 +1,89 @@
+package file
+
+import (
+	"bytes"
+	"context"
+	"errors"
+	"io/fs"
+	"slices"
+	"testing"
+
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/resource"
+)
+
+// The user's file, directory and lines are resources, which a step plans by resource.Append.
+var _ = []resource.Resource{UserFile{}, UserDir{}, UserLines{}}
+
+// TestUserFilePlanAgreesWithReport finds that a report stands off where a plan changes the file or
+// refuses it, has a conflict where that file is there, and fails where the plan fails.
+func TestUserFilePlanAgreesWithReport(t *testing.T) {
+	const target = "/h/f"
+	put := func(text string, mode fs.FileMode) func(*effecttest.Machine) {
+		return func(m *effecttest.Machine) { m.Files[target], m.Modes[target] = []byte(text), mode }
+	}
+	for _, c := range []struct {
+		setUp func(*effecttest.Machine)
+		mode  fs.FileMode
+		// want is the plan: a write, a mode, nothing, not ws's or fails.
+		name, want string
+	}{
+		{func(*effecttest.Machine) {}, 0o600, "missing", "write"},
+		{put("# ws\n", 0o600), 0o600, "the same", "nothing"},
+		{put("# ws\n", 0o640), 0o600, "another mode", "mode"},
+		{put("# ws\n", 0o640), 0, "a mode left to the user", "nothing"},
+		{put("# ws\nmore\n", 0o600), 0o600, "other content", "write"},
+		{put("mine\n", 0o600), 0o600, "another's", "not ws's"},
+		{func(m *effecttest.Machine) { m.Links[target] = "/nowhere" }, 0o600, "a link to nowhere", "not ws's"},
+		{func(m *effecttest.Machine) { m.Dirs[target] = 0o755 }, 0o600, "a directory", "not ws's"},
+		{func(m *effecttest.Machine) { put("# ws\n", 0o600)(m); m.Root[target] = effect.Attrs{} }, 0o600, "unreadable", "fails"},
+	} {
+		m := effecttest.NewMachine()
+		c.setUp(m)
+		f := UserFile{M: m, Path: target, Text: []byte("# ws\n"), Mode: c.mode,
+			Own: func(have []byte) bool { return bytes.HasPrefix(have, []byte("# ws")) }}
+		cs, planErr := f.Plan(context.Background())
+		items, reportErr := f.Report(context.Background())
+		got := "nothing"
+		switch {
+		case errors.Is(planErr, ErrNotWs):
+			got = "not ws's"
+		case planErr != nil:
+			got = "fails"
+		case len(cs) == 1 && cs[0] == UserChmod{M: m, Path: target, Mode: c.mode}:
+			got = "mode"
+		case len(cs) == 1:
+			got = "write"
+		}
+		if got != c.want || (got == "fails") != (reportErr != nil) {
+			t.Errorf("%s: plan = %v, %v, report's error %v, want %s", c.name, cs, planErr, reportErr, c.want)
+			continue
+		}
+		if reportErr == nil {
+			it := items[0]
+			if (it.Found != it.Want) != (got != "nothing") || (it.Conflict != "") != (got != "nothing" && c.name != "missing") {
+				t.Errorf("%s: report = %+v, plan %s", c.name, it, got)
+			}
+		}
+	}
+}
+
+// TestUserFileStopsOrWarnsWhereNotWs finds that a file that is not ws's stops a plan, and that it
+// draws one warning and no change where Warn is set.
+func TestUserFileStopsOrWarnsWhereNotWs(t *testing.T) {
+	for _, warn := range []bool{false, true} {
+		m, out := effecttest.NewMachine(), &effecttest.Out{}
+		m.Files["/h/f"] = []byte("mine\n")
+		f := UserFile{M: m, Out: out, Path: "/h/f", Text: []byte("# ws\n"), Warn: warn,
+			Own: func(have []byte) bool { return bytes.HasPrefix(have, []byte("# ws")) }}
+		cs, err := f.Plan(context.Background())
+		wantErr, wantSaid := error(ErrNotWs), []string(nil)
+		if warn {
+			wantErr, wantSaid = nil, []string{"warn: /h/f is not ws's: move it away, and the next run writes ws's"}
+		}
+		if len(cs) != 0 || !errors.Is(err, wantErr) || !slices.Equal(out.Lines, wantSaid) {
+			t.Errorf("Warn %v: plan = %v, %v, said %q; want %v and %q", warn, cs, err, out.Lines, wantErr, wantSaid)
+		}
+	}
+}

@@ -2,7 +2,7 @@ name: release
 
 # A pushed tag vX.Y.Z on a commit of main publishes ws's release. ci.yml and mac.yml run on the tag
 # first, then three binaries, ws.sha256 and install.sh are published, all checked for the local
-# list's words. docs/releases.md says how a release is cut.
+# list's words. engine/core/update/README.md says how a release is cut.
 on:
   push:
     tags: ["v*"]
@@ -48,7 +48,7 @@ jobs:
     permissions:
       contents: read
 
-  # The binaries, built by tools/build.
+  # The binaries, built by .tools/build.
   # Go stamps the tag into ws version from the clean tree at the tag: the files go outside it.
   build:
     needs: check
@@ -67,7 +67,7 @@ jobs:
         run: |
           mkdir "$RUNNER_TEMP/dist"
           for target in darwin-arm64 linux-amd64 linux-arm64; do
-              tools/build "${target%-*}" "${target#*-}" "$RUNNER_TEMP/dist/ws-$target"
+              .tools/build "${target%-*}" "${target#*-}" "$RUNNER_TEMP/dist/ws-$target"
           done
           (cd "$RUNNER_TEMP/dist" && sha256sum ws-* >ws.sha256)
           cp install.sh "$RUNNER_TEMP/dist/install.sh"

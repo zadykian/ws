@@ -9,22 +9,24 @@
 # - ws.version is the version that ws prints, and install.log holds a line for each curl, its URL.
 #   curl writes the release's install.sh, which puts its WS_VERSION in ws.version;
 # - units/NAME is a unit's log, as the journal holds it, and units/NAME.on is there while it runs;
-# - run.log holds systemd-run's arguments, and server.log the arguments of ws server apply past its
-#   --json, which it requires, a line each. values.log holds those of ws server values set, a line
-#   each, each argument in brackets;
-# - secrets.log holds the arguments of ws server secrets, a line each, secrets.in its last stdin,
-#   and keys what its keys prints;
+# - run.log holds systemd-run's arguments, and server.log the arguments of ws server ubuntu apply
+#   past its --json, which it requires, a line each. values.log holds those of ws server ubuntu
+#   values set, a line each, each argument in brackets;
+# - secrets.log holds the arguments of ws server ubuntu secrets, a line each, secrets.in its last
+#   stdin, and keys what its keys prints;
 # - creds/UNIT holds a unit's credentials, and seen/ the identity and the secrets file that
-#   ws server apply --secrets found, identity and secrets.age;
-# - server.wait holds the seconds that ws server apply runs. server.status holds its status, and
-#   that of ws server state --json, which prints a line with its version, HOME and locale;
-# - with server.cut, ws server apply kills the unit's job, as a stop or a reboot would;
+#   ws server ubuntu apply --secrets found, identity and secrets.age;
+# - server.wait holds the seconds that ws server ubuntu apply runs. server.status holds its status,
+#   and that of ws server ubuntu state --json, which prints a line with its version, HOME and
+#   locale;
+# - with server.cut, ws server ubuntu apply kills the unit's job, as a stop or a reboot would;
 # - wg0 holds wg0's key, sb turns Secure Boot on, nct6687 builds the fans' driver, and claude logs
 #   in;
-# - ws.key is wg0's key, which ws server apply --only wireguard makes, and utun names wg0, root's;
-# - uplink names the port of the default route. addr/PORT holds a port's IPv4 addresses, which
-#   ws server apply --only network,wireguard gives the port that host_vars names, with carrier. That
-#   run writes the port in root's netplan file, as the network role does, or removes the file.
+# - ws.key is wg0's key, which ws server ubuntu apply --only wireguard makes, and utun names wg0,
+#   root's;
+# - uplink names the port of the default route. addr/PORT holds a port's IPv4 addresses, which ws
+#   server ubuntu apply --only network,wireguard gives the port that host_vars names, with carrier.
+#   That run writes the port in root's netplan file, as the network role does, or removes the file.
 
 set -u
 
@@ -154,6 +156,8 @@ ws)
     case $1 in
     version) cat "$s/ws.version" 2>/dev/null ;;
     server)
+        [ "${2-}" = ubuntu ] || exit 2
+        shift
         if [ "$2" = secrets ]; then
             shift 2
             echo "$*" >>"$s/secrets.log"
@@ -174,7 +178,7 @@ ws)
         [ "$2 ${3-}" = 'apply --json' ] || exit 2
         shift 3
         echo "$*" >>"$s/server.log"
-        echo "ws server apply's stand-in, with '$*'"
+        echo "ws server ubuntu apply's stand-in, with '$*'"
         echo '{"event":"done","step":"stand-in","index":0}'
         # With --secrets, the credential must be there, and the file: they are copied to seen/.
         case $* in

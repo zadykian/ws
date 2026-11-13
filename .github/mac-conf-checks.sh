@@ -1,12 +1,12 @@
 #!/bin/sh
-# The mac job's checks of mac.conf's WS_TUNNEL_NETWORKS and WS_RESOLVERS, which ws mac apply writes.
-# The job runs it from the repository's root after mac-ws-checks.sh, with the tunnel's daemon
-# loaded and WS_PUBLIC_KEY in mac.conf (.github/workflows/mac.yml). It takes ws's path from the
-# job's TUNNEL, and stops without it. The keys' network must go into the daemon's utun, and their
-# domain show in scutil --dns. A second run and --check must print nothing. Emptied or removed, the
-# keys must take both back, and spare a script's own files. Each failure prints an ::error:: line,
-# and any fails the script at its end. Last, it runs mac-setup-checks.sh, whose cases run ws
-# setup's own steps. mac.conf's rules are go test's (internal/conf).
+# The mac job's checks of mac.conf's WS_TUNNEL_NETWORKS and WS_RESOLVERS, which ws client macos
+# apply writes. The job runs it from the repository's root after mac-ws-checks.sh, with the tunnel's
+# daemon loaded and WS_PUBLIC_KEY in mac.conf (.github/workflows/mac.yml). It takes ws's path from
+# the job's TUNNEL, and stops without it. The keys' network must go into the daemon's utun, and
+# their domain show in scutil --dns. A second run and --check must print nothing. Emptied or
+# removed, the keys must take both back, and spare a script's own files. Each failure prints an
+# ::error:: line, and any fails the script at its end. Last, it runs mac-setup-checks.sh, whose
+# cases run ws setup's own steps. mac.conf's rules are go test's (roles/client/macos/conf).
 #
 # shellcheck source-path=SCRIPTDIR/..
 
@@ -48,9 +48,9 @@ keys() {
     [ $# = 0 ] || printf '%s\n' "$@" >>"$conf"
 }
 
-# setup [ARG] runs ws mac apply, and sets out to what it printed.
+# setup [ARG] runs ws client macos apply, and sets out to what it printed.
 setup() {
-    out=$(ws mac apply "$@" 2>&1)
+    out=$(ws client macos apply "$@" 2>&1)
 }
 
 # routed ADDRESS succeeds where macOS routes ADDRESS into the daemon's utun.
@@ -69,14 +69,14 @@ shown() {
         END { exit !found }'
 }
 
-utun=$(sudo "$TUNNEL" mac tunnel status | awk -F': ' '$1 == "interface" { print $2 }')
+utun=$(sudo "$TUNNEL" client macos tunnel status | awk -F': ' '$1 == "interface" { print $2 }')
 # A script's own route and resolver, which the keys must spare.
-must "$TUNNEL" mac tunnel routes own 198.51.100.0/24
-must "$TUNNEL" mac resolver own.test 198.51.100.53
+must "$TUNNEL" client macos tunnel routes own 198.51.100.0/24
+must "$TUNNEL" client macos resolver own.test 198.51.100.53
 
 keys 'WS_TUNNEL_NETWORKS="203.0.113.0/24"' 'WS_RESOLVERS="conf.test=203.0.113.53,203.0.113.54"'
 if ! setup --check; then
-    error "ws mac apply --check with the keys failed: $out"
+    error "ws client macos apply --check with the keys failed: $out"
 else
     case $out in *'+203.0.113.0/24'*) ;; *) error "--check showed no network: $out" ;; esac
     case $out in
@@ -87,35 +87,35 @@ fi
 ! sudo test -e "$tunnel_dir/routes.d/mac-conf" || error '--check wrote routes.d/mac-conf'
 ! test -e "$ws_resolvers/conf.test" || error "--check wrote $ws_resolvers/conf.test"
 
-setup || error "ws mac apply with the keys failed: $out"
+setup || error "ws client macos apply with the keys failed: $out"
 printf '%s\n' "$out"
 until_ok 20 routed 203.0.113.1 || error "203.0.113.1 is not routed into the daemon's $utun"
 until_ok 20 shown conf.test 203.0.113.53 || error 'scutil --dns shows no resolver for conf.test'
 case $(head -n 1 "$ws_resolvers/conf.test") in
-"# Written by github.com/zadykian/ws: ws mac apply"*) ;;
-*) error "$ws_resolvers/conf.test does not start with ws mac apply's header" ;;
+"# Written by github.com/zadykian/ws: ws client macos apply"*) ;;
+*) error "$ws_resolvers/conf.test does not start with ws client macos apply's header" ;;
 esac
 for args in '' --check; do
     if ! setup ${args:+"$args"}; then
-        error "a second ws mac apply${args:+ $args} failed: $out"
+        error "a second ws client macos apply${args:+ $args} failed: $out"
     elif [ -n "$out" ]; then
-        error "a second ws mac apply${args:+ $args} printed what it should not: $out"
+        error "a second ws client macos apply${args:+ $args} printed what it should not: $out"
     fi
 done
 
 keys 'WS_RESOLVERS="conf.test=203.0.113.53,203.0.113.54,203.0.113.55,203.0.113.56"'
 if setup --check; then
-    error 'ws mac apply took 4 nameservers for a domain'
+    error 'ws client macos apply took 4 nameservers for a domain'
 else
     case $out in
     *'WS_RESOLVERS=conf.test='*'up to 3 IPv4 addresses'*) ;;
-    *) error "ws mac apply refused 4 nameservers with another error: $out" ;;
+    *) error "ws client macos apply refused 4 nameservers with another error: $out" ;;
     esac
 fi
 
 # WS_TUNNEL_NETWORKS emptied, and WS_RESOLVERS removed.
 keys 'WS_TUNNEL_NETWORKS='
-setup || error "ws mac apply with the keys emptied failed: $out"
+setup || error "ws client macos apply with the keys emptied failed: $out"
 printf '%s\n' "$out"
 until_ok 20 eval '! routed 203.0.113.1' || error "203.0.113.1 is still routed into $utun"
 until_ok 20 eval '! shown conf.test 203.0.113.53' || error 'scutil --dns still shows conf.test'
@@ -126,8 +126,8 @@ routed 198.51.100.1 || error "198.51.100.1, routes.d/own's, left $utun"
 shown own.test 198.51.100.53 || error 'the removed key took own.test too'
 
 keys
-must "$TUNNEL" mac tunnel routes own
-must "$TUNNEL" mac resolver own.test
+must "$TUNNEL" client macos tunnel routes own
+must "$TUNNEL" client macos resolver own.test
 
 sh .github/mac-setup-checks.sh || fail=1
 exit "$fail"

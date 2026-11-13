@@ -4,32 +4,32 @@
 # First come wg0's key, a Mac's key it lacks, Secure Boot that refuses the fans' driver, and no
 # login of claude's. Then its login, with no signing key in root's git config, and Secure Boot
 # off. state must print ws's report, with root's HOME and a UTF-8 locale, and exit with ws's status.
-# A full run must run ws server apply with --json alone in a unit of its own, with root's HOME and
-# a UTF-8 locale. It must print its log, event lines too, and exit 0. It must stamp ws's version,
-# 0, on and no sums in run, and the unit and 0 in last. A tagged run after it must start its own
-# unit, exit with its status, and leave run unchanged. A run during a full unit, or one of the
-# same steps, must follow that unit and start none. One of other steps during a part's unit must
+# A full run must run ws server ubuntu apply with --json alone in a unit of its own, with root's
+# HOME and a UTF-8 locale. It must print its log, event lines too, and exit 0. It must stamp ws's
+# version, 0, on and no sums in run, and the unit and 0 in last. A tagged run after it must start
+# its own unit, exit with its status, and leave run unchanged. A run during a full unit, or one of
+# the same steps, must follow that unit and start none. One of other steps during a part's unit must
 # refuse it. A full run whose unit is cut off must exit 1 and remove the run stamp that the one
 # before left. The next must start a unit of its own, as must one after outbound. That one stamps
 # off and the file's sum in run, as /etc/ws/host_vars.yml names security_outbound: false. That file
 # has mode 0600, in a directory of 0755. One with an argument, as --diff, must leave that stamp.
 # The files script's link must list ws's wired ports but the uplink and a bridge's member, with
 # their carrier and IPv4 addresses. link PORT must name one in ws's /etc/ws/host_vars.yml once. ws
-# server apply --only network,wireguard must then give it 10.77.0.1, and status's cable name it. The
-# remote script's outbound must add security_outbound: false there once, which status must then read
-# as off. So must it read false with a blank after it, and no with CRLF. The last line counts, as in
-# YAML: Off with a comment by hand must read as off, and stay, and true after it as on. Through a
-# link, outbound must stop, but where the linked file holds the line. The files script's user must
-# name ws_user there, which status reads, and refuse no user's name and a link. Its values must
-# print the file, and values PAIR... run ws server values set on each pair, an empty value too. The
-# stand-ins' state goes back.
+# server ubuntu apply --only network,wireguard must then give it 10.77.0.1, and status's cable name
+# it. The remote script's outbound must add security_outbound: false there once, which status must
+# then read as off. So must it read false with a blank after it, and no with CRLF. The last line
+# counts, as in YAML: Off with a comment by hand must read as off, and stay, and true after it as
+# on. Through a link, outbound must stop, but where the linked file holds the line. The files
+# script's user must name ws_user there, which status reads, and refuse no user's name and a link.
+# Its values must print the file, and values PAIR... run ws server ubuntu values set on each pair,
+# an empty value too. The stand-ins' state goes back.
 
 set -u
 
 # The one line of the gh stage that a run says where the account holds the Mac's key.
-known="ws mac wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
+known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
 
-remote_sh=$HOME/repository/ws/mac/wizard-remote.sh
+remote_sh=$HOME/repository/ws/roles/server/ubuntu/session/wizard-remote.sh
 ws=$RUNNER_TEMP/ws
 stamps=$ws/root/var/lib/ws-wizard
 peer=$ws/root/etc/wireguard/mac.pub
@@ -240,7 +240,7 @@ remote run --only network,wireguard
 files link
 printf '%s\n' "$out" | grep -qx 'enp5s0 1 10\.77\.0\.1/30' &&
     [ "$(tail -n 1 "$ws/server.log")" = '--only network,wireguard' ] ||
-    error "ws server apply --only network,wireguard gave enp5s0 no 10.77.0.1/30"
+    error "ws server ubuntu apply --only network,wireguard gave enp5s0 no 10.77.0.1/30"
 remote status
 printf '%s\n' "$out" | grep -qx 'cable enp5s0' || error "status named no cable enp5s0"
 remote outbound
