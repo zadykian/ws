@@ -1,6 +1,6 @@
 //go:build linux
 
-package base
+package swap
 
 import (
 	"io"

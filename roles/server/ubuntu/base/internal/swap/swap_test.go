@@ -1,4 +1,4 @@
-package base
+package swap
 
 import (
 	"fmt"
@@ -49,7 +49,7 @@ func booted(swaps string) *effecttest.Machine {
 	return m
 }
 
-func swapGroup(m *effecttest.Machine, d *fakeDisk, want swapSetting) host.Group {
+func swapGroup(m *effecttest.Machine, d *fakeDisk, want Setting) host.Group {
 	return host.Group{Title: "Swap", Parts: swapParts(m, &effecttest.Out{}, d, want)}
 }
 
@@ -59,7 +59,7 @@ func TestSwapSettled(t *testing.T) {
 	m := booted("/swapfile file 4194300 0 -2\n")
 	m.Files["/etc/fstab"] = []byte("/swapfile none swap sw 0 0\n")
 	d := &fakeDisk{files: map[string]swapFileInfo{swapFile: {Exists: true, Size: 16384 * mib, Mode: 0o600}}, avail: 1}
-	p, err := swapGroup(m, d, swapSetting{Swappiness: 10}).Plan(t.Context())
+	p, err := swapGroup(m, d, Setting{Swappiness: 10}).Plan(t.Context())
 	if err != nil || len(p.Changes) != 0 {
 		t.Errorf("plan = %v, %v, want none", p.Changes, err)
 	}
@@ -68,14 +68,14 @@ func TestSwapSettled(t *testing.T) {
 func TestSwapRefusals(t *testing.T) {
 	for _, tt := range []struct {
 		name  string
-		want  swapSetting
+		want  Setting
 		avail int64
 		text  string
 	}{
-		{"negative size", swapSetting{SizeMiB: ptr(-1)}, 100000, "base_swap_size_mb is -1"},
-		{"swappiness too high", swapSetting{Swappiness: 201}, 100000, "base_swappiness is 201"},
-		{"swappiness negative", swapSetting{Swappiness: -1}, 100000, "base_swappiness is -1"},
-		{"disk too small", swapSetting{SizeMiB: ptr(1024)}, 3000, "too little for a swap file"},
+		{"negative size", Setting{SizeMiB: ptr(-1)}, 100000, "base_swap_size_mb is -1"},
+		{"swappiness too high", Setting{Swappiness: 201}, 100000, "base_swappiness is 201"},
+		{"swappiness negative", Setting{Swappiness: -1}, 100000, "base_swappiness is -1"},
+		{"disk too small", Setting{SizeMiB: ptr(1024)}, 3000, "too little for a swap file"},
 	} {
 		m, d := booted(""), &fakeDisk{avail: tt.avail}
 		_, err := swapGroup(m, d, tt.want).Plan(t.Context())

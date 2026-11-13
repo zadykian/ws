@@ -1,4 +1,4 @@
-package base
+package swap
 
 // disk is what the swap step reads of the disk and changes on it, other than through the machine.
 // The step runs as root, so these calls need no sudo. osDisk is the real one; tests use a fake.

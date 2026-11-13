@@ -6,6 +6,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/server/ubuntu/base/internal/swap"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -18,7 +19,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units,
 		host.Group{Title: "Locale", Parts: localeParts(m, v.Base.Locale)},
 		host.Group{Title: "Timezone", Parts: timezoneParts(m, v.Base.Timezone)},
 		host.Group{Title: "Upgrades", Parts: upgradesParts(m, u, out)},
-		host.Group{Title: "Swap", Parts: hostParts(m, out, swapSetting{SizeMiB: v.Base.SwapSizeMB, Swappiness: v.Base.Swappiness})},
-		host.Group{Title: "Swappiness", Parts: swappinessParts(m, out, v.Base.Swappiness)},
+		host.Group{Title: "Swap", Parts: swap.Parts(m, out, swap.Setting{SizeMiB: v.Base.SwapSizeMB, Swappiness: v.Base.Swappiness})},
+		host.Group{Title: "Swappiness", Parts: swap.Swappiness(m, out, v.Base.Swappiness)},
 	}
 }

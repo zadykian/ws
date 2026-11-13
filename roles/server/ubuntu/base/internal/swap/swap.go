@@ -1,4 +1,5 @@
-package base
+// Package swap keeps the swap file and the kernel's swappiness, the last two steps of the base role.
+package swap
 
 import (
 	"fmt"
@@ -10,9 +11,9 @@ import (
 // fstabLine swaps to the file at boot.
 const fstabLine = "/swapfile none swap sw 0 0"
 
-// swapSetting is the swap file's wanted size in MiB, nil for the RAM's, and the swappiness. The
+// Setting is the swap file's wanted size in MiB, nil for the RAM's, and the swappiness. The
 // step checks the swappiness too, so that a wrong value stops the run with the swap unchanged.
-type swapSetting struct {
+type Setting struct {
 	SizeMiB    *int
 	Swappiness int
 }
@@ -22,13 +23,13 @@ type swap struct {
 	M      effect.Machine
 	Out    effect.Out
 	Disk   disk
-	Want   swapSetting
+	Want   Setting
 	active bool // plans the swapon and the swapoff of the installer's file, not the file's own
 }
 
 // swapParts keeps /swapfile, base_swap_size_mb MiB, in /etc/fstab and swapped to; none where the
 // size is 0. It takes the place of /swap.img, which Ubuntu Server's installer makes.
-func swapParts(m effect.Machine, out effect.Out, d disk, want swapSetting) []host.Resource {
+func swapParts(m effect.Machine, out effect.Out, d disk, want Setting) []host.Resource {
 	s := swap{M: m, Out: out, Disk: d, Want: want}
 	on := s
 	on.active = true
@@ -42,8 +43,8 @@ func swapParts(m effect.Machine, out effect.Out, d disk, want swapSetting) []hos
 	}
 }
 
-// hostParts is swapParts on the disk of the machine that ws runs on.
-func hostParts(m effect.Machine, out effect.Out, want swapSetting) []host.Resource {
+// Parts is swapParts on the disk of the machine that ws runs on.
+func Parts(m effect.Machine, out effect.Out, want Setting) []host.Resource {
 	return swapParts(m, out, osDisk{}, want)
 }
 
