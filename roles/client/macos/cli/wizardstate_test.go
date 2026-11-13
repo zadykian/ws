@@ -93,7 +93,7 @@ func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
 		<-ws.ops
 		_, _ = keys.Write([]byte("q"))
 	}()
-	read, done := macState(p, new(string), string(session.Ws), &host.Sudo{})
+	read, done := macState(p, wsServer(), string(session.Ws), &host.Sudo{})
 	err := tui.RunState(c.Context(), engine.ScreenConfig(enginecli.CallOf(c, p)), string(session.Ws), read)
 	done(c.Context())
 	if err != nil {
@@ -104,11 +104,17 @@ func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
 	}
 }
 
+// wsServer returns the server flag of a Mac whose server is called ws.
+func wsServer() *string {
+	name := "ws"
+	return &name
+}
+
 // The Mac's read is local, so a run's lock on ws stays out of it.
 func TestWizardStateOfTheMacTakesNoLock(t *testing.T) {
 	p, m := macTerminal()
 	c := screenCommand(t, "q")
-	read, done := macState(p, new(string), string(stage.Mac), &host.Sudo{})
+	read, done := macState(p, wsServer(), string(stage.Mac), &host.Sudo{})
 	if err := tui.RunState(c.Context(), engine.ScreenConfig(enginecli.CallOf(c, p)), string(stage.Mac), read); err != nil || done != nil {
 		t.Fatalf("err = %v, done = %v", err, done != nil)
 	}
