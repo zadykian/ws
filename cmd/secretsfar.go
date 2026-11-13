@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
@@ -14,7 +15,7 @@ import (
 // newMacSecretsCmd returns ws client macos secrets, which edits ws's secrets file. Each command
 // runs its own of ws server ubuntu secrets on ws as root, over the wizard's ssh, with a value on
 // ssh's stdin.
-func newMacSecretsCmd(p process) *cobra.Command {
+func newMacSecretsCmd(p cli.Env) *cobra.Command {
 	c := group("secrets", "edit ws's secrets file, over ssh", append([]*cobra.Command{{Use: "init",
 		Short: "make ws's age identity and an empty secrets file on ws", Args: cobra.NoArgs}},
 		secretsEditCmds(p, nil)...)...)
@@ -23,7 +24,7 @@ func newMacSecretsCmd(p process) *cobra.Command {
 }
 
 // forward has each command under c, but a group, run its own on ws.
-func forward(c *cobra.Command, p process) {
+func forward(c *cobra.Command, p cli.Env) {
 	for _, sub := range c.Commands() {
 		if sub.HasSubCommands() {
 			forward(sub, p)
@@ -39,7 +40,7 @@ func forward(c *cobra.Command, p process) {
 // alone. At a terminal, it reaches root on ws before it asks a value, so that a value is asked only
 // where it can go. Else it reads stdin first, and sudo's password, where ws's sudo asks one, comes
 // from /dev/tty.
-func runFar(c *cobra.Command, p process, args []string) error {
+func runFar(c *cobra.Command, p cli.Env, args []string) error {
 	if why := wizardRefusal(p); why != "" {
 		return errors.New(why)
 	}
@@ -47,15 +48,15 @@ func runFar(c *cobra.Command, p process, args []string) error {
 	var talk rootTalk = effect.NewTerminal(c.InOrStdin(), c.ErrOrStderr())
 	var in []byte
 	var err error
-	atTerminal := p.tty
+	atTerminal := p.TTY
 	if !atTerminal {
 		if in, args, err = farInput(c, p, far, args); err != nil {
 			return err
 		}
-		if p.openTTY != nil {
-			if tty, done, ttyErr := p.openTTY(); ttyErr == nil {
+		if p.OpenTTY != nil {
+			if tty, done, ttyErr := p.OpenTTY(); ttyErr == nil {
 				defer done()
-				talk, p.tty = struct {
+				talk, p.TTY = struct {
 					effect.Hidden
 					effect.Out
 				}{tty, talk}, true
@@ -64,7 +65,7 @@ func runFar(c *cobra.Command, p process, args []string) error {
 	}
 	r := &varsReach{p: p}
 	defer r.close(c.Context())
-	ws, err := r.reachOn(c.Context(), p.machine, talk)
+	ws, err := r.reachOn(c.Context(), p.Machine, talk)
 	if err != nil {
 		return err
 	}
@@ -87,7 +88,7 @@ func runFar(c *cobra.Command, p process, args []string) error {
 }
 
 // farInput reads what set sends on ssh's stdin, and returns the arguments that go on to ws.
-func farInput(c *cobra.Command, p process, far, args []string) ([]byte, []string, error) {
+func farInput(c *cobra.Command, p cli.Env, far, args []string) ([]byte, []string, error) {
 	switch {
 	case far[0] == "set" && far[1] == secrets.KindFile:
 		in, err := readProfile(c, p, args)

@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/engine"
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
@@ -17,7 +18,7 @@ import (
 )
 
 // newStateCmd returns ws server ubuntu state.
-func newStateCmd(p process) *cobra.Command {
+func newStateCmd(p cli.Env) *cobra.Command {
 	var opts role.Options
 	var asJSON bool
 	c := &cobra.Command{
@@ -41,7 +42,7 @@ func newStateCmd(p process) *cobra.Command {
 }
 
 // runState prints what the roles report.
-func runState(c *cobra.Command, p process, opts applyOptions, asJSON bool) error {
+func runState(c *cobra.Command, p cli.Env, opts applyOptions, asJSON bool) error {
 	r, err := prepareServer(c, p, opts)
 	if err != nil {
 		return err
@@ -53,7 +54,7 @@ func runState(c *cobra.Command, p process, opts applyOptions, asJSON bool) error
 		return engine.UsageError{Err: err}
 	}
 	if drawsReport(c, p) {
-		p.machine = r.cfg.M // ws_home confines it.
+		p.Machine = r.cfg.M // ws_home confines it.
 		return tui.RunState(c.Context(), screenConfig(c, p), c.CommandPath(), func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
 			// The read takes the screen's effects as a run does, as the steps don't own the terminal under it.
 			states, err := role.State(ctx, onScreen(r.cfg, b), list)
@@ -66,7 +67,7 @@ func runState(c *cobra.Command, p process, opts applyOptions, asJSON bool) error
 		return err
 	}
 	if asJSON {
-		return writeJSON(c.OutOrStdout(), role.StateDoc{Version: p.version, Roles: states})
+		return writeJSON(c.OutOrStdout(), role.StateDoc{Version: p.Version, Roles: states})
 	}
 	return writeState(c.OutOrStdout(), states)
 }

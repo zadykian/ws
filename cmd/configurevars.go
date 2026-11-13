@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 	"sync"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/remote"
 	"github.com/zadykian/ws/engine/tui"
@@ -18,7 +19,7 @@ import (
 // ws client macos secrets. It starts with the first read, so that mac.conf draws with ws out of
 // reach.
 type varsReach struct {
-	p process
+	p cli.Env
 	// sudo is the scan's, whose way to root the state screen keeps. It stands unread where the scan
 	// never reached it, and a read then asks. Nil makes a new one for each reach.
 	sudo *host.Sudo
@@ -71,13 +72,13 @@ func (r *varsReach) reachOn(ctx context.Context, m effect.Machine, t rootTalk) (
 	if err != nil {
 		return nil, err
 	}
-	conf := confPath(r.p.getenv, r.p.pwd)
-	ssh := remote.SSH{M: m, Lock: lock, Home: r.p.getenv("HOME"), Ways: host.MacWays{M: m, Conf: conf}}
+	conf := confPath(r.p.Getenv, r.p.Pwd)
+	ssh := remote.SSH{M: m, Lock: lock, Home: r.p.Getenv("HOME"), Ways: host.MacWays{M: m, Conf: conf}}
 	sudo := cmp.Or(r.sudo, &host.Sudo{})
 	// A kept one holds the effects of a screen that has ended.
 	ws := session.New(host.MacReach{SSH: ssh, Sudo: sudo, Conf: conf, Out: t},
 		session.Scripts{Remote: session.RemoteScript, Files: session.RemoteFilesScript})
-	sudo.SSH, sudo.Tty, sudo.P, sudo.Out = ssh, r.p.tty, t, t
+	sudo.SSH, sudo.Tty, sudo.P, sudo.Out = ssh, r.p.TTY, t, t
 	plan, err := sudo.Plan(ctx)
 	if err != nil {
 		return nil, err
@@ -97,7 +98,7 @@ func (r *varsReach) locked(ctx context.Context) (string, error) {
 	if r.release != nil {
 		return r.lock, nil
 	}
-	lock, release, err := wizard.Lock(ctx, r.p.machine, r.p.lockDir())
+	lock, release, err := wizard.Lock(ctx, r.p.Machine, r.p.LockDir())
 	if err != nil {
 		return "", err
 	}
@@ -111,7 +112,7 @@ func (r *varsReach) close(ctx context.Context) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.release != nil {
-		remote.SSH{M: r.p.machine, Lock: r.lock}.End(context.WithoutCancel(ctx))
+		remote.SSH{M: r.p.Machine, Lock: r.lock}.End(context.WithoutCancel(ctx))
 		r.release()
 	}
 }

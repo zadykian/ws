@@ -11,29 +11,30 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/engine"
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 // fakeProcess returns a process that touches nothing of the test's own.
-func fakeProcess() process {
-	return process{
-		machine: effecttest.NewMachine(), getenv: noEnv, lookup: func(string) (string, bool) { return "", false },
-		setenv: func(string, string) error { return nil }, euid: 501, pid: 7, goos: "darwin", goarch: "arm64", pwd: "/p", version: "v1.2.3",
-		self: func() (string, error) { return "/h/.local/bin/ws", nil },
+func fakeProcess() cli.Env {
+	return cli.Env{
+		Machine: effecttest.NewMachine(), Getenv: noEnv, Lookup: func(string) (string, bool) { return "", false },
+		Setenv: func(string, string) error { return nil }, Euid: 501, Pid: 7, GOOS: "darwin", GOARCH: "arm64", Pwd: "/p", Version: "v1.2.3",
+		Self: func() (string, error) { return "/h/.local/bin/ws", nil },
 	}
 }
 
 // withEnv returns p with the environment env, for getenv, lookup and setenv.
-func withEnv(p process, env map[string]string) process {
-	p.getenv = func(k string) string { return env[k] }
-	p.lookup = func(k string) (string, bool) { v, ok := env[k]; return v, ok }
-	p.setenv = func(k, v string) error { env[k] = v; return nil }
+func withEnv(p cli.Env, env map[string]string) cli.Env {
+	p.Getenv = func(k string) string { return env[k] }
+	p.Lookup = func(k string) (string, bool) { v, ok := env[k]; return v, ok }
+	p.Setenv = func(k, v string) error { env[k] = v; return nil }
 	return p
 }
 
 // runWs runs args on the root of the groups that p serves, with stdin, and returns the status,
 // stdout and stderr.
-func runWs(p process, stdin string, args ...string) (status int, stdout, stderr string) {
+func runWs(p cli.Env, stdin string, args ...string) (status int, stdout, stderr string) {
 	var out, errs bytes.Buffer
 	root := newRoot(p, newMacCmd(p), newServerCmd(p))
 	status = execute(context.Background(), root, args, strings.NewReader(stdin), &out, &errs)
@@ -41,7 +42,7 @@ func runWs(p process, stdin string, args ...string) (status int, stdout, stderr 
 }
 
 // runGroups is runWs on the groups of this system.
-func runGroups(p process, args ...string) (status int, stdout, stderr string) {
+func runGroups(p cli.Env, args ...string) (status int, stdout, stderr string) {
 	var out, errs bytes.Buffer
 	status = execute(context.Background(), newRoot(p, groups(p)...), args, strings.NewReader(""), &out, &errs)
 	return status, out.String(), errs.String()

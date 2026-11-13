@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/tui"
@@ -48,7 +49,7 @@ func TestScreenWanted(t *testing.T) {
 
 func TestDrawsReportNeedsStdoutAtATerminal(t *testing.T) {
 	for _, atTerminal := range []bool{true, false} {
-		p := process{tty: true, errTTY: true, outTTY: atTerminal, getenv: func(string) string { return "xterm" }}
+		p := cli.Env{TTY: true, ErrTTY: true, OutTTY: atTerminal, Getenv: func(string) string { return "xterm" }}
 		if got := drawsReport(&cobra.Command{}, p); got != atTerminal {
 			t.Errorf("stdout at a terminal %v: drawsReport = %v", atTerminal, got)
 		}
@@ -56,7 +57,7 @@ func TestDrawsReportNeedsStdoutAtATerminal(t *testing.T) {
 }
 
 func TestDrawsScreenReadsPlain(t *testing.T) {
-	p := process{tty: true, errTTY: true, getenv: func(string) string { return "xterm" }}
+	p := cli.Env{TTY: true, ErrTTY: true, Getenv: func(string) string { return "xterm" }}
 	var seen []bool
 	root := newRoot(p)
 	root.AddCommand(group("probe", "x"))
@@ -76,7 +77,7 @@ func TestScreenMachineKeepsRootsSudoAndTheConfine(t *testing.T) {
 	var got effect.Machine
 	c, _ := screenCommand(t, "")
 	p := fakeProcess()
-	p.machine = local.OSMachine{Sudo: []string{}, Confine: "/home/z"}
+	p.Machine = local.OSMachine{Sudo: []string{}, Confine: "/home/z"}
 	err := drawRun(c, p, "title", nil, func(_ context.Context, b *tui.Bridge) error {
 		got = b.Effects().M
 		return nil

@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/engine"
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/tui"
 )
 
@@ -23,17 +24,17 @@ const jsonFlag = "json"
 // drawsScreen tells whether a command draws a full-screen display: stdin and stderr are
 // terminals, TERM names one that can draw, and neither --plain nor --json is given. Anywhere else
 // ws prints lines, which CI, pipes and the unit on ws read.
-func drawsScreen(c *cobra.Command, p process) bool {
+func drawsScreen(c *cobra.Command, p cli.Env) bool {
 	plain, _ := c.Flags().GetBool(plainFlag)
 	// A command without --json has no such flag, and the lookup then reads false.
 	asJSON, _ := c.Flags().GetBool(jsonFlag)
-	return screenWanted(plain, asJSON, p.tty, p.errTTY, p.getenv("TERM"))
+	return screenWanted(plain, asJSON, p.TTY, p.ErrTTY, p.Getenv("TERM"))
 }
 
 // drawsReport tells whether a command draws the report that it would print on stdout. That takes a
 // terminal there too: a pipe or a file waits for the text, which a screen never prints.
-func drawsReport(c *cobra.Command, p process) bool {
-	return p.outTTY && drawsScreen(c, p)
+func drawsReport(c *cobra.Command, p cli.Env) bool {
+	return p.OutTTY && drawsScreen(c, p)
 }
 
 // screenWanted is the choice itself, on its five inputs.
@@ -51,17 +52,17 @@ func runTitle(c *cobra.Command, check bool) string {
 
 // screenConfig is what a screen draws with: ws's lines go to stderr, where it draws, and a run's
 // stdout waits for the screen's end. Its works run on p's machine.
-func screenConfig(c *cobra.Command, p process) tui.Config {
+func screenConfig(c *cobra.Command, p cli.Env) tui.Config {
 	return tui.Config{
-		In: c.InOrStdin(), Out: c.ErrOrStderr(), Text: c.OutOrStdout(), Theme: tui.NewTheme(p.getenv),
-		Machine: p.machine, Cut: func(s syscall.Signal) error { return engine.SignalExit{Sig: s} },
+		In: c.InOrStdin(), Out: c.ErrOrStderr(), Text: c.OutOrStdout(), Theme: tui.NewTheme(p.Getenv),
+		Machine: p.Machine, Cut: func(s syscall.Signal) error { return engine.SignalExit{Sig: s} },
 	}
 }
 
 // drawRun runs work beside a run screen of groups, on stderr, where the lines go, and returns once
 // the terminal is back. work gives its steps Bridge.Options. A run cut short ends with the
 // status of a signal, for execute to report.
-func drawRun(c *cobra.Command, p process, title string, groups []tui.Group, work tui.Work) error {
+func drawRun(c *cobra.Command, p cli.Env, title string, groups []tui.Group, work tui.Work) error {
 	cfg, done := runConfig(c, p, screenConfig(c, p))
 	defer done()
 	return tui.Run(c.Context(), cfg, tui.NewRunScreen(title, cfg.Theme, groups...), work)
@@ -69,7 +70,7 @@ func drawRun(c *cobra.Command, p process, title string, groups []tui.Group, work
 
 // runConfig returns cfg as a run draws it: it asks before it stops, and keeps a log, which done
 // closes once the run has ended.
-func runConfig(c *cobra.Command, p process, cfg tui.Config) (tui.Config, func()) {
+func runConfig(c *cobra.Command, p cli.Env, cfg tui.Config) (tui.Config, func()) {
 	log, path := openLog(p, c.CommandPath(), time.Now())
 	cfg.LogPath = path
 	if log == nil { // A nil *os.File in the interface would not be nil.
@@ -84,10 +85,10 @@ const logsKept = 20
 
 // openLog creates the log of a run of command, under $XDG_STATE_HOME/ws or ~/.local/state/ws, for
 // the owner alone. A log that can't be made is no reason to stop a run, so it returns nil.
-func openLog(p process, command string, now time.Time) (*os.File, string) {
-	dir := p.getenv("XDG_STATE_HOME")
+func openLog(p cli.Env, command string, now time.Time) (*os.File, string) {
+	dir := p.Getenv("XDG_STATE_HOME")
 	if dir == "" {
-		if home := p.getenv("HOME"); home != "" {
+		if home := p.Getenv("HOME"); home != "" {
 			dir = filepath.Join(home, ".local", "state")
 		}
 	}

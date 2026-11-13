@@ -12,6 +12,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
@@ -20,7 +21,7 @@ import (
 // wizardRun is a wizard's run at a terminal, over its side: the Mac's or ws's.
 type wizardRun struct {
 	c    *cobra.Command
-	p    process
+	p    cli.Env
 	side wizardSide
 	o    wizardOptions
 }
@@ -57,10 +58,10 @@ func (w wizardRun) lines(ctx context.Context, term *effect.Terminal, out progOut
 		hand.Close(ctx, w.c.OutOrStdout())
 		term.Flush()
 	}
-	talks, _ := w.p.machine.(effect.Foreground)
+	talks, _ := w.p.Machine.(effect.Foreground)
 	stages := w.side.stages(wizardEffects{p: w.p, prog: w.c.CommandPath(), talks: talks, ask: signalPrompt{term},
 		hidden: term, out: out, text: w.c.OutOrStdout(), obs: out, hand: hand, sudo: &host.Sudo{}}, w.o)
-	_, err := wizard.Run(ctx, w.p.machine, step.Options{Observer: out, Check: w.o.check}, stages, w.p.lockDir(),
+	_, err := wizard.Run(ctx, w.p.Machine, step.Options{Observer: out, Check: w.o.check}, stages, w.p.LockDir(),
 		w.side.pid, closing)
 	// The runner names the stage before the stage's own message.
 	return unwrapStep(err)
@@ -109,7 +110,7 @@ func (w wizardRun) plainStages() []step.Step {
 // effects returns the stages' effects on b, whose stdout waits for the screen's end.
 func (w wizardRun) effects(b *tui.Bridge, sudo *host.Sudo) wizardEffects {
 	p, on := w.p, b.Effects()
-	p.machine = on.M
+	p.Machine = on.M
 	return wizardEffects{p: p, prog: w.c.CommandPath(), talks: on.Talks, ask: b, hidden: b, out: b, text: on.Text, obs: b,
 		hand: &wizard.Hand{}, sudo: sudo, stop: b.Options(step.Options{}).Stop}
 }
@@ -125,11 +126,11 @@ func (w wizardRun) scan(sudo *host.Sudo) tui.Work {
 		o := b.Options(step.Options{Check: true})
 		if run := wsRunOf(stages); run != nil {
 			o.Observer = afterStage{b, run.WaitsOn(), func() {
-				states, err := run.Ws.State(ctx, w.p.version)
+				states, err := run.Ws.State(ctx, w.p.Version)
 				reportRoles(run.Name(), states, err, b.Report)
 			}}
 		}
-		_, err := wizard.Run(ctx, e.p.machine, o, stages, w.p.lockDir(), w.side.pid, nil)
+		_, err := wizard.Run(ctx, e.p.Machine, o, stages, w.p.LockDir(), w.side.pid, nil)
 		return unwrapStep(err)
 	}
 }
@@ -168,7 +169,7 @@ func (w wizardRun) work(o wizardOptions, sudo *host.Sudo) tui.Work {
 		e.events = b
 		closing := func(ctx context.Context) { e.hand.Close(ctx, e.text) }
 		so := b.Options(step.Options{Check: o.check, LeftOut: o.left})
-		_, err := wizard.Run(ctx, e.p.machine, so, w.side.stages(e, o), w.p.lockDir(), w.side.pid, closing)
+		_, err := wizard.Run(ctx, e.p.Machine, so, w.side.stages(e, o), w.p.LockDir(), w.side.pid, closing)
 		return unwrapStep(err)
 	}
 }

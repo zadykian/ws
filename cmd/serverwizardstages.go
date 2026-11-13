@@ -18,14 +18,14 @@ import (
 // chose ws's run in part gives o.only, and one that ticked it whole o.update, as on the Mac.
 func serverWizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	p, out, hand := e.p, e.out, e.hand
-	m := p.machine
-	vals := &stages.WsValues{Vars: serverVars, User: p.getenv("SUDO_USER"), Tty: p.tty, M: m, P: e.ask,
+	m := p.Machine
+	vals := &stages.WsValues{Vars: serverVars, User: p.Getenv("SUDO_USER"), Tty: p.TTY, M: m, P: e.ask,
 		Set: func(key, value string) error { return setServerValue(m, out, key, value) }}
 	ws := serverSession(m, e.talks, out, e.events)
 	run := &stages.WsRun{Ws: ws, Await: vals.Name(), Unbooted: !systemd.Booted(m), Check: o.check, Out: out,
-		Version: p.version, Update: o.update, Only: o.only}
+		Version: p.Version, Update: o.update, Only: o.only}
 	hand.Late(ws.Hand)
-	return []step.Step{vals, run, &stages.WsClaude{Ws: ws, Tty: p.tty},
+	return []step.Step{vals, run, &stages.WsClaude{Ws: ws, Tty: p.TTY},
 		&stages.Signing{Ws: ws, GitHub: &stages.WsGitHub{M: m, Out: out, Hand: hand}}}
 }
 

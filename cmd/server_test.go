@@ -52,8 +52,8 @@ func TestServerApplyRefusesOtherArgs(t *testing.T) {
 
 func TestServerApplyRefusesNonRoot(t *testing.T) {
 	p := fakeProcess()
-	m := p.machine.(*effecttest.Machine)
-	p.euid = 1000
+	m := p.Machine.(*effecttest.Machine)
+	p.Euid = 1000
 	m.Files["/etc/os-release"] = []byte("ID=ubuntu\nVERSION_ID=\"26.04\"\n")
 	status, _, stderr := runWs(p, "", "server", "ubuntu", "apply")
 	if status != 1 || stderr != "ws server ubuntu apply: run it as root\n" {
@@ -113,7 +113,7 @@ func TestLoadSecrets(t *testing.T) {
 
 func TestServerFansRefusesAConfigThatFailsItsCheck(t *testing.T) {
 	p := fakeProcess()
-	p.machine.(*effecttest.Machine).Files["/ws-fans.json"] = []byte(`{"interval": 0}`)
+	p.Machine.(*effecttest.Machine).Files["/ws-fans.json"] = []byte(`{"interval": 0}`)
 	status, _, stderr := runWs(p, "", "server", "ubuntu", "fans", "/ws-fans.json")
 	if status != 1 || !strings.HasPrefix(stderr, "ws server ubuntu fans: /ws-fans.json: ") || !strings.Contains(stderr, "interval") {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
@@ -130,8 +130,8 @@ func noEnv(string) string { return "" }
 
 func TestServerStateRefusesNonRootAndOtherArgs(t *testing.T) {
 	p := fakeProcess()
-	m := p.machine.(*effecttest.Machine)
-	p.euid = 1000
+	m := p.Machine.(*effecttest.Machine)
+	p.Euid = 1000
 	m.Files["/etc/os-release"] = []byte("ID=ubuntu\nVERSION_ID=\"26.04\"\n")
 	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "state", "--json")
 	if status != 1 || stdout != "" || stderr != "ws server ubuntu state: run it as root\n" {
@@ -204,7 +204,7 @@ func TestRoleSectionsNameTheRoles(t *testing.T) {
 
 func TestServerStateDrawsTheScreenAtATerminal(t *testing.T) {
 	p, _ := serverTerminal()
-	p.outTTY = true
+	p.OutTTY = true
 	status, stdout, stderr := runWs(p, "q", "server", "ubuntu", "state", "--only", "tmux")
 	if status != 0 || stdout != "" || !strings.Contains(stderr, enterScreen) {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)

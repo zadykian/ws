@@ -5,12 +5,13 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
 // newServerSecretsCmd returns ws server ubuntu secrets, which keeps ws's secrets file, with its
 // identity as a systemd credential. ws client macos secrets runs its commands here, over ssh.
-func newServerSecretsCmd(p process) *cobra.Command {
+func newServerSecretsCmd(p cli.Env) *cobra.Command {
 	open := func() (secrets.Store, error) { return serverSecretsStore(p) }
 	return group("secrets", "keep ws's secrets file, with its identity as a systemd credential",
 		append([]*cobra.Command{{
@@ -26,15 +27,15 @@ func newServerSecretsCmd(p process) *cobra.Command {
 }
 
 // serverSecretsStore returns ws's store, to root alone: the file and the host's key are root's.
-func serverSecretsStore(p process) (secrets.Store, error) {
-	if p.euid != 0 {
+func serverSecretsStore(p cli.Env) (secrets.Store, error) {
+	if p.Euid != 0 {
 		return secrets.Store{}, errors.New("run it as root")
 	}
-	return secrets.Store{M: p.machine}, nil
+	return secrets.Store{M: p.Machine}, nil
 }
 
 // serverSecretsInit makes a missing credential, and the file where none is, and says which it made.
-func serverSecretsInit(c *cobra.Command, p process) error {
+func serverSecretsInit(c *cobra.Command, p cli.Env) error {
 	store, err := serverSecretsStore(p)
 	if err != nil {
 		return err

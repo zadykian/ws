@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
@@ -16,7 +17,7 @@ import (
 type openStore func() (secrets.Store, error)
 
 // secretsEditCmds returns set, unset and keys, which edit the store that open returns.
-func secretsEditCmds(p process, open openStore) []*cobra.Command {
+func secretsEditCmds(p cli.Env, open openStore) []*cobra.Command {
 	return []*cobra.Command{newSecretsSetCmd(p, open), {
 		Use:   "unset KIND NAME",
 		Short: "drop an entry",
@@ -43,7 +44,7 @@ func editIn(c *cobra.Command, open openStore, fn func(*secrets.Secrets) error) e
 
 // newSecretsSetCmd returns set, of ws server ubuntu secrets and ws client macos secrets, with a
 // command per kind.
-func newSecretsSetCmd(p process, open openStore) *cobra.Command {
+func newSecretsSetCmd(p cli.Env, open openStore) *cobra.Command {
 	cmds := []*cobra.Command{newSecretsSetGitCmd(open), newSecretsSetFileCmd(p, open)}
 	for _, kind := range []string{secrets.KindToken, secrets.KindEnv, secrets.KindPassword} {
 		cmds = append(cmds, &cobra.Command{
@@ -98,7 +99,7 @@ func newSecretsSetGitCmd(open openStore) *cobra.Command {
 }
 
 // newSecretsSetFileCmd returns set file.
-func newSecretsSetFileCmd(p process, open openStore) *cobra.Command {
+func newSecretsSetFileCmd(p cli.Env, open openStore) *cobra.Command {
 	return &cobra.Command{
 		Use:   "file NAME [PATH]",
 		Short: "set a profile file (vpn_p12, vpn_sswan) from the file at PATH, or from stdin",
@@ -115,9 +116,9 @@ func newSecretsSetFileCmd(p process, open openStore) *cobra.Command {
 
 // readProfile reads the file at args[1], else stdin whole, as bytes: a terminal is refused, as no
 // prompt takes a .p12.
-func readProfile(c *cobra.Command, p process, args []string) ([]byte, error) {
+func readProfile(c *cobra.Command, p cli.Env, args []string) ([]byte, error) {
 	if len(args) == 2 {
-		return p.machine.ReadFile(args[1])
+		return p.Machine.ReadFile(args[1])
 	}
 	if f, ok := c.InOrStdin().(*os.File); ok && term.IsTerminal(int(f.Fd())) {
 		return nil, fmt.Errorf("give the file %s as PATH, or on stdin from a file", args[0])

@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/engine"
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/update"
 )
 
@@ -27,7 +28,7 @@ func runningFile() (string, error) {
 
 // newUpdateCmd returns ws update, which replaces this ws and changes nothing else, as cld update
 // does for cld. It runs on any system that ws is released for, as any user who may write the file.
-func newUpdateCmd(p process) *cobra.Command {
+func newUpdateCmd(p cli.Env) *cobra.Command {
 	return &cobra.Command{
 		Use:   "update",
 		Short: "update ws to the latest release",
@@ -42,8 +43,8 @@ func newUpdateCmd(p process) *cobra.Command {
 
 // runUpdate runs the update until it returns. A signal before the replace cancels it, and leaves
 // this ws unchanged. One after the replace changes nothing.
-func runUpdate(c *cobra.Command, p process) error {
-	file, err := p.self()
+func runUpdate(c *cobra.Command, p cli.Env) error {
+	file, err := p.Self()
 	if err != nil {
 		return fmt.Errorf("finding the file ws runs from: %w", err)
 	}
@@ -59,8 +60,8 @@ func runUpdate(c *cobra.Command, p process) error {
 		case <-ctx.Done():
 		}
 	}()
-	u := update.Updater{M: p.machine, Version: p.version, URL: p.releases, File: file,
-		Binary: "ws-" + p.goos + "-" + p.goarch, PID: p.pid}
+	u := update.Updater{M: p.Machine, Version: p.Version, URL: p.Releases, File: file,
+		Binary: "ws-" + p.GOOS + "-" + p.GOARCH, PID: p.Pid}
 	r, err := u.Run(ctx)
 	if err != nil {
 		var cut engine.SignalExit

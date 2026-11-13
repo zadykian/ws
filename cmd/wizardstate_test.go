@@ -41,13 +41,13 @@ func (w reportingWs) RunInput(ctx context.Context, in []byte, name string, args 
 
 func TestWsReadGivesTheRolesAndReadsWsAgain(t *testing.T) {
 	p, m := macTerminal()
-	ws := newReportingWs(m, p.version)
-	p.machine = ws
+	ws := newReportingWs(m, p.Version)
+	p.Machine = ws
 	reach := &varsReach{p: p, sudo: &host.Sudo{}}
 	defer reach.close(context.Background())
-	read := stateRead(reach.reach, p.version)
+	read := stateRead(reach.reach, p.Version)
 	for range 2 {
-		sections, err := read(t.Context(), tui.Offscreen(p.machine))
+		sections, err := read(t.Context(), tui.Offscreen(p.Machine))
 		if err != nil || len(sections) != 1 || sections[0].Name != "base" {
 			t.Fatalf("read = %+v, %v", sections, err)
 		}
@@ -66,10 +66,10 @@ func TestWsReadGivesTheRolesAndReadsWsAgain(t *testing.T) {
 
 func TestWsReadRefusesAnotherVersion(t *testing.T) {
 	p, m := macTerminal()
-	p.machine = newReportingWs(m, "v0.0.1")
+	p.Machine = newReportingWs(m, "v0.0.1")
 	reach := &varsReach{p: p, sudo: &host.Sudo{}}
 	defer reach.close(context.Background())
-	if _, err := stateRead(reach.reach, p.version)(t.Context(), tui.Offscreen(p.machine)); err == nil || !strings.Contains(err.Error(), "holds v0.0.1") {
+	if _, err := stateRead(reach.reach, p.Version)(t.Context(), tui.Offscreen(p.Machine)); err == nil || !strings.Contains(err.Error(), "holds v0.0.1") {
 		t.Errorf("err = %v", err)
 	}
 }
@@ -77,8 +77,8 @@ func TestWsReadRefusesAnotherVersion(t *testing.T) {
 // The lock goes with the screen, for the run that may follow.
 func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
 	p, m := macTerminal()
-	ws := newReportingWs(m, p.version)
-	p.machine = ws
+	ws := newReportingWs(m, p.Version)
+	p.Machine = ws
 	c, _ := screenCommand(t, "")
 	in, keys := io.Pipe()
 	defer func() { _ = keys.Close() }()
@@ -136,7 +136,7 @@ func (s stateTrip) Read(b []byte) (int, error) {
 // The lists come back from the state screen with no scan of their own: one scan reads the Mac.
 func TestWizardStateKeyComesBackToTheListsWithNoScan(t *testing.T) {
 	p, m := macTerminal()
-	p.machine = freed{m}
+	p.Machine = freed{m}
 	ctx, cancel := context.WithTimeout(t.Context(), 20*time.Second)
 	defer cancel()
 	var out bytes.Buffer

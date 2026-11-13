@@ -13,6 +13,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/settings"
@@ -36,13 +37,13 @@ const watchWait = 5 * time.Second
 const statusWait = 5 * time.Second
 
 // newTunnelCmd returns ws client macos tunnel.
-func newTunnelCmd(p process) *cobra.Command {
+func newTunnelCmd(p cli.Env) *cobra.Command {
 	return group("tunnel", "the Mac's tunnel to ws",
 		newTunnelRunCmd(p), newTunnelStatusCmd(p), newTunnelKeyCmd(p), newTunnelLoadedCmd(p), newTunnelRoutesCmd(p))
 }
 
 // newTunnelRunCmd returns ws client macos tunnel run.
-func newTunnelRunCmd(_ process) *cobra.Command {
+func newTunnelRunCmd(_ cli.Env) *cobra.Command {
 	return &cobra.Command{
 		Use:   "run",
 		Short: "keep the tunnel to ws up, as root",
@@ -53,7 +54,7 @@ func newTunnelRunCmd(_ process) *cobra.Command {
 }
 
 // newTunnelStatusCmd returns ws client macos tunnel status.
-func newTunnelStatusCmd(p process) *cobra.Command {
+func newTunnelStatusCmd(p cli.Env) *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
 		Short: "print the way in use and the peer, as root",
@@ -70,7 +71,7 @@ func newTunnelStatusCmd(p process) *cobra.Command {
 }
 
 // newTunnelKeyCmd returns ws client macos tunnel key.
-func newTunnelKeyCmd(p process) *cobra.Command {
+func newTunnelKeyCmd(p cli.Env) *cobra.Command {
 	return &cobra.Command{
 		Use:   "key",
 		Short: "make the Mac's key where none is, and print the public key, as root",
@@ -111,20 +112,20 @@ func tunnelRun(ctx context.Context, stdout io.Writer) error {
 
 // tunnelStatus returns the way in use and the peer's handshake and bytes. The state file and the
 // device's socket are root's, so it needs root, as ws-tunnel status did.
-func tunnelStatus(ctx context.Context, p process) (string, error) {
-	if p.euid != 0 {
+func tunnelStatus(ctx context.Context, p cli.Env) (string, error) {
+	if p.Euid != 0 {
 		return "", errNotRoot
 	}
 	ctx, cancel := context.WithTimeout(ctx, statusWait)
 	defer cancel()
-	return settings.Status(ctx, p.machine, uapi.Get, settings.Dir, stateFile, time.Now())
+	return settings.Status(ctx, p.Machine, uapi.Get, settings.Dir, stateFile, time.Now())
 }
 
 // tunnelKey makes the Mac's private key where none is, and returns the public key. The private key
 // stays in root's file, which only root can write, so setup runs this through sudo.
-func tunnelKey(ctx context.Context, p process) (string, error) {
-	if p.euid != 0 {
+func tunnelKey(ctx context.Context, p cli.Env) (string, error) {
+	if p.Euid != 0 {
 		return "", errNotRoot
 	}
-	return settings.Key(ctx, p.machine, rand.Reader, settings.Dir)
+	return settings.Key(ctx, p.Machine, rand.Reader, settings.Dir)
 }

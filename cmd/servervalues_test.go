@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
@@ -34,10 +35,10 @@ func TestWriteVarsKeepsTheModeOfAFile(t *testing.T) {
 }
 
 // valuesProcess returns a root process on a machine that holds file as the values.
-func valuesProcess(file string) (process, *effecttest.Machine) {
+func valuesProcess(file string) (cli.Env, *effecttest.Machine) {
 	p := fakeProcess()
 	m := effecttest.NewMachine()
-	p.machine, p.euid = m, 0
+	p.Machine, p.Euid = m, 0
 	m.Dirs["/etc/ws"] = 0o755
 	m.Files[serverVars] = []byte(file)
 	return p, m
@@ -89,13 +90,13 @@ func TestValuesSetTakesAValueWithADash(t *testing.T) {
 
 func TestValuesSetRefuses(t *testing.T) {
 	notRoot, _ := valuesProcess("---\n")
-	notRoot.euid = 501
+	notRoot.Euid = 501
 	linked, m := valuesProcess("---\n")
 	m.Links[serverVars] = "/srv/vars.yml"
 	plain, _ := valuesProcess("---\n")
 	for _, tc := range []struct {
 		name string
-		p    process
+		p    cli.Env
 		args []string
 		want string
 	}{

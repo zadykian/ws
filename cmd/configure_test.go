@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos/conf"
@@ -67,16 +68,16 @@ func TestConfSheetDrawsWhatTheFormGives(t *testing.T) {
 
 func TestMacConfigureRefusals(t *testing.T) {
 	away, _ := macTerminal()
-	away.tty = false
+	away.TTY = false
 	linux, _ := macTerminal()
-	linux.goos = "linux"
+	linux.GOOS = "linux"
 	root, _ := macTerminal()
-	root.euid = 0
+	root.Euid = 0
 	bad, badFiles := macTerminal()
 	badFiles.Files["/h/.config/ws/mac.conf"] = []byte("no line\n")
 	plain, _ := macTerminal()
 	for name, tc := range map[string]struct {
-		p    process
+		p    cli.Env
 		args []string
 		want string
 	}{

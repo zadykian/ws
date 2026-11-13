@@ -119,7 +119,7 @@ func TestWizardRunsTheStagesChosenAlone(t *testing.T) {
 	p, m := macTerminal()
 	m.Results["xcode-select -p"] = effecttest.Result{Out: []byte("/x\n")}
 	m.Files["/x/usr/bin/git"], m.Modes["/x/usr/bin/git"] = nil, 0o755
-	p.machine = freed{m}
+	p.Machine = freed{m}
 	var out bytes.Buffer
 	root := newRoot(p, newMacCmd(p), newServerCmd(p))
 	keys := newAfterScan("n \r")

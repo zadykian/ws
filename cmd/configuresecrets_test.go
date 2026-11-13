@@ -44,10 +44,10 @@ func (w wsSecrets) RunInput(ctx context.Context, in []byte, name string, args ..
 func TestWsSideSetsAndListsOnWs(t *testing.T) {
 	m, id := credFixture()
 	p, mac := macTerminal()
-	p.machine = wsSecrets{farWs: newFarWs(mac, ""), ws: m}
+	p.Machine = wsSecrets{farWs: newFarWs(mac, ""), ws: m}
 	r := &varsReach{p: p}
 	defer r.close(context.Background())
-	ws, err := r.reach(context.Background(), tui.Offscreen(p.machine))
+	ws, err := r.reach(context.Background(), tui.Offscreen(p.Machine))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,10 +71,10 @@ func openSecrets(t *testing.T, toml string) (tui.Sheet, *effecttest.Machine, age
 	}
 	m.Files[secrets.FilePath] = armored
 	p, mac := macTerminal()
-	p.machine = wsSecrets{farWs: newFarWs(mac, ""), ws: m}
+	p.Machine = wsSecrets{farWs: newFarWs(mac, ""), ws: m}
 	r := &varsReach{p: p}
 	t.Cleanup(func() { r.close(context.Background()) })
-	sheet, err := r.secretsSheet().Open(context.Background(), tui.Offscreen(r.p.machine))
+	sheet, err := r.secretsSheet().Open(context.Background(), tui.Offscreen(r.p.Machine))
 	return sheet, m, id, err
 }
 
@@ -105,10 +105,10 @@ func TestWsSecretsSheetSavesOnWs(t *testing.T) {
 
 func TestWsSecretsSheetWithoutTheCredential(t *testing.T) {
 	p, m := macTerminal()
-	p.machine = wsSecrets{farWs: newFarWs(m, ""), ws: effecttest.NewMachine()}
+	p.Machine = wsSecrets{farWs: newFarWs(m, ""), ws: effecttest.NewMachine()}
 	r := &varsReach{p: p}
 	defer r.close(context.Background())
-	if _, err := r.secretsSheet().Open(context.Background(), tui.Offscreen(r.p.machine)); err == nil || !strings.Contains(err.Error(), "ws server ubuntu secrets init") {
+	if _, err := r.secretsSheet().Open(context.Background(), tui.Offscreen(r.p.Machine)); err == nil || !strings.Contains(err.Error(), "ws server ubuntu secrets init") {
 		t.Errorf("err = %v, want one naming init", err)
 	}
 }

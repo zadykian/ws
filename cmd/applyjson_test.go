@@ -62,7 +62,7 @@ func TestServerApplyHelpNamesJSON(t *testing.T) {
 
 func TestServerApplyJSONRefusesNonRootOnStdoutAlone(t *testing.T) {
 	p := fakeProcess()
-	p.euid = 1000
+	p.Euid = 1000
 	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "apply", "--json")
 	if status != 1 || stdout != "" || !strings.Contains(stderr, "run it as root") {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)

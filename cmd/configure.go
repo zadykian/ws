@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/form"
 	"github.com/zadykian/ws/engine/tui"
@@ -14,7 +15,7 @@ import (
 )
 
 // newConfigureCmd returns ws client macos configure.
-func newConfigureCmd(p process) *cobra.Command {
+func newConfigureCmd(p cli.Env) *cobra.Command {
 	return &cobra.Command{
 		Use:   "configure",
 		Short: "edit mac.conf, the secrets and ws's host_vars on forms",
@@ -28,7 +29,7 @@ func newConfigureCmd(p process) *cobra.Command {
 
 // runConfigure draws the form. A form has no lines to fall back on, so it refuses where no screen
 // draws. A mac.conf that it can't show stops it on the terminal, before the screen.
-func runConfigure(c *cobra.Command, p process) error {
+func runConfigure(c *cobra.Command, p cli.Env) error {
 	if why := wizardRefusal(p); why != "" {
 		return errors.New(why)
 	}
@@ -45,9 +46,9 @@ func runConfigure(c *cobra.Command, p process) error {
 
 // macForms gives the forms' sheets, for ws client macos configure and the wizard's list, and done,
 // which lets go of ws once they have ended.
-func macForms(c *cobra.Command, p process) func(context.Context) ([]tui.Sheet, func(context.Context), error) {
+func macForms(c *cobra.Command, p cli.Env) func(context.Context) ([]tui.Sheet, func(context.Context), error) {
 	return func(context.Context) ([]tui.Sheet, func(context.Context), error) {
-		form := conf.Form{Conf: confPath(p.getenv, p.pwd), Defaults: shellDefaults(), M: p.machine}
+		form := conf.Form{Conf: confPath(p.Getenv, p.Pwd), Defaults: shellDefaults(), M: p.Machine}
 		form, err := form.Load(effect.NewTerminal(c.InOrStdin(), c.ErrOrStderr()))
 		if err != nil {
 			return nil, nil, err

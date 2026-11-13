@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
@@ -19,7 +20,7 @@ type macDoc struct {
 }
 
 // newMacStateCmd returns ws client macos state.
-func newMacStateCmd(p process) *cobra.Command {
+func newMacStateCmd(p cli.Env) *cobra.Command {
 	var asJSON bool
 	c := &cobra.Command{
 		Use:   "state",
@@ -41,7 +42,7 @@ func newMacStateCmd(p process) *cobra.Command {
 
 // runMacState prints what the steps of ws client macos apply report. The ssh step that runs again
 // is left out: under a read it would repeat the first.
-func runMacState(c *cobra.Command, p process, asJSON bool) error {
+func runMacState(c *cobra.Command, p cli.Env, asJSON bool) error {
 	settings, err := loadMacConf(p)
 	if err != nil {
 		return err
@@ -51,20 +52,20 @@ func runMacState(c *cobra.Command, p process, asJSON bool) error {
 	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
 	out := progOut{term, c.CommandPath(), map[string]bool{}}
-	reports, err := macOf(p, settings, p.machine, out, nil).State(c.Context())
+	reports, err := macOf(p, settings, p.Machine, out, nil).State(c.Context())
 	term.Flush()
 	if err != nil {
 		return err
 	}
 	if asJSON {
-		return writeJSON(c.OutOrStdout(), macDoc{Version: p.version, Steps: reports})
+		return writeJSON(c.OutOrStdout(), macDoc{Version: p.Version, Steps: reports})
 	}
 	return writeMacState(c.OutOrStdout(), reports)
 }
 
 // macRead is the state screen's read of the Mac. It takes mac.conf itself, as the wizard opens the
 // screen on a Mac that may have none: the header then says so, and the wizard stays.
-func macRead(p process) tui.StateReader {
+func macRead(p cli.Env) tui.StateReader {
 	return func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
 		settings, err := loadMacConf(p)
 		if err != nil {

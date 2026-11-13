@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/engine"
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
@@ -72,12 +73,12 @@ func (o progOut) Warn(format string, a ...any) {
 
 // macOf returns the Mac's steps over the process's environment and the effects given to it.
 // No other function builds a Mac. text takes what a run prints on stdout.
-func macOf(p process, c conf.Conf, m effect.Machine, out effect.Out, text io.Writer) macos.Mac {
-	return macos.Mac{Conf: c, Home: p.getenv("HOME"), XDG: p.getenv("XDG_CONFIG_HOME"), M: m, Out: out, Text: text}
+func macOf(p cli.Env, c conf.Conf, m effect.Machine, out effect.Out, text io.Writer) macos.Mac {
+	return macos.Mac{Conf: c, Home: p.Getenv("HOME"), XDG: p.Getenv("XDG_CONFIG_HOME"), M: m, Out: out, Text: text}
 }
 
 // newMacApplyCmd returns ws client macos apply.
-func newMacApplyCmd(p process) *cobra.Command {
+func newMacApplyCmd(p cli.Env) *cobra.Command {
 	var check bool
 	var only []string
 	names := macos.Names()
@@ -98,17 +99,17 @@ func newMacApplyCmd(p process) *cobra.Command {
 }
 
 // loadMacConf refuses root and reads mac.conf: the commands that act on the Mac's own files share it.
-func loadMacConf(p process) (settings conf.Conf, err error) {
-	if p.euid == 0 {
+func loadMacConf(p cli.Env) (settings conf.Conf, err error) {
+	if p.Euid == 0 {
 		// As root, with HOME kept, it would leave root's files in the user's ~/.ssh, and run the
 		// user's ~/.local/bin/cld.
 		return conf.Conf{}, errors.New("run it as yourself, not root: it asks sudo where it needs root")
 	}
-	file := p.getenv("WS_CONF")
+	file := p.Getenv("WS_CONF")
 	if file == "" {
-		file = filepath.Join(p.getenv("HOME"), confFile)
+		file = filepath.Join(p.Getenv("HOME"), confFile)
 	}
-	text, err := p.machine.ReadFile(file)
+	text, err := p.Machine.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
 		return conf.Conf{}, fmt.Errorf("%s is missing: docs/mac.md says what goes in it", file)
 	}
@@ -133,7 +134,7 @@ type setupRun func(ctx context.Context, m effect.Machine, out effect.Out, text i
 
 // runMacApply runs the steps that only names, or every step, from mac.conf. Under check it prints
 // each change and makes none.
-func runMacApply(c *cobra.Command, p process, only []string, check bool) error {
+func runMacApply(c *cobra.Command, p cli.Env, only []string, check bool) error {
 	if c.Flags().Changed("only") && len(only) == 0 {
 		return engine.UsageError{Err: errors.New("--only names no step")}
 	}
@@ -166,7 +167,7 @@ func runMacApply(c *cobra.Command, p process, only []string, check bool) error {
 	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
 	out := progOut{term, c.CommandPath(), map[string]bool{}}
-	err = run(c.Context(), p.machine, out, c.OutOrStdout(), step.Options{Observer: out, Check: check})
+	err = run(c.Context(), p.Machine, out, c.OutOrStdout(), step.Options{Observer: out, Check: check})
 	term.Flush()
 	return err
 }
@@ -174,7 +175,7 @@ func runMacApply(c *cobra.Command, p process, only []string, check bool) error {
 // setupOnScreen is a run of ws client macos apply under the run screen. The rows name the screen's
 // steps, and the run acts on the screen's effects. What a run prints on stdout waits for the
 // screen's end, as it would paint over the screen at a terminal.
-func setupOnScreen(c *cobra.Command, p process, rows tui.Group, run setupRun, o step.Options) error {
+func setupOnScreen(c *cobra.Command, p cli.Env, rows tui.Group, run setupRun, o step.Options) error {
 	return drawRun(c, p, runTitle(c, o.Check), []tui.Group{rows}, func(ctx context.Context, b *tui.Bridge) error {
 		e := b.Effects()
 		return run(ctx, e.M, b, e.Text, b.Options(o))

@@ -7,11 +7,13 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime/debug"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/engine"
+	"github.com/zadykian/ws/engine/cli"
 )
 
 // group returns a command that only holds others. Alone it prints its help, and an unknown
@@ -28,7 +30,7 @@ func group(use, short string, cmds ...*cobra.Command) *cobra.Command {
 }
 
 // newRoot returns the ws command with the groups of this system.
-func newRoot(p process, groups ...*cobra.Command) *cobra.Command {
+func newRoot(p cli.Env, groups ...*cobra.Command) *cobra.Command {
 	root := group("ws", "set up the server and the Mac that works on it", newVersionCmd(p), newUpdateCmd(p))
 	root.AddCommand(groups...)
 	root.PersistentFlags().Bool(plainFlag, false, "print lines, with no full-screen display")
@@ -87,6 +89,7 @@ func execute(ctx context.Context, root *cobra.Command, args []string, stdin io.R
 
 // Execute runs ws on the process's arguments and terminals, and returns its exit status.
 func Execute() int {
-	p := newProcess()
+	info, ok := debug.ReadBuildInfo()
+	p := cli.NewEnv(versionOf(info, ok), runningFile)
 	return execute(context.Background(), newRoot(p, groups(p)...), os.Args[1:], os.Stdin, os.Stdout, os.Stderr)
 }

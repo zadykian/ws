@@ -10,12 +10,13 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // newValuesCmd returns ws server ubuntu values, which edits the machine's values.
-func newValuesCmd(p process) *cobra.Command {
+func newValuesCmd(p cli.Env) *cobra.Command {
 	return group("values", "edit the machine's values", &cobra.Command{
 		Use:   "set KEY VALUE",
 		Short: "write one key of " + serverVars,
@@ -28,13 +29,13 @@ func newValuesCmd(p process) *cobra.Command {
 }
 
 // runValuesSet writes key in the file, by setServerValue.
-func runValuesSet(c *cobra.Command, p process, key, value string) error {
-	if p.euid != 0 {
+func runValuesSet(c *cobra.Command, p cli.Env, key, value string) error {
+	if p.Euid != 0 {
 		return errors.New("run it as root")
 	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
 	defer term.Flush()
-	return setServerValue(p.machine, progOut{term, c.CommandPath(), map[string]bool{}}, key, value)
+	return setServerValue(p.Machine, progOut{term, c.CommandPath(), map[string]bool{}}, key, value)
 }
 
 // setServerValue writes key in the file, by rename and with its owner and mode, as the wizard's own

@@ -6,6 +6,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
@@ -14,7 +15,7 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu"
 )
 
-func queueOf(p process) []tui.Stage {
+func queueOf(p cli.Env) []tui.Stage {
 	return wizardQueue(wizardStages(wizardEffects{p: p, hand: &wizard.Hand{}, sudo: &host.Sudo{}}, wizardOptions{}))
 }
 

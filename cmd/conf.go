@@ -6,16 +6,31 @@ import (
 	"io"
 	"io/fs"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 const confFile = ".config/ws/mac.conf"
 
+// confPath returns mac.conf's path from WS_CONF, a path from / as ws client macos apply gets it,
+// else from the home.
+func confPath(getenv func(string) string, pwd string) string {
+	switch file := getenv("WS_CONF"); {
+	case file == "":
+		return getenv("HOME") + "/" + confFile
+	case strings.HasPrefix(file, "/"):
+		return file
+	default:
+		return pwd + "/" + file
+	}
+}
+
 // newConfCmd returns ws client macos conf.
-func newConfCmd(p process) *cobra.Command {
+func newConfCmd(p cli.Env) *cobra.Command {
 	var lines bool
 	c := &cobra.Command{
 		Use:   "conf [FILE]",
@@ -30,19 +45,19 @@ func newConfCmd(p process) *cobra.Command {
 }
 
 // runConf prints the settings of FILE, or of the file that the environment names.
-func runConf(c *cobra.Command, p process, args []string, lines bool) error {
+func runConf(c *cobra.Command, p cli.Env, args []string, lines bool) error {
 	parse := conf.Parse
 	if lines {
 		parse = conf.Lines
 	}
-	file := p.getenv("WS_CONF")
+	file := p.Getenv("WS_CONF")
 	if len(args) == 1 {
 		file = args[0]
 	}
 	if file == "" {
-		file = filepath.Join(p.getenv("HOME"), confFile)
+		file = filepath.Join(p.Getenv("HOME"), confFile)
 	}
-	text, err := p.machine.ReadFile(file)
+	text, err := p.Machine.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("%s is missing: docs/mac.md says what goes in it", file)
 	}
