@@ -1,6 +1,6 @@
 //go:build linux
 
-package effect
+package units
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/coreos/go-systemd/v22/dbus"
+
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 func TestUnitState(t *testing.T) {
@@ -20,13 +22,13 @@ func TestUnitState(t *testing.T) {
 	for _, tt := range []struct {
 		files []dbus.UnitFile
 		units []dbus.UnitStatus
-		want  UnitState
+		want  effect.UnitState
 	}{
-		{nil, nil, UnitState{}},
-		{file("enabled"), unit("active"), UnitState{Enabled: true, Active: true}},
-		{file("static"), unit("inactive"), UnitState{Enabled: true}},
-		{file("disabled"), unit("failed"), UnitState{Failed: true}},
-		{file("masked"), unit("activating"), UnitState{}},
+		{nil, nil, effect.UnitState{}},
+		{file("enabled"), unit("active"), effect.UnitState{Enabled: true, Active: true}},
+		{file("static"), unit("inactive"), effect.UnitState{Enabled: true}},
+		{file("disabled"), unit("failed"), effect.UnitState{Failed: true}},
+		{file("masked"), unit("activating"), effect.UnitState{}},
 	} {
 		if got := unitState(tt.files, tt.units, "a.service"); got != tt.want {
 			t.Errorf("unitState(%v, %v) = %+v, want %+v", tt.files, tt.units, got, tt.want)
@@ -34,7 +36,7 @@ func TestUnitState(t *testing.T) {
 	}
 }
 
-var _ Units = OSUnits{}
+var _ effect.Units = OSUnits{}
 
 func TestOSUnitsRefuseABareName(t *testing.T) {
 	ctx, u := context.Background(), OSUnits{}

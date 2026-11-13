@@ -10,8 +10,8 @@ import (
 	"filippo.io/age/armor"
 	"github.com/spf13/cobra"
 
-	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/units"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -223,7 +223,7 @@ func TestPrepareServerGivesTheRolesTheMachinesUnits(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := r.cfg.U.(effect.OSUnits); !ok {
-		t.Errorf("units = %T, want effect.OSUnits", r.cfg.U)
+	if _, ok := r.cfg.U.(units.OSUnits); !ok {
+		t.Errorf("units = %T, want units.OSUnits", r.cfg.U)
 	}
 }

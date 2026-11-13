@@ -1,6 +1,7 @@
 //go:build linux
 
-package effect
+// Package units is the effect.Units of the machine that ws runs on, over systemd.
+package units
 
 import (
 	"context"
@@ -9,16 +10,18 @@ import (
 	"slices"
 
 	"github.com/coreos/go-systemd/v22/dbus"
+
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
-// OSUnits is the Units of the machine that ws runs on, over systemd's D-Bus on the system bus.
+// OSUnits is the effect.Units of the machine that ws runs on, over systemd's D-Bus on the system bus.
 type OSUnits struct{}
 
 // enabledFileStates are the states of a unit file that boot starts it in, or needs no enabling in.
 var enabledFileStates = []string{"enabled", "enabled-runtime", "static", "alias", "generated", "transient", "indirect"}
 
-func unitState(files []dbus.UnitFile, units []dbus.UnitStatus, name string) UnitState {
-	var s UnitState
+func unitState(files []dbus.UnitFile, units []dbus.UnitStatus, name string) effect.UnitState {
+	var s effect.UnitState
 	for _, f := range files {
 		if path.Base(f.Path) == name {
 			s.Enabled = slices.Contains(enabledFileStates, f.Type)
@@ -33,22 +36,22 @@ func unitState(files []dbus.UnitFile, units []dbus.UnitStatus, name string) Unit
 }
 
 // State asks systemd for the unit's file and for its active state.
-func (OSUnits) State(ctx context.Context, name string) (UnitState, error) {
-	if err := CheckUnitName("state", name); err != nil {
-		return UnitState{}, err
+func (OSUnits) State(ctx context.Context, name string) (effect.UnitState, error) {
+	if err := effect.CheckUnitName("state", name); err != nil {
+		return effect.UnitState{}, err
 	}
 	c, err := dbus.NewSystemConnectionContext(ctx)
 	if err != nil {
-		return UnitState{}, err
+		return effect.UnitState{}, err
 	}
 	defer c.Close()
 	files, err := c.ListUnitFilesByPatternsContext(ctx, nil, []string{name})
 	if err != nil {
-		return UnitState{}, err
+		return effect.UnitState{}, err
 	}
 	units, err := c.ListUnitsByNamesContext(ctx, []string{name})
 	if err != nil {
-		return UnitState{}, err
+		return effect.UnitState{}, err
 	}
 	s := unitState(files, units, name)
 	if len(units) == 0 {
@@ -56,7 +59,7 @@ func (OSUnits) State(ctx context.Context, name string) (UnitState, error) {
 	}
 	p, err := c.GetUnitPropertyContext(ctx, name, "NeedDaemonReload")
 	if err != nil {
-		return UnitState{}, err
+		return effect.UnitState{}, err
 	}
 	s.NeedsReload, _ = p.Value.Value().(bool)
 	return s, nil
@@ -66,7 +69,7 @@ func (OSUnits) State(ctx context.Context, name string) (UnitState, error) {
 // unit reporting NeedDaemonReload, so a run would plan a reload that it cannot clear.
 func (OSUnits) Enable(ctx context.Context, names ...string) error {
 	for _, n := range names {
-		if err := CheckUnitName("enable", n); err != nil {
+		if err := effect.CheckUnitName("enable", n); err != nil {
 			return err
 		}
 	}
@@ -84,7 +87,7 @@ func (OSUnits) Enable(ctx context.Context, names ...string) error {
 // Disable disables the units' files, and reloads systemd, as Enable does.
 func (OSUnits) Disable(ctx context.Context, names ...string) error {
 	for _, n := range names {
-		if err := CheckUnitName("disable", n); err != nil {
+		if err := effect.CheckUnitName("disable", n); err != nil {
 			return err
 		}
 	}
@@ -101,7 +104,7 @@ func (OSUnits) Disable(ctx context.Context, names ...string) error {
 
 // Start starts the unit, replacing the jobs that conflict, and waits for the job.
 func (OSUnits) Start(ctx context.Context, name string) error {
-	if err := CheckUnitName("start", name); err != nil {
+	if err := effect.CheckUnitName("start", name); err != nil {
 		return err
 	}
 	return job(ctx, name, func(c *dbus.Conn) startFunc { return c.StartUnitContext })
@@ -109,7 +112,7 @@ func (OSUnits) Start(ctx context.Context, name string) error {
 
 // Restart restarts the unit and waits for the job.
 func (OSUnits) Restart(ctx context.Context, name string) error {
-	if err := CheckUnitName("restart", name); err != nil {
+	if err := effect.CheckUnitName("restart", name); err != nil {
 		return err
 	}
 	return job(ctx, name, func(c *dbus.Conn) startFunc { return c.RestartUnitContext })
@@ -117,7 +120,7 @@ func (OSUnits) Restart(ctx context.Context, name string) error {
 
 // Reload asks the unit to read its configuration again and waits for the job.
 func (OSUnits) Reload(ctx context.Context, name string) error {
-	if err := CheckUnitName("reload", name); err != nil {
+	if err := effect.CheckUnitName("reload", name); err != nil {
 		return err
 	}
 	return job(ctx, name, func(c *dbus.Conn) startFunc { return c.ReloadUnitContext })
@@ -125,7 +128,7 @@ func (OSUnits) Reload(ctx context.Context, name string) error {
 
 // Stop stops the unit and waits for the job.
 func (OSUnits) Stop(ctx context.Context, name string) error {
-	if err := CheckUnitName("stop", name); err != nil {
+	if err := effect.CheckUnitName("stop", name); err != nil {
 		return err
 	}
 	return job(ctx, name, func(c *dbus.Conn) startFunc { return c.StopUnitContext })
@@ -156,7 +159,7 @@ func job(ctx context.Context, name string, method func(*dbus.Conn) startFunc) er
 
 // ResetFailed clears the unit's failed state.
 func (OSUnits) ResetFailed(ctx context.Context, name string) error {
-	if err := CheckUnitName("reset-failed", name); err != nil {
+	if err := effect.CheckUnitName("reset-failed", name); err != nil {
 		return err
 	}
 	c, err := dbus.NewSystemConnectionContext(ctx)

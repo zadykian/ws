@@ -13,6 +13,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/local"
+	"github.com/zadykian/ws/engine/core/effect/units"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
@@ -140,7 +141,7 @@ func prepareServer(c *cobra.Command, p process, opts applyOptions) (serverRun, e
 	if err != nil {
 		return serverRun{}, err
 	}
-	cfg := role.Config{Options: opts.Options, M: p.machine, U: effect.OSUnits{}, Out: out, Observer: out,
+	cfg := role.Config{Options: opts.Options, M: p.machine, U: units.OSUnits{}, Out: out, Observer: out,
 		Prepare: prepareSteps(p.machine, out)}
 	r := serverRun{cfg: cfg, values: v, term: term, out: out}
 	if r.list, err = r.roles(sec); err != nil {
