@@ -28,12 +28,14 @@ func sshMachine() *effecttest.Machine {
 	return m
 }
 
-func sshStep(m *effecttest.Machine, out *effecttest.Out) ssh.SSH {
+func sshConf(m *effecttest.Machine, out *effecttest.Out) ssh.SSH {
 	return ssh.SSH{
 		Conf: conf.Conf{User: "me", IdentityPubKey: "~/.ssh/id_ed25519.pub"}, Home: "/h", M: m, Out: out,
 		Now: func() time.Time { return time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC) },
 	}
 }
+
+func sshStep(m *effecttest.Machine, out *effecttest.Out) step.Step { return sshConf(m, out).Step() }
 
 func TestSSHPlanOfAFreshHome(t *testing.T) {
 	m := sshMachine()
@@ -116,8 +118,9 @@ func TestSSHWarnsOfABlockAtTheLineTheRunLeaves(t *testing.T) {
 
 func TestSSHAgainAppliesNothingOfAnSSHLeftOut(t *testing.T) {
 	m, out := sshMachine(), &effecttest.Out{}
-	again := sshStep(m, out)
-	again.Again = true
+	secondRun := sshConf(m, out)
+	secondRun.Again = true
+	again := secondRun.Step()
 	left := func(_, name string) bool { return name == "ssh" }
 	if _, err := step.RunWith(t.Context(), []step.Step{sshStep(m, out), again}, step.Options{LeftOut: left}); err != nil {
 		t.Fatal(err)

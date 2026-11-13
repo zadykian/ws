@@ -52,7 +52,7 @@ func (m Mac) ofRun(o Options) []step.Step {
 
 // ssh returns the step for ssh's file, or for its second run.
 func (m Mac) ssh(again bool) step.Step {
-	return ssh.SSH{Conf: m.Conf, Home: m.Home, M: m.M, Out: m.Out, Now: time.Now, Again: again}
+	return ssh.SSH{Conf: m.Conf, Home: m.Home, M: m.M, Out: m.Out, Now: time.Now, Again: again}.Step()
 }
 
 // finisher is a step that leaves something for the end of a run that passed.

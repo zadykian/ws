@@ -27,3 +27,16 @@ func TestSSHPartsPlanTheChangesOfAFreshHomeInOrder(t *testing.T) {
 		t.Errorf("Plan = %v, %v; want 4 changes, the third config.d/ws's diff", p.Changes, err)
 	}
 }
+
+func TestSSHPartsRefuseBeforeTheyPlanAnyChange(t *testing.T) {
+	m := effecttest.NewMachine()
+	s := partsOf(m)
+	m.Files["/h/.ssh/config"] = []byte("Host a\nInclude config.d/ws\n")
+	parts, err := s.parts(t.Context())
+	if err != nil {
+		t.Fatalf("parts = %v; a refusal belongs to the plan, as a report reads on", err)
+	}
+	if _, err := (resource.Group{Parts: parts}).Plan(t.Context()); err == nil {
+		t.Error("Plan found no refusal of an Include below a setting")
+	}
+}

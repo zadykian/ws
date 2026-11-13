@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
@@ -29,6 +30,24 @@ type SSH struct {
 	// Again is the second run of the step, which cld may have changed ssh's file for.
 	Again bool
 }
+
+// Step returns the step: ssh's parts, made as it plans from what ~/.ssh and the Mac show then.
+func (s SSH) Step() step.Step {
+	lazy := resource.Lazy{Title: "ssh", Parts: s.parts}
+	if !s.Again {
+		return lazy
+	}
+	lazy.Title, lazy.After = "ssh again", "ssh"
+	return secondRun{lazy}
+}
+
+// secondRun is the step's second run, which manages the same files as the first and so reports
+// nothing. It waits on ssh: where ssh is left out with changes, its plan would hold them too. The
+// run's order puts it past cld.
+type secondRun struct{ resource.Lazy }
+
+// Report says nothing: the first run reports the same files.
+func (secondRun) Report(context.Context) ([]step.Item, error) { return nil, nil }
 
 // Name is ssh, or ssh again.
 func (s SSH) Name() string {
