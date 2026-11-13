@@ -25,7 +25,7 @@ func (d *Daemon) try(ctx context.Context, c tunnel.Candidate, now time.Time) {
 		_ = d.Dev.IpcSet(text) // none to remove at the first try
 	}
 	end := netip.AddrPortFrom(c.Host, conf.Port)
-	text, err := uapi.Peer{Key: conf.Key, Endpoint: end, Allowed: a.IPs(), Keepalive: keepalive}.Add()
+	text, err := uapi.Peer{Key: conf.Key, Endpoint: end, Allowed: a.IPs(conf.Slot.Server()), Keepalive: keepalive}.Add()
 	if err == nil {
 		err = d.Dev.IpcSet(text)
 	}

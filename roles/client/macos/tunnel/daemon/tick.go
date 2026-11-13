@@ -2,8 +2,6 @@ package daemon
 
 import (
 	"context"
-
-	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 // tick checks that ws answers and looks at the choice again. Decide runs the paths anew where the
@@ -15,7 +13,7 @@ func (d *Daemon) tick(ctx context.Context) {
 		return
 	}
 	if d.inUse.Host.IsValid() {
-		if err := d.run(ctx, "ping", "-c", "1", "-t", "2", "-q", tunnel.Server.String()); err != nil {
+		if err := d.run(ctx, "ping", "-c", "1", "-t", "2", "-q", d.set.Conf.Slot.Server().String()); err != nil {
 			d.misses++
 		} else {
 			d.misses = 0

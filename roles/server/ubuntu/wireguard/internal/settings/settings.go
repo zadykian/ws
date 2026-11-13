@@ -10,9 +10,9 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
-// The Mac's daemon, in roles/client/macos/tunnel/plan, fixes the tunnel's ends, the server and the address. It
-// also fixes the peer's name, as the mac.pub that `ws client macos apply` has the user write on the
-// server.
+// The Mac's daemon takes the tunnel's ends, the server and the address, from the slot, in
+// roles/internal/slot: slot 0's are these. It also fixes the peer's name, as the mac.pub that
+// `ws client macos apply` has the user write on the server.
 const (
 	macPeer   = "mac"
 	macServer = "10.99.0.1/24"

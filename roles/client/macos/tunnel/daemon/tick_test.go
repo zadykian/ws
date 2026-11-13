@@ -39,6 +39,15 @@ func TestTickTriesAgainAfterMissedPings(t *testing.T) {
 	}
 }
 
+func TestTickPingsTheServerAtTheSlot(t *testing.T) {
+	r := onTheCable(t)
+	r.set.Conf.Slot = 1
+	r.tick(context.Background())
+	if want := "ping -c 1 -t 2 -q 10.99.1.1"; !slices.Contains(r.m.runs, want) {
+		t.Errorf("commands = %q, want %q", r.m.runs, want)
+	}
+}
+
 func TestTickCountsMissesInARowOnly(t *testing.T) {
 	r := onTheCable(t)
 	ctx := context.Background()
