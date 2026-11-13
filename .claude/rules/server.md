@@ -45,7 +45,7 @@ steps, and each role's page in `docs/` says what it sets up.
   ([Dry runs](../../README.md#dry-runs)). A step reads in its Plan, a GET included
   ([devtools](../../roles/server/ubuntu/devtools/internal/golang/golang.go)).
 - A role's test states dpkg's database by effecttest's package table, never by a `dpkg-query` line
-  in Results, so host's read can change under it
+  in Results, so apt's read can change under it
   ([machine_dpkg.go](../../engine/core/effect/effecttest/machine_dpkg.go)).
 - A package is installed where dpkg lists it `ii`, in plans and reports alike, and a step reads dpkg
   in one run ([dpkg.go](../../engine/core/resource/apt/dpkg.go)). A role reads dpkg through `apt.PackageStates`.

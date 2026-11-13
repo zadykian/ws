@@ -27,8 +27,8 @@ var knownFields = strings.NewReplacer("${Package}", "", "${Version}", "", "${db:
 // dpkgQuery answers "dpkg-query -W -f FORMAT PATTERN..." from the table, and reports whether it
 // did. A pattern is a name or a glob. Each package that one matches prints once, in name order.
 // Where a pattern matches none, the rest still prints and the error is exit 1, as dpkg-query
-// does. A field of the format other than host's three fails the command. The caller holds the
-// lock.
+// does. A field of the format other than apt.PackageStates' three fails the command. The
+// caller holds the lock.
 func (m *Machine) dpkgQuery(name string, args []string) (Result, bool) {
 	if name != "dpkg-query" || m.Packages == nil || len(args) < 4 || args[0] != "-W" || args[1] != "-f" {
 		return Result{}, false
