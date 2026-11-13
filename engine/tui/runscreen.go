@@ -10,6 +10,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 const (
@@ -39,28 +40,28 @@ type tickMsg struct{ at time.Time }
 // it shows. The keys scroll the window, as the steps list follows the run by itself.
 type RunScreen struct {
 	title   string
-	theme   Theme
+	theme   widget.Theme
 	steps   stepList
-	output  OutputPane
-	footer  Footer
-	window  Size
+	output  widget.OutputPane
+	footer  widget.Footer
+	window  widget.Size
 	started time.Time
 	now     time.Time
 	// halted says that the run ends with its current step. No box covers the window for it, as a
 	// step can run for long and its output stays worth reading.
 	halted bool
 	// pane, where set, sizes the output in a window, for a host that draws the output elsewhere.
-	pane func(window Size) Size
+	pane func(window widget.Size) widget.Size
 }
 
 // NewRunScreen returns the screen of a run of groups, which name every step before the run starts.
-func NewRunScreen(title string, theme Theme, groups ...Group) RunScreen {
+func NewRunScreen(title string, theme widget.Theme, groups ...Group) RunScreen {
 	return RunScreen{
 		title:  title,
 		theme:  theme,
 		steps:  newStepList(groups),
-		output: OutputPane{Theme: theme},
-		footer: NewFooter(Keys.PageUp, Keys.PageDown, Keys.Bottom, Keys.Interrupt),
+		output: widget.OutputPane{Theme: theme},
+		footer: widget.NewFooter(widget.Keys.PageUp, widget.Keys.PageDown, widget.Keys.Bottom, widget.Keys.Interrupt),
 	}
 }
 
@@ -79,7 +80,7 @@ func (r RunScreen) update(msg tea.Msg) (RunScreen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case step.Event:
 		r.steps = r.steps.take(msg)
-	case Line:
+	case widget.Line:
 		r.output = r.output.Add(msg)
 	case tickMsg:
 		if r.started.IsZero() {
@@ -89,10 +90,10 @@ func (r RunScreen) update(msg tea.Msg) (RunScreen, tea.Cmd) {
 		return r, tea.Tick(time.Second, func(at time.Time) tea.Msg { return tickMsg{at} })
 	case haltedMsg:
 		r.halted = true
-		r.footer = NewFooter(Keys.PageUp, Keys.PageDown, Keys.Bottom, stopNowButton)
+		r.footer = widget.NewFooter(widget.Keys.PageUp, widget.Keys.PageDown, widget.Keys.Bottom, stopNowButton)
 		return r.fitted(), nil
 	case tea.WindowSizeMsg:
-		r.window = Size{msg.Width, msg.Height}
+		r.window = widget.Size{Width: msg.Width, Height: msg.Height}
 		return r.fitted(), nil
 	case tea.KeyPressMsg:
 		return r.pressed(msg)
@@ -125,11 +126,11 @@ func (r RunScreen) pressed(msg tea.KeyPressMsg) (RunScreen, tea.Cmd) {
 		r.output = r.output.Move(-len(r.output.Rows))
 	case place == stopButtonPlace:
 		return r, func() tea.Msg { return stopPressedMsg{} }
-	case key.Matches(msg, Keys.Up):
+	case key.Matches(msg, widget.Keys.Up):
 		r.output = r.output.Move(1)
-	case key.Matches(msg, Keys.Down):
+	case key.Matches(msg, widget.Keys.Down):
 		r.output = r.output.Move(-1)
-	case key.Matches(msg, Keys.Top):
+	case key.Matches(msg, widget.Keys.Top):
 		r.output = r.output.Move(len(r.output.Rows))
 	}
 	return r, nil
@@ -138,7 +139,7 @@ func (r RunScreen) pressed(msg tea.KeyPressMsg) (RunScreen, tea.Cmd) {
 // layout is the screen with its panes empty, as what fills them depends on their sizes. The window
 // holds the focus alone, so that a window too short for two panes shows it, under the current
 // step's name.
-func (r RunScreen) layout() Layout {
+func (r RunScreen) layout() widget.Layout {
 	title := "Output"
 	if at := r.steps.at(); at >= 0 {
 		title = r.steps[at].label()
@@ -146,10 +147,10 @@ func (r RunScreen) layout() Layout {
 			title = "Stopping after " + title
 		}
 	}
-	return Layout{
+	return widget.Layout{
 		Title:  r.title,
 		Status: r.status(),
-		Panes:  []Pane{{Title: "Steps"}, {Title: title, Weight: 2, Focused: true}},
+		Panes:  []widget.Pane{{Title: "Steps"}, {Title: title, Weight: 2, Focused: true}},
 		Footer: r.footer,
 	}
 }

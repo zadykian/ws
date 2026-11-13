@@ -9,6 +9,8 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // stoppedMsg is what a test's stop returns.
@@ -56,9 +58,9 @@ func quits(cmd tea.Cmd) bool {
 func TestSessionHandsTheScreenWhatIsNotARuns(t *testing.T) {
 	s, got := testSession()
 	size := tea.WindowSizeMsg{Width: 100, Height: 30}
-	msgs := []tea.Msg{Line{Said, "a line"}, press('a'), tea.PasteMsg{Content: "b"}, size}
+	msgs := []tea.Msg{widget.Line{Kind: widget.Said, Text: "a line"}, press('a'), tea.PasteMsg{Content: "b"}, size}
 	s, _ = feed(s, msgs...)
-	if !reflect.DeepEqual(*got, msgs) || s.window != (Size{100, 30}) {
+	if !reflect.DeepEqual(*got, msgs) || s.window != (widget.Size{Width: 100, Height: 30}) {
 		t.Errorf("the screen got %v, and the window is %v", *got, s.window)
 	}
 }
@@ -217,7 +219,7 @@ func TestSessionAnswersAChoice(t *testing.T) {
 }
 
 func TestFieldOfAChoiceStartsOnItsDefault(t *testing.T) {
-	size := Size{80, 24}
+	size := widget.Size{Width: 80, Height: 24}
 	f := newField(prompt{text: "Keep?", options: []string{"yes", "no"}, fallback: "no"}, size)
 	if _, answer, ok := f.answer(); !ok || answer != "no" {
 		t.Errorf("answered %q, %v", answer, ok)

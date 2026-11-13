@@ -1,6 +1,7 @@
-// Package tui holds the parts of ws's full-screen terminal UI: the theme, the layout and the keys.
-// A screen built on them is a pure Update and View, so that tests compare values and text.
-package tui
+// Package widget holds what the screens of ws's full-screen terminal UI are built from: the theme,
+// the layout, the keys, the footer and the inputs. Each is a pure Update and View, so that tests
+// compare values and text.
+package widget
 
 import (
 	"image/color"

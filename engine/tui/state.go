@@ -5,6 +5,8 @@ import (
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // The panes of the state screen.
@@ -37,13 +39,13 @@ type StateRead struct {
 // StateScreen shows what a machine holds of what ws manages. It has a tab for each kind, the rows
 // of the tab on show, and a pane of the selected row's wanted and found state. It changes nothing.
 type StateScreen struct {
-	theme Theme
+	theme widget.Theme
 	title string
 	// read asks for a report, which comes as a StateRead, and leave ends the screen. A screen is an
 	// Update and a View alone, so that a command's run and the wizard's screen can each hold it.
 	read, leave tea.Cmd
-	window      Size
-	footer      Footer
+	window      widget.Size
+	footer      widget.Footer
 	// rows is each tab's, cursors the selected row of each, and tab the tab on show. They are arrays
 	// so that a value of the screen shares none of them with an older one.
 	rows    [tabCount][]stateRow
@@ -57,14 +59,14 @@ type StateScreen struct {
 	reading, reported bool
 	problem, warning  string
 	// filter holds the words that a row's name must contain.
-	filter Filter
+	filter widget.Filter
 }
 
 // NewStateScreen returns the screen, which asks for a report as it starts.
-func NewStateScreen(theme Theme, title string, read, leave tea.Cmd) StateScreen {
-	footer := NewFooter(filterButton, readButton, Keys.Quit).Enable(readPlace, false)
+func NewStateScreen(theme widget.Theme, title string, read, leave tea.Cmd) StateScreen {
+	footer := widget.NewFooter(filterButton, readButton, widget.Keys.Quit).Enable(readPlace, false)
 	return StateScreen{
-		theme: theme, title: title, read: read, leave: leave, footer: footer, reading: true, filter: NewFilter(),
+		theme: theme, title: title, read: read, leave: leave, footer: footer, reading: true, filter: widget.NewFilter(),
 	}
 }
 
@@ -78,11 +80,11 @@ func (s StateScreen) Init() tea.Cmd {
 func (s StateScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		s.window = Size{msg.Width, msg.Height}
+		s.window = widget.Size{Width: msg.Width, Height: msg.Height}
 	case StateRead:
 		return s.took(msg), nil
-	case Line:
-		if msg.Kind == Warned {
+	case widget.Line:
+		if msg.Kind == widget.Warned {
 			s.warning = firstLine(printable(msg.Text))
 		}
 	case tea.PasteMsg:
@@ -146,9 +148,9 @@ func (s StateScreen) refound(picks [tabCount]*stateRow) StateScreen {
 // pressed acts on a key: Tab first, as the footer would take it, then the buttons, then the panes.
 func (s StateScreen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
-	case key.Matches(msg, Keys.Next):
+	case key.Matches(msg, widget.Keys.Next):
 		return s.turned(1), nil
-	case key.Matches(msg, Keys.Prev):
+	case key.Matches(msg, widget.Keys.Prev):
 		return s.turned(-1), nil
 	}
 	var place int
@@ -162,7 +164,7 @@ func (s StateScreen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case s.inDetail && key.Matches(msg, backKey):
 		s.inDetail = false
 		return s, nil
-	case key.Matches(msg, ClearKey):
+	case key.Matches(msg, widget.ClearKey):
 		return s.cleared(), nil
 	}
 	return s.moved(msg), nil
@@ -222,17 +224,17 @@ func (s StateScreen) moved(msg tea.KeyPressMsg) StateScreen {
 // stepped returns where a key moves a place in 0 to last, by a page of page lines.
 func stepped(msg tea.KeyPressMsg, at, page, last int) int {
 	switch {
-	case key.Matches(msg, Keys.Up):
+	case key.Matches(msg, widget.Keys.Up):
 		at--
-	case key.Matches(msg, Keys.Down):
+	case key.Matches(msg, widget.Keys.Down):
 		at++
-	case key.Matches(msg, Keys.PageUp):
+	case key.Matches(msg, widget.Keys.PageUp):
 		at -= page
-	case key.Matches(msg, Keys.PageDown):
+	case key.Matches(msg, widget.Keys.PageDown):
 		at += page
-	case key.Matches(msg, Keys.Top):
+	case key.Matches(msg, widget.Keys.Top):
 		at = 0
-	case key.Matches(msg, Keys.Bottom):
+	case key.Matches(msg, widget.Keys.Bottom):
 		at = last
 	}
 	return max(min(at, last), 0)

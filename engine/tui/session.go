@@ -8,6 +8,8 @@ import (
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 const (
@@ -49,8 +51,8 @@ type (
 // end, and a screen never quits by itself.
 type session struct {
 	screen tea.Model
-	theme  Theme
-	window Size
+	theme  widget.Theme
+	window widget.Size
 	// begin starts the work, and stop ends the run's ctx. cut names a signal's error. halt ends the
 	// run past its current step, and nil says that it can't.
 	begin tea.Cmd
@@ -66,7 +68,7 @@ type session struct {
 	// confirming is set while the box in confirm asks before a stop, and halted once the stop is
 	// confirmed.
 	confirming bool
-	confirm    Footer
+	confirm    widget.Footer
 	halted     bool
 	// stopping is set once ctx ended. cutBy is set once a signal or Ctrl-C ended ctx, or halted the
 	// run, so that a run stopped short ends with the status of a cut one.
@@ -105,7 +107,7 @@ func (s session) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case stopPressedMsg:
 		return s.pressed()
 	case tea.KeyPressMsg:
-		if key.Matches(msg, Keys.Interrupt) {
+		if key.Matches(msg, widget.Keys.Interrupt) {
 			return s.pressed()
 		}
 		if len(s.asked) > 0 {
@@ -119,7 +121,7 @@ func (s session) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return s.typed(msg)
 		}
 	case tea.WindowSizeMsg:
-		s.window = Size{msg.Width, msg.Height}
+		s.window = widget.Size{Width: msg.Width, Height: msg.Height}
 		s.field = s.field.fit(s.window)
 	}
 	var cmd tea.Cmd
@@ -170,7 +172,7 @@ func (s session) pressed() (tea.Model, tea.Cmd) {
 	if s.halt == nil || s.took == nil || !s.took.Load() || s.confirming || s.halted || s.stopping || len(s.asked) > 0 {
 		return s.interrupt(syscall.SIGINT)
 	}
-	s.confirming, s.confirm = true, NewFooter(haltButton, goOnButton)
+	s.confirming, s.confirm = true, widget.NewFooter(haltButton, goOnButton)
 	return s, nil
 }
 
@@ -212,21 +214,21 @@ func (s session) View() tea.View {
 	case len(s.asked) > 0:
 		view.Content = over(view.Content, s.field.render(s.theme, s.window), s.window)
 	case s.confirming:
-		body := wrapped(confirmNote, s.window) + "\n" + s.confirm.Render(s.theme, min(s.window.Width, BoxWidth)-2)
-		view.Content = over(view.Content, Box(s.theme, "Stop", body, s.window), s.window)
+		body := wrapped(confirmNote, s.window) + "\n" + s.confirm.Render(s.theme, min(s.window.Width, widget.BoxWidth)-2)
+		view.Content = over(view.Content, widget.Box(s.theme, "Stop", body, s.window), s.window)
 	case s.stopping:
-		view.Content = over(view.Content, Box(s.theme, "Stopping", wrapped(stopNote, s.window), s.window), s.window)
+		view.Content = over(view.Content, widget.Box(s.theme, "Stopping", wrapped(stopNote, s.window), s.window), s.window)
 	}
 	return view
 }
 
 // wrapped fits words to the inside of a box, which would cut them.
-func wrapped(words string, window Size) string {
-	return lipgloss.Wrap(words, max(min(window.Width, BoxWidth)-2, 1), "")
+func wrapped(words string, window widget.Size) string {
+	return lipgloss.Wrap(words, max(min(window.Width, widget.BoxWidth)-2, 1), "")
 }
 
 // over draws a box in the middle of a window, on what base shows there.
-func over(base, drawn string, window Size) string {
+func over(base, drawn string, window widget.Size) string {
 	if drawn == "" {
 		return base
 	}

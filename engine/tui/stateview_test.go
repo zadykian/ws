@@ -11,6 +11,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // colored finds a text style that writes a color, whose parameter takes two digits.
@@ -35,7 +36,7 @@ func TestStateScreenDrawsTheTabs(t *testing.T) {
 }
 
 func TestStateScreenSaysWhyAReadFailed(t *testing.T) {
-	s, _ := feedState(t, reportedState(t), Line{Warned, "a slow disk"}, StateRead{Err: errors.New("no ssh")})
+	s, _ := feedState(t, reportedState(t), widget.Line{Kind: widget.Warned, Text: "a slow disk"}, StateRead{Err: errors.New("no ssh")})
 	wantDrawn(t, s, "no ssh", "a slow disk", " Packages 2 ")
 }
 
@@ -48,7 +49,7 @@ func TestStateScreenDrawsTheRows(t *testing.T) {
 }
 
 func TestStateScreenKeepsItsMarksWithoutColor(t *testing.T) {
-	s, _ := feedState(t, NewStateScreen(NewTheme(noColor("1")), "ws", nil, nil), sized,
+	s, _ := feedState(t, NewStateScreen(widget.NewTheme(noColor("1")), "ws", nil, nil), sized,
 		StateRead{Sections: testSections()})
 	if got := s.View().Content; colored.MatchString(got) {
 		t.Errorf("a color under NO_COLOR: %q", got)

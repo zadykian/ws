@@ -7,6 +7,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // queueRunSent returns q past msgs.
@@ -29,7 +30,7 @@ func testQueueRun() QueueRun {
 }
 
 func TestARunOfAQueueShowsBothListsOverItsOutput(t *testing.T) {
-	got := queueRunShown(queueRunSent(testQueueRun(), Line{Said, "installs the tools"}))
+	got := queueRunShown(queueRunSent(testQueueRun(), widget.Line{Kind: widget.Said, Text: "installs the tools"}))
 	for _, want := range []string{"0/5", " 1 [x] · Tools", " 3 [ ] · Sudo", "installs the tools"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("no %q in:\n%s", want, got)
@@ -51,10 +52,10 @@ func TestARunOfAQueueFollowsItsStages(t *testing.T) {
 
 func TestTheOutputOfAQueueRunFitsItsStrip(t *testing.T) {
 	q := testQueueRun()
-	if got, want := q.run.output.Size, inside(stripSize(Size{100, 30})); got != want {
+	if got, want := q.run.output.Size, inside(stripSize(widget.Size{Width: 100, Height: 30})); got != want {
 		t.Errorf("output %v, want %v", got, want)
 	}
-	if q = queueRunSent(q, haltedMsg{}); q.run.output.Size != inside(stripSize(Size{100, 30})) {
+	if q = queueRunSent(q, haltedMsg{}); q.run.output.Size != inside(stripSize(widget.Size{Width: 100, Height: 30})) {
 		t.Errorf("past a stop, output %v", q.run.output.Size)
 	}
 	if got := queueRunShown(q); !strings.Contains(got, "Stopping after Tools") {
@@ -63,7 +64,7 @@ func TestTheOutputOfAQueueRunFitsItsStrip(t *testing.T) {
 }
 
 func TestAShortWindowFollowsAQueueRunWithoutItsOutput(t *testing.T) {
-	q := queueRunSent(testQueueRun(), tea.WindowSizeMsg{Width: 100, Height: 12}, Line{Said, "installs the tools"})
+	q := queueRunSent(testQueueRun(), tea.WindowSizeMsg{Width: 100, Height: 12}, widget.Line{Kind: widget.Said, Text: "installs the tools"})
 	if got := queueRunShown(q); strings.Contains(got, "installs the tools") || !strings.Contains(got, "Tools") {
 		t.Errorf("frame:\n%s", got)
 	}
@@ -72,9 +73,9 @@ func TestAShortWindowFollowsAQueueRunWithoutItsOutput(t *testing.T) {
 func TestThePagesOfAQueueRunMoveItsStrip(t *testing.T) {
 	q := testQueueRun()
 	for range 40 {
-		q = queueRunSent(q, Line{Said, "installs the tools"})
+		q = queueRunSent(q, widget.Line{Kind: widget.Said, Text: "installs the tools"})
 	}
-	if got, want := queueRunSent(q, pgUp).run.output.Back, inside(stripSize(Size{100, 30})).Height; got != want {
+	if got, want := queueRunSent(q, pgUp).run.output.Back, inside(stripSize(widget.Size{Width: 100, Height: 30})).Height; got != want {
 		t.Errorf("back = %d, want %d", got, want)
 	}
 }

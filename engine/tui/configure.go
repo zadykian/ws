@@ -7,6 +7,8 @@ import (
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // The places of the Configure screen's buttons.
@@ -31,7 +33,7 @@ type Sheet struct {
 	Name string
 	// Fields gives the fields that show under the edits so far. Fields is pure, as it runs on each
 	// edit.
-	Fields func(edits map[string]string) []FieldSpec
+	Fields func(edits map[string]string) []widget.FieldSpec
 	// Save writes the edits on the work's goroutine, and returns the sheet of what the file then holds.
 	Save func(ctx context.Context, b *Bridge, edits map[string]string) (Sheet, error)
 	// Open reads a file that takes time to reach, on the work's goroutine, once the sheet shows, and
@@ -43,16 +45,16 @@ type Sheet struct {
 // configureScreen edits its sheets, a form each, with one form on the screen.
 type configureScreen struct {
 	title  string
-	theme  Theme
+	theme  widget.Theme
 	sheets []Sheet
-	forms  []Form
+	forms  []widget.Form
 	// at is the place of the sheet that shows.
 	at     int
-	footer Footer
-	window Size
+	footer widget.Footer
+	window widget.Size
 	// notes is what the last save said. send hands the work a job, and saving holds the keys till it
 	// ends, as the form would change under the file that it writes.
-	notes []Line
+	notes []widget.Line
 	send  func(configureJob)
 	// end is the Cmd that ends the work, for a leave.
 	end    tea.Cmd
@@ -63,16 +65,16 @@ type configureScreen struct {
 
 // newConfigureScreen returns the screen of sheets, on the first. A second sheet adds the button that
 // walks them.
-func newConfigureScreen(title string, theme Theme, send func(configureJob), end tea.Cmd, sheets []Sheet) configureScreen {
-	forms := make([]Form, 0, len(sheets))
+func newConfigureScreen(title string, theme widget.Theme, send func(configureJob), end tea.Cmd, sheets []Sheet) configureScreen {
+	forms := make([]widget.Form, 0, len(sheets))
 	for _, sheet := range sheets {
-		forms = append(forms, NewForm(theme, sheet.Fields))
+		forms = append(forms, widget.NewForm(theme, sheet.Fields))
 	}
 	buttons := []key.Binding{saveButton, leaveButton}
 	if len(sheets) > 1 {
 		buttons = append(buttons, nextFormButton)
 	}
-	footer := NewFooter(buttons...)
+	footer := widget.NewFooter(buttons...)
 	return configureScreen{title: title, theme: theme, sheets: sheets, forms: forms, footer: footer, send: send, end: end,
 		saving: sheets[0].Open != nil}
 }
@@ -91,10 +93,10 @@ func (s configureScreen) Init() tea.Cmd {
 func (s configureScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		s.window = Size{msg.Width, msg.Height}
+		s.window = widget.Size{Width: msg.Width, Height: msg.Height}
 		return s.fitted(), nil
-	case Line:
-		s.notes = slices.Concat(s.notes, []Line{msg})
+	case widget.Line:
+		s.notes = slices.Concat(s.notes, []widget.Line{msg})
 		return s.fitted(), nil
 	case savedMsg:
 		return s.saved(msg), nil
@@ -109,10 +111,10 @@ func (s configureScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // form is the form that shows.
-func (s configureScreen) form() Form { return s.forms[s.at] }
+func (s configureScreen) form() widget.Form { return s.forms[s.at] }
 
 // with replaces the form that shows.
-func (s configureScreen) with(form Form) configureScreen {
+func (s configureScreen) with(form widget.Form) configureScreen {
 	s.forms = slices.Clone(s.forms)
 	s.forms[s.at] = form
 	return s
@@ -131,9 +133,9 @@ func (s configureScreen) fitted() configureScreen {
 // fieldStep is the way that msg moves along a form's fields, or 0.
 func fieldStep(msg tea.KeyPressMsg) int {
 	switch {
-	case key.Matches(msg, Keys.Next, Keys.Press, fieldDown):
+	case key.Matches(msg, widget.Keys.Next, widget.Keys.Press, fieldDown):
 		return 1
-	case key.Matches(msg, Keys.Prev, fieldUp):
+	case key.Matches(msg, widget.Keys.Prev, fieldUp):
 		return -1
 	}
 	return 0
@@ -161,7 +163,7 @@ func (s configureScreen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case place == nextFormPlace:
 		return s.nextForm().opened()
 	case !onForm && s.footer.Focused() < 0:
-		return s.with(s.form().Enter(key.Matches(msg, Keys.Prev))), nil
+		return s.with(s.form().Enter(key.Matches(msg, widget.Keys.Prev))), nil
 	case onForm:
 		return s.with(s.form().Update(msg)), nil
 	}
@@ -179,7 +181,7 @@ func (s configureScreen) stepped(step int) configureScreen {
 }
 
 // layout is the screen with its pane empty, as what fills it depends on its size.
-func (s configureScreen) layout() Layout {
+func (s configureScreen) layout() widget.Layout {
 	at, of := s.form().Place()
 	title, status := s.title, s.status()
 	if s.leaving {
@@ -187,10 +189,10 @@ func (s configureScreen) layout() Layout {
 		// the next Esc drops the edits.
 		title, status = "esc again leaves without saving", ""
 	}
-	return Layout{
+	return widget.Layout{
 		Title:  title,
 		Status: status,
-		Panes:  []Pane{{Title: fmt.Sprintf("%s %d/%d", s.sheets[s.at].Name, at, of), Focused: s.footer.Focused() < 0}},
+		Panes:  []widget.Pane{{Title: fmt.Sprintf("%s %d/%d", s.sheets[s.at].Name, at, of), Focused: s.footer.Focused() < 0}},
 		Footer: s.footer,
 	}
 }

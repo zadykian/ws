@@ -3,6 +3,8 @@ package tui
 import (
 	"bytes"
 	"sync"
+
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // pipeCap bounds a line that no line end closes, such as a meter of \r alone.
@@ -25,7 +27,7 @@ func (p *pipe) Write(data []byte) (int, error) {
 	defer p.lock.Unlock()
 	p.rest = append(p.rest, data...)
 	if end := bytes.LastIndexByte(p.rest, '\n'); end >= 0 {
-		p.bridge.send(Line{Piped, string(p.rest[:end])})
+		p.bridge.send(widget.Line{Kind: widget.Piped, Text: string(p.rest[:end])})
 		p.rest = append(p.rest[:0], p.rest[end+1:]...)
 	}
 	if len(p.rest) > pipeCap {
@@ -43,7 +45,7 @@ func (p *pipe) flush() {
 
 func (p *pipe) send() {
 	if len(p.rest) > 0 {
-		p.bridge.send(Line{Piped, string(p.rest)})
+		p.bridge.send(widget.Line{Kind: widget.Piped, Text: string(p.rest)})
 		p.rest = p.rest[:0]
 	}
 }

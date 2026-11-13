@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // pickRow is a step of the list that a run is chosen from.
@@ -21,7 +22,7 @@ type pickRow struct {
 	// after names the step whose changes kept the scan from planning this one.
 	after string
 	// said holds what the scan printed of the step.
-	said []Line
+	said []widget.Line
 }
 
 // entry names the row as Options.Only does.
@@ -63,7 +64,7 @@ func (r pickRow) box() string {
 type pickList struct {
 	rows []pickRow
 	// heard holds what the scan printed since a step last ended.
-	heard []Line
+	heard []widget.Line
 	// words is the filter: the list shows the steps whose entry holds them.
 	words string
 }
@@ -78,7 +79,7 @@ func newPickList(groups []Group) pickList {
 }
 
 // hear keeps a line of the scan for the step that ends next.
-func (l pickList) hear(line Line) pickList {
+func (l pickList) hear(line widget.Line) pickList {
 	l.heard = append(slices.Clip(l.heard), line)
 	return l
 }
@@ -102,7 +103,7 @@ func (l pickList) take(e step.Event) pickList {
 
 // took returns the row as e leaves its step: chosen where it holds changes. said is what the scan
 // printed since a step last ended.
-func (r pickRow) took(e step.Event, said []Line) pickRow {
+func (r pickRow) took(e step.Event, said []widget.Line) pickRow {
 	r.state, r.after = stateAfter(e), e.After
 	r.chosen = r.pending()
 	r.said = nil
@@ -110,7 +111,7 @@ func (r pickRow) took(e step.Event, said []Line) pickRow {
 		r.said = withoutLabel(said, r.label())
 	}
 	if e.Err != nil {
-		r.said = append(r.said, Line{Warned, e.Err.Error()})
+		r.said = append(r.said, widget.Line{Kind: widget.Warned, Text: e.Err.Error()})
 	}
 	return r
 }
@@ -122,10 +123,10 @@ func (l pickList) place(e step.Event) int {
 
 // withoutLabel returns lines less the step's name that opens them, as the pane they go to has it in
 // its title.
-func withoutLabel(lines []Line, label string) []Line {
-	kept := make([]Line, len(lines))
+func withoutLabel(lines []widget.Line, label string) []widget.Line {
+	kept := make([]widget.Line, len(lines))
 	for i, line := range lines {
-		kept[i] = Line{line.Kind, strings.TrimPrefix(line.Text, label+": ")}
+		kept[i] = widget.Line{Kind: line.Kind, Text: strings.TrimPrefix(line.Text, label+": ")}
 	}
 	return kept
 }

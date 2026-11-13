@@ -9,13 +9,14 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 func TestPipeSendsWholeLines(t *testing.T) {
 	b, sent := testBridge(io.Discard)
 	_, _ = b.pipe.Write([]byte("one\ntwo\nthr"))
 	_, _ = b.pipe.Write([]byte("ee\n"))
-	want := []tea.Msg{Line{Piped, "one\ntwo"}, Line{Piped, "three"}}
+	want := []tea.Msg{widget.Line{Kind: widget.Piped, Text: "one\ntwo"}, widget.Line{Kind: widget.Piped, Text: "three"}}
 	if !reflect.DeepEqual(*sent, want) {
 		t.Errorf("sent %v, want %v", *sent, want)
 	}
@@ -26,7 +27,7 @@ func TestPipeFlushSendsALineWithNoEnd(t *testing.T) {
 	_, _ = b.pipe.Write([]byte("no end"))
 	b.pipe.flush()
 	b.pipe.flush()
-	if want := []tea.Msg{Line{Piped, "no end"}}; !reflect.DeepEqual(*sent, want) {
+	if want := []tea.Msg{widget.Line{Kind: widget.Piped, Text: "no end"}}; !reflect.DeepEqual(*sent, want) {
 		t.Errorf("sent %v, want %v", *sent, want)
 	}
 }

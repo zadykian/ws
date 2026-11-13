@@ -1,6 +1,10 @@
 package tui
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/zadykian/ws/engine/tui/internal/widget"
+)
 
 // pickLine is a line of the list: a step, or the heading of the role whose first shown step is row.
 type pickLine struct {
@@ -37,7 +41,7 @@ func (l pickList) lines() []pickLine {
 }
 
 // current returns the line under the cursor. A filter can leave none.
-func (l pickList) current(at Cursor) (pickLine, bool) {
+func (l pickList) current(at widget.Cursor) (pickLine, bool) {
 	lines := l.lines()
 	if int(at) >= len(lines) {
 		return pickLine{}, false
@@ -52,10 +56,10 @@ func (l pickList) filtered(words string) pickList {
 }
 
 // narrowed returns the list under words, and the cursor on its line while that shows.
-func (l pickList) narrowed(at Cursor, words string) (pickList, Cursor) {
+func (l pickList) narrowed(at widget.Cursor, words string) (pickList, widget.Cursor) {
 	was := l.lines()
 	l = l.filtered(words)
-	return l, Kept(at, was, l.lines())
+	return l, widget.Kept(at, was, l.lines())
 }
 
 // groupBox draws a role's box, which follows its steps: "[-]" says that some are on.
@@ -71,7 +75,7 @@ func (l pickList) groupBox(parent string) string {
 }
 
 // render draws a line. Its box and its mark differ by shape, as NO_COLOR takes the rest.
-func (l pickList) render(theme Theme, line pickLine) string {
+func (l pickList) render(theme widget.Theme, line pickLine) string {
 	r := l.rows[line.row]
 	if line.heading {
 		return l.groupBox(r.parent) + " " + theme.PaneTitle.Render(r.parent)
@@ -81,14 +85,14 @@ func (l pickList) render(theme Theme, line pickLine) string {
 }
 
 // view draws height lines of the list, the cursor's gutter always.
-func (l pickList) view(theme Theme, height int, at Cursor) string {
+func (l pickList) view(theme widget.Theme, height int, at widget.Cursor) string {
 	lines := l.lines()
 	return windowed(theme, height, at, true, len(lines), func(i int) string { return l.render(theme, lines[i]) })
 }
 
 // windowed draws height of count lines, each by draw, the cursor's gutter where shown. The lines run
 // past a window, so that the cursor stays in sight.
-func windowed(theme Theme, height int, at Cursor, shown bool, count int, draw func(int) string) string {
+func windowed(theme widget.Theme, height int, at widget.Cursor, shown bool, count int, draw func(int) string) string {
 	if count == 0 {
 		return theme.Muted.Render("No step matches.")
 	}

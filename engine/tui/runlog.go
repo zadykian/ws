@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // tailLines is how many of a failed step's last lines stay for the end of a run.
@@ -20,7 +21,7 @@ type record struct {
 	// log takes every line of the run, as clean makes it. Nil where there is none.
 	log io.Writer
 	// kept are the warnings and the lines of --check's plan, in the order of the run.
-	kept []Line
+	kept []widget.Line
 	// recent are the last lines since a step last ended: the current step's, its Plan's included.
 	recent []string
 	// failed names the step that failed, and tail holds its recent lines.
@@ -33,7 +34,7 @@ func (r *record) note(msg any) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 	switch m := msg.(type) {
-	case Line:
+	case widget.Line:
 		text := cleanLines(m.Text)
 		r.write(text)
 		r.recent = append(r.recent, strings.Split(text, "\n")...)
@@ -68,7 +69,7 @@ func (r *record) event(e step.Event) {
 }
 
 // keep holds a warning or a change line of --check for the end of the run.
-func (r *record) keep(l Line) {
+func (r *record) keep(l widget.Line) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 	r.kept = append(r.kept, l)
@@ -131,7 +132,7 @@ func (r *record) report(w io.Writer, path string, cut bool) {
 func cleanLines(text string) string {
 	lines := strings.Split(text, "\n")
 	for i, l := range lines {
-		lines[i] = Clean(l)
+		lines[i] = widget.Clean(l)
 	}
 	return strings.Join(lines, "\n")
 }

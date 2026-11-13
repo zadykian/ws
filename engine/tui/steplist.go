@@ -7,6 +7,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // Group is the steps of a role or a stage, by the names that a run's events give them.
@@ -68,7 +69,7 @@ func stateAfter(e step.Event) stepState {
 }
 
 // look is the mark and the style of a state. The marks differ by shape, as NO_COLOR takes the rest.
-func (s stepState) look(theme Theme) (string, lipgloss.Style) {
+func (s stepState) look(theme widget.Theme) (string, lipgloss.Style) {
 	switch s {
 	case stepSame:
 		return "✓", theme.Good
@@ -103,7 +104,7 @@ func (r stepRow) label() string {
 }
 
 // render draws the row, indented under a heading.
-func (r stepRow) render(theme Theme, current bool) string {
+func (r stepRow) render(theme widget.Theme, current bool) string {
 	mark, style := r.state.look(theme)
 	if current && r.state == stepOpen {
 		mark, style = "▸", theme.PaneTitle
@@ -160,7 +161,7 @@ func (l stepList) ended() int {
 
 // view draws height lines of the list, the steps under their headings. A run has more steps than a
 // window has lines, so the current one stays in sight, a third of the way down.
-func (l stepList) view(theme Theme, height int) string {
+func (l stepList) view(theme widget.Theme, height int) string {
 	at := l.at()
 	lines := make([]string, 0, len(l))
 	sight := 0

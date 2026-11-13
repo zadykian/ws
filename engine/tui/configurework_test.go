@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 var (
@@ -35,8 +37,8 @@ func TestConfigureSaveHandsTheWorkTheEdits(t *testing.T) {
 
 func TestConfigureRefusedSaveStaysOnTheField(t *testing.T) {
 	refused := errors.New("no such host")
-	sheet := Sheet{Name: "way.conf", Fields: func(map[string]string) []FieldSpec {
-		return []FieldSpec{{Label: "A"}, {Label: "HOST", Valid: func(string) error { return refused }}}
+	sheet := Sheet{Name: "way.conf", Fields: func(map[string]string) []widget.FieldSpec {
+		return []widget.FieldSpec{{Label: "A"}, {Label: "HOST", Valid: func(string) error { return refused }}}
 	}}
 	var jobs []configureJob
 	s := fed(recording(&jobs, nil, sheet), tab, tab, ctrlS)
@@ -51,10 +53,10 @@ func TestConfigureRefusedSaveStaysOnTheField(t *testing.T) {
 func TestConfigureSavedStartsTheFormOverOnTheFile(t *testing.T) {
 	var jobs []configureJob
 	s := fed(recording(&jobs, nil, wayFile()), enter, tea.PasteMsg{Content: "2222"}, ctrlS)
-	wrote := Sheet{Name: "way.conf", Fields: func(map[string]string) []FieldSpec {
-		return []FieldSpec{{Label: "HOST"}, {Label: "PORT", Value: "2222"}}
+	wrote := Sheet{Name: "way.conf", Fields: func(map[string]string) []widget.FieldSpec {
+		return []widget.FieldSpec{{Label: "HOST"}, {Label: "PORT", Value: "2222"}}
 	}}
-	s = fed(s, Line{Said, "wrote way.conf"}, savedMsg{sheet: wrote})
+	s = fed(s, widget.Line{Kind: widget.Said, Text: "wrote way.conf"}, savedMsg{sheet: wrote})
 	if s.saving || len(s.form().Edits()) != 0 || s.form().Name() != "PORT" {
 		t.Errorf("saving = %v, Edits = %v, field %q", s.saving, s.form().Edits(), s.form().Name())
 	}
@@ -81,7 +83,7 @@ func TestConfigureFailedSaveKeepsTheEditsAndSaysWhy(t *testing.T) {
 func TestConfigureKeepsTheEndOfWhatASaveSaid(t *testing.T) {
 	s := testConfigure(wayFile())
 	for range noteRows + 2 {
-		s = fed(s, Line{Said, "a line"})
+		s = fed(s, widget.Line{Kind: widget.Said, Text: "a line"})
 	}
 	if got := len(s.noteLines(40)); got != noteRows {
 		t.Errorf("%d rows", got)
@@ -92,7 +94,7 @@ func TestConfigureShortWindowKeepsTheInputAndTheNotesEnd(t *testing.T) {
 	refusal := strings.Repeat("no room here ", 30) + "why"
 	for _, height := range []int{5, 6, 8, 9, 11} {
 		s := fed(testConfigure(wayFile()), tea.WindowSizeMsg{Width: 60, Height: height}, enter)
-		s = fed(s, tea.PasteMsg{Content: "2222"}, Line{Warned, refusal})
+		s = fed(s, tea.PasteMsg{Content: "2222"}, widget.Line{Kind: widget.Warned, Text: refusal})
 		got := stripped(s.View().Content)
 		// A pane of one row holds the input alone. The status still counts the edit.
 		if !strings.Contains(got, "2222") || height > 5 && !strings.Contains(got, "why") {

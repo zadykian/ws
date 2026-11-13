@@ -6,6 +6,8 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // Words of the panes where no row shows.
@@ -24,16 +26,16 @@ func (s StateScreen) View() tea.View {
 }
 
 // layout is the screen with its panes empty: their sizes are what their bodies are drawn for.
-func (s StateScreen) layout() Layout {
+func (s StateScreen) layout() widget.Layout {
 	status := ""
 	if s.reading {
 		status = "reading"
 	}
-	return Layout{
+	return widget.Layout{
 		Title:  s.title,
 		Status: status,
 		Header: s.header(),
-		Panes: []Pane{
+		Panes: []widget.Pane{
 			{Title: tabNames[s.tab], Focused: !s.inDetail},
 			{Title: "Detail", Weight: detailWeight, Focused: s.inDetail},
 		},
@@ -51,11 +53,11 @@ func (s StateScreen) header() string {
 		switch {
 		case line == "":
 			line = cell
-		case lipgloss.Width(line)+ButtonGap+lipgloss.Width(cell) > s.window.Width:
+		case lipgloss.Width(line)+widget.ButtonGap+lipgloss.Width(cell) > s.window.Width:
 			lines = append(lines, line)
 			line = cell
 		default:
-			line += strings.Repeat(" ", ButtonGap) + cell
+			line += strings.Repeat(" ", widget.ButtonGap) + cell
 		}
 	}
 	lines = append(lines, line)
@@ -92,7 +94,7 @@ func (s StateScreen) tabCell(tab int) string {
 
 // listBody draws the rows that fit a pane of size. The selection stays in the middle of a long
 // list. So the list needs no scroll of its own to keep, and a new size can't lose the row.
-func (s StateScreen) listBody(size Size) string {
+func (s StateScreen) listBody(size widget.Size) string {
 	var lines []string
 	if field := s.filter.Line(s.theme); field != "" {
 		lines = append(lines, field)

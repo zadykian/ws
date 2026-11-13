@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // queueBoxes draws each row's box in order, the stages' own among them, as the eye reads a queue.
@@ -21,7 +22,7 @@ func queueBoxes(q queue) []string {
 }
 
 func TestAStagesBoxTurnsItsSteps(t *testing.T) {
-	side, at := "Mac", Cursor(1)
+	side, at := "Mac", widget.Cursor(1)
 	q := queueOf(testStages()).toggled(side, at)
 	if got := queueBoxes(q)[1:4]; !slices.Equal(got, []string{"[x]", "[x]", "[x]"}) {
 		t.Errorf("boxes = %q", got)

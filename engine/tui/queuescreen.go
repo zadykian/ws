@@ -4,6 +4,8 @@ import (
 	"slices"
 
 	"charm.land/bubbles/v2/key"
+
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 const (
@@ -22,25 +24,25 @@ var stateButton = key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "state"))
 
 // stripSize is the frame of the strip under a queue's lists, and the zero Size where a window has
 // no room for one.
-func stripSize(window Size) Size {
-	if window.Height < stripWindow || window.Width < MinFrameWidth {
-		return Size{}
+func stripSize(window widget.Size) widget.Size {
+	if window.Height < stripWindow || window.Width < widget.MinFrameWidth {
+		return widget.Size{}
 	}
-	return Size{window.Width, min(max(window.Height/3, stripLeast), stripMost)}
+	return widget.Size{Width: window.Width, Height: min(max(window.Height/3, stripLeast), stripMost)}
 }
 
 // strip draws pane in the strip of a window, or nothing where the window has no room.
-func strip(theme Theme, pane Pane, window Size) string {
+func strip(theme widget.Theme, pane widget.Pane, window widget.Size) string {
 	size := stripSize(window)
-	if size == (Size{}) {
+	if size == (widget.Size{}) {
 		return ""
 	}
 	return pane.Render(theme, size)
 }
 
 // inside is the room within a frame of that size.
-func inside(frame Size) Size {
-	return Size{max(frame.Width-2, 0), max(frame.Height-2, 0)}
+func inside(frame widget.Size) widget.Size {
+	return widget.Size{Width: max(frame.Width-2, 0), Height: max(frame.Height-2, 0)}
 }
 
 // sides returns the sides that have a stage, in the order the stages first name them.
@@ -59,10 +61,10 @@ func (q queue) pane(side string) int { return max(slices.Index(q.sides(), side),
 
 // panes returns the lists' panes, empty. A side's says so while a role of it stands unread, as a
 // check of one machine can't reach what another reports until that one is there.
-func (q queue) panes() []Pane {
-	var panes []Pane
+func (q queue) panes() []widget.Pane {
+	var panes []widget.Pane
 	for _, side := range q.sides() {
-		pane := Pane{Title: side, Focused: q.side == side}
+		pane := widget.Pane{Title: side, Focused: q.side == side}
 		unread := func(s queueStage) bool {
 			return s.side == side && slices.ContainsFunc(s.list.rows, func(r pickRow) bool { return r.index == unreadIndex })
 		}
@@ -76,7 +78,7 @@ func (q queue) panes() []Pane {
 
 // drawn returns the layout with the lists in its panes, a cursor a side. The side out of focus shows
 // none.
-func (q queue) drawn(layout Layout, theme Theme, window Size, at map[string]Cursor) Layout {
+func (q queue) drawn(layout widget.Layout, theme widget.Theme, window widget.Size, at map[string]widget.Cursor) widget.Layout {
 	sizes := layout.PaneSizes(window.Width, window.Height)
 	for i, side := range q.sides() {
 		there := at[side].Within(len(q.lines(side)))

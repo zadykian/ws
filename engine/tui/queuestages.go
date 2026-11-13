@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // queueStage is a stage of a queue: its own row, the side that shows it, and a list of what it runs.
@@ -17,7 +19,7 @@ type queueStage struct {
 type queue struct {
 	stages []queueStage
 	// heard holds what the scan printed since a step last ended.
-	heard []Line
+	heard []widget.Line
 	// words is the filter the lists show under.
 	words string
 	// side is the list in focus.
@@ -74,7 +76,7 @@ func (q queue) lines(side string) []queueLine {
 }
 
 // render draws a line: a stage by its number, and its steps past the room of that number.
-func (q queue) render(theme Theme, l queueLine) string {
+func (q queue) render(theme widget.Theme, l queueLine) string {
 	s := q.stages[l.stage]
 	if !l.head {
 		return strings.Repeat(" ", stageColumns) + s.list.render(theme, l.line)
@@ -94,14 +96,14 @@ func (q queue) filtered(words string) queue {
 }
 
 // narrowed returns the queue under words, and the cursor on its line of the side while that shows.
-func (q queue) narrowed(side string, at Cursor, words string) (queue, Cursor) {
+func (q queue) narrowed(side string, at widget.Cursor, words string) (queue, widget.Cursor) {
 	was := q.lines(side)
 	q = q.filtered(words)
-	return q, Kept(at, was, q.lines(side))
+	return q, widget.Kept(at, was, q.lines(side))
 }
 
 // view draws height lines of the side, the cursor's gutter where shown.
-func (q queue) view(theme Theme, side string, height int, at Cursor, shown bool) string {
+func (q queue) view(theme widget.Theme, side string, height int, at widget.Cursor, shown bool) string {
 	lines := q.lines(side)
 	return windowed(theme, height, at, shown, len(lines), func(i int) string { return q.render(theme, lines[i]) })
 }

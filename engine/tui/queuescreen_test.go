@@ -10,6 +10,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // testQueueScreen is the two lists at 100 by 30, their scan under way.
@@ -59,7 +60,7 @@ func TestAStripTakesAThirdOfTheWindowWithinBounds(t *testing.T) {
 		height, want int
 	}{{13, 0}, {14, stripLeast}, {24, 8}, {60, stripMost}}
 	for _, c := range cases {
-		if got := stripSize(Size{80, c.height}).Height; got != c.want {
+		if got := stripSize(widget.Size{Width: 80, Height: c.height}).Height; got != c.want {
 			t.Errorf("a window of %d lines has a strip of %d, want %d", c.height, got, c.want)
 		}
 	}

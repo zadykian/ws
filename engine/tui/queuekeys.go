@@ -7,6 +7,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // The places of the queue's buttons that the flat list lacks, after the places that both share.
@@ -29,8 +30,8 @@ type queueScreen struct {
 	list queue
 	// at is the cursor on each side's list, by side. Never written in place: the screens are values,
 	// and Reopen reuses a left one, so withCursor copies it.
-	at     map[string]Cursor
-	footer Footer
+	at     map[string]widget.Cursor
+	footer widget.Footer
 	// unread is why a machine reported nothing, and its steps stand as the queue named them.
 	unread string
 	// picks takes the choice, and holds one, so that sending it waits for nobody.
@@ -38,10 +39,10 @@ type queueScreen struct {
 }
 
 // openQueue returns the lists of stages, their scan under way. The configure button comes last.
-func openQueue(title string, theme Theme, stages []Stage, picks chan<- QueueChoice) queueScreen {
+func openQueue(title string, theme widget.Theme, stages []Stage, picks chan<- QueueChoice) queueScreen {
 	buttons := append(listButtons(), stateButton, configureButton)
-	s := queueScreen{listScreen: listScreen{title: title, theme: theme, scanning: true, filter: NewFilter()},
-		list: queueOf(stages), footer: NewFooter(buttons...), picks: picks}
+	s := queueScreen{listScreen: listScreen{title: title, theme: theme, scanning: true, filter: widget.NewFilter()},
+		list: queueOf(stages), footer: widget.NewFooter(buttons...), picks: picks}
 	return s.enabled()
 }
 
@@ -57,7 +58,7 @@ func (s queueScreen) statusLine() string {
 }
 
 // notes is the words of the strip: what holds for the whole queue, then the line under the cursor.
-func (s queueScreen) notes() []Line {
+func (s queueScreen) notes() []widget.Line {
 	notes := s.warnings(s.unread, s.list.passed())
 	lines := s.list.lines(s.list.side)
 	at := int(s.at[s.list.side])
@@ -70,15 +71,15 @@ func (s queueScreen) notes() []Line {
 	case !line.head:
 		row = s.list.stages[line.stage].list.rows[line.line.row]
 	case s.list.partial()[row.name] != nil:
-		notes = append(notes, Line{Said, "Runs in part, so it stays pending."})
+		notes = append(notes, widget.Line{Kind: widget.Said, Text: "Runs in part, so it stays pending."})
 	}
 	return append(notes, row.notes()...)
 }
 
 // layout is the screen with its panes empty, as what fills them depends on their sizes.
-func (s queueScreen) layout() Layout {
-	detail := Pane{Title: "Detail", Body: s.detail(inside(stripSize(s.window)), s.notes())}
-	return Layout{
+func (s queueScreen) layout() widget.Layout {
+	detail := widget.Pane{Title: "Detail", Body: s.detail(inside(stripSize(s.window)), s.notes())}
+	return widget.Layout{
 		Title:  s.title,
 		Status: s.statusLine(),
 		Panes:  s.list.panes(),
@@ -110,7 +111,7 @@ func (s queueScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case step.Event:
 		s.list = s.list.take(msg)
-	case Line:
+	case widget.Line:
 		s.list = s.list.hear(msg)
 	case scannedMsg:
 		s.listScreen = s.scanned(msg)
@@ -121,7 +122,7 @@ func (s queueScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			s.list = s.list.reported(msg.stage, msg.sections)
 		}
 	case tea.WindowSizeMsg:
-		s.window = Size{msg.Width, msg.Height}
+		s.window = widget.Size{Width: msg.Width, Height: msg.Height}
 	case tea.PasteMsg:
 		if s.filter.Editing && !s.left {
 			s = s.typed(msg)
@@ -142,13 +143,13 @@ func (s queueScreen) pressed(msg tea.KeyPressMsg) (queueScreen, tea.Cmd) {
 		return s, nil
 	case s.held():
 		return s.typed(msg), nil
-	case key.Matches(msg, ClearKey):
+	case key.Matches(msg, widget.ClearKey):
 		s.filter = s.filter.Cleared()
 		s = s.narrowed("")
 		return s, nil
-	case key.Matches(msg, Keys.Next):
+	case key.Matches(msg, widget.Keys.Next):
 		return s.tabbed(1), nil
-	case key.Matches(msg, Keys.Prev):
+	case key.Matches(msg, widget.Keys.Prev):
 		return s.tabbed(-1), nil
 	}
 	var place int
@@ -194,17 +195,17 @@ func (s queueScreen) typed(msg tea.Msg) queueScreen {
 
 // narrowed returns s with its lists under words, and the cursor of the side in focus kept.
 func (s queueScreen) narrowed(words string) queueScreen {
-	var c Cursor
+	var c widget.Cursor
 	s.list, c = s.list.narrowed(s.list.side, s.at[s.list.side], words)
 	s.at = withCursor(s.at, s.list.side, c)
 	return s
 }
 
 // withCursor returns at with side's cursor set, on a copy.
-func withCursor(at map[string]Cursor, side string, c Cursor) map[string]Cursor {
+func withCursor(at map[string]widget.Cursor, side string, c widget.Cursor) map[string]widget.Cursor {
 	next := maps.Clone(at)
 	if next == nil {
-		next = map[string]Cursor{}
+		next = map[string]widget.Cursor{}
 	}
 	next[side] = c
 	return next

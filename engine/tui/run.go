@@ -15,6 +15,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // unwindBound bounds the wait for a work's cleanup, short as a second Ctrl-C asked to leave.
@@ -33,7 +34,7 @@ type Config struct {
 	In  io.Reader
 	Out io.Writer
 	// Theme is what the questions draw with.
-	Theme Theme
+	Theme widget.Theme
 	// Cut returns the error of a run that a signal ended. Ctrl-C counts as SIGINT. A command gives
 	// the error that its plain run ends with, so that its exit status stays.
 	Cut func(syscall.Signal) error

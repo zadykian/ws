@@ -8,6 +8,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // detailOf is the words of the pane for the step of that name in l.
@@ -28,7 +29,7 @@ func TestDetailSaysWhyAStepIsLocked(t *testing.T) {
 }
 
 func TestDetailShowsWhatTheScanSaid(t *testing.T) {
-	l := chain().hear(Line{Diffed, "base: one: writes a\n+b"}).take(planned("base", "one", 0, oneChange("a")))
+	l := chain().hear(widget.Line{Kind: widget.Diffed, Text: "base: one: writes a\n+b"}).take(planned("base", "one", 0, oneChange("a")))
 	want := []string{"Holds changes.", "writes a\n+b"}
 	if got := detailOf(l, "one"); !slices.Equal(got, want) {
 		t.Errorf("detail = %q, want %q", got, want)
@@ -65,7 +66,7 @@ func TestDetailWarnsOfARolePassedOverAndOfAStoppedScan(t *testing.T) {
 }
 
 func TestDetailStaysInsideItsPane(t *testing.T) {
-	said := Line{Said, strings.Repeat("a long line of a plan ", 40)}
+	said := widget.Line{Kind: widget.Said, Text: strings.Repeat("a long line of a plan ", 40)}
 	s := pickSent(testPick(), said, planned("base", "Packages", 0, oneChange("a")), press('j'))
 	if got := len(strings.Split(pickShown(s), "\n")); got > 24 {
 		t.Errorf("%d lines in a window of 24", got)

@@ -1,6 +1,10 @@
 package tui
 
-import "slices"
+import (
+	"slices"
+
+	"github.com/zadykian/ws/engine/tui/internal/widget"
+)
 
 // settled returns the queue with its boxes and locks worked out again. A stage with steps of its own
 // is on where one is, a locked stage holds its steps, and one walk from the end reaches a whole chain.
@@ -45,7 +49,7 @@ func (q queue) box(i int) string {
 
 // toggled returns the queue with the box under the cursor of the side turned. A stage's or a role's
 // turns its shown steps on, or off where all are on. A locked stage or step holds.
-func (q queue) toggled(side string, at Cursor) queue {
+func (q queue) toggled(side string, at widget.Cursor) queue {
 	lines := q.lines(side)
 	if int(at) >= len(lines) {
 		return q

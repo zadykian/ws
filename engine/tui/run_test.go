@@ -18,6 +18,8 @@ import (
 	"time"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // noKeys is a terminal that nobody types on.
@@ -43,7 +45,7 @@ func TestRunGivesTheScreenTheLinesAndReturnsTheError(t *testing.T) {
 	if !errors.Is(err, failed) {
 		t.Errorf("Run: %v", err)
 	}
-	if !slices.Contains(got, tea.Msg(Line{Said, "a line"})) {
+	if !slices.Contains(got, tea.Msg(widget.Line{Kind: widget.Said, Text: "a line"})) {
 		t.Errorf("the screen got %v", got)
 	}
 	left := strings.LastIndex(out.String(), leaveBuffer)
@@ -146,7 +148,7 @@ func TestRunReportsAPanicPastItsScreen(t *testing.T) {
 type fragile struct{ recorder }
 
 func (f fragile) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	if _, ok := msg.(Line); ok {
+	if _, ok := msg.(widget.Line); ok {
 		panic("a bug")
 	}
 	return f, nil

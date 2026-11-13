@@ -7,6 +7,8 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // typeIn gives the field each rune of text as a key.
@@ -121,7 +123,7 @@ func TestFieldKeys(t *testing.T) {
 }
 
 func TestFieldDrawsTheQuestionWithNoColorUnderNoColor(t *testing.T) {
-	theme := NewTheme(func(string) string { return "yes" })
+	theme := widget.NewTheme(func(string) string { return "yes" })
 	f := typeIn(newField(prompt{text: "Host", fallback: "ws"}, window), "abc")
 	shown := f.render(theme, window)
 	for _, want := range []string{"Host [ws]", "> ", "abc", "[enter]", "answer", "[ctrl+c]", "stop"} {
@@ -143,15 +145,15 @@ func TestFieldShowsNothingOfAHiddenAnswer(t *testing.T) {
 }
 
 func TestFieldScrollsALongAnswerInsideItsBox(t *testing.T) {
-	f := typeIn(newField(prompt{text: "Key"}, Size{20, 10}), strings.Repeat("a", 40)+"end")
-	got := f.render(testTheme, Size{20, 10})
+	f := typeIn(newField(prompt{text: "Key"}, widget.Size{Width: 20, Height: 10}), strings.Repeat("a", 40)+"end")
+	got := f.render(testTheme, widget.Size{Width: 20, Height: 10})
 	if !strings.Contains(got, "end") || lipgloss.Width(got) != 20 {
 		t.Errorf("the end of the answer is off the box:\n%s", got)
 	}
 }
 
 func TestFieldScrollsThroughAShrink(t *testing.T) {
-	small := Size{30, 24}
+	small := widget.Size{Width: 30, Height: 24}
 	long := typeIn(newField(prompt{text: "Key"}, window), strings.Repeat("a", 50)+"END")
 	if got := long.fit(small).render(testTheme, small); !strings.Contains(got, "END") {
 		t.Errorf("the end of the answer went with the shrink:\n%s", got)
@@ -173,7 +175,7 @@ func TestFieldKeepsItsInputInAnyWindow(t *testing.T) {
 	text := strings.Repeat("a long question ", 20)
 	for w := range 14 {
 		for h := range 14 {
-			size := Size{w, h}
+			size := widget.Size{Width: w, Height: h}
 			got := newField(prompt{text: text}, size).render(testTheme, size)
 			switch {
 			case w == 0 || h == 0:
@@ -189,15 +191,15 @@ func TestFieldKeepsItsInputInAnyWindow(t *testing.T) {
 
 func TestShortWindowGivesUpTheButtonsThenTheFrame(t *testing.T) {
 	cases := []struct {
-		size    Size
+		size    widget.Size
 		want    []string
 		missing []string
 	}{
-		{Size{80, 1}, []string{">"}, []string{"Host", "Question"}},
-		{Size{80, 2}, []string{"Host", ">"}, []string{"Question"}},
-		{Size{80, 3}, []string{"Host", ">"}, []string{"Question", "answer"}},
-		{Size{80, 4}, []string{"Question", "Host", ">"}, []string{"answer"}},
-		{Size{80, 5}, []string{"Question", "Host", ">", "answer"}, nil},
+		{widget.Size{Width: 80, Height: 1}, []string{">"}, []string{"Host", "Question"}},
+		{widget.Size{Width: 80, Height: 2}, []string{"Host", ">"}, []string{"Question"}},
+		{widget.Size{Width: 80, Height: 3}, []string{"Host", ">"}, []string{"Question", "answer"}},
+		{widget.Size{Width: 80, Height: 4}, []string{"Question", "Host", ">"}, []string{"answer"}},
+		{widget.Size{Width: 80, Height: 5}, []string{"Question", "Host", ">", "answer"}, nil},
 	}
 	for _, c := range cases {
 		got := newField(prompt{text: "Host"}, c.size).render(testTheme, c.size)

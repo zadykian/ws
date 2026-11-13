@@ -14,6 +14,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // errHalted ends a run that a confirmed stop ended between two steps.
@@ -125,12 +126,12 @@ func (b *Bridge) ask(ctx context.Context, p prompt) (string, error) {
 func (b *Bridge) Say(format string, a ...any) {
 	text := fmt.Sprintf(format, a...)
 	b.said.Store(&text)
-	b.send(Line{Said, text})
+	b.send(widget.Line{Kind: widget.Said, Text: text})
 }
 
 // Raw sends a line to copy.
 func (b *Bridge) Raw(format string, a ...any) {
-	b.send(Line{Copied, fmt.Sprintf(format, a...)})
+	b.send(widget.Line{Kind: widget.Copied, Text: fmt.Sprintf(format, a...)})
 }
 
 // Warn sends a line that starts with "warning: ", once, as a step plans again after it applies. It
@@ -138,7 +139,7 @@ func (b *Bridge) Raw(format string, a ...any) {
 func (b *Bridge) Warn(format string, a ...any) {
 	line := fmt.Sprintf("warning: "+format, a...)
 	if _, sent := b.warned.LoadOrStore(line, true); !sent {
-		l := Line{Warned, line}
+		l := widget.Line{Kind: widget.Warned, Text: line}
 		b.rec.keep(l)
 		b.send(l)
 	}
@@ -148,7 +149,7 @@ func (b *Bridge) Warn(format string, a ...any) {
 // applies. The window goes with the screen, and the maintainer acts on this line past it.
 func (b *Bridge) SayLasting(format string, a ...any) {
 	line := fmt.Sprintf(format, a...)
-	b.send(Line{Said, line})
+	b.send(widget.Line{Kind: widget.Said, Text: line})
 	if _, kept := b.lasting.LoadOrStore(line, true); !kept {
 		b.keepByHand("%s", line)
 	}
@@ -157,7 +158,7 @@ func (b *Bridge) SayLasting(format string, a ...any) {
 // Diff sends the unified diff of before and after, and nothing where they are equal.
 func (b *Bridge) Diff(name string, before, after []byte) {
 	if text := effect.Diff(name, before, after); text != "" {
-		b.send(Line{Diffed, strings.TrimSuffix(text, "\n")})
+		b.send(widget.Line{Kind: widget.Diffed, Text: strings.TrimSuffix(text, "\n")})
 	}
 }
 
@@ -182,7 +183,7 @@ func (b *Bridge) Observe(e step.Event) {
 		}
 	case e.Kind == step.Started:
 		b.said.Store(nil)
-		b.send(Line{Said, fmt.Sprintf("%s: applying %d change(s)", name, len(e.Changes))})
+		b.send(widget.Line{Kind: widget.Said, Text: fmt.Sprintf("%s: applying %d change(s)", name, len(e.Changes))})
 	case e.Kind == step.Skipped && e.After != "":
 		b.Say("%s: after %s", name, e.After)
 	}
@@ -192,15 +193,15 @@ func (b *Bridge) Observe(e step.Event) {
 // changeLine is a change as --check shows it, under the name of its step, which a wizard's stage
 // writes in the change itself. One of several lines holds a file's diff under its first line. A
 // line reaches the log, so it holds the excerpt.
-func changeLine(name string, c step.Change) Line {
+func changeLine(name string, c step.Change) widget.Line {
 	text := strings.TrimSuffix(step.ExcerptOf(c), "\n")
 	if !strings.HasPrefix(text, name+": ") {
 		text = name + ": " + text
 	}
 	if strings.Contains(text, "\n") {
-		return Line{Diffed, text}
+		return widget.Line{Kind: widget.Diffed, Text: text}
 	}
-	return Line{Said, text}
+	return widget.Line{Kind: widget.Said, Text: text}
 }
 
 // stop is a run's step.Options.Stop, which Options hands out. It ends the run before its next step, past a confirmed stop or

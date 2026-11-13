@@ -7,13 +7,15 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // unread is a sheet that shows no field until it reads the file, which gives wayFile's.
 func unread(reads *int, err error) Sheet {
 	return Sheet{
 		Name:   "far.conf",
-		Fields: func(map[string]string) []FieldSpec { return nil },
+		Fields: func(map[string]string) []widget.FieldSpec { return nil },
 		Open: func(context.Context, *Bridge) (Sheet, error) {
 			*reads++
 			return wayFile(), err

@@ -4,6 +4,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // QueueRun follows a run of a queue on the lists that chose it, over what the run prints. The
@@ -12,17 +13,17 @@ import (
 type QueueRun struct {
 	run  RunScreen
 	list queue
-	at   map[string]Cursor
+	at   map[string]widget.Cursor
 }
 
 // NewQueueRun returns the screen of what choice runs, under the choice's boxes.
-func NewQueueRun(title string, theme Theme, choice QueueChoice) QueueRun {
+func NewQueueRun(title string, theme widget.Theme, choice QueueChoice) QueueRun {
 	var stages Group
 	for _, s := range choice.left.list.stages {
 		stages.Steps = append(stages.Steps, s.row.name)
 	}
 	run := NewRunScreen(title, theme, stages)
-	run.pane = func(window Size) Size { return inside(stripSize(window)) }
+	run.pane = func(window widget.Size) widget.Size { return inside(stripSize(window)) }
 	return QueueRun{run, choice.left.list.filtered(""), choice.left.at}
 }
 
@@ -38,7 +39,7 @@ func (q QueueRun) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var side string
 		var line int
 		if q.list, side, line = q.list.follow(e); line >= 0 {
-			q.list.side, q.at = side, withCursor(q.at, side, Cursor(line))
+			q.list.side, q.at = side, withCursor(q.at, side, widget.Cursor(line))
 		}
 	}
 	var cmd tea.Cmd
@@ -47,9 +48,9 @@ func (q QueueRun) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // layout is the run's screen with the lists in place of its panes, and its output in the strip.
-func (q QueueRun) layout() Layout {
+func (q QueueRun) layout() widget.Layout {
 	l := q.run.layout()
-	output := Pane{Title: l.Panes[1].Title, Body: q.run.output.View(), Focused: true}
+	output := widget.Pane{Title: l.Panes[1].Title, Body: q.run.output.View(), Focused: true}
 	l.Panes, l.Below = q.list.panes(), strip(q.run.theme, output, q.run.window)
 	return l
 }

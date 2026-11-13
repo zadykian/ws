@@ -7,6 +7,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // The places of the list's buttons.
@@ -37,14 +38,14 @@ type scannedMsg struct{ problem string }
 // and the leave.
 type listScreen struct {
 	title  string
-	theme  Theme
-	window Size
+	theme  widget.Theme
+	window widget.Size
 	// scanning says that events of the scan are still on their way.
 	scanning bool
 	// problem is why the scan stopped short.
 	problem string
 	// filter holds the words that the list follows.
-	filter Filter
+	filter widget.Filter
 	// left says that the choice has gone, and the screen waits for the work to end it.
 	left bool
 }
@@ -88,8 +89,8 @@ type pickScreen struct {
 	listScreen
 	list pickList
 	// at is the cursor on the list.
-	at     Cursor
-	footer Footer
+	at     widget.Cursor
+	footer widget.Footer
 	// picks takes the choice, and holds one, so that sending it waits for nobody.
 	picks chan<- Choice
 }
@@ -98,13 +99,13 @@ type pickScreen struct {
 func listButtons() []key.Binding {
 	button := func(k, label string) key.Binding { return key.NewBinding(key.WithKeys(k), key.WithHelp(k, label)) }
 	return []key.Binding{button("space", "toggle"), button("a", "all"), button("n", "none"), button("i", "invert"),
-		button("p", "pending"), button("/", "filter"), button("enter", "run"), button("c", "check"), Keys.Quit}
+		button("p", "pending"), button("/", "filter"), button("enter", "run"), button("c", "check"), widget.Keys.Quit}
 }
 
 // newPickScreen returns the screen of groups, its scan under way.
-func newPickScreen(title string, theme Theme, groups []Group, picks chan<- Choice) pickScreen {
-	footer := NewFooter(listButtons()...)
-	s := pickScreen{listScreen: listScreen{title: title, theme: theme, scanning: true, filter: NewFilter()},
+func newPickScreen(title string, theme widget.Theme, groups []Group, picks chan<- Choice) pickScreen {
+	footer := widget.NewFooter(listButtons()...)
+	s := pickScreen{listScreen: listScreen{title: title, theme: theme, scanning: true, filter: widget.NewFilter()},
 		list: newPickList(groups), footer: footer, picks: picks}
 	return s.enabled()
 }
@@ -119,12 +120,12 @@ func (s pickScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case step.Event:
 		s.list = s.list.take(msg)
-	case Line:
+	case widget.Line:
 		s.list = s.list.hear(msg)
 	case scannedMsg:
 		s.listScreen = s.scanned(msg)
 	case tea.WindowSizeMsg:
-		s.window = Size{msg.Width, msg.Height}
+		s.window = widget.Size{Width: msg.Width, Height: msg.Height}
 	case tea.PasteMsg:
 		if s.filter.Editing && !s.left {
 			s = s.typed(msg)
@@ -144,7 +145,7 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 		return s, nil
 	case s.held():
 		return s.typed(msg), nil
-	case key.Matches(msg, ClearKey):
+	case key.Matches(msg, widget.ClearKey):
 		s.filter = s.filter.Cleared()
 		s.list, s.at = s.list.narrowed(s.at, "")
 		return s, nil
@@ -215,11 +216,11 @@ func (s pickScreen) statusLine() string {
 
 // layout is the screen with its panes empty, as what fills them depends on their sizes. The list
 // holds the focus alone, so that a window too short for two panes shows it.
-func (s pickScreen) layout() Layout {
-	return Layout{
+func (s pickScreen) layout() widget.Layout {
+	return widget.Layout{
 		Title:  s.title,
 		Status: s.statusLine(),
-		Panes:  []Pane{{Title: "Steps", Focused: true}, {Title: "Detail"}},
+		Panes:  []widget.Pane{{Title: "Steps", Focused: true}, {Title: "Detail"}},
 		Footer: s.footer,
 	}
 }

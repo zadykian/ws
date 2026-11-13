@@ -5,14 +5,16 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // queueFrame is the queue's screen at 100 by 30, its scan under way, with no footer.
 func queueFrame() queueScreen {
 	return queueScreen{
-		listScreen: listScreen{title: "ws client macos wizard", theme: testTheme, window: Size{100, 30}, scanning: true},
+		listScreen: listScreen{title: "ws client macos wizard", theme: testTheme, window: widget.Size{Width: 100, Height: 30}, scanning: true},
 		list:       queueOf(testStages()),
-		footer:     NewFooter(append(listButtons(), stateButton, configureButton)...),
+		footer:     widget.NewFooter(append(listButtons(), stateButton, configureButton)...),
 		picks:      make(chan QueueChoice, 1),
 	}
 }

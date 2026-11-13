@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // detailWeight is the detail pane's part of the width: a diff needs more room than a name.
@@ -12,7 +14,7 @@ const detailWeight = 2
 
 // detailBody returns the detail pane's title and the lines that fit a pane of size. The title says
 // where they stand in a row that overflows the pane.
-func (s StateScreen) detailBody(size Size) (string, string) {
+func (s StateScreen) detailBody(size widget.Size) (string, string) {
 	lines := s.detailLines(size.Width)
 	if len(lines) <= size.Height {
 		return "Detail", strings.Join(lines, "\n")

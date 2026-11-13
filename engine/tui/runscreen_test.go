@@ -9,6 +9,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // sent gives r each message.
@@ -51,14 +52,14 @@ func TestRunScreenFollowsTheEvents(t *testing.T) {
 }
 
 func TestRunScreenShowsALineInItsWindow(t *testing.T) {
-	if got := shown(sent(testRun(), Line{Piped, "Setting up curl"})); !strings.Contains(got, "Setting up curl") {
+	if got := shown(sent(testRun(), widget.Line{Kind: widget.Piped, Text: "Setting up curl"})); !strings.Contains(got, "Setting up curl") {
 		t.Errorf("frame holds no line:\n%s", got)
 	}
 }
 
 func TestRunScreenFitsItsFrameToTheWindow(t *testing.T) {
-	r := sent(testRun(), Line{Said, strings.Repeat("word ", 100)})
-	for _, size := range []Size{{80, 24}, {120, 40}, {40, 12}, {30, 8}, {12, 5}} {
+	r := sent(testRun(), widget.Line{Kind: widget.Said, Text: strings.Repeat("word ", 100)})
+	for _, size := range []widget.Size{{Width: 80, Height: 24}, {Width: 120, Height: 40}, {Width: 40, Height: 12}, {Width: 30, Height: 8}, {Width: 12, Height: 5}} {
 		got := sent(r, tea.WindowSizeMsg{Width: size.Width, Height: size.Height}).View().Content
 		if lipgloss.Width(got) > size.Width || lipgloss.Height(got) > size.Height {
 			t.Errorf("%v: frame is %dx%d", size, lipgloss.Width(got), lipgloss.Height(got))
@@ -67,7 +68,7 @@ func TestRunScreenFitsItsFrameToTheWindow(t *testing.T) {
 }
 
 func TestRunScreenWrapsALongLineToTheWindow(t *testing.T) {
-	r := sent(testRun(), Line{Said, "first " + strings.Repeat("x", 45) + " last"})
+	r := sent(testRun(), widget.Line{Kind: widget.Said, Text: "first " + strings.Repeat("x", 45) + " last"})
 	if got := shown(r); !strings.Contains(got, "last") {
 		t.Errorf("frame cut the line:\n%s", got)
 	}
@@ -76,7 +77,7 @@ func TestRunScreenWrapsALongLineToTheWindow(t *testing.T) {
 func TestRunScreenKeysScrollTheWindow(t *testing.T) {
 	r := testRun()
 	for i := range 100 {
-		r = sent(r, Line{Said, "line" + strings.Repeat("x", i%2) + string(rune('0'+i%10))})
+		r = sent(r, widget.Line{Kind: widget.Said, Text: "line" + strings.Repeat("x", i%2) + string(rune('0'+i%10))})
 	}
 	page := r.output.Size.Height
 	cases := []struct {
@@ -111,7 +112,7 @@ func TestRunScreenKeysScrollTheWindow(t *testing.T) {
 }
 
 func TestRunScreenButtonsTakeTheFocus(t *testing.T) {
-	r := sent(testRun(), Line{Said, strings.Repeat("line\n", 60)})
+	r := sent(testRun(), widget.Line{Kind: widget.Said, Text: strings.Repeat("line\n", 60)})
 	focused := sent(r, tea.KeyPressMsg{Code: tea.KeyTab})
 	if focused.footer.Focused() != pageUpPlace {
 		t.Fatalf("focus = %d after Tab, want the first button", focused.footer.Focused())
@@ -193,7 +194,7 @@ func TestElapsed(t *testing.T) {
 
 func TestRunScreenRunsUnderASession(t *testing.T) {
 	s := session{screen: testRun(), theme: testTheme, window: window, cut: testCut}
-	s, _ = feed(s, Line{Piped, "a line of output"})
+	s, _ = feed(s, widget.Line{Kind: widget.Piped, Text: "a line of output"})
 	if got := stripped(s.View().Content); !strings.Contains(got, "a line of output") {
 		t.Errorf("frame holds no line:\n%s", got)
 	}

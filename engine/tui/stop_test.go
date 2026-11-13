@@ -15,6 +15,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // haltedRunMsg is what a test's halt returns.
@@ -231,7 +232,7 @@ func TestRunScreenStopButtonAsksTheSession(t *testing.T) {
 }
 
 func TestRunScreenShowsAStopInItsWindowsTitle(t *testing.T) {
-	r := sent(testRun(), haltedMsg{}, Line{Piped, "still printing"})
+	r := sent(testRun(), haltedMsg{}, widget.Line{Kind: widget.Piped, Text: "still printing"})
 	got := shown(r)
 	for _, want := range []string{"Stopping after base: Packages", "still printing", "[ctrl+c] stop now"} {
 		if !strings.Contains(got, want) {

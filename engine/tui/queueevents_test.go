@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 func TestAnEventOutsideEveryStageMovesNothing(t *testing.T) {
-	was := queueOf(testStages()).hear(Line{Said, "x"})
+	was := queueOf(testStages()).hear(widget.Line{Kind: widget.Said, Text: "x"})
 	got := was.take(planned("other", "x", 0))
 	if !slices.Equal(drawnQueue(got, "Mac"), drawnQueue(was, "Mac")) || len(got.heard) != 0 {
 		t.Errorf("queue = %+v", got)
@@ -19,7 +20,7 @@ func TestAnEventOutsideEveryStageMovesNothing(t *testing.T) {
 }
 
 func TestAStageTakesTheWordsTheScanSaidBeforeItsStepEnded(t *testing.T) {
-	q := queueOf(testStages()).hear(Line{Said, "Tools: found it"})
+	q := queueOf(testStages()).hear(widget.Line{Kind: widget.Said, Text: "Tools: found it"})
 	q = q.take(planned("", "Tools", 0, oneChange("a")))
 	if said := q.stages[0].row.said; len(said) != 1 || said[0].Text != "found it" || len(q.heard) != 0 {
 		t.Errorf("said = %+v, heard = %+v", said, q.heard)
@@ -68,7 +69,7 @@ func TestAReportNamesAStagesStepsInPlaceOfItsRoles(t *testing.T) {
 	if got := rows[1].said; len(got) != 1 || got[0].Text != "sets the locale" {
 		t.Errorf("said = %+v", got)
 	}
-	if got := rows[3].said; len(got) != 1 || got[0].Kind != Warned || got[0].Text != "no sensor" {
+	if got := rows[3].said; len(got) != 1 || got[0].Kind != widget.Warned || got[0].Text != "no sensor" {
 		t.Errorf("said = %+v", got)
 	}
 }

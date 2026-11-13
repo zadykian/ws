@@ -8,6 +8,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // pickSent returns s past msgs.
@@ -38,7 +39,7 @@ func TestPickScreenShowsEveryStepBeforeTheScan(t *testing.T) {
 }
 
 func TestPickScreenFollowsTheScan(t *testing.T) {
-	s := pickSent(testPick(), Line{Said, "base: Packages: installs vim"}, step.Event{Kind: step.Planned, Parent: "base", Step: "Packages"},
+	s := pickSent(testPick(), widget.Line{Kind: widget.Said, Text: "base: Packages: installs vim"}, step.Event{Kind: step.Planned, Parent: "base", Step: "Packages"},
 		planned("base", "Packages", 0, oneChange("installs vim")))
 	if got := pickShown(s); !strings.Contains(got, "scanning 1/3") || !strings.Contains(got, "[x] ● Packages") {
 		t.Errorf("frame:\n%s", got)

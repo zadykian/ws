@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // chain is a role whose steps wait on each other, beside one that waits on nothing.
@@ -97,7 +98,7 @@ func TestAScanChoosesTheStepsWithChanges(t *testing.T) {
 
 func TestAStepBehindChangesStartsChosen(t *testing.T) {
 	behind := step.Event{Kind: step.Skipped, Parent: "base", Step: "two", Index: 1, After: "one"}
-	l := chain().take(planned("base", "one", 0, oneChange("a"))).hear(Line{Said, "base: two: after one"}).take(behind)
+	l := chain().take(planned("base", "one", 0, oneChange("a"))).hear(widget.Line{Kind: widget.Said, Text: "base: two: after one"}).take(behind)
 	if want := []string{"[#]", "[x]", "[ ]", "[ ]"}; !slices.Equal(boxes(l), want) {
 		t.Errorf("boxes = %q, want %q", boxes(l), want)
 	}
@@ -109,21 +110,21 @@ func TestAStepBehindChangesStartsChosen(t *testing.T) {
 func TestAStepThatFailsStartsLeftOutWithItsError(t *testing.T) {
 	failed := step.Event{Kind: step.Failed, Parent: "base", Step: "one", Err: errors.New("no disk")}
 	row := chain().take(failed).rows[0]
-	if row.on() || row.state != stepFailed || len(row.said) != 1 || row.said[0] != (Line{Warned, "no disk"}) {
+	if row.on() || row.state != stepFailed || len(row.said) != 1 || row.said[0] != (widget.Line{Kind: widget.Warned, Text: "no disk"}) {
 		t.Errorf("row = %+v", row)
 	}
 }
 
 func TestALineGoesToTheStepThatEndsPastIt(t *testing.T) {
-	l := chain().hear(Line{Diffed, "base: one: writes a\n+b"}).hear(Line{Warned, "warning: old"})
+	l := chain().hear(widget.Line{Kind: widget.Diffed, Text: "base: one: writes a\n+b"}).hear(widget.Line{Kind: widget.Warned, Text: "warning: old"})
 	got := l.take(step.Event{Kind: step.Planned, Parent: "base", Step: "one"}).take(planned("base", "one", 0)).rows[0].said
-	if want := []Line{{Diffed, "writes a\n+b"}, {Warned, "warning: old"}}; !slices.Equal(got, want) {
+	if want := []widget.Line{{Kind: widget.Diffed, Text: "writes a\n+b"}, {Kind: widget.Warned, Text: "warning: old"}}; !slices.Equal(got, want) {
 		t.Errorf("said = %+v, want %+v", got, want)
 	}
 }
 
 func TestAStepOutsideTheListTakesItsLinesWithIt(t *testing.T) {
-	l := chain().hear(Line{Said, "prepare: first: writes"}).take(planned("prepare", "first", 0))
+	l := chain().hear(widget.Line{Kind: widget.Said, Text: "prepare: first: writes"}).take(planned("prepare", "first", 0))
 	if got := l.take(planned("base", "one", 0)).rows[0].said; len(got) != 0 {
 		t.Errorf("said = %+v, want none", got)
 	}
@@ -162,13 +163,13 @@ func TestARoleIsNamedWhereItsChangesStayBehindAStepOn(t *testing.T) {
 
 func TestARowTakesWhatTheScanSaidOfItsStep(t *testing.T) {
 	row := pickRow{stepRow: stepRow{name: "one"}}
-	said := []Line{{Said, "one: sets it"}}
+	said := []widget.Line{{Kind: widget.Said, Text: "one: sets it"}}
 	got := row.took(planned("", "one", 0, oneChange("a")), said)
 	if !got.chosen || got.state != stepChanged || len(got.said) != 1 || got.said[0].Text != "sets it" {
 		t.Errorf("row = %+v", got)
 	}
 	failed := row.took(step.Event{Kind: step.Failed, Err: errors.New("no")}, said)
-	if failed.chosen || failed.said[len(failed.said)-1].Kind != Warned {
+	if failed.chosen || failed.said[len(failed.said)-1].Kind != widget.Warned {
 		t.Errorf("row = %+v", failed)
 	}
 }

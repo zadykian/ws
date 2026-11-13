@@ -4,10 +4,11 @@ import (
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // hear keeps a line of the scan for the step that ends next.
-func (q queue) hear(line Line) queue {
+func (q queue) hear(line widget.Line) queue {
 	q.heard = append(slices.Clip(q.heard), line)
 	return q
 }

@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // noteRows is the most rows of what a save said that the screen keeps under the form.
@@ -93,7 +95,7 @@ func (s configureScreen) opened() (tea.Model, tea.Cmd) {
 func (s configureScreen) saved(msg savedMsg) configureScreen {
 	s.saving = false
 	if msg.err != nil {
-		s.notes = slices.Concat(s.notes, []Line{{Warned, msg.err.Error()}})
+		s.notes = slices.Concat(s.notes, []widget.Line{{Kind: widget.Warned, Text: msg.err.Error()}})
 		return s.fitted()
 	}
 	s.sheets, s.forms = slices.Clone(s.sheets), slices.Clone(s.forms)
@@ -106,7 +108,7 @@ func (s configureScreen) noteLines(width int) []string {
 	var lines []string
 	for _, note := range s.notes {
 		style := s.theme.Muted
-		if note.Kind == Warned {
+		if note.Kind == widget.Warned {
 			style = s.theme.Bad
 		}
 		lines = append(lines, strings.Split(style.Width(max(width, 1)).Render(cleanLines(note.Text)), "\n")...)
@@ -117,7 +119,7 @@ func (s configureScreen) noteLines(width int) []string {
 // split shares a pane between the form and the notes: it returns the form's room, and what the body
 // holds under the form. The form keeps a row, for the line that takes the keys, and the notes keep
 // their end, which says why. The blank over them goes before a row of theirs.
-func (s configureScreen) split(pane Size) (Size, string) {
+func (s configureScreen) split(pane widget.Size) (widget.Size, string) {
 	notes := s.noteLines(pane.Width)
 	notes = notes[max(len(notes)-max(pane.Height-1, 0), 0):]
 	if len(notes) == 0 {

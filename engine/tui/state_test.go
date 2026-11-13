@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // The messages of a test's read and leave.
@@ -70,7 +72,7 @@ func TestStateScreenReadsOnceAtATime(t *testing.T) {
 	if _, cmd := feedState(t, newTestState(), press('r')); cmd != nil {
 		t.Error("r asks during the first read")
 	}
-	s, _ := feedState(t, reportedState(t), Line{Warned, "a slow disk"}, press('r'))
+	s, _ := feedState(t, reportedState(t), widget.Line{Kind: widget.Warned, Text: "a slow disk"}, press('r'))
 	if !s.reading || s.warning != "" {
 		t.Fatalf("after r: reading %v, warning %q", s.reading, s.warning)
 	}
@@ -170,7 +172,7 @@ func TestStateScreenAFailedReadKeepsTheRows(t *testing.T) {
 }
 
 func TestStateScreenKeepsAWarningOfAStepAlone(t *testing.T) {
-	s, _ := feedState(t, newTestState(), Line{Said, "a line"}, Line{Warned, "a slow disk\nat last"})
+	s, _ := feedState(t, newTestState(), widget.Line{Kind: widget.Said, Text: "a line"}, widget.Line{Kind: widget.Warned, Text: "a slow disk\nat last"})
 	if s.warning != "a slow disk" {
 		t.Errorf("warning %q", s.warning)
 	}

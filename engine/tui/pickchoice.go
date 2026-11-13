@@ -1,6 +1,10 @@
 package tui
 
-import "slices"
+import (
+	"slices"
+
+	"github.com/zadykian/ws/engine/tui/internal/widget"
+)
 
 // chose returns the list with the box of each shown step set by box. The steps that a filter hides
 // keep theirs, as a bulk choice holds what the maintainer sees.
@@ -17,7 +21,7 @@ func (l pickList) chose(box func(pickRow) bool) pickList {
 // toggled returns the list with the box under the cursor turned. A role's turns its shown steps on,
 // or off where all are on, and so does a stage's. A locked step holds, as the step that waits on it
 // would go with it.
-func (l pickList) toggled(at Cursor) pickList {
+func (l pickList) toggled(at widget.Cursor) pickList {
 	line, ok := l.current(at)
 	if !ok {
 		return l

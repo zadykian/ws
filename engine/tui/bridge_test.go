@@ -14,6 +14,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 var (
@@ -35,14 +36,14 @@ func TestBridgeLinesHoldWhatAPlainRunPrints(t *testing.T) {
 	before, after := []byte("a\n"), []byte("b\n")
 	cases := []struct {
 		name string
-		kind LineKind
+		kind widget.LineKind
 		call func(effect.Out)
 	}{
-		{"say", Said, func(o effect.Out) { o.Say("%d changes", 2) }},
-		{"raw", Copied, func(o effect.Out) { o.Raw("ssh %s", "ws") }},
-		{"warn", Warned, func(o effect.Out) { o.Warn("no %s", "cable") }},
-		{"diff", Diffed, func(o effect.Out) { o.Diff("f", before, after) }},
-		{"equal diff", Diffed, func(o effect.Out) { o.Diff("f", before, before) }},
+		{"say", widget.Said, func(o effect.Out) { o.Say("%d changes", 2) }},
+		{"raw", widget.Copied, func(o effect.Out) { o.Raw("ssh %s", "ws") }},
+		{"warn", widget.Warned, func(o effect.Out) { o.Warn("no %s", "cable") }},
+		{"diff", widget.Diffed, func(o effect.Out) { o.Diff("f", before, after) }},
+		{"equal diff", widget.Diffed, func(o effect.Out) { o.Diff("f", before, before) }},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -52,7 +53,7 @@ func TestBridgeLinesHoldWhatAPlainRunPrints(t *testing.T) {
 			c.call(b)
 			var want []tea.Msg
 			if plain.Len() > 0 {
-				want = []tea.Msg{Line{c.kind, strings.TrimSuffix(plain.String(), "\n")}}
+				want = []tea.Msg{widget.Line{Kind: c.kind, Text: strings.TrimSuffix(plain.String(), "\n")}}
 			}
 			if !slices.Equal(*sent, want) {
 				t.Errorf("sent %v, want %v", *sent, want)
@@ -66,7 +67,7 @@ func TestBridgeSendsEachWarningOnce(t *testing.T) {
 	for _, name := range []string{"a", "a", "b"} {
 		b.Warn("no %s", name)
 	}
-	if want := []tea.Msg{Line{Warned, "warning: no a"}, Line{Warned, "warning: no b"}}; !slices.Equal(*sent, want) {
+	if want := []tea.Msg{widget.Line{Kind: widget.Warned, Text: "warning: no a"}, widget.Line{Kind: widget.Warned, Text: "warning: no b"}}; !slices.Equal(*sent, want) {
 		t.Errorf("sent %v, want %v", *sent, want)
 	}
 }
@@ -92,7 +93,7 @@ func TestBridgeSayLastingStaysPastTheScreenOnce(t *testing.T) {
 	b, sent := testBridge(&got)
 	effect.SayLasting(b, "the key: %s", "k")
 	effect.SayLasting(b, "the key: %s", "k")
-	if len(*sent) != 2 || (*sent)[0] != (Line{Said, "the key: k"}) {
+	if len(*sent) != 2 || (*sent)[0] != (widget.Line{Kind: widget.Said, Text: "the key: k"}) {
 		t.Fatalf("sent %v, want the line twice", *sent)
 	}
 	b.flush()
@@ -157,23 +158,23 @@ func TestBridgeObservePrintsAsAPlainRun(t *testing.T) {
 	cases := []struct {
 		name  string
 		event step.Event
-		want  []Line
+		want  []widget.Line
 	}{
 		{"an apply's plan", step.Event{Kind: step.Planned, Step: "S", Changes: changes}, nil},
 		{"a check's plan", step.Event{Kind: step.Planned, Step: "S", Check: true, Changes: changes},
-			[]Line{{Said, "S: a"}, {Said, "S: b"}}},
+			[]widget.Line{{Kind: widget.Said, Text: "S: a"}, {Kind: widget.Said, Text: "S: b"}}},
 		{"a diff", step.Event{Kind: step.Planned, Parent: "base", Step: "S", Check: true,
 			Changes: []step.Change{oneChange("write f\n--- f\n+++ f\n")}},
-			[]Line{{Diffed, "base: S: write f\n--- f\n+++ f"}}},
+			[]widget.Line{{Kind: widget.Diffed, Text: "base: S: write f\n--- f\n+++ f"}}},
 		{"a start", step.Event{Kind: step.Started, Parent: "base", Step: "S", Changes: changes},
-			[]Line{{Said, "base: S: applying 2 change(s)"}}},
-		{"behind a step", step.Event{Kind: step.Skipped, Step: "S", After: "T"}, []Line{{Said, "S: after T"}}},
+			[]widget.Line{{Kind: widget.Said, Text: "base: S: applying 2 change(s)"}}},
+		{"behind a step", step.Event{Kind: step.Skipped, Step: "S", After: "T"}, []widget.Line{{Kind: widget.Said, Text: "S: after T"}}},
 		{"past a failure", step.Event{Kind: step.Skipped, Step: "S"}, nil},
 		{"left out", step.Event{Kind: step.Planned, Step: "S", Changes: changes, LeftOut: true}, nil},
 		{"left out of a check", step.Event{Kind: step.Planned, Step: "S", Check: true, Changes: changes, LeftOut: true}, nil},
 		{"left out behind a step", step.Event{Kind: step.Skipped, Step: "S", After: "T", LeftOut: true}, nil},
 		{"left out with a failed plan", step.Event{Kind: step.Skipped, Step: "S", Err: errors.New("no file"), LeftOut: true},
-			[]Line{{Warned, "warning: left out: no file"}}},
+			[]widget.Line{{Kind: widget.Warned, Text: "warning: left out: no file"}}},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -217,7 +218,7 @@ func TestBridgeObserveSendsACommandsOutputFirst(t *testing.T) {
 	_, _ = b.pipe.Write([]byte("no end"))
 	event := step.Event{Kind: step.Done, Step: "S"}
 	b.Observe(event)
-	if want := []tea.Msg{Line{Piped, "no end"}, event}; !reflect.DeepEqual(*sent, want) {
+	if want := []tea.Msg{widget.Line{Kind: widget.Piped, Text: "no end"}, event}; !reflect.DeepEqual(*sent, want) {
 		t.Errorf("sent %v, want %v", *sent, want)
 	}
 }
