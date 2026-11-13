@@ -12,8 +12,8 @@ import (
 
 // Found returns, in order, the names of the servers with a trace of a daemon on the Mac. A trace is
 // a plist, a state file, a log, or a directory under /etc/ws-tunnel. Found inverts For. Root lists
-// that directory, which is root's. A name holds no dot, so routes.d, private.key and the files of
-// an older form fall out.
+// that directory, which is root's. A name holds no dot, so private.key and the files of an older
+// form fall out.
 func Found(ctx context.Context, m effect.Machine) ([]string, error) {
 	names, err := Installed(m)
 	if err != nil {
