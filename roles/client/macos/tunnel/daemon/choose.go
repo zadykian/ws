@@ -35,6 +35,7 @@ func (d *Daemon) choose(ctx context.Context) {
 			d.resolved = routing.Resolve(ctx, d.M, d.set.Conf.Remote)
 			dec = decide()
 		}
+		d.otherEnds(ctx)
 		d.seen, d.peerConf, d.misses = ifaces, d.set.Conf, 0
 	}
 	if dec.Action == tunnel.Try && dec.Why != "" && dec.Why != tunnel.WhyAddresses && dec.Why != tunnel.WhyNone {
