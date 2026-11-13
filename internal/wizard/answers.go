@@ -87,7 +87,7 @@ func (a *Answers) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, err
 	}
 	if _, errs := conf.Parse(text); len(errs) > 0 {
-		return step.Plan{Changes: []step.Change{todo(answers + ": ws mac apply would refuse " + a.Conf)}}, nil
+		return step.Plan{Changes: []step.Change{todo(answers + ": ws client macos apply would refuse " + a.Conf)}}, nil
 	}
 	return step.Plan{}, nil
 }
@@ -107,7 +107,7 @@ func (a *Answers) refusal(lines string) error {
 	if lines != "" {
 		with = " with the answers"
 	}
-	return fmt.Errorf("%s: ws mac apply would refuse %s%s, as above; fix it, then run the wizard again", answers, a.Conf, with)
+	return fmt.Errorf("%s: ws client macos apply would refuse %s%s, as above; fix it, then run the wizard again", answers, a.Conf, with)
 }
 
 // Apply asks for the values that mac.conf lacks, in order, and adds them to it. A mac.conf that

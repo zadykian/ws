@@ -15,7 +15,7 @@ func newMacUpdate(version, redirect string) (*MacUpdate, *effecttest.Machine, *e
 	out := &effecttest.Out{}
 	m.Results[strings.TrimPrefix(latestCmd, "run ")] = effecttest.Result{Out: []byte(redirect)}
 	return &MacUpdate{M: m, Out: out, Version: version, URL: "http://127.0.0.1:22080", Home: "/h",
-		Args: []string{"mac", "wizard", "--update"}}, m, out
+		Args: []string{"client", "macos", "wizard", "--update"}}, m, out
 }
 
 func TestMacUpdatePlan(t *testing.T) {

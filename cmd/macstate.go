@@ -24,7 +24,7 @@ func newMacStateCmd(p process) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "state",
 		Short: "report what the Mac's steps would change",
-		Long: "It reads alone and applies nothing, as ws mac apply --check does, and needs what it needs: " +
+		Long: "It reads alone and applies nothing, as ws client macos apply --check does, and needs what it needs: " +
 			"mac.conf, and not root. The Mac's steps report the packages, services and files ws manages " +
 			"there, and a step that fails stands in the report as a check. The exit code stays 0. " +
 			"A report holds no secret.\n\n" +

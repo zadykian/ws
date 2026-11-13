@@ -14,13 +14,13 @@ import (
 
 // testQueueScreen is the two lists at 100 by 30, their scan under way.
 func testQueueScreen() queueScreen {
-	s := openQueue("ws mac wizard", testTheme, testStages(), make(chan QueueChoice, 1))
+	s := openQueue("ws client macos wizard", testTheme, testStages(), make(chan QueueChoice, 1))
 	return queueSent(s, tea.WindowSizeMsg{Width: 100, Height: 30})
 }
 
 func TestTheTwoListsStandSideBySideOverTheDetail(t *testing.T) {
 	got := queueShown(testQueueScreen())
-	for _, want := range []string{"ws mac wizard", "scanning 0/5", "Mac", "ws: roles not scanned", "Detail",
+	for _, want := range []string{"ws client macos wizard", "scanning 0/5", "Mac", "ws: roles not scanned", "Detail",
 		"▸  1 [ ] · Tools", "   3 [ ] · Sudo", "Not scanned yet."} {
 		if !strings.Contains(got, want) {
 			t.Errorf("no %q in:\n%s", want, got)

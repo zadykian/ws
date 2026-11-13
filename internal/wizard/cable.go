@@ -188,7 +188,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 			"ws server ubuntu apply --only network,wireguard there")
 	}
 	return c.change("ask the Mac's service of the cable, write it in mac.conf as WS_CABLE_SERVICE, run " +
-		"ws mac apply, which gives it 10.77.0.2, and ping " + cableEnd)
+		"ws client macos apply, which gives it 10.77.0.2, and ping " + cableEnd)
 }
 
 func (*Cable) change(text string) (step.Plan, error) {

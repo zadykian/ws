@@ -60,10 +60,10 @@ func unnamed(u KeyUse, keys []sshcfg.AgentKey) error {
 		}
 	}
 	if len(lines) == 0 {
-		return fmt.Errorf("mac.conf names no %s, %s: run ws mac wizard to pick or make one in Secretive, or "+
+		return fmt.Errorf("mac.conf names no %s, %s: run ws client macos wizard to pick or make one in Secretive, or "+
 			"name a key's .pub there", name, use)
 	}
-	return fmt.Errorf("mac.conf names no %s, %s: run ws mac wizard, or add one of these lines to mac.conf, %s",
+	return fmt.Errorf("mac.conf names no %s, %s: run ws client macos wizard, or add one of these lines to mac.conf, %s",
 		name, use, strings.Join(lines, "; "))
 }
 

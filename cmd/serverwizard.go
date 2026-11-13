@@ -12,7 +12,7 @@ func newServerWizardCmd(p process) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "wizard",
 		Short: "set ws up from its own shell, in stages",
-		Long: "The stages of ws mac wizard that act on ws, run as root on ws: ws's values, which it asks where " +
+		Long: "The stages of ws client macos wizard that act on ws, run as root on ws: ws's values, which it asks where " +
 			"host_vars lacks them, then ws server ubuntu apply, in a unit of its own that goes on where the login drops, " +
 			"then claude's login, and ws's signing key on GitHub. " +
 			"Either wizard follows the other's unit, and after the other's run, with nothing changed, runs no apply. " +

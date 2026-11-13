@@ -22,7 +22,7 @@ func (t *Tunnel) publicKey(ctx context.Context) (string, error) {
 	if _, err := t.M.RootAttrs(tunnelLibexec + "/ws"); errors.Is(err, fs.ErrNotExist) {
 		return "", nil
 	}
-	out, err := t.M.RunRoot(ctx, tunnelLibexec+"/ws", "mac", "tunnel", "key")
+	out, err := t.M.RunRoot(ctx, tunnelLibexec+"/ws", "client", "macos", "tunnel", "key")
 	if err != nil {
 		return "", fmt.Errorf("cannot read the Mac's public key: %w", err)
 	}
@@ -99,7 +99,7 @@ func (t *Tunnel) finish(ctx context.Context) error {
 		"    %s %sws server ubuntu apply --only wireguard\n", public, ssh, public, sudo, ssh, sudo)
 	if t.Conf.PublicKey == "" {
 		_, _ = io.WriteString(t.Text, "\nThen set WS_PUBLIC_KEY in ~/.config/ws/mac.conf to ws's key, which that run prints, and run\n"+
-			"ws mac apply again, which installs the tunnel's daemon.\n")
+			"ws client macos apply again, which installs the tunnel's daemon.\n")
 	}
 	return nil
 }

@@ -164,7 +164,7 @@ func TestTunnelReportNeverReadsTheKey(t *testing.T) {
 	}
 	asked := 0
 	for _, c := range m.Calls {
-		if strings.Contains(c, "mac tunnel key") {
+		if strings.Contains(c, "client macos tunnel key") {
 			asked++
 		}
 	}

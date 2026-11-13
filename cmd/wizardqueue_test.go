@@ -42,16 +42,16 @@ func TestWizardQueueSetsEachStageOnItsMachine(t *testing.T) {
 
 // A chosen Cable locks ws mac apply, whose steps it applies: left out, the cable's service stays unset.
 func TestWizardQueueHoldsWsMacApplyBesideCable(t *testing.T) {
-	if cable := stageOf(t, queueOf(fakeProcess()), "Cable"); cable.Waits != "ws mac apply" {
-		t.Errorf("Cable = %+v, want it behind ws mac apply", cable)
+	if cable := stageOf(t, queueOf(fakeProcess()), "Cable"); cable.Waits != "ws client macos apply" {
+		t.Errorf("Cable = %+v, want it behind ws client macos apply", cable)
 	}
 }
 
 func TestWizardQueueNestsWhatItsStagesRun(t *testing.T) {
 	queue := queueOf(fakeProcess())
-	nested := stageOf(t, queue, "ws mac apply").Nested
-	if len(nested) != 1 || nested[0].Name != "ws mac apply" || !slices.Equal(nested[0].Steps, setup.Names()) {
-		t.Errorf("ws mac apply holds %+v, want its steps by its name", nested)
+	nested := stageOf(t, queue, "ws client macos apply").Nested
+	if len(nested) != 1 || nested[0].Name != "ws client macos apply" || !slices.Equal(nested[0].Steps, setup.Names()) {
+		t.Errorf("ws client macos apply holds %+v, want its steps by its name", nested)
 	}
 	run := stageOf(t, queue, "ws's run").Nested
 	if len(run) != len(roles.List()) || run[0].Name != roles.List()[0].Name || len(run[0].Steps) != 0 {
@@ -60,7 +60,7 @@ func TestWizardQueueNestsWhatItsStagesRun(t *testing.T) {
 }
 
 func TestWizardLeftFollowsTheChoice(t *testing.T) {
-	const setup = "ws mac apply"
+	const setup = "ws client macos apply"
 	choice := tui.QueueChoice{Only: []string{setup, "Tools"}, Partial: map[string][]string{setup: {setup + "/ssh", setup + "/zed"}}}
 	left := wizardLeft(choice)
 	for _, tc := range []struct {

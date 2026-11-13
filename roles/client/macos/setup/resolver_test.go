@@ -11,7 +11,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/setup"
 )
 
-const resolverCmdHeader = "# Written by github.com/zadykian/ws: ws mac resolver, which removes this file when given no address."
+const resolverCmdHeader = "# Written by github.com/zadykian/ws: ws client macos resolver, which removes this file when given no address."
 
 func resolverPlan(m *effecttest.Machine, domain string, addresses ...string) (string, error) {
 	p, err := (&setup.Resolver{Domain: domain, Addresses: addresses, M: m, Out: &effecttest.Out{}}).Plan(context.Background())
@@ -31,7 +31,7 @@ func TestResolverRefusesWhatTheShellRefused(t *testing.T) {
 		_, err := resolverPlan(effecttest.NewMachine(), domain, addresses...)
 		if err == nil {
 			t.Errorf("Plan of %q %q succeeded", domain, addresses)
-		} else if strings.Contains(err.Error(), "ws mac resolver") {
+		} else if strings.Contains(err.Error(), "ws client macos resolver") {
 			t.Errorf("Plan of %q %q: %v names the command, which execute does", domain, addresses, err)
 		}
 	}

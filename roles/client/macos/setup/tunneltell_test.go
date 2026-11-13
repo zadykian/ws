@@ -59,7 +59,7 @@ func TestTunnelDoesNotRunRootsCopyWhereItOrItsDirectoryIsToChange(t *testing.T) 
 	delete(m.Files, "/h/.config/ws/tunnel.pub")
 	tunnelChanges(t, daemonStep(m))
 	for _, c := range m.Calls {
-		if strings.Contains(c, "ws mac tunnel key") {
+		if strings.Contains(c, "ws client macos tunnel key") {
 			t.Errorf("calls = %q; want root's copy not run before Apply fixes it", m.Calls)
 		}
 	}

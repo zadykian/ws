@@ -16,7 +16,7 @@ func newConfigureCmd(p process) *cobra.Command {
 	return &cobra.Command{
 		Use:   "configure",
 		Short: "edit mac.conf, the secrets and ws's host_vars on forms",
-		Long: "It shows the keys that ws mac wizard would ask, by WS_TARGET, with what mac.conf holds, and " +
+		Long: "It shows the keys that ws client macos wizard would ask, by WS_TARGET, with what mac.conf holds, and " +
 			"writes them on Ctrl-S. Ctrl-N goes to ws's secrets, which show as set or not, never their values, " +
 			"then to ws's host_vars, both read over ssh. It needs a terminal: anywhere else, edit the file by hand.",
 		Args: cobra.NoArgs,

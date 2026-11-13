@@ -18,7 +18,7 @@ func zedStep(m *effecttest.Machine, out *effecttest.Out) *setup.Zed {
 	m.Dirs["/h/Applications/Zed.app"] = 0o755
 	m.Files["/h/Library/Fonts/JetBrainsMonoNerdFontMono-Regular.ttf"] = nil
 	return &setup.Zed{
-		Home: "/h", Settings: []byte("// Written by ws mac apply: its next run replaces changes made here.\n{}\n"),
+		Home: "/h", Settings: []byte("// Written by ws client macos apply: its next run replaces changes made here.\n{}\n"),
 		Keymap: []byte(zedKeymap), M: m, Out: out,
 		LookPath: func(string) (string, error) { return "brew", nil },
 	}
@@ -78,7 +78,7 @@ func TestZedFirstRunMakesTheDirectoriesAndWritesTheFile(t *testing.T) {
 	if err := s.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
-	want := "// Written by ws mac apply: its next run replaces changes made here.\n{}\n"
+	want := "// Written by ws client macos apply: its next run replaces changes made here.\n{}\n"
 	if got := string(m.Files["/h/.config/zed/global_settings.json"]); got != want {
 		t.Errorf("global_settings.json = %q", got)
 	}

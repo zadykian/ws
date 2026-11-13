@@ -32,7 +32,7 @@ func TestMacUpdateApply(t *testing.T) {
 		"run curl -fsSL --retry 3 --proto-redir =https -o /tmp/x/install.sh http://127.0.0.1:22080/download/v1.3.0/install.sh",
 		"run env WS_VERSION=v1.3.0 WS_RELEASES_URL=http://127.0.0.1:22080 sh /tmp/x/install.sh",
 		"run rm -rf /tmp/x",
-		"exec /h/.local/bin/ws mac wizard --update",
+		"exec /h/.local/bin/ws client macos wizard --update",
 	}
 	if got := strings.Join(m.Calls, "\n"); got != strings.Join(want, "\n") {
 		t.Errorf("Apply made the calls\n%s\nwant\n%s", got, strings.Join(want, "\n"))

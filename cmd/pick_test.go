@@ -67,14 +67,14 @@ func (s *afterScan) Read(b []byte) (int, error) {
 
 func TestMacApplyOpensTheListAtATerminal(t *testing.T) {
 	p, _ := macTerminal()
-	status, stdout, stderr := runWs(p, "q", "mac", "apply")
+	status, stdout, stderr := runWs(p, "q", "client", "macos", "apply")
 	if status != 0 || stdout != "" || !strings.Contains(stderr, enterScreen) || !strings.Contains(stderr, leaveScreen) {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
 }
 
 func TestMacApplyGoesStraightToTheRunWithAStepOrCheck(t *testing.T) {
-	for _, args := range [][]string{{"mac", "apply", "ssh"}, {"mac", "apply", "--check"}} {
+	for _, args := range [][]string{{"client", "macos", "apply", "ssh"}, {"client", "macos", "apply", "--check"}} {
 		p, m := macTerminal()
 		status, _, stderr := runWs(p, "q", args...)
 		if !slices.Contains(m.Calls, "run mktemp -d") {

@@ -39,11 +39,11 @@ func TestReadKeyStops(t *testing.T) {
 		want string                             // VAR, WORDS and PAGE stand for the use's
 	}{
 		{"none named, no agent", func(*effecttest.Machine) string { return "" },
-			"mac.conf names no VAR, WORDS: run ws mac wizard to pick or make one in Secretive"},
+			"mac.conf names no VAR, WORDS: run ws client macos wizard to pick or make one in Secretive"},
 		{"none named, two agent keys", func(m *effecttest.Machine) string {
 			agentMachine(m, agentKey, mldsa)
 			return ""
-		}, "mac.conf names no VAR, WORDS: run ws mac wizard, or add one of these lines to mac.conf, VAR=" +
+		}, "mac.conf names no VAR, WORDS: run ws client macos wizard, or add one of these lines to mac.conf, VAR=" +
 			sshcfg.AgentKeys(agentKey)[0].Pub() + " for " + sshcfg.AgentKeys(agentKey)[0].Label()},
 		{"missing", func(*effecttest.Machine) string { return filePub },
 			fileLine + ", mac.conf's VAR, is missing: make the key first, as PAGE says"},

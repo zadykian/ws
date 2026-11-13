@@ -63,7 +63,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	mac := t.pub()
 	if mac == "" && t.Check {
-		t.Out.Say("%s: after ws mac apply", tunnelStage)
+		t.Out.Say("%s: after ws client macos apply", tunnelStage)
 		return step.Plan{}, nil
 	}
 	s, ok := t.Ws.status(ctx)
@@ -90,6 +90,6 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 		}
 		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in mac.conf to wg0's key, "+wg0))
 	}
-	return step.Plan{Changes: append(ch, tunnelChange("run ws mac apply again, which loads ws-tunnel, and wait up "+
+	return step.Plan{Changes: append(ch, tunnelChange("run ws client macos apply again, which loads ws-tunnel, and wait up "+
 		"to 30 s for ws-tunnel's handshake, then log in to ws through it"))}, nil
 }

@@ -13,7 +13,7 @@ import (
 
 const (
 	// ghosttyHeader starts ws.ghostty's first line, by which a run knows a file for its own.
-	ghosttyHeader = "# Written by ws mac apply"
+	ghosttyHeader = "# Written by ws client macos apply"
 	// ghosttyLine is the line of Ghostty's config that reads ws.ghostty.
 	ghosttyLine = "config-file = ?ws.ghostty"
 )
@@ -111,7 +111,7 @@ func (g *Ghostty) files(ctx context.Context) ([]step.Change, error) {
 	ws, err := file.plan()
 	switch {
 	case errors.Is(err, errNotWs):
-		g.Out.Warn("%s is not ws mac apply's: move it away, as the script writes its own", file.Path)
+		g.Out.Warn("%s is not ws client macos apply's: move it away, as the script writes its own", file.Path)
 		return nil, nil
 	case err != nil:
 		return nil, err

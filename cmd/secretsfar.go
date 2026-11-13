@@ -41,7 +41,7 @@ func runFar(c *cobra.Command, p process, args []string) error {
 	if why := wizardRefusal(p); why != "" {
 		return errors.New(why)
 	}
-	far := strings.Fields(c.CommandPath())[3:]
+	far := strings.Fields(c.CommandPath())[4:]
 	var talk rootTalk = effect.NewTerminal(c.InOrStdin(), c.ErrOrStderr())
 	var in []byte
 	var err error

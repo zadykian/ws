@@ -25,7 +25,7 @@ func (s SSH) read(ctx context.Context) (sshFacts, error) {
 		return f, err
 	}
 	if !ours {
-		return f, fmt.Errorf("%s is not ws mac apply's: move it away, as the script writes its own there", dir+"/config.d/ws")
+		return f, fmt.Errorf("%s is not ws client macos apply's: move it away, as the script writes its own there", dir+"/config.d/ws")
 	}
 	lines := s.configLines()
 	found, link, holds, err := lines.read(ctx)

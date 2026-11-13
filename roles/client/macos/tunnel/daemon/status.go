@@ -24,7 +24,7 @@ type GetFunc func(ctx context.Context, sock string) (string, error)
 func Status(ctx context.Context, m effect.Machine, get GetFunc, dir, stateFile string, now time.Time) (string, error) {
 	text, err := m.ReadFile(stateFile)
 	if err != nil {
-		return "", fmt.Errorf("ws mac tunnel isn't running; its log is %s", LogFile)
+		return "", fmt.Errorf("ws client macos tunnel isn't running; its log is %s", LogFile)
 	}
 	state, err := tunnel.ParseState(string(text))
 	if err != nil {
@@ -32,7 +32,7 @@ func Status(ctx context.Context, m effect.Machine, get GetFunc, dir, stateFile s
 	}
 	conf, err := m.ReadFile(path.Join(dir, "tunnel.conf"))
 	if err != nil {
-		return "", fmt.Errorf("cannot read %s/tunnel.conf: run ws mac apply", dir)
+		return "", fmt.Errorf("cannot read %s/tunnel.conf: run ws client macos apply", dir)
 	}
 	c, err := tunnel.ParseConf(string(conf))
 	if err != nil {

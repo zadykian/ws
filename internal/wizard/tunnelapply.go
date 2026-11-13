@@ -27,10 +27,10 @@ func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 	case err != nil:
 		return errors.New(tunnelStage + ": sudo -v failed; the Mac's key is root's, as an admin of the Mac")
 	}
-	out, err := t.M.RunRoot(ctx, libexec, "mac", "tunnel", "key")
+	out, err := t.M.RunRoot(ctx, libexec, "client", "macos", "tunnel", "key")
 	mac := strings.TrimSpace(string(out))
 	if err != nil || !check.Key(mac) {
-		return errors.New(tunnelStage + ": root's ws mac tunnel key prints no key: run ws mac apply, which makes both")
+		return errors.New(tunnelStage + ": root's ws client macos tunnel key prints no key: run ws client macos apply, which makes both")
 	}
 	s, _ := t.Ws.status(ctx)
 	peered := s.MacKey != mac || !s.Peered

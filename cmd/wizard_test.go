@@ -32,11 +32,11 @@ func TestWizardCommandRefuses(t *testing.T) {
 		uid     int
 		message string
 	}{
-		"linux": {"linux", 501, "ws mac wizard: it sets up a Mac, not Linux\n"},
-		"root":  {"darwin", 0, "ws mac wizard: run it as yourself, not root: it asks sudo where it needs root\n"},
+		"linux": {"linux", 501, "ws client macos wizard: it sets up a Mac, not Linux\n"},
+		"root":  {"darwin", 0, "ws client macos wizard: run it as yourself, not root: it asks sudo where it needs root\n"},
 	} {
 		p, _ := testWizardProcess(tc.goos, tc.uid)
-		if status, _, stderr := runWs(p, "", "mac", "wizard"); status != 1 || stderr != tc.message {
+		if status, _, stderr := runWs(p, "", "client", "macos", "wizard"); status != 1 || stderr != tc.message {
 			t.Errorf("%s: status = %d, stderr = %q; want 1, %q", name, status, stderr, tc.message)
 		}
 	}
@@ -44,8 +44,8 @@ func TestWizardCommandRefuses(t *testing.T) {
 
 func TestWizardCommandRuns(t *testing.T) {
 	p, _ := testWizardProcess("darwin", 501)
-	if status, _, stderr := runWs(p, "", "mac", "wizard", "--check"); status != 1 ||
-		!strings.Contains(stderr, "ws mac wizard: Answers: no terminal to ask WS_TARGET: set WS_TARGET") {
+	if status, _, stderr := runWs(p, "", "client", "macos", "wizard", "--check"); status != 1 ||
+		!strings.Contains(stderr, "ws client macos wizard: Answers: no terminal to ask WS_TARGET: set WS_TARGET") {
 		t.Errorf("status = %d, stderr = %q; want the refusal to ask with no terminal", status, stderr)
 	}
 	if calls := p.machine.(*effecttest.Machine).Calls; len(calls) == 0 || calls[0] != "mkdir /t/ws-wizard.lock 700" {
@@ -56,7 +56,7 @@ func TestWizardCommandRuns(t *testing.T) {
 func TestWizardPutsHomebrewFirstAndSetsWsConf(t *testing.T) {
 	p, env := testWizardProcess("darwin", 501)
 	env["PATH"], env["HOME"] = "/usr/bin", "/h"
-	runWs(p, "", "mac", "wizard", "--check")
+	runWs(p, "", "client", "macos", "wizard", "--check")
 	if env["PATH"] != "/opt/homebrew/bin:/usr/bin" || env["WS_CONF"] != "/h/.config/ws/mac.conf" {
 		t.Errorf("PATH = %q, WS_CONF = %q", env["PATH"], env["WS_CONF"])
 	}
@@ -68,7 +68,7 @@ func TestWizardCheckShowsTheAnswersDiff(t *testing.T) {
 		"WS_TUNNEL_NETWORKS": "", "WS_RESOLVERS": ""} {
 		env[k] = v
 	}
-	status, _, stderr := runWs(p, "", "mac", "wizard", "--check")
+	status, _, stderr := runWs(p, "", "client", "macos", "wizard", "--check")
 	if status != 0 || !strings.Contains(stderr, "+WS_TARGET=cloud") {
 		t.Errorf("status = %d, stderr = %q; want the diff of mac.conf", status, stderr)
 	}
@@ -93,12 +93,12 @@ func TestWizardCheckOnANewMacStopsAtHomebrew(t *testing.T) {
 	m := p.machine.(*effecttest.Machine)
 	m.Results["xcode-select -p"] = effecttest.Result{Err: errors.New("exit status 2")}
 	m.Results["/opt/homebrew/bin/brew --version"] = effecttest.Result{Err: errors.New("no brew")}
-	status, _, stderr := runWs(p, "", "mac", "wizard", "--check")
+	status, _, stderr := runWs(p, "", "client", "macos", "wizard", "--check")
 	if status != 0 {
 		t.Fatalf("status = %d, stderr = %q", status, stderr)
 	}
 	for _, want := range []string{"Tools: would run xcode-select --install", "Homebrew: after Tools", "Answers: after Homebrew",
-		"gh on the Mac: after Homebrew", "ws mac apply: after Homebrew"} {
+		"gh on the Mac: after Homebrew", "ws client macos apply: after Homebrew"} {
 		if !strings.Contains(stderr, want) {
 			t.Errorf("stderr = %q, want %q", stderr, want)
 		}
@@ -108,7 +108,7 @@ func TestWizardCheckOnANewMacStopsAtHomebrew(t *testing.T) {
 func TestWizardUpdateRunsTheNewWs(t *testing.T) {
 	p, env := testWizardProcess("darwin", 501)
 	m := p.machine.(*effecttest.Machine)
-	p.version, p.releases, p.argv = "v1.0.0", "http://127.0.0.1:22080", []string{"mac", "wizard", "--update"}
+	p.version, p.releases, p.argv = "v1.0.0", "http://127.0.0.1:22080", []string{"client", "macos", "wizard", "--update"}
 	env["HOME"] = "/h"
 	m.Results["curl -fsS -o /dev/null -w %{redirect_url} http://127.0.0.1:22080/latest"] =
 		effecttest.Result{Out: []byte("http://127.0.0.1:22080/tag/v1.1.0")}
@@ -119,9 +119,9 @@ func TestWizardUpdateRunsTheNewWs(t *testing.T) {
 		m.Results[c] = effecttest.Result{}
 	}
 	// The fake Exec returns, so the step finds its change again: the command fails, after the exec.
-	status, _, _ := runWs(p, "", "mac", "wizard", "--update")
+	status, _, _ := runWs(p, "", "client", "macos", "wizard", "--update")
 	calls := strings.Join(m.Calls, "\n")
-	if status != 1 || !strings.Contains(calls, "exec /h/.local/bin/ws mac wizard --update") || strings.Contains(calls, "mkdir /t/ws-wizard.lock") {
+	if status != 1 || !strings.Contains(calls, "exec /h/.local/bin/ws client macos wizard --update") || strings.Contains(calls, "mkdir /t/ws-wizard.lock") {
 		t.Errorf("status = %d, calls = %q; want the exec of the new ws, before the lock", status, calls)
 	}
 }
@@ -132,7 +132,7 @@ func TestWizardUpdateCheckInstallsNothing(t *testing.T) {
 	p.version, p.releases = "v1.0.0", "http://127.0.0.1:22080"
 	m.Results["curl -fsS -o /dev/null -w %{redirect_url} http://127.0.0.1:22080/latest"] =
 		effecttest.Result{Out: []byte("http://127.0.0.1:22080/tag/v1.1.0")}
-	_, _, stderr := runWs(p, "", "mac", "wizard", "--check", "--update")
+	_, _, stderr := runWs(p, "", "client", "macos", "wizard", "--check", "--update")
 	if !strings.Contains(stderr, "ws on the Mac: would install ws v1.1.0 on the Mac") || strings.Contains(strings.Join(m.Calls, "\n"), "exec") {
 		t.Errorf("stderr = %q, calls = %v; want the plan and no exec", stderr, m.Calls)
 	}
@@ -142,7 +142,7 @@ func TestWizardUpdateCheckInstallsNothing(t *testing.T) {
 // that the wizard runs names the machine it acts on.
 func TestWizardStagesNameTheirMachines(t *testing.T) {
 	var out strings.Builder
-	stages := wizardStages(wizardEffects{p: fakeProcess(), prog: "ws mac wizard", text: &out, hand: &wizard.Hand{},
+	stages := wizardStages(wizardEffects{p: fakeProcess(), prog: "ws client macos wizard", text: &out, hand: &wizard.Hand{},
 		sudo: &wizard.Sudo{}}, wizardOptions{})
 	onWs := 0
 	for _, s := range stages {

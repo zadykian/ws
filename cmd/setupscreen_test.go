@@ -40,7 +40,7 @@ func macTerminal() (process, *effecttest.Machine) {
 
 func TestMacApplyAtATerminalDrawsAWholeScreen(t *testing.T) {
 	p, _ := macTerminal()
-	status, stdout, stderr := runWs(p, "", "mac", "apply", "--check", "ssh")
+	status, stdout, stderr := runWs(p, "", "client", "macos", "apply", "--check", "ssh")
 	if status != 0 || stdout != "" || !strings.Contains(stderr, enterScreen) || !strings.Contains(stderr, leaveScreen) {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
@@ -49,17 +49,17 @@ func TestMacApplyAtATerminalDrawsAWholeScreen(t *testing.T) {
 func TestMacApplyReportsAFailurePastTheScreen(t *testing.T) {
 	p, m := macTerminal()
 	delete(m.Results, "mktemp -d")
-	status, _, stderr := runWs(p, "", "mac", "apply", "--check", "ssh")
+	status, _, stderr := runWs(p, "", "client", "macos", "apply", "--check", "ssh")
 	left := strings.LastIndex(stderr, leaveScreen)
-	if status != 1 || left < 0 || !strings.Contains(stderr[left:], "ws mac apply: ") {
+	if status != 1 || left < 0 || !strings.Contains(stderr[left:], "ws client macos apply: ") {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
 }
 
 func TestMacApplyDrawsNothingWithPlain(t *testing.T) {
 	p, _ := macTerminal()
-	_, wantOut, wantErr := runWs(withEnv(p, map[string]string{"HOME": "/h", "TERM": ""}), "", "mac", "apply", "--check", "ssh")
-	status, stdout, stderr := runWs(p, "", "mac", "apply", "--plain", "--check", "ssh")
+	_, wantOut, wantErr := runWs(withEnv(p, map[string]string{"HOME": "/h", "TERM": ""}), "", "client", "macos", "apply", "--check", "ssh")
+	status, stdout, stderr := runWs(p, "", "client", "macos", "apply", "--plain", "--check", "ssh")
 	if status != 0 || stdout != wantOut || stderr != wantErr || strings.Contains(stderr, "\x1b") {
 		t.Errorf("status = %d, stdout = %q, stderr = %q, want the lines %q", status, stdout, stderr, wantErr)
 	}

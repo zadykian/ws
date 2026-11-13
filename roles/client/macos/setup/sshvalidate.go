@@ -50,7 +50,7 @@ func (s SSH) validate(ctx context.Context, f sshFacts, text []byte) error {
 		switch {
 		case strings.Contains(e, s.Home+"/.ssh/config.d/ws"):
 			return fmt.Errorf("ssh refuses the old config.d/ws, which ~/.ssh/config also reads, as %s: "+
-				"move it away, and run ws mac apply again", e)
+				"move it away, and run ws client macos apply again", e)
 		case strings.Contains(e, "Bad configuration option"):
 			return fmt.Errorf("ssh refuses ~/.ssh/config read after the new config.d/ws, as %s; "+
 				"config.d/ws's IgnoreUnknown, read first, carries only ~/.ssh/config's own "+

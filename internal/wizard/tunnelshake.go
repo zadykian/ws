@@ -17,7 +17,7 @@ var age = regexp.MustCompile(`(?m)^latest handshake: (\d+) s ago$`)
 // the peer and adds it again. sudo asks for no password.
 func (t *Tunnel) shake(ctx context.Context, tries int) bool {
 	for try := 1; ; try++ {
-		out, _ := t.M.RunRoot(ctx, libexec, "mac", "tunnel", "status")
+		out, _ := t.M.RunRoot(ctx, libexec, "client", "macos", "tunnel", "status")
 		if m := age.FindSubmatch(out); m != nil {
 			if n, _ := strconv.Atoi(string(m[1])); n <= 180 {
 				return true

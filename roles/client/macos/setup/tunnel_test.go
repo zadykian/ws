@@ -57,7 +57,7 @@ func TestTunnelPlansNothingOnceDone(t *testing.T) {
 	} {
 		m.Root[path] = mode
 	}
-	m.Results["/usr/local/libexec/ws-tunnel/ws mac tunnel key"] = effecttest.Result{Out: []byte("PUB\n")}
+	m.Results["/usr/local/libexec/ws-tunnel/ws client macos tunnel key"] = effecttest.Result{Out: []byte("PUB\n")}
 	m.Files["/h/.config/ws/tunnel.pub"] = []byte("PUB\n")
 	m.Dirs["/h/.config"], m.Dirs["/h/.config/ws"] = 0o755, 0o700
 	m.Files["/usr/local/libexec/ws-tunnel/ws"] = []byte("ws")
@@ -84,7 +84,7 @@ func TestTunnelApplyInstallsCopiesAndMakesTheKey(t *testing.T) {
 	for _, line := range []string{"mv -f /h/.local/bin/ws.new /h/.local/bin/ws"} {
 		m.Results[line] = effecttest.Result{}
 	}
-	m.Results["/usr/local/libexec/ws-tunnel/ws mac tunnel key"] = effecttest.Result{Out: []byte("PUB\n")}
+	m.Results["/usr/local/libexec/ws-tunnel/ws client macos tunnel key"] = effecttest.Result{Out: []byte("PUB\n")}
 	p, err := s.Plan(context.Background())
 	if err != nil {
 		t.Fatal(err)

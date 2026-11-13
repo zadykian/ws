@@ -12,7 +12,7 @@ import (
 
 const (
 	// zshHeader is the hook's first line, by which a run knows the file for its own.
-	zshHeader = "# Written by ws mac apply: its next run replaces changes made here."
+	zshHeader = "# Written by ws client macos apply: its next run replaces changes made here."
 	// zshLine is the line of ~/.zshrc that sources the hook.
 	zshLine = "source ~/.config/ws/zshrc"
 )

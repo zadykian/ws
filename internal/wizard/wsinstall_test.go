@@ -19,8 +19,8 @@ func TestWsInstallPlan(t *testing.T) {
 	for name, tc := range map[string]struct{ version, url, held, want, err string }{
 		"done":          {"v1.2.3", releases, "v1.2.3", "", ""},
 		"older":         {"v1.2.3", releases, "v1.2.2", "would install ws v1.2.3 on ws", ""},
-		"newer":         {"v1.2.3", releases, "v1.3.0", "", "ws mac wizard --update"},
-		"newer 10":      {"v1.2.3", releases, "v1.10.0", "", "ws mac wizard --update"},
+		"newer":         {"v1.2.3", releases, "v1.3.0", "", "ws client macos wizard --update"},
+		"newer 10":      {"v1.2.3", releases, "v1.10.0", "", "ws client macos wizard --update"},
 		"a build on ws": {"v1.2.3", releases, "v1.2.4-0.2026-abc+dirty", "would install ws v1.2.3 on ws", ""},
 		"none":          {"v1.2.3", releases, "", "would install ws v1.2.3 on ws", ""},
 		"no status":     {"v1.2.3", releases, "v1.2.3", "would install ws v1.2.3 on ws", ""},

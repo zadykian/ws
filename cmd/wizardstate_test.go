@@ -140,8 +140,8 @@ func TestWizardStateKeyComesBackToTheListsWithNoScan(t *testing.T) {
 	ctx, cancel := context.WithTimeout(t.Context(), 20*time.Second)
 	defer cancel()
 	var out bytes.Buffer
-	keys := stateTrip{newAfterScan("s"), "ws mac wizard: Mac"}
-	status := execute(ctx, newRoot(p, newMacCmd(p), newServerCmd(p)), []string{"mac", "wizard"}, keys, &out, keys)
+	keys := stateTrip{newAfterScan("s"), "ws client macos wizard: Mac"}
+	status := execute(ctx, newRoot(p, newMacCmd(p), newServerCmd(p)), []string{"client", "macos", "wizard"}, keys, &out, keys)
 	if status != 0 || strings.Count(strings.Join(m.Calls, "\n"), "run caffeinate") != 1 {
 		t.Fatalf("status = %d, want a scan alone: calls = %q", status, m.Calls)
 	}

@@ -15,7 +15,7 @@ func newServerConfigureCmd(p process) *cobra.Command {
 	return &cobra.Command{
 		Use:   "configure",
 		Short: "edit ws's secrets and host_vars on forms, on ws",
-		Long: "The forms of ws mac configure that edit ws, read and written here as root, with no ssh. ws's " +
+		Long: "The forms of ws client macos configure that edit ws, read and written here as root, with no ssh. ws's " +
 			"secrets show as set or not, never their values. Ctrl-N goes to host_vars. Ctrl-S writes a form. " +
 			"It needs a terminal: anywhere else, run ws server ubuntu secrets and ws server ubuntu values set.",
 		Args: cobra.NoArgs,

@@ -14,7 +14,7 @@ import (
 
 const (
 	ghosttyDir  = "/h/Library/Application Support/com.mitchellh.ghostty"
-	ghosttyHead = "# Written by ws mac apply: its next run replaces changes made here.\n"
+	ghosttyHead = "# Written by ws client macos apply: its next run replaces changes made here.\n"
 )
 
 func ghosttyStep(m *effecttest.Machine, out *effecttest.Out) *setup.Ghostty {
@@ -112,7 +112,7 @@ func TestGhosttyWarnsOfAFileNotItsOwn(t *testing.T) {
 	s := ghosttyStep(m, out)
 	m.Files[ghosttyDir+"/ws.ghostty"] = []byte("mine\n")
 	p, err := s.Plan(context.Background())
-	if err != nil || len(p.Changes) != 0 || !strings.Contains(strings.Join(out.Lines, "\n"), "is not ws mac apply's") {
+	if err != nil || len(p.Changes) != 0 || !strings.Contains(strings.Join(out.Lines, "\n"), "is not ws client macos apply's") {
 		t.Errorf("Plan = %v, %v, out %v; want a warning alone", p.Changes, err, out.Lines)
 	}
 }

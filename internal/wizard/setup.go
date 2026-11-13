@@ -11,7 +11,7 @@ import (
 )
 
 // setupStage names the stage in its messages.
-const setupStage = "ws mac apply"
+const setupStage = "ws client macos apply"
 
 // Setup is the stage that has ws mac apply set up the Mac from mac.conf, after sudo's password rather
 // than amid its lines. ws mac apply changes only what differs, and is silent then, so a plan is empty
@@ -59,7 +59,7 @@ func (s *Setup) Plan(ctx context.Context) (step.Plan, error) {
 		case errors.Is(err, effect.ErrNoTicket):
 			return step.Plan{}, err
 		case err != nil:
-			return step.Plan{}, errors.New("sudo -v failed; ws mac apply needs sudo, as an admin of the Mac")
+			return step.Plan{}, errors.New("sudo -v failed; ws client macos apply needs sudo, as an admin of the Mac")
 		}
 		s.sudoed = true
 	}

@@ -10,7 +10,7 @@ import (
 )
 
 // Header starts config.d/ws's first line, by which a run knows a file for its own.
-const Header = "# Written by ws mac apply"
+const Header = "# Written by ws client macos apply"
 
 // Inputs are what config.d/ws's text depends on.
 type Inputs struct {

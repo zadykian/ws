@@ -8,7 +8,7 @@ import (
 
 const (
 	// zedHeader is the first line of global_settings.json, by which a run knows a file for its own.
-	zedHeader = "// Written by ws mac apply: its next run replaces changes made here."
+	zedHeader = "// Written by ws client macos apply: its next run replaces changes made here."
 	// zedKeymapMark starts the first line of keymap.json, which carries its own header. It does not
 	// name the command, so the file stays ws's if the command changes.
 	zedKeymapMark = "// Written by github.com/zadykian/ws"

@@ -8,6 +8,6 @@ func TestCableLocksWsMacApply(t *testing.T) {
 		t.Errorf("Cable locks %q", got)
 	}
 	if got := Locks(&Setup{}); got != homebrewStage {
-		t.Errorf("ws mac apply locks %q", got)
+		t.Errorf("ws client macos apply locks %q", got)
 	}
 }
