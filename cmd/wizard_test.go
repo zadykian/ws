@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/remote"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/roles/client/macos/mac"
 )
@@ -181,7 +182,7 @@ func TestWizardReadsWhatServerStatePrints(t *testing.T) {
 		t.Fatalf("status = %d", status)
 	}
 	m := wsOverSSH{effecttest.NewMachine(), []byte("ws " + p.version + "\n"), []byte(stdout)}
-	ws := wizard.NewSession(wizard.MacReach{SSH: wizard.SSH{M: m, Lock: "/t/l"}},
+	ws := wizard.NewSession(wizard.MacReach{SSH: remote.SSH{M: m, Lock: "/t/l"}},
 		wizard.Scripts{Remote: mac.RemoteScript})
 	roles, err := ws.State(context.Background(), p.version)
 	if err != nil {

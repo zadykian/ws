@@ -2,12 +2,13 @@ package wizard
 
 import (
 	"context"
+	"github.com/zadykian/ws/engine/core/remote"
 	"testing"
 )
 
 func TestHostKeyScan(t *testing.T) {
 	h, m := newHost(nil)
-	w := Way{Host: "10.1.1.2", Port: "22"}
+	w := remote.Way{Host: "10.1.1.2", Port: "22"}
 	if got := scanKey(context.Background(), h.M, w); got != hostLine {
 		t.Errorf("scan = %q; want %q", got, hostLine)
 	}

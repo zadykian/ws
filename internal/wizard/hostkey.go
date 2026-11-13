@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"errors"
+	"github.com/zadykian/ws/engine/core/remote"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
@@ -22,7 +23,7 @@ type HostKey struct {
 	Tty, Check bool
 	// Env looks up a variable of the environment.
 	Env func(string) (string, bool)
-	SSH SSH
+	SSH remote.SSH
 	M   effect.Machine
 	P   effect.Prompt
 	Out effect.Out
@@ -62,7 +63,9 @@ func macConf(m effect.Machine, path string) (conf.Conf, error) {
 
 // known tells whether known_hosts holds a key under ws. It reads no key of ws's, as ws's sshd counts
 // each connection that doesn't log in against the Mac's address (PerSourcePenalties).
-func (h *HostKey) known(ctx context.Context, file string) bool { return KnownHost(ctx, h.M, file) }
+func (h *HostKey) known(ctx context.Context, file string) bool {
+	return remote.KnownHost(ctx, h.M, file)
+}
 
 // noWay is the stop where no way leads to ws, naming what ws's target needs.
 func noWay(c conf.Conf) error {

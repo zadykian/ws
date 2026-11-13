@@ -1,8 +1,9 @@
-package wizard
+package remote
 
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
@@ -44,4 +45,9 @@ func TestSSHWayNamesTheReasonOfWays(t *testing.T) {
 	if _, err := s.Way(context.Background()); !errors.Is(err, reason) {
 		t.Errorf("Way = %v, want %v", err, reason)
 	}
+}
+
+// wayCall is the ssh -G call that Way makes.
+func wayCall(s SSH) string {
+	return "ssh " + strings.Join(append([]string{"-G"}, s.Argv(context.Background(), []string{"ws"})...), " ")
 }

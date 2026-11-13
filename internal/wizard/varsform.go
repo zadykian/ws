@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/zadykian/ws/engine/core/remote"
 	"maps"
 	"slices"
 
@@ -24,7 +25,7 @@ type VarsForm struct {
 func (f VarsForm) Load(ctx context.Context) (VarsForm, error) {
 	text, err := f.Ws.values(ctx)
 	if err != nil {
-		return f, errors.New("host_vars on ws: " + Stderr(err))
+		return f, errors.New("host_vars on ws: " + remote.Stderr(err))
 	}
 	if f.file, err = values.Parse(text); err != nil {
 		return f, fmt.Errorf("host_vars on ws: %w", err)
@@ -64,7 +65,7 @@ func (f VarsForm) Save(ctx context.Context, out effect.Out, edits map[string]str
 		pairs = append(pairs, key+"="+edits[key])
 	}
 	if err := f.Ws.setValues(ctx, pairs); err != nil {
-		return f, errors.New("host_vars on ws: " + Stderr(err))
+		return f, errors.New("host_vars on ws: " + remote.Stderr(err))
 	}
 	out.Say("wrote host_vars: the next ws server ubuntu apply takes it")
 	return f.Load(ctx)

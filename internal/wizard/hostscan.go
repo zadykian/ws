@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"fmt"
+	"github.com/zadykian/ws/engine/core/remote"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -11,7 +12,7 @@ import (
 // scanKey returns the ed25519 key that ws offers at the way's host and port, as "ssh-ed25519 KEY",
 // within 10 s. It goes over IPv4 alone where ssh takes it alone. It returns an empty string where
 // ws offers none.
-func scanKey(ctx context.Context, m effect.Machine, w Way) string {
+func scanKey(ctx context.Context, m effect.Machine, w remote.Way) string {
 	args := []string{"-T", "10", "-t", "ed25519", "-p", w.Port, w.Host}
 	if w.Inet {
 		args = append([]string{"-4"}, args...)
@@ -39,6 +40,6 @@ func (h *HostKey) fingerprint(ctx context.Context, line string) (string, error) 
 }
 
 // offer returns the sentence that names the key that ws offers.
-func offer(w Way, fp string) string {
+func offer(w remote.Way, fp string) string {
 	return "ws at " + w.Host + ":" + w.Port + " offers the ed25519 key " + fp
 }

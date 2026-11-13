@@ -2,6 +2,7 @@ package wizard
 
 import (
 	"context"
+	"github.com/zadykian/ws/engine/core/remote"
 	"slices"
 	"strings"
 	"testing"
@@ -21,7 +22,7 @@ func newRun(target string, status wsStatus, update, check bool) (*WsRun, *effect
 	m := effecttest.NewMachine()
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=" + target + "\nWS_USER=" + defaultUser() + "\n" + extra[target])
 	out := &effecttest.Out{}
-	ws := macSession(m, SSH{M: m, Lock: "/l", Ways: MacWays{M: m, Conf: "/h/mac.conf"}}, out, status)
+	ws := macSession(m, remote.SSH{M: m, Lock: "/l", Ways: MacWays{M: m, Conf: "/h/mac.conf"}}, out, status)
 	return &WsRun{Ws: ws, Check: check, Out: out, Version: "v1.2.3", Update: update}, m
 }
 

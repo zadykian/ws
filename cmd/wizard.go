@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/remote"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/roles/client/macos/mac"
@@ -92,7 +93,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	}
 	gh := &wizard.Gh{GhCLI: wizard.GhCLI{Conf: later, Home: p.getenv("HOME"), M: p.machine, Out: out}, Tty: p.tty, F: e.talks}
 	host := &wizard.HostKey{Conf: later, Lock: lock, Tty: p.tty, Check: check, Env: p.lookup,
-		SSH: wizard.SSH{M: p.machine, F: e.talks, Lock: lock, Home: p.getenv("HOME"),
+		SSH: remote.SSH{M: p.machine, F: e.talks, Lock: lock, Home: p.getenv("HOME"),
 			Ways: wizard.MacWays{M: p.machine, Conf: later}}, M: p.machine, P: ask, Out: out}
 	sudo := e.sudo
 	ws := wizard.NewSession(wizard.MacReach{SSH: host.SSH, Sudo: sudo, Conf: later, Out: out},

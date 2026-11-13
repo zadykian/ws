@@ -1,4 +1,4 @@
-package wizard
+package remote
 
 import (
 	"context"
@@ -68,4 +68,9 @@ func TestSSHTunnelTakesNoWayOptions(t *testing.T) {
 	if !strings.Contains(got, "ControlPath=/t/l/%n ") {
 		t.Errorf("Tunnel call %q lacks the socket /t/l/%%n", got)
 	}
+}
+
+// tunnelCall is the call that Tunnel makes.
+func tunnelCall(s SSH, args ...string) string {
+	return "ssh " + strings.Join(append(s.Shared("%n"), args...), " ")
 }

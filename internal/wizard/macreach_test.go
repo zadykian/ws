@@ -2,6 +2,7 @@ package wizard
 
 import (
 	"context"
+	"github.com/zadykian/ws/engine/core/remote"
 	"strings"
 	"testing"
 
@@ -11,7 +12,7 @@ import (
 
 // macSession returns the Mac's session over ssh, whose remote script answers status on m with the
 // value's text.
-func macSession(m *effecttest.Machine, ssh SSH, out *effecttest.Out, status wsStatus) *Session {
+func macSession(m *effecttest.Machine, ssh remote.SSH, out *effecttest.Out, status wsStatus) *Session {
 	ws := NewSession(fakeReach{Reach: MacReach{SSH: ssh, Conf: "/h/mac.conf", Out: out}, M: m},
 		Scripts{Remote: []byte("x"), Files: []byte("y")})
 	m.Results[opLine("status")] = effecttest.Result{Out: status.text()}
@@ -20,7 +21,7 @@ func macSession(m *effecttest.Machine, ssh SSH, out *effecttest.Out, status wsSt
 
 func TestWsClaudeLoginTakesTheTerminal(t *testing.T) {
 	m := effecttest.NewMachine()
-	ws := macSession(m, SSH{M: m, F: m, Lock: "/l"}, &effecttest.Out{}, wsStatus{Claude: "login"})
+	ws := macSession(m, remote.SSH{M: m, F: m, Lock: "/l"}, &effecttest.Out{}, wsStatus{Claude: "login"})
 	c := &WsClaude{Ws: ws, Tty: true}
 	_ = c.Apply(context.Background(), step.Plan{})
 	got := callsWith(m, `claude auth login`)

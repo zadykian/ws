@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"errors"
+	"github.com/zadykian/ws/engine/core/remote"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/role"
@@ -16,7 +17,7 @@ import (
 // the session, never another stage, for what they read of ws.
 type Session struct {
 	reach Reach
-	shell Shell
+	shell remote.Shell
 	// remote and files are the scripts, which sh -s reads from standard input.
 	remote, files []byte
 	// events hears a run's events. Nil drops them. It hears them on a goroutine of the Shell's,
@@ -34,7 +35,7 @@ type heldStatus struct {
 // Reach is how a Session reaches ws: MacReach or WsReach.
 type Reach interface {
 	// shell runs a command as root on ws.
-	shell() Shell
+	shell() remote.Shell
 	// want reads the target and WS_USER that ws's run is to leave: mac.conf's on the Mac, and
 	// host_vars' on ws.
 	want() (conf.Conf, error)
@@ -115,9 +116,9 @@ func (s *Session) Secrets(ctx context.Context, in []byte, args ...string) ([]byt
 	case err == nil:
 		return out, nil
 	case strings.Contains(err.Error(), "exit status 255"):
-		return nil, errors.New("ws is out of reach: ssh to ws failed: " + Stderr(err))
+		return nil, errors.New("ws is out of reach: ssh to ws failed: " + remote.Stderr(err))
 	}
-	return nil, errors.New(cmp.Or(Stderr(err), err.Error()))
+	return nil, errors.New(cmp.Or(remote.Stderr(err), err.Error()))
 }
 
 // Restate is State with ws's status read again, for a screen that reads ws more than once: a run

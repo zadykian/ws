@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"errors"
+	"github.com/zadykian/ws/engine/core/remote"
 	"strings"
 	"testing"
 
@@ -23,7 +24,7 @@ func wsSession(status wsStatus) (*Session, *effecttest.Machine) {
 
 func TestSessionStatus(t *testing.T) {
 	m := effecttest.NewMachine()
-	s := macSession(m, SSH{M: m, Lock: "/l"}, &effecttest.Out{}, wsStatus{Claude: "ok"})
+	s := macSession(m, remote.SSH{M: m, Lock: "/l"}, &effecttest.Out{}, wsStatus{Claude: "ok"})
 	st, ok := s.status(context.Background())
 	if !ok {
 		t.Fatal("status read nothing")
@@ -39,7 +40,7 @@ func TestSessionStatus(t *testing.T) {
 
 func TestSessionStatusFails(t *testing.T) {
 	m := effecttest.NewMachine()
-	s := macSession(m, SSH{M: m, Lock: "/l"}, &effecttest.Out{}, wsStatus{})
+	s := macSession(m, remote.SSH{M: m, Lock: "/l"}, &effecttest.Out{}, wsStatus{})
 	m.Results[opLine("status")] = effecttest.Result{Err: errors.New("denied")}
 	if st, ok := s.status(context.Background()); ok || st != (wsStatus{}) {
 		t.Error("status read from a failed ssh")

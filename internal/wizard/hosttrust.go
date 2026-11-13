@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"fmt"
+	"github.com/zadykian/ws/engine/core/remote"
 	"slices"
 	"strings"
 
@@ -15,7 +16,7 @@ const hostPrint = "ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub"
 // trust stops unless fp, the fingerprint of ws's key, is the one at ws's console. WS_HOST_KEY, else
 // the answer at the terminal, must be yes, or hold that fingerprint as the console's ssh-keygen
 // prints it. --check asks nothing.
-func (h *HostKey) trust(ctx context.Context, w Way, fp string) error {
+func (h *HostKey) trust(ctx context.Context, w remote.Way, fp string) error {
 	o := offer(w, fp)
 	if h.Check {
 		h.Out.Say("%s: %s; a run would ask whether ws's console shows it", hostStage, o)

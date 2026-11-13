@@ -2,6 +2,7 @@ package wizard
 
 import (
 	"context"
+	"github.com/zadykian/ws/engine/core/remote"
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -27,7 +28,7 @@ type Tunnel struct {
 	// Ws is the session to ws, whose files script names the Mac's key as wg0's peer.
 	Ws *Session
 	// SSH is the Mac's ssh to ws.
-	SSH SSH
+	SSH remote.SSH
 	// Conf is mac.conf's path. Check is set under --check.
 	Conf  string
 	Check bool

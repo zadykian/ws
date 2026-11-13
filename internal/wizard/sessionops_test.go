@@ -2,6 +2,7 @@ package wizard
 
 import (
 	"context"
+	"github.com/zadykian/ws/engine/core/remote"
 	"regexp"
 	"slices"
 	"strings"
@@ -67,7 +68,7 @@ func TestEachOperationsStaleRule(t *testing.T) {
 		"setValues": {func(s *Session) error { return s.setValues(ctx, []string{"a=b"}) }, true},
 	} {
 		m := effecttest.NewMachine()
-		s := macSession(m, SSH{M: m, Lock: "/l"}, &effecttest.Out{}, wsStatus{})
+		s := macSession(m, remote.SSH{M: m, Lock: "/l"}, &effecttest.Out{}, wsStatus{})
 		for _, line := range []string{"link", "link eth1", "wait eth1", "user ada", "peer key", "install v1 url",
 			"run", "run --only network,wireguard", "run --only wireguard", "outbound", "values", "values YT1i"} {
 			m.Results["op "+line] = effecttest.Result{}

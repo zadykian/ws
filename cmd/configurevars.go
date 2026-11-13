@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/remote"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/roles/client/macos/mac"
@@ -69,7 +70,7 @@ func (r *varsReach) reachOn(ctx context.Context, m effect.Machine, t rootTalk) (
 		return nil, err
 	}
 	conf := confPath(r.p.getenv, r.p.pwd)
-	ssh := wizard.SSH{M: m, Lock: lock, Home: r.p.getenv("HOME"), Ways: wizard.MacWays{M: m, Conf: conf}}
+	ssh := remote.SSH{M: m, Lock: lock, Home: r.p.getenv("HOME"), Ways: wizard.MacWays{M: m, Conf: conf}}
 	sudo := cmp.Or(r.sudo, &wizard.Sudo{})
 	// A kept one holds the effects of a screen that has ended.
 	ws := wizard.NewSession(wizard.MacReach{SSH: ssh, Sudo: sudo, Conf: conf, Out: t},
@@ -108,7 +109,7 @@ func (r *varsReach) close(ctx context.Context) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.release != nil {
-		wizard.SSH{M: r.p.machine, Lock: r.lock}.End(context.WithoutCancel(ctx))
+		remote.SSH{M: r.p.machine, Lock: r.lock}.End(context.WithoutCancel(ctx))
 		r.release()
 	}
 }

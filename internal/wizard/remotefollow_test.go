@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"errors"
+	"github.com/zadykian/ws/engine/core/remote"
 	"slices"
 	"strings"
 	"testing"
@@ -31,7 +32,7 @@ func (h heard) steps() []string {
 
 // newFollow returns a session over ws's fake, whose runs' events go to events.
 func newFollow(m *effecttest.Machine, events step.Observer) *Session {
-	reach := fakeReach{Reach: MacReach{SSH: SSH{M: m, Lock: "/t/l"}}, M: m}
+	reach := fakeReach{Reach: MacReach{SSH: remote.SSH{M: m, Lock: "/t/l"}}, M: m}
 	return NewSession(reach, Scripts{Remote: []byte("echo\n"), Files: []byte("true\n"), Events: events})
 }
 
@@ -100,7 +101,7 @@ func TestFollowReadsStatusAgainAfterAFailure(t *testing.T) {
 
 func TestFollowRunsOnAMachineWithoutLines(t *testing.T) {
 	m := effecttest.NewMachine()
-	ssh := SSH{M: struct{ effect.Machine }{m}, Lock: "/t/l"}
+	ssh := remote.SSH{M: struct{ effect.Machine }{m}, Lock: "/t/l"}
 	r := NewSession(MacReach{SSH: ssh}, Scripts{Remote: []byte("echo\n")})
 	args := []string{"-o", "BatchMode=yes", "ws", "sh", "-s", "--", "run"}
 	m.Results["ssh "+strings.Join(ssh.Argv(context.Background(), args), " ")] = effecttest.Result{}

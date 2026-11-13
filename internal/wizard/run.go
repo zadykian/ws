@@ -2,6 +2,7 @@ package wizard
 
 import (
 	"context"
+	"github.com/zadykian/ws/engine/core/remote"
 	"strconv"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -21,7 +22,7 @@ func Run(ctx context.Context, m effect.Machine, o step.Options, stages []step.St
 	}
 	defer release()
 	// The masters that the stages' ssh calls opened end before the lock goes, after a signal too.
-	defer SSH{M: m, Lock: lock}.End(context.WithoutCancel(ctx))
+	defer remote.SSH{M: m, Lock: lock}.End(context.WithoutCancel(ctx))
 	awake, cancel := context.WithCancel(ctx)
 	done := make(chan struct{})
 	go func() {

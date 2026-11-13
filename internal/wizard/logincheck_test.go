@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"errors"
+	"github.com/zadykian/ws/engine/core/remote"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
@@ -26,7 +27,7 @@ func newLogin(login effecttest.Result) (*Login, *effecttest.Machine) {
 func sshFailed(stderr string) error { return errors.New("ssh: exit status 255: " + stderr) }
 
 func TestLoginLogin(t *testing.T) {
-	w := Way{User: "root", KnownHosts: hostsOf}
+	w := remote.Way{User: "root", KnownHosts: hostsOf}
 	for name, tc := range map[string]struct {
 		login effecttest.Result
 		user  string
@@ -39,7 +40,7 @@ func TestLoginLogin(t *testing.T) {
 	} {
 		r, _ := newLogin(tc.login)
 		w.User = tc.user
-		if ok, msg := r.SSH.login(context.Background(), w); ok != tc.ok || msg != tc.err {
+		if ok, msg := r.SSH.Login(context.Background(), w); ok != tc.ok || msg != tc.err {
 			t.Errorf("%s: login = %v, %q; want %v, %q", name, ok, msg, tc.ok, tc.err)
 		}
 	}

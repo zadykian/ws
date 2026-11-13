@@ -2,12 +2,13 @@ package wizard
 
 import (
 	"context"
+	"github.com/zadykian/ws/engine/core/remote"
 	"strings"
 	"testing"
 )
 
 func TestHostKeyTrust(t *testing.T) {
-	w := Way{Host: "10.1.1.2", Port: "22"}
+	w := remote.Way{Host: "10.1.1.2", Port: "22"}
 	for name, tc := range map[string]struct {
 		env  map[string]string
 		tty  bool

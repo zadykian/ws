@@ -3,11 +3,12 @@ package wizard
 import (
 	"context"
 	"fmt"
+	"github.com/zadykian/ws/engine/core/remote"
 	"strings"
 )
 
 // refuse says why WS_USER refuses the Mac's key, and what to do, or under --check that a run would.
-func (r *Login) refuse(ctx context.Context, w Way, sshErr string) error {
+func (r *Login) refuse(ctx context.Context, w remote.Way, sshErr string) error {
 	if strings.Contains(sshErr, "Host key verification failed") {
 		return fmt.Errorf("%s: ws at %s:%s offers another host key than known_hosts holds under ws: where ws was "+
 			"installed again, run ssh-keygen -R ws, then the wizard again", loginStage, w.Host, w.Port)

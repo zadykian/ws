@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"fmt"
+	"github.com/zadykian/ws/engine/core/remote"
 	"regexp"
 	"strings"
 
@@ -32,7 +33,7 @@ type Cable struct {
 	// its ssh logs in, in this run.
 	Ws *Session
 	// SSH is the Mac's ssh to ws.
-	SSH SSH
+	SSH remote.SSH
 	// Conf is mac.conf's path. Check is set under --check.
 	Conf  string
 	Check bool
@@ -156,7 +157,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	in := false
 	if err == nil {
-		in, _ = c.SSH.login(ctx, w)
+		in, _ = c.SSH.Login(ctx, w)
 	}
 	_, portSet := c.Env("WS_CABLE_PORT")
 	svc, svcSet := c.Env("WS_CABLE_SERVICE")

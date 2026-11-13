@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"errors"
+	"github.com/zadykian/ws/engine/core/remote"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/roles/client/macos/conf"
@@ -10,7 +11,7 @@ import (
 
 // MacReach is the Mac's way to ws: ssh at the direct way that mac.conf gives, root by Sudo.
 type MacReach struct {
-	SSH SSH
+	SSH remote.SSH
 	// Sudo is how a command reaches root. Nil runs it as the login, as the tests do.
 	Sudo *Sudo
 	// Conf is mac.conf's path, which the reach reads for the target and WS_USER.
@@ -18,7 +19,7 @@ type MacReach struct {
 	Out  effect.Out
 }
 
-func (r MacReach) shell() Shell { return SSHShell{SSH: r.SSH, Root: r.Sudo} }
+func (r MacReach) shell() remote.Shell { return remote.SSHShell{SSH: r.SSH, Root: r.Sudo} }
 
 func (r MacReach) want() (conf.Conf, error) { return macConf(r.SSH.M, r.Conf) }
 

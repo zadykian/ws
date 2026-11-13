@@ -1,4 +1,6 @@
-package wizard
+// Package remote reaches a machine for the guided run. A Shell runs a command and its input, as a
+// local shell or over ssh.
+package remote
 
 import (
 	"context"

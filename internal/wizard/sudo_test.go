@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"errors"
+	"github.com/zadykian/ws/engine/core/remote"
 	"slices"
 	"strings"
 	"testing"
@@ -158,7 +159,7 @@ func TestSudoStopsWhereSSHFails(t *testing.T) {
 func TestSessionThroughSudo(t *testing.T) {
 	s, m, _ := newSudo(t)
 	s.way, s.password = sudoAsked, sudoPassword
-	r := secretsSession(SSHShell{SSH: s.SSH, Root: s})
+	r := secretsSession(remote.SSHShell{SSH: s.SSH, Root: s})
 	line := sudoLine(s, "sudo", "-k", "-S", "-p", "''", "sh", "-s", "--", "status")
 	m.Results[line] = effecttest.Result{Out: []byte("active -\n")}
 	if _, ok := r.status(context.Background()); !ok {
@@ -171,7 +172,7 @@ func TestSessionThroughSudo(t *testing.T) {
 
 func TestSessionBeforeTheStageReadsNothing(t *testing.T) {
 	s, _, _ := newSudo(t)
-	r := secretsSession(SSHShell{SSH: s.SSH, Root: s})
+	r := secretsSession(remote.SSHShell{SSH: s.SSH, Root: s})
 	if _, ok := r.status(context.Background()); ok {
 		t.Error("Status read with the stage unread")
 	}

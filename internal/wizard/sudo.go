@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/zadykian/ws/engine/core/remote"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -31,7 +32,7 @@ const (
 // ssh's stdin, never in an argument, a message or the environment.
 type Sudo struct {
 	// SSH is the Mac's ssh to ws.
-	SSH SSH
+	SSH remote.SSH
 	// Tty tells whether a terminal is there to ask. Check is set under --check.
 	Tty, Check bool
 	P          effect.Hidden
@@ -78,7 +79,7 @@ func (s *Sudo) Plan(ctx context.Context) (step.Plan, error) {
 		s.way = sudoOpen
 		return step.Plan{}, nil
 	case strings.Contains(err.Error(), "exit status 255"):
-		return step.Plan{}, errors.New(sudoStage + ": ssh to ws failed: " + Stderr(err))
+		return step.Plan{}, errors.New(sudoStage + ": ssh to ws failed: " + remote.Stderr(err))
 	case s.Check && s.Tty:
 		return step.Plan{}, s.ask(ctx, w.User)
 	}
@@ -112,7 +113,7 @@ func (s *Sudo) ask(ctx context.Context, user string) error {
 			s.way, s.password = sudoAsked, password
 			return nil
 		}
-		why := Stderr(err)
+		why := remote.Stderr(err)
 		if !strings.Contains(why, "Authentication failed") {
 			return fmt.Errorf("%s: sudo on ws stopped: %s", sudoStage, why)
 		}

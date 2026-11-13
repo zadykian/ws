@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"errors"
+	"github.com/zadykian/ws/engine/core/remote"
 	"slices"
 	"testing"
 
@@ -19,7 +20,7 @@ type fakeWs struct{ M *effecttest.Machine }
 func opLine(op ...string) string {
 	line := "op"
 	for _, word := range op {
-		line += " " + Quote(word)
+		line += " " + remote.Quote(word)
 	}
 	return line
 }
@@ -53,13 +54,13 @@ type fakeReach struct {
 	M *effecttest.Machine
 }
 
-func (r fakeReach) shell() Shell { return fakeWs{M: r.M} }
+func (r fakeReach) shell() remote.Shell { return fakeWs{M: r.M} }
 
 func TestFakeWsKeysAScriptByItsOp(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results[opLine("link", "eth1")] = effecttest.Result{Out: []byte("ok")}
 	m.Results["uname -r"] = effecttest.Result{Out: []byte("7.0")}
-	var f Shell = fakeWs{M: m}
+	var f remote.Shell = fakeWs{M: m}
 	ctx := context.Background()
 	if out, err := f.Run(ctx, []byte("echo\n"), script([]string{"link", "eth1"})...); err != nil || string(out) != "ok" {
 		t.Errorf("Run of the op = %q, %v", out, err)
@@ -76,7 +77,7 @@ func TestFakeWsPasses(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results[opLine("install", "v1")] = effecttest.Result{Err: errors.New("denied")}
 	m.Results[opLine("run")] = effecttest.Result{Out: []byte("event\nother\n")}
-	var f Shell = fakeWs{M: m}
+	var f remote.Shell = fakeWs{M: m}
 	ctx := context.Background()
 	if err := f.Pass(ctx, nil, script([]string{"install", "v1"})...); err == nil {
 		t.Error("Pass of the op: err = nil")
@@ -93,7 +94,7 @@ func TestFakeWsKeepsAWordWhole(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results[opLine("run", "--only", "network")] = effecttest.Result{Out: []byte("two")}
 	m.Results[opLine("run", "--only network")] = effecttest.Result{Out: []byte("one")}
-	var f Shell = fakeWs{M: m}
+	var f remote.Shell = fakeWs{M: m}
 	for want, op := range map[string][]string{"two": {"run", "--only", "network"}, "one": {"run", "--only network"}} {
 		if out, err := f.Run(context.Background(), nil, script(op)...); err != nil || string(out) != want {
 			t.Errorf("Run of %q = %q, %v; want %q", op, out, err, want)

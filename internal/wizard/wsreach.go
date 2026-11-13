@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/zadykian/ws/engine/core/remote"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/roles/client/macos/conf"
@@ -21,8 +22,8 @@ type WsReach struct {
 	Out  effect.Out
 }
 
-func (r WsReach) shell() Shell {
-	return LocalShell{M: r.M, User: func() string { c, _ := r.Want(); return c.User }}
+func (r WsReach) shell() remote.Shell {
+	return remote.LocalShell{M: r.M, User: func() string { c, _ := r.Want(); return c.User }}
 }
 
 func (r WsReach) want() (conf.Conf, error) { return r.Want() }

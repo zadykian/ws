@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"fmt"
+	"github.com/zadykian/ws/engine/core/remote"
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/setup"
@@ -43,7 +44,7 @@ func (g *Gh) login(ctx context.Context, c ghLogin) error {
 		return err
 	}
 	args := append(append([]string{"auth"}, c.args...), "-h", "github.com", "-s", ghScopes)
-	if err := Talk(ctx, g.F, g.M, path, args...); err != nil {
+	if err := remote.Talk(ctx, g.F, g.M, path, args...); err != nil {
 		return fmt.Errorf("%s: %s failed", ghStage, c.line())
 	}
 	return nil

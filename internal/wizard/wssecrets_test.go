@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"errors"
+	"github.com/zadykian/ws/engine/core/remote"
 	"strings"
 	"testing"
 
@@ -10,7 +11,7 @@ import (
 )
 
 // secretsLine is the ssh command line that runs cmd as root on ws, through sudo's password.
-func secretsLine(sh SSHShell, cmd string) string {
+func secretsLine(sh remote.SSHShell, cmd string) string {
 	return "ssh " + strings.Join(sh.SSH.Argv(context.Background(),
 		[]string{"-o", "BatchMode=yes", "ws", "sudo", "-k", "-S", "-p", "''", wsPath, "server", "ubuntu", "secrets"}), " ") + " " + cmd
 }
@@ -18,19 +19,19 @@ func secretsLine(sh SSHShell, cmd string) string {
 // shellReach is a Reach whose shell is sh.
 type shellReach struct {
 	Reach
-	sh Shell
+	sh remote.Shell
 }
 
-func (r shellReach) shell() Shell { return r.sh }
+func (r shellReach) shell() remote.Shell { return r.sh }
 
 // secretsSession returns a session that reaches ws through sh.
-func secretsSession(sh Shell) *Session {
+func secretsSession(sh remote.Shell) *Session {
 	return NewSession(shellReach{sh: sh}, Scripts{Remote: []byte("echo\n")})
 }
 
 func TestSessionSecretsSendsTheValueOnStdin(t *testing.T) {
 	m := effecttest.NewMachine()
-	sh := SSHShell{SSH: SSH{M: m, Lock: "/t/l"}, Root: &Sudo{way: sudoAsked, password: "pw"}}
+	sh := remote.SSHShell{SSH: remote.SSH{M: m, Lock: "/t/l"}, Root: &Sudo{way: sudoAsked, password: "pw"}}
 	r := secretsSession(sh)
 	m.Results[secretsLine(sh, `set env 'A'\''B'`)] = effecttest.Result{Out: []byte("set\n")}
 	out, err := r.Secrets(context.Background(), []byte("dummy-value\n"), "set", "env", "A'B")
@@ -51,7 +52,7 @@ func TestSessionSecretsErrors(t *testing.T) {
 		{"[ssh]: exit status 1: \nws server ubuntu secrets keys: run it as root\n", "ws server ubuntu secrets keys: run it as root"},
 	} {
 		m := effecttest.NewMachine()
-		sh := SSHShell{SSH: SSH{M: m, Lock: "/t/l"}}
+		sh := remote.SSHShell{SSH: remote.SSH{M: m, Lock: "/t/l"}}
 		r := secretsSession(sh)
 		m.Results["ssh "+strings.Join(sh.SSH.Argv(context.Background(),
 			[]string{"-o", "BatchMode=yes", "ws", wsPath, "server", "ubuntu", "secrets", "keys"}), " ")] = effecttest.Result{Err: errors.New(tt.err)}

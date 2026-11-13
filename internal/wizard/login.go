@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"errors"
+	"github.com/zadykian/ws/engine/core/remote"
 
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -20,7 +21,7 @@ func (r *Login) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, errors.New(loginStage + ": " + err.Error())
 	}
-	if ok, _ := r.SSH.login(ctx, w); ok {
+	if ok, _ := r.SSH.Login(ctx, w); ok {
 		return step.Plan{}, nil
 	}
 	if r.Check {
@@ -42,7 +43,7 @@ func (r *Login) Apply(ctx context.Context, _ step.Plan) error {
 	return r.stop(ctx, w)
 }
 
-func (r *Login) stop(ctx context.Context, w Way) error {
+func (r *Login) stop(ctx context.Context, w remote.Way) error {
 	c, err := r.Ws.want()
 	if err != nil {
 		return err
@@ -56,7 +57,7 @@ func (r *Login) stop(ctx context.Context, w Way) error {
 			return err
 		}
 	}
-	if ok, sshErr := r.SSH.login(ctx, w); !ok {
+	if ok, sshErr := r.SSH.Login(ctx, w); !ok {
 		return r.refuse(ctx, w, sshErr)
 	}
 	return nil

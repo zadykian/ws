@@ -2,6 +2,7 @@ package wizard
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/remote"
 )
 
 // loginStage names the stage in its messages.
@@ -13,7 +14,7 @@ const loginStage = "Login"
 // says what to do.
 type Login struct {
 	// SSH is the Mac's ssh to ws. Ws is the session to ws, whose status the stage reads.
-	SSH SSH
+	SSH remote.SSH
 	Ws  *Session
 	// Gh names the Mac's key in the stop.
 	Gh GhCLI
