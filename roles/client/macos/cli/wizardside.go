@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/zadykian/ws/engine"
 	enginecli "github.com/zadykian/ws/engine/cli"
@@ -9,6 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 	"github.com/zadykian/ws/roles/client/macos/stages/tools"
@@ -37,6 +39,28 @@ func macSide(p enginecli.Env, server *string) engine.Side {
 			}}
 		},
 	}
+}
+
+// wizardServer returns the server that the wizard sets up: the one that flag names, or the only one,
+// or ws where there is none. It refuses a second server.
+func wizardServer(p enginecli.Env, flag string) (string, error) {
+	mac := conf.Path(p.Getenv, p.Pwd)
+	name, err := conf.Pick(p.Machine, mac, flag)
+	if err == nil {
+		return name, nil
+	}
+	names, listErr := conf.Servers(p.Machine, mac)
+	switch {
+	case listErr != nil:
+		return "", listErr
+	case len(names) == 0 && flag == "":
+		return conf.FirstServer, nil
+	case len(names) == 0 && conf.IsName(flag):
+		return flag, nil
+	case len(names) > 0 && conf.IsName(flag):
+		return "", fmt.Errorf("%s would be a second server, beside %s: the wizard sets up one server", flag, conf.List(names))
+	}
+	return "", err
 }
 
 // effectsOf is e as the stages of p take it: p acts on e's machine.
