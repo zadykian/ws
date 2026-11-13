@@ -71,3 +71,12 @@ func TestZedReportsInOrder(t *testing.T) {
 		t.Errorf("items %q, %v; want %q", names, err, want)
 	}
 }
+
+// The step is the app's cask, the font's, then the files, which the app's install holds back.
+func TestZedPartsAreTheAppTheFontAndTheFiles(t *testing.T) {
+	m, out := freshZed()
+	parts, err := zedStep(m, out).Parts(context.Background())
+	if err != nil || len(parts) != 3 {
+		t.Errorf("Parts = %d, %v; want the app, the font and the files", len(parts), err)
+	}
+}
