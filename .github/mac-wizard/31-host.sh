@@ -8,6 +8,7 @@
 # Mac's own mac.conf, must then add the same line back. With a mac.conf whose way to ws doesn't
 # answer, ws's address now must come from WS_FIRST_ADDRESS. That run's closing list must name
 # mac.conf's WS_PORT in the router's forwards, and ws's lease at no address, as mac.conf has no LAN.
+# As that port is not 51820, the run must name wireguard_port in ws's host_vars before ws's run.
 # A cloud VM's copy must name mac.conf's way to ws, and no lease. The Mac's own mac.conf then puts
 # the way back.
 
@@ -100,6 +101,8 @@ status=$?
 printf '%s\n' "$out"
 [ "$status" = 0 ] || error "ws client macos wizard with WS_FIRST_ADDRESS=127.0.0.1 exited $status"
 cmp -s "$hosts" "$RUNNER_TEMP/hosts" || error "ws client macos wizard with WS_FIRST_ADDRESS wrote another $hosts"
+sudo grep -qx 'wireguard_port: 51821' "$RUNNER_TEMP/ws/root"/etc/ws/host_vars.yml ||
+    error "ws client macos wizard with WS_PORT=51821 named no wireguard_port in ws's host_vars"
 lease="- ws's lease: static, as roles/server/ubuntu/network/router.md has it, as this run reached ws at 127.0.0.1."
 forwards="- The router's forwards to ws, UDP 51821 and TCP 22022, for 192.0.2.1,"
 if ! printf '%s\n' "$out" | grep -qxF -e "$lease" ||
@@ -117,7 +120,9 @@ if [ "$status" != 0 ] || ! printf '%s\n' "$out" | grep -qF -e "$way (roles/clien
     printf '%s\n' "$out" | grep -q "^- ws's lease: "; then
     error "ws client macos wizard on a cloud VM with WS_FIRST_ADDRESS exited $status, or named its lease"
 fi
-sudo sed -i '' '/^security_outbound:/d' "$RUNNER_TEMP/ws/root"/etc/ws/host_vars.yml
+sudo sed -i '' -e '/^security_outbound:/d' -e '/^wireguard_port:/d' \
+    "$RUNNER_TEMP/ws/root"/etc/ws/host_vars.yml
+sudo rm -f "$RUNNER_TEMP/ws/values.log"
 rm -r "$RUNNER_TEMP/confs/cloud"
 "$wsbin" client macos wizard </dev/null || error "ws client macos wizard with the Mac's own mac.conf exited $?"
 grep -qx '    HostName 10.99.0.1' ~/.ssh/config.d/ws || error 'ws client macos wizard wrote no config.d/ws for the tunnel'
