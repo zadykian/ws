@@ -28,9 +28,9 @@ which runs `--secrets` ([The run](mac-secrets.md#the-run)). Then remove the plai
 the client's key:
 
 ```sh
-ws mac secrets set file vpn_p12 vpnclient.p12
-ws mac secrets set file vpn_sswan vpnclient.sswan
-ws mac secrets set password vpn_p12
+ws client macos secrets set file vpn_p12 vpnclient.p12
+ws client macos secrets set file vpn_sswan vpnclient.sswan
+ws client macos secrets set password vpn_p12
 ```
 
 `ikeward_profile` is an absolute path, less the extension, that names the files `install` writes.

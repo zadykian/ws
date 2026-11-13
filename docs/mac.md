@@ -1,11 +1,11 @@
 # The Mac
 
 The Mac reaches the server, ws, over the cable from the 2.5GbE port of the display it docks at. It
-reaches it over the LAN, or elsewhere through the router's port forwards. `ws mac apply` sets up its
-end of the cable ([The cable](#the-cable)), git ([git on the Mac](mac-git.md)), Zed ([Zed on the
-Mac](mac-zed.md)) and one host for ssh, `ws`. It goes through a WireGuard tunnel that ends on ws,
-at `10.99.0.1` whichever way the Mac connects. The sessions of `ssh ws` and Zed stay open as the
-Mac moves between the cable, the LAN and elsewhere, with a pause of a few seconds
+reaches it over the LAN, or elsewhere through the router's port forwards. `ws client macos apply`
+sets up its end of the cable ([The cable](#the-cable)), git ([git on the Mac](mac-git.md)), Zed
+([Zed on the Mac](mac-zed.md)) and one host for ssh, `ws`. It goes through a WireGuard tunnel that
+ends on ws, at `10.99.0.1` whichever way the Mac connects. The sessions of `ssh ws` and Zed stay
+open as the Mac moves between the cable, the LAN and elsewhere, with a pause of a few seconds
 ([Zed](zed.md#when-the-connection-drops)). What it gives up: `ssh ws` fails where UDP is blocked and
 while the tunnel is down, and bulk copies run at wireguard-go's speed. To reach ws by hand, give ssh
 a direct way: `ssh -o HostName=ADDRESS -o Port=PORT ws`, as ufw lets SSH in on every interface.
@@ -19,28 +19,27 @@ Homebrew, [installed](https://brew.sh) first. `install.sh` puts `ws` in `~/.loca
 needs no clone. Then:
 
 ```sh
-ws mac apply
+ws client macos apply
 ```
 
-`ws mac wizard`, in its place, asks first for the values below ([The Mac's wizard](mac-wizard.md)),
-and `ws mac configure` changes them later on a form, with ws's secrets and host_vars
-([The Configure screen](tui-configure.md)). `ws mac apply STEP` runs one step, and
-`--check` shows each change and makes none. At a terminal it draws
-[the run screen](tui.md#the-run-screen), past [the list of steps](tui.md#the-list-of-steps) where
-it gets neither, and `--plain` keeps its lines. `ws mac state` reports what a check reads, and
-changes nothing ([State](../README.md#state)). `ws mac` holds the Mac's
-commands ([the secrets](mac-secrets.md) too), darwin alone. `ws version` prints its version, and
-`ws update` replaces it with the latest release
-([Update](releases.md#update)).
+`ws client macos wizard`, in its place, asks first for the values below ([The Mac's
+wizard](mac-wizard.md)), and `ws client macos configure` changes them later on a form, with ws's
+secrets and host_vars ([The Configure screen](tui-configure.md)). `ws client macos apply --only
+STEP` runs one step, and `--check` shows each change and makes none. At a terminal it draws [the run
+screen](tui.md#the-run-screen), past [the list of steps](tui.md#the-list-of-steps) where it gets
+neither, and `--plain` keeps its lines. `ws client macos state` reports what a check reads, and
+changes nothing ([State](../README.md#state)). `ws client macos` holds the Mac's commands ([the
+secrets](mac-secrets.md) too), darwin alone. `ws version` prints its version, and `ws update`
+replaces it with the latest release ([Update](releases.md#update)).
 
 ## What the Mac reports
 
-`ws mac state` lists the casks, gh, cld, the cable's service, the tunnel's daemon, and the files and
-directories ws writes. A file that differs from ws's, or holds no `Written by` line, is a conflict.
-So is a cask that Homebrew holds with its files gone, and a cable's service that is disabled, which
-no run turns on. No report reads a private key: `private.key` shows by its owner and mode, a signing
-key by its `.pub`. `~/.ssh/config`, `~/.gitconfig` and Ghostty's config show whether they hold ws's
-line, and none of their text.
+`ws client macos state` lists the casks, gh, cld, the cable's service, the tunnel's daemon, and the
+files and directories ws writes. A file that differs from ws's, or holds no `Written by` line, is a
+conflict. So is a cask that Homebrew holds with its files gone, and a cable's service that is
+disabled, which no run turns on. No report reads a private key: `private.key` shows by its owner and
+mode, a signing key by its `.pub`. `~/.ssh/config`, `~/.gitconfig` and Ghostty's config show whether
+they hold ws's line, and none of their text.
 
 ## mac.conf
 
@@ -86,17 +85,17 @@ with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does:
 `WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
 sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split by blanks. Each
 domain comes once and in lower case, with up to 3 addresses split by commas. Once launchd has the
-tunnel's daemon, `ws mac apply` hands both to the code of `ws mac tunnel routes` and
-`ws mac resolver`, whose caveats hold
-([their section](#routes-and-resolvers-of-another-repository)). The networks go in
-`/etc/ws-tunnel/routes.d/mac-conf`, a name no other script may take. Each resolver starts with
-ws's `Written by` line, which names `ws mac apply`, so a domain whose file is another script's, or
-written by hand, stops the run. To move a domain from such a script, have it remove its file first,
-with `ws mac resolver DOMAIN` and no address. A key emptied or removed takes back what earlier runs
-wrote, and only that. `--check` shows each change: a diff, a removal, or a line where `routes.d`
-is missing. Root's files go through sudo, by the code that writes `ws server apply`'s. Sudo never
-changes a file in the home, nor one a link names. A file there that the user may not change stops
-the run: sudo would leave root's files where the user's go.
+tunnel's daemon, `ws client macos apply` hands both to the code of `ws client macos tunnel routes`
+and `ws client macos resolver`, whose caveats hold ([their
+section](#routes-and-resolvers-of-another-repository)). The networks go in
+`/etc/ws-tunnel/routes.d/mac-conf`, a name no other script may take. Each resolver starts with ws's
+`Written by` line, which names `ws client macos apply`, so a domain whose file is another script's,
+or written by hand, stops the run. To move a domain from such a script, have it remove its file
+first, with `ws client macos resolver DOMAIN` and no address. A key emptied or removed takes back
+what earlier runs wrote, and only that. `--check` shows each change: a diff, a removal, or a line
+where `routes.d` is missing. Root's files go through sudo, by the code that writes `ws server ubuntu
+apply`'s. Sudo never changes a file in the home, nor one a link names. A file there that the user
+may not change stops the run: sudo would leave root's files where the user's go.
 
 ## ssh's hosts
 
@@ -109,14 +108,14 @@ key below, and checks ws's host key under the one name `ws` (`HostKeyAlias`). A 
 ssh offers ws one key alone (`IdentitiesOnly`): the one whose `.pub` `WS_IDENTITY_PUB_KEY` names, as
 ws's copy of a key of Secretive's ([Secretive's keys](mac-git.md#secretives-keys)) or a file key.
 The script picks none by itself, not even the agent's sole key, as a key made for another use would
-go to GitHub unasked. Without the key, or with it empty, it stops: run `ws mac wizard`, which asks
-([The wizard](mac-wizard.md#the-macs-key)), or add one of the lines it gives. They name each P-256 key that
-Secretive's agent lists, by its comment and SHA256 fingerprint. The agent is the one whose socket
-`WS_IDENTITY_AGENT` names, else Secretive's where the `.pub` is there. Else ssh reads the file
-beside the `.pub`, its passphrase kept in the Keychain. The script stops where that `.pub` is
-missing or unreadable. It stops too where the `.pub` holds other than one public key's line, as a
-private key or a certificate does. So does a key that ssh-keygen cannot read, or one of a type that
-ws's OpenSSH lacks, as Secretive's ML-DSA keys on macOS 26.
+go to GitHub unasked. Without the key, or with it empty, it stops: run `ws client macos wizard`,
+which asks ([The wizard](mac-wizard.md#the-macs-key)), or add one of the lines it gives. They name
+each P-256 key that Secretive's agent lists, by its comment and SHA256 fingerprint. The agent is the
+one whose socket `WS_IDENTITY_AGENT` names, else Secretive's where the `.pub` is there. Else ssh
+reads the file beside the `.pub`, its passphrase kept in the Keychain. The script stops where that
+`.pub` is missing or unreadable. It stops too where the `.pub` holds other than one public key's
+line, as a private key or a certificate does. So does a key that ssh-keygen cannot read, or one of a
+type that ws's OpenSSH lacks, as Secretive's ML-DSA keys on macOS 26.
 
 The script puts `Include config.d/ws` first in `~/.ssh/config`, as ssh keeps the first value it
 reads for each key. So neither the file's own settings nor the other files of `config.d` override
@@ -196,33 +195,33 @@ in order.
 ## The Mac's tunnel
 
 The keys come first, in this order. A run of the `wireguard` role makes ws's key and prints its
-public key. `ws mac apply`, without `WS_PUBLIC_KEY`, makes the Mac's key, which only root reads. It
-prints its public key with the two commands that make the Mac ws's peer, over a direct way, as
-`ssh ws` needs this done first. ADDRESS and PORT are that way:
+public key. `ws client macos apply`, without `WS_PUBLIC_KEY`, makes the Mac's key, which only root
+reads. It prints its public key with the two commands that make the Mac ws's peer, over a direct
+way, as `ssh ws` needs this done first. ADDRESS and PORT are that way:
 
 ```sh
 ssh -o HostName=ADDRESS -o Port=PORT ws "printf '%s\n' 'MAC_PUBLIC_KEY' | tee /etc/wireguard/mac.pub
->/dev/null" ssh -o HostName=ADDRESS -o Port=PORT ws ws server apply --only wireguard
+>/dev/null" ssh -o HostName=ADDRESS -o Port=PORT ws ws server ubuntu apply --only wireguard
 ```
 
 For a `WS_USER` other than root, both go through `sudo` and `ssh -t`, for the password.
 
-With ws's key as `WS_PUBLIC_KEY`, `ws mac apply` again installs the tunnel's daemon. A new Mac or a
-rebuilt server changes one file on each side, and nothing in the repository. The wizard's Tunnel
-stage takes these steps, which stay the way by hand ([The tunnel](mac-wizard.md#the-tunnel)).
+With ws's key as `WS_PUBLIC_KEY`, `ws client macos apply` again installs the tunnel's daemon. A new
+Mac or a rebuilt server changes one file on each side, and nothing in the repository. The wizard's
+Tunnel stage takes these steps, which stay the way by hand ([The tunnel](mac-wizard.md#the-tunnel)).
 
-The daemon, `ws mac tunnel run`, runs as root from launchd, from boot and before any login, through
-`/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist`. `ws mac apply` copies
-`ws` from `~/.local/bin`, which a run makes first if missing, to `/usr/local/libexec/ws-tunnel/ws` as
-root's. The user owns `~/.local/bin`, so a root daemon that ran that file would let anything that
-runs as the user become root. The daemon holds WireGuard's device in its own process, so it
-needs no `wg` or `wireguard-go`. `ws mac apply` restarts it where a rebuilt `ws` changed the copy.
+The daemon, `ws client macos tunnel run`, runs as root from launchd, from boot and before any login,
+through `/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist`. `ws client macos apply` copies
+`ws` from `~/.local/bin`, which a run makes first if missing, to `/usr/local/libexec/ws-tunnel/ws`
+as root's. The user owns `~/.local/bin`, so a root daemon that ran that file would let anything that
+runs as the user become root. The daemon holds WireGuard's device in its own process, so it needs no
+`wg` or `wireguard-go`. `ws client macos apply` restarts it where a rebuilt `ws` changed the copy.
 
 The daemon's settings are in `/etc/ws-tunnel`, which only root reads. They are the Mac's key, which
-`ws mac tunnel key` makes once, `tunnel.conf` and `routes.d`, below. `ws mac apply` keeps the public
-key in `~/.config/ws/tunnel.pub`, which the wizard reads, and copies `tunnel.conf` from `mac.conf`,
-so the daemon reads no file the user can write. In System Settings › General › Login Items &
-Extensions, its "Allow in the Background" must stay on.
+`ws client macos tunnel key` makes once, `tunnel.conf` and `routes.d`, below. `ws client macos
+apply` keeps the public key in `~/.config/ws/tunnel.pub`, which the wizard reads, and copies
+`tunnel.conf` from `mac.conf`, so the daemon reads no file the user can write. In System Settings ›
+General › Login Items & Extensions, its "Allow in the Background" must stay on.
 
 The tunnel's end on the Mac is `10.99.0.2`, on a utun of wireguard-go's, and ws's is `10.99.0.1`.
 The daemon fixes both, and `mac.conf` sets neither. So a run of the `wireguard` role stops where its
@@ -246,7 +245,7 @@ to 5 s a way. A way that comes back while the Mac's addresses stay as they were 
 next change or failure.
 
 ```sh
-sudo /usr/local/libexec/ws-tunnel/ws mac tunnel status
+sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status
 ```
 
 prints the way in use, its endpoint, the latest handshake and the bytes moved.
@@ -266,9 +265,9 @@ iperf3 -s
 
 then, on the Mac, compare `iperf3 -c 10.99.0.1` with `iperf3 -c 10.77.0.1`, each with `-R` too, and
 delete the two rules after. Bulk copies run at that speed: for faster ones, give rsync a direct way,
-such as `rsync -e 'ssh -o HostName=ADDRESS -o Port=PORT' -a DIR ws:`. Besides, check `ws mac tunnel
-status` docked, on the home Wi-Fi and on a phone's hotspot, and `ethtool CABLE_INTERFACE` on ws, for
-2500Mb/s.
+such as `rsync -e 'ssh -o HostName=ADDRESS -o Port=PORT' -a DIR ws:`. Besides, check `ws client
+macos tunnel status` docked, on the home Wi-Fi and on a phone's hotspot, and `ethtool
+CABLE_INTERFACE` on ws, for 2500Mb/s.
 
 ## Routes and resolvers of another repository
 
@@ -276,20 +275,22 @@ A private repository's own script for the Mac can send more networks through the
 domain's names to nameservers behind it. It calls `ws`, which changes only what you give it.
 `--check` makes each print its diffs and change nothing:
 
-- `ws mac tunnel routes [--check] NAME CIDR...`, which writes the IPv4 networks to
+- `ws client macos tunnel routes [--check] NAME CIDR...`, which writes the IPv4 networks to
   `/etc/ws-tunnel/routes.d/NAME` and has the daemon read them again. The daemon adds them to the
   peer's AllowedIPs and routes them into its utun, without closing a connection. It leaves out for
   the time being one that holds the endpoint in use, or one that holds a way's endpoint while none
   answers. `NAME` is of `a-z`, `0-9` and `-`, `mac-conf` aside. A network that overlaps the tunnel's
-  `10.99.0.0/24` or the cable's `10.77.0.0/30`, as `0.0.0.0/0` does, is refused. As in
-  `ws mac tunnel routes example 198.51.100.0/24`. - `ws mac resolver [--check] DOMAIN ADDRESS...`,
-  which writes `/etc/resolver/DOMAIN`, with up to 3 nameservers, so that macOS asks them for the
-  domain's names (resolver(5)), and takes the file at once. - `ws mac tunnel loaded`, which says
-  whether the daemon is loaded, so that the script can stop with "run ws mac apply first".
+  `10.99.0.0/24` or the cable's `10.77.0.0/30`, as `0.0.0.0/0` does, is refused. As in `ws client
+  macos tunnel routes example 198.51.100.0/24`. - `ws client macos resolver [--check] DOMAIN
+  ADDRESS...`, which writes `/etc/resolver/DOMAIN`, with up to 3 nameservers, so that macOS asks
+  them for the domain's names (resolver(5)), and takes the file at once. - `ws client macos tunnel
+  loaded`, which says whether the daemon is loaded, so that the script can stop with "run ws client
+  macos apply first".
 
-With no network or address, each removes its file, `ws mac resolver` only a file it wrote. The files
-outlive the daemon. While the daemon is stopped, the routes go with its utun, and the domain's
-lookups go out by the Mac's own network and fail. ufw on ws forwards from the tunnel only ping, and
-what the `ikeward` role lets through to its VPN ([Forwarding](ikeward.md#forwarding)). Any other
-network behind ws needs its side set up on ws too. A network the Mac is on, inside one sent into the
-tunnel, keeps its part off the tunnel: macOS routes the narrower network to the Mac's own interface.
+With no network or address, each removes its file, `ws client macos resolver` only a file it wrote.
+The files outlive the daemon. While the daemon is stopped, the routes go with its utun, and the
+domain's lookups go out by the Mac's own network and fail. ufw on ws forwards from the tunnel only
+ping, and what the `ikeward` role lets through to its VPN ([Forwarding](ikeward.md#forwarding)). Any
+other network behind ws needs its side set up on ws too. A network the Mac is on, inside one sent
+into the tunnel, keeps its part off the tunnel: macOS routes the narrower network to the Mac's own
+interface.

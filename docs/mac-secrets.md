@@ -2,17 +2,18 @@
 
 The secrets of the roles are one file, `/etc/ws/secrets.age` on ws ([ws's file](#wss-file)): TOML
 that age encrypts, in armor. The Mac keeps neither it nor its identity. Git never holds it. `ws
-server apply --secrets` decrypts it in its process ([The secrets file](shell.md#the-secrets-file)).
-A value is never in an error, a plan or a diff: they name kinds, names, keys and paths.
+server ubuntu apply --secrets` decrypts it in its process ([The secrets
+file](shell.md#the-secrets-file)). A value is never in an error, a plan or a diff: they name kinds,
+names, keys and paths.
 
 ## From the Mac
 
-`ws mac secrets` runs its own of `ws server secrets` on ws, as root, through the wizard's ssh and
-its way to root ([ws's file](#wss-file)). So `ws mac secrets init` makes the identity on ws. A value
-goes on ssh's standard input, never in an argument. Where ws's sudo asks a password, a command
-that reads its value from standard input asks it at the terminal, `/dev/tty`, and fails, saying
-why, with none. With ws out of reach, a command says so and fails. The Configure screen sets the
-secrets the same way ([The Configure screen](tui-configure.md)).
+`ws client macos secrets` runs its own of `ws server ubuntu secrets` on ws, as root, through the
+wizard's ssh and its way to root ([ws's file](#wss-file)). So `ws client macos secrets init` makes
+the identity on ws. A value goes on ssh's standard input, never in an argument. Where ws's sudo asks
+a password, a command that reads its value from standard input asks it at the terminal, `/dev/tty`,
+and fails, saying why, with none. With ws out of reach, a command says so and fails. The Configure
+screen sets the secrets the same way ([The Configure screen](tui-configure.md)).
 
 ## Editing
 
@@ -21,14 +22,14 @@ through a renamed temporary file, mode 600. No plain file is made, and no editor
 the result again and refuses what a parse refuses, before it writes. Its references stay as written.
 
 ```sh
-ws mac secrets set token github                 # also azure_devops
-ws mac secrets set env MY_TOKEN                 # any shell name
-ws mac secrets set password vpn_p12
-ws mac secrets set git https://git.example.com --username bob --proactive-auth
-ws mac secrets set file vpn_p12 vpnclient.p12   # vpn_sswan too: the file whole
-ws mac secrets set file vpn_sswan <ws.sswan     # or the file on standard input
-ws mac secrets unset env MY_TOKEN
-ws mac secrets keys
+ws client macos secrets set token github                 # also azure_devops
+ws client macos secrets set env MY_TOKEN                 # any shell name
+ws client macos secrets set password vpn_p12
+ws client macos secrets set git https://git.example.com --username bob --proactive-auth
+ws client macos secrets set file vpn_p12 vpnclient.p12   # vpn_sswan too: the file whole
+ws client macos secrets set file vpn_sswan <ws.sswan     # or the file on standard input
+ws client macos secrets unset env MY_TOKEN
+ws client macos secrets keys
 ```
 
 A value comes from a prompt with no echo at a terminal, else from standard input, less one trailing
@@ -37,30 +38,30 @@ input whole without one, but not a terminal. A git entry takes the token so, and
 username and proactive auth: one left out keeps the entry's. `unset` fails where the entry is
 missing. A name that ws does not know fails, and the error lists the kind's names. `keys` prints a
 `KIND NAME` line per entry, sorted, and `git URL` for a server: never a value. `set` without ws's
-credential fails and names `ws server secrets init`.
+credential fails and names `ws server ubuntu secrets init`.
 
 ## The run
 
-The run stage of `ws mac wizard` runs `--secrets` on ws's file, and sends nothing from the Mac
-([ws's run](mac-wizard.md#wss-run)). The file's SHA-256 is in the run's stamp, so a changed file
+The run stage of `ws client macos wizard` runs `--secrets` on ws's file, and sends nothing from the
+Mac ([ws's run](mac-wizard.md#wss-run)). The file's SHA-256 is in the run's stamp, so a changed file
 runs the stage again.
 
 ## ws's file
 
-`ws server secrets` keeps the file on ws, root's and mode 600, and runs as root alone. Its `set`,
-`unset` and `keys` are those above. `init` makes the identity in memory and gives it to
+`ws server ubuntu secrets` keeps the file on ws, root's and mode 600, and runs as root alone. Its
+`set`, `unset` and `keys` are those above. `init` makes the identity in memory and gives it to
 `systemd-creds encrypt --with-key=host` on its standard input. ws writes what that prints as the
-credential `/etc/credstore.encrypted/ws-secrets`, mode 600 in a directory of 700. The host's key
-in `/var/lib/systemd` encrypts it, not the TPM's, which a change of firmware or of Secure Boot can
-lock out. Each command decrypts the identity by `systemd-creds decrypt` into memory. `init` keeps
-a credential and a file that are there. It refuses a file without the credential, which a new
-identity would not open. A unit reads the credential by `LoadCredentialEncrypted=ws-secrets`
-([The secrets file](shell.md#the-secrets-file)).
+credential `/etc/credstore.encrypted/ws-secrets`, mode 600 in a directory of 700. The host's key in
+`/var/lib/systemd` encrypts it, not the TPM's, which a change of firmware or of Secure Boot can lock
+out. Each command decrypts the identity by `systemd-creds decrypt` into memory. `init` keeps a
+credential and a file that are there. It refuses a file without the credential, which a new identity
+would not open. A unit reads the credential by `LoadCredentialEncrypted=ws-secrets` ([The secrets
+file](shell.md#the-secrets-file)).
 
 ```sh
-ws server secrets init
-ws server secrets set file vpn_sswan <ws.sswan
-ws server secrets keys
+ws server ubuntu secrets init
+ws server ubuntu secrets set file vpn_sswan <ws.sswan
+ws server ubuntu secrets keys
 ```
 
 ## The tables

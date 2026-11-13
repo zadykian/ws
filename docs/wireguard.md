@@ -5,9 +5,9 @@ The `wireguard` role sets up `wg0`, the server's end of a WireGuard tunnel for t
 each peer's public key is read from `/etc/wireguard`. It keeps Docker's containers from reaching
 the Mac through the tunnel or the cable.
 
-Its code is Go, in `roles/server/ubuntu/wireguard`, as steps of `ws server apply`. They check the
-settings, install `wireguard-tools`, `systemd` and `iptables`, and put in the drops that keep the
-containers off the Mac. Then they make the tunnel: the key, wg0's files, the firewall and the
+Its code is Go, in `roles/server/ubuntu/wireguard`, as steps of `ws server ubuntu apply`. They check
+the settings, install `wireguard-tools`, `systemd` and `iptables`, and put in the drops that keep
+the containers off the Mac. Then they make the tunnel: the key, wg0's files, the firewall and the
 reload of networkd. The last step shows the public key and waits for `wg0`. Without systemd booted,
 as in CI's container, the unit, networkd, ufw and the wait skip and say so.
 
@@ -37,7 +37,7 @@ line as `wg pubkey` prints it, in a directory only root reads:
 
 ```sh
 printf '%s\n' PUBLIC_KEY >/etc/wireguard/mac.pub
-ws server apply --only wireguard
+ws server ubuntu apply --only wireguard
 ```
 
 The Mac's scripts fix the peer's name, `mac`, and the tunnel's addresses: `10.99.0.1` for the
@@ -46,11 +46,11 @@ server and `10.99.0.2` for the Mac ([The Mac's tunnel](mac.md#the-macs-tunnel)).
 `mac`'s address `10.99.0.2`.
 
 The repository holds no peer's key, as access to a machine is granted on the machine, as SSH's
-`authorized_keys` is. Anyone may run `ws server apply`, and a key in the repository would let its peer
-into every machine set up from it. A peer without its file is left out of `wg0`, and the run names
-it. The run stops on a peer's name of other than lowercase letters, digits and dashes. It stops on
-an address outside the subnet, on the server's own or another peer's, and on a file that holds no
-key.
+`authorized_keys` is. Anyone may run `ws server ubuntu apply`, and a key in the repository would let
+its peer into every machine set up from it. A peer without its file is left out of `wg0`, and the
+run names it. The run stops on a peer's name of other than lowercase letters, digits and dashes. It
+stops on an address outside the subnet, on the server's own or another peer's, and on a file that
+holds no key.
 
 A change reaches `wg0` through `networkctl reload`, which sets up again only the links whose files
 changed: the uplink and the cable are left alone. A change of peers ends every session of the
@@ -81,7 +81,7 @@ Docker's chain `DOCKER-USER` jumps to first. It runs before Docker starts, at bo
 a run changes the drops, which last through Docker's restarts. Where the unit fails, Docker starts
 without them, and `systemctl status wireguard-docker-user` shows why.
 
-The drops take a change of `network_direct_link_interface` as the `wireguard` role next runs, so
-run `ws server apply --only network,wireguard` after one. Unless `security_outbound` is false, they
-are a second layer: the `security` role's table drops what the containers start through `wg0` or the
-cable too ([Outbound](security.md#outbound)).
+The drops take a change of `network_direct_link_interface` as the `wireguard` role next runs, so run
+`ws server ubuntu apply --only network,wireguard` after one. Unless `security_outbound` is false,
+they are a second layer: the `security` role's table drops what the containers start through `wg0`
+or the cable too ([Outbound](security.md#outbound)).

@@ -1,15 +1,14 @@
 # Ghostty and cld on the Mac
 
-Before the tunnel ([The Mac](mac.md)), `ws mac apply` sets up Ghostty, the Mac's terminal: Ghostty
-and the font its settings name, from Homebrew's casks, and the settings, `ws.ghostty`. Then it sets
-up [cld](https://github.com/zadykian/cld) wherever it runs, for `cld restore tabs`. After Ghostty
-quits or a window closes, a restore joins each pane's cld session again, and reopens what Ghostty
-did not bring back
-([Ghostty's tabs on a Mac](https://github.com/zadykian/cld/blob/main/docs/guide/ghostty-tabs.md)).
-Where Ghostty or cld can't be installed or updated, as when Homebrew or GitHub can't be reached, the
-script warns and goes on to the tunnel. So it does where Ghostty's config is not its to change, as
-below, but it stops where it can't write a file. `--check` notes each install, and shows each file
-as a diff.
+Before the tunnel ([The Mac](mac.md)), `ws client macos apply` sets up Ghostty, the Mac's terminal:
+Ghostty and the font its settings name, from Homebrew's casks, and the settings, `ws.ghostty`. Then
+it sets up [cld](https://github.com/zadykian/cld) wherever it runs, for `cld restore tabs`. After
+Ghostty quits or a window closes, a restore joins each pane's cld session again, and reopens what
+Ghostty did not bring back ([Ghostty's tabs on a
+Mac](https://github.com/zadykian/cld/blob/main/docs/guide/ghostty-tabs.md)). Where Ghostty or cld
+can't be installed or updated, as when Homebrew or GitHub can't be reached, the script warns and
+goes on to the tunnel. So it does where Ghostty's config is not its to change, as below, but it
+stops where it can't write a file. `--check` notes each install, and shows each file as a diff.
 
 ## Ghostty
 
@@ -117,9 +116,10 @@ hosts](mac.md#sshs-hosts) says how to lift the ban.
 
 A dropped ssh leaves Ghostty in the modes that Fresh, tmux and cld's sessions turned on, as their
 resets never reach the Mac. Each mouse move then types `^[[<35;42;17M` at the prompt, and some Ctrl
-keys arrive as escape codes. `ws mac apply` writes [`roles/client/macos/mac/zshrc`](../roles/client/macos/mac/zshrc) as
-`~/.config/ws/zshrc`, and adds `source ~/.config/ws/zshrc` at the end of `~/.zshrc`. It keeps the
-old file as `~/.zshrc.TIME~`, and warns where `~/.zshrc` is a link that lacks the line.
+keys arrive as escape codes. `ws client macos apply` writes
+[`roles/client/macos/mac/zshrc`](../roles/client/macos/mac/zshrc) as `~/.config/ws/zshrc`, and adds
+`source ~/.config/ws/zshrc` at the end of `~/.zshrc`. It keeps the old file as `~/.zshrc.TIME~`, and
+warns where `~/.zshrc` is a link that lacks the line.
 
 Before each prompt, the hook turns off the reports of the mouse, focus and the colour scheme, and
 modifyOtherKeys. It resets kitty's keyboard flags, the cursor keys, the keypad, and the cursor's

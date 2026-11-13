@@ -9,8 +9,8 @@ private address that answers, `10.250.0.2`. The cases are
 [rootless-checks.sh](../.github/rootless-checks.sh). Each refusal has a control that holds before
 ws runs.
 
-`ws server apply --only security,docker` runs twice, and the second run must change nothing. Then
-the user must keep `sudo`, leave `docker` and `lxd`, and have no cached password. The system's
+`ws server ubuntu apply --only security,docker` runs twice, and the second run must change nothing.
+Then the user must keep `sudo`, leave `docker` and `lxd`, and have no cached password. The system's
 socket must refuse it, and its own Docker must run a container that resolves names through
 slirp4netns's resolver and reaches the internet. The daemon and its containers must run in
 `docker.slice`, and the user's systemd must have `io`.
@@ -26,16 +26,16 @@ The firewall must hold under the rootless daemon:
   published on loopback.
 - A link at `~/.bashrc` is refused ([Shell](shell.md)).
 
-Then ws's secrets. `ws server secrets init` makes the credential, root's 600 in root's 700, and the
-file, root's 600. `set` takes a value on standard input, and `keys` names it but never prints it.
-The user can't run them. A unit with `LoadCredentialEncrypted=ws-secrets` runs
-`ws server apply --secrets --check`, and one without it fails: a container's systemd runs neither.
-`unset` drops the entry, and a second `init` keeps both files
-([ws's file](mac-secrets.md#wss-file)).
+Then ws's secrets. `ws server ubuntu secrets init` makes the credential, root's 600 in root's 700,
+and the file, root's 600. `set` takes a value on standard input, and `keys` names it but never
+prints it. The user can't run them. A unit with `LoadCredentialEncrypted=ws-secrets` runs `ws server
+ubuntu apply --secrets --check`, and one without it fails: a container's systemd runs neither.
+`unset` drops the entry, and a second `init` keeps both files ([ws's
+file](mac-secrets.md#wss-file)).
 
-Last, `ws server wizard`. With no terminal it stops where host_vars lacks a key. Then it runs
-`ws server apply` in a unit, with the credential, and a second run starts no unit. One after
-`ws server values set` changes host_vars starts one. The unit's ws is a stand-in that adds
+Last, `ws server ubuntu wizard`. With no terminal it stops where host_vars lacks a key. Then it runs
+`ws server ubuntu apply` in a unit, with the credential, and a second run starts no unit. One after
+`ws server ubuntu values set` changes host_vars starts one. The unit's ws is a stand-in that adds
 `--only shell` to apply, so that a full run, as its stamp has it, fits the job. The user's claude
 is a stand-in too, with a login
 ([The server's wizard](server-wizard.md)).

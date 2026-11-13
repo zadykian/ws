@@ -15,7 +15,7 @@ every machine. A packet it cannot parse fails the run, and only keys of version 
 repository that is no longer needed loses its `.sources` file and its key, and so do the sources
 that the repositories' own instructions add.
 
-The packages wait on the repositories: `ws server apply --check` says "after Devtools
+The packages wait on the repositories: `ws server ubuntu apply --check` says "after Devtools
 repositories" where a repository is still to come, as apt may not know the packages then. The
 libraries for Chromium go in without recommends.
 
@@ -44,9 +44,9 @@ postgres-language-server and docker-language-server are release binaries, each p
 `roles/server/ubuntu/devtools/binaries.go` by version and by SHA-256 for `amd64` and `arm64`. The
 role downloads the one for the machine, by the architecture that dpkg names, to `/usr/local/bin`,
 owned by root with mode 0755, so any `ws_user` can run it. A failed download is tried five times,
-ten seconds apart. A machine of another architecture fails the step. The settings name both by
-path, so Zed downloads neither. Fresh names them too.
-`ws server apply --only zed` does not install them: pass `--only devtools,zed`, or `devtools,fresh`.
+ten seconds apart. A machine of another architecture fails the step. The settings name both by path,
+so Zed downloads neither. Fresh names them too. `ws server ubuntu apply --only zed` does not install
+them: pass `--only devtools,zed`, or `devtools,fresh`.
 
 - docker-language-server's telemetry is off, and its experimental `removeOverlappingIssues` drops
   the diagnostics that rcjsuen's server also gives. Check the option on each bump.

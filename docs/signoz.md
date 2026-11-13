@@ -36,7 +36,7 @@ SigNoz keeps traces, metrics and logs for 90 days, `signoz_retention_days`; its 
 days, and 30 for metrics. The role sets it through SigNoz's API before anything is sent, as a change
 applies only to data that comes in after it. It sets it after SigNoz's schema migrator has finished
 too, as the migrator sets its own. Settings › General in the UI shows it; rules set there to keep
-some logs for another time stay. `ws server apply --check` reads it and reports what it would
+some logs for another time stay. `ws server ubuntu apply --check` reads it and reports what it would
 change, and skips it where SigNoz isn't running.
 
 ## The dashboards
@@ -82,6 +82,7 @@ for a newer release. It never removes a file, hence the `rm`.
 
 A new SigNoz may return the dashboards with fields added or dropped, and the role would then replace
 them on every run. So after changing SigNoz's image, unlock any dashboard locked in the UI, reported
-or not, as the refresh stops at one. Then run `ws server apply --only signoz`, refresh `host.json`
-and `claude.json` from SigNoz as `roles/server/ubuntu/signoz/dashboards/README.md` says, review their
-diff, and commit them with the casting. A second run must then leave both dashboards as they are.
+or not, as the refresh stops at one. Then run `ws server ubuntu apply --only signoz`, refresh
+`host.json` and `claude.json` from SigNoz as `roles/server/ubuntu/signoz/dashboards/README.md` says,
+review their diff, and commit them with the casting. A second run must then leave both dashboards as
+they are.

@@ -1,12 +1,11 @@
 # The wizard's lists
 
-[The list of steps](tui.md#the-list-of-steps) holds the keys these lists share. `ws mac wizard`
+[The list of steps](tui.md#the-list-of-steps) holds the keys these lists share. `ws client macos wizard`
 opens them at a terminal, and `--plain` or no terminal keeps its lines. `--check` goes straight to
 its run, on the run screen. `--update` runs ahead of any screen, on lines, as the new ws takes this
-one's place and opens them itself.
-`ws server wizard` opens one list, `ws`, where every stage runs, by the same rules
-([The server's wizard](server-wizard.md)). Its `configure` button opens `ws server configure`'s
-forms, and its `s` reads ws on ws.
+one's place and opens them itself. `ws server ubuntu wizard` opens one list, `ws`, where every stage
+runs, by the same rules ([The server's wizard](server-wizard.md)). Its `configure` button opens `ws
+server ubuntu configure`'s forms, and its `s` reads ws on ws.
 
 The wizard's stages are one queue, shown as two lists side by side: `Mac` and `ws`, by the machine
 a stage runs on. A narrow window stacks them, and one too short for that keeps the list in focus.
@@ -20,7 +19,8 @@ Shift-Tab walks back. Each list keeps its cursor. `a`, `n`, `i`, `p` and `/` act
 
 Each stage's box follows its steps, and `[-]` says that some are on. A stage run in part stays
 pending, and the detail says so. A stage that a chosen one waits on is locked as `[#]`, with its
-steps, as that one needs it whole. Cable locks ws mac apply too, whose steps it applies itself.
+steps, as that one needs it whole. Cable locks ws client macos apply too, whose steps it applies
+itself.
 
 ws's run with every step on and one of them ticked runs once more, whatever its last run left, as a
 step can drift after it. A lock alone leaves a good last run as it stands.
@@ -52,9 +52,9 @@ for the scan's end, as both read that machine. The screen changes nothing, so `q
 lists as they stood, with no new scan. `e` comes back to a new scan, which chooses the boxes again.
 The run's screen has no `s`, as ssh and the lock are the run's.
 
-The Mac's read is `ws mac state`'s, and ws's is `ws server state`'s, over ssh under the wizard's
-lock. sudo's password carries from the scan. A scan that stopped before it leaves the state screen
-to ask, and the run keeps the answer.
+The Mac's read is `ws client macos state`'s, and ws's is `ws server ubuntu state`'s, over ssh under
+the wizard's lock. sudo's password carries from the scan. A scan that stopped before it leaves the
+state screen to ask, and the run keeps the answer.
 
 A read that fails shows in the header and ends nothing. A Mac with no `mac.conf` fails so, and so
 does a ws at another version or with none. A first run's address, which the Host key stage asked,
@@ -67,8 +67,8 @@ cursor follows it across the lists. The strip holds what the run prints, and a w
 the strip shows the lists alone. The bar and the count are of stages. The keys and the stop are
 [the run screen's](tui.md#the-run-screen).
 
-A stage run in part leaves the rest out as a run does: ws mac apply's steps by the run's filter, and
-ws's roles by `--only` to `ws server apply`. A stop in ws's run ends the Mac's side alone. The unit
-goes on on ws, the run says so, and the next wizard follows it. Where that unit runs part of ws, the
-next wizard's other steps wait for its end. A signal ends with status 1, as in
+A stage run in part leaves the rest out as a run does: ws client macos apply's steps by the run's
+filter, and ws's roles by `--only` to `ws server ubuntu apply`. A stop in ws's run ends the Mac's
+side alone. The unit goes on on ws, the run says so, and the next wizard follows it. Where that unit
+runs part of ws, the next wizard's other steps wait for its end. A signal ends with status 1, as in
 [plain mode](tui.md#the-terminal-comes-back).

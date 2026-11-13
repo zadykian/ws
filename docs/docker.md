@@ -1,12 +1,11 @@
 # docker
 
 The `docker` role installs Docker Engine with its buildx and compose plugins, from Docker's apt
-repository, and writes `/etc/docker/daemon.json`. Its code is Go, in `roles/server/ubuntu/docker`, as
-steps of `ws server apply`. They are the repository, the packages, the check of the routes, the
-user's leaving the `docker` group, the configuration, the check of `docker0` and the user's rootless
-daemon. Docker's apt key is pinned by its SHA-256 in
-`repository.go`: a changed key fails the run. Without systemd booted, as in CI's container, the
-steps that need it skip and say so.
+repository, and writes `/etc/docker/daemon.json`. Its code is Go, in `roles/server/ubuntu/docker`,
+as steps of `ws server ubuntu apply`. They are the repository, the packages, the check of the
+routes, the user's leaving the `docker` group, the configuration, the check of `docker0` and the
+user's rootless daemon. Docker's apt key is pinned by its SHA-256 in `repository.go`: a changed key
+fails the run. Without systemd booted, as in CI's container, the steps that need it skip and say so.
 
 ## Logs and restarts
 

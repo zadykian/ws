@@ -185,8 +185,8 @@ alone: as a home file (`Account.File`, `Account.Dir`), a removal (`Account.Absen
 read (`User.ReadHome`). Each refuses a link at the file, or at a directory between the home and it,
 and names the link and its target. The `claude` role acts as `ws_user` for its reads and writes
 there, so a link reaches only what the user could reach: `settings.json` may link into a clone of
-dotfiles. `ws server state` goes past a step that fails, so it reports no step that a refusal
+dotfiles. `ws server ubuntu state` goes past a step that fails, so it reports no step that a refusal
 covers. Replace the link with the file itself. The check looks as the step plans, and a home file or
-a removal looks again as it applies. A link made after that fails at the write: `ws server apply`
-makes its writes under `ws_home` through an `os.Root`, which refuses a link that leaves the home.
-Its reads, `cat`, `rm` and `git` stay outside that bound.
+a removal looks again as it applies. A link made after that fails at the write: `ws server ubuntu
+apply` makes its writes under `ws_home` through an `os.Root`, which refuses a link that leaves the
+home. Its reads, `cat`, `rm` and `git` stay outside that bound.

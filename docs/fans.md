@@ -38,15 +38,15 @@ mokutil --import /var/lib/shim-signed/mok/MOK.der       # asks for a one-time pa
 reboot                                                  # MOK manager: Enroll MOK, the password
 ```
 
-Then run `ws server apply` again, or `modprobe nct6687 && systemctl restart ws-fans`.
+Then run `ws server ubuntu apply` again, or `modprobe nct6687 && systemctl restart ws-fans`.
 
 ## ws-fans
 
-`ws-fans.service` runs `ws server fans`, from a copy of ws in `/usr/local/lib/ws-fans`: an update
-of ws leaves the running service alone until the next run. It reads `/etc/ws-fans.json`, which
-the role writes from its variables, below. The daemon's own loader checks a new config before the
-role writes it. A change to the copy, the config or the unit restarts the service. Without systemd
-running, as in CI's container, the role leaves the unit and the modules alone. The log,
+`ws-fans.service` runs `ws server ubuntu fans`, from a copy of ws in `/usr/local/lib/ws-fans`: an
+update of ws leaves the running service alone until the next run. It reads `/etc/ws-fans.json`,
+which the role writes from its variables, below. The daemon's own loader checks a new config before
+the role writes it. A change to the copy, the config or the unit restarts the service. Without
+systemd running, as in CI's container, the role leaves the unit and the modules alone. The log,
 `journalctl -u ws-fans`, says when a sensor or a fan goes missing or comes back.
 
 Every second it reads each sensor, moves each curve, and steps each fan towards its curve's speed:
@@ -108,4 +108,4 @@ System Fan #3 to #6 are left out, so the board's curves drive them.
 - `fans_interval`: the tick, in seconds.
 
 With `nct6687` loaded, node_exporter reads the fans' speeds too, for SigNoz ([otelcol](otelcol.md)).
-`ws server apply --check` builds no driver, and says what it would build.
+`ws server ubuntu apply --check` builds no driver, and says what it would build.
