@@ -13,11 +13,19 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
+// Store is where the form reads and writes host_vars: ws's session, whose operations run on ws.
+type Store interface {
+	// Values reads the file, empty where it is missing.
+	Values(ctx context.Context) ([]byte, error)
+	// SetValues writes each KEY=VALUE pair of pairs into the file in one login.
+	SetValues(ctx context.Context, pairs []string) error
+}
+
 // VarsForm is ws's host_vars as a form: the keys that a line holds, with what the file gives each.
 // A table stays the file's to edit by hand. The file is root's on ws, so the files script reads it.
 type VarsForm struct {
 	// Ws is the session whose operations read and write the file.
-	Ws *Session
+	Ws Store
 	// file is what host_vars gave at the last load.
 	file values.Values
 }
