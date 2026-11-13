@@ -52,11 +52,11 @@ func TestARunOfAQueueFollowsItsStages(t *testing.T) {
 
 func TestTheOutputOfAQueueRunFitsItsStrip(t *testing.T) {
 	q := testQueueRun()
-	if got, want := q.run.output.Size, inside(stripSize(widget.Size{Width: 100, Height: 30})); got != want {
+	if got, want := q.run.Output().Size, inside(stripSize(widget.Size{Width: 100, Height: 30})); got != want {
 		t.Errorf("output %v, want %v", got, want)
 	}
-	if q = queueRunSent(q, haltedMsg{}); q.run.output.Size != inside(stripSize(widget.Size{Width: 100, Height: 30})) {
-		t.Errorf("past a stop, output %v", q.run.output.Size)
+	if q = queueRunSent(q, haltedMsg{}); q.run.Output().Size != inside(stripSize(widget.Size{Width: 100, Height: 30})) {
+		t.Errorf("past a stop, output %v", q.run.Output().Size)
 	}
 	if got := queueRunShown(q); !strings.Contains(got, "Stopping after Tools") {
 		t.Errorf("frame:\n%s", got)
@@ -75,7 +75,7 @@ func TestThePagesOfAQueueRunMoveItsStrip(t *testing.T) {
 	for range 40 {
 		q = queueRunSent(q, widget.Line{Kind: widget.Said, Text: "installs the tools"})
 	}
-	if got, want := queueRunSent(q, pgUp).run.output.Back, inside(stripSize(widget.Size{Width: 100, Height: 30})).Height; got != want {
+	if got, want := queueRunSent(q, pgUp).run.Output().Back, inside(stripSize(widget.Size{Width: 100, Height: 30})).Height; got != want {
 		t.Errorf("back = %d, want %d", got, want)
 	}
 }

@@ -52,7 +52,7 @@ func (q QueueRun) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // layout is the run's screen with the lists in place of its panes, and its output in the strip.
 func (q QueueRun) layout() widget.Layout {
 	l := q.run.Layout()
-	output := widget.Pane{Title: l.Panes[1].Title, Body: q.run.Output(), Focused: true}
+	output := widget.Pane{Title: l.Panes[1].Title, Body: q.run.Output().View(), Focused: true}
 	l.Panes, l.Below = q.list.panes(), strip(q.run.Theme(), output, q.run.Window())
 	return l
 }

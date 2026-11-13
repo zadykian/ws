@@ -119,9 +119,9 @@ func (r RunScreen) OutputIn(pane func(window widget.Size) widget.Size) RunScreen
 	return r
 }
 
-// Output is what the screen shows in its output window.
-func (r RunScreen) Output() string {
-	return r.output.View()
+// Output is the window on what the run prints.
+func (r RunScreen) Output() widget.OutputPane {
+	return r.output
 }
 
 // Theme is the theme that styles the screen.
