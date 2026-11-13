@@ -66,3 +66,15 @@ func TestSSHStopsWhereSSHReadsAServerAtAnotherAddress(t *testing.T) {
 		t.Errorf("Plan err = %v, want a refusal of lab's address", err)
 	}
 }
+
+func TestSSHStopsWhereABlockNamesASecondServer(t *testing.T) {
+	m := sshMachine()
+	withLab(m, "WS_TARGET=cloud\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22\nWS_USER=root\nWS_SLOT=1\n")
+	m.Files["/h/.ssh/config"] = []byte("Include config.d/ws\nHost lab\n  User x\n")
+	c := sshConf(m, &effecttest.Out{})
+	c.MacConf = macConf
+	_, err := c.Step().Plan(context.Background())
+	if err == nil || !strings.Contains(err.Error(), "Host lab, sets its own values for lab:") {
+		t.Errorf("Plan err = %v, want a stop at the block for lab", err)
+	}
+}
