@@ -73,7 +73,7 @@ func (n *Networks) Report(ctx context.Context) ([]step.Item, error) {
 }
 
 func (n *Networks) routes(ctx context.Context) ([]step.Change, error) {
-	r := Routes{Set: "mac-conf", Networks: strings.Fields(n.Conf.TunnelNetworks), M: n.M, Check: n.Check}
+	r := Routes{Set: "mac-conf", Networks: strings.Fields(n.Conf.TunnelNetworks), M: n.M, Out: n.Out, Check: n.Check}
 	return r.changes(ctx)
 }
 
