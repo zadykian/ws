@@ -26,7 +26,7 @@ func macSide(c *cobra.Command, p cli.Env) wizardSide {
 	return wizardSide{
 		stages: wizardStages,
 		pid:    p.Pid,
-		forms:  macForms(c, p),
+		forms:  macForms(c.InOrStdin(), c.ErrOrStderr(), p),
 		read: func(side string, sudo *host.Sudo) (tui.StateReader, func(context.Context)) {
 			return macState(p, side, sudo)
 		},

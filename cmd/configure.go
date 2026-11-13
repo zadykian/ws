@@ -2,11 +2,10 @@ package cmd
 
 import (
 	"context"
-	"errors"
+	"io"
 
 	"github.com/spf13/cobra"
 
-	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/form"
@@ -24,33 +23,16 @@ func newConfigureCmd(p cli.Env) *cobra.Command {
 			"writes them on Ctrl-S. Ctrl-N goes to ws's secrets, which show as set or not, never their values, " +
 			"then to ws's host_vars, both read over ssh. It needs a terminal: anywhere else, edit the file by hand.",
 		Args: cobra.NoArgs,
-		RunE: func(c *cobra.Command, _ []string) error { return runConfigure(c, p) },
+		RunE: cli.Configure(macTarget(p, new([]string)), p),
 	}
-}
-
-// runConfigure draws the form. A form has no lines to fall back on, so it refuses where no screen
-// draws. A mac.conf that it can't show stops it on the terminal, before the screen.
-func runConfigure(c *cobra.Command, p cli.Env) error {
-	if why := wizardRefusal(p); why != "" {
-		return errors.New(why)
-	}
-	if !engine.DrawsScreen(cli.CallOf(c, p)) {
-		return errors.New("it needs a terminal and no --plain: anywhere else, edit mac.conf by hand")
-	}
-	sheets, done, err := macForms(c, p)(c.Context())
-	if err != nil {
-		return err
-	}
-	defer done(c.Context())
-	return tui.Configure(c.Context(), engine.ScreenConfig(cli.CallOf(c, p)), c.CommandPath(), sheets...)
 }
 
 // macForms gives the forms' sheets, for ws client macos configure and the wizard's list, and done,
 // which lets go of ws once they have ended.
-func macForms(c *cobra.Command, p cli.Env) func(context.Context) ([]tui.Sheet, func(context.Context), error) {
+func macForms(in io.Reader, errw io.Writer, p cli.Env) func(context.Context) ([]tui.Sheet, func(context.Context), error) {
 	return func(context.Context) ([]tui.Sheet, func(context.Context), error) {
 		form := conf.Form{Conf: confPath(p.Getenv, p.Pwd), Defaults: shellDefaults(), M: p.Machine}
-		form, err := form.Load(effect.NewTerminal(c.InOrStdin(), c.ErrOrStderr()))
+		form, err := form.Load(effect.NewTerminal(in, errw))
 		if err != nil {
 			return nil, nil, err
 		}
