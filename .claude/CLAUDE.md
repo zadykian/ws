@@ -28,8 +28,8 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   `zsh/files/zshrc`, the zsh hook that turns off the modes that a drop leaves on.
 - The pages sit beside their code, as the `README.md` of a role or a package. A second page stands
   beside one where the cap keeps two apart: `zed/projects.md`, `network/router.md`,
-  `.github/workflows/rootless.md` and `mac-cld.md`. `.tools/README.md` holds the gates and
-  `.github/workflows/README.md` CI.
+  `.github/workflows/rootless.md`, `mac-cld.md` and `mac-servers.md`. `.tools/README.md` holds the
+  gates and `.github/workflows/README.md` CI.
 - `.tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
   caps them. `build` builds ws for a target, and `vale-comments` runs Vale on files' comments. Go's
   `./...` leaves out a dot directory, so the Go gates name the tools' packages too. `lint/` holds
