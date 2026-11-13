@@ -17,6 +17,8 @@
 # tunnel once. The closing list must name no step of the tunnel.
 
 set -u
+# shellcheck source=.github/mac-conf.sh
+. "$(dirname "$0")/../mac-conf.sh"
 
 wsbin=$HOME/.local/bin/ws
 tmp=${TMPDIR:-/tmp}
@@ -79,9 +81,10 @@ sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status | grep -q '^late
 ! grep -q 'WireGuard public key' "$RUNNER_TEMP/run.out" || error "ws client macos wizard printed ws client macos apply's key"
 printf '%s\n' "WS_USER=$(id -un)" WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' \
     WS_TARGET=lan WS_LAN= WS_GIT_NAME= WS_TUNNEL_NETWORKS= WS_RESOLVERS= \
-    "WS_PUBLIC_KEY=$(cat "$RUNNER_TEMP/ws/wg0")" |
-    cmp -s - ~/.config/ws/mac.conf ||
+    "WS_PUBLIC_KEY=$(cat "$RUNNER_TEMP/ws/wg0")" >"$RUNNER_TEMP/run.conf"
+conf_print ~/.config/ws/mac.conf | cmp -s - "$RUNNER_TEMP/run.conf" ||
     error "ws client macos wizard wrote another mac.conf than standin.sh's lines, the answers and wg0's key"
+rm "$RUNNER_TEMP/run.conf"
 if [ "$(sed -n 2p "$RUNNER_TEMP/run.out")" != 'What stays by hand:' ] ||
     grep -qi 'tunnel' "$RUNNER_TEMP/run.out"; then
     error "ws client macos wizard listed nothing by hand, or a step of the tunnel"
