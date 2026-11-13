@@ -23,6 +23,8 @@ type SSH struct {
 	Home string
 	// Ways finds the direct way to ws. Nil means none, and ssh leads through config.d/ws.
 	Ways Ways
+	// Host is the server's name, its Host in config.d/ws, which every call names.
+	Host string
 }
 
 // First returns the address that a stage asked, or an empty string.
@@ -64,7 +66,7 @@ func (s SSH) room() bool {
 }
 
 // Shared returns the options that every call needs, with the master's socket in the lock. ssh stops
-// where known_hosts lacks ws's key, or holds another, and adds nothing there. The first call opens
+// where known_hosts lacks the server's key, or holds another, and adds nothing there. The first call opens
 // a master connection for the calls after it, so a key that asks Touch ID at each login, as
 // Secretive's does, asks once a run.
 //   - A call that uses a master takes the master's options, so those that every caller needs are
@@ -81,7 +83,7 @@ func (s SSH) Shared(socket string) []string {
 		"-o", "CheckHostIP=no", "-o", "ServerAliveInterval=15", "-o", "PermitLocalCommand=no")
 }
 
-// Argv returns ssh's arguments for a direct call, whose host in args is ws.
+// Argv returns ssh's arguments for a direct call, whose host in args is the server.
 //   - The way's host and port go before args as options, over config.d/ws's, which leads through the
 //     tunnel. The address that a stage asked replaces the way's host.
 //   - AddressFamily=inet goes on every call: the ways are IPv4 by conf and WS_REMOTE takes IPv4 alone.

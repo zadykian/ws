@@ -24,7 +24,7 @@ func macSession(m *effecttest.Machine, ssh remote.SSH, out *effecttest.Out, stat
 
 func TestWsClaudeLoginTakesTheTerminal(t *testing.T) {
 	m := effecttest.NewMachine()
-	ws := macSession(m, remote.SSH{M: m, F: m, Lock: "/l"}, &effecttest.Out{}, session.Status{Claude: "login"})
+	ws := macSession(m, remote.SSH{Host: "ws", M: m, F: m, Lock: "/l"}, &effecttest.Out{}, session.Status{Claude: "login"})
 	c := &stages.WsClaude{Ws: ws, Tty: true}
 	_ = c.Apply(context.Background(), step.Plan{})
 	got := callsWith(m, `claude auth login`)
@@ -36,7 +36,7 @@ func TestWsClaudeLoginTakesTheTerminal(t *testing.T) {
 func TestWsClaudeApply(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\nWS_USER=ada\n")
-	ws := macSession(m, remote.SSH{M: m, Lock: "/l", Ways: MacWays{M: m, Conf: "/h/mac.conf"}}, &effecttest.Out{},
+	ws := macSession(m, remote.SSH{Host: "ws", M: m, Lock: "/l", Ways: MacWays{M: m, Conf: "/h/mac.conf"}}, &effecttest.Out{},
 		session.Status{Claude: "login"})
 	if err := (&stages.WsClaude{Ws: ws}).Apply(context.Background(), step.Plan{}); err == nil ||
 		!strings.Contains(err.Error(), "no terminal") {
