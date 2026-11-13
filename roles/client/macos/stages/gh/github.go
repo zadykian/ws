@@ -1,4 +1,4 @@
-package wizard
+package gh
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 // MacGitHub is the Mac's gh login, which lists and adds the key. ws's own gh holds no token that may
 // add it. The stage runs after the gh stage, which makes the login.
 type MacGitHub struct {
-	Gh GhCLI
+	Gh CLI
 	// Lock is the run's lock, which holds the key's file for gh.
 	Lock string
 	// Check is set under --check, where the gh stage is pending and has not made the login yet.

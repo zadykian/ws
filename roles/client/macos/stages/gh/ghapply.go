@@ -1,4 +1,4 @@
-package wizard
+package gh
 
 import (
 	"context"
@@ -57,7 +57,7 @@ func (g *Gh) add(ctx context.Context, c ghAdd) error {
 	if err != nil {
 		return err
 	}
-	_, key, err := g.key(ctx)
+	_, key, err := g.Key(ctx)
 	if err != nil {
 		return err
 	}

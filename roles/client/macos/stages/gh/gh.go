@@ -1,4 +1,6 @@
-package wizard
+// Package gh is the wizard stage that logs the Mac in to GitHub with gh and adds the Mac key to the
+// account.
+package gh
 
 import (
 	"context"
@@ -22,7 +24,7 @@ const ghScopes = "write:public_key,write:ssh_signing_key"
 // Ubuntu's installer imports for ws's user. setup's git step, which runs after, adds git's signing
 // key with that login.
 type Gh struct {
-	GhCLI
+	CLI
 	// Tty tells whether a terminal is there for gh's device flow.
 	Tty bool
 	// F runs gh's login, which shows a code and waits. Nil means M.Pass.
@@ -32,8 +34,8 @@ type Gh struct {
 	added bool
 }
 
-// GhCLI is the Mac's gh, as the stages that read its login and the Mac's key run it.
-type GhCLI struct {
+// CLI is the Mac's gh, as the stages that read its login and the Mac's key run it.
+type CLI struct {
 	// Conf is mac.conf's path, and Home the user's.
 	Conf, Home string
 	// LookPath finds a program on PATH.
@@ -80,7 +82,7 @@ func (c ghLater) String() string {
 }
 
 // ghPath returns the path of gh, and the change that installs it where PATH has none.
-func (g GhCLI) ghPath(ctx context.Context) (string, []step.Change, error) {
+func (g CLI) ghPath(ctx context.Context) (string, []step.Change, error) {
 	path, install, err := setup.FindGh(ctx, g.M, g.look)
 	if err != nil {
 		return "", nil, fmt.Errorf("%s: %w", stage.GitHub, err)
@@ -91,7 +93,7 @@ func (g GhCLI) ghPath(ctx context.Context) (string, []step.Change, error) {
 	return path, nil, nil
 }
 
-func (g GhCLI) look(name string) (string, error) {
+func (g CLI) look(name string) (string, error) {
 	if g.LookPath != nil {
 		return g.LookPath(name)
 	}

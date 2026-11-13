@@ -3,11 +3,12 @@ package wizard
 import (
 	"context"
 	"errors"
-	"github.com/zadykian/ws/engine/core/remote"
-	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/remote"
+	"github.com/zadykian/ws/roles/client/macos/stages/gh"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 )
 
 const loginCall = "ssh -o ControlMaster=auto -o ControlPath=/l/direct -o ControlPersist=30m " +
@@ -21,7 +22,7 @@ func newLogin(login effecttest.Result) (*Login, *effecttest.Machine) {
 	m.Results["ssh-keygen -F ws -f "+hostsOf] = effecttest.Result{}
 	m.Results[loginCall] = login
 	ws := macSession(m, h.SSH, h.Out.(*effecttest.Out), session.Status{})
-	return &Login{SSH: h.SSH, Ws: ws, Gh: GhCLI{Conf: "/h/mac.conf", Home: "/h", M: m, Out: h.Out}, Tty: h.Tty, Env: h.Env, P: h.P, Out: h.Out}, m
+	return &Login{SSH: h.SSH, Ws: ws, Gh: gh.CLI{Conf: "/h/mac.conf", Home: "/h", M: m, Out: h.Out}, Tty: h.Tty, Env: h.Env, P: h.P, Out: h.Out}, m
 }
 
 // sshFailed is the error of a failed ssh, whose stderr ends each line with \r\n.

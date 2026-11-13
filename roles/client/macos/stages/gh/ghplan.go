@@ -1,4 +1,4 @@
-package wizard
+package gh
 
 import (
 	"context"
@@ -20,7 +20,7 @@ func (g *Gh) Plan(ctx context.Context) (step.Plan, error) {
 		_, err := g.M.Run(ctx, path, "auth", "status", "-h", "github.com")
 		login = err != nil
 	}
-	pub, key, err := g.key(ctx)
+	pub, key, err := g.Key(ctx)
 	var missing noKey
 	if errors.As(err, &missing) {
 		// The Mac's key is yet to be made: say so under --check, and fail in Apply, as sh did.

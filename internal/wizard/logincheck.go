@@ -4,6 +4,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/remote"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/client/macos/stages/gh"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 )
@@ -17,7 +18,7 @@ type Login struct {
 	SSH remote.SSH
 	Ws  *session.Session
 	// Gh names the Mac's key in the stop.
-	Gh GhCLI
+	Gh gh.CLI
 	// Tty tells whether a terminal is there to ask ws's address, where ws doesn't answer at its way.
 	// Check is set under --check, which asks nothing.
 	Tty, Check bool

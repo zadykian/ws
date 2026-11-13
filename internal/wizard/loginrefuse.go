@@ -22,7 +22,7 @@ func (r *Login) refuse(ctx context.Context, w remote.Way, sshErr string) error {
 			"to ws%s", stage.Login, w.User, sshErr)
 		return nil
 	}
-	pub, _, err := r.Gh.key(ctx)
+	pub, _, err := r.Gh.Key(ctx)
 	if err != nil {
 		return fmt.Errorf("%s: the Mac's key for ws has no .pub", stage.Login)
 	}

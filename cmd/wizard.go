@@ -16,6 +16,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/roles/client/macos/stages/answers"
+	"github.com/zadykian/ws/roles/client/macos/stages/gh"
 	"github.com/zadykian/ws/roles/client/macos/stages/keys"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -95,7 +96,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	if check {
 		later = scratch
 	}
-	gh := &wizard.Gh{GhCLI: wizard.GhCLI{Conf: later, Home: p.getenv("HOME"), M: p.machine, Out: out}, Tty: p.tty, F: e.talks}
+	ghStage := &gh.Gh{CLI: gh.CLI{Conf: later, Home: p.getenv("HOME"), M: p.machine, Out: out}, Tty: p.tty, F: e.talks}
 	host := &wizard.HostKey{Conf: later, Lock: lock, Tty: p.tty, Check: check, Env: p.lookup,
 		SSH: remote.SSH{M: p.machine, F: e.talks, Lock: lock, Home: p.getenv("HOME"),
 			Ways: wizard.MacWays{M: p.machine, Conf: later}}, M: p.machine, P: ask, Out: out}
@@ -106,9 +107,9 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	install := &wizard.WsInstall{Ws: ws, Version: p.version, URL: p.releases, Out: out}
 	run := &stages.WsRun{Ws: ws, Await: install.Name(), Check: check, Out: out, Version: p.version, Update: o.update, Only: o.only}
 	hand.Late(ws.Hand)
-	hand.Late(gh.Hand)
+	hand.Late(ghStage.Hand)
 	setup := wizardSetup(e, o.left, later)
-	login := &wizard.Login{SSH: host.SSH, Ws: ws, Gh: gh.GhCLI, Tty: p.tty, Check: check, Env: p.lookup, P: ask, Out: out}
+	login := &wizard.Login{SSH: host.SSH, Ws: ws, Gh: ghStage.CLI, Tty: p.tty, Check: check, Env: p.lookup, P: ask, Out: out}
 	cable := &wizard.Cable{Ws: ws, SSH: host.SSH, Conf: later, Check: check, RunDone: run.RunDone,
 		MacApply: setup.Run, Env: p.lookup, P: ask, Prog: prog, Tty: p.tty, M: p.machine, Out: out}
 	hand.Late(cable.Hand)
@@ -120,7 +121,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 		&keys.MacKey{Conf: later, Home: p.getenv("HOME"),
 			Lock: lock, Tty: p.tty,
 			M: p.machine, P: ask, Out: out, Sleep: time.Sleep},
-		gh,
+		ghStage,
 		setup,
 		host,
 		login,
@@ -128,7 +129,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 		install,
 		run,
 		&stages.WsClaude{Ws: ws, Tty: p.tty},
-		&stages.Signing{Ws: ws, GitHub: &wizard.MacGitHub{Gh: gh.GhCLI, Lock: lock, Check: check}},
+		&stages.Signing{Ws: ws, GitHub: &gh.MacGitHub{Gh: ghStage.CLI, Lock: lock, Check: check}},
 		&wizard.Tunnel{SSH: host.SSH, Ws: ws, Conf: later, Check: check, MacApply: setup.Run, Hand: hand, Home: p.getenv("HOME"),
 			Sleep: time.Sleep, M: p.machine, Out: out},
 		cable,

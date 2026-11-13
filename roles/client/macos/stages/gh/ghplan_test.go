@@ -1,4 +1,4 @@
-package wizard
+package gh
 
 import (
 	"context"
@@ -17,7 +17,7 @@ func newGh(look func(string) (string, error)) (*Gh, *effecttest.Machine) {
 	m.Files["/h/k.pub"] = []byte(pubText)
 	m.Results["ssh-keygen -l -f /h/k.pub"] = effecttest.Result{Out: []byte("256 SHA256:aa me\n")}
 	m.Results["hostname -s"] = effecttest.Result{Out: []byte("mac\n")}
-	return &Gh{GhCLI: GhCLI{Conf: confPathForTest, Home: "/h", LookPath: look, M: m, Out: &effecttest.Out{}}}, m
+	return &Gh{CLI: CLI{Conf: confPathForTest, Home: "/h", LookPath: look, M: m, Out: &effecttest.Out{}}}, m
 }
 
 func found(name string) (string, error) { return "/bin/" + name, nil }
@@ -124,7 +124,7 @@ func TestGhKeyOfTheAgent(t *testing.T) {
 	g, m := newGh(found)
 	agent(m, p256)
 	m.Files[confPathForTest] = []byte("WS_IDENTITY_PUB_KEY=" + copyOf(p256) + "\n")
-	pub, key, err := g.key(context.Background())
+	pub, key, err := g.Key(context.Background())
 	if err != nil || pub != copyOf(p256) || key != strings.TrimSuffix(strings.TrimSuffix(p256, "\n"), " me") {
 		t.Errorf("key = %q, %q, %v", pub, key, err)
 	}

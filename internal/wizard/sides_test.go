@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/stages/answers"
+	"github.com/zadykian/ws/roles/client/macos/stages/gh"
 	"github.com/zadykian/ws/roles/client/macos/stages/keys"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
@@ -21,8 +22,8 @@ func TestEveryStageStatesItsSide(t *testing.T) {
 		stage.Install: session.Ws, stages.RunStage: session.Ws, session.ClaudeStage: session.Ws, stages.SigningStage: stage.Mac, stage.Tunnel: stage.Mac,
 		stage.Cable: stage.Mac, (&stages.WsValues{}).Name(): session.Ws,
 	}
-	list := []step.Step{&MacUpdate{}, &Tools{}, &Homebrew{}, &answers.Answers{}, &keys.MacKey{}, &Gh{}, &Setup{},
-		&HostKey{}, &Login{}, &Sudo{}, &WsInstall{}, &stages.WsRun{}, &stages.WsClaude{}, &stages.Signing{GitHub: &MacGitHub{}}, &Tunnel{}, &Cable{},
+	list := []step.Step{&MacUpdate{}, &Tools{}, &Homebrew{}, &answers.Answers{}, &keys.MacKey{}, &gh.Gh{}, &Setup{},
+		&HostKey{}, &Login{}, &Sudo{}, &WsInstall{}, &stages.WsRun{}, &stages.WsClaude{}, &stages.Signing{GitHub: &gh.MacGitHub{}}, &Tunnel{}, &Cable{},
 		&stages.WsValues{}}
 	if len(list) != len(want) {
 		t.Fatalf("%d stages, %d wanted", len(list), len(want))

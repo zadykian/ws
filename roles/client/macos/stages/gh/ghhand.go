@@ -1,4 +1,4 @@
-package wizard
+package gh
 
 import (
 	"context"
