@@ -18,11 +18,11 @@ func keyMachine() *fakeMachine {
 func TestKeyMakesOne(t *testing.T) {
 	m := keyMachine()
 	random := bytes.NewReader(bytes.Repeat([]byte{7}, 32))
-	public, err := Key(context.Background(), m, random, dir)
+	public, err := Key(context.Background(), m, random, paths.Key)
 	if err != nil {
 		t.Fatal(err)
 	}
-	private, err := ReadKey(m, dir)
+	private, err := ReadKey(m, paths.Key)
 	if err != nil {
 		t.Fatalf("private.key: %v", err)
 	}
@@ -37,7 +37,7 @@ func TestKeyMakesOne(t *testing.T) {
 func TestKeyKeepsTheOneThatIsThere(t *testing.T) {
 	m := keyMachine()
 	m.Files[dir+"/private.key"] = []byte(macKey + "\n")
-	public, err := Key(context.Background(), m, strings.NewReader(""), dir)
+	public, err := Key(context.Background(), m, strings.NewReader(""), paths.Key)
 	if want, _ := wgkey.Public(macKey); err != nil || public != want {
 		t.Errorf("Key = %q, %v, want %q", public, err, want)
 	}
@@ -61,7 +61,7 @@ func TestKeyFails(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := Key(context.Background(), tt.m, strings.NewReader(tt.random), dir)
+			_, err := Key(context.Background(), tt.m, strings.NewReader(tt.random), paths.Key)
 			if err == nil || !strings.Contains(err.Error(), tt.want) {
 				t.Errorf("err = %v, want one with %q", err, tt.want)
 			}

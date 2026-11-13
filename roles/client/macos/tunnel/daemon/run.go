@@ -56,13 +56,13 @@ func (d *Daemon) start(ctx context.Context) error {
 	d.trimLog()
 	_ = d.run(ctx, "rm", "-f", d.StateFile, d.StateFile+".new") // a dead run's state would mislead status
 	var err error
-	if d.set, err = settings.ReadSettings(ctx, d.M, d.Dir); err != nil {
+	if d.set, err = settings.ReadSettings(ctx, d.M, d.paths()); err != nil {
 		return err
 	}
 	for _, w := range d.set.Warnings {
 		d.say("%s", w)
 	}
-	if d.key, err = settings.ReadKey(d.M, d.Dir); err != nil {
+	if d.key, err = settings.ReadKey(d.M, d.paths().Key); err != nil {
 		return err
 	}
 	s := d.set.Conf.Slot
