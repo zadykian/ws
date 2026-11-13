@@ -14,9 +14,9 @@ import (
 // runStage names the stage in its messages.
 const runStage = "ws's run"
 
-// WsRun is the stage of ws's run, ws server apply, in a unit of its own on ws. The remote script
-// starts it and follows it. A run goes on where ssh drops, and the next run of the wizard follows it.
-// The Mac's wizard and ws's both run it, each on its own session.
+// WsRun is the stage of ws's run, ws server ubuntu apply, in a unit of its own on ws. The remote
+// script starts it and follows it. A run goes on where ssh drops, and the next run of the wizard
+// follows it. The Mac's wizard and ws's both run it, each on its own session.
 type WsRun struct {
 	// Ws is the session to ws, whose files script names ws_user and the tunnel's peer.
 	Ws *Session
@@ -30,12 +30,12 @@ type WsRun struct {
 	Out   effect.Out
 	// Version is this ws's version. A full run counts only where a ws of that version made it.
 	Version string
-	// Update has the stage run ws server apply once more, with the ws installed there.
+	// Update has the stage run ws server ubuntu apply once more, with the ws installed there.
 	Update bool
 	// Only is what a run of part of ws takes, by --only's entries. The remote script stamps a full run
 	// alone, so such a run leaves the stage due as it found it.
 	Only []string
-	// ran is set once the stage ran ws server apply in this run.
+	// ran is set once the stage ran ws server ubuntu apply in this run.
 	ran bool
 }
 
@@ -46,7 +46,7 @@ func (*WsRun) Name() string { return runStage }
 func (r *WsRun) WaitsOn() string { return cmp.Or(r.Await, installStage) }
 
 // RunDone succeeds where ws's last full run left what c wants. Under --update, only once the stage
-// ran ws server apply in this run.
+// ran ws server ubuntu apply in this run.
 func (r *WsRun) RunDone(ctx context.Context, c conf.Conf) bool {
 	if r.Update && !r.ran {
 		return false
@@ -58,7 +58,7 @@ func (r *WsRun) RunDone(ctx context.Context, c conf.Conf) bool {
 // defaultUser is the server's default ws_user, what a host_vars with no such line gives.
 func defaultUser() string { return values.Default().User }
 
-// runChange is the change that runs ws server apply.
+// runChange is the change that runs ws server ubuntu apply.
 type runChange struct {
 	text string
 	// cloud is set for a cloud VM, whose run turns the outbound table off.
@@ -69,8 +69,8 @@ type runChange struct {
 
 func (c runChange) String() string { return runStage + ": would " + c.text }
 
-// Plan reads ws's last run, and finds whether ws server apply is to run or to be followed. Under
-// --check it says what would happen.
+// Plan reads ws's last run, and finds whether ws server ubuntu apply is to run or to be followed.
+// Under --check it says what would happen.
 func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	if r.Unbooted {
 		r.Out.Say("%s: ws's systemd isn't booted, as in a container, so no unit runs ws server ubuntu apply: "+
@@ -120,8 +120,8 @@ func (r *WsRun) partDone(ctx context.Context, c conf.Conf) bool {
 	return r.RunDone(ctx, c)
 }
 
-// fail says what to do where ws server apply ran no full run to its end. It names no cause, as ssh has
-// printed it, or ws has.
+// fail says what to do where ws server ubuntu apply ran no full run to its end. It names no cause,
+// as ssh has printed it, or ws has.
 func fail() error {
 	return errors.New(runStage + ": ws server ubuntu apply stopped, as above, or ssh dropped while " +
 		"it goes on; mend what it printed, then run the wizard again, which follows a run that goes on")

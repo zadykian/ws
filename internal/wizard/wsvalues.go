@@ -17,11 +17,11 @@ import (
 // names, as a cloud VM turns the outbound table off, and userKey the user that ws is set up for.
 const valuesStage, outboundKey, userKey = "ws's values", "security_outbound", "ws_user"
 
-// WsValues is the stage of ws's values on ws itself, which ws server wizard runs. It asks each key
-// that host_vars lacks, and names it there even at its default. So a later run, from ws or the Mac,
-// reads the file and asks nothing.
+// WsValues is the stage of ws's values on ws itself, which ws server ubuntu wizard runs. It asks
+// each key that host_vars lacks, and names it there even at its default. So a later run, from ws or
+// the Mac, reads the file and asks nothing.
 type WsValues struct {
-	// Vars is host_vars' path. Set writes one key of it, as ws server values set does.
+	// Vars is host_vars' path. Set writes one key of it, as ws server ubuntu values set does.
 	Vars string
 	Set  func(key, value string) error
 	// User is the user that ran sudo, which ws_user offers first. Empty at a root login.

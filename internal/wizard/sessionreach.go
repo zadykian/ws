@@ -26,8 +26,8 @@ func (r MacReach) user() (string, error) {
 
 func (MacReach) rerun() string { return "run the wizard with --update" }
 
-// WsReach is ws's way to itself, for ws server wizard: the scripts run as the user that runs ws,
-// root there, and host_vars names the target and WS_USER.
+// WsReach is ws's way to itself, for ws server ubuntu wizard: the scripts run as the user that runs
+// ws, root there, and host_vars names the target and WS_USER.
 type WsReach struct {
 	M effect.Machine
 	// Want reads host_vars' target and ws_user.

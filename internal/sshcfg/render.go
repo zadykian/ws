@@ -33,7 +33,8 @@ func Config(in Inputs) string {
 	fmt.Fprintf(&b, `%s from ~/.config/ws/mac.conf: its next run replaces changes made here.
 
 # Only Apple's ssh knows UseKeychain. ssh keeps the first IgnoreUnknown it reads, this one, so it
-# carries the patterns of ~/.ssh/config's own too: run ws mac apply again after a change to those.
+# carries the patterns of ~/.ssh/config's own too: run ws client macos apply again after a change to
+# those.
 IgnoreUnknown %s
 
 # ws through the tunnel. One known_hosts entry, ws's. 30 s between checks, 3 of them unanswered

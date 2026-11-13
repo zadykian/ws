@@ -18,11 +18,11 @@ const (
 )
 
 // Tunnel is the stage of the keys' exchange of the WireGuard tunnel between the Mac and ws. The
-// Mac's key goes to wg0's mac.pub on ws, where wg0 takes it as its peer, and ws server apply --only
-// wireguard runs there. Both go through the remote script over its direct way, as a change of wg0's peers
-// ends the tunnel's sessions. Then mac.conf's WS_PUBLIC_KEY follows wg0's key, and ws mac apply runs
-// again, which loads ws-tunnel. Last, ws-tunnel must show a handshake, and ssh ws log in through it.
-// Without a handshake, the closing list says so, and the run goes on.
+// Mac's key goes to wg0's mac.pub on ws, where wg0 takes it as its peer, and ws server ubuntu apply
+// --only wireguard runs there. Both go through the remote script over its direct way, as a change
+// of wg0's peers ends the tunnel's sessions. Then mac.conf's WS_PUBLIC_KEY follows wg0's key, and
+// ws client macos apply runs again, which loads ws-tunnel. Last, ws-tunnel must show a handshake,
+// and ssh ws log in through it. Without a handshake, the closing list says so, and the run goes on.
 type Tunnel struct {
 	// Ws is the session to ws, whose files script names the Mac's key as wg0's peer.
 	Ws *Session
@@ -31,7 +31,8 @@ type Tunnel struct {
 	// Conf is mac.conf's path. Check is set under --check.
 	Conf  string
 	Check bool
-	// MacApply runs ws mac apply, as the Setup stage's Run does, again once WS_PUBLIC_KEY is wg0's.
+	// MacApply runs ws client macos apply, as the Setup stage's Run does, again once WS_PUBLIC_KEY is
+	// wg0's.
 	MacApply func(ctx context.Context, check bool) (bool, error)
 	Hand     *Hand
 	Home     string

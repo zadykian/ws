@@ -47,7 +47,8 @@ func TestSetup(t *testing.T) {
 }
 
 func TestSetupWaitsOnTheMacKey(t *testing.T) {
-	// Under --check the Mac key stage writes no line, so ws mac apply's plan would stop for the key.
+	// Under --check the Mac key stage writes no line, so ws client macos apply's plan would stop for
+	// the key.
 	for conf, want := range map[string]string{
 		"WS_USER=ada\n": "ws client macos apply: after Mac key",
 		"WS_IDENTITY_PUB_KEY=~/k.pub\nWS_GIT_NAME=Ada\nWS_GIT_SIGNING_PUB_KEY=\n":        "ws client macos apply: after Mac key",
@@ -88,7 +89,8 @@ func TestSetupApply(t *testing.T) {
 }
 
 func TestSetupIsDoneOnceApplied(t *testing.T) {
-	// ws mac apply's own plan still finds a change after it ran: a step that only warned, as cld's install.
+	// ws client macos apply's own plan still finds a change after it ran: a step that only warned, as
+	// cld's install.
 	s := &Setup{M: effecttest.NewMachine(), LookPath: func(string) (string, error) { return "/brew", nil },
 		Run: func(context.Context, bool) (bool, error) { return true, nil }}
 	s.sudoed = true

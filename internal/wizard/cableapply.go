@@ -14,8 +14,8 @@ func (c *Cable) file() confFile { return confFile{c.Conf, cableStage, c.M, c.Out
 
 // Apply takes ws's port of the cable, where none holds ws's end, from WS_CABLE_PORT or the
 // terminal, the one with carrier by default. link names it in /etc/ws/host_vars.yml on ws. Then ws
-// server apply --only network,wireguard runs there, as both roles read it: the network role must
-// give it 10.77.0.1 as ws's end. After that, service takes the Mac's service. none, as either
+// server ubuntu apply --only network,wireguard runs there, as both roles read it: the network role
+// must give it 10.77.0.1 as ws's end. After that, service takes the Mac's service. none, as either
 // answer, writes an empty WS_CABLE_SERVICE. Where mac.conf has a service, again takes the stage's
 // steps.
 func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
@@ -101,8 +101,8 @@ func (c *Cable) again(ctx context.Context, port string) error {
 
 // service takes the Mac's service of the cable, from WS_CABLE_SERVICE in the environment or the
 // terminal. The default is the one service with a 169.254 address, which an adapter gives itself
-// where no DHCP server answers. It writes it in mac.conf, and runs ws mac apply, which gives it
-// 10.77.0.2. Then ping must reach ws's end over it. none writes an empty WS_CABLE_SERVICE.
+// where no DHCP server answers. It writes it in mac.conf, and runs ws client macos apply, which
+// gives it 10.77.0.2. Then ping must reach ws's end over it. none writes an empty WS_CABLE_SERVICE.
 func (c *Cable) service(ctx context.Context) error {
 	out, err := c.M.Run(ctx, "networksetup", "-listallnetworkservices")
 	if err != nil {

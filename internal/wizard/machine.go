@@ -45,7 +45,7 @@ func (*MacKey) Machine() Machine { return OnMac }
 // Machine is the Mac: gh's login and the Mac's key among the account's.
 func (*Gh) Machine() Machine { return OnMac }
 
-// Machine is the Mac: ws mac apply.
+// Machine is the Mac: ws client macos apply.
 func (*Setup) Machine() Machine { return OnMac }
 
 // Machine is the Mac: known_hosts holds ws's host key.
@@ -63,7 +63,7 @@ func (*WsInstall) Machine() Machine { return OnWs }
 // Machine is ws: its host_vars.
 func (*WsValues) Machine() Machine { return OnWs }
 
-// Machine is ws: ws server apply runs there.
+// Machine is ws: ws server ubuntu apply runs there.
 func (*WsRun) Machine() Machine { return OnWs }
 
 // Machine is ws: the claude login of WS_USER.

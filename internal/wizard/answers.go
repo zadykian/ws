@@ -49,7 +49,8 @@ func (c todo) String() string { return string(c) }
 
 func (a *Answers) file() confFile { return confFile{a.Conf, answers, a.M, a.Out} }
 
-// load reads mac.conf and says each line that conf refuses, which ws mac apply would stop at.
+// load reads mac.conf and says each line that conf refuses, which ws client macos apply would stop
+// at.
 func (a *Answers) load() (string, conf.Conf, error) { return loadConf(a.file()) }
 
 // role gives the shell role's default of that name, as the role's file has it, or nothing.
@@ -111,7 +112,7 @@ func (a *Answers) refusal(lines string) error {
 }
 
 // Apply asks for the values that mac.conf lacks, in order, and adds them to it. A mac.conf that
-// ws mac apply would refuse with them is left alone.
+// ws client macos apply would refuse with them is left alone.
 func (a *Answers) Apply(ctx context.Context, _ step.Plan) error {
 	text, c, err := a.load()
 	if err != nil {

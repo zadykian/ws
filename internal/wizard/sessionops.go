@@ -147,7 +147,7 @@ func (s *Session) install(ctx context.Context, version, url string) error {
 	return err
 }
 
-// run runs ws server apply with args.
+// run runs ws server ubuntu apply with args.
 func (s *Session) run(ctx context.Context, args []string) error {
 	_, err := s.do(ctx, opRun, args)
 	return err
