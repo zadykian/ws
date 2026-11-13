@@ -93,11 +93,13 @@ may not change stops the run: sudo would leave root's files where the user's go.
 
 ## ssh's hosts
 
-The script writes `~/.ssh/config.d/ws`, with one host, `ws`, at the tunnel's `10.99.0.1` from the
-first run, whichever network the Mac is on. So `ssh ws` fails until the keys' exchange ends
-([The Mac's tunnel](#the-macs-tunnel)), where a direct way serves. It logs in as `WS_USER` with the
-key below, and checks ws's host key under the one name `ws` (`HostKeyAlias`). A session ends after
-120 s without word from ws, far longer than a switch of the tunnel takes.
+The script writes `~/.ssh/config.d/ws`, with a host for each server of `servers/`, named as the
+server is, at its tunnel's `10.99.N.1` from the first run, whichever network the Mac is on. A
+server's host is `ws` at `10.99.0.1` for slot 0. So `ssh NAME` fails until the keys' exchange ends
+([The Mac's tunnel](#the-macs-tunnel)), where a direct way serves. It logs in as the server's
+`WS_USER` with the key below, and checks the server's host key under its name (`HostKeyAlias`). A
+server whose `server.conf` fails to load stops the run. A session ends after 120 s without word
+from the server, far longer than a switch of the tunnel takes.
 
 ssh offers ws one key alone (`IdentitiesOnly`): the one whose `.pub` `WS_IDENTITY_PUB_KEY` names, as
 ws's copy of a key of Secretive's ([Secretive's keys](git/README.md#secretives-keys)) or a file key.
@@ -131,13 +133,14 @@ patterns of every `IgnoreUnknown` in `~/.ssh/config`. Run the script again after
 A pattern in a file that `~/.ssh/config` includes must be in `~/.ssh/config` too, as the script
 reads no other file.
 
-Before it writes, the script has `ssh -G`, for `ws`, read the new `config.d/ws` alone.
+Before it writes, the script has `ssh -G`, for each server, read the new `config.d/ws` alone.
 Then it reads it first, `~/.ssh/config` next, without its own Include of the old file, and the
-system's file last. Where ssh refuses either, the script stops and changes nothing, under `--check`
-too. The system's file goes through an Include there, so its relative Includes resolve under
-`~/.ssh`. A run changes only what differs, so a second prints nothing but warnings once
-`WS_PUBLIC_KEY` is set. Until then, each run prints the Mac's public key again, with the commands of
-[The Mac's tunnel](#the-macs-tunnel). `--check` prints each change as a diff and makes none.
+system's file last. Where ssh refuses either, or reads a server at another address or user than
+its block sets, the script stops and changes nothing, under `--check` too. The system's file goes
+through an Include there, so its relative Includes resolve under `~/.ssh`. A run changes only what
+differs, so a second prints nothing but warnings once `WS_PUBLIC_KEY` is set. Until then, each run
+prints the Mac's public key again, with the commands of [The Mac's tunnel](#the-macs-tunnel).
+`--check` prints each change as a diff and makes none.
 
 Through the forward, ws takes logins from the internet: by key alone, as everywhere, with fail2ban
 banning the address of the network the Mac is on after 5 failed ones. Over the tunnel, ws sees
