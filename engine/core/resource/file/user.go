@@ -8,6 +8,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -146,7 +147,7 @@ func (f UserFile) Change(found Found) []step.Change {
 
 // Plan returns a write, a fix of the mode, or nothing. It returns ErrNotWs, and no change, where
 // the file is not ws's.
-func (f UserFile) Plan() ([]step.Change, error) {
+func (f UserFile) Plan(context.Context) ([]resource.Change, error) {
 	found, ours, err := f.Read()
 	if err != nil {
 		return nil, err
@@ -154,7 +155,7 @@ func (f UserFile) Plan() ([]step.Change, error) {
 	if !ours {
 		return nil, ErrNotWs
 	}
-	return f.Change(found), nil
+	return applying(f.Change(found)), nil
 }
 
 // Report compares the file as a plan does. A file that isn't ws's shows no diff: a run leaves it,
@@ -186,8 +187,8 @@ func (f UserFile) Report(context.Context) ([]step.Item, error) {
 }
 
 // Owned plans f, and leaves a file that is not ws's, with a warning.
-func Owned(out effect.Out, f UserFile) ([]step.Change, error) {
-	cs, err := f.Plan()
+func Owned(ctx context.Context, out effect.Out, f UserFile) ([]step.Change, error) {
+	cs, err := resource.Append(ctx, nil, f)
 	if errors.Is(err, ErrNotWs) {
 		out.Warn("%s is not ws's: move it away, and the next run writes ws's", f.Path)
 		return nil, nil

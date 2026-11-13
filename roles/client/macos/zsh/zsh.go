@@ -5,11 +5,12 @@ package zsh
 import (
 	"context"
 	"errors"
-	"github.com/zadykian/ws/engine/core/resource/file"
 	"strings"
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -60,7 +61,7 @@ func (z *Zsh) plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	hook, err := z.hookFile().Plan()
+	cs, err = resource.Append(ctx, cs, z.hookFile())
 	switch {
 	case errors.Is(err, file.ErrNotWs):
 		z.Out.Warn("%s is not ws's: move it away, and the next run writes ws's and sources it", z.hook())
@@ -69,13 +70,11 @@ func (z *Zsh) plan(ctx context.Context) (step.Plan, error) {
 	case err != nil:
 		return step.Plan{}, err
 	}
-	cs = append(cs, hook...)
-	line, err := z.rcLines().Plan(ctx)
+	cs, err = resource.Append(ctx, cs, z.rcLines())
 	if errors.Is(err, file.ErrLinked) {
 		z.Out.Warn("%s", err)
 		err = nil
 	}
-	cs = append(cs, line...)
 	link.Warn(z.Out, len(cs), "ws's files go there")
 	return step.Plan{Changes: cs}, err
 }

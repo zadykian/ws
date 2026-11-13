@@ -47,7 +47,7 @@ func (z *Zed) plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	files, err := z.files()
+	files, err := z.files(ctx)
 	if err != nil {
 		return step.Plan{}, err
 	}

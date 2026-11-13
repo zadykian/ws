@@ -45,11 +45,9 @@ func (t *Tunnel) tell(ctx context.Context) ([]step.Change, error) {
 	if err != nil {
 		return nil, err
 	}
-	pub, err := t.pub().Plan()
-	if err != nil {
+	if cs, err = resource.Append(ctx, cs, t.pub()); err != nil {
 		return nil, err
 	}
-	cs = append(cs, pub...)
 	link.Warn(t.Out, len(cs), "ws's files go there")
 	return cs, nil
 }

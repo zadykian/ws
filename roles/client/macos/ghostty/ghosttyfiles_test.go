@@ -1,19 +1,21 @@
 package ghostty
 
 import (
-	"github.com/zadykian/ws/engine/core/resource/file"
+	"context"
 	"slices"
 	"testing"
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
 func fileChanges(t *testing.T, m *effecttest.Machine, holds bool) []step.Change {
 	g := &Ghostty{M: m, Out: &effecttest.Out{}}
 	dir := "/h/.config/ghostty"
-	ws, err := file.UserFile{M: m, Path: dir + "/ws.ghostty", Text: []byte("new\n"), Mode: 0o644}.Plan()
+	ws, err := resource.Append(context.Background(), nil, file.UserFile{M: m, Path: dir + "/ws.ghostty", Text: []byte("new\n"), Mode: 0o644})
 	if err != nil {
 		t.Fatal(err)
 	}

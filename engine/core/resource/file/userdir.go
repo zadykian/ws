@@ -7,6 +7,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -52,6 +53,16 @@ func (d UserDir) change(found Found) []step.Change {
 		return []step.Change{UserChmod{M: d.M, Path: d.Path, Mode: d.Mode}}
 	}
 	return nil
+}
+
+// Plan makes the directory where missing, or sets its mode where Fix asks for it. It stops at a
+// path that is no directory.
+func (d UserDir) Plan(context.Context) ([]resource.Change, error) {
+	found, _, err := d.read()
+	if err != nil {
+		return nil, err
+	}
+	return applying(d.change(found)), nil
 }
 
 // Report says how the directory stands, as a plan reads it. A path that is no directory shows as

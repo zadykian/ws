@@ -1,9 +1,10 @@
 package zed
 
 import (
-	"github.com/zadykian/ws/engine/core/resource/file"
+	"context"
 	"strings"
 
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -25,14 +26,14 @@ const (
 // files plans Zed's directory and its three files. global_settings.json is Settings, replaced on
 // each run, and left with a warning where its first line is not ws's. keymap.json is Keymap,
 // replaced and left on the same terms with its own mark. settings.json is written where nothing is there, and never read.
-func (z *Zed) files() ([]step.Change, error) {
+func (z *Zed) files(ctx context.Context) ([]step.Change, error) {
 	dir := z.Home + "/.config/zed"
 	cs, link, err := z.dirs().Plan()
 	if err != nil {
 		return nil, err
 	}
 	for _, f := range z.whole() {
-		planned, err := file.Owned(z.Out, f)
+		planned, err := file.Owned(ctx, z.Out, f)
 		if err != nil {
 			return nil, err
 		}

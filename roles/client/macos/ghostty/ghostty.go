@@ -5,12 +5,13 @@ package ghostty
 import (
 	"context"
 	"errors"
-	"github.com/zadykian/ws/engine/core/resource/file"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/brew"
 )
@@ -101,7 +102,7 @@ func (g *Ghostty) conf() string {
 func (g *Ghostty) files(ctx context.Context) ([]step.Change, error) {
 	config := g.conf()
 	wsFile := g.file(config)
-	ws, err := wsFile.Plan()
+	ws, err := resource.Append(ctx, nil, wsFile)
 	switch {
 	case errors.Is(err, file.ErrNotWs):
 		g.Out.Warn("%s is not ws client macos apply's: move it away, as the script writes its own", wsFile.Path)

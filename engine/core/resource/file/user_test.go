@@ -9,7 +9,11 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/resource"
 )
+
+// The user's file, directory and lines are resources, which a step plans by resource.Append.
+var _ = []resource.Resource{UserFile{}, UserDir{}, UserLines{}}
 
 // TestUserFilePlanAgreesWithReport finds that a report stands off where a plan changes the file or
 // refuses it, has a conflict where that file is there, and fails where the plan fails.
@@ -38,7 +42,7 @@ func TestUserFilePlanAgreesWithReport(t *testing.T) {
 		c.setUp(m)
 		f := UserFile{M: m, Path: target, Text: []byte("# ws\n"), Mode: c.mode,
 			Own: func(have []byte) bool { return bytes.HasPrefix(have, []byte("# ws")) }}
-		cs, planErr := f.Plan()
+		cs, planErr := f.Plan(context.Background())
 		items, reportErr := f.Report(context.Background())
 		got := "nothing"
 		switch {

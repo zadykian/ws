@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -115,9 +116,10 @@ func (l UserLines) Changes(found Found, link string, holds bool, err error) ([]s
 }
 
 // Plan writes the lines where missing: none, a new file, or the old file kept and rewritten.
-func (l UserLines) Plan(ctx context.Context) ([]step.Change, error) {
+func (l UserLines) Plan(ctx context.Context) ([]resource.Change, error) {
 	found, link, holds, err := l.Read(ctx)
-	return l.Changes(found, link, holds, err)
+	cs, err := l.Changes(found, link, holds, err)
+	return applying(cs), err
 }
 
 // Item says how the file stands against what read found. A conflict is where the plan stops.
