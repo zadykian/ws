@@ -53,7 +53,7 @@ func away(h *guided.Hand, c conf.Conf, first string) {
 		way = "WS_REMOTE"
 	}
 	if first != "" {
-		h.Add("ws's address: %s in mac.conf must lead to ws, as this run reached it at %s "+
+		h.Add("ws's address: %s in server.conf must lead to ws, as this run reached it at %s "+
 			"(roles/client/macos/conf/README.md).", way, first)
 	}
 	if target == "cloud" {
