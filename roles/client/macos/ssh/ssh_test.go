@@ -30,7 +30,7 @@ func sshMachine() *effecttest.Machine {
 
 func sshConf(m *effecttest.Machine, out *effecttest.Out) ssh.SSH {
 	return ssh.SSH{
-		Conf: conf.Conf{User: "me", IdentityPubKey: "~/.ssh/id_ed25519.pub"}, Home: "/h", M: m, Out: out,
+		Server: "ws", Conf: conf.Conf{User: "me", IdentityPubKey: "~/.ssh/id_ed25519.pub"}, Home: "/h", M: m, Out: out,
 		Now: func() time.Time { return time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC) },
 	}
 }

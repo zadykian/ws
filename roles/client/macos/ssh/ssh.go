@@ -19,10 +19,12 @@ import (
 // reads it whole.
 type SSH struct {
 	Conf conf.Conf
-	Home string
-	M    effect.Machine
-	Out  effect.Out
-	Now  func() time.Time
+	// Server is the name of the server that the run acts for.
+	Server string
+	Home   string
+	M      effect.Machine
+	Out    effect.Out
+	Now    func() time.Time
 	// Again is the second run of the step, which cld may have changed ssh's file for.
 	Again bool
 }
@@ -48,7 +50,8 @@ func (secondRun) Report(context.Context) ([]step.Item, error) { return nil, nil 
 // config returns the text of config.d/ws.
 func (s SSH) config(ctx context.Context, f sshFacts, key keys.NamedKey) []byte {
 	return []byte(sshcfg.Config(sshcfg.Inputs{
-		User: s.Conf.User, Server: s.Conf.TunnelSlot().Server(), Patterns: sshcfg.IgnoreUnknown(string(f.UserConfig.Text), "UseKeychain"),
+		Hosts:       []sshcfg.Host{{Name: s.Server, Addr: s.Conf.TunnelSlot().Server(), User: s.Conf.User}},
+		Patterns:    sshcfg.IgnoreUnknown(string(f.UserConfig.Text), "UseKeychain"),
 		IdentityPub: key.Pub, IdentityAgent: key.Agent, CldTabs: s.cldTabs(ctx),
 	}))
 }
