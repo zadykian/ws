@@ -47,14 +47,14 @@ A workflow of its own, `mac-wizard.yml`, runs `ws client macos wizard` on GitHub
 from a copy of the checkout at `~/repository/ws`. `standin.sh` gives the wizard what a new Mac and
 user would, such as `mac.conf`'s answers, dash, and a logged-in `gh`, first on the wizard's `PATH`.
 Then `checks.sh` runs the cases beside it in order, stopping at the first failure
-([checks.sh](../mac-wizard/checks.sh)). The wizard must refuse an unknown flag, root and a
-removed `WS_HOOK` line, as an unknown key, and a removed op of the files script. A run must stop
-where another holds the lock, leaving it. A fresh `--check`, by sh and dash, must find brew with its
-directories off `PATH`. As `ws client macos apply --check` must, it must change nothing, and leave
-no lock or temporary file. The job's `mac.conf` names `~/.ssh/id_ed25519` as ws's key, which
-`standin.sh` makes, as the wizard makes none in a file. With no terminal and a `mac.conf` that names
-none, a run must stop at the Mac key stage, naming `WS_IDENTITY_PUB_KEY`, making nothing, and
-`--check` must show the question, a new key the default. A named key that is missing must stop a
+([checks.sh](../mac-wizard/checks.sh)). The wizard must refuse an unknown flag, root and a removed
+`WS_HOOK` line, as an unknown key, with `--server ws`, and a removed op of the files script. A run
+must stop where another holds the lock, leaving it. A fresh `--check`, by sh and dash, must find
+brew with its directories off `PATH`. As `ws client macos apply --check` must, it must change
+nothing, and leave no lock or temporary file. The job's `mac.conf` names `~/.ssh/id_ed25519` as ws's
+key, which `standin.sh` makes, as the wizard makes none in a file. With no terminal and a `mac.conf`
+that names none, a run must stop at the Mac key stage, naming `WS_IDENTITY_PUB_KEY`, making nothing,
+and `--check` must show the question, a new key the default. A named key that is missing must stop a
 run. The first run, with that `PATH` too, must add that key to that login, install what `ws client
 macos apply` installs. It must drop the Mac's key that it prints, and leave no tunnel step by hand,
 as the Tunnel stage below takes it. A second run and `--check` must print nothing, by sh and dash:
