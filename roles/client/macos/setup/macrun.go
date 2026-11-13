@@ -55,7 +55,7 @@ func (m Mac) ssh(again bool) step.Step {
 }
 
 // finisher is a step that leaves something for the end of a run that passed.
-type finisher interface{ finish(context.Context) error }
+type finisher interface{ Finish(context.Context) error }
 
 // run runs steps under o as one role, named by o.Parent, through role.Run, then what each leaves
 // for the end of a run that passed. One role keeps the rows, the waits and the events of the steps
@@ -79,7 +79,7 @@ func run(ctx context.Context, steps []step.Step, o step.Options) (bool, error) {
 	for _, s := range steps {
 		left := o.LeftOut != nil && o.LeftOut(o.Parent, s.Name())
 		if f, ok := s.(finisher); ok && err == nil && !left {
-			err = f.finish(ctx)
+			err = f.Finish(ctx)
 		}
 	}
 	return len(changed) > 0, err

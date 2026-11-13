@@ -10,7 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-// ending is a step that leaves finish for the end of a run.
+// ending is a step that leaves Finish for the end of a run.
 type ending struct {
 	name string
 	plan error
@@ -23,7 +23,7 @@ func (e ending) Plan(context.Context) (step.Plan, error) {
 	return step.Plan{}, e.plan
 }
 func (e ending) Apply(context.Context, step.Plan) error { return nil }
-func (e ending) finish(ctx context.Context) error       { return e.done(ctx) }
+func (e ending) Finish(ctx context.Context) error       { return e.done(ctx) }
 
 func TestRunFinishesNoStepLeftOut(t *testing.T) {
 	finish := func(context.Context) error { return errors.New("a step left out finished") }

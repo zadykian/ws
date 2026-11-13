@@ -76,9 +76,9 @@ func (t *Tunnel) publish(ctx context.Context) error {
 	return nil
 }
 
-// finish prints the Mac's public key, with the commands that make it ws's peer, where the key is new
+// Finish prints the Mac's public key, with the commands that make it ws's peer, where the key is new
 // or mac.conf has no WS_PUBLIC_KEY yet. A check prints nothing of it.
-func (t *Tunnel) finish(ctx context.Context) error {
+func (t *Tunnel) Finish(ctx context.Context) error {
 	if t.Check || (!t.madeKey && t.Conf.PublicKey != "") {
 		return nil
 	}
