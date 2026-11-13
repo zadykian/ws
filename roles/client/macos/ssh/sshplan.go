@@ -84,7 +84,7 @@ func (s SSH) parts(ctx context.Context) ([]resource.Resource, error) {
 	copies = append(copies, keys.CopyReport(s.M, s.Out, key.File, key.Text, s.Home)...)
 	copied, err := keys.PlanCopy(s.M, s.Out, key.File, key.Text, s.Home)
 	return []resource.Resource{
-		s.refusal(f, text),
+		s.refusal(f, hosts, text),
 		resource.Planned{Changes: copied, Err: err},
 		resource.Planned{Changes: f.Dirs, Seen: sshDirs(s.M, s.Out, s.Home)},
 		resource.Planned{Changes: s.wsFile(text).Change(f.Ws), Seen: s.wsFile(text)},
@@ -100,12 +100,12 @@ type reports []step.Reporter
 func (r reports) Report(ctx context.Context) ([]step.Item, error) { return file.Gather(ctx, r...) }
 
 // refusal stops where ssh can't take the files, and warns of what the run leaves to the user.
-func (s SSH) refusal(f sshFacts, text []byte) refusal {
+func (s SSH) refusal(f sshFacts, hosts []sshcfg.Host, text []byte) refusal {
 	return func(ctx context.Context) error {
 		if f.Stop != nil {
 			return f.Stop
 		}
-		if err := s.validate(ctx, f, text); err != nil {
+		if err := s.validate(ctx, f, hosts, text); err != nil {
 			return err
 		}
 		if f.DirLink.Path == s.Home+"/.ssh/config.d" && !bytes.Equal(f.Ws.Text, text) {
