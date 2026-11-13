@@ -11,7 +11,7 @@ paths:
 The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `roles/`
 (its module is at the root), each linking its reason
 ([#273](https://github.com/zadykian/ws/issues/273)). The hard rules of
-[CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too.
+[CLAUDE.md](../CLAUDE.md#hard-rules) hold here too.
 
 - Each step is isolated behind `step.Step`: it plans and applies one part of the setup, and reads
   no other step's state. A step that needs another done first names it in `Step.WaitsOn`

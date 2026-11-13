@@ -10,9 +10,9 @@ What each document holds. How to write them is in the `writing` skill and [writi
 - `README.md` is the overview: what ws sets up, with a line per role that links its directory. Then
   a new machine, running it again, and dry runs. Then what stays by hand, the checks, how pull
   requests land, and the license.
-- `CLAUDE.md` holds what Claude needs before a change: the layout, the commands, how changes land,
-  and the hard rules, each linking its reason. An area's invariants go in `.claude/rules/`, loaded
-  with the files they cover, as [server.md](server.md) is.
+- `.claude/CLAUDE.md` holds what Claude needs before a change: the layout, the commands, how
+  changes land, and the hard rules, each linking its reason. An area's invariants go in
+  `.claude/rules/`, loaded with the files they cover, as [server.md](server.md) is.
 - `GLOSSARY.md` names the terms of the server's side and of the Mac's: what the code and the docs
   mean by each.
 - A page lives beside the code it describes, as that directory's `README.md`. A second page stands
