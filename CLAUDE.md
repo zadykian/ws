@@ -8,25 +8,27 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 
 ## Layout
 
-- `roles/server/ubuntu/NAME`: a role per directory, as Go steps, with its page, `docs/NAME.md`,
-  and a line in the README. `roles/server/ubuntu` lists the roles in the order they run, and
+- `roles/server/ubuntu/NAME`: a role per directory, as Go steps, with its page, `README.md`,
+  and a line in the root README. `roles/server/ubuntu` lists the roles in the order they run, and
   `roles/server/ubuntu/values` types the machine's values: `/etc/ws/host_vars.yml`, on the machine
   alone, such as the cable's port ([The direct link](roles/server/ubuntu/network/README.md#the-direct-link)). Each role
   holds its pins, and embeds its templates and files. ws-fans, the fans' service, is
   `ws server ubuntu fans`, in `roles/server/ubuntu/fans/daemon`.
 - `go.mod`, `go.sum` and `.golangci.yml`: the Go module `github.com/zadykian/ws`, at the root.
-  `main.go` runs `cmd`, the command. `engine/core` holds `step`,
+  `main.go` runs `cmd`, which composes the root, `--plain` and the exit codes with the two sides'
+  commands. `engine/cli` builds the root, `--plain` and the exit codes. `engine/core` holds `step`,
   `effect`, with `effect/effecttest`, `effect/local` and `effect/units`, and `resource`, the resources
-  the steps share, which are public: another module builds steps on them.
+  the steps share. They are public, as the roles import them from outside `engine/`.
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
 - `install.sh`: installs ws's binary from a release ([Releases](engine/core/update/README.md)).
-- `roles/client/macos/`: the Mac's side, the files that the ws CLI embeds ([The Mac](roles/client/macos/README.md)). These are
-  `ws.ghostty`, Ghostty's settings, and `zed/`, Zed's settings
-  and keymap. `zshrc` is the zsh hook that turns off the modes that a drop leaves on.
-- `docs/`: a page per role; `releases.md`; `mac.md`, with `mac-git.md`, `mac-wizard.md`,
-  `mac-targets.md`, `mac-ghostty.md`, `mac-zed.md` and `mac-secrets.md`; `server-wizard.md`;
-  `router.md` and `checks.md`; `tui.md`, the terminal UI, with `tui-configure.md` and `tui-wizard.md`.
+- `roles/client/macos/`: the Mac's side ([The Mac](roles/client/macos/README.md)). Its roles embed
+  `ghostty/files/ws.ghostty`, Ghostty's settings, `zed/files/`, Zed's settings and keymap, and
+  `zsh/files/zshrc`, the zsh hook that turns off the modes that a drop leaves on.
+- The pages sit beside their code, as the `README.md` of a role or a package. A second page stands
+  beside one where the cap keeps two apart: `zed/projects.md`, `network/router.md`,
+  `.github/workflows/rootless.md` and `mac-cld.md`. `tools/README.md` holds the gates and
+  `.github/workflows/README.md` CI. There is no `docs/`.
 - `tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
   caps them. `build` builds ws for a target, and `vale-comments` runs Vale on files' comments.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
