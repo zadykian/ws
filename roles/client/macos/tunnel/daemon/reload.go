@@ -11,7 +11,10 @@ import (
 // reload reads tunnel.conf and routes.d again, on SIGHUP. A new key or path has the paths tried
 // again. Otherwise it changes the peer's AllowedIPs and the routes in place, which keeps the
 // session. The routes stay clear of the endpoints of the last round.
-func (d *Daemon) reload(ctx context.Context) {
+//
+// A moved slot changes the utun's address, its route and the peer's AllowedIPs. So reload reports
+// it, and the daemon stops, for launchd to start it again at the new slot.
+func (d *Daemon) reload(ctx context.Context) (moved bool) {
 	set, err := settings.ReadSettings(ctx, d.M, d.Dir)
 	if err != nil {
 		d.say("%v; keeps the settings it had", err)
@@ -21,6 +24,11 @@ func (d *Daemon) reload(ctx context.Context) {
 		d.say("%s", w)
 	}
 	old := d.set.Conf
+	if set.Conf.Slot != old.Slot {
+		d.say("tunnel.conf moves the tunnel to %s; stops, for launchd to start it there",
+			set.Conf.Slot.Net())
+		return true
+	}
 	d.set = set
 	if set.Conf != old {
 		if set.Conf.Key != old.Key {
@@ -32,7 +40,7 @@ func (d *Daemon) reload(ctx context.Context) {
 		if len(d.round) == 0 {
 			d.choose(ctx)
 		}
-		return
+		return false
 	}
 	hosts := d.ends
 	if len(d.round) > 0 {
@@ -41,7 +49,7 @@ func (d *Daemon) reload(ctx context.Context) {
 	a := d.allow(hosts)
 	// The peer exists once a round has tried an endpoint, whether it answered or not.
 	if len(d.round) > 0 || len(d.ends) > 0 {
-		text, err := uapi.SetAllowed(set.Conf.Key, a.IPs())
+		text, err := uapi.SetAllowed(set.Conf.Key, a.IPs(set.Conf.Slot.Server()))
 		if err == nil {
 			err = d.Dev.IpcSet(text)
 		}
@@ -57,4 +65,5 @@ func (d *Daemon) reload(ctx context.Context) {
 	}
 	d.say("read its settings again; routes: %s", routed)
 	d.writeState(ctx)
+	return false
 }
