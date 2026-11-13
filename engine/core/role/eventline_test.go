@@ -11,17 +11,23 @@ import (
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/setup"
 )
 
+// userFile is a change to a file of the user's: String quotes the old text, and Excerpt leaves it out.
+type userFile struct{ path, before, after string }
+
+func (c userFile) String() string  { return c.path + "\n-" + c.before + "+" + c.after }
+func (c userFile) Excerpt() string { return c.path + "\n+" + c.after }
+func (c userFile) Title() string   { return "would write " + c.path }
+
 // fullDisk is a write that fails.
-type fullDisk struct{ setup.Write }
+type fullDisk struct{ userFile }
 
 func (fullDisk) Apply(context.Context) error { return errors.New("no space left on device") }
 
 // A file's text stays off the line: a token that a person added by hand must not reach a journal.
 func TestEventLineHoldsNoFilesText(t *testing.T) {
-	c := setup.Write{Path: "/a/.bashrc", Before: []byte("TOKEN=old\n"), After: []byte("new\n"), Exists: true}
+	c := userFile{path: "/a/.bashrc", before: "TOKEN=old\n", after: "new\n"}
 	if !strings.Contains(c.String(), "TOKEN") {
 		t.Fatalf("the change holds no text to keep off: %q", c)
 	}
