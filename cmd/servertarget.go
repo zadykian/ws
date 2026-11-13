@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
+	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
 // serverTarget is ws server ubuntu apply's side of the verbs. opts holds the flags, read when the
@@ -20,7 +21,42 @@ func serverTarget(p cli.Env, opts *applyOptions) engine.Target {
 		}
 		r.term.Flush() // Prepare's lines wait for no run: Apply says the run's own.
 		return runOf(r.cfg, r.list), nil
+	}, State: func(_ context.Context, c engine.Call) (engine.Report, error) {
+		return serverReport(c, p, *opts)
 	}}
+}
+
+// serverReport readies what ws server ubuntu state reports.
+func serverReport(c engine.Call, p cli.Env, opts applyOptions) (engine.Report, error) {
+	r, err := prepareServer(c, p, opts)
+	if err != nil {
+		return engine.Report{}, err
+	}
+	// State reads the machine and takes no secrets. A step that needs them would write them out to
+	// plan, as ikeward's install does, and a report has no use for them.
+	list, err := r.roles(secrets.Secrets{Unread: true})
+	if err != nil {
+		return engine.Report{}, engine.UsageError{Err: err}
+	}
+	return engine.Report{
+		M: r.cfg.M,
+		Read: func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
+			// The read takes the screen's effects as a run does, as the steps don't own the terminal under it.
+			states, err := role.State(ctx, onScreen(r.cfg, b), list)
+			return engine.RoleSections(states), err
+		},
+		Print: func(ctx context.Context, c engine.Call) error {
+			states, err := role.State(ctx, r.cfg, list)
+			r.term.Flush()
+			if err != nil {
+				return err
+			}
+			if c.JSON {
+				return engine.WriteJSON(c.Out, role.StateDoc{Version: p.Version, Roles: states})
+			}
+			return engine.WriteRoles(c.Out, states)
+		},
+	}, nil
 }
 
 // runOf is the run of the roles in list under cfg's options.
