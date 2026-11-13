@@ -219,7 +219,7 @@ func TestPrepareServerGivesTheRolesTheMachinesUnits(t *testing.T) {
 	p, _ := serverTerminal()
 	c := &cobra.Command{Use: "apply"}
 	c.SetContext(t.Context())
-	r, err := prepareServer(c, p, apply.Options{})
+	r, err := prepareServer(c, p, applyOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}

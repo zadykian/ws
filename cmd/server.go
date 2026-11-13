@@ -65,9 +65,16 @@ func newUbuntuCmd(p process) *cobra.Command {
 		newValuesCmd(p), newServerSecretsCmd(p), newServerWizardCmd(p), newServerConfigureCmd(p))
 }
 
+// applyOptions are apply's flags: the runner's, and the --secrets path, which the runner never reads.
+type applyOptions struct {
+	apply.Options
+	// Secrets is the age-encrypted file of --secrets, or empty.
+	Secrets string
+}
+
 // newApplyCmd returns ws server ubuntu apply.
 func newApplyCmd(p process) *cobra.Command {
-	var opts apply.Options
+	var opts applyOptions
 	var asJSON bool
 	c := &cobra.Command{
 		Use:   "apply",
@@ -101,7 +108,7 @@ type serverRun struct {
 
 // prepareServer checks where the command runs, then loads the values and the secrets that the
 // roles read. The steps of --only follow the values, so they are checked last.
-func prepareServer(c *cobra.Command, p process, opts apply.Options) (serverRun, error) {
+func prepareServer(c *cobra.Command, p process, opts applyOptions) (serverRun, error) {
 	if c.Flags().Changed("only") && len(opts.Only) == 0 {
 		return serverRun{}, usageError{errors.New("--only names no role")}
 	}
@@ -131,7 +138,7 @@ func prepareServer(c *cobra.Command, p process, opts apply.Options) (serverRun, 
 	if err != nil {
 		return serverRun{}, err
 	}
-	cfg := apply.Config{Options: opts, Values: v, Secrets: sec, M: p.machine, U: effect.OSUnits{}, Out: out, Observer: out,
+	cfg := apply.Config{Options: opts.Options, Values: v, Secrets: sec, M: p.machine, U: effect.OSUnits{}, Out: out, Observer: out,
 		Prepare: prepareSteps(p.machine, out)}
 	if err := cfg.CheckSteps(list); err != nil {
 		return serverRun{}, usageError{err}
@@ -140,7 +147,7 @@ func prepareServer(c *cobra.Command, p process, opts apply.Options) (serverRun, 
 }
 
 // runApply sets the server up as opts say.
-func runApply(c *cobra.Command, p process, opts apply.Options, asJSON bool) error {
+func runApply(c *cobra.Command, p process, opts applyOptions, asJSON bool) error {
 	r, err := prepareServer(c, p, opts)
 	if err != nil {
 		return err

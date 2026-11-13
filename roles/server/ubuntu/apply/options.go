@@ -8,6 +8,4 @@ type Options struct {
 	// Only names what runs, each by ROLE or ROLE/STEP, or is empty for all. The other steps of a
 	// role named by ROLE/STEP alone are planned and left out, as later steps read their state.
 	Only []string
-	// Secrets is the age-encrypted file of --secrets, or empty.
-	Secrets string
 }

@@ -31,7 +31,7 @@ func newStateCmd(p process) *cobra.Command {
 			"--plain prints the report as text, and so does a pipe. The text is on stdout and ws's own lines on stderr. --json prints the version of ws, then " +
 			"each role with its steps, items and changes.",
 		Args: cobra.NoArgs,
-		RunE: func(c *cobra.Command, _ []string) error { return runState(c, p, opts, asJSON) },
+		RunE: func(c *cobra.Command, _ []string) error { return runState(c, p, applyOptions{Options: opts}, asJSON) },
 	}
 	f := c.Flags()
 	f.BoolVar(&asJSON, "json", false, "print the report as JSON")
@@ -40,7 +40,7 @@ func newStateCmd(p process) *cobra.Command {
 }
 
 // runState prints what the roles report.
-func runState(c *cobra.Command, p process, opts apply.Options, asJSON bool) error {
+func runState(c *cobra.Command, p process, opts applyOptions, asJSON bool) error {
 	r, err := prepareServer(c, p, opts)
 	if err != nil {
 		return err
