@@ -19,7 +19,11 @@ const Dir = "/etc/ws-tunnel"
 
 // Launchctl has launchd run or signal the daemon, through sudo.
 type Launchctl struct {
-	Args []string
+	M   effect.Machine
+	Out effect.Out
+	// Sleep waits between the tries of a bootstrap. Nil means time.Sleep.
+	Sleep func(time.Duration)
+	Args  []string
 	// Signal marks `kill SIGHUP`, which a daemon that is not running refuses: kickstart starts it
 	// then, and it reads tunnel.conf as it starts.
 	Signal bool
