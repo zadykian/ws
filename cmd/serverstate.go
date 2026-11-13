@@ -12,6 +12,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/server/ubuntu/apply"
+	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
 // newStateCmd returns ws server ubuntu state.
@@ -44,6 +45,9 @@ func runState(c *cobra.Command, p process, opts apply.Options, asJSON bool) erro
 	if err != nil {
 		return err
 	}
+	// State reads the machine and takes no secrets. A step that needs them would write them out to
+	// plan, as ikeward's install does, and a report has no use for them.
+	r.cfg.Secrets = secrets.Secrets{Unread: true}
 	if drawsReport(c, p) {
 		p.machine = r.cfg.M // ws_home confines it.
 		return tui.RunState(c.Context(), screenConfig(c, p), c.CommandPath(), func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {

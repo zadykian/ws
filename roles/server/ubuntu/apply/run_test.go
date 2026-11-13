@@ -247,15 +247,15 @@ func TestStateKeepsTheStepsThatOnlyNames(t *testing.T) {
 	}
 }
 
-func TestStateGivesTheRolesNoSecrets(t *testing.T) {
+func TestStateHandsTheRolesTheConfigsSecrets(t *testing.T) {
 	var got secrets.Secrets
 	r := roles.Role{Name: "a", Steps: func(_ values.Values, s secrets.Secrets, _ effect.Machine, _ effect.Units, _ effect.Out) []step.Step {
 		got = s
 		return nil
 	}}
-	c := Config{M: effecttest.NewMachine(), Out: &effecttest.Out{}, Secrets: secrets.Secrets{Env: map[string]string{"A": "b"}}}
-	if _, err := State(context.Background(), c, []roles.Role{r}); err != nil || !got.Unread || got.Env != nil {
-		t.Errorf("secrets = %+v, %v, want none, and Unread", got, err)
+	c := Config{M: effecttest.NewMachine(), Out: &effecttest.Out{}, Secrets: secrets.Secrets{Unread: true, Env: map[string]string{"A": "b"}}}
+	if _, err := State(context.Background(), c, []roles.Role{r}); err != nil || !got.Unread || got.Env["A"] != "b" {
+		t.Errorf("secrets = %+v, %v, want the config's", got, err)
 	}
 }
 
