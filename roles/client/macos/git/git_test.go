@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/zadykian/ws/engine/core/resource/file"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -12,7 +13,6 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/git"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
@@ -41,8 +41,8 @@ func gitStep(m *effecttest.Machine, look func(string) (string, error)) *git.Git 
 func prereqs(p step.Plan) []step.Change {
 	var cs []step.Change
 	for _, c := range p.Changes {
-		if run, ok := c.(change.Run); ok {
-			cs = append(cs, run)
+		if step.KindOf(c) == step.Install {
+			cs = append(cs, c)
 		}
 	}
 	return cs
@@ -87,10 +87,17 @@ func TestGitPlansGh(t *testing.T) {
 func TestGitApplyInstallsGh(t *testing.T) {
 	m, _ := gitReady()
 	m.Results["brew install gh"] = effecttest.Result{}
-	install := change.Run{Name: "brew", Args: []string{"install", "gh"}}
-	err := gitStep(m, nil).Apply(context.Background(), step.Plan{Changes: []step.Change{install}})
-	if err != nil || m.Calls[0] != "run brew install gh" {
-		t.Errorf("Apply = %v, calls %q; want brew install gh first", err, m.Calls)
+	g := gitStep(m, func(n string) (string, error) {
+		if n == "gh" {
+			return "", errors.New("not found")
+		}
+		return "/opt/bin/" + n, nil
+	})
+	m.Results["brew --prefix"] = effecttest.Result{Out: []byte("/opt\n")}
+	install := prereqs(mustPlan(t, g))
+	err := g.Apply(context.Background(), step.Plan{Changes: install})
+	if err != nil || !slices.Contains(m.Calls, "run brew install gh") {
+		t.Errorf("Apply = %v, calls %q; want brew install gh", err, m.Calls)
 	}
 }
 

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
@@ -93,41 +94,24 @@ func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 	return step.Plan{Changes: g.withNotes(cs)}, nil
 }
 
-// Apply installs gh first, plans again with it there, then applies the rest.
+// Apply installs gh first, plans again with it there, then applies the rest as a group does.
 func (g *Git) Apply(ctx context.Context, p step.Plan) error {
 	n := 0
-	for ; n < len(p.Changes); n++ {
-		c, ok := p.Changes[n].(change.Run)
-		if !ok {
+	for n < len(p.Changes) {
+		if _, ok := p.Changes[n].(ghInstall); !ok {
 			break
 		}
-		g.Out.Say("installing gh")
-		if err := change.Apply(ctx, g.M, g.Out, c); err != nil {
-			return err
-		}
+		n++
 	}
 	if n > 0 {
+		if err := (resource.Group{}).Apply(ctx, step.Plan{Changes: p.Changes[:n]}); err != nil {
+			return err
+		}
 		var err error
 		if p, err = g.Plan(ctx); err != nil {
 			return err
 		}
 		n = 0
 	}
-	for _, c := range p.Changes[n:] {
-		switch c := c.(type) {
-		case Known:
-			g.tell(c.Text)
-			continue
-		case Notice:
-			g.say(c.Text)
-			continue
-		case Register:
-			g.add(ctx, c)
-			continue
-		}
-		if err := change.Apply(ctx, g.M, g.Out, c); err != nil {
-			return err
-		}
-	}
-	return nil
+	return resource.Group{}.Apply(ctx, step.Plan{Changes: p.Changes[n:]})
 }
