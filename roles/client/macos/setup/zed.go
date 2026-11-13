@@ -5,6 +5,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/internal/brew"
 	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 )
 
@@ -31,19 +32,19 @@ func (*Zed) Name() string { return "zed" }
 func (*Zed) WaitsOn() string { return "" }
 
 // casks is the cask code that Zed shares with Ghostty, built from the step's fields.
-func (z *Zed) casks() brewCasks {
-	return brewCasks{m: z.M, out: z.Out, lookPath: z.LookPath, failed: z.failed}
+func (z *Zed) casks() brew.Casks {
+	return brew.Casks{M: z.M, Out: z.Out, LookPath: z.LookPath, Failed: z.failed}
 }
 
 // Plan plans the app, then the font where the app is there or comes, and the files.
 func (z *Zed) Plan(ctx context.Context) (step.Plan, error) {
 	b := z.casks()
-	app, ok, err := b.cask(ctx, "zed", b.has("Zed.app", "/Applications", z.Home+"/Applications"),
+	app, ok, err := b.Cask(ctx, "zed", b.Has("Zed.app", "/Applications", z.Home+"/Applications"),
 		"no Zed.app is in /Applications or ~/Applications")
 	if err != nil || !ok {
 		return step.Plan{}, err
 	}
-	font, err := b.font(ctx, z.Home)
+	font, err := b.Font(ctx, z.Home)
 	if err != nil {
 		return step.Plan{}, err
 	}
@@ -59,7 +60,7 @@ func (z *Zed) Plan(ctx context.Context) (step.Plan, error) {
 func (z *Zed) Report(ctx context.Context) ([]step.Item, error) {
 	dir := z.Home + "/.config/zed"
 	files := z.whole()
-	return userfile.Gather(ctx, z.casks().report(ctx, "zed", "Zed.app", z.Home),
+	return userfile.Gather(ctx, z.casks().Report(ctx, "zed", "Zed.app", z.Home),
 		z.dirs(), files[0], files[1],
 		userfile.Path{M: z.M, Kind: step.FileItem, Path: dir + "/settings.json"})
 }
@@ -70,5 +71,5 @@ func (z *Zed) Apply(ctx context.Context, p step.Plan) error {
 	if z.failed == nil {
 		z.failed = map[string]bool{}
 	}
-	return z.casks().install(ctx, p, "zed")
+	return z.casks().Install(ctx, p, "zed")
 }

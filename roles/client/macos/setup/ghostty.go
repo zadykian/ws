@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/internal/brew"
 	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 )
 
@@ -46,19 +47,19 @@ func (*Ghostty) Name() string { return "ghostty" }
 func (*Ghostty) WaitsOn() string { return "" }
 
 // casks is the cask code that Ghostty shares with Zed, built from the step's fields.
-func (g *Ghostty) casks() brewCasks {
-	return brewCasks{m: g.M, out: g.Out, lookPath: g.LookPath, failed: g.failed}
+func (g *Ghostty) casks() brew.Casks {
+	return brew.Casks{M: g.M, Out: g.Out, LookPath: g.LookPath, Failed: g.failed}
 }
 
 // Plan plans the app, then the font where the app is there or comes, and the files.
 func (g *Ghostty) Plan(ctx context.Context) (step.Plan, error) {
 	b := g.casks()
-	app, ok, err := b.cask(ctx, "ghostty", b.has("Ghostty.app", "/Applications", g.Home+"/Applications"),
+	app, ok, err := b.Cask(ctx, "ghostty", b.Has("Ghostty.app", "/Applications", g.Home+"/Applications"),
 		"no Ghostty.app is in /Applications or ~/Applications")
 	if err != nil || !ok {
 		return step.Plan{}, err
 	}
-	font, err := b.font(ctx, g.Home)
+	font, err := b.Font(ctx, g.Home)
 	if err != nil {
 		return step.Plan{}, err
 	}
@@ -75,7 +76,7 @@ func (g *Ghostty) Apply(ctx context.Context, p step.Plan) error {
 	if g.failed == nil {
 		g.failed = map[string]bool{}
 	}
-	return g.casks().install(ctx, p, "ghostty")
+	return g.casks().Install(ctx, p, "ghostty")
 }
 
 // conf returns the config file that Ghostty's menu opens: the first of ghosttyConfigs that holds
@@ -168,6 +169,6 @@ func (g *Ghostty) resolve() func(string) (string, error) {
 func (g *Ghostty) Report(ctx context.Context) ([]step.Item, error) {
 	config := g.conf()
 	file := g.file(config)
-	return userfile.Gather(ctx, g.casks().report(ctx, "ghostty", "Ghostty.app", g.Home),
+	return userfile.Gather(ctx, g.casks().Report(ctx, "ghostty", "Ghostty.app", g.Home),
 		g.dirs(config), file, g.configLines(config, file.Path))
 }
