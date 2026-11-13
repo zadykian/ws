@@ -2,10 +2,7 @@ package cli
 
 import (
 	"errors"
-	"fmt"
 	"io"
-	"io/fs"
-	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -62,32 +59,14 @@ func newMacApplyCmd(p enginecli.Env) *cobra.Command {
 	return c
 }
 
-// loadMacConf refuses root and reads mac.conf: the commands that act on the Mac's own files share it.
+// loadMacConf refuses root and reads mac.conf and the server's file: the commands that act on the Mac's
+// own files share it.
 func loadMacConf(p enginecli.Env) (settings conf.Conf, err error) {
 	if p.Euid == 0 {
 		// As root, with HOME kept, it would leave root's files in the user's ~/.ssh, and run the
 		// user's ~/.local/bin/cld.
 		return conf.Conf{}, errors.New("run it as yourself, not root: it asks sudo where it needs root")
 	}
-	file := p.Getenv("WS_CONF")
-	if file == "" {
-		file = filepath.Join(p.Getenv("HOME"), confFile)
-	}
-	text, err := p.Machine.ReadFile(file)
-	if errors.Is(err, fs.ErrNotExist) {
-		return conf.Conf{}, fmt.Errorf("%s is missing: roles/client/macos/README.md says what goes in it", file)
-	}
-	if err != nil {
-		return conf.Conf{}, err
-	}
-	var errs []conf.Error
-	settings, errs = conf.Parse(string(text))
-	if len(errs) > 0 {
-		var all []error
-		for _, e := range errs {
-			all = append(all, errors.New(e.In(file)))
-		}
-		return conf.Conf{}, errors.Join(all...)
-	}
-	return settings, nil
+	mac := conf.Path(p.Getenv, p.Pwd)
+	return conf.Load(p.Machine, mac, conf.ServerPath(mac, conf.FirstServer))
 }

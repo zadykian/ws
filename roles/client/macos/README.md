@@ -45,21 +45,11 @@ they hold ws's line, and none of their text.
 
 ## mac.conf
 
-The repository names no server, so the Mac's values go in `~/.config/ws/mac.conf`, `KEY=value`
-lines that the script reads without running them:
-
-```sh
-WS_PUBLIC_KEY=WS_KEY
-WS_LAN=10.88.0.0/24
-WS_LAN_ADDRESS=10.88.0.10
-WS_CABLE_SERVICE="USB 10/100/1G/2.5G LAN"
-WS_GIT_NAME="NAME"
-WS_GIT_EMAIL=NAME@example.com
-WS_REMOTE=ws.example.com
-WS_REMOTE_PORT=22022
-WS_TUNNEL_NETWORKS="10.20.0.0/16 198.51.100.0/24"
-WS_RESOLVERS="example.internal=10.20.0.53,10.20.0.54"
-```
+The repository names no server, so the values go in two files of `KEY=value` lines that the script
+reads without running them. `~/.config/ws/mac.conf` holds the Mac's keys, which `WS_GIT_NAME`,
+`WS_GIT_EMAIL`, `WS_GIT_SIGNING_PUB_KEY`, `WS_IDENTITY_PUB_KEY` and `WS_IDENTITY_AGENT` are.
+`~/.config/ws/servers/ws/server.conf` holds every other key. A key in the other file is refused.
+[The two files](conf/README.md#the-two-files) shows both.
 
 `WS_PUBLIC_KEY` is ws's WireGuard public key, which the `wireguard` role prints:
 [The Mac's tunnel](#the-macs-tunnel), below. `WS_LAN` is the home LAN, and `WS_LAN_ADDRESS` ws's
