@@ -45,7 +45,7 @@ func newFixture(t *testing.T) fixture {
 }
 
 func (f fixture) plan(_ *testing.T) ([]host.Change, error) {
-	return Repositories{M: f.m, repos: f.repos}.Plan(context.Background())
+	return Repositories{M: f.m, List: f.repos, Replaced: replacedFiles}.Plan(context.Background())
 }
 
 func apply(t *testing.T, changes []host.Change) {

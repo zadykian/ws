@@ -25,9 +25,9 @@ const (
 // run that stops between the two leaves a repository missing, never defined twice.
 type Repositories struct {
 	M effect.Machine
-	// repos lists the repositories by the release's codename. Nil means repositories; tests pin
-	// their own keys.
-	repos func(release string) []Repository
+	// List gives the repositories by the release's codename, and Replaced the files they replace.
+	List     func(release string) []Repository
+	Replaced func(release string) []string
 }
 
 // Plan fetches each key again at every run, so that a renewed key replaces the old one: Charm's
@@ -40,14 +40,10 @@ func (r Repositories) Plan(ctx context.Context) ([]host.Change, error) {
 		return nil, err
 	}
 	var parts []host.Resource
-	for _, path := range replacedFiles(release) {
+	for _, path := range r.Replaced(release) {
 		parts = append(parts, host.Absent{M: r.M, Path: path})
 	}
-	list := repositories
-	if r.repos != nil {
-		list = r.repos
-	}
-	repos := list(release)
+	repos := r.List(release)
 	for _, repo := range repos {
 		if !repo.Needed {
 			parts = append(parts,

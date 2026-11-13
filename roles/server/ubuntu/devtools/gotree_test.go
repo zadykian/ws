@@ -23,7 +23,7 @@ func goTreeMachine(listed string) *effecttest.Machine {
 
 func TestGoTreePlansItsSumFromTheList(t *testing.T) {
 	m := goTreeMachine(goFile)
-	changes, err := goTree(m).Plan(t.Context())
+	changes, err := goTree(m, "1.27.3").Plan(t.Context())
 	if err != nil || len(changes) != 3 {
 		t.Fatalf("got %d changes, %v; want the directory, the download and the install", len(changes), err)
 	}
@@ -38,7 +38,7 @@ func TestGoTreePlansItsSumFromTheList(t *testing.T) {
 func TestGoTreeCurrentAsksForNoList(t *testing.T) {
 	m := goTreeMachine(goFile)
 	m.Files[goDir+"/.ws-source"] = []byte("https://go.dev/dl/" + goFile + "\n")
-	if changes, err := goTree(m).Plan(t.Context()); err != nil || len(changes) != 0 {
+	if changes, err := goTree(m, "1.27.3").Plan(t.Context()); err != nil || len(changes) != 0 {
 		t.Errorf("got %v, %v; want none", changes, err)
 	}
 	for _, c := range m.Calls {
@@ -50,12 +50,12 @@ func TestGoTreeCurrentAsksForNoList(t *testing.T) {
 
 func TestGoTreeFails(t *testing.T) {
 	m := goTreeMachine("go1.27.3.linux-arm64.tar.gz")
-	if _, err := goTree(m).Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "lists no "+goFile) {
+	if _, err := goTree(m, "1.27.3").Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "lists no "+goFile) {
 		t.Errorf("a list without the file: %v", err)
 	}
 	m = goTreeMachine(goFile)
 	m.Results[curl+goReleases] = effecttest.Result{Err: errors.New("503")}
-	if _, err := goTree(m).Plan(t.Context()); err == nil {
+	if _, err := goTree(m, "1.27.3").Plan(t.Context()); err == nil {
 		t.Error("a failed fetch planned")
 	}
 }

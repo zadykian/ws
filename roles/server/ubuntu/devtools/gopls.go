@@ -16,34 +16,19 @@ type goplsTool struct {
 	User host.User
 	// Path is where go install puts gopls, and where languages.toml names it.
 	Path string
-	// Version and GoVersion are the pins, without the v and the go. Empty means the package's and
-	// devtools'.
+	// Version and GoVersion are the pins, without the v and the go.
 	Version, GoVersion string
-}
-
-func (g goplsTool) version() string {
-	if g.Version == "" {
-		return goplsVersion
-	}
-	return g.Version
-}
-
-func (g goplsTool) goVersion() string {
-	if g.GoVersion == "" {
-		return GoVersion
-	}
-	return g.GoVersion
 }
 
 type buildGopls struct{ g goplsTool }
 
 func (c buildGopls) String() string {
-	return fmt.Sprintf("build gopls v%s with Go %s at %s", c.g.version(), c.g.goVersion(), c.g.Path)
+	return fmt.Sprintf("build gopls v%s with Go %s at %s", c.g.Version, c.g.GoVersion, c.g.Path)
 }
 
 // Apply builds gopls where languages.toml names it.
 func (c buildGopls) Apply(ctx context.Context) error {
-	return goInstall(ctx, c.g.M, c.g.User, "gopls", c.g.Path, "golang.org/x/tools/gopls@v"+c.g.version())
+	return goInstall(ctx, c.g.M, c.g.User, "gopls", c.g.Path, "golang.org/x/tools/gopls@v"+c.g.Version)
 }
 
 // Plan reads gopls's version and the Go that built it. A gopls that is missing fails the
@@ -55,7 +40,7 @@ func (g goplsTool) Plan(ctx context.Context) ([]host.Change, error) {
 		if err := json.Unmarshal(out, &got); err != nil {
 			return nil, fmt.Errorf("read %s version -json: %w", g.Path, err)
 		}
-		if got.Version == "v"+g.version() && got.GoVersion == "go"+g.goVersion() {
+		if got.Version == "v"+g.Version && got.GoVersion == "go"+g.GoVersion {
 			return nil, nil
 		}
 	}
