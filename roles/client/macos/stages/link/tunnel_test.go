@@ -51,7 +51,7 @@ func TestTunnelPlan(t *testing.T) {
 		"peer":      {keyB, session.Status{WgKey: keyB, MacKey: keyA}, "run ws server ubuntu apply --only wireguard"},
 		"other key": {keyB, session.Status{WgKey: keyB, Peered: true, MacKey: keyB}, "write the Mac's key, " + keyA},
 		"new wg0": {keyA, session.Status{WgKey: keyB, Peered: true, MacKey: keyA},
-			"set WS_PUBLIC_KEY in mac.conf to wg0's key, " + keyB},
+			"set WS_PUBLIC_KEY in server.conf to wg0's key, " + keyB},
 		"no wg0": {"", session.Status{}, "to wg0's key, which that run makes"},
 	} {
 		tun, _ := newTunnel(tc.pub, tc.status, false)
