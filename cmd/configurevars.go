@@ -121,7 +121,7 @@ func (r *varsReach) close(ctx context.Context) {
 func varsSheet(form values.Form) tui.Sheet {
 	return tui.Sheet{
 		Name:   "host_vars",
-		Fields: func(map[string]string) []tui.FieldSpec { return fieldSpecs(form.Fields()) },
+		Fields: func(map[string]string) []tui.FieldSpec { return cli.FieldSpecs(form.Fields()) },
 		Save: func(ctx context.Context, b *tui.Bridge, edits map[string]string) (tui.Sheet, error) {
 			next, err := form.Save(ctx, b, edits)
 			return varsSheet(next), err

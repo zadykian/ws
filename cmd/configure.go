@@ -8,7 +8,6 @@ import (
 
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/form"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
@@ -46,7 +45,7 @@ func macForms(in io.Reader, errw io.Writer, p cli.Env) func(context.Context) ([]
 func confSheet(form conf.Form) tui.Sheet {
 	return tui.Sheet{
 		Name:   "mac.conf",
-		Fields: func(edits map[string]string) []tui.FieldSpec { return fieldSpecs(form.Fields(edits)) },
+		Fields: func(edits map[string]string) []tui.FieldSpec { return cli.FieldSpecs(form.Fields(edits)) },
 		Save: func(ctx context.Context, b *tui.Bridge, edits map[string]string) (tui.Sheet, error) {
 			// A copy, as Fields reads form on the screen's goroutine.
 			work := form
@@ -55,18 +54,4 @@ func confSheet(form conf.Form) tui.Sheet {
 			return confSheet(next), err
 		},
 	}
-}
-
-// fieldSpecs is a form's fields on the screen. A key that takes one of a few is a choice.
-func fieldSpecs(fields []form.Field) []tui.FieldSpec {
-	specs := make([]tui.FieldSpec, 0, len(fields))
-	for _, f := range fields {
-		spec := tui.FieldSpec{Label: f.Key, Help: f.Text, Value: f.Value, Default: f.Default,
-			Options: f.Options, Valid: f.Valid}
-		if f.Options != nil {
-			spec.Kind = tui.ChoiceField
-		}
-		specs = append(specs, spec)
-	}
-	return specs
 }
