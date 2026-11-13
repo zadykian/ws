@@ -15,11 +15,13 @@ import (
 // said.
 var ErrRefused = errors.New("mac.conf would be refused")
 
-// File is mac.conf on a machine, which the Mac's stages add lines to. Stage names the stage that
+// File is mac.conf, or a server's file, on a machine, which the Mac's stages add lines to. Stage names the stage that
 // holds it, in the messages.
 type File struct {
 	Path  string
 	Stage string
+	// Scope is the file that Path is, whose keys the checks take: Both, the zero value, takes any.
+	Scope Scope
 	M     effect.Machine
 	Out   effect.Out
 }
@@ -46,7 +48,7 @@ func (f File) Compose(lines string) (before, after string, err error) {
 		after += "\n"
 	}
 	after += lines
-	if _, errs := Parse(after); len(errs) > 0 {
+	if _, errs := f.Scope.Parse(after); len(errs) > 0 {
 		for _, e := range errs {
 			f.Out.Say("%s", e.In(f.Path))
 		}
@@ -90,7 +92,7 @@ func (f File) Write(ctx context.Context, text string) error {
 // stop at.
 func (f File) Load() (string, Conf, error) {
 	text, err := f.Read()
-	c, errs := Lines(text)
+	c, errs := f.Scope.Lines(text)
 	for _, e := range errs {
 		f.Out.Say("%s", e.In(f.Path))
 	}
