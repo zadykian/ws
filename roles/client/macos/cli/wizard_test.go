@@ -71,11 +71,17 @@ func TestWizardCheckShowsTheAnswersDiff(t *testing.T) {
 		"WS_TUNNEL_NETWORKS": "", "WS_RESOLVERS": ""} {
 		env[k] = v
 	}
+	m := p.Machine.(*effecttest.Machine)
+	m.Results["mkdir -p /t/ws-wizard.lock"] = effecttest.Result{}
+	m.Results["mkdir -p /t/ws-wizard.lock/servers/ws"] = effecttest.Result{}
 	status, _, stderr := runWs(p, "", "client", "macos", "wizard", "--check")
 	if status != 0 || !strings.Contains(stderr, "+WS_TARGET=cloud") {
-		t.Errorf("status = %d, stderr = %q; want the diff of mac.conf", status, stderr)
+		t.Errorf("status = %d, stderr = %q; want the diff of the server's file", status, stderr)
 	}
-	if got := string(p.Machine.(*effecttest.Machine).Files["/t/ws-wizard.lock/mac.conf"]); !strings.HasPrefix(got, "WS_TARGET=cloud\n") {
+	if got := string(m.Files["/t/ws-wizard.lock/servers/ws/server.conf"]); !strings.HasPrefix(got, "WS_TARGET=cloud\n") {
+		t.Errorf("scratch server file = %q", got)
+	}
+	if got := string(m.Files["/t/ws-wizard.lock/mac.conf"]); got != "WS_GIT_NAME=\n" {
 		t.Errorf("scratch mac.conf = %q", got)
 	}
 }
