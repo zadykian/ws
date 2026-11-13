@@ -23,7 +23,7 @@ hand. The stages, in order, the first two of which install what the rest needs:
    opens, waited on for 60 minutes. Then [Homebrew](https://brew.sh), from the `Homebrew.pkg` that
    `roles/client/macos/stages/tools/homebrew.go` pins, checked by its SHA-256 and signer, through `sudo
    installer`. On a new Mac, `--check` stops there.
-2. Answers: the values the two files lack, below.
+2. Answers: the server's name, asked first where none is set up, then the values the files lack.
 3. Mac key: the ssh key that the Mac offers ws, and git's, asked among Secretive's keys, below.
 4. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, said if there.
 5. ws client macos apply: `ws client macos apply`, after sudo's password, asked at each run,
@@ -74,12 +74,12 @@ answer comes from the first of these that has one:
 
 A bad answer at the terminal is asked again, with the form the key takes. From the environment, it
 stops the run. ws's address and git's email take a value where asked. The wizard adds the answers at
-the end of each file, and keeps their comments and order. It writes `mac.conf`, then the server's
-file, once `ws client macos apply` would take both. It stops before it asks on a file it can't read,
-or on a line that `ws client macos apply` would refuse. Where a file is a link and lacks a key, it
-prints the lines to add to the link's file, and stops. The Cable stage asks `WS_CABLE_PORT` and
-`WS_CABLE_SERVICE` ([The cable](#the-cable)). The other keys, such as `WS_USER` and `WS_PORT`, keep
-their defaults until set by hand.
+the end of each file, keeps their comments and order, and adds `WS_SLOT=0` to a server's file that
+lacks it. It writes `mac.conf`, then the server's file, once `ws client macos apply` would take
+both. It stops before it asks on a file it can't read, or on a line that `ws client macos apply`
+would refuse. Where a file is a link and lacks a key, it prints the lines to add to the link's file,
+and stops. The Cable stage asks `WS_CABLE_PORT` and `WS_CABLE_SERVICE` ([The cable](#the-cable)).
+The other keys, such as `WS_USER` and `WS_PORT`, keep their defaults until set by hand.
 
 Under `--check`, the wizard asks too, and shows the lines it would add as a diff. `ws client macos
 apply --check` then reads the files it would write, in the lock, which `WS_CONF` names. `WS_CONF`
