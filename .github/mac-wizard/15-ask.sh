@@ -99,7 +99,7 @@ quick "WS_TARGET=mac-vm has another target's key: WS_REMOTE" env WS_TARGET=mac-v
     WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=192.0.2.10 WS_GIT_NAME= WS_TUNNEL_NETWORKS= WS_RESOLVERS= \
     "$wsbin" client macos wizard --check
 
-printf '%s\n' '+WS_GIT_NAME="Jane Doe"' '+WS_GIT_EMAIL=jane@example.com' '+WS_SLOT=0' '+WS_TARGET=lan' \
+printf '%s\n' '+WS_GIT_NAME="Jane Doe"' '+WS_GIT_EMAIL=jane@example.com' '+WS_TARGET=lan' \
     '+WS_LAN=192.0.2.0/24' '+WS_LAN_ADDRESS=192.0.2.10' \
     '+WS_TUNNEL_NETWORKS="198.51.100.0/24 203.0.113.0/24"' '+WS_RESOLVERS=example.test=192.0.2.53' >"$RUNNER_TEMP/added"
 env WS_TARGET=lan WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=192.0.2.10 WS_GIT_NAME='Jane Doe' \
@@ -129,7 +129,7 @@ done
 
 # The defaults: a machine on the LAN, the router's LAN and lease
 # (roles/server/ubuntu/network/router.md), and the shell role's git identity.
-printf '%s\n' '+WS_GIT_NAME=zadykian' '+WS_GIT_EMAIL=me@zadykian.dev' '+WS_SLOT=0' '+WS_TARGET=lan' \
+printf '%s\n' '+WS_GIT_NAME=zadykian' '+WS_GIT_EMAIL=me@zadykian.dev' '+WS_TARGET=lan' \
     '+WS_LAN=10.88.0.0/24' '+WS_LAN_ADDRESS=10.88.0.10' '+WS_TUNNEL_NETWORKS=' \
     '+WS_RESOLVERS=' >"$RUNNER_TEMP/added"
 typed 'seven empty lines' '' '' '' '' '' '' ''
