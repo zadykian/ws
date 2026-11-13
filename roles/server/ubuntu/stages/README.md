@@ -20,7 +20,9 @@ stage acted ends with what stays by hand of ws.
 2. ws's run: `ws server ubuntu apply` in a unit of its own, by the remote script that the Mac's
    wizard sends over ssh, here on `sh`'s standard input. The unit goes on where the login drops, and
    reads [ws's secrets file](../secrets/README.md#wss-file) where its credential stands beside it. A run
-   follows the unit that runs, whichever wizard started it.
+   follows the unit that runs, whichever wizard started it. The Mac's wizard first writes
+   `wireguard_address` and `wireguard_port` into `host_vars.yml`, where the server's slot or port
+   isn't the default's. ws's own wizard writes neither.
 3. claude on ws: `WS_USER`'s claude, logged in, as `claude auth status` says. Else the stage runs
    `runuser -l WS_USER -c 'claude auth login'` at the terminal: open the address it shows in a
    browser. With no terminal, it stops. Where ws lacks claude, it names `sudo ws server ubuntu
