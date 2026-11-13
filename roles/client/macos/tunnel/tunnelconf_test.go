@@ -13,9 +13,9 @@ func TestTunnelConf(t *testing.T) {
 		c    conf.Conf
 		want string
 	}{
-		{"default port", conf.Conf{PublicKey: "K"}, head + "WS_PORT=51820\n"},
-		{"all", conf.Conf{PublicKey: "K", LAN: "192.0.2.0/24", LANAddress: "192.0.2.5", Remote: "r.example", Port: "5"},
-			head + "WS_LAN=192.0.2.0/24\nWS_LAN_ADDRESS=192.0.2.5\nWS_REMOTE=r.example\nWS_PORT=5\n"},
+		{"default port", conf.Conf{PublicKey: "K"}, head + "WS_PORT=51820\nWS_SLOT=0\n"},
+		{"all", conf.Conf{PublicKey: "K", LAN: "192.0.2.0/24", LANAddress: "192.0.2.5", Remote: "r.example", Port: "5", Slot: "3"},
+			head + "WS_LAN=192.0.2.0/24\nWS_LAN_ADDRESS=192.0.2.5\nWS_REMOTE=r.example\nWS_PORT=5\nWS_SLOT=3\n"},
 	}
 	for _, tt := range tests {
 		if got := tunnelConf(tt.c); got != tt.want {
