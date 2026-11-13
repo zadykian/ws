@@ -1,4 +1,4 @@
-package setup_test
+package zsh_test
 
 import (
 	"context"
@@ -10,24 +10,23 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
-	"github.com/zadykian/ws/roles/client/macos/mac"
-	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/zsh"
 )
 
 const zshSource = "source ~/.config/ws/zshrc\n"
 
-func zshStep(m *effecttest.Machine, out *effecttest.Out) *setup.Zsh {
-	return &setup.Zsh{Home: "/h", Hook: mac.Zshrc, M: m, Out: out,
+func zshStep(m *effecttest.Machine, out *effecttest.Out) *zsh.Zsh {
+	return &zsh.Zsh{Home: "/h", Hook: zsh.Hook, M: m, Out: out,
 		Now: func() time.Time { return time.Date(2026, 11, 9, 10, 0, 0, 0, time.UTC) }}
 }
 
-// The second plan finds roles/client/macos/mac/zshrc's header, so the hook that ws embeds is its own.
+// The second plan finds roles/client/macos/zsh/files/zshrc's header, so the hook that ws embeds is its own.
 func TestZshMakesTheHookAndZshrcThenNothing(t *testing.T) {
 	m := effecttest.NewMachine()
 	s := zshStep(m, &effecttest.Out{})
 	p, err := s.Plan(context.Background())
 	want := []step.Change{change.MakeDir{Path: "/h/.config", Mode: 0o755}, change.MakeDir{Path: "/h/.config/ws", Mode: 0o700},
-		change.Write{Path: "/h/.config/ws/zshrc", After: mac.Zshrc, Mode: 0o644},
+		change.Write{Path: "/h/.config/ws/zshrc", After: zsh.Hook, Mode: 0o644},
 		change.Write{Path: "/h/.zshrc", After: []byte(zshSource), Mode: 0o644}}
 	if err != nil || !reflect.DeepEqual(p.Changes, want) {
 		t.Fatalf("Plan = %v, %v; want %v", p.Changes, err, want)
@@ -57,7 +56,7 @@ func TestZshLeavesAHookNotItsOwnAndZshrc(t *testing.T) {
 func TestZshWarnsOfALinkedZshrcThatLacksTheLine(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	m.Dirs["/h/.config"], m.Dirs["/h/.config/ws"] = 0o755, 0o700
-	m.Files["/h/.config/ws/zshrc"] = mac.Zshrc
+	m.Files["/h/.config/ws/zshrc"] = zsh.Hook
 	m.Files["/h/.zshrc"] = []byte("export EDITOR=vi\n")
 	m.Links["/h/.zshrc"] = "/dots/zshrc"
 	s := zshStep(m, out)

@@ -15,6 +15,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/mac"
 	"github.com/zadykian/ws/roles/client/macos/setup"
 	"github.com/zadykian/ws/roles/client/macos/zed"
+	"github.com/zadykian/ws/roles/client/macos/zsh"
 )
 
 // Mac is what the Mac's steps read and act through. It holds the order of ws client macos apply's
@@ -40,7 +41,7 @@ func (m Mac) steps(check bool) []step.Step {
 		&ghostty.Ghostty{Home: m.Home, Settings: ghostty.Settings, M: m.M, Out: m.Out},
 		&zed.Zed{Home: m.Home, Settings: zed.Settings, Keymap: zed.Keymap, M: m.M, Out: m.Out},
 		&setup.Cld{Home: m.Home, M: m.M, Out: m.Out, Check: check},
-		&setup.Zsh{Home: m.Home, Hook: mac.Zshrc, M: m.M, Out: m.Out, Now: time.Now},
+		&zsh.Zsh{Home: m.Home, Hook: zsh.Hook, M: m.M, Out: m.Out, Now: time.Now},
 		&setup.Tunnel{Conf: m.Conf, Home: m.Home, Plist: mac.TunnelPlist, M: m.M, Out: m.Out, Text: m.Text,
 			Check: check},
 		&setup.Networks{Conf: m.Conf, M: m.M, Out: m.Out, Check: check},

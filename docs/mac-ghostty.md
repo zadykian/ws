@@ -119,7 +119,7 @@ hosts](mac.md#sshs-hosts) says how to lift the ban.
 A dropped ssh leaves Ghostty in the modes that Fresh, tmux and cld's sessions turned on, as their
 resets never reach the Mac. Each mouse move then types `^[[<35;42;17M` at the prompt, and some Ctrl
 keys arrive as escape codes. `ws client macos apply` writes
-[`roles/client/macos/mac/zshrc`](../roles/client/macos/mac/zshrc) as `~/.config/ws/zshrc`, and adds
+[`roles/client/macos/zsh/files/zshrc`](../roles/client/macos/zsh/files/zshrc) as `~/.config/ws/zshrc`, and adds
 `source ~/.config/ws/zshrc` at the end of `~/.zshrc`. It keeps the old file as `~/.zshrc.TIME~`, and
 warns where `~/.zshrc` is a link that lacks the line.
 

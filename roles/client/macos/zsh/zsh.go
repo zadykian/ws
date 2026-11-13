@@ -1,4 +1,6 @@
-package setup
+// Package zsh writes the hook that turns off the terminal modes a dropped ssh leaves on, and the line
+// of ~/.zshrc that sources it.
+package zsh
 
 import (
 	"context"
@@ -25,7 +27,7 @@ const (
 // ~/.zshrc, where the hook is not ws's or ~/.zshrc is a link that lacks the line.
 type Zsh struct {
 	Home string
-	// Hook is roles/client/macos/mac/zshrc, its first line zshHeader.
+	// Hook is roles/client/macos/zsh/files/zshrc, its first line zshHeader.
 	Hook []byte
 	M    effect.Machine
 	Out  effect.Out
