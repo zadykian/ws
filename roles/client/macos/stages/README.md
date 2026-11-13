@@ -30,7 +30,7 @@ hand. The stages, in order, the first two of which install what the rest needs:
    `--check` too, unless its timestamp is fresh. With no terminal, the stage stops, unless sudo
    needs no password. It shows the warnings of `ws client macos apply` and drops the Mac's key that
    it prints.
-6. Host key: ws's host key, matched against ws's console, in `known_hosts` under `ws`, below.
+6. Host key: ws's host key, matched against its console, in `known_hosts` under its name, below.
 7. Login: `WS_USER`'s login to ws by the Mac's key, checked and never added, below.
 8. Sudo: how the remote scripts reach root on ws, with sudo's password asked where it needs one,
    below.
@@ -137,7 +137,7 @@ targets](../conf/README.md) says where it shows. ssh takes that address for the 
 
 The stage shows the key's fingerprint. At ws's console, `ssh-keygen -lf
 /etc/ssh/ssh_host_ed25519_key.pub` prints ws's own: answer `yes` where they match, or paste what it
-prints. Any other answer stops the run. The key goes in `known_hosts` as `ws`, the name that
+prints. Any other answer stops the run. The key goes in `known_hosts` under the server's name, which
 `HostKeyAlias` gives each way. From then on, the stage reads nothing from ws. Through `WS_REMOTE`,
 the stage warns that a new ws faces the internet until its run sets up the `security` role
 ([security](../../../server/ubuntu/security/README.md)). With no terminal, `WS_FIRST_ADDRESS` and `WS_HOST_KEY` give the
@@ -153,9 +153,9 @@ keys instead, which must be the account's. Set `WS_USER` to that user, then run 
 `--check` says that a run would stop. Both show any ssh error.
 
 Where ws offers another host key than `known_hosts` holds, as once ws is installed again, it stops,
-naming `ssh-keygen -R ws`. It does so whatever `StrictHostKeyChecking` the user's `ssh_config` sets,
-and its logins add nothing to `known_hosts`. They run no `LocalCommand` either, such as the line
-that starts cld's watcher ([The watcher](../ghostty/README.md#the-watcher)).
+naming `ssh-keygen -R NAME`, NAME the server's name. It does so whatever `StrictHostKeyChecking`
+the user's `ssh_config` sets, and its logins add nothing to `known_hosts`. They run no
+`LocalCommand` either, such as the line that starts cld's watcher ([The watcher](../ghostty/README.md#the-watcher)).
 
 A run shares one ssh connection for its direct calls, and one for the Tunnel stage, so Secretive's
 key asks Touch ID once a run. Its end closes them, or 30 idle minutes after a `SIGKILL`.
