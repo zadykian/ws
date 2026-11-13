@@ -169,7 +169,8 @@ other settings, the script runs `sudo networksetup -setmanual SERVICE 10.77.0.2 
 with no router argument, the service gets none. `--check` prints that command. The script stops on a
 service the list lacks, or one with a router outside `10.77.0.0/30`, as an uplink has. A disabled
 service, which the list prints with a `*` first and the key names without it, draws a warning at
-each run while it stays off. Without the key, it does nothing. `-setmanual` replaces the service's
+each run while it stays off. Without the key, it does nothing, and the server's tunnel
+does not try the cable: the cable reaches the one server that names it. `-setmanual` replaces the service's
 settings, whatever they were, and emptying the key leaves them. To give the service DHCP again:
 `sudo networksetup -setdhcp SERVICE`.
 
