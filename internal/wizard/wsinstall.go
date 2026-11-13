@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 
 	"github.com/zadykian/ws/engine/core/check"
 	"github.com/zadykian/ws/engine/core/effect"
@@ -16,7 +17,7 @@ const installStage = "ws on ws"
 
 // WsInstall is the stage that puts this ws's release on ws, by the remote script's install.
 type WsInstall struct {
-	Ws *Session
+	Ws *session.Session
 	// URL is the address of the releases that Version comes from.
 	Version, URL string
 	Out          effect.Out
@@ -26,7 +27,7 @@ type WsInstall struct {
 func (*WsInstall) Name() string { return installStage }
 
 // Side is ws: this release is installed there.
-func (*WsInstall) Side() guided.Side { return OnWs }
+func (*WsInstall) Side() guided.Side { return session.Ws }
 
 // WaitsOn is the Sudo stage, which the remote script needs.
 func (*WsInstall) WaitsOn() string { return sudoStage }

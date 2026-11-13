@@ -2,6 +2,8 @@ package wizard
 
 import (
 	"context"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"github.com/zadykian/ws/roles/server/ubuntu/session/sessiontest"
 	"strings"
 	"testing"
 
@@ -10,11 +12,11 @@ import (
 )
 
 func TestWsInstallApply(t *testing.T) {
-	i, m := newInstall("v1.2.3", releases, Status{})
+	i, m := newInstall("v1.2.3", releases, session.Status{})
 	if err := i.Apply(context.Background(), step.Plan{}); err == nil || !strings.Contains(err.Error(), "install.sh failed") {
 		t.Errorf("Apply where ssh has no result = %v; want the stop", err)
 	}
-	m.Results[opLine("install", "v1.2.3", releases)] = effecttest.Result{}
+	m.Results[sessiontest.Op("install", "v1.2.3", releases)] = effecttest.Result{}
 	if err := i.Apply(context.Background(), step.Plan{}); err != nil {
 		t.Errorf("Apply = %v", err)
 	}

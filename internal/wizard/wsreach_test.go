@@ -2,6 +2,8 @@ package wizard
 
 import (
 	"context"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"github.com/zadykian/ws/roles/server/ubuntu/session/sessiontest"
 	"slices"
 	"strings"
 	"testing"
@@ -13,7 +15,7 @@ import (
 // On ws, the login runs by runuser as host_vars' WS_USER, and a missing claude names ws server
 // ubuntu apply.
 func TestWsClaudeHere(t *testing.T) {
-	ws, m := wsSession(Status{Claude: "none"})
+	ws, m := sessiontest.New(session.Status{Claude: "none"})
 	c := &WsClaude{Ws: ws, Tty: true}
 	if _, err := c.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "run sudo ws server ubuntu apply") {
 		t.Errorf("Plan where claude is missing = %v", err)

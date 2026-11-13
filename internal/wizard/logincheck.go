@@ -4,6 +4,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/remote"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 )
 
 // loginStage names the stage in its messages.
@@ -16,7 +17,7 @@ const loginStage = "Login"
 type Login struct {
 	// SSH is the Mac's ssh to ws. Ws is the session to ws, whose status the stage reads.
 	SSH remote.SSH
-	Ws  *Session
+	Ws  *session.Session
 	// Gh names the Mac's key in the stop.
 	Gh GhCLI
 	// Tty tells whether a terminal is there to ask ws's address, where ws doesn't answer at its way.

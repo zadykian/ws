@@ -4,9 +4,7 @@ package wizard
 
 import guided "github.com/zadykian/ws/engine/core/wizard"
 
-// The two machines of the wizard. A stage that changes both is the Mac's where its last change
-// lands on the Mac, as in the Tunnel stage, whose last write is WS_PUBLIC_KEY in mac.conf.
-const (
-	OnMac guided.Side = "Mac"
-	OnWs  guided.Side = "ws"
-)
+// OnMac is the Mac, one of the wizard's two machines. The other is session.Ws.
+// A stage that changes both is the Mac's where its last change lands there.
+// The Tunnel stage is one: its last write is WS_PUBLIC_KEY in mac.conf.
+const OnMac guided.Side = "Mac"

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -30,7 +31,7 @@ func (c signingAdd) String() string {
 
 // Lacks is empty where the Mac's gh lists the key among its login's signing keys. gh's errors other
 // than a 404, which shows its login lacks the scope, stop it, as the gh stage mends first.
-func (s *MacGitHub) Lacks(ctx context.Context, ws *Session, line string) (step.Change, error) {
+func (s *MacGitHub) Lacks(ctx context.Context, ws *session.Session, line string) (step.Change, error) {
 	path, _, err := s.Gh.ghPath(ctx)
 	if err != nil {
 		return nil, err
@@ -55,7 +56,7 @@ func (s *MacGitHub) Lacks(ctx context.Context, ws *Session, line string) (step.C
 }
 
 // Add adds the key to the Mac's gh login, titled with ws's hostname, from a file in the lock.
-func (s *MacGitHub) Add(ctx context.Context, ws *Session, line string) error {
+func (s *MacGitHub) Add(ctx context.Context, ws *session.Session, line string) error {
 	path, _, err := s.Gh.ghPath(ctx)
 	if err != nil {
 		return err

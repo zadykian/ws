@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"io"
 	"strings"
 	"time"
@@ -13,7 +14,6 @@ import (
 	"github.com/zadykian/ws/engine/core/remote"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/wizard"
-	"github.com/zadykian/ws/roles/client/macos/mac"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -97,8 +97,8 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 		SSH: remote.SSH{M: p.machine, F: e.talks, Lock: lock, Home: p.getenv("HOME"),
 			Ways: wizard.MacWays{M: p.machine, Conf: later}}, M: p.machine, P: ask, Out: out}
 	sudo := e.sudo
-	ws := wizard.NewSession(wizard.MacReach{SSH: host.SSH, Sudo: sudo, Conf: later, Out: out},
-		wizard.Scripts{Remote: mac.RemoteScript, Files: mac.RemoteFilesScript, Events: e.events})
+	ws := session.New(wizard.MacReach{SSH: host.SSH, Sudo: sudo, Conf: later, Out: out},
+		session.Scripts{Remote: session.RemoteScript, Files: session.RemoteFilesScript, Events: e.events})
 	sudo.SSH, sudo.Tty, sudo.Check, sudo.P, sudo.Out = host.SSH, p.tty, check, e.hidden, out
 	install := &wizard.WsInstall{Ws: ws, Version: p.version, URL: p.releases, Out: out}
 	run := &wizard.WsRun{Ws: ws, Await: install.Name(), Check: check, Out: out, Version: p.version, Update: o.update, Only: o.only}

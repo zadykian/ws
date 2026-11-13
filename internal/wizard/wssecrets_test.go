@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"github.com/zadykian/ws/engine/core/remote"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"github.com/zadykian/ws/roles/server/ubuntu/session/sessiontest"
 	"strings"
 	"testing"
 
@@ -13,20 +15,20 @@ import (
 // secretsLine is the ssh command line that runs cmd as root on ws, through sudo's password.
 func secretsLine(sh remote.SSHShell, cmd string) string {
 	return "ssh " + strings.Join(sh.SSH.Argv(context.Background(),
-		[]string{"-o", "BatchMode=yes", "ws", "sudo", "-k", "-S", "-p", "''", wsPath, "server", "ubuntu", "secrets"}), " ") + " " + cmd
+		[]string{"-o", "BatchMode=yes", "ws", "sudo", "-k", "-S", "-p", "''", session.WsPath, "server", "ubuntu", "secrets"}), " ") + " " + cmd
 }
 
 // shellReach is a Reach whose shell is sh.
 type shellReach struct {
-	Reach
+	session.Reach
 	sh remote.Shell
 }
 
 func (r shellReach) Shell() remote.Shell { return r.sh }
 
 // secretsSession returns a session that reaches ws through sh.
-func secretsSession(sh remote.Shell) *Session {
-	return NewSession(shellReach{sh: sh}, Scripts{Remote: []byte("echo\n")})
+func secretsSession(sh remote.Shell) *session.Session {
+	return session.New(shellReach{sh: sh}, session.Scripts{Remote: []byte("echo\n")})
 }
 
 func TestSessionSecretsSendsTheValueOnStdin(t *testing.T) {
@@ -55,7 +57,7 @@ func TestSessionSecretsErrors(t *testing.T) {
 		sh := remote.SSHShell{SSH: remote.SSH{M: m, Lock: "/t/l"}}
 		r := secretsSession(sh)
 		m.Results["ssh "+strings.Join(sh.SSH.Argv(context.Background(),
-			[]string{"-o", "BatchMode=yes", "ws", wsPath, "server", "ubuntu", "secrets", "keys"}), " ")] = effecttest.Result{Err: errors.New(tt.err)}
+			[]string{"-o", "BatchMode=yes", "ws", session.WsPath, "server", "ubuntu", "secrets", "keys"}), " ")] = effecttest.Result{Err: errors.New(tt.err)}
 		if _, err := r.Secrets(context.Background(), nil, "keys"); err == nil || !strings.HasPrefix(err.Error(), tt.want) {
 			t.Errorf("err = %v, want %q", err, tt.want)
 		}
@@ -66,15 +68,15 @@ func TestSessionSecretsErrors(t *testing.T) {
 func TestSessionSecretsLeavesTheStatusStale(t *testing.T) {
 	ctx := context.Background()
 	m := effecttest.NewMachine()
-	ws := NewSession(fakeReach{Reach: MacReach{}, M: m}, Scripts{Remote: []byte("x")})
-	m.Results[opLine("status")] = effecttest.Result{Out: Status{}.text()}
-	m.Results[wsPath+" server ubuntu secrets keys"] = effecttest.Result{}
+	ws := session.New(sessiontest.Reach{Reach: MacReach{}, M: m}, session.Scripts{Remote: []byte("x")})
+	m.Results[sessiontest.Op("status")] = effecttest.Result{Out: sessiontest.Text(session.Status{})}
+	m.Results[session.WsPath+" server ubuntu secrets keys"] = effecttest.Result{}
 	ws.Status(ctx)
 	if _, err := ws.Secrets(ctx, nil, "keys"); err != nil {
 		t.Fatal(err)
 	}
 	ws.Status(ctx)
-	if got := strings.Count(strings.Join(m.Calls, "\n"), opLine("status")); got != 2 {
+	if got := strings.Count(strings.Join(m.Calls, "\n"), sessiontest.Op("status")); got != 2 {
 		t.Errorf("status read %d times, want 2", got)
 	}
 }

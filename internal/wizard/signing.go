@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -14,7 +15,7 @@ const SigningStage = "Signing key"
 // Signing is the stage of ws's public signing key on GitHub, so that GitHub shows ws's commits as
 // verified. The remote script's status prints that key. It runs after ws's run, which makes the key.
 type Signing struct {
-	Ws *Session
+	Ws *session.Session
 	// GitHub is where the stage looks for the key and what it does where GitHub lacks it: MacGitHub
 	// or WsGitHub.
 	GitHub SigningGitHub
@@ -23,9 +24,9 @@ type Signing struct {
 // SigningGitHub is a Signing stage's side of GitHub.
 type SigningGitHub interface {
 	// Lacks returns the change that adds line, where GitHub lacks it, or none.
-	Lacks(ctx context.Context, ws *Session, line string) (step.Change, error)
+	Lacks(ctx context.Context, ws *session.Session, line string) (step.Change, error)
 	// Add adds line, or names it to add.
-	Add(ctx context.Context, ws *Session, line string) error
+	Add(ctx context.Context, ws *session.Session, line string) error
 	// Side is the side that the stage acts on.
 	Side() guided.Side
 }
@@ -45,7 +46,7 @@ func (s *Signing) line(ctx context.Context) (string, error) { return signingLine
 
 // signingLine is Signing's line, as ws's session reads it. It reads ws only where the remote script
 // does.
-func signingLine(ctx context.Context, ws *Session) (string, error) {
+func signingLine(ctx context.Context, ws *session.Session) (string, error) {
 	s, ok := ws.Status(ctx)
 	if !ok {
 		return "", errors.New(SigningStage + ": the remote script reads nothing on ws, so the key cannot be read")

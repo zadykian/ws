@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/zadykian/ws/engine/core/remote"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -27,7 +28,7 @@ const (
 // and ssh ws log in through it. Without a handshake, the closing list says so, and the run goes on.
 type Tunnel struct {
 	// Ws is the session to ws, whose files script names the Mac's key as wg0's peer.
-	Ws *Session
+	Ws *session.Session
 	// SSH is the Mac's ssh to ws.
 	SSH remote.SSH
 	// Conf is mac.conf's path. Check is set under --check.

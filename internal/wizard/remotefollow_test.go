@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"github.com/zadykian/ws/engine/core/remote"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"github.com/zadykian/ws/roles/server/ubuntu/session/sessiontest"
 	"slices"
 	"strings"
 	"testing"
@@ -31,16 +33,16 @@ func (h heard) steps() []string {
 }
 
 // newFollow returns a session over ws's fake, whose runs' events go to events.
-func newFollow(m *effecttest.Machine, events step.Observer) *Session {
-	reach := fakeReach{Reach: MacReach{SSH: remote.SSH{M: m, Lock: "/t/l"}}, M: m}
-	return NewSession(reach, Scripts{Remote: []byte("echo\n"), Files: []byte("true\n"), Events: events})
+func newFollow(m *effecttest.Machine, events step.Observer) *session.Session {
+	reach := sessiontest.Reach{Reach: MacReach{SSH: remote.SSH{M: m, Lock: "/t/l"}}, M: m}
+	return session.New(reach, session.Scripts{Remote: []byte("echo\n"), Files: []byte("true\n"), Events: events})
 }
 
 func TestFollowHandsEventsOnAndPassesTheLog(t *testing.T) {
 	m := effecttest.NewMachine()
 	h := &heard{}
 	r := newFollow(m, h)
-	m.Results[opLine("run", "--only", "wireguard")] = effecttest.Result{Out: []byte(runLog)}
+	m.Results[sessiontest.Op("run", "--only", "wireguard")] = effecttest.Result{Out: []byte(runLog)}
 	if err := r.Run(context.Background(), []string{"--only", "wireguard"}); err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +58,7 @@ func TestFollowHearsAReplayAgain(t *testing.T) {
 	m := effecttest.NewMachine()
 	h := &heard{}
 	r := newFollow(m, h)
-	m.Results[opLine("run")] = effecttest.Result{Out: []byte(runLog)}
+	m.Results[sessiontest.Op("run")] = effecttest.Result{Out: []byte(runLog)}
 	for range 2 {
 		if err := r.Run(context.Background(), nil); err != nil {
 			t.Fatal(err)
@@ -70,7 +72,7 @@ func TestFollowHearsAReplayAgain(t *testing.T) {
 func TestFollowDropsEventsThatNoOneHears(t *testing.T) {
 	m := effecttest.NewMachine()
 	r := newFollow(m, nil)
-	m.Results[opLine("run")] = effecttest.Result{Out: []byte(runLog)}
+	m.Results[sessiontest.Op("run")] = effecttest.Result{Out: []byte(runLog)}
 	if err := r.Run(context.Background(), nil); err != nil {
 		t.Fatal(err)
 	}
@@ -84,8 +86,8 @@ func TestFollowReadsStatusAgainAfterAFailure(t *testing.T) {
 	h := &heard{}
 	r := newFollow(m, h)
 	drop := errors.New("ssh dropped")
-	m.Results[opLine("status")] = effecttest.Result{Out: Status{}.text()}
-	m.Results[opLine("run")] = effecttest.Result{Out: []byte(runLog), Err: drop}
+	m.Results[sessiontest.Op("status")] = effecttest.Result{Out: sessiontest.Text(session.Status{})}
+	m.Results[sessiontest.Op("run")] = effecttest.Result{Out: []byte(runLog), Err: drop}
 	r.Status(context.Background())
 	if err := r.Run(context.Background(), nil); !errors.Is(err, drop) {
 		t.Fatalf("Follow = %v, want ssh's error", err)
@@ -93,7 +95,7 @@ func TestFollowReadsStatusAgainAfterAFailure(t *testing.T) {
 	if len(*h) != 1 {
 		t.Errorf("heard %d events; want those before the drop", len(*h))
 	}
-	m.Results[opLine("status")] = effecttest.Result{Out: Status{Active: "ws-wizard-1"}.text()}
+	m.Results[sessiontest.Op("status")] = effecttest.Result{Out: sessiontest.Text(session.Status{Active: "ws-wizard-1"})}
 	if s, _ := r.Status(context.Background()); s.Active != "ws-wizard-1" {
 		t.Errorf("active = %q; want the status read again", s.Active)
 	}
@@ -102,7 +104,7 @@ func TestFollowReadsStatusAgainAfterAFailure(t *testing.T) {
 func TestFollowRunsOnAMachineWithoutLines(t *testing.T) {
 	m := effecttest.NewMachine()
 	ssh := remote.SSH{M: struct{ effect.Machine }{m}, Lock: "/t/l"}
-	r := NewSession(MacReach{SSH: ssh}, Scripts{Remote: []byte("echo\n")})
+	r := session.New(MacReach{SSH: ssh}, session.Scripts{Remote: []byte("echo\n")})
 	args := []string{"-o", "BatchMode=yes", "ws", "sh", "-s", "--", "run"}
 	m.Results["ssh "+strings.Join(ssh.Argv(context.Background(), args), " ")] = effecttest.Result{}
 	if err := r.Run(context.Background(), nil); err != nil {
@@ -119,27 +121,27 @@ func TestEachRunIsFollowed(t *testing.T) {
 	ctx, h := context.Background(), &heard{}
 	log := effecttest.Result{Out: []byte(runLog)}
 
-	r, m := newRun("lan", Status{}, false, false)
-	r.Ws.events = h
-	m.Results[opLine("run")] = log
+	r, m := newRun("lan", session.Status{}, false, false)
+	r.Ws.Hear(h)
+	m.Results[sessiontest.Op("run")] = log
 	if err := r.run(ctx); err != nil {
 		t.Fatal(err)
 	}
 
-	c, m, _ := newCable(t, Status{}, cableLink, nil)
-	c.Ws.events = h
-	m.Results[opLine("link", "eth1")] = effecttest.Result{}
-	m.Results[opLine("run", "--only", "network,wireguard")] = log
+	c, m, _ := newCable(t, session.Status{}, cableLink, nil)
+	c.Ws.Hear(h)
+	m.Results[sessiontest.Op("link", "eth1")] = effecttest.Result{}
+	m.Results[sessiontest.Op("run", "--only", "network,wireguard")] = log
 	if err := c.name(ctx, "eth1"); err != nil {
 		t.Fatal(err)
 	}
 
-	tun, m := newTunnel(keyA, Status{}, false)
-	tun.Ws.events = h
+	tun, m := newTunnel(keyA, session.Status{}, false)
+	tun.Ws.Hear(h)
 	m.Results["sudo -v"] = effecttest.Result{}
 	m.Results[libexec+" client macos tunnel key"] = effecttest.Result{Out: []byte(keyA + "\n")}
-	m.Results[opLine("peer", keyA)] = effecttest.Result{}
-	m.Results[opLine("run", "--only", "wireguard")] = log
+	m.Results[sessiontest.Op("peer", keyA)] = effecttest.Result{}
+	m.Results[sessiontest.Op("run", "--only", "wireguard")] = log
 	if err := tun.Apply(ctx, step.Plan{}); err == nil || !strings.Contains(err.Error(), "lacks the Mac's key") {
 		t.Errorf("Apply = %v; want the stop past the run", err)
 	}

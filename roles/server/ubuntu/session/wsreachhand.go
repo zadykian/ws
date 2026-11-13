@@ -1,4 +1,4 @@
-package wizard
+package session
 
 import guided "github.com/zadykian/ws/engine/core/wizard"
 

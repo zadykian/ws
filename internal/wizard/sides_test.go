@@ -2,6 +2,7 @@ package wizard
 
 import (
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/step"
@@ -12,9 +13,9 @@ import (
 func TestEveryStageStatesItsSide(t *testing.T) {
 	want := map[string]guided.Side{
 		macUpdateStage: OnMac, toolsStage: OnMac, homebrewStage: OnMac, answers: OnMac, macKey: OnMac,
-		ghStage: OnMac, setupStage: OnMac, hostStage: OnMac, loginStage: OnMac, sudoStage: OnWs,
-		installStage: OnWs, RunStage: OnWs, ClaudeStage: OnWs, SigningStage: OnMac, tunnelStage: OnMac,
-		cableStage: OnMac, valuesStage: OnWs,
+		ghStage: OnMac, setupStage: OnMac, hostStage: OnMac, loginStage: OnMac, sudoStage: session.Ws,
+		installStage: session.Ws, RunStage: session.Ws, session.ClaudeStage: session.Ws, SigningStage: OnMac, tunnelStage: OnMac,
+		cableStage: OnMac, valuesStage: session.Ws,
 	}
 	stages := []step.Step{&MacUpdate{}, &Tools{}, &Homebrew{}, &Answers{}, &MacKey{}, &Gh{}, &Setup{},
 		&HostKey{}, &Login{}, &Sudo{}, &WsInstall{}, &WsRun{}, &WsClaude{}, &Signing{GitHub: &MacGitHub{}}, &Tunnel{}, &Cable{},

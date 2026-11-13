@@ -1,4 +1,4 @@
-package wizard
+package session_test
 
 import (
 	"context"
@@ -10,6 +10,8 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"github.com/zadykian/ws/roles/server/ubuntu/session/sessiontest"
 )
 
 // wsReport is a report of ws v1, as ws server ubuntu state --json prints it.
@@ -25,11 +27,10 @@ const wsReport = `{
 
 // stateSession returns a session on a machine whose status names held as ws's version, and whose
 // state op prints report.
-func stateSession(held, report string) (*Session, *effecttest.Machine) {
+func stateSession(held, report string) (*session.Session, *effecttest.Machine) {
 	m := effecttest.NewMachine()
-	r := NewSession(fakeReach{Reach: MacReach{}, M: m}, Scripts{Remote: []byte("echo\n")})
-	m.Results[opLine("status")] = effecttest.Result{Out: Status{Version: held}.text()}
-	m.Results[opLine("state")] = effecttest.Result{Out: []byte(report)}
+	r := sessiontest.On(m, session.Status{Version: held})
+	m.Results[sessiontest.Op("state")] = effecttest.Result{Out: []byte(report)}
 	return r, m
 }
 
@@ -85,8 +86,8 @@ func TestSessionStateRefusesAnotherWs(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			r, m := stateSession(c.held, c.report)
-			if got, err := r.State(context.Background(), "v1"); !errors.Is(err, ErrOtherWs) || got != nil {
-				t.Errorf("got %v, %v; want ErrOtherWs", got, err)
+			if got, err := r.State(context.Background(), "v1"); !errors.Is(err, session.ErrOtherWs) || got != nil {
+				t.Errorf("got %v, %v; want session.ErrOtherWs", got, err)
 			}
 			if n := ranOp(m, "state"); n != c.state {
 				t.Errorf("state ran %d times; want %d", n, c.state)
@@ -107,8 +108,8 @@ func TestSessionStateFails(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			r, m := stateSession("v1", "")
-			m.Results[opLine("state")] = c.result
-			if got, err := r.State(context.Background(), "v1"); err == nil || errors.Is(err, ErrOtherWs) || got != nil {
+			m.Results[sessiontest.Op("state")] = c.result
+			if got, err := r.State(context.Background(), "v1"); err == nil || errors.Is(err, session.ErrOtherWs) || got != nil {
 				t.Errorf("got %v, %v; want a failure that is no refusal", got, err)
 			}
 		})
@@ -117,8 +118,8 @@ func TestSessionStateFails(t *testing.T) {
 
 func TestSessionStateWithNoStatus(t *testing.T) {
 	r, m := stateSession("v1", wsReport)
-	m.Results[opLine("status")] = effecttest.Result{Err: errors.New("denied")}
-	if got, err := r.State(context.Background(), "v1"); err == nil || errors.Is(err, ErrOtherWs) || got != nil {
+	m.Results[sessiontest.Op("status")] = effecttest.Result{Err: errors.New("denied")}
+	if got, err := r.State(context.Background(), "v1"); err == nil || errors.Is(err, session.ErrOtherWs) || got != nil {
 		t.Errorf("got %v, %v; want a failure that is no refusal", got, err)
 	}
 	if n := ranOp(m, "state"); n != 0 {

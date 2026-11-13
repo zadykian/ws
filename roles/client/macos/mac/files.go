@@ -1,3 +1,5 @@
+// Package mac holds the files that the ws CLI embeds for the Mac: Ghostty's settings, Zed's and
+// the zsh hook.
 package mac
 
 import _ "embed" // for the files' go:embed

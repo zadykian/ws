@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"github.com/zadykian/ws/engine/core/remote"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"strings"
 	"testing"
 
@@ -15,7 +16,7 @@ const (
 )
 
 // newTunnel returns the stage over a Mac whose mac.conf holds WS_PUBLIC_KEY pub, with ws's status.
-func newTunnel(pub string, status Status, check bool) (*Tunnel, *effecttest.Machine) {
+func newTunnel(pub string, status session.Status, check bool) (*Tunnel, *effecttest.Machine) {
 	r, m := newRun("lan", status, false, check)
 	m.Files["/h/mac.conf"] = append(m.Files["/h/mac.conf"], []byte("WS_PUBLIC_KEY="+pub+"\n")...)
 	m.Files["/h/.config/ws/tunnel.pub"] = []byte(keyA + "\n")
@@ -28,15 +29,15 @@ func newTunnel(pub string, status Status, check bool) (*Tunnel, *effecttest.Mach
 func TestTunnelPlan(t *testing.T) {
 	for name, tc := range map[string]struct {
 		pub    string
-		status Status
+		status session.Status
 		want   string
 	}{
-		"done":      {keyB, Status{WgKey: keyB, Peered: true, MacKey: keyA}, ""},
-		"peer":      {keyB, Status{WgKey: keyB, MacKey: keyA}, "run ws server ubuntu apply --only wireguard"},
-		"other key": {keyB, Status{WgKey: keyB, Peered: true, MacKey: keyB}, "write the Mac's key, " + keyA},
-		"new wg0": {keyA, Status{WgKey: keyB, Peered: true, MacKey: keyA},
+		"done":      {keyB, session.Status{WgKey: keyB, Peered: true, MacKey: keyA}, ""},
+		"peer":      {keyB, session.Status{WgKey: keyB, MacKey: keyA}, "run ws server ubuntu apply --only wireguard"},
+		"other key": {keyB, session.Status{WgKey: keyB, Peered: true, MacKey: keyB}, "write the Mac's key, " + keyA},
+		"new wg0": {keyA, session.Status{WgKey: keyB, Peered: true, MacKey: keyA},
 			"set WS_PUBLIC_KEY in mac.conf to wg0's key, " + keyB},
-		"no wg0": {"", Status{}, "to wg0's key, which that run makes"},
+		"no wg0": {"", session.Status{}, "to wg0's key, which that run makes"},
 	} {
 		tun, _ := newTunnel(tc.pub, tc.status, false)
 		p, err := tun.Plan(context.Background())
@@ -52,7 +53,7 @@ func TestTunnelPlan(t *testing.T) {
 }
 
 func TestTunnelPlanWaits(t *testing.T) {
-	tun, m := newTunnel(keyB, Status{Peered: true}, true)
+	tun, m := newTunnel(keyB, session.Status{Peered: true}, true)
 	delete(m.Files, "/h/.config/ws/tunnel.pub")
 	p, err := tun.Plan(context.Background())
 	if err != nil || len(p.Changes) != 0 || !strings.Contains(tun.Out.(*effecttest.Out).Lines[0], "after ws client macos apply") {
@@ -62,7 +63,7 @@ func TestTunnelPlanWaits(t *testing.T) {
 
 func TestTunnelPlanShowsConfsDiffUnderCheck(t *testing.T) {
 	for _, check := range []bool{true, false} {
-		tun, m := newTunnel(keyA, Status{WgKey: keyB, Peered: true, MacKey: keyA}, check)
+		tun, m := newTunnel(keyA, session.Status{WgKey: keyB, Peered: true, MacKey: keyA}, check)
 		if _, err := tun.Plan(context.Background()); err != nil {
 			t.Fatal(err)
 		}

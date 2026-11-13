@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/internal/wizard"
@@ -21,7 +22,7 @@ func macState(p process, side string, sudo *wizard.Sudo) (tui.StateReader, func(
 // for. The session stays once found, as a new one would hold sudo's ticket until the screen ends.
 // Each read asks ws's status again, as a run may have changed it.
 func stateRead(open sessionOpen, version string) tui.StateReader {
-	var ws *wizard.Session
+	var ws *session.Session
 	return func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
 		if ws == nil {
 			found, err := open(ctx, b)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
@@ -17,7 +18,7 @@ const RunStage = "ws's run"
 // follows it. The Mac's wizard and ws's both run it, each on its own session.
 type WsRun struct {
 	// Ws is the session to ws, whose files script names ws_user and the tunnel's peer.
-	Ws *Session
+	Ws *session.Session
 	// Await names the stage that must be done first. It is required: the Mac's list names the stage
 	// that installs this ws on ws, and ws's own names its values.
 	Await string
@@ -42,14 +43,14 @@ type WsRun struct {
 func (*WsRun) Name() string { return RunStage }
 
 // Side is ws: ws server ubuntu apply runs there.
-func (*WsRun) Side() guided.Side { return OnWs }
+func (*WsRun) Side() guided.Side { return session.Ws }
 
 // WaitsOn is Await.
 func (r *WsRun) WaitsOn() string { return r.Await }
 
 // RunDone succeeds where ws's last full run left what c wants. Under --update, only once the stage
 // ran ws server ubuntu apply in this run.
-func (r *WsRun) RunDone(ctx context.Context, c Want) bool {
+func (r *WsRun) RunDone(ctx context.Context, c session.Want) bool {
 	if r.Update && !r.ran {
 		return false
 	}
@@ -112,7 +113,7 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 
 // partDone is RunDone for what this run takes. A part that ran is all there is to do, and a part
 // chosen is to run whatever the last full run left, as a step can drift after it.
-func (r *WsRun) partDone(ctx context.Context, c Want) bool {
+func (r *WsRun) partDone(ctx context.Context, c session.Want) bool {
 	if len(r.Only) > 0 {
 		return r.ran
 	}

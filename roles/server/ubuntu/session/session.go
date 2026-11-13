@@ -1,4 +1,7 @@
-package wizard
+// Package session is how the wizard reaches ws: one Session, over the Mac's ssh or on the machine
+// itself, that runs the scripts which read and change ws. The scripts stay sh, as they run on ws
+// before the ws binary is there.
+package session
 
 import (
 	"cmp"
@@ -11,6 +14,9 @@ import (
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 )
+
+// Ws is the side of ws, in the wizard's locks and its list of what stays by hand.
+const Ws guided.Side = "ws"
 
 // Session is the one way to ws of a wizard's run: the Mac's over ssh, or ws's own on the machine
 // itself. It runs the remote script and the files script, which share ws's status. The stages take
@@ -60,10 +66,13 @@ type Scripts struct {
 	Events        step.Observer
 }
 
-// NewSession returns the session of r, which runs sc's scripts.
-func NewSession(r Reach, sc Scripts) *Session {
+// New returns the session of r, which runs sc's scripts.
+func New(r Reach, sc Scripts) *Session {
 	return &Session{reach: r, shell: r.Shell(), remote: sc.Remote, files: sc.Files, events: sc.Events}
 }
+
+// Hear has o hear a run's events from now on, in place of Scripts.Events.
+func (s *Session) Hear(o step.Observer) { s.events = o }
 
 // Status reads what the remote script's status prints once, until an operation that changes ws, or
 // claude's login, runs. It reports whether it read any: the Shell or the script fails where root is
@@ -115,7 +124,7 @@ func (s *Session) Hand(ctx context.Context, h *guided.Hand) {
 // A failed ssh says that ws is out of reach; else the error is what ws printed.
 func (s *Session) Secrets(ctx context.Context, in []byte, args ...string) ([]byte, error) {
 	s.stale()
-	out, err := s.shell.Run(ctx, in, append([]string{wsPath, "server", "ubuntu", "secrets"}, args...)...)
+	out, err := s.shell.Run(ctx, in, append([]string{WsPath, "server", "ubuntu", "secrets"}, args...)...)
 	switch {
 	case err == nil:
 		return out, nil

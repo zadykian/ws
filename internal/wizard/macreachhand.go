@@ -3,6 +3,7 @@ package wizard
 import (
 	"cmp"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 
 	"github.com/zadykian/ws/roles/client/macos/conf"
 )
@@ -11,12 +12,12 @@ import (
 // remote script's status. ws's gh login is a step of ws server ubuntu apply, by token.github, so
 // the list leaves it out. mac.conf has WS_LAN_ADDRESS with WS_LAN alone, so the lease names an
 // address only with a LAN. Off the LAN, away's lines take the router's place.
-func (r MacReach) Hand(h *guided.Hand, s Status) {
+func (r MacReach) Hand(h *guided.Hand, s session.Status) {
 	_, c, err := loadConf(confFile{r.Conf, RunStage, r.SSH.M, r.Out})
 	if err != nil {
 		return
 	}
-	Fans(h, s)
+	session.Fans(h, s)
 	if c.Target != "cloud" && s.OutboundOff {
 		h.Add("ws's outbound table: off, as ws's /etc/ws/host_vars.yml names security_outbound: false, as for " +
 			"a cloud VM; remove that line, then run the wizard with --update (docs/security.md, Outbound).")

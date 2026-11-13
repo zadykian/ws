@@ -1,4 +1,4 @@
-package wizard
+package session
 
 import (
 	"cmp"
@@ -26,17 +26,21 @@ type WsReach struct {
 	Out  effect.Out
 }
 
+// Shell runs a command here as root, which ws server ubuntu wizard has on ws itself.
 func (r WsReach) Shell() remote.Shell {
 	return remote.LocalShell{M: r.M, User: func() string { c, _ := r.Read(); return c.User }}
 }
 
+// Want reads the target and WS_USER through Read.
 func (r WsReach) Want() (Want, error) { return r.Read() }
 
+// User returns WS_USER, or the default where host_vars names none.
 func (r WsReach) User() (string, error) {
 	c, err := r.Read()
 	return cmp.Or(c.User, values.Default().User), err
 }
 
+// Rerun says how to run ws server ubuntu apply again on ws.
 func (WsReach) Rerun() string { return "run sudo ws server ubuntu apply" }
 
 // Claude runs the login as WS_USER: runuser gives WS_USER's login shell in place of ssh's.

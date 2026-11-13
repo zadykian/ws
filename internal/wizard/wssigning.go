@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -21,7 +22,7 @@ type WsGitHub struct {
 	named bool
 }
 
-func (*WsGitHub) Side() guided.Side { return OnWs }
+func (*WsGitHub) Side() guided.Side { return session.Ws }
 
 type signingByHand struct{ why string }
 
@@ -30,7 +31,7 @@ func (c signingByHand) String() string {
 }
 
 // Lacks is empty where GitHub lists the key among the signing keys of WS_USER's GitHub login.
-func (s *WsGitHub) Lacks(ctx context.Context, ws *Session, line string) (step.Change, error) {
+func (s *WsGitHub) Lacks(ctx context.Context, ws *session.Session, line string) (step.Change, error) {
 	if s.named {
 		return nil, nil
 	}
@@ -50,7 +51,7 @@ func (s *WsGitHub) Lacks(ctx context.Context, ws *Session, line string) (step.Ch
 }
 
 // Add lists the key in what stays by hand, to add on GitHub, as ws holds no token that may.
-func (s *WsGitHub) Add(_ context.Context, _ *Session, line string) error {
+func (s *WsGitHub) Add(_ context.Context, _ *session.Session, line string) error {
 	s.Hand.Add("ws's signing key on GitHub: add it as a signing key at https://github.com/settings/ssh/new, "+
 		"so that GitHub shows ws's commits as verified (docs/server-wizard.md): %s", line)
 	s.Out.Say("%s: GitHub lacks ws's signing key, which the list at the end names", SigningStage)

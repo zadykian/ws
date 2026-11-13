@@ -4,13 +4,13 @@ import (
 	"cmp"
 	"context"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"sync"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/remote"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/internal/wizard"
-	"github.com/zadykian/ws/roles/client/macos/mac"
 )
 
 // varsReach is the way to ws of the host_vars and secrets sheets, of the wizard's state screen and of
@@ -30,7 +30,7 @@ type varsReach struct {
 
 // sessionOpen finds the session to ws of a sheet or a read, through the screen: the Mac's over ssh,
 // or ws's own.
-type sessionOpen func(ctx context.Context, b *tui.Bridge) (*wizard.Session, error)
+type sessionOpen func(ctx context.Context, b *tui.Bridge) (*session.Session, error)
 
 // hostVarsSheet is the host_vars form before its read, which open reaches ws for. The password that
 // sudo asks stays with the session, so that a save asks none.
@@ -53,7 +53,7 @@ func hostVarsSheet(open sessionOpen) tui.Sheet {
 }
 
 // reach finds how the session reaches root on ws, as the wizard's stages do, through the screen.
-func (r *varsReach) reach(ctx context.Context, b *tui.Bridge) (*wizard.Session, error) {
+func (r *varsReach) reach(ctx context.Context, b *tui.Bridge) (*session.Session, error) {
 	return r.reachOn(ctx, b.Effects().M, b)
 }
 
@@ -65,7 +65,7 @@ type rootTalk interface {
 
 // reachOn is reach on m, which asks through t. The lock keeps a wizard's own run away, and holds
 // ssh's sockets.
-func (r *varsReach) reachOn(ctx context.Context, m effect.Machine, t rootTalk) (*wizard.Session, error) {
+func (r *varsReach) reachOn(ctx context.Context, m effect.Machine, t rootTalk) (*session.Session, error) {
 	lock, err := r.locked(ctx)
 	if err != nil {
 		return nil, err
@@ -74,8 +74,8 @@ func (r *varsReach) reachOn(ctx context.Context, m effect.Machine, t rootTalk) (
 	ssh := remote.SSH{M: m, Lock: lock, Home: r.p.getenv("HOME"), Ways: wizard.MacWays{M: m, Conf: conf}}
 	sudo := cmp.Or(r.sudo, &wizard.Sudo{})
 	// A kept one holds the effects of a screen that has ended.
-	ws := wizard.NewSession(wizard.MacReach{SSH: ssh, Sudo: sudo, Conf: conf, Out: t},
-		wizard.Scripts{Remote: mac.RemoteScript, Files: mac.RemoteFilesScript})
+	ws := session.New(wizard.MacReach{SSH: ssh, Sudo: sudo, Conf: conf, Out: t},
+		session.Scripts{Remote: session.RemoteScript, Files: session.RemoteFilesScript})
 	sudo.SSH, sudo.Tty, sudo.P, sudo.Out = ssh, r.p.tty, t, t
 	plan, err := sudo.Plan(ctx)
 	if err != nil {

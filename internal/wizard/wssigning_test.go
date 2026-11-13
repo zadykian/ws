@@ -3,6 +3,8 @@ package wizard
 import (
 	"context"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"github.com/zadykian/ws/roles/server/ubuntu/session/sessiontest"
 	"strings"
 	"testing"
 
@@ -12,8 +14,8 @@ import (
 
 const keysCmd = "curl -fsSL --retry 3 --proto =https https://api.github.com/users/ada-1/ssh_signing_keys?per_page=100"
 
-func newWsSigning(status Status, login, listed string) (*Signing, *WsGitHub) {
-	ws, m := wsSession(status)
+func newWsSigning(status session.Status, login, listed string) (*Signing, *WsGitHub) {
+	ws, m := sessiontest.New(status)
 	m.Results[loginCmd] = effecttest.Result{Out: []byte(login)}
 	m.Results[keysCmd] = effecttest.Result{Out: []byte(listed)}
 	g := &WsGitHub{M: m, Out: &effecttest.Out{}, Hand: &guided.Hand{}}
@@ -21,12 +23,12 @@ func newWsSigning(status Status, login, listed string) (*Signing, *WsGitHub) {
 }
 
 func TestWsSigningPlan(t *testing.T) {
-	key := Status{Signing: "ssh-ed25519 AAA"}
+	key := session.Status{Signing: "ssh-ed25519 AAA"}
 	for name, tc := range map[string]struct {
-		status              Status
+		status              session.Status
 		login, listed, want string
 	}{
-		"no key":   {Status{Signing: "none"}, "", "", ""},
+		"no key":   {session.Status{Signing: "none"}, "", "", ""},
 		"listed":   {key, "motd\nada-1\n", `[{"id":1,"key":"ssh-ed25519 AAA"}]`, ""},
 		"missing":  {key, "ada-1\n", `[{"key":"ssh-ed25519 BBB"}]`, "lists it for no login"},
 		"no login": {key, "", "", "names a GitHub login"},
@@ -35,7 +37,7 @@ func TestWsSigningPlan(t *testing.T) {
 	} {
 		s, g := newWsSigning(tc.status, tc.login, tc.listed)
 		if name == "no ssh" {
-			delete(g.M.(*effecttest.Machine).Results, opLine("status"))
+			delete(g.M.(*effecttest.Machine).Results, sessiontest.Op("status"))
 		}
 		p, err := s.Plan(context.Background())
 		got := errText(err)
@@ -50,7 +52,7 @@ func TestWsSigningPlan(t *testing.T) {
 
 // The key goes to what stays by hand, to add on GitHub, and the run plans nothing more of it.
 func TestWsSigningApply(t *testing.T) {
-	s, g := newWsSigning(Status{Signing: "ssh-ed25519 AAA"}, "", "")
+	s, g := newWsSigning(session.Status{Signing: "ssh-ed25519 AAA"}, "", "")
 	if err := s.Apply(context.Background(), step.Plan{}); err != nil {
 		t.Fatal(err)
 	}

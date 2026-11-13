@@ -186,8 +186,8 @@ journal. The wizard takes it from its own version's ws alone: another's names ot
 
 ## ws's run
 
-The stage sends `roles/client/macos/mac/wizard-remote.sh`, the wizard's remote script, to root on ws
-over ssh at a direct way, through [sudo](#sudo) where `WS_USER` isn't root. It runs `ws server
+The stage sends `roles/server/ubuntu/session/wizard-remote.sh`, the wizard's remote script, to root
+on ws over ssh at a direct way, through [sudo](#sudo) where `WS_USER` isn't root. It runs `ws server
 ubuntu apply --json` in a unit of its own, `ws-wizard-STAMP`, through `systemd-run`, with root's
 `HOME` and a UTF-8 locale. That ws runs its roles ([The `playbook`
 job](checks.md#the-playbook-job)). The wizard prints the unit's log until it ends, past the [event

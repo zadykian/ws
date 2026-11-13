@@ -1,6 +1,4 @@
-// Package mac holds the scripts that the wizard sends to ws over ssh, which stay sh: they run
-// on ws, where the ws binary is not.
-package mac
+package session
 
 import _ "embed" // for the scripts' go:embed
 

@@ -2,6 +2,7 @@ package wizard
 
 import (
 	"context"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"testing"
 	"time"
 
@@ -17,7 +18,7 @@ func TestTunnelShake(t *testing.T) {
 		"stale": {"latest handshake: 181 s ago\n", false},
 		"none":  {"peer: x\n", false},
 	} {
-		tun, m := newTunnel(keyA, Status{}, false)
+		tun, m := newTunnel(keyA, session.Status{}, false)
 		m.Results[libexec+" client macos tunnel status"] = effecttest.Result{Out: []byte(tc.status)}
 		tun.Sleep = func(time.Duration) {}
 		if got := tun.shake(context.Background(), 3); got != tc.want {

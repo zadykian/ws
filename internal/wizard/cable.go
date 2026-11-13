@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/zadykian/ws/engine/core/remote"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"regexp"
 	"strings"
 
@@ -31,14 +32,14 @@ const cableEnd = "10.77.0.1"
 type Cable struct {
 	// Ws is the session to ws, whose files script lists and names the ports. ws is read only where
 	// its ssh logs in, in this run.
-	Ws *Session
+	Ws *session.Session
 	// SSH is the Mac's ssh to ws.
 	SSH remote.SSH
 	// Conf is mac.conf's path. Check is set under --check.
 	Conf  string
 	Check bool
 	// RunDone is ws's run's verdict, which the stage waits on under --check.
-	RunDone func(ctx context.Context, w Want) bool
+	RunDone func(ctx context.Context, w session.Want) bool
 	// MacApply runs ws client macos apply, as the Setup stage's Run does, which gives the Mac's
 	// service its address.
 	MacApply func(ctx context.Context, check bool) (bool, error)
@@ -166,7 +167,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 		in && c.holds(ctx, cf.CablePort)) {
 		return step.Plan{}, nil
 	}
-	if c.Check && !none && (!in || !c.RunDone(ctx, Want{Target: cf.Target, User: cf.User})) {
+	if c.Check && !none && (!in || !c.RunDone(ctx, session.Want{Target: cf.Target, User: cf.User})) {
 		c.Out.Say("%s: after %s", cableStage, RunStage)
 		return step.Plan{}, nil
 	}

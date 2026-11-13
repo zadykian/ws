@@ -3,6 +3,8 @@ package wizard
 import (
 	"context"
 	"github.com/zadykian/ws/engine/core/remote"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"github.com/zadykian/ws/roles/server/ubuntu/session/sessiontest"
 	"strings"
 	"testing"
 
@@ -12,16 +14,16 @@ import (
 
 // macSession returns the Mac's session over ssh, whose remote script answers status on m with the
 // value's text.
-func macSession(m *effecttest.Machine, ssh remote.SSH, out *effecttest.Out, status Status) *Session {
-	ws := NewSession(fakeReach{Reach: MacReach{SSH: ssh, Conf: "/h/mac.conf", Out: out}, M: m},
-		Scripts{Remote: []byte("x"), Files: []byte("y")})
-	m.Results[opLine("status")] = effecttest.Result{Out: status.text()}
+func macSession(m *effecttest.Machine, ssh remote.SSH, out *effecttest.Out, status session.Status) *session.Session {
+	ws := session.New(sessiontest.Reach{Reach: MacReach{SSH: ssh, Conf: "/h/mac.conf", Out: out}, M: m},
+		session.Scripts{Remote: []byte("x"), Files: []byte("y")})
+	m.Results[sessiontest.Op("status")] = effecttest.Result{Out: sessiontest.Text(status)}
 	return ws
 }
 
 func TestWsClaudeLoginTakesTheTerminal(t *testing.T) {
 	m := effecttest.NewMachine()
-	ws := macSession(m, remote.SSH{M: m, F: m, Lock: "/l"}, &effecttest.Out{}, Status{Claude: "login"})
+	ws := macSession(m, remote.SSH{M: m, F: m, Lock: "/l"}, &effecttest.Out{}, session.Status{Claude: "login"})
 	c := &WsClaude{Ws: ws, Tty: true}
 	_ = c.Apply(context.Background(), step.Plan{})
 	got := callsWith(m, `claude auth login`)
@@ -31,7 +33,7 @@ func TestWsClaudeLoginTakesTheTerminal(t *testing.T) {
 }
 
 func TestWsClaudeApply(t *testing.T) {
-	r, m := newRun("lan", Status{Claude: "login"}, false, false)
+	r, m := newRun("lan", session.Status{Claude: "login"}, false, false)
 	if err := (&WsClaude{Ws: r.Ws}).Apply(context.Background(), step.Plan{}); err == nil ||
 		!strings.Contains(err.Error(), "no terminal") {
 		t.Errorf("Apply without a terminal = %v", err)

@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"strings"
 	"testing"
 )
@@ -10,13 +11,13 @@ import (
 func TestMacHand(t *testing.T) {
 	for name, tc := range map[string]struct {
 		target string
-		status Status
+		status session.Status
 		want   string
 	}{
-		"lan":   {"lan", Status{FansRefused: true}, "ws's fans' driver"},
-		"local": {"lan", Status{}, "macOS's local network"},
-		"cloud": {"cloud", Status{OutboundOff: true}, "The provider's firewall: UDP 51820"},
-		"off":   {"lan", Status{OutboundOff: true}, "ws's outbound table"},
+		"lan":   {"lan", session.Status{FansRefused: true}, "ws's fans' driver"},
+		"local": {"lan", session.Status{}, "macOS's local network"},
+		"cloud": {"cloud", session.Status{OutboundOff: true}, "The provider's firewall: UDP 51820"},
+		"off":   {"lan", session.Status{OutboundOff: true}, "ws's outbound table"},
 	} {
 		r, _ := newRun(tc.target, tc.status, false, false)
 		h := &guided.Hand{}

@@ -1,13 +1,10 @@
-package wizard
+package session
 
 import (
-	"cmp"
 	"regexp"
 	"slices"
 	"strings"
 	"testing"
-
-	"github.com/zadykian/ws/roles/client/macos/mac"
 )
 
 func TestParseStatus(t *testing.T) {
@@ -19,41 +16,6 @@ func TestParseStatus(t *testing.T) {
 		Claude: "login", FansRefused: true, Cable: "enp1s0", Peered: true, OutboundOff: true, Secrets: "aa11"}
 	if got := parseStatus(text); got != want {
 		t.Errorf("parseStatus = %+v; want %+v", got, want)
-	}
-}
-
-// text is the status as the remote script prints it, with - for an empty field, so that a stage's
-// test states ws's status as a value.
-func (s Status) text() []byte {
-	word := func(set bool, yes, no string) string {
-		if set {
-			return yes
-		}
-		return no
-	}
-	run := "-"
-	if s.Run != (Stamp{}) {
-		run = strings.Join([]string{cmp.Or(s.Run.Version, "-"), cmp.Or(s.Run.Exit, "-"), word(s.Run.Off, "off", "on"),
-			cmp.Or(s.Run.Secrets, "-"), cmp.Or(s.Run.Vars, "-")}, " ")
-	}
-	lines := []string{"run " + run, "fans " + word(s.FansRefused, "refused", "ok"), "peer " + word(s.Peered, "ok", "-"),
-		"outbound " + word(s.OutboundOff, "off", "on")}
-	for name, value := range map[string]string{"active": s.Active, "ws": s.Version, "user": s.User,
-		"mac.pub": s.MacKey, "wg0": s.WgKey, "signing": s.Signing, "hostname": s.Hostname, "claude": s.Claude,
-		"cable": s.Cable, "secrets": s.Secrets, "vars": s.Vars} {
-		lines = append(lines, name+" "+cmp.Or(value, "-"))
-	}
-	return []byte(strings.Join(lines, "\n") + "\n")
-}
-
-// The text that a test states parses back to its value.
-func TestStatusText(t *testing.T) {
-	full := parseStatus("run v1 0 off aa bb\nactive u\nws v1\nuser alice\nmac.pub mk\nwg0 wk\n" +
-		"signing none\nhostname ws\nclaude ok\nfans refused\ncable p\npeer ok\noutbound off\nsecrets s\nvars v\n")
-	for _, s := range []Status{{}, full} {
-		if got := parseStatus(string(s.text())); got != s {
-			t.Errorf("parseStatus(%q) = %+v; want %+v", s.text(), got, s)
-		}
 	}
 }
 
@@ -81,7 +43,7 @@ var statusLines = map[string]string{
 // The parse reads each name that the script's status prints, and the stamp's words in the order
 // that the script's job writes them.
 func TestStatusPinsScript(t *testing.T) {
-	script := string(mac.RemoteScript)
+	script := string(RemoteScript)
 	start := strings.Index(script, "\nstatus() {\n")
 	end := strings.Index(script[start+1:], "\n}\n")
 	if start < 0 || end < 0 {

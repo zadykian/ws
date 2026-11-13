@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"os"
 	"strings"
 	"testing"
@@ -11,7 +12,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/remote"
 	"github.com/zadykian/ws/internal/wizard"
-	"github.com/zadykian/ws/roles/client/macos/mac"
 )
 
 // testWizardProcess returns the process of a Mac whose Command Line Tools and Homebrew are there, and
@@ -152,7 +152,7 @@ func TestWizardStagesStateTheirSides(t *testing.T) {
 		if !ok {
 			t.Errorf("%s states no side", s.Name())
 		}
-		if m == wizard.OnWs {
+		if m == session.Ws {
 			onWs++
 		}
 	}
@@ -183,8 +183,8 @@ func TestWizardReadsWhatServerStatePrints(t *testing.T) {
 		t.Fatalf("status = %d", status)
 	}
 	m := wsOverSSH{effecttest.NewMachine(), []byte("ws " + p.version + "\n"), []byte(stdout)}
-	ws := wizard.NewSession(wizard.MacReach{SSH: remote.SSH{M: m, Lock: "/t/l"}},
-		wizard.Scripts{Remote: mac.RemoteScript})
+	ws := session.New(wizard.MacReach{SSH: remote.SSH{M: m, Lock: "/t/l"}},
+		session.Scripts{Remote: session.RemoteScript})
 	roles, err := ws.State(context.Background(), p.version)
 	if err != nil {
 		t.Fatal(err)

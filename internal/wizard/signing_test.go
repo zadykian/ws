@@ -3,6 +3,8 @@ package wizard
 import (
 	"context"
 	"errors"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"github.com/zadykian/ws/roles/server/ubuntu/session/sessiontest"
 	"strings"
 	"testing"
 
@@ -10,7 +12,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-func newSigning(status Status, listed string) (*Signing, *effecttest.Machine) {
+func newSigning(status session.Status, listed string) (*Signing, *effecttest.Machine) {
 	r, m := newRun("lan", status, false, false)
 	g := GhCLI{M: m, Out: &effecttest.Out{}, LookPath: found}
 	m.Results["/bin/gh auth status -h github.com"] = effecttest.Result{}
@@ -21,19 +23,19 @@ func newSigning(status Status, listed string) (*Signing, *effecttest.Machine) {
 }
 
 func TestSigningPlan(t *testing.T) {
-	key := Status{Signing: "ssh-ed25519 AAA", Hostname: "ws1"}
+	key := session.Status{Signing: "ssh-ed25519 AAA", Hostname: "ws1"}
 	for name, tc := range map[string]struct {
-		status       Status
+		status       session.Status
 		listed, want string
 	}{
-		"no key":  {Status{Signing: "none"}, "", ""},
+		"no key":  {session.Status{Signing: "none"}, "", ""},
 		"listed":  {key, "ssh-ed25519 AAA\n", ""},
 		"missing": {key, "ssh-ed25519 BBB\n", "--title ws1"},
 		"no ssh":  {key, "", "the remote script reads nothing"},
 	} {
 		s, m := newSigning(tc.status, tc.listed)
 		if name == "no ssh" {
-			delete(m.Results, opLine("status"))
+			delete(m.Results, sessiontest.Op("status"))
 		}
 		p, err := s.Plan(context.Background())
 		got := errText(err)
@@ -47,7 +49,7 @@ func TestSigningPlan(t *testing.T) {
 }
 
 func TestSigningApply(t *testing.T) {
-	s, m := newSigning(Status{Signing: "ssh-ed25519 AAA", Hostname: "ws1"}, "")
+	s, m := newSigning(session.Status{Signing: "ssh-ed25519 AAA", Hostname: "ws1"}, "")
 	if err := s.Apply(context.Background(), step.Plan{}); err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +62,7 @@ func TestSigningApply(t *testing.T) {
 }
 
 func TestSigningPlanWaitsOnGhUnderCheck(t *testing.T) {
-	s, m := newSigning(Status{Signing: "ssh-ed25519 AAA"}, "")
+	s, m := newSigning(session.Status{Signing: "ssh-ed25519 AAA"}, "")
 	m.Results["/bin/gh auth status -h github.com"] = effecttest.Result{Err: errors.New("logged out")}
 	out, g := &effecttest.Out{}, s.GitHub.(*MacGitHub)
 	g.Gh.Out = out

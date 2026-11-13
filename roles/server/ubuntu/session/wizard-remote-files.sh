@@ -2,7 +2,7 @@
 # The wizard's files script on ws, which writes what the wizard names there: the cable's port,
 # ws_user and the tunnel's peer. The Mac's wizard sends it over ssh, as it sends wizard-remote.sh:
 #
-#   ssh -o HostName=ADDRESS -o Port=PORT ws sh -s -- OP [ARG...] <roles/client/macos/mac/wizard-remote-files.sh
+#   ssh -o HostName=ADDRESS -o Port=PORT ws sh -s -- OP [ARG...] <roles/server/ubuntu/session/wizard-remote-files.sh
 #
 # - wait PORT prints what link prints, below, once PORT holds 10.77.0.1, or after 10 s.
 # - link lists ws's wired ports but the uplinks, those that a default route names, a line each. A

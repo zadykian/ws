@@ -2,6 +2,7 @@ package wizard
 
 import (
 	"context"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"slices"
 	"testing"
 
@@ -11,9 +12,9 @@ import (
 )
 
 // localSession returns ws's own session over m, whose runs' events go to events.
-func localSession(m effect.Machine, events step.Observer) *Session {
-	want := func() (Want, error) { return Want{}, nil }
-	return NewSession(WsReach{M: m, Read: want}, Scripts{Remote: []byte("echo\n"), Events: events})
+func localSession(m effect.Machine, events step.Observer) *session.Session {
+	want := func() (session.Want, error) { return session.Want{}, nil }
+	return session.New(session.WsReach{M: m, Read: want}, session.Scripts{Remote: []byte("echo\n"), Events: events})
 }
 
 // On ws, the script goes on sh's stdin and each word goes unchanged, with no ssh and no sudo.
@@ -24,7 +25,7 @@ func TestSessionOnWsRunsTheScriptLocally(t *testing.T) {
 	if s, ok := r.Status(context.Background()); !ok || s.Version != "abc" {
 		t.Fatalf("status read %q; calls %q", s.Version, m.Calls)
 	}
-	m.Results[wsPath+" server ubuntu secrets set env A'B"] = effecttest.Result{Out: []byte("set\n")}
+	m.Results[session.WsPath+" server ubuntu secrets set env A'B"] = effecttest.Result{Out: []byte("set\n")}
 	if out, err := localSession(m, nil).Secrets(context.Background(), []byte("dummy-value\n"), "set", "env", "A'B"); err != nil || string(out) != "set\n" {
 		t.Fatalf("Secrets = %q, %v", out, err)
 	}
@@ -67,7 +68,7 @@ func TestFollowOnWsWithoutLines(t *testing.T) {
 func TestLocalShellNamesWsUser(t *testing.T) {
 	m := effecttest.NewMachine()
 	user := "ada"
-	r := NewSession(WsReach{M: m, Read: func() (Want, error) { return Want{User: user}, nil }}, Scripts{Remote: []byte("echo\n")})
+	r := session.New(session.WsReach{M: m, Read: func() (session.Want, error) { return session.Want{User: user}, nil }}, session.Scripts{Remote: []byte("echo\n")})
 	m.Results["env SUDO_USER=ada sh -s -- status"] = effecttest.Result{Out: []byte("claude ok\n")}
 	if s, ok := r.Status(context.Background()); !ok || s.Claude != "ok" {
 		t.Errorf("status read %q; calls %q", s.Claude, m.Calls)

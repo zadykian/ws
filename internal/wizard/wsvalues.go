@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"io/fs"
 	"strconv"
 	"strings"
@@ -37,7 +38,7 @@ type WsValues struct {
 func (*WsValues) Name() string { return valuesStage }
 
 // Side is ws: its host_vars.
-func (*WsValues) Side() guided.Side { return OnWs }
+func (*WsValues) Side() guided.Side { return session.Ws }
 
 // WaitsOn is empty: the stage is ws's first.
 func (*WsValues) WaitsOn() string { return "" }
