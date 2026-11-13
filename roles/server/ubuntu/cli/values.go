@@ -16,11 +16,8 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
-// serverVars is the file of the machine's values.
-const serverVars = "/etc/ws/host_vars.yml"
-
-// NewValuesCmd returns ws server ubuntu values, which edits the machine's values.
-func NewValuesCmd(p enginecli.Env) *cobra.Command {
+// newValuesCmd returns ws server ubuntu values, which edits the machine's values.
+func newValuesCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("values", "edit the machine's values", &cobra.Command{
 		Use:   "set KEY VALUE",
 		Short: "write one key of " + serverVars,

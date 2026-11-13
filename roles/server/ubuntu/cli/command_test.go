@@ -1,4 +1,4 @@
-package cmd
+package cli
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 	"filippo.io/age/armor"
 	"github.com/spf13/cobra"
 
-	"github.com/zadykian/ws/engine/cli"
+	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/effect/units"
 )
@@ -179,7 +179,7 @@ func TestPrepareServerGivesTheRolesTheMachinesUnits(t *testing.T) {
 	p, _ := serverTerminal()
 	c := &cobra.Command{Use: "apply"}
 	c.SetContext(t.Context())
-	r, err := prepareServer(cli.CallOf(c, p), p, applyOptions{})
+	r, err := prepareServer(enginecli.CallOf(c, p), p, applyOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -11,11 +11,9 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine"
-	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // repeating types keys again and again, so that one lands once the list takes it.
@@ -81,32 +79,6 @@ func TestMacApplyGoesStraightToTheRunWithAStepOrCheck(t *testing.T) {
 		if !slices.Contains(m.Calls, "run mktemp -d") {
 			t.Errorf("%v: status = %d, no run began: calls = %q, stderr = %q", args, status, m.Calls, stderr)
 		}
-	}
-}
-
-func TestServerApplyOpensTheListAndLeavesWithQ(t *testing.T) {
-	p, _ := serverTerminal()
-	status, stdout, stderr := runWs(p, "q", "server", "ubuntu", "apply")
-	if status != 0 || stdout != "" || !strings.Contains(stderr, enterScreen) || !strings.Contains(stderr, leaveScreen) {
-		t.Fatalf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
-	}
-	if strings.Contains(stderr, "changed:") {
-		t.Errorf("a run began: %q", stderr)
-	}
-}
-
-func TestServerApplyChecksFromTheListAndSaysSo(t *testing.T) {
-	p, m := serverTerminal()
-	// The list scans every role, and base would install what the table leaves out.
-	for _, name := range values.Default().Base.Packages {
-		m.Packages[name] = effecttest.Package{Version: "1", Status: "ii"}
-	}
-	var errs bytes.Buffer
-	root := cli.Root(p, newMacCmd(p), newServerCmd(p))
-	// A scan holds c back, so each turn ends by emptying the filter that the next one types.
-	status := cli.Execute(t.Context(), root, []string{"server", "ubuntu", "apply"}, repeating("/tmux\rac/\x7f\x7f\x7f\x7f\r"), io.Discard, &errs)
-	if want := "ws server ubuntu apply: would change: none\n"; status != 0 || !strings.HasSuffix(errs.String(), want) {
-		t.Errorf("status = %d, stderr ends %q, want %q", status, errs.String()[max(0, errs.Len()-300):], want)
 	}
 }
 

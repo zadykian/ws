@@ -1,4 +1,4 @@
-package cmd
+package cli
 
 import (
 	"errors"
@@ -6,11 +6,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/zadykian/ws/engine/cli"
+	enginecli "github.com/zadykian/ws/engine/cli"
 )
 
 // newServerWizardCmd returns ws server ubuntu wizard.
-func newServerWizardCmd(p cli.Env) *cobra.Command {
+func newServerWizardCmd(p enginecli.Env) *cobra.Command {
 	var o engine.WizardOptions
 	c := &cobra.Command{
 		Use:   "wizard",
@@ -31,9 +31,9 @@ func newServerWizardCmd(p cli.Env) *cobra.Command {
 // runServerWizard runs ws server ubuntu wizard's stages under a lock, and what stays by hand of ws
 // after a run in which a stage acted. It runs as root, as the remote script does: sudo asks its
 // password before ws starts.
-func runServerWizard(c *cobra.Command, p cli.Env, o engine.WizardOptions) error {
+func runServerWizard(c *cobra.Command, p enginecli.Env, o engine.WizardOptions) error {
 	if p.Euid != 0 {
 		return errors.New("run it as root, by sudo: ws's values and its run are root's")
 	}
-	return engine.Wizard(c.Context(), cli.CallOf(c, p), serverTarget(p, new(applyOptions)), o)
+	return engine.Wizard(c.Context(), enginecli.CallOf(c, p), serverTarget(p, new(applyOptions)), o)
 }

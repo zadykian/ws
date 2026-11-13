@@ -39,9 +39,9 @@ func serverSession(m effect.Machine, talks effect.Foreground, out effect.Out, ev
 		session.Scripts{Remote: session.RemoteScript, Files: session.RemoteFilesScript, Events: events})
 }
 
-// ServerOpen is ws's session through a screen, for the host_vars sheet and the state screen, which
+// serverOpen is ws's session through a screen, for the host_vars sheet and the state screen, which
 // run no login and print nothing. It runs on the screen's machine.
-func ServerOpen(_ context.Context, b *tui.Bridge) (*session.Session, error) {
+func serverOpen(_ context.Context, b *tui.Bridge) (*session.Session, error) {
 	return serverSession(b.Effects().M, nil, nil, nil), nil
 }
 

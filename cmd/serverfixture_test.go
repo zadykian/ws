@@ -1,38 +1,16 @@
 package cmd
 
 import (
+	"context"
 	"testing"
 
 	"filippo.io/age"
 
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
-
-// wizardProcess returns a root process on a machine that holds vars as host_vars, booted or not,
-// whose remote script reports status as host_vars' ws_user reads it.
-func wizardProcess(vars string, booted bool, status string) (cli.Env, *effecttest.Machine) {
-	p, m := valuesProcess(vars)
-	p.GOOS = "linux"
-	if booted {
-		m.Dirs["/run/systemd/system"] = 0o755
-	}
-	v, _ := values.Load(m, serverVars)
-	m.Results["env SUDO_USER="+v.User+" sh -s -- status"] = effecttest.Result{Out: []byte(status)}
-	return p, m
-}
-
-// valuesProcess returns a root process on a machine that holds file as the values.
-func valuesProcess(file string) (cli.Env, *effecttest.Machine) {
-	p := fakeProcess()
-	m := effecttest.NewMachine()
-	p.Machine, p.Euid = m, 0
-	m.Dirs["/etc/ws"] = 0o755
-	m.Files[serverVars] = []byte(file)
-	return p, m
-}
 
 // runServerSecrets runs ws server ubuntu secrets as euid on m.
 func runServerSecrets(m *effecttest.Machine, euid int, stdin string, args ...string) (int, string, string) {
@@ -64,3 +42,41 @@ func editFixture(t *testing.T, toml string) (*effecttest.Machine, *age.X25519Ide
 	}
 	return m, id
 }
+
+const (
+	// enterScreen and leaveScreen are how a terminal's alternate screen starts and ends.
+	enterScreen = "\x1b[?1049h"
+	leaveScreen = "\x1b[?1049l"
+)
+
+// serverTerminal returns a process with a terminal, as root on the one system that ws server ubuntu
+// apply takes, with ca-certificates and tmux installed.
+func serverTerminal() (cli.Env, *effecttest.Machine) {
+	p := withEnv(fakeProcess(), map[string]string{"TERM": "xterm"})
+	p.TTY, p.ErrTTY, p.Euid = true, true, 0
+	m := p.Machine.(*effecttest.Machine)
+	m.Files["/etc/os-release"] = []byte("ID=ubuntu\nVERSION_ID=\"26.04\"\n")
+	m.Packages = effecttest.Packages{"ca-certificates": {Version: "1", Status: "ii"}, "tmux": {Version: "3.5", Status: "ii"}}
+	return p, m
+}
+
+// change is what a stepOf plans.
+type change string
+
+func (c change) String() string { return string(c) }
+
+// stepOf is a step whose Plan runs plan and finds a change, so that --check names its role.
+type stepOf struct {
+	name string
+	plan func(ctx context.Context) error
+}
+
+func (s stepOf) Name() string    { return s.name }
+func (s stepOf) WaitsOn() string { return "" }
+func (s stepOf) Plan(ctx context.Context) (step.Plan, error) {
+	if err := s.plan(ctx); err != nil {
+		return step.Plan{}, err
+	}
+	return step.Plan{Changes: []step.Change{change("x")}}, nil
+}
+func (stepOf) Apply(context.Context, step.Plan) error { return nil }

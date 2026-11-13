@@ -1,13 +1,13 @@
-package cmd
+package cli
 
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/zadykian/ws/engine/cli"
+	enginecli "github.com/zadykian/ws/engine/cli"
 )
 
 // newStateCmd returns ws server ubuntu state.
-func newStateCmd(p cli.Env) *cobra.Command {
+func newStateCmd(p enginecli.Env) *cobra.Command {
 	var opts applyOptions
 	c := &cobra.Command{
 		Use:   "state",
@@ -21,7 +21,7 @@ func newStateCmd(p cli.Env) *cobra.Command {
 			"--plain prints the report as text, and so does a pipe. The text is on stdout and ws's own lines on stderr. --json prints the version of ws, then " +
 			"each role with its steps, items and changes.",
 		Args: cobra.NoArgs,
-		RunE: cli.State(serverTarget(p, &opts), p),
+		RunE: enginecli.State(serverTarget(p, &opts), p),
 	}
 	f := c.Flags()
 	f.Bool("json", false, "print the report as JSON")

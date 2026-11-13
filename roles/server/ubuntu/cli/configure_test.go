@@ -1,14 +1,13 @@
-package cmd
+package cli
 
 import (
 	"context"
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/engine/cli"
+	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/tui"
-	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
@@ -20,7 +19,7 @@ func TestServerConfigureRefusals(t *testing.T) {
 	plain = withEnv(plain, map[string]string{"TERM": "xterm"})
 	plain.TTY, plain.ErrTTY = true, true
 	for name, tc := range map[string]struct {
-		p    cli.Env
+		p    enginecli.Env
 		args []string
 		want string
 	}{
@@ -65,7 +64,7 @@ func TestServerSecretsSheetSetsOnWs(t *testing.T) {
 func TestServerVarsSheetReadsOnWs(t *testing.T) {
 	p, m := wizardProcess("---\nws_user: ada\n", false, "")
 	m.Results["env SUDO_USER=ada sh -s -- values"] = effecttest.Result{Out: []byte("ws_user: ada\n")}
-	sheet, err := ubuntucli.HostVarsSheet(ubuntucli.ServerOpen).Open(context.Background(), tui.Offscreen(p.Machine))
+	sheet, err := HostVarsSheet(serverOpen).Open(context.Background(), tui.Offscreen(p.Machine))
 	if err != nil {
 		t.Fatal(err)
 	}

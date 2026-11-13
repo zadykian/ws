@@ -17,15 +17,15 @@ import (
 // Mac's name, as the Mac's wizard does.
 const localSide wizard.Side = "Mac"
 
-// WizardSide is ws server ubuntu wizard's side. Every stage runs on ws, with no caffeinate.
-func WizardSide(p enginecli.Env) engine.Side {
+// wizardSide is ws server ubuntu wizard's side. Every stage runs on ws, with no caffeinate.
+func wizardSide(p enginecli.Env) engine.Side {
 	return engine.Side{
 		Stages: func(e engine.WizardEffects, o engine.WizardOptions) []step.Step {
 			return serverWizardStages(p, e, o)
 		},
 		Local: localSide, Nested: NestedRows, WsRun: WsRunSide(p),
 		Read: func(string, any) (tui.StateReader, func(context.Context)) {
-			return StateRead(ServerOpen, p.Version), nil
+			return StateRead(serverOpen, p.Version), nil
 		},
 	}
 }

@@ -1,27 +1,24 @@
-package cmd
+package cli
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"slices"
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/engine/cli"
+	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
-)
-
-const (
-	// enterScreen and leaveScreen are how a terminal's alternate screen starts and ends.
-	enterScreen = "\x1b[?1049h"
-	leaveScreen = "\x1b[?1049l"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // serverTerminal returns a process with a terminal, as root on the one system that ws server ubuntu
 // apply takes, with ca-certificates and tmux installed.
-func serverTerminal() (cli.Env, *effecttest.Machine) {
+func serverTerminal() (enginecli.Env, *effecttest.Machine) {
 	p := withEnv(fakeProcess(), map[string]string{"TERM": "xterm"})
 	p.TTY, p.ErrTTY, p.Euid = true, true, 0
 	m := p.Machine.(*effecttest.Machine)
@@ -108,5 +105,31 @@ func TestServerApplyDrawsNothingWithPlain(t *testing.T) {
 	status, _, stderr := runWs(p, "", "server", "ubuntu", "apply", "--plain", "--check", "--only", "tmux")
 	if status != 0 || strings.Contains(stderr, "\x1b") || !strings.HasSuffix(stderr, "ws server ubuntu apply: would change: none\n") {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
+	}
+}
+
+func TestServerApplyOpensTheListAndLeavesWithQ(t *testing.T) {
+	p, _ := serverTerminal()
+	status, stdout, stderr := runWs(p, "q", "server", "ubuntu", "apply")
+	if status != 0 || stdout != "" || !strings.Contains(stderr, enterScreen) || !strings.Contains(stderr, leaveScreen) {
+		t.Fatalf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
+	}
+	if strings.Contains(stderr, "changed:") {
+		t.Errorf("a run began: %q", stderr)
+	}
+}
+
+func TestServerApplyChecksFromTheListAndSaysSo(t *testing.T) {
+	p, m := serverTerminal()
+	// The list scans every role, and base would install what the table leaves out.
+	for _, name := range values.Default().Base.Packages {
+		m.Packages[name] = effecttest.Package{Version: "1", Status: "ii"}
+	}
+	var errs bytes.Buffer
+	root := enginecli.Root(p, serverGroup(p))
+	// A scan holds c back, so each turn ends by emptying the filter that the next one types.
+	status := enginecli.Execute(t.Context(), root, []string{"server", "ubuntu", "apply"}, repeating("/tmux\rac/\x7f\x7f\x7f\x7f\r"), io.Discard, &errs)
+	if want := "ws server ubuntu apply: would change: none\n"; status != 0 || !strings.HasSuffix(errs.String(), want) {
+		t.Errorf("status = %d, stderr ends %q, want %q", status, errs.String()[max(0, errs.Len()-300):], want)
 	}
 }

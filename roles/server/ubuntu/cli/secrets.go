@@ -9,10 +9,10 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
-// NewSecretsCmd returns ws server ubuntu secrets, which keeps ws's secrets file, with its
+// newSecretsCmd returns ws server ubuntu secrets, which keeps ws's secrets file, with its
 // identity as a systemd credential. ws client macos secrets runs its commands here, over ssh.
-func NewSecretsCmd(p enginecli.Env) *cobra.Command {
-	open := func() (secrets.Store, error) { return ServerSecretsStore(p) }
+func newSecretsCmd(p enginecli.Env) *cobra.Command {
+	open := func() (secrets.Store, error) { return serverSecretsStore(p) }
 	return enginecli.Group("secrets", "keep ws's secrets file, with its identity as a systemd credential",
 		append([]*cobra.Command{{
 			Use:   "init",
@@ -26,8 +26,8 @@ func NewSecretsCmd(p enginecli.Env) *cobra.Command {
 		}}, SecretsEdit(p, open)...)...)
 }
 
-// ServerSecretsStore returns ws's store, to root alone: the file and the host's key are root's.
-func ServerSecretsStore(p enginecli.Env) (secrets.Store, error) {
+// serverSecretsStore returns ws's store, to root alone: the file and the host's key are root's.
+func serverSecretsStore(p enginecli.Env) (secrets.Store, error) {
 	if p.Euid != 0 {
 		return secrets.Store{}, errors.New("run it as root")
 	}
@@ -36,7 +36,7 @@ func ServerSecretsStore(p enginecli.Env) (secrets.Store, error) {
 
 // serverSecretsInit makes a missing credential, and the file where none is, and says which it made.
 func serverSecretsInit(c *cobra.Command, p enginecli.Env) error {
-	store, err := ServerSecretsStore(p)
+	store, err := serverSecretsStore(p)
 	if err != nil {
 		return err
 	}
