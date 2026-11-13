@@ -7,6 +7,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 const (
@@ -15,12 +16,11 @@ const (
 	// zedKeymapMark starts the first line of keymap.json, which carries its own header. It does not
 	// name the command, so the file stays ws's if the command changes.
 	zedKeymapMark = "// Written by github.com/zadykian/ws"
-	// zedSeed is settings.json where the file is missing. Zed writes that file from its UI and
-	// merges it over global_settings.json. The connection to ws can sit in no other file, as an
-	// opened project is recorded by its index in this list.
-	zedSeed = `// Zed's own settings, which its UI writes. ws wrote this once, where it was missing; ws's
+	// zedSeedHead is the start of settings.json where the file is missing. Zed writes that file from
+	// its UI and merges it over global_settings.json. The connections to the servers can sit in no
+	// other file, as an opened project is recorded by its index in this list.
+	zedSeedHead = `// Zed's own settings, which its UI writes. ws wrote this once, where it was missing; ws's
 // settings are in global_settings.json, and a key set here wins over them.
-{ "ssh_connections": [{ "host": "ws" }] }
 `
 )
 
@@ -39,10 +39,23 @@ func (z *Zed) files(ctx context.Context) ([]step.Change, error) {
 		}
 	}
 	if _, err := z.M.Stat(dir + "/settings.json"); err != nil {
-		cs = append(cs, file.UserWrite{M: z.M, Out: z.Out, Path: dir + "/settings.json", Before: nil, After: []byte(zedSeed), Exists: false, Mode: 0o644})
+		names, err := conf.Known(z.M, z.MacConf, z.Server)
+		if err != nil {
+			return nil, err
+		}
+		cs = append(cs, file.UserWrite{M: z.M, Out: z.Out, Path: dir + "/settings.json", Before: nil, After: seed(names), Exists: false, Mode: 0o644})
 	}
 	link.Warn(z.Out, len(cs), "Zed's files go there")
 	return cs, nil
+}
+
+// seed is settings.json where the file is missing: a connection to each server, in the order given.
+func seed(names []string) []byte {
+	conns := make([]string, len(names))
+	for i, n := range names {
+		conns[i] = `{ "host": "` + n + `" }`
+	}
+	return []byte(zedSeedHead + `{ "ssh_connections": [` + strings.Join(conns, ", ") + "] }\n")
 }
 
 // dirs returns ~/.config and Zed's directory in it.
