@@ -1,4 +1,6 @@
-package docker
+// Package rootless sets up ws_user's own Docker daemon: its subordinate ids, its drop-ins and the
+// tool that installs its unit.
+package rootless
 
 import (
 	"fmt"
@@ -8,15 +10,15 @@ import (
 	"github.com/zadykian/ws/engine/core/host"
 )
 
-// rootlessResources makes the resources of ws_user's own daemon from its daemon.json and
+// Resources makes the resources of ws_user's own daemon from its daemon.json and
 // docker.slice, which the role works out from the values.
-func rootlessResources(m effect.Machine, u effect.Units, out effect.Out, a host.Account,
+func Resources(m effect.Machine, u effect.Units, out effect.Out, a host.Account,
 	daemonJSON, slice []byte) ([]host.Resource, error) {
-	override, err := RootlessOverride()
+	override, err := overrideDropIn()
 	if err != nil {
 		return nil, err
 	}
-	delegate, err := Delegate()
+	delegate, err := delegateDropIn()
 	if err != nil {
 		return nil, err
 	}

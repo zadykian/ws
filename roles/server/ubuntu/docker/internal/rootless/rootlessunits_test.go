@@ -1,14 +1,12 @@
-package docker_test
+package rootless
 
 import (
 	"strings"
 	"testing"
-
-	"github.com/zadykian/ws/roles/server/ubuntu/docker"
 )
 
 func TestRootlessDropInsPinTheSliceAndTheControllers(t *testing.T) {
-	override, err := docker.RootlessOverride()
+	override, err := overrideDropIn()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -17,7 +15,7 @@ func TestRootlessDropInsPinTheSliceAndTheControllers(t *testing.T) {
 			t.Errorf("the override lacks %q", want)
 		}
 	}
-	delegate, err := docker.Delegate()
+	delegate, err := delegateDropIn()
 	if err != nil || !strings.Contains(string(delegate), "Delegate=cpu io memory pids") {
 		t.Errorf("Delegate = %q, %v; want the io controller", delegate, err)
 	}

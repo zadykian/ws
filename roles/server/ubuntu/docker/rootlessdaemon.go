@@ -4,6 +4,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/server/ubuntu/docker/internal/rootless"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -30,6 +31,6 @@ func rootlessDaemon(v values.Values, m effect.Machine, u effect.Units, out effec
 		if err != nil {
 			return nil, err
 		}
-		return rootlessResources(m, u, out, a, daemonJSON, slice)
+		return rootless.Resources(m, u, out, a, daemonJSON, slice)
 	})
 }
