@@ -99,39 +99,18 @@
       "alt-f9": "editor::EditLogBreakpoint"
     }
   },
-  // The project panel: the tree keys, and F1 hides it again.
+  // The project panel; F1 hides it again.
   {
     "context": "ProjectPanel && not_editing",
     "bindings": {
-      // Ctrl+numpad +, which a Mac sees as Ctrl++
-      "ctrl-+": "project_panel::ExpandAllEntries",
-      "ctrl--": "project_panel::CollapseAllEntries",
-      // The project panel's file, from the server
-      "ctrl-shift-d": "project_panel::DownloadFromRemote",
-      "ctrl-shift-a": "project_panel::NewFile",
-      "ctrl-n": "project_panel::NewFile",
       "f1": "workspace::CloseActiveDock",
-      "alt-1": "workspace::CloseActiveDock",
-      "ctrl-r r": "project_panel::Rename",
-      "ctrl-c": "project_panel::Copy",
-      "ctrl-x": "project_panel::Cut",
-      "ctrl-v": "project_panel::Paste",
-      "ctrl-z": "project_panel::Undo",
-      "ctrl-y": "project_panel::Redo",
-      "ctrl-shift-f": "project_panel::NewSearchInDirectory"
+      "alt-1": "workspace::CloseActiveDock"
     }
   },
   // The git panel; F5 hides it again.
   {
     "context": "GitPanel",
     "bindings": {
-      // In the git panel
-      "ctrl-alt-a": "git::ToggleStaged",
-      "ctrl-alt-p": "git_panel::ToggleTreeView",
-      "ctrl-alt-z": "git::RestoreFile",
-      // A stash, not a shelf; in the git panel, as Shift+Ctrl+H is Replace in path's
-      "ctrl-shift-h": "git::StashAll",
-      "ctrl-alt-u": "git::StashPop",
       // Replaces Zed's F5, which reruns the debugger
       "f5": "workspace::CloseActiveDock",
       "alt-5": "workspace::CloseActiveDock"
@@ -152,67 +131,31 @@
     "bindings": {
       // The selection, in the console
       "alt-f": "debugger::EvaluateSelectedText",
-      "ctrl-alt-r": "debugger::RunToCursor",
-      "ctrl-alt-e": "debugger::StepInto",
-      "ctrl-alt-w": "debugger::StepOver",
       "alt-r": "debugger::RunToCursor",
       "alt-e": "debugger::StepInto",
       "alt-q": "debugger::StepOut",
-      "alt-w": "debugger::StepOver",
-      "ctrl-alt-f8": "debugger::EvaluateSelectedText"
+      "alt-w": "debugger::StepOver"
     }
   },
-  // Esc goes back to the editor from a panel; the terminal keeps its own Esc.
-  {
-    "context": "Dock || OutlinePanel || ProjectPanel || GitPanel",
-    "bindings": {
-      "escape": "editor::ToggleFocus"
-    }
-  },
-  // The terminal: a Ctrl or Alt key with a letter or sign, without Shift, reaches the shell. The
-  // chords' first keys go to it straight, so that they never wait (zed#28423).
+  // The terminal: an Alt key with a letter or sign, without Shift, reaches the shell, and so do
+  // Alt+Left and Right.
   {
     "context": "Terminal",
     "unbind": {
-      "ctrl-s": "workspace::Save",
-      "ctrl-=": "pane::GoForward",
-      "ctrl-f": "buffer_search::Deploy",
-      "ctrl-q": "command_palette::Toggle",
-      "ctrl-o": "workspace::Open",
-      "ctrl-h": "buffer_search::DeployReplace",
-      "ctrl-,": "file_finder::Toggle",
-      "ctrl-alt-v": "diagnostics::Deploy",
-      "ctrl-alt-]": "workspace::ActivateNextWindow",
-      "ctrl-alt-[": "workspace::ActivatePreviousWindow",
-      "ctrl-alt-k": "git::ToggleCommitEditor",
       "alt-x": "git::Branch",
-      "ctrl-alt-n": "git::Branch",
       "alt-z": "git::Fetch",
-      "ctrl-alt-y": "workspace::ReloadActiveItem",
       "alt-v": "git::Push",
-      "ctrl-alt-g": ["task::Spawn", { "task_name": "go generate" }],
-      "ctrl-alt-p": "debugger::Start",
-      "ctrl-alt-s": "zed::OpenSettings",
       "alt-left": "pane::ActivatePreviousItem",
       "alt-right": "pane::ActivateNextItem"
     },
     "bindings": {
-      "ctrl-v": "terminal::Paste",
-      "ctrl-k": ["terminal::SendKeystroke", "ctrl-k"],
-      "ctrl-m": ["terminal::SendKeystroke", "ctrl-m"],
-      "ctrl-u": ["terminal::SendKeystroke", "ctrl-u"],
       // In the terminal, it closes the dock
       "f2": "workspace::CloseActiveDock",
       "alt-2": "workspace::CloseActiveDock"
     }
   }
   // The keys left out, so that a sync doesn't retry them.
-  // ctrl-shift-tab: Shift+Ctrl+Tab is Zed's.
-  // ctrl-d: Ctrl+D reaches the shell.
-  // cmd-c: Cmd+C is Zed's; Ctrl+C stays the shell's.
   // alt-up: Alt+Up is Zed's on macOS.
   // alt-down: Alt+Down is Zed's on macOS.
-  // ctrl--: Ctrl+- is Zed's in a pane.
   // alt-f12: no popup: Zed's Alt+F12 opens it in a split.
-  // delete: Delete is Zed's.
 ]
