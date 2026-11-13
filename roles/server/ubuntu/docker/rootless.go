@@ -66,5 +66,3 @@ func rootless(v values.Values, m effect.Machine, u effect.Units, out effect.Out,
 		}, nil
 	})
 }
-
-const delegatePath = "/etc/systemd/system/user@.service.d/delegate.conf"
