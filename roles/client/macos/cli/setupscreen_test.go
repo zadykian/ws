@@ -10,7 +10,7 @@ import (
 
 // keyed gives the Mac a mac.conf that names the file key it has for ws's login, as ssh's step needs.
 func keyed(m *effecttest.Machine) {
-	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\nWS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub\n")
+	writeConfs(m, "WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub\n", "WS_USER=ada\n")
 	m.Files["/h/.ssh/id_ed25519.pub"] = []byte("ssh-ed25519 AAAA ada\n")
 	m.Results["ssh-keygen -l -f /h/.ssh/id_ed25519.pub"] = effecttest.Result{}
 }
@@ -55,4 +55,10 @@ func TestMacApplyDrawsNothingWithPlain(t *testing.T) {
 	if status != 0 || stdout != wantOut || stderr != wantErr || strings.Contains(stderr, "\x1b") {
 		t.Errorf("status = %d, stdout = %q, stderr = %q, want the lines %q", status, stdout, stderr, wantErr)
 	}
+}
+
+// writeConfs puts the Mac's mac.conf and the server's file at their paths in the home.
+func writeConfs(m *effecttest.Machine, mac, server string) {
+	m.Files["/h/.config/ws/mac.conf"] = []byte(mac)
+	m.Files["/h/.config/ws/servers/ws/server.conf"] = []byte(server)
 }

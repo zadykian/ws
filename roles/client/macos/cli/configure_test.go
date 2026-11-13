@@ -14,7 +14,8 @@ import (
 )
 
 func TestMacConfigureAtATerminalDrawsAForm(t *testing.T) {
-	p, _ := macTerminal()
+	p, m := macTerminal()
+	writeConfs(m, "", "WS_USER=ada\n")
 	status, stdout, stderr := runWs(p, "\x03", "client", "macos", "configure")
 	if status != 130 || stdout != "" || !strings.Contains(stderr, enterScreen) || !strings.Contains(stderr, leaveScreen) {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
@@ -23,8 +24,8 @@ func TestMacConfigureAtATerminalDrawsAForm(t *testing.T) {
 
 func TestMacConfigureWritesWhatAFormSaves(t *testing.T) {
 	p, m := macTerminal()
-	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\n")
-	m.Results["mkdir -p /h/.config/ws"] = effecttest.Result{}
+	writeConfs(m, "", "WS_USER=ada\n")
+	m.Results["mkdir -p /h/.config/ws/servers/ws"] = effecttest.Result{}
 	in, keys := io.Pipe()
 	defer func() { _ = keys.Close() }()
 	ended := make(chan int, 1)
@@ -39,7 +40,7 @@ func TestMacConfigureWritesWhatAFormSaves(t *testing.T) {
 	for {
 		select {
 		case status := <-ended:
-			if got, want := string(m.Files["/h/.config/ws/mac.conf"]), "WS_USER=ada\nWS_REMOTE=r.example\n"; status != 0 || got != want {
+			if got, want := string(m.Files["/h/.config/ws/servers/ws/server.conf"]), "WS_USER=ada\nWS_REMOTE=r.example\n"; status != 0 || got != want {
 				t.Errorf("status = %d, mac.conf = %q; want %q", status, got, want)
 			}
 			return
@@ -53,7 +54,7 @@ func TestMacConfigureWritesWhatAFormSaves(t *testing.T) {
 
 func TestConfSheetDrawsWhatTheFormGives(t *testing.T) {
 	_, m := macTerminal()
-	form, err := conf.Form{Conf: "/h/.config/ws/mac.conf", M: m}.Load(&effecttest.Out{})
+	form, err := conf.Form{Conf: "/h/.config/ws/mac.conf", Server: "/h/.config/ws/servers/ws/server.conf", M: m}.Load(&effecttest.Out{})
 	if err != nil {
 		t.Fatal(err)
 	}

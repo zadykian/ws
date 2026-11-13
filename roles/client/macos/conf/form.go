@@ -17,26 +17,38 @@ const configureStage = "Configure"
 // WS_LAN on a cloud VM, and a key that doesn't show has no field to clear it by.
 var wayKeys = []string{"WS_LAN", "WS_LAN_ADDRESS", "WS_REMOTE", "WS_REMOTE_PORT", "WS_GIT_EMAIL"}
 
-// Form is mac.conf as a form: the keys that the Answers stage would ask where the file lacked
-// them all, as the edits so far lead it. A key that the stage never asks stays the file's.
+// Form is mac.conf and a server's file as a form. It shows the keys that the Answers stage would ask
+// where the files lacked them all, as the edits so far lead it. A key that the stage never asks
+// stays the file's. Each key is saved to its own file.
 type Form struct {
-	// Conf is mac.conf's path.
-	Conf string
+	// Conf is mac.conf's path, and Server the server's file's.
+	Conf   string
+	Server string
 	// Defaults is the text of the shell role's defaults, whose git identity ws's git takes.
 	Defaults []byte
 	M        effect.Machine
-	// file is what mac.conf held at the last load.
+	// file is what the files held at the last load, joined.
 	file Conf
 }
 
-// Load reads mac.conf, says each line that conf refuses, and fails on one: a form shows keys, and
+// of returns the file of the scope, which says its refusals to out.
+func (f Form) of(s Scope, out effect.Out) File {
+	path := f.Conf
+	if s == ServerFile {
+		path = f.Server
+	}
+	return File{Path: path, Stage: configureStage, M: f.M, Out: out, Scope: s}
+}
+
+// Load reads both files, says each line that conf refuses, and fails on one: a form shows keys, and
 // has no field for a line that is none. A refusal of keys that go together opens, as a form mends it.
 func (f Form) Load(out effect.Out) (Form, error) {
-	_, c, err := (File{Path: f.Conf, Stage: configureStage, M: f.M, Out: out}).Load()
-	if err != nil {
+	_, mac, macErr := f.of(MacFile, out).Load()
+	_, server, serverErr := f.of(ServerFile, out).Load()
+	if err := errors.Join(macErr, serverErr); err != nil {
 		return f, err
 	}
-	f.file = c
+	f.file = join(mac, server)
 	return f, nil
 }
 
@@ -125,16 +137,27 @@ func (f Form) settings(edits map[string]string) []Setting {
 	return changes
 }
 
-// Save writes the changes to mac.conf as one and returns the form of what it then holds. It says the
-// keys that it emptied, as some of them no longer show.
+// Save writes the changes, each to the file of its key, mac.conf first, and returns the form of what
+// they then hold. It says the keys that it emptied, as some of them no longer show.
 func (f Form) Save(ctx context.Context, out effect.Out, edits map[string]string) (Form, error) {
 	changes := f.settings(edits)
 	if len(changes) == 0 {
-		out.Say("%s holds these values already", f.Conf)
+		out.Say("%s and %s hold these values already", f.Conf, f.Server)
 		return f, nil
 	}
-	if err := (File{Path: f.Conf, Stage: configureStage, M: f.M, Out: out}).SetAll(ctx, changes...); err != nil {
-		return f, err
+	for _, s := range []Scope{MacFile, ServerFile} {
+		var own []Setting
+		for _, c := range changes {
+			if KeyScope(c.Key) == s {
+				own = append(own, c)
+			}
+		}
+		if len(own) == 0 {
+			continue
+		}
+		if err := f.of(s, out).SetAll(ctx, own...); err != nil {
+			return f, err
+		}
 	}
 	var emptied []string
 	for _, c := range changes {
