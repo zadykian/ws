@@ -34,6 +34,7 @@ func daemonMachine() *effecttest.Machine {
 	m.Results["/usr/local/libexec/ws-tunnel/ws client macos tunnel key"] = effecttest.Result{Out: []byte("PUB\n")}
 	m.Files["/h/.config/ws/tunnel.pub"] = []byte("PUB\n")
 	m.Dirs["/h/.config"], m.Dirs["/h/.config/ws"] = 0o755, 0o700
+	m.Dirs["/Library/LaunchDaemons"] = 0o755
 	m.Results["launchctl print system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{}
 	return m
 }
@@ -136,5 +137,45 @@ func TestTunnelRendersThePlistWithTheServersName(t *testing.T) {
 	}
 	if strings.Contains(got, "@NAME@") {
 		t.Error("Plan holds a name left unfilled")
+	}
+}
+
+// otherDaemon adds a second server's daemon, loaded, to a Mac.
+func otherDaemon(m *effecttest.Machine, name string) {
+	label := "com.github.zadykian.ws-tunnel." + name
+	m.Files["/Library/LaunchDaemons/"+label+".plist"] = []byte("plist")
+	m.Results["launchctl print system/"+label] = effecttest.Result{}
+}
+
+func TestTunnelKicksTheOtherLoadedDaemonsWhereWsChanged(t *testing.T) {
+	m := daemonMachine()
+	m.Files["/usr/local/libexec/ws-tunnel/ws"] = []byte("old")
+	otherDaemon(m, "lab")
+	otherDaemon(m, "gone")
+	m.Results["launchctl print system/com.github.zadykian.ws-tunnel.gone"] = effecttest.Result{Err: errors.New("no")}
+	got := tunnelChanges(t, daemonStep(m))
+	want := []string{"would run launchctl kickstart -k system/com.github.zadykian.ws-tunnel.ws", "would run launchctl kickstart -k system/com.github.zadykian.ws-tunnel.lab"}
+	if len(got) != 3 || got[1] != want[0] || got[2] != want[1] {
+		t.Errorf("Plan = %q; want the copy, the own kickstart and lab's", got)
+	}
+}
+
+func TestTunnelLeavesTheOtherDaemonsAloneWhereWsIsTheSame(t *testing.T) {
+	m := daemonMachine()
+	otherDaemon(m, "lab")
+	if got := tunnelChanges(t, daemonStep(m)); len(got) != 0 {
+		t.Errorf("Plan = %q; want none", got)
+	}
+}
+
+func TestTunnelKicksTheOtherDaemonsWithNoPublicKey(t *testing.T) {
+	m := daemonMachine()
+	m.Files["/usr/local/libexec/ws-tunnel/ws"] = []byte("old")
+	otherDaemon(m, "lab")
+	s := daemonStep(m)
+	s.Conf = conf.Conf{}
+	got := tunnelChanges(t, s)
+	if len(got) != 2 || got[1] != "would run launchctl kickstart -k system/com.github.zadykian.ws-tunnel.lab" {
+		t.Errorf("Plan = %q; want the copy and lab's kickstart", got)
 	}
 }
