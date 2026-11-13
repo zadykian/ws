@@ -1,5 +1,7 @@
-// Package tui runs ws's full-screen terminal UI: the entry points that the commands call, and the
-// types that they hand to them. The screens are in internal packages.
+// Package tui runs ws's full-screen terminal UI. The commands call its entry points. Run follows a
+// run on a screen. Pick and PickStages draw the lists that choose one. Configure draws the forms,
+// RunState the state screen and RunWizard the guided run of them. The inputs they take are its
+// types. The screens are in internal packages.
 package tui
 
 import (
@@ -18,28 +20,6 @@ import (
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
-// A Theme styles every part of a screen.
-type Theme = widget.Theme
-
-// NewTheme returns the theme for an environment, which getenv reads.
-func NewTheme(getenv func(string) string) Theme { return widget.NewTheme(getenv) }
-
-// A FieldSpec describes one field of a sheet.
-type FieldSpec = widget.FieldSpec
-
-// The kinds of a sheet's field.
-const (
-	TextField     = widget.TextField
-	PasswordField = widget.PasswordField
-	ChoiceField   = widget.ChoiceField
-)
-
-// A Group is the steps of a role or a stage, by the names that a run's events give them.
-type Group = list.Group
-
-// NewGroup names steps as a run of them under parent will.
-func NewGroup(parent string, steps []step.Step) Group { return list.NewGroup(parent, steps) }
-
 // Config is what Run takes of the process.
 type Config = run.Config
 
@@ -52,9 +32,31 @@ type Bridge = run.Bridge
 // StateSection is a part of what a machine reports: a role's steps, or the Mac's, which have no name.
 type StateSection = run.StateSection
 
-// RunScreen follows a run: its steps by role with the current one marked, a window on what the run
-// prints, a bar of the steps ended and the elapsed time.
-type RunScreen = run.Screen
+// A Group is the steps of a role or a stage, by the names that a run's events give them.
+type Group = list.Group
+
+// NewGroup names steps as a run of them under parent will.
+func NewGroup(parent string, steps []step.Step) Group { return list.NewGroup(parent, steps) }
+
+// A Stage is a step of a queue. The lists show one order, as stages wait on each other across the
+// machines and share a connection, so that no two run at once.
+type Stage = queue.Stage
+
+// A Sheet is a file that the Configure screen edits.
+type Sheet = configure.Sheet
+
+// A FieldSpec describes one field of a sheet.
+type FieldSpec = widget.FieldSpec
+
+// The kinds of a sheet's field.
+const (
+	TextField     = widget.TextField
+	PasswordField = widget.PasswordField
+	ChoiceField   = widget.ChoiceField
+)
+
+// NewTheme returns the theme for an environment, which getenv reads.
+func NewTheme(getenv func(string) string) widget.Theme { return widget.NewTheme(getenv) }
 
 // Run draws screen on c.Out, runs work in a goroutine beside it, and returns once the terminal is
 // back.
@@ -67,18 +69,10 @@ func Run(ctx context.Context, c Config, screen tea.Model, work Work) error {
 func Offscreen(m effect.Machine) *Bridge { return run.Offscreen(m) }
 
 // NewRunScreen returns the screen of a run of groups, which name every step before the run starts.
-func NewRunScreen(title string, theme Theme, groups ...Group) RunScreen {
+// It follows a run: its steps by role with the current one marked, a window on what the run prints,
+// a bar of the steps ended and the elapsed time.
+func NewRunScreen(title string, theme widget.Theme, groups ...Group) run.Screen {
 	return run.NewRunScreen(title, theme, groups...)
-}
-
-// Sheet is a file that the Configure screen edits.
-type Sheet = configure.Sheet
-
-// Configure draws the sheets on c.Out, a form each, until a leave, with title over them. It returns
-// nil past a leave, and Cut's error past Ctrl-C or a signal, which drop what is unsaved. Saves run
-// here, off the screen's goroutine, and what they print stays on the screen.
-func Configure(ctx context.Context, c Config, title string, sheets ...Sheet) error {
-	return configure.Configure(ctx, c, title, sheets...)
 }
 
 // A Choice is what a flat list leaves to a run. No steps says that nothing runs.
@@ -90,30 +84,19 @@ func Pick(ctx context.Context, c Config, title string, groups []Group, scan Work
 	return pick.Pick(ctx, c, title, groups, scan)
 }
 
-// Stage is a step of a queue. The lists show one order, as stages wait on each other across the
-// machines and share a connection, so that no two run at once.
-type Stage = queue.Stage
-
 // QueueChoice is what the queue's screen leaves to the wizard's loop.
 type QueueChoice = queue.Choice
 
-// Next is what the queue's screen was left for.
-type Next = queue.Next
-
-// The ways to leave the queue's screen.
+// The ways to leave the queue's screen that the commands and the loop name.
 const (
-	NextLeave     = queue.NextLeave
 	NextRun       = queue.NextRun
 	NextCheck     = queue.NextCheck
 	NextConfigure = queue.NextConfigure
 	NextState     = queue.NextState
 )
 
-// QueueRun follows a run of a queue on the lists that chose it, over what the run prints.
-type QueueRun = queue.RunScreen
-
-// NewQueueRun returns the screen of a run of choice's stages.
-func NewQueueRun(title string, theme Theme, choice QueueChoice) QueueRun {
+// NewQueueRun returns the screen of a run of what choice runs, under the choice's boxes.
+func NewQueueRun(title string, theme widget.Theme, choice QueueChoice) queue.RunScreen {
 	return queue.NewRunScreen(title, theme, choice)
 }
 
@@ -127,6 +110,13 @@ func PickStages(ctx context.Context, c Config, title string, stages []Stage, sca
 // No scan runs.
 func Reopen(ctx context.Context, c Config, left QueueChoice) (QueueChoice, error) {
 	return queue.Reopen(ctx, c, left)
+}
+
+// Configure draws the sheets on c.Out, a form each, until a leave, with title over them. It returns
+// nil past a leave, and Cut's error past Ctrl-C or a signal, which drop what is unsaved. Saves run
+// here, off the screen's goroutine, and what they print stays on the screen.
+func Configure(ctx context.Context, c Config, title string, sheets ...Sheet) error {
+	return configure.Configure(ctx, c, title, sheets...)
 }
 
 // StateReader reads a machine and changes nothing. b gives the read's effects, for its lines to
