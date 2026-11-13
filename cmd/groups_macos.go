@@ -12,5 +12,5 @@ import (
 // groups returns the command groups that exist on this system: ws client macos, on a Mac.
 func groups(p cli.Env) []*cobra.Command {
 	p.Machine = local.OSMachine{}
-	return []*cobra.Command{newMacCmd(p)}
+	return []*cobra.Command{clientCmd(p)}
 }

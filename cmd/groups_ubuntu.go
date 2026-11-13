@@ -14,5 +14,5 @@ import (
 // container has none.
 func groups(p cli.Env) []*cobra.Command {
 	p.Machine = local.OSMachine{Sudo: []string{}}
-	return []*cobra.Command{newServerCmd(p)}
+	return []*cobra.Command{serverCmd(p)}
 }
