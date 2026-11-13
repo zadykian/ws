@@ -44,7 +44,7 @@ func (t *Tunnel) daemon(ctx context.Context) ([]step.Change, error) {
 	plist := len(cs) > conf
 	_, err = t.M.Run(ctx, "launchctl", "print", "system/"+launchd.Label)
 	for _, l := range launchctlAction(err == nil, plist, t.copied, t.keyMade, conf > 0) {
-		l.M, l.Out, l.Sleep = t.M, t.Out, t.sleep
+		l.M, l.Out, l.Sleep, l.Label = t.M, t.Out, t.sleep, launchd.Label
 		cs = append(cs, l)
 	}
 	return cs, nil
