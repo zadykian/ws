@@ -9,6 +9,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/list"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -26,7 +27,7 @@ func shown(r RunScreen) string { return stripped(r.View().Content) }
 
 func testRun() RunScreen {
 	screen := NewRunScreen("ws server ubuntu apply", testTheme,
-		Group{Name: "base", Steps: []string{"Packages", "Locale"}}, Group{Name: "ssh", Steps: []string{"Keys"}})
+		list.Group{Name: "base", Steps: []string{"Packages", "Locale"}}, list.Group{Name: "ssh", Steps: []string{"Keys"}})
 	return sent(screen, tea.WindowSizeMsg{Width: 80, Height: 24})
 }
 

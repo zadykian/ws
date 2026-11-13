@@ -5,14 +5,15 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/zadykian/ws/engine/tui/internal/list"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // queueStage is a stage of a queue: its own row, the side that shows it, and a list of what it runs.
 type queueStage struct {
-	row  PickRow
+	row  list.PickRow
 	side string
-	list PickList
+	list list.PickList
 }
 
 // queue is the stages in the order they run, each with a list of its own.
@@ -31,18 +32,18 @@ type queue struct {
 func queueOf(stages []Stage) queue {
 	var q queue
 	for i, s := range stages {
-		groups := make([]ListGroup, len(s.Nested))
+		groups := make([]list.ListGroup, len(s.Nested))
 		for j, g := range s.Nested {
-			groups[j] = ListGroup{Group: g}
+			groups[j] = list.ListGroup{Group: g}
 			switch {
 			case g.Name == s.Name:
-				groups[j].Form = GroupBare
+				groups[j].Form = list.GroupBare
 			case len(g.Steps) == 0:
-				groups[j].Form = GroupUnread
+				groups[j].Form = list.GroupUnread
 			}
 		}
-		row := PickRow{StepRow: StepRow{Index: i, Name: s.Name}, WaitsOn: s.Waits}
-		q.stages = append(q.stages, queueStage{row: row, side: s.Side, list: NewFormedList(groups)})
+		row := list.PickRow{StepRow: list.StepRow{Index: i, Name: s.Name}, WaitsOn: s.Waits}
+		q.stages = append(q.stages, queueStage{row: row, side: s.Side, list: list.NewFormedList(groups)})
 	}
 	if sides := q.sides(); len(sides) > 0 {
 		q.side = sides[0]
@@ -54,7 +55,7 @@ func queueOf(stages []Stage) queue {
 type queueLine struct {
 	stage int
 	head  bool
-	line  PickLine
+	line  list.PickLine
 }
 
 // lines returns what the filter leaves of the side. A stage whose name the words miss loses its own
@@ -105,5 +106,5 @@ func (q queue) narrowed(side string, at widget.Cursor, words string) (queue, wid
 // view draws height lines of the side, the cursor's gutter where shown.
 func (q queue) view(theme widget.Theme, side string, height int, at widget.Cursor, shown bool) string {
 	lines := q.lines(side)
-	return Windowed(theme, height, at, shown, len(lines), func(i int) string { return q.render(theme, lines[i]) })
+	return list.Windowed(theme, height, at, shown, len(lines), func(i int) string { return q.render(theme, lines[i]) })
 }

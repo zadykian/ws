@@ -1,5 +1,9 @@
 package tui
 
+import (
+	"github.com/zadykian/ws/engine/tui/internal/list"
+)
+
 // stageColumns is the columns of a stage's number, which a row under the stage stands past.
 const stageColumns = 5
 
@@ -14,5 +18,5 @@ type Stage struct {
 	// Nested is what the stage runs, each group by the Parent of its events. A group with no steps
 	// stands for what no scan has named yet. A role shows by its name, and a group called as its
 	// stage shows nothing until its events do.
-	Nested []Group
+	Nested []list.Group
 }

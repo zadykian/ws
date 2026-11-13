@@ -8,6 +8,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/list"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -25,7 +26,7 @@ func pickShown(s pickScreen) string { return stripped(s.View().Content) }
 
 // testPick is a screen at 80 by 24, its scan under way.
 func testPick() pickScreen {
-	groups := []Group{{Name: "base", Steps: []string{"Packages", "Locale"}}, {Name: "ssh", Steps: []string{"Keys"}}}
+	groups := []list.Group{{Name: "base", Steps: []string{"Packages", "Locale"}}, {Name: "ssh", Steps: []string{"Keys"}}}
 	return pickSent(newPickScreen("ws server ubuntu apply", testTheme, groups, make(chan Choice, 1)), tea.WindowSizeMsg{Width: 80, Height: 24})
 }
 
@@ -44,7 +45,7 @@ func TestPickScreenFollowsTheScan(t *testing.T) {
 	if got := pickShown(s); !strings.Contains(got, "scanning 1/3") || !strings.Contains(got, "[x] ● Packages") {
 		t.Errorf("frame:\n%s", got)
 	}
-	if got := pickShown(pickSent(s, ScannedMsg{})); !strings.Contains(got, "1 of 3 chosen") {
+	if got := pickShown(pickSent(s, list.ScannedMsg{})); !strings.Contains(got, "1 of 3 chosen") {
 		t.Errorf("frame:\n%s", got)
 	}
 }
@@ -69,7 +70,7 @@ func TestPickScreenFitsAnyWindow(t *testing.T) {
 // scannedPick is a screen past its scan, which found changes in Packages and in Keys.
 func scannedPick() pickScreen {
 	return pickSent(testPick(), planned("base", "Packages", 0, oneChange("a")), planned("base", "Locale", 1),
-		planned("ssh", "Keys", 0, oneChange("a")), ScannedMsg{})
+		planned("ssh", "Keys", 0, oneChange("a")), list.ScannedMsg{})
 }
 
 func TestPickScreenKeysTurnTheBoxes(t *testing.T) {

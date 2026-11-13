@@ -5,6 +5,7 @@ import (
 
 	"charm.land/bubbles/v2/key"
 
+	"github.com/zadykian/ws/engine/tui/internal/list"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -66,7 +67,7 @@ func (q queue) panes() []widget.Pane {
 	for _, side := range q.sides() {
 		pane := widget.Pane{Title: side, Focused: q.side == side}
 		unread := func(s queueStage) bool {
-			return s.side == side && slices.ContainsFunc(s.list.Rows, func(r PickRow) bool { return r.Index == UnreadIndex })
+			return s.side == side && slices.ContainsFunc(s.list.Rows, func(r list.PickRow) bool { return r.Index == list.UnreadIndex })
 		}
 		if slices.ContainsFunc(q.stages, unread) {
 			pane.Title += ": roles not scanned"

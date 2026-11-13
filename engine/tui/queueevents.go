@@ -4,6 +4,7 @@ import (
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/list"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -61,11 +62,11 @@ func (q queue) reported(stage string, sections []StateSection) queue {
 	if i < 0 {
 		return q
 	}
-	var rows []PickRow
+	var rows []list.PickRow
 	for _, section := range sections {
-		form := GroupHeaded
+		form := list.GroupHeaded
 		if section.Name == stage {
-			form = GroupBare
+			form = list.GroupBare
 		}
 		for j, report := range section.Reports {
 			row := reportedRow(section.Name, j, report)
@@ -90,13 +91,13 @@ func (q queue) follow(e step.Event) (queue, string, int) {
 	s := &q.stages[i]
 	at := queueLine{stage: i, head: true}
 	if e.Parent == "" {
-		s.row.State, s.row.After = StateAfter(e), e.After
+		s.row.State, s.row.After = list.StateAfter(e), e.After
 	} else {
 		s.list = s.list.Joined(e)
 		s.list.Rows = slices.Clone(s.list.Rows)
 		place := s.list.Place(e)
-		s.list.Rows[place].State, s.list.Rows[place].After = StateAfter(e), e.After
-		at = queueLine{stage: i, line: PickLine{Row: place}}
+		s.list.Rows[place].State, s.list.Rows[place].After = list.StateAfter(e), e.After
+		at = queueLine{stage: i, line: list.PickLine{Row: place}}
 	}
 	if e.Kind != step.Planned && e.Kind != step.Started {
 		return q, s.side, -1

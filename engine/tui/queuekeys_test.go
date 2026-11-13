@@ -6,15 +6,16 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/zadykian/ws/engine/tui/internal/list"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // queueFrame is the queue's screen at 100 by 30, its scan under way, with no footer.
 func queueFrame() queueScreen {
 	return queueScreen{
-		ListScreen: ListScreen{Title: "ws client macos wizard", Theme: testTheme, Window: widget.Size{Width: 100, Height: 30}, Scanning: true},
+		ListScreen: list.ListScreen{Title: "ws client macos wizard", Theme: testTheme, Window: widget.Size{Width: 100, Height: 30}, Scanning: true},
 		list:       queueOf(testStages()),
-		footer:     widget.NewFooter(append(ListButtons(), stateButton, configureButton)...),
+		footer:     widget.NewFooter(append(list.ListButtons(), stateButton, configureButton)...),
 		picks:      make(chan QueueChoice, 1),
 	}
 }
@@ -69,7 +70,7 @@ func TestTheQueueScreenHoldsItsBoxesUntilTheScanEnds(t *testing.T) {
 	if s = queueSent(s, press('a')); len(s.list.only()) != 0 {
 		t.Errorf("only = %q during the scan", s.list.only())
 	}
-	s = queueSent(s, ScannedMsg{}, press('a'))
+	s = queueSent(s, list.ScannedMsg{}, press('a'))
 	if s.Scanning || len(s.list.only()) != 5 {
 		t.Errorf("scanning %v, only = %q", s.Scanning, s.list.only())
 	}

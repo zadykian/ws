@@ -7,12 +7,13 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/list"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // The places of the queue's buttons that the flat list lacks, after the places that both share.
 const (
-	queueStatePlace = PickQuitPlace + 1 + iota
+	queueStatePlace = list.PickQuitPlace + 1 + iota
 	queueConfigurePlace
 )
 
@@ -26,7 +27,7 @@ type reportedMsg struct {
 // queueScreen is the queue's lists, a side each, over the strip of the detail. A scan fills them
 // behind the screen, and the maintainer can read and move as it goes.
 type queueScreen struct {
-	ListScreen
+	list.ListScreen
 	list queue
 	// at is the cursor on each side's list, by side. Never written in place: the screens are values,
 	// and Reopen reuses a left one, so withCursor copies it.
@@ -40,8 +41,8 @@ type queueScreen struct {
 
 // openQueue returns the lists of stages, their scan under way. The configure button comes last.
 func openQueue(title string, theme widget.Theme, stages []Stage, picks chan<- QueueChoice) queueScreen {
-	buttons := append(ListButtons(), stateButton, configureButton)
-	s := queueScreen{ListScreen: ListScreen{Title: title, Theme: theme, Scanning: true, Filter: widget.NewFilter()},
+	buttons := append(list.ListButtons(), stateButton, configureButton)
+	s := queueScreen{ListScreen: list.ListScreen{Title: title, Theme: theme, Scanning: true, Filter: widget.NewFilter()},
 		list: queueOf(stages), footer: widget.NewFooter(buttons...), picks: picks}
 	return s.enabled()
 }
@@ -113,7 +114,7 @@ func (s queueScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		s.list = s.list.take(msg)
 	case widget.Line:
 		s.list = s.list.hear(msg)
-	case ScannedMsg:
+	case list.ScannedMsg:
 		s.ListScreen = s.Scanned(msg)
 		s.list = s.list.opened()
 	case reportedMsg:
@@ -155,23 +156,23 @@ func (s queueScreen) pressed(msg tea.KeyPressMsg) (queueScreen, tea.Cmd) {
 	var place int
 	s.footer, place = s.footer.Update(msg)
 	switch place {
-	case PickTogglePlace:
+	case list.PickTogglePlace:
 		s.list = s.list.toggled(s.list.side, s.at[s.list.side])
-	case PickAllPlace:
-		s.list = s.list.chose(func(PickRow) bool { return true })
-	case PickNonePlace:
-		s.list = s.list.chose(func(PickRow) bool { return false })
-	case PickInvertPlace:
-		s.list = s.list.chose(func(r PickRow) bool { return !r.On() })
-	case PickPendingPlace:
-		s.list = s.list.chose(PickRow.Pending).whole(func(o queueStage) bool { return o.row.Pending() })
-	case PickFilterPlace:
+	case list.PickAllPlace:
+		s.list = s.list.chose(func(list.PickRow) bool { return true })
+	case list.PickNonePlace:
+		s.list = s.list.chose(func(list.PickRow) bool { return false })
+	case list.PickInvertPlace:
+		s.list = s.list.chose(func(r list.PickRow) bool { return !r.On() })
+	case list.PickPendingPlace:
+		s.list = s.list.chose(list.PickRow.Pending).whole(func(o queueStage) bool { return o.row.Pending() })
+	case list.PickFilterPlace:
 		s.Filter = s.Filter.Opened()
-	case PickRunPlace:
+	case list.PickRunPlace:
 		return s.leave(s.queueChoice(NextRun))
-	case PickCheckPlace:
+	case list.PickCheckPlace:
 		return s.leave(s.queueChoice(NextCheck))
-	case PickQuitPlace:
+	case list.PickQuitPlace:
 		return s.leave(s.queueChoice(NextLeave))
 	case queueConfigurePlace:
 		return s.leave(s.queueChoice(NextConfigure))
@@ -233,11 +234,11 @@ func (s queueScreen) leave(c QueueChoice) (queueScreen, tea.Cmd) {
 // waits for something chosen, as a run with no Only runs every step. The state screen waits for the
 // scan's end, as both read the same machine.
 func (s queueScreen) enabled() queueScreen {
-	for place := PickTogglePlace; place <= PickPendingPlace; place++ {
+	for place := list.PickTogglePlace; place <= list.PickPendingPlace; place++ {
 		s.footer = s.footer.Enable(place, !s.Scanning)
 	}
 	some := !s.Scanning && len(s.list.only()) > 0
-	s.footer = s.footer.Enable(PickRunPlace, some).Enable(PickCheckPlace, some)
+	s.footer = s.footer.Enable(list.PickRunPlace, some).Enable(list.PickCheckPlace, some)
 	s.footer = s.footer.Enable(queueStatePlace, !s.Scanning)
 	return s
 }

@@ -4,6 +4,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/list"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -18,7 +19,7 @@ type QueueRun struct {
 
 // NewQueueRun returns the screen of what choice runs, under the choice's boxes.
 func NewQueueRun(title string, theme widget.Theme, choice QueueChoice) QueueRun {
-	var stages Group
+	var stages list.Group
 	for _, s := range choice.left.list.stages {
 		stages.Steps = append(stages.Steps, s.row.Name)
 	}

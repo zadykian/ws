@@ -1,4 +1,6 @@
-package tui
+// Package list holds the lists that the screens draw. Its rows are steps and roles to pick, and
+// the screen is what the lists share.
+package list
 
 import (
 	"strings"

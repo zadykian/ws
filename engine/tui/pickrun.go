@@ -6,11 +6,13 @@ import (
 	"errors"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/zadykian/ws/engine/tui/internal/list"
 )
 
 // Pick draws the list of groups over scan, a run with --check, and returns what the maintainer
 // chose: a Choice with no steps where they left. Ctrl-C ends it as Cut says, and no stop is asked.
-func Pick(ctx context.Context, c Config, title string, groups []Group, scan Work) (Choice, error) {
+func Pick(ctx context.Context, c Config, title string, groups []list.Group, scan Work) (Choice, error) {
 	picks := make(chan Choice, 1)
 	return pick(ctx, c, newPickScreen(title, c.Theme, groups, picks), picks, scan)
 }
@@ -77,7 +79,7 @@ func awaitPick[C any](ctx context.Context, b *Bridge, picks <-chan C, scan Work)
 				return none, err
 			}
 			waiting = nil
-			msg := ScannedMsg{}
+			msg := list.ScannedMsg{}
 			if err != nil {
 				msg.Problem = err.Error()
 			}

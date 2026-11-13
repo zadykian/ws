@@ -3,6 +3,7 @@ package tui
 import (
 	"slices"
 
+	"github.com/zadykian/ws/engine/tui/internal/list"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -15,7 +16,7 @@ func (q queue) settled() queue {
 		s.list = s.list.Settled()
 		s.row.LockedBy = nil
 		if len(s.list.Rows) > 0 {
-			s.row.Chosen = slices.ContainsFunc(s.list.Rows, func(r PickRow) bool { return r.Chosen })
+			s.row.Chosen = slices.ContainsFunc(s.list.Rows, func(r list.PickRow) bool { return r.Chosen })
 		}
 	}
 	for i := len(q.stages) - 1; i >= 0; i-- {
@@ -60,11 +61,11 @@ func (q queue) toggled(side string, at widget.Cursor) queue {
 	switch {
 	case line.line.Heading:
 		parent := s.list.Rows[line.line.Row].Parent
-		s.list = s.list.Turned(func(o PickRow) bool { return o.Parent == parent })
+		s.list = s.list.Turned(func(o list.PickRow) bool { return o.Parent == parent })
 	case line.head && len(s.row.LockedBy) > 0:
 		return q
 	case line.head && len(s.list.Rows) > 0:
-		s.list = s.list.Turned(func(PickRow) bool { return true })
+		s.list = s.list.Turned(func(list.PickRow) bool { return true })
 	case line.head:
 		s.row.Chosen = !s.row.Chosen
 	default:
@@ -72,7 +73,7 @@ func (q queue) toggled(side string, at widget.Cursor) queue {
 		if len(row.LockedBy) > 0 {
 			return q
 		}
-		s.list = s.list.Chose(func(o PickRow) bool { return o.SameChoice(row) != o.Chosen })
+		s.list = s.list.Chose(func(o list.PickRow) bool { return o.SameChoice(row) != o.Chosen })
 	}
 	return q.settled()
 }
@@ -96,7 +97,7 @@ func (q queue) partial() map[string][]string {
 			if parts == nil {
 				parts = map[string][]string{}
 			}
-			parts[s.row.Name] = s.list.Entries(func(PickRow) bool { return true })
+			parts[s.row.Name] = s.list.Entries(func(list.PickRow) bool { return true })
 		}
 	}
 	return parts
@@ -107,7 +108,7 @@ func (q queue) ticked() []string {
 	var names []string
 	for _, s := range q.stages {
 		on, _, all := s.list.Tally()
-		if on == all && slices.ContainsFunc(s.list.Rows, func(r PickRow) bool { return r.Chosen }) {
+		if on == all && slices.ContainsFunc(s.list.Rows, func(r list.PickRow) bool { return r.Chosen }) {
 			names = append(names, s.row.Name)
 		}
 	}
@@ -121,7 +122,7 @@ func (q queue) count() (on, scanned, all int) {
 		if s.row.On() {
 			on++
 		}
-		if s.row.State != StepOpen {
+		if s.row.State != list.StepOpen {
 			scanned++
 		}
 	}
@@ -129,11 +130,11 @@ func (q queue) count() (on, scanned, all int) {
 }
 
 // dueAt says that a step in state has work. In a clean stage, a step no scan named has none.
-func dueAt(state StepState, clean bool) bool {
+func dueAt(state list.StepState, clean bool) bool {
 	switch state {
-	case StepSame, StepLeftOut:
+	case list.StepSame, list.StepLeftOut:
 		return false
-	case StepOpen:
+	case list.StepOpen:
 		return !clean
 	}
 	return true
@@ -148,7 +149,7 @@ func (q queue) opened() queue {
 		q.stages[i].row.Chosen = due(s)
 		q.stages[i].list.Rows = slices.Clone(s.list.Rows)
 		for j, r := range s.list.Rows {
-			q.stages[i].list.Rows[j].Chosen = dueAt(r.State, s.row.State == StepSame)
+			q.stages[i].list.Rows[j].Chosen = dueAt(r.State, s.row.State == list.StepSame)
 		}
 	}
 	return q.settled().whole(due)
@@ -185,7 +186,7 @@ func (q queue) passed() []string {
 
 // chose returns the queue with the box of each shown row set by box, the stages' own among them. What
 // a filter hides keeps its box.
-func (q queue) chose(box func(PickRow) bool) queue {
+func (q queue) chose(box func(list.PickRow) bool) queue {
 	q.stages = slices.Clone(q.stages)
 	for i, s := range q.stages {
 		if s.list.Named(s.row.Name) {

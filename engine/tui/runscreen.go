@@ -10,6 +10,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/list"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -41,7 +42,7 @@ type tickMsg struct{ at time.Time }
 type RunScreen struct {
 	title   string
 	theme   widget.Theme
-	steps   StepList
+	steps   list.StepList
 	output  widget.OutputPane
 	footer  widget.Footer
 	window  widget.Size
@@ -55,11 +56,11 @@ type RunScreen struct {
 }
 
 // NewRunScreen returns the screen of a run of groups, which name every step before the run starts.
-func NewRunScreen(title string, theme widget.Theme, groups ...Group) RunScreen {
+func NewRunScreen(title string, theme widget.Theme, groups ...list.Group) RunScreen {
 	return RunScreen{
 		title:  title,
 		theme:  theme,
-		steps:  NewStepList(groups),
+		steps:  list.NewStepList(groups),
 		output: widget.OutputPane{Theme: theme},
 		footer: widget.NewFooter(widget.Keys.PageUp, widget.Keys.PageDown, widget.Keys.Bottom, widget.Keys.Interrupt),
 	}

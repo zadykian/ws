@@ -10,6 +10,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/list"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -67,7 +68,7 @@ func TestAStripTakesAThirdOfTheWindowWithinBounds(t *testing.T) {
 }
 
 func TestAReadRoleClearsTheTitleOfWsList(t *testing.T) {
-	stages := []Stage{{Name: "Run", Side: "ws", Nested: []Group{{Name: "base"}}}}
+	stages := []Stage{{Name: "Run", Side: "ws", Nested: []list.Group{{Name: "base"}}}}
 	l := queueOf(stages)
 	if got := l.panes()[l.pane("ws")].Title; got != "ws: roles not scanned" {
 		t.Errorf("title = %q", got)
@@ -81,14 +82,14 @@ func TestAReadRoleClearsTheTitleOfWsList(t *testing.T) {
 func wsStages() []Stage {
 	return []Stage{
 		{Name: "Values", Side: "ws"},
-		{Name: "Run", Side: "ws", Waits: "Values", Nested: []Group{{Name: "base"}}},
+		{Name: "Run", Side: "ws", Waits: "Values", Nested: []list.Group{{Name: "base"}}},
 		{Name: "Signing", Side: "ws", Waits: "Run"},
 	}
 }
 
 func TestStagesAllOnWsStandInOneList(t *testing.T) {
 	s := openQueue("ws server ubuntu wizard", testTheme, wsStages(), make(chan QueueChoice, 1))
-	s = queueSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, ScannedMsg{}, press('/'), press('s'))
+	s = queueSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, list.ScannedMsg{}, press('/'), press('s'))
 	got := queueShown(s)
 	for _, want := range []string{"ws server ubuntu wizard", "ws", "/ s", "   3 [x] · Signing", "Detail"} {
 		if !strings.Contains(got, want) {
@@ -102,8 +103,8 @@ func TestStagesAllOnWsStandInOneList(t *testing.T) {
 
 func TestTabLeavesOneListForTheButtons(t *testing.T) {
 	s := openQueue("ws server ubuntu wizard", testTheme, wsStages(), make(chan QueueChoice, 1))
-	s = queueSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, ScannedMsg{}, tab)
-	if s.list.side != "ws" || s.footer.Focused() != PickTogglePlace {
+	s = queueSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, list.ScannedMsg{}, tab)
+	if s.list.side != "ws" || s.footer.Focused() != list.PickTogglePlace {
 		t.Errorf("side %q, focus %d", s.list.side, s.footer.Focused())
 	}
 	if s = queueSent(s, shiftTab); s.list.side != "ws" || s.footer.Focused() >= 0 {
@@ -131,11 +132,11 @@ func chosenBy(t *testing.T, msgs ...tea.Msg) QueueChoice {
 }
 
 func TestTabWalksTheTwoListsThenTheButtons(t *testing.T) {
-	s := queueSent(testQueueScreen(), ScannedMsg{}, tab)
+	s := queueSent(testQueueScreen(), list.ScannedMsg{}, tab)
 	if s.list.side != "ws" || s.footer.Focused() >= 0 {
 		t.Errorf("side %q, focus %d", s.list.side, s.footer.Focused())
 	}
-	if s = queueSent(s, tab); s.list.side != "ws" || s.footer.Focused() != PickTogglePlace {
+	if s = queueSent(s, tab); s.list.side != "ws" || s.footer.Focused() != list.PickTogglePlace {
 		t.Errorf("side %q, focus %d", s.list.side, s.footer.Focused())
 	}
 	s = queueSent(s, shiftTab, shiftTab)
@@ -151,7 +152,7 @@ func TestTabWalksTheTwoListsThenTheButtons(t *testing.T) {
 }
 
 func TestAScansEndOpensTheQueueChosen(t *testing.T) {
-	got := chosenBy(t, ScannedMsg{}, press('c'))
+	got := chosenBy(t, list.ScannedMsg{}, press('c'))
 	if got.Next != NextCheck || len(got.Only) != 5 || got.Partial != nil {
 		t.Errorf("choice = %+v", got)
 	}
@@ -164,7 +165,7 @@ func TestConfigureGoesBeforeTheScanEnds(t *testing.T) {
 }
 
 func TestPendingTurnsAWholeStageThatIsDue(t *testing.T) {
-	s := queueSent(testQueueScreen(), planned("", "Setup", 1, oneChange("a")), ScannedMsg{}, press('n'), press('p'))
+	s := queueSent(testQueueScreen(), planned("", "Setup", 1, oneChange("a")), list.ScannedMsg{}, press('n'), press('p'))
 	if got := s.list.only(); !slices.Equal(got, []string{"Tools", "Setup"}) {
 		t.Errorf("only = %q", got)
 	}
@@ -189,7 +190,7 @@ func TestARefusedReportLeavesTheRolesAndSaysWhy(t *testing.T) {
 }
 
 func TestAStageInPartSaysThatItStaysPending(t *testing.T) {
-	s := queueSent(testQueueScreen(), ScannedMsg{})
+	s := queueSent(testQueueScreen(), list.ScannedMsg{})
 	s.list, s.at = queueChoosing(s.list, "one"), withCursor(s.at, "Mac", 1)
 	if got := queueShown(s); !strings.Contains(got, "Runs in part, so it stays pending.") {
 		t.Errorf("frame:\n%s", got)
@@ -206,10 +207,10 @@ func TestPickStagesEndsTheScanWithTheChoice(t *testing.T) {
 }
 
 func TestStateKeyNamesTheListInFocus(t *testing.T) {
-	if got := chosenBy(t, ScannedMsg{}, press('s')); got.Next != NextState || got.Side != "Mac" || len(got.Only) != 0 {
+	if got := chosenBy(t, list.ScannedMsg{}, press('s')); got.Next != NextState || got.Side != "Mac" || len(got.Only) != 0 {
 		t.Errorf("s on the Mac's list = %+v", got)
 	}
-	if got := chosenBy(t, ScannedMsg{}, tab, press('s')); got.Next != NextState || got.Side != "ws" {
+	if got := chosenBy(t, list.ScannedMsg{}, tab, press('s')); got.Next != NextState || got.Side != "ws" {
 		t.Errorf("s on ws's list = %+v", got)
 	}
 }
@@ -218,7 +219,7 @@ func TestStateKeyWaitsForTheScanAndTheFilter(t *testing.T) {
 	if s := queueSent(testQueueScreen(), press('s')); s.Left {
 		t.Error("s left a scan under way")
 	}
-	s := queueSent(testQueueScreen(), ScannedMsg{}, press('/'), press('s'))
+	s := queueSent(testQueueScreen(), list.ScannedMsg{}, press('/'), press('s'))
 	if s.Left || s.list.words != "s" {
 		t.Errorf("left %v, words %q", s.Left, s.list.words)
 	}
@@ -226,7 +227,7 @@ func TestStateKeyWaitsForTheScanAndTheFilter(t *testing.T) {
 
 // A list of steps alone has no machine to read, and no such button.
 func TestStateKeyIsAQueuesAlone(t *testing.T) {
-	s := pickSent(newPickScreen("ws", testTheme, nil, make(chan Choice, 1)), ScannedMsg{}, press('s'))
+	s := pickSent(newPickScreen("ws", testTheme, nil, make(chan Choice, 1)), list.ScannedMsg{}, press('s'))
 	if s.Left {
 		t.Error("s left a list of steps")
 	}
@@ -234,7 +235,7 @@ func TestStateKeyIsAQueuesAlone(t *testing.T) {
 
 // What the maintainer chose comes back: a new scan would choose the boxes again.
 func TestReopenKeepsTheBoxesAndRunsNoScan(t *testing.T) {
-	s := queueSent(testQueueScreen(), ScannedMsg{Problem: "no network"}, press('n'), press(' '))
+	s := queueSent(testQueueScreen(), list.ScannedMsg{Problem: "no network"}, press('n'), press(' '))
 	var out bytes.Buffer
 	c := noKeys(&out)
 	c.In = strings.NewReader("\r")
@@ -253,7 +254,7 @@ func TestABridgeReportReachesTheScreen(t *testing.T) {
 }
 
 func TestEachSideKeepsItsCursor(t *testing.T) {
-	s := queueSent(testQueueScreen(), ScannedMsg{}, press('j'), press('j'), press('j'), tab)
+	s := queueSent(testQueueScreen(), list.ScannedMsg{}, press('j'), press('j'), press('j'), tab)
 	if s.list.side != "ws" || s.at["Mac"] != 3 || s.at["ws"] != 0 {
 		t.Errorf("side %q, cursors %v", s.list.side, s.at)
 	}
@@ -266,7 +267,7 @@ func TestEachSideKeepsItsCursor(t *testing.T) {
 }
 
 func TestAMoveLeavesTheScreenItCameFromItsCursors(t *testing.T) {
-	was := queueSent(testQueueScreen(), ScannedMsg{}, press('j'))
+	was := queueSent(testQueueScreen(), list.ScannedMsg{}, press('j'))
 	moved := queueSent(was, press('j'), tab)
 	if was.at["Mac"] != 1 || was.at["ws"] != 0 || moved.at["Mac"] != 2 {
 		t.Errorf("cursors %v before, %v after", was.at, moved.at)

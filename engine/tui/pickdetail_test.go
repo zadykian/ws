@@ -8,11 +8,12 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/list"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // detailOf is the words of the pane for the step of that name in l.
-func detailOf(l PickList, name string) []string {
+func detailOf(l list.PickList, name string) []string {
 	var got []string
 	for _, line := range (pickScreen{list: l, at: cursorOn(l, name)}).notes() {
 		got = append(got, line.Text)
@@ -54,7 +55,7 @@ func TestDetailWordsEachStateOfTheScan(t *testing.T) {
 }
 
 func TestDetailWarnsOfARolePassedOverAndOfAStoppedScan(t *testing.T) {
-	l := threeRoles().Chose(func(r PickRow) bool { return r.Name == "four" })
+	l := threeRoles().Chose(func(r list.PickRow) bool { return r.Name == "four" })
 	s := testPick()
 	s.list, s.Scanning, s.Problem = l, false, "no network"
 	got := pickShown(pickSent(s, tea.WindowSizeMsg{Width: 100, Height: 24}))

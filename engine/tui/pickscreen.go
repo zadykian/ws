@@ -5,6 +5,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/list"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -19,8 +20,8 @@ type Choice struct {
 // pickScreen is the list that a run is chosen from. A scan fills it behind the screen, and the
 // maintainer can read and move as it goes.
 type pickScreen struct {
-	ListScreen
-	list PickList
+	list.ListScreen
+	list list.PickList
 	// at is the cursor on the list.
 	at     widget.Cursor
 	footer widget.Footer
@@ -29,10 +30,10 @@ type pickScreen struct {
 }
 
 // newPickScreen returns the screen of groups, its scan under way.
-func newPickScreen(title string, theme widget.Theme, groups []Group, picks chan<- Choice) pickScreen {
-	footer := widget.NewFooter(ListButtons()...)
-	s := pickScreen{ListScreen: ListScreen{Title: title, Theme: theme, Scanning: true, Filter: widget.NewFilter()},
-		list: NewPickList(groups), footer: footer, picks: picks}
+func newPickScreen(title string, theme widget.Theme, groups []list.Group, picks chan<- Choice) pickScreen {
+	footer := widget.NewFooter(list.ListButtons()...)
+	s := pickScreen{ListScreen: list.ListScreen{Title: title, Theme: theme, Scanning: true, Filter: widget.NewFilter()},
+		list: list.NewPickList(groups), footer: footer, picks: picks}
 	return s.enabled()
 }
 
@@ -48,7 +49,7 @@ func (s pickScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		s.list = s.list.Take(msg)
 	case widget.Line:
 		s.list = s.list.Hear(msg)
-	case ScannedMsg:
+	case list.ScannedMsg:
 		s.ListScreen = s.Scanned(msg)
 	case tea.WindowSizeMsg:
 		s.Window = widget.Size{Width: msg.Width, Height: msg.Height}
@@ -79,23 +80,23 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 	var place int
 	s.footer, place = s.footer.Update(msg)
 	switch place {
-	case PickTogglePlace:
+	case list.PickTogglePlace:
 		s.list = s.list.Toggled(s.at)
-	case PickAllPlace:
-		s.list = s.list.Chose(func(PickRow) bool { return true })
-	case PickNonePlace:
-		s.list = s.list.Chose(func(PickRow) bool { return false })
-	case PickInvertPlace:
-		s.list = s.list.Chose(func(r PickRow) bool { return !r.On() })
-	case PickPendingPlace:
-		s.list = s.list.Chose(PickRow.Pending)
-	case PickFilterPlace:
+	case list.PickAllPlace:
+		s.list = s.list.Chose(func(list.PickRow) bool { return true })
+	case list.PickNonePlace:
+		s.list = s.list.Chose(func(list.PickRow) bool { return false })
+	case list.PickInvertPlace:
+		s.list = s.list.Chose(func(r list.PickRow) bool { return !r.On() })
+	case list.PickPendingPlace:
+		s.list = s.list.Chose(list.PickRow.Pending)
+	case list.PickFilterPlace:
 		s.Filter = s.Filter.Opened()
-	case PickRunPlace:
+	case list.PickRunPlace:
 		return s.leave(Choice{Only: s.list.Only()})
-	case PickCheckPlace:
+	case list.PickCheckPlace:
 		return s.leave(Choice{Only: s.list.Only(), Check: true})
-	case PickQuitPlace:
+	case list.PickQuitPlace:
 		return s.leave(Choice{})
 	default:
 		s.at = s.at.Moved(msg, max(s.listHeight(), 1), len(s.list.Lines()))
@@ -126,11 +127,11 @@ func (s pickScreen) leave(c Choice) (pickScreen, tea.Cmd) {
 // waits for something chosen, as a run with no Only runs every step. The state screen waits for the
 // scan's end, as both read the same machine.
 func (s pickScreen) enabled() pickScreen {
-	for place := PickTogglePlace; place <= PickPendingPlace; place++ {
+	for place := list.PickTogglePlace; place <= list.PickPendingPlace; place++ {
 		s.footer = s.footer.Enable(place, !s.Scanning)
 	}
 	some := !s.Scanning && len(s.list.Only()) > 0
-	s.footer = s.footer.Enable(PickRunPlace, some).Enable(PickCheckPlace, some)
+	s.footer = s.footer.Enable(list.PickRunPlace, some).Enable(list.PickCheckPlace, some)
 	return s
 }
 

@@ -11,6 +11,8 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/zadykian/ws/engine/tui/internal/list"
 )
 
 func TestTheListHearsWhyAScanStopped(t *testing.T) {
@@ -22,7 +24,7 @@ func TestTheListHearsWhyAScanStopped(t *testing.T) {
 	if err != nil || got.Next != NextCheck {
 		t.Errorf("awaitPick = %v, %v", got, err)
 	}
-	if !slices.Equal(*sent, []tea.Msg{ScannedMsg{"no network"}}) {
+	if !slices.Equal(*sent, []tea.Msg{list.ScannedMsg{Problem: "no network"}}) {
 		t.Errorf("sent %v", *sent)
 	}
 }

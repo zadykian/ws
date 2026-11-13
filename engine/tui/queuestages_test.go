@@ -4,15 +4,17 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/zadykian/ws/engine/tui/internal/list"
 )
 
 // testStages is a queue across both sides: a stage of steps, a stage of roles no scan has read.
 func testStages() []Stage {
 	return []Stage{
 		{Name: "Tools", Side: "Mac"},
-		{Name: "Setup", Side: "Mac", Waits: "Tools", Nested: []Group{{Name: "Setup", Steps: []string{"one", "two"}}}},
+		{Name: "Setup", Side: "Mac", Waits: "Tools", Nested: []list.Group{{Name: "Setup", Steps: []string{"one", "two"}}}},
 		{Name: "Sudo", Side: "ws", Waits: "Setup"},
-		{Name: "Run", Side: "ws", Waits: "Sudo", Nested: []Group{{Name: "base"}, {Name: "ssh"}}},
+		{Name: "Run", Side: "ws", Waits: "Sudo", Nested: []list.Group{{Name: "base"}, {Name: "ssh"}}},
 		{Name: "Signing", Side: "Mac", Waits: "Run"},
 	}
 }
@@ -49,7 +51,7 @@ func TestAStageKeepsItsStepsInAListOfItsOwn(t *testing.T) {
 
 func TestARoleOfAStageThatNoScanReadIsOneRow(t *testing.T) {
 	rows := queueOf(testStages()).stages[3].list.Rows
-	if len(rows) != 2 || rows[0].Index != UnreadIndex || rows[0].Form != GroupUnread {
+	if len(rows) != 2 || rows[0].Index != list.UnreadIndex || rows[0].Form != list.GroupUnread {
 		t.Errorf("rows = %+v", rows)
 	}
 }
@@ -76,7 +78,7 @@ func TestAQueueNumbersItsStagesAcrossBothSides(t *testing.T) {
 }
 
 func TestARoleOfAStageOpensUnderItsHeading(t *testing.T) {
-	stages := []Stage{{Name: "Run", Side: "Mac", Nested: []Group{{Name: "base", Steps: []string{"Packages"}}}}}
+	stages := []Stage{{Name: "Run", Side: "Mac", Nested: []list.Group{{Name: "base", Steps: []string{"Packages"}}}}}
 	got := strings.Join(drawnQueue(queueOf(stages), "Mac"), "|")
 	if want := " 1 [ ] · Run|     [ ] base|       [ ] · Packages"; got != want {
 		t.Errorf("list = %q, want %q", got, want)
