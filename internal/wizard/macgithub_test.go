@@ -3,53 +3,31 @@ package wizard
 import (
 	"context"
 	"errors"
-	"github.com/zadykian/ws/roles/server/ubuntu/session"
-	"github.com/zadykian/ws/roles/server/ubuntu/session/sessiontest"
 	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/remote"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 )
 
-func newSigning(status session.Status, listed string) (*Signing, *effecttest.Machine) {
-	r, m := newRun("lan", status, false, false)
+func newMacSigning(status session.Status, listed string) (*stages.Signing, *effecttest.Machine) {
+	m := effecttest.NewMachine()
+	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\nWS_USER=ada\n")
+	out := &effecttest.Out{}
+	ws := macSession(m, remote.SSH{M: m, Lock: "/l", Ways: MacWays{M: m, Conf: "/h/mac.conf"}}, out, status)
 	g := GhCLI{M: m, Out: &effecttest.Out{}, LookPath: found}
 	m.Results["/bin/gh auth status -h github.com"] = effecttest.Result{}
 	m.Results["/bin/gh ssh-key add /l/signing.pub --type signing --title ws1"] = effecttest.Result{}
 	m.Results["/bin/gh api --paginate user/ssh_signing_keys --jq .[].key"] =
 		effecttest.Result{Out: []byte(listed)}
-	return &Signing{Ws: r.Ws, GitHub: &MacGitHub{Gh: g, Lock: "/l"}}, m
+	return &stages.Signing{Ws: ws, GitHub: &MacGitHub{Gh: g, Lock: "/l"}}, m
 }
 
-func TestSigningPlan(t *testing.T) {
-	key := session.Status{Signing: "ssh-ed25519 AAA", Hostname: "ws1"}
-	for name, tc := range map[string]struct {
-		status       session.Status
-		listed, want string
-	}{
-		"no key":  {session.Status{Signing: "none"}, "", ""},
-		"listed":  {key, "ssh-ed25519 AAA\n", ""},
-		"missing": {key, "ssh-ed25519 BBB\n", "--title ws1"},
-		"no ssh":  {key, "", "the remote script reads nothing"},
-	} {
-		s, m := newSigning(tc.status, tc.listed)
-		if name == "no ssh" {
-			delete(m.Results, sessiontest.Op("status"))
-		}
-		p, err := s.Plan(context.Background())
-		got := errText(err)
-		for _, c := range p.Changes {
-			got += c.String()
-		}
-		if (tc.want == "") != (got == "") || !strings.Contains(got, tc.want) {
-			t.Errorf("%s: Plan = %q; want %q", name, got, tc.want)
-		}
-	}
-}
-
-func TestSigningApply(t *testing.T) {
-	s, m := newSigning(session.Status{Signing: "ssh-ed25519 AAA", Hostname: "ws1"}, "")
+func TestMacGitHubAddsTheSigningKey(t *testing.T) {
+	s, m := newMacSigning(session.Status{Signing: "ssh-ed25519 AAA", Hostname: "ws1"}, "")
 	if err := s.Apply(context.Background(), step.Plan{}); err != nil {
 		t.Fatal(err)
 	}
@@ -61,8 +39,8 @@ func TestSigningApply(t *testing.T) {
 	}
 }
 
-func TestSigningPlanWaitsOnGhUnderCheck(t *testing.T) {
-	s, m := newSigning(session.Status{Signing: "ssh-ed25519 AAA"}, "")
+func TestMacGitHubWaitsOnGhUnderCheck(t *testing.T) {
+	s, m := newMacSigning(session.Status{Signing: "ssh-ed25519 AAA"}, "")
 	m.Results["/bin/gh auth status -h github.com"] = effecttest.Result{Err: errors.New("logged out")}
 	out, g := &effecttest.Out{}, s.GitHub.(*MacGitHub)
 	g.Gh.Out = out

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/role"
@@ -32,7 +33,7 @@ func nestedRows(stage string) []tui.Group {
 	switch stage {
 	case (&wizard.Setup{}).Name():
 		groups = []tui.Group{{Name: stage, Steps: setup.Names()}}
-	case (&wizard.WsRun{}).Name():
+	case (&stages.WsRun{}).Name():
 		for _, name := range ubuntu.Names() {
 			groups = append(groups, tui.Group{Name: name})
 		}

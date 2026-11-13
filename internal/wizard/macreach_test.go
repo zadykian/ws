@@ -5,6 +5,7 @@ import (
 	"github.com/zadykian/ws/engine/core/remote"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/session/sessiontest"
+	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 	"strings"
 	"testing"
 
@@ -24,7 +25,7 @@ func macSession(m *effecttest.Machine, ssh remote.SSH, out *effecttest.Out, stat
 func TestWsClaudeLoginTakesTheTerminal(t *testing.T) {
 	m := effecttest.NewMachine()
 	ws := macSession(m, remote.SSH{M: m, F: m, Lock: "/l"}, &effecttest.Out{}, session.Status{Claude: "login"})
-	c := &WsClaude{Ws: ws, Tty: true}
+	c := &stages.WsClaude{Ws: ws, Tty: true}
 	_ = c.Apply(context.Background(), step.Plan{})
 	got := callsWith(m, `claude auth login`)
 	if len(got) != 1 || !strings.HasPrefix(got[0], "foreground ssh ") {
@@ -33,12 +34,15 @@ func TestWsClaudeLoginTakesTheTerminal(t *testing.T) {
 }
 
 func TestWsClaudeApply(t *testing.T) {
-	r, m := newRun("lan", session.Status{Claude: "login"}, false, false)
-	if err := (&WsClaude{Ws: r.Ws}).Apply(context.Background(), step.Plan{}); err == nil ||
+	m := effecttest.NewMachine()
+	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\nWS_USER=ada\n")
+	ws := macSession(m, remote.SSH{M: m, Lock: "/l", Ways: MacWays{M: m, Conf: "/h/mac.conf"}}, &effecttest.Out{},
+		session.Status{Claude: "login"})
+	if err := (&stages.WsClaude{Ws: ws}).Apply(context.Background(), step.Plan{}); err == nil ||
 		!strings.Contains(err.Error(), "no terminal") {
 		t.Errorf("Apply without a terminal = %v", err)
 	}
-	c := &WsClaude{Ws: r.Ws, Tty: true}
+	c := &stages.WsClaude{Ws: ws, Tty: true}
 	if err := c.Apply(context.Background(), step.Plan{}); err == nil || !strings.Contains(err.Error(), "still has no login") {
 		t.Errorf("Apply where ssh fails = %v", err)
 	}

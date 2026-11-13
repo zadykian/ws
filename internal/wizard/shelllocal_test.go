@@ -39,7 +39,7 @@ func TestFollowOnWsHandsEventsOn(t *testing.T) {
 	h := &heard{}
 	r := localSession(m, h)
 	m.Results["sh -s -- run --only=signoz/signoz up"] = effecttest.Result{Out: []byte(runLog)}
-	if err := r.Run(context.Background(), onlyArgs([]string{"signoz/signoz up"})); err != nil {
+	if err := r.Run(context.Background(), []string{"--only=signoz/signoz up"}); err != nil {
 		t.Fatal(err)
 	}
 	if got := h.steps(); !slices.Equal(got, []string{"ssh/keys"}) {

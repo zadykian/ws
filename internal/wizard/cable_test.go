@@ -12,6 +12,9 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
+// idleRun is ws's status after a full run of this ws, v1.2.3, that exited 0.
+var idleRun = session.Status{Run: session.Stamp{Version: "v1.2.3", Exit: "0"}}
+
 const cableLink = "eth0 - -\neth1 1 -\n"
 
 // newCable returns the stage after a full run of this ws, whose status names the cable that status

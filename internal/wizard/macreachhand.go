@@ -4,6 +4,7 @@ import (
 	"cmp"
 	guided "github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 
 	"github.com/zadykian/ws/roles/client/macos/conf"
 )
@@ -13,7 +14,7 @@ import (
 // the list leaves it out. mac.conf has WS_LAN_ADDRESS with WS_LAN alone, so the lease names an
 // address only with a LAN. Off the LAN, away's lines take the router's place.
 func (r MacReach) Hand(h *guided.Hand, s session.Status) {
-	_, c, err := loadConf(confFile{r.Conf, RunStage, r.SSH.M, r.Out})
+	_, c, err := loadConf(confFile{r.Conf, stages.RunStage, r.SSH.M, r.Out})
 	if err != nil {
 		return
 	}

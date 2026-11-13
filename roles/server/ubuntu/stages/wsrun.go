@@ -1,4 +1,4 @@
-package wizard
+package stages
 
 import (
 	"context"
@@ -19,7 +19,7 @@ const RunStage = "ws's run"
 type WsRun struct {
 	// Ws is the session to ws, whose files script names ws_user and the tunnel's peer.
 	Ws *session.Session
-	// Await names the stage that must be done first. It is required: the Mac's list names the stage
+	// Await names the stage that must be done first. A run needs one: the Mac's list names the stage
 	// that installs this ws on ws, and ws's own names its values.
 	Await string
 	// Unbooted is set on ws where its systemd isn't booted, as in a container: no unit runs there, so

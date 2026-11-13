@@ -4,6 +4,7 @@ import (
 	"errors"
 	guided "github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 	"io"
 	"strings"
 	"time"
@@ -101,7 +102,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 		session.Scripts{Remote: session.RemoteScript, Files: session.RemoteFilesScript, Events: e.events})
 	sudo.SSH, sudo.Tty, sudo.Check, sudo.P, sudo.Out = host.SSH, p.tty, check, e.hidden, out
 	install := &wizard.WsInstall{Ws: ws, Version: p.version, URL: p.releases, Out: out}
-	run := &wizard.WsRun{Ws: ws, Await: install.Name(), Check: check, Out: out, Version: p.version, Update: o.update, Only: o.only}
+	run := &stages.WsRun{Ws: ws, Await: install.Name(), Check: check, Out: out, Version: p.version, Update: o.update, Only: o.only}
 	hand.Late(ws.Hand)
 	hand.Late(gh.Hand)
 	setup := wizardSetup(e, o.left, later)
@@ -124,8 +125,8 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 		sudo,
 		install,
 		run,
-		&wizard.WsClaude{Ws: ws, Tty: p.tty},
-		&wizard.Signing{Ws: ws, GitHub: &wizard.MacGitHub{Gh: gh.GhCLI, Lock: lock, Check: check}},
+		&stages.WsClaude{Ws: ws, Tty: p.tty},
+		&stages.Signing{Ws: ws, GitHub: &wizard.MacGitHub{Gh: gh.GhCLI, Lock: lock, Check: check}},
 		&wizard.Tunnel{SSH: host.SSH, Ws: ws, Conf: later, Check: check, MacApply: setup.Run, Hand: hand, Home: p.getenv("HOME"),
 			Sleep: time.Sleep, M: p.machine, Out: out},
 		cable,

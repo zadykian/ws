@@ -3,6 +3,7 @@ package wizard
 import (
 	guided "github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/step"
@@ -14,16 +15,16 @@ func TestEveryStageStatesItsSide(t *testing.T) {
 	want := map[string]guided.Side{
 		macUpdateStage: OnMac, toolsStage: OnMac, homebrewStage: OnMac, answers: OnMac, macKey: OnMac,
 		ghStage: OnMac, setupStage: OnMac, hostStage: OnMac, loginStage: OnMac, sudoStage: session.Ws,
-		installStage: session.Ws, RunStage: session.Ws, session.ClaudeStage: session.Ws, SigningStage: OnMac, tunnelStage: OnMac,
-		cableStage: OnMac, valuesStage: session.Ws,
+		installStage: session.Ws, stages.RunStage: session.Ws, session.ClaudeStage: session.Ws, stages.SigningStage: OnMac, tunnelStage: OnMac,
+		cableStage: OnMac, (&stages.WsValues{}).Name(): session.Ws,
 	}
-	stages := []step.Step{&MacUpdate{}, &Tools{}, &Homebrew{}, &Answers{}, &MacKey{}, &Gh{}, &Setup{},
-		&HostKey{}, &Login{}, &Sudo{}, &WsInstall{}, &WsRun{}, &WsClaude{}, &Signing{GitHub: &MacGitHub{}}, &Tunnel{}, &Cable{},
-		&WsValues{}}
-	if len(stages) != len(want) {
-		t.Fatalf("%d stages, %d wanted", len(stages), len(want))
+	list := []step.Step{&MacUpdate{}, &Tools{}, &Homebrew{}, &Answers{}, &MacKey{}, &Gh{}, &Setup{},
+		&HostKey{}, &Login{}, &Sudo{}, &WsInstall{}, &stages.WsRun{}, &stages.WsClaude{}, &stages.Signing{GitHub: &MacGitHub{}}, &Tunnel{}, &Cable{},
+		&stages.WsValues{}}
+	if len(list) != len(want) {
+		t.Fatalf("%d stages, %d wanted", len(list), len(want))
 	}
-	for _, s := range stages {
+	for _, s := range list {
 		got, ok := guided.SideOf(s)
 		if !ok {
 			t.Errorf("%s states no side", s.Name())

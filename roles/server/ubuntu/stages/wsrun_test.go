@@ -1,8 +1,7 @@
-package wizard
+package stages
 
 import (
 	"context"
-	"github.com/zadykian/ws/engine/core/remote"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/session/sessiontest"
 	"slices"
@@ -13,22 +12,6 @@ import (
 
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
-
-// extra is what mac.conf needs besides its target.
-var extra = map[string]string{"cloud": "WS_REMOTE=ws.example.org\nWS_REMOTE_PORT=22022\n"}
-
-// idleRun is ws's status after a full run of this ws, v1.2.3, that exited 0.
-var idleRun = session.Status{Run: session.Stamp{Version: "v1.2.3", Exit: "0"}}
-
-// newRun returns the stage over a Machine whose mac.conf holds the target, and whose remote script
-// answers status with the value's text.
-func newRun(target string, status session.Status, update, check bool) (*WsRun, *effecttest.Machine) {
-	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=" + target + "\nWS_USER=" + values.Default().User + "\n" + extra[target])
-	out := &effecttest.Out{}
-	ws := macSession(m, remote.SSH{M: m, Lock: "/l", Ways: MacWays{M: m, Conf: "/h/mac.conf"}}, out, status)
-	return &WsRun{Ws: ws, Check: check, Out: out, Version: "v1.2.3", Update: update, Await: installStage}, m
-}
 
 func TestWsRunPlan(t *testing.T) {
 	off := session.Stamp{Version: "v1.2.3", Exit: "0", Off: true}

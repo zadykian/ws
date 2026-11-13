@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 	"os/signal"
 	"slices"
 	"syscall"
@@ -149,10 +150,10 @@ func (a afterStage) Observe(e step.Event) {
 	}
 }
 
-// wsRunOf returns the stage of ws's run, or nil where the stages hold none.
-func wsRunOf(stages []step.Step) *wizard.WsRun {
-	for _, s := range stages {
-		if run, ok := s.(*wizard.WsRun); ok {
+// wsRunOf returns the stage of ws's run, or nil where the list holds none.
+func wsRunOf(list []step.Step) *stages.WsRun {
+	for _, s := range list {
+		if run, ok := s.(*stages.WsRun); ok {
 			return run
 		}
 	}

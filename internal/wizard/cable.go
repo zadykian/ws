@@ -6,6 +6,7 @@ import (
 	"github.com/zadykian/ws/engine/core/remote"
 	guided "github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 	"regexp"
 	"strings"
 
@@ -168,7 +169,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, nil
 	}
 	if c.Check && !none && (!in || !c.RunDone(ctx, session.Want{Target: cf.Target, User: cf.User})) {
-		c.Out.Say("%s: after %s", cableStage, RunStage)
+		c.Out.Say("%s: after %s", cableStage, stages.RunStage)
 		return step.Plan{}, nil
 	}
 	if !c.lacks() {

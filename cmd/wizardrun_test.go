@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 	"io"
 	"slices"
 	"strings"
@@ -138,7 +139,7 @@ func TestWsRunOfFindsNoneWhereNoneIs(t *testing.T) {
 
 // A tick in ws's run whole asks for a run, though the last one passed. Another stage's asks for none.
 func TestWizardRunGoesOnceMoreForATick(t *testing.T) {
-	w := wizardRun{p: fakeProcess(), side: testSide(&wizard.WsRun{}, tickStep{name: "one"})}
+	w := wizardRun{p: fakeProcess(), side: testSide(&stages.WsRun{}, tickStep{name: "one"})}
 	run := wsRunOf(w.plainStages()).Name()
 	if !w.optionsOf(tui.QueueChoice{Whole: []string{"ws's run"}}, run).update {
 		t.Error("a tick in ws's run left the last run to speak")

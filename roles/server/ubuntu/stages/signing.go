@@ -1,4 +1,6 @@
-package wizard
+// Package stages holds the stages that act on ws: its values, its run, claude's login and the
+// signing key. Both wizards run them.
+package stages
 
 import (
 	"context"

@@ -3,12 +3,12 @@ package cmd
 import (
 	"context"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -19,14 +19,14 @@ import (
 func serverWizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	p, out, hand := e.p, e.out, e.hand
 	m := p.machine
-	vals := &wizard.WsValues{Vars: serverVars, User: p.getenv("SUDO_USER"), Tty: p.tty, M: m, P: e.ask,
+	vals := &stages.WsValues{Vars: serverVars, User: p.getenv("SUDO_USER"), Tty: p.tty, M: m, P: e.ask,
 		Set: func(key, value string) error { return setServerValue(m, out, key, value) }}
 	ws := serverSession(m, e.talks, out, e.events)
-	run := &wizard.WsRun{Ws: ws, Await: vals.Name(), Unbooted: !host.Booted(m), Check: o.check, Out: out,
+	run := &stages.WsRun{Ws: ws, Await: vals.Name(), Unbooted: !host.Booted(m), Check: o.check, Out: out,
 		Version: p.version, Update: o.update, Only: o.only}
 	hand.Late(ws.Hand)
-	return []step.Step{vals, run, &wizard.WsClaude{Ws: ws, Tty: p.tty},
-		&wizard.Signing{Ws: ws, GitHub: &wizard.WsGitHub{M: m, Out: out, Hand: hand}}}
+	return []step.Step{vals, run, &stages.WsClaude{Ws: ws, Tty: p.tty},
+		&stages.Signing{Ws: ws, GitHub: &stages.WsGitHub{M: m, Out: out, Hand: hand}}}
 }
 
 // serverSession is ws's session to itself on m: the scripts run here as root, as the Mac's ssh logs

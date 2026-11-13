@@ -1,4 +1,4 @@
-package wizard
+package stages
 
 import (
 	"context"
@@ -22,6 +22,7 @@ type WsGitHub struct {
 	named bool
 }
 
+// Side is ws: the stage acts through ws's own gh.
 func (*WsGitHub) Side() guided.Side { return session.Ws }
 
 type signingByHand struct{ why string }

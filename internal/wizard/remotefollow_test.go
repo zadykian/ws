@@ -121,10 +121,14 @@ func TestEachRunIsFollowed(t *testing.T) {
 	ctx, h := context.Background(), &heard{}
 	log := effecttest.Result{Out: []byte(runLog)}
 
-	r, m := newRun("lan", session.Status{}, false, false)
+	r, m := newRun("lan", idleRun, true, false)
 	r.Ws.Hear(h)
 	m.Results[sessiontest.Op("run")] = log
-	if err := r.run(ctx); err != nil {
+	plan, err := r.Plan(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.Apply(ctx, plan); err != nil {
 		t.Fatal(err)
 	}
 

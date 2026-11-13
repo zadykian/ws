@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/session/sessiontest"
+	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 	"slices"
 	"strings"
 	"testing"
@@ -16,7 +17,7 @@ import (
 // ubuntu apply.
 func TestWsClaudeHere(t *testing.T) {
 	ws, m := sessiontest.New(session.Status{Claude: "none"})
-	c := &WsClaude{Ws: ws, Tty: true}
+	c := &stages.WsClaude{Ws: ws, Tty: true}
 	if _, err := c.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "run sudo ws server ubuntu apply") {
 		t.Errorf("Plan where claude is missing = %v", err)
 	}

@@ -2,10 +2,10 @@ package wizard
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	guided "github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -20,12 +20,13 @@ type MacGitHub struct {
 	Check bool
 }
 
+// Side is the Mac: the stage acts through the Mac's gh.
 func (*MacGitHub) Side() guided.Side { return OnMac }
 
 type signingAdd struct{ title string }
 
 func (c signingAdd) String() string {
-	return SigningStage + ": would run gh ssh-key add --type signing --title " + c.title +
+	return stages.SigningStage + ": would run gh ssh-key add --type signing --title " + c.title +
 		" for ws's signing key"
 }
 
@@ -38,10 +39,10 @@ func (s *MacGitHub) Lacks(ctx context.Context, ws *session.Session, line string)
 	}
 	if _, err := s.Gh.M.Run(ctx, path, "auth", "status", "-h", "github.com"); err != nil {
 		if s.Check {
-			s.Gh.Out.Say("%s: after %s on the Mac", SigningStage, ghStage)
+			s.Gh.Out.Say("%s: after %s on the Mac", stages.SigningStage, ghStage)
 			return nil, nil
 		}
-		return nil, errors.New(SigningStage + ": the Mac's gh has no login: the stage " + ghStage + " mends it")
+		return nil, fmt.Errorf("%s: the Mac's gh has no login: the stage %s mends it", stages.SigningStage, ghStage)
 	}
 	keys, err := s.Gh.api(ctx, path, "user/ssh_signing_keys")
 	if err != nil {
@@ -64,12 +65,12 @@ func (s *MacGitHub) Add(ctx context.Context, ws *session.Session, line string) e
 	title := ws.Known().Hostname
 	file := s.Lock + "/signing.pub"
 	if err := s.Gh.M.WriteFile(file, []byte(line+"\n"), 0o600); err != nil {
-		return fmt.Errorf("%s: %w", SigningStage, err)
+		return fmt.Errorf("%s: %w", stages.SigningStage, err)
 	}
 	add := "gh ssh-key add --type signing --title " + title
 	if _, err := s.Gh.M.Run(ctx, path, "ssh-key", "add", file, "--type", "signing", "--title", title); err != nil {
-		return fmt.Errorf("%s: %s failed", SigningStage, add)
+		return fmt.Errorf("%s: %s failed", stages.SigningStage, add)
 	}
-	s.Gh.Out.Say("%s: ran %s for ws's signing key", SigningStage, add)
+	s.Gh.Out.Say("%s: ran %s for ws's signing key", stages.SigningStage, add)
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/zadykian/ws/engine/core/remote"
 	guided "github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -53,7 +54,7 @@ func (*Tunnel) Name() string { return tunnelStage }
 func (*Tunnel) Side() guided.Side { return OnMac }
 
 // WaitsOn is ws's run, which makes wg0.
-func (*Tunnel) WaitsOn() string { return RunStage }
+func (*Tunnel) WaitsOn() string { return stages.RunStage }
 
 type tunnelChange string
 
