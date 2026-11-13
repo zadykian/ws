@@ -30,12 +30,6 @@ var itemTabs = map[step.ItemKind]int{
 	step.DirItem:     filesTab,
 }
 
-// StateSection is a part of what a machine reports: a role's steps, or the Mac's, which have no name.
-type StateSection struct {
-	Name    string
-	Reports []step.Report
-}
-
 // stateFact is a line of the detail pane.
 type stateFact struct{ label, text string }
 

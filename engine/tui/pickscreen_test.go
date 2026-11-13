@@ -1,8 +1,13 @@
 package tui
 
 import (
+	"bytes"
+	"context"
+	"errors"
+	"io"
 	"slices"
 	"strings"
+	"syscall"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -181,5 +186,36 @@ func TestPickScreenFilterTakesAnEditInsideItsWords(t *testing.T) {
 	left := tea.KeyPressMsg{Code: tea.KeyLeft}
 	if s := pickSent(testPick(), press('/'), press('k'), press('y'), left, press('e')); s.list.Words != "key" {
 		t.Errorf("words = %q", s.list.Words)
+	}
+}
+
+func TestPickLeavesNothingPastTheScreen(t *testing.T) {
+	var out bytes.Buffer
+	c := noKeys(&out)
+	c.In = strings.NewReader("q")
+	got, err := Pick(t.Context(), c, "ws", nil, func(ctx context.Context, b *Bridge) error {
+		b.Warn("a line of the scan")
+		b.ByHand("a line of the scan")
+		return waitForCtx(ctx, b)
+	})
+	if err != nil || got.Only != nil {
+		t.Errorf("Pick = %+v, %v", got, err)
+	}
+	left := out.String()[strings.LastIndex(out.String(), leaveBuffer):]
+	if strings.Contains(left, "a line of the scan") {
+		t.Errorf("past the screen: %q", left)
+	}
+}
+
+func TestPickEndsInTheCutOfCtrlC(t *testing.T) {
+	c := noKeys(io.Discard)
+	c.In = strings.NewReader("\x03")
+	if _, err := Pick(t.Context(), c, "ws", nil, waitForCtx); !errors.Is(err, testCut(syscall.SIGINT)) {
+		t.Errorf("Pick: %v", err)
+	}
+	c.In, c.quiet = strings.NewReader("\x03"), true // A work past a choice ends well, whatever the cut.
+	past := func(ctx context.Context, _ *Bridge) error { <-ctx.Done(); return nil }
+	if err := Run(t.Context(), c, recorder{&[]tea.Msg{}}, past); !errors.Is(err, testCut(syscall.SIGINT)) {
+		t.Errorf("Run: %v", err)
 	}
 }

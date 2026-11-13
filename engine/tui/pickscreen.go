@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"context"
+
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 
@@ -181,4 +183,11 @@ func (s pickScreen) notes() []widget.Line {
 	}
 	row := s.list.Rows[line.Row]
 	return append(notes, row.Notes()...)
+}
+
+// Pick draws the list of groups over scan, a run with --check, and returns what the maintainer
+// chose: a Choice with no steps where they left. Ctrl-C ends it as Cut says, and no stop is asked.
+func Pick(ctx context.Context, c Config, title string, groups []list.Group, scan Work) (Choice, error) {
+	picks := make(chan Choice, 1)
+	return pick(ctx, c, newPickScreen(title, c.Theme, groups, picks), picks, scan)
 }

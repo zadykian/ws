@@ -1,5 +1,7 @@
 package tui
 
+import "context"
+
 // Next is what the queue's screen was left for.
 type Next int
 
@@ -31,4 +33,24 @@ type QueueChoice struct {
 	Side string
 	// left is the screen as the maintainer left it, for Reopen and NewQueueRun.
 	left queueScreen
+}
+
+// PickStages draws a queue's lists over scan, as Pick draws a list. scan's Bridge.Report fills
+// a stage from what its machine says. A QueueChoice that runs nothing, or goes to the form or the state screen, says it by its Next.
+func PickStages(ctx context.Context, c Config, title string, stages []Stage, scan Work) (QueueChoice, error) {
+	picks := make(chan QueueChoice, 1)
+	return pick(ctx, c, openQueue(title, c.Theme, stages, picks), picks, scan)
+}
+
+// Reopen draws the lists again as left, a NextState choice, found them, and returns the next choice. No
+// scan runs, as left came past a scan's end and the state screen changes nothing. What the scan
+// found stands, and so do the boxes, which a scan would choose again.
+func Reopen(ctx context.Context, c Config, left QueueChoice) (QueueChoice, error) {
+	picks := make(chan QueueChoice, 1)
+	screen := left.left
+	screen.picks = picks
+	return pick(ctx, c, screen, picks, func(ctx context.Context, _ *Bridge) error {
+		<-ctx.Done()
+		return nil
+	})
 }
