@@ -2,6 +2,7 @@ package file
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/fs"
 
@@ -11,6 +12,8 @@ import (
 
 // UserWrite puts After in the user's file with Mode. Before is what the file holds, if it exists.
 type UserWrite struct {
+	M             effect.Machine
+	Out           effect.Out
 	Path          string
 	Before, After []byte
 	Exists        bool
@@ -46,8 +49,18 @@ func (w UserWrite) Title() string {
 // Kind is write.
 func (UserWrite) Kind() step.ChangeKind { return step.Write }
 
+// Apply writes the file, and says so.
+func (w UserWrite) Apply(context.Context) error {
+	if err := w.M.WriteFile(w.Path, w.After, w.Mode); err != nil {
+		return err
+	}
+	w.Out.Say("wrote %s", w.Path)
+	return nil
+}
+
 // UserMkdir makes the user's directory.
 type UserMkdir struct {
+	M    effect.Machine
 	Path string
 	Mode fs.FileMode
 }
@@ -57,8 +70,12 @@ func (d UserMkdir) String() string { return fmt.Sprintf("would make %s, mode %o"
 // Kind is write.
 func (UserMkdir) Kind() step.ChangeKind { return step.Write }
 
+// Apply makes the directory.
+func (d UserMkdir) Apply(context.Context) error { return d.M.Mkdir(d.Path, d.Mode) }
+
 // UserChmod sets the mode of the user's file or directory.
 type UserChmod struct {
+	M    effect.Machine
 	Path string
 	Mode fs.FileMode
 }
@@ -70,7 +87,23 @@ func (s UserChmod) String() string {
 // Kind is write.
 func (UserChmod) Kind() step.ChangeKind { return step.Write }
 
+// Apply sets the mode.
+func (s UserChmod) Apply(context.Context) error { return s.M.Chmod(s.Path, s.Mode) }
+
 // UserBackup keeps a copy of the file at To.
-type UserBackup struct{ Path, To string }
+type UserBackup struct {
+	M        effect.Machine
+	Out      effect.Out
+	Path, To string
+}
 
 func (b UserBackup) String() string { return fmt.Sprintf("would keep %s as %s", b.Path, b.To) }
+
+// Apply copies the file, with its mode and times, and says so.
+func (b UserBackup) Apply(ctx context.Context) error {
+	if _, err := b.M.Run(ctx, "cp", "-p", b.Path, b.To); err != nil {
+		return err
+	}
+	b.Out.Say("kept the old %s as %s", b.Path, b.To)
+	return nil
+}
