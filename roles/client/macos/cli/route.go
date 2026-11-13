@@ -34,7 +34,7 @@ func newTunnelLoadedCmd(p enginecli.Env, server *string) *cobra.Command {
 }
 
 // newTunnelRoutesCmd returns ws client macos tunnel routes.
-func newTunnelRoutesCmd(p enginecli.Env) *cobra.Command {
+func newTunnelRoutesCmd(p enginecli.Env, server *string) *cobra.Command {
 	var check bool
 	c := &cobra.Command{
 		Use:   "routes NAME [CIDR...]",
@@ -43,7 +43,7 @@ func newTunnelRoutesCmd(p enginecli.Env) *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(c *cobra.Command, args []string) error {
 			return runRoute(c, check, func(out effect.Out) step.Step {
-				return &networks.Routes{Set: args[0], Networks: args[1:], M: p.Machine, Out: out, Check: check, Alone: true}
+				return &networks.Routes{Server: *server, Set: args[0], Networks: args[1:], M: p.Machine, Out: out, Check: check, Alone: true}
 			})
 		},
 	}
