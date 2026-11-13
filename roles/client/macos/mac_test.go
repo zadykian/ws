@@ -12,7 +12,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos"
 	"github.com/zadykian/ws/roles/client/macos/cld"
 	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/networks"
 	"github.com/zadykian/ws/roles/client/macos/tunnel"
 )
 
@@ -53,7 +53,7 @@ func TestMacStepsTakeTheCheck(t *testing.T) {
 				got = s.Check
 			case *tunnel.Tunnel:
 				got = s.Check
-			case *setup.Networks:
+			case *networks.Networks:
 				got = s.Check
 			default:
 				continue

@@ -1,4 +1,4 @@
-package setup_test
+package networks_test
 
 import (
 	"context"
@@ -8,17 +8,17 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/networks"
 )
 
 const resolverHead = "# Written by github.com/zadykian/ws: ws client macos apply, from WS_RESOLVERS in ~/.config/ws/mac.conf.\n"
 
-func networksStep(m *effecttest.Machine, c conf.Conf) *setup.Networks {
+func networksStep(m *effecttest.Machine, c conf.Conf) *networks.Networks {
 	m.Root["/etc/ws-tunnel/routes.d"] = effect.Attrs{Mode: 0o755}
-	return &setup.Networks{Conf: c, M: m, Out: &effecttest.Out{}}
+	return &networks.Networks{Conf: c, M: m, Out: &effecttest.Out{}}
 }
 
-func networksPlan(t *testing.T, s *setup.Networks) []string {
+func networksPlan(t *testing.T, s *networks.Networks) []string {
 	p, err := s.Plan(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -50,7 +50,7 @@ func TestNetworksWritesRoutesAndResolversAndSignalsTheDaemon(t *testing.T) {
 
 func TestNetworksSaysWhatCheckWouldPutBeforeRoutesDExists(t *testing.T) {
 	m := effecttest.NewMachine()
-	s := &setup.Networks{Conf: conf.Conf{PublicKey: "K", TunnelNetworks: "10.1.0.0/24 10.2.0.0/24"}, M: m, Out: &effecttest.Out{}, Check: true}
+	s := &networks.Networks{Conf: conf.Conf{PublicKey: "K", TunnelNetworks: "10.1.0.0/24 10.2.0.0/24"}, M: m, Out: &effecttest.Out{}, Check: true}
 	got := networksPlan(t, s)
 	want := "would put 10.1.0.0/24 10.2.0.0/24 in /etc/ws-tunnel/routes.d/mac-conf once routes.d is made"
 	if len(got) != 1 || got[0] != want {

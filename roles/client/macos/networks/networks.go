@@ -1,4 +1,5 @@
-package setup
+// Package networks sets up the routes and resolvers of the networks that the tunnel reaches.
+package networks
 
 import (
 	"context"

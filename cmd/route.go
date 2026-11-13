@@ -8,7 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/networks"
 )
 
 const daemonLabel = "com.github.zadykian.ws-tunnel"
@@ -39,7 +39,7 @@ func newTunnelRoutesCmd(p process) *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(c *cobra.Command, args []string) error {
 			return runRoute(c, check, func(out effect.Out) step.Step {
-				return &setup.Routes{Set: args[0], Networks: args[1:], M: p.machine, Out: out, Check: check, Alone: true}
+				return &networks.Routes{Set: args[0], Networks: args[1:], M: p.machine, Out: out, Check: check, Alone: true}
 			})
 		},
 	}
@@ -57,7 +57,7 @@ func newResolverCmd(p process) *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(c *cobra.Command, args []string) error {
 			return runRoute(c, check, func(out effect.Out) step.Step {
-				return &setup.Resolver{Domain: args[0], Addresses: args[1:], M: p.machine, Out: out}
+				return &networks.Resolver{Domain: args[0], Addresses: args[1:], M: p.machine, Out: out}
 			})
 		},
 	}
