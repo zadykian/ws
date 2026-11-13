@@ -3,6 +3,7 @@ package answers
 import (
 	"bytes"
 	"context"
+	"slices"
 	"strings"
 	"testing"
 
@@ -63,5 +64,40 @@ func TestAskerRefusesWithoutATerminal(t *testing.T) {
 	_, err := a.ask(context.Background(), conf.Question{Key: "WS_TARGET"})
 	if err == nil || err.Error() != "Answers: no terminal to ask WS_TARGET: set WS_TARGET" || len(out.Lines) != 0 {
 		t.Errorf("ask with no terminal = %v, saying %q", err, out.Lines)
+	}
+}
+
+// chooser answers each choice with answer and keeps the questions. It takes no line.
+type chooser struct {
+	effect.Prompt
+	answer string
+	asked  []effect.ChoiceQuestion
+}
+
+func (c *chooser) Choose(_ context.Context, q effect.ChoiceQuestion) (string, error) {
+	c.asked = append(c.asked, q)
+	return c.answer, nil
+}
+
+func TestAskerChoosesTheTargetOnAScreen(t *testing.T) {
+	c := &chooser{Prompt: &effecttest.Prompt{T: t}, answer: "mac-vm"}
+	a, _ := newAsker(c, nil)
+	q := conf.Question{Key: "WS_TARGET", Text: "The machine ws runs on", Def: "lan", Need: "needs"}
+	if v, err := a.ask(context.Background(), q); v != "mac-vm" || err != nil || a.lines != "WS_TARGET=mac-vm\n" {
+		t.Fatalf("ask = %q, %v, lines %q", v, err, a.lines)
+	}
+	want := effect.ChoiceQuestion{Text: "The machine ws runs on (WS_TARGET)", Options: []string{"lan", "cloud", "mac-vm"}, Default: "lan"}
+	if len(c.asked) != 1 || c.asked[0].Text != want.Text || !slices.Equal(c.asked[0].Options, want.Options) ||
+		c.asked[0].Default != want.Default {
+		t.Errorf("asked %+v, want %+v", c.asked, want)
+	}
+}
+
+func TestAskerAsksALineOfAKeyWithNoOptions(t *testing.T) {
+	c := &chooser{Prompt: &effecttest.Prompt{T: t, Answers: map[string]string{"The VM's SSH port (WS_REMOTE_PORT) [22]": ""}}}
+	a, _ := newAsker(c, nil)
+	q := conf.Question{Key: "WS_REMOTE_PORT", Text: "The VM's SSH port", Def: "22", Need: "needs a port"}
+	if v, err := a.ask(context.Background(), q); v != "22" || err != nil || len(c.asked) != 0 {
+		t.Errorf("ask = %q, %v, choices %+v", v, err, c.asked)
 	}
 }

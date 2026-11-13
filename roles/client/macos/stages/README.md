@@ -69,7 +69,7 @@ answer comes from the first of these that has one:
 - `mac.conf`'s line for the key, even an empty one, so the wizard never asks it again;
 - the environment, under the key's name, as `WS_LAN=10.88.0.0/24`, or `WS_LAN=` for no value;
 - the terminal on the wizard's stdin, where an empty line takes the default in brackets, and `none`
-  no value;
+  no value. A screen asks `WS_TARGET` as a choice of its three values, on the default first;
 - else nothing: the run stops with `no terminal to ask KEY: set KEY`.
 
 A bad answer at the terminal is asked again, with the form the key takes. From the environment, it
