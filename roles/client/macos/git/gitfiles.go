@@ -43,7 +43,7 @@ func (g *Git) files(key keys.NamedKey, gh string) ([]step.Change, error) {
 		return nil, err
 	}
 	if keys.Copied(key.File, key.Text, g.Home) {
-		cs = append(cs, keys.CopyChange(g.M, key.File, key.Text)...)
+		cs = append(cs, keys.CopyChange(g.M, g.Out, key.File, key.Text)...)
 	}
 	for _, f := range g.list(key, gh) {
 		planned, err := f.Plan()

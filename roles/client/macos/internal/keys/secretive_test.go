@@ -66,7 +66,7 @@ func TestPlanCopy(t *testing.T) {
 	}
 	got, err := keys.PlanCopy(m, out, pub, mactest.AgentKey, mactest.AgentHome)
 	if err != nil || len(got) != 4 || got[2] != (file.UserMkdir{M: m, Path: "/h/" + sshcfg.KeyCopies, Mode: 0o755}) ||
-		got[3] != (change.KeyCopy{Path: pub, Text: mactest.AgentKey}) {
+		got[3] != (keys.Copy{M: m, Out: out, Path: pub, Text: mactest.AgentKey}) {
 		t.Fatalf("a missing copy: %v, %v; want the directories, then the copy", got, err)
 	}
 	m.Results["mkdir -p /h/"+sshcfg.KeyCopies] = effecttest.Result{}

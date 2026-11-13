@@ -2,11 +2,7 @@ package change
 
 import "github.com/zadykian/ws/engine/core/step"
 
-// The rest of the changes stay other: each is a line for a person, a key made, or a file kept
-// beside a write.
-
-// Kind is write.
-func (KeyCopy) Kind() step.ChangeKind { return step.Write }
+// The rest of the changes stay other: each is a line for a person.
 
 // Kind says install for brew, the one package manager of the Mac's runs.
 func (r Run) Kind() step.ChangeKind {

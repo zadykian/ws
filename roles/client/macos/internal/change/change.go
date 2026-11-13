@@ -10,6 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 )
 
 // Remark is a line that --check prints in the form of a change, which a run does not apply.
@@ -26,8 +27,10 @@ func Apply(ctx context.Context, m effect.Machine, out effect.Out, c step.Change)
 		if err := c.Apply(ctx); err != nil {
 			return fmt.Errorf("cannot write %s: %w", c.Path, err)
 		}
-	case KeyCopy:
-		return applyCopy(m, out, c)
+	case keys.Copy:
+		if err := c.Apply(ctx); err != nil {
+			return fmt.Errorf("cannot write %s: %w", c.Path, err)
+		}
 	case file.UserMkdir:
 		if err := c.Apply(ctx); err != nil {
 			return fmt.Errorf("cannot make %s: %w", c.Path, err)
