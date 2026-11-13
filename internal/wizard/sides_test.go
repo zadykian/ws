@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/stages/answers"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
@@ -19,7 +20,7 @@ func TestEveryStageStatesItsSide(t *testing.T) {
 		stage.Install: session.Ws, stages.RunStage: session.Ws, session.ClaudeStage: session.Ws, stages.SigningStage: stage.Mac, stage.Tunnel: stage.Mac,
 		stage.Cable: stage.Mac, (&stages.WsValues{}).Name(): session.Ws,
 	}
-	list := []step.Step{&MacUpdate{}, &Tools{}, &Homebrew{}, &Answers{}, &MacKey{}, &Gh{}, &Setup{},
+	list := []step.Step{&MacUpdate{}, &Tools{}, &Homebrew{}, &answers.Answers{}, &MacKey{}, &Gh{}, &Setup{},
 		&HostKey{}, &Login{}, &Sudo{}, &WsInstall{}, &stages.WsRun{}, &stages.WsClaude{}, &stages.Signing{GitHub: &MacGitHub{}}, &Tunnel{}, &Cable{},
 		&stages.WsValues{}}
 	if len(list) != len(want) {

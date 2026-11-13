@@ -1,4 +1,5 @@
-package wizard
+// Package answers is the wizard stage that asks for the values of mac.conf and writes them.
+package answers
 
 import (
 	"context"

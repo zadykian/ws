@@ -15,6 +15,7 @@ import (
 	"github.com/zadykian/ws/engine/core/remote"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/wizard"
+	"github.com/zadykian/ws/roles/client/macos/stages/answers"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -113,7 +114,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	return []step.Step{
 		&wizard.Tools{M: p.machine, Out: out, Sleep: time.Sleep},
 		&wizard.Homebrew{Lock: lock, M: p.machine, Out: out},
-		&wizard.Answers{Conf: conf, Defaults: shellDefaults(),
+		&answers.Answers{Conf: conf, Defaults: shellDefaults(),
 			Prog: prog, Tty: p.tty, Check: check, Scratch: scratch, M: p.machine, P: ask, Out: out, Env: p.lookup},
 		&wizard.MacKey{Conf: later, Home: p.getenv("HOME"),
 			Lock: lock, Tty: p.tty,
