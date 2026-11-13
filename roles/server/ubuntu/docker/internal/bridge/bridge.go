@@ -1,13 +1,13 @@
-package docker
+package bridge
 
 import (
 	"net"
 	"net/netip"
 )
 
-// BridgeAddrs returns docker0's IPv4 addresses with their prefix lengths, and none where docker0
+// Addrs returns docker0's IPv4 addresses with their prefix lengths, and none where docker0
 // is missing, as before Docker's first start since boot.
-func BridgeAddrs() ([]netip.Prefix, error) { return addrsOf("docker0") }
+func Addrs() ([]netip.Prefix, error) { return addrsOf("docker0") }
 
 func addrsOf(name string) ([]netip.Prefix, error) {
 	ifaces, err := net.Interfaces()

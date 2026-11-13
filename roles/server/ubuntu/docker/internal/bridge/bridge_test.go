@@ -1,4 +1,4 @@
-package docker
+package bridge
 
 import (
 	"net/netip"

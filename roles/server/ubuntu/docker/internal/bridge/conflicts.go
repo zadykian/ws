@@ -1,4 +1,4 @@
-package docker
+package bridge
 
 import (
 	"cmp"
@@ -23,11 +23,11 @@ func network(value string) (netip.Prefix, error) {
 	return netip.PrefixFrom(a, a.BitLen()), nil
 }
 
-// Conflicts returns, as text, the routes that Docker's networks would overlap. One is any route
+// overlaps returns, as text, the routes that Docker's networks would overlap. One is any route
 // into pool that is not an on-link route of the main table, which Docker avoids. The other is any
 // route into bridge but docker0's own. Routes of another type than unicast do not count. Nor do
 // those shorter than /8, a VPN's 0.0.0.0/1, which cover every address rather than name a network.
-func Conflicts(routes []Route, pool, bridge string) ([]string, error) {
+func overlaps(routes []route, pool, bridge string) ([]string, error) {
 	poolNet, err := network(pool)
 	if err != nil {
 		return nil, err

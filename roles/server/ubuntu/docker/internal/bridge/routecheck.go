@@ -1,4 +1,4 @@
-package docker
+package bridge
 
 import (
 	"context"
@@ -10,26 +10,26 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
-// routeCheck stops the run on a route that Docker's networks would overlap, such as one a VPN keeps
+// Routes stops the run on a route that Docker's networks would overlap, such as one a VPN keeps
 // in a table of its own. It runs before daemon.json takes the pool. The routes are those of the
 // moment, and a VPN that is down has none.
-type routeCheck struct {
-	m      effect.Machine
-	d      values.Docker
-	bridge string // the default bridge's address with its prefix length
+type Routes struct {
+	M      effect.Machine
+	D      values.Docker
+	Bridge string // the default bridge's address with its prefix length
 }
 
 // Plan reads the routes of every table, and plans no change.
-func (c routeCheck) Plan(ctx context.Context) ([]host.Change, error) {
-	out, err := c.m.Run(ctx, "ip", "-j", "-4", "route", "show", "table", "all")
+func (c Routes) Plan(ctx context.Context) ([]host.Change, error) {
+	out, err := c.M.Run(ctx, "ip", "-j", "-4", "route", "show", "table", "all")
 	if err != nil {
 		return nil, fmt.Errorf("reading the routes: %w", err)
 	}
-	routes, err := ParseRoutes(out)
+	routes, err := parseRoutes(out)
 	if err != nil {
 		return nil, err
 	}
-	found, err := Conflicts(routes, c.d.AddressPool, c.bridge)
+	found, err := overlaps(routes, c.D.AddressPool, c.Bridge)
 	if err != nil {
 		return nil, err
 	}

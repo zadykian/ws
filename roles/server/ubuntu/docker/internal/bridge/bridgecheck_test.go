@@ -1,4 +1,4 @@
-package docker
+package bridge
 
 import (
 	"net/netip"
@@ -28,7 +28,7 @@ func TestBridgeCheckPlansAMoveAsAChangeThatFails(t *testing.T) {
 		if c.held != "" {
 			addrs = []string{"192.168.0.1/24", c.held}
 		}
-		check := bridgeCheck{m: m, out: &effecttest.Out{}, held: held(addrs...), want: "172.17.0.1/16"}
+		check := Check{M: m, Out: &effecttest.Out{}, Held: held(addrs...), Want: "172.17.0.1/16"}
 		changes, err := check.Plan(t.Context())
 		if err != nil || len(changes) != 1 || !strings.Contains(changes[0].String(), "holds ") {
 			t.Fatalf("held %q: plan = %v, %v; want one change", c.held, changes, err)
@@ -42,7 +42,7 @@ func TestBridgeCheckPlansAMoveAsAChangeThatFails(t *testing.T) {
 func TestBridgeCheckPassesOnTheWantedAddressAndWithoutSystemd(t *testing.T) {
 	m := effecttest.NewMachine()
 	out := &effecttest.Out{}
-	check := bridgeCheck{m: m, out: out, held: held("172.17.0.1/16"), want: "172.17.0.1/16"}
+	check := Check{M: m, Out: out, Held: held("172.17.0.1/16"), Want: "172.17.0.1/16"}
 	if changes, err := check.Plan(t.Context()); err != nil || changes != nil || len(out.Lines) != 1 {
 		t.Errorf("without systemd: %v, %v, said %q; want a skip", changes, err, out.Lines)
 	}

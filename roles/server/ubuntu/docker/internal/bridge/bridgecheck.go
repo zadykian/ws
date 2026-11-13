@@ -1,4 +1,4 @@
-package docker
+package bridge
 
 import (
 	"context"
@@ -10,15 +10,15 @@ import (
 	"github.com/zadykian/ws/engine/core/host"
 )
 
-// bridgeCheck stops the run where docker0 lacks the address the values give. docker0 takes a moved
+// Check stops the run where docker0 lacks the address the values give. docker0 takes a moved
 // address only as dockerd starts with no container running. daemon.json's dns, resolved and ufw
 // take it at once, and lookups to it get no answers until docker0 moves. A first install passes,
 // as no container runs yet. A check shows the move as a change instead.
-type bridgeCheck struct {
-	m    effect.Machine
-	out  effect.Out
-	held func() ([]netip.Prefix, error)
-	want string // the bridge's address with its prefix length
+type Check struct {
+	M    effect.Machine
+	Out  effect.Out
+	Held func() ([]netip.Prefix, error)
+	Want string // the bridge's address with its prefix length
 }
 
 type bridgeMoves struct{ holds, want string }
@@ -35,18 +35,18 @@ func (c bridgeMoves) Apply(context.Context) error {
 }
 
 // Plan reads docker0's addresses.
-func (c bridgeCheck) Plan(context.Context) ([]host.Change, error) {
-	if !host.Booted(c.m) {
-		c.out.Say("docker0: skipped, systemd is not running")
+func (c Check) Plan(context.Context) ([]host.Change, error) {
+	if !host.Booted(c.M) {
+		c.Out.Say("docker0: skipped, systemd is not running")
 		return nil, nil
 	}
-	held, err := c.held()
+	held, err := c.Held()
 	if err != nil {
 		return nil, err
 	}
 	var text []string
 	for _, p := range held {
-		if p.String() == c.want {
+		if p.String() == c.Want {
 			return nil, nil
 		}
 		text = append(text, p.String())
@@ -55,5 +55,5 @@ func (c bridgeCheck) Plan(context.Context) ([]host.Change, error) {
 	if len(text) > 0 {
 		holds = strings.Join(text, ", ")
 	}
-	return []host.Change{bridgeMoves{holds, c.want}}, nil
+	return []host.Change{bridgeMoves{holds, c.Want}}, nil
 }

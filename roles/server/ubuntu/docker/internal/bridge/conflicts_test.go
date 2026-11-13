@@ -1,10 +1,8 @@
-package docker_test
+package bridge
 
 import (
 	"slices"
 	"testing"
-
-	"github.com/zadykian/ws/roles/server/ubuntu/docker"
 )
 
 const (
@@ -13,11 +11,11 @@ const (
 )
 
 func conflicts(t *testing.T, routesJSON string) []string {
-	routes, err := docker.ParseRoutes([]byte(routesJSON))
+	routes, err := parseRoutes([]byte(routesJSON))
 	if err != nil {
 		t.Fatal(err)
 	}
-	got, err := docker.Conflicts(routes, pool, bridge)
+	got, err := overlaps(routes, pool, bridge)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,14 +48,14 @@ func TestConflictsSkipsWhatIsNoNetworkRoute(t *testing.T) {
 }
 
 func TestConflictsRefusesAnAddressThatIsNoNetwork(t *testing.T) {
-	routes, err := docker.ParseRoutes([]byte(`[{"dst":"nonsense"}]`))
+	routes, err := parseRoutes([]byte(`[{"dst":"nonsense"}]`))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := docker.Conflicts(routes, pool, bridge); err == nil {
+	if _, err := overlaps(routes, pool, bridge); err == nil {
 		t.Error("a destination that is no network passed")
 	}
-	if _, err := docker.Conflicts(nil, "x", bridge); err == nil {
+	if _, err := overlaps(nil, "x", bridge); err == nil {
 		t.Error("a pool that is no network passed")
 	}
 }
