@@ -10,64 +10,21 @@
     "ws": {
       "inherits": "default",
       "bindings": [
-        { "key": "s", "modifiers": ["ctrl", "shift"], "action": "save_all", "when": "normal" },
-        { "key": "s", "modifiers": ["ctrl", "super"], "action": "save_all", "when": "normal" },
-        { "key": "s", "modifiers": ["ctrl"], "action": "save", "when": "normal" },
-        { "key": "=", "modifiers": ["ctrl"], "action": "navigate_forward", "when": "normal" },
-        { "key": "-", "modifiers": ["ctrl"], "action": "navigate_back", "when": "normal" },
-        { "key": "f", "modifiers": ["ctrl"], "action": "search", "when": "normal" },
-        // a live picker, not a results buffer
-        { "key": "f", "modifiers": ["ctrl", "shift"], "action": "start_live_grep", "when": "normal" },
         { "key": "?", "modifiers": ["alt"], "action": "find_next", "when": "normal" },
         { "key": "/", "modifiers": ["alt", "shift"], "action": "find_next", "when": "normal" },
-        { "key": "q", "modifiers": ["ctrl"], "action": "command_palette", "when": "normal" },
-        { "key": "t", "modifiers": ["ctrl", "shift"], "action": "quick_open_files", "when": "normal" },
-        { "key": "o", "modifiers": ["ctrl"], "action": "open", "when": "normal" },
-        // a plugin panel, not a results buffer
-        { "key": "h", "modifiers": ["ctrl", "shift"], "action": "start_search_replace", "when": "normal" },
-        { "key": ",", "modifiers": ["ctrl"], "action": "quick_open_files", "when": "normal" },
-        // Fresh names its floating picker so
-        { "key": "e", "modifiers": ["ctrl", "alt", "shift"], "action": "open_live_grep", "when": "normal" },
         // opens on the current file; a in the panel shows all
-        { "key": "2", "modifiers": ["ctrl", "alt"], "action": "show_diagnostics_panel", "when": "normal" },
-        { "key": "4", "modifiers": ["ctrl", "alt"], "action": "show_diagnostics_panel", "when": "normal" },
-        { "key": "\\", "modifiers": ["ctrl", "alt"], "action": "show_diagnostics_panel", "when": "normal" },
-        { "key": "v", "modifiers": ["ctrl", "alt"], "action": "show_diagnostics_panel", "when": "normal" },
         { "key": "i", "modifiers": ["alt", "shift"], "action": "show_diagnostics_panel", "when": "normal" },
         { "key": "F11", "modifiers": ["alt"], "action": "show_diagnostics_panel", "when": "normal" },
         { "key": "PageDown", "modifiers": ["alt", "shift"], "action": "show_diagnostics_panel", "when": "normal" },
-        { "key": "F12", "modifiers": ["ctrl", "shift"], "action": "show_diagnostics_panel", "when": "normal" },
         { "key": "F2", "modifiers": ["alt", "shift"], "action": "show_diagnostics_panel", "when": "normal" },
         { "key": "PageUp", "modifiers": ["alt", "shift"], "action": "show_diagnostics_panel", "when": "normal" },
         // focuses the explorer; follow_active_buffer is off by default
         { "key": "l", "modifiers": ["alt", "shift"], "action": "focus_file_explorer", "when": "normal" },
-        { "key": "End", "modifiers": ["ctrl"], "action": "next_split", "when": "normal" },
         { "key": "Right", "modifiers": ["alt", "shift"], "action": "next_split", "when": "normal" },
-        { "key": "PageDown", "modifiers": ["ctrl", "alt"], "action": "next_buffer", "when": "normal" },
         { "key": "Right", "modifiers": ["alt"], "action": "next_buffer", "when": "normal" },
-        { "key": "PageUp", "modifiers": ["ctrl", "alt"], "action": "prev_buffer", "when": "normal" },
         { "key": "Left", "modifiers": ["alt"], "action": "prev_buffer", "when": "normal" },
-        { "key": "Home", "modifiers": ["ctrl"], "action": "prev_split", "when": "normal" },
         { "key": "Left", "modifiers": ["alt", "shift"], "action": "prev_split", "when": "normal" },
-        // resizes a split, not a dock
-        { "key": "Down", "modifiers": ["ctrl", "alt"], "action": "decrease_split_size", "when": "normal" },
-        { "key": "Left", "modifiers": ["ctrl", "alt"], "action": "decrease_split_size", "when": "normal" },
-        // resizes a split, not a dock
-        { "key": "Right", "modifiers": ["ctrl", "alt"], "action": "increase_split_size", "when": "normal" },
-        { "key": "Up", "modifiers": ["ctrl", "alt"], "action": "increase_split_size", "when": "normal" },
-        { "key": "r", "modifiers": ["ctrl", "alt", "shift"], "action": "split_vertical", "when": "normal" },
-        // the utility dock alone
-        { "key": "F4", "modifiers": ["ctrl", "shift"], "action": "toggle_utility_dock", "when": "normal" },
-        { "key": "F4", "modifiers": ["ctrl"], "action": "close_tab", "when": "normal" },
-        { "key": "\"", "modifiers": ["ctrl"], "action": "toggle_maximize_split", "when": "normal" },
-        { "key": "'", "modifiers": ["ctrl", "shift"], "action": "toggle_maximize_split", "when": "normal" },
-        // cycles Fresh's windows in one session
-        { "key": "]", "modifiers": ["ctrl", "alt"], "action": "next_window", "when": "normal" },
-        // cycles Fresh's windows in one session
-        { "key": "[", "modifiers": ["ctrl", "alt"], "action": "prev_window", "when": "normal" },
         { "key": "F1", "modifiers": ["alt"], "action": "focus_file_explorer", "when": "normal" },
-        // the last tab, with no list
-        { "key": "Tab", "modifiers": ["ctrl", "shift"], "action": "switch_to_previous_tab", "when": "normal" },
         // a review view, not a staging panel
         { "key": "F5", "action": "start_review_diff", "when": "normal" },
         { "key": "5", "modifiers": ["alt"], "action": "start_review_diff", "when": "normal" },
@@ -79,12 +36,6 @@
         // a log with no graph
         { "key": "F6", "action": "show_git_log", "when": "normal" },
         { "key": "6", "modifiers": ["alt"], "action": "show_git_log", "when": "normal" },
-        // Fresh's manual
-        { "key": "F1", "modifiers": ["ctrl"], "action": "show_help", "when": "normal" },
-        { "key": "y", "modifiers": ["ctrl", "alt"], "action": "revert", "when": "normal" },
-        // one editor for every layer
-        { "key": "s", "modifiers": ["ctrl", "alt", "shift"], "action": "open_settings", "when": "normal" },
-        { "key": "s", "modifiers": ["ctrl", "alt"], "action": "open_settings", "when": "normal" },
         { "key": "Up", "modifiers": ["alt"], "action": "move_line_up", "when": "normal" },
         { "key": "Down", "modifiers": ["alt"], "action": "move_line_down", "when": "normal" },
         { "key": "Up", "modifiers": ["alt", "shift"], "action": "add_cursor_above", "when": "normal" },
@@ -132,11 +83,7 @@
         { "key": "2", "modifiers": ["alt"], "action": "toggle_utility_dock", "when": "terminal" },
         // Each noop leaves its key to the shell, as the terminal would otherwise take it.
         { "key": "q", "modifiers": ["ctrl"], "action": "noop", "when": "terminal" },
-        { "key": ",", "modifiers": ["ctrl"], "action": "noop", "when": "terminal" },
-        { "key": "]", "modifiers": ["ctrl", "alt"], "action": "noop", "when": "terminal" },
-        { "key": "[", "modifiers": ["ctrl", "alt"], "action": "noop", "when": "terminal" },
         { "key": "x", "modifiers": ["alt"], "action": "noop", "when": "terminal" },
-        { "key": "s", "modifiers": ["ctrl", "alt"], "action": "noop", "when": "terminal" },
         { "key": "v", "modifiers": ["alt"], "action": "noop", "when": "terminal" },
         { "key": "Left", "modifiers": ["alt"], "action": "noop", "when": "terminal" },
         { "key": "Right", "modifiers": ["alt"], "action": "noop", "when": "terminal" },
