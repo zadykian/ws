@@ -61,7 +61,7 @@ func TestNetworksSaysWhatCheckWouldPutBeforeRoutesDExists(t *testing.T) {
 	m := effecttest.NewMachine()
 	s := &networks.Networks{Server: "ws", Conf: conf.Conf{PublicKey: "K", TunnelNetworks: "10.1.0.0/24 10.2.0.0/24"}, M: m, Out: &effecttest.Out{}, Check: true}
 	got := networksPlan(t, s)
-	want := "would put 10.1.0.0/24 10.2.0.0/24 in /etc/ws-tunnel/ws/routes.d/mac-conf once routes.d is made"
+	want := "would put 10.1.0.0/24 10.2.0.0/24 in /etc/ws-tunnel/ws/routes.d/server-conf once routes.d is made"
 	if len(got) != 1 || got[0] != want {
 		t.Errorf("Plan = %q; want %q", got, want)
 	}
@@ -149,7 +149,7 @@ func TestNetworksApplySaysEachChangeInOrder(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := s.Out.(*effecttest.Out).Lines
-	if len(out) != 2 || !strings.Contains(out[0], "/etc/ws-tunnel/ws/routes.d/mac-conf") ||
+	if len(out) != 2 || !strings.Contains(out[0], "/etc/ws-tunnel/ws/routes.d/server-conf") ||
 		out[1] != "say: ran launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.ws" {
 		t.Errorf("out = %q; want the routes file, then the signal", out)
 	}
