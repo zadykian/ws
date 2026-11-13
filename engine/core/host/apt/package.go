@@ -1,8 +1,9 @@
-package host
+package apt
 
 import (
 	"context"
 	"fmt"
+	"github.com/zadykian/ws/engine/core/host"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -15,7 +16,7 @@ import (
 type Package struct {
 	M      effect.Machine
 	Name   string
-	Source PinnedFile // its Path and Mode are not used
+	Source host.PinnedFile // its Path and Mode are not used
 }
 
 type installPackage struct {
@@ -63,8 +64,8 @@ func (c installPackage) check(ctx context.Context) error {
 
 // Plan plans the directory, the fetch and the install where the pinned version is not installed.
 // With the pinned version installed, Plan plans the removal of a file that a cut run left.
-func (p Package) Plan(ctx context.Context) ([]Change, error) {
-	file, err := p.Source.cached(ctx)
+func (p Package) Plan(ctx context.Context) ([]host.Change, error) {
+	file, err := p.Source.Cached(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("package %s: %w", p.Name, err)
 	}
@@ -73,10 +74,10 @@ func (p Package) Plan(ctx context.Context) ([]Change, error) {
 		return nil, err
 	}
 	if have := states[p.Name]; have.Installed() && have.Version == p.Source.Version {
-		return Absent{M: p.M, Path: file.Path}.Plan(ctx)
+		return host.Absent{M: p.M, Path: file.Path}.Plan(ctx)
 	}
-	var changes []Change
-	for _, r := range []Resource{Dir{M: p.M, Path: CacheDir, Mode: 0o755}, file} {
+	var changes []host.Change
+	for _, r := range []host.Resource{host.Dir{M: p.M, Path: host.CacheDir, Mode: 0o755}, file} {
 		more, err := r.Plan(ctx)
 		if err != nil {
 			return nil, err

@@ -12,6 +12,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/apt"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -162,7 +163,7 @@ func TestThePagerIsDeltaFromItsPackage(t *testing.T) {
 		t.Errorf("pager %q", cmd)
 	}
 	group, _ := steps()[0].(host.Group)
-	if packages, _ := group.Parts[0].(host.Packages); !slices.Contains(packages.Names, "git-delta") {
+	if packages, _ := group.Parts[0].(apt.Packages); !slices.Contains(packages.Names, "git-delta") {
 		t.Errorf("packages %v", packages.Names)
 	}
 }

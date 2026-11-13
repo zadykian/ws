@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/apt"
 )
 
 // packageNames returns the driver's packages and the modules of each kernel flavor installed. The
@@ -17,7 +17,7 @@ import (
 // without its headers, and DKMS would build no nct6687 for it. A kernel of none of the flavors
 // fails the run, as no modules would follow it.
 func packageNames(ctx context.Context, m effect.Machine) ([]string, error) {
-	states, err := host.PackageStates(ctx, m, "linux-image-generic*")
+	states, err := apt.PackageStates(ctx, m, "linux-image-generic*")
 	if err != nil {
 		return nil, err
 	}

@@ -10,6 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/apt"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -45,7 +46,7 @@ func steps(f values.Fans, m effect.Machine, u effect.Units, out effect.Out, exe 
 			if err != nil {
 				return nil, err
 			}
-			return []host.Resource{host.Packages{M: m, Out: out, Recommends: true, Names: []string{"dkms", "linux-headers-generic", "linux-headers-" + kernel}}}, nil
+			return []host.Resource{apt.Packages{M: m, Out: out, Recommends: true, Names: []string{"dkms", "linux-headers-generic", "linux-headers-" + kernel}}}, nil
 		})},
 		host.Lazy{Title: sourceStep, After: packagesStep, Parts: gated(m, vendor, func(context.Context) ([]host.Resource, error) {
 			conf, err := host.Render(files, "files/dkms.conf.tmpl", struct{ Version string }{nct6687Short})

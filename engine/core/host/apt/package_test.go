@@ -1,4 +1,4 @@
-package host_test
+package apt_test
 
 import (
 	"slices"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/apt"
 )
 
 const (
@@ -19,7 +20,7 @@ const (
 const pkgDeb = "dpkg-deb -f " + pkgFile + " Package Version"
 
 // packageFixture is a machine where dpkg lists "a" as the row says, or knows no "a" for a zero row.
-func packageFixture(row effecttest.Package) (*effecttest.Machine, host.Package) {
+func packageFixture(row effecttest.Package) (*effecttest.Machine, apt.Package) {
 	m := effecttest.NewMachine()
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	m.Packages = effecttest.Packages{}
@@ -29,7 +30,7 @@ func packageFixture(row effecttest.Package) (*effecttest.Machine, host.Package) 
 	m.Results[pkgDeb] = effecttest.Result{Out: []byte("Package: a\nVersion: 1.2\n")}
 	m.Results[pkgApt] = effecttest.Result{}
 	m.Pages["https://x/1.2/a_amd64.deb"] = []byte("deb")
-	return m, host.Package{M: m, Name: "a", Source: host.PinnedFile{M: m, Version: "1.2",
+	return m, apt.Package{M: m, Name: "a", Source: host.PinnedFile{M: m, Version: "1.2",
 		SHA256: map[string]string{"amd64": sumOf("deb")},
 		URL:    func(version, arch string) string { return "https://x/" + version + "/a_" + arch + ".deb" }}}
 }

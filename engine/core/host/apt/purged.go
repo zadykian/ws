@@ -1,7 +1,8 @@
-package host
+package apt
 
 import (
 	"context"
+	"github.com/zadykian/ws/engine/core/host"
 	"slices"
 	"strings"
 
@@ -32,7 +33,7 @@ func (c purge) Apply(ctx context.Context) error {
 
 // Plan reads dpkg once and purges each package with anything of it on the machine. One that left
 // its settings alone still takes a purge. With no names, it plans nothing.
-func (p Purged) Plan(ctx context.Context) ([]Change, error) {
+func (p Purged) Plan(ctx context.Context) ([]host.Change, error) {
 	states, err := PackageStates(ctx, p.M, p.Names...)
 	if err != nil {
 		return nil, err
@@ -46,7 +47,7 @@ func (p Purged) Plan(ctx context.Context) ([]Change, error) {
 	if len(present) == 0 {
 		return nil, nil
 	}
-	return []Change{purge{p.M, present}}, nil
+	return []host.Change{purge{p.M, present}}, nil
 }
 
 // Report shows each package as dpkg knows it. One that is installed stands against ws, as a run

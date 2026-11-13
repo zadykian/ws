@@ -10,6 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/apt"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -43,7 +44,7 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out, ra
 		// holds the containers' drops. wireguard-tools' recommends serve wg-quick, which the role
 		// doesn't use.
 		host.Group{Title: packagesStep, After: settingsStep, Parts: []host.Resource{
-			host.Packages{M: m, Out: out, Names: []string{"wireguard-tools", "systemd", "iptables"}},
+			apt.Packages{M: m, Out: out, Names: []string{"wireguard-tools", "systemd", "iptables"}},
 		}},
 		// Ahead of wg0, which the drops don't need: a run that stops on wg0 still puts them in.
 		host.Lazy{Title: dropsStep, After: packagesStep, Parts: drops.Parts(m, u, out, v.Network.DirectLinkInterface)},

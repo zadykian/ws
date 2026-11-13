@@ -5,6 +5,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/apt"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
@@ -24,7 +25,7 @@ func exporter(m effect.Machine, u effect.Units, out effect.Out) func(context.Con
 		file := host.File{M: m, Path: "/etc/default/prometheus-node-exporter", Content: args, Mode: 0o644}
 		return []host.Resource{
 			file,
-			host.Packages{M: m, Out: out, Names: []string{"prometheus-node-exporter"}},
+			apt.Packages{M: m, Out: out, Names: []string{"prometheus-node-exporter"}},
 			systemd.Unit{M: m, U: u, Out: out, Name: "prometheus-node-exporter.service", Enabled: true, Run: systemd.Running, Watch: []host.Resource{file}},
 		}, nil
 	}

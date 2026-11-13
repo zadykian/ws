@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/apt"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -34,7 +35,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units,
 		// nftables brings nft, which loads the outbound table. Its own service stays off, as the
 		// package leaves it. Recommends: apt's default, as the role installed them.
 		host.Group{Title: packagesStep, Parts: []host.Resource{
-			host.Packages{M: m, Out: out, Recommends: true,
+			apt.Packages{M: m, Out: out, Recommends: true,
 				Names: []string{"openssh-server", "ufw", "fail2ban", "nftables", "sudo"}},
 		}},
 		host.Group{Title: keysStep, Parts: []host.Resource{keyCheck{m, host.User{Name: v.User, Home: v.Home}}}},
@@ -47,7 +48,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units,
 	if v.User != "root" {
 		ss = append(ss, host.Group{Title: lxdStep, After: packagesStep, Parts: []host.Resource{
 			host.Left{M: m, User: v.User, Group: "lxd"},
-			host.Purged{M: m, Names: []string{"lxd-installer"}},
+			apt.Purged{M: m, Names: []string{"lxd-installer"}},
 		}})
 	}
 	ss = append(ss,

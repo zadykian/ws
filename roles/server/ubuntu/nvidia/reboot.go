@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/apt"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
@@ -45,7 +46,7 @@ func (r reboot) Plan(ctx context.Context) ([]host.Change, error) {
 // installedVersion returns the upstream version of nvidia-smi's package, as the driver's module
 // gives it, or "" where the package is not installed, as in a dry run.
 func installedVersion(ctx context.Context, m effect.Machine) (string, error) {
-	states, err := host.PackageStates(ctx, m, smiPackage)
+	states, err := apt.PackageStates(ctx, m, smiPackage)
 	if err != nil || !states[smiPackage].Installed() {
 		return "", err
 	}

@@ -91,7 +91,7 @@ func (t Tree) Plan(ctx context.Context) ([]Change, error) {
 	if err == nil && string(marker) == url+"\n" {
 		return t.cleaned(ctx, url)
 	}
-	file, err := t.Source.cached(ctx)
+	file, err := t.Source.Cached(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("tree %s: %w", t.Path, err)
 	}

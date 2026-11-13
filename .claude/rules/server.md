@@ -48,7 +48,7 @@ steps, and each role's page in `docs/` says what it sets up.
   in Results, so host's read can change under it
   ([machine_dpkg.go](../../engine/core/effect/effecttest/machine_dpkg.go)).
 - A package is installed where dpkg lists it `ii`, in plans and reports alike, and a step reads dpkg
-  in one run ([dpkg.go](../../engine/core/host/dpkg.go)). A role reads dpkg through `host.PackageStates`.
+  in one run ([dpkg.go](../../engine/core/host/apt/dpkg.go)). A role reads dpkg through `apt.PackageStates`.
 - A report reads as Plan does and holds no secret: a `Secret` file shows no diff and no sum
   ([report.go](../../engine/core/step/report.go)). A `File` that a role builds in `Plan` shows by its change
   alone, so a healthy one has no item.
@@ -74,7 +74,7 @@ steps, and each role's page in `docs/` says what it sets up.
   `effect.ErrSHA256` names ([the fetch](../../engine/core/host/download.go)).
 - A package plans from its pin, a name and a version, and fetches its file only where that version
   is not installed. Before dpkg, it checks the file's own name and version against the pin
-  ([package.go](../../engine/core/host/package.go)).
+  ([package.go](../../engine/core/host/apt/package.go)).
 - A tree is unpacked beside its target and moved in whole, and its marker is its probe
   ([tree.go](../../engine/core/host/tree.go)).
 - An apt repository's key goes in only where its entry pins the primary fingerprint of each

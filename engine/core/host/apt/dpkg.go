@@ -1,4 +1,5 @@
-package host
+// Package apt installs and purges packages, and reads dpkg's states.
+package apt
 
 import (
 	"context"

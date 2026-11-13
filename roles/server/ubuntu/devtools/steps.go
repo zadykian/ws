@@ -5,6 +5,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/apt"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools/internal/aptrepo"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools/internal/golang"
@@ -33,9 +34,9 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units,
 		host.Group{Title: "Devtools packages", After: repoStep, Parts: []host.Resource{
 			// Node at its major version, from NodeSource's repository; gh from GitHub CLI's;
 			// glow from Charm's; each .NET SDK from Ubuntu's archive or the PPA.
-			host.Packages{M: m, Out: out, Recommends: true, Names: packageNames()},
+			apt.Packages{M: m, Out: out, Recommends: true, Names: packageNames()},
 			// The libraries go in without recommends: the browser needs the libraries alone.
-			host.Packages{M: m, Out: out, Names: v.Devtools.ChromiumLibraries},
+			apt.Packages{M: m, Out: out, Names: v.Devtools.ChromiumLibraries},
 		}},
 		// gh's telemetry goes off before gh's login runs gh again.
 		host.Group{Title: "Devtools gh telemetry", After: "Devtools packages", Parts: []host.Resource{

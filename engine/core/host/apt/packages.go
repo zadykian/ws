@@ -1,9 +1,10 @@
-package host
+package apt
 
 import (
 	"cmp"
 	"context"
 	"fmt"
+	"github.com/zadykian/ws/engine/core/host"
 	"path"
 	"strings"
 	"time"
@@ -48,7 +49,7 @@ func (installChange) Kind() step.ChangeKind { return step.Install }
 // Plan asks dpkg, in one run, which of the packages are installed. A name of the form NAME=GLOB,
 // such as nodejs=24.*, is installed only at a version that matches the glob. The change lists
 // the plain names first, then the pins.
-func (p Packages) Plan(ctx context.Context) ([]Change, error) {
+func (p Packages) Plan(ctx context.Context) ([]host.Change, error) {
 	var plain, pinned, patterns []string
 	for _, n := range p.Names {
 		if name, _, ok := strings.Cut(n, "="); ok {
@@ -78,7 +79,7 @@ func (p Packages) Plan(ctx context.Context) ([]Change, error) {
 	if len(missing) == 0 {
 		return nil, nil
 	}
-	return []Change{installChange{p, missing}}, nil
+	return []host.Change{installChange{p, missing}}, nil
 }
 
 // globMatch reports whether version matches the glob, whose * stands for any run of characters.

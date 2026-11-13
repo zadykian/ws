@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/apt"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -33,7 +34,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units,
 	user := host.User{Name: v.User, Home: v.Home}
 	return []step.Step{
 		host.Group{Title: packageStep, Parts: []host.Resource{
-			host.Packages{M: m, Out: out, Recommends: true, Names: []string{"lazygit", "git-delta"}},
+			apt.Packages{M: m, Out: out, Recommends: true, Names: []string{"lazygit", "git-delta"}},
 		}},
 		host.Group{Title: wrapperStep, After: packageStep, Parts: []host.Resource{
 			host.File{M: m, Path: wrapperPath, Content: wrapper, Mode: 0o755},

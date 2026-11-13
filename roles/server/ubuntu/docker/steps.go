@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/apt"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/docker/internal/bridge"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
@@ -42,7 +43,7 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out, si
 		host.Lazy{Title: repositoryStep, Parts: repository(m)},
 		// iproute2, from Ubuntu's archive, gives the route check its ip; a container lacks it.
 		host.Group{Title: packagesStep, After: repositoryStep, Parts: []host.Resource{
-			host.Packages{M: m, Out: out, Recommends: true, Names: packages(v)},
+			apt.Packages{M: m, Out: out, Recommends: true, Names: packages(v)},
 		}},
 		host.Group{Title: routesStep, After: packagesStep, Parts: []host.Resource{bridge.Routes{M: m, D: d, Bridge: bridgeCIDR(d)}}},
 	}

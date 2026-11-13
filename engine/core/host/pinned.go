@@ -78,8 +78,8 @@ func (p PinnedFile) Report(ctx context.Context) ([]step.Item, error) {
 	return d.Report(ctx)
 }
 
-// cached is download for a package's source: its file waits in CacheDir, named by its URL.
-func (p PinnedFile) cached(ctx context.Context) (Download, error) {
+// Cached is download for a package's source: its file waits in CacheDir, named by its URL.
+func (p PinnedFile) Cached(ctx context.Context) (Download, error) {
 	p.Path = CacheDir
 	d, err := p.download(ctx)
 	if err != nil {

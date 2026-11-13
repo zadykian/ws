@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/apt"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/git"
@@ -20,7 +21,7 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units,
 	user := host.User{Name: v.User, Home: v.Home}
 	steps := []step.Step{
 		host.Group{Title: "Shell packages", Parts: []host.Resource{
-			host.Packages{M: m, Out: out, Recommends: true, Names: []string{"bash-completion", "ble.sh"}},
+			apt.Packages{M: m, Out: out, Recommends: true, Names: []string{"bash-completion", "ble.sh"}},
 		}},
 		host.Lazy{Title: "Shell files", Parts: func(ctx context.Context) ([]host.Resource, error) {
 			arch, err := host.Architecture(ctx, m)

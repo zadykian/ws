@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/apt"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -31,7 +32,7 @@ func Steps(_ values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units,
 			if err != nil {
 				return nil, err
 			}
-			return []host.Resource{host.Packages{M: m, Out: out, Names: names}}, nil
+			return []host.Resource{apt.Packages{M: m, Out: out, Names: names}}, nil
 		})},
 		host.Lazy{Title: driverStep, After: packagesStep, Parts: gated(m, func(context.Context) ([]host.Resource, error) {
 			return []host.Resource{reboot{m, out}}, nil
