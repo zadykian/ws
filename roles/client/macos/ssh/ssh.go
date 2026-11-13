@@ -1,4 +1,5 @@
-package setup
+// Package ssh sets up the Mac's ~/.ssh/config.d/ws and the Include that reads it.
+package ssh
 
 import (
 	"bytes"

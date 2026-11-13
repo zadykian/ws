@@ -1,4 +1,4 @@
-package setup_test
+package ssh_test
 
 import (
 	"context"

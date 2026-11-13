@@ -1,4 +1,4 @@
-package setup_test
+package ssh_test
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/ssh"
 )
 
 // sshMachine answers the commands that the ssh step runs, with ssh happy, and has the file key that
@@ -28,8 +28,8 @@ func sshMachine() *effecttest.Machine {
 	return m
 }
 
-func sshStep(m *effecttest.Machine, out *effecttest.Out) setup.SSH {
-	return setup.SSH{
+func sshStep(m *effecttest.Machine, out *effecttest.Out) ssh.SSH {
+	return ssh.SSH{
 		Conf: conf.Conf{User: "me", IdentityPubKey: "~/.ssh/id_ed25519.pub"}, Home: "/h", M: m, Out: out,
 		Now: func() time.Time { return time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC) },
 	}
