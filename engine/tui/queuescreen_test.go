@@ -271,3 +271,26 @@ func TestAMoveLeavesTheScreenItCameFromItsCursors(t *testing.T) {
 		t.Errorf("cursors %v before, %v after", was.at, moved.at)
 	}
 }
+
+func TestThreeSidesDrawThreePanesAndTabWalksThem(t *testing.T) {
+	third := Side(2)
+	stages := []Stage{{Name: "One", Side: WsSide}, {Name: "Two", Side: MacSide}, {Name: "Three", Side: third}, {Name: "Four", Side: WsSide}}
+	s := queueSent(openQueue("ws", testTheme, stages, make(chan QueueChoice, 1)), tea.WindowSizeMsg{Width: 120, Height: 30})
+	if got := s.list.sides(); !slices.Equal(got, []Side{WsSide, MacSide, third}) || len(s.list.panes()) != 3 {
+		t.Fatalf("sides %v, %d panes: want ws, Mac and the third, in the order named", got, len(s.list.panes()))
+	}
+	var seen []Side
+	for range 3 {
+		seen = append(seen, s.list.side)
+		s = queueSent(s, tab)
+	}
+	if !slices.Equal(seen, []Side{WsSide, MacSide, third}) || s.footer.Focused() < 0 {
+		t.Errorf("Tab met %v, then button %d", seen, s.footer.Focused())
+	}
+}
+
+func TestAQueueWithNoStageHasNoSide(t *testing.T) {
+	if q := queueOf(nil); len(q.sides()) != 0 || len(q.panes()) != 0 {
+		t.Errorf("sides %v, panes %v", q.sides(), q.panes())
+	}
+}

@@ -43,32 +43,35 @@ func inside(frame Size) Size {
 	return Size{max(frame.Width-2, 0), max(frame.Height-2, 0)}
 }
 
-// sides returns the sides that have a stage: ws's alone where none runs on the Mac, as in ws server
-// ubuntu wizard, else both.
+// sides returns the sides that have a stage, in the order the stages first name them.
 func (q queue) sides() []Side {
-	if slices.ContainsFunc(q.stages, func(s queueStage) bool { return s.side == MacSide }) {
-		return []Side{MacSide, WsSide}
+	var sides []Side
+	for _, s := range q.stages {
+		if !slices.Contains(sides, s.side) {
+			sides = append(sides, s.side)
+		}
 	}
-	return []Side{WsSide}
+	return sides
 }
 
 // pane is the place of side's list among the panes.
 func (q queue) pane(side Side) int { return max(slices.Index(q.sides(), side), 0) }
 
-// panes returns the lists' panes, empty. ws's says so while a role stands unread, as a check of the
-// Mac can't reach what ws reports until ws is there.
+// panes returns the lists' panes, empty. A side's says so while a role of it stands unread, as a
+// check of one machine can't reach what another reports until that one is there.
 func (q queue) panes() []Pane {
-	ws := Pane{Title: WsSide.String(), Focused: q.side == WsSide}
-	unread := func(s queueStage) bool {
-		return slices.ContainsFunc(s.list.rows, func(r pickRow) bool { return r.index == unreadIndex })
+	var panes []Pane
+	for _, side := range q.sides() {
+		pane := Pane{Title: side.String(), Focused: q.side == side}
+		unread := func(s queueStage) bool {
+			return s.side == side && slices.ContainsFunc(s.list.rows, func(r pickRow) bool { return r.index == unreadIndex })
+		}
+		if slices.ContainsFunc(q.stages, unread) {
+			pane.Title += ": roles not scanned"
+		}
+		panes = append(panes, pane)
 	}
-	if slices.ContainsFunc(q.stages, unread) {
-		ws.Title = WsSide.String() + ": roles not scanned"
-	}
-	if len(q.sides()) == 1 {
-		return []Pane{ws}
-	}
-	return []Pane{{Title: MacSide.String(), Focused: q.side == MacSide}, ws}
+	return panes
 }
 
 // drawn returns the layout with the lists in its panes, a cursor a side. The side out of focus shows
