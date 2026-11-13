@@ -1,4 +1,4 @@
-package signoz
+package api
 
 import (
 	"context"
@@ -14,8 +14,8 @@ type Wait struct {
 	Sleep func(ctx context.Context, d time.Duration) error
 }
 
-// orDefault returns w, or the default where w has no tries.
-func (w Wait) orDefault(tries int, delay time.Duration) Wait {
+// OrDefault returns w, or the default where w has no tries.
+func (w Wait) OrDefault(tries int, delay time.Duration) Wait {
 	if w.Tries == 0 {
 		w.Tries, w.Delay = tries, delay
 	}
@@ -36,12 +36,12 @@ func (w Wait) sleep(ctx context.Context) error {
 	}
 }
 
-// check reports whether the wait is over, and if not, why.
-type check func() (done bool, why string, err error)
+// Check reports whether the wait is over, and if not, why.
+type Check func() (done bool, why string, err error)
 
-// poll calls check up to Tries times, a Delay apart, and returns when it reports done or fails.
-// It fails with what the last call said, if check never reports done.
-func (w Wait) poll(ctx context.Context, what string, c check) error {
+// Poll calls c up to Tries times, a Delay apart, and returns when it reports done or fails.
+// It fails with what the last call said, if c never reports done.
+func (w Wait) Poll(ctx context.Context, what string, c Check) error {
 	var why string
 	for i := range w.Tries {
 		if i > 0 {

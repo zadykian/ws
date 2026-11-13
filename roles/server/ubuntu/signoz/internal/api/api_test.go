@@ -1,4 +1,4 @@
-package signoz
+package api
 
 import (
 	"io"
@@ -14,7 +14,7 @@ func TestAPIDecodesTheAnswer(t *testing.T) {
 	}))
 	defer srv.Close()
 	var got struct{ Status string }
-	if err := (API{URL: srv.URL}).get(t.Context(), "/x", &got); err != nil || got.Status != "success" {
+	if err := (Client{URL: srv.URL}).Get(t.Context(), "/x", &got); err != nil || got.Status != "success" {
 		t.Errorf("got %+v, %v; want success", got, err)
 	}
 }
@@ -24,7 +24,7 @@ func TestAPIFailsOnAnotherStatusAndSaysWhatItGot(t *testing.T) {
 		http.Error(w, "locked", http.StatusForbidden)
 	}))
 	defer srv.Close()
-	err := API{URL: srv.URL}.get(t.Context(), "/api/v2/x", nil)
+	err := Client{URL: srv.URL}.Get(t.Context(), "/api/v2/x", nil)
 	if err == nil || !strings.Contains(err.Error(), "GET /api/v2/x: status 403, want 200: locked") {
 		t.Errorf("err = %v, want the status and the body", err)
 	}
@@ -38,7 +38,7 @@ func TestAPISendsTheBodyAsJSON(t *testing.T) {
 		w.WriteHeader(http.StatusCreated)
 	}))
 	defer srv.Close()
-	if err := (API{URL: srv.URL}).call(t.Context(), http.MethodPost, "/x", []byte(`{"a":1}`), http.StatusCreated, nil); err != nil {
+	if err := (Client{URL: srv.URL}).Call(t.Context(), http.MethodPost, "/x", []byte(`{"a":1}`), http.StatusCreated, nil); err != nil {
 		t.Fatal(err)
 	}
 	if got != `POST {"a":1}` || kind != "application/json" {

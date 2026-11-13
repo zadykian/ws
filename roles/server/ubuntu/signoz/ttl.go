@@ -21,7 +21,7 @@ func (t ttl) String() string { return fmt.Sprintf("%s: %d h, %s", t.signal, t.ho
 // readSignal reads the retention of traces or metrics.
 func (r Retention) readSignal(ctx context.Context, signal string) (ttl, error) {
 	var got map[string]json.RawMessage
-	if err := r.API.get(ctx, "/api/v1/settings/ttl?type="+signal, &got); err != nil {
+	if err := r.API.Get(ctx, "/api/v1/settings/ttl?type="+signal, &got); err != nil {
 		return ttl{}, err
 	}
 	t := ttl{signal: signal}
@@ -54,13 +54,13 @@ func (c setSignals) Apply(ctx context.Context) error {
 	hours := c.r.Days * 24
 	for _, t := range c.due {
 		q := fmt.Sprintf("/api/v1/settings/ttl?type=%s&duration=%dh", t.signal, hours)
-		if err := c.r.API.call(ctx, http.MethodPost, q, nil, http.StatusOK, nil); err != nil {
+		if err := c.r.API.Call(ctx, http.MethodPost, q, nil, http.StatusOK, nil); err != nil {
 			return err
 		}
 	}
-	w := c.r.Altered.orDefault(60, 5*time.Second)
+	w := c.r.Altered.OrDefault(60, 5*time.Second)
 	for _, t := range c.due {
-		err := w.poll(ctx, t.signal+"'s retention", func() (bool, string, error) {
+		err := w.Poll(ctx, t.signal+"'s retention", func() (bool, string, error) {
 			got, err := c.r.readSignal(ctx, t.signal)
 			if err != nil {
 				return false, err.Error(), nil

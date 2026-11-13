@@ -1,4 +1,4 @@
-package signoz
+package api
 
 import (
 	"context"
@@ -17,7 +17,7 @@ func countingWait(tries int, slept *int) Wait {
 
 func TestPollStopsWhenDone(t *testing.T) {
 	var slept, calls int
-	err := countingWait(5, &slept).poll(t.Context(), "x", func() (bool, string, error) {
+	err := countingWait(5, &slept).Poll(t.Context(), "x", func() (bool, string, error) {
 		calls++
 		return calls == 3, "not yet", nil
 	})
@@ -28,7 +28,7 @@ func TestPollStopsWhenDone(t *testing.T) {
 
 func TestPollGivesUpWithTheLastReason(t *testing.T) {
 	var slept int
-	err := countingWait(3, &slept).poll(t.Context(), "readyz", func() (bool, string, error) {
+	err := countingWait(3, &slept).Poll(t.Context(), "readyz", func() (bool, string, error) {
 		return false, "status 503", nil
 	})
 	if err == nil || !strings.Contains(err.Error(), "readyz: gave up after 3 tries, last: status 503") {
@@ -42,7 +42,7 @@ func TestPollGivesUpWithTheLastReason(t *testing.T) {
 func TestPollReturnsAnErrorAtOnce(t *testing.T) {
 	var slept int
 	boom := errors.New("boom")
-	err := countingWait(3, &slept).poll(t.Context(), "x", func() (bool, string, error) { return false, "", boom })
+	err := countingWait(3, &slept).Poll(t.Context(), "x", func() (bool, string, error) { return false, "", boom })
 	if !errors.Is(err, boom) || slept != 0 {
 		t.Errorf("err %v after %d sleeps, want boom and none", err, slept)
 	}

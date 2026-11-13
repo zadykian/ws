@@ -19,7 +19,7 @@ type create struct {
 func (c create) String() string { return "create the dashboard " + c.name }
 
 func (c create) Apply(ctx context.Context) error {
-	return c.s.API.call(ctx, http.MethodPost, "/api/v2/dashboards", c.body, http.StatusCreated, nil)
+	return c.s.API.Call(ctx, http.MethodPost, "/api/v2/dashboards", c.body, http.StatusCreated, nil)
 }
 
 type replace struct {
@@ -30,7 +30,7 @@ type replace struct {
 func (c replace) String() string { return "replace the dashboard " + c.name }
 
 func (c replace) Apply(ctx context.Context) error {
-	return c.s.API.call(ctx, http.MethodPut, "/api/v2/dashboards/"+c.id, c.body, http.StatusOK, nil)
+	return c.s.API.Call(ctx, http.MethodPut, "/api/v2/dashboards/"+c.id, c.body, http.StatusOK, nil)
 }
 
 // Plan lists SigNoz's dashboards and compares each of the step's with its file. SigNoz refuses to
@@ -65,7 +65,7 @@ func (s Dashboards) Plan(ctx context.Context) (step.Plan, error) {
 		var got struct {
 			Data dashboard `json:"data"`
 		}
-		if err := s.API.get(ctx, "/api/v2/dashboards/"+have[i].ID, &got); err != nil {
+		if err := s.API.Get(ctx, "/api/v2/dashboards/"+have[i].ID, &got); err != nil {
 			return step.Plan{}, err
 		}
 		switch {

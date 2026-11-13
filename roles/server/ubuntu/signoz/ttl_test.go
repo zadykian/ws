@@ -10,6 +10,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/zadykian/ws/roles/server/ubuntu/signoz/internal/api"
 )
 
 // fakeTTL is SigNoz's v1 retention API for traces and metrics. A POST sets the hours, and the
@@ -42,8 +44,8 @@ func (f *fakeTTL) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func newRetention(t *testing.T, f *fakeTTL) Retention {
 	srv := httptest.NewServer(f)
 	t.Cleanup(srv.Close)
-	w := Wait{Tries: 5, Delay: time.Second, Sleep: func(context.Context, time.Duration) error { return nil }}
-	return Retention{API: API{URL: srv.URL}, Days: 90, Altered: w}
+	w := api.Wait{Tries: 5, Delay: time.Second, Sleep: func(context.Context, time.Duration) error { return nil }}
+	return Retention{API: api.Client{URL: srv.URL}, Days: 90, Altered: w}
 }
 
 func TestSetSignalsSetsThenWaitsForTheTables(t *testing.T) {

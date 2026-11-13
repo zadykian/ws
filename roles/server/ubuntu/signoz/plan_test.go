@@ -10,6 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/server/ubuntu/signoz/internal/api"
 )
 
 // signozAPI serves the retention of traces and metrics from a fakeTTL, and of logs from days.
@@ -28,8 +29,8 @@ func signozAPI(t *testing.T, f *fakeTTL, logsDays *int) Retention {
 	m := effecttest.NewMachine()
 	m.Dirs["/run/systemd/system"] = 0o755
 	m.Results[lsLine] = effecttest.Result{Out: []byte("Exited (0) 1 hour ago\n")}
-	w := Wait{Tries: 5, Delay: time.Second, Sleep: func(context.Context, time.Duration) error { return nil }}
-	return Retention{M: m, Out: &effecttest.Out{}, API: API{URL: srv.URL}, Days: 90, Migrator: w, Altered: w}
+	w := api.Wait{Tries: 5, Delay: time.Second, Sleep: func(context.Context, time.Duration) error { return nil }}
+	return Retention{M: m, Out: &effecttest.Out{}, API: api.Client{URL: srv.URL}, Days: 90, Migrator: w, Altered: w}
 }
 
 func newTTL(traces, metrics int) *fakeTTL {

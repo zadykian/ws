@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/server/ubuntu/signoz/internal/api"
 )
 
 // fakeDashboards is SigNoz's v2 dashboards API: one list, a read by ID, a create and a replace.
@@ -46,7 +47,7 @@ func dashboardsFixture(t *testing.T, f *fakeDashboards, names ...string) (Dashbo
 	t.Cleanup(srv.Close)
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	m.Dirs["/run/systemd/system"] = 0o755
-	return Dashboards{M: m, Out: out, API: API{URL: srv.URL}, Names: names}, out
+	return Dashboards{M: m, Out: out, API: api.Client{URL: srv.URL}, Names: names}, out
 }
 
 // fromFile is the dashboard that SigNoz holds once the file of name is applied.

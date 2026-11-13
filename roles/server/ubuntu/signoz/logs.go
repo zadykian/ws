@@ -19,7 +19,7 @@ func (l logsTTL) String() string { return fmt.Sprintf("logs: %d days, %s", l.Day
 
 func (r Retention) readLogs(ctx context.Context) (logsTTL, error) {
 	var l logsTTL
-	err := r.API.get(ctx, "/api/v2/settings/ttl", &l)
+	err := r.API.Get(ctx, "/api/v2/settings/ttl", &l)
 	return l, err
 }
 
@@ -46,7 +46,7 @@ func (c setLogs) Apply(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return c.r.API.call(ctx, http.MethodPost, "/api/v2/settings/ttl", body, http.StatusOK, nil)
+	return c.r.API.Call(ctx, http.MethodPost, "/api/v2/settings/ttl", body, http.StatusOK, nil)
 }
 
 // due says whether the retention differs from the wanted days, or the last change is not done.

@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/zadykian/ws/roles/server/ubuntu/signoz/internal/api"
 )
 
 func TestSetLogsSendsTheRulesBack(t *testing.T) {
@@ -15,7 +17,7 @@ func TestSetLogsSendsTheRulesBack(t *testing.T) {
 	}))
 	defer srv.Close()
 	have := logsTTL{Days: 15, Status: "success", Conditions: []byte(`[{"filter":"x"}]`)}
-	c := setLogs{Retention{API: API{URL: srv.URL}, Days: 90}, have}
+	c := setLogs{Retention{API: api.Client{URL: srv.URL}, Days: 90}, have}
 	if err := c.Apply(t.Context()); err != nil {
 		t.Fatal(err)
 	}
@@ -32,7 +34,7 @@ func TestSetLogsSendsNoRulesAsAList(t *testing.T) {
 		body = string(b)
 	}))
 	defer srv.Close()
-	if err := (setLogs{Retention{API: API{URL: srv.URL}, Days: 90}, logsTTL{}}).Apply(t.Context()); err != nil {
+	if err := (setLogs{Retention{API: api.Client{URL: srv.URL}, Days: 90}, logsTTL{}}).Apply(t.Context()); err != nil {
 		t.Fatal(err)
 	}
 	if want := `{"defaultTTLDays":90,"ttlConditions":[],"type":"logs"}`; body != want {

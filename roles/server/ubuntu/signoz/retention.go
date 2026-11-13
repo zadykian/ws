@@ -1,6 +1,10 @@
 package signoz
 
-import "github.com/zadykian/ws/engine/core/effect"
+import (
+	"github.com/zadykian/ws/engine/core/effect"
+
+	"github.com/zadykian/ws/roles/server/ubuntu/signoz/internal/api"
+)
 
 // Retention is the step that keeps SigNoz's data for Days. SigNoz keeps traces and logs for 15 days
 // and metrics for 30, unless told otherwise. A new retention applies only to data that comes in
@@ -8,13 +12,13 @@ import "github.com/zadykian/ws/engine/core/effect"
 type Retention struct {
 	M    effect.Machine
 	Out  effect.Out
-	API  API
+	API  api.Client
 	Days int
 	// Migrator is how long Plan waits for the schema migrator: 120 tries, 5 seconds apart, if zero.
-	Migrator Wait
+	Migrator api.Wait
 	// Altered is how long Apply waits for SigNoz to alter the tables of traces and metrics: 60
 	// tries, 5 seconds apart, if zero.
-	Altered Wait
+	Altered api.Wait
 }
 
 // Name returns the step's name.

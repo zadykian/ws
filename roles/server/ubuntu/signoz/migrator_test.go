@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/server/ubuntu/signoz/internal/api"
 )
 
 const lsLine = "docker container ls --all --filter name=^signoz-telemetrystore-migrator$ --format {{.Status}}"
@@ -23,7 +24,7 @@ func TestAwaitMigrator(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			m := effecttest.NewMachine()
 			m.Results[lsLine] = effecttest.Result{Out: []byte(tc.status + "\n")}
-			w := Wait{Tries: 3, Delay: time.Second, Sleep: func(context.Context, time.Duration) error { return nil }}
+			w := api.Wait{Tries: 3, Delay: time.Second, Sleep: func(context.Context, time.Duration) error { return nil }}
 			err := awaitMigrator(t.Context(), m, w)
 			if tc.fails == "" && err != nil || tc.fails != "" && (err == nil || !strings.Contains(err.Error(), tc.fails)) {
 				t.Errorf("status %q: err = %v, want one with %q", tc.status, err, tc.fails)

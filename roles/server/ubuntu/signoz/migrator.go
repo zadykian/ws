@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/roles/server/ubuntu/signoz/internal/api"
 )
 
 // migrator is the schema migrator's container, a one-shot service that each up of compose runs.
@@ -23,9 +24,9 @@ var (
 // a column it has yet to add, while SigNoz reports it as done. A migrator that is gone, as a prune
 // removes stopped containers, finished on an earlier run. It fails where the last run failed, or
 // was stopped before it finished.
-func awaitMigrator(ctx context.Context, m effect.Machine, w Wait) error {
-	w = w.orDefault(120, 5*time.Second)
-	return w.poll(ctx, migrator, func() (bool, string, error) {
+func awaitMigrator(ctx context.Context, m effect.Machine, w api.Wait) error {
+	w = w.OrDefault(120, 5*time.Second)
+	return w.Poll(ctx, migrator, func() (bool, string, error) {
 		out, err := m.RunRoot(ctx, "docker", "container", "ls", "--all",
 			"--filter", "name=^"+migrator+"$", "--format", "{{.Status}}")
 		if err != nil {

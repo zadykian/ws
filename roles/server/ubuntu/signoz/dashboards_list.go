@@ -18,7 +18,7 @@ func (s Dashboards) list(ctx context.Context) ([]dashboard, error) {
 			} `json:"data"`
 		}
 		q := fmt.Sprintf("/api/v2/dashboards?sort=created_at&order=asc&limit=200&offset=%d", offset)
-		if err := s.API.get(ctx, q, &got); err != nil {
+		if err := s.API.Get(ctx, q, &got); err != nil {
 			return nil, err
 		}
 		all = append(all, got.Data.Dashboards...)

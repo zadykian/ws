@@ -8,6 +8,7 @@ import (
 	"reflect"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/roles/server/ubuntu/signoz/internal/api"
 )
 
 // dashboardFiles holds the dashboards as SigNoz returns them, without the ID, owner and times it
@@ -23,7 +24,7 @@ var dashboardFiles embed.FS
 type Dashboards struct {
 	M     effect.Machine
 	Out   effect.Out
-	API   API
+	API   api.Client
 	Names []string
 }
 
