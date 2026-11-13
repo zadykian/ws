@@ -10,21 +10,21 @@ import (
 )
 
 // servedAsks starts serve, with replies on a channel and its result on another.
-func servedAsks(t *testing.T) (*asks, context.CancelCauseFunc, chan tea.Msg, chan error) {
+func servedAsks(t *testing.T) (*Asks, context.CancelCauseFunc, chan tea.Msg, chan error) {
 	ctx, end := context.WithCancelCause(t.Context())
-	a := newAsks(end)
+	a := NewAsks(end)
 	b, _ := testBridge(io.Discard)
 	replies := make(chan tea.Msg, 8)
 	b.send = func(msg tea.Msg) { replies <- msg }
 	ended := make(chan error, 1)
-	go func() { ended <- a.serve(ctx, b) }()
+	go func() { ended <- a.Serve(ctx, b) }()
 	return a, end, replies, ended
 }
 
 func TestAsksRunInOrderAndReply(t *testing.T) {
 	a, _, replies, _ := servedAsks(t)
 	for i := range 3 {
-		a.ask(func(context.Context, *Bridge) tea.Msg { return i })
+		a.Ask(func(context.Context, *Bridge) tea.Msg { return i })
 	}
 	for want := range 3 {
 		if got := <-replies; got != want {
@@ -36,13 +36,13 @@ func TestAsksRunInOrderAndReply(t *testing.T) {
 func TestAsksLeaveEndsARunningAskAndServeReturnsNil(t *testing.T) {
 	a, _, _, ended := servedAsks(t)
 	running := make(chan struct{})
-	a.ask(func(ctx context.Context, _ *Bridge) tea.Msg {
+	a.Ask(func(ctx context.Context, _ *Bridge) tea.Msg {
 		close(running)
 		<-ctx.Done()
 		return nil
 	})
 	<-running
-	if msg := a.leave(); msg != nil {
+	if msg := a.Leave(); msg != nil {
 		t.Errorf("leave returned %v", msg)
 	}
 	if err := <-ended; err != nil {
@@ -52,11 +52,11 @@ func TestAsksLeaveEndsARunningAskAndServeReturnsNil(t *testing.T) {
 
 func TestAsksAskAfterTheEndReturnsAtOnce(t *testing.T) {
 	a, _, _, ended := servedAsks(t)
-	a.leave()
+	a.Leave()
 	if err := <-ended; err != nil {
 		t.Error(err)
 	}
-	a.ask(func(context.Context, *Bridge) tea.Msg { return nil })
+	a.Ask(func(context.Context, *Bridge) tea.Msg { return nil })
 }
 
 func TestAsksCutReturnsCtxError(t *testing.T) {
@@ -65,13 +65,13 @@ func TestAsksCutReturnsCtxError(t *testing.T) {
 	if err := <-ended; !errors.Is(err, context.Canceled) {
 		t.Errorf("serve returned %v, want the cut", err)
 	}
-	a.ask(func(context.Context, *Bridge) tea.Msg { return nil })
+	a.Ask(func(context.Context, *Bridge) tea.Msg { return nil })
 }
 
 func TestAsksDropAReplyPastCtxEnd(t *testing.T) {
 	a, _, replies, ended := servedAsks(t)
-	a.ask(func(_ context.Context, _ *Bridge) tea.Msg {
-		a.leave()
+	a.Ask(func(_ context.Context, _ *Bridge) tea.Msg {
+		a.Leave()
 		return "late"
 	})
 	if err := <-ended; err != nil {

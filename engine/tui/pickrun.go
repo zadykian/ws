@@ -17,14 +17,21 @@ type StateSection struct {
 	Reports []step.Report
 }
 
+// ReportedMsg says what a stage's machine reports, or why it reports nothing.
+type ReportedMsg struct {
+	Stage    string
+	Sections []StateSection
+	Problem  string
+}
+
 // Report fills a stage of the lists with what its machine says: sections, or problem, why it says
 // nothing. It goes ahead of the scan's end, which chooses by it.
 func (b *Bridge) Report(stage string, sections []StateSection, problem string) {
-	b.send(reportedMsg{stage, sections, problem})
+	b.send(ReportedMsg{stage, sections, problem})
 }
 
-// pick runs a list's screen over scan until picks gives a choice, of whatever type the screen leaves.
-func pick[C any](ctx context.Context, c Config, screen tea.Model, picks <-chan C, scan Work) (C, error) {
+// Await runs a list's screen over scan until picks gives a choice, of whatever type the screen leaves.
+func Await[C any](ctx context.Context, c Config, screen tea.Model, picks <-chan C, scan Work) (C, error) {
 	var choice C
 	c.quiet = true
 	err := Run(ctx, c, screen, func(ctx context.Context, b *Bridge) error {

@@ -17,13 +17,6 @@ const (
 	queueConfigurePlace
 )
 
-// reportedMsg says what a stage's machine reports, or why it reports nothing.
-type reportedMsg struct {
-	stage    string
-	sections []StateSection
-	problem  string
-}
-
 // queueScreen is the queue's lists, a side each, over the strip of the detail. A scan fills them
 // behind the screen, and the maintainer can read and move as it goes.
 type queueScreen struct {
@@ -117,10 +110,10 @@ func (s queueScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case list.ScannedMsg:
 		s.Screen = s.Scanned(msg)
 		s.list = s.list.opened()
-	case reportedMsg:
-		s.unread = msg.problem
-		if msg.problem == "" {
-			s.list = s.list.reported(msg.stage, msg.sections)
+	case ReportedMsg:
+		s.unread = msg.Problem
+		if msg.Problem == "" {
+			s.list = s.list.reported(msg.Stage, msg.Sections)
 		}
 	case tea.WindowSizeMsg:
 		s.Window = widget.Size{Width: msg.Width, Height: msg.Height}

@@ -17,14 +17,14 @@ func RunState(ctx context.Context, c Config, title string, read StateReader) err
 	ctx, end := context.WithCancelCause(ctx)
 	defer end(nil)
 	// The screen asks once a read has ended, so serve never has two reads to run.
-	a := newAsks(end)
+	a := NewAsks(end)
 	ask := func() tea.Msg {
-		a.ask(func(ctx context.Context, b *Bridge) tea.Msg {
+		a.Ask(func(ctx context.Context, b *Bridge) tea.Msg {
 			sections, err := read(ctx, b)
 			return StateRead{sections, err}
 		})
 		return nil
 	}
-	screen := NewStateScreen(c.Theme, title, ask, a.leave)
-	return Run(ctx, c, screen, a.serve)
+	screen := NewStateScreen(c.Theme, title, ask, a.Leave)
+	return Run(ctx, c, screen, a.Serve)
 }

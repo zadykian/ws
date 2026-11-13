@@ -176,14 +176,14 @@ func TestPendingTurnsAWholeStageThatIsDue(t *testing.T) {
 
 func TestAReportFillsWsList(t *testing.T) {
 	sections := []StateSection{{Name: "base", Reports: []step.Report{{Step: "Packages"}}}}
-	got := queueShown(queueSent(testQueueScreen(), reportedMsg{stage: "Run", sections: sections}))
+	got := queueShown(queueSent(testQueueScreen(), ReportedMsg{Stage: "Run", Sections: sections}))
 	if strings.Contains(got, "not scanned") || !strings.Contains(got, "✓ Packages") {
 		t.Errorf("frame:\n%s", got)
 	}
 }
 
 func TestARefusedReportLeavesTheRolesAndSaysWhy(t *testing.T) {
-	got := queueShown(queueSent(testQueueScreen(), reportedMsg{stage: "Run", problem: "ws on ws is another version"}))
+	got := queueShown(queueSent(testQueueScreen(), ReportedMsg{Stage: "Run", Problem: "ws on ws is another version"}))
 	if !strings.Contains(got, "ws: roles not scanned") || !strings.Contains(got, "Not scanned: ws on ws is another version") {
 		t.Errorf("frame:\n%s", got)
 	}
@@ -248,7 +248,7 @@ func TestReopenKeepsTheBoxesAndRunsNoScan(t *testing.T) {
 func TestABridgeReportReachesTheScreen(t *testing.T) {
 	b, sent := testBridge(io.Discard)
 	b.Report("Run", nil, "refused")
-	if got := (*sent)[0].(reportedMsg); got.stage != "Run" || got.problem != "refused" {
+	if got := (*sent)[0].(ReportedMsg); got.Stage != "Run" || got.Problem != "refused" {
 		t.Errorf("sent %+v", got)
 	}
 }

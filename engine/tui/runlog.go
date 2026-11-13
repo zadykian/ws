@@ -35,7 +35,7 @@ func (r *record) note(msg any) {
 	defer r.lock.Unlock()
 	switch m := msg.(type) {
 	case widget.Line:
-		text := cleanLines(m.Text)
+		text := CleanLines(m.Text)
 		r.write(text)
 		r.recent = append(r.recent, strings.Split(text, "\n")...)
 		if len(r.recent) > tailLines {
@@ -83,7 +83,7 @@ func (r *record) logText(text string) {
 	}
 	r.lock.Lock()
 	defer r.lock.Unlock()
-	r.write(cleanLines(text))
+	r.write(CleanLines(text))
 }
 
 // write adds a line to the log. A log that fails stops, and the run goes on without it.
@@ -110,7 +110,7 @@ func (r *record) report(w io.Writer, path string, cut bool) {
 	defer r.lock.Unlock()
 	var b strings.Builder
 	for _, l := range r.kept {
-		b.WriteString(cleanLines(l.Text) + "\n")
+		b.WriteString(CleanLines(l.Text) + "\n")
 	}
 	if r.failed != "" {
 		fmt.Fprintf(&b, "%s failed.", r.failed)
@@ -128,8 +128,8 @@ func (r *record) report(w io.Writer, path string, cut bool) {
 	_, _ = io.WriteString(w, b.String())
 }
 
-// cleanLines applies clean to each line of a text, as a diff holds several.
-func cleanLines(text string) string {
+// CleanLines applies clean to each line of a text, as a diff holds several.
+func CleanLines(text string) string {
 	lines := strings.Split(text, "\n")
 	for i, l := range lines {
 		lines[i] = widget.Clean(l)

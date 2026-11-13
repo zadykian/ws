@@ -19,15 +19,15 @@ const noteRows = 6
 func Configure(ctx context.Context, c Config, title string, sheets ...Sheet) error {
 	ctx, end := context.WithCancelCause(ctx)
 	defer end(nil)
-	a := newAsks(end)
+	a := NewAsks(end)
 	send := func(j configureJob) {
-		a.ask(func(ctx context.Context, b *Bridge) tea.Msg {
+		a.Ask(func(ctx context.Context, b *Bridge) tea.Msg {
 			sheet, err := j.run(ctx, b)
 			return savedMsg{j.place, sheet, err}
 		})
 	}
-	screen := newConfigureScreen(title, c.Theme, send, a.leave, sheets)
-	return Run(ctx, c, screen, a.serve)
+	screen := newConfigureScreen(title, c.Theme, send, a.Leave, sheets)
+	return Run(ctx, c, screen, a.Serve)
 }
 
 // configureJob is what the screen asks of its work. It travels inside an ask's closure and never as a
@@ -111,7 +111,7 @@ func (s configureScreen) noteLines(width int) []string {
 		if note.Kind == widget.Warned {
 			style = s.theme.Bad
 		}
-		lines = append(lines, strings.Split(style.Width(max(width, 1)).Render(cleanLines(note.Text)), "\n")...)
+		lines = append(lines, strings.Split(style.Width(max(width, 1)).Render(CleanLines(note.Text)), "\n")...)
 	}
 	return lines[max(len(lines)-noteRows, 0):]
 }
