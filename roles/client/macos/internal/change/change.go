@@ -13,10 +13,8 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 )
 
-// Remark is a line that --check prints in the form of a change, which a run does not apply.
-type Remark string
-
-func (r Remark) String() string { return string(r) }
+// Remark is resource.Remark, which the Mac's roles plan.
+type Remark = resource.Remark
 
 // Apply applies one change of the user's files, and says what it did.
 func Apply(ctx context.Context, m effect.Machine, out effect.Out, c step.Change) error {
