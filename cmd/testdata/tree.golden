@@ -74,7 +74,7 @@ Global Flags:
       --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos conf
-It reads FILE, else $WS_CONF, else ~/.config/ws/mac.conf, and the server's file, servers/ws/server.conf beside it, and prints the checked settings as shell assignments, or the errors of a file it refuses.
+It reads FILE, else $WS_CONF, else ~/.config/ws/mac.conf, and the server's file, servers/NAME/server.conf beside it, of the server that --server names, and prints the checked settings as shell assignments, or the errors of a file it refuses.
 
 Usage:
   ws client macos conf [FILE] [flags]
