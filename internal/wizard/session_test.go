@@ -8,15 +8,14 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // wsSession returns ws's own session, whose host_vars names ada, and whose remote script answers
 // status with the value's text.
 func wsSession(status wsStatus) (*Session, *effecttest.Machine) {
 	m := effecttest.NewMachine()
-	want := func() (conf.Conf, error) { return conf.Conf{Target: "lan", User: "ada"}, nil }
-	reach := WsReach{M: m, Want: want, Here: m, Out: &effecttest.Out{}}
+	want := func() (Want, error) { return Want{Target: "lan", User: "ada"}, nil }
+	reach := WsReach{M: m, Read: want, Here: m, Out: &effecttest.Out{}}
 	ws := NewSession(fakeReach{Reach: reach, M: m}, Scripts{Remote: []byte("x"), Files: []byte("y")})
 	m.Results[opLine("status")] = effecttest.Result{Out: status.text()}
 	return ws, m

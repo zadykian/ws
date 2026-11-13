@@ -8,7 +8,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -51,7 +50,7 @@ func (r *WsRun) WaitsOn() string { return cmp.Or(r.Await, installStage) }
 
 // RunDone succeeds where ws's last full run left what c wants. Under --update, only once the stage
 // ran ws server ubuntu apply in this run.
-func (r *WsRun) RunDone(ctx context.Context, c conf.Conf) bool {
+func (r *WsRun) RunDone(ctx context.Context, c Want) bool {
 	if r.Update && !r.ran {
 		return false
 	}
@@ -117,7 +116,7 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 
 // partDone is RunDone for what this run takes. A part that ran is all there is to do, and a part
 // chosen is to run whatever the last full run left, as a step can drift after it.
-func (r *WsRun) partDone(ctx context.Context, c conf.Conf) bool {
+func (r *WsRun) partDone(ctx context.Context, c Want) bool {
 	if len(r.Only) > 0 {
 		return r.ran
 	}

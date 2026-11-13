@@ -10,7 +10,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // Session is the one way to ws of a wizard's run: the Mac's over ssh, or ws's own on the machine
@@ -39,7 +38,7 @@ type Reach interface {
 	shell() remote.Shell
 	// want reads the target and WS_USER that ws's run is to leave: mac.conf's on the Mac, and
 	// host_vars' on ws.
-	want() (conf.Conf, error)
+	want() (Want, error)
 	// user returns WS_USER, whose claude and git config the stages read.
 	user() (string, error)
 	// claude runs claude auth login as WS_USER at the terminal.
@@ -49,6 +48,10 @@ type Reach interface {
 	// hand adds what stays by hand of this way's ws, as the status s read it.
 	hand(h *guided.Hand, s wsStatus)
 }
+
+// Want is what ws's run is to leave: the target, lan or cloud, and WS_USER. The server reads no
+// other key of mac.conf.
+type Want struct{ Target, User string }
 
 // Scripts are what a Session runs on ws: the remote script and the files script. Events hears a
 // run's events.
@@ -85,7 +88,7 @@ func (s *Session) known() wsStatus { return s.held.last }
 func (s *Session) stale() { s.held.read = false }
 
 // want reads what ws's run is to leave.
-func (s *Session) want() (conf.Conf, error) { return s.reach.want() }
+func (s *Session) want() (Want, error) { return s.reach.want() }
 
 // rerun says how to run ws server ubuntu apply again, for a stop that needs it.
 func (s *Session) rerun() string { return s.reach.rerun() }

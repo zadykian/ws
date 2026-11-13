@@ -63,7 +63,7 @@ func (c tunnelChange) String() string { return tunnelStage + ": would " + string
 // through it. Where the run asked ws's address, ws isn't at the ways that ws-tunnel tries. Where
 // the check found no handshake, ws-tunnel has none. A later run checks those two.
 func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
-	c, err := t.Ws.want()
+	c, err := macConf(t.M, t.Conf)
 	if err != nil {
 		return step.Plan{}, err
 	}

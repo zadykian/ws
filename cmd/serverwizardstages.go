@@ -8,7 +8,6 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/internal/wizard"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/mac"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -33,8 +32,8 @@ func serverWizardStages(e wizardEffects, o wizardOptions) []step.Step {
 // serverSession is ws's session to itself on m: the scripts run here as root, as the Mac's ssh logs
 // in as host_vars' ws_user. talks runs claude's login, and events hears ws's run.
 func serverSession(m effect.Machine, talks effect.Foreground, out effect.Out, events step.Observer) *wizard.Session {
-	want := func() (conf.Conf, error) { return wsWant(m) }
-	return wizard.NewSession(wizard.WsReach{M: m, Want: want, Here: talks, Out: out},
+	want := func() (wizard.Want, error) { return wsWant(m) }
+	return wizard.NewSession(wizard.WsReach{M: m, Read: want, Here: talks, Out: out},
 		wizard.Scripts{Remote: mac.RemoteScript, Files: mac.RemoteFilesScript, Events: events})
 }
 
@@ -46,11 +45,11 @@ func serverOpen(_ context.Context, b *tui.Bridge) (*wizard.Session, error) {
 
 // wsWant is what ws's run is to leave, as host_vars names it: a cloud VM where it turns the outbound
 // table off, and its ws_user.
-func wsWant(m effect.Machine) (conf.Conf, error) {
+func wsWant(m effect.Machine) (wizard.Want, error) {
 	v, err := values.Load(m, serverVars)
 	target := "lan"
 	if !v.Security.Outbound {
 		target = "cloud"
 	}
-	return conf.Conf{Target: target, User: v.User}, err
+	return wizard.Want{Target: target, User: v.User}, err
 }

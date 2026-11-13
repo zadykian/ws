@@ -8,28 +8,27 @@ import (
 	"github.com/zadykian/ws/engine/core/remote"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // WsReach is ws's way to itself, for ws server ubuntu wizard: the scripts run as the user that runs
 // ws, root there, and host_vars names the target and WS_USER.
 type WsReach struct {
 	M effect.Machine
-	// Want reads host_vars' target and ws_user.
-	Want func() (conf.Conf, error)
+	// Read reads host_vars' target and ws_user.
+	Read func() (Want, error)
 	// Here runs claude's login at the terminal.
 	Here effect.Foreground
 	Out  effect.Out
 }
 
 func (r WsReach) shell() remote.Shell {
-	return remote.LocalShell{M: r.M, User: func() string { c, _ := r.Want(); return c.User }}
+	return remote.LocalShell{M: r.M, User: func() string { c, _ := r.Read(); return c.User }}
 }
 
-func (r WsReach) want() (conf.Conf, error) { return r.Want() }
+func (r WsReach) want() (Want, error) { return r.Read() }
 
 func (r WsReach) user() (string, error) {
-	c, err := r.Want()
+	c, err := r.Read()
 	return cmp.Or(c.User, defaultUser()), err
 }
 

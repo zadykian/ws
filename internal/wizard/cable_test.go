@@ -8,7 +8,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 const cableLink = "eth0 - -\neth1 1 -\n"
@@ -24,7 +23,7 @@ func newCable(t *testing.T, status wsStatus, link string, env map[string]string)
 	m.Results[opLine("link")] = effecttest.Result{Out: []byte(link)}
 	p := &effecttest.Prompt{T: t, Answers: map[string]string{}}
 	c := &Cable{Ws: ws, SSH: root.SSH, Conf: "/h/mac.conf",
-		RunDone:  func(context.Context, conf.Conf) bool { return true },
+		RunDone:  func(context.Context, Want) bool { return true },
 		MacApply: func(context.Context, bool) (bool, error) { return false, nil },
 		Env:      func(k string) (string, bool) { v, ok := env[k]; return v, ok }, P: p, Tty: true, M: m, Out: out}
 	return c, m, p
@@ -109,7 +108,7 @@ func TestCablePlanAfterRunUnderCheck(t *testing.T) {
 	c, m, _ := newCable(t, wsStatus{}, cableLink, nil)
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + wayConf)
 	c.Check = true
-	c.RunDone = func(context.Context, conf.Conf) bool { return false }
+	c.RunDone = func(context.Context, Want) bool { return false }
 	p, err := c.Plan(context.Background())
 	out := strings.Join(c.Out.(*effecttest.Out).Lines, "\n")
 	if err != nil || len(p.Changes) != 0 || out != "say: Cable: after ws's run" {

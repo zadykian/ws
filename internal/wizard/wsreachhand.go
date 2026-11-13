@@ -8,7 +8,7 @@ import guided "github.com/zadykian/ws/engine/core/wizard"
 // ws, so each goes from GitHub by hand.
 func (r WsReach) hand(h *guided.Hand, s wsStatus) {
 	fans(h, s)
-	if c, err := r.Want(); err == nil && c.Target == "lan" {
+	if c, err := r.Read(); err == nil && c.Target == "lan" {
 		h.Add("ws's lease, on a machine on the LAN: static, as docs/router.md has it.")
 	}
 	h.Add("Each device's ssh key on ws: ssh-import-id gh:LOGIN, run as WS_USER, adds the keys that GitHub " +

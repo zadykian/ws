@@ -8,13 +8,12 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // localSession returns ws's own session over m, whose runs' events go to events.
 func localSession(m effect.Machine, events step.Observer) *Session {
-	want := func() (conf.Conf, error) { return conf.Conf{}, nil }
-	return NewSession(WsReach{M: m, Want: want}, Scripts{Remote: []byte("echo\n"), Events: events})
+	want := func() (Want, error) { return Want{}, nil }
+	return NewSession(WsReach{M: m, Read: want}, Scripts{Remote: []byte("echo\n"), Events: events})
 }
 
 // On ws, the script goes on sh's stdin and each word goes unchanged, with no ssh and no sudo.
@@ -68,7 +67,7 @@ func TestFollowOnWsWithoutLines(t *testing.T) {
 func TestLocalShellNamesWsUser(t *testing.T) {
 	m := effecttest.NewMachine()
 	user := "ada"
-	r := NewSession(WsReach{M: m, Want: func() (conf.Conf, error) { return conf.Conf{User: user}, nil }}, Scripts{Remote: []byte("echo\n")})
+	r := NewSession(WsReach{M: m, Read: func() (Want, error) { return Want{User: user}, nil }}, Scripts{Remote: []byte("echo\n")})
 	m.Results["env SUDO_USER=ada sh -s -- status"] = effecttest.Result{Out: []byte("claude ok\n")}
 	if s, ok := r.status(context.Background()); !ok || s.Claude != "ok" {
 		t.Errorf("status read %q; calls %q", s.Claude, m.Calls)

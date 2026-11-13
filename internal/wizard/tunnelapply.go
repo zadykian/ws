@@ -17,15 +17,15 @@ import (
 // later run. It takes root's key rather than tunnel.pub, which the user can write, as the key it
 // sends becomes ws's peer.
 func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
-	c, err := t.Ws.want()
-	if err != nil {
-		return err
-	}
 	switch err := effect.Validate(ctx, t.M); {
 	case errors.Is(err, effect.ErrNoTicket):
 		return err
 	case err != nil:
 		return errors.New(tunnelStage + ": sudo -v failed; the Mac's key is root's, as an admin of the Mac")
+	}
+	c, err := macConf(t.M, t.Conf)
+	if err != nil {
+		return err
 	}
 	out, err := t.M.RunRoot(ctx, libexec, "client", "macos", "tunnel", "key")
 	mac := strings.TrimSpace(string(out))

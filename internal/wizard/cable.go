@@ -10,7 +10,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // cableStage names the stage in its messages.
@@ -39,7 +38,7 @@ type Cable struct {
 	Conf  string
 	Check bool
 	// RunDone is ws's run's verdict, which the stage waits on under --check.
-	RunDone func(ctx context.Context, c conf.Conf) bool
+	RunDone func(ctx context.Context, w Want) bool
 	// MacApply runs ws client macos apply, as the Setup stage's Run does, which gives the Mac's
 	// service its address.
 	MacApply func(ctx context.Context, check bool) (bool, error)
@@ -146,7 +145,7 @@ func (c *Cable) lacks() bool {
 // ws keeps down. It reads ws only where the login reached it in this run. Under --check it says
 // that the stage is after ws's run, where that run has changes to make.
 func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
-	cf, err := c.Ws.want()
+	cf, err := macConf(c.M, c.Conf)
 	if err != nil || cf.Target != "lan" {
 		return step.Plan{}, err
 	}
@@ -167,7 +166,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 		in && c.holds(ctx, cf.CablePort)) {
 		return step.Plan{}, nil
 	}
-	if c.Check && !none && (!in || !c.RunDone(ctx, cf)) {
+	if c.Check && !none && (!in || !c.RunDone(ctx, Want{Target: cf.Target, User: cf.User})) {
 		c.Out.Say("%s: after %s", cableStage, runStage)
 		return step.Plan{}, nil
 	}

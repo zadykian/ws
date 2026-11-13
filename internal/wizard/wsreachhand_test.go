@@ -6,8 +6,6 @@ import (
 	"slices"
 	"strings"
 	"testing"
-
-	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // ws's own list holds ws's lines alone, with nothing of the Mac's, and each device's key.
@@ -25,7 +23,7 @@ func TestWsHand(t *testing.T) {
 		ws, _ := wsSession(tc.status)
 		far := ws.reach.(fakeReach)
 		r := far.Reach.(WsReach)
-		r.Want = func() (conf.Conf, error) { return conf.Conf{Target: tc.target}, nil }
+		r.Read = func() (Want, error) { return Want{Target: tc.target}, nil }
 		far.Reach = r
 		ws.reach = far
 		h := &guided.Hand{}
