@@ -17,7 +17,7 @@ import (
 )
 
 func queueOf(p enginecli.Env) []tui.Stage {
-	return engine.WizardQueue(macSide(p), wizardStages(wizardEffects{p: p, hand: &wizard.Hand{}, sudo: &host.Sudo{}}, engine.WizardOptions{}))
+	return engine.WizardQueue(macSide(p, new(string)), wizardStages(wizardEffects{p: p, hand: &wizard.Hand{}, sudo: &host.Sudo{}}, engine.WizardOptions{}))
 }
 
 func stageOf(t *testing.T, queue []tui.Stage, name string) tui.Stage {

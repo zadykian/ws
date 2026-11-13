@@ -141,7 +141,7 @@ func runWizard(c *cobra.Command, p enginecli.Env, o engine.WizardOptions) error 
 	// is set for the scripts that stages run.
 	_ = p.Setenv("PATH", "/opt/homebrew/bin:"+p.Getenv("PATH"))
 	_ = p.Setenv("WS_CONF", conf.Path(p.Getenv, p.Pwd))
-	return engine.Wizard(c.Context(), enginecli.CallOf(c, p), macTarget(p, new([]string)), o)
+	return engine.Wizard(c.Context(), enginecli.CallOf(c, p), macTarget(p, new([]string), new(string)), o)
 }
 
 // shellDefaults is the shell role's git identity as lines of key: value, which ws client macos
