@@ -73,3 +73,52 @@ func TestGhSaysNoAlreadyAfterItsAdd(t *testing.T) {
 		t.Errorf("lines = %q, want %q alone", got, want)
 	}
 }
+
+// brewAlone finds Homebrew on PATH, and no gh.
+func brewAlone(name string) (string, error) {
+	if name == "brew" {
+		return "/bin/brew", nil
+	}
+	return "", errors.New("not found")
+}
+
+// Where PATH has no gh, the plan holds its install, and the login needs gh there. So Apply runs
+// the install first, and stops at a failed one before it logs in.
+func TestGhApplyInstallsGhBeforeTheLogin(t *testing.T) {
+	const gh = "/opt/homebrew/bin/gh"
+	const login = gh + " auth login -p https -w -h github.com -s " + ghScopes
+	for name, tc := range map[string]struct {
+		brew error
+		want string // the stop, or empty where the login runs
+	}{
+		"installed":   {nil, ""},
+		"brew failed": {errors.New("exit status 1"), stage.GitHub + ": brew install gh failed"},
+	} {
+		g, m := newGh(brewAlone)
+		g.Tty = true
+		m.Results["brew --prefix"] = effecttest.Result{Out: []byte("/opt/homebrew\n")}
+		m.Results["brew install gh"] = effecttest.Result{Err: tc.brew}
+		m.Results[login] = effecttest.Result{}
+		for _, path := range []string{"user/keys", "user/ssh_signing_keys"} {
+			m.Results[gh+" api --paginate "+path+" --jq .[].key"] = effecttest.Result{}
+		}
+		m.Results[gh+" ssh-key add /h/k.pub --title mac"] = effecttest.Result{}
+		p, err := g.Plan(context.Background())
+		if err != nil {
+			t.Fatalf("%s: Plan = %v", name, err)
+		}
+		err = g.Apply(context.Background(), p)
+		installs, at, logins := 0, -1, -1
+		for i, call := range m.Calls {
+			switch call {
+			case "run brew install gh":
+				installs, at = installs+1, i
+			case "run " + login:
+				logins = i
+			}
+		}
+		if installs != 1 || errText(err) != tc.want || (tc.want == "") != (logins > at) {
+			t.Errorf("%s: Apply = %v, calls %q; want one install, then %q", name, err, m.Calls, tc.want)
+		}
+	}
+}
