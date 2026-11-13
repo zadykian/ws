@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/check"
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
@@ -63,19 +64,24 @@ func (r *Resolver) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, nil
 	}
 	if len(r.Addresses) == 0 {
-		cs, err := change.Plan(ctx, nil, file.Absent{M: r.M, Path: resolverFile})
+		cs, err := change.Plan(ctx, nil, r.said(file.Absent{M: r.M, Path: resolverFile}))
 		return step.Plan{Changes: cs}, err
 	}
-	cs, err := change.Plan(ctx, nil, file.Dir{M: r.M, Path: resolverDir, Mode: 0o755})
+	cs, err := change.Plan(ctx, nil, r.said(file.Dir{M: r.M, Path: resolverDir, Mode: 0o755}))
 	if err != nil {
 		return step.Plan{}, err
 	}
 	want := resolverCmdHeader + "\nnameserver " + strings.Join(r.Addresses, "\nnameserver ") + "\n"
-	cs, err = change.Plan(ctx, cs, file.File{M: r.M, Path: resolverFile, Content: []byte(want), Mode: 0o644})
+	cs, err = change.Plan(ctx, cs, r.said(file.File{M: r.M, Path: resolverFile, Content: []byte(want), Mode: 0o644}))
 	return step.Plan{Changes: cs}, err
+}
+
+// said has a change of the file say its headline once it applies, as the Mac's runs do.
+func (r *Resolver) said(part resource.Resource) resource.Resource {
+	return resource.Said{Out: r.Out, Part: part}
 }
 
 // Apply applies the changes in order, so that the directory is made before the file.
 func (r *Resolver) Apply(ctx context.Context, p step.Plan) error {
-	return applyInOrder(ctx, r.M, r.Out, p)
+	return resource.Group{}.Apply(ctx, p)
 }
