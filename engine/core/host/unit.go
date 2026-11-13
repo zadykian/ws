@@ -10,6 +10,9 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
+// noSystemd is what a unit reports where systemd is not running.
+const noSystemd = "systemd is not running"
+
 // Run is what a Unit wants of a unit's activity.
 type Run int
 

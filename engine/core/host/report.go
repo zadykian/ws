@@ -6,21 +6,16 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/step"
 )
 
 // The states that a report's items share.
 const (
-	missing   = "missing"
-	present   = "present"
-	noSystemd = "systemd is not running"
+	missing = "missing"
+	present = "present"
 )
 
 // attrsChanged says how a path stands against ws where its content, if it has any, is right.
 const attrsChanged = "its owner or mode changed"
-
-// writtenBy is the line at the top of a file ws writes, after its format's comment mark.
-var writtenBy = []byte("Written by github.com/zadykian/ws")
 
 func attrsText(a effect.Attrs) string {
 	return fmt.Sprintf("owner %d:%d, mode %o", a.UID, a.GID, a.Mode)
@@ -37,16 +32,4 @@ func readRoot(m effect.Machine, path string) (body []byte, a effect.Attrs, ok bo
 	}
 	a, err = m.RootAttrs(path)
 	return body, a, err == nil, err
-}
-
-// reportPath returns item, with found and conflict unless err says that the path is missing.
-func reportPath(item step.Item, found, conflict string, err error) ([]step.Item, error) {
-	if errors.Is(err, fs.ErrNotExist) {
-		return []step.Item{item}, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	item.Found, item.Conflict = found, conflict
-	return []step.Item{item}, nil
 }
