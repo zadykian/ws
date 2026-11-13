@@ -135,3 +135,29 @@ func TestApplyOpensNoListWithCheck(t *testing.T) {
 		t.Errorf("err = %v, runs with check = %v, want one", err, checks)
 	}
 }
+
+// The server's run takes a machine that ws_home confines, apart from the call's: the screen's run
+// and the list's scan must act on it.
+func TestApplyActsOnTheRunsMachineNotTheCalls(t *testing.T) {
+	for _, selected := range []bool{true, false} {
+		keys, press := io.Pipe()
+		t.Cleanup(func() { _ = press.Close() })
+		c, _, _ := applyCall(keys)
+		c.TTY, c.ErrTTY, c.Selected = true, true, selected
+		confined := effecttest.NewMachine()
+		var ran []effect.Machine
+		err := Apply(t.Context(), c, Target{Prepare: func(context.Context, Call) (Run, error) {
+			return Run{M: confined, Groups: func(bool) []tui.Group { return []tui.Group{tui.NewGroup("", nil)} },
+				Do: func(_ context.Context, e Effects, o step.Options) (string, error) {
+					ran = append(ran, e.M)
+					if o.Check { // The list's scan: leave the list past it.
+						_, _ = io.WriteString(press, "q")
+					}
+					return "", nil
+				}}, nil
+		}})
+		if err != nil || len(ran) != 1 || ran[0] != confined {
+			t.Errorf("selected %v: err = %v, the run acted on %v, want the run's machine alone", selected, err, ran)
+		}
+	}
+}
