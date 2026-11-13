@@ -6,6 +6,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/roles/server/ubuntu/devtools/internal/web"
 )
 
 // goDir is where Go is installed. Its tree is staged beside it, so that a run cut short never
@@ -22,7 +23,7 @@ func goTree(m effect.Machine, version string) host.Tree {
 			return "https://go.dev/dl/go" + version + ".linux-" + arch + ".tar.gz"
 		},
 		Lookup: func(ctx context.Context, url string) (string, error) {
-			list, err := fetch(ctx, m, goReleases)
+			list, err := web.Read(ctx, m, goReleases)
 			if err != nil {
 				return "", err
 			}

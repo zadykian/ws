@@ -7,6 +7,7 @@ import (
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/roles/server/ubuntu/devtools/internal/web"
 )
 
 // keyNoise are the armor's Comment and Version lines, which the keyserver swaps from one fetch to
@@ -16,7 +17,7 @@ var keyNoise = regexp.MustCompile(`(?m)^(Comment|Version): .*\n`)
 // fetchKey fetches the repository's key and checks that it holds a certificate at least, and
 // pinned ones alone.
 func fetchKey(ctx context.Context, m effect.Machine, repo Repository) ([]byte, error) {
-	body, err := fetch(ctx, m, repo.Key)
+	body, err := web.Read(ctx, m, repo.Key)
 	if err != nil {
 		return nil, err
 	}
