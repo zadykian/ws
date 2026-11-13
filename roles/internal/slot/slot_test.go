@@ -43,3 +43,16 @@ func TestRangeHoldsEverySlot(t *testing.T) {
 		t.Errorf("slot %d is inside %s", slot.Last+1, slot.Range)
 	}
 }
+
+func TestParse(t *testing.T) {
+	for text, want := range map[string]slot.Slot{"0": 0, "1": 1, "15": 15} {
+		if got, ok := slot.Parse(text); !ok || got != want {
+			t.Errorf("Parse(%q) = %d, %t", text, got, ok)
+		}
+	}
+	for _, text := range []string{"16", "-1", "+1", "01", " 1", "1 ", "", "a", "256", "0x1"} {
+		if _, ok := slot.Parse(text); ok {
+			t.Errorf("Parse(%q) was taken", text)
+		}
+	}
+}
