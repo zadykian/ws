@@ -137,7 +137,7 @@ func TestMacHelpAndErrors(t *testing.T) {
 		{"wizard flag", []string{"client", "macos", "wizard", "--bogus"}, 2, "", "ws client macos wizard: unknown flag: --bogus\nRun 'ws client macos wizard --help' for usage.\n"},
 		{"wizard help", []string{"client", "macos", "wizard", "-h"}, 0, "--check", ""},
 		{"conf two files", []string{"client", "macos", "conf", "a", "b"}, 2, "", "ws client macos conf: accepts at most 1 arg(s), received 2"},
-		{"apply two steps", []string{"client", "macos", "apply", "ssh", "git"}, 2, "", "ws client macos apply: accepts at most 1 arg(s), received 2"},
+		{"apply an argument", []string{"client", "macos", "apply", "ssh"}, 2, "", "ws client macos apply: unknown command \"ssh\" for \"ws client macos apply\""},
 		{"secrets alone", []string{"client", "macos", "secrets"}, 0, "Available Commands:", ""},
 		{"secrets unknown", []string{"client", "macos", "secrets", "nope"}, 2, "", "ws client macos secrets: unknown command \"nope\""},
 		{"secrets init extra", []string{"client", "macos", "secrets", "init", "x"}, 2, "", "ws client macos secrets init: unknown command \"x\""},
@@ -148,7 +148,8 @@ func TestMacHelpAndErrors(t *testing.T) {
 		{"secrets set git flag", []string{"client", "macos", "secrets", "set", "git", "https://git.example.com", "--bogus"}, 2, "", "ws client macos secrets set git: unknown flag: --bogus"},
 		{"secrets unset one", []string{"client", "macos", "secrets", "unset", "env"}, 2, "", "ws client macos secrets unset: accepts 2 arg(s), received 1"},
 		{"secrets keys extra", []string{"client", "macos", "secrets", "keys", "x"}, 2, "", "ws client macos secrets keys: unknown command \"x\""},
-		{"apply unknown step", []string{"client", "macos", "apply", "nope"}, 2, "", "ws client macos apply: invalid argument \"nope\" for \"ws client macos apply\""},
+		{"apply unknown step", []string{"client", "macos", "apply", "--only", "nope"}, 2, "", "ws client macos apply: no step is named \"nope\""},
+		{"apply no step", []string{"client", "macos", "apply", "--only", ""}, 2, "", "ws client macos apply: --only names no step"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			status, stdout, stderr := runWs(fakeProcess(), "", tc.args...)

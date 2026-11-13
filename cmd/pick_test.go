@@ -74,7 +74,7 @@ func TestMacApplyOpensTheListAtATerminal(t *testing.T) {
 }
 
 func TestMacApplyGoesStraightToTheRunWithAStepOrCheck(t *testing.T) {
-	for _, args := range [][]string{{"client", "macos", "apply", "ssh"}, {"client", "macos", "apply", "--check"}} {
+	for _, args := range [][]string{{"client", "macos", "apply", "--only", "ssh"}, {"client", "macos", "apply", "--check"}} {
 		p, m := macTerminal()
 		status, _, stderr := runWs(p, "q", args...)
 		if !slices.Contains(m.Calls, "run mktemp -d") {

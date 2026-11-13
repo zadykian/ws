@@ -17,13 +17,13 @@ func TestSetupCommand(t *testing.T) {
 	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\n")
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.machine = m
-	status, _, stderr := runWs(p, "", "client", "macos", "apply", "ssh", "--bogus")
+	status, _, stderr := runWs(p, "", "client", "macos", "apply", "--only", "ssh", "--bogus")
 	if status != 2 || !strings.Contains(stderr, "ws client macos apply: unknown flag: --bogus") {
 		t.Errorf("status = %d, stderr = %q; want a usage error", status, stderr)
 	}
 	p = fakeProcess()
 	p.machine = m
-	if status, _, stderr = runWs(p, "", "client", "macos", "apply", "ssh"); status != 1 || !strings.Contains(stderr, "is missing") {
+	if status, _, stderr = runWs(p, "", "client", "macos", "apply", "--only", "ssh"); status != 1 || !strings.Contains(stderr, "is missing") {
 		t.Errorf("without HOME: status = %d, stderr = %q; want a missing mac.conf", status, stderr)
 	}
 }
@@ -31,7 +31,7 @@ func TestSetupCommand(t *testing.T) {
 func TestSetupRefusesRoot(t *testing.T) {
 	p := fakeProcess()
 	p.euid = 0
-	if status, _, stderr := runWs(p, "", "client", "macos", "apply", "ssh"); status != 1 ||
+	if status, _, stderr := runWs(p, "", "client", "macos", "apply", "--only", "ssh"); status != 1 ||
 		!strings.HasPrefix(stderr, "ws client macos apply: run it as yourself, not root") {
 		t.Errorf("as root: status = %d, stderr = %q", status, stderr)
 	}
@@ -104,10 +104,12 @@ func TestSetupCheckWithNoStepPlansSSHOnce(t *testing.T) {
 	}
 }
 
-func TestSetupStepNamesAreTheArguments(t *testing.T) {
+func TestSetupStepNamesCompleteOnly(t *testing.T) {
 	c := newMacApplyCmd(fakeProcess())
-	if want := []string{"ssh", "cable", "git", "ghostty", "zed", "cld", "zsh", "tunnel", "networks"}; !reflect.DeepEqual(c.ValidArgs, want) {
-		t.Errorf("ValidArgs = %q; want %q", c.ValidArgs, want)
+	got, _ := c.GetFlagCompletionFunc("only")
+	names, _ := got(c, nil, "")
+	if want := []string{"ssh", "cable", "git", "ghostty", "zed", "cld", "zsh", "tunnel", "networks"}; !reflect.DeepEqual(names, want) {
+		t.Errorf("--only completes %q; want %q", names, want)
 	}
 }
 

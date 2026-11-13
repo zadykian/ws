@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/fs"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -77,18 +78,21 @@ func macOf(p process, c conf.Conf, m effect.Machine, out effect.Out, text io.Wri
 // newMacApplyCmd returns ws mac apply.
 func newMacApplyCmd(p process) *cobra.Command {
 	var check bool
+	var only []string
 	names := setup.Names()
 	c := &cobra.Command{
-		Use:   "apply [STEP]",
+		Use:   "apply",
 		Short: "set the Mac up from mac.conf",
 		Long: "It runs the steps it names, from mac.conf, in this order: " + strings.Join(names, ", ") + ". " +
-			"With no STEP, it runs every step, and ssh again, whose plan is empty unless cld " +
+			"With no --only, it runs every step, and ssh again, whose plan is empty unless cld " +
 			"changed ssh's file. It asks sudo where it needs root.",
-		Args:      cobra.MatchAll(cobra.MaximumNArgs(1), cobra.OnlyValidArgs),
-		ValidArgs: names,
-		RunE:      func(c *cobra.Command, args []string) error { return runMacApply(c, p, args, check) },
+		Args: cobra.NoArgs,
+		RunE: func(c *cobra.Command, _ []string) error { return runMacApply(c, p, only, check) },
 	}
-	c.Flags().BoolVar(&check, "check", false, "print each change and make none")
+	f := c.Flags()
+	f.BoolVar(&check, "check", false, "print each change and make none")
+	f.StringSliceVar(&only, "only", nil, "run the named steps alone, as a list or by repeating the flag")
+	_ = c.RegisterFlagCompletionFunc("only", cobra.FixedCompletions(names, cobra.ShellCompDirectiveNoFileComp))
 	return c
 }
 
@@ -125,16 +129,20 @@ func loadMacConf(p process) (settings conf.Conf, err error) {
 // setupRun runs ws mac apply's steps on the effects given to it. It names no step in its errors.
 type setupRun func(ctx context.Context, m effect.Machine, out effect.Out, text io.Writer, o step.Options) error
 
-// runMacApply runs the steps that args name, or every step, from mac.conf. Under check it prints
+// runMacApply runs the steps that only names, or every step, from mac.conf. Under check it prints
 // each change and makes none.
-func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
+func runMacApply(c *cobra.Command, p process, only []string, check bool) error {
+	if c.Flags().Changed("only") && len(only) == 0 {
+		return usageError{errors.New("--only names no step")}
+	}
+	for _, name := range only {
+		if !slices.Contains(setup.Names(), name) {
+			return usageError{fmt.Errorf("no step is named %q", name)}
+		}
+	}
 	settings, err := loadMacConf(p)
 	if err != nil {
 		return err
-	}
-	var only string
-	if len(args) == 1 {
-		only = args[0]
 	}
 	var run setupRun = func(ctx context.Context, m effect.Machine, out effect.Out, text io.Writer, o step.Options) error {
 		_, err := macOf(p, settings, m, out, text).Run(ctx, setup.Options{Options: o, Only: only})
@@ -144,7 +152,7 @@ func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
 		o := setup.Options{Options: step.Options{Check: check}, Only: only}
 		return tui.NewGroup("", macOf(p, settings, nil, nil, nil).Rows(o))
 	}
-	if opensList(c, p, len(args) == 1) {
+	if opensList(c, p, len(only) > 0) {
 		chosen, ok, err := pickSetup(c, p, rowsOf(true), run)
 		if err != nil || !ok {
 			return err
