@@ -1,4 +1,5 @@
-package signoz
+// Package dashboards keeps the dashboards of a list in SigNoz, from the files embedded here.
+package dashboards
 
 import (
 	"embed"

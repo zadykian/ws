@@ -1,4 +1,4 @@
-package signoz
+package dashboards
 
 import (
 	"encoding/json"

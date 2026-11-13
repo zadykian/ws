@@ -89,4 +89,4 @@ steps, and each role's page in `docs/` says what it sets up.
   hand: change `casting.yaml` and forge again ([The compose files](../../docs/signoz.md#the-compose-files)).
 - The dashboards' files are kept as SigNoz's API returns them, so that the step can compare the
   two. After a change of SigNoz's image, refresh them and commit them with the casting
-  ([The dashboards](../../roles/server/ubuntu/signoz/dashboards/README.md#refreshing-them)).
+  ([The dashboards](../../roles/server/ubuntu/signoz/internal/dashboards/dashboards/README.md#refreshing-them)).
