@@ -5,8 +5,10 @@ import (
 	"net/netip"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/settings"
 	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
@@ -79,5 +81,45 @@ func TestWriteStateNone(t *testing.T) {
 	r.writeState(context.Background())
 	if got, _ := tunnel.ParseState(string(r.m.Files[r.Paths.State])); got.Tier != tunnel.TierNone || got.Endpoint != "" {
 		t.Errorf("state = %+v, want tier none and no endpoint", got)
+	}
+}
+
+func TestAllowCountsTheOtherServersEndpoints(t *testing.T) {
+	r := newRig("")
+	r.m.table["dscacheutil -q host -a name lab.example.org"] = effecttest.Result{Out: []byte("ip_address: 172.16.4.4\n")}
+	r.set.Routes = []netip.Prefix{lan, far}
+	r.set.Others = []settings.Other{
+		{Name: "lab", Conf: tunnel.Conf{LANServer: inLAN, Remote: "lab.example.org"}},
+		{Name: "none"},
+	}
+	r.otherEnds(context.Background())
+	if want := []netip.Addr{inLAN, netip.MustParseAddr("172.16.4.4")}; !slices.Equal(r.elsewhere, want) {
+		t.Fatalf("elsewhere = %v, want %v", r.elsewhere, want)
+	}
+	got := r.allow(nil)
+	if len(got.Want) != 0 || !slices.Equal(got.Out, []netip.Prefix{lan, far}) {
+		t.Errorf("Want = %v, Out = %v, want both left out", got.Want, got.Out)
+	}
+	if len(r.lines()) != 2 {
+		t.Errorf("log = %q, want each network named once", r.lines())
+	}
+}
+
+func TestChooseCountsTheOtherServersEndpointsAtTheStartOfARound(t *testing.T) {
+	r := newRig(confAll)
+	r.CheckEvery = time.Hour
+	r.m.table["ifconfig"] = effecttest.Result{Out: []byte(ifaces)}
+	r.m.table["dscacheutil -q host -a name ws.example.org"] = effecttest.Result{Out: []byte("ip_address: 203.0.113.9\n")}
+	r.m.Files["/etc/lab/tunnel.conf"] = []byte("WS_PUBLIC_KEY=" + peerKey + "\nWS_LAN_ADDRESS=192.168.7.7\n")
+	r.m.table["ls -1p /etc"] = effecttest.Result{Out: []byte("lab/\nws-tunnel/\n")}
+	r.Paths.Root = "/etc"
+	if err := r.start(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.play(Check); err != nil {
+		t.Fatal(err)
+	}
+	if want := []netip.Addr{netip.MustParseAddr("192.168.7.7")}; !slices.Equal(r.elsewhere, want) {
+		t.Errorf("elsewhere = %v, want %v", r.elsewhere, want)
 	}
 }
