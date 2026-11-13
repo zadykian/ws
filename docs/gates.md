@@ -26,7 +26,8 @@ check files take `FILES`, as in `make vale FILES=README.md`:
 - `gitleaks`: every commit, for secrets, or those that `LOG_OPTS` picks with git log's options;
 - `gofmt`, `govet`, `golangci-lint`, `govulncheck` and `gotest`: the Go module at the root.
   `gofmt` fails where `gofmt -l` lists a file, and `golangci-lint` runs a strict set of linters
-  (`.golangci.yml`). A finding is justified with `//nolint:NAME // reason` alone.
+  (`.golangci.yml`). Its depguard lists, one a layer, fail an import across ws's layers and say
+  why. A finding is justified with `//nolint:NAME // reason` alone.
   `govulncheck` is the module's `tool` directive, so go.mod pins it. `gotest` runs
   `go test -race -count=1 ./...`, and cgo is on for the race detector alone, as ws builds with
   `CGO_ENABLED=0`. `LAZYGIT_SCHEMA` names lazygit's config schema, for

@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/resource"
-	maczed "github.com/zadykian/ws/roles/client/macos/zed"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools"
 )
 
@@ -28,8 +27,12 @@ func sharedFiles(t *testing.T) (fresh, zed, macZed map[string]any) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	macText, err := os.ReadFile("../../../client/macos/zed/files/global_settings.json")
+	if err != nil {
+		t.Fatal(err)
+	}
 	fresh, _ = load(t)
-	for data, out := range map[string]*map[string]any{string(zedText): &zed, string(maczed.Settings): &macZed} {
+	for data, out := range map[string]*map[string]any{string(zedText): &zed, string(macText): &macZed} {
 		if err := json.Unmarshal(withoutComments([]byte(data)), out); err != nil {
 			t.Fatal(err)
 		}

@@ -10,7 +10,8 @@ import (
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
-	"github.com/zadykian/ws/roles/server/ubuntu"
+	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
+	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 )
 
 func queueOf(p enginecli.Env) []tui.Stage {
@@ -62,7 +63,9 @@ func TestWizardQueueNestsWhatItsStagesRun(t *testing.T) {
 		t.Errorf("ws client macos apply holds %+v, want its steps by its name", nested)
 	}
 	run := stageOf(t, queue, "ws's run").Nested
-	if len(run) != len(ubuntu.Names()) || run[0].Name != ubuntu.Names()[0] || len(run[0].Steps) != 0 {
-		t.Errorf("ws's run holds %+v, want each role unread", run)
+	want := ubuntucli.NestedRows((&stages.WsRun{}).Name())
+	same := func(a, b tui.Group) bool { return a.Name == b.Name && slices.Equal(a.Steps, b.Steps) }
+	if len(want) == 0 || !slices.EqualFunc(run, want, same) {
+		t.Errorf("ws's run holds %+v, want the server cli's rows %+v", run, want)
 	}
 }

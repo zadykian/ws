@@ -4,9 +4,8 @@ package sshcfg
 
 import (
 	"fmt"
+	"net/netip"
 	"strings"
-
-	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 // Header starts config.d/ws's first line, by which a run knows a file for its own.
@@ -15,6 +14,8 @@ const Header = "# Written by ws client macos apply"
 // Inputs are what config.d/ws's text depends on.
 type Inputs struct {
 	User string
+	// Server is the tunnel's end, ws's address on it.
+	Server netip.Addr
 	// CldTabs is whether ssh's hosts start cld's tab restorer.
 	CldTabs bool
 	// Patterns are the IgnoreUnknown patterns, joined by commas.
@@ -45,7 +46,7 @@ Host ws
     User %s
     HostKeyAlias ws
 %s    ServerAliveInterval 30
-`, Header, in.Patterns, tunnel.Server, in.User, identityLines(in))
+`, Header, in.Patterns, in.Server, in.User, identityLines(in))
 	if in.CldTabs {
 		b.WriteString(cldLines)
 	}

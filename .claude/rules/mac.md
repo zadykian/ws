@@ -45,4 +45,5 @@ The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `rol
   group of commands exists on the systems where it runs. `clientCmd`, over macos/cli's `Command`, is
   built everywhere and tested on Linux, and `groups` lists it in a `//go:build darwin` file
   ([groups_macos.go](../../cmd/groups_macos.go)). Commands take what they need from the
-  process through `cli.Env`, which tests build from fakes with `clitest`.
+  process through `cli.Env`, which tests build from fakes with `clitest`. depguard keeps cobra and
+  pflag in `cmd`, the `cli` packages and `tools/` ([.golangci.yml](../../.golangci.yml)).

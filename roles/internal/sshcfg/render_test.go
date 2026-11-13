@@ -1,6 +1,7 @@
 package sshcfg_test
 
 import (
+	"net/netip"
 	"strings"
 	"testing"
 
@@ -8,7 +9,10 @@ import (
 )
 
 func inputs() sshcfg.Inputs {
-	return sshcfg.Inputs{User: "me", Patterns: "UseKeychain", IdentityPub: "~/.ssh/id_ed25519.pub"}
+	return sshcfg.Inputs{
+		User: "me", Server: netip.MustParseAddr("10.99.0.1"), Patterns: "UseKeychain",
+		IdentityPub: "~/.ssh/id_ed25519.pub",
+	}
 }
 
 func TestConfigHoldsOneHostAtTheTunnelsEnd(t *testing.T) {
