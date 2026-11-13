@@ -123,9 +123,9 @@ Where `~/.ssh/config` is a link, as a dotfiles manager makes it, the script read
 to. It stops where the line is missing there, rather than replace the link with a file, and the
 report shows the file as a conflict. Where `~/.ssh/config.d` is a link, the script warns as it
 writes `config.d/ws` there. It stops where `config.d/ws` is a file it did not write, rather than
-replace it. It warns of a `Host` or `Match` of `~/.ssh/config`'s own for `ws`, whose settings come
-after those of `config.d/ws`. Remove an older `Host ws` there, whose `IdentityFile` would add a key
-to ws's.
+replace it. It stops where a `Host` or `Match` of `~/.ssh/config`'s own names a server, whose
+settings would come after those of `config.d/ws`: remove it, as its `IdentityFile` would add a key
+to ws's. The wizard refuses such a name when it asks the server's name.
 
 ssh keeps the first `IgnoreUnknown` it reads too. `config.d/ws` needs one for the file key's
 `UseKeychain`, which only Apple's ssh knows, and keeps it with an agent's key. So it carries the
