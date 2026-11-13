@@ -1,4 +1,5 @@
-package tui
+// Package pick draws the list that a run is chosen from, over a scan.
+package pick
 
 import (
 	"context"
@@ -188,7 +189,7 @@ func (s pickScreen) notes() []widget.Line {
 
 // Pick draws the list of groups over scan, a run with --check, and returns what the maintainer
 // chose: a Choice with no steps where they left. Ctrl-C ends it as Cut says, and no stop is asked.
-func Pick(ctx context.Context, c Config, title string, groups []list.Group, scan Work) (Choice, error) {
+func Pick(ctx context.Context, c run.Config, title string, groups []list.Group, scan run.Work) (Choice, error) {
 	picks := make(chan Choice, 1)
 	return run.Await(ctx, c, newPickScreen(title, c.Theme, groups, picks), picks, scan)
 }

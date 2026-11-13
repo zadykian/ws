@@ -226,14 +226,6 @@ func TestStateKeyWaitsForTheScanAndTheFilter(t *testing.T) {
 	}
 }
 
-// A list of steps alone has no machine to read, and no such button.
-func TestStateKeyIsAQueuesAlone(t *testing.T) {
-	s := pickSent(newPickScreen("ws", testTheme, nil, make(chan Choice, 1)), list.ScannedMsg{}, press('s'))
-	if s.Left {
-		t.Error("s left a list of steps")
-	}
-}
-
 // What the maintainer chose comes back: a new scan would choose the boxes again.
 func TestReopenKeepsTheBoxesAndRunsNoScan(t *testing.T) {
 	s := queueSent(testQueueScreen(), list.ScannedMsg{Problem: "no network"}, press('n'), press(' '))

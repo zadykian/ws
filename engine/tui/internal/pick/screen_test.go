@@ -1,4 +1,4 @@
-package tui
+package pick
 
 import (
 	"bytes"
@@ -14,6 +14,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui/internal/list"
+	"github.com/zadykian/ws/engine/tui/internal/run"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -193,7 +194,7 @@ func TestPickLeavesNothingPastTheScreen(t *testing.T) {
 	var out bytes.Buffer
 	c := noKeys(&out)
 	c.In = strings.NewReader("q")
-	got, err := Pick(t.Context(), c, "ws", nil, func(ctx context.Context, b *Bridge) error {
+	got, err := Pick(t.Context(), c, "ws", nil, func(ctx context.Context, b *run.Bridge) error {
 		b.Warn("a line of the scan")
 		b.ByHand("a line of the scan")
 		return waitForCtx(ctx, b)
@@ -212,5 +213,13 @@ func TestPickEndsInTheCutOfCtrlC(t *testing.T) {
 	c.In = strings.NewReader("\x03")
 	if _, err := Pick(t.Context(), c, "ws", nil, waitForCtx); !errors.Is(err, testCut(syscall.SIGINT)) {
 		t.Errorf("Pick: %v", err)
+	}
+}
+
+// A list of steps alone has no machine to read, and no such button.
+func TestStateKeyIsAQueuesAlone(t *testing.T) {
+	s := pickSent(newPickScreen("ws", testTheme, nil, make(chan Choice, 1)), list.ScannedMsg{}, press('s'))
+	if s.Left {
+		t.Error("s left a list of steps")
 	}
 }

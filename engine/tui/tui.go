@@ -11,6 +11,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui/internal/configure"
 	"github.com/zadykian/ws/engine/tui/internal/list"
+	"github.com/zadykian/ws/engine/tui/internal/pick"
 	"github.com/zadykian/ws/engine/tui/internal/run"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
@@ -76,4 +77,13 @@ type Sheet = configure.Sheet
 // here, off the screen's goroutine, and what they print stays on the screen.
 func Configure(ctx context.Context, c Config, title string, sheets ...Sheet) error {
 	return configure.Configure(ctx, c, title, sheets...)
+}
+
+// A Choice is what a flat list leaves to a run. No steps says that nothing runs.
+type Choice = pick.Choice
+
+// Pick draws the list of groups over scan, a run with --check, and returns what the maintainer
+// chose: a Choice with no steps where they left. Ctrl-C ends it as Cut says, and no stop is asked.
+func Pick(ctx context.Context, c Config, title string, groups []Group, scan Work) (Choice, error) {
+	return pick.Pick(ctx, c, title, groups, scan)
 }
