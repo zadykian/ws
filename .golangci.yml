@@ -36,7 +36,7 @@ linters:
             - github.com/zadykian/ws/engine/core/
           deny:
             - pkg: github.com/zadykian/ws/
-              desc: engine/core imports engine/core alone, as other modules build on it
+              desc: engine/core imports engine/core alone, as the layer below the sides
         engine:
           files:
             - "${base-path}/engine/**"
