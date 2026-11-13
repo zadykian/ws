@@ -16,8 +16,6 @@ import (
 
 const (
 	label = "com.github.zadykian.ws-tunnel"
-	// wsEnd is ws's end of the tunnel.
-	wsEnd = "10.99.0.1"
 )
 
 // Tunnel is the stage of the keys' exchange of the WireGuard tunnel between the Mac and ws. The
@@ -73,9 +71,10 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 		t.Out.Say("%s: after ws client macos apply", stage.Tunnel)
 		return step.Plan{}, nil
 	}
+	end := c.TunnelSlot().Server()
 	s, ok := t.Ws.Status(ctx)
 	if ok && c.PublicKey != "" && s.WgKey == c.PublicKey && s.Peered && mac != "" && s.MacKey == mac &&
-		t.loaded(ctx) && (t.SSH.First() != "" || t.none || (t.port(ctx) && t.via(ctx))) {
+		t.loaded(ctx) && (t.SSH.First() != "" || t.none || (t.port(ctx, end) && t.via(ctx, end))) {
 		return step.Plan{}, nil
 	}
 	var ch []step.Change
