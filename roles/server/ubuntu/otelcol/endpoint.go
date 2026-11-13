@@ -1,6 +1,7 @@
 // Package otelcol is the otelcol role as Go steps. They set up node_exporter, and the
 // OpenTelemetry Collector with its configuration. The collector feeds SigNoz and, where
-// ~/.secrets/env names one, a remote collector for claude's metrics. See docs/otelcol.md.
+// ~/.secrets/env names one, a remote collector for claude's metrics. See
+// roles/server/ubuntu/otelcol/README.md.
 package otelcol
 
 import (

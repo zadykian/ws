@@ -55,8 +55,9 @@ func (s *Sequence) Run() error {
 // ways asks the machine, then the ways to it (docs/mac-targets.md). A cloud VM has its name or
 // address and its SSH port alone, and a VM on the Mac the Mac's network for its VMs and its address
 // there. On the LAN, ws's address is asked only with a LAN, and the router's port only with its
-// name. They default to the router's lease where the LAN holds it, and its forward (docs/router.md).
-// A cloud VM's name and port, and each address where asked, need a value.
+// name. They default to the router's lease where the LAN holds it, and its forward
+// (roles/server/ubuntu/network/router.md). A cloud VM's name and port, and each address where
+// asked, need a value.
 func (s *Sequence) ways() error {
 	target, err := s.get(Question{"WS_TARGET", "The machine ws runs on: lan, cloud or mac-vm", "lan",
 		"WS_TARGET needs lan, cloud or mac-vm"})

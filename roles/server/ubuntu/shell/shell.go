@@ -1,5 +1,5 @@
 // Package shell is the shell role as Go steps: ws_user's bash, git, the key that signs commits,
-// ~/.secrets/env, git's tokens and the clones. See docs/shell.md.
+// ~/.secrets/env, git's tokens and the clones. See roles/server/ubuntu/shell/README.md.
 package shell
 
 import (

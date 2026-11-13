@@ -1,5 +1,5 @@
 // Package fresh is the fresh role as Go steps: the editor from its release's .deb, the wrapper that
-// carries its keys through tmux, and its config and theme. See docs/fresh.md.
+// carries its keys through tmux, and its config and theme. See roles/server/ubuntu/fresh/README.md.
 package fresh
 
 import (
@@ -21,7 +21,8 @@ const (
 	configStep  = "Fresh config"
 )
 
-// wrapperPath comes before the .deb's /usr/bin/fresh on every PATH of Ubuntu's, as docs/fresh.md says.
+// wrapperPath comes before the .deb's /usr/bin/fresh on every PATH of Ubuntu's, as
+// roles/server/ubuntu/fresh/README.md says.
 const wrapperPath = "/usr/local/bin/fresh"
 
 // templates holds config.json.tmpl, which the role fills with the user's home.

@@ -3,7 +3,7 @@
 # stops. Its log goes to the journal.
 [Unit]
 Description=Fan curves for the board's headers
-Documentation=https://github.com/zadykian/ws/blob/main/docs/fans.md
+Documentation=https://github.com/zadykian/ws/blob/main/roles/server/ubuntu/fans/README.md
 After=systemd-modules-load.service
 
 [Service]

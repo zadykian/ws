@@ -55,7 +55,7 @@ var all = []entry{
 	{"signoz", signoz.Steps},
 	{"otelcol", otelcol.Steps},
 	{"fresh", fresh.Steps},
-	// zed is described in `docs/zed.md`.
+	// zed is described in `roles/server/ubuntu/zed/README.md`.
 	{"zed", zed.Steps},
 }
 

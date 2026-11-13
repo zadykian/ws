@@ -21,7 +21,7 @@ func (r MacReach) Hand(h *guided.Hand, s session.Status) {
 	session.Fans(h, s)
 	if c.Target != "cloud" && s.OutboundOff {
 		h.Add("ws's outbound table: off, as ws's /etc/ws/host_vars.yml names security_outbound: false, as for " +
-			"a cloud VM; remove that line, then run the wizard with --update (docs/security.md, Outbound).")
+			"a cloud VM; remove that line, then run the wizard with --update (roles/server/ubuntu/security/README.md, Outbound).")
 	}
 	h.Add("macOS's local network: where it asks whether Ghostty, Zed or another app may find " +
 		"devices there, allow it (docs/mac.md, ssh's hosts).")
@@ -35,10 +35,10 @@ func (r MacReach) Hand(h *guided.Hand, s session.Status) {
 		if c.LANAddress != "" {
 			lease += " at " + c.LANAddress
 		}
-		h.Add("ws's lease: %s, as docs/router.md has it, as this run reached ws at %s.", lease, first)
+		h.Add("ws's lease: %s, as roles/server/ubuntu/network/router.md has it, as this run reached ws at %s.", lease, first)
 	}
 	if c.Remote != "" {
-		h.Add("The router's forwards to ws, UDP %s and TCP %s, for %s, as docs/router.md has them.",
+		h.Add("The router's forwards to ws, UDP %s and TCP %s, for %s, as roles/server/ubuntu/network/router.md has them.",
 			cmp.Or(c.Port, "51820"), cmp.Or(c.RemotePort, "22022"), c.Remote)
 	}
 }
