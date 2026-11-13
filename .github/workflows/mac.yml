@@ -25,9 +25,9 @@ jobs:
   # run screen. ssh -G must give ws the tunnel's end. A stand-in ws is a second wireguard-go on the
   # runner, with the Mac's key as its peer. It answers the tunnel's handshakes on loopback, as the
   # LAN (127.0.0.0/8) and as WS_REMOTE (localhost). The daemon's status must show each in turn.
-  # Last, ws client macos tunnel routes and ws client macos resolver, then mac.conf's. A stand-in
-  # that makes no utun fails the job, as the daemon's device makes one too. Gated as ci.yml's
-  # playbook job.
+  # Last, ws client macos tunnel routes --server ws and ws client macos resolver, then the keys'. A
+  # stand-in that makes no utun fails the job, as the daemon's device makes one too. Gated as
+  # ci.yml's playbook job.
   mac:
     if: >-
       (github.event.action != 'opened' || !github.event.pull_request.draft) &&
