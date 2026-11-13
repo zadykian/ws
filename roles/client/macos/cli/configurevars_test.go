@@ -64,7 +64,7 @@ type farWs struct {
 }
 
 func newFarWs(m *effecttest.Machine, file string) farWs {
-	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22\n")
+	writeConfs(m, "", "WS_USER=ada\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22\n")
 	return farWs{Machine: m, file: file, ops: make(chan []string, 64)}
 }
 

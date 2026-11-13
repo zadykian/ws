@@ -23,15 +23,21 @@ func TestConfCommand(t *testing.T) {
 		{"missing", []string{"/none"}, "", 1, "", "ws client macos conf: /none is missing: roles/client/macos/README.md"},
 		{"refused", []string{"/bad"}, "", 1, "", "ws client macos conf: /bad, line 2: unknown key WS_NOPE"},
 		{"lines", []string{"--lines", "/pair"}, "", 0, "WS_USER='zadykian'\nWS_TARGET='lan'\nWS_PUBLIC_KEY=''\nWS_LAN='10.88.0.0/24'\n", ""},
-		{"pair", []string{"/pair"}, "", 1, "", "WS_LAN and WS_LAN_ADDRESS go together"},
+		{"pair", []string{"/pairs/mac.conf"}, "", 1, "", "WS_LAN and WS_LAN_ADDRESS go together"},
 		{"two files", []string{"a", "b"}, "", 2, "", "ws client macos conf: accepts at most 1 arg(s), received 2"},
 	}
 	m := effecttest.NewMachine()
-	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\n")
-	m.Files["/e/mac.conf"] = []byte("WS_USER=eve\n")
-	m.Files["/a/mac.conf"] = []byte("WS_USER=amy\n")
+	m.Files["/h/.config/ws/mac.conf"] = []byte("")
+	m.Files["/h/.config/ws/servers/ws/server.conf"] = []byte("WS_USER=ada\n")
+	m.Files["/e/mac.conf"] = []byte("")
+	m.Files["/e/servers/ws/server.conf"] = []byte("WS_USER=eve\n")
+	m.Files["/a/mac.conf"] = []byte("")
+	m.Files["/a/servers/ws/server.conf"] = []byte("WS_USER=amy\n")
 	m.Files["/pair"] = []byte("WS_LAN=10.88.0.0/24\n")
-	m.Files["/bad"] = []byte("WS_USER=ada\nWS_NOPE=1\n")
+	m.Files["/pairs/mac.conf"] = []byte("")
+	m.Files["/pairs/servers/ws/server.conf"] = []byte("WS_LAN=10.88.0.0/24\n")
+	m.Files["/bad"] = []byte("WS_GIT_NAME=ada\nWS_NOPE=1\n")
+	m.Files["/servers/ws/server.conf"] = []byte("")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			env["WS_CONF"] = tt.wsConf
@@ -55,18 +61,11 @@ func TestConfReportsEachLineOfARefusedFile(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{})
 	m := effecttest.NewMachine()
 	m.Files["/bad"] = []byte("WS_NOPE=1\nWS_NOPE2=1\n")
+	m.Files["/servers/ws/server.conf"] = []byte("")
 	p.Machine = m
 	status, _, stderr := runWs(p, "", "client", "macos", "conf", "/bad")
 	want := "ws client macos conf: /bad, line 1: unknown key WS_NOPE\nws client macos conf: /bad, line 2: unknown key WS_NOPE2\n"
 	if status != 1 || stderr != want {
 		t.Errorf("status = %d, stderr = %q; want 1, %q", status, stderr, want)
-	}
-}
-
-func TestConfPath(t *testing.T) {
-	for conf, want := range map[string]string{"": "/h/.config/ws/mac.conf", "/x/m.conf": "/x/m.conf", "m.conf": "/w/m.conf"} {
-		if got := confPath(func(k string) string { return map[string]string{"HOME": "/h", "WS_CONF": conf}[k] }, "/w"); got != want {
-			t.Errorf("WS_CONF=%q: confPath = %q, want %q", conf, got, want)
-		}
 	}
 }
