@@ -142,31 +142,12 @@
   {
     "context": "Editor && mode == full",
     "bindings": {
-      "ctrl-shift-enter": "editor::NewlineBelow",
-      // Zed offers snippets among completions
-      "ctrl-k x": "editor::ShowCompletions",
-      "ctrl-k ctrl-x": "editor::ShowCompletions",
-      "ctrl-shift-delete": "editor::UnwrapSyntaxNode",
-      "ctrl-alt-}": "editor::SelectToEndOfLargerSyntaxNode",
-      "ctrl-alt-{": "editor::SelectToStartOfLargerSyntaxNode",
       "alt-}": "editor::SelectEnclosingSymbol",
-      "ctrl-{": "editor::SelectEnclosingSymbol",
       // One kind of completion
       "alt-shift-space": "editor::ShowCompletions",
-      // Ctrl+Space is Zed's, but macOS's input sources may take it
-      "ctrl-j": "editor::ShowCompletions",
       // Words of the buffer; takes Alt+/ from which-key in the editor
       "alt-/": "editor::ShowWordCompletions",
-      // Replaces Zed's word completion on this key
-      "ctrl-shift-space": "editor::ShowSignatureHelp",
-      "ctrl-alt-space": "editor::ShowCompletions",
-      "ctrl-k t": "call_hierarchy::ShowIncomingCalls",
-      "ctrl-k ctrl-t": "call_hierarchy::ShowIncomingCalls",
-      // path:line, not the symbol's name
-      "ctrl-alt-shift-c": "editor::CopyFileLocation",
       "alt-{": "editor::MoveToStartOfLargerSyntaxNode",
-      // In the full editor, so the inline assistant keeps Ctrl+] for its next alternative
-      "ctrl-]": "editor::MoveToEnclosingBracket",
       // Where the server gives a docs link
       "shift-f1": "editor::OpenDocs",
       // Replaces Zed's Shift+F12, which goes to implementations
@@ -174,53 +155,12 @@
       "shift-f12": "editor::FindAllReferences",
       // F12 stays Zed's too
       "alt-d": "editor::GoToDefinition",
-      "ctrl-alt-d": "editor::GoToImplementation",
-      "ctrl-k n": "editor::GoToNextBookmark",
-      "ctrl-k ctrl-n": "editor::GoToNextBookmark",
-      // Find next's Shift+Ctrl+Down goes here
-      "ctrl-shift-down": "editor::GoToNextDocumentHighlight",
-      "ctrl-shift-up": "editor::GoToPreviousDocumentHighlight",
-      "ctrl-k p": "editor::GoToPreviousBookmark",
-      "ctrl-k ctrl-p": "editor::GoToPreviousBookmark",
       // gopls lists a method's interfaces too; C# goes down alone
       "alt-home": "editor::GoToImplementation",
-      "ctrl-shift-f11": "editor::GoToTypeDefinition",
-      // The file's own changes, not across files
-      "ctrl-shift-backspace": "editor::GoToPreviousChange",
-      "ctrl-k i": "editor::Hover",
-      "ctrl-k ctrl-i": "editor::Hover",
-      "ctrl-shift-f1": "editor::Hover",
-      // Selects the symbol, then collapses to its start
-      "ctrl-[": ["action::Sequence", ["editor::SelectEnclosingSymbol", "editor::MoveLeft"]],
-      // No settings dialog
-      "ctrl-alt-shift-f12": "editor::FindAllReferences",
-      // A label, not a mnemonic key
-      "ctrl-f11": "editor::ToggleBookmarkWithLabel",
       "alt-\\": "outline::Toggle",
-      // The inline assistant, whose Ctrl+Enter is a code action here
-      "ctrl-/": "assistant::InlineAssist",
       // The server's code actions, of every kind
       // Alt+Insert: a Mac keyboard has no Insert
-      "ctrl-r s": "editor::ToggleCodeActions",
-      "ctrl-r m": "editor::ToggleCodeActions",
-      "ctrl-alt-shift-f": "editor::Format",
-      "ctrl-shift-i": "editor::ToggleCodeActions",
-      "ctrl-alt-c": "editor::ToggleCodeActions",
-      "ctrl-t": "editor::ToggleCodeActions",
-      "ctrl-alt-enter": "editor::Format",
-      "ctrl-k f": "editor::Format",
-      "ctrl-k ctrl-f": "editor::Format",
-      "ctrl-k d": "editor::Format",
-      "ctrl-k ctrl-d": "editor::Format",
-      // Zed's F2 stays too
-      "ctrl-r r": "editor::Rename",
-      // The hover shows the diagnostic
-      "ctrl-e": "editor::Hover",
-      // Shift+Enter and Ctrl+Enter only in the full editor
       "alt-enter": "editor::ToggleCodeActions",
-      "shift-enter": "editor::ToggleCodeActions",
-      "ctrl-enter": "editor::ToggleCodeActions",
-      "ctrl-alt-shift-l": "editor::Format",
       "ctrl-m a": "editor::FoldAll",
       "ctrl-m ctrl-a": "editor::FoldAll",
       "ctrl-m s": "editor::Fold",
