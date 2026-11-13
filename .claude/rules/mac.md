@@ -41,8 +41,8 @@ The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `rol
 - No cgo: ws builds with `CGO_ENABLED=0`. The race detector's cgo is the tests' alone
   ([Makefile](../../Makefile)).
 - ws is cobra's: a command parses no flag or argument by hand and holds no usage text.
-  `execute` runs the root, names the command in each error, and returns 2 for a usage error. A
+  `cli.Execute` runs the root, names the command in each error, and returns 2 for a usage error. A
   group of commands exists on the systems where it runs. `newMacCmd` is built everywhere and tested
   on Linux, and `groups` lists it in a `//go:build darwin` file
   ([groups_darwin.go](../../cmd/groups_darwin.go)). Commands take what they need from the
-  process through `process`, which tests build from fakes.
+  process through `cli.Env`, which tests build from fakes with `clitest`.
