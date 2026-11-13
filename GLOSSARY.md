@@ -85,7 +85,8 @@ then up to 11 lower-case letters, digits and `-`.
 
 **slot**:
 A server's number from 0 to 15, kept as `WS_SLOT` in its file. The wizard writes 0 in a file that
-lacks it.
+lacks it. Slot N's tunnel is `10.99.N.0/24`, inside `10.99.0.0/20`, with the server at `.1` and
+the Mac at `.2`.
 
 **ws's directory**:
 `~/.config/ws` on the Mac, mode 700, which holds `mac.conf`, `servers/` and the files that git, zsh

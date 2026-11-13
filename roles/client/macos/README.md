@@ -217,10 +217,10 @@ apply` keeps the public key in `~/.config/ws/tunnel.pub`, which the wizard reads
 `tunnel.conf` from `mac.conf`, so the daemon reads no file the user can write. In System Settings ›
 General › Login Items & Extensions, its "Allow in the Background" must stay on.
 
-The tunnel's end on the Mac is `10.99.0.2`, on a utun of wireguard-go's, and ws's is `10.99.0.1`.
-The daemon fixes both, and `mac.conf` sets neither. So a run of the `wireguard` role stops where its
-variables give either end another address ([The tunnel](../../server/ubuntu/wireguard/README.md#the-tunnel)). The daemon
-points the Mac's end at the first of these that answers, each on UDP 51820:
+The tunnel's end on the Mac is `10.99.0.2`, on a utun of wireguard-go's, and ws's is `10.99.0.1`, at
+slot 0. `WS_SLOT` N gives `10.99.N.2` and `10.99.N.1`, and a moved slot restarts the daemon. So a
+run of the `wireguard` role stops where its variables give either end another address ([The tunnel](../../server/ubuntu/wireguard/README.md#the-tunnel)).
+The daemon points the Mac's end at the first of these that answers, each on UDP 51820:
 
 - the cable, `10.77.0.1`, where one of the Mac's addresses lies in `10.77.0.0/30`;
 - the LAN, `WS_LAN_ADDRESS`, where one lies in `WS_LAN`;
@@ -273,13 +273,13 @@ domain's names to nameservers behind it. It calls `ws`, which changes only what 
   `/etc/ws-tunnel/routes.d/NAME` and has the daemon read them again. The daemon adds them to the
   peer's AllowedIPs and routes them into its utun, without closing a connection. It leaves out for
   the time being one that holds the endpoint in use, or one that holds a way's endpoint while none
-  answers. `NAME` is of `a-z`, `0-9` and `-`, `mac-conf` aside. A network that overlaps the tunnel's
-  `10.99.0.0/24` or the cable's `10.77.0.0/30`, as `0.0.0.0/0` does, is refused. As in `ws client
-  macos tunnel routes example 198.51.100.0/24`. - `ws client macos resolver [--check] DOMAIN
-  ADDRESS...`, which writes `/etc/resolver/DOMAIN`, with up to 3 nameservers, so that macOS asks
-  them for the domain's names (resolver(5)), and takes the file at once. - `ws client macos tunnel
-  loaded`, which says whether the daemon is loaded, so that the script can stop with "run ws client
-  macos apply first".
+  answers. `NAME` is of `a-z`, `0-9` and `-`, `mac-conf` aside. A network that overlaps the
+  tunnels' `10.99.0.0/20` or the cable's `10.77.0.0/30`, as `0.0.0.0/0` does, is refused. As in
+  `ws client macos tunnel routes example 198.51.100.0/24`. - `ws client macos resolver [--check]
+  DOMAIN ADDRESS...`, which writes `/etc/resolver/DOMAIN`, with up to 3 nameservers, so that macOS
+  asks them for the domain's names (resolver(5)), and takes the file at once. - `ws client macos
+  tunnel loaded`, which says whether the daemon is loaded, so that the script can stop with "run ws
+  client macos apply first".
 
 With no network or address, each removes its file, `ws client macos resolver` only a file it wrote.
 The files outlive the daemon. While the daemon is stopped, the routes go with its utun, and the
