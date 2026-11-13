@@ -21,54 +21,21 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
-// progOut prefixes a line with the path of the command that prints it, and says each warning once,
-// as a step plans again after it applies.
-type progOut struct {
-	effect.Out
-	prog string
-	seen map[string]bool
-}
-
-// Say prints the line after the prefix.
-func (o progOut) Say(format string, a ...any) {
-	o.Out.Say("%s: "+format, append([]any{o.prog}, a...)...)
-}
-
-// Observe prints a run's events as the runner's lines once did, but for the line that a step is
-// applying. The step's own lines follow that line: a plan under --check, what a step is behind,
-// and a left-out step's failed plan.
-func (o progOut) Observe(e step.Event) {
-	switch {
-	case e.Kind == step.Skipped && e.Err != nil:
-		o.Warn("left out: %v", e.Err)
-	case e.LeftOut:
-	case e.Kind == step.Planned && e.Check:
-		for _, c := range e.Changes {
-			o.sayChange(c)
-		}
-	case e.Kind == step.Skipped && e.After != "":
-		o.Say("%s: after %s", e.Step, e.After)
-	}
-}
-
-// sayChange prints a change under --check. ws client macos apply printed a diff as diff -u does,
-// with no prefix and no blank line after it, and said nothing of the backup of a file.
-func (o progOut) sayChange(c step.Change) {
+// macChange says the Mac's changes under --check. ws client macos apply printed a diff as diff -u
+// does, with no prefix and no blank line after it, and said nothing of the backup of a file.
+func macChange(c step.Change) (string, bool) {
 	switch c := c.(type) {
 	case macos.Write:
-		o.Out.Say("%s", strings.TrimSuffix(c.String(), "\n"))
+		return strings.TrimSuffix(c.String(), "\n"), true
 	case macos.Backup:
-	default:
-		o.Out.Say("%s: %v", o.prog, c)
+		return "", true
 	}
+	return "", false
 }
 
-func (o progOut) Warn(format string, a ...any) {
-	line := fmt.Sprintf(format, a...)
-	if !o.seen[line] {
-		o.seen[line] = true
-		o.Out.Say("%s: warning: %s", o.prog, line)
-	}
+// linesOf returns the lines that the command at path prints on out.
+func linesOf(out effect.Out, path string) engine.Lines {
+	return engine.Lines{Out: out, Prog: path, Seen: map[string]bool{}, Change: macChange}
 }
 
 // macOf returns the Mac's steps over the process's environment and the effects given to it.
@@ -149,7 +116,7 @@ func runMacApply(c *cobra.Command, p cli.Env, only []string, check bool) error {
 	}
 	var run setupRun = func(ctx context.Context, m effect.Machine, out effect.Out, text io.Writer, o step.Options) error {
 		_, err := macOf(p, settings, m, out, text).Run(ctx, macos.Options{Options: o, Only: only})
-		return unwrapStep(err)
+		return engine.Cause(err)
 	}
 	rowsOf := func(check bool) tui.Group {
 		o := macos.Options{Options: step.Options{Check: check}, Only: only}
@@ -166,7 +133,7 @@ func runMacApply(c *cobra.Command, p cli.Env, only []string, check bool) error {
 		return setupOnScreen(c, p, rowsOf(check), run, step.Options{Check: check})
 	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
-	out := progOut{term, c.CommandPath(), map[string]bool{}}
+	out := linesOf(term, c.CommandPath())
 	err = run(c.Context(), p.Machine, out, c.OutOrStdout(), step.Options{Observer: out, Check: check})
 	term.Flush()
 	return err
@@ -181,13 +148,4 @@ func setupOnScreen(c *cobra.Command, p cli.Env, rows tui.Group, run setupRun, o 
 		e := b.Effects()
 		return run(ctx, e.M, b, e.Text, b.Options(o))
 	})
-}
-
-// unwrapStep returns the error of a step, without the step and stage that the runner names before
-// it: the command names itself.
-func unwrapStep(err error) error {
-	if inner := errors.Unwrap(err); inner != nil {
-		return inner
-	}
-	return err
 }

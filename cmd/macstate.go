@@ -52,14 +52,14 @@ func runMacState(c *cobra.Command, p cli.Env, asJSON bool) error {
 		return tui.RunState(c.Context(), engine.ScreenConfig(cli.CallOf(c, p)), c.CommandPath(), macRead(p))
 	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
-	out := progOut{term, c.CommandPath(), map[string]bool{}}
+	out := linesOf(term, c.CommandPath())
 	reports, err := macOf(p, settings, p.Machine, out, nil).State(c.Context())
 	term.Flush()
 	if err != nil {
 		return err
 	}
 	if asJSON {
-		return writeJSON(c.OutOrStdout(), macDoc{Version: p.Version, Steps: reports})
+		return engine.WriteJSON(c.OutOrStdout(), macDoc{Version: p.Version, Steps: reports})
 	}
 	return writeMacState(c.OutOrStdout(), reports)
 }
@@ -82,7 +82,7 @@ func macRead(p cli.Env) tui.StateReader {
 func writeMacState(w io.Writer, reports []step.Report) error {
 	var b strings.Builder
 	for _, r := range reports {
-		writeReport(&b, r)
+		engine.WriteReport(&b, r)
 	}
 	_, err := io.WriteString(w, b.String())
 	return err

@@ -2,17 +2,12 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"io"
-	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/role"
-	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
@@ -58,7 +53,7 @@ func runState(c *cobra.Command, p cli.Env, opts applyOptions, asJSON bool) error
 		return tui.RunState(c.Context(), engine.ScreenConfig(cli.CallOf(c, p)), c.CommandPath(), func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
 			// The read takes the screen's effects as a run does, as the steps don't own the terminal under it.
 			states, err := role.State(ctx, onScreen(r.cfg, b), list)
-			return roleSections(states), err
+			return engine.RoleSections(states), err
 		})
 	}
 	states, err := role.State(c.Context(), r.cfg, list)
@@ -67,65 +62,7 @@ func runState(c *cobra.Command, p cli.Env, opts applyOptions, asJSON bool) error
 		return err
 	}
 	if asJSON {
-		return writeJSON(c.OutOrStdout(), role.StateDoc{Version: p.Version, Roles: states})
+		return engine.WriteJSON(c.OutOrStdout(), role.StateDoc{Version: p.Version, Roles: states})
 	}
-	return writeState(c.OutOrStdout(), states)
-}
-
-// roleSections turns the roles' reports into the state screen's sections.
-func roleSections(states []role.RoleState) []tui.StateSection {
-	sections := make([]tui.StateSection, len(states))
-	for i, s := range states {
-		sections[i] = tui.StateSection{Name: s.Role, Reports: s.Steps}
-	}
-	return sections
-}
-
-// writeJSON prints doc as indented JSON.
-func writeJSON(w io.Writer, doc any) error {
-	enc := json.NewEncoder(w)
-	enc.SetIndent("", "  ")
-	return enc.Encode(doc)
-}
-
-// writeState prints the roles' reports as text.
-func writeState(w io.Writer, states []role.RoleState) error {
-	var b strings.Builder
-	for _, s := range states {
-		fmt.Fprintf(&b, "%s\n", s.Role)
-		for _, r := range s.Steps {
-			writeReport(&b, r)
-		}
-	}
-	_, err := io.WriteString(w, b.String())
-	return err
-}
-
-// writeReport prints one step's items and changes, indented under the step.
-func writeReport(b *strings.Builder, r step.Report) {
-	fmt.Fprintf(b, "  %s\n", r.Step)
-	if r.After != "" {
-		fmt.Fprintf(b, "    not read: after %s\n", r.After)
-	}
-	for _, it := range r.Items {
-		fmt.Fprintf(b, "    %s %s: found %s, want %s\n", it.Kind, it.Name, it.Found, it.Want)
-		if it.Conflict != "" {
-			fmt.Fprintf(b, "      conflict: %s\n", it.Conflict)
-		}
-		if it.Diff != "" {
-			for line := range strings.SplitSeq(strings.TrimSuffix(it.Diff, "\n"), "\n") {
-				fmt.Fprintf(b, "      %s\n", line)
-			}
-		}
-	}
-	for _, ch := range r.Changes {
-		fmt.Fprintf(b, "    pending: %s\n", firstLine(ch.Text))
-	}
-}
-
-// firstLine returns the line that says what changes. The lines after it hold a file's diff, which
-// the item and --json show.
-func firstLine(text string) string {
-	line, _, _ := strings.Cut(text, "\n")
-	return line
+	return engine.WriteRoles(c.OutOrStdout(), states)
 }

@@ -109,7 +109,7 @@ type serverRun struct {
 	list   []role.Role
 	values values.Values
 	term   *effect.Terminal
-	out    progOut
+	out    engine.Lines
 }
 
 // prepareServer checks where the command runs, then loads the values and the secrets that the
@@ -130,7 +130,7 @@ func prepareServer(c *cobra.Command, p cli.Env, opts applyOptions) (serverRun, e
 		return serverRun{}, errors.New(why)
 	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
-	out := progOut{term, c.CommandPath(), map[string]bool{}}
+	out := linesOf(term, c.CommandPath())
 	v, err := values.Load(p.Machine, serverVars)
 	if err != nil {
 		return serverRun{}, err
@@ -173,9 +173,9 @@ func runApply(c *cobra.Command, p cli.Env, opts applyOptions, asJSON bool) error
 			return err
 		}
 	}
-	var events *jsonEvents
+	var events *engine.JSONEvents
 	if asJSON {
-		events = newJSONEvents(c.OutOrStdout(), r.out)
+		events = engine.NewJSONEvents(c.OutOrStdout(), r.out)
 		r.cfg.Observer = events
 	}
 	var changed []string
@@ -188,8 +188,8 @@ func runApply(c *cobra.Command, p cli.Env, opts applyOptions, asJSON bool) error
 	if err != nil {
 		return err
 	}
-	if events != nil && events.err != nil {
-		return events.err
+	if events != nil && events.Err() != nil {
+		return events.Err()
 	}
 	r.out.Say("%s", role.Summary(changed, r.cfg.Check))
 	return nil

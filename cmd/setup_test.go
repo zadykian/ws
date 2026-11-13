@@ -2,11 +2,11 @@ package cmd
 
 import (
 	"bytes"
-	"errors"
 	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
@@ -38,45 +38,16 @@ func TestSetupRefusesRoot(t *testing.T) {
 	}
 }
 
-func TestProgOutPrefixesLines(t *testing.T) {
-	out := progOut{Out: &effecttest.Out{}, prog: "ws client macos apply", seen: map[string]bool{}}
-	out.Say("wrote %s", "f")
-	out.Say("%s: %s", "Answers", "bad")
-	out.Warn("w %d", 1)
-	out.Warn("w %d", 1)
-	want := []string{
-		"say: ws client macos apply: wrote f", "say: ws client macos apply: Answers: bad", "say: ws client macos apply: warning: w 1",
-	}
-	if got := out.Out.(*effecttest.Out).Lines; !reflect.DeepEqual(got, want) {
-		t.Errorf("lines = %q, want %q", got, want)
+func TestMacChangeSaysADiffBareAndNoBackup(t *testing.T) {
+	out := &effecttest.Out{}
+	o := linesOf(out, "ws client macos apply")
+	plan := []step.Change{macos.Write{Path: "/f", After: []byte("a\n")}, macos.Backup{Path: "/f", To: "/f.~"}}
+	o.Observe(step.Event{Kind: step.Planned, Step: "ssh", Check: true, Changes: plan})
+	want := []string{"say: --- /dev/null\n+++ /f\n@@ -0,0 +1 @@\n+a"}
+	if !reflect.DeepEqual(out.Lines, want) {
+		t.Errorf("lines = %q, want %q", out.Lines, want)
 	}
 }
-
-func TestProgOutObservesAPlanAndWhatAStepIsBehind(t *testing.T) {
-	out := progOut{Out: &effecttest.Out{}, prog: "ws client macos apply", seen: map[string]bool{}}
-	plan := []step.Change{
-		macos.Write{Path: "/f", After: []byte("a\n")}, macos.Backup{Path: "/f", To: "/f.~"}, stringChange("would run x"),
-	}
-	out.Observe(step.Event{Kind: step.Planned, Step: "ssh", Changes: plan})
-	out.Observe(step.Event{Kind: step.Started, Step: "ssh", Changes: plan})
-	out.Observe(step.Event{Kind: step.Planned, Step: "ssh", Check: true, Changes: plan})
-	out.Observe(step.Event{Kind: step.Skipped, Step: "git", After: "ssh"})
-	out.Observe(step.Event{Kind: step.Skipped, Step: "zed"})
-	out.Observe(step.Event{Kind: step.Planned, Step: "ssh", Check: true, Changes: plan, LeftOut: true})
-	out.Observe(step.Event{Kind: step.Skipped, Step: "git", After: "ssh", LeftOut: true})
-	out.Observe(step.Event{Kind: step.Skipped, Step: "cld", Err: errors.New("no file"), LeftOut: true})
-	want := []string{
-		"say: --- /dev/null\n+++ /f\n@@ -0,0 +1 @@\n+a", "say: ws client macos apply: would run x",
-		"say: ws client macos apply: git: after ssh", "say: ws client macos apply: warning: left out: no file",
-	}
-	if got := out.Out.(*effecttest.Out).Lines; !reflect.DeepEqual(got, want) {
-		t.Errorf("lines = %q, want %q", got, want)
-	}
-}
-
-type stringChange string
-
-func (c stringChange) String() string { return string(c) }
 
 func TestSetupWithNoStepRunsThemAll(t *testing.T) {
 	m := effecttest.NewMachine()
@@ -155,7 +126,7 @@ func TestMacStateWritesReports(t *testing.T) {
 		t.Errorf("got %q, want %q", b.String(), want)
 	}
 	b.Reset()
-	if err := writeJSON(&b, macDoc{Version: "v1", Steps: reports[1:]}); err != nil {
+	if err := engine.WriteJSON(&b, macDoc{Version: "v1", Steps: reports[1:]}); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(b.String(), `"version": "v1"`) || !strings.Contains(b.String(), `"after": "git"`) {

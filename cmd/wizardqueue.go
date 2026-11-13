@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/client/macos"
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
@@ -66,7 +67,7 @@ func reportRoles(stage string, states []role.RoleState, err error, report func(s
 		report(stage, nil, err.Error())
 		return
 	}
-	report(stage, slices.DeleteFunc(roleSections(states), func(s tui.StateSection) bool {
+	report(stage, slices.DeleteFunc(engine.RoleSections(states), func(s tui.StateSection) bool {
 		return s.Name == role.Prepare
 	}), "")
 }

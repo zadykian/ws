@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
@@ -71,7 +72,7 @@ func newResolverCmd(p cli.Env) *cobra.Command {
 func runRoute(c *cobra.Command, check bool, build func(effect.Out) step.Step) error {
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
 	defer term.Flush()
-	out := progOut{term, c.CommandPath(), map[string]bool{}}
+	out := linesOf(term, c.CommandPath())
 	_, err := step.RunWith(c.Context(), []step.Step{build(out)}, step.Options{Observer: out, Check: check})
-	return unwrapStep(err)
+	return engine.Cause(err)
 }

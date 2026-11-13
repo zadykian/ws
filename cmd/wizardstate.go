@@ -5,6 +5,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
@@ -34,6 +35,6 @@ func stateRead(open sessionOpen, version string) tui.StateReader {
 			ws = found
 		}
 		states, err := ws.Restate(ctx, version)
-		return roleSections(states), err
+		return engine.RoleSections(states), err
 	}
 }

@@ -35,14 +35,14 @@ func (w wizardRun) start(before ...func(effect.Out) step.Step) error {
 	ctx, stop := signal.NotifyContext(w.c.Context(), syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	term := effect.NewTerminal(w.c.InOrStdin(), w.c.ErrOrStderr())
-	out := progOut{term, w.c.CommandPath(), map[string]bool{}}
+	out := linesOf(term, w.c.CommandPath())
 	if len(before) > 0 {
 		steps := make([]step.Step, len(before))
 		for i, build := range before {
 			steps[i] = build(out)
 		}
 		if _, err := step.RunWith(ctx, steps, step.Options{Observer: out, Check: w.o.check}); err != nil {
-			return unwrapStep(err)
+			return engine.Cause(err)
 		}
 	}
 	if engine.DrawsScreen(cli.CallOf(w.c, w.p)) {
@@ -53,7 +53,7 @@ func (w wizardRun) start(before ...func(effect.Out) step.Step) error {
 }
 
 // lines is the plain run: the stages under the lock, then what stays by hand.
-func (w wizardRun) lines(ctx context.Context, term *effect.Terminal, out progOut) error {
+func (w wizardRun) lines(ctx context.Context, term *effect.Terminal, out engine.Lines) error {
 	hand := &wizard.Hand{}
 	closing := func(ctx context.Context) {
 		hand.Close(ctx, w.c.OutOrStdout())
@@ -65,7 +65,7 @@ func (w wizardRun) lines(ctx context.Context, term *effect.Terminal, out progOut
 	_, err := wizard.Run(ctx, w.p.Machine, step.Options{Observer: out, Check: w.o.check}, stages, w.p.LockDir(),
 		w.side.pid, closing)
 	// The runner names the stage before the stage's own message.
-	return unwrapStep(err)
+	return engine.Cause(err)
 }
 
 // draw opens the lists over a scan and runs what they choose, or goes straight to the run under
@@ -132,7 +132,7 @@ func (w wizardRun) scan(sudo *host.Sudo) tui.Work {
 			}}
 		}
 		_, err := wizard.Run(ctx, e.p.Machine, o, stages, w.p.LockDir(), w.side.pid, nil)
-		return unwrapStep(err)
+		return engine.Cause(err)
 	}
 }
 
@@ -171,7 +171,7 @@ func (w wizardRun) work(o wizardOptions, sudo *host.Sudo) tui.Work {
 		closing := func(ctx context.Context) { e.hand.Close(ctx, e.text) }
 		so := b.Options(step.Options{Check: o.check, LeftOut: o.left})
 		_, err := wizard.Run(ctx, e.p.Machine, so, w.side.stages(e, o), w.p.LockDir(), w.side.pid, closing)
-		return unwrapStep(err)
+		return engine.Cause(err)
 	}
 }
 

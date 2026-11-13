@@ -35,7 +35,7 @@ func runValuesSet(c *cobra.Command, p cli.Env, key, value string) error {
 	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
 	defer term.Flush()
-	return setServerValue(p.Machine, progOut{term, c.CommandPath(), map[string]bool{}}, key, value)
+	return setServerValue(p.Machine, linesOf(term, c.CommandPath()), key, value)
 }
 
 // setServerValue writes key in the file, by rename and with its owner and mode, as the wizard's own
