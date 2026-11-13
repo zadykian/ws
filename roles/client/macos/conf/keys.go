@@ -5,6 +5,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/check"
 	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
+	"github.com/zadykian/ws/roles/internal/slot"
 )
 
 // Conf is mac.conf's settings, each key's value as the file gives it, with the default of a key
@@ -13,6 +14,12 @@ type Conf struct {
 	User, Target, Slot, PublicKey, LAN, LANAddress, Remote, RemotePort, Port string
 	TunnelNetworks, Resolvers, CableService, CablePort                       string
 	GitName, GitEmail, GitSigningPubKey, IdentityPubKey, IdentityAgent       string
+}
+
+// TunnelSlot gives the slot that c.Slot names. Load has checked it, and an empty one is slot 0.
+func (c Conf) TunnelSlot() slot.Slot {
+	s, _ := slot.Parse(c.Slot)
+	return s
 }
 
 // key is one of mac.conf's keys: where its value goes, its check, and the form its message names.
@@ -31,7 +38,7 @@ func plain(f func(string) bool) func(string, bool) bool {
 
 // keptNames names the networks that the cable and the tunnel keep, for the forms of WS_LAN and
 // WS_TUNNEL_NETWORKS.
-var keptNames = tunnel.CableNet.String() + " and " + tunnel.TunnelNet.String()
+var keptNames = tunnel.CableNet.String() + " and " + slot.Range.String()
 
 // port is the form of both ports.
 const port = "a port, 1 to 65535"
@@ -47,8 +54,8 @@ var keys = []key{
 	{"WS_TARGET", func(c *Conf) *string { return &c.Target },
 		plain(func(v string) bool { return v == "lan" || v == "cloud" || v == "mac-vm" }),
 		"lan, cloud or mac-vm: a machine on the LAN, a cloud VM or a VM on the Mac"},
-	{"WS_SLOT", func(c *Conf) *string { return &c.Slot }, plain(isSlot),
-		"a number from 0 to 15"},
+	{"WS_SLOT", func(c *Conf) *string { return &c.Slot }, plain(func(v string) bool { _, ok := slot.Parse(v); return ok }),
+		"a number from 0 to " + strconv.Itoa(slot.Last)},
 	{"WS_PUBLIC_KEY", func(c *Conf) *string { return &c.PublicKey }, plain(check.Key),
 		"a WireGuard public key, 43 base64 characters and an ="},
 	{"WS_LAN", func(c *Conf) *string { return &c.LAN }, plain(isLAN),
@@ -60,7 +67,7 @@ var keys = []key{
 	{"WS_REMOTE_PORT", func(c *Conf) *string { return &c.RemotePort }, plain(check.Port), port},
 	{"WS_PORT", func(c *Conf) *string { return &c.Port }, plain(check.Port), port},
 	{"WS_TUNNEL_NETWORKS", func(c *Conf) *string { return &c.TunnelNetworks },
-		plain(func(v string) bool { return check.Networks(v, tunnel.CableNet, tunnel.TunnelNet) }),
+		plain(func(v string) bool { return check.Networks(v, tunnel.CableNet, slot.Range) }),
 		"IPv4 networks split by blanks, as 10.20.0.0/16, each clear of " + keptNames},
 	{"WS_RESOLVERS", func(c *Conf) *string { return &c.Resolvers }, plain(check.Resolvers),
 		"DOMAIN=ADDRESS[,ADDRESS...] split by blanks, as example.internal=10.20.0.53, each " +
@@ -82,14 +89,8 @@ var keys = []key{
 			"in quotes where it holds a blank"},
 }
 
-// isLAN reports whether v is a network clear of the cable's and the tunnel's.
+// isLAN reports whether v is a network clear of the cable's and the slots' subnets.
 func isLAN(v string) bool {
 	p, ok := check.CIDR(v)
-	return ok && !p.Overlaps(tunnel.CableNet) && !p.Overlaps(tunnel.TunnelNet)
-}
-
-// isSlot reports whether v is a slot: 0 to 15 in decimal, with no leading zero.
-func isSlot(v string) bool {
-	n, err := strconv.Atoi(v)
-	return err == nil && n >= 0 && n <= 15 && strconv.Itoa(n) == v
+	return ok && !p.Overlaps(tunnel.CableNet) && !p.Overlaps(slot.Range)
 }

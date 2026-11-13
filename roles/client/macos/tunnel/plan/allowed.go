@@ -34,6 +34,6 @@ func AllowedFor(routes []netip.Prefix, ends []netip.Addr, told []netip.Prefix) A
 }
 
 // IPs is the peer's AllowedIPs: ws's address, then the networks wanted.
-func (a Allowed) IPs() []netip.Prefix {
-	return append([]netip.Prefix{netip.PrefixFrom(Server, 32)}, a.Want...)
+func (a Allowed) IPs(server netip.Addr) []netip.Prefix {
+	return append([]netip.Prefix{netip.PrefixFrom(server, 32)}, a.Want...)
 }
