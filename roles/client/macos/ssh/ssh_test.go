@@ -2,7 +2,6 @@ package ssh_test
 
 import (
 	"context"
-	"maps"
 	"slices"
 	"strings"
 	"testing"
@@ -119,34 +118,21 @@ func TestSSHRefusesAnIncludeBelowASetting(t *testing.T) {
 	}
 }
 
-func TestSSHWarnsOfBlocksForWs(t *testing.T) {
-	m, out := sshMachine(), &effecttest.Out{}
+func TestSSHStopsWhereABlockNamesTheServer(t *testing.T) {
+	m := sshMachine()
 	m.Files["/h/.ssh/config"] = []byte("Include config.d/ws\nHost ws\n  User x\n")
-	if _, err := sshStep(m, out).Plan(context.Background()); err != nil {
-		t.Fatal(err)
-	}
-	if len(out.Lines) != 1 || !strings.HasPrefix(out.Lines[0], "warn: line 2 of ~/.ssh/config, Host ws, sets its own values for ws:") {
-		t.Errorf("said %q, want a warning of line 2", out.Lines)
+	_, err := sshStep(m, &effecttest.Out{}).Plan(context.Background())
+	if err == nil || !strings.HasPrefix(err.Error(), "line 2 of ~/.ssh/config, Host ws, sets its own values for ws:") {
+		t.Errorf("Plan err = %v, want a stop at line 2", err)
 	}
 }
 
-func TestSSHWarnsOfABlockAtTheLineTheRunLeaves(t *testing.T) {
-	m, out := sshMachine(), &effecttest.Out{}
+func TestSSHStopsAtTheLineTheRunLeaves(t *testing.T) {
+	m := sshMachine()
 	m.Files["/h/.ssh/config"] = []byte("Host ws\n  User x\n")
-	m.Results["cp -p /h/.ssh/config /h/.ssh/config.20260102030405~"] = effecttest.Result{}
-	if _, err := step.RunWith(t.Context(), []step.Step{sshStep(m, out)}, step.Options{}); err != nil {
-		t.Fatal(err)
-	}
-	// The runner plans twice; Out's callers drop a text they have shown.
-	warned := map[string]bool{}
-	for _, l := range out.Lines {
-		if strings.HasPrefix(l, "warn: ") {
-			warned[l] = true
-		}
-	}
-	want := "warn: line 3 of ~/.ssh/config, Host ws, sets its own values for ws:"
-	if len(warned) != 1 || !strings.HasPrefix(slices.Collect(maps.Keys(warned))[0], want) {
-		t.Errorf("warned %q, want one warning of line 3", slices.Collect(maps.Keys(warned)))
+	_, err := sshStep(m, &effecttest.Out{}).Plan(context.Background())
+	if err == nil || !strings.HasPrefix(err.Error(), "line 3 of ~/.ssh/config, Host ws, sets its own values for ws:") {
+		t.Errorf("Plan err = %v, want a stop at line 3", err)
 	}
 }
 
