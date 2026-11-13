@@ -1,0 +1,34 @@
+package wizard
+
+import (
+	"testing"
+
+	"github.com/zadykian/ws/engine/core/step"
+)
+
+// TestEveryStageStatesItsSide fails where a stage is added with no side, as a screen could not
+// put it in a list.
+func TestEveryStageStatesItsSide(t *testing.T) {
+	want := map[string]Side{
+		macUpdateStage: OnMac, toolsStage: OnMac, homebrewStage: OnMac, answers: OnMac, macKey: OnMac,
+		ghStage: OnMac, setupStage: OnMac, hostStage: OnMac, loginStage: OnMac, sudoStage: OnWs,
+		installStage: OnWs, runStage: OnWs, claudeStage: OnWs, signingStage: OnMac, tunnelStage: OnMac,
+		cableStage: OnMac, valuesStage: OnWs,
+	}
+	stages := []step.Step{&MacUpdate{}, &Tools{}, &Homebrew{}, &Answers{}, &MacKey{}, &Gh{}, &Setup{},
+		&HostKey{}, &Login{}, &Sudo{}, &WsInstall{}, &WsRun{}, &WsClaude{}, &Signing{GitHub: &MacGitHub{}}, &Tunnel{}, &Cable{},
+		&WsValues{}}
+	if len(stages) != len(want) {
+		t.Fatalf("%d stages, %d wanted", len(stages), len(want))
+	}
+	for _, s := range stages {
+		got, ok := SideOf(s)
+		if !ok {
+			t.Errorf("%s states no side", s.Name())
+			continue
+		}
+		if got != want[s.Name()] {
+			t.Errorf("%s is on %s, want %s", s.Name(), got, want[s.Name()])
+		}
+	}
+}
