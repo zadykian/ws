@@ -81,7 +81,7 @@ func TestWizardCheckShowsTheAnswersDiff(t *testing.T) {
 	if status != 0 || !strings.Contains(stderr, "+WS_TARGET=cloud") {
 		t.Errorf("status = %d, stderr = %q; want the diff of the server's file", status, stderr)
 	}
-	if got := string(m.Files["/t/ws-wizard.lock/servers/ws/server.conf"]); !strings.HasPrefix(got, "WS_TARGET=cloud\n") {
+	if got := string(m.Files["/t/ws-wizard.lock/servers/ws/server.conf"]); !strings.HasPrefix(got, "WS_SLOT=0\nWS_TARGET=cloud\n") {
 		t.Errorf("scratch server file = %q", got)
 	}
 	if got := string(m.Files["/t/ws-wizard.lock/mac.conf"]); got != "WS_GIT_NAME=\n" {
