@@ -27,7 +27,7 @@ func macSide(p enginecli.Env, server *string) engine.Side {
 		Read: func(side string, sudo any) (tui.StateReader, func(context.Context)) {
 			return macState(p, server, side, sudo.(*host.Sudo))
 		},
-		Before: func(o engine.WizardOptions) []func(effect.Out) step.Step {
+		Before: func(o engine.WizardOptions, _ effect.Prompt) []func(effect.Out) step.Step {
 			if !o.Update {
 				return nil
 			}
