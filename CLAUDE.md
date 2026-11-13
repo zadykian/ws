@@ -17,8 +17,9 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 - `go.mod`, `go.sum` and `.golangci.yml`: the Go module `github.com/zadykian/ws`, at the root.
   `main.go` runs `cmd`, which composes the root, `--plain` and the exit codes with the two sides'
   commands. `engine/cli` builds the root, `--plain` and the exit codes. `engine/core` holds `step`,
-  `effect`, with `effect/effecttest`, `effect/local` and `effect/units`, and `resource`, the resources
-  the steps share. They are public, as the roles import them from outside `engine/`.
+  `effect`, with `effect/effecttest`, `effect/local` and `effect/units`, and `resource`, with
+  `resource/resourcetest`, the resources the steps share. They are public, as the roles import them
+  from outside `engine/`.
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
 - `install.sh`: installs ws's binary from a release ([Releases](engine/core/update/README.md)).

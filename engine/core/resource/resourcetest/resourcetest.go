@@ -5,6 +5,8 @@ package resourcetest
 
 import (
 	"context"
+	"crypto/sha256"
+	"fmt"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/resource"
@@ -40,3 +42,6 @@ func ReportOf(t testing.TB, r step.Reporter) step.Item {
 	}
 	return items[0]
 }
+
+// SumOf returns the hex SHA-256 of body, as a pin states it.
+func SumOf(body string) string { return fmt.Sprintf("%x", sha256.Sum256([]byte(body))) }
