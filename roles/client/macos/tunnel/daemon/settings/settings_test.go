@@ -101,3 +101,45 @@ func TestReadKey(t *testing.T) {
 		t.Error("ReadKey took a missing file")
 	}
 }
+
+func TestReadSettingsOthers(t *testing.T) {
+	p := paths
+	p.Conf, p.Routes, p.Root = dir+"/ws/tunnel.conf", dir+"/ws/routes.d", dir
+	m := machine(map[string]string{
+		p.Conf:                   conf,
+		dir + "/lab/tunnel.conf": "WS_PUBLIC_KEY=AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=\nWS_REMOTE=lab.example.org\n",
+		dir + "/lab/routes.d/a":  "10.50.0.0/16\n",
+		dir + "/bad/tunnel.conf": "WS_PORT=0\n",
+		dir + "/bad/routes.d/a":  "not a network\n10.60.0.0/16\n",
+		dir + "/gone/routes.d/a": "10.70.0.0/16\n",
+		dir + "/private.key":     "key",
+	})
+	m.Results["ls -1p "+dir] = effecttest.Result{Out: []byte("bad/\ngone/\nlab/\nprivate.key\nws/\n")}
+	m.Results["ls -1 "+dir+"/lab/routes.d"] = effecttest.Result{Out: []byte("a\n")}
+	m.Results["ls -1 "+dir+"/bad/routes.d"] = effecttest.Result{Out: []byte("a\n")}
+	m.Results["ls -1 "+dir+"/gone/routes.d"] = effecttest.Result{Out: []byte("a\n")}
+	got, err := ReadSettings(context.Background(), m, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var names []string
+	for _, o := range got.Others {
+		names = append(names, o.Name)
+	}
+	if strings.Join(names, " ") != "bad gone lab" {
+		t.Fatalf("Others = %v, want bad gone lab: not its own, not private.key", names)
+	}
+	bad, gone, lab := got.Others[0], got.Others[1], got.Others[2]
+	if lab.Conf.Remote != "lab.example.org" || len(lab.Routes) != 1 || lab.Routes[0] != netip.MustParsePrefix("10.50.0.0/16") {
+		t.Errorf("lab = %+v", lab)
+	}
+	if gone.Conf.Key != "" || len(gone.Routes) != 1 {
+		t.Errorf("gone = %+v, want no conf and its routes", gone)
+	}
+	if bad.Conf.Key != "" || len(bad.Routes) != 1 {
+		t.Errorf("bad = %+v, want no conf and its valid route", bad)
+	}
+	if len(got.Warnings) != 1 || !strings.Contains(got.Warnings[0], "leaves out server bad's endpoints") {
+		t.Errorf("Warnings = %q, want bad's endpoints alone", got.Warnings)
+	}
+}
