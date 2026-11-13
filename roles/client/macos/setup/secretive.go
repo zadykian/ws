@@ -73,39 +73,39 @@ func unnamed(u KeyUse, keys []sshcfg.AgentKey) error {
 // ~/.config/ws and ~/.config with them, where missing, then the copy. It returns none for a .pub
 // elsewhere and for one with no text from the agent, and no copy where it holds text already.
 func PlanCopy(m effect.Machine, pub, text, home string) ([]step.Change, error) {
-	if !copied(pub, text, home) {
+	if !Copied(pub, text, home) {
 		return nil, nil
 	}
-	cs, _, err := copyDirs(m, home).Plan()
+	cs, _, err := CopyDirs(m, home).Plan()
 	if err != nil {
 		return nil, err
 	}
-	return append(cs, copyChange(m, pub, text)...), nil
+	return append(cs, CopyChange(m, pub, text)...), nil
 }
 
-// copyDirs is ws's directory with the directory of ws's copies in it.
-func copyDirs(m effect.Machine, home string) userfile.Dirs {
+// CopyDirs is ws's directory with the directory of ws's copies in it.
+func CopyDirs(m effect.Machine, home string) userfile.Dirs {
 	return append(userfile.WsDirs(m, home), userfile.Dir{M: m, Path: home + "/" + sshcfg.KeyCopies, Mode: 0o755})
 }
 
-// copyChange returns the write of ws's copy at pub, or none where it holds text already.
-func copyChange(m effect.Machine, pub, text string) []step.Change {
+// CopyChange returns the write of ws's copy at pub, or none where it holds text already.
+func CopyChange(m effect.Machine, pub, text string) []step.Change {
 	if old, err := m.ReadFile(pub); err == nil && string(old) == text {
 		return nil
 	}
 	return []step.Change{change.KeyCopy{Path: pub, Text: text}}
 }
 
-// copied says whether ws keeps a copy of the .pub at pub: one in ws's directory of copies, with text
+// Copied says whether ws keeps a copy of the .pub at pub: one in ws's directory of copies, with text
 // from the agent.
-func copied(pub, text, home string) bool {
+func Copied(pub, text, home string) bool {
 	return text != "" && strings.HasPrefix(pub, home+"/"+sshcfg.KeyCopies+"/")
 }
 
-// keyCopy reports ws's copy of a .pub, where it keeps one. A run writes the copy where its text
+// CopyReport reports ws's copy of a .pub, where it keeps one. A run writes the copy where its text
 // differs, and leaves its mode.
-func keyCopy(m effect.Machine, pub, text, home string) []step.Reporter {
-	if !copied(pub, text, home) {
+func CopyReport(m effect.Machine, pub, text, home string) []step.Reporter {
+	if !Copied(pub, text, home) {
 		return nil
 	}
 	return []step.Reporter{userfile.File{M: m, Path: pub, Text: []byte(text)}}

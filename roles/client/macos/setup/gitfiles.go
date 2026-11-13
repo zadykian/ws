@@ -29,8 +29,8 @@ func (g *Git) list(key NamedKey, gh string) []userfile.File {
 
 // dirs is ws's directory, with the directory of ws's copies where git signs with a copy.
 func (g *Git) dirs(pub, text string) userfile.Dirs {
-	if copied(pub, text, g.Home) {
-		return copyDirs(g.M, g.Home)
+	if Copied(pub, text, g.Home) {
+		return CopyDirs(g.M, g.Home)
 	}
 	return userfile.WsDirs(g.M, g.Home)
 }
@@ -41,8 +41,8 @@ func (g *Git) files(key NamedKey, gh string) ([]step.Change, error) {
 	if err != nil {
 		return nil, err
 	}
-	if copied(key.File, key.Text, g.Home) {
-		cs = append(cs, copyChange(g.M, key.File, key.Text)...)
+	if Copied(key.File, key.Text, g.Home) {
+		cs = append(cs, CopyChange(g.M, key.File, key.Text)...)
 	}
 	for _, f := range g.list(key, gh) {
 		planned, err := f.Plan()
@@ -77,7 +77,7 @@ func (g *Git) Report(ctx context.Context) ([]step.Item, error) {
 	for _, f := range g.list(key, gh) {
 		parts = append(parts, f)
 	}
-	pub := keyCopy(g.M, key.File, key.Text, g.Home)
+	pub := CopyReport(g.M, key.File, key.Text, g.Home)
 	if len(pub) == 0 {
 		pub = []step.Reporter{userfile.Path{M: g.M, Kind: step.FileItem, Path: key.File}}
 	}

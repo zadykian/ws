@@ -110,10 +110,10 @@ func (s SSH) Report(ctx context.Context) ([]step.Item, error) {
 		s.wsFile(s.config(ctx, f, key)),
 		userfile.Fixed{include},
 	}
-	if copied(key.File, key.Text, s.Home) {
-		parts = append(parts, copyDirs(s.M, s.Home))
+	if Copied(key.File, key.Text, s.Home) {
+		parts = append(parts, CopyDirs(s.M, s.Home))
 	}
-	return userfile.Gather(ctx, append(parts, keyCopy(s.M, key.File, key.Text, s.Home)...)...)
+	return userfile.Gather(ctx, append(parts, CopyReport(s.M, key.File, key.Text, s.Home)...)...)
 }
 
 // Apply applies the changes in order.
