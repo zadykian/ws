@@ -35,12 +35,12 @@ func linesOf(out effect.Out, path string) engine.Lines {
 
 // macOf returns the Mac's steps over the process's environment and the effects given to it.
 // No other function builds a Mac. text takes what a run prints on stdout.
-func macOf(p enginecli.Env, c conf.Conf, m effect.Machine, out effect.Out, text io.Writer) macos.Mac {
-	return macos.Mac{Conf: c, Home: p.Getenv("HOME"), XDG: p.Getenv("XDG_CONFIG_HOME"), M: m, Out: out, Text: text}
+func macOf(p enginecli.Env, server string, c conf.Conf, m effect.Machine, out effect.Out, text io.Writer) macos.Mac {
+	return macos.Mac{Server: server, Conf: c, Home: p.Getenv("HOME"), XDG: p.Getenv("XDG_CONFIG_HOME"), M: m, Out: out, Text: text}
 }
 
 // newMacApplyCmd returns ws client macos apply.
-func newMacApplyCmd(p enginecli.Env) *cobra.Command {
+func newMacApplyCmd(p enginecli.Env, server *string) *cobra.Command {
 	var only []string
 	names := macos.Names()
 	c := &cobra.Command{
@@ -50,7 +50,7 @@ func newMacApplyCmd(p enginecli.Env) *cobra.Command {
 			"With no --only, it runs every step, and ssh again, whose plan is empty unless cld " +
 			"changed ssh's file. It asks sudo where it needs root.",
 		Args: cobra.NoArgs,
-		RunE: enginecli.Apply(macTarget(p, &only), p),
+		RunE: enginecli.Apply(macTarget(p, &only, server), p),
 	}
 	f := c.Flags()
 	f.Bool("check", false, "print each change and make none")
@@ -59,14 +59,24 @@ func newMacApplyCmd(p enginecli.Env) *cobra.Command {
 	return c
 }
 
-// loadMacConf refuses root and reads mac.conf and the server's file: the commands that act on the Mac's
-// own files share it.
-func loadMacConf(p enginecli.Env) (settings conf.Conf, err error) {
+// pickServer returns the name of the server that --server names, or of the only one.
+func pickServer(p enginecli.Env, server *string) (string, error) {
+	return conf.Pick(p.Machine, conf.Path(p.Getenv, p.Pwd), *server)
+}
+
+// loadMacConf refuses root, picks the server that --server names, and reads mac.conf and the server's
+// file: the commands that act on the Mac's own files share it. It returns the server's name.
+func loadMacConf(p enginecli.Env, server *string) (name string, settings conf.Conf, err error) {
 	if p.Euid == 0 {
 		// As root, with HOME kept, it would leave root's files in the user's ~/.ssh, and run the
 		// user's ~/.local/bin/cld.
-		return conf.Conf{}, errors.New("run it as yourself, not root: it asks sudo where it needs root")
+		return "", conf.Conf{}, errors.New("run it as yourself, not root: it asks sudo where it needs root")
 	}
 	mac := conf.Path(p.Getenv, p.Pwd)
-	return conf.Load(p.Machine, mac, conf.ServerPath(mac, conf.FirstServer))
+	name, err = pickServer(p, server)
+	if err != nil {
+		return "", conf.Conf{}, err
+	}
+	settings, err = conf.Load(p.Machine, mac, conf.ServerPath(mac, name))
+	return name, settings, err
 }

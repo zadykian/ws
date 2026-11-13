@@ -1,11 +1,22 @@
 package cli
 
 import (
+	"path"
 	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
+
+// withServerDirs makes a directory of each server file that m holds, as a machine's directory listing needs.
+func withServerDirs(m *effecttest.Machine) *effecttest.Machine {
+	for f := range m.Files {
+		if dir := path.Dir(f); path.Base(f) == "server.conf" {
+			m.Dirs[dir], m.Dirs[path.Dir(dir)] = 0o755, 0o755
+		}
+	}
+	return m
+}
 
 func TestConfCommand(t *testing.T) {
 	env := map[string]string{"HOME": "/h", "WS_CONF": ""}
@@ -22,7 +33,7 @@ func TestConfCommand(t *testing.T) {
 		{"argument", []string{"/a/mac.conf"}, "/e/mac.conf", 0, "WS_USER='amy'\n", ""},
 		{"missing", []string{"/none"}, "", 1, "", "ws client macos conf: /none is missing: roles/client/macos/README.md"},
 		{"refused", []string{"/bad"}, "", 1, "", "ws client macos conf: /bad, line 2: unknown key WS_NOPE"},
-		{"lines", []string{"--lines", "/pair"}, "", 0, "WS_USER='zadykian'\nWS_TARGET='lan'\nWS_PUBLIC_KEY=''\nWS_LAN='10.88.0.0/24'\n", ""},
+		{"lines", []string{"--lines", "/pair"}, "", 0, "WS_USER='zadykian'\nWS_TARGET='lan'\nWS_SLOT='0'\nWS_PUBLIC_KEY=''\nWS_LAN='10.88.0.0/24'\n", ""},
 		{"pair", []string{"/pairs/mac.conf"}, "", 1, "", "WS_LAN and WS_LAN_ADDRESS go together"},
 		{"two files", []string{"a", "b"}, "", 2, "", "ws client macos conf: accepts at most 1 arg(s), received 2"},
 	}
@@ -38,6 +49,7 @@ func TestConfCommand(t *testing.T) {
 	m.Files["/pairs/servers/ws/server.conf"] = []byte("WS_LAN=10.88.0.0/24\n")
 	m.Files["/bad"] = []byte("WS_GIT_NAME=ada\nWS_NOPE=1\n")
 	m.Files["/servers/ws/server.conf"] = []byte("")
+	withServerDirs(m)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			env["WS_CONF"] = tt.wsConf
@@ -62,7 +74,7 @@ func TestConfReportsEachLineOfARefusedFile(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/bad"] = []byte("WS_NOPE=1\nWS_NOPE2=1\n")
 	m.Files["/servers/ws/server.conf"] = []byte("")
-	p.Machine = m
+	p.Machine = withServerDirs(m)
 	status, _, stderr := runWs(p, "", "client", "macos", "conf", "/bad")
 	want := "ws client macos conf: /bad, line 1: unknown key WS_NOPE\nws client macos conf: /bad, line 2: unknown key WS_NOPE2\n"
 	if status != 1 || stderr != want {

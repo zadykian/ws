@@ -1,6 +1,8 @@
 package conf
 
 import (
+	"strconv"
+
 	"github.com/zadykian/ws/engine/core/check"
 	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
@@ -8,9 +10,9 @@ import (
 // Conf is mac.conf's settings, each key's value as the file gives it, with the default of a key
 // that has no line or an empty value.
 type Conf struct {
-	User, Target, PublicKey, LAN, LANAddress, Remote, RemotePort, Port string
-	TunnelNetworks, Resolvers, CableService, CablePort                 string
-	GitName, GitEmail, GitSigningPubKey, IdentityPubKey, IdentityAgent string
+	User, Target, Slot, PublicKey, LAN, LANAddress, Remote, RemotePort, Port string
+	TunnelNetworks, Resolvers, CableService, CablePort                       string
+	GitName, GitEmail, GitSigningPubKey, IdentityPubKey, IdentityAgent       string
 }
 
 // key is one of mac.conf's keys: where its value goes, its check, and the form its message names.
@@ -45,6 +47,8 @@ var keys = []key{
 	{"WS_TARGET", func(c *Conf) *string { return &c.Target },
 		plain(func(v string) bool { return v == "lan" || v == "cloud" || v == "mac-vm" }),
 		"lan, cloud or mac-vm: a machine on the LAN, a cloud VM or a VM on the Mac"},
+	{"WS_SLOT", func(c *Conf) *string { return &c.Slot }, plain(isSlot),
+		"a number from 0 to 15"},
 	{"WS_PUBLIC_KEY", func(c *Conf) *string { return &c.PublicKey }, plain(check.Key),
 		"a WireGuard public key, 43 base64 characters and an ="},
 	{"WS_LAN", func(c *Conf) *string { return &c.LAN }, plain(isLAN),
@@ -82,4 +86,10 @@ var keys = []key{
 func isLAN(v string) bool {
 	p, ok := check.CIDR(v)
 	return ok && !p.Overlaps(tunnel.CableNet) && !p.Overlaps(tunnel.TunnelNet)
+}
+
+// isSlot reports whether v is a slot: 0 to 15 in decimal, with no leading zero.
+func isSlot(v string) bool {
+	n, err := strconv.Atoi(v)
+	return err == nil && n >= 0 && n <= 15 && strconv.Itoa(n) == v
 }

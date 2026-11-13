@@ -27,7 +27,7 @@ import (
 )
 
 // newWizardCmd returns ws client macos wizard.
-func newWizardCmd(p enginecli.Env) *cobra.Command {
+func newWizardCmd(p enginecli.Env, server *string) *cobra.Command {
 	var o engine.WizardOptions
 	c := &cobra.Command{
 		Use:   "wizard",
@@ -36,7 +36,7 @@ func newWizardCmd(p enginecli.Env) *cobra.Command {
 			"The stages run under a lock, and what stays by hand is listed after a run in which a stage " +
 			"acted. Under --check each stage prints what it would do and changes nothing.",
 		Args: cobra.NoArgs,
-		RunE: func(c *cobra.Command, _ []string) error { return runWizard(c, p, o) },
+		RunE: func(c *cobra.Command, _ []string) error { return runWizard(c, p, server, o) },
 	}
 	f := c.Flags()
 	f.BoolVar(&o.Check, "check", false, "print what each stage would do and change nothing")
@@ -79,7 +79,7 @@ type wizardEffects struct {
 }
 
 // wizardStages returns the stages of ws client macos wizard, in order.
-func wizardStages(e wizardEffects, o engine.WizardOptions) []step.Step {
+func wizardStages(e wizardEffects, o engine.WizardOptions, name string) []step.Step {
 	p, ask, out, prog, hand := e.p, e.ask, e.out, e.prog, e.hand
 	check := o.Check
 	macConf := conf.Path(p.Getenv, p.Pwd)
@@ -87,9 +87,9 @@ func wizardStages(e wizardEffects, o engine.WizardOptions) []step.Step {
 	scratch := lock + "/mac.conf"
 	// Under --check the stages after Answers read the mac.conf that it would write, a file in the lock,
 	// as the old script pointed WS_CONF there.
-	later, laterServer := macConf, conf.ServerPath(macConf, conf.FirstServer)
+	later, laterServer := macConf, conf.ServerPath(macConf, name)
 	if check {
-		later, laterServer = scratch, conf.ServerPath(scratch, conf.FirstServer)
+		later, laterServer = scratch, conf.ServerPath(scratch, name)
 	}
 	ghStage := &gh.Gh{CLI: gh.CLI{Conf: later, Home: p.Getenv("HOME"), M: p.Machine, Out: out}, Tty: p.TTY, F: e.talks}
 	hostKey := &host.Key{Conf: laterServer, Lock: lock, Tty: p.TTY, Check: check, Env: p.Lookup,
@@ -103,7 +103,7 @@ func wizardStages(e wizardEffects, o engine.WizardOptions) []step.Step {
 	run := &stages.WsRun{Ws: ws, Await: install.Name(), Check: check, Out: out, Version: p.Version, Update: o.Update, Only: o.Only}
 	hand.Late(ws.Hand)
 	hand.Late(ghStage.Hand)
-	setup := wizardSetup(e, o.Left, later, laterServer)
+	setup := wizardSetup(e, o.Left, later, name)
 	login := &host.Login{SSH: hostKey.SSH, Ws: ws, Gh: ghStage.CLI, Tty: p.TTY, Check: check, Env: p.Lookup, P: ask, Out: out}
 	cable := &link.Cable{Ws: ws, SSH: hostKey.SSH, Conf: laterServer, Check: check, RunDone: run.RunDone,
 		MacApply: setup.Run, Env: p.Lookup, P: ask, Prog: prog, Tty: p.TTY, M: p.Machine, Out: out}
@@ -111,8 +111,8 @@ func wizardStages(e wizardEffects, o engine.WizardOptions) []step.Step {
 	return []step.Step{
 		&tools.Tools{M: p.Machine, Out: out, Sleep: time.Sleep},
 		&tools.Homebrew{Lock: lock, M: p.Machine, Out: out},
-		&answers.Answers{Conf: macConf, Server: conf.ServerPath(macConf, conf.FirstServer), Defaults: shellDefaults(),
-			Prog: prog, Tty: p.TTY, Check: check, Scratch: scratch, ServerScratch: conf.ServerPath(scratch, conf.FirstServer), M: p.Machine, P: ask, Out: out, Env: p.Lookup},
+		&answers.Answers{Conf: macConf, Server: conf.ServerPath(macConf, name), Slot: "0", Defaults: shellDefaults(),
+			Prog: prog, Tty: p.TTY, Check: check, Scratch: scratch, ServerScratch: conf.ServerPath(scratch, name), M: p.Machine, P: ask, Out: out, Env: p.Lookup},
 		&keys.MacKey{Conf: later, Home: p.Getenv("HOME"),
 			Lock: lock, Tty: p.TTY,
 			M: p.Machine, P: ask, Out: out, Sleep: time.Sleep},
@@ -133,15 +133,20 @@ func wizardStages(e wizardEffects, o engine.WizardOptions) []step.Step {
 
 // runWizard runs ws client macos wizard: its stages under a lock, and what stays by hand after a
 // run in which a stage acted. Under --check it prints what each stage would do and changes nothing.
-func runWizard(c *cobra.Command, p enginecli.Env, o engine.WizardOptions) error {
+func runWizard(c *cobra.Command, p enginecli.Env, server *string, o engine.WizardOptions) error {
 	if why := wizardRefusal(p); why != "" {
 		return errors.New(why)
 	}
+	name, err := wizardServer(p, *server)
+	if err != nil {
+		return err
+	}
+	*server = name
 	// Homebrew's bin comes first in PATH, as a shell started before its install lacks it, and WS_CONF
 	// is set for the scripts that stages run.
 	_ = p.Setenv("PATH", "/opt/homebrew/bin:"+p.Getenv("PATH"))
 	_ = p.Setenv("WS_CONF", conf.Path(p.Getenv, p.Pwd))
-	return engine.Wizard(c.Context(), enginecli.CallOf(c, p), macTarget(p, new([]string)), o)
+	return engine.Wizard(c.Context(), enginecli.CallOf(c, p), macTarget(p, new([]string), server), o)
 }
 
 // shellDefaults is the shell role's git identity as lines of key: value, which ws client macos

@@ -41,8 +41,8 @@ refused "another run holds $lock" "$wsbin" client macos wizard --check
 [ -d "$lock" ] || error 'a refused run removed the lock it found'
 rmdir "$lock"
 echo WS_HOOK=example/Ws | conf_write "$RUNNER_TEMP/confs/refuse/mac.conf"
-refused 'line 1: unknown key WS_HOOK' \
-    env WS_CONF="$RUNNER_TEMP/confs/refuse/mac.conf" "$wsbin" client macos wizard --check
+refused 'line 2: unknown key WS_HOOK' \
+    env WS_CONF="$RUNNER_TEMP/confs/refuse/mac.conf" "$wsbin" client macos wizard --server ws --check
 rm -r "$RUNNER_TEMP/confs/refuse"
 refused "unknown op 'stage'" \
     sudo sh "$HOME/repository/ws/roles/server/ubuntu/session/wizard-remote-files.sh" stage
