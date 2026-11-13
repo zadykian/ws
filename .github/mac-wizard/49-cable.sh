@@ -24,6 +24,8 @@
 # the last full run runs that first.
 
 set -u
+# shellcheck source=.github/mac-conf.sh
+. "$(dirname "$0")/../mac-conf.sh"
 
 # The one line of the gh stage that a run says where the account holds the Mac's key.
 known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
@@ -69,7 +71,7 @@ logged() {
     cat "$cable/$1" 2>/dev/null | wc -l | tr -d ' '
 }
 
-cp "$conf" "$RUNNER_TEMP/cable.conf"
+conf_print "$conf" >"$RUNNER_TEMP/cable.conf"
 for each in enp4s0:1 enp5s0:0 enp6s0:0 enp7s0; do
     sudo mkdir -p "$net/${each%:*}/device"
     echo 1 | sudo tee "$net/${each%:*}/type" >/dev/null
@@ -131,9 +133,9 @@ printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: WS_CABLE_PORT co
 'enp4s0' is none of enp5s0, enp6s0, enp7s0: set it to one, or to nothing for none" &&
     unnamed && [ "$status" = 1 ] || error "ws client macos wizard with the uplink's port exited $status"
 wizard run WS_CABLE_PORT=
-unnamed && [ "$status" = 0 ] && [ "$(tail -n 1 "$conf")" = WS_CABLE_SERVICE= ] ||
+unnamed && [ "$status" = 0 ] && [ "$(conf_print "$conf" | tail -n 1)" = WS_CABLE_SERVICE= ] ||
     error "ws client macos wizard with WS_CABLE_PORT= exited $status, or wrote another line, or host_vars"
-cp "$RUNNER_TEMP/cable.conf" "$conf"
+conf_write "$conf" <"$RUNNER_TEMP/cable.conf"
 wizard run WS_CABLE_PORT=enp7s0
 printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: ws's enp7s0 lacks 10\.77\.0\.1 after \
 ws server ubuntu apply --only network,wireguard: plug the Mac's cable into it, or mend what that printed, \
@@ -145,8 +147,9 @@ wizard run
 printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: no terminal to ask WS_CABLE_PORT: set \
 WS_CABLE_PORT, or set it to nothing for none" && unnamed && [ "$status" = 1 ] ||
     error "ws client macos wizard docked with no terminal exited $status, or named no WS_CABLE_PORT"
-sed -e 's/^WS_TARGET=.*/WS_TARGET=cloud/' -e '/^WS_CABLE_/d' "$conf" >"$RUNNER_TEMP/cloud.conf"
-wizard run WS_CONF="$RUNNER_TEMP/cloud.conf"
+conf_print "$conf" | sed -e 's/^WS_TARGET=.*/WS_TARGET=cloud/' -e '/^WS_CABLE_/d' |
+    conf_write "$RUNNER_TEMP/confs/cloud/mac.conf"
+wizard run WS_CONF="$RUNNER_TEMP/confs/cloud/mac.conf"
 firewall="- The provider's firewall: UDP 51820 open to ws, for the tunnel (roles/client/macos/conf/README.md)."
 if [ "$status" != 0 ] || ! printf '%s\n' "$out" | grep -qxF -e "$firewall" ||
     printf '%s\n' "$out" | grep -q -e '^ws client macos wizard: Cable: ' -e '^- The cable: ' \
@@ -154,15 +157,15 @@ if [ "$status" != 0 ] || ! printf '%s\n' "$out" | grep -qxF -e "$firewall" ||
     error "ws client macos wizard with WS_TARGET=cloud exited $status, or took the cable's steps"
 fi
 unname
-rm "$RUNNER_TEMP/cloud.conf"
-sed -e 's/^WS_TARGET=.*/WS_TARGET=mac-vm/' -e 's|^WS_LAN=.*|WS_LAN=192.0.2.0/24|' \
-    -e '/^WS_REMOTE/d' -e '/^WS_CABLE_/d' "$conf" >"$RUNNER_TEMP/vm.conf"
-echo WS_LAN_ADDRESS=192.0.2.10 >>"$RUNNER_TEMP/vm.conf"
-wizard --check WS_CONF="$RUNNER_TEMP/vm.conf"
+rm -r "$RUNNER_TEMP/confs/cloud"
+conf_print "$conf" | sed -e 's/^WS_TARGET=.*/WS_TARGET=mac-vm/' -e 's|^WS_LAN=.*|WS_LAN=192.0.2.0/24|' \
+    -e '/^WS_REMOTE/d' -e '/^WS_CABLE_/d' | conf_write "$RUNNER_TEMP/confs/vm/mac.conf"
+conf_set "$RUNNER_TEMP/confs/vm/mac.conf" WS_LAN_ADDRESS=192.0.2.10
+wizard --check WS_CONF="$RUNNER_TEMP/confs/vm/mac.conf"
 if [ "$status" != 0 ] || printf '%s\n' "$out" | grep -q '^ws client macos wizard: Cable: '; then
     error "ws client macos wizard --check with WS_TARGET=mac-vm exited $status, or took the cable's steps"
 fi
-rm "$RUNNER_TEMP/vm.conf"
+rm -r "$RUNNER_TEMP/confs/vm"
 wizard --check
 printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: would ask ws's port of the cable, name it \
 in /etc/ws/host_vars\.yml on ws, and run ws server ubuntu apply --only network,wireguard there" &&
@@ -182,7 +185,7 @@ chmod 755 "$ws/bin/ip"
 links=$(grep -c '^root: sh -s -- link$' "$ws/log")
 wizard run WS_CABLE_PORT=enp5s0
 sudo grep -qx 'network_direct_link_interface: "enp5s0"' "$vars" &&
-    cmp -s "$conf" "$RUNNER_TEMP/cable.conf" &&
+    conf_print "$conf" | cmp -s - "$RUNNER_TEMP/cable.conf" &&
     printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: no terminal to ask WS_CABLE_SERVICE: set \
 WS_CABLE_SERVICE, or set it to nothing for none" && [ "$status" = 1 ] &&
     [ "$(tail -n 1 "$ws/server.log")" = '--only network,wireguard' ] && [ -e "$cable/late" ] &&
@@ -206,8 +209,8 @@ status=$?
 tr -d '\r' <"$RUNNER_TEMP/tty"
 grep -qF "(WS_CABLE_SERVICE) [ws stand-in adapter, or none]: " "$RUNNER_TEMP/tty" &&
     grep -qF "ws client macos wizard: Cable: 'ws stand-in absent' is none of those" "$RUNNER_TEMP/tty" &&
-    [ "$status" = 0 ] && [ "$(tail -n 1 "$conf")" = 'WS_CABLE_SERVICE="ws stand-in adapter"' ] &&
-    grep -qx WS_CABLE_PORT=enp5s0 "$conf" &&
+    [ "$status" = 0 ] && [ "$(conf_print "$conf" | tail -n 1)" = 'WS_CABLE_SERVICE="ws stand-in adapter"' ] &&
+    conf_print "$conf" | grep -qx WS_CABLE_PORT=enp5s0 &&
     [ "$(logged setmanual.log) $(logged ping.log)" = '1 1' ] ||
     error "ws client macos wizard at a terminal exited $status, set the adapter or pinged other than once, or" \
         "kept no port"
@@ -217,7 +220,7 @@ wizard run
     [ "$(grep -c '^root: sh -s -- link$' "$ws/log")" = "$links" ] ||
     error "the next run exited $status, or read link"
 # ws's install again, undocked: host_vars' port and the netplan file go, and enp5s0 loses carrier.
-kept=$(cat "$conf")
+kept=$(conf_print "$conf")
 runs=$(grep -c '' "$ws/server.log")
 unname
 sudo rm -f "$netplan"
@@ -229,7 +232,7 @@ wizard run
 printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: enp5s0 goes in /etc/ws/host_vars\.yml on ws \
 again, and ws server ubuntu apply --only network,wireguard runs there in a unit of its own" &&
     sudo grep -qx 'network_direct_link_interface: "enp5s0"' "$vars" && [ "$status" = 0 ] &&
-    [ "$(grep -c '' "$ws/server.log")" = $((runs + 2)) ] && [ "$(cat "$conf")" = "$kept" ] ||
+    [ "$(grep -c '' "$ws/server.log")" = $((runs + 2)) ] && [ "$(conf_print "$conf")" = "$kept" ] ||
     error "ws client macos wizard without host_vars exited $status, named no enp5s0, or changed mac.conf"
 sudo rm -f "$netplan"
 wizard run
@@ -239,7 +242,7 @@ sudo test -e "$netplan" && [ "$status" = 0 ] &&
     error "ws client macos wizard without the netplan file exited $status, ran the roles other than once, or" \
         "wrote no netplan file"
 echo 1 | sudo tee "$net/enp5s0/carrier" >/dev/null
-cp "$RUNNER_TEMP/cable.conf" "$conf"
+conf_write "$conf" <"$RUNNER_TEMP/cable.conf"
 touch "$cable/silent"
 wizard run "WS_CABLE_SERVICE=ws stand-in adapter"
 printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: ping -c 1 -t 3 10\.77\.0\.1, ws's end of the \
@@ -248,15 +251,15 @@ cable plugs into" && [ "$status" = 1 ] &&
     [ "$(logged setmanual.log) $(logged ping.log)" = '1 2' ] ||
     error "ws client macos wizard with no answer from ping exited $status, or pinged other than once"
 rm "$cable/silent"
-cp "$RUNNER_TEMP/cable.conf" "$conf"
+conf_write "$conf" <"$RUNNER_TEMP/cable.conf"
 wizard run WS_CABLE_SERVICE=
-[ "$status" = 0 ] && [ "$(tail -n 1 "$conf")" = WS_CABLE_SERVICE= ] &&
+[ "$status" = 0 ] && [ "$(conf_print "$conf" | tail -n 1)" = WS_CABLE_SERVICE= ] &&
     [ "$(logged setmanual.log) $(logged ping.log)" = '1 2' ] ||
     error "ws client macos wizard with WS_CABLE_SERVICE= exited $status, or wrote another line, or acted"
 wizard run
 [ "$status" = 0 ] && [ -z "${out#"$known"}" ] || error "the run after none exited $status"
 
-cp "$RUNNER_TEMP/cable.conf" "$conf"
+conf_write "$conf" <"$RUNNER_TEMP/cable.conf"
 rm -rf /opt/homebrew/bin/networksetup /opt/homebrew/bin/ping "$RUNNER_TEMP/cable.conf" \
     "$RUNNER_TEMP/tty" "$ws/uplink"
 unname
