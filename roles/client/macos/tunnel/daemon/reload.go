@@ -3,6 +3,7 @@ package daemon
 import (
 	"context"
 
+	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/settings"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/uapi"
 	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
@@ -11,7 +12,7 @@ import (
 // again. Otherwise it changes the peer's AllowedIPs and the routes in place, which keeps the
 // session. The routes stay clear of the endpoints of the last round.
 func (d *Daemon) reload(ctx context.Context) {
-	set, err := ReadSettings(ctx, d.M, d.Dir)
+	set, err := settings.ReadSettings(ctx, d.M, d.Dir)
 	if err != nil {
 		d.say("%v; keeps the settings it had", err)
 		set.Conf = d.set.Conf

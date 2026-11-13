@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/settings"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/uapi"
 	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
@@ -54,13 +55,13 @@ func (d *Daemon) start(ctx context.Context) error {
 	d.trimLog()
 	_ = d.run(ctx, "rm", "-f", d.StateFile, d.StateFile+".new") // a dead run's state would mislead status
 	var err error
-	if d.set, err = ReadSettings(ctx, d.M, d.Dir); err != nil {
+	if d.set, err = settings.ReadSettings(ctx, d.M, d.Dir); err != nil {
 		return err
 	}
 	for _, w := range d.set.Warnings {
 		d.say("%s", w)
 	}
-	if d.key, err = ReadKey(d.M, d.Dir); err != nil {
+	if d.key, err = settings.ReadKey(d.M, d.Dir); err != nil {
 		return err
 	}
 	address := tunnel.Address.String()

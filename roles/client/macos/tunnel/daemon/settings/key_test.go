@@ -1,4 +1,4 @@
-package daemon
+package settings
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 
 // keyMachine moves a file for mv, as fakeMachine does.
 func keyMachine() *fakeMachine {
-	return &fakeMachine{Machine: effecttest.NewMachine(), table: map[string]effecttest.Result{}}
+	return &fakeMachine{Machine: effecttest.NewMachine()}
 }
 
 func TestKeyMakesOne(t *testing.T) {

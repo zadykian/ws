@@ -1,4 +1,6 @@
-package daemon
+// Package settings reads the tunnel daemon's settings and key, and its status for ws client macos
+// tunnel status.
+package settings
 
 import (
 	"context"

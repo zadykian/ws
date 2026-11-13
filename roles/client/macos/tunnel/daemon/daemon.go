@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/settings"
 	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
@@ -37,7 +38,7 @@ type Daemon struct {
 	// it through Send.
 	Events chan Event
 
-	set        Settings
+	set        settings.Settings
 	key        string
 	inUse      tunnel.Candidate // Tier TierNone where no path answers; empty before the first round
 	since      time.Time        // when inUse began
