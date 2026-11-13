@@ -59,7 +59,7 @@ printf '%s\n' "$out" | grep -qx "ws client macos wizard: Tunnel: after ws's run"
 printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: after ws's run" ||
     error "ws client macos wizard --check showed no Cable stage after ws's run"
 for made in ~/.ssh/config.d ~/.ssh/config.*~ /etc/ws-tunnel /usr/local/libexec/ws-tunnel \
-    /Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist; do
+    /Library/LaunchDaemons/com.github.zadykian.ws-tunnel.ws.plist; do
     ! sudo test -e "$made" || error "ws client macos wizard --check made $made"
 done
 config | cmp -s - "$RUNNER_TEMP/config" ||
