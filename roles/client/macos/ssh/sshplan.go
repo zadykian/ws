@@ -67,7 +67,11 @@ func (s SSH) parts(ctx context.Context) ([]resource.Resource, error) {
 	if err != nil {
 		return nil, err
 	}
-	text := s.config(ctx, f, key)
+	hosts, err := s.hosts()
+	if err != nil {
+		return nil, err
+	}
+	text := s.config(ctx, f, key, hosts)
 	include := f.Include
 	if own := sshcfg.OwnHosts(string(f.UserConfig.Text), "ws"); len(own) > 0 && include.Conflict == "" {
 		include.Conflict = fmt.Sprintf("line %d sets its own values for ws: those in config.d/ws, read "+
