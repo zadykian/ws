@@ -8,16 +8,15 @@ import (
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
 // wizardQueue returns the stages as the lists show them, each on its machine, with the stage that
 // picking it locks. ws client macos apply's steps stand under their stage, and ws's roles too, by
 // name, until ws reports their steps.
-func wizardQueue(stages []step.Step) []tui.Stage {
+func wizardQueue(side engine.Side, stages []step.Step) []tui.Stage {
 	queue := make([]tui.Stage, len(stages))
 	for i, s := range stages {
-		queue[i] = tui.Stage{Name: s.Name(), Side: string(stage.Mac), Waits: wizard.Locks(s), Nested: nestedRows(s.Name())}
+		queue[i] = tui.Stage{Name: s.Name(), Side: string(side.Local), Waits: wizard.Locks(s), Nested: side.Nested(s.Name())}
 		if m, ok := wizard.SideOf(s); ok {
 			queue[i].Side = string(m)
 		}

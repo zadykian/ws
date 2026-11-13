@@ -37,7 +37,8 @@ func TestWizardWorkRunsTheStagesOnTheScreensEffects(t *testing.T) {
 
 // testSide is a side of stages that need no machine: no caffeinate, no forms and no state read.
 func testSide(stages ...step.Step) wizardSide {
-	return wizardSide{Stages: func(engine.WizardEffects, engine.WizardOptions) []step.Step { return stages }}
+	return wizardSide{Side: engine.Side{WsRun: wsRunSide(fakeProcess()),
+		Stages: func(engine.WizardEffects, engine.WizardOptions) []step.Step { return stages }}}
 }
 
 // tickStep is a stage that plans a change and records that it applied.

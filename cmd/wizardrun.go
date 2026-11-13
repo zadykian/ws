@@ -83,11 +83,11 @@ func (w wizardRun) round() tui.Round {
 	sudo := w.newSudo()
 	stages := w.plainStages()
 	var run string // ws's run, found once a round; a side with none has no name to choose
-	if r := wsRunOf(stages); r != nil {
-		run = r.Name()
+	if r, ok := w.side.WsRun(stages); ok {
+		run = r.Name
 	}
 	return tui.Round{
-		Stages: wizardQueue(stages),
+		Stages: wizardQueue(w.side.Side, stages),
 		Scan:   w.scan(sudo),
 		Read:   func(side string) (tui.StateReader, func(context.Context)) { return w.side.Read(side, sudo) },
 		Run:    func(_ context.Context, choice tui.QueueChoice) error { return w.chosen(choice, run, sudo) },
@@ -123,10 +123,10 @@ func (w wizardRun) scan(sudo any) tui.Work {
 		e := w.effects(b, sudo)
 		stages := w.side.Stages(e, check)
 		o := b.Options(step.Options{Check: true})
-		if run := wsRunOf(stages); run != nil {
-			o.Observer = afterStage{b, run.WaitsOn(), func() {
-				states, err := run.Ws.State(ctx, w.p.Version)
-				reportRoles(run.Name(), states, err, b.Report)
+		if run, ok := w.side.WsRun(stages); ok {
+			o.Observer = afterStage{b, run.Await, func() {
+				states, err := run.State(ctx)
+				reportRoles(run.Name, states, err, b.Report)
 			}}
 		}
 		_, err := wizard.Run(ctx, e.Machine, o, stages, w.p.LockDir(), w.side.Pid, nil)

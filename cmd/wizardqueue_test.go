@@ -13,11 +13,12 @@ import (
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 	"github.com/zadykian/ws/roles/server/ubuntu"
 )
 
 func queueOf(p cli.Env) []tui.Stage {
-	return wizardQueue(wizardStages(wizardEffects{p: p, hand: &wizard.Hand{}, sudo: &host.Sudo{}}, engine.WizardOptions{}))
+	return wizardQueue(engine.Side{Local: stage.Mac, Nested: nestedRows}, wizardStages(wizardEffects{p: p, hand: &wizard.Hand{}, sudo: &host.Sudo{}}, engine.WizardOptions{}))
 }
 
 func stageOf(t *testing.T, queue []tui.Stage, name string) tui.Stage {

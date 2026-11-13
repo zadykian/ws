@@ -12,34 +12,25 @@ import (
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 	"github.com/zadykian/ws/roles/client/macos/stages/tools"
 	"github.com/zadykian/ws/roles/server/ubuntu"
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 )
 
-// wizardSide is what differs between the wizards: engine.Side's fields, by their names, and the
-// Configure forms.
+// wizardSide is a wizard's engine.Side, with its Configure forms.
 type wizardSide struct {
-	Stages func(engine.WizardEffects, engine.WizardOptions) []step.Step
-	// Pid is the process that caffeinate waits on. 0 on ws, which has no caffeinate.
-	Pid   int
+	engine.Side
 	forms func(context.Context) ([]tui.Sheet, func(context.Context), error)
-	Read  func(string, any) (tui.StateReader, func(context.Context))
-	// NewSudo makes the sudo that a scan, the state screen's read and the run share. Nil makes none.
-	NewSudo func() any
-	// Before builds the steps that run first, on lines, before the lock and the screen.
-	Before func(o engine.WizardOptions) []func(effect.Out) step.Step
 }
 
 // macSide is ws client macos wizard's side.
 func macSide(c *cobra.Command, p cli.Env) wizardSide {
-	return wizardSide{
+	return wizardSide{forms: macForms(c.InOrStdin(), c.ErrOrStderr(), p), Side: engine.Side{
 		Stages: func(e engine.WizardEffects, o engine.WizardOptions) []step.Step {
 			return wizardStages(effectsOf(p, e), o)
 		},
-		Pid:     p.Pid,
-		forms:   macForms(c.InOrStdin(), c.ErrOrStderr(), p),
-		NewSudo: func() any { return &host.Sudo{} },
+		Pid: p.Pid, Local: stage.Mac, NewSudo: func() any { return &host.Sudo{} }, Nested: nestedRows, WsRun: wsRunSide(p),
 		Read: func(side string, sudo any) (tui.StateReader, func(context.Context)) {
 			return macState(p, side, sudo.(*host.Sudo))
 		},
@@ -54,23 +45,22 @@ func macSide(c *cobra.Command, p cli.Env) wizardSide {
 					Home: p.Getenv("HOME"), Args: p.Argv}
 			}}
 		},
-	}
+	}}
 }
 
 // serverSide is ws server ubuntu wizard's side. Every stage runs on ws, with no caffeinate, and the
 // forms are ws's values alone.
 func serverSide(p cli.Env) wizardSide {
-	return wizardSide{
+	forms := func(context.Context) ([]tui.Sheet, func(context.Context), error) { return serverSheets(p), nil, nil }
+	return wizardSide{forms: forms, Side: engine.Side{
 		Stages: func(e engine.WizardEffects, o engine.WizardOptions) []step.Step {
 			return serverWizardStages(effectsOf(p, e), o)
 		},
-		forms: func(context.Context) ([]tui.Sheet, func(context.Context), error) {
-			return serverSheets(p), nil, nil
-		},
+		Local: stage.Mac, Nested: nestedRows, WsRun: wsRunSide(p),
 		Read: func(string, any) (tui.StateReader, func(context.Context)) {
 			return stateRead(serverOpen, p.Version), nil
 		},
-	}
+	}}
 }
 
 // effectsOf is e as the stages of p take it: p acts on e's machine.
