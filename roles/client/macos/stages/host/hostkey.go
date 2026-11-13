@@ -1,4 +1,7 @@
-package wizard
+// Package host holds the wizard stages that reach ws from the Mac.
+// They are the host key, the login as root and the sudo password.
+// The Mac's reach and ways to ws serve them.
+package host
 
 import (
 	"context"
@@ -12,10 +15,10 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
-// HostKey is the stage of ws's host key: the ed25519 key that ws offers, matched against ws's
+// Key is the stage of ws's host key: the ed25519 key that ws offers, matched against ws's
 // console. It goes in known_hosts under the name ws, which config.d/ws's HostKeyAlias gives each
 // way to ws.
-type HostKey struct {
+type Key struct {
 	// Conf is mac.conf's path, Lock the run's lock, whose host.pub holds the key to fingerprint.
 	Conf, Lock string
 	// Tty tells whether a terminal is there to ask. Check is set under --check, which asks nothing.
@@ -29,13 +32,13 @@ type HostKey struct {
 }
 
 // Name is the stage's name.
-func (*HostKey) Name() string { return stage.Host }
+func (*Key) Name() string { return stage.Host }
 
 // Side is the Mac: known_hosts holds ws's host key.
-func (*HostKey) Side() guided.Side { return stage.Mac }
+func (*Key) Side() guided.Side { return stage.Mac }
 
 // WaitsOn is ws client macos apply, which writes config.d/ws.
-func (*HostKey) WaitsOn() string { return stage.Setup }
+func (*Key) WaitsOn() string { return stage.Setup }
 
 // hostAdd is the change that adds ws's key to known_hosts.
 type hostAdd struct{ file string }
@@ -45,11 +48,11 @@ func (c hostAdd) String() string {
 }
 
 // conf reads mac.conf.
-func (h *HostKey) conf() (conf.Conf, error) { return conf.Read(h.M, h.Conf) }
+func (h *Key) conf() (conf.Conf, error) { return conf.Read(h.M, h.Conf) }
 
 // known tells whether known_hosts holds a key under ws. It reads no key of ws's, as ws's sshd counts
 // each connection that doesn't log in against the Mac's address (PerSourcePenalties).
-func (h *HostKey) known(ctx context.Context, file string) bool {
+func (h *Key) known(ctx context.Context, file string) bool {
 	return remote.KnownHost(ctx, h.M, file)
 }
 
@@ -69,7 +72,7 @@ func noWay(c conf.Conf) error {
 }
 
 // Plan finds whether known_hosts lacks ws's key. Under --check it also shows what a run would do.
-func (h *HostKey) Plan(ctx context.Context) (step.Plan, error) {
+func (h *Key) Plan(ctx context.Context) (step.Plan, error) {
 	c, err := h.conf()
 	if err != nil {
 		return step.Plan{}, err

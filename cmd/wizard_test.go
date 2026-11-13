@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"os"
 	"strings"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/remote"
-	"github.com/zadykian/ws/internal/wizard"
 )
 
 // testWizardProcess returns the process of a Mac whose Command Line Tools and Homebrew are there, and
@@ -145,7 +145,7 @@ func TestWizardUpdateCheckInstallsNothing(t *testing.T) {
 func TestWizardStagesStateTheirSides(t *testing.T) {
 	var out strings.Builder
 	stages := wizardStages(wizardEffects{p: fakeProcess(), prog: "ws client macos wizard", text: &out, hand: &guided.Hand{},
-		sudo: &wizard.Sudo{}}, wizardOptions{})
+		sudo: &host.Sudo{}}, wizardOptions{})
 	onWs := 0
 	for _, s := range stages {
 		m, ok := guided.SideOf(s)
@@ -183,7 +183,7 @@ func TestWizardReadsWhatServerStatePrints(t *testing.T) {
 		t.Fatalf("status = %d", status)
 	}
 	m := wsOverSSH{effecttest.NewMachine(), []byte("ws " + p.version + "\n"), []byte(stdout)}
-	ws := session.New(wizard.MacReach{SSH: remote.SSH{M: m, Lock: "/t/l"}},
+	ws := session.New(host.MacReach{SSH: remote.SSH{M: m, Lock: "/t/l"}},
 		session.Scripts{Remote: session.RemoteScript})
 	roles, err := ws.State(context.Background(), p.version)
 	if err != nil {

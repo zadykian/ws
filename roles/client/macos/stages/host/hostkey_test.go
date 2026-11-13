@@ -1,4 +1,4 @@
-package wizard
+package host
 
 import (
 	"context"
@@ -20,7 +20,7 @@ const (
 
 // newHost returns the stage on a machine whose ws answers at 10.1.1.2:22 with hostLine, and whose
 // known_hosts lacks ws.
-func newHost(env map[string]string) (*HostKey, *effecttest.Machine) {
+func newHost(env map[string]string) (*Key, *effecttest.Machine) {
 	m := effecttest.NewMachine()
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + wayConf)
 	m.Dirs["/l"] = 0o700
@@ -31,7 +31,7 @@ func newHost(env map[string]string) (*HostKey, *effecttest.Machine) {
 	m.Results["ssh-keyscan -T 10 -t ed25519 -p 22 10.1.1.2"] = effecttest.Result{
 		Out: []byte("10.1.1.2 " + hostLine + "\n")}
 	m.Results["ssh-keygen -l -f /l/host.pub"] = effecttest.Result{Out: []byte("256 " + hostFP + " ws (ED25519)\n")}
-	return &HostKey{Conf: "/h/mac.conf", Lock: "/l", Tty: true, M: m, Out: &effecttest.Out{},
+	return &Key{Conf: "/h/mac.conf", Lock: "/l", Tty: true, M: m, Out: &effecttest.Out{},
 		SSH: s,
 		Env: func(k string) (string, bool) { v, ok := env[k]; return v, ok }}, m
 }

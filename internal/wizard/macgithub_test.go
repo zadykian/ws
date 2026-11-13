@@ -10,6 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/core/remote"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/stages/gh"
+	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 )
@@ -20,7 +21,7 @@ func newMacSigning(status session.Status, listed string) (*stages.Signing, *effe
 	m := effecttest.NewMachine()
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\nWS_USER=ada\n")
 	out := &effecttest.Out{}
-	ws := macSession(m, remote.SSH{M: m, Lock: "/l", Ways: MacWays{M: m, Conf: "/h/mac.conf"}}, out, status)
+	ws := macSession(m, remote.SSH{M: m, Lock: "/l", Ways: host.MacWays{M: m, Conf: "/h/mac.conf"}}, out, status)
 	g := gh.CLI{M: m, Out: &effecttest.Out{}, LookPath: found}
 	m.Results["/bin/gh auth status -h github.com"] = effecttest.Result{}
 	m.Results["/bin/gh ssh-key add /l/signing.pub --type signing --title ws1"] = effecttest.Result{}

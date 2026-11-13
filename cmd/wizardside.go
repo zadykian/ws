@@ -7,7 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/internal/wizard"
+	"github.com/zadykian/ws/roles/client/macos/stages/host"
 )
 
 // wizardSide is what differs between the wizards: their stages, the process that caffeinate waits
@@ -17,7 +17,7 @@ type wizardSide struct {
 	// pid is the process that caffeinate waits on. 0 on ws, which has no caffeinate.
 	pid   int
 	forms func(context.Context) ([]tui.Sheet, func(context.Context), error)
-	read  func(string, *wizard.Sudo) (tui.StateReader, func(context.Context))
+	read  func(string, *host.Sudo) (tui.StateReader, func(context.Context))
 }
 
 // macSide is ws client macos wizard's side.
@@ -26,7 +26,7 @@ func macSide(c *cobra.Command, p process) wizardSide {
 		stages: wizardStages,
 		pid:    p.pid,
 		forms:  macForms(c, p),
-		read: func(side string, sudo *wizard.Sudo) (tui.StateReader, func(context.Context)) {
+		read: func(side string, sudo *host.Sudo) (tui.StateReader, func(context.Context)) {
 			return macState(p, side, sudo)
 		},
 	}
@@ -40,7 +40,7 @@ func serverSide(p process) wizardSide {
 		forms: func(context.Context) ([]tui.Sheet, func(context.Context), error) {
 			return serverSheets(p), nil, nil
 		},
-		read: func(string, *wizard.Sudo) (tui.StateReader, func(context.Context)) {
+		read: func(string, *host.Sudo) (tui.StateReader, func(context.Context)) {
 			return stateRead(serverOpen, p.version), nil
 		},
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 	"os/signal"
 	"slices"
@@ -14,7 +15,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/internal/wizard"
 )
 
 // wizardRun is a wizard's run at a terminal, over its side: the Mac's or ws's.
@@ -59,7 +59,7 @@ func (w wizardRun) lines(ctx context.Context, term *effect.Terminal, out progOut
 	}
 	talks, _ := w.p.machine.(effect.Foreground)
 	stages := w.side.stages(wizardEffects{p: w.p, prog: w.c.CommandPath(), talks: talks, ask: signalPrompt{term},
-		hidden: term, out: out, text: w.c.OutOrStdout(), obs: out, hand: hand, sudo: &wizard.Sudo{}}, w.o)
+		hidden: term, out: out, text: w.c.OutOrStdout(), obs: out, hand: hand, sudo: &host.Sudo{}}, w.o)
 	_, err := guided.Run(ctx, w.p.machine, step.Options{Observer: out, Check: w.o.check}, stages, w.p.lockDir(),
 		w.side.pid, closing)
 	// The runner names the stage before the stage's own message.
@@ -79,7 +79,7 @@ func (w wizardRun) draw() error {
 // round is the works of a scan. A new one reads the forms' answers. The state screen's read of ws and
 // the run take the scan's sudo, which holds what it asked.
 func (w wizardRun) round() tui.Round {
-	sudo := &wizard.Sudo{}
+	sudo := &host.Sudo{}
 	stages := w.plainStages()
 	var run string // ws's run, found once a round; a side with none has no name to choose
 	if r := wsRunOf(stages); r != nil {
@@ -103,11 +103,11 @@ func (w wizardRun) config() tui.Config {
 
 // plainStages returns the stages for their names and machines alone: none of them runs.
 func (w wizardRun) plainStages() []step.Step {
-	return w.side.stages(wizardEffects{p: w.p, hand: &guided.Hand{}, sudo: &wizard.Sudo{}}, w.o)
+	return w.side.stages(wizardEffects{p: w.p, hand: &guided.Hand{}, sudo: &host.Sudo{}}, w.o)
 }
 
 // effects returns the stages' effects on b, whose stdout waits for the screen's end.
-func (w wizardRun) effects(b *tui.Bridge, sudo *wizard.Sudo) wizardEffects {
+func (w wizardRun) effects(b *tui.Bridge, sudo *host.Sudo) wizardEffects {
 	p, on := w.p, b.Effects()
 	p.machine = on.M
 	return wizardEffects{p: p, prog: w.c.CommandPath(), talks: on.Talks, ask: b, hidden: b, out: b, text: on.Text, obs: b,
@@ -116,7 +116,7 @@ func (w wizardRun) effects(b *tui.Bridge, sudo *wizard.Sudo) wizardEffects {
 
 // scan is a check of every stage, beside the lists. ws speaks for its roles once the stage that
 // installs it has read it, as ws's stages behind that need a ws at this version.
-func (w wizardRun) scan(sudo *wizard.Sudo) tui.Work {
+func (w wizardRun) scan(sudo *host.Sudo) tui.Work {
 	check := w.o
 	check.check = true
 	return func(ctx context.Context, b *tui.Bridge) error {
@@ -162,7 +162,7 @@ func wsRunOf(list []step.Step) *stages.WsRun {
 
 // work is a run of the stages by o beside a screen. What stays by hand goes to the run's stdout, as in
 // a plain run.
-func (w wizardRun) work(o wizardOptions, sudo *wizard.Sudo) tui.Work {
+func (w wizardRun) work(o wizardOptions, sudo *host.Sudo) tui.Work {
 	return func(ctx context.Context, b *tui.Bridge) error {
 		e := w.effects(b, sudo)
 		e.events = b
@@ -175,7 +175,7 @@ func (w wizardRun) work(o wizardOptions, sudo *wizard.Sudo) tui.Work {
 
 // running gives draw a run's config and the work of o. The run's stdout prints past the screen,
 // which it would paint over.
-func (w wizardRun) running(o wizardOptions, sudo *wizard.Sudo, draw func(tui.Config, tui.Work) error) error {
+func (w wizardRun) running(o wizardOptions, sudo *host.Sudo, draw func(tui.Config, tui.Work) error) error {
 	cfg, done := runConfig(w.c, w.p, w.config())
 	defer done()
 	return draw(cfg, w.work(o, sudo))
@@ -183,7 +183,7 @@ func (w wizardRun) running(o wizardOptions, sudo *wizard.Sudo, draw func(tui.Con
 
 // whole runs every stage, on the run screen of their names.
 func (w wizardRun) whole() error {
-	return w.running(w.o, &wizard.Sudo{}, func(cfg tui.Config, work tui.Work) error {
+	return w.running(w.o, &host.Sudo{}, func(cfg tui.Config, work tui.Work) error {
 		screen := tui.NewRunScreen(runTitle(w.c, w.o.check), cfg.Theme, tui.NewGroup("", w.plainStages()))
 		return tui.Run(w.c.Context(), cfg, screen, work)
 	})
@@ -202,7 +202,7 @@ func (w wizardRun) optionsOf(choice tui.QueueChoice, run string) wizardOptions {
 }
 
 // chosen runs what the lists chose, on a run of those stages.
-func (w wizardRun) chosen(choice tui.QueueChoice, run string, sudo *wizard.Sudo) error {
+func (w wizardRun) chosen(choice tui.QueueChoice, run string, sudo *host.Sudo) error {
 	o := w.optionsOf(choice, run)
 	return w.running(o, sudo, func(cfg tui.Config, work tui.Work) error {
 		screen := tui.NewQueueRun(runTitle(w.c, o.check), cfg.Theme, choice)

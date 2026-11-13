@@ -1,4 +1,4 @@
-package wizard
+package host
 
 import (
 	"context"
@@ -21,7 +21,7 @@ type firstQuestion struct {
 }
 
 // question is the Host key stage's.
-func (h *HostKey) question() firstQuestion { return firstQuestion{h.SSH, h.Env, h.Tty, h.P, h.Out} }
+func (h *Key) question() firstQuestion { return firstQuestion{h.SSH, h.Env, h.Tty, h.P, h.Out} }
 
 func noAnswer(w remote.Way) string {
 	return fmt.Sprintf("ws doesn't answer at %s:%s with an ed25519 key", w.Host, w.Port)

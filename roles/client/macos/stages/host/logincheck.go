@@ -1,4 +1,4 @@
-package wizard
+package host
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"

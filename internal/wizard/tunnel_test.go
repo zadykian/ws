@@ -6,6 +6,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/remote"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/client/macos/stages/tools"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"strings"
@@ -27,7 +28,7 @@ func newTunnel(pub string, status session.Status, check bool) (*Tunnel, *effectt
 	m.Results["launchctl print system/"+label] = effecttest.Result{}
 	m.Results["nc -z -G 3 -w 3 10.99.0.1 22"] = effecttest.Result{}
 	m.Results["ssh -G ws"] = effecttest.Result{Out: []byte("user root\nhostname 10.99.0.1\n")}
-	return &Tunnel{SSH: remote.SSH{M: m, Lock: "/l", Ways: MacWays{M: m, Conf: "/h/mac.conf"}}, Ws: r.Ws, Conf: "/h/mac.conf", Check: check, Home: "/h", M: m, Out: r.Out}, m
+	return &Tunnel{SSH: remote.SSH{M: m, Lock: "/l", Ways: host.MacWays{M: m, Conf: "/h/mac.conf"}}, Ws: r.Ws, Conf: "/h/mac.conf", Check: check, Home: "/h", M: m, Out: r.Out}, m
 }
 
 func TestStagesGiveTheWordsOfNoTicket(t *testing.T) {

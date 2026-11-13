@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 	"sync"
@@ -11,7 +12,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/remote"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/internal/wizard"
 )
 
 // varsReach is the way to ws of the host_vars and secrets sheets, of the wizard's state screen and of
@@ -21,7 +21,7 @@ type varsReach struct {
 	p process
 	// sudo is the scan's, whose way to root the state screen keeps. It stands unread where the scan
 	// never reached it, and a read then asks. Nil makes a new one for each reach.
-	sudo *wizard.Sudo
+	sudo *host.Sudo
 	// mu guards lock and release: the work takes the lock, and the command lets it go, past a work
 	// that the screen's end left behind.
 	mu      sync.Mutex
@@ -72,10 +72,10 @@ func (r *varsReach) reachOn(ctx context.Context, m effect.Machine, t rootTalk) (
 		return nil, err
 	}
 	conf := confPath(r.p.getenv, r.p.pwd)
-	ssh := remote.SSH{M: m, Lock: lock, Home: r.p.getenv("HOME"), Ways: wizard.MacWays{M: m, Conf: conf}}
-	sudo := cmp.Or(r.sudo, &wizard.Sudo{})
+	ssh := remote.SSH{M: m, Lock: lock, Home: r.p.getenv("HOME"), Ways: host.MacWays{M: m, Conf: conf}}
+	sudo := cmp.Or(r.sudo, &host.Sudo{})
 	// A kept one holds the effects of a screen that has ended.
-	ws := session.New(wizard.MacReach{SSH: ssh, Sudo: sudo, Conf: conf, Out: t},
+	ws := session.New(host.MacReach{SSH: ssh, Sudo: sudo, Conf: conf, Out: t},
 		session.Scripts{Remote: session.RemoteScript, Files: session.RemoteFilesScript})
 	sudo.SSH, sudo.Tty, sudo.P, sudo.Out = ssh, r.p.tty, t, t
 	plan, err := sudo.Plan(ctx)

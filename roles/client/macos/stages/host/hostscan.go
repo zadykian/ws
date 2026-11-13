@@ -1,4 +1,4 @@
-package wizard
+package host
 
 import (
 	"context"
@@ -28,7 +28,7 @@ func scanKey(ctx context.Context, m effect.Machine, w remote.Way) string {
 }
 
 // fingerprint returns the fingerprint of the key, which ssh-keygen reads from a file in the lock.
-func (h *HostKey) fingerprint(ctx context.Context, line string) (string, error) {
+func (h *Key) fingerprint(ctx context.Context, line string) (string, error) {
 	file := h.Lock + "/host.pub"
 	if err := h.M.WriteFile(file, []byte(line+"\n"), 0o600); err != nil {
 		return "", err

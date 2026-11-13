@@ -9,8 +9,8 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/form"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/stages/host"
 )
 
 // newConfigureCmd returns ws client macos configure.
@@ -53,7 +53,7 @@ func macForms(c *cobra.Command, p process) func(context.Context) ([]tui.Sheet, f
 			return nil, nil, err
 		}
 		// One way to root serves both of ws's sheets, so that sudo's password is asked once.
-		vars := &varsReach{p: p, sudo: &wizard.Sudo{}}
+		vars := &varsReach{p: p, sudo: &host.Sudo{}}
 		return []tui.Sheet{confSheet(form), vars.secretsSheet(), hostVarsSheet(vars.reach)}, vars.close, nil
 	}
 }

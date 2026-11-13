@@ -1,4 +1,4 @@
-package wizard
+package host
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 )
 
 // Apply adds the key.
-func (h *HostKey) Apply(ctx context.Context, _ step.Plan) error { return h.add(ctx) }
+func (h *Key) Apply(ctx context.Context, _ step.Plan) error { return h.add(ctx) }
 
 // add adds the ed25519 key that ws offers at its way to known_hosts, under ws, once WS_HOST_KEY, or
 // the answer at the terminal, says that ws's console shows it. Where ws doesn't answer at its way,
@@ -19,7 +19,7 @@ func (h *HostKey) Apply(ctx context.Context, _ step.Plan) error { return h.add(c
 // nothing, and shows the line it would add. Where known_hosts is a link, as a dotfiles manager makes
 // it, it prints that line, and stops: a write would replace the link. --check, which compared no key
 // with ws's console, stops without it.
-func (h *HostKey) add(ctx context.Context) error {
+func (h *Key) add(ctx context.Context) error {
 	c, err := h.conf()
 	if err != nil {
 		return err
@@ -54,7 +54,7 @@ func (h *HostKey) add(ctx context.Context) error {
 }
 
 // write adds ws's line to known_hosts, or shows it under --check.
-func (h *HostKey) write(file, line string) error {
+func (h *Key) write(file, line string) error {
 	info, err := h.M.Stat(file)
 	if err == nil && info.Link != "" {
 		why := fmt.Sprintf("%s is a link to %s, which the wizard leaves", file, info.Link)

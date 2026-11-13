@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 	"io"
 	"slices"
@@ -14,7 +15,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/internal/wizard"
 )
 
 func TestWizardWorkRunsTheStagesOnTheScreensEffects(t *testing.T) {
@@ -25,7 +25,7 @@ func TestWizardWorkRunsTheStagesOnTheScreensEffects(t *testing.T) {
 	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
 	var text bytes.Buffer
 	cfg.Text = &text
-	if err := tui.Run(context.Background(), cfg, screen, w.work(wizardOptions{check: true}, &wizard.Sudo{})); err != nil {
+	if err := tui.Run(context.Background(), cfg, screen, w.work(wizardOptions{check: true}, &host.Sudo{})); err != nil {
 		t.Fatal(err)
 	}
 	if !slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "run caffeinate") }) {
@@ -158,7 +158,7 @@ func TestWizardWorkLeavesOutWhatTheChoiceDoes(t *testing.T) {
 	cfg := w.config()
 	cfg.Text = io.Discard
 	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
-	if err := tui.Run(context.Background(), cfg, screen, w.work(o, &wizard.Sudo{})); err != nil {
+	if err := tui.Run(context.Background(), cfg, screen, w.work(o, &host.Sudo{})); err != nil {
 		t.Fatal(err)
 	}
 	if applied {
@@ -174,7 +174,7 @@ func TestWizardScanOfASideWithNoRunReportsNoRoles(t *testing.T) {
 	cfg := w.config()
 	cfg.Text = io.Discard
 	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
-	if err := tui.Run(context.Background(), cfg, screen, w.scan(&wizard.Sudo{})); err != nil {
+	if err := tui.Run(context.Background(), cfg, screen, w.scan(&host.Sudo{})); err != nil {
 		t.Fatal(err)
 	}
 	if applied {
@@ -188,7 +188,7 @@ func TestWizardScanChangesNothing(t *testing.T) {
 	w := wizardRun{c, p, macSide(c, p), wizardOptions{}}
 	cfg := w.config()
 	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
-	if err := tui.Run(context.Background(), cfg, screen, w.scan(&wizard.Sudo{})); err != nil {
+	if err := tui.Run(context.Background(), cfg, screen, w.scan(&host.Sudo{})); err != nil {
 		t.Fatal(err)
 	}
 	if !slices.Contains(m.Calls, "run xcode-select -p") || slices.Contains(m.Calls, "run xcode-select --install") {

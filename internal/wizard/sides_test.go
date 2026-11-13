@@ -2,6 +2,7 @@ package wizard
 
 import (
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 	"testing"
@@ -24,7 +25,7 @@ func TestEveryStageStatesItsSide(t *testing.T) {
 		stage.Cable: stage.Mac, (&stages.WsValues{}).Name(): session.Ws,
 	}
 	list := []step.Step{&tools.MacUpdate{}, &tools.Tools{}, &tools.Homebrew{}, &answers.Answers{}, &keys.MacKey{}, &gh.Gh{}, &tools.Setup{},
-		&HostKey{}, &Login{}, &Sudo{}, &tools.WsInstall{}, &stages.WsRun{}, &stages.WsClaude{}, &stages.Signing{GitHub: &gh.MacGitHub{}}, &Tunnel{}, &Cable{},
+		&host.Key{}, &host.Login{}, &host.Sudo{}, &tools.WsInstall{}, &stages.WsRun{}, &stages.WsClaude{}, &stages.Signing{GitHub: &gh.MacGitHub{}}, &Tunnel{}, &Cable{},
 		&stages.WsValues{}}
 	if len(list) != len(want) {
 		t.Fatalf("%d stages, %d wanted", len(list), len(want))
