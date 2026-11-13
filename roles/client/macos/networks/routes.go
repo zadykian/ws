@@ -74,7 +74,7 @@ func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 	}
 	var res resource.Resource = file.Absent{M: r.M, Path: routesFile}
 	if len(networks) > 0 {
-		res = file.File{M: r.M, Path: routesFile, Content: []byte(routesText(networks)), Mode: 0o644}
+		res = file.File{M: r.M, Path: routesFile, Content: []byte(routesText(r.Server, r.Set, networks)), Mode: 0o644}
 	}
 	cs, err := resource.Append(ctx, nil, resource.Said{Out: r.Out, Part: res})
 	if err != nil || len(cs) == 0 || r.Check {
