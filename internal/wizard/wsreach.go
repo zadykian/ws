@@ -8,6 +8,8 @@ import (
 	"github.com/zadykian/ws/engine/core/remote"
 
 	"github.com/zadykian/ws/engine/core/effect"
+
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // WsReach is ws's way to itself, for ws server ubuntu wizard: the scripts run as the user that runs
@@ -29,7 +31,7 @@ func (r WsReach) want() (Want, error) { return r.Read() }
 
 func (r WsReach) user() (string, error) {
 	c, err := r.Read()
-	return cmp.Or(c.User, defaultUser()), err
+	return cmp.Or(c.User, values.Default().User), err
 }
 
 func (WsReach) rerun() string { return "run sudo ws server ubuntu apply" }

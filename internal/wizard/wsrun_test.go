@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // extra is what mac.conf needs besides its target.
@@ -20,10 +22,10 @@ var idleRun = wsStatus{Run: stamp{Version: "v1.2.3", Exit: "0"}}
 // answers status with the value's text.
 func newRun(target string, status wsStatus, update, check bool) (*WsRun, *effecttest.Machine) {
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=" + target + "\nWS_USER=" + defaultUser() + "\n" + extra[target])
+	m.Files["/h/mac.conf"] = []byte("WS_TARGET=" + target + "\nWS_USER=" + values.Default().User + "\n" + extra[target])
 	out := &effecttest.Out{}
 	ws := macSession(m, remote.SSH{M: m, Lock: "/l", Ways: MacWays{M: m, Conf: "/h/mac.conf"}}, out, status)
-	return &WsRun{Ws: ws, Check: check, Out: out, Version: "v1.2.3", Update: update}, m
+	return &WsRun{Ws: ws, Check: check, Out: out, Version: "v1.2.3", Update: update, Await: installStage}, m
 }
 
 func TestWsRunPlan(t *testing.T) {
@@ -112,7 +114,7 @@ func asks(m *effecttest.Machine, user string) {
 
 func TestWsRunNamesWsUser(t *testing.T) {
 	for name, tc := range map[string]struct{ named, want, plan string }{
-		"the default": {"", defaultUser(), ""},
+		"the default": {"", values.Default().User, ""},
 		"none named":  {"", "alice", "after naming ws_user: alice in ws's host_vars"},
 		"named":       {"alice", "alice", ""},
 		"another":     {"other", "alice", "after naming ws_user: alice in ws's host_vars"},

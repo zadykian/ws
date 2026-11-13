@@ -1,14 +1,12 @@
 package wizard
 
 import (
-	"cmp"
 	"context"
 	"errors"
 	guided "github.com/zadykian/ws/engine/core/wizard"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // runStage names the stage in its messages.
@@ -20,7 +18,8 @@ const runStage = "ws's run"
 type WsRun struct {
 	// Ws is the session to ws, whose files script names ws_user and the tunnel's peer.
 	Ws *Session
-	// Await names the stage that must be done first: by default the one that installs this ws on ws.
+	// Await names the stage that must be done first. It is required: the Mac's list names the stage
+	// that installs this ws on ws, and ws's own names its values.
 	Await string
 	// Unbooted is set on ws where its systemd isn't booted, as in a container: no unit runs there, so
 	// the stage says so and skips.
@@ -45,8 +44,8 @@ func (*WsRun) Name() string { return runStage }
 // Side is ws: ws server ubuntu apply runs there.
 func (*WsRun) Side() guided.Side { return OnWs }
 
-// WaitsOn is Await, or the stage that installs this ws on ws.
-func (r *WsRun) WaitsOn() string { return cmp.Or(r.Await, installStage) }
+// WaitsOn is Await.
+func (r *WsRun) WaitsOn() string { return r.Await }
 
 // RunDone succeeds where ws's last full run left what c wants. Under --update, only once the stage
 // ran ws server ubuntu apply in this run.
@@ -57,9 +56,6 @@ func (r *WsRun) RunDone(ctx context.Context, c Want) bool {
 	s, ok := r.Ws.status(ctx)
 	return ok && s.done(r.Version, c)
 }
-
-// defaultUser is the server's default ws_user, what a host_vars with no such line gives.
-func defaultUser() string { return values.Default().User }
 
 // runChange is the change that runs ws server ubuntu apply.
 type runChange struct {

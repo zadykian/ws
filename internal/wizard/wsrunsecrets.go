@@ -3,6 +3,8 @@ package wizard
 import (
 	"cmp"
 	"context"
+
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // done tells whether ws's last full run, by this version, exited 0 and no run's unit runs there. On
@@ -15,7 +17,7 @@ func (s wsStatus) done(version string, c Want) bool {
 // named tells whether ws's values give ws_user the user that ssh logs in as. It compares with the
 // server's default, so that a default that moves leaves a WS_USER of the old one named in
 // host_vars.
-func (s wsStatus) named(c Want) bool { return cmp.Or(s.User, defaultUser()) == c.User }
+func (s wsStatus) named(c Want) bool { return cmp.Or(s.User, values.Default().User) == c.User }
 
 // idle tells whether ws's last full run, made by a ws of this version, exited 0. The run must have
 // read ws's secrets file and host_vars as they are now, and no run's unit may run there now.
