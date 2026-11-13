@@ -21,7 +21,7 @@ func TestTunnelApply(t *testing.T) {
 		m.Results["sudo -v"] = effecttest.Result{}
 		m.Results[libexec+" client macos tunnel key"] = effecttest.Result{Out: []byte(keyA + "\n")}
 		if tc.shake != "" {
-			m.Results[libexec+" client macos tunnel status"] = effecttest.Result{Out: []byte(tc.shake)}
+			m.Results[libexec+" client macos tunnel status --server ws"] = effecttest.Result{Out: []byte(tc.shake)}
 		}
 		m.Results["mkdir -p /h"] = effecttest.Result{}
 		m.Results[tunnelCall(tun.SSH, "-o", "BatchMode=yes", "ws", "echo", "ok")] =

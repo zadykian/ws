@@ -121,9 +121,9 @@ func TestStagesNameTheServerInEachSSHCall(t *testing.T) {
 	})
 	t.Run("tunnel", func(t *testing.T) {
 		tun, m := newTunnel(keyB, session.Status{WgKey: keyB, Peered: true, MacKey: keyA}, false)
-		tun.SSH.Host = "lab"
+		tun.SSH.Host, tun.Server = "lab", "lab"
 		m.Results["ssh -G lab"] = effecttest.Result{Out: []byte("user root\nhostname 10.99.0.1\n")}
-		m.Results[libexec+" client macos tunnel status"] = effecttest.Result{Out: []byte("latest handshake: 5 s ago\n")}
+		m.Results[libexec+" client macos tunnel status --server lab"] = effecttest.Result{Out: []byte("latest handshake: 5 s ago\n")}
 		m.Results[tunnelCall(tun.SSH, "-o", "BatchMode=yes", "lab", "echo", "ok")] = effecttest.Result{Out: []byte("ok\n")}
 		tun.Sleep = func(time.Duration) {}
 		if err := tun.handshake(ctx, conf.Conf{}, false); err != nil {
