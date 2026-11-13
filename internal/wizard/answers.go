@@ -40,6 +40,9 @@ type Answers struct {
 // Name is the stage's name.
 func (*Answers) Name() string { return answers }
 
+// Side is the Mac: mac.conf.
+func (*Answers) Side() Side { return OnMac }
+
 // WaitsOn is Homebrew: on a new Mac, a --check run stops there, as the install does.
 func (*Answers) WaitsOn() string { return homebrewStage }
 

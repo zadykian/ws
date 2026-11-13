@@ -31,6 +31,9 @@ type Tools struct {
 // Name is the stage's name.
 func (*Tools) Name() string { return toolsStage }
 
+// Side is the Mac: the Command Line Tools.
+func (*Tools) Side() Side { return OnMac }
+
 // WaitsOn is empty: the tools come first.
 func (*Tools) WaitsOn() string { return "" }
 

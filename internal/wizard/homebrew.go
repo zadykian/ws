@@ -42,6 +42,9 @@ type Homebrew struct {
 // Name is the stage's name.
 func (*Homebrew) Name() string { return homebrewStage }
 
+// Side is the Mac: Homebrew.
+func (*Homebrew) Side() Side { return OnMac }
+
 // WaitsOn is Tools: the installer needs the Command Line Tools.
 func (*Homebrew) WaitsOn() string { return toolsStage }
 

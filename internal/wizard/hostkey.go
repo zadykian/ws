@@ -31,6 +31,9 @@ type HostKey struct {
 // Name is the stage's name.
 func (*HostKey) Name() string { return hostStage }
 
+// Side is the Mac: known_hosts holds ws's host key.
+func (*HostKey) Side() Side { return OnMac }
+
 // WaitsOn is ws client macos apply, which writes config.d/ws.
 func (*HostKey) WaitsOn() string { return setupStage }
 

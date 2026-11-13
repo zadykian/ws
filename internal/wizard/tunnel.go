@@ -46,6 +46,9 @@ type Tunnel struct {
 // Name is the stage's name.
 func (*Tunnel) Name() string { return tunnelStage }
 
+// Side is the Mac: the stage ends in the Mac's WireGuard configuration and mac.conf.
+func (*Tunnel) Side() Side { return OnMac }
+
 // WaitsOn is ws's run, which makes wg0.
 func (*Tunnel) WaitsOn() string { return runStage }
 

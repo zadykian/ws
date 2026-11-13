@@ -24,6 +24,9 @@ type WsInstall struct {
 // Name is the stage's name.
 func (*WsInstall) Name() string { return installStage }
 
+// Side is ws: this release is installed there.
+func (*WsInstall) Side() Side { return OnWs }
+
 // WaitsOn is the Sudo stage, which the remote script needs.
 func (*WsInstall) WaitsOn() string { return sudoStage }
 

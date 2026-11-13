@@ -46,6 +46,9 @@ type GhCLI struct {
 // Name is the stage's name.
 func (*Gh) Name() string { return ghStage }
 
+// Side is the Mac: gh's login and the Mac's key among the account's.
+func (*Gh) Side() Side { return OnMac }
+
 // WaitsOn is Homebrew, which gh comes from. Under --check, where the Mac key is still to be made,
 // Plan says it would add the key once made, as wizard-gh.sh did.
 func (*Gh) WaitsOn() string { return homebrewStage }

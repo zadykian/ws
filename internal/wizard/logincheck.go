@@ -31,6 +31,9 @@ type Login struct {
 // Name is the stage's name.
 func (*Login) Name() string { return loginStage }
 
+// Side is the Mac: the stage checks the Mac's login and changes nothing on ws.
+func (*Login) Side() Side { return OnMac }
+
 // WaitsOn is the Host key stage, without which ssh logs in nowhere.
 func (*Login) WaitsOn() string { return hostStage }
 

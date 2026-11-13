@@ -42,6 +42,9 @@ type WsRun struct {
 // Name is the stage's name.
 func (*WsRun) Name() string { return runStage }
 
+// Side is ws: ws server ubuntu apply runs there.
+func (*WsRun) Side() Side { return OnWs }
+
 // WaitsOn is Await, or the stage that installs this ws on ws.
 func (r *WsRun) WaitsOn() string { return cmp.Or(r.Await, installStage) }
 

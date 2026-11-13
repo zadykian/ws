@@ -35,6 +35,9 @@ type Setup struct {
 // Name is the stage's name.
 func (*Setup) Name() string { return setupStage }
 
+// Side is the Mac: ws client macos apply.
+func (*Setup) Side() Side { return OnMac }
+
 // WaitsOn is Homebrew, which ws client macos apply needs. Under --check, ws client macos apply's
 // plan stands alone, as setup_after in sh did, and the git step says itself what waits on the
 // login.

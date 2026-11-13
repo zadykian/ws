@@ -33,6 +33,9 @@ type SigningGitHub interface {
 // Name is the stage's name.
 func (*Signing) Name() string { return signingStage }
 
+// Side is its GitHub's: the Mac, whose gh login takes ws's signing key, or ws.
+func (s *Signing) Side() Side { return s.GitHub.side() }
+
 // WaitsOn is ws's run, which makes the key.
 func (*Signing) WaitsOn() string { return runStage }
 

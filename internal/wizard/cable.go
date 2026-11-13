@@ -63,6 +63,13 @@ var cableEndAt = regexp.MustCompile(`(^| )` + regexp.QuoteMeta(cableEnd) + `/`)
 // Name is the stage's name.
 func (*Cable) Name() string { return cableStage }
 
+// Locks is ws client macos apply, whose steps the stage applies itself, so a list holds them on
+// beside it. A plain run's Cable reads Homebrew as ever.
+func (*Cable) Locks() string { return setupStage }
+
+// Side is the Mac: the cable's service, after ws's port in host_vars.yml.
+func (*Cable) Side() Side { return OnMac }
+
 // WaitsOn is Homebrew: under --check on a new Mac, Answers is skipped and writes no mac.conf to
 // read. Plan says itself that the stage is after ws's run, as wizard-cable.sh's cable_after did.
 // That run makes /etc/ws/host_vars.yml on ws, where it has no cable to see off the LAN.

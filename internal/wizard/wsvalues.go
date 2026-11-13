@@ -35,6 +35,9 @@ type WsValues struct {
 // Name is the stage's name.
 func (*WsValues) Name() string { return valuesStage }
 
+// Side is ws: its host_vars.
+func (*WsValues) Side() Side { return OnWs }
+
 // WaitsOn is empty: the stage is ws's first.
 func (*WsValues) WaitsOn() string { return "" }
 

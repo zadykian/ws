@@ -28,6 +28,9 @@ type MacUpdate struct {
 // Name is the stage's name.
 func (*MacUpdate) Name() string { return macUpdateStage }
 
+// Side is the Mac: the stage installs ws's tool before the others.
+func (*MacUpdate) Side() Side { return OnMac }
+
 // WaitsOn is empty: the stage comes before the others.
 func (*MacUpdate) WaitsOn() string { return "" }
 

@@ -44,6 +44,9 @@ type Sudo struct {
 // Name is the stage's name.
 func (*Sudo) Name() string { return sudoStage }
 
+// Side is ws: how its scripts reach root.
+func (*Sudo) Side() Side { return OnWs }
+
 // WaitsOn is the stage that checks the login, without which sudo answers nothing.
 func (*Sudo) WaitsOn() string { return loginStage }
 

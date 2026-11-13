@@ -23,6 +23,9 @@ type WsClaude struct {
 // Name is the stage's name.
 func (*WsClaude) Name() string { return claudeStage }
 
+// Side is ws: the claude login of WS_USER.
+func (*WsClaude) Side() Side { return OnWs }
+
 // WaitsOn is ws's run.
 func (*WsClaude) WaitsOn() string { return runStage }
 

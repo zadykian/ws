@@ -41,7 +41,7 @@ hand. The stages, in order, the first two of which install what the rest needs:
 13. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
 14. Cable: on the LAN, ws's port of the cable in its `host_vars.yml`, and the Mac's service, below.
 
-Each stage names the machine it acts on, in `internal/wizard/machine.go`. Sudo, ws on ws, ws's run
+Each stage states the side it acts on, in its own file by `Side()`. Sudo, ws on ws, ws's run
 and claude on ws are ws's, and the rest are the Mac's. A stage that changes both is the Mac's where
 its last change lands there, as the Tunnel and the Cable do.
 

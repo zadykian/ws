@@ -28,5 +28,8 @@ type MacKey struct {
 // Name is the stage's name.
 func (*MacKey) Name() string { return macKey }
 
+// Side is the Mac: its ssh key.
+func (*MacKey) Side() Side { return OnMac }
+
 // WaitsOn is Answers, which gives mac.conf the lines that this stage reads.
 func (*MacKey) WaitsOn() string { return answers }
