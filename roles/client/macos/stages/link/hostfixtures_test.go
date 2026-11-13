@@ -5,6 +5,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/remote"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/stages/gh"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
@@ -47,15 +48,15 @@ func newLogin(login effecttest.Result) (*host.Login, *effecttest.Machine) {
 	h, m := newHost(nil)
 	m.Results["ssh-keygen -F ws -f "+hostsOf] = effecttest.Result{}
 	m.Results[loginCall] = login
-	ws := macSession(m, h.SSH, h.Out.(*effecttest.Out), session.Status{})
+	ws := macSession(m, h.SSH, h.Out.(*effecttest.Out), session.Status{}, nil)
 	return &host.Login{SSH: h.SSH, Ws: ws, Gh: gh.CLI{Conf: "/h/mac.conf", Home: "/h", M: m, Out: h.Out}, Tty: h.Tty, Env: h.Env, P: h.P, Out: h.Out}, m
 }
 
 // macSession returns the Mac's session over ssh, whose remote script answers status on m with the
-// value's text.
-func macSession(m *effecttest.Machine, ssh remote.SSH, out *effecttest.Out, status session.Status) *session.Session {
+// value's text. A run's events go to events, which may be nil.
+func macSession(m *effecttest.Machine, ssh remote.SSH, out *effecttest.Out, status session.Status, events step.Observer) *session.Session {
 	ws := session.New(sessiontest.Reach{Reach: host.MacReach{SSH: ssh, Conf: "/h/mac.conf", Out: out}, M: m},
-		session.Scripts{Remote: []byte("x"), Files: []byte("y")})
+		session.Scripts{Remote: []byte("x"), Files: []byte("y"), Events: events})
 	m.Results[sessiontest.Op("status")] = effecttest.Result{Out: sessiontest.Text(status)}
 	return ws
 }

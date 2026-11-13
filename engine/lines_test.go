@@ -25,16 +25,18 @@ func TestLinesPrefixLines(t *testing.T) {
 
 func TestLinesObserveAPlanAndWhatAStepIsBehind(t *testing.T) {
 	out := Lines{Out: &effecttest.Out{}, Prog: "ws client macos apply", Seen: map[string]bool{}}
-	out.Change = func(c step.Change) (string, bool) {
+	out.Change = func(c step.Change) ([]string, bool) {
 		switch c.String() {
 		case "bare\n":
-			return "bare", true
+			return []string{"bare"}, true
+		case "blank":
+			return []string{""}, true
 		case "silent":
-			return "", true
+			return nil, true
 		}
-		return "", false
+		return nil, false
 	}
-	plan := []step.Change{textChange("bare\n"), textChange("silent"), textChange("would run x")}
+	plan := []step.Change{textChange("bare\n"), textChange("blank"), textChange("silent"), textChange("would run x")}
 	out.Observe(step.Event{Kind: step.Planned, Step: "ssh", Changes: plan})
 	out.Observe(step.Event{Kind: step.Started, Step: "ssh", Changes: plan})
 	out.Observe(step.Event{Kind: step.Planned, Step: "ssh", Check: true, Changes: plan})
@@ -44,7 +46,7 @@ func TestLinesObserveAPlanAndWhatAStepIsBehind(t *testing.T) {
 	out.Observe(step.Event{Kind: step.Skipped, Step: "git", After: "ssh", LeftOut: true})
 	out.Observe(step.Event{Kind: step.Skipped, Step: "cld", Err: errors.New("no file"), LeftOut: true})
 	want := []string{
-		"say: bare", "say: ws client macos apply: would run x",
+		"say: bare", "say: ", "say: ws client macos apply: would run x",
 		"say: ws client macos apply: git: after ssh", "say: ws client macos apply: warning: left out: no file",
 	}
 	if got := out.Out.(*effecttest.Out).Lines; !reflect.DeepEqual(got, want) {

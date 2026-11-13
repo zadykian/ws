@@ -13,9 +13,8 @@
 # - user NAME names NAME in that file as ws_user, for ws server ubuntu apply.
 # - peer KEY writes KEY, the Mac's WireGuard key, to mac.pub where that holds another.
 # - values prints that file, and nothing where there is none. values PAIR... runs ws server ubuntu
-# values
-#   set on each PAIR, the base64 of KEY=VALUE. ssh joins its arguments for this shell, which would
-#   split a value at a blank, run one with a quote, and lose an empty one.
+#   values set on each PAIR, the base64 of KEY=VALUE. ssh joins its arguments for this shell, which
+#   would split a value at a blank, run one with a quote, and lose an empty one.
 #
 # Everything is in functions that the last line calls, so that a script cut short runs nothing.
 

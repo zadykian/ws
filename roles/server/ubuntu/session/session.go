@@ -71,9 +71,6 @@ func New(r Reach, sc Scripts) *Session {
 	return &Session{reach: r, shell: r.Shell(), remote: sc.Remote, files: sc.Files, events: sc.Events}
 }
 
-// Hear has o hear a run's events from now on, in place of Scripts.Events.
-func (s *Session) Hear(o step.Observer) { s.events = o }
-
 // Status reads what the remote script's status prints once, until an operation that changes ws, or
 // claude's login, runs. It reports whether it read any: the Shell or the script fails where root is
 // out of reach.

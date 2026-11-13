@@ -81,7 +81,8 @@ func (g *Git) tell(text string) {
 	g.Out.Say("%s", text)
 }
 
-// say warns once for each text in a run, as Apply plans again and the runner plans after it.
+// say warns once for each text in a run, as waiting.Apply plans the registration again and the
+// runner plans after it.
 func (g *Git) say(text string) {
 	if g.said[text] {
 		return

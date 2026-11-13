@@ -85,7 +85,12 @@ func (s queueScreen) layout() widget.Layout {
 
 // listHeight is the lines of the pane of the list in focus that the list has.
 func (s queueScreen) listHeight() int {
-	height := s.layout().PaneSizes(s.Window.Width, s.Window.Height)[s.list.pane(s.list.side)].Height
+	sizes := s.layout().PaneSizes(s.Window.Width, s.Window.Height)
+	at := s.list.pane(s.list.side)
+	if at >= len(sizes) {
+		return 0
+	}
+	height := sizes[at].Height
 	if s.Filtering() {
 		height--
 	}
@@ -95,8 +100,8 @@ func (s queueScreen) listHeight() int {
 // View draws the lists, the filter's line over the one in focus.
 func (s queueScreen) View() tea.View {
 	l := s.list.drawn(s.layout(), s.Theme, s.Window, s.at)
-	if s.Filtering() {
-		l.Panes[s.list.pane(s.list.side)].Body = s.Filter.Line(s.Theme) + "\n" + s.list.view(s.Theme, s.list.side, s.listHeight(), s.at[s.list.side], true)
+	if at := s.list.pane(s.list.side); s.Filtering() && at < len(l.Panes) {
+		l.Panes[at].Body = s.Filter.Line(s.Theme) + "\n" + s.list.view(s.Theme, s.list.side, s.listHeight(), s.at[s.list.side], true)
 	}
 	return l.View(s.Theme, s.Window.Width, s.Window.Height)
 }

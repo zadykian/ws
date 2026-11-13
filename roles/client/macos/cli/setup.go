@@ -21,14 +21,14 @@ import (
 
 // macChange says the Mac's changes under --check. ws client macos apply printed a diff as diff -u
 // does, with no prefix and no blank line after it, and said nothing of the backup of a file.
-func macChange(c step.Change) (string, bool) {
+func macChange(c step.Change) ([]string, bool) {
 	switch c := c.(type) {
 	case file.UserWrite:
-		return strings.TrimSuffix(c.String(), "\n"), true
+		return []string{strings.TrimSuffix(c.String(), "\n")}, true
 	case file.UserBackup:
-		return "", true
+		return nil, true
 	}
-	return "", false
+	return nil, false
 }
 
 // linesOf returns the lines that the command at path prints on out.

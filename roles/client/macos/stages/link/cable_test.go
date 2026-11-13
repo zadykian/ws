@@ -23,7 +23,7 @@ func newCable(t *testing.T, status session.Status, link string, env map[string]s
 	root, m := newLogin(effecttest.Result{Out: []byte("ok\n")})
 	status.Run = idleRun.Run
 	out := &effecttest.Out{}
-	ws := macSession(m, root.SSH, out, status)
+	ws := macSession(m, root.SSH, out, status, nil)
 	m.Results["mkdir -p /h"] = effecttest.Result{}
 	m.Results[sessiontest.Op("link")] = effecttest.Result{Out: []byte(link)}
 	p := &effecttest.Prompt{T: t, Answers: map[string]string{}}

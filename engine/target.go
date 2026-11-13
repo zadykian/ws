@@ -15,7 +15,7 @@ type Target struct {
 	// the command's own, in the order that a side checks them.
 	Prepare func(ctx context.Context, c Call) (Run, error)
 	// Change says a change under --check in the side's way. Nil prints each as "PATH: change".
-	Change func(step.Change) (string, bool)
+	Change func(step.Change) ([]string, bool)
 	// State readies the report of state. Its errors are the command's own.
 	State func(ctx context.Context, c Call) (Report, error)
 	// Sheets gives the forms of configure, and done, which lets go of what they hold once the

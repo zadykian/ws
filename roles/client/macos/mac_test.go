@@ -2,6 +2,7 @@ package macos_test
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"slices"
 	"strings"
@@ -57,6 +58,34 @@ func TestMacStepsTakeTheCheck(t *testing.T) {
 			}
 			if got != check {
 				t.Errorf("%s: Check = %v; want %v", s.Name(), got, check)
+			}
+		}
+	}
+}
+
+// TestMacCldTakesTheCheck reads cld's plan, which words the update by the run's check: with it,
+// the versions follow.
+func TestMacCldTakesTheCheck(t *testing.T) {
+	for check, want := range map[bool]string{
+		false: "would run cld update",
+		true:  "would run cld update: cld 0.13.0, the latest 0.14.0",
+	} {
+		m := effecttest.NewMachine()
+		m.Modes["/h/.local/bin/cld"], m.Files["/h/.local/bin/cld"] = 0o755, nil
+		m.Results["/h/.local/bin/cld --version"] = effecttest.Result{Out: []byte("cld 0.13.0\n")}
+		m.Results["/h/.local/bin/cld help update"] = effecttest.Result{}
+		m.Results["/h/.local/bin/cld help restore tabs"] = effecttest.Result{Err: errors.New("no")}
+		m.Results["brew list --cask ghostty"] = effecttest.Result{Err: errors.New("no")}
+		m.Results["curl -fsSIL --retry 3 -o /dev/null -w %{url_effective} https://github.com/zadykian/cld/releases/latest"] =
+			effecttest.Result{Out: []byte("https://github.com/zadykian/cld/releases/tag/v0.14.0")}
+		mac := macos.Mac{Home: "/h", M: m, Out: &effecttest.Out{}, Text: io.Discard}
+		for _, r := range mac.Roles(check) {
+			if r.Name != "cld" {
+				continue
+			}
+			p, err := r.Steps(m, nil, mac.Out)[0].Plan(t.Context())
+			if err != nil || len(p.Changes) == 0 || p.Changes[0].String() != want {
+				t.Errorf("check %v: Plan = %v, %v; want %q first", check, p.Changes, err, want)
 			}
 		}
 	}

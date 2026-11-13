@@ -123,7 +123,7 @@ func TestEachRunIsFollowed(t *testing.T) {
 	log := effecttest.Result{Out: []byte(runLog)}
 
 	r, m := newRun("lan", idleRun, true, false)
-	r.Ws.Hear(h)
+	r.Ws = macSession(m, remote.SSH{M: m, Lock: "/l", Ways: host.MacWays{M: m, Conf: "/h/mac.conf"}}, r.Out.(*effecttest.Out), idleRun, h)
 	m.Results[sessiontest.Op("run")] = log
 	plan, err := r.Plan(ctx)
 	if err != nil {
@@ -134,7 +134,7 @@ func TestEachRunIsFollowed(t *testing.T) {
 	}
 
 	c, m, _ := newCable(t, session.Status{}, cableLink, nil)
-	c.Ws.Hear(h)
+	c.Ws = macSession(m, c.SSH, c.Out.(*effecttest.Out), session.Status{Run: idleRun.Run}, h)
 	m.Results[sessiontest.Op("link", "eth1")] = effecttest.Result{}
 	m.Results[sessiontest.Op("run", "--only", "network,wireguard")] = log
 	if err := c.name(ctx, "eth1"); err != nil {
@@ -142,7 +142,7 @@ func TestEachRunIsFollowed(t *testing.T) {
 	}
 
 	tun, m := newTunnel(keyA, session.Status{}, false)
-	tun.Ws.Hear(h)
+	tun.Ws = macSession(m, tun.SSH, tun.Out.(*effecttest.Out), session.Status{}, h)
 	m.Results["sudo -v"] = effecttest.Result{}
 	m.Results[libexec+" client macos tunnel key"] = effecttest.Result{Out: []byte(keyA + "\n")}
 	m.Results[sessiontest.Op("peer", keyA)] = effecttest.Result{}
