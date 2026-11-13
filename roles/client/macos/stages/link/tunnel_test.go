@@ -89,3 +89,19 @@ func TestTunnelPlanShowsConfsDiffUnderCheck(t *testing.T) {
 		}
 	}
 }
+
+func TestTunnelPlanReachesWsAtItsSlot(t *testing.T) {
+	tun, m := newTunnel(keyB, session.Status{WgKey: keyB, Peered: true, MacKey: keyA}, false)
+	m.Files["/h/mac.conf"] = append(m.Files["/h/mac.conf"], "WS_SLOT=1\n"...)
+	m.Results["nc -z -G 3 -w 3 10.99.1.1 22"] = effecttest.Result{}
+	m.Results["ssh -G ws"] = effecttest.Result{Out: []byte("user root\nhostname 10.99.1.1\n")}
+	delete(m.Results, "nc -z -G 3 -w 3 10.99.0.1 22")
+	p, err := tun.Plan(context.Background())
+	if err != nil || len(p.Changes) != 0 {
+		t.Errorf("Plan = %v, %v; want it done at slot 1's end", p, err)
+	}
+	m.Results["ssh -G ws"] = effecttest.Result{Out: []byte("user root\nhostname 10.99.0.1\n")}
+	if p, _ := tun.Plan(context.Background()); len(p.Changes) == 0 {
+		t.Error("Plan is empty where ssh -G ws gives slot 0's end")
+	}
+}
