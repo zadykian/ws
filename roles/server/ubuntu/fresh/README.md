@@ -134,6 +134,11 @@ The template `config.json.tmpl` is the source of the keys, in the map `ws`, whic
 binding. The block at the file's end gives the reason for each key left out, such as an action
 that Fresh lacks. Tests hold the template to its rules.
 
+- The map holds the Alt and F keys that Zed has too, and four guards in the terminal
+  ([The shell keys](#the-shell-keys)).
+- Every Ctrl key is Fresh's default. No Cmd key reaches Fresh: tmux reads Ghostty's Cmd as Alt,
+  and Termius keeps Cmd for itself.
+
 ### Contexts
 
 - Global, Text and Code bind in `normal` alone. A global binding loses to the default map's
@@ -148,50 +153,36 @@ for each.
 
 - A stroke with Shift and a sign gets two forms: tmux sends the sign without Shift, and a direct
   terminal sends the key with Shift.
-- Terminals rewrite some chords, and a test keeps them apart from the bound keys:
-  - ctrl+alt+4 arrives as ctrl+alt+\\, and ctrl+alt+/ as ctrl+alt+shift+-;
-  - ctrl+k ctrl+/ arrives as ctrl+k ctrl+shift+-;
-  - ctrl+shift+space arrives as ctrl+space, and alt+shift+space as alt+space.
-- ctrl+backspace and ctrl+shift+backspace take no binding. Through tmux both arrive as ctrl+h. With
-  no tmux, Fresh's default for ctrl+backspace deletes a word.
-- ctrl+h is bound outside the map. The default map binds both ctrl+h and ctrl+backspace, and a
-  binding in a map warns at each start.
+- alt+shift+space arrives as alt+space, and a test keeps the two bound alike.
+- Through tmux, ctrl+backspace arrives as ctrl+h. Fresh's default map binds both to
+  `delete_word_backward`, so either way it deletes a word.
+- The map binds neither ctrl+h nor ctrl+backspace: a binding of either in a map warns at each
+  start.
 
 ### The shell keys
 
-24 keys are `noop` in `terminal`, so the shell in Fresh's terminal gets them. A `noop` there
-ends Fresh's lookup, so its default map cannot take the key:
+20 keys are `noop` in `terminal`, so the shell in Fresh's terminal gets them. A `noop` there
+ends Fresh's lookup, so no other binding can take the key:
 
-- Nine are free of any other use: ctrl+q, ctrl+comma, ctrl+alt+], ctrl+alt+[, ctrl+alt+s, alt+x,
-  alt+v, alt+left and alt+right.
-- The default map fires 15 more over the shell:
-  - alt+e, alt+f, alt+g, alt+h and alt+s open a menu, and alt+w closes the tab;
-  - ctrl+p, ctrl+; and ctrl+' open Quick Open;
+- The map's own alt+left and alt+right would switch tabs over the shell.
+- The default map fires 18 more:
+  - ctrl+q quits Fresh, and alt+w closes the tab;
+  - alt+e, alt+f, alt+g, alt+h, alt+s, alt+x and alt+v open a menu;
+  - ctrl+p, ctrl+; and ctrl+' open Quick Open: these three and ctrl+q are the four guards;
   - alt+r, alt+j, alt+/, alt+[, alt+] and alt+` do the editor's work.
 - Fresh's own ways out stay: ctrl+space and ctrl+] (`terminal_escape`), F9 (keyboard capture) and
   alt+o (the dock's focus).
 
-### Keys that fail through tmux
-
-| Key | Action | What happens |
-| --- | --- | --- |
-| ctrl+cmd+s | `file.save-all` | Lands on `open_settings` |
-| ctrl+alt+2 | `problem.list` | Lands on `lsp_completion` |
-| ctrl+backspace | `edit.delete-word-start` | Arrives as ctrl+h, so lands on `replace` |
-| ctrl+shift+backspace | `nav.last-change` | Arrives as ctrl+h, so lands on `replace` |
-| ctrl+f3 | `search.next-word` | Types `13;~5`, as tmux splits it |
-| ctrl+shift+f3 | `search.previous-word` | Types `13;6~`, as tmux splits it |
-
 ### Other limits
 
 - Fresh lacks a debugger, a git panel and a task runner. The maintainer accepted it.
-- A key with no Fresh action keeps Fresh's default, such as ctrl+b, `toggle_file_explorer`, and
-  alt+f, `menu_open`, in the editor.
+- An Alt or F key with no Fresh action keeps Fresh's default, such as alt+f, `menu_open`, in the
+  editor.
 - Fresh's `normal` passes on only its UI actions: menus, quick open, splits, tabs, the terminal's
-  and the explorer's toggles. With focus in the explorer or a panel, save, save-all, search,
-  replace and revert and the like do nothing. F6 there opens Fresh's remote menu, not the git log.
+  and the explorer's toggles. With focus in the explorer or a panel, the map's other keys do
+  nothing. F6 there opens Fresh's remote menu, not the git log.
 - The prefix reaches the editor pressed twice: ctrl+b by default, ctrl+q in cld's sessions. So
-  Fresh's palette on ctrl+q needs it twice in cld's sessions, and ctrl+b is lost in tmux.
+  Fresh's quit on ctrl+q takes two presses in cld's sessions, and ctrl+b two in tmux.
 - A folder with a project marker opens Restricted, with every server off
   ([Trust each project](#trust-each-project)).
 - `.yml` playbooks stay YAML, with no Ansible server.
@@ -205,7 +196,8 @@ What stays unproven until the maintainer's trial on the Mac:
   is what ran.
 - The arm64 binary: its hash matched, and it never ran.
 - gopls with Fresh, and Roslyn past initialise: diagnostics and navigation.
-- Fresh's terminal keys, known by source alone: the 24 `noop` keys reach the shell, and
+- Termius on the iPad, whose Alt keys need its "Use Option as meta key".
+- Fresh's terminal keys, known by source alone: the 20 `noop` keys reach the shell, and
   ctrl+space, ctrl+], F9 and alt+o leave the terminal. Also `self_update` at run time.
 - The wrapper when it dies with Fresh: the pane keeps asking.
 - Italic modifiers in the theme.

@@ -20,7 +20,7 @@ They share:
 - the theme, the ruler and auto-save;
 - the language servers' arguments;
 - the Alt and F keys. The Cmd and Ctrl keys are each editor's own: Zed's stay its macOS
-  defaults.
+  defaults, and Fresh's its defaults, but for four guards in its terminal.
 
 lazygit's `roles/server/ubuntu/lazygit/files/config.yml` takes the theme's colours too, each beside
 the Zed key it comes from, so a change of theme goes to it as well
@@ -30,13 +30,10 @@ Fresh spells its keys as follows ([Fresh](../../roles/server/ubuntu/fresh/README
 
 - A stroke with Shift and a sign gets two forms: tmux sends the sign without Shift, and a direct
   terminal sends the key with Shift.
-- Some chords arrive as another key, so each is bound under both:
-  - ctrl+alt+4 as ctrl+alt+\\, and ctrl+alt+/ as ctrl+alt+shift+-;
-  - ctrl+k ctrl+/ as ctrl+k ctrl+shift+-;
-  - ctrl+shift+space as ctrl+space, and alt+shift+space as alt+space.
+- alt+shift+space arrives as alt+space, so the map binds both.
 - The shell keys are `noop` in `terminal`, so that the shell in Fresh's terminal gets them. Fresh's
   own ways out of the terminal are not among them: ctrl+space, ctrl+], F9 and alt+o.
-- ctrl+h is bound outside the map, as the default map binds it with ctrl+backspace and warns at
-  each start. ctrl+backspace and ctrl+shift+backspace take no binding.
+- ctrl+h and ctrl+backspace take no binding: the default map binds both, and a map's binding of
+  either warns at each start.
 
 This rule reaches Claude alone. Nothing fails on a hand edit that leaves the two files apart.
