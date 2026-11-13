@@ -13,18 +13,20 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/networks"
 )
 
-const daemonLabel = "com.github.zadykian.ws-tunnel"
-
 // newTunnelLoadedCmd returns ws client macos tunnel loaded.
-func newTunnelLoadedCmd(p enginecli.Env) *cobra.Command {
+func newTunnelLoadedCmd(p enginecli.Env, server *string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "loaded",
 		Short: "succeed where launchd has the tunnel's daemon loaded",
 		Long:  "Anyone may read launchd's system domain, so it needs no sudo.",
 		Args:  cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error {
-			if _, err := p.Machine.Run(c.Context(), "launchctl", "print", "system/"+daemonLabel); err != nil {
-				return fmt.Errorf("launchd has not loaded the daemon %s", daemonLabel)
+			d, err := daemonOf(p.Machine, *server)
+			if err != nil {
+				return err
+			}
+			if _, err := p.Machine.Run(c.Context(), "launchctl", "print", "system/"+d.Label); err != nil {
+				return fmt.Errorf("launchd has not loaded the daemon %s", d.Label)
 			}
 			return nil
 		},
