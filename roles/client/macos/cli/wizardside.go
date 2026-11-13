@@ -40,7 +40,9 @@ func macSide(p enginecli.Env, server *string) engine.Side {
 			if *server == "" {
 				// After the update, which runs this command again: the new ws asks, not this one. On lines too,
 				// before the lists, which name the server's file.
-				before = append(before, func(effect.Out) step.Step { return &askServer{ask: ask, tty: p.TTY, name: server} })
+				before = append(before, func(effect.Out) step.Step {
+					return &askServer{ask: ask, tty: p.TTY, m: p.Machine, home: p.Getenv("HOME"), name: server}
+				})
 			}
 			return before
 		},

@@ -43,6 +43,27 @@ func TestAskServerOffersWsAndSetsTheName(t *testing.T) {
 	}
 }
 
+func TestAskServerRefusesAHostOfTheUsersOwn(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/h/.ssh/config"] = []byte("Host a\n  User x\nHost box lab\n  User y\n")
+	ask := &replies{give: []string{"ws"}}
+	a := &askServer{ask: ask, tty: true, m: m, home: "/h", name: new(string)}
+	if _, err := a.Plan(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	valid := ask.got[0].Valid
+	err := valid("box")
+	if err == nil || err.Error() != "line 3 of ~/.ssh/config, Host box lab, sets its own values for box: pick another name, or remove it" {
+		t.Errorf("Valid(box) = %v, want a refusal at line 3", err)
+	}
+	if err := valid("ws"); err != nil {
+		t.Errorf("Valid(ws) = %v, want none: no Host names it", err)
+	}
+	if err := (&askServer{m: effecttest.NewMachine(), home: "/h"}).free("box"); err != nil {
+		t.Errorf("free(box) with no ~/.ssh/config = %v", err)
+	}
+}
+
 func TestAskServerRefusesWithNoTerminal(t *testing.T) {
 	ask := &replies{}
 	_, err := (&askServer{ask: ask, name: new(string)}).Plan(t.Context())
