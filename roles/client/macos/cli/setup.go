@@ -59,6 +59,11 @@ func newMacApplyCmd(p enginecli.Env, server *string) *cobra.Command {
 	return c
 }
 
+// pickServer returns the name of the server that --server names, or of the only one.
+func pickServer(p enginecli.Env, server *string) (string, error) {
+	return conf.Pick(p.Machine, conf.Path(p.Getenv, p.Pwd), *server)
+}
+
 // loadMacConf refuses root, picks the server that --server names, and reads mac.conf and the server's
 // file: the commands that act on the Mac's own files share it. It returns the server's name.
 func loadMacConf(p enginecli.Env, server *string) (name string, settings conf.Conf, err error) {
@@ -68,7 +73,7 @@ func loadMacConf(p enginecli.Env, server *string) (name string, settings conf.Co
 		return "", conf.Conf{}, errors.New("run it as yourself, not root: it asks sudo where it needs root")
 	}
 	mac := conf.Path(p.Getenv, p.Pwd)
-	name, err = conf.Pick(p.Machine, mac, *server)
+	name, err = pickServer(p, server)
 	if err != nil {
 		return "", conf.Conf{}, err
 	}

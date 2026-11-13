@@ -48,7 +48,7 @@ func TestWsReadGivesTheRolesAndReadsWsAgain(t *testing.T) {
 	p, m := macTerminal()
 	ws := newReportingWs(m, p.Version)
 	p.Machine = ws
-	reach := &varsReach{p: p, sudo: &host.Sudo{}}
+	reach := &varsReach{server: "ws", p: p, sudo: &host.Sudo{}}
 	defer reach.close(context.Background())
 	read := ubuntucli.StateRead(reach.reach, p.Version)
 	for range 2 {
@@ -72,7 +72,7 @@ func TestWsReadGivesTheRolesAndReadsWsAgain(t *testing.T) {
 func TestWsReadRefusesAnotherVersion(t *testing.T) {
 	p, m := macTerminal()
 	p.Machine = newReportingWs(m, "v0.0.1")
-	reach := &varsReach{p: p, sudo: &host.Sudo{}}
+	reach := &varsReach{server: "ws", p: p, sudo: &host.Sudo{}}
 	defer reach.close(context.Background())
 	if _, err := ubuntucli.StateRead(reach.reach, p.Version)(t.Context(), tui.Offscreen(p.Machine)); err == nil || !strings.Contains(err.Error(), "holds v0.0.1") {
 		t.Errorf("err = %v", err)

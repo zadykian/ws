@@ -38,7 +38,7 @@ func macForms(in io.Reader, errw io.Writer, p enginecli.Env) func(context.Contex
 			return nil, nil, err
 		}
 		// One way to root serves both of ws's sheets, so that sudo's password is asked once.
-		vars := &varsReach{p: p, sudo: &host.Sudo{}}
+		vars := &varsReach{p: p, server: conf.FirstServer, sudo: &host.Sudo{}}
 		return []tui.Sheet{confSheet(form), vars.secretsSheet(), ubuntucli.HostVarsSheet(vars.reach)}, vars.close, nil
 	}
 }
