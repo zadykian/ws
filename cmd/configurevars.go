@@ -6,7 +6,6 @@ import (
 	"github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
 	"sync"
 
 	"github.com/zadykian/ws/engine/cli"
@@ -28,30 +27,6 @@ type varsReach struct {
 	mu      sync.Mutex
 	lock    string
 	release func()
-}
-
-// sessionOpen finds the session to ws of a sheet or a read, through the screen: the Mac's over ssh,
-// or ws's own.
-type sessionOpen func(ctx context.Context, b *tui.Bridge) (*session.Session, error)
-
-// hostVarsSheet is the host_vars form before its read, which open reaches ws for. The password that
-// sudo asks stays with the session, so that a save asks none.
-func hostVarsSheet(open sessionOpen) tui.Sheet {
-	return tui.Sheet{
-		Name:   "host_vars",
-		Fields: func(map[string]string) []tui.FieldSpec { return nil },
-		Open: func(ctx context.Context, b *tui.Bridge) (tui.Sheet, error) {
-			ws, err := open(ctx, b)
-			if err != nil {
-				return tui.Sheet{}, err
-			}
-			form, err := values.Form{Ws: ws}.Load(ctx)
-			if err != nil {
-				return tui.Sheet{}, err
-			}
-			return varsSheet(form), nil
-		},
-	}
 }
 
 // reach finds how the session reaches root on ws, as the wizard's stages do, through the screen.
@@ -114,17 +89,5 @@ func (r *varsReach) close(ctx context.Context) {
 	if r.release != nil {
 		remote.SSH{M: r.p.Machine, Lock: r.lock}.End(context.WithoutCancel(ctx))
 		r.release()
-	}
-}
-
-// varsSheet is ws's host_vars on the Configure screen, as form read it.
-func varsSheet(form values.Form) tui.Sheet {
-	return tui.Sheet{
-		Name:   "host_vars",
-		Fields: func(map[string]string) []tui.FieldSpec { return cli.FieldSpecs(form.Fields()) },
-		Save: func(ctx context.Context, b *tui.Bridge, edits map[string]string) (tui.Sheet, error) {
-			next, err := form.Save(ctx, b, edits)
-			return varsSheet(next), err
-		},
 	}
 }

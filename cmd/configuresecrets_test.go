@@ -11,6 +11,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/tui"
+	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
@@ -51,7 +52,7 @@ func TestWsSideSetsAndListsOnWs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	side := wsSide{ws}
+	side := ubuntucli.WsSide{Ws: ws}
 	if err := side.Set(context.Background(), "env A", "dummy-value"); err != nil {
 		t.Fatal(err)
 	}

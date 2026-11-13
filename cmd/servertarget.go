@@ -8,13 +8,14 @@ import (
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
+	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
 // serverTarget is ws server ubuntu apply's side of the verbs. opts holds the flags, read when the
 // command runs.
 func serverTarget(p cli.Env, opts *applyOptions) engine.Target {
-	return engine.Target{Wizard: serverSide(p), Prepare: func(_ context.Context, c engine.Call) (engine.Run, error) {
+	return engine.Target{Wizard: ubuntucli.WizardSide(p), Prepare: func(_ context.Context, c engine.Call) (engine.Run, error) {
 		r, err := prepareServer(c, p, *opts)
 		if err != nil {
 			return engine.Run{}, err

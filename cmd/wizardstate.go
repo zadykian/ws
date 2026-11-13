@@ -3,12 +3,11 @@ package cmd
 import (
 	"context"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
-	"github.com/zadykian/ws/roles/server/ubuntu/session"
 
-	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
+	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
 )
 
 // macState is the state screen's read of side's machine, and what ends it. ws's reach takes sudo, the
@@ -18,23 +17,5 @@ func macState(p cli.Env, side string, sudo *host.Sudo) (tui.StateReader, func(co
 		return macRead(p), nil
 	}
 	reach := &varsReach{p: p, sudo: sudo}
-	return stateRead(reach.reach, p.Version), reach.close
-}
-
-// stateRead is the state screen's read of ws, by the remote script's report, which open reaches ws
-// for. The session stays once found, as a new one would hold sudo's ticket until the screen ends.
-// Each read asks ws's status again, as a run may have changed it.
-func stateRead(open sessionOpen, version string) tui.StateReader {
-	var ws *session.Session
-	return func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
-		if ws == nil {
-			found, err := open(ctx, b)
-			if err != nil {
-				return nil, err
-			}
-			ws = found
-		}
-		states, err := ws.Restate(ctx, version)
-		return engine.RoleSections(states), err
-	}
+	return ubuntucli.StateRead(reach.reach, p.Version), reach.close
 }

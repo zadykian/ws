@@ -16,6 +16,7 @@ import (
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
+	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
 )
 
 // reportingWs is a far ws whose script gives its status and its report, at version.
@@ -47,7 +48,7 @@ func TestWsReadGivesTheRolesAndReadsWsAgain(t *testing.T) {
 	p.Machine = ws
 	reach := &varsReach{p: p, sudo: &host.Sudo{}}
 	defer reach.close(context.Background())
-	read := stateRead(reach.reach, p.Version)
+	read := ubuntucli.StateRead(reach.reach, p.Version)
 	for range 2 {
 		sections, err := read(t.Context(), tui.Offscreen(p.Machine))
 		if err != nil || len(sections) != 1 || sections[0].Name != "base" {
@@ -71,7 +72,7 @@ func TestWsReadRefusesAnotherVersion(t *testing.T) {
 	p.Machine = newReportingWs(m, "v0.0.1")
 	reach := &varsReach{p: p, sudo: &host.Sudo{}}
 	defer reach.close(context.Background())
-	if _, err := stateRead(reach.reach, p.Version)(t.Context(), tui.Offscreen(p.Machine)); err == nil || !strings.Contains(err.Error(), "holds v0.0.1") {
+	if _, err := ubuntucli.StateRead(reach.reach, p.Version)(t.Context(), tui.Offscreen(p.Machine)); err == nil || !strings.Contains(err.Error(), "holds v0.0.1") {
 		t.Errorf("err = %v", err)
 	}
 }

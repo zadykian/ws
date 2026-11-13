@@ -1,10 +1,10 @@
-package cmd
+package cli
 
 import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/engine/cli"
+	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
@@ -35,7 +35,7 @@ func TestWriteVarsKeepsTheModeOfAFile(t *testing.T) {
 }
 
 // valuesProcess returns a root process on a machine that holds file as the values.
-func valuesProcess(file string) (cli.Env, *effecttest.Machine) {
+func valuesProcess(file string) (enginecli.Env, *effecttest.Machine) {
 	p := fakeProcess()
 	m := effecttest.NewMachine()
 	p.Machine, p.Euid = m, 0
@@ -96,7 +96,7 @@ func TestValuesSetRefuses(t *testing.T) {
 	plain, _ := valuesProcess("---\n")
 	for _, tc := range []struct {
 		name string
-		p    cli.Env
+		p    enginecli.Env
 		args []string
 		want string
 	}{

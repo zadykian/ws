@@ -9,7 +9,6 @@ import (
 
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/step"
 )
 
 func TestWizardCheckAtATerminalGoesStraightToTheRun(t *testing.T) {
@@ -76,11 +75,5 @@ func TestWizardRunsTheStagesChosenAlone(t *testing.T) {
 	}
 	if strings.Contains(strings.Join(m.Calls, "\n"), "run curl") {
 		t.Errorf("Homebrew applied, left out: calls = %q", m.Calls)
-	}
-}
-
-func TestWsRunOfFindsNoneWhereNoneIs(t *testing.T) {
-	if run := wsRunOf([]step.Step{stepOf{name: "one"}}); run != nil {
-		t.Errorf("wsRunOf = %v, want nil", run)
 	}
 }

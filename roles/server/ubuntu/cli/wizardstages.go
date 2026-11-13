@@ -1,28 +1,29 @@
-package cmd
+package cli
 
 import (
 	"context"
 	"github.com/zadykian/ws/engine"
-	"github.com/zadykian/ws/roles/server/ubuntu/session"
-	"github.com/zadykian/ws/roles/server/ubuntu/stages"
-
+	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // serverWizardStages returns the stages of ws server ubuntu wizard, in order. They act on ws
-// itself, with the remote script on sh's stdin, as the Mac's wizard sends it over ssh. e.events
-// hears ws's run, e.talks runs claude's login, and e.hand takes what stays by hand. A list that
+// itself, with the remote script on sh's stdin, as the Mac's wizard sends it over ssh. e.Events
+// hears ws's run, e.Talks runs claude's login, and e.Hand takes what stays by hand. A list that
 // chose ws's run in part gives o.Only, and one that ticked it whole o.Update, as on the Mac.
-func serverWizardStages(e wizardEffects, o engine.WizardOptions) []step.Step {
-	p, out, hand := e.p, e.out, e.hand
+func serverWizardStages(p enginecli.Env, e engine.WizardEffects, o engine.WizardOptions) []step.Step {
+	out, hand := e.Out, e.Hand
+	p.Machine = e.Machine
 	m := p.Machine
-	vals := &stages.WsValues{Vars: serverVars, User: p.Getenv("SUDO_USER"), Tty: p.TTY, M: m, P: e.ask,
+	vals := &stages.WsValues{Vars: serverVars, User: p.Getenv("SUDO_USER"), Tty: p.TTY, M: m, P: e.Ask,
 		Set: func(key, value string) error { return setServerValue(m, out, key, value) }}
-	ws := serverSession(m, e.talks, out, e.events)
+	ws := serverSession(m, e.Talks, out, e.Events)
 	run := &stages.WsRun{Ws: ws, Await: vals.Name(), Unbooted: !systemd.Booted(m), Check: o.Check, Out: out,
 		Version: p.Version, Update: o.Update, Only: o.Only}
 	hand.Late(ws.Hand)
@@ -38,9 +39,9 @@ func serverSession(m effect.Machine, talks effect.Foreground, out effect.Out, ev
 		session.Scripts{Remote: session.RemoteScript, Files: session.RemoteFilesScript, Events: events})
 }
 
-// serverOpen is ws's session through a screen, for the host_vars sheet and the state screen, which
+// ServerOpen is ws's session through a screen, for the host_vars sheet and the state screen, which
 // run no login and print nothing. It runs on the screen's machine.
-func serverOpen(_ context.Context, b *tui.Bridge) (*session.Session, error) {
+func ServerOpen(_ context.Context, b *tui.Bridge) (*session.Session, error) {
 	return serverSession(b.Effects().M, nil, nil, nil), nil
 }
 

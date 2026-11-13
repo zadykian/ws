@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/tui"
+	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
@@ -64,7 +65,7 @@ func TestServerSecretsSheetSetsOnWs(t *testing.T) {
 func TestServerVarsSheetReadsOnWs(t *testing.T) {
 	p, m := wizardProcess("---\nws_user: ada\n", false, "")
 	m.Results["env SUDO_USER=ada sh -s -- values"] = effecttest.Result{Out: []byte("ws_user: ada\n")}
-	sheet, err := hostVarsSheet(serverOpen).Open(context.Background(), tui.Offscreen(p.Machine))
+	sheet, err := ubuntucli.HostVarsSheet(ubuntucli.ServerOpen).Open(context.Background(), tui.Offscreen(p.Machine))
 	if err != nil {
 		t.Fatal(err)
 	}

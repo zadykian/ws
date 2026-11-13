@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/tui"
+	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
 )
 
 // newServerConfigureCmd returns ws server ubuntu configure.
@@ -25,7 +26,7 @@ func newServerConfigureCmd(p cli.Env) *cobra.Command {
 
 // serverSheets are the forms of ws server ubuntu configure and of ws server ubuntu wizard's list.
 func serverSheets(p cli.Env) []tui.Sheet {
-	return []tui.Sheet{serverSecretsSheet(p), hostVarsSheet(serverOpen)}
+	return []tui.Sheet{serverSecretsSheet(p), ubuntucli.HostVarsSheet(ubuntucli.ServerOpen)}
 }
 
 // serverSecretsSheet is ws's secrets file, edited here as ws server ubuntu secrets edits it.
@@ -44,7 +45,7 @@ func serverSecretsSheet(p cli.Env) tui.Sheet {
 			if err != nil {
 				return tui.Sheet{}, fmt.Errorf("the secrets on ws: %w", err)
 			}
-			return secretsSheet(store, held), nil
+			return ubuntucli.SecretsSheet(store, held), nil
 		},
 	}
 }

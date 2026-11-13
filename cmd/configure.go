@@ -11,6 +11,7 @@ import (
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
+	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
 )
 
 // newConfigureCmd returns ws client macos configure.
@@ -37,7 +38,7 @@ func macForms(in io.Reader, errw io.Writer, p cli.Env) func(context.Context) ([]
 		}
 		// One way to root serves both of ws's sheets, so that sudo's password is asked once.
 		vars := &varsReach{p: p, sudo: &host.Sudo{}}
-		return []tui.Sheet{confSheet(form), vars.secretsSheet(), hostVarsSheet(vars.reach)}, vars.close, nil
+		return []tui.Sheet{confSheet(form), vars.secretsSheet(), ubuntucli.HostVarsSheet(vars.reach)}, vars.close, nil
 	}
 }
 

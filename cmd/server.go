@@ -21,6 +21,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/server/ubuntu"
+	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -66,7 +67,7 @@ func newServerCmd(p cli.Env) *cobra.Command {
 // newUbuntuCmd returns ws server ubuntu, the commands that set up an Ubuntu server.
 func newUbuntuCmd(p cli.Env) *cobra.Command {
 	return cli.Group("ubuntu", "the commands for an Ubuntu server", newApplyCmd(p), newStateCmd(p), newFansCmd(p),
-		newValuesCmd(p), newServerSecretsCmd(p), newServerWizardCmd(p), newServerConfigureCmd(p))
+		ubuntucli.NewValuesCmd(p), newServerSecretsCmd(p), newServerWizardCmd(p), newServerConfigureCmd(p))
 }
 
 // applyOptions are apply's flags: the runner's, and the --secrets path, which the runner never reads.

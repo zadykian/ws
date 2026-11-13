@@ -15,6 +15,7 @@ import (
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/tui"
+	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
 )
 
 // lockCalls counts the calls of the wizard's lock that hold what.
@@ -117,7 +118,7 @@ func TestVarsSheetOpensWithWhatWsHolds(t *testing.T) {
 	p.Machine = ws
 	r := &varsReach{p: p}
 	defer r.close(context.Background())
-	sheet, err := hostVarsSheet(r.reach).Open(context.Background(), tui.Offscreen(r.p.Machine))
+	sheet, err := ubuntucli.HostVarsSheet(r.reach).Open(context.Background(), tui.Offscreen(r.p.Machine))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,4 +1,4 @@
-package cmd
+package cli
 
 import (
 	"github.com/zadykian/ws/engine"
@@ -6,13 +6,13 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/zadykian/ws/engine/cli"
+	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 // wizardProcess returns a root process on a machine that holds vars as host_vars, booted or not,
 // whose remote script reports status as host_vars' ws_user reads it.
-func wizardProcess(vars string, booted bool, status string) (cli.Env, *effecttest.Machine) {
+func wizardProcess(vars string, booted bool, status string) (enginecli.Env, *effecttest.Machine) {
 	p, m := valuesProcess(vars)
 	p.GOOS = "linux"
 	if booted {
@@ -27,7 +27,7 @@ func wizardProcess(vars string, booted bool, status string) (cli.Env, *effecttes
 // the signing key wait on the run.
 func TestServerWizardStagesReadHostVars(t *testing.T) {
 	p, m := wizardProcess("---\nsecurity_outbound: false\nws_user: root\n", false, "")
-	stages := serverWizardStages(wizardEffects{p: p, hand: &wizard.Hand{}}, engine.WizardOptions{})
+	stages := serverWizardStages(p, engine.WizardEffects{Machine: p.Machine, Hand: &wizard.Hand{}}, engine.WizardOptions{})
 	var got []string
 	for _, s := range stages {
 		got = append(got, s.Name()+" < "+s.WaitsOn())

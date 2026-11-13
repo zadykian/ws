@@ -1,4 +1,4 @@
-package cmd
+package cli
 
 import (
 	"bytes"
@@ -10,14 +10,18 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/zadykian/ws/engine/cli"
+	"github.com/zadykian/ws/engine"
+	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
-// newValuesCmd returns ws server ubuntu values, which edits the machine's values.
-func newValuesCmd(p cli.Env) *cobra.Command {
-	return cli.Group("values", "edit the machine's values", &cobra.Command{
+// serverVars is the file of the machine's values.
+const serverVars = "/etc/ws/host_vars.yml"
+
+// NewValuesCmd returns ws server ubuntu values, which edits the machine's values.
+func NewValuesCmd(p enginecli.Env) *cobra.Command {
+	return enginecli.Group("values", "edit the machine's values", &cobra.Command{
 		Use:   "set KEY VALUE",
 		Short: "write one key of " + serverVars,
 		Long: "An empty VALUE takes the key's line out, which gives its default back. A list's VALUE is split by " +
@@ -29,7 +33,7 @@ func newValuesCmd(p cli.Env) *cobra.Command {
 }
 
 // runValuesSet writes key in the file, by setServerValue.
-func runValuesSet(c *cobra.Command, p cli.Env, key, value string) error {
+func runValuesSet(c *cobra.Command, p enginecli.Env, key, value string) error {
 	if p.Euid != 0 {
 		return errors.New("run it as root")
 	}
@@ -92,4 +96,9 @@ func makeConfigDir(m effect.Machine) error {
 		return m.Mkdir(dir, 0o755)
 	}
 	return err
+}
+
+// linesOf returns the lines that the command at path prints on out.
+func linesOf(out effect.Out, path string) engine.Lines {
+	return engine.Lines{Out: out, Prog: path, Seen: map[string]bool{}}
 }
