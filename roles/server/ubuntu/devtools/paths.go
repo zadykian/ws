@@ -1,5 +1,7 @@
 package devtools
 
+import "github.com/zadykian/ws/roles/server/ubuntu/devtools/internal/npm"
+
 // Gopls returns where go install puts gopls for the home. Zed and Fresh name it by this path.
 func Gopls(home string) string { return home + "/go/bin/gopls" }
 
@@ -14,9 +16,9 @@ func ServerPaths(home string) map[string]string {
 		"roslyn-language-server":      Roslyn(home),
 		"postgres-language-server":    "/usr/local/bin/postgres-language-server",
 		"docker-language-server":      "/usr/local/bin/docker-language-server",
-		"ansible-language-server":     serverBin(home, "ansible-language-server"),
-		"vscode-html-language-server": serverBin(home, "vscode-html-language-server"),
-		"dockerfile-language-server":  serverBin(home, "docker-langserver"),
+		"ansible-language-server":     npm.Bin(home, "ansible-language-server"),
+		"vscode-html-language-server": npm.Bin(home, "vscode-html-language-server"),
+		"dockerfile-language-server":  npm.Bin(home, "docker-langserver"),
 	}
 }
 

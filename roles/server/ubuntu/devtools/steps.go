@@ -6,6 +6,9 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/server/ubuntu/devtools/internal/aptrepo"
+	"github.com/zadykian/ws/roles/server/ubuntu/devtools/internal/golang"
+	"github.com/zadykian/ws/roles/server/ubuntu/devtools/internal/npm"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -20,14 +23,14 @@ var ghUpgrades []byte
 // The packages wait on the repositories, so a check run says "after Devtools repositories" where a
 // repository is still to come, as apt may not know the packages then.
 func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
-	const repositories = "Devtools repositories"
+	const repoStep = "Devtools repositories"
 	user := host.User{Name: v.User, Home: v.Home}
 	steps := []step.Step{
-		host.Group{Title: repositories, Parts: []host.Resource{
-			Repositories{M: m},
+		host.Group{Title: repoStep, Parts: []host.Resource{
+			aptrepo.Repositories{M: m, List: repositories, Replaced: replacedFiles},
 			host.File{M: m, Path: "/etc/apt/apt.conf.d/52unattended-upgrades-github-cli", Content: ghUpgrades, Mode: 0o644},
 		}},
-		host.Group{Title: "Devtools packages", After: repositories, Parts: []host.Resource{
+		host.Group{Title: "Devtools packages", After: repoStep, Parts: []host.Resource{
 			// Node at its major version, from NodeSource's repository; gh from GitHub CLI's;
 			// glow from Charm's; each .NET SDK from Ubuntu's archive or the PPA.
 			host.Packages{M: m, Out: out, Recommends: true, Names: packageNames()},
@@ -42,12 +45,12 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units,
 		host.Group{Title: "Devtools gh login", After: "Devtools packages", Parts: []host.Resource{
 			GHLogin{M: m, User: v.User, Home: v.Home, Token: s.Token.GitHub},
 		}},
-		host.Group{Title: "Devtools Go", Parts: []host.Resource{goTree(m)}},
+		host.Group{Title: "Devtools Go", Parts: []host.Resource{golang.Tree(m, GoVersion)}},
 		host.Group{Title: "Devtools gopls", After: "Devtools Go", Parts: []host.Resource{
-			goplsTool{M: m, User: user, Path: Gopls(v.Home)},
+			golang.Gopls{M: m, User: user, Path: Gopls(v.Home), Version: goplsVersion, GoVersion: GoVersion},
 		}},
 		host.Group{Title: "Devtools Delve", After: "Devtools Go", Parts: []host.Resource{
-			delveTool{M: m, User: user, Path: Dlv(v.Home), Version: dlvVersion, GoVersion: GoVersion},
+			golang.Delve{M: m, User: user, Path: Dlv(v.Home), Version: dlvVersion, GoVersion: GoVersion},
 		}},
 		host.Group{Title: "Devtools roslyn-language-server", After: "Devtools packages", Parts: []host.Resource{
 			roslynTool{M: m, User: user, Path: Roslyn(v.Home)},
@@ -66,7 +69,7 @@ func serverSteps(m effect.Machine, user host.User) []step.Step {
 		download(m, "postgres-language-server", pgls, pglsURL),
 		download(m, "docker-language-server", dockerLS, dockerLSURL),
 		user.WithAccount(m, "Devtools npm servers", "Devtools packages", func(a host.Account) ([]host.Resource, error) {
-			return serverFiles(m, a)
+			return npm.Files(m, a)
 		}),
 	}
 }

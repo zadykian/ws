@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/server/ubuntu/signoz/internal/api"
 )
 
 // readyFixture is a booted machine and a SigNoz that answers 503 for the first fails requests.
@@ -22,8 +23,8 @@ func readyFixture(t *testing.T, fails int32) (Ready, *effecttest.Out) {
 	t.Cleanup(srv.Close)
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	m.Dirs["/run/systemd/system"] = 0o755
-	wait := Wait{Tries: 3, Delay: time.Second, Sleep: func(context.Context, time.Duration) error { return nil }}
-	return Ready{M: m, Out: out, API: API{URL: srv.URL}, Wait: wait}, out
+	wait := api.Wait{Tries: 3, Delay: time.Second, Sleep: func(context.Context, time.Duration) error { return nil }}
+	return Ready{M: m, Out: out, API: api.Client{URL: srv.URL}, Wait: wait}, out
 }
 
 func TestReadyHasNoChangeOnceSigNozAnswers(t *testing.T) {

@@ -77,7 +77,7 @@ A project's `postgres-language-server.jsonc` holds `db` fields, never a `connect
 ## The npm servers
 
 The role installs four packages into `~/.local/lib/language-servers`, owned by `ws_user`, from the
-`package.json` and `package-lock.json` in `roles/server/ubuntu/devtools/servers`:
+`package.json` and `package-lock.json` in `roles/server/ubuntu/devtools/internal/npm/servers`:
 
 - `@ansible/ansible-language-server`, for Ansible.
 - `@zed-industries/vscode-langservers-extracted`, whose HTML server Zed installs by default.
@@ -97,7 +97,7 @@ server, so Zed installs no Prettier.
 To bump a package:
 
 1. Edit its version in `package.json`.
-2. In `roles/server/ubuntu/devtools/servers`, run `npm install --package-lock-only --ignore-scripts
+2. In `roles/server/ubuntu/devtools/internal/npm/servers`, run `npm install --package-lock-only --ignore-scripts
    --no-audit --no-fund`.
 3. Commit both files, after checking each `integrity` against
    `npm view PACKAGE@VERSION dist.integrity`.

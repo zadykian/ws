@@ -1,0 +1,43 @@
+package bridge
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
+)
+
+// Routes stops the run on a route that Docker's networks would overlap, such as one a VPN keeps
+// in a table of its own. It runs before daemon.json takes the pool. The routes are those of the
+// moment, and a VPN that is down has none.
+type Routes struct {
+	M      effect.Machine
+	D      values.Docker
+	Bridge string // the default bridge's address with its prefix length
+}
+
+// Plan reads the routes of every table, and plans no change.
+func (c Routes) Plan(ctx context.Context) ([]host.Change, error) {
+	out, err := c.M.Run(ctx, "ip", "-j", "-4", "route", "show", "table", "all")
+	if err != nil {
+		return nil, fmt.Errorf("reading the routes: %w", err)
+	}
+	routes, err := parseRoutes(out)
+	if err != nil {
+		return nil, err
+	}
+	found, err := overlaps(routes, c.D.AddressPool, c.Bridge)
+	if err != nil {
+		return nil, err
+	}
+	if len(found) > 0 {
+		return nil, fmt.Errorf("the Docker networks would overlap these routes, which it does not avoid: %s. "+
+			"Set docker_address_pool and docker_bridge_ip clear of them. A moved pool serves the networks created "+
+			"afterwards, as by docker compose down and up. docker0 takes a moved bridge as Docker starts with no "+
+			"container running, as after a reboot", strings.Join(found, ", "))
+	}
+	return nil, nil
+}

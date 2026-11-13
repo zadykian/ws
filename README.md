@@ -199,5 +199,6 @@ merge method alone, and requires signed commits and branches up to date.
 
 ## License
 
-[MIT](LICENSE), but for the Host dashboard in `roles/server/ubuntu/signoz/dashboards`, which is SigNoz's,
-under the [Apache License 2.0](roles/server/ubuntu/signoz/dashboards/LICENSE).
+[MIT](LICENSE), but for the Host dashboard in
+`roles/server/ubuntu/signoz/internal/dashboards/dashboards`, which is SigNoz's,
+under the [Apache License 2.0](roles/server/ubuntu/signoz/internal/dashboards/dashboards/LICENSE).

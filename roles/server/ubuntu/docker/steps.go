@@ -10,6 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/server/ubuntu/docker/internal/bridge"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -30,7 +31,7 @@ const (
 // check of the routes and the user's leaving the docker group. Then come the configuration, the
 // check of docker0, and the user's rootless daemon. The role takes no secrets.
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units, out effect.Out) []step.Step {
-	return steps(v, m, u, out, StatfsSize, BridgeAddrs)
+	return steps(v, m, u, out, StatfsSize, bridge.Addrs)
 }
 
 // steps is Steps with the disk and docker0 given, for a test to fake.
@@ -43,7 +44,7 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out, si
 		host.Group{Title: packagesStep, After: repositoryStep, Parts: []host.Resource{
 			host.Packages{M: m, Out: out, Recommends: true, Names: packages(v)},
 		}},
-		host.Group{Title: routesStep, After: packagesStep, Parts: []host.Resource{routeCheck{m, d}}},
+		host.Group{Title: routesStep, After: packagesStep, Parts: []host.Resource{bridge.Routes{M: m, D: d, Bridge: bridgeCIDR(d)}}},
 	}
 	if v.User != "root" {
 		steps = append(steps, host.Group{Title: membersStep, After: packagesStep, Parts: []host.Resource{host.Left{M: m, User: v.User, Group: "docker"}}})
@@ -51,11 +52,11 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out, si
 	steps = append(steps,
 		host.Lazy{Title: configStep, After: routesStep, Parts: configuration(m, u, out, d, size)},
 		host.Group{Title: bridgeStep, After: configStep, Parts: []host.Resource{
-			bridgeCheck{m: m, out: out, held: held, want: bridgeCIDR(d)},
+			bridge.Check{M: m, Out: out, Held: held, Want: bridgeCIDR(d)},
 		}},
 	)
 	if v.User != "root" {
-		steps = append(steps, rootless(v, m, u, out, size))
+		steps = append(steps, rootlessDaemon(v, m, u, out, size))
 	}
 	return steps
 }

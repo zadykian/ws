@@ -42,3 +42,11 @@ func TestGHTelemetryPlan(t *testing.T) {
 		})
 	}
 }
+
+func apply(t *testing.T, changes []host.Change) {
+	for _, c := range changes {
+		if err := c.Apply(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+	}
+}

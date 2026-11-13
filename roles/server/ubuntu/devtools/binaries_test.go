@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"maps"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
@@ -96,8 +97,8 @@ func runServers(t *testing.T, user, home string) *effecttest.Machine {
 	servePins(t, m)
 	m.Results["id -u "+user] = effecttest.Result{Out: []byte("1000\n")}
 	m.Results["id -g "+user] = effecttest.Result{Out: []byte("1000\n")}
-	m.Files[npmBin] = []byte("stand-in npm")
-	m.Results[npmCommand(user, home)] = effecttest.Result{}
+	m.Files["/usr/bin/npm"] = []byte("stand-in npm")
+	m.Results[npmCI(user, home)] = effecttest.Result{}
 	steps := withPackages(m, user, home)
 	if _, err := step.Run(t.Context(), steps, &effecttest.Out{}, false); err != nil {
 		t.Fatal(err)
@@ -119,5 +120,42 @@ func TestTheServersChangeNothingOnASecondRun(t *testing.T) {
 	changed, err := step.Run(t.Context(), withPackages(m, "root", "/root"), &effecttest.Out{}, true)
 	if err != nil || changed {
 		t.Errorf("second run: %v, %v", changed, err)
+	}
+}
+
+// wsServersDir is the user ws's npm servers directory, which npm_test.go names again.
+const wsServersDir = "/home/ws/.local/lib/language-servers"
+
+// npmCI is the command line that the fake machine answers for the user's npm ci.
+func npmCI(user, home string) string {
+	dir := home + "/.local/lib/language-servers"
+	if user == "root" {
+		return "env HOME=" + home + " /usr/bin/npm ci --prefix " + dir + " --ignore-scripts --no-audit --no-fund"
+	}
+	return "runuser -u " + user + " -- env -C " + home + " HOME=" + home + " /usr/bin/npm ci --prefix " + dir +
+		" --ignore-scripts --no-audit --no-fund"
+}
+
+func TestTheDirectoriesPlanInOrderForAHomeWithNoLocal(t *testing.T) {
+	m := runServers(t, "ws", "/home/ws")
+	var made []string
+	for _, c := range m.Calls {
+		if p, ok := strings.CutPrefix(c, "mkdir "); ok && strings.Contains(p, "/.local") {
+			made = append(made, p)
+		}
+	}
+	want := []string{"/home/ws/.local", "/home/ws/.local/lib", wsServersDir}
+	if len(made) != 3 {
+		t.Fatalf("made %v", made)
+	}
+	for i, p := range want {
+		if !strings.HasPrefix(made[i], p) || m.Owners[p] != [2]int{1000, 1000} || m.Dirs[p] != 0o755 {
+			t.Errorf("%s: made %q, owner %v, mode %v", p, made[i], m.Owners[p], m.Dirs[p])
+		}
+	}
+	for _, name := range []string{"package.json", "package-lock.json"} {
+		if len(m.Files[wsServersDir+"/"+name]) == 0 || m.Owners[wsServersDir+"/"+name] != [2]int{1000, 1000} {
+			t.Errorf("%s missing or not the user's", name)
+		}
 	}
 }

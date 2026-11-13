@@ -43,7 +43,7 @@ steps, and each role's page in `docs/` says what it sets up.
   ([The `playbook` job](../../docs/checks.md#the-playbook-job)). A step that only reads plans no change.
 - A dry run, `--check`, applies nothing and shows how the machine differs
   ([Dry runs](../../README.md#dry-runs)). A step reads in its Plan, a GET included
-  ([devtools](../../roles/server/ubuntu/devtools/golang.go)).
+  ([devtools](../../roles/server/ubuntu/devtools/internal/golang/golang.go)).
 - A role's test states dpkg's database by effecttest's package table, never by a `dpkg-query` line
   in Results, so host's read can change under it
   ([machine_dpkg.go](../../engine/core/effect/effecttest/machine_dpkg.go)).
@@ -89,4 +89,4 @@ steps, and each role's page in `docs/` says what it sets up.
   hand: change `casting.yaml` and forge again ([The compose files](../../docs/signoz.md#the-compose-files)).
 - The dashboards' files are kept as SigNoz's API returns them, so that the step can compare the
   two. After a change of SigNoz's image, refresh them and commit them with the casting
-  ([The dashboards](../../roles/server/ubuntu/signoz/dashboards/README.md#refreshing-them)).
+  ([The dashboards](../../roles/server/ubuntu/signoz/internal/dashboards/dashboards/README.md#refreshing-them)).

@@ -1,6 +1,6 @@
 // Package signoz sets up SigNoz in Docker from foundryctl's compose files, and sets its retention
-// and dashboards through its API. The compose files, the casting they are forged from and the
-// dashboards are embedded from this directory.
+// and dashboards through its API. The compose files and the casting they are forged from are
+// embedded from this directory.
 package signoz
 
 import "embed"
