@@ -21,12 +21,14 @@ const resolverDir = "/etc/resolver"
 // Networks has the daemon of Server route WS_TUNNEL_NETWORKS, from its routes.d/server-conf, and
 // macOS ask the nameservers of WS_RESOLVERS for their domains. A domain whose file lacks ws's
 // header stops the run, as does a file that another script wrote. A resolver with the header goes
-// once WS_RESOLVERS no longer names its domain.
+// once WS_RESOLVERS no longer names its domain, unless another server's file names it.
 type Networks struct {
 	Server string
-	Conf   conf.Conf
-	M      effect.Machine
-	Out    effect.Out
+	// MacConf is mac.conf's path, whose servers/ holds the other servers' files.
+	MacConf string
+	Conf    conf.Conf
+	M       effect.Machine
+	Out     effect.Out
 	// Check is set under --check, which signals no daemon.
 	Check bool
 }
@@ -106,6 +108,15 @@ func (n *Networks) resolvers(ctx context.Context) ([]step.Change, error) {
 	names, err := n.M.ReadDir(resolverDir)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
+	}
+	siblings, err := conf.Siblings(n.M, n.MacConf, conf.ServerPath(n.MacConf, n.Server))
+	if err != nil {
+		return nil, err
+	}
+	for _, s := range siblings {
+		for _, r := range resolvers(s.Conf.Resolvers) {
+			named[r.Domain] = true
+		}
 	}
 	for _, name := range names {
 		resolverFile := resolverDir + "/" + name
