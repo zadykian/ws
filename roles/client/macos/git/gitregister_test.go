@@ -81,7 +81,7 @@ func TestGitChecksThatGhListsTheKeyItAdded(t *testing.T) {
 	m.Results[gitList] = effecttest.Result{}
 	m.Results["/opt/bin/gh ssh-key add "+gitPub+" --type signing --title mac"] = effecttest.Result{}
 	if err := g.Apply(context.Background(), step.Plan{Changes: []step.Change{git.Register{
-		Gh: "/opt/bin/gh", Pub: gitPub, Public: "ssh-ed25519 AAAAC3Nz", Title: "mac"}}}); err != nil {
+		Git: g, Gh: "/opt/bin/gh", Pub: gitPub, Public: "ssh-ed25519 AAAAC3Nz", Title: "mac"}}}); err != nil {
 		t.Fatal(err)
 	}
 	if len(out.Lines) != 1 || !strings.Contains(out.Lines[0], "lacks the key after "+gitAdd) {
@@ -118,7 +118,7 @@ func TestGitSaysNoAlreadyAfterItsAdd(t *testing.T) {
 	m, g := gitReady()
 	m.Results["/opt/bin/gh ssh-key add "+gitPub+" --type signing --title mac"] = effecttest.Result{}
 	if err := g.Apply(context.Background(), step.Plan{Changes: []step.Change{git.Register{
-		Gh: "/opt/bin/gh", Pub: gitPub, Public: "ssh-ed25519 AAAAC3Nz", Title: "mac"}}}); err != nil {
+		Git: g, Gh: "/opt/bin/gh", Pub: gitPub, Public: "ssh-ed25519 AAAAC3Nz", Title: "mac"}}}); err != nil {
 		t.Fatal(err)
 	}
 	if p, err := g.Plan(context.Background()); err != nil || strings.Contains(fmt.Sprint(p.Changes), "already") {

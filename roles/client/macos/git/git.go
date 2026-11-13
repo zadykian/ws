@@ -116,10 +116,10 @@ func (g *Git) Apply(ctx context.Context, p step.Plan) error {
 	for _, c := range p.Changes[n:] {
 		switch c := c.(type) {
 		case Known:
-			g.tell(string(c))
+			g.tell(c.Text)
 			continue
 		case Notice:
-			g.say(string(c))
+			g.say(c.Text)
 			continue
 		case Register:
 			g.add(ctx, c)

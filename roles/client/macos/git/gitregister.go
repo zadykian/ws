@@ -13,6 +13,7 @@ import (
 
 // Register adds the key to the signing keys of gh's login.
 type Register struct {
+	Git                    *Git
 	Gh, Pub, Public, Title string
 }
 
@@ -22,6 +23,12 @@ func (r Register) command() string {
 
 // String is the line that --check prints.
 func (r Register) String() string { return "would run " + r.command() }
+
+// Apply adds the key. A failure is a warning, and the next run tries again.
+func (r Register) Apply(ctx context.Context) error {
+	r.Git.add(ctx, r)
+	return nil
+}
 
 // ghFailure splits the error of a gh command into its exit status and its errors.
 func ghFailure(err error) (int, string) {
@@ -62,7 +69,7 @@ func (g *Git) register(ctx context.Context, key keys.NamedKey, gh string, instal
 	if err != nil {
 		return nil, "", fmt.Errorf("hostname failed: %w", err)
 	}
-	r := Register{gh, key.File, key.Key.String(), strings.TrimSpace(string(title))}
+	r := Register{g, gh, key.File, key.Key.String(), strings.TrimSpace(string(title))}
 	if installing {
 		return nil, "would run " + r.command() + " once gh is installed, where it has a login that lacks the key", nil
 	}
