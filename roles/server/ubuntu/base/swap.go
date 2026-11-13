@@ -42,6 +42,11 @@ func swapParts(m effect.Machine, out effect.Out, d disk, want swapSetting) []hos
 	}
 }
 
+// hostParts is swapParts on the disk of the machine that ws runs on.
+func hostParts(m effect.Machine, out effect.Out, want swapSetting) []host.Resource {
+	return swapParts(m, out, osDisk{}, want)
+}
+
 // state reads what the plan needs.
 func (s swap) state() (swapState, error) {
 	if sw := s.Want.Swappiness; sw < 0 || sw > 200 {
