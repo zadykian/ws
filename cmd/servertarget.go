@@ -21,9 +21,18 @@ func serverTarget(p cli.Env, opts *applyOptions) engine.Target {
 		}
 		r.term.Flush() // Prepare's lines wait for no run: Apply says the run's own.
 		return runOf(r.cfg, r.list), nil
-	}, State: func(_ context.Context, c engine.Call) (engine.Report, error) {
-		return serverReport(c, p, *opts)
-	}}
+	}, Refuse: func(engine.Call) string {
+		if p.Euid != 0 {
+			return "run it as root, by sudo: ws's secrets and host_vars are root's"
+		}
+		return ""
+	}, NoScreen: "it needs a terminal and no --plain: anywhere else, run ws server ubuntu secrets " +
+		"and ws server ubuntu values set",
+		Sheets: func(context.Context, engine.Call) ([]tui.Sheet, func(context.Context), error) {
+			return serverSheets(p), nil, nil
+		}, State: func(_ context.Context, c engine.Call) (engine.Report, error) {
+			return serverReport(c, p, *opts)
+		}}
 }
 
 // serverReport readies what ws server ubuntu state reports.

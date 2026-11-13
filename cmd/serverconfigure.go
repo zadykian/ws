@@ -2,12 +2,10 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
 
-	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/tui"
 )
@@ -21,21 +19,8 @@ func newServerConfigureCmd(p cli.Env) *cobra.Command {
 			"secrets show as set or not, never their values. Ctrl-N goes to host_vars. Ctrl-S writes a form. " +
 			"It needs a terminal: anywhere else, run ws server ubuntu secrets and ws server ubuntu values set.",
 		Args: cobra.NoArgs,
-		RunE: func(c *cobra.Command, _ []string) error { return runServerConfigure(c, p) },
+		RunE: cli.Configure(serverTarget(p, new(applyOptions)), p),
 	}
-}
-
-// runServerConfigure draws the forms. A form has no lines to fall back on, so it refuses where no
-// screen draws.
-func runServerConfigure(c *cobra.Command, p cli.Env) error {
-	if p.Euid != 0 {
-		return errors.New("run it as root, by sudo: ws's secrets and host_vars are root's")
-	}
-	if !engine.DrawsScreen(cli.CallOf(c, p)) {
-		return errors.New("it needs a terminal and no --plain: anywhere else, run ws server ubuntu secrets " +
-			"and ws server ubuntu values set")
-	}
-	return tui.Configure(c.Context(), engine.ScreenConfig(cli.CallOf(c, p)), c.CommandPath(), serverSheets(p)...)
 }
 
 // serverSheets are the forms of ws server ubuntu configure and of ws server ubuntu wizard's list.
