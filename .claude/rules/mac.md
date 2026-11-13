@@ -40,6 +40,8 @@ The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `rol
   A step holds it as `F` beside `M`. `Pass` would keep the screen on the terminal ([the TUI](../../engine/tui/README.md#commands)).
 - No cgo: ws builds with `CGO_ENABLED=0`. The race detector's cgo is the tests' alone
   ([Makefile](../../Makefile)).
+- `--server NAME` is `ws client macos`'s persistent flag, bound once in `Command` and read through a
+  pointer at run time.
 - ws is cobra's: a command parses no flag or argument by hand and holds no usage text.
   `cli.Execute` runs the root, names the command in each error, and returns 2 for a usage error. A
   group of commands exists on the systems where it runs. `clientCmd`, over macos/cli's `Command`, is

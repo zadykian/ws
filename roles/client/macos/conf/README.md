@@ -34,6 +34,13 @@ A key in the other file is refused, with the file it goes in. `WS_CONF` names `m
 server's file is `servers/ws/server.conf` beside it. Each key's meaning is in
 [mac.conf](../README.md#macconf).
 
+## The server's name
+
+`--server NAME` picks the server, and its file is `servers/NAME/server.conf`. A name is a
+lower-case letter, then up to 11 lower-case letters, digits and `-`. With one server, the flag may
+be left out. With none, ws refuses and says that the wizard adds one. With several, it refuses and
+lists them. A directory of a bad name that holds `server.conf` is refused too.
+
 ## A machine on the LAN
 
 `WS_TARGET=lan`, the default, is a machine at home, behind [The router](../../../server/ubuntu/network/router.md), with a cable to

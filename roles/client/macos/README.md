@@ -50,6 +50,8 @@ reads without running them. `~/.config/ws/mac.conf` holds the Mac's keys, which 
 `WS_GIT_EMAIL`, `WS_GIT_SIGNING_PUB_KEY`, `WS_IDENTITY_PUB_KEY` and `WS_IDENTITY_AGENT` are.
 `~/.config/ws/servers/ws/server.conf` holds every other key. A key in the other file is refused.
 [The two files](conf/README.md#the-two-files) shows both.
+`--server NAME`, on every `ws client macos` command, picks the server, which may be left out where
+there is one ([The server's name](conf/README.md#the-servers-name)).
 
 `WS_PUBLIC_KEY` is ws's WireGuard public key, which the `wireguard` role prints:
 [The Mac's tunnel](#the-macs-tunnel), below. `WS_LAN` is the home LAN, and `WS_LAN_ADDRESS` ws's

@@ -145,8 +145,8 @@ ws's own lines on stderr. `--json` prints the version of ws, then each role with
 and changes.
 
 `ws client macos state` does the same for the Mac, as `ws client macos apply --check` reads it: it
-needs `mac.conf`, and not root. On the screen, sudo's password comes through a question. `--json`
-prints the version of ws, then each step ([What the Mac reports](roles/client/macos/README.md#what-the-mac-reports)).
+needs `mac.conf` and a server's file, and not root. On the screen, sudo's password comes through a
+question. `--json` prints the version of ws, then each step ([What the Mac reports](roles/client/macos/README.md#what-the-mac-reports)).
 
 ```sh
 ws client macos state
