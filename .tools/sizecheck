@@ -2,7 +2,7 @@
 # Keeps ws's files short: each is at most 300 lines. It checks the files git lists, new ones
 # included but not those it ignores, or those of the FILEs it caps:
 #
-#   tools/sizecheck [FILE...]
+#   .tools/sizecheck [FILE...]
 #
 # It caps Markdown, YAML, shell scripts, found by extension or shebang, Python, Go and Jinja
 # templates. Data files, such as TOML, JSON, conf files and licenses, are of no kind it caps.
@@ -26,8 +26,8 @@ exempt() {
 }
 
 main() {
-    [ -f tools/sizecheck ] || {
-        echo "tools/sizecheck: run it from the repository's root" >&2
+    [ -f .tools/sizecheck ] || {
+        echo ".tools/sizecheck: run it from the repository's root" >&2
         exit 1
     }
     tmp=$(mktemp -d)

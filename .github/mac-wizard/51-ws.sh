@@ -1,5 +1,5 @@
 #!/bin/sh
-# The ws that tools/build built into ~/.local/bin, in the workflow: it must run, print its usage,
+# The ws that .tools/build built into ~/.local/bin, in the workflow: it must run, print its usage,
 # and refuse an unknown command with status 2.
 
 set -u

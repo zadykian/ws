@@ -1,9 +1,9 @@
 #!/bin/sh
 # Builds ws for one target:
 #
-#   tools/build GOOS GOARCH FILE
+#   .tools/build GOOS GOARCH FILE
 #
-# The targets are darwin arm64, linux amd64 and linux arm64. It uses the Go that tools/run pins,
+# The targets are darwin arm64, linux amd64 and linux arm64. It uses the Go that .tools/run pins,
 # with its caches in .cache, and stamps the commit's version, as a release does. It writes FILE.new
 # and moves it over FILE, so that no one runs a half-written binary. Run it from anywhere.
 
@@ -11,12 +11,12 @@ set -eu
 
 # die prints a message of the script's and exits with status 1.
 die() {
-    printf 'tools/build: %s\n' "$*" >&2
+    printf '.tools/build: %s\n' "$*" >&2
     exit 1
 }
 
 main() {
-    [ $# -eq 3 ] || die "usage: tools/build GOOS GOARCH FILE"
+    [ $# -eq 3 ] || die "usage: .tools/build GOOS GOARCH FILE"
     case $1-$2 in
     darwin-arm64 | linux-amd64 | linux-arm64) ;;
     *) die "$1-$2 is not a target: darwin-arm64, linux-amd64 or linux-arm64" ;;
@@ -24,7 +24,7 @@ main() {
     goos=$1 goarch=$2 file=$3
     root=$(cd "$(dirname "$0")/.." && pwd)
     cd "$root"
-    go=$(sh tools/run -path go) || die "cannot get the pinned Go"
+    go=$(sh .tools/run -path go) || die "cannot get the pinned Go"
     mkdir -p "$(dirname "$file")"
     GOOS=$goos GOARCH=$goarch GOPATH=$root/.cache/go GOMODCACHE=$root/.cache/go/pkg/mod \
         GOCACHE=$root/.cache/go-build GOTOOLCHAIN=local GOWORK=off CGO_ENABLED=0 \

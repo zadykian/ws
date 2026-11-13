@@ -186,7 +186,7 @@ compose files again, and sets up a Mac on GitHub's macOS runner. A pushed tag `v
 release that `install.sh` installs: [Releases](engine/core/update). The rules workflow warns where a
 pull request breaks the rules of zadykian/toolkit's skills, and the issues workflow where an issue
 strays from its issue form. The hooks in `.githooks` check each commit before git makes it.
-[Checks](.github/workflows) and [The gates](tools) have the details.
+[Checks](.github/workflows) and [The gates](.tools) have the details.
 
 On a terminal, ws draws a full-screen display, and `--plain` keeps its lines: [The terminal UI](engine/tui).
 

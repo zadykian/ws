@@ -28,7 +28,7 @@ echo /.cache >>"$src/.git/info/exclude"
 git -C "$src" tag -d v0.0.0 >/dev/null
 git -C "$src" tag v0.0.1
 mkdir -p "$releases/download/v0.0.1"
-sh "$src/tools/build" darwin arm64 "$releases/download/v0.0.1/ws-darwin-arm64" || exit 1
+sh "$src/.tools/build" darwin arm64 "$releases/download/v0.0.1/ws-darwin-arm64" || exit 1
 cp "$src/install.sh" "$releases/download/v0.0.1/install.sh"
 (cd "$releases/download/v0.0.1" && shasum -a 256 ws-darwin-arm64 >ws.sha256)
 [ "$("$releases/download/v0.0.1/ws-darwin-arm64" version)" = v0.0.1 ] || error "the build at v0.0.1 prints another version"

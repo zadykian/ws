@@ -22,12 +22,12 @@ linters:
             - "!${base-path}/cmd/**"
             - "!${base-path}/engine/cli/**"
             - "!${base-path}/roles/*/*/cli/**"
-            - "!${base-path}/tools/**"
+            - "!${base-path}/.tools/**"
           deny:
             - pkg: github.com/spf13/cobra
-              desc: cobra lives in cmd, the cli packages and tools/ alone
+              desc: cobra lives in cmd, the cli packages and .tools/ alone
             - pkg: github.com/spf13/pflag
-              desc: cobra's flags live in cmd, the cli packages and tools/ alone
+              desc: cobra's flags live in cmd, the cli packages and .tools/ alone
         core:
           list-mode: lax
           files:

@@ -36,7 +36,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   screen, and [the queue](../../engine/tui/internal/queue/README.md) the wizard's two lists.
 - [The update package's README](../../engine/core/update/README.md) says how to install and update
   ws, and how a release is cut.
-- [The tools' README](../../tools/README.md) says what each gate of `make lint` runs.
+- [The tools' README](../../.tools/README.md) says what each gate of `make lint` runs.
   [CI's README](../../.github/workflows/README.md) says what CI's other jobs check, and what the
   hooks of `.githooks` and Claude's hooks do.
   [mac-cld.md](../../.github/workflows/mac-cld.md) says what the job `mac-cld` checks.

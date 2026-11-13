@@ -14,8 +14,8 @@ import (
 	"strings"
 )
 
-// valeCommand runs the pinned Vale, which tools/run fetches on its first run. A test swaps it.
-var valeCommand = []string{"tools/run", "vale"}
+// valeCommand runs the pinned Vale, which .tools/run fetches on its first run. A test swaps it.
+var valeCommand = []string{".tools/run", "vale"}
 
 // check returns the alerts of Vale, with .vale.ini, on the comments of the files.
 func check(files []string, stderr io.Writer) ([]finding, error) {

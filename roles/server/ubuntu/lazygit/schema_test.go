@@ -11,7 +11,7 @@ import (
 )
 
 // lazygitSchema compiles the schema that LAZYGIT_SCHEMA names, which make gotest sets from
-// tools/run. A go test of its own has none, and skips.
+// .tools/run. A go test of its own has none, and skips.
 func lazygitSchema(t *testing.T) *jsonschema.Schema {
 	path := os.Getenv("LAZYGIT_SCHEMA")
 	if path == "" {

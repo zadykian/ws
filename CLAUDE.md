@@ -28,10 +28,11 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   `zsh/files/zshrc`, the zsh hook that turns off the modes that a drop leaves on.
 - The pages sit beside their code, as the `README.md` of a role or a package. A second page stands
   beside one where the cap keeps two apart: `zed/projects.md`, `network/router.md`,
-  `.github/workflows/rootless.md` and `mac-cld.md`. `tools/README.md` holds the gates and
+  `.github/workflows/rootless.md` and `mac-cld.md`. `.tools/README.md` holds the gates and
   `.github/workflows/README.md` CI.
-- `tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
-  caps them. `build` builds ws for a target, and `vale-comments` runs Vale on files' comments.
+- `.tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
+  caps them. `build` builds ws for a target, and `vale-comments` runs Vale on files' comments. Go's
+  `./...` leaves out a dot directory, so the Go gates name the tools' packages too.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
 - `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook`, `rootless`, `install` and
   `signoz`;
@@ -55,8 +56,8 @@ make gotest                       # the Go gates run at the root, the module; so
 
 The gates are `shell`, `yamllint`, `sizecheck`, `vale`, `lychee`, `rumdl`, `actionlint`, `zizmor`,
 `gitleaks`, `gofmt`, `govet`, `golangci-lint`, `govulncheck` and `gotest`
-([The gates](tools/README.md)). `make lint` needs Python 3.12 to 3.14, on Linux or on macOS on arm64.
-It installs yamllint into `.cache`, and `tools/run` downloads the rest there.
+([The gates](.tools/README.md)). `make lint` needs Python 3.12 to 3.14, on Linux or on macOS on arm64.
+It installs yamllint into `.cache`, and `.tools/run` downloads the rest there.
 
 The tests are CI's jobs ([Checks](.github/workflows/README.md)). `playbook` builds ws and runs `ws server ubuntu
 apply` twice in an Ubuntu 26.04 container and checks the config that Fresh reads, `signoz` forges
@@ -107,7 +108,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([download.go](roles/server/ubuntu/otelcol/download.go)) and Docker's apt key
   ([repository.go](roles/server/ubuntu/docker/repository.go)). So is Fresh's `.deb`
   ([download.go](roles/server/ubuntu/fresh/download.go)), and so are foundryctl
-  ([ci.yml](.github/workflows/ci.yml)) and the gates' tools ([tools/run](tools/run)). So is ws's
+  ([ci.yml](.github/workflows/ci.yml)) and the gates' tools ([.tools/run](.tools/run)). So is ws's
   binary, against its release's `ws.sha256` ([install.sh](install.sh),
   [update.go](engine/core/update/update.go)), and so are yamllint
   ([lint-requirements.in](.github/lint-requirements.in)) and Homebrew's `.pkg`, with its signer
@@ -132,13 +133,13 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   print the list or a word of it, and never pass `--no-verify`
   ([The hooks](.github/workflows/README.md#the-hooks)).
 - `make lint` fails on any finding, warnings included, in any line of any file
-  ([The gates](tools/README.md); #47).
+  ([The gates](.tools/README.md); #47).
 - Fix a finding, or justify it in place with its linter's own mechanism and a reason:
   `//nolint:NAME // reason`, `# yamllint disable-line rule:NAME` or
   `# shellcheck disable=SCNNNN`, each with the reason beside it. Never lower a severity, add an
   exclusion or keep a baseline: every file passes every gate outright, and `.yamllint`,
   `.golangci.yml` and `.vale.ini` are never weakened.
-- ws's layers import downward: cobra lives in `cmd`, the `cli` packages and `tools/`;
+- ws's layers import downward: cobra lives in `cmd`, the `cli` packages and `.tools/`;
   `engine/core` imports itself alone; a role imports `engine/core`, `roles/internal` and its own
   side, but not that side's `cli`. The Mac imports the server's `values`, `secrets`, `session`,
   `stages` and `cli` alone.

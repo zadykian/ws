@@ -1,7 +1,7 @@
 // Command vale-comments runs Vale on the comments of the files written here, which Vale reads
 // whole, code and strings included, or not at all:
 //
-//	go run ./tools/vale-comments [PATHSPEC...]
+//	go run ./.tools/vale-comments [PATHSPEC...]
 //
 // It mirrors the comments of each file that git lists for the PATHSPECs, or of every file, as
 // Markdown. It runs the pinned Vale with .vale.ini on the mirrors, and prints each alert at its

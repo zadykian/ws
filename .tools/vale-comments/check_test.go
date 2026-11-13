@@ -20,7 +20,7 @@ func inDir(t *testing.T, script string, files map[string]string) {
 		}
 	}
 	valeCommand = []string{"sh", "-c", script, "vale"}
-	t.Cleanup(func() { valeCommand = []string{"tools/run", "vale"} })
+	t.Cleanup(func() { valeCommand = []string{".tools/run", "vale"} })
 }
 
 func TestCheck(t *testing.T) {

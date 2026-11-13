@@ -51,7 +51,7 @@ func (i *WsInstall) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	if !check.Release(i.Version) {
 		return step.Plan{}, fmt.Errorf("%s: this ws is %s, not a release: put a linux build of the same tree at "+
-			"/usr/local/bin/ws on ws by hand (tools/build), then run the wizard again", stage.Install, i.Version)
+			"/usr/local/bin/ws on ws by hand (.tools/build), then run the wizard again", stage.Install, i.Version)
 	}
 	if !check.ReleasesURL(i.URL) {
 		return step.Plan{}, fmt.Errorf("%s: WS_RELEASES_URL is %q: it must start with https://, or with "+

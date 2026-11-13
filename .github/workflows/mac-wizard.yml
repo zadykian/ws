@@ -43,13 +43,13 @@ jobs:
         run: |
           mkdir -p ~/repository
           cp -R "$GITHUB_WORKSPACE" ~/repository/ws
-      # ws is built from the clone into ~/.local/bin by tools/build, and the cases run it as
+      # ws is built from the clone into ~/.local/bin by .tools/build, and the cases run it as
       # ws client macos wizard. The clone is tagged v0.0.0 first, so that ws is a release, as the
       # wizard installs ws on ws only for a release. The stand-in ws takes the install.
       - name: Build ws
         run: |
           git -C ~/repository/ws tag v0.0.0
-          sh ~/repository/ws/tools/build darwin arm64 ~/.local/bin/ws
+          sh ~/repository/ws/.tools/build darwin arm64 ~/.local/bin/ws
           [ "$(~/.local/bin/ws version)" = v0.0.0 ]
       - name: The stand-ins
         run: sh ~/repository/ws/.github/mac-wizard/standin.sh
