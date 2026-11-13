@@ -77,7 +77,7 @@ typed() {
     {
         printf '%s\n' "$@"
         sleep 5
-    } | script -q /dev/null "$wsbin" --plain client macos wizard --check >"$RUNNER_TEMP/raw" 2>&1
+    } | script -q /dev/null "$wsbin" --plain client macos wizard --server ws --check >"$RUNNER_TEMP/raw" 2>&1
     status=$?
     tr -d '\r' <"$RUNNER_TEMP/raw" >"$RUNNER_TEMP/tty"
     cat "$RUNNER_TEMP/tty"
@@ -99,7 +99,7 @@ quick "WS_TARGET=mac-vm has another target's key: WS_REMOTE" env WS_TARGET=mac-v
     WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=192.0.2.10 WS_GIT_NAME= WS_TUNNEL_NETWORKS= WS_RESOLVERS= \
     "$wsbin" client macos wizard --check
 
-printf '%s\n' '+WS_GIT_NAME="Jane Doe"' '+WS_GIT_EMAIL=jane@example.com' '+WS_TARGET=lan' \
+printf '%s\n' '+WS_GIT_NAME="Jane Doe"' '+WS_GIT_EMAIL=jane@example.com' '+WS_SLOT=0' '+WS_TARGET=lan' \
     '+WS_LAN=192.0.2.0/24' '+WS_LAN_ADDRESS=192.0.2.10' \
     '+WS_TUNNEL_NETWORKS="198.51.100.0/24 203.0.113.0/24"' '+WS_RESOLVERS=example.test=192.0.2.53' >"$RUNNER_TEMP/added"
 env WS_TARGET=lan WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=192.0.2.10 WS_GIT_NAME='Jane Doe' \
@@ -129,7 +129,7 @@ done
 
 # The defaults: a machine on the LAN, the router's LAN and lease
 # (roles/server/ubuntu/network/router.md), and the shell role's git identity.
-printf '%s\n' '+WS_GIT_NAME=zadykian' '+WS_GIT_EMAIL=me@zadykian.dev' '+WS_TARGET=lan' \
+printf '%s\n' '+WS_GIT_NAME=zadykian' '+WS_GIT_EMAIL=me@zadykian.dev' '+WS_SLOT=0' '+WS_TARGET=lan' \
     '+WS_LAN=10.88.0.0/24' '+WS_LAN_ADDRESS=10.88.0.10' '+WS_TUNNEL_NETWORKS=' \
     '+WS_RESOLVERS=' >"$RUNNER_TEMP/added"
 typed 'seven empty lines' '' '' '' '' '' '' ''
@@ -140,8 +140,8 @@ export WS_CONF
 echo 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' | conf_write "$conf"
 conf_print "$conf" >"$RUNNER_TEMP/mac.conf"
 quick 'ws client macos wizard: Answers: no terminal to ask WS_REMOTE: set WS_REMOTE' \
-    env WS_TARGET=cloud "$wsbin" client macos wizard --check
-printf '%s\n' '+WS_GIT_NAME=zadykian' '+WS_GIT_EMAIL=me@zadykian.dev' '+WS_TARGET=cloud' \
+    env WS_TARGET=cloud "$wsbin" client macos wizard --server ws --check
+printf '%s\n' '+WS_GIT_NAME=zadykian' '+WS_GIT_EMAIL=me@zadykian.dev' '+WS_SLOT=0' '+WS_TARGET=cloud' \
     '+WS_REMOTE=ws.example.test' '+WS_REMOTE_PORT=22' '+WS_TUNNEL_NETWORKS=' \
     '+WS_RESOLVERS=' >"$RUNNER_TEMP/added"
 typed 'a cloud VM' cloud '' ws.example.test '' '' '' '' ''
@@ -149,7 +149,7 @@ for asked in 'Answers: WS_TARGET=cloud needs WS_REMOTE and WS_REMOTE_PORT' \
     "The VM's SSH port (WS_REMOTE_PORT) [22]: "; do
     grep -qF "$asked" "$RUNNER_TEMP/tty" || error "ws client macos wizard asked a cloud VM with no '$asked'"
 done
-printf '%s\n' '+WS_GIT_NAME=zadykian' '+WS_GIT_EMAIL=me@zadykian.dev' '+WS_TARGET=mac-vm' \
+printf '%s\n' '+WS_GIT_NAME=zadykian' '+WS_GIT_EMAIL=me@zadykian.dev' '+WS_SLOT=0' '+WS_TARGET=mac-vm' \
     '+WS_LAN=192.168.64.0/24' '+WS_LAN_ADDRESS=192.168.64.2' '+WS_TUNNEL_NETWORKS=' \
     '+WS_RESOLVERS=' >"$RUNNER_TEMP/added"
 typed 'a VM on the Mac' mac-vm '' '' 192.168.64.2 '' '' '' ''

@@ -33,7 +33,7 @@ conf=$RUNNER_TEMP/confs/tools/mac.conf
 user=$(id -un)
 out=$(WS_CONF=$conf WS_USER=$user WS_TARGET=lan WS_LAN='' WS_REMOTE=localhost WS_REMOTE_PORT=22022 \
     WS_GIT_NAME='' WS_TUNNEL_NETWORKS='' WS_RESOLVERS='' PATH=$path \
-    "$wsbin" client macos wizard --check 2>&1)
+    "$wsbin" client macos wizard --server ws --check 2>&1)
 status=$?
 printf '%s\n' "$out"
 printf '%s\n' "$out" | grep -qx '+WS_REMOTE=localhost' && [ "$status" = 0 ] ||
