@@ -118,6 +118,38 @@ func TestZedSeedIsJSONWithItsCommentsDropped(t *testing.T) {
 	}
 }
 
+func TestZedSeedsEachServerInNameOrder(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Dirs["/h/.config/ws/servers"], m.Dirs["/h/.config/ws/servers/lab"] = 0o755, 0o755
+	m.Files["/h/.config/ws/mac.conf"], m.Files["/h/.config/ws/servers/lab/server.conf"] = nil, nil
+	z := zedOf(m, &effecttest.Out{})
+	z.MacConf = "/h/.config/ws/mac.conf"
+	s := z.Step()
+	p, _ := s.Plan(context.Background())
+	if err := s.Apply(context.Background(), p); err != nil {
+		t.Fatal(err)
+	}
+	want := "{ \"ssh_connections\": [{ \"host\": \"lab\" }, { \"host\": \"ws\" }] }\n"
+	if got := string(m.Files["/h/.config/zed/settings.json"]); !strings.HasSuffix(got, "\n"+want) {
+		t.Errorf("settings.json = %q, want it to end with %q", got, want)
+	}
+}
+
+func TestZedSeedOfOneServerIsTheLineCIGreps(t *testing.T) {
+	m := effecttest.NewMachine()
+	s := zedStep(m, &effecttest.Out{})
+	p, _ := s.Plan(context.Background())
+	if err := s.Apply(context.Background(), p); err != nil {
+		t.Fatal(err)
+	}
+	want := "// Zed's own settings, which its UI writes. ws wrote this once, where it was missing; ws's\n" +
+		"// settings are in global_settings.json, and a key set here wins over them.\n" +
+		"{ \"ssh_connections\": [{ \"host\": \"ws\" }] }\n"
+	if got := string(m.Files["/h/.config/zed/settings.json"]); got != want {
+		t.Errorf("settings.json = %q, want %q", got, want)
+	}
+}
+
 func TestZedLeavesAnExistingSettingsFileAlone(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	s := zedStep(m, out)
