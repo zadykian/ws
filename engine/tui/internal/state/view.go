@@ -17,7 +17,7 @@ const (
 )
 
 // View draws the tabs, the list and the detail pane.
-func (s StateScreen) View() tea.View {
+func (s Screen) View() tea.View {
 	l := s.layout()
 	sizes := l.PaneSizes(s.window.Width, s.window.Height)
 	l.Panes[listPane].Body = s.listBody(sizes[listPane])
@@ -26,7 +26,7 @@ func (s StateScreen) View() tea.View {
 }
 
 // layout is the screen with its panes empty: their sizes are what their bodies are drawn for.
-func (s StateScreen) layout() widget.Layout {
+func (s Screen) layout() widget.Layout {
 	status := ""
 	if s.reading {
 		status = "reading"
@@ -45,7 +45,7 @@ func (s StateScreen) layout() widget.Layout {
 
 // header draws the tabs, in as many lines as the window needs so that none is cut, then why the last
 // read failed and what it warned of.
-func (s StateScreen) header() string {
+func (s Screen) header() string {
 	var lines []string
 	line := ""
 	for tab := range tabCount {
@@ -73,7 +73,7 @@ func (s StateScreen) header() string {
 // tabCell draws a tab with its count, and under a filter what that leaves of it. What needs a look
 // shows in color, and the count says the same under NO_COLOR. Before the first report a tab has no
 // count to give.
-func (s StateScreen) tabCell(tab int) string {
+func (s Screen) tabCell(tab int) string {
 	text := " " + tabNames[tab] + " "
 	switch {
 	case s.reported && s.filter.Words() != "":
@@ -94,7 +94,7 @@ func (s StateScreen) tabCell(tab int) string {
 
 // listBody draws the rows that fit a pane of size. The selection stays in the middle of a long
 // list. So the list needs no scroll of its own to keep, and a new size can't lose the row.
-func (s StateScreen) listBody(size widget.Size) string {
+func (s Screen) listBody(size widget.Size) string {
 	var lines []string
 	if field := s.filter.Line(s.theme); field != "" {
 		lines = append(lines, field)
@@ -118,7 +118,7 @@ func (s StateScreen) listBody(size widget.Size) string {
 
 // rowLine draws a row. The selected one is reversed across the pane, which needs no color, and a
 // conflict has a mark for the same reason.
-func (s StateScreen) rowLine(row stateRow, selected bool, width int) string {
+func (s Screen) rowLine(row stateRow, selected bool, width int) string {
 	text := "  " + row.name
 	style := lipgloss.NewStyle()
 	if row.conflict != "" {

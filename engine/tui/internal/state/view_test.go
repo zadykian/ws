@@ -19,7 +19,7 @@ import (
 var colored = regexp.MustCompile(`\x1b\[([0-9]+;)*[0-9]{2}(;[0-9]+)*m`)
 
 // wantDrawn checks that the screen, as a person reads it, holds the words.
-func wantDrawn(t *testing.T, s StateScreen, words ...string) {
+func wantDrawn(t *testing.T, s Screen, words ...string) {
 	got := stripped(s.View().Content)
 	for _, word := range words {
 		if !strings.Contains(got, word) {
@@ -37,7 +37,7 @@ func TestStateScreenDrawsTheTabs(t *testing.T) {
 }
 
 func TestStateScreenSaysWhyAReadFailed(t *testing.T) {
-	s, _ := feedState(t, reportedState(t), widget.Line{Kind: widget.Warned, Text: "a slow disk"}, StateRead{Err: errors.New("no ssh")})
+	s, _ := feedState(t, reportedState(t), widget.Line{Kind: widget.Warned, Text: "a slow disk"}, Read{Err: errors.New("no ssh")})
 	wantDrawn(t, s, "no ssh", "a slow disk", " Packages 2 ")
 }
 
@@ -45,13 +45,13 @@ func TestStateScreenDrawsTheRows(t *testing.T) {
 	wantDrawn(t, reportedState(t), "docker-ce", "! podman")
 	s, _ := feedState(t, newTestState(), sized)
 	wantDrawn(t, s, readingNote)
-	s, _ = feedState(t, s, StateRead{})
+	s, _ = feedState(t, s, Read{})
 	wantDrawn(t, s, " Packages 0 ", emptyNote)
 }
 
 func TestStateScreenKeepsItsMarksWithoutColor(t *testing.T) {
-	s, _ := feedState(t, NewStateScreen(widget.NewTheme(noColor("1")), "ws", nil, nil), sized,
-		StateRead{Sections: testSections()})
+	s, _ := feedState(t, NewScreen(widget.NewTheme(noColor("1")), "ws", nil, nil), sized,
+		Read{Sections: testSections()})
 	if got := s.View().Content; colored.MatchString(got) {
 		t.Errorf("a color under NO_COLOR: %q", got)
 	}
@@ -63,7 +63,7 @@ func TestStateScreenShowsTheSelectionInALongList(t *testing.T) {
 	for i := range 100 {
 		items = append(items, step.Item{Kind: step.PackageItem, Name: fmt.Sprintf("row-%d.", i)})
 	}
-	report := StateRead{Sections: []run.StateSection{{Reports: []step.Report{{Items: items}}}}}
+	report := Read{Sections: []run.StateSection{{Reports: []step.Report{{Items: items}}}}}
 	s, _ := feedState(t, newTestState(), sized, report)
 	wantDrawn(t, s, "row-0.")
 	s, _ = feedState(t, s, press('G'))

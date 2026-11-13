@@ -131,7 +131,7 @@ func Reopen(ctx context.Context, c Config, left QueueChoice) (QueueChoice, error
 
 // StateReader reads a machine and changes nothing. b gives the read's effects, for its lines to
 // reach the screen and not the terminal under it.
-type StateReader = state.StateReader
+type StateReader = state.Reader
 
 // RunState draws the state screen on c.Out until q, and reads the machine in Run's work. So a
 // read's panic and a signal end as a run's do. A read goes on under the screen, which takes the

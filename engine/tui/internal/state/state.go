@@ -32,18 +32,18 @@ var (
 	backKey = key.NewBinding(key.WithKeys("esc", "left", "h"))
 )
 
-// StateRead is the end of a read: what the machine reports, or why it can't be read.
-type StateRead struct {
+// Read is the end of a read: what the machine reports, or why it can't be read.
+type Read struct {
 	Sections []run.StateSection
 	Err      error
 }
 
-// StateScreen shows what a machine holds of what ws manages. It has a tab for each kind, the rows
+// Screen shows what a machine holds of what ws manages. It has a tab for each kind, the rows
 // of the tab on show, and a pane of the selected row's wanted and found state. It changes nothing.
-type StateScreen struct {
+type Screen struct {
 	theme widget.Theme
 	title string
-	// read asks for a report, which comes as a StateRead, and leave ends the screen. A screen is an
+	// read asks for a report, which comes as a Read, and leave ends the screen. A screen is an
 	// Update and a View alone, so that a command's run and the wizard's screen can each hold it.
 	read, leave tea.Cmd
 	window      widget.Size
@@ -64,26 +64,26 @@ type StateScreen struct {
 	filter widget.Filter
 }
 
-// NewStateScreen returns the screen, which asks for a report as it starts.
-func NewStateScreen(theme widget.Theme, title string, read, leave tea.Cmd) StateScreen {
+// NewScreen returns the screen, which asks for a report as it starts.
+func NewScreen(theme widget.Theme, title string, read, leave tea.Cmd) Screen {
 	footer := widget.NewFooter(filterButton, readButton, widget.Keys.Quit).Enable(readPlace, false)
-	return StateScreen{
+	return Screen{
 		theme: theme, title: title, read: read, leave: leave, footer: footer, reading: true, filter: widget.NewFilter(),
 	}
 }
 
 // Init asks for the first report.
-func (s StateScreen) Init() tea.Cmd {
+func (s Screen) Init() tea.Cmd {
 	return s.read
 }
 
 // Update takes a report, the window's size and the keys. Of a step's lines, a warning alone shows: a report
 // says more than the others do.
-func (s StateScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (s Screen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		s.window = widget.Size{Width: msg.Width, Height: msg.Height}
-	case StateRead:
+	case Read:
 		return s.took(msg), nil
 	case widget.Line:
 		if msg.Kind == widget.Warned {
@@ -103,7 +103,7 @@ func (s StateScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // took ends a read. One that failed keeps the rows on show: an old report beats none.
-func (s StateScreen) took(msg StateRead) StateScreen {
+func (s Screen) took(msg Read) Screen {
 	s.reading = false
 	s.footer = s.footer.Enable(readPlace, true)
 	s.problem = ""
@@ -120,7 +120,7 @@ func (s StateScreen) took(msg StateRead) StateScreen {
 // picks returns the row that each tab has selected, nil where a tab shows none. Whatever moves the
 // rows takes them first. The input rewrites its words in place, so a copy of the screen from before
 // an edit reads the new words. Its cursors don't fit the rows those leave.
-func (s StateScreen) picks() [tabCount]*stateRow {
+func (s Screen) picks() [tabCount]*stateRow {
 	var picks [tabCount]*stateRow
 	for tab, cursor := range s.cursors {
 		if rows := s.shown(tab); len(rows) > 0 {
@@ -132,7 +132,7 @@ func (s StateScreen) picks() [tabCount]*stateRow {
 
 // refound puts each tab's selection back on its row, once a read or the filter moved the rows under
 // it. Where the row went, the selection keeps its place.
-func (s StateScreen) refound(picks [tabCount]*stateRow) StateScreen {
+func (s Screen) refound(picks [tabCount]*stateRow) Screen {
 	for tab, picked := range picks {
 		rows := s.shown(tab)
 		s.cursors[tab] = max(min(s.cursors[tab], len(rows)-1), 0)
@@ -148,7 +148,7 @@ func (s StateScreen) refound(picks [tabCount]*stateRow) StateScreen {
 }
 
 // pressed acts on a key: Tab first, as the footer would take it, then the buttons, then the panes.
-func (s StateScreen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+func (s Screen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
 	case key.Matches(msg, widget.Keys.Next):
 		return s.turned(1), nil
@@ -173,7 +173,7 @@ func (s StateScreen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 }
 
 // pushed acts on a button.
-func (s StateScreen) pushed(place int) (tea.Model, tea.Cmd) {
+func (s Screen) pushed(place int) (tea.Model, tea.Cmd) {
 	switch place {
 	case filterPlace:
 		s.filter, s.inDetail = s.filter.Opened(), false
@@ -188,7 +188,7 @@ func (s StateScreen) pushed(place int) (tea.Model, tea.Cmd) {
 
 // turned moves along one ring of the tabs and the buttons, as Tab must both turn the tabs and reach
 // a button. The list takes the keys in a new tab.
-func (s StateScreen) turned(step int) StateScreen {
+func (s Screen) turned(step int) Screen {
 	s.inDetail, s.scroll = false, 0
 	next := s.tab + step
 	if s.footer.Focused() < 0 && next >= 0 && next < tabCount {
@@ -208,7 +208,7 @@ func (s StateScreen) turned(step int) StateScreen {
 
 // moved moves the selection, or the detail pane's lines where that pane has the keys. A new row
 // shows from its first line.
-func (s StateScreen) moved(msg tea.KeyPressMsg) StateScreen {
+func (s Screen) moved(msg tea.KeyPressMsg) Screen {
 	sizes := s.layout().PaneSizes(s.window.Width, s.window.Height)
 	if s.inDetail {
 		size := sizes[detailPane]

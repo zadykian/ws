@@ -11,7 +11,7 @@ import (
 )
 
 // filtered is the screen with text typed into its filter.
-func filtered(t *testing.T, text string) StateScreen {
+func filtered(t *testing.T, text string) Screen {
 	s, _ := feedState(t, reportedState(t), press('/'))
 	for _, r := range text {
 		s, _ = feedState(t, s, press(r))
@@ -88,7 +88,7 @@ func TestStateFilterKeepsTheSelectedRow(t *testing.T) {
 	if got := selected(s); got != "podman" {
 		t.Errorf("without it, on %q", got)
 	}
-	s, _ = feedState(t, filtered(t, "pod"), enter, press('r'), StateRead{Sections: testSections()})
+	s, _ = feedState(t, filtered(t, "pod"), enter, press('r'), Read{Sections: testSections()})
 	wantDrawn(t, s, " Packages 1/2 ", "! podman")
 }
 
@@ -101,12 +101,12 @@ func TestStateFilterThatLeavesNothingDrawsAnEmptyList(t *testing.T) {
 }
 
 // wordsState is the screen on a list of packages by these names, with the last selected.
-func wordsState(t *testing.T, rows ...string) StateScreen {
+func wordsState(t *testing.T, rows ...string) Screen {
 	items := make([]step.Item, len(rows))
 	for i, name := range rows {
 		items[i] = step.Item{Kind: step.PackageItem, Name: name}
 	}
-	read := StateRead{Sections: []run.StateSection{{Reports: []step.Report{{Step: "Packages", Items: items}}}}}
+	read := Read{Sections: []run.StateSection{{Reports: []step.Report{{Step: "Packages", Items: items}}}}}
 	s, _ := feedState(t, newTestState(), sized, read, press('G'))
 	return s
 }

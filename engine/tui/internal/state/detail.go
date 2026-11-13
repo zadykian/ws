@@ -14,7 +14,7 @@ const detailWeight = 2
 
 // detailBody returns the detail pane's title and the lines that fit a pane of size. The title says
 // where they stand in a row that overflows the pane.
-func (s StateScreen) detailBody(size widget.Size) (string, string) {
+func (s Screen) detailBody(size widget.Size) (string, string) {
 	lines := s.detailLines(size.Width)
 	if len(lines) <= size.Height {
 		return "Detail", strings.Join(lines, "\n")
@@ -26,7 +26,7 @@ func (s StateScreen) detailBody(size widget.Size) (string, string) {
 
 // detailLines draws the selected row for a pane of width, each line wrapped to it, as what a pane
 // cuts is what a diff is read for.
-func (s StateScreen) detailLines(width int) []string {
+func (s Screen) detailLines(width int) []string {
 	rows := s.shown(s.tab)
 	if len(rows) == 0 || width <= 0 {
 		return nil
@@ -57,7 +57,7 @@ func (s StateScreen) detailLines(width int) []string {
 // diffStyle colors the line at place i of a unified diff. Its marks say the same under NO_COLOR. The
 // first two lines name the file, and any later one that starts as they do is a change. A removal is
 // not bold, as a long one would shout over the rest.
-func (s StateScreen) diffStyle(i int, line string) lipgloss.Style {
+func (s Screen) diffStyle(i int, line string) lipgloss.Style {
 	switch {
 	case i < 2 && (strings.HasPrefix(line, "--- ") || strings.HasPrefix(line, "+++ ")):
 		return s.theme.Muted

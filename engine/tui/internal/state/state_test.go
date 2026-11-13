@@ -17,19 +17,19 @@ type (
 
 var sized = tea.WindowSizeMsg{Width: 80, Height: 24}
 
-func newTestState() StateScreen {
+func newTestState() Screen {
 	read := func() tea.Msg { return readAsked{} }
 	leave := func() tea.Msg { return leftAsked{} }
-	return NewStateScreen(testTheme, "ws server ubuntu state", read, leave)
+	return NewScreen(testTheme, "ws server ubuntu state", read, leave)
 }
 
 // feedState gives s each message, and returns the last Cmd.
-func feedState(t *testing.T, s StateScreen, msgs ...tea.Msg) (StateScreen, tea.Cmd) {
+func feedState(t *testing.T, s Screen, msgs ...tea.Msg) (Screen, tea.Cmd) {
 	var cmd tea.Cmd
 	for _, msg := range msgs {
 		var model tea.Model
 		model, cmd = s.Update(msg)
-		next, ok := model.(StateScreen)
+		next, ok := model.(Screen)
 		if !ok {
 			t.Fatalf("Update returned a %T", model)
 		}
@@ -39,8 +39,8 @@ func feedState(t *testing.T, s StateScreen, msgs ...tea.Msg) (StateScreen, tea.C
 }
 
 // reportedState is the screen in an 80 by 24 window, after the report of testSections.
-func reportedState(t *testing.T) StateScreen {
-	s, _ := feedState(t, newTestState(), sized, StateRead{Sections: testSections()})
+func reportedState(t *testing.T) Screen {
+	s, _ := feedState(t, newTestState(), sized, Read{Sections: testSections()})
 	return s
 }
 
@@ -79,7 +79,7 @@ func TestStateScreenReadsOnceAtATime(t *testing.T) {
 	if _, cmd := feedState(t, s, press('r')); cmd != nil {
 		t.Error("a second r reads beside the first")
 	}
-	if s, _ = feedState(t, s, StateRead{}); s.reading || len(s.rows[packagesTab]) != 0 {
+	if s, _ = feedState(t, s, Read{}); s.reading || len(s.rows[packagesTab]) != 0 {
 		t.Errorf("a new report: reading %v, %d packages", s.reading, len(s.rows[packagesTab]))
 	}
 	if _, cmd := feedState(t, s, press('r')); cmd == nil {
@@ -113,7 +113,7 @@ func TestStateScreenTabWalksTheTabsThenTheButtons(t *testing.T) {
 }
 
 // selected returns the name of the row that the screen has selected.
-func selected(s StateScreen) string {
+func selected(s Screen) string {
 	return s.shown(s.tab)[s.cursors[s.tab]].name
 }
 
@@ -143,29 +143,29 @@ func TestStateScreenAReadKeepsTheSelectedRow(t *testing.T) {
 	s, _ := feedState(t, reportedState(t), down)
 	sections := testSections()
 	sections[0].Reports[0].Items = sections[0].Reports[0].Items[1:]
-	s, _ = feedState(t, s, press('r'), StateRead{Sections: sections})
+	s, _ = feedState(t, s, press('r'), Read{Sections: sections})
 	if got := selected(s); got != "podman" || s.cursors[packagesTab] != 0 {
 		t.Errorf("on %q, at %d", got, s.cursors[packagesTab])
 	}
-	s, _ = feedState(t, s, press('r'), StateRead{})
+	s, _ = feedState(t, s, press('r'), Read{})
 	if s.cursors != ([tabCount]int{}) {
 		t.Errorf("no rows, cursors %v", s.cursors)
 	}
 }
 
 func TestStateScreenTakesAReport(t *testing.T) {
-	s, cmd := feedState(t, newTestState(), StateRead{Sections: testSections()})
+	s, cmd := feedState(t, newTestState(), Read{Sections: testSections()})
 	if cmd != nil || s.reading || !s.reported || len(s.rows[packagesTab]) != 2 {
 		t.Errorf("reading %v, reported %v, %d packages", s.reading, s.reported, len(s.rows[packagesTab]))
 	}
 }
 
 func TestStateScreenAFailedReadKeepsTheRows(t *testing.T) {
-	s, _ := feedState(t, reportedState(t), StateRead{Err: errors.New("no ssh\nat all")})
+	s, _ := feedState(t, reportedState(t), Read{Err: errors.New("no ssh\nat all")})
 	if s.problem != "no ssh" || s.reading || len(s.rows[packagesTab]) != 2 {
 		t.Fatalf("problem %q, reading %v, %d packages", s.problem, s.reading, len(s.rows[packagesTab]))
 	}
-	s, _ = feedState(t, s, StateRead{Sections: testSections()})
+	s, _ = feedState(t, s, Read{Sections: testSections()})
 	if s.problem != "" {
 		t.Errorf("the problem stays: %q", s.problem)
 	}

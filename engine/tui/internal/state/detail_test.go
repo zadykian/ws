@@ -13,9 +13,9 @@ import (
 )
 
 // fileReport is a report of the file /a, with this diff, and of the file /b.
-func fileReport(diff string) StateRead {
+func fileReport(diff string) Read {
 	items := []step.Item{{Kind: step.FileItem, Name: "/a", Diff: diff}, {Kind: step.FileItem, Name: "/b"}}
-	return StateRead{Sections: []run.StateSection{{Reports: []step.Report{{Items: items}}}}}
+	return Read{Sections: []run.StateSection{{Reports: []step.Report{{Items: items}}}}}
 }
 
 func TestStateScreenDrawsTheSelectedRow(t *testing.T) {
@@ -36,7 +36,7 @@ func TestStateScreenDetailTakesTheKeys(t *testing.T) {
 	if _, cmd := feedState(t, s, press('q')); cmd == nil {
 		t.Error("q stays in the detail pane")
 	}
-	if s, _ = feedState(t, newTestState(), sized, StateRead{}, enter); s.inDetail {
+	if s, _ = feedState(t, newTestState(), sized, Read{}, enter); s.inDetail {
 		t.Error("an empty tab opens the detail pane")
 	}
 }
