@@ -1,15 +1,15 @@
-package wizard
+package link
 
 import (
 	"context"
 
-	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/engine/core/wizard"
 )
 
 // Hand adds the dock to what stays by hand, where mac.conf has no WS_CABLE_SERVICE yet, as no port
 // of ws's had carrier. It names WS_CABLE_PORT for the ports that ws keeps down, whose carrier link
 // can't read, and an empty WS_CABLE_SERVICE for a Mac without the cable.
-func (c *Cable) Hand(_ context.Context, h *guided.Hand) {
+func (c *Cable) Hand(_ context.Context, h *wizard.Hand) {
 	if cf, err := c.Ws.Want(); err != nil || cf.Target != "lan" || !c.lacks() {
 		return
 	}

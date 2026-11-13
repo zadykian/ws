@@ -1,9 +1,9 @@
-package wizard
+package link
 
 import (
 	"context"
 	"github.com/zadykian/ws/engine/core/remote"
-	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 	"time"
@@ -37,7 +37,7 @@ type Tunnel struct {
 	// MacApply runs ws client macos apply, as the Setup stage's Run does, again once WS_PUBLIC_KEY is
 	// wg0's.
 	MacApply func(ctx context.Context, check bool) (bool, error)
-	Hand     *guided.Hand
+	Hand     *wizard.Hand
 	Home     string
 	Sleep    func(time.Duration)
 	M        effect.Machine
@@ -50,7 +50,7 @@ type Tunnel struct {
 func (*Tunnel) Name() string { return stage.Tunnel }
 
 // Side is the Mac: the stage ends in the Mac's WireGuard configuration and mac.conf.
-func (*Tunnel) Side() guided.Side { return stage.Mac }
+func (*Tunnel) Side() wizard.Side { return stage.Mac }
 
 // WaitsOn is ws's run, which makes wg0.
 func (*Tunnel) WaitsOn() string { return stages.RunStage }

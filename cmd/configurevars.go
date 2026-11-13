@@ -3,7 +3,7 @@ package cmd
 import (
 	"cmp"
 	"context"
-	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -97,7 +97,7 @@ func (r *varsReach) locked(ctx context.Context) (string, error) {
 	if r.release != nil {
 		return r.lock, nil
 	}
-	lock, release, err := guided.Lock(ctx, r.p.machine, r.p.lockDir())
+	lock, release, err := wizard.Lock(ctx, r.p.machine, r.p.lockDir())
 	if err != nil {
 		return "", err
 	}

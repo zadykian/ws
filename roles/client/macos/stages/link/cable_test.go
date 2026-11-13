@@ -1,8 +1,8 @@
-package wizard
+package link
 
 import (
 	"context"
-	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/session/sessiontest"
 	"strings"
@@ -98,7 +98,7 @@ func TestCableApplyEnvPortOutsideList(t *testing.T) {
 func TestCableHand(t *testing.T) {
 	c, _, _ := newCable(t, session.Status{}, "eth0 - -\n", nil)
 	c.ports = []cablePort{{"eth0", "-", "-"}}
-	var h guided.Hand
+	var h wizard.Hand
 	c.Hand(context.Background(), &h)
 	var b strings.Builder
 	h.Close(context.Background(), &b)

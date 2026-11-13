@@ -11,9 +11,9 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/roles/client/macos/stages/answers"
 	"github.com/zadykian/ws/roles/client/macos/stages/gh"
+	"github.com/zadykian/ws/roles/client/macos/stages/link"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
@@ -45,7 +45,7 @@ func TestHomebrewWaitsOnTools(t *testing.T) {
 	if got := (&Homebrew{}).WaitsOn(); got != stage.Tools {
 		t.Errorf("WaitsOn = %q, want %q", got, stage.Tools)
 	}
-	for _, s := range []step.Step{&answers.Answers{}, &gh.Gh{}, &Setup{}, &wizard.Cable{}} {
+	for _, s := range []step.Step{&answers.Answers{}, &gh.Gh{}, &Setup{}, &link.Cable{}} {
 		if got := s.WaitsOn(); got != stage.Homebrew {
 			t.Errorf("%s waits on %q, want %q", s.Name(), got, stage.Homebrew)
 		}

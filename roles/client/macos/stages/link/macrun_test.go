@@ -1,4 +1,4 @@
-package wizard
+package link
 
 import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"

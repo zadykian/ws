@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"errors"
-	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
@@ -15,10 +15,10 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/remote"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/roles/client/macos/stages/answers"
 	"github.com/zadykian/ws/roles/client/macos/stages/gh"
 	"github.com/zadykian/ws/roles/client/macos/stages/keys"
+	"github.com/zadykian/ws/roles/client/macos/stages/link"
 	"github.com/zadykian/ws/roles/client/macos/stages/tools"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -75,7 +75,7 @@ type wizardEffects struct {
 	// text takes what a run prints on stdout.
 	text io.Writer
 	obs  step.Observer
-	hand *guided.Hand
+	hand *wizard.Hand
 	// sudo is the stage that finds how to reach root on ws. A run takes it from the scan before it, so
 	// that its password is asked once.
 	sudo *host.Sudo
@@ -90,7 +90,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	p, ask, out, prog, hand := e.p, e.ask, e.out, e.prog, e.hand
 	check := o.check
 	conf := confPath(p.getenv, p.pwd)
-	lock := guided.LockPath(p.lockDir())
+	lock := wizard.LockPath(p.lockDir())
 	scratch := lock + "/mac.conf"
 	// Under --check the stages after Answers read the mac.conf that it would write, a file in the lock,
 	// as the old script pointed WS_CONF there.
@@ -112,7 +112,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	hand.Late(ghStage.Hand)
 	setup := wizardSetup(e, o.left, later)
 	login := &host.Login{SSH: hostKey.SSH, Ws: ws, Gh: ghStage.CLI, Tty: p.tty, Check: check, Env: p.lookup, P: ask, Out: out}
-	cable := &wizard.Cable{Ws: ws, SSH: hostKey.SSH, Conf: later, Check: check, RunDone: run.RunDone,
+	cable := &link.Cable{Ws: ws, SSH: hostKey.SSH, Conf: later, Check: check, RunDone: run.RunDone,
 		MacApply: setup.Run, Env: p.lookup, P: ask, Prog: prog, Tty: p.tty, M: p.machine, Out: out}
 	hand.Late(cable.Hand)
 	return []step.Step{
@@ -132,7 +132,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 		run,
 		&stages.WsClaude{Ws: ws, Tty: p.tty},
 		&stages.Signing{Ws: ws, GitHub: &gh.MacGitHub{Gh: ghStage.CLI, Lock: lock, Check: check}},
-		&wizard.Tunnel{SSH: hostKey.SSH, Ws: ws, Conf: later, Check: check, MacApply: setup.Run, Hand: hand, Home: p.getenv("HOME"),
+		&link.Tunnel{SSH: hostKey.SSH, Ws: ws, Conf: later, Check: check, MacApply: setup.Run, Hand: hand, Home: p.getenv("HOME"),
 			Sleep: time.Sleep, M: p.machine, Out: out},
 		cable,
 	}

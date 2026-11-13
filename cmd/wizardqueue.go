@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 	"slices"
 
@@ -20,8 +20,8 @@ import (
 func wizardQueue(stages []step.Step) []tui.Stage {
 	queue := make([]tui.Stage, len(stages))
 	for i, s := range stages {
-		queue[i] = tui.Stage{Name: s.Name(), Side: string(stage.Mac), Waits: guided.Locks(s), Nested: nestedRows(s.Name())}
-		if m, ok := guided.SideOf(s); ok {
+		queue[i] = tui.Stage{Name: s.Name(), Side: string(stage.Mac), Waits: wizard.Locks(s), Nested: nestedRows(s.Name())}
+		if m, ok := wizard.SideOf(s); ok {
 			queue[i].Side = string(m)
 		}
 	}

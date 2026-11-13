@@ -1,10 +1,12 @@
-package wizard
+// Package link holds the wizard stages of the link between the Mac and ws: the cable and the
+// WireGuard tunnel.
+package link
 
 import (
 	"context"
 	"fmt"
 	"github.com/zadykian/ws/engine/core/remote"
-	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 	"regexp"
@@ -70,7 +72,7 @@ func (*Cable) Name() string { return stage.Cable }
 func (*Cable) Locks() string { return stage.Setup }
 
 // Side is the Mac: the cable's service, after ws's port in host_vars.yml.
-func (*Cable) Side() guided.Side { return stage.Mac }
+func (*Cable) Side() wizard.Side { return stage.Mac }
 
 // WaitsOn is Homebrew: under --check on a new Mac, Answers is skipped and writes no mac.conf to
 // read. Plan says itself that the stage is after ws's run, as wizard-cable.sh's cable_after did.

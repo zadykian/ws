@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 	"errors"
-	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"os"
@@ -144,11 +144,11 @@ func TestWizardUpdateCheckInstallsNothing(t *testing.T) {
 // that the wizard runs names the machine it acts on.
 func TestWizardStagesStateTheirSides(t *testing.T) {
 	var out strings.Builder
-	stages := wizardStages(wizardEffects{p: fakeProcess(), prog: "ws client macos wizard", text: &out, hand: &guided.Hand{},
+	stages := wizardStages(wizardEffects{p: fakeProcess(), prog: "ws client macos wizard", text: &out, hand: &wizard.Hand{},
 		sudo: &host.Sudo{}}, wizardOptions{})
 	onWs := 0
 	for _, s := range stages {
-		m, ok := guided.SideOf(s)
+		m, ok := wizard.SideOf(s)
 		if !ok {
 			t.Errorf("%s states no side", s.Name())
 		}
