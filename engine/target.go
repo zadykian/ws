@@ -25,6 +25,8 @@ type Target struct {
 	Refuse func(c Call) string
 	// NoScreen is what configure says where no screen draws: a form has no lines to fall back on.
 	NoScreen string
+	// Wizard is the guided run of the side.
+	Wizard Side
 }
 
 // Report is a prepared state: what the roles report, on the screen or in text.

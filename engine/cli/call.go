@@ -19,6 +19,6 @@ func CallOf(c *cobra.Command, e Env) engine.Call {
 		Path: c.CommandPath(), In: c.InOrStdin(), Out: c.OutOrStdout(), Err: c.ErrOrStderr(),
 		Plain: plain, JSON: asJSON, Check: check, Selected: c.Flags().Changed("only"),
 		Machine: e.Machine, Getenv: e.Getenv,
-		TTY: e.TTY, ErrTTY: e.ErrTTY, OutTTY: e.OutTTY,
+		TTY: e.TTY, ErrTTY: e.ErrTTY, OutTTY: e.OutTTY, LockDir: e.LockDir(),
 	}
 }
