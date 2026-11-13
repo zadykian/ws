@@ -13,6 +13,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // macTarget is ws client macos apply's side of the verbs. only holds the steps that --only names,
@@ -40,10 +41,10 @@ func macTarget(p enginecli.Env, only *[]string) engine.Target {
 			run := engine.Run{M: c.Machine}
 			run.Groups = func(check bool) []tui.Group {
 				o := macos.Options{Options: step.Options{Check: check}, Only: *only}
-				return []tui.Group{tui.NewGroup("", macOf(p, settings, nil, nil, nil).Rows(o))}
+				return []tui.Group{tui.NewGroup("", macOf(p, conf.FirstServer, settings, nil, nil, nil).Rows(o))}
 			}
 			run.Do = func(ctx context.Context, e engine.Effects, o step.Options) (string, error) {
-				_, err := macOf(p, settings, e.M, e.Out, e.Text).Run(ctx, macos.Options{Options: o, Only: *only})
+				_, err := macOf(p, conf.FirstServer, settings, e.M, e.Out, e.Text).Run(ctx, macos.Options{Options: o, Only: *only})
 				return "", engine.Cause(err)
 			}
 			run.Choose = func(choice tui.Choice) (engine.Run, step.Options, error) {
@@ -64,7 +65,7 @@ func macReport(p enginecli.Env) func(context.Context, engine.Call) (engine.Repor
 		}
 		return engine.Report{Read: macRead(p), Print: func(ctx context.Context, c engine.Call) error {
 			term := effect.NewTerminal(strings.NewReader(""), c.Err)
-			reports, err := macOf(p, settings, p.Machine, linesOf(term, c.Path), nil).State(ctx)
+			reports, err := macOf(p, conf.FirstServer, settings, p.Machine, linesOf(term, c.Path), nil).State(ctx)
 			term.Flush()
 			if err != nil {
 				return err

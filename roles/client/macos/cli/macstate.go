@@ -11,6 +11,7 @@ import (
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // macDoc is what ws client macos state --json prints.
@@ -48,7 +49,7 @@ func macRead(p enginecli.Env) tui.StateReader {
 			return nil, err
 		}
 		// The read takes the screen's effects as a run does, as the steps don't own the terminal under it.
-		reports, err := macOf(p, settings, b.Effects().M, b, nil).State(ctx)
+		reports, err := macOf(p, conf.FirstServer, settings, b.Effects().M, b, nil).State(ctx)
 		return []tui.StateSection{{Reports: reports}}, err
 	}
 }
