@@ -24,3 +24,19 @@ func TestServerFlagNamesTheServerOfApplyAndState(t *testing.T) {
 		t.Errorf("--server box: status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
 }
+
+func TestServerFlagNamesTheServerOfConf(t *testing.T) {
+	m := effecttest.NewMachine()
+	for _, name := range []string{"ws", "box"} {
+		m.Files[conf.ServerPath("/h/.config/ws/mac.conf", name)] = []byte("WS_USER=" + name + "\n")
+	}
+	m.Files["/h/.config/ws/mac.conf"] = nil
+	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
+	p.Machine = withServerDirs(m)
+	if status, stdout, _ := runWs(p, "", "client", "macos", "conf", "--server", "box"); status != 0 || !strings.HasPrefix(stdout, "WS_USER='box'\n") {
+		t.Errorf("--server box: status = %d, stdout = %q", status, stdout)
+	}
+	if status, _, stderr := runWs(p, "", "client", "macos", "conf"); status != 1 || !strings.Contains(stderr, "several servers") {
+		t.Errorf("no flag: status = %d, stderr = %q", status, stderr)
+	}
+}

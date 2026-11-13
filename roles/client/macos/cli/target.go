@@ -23,7 +23,7 @@ func macTarget(p enginecli.Env, only *[]string, server *string) engine.Target {
 	return engine.Target{Wizard: macSide(p, server), Change: macChange, State: macReport(p, server), Refuse: func(engine.Call) string { return wizardRefusal(p) },
 		NoScreen: "it needs a terminal and no --plain: anywhere else, edit mac.conf by hand",
 		Sheets: func(ctx context.Context, c engine.Call) ([]tui.Sheet, func(context.Context), error) {
-			return macForms(c.In, c.Err, p)(ctx)
+			return macForms(c.In, c.Err, p, server)(ctx)
 		}, Prepare: func(_ context.Context, c engine.Call) (engine.Run, error) {
 			if c.Selected && len(*only) == 0 {
 				return engine.Run{}, engine.UsageError{Err: errors.New("--only names no step")}
