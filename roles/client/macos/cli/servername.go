@@ -3,10 +3,13 @@ package cli
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
 // askServer is the step that asks the name of the server that the wizard sets up, where no --server
@@ -15,6 +18,9 @@ import (
 type askServer struct {
 	ask effect.Prompt
 	tty bool
+	// m and home find ~/.ssh/config, whose own Host a name must not take.
+	m    effect.Machine
+	home string
 	// name is the server's name, which the step sets.
 	name *string
 }
@@ -35,13 +41,29 @@ func (a *askServer) Plan(ctx context.Context) (step.Plan, error) {
 			if !conf.IsName(s) {
 				return errors.New("not a server's name: " + conf.NameForm)
 			}
-			return nil
+			return a.free(s)
 		}})
 	if err != nil {
 		return step.Plan{}, err
 	}
 	*a.name = name
 	return step.Plan{}, nil
+}
+
+// free refuses a name that ~/.ssh/config sets its own values for: config.d/ws would not win there.
+func (a *askServer) free(name string) error {
+	text, err := a.m.ReadFile(a.home + "/.ssh/config")
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if own := sshcfg.OwnHosts(string(text), name); len(own) > 0 {
+		return fmt.Errorf("line %d of ~/.ssh/config, %s, sets its own values for %s: pick another name, or remove it",
+			own[0].Line, own[0].Text, name)
+	}
+	return nil
 }
 
 // Apply has nothing to do.

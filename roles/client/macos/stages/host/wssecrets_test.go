@@ -33,7 +33,7 @@ func secretsSession(sh remote.Shell) *session.Session {
 
 func TestSessionSecretsSendsTheValueOnStdin(t *testing.T) {
 	m := effecttest.NewMachine()
-	sh := remote.SSHShell{SSH: remote.SSH{M: m, Lock: "/t/l"}, Root: &Sudo{way: sudoAsked, password: "pw"}}
+	sh := remote.SSHShell{SSH: remote.SSH{Host: "ws", M: m, Lock: "/t/l"}, Root: &Sudo{way: sudoAsked, password: "pw"}}
 	r := secretsSession(sh)
 	m.Results[secretsLine(sh, `set env 'A'\''B'`)] = effecttest.Result{Out: []byte("set\n")}
 	out, err := r.Secrets(context.Background(), []byte("dummy-value\n"), "set", "env", "A'B")
@@ -54,7 +54,7 @@ func TestSessionSecretsErrors(t *testing.T) {
 		{"[ssh]: exit status 1: \nws server ubuntu secrets keys: run it as root\n", "ws server ubuntu secrets keys: run it as root"},
 	} {
 		m := effecttest.NewMachine()
-		sh := remote.SSHShell{SSH: remote.SSH{M: m, Lock: "/t/l"}}
+		sh := remote.SSHShell{SSH: remote.SSH{Host: "ws", M: m, Lock: "/t/l"}}
 		r := secretsSession(sh)
 		m.Results["ssh "+strings.Join(sh.SSH.Argv(context.Background(),
 			[]string{"-o", "BatchMode=yes", "ws", session.WsPath, "server", "ubuntu", "secrets", "keys"}), " ")] = effecttest.Result{Err: errors.New(tt.err)}

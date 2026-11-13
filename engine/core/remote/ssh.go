@@ -23,6 +23,8 @@ type SSH struct {
 	Home string
 	// Ways finds the direct way to ws. Nil means none, and ssh leads through config.d/ws.
 	Ways Ways
+	// Host is the server's name, its Host in config.d/ws, which every call names.
+	Host string
 }
 
 // First returns the address that a stage asked, or an empty string.
@@ -54,17 +56,21 @@ func (s SSH) way(ctx context.Context) (host, port string, found bool) {
 	return host, port, found
 }
 
+// longestSocket is the longest name of a socket in the lock: direct, direct.1, or the server's name,
+// which conf holds to 12 characters (conf's maxName). The engine may not import conf.
+const longestSocket = 12
+
 // room tells whether the lock's path leaves room for a socket's. A master binds its socket at the
 // path plus a dot and 16 characters, then links it into place (mux.c's muxserver_listen), and
 // macOS's sun_path holds 103 bytes. So a path may hold 86, and the lock, which a slash and
-// a name of 8 characters, direct.1, follow, 77. A Mac's holds 63. ssh also reads % and $ in a path
+// a name of longestSocket characters follow, 73. A Mac's holds 63. ssh also reads % and $ in a path
 // as its own.
 func (s SSH) room() bool {
-	return !strings.ContainsAny(s.Lock, "%$") && len(s.Lock) <= 77
+	return !strings.ContainsAny(s.Lock, "%$") && len(s.Lock) <= 86-1-longestSocket
 }
 
 // Shared returns the options that every call needs, with the master's socket in the lock. ssh stops
-// where known_hosts lacks ws's key, or holds another, and adds nothing there. The first call opens
+// where known_hosts lacks the server's key, or holds another, and adds nothing there. The first call opens
 // a master connection for the calls after it, so a key that asks Touch ID at each login, as
 // Secretive's does, asks once a run.
 //   - A call that uses a master takes the master's options, so those that every caller needs are
@@ -81,7 +87,7 @@ func (s SSH) Shared(socket string) []string {
 		"-o", "CheckHostIP=no", "-o", "ServerAliveInterval=15", "-o", "PermitLocalCommand=no")
 }
 
-// Argv returns ssh's arguments for a direct call, whose host in args is ws.
+// Argv returns ssh's arguments for a direct call, whose host in args is the server.
 //   - The way's host and port go before args as options, over config.d/ws's, which leads through the
 //     tunnel. The address that a stage asked replaces the way's host.
 //   - AddressFamily=inet goes on every call: the ways are IPv4 by conf and WS_REMOTE takes IPv4 alone.

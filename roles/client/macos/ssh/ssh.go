@@ -19,10 +19,14 @@ import (
 // reads it whole.
 type SSH struct {
 	Conf conf.Conf
-	Home string
-	M    effect.Machine
-	Out  effect.Out
-	Now  func() time.Time
+	// Server is the name of the server that the run acts for.
+	Server string
+	// MacConf is mac.conf's path, whose servers/ holds the other servers' files.
+	MacConf string
+	Home    string
+	M       effect.Machine
+	Out     effect.Out
+	Now     func() time.Time
 	// Again is the second run of the step, which cld may have changed ssh's file for.
 	Again bool
 }
@@ -45,10 +49,11 @@ type secondRun struct{ resource.Lazy }
 // Report says nothing: the first run reports the same files.
 func (secondRun) Report(context.Context) ([]step.Item, error) { return nil, nil }
 
-// config returns the text of config.d/ws.
-func (s SSH) config(ctx context.Context, f sshFacts, key keys.NamedKey) []byte {
+// config returns the text of config.d/ws, a block for each of hosts.
+func (s SSH) config(ctx context.Context, f sshFacts, key keys.NamedKey, hosts []sshcfg.Host) []byte {
 	return []byte(sshcfg.Config(sshcfg.Inputs{
-		User: s.Conf.User, Server: s.Conf.TunnelSlot().Server(), Patterns: sshcfg.IgnoreUnknown(string(f.UserConfig.Text), "UseKeychain"),
+		Hosts:       hosts,
+		Patterns:    sshcfg.IgnoreUnknown(string(f.UserConfig.Text), "UseKeychain"),
 		IdentityPub: key.Pub, IdentityAgent: key.Agent, CldTabs: s.cldTabs(ctx),
 	}))
 }
