@@ -3,7 +3,7 @@
 The router, a MikroTik on RouterOS 7, takes these steps once. Take each in Safe Mode, WinBox's
 button or Ctrl+X in its terminal, which undoes the changes if the session drops:
 
-- The LAN on `10.88.0.0/24`, clear of the cable's `10.77.0.0/30`, the tunnel's `10.99.0.0/24` and
+- The LAN on `10.88.0.0/24`, clear of the cable's `10.77.0.0/30`, the tunnels' `10.99.0.0/20` and
   Docker's `172.16.0.0/12`. It stays off RouterOS's default, `192.168.88.0/24`, which cafés and
   other homes use too. Run these from WinBox connected by MAC address, which the change doesn't
   drop, once `/export` has shown the names these commands find:
