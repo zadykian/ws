@@ -29,3 +29,9 @@ SIGHUP, so that each counts that server's endpoints at once.
 
 `ws client macos tunnel routes` and the removal of a server's daemon, at the next `apply`, have
 every loaded daemon read again, by SIGHUP. A daemon routes at once what a gone server held.
+
+## The cable
+
+The cable reaches one server, the one whose file has `WS_CABLE_SERVICE`. Its `tunnel.conf` says
+`WS_CABLE=yes`, and only its daemon and its direct way try `10.77.0.1`, first. The other servers
+leave the cable out, as they would try an address that is no server of theirs.
