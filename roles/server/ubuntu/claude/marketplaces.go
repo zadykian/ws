@@ -11,6 +11,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -21,7 +22,7 @@ import (
 // user settings; it needs no claude login.
 type Marketplaces struct {
 	M    effect.Machine
-	User host.User
+	User account.User
 	List []values.Marketplace
 }
 

@@ -10,6 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
@@ -20,7 +21,7 @@ import (
 // systemd, so Restore plans nothing there.
 type Restore struct {
 	M       effect.Machine
-	Account host.Account
+	Account account.Account
 	Out     effect.Out
 }
 

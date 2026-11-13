@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/roles/server/ubuntu/claude/internal/asuser"
 )
 
@@ -32,7 +33,7 @@ var telemetryRemoved = []string{
 // bytes would differ at every run.
 type Telemetry struct {
 	M    effect.Machine
-	User host.User
+	User account.User
 	// Env is the keys to set, with their values.
 	Env map[string]string
 }

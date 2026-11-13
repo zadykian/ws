@@ -8,7 +8,7 @@ import (
 	"path"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
 // goBin is the go command of devtools' Go.
@@ -19,7 +19,7 @@ const goBin = "/usr/local/go/bin/go"
 // user's go env sets. GOTOOLCHAIN=local builds it with this Go, never one go would download. GOENV=off
 // ignores a go env -w file, which could turn off GOSUMDB, so go install checks the module against
 // Go's checksum database.
-func goInstall(ctx context.Context, m effect.Machine, user host.User, name, binary, pkg string) error {
+func goInstall(ctx context.Context, m effect.Machine, user account.User, name, binary, pkg string) error {
 	if _, err := m.Stat(goBin); errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("%s is built with the Go in /usr/local/go, which the devtools role installs", name)
 	} else if err != nil {

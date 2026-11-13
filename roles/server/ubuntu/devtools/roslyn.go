@@ -11,6 +11,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
 // dotnetBin is the .NET SDK's command, from devtools' packages.
@@ -22,7 +23,7 @@ const dotnetBin = "/usr/bin/dotnet"
 // among them, and a plan must change nothing. NuGet names the directories in lower case.
 type roslynTool struct {
 	M    effect.Machine
-	User host.User
+	User account.User
 	// Path is where dotnet tool install --global puts the command, and where languages.toml names it.
 	Path string
 	// Version is the pin. Empty means the package's.

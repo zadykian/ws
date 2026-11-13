@@ -7,11 +7,12 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
 func TestDotfilesAreTheRolesFiles(t *testing.T) {
 	m := effecttest.NewMachine()
-	got, err := dotfiles(m, host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1, GID: 2}, "amd64")
+	got, err := dotfiles(m, account.Account{User: account.User{Name: "ws", Home: "/home/ws"}, UID: 1, GID: 2}, "amd64")
 	if err != nil || len(got) != 2 {
 		t.Fatalf("got %d files, %v", len(got), err)
 	}

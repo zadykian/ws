@@ -5,12 +5,12 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
 func TestSigningKeyIsMadeOnceAsTheUser(t *testing.T) {
 	m := effecttest.NewMachine()
-	a := host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
+	a := account.Account{User: account.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
 	const key = "/home/ws/.ssh/id_ed25519_signing"
 	m.Results["runuser -u ws -- env -C /home/ws HOME=/home/ws ssh-keygen -q -t ed25519 -N  -f "+key] = effecttest.Result{}
 	var shown []string
@@ -38,7 +38,7 @@ func TestSigningKeyIsMadeOnceAsTheUser(t *testing.T) {
 
 // A key in the home itself needs no directory: a Dir at the home would be no path below it.
 func TestSigningKeyInTheHomePlansNoDirectory(t *testing.T) {
-	a := host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
+	a := account.Account{User: account.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
 	rs := SigningKey(effecttest.NewMachine(), a, "/home/ws/id_ed25519_signing")
 	if _, ok := rs[0].(keygen); len(rs) != 1 || !ok {
 		t.Errorf("resources %v; want the key alone", rs)

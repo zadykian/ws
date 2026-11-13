@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
 func gitFixture(signing bool) (*effecttest.Machine, stdinMachine, *effecttest.Out, Config) {
@@ -16,7 +16,7 @@ func gitFixture(signing bool) (*effecttest.Machine, stdinMachine, *effecttest.Ou
 	m.Results["git config --file - --list"] = effecttest.Result{}
 	sm := stdinMachine{Machine: m, answers: map[string]string{}}
 	out := &effecttest.Out{}
-	a := host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
+	a := account.Account{User: account.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
 	return m, sm, out, Config{M: sm, Out: out, A: a, Name: "zadykian", Email: "me@zadykian.dev",
 		Signing: signing, Key: "/home/ws/.ssh/id_ed25519_signing", Signers: "/home/ws/.config/git/allowed_signers"}
 }

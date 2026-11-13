@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
 const completionFile = "/root/.local/share/bash-completion/completions/cld"
@@ -15,7 +15,7 @@ const completionFile = "/root/.local/share/bash-completion/completions/cld"
 const completionReadScript = `if [ -e "$1" ]; then printf y; cat "$1"; else printf n; fi`
 
 // serveCompletion fakes the command that asuser.Read runs for the user's file. A nil body is no file.
-func serveCompletion(m *effecttest.Machine, u host.User, file string, body []byte) {
+func serveCompletion(m *effecttest.Machine, u account.User, file string, body []byte) {
 	out := []byte("n")
 	if body != nil {
 		out = append([]byte("y"), body...)

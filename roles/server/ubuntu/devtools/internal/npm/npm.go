@@ -10,6 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
 const npmBin = "/usr/bin/npm"
@@ -31,7 +32,7 @@ func Bin(home, name string) string { return serversDir(home) + "/node_modules/.b
 // Files returns the two files of the lock, the install they feed and sql-formatter's link.
 // Their directories are made as the user's, so root's would not break the user's own tools, such as
 // claude and pip --user.
-func Files(m effect.Machine, a host.Account) ([]host.Resource, error) {
+func Files(m effect.Machine, a account.Account) ([]host.Resource, error) {
 	sum := sha256.New()
 	var parts []host.Resource
 	for _, name := range []string{"package.json", "package-lock.json"} {
@@ -50,7 +51,7 @@ func Files(m effect.Machine, a host.Account) ([]host.Resource, error) {
 // their digest in node_modules, which npm ci removes, tells it the install is current.
 type npmInstall struct {
 	M       effect.Machine
-	Account host.Account
+	Account account.Account
 	Digest  string
 }
 

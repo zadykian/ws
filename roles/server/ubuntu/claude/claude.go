@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/claude/internal/cld"
@@ -24,7 +25,7 @@ const (
 // Steps returns the role's steps in order. Each of cld's steps comes after the install, as cld is
 // not there to ask until a run has installed it.
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units, out effect.Out) []step.Step {
-	user := host.User{Name: v.User, Home: v.Home}
+	user := account.User{Name: v.User, Home: v.Home}
 	list := []step.Step{
 		host.Group{Title: installStep, Parts: []host.Resource{Install{M: m, User: user}}},
 		host.Group{Title: updateStep, After: installStep, Parts: []host.Resource{cld.Update{M: m, User: user}}},
@@ -46,7 +47,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units,
 			Marketplaces{M: m, User: user, List: v.Claude.Marketplaces},
 		}})
 	}
-	return append(list, user.WithAccount(m, "Claude restore", "Claude telemetry", func(a host.Account) ([]host.Resource, error) {
+	return append(list, user.WithAccount(m, "Claude restore", "Claude telemetry", func(a account.Account) ([]host.Resource, error) {
 		return []host.Resource{
 			systemd.Linger{M: m, User: user, Out: out},
 			systemd.Unit{M: m, U: u, Out: out, Name: fmt.Sprintf("user@%d.service", a.UID), Run: systemd.Running},

@@ -7,6 +7,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -26,7 +27,7 @@ func userUnitFixture(booted bool) (*effecttest.Machine, systemd.UserUnit, *effec
 		m.Results[userShow[len("root "):]+c] = effecttest.Result{}
 	}
 	out := &effecttest.Out{}
-	return m, systemd.UserUnit{M: m, Account: host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000}, Out: out,
+	return m, systemd.UserUnit{M: m, Account: account.Account{User: account.User{Name: "ws", Home: "/home/ws"}, UID: 1000}, Out: out,
 		Name: "docker.service"}, out
 }
 

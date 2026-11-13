@@ -3,6 +3,7 @@ package otelcol
 import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -27,7 +28,7 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out, he
 	return []step.Step{
 		host.Lazy{Title: exporterStep, Parts: exporter(m, u, out)},
 		host.Group{Title: installStep, Parts: []host.Resource{stopped{pinned(m), m, u, out}}},
-		host.Lazy{Title: configStep, After: installStep, Parts: configuration(m, u, out, host.User{Name: v.User, Home: v.Home})},
+		host.Lazy{Title: configStep, After: installStep, Parts: configuration(m, u, out, account.User{Name: v.User, Home: v.Home})},
 		host.Group{Title: healthStep, After: configStep, Parts: []host.Resource{
 			answer{m: m, out: out, url: health, tries: healthTries, wait: healthWait},
 		}},

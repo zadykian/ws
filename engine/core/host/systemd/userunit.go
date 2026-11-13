@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"io/fs"
 	"slices"
 	"strings"
@@ -18,7 +19,7 @@ import (
 // runs systemctl --user, as the user. A unit with no file is left to whatever installs it.
 type UserUnit struct {
 	M       effect.Machine
-	Account host.Account
+	Account account.Account
 	Out     effect.Out
 	Name    string
 	Watch   []host.Resource

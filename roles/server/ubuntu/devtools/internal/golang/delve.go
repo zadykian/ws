@@ -5,13 +5,14 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
 // Delve is Delve at a version, built with a Go version, for Zed's debugger. The
 // versions are the pins, without the v and the go.
 type Delve struct {
 	M                  effect.Machine
-	User               host.User
+	User               account.User
 	Path               string // where go install puts dlv
 	Version, GoVersion string
 }

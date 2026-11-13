@@ -10,6 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -87,7 +88,7 @@ func servePins(t *testing.T, m *effecttest.Machine) {
 // withPackages returns serverSteps after an empty step of the name that the npm servers wait on.
 func withPackages(m *effecttest.Machine, user, home string) []step.Step {
 	return append([]step.Step{host.Group{Title: "Devtools packages"}},
-		serverSteps(m, host.User{Name: user, Home: home})...)
+		serverSteps(m, account.User{Name: user, Home: home})...)
 }
 
 // runServers applies serverSteps on a machine with an empty home for the user, and returns it.

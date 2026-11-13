@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/engine/core/host/apt"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
@@ -38,7 +39,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units,
 			apt.Packages{M: m, Out: out, Recommends: true,
 				Names: []string{"openssh-server", "ufw", "fail2ban", "nftables", "sudo"}},
 		}},
-		host.Group{Title: keysStep, Parts: []host.Resource{keyCheck{m, host.User{Name: v.User, Home: v.Home}}}},
+		host.Group{Title: keysStep, Parts: []host.Resource{keyCheck{m, account.User{Name: v.User, Home: v.Home}}}},
 		host.Lazy{Title: sudoStep, After: packagesStep, Parts: func(context.Context) ([]host.Resource, error) {
 			return sudoParts(m, v.User)
 		}},

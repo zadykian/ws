@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
 const wsDir = "/home/ws/.local/lib/language-servers"
@@ -152,6 +152,6 @@ func TestTheStampIsNotReadThroughALink(t *testing.T) {
 	}
 }
 
-func testAccount(id int) host.Account {
-	return host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: id, GID: id}
+func testAccount(id int) account.Account {
+	return account.Account{User: account.User{Name: "ws", Home: "/home/ws"}, UID: id, GID: id}
 }

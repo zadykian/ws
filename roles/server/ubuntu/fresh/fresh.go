@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -37,13 +38,13 @@ var themeFile []byte
 
 // Steps returns the role's steps in order. The role takes no secrets.
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units, _ effect.Out) []step.Step {
-	user := host.User{Name: v.User, Home: v.Home}
+	user := account.User{Name: v.User, Home: v.Home}
 	return []step.Step{
 		host.Group{Title: installStep, Parts: []host.Resource{pinned(m)}},
 		host.Group{Title: wrapperStep, After: installStep, Parts: []host.Resource{
 			host.File{M: m, Path: wrapperPath, Content: wrapper, Mode: 0o755},
 		}},
-		user.WithAccount(m, configStep, "", func(a host.Account) ([]host.Resource, error) {
+		user.WithAccount(m, configStep, "", func(a account.Account) ([]host.Resource, error) {
 			return configFiles(m, v, a)
 		}),
 	}

@@ -1,4 +1,4 @@
-package host_test
+package account_test
 
 import (
 	"slices"
@@ -28,16 +28,16 @@ func planThenLink(t *testing.T, m *effecttest.Machine, parts ...host.Resource) (
 func TestHomePartsRefuseALinkMadeAfterPlan(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/home/ws/.config/old"] = []byte("x")
-	edit := account.File(m, ".config/old", []byte("y"), 0o644)
+	edit := owner.File(m, ".config/old", []byte("y"), 0o644)
 	edit.Backup = true
 	changes, planned := planThenLink(t, m,
-		account.File(m, ".config/f", []byte("a"), 0o644),
+		owner.File(m, ".config/f", []byte("a"), 0o644),
 		edit,
 		host.Validated{
-			File:  account.File(m, ".config/v", []byte("a"), 0o644),
+			File:  owner.File(m, ".config/v", []byte("a"), 0o644),
 			Check: func(p string) (string, []string) { return "check", []string{p} },
 		},
-		account.Dir(m, ".config/d", 0o700),
+		owner.Dir(m, ".config/d", 0o700),
 	)
 	for _, c := range changes {
 		if err := c.Apply(t.Context()); err == nil || !strings.Contains(err.Error(), "/home/ws/.config is a link to") {
@@ -56,11 +56,11 @@ func TestHomeAbsentRefusesALink(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/home/ws/.config/old"] = []byte("x")
 	m.Results["rm -rf -- /home/ws/.config/old"] = effecttest.Result{}
-	if got := applyAll(t, account.Absent(m, ".config/old")); len(got) != 1 || got[0] != "remove /home/ws/.config/old" {
+	if got := applyAll(t, owner.Absent(m, ".config/old")); len(got) != 1 || got[0] != "remove /home/ws/.config/old" {
 		t.Fatalf("plan = %q, want the removal", got)
 	}
 	m.Files["/home/ws/.config/old"] = []byte("x")
-	gone := account.Absent(m, ".config/old")
+	gone := owner.Absent(m, ".config/old")
 	changes, planned := planThenLink(t, m, gone)
 	if err := changes[0].Apply(t.Context()); err == nil || !strings.Contains(err.Error(), "is a link to") {
 		t.Errorf("Apply = %v; want the link refused", err)

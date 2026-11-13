@@ -8,12 +8,13 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
 // Resources makes the resources of ws_user's own daemon from its daemon.json and
 // docker.slice, which the role works out from the values.
-func Resources(m effect.Machine, u effect.Units, out effect.Out, a host.Account,
+func Resources(m effect.Machine, u effect.Units, out effect.Out, a account.Account,
 	daemonJSON, slice []byte) ([]host.Resource, error) {
 	override, err := overrideDropIn()
 	if err != nil {

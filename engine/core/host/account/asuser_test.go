@@ -1,4 +1,4 @@
-package host_test
+package account_test
 
 import (
 	"context"
@@ -6,16 +6,16 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
 func TestUserRunsWithItsHome(t *testing.T) {
 	cases := []struct {
-		user host.User
+		user account.User
 		want string
 	}{
-		{host.User{Name: "root", Home: "/root"}, "run env HOME=/root git clone -- a b"},
-		{host.User{Name: "ws", Home: "/home/ws"}, "root runuser -u ws -- env -C /home/ws HOME=/home/ws git clone -- a b"},
+		{account.User{Name: "root", Home: "/root"}, "run env HOME=/root git clone -- a b"},
+		{account.User{Name: "ws", Home: "/home/ws"}, "root runuser -u ws -- env -C /home/ws HOME=/home/ws git clone -- a b"},
 	}
 	for _, c := range cases {
 		m := effecttest.NewMachine()
@@ -40,7 +40,7 @@ func TestUserRunsWithItsHome(t *testing.T) {
 func TestUserPassesStdin(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results["runuser -u ws -- env -C /home/ws HOME=/home/ws bash"] = effecttest.Result{}
-	err := host.User{Name: "ws", Home: "/home/ws"}.PassInput(context.Background(), m, []byte("echo"), "bash")
+	err := account.User{Name: "ws", Home: "/home/ws"}.PassInput(context.Background(), m, []byte("echo"), "bash")
 	if err != nil || !slices.Equal(m.Inputs, []string{"echo"}) {
 		t.Errorf("err %v, inputs %q", err, m.Inputs)
 	}

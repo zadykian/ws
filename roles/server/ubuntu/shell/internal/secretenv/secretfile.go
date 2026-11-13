@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/plan"
 )
 
@@ -18,7 +19,7 @@ import (
 // wrote.
 type Env struct {
 	M   effect.Machine
-	A   host.Account
+	A   account.Account
 	Env map[string]string
 	// Whole is the secrets file's say that [env] is all: with none, the file goes.
 	Whole bool

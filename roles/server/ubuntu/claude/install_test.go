@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
-var root = host.User{Name: "root", Home: "/root"}
+var root = account.User{Name: "root", Home: "/root"}
 
 func TestInstallPlansWhatIsMissing(t *testing.T) {
 	cases := []struct {

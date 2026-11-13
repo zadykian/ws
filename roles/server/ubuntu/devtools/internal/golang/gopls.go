@@ -7,13 +7,14 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
 // Gopls is gopls at the pinned version, built with devtools' Go. gopls type-checks with the Go it
 // was built with, so a new Go needs a new gopls too.
 type Gopls struct {
 	M    effect.Machine
-	User host.User
+	User account.User
 	// Path is where go install puts gopls, and where languages.toml names it.
 	Path string
 	// Version and GoVersion are the pins, without the v and the go.

@@ -10,6 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
 // gitFiles are the templates of ~/.gitconfig and of the tokens' include.
@@ -24,7 +25,7 @@ var gitFiles embed.FS
 type Config struct {
 	M       effect.Machine
 	Out     effect.Out
-	A       host.Account
+	A       account.Account
 	Name    string
 	Email   string
 	Signing bool

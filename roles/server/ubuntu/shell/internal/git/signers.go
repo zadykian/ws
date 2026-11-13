@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/plan"
 )
@@ -19,7 +20,7 @@ const signersHeader = "# Written by github.com/zadykian/ws, whose next run repla
 // beside it, as ~/.gitconfig is.
 type signers struct {
 	M     effect.Machine
-	A     host.Account
+	A     account.Account
 	Key   string
 	Path  string
 	Email string
@@ -45,6 +46,6 @@ func (s signers) Plan(ctx context.Context) ([]host.Change, error) {
 }
 
 // AllowedSigners returns the allowed signers file, whose directories the file makes.
-func AllowedSigners(m effect.Machine, a host.Account, key, file, email string) []host.Resource {
+func AllowedSigners(m effect.Machine, a account.Account, key, file, email string) []host.Resource {
 	return []host.Resource{signers{M: m, A: a, Key: key, Path: file, Email: email}}
 }

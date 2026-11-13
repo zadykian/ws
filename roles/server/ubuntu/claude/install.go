@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
 // Install installs claude and cld where they are missing. claude updates itself in the background,
@@ -14,7 +15,7 @@ import (
 // runs as the user, with HOME set, as it writes under it.
 type Install struct {
 	M    effect.Machine
-	User host.User
+	User account.User
 }
 
 func (i Install) claude() string { return i.User.Home + "/.local/bin/claude" }

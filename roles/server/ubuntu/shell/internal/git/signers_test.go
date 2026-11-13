@@ -6,13 +6,13 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
 func TestAllowedSignersTrustTheKeyOnce(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Dirs["/home/ws/.config"] = 0o700
-	a := host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
+	a := account.Account{User: account.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
 	const key = "/home/ws/.ssh/k"
 	rs := AllowedSigners(m, a, key, "/home/ws/.config/git/allowed_signers", "me@x.dev")
 	run := func() []string {

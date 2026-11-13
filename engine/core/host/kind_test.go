@@ -7,6 +7,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/engine/core/host/apt"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 	"github.com/zadykian/ws/engine/core/step"
@@ -35,7 +36,7 @@ func TestKindsOfTheResourcesChanges(t *testing.T) {
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	u := &effecttest.Units{States: map[string]effect.UnitState{"on.service": {Active: true}}}
 	out := &effecttest.Out{}
-	ann := host.User{Name: "ann", Home: "/home/ann"}
+	ann := account.User{Name: "ann", Home: "/home/ann"}
 	watch := []host.Resource{host.Absent{M: m, Path: "/old"}}
 	tests := []struct {
 		name string
@@ -56,7 +57,7 @@ func TestKindsOfTheResourcesChanges(t *testing.T) {
 			[]step.ChangeKind{step.Write, step.Restart}},
 		{"restart", systemd.Unit{M: m, U: u, Out: out, Name: "on.service", Run: systemd.Running, Watch: watch},
 			[]step.ChangeKind{step.Write, step.Restart}},
-		{"user unit", systemd.UserUnit{M: m, Account: host.Account{User: ann, UID: 1000}, Out: out, Name: "a.service"},
+		{"user unit", systemd.UserUnit{M: m, Account: account.Account{User: ann, UID: 1000}, Out: out, Name: "a.service"},
 			[]step.ChangeKind{step.Restart}},
 		{"linger", systemd.Linger{M: m, User: ann, Out: out}, []step.ChangeKind{step.Write}},
 		{"package", apt.Package{M: m, Name: "a", Source: host.PinnedFile{M: m, Version: "1", SHA256: map[string]string{"amd64": "s"},

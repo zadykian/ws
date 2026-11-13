@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -25,10 +26,10 @@ const terminalPath = terminalDir + "/terminal"
 
 // Steps returns the role's steps in order.
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units, _ effect.Out) []step.Step {
-	user := host.User{Name: v.User, Home: v.Home}
+	user := account.User{Name: v.User, Home: v.Home}
 	return []step.Step{
 		host.Group{Title: "Zed terminal", Parts: terminalParts(m)},
-		user.WithAccount(m, "Zed settings", "Zed terminal", func(a host.Account) ([]host.Resource, error) {
+		user.WithAccount(m, "Zed settings", "Zed terminal", func(a account.Account) ([]host.Resource, error) {
 			settings, err := settingsFile(v)
 			if err != nil {
 				return nil, err

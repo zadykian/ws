@@ -10,6 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
 // inContainer reports whether the machine is a container, which has no SSH to lose: Docker, Podman
@@ -28,7 +29,7 @@ func inContainer(m effect.Machine) bool {
 // installer's user, not root's.
 type keyCheck struct {
 	m    effect.Machine
-	user host.User
+	user account.User
 }
 
 // Plan fails where authorized_keys, or a directory above it, is a link: the user owns the home and

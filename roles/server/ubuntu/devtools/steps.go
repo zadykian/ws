@@ -5,6 +5,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/engine/core/host/apt"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools/internal/aptrepo"
@@ -25,7 +26,7 @@ var ghUpgrades []byte
 // repository is still to come, as apt may not know the packages then.
 func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
 	const repoStep = "Devtools repositories"
-	user := host.User{Name: v.User, Home: v.Home}
+	user := account.User{Name: v.User, Home: v.Home}
 	steps := []step.Step{
 		host.Group{Title: repoStep, Parts: []host.Resource{
 			aptrepo.Repositories{M: m, List: repositories, Replaced: replacedFiles},
@@ -65,11 +66,11 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units,
 // serverSteps returns the steps of the language servers that editors name by path. They are the
 // downloads of the SQL and Docker servers, and the npm servers, which wait on the Node package. They install
 // apart from Steps so that a test can run them with no stand-ins for Go and the packages.
-func serverSteps(m effect.Machine, user host.User) []step.Step {
+func serverSteps(m effect.Machine, user account.User) []step.Step {
 	return []step.Step{
 		download(m, "postgres-language-server", pgls, pglsURL),
 		download(m, "docker-language-server", dockerLS, dockerLSURL),
-		user.WithAccount(m, "Devtools npm servers", "Devtools packages", func(a host.Account) ([]host.Resource, error) {
+		user.WithAccount(m, "Devtools npm servers", "Devtools packages", func(a account.Account) ([]host.Resource, error) {
 			return npm.Files(m, a)
 		}),
 	}

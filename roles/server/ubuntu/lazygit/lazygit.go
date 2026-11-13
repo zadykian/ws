@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/engine/core/host/apt"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
@@ -31,7 +32,7 @@ var config []byte
 
 // Steps returns the role's steps in order. The role takes no secrets.
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
-	user := host.User{Name: v.User, Home: v.Home}
+	user := account.User{Name: v.User, Home: v.Home}
 	return []step.Step{
 		host.Group{Title: packageStep, Parts: []host.Resource{
 			apt.Packages{M: m, Out: out, Recommends: true, Names: []string{"lazygit", "git-delta"}},
@@ -39,7 +40,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units,
 		host.Group{Title: wrapperStep, After: packageStep, Parts: []host.Resource{
 			host.File{M: m, Path: wrapperPath, Content: wrapper, Mode: 0o755},
 		}},
-		user.WithAccount(m, configStep, "", func(a host.Account) ([]host.Resource, error) {
+		user.WithAccount(m, configStep, "", func(a account.Account) ([]host.Resource, error) {
 			return configFiles(m, a), nil
 		}),
 	}
@@ -47,7 +48,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units,
 
 // configFiles returns ~/.config/lazygit/config.yml, which ws replaces whole, keeping the old file
 // beside it. The directories on the way stay the user's.
-func configFiles(m effect.Machine, a host.Account) []host.Resource {
+func configFiles(m effect.Machine, a account.Account) []host.Resource {
 	f := a.File(m, ".config/lazygit/config.yml", config, 0o644)
 	f.Backup = true
 	return []host.Resource{f}

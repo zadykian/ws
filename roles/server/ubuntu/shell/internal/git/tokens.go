@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/plan"
 )
 
@@ -18,7 +19,7 @@ import (
 // without, it keeps both.
 type Tokens struct {
 	M     effect.Machine
-	A     host.Account
+	A     account.Account
 	Creds []Credential
 	// Whole removes the tokens and helpers of the URLs that Creds omit.
 	Whole bool

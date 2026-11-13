@@ -11,13 +11,14 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/roles/server/ubuntu/claude/internal/asuser"
 )
 
 // Completion sets up cld's completion in bash. cld writes the script only where it differs.
 type Completion struct {
 	M    effect.Machine
-	User host.User
+	User account.User
 }
 
 type setupCompletion struct{ c Completion }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
 // UserSettings has cld add to claude's user settings what they lack. It adds the permission set,
@@ -18,7 +19,7 @@ import (
 // cld keeps every value already there, and leaves env, which Telemetry writes, alone.
 type UserSettings struct {
 	M    effect.Machine
-	User host.User
+	User account.User
 	// Permissions is read-only, cld or none. Notifications is the channel, or empty for none: cld
 	// refuses an empty channel, so without one the option is left out.
 	Permissions, Notifications string

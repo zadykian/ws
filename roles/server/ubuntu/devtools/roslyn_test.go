@@ -7,13 +7,13 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
 const roslynStore = "/root/.dotnet/tools/.store/roslyn-language-server"
 
 func newRoslyn(m *effecttest.Machine) roslynTool {
-	return roslynTool{M: m, User: host.User{Name: "root", Home: "/root"},
+	return roslynTool{M: m, User: account.User{Name: "root", Home: "/root"},
 		Path: "/root/.dotnet/tools/roslyn-language-server", Version: "5.12.0-1.26475.2"}
 }
 

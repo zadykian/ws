@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -14,7 +15,7 @@ import (
 // it now too.
 type Linger struct {
 	M    effect.Machine
-	User host.User
+	User account.User
 	Out  effect.Out
 }
 

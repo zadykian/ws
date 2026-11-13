@@ -1,8 +1,11 @@
-package host
+// Package account reads a user and its account, and gives the home's files, directories and
+// removals their guard.
+package account
 
 import (
 	"context"
 	"fmt"
+	"github.com/zadykian/ws/engine/core/host"
 	"strconv"
 	"strings"
 
@@ -37,8 +40,8 @@ func (u User) Lookup(ctx context.Context, m effect.Machine) (Account, error) {
 
 // WithAccount is a step whose parts are made from the account as the step plans. It comes from
 // the machine, and a dry run on a new one must still show them.
-func (u User) WithAccount(m effect.Machine, title, after string, parts func(a Account) ([]Resource, error)) Lazy {
-	return Lazy{Title: title, After: after, Parts: func(ctx context.Context) ([]Resource, error) {
+func (u User) WithAccount(m effect.Machine, title, after string, parts func(a Account) ([]host.Resource, error)) host.Lazy {
+	return host.Lazy{Title: title, After: after, Parts: func(ctx context.Context) ([]host.Resource, error) {
 		a, err := u.Lookup(ctx, m)
 		if err != nil {
 			return nil, err

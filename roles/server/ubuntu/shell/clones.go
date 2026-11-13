@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -43,7 +44,7 @@ func hasUserInfo(repo string) bool {
 // ~/.gitconfig gives the tokens, in the user's home.
 type clones struct {
 	M      effect.Machine
-	A      host.Account
+	A      account.Account
 	Clones []values.GitClone
 }
 

@@ -6,12 +6,13 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
 // GHTelemetry turns gh's telemetry off for User, as gh 2.91.0 and later send it unless told not to.
 type GHTelemetry struct {
 	M    effect.Machine
-	User host.User
+	User account.User
 }
 
 type telemetryOff struct{ g GHTelemetry }

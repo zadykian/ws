@@ -5,6 +5,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
 //go:embed files/bashrc.tmpl files/profile
@@ -21,7 +22,7 @@ func dotnetArch(arch string) string {
 
 // dotfiles returns ~/.bashrc and ~/.profile, which ws replaces whole: settings of the user's own
 // go in ~/.bash_aliases, which ~/.bashrc sources. arch is the machine's architecture as dpkg names it.
-func dotfiles(m effect.Machine, a host.Account, arch string) ([]host.Resource, error) {
+func dotfiles(m effect.Machine, a account.Account, arch string) ([]host.Resource, error) {
 	rc, err := host.Render(files, "files/bashrc.tmpl", struct{ Arch string }{dotnetArch(arch)})
 	if err != nil {
 		return nil, err

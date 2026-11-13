@@ -1,4 +1,4 @@
-package host_test
+package account_test
 
 import (
 	"errors"
@@ -9,9 +9,10 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
-var ws = host.User{Name: "ws", Home: "/home/ws"}
+var ws = account.User{Name: "ws", Home: "/home/ws"}
 
 func TestReadHomeReadsAFile(t *testing.T) {
 	m := effecttest.NewMachine()
@@ -75,13 +76,13 @@ func TestReadHomeRefusesAPathThatIsNotLocalBeforeAnyCall(t *testing.T) {
 	}
 }
 
-var account = host.Account{User: ws, UID: 1000, GID: 1001}
+var owner = account.Account{User: ws, UID: 1000, GID: 1001}
 
 func TestHomeFileRefusesALinkAsItPlansAndReports(t *testing.T) {
 	for _, link := range []string{"/home/ws/.config", "/home/ws/.config/x", "/home/ws/.config/x/f"} {
 		m := effecttest.NewMachine()
 		m.Links[link] = "/srv/target"
-		f := account.File(m, ".config/x/f", []byte("a"), 0o644)
+		f := owner.File(m, ".config/x/f", []byte("a"), 0o644)
 		if _, err := f.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), link+" is a link to") {
 			t.Errorf("link at %s: Plan = %v", link, err)
 		}
@@ -93,7 +94,7 @@ func TestHomeFileRefusesALinkAsItPlansAndReports(t *testing.T) {
 
 func TestHomeFileRefusesARelThatIsNotLocal(t *testing.T) {
 	for _, rel := range []string{"../x", "/etc/x", ""} {
-		f := account.File(effecttest.NewMachine(), rel, nil, 0o644)
+		f := owner.File(effecttest.NewMachine(), rel, nil, 0o644)
 		if _, err := f.Plan(t.Context()); err == nil {
 			t.Errorf("rel %q: Plan found no error", rel)
 		}
@@ -102,7 +103,7 @@ func TestHomeFileRefusesARelThatIsNotLocal(t *testing.T) {
 
 func TestHomeFilePlansAsTheAccount(t *testing.T) {
 	m := effecttest.NewMachine()
-	f := account.File(m, ".config/x/f", []byte("a"), 0o644)
+	f := owner.File(m, ".config/x/f", []byte("a"), 0o644)
 	got, err := f.Plan(t.Context())
 	if err != nil || len(got) != 1 || !strings.HasPrefix(got[0].String(), "create /home/ws/.config/x/f") {
 		t.Fatalf("Plan = %v, %v", got, err)
@@ -121,7 +122,7 @@ func TestHomeFilePlansAsTheAccount(t *testing.T) {
 
 func TestHomeFileMakesItsParentsAsTheAccount(t *testing.T) {
 	m := effecttest.NewMachine()
-	f := account.File(m, ".config/x/f", []byte("a"), 0o600)
+	f := owner.File(m, ".config/x/f", []byte("a"), 0o600)
 	changes, err := f.Plan(t.Context())
 	if err != nil || len(changes) != 1 {
 		t.Fatalf("Plan = %v, %v", changes, err)
@@ -154,7 +155,7 @@ func TestHomeFileMakesItsParentsAsTheAccount(t *testing.T) {
 func TestHomeFileLeavesAnExistingParentAlone(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Dirs["/home/ws/.config"] = 0o700
-	f := account.File(m, ".config/f", []byte("a"), 0o644)
+	f := owner.File(m, ".config/f", []byte("a"), 0o644)
 	changes, _ := f.Plan(t.Context())
 	if err := changes[0].Apply(t.Context()); err != nil {
 		t.Fatal(err)
@@ -166,7 +167,7 @@ func TestHomeFileLeavesAnExistingParentAlone(t *testing.T) {
 
 func TestHomeFileOfRootChownsToRoot(t *testing.T) {
 	m := effecttest.NewMachine()
-	root := host.Account{User: host.User{Name: "root", Home: "/root"}}
+	root := account.Account{User: account.User{Name: "root", Home: "/root"}}
 	f := root.File(m, ".config/f", []byte("a"), 0o644)
 	changes, _ := f.Plan(t.Context())
 	if err := changes[0].Apply(t.Context()); err != nil {
@@ -181,7 +182,7 @@ func TestValidatedHomeFileMakesItsParentsBeforeTheCheck(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results["check /home/ws/.config/f.ws-check"] = effecttest.Result{}
 	v := host.Validated{
-		File:  account.File(m, ".config/f", []byte("a"), 0o644),
+		File:  owner.File(m, ".config/f", []byte("a"), 0o644),
 		Check: func(p string) (string, []string) { return "check", []string{p} },
 	}
 	changes, _ := v.Plan(t.Context())
@@ -206,7 +207,7 @@ func TestHomeDirRefusesALink(t *testing.T) {
 	for _, link := range []string{"/home/ws/.local", "/home/ws/.local/share"} {
 		m := effecttest.NewMachine()
 		m.Links[link] = "/srv/target"
-		d := account.Dir(m, ".local/share", 0o700)
+		d := owner.Dir(m, ".local/share", 0o700)
 		if _, err := d.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), link+" is a link to") {
 			t.Errorf("link at %s: Plan = %v", link, err)
 		}
@@ -218,7 +219,7 @@ func TestHomeDirRefusesALink(t *testing.T) {
 
 func TestHomeDirMakesItsParentsAndSetsItsMode(t *testing.T) {
 	m := effecttest.NewMachine()
-	d := account.Dir(m, ".local/share", 0o700)
+	d := owner.Dir(m, ".local/share", 0o700)
 	changes, err := d.Plan(t.Context())
 	if err != nil || len(changes) != 1 {
 		t.Fatalf("Plan = %v, %v", changes, err)
@@ -237,7 +238,7 @@ func TestHomeDirMakesItsParentsAndSetsItsMode(t *testing.T) {
 func TestHomeDirFixesAWrongModeAndOwner(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Dirs["/home/ws/.ssh"] = 0o755
-	d := account.Dir(m, ".ssh", 0o700)
+	d := owner.Dir(m, ".ssh", 0o700)
 	changes, _ := d.Plan(t.Context())
 	if len(changes) != 1 || !strings.Contains(changes[0].String(), "set owner 1000:1001 and mode 700") {
 		t.Fatalf("Plan = %v", changes)

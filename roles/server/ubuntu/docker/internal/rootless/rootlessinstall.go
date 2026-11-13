@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
@@ -16,7 +17,7 @@ import (
 // socket, which the docker group's removal, a step earlier, settles.
 type rootlessInstall struct {
 	m   effect.Machine
-	a   host.Account
+	a   account.Account
 	out effect.Out
 }
 

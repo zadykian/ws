@@ -13,6 +13,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 )
 
 // releaseVersion is a version of a release, which cld update takes. A build from source, cld dev,
@@ -22,7 +23,7 @@ var releaseVersion = regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+$`)
 // Update updates cld where a newer release is out.
 type Update struct {
 	M    effect.Machine
-	User host.User
+	User account.User
 	// Client and URL name the page that leads to the latest release. Zero values mean the
 	// default client and cld's releases.
 	Client *http.Client

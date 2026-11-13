@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
@@ -17,7 +18,7 @@ const (
 
 // remoteEndpoint reads the remote collector's endpoint from the user's ~/.secrets/env, or ""
 // where the file or the variable is missing. A bad value stops the run.
-func remoteEndpoint(m effect.Machine, user host.User) (string, error) {
+func remoteEndpoint(m effect.Machine, user account.User) (string, error) {
 	env, err := user.ReadHome(m, ".secrets/env")
 	if errors.Is(err, fs.ErrNotExist) {
 		return "", nil
@@ -39,7 +40,7 @@ func remoteEndpoint(m effect.Machine, user host.User) (string, error) {
 // one's. The remote endpoint is a stand-in there, as its value is only in the service's
 // environment. A change of any of them restarts the collector: a new endpoint needs a restart, as
 // the collector's reload rereads its config alone.
-func configuration(m effect.Machine, u effect.Units, out effect.Out, user host.User) func(context.Context) ([]host.Resource, error) {
+func configuration(m effect.Machine, u effect.Units, out effect.Out, user account.User) func(context.Context) ([]host.Resource, error) {
 	return func(context.Context) ([]host.Resource, error) {
 		endpoint, err := remoteEndpoint(m, user)
 		if err != nil {
