@@ -73,7 +73,7 @@ func (s *Sudo) Plan(ctx context.Context) (step.Plan, error) {
 		s.way = sudoLogin
 		return step.Plan{}, nil
 	}
-	_, err = s.SSH.Run(ctx, "-o", "BatchMode=yes", "ws", "sudo", "-n", "true")
+	_, err = s.SSH.Run(ctx, "-o", "BatchMode=yes", s.SSH.Host, "sudo", "-n", "true")
 	switch {
 	case err == nil:
 		s.way = sudoOpen
@@ -107,7 +107,7 @@ func (s *Sudo) ask(ctx context.Context, user string) error {
 		if err != nil {
 			return fmt.Errorf("%s: %w", stage.Sudo, err)
 		}
-		_, err = s.SSH.RunInput(ctx, []byte(password+"\n"), "-o", "BatchMode=yes", "ws",
+		_, err = s.SSH.RunInput(ctx, []byte(password+"\n"), "-o", "BatchMode=yes", s.SSH.Host,
 			"sudo", "-k", "-S", "-p", "''", "true")
 		if err == nil {
 			s.way, s.password = sudoAsked, password
