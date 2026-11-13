@@ -1,9 +1,38 @@
 # The wizard's targets
 
-The Mac's wizard sets up ws on one of three machines, which `mac.conf`'s `WS_TARGET` names ([The
+The Mac's wizard sets up ws on one of three machines, which the server's file's `WS_TARGET` names ([The
 answers](../stages/README.md#the-answers)). Each target sets the questions of ws's ways and their
 defaults, and what a few stages do. `ws server ubuntu apply` is the same on each, but for the
 outbound table on a cloud VM.
+
+## The two files
+
+`~/.config/ws/mac.conf` holds the Mac's keys, which no server changes:
+
+```sh
+WS_GIT_NAME="NAME"
+WS_GIT_EMAIL=NAME@example.com
+WS_GIT_SIGNING_PUB_KEY=~/.ssh/KEY.pub
+WS_IDENTITY_PUB_KEY=~/.ssh/KEY.pub
+WS_IDENTITY_AGENT=~/PATH/socket.ssh
+```
+
+`~/.config/ws/servers/ws/server.conf`, beside it, holds every other key:
+
+```sh
+WS_PUBLIC_KEY=WS_KEY
+WS_LAN=10.88.0.0/24
+WS_LAN_ADDRESS=10.88.0.10
+WS_CABLE_SERVICE="USB 10/100/1G/2.5G LAN"
+WS_REMOTE=ws.example.com
+WS_REMOTE_PORT=22022
+WS_TUNNEL_NETWORKS="10.20.0.0/16 198.51.100.0/24"
+WS_RESOLVERS="example.internal=10.20.0.53,10.20.0.54"
+```
+
+A key in the other file is refused, with the file it goes in. `WS_CONF` names `mac.conf`, and the
+server's file is `servers/ws/server.conf` beside it. Each key's meaning is in
+[mac.conf](../README.md#macconf).
 
 ## A machine on the LAN
 
@@ -58,7 +87,7 @@ the Mac's display, if any:
 
 ## A move to another target
 
-To move `mac.conf` to another target, set `WS_TARGET`, and remove every key of ws's ways: `WS_LAN`,
+To move the server's file to another target, set `WS_TARGET`, and remove every key of ws's ways: `WS_LAN`,
 `WS_LAN_ADDRESS`, `WS_REMOTE`, `WS_REMOTE_PORT`, `WS_CABLE_SERVICE` and `WS_CABLE_PORT`. An old way
 would lead to the old machine still. From the LAN to a cloud VM, the router's `WS_REMOTE` would, and
 the cloud VM's run would turn that machine's outbound table off. `ws client macos apply` refuses a
