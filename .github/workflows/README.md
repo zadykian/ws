@@ -5,8 +5,8 @@ the top pull request alone, as it holds every change below it. `lint`, `install`
 on each. A stack opens as drafts, as a pull request opens before its link, and only a later event
 names the stack. So these five skip a draft's `opened` run and start on `ready_for_review`, which
 the other three skip. A newer push to a pull request cancels the runs of the push before it.
-The checks of `rootless` and `mac-cld` are on their own pages ([rootless](rootless.md),
-[mac-cld](mac-cld.md)), and the gates of `make lint` on [theirs](../../.tools/README.md).
+The checks of `rootless`, `mac-cld` and a Mac's servers have pages: [rootless](rootless.md),
+[mac-cld](mac-cld.md) and [mac-servers](mac-servers.md). So have [the gates](../../.tools/README.md).
 
 ## The `playbook` job
 
