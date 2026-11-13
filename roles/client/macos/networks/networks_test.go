@@ -8,13 +8,22 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 	"github.com/zadykian/ws/roles/client/macos/networks"
 )
 
 const resolverHead = "# Written by github.com/zadykian/ws: ws client macos apply, from WS_RESOLVERS in ~/.config/ws/mac.conf.\n"
 
+func installDaemons(m *effecttest.Machine, names ...string) {
+	m.Dirs["/Library/LaunchDaemons"] = 0o755
+	for _, n := range names {
+		m.Files["/Library/LaunchDaemons/"+launchd.For(n).Label+".plist"] = []byte("x")
+	}
+}
+
 func networksStep(m *effecttest.Machine, c conf.Conf) *networks.Networks {
 	m.Root["/etc/ws-tunnel/routes.d"] = effect.Attrs{Mode: 0o755}
+	installDaemons(m, "ws")
 	return &networks.Networks{Conf: c, M: m, Out: &effecttest.Out{}}
 }
 
@@ -38,11 +47,11 @@ func TestNetworksPlansNothingWithNoNetworksAndNoResolvers(t *testing.T) {
 
 func TestNetworksWritesRoutesAndResolversAndSignalsTheDaemon(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Results["launchctl print system/com.github.zadykian.ws-tunnel"] = effecttest.Result{}
+	m.Results["launchctl print system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{}
 	s := networksStep(m, conf.Conf{PublicKey: "K", TunnelNetworks: "10.1.0.0/24", Resolvers: "a.test=10.0.0.1"})
 	got := networksPlan(t, s)
 	if len(got) != 4 || !strings.Contains(got[0], "+10.1.0.0/24") ||
-		got[1] != "would run launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel" ||
+		got[1] != "would run launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.ws" ||
 		got[2] != "create directory /etc/resolver, owner 0:0, mode 755" || !strings.Contains(got[3], "+nameserver 10.0.0.1") {
 		t.Errorf("Plan = %q", got)
 	}
@@ -90,8 +99,8 @@ func TestNetworksRemovesTheResolverOfADomainMacConfDropped(t *testing.T) {
 
 func TestNetworksWarnsWhereTheDaemonCannotBeSignalled(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Results["launchctl print system/com.github.zadykian.ws-tunnel"] = effecttest.Result{}
-	m.Results["launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel"] = effecttest.Result{Err: context.Canceled}
+	m.Results["launchctl print system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{}
+	m.Results["launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{Err: context.Canceled}
 	s := networksStep(m, conf.Conf{PublicKey: "K", TunnelNetworks: "10.1.0.0/24"})
 	p, err := s.Plan(context.Background())
 	if err != nil {
@@ -101,7 +110,7 @@ func TestNetworksWarnsWhereTheDaemonCannotBeSignalled(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := s.Out.(*effecttest.Out).Lines
-	if last := out[len(out)-1]; !strings.HasPrefix(last, "warn: cannot signal com.github.zadykian.ws-tunnel") {
+	if last := out[len(out)-1]; !strings.HasPrefix(last, "warn: cannot signal com.github.zadykian.ws-tunnel.ws") {
 		t.Errorf("out = %q; want the warning", out)
 	}
 }
@@ -129,8 +138,8 @@ func TestNetworksPlansNothingUntilMacConfHasWsKey(t *testing.T) {
 
 func TestNetworksApplySaysEachChangeInOrder(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Results["launchctl print system/com.github.zadykian.ws-tunnel"] = effecttest.Result{}
-	m.Results["launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel"] = effecttest.Result{}
+	m.Results["launchctl print system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{}
+	m.Results["launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{}
 	s := networksStep(m, conf.Conf{PublicKey: "K", TunnelNetworks: "10.1.0.0/24"})
 	p, err := s.Plan(context.Background())
 	if err != nil {
@@ -141,7 +150,7 @@ func TestNetworksApplySaysEachChangeInOrder(t *testing.T) {
 	}
 	out := s.Out.(*effecttest.Out).Lines
 	if len(out) != 2 || !strings.Contains(out[0], "routes.d/mac-conf") ||
-		out[1] != "say: ran launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel" {
+		out[1] != "say: ran launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.ws" {
 		t.Errorf("out = %q; want the routes file, then the signal", out)
 	}
 }
