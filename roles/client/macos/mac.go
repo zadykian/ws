@@ -25,8 +25,10 @@ import (
 type Mac struct {
 	// Server is the name of the server that the steps act for.
 	Server string
-	Conf   conf.Conf
-	Home   string
+	// MacConf is mac.conf's path, whose servers/ the ssh step lists.
+	MacConf string
+	Conf    conf.Conf
+	Home    string
 	// XDG is XDG_CONFIG_HOME, which may be empty.
 	XDG string
 	M   effect.Machine
