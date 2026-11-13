@@ -87,7 +87,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	switch wg0 := s.WgKey; {
 	case wg0 == "":
-		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in mac.conf to wg0's key, which that run makes"))
+		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in server.conf to wg0's key, which that run makes"))
 	case wg0 != c.PublicKey:
 		if t.Check {
 			// Under --check mac.conf is the scratch file, as for the stages before.
@@ -95,7 +95,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 				return step.Plan{}, err
 			}
 		}
-		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in mac.conf to wg0's key, "+wg0))
+		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in server.conf to wg0's key, "+wg0))
 	}
 	return step.Plan{Changes: append(ch, tunnelChange("run ws client macos apply again, which loads ws-tunnel, and wait up "+
 		"to 30 s for ws-tunnel's handshake, then log in to ws through it"))}, nil

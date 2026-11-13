@@ -246,7 +246,7 @@ conf_write "$conf" <"$RUNNER_TEMP/cable.conf"
 touch "$cable/silent"
 wizard run "WS_CABLE_SERVICE=ws stand-in adapter"
 printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: ping -c 1 -t 3 10\.77\.0\.1, ws's end of the \
-cable, got no answer: mac\.conf's WS_CABLE_SERVICE must name the service of the adapter that the \
+cable, got no answer: server\.conf's WS_CABLE_SERVICE must name the service of the adapter that the \
 cable plugs into" && [ "$status" = 1 ] &&
     [ "$(logged setmanual.log) $(logged ping.log)" = '1 2' ] ||
     error "ws client macos wizard with no answer from ping exited $status, or pinged other than once"
