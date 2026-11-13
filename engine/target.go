@@ -18,6 +18,13 @@ type Target struct {
 	Change func(step.Change) (string, bool)
 	// State readies the report of state. Its errors are the command's own.
 	State func(ctx context.Context, c Call) (Report, error)
+	// Sheets gives the forms of configure, and done, which lets go of what they hold once the
+	// screen has ended. Done may be nil.
+	Sheets func(ctx context.Context, c Call) (sheets []tui.Sheet, done func(context.Context), err error)
+	// Refuse says why configure does not run here, or "" to let it.
+	Refuse func(c Call) string
+	// NoScreen is what configure says where no screen draws: a form has no lines to fall back on.
+	NoScreen string
 }
 
 // Report is a prepared state: what the roles report, on the screen or in text.

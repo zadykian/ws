@@ -19,3 +19,10 @@ func State(t engine.Target, e Env) func(*cobra.Command, []string) error {
 		return engine.State(c.Context(), CallOf(c, e), t)
 	}
 }
+
+// Configure returns the RunE of a side's configure command: it draws the Target's forms.
+func Configure(t engine.Target, e Env) func(*cobra.Command, []string) error {
+	return func(c *cobra.Command, _ []string) error {
+		return engine.Configure(c.Context(), CallOf(c, e), t)
+	}
+}
