@@ -61,4 +61,5 @@ func TestMacApplyDrawsNothingWithPlain(t *testing.T) {
 func writeConfs(m *effecttest.Machine, mac, server string) {
 	m.Files["/h/.config/ws/mac.conf"] = []byte(mac)
 	m.Files["/h/.config/ws/servers/ws/server.conf"] = []byte(server)
+	m.Dirs["/h/.config/ws/servers"], m.Dirs["/h/.config/ws/servers/ws"] = 0o755, 0o755
 }
