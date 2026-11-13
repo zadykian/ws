@@ -1,6 +1,9 @@
 package conf
 
-import "slices"
+import (
+	"slices"
+	"strings"
+)
 
 // Scope is the file that a text is: the Mac's mac.conf, or a server's file beside it. Each file
 // refuses the other's keys.
@@ -31,4 +34,25 @@ func (s Scope) refuse(name string) string {
 		return name + " is the Mac's key: it goes in mac.conf"
 	}
 	return ""
+}
+
+// KeyScope returns the file that the key goes in: MacFile for the Mac's keys, else ServerFile.
+func KeyScope(key string) Scope {
+	if slices.Contains(macKeys, key) {
+		return MacFile
+	}
+	return ServerFile
+}
+
+// Keep returns the KEY=value lines of the text whose key goes in the scope, in order. Both keeps
+// every line.
+func (s Scope) Keep(lines string) string {
+	var kept strings.Builder
+	for _, line := range strings.SplitAfter(lines, "\n") {
+		key, _, _ := strings.Cut(line, "=")
+		if s == Both || KeyScope(key) == s {
+			kept.WriteString(line)
+		}
+	}
+	return kept.String()
 }
