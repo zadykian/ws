@@ -97,6 +97,28 @@ func TestNetworksRemovesTheResolverOfADomainMacConfDropped(t *testing.T) {
 	}
 }
 
+func TestNetworksKeepsTheResolverOfADomainAnotherServerNames(t *testing.T) {
+	m := effecttest.NewMachine()
+	for _, f := range []string{"gone.test", "lab.test"} {
+		m.Files["/etc/resolver/"+f] = []byte(resolverHead + "nameserver 10.0.0.1\n")
+		m.Root["/etc/resolver/"+f] = effect.Attrs{Mode: 0o644}
+	}
+	m.Root["/etc/resolver"] = effect.Attrs{Mode: 0o755}
+	m.Dirs["/etc/resolver"] = 0o755
+	const mac = "/h/.config/ws/mac.conf"
+	for _, n := range []string{"ws", "lab"} {
+		m.Dirs["/h/.config/ws/servers"], m.Dirs["/h/.config/ws/servers/"+n] = 0o755, 0o755
+		m.Files[conf.ServerPath(mac, n)] = nil
+	}
+	m.Files[conf.ServerPath(mac, "lab")] = []byte("WS_RESOLVERS=lab.test=10.0.0.1\n")
+	s := networksStep(m, conf.Conf{PublicKey: "K"})
+	s.MacConf = mac
+	got := networksPlan(t, s)
+	if len(got) != 1 || !strings.Contains(got[0], "/etc/resolver/gone.test") {
+		t.Errorf("Plan = %q; want gone.test's removal alone", got)
+	}
+}
+
 func TestNetworksWarnsWhereTheDaemonCannotBeSignalled(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results["launchctl print system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{}
