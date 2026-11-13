@@ -19,6 +19,6 @@ those of the YAML, the shell scripts, the templates and the configs. `make vale`
 
 - A step's `Name` says what it does. The comment above it says why, and what a dry run or a
   container does there where that differs.
-- How a role works goes in its comments, what it sets up in its page in `docs/`, and how to run
-  `ws server ubuntu apply` in the README.
+- How a role works goes in its comments, what it sets up in its README, and how to run
+  `ws server ubuntu apply` in the root README.
 - No word of the local list, in prose, code or names (CLAUDE.md).

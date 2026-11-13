@@ -8,12 +8,12 @@ paths:
 
 The invariants a change to a role keeps, each linking where the repository gives its reason. The
 hard rules of [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too, as do [mac.md](mac.md)'s for
-steps, and each role's page in `docs/` says what it sets up.
+steps, and each role's README says what it sets up.
 
 ## The roles
 
-- A role is the Go steps of `roles/server/ubuntu/NAME`, with its page, `docs/NAME.md`, and a line in
-  the README ([README](../../README.md)). `ubuntu.Roles` lists the roles in the order they run,
+- A role is the Go steps of `roles/server/ubuntu/NAME`, with its page, its `README.md`, and a line in
+  the root README ([README](../../README.md)). `ubuntu.Roles` lists the roles in the order they run,
   each closed over the machine's values and secrets ([roles.go](../../roles/server/ubuntu/roles.go)).
 - The server's values are one struct, `values.Values`, parsed once from the machine's file with
   unknown keys refused. A role's steps read it and add no key without a commit of their own
