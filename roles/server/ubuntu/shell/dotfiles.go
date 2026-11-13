@@ -7,7 +7,7 @@ import (
 	"github.com/zadykian/ws/engine/core/host"
 )
 
-//go:embed files
+//go:embed files/bashrc.tmpl files/profile
 var files embed.FS
 
 // dotnetArch is the architecture in .NET's portable runtime ID: arm64, or x64 for the rest. It

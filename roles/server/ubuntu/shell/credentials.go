@@ -89,5 +89,5 @@ func sections(keys []string, creds []credential) []section {
 // tokensConfig renders ~/.config/git/tokens.gitconfig: the helpers, which name the tokens' files
 // and never a token.
 func tokensConfig(s []section) ([]byte, error) {
-	return host.Render(files, "files/tokens.gitconfig.tmpl", struct{ Sections []section }{s})
+	return host.Render(gitFiles, "files/tokens.gitconfig.tmpl", struct{ Sections []section }{s})
 }

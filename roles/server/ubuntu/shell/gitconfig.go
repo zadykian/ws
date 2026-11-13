@@ -2,12 +2,18 @@ package shell
 
 import (
 	"context"
+	"embed"
 	"errors"
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 )
+
+// gitFiles are the templates of ~/.gitconfig and of the tokens' include.
+//
+//go:embed files/gitconfig.tmpl files/tokens.gitconfig.tmpl
+var gitFiles embed.FS
 
 // gitconfig is ~/.gitconfig, which ws replaces whole. A real run keeps the old file beside it, as
 // ~/.gitconfig.*~. A diff would print a credential that a file set up by hand holds, such as an
@@ -25,7 +31,7 @@ type gitconfig struct {
 }
 
 func (g gitconfig) content() ([]byte, error) {
-	return host.Render(files, "files/gitconfig.tmpl", struct {
+	return host.Render(gitFiles, "files/gitconfig.tmpl", struct {
 		Name, Email, Key, Signers string
 		Signing                   bool
 	}{g.Name, g.Email, g.Key, g.Signers, g.Signing})
