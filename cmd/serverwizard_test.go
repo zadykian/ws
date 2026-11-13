@@ -16,7 +16,7 @@ import (
 func TestServerWizardAfterARunAppliesNothing(t *testing.T) {
 	p, m := wizardProcess("---\nsecurity_outbound: true\nws_user: ada\n", true,
 		"run v1.2.3 0 on - -\nactive -\nuser ada\noutbound on\nsecrets -\nvars -\nclaude ok\nsigning none\n")
-	status, stdout, stderr := runWs(p, "", "server", "wizard", "--plain")
+	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "wizard", "--plain")
 	if status != 0 || stdout != "" || slices.ContainsFunc(m.Calls, func(c string) bool { return strings.Contains(c, "-- run") }) {
 		t.Errorf("status %d, stdout %q, stderr %q; calls %q", status, stdout, stderr, m.Calls)
 	}
@@ -27,7 +27,7 @@ func TestServerWizardAsksTheValuesAndSkipsUnbooted(t *testing.T) {
 	p, m := wizardProcess("", false, "")
 	p.tty = true
 	m.Results["env SUDO_USER=root sh -s -- status"] = effecttest.Result{Out: []byte("claude ok\nsigning none\n")}
-	status, _, stderr := runWs(p, "cloud\n\n", "server", "wizard", "--plain")
+	status, _, stderr := runWs(p, "cloud\n\n", "server", "ubuntu", "wizard", "--plain")
 	if status != 0 || !strings.Contains(stderr, "isn't booted") {
 		t.Fatalf("status %d, stderr %q", status, stderr)
 	}
@@ -43,11 +43,11 @@ func TestServerWizardAsksTheValuesAndSkipsUnbooted(t *testing.T) {
 func TestServerWizardCheckAsksNothing(t *testing.T) {
 	p, m := wizardProcess("", true, "")
 	p.euid = 1000
-	if status, _, stderr := runWs(p, "", "server", "wizard", "--check", "--plain"); status == 0 || !strings.Contains(stderr, "by sudo") {
+	if status, _, stderr := runWs(p, "", "server", "ubuntu", "wizard", "--check", "--plain"); status == 0 || !strings.Contains(stderr, "by sudo") {
 		t.Errorf("as a user: status %d, stderr %q", status, stderr)
 	}
 	p.euid = 0
-	status, _, stderr := runWs(p, "", "server", "wizard", "--check", "--plain")
+	status, _, stderr := runWs(p, "", "server", "ubuntu", "wizard", "--check", "--plain")
 	if status != 0 || !strings.Contains(stderr, "would ask security_outbound and ws_user") || len(m.Files[serverVars]) != 0 {
 		t.Errorf("status %d, stderr %q, host_vars %q", status, stderr, m.Files[serverVars])
 	}
@@ -58,7 +58,7 @@ func TestServerWizardAtATerminalOpensOneList(t *testing.T) {
 	p, m := wizardProcess("---\nsecurity_outbound: true\nws_user: ada\n", false, "claude ok\nsigning none\n")
 	p = withEnv(p, map[string]string{"TERM": "xterm"})
 	p.tty, p.errTTY = true, true
-	status, stdout, stderr := runWs(p, "q", "server", "wizard")
+	status, stdout, stderr := runWs(p, "q", "server", "ubuntu", "wizard")
 	if status != 0 || stdout != "" || !strings.Contains(stderr, enterScreen) || !strings.Contains(stderr, leaveScreen) {
 		t.Errorf("status %d, stdout %q, stderr %q", status, stdout, stderr)
 	}
@@ -70,8 +70,8 @@ func TestServerWizardAtATerminalOpensOneList(t *testing.T) {
 // ranWs tells whether a call ran ws's run.
 func ranWs(call string) bool { return strings.HasSuffix(call, "sh -s -- run") }
 
-// screenServer is ws server wizard at a terminal, on a booted machine whose remote script reports a
-// good last run, and the keys that the lists read, past the scan.
+// screenServer is ws server ubuntu wizard at a terminal. The machine is booted and its remote script
+// reports a good last run. It reads the keys that the lists read, past the scan.
 func screenServer(keys io.ReadWriter) (int, *effecttest.Machine) {
 	p, m := wizardProcess("---\nsecurity_outbound: true\nws_user: ada\n", true,
 		"run v1.2.3 0 on - -\nactive -\nuser ada\noutbound on\nsecrets -\nvars -\nclaude ok\nsigning none\n")
@@ -80,7 +80,7 @@ func screenServer(keys io.ReadWriter) (int, *effecttest.Machine) {
 	var out bytes.Buffer
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
-	return execute(ctx, newRoot(p, newServerCmd(p)), []string{"server", "wizard"}, keys, &out, keys), m
+	return execute(ctx, newRoot(p, newServerCmd(p)), []string{"server", "ubuntu", "wizard"}, keys, &out, keys), m
 }
 
 // The stages chosen run on the list's run screen, ws's run left out.
@@ -101,7 +101,7 @@ func TestServerWizardRunsTheStagesChosen(t *testing.T) {
 // s opens ws's state, read on ws itself: the keys leave it by its title. tui's tests follow the
 // loop back to the list.
 func TestServerWizardStateKeyReadsWs(t *testing.T) {
-	keys := stateTrip{newAfterScan("s"), "ws server wizard: ws"}
+	keys := stateTrip{newAfterScan("s"), "ws server ubuntu wizard: ws"}
 	if status, m := screenServer(keys); status != 0 {
 		t.Errorf("status %d, calls %q", status, m.Calls)
 	}
@@ -113,7 +113,7 @@ func TestServerWizardListsTheSigningKeyByHand(t *testing.T) {
 		"run v1.2.3 0 on - -\nactive -\nuser ada\noutbound on\nsecrets -\nvars -\nclaude ok\nsigning ssh-ed25519 AAA\n")
 	m.Results["runuser -l ada -c gh api user --jq .login 2>/dev/null || git config --global github.user"] =
 		effecttest.Result{}
-	status, stdout, stderr := runWs(p, "", "server", "wizard", "--plain")
+	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "wizard", "--plain")
 	for _, want := range []string{"What stays by hand", "settings/ssh/new", "ssh-ed25519 AAA", "ws's lease", "ssh-import-id gh:LOGIN"} {
 		if status != 0 || !strings.Contains(stdout, want) {
 			t.Errorf("status %d, stdout %q lacks %q; stderr %q", status, stdout, want, stderr)
@@ -161,7 +161,7 @@ func TestServerWizardCheckAtATerminalGoesStraightToTheRun(t *testing.T) {
 		"run v1.2.3 0 on - -\nactive -\nuser ada\noutbound on\nsecrets -\nvars -\nclaude ok\nsigning none\n")
 	p = withEnv(p, map[string]string{"TERM": "xterm"})
 	p.tty, p.errTTY = true, true
-	_, stdout, stderr := runWs(p, "", "server", "wizard", "--check")
+	_, stdout, stderr := runWs(p, "", "server", "ubuntu", "wizard", "--check")
 	if stdout != "" || !strings.Contains(stderr, enterScreen) || !strings.Contains(stderr, leaveScreen) {
 		t.Errorf("stdout = %q, stderr = %q", stdout, stderr)
 	}

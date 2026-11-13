@@ -85,9 +85,12 @@ func TestMacRunEndsAnApplyWithSSHAgain(t *testing.T) {
 	}
 }
 
-func TestMacRunTakesOnlyTheStepNamed(t *testing.T) {
-	if got := reached(t, Options{Only: "zed"}); !slices.Equal(got, []string{"zed"}) {
+func TestMacRunTakesOnlyTheStepsNamed(t *testing.T) {
+	if got := reached(t, Options{Only: []string{"zed"}}); !slices.Equal(got, []string{"zed"}) {
 		t.Errorf("ran %q; want zed alone, with no ssh again", got)
+	}
+	if got := reached(t, Options{Only: []string{"zed", "git"}}); !slices.Equal(got, []string{"git", "zed"}) {
+		t.Errorf("ran %q; want git and zed, in the order of the steps", got)
 	}
 }
 

@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// confPath returns mac.conf's path from WS_CONF, a path from / as ws mac apply gets it, else from the
-// home.
+// confPath returns mac.conf's path from WS_CONF, a path from / as ws client macos apply gets it,
+// else from the home.
 func confPath(getenv func(string) string, pwd string) string {
 	switch file := getenv("WS_CONF"); {
 	case file == "":

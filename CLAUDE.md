@@ -1,7 +1,7 @@
 # CLAUDE.md
 
-ws sets up the maintainer's development server from code: `ws server apply`, which runs on the
-machine itself, each role as Go steps. Its roles set up packages, SSH by key and a firewall, the
+ws sets up the maintainer's development server from code: `ws server ubuntu apply`, which runs on
+the machine itself, each role as Go steps. Its roles set up packages, SSH by key and a firewall, the
 links to the Mac, an IKEv2 VPN where a profile is given, and the fans. Then the shell, tmux,
 lazygit, Fresh, Docker, claude, SigNoz with its collector, and Zed's server. `roles/client/macos/`
 sets up the Mac that works on the server. The rest is the docs, the lint gates' tools and CI.
@@ -13,7 +13,7 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   `roles/server/ubuntu/values` types the machine's values: `/etc/ws/host_vars.yml`, on the machine
   alone, such as the cable's port ([The direct link](docs/network.md#the-direct-link)). Each role
   holds its pins, and embeds its templates and files. ws-fans, the fans' service, is
-  `ws server fans`, in `roles/server/ubuntu/fans/daemon`.
+  `ws server ubuntu fans`, in `roles/server/ubuntu/fans/daemon`.
 - `go.mod`, `go.sum` and `.golangci.yml`: the Go module `github.com/zadykian/ws`, at the root.
   `main.go` runs `cmd`, the command, and `internal/` holds its packages. `engine/core` holds `step`,
   `effect`, with `effect/effecttest`, and `host`, the resources the steps share, which are public:
@@ -55,14 +55,13 @@ The gates are `shell`, `yamllint`, `sizecheck`, `vale`, `lychee`, `rumdl`, `acti
 ([The gates](docs/gates.md)). `make lint` needs Python 3.12 to 3.14, on Linux or on macOS on arm64.
 It installs yamllint into `.cache`, and `tools/run` downloads the rest there.
 
-The tests are CI's jobs ([Checks](docs/checks.md)). `playbook` builds ws and runs `ws server apply`
-twice in an Ubuntu 26.04 container and checks the config that Fresh reads, `signoz` forges SigNoz's
-compose files again, and `install` tries `install.sh`. `rootless` runs the rootless daemon and the
-firewall on a booted runner ([The rootless job](docs/checks-rootless.md)). `mac` sets up a Mac on
-GitHub's macOS runner, and `mac-wizard` runs the Mac's wizard on another. `mac-cld` sets up Ghostty
-and cld on a third
-([Ghostty and cld on the Mac](docs/checks-mac-cld.md)). A run of `ws server apply` sets up the
-machine that runs it, as below.
+The tests are CI's jobs ([Checks](docs/checks.md)). `playbook` builds ws and runs `ws server ubuntu
+apply` twice in an Ubuntu 26.04 container and checks the config that Fresh reads, `signoz` forges
+SigNoz's compose files again, and `install` tries `install.sh`. `rootless` runs the rootless daemon
+and the firewall on a booted runner ([The rootless job](docs/checks-rootless.md)). `mac` sets up a
+Mac on GitHub's macOS runner, and `mac-wizard` runs the Mac's wizard on another. `mac-cld` sets up
+Ghostty and cld on a third ([Ghostty and cld on the Mac](docs/checks-mac-cld.md)). A run of `ws
+server ubuntu apply` sets up the machine that runs it, as below.
 
 The hooks check a commit for the local list's words. This checks any other text, such as a pull
 request's body, as they do, and prints 0 where it holds none:
@@ -91,8 +90,8 @@ LC_ALL=C tr _ ' ' <FILE | grep -ciwF -f <(sed -e 'y/_/ /' -e 's/^[[:space:]]*//'
 
 Each rule links where the repository gives its reason: a doc, a comment or a CI job.
 
-- `ws server apply` sets up the machine that runs it. CI's `playbook` job runs it in a container
-  ([The `playbook` job](docs/checks.md#the-playbook-job)).
+- `ws server ubuntu apply` sets up the machine that runs it. CI's `playbook` job runs it in a
+  container ([The `playbook` job](docs/checks.md#the-playbook-job)).
 - A second run changes nothing: CI's `playbook` job runs it twice and fails where the second run
   reports a change ([ci.yml](.github/workflows/ci.yml)).
 - A step that needs a booted machine's systemd checks `host.Booted`, and skips without it, as in

@@ -26,8 +26,8 @@ const (
 	osRelease  = "/etc/os-release"
 )
 
-// serverRefusal returns why ws server apply does not run here, or "" where it does: as root on
-// Ubuntu 26.04, the one system that the steps are written for. osRelease is /etc/os-release.
+// serverRefusal returns why ws server ubuntu apply does not run here, or "" where it does: as root
+// on Ubuntu 26.04, the one system that the steps are written for. osRelease is /etc/os-release.
 func serverRefusal(euid int, osRelease []byte) string {
 	if euid != 0 {
 		return "run it as root"
@@ -53,14 +53,19 @@ func serverRefusal(euid int, osRelease []byte) string {
 	return ""
 }
 
-// newServerCmd returns ws server, the server's side of ws. It builds everywhere, so that the
-// tests run anywhere. Only its entry in the groups is built for Linux alone.
+// newServerCmd returns ws server, the group of the server's systems. It builds everywhere, so that
+// the tests run anywhere. Only its entry in the groups is built for Linux alone.
 func newServerCmd(p process) *cobra.Command {
-	return group("server", "the server's commands", newApplyCmd(p), newStateCmd(p), newFansCmd(p), newValuesCmd(p),
-		newServerSecretsCmd(p), newServerWizardCmd(p), newServerConfigureCmd(p))
+	return group("server", "the server's systems", newUbuntuCmd(p))
 }
 
-// newApplyCmd returns ws server apply.
+// newUbuntuCmd returns ws server ubuntu, the commands that set up an Ubuntu server.
+func newUbuntuCmd(p process) *cobra.Command {
+	return group("ubuntu", "the commands for an Ubuntu server", newApplyCmd(p), newStateCmd(p), newFansCmd(p),
+		newValuesCmd(p), newServerSecretsCmd(p), newServerWizardCmd(p), newServerConfigureCmd(p))
+}
+
+// newApplyCmd returns ws server ubuntu apply.
 func newApplyCmd(p process) *cobra.Command {
 	var opts apply.Options
 	var asJSON bool

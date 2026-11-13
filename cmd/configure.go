@@ -11,12 +11,12 @@ import (
 	"github.com/zadykian/ws/internal/wizard"
 )
 
-// newConfigureCmd returns ws mac configure.
+// newConfigureCmd returns ws client macos configure.
 func newConfigureCmd(p process) *cobra.Command {
 	return &cobra.Command{
 		Use:   "configure",
 		Short: "edit mac.conf, the secrets and ws's host_vars on forms",
-		Long: "It shows the keys that ws mac wizard would ask, by WS_TARGET, with what mac.conf holds, and " +
+		Long: "It shows the keys that ws client macos wizard would ask, by WS_TARGET, with what mac.conf holds, and " +
 			"writes them on Ctrl-S. Ctrl-N goes to ws's secrets, which show as set or not, never their values, " +
 			"then to ws's host_vars, both read over ssh. It needs a terminal: anywhere else, edit the file by hand.",
 		Args: cobra.NoArgs,
@@ -41,8 +41,8 @@ func runConfigure(c *cobra.Command, p process) error {
 	return tui.Configure(c.Context(), screenConfig(c, p), c.CommandPath(), sheets...)
 }
 
-// macForms gives the forms' sheets, for ws mac configure and the wizard's list, and done, which lets
-// go of ws once they have ended.
+// macForms gives the forms' sheets, for ws client macos configure and the wizard's list, and done,
+// which lets go of ws once they have ended.
 func macForms(c *cobra.Command, p process) func(context.Context) ([]tui.Sheet, func(context.Context), error) {
 	return func(context.Context) ([]tui.Sheet, func(context.Context), error) {
 		form := wizard.ConfForm{Conf: confPath(p.getenv, p.pwd), Defaults: shellDefaults(), M: p.machine}

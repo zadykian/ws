@@ -118,10 +118,10 @@ must "the private address answers before the table" up "http://$target/"
 must "sudo's password is cached before the drop-in" as bash -c "$sudo_form" bash "$password"
 
 log=$(mktemp)
-ws server apply --only security,docker
-ws server apply --only security,docker 2>&1 | tee "$log"
-if [ "$(tail -n 1 "$log")" != 'ws server apply: changed: none' ]; then
-    fail "The second run of ws server apply changed something."
+ws server ubuntu apply --only security,docker
+ws server ubuntu apply --only security,docker 2>&1 | tee "$log"
+if [ "$(tail -n 1 "$log")" != 'ws server ubuntu apply: changed: none' ]; then
+    fail "The second run of ws server ubuntu apply changed something."
 fi
 
 groups=$(id -nG "$user")
@@ -192,8 +192,8 @@ docker stop -t 0 ws-probe >/dev/null
 # it installs none of the role's packages. useradd made ~/.bashrc, from /etc/skel.
 as mv "$home/.bashrc" "$home/.bashrc.orig"
 as ln -s /etc/hostname "$home/.bashrc"
-if out=$(ws server apply --check --only shell 2>&1); then
-    fail "ws server apply planned through a link at ~/.bashrc"
+if out=$(ws server ubuntu apply --check --only shell 2>&1); then
+    fail "ws server ubuntu apply planned through a link at ~/.bashrc"
 fi
 must "a link at ~/.bashrc is refused" grep -q 'is a link to /etc/hostname' <<<"$out"
 as rm "$home/.bashrc"
@@ -201,19 +201,19 @@ as mv "$home/.bashrc.orig" "$home/.bashrc"
 
 # ws's secrets: the identity is a credential that the host's key encrypts, and a unit reads it by
 # LoadCredentialEncrypted, which a container's systemd can't run.
-ws server secrets init
+ws server ubuntu secrets init
 must "the credential is root's 600, in root's 700" test "$(stat -c '%U %a' \
     /etc/credstore.encrypted /etc/credstore.encrypted/ws-secrets)" = $'root 700\nroot 600'
 must "the file is root's 600" test "$(stat -c '%U %a' /etc/ws/secrets.age)" = 'root 600'
 value=$(openssl rand -hex 16)
 echo "::add-mask::$value"
-must "set takes a value on stdin" ws server secrets set env WS_CI <<<"$value"
-names=$(ws server secrets keys)
+must "set takes a value on stdin" ws server ubuntu secrets set env WS_CI <<<"$value"
+names=$(ws server ubuntu secrets keys)
 must "keys names the entry" grep -qx 'env WS_CI' <<<"$names"
 refused "keys prints the value" grep -q "$value" <<<"$names"
-refused "the user runs ws server secrets" as ws server secrets keys
+refused "the user runs ws server ubuntu secrets" as ws server ubuntu secrets keys
 
-apply=(ws server apply --secrets /etc/ws/secrets.age --check --only shell)
+apply=(ws server ubuntu apply --secrets /etc/ws/secrets.age --check --only shell)
 out=$(systemd-run --quiet --wait --pipe -p LoadCredentialEncrypted=ws-secrets "${apply[@]}" \
     </dev/null 2>&1) || fail "a unit with the credential can't read the file"
 echo "ok: a unit with the credential reads the file"
@@ -221,22 +221,23 @@ refused "the unit prints the value" grep -q "$value" <<<"$out"
 refused "a unit without the credential reads the file" \
     systemd-run --quiet --wait --pipe "${apply[@]}" </dev/null
 
-must "unset drops the entry" ws server secrets unset env WS_CI
-refused "keys names the entry after unset" grep -q WS_CI <<<"$(ws server secrets keys)"
+must "unset drops the entry" ws server ubuntu secrets unset env WS_CI
+refused "keys names the entry after unset" grep -q WS_CI <<<"$(ws server ubuntu secrets keys)"
 sums=$(sha256sum /etc/ws/secrets.age /etc/credstore.encrypted/ws-secrets)
-ws server secrets init
+ws server ubuntu secrets init
 must "a second init keeps both" test "$sums" = \
     "$(sha256sum /etc/ws/secrets.age /etc/credstore.encrypted/ws-secrets)"
 
-# ws server wizard runs ws server apply in a unit, as the Mac's wizard does, and a second run with
-# nothing changed starts none. A value set in host_vars has the next start one. The unit's ws adds --only shell to apply, so that a full run, as the
-# stamp has it, fits the job. This comes last: ws is that stand-in from here on.
-refused "the wizard asks with no terminal" ws server wizard --plain </dev/null
-ws server values set security_outbound true
+# ws server ubuntu wizard runs ws server ubuntu apply in a unit, as the Mac's wizard does, and a
+# second run with nothing changed starts none. A value set in host_vars has the next start one. The
+# unit's ws adds --only shell to apply, so that a full run, as the stamp has it, fits the job. This
+# comes last: ws is that stand-in from here on.
+refused "the wizard asks with no terminal" ws server ubuntu wizard --plain </dev/null
+ws server ubuntu values set security_outbound true
 real=$(mktemp -d)/ws
 mv /usr/local/bin/ws "$real"
 printf '%s\n' '#!/bin/sh' \
-    "[ \"\$1 \$2\" != 'server apply' ] || { shift 2; exec $real server apply --only shell \"\$@\"; }" \
+    "[ \"\$1 \$2 \$3\" != 'server ubuntu apply' ] || { shift 3; exec $real server ubuntu apply --only shell \"\$@\"; }" \
     "exec $real \"\$@\"" >/usr/local/bin/ws
 chmod 755 /usr/local/bin/ws
 # The user's claude is a stand-in with a login, as that run installs none.
@@ -246,9 +247,9 @@ runuser -u "$user" -- sh -c 'mkdir -p "$1" && cat >"$1/claude" && chmod 755 "$1/
 #!/bin/sh
 [ "$*" = 'auth status' ]
 EOF
-must "the wizard runs ws server apply in a unit" ws server wizard --plain </dev/null
-out=$(ws server wizard --plain 2>&1 </dev/null)
+must "the wizard runs ws server ubuntu apply in a unit" ws server ubuntu wizard --plain </dev/null
+out=$(ws server ubuntu wizard --plain 2>&1 </dev/null)
 refused "a second wizard starts a unit" grep -q ws-wizard- <<<"$out"
-ws server values set base_swappiness 10
-out=$(ws server wizard --plain 2>&1 </dev/null)
+ws server ubuntu values set base_swappiness 10
+out=$(ws server ubuntu wizard --plain 2>&1 </dev/null)
 must "a wizard after a value's change starts a unit" grep -q ws-wizard- <<<"$out"

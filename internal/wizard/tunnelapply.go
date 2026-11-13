@@ -11,11 +11,11 @@ import (
 )
 
 // Apply gives ws's wg0 the Mac's key as its peer, where mac.pub holds another or wg0 lacks it. The
-// peer op writes the key, then ws server apply --only wireguard runs in a unit of its own. It sets
-// WS_PUBLIC_KEY to wg0's key, where it differs, and runs ws mac apply again. Last, it waits for the
-// handshake and logs in, or, where the run asked ws's address, leaves that to a later run. It takes
-// root's key rather than tunnel.pub, which the user can write, as the key it sends becomes ws's
-// peer.
+// peer op writes the key, then ws server ubuntu apply --only wireguard runs in a unit of its own.
+// It sets WS_PUBLIC_KEY to wg0's key, where it differs, and runs ws client macos apply again. Last,
+// it waits for the handshake and logs in, or, where the run asked ws's address, leaves that to a
+// later run. It takes root's key rather than tunnel.pub, which the user can write, as the key it
+// sends becomes ws's peer.
 func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 	c, err := t.Ws.want()
 	if err != nil {
@@ -27,22 +27,22 @@ func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 	case err != nil:
 		return errors.New(tunnelStage + ": sudo -v failed; the Mac's key is root's, as an admin of the Mac")
 	}
-	out, err := t.M.RunRoot(ctx, libexec, "mac", "tunnel", "key")
+	out, err := t.M.RunRoot(ctx, libexec, "client", "macos", "tunnel", "key")
 	mac := strings.TrimSpace(string(out))
 	if err != nil || !check.Key(mac) {
-		return errors.New(tunnelStage + ": root's ws mac tunnel key prints no key: run ws mac apply, which makes both")
+		return errors.New(tunnelStage + ": root's ws client macos tunnel key prints no key: run ws client macos apply, which makes both")
 	}
 	s, _ := t.Ws.status(ctx)
 	peered := s.MacKey != mac || !s.Peered
 	if peered {
-		t.Out.Say("%s: the Mac's key goes to /etc/wireguard/mac.pub on ws, and ws server apply --only "+
+		t.Out.Say("%s: the Mac's key goes to /etc/wireguard/mac.pub on ws, and ws server ubuntu apply --only "+
 			"wireguard runs there in a unit of its own, which gives wg0 that peer", tunnelStage)
 		if err := t.Ws.namePeer(ctx, mac); err != nil {
 			return err
 		}
 		var ok bool
 		if s, ok = t.Ws.status(ctx); !ok || !s.Peered {
-			return errors.New(tunnelStage + ": ws's wg0 lacks the Mac's key after ws server apply --only " +
+			return errors.New(tunnelStage + ": ws's wg0 lacks the Mac's key after ws server ubuntu apply --only " +
 				"wireguard: mend what it printed, then run the wizard again")
 		}
 	}

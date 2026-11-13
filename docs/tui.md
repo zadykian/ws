@@ -1,27 +1,30 @@
 # The terminal UI
 
 ws draws a full-screen display on a terminal, with Bubble Tea, Bubbles and Lip Gloss. Its code is
-`engine/tui`. `ws server apply` and `ws mac apply` draw [the run screen](#the-run-screen),
-`ws server state` and `ws mac state` draw [the state screen](#the-state-screen), and
-`ws mac configure` and `ws server configure` draw [the Configure screen](tui-configure.md). `ws mac wizard` draws
-[two lists](tui-wizard.md), which lead to the other two, and `ws server wizard` one. The rest, such
-as `ws update` and `ws version`, print lines.
+`engine/tui`. `ws server ubuntu apply` and `ws client macos apply` draw [the run
+screen](#the-run-screen), `ws server ubuntu state` and `ws client macos state` draw [the state
+screen](#the-state-screen), and `ws client macos configure` and `ws server ubuntu configure` draw
+[the Configure screen](tui-configure.md). `ws client macos wizard` draws [two lists](tui-wizard.md),
+which lead to the other two, and `ws server ubuntu wizard` one. The rest, such as `ws update` and
+`ws version`, print lines.
 
 ## Modes
 
 A command draws a screen only where each of these holds:
 
-- `--plain` is not given. Every command takes the flag, and `ws --plain mac wizard` is the form.
+- `--plain` is not given. Every command takes the flag, and `ws --plain client macos wizard` is the
+  form.
 - `--json` is not given, where a command takes it.
-- Stdin and stderr are terminals. So is stdout for `ws server state` and `ws mac state`, as their
-  report prints there.
+- Stdin and stderr are terminals. So is stdout for `ws server ubuntu state` and `ws client macos
+  state`, as their report prints there.
 - `TERM` is set and is not `dumb`.
 
-Anywhere else ws prints lines, as before, byte for byte. That covers CI, a pipe and the unit on
-ws, which reads the last line of a run. The wizard's cases in `.github/mac-wizard` that run under
-`script -q` get a terminal, so each passes `--plain`. CI's `playbook` job runs `ws server apply
---check` under `script` to draw the screen ([The `playbook` job](checks.md#the-playbook-job)), and
-a case of the `mac` job does so with `ws mac apply --check` ([The Mac](checks.md#the-mac)).
+Anywhere else ws prints lines, as before, byte for byte. That covers CI, a pipe and the unit on ws,
+which reads the last line of a run. The wizard's cases in `.github/mac-wizard` that run under
+`script -q` get a terminal, so each passes `--plain`. CI's `playbook` job runs `ws server ubuntu
+apply --check` under `script` to draw the screen ([The `playbook` job](checks.md#the-playbook-job)),
+and a case of the `mac` job does so with `ws client macos apply --check` ([The
+Mac](checks.md#the-mac)).
 
 The screen draws on stderr, where ws's lines go. Stdout and the exit codes stay what they were.
 The mode is chosen in `cmd/screen.go`.
@@ -124,10 +127,11 @@ The window goes with the screen, and these stay:
   lines beside them may hold a secret. `--plain` prints the whole diff.
 - A warning prints there too, on any run, as the step that gave it passes.
 - A failed step prints the last 30 lines of its output, then the error.
-- The summary of `ws server apply` is the last line. A passing `ws mac apply` prints nothing more.
+- The summary of `ws server ubuntu apply` is the last line. A passing `ws client macos apply` prints
+  nothing more.
 - What stays by hand prints after the screen.
-- `--plain` keeps every line of a run. What `ws mac apply` prints on stdout, the commands that make
-  the Mac ws's peer, waits for the screen's end, and prints after a run that passed.
+- `--plain` keeps every line of a run. What `ws client macos apply` prints on stdout, the commands
+  that make the Mac ws's peer, waits for the screen's end, and prints after a run that passed.
 
 What stays by hand holds the lines that the maintainer acts on past a run: ws's WireGuard key, and
 what a step leaves to do. A step says one through `effect.SayLasting`, which a plain run prints in
@@ -136,9 +140,9 @@ place.
 ### The log
 
 A run keeps its whole output in `$XDG_STATE_HOME/ws/`, or `~/.local/state/ws/`, in a file named for
-the command and the time, as `ws-server-apply-20261105T120000Z.log`. The directory is mode 0700
-and the file 0600. The file holds the lines the window shows, cleaned as the window cleans them,
-and a failed or skipped step's name. It holds too what a plain run prints apart from them: the
+the command and the time, as `ws-server-ubuntu-apply-20261105T120000Z.log`. The directory is mode
+0700 and the file 0600. The file holds the lines the window shows, cleaned as the window cleans
+them, and a failed or skipped step's name. It holds too what a plain run prints apart from them: the
 summary, the stdout text of a run, and what stays by hand. A hidden answer never reaches it, and
 neither does a foreground command's own output, which holds the terminal.
 
@@ -167,14 +171,14 @@ with changes, among those a filter shows. `/` filters, and `Esc` drops it. `ente
 chosen, `c` checks them and `q` leaves. The filter is the state screen's: it takes the same keys
 and a paste.
 
-`ws server apply` and `ws mac apply` open it at a terminal when they get no selection: no `--only`
-on the server, no STEP on the Mac, and no `--check` on either. The scan is a check of every step, run
-beside the list. `enter` then runs the steps chosen on the run screen, and `c` checks them there.
-Both are off with nothing chosen. A list left with `q` runs nothing and exits 0. A cut that follows
-a choice wins: nothing runs, and the status is that of the cut. The server's choice is the `--only`
-entries, `ROLE` or `ROLE/STEP`. The Mac's is a set of step names. `ssh again` has no row, as a check
-has no second plan: it runs, unless `ssh` is left out with changes. With `--plain` or no terminal
-the command runs at once, as before, and so does the server's with `--json`.
+`ws server ubuntu apply` and `ws client macos apply` open it at a terminal when they get no
+selection: no `--only` and no `--check`. The scan is a check of every step, run beside the list.
+`enter` then runs the steps chosen on the run screen, and `c` checks them there. Both are off with
+nothing chosen. A list left with `q` runs nothing and exits 0. A cut that follows a choice wins:
+nothing runs, and the status is that of the cut. The server's choice is the `--only` entries, `ROLE`
+or `ROLE/STEP`. The Mac's is a set of step names. `ssh again` has no row, as a check has no second
+plan: it runs, unless `ssh` is left out with changes. With `--plain` or no terminal the command runs
+at once, as before, and so does the server's with `--json`.
 
 A role's box follows its steps, and `[-]` says that some are on. A chosen step locks the step it
 waits on as `[#]`, and the pane beside the list says why. The order of roles is not modeled, so
@@ -184,8 +188,9 @@ waits on as `[#]`, and the pane beside the list says why. The order of roles is 
 
 ## The state screen
 
-`ws server state`, `ws mac state` and [the wizard's `s`](tui-wizard.md#the-state-screen) draw what a
-machine holds of what ws manages. The screen reads and changes nothing.
+`ws server ubuntu state`, `ws client macos state` and [the wizard's
+`s`](tui-wizard.md#the-state-screen) draw what a machine holds of what ws manages. The screen reads
+and changes nothing.
 
 The header holds the tabs, each with its count: Packages, Services, Files, Conflicts and Pending.
 The tabs wrap to a new line in a narrow window. Under a filter a count reads `shown/all`. A check
@@ -269,8 +274,8 @@ takes it from `Bridge.Effects`, with `Bridge.Foreground` and the run's stop:
 - A stage that has sudo ask ahead of its lines calls `effect.Validate`. That is `sudo -v` in plain
   mode, and the same field under a screen.
 
-ws runs as root on the server, with no sudo, so there it asks nothing. `ws mac apply` and
-`ws mac state` ask at their first root command, so one that needs none asks nothing.
+ws runs as root on the server, with no sudo, so there it asks nothing. `ws client macos apply` and
+`ws client macos state` ask at their first root command, so one that needs none asks nothing.
 
 ## The terminal comes back
 
@@ -284,8 +289,8 @@ the context in each case:
 
 | Command | Plain mode, on a signal | Status |
 | --- | --- | --- |
-| `ws mac wizard` | Ends the context, and prints an error line. | 1 |
+| `ws client macos wizard` | Ends the context, and prints an error line. | 1 |
 | `ws update` | Ends the context. | 128 plus the signal |
-| `ws server apply`, `ws mac apply` | Dies at once, mid-step. | 128 plus the signal |
+| `ws server ubuntu apply`, `ws client macos apply` | Dies at once, mid-step. | 128 plus the signal |
 
 So 130 is SIGINT and 143 is SIGTERM wherever the status is 128 plus the signal.

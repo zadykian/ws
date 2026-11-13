@@ -26,7 +26,7 @@ func TestCredstoreReadsTheIdentity(t *testing.T) {
 
 func TestCredstoreWithoutTheCredential(t *testing.T) {
 	_, err := credstore{M: effecttest.NewMachine()}.Identity(context.Background())
-	if !errors.Is(err, ErrNoCredential) || !strings.Contains(err.Error(), "ws server secrets init") {
+	if !errors.Is(err, ErrNoCredential) || !strings.Contains(err.Error(), "ws server ubuntu secrets init") {
 		t.Errorf("err = %v, want ErrNoCredential naming init", err)
 	}
 }

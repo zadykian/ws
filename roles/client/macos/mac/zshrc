@@ -1,4 +1,4 @@
-# Written by ws mac apply: its next run replaces changes made here.
+# Written by ws client macos apply: its next run replaces changes made here.
 #
 # ~/.zshrc sources this file. tmux, Fresh and cld's sessions turn modes on in the terminal, and a
 # dropped ssh leaves them on: the mouse would type escape codes at the prompt. So, before each

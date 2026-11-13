@@ -35,7 +35,7 @@ func (s wsStatus) sameSecrets() bool { return s.Run.Exit != "" && s.Run.Secrets 
 // or by hand, makes the next run due.
 func (s wsStatus) sameVars() bool { return s.Run.Exit != "" && s.Run.Vars == s.Vars }
 
-// run runs ws server apply through the remote script.
+// run runs ws server ubuntu apply through the remote script.
 func (r *WsRun) run(ctx context.Context) error {
 	if err := r.Ws.run(ctx, onlyArgs(r.Only)); err != nil {
 		// A screen ends by the cut's own words, which leave the unit unsaid, and a plain run by fail's.

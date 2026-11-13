@@ -17,9 +17,9 @@ func TestTunnelApply(t *testing.T) {
 	} {
 		tun, m := newTunnel(keyA, wsStatus{WgKey: keyB, Peered: true, MacKey: keyA}, false)
 		m.Results["sudo -v"] = effecttest.Result{}
-		m.Results[libexec+" mac tunnel key"] = effecttest.Result{Out: []byte(keyA + "\n")}
+		m.Results[libexec+" client macos tunnel key"] = effecttest.Result{Out: []byte(keyA + "\n")}
 		if tc.shake != "" {
-			m.Results[libexec+" mac tunnel status"] = effecttest.Result{Out: []byte(tc.shake)}
+			m.Results[libexec+" client macos tunnel status"] = effecttest.Result{Out: []byte(tc.shake)}
 		}
 		m.Results["mkdir -p /h"] = effecttest.Result{}
 		m.Results[tunnelCall(tun.SSH, "-o", "BatchMode=yes", "ws", "echo", "ok")] =
@@ -41,7 +41,7 @@ func TestTunnelApply(t *testing.T) {
 func TestTunnelApplyStops(t *testing.T) {
 	tun, m := newTunnel(keyA, wsStatus{Peered: true}, false)
 	m.Results["sudo -v"] = effecttest.Result{}
-	m.Results[libexec+" mac tunnel key"] = effecttest.Result{Out: []byte("x\n")}
+	m.Results[libexec+" client macos tunnel key"] = effecttest.Result{Out: []byte("x\n")}
 	if err := tun.Apply(context.Background(), step.Plan{}); err == nil || !strings.Contains(err.Error(), "prints no key") {
 		t.Errorf("Apply with no key = %v", err)
 	}

@@ -14,7 +14,7 @@ import (
 
 func TestMacConfigureAtATerminalDrawsAForm(t *testing.T) {
 	p, _ := macTerminal()
-	status, stdout, stderr := runWs(p, "\x03", "mac", "configure")
+	status, stdout, stderr := runWs(p, "\x03", "client", "macos", "configure")
 	if status != 130 || stdout != "" || !strings.Contains(stderr, enterScreen) || !strings.Contains(stderr, leaveScreen) {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
@@ -29,7 +29,7 @@ func TestMacConfigureWritesWhatAFormSaves(t *testing.T) {
 	ended := make(chan int, 1)
 	go func() {
 		root := newRoot(p, newMacCmd(p), newServerCmd(p))
-		ended <- execute(context.Background(), root, []string{"mac", "configure"}, in, io.Discard, io.Discard)
+		ended <- execute(context.Background(), root, []string{"client", "macos", "configure"}, in, io.Discard, io.Discard)
 	}()
 	if _, err := keys.Write([]byte("\t\tr.example\x13")); err != nil {
 		t.Fatal(err)
@@ -80,11 +80,11 @@ func TestMacConfigureRefusals(t *testing.T) {
 		args []string
 		want string
 	}{
-		"no terminal": {away, []string{"mac", "configure"}, "edit mac.conf by hand"},
-		"--plain":     {plain, []string{"--plain", "mac", "configure"}, "edit mac.conf by hand"},
-		"linux":       {linux, []string{"mac", "configure"}, "not Linux"},
-		"root":        {root, []string{"mac", "configure"}, "not root"},
-		"a bad line":  {bad, []string{"mac", "configure"}, "not a KEY=value line"},
+		"no terminal": {away, []string{"client", "macos", "configure"}, "edit mac.conf by hand"},
+		"--plain":     {plain, []string{"--plain", "client", "macos", "configure"}, "edit mac.conf by hand"},
+		"linux":       {linux, []string{"client", "macos", "configure"}, "not Linux"},
+		"root":        {root, []string{"client", "macos", "configure"}, "not root"},
+		"a bad line":  {bad, []string{"client", "macos", "configure"}, "not a KEY=value line"},
 	} {
 		status, stdout, stderr := runWs(tc.p, "", tc.args...)
 		if status != 1 || stdout != "" || !strings.Contains(stderr, tc.want) || strings.Contains(stderr, enterScreen) {

@@ -41,7 +41,8 @@ func editIn(c *cobra.Command, open openStore, fn func(*secrets.Secrets) error) e
 	return s.Edit(c.Context(), fn)
 }
 
-// newSecretsSetCmd returns set, of ws server secrets and ws mac secrets, with a command per kind.
+// newSecretsSetCmd returns set, of ws server ubuntu secrets and ws client macos secrets, with a
+// command per kind.
 func newSecretsSetCmd(p process, open openStore) *cobra.Command {
 	cmds := []*cobra.Command{newSecretsSetGitCmd(open), newSecretsSetFileCmd(p, open)}
 	for _, kind := range []string{secrets.KindToken, secrets.KindEnv, secrets.KindPassword} {

@@ -44,7 +44,7 @@ func inside(frame Size) Size {
 }
 
 // sides returns the sides that have a stage: ws's alone where none runs on the Mac, as in ws server
-// wizard, else both.
+// ubuntu wizard, else both.
 func (q queue) sides() []Side {
 	if slices.ContainsFunc(q.stages, func(s queueStage) bool { return s.side == MacSide }) {
 		return []Side{MacSide, WsSide}

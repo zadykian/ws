@@ -53,7 +53,7 @@ func (f VarsForm) Fields() []Field {
 
 // Save writes the edits in one login, each key's check being ws's, and reads the file back. A failed
 // one can leave the first keys written, which a second save writes again as they are. Nothing applies
-// them until the next ws server apply.
+// them until the next ws server ubuntu apply.
 func (f VarsForm) Save(ctx context.Context, out effect.Out, edits map[string]string) (VarsForm, error) {
 	if len(edits) == 0 {
 		out.Say("host_vars holds these values already")
@@ -66,6 +66,6 @@ func (f VarsForm) Save(ctx context.Context, out effect.Out, edits map[string]str
 	if err := f.Ws.setValues(ctx, pairs); err != nil {
 		return f, errors.New("host_vars on ws: " + stderrOf(err))
 	}
-	out.Say("wrote host_vars: the next ws server apply takes it")
+	out.Say("wrote host_vars: the next ws server ubuntu apply takes it")
 	return f.Load(ctx)
 }

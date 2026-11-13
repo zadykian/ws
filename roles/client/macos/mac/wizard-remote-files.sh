@@ -10,9 +10,10 @@
 #   or -. link PORT names that port in ws's /etc/ws/host_vars.yml as
 #   network_direct_link_interface, the port of the Mac's cable, which the network and wireguard
 #   roles read.
-# - user NAME names NAME in that file as ws_user, for ws server apply.
+# - user NAME names NAME in that file as ws_user, for ws server ubuntu apply.
 # - peer KEY writes KEY, the Mac's WireGuard key, to mac.pub where that holds another.
-# - values prints that file, and nothing where there is none. values PAIR... runs ws server values
+# - values prints that file, and nothing where there is none. values PAIR... runs ws server ubuntu
+# values
 #   set on each PAIR, the base64 of KEY=VALUE. ssh joins its arguments for this shell, which would
 #   split a value at a blank, run one with a quote, and lose an empty one.
 #
@@ -20,8 +21,8 @@
 
 set -eu
 
-# Sysfs's network interfaces, ws, the machine's values for ws server apply and the Mac's key for
-# wg0. CI's stand-in for ws roots each, a line NAME=PATH, in a directory of its own.
+# Sysfs's network interfaces, ws, the machine's values for ws server ubuntu apply and the Mac's key
+# for wg0. CI's stand-in for ws roots each, a line NAME=PATH, in a directory of its own.
 net=/sys/class/net
 ws=/usr/local/bin/ws
 vars=/etc/ws/host_vars.yml
@@ -138,7 +139,7 @@ values() {
         case $pair in *[!A-Za-z0-9+/=]*) die "'$pair' is not base64" ;; esac
         text=$(printf %s "$pair" | base64 -d) || die "'$pair' is not base64"
         case $text in [a-z]*=*) ;; *) die "'$pair' holds no KEY=VALUE" ;; esac
-        "$ws" server values set -- "${text%%=*}" "${text#*=}" || die "cannot write ${text%%=*}"
+        "$ws" server ubuntu values set -- "${text%%=*}" "${text#*=}" || die "cannot write ${text%%=*}"
     done
 }
 

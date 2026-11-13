@@ -37,7 +37,7 @@ func TestTunnelFinishPrintsTheKeyWhereMacConfLacksWsKey(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, want := range []string{"public key is PUB\n", "ssh -t -o HostName=ADDRESS -o Port=PORT ws \"printf '%s\\n' 'PUB' | sudo tee /etc/wireguard/mac.pub",
-		"ssh -t -o HostName=ADDRESS -o Port=PORT ws sudo ws server apply --only wireguard\n", "Then set WS_PUBLIC_KEY"} {
+		"ssh -t -o HostName=ADDRESS -o Port=PORT ws sudo ws server ubuntu apply --only wireguard\n", "Then set WS_PUBLIC_KEY"} {
 		if !strings.Contains(text.String(), want) {
 			t.Errorf("Finish printed %q; want %q in it", text.String(), want)
 		}
@@ -59,7 +59,7 @@ func TestTunnelDoesNotRunRootsCopyWhereItOrItsDirectoryIsToChange(t *testing.T) 
 	delete(m.Files, "/h/.config/ws/tunnel.pub")
 	tunnelChanges(t, daemonStep(m))
 	for _, c := range m.Calls {
-		if strings.Contains(c, "ws mac tunnel key") {
+		if strings.Contains(c, "ws client macos tunnel key") {
 			t.Errorf("calls = %q; want root's copy not run before Apply fixes it", m.Calls)
 		}
 	}

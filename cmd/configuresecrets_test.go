@@ -14,8 +14,8 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
-// wsSecrets is a ws that takes the login as root, whose ws server secrets runs here on ws, as root,
-// or where ssh fails with err.
+// wsSecrets is a ws that takes the login as root, whose ws server ubuntu secrets runs here on ws,
+// as root, or where ssh fails with err.
 type wsSecrets struct {
 	farWs
 	ws  *effecttest.Machine
@@ -30,7 +30,7 @@ func (w wsSecrets) RunInput(ctx context.Context, in []byte, name string, args ..
 		return nil, w.err
 	}
 	var far []string
-	for _, a := range args[at+3:] {
+	for _, a := range args[at+4:] {
 		far = append(far, strings.Trim(a, "'"))
 	}
 	status, out, errs := runServerSecrets(w.ws, 0, string(in), far...)
@@ -108,7 +108,7 @@ func TestWsSecretsSheetWithoutTheCredential(t *testing.T) {
 	p.machine = wsSecrets{farWs: newFarWs(m, ""), ws: effecttest.NewMachine()}
 	r := &varsReach{p: p}
 	defer r.close(context.Background())
-	if _, err := r.secretsSheet().Open(context.Background(), tui.Offscreen(r.p.machine)); err == nil || !strings.Contains(err.Error(), "ws server secrets init") {
+	if _, err := r.secretsSheet().Open(context.Background(), tui.Offscreen(r.p.machine)); err == nil || !strings.Contains(err.Error(), "ws server ubuntu secrets init") {
 		t.Errorf("err = %v, want one naming init", err)
 	}
 }

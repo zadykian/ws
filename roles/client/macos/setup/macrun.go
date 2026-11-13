@@ -12,8 +12,8 @@ import (
 // Options says how Run runs.
 type Options struct {
 	step.Options
-	// Only names the one step that runs, alone. Empty runs them all.
-	Only string
+	// Only names the steps that run, alone. Empty runs them all.
+	Only []string
 }
 
 // Run runs the steps that o names, or every step. A run that applies and names no step ends with
@@ -33,8 +33,8 @@ func (m Mac) Rows(o Options) []step.Step {
 func (m Mac) ofRun(o Options) []step.Step {
 	steps := m.steps(o.Check)
 	switch {
-	case o.Only != "":
-		return slices.DeleteFunc(steps, func(s step.Step) bool { return s.Name() != o.Only })
+	case len(o.Only) > 0:
+		return slices.DeleteFunc(steps, func(s step.Step) bool { return !slices.Contains(o.Only, s.Name()) })
 	case o.Check:
 		// Nothing is applied, so a second plan would only repeat the first.
 		return steps

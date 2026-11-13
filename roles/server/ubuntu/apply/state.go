@@ -10,15 +10,15 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
-// RoleState is what a role's steps report, as ws server state prints it. Prepare's steps stand
-// under the role Prepare.
+// RoleState is what a role's steps report, as ws server ubuntu state prints it. Prepare's steps
+// stand under the role Prepare.
 type RoleState struct {
 	Role  string        `json:"role"`
 	Steps []step.Report `json:"steps"`
 }
 
-// StateDoc is what ws server state --json prints, and what the Mac's wizard reads of it. Version is
-// that of the ws that read the steps.
+// StateDoc is what ws server ubuntu state --json prints, and what the Mac's wizard reads of it.
+// Version is that of the ws that read the steps.
 type StateDoc struct {
 	Version string      `json:"version"`
 	Roles   []RoleState `json:"roles"`

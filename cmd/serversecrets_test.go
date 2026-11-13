@@ -26,7 +26,7 @@ func credFixture() (*effecttest.Machine, *age.X25519Identity) {
 func runServerSecrets(m *effecttest.Machine, euid int, stdin string, args ...string) (int, string, string) {
 	p := fakeProcess()
 	p.machine, p.euid = m, euid
-	return runWs(p, stdin, append([]string{"server", "secrets"}, args...)...)
+	return runWs(p, stdin, append([]string{"server", "ubuntu", "secrets"}, args...)...)
 }
 
 func TestServerSecretsEdits(t *testing.T) {
@@ -96,7 +96,7 @@ func TestServerSecretsAsRootAlone(t *testing.T) {
 
 func TestServerSecretsWithoutTheCredential(t *testing.T) {
 	status, _, errs := runServerSecrets(effecttest.NewMachine(), 0, "dummy\n", "set", "env", "A")
-	if status != 1 || !strings.Contains(errs, "ws server secrets init") {
+	if status != 1 || !strings.Contains(errs, "ws server ubuntu secrets init") {
 		t.Errorf("status %d, stderr %q; want 1 naming init", status, errs)
 	}
 }

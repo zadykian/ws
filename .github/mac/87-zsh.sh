@@ -1,7 +1,8 @@
 #!/bin/bash
-# ws mac apply writes ~/.config/ws/zshrc, roles/client/macos/mac/zshrc whole, and ends ~/.zshrc with the line that
-# sources it. An interactive zsh prints the resets before each prompt, and the alternate screen's
-# reset after a 255 from ssh, or from cld with --host, alone. Functions stand in for both.
+# ws client macos apply writes ~/.config/ws/zshrc, roles/client/macos/mac/zshrc whole, and ends
+# ~/.zshrc with the line that sources it. An interactive zsh prints the resets before each prompt,
+# and the alternate screen's reset after a 255 from ssh, or from cld with --host, alone. Functions
+# stand in for both.
 
 set -eo pipefail
 

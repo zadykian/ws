@@ -40,7 +40,7 @@ type wsStatus struct {
 type stamp struct {
 	// Version is what the run's ws printed as its version before the run.
 	Version string
-	// Exit is ws server apply's status.
+	// Exit is ws server ubuntu apply's status.
 	Exit string
 	// Off is set where host_vars turned the outbound table off as the run began.
 	Off bool

@@ -26,14 +26,14 @@ func sent(r RunScreen, msgs ...tea.Msg) RunScreen {
 func shown(r RunScreen) string { return stripped(r.View().Content) }
 
 func testRun() RunScreen {
-	screen := NewRunScreen("ws server apply", testTheme,
+	screen := NewRunScreen("ws server ubuntu apply", testTheme,
 		Group{Name: "base", Steps: []string{"Packages", "Locale"}}, Group{Name: "ssh", Steps: []string{"Keys"}})
 	return sent(screen, tea.WindowSizeMsg{Width: 80, Height: 24})
 }
 
 func TestRunScreenKnowsEveryStepBeforeTheRun(t *testing.T) {
 	got := shown(testRun())
-	for _, want := range []string{"ws server apply", "0/3", "base", "▸ Packages", "· Locale", "ssh", "· Keys"} {
+	for _, want := range []string{"ws server ubuntu apply", "0/3", "base", "▸ Packages", "· Locale", "ssh", "· Keys"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("frame holds no %q:\n%s", want, got)
 		}
@@ -150,7 +150,7 @@ func TestRunScreenInitReadsTheClock(t *testing.T) {
 }
 
 func TestRunScreenStatusMakesRoomInANarrowWindow(t *testing.T) {
-	r := sent(testRun(), tea.WindowSizeMsg{Width: 30, Height: 24})
+	r := sent(testRun(), tea.WindowSizeMsg{Width: 36, Height: 24})
 	if got := r.status(); got != "0/3 00:00" {
 		t.Errorf("status = %q, want no bar", got)
 	}

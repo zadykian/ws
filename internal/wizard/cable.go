@@ -24,9 +24,9 @@ const cableEnd = "10.77.0.1"
 // Docked, the Mac's cable gives that port carrier, which the files script's link lists among ws's
 // wired ports. The stage names the port in /etc/ws/host_vars.yml on ws, whose network role gives it
 // 10.77.0.1 as ws's end. Then it names the Mac's service of the cable in mac.conf's
-// WS_CABLE_SERVICE, and ws mac apply gives that 10.77.0.2 as the Mac's end. It names the port in
-// mac.conf's WS_CABLE_PORT too, which the stage names on ws again after ws's install. Undocked, the
-// first setup waits, and the closing list says to dock the Mac.
+// WS_CABLE_SERVICE. There ws client macos apply gives that 10.77.0.2 as the Mac's end. It names the
+// port in mac.conf's WS_CABLE_PORT too, which the stage names on ws again after ws's install.
+// Undocked, the first setup waits, and the closing list says to dock the Mac.
 type Cable struct {
 	// Ws is the session to ws, whose files script lists and names the ports. ws is read only where
 	// its ssh logs in, in this run.
@@ -38,8 +38,8 @@ type Cable struct {
 	Check bool
 	// RunDone is ws's run's verdict, which the stage waits on under --check.
 	RunDone func(ctx context.Context, c conf.Conf) bool
-	// MacApply runs ws mac apply, as the Setup stage's Run does, which gives the Mac's service its
-	// address.
+	// MacApply runs ws client macos apply, as the Setup stage's Run does, which gives the Mac's
+	// service its address.
 	MacApply func(ctx context.Context, check bool) (bool, error)
 	// Env looks up a variable of the environment.
 	Env func(string) (string, bool)
@@ -164,7 +164,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	if !c.lacks() {
 		return c.change("name " + cf.CablePort + " in /etc/ws/host_vars.yml on ws again, and run " +
-			"ws server apply --only network,wireguard there")
+			"ws server ubuntu apply --only network,wireguard there")
 	}
 	if none {
 		return c.change("write an empty WS_CABLE_SERVICE in mac.conf, for no cable")
@@ -175,7 +175,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	if portSet && !c.Check {
 		// Apply reads the ports once, and names the port that the environment gives.
 		return c.change("ask ws's port of the cable, name it in /etc/ws/host_vars.yml on ws, and run " +
-			"ws server apply --only network,wireguard there")
+			"ws server ubuntu apply --only network,wireguard there")
 	}
 	if err := c.read(ctx, ""); err != nil {
 		return step.Plan{}, err
@@ -185,10 +185,10 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	if c.end() == "" {
 		return c.change("ask ws's port of the cable, name it in /etc/ws/host_vars.yml on ws, and run " +
-			"ws server apply --only network,wireguard there")
+			"ws server ubuntu apply --only network,wireguard there")
 	}
 	return c.change("ask the Mac's service of the cable, write it in mac.conf as WS_CABLE_SERVICE, run " +
-		"ws mac apply, which gives it 10.77.0.2, and ping " + cableEnd)
+		"ws client macos apply, which gives it 10.77.0.2, and ping " + cableEnd)
 }
 
 func (*Cable) change(text string) (step.Plan, error) {

@@ -31,7 +31,7 @@ Put `~/.local/bin` on `PATH` by hand.
 ## Update
 
 `ws update` replaces the ws that runs with the latest release, and changes nothing else. It runs no
-role, so `ws server apply` follows it by hand. It works as `cld update` does:
+role, so `ws server ubuntu apply` follows it by hand. It works as `cld update` does:
 
 - It replaces the file ws runs from, the file a link leads to. `install.sh` goes by the user
   instead, so a ws in another directory stays there.
@@ -44,7 +44,7 @@ role, so `ws server apply` follows it by hand. It works as `cld update` does:
 It takes `WS_RELEASES_URL` as the table above says. To pick a release, run `install.sh` with
 `WS_VERSION`. A ws before v0.5.1 lacks the command, so `install.sh` updates it once.
 
-`ws mac wizard --update` stays apart: it runs `install.sh`, then the wizard with the new ws
+`ws client macos wizard --update` stays apart: it runs `install.sh`, then the wizard with the new ws
 ([The Mac's wizard](mac-wizard.md)).
 
 ## The install job

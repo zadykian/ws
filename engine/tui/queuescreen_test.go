@@ -14,13 +14,13 @@ import (
 
 // testQueueScreen is the two lists at 100 by 30, their scan under way.
 func testQueueScreen() queueScreen {
-	s := openQueue("ws mac wizard", testTheme, testStages(), make(chan QueueChoice, 1))
+	s := openQueue("ws client macos wizard", testTheme, testStages(), make(chan QueueChoice, 1))
 	return queueSent(s, tea.WindowSizeMsg{Width: 100, Height: 30})
 }
 
 func TestTheTwoListsStandSideBySideOverTheDetail(t *testing.T) {
 	got := queueShown(testQueueScreen())
-	for _, want := range []string{"ws mac wizard", "scanning 0/5", "Mac", "ws: roles not scanned", "Detail",
+	for _, want := range []string{"ws client macos wizard", "scanning 0/5", "Mac", "ws: roles not scanned", "Detail",
 		"▸  1 [ ] · Tools", "   3 [ ] · Sudo", "Not scanned yet."} {
 		if !strings.Contains(got, want) {
 			t.Errorf("no %q in:\n%s", want, got)
@@ -76,7 +76,7 @@ func TestAReadRoleClearsTheTitleOfWsList(t *testing.T) {
 	}
 }
 
-// wsStages is a queue of ws server wizard, whose every stage runs on ws.
+// wsStages is a queue of ws server ubuntu wizard, whose every stage runs on ws.
 func wsStages() []Stage {
 	return []Stage{
 		{Name: "Values", Side: WsSide},
@@ -86,10 +86,10 @@ func wsStages() []Stage {
 }
 
 func TestStagesAllOnWsStandInOneList(t *testing.T) {
-	s := openQueue("ws server wizard", testTheme, wsStages(), make(chan QueueChoice, 1))
+	s := openQueue("ws server ubuntu wizard", testTheme, wsStages(), make(chan QueueChoice, 1))
 	s = queueSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, scannedMsg{}, press('/'), press('s'))
 	got := queueShown(s)
-	for _, want := range []string{"ws server wizard", "ws", "/ s", "   3 [x] · Signing", "Detail"} {
+	for _, want := range []string{"ws server ubuntu wizard", "ws", "/ s", "   3 [x] · Signing", "Detail"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("no %q in:\n%s", want, got)
 		}
@@ -100,7 +100,7 @@ func TestStagesAllOnWsStandInOneList(t *testing.T) {
 }
 
 func TestTabLeavesOneListForTheButtons(t *testing.T) {
-	s := openQueue("ws server wizard", testTheme, wsStages(), make(chan QueueChoice, 1))
+	s := openQueue("ws server ubuntu wizard", testTheme, wsStages(), make(chan QueueChoice, 1))
 	s = queueSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, scannedMsg{}, tab)
 	if s.list.side != WsSide || s.footer.Focused() != pickTogglePlace {
 		t.Errorf("side %d, focus %d", s.list.side, s.footer.Focused())

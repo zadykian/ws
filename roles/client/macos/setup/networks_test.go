@@ -11,7 +11,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/setup"
 )
 
-const resolverHead = "# Written by github.com/zadykian/ws: ws mac apply, from WS_RESOLVERS in ~/.config/ws/mac.conf.\n"
+const resolverHead = "# Written by github.com/zadykian/ws: ws client macos apply, from WS_RESOLVERS in ~/.config/ws/mac.conf.\n"
 
 func networksStep(m *effecttest.Machine, c conf.Conf) *setup.Networks {
 	m.Root["/etc/ws-tunnel/routes.d"] = effect.Attrs{Mode: 0o755}
@@ -58,7 +58,7 @@ func TestNetworksSaysWhatCheckWouldPutBeforeRoutesDExists(t *testing.T) {
 	}
 	s.Check = false
 	if _, err := s.Plan(context.Background()); err == nil ||
-		err.Error() != "/etc/ws-tunnel/routes.d is missing: run ws mac apply first" {
+		err.Error() != "/etc/ws-tunnel/routes.d is missing: run ws client macos apply first" {
 		t.Errorf("Plan error = %v", err)
 	}
 }

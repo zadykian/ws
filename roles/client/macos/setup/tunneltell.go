@@ -22,7 +22,7 @@ func (t *Tunnel) publicKey(ctx context.Context) (string, error) {
 	if _, err := t.M.RootAttrs(tunnelLibexec + "/ws"); errors.Is(err, fs.ErrNotExist) {
 		return "", nil
 	}
-	out, err := t.M.RunRoot(ctx, tunnelLibexec+"/ws", "mac", "tunnel", "key")
+	out, err := t.M.RunRoot(ctx, tunnelLibexec+"/ws", "client", "macos", "tunnel", "key")
 	if err != nil {
 		return "", fmt.Errorf("cannot read the Mac's public key: %w", err)
 	}
@@ -85,8 +85,8 @@ func (t *Tunnel) finish(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	// /etc/wireguard and ws server apply are root's, so a WS_USER other than root goes through sudo,
-	// with a terminal for its password. The key, which is public, goes in the remote command, so
+	// /etc/wireguard and ws server ubuntu apply are root's, so a WS_USER other than root goes through
+	// sudo, with a terminal for its password. The key, which is public, goes in the remote command, so
 	// that ssh's stdin stays the terminal.
 	sudo, tty := "", ""
 	if t.Conf.User != "root" {
@@ -96,10 +96,10 @@ func (t *Tunnel) finish(ctx context.Context) error {
 	_, _ = fmt.Fprintf(t.Text, "The Mac's WireGuard public key is %s\nMake it ws's peer, mac, with a direct way to ws, "+
 		"as ssh ws needs this done first. ADDRESS and PORT are that way:\n\n"+
 		"    %s \"printf '%%s\\n' '%s' | %stee /etc/wireguard/mac.pub >/dev/null\"\n"+
-		"    %s %sws server apply --only wireguard\n", public, ssh, public, sudo, ssh, sudo)
+		"    %s %sws server ubuntu apply --only wireguard\n", public, ssh, public, sudo, ssh, sudo)
 	if t.Conf.PublicKey == "" {
 		_, _ = io.WriteString(t.Text, "\nThen set WS_PUBLIC_KEY in ~/.config/ws/mac.conf to ws's key, which that run prints, and run\n"+
-			"ws mac apply again, which installs the tunnel's daemon.\n")
+			"ws client macos apply again, which installs the tunnel's daemon.\n")
 	}
 	return nil
 }

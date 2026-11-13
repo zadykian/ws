@@ -13,12 +13,13 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
-// runFarSecrets runs ws mac secrets ARGS on a Mac whose ws is m, or where ssh fails with err.
+// runFarSecrets runs ws client macos secrets ARGS on a Mac whose ws is m, or where ssh fails with
+// err.
 func runFarSecrets(m *effecttest.Machine, err error, stdin string, args ...string) (int, string, string) {
 	p, mac := macTerminal()
 	mac.Files["/p12"] = []byte{0, 1, 2}
 	p.machine = wsSecrets{farWs: newFarWs(mac, ""), ws: m, err: err}
-	return runWs(p, stdin, append([]string{"mac", "secrets"}, args...)...)
+	return runWs(p, stdin, append([]string{"client", "macos", "secrets"}, args...)...)
 }
 
 func TestMacSecretsEditWsFile(t *testing.T) {
@@ -42,7 +43,7 @@ func TestMacSecretsEditWsFile(t *testing.T) {
 
 func TestMacSecretsSayWhyTheyStop(t *testing.T) {
 	ssh := errors.New("[ssh]: exit status 255: \nssh: connect to host ws: No route to host")
-	for err, want := range map[error]string{ssh: "ws is out of reach", nil: "run ws server secrets init"} {
+	for err, want := range map[error]string{ssh: "ws is out of reach", nil: "run ws server ubuntu secrets init"} {
 		status, _, errs := runFarSecrets(effecttest.NewMachine(), err, "", "unset", "env", "A")
 		if status != 1 || !strings.Contains(errs, want) {
 			t.Errorf("status %d, stderr %q; want 1 naming %q", status, errs, want)
@@ -53,12 +54,12 @@ func TestMacSecretsSayWhyTheyStop(t *testing.T) {
 // With no way to ws, a command says so before it reads a value, and a value never shows.
 func TestMacSecretsSetAsksNoValueWithWsOutOfReach(t *testing.T) {
 	p, m := macTerminal()
-	if status, _, errs := runWs(p, "dummy-value\n", "mac", "secrets", "set", "env", "A"); status != 1 ||
+	if status, _, errs := runWs(p, "dummy-value\n", "client", "macos", "secrets", "set", "env", "A"); status != 1 ||
 		!strings.Contains(errs, "no direct way") || len(m.Inputs) != 0 {
 		t.Errorf("status %d, stderr %q; want 1 naming the way", status, errs)
 	}
 	status, _, errs := runFarSecrets(effecttest.NewMachine(), nil, "dummy-value\n", "set", "env", "A")
-	if status != 1 || !strings.Contains(errs, "run ws server secrets init") || strings.Contains(errs, "dummy-value") {
+	if status != 1 || !strings.Contains(errs, "run ws server ubuntu secrets init") || strings.Contains(errs, "dummy-value") {
 		t.Errorf("status %d, stderr %q; want 1 naming init, and no value", status, errs)
 	}
 }
@@ -94,13 +95,13 @@ func TestMacSecretsAskSudoAtTheTerminalPastStdin(t *testing.T) {
 	p.machine, p.tty = sudoWs{wsSecrets{farWs: newFarWs(mac, ""), ws: m}}, false
 	tty := &effecttest.Prompt{T: t, Hidden: []string{"pw"}}
 	p.openTTY = func() (effect.Hidden, func(), error) { return tty, func() {}, nil }
-	status, _, errs := runWs(p, "dummy-value\n", "mac", "secrets", "set", "env", "A")
+	status, _, errs := runWs(p, "dummy-value\n", "client", "macos", "secrets", "set", "env", "A")
 	if s, err := secrets.Load(m, secrets.FilePath, id); status != 0 || err != nil || s.Env["A"] != "dummy-value" {
 		t.Errorf("status %d, stderr %q, secrets %+v, %v; want A set", status, errs, s, err)
 	}
 	p, mac = macTerminal()
 	p.machine, p.tty = sudoWs{wsSecrets{farWs: newFarWs(mac, ""), ws: m}}, false
-	if status, _, errs := runWs(p, "dummy-value\n", "mac", "secrets", "set", "env", "A"); status != 1 ||
+	if status, _, errs := runWs(p, "dummy-value\n", "client", "macos", "secrets", "set", "env", "A"); status != 1 ||
 		!strings.Contains(errs, "no terminal") {
 		t.Errorf("status %d, stderr %q; want 1 naming no terminal", status, errs)
 	}

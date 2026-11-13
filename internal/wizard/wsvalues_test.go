@@ -75,7 +75,7 @@ func TestWsValuesWritesEachAnswer(t *testing.T) {
 
 func TestWsValuesWithNoTerminalNamesTheCommand(t *testing.T) {
 	set, err := valuesApply(t, "ws_user: a\n", "", nil)
-	if err == nil || !strings.Contains(err.Error(), "sudo ws server values set security_outbound VALUE") || set != nil {
+	if err == nil || !strings.Contains(err.Error(), "sudo ws server ubuntu values set security_outbound VALUE") || set != nil {
 		t.Errorf("Apply = %v; wrote %q", err, set)
 	}
 }

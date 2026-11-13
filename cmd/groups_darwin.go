@@ -8,7 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 )
 
-// groups returns the command groups that exist on this system: ws mac, on a Mac.
+// groups returns the command groups that exist on this system: ws client macos, on a Mac.
 func groups(p process) []*cobra.Command {
 	p.machine = effect.OSMachine{}
 	return []*cobra.Command{newMacCmd(p)}

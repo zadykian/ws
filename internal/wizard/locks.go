@@ -17,6 +17,6 @@ func Locks(s step.Step) string {
 	return s.WaitsOn()
 }
 
-// Locks is ws mac apply, whose steps the stage applies itself, so a list holds them on beside it.
-// A plain run's Cable reads Homebrew as ever.
+// Locks is ws client macos apply, whose steps the stage applies itself, so a list holds them on
+// beside it. A plain run's Cable reads Homebrew as ever.
 func (*Cable) Locks() string { return setupStage }

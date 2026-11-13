@@ -14,7 +14,7 @@ import (
 // twoPanes is a list beside a window of output, which takes the room left twice over.
 func twoPanes() Layout {
 	return Layout{
-		Title:  "ws server apply",
+		Title:  "ws server ubuntu apply",
 		Status: "3/59",
 		Panes: []Pane{
 			{Title: "Steps", Body: "a\nb", Focused: true},
@@ -118,7 +118,7 @@ func TestPaneRender(t *testing.T) {
 
 func TestRenderAt80x24(t *testing.T) {
 	lines := strings.Split(stripped(twoPanes().Render(NewTheme(noColor("1")), 80, 24)), "\n")
-	if want := " ws server apply" + strings.Repeat(" ", 59) + "3/59 "; lines[0] != want {
+	if want := " ws server ubuntu apply" + strings.Repeat(" ", 52) + "3/59 "; lines[0] != want {
 		t.Errorf("title %q, want %q", lines[0], want)
 	}
 	if !strings.HasPrefix(lines[1], "┏━ Steps ") || !strings.Contains(lines[1], "╭─ Output ") {
@@ -154,8 +154,8 @@ func TestRenderDrawsTheHeaderAboveThePanes(t *testing.T) {
 }
 
 func TestRenderDropsTheStatusThatDoesNotFit(t *testing.T) {
-	got := stripped(twoPanes().Render(NewTheme(noColor("1")), 18, 24))
-	if line, _, _ := strings.Cut(got, "\n"); line != " ws server apply  " {
+	got := stripped(twoPanes().Render(NewTheme(noColor("1")), 25, 24))
+	if line, _, _ := strings.Cut(got, "\n"); line != " ws server ubuntu apply  " {
 		t.Errorf("title %q", line)
 	}
 }

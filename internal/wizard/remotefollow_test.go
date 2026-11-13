@@ -136,7 +136,7 @@ func TestEachRunIsFollowed(t *testing.T) {
 	tun, m := newTunnel(keyA, wsStatus{}, false)
 	tun.Ws.events = h
 	m.Results["sudo -v"] = effecttest.Result{}
-	m.Results[libexec+" mac tunnel key"] = effecttest.Result{Out: []byte(keyA + "\n")}
+	m.Results[libexec+" client macos tunnel key"] = effecttest.Result{Out: []byte(keyA + "\n")}
 	m.Results[opLine("peer", keyA)] = effecttest.Result{}
 	m.Results[opLine("run", "--only", "wireguard")] = log
 	if err := tun.Apply(ctx, step.Plan{}); err == nil || !strings.Contains(err.Error(), "lacks the Mac's key") {

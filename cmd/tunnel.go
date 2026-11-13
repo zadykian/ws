@@ -34,13 +34,13 @@ const watchWait = 5 * time.Second
 // statusWait is how long status waits for the device's socket.
 const statusWait = 5 * time.Second
 
-// newTunnelCmd returns ws mac tunnel.
+// newTunnelCmd returns ws client macos tunnel.
 func newTunnelCmd(p process) *cobra.Command {
 	return group("tunnel", "the Mac's tunnel to ws",
 		newTunnelRunCmd(p), newTunnelStatusCmd(p), newTunnelKeyCmd(p), newTunnelLoadedCmd(p), newTunnelRoutesCmd(p))
 }
 
-// newTunnelRunCmd returns ws mac tunnel run.
+// newTunnelRunCmd returns ws client macos tunnel run.
 func newTunnelRunCmd(_ process) *cobra.Command {
 	return &cobra.Command{
 		Use:   "run",
@@ -51,7 +51,7 @@ func newTunnelRunCmd(_ process) *cobra.Command {
 	}
 }
 
-// newTunnelStatusCmd returns ws mac tunnel status.
+// newTunnelStatusCmd returns ws client macos tunnel status.
 func newTunnelStatusCmd(p process) *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
@@ -68,7 +68,7 @@ func newTunnelStatusCmd(p process) *cobra.Command {
 	}
 }
 
-// newTunnelKeyCmd returns ws mac tunnel key.
+// newTunnelKeyCmd returns ws client macos tunnel key.
 func newTunnelKeyCmd(p process) *cobra.Command {
 	return &cobra.Command{
 		Use:   "key",

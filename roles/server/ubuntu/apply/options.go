@@ -1,7 +1,7 @@
-// Package apply runs the server's roles for ws server apply, each as Go steps.
+// Package apply runs the server's roles for ws server ubuntu apply, each as Go steps.
 package apply
 
-// Options are the flags of ws server apply.
+// Options are the flags of ws server ubuntu apply.
 type Options struct {
 	// Check plans the steps and applies none.
 	Check bool

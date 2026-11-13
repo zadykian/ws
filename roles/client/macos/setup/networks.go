@@ -85,7 +85,7 @@ func (n *Networks) resolvers(ctx context.Context) ([]step.Change, error) {
 			return nil, err
 		} else if !own {
 			return nil, fmt.Errorf("%s is another script's, or written by hand: have that script call "+
-				"ws mac resolver %s with no address, or move the file away", file, r.Domain)
+				"ws client macos resolver %s with no address, or move the file away", file, r.Domain)
 		}
 		// The directory is planned once: a second mkdir would fail where the directory is new.
 		if i == 0 {

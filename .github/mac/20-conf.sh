@@ -1,6 +1,7 @@
 #!/bin/bash
 # mac.conf, without ws's WireGuard key. It names a file key, made here, as ws's login key, which
-# ws mac apply needs. The runner must lack one, as mac-identity-checks.sh checks the key's lines.
+# ws client macos apply needs. The runner must lack one, as mac-identity-checks.sh checks the key's
+# lines.
 
 set -eo pipefail
 

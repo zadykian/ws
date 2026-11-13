@@ -25,12 +25,12 @@ func pickShown(s pickScreen) string { return stripped(s.View().Content) }
 // testPick is a screen at 80 by 24, its scan under way.
 func testPick() pickScreen {
 	groups := []Group{{Name: "base", Steps: []string{"Packages", "Locale"}}, {Name: "ssh", Steps: []string{"Keys"}}}
-	return pickSent(newPickScreen("ws server apply", testTheme, groups, make(chan Choice, 1)), tea.WindowSizeMsg{Width: 80, Height: 24})
+	return pickSent(newPickScreen("ws server ubuntu apply", testTheme, groups, make(chan Choice, 1)), tea.WindowSizeMsg{Width: 80, Height: 24})
 }
 
 func TestPickScreenShowsEveryStepBeforeTheScan(t *testing.T) {
 	got := pickShown(testPick())
-	for _, want := range []string{"ws server apply", "scanning 0/3", "[ ] base", "[ ] · Packages", "[ ] ssh", "[ ] · Keys"} {
+	for _, want := range []string{"ws server ubuntu apply", "scanning 0/3", "[ ] base", "[ ] · Packages", "[ ] ssh", "[ ] · Keys"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("no %q in:\n%s", want, got)
 		}

@@ -1,7 +1,7 @@
 # otelcol
 
 The `otelcol` role runs the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) on
-the host. Its code is Go, in `roles/server/ubuntu/otelcol`, as steps of `ws server apply`:
+the host. Its code is Go, in `roles/server/ubuntu/otelcol`, as steps of `ws server ubuntu apply`:
 node_exporter, the `.deb`'s install, the configuration, and the check that the
 collector answers. It takes OTLP on loopback, and reads the journal, the host's metrics and its
 temperatures from node_exporter. It sends it all to SigNoz, and claude's metrics to another

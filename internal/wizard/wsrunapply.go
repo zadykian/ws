@@ -8,11 +8,11 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-// Apply runs ws server apply in a unit of its own through the remote script, or follows the run
-// that goes on there, with its log on stderr. On a cloud VM the outbound table would drop the
+// Apply runs ws server ubuntu apply in a unit of its own through the remote script, or follows the
+// run that goes on there, with its log on stderr. On a cloud VM the outbound table would drop the
 // provider's metadata service. So host_vars names security_outbound: false before the run, as ws
-// server apply reads its values from that file. A unit that the run followed may have begun before
-// a change to that file: a run of its own follows then.
+// server ubuntu apply reads its values from that file. A unit that the run followed may have begun
+// before a change to that file: a run of its own follows then.
 func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 	c, ok := p.Changes[0].(runChange)
 	if !ok {
@@ -32,7 +32,7 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 			}
 		}
 	}
-	r.Out.Say("%s: ws server apply runs on ws in a unit of its own, which goes on where ssh drops; "+
+	r.Out.Say("%s: ws server ubuntu apply runs on ws in a unit of its own, which goes on where ssh drops; "+
 		"a first run takes 20 to 40 minutes", runStage)
 	if err := r.run(ctx); err != nil {
 		return err
@@ -46,7 +46,7 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 		return fail()
 	} else if !s.sameVars() {
 		r.Out.Say("%s: the unit it followed began before ws's host_vars took its last change, "+
-			"so ws server apply runs again", runStage)
+			"so ws server ubuntu apply runs again", runStage)
 		if err := r.run(ctx); err != nil {
 			return err
 		}
@@ -63,7 +63,7 @@ func (r *WsRun) outbound(ctx context.Context) error {
 	if err := r.Ws.outbound(ctx); err != nil {
 		lines := strings.Split(strings.TrimSpace(err.Error()), "\n")
 		return fmt.Errorf("%s: ws's host_vars lacks security_outbound: false: %s; mend that, or run the "+
-			"wizard with --update, which runs ws server apply again", runStage, lines[len(lines)-1])
+			"wizard with --update, which runs ws server ubuntu apply again", runStage, lines[len(lines)-1])
 	}
 	return nil
 }

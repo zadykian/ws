@@ -21,7 +21,7 @@ const CredstorePath = "/etc/credstore.encrypted/" + CredentialName
 const FilePath = "/etc/ws/secrets.age"
 
 // ErrNoCredential is the error where ws lacks the credential.
-var ErrNoCredential = errors.New("no credential " + CredstorePath + ": run ws server secrets init")
+var ErrNoCredential = errors.New("no credential " + CredstorePath + ": run ws server ubuntu secrets init")
 
 // credstore keeps the identity as the credential, which systemd-creds encrypts by the host's key in
 // /var/lib/systemd. It does not use the TPM's key: a change of firmware or of Secure Boot can lock

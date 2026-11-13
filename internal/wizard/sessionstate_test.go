@@ -12,7 +12,7 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/apply"
 )
 
-// wsReport is a report of ws v1, as ws server state --json prints it.
+// wsReport is a report of ws v1, as ws server ubuntu state --json prints it.
 const wsReport = `{
   "version": "v1",
   "roles": [{"role": "base", "steps": [

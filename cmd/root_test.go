@@ -124,31 +124,32 @@ func TestMacHelpAndErrors(t *testing.T) {
 		wantOut    string
 		wantErr    string
 	}{
-		{"no command", []string{"mac"}, 0, "Available Commands:", ""},
-		{"help", []string{"mac", "-h"}, 0, "Available Commands:", ""},
-		{"unknown", []string{"mac", "nope"}, 2, "", "ws mac: unknown command \"nope\" for \"ws mac\"\nRun 'ws mac --help' for usage.\n"},
-		{"tunnel alone", []string{"mac", "tunnel"}, 0, "Available Commands:", ""},
-		{"tunnel unknown", []string{"mac", "tunnel", "nope"}, 2, "", "ws mac tunnel: unknown command"},
-		{"tunnel status extra", []string{"mac", "tunnel", "status", "x"}, 2, "", "ws mac tunnel status: unknown command \"x\""},
-		{"tunnel loaded extra", []string{"mac", "tunnel", "loaded", "x"}, 2, "", "ws mac tunnel loaded: unknown command \"x\""},
-		{"tunnel routes alone", []string{"mac", "tunnel", "routes"}, 2, "", "ws mac tunnel routes: requires at least 1 arg(s), only received 0\nRun 'ws mac tunnel routes --help' for usage.\n"},
-		{"resolver alone", []string{"mac", "resolver"}, 2, "", "ws mac resolver: requires at least 1 arg(s)"},
-		{"resolver flag", []string{"mac", "resolver", "--nope", "x"}, 2, "", "ws mac resolver: unknown flag: --nope"},
-		{"wizard flag", []string{"mac", "wizard", "--bogus"}, 2, "", "ws mac wizard: unknown flag: --bogus\nRun 'ws mac wizard --help' for usage.\n"},
-		{"wizard help", []string{"mac", "wizard", "-h"}, 0, "--check", ""},
-		{"conf two files", []string{"mac", "conf", "a", "b"}, 2, "", "ws mac conf: accepts at most 1 arg(s), received 2"},
-		{"apply two steps", []string{"mac", "apply", "ssh", "git"}, 2, "", "ws mac apply: accepts at most 1 arg(s), received 2"},
-		{"secrets alone", []string{"mac", "secrets"}, 0, "Available Commands:", ""},
-		{"secrets unknown", []string{"mac", "secrets", "nope"}, 2, "", "ws mac secrets: unknown command \"nope\""},
-		{"secrets init extra", []string{"mac", "secrets", "init", "x"}, 2, "", "ws mac secrets init: unknown command \"x\""},
-		{"secrets set alone", []string{"mac", "secrets", "set"}, 0, "Available Commands:", ""},
-		{"secrets set no name", []string{"mac", "secrets", "set", "env"}, 2, "", "ws mac secrets set env: accepts 1 arg(s), received 0"},
-		{"secrets set extra", []string{"mac", "secrets", "set", "env", "A", "x"}, 2, "", "ws mac secrets set env: accepts 1 arg(s), received 2"},
-		{"secrets set file no name", []string{"mac", "secrets", "set", "file"}, 2, "", "ws mac secrets set file: accepts between 1 and 2 arg(s), received 0"},
-		{"secrets set git flag", []string{"mac", "secrets", "set", "git", "https://git.example.com", "--bogus"}, 2, "", "ws mac secrets set git: unknown flag: --bogus"},
-		{"secrets unset one", []string{"mac", "secrets", "unset", "env"}, 2, "", "ws mac secrets unset: accepts 2 arg(s), received 1"},
-		{"secrets keys extra", []string{"mac", "secrets", "keys", "x"}, 2, "", "ws mac secrets keys: unknown command \"x\""},
-		{"apply unknown step", []string{"mac", "apply", "nope"}, 2, "", "ws mac apply: invalid argument \"nope\" for \"ws mac apply\""},
+		{"no command", []string{"client", "macos"}, 0, "Available Commands:", ""},
+		{"help", []string{"client", "macos", "-h"}, 0, "Available Commands:", ""},
+		{"unknown", []string{"client", "macos", "nope"}, 2, "", "ws client macos: unknown command \"nope\" for \"ws client macos\"\nRun 'ws client macos --help' for usage.\n"},
+		{"tunnel alone", []string{"client", "macos", "tunnel"}, 0, "Available Commands:", ""},
+		{"tunnel unknown", []string{"client", "macos", "tunnel", "nope"}, 2, "", "ws client macos tunnel: unknown command"},
+		{"tunnel status extra", []string{"client", "macos", "tunnel", "status", "x"}, 2, "", "ws client macos tunnel status: unknown command \"x\""},
+		{"tunnel loaded extra", []string{"client", "macos", "tunnel", "loaded", "x"}, 2, "", "ws client macos tunnel loaded: unknown command \"x\""},
+		{"tunnel routes alone", []string{"client", "macos", "tunnel", "routes"}, 2, "", "ws client macos tunnel routes: requires at least 1 arg(s), only received 0\nRun 'ws client macos tunnel routes --help' for usage.\n"},
+		{"resolver alone", []string{"client", "macos", "resolver"}, 2, "", "ws client macos resolver: requires at least 1 arg(s)"},
+		{"resolver flag", []string{"client", "macos", "resolver", "--nope", "x"}, 2, "", "ws client macos resolver: unknown flag: --nope"},
+		{"wizard flag", []string{"client", "macos", "wizard", "--bogus"}, 2, "", "ws client macos wizard: unknown flag: --bogus\nRun 'ws client macos wizard --help' for usage.\n"},
+		{"wizard help", []string{"client", "macos", "wizard", "-h"}, 0, "--check", ""},
+		{"conf two files", []string{"client", "macos", "conf", "a", "b"}, 2, "", "ws client macos conf: accepts at most 1 arg(s), received 2"},
+		{"apply an argument", []string{"client", "macos", "apply", "ssh"}, 2, "", "ws client macos apply: unknown command \"ssh\" for \"ws client macos apply\""},
+		{"secrets alone", []string{"client", "macos", "secrets"}, 0, "Available Commands:", ""},
+		{"secrets unknown", []string{"client", "macos", "secrets", "nope"}, 2, "", "ws client macos secrets: unknown command \"nope\""},
+		{"secrets init extra", []string{"client", "macos", "secrets", "init", "x"}, 2, "", "ws client macos secrets init: unknown command \"x\""},
+		{"secrets set alone", []string{"client", "macos", "secrets", "set"}, 0, "Available Commands:", ""},
+		{"secrets set no name", []string{"client", "macos", "secrets", "set", "env"}, 2, "", "ws client macos secrets set env: accepts 1 arg(s), received 0"},
+		{"secrets set extra", []string{"client", "macos", "secrets", "set", "env", "A", "x"}, 2, "", "ws client macos secrets set env: accepts 1 arg(s), received 2"},
+		{"secrets set file no name", []string{"client", "macos", "secrets", "set", "file"}, 2, "", "ws client macos secrets set file: accepts between 1 and 2 arg(s), received 0"},
+		{"secrets set git flag", []string{"client", "macos", "secrets", "set", "git", "https://git.example.com", "--bogus"}, 2, "", "ws client macos secrets set git: unknown flag: --bogus"},
+		{"secrets unset one", []string{"client", "macos", "secrets", "unset", "env"}, 2, "", "ws client macos secrets unset: accepts 2 arg(s), received 1"},
+		{"secrets keys extra", []string{"client", "macos", "secrets", "keys", "x"}, 2, "", "ws client macos secrets keys: unknown command \"x\""},
+		{"apply unknown step", []string{"client", "macos", "apply", "--only", "nope"}, 2, "", "ws client macos apply: no step is named \"nope\""},
+		{"apply no step", []string{"client", "macos", "apply", "--only", ""}, 2, "", "ws client macos apply: --only names no step"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			status, stdout, stderr := runWs(fakeProcess(), "", tc.args...)
@@ -161,8 +162,8 @@ func TestMacHelpAndErrors(t *testing.T) {
 
 func TestTunnelStatusAndKeyNeedRoot(t *testing.T) {
 	for _, sub := range []string{"status", "key"} {
-		status, stdout, stderr := runWs(fakeProcess(), "", "mac", "tunnel", sub)
-		want := "ws mac tunnel " + sub + ": run it as root, with sudo\n"
+		status, stdout, stderr := runWs(fakeProcess(), "", "client", "macos", "tunnel", sub)
+		want := "ws client macos tunnel " + sub + ": run it as root, with sudo\n"
 		if status != 1 || stdout != "" || stderr != want {
 			t.Errorf("%s: status = %d, stdout = %q, stderr = %q; want 1, nothing, %q", sub, status, stdout, stderr, want)
 		}

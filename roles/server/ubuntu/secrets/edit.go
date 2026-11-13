@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// The kinds of an entry, as ws server secrets names them.
+// The kinds of an entry, as ws server ubuntu secrets names them.
 const (
 	KindToken    = "token"
 	KindEnv      = "env"

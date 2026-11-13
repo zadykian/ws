@@ -26,8 +26,8 @@ const (
 	leaveScreen = "\x1b[?1049l"
 )
 
-// serverTerminal returns a process with a terminal, as root on the one system that ws server apply
-// takes, with ca-certificates and tmux installed.
+// serverTerminal returns a process with a terminal, as root on the one system that ws server ubuntu
+// apply takes, with ca-certificates and tmux installed.
 func serverTerminal() (process, *effecttest.Machine) {
 	p := withEnv(fakeProcess(), map[string]string{"TERM": "xterm"})
 	p.tty, p.errTTY, p.euid = true, true, 0
@@ -39,12 +39,12 @@ func serverTerminal() (process, *effecttest.Machine) {
 
 func TestServerApplyAtATerminalEndsOnTheNormalScreen(t *testing.T) {
 	p, _ := serverTerminal()
-	status, stdout, stderr := runWs(p, "", "server", "apply", "--check", "--only", "tmux")
+	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "apply", "--check", "--only", "tmux")
 	left := strings.LastIndex(stderr, leaveScreen)
 	if status != 0 || stdout != "" || !strings.Contains(stderr, enterScreen) || left < 0 {
 		t.Fatalf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
-	if want := "ws server apply: would change: none\n"; !strings.HasSuffix(stderr[left:], want) {
+	if want := "ws server ubuntu apply: would change: none\n"; !strings.HasSuffix(stderr[left:], want) {
 		t.Errorf("after the screen: %q, want the last line %q", stderr[left:], want)
 	}
 }
@@ -52,9 +52,9 @@ func TestServerApplyAtATerminalEndsOnTheNormalScreen(t *testing.T) {
 func TestServerApplyReportsAFailurePastTheScreen(t *testing.T) {
 	p, m := serverTerminal()
 	m.Packages = nil
-	status, _, drawn := runWs(p, "", "server", "apply", "--only", "tmux")
+	status, _, drawn := runWs(p, "", "server", "ubuntu", "apply", "--only", "tmux")
 	left := strings.LastIndex(drawn, leaveScreen)
-	if status != 1 || left < 0 || !strings.Contains(drawn[left:], "ws server apply: Packages: ") {
+	if status != 1 || left < 0 || !strings.Contains(drawn[left:], "ws server ubuntu apply: Packages: ") {
 		t.Errorf("status = %d, stderr = %q", status, drawn)
 	}
 }
@@ -159,9 +159,9 @@ func TestServerGroupsNameEveryStepOfARun(t *testing.T) {
 // step's name holds a space, and --only keeps it whole.
 func TestServerApplyRefusesAStepItsRoleLacks(t *testing.T) {
 	p, m := serverTerminal()
-	status, _, stderr := runWs(p, "", "server", "apply", "--only", "tmux/no such")
-	want := `ws server apply: no step "no such" in tmux; its steps here are ["Tmux"]` + "\n" +
-		"Run 'ws server apply --help' for usage.\n"
+	status, _, stderr := runWs(p, "", "server", "ubuntu", "apply", "--only", "tmux/no such")
+	want := `ws server ubuntu apply: no step "no such" in tmux; its steps here are ["Tmux"]` + "\n" +
+		"Run 'ws server ubuntu apply --help' for usage.\n"
 	if status != 2 || stderr != want {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
@@ -172,8 +172,8 @@ func TestServerApplyRefusesAStepItsRoleLacks(t *testing.T) {
 
 func TestServerApplyTakesAStepByName(t *testing.T) {
 	p, _ := serverTerminal()
-	status, _, stderr := runWs(p, "", "server", "apply", "--plain", "--check", "--only", "tmux/Tmux")
-	if status != 0 || !strings.HasSuffix(stderr, "ws server apply: would change: none\n") {
+	status, _, stderr := runWs(p, "", "server", "ubuntu", "apply", "--plain", "--check", "--only", "tmux/Tmux")
+	if status != 0 || !strings.HasSuffix(stderr, "ws server ubuntu apply: would change: none\n") {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
 }
@@ -198,8 +198,8 @@ func TestApplyOnScreenChecksTheStepsNamed(t *testing.T) {
 
 func TestServerApplyDrawsNothingWithPlain(t *testing.T) {
 	p, _ := serverTerminal()
-	status, _, stderr := runWs(p, "", "server", "apply", "--plain", "--check", "--only", "tmux")
-	if status != 0 || strings.Contains(stderr, "\x1b") || !strings.HasSuffix(stderr, "ws server apply: would change: none\n") {
+	status, _, stderr := runWs(p, "", "server", "ubuntu", "apply", "--plain", "--check", "--only", "tmux")
+	if status != 0 || strings.Contains(stderr, "\x1b") || !strings.HasSuffix(stderr, "ws server ubuntu apply: would change: none\n") {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
 }

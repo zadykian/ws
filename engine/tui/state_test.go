@@ -21,7 +21,7 @@ var (
 func newTestState() StateScreen {
 	read := func() tea.Msg { return readAsked{} }
 	leave := func() tea.Msg { return leftAsked{} }
-	return NewStateScreen(testTheme, "ws server state", read, leave)
+	return NewStateScreen(testTheme, "ws server ubuntu state", read, leave)
 }
 
 // feedState gives s each message, and returns the last Cmd.

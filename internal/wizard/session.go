@@ -42,7 +42,7 @@ type Reach interface {
 	user() (string, error)
 	// claude runs claude auth login as WS_USER at the terminal.
 	claude(ctx context.Context) error
-	// rerun says how to run ws server apply again, for a stop that needs it.
+	// rerun says how to run ws server ubuntu apply again, for a stop that needs it.
 	rerun() string
 	// hand adds what stays by hand of this way's ws, as the status s read it.
 	hand(h *Hand, s wsStatus)
@@ -85,7 +85,7 @@ func (s *Session) stale() { s.held.read = false }
 // want reads what ws's run is to leave.
 func (s *Session) want() (conf.Conf, error) { return s.reach.want() }
 
-// rerun says how to run ws server apply again, for a stop that needs it.
+// rerun says how to run ws server ubuntu apply again, for a stop that needs it.
 func (s *Session) rerun() string { return s.reach.rerun() }
 
 // user returns WS_USER, whose claude and git config the stages read.
@@ -104,13 +104,13 @@ func (s *Session) Hand(ctx context.Context, h *Hand) {
 	s.reach.hand(h, st)
 }
 
-// Secrets runs ws server secrets ARGS on ws as root, with in as its stdin, and returns its stdout. A
-// value goes in in alone: ps shows the arguments. No script has an op for it, as the command is
-// ws's own, and the status stays stale after it, as it may change what the status reads. A failed
-// ssh says that ws is out of reach; else the error is what ws printed.
+// Secrets runs ws server ubuntu secrets ARGS on ws as root, with in as its stdin, and returns its
+// stdout. A value goes in in alone: ps shows the arguments. No script has an op for it, as the
+// command is ws's own, and the status stays stale after it, as it may change what the status reads.
+// A failed ssh says that ws is out of reach; else the error is what ws printed.
 func (s *Session) Secrets(ctx context.Context, in []byte, args ...string) ([]byte, error) {
 	s.stale()
-	out, err := s.shell.Run(ctx, in, append([]string{wsPath, "server", "secrets"}, args...)...)
+	out, err := s.shell.Run(ctx, in, append([]string{wsPath, "server", "ubuntu", "secrets"}, args...)...)
 	switch {
 	case err == nil:
 		return out, nil

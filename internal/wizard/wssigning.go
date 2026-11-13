@@ -9,9 +9,9 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-// WsGitHub is GitHub's API, from ws, for ws server wizard. It lists a login's signing keys with no
-// token, so the stage checks them on ws. ws's gh has no account permission that may add the key, so
-// where GitHub lacks it, the key goes to what stays by hand.
+// WsGitHub is GitHub's API, from ws, for ws server ubuntu wizard. It lists a login's signing keys
+// with no token, so the stage checks them on ws. ws's gh has no account permission that may add the
+// key, so where GitHub lacks it, the key goes to what stays by hand.
 type WsGitHub struct {
 	M    effect.Machine
 	Out  effect.Out

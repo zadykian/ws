@@ -6,8 +6,8 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 )
 
-// LocalShell runs a command on ws itself, as the user that runs ws, root for ws server wizard. Its
-// words reach the command as they are, with no shell between.
+// LocalShell runs a command on ws itself, as the user that runs ws, root for ws server ubuntu
+// wizard. Its words reach the command as they are, with no shell between.
 type LocalShell struct {
 	M effect.Machine
 	// User returns WS_USER, whose claude and git config the remote script reads as SUDO_USER's, as

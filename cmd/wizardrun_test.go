@@ -65,7 +65,7 @@ func TestWizardConfigEndsACutAsAPlainRunDoes(t *testing.T) {
 
 func TestWizardCheckAtATerminalGoesStraightToTheRun(t *testing.T) {
 	p, m := macTerminal()
-	_, stdout, stderr := runWs(p, "", "mac", "wizard", "--check")
+	_, stdout, stderr := runWs(p, "", "client", "macos", "wizard", "--check")
 	if stdout != "" || !strings.Contains(stderr, enterScreen) || !strings.Contains(stderr, leaveScreen) {
 		t.Errorf("stdout = %q, stderr = %q", stdout, stderr)
 	}
@@ -76,7 +76,7 @@ func TestWizardCheckAtATerminalGoesStraightToTheRun(t *testing.T) {
 
 func TestWizardPlainDrawsNoScreenAtATerminal(t *testing.T) {
 	p, _ := macTerminal()
-	_, _, stderr := runWs(p, "", "mac", "wizard", "--plain", "--check")
+	_, _, stderr := runWs(p, "", "client", "macos", "wizard", "--plain", "--check")
 	if strings.Contains(stderr, enterScreen) {
 		t.Errorf("--plain drew: %q", stderr)
 	}
@@ -84,7 +84,7 @@ func TestWizardPlainDrawsNoScreenAtATerminal(t *testing.T) {
 
 func TestWizardOpensTheListsAndLeavesWithQ(t *testing.T) {
 	p, m := macTerminal()
-	status, stdout, stderr := runWs(p, "q", "mac", "wizard")
+	status, stdout, stderr := runWs(p, "q", "client", "macos", "wizard")
 	if status != 0 || stdout != "" || !strings.Contains(stderr, enterScreen) || !strings.Contains(stderr, leaveScreen) {
 		t.Fatalf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
@@ -97,7 +97,7 @@ func TestWizardCutAtTheListsEndsWithStatusOne(t *testing.T) {
 	p, _ := macTerminal()
 	var out, errs bytes.Buffer
 	root := newRoot(p, newMacCmd(p), newServerCmd(p))
-	status := execute(context.Background(), root, []string{"mac", "wizard"}, repeating("\x03"), &out, &errs)
+	status := execute(context.Background(), root, []string{"client", "macos", "wizard"}, repeating("\x03"), &out, &errs)
 	if status != 1 {
 		t.Errorf("status = %d, want the plain wizard's 1: %q", status, errs.String())
 	}
@@ -121,7 +121,7 @@ func TestWizardRunsTheStagesChosenAlone(t *testing.T) {
 	var out bytes.Buffer
 	root := newRoot(p, newMacCmd(p), newServerCmd(p))
 	keys := newAfterScan("n \r")
-	status := execute(context.Background(), root, []string{"mac", "wizard"}, keys, &out, keys)
+	status := execute(context.Background(), root, []string{"client", "macos", "wizard"}, keys, &out, keys)
 	if status != 0 || strings.Count(strings.Join(m.Calls, "\n"), "run caffeinate") != 2 {
 		t.Fatalf("status = %d, want a scan and a run: calls = %q", status, m.Calls)
 	}
@@ -143,7 +143,7 @@ func TestWizardRunGoesOnceMoreForATick(t *testing.T) {
 	if !w.optionsOf(tui.QueueChoice{Whole: []string{"ws's run"}}, run).update {
 		t.Error("a tick in ws's run left the last run to speak")
 	}
-	if w.optionsOf(tui.QueueChoice{Whole: []string{"ws mac apply"}}, run).update {
+	if w.optionsOf(tui.QueueChoice{Whole: []string{"ws client macos apply"}}, run).update {
 		t.Error("another stage's tick ran ws again")
 	}
 }

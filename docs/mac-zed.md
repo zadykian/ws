@@ -1,7 +1,8 @@
 # Zed on the Mac
 
-`ws mac apply` sets up [Zed](https://zed.dev) on the Mac, the editor that opens projects on ws. The
-step is `zed`, so `ws mac apply zed` runs it alone, and `--check` shows its changes and makes none.
+`ws client macos apply` sets up [Zed](https://zed.dev) on the Mac, the editor that opens projects on
+ws. The step is `zed`, so `ws client macos apply --only zed` runs it alone, and `--check` shows its
+changes and makes none.
 
 ## The install
 

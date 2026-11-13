@@ -66,14 +66,14 @@ func TestWizardSetupWaitsOnTheMacKeyStage(t *testing.T) {
 	s := setupOf(t, wizardEffects{}, nil)
 	s.LookPath = func(string) (string, error) { return "/brew", nil }
 	p, err := s.Plan(context.Background())
-	if err != nil || len(p.Changes) != 1 || p.Changes[0].String() != "ws mac apply: after Mac key" {
+	if err != nil || len(p.Changes) != 1 || p.Changes[0].String() != "ws client macos apply: after Mac key" {
 		t.Errorf("Plan = %v, %v; want the wait on the Mac key stage", p, err)
 	}
 }
 
 func TestWizardSetupLeavesOutWhatTheRunDoes(t *testing.T) {
 	var got leftEvents
-	left := func(parent, name string) bool { return parent == "ws mac apply" && name == "ssh" }
+	left := func(parent, name string) bool { return parent == "ws client macos apply" && name == "ssh" }
 	s := setupOf(t, wizardEffects{obs: &got}, left)
 	// The fake machine fails ssh's plan, which a step left out survives.
 	_, _ = s.Run(context.Background(), true)

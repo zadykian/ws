@@ -11,14 +11,14 @@ import (
 )
 
 // setupStage names the stage in its messages.
-const setupStage = "ws mac apply"
+const setupStage = "ws client macos apply"
 
-// Setup is the stage that has ws mac apply set up the Mac from mac.conf, after sudo's password rather
-// than amid its lines. ws mac apply changes only what differs, and is silent then, so a plan is empty
-// once its own plan is.
+// Setup is the stage that has ws client macos apply set up the Mac from mac.conf, after sudo's
+// password rather than amid its lines. ws client macos apply changes only what differs, and is
+// silent then, so a plan is empty once its own plan is.
 type Setup struct {
-	// Run plans the steps of ws mac apply, or applies them where check is not set, and reports whether
-	// any had changes to make.
+	// Run plans the steps of ws client macos apply, or applies them where check is not set, and
+	// reports whether any had changes to make.
 	Run func(ctx context.Context, check bool) (bool, error)
 	// Conf is the mac.conf that Run reads.
 	Conf string
@@ -26,20 +26,23 @@ type Setup struct {
 	LookPath func(string) (string, error)
 	M        effect.Machine
 	sudoed   bool
-	// applied is set once ws mac apply has run: the runner plans again after Apply. The plan builds
-	// ws mac apply's steps afresh, which forget what a step only warned of, as cld's install.
+	// applied is set once ws client macos apply has run: the runner plans again after Apply. The plan
+	// builds ws client macos apply's steps afresh, which forget what a step only warned of, as cld's
+	// install.
 	applied bool
 }
 
 // Name is the stage's name.
 func (*Setup) Name() string { return setupStage }
 
-// WaitsOn is Homebrew, which ws mac apply needs. Under --check, ws mac apply's plan stands alone, as
-// setup_after in sh did, and the git step says itself what waits on the login.
+// WaitsOn is Homebrew, which ws client macos apply needs. Under --check, ws client macos apply's
+// plan stands alone, as setup_after in sh did, and the git step says itself what waits on the
+// login.
 func (*Setup) WaitsOn() string { return homebrewStage }
 
-// Plan runs ws mac apply's plan, which prints each change it finds. Where PATH has no brew, ws mac apply
-// would stop, so the plan waits on Homebrew. It waits on the Mac key stage too, for a key to name.
+// Plan runs ws client macos apply's plan, which prints each change it finds. Where PATH has no
+// brew, ws client macos apply would stop, so the plan waits on Homebrew. It waits on the Mac key
+// stage too, for a key to name.
 func (s *Setup) Plan(ctx context.Context) (step.Plan, error) {
 	if s.applied {
 		return step.Plan{}, nil
@@ -59,7 +62,7 @@ func (s *Setup) Plan(ctx context.Context) (step.Plan, error) {
 		case errors.Is(err, effect.ErrNoTicket):
 			return step.Plan{}, err
 		case err != nil:
-			return step.Plan{}, errors.New("sudo -v failed; ws mac apply needs sudo, as an admin of the Mac")
+			return step.Plan{}, errors.New("sudo -v failed; ws client macos apply needs sudo, as an admin of the Mac")
 		}
 		s.sudoed = true
 	}
@@ -71,8 +74,8 @@ func (s *Setup) Plan(ctx context.Context) (step.Plan, error) {
 }
 
 // unnamed reports whether mac.conf lacks a key that the Mac key stage asks for. Under --check that
-// stage writes no line, and ws mac apply would stop for the key, or plan without the one that a run
-// names. A file that cannot be read is Run's to report.
+// stage writes no line, and ws client macos apply would stop for the key, or plan without the one
+// that a run names. A file that cannot be read is Run's to report.
 func (s *Setup) unnamed() bool {
 	text, err := s.M.ReadFile(s.Conf)
 	if err != nil {
@@ -82,8 +85,8 @@ func (s *Setup) unnamed() bool {
 	return len(errs) == 0 && asked(c)
 }
 
-// Apply runs ws mac apply. Where it stops, it has said why. Where it finishes, the stage is done, as a
-// step that only warns, as cld's, leaves its change in the plan.
+// Apply runs ws client macos apply. Where it stops, it has said why. Where it finishes, the stage
+// is done, as a step that only warns, as cld's, leaves its change in the plan.
 func (s *Setup) Apply(ctx context.Context, _ step.Plan) error {
 	_, err := s.Run(ctx, false)
 	s.applied = err == nil

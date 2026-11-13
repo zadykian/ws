@@ -10,14 +10,14 @@ import (
 	"github.com/zadykian/ws/engine/tui"
 )
 
-// newServerConfigureCmd returns ws server configure.
+// newServerConfigureCmd returns ws server ubuntu configure.
 func newServerConfigureCmd(p process) *cobra.Command {
 	return &cobra.Command{
 		Use:   "configure",
 		Short: "edit ws's secrets and host_vars on forms, on ws",
-		Long: "The forms of ws mac configure that edit ws, read and written here as root, with no ssh. ws's " +
+		Long: "The forms of ws client macos configure that edit ws, read and written here as root, with no ssh. ws's " +
 			"secrets show as set or not, never their values. Ctrl-N goes to host_vars. Ctrl-S writes a form. " +
-			"It needs a terminal: anywhere else, run ws server secrets and ws server values set.",
+			"It needs a terminal: anywhere else, run ws server ubuntu secrets and ws server ubuntu values set.",
 		Args: cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error { return runServerConfigure(c, p) },
 	}
@@ -30,18 +30,18 @@ func runServerConfigure(c *cobra.Command, p process) error {
 		return errors.New("run it as root, by sudo: ws's secrets and host_vars are root's")
 	}
 	if !drawsScreen(c, p) {
-		return errors.New("it needs a terminal and no --plain: anywhere else, run ws server secrets " +
-			"and ws server values set")
+		return errors.New("it needs a terminal and no --plain: anywhere else, run ws server ubuntu secrets " +
+			"and ws server ubuntu values set")
 	}
 	return tui.Configure(c.Context(), screenConfig(c, p), c.CommandPath(), serverSheets(p)...)
 }
 
-// serverSheets are the forms of ws server configure and of ws server wizard's list.
+// serverSheets are the forms of ws server ubuntu configure and of ws server ubuntu wizard's list.
 func serverSheets(p process) []tui.Sheet {
 	return []tui.Sheet{serverSecretsSheet(p), hostVarsSheet(serverOpen)}
 }
 
-// serverSecretsSheet is ws's secrets file, edited here as ws server secrets edits it.
+// serverSecretsSheet is ws's secrets file, edited here as ws server ubuntu secrets edits it.
 func serverSecretsSheet(p process) tui.Sheet {
 	return tui.Sheet{
 		Name:   "secrets",

@@ -9,7 +9,7 @@
 set -u
 
 # The one line of the gh stage that a run says where the account holds the Mac's key.
-known="ws mac wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
+known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
 
 wsbin=$HOME/.local/bin/ws
 state=$RUNNER_TEMP/gh
@@ -27,27 +27,27 @@ error() {
 
 # quiet: a run with no terminal must print nothing.
 quiet() {
-    out=$("$wsbin" mac wizard </dev/null 2>&1)
+    out=$("$wsbin" client macos wizard </dev/null 2>&1)
     status=$?
-    [ "$status" = 0 ] && [ -z "${out#"$known"}" ] || error "ws mac wizard $1 exited $status: '$out'"
+    [ "$status" = 0 ] && [ -z "${out#"$known"}" ] || error "ws client macos wizard $1 exited $status: '$out'"
 }
 
 : >"$state/signing"
-out=$("$wsbin" mac wizard --check </dev/null 2>&1)
+out=$("$wsbin" client macos wizard --check </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
-printf '%s\n' "$out" | grep -qxF "ws mac wizard: Signing key: would run $add for ws's signing key" &&
-    [ "$status" = 0 ] && [ ! -s "$state/signing" ] || error "ws mac wizard --check exited $status"
-out=$("$wsbin" mac wizard </dev/null 2>&1)
+printf '%s\n' "$out" | grep -qxF "ws client macos wizard: Signing key: would run $add for ws's signing key" &&
+    [ "$status" = 0 ] && [ ! -s "$state/signing" ] || error "ws client macos wizard --check exited $status"
+out=$("$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
-printf '%s\n' "$out" | grep -qxF "ws mac wizard: Signing key: ran $add for ws's signing key" &&
+printf '%s\n' "$out" | grep -qxF "ws client macos wizard: Signing key: ran $add for ws's signing key" &&
     printf '%s\n' "$out" | grep -qx 'What stays by hand:' &&
     printf '%s\n' "$out" | grep -qF -e "$login" &&
     ! printf '%s\n' "$out" | grep -qF "ws's gh login" &&
     [ "$status" = 0 ] &&
     [ "$(cat "$state/signing")" = "$key" ] && [ "$(grep -cxF "$key" "$state/keys")" = 0 ] ||
-    error "ws mac wizard exited $status, adding other than the signing key to the signing keys"
+    error "ws client macos wizard exited $status, adding other than the signing key to the signing keys"
 quiet 'after the key was added'
 : >"$state/signing"
 sudo git config -f "$ws/root/home/$(id -un)/.gitconfig" --unset user.signingkey

@@ -1,9 +1,9 @@
 # The wizard's targets
 
-The Mac's wizard sets up ws on one of three machines, which `mac.conf`'s `WS_TARGET` names
-([The answers](mac-wizard.md#the-answers)). Each target sets the questions of ws's ways and their
-defaults, and what a few stages do. `ws server apply` is the same on each, but for the outbound
-table on a cloud VM.
+The Mac's wizard sets up ws on one of three machines, which `mac.conf`'s `WS_TARGET` names ([The
+answers](mac-wizard.md#the-answers)). Each target sets the questions of ws's ways and their
+defaults, and what a few stages do. `ws server ubuntu apply` is the same on each, but for the
+outbound table on a cloud VM.
 
 ## A machine on the LAN
 
@@ -61,9 +61,9 @@ the Mac's display, if any:
 To move `mac.conf` to another target, set `WS_TARGET`, and remove every key of ws's ways: `WS_LAN`,
 `WS_LAN_ADDRESS`, `WS_REMOTE`, `WS_REMOTE_PORT`, `WS_CABLE_SERVICE` and `WS_CABLE_PORT`. An old way
 would lead to the old machine still. From the LAN to a cloud VM, the router's `WS_REMOTE` would, and
-the cloud VM's run would turn that machine's outbound table off. `ws mac apply` refuses a key of another
-target's ways: `WS_LAN` on a cloud VM, `WS_REMOTE` on a VM on the Mac, and `WS_CABLE_SERVICE` or
-`WS_CABLE_PORT` off the LAN. Then run the wizard, which asks the new target's ways. A new machine
-offers another host key, so run `ssh-keygen -R ws` first. From a cloud VM, remove
-`security_outbound: false` from ws's `host_vars.yml` too, as the closing list says, then run the wizard
-with `--update`.
+the cloud VM's run would turn that machine's outbound table off. `ws client macos apply` refuses a
+key of another target's ways: `WS_LAN` on a cloud VM, `WS_REMOTE` on a VM on the Mac, and
+`WS_CABLE_SERVICE` or `WS_CABLE_PORT` off the LAN. Then run the wizard, which asks the new target's
+ways. A new machine offers another host key, so run `ssh-keygen -R ws` first. From a cloud VM,
+remove `security_outbound: false` from ws's `host_vars.yml` too, as the closing list says, then run
+the wizard with `--update`.

@@ -141,7 +141,7 @@ func TestMacConfigureSavesHostVarsAndLetsTheLockGo(t *testing.T) {
 	ended := make(chan int, 1)
 	go func() {
 		root := newRoot(p, newMacCmd(p), newServerCmd(p))
-		ended <- execute(context.Background(), root, []string{"mac", "configure"}, in, io.Discard, io.Discard)
+		ended <- execute(context.Background(), root, []string{"client", "macos", "configure"}, in, io.Discard, io.Discard)
 	}()
 	press := func(text string) {
 		if _, err := keys.Write([]byte(text)); err != nil {

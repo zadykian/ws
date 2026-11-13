@@ -73,20 +73,20 @@ removes `~/.secrets/env`, if ws wrote it.
 
 ## The secrets file
 
-`ws server apply --secrets FILE` takes the secrets of the roles from a TOML file that age encrypts,
-in armor. `ws` decrypts it in its process with an X25519 identity. A run without `--secrets`, as
-CI's, has no secrets. [ws's secrets](mac-secrets.md) says the file's tables, its references and
-its values.
+`ws server ubuntu apply --secrets FILE` takes the secrets of the roles from a TOML file that age
+encrypts, in armor. `ws` decrypts it in its process with an X25519 identity. A run without
+`--secrets`, as CI's, has no secrets. [ws's secrets](mac-secrets.md) says the file's tables, its
+references and its values.
 
-The identity stays in ws's credential, made by `ws server secrets init`, or by `ws mac secrets
-init` from the Mac ([ws's file](mac-secrets.md#wss-file)). `ws server apply` reads it from
-the systemd credential `ws-secrets`, in `$CREDENTIALS_DIRECTORY`, for `--secrets` and `--check`
-alike. Without the credential it fails and names `LoadCredential`. It reads no standard input and
-no terminal. The wizard starts the run as a unit with `LoadCredentialEncrypted=ws-secrets`. By
-hand, on a server, as root, with ws's file:
+The identity stays in ws's credential, made by `ws server ubuntu secrets init`, or by `ws client
+macos secrets init` from the Mac ([ws's file](mac-secrets.md#wss-file)). `ws server ubuntu apply`
+reads it from the systemd credential `ws-secrets`, in `$CREDENTIALS_DIRECTORY`, for `--secrets` and
+`--check` alike. Without the credential it fails and names `LoadCredential`. It reads no standard
+input and no terminal. The wizard starts the run as a unit with
+`LoadCredentialEncrypted=ws-secrets`. By hand, on a server, as root, with ws's file:
 
 ```sh
-systemd-run --pty --wait -p LoadCredentialEncrypted=ws-secrets ws server apply --secrets /etc/ws/secrets.age
+systemd-run --pty --wait -p LoadCredentialEncrypted=ws-secrets ws server ubuntu apply --secrets /etc/ws/secrets.age
 ```
 
 systemd decrypts the credential for the unit alone, and drops it once the run ends.

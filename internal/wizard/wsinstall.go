@@ -43,7 +43,7 @@ func (i *WsInstall) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	if have := s.Version; ok && check.Release(i.Version) && check.Release(have) &&
 		semver.Compare(have, i.Version) > 0 {
-		return step.Plan{}, fmt.Errorf("%s: ws holds %s, newer than this ws's %s: run ws mac wizard --update "+
+		return step.Plan{}, fmt.Errorf("%s: ws holds %s, newer than this ws's %s: run ws client macos wizard --update "+
 			"to bring this ws to the newest", installStage, have, i.Version)
 	}
 	if !check.Release(i.Version) {

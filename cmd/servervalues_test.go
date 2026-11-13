@@ -45,7 +45,7 @@ func valuesProcess(file string) (process, *effecttest.Machine) {
 
 func TestValuesSetWritesOneKey(t *testing.T) {
 	p, m := valuesProcess("---\n# the machine\nws_user: ada\n")
-	status, stdout, stderr := runWs(p, "", "server", "values", "set", "base_swappiness", "20")
+	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "values", "set", "base_swappiness", "20")
 	if status != 0 || stdout != "" || !strings.Contains(stderr, "wrote "+serverVars) {
 		t.Fatalf("status = %d, stdout %q, stderr %q", status, stdout, stderr)
 	}
@@ -56,7 +56,7 @@ func TestValuesSetWritesOneKey(t *testing.T) {
 
 func TestValuesSetAgainWritesNothing(t *testing.T) {
 	p, m := valuesProcess("---\nws_user: ada\n")
-	status, _, stderr := runWs(p, "", "server", "values", "set", "ws_user", "ada")
+	status, _, stderr := runWs(p, "", "server", "ubuntu", "values", "set", "ws_user", "ada")
 	if status != 0 || strings.Contains(stderr, "wrote") {
 		t.Fatalf("status = %d, stderr %q", status, stderr)
 	}
@@ -69,7 +69,7 @@ func TestValuesSetAgainWritesNothing(t *testing.T) {
 
 func TestValuesSetTakesAKeyOut(t *testing.T) {
 	p, m := valuesProcess("---\nws_user: ada\nws_home: /h\n")
-	if status, _, stderr := runWs(p, "", "server", "values", "set", "ws_home", ""); status != 0 {
+	if status, _, stderr := runWs(p, "", "server", "ubuntu", "values", "set", "ws_home", ""); status != 0 {
 		t.Fatalf("status = %d: %s", status, stderr)
 	}
 	if got := string(m.Files[serverVars]); got != "---\nws_user: ada\n" {
@@ -79,7 +79,7 @@ func TestValuesSetTakesAKeyOut(t *testing.T) {
 
 func TestValuesSetTakesAValueWithADash(t *testing.T) {
 	p, m := valuesProcess("---\n")
-	if status, _, stderr := runWs(p, "", "server", "values", "set", "--", "ws_user", "-x"); status != 0 {
+	if status, _, stderr := runWs(p, "", "server", "ubuntu", "values", "set", "--", "ws_user", "-x"); status != 0 {
 		t.Fatalf("status = %d: %s", status, stderr)
 	}
 	if got := string(m.Files[serverVars]); got != "---\nws_user: -x\n" {
@@ -105,7 +105,7 @@ func TestValuesSetRefuses(t *testing.T) {
 		{"a wrong kind", plain, []string{"base_swappiness", "ten"}, "a whole number"},
 		{"no value", plain, []string{"ws_user"}, "accepts 2 arg"},
 	} {
-		args := append([]string{"server", "values", "set"}, tc.args...)
+		args := append([]string{"server", "ubuntu", "values", "set"}, tc.args...)
 		if status, _, stderr := runWs(tc.p, "", args...); status == 0 || !strings.Contains(stderr, tc.want) {
 			t.Errorf("%s: status = %d, stderr %q, want %q", tc.name, status, stderr, tc.want)
 		}

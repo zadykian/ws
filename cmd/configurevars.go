@@ -12,7 +12,8 @@ import (
 )
 
 // varsReach is the way to ws of the host_vars and secrets sheets, of the wizard's state screen and of
-// ws mac secrets. It starts with the first read, so that mac.conf draws with ws out of reach.
+// ws client macos secrets. It starts with the first read, so that mac.conf draws with ws out of
+// reach.
 type varsReach struct {
 	p process
 	// sudo is the scan's, whose way to root the state screen keeps. It stands unread where the scan

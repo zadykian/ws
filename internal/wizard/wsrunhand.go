@@ -7,9 +7,9 @@ import (
 )
 
 // hand adds what stays by hand of ws, the router and the Mac to the list. ws's part comes from the
-// remote script's status. ws's gh login is a step of ws server apply, by token.github, so the list
-// leaves it out. mac.conf has WS_LAN_ADDRESS with WS_LAN alone, so the lease names an address only
-// with a LAN. Off the LAN, away's lines take the router's place.
+// remote script's status. ws's gh login is a step of ws server ubuntu apply, by token.github, so
+// the list leaves it out. mac.conf has WS_LAN_ADDRESS with WS_LAN alone, so the lease names an
+// address only with a LAN. Off the LAN, away's lines take the router's place.
 func (r MacReach) hand(h *Hand, s wsStatus) {
 	_, c, err := loadConf(confFile{r.SSH.Conf, runStage, r.SSH.M, r.Out})
 	if err != nil {

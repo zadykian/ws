@@ -7,7 +7,7 @@
 set -u
 
 # The one line of the gh stage that a run says where the account holds the Mac's key.
-known="ws mac wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
+known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
 
 wsbin=$HOME/.local/bin/ws
 ws=$RUNNER_TEMP/ws
@@ -19,18 +19,18 @@ error() {
     fail=1
 }
 
-# expect STAGE STATUS WANT ARG...: ws mac wizard ARGs, with no terminal, must exit STATUS, with WANT in
-# its lines of STAGE.
+# expect STAGE STATUS WANT ARG...: ws client macos wizard ARGs, with no terminal, must exit STATUS,
+# with WANT in its lines of STAGE.
 expect() {
     stage=$1
     want_status=$2
     want=$3
     shift 3
-    out=$("$wsbin" mac wizard "$@" </dev/null 2>&1)
+    out=$("$wsbin" client macos wizard "$@" </dev/null 2>&1)
     status=$?
     printf '%s\n' "$out"
-    printf '%s\n' "$out" | grep "^ws mac wizard: $stage: " | grep -qF -e "$want" &&
-        [ "$status" = "$want_status" ] || error "ws mac wizard $* exited $status, with no '$want'"
+    printf '%s\n' "$out" | grep "^ws client macos wizard: $stage: " | grep -qF -e "$want" &&
+        [ "$status" = "$want_status" ] || error "ws client macos wizard $* exited $status, with no '$want'"
 }
 
 # sessions: no session on ws may have run a login.
@@ -45,7 +45,7 @@ expect 'claude on ws' 1 'no terminal is there for claude auth login'
 expect 'claude on ws' 0 'would run claude auth login as WS_USER on ws' --check
 touch "$ws/claude"
 sessions
-out=$("$wsbin" mac wizard </dev/null 2>&1)
+out=$("$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
-[ "$status" = 0 ] && [ -z "${out#"$known"}" ] || error "ws mac wizard after it exited $status: '$out'"
+[ "$status" = 0 ] && [ -z "${out#"$known"}" ] || error "ws client macos wizard after it exited $status: '$out'"
 exit "$fail"

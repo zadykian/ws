@@ -25,7 +25,7 @@ func TestSessionOnWsRunsTheScriptLocally(t *testing.T) {
 	if s, ok := r.status(context.Background()); !ok || s.Version != "abc" {
 		t.Fatalf("status read %q; calls %q", s.Version, m.Calls)
 	}
-	m.Results[wsPath+" server secrets set env A'B"] = effecttest.Result{Out: []byte("set\n")}
+	m.Results[wsPath+" server ubuntu secrets set env A'B"] = effecttest.Result{Out: []byte("set\n")}
 	if out, err := localSession(m, nil).Secrets(context.Background(), []byte("dummy-value\n"), "set", "env", "A'B"); err != nil || string(out) != "set\n" {
 		t.Fatalf("Secrets = %q, %v", out, err)
 	}

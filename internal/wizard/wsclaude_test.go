@@ -43,11 +43,12 @@ func TestWsClaudeApply(t *testing.T) {
 	}
 }
 
-// On ws, the login runs by runuser as host_vars' WS_USER, and a missing claude names ws server apply.
+// On ws, the login runs by runuser as host_vars' WS_USER, and a missing claude names ws server
+// ubuntu apply.
 func TestWsClaudeHere(t *testing.T) {
 	ws, m := wsSession(wsStatus{Claude: "none"})
 	c := &WsClaude{Ws: ws, Tty: true}
-	if _, err := c.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "run sudo ws server apply") {
+	if _, err := c.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "run sudo ws server ubuntu apply") {
 		t.Errorf("Plan where claude is missing = %v", err)
 	}
 	m.Results["runuser -l ada -c claude auth login"] = effecttest.Result{}

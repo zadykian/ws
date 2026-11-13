@@ -1,6 +1,6 @@
 // Package secrets holds the values that the roles take from ws's secrets file: age-encrypted TOML,
-// a table per kind, decrypted in ws's process. ws server secrets and ws server apply share this
-// format. Nothing here prints a value: an error names a kind, a name, a key or a line.
+// a table per kind, decrypted in ws's process. ws server ubuntu secrets and ws server ubuntu apply
+// share this format. Nothing here prints a value: an error names a kind, a name, a key or a line.
 package secrets
 
 // Secrets is the decrypted file. The names of its fields are those of the tables.
@@ -15,11 +15,11 @@ type Secrets struct {
 	File Files
 	// Password holds the passwords that go with the files.
 	Password Passwords
-	// Whole is true where the run was given a secrets file, as ws server apply sets it. The file is
-	// then the truth of what it names, and a role removes what it lacks. The file does not hold
-	// Whole.
+	// Whole is true where the run was given a secrets file, as ws server ubuntu apply sets it. The
+	// file is then the truth of what it names, and a role removes what it lacks. The file does not
+	// hold Whole.
 	Whole bool
-	// Unread is true where a command reads the machine and takes no secrets, as ws server state
+	// Unread is true where a command reads the machine and takes no secrets, as ws server ubuntu state
 	// does. A role then shows what it can, where a run would stop at what the secrets lack.
 	Unread bool
 }

@@ -55,8 +55,8 @@ func (a sudoAsk) String() string {
 }
 
 // Plan reads how a script reaches root. Under --check at a terminal it asks too, as the Answers
-// stage and ws mac apply's sudo do. It asks since the stages after it read ws through sudo and
-// change nothing. Elsewhere a password is Apply's to ask.
+// stage and ws client macos apply's sudo do. It asks since the stages after it read ws through sudo
+// and change nothing. Elsewhere a password is Apply's to ask.
 func (s *Sudo) Plan(ctx context.Context) (step.Plan, error) {
 	if s.way != sudoUnread {
 		return step.Plan{}, nil
