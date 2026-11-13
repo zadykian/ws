@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -54,4 +55,20 @@ func (c Cask) plan(ctx context.Context) ([]resource.Change, bool, error) {
 	}
 	c.Out.Warn("%s", CaskGone(c.Name, c.Missing))
 	return nil, false, nil
+}
+
+// Report says how the cask stands. brew is asked of this cask alone, and only where its files are
+// gone: a report covers what ws manages, never all that Homebrew holds.
+func (c Cask) Report(ctx context.Context) ([]step.Item, error) { return []step.Item{c.item(ctx)}, nil }
+
+func (c Cask) item(ctx context.Context) step.Item {
+	item := step.Item{Kind: step.PackageItem, Name: c.Name, Want: file.StateInstalled, Found: file.StateInstalled}
+	if c.There {
+		return item
+	}
+	item.Found = file.StateMissing
+	if _, err := c.M.Run(ctx, "brew", "list", "--cask", c.Name); err == nil {
+		item.Conflict = CaskGone(c.Name, c.Missing)
+	}
+	return item
 }

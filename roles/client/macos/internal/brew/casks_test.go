@@ -65,3 +65,13 @@ func TestACaskStopsWithoutHomebrewAndWarnsWhereBrewHasIt(t *testing.T) {
 		t.Errorf("Plan = %v, %v, said %q; want a warning alone", cs, err, out.Lines)
 	}
 }
+
+func TestACaskReportsHowItStands(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["brew list --cask zed"] = effecttest.Result{}
+	there, _ := brew.Cask{M: m, Name: "zed", There: true}.Report(context.Background())
+	gone, _ := brew.Cask{M: m, Name: "zed", Missing: "no Zed.app is there"}.Report(context.Background())
+	if there[0].Found != "installed" || gone[0].Found != "missing" || gone[0].Conflict == "" {
+		t.Errorf("reports %+v, %+v; want installed, then missing against Homebrew", there, gone)
+	}
+}
