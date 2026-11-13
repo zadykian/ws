@@ -13,6 +13,6 @@ func TestAQueueChoiceHoldsTheStagesOnlyWhereItRuns(t *testing.T) {
 		}
 	}
 	if got := s.queueChoice(NextState); got.Side != s.list.side {
-		t.Errorf("side = %d, want %d", got.Side, s.list.side)
+		t.Errorf("side = %q, want %q", got.Side, s.list.side)
 	}
 }

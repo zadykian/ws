@@ -17,7 +17,7 @@ import (
 func wizardQueue(stages []step.Step) []tui.Stage {
 	queue := make([]tui.Stage, len(stages))
 	for i, s := range stages {
-		queue[i] = tui.Stage{Name: s.Name(), Waits: wizard.Locks(s), Nested: nestedRows(s.Name())}
+		queue[i] = tui.Stage{Name: s.Name(), Side: tui.MacSide, Waits: wizard.Locks(s), Nested: nestedRows(s.Name())}
 		if m, ok := wizard.MachineOf(s); ok && m == wizard.OnWs {
 			queue[i].Side = tui.WsSide
 		}

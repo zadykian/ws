@@ -95,7 +95,7 @@ func TestStagesAllOnWsStandInOneList(t *testing.T) {
 		}
 	}
 	if strings.Contains(got, "Mac") || s.list.side != WsSide || len(s.layout().Panes) != 1 {
-		t.Errorf("side %d, frame:\n%s", s.list.side, got)
+		t.Errorf("side %q, frame:\n%s", s.list.side, got)
 	}
 }
 
@@ -103,10 +103,10 @@ func TestTabLeavesOneListForTheButtons(t *testing.T) {
 	s := openQueue("ws server ubuntu wizard", testTheme, wsStages(), make(chan QueueChoice, 1))
 	s = queueSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, scannedMsg{}, tab)
 	if s.list.side != WsSide || s.footer.Focused() != pickTogglePlace {
-		t.Errorf("side %d, focus %d", s.list.side, s.footer.Focused())
+		t.Errorf("side %q, focus %d", s.list.side, s.footer.Focused())
 	}
 	if s = queueSent(s, shiftTab); s.list.side != WsSide || s.footer.Focused() >= 0 {
-		t.Errorf("side %d, focus %d", s.list.side, s.footer.Focused())
+		t.Errorf("side %q, focus %d", s.list.side, s.footer.Focused())
 	}
 	if s = queueSent(s, shiftTab); s.footer.Focused() != queueConfigurePlace || !strings.Contains(queueShown(s), "configure") {
 		t.Errorf("focus %d, frame:\n%s", s.footer.Focused(), queueShown(s))
@@ -132,20 +132,20 @@ func chosenBy(t *testing.T, msgs ...tea.Msg) QueueChoice {
 func TestTabWalksTheTwoListsThenTheButtons(t *testing.T) {
 	s := queueSent(testQueueScreen(), scannedMsg{}, tab)
 	if s.list.side != WsSide || s.footer.Focused() >= 0 {
-		t.Errorf("side %d, focus %d", s.list.side, s.footer.Focused())
+		t.Errorf("side %q, focus %d", s.list.side, s.footer.Focused())
 	}
 	if s = queueSent(s, tab); s.list.side != WsSide || s.footer.Focused() != pickTogglePlace {
-		t.Errorf("side %d, focus %d", s.list.side, s.footer.Focused())
+		t.Errorf("side %q, focus %d", s.list.side, s.footer.Focused())
 	}
 	s = queueSent(s, shiftTab, shiftTab)
 	if s.list.side != MacSide || s.footer.Focused() >= 0 {
-		t.Errorf("side %d, focus %d", s.list.side, s.footer.Focused())
+		t.Errorf("side %q, focus %d", s.list.side, s.footer.Focused())
 	}
 	if s = queueSent(s, shiftTab); s.footer.Focused() != queueConfigurePlace {
 		t.Errorf("focus %d", s.footer.Focused())
 	}
 	if s = queueSent(s, tab); s.list.side != MacSide || s.footer.Focused() >= 0 {
-		t.Errorf("side %d, focus %d", s.list.side, s.footer.Focused())
+		t.Errorf("side %q, focus %d", s.list.side, s.footer.Focused())
 	}
 }
 
@@ -254,13 +254,13 @@ func TestABridgeReportReachesTheScreen(t *testing.T) {
 func TestEachSideKeepsItsCursor(t *testing.T) {
 	s := queueSent(testQueueScreen(), scannedMsg{}, press('j'), press('j'), press('j'), tab)
 	if s.list.side != WsSide || s.at[MacSide] != 3 || s.at[WsSide] != 0 {
-		t.Errorf("side %d, cursors %v", s.list.side, s.at)
+		t.Errorf("side %q, cursors %v", s.list.side, s.at)
 	}
 	if got := strings.Count(queueShown(s), "▸"); got != 1 {
 		t.Errorf("%d cursors drawn, want the focused list's alone", got)
 	}
 	if s = queueSent(s, shiftTab); s.list.side != MacSide || s.at[MacSide] != 3 {
-		t.Errorf("side %d, cursors %v", s.list.side, s.at)
+		t.Errorf("side %q, cursors %v", s.list.side, s.at)
 	}
 }
 
@@ -273,7 +273,7 @@ func TestAMoveLeavesTheScreenItCameFromItsCursors(t *testing.T) {
 }
 
 func TestThreeSidesDrawThreePanesAndTabWalksThem(t *testing.T) {
-	third := Side(2)
+	third := Side("VM")
 	stages := []Stage{{Name: "One", Side: WsSide}, {Name: "Two", Side: MacSide}, {Name: "Three", Side: third}, {Name: "Four", Side: WsSide}}
 	s := queueSent(openQueue("ws", testTheme, stages, make(chan QueueChoice, 1)), tea.WindowSizeMsg{Width: 120, Height: 30})
 	if got := s.list.sides(); !slices.Equal(got, []Side{WsSide, MacSide, third}) || len(s.list.panes()) != 3 {

@@ -9,11 +9,11 @@ import (
 // testStages is a queue across both sides: a stage of steps, a stage of roles no scan has read.
 func testStages() []Stage {
 	return []Stage{
-		{Name: "Tools"},
-		{Name: "Setup", Waits: "Tools", Nested: []Group{{Name: "Setup", Steps: []string{"one", "two"}}}},
+		{Name: "Tools", Side: MacSide},
+		{Name: "Setup", Side: MacSide, Waits: "Tools", Nested: []Group{{Name: "Setup", Steps: []string{"one", "two"}}}},
 		{Name: "Sudo", Side: WsSide, Waits: "Setup"},
 		{Name: "Run", Side: WsSide, Waits: "Sudo", Nested: []Group{{Name: "base"}, {Name: "ssh"}}},
-		{Name: "Signing", Waits: "Run"},
+		{Name: "Signing", Side: MacSide, Waits: "Run"},
 	}
 }
 
@@ -76,7 +76,7 @@ func TestAQueueNumbersItsStagesAcrossBothSides(t *testing.T) {
 }
 
 func TestARoleOfAStageOpensUnderItsHeading(t *testing.T) {
-	stages := []Stage{{Name: "Run", Nested: []Group{{Name: "base", Steps: []string{"Packages"}}}}}
+	stages := []Stage{{Name: "Run", Side: MacSide, Nested: []Group{{Name: "base", Steps: []string{"Packages"}}}}}
 	got := strings.Join(drawnQueue(queueOf(stages), MacSide), "|")
 	if want := " 1 [ ] · Run|     [ ] base|       [ ] · Packages"; got != want {
 		t.Errorf("list = %q, want %q", got, want)

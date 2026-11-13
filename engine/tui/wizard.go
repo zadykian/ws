@@ -91,7 +91,7 @@ func (d terminalScreens) pick(ctx context.Context, r Round) (QueueChoice, error)
 	return PickStages(ctx, d.w.Config, d.w.Title, r.Stages, r.Scan)
 }
 func (d terminalScreens) state(ctx context.Context, side Side, read StateReader) error {
-	return RunState(ctx, d.w.Config, d.w.Title+": "+side.String(), read)
+	return RunState(ctx, d.w.Config, d.w.Title+": "+side, read)
 }
 func (d terminalScreens) reopen(ctx context.Context, left QueueChoice) (QueueChoice, error) {
 	return Reopen(ctx, d.w.Config, left)

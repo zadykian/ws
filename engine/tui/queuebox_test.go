@@ -117,14 +117,14 @@ func TestWhatNoScanReachedStartsChosen(t *testing.T) {
 }
 
 func TestRolesUnreadFollowAStageThatFoundNothing(t *testing.T) {
-	stages := []Stage{{Name: "Run", Nested: []Group{{Name: "base"}}}}
+	stages := []Stage{{Name: "Run", Side: MacSide, Nested: []Group{{Name: "base"}}}}
 	if got := queueOf(stages).take(planned("", "Run", 0)).opened().only(); len(got) != 0 {
 		t.Errorf("only = %q", got)
 	}
 }
 
 func TestAStageDueRunsWholeWhereItsStepsReadClean(t *testing.T) {
-	stages := []Stage{{Name: "Run", Nested: []Group{{Name: "base", Steps: []string{"one", "two"}}}}}
+	stages := []Stage{{Name: "Run", Side: MacSide, Nested: []Group{{Name: "base", Steps: []string{"one", "two"}}}}}
 	q := queueOf(stages).take(planned("base", "one", 0)).take(planned("base", "two", 1)).
 		take(planned("", "Run", 0, oneChange("a"))).opened()
 	if want := []string{"[x]", "[x]", "[x]"}; !slices.Equal(queueBoxes(q), want) {
@@ -133,7 +133,7 @@ func TestAStageDueRunsWholeWhereItsStepsReadClean(t *testing.T) {
 }
 
 func TestAStageRunsWhatTheScanFound(t *testing.T) {
-	stages := []Stage{{Name: "Run", Nested: []Group{{Name: "base", Steps: []string{"one", "two"}}}}}
+	stages := []Stage{{Name: "Run", Side: MacSide, Nested: []Group{{Name: "base", Steps: []string{"one", "two"}}}}}
 	q := queueOf(stages).take(planned("base", "one", 0, oneChange("a"))).take(planned("base", "two", 1)).
 		take(planned("", "Run", 0)).opened()
 	if want := []string{"[x]", "[x]", "[ ]"}; !slices.Equal(queueBoxes(q), want) {
@@ -143,8 +143,8 @@ func TestAStageRunsWhatTheScanFound(t *testing.T) {
 
 func TestALeftOutWarningStaysAmongOneStagesRoles(t *testing.T) {
 	stages := []Stage{
-		{Name: "Setup", Nested: []Group{{Name: "Setup", Steps: []string{"one"}}}},
-		{Name: "Run", Nested: []Group{{Name: "base", Steps: []string{"two"}}, {Name: "ssh", Steps: []string{"three"}}}},
+		{Name: "Setup", Side: MacSide, Nested: []Group{{Name: "Setup", Steps: []string{"one"}}}},
+		{Name: "Run", Side: MacSide, Nested: []Group{{Name: "base", Steps: []string{"two"}}, {Name: "ssh", Steps: []string{"three"}}}},
 	}
 	q := queueOf(stages)
 	q = q.take(planned("Setup", "one", 0, oneChange("a"))).take(planned("base", "two", 0, oneChange("a")))
@@ -164,7 +164,7 @@ func TestABulkChoiceLeavesWhatTheFilterHides(t *testing.T) {
 
 func TestAQueuePassesOverTheRolesOfEachStage(t *testing.T) {
 	stages := []Stage{
-		{Name: "Run", Nested: []Group{{Name: "base", Steps: []string{"one"}}, {Name: "ssh", Steps: []string{"two"}}}},
+		{Name: "Run", Side: MacSide, Nested: []Group{{Name: "base", Steps: []string{"one"}}, {Name: "ssh", Steps: []string{"two"}}}},
 		{Name: "Sudo", Side: WsSide, Nested: []Group{{Name: "net", Steps: []string{"three"}}, {Name: "dns", Steps: []string{"four"}}}},
 	}
 	q := queueOf(stages)

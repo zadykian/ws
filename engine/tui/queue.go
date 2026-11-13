@@ -1,21 +1,14 @@
 package tui
 
-// Side is the list of a queue that shows a stage: the machine the stage acts on.
-type Side int
+// Side is the list of a queue that shows a stage: the name of the machine the stage acts on, drawn
+// as the title of its pane.
+type Side = string
 
-// The sides of a queue.
+// The sides of the wizards' queues.
 const (
-	MacSide Side = iota
-	WsSide
+	MacSide Side = "Mac"
+	WsSide  Side = "ws"
 )
-
-// String names the side as its list's pane does.
-func (s Side) String() string {
-	if s == MacSide {
-		return "Mac"
-	}
-	return "ws"
-}
 
 const (
 	// unreadIndex is a role's in place of a step's, as no event of a run names a role.

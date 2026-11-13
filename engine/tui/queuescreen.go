@@ -62,7 +62,7 @@ func (q queue) pane(side Side) int { return max(slices.Index(q.sides(), side), 0
 func (q queue) panes() []Pane {
 	var panes []Pane
 	for _, side := range q.sides() {
-		pane := Pane{Title: side.String(), Focused: q.side == side}
+		pane := Pane{Title: side, Focused: q.side == side}
 		unread := func(s queueStage) bool {
 			return s.side == side && slices.ContainsFunc(s.list.rows, func(r pickRow) bool { return r.index == unreadIndex })
 		}

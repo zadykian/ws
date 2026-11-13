@@ -85,7 +85,7 @@ func TestARunMovesTheMarksAndLeavesTheBoxes(t *testing.T) {
 	q := queueOf(testStages()).take(planned("", "Tools", 0, oneChange("a")))
 	q, side, line := q.follow(step.Event{Kind: step.Started, Step: "Sudo", Index: 2})
 	if side != WsSide || line != 0 {
-		t.Errorf("side %d, line %d", side, line)
+		t.Errorf("side %q, line %d", side, line)
 	}
 	q, _, line = q.follow(step.Event{Kind: step.Done, Step: "Tools", Index: 0, LeftOut: true})
 	if line >= 0 {
@@ -103,7 +103,7 @@ func TestARunLearnsTheStepsOfARoleAndOpensOneAgain(t *testing.T) {
 		t.Errorf("list = %q", got)
 	}
 	if side != WsSide || line != 4 {
-		t.Errorf("side %d, line %d: the cursor is on the step", side, line)
+		t.Errorf("side %q, line %d: the cursor is on the step", side, line)
 	}
 	event.Kind = step.Done
 	q, _, _ = q.follow(event)
