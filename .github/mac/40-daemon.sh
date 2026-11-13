@@ -3,8 +3,10 @@
 # The daemon must run: launchd gives it a pid, and its state names the utun it set up.
 
 set -eo pipefail
+# shellcheck source=.github/mac-conf.sh
+. .github/mac-conf.sh
 
-echo "WS_PUBLIC_KEY=$(cat "$RUNNER_TEMP/ws.pub")" >>~/.config/ws/mac.conf
+conf_set ~/.config/ws/mac.conf "WS_PUBLIC_KEY=$(cat "$RUNNER_TEMP/ws.pub")"
 ws client macos apply || {
     echo "::error::ws client macos apply with ws's key failed"
     exit 1
