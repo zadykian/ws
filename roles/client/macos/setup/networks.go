@@ -12,6 +12,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
+	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 )
 
@@ -59,7 +60,7 @@ func (n *Networks) Report(ctx context.Context) ([]step.Item, error) {
 	}
 	var parts []step.Reporter
 	if nets := strings.Fields(n.Conf.TunnelNetworks); len(nets) > 0 {
-		parts = append(parts, host.File{M: n.M, Path: tunnelDir + "/routes.d/mac-conf", Content: []byte(routesText(nets)), Mode: 0o644})
+		parts = append(parts, host.File{M: n.M, Path: launchd.Dir + "/routes.d/mac-conf", Content: []byte(routesText(nets)), Mode: 0o644})
 	}
 	list := resolvers(n.Conf.Resolvers)
 	if len(list) > 0 {

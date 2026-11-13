@@ -15,6 +15,7 @@ import (
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 )
 
@@ -161,19 +162,19 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 		host.Dir{M: t.M, Path: "/usr/local/libexec", Mode: 0o755},
 		host.Dir{M: t.M, Path: tunnelLibexec, Mode: 0o755},
 		host.File{M: t.M, Path: tunnelLibexec + "/ws", Content: self, Mode: 0o755, Secret: true},
-		host.Dir{M: t.M, Path: tunnelDir, Mode: 0o700},
-		host.Dir{M: t.M, Path: tunnelDir + "/routes.d", Mode: 0o755},
+		host.Dir{M: t.M, Path: launchd.Dir, Mode: 0o700},
+		host.Dir{M: t.M, Path: launchd.Dir + "/routes.d", Mode: 0o755},
 		userfile.Fixed(key),
 	}
 	if t.public != "" {
 		parts = append(parts, userfile.WsDirs(t.M, t.Home), t.pub())
 	}
 	if t.Conf.PublicKey != "" {
-		daemon := step.Item{Kind: step.ServiceItem, Name: daemonLabel, Want: "loaded", Found: "not loaded"}
-		if _, err := t.M.Run(ctx, "launchctl", "print", "system/"+daemonLabel); err == nil {
+		daemon := step.Item{Kind: step.ServiceItem, Name: launchd.Label, Want: "loaded", Found: "not loaded"}
+		if _, err := t.M.Run(ctx, "launchctl", "print", "system/"+launchd.Label); err == nil {
 			daemon.Found = daemon.Want
 		}
-		parts = append(parts, host.File{M: t.M, Path: tunnelDir + "/tunnel.conf", Content: []byte(tunnelConf(t.Conf)), Mode: 0o600},
+		parts = append(parts, host.File{M: t.M, Path: launchd.Dir + "/tunnel.conf", Content: []byte(tunnelConf(t.Conf)), Mode: 0o600},
 			host.File{M: t.M, Path: tunnelPlist, Content: t.Plist, Mode: 0o644}, userfile.Fixed{daemon})
 	}
 	return userfile.Gather(ctx, parts...)

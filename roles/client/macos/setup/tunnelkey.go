@@ -9,10 +9,11 @@ import (
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
+	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 )
 
 // tunnelKeyFile is the Mac's WireGuard key, in a file only root reads.
-const tunnelKeyFile = tunnelDir + "/private.key"
+const tunnelKeyFile = launchd.Dir + "/private.key"
 
 // KeyMake has root's ws make the Mac's WireGuard key, which is never shown to the user.
 type KeyMake struct{}
@@ -24,7 +25,7 @@ func (KeyMake) String() string { return "would make the Mac's WireGuard key, " +
 func (t *Tunnel) key(ctx context.Context) ([]step.Change, error) {
 	var cs []step.Change
 	var err error
-	for _, d := range []host.Dir{{M: t.M, Path: tunnelDir, Mode: 0o700}, {M: t.M, Path: tunnelDir + "/routes.d", Mode: 0o755}} {
+	for _, d := range []host.Dir{{M: t.M, Path: launchd.Dir, Mode: 0o700}, {M: t.M, Path: launchd.Dir + "/routes.d", Mode: 0o755}} {
 		if cs, err = change.Plan(ctx, cs, d); err != nil {
 			return nil, err
 		}

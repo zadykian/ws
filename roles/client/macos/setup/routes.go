@@ -12,6 +12,7 @@ import (
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
+	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
@@ -55,15 +56,15 @@ func (r *Routes) Apply(ctx context.Context, p step.Plan) error {
 // file's owner or mode alone sends the signal too.
 func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 	networks := r.Networks
-	file := tunnelDir + "/routes.d/" + r.Set
-	if _, err := r.M.RootAttrs(tunnelDir + "/routes.d"); errors.Is(err, fs.ErrNotExist) {
+	file := launchd.Dir + "/routes.d/" + r.Set
+	if _, err := r.M.RootAttrs(launchd.Dir + "/routes.d"); errors.Is(err, fs.ErrNotExist) {
 		switch {
 		case len(networks) == 0:
 			return nil, nil
 		case r.Check && !r.Alone:
 			return []step.Change{change.Remark("would put " + strings.Join(networks, " ") + " in " + file + " " + routesAbsent)}, nil
 		}
-		return nil, fmt.Errorf("%s/routes.d is missing: run ws client macos apply first", tunnelDir)
+		return nil, fmt.Errorf("%s/routes.d is missing: run ws client macos apply first", launchd.Dir)
 	} else if err != nil {
 		return nil, err
 	}
@@ -75,8 +76,8 @@ func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 	if err != nil || len(cs) == 0 || r.Check {
 		return cs, err
 	}
-	if _, err := r.M.Run(ctx, "launchctl", "print", "system/"+daemonLabel); err == nil {
-		cs = append(cs, Launchctl{Args: []string{"kill", "SIGHUP", "system/" + daemonLabel}, Routes: true})
+	if _, err := r.M.Run(ctx, "launchctl", "print", "system/"+launchd.Label); err == nil {
+		cs = append(cs, launchd.Launchctl{Args: []string{"kill", "SIGHUP", "system/" + launchd.Label}, Routes: true})
 	}
 	return cs, nil
 }

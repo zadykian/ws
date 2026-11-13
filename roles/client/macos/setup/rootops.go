@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
+	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 )
 
@@ -15,8 +16,8 @@ import (
 func applyInOrder(ctx context.Context, m effect.Machine, out effect.Out, p step.Plan) error {
 	for _, c := range p.Changes {
 		var err error
-		if l, ok := c.(Launchctl); ok {
-			err = launchctl(ctx, m, out, time.Sleep, l)
+		if l, ok := c.(launchd.Launchctl); ok {
+			err = launchd.Run(ctx, m, out, time.Sleep, l)
 		} else {
 			err = change.Apply(ctx, m, out, c)
 		}

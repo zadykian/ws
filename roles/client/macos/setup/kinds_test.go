@@ -13,7 +13,6 @@ func TestTheRolesChangesSayTheirKind(t *testing.T) {
 		want   step.ChangeKind
 	}{
 		{setup.Install{Path: "/b"}, step.Install},
-		{setup.Launchctl{}, step.Restart},
 		{setup.KeyMake{}, step.OtherChange},
 	}
 	for _, tt := range tests {
