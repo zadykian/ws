@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"bytes"
-	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -10,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/spf13/cobra"
+
+	"github.com/zadykian/ws/engine/cli"
 )
 
 var rewriteGolden = flag.Bool("update", false, "write testdata/tree.golden")
@@ -18,15 +18,13 @@ var rewriteGolden = flag.Bool("update", false, "write testdata/tree.golden")
 // its path.
 func listing(t *testing.T, root *cobra.Command) string {
 	var sb strings.Builder
-	walk(root, func(c *cobra.Command) {
+	cli.Walk(root, func(c *cobra.Command) {
 		path := strings.TrimPrefix(strings.TrimPrefix(c.CommandPath(), "ws"), " ")
-		var out, errs bytes.Buffer
-		args := append(strings.Fields(path), "--help")
-		fresh := newRoot(fakeProcess(), newMacCmd(fakeProcess()), newServerCmd(fakeProcess()))
-		if status := execute(context.Background(), fresh, args, strings.NewReader(""), &out, &errs); status != 0 {
-			t.Errorf("ws %s: status = %d, stderr = %q", path, status, errs.String())
+		status, stdout, stderr := runWs(fakeProcess(), "", append(strings.Fields(path), "--help")...)
+		if status != 0 {
+			t.Errorf("ws %s: status = %d, stderr = %q", path, status, stderr)
 		}
-		fmt.Fprintf(&sb, "== %s\n%s", c.CommandPath(), out.String())
+		fmt.Fprintf(&sb, "== %s\n%s", c.CommandPath(), stdout)
 	})
 	return sb.String()
 }
@@ -35,7 +33,7 @@ func listing(t *testing.T, root *cobra.Command) string {
 // groups on every system. A move of the commands then shows any change of a name or a text.
 func TestTreeHoldsTheCommandsAndTheirHelp(t *testing.T) {
 	p := fakeProcess()
-	got := listing(t, newRoot(p, newMacCmd(p), newServerCmd(p)))
+	got := listing(t, cli.Root(p, newMacCmd(p), newServerCmd(p)))
 	const golden = "testdata/tree.golden"
 	if *rewriteGolden {
 		if err := os.WriteFile(golden, []byte(got), 0o644); err != nil { //nolint:gosec // a test's data file

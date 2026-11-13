@@ -38,7 +38,7 @@ const statusWait = 5 * time.Second
 
 // newTunnelCmd returns ws client macos tunnel.
 func newTunnelCmd(p cli.Env) *cobra.Command {
-	return group("tunnel", "the Mac's tunnel to ws",
+	return cli.Group("tunnel", "the Mac's tunnel to ws",
 		newTunnelRunCmd(p), newTunnelStatusCmd(p), newTunnelKeyCmd(p), newTunnelLoadedCmd(p), newTunnelRoutesCmd(p))
 }
 

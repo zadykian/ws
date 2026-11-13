@@ -59,12 +59,12 @@ func TestDrawsReportNeedsStdoutAtATerminal(t *testing.T) {
 func TestDrawsScreenReadsPlain(t *testing.T) {
 	p := cli.Env{TTY: true, ErrTTY: true, Getenv: func(string) string { return "xterm" }}
 	var seen []bool
-	root := newRoot(p)
-	root.AddCommand(group("probe", "x"))
+	root := cli.Root(p)
+	root.AddCommand(cli.Group("probe", "x"))
 	probe, _, _ := root.Find([]string{"probe"})
 	probe.RunE = func(c *cobra.Command, _ []string) error { seen = append(seen, drawsScreen(c, p)); return nil }
 	for _, args := range [][]string{{"probe"}, {"probe", "--plain"}, {"--plain", "probe"}} {
-		if code := execute(t.Context(), root, args, nil, nil, nil); code != 0 {
+		if code := cli.Execute(t.Context(), root, args, nil, nil, nil); code != 0 {
 			t.Fatalf("%v exited %d", args, code)
 		}
 	}

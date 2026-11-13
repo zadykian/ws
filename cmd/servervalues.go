@@ -17,7 +17,7 @@ import (
 
 // newValuesCmd returns ws server ubuntu values, which edits the machine's values.
 func newValuesCmd(p cli.Env) *cobra.Command {
-	return group("values", "edit the machine's values", &cobra.Command{
+	return cli.Group("values", "edit the machine's values", &cobra.Command{
 		Use:   "set KEY VALUE",
 		Short: "write one key of " + serverVars,
 		Long: "An empty VALUE takes the key's line out, which gives its default back. A list's VALUE is split by " +

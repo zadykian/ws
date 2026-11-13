@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine"
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
@@ -98,8 +99,8 @@ func TestWizardOpensTheListsAndLeavesWithQ(t *testing.T) {
 func TestWizardCutAtTheListsEndsWithStatusOne(t *testing.T) {
 	p, _ := macTerminal()
 	var out, errs bytes.Buffer
-	root := newRoot(p, newMacCmd(p), newServerCmd(p))
-	status := execute(context.Background(), root, []string{"client", "macos", "wizard"}, repeating("\x03"), &out, &errs)
+	root := cli.Root(p, newMacCmd(p), newServerCmd(p))
+	status := cli.Execute(context.Background(), root, []string{"client", "macos", "wizard"}, repeating("\x03"), &out, &errs)
 	if status != 1 {
 		t.Errorf("status = %d, want the plain wizard's 1: %q", status, errs.String())
 	}
@@ -121,9 +122,9 @@ func TestWizardRunsTheStagesChosenAlone(t *testing.T) {
 	m.Files["/x/usr/bin/git"], m.Modes["/x/usr/bin/git"] = nil, 0o755
 	p.Machine = freed{m}
 	var out bytes.Buffer
-	root := newRoot(p, newMacCmd(p), newServerCmd(p))
+	root := cli.Root(p, newMacCmd(p), newServerCmd(p))
 	keys := newAfterScan("n \r")
-	status := execute(context.Background(), root, []string{"client", "macos", "wizard"}, keys, &out, keys)
+	status := cli.Execute(context.Background(), root, []string{"client", "macos", "wizard"}, keys, &out, keys)
 	if status != 0 || strings.Count(strings.Join(m.Calls, "\n"), "run caffeinate") != 2 {
 		t.Fatalf("status = %d, want a scan and a run: calls = %q", status, m.Calls)
 	}

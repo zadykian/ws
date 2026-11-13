@@ -15,9 +15,6 @@ import (
 	"github.com/zadykian/ws/engine/tui"
 )
 
-// plainFlag names the persistent flag that keeps a command to lines.
-const plainFlag = "plain"
-
 // jsonFlag names the flag that prints a command's data.
 const jsonFlag = "json"
 
@@ -25,7 +22,7 @@ const jsonFlag = "json"
 // terminals, TERM names one that can draw, and neither --plain nor --json is given. Anywhere else
 // ws prints lines, which CI, pipes and the unit on ws read.
 func drawsScreen(c *cobra.Command, p cli.Env) bool {
-	plain, _ := c.Flags().GetBool(plainFlag)
+	plain, _ := c.Flags().GetBool(cli.PlainFlag)
 	// A command without --json has no such flag, and the lookup then reads false.
 	asJSON, _ := c.Flags().GetBool(jsonFlag)
 	return screenWanted(plain, asJSON, p.TTY, p.ErrTTY, p.Getenv("TERM"))

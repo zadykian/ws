@@ -60,7 +60,7 @@ func newSecretsSetCmd(p cli.Env, open openStore) *cobra.Command {
 			},
 		})
 	}
-	return group("set", "set an entry, whose value never goes in an argument", cmds...)
+	return cli.Group("set", "set an entry, whose value never goes in an argument", cmds...)
 }
 
 // newSecretsSetGitCmd returns set git.

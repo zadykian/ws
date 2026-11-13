@@ -5,6 +5,7 @@ import (
 	"cmp"
 	"os"
 	"runtime"
+	"runtime/debug"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/local"
@@ -44,8 +45,9 @@ type Env struct {
 	Self func() (string, error)
 }
 
-// NewEnv returns the Env of this ws, whose version is version and whose file self returns.
-func NewEnv(version string, self func() (string, error)) Env {
+// NewEnv returns the Env of this ws.
+func NewEnv() Env {
+	info, ok := debug.ReadBuildInfo()
 	pwd, _ := os.Getwd()
 	return Env{
 		Machine:  local.OSMachine{},
@@ -61,10 +63,10 @@ func NewEnv(version string, self func() (string, error)) Env {
 		OpenTTY:  openTTY,
 		ErrTTY:   isTerminal(os.Stderr),
 		OutTTY:   isTerminal(os.Stdout),
-		Version:  version,
+		Version:  versionOf(info, ok),
 		Argv:     os.Args[1:],
 		Releases: releasesURL(os.Getenv),
-		Self:     self,
+		Self:     runningFile,
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
@@ -80,7 +81,7 @@ func screenServer(keys io.ReadWriter) (int, *effecttest.Machine) {
 	var out bytes.Buffer
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
-	return execute(ctx, newRoot(p, newServerCmd(p)), []string{"server", "ubuntu", "wizard"}, keys, &out, keys), m
+	return cli.Execute(ctx, cli.Root(p, newServerCmd(p)), []string{"server", "ubuntu", "wizard"}, keys, &out, keys), m
 }
 
 // The stages chosen run on the list's run screen, ws's run left out.

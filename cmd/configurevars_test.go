@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/tui"
 )
@@ -142,8 +143,8 @@ func TestMacConfigureSavesHostVarsAndLetsTheLockGo(t *testing.T) {
 	defer func() { _ = keys.Close() }()
 	ended := make(chan int, 1)
 	go func() {
-		root := newRoot(p, newMacCmd(p), newServerCmd(p))
-		ended <- execute(context.Background(), root, []string{"client", "macos", "configure"}, in, io.Discard, io.Discard)
+		root := cli.Root(p, newMacCmd(p), newServerCmd(p))
+		ended <- cli.Execute(context.Background(), root, []string{"client", "macos", "configure"}, in, io.Discard, io.Discard)
 	}()
 	press := func(text string) {
 		if _, err := keys.Write([]byte(text)); err != nil {

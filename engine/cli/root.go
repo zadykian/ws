@@ -1,24 +1,23 @@
-// Package cmd holds ws's commands, which main.go runs by Execute.
-package cmd
+package cli
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"io"
-	"os"
-	"runtime/debug"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/engine"
-	"github.com/zadykian/ws/engine/cli"
 )
 
-// group returns a command that only holds others. Alone it prints its help, and an unknown
+// PlainFlag names the persistent flag that keeps a command to lines.
+const PlainFlag = "plain"
+
+// Group returns a command that only holds others. Alone it prints its help, and an unknown
 // subcommand is a usage error.
-func group(use, short string, cmds ...*cobra.Command) *cobra.Command {
+func Group(use, short string, cmds ...*cobra.Command) *cobra.Command {
 	c := &cobra.Command{
 		Use:   use,
 		Short: short,
@@ -29,16 +28,16 @@ func group(use, short string, cmds ...*cobra.Command) *cobra.Command {
 	return c
 }
 
-// newRoot returns the ws command with the groups of this system.
-func newRoot(p cli.Env, groups ...*cobra.Command) *cobra.Command {
-	root := group("ws", "set up the server and the Mac that works on it", newVersionCmd(p), newUpdateCmd(p))
+// Root returns the ws command with the groups of this system.
+func Root(p Env, groups ...*cobra.Command) *cobra.Command {
+	root := Group("ws", "set up the server and the Mac that works on it", Version(p), Update(p))
 	root.AddCommand(groups...)
-	root.PersistentFlags().Bool(plainFlag, false, "print lines, with no full-screen display")
+	root.PersistentFlags().Bool(PlainFlag, false, "print lines, with no full-screen display")
 	root.SilenceErrors = true
 	root.SilenceUsage = true
 	root.CompletionOptions.DisableDefaultCmd = true
 	root.SetFlagErrorFunc(func(_ *cobra.Command, err error) error { return engine.UsageError{Err: err} })
-	walk(root, func(c *cobra.Command) {
+	Walk(root, func(c *cobra.Command) {
 		if args := c.Args; args != nil {
 			c.Args = func(c *cobra.Command, a []string) error {
 				if err := args(c, a); err != nil {
@@ -51,18 +50,18 @@ func newRoot(p cli.Env, groups ...*cobra.Command) *cobra.Command {
 	return root
 }
 
-// walk calls f on c and on each command below it.
-func walk(c *cobra.Command, f func(*cobra.Command)) {
+// Walk calls f on c and on each command below it.
+func Walk(c *cobra.Command, f func(*cobra.Command)) {
 	f(c)
 	for _, sub := range c.Commands() {
-		walk(sub, f)
+		Walk(sub, f)
 	}
 }
 
-// execute runs root with args and returns the exit status. An error prints on stderr after the
+// Execute runs root with args and returns the exit status. An error prints on stderr after the
 // path of the command that returned it. A usage error adds a line to the command's help and takes
 // status 2, any other error status 1. A signal's exit prints nothing.
-func execute(ctx context.Context, root *cobra.Command, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+func Execute(ctx context.Context, root *cobra.Command, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	root.SetArgs(append([]string{}, args...))
 	root.SetIn(stdin)
 	root.SetOut(stdout)
@@ -85,11 +84,4 @@ func execute(ctx context.Context, root *cobra.Command, args []string, stdin io.R
 		return 2
 	}
 	return 1
-}
-
-// Execute runs ws on the process's arguments and terminals, and returns its exit status.
-func Execute() int {
-	info, ok := debug.ReadBuildInfo()
-	p := cli.NewEnv(versionOf(info, ok), runningFile)
-	return execute(context.Background(), newRoot(p, groups(p)...), os.Args[1:], os.Stdin, os.Stdout, os.Stderr)
 }

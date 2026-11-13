@@ -29,8 +29,8 @@ func TestMacConfigureWritesWhatAFormSaves(t *testing.T) {
 	defer func() { _ = keys.Close() }()
 	ended := make(chan int, 1)
 	go func() {
-		root := newRoot(p, newMacCmd(p), newServerCmd(p))
-		ended <- execute(context.Background(), root, []string{"client", "macos", "configure"}, in, io.Discard, io.Discard)
+		root := cli.Root(p, newMacCmd(p), newServerCmd(p))
+		ended <- cli.Execute(context.Background(), root, []string{"client", "macos", "configure"}, in, io.Discard, io.Discard)
 	}()
 	if _, err := keys.Write([]byte("\t\tr.example\x13")); err != nil {
 		t.Fatal(err)

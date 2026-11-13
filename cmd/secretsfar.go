@@ -16,7 +16,7 @@ import (
 // runs its own of ws server ubuntu secrets on ws as root, over the wizard's ssh, with a value on
 // ssh's stdin.
 func newMacSecretsCmd(p cli.Env) *cobra.Command {
-	c := group("secrets", "edit ws's secrets file, over ssh", append([]*cobra.Command{{Use: "init",
+	c := cli.Group("secrets", "edit ws's secrets file, over ssh", append([]*cobra.Command{{Use: "init",
 		Short: "make ws's age identity and an empty secrets file on ws", Args: cobra.NoArgs}},
 		secretsEditCmds(p, nil)...)...)
 	forward(c, p)

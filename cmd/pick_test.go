@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
@@ -129,9 +130,9 @@ func TestServerApplyChecksFromTheListAndSaysSo(t *testing.T) {
 		m.Packages[name] = effecttest.Package{Version: "1", Status: "ii"}
 	}
 	var errs bytes.Buffer
-	root := newRoot(p, newMacCmd(p), newServerCmd(p))
+	root := cli.Root(p, newMacCmd(p), newServerCmd(p))
 	// A scan holds c back, so each turn ends by emptying the filter that the next one types.
-	status := execute(t.Context(), root, []string{"server", "ubuntu", "apply"}, repeating("/tmux\rac/\x7f\x7f\x7f\x7f\r"), io.Discard, &errs)
+	status := cli.Execute(t.Context(), root, []string{"server", "ubuntu", "apply"}, repeating("/tmux\rac/\x7f\x7f\x7f\x7f\r"), io.Discard, &errs)
 	if want := "ws server ubuntu apply: would change: none\n"; status != 0 || !strings.HasSuffix(errs.String(), want) {
 		t.Errorf("status = %d, stderr ends %q, want %q", status, errs.String()[max(0, errs.Len()-300):], want)
 	}

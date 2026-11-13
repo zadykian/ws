@@ -1,11 +1,9 @@
-package cmd
+package cli
 
 import (
 	"runtime/debug"
 
 	"github.com/spf13/cobra"
-
-	"github.com/zadykian/ws/engine/cli"
 )
 
 // versionOf returns the version that Go stamped into the build: the tag, or a pseudo-version with
@@ -17,8 +15,8 @@ func versionOf(info *debug.BuildInfo, ok bool) string {
 	return info.Main.Version
 }
 
-// newVersionCmd returns ws version, which prints this binary's version.
-func newVersionCmd(p cli.Env) *cobra.Command {
+// Version returns ws version, which prints this binary's version.
+func Version(p Env) *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
 		Short: "print the version of this ws",
