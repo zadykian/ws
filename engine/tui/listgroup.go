@@ -7,6 +7,13 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
+const (
+	// unreadIndex is a role's in place of a step's, as no event of a run names a role.
+	unreadIndex = -1
+	// roleColumns is what a role's heading adds to a step of the role.
+	roleColumns = 2
+)
+
 // groupForm is how a list shows a group of its steps.
 type groupForm int
 

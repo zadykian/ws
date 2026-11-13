@@ -1,13 +1,7 @@
 package tui
 
-const (
-	// unreadIndex is a role's in place of a step's, as no event of a run names a role.
-	unreadIndex = -1
-	// stageColumns is the columns of a stage's number, which a row under the stage stands past.
-	stageColumns = 5
-	// roleColumns is what a role's heading adds to a step of the role.
-	roleColumns = 2
-)
+// stageColumns is the columns of a stage's number, which a row under the stage stands past.
+const stageColumns = 5
 
 // Stage is a step of a queue. The lists show one order, as stages wait on each other across the
 // machines and share a connection, so that no two run at once.

@@ -37,17 +37,6 @@ func (s listScreen) warnings(unread string, held []string) []widget.Line {
 	return notes
 }
 
-// notes is the words of the pane: what holds for the whole list, then the line under the cursor.
-func (s pickScreen) notes() []widget.Line {
-	notes := s.warnings("", s.list.passedOver())
-	line, ok := s.list.current(s.at)
-	if !ok || line.heading {
-		return notes
-	}
-	row := s.list.rows[line.row]
-	return append(notes, row.notes()...)
-}
-
 // notes says why the step stands as it does, then what the scan printed of it.
 func (r pickRow) notes() []widget.Line {
 	var notes []widget.Line
