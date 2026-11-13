@@ -61,23 +61,8 @@
         { "key": "F8", "action": "diff_nav_next", "when": "normal" },
         { "key": "F8", "modifiers": ["shift"], "action": "diff_nav_prev", "when": "normal" },
         { "key": "F7", "modifiers": ["shift"], "action": "diff_nav_prev", "when": "normal" },
-        // one directory
-        { "key": "+", "modifiers": ["ctrl"], "action": "file_explorer_expand", "when": "file_explorer" },
-        { "key": "=", "modifiers": ["ctrl", "shift"], "action": "file_explorer_expand", "when": "file_explorer" },
-        // one directory
-        { "key": "-", "modifiers": ["ctrl"], "action": "file_explorer_collapse", "when": "file_explorer" },
-        { "key": "a", "modifiers": ["ctrl", "shift"], "action": "file_explorer_new_file", "when": "file_explorer" },
-        { "key": "n", "modifiers": ["ctrl"], "action": "file_explorer_new_file", "when": "file_explorer" },
         { "key": "F1", "action": "toggle_file_explorer", "when": "file_explorer" },
         { "key": "1", "modifiers": ["alt"], "action": "toggle_file_explorer", "when": "file_explorer" },
-        { "keys": [ { "key": "r", "modifiers": ["ctrl"] }, { "key": "r" } ], "action": "file_explorer_rename", "when": "file_explorer" },
-        { "key": "c", "modifiers": ["ctrl"], "action": "file_explorer_copy", "when": "file_explorer" },
-        { "key": "x", "modifiers": ["ctrl"], "action": "file_explorer_cut", "when": "file_explorer" },
-        { "key": "v", "modifiers": ["ctrl"], "action": "file_explorer_paste", "when": "file_explorer" },
-        // searches the whole root
-        { "key": "f", "modifiers": ["ctrl", "shift"], "action": "start_live_grep", "when": "file_explorer" },
-        { "key": "Esc", "action": "focus_editor", "when": "file_explorer" },
-        { "key": "v", "modifiers": ["ctrl"], "action": "terminal_paste", "when": "terminal" },
         // with the terminal in the dock
         { "key": "F2", "action": "toggle_utility_dock", "when": "terminal" },
         { "key": "2", "modifiers": ["alt"], "action": "toggle_utility_dock", "when": "terminal" },
@@ -105,11 +90,6 @@
       ]
     }
   },
-  // Fresh's default map binds Ctrl+H and Ctrl+Backspace, a pair it compares as each map loads,
-  // so a map's Ctrl+H warns at each start. It doesn't compare these.
-  "keybindings": [
-    { "key": "h", "modifiers": ["ctrl"], "action": "replace", "when": "normal" }
-  ],
   "editor": {
     "rulers": [120],
     "whitespace_show": true,

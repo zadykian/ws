@@ -177,15 +177,6 @@ func TestNoKeyConflictsWithItsTerminalEquivalent(t *testing.T) {
 	}
 }
 
-func TestCtrlHBindsOutsideTheMap(t *testing.T) {
-	_, c := load(t)
-	outside := c.Keybindings
-	if len(outside) != 1 || outside[0].Action != "replace" || outside[0].When != "normal" ||
-		spell(outside[0].press) != "ctrl+h" {
-		t.Fatalf("%+v", outside)
-	}
-}
-
 func TestAComposeFileTakesItsLanguageID(t *testing.T) {
 	loose, _ := load(t)
 	langs, _ := loose["languages"].(map[string]any)
