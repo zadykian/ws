@@ -126,3 +126,22 @@ func TestNetworksPlansNothingUntilMacConfHasWsKey(t *testing.T) {
 		t.Errorf("Plan = %q; want none", got)
 	}
 }
+
+func TestNetworksApplySaysEachChangeInOrder(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["launchctl print system/com.github.zadykian.ws-tunnel"] = effecttest.Result{}
+	m.Results["launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel"] = effecttest.Result{}
+	s := networksStep(m, conf.Conf{PublicKey: "K", TunnelNetworks: "10.1.0.0/24"})
+	p, err := s.Plan(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Apply(context.Background(), p); err != nil {
+		t.Fatal(err)
+	}
+	out := s.Out.(*effecttest.Out).Lines
+	if len(out) != 2 || !strings.Contains(out[0], "routes.d/mac-conf") ||
+		out[1] != "say: ran launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel" {
+		t.Errorf("out = %q; want the routes file, then the signal", out)
+	}
+}

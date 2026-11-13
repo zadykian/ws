@@ -50,7 +50,7 @@ func (r *Routes) Plan(ctx context.Context) (step.Plan, error) {
 
 // Apply applies the changes in order, so that the file is written before the daemon reads it.
 func (r *Routes) Apply(ctx context.Context, p step.Plan) error {
-	return applyInOrder(ctx, r.M, r.Out, p)
+	return resource.Group{}.Apply(ctx, p)
 }
 
 // changes plans routes.d/Set, and the signal that has a loaded daemon read it. A change of the
@@ -73,7 +73,7 @@ func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 	if len(networks) > 0 {
 		res = file.File{M: r.M, Path: routesFile, Content: []byte(routesText(networks)), Mode: 0o644}
 	}
-	cs, err := change.Plan(ctx, nil, res)
+	cs, err := change.Plan(ctx, nil, resource.Said{Out: r.Out, Part: res})
 	if err != nil || len(cs) == 0 || r.Check {
 		return cs, err
 	}

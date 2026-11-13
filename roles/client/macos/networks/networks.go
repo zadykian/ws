@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
@@ -92,11 +93,12 @@ func (n *Networks) resolvers(ctx context.Context) ([]step.Change, error) {
 		}
 		// The directory is planned once: a second mkdir would fail where the directory is new.
 		if i == 0 {
-			if cs, err = change.Plan(ctx, cs, file.Dir{M: n.M, Path: resolverDir, Mode: 0o755}); err != nil {
+			if cs, err = change.Plan(ctx, cs, resource.Said{Out: n.Out, Part: file.Dir{M: n.M, Path: resolverDir, Mode: 0o755}}); err != nil {
 				return nil, err
 			}
 		}
-		if cs, err = change.Plan(ctx, cs, file.File{M: n.M, Path: resolverFile, Content: []byte(resolverText(r.Addresses)), Mode: 0o644}); err != nil {
+		if cs, err = change.Plan(ctx, cs, resource.Said{Out: n.Out,
+			Part: file.File{M: n.M, Path: resolverFile, Content: []byte(resolverText(r.Addresses)), Mode: 0o644}}); err != nil {
 			return nil, err
 		}
 	}
@@ -112,7 +114,7 @@ func (n *Networks) resolvers(ctx context.Context) ([]step.Change, error) {
 		if own, err := n.ownsFile(resolverFile); err != nil {
 			return nil, err
 		} else if own {
-			gone, err := file.Absent{M: n.M, Path: resolverFile}.Plan(ctx)
+			gone, err := resource.Said{Out: n.Out, Part: file.Absent{M: n.M, Path: resolverFile}}.Plan(ctx)
 			if err != nil {
 				return nil, err
 			}
@@ -139,5 +141,20 @@ func (n *Networks) ownsFile(file string) (bool, error) {
 
 // Apply applies the changes in order, so that routes.d is written before the daemon reads it.
 func (n *Networks) Apply(ctx context.Context, p step.Plan) error {
-	return applyInOrder(ctx, n.M, n.Out, p)
+	return resource.Group{}.Apply(ctx, p)
+}
+
+// removal is host's removal of a file that no Report names, as mac.conf no longer does. It says
+// what the file's Report would.
+type removal struct {
+	resource.Change
+	path string
+}
+
+// Kind is removal.
+func (removal) Kind() step.ChangeKind { return step.Removal }
+
+// Item says that the file is to go.
+func (r removal) Item() step.Item {
+	return step.Item{Kind: step.FileItem, Name: r.path, Want: file.StateMissing, Found: file.StatePresent}
 }
