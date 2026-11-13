@@ -36,7 +36,7 @@ type ConfForm struct {
 // Load reads mac.conf, says each line that conf refuses, and fails on one: a form shows keys, and
 // has no field for a line that is none. A refusal of keys that go together opens, as a form mends it.
 func (f ConfForm) Load(out effect.Out) (ConfForm, error) {
-	_, c, err := loadConf(confFile{f.Conf, configureStage, f.M, out})
+	_, c, err := (conf.File{Path: f.Conf, Stage: configureStage, M: f.M, Out: out}).Load()
 	if err != nil {
 		return f, err
 	}
@@ -109,12 +109,12 @@ func (f ConfForm) Fields(edits map[string]string) []form.Field {
 
 // settings lists what a save changes: each key that shows, and an empty value for one that holds a
 // value and no longer has a place. The cable's keys never show, and go with the LAN.
-func (f ConfForm) settings(edits map[string]string) []setting {
+func (f ConfForm) settings(edits map[string]string) []conf.Setting {
 	asked, vals := f.walk(edits)
-	var changes []setting
+	var changes []conf.Setting
 	for _, q := range asked {
 		if v := f.wanted(q, edits); v != f.file.Value(q.key) {
-			changes = append(changes, setting{q.key, v})
+			changes = append(changes, conf.Setting{Key: q.key, Value: v})
 		}
 	}
 	gone := wayKeys
@@ -123,7 +123,7 @@ func (f ConfForm) settings(edits map[string]string) []setting {
 	}
 	for _, key := range gone {
 		if _, shows := vals[key]; !shows && f.file.Value(key) != "" {
-			changes = append(changes, setting{key, ""})
+			changes = append(changes, conf.Setting{Key: key})
 		}
 	}
 	return changes
@@ -137,13 +137,13 @@ func (f ConfForm) Save(ctx context.Context, out effect.Out, edits map[string]str
 		out.Say("%s holds these values already", f.Conf)
 		return f, nil
 	}
-	if err := (confFile{f.Conf, configureStage, f.M, out}).setAll(ctx, changes...); err != nil {
+	if err := (conf.File{Path: f.Conf, Stage: configureStage, M: f.M, Out: out}).SetAll(ctx, changes...); err != nil {
 		return f, err
 	}
 	var emptied []string
 	for _, c := range changes {
-		if c.value == "" {
-			emptied = append(emptied, c.key)
+		if c.Value == "" {
+			emptied = append(emptied, c.Key)
 		}
 	}
 	if len(emptied) > 0 {

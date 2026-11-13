@@ -1,4 +1,4 @@
-package wizard
+package conf
 
 import (
 	"context"
@@ -31,12 +31,12 @@ func TestConfSetAllPassesAPairTogether(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n")
 	m.Results["mkdir -p /h"] = effecttest.Result{}
-	f := confFile{"/h/mac.conf", "Configure", m, &effecttest.Out{}}
-	if err := f.set(context.Background(), "WS_LAN", "10.88.0.0/24"); err == nil {
+	f := File{"/h/mac.conf", "Configure", m, &effecttest.Out{}}
+	if err := f.Set(context.Background(), "WS_LAN", "10.88.0.0/24"); err == nil {
 		t.Error("set of half a pair = nil; want a refusal")
 	}
-	pair := []setting{{"WS_LAN", "10.88.0.0/24"}, {"WS_LAN_ADDRESS", "10.88.0.10"}}
-	if err := f.setAll(context.Background(), pair...); err != nil {
+	pair := []Setting{{"WS_LAN", "10.88.0.0/24"}, {"WS_LAN_ADDRESS", "10.88.0.10"}}
+	if err := f.SetAll(context.Background(), pair...); err != nil {
 		t.Fatal(err)
 	}
 	want := "WS_TARGET=lan\nWS_LAN=10.88.0.0/24\nWS_LAN_ADDRESS=10.88.0.10\n"
@@ -49,15 +49,21 @@ func TestConfSet(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\nWS_PUBLIC_KEY=x\n")
 	m.Results["mkdir -p /h"] = effecttest.Result{}
-	f := confFile{"/h/mac.conf", "Tunnel", m, &effecttest.Out{}}
-	if err := f.set(context.Background(), "WS_PUBLIC_KEY", "bad"); err == nil {
+	f := File{"/h/mac.conf", "Tunnel", m, &effecttest.Out{}}
+	if err := f.Set(context.Background(), "WS_PUBLIC_KEY", "bad"); err == nil {
 		t.Error("set of a bad key = nil; want a refusal")
 	}
 	key := "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
-	if err := f.set(context.Background(), "WS_PUBLIC_KEY", key); err != nil {
+	if err := f.Set(context.Background(), "WS_PUBLIC_KEY", key); err != nil {
 		t.Fatal(err)
 	}
 	if got := string(m.Files["/h/mac.conf"]); got != "WS_TARGET=lan\nWS_PUBLIC_KEY="+key+"\n" {
 		t.Errorf("mac.conf = %q", got)
+	}
+}
+
+func TestLine(t *testing.T) {
+	if got := Line("WS_GIT_NAME", "Ada L"); got != `WS_GIT_NAME="Ada L"` {
+		t.Errorf("Line = %q", got)
 	}
 }

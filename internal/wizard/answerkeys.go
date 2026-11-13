@@ -2,7 +2,6 @@ package wizard
 
 import (
 	"regexp"
-	"strings"
 )
 
 // question is what the Answers stage asks for one of mac.conf's keys. A Need makes an empty answer
@@ -42,14 +41,6 @@ func (q question) reply(raw string) string {
 		return raw[1 : len(raw)-1]
 	}
 	return raw
-}
-
-// line is the key's line for mac.conf, the value in quotes where it holds a blank.
-func line(key, value string) string {
-	if strings.ContainsAny(value, " \t") {
-		return key + `="` + value + `"`
-	}
-	return key + "=" + value
 }
 
 // hasLine reports whether the text of mac.conf has a line for the key.

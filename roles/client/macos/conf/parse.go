@@ -1,5 +1,5 @@
-// Package conf reads ~/.config/ws/mac.conf, the Mac's settings, without running it. It reads no
-// file: the caller passes the text.
+// Package conf reads ~/.config/ws/mac.conf, the Mac's settings, without running it. Parse and Lines
+// take its text; File and Read reach the file through a machine.
 package conf
 
 import (

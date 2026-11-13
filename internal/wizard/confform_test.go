@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/form"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // formOf returns the form of mac.conf's text.
@@ -183,13 +184,13 @@ func TestConfFormSaveRefusals(t *testing.T) {
 	signed := "WS_GIT_NAME=Me\nWS_GIT_EMAIL=me@b.dev\nWS_GIT_SIGNING_PUB_KEY=~/.ssh/k.pub\n"
 	f, m := formOf(t, signed)
 	_, err := f.Save(context.Background(), &effecttest.Out{}, map[string]string{"WS_GIT_NAME": ""})
-	if !errors.Is(err, errRefused) || string(m.Files["/h/mac.conf"]) != signed {
+	if !errors.Is(err, conf.ErrRefused) || string(m.Files["/h/mac.conf"]) != signed {
 		t.Errorf("a signing key with no name: %v, mac.conf = %q", err, m.Files["/h/mac.conf"])
 	}
 	f, m = formOf(t, "")
 	m.Links["/h/mac.conf"] = "/dotfiles/mac.conf"
 	out := &effecttest.Out{}
-	if _, err := f.Save(context.Background(), out, map[string]string{"WS_REMOTE": "r.example"}); !errors.Is(err, errRefused) {
+	if _, err := f.Save(context.Background(), out, map[string]string{"WS_REMOTE": "r.example"}); !errors.Is(err, conf.ErrRefused) {
 		t.Errorf("a link: %v", err)
 	}
 	if said := strings.Join(out.Lines, "\n"); !strings.Contains(said, "is a link") || !strings.Contains(said, "WS_REMOTE=r.example") {

@@ -12,6 +12,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
@@ -145,7 +146,7 @@ func (c *Cable) lacks() bool {
 // ws keeps down. It reads ws only where the login reached it in this run. Under --check it says
 // that the stage is after ws's run, where that run has changes to make.
 func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
-	cf, err := macConf(c.M, c.Conf)
+	cf, err := conf.Read(c.M, c.Conf)
 	if err != nil || cf.Target != "lan" {
 		return step.Plan{}, err
 	}

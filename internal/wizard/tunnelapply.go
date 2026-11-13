@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/check"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
@@ -24,7 +25,7 @@ func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 	case err != nil:
 		return errors.New(stage.Tunnel + ": sudo -v failed; the Mac's key is root's, as an admin of the Mac")
 	}
-	c, err := macConf(t.M, t.Conf)
+	c, err := conf.Read(t.M, t.Conf)
 	if err != nil {
 		return err
 	}
@@ -52,8 +53,8 @@ func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 		return errors.New(stage.Tunnel + ": ws has no wg0 key: mend what it printed, then run the wizard again")
 	}
 	if wg0 != c.PublicKey {
-		file := confFile{t.Conf, stage.Tunnel, t.M, t.Out}
-		if err := file.set(ctx, "WS_PUBLIC_KEY", wg0); err != nil {
+		file := conf.File{Path: t.Conf, Stage: stage.Tunnel, M: t.M, Out: t.Out}
+		if err := file.Set(ctx, "WS_PUBLIC_KEY", wg0); err != nil {
 			return err
 		}
 	}

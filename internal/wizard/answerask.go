@@ -7,6 +7,7 @@ import (
 	"io"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
@@ -58,6 +59,6 @@ func (a *asker) ask(ctx context.Context, q question) (string, error) {
 		}
 		value = q.reply(raw)
 	}
-	a.lines += line(q.key, value) + "\n"
+	a.lines += conf.Line(q.key, value) + "\n"
 	return value, nil
 }

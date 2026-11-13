@@ -50,7 +50,7 @@ func tunnelConf(c conf.Conf) tunnel.Conf {
 // Missing says why no way leads to ws: a mac.conf that is missing or refused gives none, and it
 // names that rather than ssh. It returns nil where mac.conf is sound.
 func (w MacWays) Missing() error {
-	_, err := macConf(w.M, w.Conf)
+	_, err := conf.Read(w.M, w.Conf)
 	switch {
 	case errors.Is(err, fs.ErrNotExist):
 		return fmt.Errorf("ws is out of reach: no mac.conf at %s; the wizard or ws client macos configure writes it", w.Conf)

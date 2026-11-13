@@ -88,7 +88,7 @@ func (k *MacKey) ask(ctx context.Context, use keyUse) error {
 	if !k.Tty {
 		return noTerminal(use, keys)
 	}
-	_, c, err := loadConf(k.file())
+	_, c, err := k.file().Load()
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func noTerminal(use keyUse, keys []sshcfg.AgentKey) error {
 	var lines []string
 	for _, key := range keys {
 		if key.P256() {
-			lines = append(lines, line(use.key, key.Pub())+" for "+key.Label())
+			lines = append(lines, conf.Line(use.key, key.Pub())+" for "+key.Label())
 		}
 	}
 	if len(lines) == 0 {
@@ -141,9 +141,9 @@ func (k *MacKey) name(ctx context.Context, use keyUse, key sshcfg.AgentKey) erro
 			return err
 		}
 	}
-	settings := []setting{{use.key, key.Pub()}}
+	settings := []conf.Setting{{Key: use.key, Value: key.Pub()}}
 	if use == loginUse {
-		settings = append(settings, setting{"WS_IDENTITY_AGENT", "~/" + sshcfg.SecretiveData + "/socket.ssh"})
+		settings = append(settings, conf.Setting{Key: "WS_IDENTITY_AGENT", Value: "~/" + sshcfg.SecretiveData + "/socket.ssh"})
 	}
-	return refused(k.file().setAll(ctx, settings...))
+	return refused(k.file().SetAll(ctx, settings...))
 }

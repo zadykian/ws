@@ -27,10 +27,7 @@ func TestQuestionReply(t *testing.T) {
 	}
 }
 
-func TestLine(t *testing.T) {
-	if got := line("WS_GIT_NAME", "Ada L"); got != `WS_GIT_NAME="Ada L"` {
-		t.Errorf("line = %q", got)
-	}
+func TestHasLine(t *testing.T) {
 	if !hasLine("# c\n  WS_LAN=1\n", "WS_LAN") || hasLine("X_WS_LAN=1\nWS_LAN_ADDRESS=2\n", "WS_LAN") {
 		t.Error("hasLine takes a line of another key, or misses its own")
 	}

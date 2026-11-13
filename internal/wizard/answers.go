@@ -48,11 +48,13 @@ func (*Answers) Side() guided.Side { return stage.Mac }
 // WaitsOn is Homebrew: on a new Mac, a --check run stops there, as the install does.
 func (*Answers) WaitsOn() string { return stage.Homebrew }
 
-func (a *Answers) file() confFile { return confFile{a.Conf, stage.Answers, a.M, a.Out} }
+func (a *Answers) file() conf.File {
+	return conf.File{Path: a.Conf, Stage: stage.Answers, M: a.M, Out: a.Out}
+}
 
 // load reads mac.conf and says each line that conf refuses, which ws client macos apply would stop
 // at.
-func (a *Answers) load() (string, conf.Conf, error) { return loadConf(a.file()) }
+func (a *Answers) load() (string, conf.Conf, error) { return a.file().Load() }
 
 // role gives the shell role's default of that name, as the role's file has it, or nothing.
 func (a *Answers) role(name string) string {
@@ -123,8 +125,8 @@ func (a *Answers) Apply(ctx context.Context, _ step.Plan) error {
 	if err != nil {
 		return err
 	}
-	err = a.file().add(ctx, lines)
-	if errors.Is(err, errRefused) {
+	err = a.file().Add(ctx, lines)
+	if errors.Is(err, conf.ErrRefused) {
 		return a.refusal(lines)
 	}
 	return err
@@ -138,8 +140,8 @@ func (a *Answers) rehearse(ctx context.Context, text string, c conf.Conf) error 
 	if err != nil {
 		return err
 	}
-	before, after, err := a.file().compose(lines)
-	if errors.Is(err, errRefused) {
+	before, after, err := a.file().Compose(lines)
+	if errors.Is(err, conf.ErrRefused) {
 		return a.refusal(lines)
 	}
 	if err != nil {

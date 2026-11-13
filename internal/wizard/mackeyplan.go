@@ -12,12 +12,14 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
-func (k *MacKey) file() confFile { return confFile{k.Conf, stage.Key, k.M, k.Out} }
+func (k *MacKey) file() conf.File {
+	return conf.File{Path: k.Conf, Stage: stage.Key, M: k.M, Out: k.Out}
+}
 
 // Plan finds what the key that ssh offers ws lacks: a question where mac.conf names none, or ws's
 // copy of a key of Secretive's. A file key must be there, and an agent's key listed by its agent.
 func (k *MacKey) Plan(ctx context.Context) (step.Plan, error) {
-	_, c, err := loadConf(k.file())
+	_, c, err := k.file().Load()
 	if err != nil {
 		return step.Plan{}, err
 	}

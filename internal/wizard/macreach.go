@@ -7,6 +7,7 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // MacReach is the Mac's way to ws: ssh at the direct way that mac.conf gives, root by Sudo.
@@ -24,7 +25,7 @@ func (r MacReach) Shell() remote.Shell { return remote.SSHShell{SSH: r.SSH, Root
 
 // Want reads the target and WS_USER from mac.conf.
 func (r MacReach) Want() (session.Want, error) {
-	c, err := macConf(r.SSH.M, r.Conf)
+	c, err := conf.Read(r.SSH.M, r.Conf)
 	return session.Want{Target: c.Target, User: c.User}, err
 }
 

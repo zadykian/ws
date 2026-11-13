@@ -7,11 +7,14 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
 // file is mac.conf.
-func (c *Cable) file() confFile { return confFile{c.Conf, stage.Cable, c.M, c.Out} }
+func (c *Cable) file() conf.File {
+	return conf.File{Path: c.Conf, Stage: stage.Cable, M: c.M, Out: c.Out}
+}
 
 // Apply takes ws's port of the cable, where none holds ws's end, from WS_CABLE_PORT or the
 // terminal, the one with carrier by default. link names it in /etc/ws/host_vars.yml on ws. Then ws
@@ -20,7 +23,7 @@ func (c *Cable) file() confFile { return confFile{c.Conf, stage.Cable, c.M, c.Ou
 // answer, writes an empty WS_CABLE_SERVICE. Where mac.conf has a service, again takes the stage's
 // steps.
 func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
-	cf, err := macConf(c.M, c.Conf)
+	cf, err := conf.Read(c.M, c.Conf)
 	if err != nil {
 		return err
 	}
@@ -146,5 +149,5 @@ func (c *Cable) write(ctx context.Context, value string) error {
 	if value != "" {
 		lines = "WS_CABLE_PORT=" + c.end() + "\nWS_CABLE_SERVICE=\"" + value + "\"\n"
 	}
-	return c.file().add(ctx, lines)
+	return c.file().Add(ctx, lines)
 }

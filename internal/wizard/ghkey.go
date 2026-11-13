@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/setup"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
@@ -18,7 +19,7 @@ func (e noKey) Unwrap() error { return e.err }
 // key returns the .pub of the Mac's key for ws, as setup.ReadKey finds it from mac.conf, and its
 // type and base64.
 func (g GhCLI) key(ctx context.Context) (pub, key string, err error) {
-	_, c, err := loadConf(confFile{g.Conf, stage.GitHub, g.M, g.Out})
+	_, c, err := (conf.File{Path: g.Conf, Stage: stage.GitHub, M: g.M, Out: g.Out}).Load()
 	if err != nil {
 		return "", "", err
 	}

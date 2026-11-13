@@ -10,6 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
@@ -63,7 +64,7 @@ func (c tunnelChange) String() string { return stage.Tunnel + ": would " + strin
 // through it. Where the run asked ws's address, ws isn't at the ways that ws-tunnel tries. Where
 // the check found no handshake, ws-tunnel has none. A later run checks those two.
 func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
-	c, err := macConf(t.M, t.Conf)
+	c, err := conf.Read(t.M, t.Conf)
 	if err != nil {
 		return step.Plan{}, err
 	}
@@ -90,7 +91,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 	case wg0 != c.PublicKey:
 		if t.Check {
 			// Under --check mac.conf is the scratch file, as for the stages before.
-			if err := (confFile{t.Conf, stage.Tunnel, t.M, t.Out}).show("WS_PUBLIC_KEY", wg0); err != nil {
+			if err := (conf.File{Path: t.Conf, Stage: stage.Tunnel, M: t.M, Out: t.Out}).Show("WS_PUBLIC_KEY", wg0); err != nil {
 				return step.Plan{}, err
 			}
 		}
