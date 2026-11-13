@@ -3,19 +3,18 @@ package cmd
 import (
 	"context"
 
+	"github.com/spf13/cobra"
 	"github.com/zadykian/ws/engine"
+	"github.com/zadykian/ws/engine/cli"
+	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/role"
+	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos"
+	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/client/macos/stages/tools"
 	"github.com/zadykian/ws/roles/server/ubuntu"
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
-
-	"github.com/spf13/cobra"
-
-	"github.com/zadykian/ws/engine/cli"
-	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/roles/client/macos/stages/host"
 )
 
 // wizardSide is what differs between the wizards: their stages, the process that caffeinate waits
@@ -26,6 +25,8 @@ type wizardSide struct {
 	pid   int
 	forms func(context.Context) ([]tui.Sheet, func(context.Context), error)
 	read  func(string, *host.Sudo) (tui.StateReader, func(context.Context))
+	// before builds the steps that run first, on lines, before the lock and the screen.
+	before func(o engine.WizardOptions) []func(effect.Out) step.Step
 }
 
 // macSide is ws client macos wizard's side.
@@ -36,6 +37,17 @@ func macSide(c *cobra.Command, p cli.Env) wizardSide {
 		forms:  macForms(c.InOrStdin(), c.ErrOrStderr(), p),
 		read: func(side string, sudo *host.Sudo) (tui.StateReader, func(context.Context)) {
 			return macState(p, side, sudo)
+		},
+		before: func(o engine.WizardOptions) []func(effect.Out) step.Step {
+			if !o.Update {
+				return nil
+			}
+			// Its own run, before the lock: the new ws takes the place of this process, which would leave the
+			// lock held. It runs before the screen too, on lines, or the new ws would find a terminal left raw.
+			return []func(effect.Out) step.Step{func(out effect.Out) step.Step {
+				return &tools.MacUpdate{M: p.Machine, Out: out, Version: p.Version, URL: p.Releases,
+					Home: p.Getenv("HOME"), Args: p.Argv}
+			}}
 		},
 	}
 }

@@ -30,13 +30,13 @@ type wizardRun struct {
 // start runs the wizard on lines, or on its lists at a terminal. The steps that before build run
 // first, on lines, with the run's signals and terminal. A step that replaces ws, such as the update,
 // must run before the lock, and before the screen leaves the terminal raw.
-func (w wizardRun) start(before ...func(effect.Out) step.Step) error {
+func (w wizardRun) start() error {
 	// The run's context ends with a signal, and its lock goes with it.
 	ctx, stop := signal.NotifyContext(w.c.Context(), syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	term := effect.NewTerminal(w.c.InOrStdin(), w.c.ErrOrStderr())
 	out := linesOf(term, w.c.CommandPath())
-	if len(before) > 0 {
+	if before := w.sideBefore(); len(before) > 0 {
 		steps := make([]step.Step, len(before))
 		for i, build := range before {
 			steps[i] = build(out)
@@ -210,4 +210,12 @@ func (w wizardRun) chosen(choice tui.QueueChoice, run string, sudo *host.Sudo) e
 		screen := tui.NewQueueRun(engine.RunTitle(cli.CallOf(w.c, w.p), o.Check), cfg.Theme, choice)
 		return tui.Run(w.c.Context(), cfg, screen, work)
 	})
+}
+
+// sideBefore builds the steps that run first.
+func (w wizardRun) sideBefore() []func(effect.Out) step.Step {
+	if w.side.before == nil {
+		return nil
+	}
+	return w.side.before(w.o)
 }

@@ -140,16 +140,7 @@ func runWizard(c *cobra.Command, p cli.Env, o engine.WizardOptions) error {
 	// is set for the scripts that stages run.
 	_ = p.Setenv("PATH", "/opt/homebrew/bin:"+p.Getenv("PATH"))
 	_ = p.Setenv("WS_CONF", confPath(p.Getenv, p.Pwd))
-	var before []func(effect.Out) step.Step
-	if o.Update {
-		// Its own run, before the lock: the new ws takes the place of this process, which would leave the
-		// lock held. It runs before the screen too, on lines, or the new ws would find a terminal left raw.
-		before = append(before, func(out effect.Out) step.Step {
-			return &tools.MacUpdate{M: p.Machine, Out: out, Version: p.Version, URL: p.Releases,
-				Home: p.Getenv("HOME"), Args: p.Argv}
-		})
-	}
-	return wizardRun{c, p, macSide(c, p), o}.start(before...)
+	return wizardRun{c, p, macSide(c, p), o}.start()
 }
 
 // shellDefaults is the shell role's git identity as lines of key: value, which ws client macos
