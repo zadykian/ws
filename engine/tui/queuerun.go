@@ -23,8 +23,9 @@ func NewQueueRun(title string, theme widget.Theme, choice QueueChoice) QueueRun 
 	for _, s := range choice.left.list.stages {
 		stages.Steps = append(stages.Steps, s.row.Name)
 	}
-	run := NewRunScreen(title, theme, stages)
-	run.pane = func(window widget.Size) widget.Size { return inside(stripSize(window)) }
+	run := NewRunScreen(title, theme, stages).OutputIn(func(window widget.Size) widget.Size {
+		return inside(stripSize(window))
+	})
 	return QueueRun{run, choice.left.list.filtered(""), choice.left.at}
 }
 
@@ -44,20 +45,20 @@ func (q QueueRun) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 	var cmd tea.Cmd
-	q.run, cmd = q.run.update(msg)
+	q.run, cmd = q.run.Updated(msg)
 	return q, cmd
 }
 
 // layout is the run's screen with the lists in place of its panes, and its output in the strip.
 func (q QueueRun) layout() widget.Layout {
-	l := q.run.layout()
-	output := widget.Pane{Title: l.Panes[1].Title, Body: q.run.output.View(), Focused: true}
-	l.Panes, l.Below = q.list.panes(), strip(q.run.theme, output, q.run.window)
+	l := q.run.Layout()
+	output := widget.Pane{Title: l.Panes[1].Title, Body: q.run.Output(), Focused: true}
+	l.Panes, l.Below = q.list.panes(), strip(q.run.Theme(), output, q.run.Window())
 	return l
 }
 
 // View draws the screen.
 func (q QueueRun) View() tea.View {
-	l := q.list.drawn(q.layout(), q.run.theme, q.run.window, q.at)
-	return l.View(q.run.theme, q.run.window.Width, q.run.window.Height)
+	l := q.list.drawn(q.layout(), q.run.Theme(), q.run.Window(), q.at)
+	return l.View(q.run.Theme(), q.run.Window().Width, q.run.Window().Height)
 }

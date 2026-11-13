@@ -73,11 +73,11 @@ func (r RunScreen) Init() tea.Cmd {
 
 // Update takes the run's events and lines, the clock, the window's size and the keys.
 func (r RunScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	return r.update(msg)
+	return r.Updated(msg)
 }
 
-// update is Update by its own type, for a screen that draws a run its way.
-func (r RunScreen) update(msg tea.Msg) (RunScreen, tea.Cmd) {
+// Updated is Update by its own type, for a screen that draws a run its way.
+func (r RunScreen) Updated(msg tea.Msg) (RunScreen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case step.Event:
 		r.steps = r.steps.Take(msg)
@@ -108,8 +108,30 @@ func (r RunScreen) fitted() RunScreen {
 		r.output = r.output.Fit(r.pane(r.window))
 		return r
 	}
-	r.output = r.output.Fit(r.layout().PaneSizes(r.window.Width, r.window.Height)[1])
+	r.output = r.output.Fit(r.Layout().PaneSizes(r.window.Width, r.window.Height)[1])
 	return r
+}
+
+// OutputIn returns the screen with its output sized by pane in a window, for a host that draws the
+// output elsewhere.
+func (r RunScreen) OutputIn(pane func(window widget.Size) widget.Size) RunScreen {
+	r.pane = pane
+	return r
+}
+
+// Output is what the screen shows in its output window.
+func (r RunScreen) Output() string {
+	return r.output.View()
+}
+
+// Theme is the theme that styles the screen.
+func (r RunScreen) Theme() widget.Theme {
+	return r.theme
+}
+
+// Window is the size of the terminal, as the screen last heard it.
+func (r RunScreen) Window() widget.Size {
+	return r.window
 }
 
 // pressed moves the focus or the window, or asks the session to stop. Up, Down and Home are no
@@ -137,10 +159,10 @@ func (r RunScreen) pressed(msg tea.KeyPressMsg) (RunScreen, tea.Cmd) {
 	return r, nil
 }
 
-// layout is the screen with its panes empty, as what fills them depends on their sizes. The window
+// Layout is the screen with its panes empty, as what fills them depends on their sizes. The window
 // holds the focus alone, so that a window too short for two panes shows it, under the current
 // step's name.
-func (r RunScreen) layout() widget.Layout {
+func (r RunScreen) Layout() widget.Layout {
 	title := "Output"
 	if at := r.steps.At(); at >= 0 {
 		title = r.steps[at].Label()
@@ -158,7 +180,7 @@ func (r RunScreen) layout() widget.Layout {
 
 // View draws the screen.
 func (r RunScreen) View() tea.View {
-	l := r.layout()
+	l := r.Layout()
 	sizes := l.PaneSizes(r.window.Width, r.window.Height)
 	l.Panes[0].Body = r.steps.View(r.theme, sizes[0].Height)
 	l.Panes[1].Body = r.output.View()
