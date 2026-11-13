@@ -1,6 +1,7 @@
 package tunnel
 
 import (
+	"bytes"
 	"context"
 
 	"github.com/zadykian/ws/engine/core/resource"
@@ -38,7 +39,7 @@ func (t *Tunnel) daemon(ctx context.Context) ([]step.Change, error) {
 		return nil, err
 	}
 	conf := len(cs)
-	if cs, err = resource.Append(ctx, cs, t.said(file.File{M: t.M, Path: tunnelPlist, Content: t.Plist, Mode: 0o644})); err != nil {
+	if cs, err = resource.Append(ctx, cs, t.said(file.File{M: t.M, Path: tunnelPlist, Content: t.plist(), Mode: 0o644})); err != nil {
 		return nil, err
 	}
 	plist := len(cs) > conf
@@ -49,3 +50,7 @@ func (t *Tunnel) daemon(ctx context.Context) ([]step.Change, error) {
 	}
 	return cs, nil
 }
+
+// plist returns the template of the plist with the server's name in it. A name is of a-z, 0-9 and
+// -, which XML needs no escape for.
+func (t *Tunnel) plist() []byte { return bytes.ReplaceAll(t.Plist, []byte("@NAME@"), []byte(t.Server)) }
