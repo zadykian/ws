@@ -20,6 +20,7 @@ WS_IDENTITY_AGENT=~/PATH/socket.ssh
 `~/.config/ws/servers/ws/server.conf`, beside it, holds every other key:
 
 ```sh
+WS_SLOT=0
 WS_PUBLIC_KEY=WS_KEY
 WS_LAN=10.88.0.0/24
 WS_LAN_ADDRESS=10.88.0.10
@@ -38,8 +39,9 @@ server's file is `servers/ws/server.conf` beside it. Each key's meaning is in
 
 `--server NAME` picks the server, and its file is `servers/NAME/server.conf`. A name is a
 lower-case letter, then up to 11 lower-case letters, digits and `-`. With one server, the flag may
-be left out. With none, ws refuses and says that the wizard adds one. With several, it refuses and
-lists them. A directory of a bad name that holds `server.conf` is refused too.
+be left out. With none, the wizard asks the name, `ws` by default. With several, it refuses and
+lists them. `WS_SLOT`, from 0 to 15, is the slot: the wizard writes `WS_SLOT=0` in a file that
+lacks it. A directory of a bad name that holds `server.conf` is refused too.
 
 ## A machine on the LAN
 
