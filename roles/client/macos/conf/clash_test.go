@@ -16,6 +16,7 @@ func TestClashesRefuseWhatTwoServersCannotShare(t *testing.T) {
 		"own inside":    {"WS_TUNNEL_NETWORKS=10.1.0.0/24", "WS_TUNNEL_NETWORKS=10.1.0.0/16", "WS_TUNNEL_NETWORKS's 10.1.0.0/24 overlaps server lab's 10.1.0.0/16: a network goes through one server's tunnel"},
 		"theirs inside": {"WS_TUNNEL_NETWORKS=10.1.0.0/16", "WS_TUNNEL_NETWORKS=10.1.2.0/24", "WS_TUNNEL_NETWORKS's 10.1.0.0/16 overlaps server lab's 10.1.2.0/24: a network goes through one server's tunnel"},
 		"same domain":   {"WS_RESOLVERS=corp.test=10.0.0.1", "WS_RESOLVERS=\"a.test=10.0.0.2 corp.test=10.0.0.3\"", "WS_RESOLVERS's corp.test is server lab's too: /etc/resolver holds one file a domain"},
+		"second cable":  {"WS_CABLE_SERVICE=\"USB LAN\"", "WS_CABLE_SERVICE=\"Thunderbolt Ethernet\"", "WS_CABLE_SERVICE names a cable, as server lab's does: the cable reaches one server"},
 	} {
 		got := clashes(parse(t, tc.own), sibling(tc.theirs))
 		if len(got) != 1 || !strings.Contains(got[0].Msg, tc.want) {
