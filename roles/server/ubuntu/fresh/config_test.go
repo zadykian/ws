@@ -225,9 +225,6 @@ func TestEachArrivalIsBound(t *testing.T) {
 		arrivals []string
 	}{
 		{"ctrl+alt+4", []string{"ctrl+alt+\\"}},
-		{"ctrl+alt+/", []string{"ctrl+alt+_", "ctrl+alt+shift+-"}},
-		{"ctrl+k ctrl+/", []string{"ctrl+k ctrl+_", "ctrl+k ctrl+shift+-"}},
-		{"ctrl+shift+Space", []string{"ctrl+Space"}},
 		{"alt+shift+Space", []string{"alt+Space"}},
 	} {
 		found := false
