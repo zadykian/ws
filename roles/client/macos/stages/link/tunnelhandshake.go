@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/zadykian/ws/engine/core/remote"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 	"strings"
 	"time"
@@ -12,14 +13,15 @@ import (
 
 // handshake waits up to 30 s for ws-tunnel's handshake, where the run reached ws at its ways. Then
 // it logs in to ws through the tunnel once, by the key that ws takes, as fail2ban on ws bans
-// 10.99.0.2 after a few that fail. ws's new key reaches ws-tunnel by ws client macos apply's SIGHUP.
+// the Mac's end after a few that fail. ws's new key reaches ws-tunnel by ws client macos apply's SIGHUP.
 // The Mac's new peer reaches ws by a restart, so that it handshakes at once. Without a
 // handshake, it adds the tunnel to the closing list, and the run goes on, as the later stages reach
 // ws by a direct way, outside the tunnel.
-func (t *Tunnel) handshake(ctx context.Context, target, port string, kick bool) error {
+func (t *Tunnel) handshake(ctx context.Context, c conf.Conf, kick bool) error {
+	end, mac := c.TunnelSlot().Server(), c.TunnelSlot().Mac()
 	if first := t.SSH.First(); first != "" {
 		once := "server.conf's way leads to ws"
-		if target == "lan" {
+		if c.Target == "lan" {
 			once = "ws's lease is static"
 		}
 		t.Hand.Add("The tunnel's handshake: ws-tunnel goes to ws's ways, not %s, where this run reached "+
@@ -35,6 +37,7 @@ func (t *Tunnel) handshake(ctx context.Context, target, port string, kick bool) 
 	t.Sleep(2 * time.Second)
 	if !t.shake(ctx, 30) {
 		t.none = true
+		port := c.Port
 		if port == "" {
 			port = "51820"
 		}
@@ -44,8 +47,8 @@ func (t *Tunnel) handshake(ctx context.Context, target, port string, kick bool) 
 			"(roles/client/macos/README.md, The Mac's tunnel). Then run the wizard again, which checks it.", port)
 		return nil
 	}
-	if !t.via(ctx) {
-		return errors.New(stage.Tunnel + ": ssh -G ws gives another host than " + wsEnd + ", ws's end of the " +
+	if !t.via(ctx, end) {
+		return errors.New(stage.Tunnel + ": ssh -G ws gives another host than " + end.String() + ", ws's end of the " +
 			"tunnel, which ws client macos apply's config.d/ws names")
 	}
 	out, err := t.SSH.Tunnel(ctx, "-o", "BatchMode=yes", "ws", "echo", "ok")
@@ -56,7 +59,7 @@ func (t *Tunnel) handshake(ctx context.Context, target, port string, kick bool) 
 			last = ": " + strings.TrimSpace(lines[len(lines)-1])
 		}
 		return errors.New(stage.Tunnel + ": ssh ws failed through the tunnel, where ws's run lets SSH in on " +
-			"wg0, and fail2ban bans 10.99.0.2 for an hour after 5 failures" + last)
+			"wg0, and fail2ban bans " + mac.String() + " for an hour after 5 failures" + last)
 	}
 	return nil
 }

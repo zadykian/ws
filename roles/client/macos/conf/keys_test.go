@@ -13,6 +13,14 @@ func find(t *testing.T, name string) key {
 	return key{}
 }
 
+func TestTunnelSlot(t *testing.T) {
+	for slot, want := range map[string]string{"": "10.99.0.1", "0": "10.99.0.1", "1": "10.99.1.1", "15": "10.99.15.1"} {
+		if got := (Conf{Slot: slot}).TunnelSlot().Server().String(); got != want {
+			t.Errorf("slot %q: server %s, want %s", slot, got, want)
+		}
+	}
+}
+
 func TestKeys(t *testing.T) {
 	tests := []struct {
 		key, value string
@@ -30,6 +38,7 @@ func TestKeys(t *testing.T) {
 		{"WS_PUBLIC_KEY", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=", true},
 		{"WS_LAN", "10.88.0.0/24", true},
 		{"WS_LAN", "10.99.0.0/16", false},
+		{"WS_LAN", "10.99.8.0/24", false},
 		{"WS_LAN", "10.77.0.0/30", false},
 		{"WS_LAN", "10.88.0.1/24", false},
 		{"WS_LAN_ADDRESS", "10.88.0.2", true},
@@ -38,6 +47,8 @@ func TestKeys(t *testing.T) {
 		{"WS_PORT", "51820", true},
 		{"WS_TUNNEL_NETWORKS", "10.20.0.0/16 10.30.0.0/16", true},
 		{"WS_TUNNEL_NETWORKS", "10.99.0.0/24", false},
+		{"WS_TUNNEL_NETWORKS", "10.99.15.0/24", false},
+		{"WS_TUNNEL_NETWORKS", "10.99.16.0/24", true},
 		{"WS_RESOLVERS", "example.internal=10.20.0.53", true},
 		{"WS_RESOLVERS", "Example.internal=10.20.0.53", false},
 		{"WS_CABLE_PORT", "enp5s0", true},
