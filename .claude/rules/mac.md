@@ -35,9 +35,9 @@ The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `rol
   and a function takes them as parameters. Tests use the fakes of
   [effecttest](../../engine/core/effect/effecttest/effecttest.go), never the real ones.
 - A step that wants sudo's password ahead of its lines calls `local.Validate`, never `sudo -v`
-  by `Pass`, which would ask over a screen ([tui.md](../../engine/tui/README.md#commands)).
+  by `Pass`, which would ask over a screen ([the TUI](../../engine/tui/README.md#commands)).
 - A command that asks the maintainer, for a passphrase or a login, runs by `effect.Foreground`.
-  A step holds it as `F` beside `M`. `Pass` would keep the screen on the terminal ([tui.md](../../engine/tui/README.md#commands)).
+  A step holds it as `F` beside `M`. `Pass` would keep the screen on the terminal ([the TUI](../../engine/tui/README.md#commands)).
 - No cgo: ws builds with `CGO_ENABLED=0`. The race detector's cgo is the tests' alone
   ([Makefile](../../Makefile)).
 - ws is cobra's: a command parses no flag or argument by hand and holds no usage text.

@@ -28,7 +28,7 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 - The pages sit beside their code, as the `README.md` of a role or a package. A second page stands
   beside one where the cap keeps two apart: `zed/projects.md`, `network/router.md`,
   `.github/workflows/rootless.md` and `mac-cld.md`. `tools/README.md` holds the gates and
-  `.github/workflows/README.md` CI. There is no `docs/`.
+  `.github/workflows/README.md` CI.
 - `tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
   caps them. `build` builds ws for a target, and `vale-comments` runs Vale on files' comments.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
