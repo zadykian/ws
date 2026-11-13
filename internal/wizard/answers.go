@@ -67,9 +67,9 @@ func (a *Answers) role(name string) string {
 }
 
 // sequence returns the walk over the keys, which gets the value of a key that mac.conf lacks from ask.
-func (a *Answers) sequence(c conf.Conf, text string, ask func(question) (string, error)) *sequence {
+func (a *Answers) sequence(c conf.Conf, text string, ask func(conf.Question) (string, error)) *conf.Sequence {
 	vals := map[string]string{"WS_TARGET": c.Target, "WS_LAN": c.LAN, "WS_GIT_NAME": c.GitName, "WS_REMOTE": c.Remote}
-	return &sequence{vals: vals, lacks: func(key string) bool { return !hasLine(text, key) }, ask: ask, role: a.role}
+	return &conf.Sequence{Vals: vals, Lacks: func(key string) bool { return !conf.HasLine(text, key) }, Ask: ask, Role: a.role}
 }
 
 // Plan finds the first key that mac.conf lacks, or that mac.conf with all its keys is refused.
@@ -82,7 +82,7 @@ func (a *Answers) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, a.rehearse(ctx, text, c)
 	}
 	first := ""
-	err = a.sequence(c, text, func(q question) (string, error) { first = q.key; return "", errMissing }).run()
+	err = a.sequence(c, text, func(q conf.Question) (string, error) { first = q.Key; return "", errMissing }).Run()
 	switch {
 	case errors.Is(err, errMissing):
 		return step.Plan{Changes: []step.Change{stage.Todo(fmt.Sprintf(
@@ -99,9 +99,9 @@ func (a *Answers) Plan(ctx context.Context) (step.Plan, error) {
 // collect asks for the values that mac.conf lacks, in order, and returns their lines.
 func (a *Answers) collect(ctx context.Context, text string, c conf.Conf) (string, error) {
 	ask := &asker{conf: a.Conf, prog: a.Prog, env: a.Env, p: a.P, tty: a.Tty, out: a.Out}
-	seq := a.sequence(c, text, func(q question) (string, error) { return ask.ask(ctx, q) })
-	ask.lan = func() string { return seq.vals["WS_LAN"] }
-	err := seq.run()
+	seq := a.sequence(c, text, func(q conf.Question) (string, error) { return ask.ask(ctx, q) })
+	ask.lan = func() string { return seq.Vals["WS_LAN"] }
+	err := seq.Run()
 	return ask.lines, err
 }
 

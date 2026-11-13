@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 func newAsker(p effect.Prompt, env map[string]string) (*asker, *effecttest.Out) {
@@ -18,10 +19,10 @@ func newAsker(p effect.Prompt, env map[string]string) (*asker, *effecttest.Out) 
 
 func TestAskerTakesTheEnvironmentFirst(t *testing.T) {
 	a, out := newAsker(&effecttest.Prompt{T: t}, map[string]string{"WS_REMOTE": "r.example", "WS_RESOLVERS": ""})
-	if v, err := a.ask(context.Background(), question{key: "WS_REMOTE"}); v != "r.example" || err != nil {
+	if v, err := a.ask(context.Background(), conf.Question{Key: "WS_REMOTE"}); v != "r.example" || err != nil {
 		t.Errorf("ask = %q, %v", v, err)
 	}
-	if v, err := a.ask(context.Background(), question{key: "WS_RESOLVERS"}); v != "" || err != nil || len(out.Lines) != 0 {
+	if v, err := a.ask(context.Background(), conf.Question{Key: "WS_RESOLVERS"}); v != "" || err != nil || len(out.Lines) != 0 {
 		t.Errorf("an empty value set: ask = %q, %v, out %v", v, err, out.Lines)
 	}
 	if a.lines != "WS_REMOTE=r.example\nWS_RESOLVERS=\n" {
@@ -31,7 +32,7 @@ func TestAskerTakesTheEnvironmentFirst(t *testing.T) {
 
 func TestAskerRefusesABadEnvironment(t *testing.T) {
 	a, out := newAsker(&effecttest.Prompt{T: t}, map[string]string{"WS_REMOTE_PORT": "99999"})
-	_, err := a.ask(context.Background(), question{key: "WS_REMOTE_PORT"})
+	_, err := a.ask(context.Background(), conf.Question{Key: "WS_REMOTE_PORT"})
 	if err == nil || !strings.Contains(err.Error(), "WS_REMOTE_PORT comes from the environment") ||
 		len(out.Lines) != 1 || !strings.Contains(out.Lines[0], "is not a port") {
 		t.Errorf("ask = %v, out %v", err, out.Lines)
@@ -42,7 +43,7 @@ func TestAskerAsksTheMaintainerAgain(t *testing.T) {
 	var w bytes.Buffer
 	term := effect.NewTerminal(strings.NewReader("99999\n\n"), &w)
 	a, out := newAsker(term, nil)
-	q := question{key: "WS_REMOTE_PORT", text: "The VM's SSH port", def: "22", need: "needs a port"}
+	q := conf.Question{Key: "WS_REMOTE_PORT", Text: "The VM's SSH port", Def: "22", Need: "needs a port"}
 	if v, err := a.ask(context.Background(), q); v != "22" || err != nil {
 		t.Fatalf("ask = %q, %v", v, err)
 	}
@@ -59,7 +60,7 @@ func TestAskerAsksTheMaintainerAgain(t *testing.T) {
 func TestAskerRefusesWithoutATerminal(t *testing.T) {
 	a, out := newAsker(&effecttest.Prompt{T: t}, nil)
 	a.tty = false
-	_, err := a.ask(context.Background(), question{key: "WS_TARGET"})
+	_, err := a.ask(context.Background(), conf.Question{Key: "WS_TARGET"})
 	if err == nil || err.Error() != "Answers: no terminal to ask WS_TARGET: set WS_TARGET" || len(out.Lines) != 0 {
 		t.Errorf("ask with no terminal = %v, saying %q", err, out.Lines)
 	}

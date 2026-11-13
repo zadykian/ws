@@ -46,41 +46,41 @@ func (f ConfForm) Load(out effect.Out) (ConfForm, error) {
 
 // walk runs the Answers stage's sequence, each question getting the value that the form holds, and
 // returns the questions it reached and the values it ended on.
-func (f ConfForm) walk(edits map[string]string) ([]question, map[string]string) {
-	var asked []question
-	s := sequence{
-		vals:  map[string]string{},
-		lacks: func(string) bool { return true },
-		ask: func(q question) (string, error) {
+func (f ConfForm) walk(edits map[string]string) ([]conf.Question, map[string]string) {
+	var asked []conf.Question
+	s := conf.Sequence{
+		Vals:  map[string]string{},
+		Lacks: func(string) bool { return true },
+		Ask: func(q conf.Question) (string, error) {
 			asked = append(asked, q)
 			return f.wanted(q, edits), nil
 		},
-		role: (&Answers{Defaults: f.Defaults}).role,
+		Role: (&Answers{Defaults: f.Defaults}).role,
 	}
-	_ = s.run() // ask returns no error, which is what would stop the walk.
-	return asked, s.vals
+	_ = s.Run() // ask returns no error, which is what would stop the walk.
+	return asked, s.Vals
 }
 
 // wanted is the value that a save would leave for the key: an edit, or the file's, or the default of
 // a key that needs a value. An optional key's default stays the wizard's offer, as a form shows the
 // file and a value nobody typed would land unseen.
-func (f ConfForm) wanted(q question, edits map[string]string) string {
-	if raw, ok := edits[q.key]; ok {
+func (f ConfForm) wanted(q conf.Question, edits map[string]string) string {
+	if raw, ok := edits[q.Key]; ok {
 		return fieldValue(q, raw)
 	}
-	if v := f.file.Value(q.key); v != "" || q.need == "" {
+	if v := f.file.Value(q.Key); v != "" || q.Need == "" {
 		return v
 	}
-	return q.def
+	return q.Def
 }
 
 // fieldValue reads what a field holds as the wizard reads an answer. But an empty field of an
 // optional key is an empty value, which is what the form shows.
-func fieldValue(q question, raw string) string {
-	if raw == "" && q.need == "" {
+func fieldValue(q conf.Question, raw string) string {
+	if raw == "" && q.Need == "" {
 		return ""
 	}
-	return q.reply(raw)
+	return q.Reply(raw)
 }
 
 // Fields returns the keys that show under the edits, in the order that the stage asks them.
@@ -88,19 +88,19 @@ func (f ConfForm) Fields(edits map[string]string) []form.Field {
 	asked, vals := f.walk(edits)
 	fields := make([]form.Field, 0, len(asked))
 	for _, q := range asked {
-		field := form.Field{Key: q.key, Text: q.text, Value: f.file.Value(q.key), Valid: func(raw string) error {
-			if why := q.refusal(fieldValue(q, raw), vals["WS_LAN"]); why != "" {
+		field := form.Field{Key: q.Key, Text: q.Text, Value: f.file.Value(q.Key), Valid: func(raw string) error {
+			if why := q.Refusal(fieldValue(q, raw), vals["WS_LAN"]); why != "" {
 				return errors.New(why)
 			}
 			return nil
 		}}
 		switch {
-		case q.key == "WS_TARGET":
+		case q.Key == "WS_TARGET":
 			field.Options = targets
-		case q.need != "":
-			field.Default = q.def
-		case q.def != "":
-			field.Text += " (the wizard offers " + q.def + ")"
+		case q.Need != "":
+			field.Default = q.Def
+		case q.Def != "":
+			field.Text += " (the wizard offers " + q.Def + ")"
 		}
 		fields = append(fields, field)
 	}
@@ -113,8 +113,8 @@ func (f ConfForm) settings(edits map[string]string) []conf.Setting {
 	asked, vals := f.walk(edits)
 	var changes []conf.Setting
 	for _, q := range asked {
-		if v := f.wanted(q, edits); v != f.file.Value(q.key) {
-			changes = append(changes, conf.Setting{Key: q.key, Value: v})
+		if v := f.wanted(q, edits); v != f.file.Value(q.Key) {
+			changes = append(changes, conf.Setting{Key: q.Key, Value: v})
 		}
 	}
 	gone := wayKeys
