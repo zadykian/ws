@@ -67,3 +67,15 @@ func TestLoadSaysWhichFileIsMissing(t *testing.T) {
 		t.Errorf("err = %v, want mac.conf missing", err)
 	}
 }
+
+func TestLoadRefusesANetworkThatAnotherServerRoutes(t *testing.T) {
+	m := machineWith("ws", "lab")
+	server := ServerPath(macPath, "ws")
+	m.Files[macPath] = nil
+	m.Files[server] = []byte("WS_TUNNEL_NETWORKS=10.1.0.0/24\n")
+	m.Files[ServerPath(macPath, "lab")] = []byte("WS_TUNNEL_NETWORKS=10.1.0.0/16\n")
+	_, err := Load(m, macPath, server)
+	if want := server + ": WS_TUNNEL_NETWORKS's 10.1.0.0/24 overlaps server lab's"; err == nil || !strings.HasPrefix(err.Error(), want) {
+		t.Errorf("err = %v, want %q first", err, want)
+	}
+}

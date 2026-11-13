@@ -19,11 +19,23 @@ func ServerPath(mac, name string) string {
 
 // Load reads mac.conf at mac and a server's file at server, and parses each by its scope. It
 // returns them joined: the Mac's keys from mac.conf, every other from the server's file. It
-// returns every refusal of both files, each in its own file's words.
+// returns every refusal of both files, each in its own file's words, then what the server's file
+// takes that another server's file takes too ([clashes]).
 func Load(m effect.Machine, mac, server string) (Conf, error) {
 	macConf, macErr := load(m, mac, MacFile)
 	c, serverErr := load(m, server, ServerFile)
 	if err := errors.Join(macErr, serverErr); err != nil {
+		return Conf{}, err
+	}
+	others, err := Siblings(m, mac, server)
+	if err != nil {
+		return Conf{}, err
+	}
+	var all []error
+	for _, e := range clashes(c, others) {
+		all = append(all, errors.New(e.In(server)))
+	}
+	if err := errors.Join(all...); err != nil {
 		return Conf{}, err
 	}
 	return join(macConf, c), nil
