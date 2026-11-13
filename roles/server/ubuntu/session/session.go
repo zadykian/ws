@@ -43,7 +43,7 @@ type heldStatus struct {
 type Reach interface {
 	// Shell runs a command as root on ws.
 	Shell() remote.Shell
-	// Want reads the target and WS_USER that ws's run is to leave: mac.conf's on the Mac, and
+	// Want reads the target and WS_USER that ws's run is to leave: server.conf's on the Mac, and
 	// host_vars' on ws.
 	Want() (Want, error)
 	// User returns WS_USER, whose claude and git config the stages read.
@@ -57,7 +57,7 @@ type Reach interface {
 }
 
 // Want is what ws's run is to leave: the target, lan or cloud, and WS_USER. The server reads no
-// other key of mac.conf.
+// other key of server.conf.
 type Want struct{ Target, User string }
 
 // Scripts are what a Session runs on ws: the remote script and the files script. Events hears a
