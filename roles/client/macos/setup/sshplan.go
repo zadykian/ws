@@ -21,9 +21,9 @@ type sshFacts struct {
 	Home string
 	// Dirs plans ~/.ssh and ~/.ssh/config.d, and DirLink is the last of them that is a link.
 	Dirs       []step.Change
-	DirLink    dirLink
-	Ws         path // ~/.ssh/config.d/ws
-	UserConfig path // ~/.ssh/config, whose text is the file a link points to
+	DirLink    DirLink
+	Ws         Found // ~/.ssh/config.d/ws
+	UserConfig Found // ~/.ssh/config, whose text is the file a link points to
 	// IncludeLine is the line of its Include of config.d/ws, or 0.
 	IncludeLine int
 	// Config plans ~/.ssh/config, or Stop says why a run can't. Include is how it stands.
@@ -37,13 +37,13 @@ type sshFacts struct {
 func sshChanges(f sshFacts, text []byte) []step.Change {
 	cs := append([]step.Change(nil), f.Dirs...)
 	dir := f.Home + "/.ssh"
-	cs = append(cs, userFile{Path: dir + "/config.d/ws", Text: text, Mode: sshFileMode}.change(f.Ws)...)
+	cs = append(cs, File{Path: dir + "/config.d/ws", Text: text, Mode: sshFileMode}.Change(f.Ws)...)
 	return append(cs, f.Config...)
 }
 
 // sshDirs is ~/.ssh and its config.d. A run sets the mode of config.d, which holds the hosts.
-func sshDirs(m effect.Machine, home string) userDirs {
-	return userDirs{
+func sshDirs(m effect.Machine, home string) Dirs {
+	return Dirs{
 		{M: m, Path: home + "/.ssh", Mode: sshDirMode},
 		{M: m, Path: home + "/.ssh/config.d", Mode: sshDirMode, Fix: true},
 	}

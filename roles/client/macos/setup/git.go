@@ -57,8 +57,8 @@ func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, nil
 	}
 	g.notes = nil
-	found, link, holds, err := g.gitconfigLines().read(ctx)
-	lines, err := g.gitconfigLines().changes(found, link, holds, err)
+	found, link, holds, err := g.gitconfigLines().Read(ctx)
+	lines, err := g.gitconfigLines().Changes(found, link, holds, err)
 	if err != nil {
 		return step.Plan{}, err
 	}

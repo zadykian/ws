@@ -112,9 +112,9 @@ func (c *Cld) Plan(ctx context.Context) (step.Plan, error) {
 
 // Report says whether cld is there, with the version it names.
 func (c *Cld) Report(ctx context.Context) ([]step.Item, error) {
-	item := step.Item{Kind: step.PackageItem, Name: "cld", Want: stateInstalled, Found: stateMissing}
+	item := step.Item{Kind: step.PackageItem, Name: "cld", Want: StateInstalled, Found: StateMissing}
 	if c.has() {
-		item.Found = stateInstalled
+		item.Found = StateInstalled
 		if out, err := c.M.Run(ctx, c.bin(), "--version"); err == nil {
 			v, _ := cldVersion(string(out))
 			item.Found += " " + v

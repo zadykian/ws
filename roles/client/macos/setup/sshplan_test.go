@@ -29,7 +29,7 @@ func TestSSHChangesPutTheDirectoriesFirst(t *testing.T) {
 
 func TestSSHChangesOfModesAndInclude(t *testing.T) {
 	f := sshFacts{
-		Home: "/h", Ws: path{Exists: true, Mode: 0o644, Text: []byte("new\n")}, Config: []step.Change{sshInclude},
+		Home: "/h", Ws: Found{Exists: true, Mode: 0o644, Text: []byte("new\n")}, Config: []step.Change{sshInclude},
 	}
 	got := sshChanges(f, []byte("new\n"))
 	want := []step.Change{

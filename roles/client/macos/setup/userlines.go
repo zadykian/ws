@@ -13,11 +13,11 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
-// errLinked is a plan's error for a link that lacks ws's lines: a run would replace the link with a
-// file. errMisplaced is its error for lines that sit where the file's own text wins over them.
+// ErrLinked is a plan's error for a link that lacks ws's lines: a run would replace the link with a
+// file. ErrMisplaced is its error for lines that sit where the file's own text wins over them.
 var (
-	errLinked    = errors.New("a link that lacks ws's lines")
-	errMisplaced = errors.New("ws's lines out of place")
+	ErrLinked    = errors.New("a link that lacks ws's lines")
+	ErrMisplaced = errors.New("ws's lines out of place")
 )
 
 // linesError is a plan's stop with the words that a report prints too.
@@ -30,14 +30,14 @@ func (e linesError) Error() string { return e.text }
 
 func (e linesError) Unwrap() error { return e.kind }
 
-// misplaced is the error of a Has that finds ws's lines out of place.
-func misplaced(format string, a ...any) error {
-	return linesError{errMisplaced, fmt.Sprintf(format, a...)}
+// Misplaced is the error of a Has that finds ws's lines out of place.
+func Misplaced(format string, a ...any) error {
+	return linesError{ErrMisplaced, fmt.Sprintf(format, a...)}
 }
 
-// userLines is ws's lines in a file of the user's that holds other text too. A run adds them once,
+// Lines is ws's lines in a file of the user's that holds other text too. A run adds them once,
 // at the top or the end, and keeps the old file. One read gives the plan and the report.
-type userLines struct {
+type Lines struct {
 	M    effect.Machine
 	Path string
 	// Lines is the text to add. It ends in a newline.
@@ -50,31 +50,31 @@ type userLines struct {
 	Top bool
 	// Mode is the mode of a new file.
 	Mode fs.FileMode
-	// Has says whether text holds the lines. It returns misplaced where they sit out of place.
+	// Has says whether text holds the lines. It returns Misplaced where they sit out of place.
 	Has func(ctx context.Context, m effect.Machine, path string, text []byte) (bool, error)
 	// Now stamps the copy of the old file. Nil means time.Now.
 	Now func() time.Time
 }
 
 // remedy tells what to do in a file that a run leaves alone.
-func (l userLines) remedy() string {
+func (l Lines) remedy() string {
 	if l.Top {
 		return "put '" + l.Shown + "' at the top of that file"
 	}
 	return "add '" + l.Shown + "' at the end of that file"
 }
 
-// read reads the file. link is where a link points. holds is whether the file has the lines, and
-// err is misplaced where they sit out of place, with found read.
-func (l userLines) read(ctx context.Context) (found path, link string, holds bool, err error) {
+// Read reads the file. link is where a link points. holds is whether the file has the lines, and
+// err is Misplaced where they sit out of place, with found read.
+func (l Lines) Read(ctx context.Context) (found Found, link string, holds bool, err error) {
 	info, err := l.M.Stat(l.Path)
 	if errors.Is(err, fs.ErrNotExist) {
-		return path{}, "", false, nil
+		return Found{}, "", false, nil
 	}
 	if err != nil {
-		return path{}, "", false, err
+		return Found{}, "", false, err
 	}
-	found = path{Exists: true, Mode: info.Mode}
+	found = Found{Exists: true, Mode: info.Mode}
 	if found.Text, err = l.M.ReadFile(l.Path); err != nil {
 		return found, "", false, fmt.Errorf("cannot read %s: %w", l.Path, err)
 	}
@@ -82,8 +82,8 @@ func (l userLines) read(ctx context.Context) (found path, link string, holds boo
 	return found, info.Link, holds, err
 }
 
-// after is the text that a run leaves, as read in found.
-func (l userLines) after(found path, holds bool) []byte {
+// After is the text that a run leaves, as read in found.
+func (l Lines) After(found Found, holds bool) []byte {
 	switch {
 	case holds:
 		return found.Text
@@ -99,32 +99,32 @@ func (l userLines) after(found path, holds bool) []byte {
 	return append(text, l.Lines...)
 }
 
-// changes plans what read found, or stops at its error, at a link that lacks the lines.
-func (l userLines) changes(found path, link string, holds bool, err error) ([]step.Change, error) {
+// Changes plans what read found, or stops at its error, at a link that lacks the lines.
+func (l Lines) Changes(found Found, link string, holds bool, err error) ([]step.Change, error) {
 	switch {
 	case err != nil:
 		return nil, err
 	case holds:
 		return nil, nil
 	case !found.Exists:
-		return []step.Change{change.Write{Path: l.Path, Before: nil, After: l.after(found, false), Exists: false, Mode: l.Mode}}, nil
+		return []step.Change{change.Write{Path: l.Path, Before: nil, After: l.After(found, false), Exists: false, Mode: l.Mode}}, nil
 	case link != "":
-		return nil, linesError{errLinked, fmt.Sprintf("%s is a link to %s: %s", l.Path, link, l.remedy())}
+		return nil, linesError{ErrLinked, fmt.Sprintf("%s is a link to %s: %s", l.Path, link, l.remedy())}
 	}
-	return []step.Change{keep(l.Path, l.Now), change.Write{Path: l.Path, Before: found.Text, After: l.after(found, false), Exists: true, Mode: found.Mode.Perm()}}, nil
+	return []step.Change{Keep(l.Path, l.Now), change.Write{Path: l.Path, Before: found.Text, After: l.After(found, false), Exists: true, Mode: found.Mode.Perm()}}, nil
 }
 
-// plan writes the lines where missing: none, a new file, or the old file kept and rewritten.
-func (l userLines) plan(ctx context.Context) ([]step.Change, error) {
-	found, link, holds, err := l.read(ctx)
-	return l.changes(found, link, holds, err)
+// Plan writes the lines where missing: none, a new file, or the old file kept and rewritten.
+func (l Lines) Plan(ctx context.Context) ([]step.Change, error) {
+	found, link, holds, err := l.Read(ctx)
+	return l.Changes(found, link, holds, err)
 }
 
-// item says how the file stands against what read found. A conflict is where the plan stops.
-func (l userLines) item(found path, link string, holds bool, err error) (step.Item, error) {
+// Item says how the file stands against what read found. A conflict is where the plan stops.
+func (l Lines) Item(found Found, link string, holds bool, err error) (step.Item, error) {
 	item := lineItem(l.Path, cmp.Or(l.Name, l.Shown), found.Exists, holds)
 	switch {
-	case errors.Is(err, errMisplaced):
+	case errors.Is(err, ErrMisplaced):
 		item.Found, item.Conflict = "out of place", err.Error()
 	case err != nil:
 		return item, err
@@ -135,14 +135,14 @@ func (l userLines) item(found path, link string, holds bool, err error) (step.It
 }
 
 // Report reads the file as a plan does.
-func (l userLines) Report(ctx context.Context) ([]step.Item, error) {
-	found, link, holds, err := l.read(ctx)
-	item, err := l.item(found, link, holds, err)
+func (l Lines) Report(ctx context.Context) ([]step.Item, error) {
+	found, link, holds, err := l.Read(ctx)
+	item, err := l.Item(found, link, holds, err)
 	return []step.Item{item}, err
 }
 
-// keep copies the old file to PATH.TIME~. This is the one stamp of the copies.
-func keep(file string, now func() time.Time) change.Backup {
+// Keep copies the old file to PATH.TIME~. This is the one stamp of the copies.
+func Keep(file string, now func() time.Time) change.Backup {
 	if now == nil {
 		now = time.Now
 	}

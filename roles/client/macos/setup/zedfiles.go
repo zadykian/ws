@@ -27,12 +27,12 @@ const (
 // replaced and left on the same terms with its own mark. settings.json is written where nothing is there, and never read.
 func (z *Zed) files() ([]step.Change, error) {
 	dir := z.Home + "/.config/zed"
-	cs, link, err := z.dirs().plan()
+	cs, link, err := z.dirs().Plan()
 	if err != nil {
 		return nil, err
 	}
 	for _, f := range z.whole() {
-		planned, err := owned(z.Out, f)
+		planned, err := Owned(z.Out, f)
 		if err != nil {
 			return nil, err
 		}
@@ -46,14 +46,14 @@ func (z *Zed) files() ([]step.Change, error) {
 }
 
 // dirs returns ~/.config and Zed's directory in it.
-func (z *Zed) dirs() userDirs {
-	return userDirs{{M: z.M, Path: z.Home + "/.config", Mode: 0o755}, {M: z.M, Path: z.Home + "/.config/zed", Mode: 0o755}}
+func (z *Zed) dirs() Dirs {
+	return Dirs{{M: z.M, Path: z.Home + "/.config", Mode: 0o755}, {M: z.M, Path: z.Home + "/.config/zed", Mode: 0o755}}
 }
 
 // whole returns global_settings.json and keymap.json, the files that ws replaces whole.
-func (z *Zed) whole() []userFile {
+func (z *Zed) whole() []File {
 	dir := z.Home + "/.config/zed"
-	return []userFile{
+	return []File{
 		{M: z.M, Path: dir + "/global_settings.json", Text: z.Settings, Mode: 0o644, Own: zedOwn(zedHeader, true)},
 		{M: z.M, Path: dir + "/keymap.json", Text: z.Keymap, Mode: 0o644, Own: zedOwn(zedKeymapMark, false)},
 	}

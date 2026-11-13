@@ -82,8 +82,8 @@ func (i Install) String() string { return "would build ws into " + i.Path }
 func (Install) Kind() step.ChangeKind { return step.Install }
 
 // localBin is ~/.local/bin, which holds ws's program. A run makes it where missing, and leaves its mode.
-func localBin(m effect.Machine, home string) userDirs {
-	return userDirs{
+func localBin(m effect.Machine, home string) Dirs {
+	return Dirs{
 		{M: m, Path: home + "/.local", Mode: 0o755},
 		{M: m, Path: home + "/.local/bin", Mode: 0o755},
 	}
@@ -100,7 +100,7 @@ func (t *Tunnel) program(self []byte) ([]step.Change, error) {
 	if err == nil && bytes.Equal(have, self) {
 		return nil, nil
 	}
-	cs, _, err := localBin(t.M, t.Home).plan()
+	cs, _, err := localBin(t.M, t.Home).Plan()
 	if err != nil {
 		return nil, err
 	}
@@ -155,17 +155,17 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 	}
 	parts := []step.Reporter{
 		localBin(t.M, t.Home),
-		userFile{M: t.M, Path: t.Home + "/.local/bin/ws", Text: self, Binary: true},
+		File{M: t.M, Path: t.Home + "/.local/bin/ws", Text: self, Binary: true},
 		host.Dir{M: t.M, Path: "/usr/local", Mode: 0o755},
 		host.Dir{M: t.M, Path: "/usr/local/libexec", Mode: 0o755},
 		host.Dir{M: t.M, Path: tunnelLibexec, Mode: 0o755},
 		host.File{M: t.M, Path: tunnelLibexec + "/ws", Content: self, Mode: 0o755, Secret: true},
 		host.Dir{M: t.M, Path: tunnelDir, Mode: 0o700},
 		host.Dir{M: t.M, Path: tunnelDir + "/routes.d", Mode: 0o755},
-		fixed(key),
+		Fixed(key),
 	}
 	if t.public != "" {
-		parts = append(parts, wsDirs(t.M, t.Home), t.pub())
+		parts = append(parts, WsDirs(t.M, t.Home), t.pub())
 	}
 	if t.Conf.PublicKey != "" {
 		daemon := step.Item{Kind: step.ServiceItem, Name: daemonLabel, Want: "loaded", Found: "not loaded"}
@@ -173,9 +173,9 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 			daemon.Found = daemon.Want
 		}
 		parts = append(parts, host.File{M: t.M, Path: tunnelDir + "/tunnel.conf", Content: []byte(tunnelConf(t.Conf)), Mode: 0o600},
-			host.File{M: t.M, Path: tunnelPlist, Content: t.Plist, Mode: 0o644}, fixed{daemon})
+			host.File{M: t.M, Path: tunnelPlist, Content: t.Plist, Mode: 0o644}, Fixed{daemon})
 	}
-	return gather(ctx, parts...)
+	return Gather(ctx, parts...)
 }
 
 func (t *Tunnel) sleep(d time.Duration) {

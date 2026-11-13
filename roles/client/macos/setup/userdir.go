@@ -15,9 +15,9 @@ import (
 // report shows a conflict.
 var errNotDir = errors.New("is not a directory")
 
-// userDir is a directory of the user's that ws writes under, as userFile is a file. Its plan and
+// Dir is a directory of the user's that ws writes under, as File is a file. Its plan and
 // its report read it alike, from one stat.
-type userDir struct {
+type Dir struct {
 	M    effect.Machine
 	Path string
 	Mode fs.FileMode
@@ -28,15 +28,15 @@ type userDir struct {
 
 // read stats the directory. A missing path is not an error. found is set for a path that exists,
 // and info says where a link points. It returns errNotDir for a path that is no directory.
-func (d userDir) read() (found path, info effect.Info, err error) {
+func (d Dir) read() (found Found, info effect.Info, err error) {
 	info, err = d.M.Stat(d.Path)
 	if errors.Is(err, fs.ErrNotExist) {
-		return path{}, info, nil
+		return Found{}, info, nil
 	}
 	if err != nil {
-		return path{}, info, err
+		return Found{}, info, err
 	}
-	found = path{Exists: true, Mode: info.Mode}
+	found = Found{Exists: true, Mode: info.Mode}
 	if !info.Mode.IsDir() {
 		return found, info, fmt.Errorf("%s %w", d.Path, errNotDir)
 	}
@@ -44,7 +44,7 @@ func (d userDir) read() (found path, info effect.Info, err error) {
 }
 
 // change returns the change that brings the directory, as read in found, to its mode, or none.
-func (d userDir) change(found path) []step.Change {
+func (d Dir) change(found Found) []step.Change {
 	switch {
 	case !found.Exists:
 		return []step.Change{change.MakeDir{Path: d.Path, Mode: d.Mode}}
@@ -56,9 +56,9 @@ func (d userDir) change(found path) []step.Change {
 
 // Report says how the directory stands, as a plan reads it. A path that is no directory shows as
 // a conflict, where a plan stops.
-func (d userDir) Report(context.Context) ([]step.Item, error) {
+func (d Dir) Report(context.Context) ([]step.Item, error) {
 	found, _, err := d.read()
-	p := userPath{Kind: step.DirItem, Path: d.Path}
+	p := Path{Kind: step.DirItem, Path: d.Path}
 	if d.Fix {
 		p.Mode = d.Mode
 	}
@@ -74,31 +74,31 @@ func (d userDir) Report(context.Context) ([]step.Item, error) {
 	return []step.Item{p.itemOf(found)}, nil
 }
 
-// userDirs is directories in the order that a run makes them, parents first.
-type userDirs []userDir
+// Dirs is directories in the order that a run makes them, parents first.
+type Dirs []Dir
 
-// dirLink is a directory that is a link: where a step writes under it, it warns once.
-type dirLink struct{ Path, To string }
+// DirLink is a directory that is a link: where a step writes under it, it warns once.
+type DirLink struct{ Path, To string }
 
 // warn says that the step writes under the link, where it plans writes. goes names what lands there.
-func (l dirLink) warn(out effect.Out, writes int, goes string) {
+func (l DirLink) warn(out effect.Out, writes int, goes string) {
 	if l.Path != "" && writes > 0 {
 		out.Warn("%s is a link to %s: %s", l.Path, l.To, goes)
 	}
 }
 
-// plan returns the changes that make the directories, and the last of them that is a link. It stops
+// Plan returns the changes that make the directories, and the last of them that is a link. It stops
 // at a path that is no directory, and at any error other than a missing path.
-func (ds userDirs) plan() ([]step.Change, dirLink, error) {
+func (ds Dirs) Plan() ([]step.Change, DirLink, error) {
 	var cs []step.Change
-	var link dirLink
+	var link DirLink
 	for _, d := range ds {
 		found, info, err := d.read()
 		if err != nil {
-			return nil, dirLink{}, err
+			return nil, DirLink{}, err
 		}
 		if info.Link != "" {
-			link = dirLink{d.Path, info.Link}
+			link = DirLink{d.Path, info.Link}
 		}
 		cs = append(cs, d.change(found)...)
 	}
@@ -106,18 +106,18 @@ func (ds userDirs) plan() ([]step.Change, dirLink, error) {
 }
 
 // Report joins the directories' items.
-func (ds userDirs) Report(ctx context.Context) ([]step.Item, error) {
+func (ds Dirs) Report(ctx context.Context) ([]step.Item, error) {
 	parts := make([]step.Reporter, len(ds))
 	for i, d := range ds {
 		parts[i] = d
 	}
-	return gather(ctx, parts...)
+	return Gather(ctx, parts...)
 }
 
-// wsDirs is ~/.config and ws's directory in it, which git, zsh and the tunnel write under. A run
+// WsDirs is ~/.config and ws's directory in it, which git, zsh and the tunnel write under. A run
 // sets the mode of ws's directory, which holds mac.conf.
-func wsDirs(m effect.Machine, home string) userDirs {
-	return userDirs{
+func WsDirs(m effect.Machine, home string) Dirs {
+	return Dirs{
 		{M: m, Path: home + "/.config", Mode: 0o755},
 		{M: m, Path: home + "/.config/ws", Mode: 0o700, Fix: true},
 	}

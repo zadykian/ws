@@ -108,25 +108,25 @@ func (g *Ghostty) conf() string {
 func (g *Ghostty) files(ctx context.Context) ([]step.Change, error) {
 	config := g.conf()
 	file := g.file(config)
-	ws, err := file.plan()
+	ws, err := file.Plan()
 	switch {
-	case errors.Is(err, errNotWs):
+	case errors.Is(err, ErrNotWs):
 		g.Out.Warn("%s is not ws client macos apply's: move it away, as the script writes its own", file.Path)
 		return nil, nil
 	case err != nil:
 		return nil, err
 	}
 	lines := g.configLines(config, file.Path)
-	found, link, holds, err := lines.read(ctx)
+	found, link, holds, err := lines.Read(ctx)
 	if err != nil {
 		g.Out.Warn("cannot read %s, Ghostty's config, so ws.ghostty stays out", config)
 		return nil, nil
 	}
-	changes, stop := lines.changes(found, link, holds, nil)
-	if !errors.Is(stop, errLinked) {
+	changes, stop := lines.Changes(found, link, holds, nil)
+	if !errors.Is(stop, ErrLinked) {
 		stop = nil
 	}
-	dirs, dl, err := g.dirs(config).plan()
+	dirs, dl, err := g.dirs(config).Plan()
 	if err != nil {
 		return nil, err
 	}
@@ -135,13 +135,13 @@ func (g *Ghostty) files(ctx context.Context) ([]step.Change, error) {
 
 // dirs is the directory of Ghostty's config alone. Its parent is ~/Library/Application Support on
 // any Mac, so a run plans no more.
-func (g *Ghostty) dirs(config string) userDirs {
-	return userDirs{{M: g.M, Path: filepath.Dir(config), Mode: 0o755}}
+func (g *Ghostty) dirs(config string) Dirs {
+	return Dirs{{M: g.M, Path: filepath.Dir(config), Mode: 0o755}}
 }
 
 // file is ws.ghostty, beside Ghostty's config.
-func (g *Ghostty) file(config string) userFile {
-	return userFile{M: g.M, Path: filepath.Dir(config) + "/ws.ghostty", Text: g.want(), Mode: 0o644, Own: ghosttyOwn}
+func (g *Ghostty) file(config string) File {
+	return File{M: g.M, Path: filepath.Dir(config) + "/ws.ghostty", Text: g.want(), Mode: 0o644, Own: ghosttyOwn}
 }
 
 // ghosttyOwn says whether ws.ghostty's first line is ws's.
@@ -167,6 +167,6 @@ func (g *Ghostty) resolve() func(string) (string, error) {
 func (g *Ghostty) Report(ctx context.Context) ([]step.Item, error) {
 	config := g.conf()
 	file := g.file(config)
-	return gather(ctx, g.casks().report(ctx, "ghostty", "Ghostty.app", g.Home),
+	return Gather(ctx, g.casks().report(ctx, "ghostty", "Ghostty.app", g.Home),
 		g.dirs(config), file, g.configLines(config, file.Path))
 }

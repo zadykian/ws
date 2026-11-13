@@ -71,11 +71,11 @@ func caskGone(name, missing string) string {
 // item says how the cask stands, as cask reads it. brew is asked of one cask, and only where its
 // files are gone: a report covers what ws manages, never all that Homebrew holds.
 func (b brewCasks) item(ctx context.Context, name string, there bool, missing string) step.Item {
-	item := step.Item{Kind: step.PackageItem, Name: name, Want: stateInstalled, Found: stateInstalled}
+	item := step.Item{Kind: step.PackageItem, Name: name, Want: StateInstalled, Found: StateInstalled}
 	if there {
 		return item
 	}
-	item.Found = stateMissing
+	item.Found = StateMissing
 	if _, err := b.m.Run(ctx, "brew", "list", "--cask", name); err == nil {
 		item.Conflict = caskGone(name, missing)
 	}
@@ -83,8 +83,8 @@ func (b brewCasks) item(ctx context.Context, name string, there bool, missing st
 }
 
 // report says how an app's cask and the font's stand.
-func (b brewCasks) report(ctx context.Context, name, app, home string) fixed {
-	return fixed{
+func (b brewCasks) report(ctx context.Context, name, app, home string) Fixed {
+	return Fixed{
 		b.item(ctx, name, b.has(app, "/Applications", home+"/Applications"),
 			"no "+app+" is in /Applications or ~/Applications"),
 		b.item(ctx, caskFont, b.has(caskFontFile, home+"/Library/Fonts", "/Library/Fonts"), fontGone),

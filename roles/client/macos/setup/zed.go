@@ -58,9 +58,9 @@ func (z *Zed) Plan(ctx context.Context) (step.Plan, error) {
 func (z *Zed) Report(ctx context.Context) ([]step.Item, error) {
 	dir := z.Home + "/.config/zed"
 	files := z.whole()
-	return gather(ctx, z.casks().report(ctx, "zed", "Zed.app", z.Home),
+	return Gather(ctx, z.casks().report(ctx, "zed", "Zed.app", z.Home),
 		z.dirs(), files[0], files[1],
-		userPath{M: z.M, Kind: step.FileItem, Path: dir + "/settings.json"})
+		Path{M: z.M, Kind: step.FileItem, Path: dir + "/settings.json"})
 }
 
 // Apply installs the casks. A failed install is a warning, and the next run tries again; where

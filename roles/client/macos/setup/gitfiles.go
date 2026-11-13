@@ -11,13 +11,13 @@ import (
 
 // list returns the files of ~/.config/ws: the script for a key of Secretive's, the allowed signers
 // and gitconfig.
-func (g *Git) list(key NamedKey, gh string) []userFile {
+func (g *Git) list(key NamedKey, gh string) []File {
 	dir := g.Home + "/.config/ws"
 	in := gitcfg.Inputs{Name: g.Conf.GitName, Email: g.Conf.GitEmail, Key: key.File, Gh: gh, Dir: dir}
-	file := func(path, text string, mode fs.FileMode) userFile {
-		return userFile{M: g.M, Path: path, Text: []byte(text), Mode: mode}
+	file := func(path, text string, mode fs.FileMode) File {
+		return File{M: g.M, Path: path, Text: []byte(text), Mode: mode}
 	}
-	var list []userFile
+	var list []File
 	if sshcfg.SecretiveKey(key.File, g.Home) {
 		in.Program = dir + "/secretive-ssh-keygen"
 		list = append(list, file(in.Program, gitcfg.Wrapper(g.Home+"/"+sshcfg.SecretiveData), 0o755))
@@ -27,16 +27,16 @@ func (g *Git) list(key NamedKey, gh string) []userFile {
 }
 
 // dirs is ws's directory, with the directory of ws's copies where git signs with a copy.
-func (g *Git) dirs(pub, text string) userDirs {
+func (g *Git) dirs(pub, text string) Dirs {
 	if copied(pub, text, g.Home) {
 		return copyDirs(g.M, g.Home)
 	}
-	return wsDirs(g.M, g.Home)
+	return WsDirs(g.M, g.Home)
 }
 
 // files plans ~/.config/ws and the files in it.
 func (g *Git) files(key NamedKey, gh string) ([]step.Change, error) {
-	cs, link, err := g.dirs(key.File, key.Text).plan()
+	cs, link, err := g.dirs(key.File, key.Text).Plan()
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (g *Git) files(key NamedKey, gh string) ([]step.Change, error) {
 		cs = append(cs, copyChange(g.M, key.File, key.Text)...)
 	}
 	for _, f := range g.list(key, gh) {
-		planned, err := f.plan()
+		planned, err := f.Plan()
 		if err != nil {
 			return nil, err
 		}
@@ -68,17 +68,17 @@ func (g *Git) Report(ctx context.Context) ([]step.Item, error) {
 	if err != nil {
 		return nil, err
 	}
-	tool := step.Item{Kind: step.PackageItem, Name: "gh", Want: stateInstalled, Found: stateInstalled}
+	tool := step.Item{Kind: step.PackageItem, Name: "gh", Want: StateInstalled, Found: StateInstalled}
 	if install != nil {
-		tool.Found = stateMissing
+		tool.Found = StateMissing
 	}
-	parts := []step.Reporter{fixed{tool}, g.dirs(key.File, key.Text)}
+	parts := []step.Reporter{Fixed{tool}, g.dirs(key.File, key.Text)}
 	for _, f := range g.list(key, gh) {
 		parts = append(parts, f)
 	}
 	pub := keyCopy(g.M, key.File, key.Text, g.Home)
 	if len(pub) == 0 {
-		pub = []step.Reporter{userPath{M: g.M, Kind: step.FileItem, Path: key.File}}
+		pub = []step.Reporter{Path{M: g.M, Kind: step.FileItem, Path: key.File}}
 	}
-	return gather(ctx, append(append(parts, pub...), g.gitconfigLines())...)
+	return Gather(ctx, append(append(parts, pub...), g.gitconfigLines())...)
 }

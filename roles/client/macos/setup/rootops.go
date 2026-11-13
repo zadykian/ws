@@ -38,5 +38,5 @@ func (removal) Kind() step.ChangeKind { return step.Removal }
 
 // Item says that the file is to go.
 func (r removal) Item() step.Item {
-	return step.Item{Kind: step.FileItem, Name: r.path, Want: stateMissing, Found: statePresent}
+	return step.Item{Kind: step.FileItem, Name: r.path, Want: StateMissing, Found: StatePresent}
 }

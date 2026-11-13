@@ -75,7 +75,7 @@ func PlanCopy(m effect.Machine, pub, text, home string) ([]step.Change, error) {
 	if !copied(pub, text, home) {
 		return nil, nil
 	}
-	cs, _, err := copyDirs(m, home).plan()
+	cs, _, err := copyDirs(m, home).Plan()
 	if err != nil {
 		return nil, err
 	}
@@ -83,8 +83,8 @@ func PlanCopy(m effect.Machine, pub, text, home string) ([]step.Change, error) {
 }
 
 // copyDirs is ws's directory with the directory of ws's copies in it.
-func copyDirs(m effect.Machine, home string) userDirs {
-	return append(wsDirs(m, home), userDir{M: m, Path: home + "/" + sshcfg.KeyCopies, Mode: 0o755})
+func copyDirs(m effect.Machine, home string) Dirs {
+	return append(WsDirs(m, home), Dir{M: m, Path: home + "/" + sshcfg.KeyCopies, Mode: 0o755})
 }
 
 // copyChange returns the write of ws's copy at pub, or none where it holds text already.
@@ -107,5 +107,5 @@ func keyCopy(m effect.Machine, pub, text, home string) []step.Reporter {
 	if !copied(pub, text, home) {
 		return nil
 	}
-	return []step.Reporter{userFile{M: m, Path: pub, Text: []byte(text)}}
+	return []step.Reporter{File{M: m, Path: pub, Text: []byte(text)}}
 }

@@ -67,7 +67,7 @@ func (n *Networks) Report(ctx context.Context) ([]step.Item, error) {
 	for _, r := range list {
 		parts = append(parts, host.File{M: n.M, Path: resolverDir + "/" + r.Domain, Content: []byte(resolverText(r.Addresses)), Mode: 0o644})
 	}
-	return gather(ctx, parts...)
+	return Gather(ctx, parts...)
 }
 
 func (n *Networks) routes(ctx context.Context) ([]step.Change, error) {

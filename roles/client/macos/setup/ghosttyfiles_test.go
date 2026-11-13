@@ -13,7 +13,7 @@ import (
 func fileChanges(t *testing.T, m *effecttest.Machine, holds bool) []step.Change {
 	g := &Ghostty{M: m, Out: &effecttest.Out{}}
 	dir := "/h/.config/ghostty"
-	ws, err := userFile{M: m, Path: dir + "/ws.ghostty", Text: []byte("new\n"), Mode: 0o644}.plan()
+	ws, err := File{M: m, Path: dir + "/ws.ghostty", Text: []byte("new\n"), Mode: 0o644}.Plan()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -21,7 +21,7 @@ func fileChanges(t *testing.T, m *effecttest.Machine, holds bool) []step.Change 
 	if !holds {
 		lines = []step.Change{change.Write{Path: dir + "/config"}}
 	}
-	return g.fileChanges(ws, nil, dirLink{}, holds, lines, nil)
+	return g.fileChanges(ws, nil, DirLink{}, holds, lines, nil)
 }
 
 func TestGhosttyFileChangesWriteBothFiles(t *testing.T) {
@@ -46,7 +46,7 @@ func TestGhosttyKeepsTheOldConfigAsTheTimeStamped(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/h/.config/ghostty/config"] = []byte("theme = x\n")
 	g := &Ghostty{M: m, Home: "/h", Now: func() time.Time { return time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC) }}
-	cs, err := g.configLines("/h/.config/ghostty/config", "/h/.config/ghostty/ws.ghostty").plan(t.Context())
+	cs, err := g.configLines("/h/.config/ghostty/config", "/h/.config/ghostty/ws.ghostty").Plan(t.Context())
 	want := change.Backup{Path: "/h/.config/ghostty/config", To: "/h/.config/ghostty/config.20260102030405~"}
 	if err != nil || len(cs) != 2 || cs[0] != step.Change(want) {
 		t.Errorf("changes = %v, %v; want %v first", cs, err, want)

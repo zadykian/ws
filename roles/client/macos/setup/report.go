@@ -14,13 +14,13 @@ import (
 
 // The states that a report's items share.
 const (
-	stateMissing   = "missing"
-	statePresent   = "present"
-	stateInstalled = "installed"
+	StateMissing   = "missing"
+	StatePresent   = "present"
+	StateInstalled = "installed"
 )
 
-// path is what a step read of one path: whether it exists, its mode and its text.
-type path struct {
+// Found is what a step read of one path: whether it exists, its mode and its text.
+type Found struct {
 	Exists bool
 	Mode   fs.FileMode
 	Text   []byte
@@ -30,8 +30,8 @@ type path struct {
 // comment mark.
 var writtenBy = []byte("Written by ")
 
-// gather joins the items of the parts, and keeps those before a failure, as host.Group does.
-func gather(ctx context.Context, parts ...step.Reporter) ([]step.Item, error) {
+// Gather joins the items of the parts, and keeps those before a failure, as host.Group does.
+func Gather(ctx context.Context, parts ...step.Reporter) ([]step.Item, error) {
 	var items []step.Item
 	for _, p := range parts {
 		got, err := p.Report(ctx)
@@ -43,17 +43,17 @@ func gather(ctx context.Context, parts ...step.Reporter) ([]step.Item, error) {
 	return items, nil
 }
 
-// fixed is items that a step has read already.
-type fixed []step.Item
+// Fixed is items that a step has read already.
+type Fixed []step.Item
 
 // Report returns the items.
-func (f fixed) Report(context.Context) ([]step.Item, error) { return f, nil }
+func (f Fixed) Report(context.Context) ([]step.Item, error) { return f, nil }
 
 func modeText(mode fs.FileMode) string { return fmt.Sprintf("mode %o", mode.Perm()) }
 
-// userPath is a path of the user's that a report never reads inside. A Mode of 0 leaves the mode
+// Path is a path of the user's that a report never reads inside. A Mode of 0 leaves the mode
 // out, as a run leaves it to the user there.
-type userPath struct {
+type Path struct {
 	M    effect.Machine
 	Kind step.ItemKind
 	Path string
@@ -61,15 +61,15 @@ type userPath struct {
 }
 
 // itemOf says how the path stands, as read in found.
-func (p userPath) itemOf(found path) step.Item {
-	item := step.Item{Kind: p.Kind, Name: p.Path, Want: statePresent, Found: stateMissing}
+func (p Path) itemOf(found Found) step.Item {
+	item := step.Item{Kind: p.Kind, Name: p.Path, Want: StatePresent, Found: StateMissing}
 	if p.Mode != 0 {
 		item.Want = modeText(p.Mode)
 	}
 	if !found.Exists {
 		return item
 	}
-	item.Found = statePresent
+	item.Found = StatePresent
 	if p.Mode != 0 {
 		item.Found = modeText(found.Mode)
 	}
@@ -80,20 +80,20 @@ func (p userPath) itemOf(found path) step.Item {
 }
 
 // Report reads the path.
-func (p userPath) Report(context.Context) ([]step.Item, error) {
+func (p Path) Report(context.Context) ([]step.Item, error) {
 	info, err := p.M.Stat(p.Path)
 	if errors.Is(err, fs.ErrNotExist) {
-		return []step.Item{p.itemOf(path{})}, nil
+		return []step.Item{p.itemOf(Found{})}, nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	return []step.Item{p.itemOf(path{Exists: true, Mode: info.Mode})}, nil
+	return []step.Item{p.itemOf(Found{Exists: true, Mode: info.Mode})}, nil
 }
 
-// userFile is a file of the user's that ws writes, as host.File is one of root's. Its plan and its
+// File is a file of the user's that ws writes, as host.File is one of root's. Its plan and its
 // report read it alike, so that a report stands off where a plan changes the file or leaves it.
-type userFile struct {
+type File struct {
 	M    effect.Machine
 	Path string
 	Text []byte
@@ -105,20 +105,20 @@ type userFile struct {
 	Binary bool
 }
 
-// errNotWs is a plan's error for a file that is not ws's: its step warns of it, or stops.
-var errNotWs = errors.New("not ws's")
+// ErrNotWs is a plan's error for a file that is not ws's: its step warns of it, or stops.
+var ErrNotWs = errors.New("not ws's")
 
-// read reads the file. ours is false where Own refuses the text, and where Own is set and the
+// Read reads the file. ours is false where Own refuses the text, and where Own is set and the
 // path is no file, such as a link to nowhere: a run replaces neither.
-func (f userFile) read() (found path, ours bool, err error) {
+func (f File) Read() (found Found, ours bool, err error) {
 	info, err := f.M.Stat(f.Path)
 	if errors.Is(err, fs.ErrNotExist) {
-		return path{}, true, nil
+		return Found{}, true, nil
 	}
 	if err != nil {
-		return path{}, false, err
+		return Found{}, false, err
 	}
-	found = path{Exists: true, Mode: info.Mode}
+	found = Found{Exists: true, Mode: info.Mode}
 	nowhere := info.Link != "" && info.Mode == 0
 	if f.Own != nil && (nowhere || !info.Mode.IsRegular()) {
 		return found, false, nil
@@ -129,8 +129,8 @@ func (f userFile) read() (found path, ours bool, err error) {
 	return found, f.Own == nil || f.Own(found.Text), nil
 }
 
-// change returns the change that brings the file, as read in found, to Text and Mode, or none.
-func (f userFile) change(found path) []step.Change {
+// Change returns the change that brings the file, as read in found, to Text and Mode, or none.
+func (f File) Change(found Found) []step.Change {
 	mode := f.Mode
 	if mode == 0 {
 		mode = 0o644
@@ -144,27 +144,27 @@ func (f userFile) change(found path) []step.Change {
 	return nil
 }
 
-// plan returns a write, a fix of the mode, or nothing. It returns errNotWs, and no change, where
+// Plan returns a write, a fix of the mode, or nothing. It returns ErrNotWs, and no change, where
 // the file is not ws's.
-func (f userFile) plan() ([]step.Change, error) {
-	found, ours, err := f.read()
+func (f File) Plan() ([]step.Change, error) {
+	found, ours, err := f.Read()
 	if err != nil {
 		return nil, err
 	}
 	if !ours {
-		return nil, errNotWs
+		return nil, ErrNotWs
 	}
-	return f.change(found), nil
+	return f.Change(found), nil
 }
 
 // Report compares the file as a plan does. A file that isn't ws's shows no diff: a run leaves it,
 // --check shows none, and it may hold anything.
-func (f userFile) Report(context.Context) ([]step.Item, error) {
-	found, ours, err := f.read()
+func (f File) Report(context.Context) ([]step.Item, error) {
+	found, ours, err := f.Read()
 	if err != nil {
 		return nil, err
 	}
-	item := userPath{Kind: step.FileItem, Path: f.Path, Mode: f.Mode}.itemOf(found)
+	item := Path{Kind: step.FileItem, Path: f.Path, Mode: f.Mode}.itemOf(found)
 	if !found.Exists {
 		return []step.Item{item}, nil
 	}
@@ -185,10 +185,10 @@ func (f userFile) Report(context.Context) ([]step.Item, error) {
 	return []step.Item{item}, nil
 }
 
-// owned plans f, and leaves a file that is not ws's, with a warning.
-func owned(out effect.Out, f userFile) ([]step.Change, error) {
-	cs, err := f.plan()
-	if errors.Is(err, errNotWs) {
+// Owned plans f, and leaves a file that is not ws's, with a warning.
+func Owned(out effect.Out, f File) ([]step.Change, error) {
+	cs, err := f.Plan()
+	if errors.Is(err, ErrNotWs) {
 		out.Warn("%s is not ws's: move it away, and the next run writes ws's", f.Path)
 		return nil, nil
 	}
@@ -198,7 +198,7 @@ func owned(out effect.Out, f userFile) ([]step.Change, error) {
 // lineItem is a line that ws keeps in a file of the user's. The rest of the file stays out of the
 // report, as it may hold anything.
 func lineItem(path, line string, exists, holds bool) step.Item {
-	item := step.Item{Kind: step.FileItem, Name: path, Want: "holds " + line, Found: stateMissing}
+	item := step.Item{Kind: step.FileItem, Name: path, Want: "holds " + line, Found: StateMissing}
 	switch {
 	case holds:
 		item.Found = item.Want

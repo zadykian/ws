@@ -27,8 +27,8 @@ func TestUserDirPlanAgreesWithReport(t *testing.T) {
 	} {
 		m := effecttest.NewMachine()
 		c.setUp(m)
-		d := userDir{M: m, Path: dir, Mode: 0o700, Fix: c.fix}
-		cs, _, err := userDirs{d}.plan()
+		d := Dir{M: m, Path: dir, Mode: 0o700, Fix: c.fix}
+		cs, _, err := Dirs{d}.Plan()
 		items, reportErr := d.Report(context.Background())
 		got := "nothing"
 		switch {
@@ -53,8 +53,8 @@ func TestUserDirPlanAgreesWithReport(t *testing.T) {
 func TestUserDirStopsAtAFileAndReportsItAsAConflict(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/h/d"] = []byte("x")
-	d := userDir{M: m, Path: "/h/d", Mode: 0o755}
-	if cs, _, err := (userDirs{d}).plan(); !errors.Is(err, errNotDir) || len(cs) != 0 {
+	d := Dir{M: m, Path: "/h/d", Mode: 0o755}
+	if cs, _, err := (Dirs{d}).Plan(); !errors.Is(err, errNotDir) || len(cs) != 0 {
 		t.Errorf("plan = %v, %v, want errNotDir and no change", cs, err)
 	}
 	items, err := d.Report(context.Background())
@@ -66,14 +66,14 @@ func TestUserDirStopsAtAFileAndReportsItAsAConflict(t *testing.T) {
 func TestUserDirsGiveTheLastLinkAndStopAtTheFirstError(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Dirs["/t"], m.Dirs["/h"], m.Links["/a"], m.Links["/h/b"] = 0o755, 0o755, "/t", "/t"
-	ds := userDirs{{M: m, Path: "/a", Mode: 0o755}, {M: m, Path: "/h", Mode: 0o755}, {M: m, Path: "/h/b", Mode: 0o755}}
-	cs, link, err := ds.plan()
-	if err != nil || len(cs) != 0 || link != (dirLink{"/h/b", "/t"}) {
+	ds := Dirs{{M: m, Path: "/a", Mode: 0o755}, {M: m, Path: "/h", Mode: 0o755}, {M: m, Path: "/h/b", Mode: 0o755}}
+	cs, link, err := ds.Plan()
+	if err != nil || len(cs) != 0 || link != (DirLink{"/h/b", "/t"}) {
 		t.Errorf("plan = %v, %v, %v, want the last link and no change", cs, link, err)
 	}
 	m.Files["/h/b"] = []byte("x")
 	delete(m.Links, "/h/b")
-	if _, _, err := ds.plan(); !errors.Is(err, errNotDir) {
+	if _, _, err := ds.Plan(); !errors.Is(err, errNotDir) {
 		t.Errorf("plan's error = %v, want errNotDir", err)
 	}
 }

@@ -9,8 +9,8 @@ import (
 )
 
 // configLines is the line that reads ws.ghostty, at the end of Ghostty's config.
-func (g *Ghostty) configLines(config, ws string) userLines {
-	return userLines{
+func (g *Ghostty) configLines(config, ws string) Lines {
+	return Lines{
 		M: g.M, Path: config, Lines: ghosttyLine + "\n", Shown: ghosttyLine, Mode: 0o644, Now: g.Now,
 		Has: func(_ context.Context, _ effect.Machine, _ string, text []byte) (bool, error) {
 			return ghosttyIncludes(config, string(text), ws, g.Home, g.resolve()), nil
@@ -21,7 +21,7 @@ func (g *Ghostty) configLines(config, ws string) userLines {
 // fileChanges returns the changes to ws.ghostty, ws, after dirs, the changes to its directory,
 // whose link warns once, and then lines, the changes to Ghostty's config. A stop of the config's,
 // such as a link that lacks the line, warns, and the config stays unchanged.
-func (g *Ghostty) fileChanges(ws, dirs []step.Change, link dirLink, holds bool, lines []step.Change, stop error) []step.Change {
+func (g *Ghostty) fileChanges(ws, dirs []step.Change, link DirLink, holds bool, lines []step.Change, stop error) []step.Change {
 	cs := dirs
 	differs := false
 	if len(ws) > 0 {

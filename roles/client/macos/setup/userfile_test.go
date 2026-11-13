@@ -37,13 +37,13 @@ func TestUserFilePlanAgreesWithReport(t *testing.T) {
 	} {
 		m := effecttest.NewMachine()
 		c.setUp(m)
-		f := userFile{M: m, Path: file, Text: []byte("# ws\n"), Mode: c.mode,
+		f := File{M: m, Path: file, Text: []byte("# ws\n"), Mode: c.mode,
 			Own: func(have []byte) bool { return bytes.HasPrefix(have, []byte("# ws")) }}
-		cs, planErr := f.plan()
+		cs, planErr := f.Plan()
 		items, reportErr := f.Report(context.Background())
 		got := "nothing"
 		switch {
-		case errors.Is(planErr, errNotWs):
+		case errors.Is(planErr, ErrNotWs):
 			got = "not ws's"
 		case planErr != nil:
 			got = "fails"

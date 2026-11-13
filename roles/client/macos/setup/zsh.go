@@ -60,13 +60,13 @@ func zshSources(text []byte) bool {
 
 // Plan plans ~/.config and ~/.config/ws, as the git step does, then the hook and the line.
 func (z *Zsh) Plan(ctx context.Context) (step.Plan, error) {
-	cs, link, err := wsDirs(z.M, z.Home).plan()
+	cs, link, err := WsDirs(z.M, z.Home).Plan()
 	if err != nil {
 		return step.Plan{}, err
 	}
-	hook, err := z.hookFile().plan()
+	hook, err := z.hookFile().Plan()
 	switch {
-	case errors.Is(err, errNotWs):
+	case errors.Is(err, ErrNotWs):
 		z.Out.Warn("%s is not ws's: move it away, and the next run writes ws's and sources it", z.hook())
 		link.warn(z.Out, len(cs), "ws's files go there")
 		return step.Plan{Changes: cs}, nil
@@ -74,8 +74,8 @@ func (z *Zsh) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, err
 	}
 	cs = append(cs, hook...)
-	line, err := z.rcLines().plan(ctx)
-	if errors.Is(err, errLinked) {
+	line, err := z.rcLines().Plan(ctx)
+	if errors.Is(err, ErrLinked) {
 		z.Out.Warn("%s", err)
 		err = nil
 	}
@@ -85,8 +85,8 @@ func (z *Zsh) Plan(ctx context.Context) (step.Plan, error) {
 }
 
 // rcLines is zshLine at the end of ~/.zshrc.
-func (z *Zsh) rcLines() userLines {
-	return userLines{
+func (z *Zsh) rcLines() Lines {
+	return Lines{
 		M: z.M, Path: z.rc(), Lines: zshLine + "\n", Shown: zshLine, Mode: 0o644, Now: z.Now,
 		Has: func(_ context.Context, _ effect.Machine, _ string, text []byte) (bool, error) {
 			return zshSources(text), nil
@@ -107,10 +107,10 @@ func (z *Zsh) Apply(ctx context.Context, p step.Plan) error {
 // Report says how the hook and the line stand. A ~/.zshrc that is a link lacking the line stands
 // against ws: a run only warns of it.
 func (z *Zsh) Report(ctx context.Context) ([]step.Item, error) {
-	return gather(ctx, wsDirs(z.M, z.Home), z.hookFile(), z.rcLines())
+	return Gather(ctx, WsDirs(z.M, z.Home), z.hookFile(), z.rcLines())
 }
 
 // hookFile is the hook, mode 644.
-func (z *Zsh) hookFile() userFile {
-	return userFile{M: z.M, Path: z.hook(), Text: z.Hook, Mode: 0o644, Own: zshOwn}
+func (z *Zsh) hookFile() File {
+	return File{M: z.M, Path: z.hook(), Text: z.Hook, Mode: 0o644, Own: zshOwn}
 }

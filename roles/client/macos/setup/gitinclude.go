@@ -35,8 +35,8 @@ func (g *Git) lines(ctx context.Context, file string, args ...string) ([]string,
 // gitconfigLines is the include at the top of ~/.gitconfig. Its place is wrong where it comes twice
 // or sits below the file's own settings, which it then overrides. git config reads the file, so the
 // step stops before it acts, as the ssh step does for ssh's Include.
-func (g *Git) gitconfigLines() userLines {
-	return userLines{
+func (g *Git) gitconfigLines() Lines {
+	return Lines{
 		M: g.M, Path: g.Home + "/.gitconfig", Lines: includeText, Top: true, Mode: 0o644, Now: g.Now,
 		Shown: "[include] path = ~/.config/ws/gitconfig",
 		Name:  "the include of ~/.config/ws/gitconfig",
@@ -60,7 +60,7 @@ func (g *Git) included(ctx context.Context, _ effect.Machine, file string, _ []b
 	}
 	holds, err := gitcfg.Included(paths, first, g.Home+"/.config/ws")
 	if err != nil {
-		return false, misplaced("%s %v", file, err)
+		return false, Misplaced("%s %v", file, err)
 	}
 	return holds, nil
 }
@@ -68,7 +68,7 @@ func (g *Git) included(ctx context.Context, _ effect.Machine, file string, _ []b
 // includeChanges adds the notes to lines, the changes to ~/.gitconfig, where there are any. It warns
 // of the settings of identity and signing in the file itself, which win, and in git's XDG file,
 // which lose.
-func (g *Git) includeChanges(ctx context.Context, found path, lines []step.Change) []step.Change {
+func (g *Git) includeChanges(ctx context.Context, found Found, lines []step.Change) []step.Change {
 	if len(lines) == 0 {
 		return nil
 	}
