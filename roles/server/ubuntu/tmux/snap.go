@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/systemd"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // Snap removes tmux's snap. snapd must run to remove a snap, so without systemd, as in CI's
@@ -28,7 +28,7 @@ func (c removeSnap) Apply(ctx context.Context) error {
 }
 
 // Plan lists the snaps, where snapd is installed and runs, and removes tmux's.
-func (s Snap) Plan(ctx context.Context) ([]host.Change, error) {
+func (s Snap) Plan(ctx context.Context) ([]resource.Change, error) {
 	if !systemd.Booted(s.M) {
 		s.Out.Say("tmux snap: skipped, systemd is not running")
 		return nil, nil
@@ -45,7 +45,7 @@ func (s Snap) Plan(ctx context.Context) ([]host.Change, error) {
 	if !hasSnap(string(list), "tmux") {
 		return nil, nil
 	}
-	return []host.Change{removeSnap{s}}, nil
+	return []resource.Change{removeSnap{s}}, nil
 }
 
 // hasSnap reports whether the output of snap list names the snap in its first column, below the

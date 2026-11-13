@@ -6,7 +6,7 @@ import (
 	"path"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host/fetch"
+	"github.com/zadykian/ws/engine/core/resource/fetch"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools/internal/web"
 )
 

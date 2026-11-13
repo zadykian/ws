@@ -2,8 +2,8 @@ package fresh
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host/apt"
-	"github.com/zadykian/ws/engine/core/host/fetch"
+	"github.com/zadykian/ws/engine/core/resource/apt"
+	"github.com/zadykian/ws/engine/core/resource/fetch"
 )
 
 // pinned is the editor's .deb as a package, which plans from the pin and removes the file once it

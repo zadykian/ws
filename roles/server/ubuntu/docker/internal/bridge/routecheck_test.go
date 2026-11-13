@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -24,7 +24,7 @@ func TestRouteCheckStopsOnAnOverlap(t *testing.T) {
 func TestRouteCheckStandsInAReport(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results[ipRoutes] = effecttest.Result{Out: []byte(`[{"dst":"172.16.5.0/24","dev":"wg0","table":"7"}]`)}
-	group := host.Group{Title: "Docker routes", Parts: []host.Resource{Routes{m, values.Default().Docker, "172.17.0.1/16"}}}
+	group := resource.Group{Title: "Docker routes", Parts: []resource.Resource{Routes{m, values.Default().Docker, "172.17.0.1/16"}}}
 	reports, err := step.Read(t.Context(), []step.Step{group})
 	if err != nil || len(reports) != 1 || len(reports[0].Items) != 1 {
 		t.Fatalf("reports = %+v, %v; want one item", reports, err)

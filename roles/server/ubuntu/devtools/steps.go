@@ -4,10 +4,10 @@ import (
 	_ "embed"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/account"
-	"github.com/zadykian/ws/engine/core/host/apt"
-	"github.com/zadykian/ws/engine/core/host/file"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/engine/core/resource/apt"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools/internal/aptrepo"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools/internal/golang"
@@ -29,11 +29,11 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units,
 	const repoStep = "Devtools repositories"
 	user := account.User{Name: v.User, Home: v.Home}
 	steps := []step.Step{
-		host.Group{Title: repoStep, Parts: []host.Resource{
+		resource.Group{Title: repoStep, Parts: []resource.Resource{
 			aptrepo.Repositories{M: m, List: repositories, Replaced: replacedFiles},
 			file.File{M: m, Path: "/etc/apt/apt.conf.d/52unattended-upgrades-github-cli", Content: ghUpgrades, Mode: 0o644},
 		}},
-		host.Group{Title: "Devtools packages", After: repoStep, Parts: []host.Resource{
+		resource.Group{Title: "Devtools packages", After: repoStep, Parts: []resource.Resource{
 			// Node at its major version, from NodeSource's repository; gh from GitHub CLI's;
 			// glow from Charm's; each .NET SDK from Ubuntu's archive or the PPA.
 			apt.Packages{M: m, Out: out, Recommends: true, Names: packageNames()},
@@ -41,25 +41,25 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units,
 			apt.Packages{M: m, Out: out, Names: v.Devtools.ChromiumLibraries},
 		}},
 		// gh's telemetry goes off before gh's login runs gh again.
-		host.Group{Title: "Devtools gh telemetry", After: "Devtools packages", Parts: []host.Resource{
+		resource.Group{Title: "Devtools gh telemetry", After: "Devtools packages", Parts: []resource.Resource{
 			GHTelemetry{M: m, User: user},
 		}},
 		// gh logs in by token.github, after its package.
-		host.Group{Title: "Devtools gh login", After: "Devtools packages", Parts: []host.Resource{
+		resource.Group{Title: "Devtools gh login", After: "Devtools packages", Parts: []resource.Resource{
 			GHLogin{M: m, User: v.User, Home: v.Home, Token: s.Token.GitHub},
 		}},
-		host.Group{Title: "Devtools Go", Parts: []host.Resource{golang.Tree(m, GoVersion)}},
-		host.Group{Title: "Devtools gopls", After: "Devtools Go", Parts: []host.Resource{
+		resource.Group{Title: "Devtools Go", Parts: []resource.Resource{golang.Tree(m, GoVersion)}},
+		resource.Group{Title: "Devtools gopls", After: "Devtools Go", Parts: []resource.Resource{
 			golang.Gopls{M: m, User: user, Path: Gopls(v.Home), Version: goplsVersion, GoVersion: GoVersion},
 		}},
-		host.Group{Title: "Devtools Delve", After: "Devtools Go", Parts: []host.Resource{
+		resource.Group{Title: "Devtools Delve", After: "Devtools Go", Parts: []resource.Resource{
 			golang.Delve{M: m, User: user, Path: Dlv(v.Home), Version: dlvVersion, GoVersion: GoVersion},
 		}},
-		host.Group{Title: "Devtools roslyn-language-server", After: "Devtools packages", Parts: []host.Resource{
+		resource.Group{Title: "Devtools roslyn-language-server", After: "Devtools packages", Parts: []resource.Resource{
 			roslynTool{M: m, User: user, Path: Roslyn(v.Home)},
 		}},
 	}
-	return append(append(steps, serverSteps(m, user)...), host.Group{Title: "Devtools rustup", Parts: []host.Resource{
+	return append(append(steps, serverSteps(m, user)...), resource.Group{Title: "Devtools rustup", Parts: []resource.Resource{
 		Rustup{M: m, User: v.User, Home: v.Home},
 	}})
 }
@@ -71,7 +71,7 @@ func serverSteps(m effect.Machine, user account.User) []step.Step {
 	return []step.Step{
 		download(m, "postgres-language-server", pgls, pglsURL),
 		download(m, "docker-language-server", dockerLS, dockerLSURL),
-		user.WithAccount(m, "Devtools npm servers", "Devtools packages", func(a account.Account) ([]host.Resource, error) {
+		user.WithAccount(m, "Devtools npm servers", "Devtools packages", func(a account.Account) ([]resource.Resource, error) {
 			return npm.Files(m, a)
 		}),
 	}

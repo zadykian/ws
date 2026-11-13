@@ -4,10 +4,10 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 )
 
-func planDownload(t *testing.T, arch string) ([]host.Change, error) {
+func planDownload(t *testing.T, arch string) ([]resource.Change, error) {
 	m := effecttest.NewMachine()
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte(arch + "\n")}
 	return binaryFile(m).Plan(t.Context())

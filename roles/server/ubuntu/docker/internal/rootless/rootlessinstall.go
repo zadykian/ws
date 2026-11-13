@@ -7,9 +7,9 @@ import (
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/account"
-	"github.com/zadykian/ws/engine/core/host/systemd"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // rootlessInstall runs Docker's tool as the user, which makes and starts the unit, enables it, and
@@ -25,7 +25,7 @@ func (r rootlessInstall) String() string { return "install " + r.a.Name + "'s ro
 
 // Plan looks at the files alone, so a dry run on a new machine needs no user's systemd. A run cut
 // between the tool's unit and its link runs the tool again, which keeps the unit.
-func (r rootlessInstall) Plan(context.Context) ([]host.Change, error) {
+func (r rootlessInstall) Plan(context.Context) ([]resource.Change, error) {
 	if !systemd.Booted(r.m) {
 		r.out.Say("Docker rootless daemon: skipped, systemd is not running")
 		return nil, nil
@@ -34,7 +34,7 @@ func (r rootlessInstall) Plan(context.Context) ([]host.Change, error) {
 	for _, p := range []string{units + "/docker.service", units + "/default.target.wants/docker.service"} {
 		_, err := r.m.Stat(p)
 		if errors.Is(err, fs.ErrNotExist) {
-			return []host.Change{r}, nil
+			return []resource.Change{r}, nil
 		}
 		if err != nil {
 			return nil, err

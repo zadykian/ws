@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/roles/internal/wgkey"
 )
 
@@ -19,12 +19,14 @@ type noop struct{}
 func (noop) String() string              { return "write a file" }
 func (noop) Apply(context.Context) error { return nil }
 
-func (changing) Plan(context.Context) ([]host.Change, error) { return []host.Change{noop{}}, nil }
+func (changing) Plan(context.Context) ([]resource.Change, error) {
+	return []resource.Change{noop{}}, nil
+}
 
 // idle is a resource with nothing to do.
 type idle struct{}
 
-func (idle) Plan(context.Context) ([]host.Change, error) { return nil, nil }
+func (idle) Plan(context.Context) ([]resource.Change, error) { return nil, nil }
 
 // machine has a key and, where wg0 is set, a wg0 that holds the key shown.
 func machine(wg0Key string) (*effecttest.Machine, string) {
@@ -56,7 +58,7 @@ func TestWg0IsLeftAloneWhereItHoldsTheKeyAndNothingChanges(t *testing.T) {
 	m, public := machine("")
 	m.Dirs["/sys/class/net/wg0"] = 0o755
 	m.Results["wg show wg0 public-key"] = effecttest.Result{Out: []byte(public + "\n")}
-	if got := descriptions(t, wg0{m: m, watch: []host.Resource{idle{}}}); len(got) != 0 {
+	if got := descriptions(t, wg0{m: m, watch: []resource.Resource{idle{}}}); len(got) != 0 {
 		t.Errorf("plan = %q, want nothing", got)
 	}
 }
@@ -65,7 +67,7 @@ func TestWg0ReloadsForAChangedFile(t *testing.T) {
 	m, public := machine("")
 	m.Dirs["/sys/class/net/wg0"] = 0o755
 	m.Results["wg show wg0 public-key"] = effecttest.Result{Out: []byte(public)}
-	got := descriptions(t, wg0{m: m, watch: []host.Resource{idle{}, changing{}}})
+	got := descriptions(t, wg0{m: m, watch: []resource.Resource{idle{}, changing{}}})
 	if len(got) != 1 || !strings.HasPrefix(got[0], "reload networkd for wg0") {
 		t.Errorf("plan = %q, want a reload", got)
 	}

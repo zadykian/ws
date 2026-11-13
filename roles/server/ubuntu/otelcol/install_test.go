@@ -9,12 +9,12 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/fetch"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/fetch"
 )
 
-func installGroup(m *effecttest.Machine, u effect.Units, out effect.Out) host.Group {
-	return host.Group{Title: installStep, Parts: []host.Resource{stopped{pinned(m), m, u, out}}}
+func installGroup(m *effecttest.Machine, u effect.Units, out effect.Out) resource.Group {
+	return resource.Group{Title: installStep, Parts: []resource.Resource{stopped{pinned(m), m, u, out}}}
 }
 
 func TestInstallRemovesAStrayDeb(t *testing.T) {

@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 )
 
 // minSubIDs is the range a container needs for the users inside it.
@@ -23,7 +23,7 @@ type subIDs struct {
 }
 
 // Plan reads both files, and fails on the first with no range.
-func (s subIDs) Plan(context.Context) ([]host.Change, error) {
+func (s subIDs) Plan(context.Context) ([]resource.Change, error) {
 	for _, file := range []string{"/etc/subuid", "/etc/subgid"} {
 		data, err := s.m.ReadFile(file)
 		if err != nil && !errors.Is(err, fs.ErrNotExist) {

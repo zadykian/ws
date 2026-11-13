@@ -9,9 +9,9 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/account"
-	"github.com/zadykian/ws/engine/core/host/file"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/engine/core/resource/file"
 )
 
 const npmBin = "/usr/bin/npm"
@@ -33,9 +33,9 @@ func Bin(home, name string) string { return serversDir(home) + "/node_modules/.b
 // Files returns the two files of the lock, the install they feed and sql-formatter's link.
 // Their directories are made as the user's, so root's would not break the user's own tools, such as
 // claude and pip --user.
-func Files(m effect.Machine, a account.Account) ([]host.Resource, error) {
+func Files(m effect.Machine, a account.Account) ([]resource.Resource, error) {
 	sum := sha256.New()
-	var parts []host.Resource
+	var parts []resource.Resource
 	for _, name := range []string{"package.json", "package-lock.json"} {
 		content, err := serversLock.ReadFile("servers/" + name)
 		if err != nil {
@@ -78,15 +78,15 @@ func (c runNpm) Apply(ctx context.Context) error {
 }
 
 // Plan finds a change where npm is missing or the stamp is missing or another digest.
-func (n npmInstall) Plan(context.Context) ([]host.Change, error) {
+func (n npmInstall) Plan(context.Context) ([]resource.Change, error) {
 	if _, err := n.M.Stat(npmBin); errors.Is(err, fs.ErrNotExist) {
-		return []host.Change{runNpm{n}}, nil
+		return []resource.Change{runNpm{n}}, nil
 	} else if err != nil {
 		return nil, err
 	}
 	got, err := n.Account.ReadHome(n.M, stampRel)
 	if errors.Is(err, fs.ErrNotExist) || (err == nil && string(got) != n.Digest+"\n") {
-		return []host.Change{runNpm{n}}, nil
+		return []resource.Change{runNpm{n}}, nil
 	}
 	return nil, err
 }

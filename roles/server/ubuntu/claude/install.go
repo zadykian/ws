@@ -6,8 +6,8 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 // Install installs claude and cld where they are missing. claude updates itself in the background,
@@ -56,8 +56,8 @@ func (i Install) missing(path string) (bool, error) {
 }
 
 // Plan looks for the two commands.
-func (i Install) Plan(context.Context) ([]host.Change, error) {
-	var changes []host.Change
+func (i Install) Plan(context.Context) ([]resource.Change, error) {
+	var changes []resource.Change
 	for _, c := range []installer{
 		{i: i, name: "claude", path: i.claude(), url: "https://claude.ai/install.sh", shell: "bash",
 			env: []string{"CLAUDE_INSTALL_ALLOW_SUDO=1"}},

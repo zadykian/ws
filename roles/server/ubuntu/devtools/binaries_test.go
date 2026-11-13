@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/account"
-	"github.com/zadykian/ws/engine/core/host/fetch"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/engine/core/resource/fetch"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -88,7 +88,7 @@ func servePins(t *testing.T, m *effecttest.Machine) {
 
 // withPackages returns serverSteps after an empty step of the name that the npm servers wait on.
 func withPackages(m *effecttest.Machine, user, home string) []step.Step {
-	return append([]step.Step{host.Group{Title: "Devtools packages"}},
+	return append([]step.Step{resource.Group{Title: "Devtools packages"}},
 		serverSteps(m, account.User{Name: user, Home: home})...)
 }
 

@@ -1,7 +1,7 @@
 ---
 paths:
   - "roles/server/**"
-  - "engine/core/host/**"
+  - "engine/core/resource/**"
 ---
 
 # server
@@ -34,7 +34,7 @@ steps, and each role's page in `docs/` says what it sets up.
   `effect.SayLasting`, as a screen's window goes with it ([The run screen](../../docs/tui.md#the-run-screen)).
 - A version is pinned in the package of the role that installs it. SigNoz's images are pinned in
   `roles/server/ubuntu/signoz/casting.yaml`, as its compose files are forged from it.
-- A restart or a reload that a watched change calls for is `host.Forced`. `Group.Apply` runs it
+- A restart or a reload that a watched change calls for is `resource.Forced`. `Group.Apply` runs it
   after a failed change too, as the next run finds the file right and plans none.
 
 ## Runs
@@ -48,7 +48,7 @@ steps, and each role's page in `docs/` says what it sets up.
   in Results, so host's read can change under it
   ([machine_dpkg.go](../../engine/core/effect/effecttest/machine_dpkg.go)).
 - A package is installed where dpkg lists it `ii`, in plans and reports alike, and a step reads dpkg
-  in one run ([dpkg.go](../../engine/core/host/apt/dpkg.go)). A role reads dpkg through `apt.PackageStates`.
+  in one run ([dpkg.go](../../engine/core/resource/apt/dpkg.go)). A role reads dpkg through `apt.PackageStates`.
 - A report reads as Plan does and holds no secret: a `Secret` file shows no diff and no sum
   ([report.go](../../engine/core/step/report.go)). A `File` that a role builds in `Plan` shows by its change
   alone, so a healthy one has no item.
@@ -69,14 +69,14 @@ steps, and each role's page in `docs/` says what it sets up.
 ## Downloads and keys
 
 - A download is checked against its SHA-256 before it writes `dest`, and downloaded again
-  where `dest` holds another ([the Go download](../../engine/core/host/fetch/download.go)).
+  where `dest` holds another ([the Go download](../../engine/core/resource/fetch/download.go)).
 - A fetch tries five times, ten seconds apart, and stops at once on a wrong SHA-256, which
-  `effect.ErrSHA256` names ([the fetch](../../engine/core/host/fetch/download.go)).
+  `effect.ErrSHA256` names ([the fetch](../../engine/core/resource/fetch/download.go)).
 - A package plans from its pin, a name and a version, and fetches its file only where that version
   is not installed. Before dpkg, it checks the file's own name and version against the pin
-  ([package.go](../../engine/core/host/apt/package.go)).
+  ([package.go](../../engine/core/resource/apt/package.go)).
 - A tree is unpacked beside its target and moved in whole, and its marker is its probe
-  ([tree.go](../../engine/core/host/fetch/tree.go)).
+  ([tree.go](../../engine/core/resource/fetch/tree.go)).
 - An apt repository's key goes in only where its entry pins the primary fingerprint of each
   certificate in it, and it holds one at least
   ([devtools' pins](../../roles/server/ubuntu/devtools/pins.go)). Docker's key goes in only with the

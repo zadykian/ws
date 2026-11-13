@@ -7,13 +7,13 @@ import (
 	"path"
 	"strings"
 
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 // All joins the changes of resources, in order.
-func All(ctx context.Context, rs ...host.Resource) ([]host.Change, error) {
-	var all []host.Change
+func All(ctx context.Context, rs ...resource.Resource) ([]resource.Change, error) {
+	var all []resource.Change
 	for _, r := range rs {
 		changes, err := r.Plan(ctx)
 		if err != nil {

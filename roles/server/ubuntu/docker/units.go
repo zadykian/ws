@@ -3,7 +3,7 @@ package docker
 import (
 	"embed"
 
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -13,12 +13,12 @@ var files embed.FS
 // Slice returns docker.slice, whose limits are over dockerd and every container together. The
 // values must hold the limits, which Steps works out where they are empty.
 func Slice(d values.Docker) ([]byte, error) {
-	return host.Render(files, "files/docker.slice.tmpl", d)
+	return resource.Render(files, "files/docker.slice.tmpl", d)
 }
 
 // Resolved returns the drop-in that makes systemd-resolved listen on the default bridge's address.
 func Resolved(d values.Docker) ([]byte, error) {
-	return host.Render(files, "files/resolved.conf.tmpl", d)
+	return resource.Render(files, "files/resolved.conf.tmpl", d)
 }
 
 // Override returns docker.service's drop-in, which puts dockerd in docker.slice. It replaces the

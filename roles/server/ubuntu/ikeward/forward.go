@@ -2,7 +2,7 @@ package ikeward
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/roles/server/ubuntu/internal/ufw"
 )
 
@@ -30,7 +30,7 @@ func owns(r ufw.Rule) bool {
 // forward returns the resources of the WireGuard peers' way to the VPN: the kernel forwards, and
 // ufw lets each peer's packets through. ikeward's NAT rule gives them the address the VPN
 // assigned. With no peer, the file goes, and so do the role's rules.
-func forward(m effect.Machine, out effect.Out, peers []string) []host.Resource {
+func forward(m effect.Machine, out effect.Out, peers []string) []resource.Resource {
 	return append(sysctl(m, len(peers) > 0), ufw.Rules{M: m, Out: out, Comment: comment, Want: routes(peers),
 		Owns: owns, NeedsSystemd: true})
 }

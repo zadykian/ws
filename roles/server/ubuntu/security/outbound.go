@@ -2,9 +2,9 @@ package security
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/file"
-	"github.com/zadykian/ws/engine/core/host/systemd"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // unitFile makes the file of a unit that the fill or the table needs.
@@ -20,12 +20,12 @@ func unitFile(m effect.Machine, name string) (file.File, error) {
 // its unit first, as no restart has run yet. nft -c checks the table in the kernel, which a
 // container without NET_ADMIN refuses. So it checks with systemd booted alone; CI's playbook job
 // runs it on the file after the run (docs/checks.md).
-func outbound(m effect.Machine, u effect.Units, out effect.Out) ([]host.Resource, error) {
+func outbound(m effect.Machine, u effect.Units, out effect.Out) ([]resource.Resource, error) {
 	script, err := files.ReadFile("files/resolvers.sh")
 	if err != nil {
 		return nil, err
 	}
-	var fill []host.Resource
+	var fill []resource.Resource
 	for _, n := range []string{pathUnit, timerUnit, fillUnit} {
 		f, err := unitFile(m, n)
 		if err != nil {
@@ -37,7 +37,7 @@ func outbound(m effect.Machine, u effect.Units, out effect.Out) ([]host.Resource
 	if err != nil {
 		return nil, err
 	}
-	var nft host.Resource = file.File{M: m, Path: tableFile, Content: table, Mode: 0o644}
+	var nft resource.Resource = file.File{M: m, Path: tableFile, Content: table, Mode: 0o644}
 	if systemd.Booted(m) {
 		nft = file.Validated{File: nft.(file.File), Check: func(p string) (string, []string) {
 			return "/usr/sbin/nft", []string{"-c", "-f", p}
@@ -49,7 +49,7 @@ func outbound(m effect.Machine, u effect.Units, out effect.Out) ([]host.Resource
 	}
 	fillScript := file.File{M: m, Path: scriptFile, Content: script, Mode: 0o755}
 	d := drift{m, out}
-	return append(append([]host.Resource{
+	return append(append([]resource.Resource{
 		file.Dir{M: m, Path: "/usr/local/lib/ws", Mode: 0o755},
 		file.Dir{M: m, Path: tableDir, Mode: 0o755},
 		fillScript,
@@ -59,9 +59,9 @@ func outbound(m effect.Machine, u effect.Units, out effect.Out) ([]host.Resource
 		systemd.Unit{M: m, U: u, Out: out, Name: fillUnit, Run: systemd.Triggered, Watch: append(fill[:len(fill):len(fill)], d)},
 		nft,
 		service,
-		systemd.DaemonReload{M: m, U: u, Watch: []host.Resource{service}},
+		systemd.DaemonReload{M: m, U: u, Watch: []resource.Resource{service}},
 		d,
 		systemd.Unit{M: m, U: u, Out: out, Name: outboundUnit, Enabled: true, Run: systemd.Running, Reload: true,
-			Watch: []host.Resource{fillScript, nft, service, d}},
+			Watch: []resource.Resource{fillScript, nft, service, d}},
 	), nil
 }

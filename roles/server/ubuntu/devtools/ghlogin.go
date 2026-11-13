@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 // GHLogin logs gh in to github.com by Token, as User. ws has no keyring, so --insecure-storage
@@ -33,7 +33,7 @@ func (c loginGH) Apply(ctx context.Context) error {
 
 // Plan logs gh in where its token for github.com is not Token. A gh that holds none, or that is
 // not installed yet, answers with an error, which counts as no login.
-func (g GHLogin) Plan(ctx context.Context) ([]host.Change, error) {
+func (g GHLogin) Plan(ctx context.Context) ([]resource.Change, error) {
 	if g.Token == "" {
 		return nil, nil
 	}
@@ -42,5 +42,5 @@ func (g GHLogin) Plan(ctx context.Context) ([]host.Change, error) {
 		strings.TrimSpace(string(out)) == g.Token {
 		return nil, nil
 	}
-	return []host.Change{loginGH{g}}, nil
+	return []resource.Change{loginGH{g}}, nil
 }

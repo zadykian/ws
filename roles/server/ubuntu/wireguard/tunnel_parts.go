@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/file"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/roles/server/ubuntu/internal/ufw"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -34,8 +34,8 @@ func firewall(m effect.Machine, out effect.Out, port int) ufw.Rules {
 // files, the firewall, and the reload of networkd. The files are for networkd alone, so they are
 // the key's group and mode, as systemd.netdev(5) suggests for a WireGuard .netdev. Their
 // diff holds public keys and addresses alone.
-func tunnel(m effect.Machine, u effect.Units, out effect.Out, random io.Reader, v values.Values) func(context.Context) ([]host.Resource, error) {
-	return func(context.Context) ([]host.Resource, error) {
+func tunnel(m effect.Machine, u effect.Units, out effect.Out, random io.Reader, v values.Values) func(context.Context) ([]resource.Resource, error) {
+	return func(context.Context) ([]resource.Resource, error) {
 		gid, err := groupID(m)
 		if err != nil {
 			return nil, err
@@ -55,9 +55,9 @@ func tunnel(m effect.Machine, u effect.Units, out effect.Out, random io.Reader, 
 		k := key{m: m, random: random, gid: gid}
 		netdevRes := file.File{M: m, Path: netdevFile, Content: netdev, Mode: 0o640, GID: gid}
 		networkRes := file.File{M: m, Path: networkFile, Content: network, Mode: 0o644}
-		return []host.Resource{
+		return []resource.Resource{
 			networkdCheck{m, u}, k, netdevRes, networkRes, firewall(m, out, v.Wireguard.Port),
-			wg0{m: m, watch: []host.Resource{k, netdevRes, networkRes}},
+			wg0{m: m, watch: []resource.Resource{k, netdevRes, networkRes}},
 		}, nil
 	}
 }

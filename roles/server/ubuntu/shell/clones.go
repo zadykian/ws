@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -61,11 +61,11 @@ func (c cloneRepo) Apply(ctx context.Context) error {
 }
 
 // Plan checks the clones, then lists those whose dest is missing, a relative one under the home.
-func (c clones) Plan(context.Context) ([]host.Change, error) {
+func (c clones) Plan(context.Context) ([]resource.Change, error) {
 	if err := checkClones(c.Clones); err != nil {
 		return nil, err
 	}
-	var changes []host.Change
+	var changes []resource.Change
 	for _, cl := range c.Clones {
 		abs := cl.Dest
 		if !strings.HasPrefix(abs, "/") {

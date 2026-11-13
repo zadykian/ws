@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/file"
-	"github.com/zadykian/ws/engine/core/host/systemd"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // fstabLine swaps to the file at boot.
@@ -31,12 +31,12 @@ type swap struct {
 
 // swapParts keeps /swapfile, base_swap_size_mb MiB, in /etc/fstab and swapped to; none where the
 // size is 0. It takes the place of /swap.img, which Ubuntu Server's installer makes.
-func swapParts(m effect.Machine, out effect.Out, d disk, want Setting) []host.Resource {
+func swapParts(m effect.Machine, out effect.Out, d disk, want Setting) []resource.Resource {
 	s := swap{M: m, Out: out, Disk: d, Want: want}
 	on := s
 	on.active = true
 	none := want.SizeMiB != nil && *want.SizeMiB == 0
-	return []host.Resource{
+	return []resource.Resource{
 		s,
 		file.Line{M: m, Path: "/etc/fstab", Text: fstabLine, Match: `^/swapfile\s`, Absent: none, Mode: 0o644},
 		on,
@@ -46,7 +46,7 @@ func swapParts(m effect.Machine, out effect.Out, d disk, want Setting) []host.Re
 }
 
 // Parts is swapParts on the disk of the machine that ws runs on.
-func Parts(m effect.Machine, out effect.Out, want Setting) []host.Resource {
+func Parts(m effect.Machine, out effect.Out, want Setting) []resource.Resource {
 	return swapParts(m, out, osDisk{}, want)
 }
 

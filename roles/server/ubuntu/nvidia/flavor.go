@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host/apt"
+	"github.com/zadykian/ws/engine/core/resource/apt"
 )
 
 // packageNames returns the driver's packages and the modules of each kernel flavor installed. The

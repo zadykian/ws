@@ -2,9 +2,9 @@ package security
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/file"
-	"github.com/zadykian/ws/engine/core/host/systemd"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // sshd allows SSH by key only. sshd -G parses the file, as a config of its own, before the file
@@ -14,8 +14,8 @@ import (
 // before that, a change starts it. The reload comes in this step, not at the end of the run. If a
 // later step fails, the next run has no change to reload for, and a running sshd would go on taking
 // passwords.
-func sshd(m effect.Machine, u effect.Units, out effect.Out, user string) ([]host.Resource, error) {
-	conf, err := host.Render(files, "files/10-keys-only.conf.tmpl", struct{ Root bool }{user == "root"})
+func sshd(m effect.Machine, u effect.Units, out effect.Out, user string) ([]resource.Resource, error) {
+	conf, err := resource.Render(files, "files/10-keys-only.conf.tmpl", struct{ Root bool }{user == "root"})
 	if err != nil {
 		return nil, err
 	}
@@ -25,9 +25,9 @@ func sshd(m effect.Machine, u effect.Units, out effect.Out, user string) ([]host
 			return "/usr/sbin/sshd", []string{"-G", "-f", path}
 		},
 	}
-	return []host.Resource{
+	return []resource.Resource{
 		dropIn,
 		systemd.Unit{M: m, U: u, Out: out, Name: "ssh.service", Run: systemd.Running, Reload: true,
-			Watch: []host.Resource{dropIn}},
+			Watch: []resource.Resource{dropIn}},
 	}, nil
 }

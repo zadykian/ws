@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/local"
-	"github.com/zadykian/ws/engine/core/host/fetch"
+	"github.com/zadykian/ws/engine/core/resource/fetch"
 )
 
 func tarGz(t *testing.T, names ...string) string {

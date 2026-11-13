@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 )
 
 const sysctlNowCall = "/usr/lib/systemd/systemd-sysctl --strict --prefix=net.ipv4.ip_forward"
@@ -21,8 +21,8 @@ func forwardMachine(forwarding string) *effecttest.Machine {
 
 // apply plans the group and applies its plan once. The fake's ufw changes no file, so a second
 // plan would find the same changes.
-func apply(t *testing.T, parts []host.Resource) {
-	g := host.Group{Title: "forward", Parts: parts}
+func apply(t *testing.T, parts []resource.Resource) {
+	g := resource.Group{Title: "forward", Parts: parts}
 	p, err := g.Plan(t.Context())
 	if err != nil {
 		t.Fatal(err)
@@ -46,7 +46,7 @@ func TestSysctlWritesTheFileAndTurnsForwardingOn(t *testing.T) {
 func TestSysctlPlansNothingOnceForwardingIsOn(t *testing.T) {
 	m := forwardMachine("1\n")
 	m.Files[sysctlPath] = sysctlFile
-	g := host.Group{Title: "sysctl", Parts: sysctl(m, true)}
+	g := resource.Group{Title: "sysctl", Parts: sysctl(m, true)}
 	if p, err := g.Plan(t.Context()); err != nil || len(p.Changes) != 0 {
 		t.Errorf("plan = %v, %v; want nothing", p.Changes, err)
 	}

@@ -6,15 +6,15 @@ import (
 	"regexp"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/file"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 )
 
 // localeParts keeps the locale generated and the system's. /etc/locale.gen names it, and
 // locale-gen makes it. /etc/locale.conf, where Ubuntu 26.04 keeps the system's locale, sets LANG
 // to it. /etc/default/locale links to that file.
-func localeParts(m effect.Machine, name string) []host.Resource {
-	return []host.Resource{
+func localeParts(m effect.Machine, name string) []resource.Resource {
+	return []resource.Resource{
 		generated{M: m, Name: name},
 		file.Line{M: m, Path: "/etc/locale.conf", Text: "LANG=" + name, Match: "^LANG=", Mode: 0o644},
 	}
@@ -38,7 +38,7 @@ func (c generate) Apply(ctx context.Context) error {
 // Plan checks the name against the locales glibc can generate, as the module did, and plans
 // nothing where `locale -a` lists the locale. Else it enables the line in /etc/locale.gen and
 // plans locale-gen.
-func (g generated) Plan(ctx context.Context) ([]host.Change, error) {
+func (g generated) Plan(ctx context.Context) ([]resource.Change, error) {
 	supported, err := g.M.ReadFile(supportedFile)
 	if err != nil {
 		return nil, fmt.Errorf("base_locale %q: reading %s: %w", g.Name, supportedFile, err)

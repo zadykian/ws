@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/file"
-	"github.com/zadykian/ws/engine/core/host/systemd"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // Parts are the resources of the script and the unit that keep Docker's containers off the Mac.
@@ -15,13 +15,13 @@ import (
 // starts. Where Docker runs already, the restart puts them in force at once. Docker's daemon.json
 // leaves it on its iptables backend, which docker-user.sh needs. WantedBy=docker.service: Docker's
 // start, at boot too, starts the unit first.
-func Parts(m effect.Machine, u effect.Units, out effect.Out, cable string) func(context.Context) ([]host.Resource, error) {
-	return func(context.Context) ([]host.Resource, error) {
+func Parts(m effect.Machine, u effect.Units, out effect.Out, cable string) func(context.Context) ([]resource.Resource, error) {
+	return func(context.Context) ([]resource.Resource, error) {
 		return dropResources(m, u, out, cable)
 	}
 }
 
-func dropResources(m effect.Machine, u effect.Units, out effect.Out, cable string) ([]host.Resource, error) {
+func dropResources(m effect.Machine, u effect.Units, out effect.Out, cable string) ([]resource.Resource, error) {
 	script, err := Script()
 	if err != nil {
 		return nil, err
@@ -32,12 +32,12 @@ func dropResources(m effect.Machine, u effect.Units, out effect.Out, cable strin
 	}
 	scriptFile := file.File{M: m, Path: dropsScript, Content: script, Mode: 0o755}
 	serviceFile := file.File{M: m, Path: dropsUnit, Content: service, Mode: 0o644}
-	return []host.Resource{
+	return []resource.Resource{
 		file.Dir{M: m, Path: "/usr/local/lib/ws", Mode: 0o755},
 		file.Dir{M: m, Path: dropsDir, Mode: 0o755},
 		scriptFile, serviceFile,
-		systemd.DaemonReload{M: m, U: u, Watch: []host.Resource{serviceFile}},
+		systemd.DaemonReload{M: m, U: u, Watch: []resource.Resource{serviceFile}},
 		systemd.Unit{M: m, U: u, Out: out, Name: "wireguard-docker-user.service", Enabled: true, Run: systemd.Running,
-			Watch: []host.Resource{scriptFile, serviceFile}},
+			Watch: []resource.Resource{scriptFile, serviceFile}},
 	}, nil
 }

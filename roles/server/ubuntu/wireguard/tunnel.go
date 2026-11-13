@@ -1,7 +1,7 @@
 package wireguard
 
 import (
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -18,7 +18,7 @@ type Peer struct{ Name, Address, Key string }
 
 // Netdev returns wg0's .netdev, which lists the peers given: those whose key is known.
 func Netdev(port int, peers []Peer) ([]byte, error) {
-	return host.Render(wg0Files, "files/60-wg0.netdev.tmpl", struct {
+	return resource.Render(wg0Files, "files/60-wg0.netdev.tmpl", struct {
 		KeyFile string
 		Port    int
 		Peers   []Peer
@@ -27,5 +27,5 @@ func Netdev(port int, peers []Peer) ([]byte, error) {
 
 // Network returns wg0's .network, which gives it its address with the tunnel's prefix length.
 func Network(w values.Wireguard) ([]byte, error) {
-	return host.Render(wg0Files, "files/60-wg0.network.tmpl", w)
+	return resource.Render(wg0Files, "files/60-wg0.network.tmpl", w)
 }

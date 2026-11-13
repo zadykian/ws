@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 )
 
 // sysctlMachine is a machine with a swappiness in force, and systemd booted or not.
@@ -31,7 +31,7 @@ func TestSwappiness(t *testing.T) {
 		{"no systemd", "60", false, false, "vm.swappiness = 10\n"},
 	} {
 		m := sysctlMachine(tt.now, tt.systemd)
-		g := host.Group{Title: "Swappiness", Parts: Swappiness(m, &effecttest.Out{}, 10)}
+		g := resource.Group{Title: "Swappiness", Parts: Swappiness(m, &effecttest.Out{}, 10)}
 		p, err := g.Plan(t.Context())
 		if err != nil {
 			t.Fatal(err)

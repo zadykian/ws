@@ -12,8 +12,8 @@ import (
 	"golang.org/x/mod/semver"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 // releaseVersion is a version of a release, which cld update takes. A build from source, cld dev,
@@ -43,7 +43,7 @@ func (c updateCld) Apply(ctx context.Context) error {
 
 // Plan compares cld's version with the release that releases/latest leads to, as cld update does.
 // Without cld, the install step reports the change.
-func (u Update) Plan(ctx context.Context) ([]host.Change, error) {
+func (u Update) Plan(ctx context.Context) ([]resource.Change, error) {
 	cld := u.User.Home + "/.local/bin/cld"
 	if _, err := u.M.Stat(cld); errors.Is(err, fs.ErrNotExist) {
 		return nil, nil
@@ -69,5 +69,5 @@ func (u Update) Plan(ctx context.Context) ([]host.Change, error) {
 	if !semver.IsValid("v"+latest) || semver.Compare("v"+latest, "v"+have) <= 0 {
 		return nil, nil
 	}
-	return []host.Change{updateCld{u, have, latest}}, nil
+	return []resource.Change{updateCld{u, have, latest}}, nil
 }

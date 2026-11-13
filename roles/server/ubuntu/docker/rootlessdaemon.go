@@ -2,8 +2,8 @@ package docker
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/docker/internal/rootless"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -15,7 +15,7 @@ import (
 // skips: the job that proves the rest runs on a booted machine.
 func rootlessDaemon(v values.Values, m effect.Machine, u effect.Units, out effect.Out, size DiskSize) step.Step {
 	user := account.User{Name: v.User, Home: v.Home}
-	return user.WithAccount(m, rootlessStep, configStep, func(a account.Account) ([]host.Resource, error) {
+	return user.WithAccount(m, rootlessStep, configStep, func(a account.Account) ([]resource.Resource, error) {
 		d, err := WithLimits(m, v.Docker)
 		if err != nil {
 			return nil, err

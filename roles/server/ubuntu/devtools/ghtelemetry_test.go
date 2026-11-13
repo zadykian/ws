@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 const (
@@ -44,7 +44,7 @@ func TestGHTelemetryPlan(t *testing.T) {
 	}
 }
 
-func apply(t *testing.T, changes []host.Change) {
+func apply(t *testing.T, changes []resource.Change) {
 	for _, c := range changes {
 		if err := c.Apply(context.Background()); err != nil {
 			t.Fatal(err)

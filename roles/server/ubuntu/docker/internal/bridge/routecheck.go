@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -20,7 +20,7 @@ type Routes struct {
 }
 
 // Plan reads the routes of every table, and plans no change.
-func (c Routes) Plan(ctx context.Context) ([]host.Change, error) {
+func (c Routes) Plan(ctx context.Context) ([]resource.Change, error) {
 	out, err := c.M.Run(ctx, "ip", "-j", "-4", "route", "show", "table", "all")
 	if err != nil {
 		return nil, fmt.Errorf("reading the routes: %w", err)

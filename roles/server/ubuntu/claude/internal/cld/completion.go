@@ -10,8 +10,8 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
 	"github.com/zadykian/ws/roles/server/ubuntu/claude/internal/asuser"
 )
 
@@ -30,7 +30,7 @@ func (s setupCompletion) Apply(ctx context.Context) error {
 }
 
 // Plan compares the script with what cld writes. Without cld, the install step reports the change.
-func (c Completion) Plan(ctx context.Context) ([]host.Change, error) {
+func (c Completion) Plan(ctx context.Context) ([]resource.Change, error) {
 	cld := c.User.Home + "/.local/bin/cld"
 	if _, err := c.M.Stat(cld); errors.Is(err, fs.ErrNotExist) {
 		return nil, nil
@@ -48,5 +48,5 @@ func (c Completion) Plan(ctx context.Context) ([]host.Change, error) {
 	if bytes.Equal(have, want) {
 		return nil, nil
 	}
-	return []host.Change{setupCompletion{c}}, nil
+	return []resource.Change{setupCompletion{c}}, nil
 }

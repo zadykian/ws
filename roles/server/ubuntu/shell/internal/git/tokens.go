@@ -6,9 +6,9 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/account"
-	"github.com/zadykian/ws/engine/core/host/file"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/plan"
 )
 
@@ -28,7 +28,7 @@ type Tokens struct {
 
 // Plan reads the keys of tokens.gitconfig, as a URL the entries omit keeps its section there, or
 // loses it under Whole. It checks the entries before any token is written.
-func (t Tokens) Plan(ctx context.Context) ([]host.Change, error) {
+func (t Tokens) Plan(ctx context.Context) ([]resource.Change, error) {
 	if len(t.Creds) == 0 && !t.Whole {
 		return nil, nil
 	}
@@ -58,7 +58,7 @@ func (t Tokens) Plan(ctx context.Context) ([]host.Change, error) {
 		return nil, err
 	}
 	const rel = ".config/git/tokens"
-	rs := []host.Resource{t.A.Dir(t.M, rel, 0o700)}
+	rs := []resource.Resource{t.A.Dir(t.M, rel, 0o700)}
 	if t.Whole {
 		for _, u := range dropped {
 			rs = append(rs, t.A.Absent(t.M, rel+"/"+credentialFile(u)))

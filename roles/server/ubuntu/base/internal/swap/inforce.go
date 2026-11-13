@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/systemd"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // inForce makes the swappiness in force the file's, with systemd-sysctl, which sets this one key as
@@ -29,7 +29,7 @@ func (c sysctl) Apply(ctx context.Context) error {
 }
 
 // Plan reads /proc/sys/vm/swappiness, which a container can read though not write.
-func (f inForce) Plan(context.Context) ([]host.Change, error) {
+func (f inForce) Plan(context.Context) ([]resource.Change, error) {
 	if !systemd.Booted(f.M) {
 		f.Out.Say("swappiness: skipped, systemd is not running")
 		return nil, nil
@@ -45,5 +45,5 @@ func (f inForce) Plan(context.Context) ([]host.Change, error) {
 	if now == f.Swappiness {
 		return nil, nil
 	}
-	return []host.Change{sysctl{f}}, nil
+	return []resource.Change{sysctl{f}}, nil
 }

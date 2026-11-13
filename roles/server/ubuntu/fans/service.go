@@ -5,9 +5,9 @@ import (
 	"os"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/file"
-	"github.com/zadykian/ws/engine/core/host/systemd"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -22,8 +22,8 @@ const (
 // unit restarts the service, so the three are one step. The service hands the fans back as it
 // stops, and takes them again from their speeds as it starts. exe returns the path of the ws that
 // runs.
-func serviceParts(m effect.Machine, u effect.Units, out effect.Out, f values.Fans, exe func() (string, error)) func(context.Context) ([]host.Resource, error) {
-	return func(context.Context) ([]host.Resource, error) {
+func serviceParts(m effect.Machine, u effect.Units, out effect.Out, f values.Fans, exe func() (string, error)) func(context.Context) ([]resource.Resource, error) {
+	return func(context.Context) ([]resource.Resource, error) {
 		config, err := Config(f)
 		if err != nil {
 			return nil, err
@@ -43,9 +43,9 @@ func serviceParts(m effect.Machine, u effect.Units, out effect.Out, f values.Fan
 		binary := file.File{M: m, Path: binaryPath, Content: self, Mode: 0o755, Secret: true}
 		conf := file.File{M: m, Path: configPath, Content: config, Mode: 0o644}
 		unitFile := file.File{M: m, Path: unitPath, Content: unit, Mode: 0o644}
-		watch := []host.Resource{binary, conf, unitFile}
+		watch := []resource.Resource{binary, conf, unitFile}
 		return append(watch,
-			systemd.DaemonReload{M: m, U: u, Watch: []host.Resource{unitFile}},
+			systemd.DaemonReload{M: m, U: u, Watch: []resource.Resource{unitFile}},
 			systemd.Unit{M: m, U: u, Out: out, Name: "ws-fans.service", Enabled: true, Run: systemd.Running, Watch: watch}), nil
 	}
 }

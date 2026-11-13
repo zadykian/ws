@@ -3,7 +3,7 @@ package plan
 import (
 	"testing"
 
-	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 func TestBelowCleansThePathAndTheHome(t *testing.T) {

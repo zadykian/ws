@@ -7,8 +7,8 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/plan"
 )
@@ -28,7 +28,7 @@ type signers struct {
 
 // Plan reads the public key. A dry run makes no key, so where there is none yet it plans nothing,
 // and the key's creation shows the change.
-func (s signers) Plan(ctx context.Context) ([]host.Change, error) {
+func (s signers) Plan(ctx context.Context) ([]resource.Change, error) {
 	pub, err := s.A.ReadHome(s.M, plan.Below(s.A, s.Key)+".pub")
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, nil
@@ -46,6 +46,6 @@ func (s signers) Plan(ctx context.Context) ([]host.Change, error) {
 }
 
 // AllowedSigners returns the allowed signers file, whose directories the file makes.
-func AllowedSigners(m effect.Machine, a account.Account, key, file, email string) []host.Resource {
-	return []host.Resource{signers{M: m, A: a, Key: key, Path: file, Email: email}}
+func AllowedSigners(m effect.Machine, a account.Account, key, file, email string) []resource.Resource {
+	return []resource.Resource{signers{M: m, A: a, Key: key, Path: file, Email: email}}
 }

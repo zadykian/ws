@@ -14,8 +14,8 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/core/effect/units"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/apt"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/apt"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
@@ -195,7 +195,7 @@ func runApply(c *cobra.Command, p process, opts applyOptions, asJSON bool) error
 
 // prepareSteps is what every role needs: ca-certificates serves the steps' downloads over HTTPS.
 func prepareSteps(m effect.Machine, out effect.Out) []step.Step {
-	return []step.Step{host.Group{Title: "Packages", Parts: []host.Resource{apt.Packages{
+	return []step.Step{resource.Group{Title: "Packages", Parts: []resource.Resource{apt.Packages{
 		M: m, Out: out, Names: []string{"ca-certificates"},
 	}}}}
 }

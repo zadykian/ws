@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/systemd"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // ready shows the server's public key, which the Mac's end of the tunnel needs, and checks that
@@ -49,7 +49,7 @@ func (r ready) holds(ctx context.Context, public string) bool {
 }
 
 // Plan says the public key, and plans the wait where wg0 doesn't hold it yet.
-func (r ready) Plan(ctx context.Context) ([]host.Change, error) {
+func (r ready) Plan(ctx context.Context) ([]resource.Change, error) {
 	public, hasKey, err := serverPublicKey(r.m)
 	if err != nil {
 		return nil, err
@@ -62,5 +62,5 @@ func (r ready) Plan(ctx context.Context) ([]host.Change, error) {
 	if !systemd.Booted(r.m) || r.holds(ctx, public) {
 		return nil, nil
 	}
-	return []host.Change{waitForKey{r, public}}, nil
+	return []resource.Change{waitForKey{r, public}}, nil
 }

@@ -6,10 +6,10 @@ import (
 	_ "embed"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/account"
-	"github.com/zadykian/ws/engine/core/host/apt"
-	"github.com/zadykian/ws/engine/core/host/file"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/engine/core/resource/apt"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -35,13 +35,13 @@ var config []byte
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
 	user := account.User{Name: v.User, Home: v.Home}
 	return []step.Step{
-		host.Group{Title: packageStep, Parts: []host.Resource{
+		resource.Group{Title: packageStep, Parts: []resource.Resource{
 			apt.Packages{M: m, Out: out, Recommends: true, Names: []string{"lazygit", "git-delta"}},
 		}},
-		host.Group{Title: wrapperStep, After: packageStep, Parts: []host.Resource{
+		resource.Group{Title: wrapperStep, After: packageStep, Parts: []resource.Resource{
 			file.File{M: m, Path: wrapperPath, Content: wrapper, Mode: 0o755},
 		}},
-		user.WithAccount(m, configStep, "", func(a account.Account) ([]host.Resource, error) {
+		user.WithAccount(m, configStep, "", func(a account.Account) ([]resource.Resource, error) {
 			return configFiles(m, a), nil
 		}),
 	}
@@ -49,8 +49,8 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units,
 
 // configFiles returns ~/.config/lazygit/config.yml, which ws replaces whole, keeping the old file
 // beside it. The directories on the way stay the user's.
-func configFiles(m effect.Machine, a account.Account) []host.Resource {
+func configFiles(m effect.Machine, a account.Account) []resource.Resource {
 	f := a.File(m, ".config/lazygit/config.yml", config, 0o644)
 	f.Backup = true
-	return []host.Resource{f}
+	return []resource.Resource{f}
 }

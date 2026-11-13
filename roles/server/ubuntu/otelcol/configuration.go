@@ -6,10 +6,10 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/account"
-	"github.com/zadykian/ws/engine/core/host/file"
-	"github.com/zadykian/ws/engine/core/host/systemd"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/engine/core/resource/file"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 const (
@@ -41,8 +41,8 @@ func remoteEndpoint(m effect.Machine, user account.User) (string, error) {
 // one's. The remote endpoint is a stand-in there, as its value is only in the service's
 // environment. A change of any of them restarts the collector: a new endpoint needs a restart, as
 // the collector's reload rereads its config alone.
-func configuration(m effect.Machine, u effect.Units, out effect.Out, user account.User) func(context.Context) ([]host.Resource, error) {
-	return func(context.Context) ([]host.Resource, error) {
+func configuration(m effect.Machine, u effect.Units, out effect.Out, user account.User) func(context.Context) ([]resource.Resource, error) {
+	return func(context.Context) ([]resource.Resource, error) {
 		endpoint, err := remoteEndpoint(m, user)
 		if err != nil {
 			return nil, err
@@ -68,8 +68,8 @@ func configuration(m effect.Machine, u effect.Units, out effect.Out, user accoun
 					"/usr/bin/otelcol-contrib", "validate", "--config=" + path}
 			},
 		}
-		watch := []host.Resource{journalFile, claudeFile, config}
-		parts := []host.Resource{file.Dir{M: m, Path: dropIns, Mode: 0o755}, journalFile, claudeFile}
+		watch := []resource.Resource{journalFile, claudeFile, config}
+		parts := []resource.Resource{file.Dir{M: m, Path: dropIns, Mode: 0o755}, journalFile, claudeFile}
 		if endpoint != "" {
 			env, err := Env(user.Home, endpoint)
 			if err != nil {
@@ -84,7 +84,7 @@ func configuration(m effect.Machine, u effect.Units, out effect.Out, user accoun
 			watch = append(watch, gone)
 		}
 		parts = append(parts,
-			systemd.DaemonReload{M: m, U: u, Watch: []host.Resource{journalFile, claudeFile}},
+			systemd.DaemonReload{M: m, U: u, Watch: []resource.Resource{journalFile, claudeFile}},
 			systemd.Unit{M: m, U: u, Out: out, Name: "otelcol-contrib.service", Enabled: true, Run: systemd.Running, Watch: watch},
 		)
 		return parts, nil

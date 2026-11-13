@@ -2,8 +2,8 @@ package security
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/systemd"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/roles/server/ubuntu/internal/ufw"
 )
 
@@ -17,9 +17,9 @@ const sshComment = "ws: SSH"
 // can't match resolved's or networkd's uid, or an IPv6 next hop. Docker forwards its containers'
 // packets ahead of ufw's rules. ufw.service loads the rules at boot; without it, the machine would
 // boot with no firewall.
-func firewall(m effect.Machine, u effect.Units, out effect.Out) []host.Resource {
+func firewall(m effect.Machine, u effect.Units, out effect.Out) []resource.Resource {
 	ssh := ufw.Rule{Action: "allow", Proto: "tcp", To: "any", ToPort: "22", From: "any", FromPort: "any", Dir: "in"}
-	return []host.Resource{
+	return []resource.Resource{
 		// ufw writes a rule for IPv6 too, which is not in Want and which Owns leaves alone.
 		ufw.Rules{M: m, Out: out, Comment: sshComment, Want: []ufw.Rule{ssh}, NeedsSystemd: true,
 			Owns: func(r ufw.Rule) bool { return r.To == ufw.Any }},

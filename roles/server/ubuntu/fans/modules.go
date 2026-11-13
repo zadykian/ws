@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/systemd"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // refusedMark is in /run, so that a reboot clears it.
@@ -33,12 +33,12 @@ func (c modules) loaded(name string) (bool, error) {
 	return err == nil, err
 }
 
-func (c modules) Plan(context.Context) ([]host.Change, error) {
+func (c modules) Plan(context.Context) ([]resource.Change, error) {
 	if !systemd.Booted(c.m) {
 		c.out.Say("fans' modules: skipped, systemd is not running")
 		return nil, nil
 	}
-	var changes []host.Change
+	var changes []resource.Change
 	if own, err := c.loaded("nct6683"); err != nil {
 		return nil, err
 	} else if own {

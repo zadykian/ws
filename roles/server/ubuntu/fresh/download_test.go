@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/fetch"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/fetch"
 )
 
 func machine(arch string, have effecttest.Package) *effecttest.Machine {
@@ -29,7 +29,7 @@ func TestTheURLIsTheReleasesDeb(t *testing.T) {
 
 func TestInstallPlansFromThePinOnANewMachine(t *testing.T) {
 	m := machine("amd64", effecttest.Package{})
-	p, err := (host.Group{Title: installStep, Parts: []host.Resource{pinned(m)}}).Plan(t.Context())
+	p, err := (resource.Group{Title: installStep, Parts: []resource.Resource{pinned(m)}}).Plan(t.Context())
 	if err != nil || len(p.Changes) != 3 || p.Changes[2].String() != "install fresh-editor "+version {
 		t.Errorf("plan = %v, %v; want the directory, the fetch and the install", p.Changes, err)
 	}
@@ -38,7 +38,7 @@ func TestInstallPlansFromThePinOnANewMachine(t *testing.T) {
 func TestInstallOnlyClearsTheDebWhereTheVersionIsInstalled(t *testing.T) {
 	m := machine("amd64", effecttest.Package{Version: version, Status: "ii"})
 	m.Files[path.Join(fetch.CacheDir, debName("amd64"))] = []byte("deb")
-	p, err := (host.Group{Title: installStep, Parts: []host.Resource{pinned(m)}}).Plan(t.Context())
+	p, err := (resource.Group{Title: installStep, Parts: []resource.Resource{pinned(m)}}).Plan(t.Context())
 	if err != nil || len(p.Changes) != 1 || strings.Contains(p.Changes[0].String(), "install") {
 		t.Errorf("plan = %v, %v; want only the .deb's removal", p.Changes, err)
 	}
@@ -46,7 +46,7 @@ func TestInstallOnlyClearsTheDebWhereTheVersionIsInstalled(t *testing.T) {
 
 func TestInstallFailsOnAnArchitectureWithNoSum(t *testing.T) {
 	m := machine("riscv64", effecttest.Package{})
-	if _, err := (host.Group{Title: installStep, Parts: []host.Resource{pinned(m)}}).Plan(t.Context()); err == nil {
+	if _, err := (resource.Group{Title: installStep, Parts: []resource.Resource{pinned(m)}}).Plan(t.Context()); err == nil {
 		t.Error("no error")
 	}
 }

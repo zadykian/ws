@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 func gitFixture(signing bool) (*effecttest.Machine, stdinMachine, *effecttest.Out, Config) {

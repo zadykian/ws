@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/systemd"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // Later roles may need the VPN, as for a clone from the remote network, so one that is not up
@@ -45,7 +45,7 @@ func (c awaitVPN) Apply(ctx context.Context) error {
 }
 
 // Plan plans the wait where ikeward status fails now.
-func (s Status) Plan(ctx context.Context) ([]host.Change, error) {
+func (s Status) Plan(ctx context.Context) ([]resource.Change, error) {
 	if !systemd.Booted(s.M) {
 		s.Out.Say("ikeward status: skipped, systemd is not running")
 		return nil, nil
@@ -53,5 +53,5 @@ func (s Status) Plan(ctx context.Context) ([]host.Change, error) {
 	if _, err := s.M.Run(ctx, binary, "status"); err == nil {
 		return nil, nil
 	}
-	return []host.Change{awaitVPN{s}}, nil
+	return []resource.Change{awaitVPN{s}}, nil
 }

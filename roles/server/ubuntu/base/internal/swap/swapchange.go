@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 )
 
 // swapChange is one change of the swap, a closure and its words for --check.
@@ -19,7 +19,7 @@ func (c swapChange) String() string { return c.text }
 func (c swapChange) Apply(ctx context.Context) error { return c.do(ctx) }
 
 // Plan reads the machine and returns the changes of its phase, in the order they apply.
-func (s swap) Plan(_ context.Context) ([]host.Change, error) {
+func (s swap) Plan(_ context.Context) ([]resource.Change, error) {
 	st, err := s.state()
 	if err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func (s swap) Plan(_ context.Context) ([]host.Change, error) {
 	if err != nil {
 		return nil, err
 	}
-	var cs []host.Change
+	var cs []resource.Change
 	add := func(on bool, text string, do func(context.Context) error) {
 		if on {
 			cs = append(cs, swapChange{text, do})

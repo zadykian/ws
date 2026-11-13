@@ -5,10 +5,10 @@ import (
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/apt"
-	"github.com/zadykian/ws/engine/core/host/fetch"
-	"github.com/zadykian/ws/engine/core/host/systemd"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/apt"
+	"github.com/zadykian/ws/engine/core/resource/fetch"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -44,9 +44,9 @@ func (c stop) Apply(ctx context.Context) error {
 	return c.u.Disable(ctx, "otelcol-contrib.service")
 }
 
-func (s stopped) Plan(ctx context.Context) ([]host.Change, error) {
+func (s stopped) Plan(ctx context.Context) ([]resource.Change, error) {
 	changes, err := s.pkg.Plan(ctx)
-	if err != nil || !slices.ContainsFunc(changes, func(c host.Change) bool { return step.KindOf(c) == step.Install }) {
+	if err != nil || !slices.ContainsFunc(changes, func(c resource.Change) bool { return step.KindOf(c) == step.Install }) {
 		return changes, err
 	}
 	if !systemd.Booted(s.m) {

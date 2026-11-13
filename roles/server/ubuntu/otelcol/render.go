@@ -4,7 +4,7 @@ import (
 	"embed"
 	"strings"
 
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 )
 
 //go:embed files
@@ -24,10 +24,10 @@ func data(home, endpoint string) templateData {
 // Config returns the collector's config. The remote collector's endpoint is not in it, as the
 // service's environment gives it; an empty endpoint leaves claude's pipeline out.
 func Config(endpoint string) ([]byte, error) {
-	return host.Render(files, "files/config.yaml.tmpl", data("", endpoint))
+	return resource.Render(files, "files/config.yaml.tmpl", data("", endpoint))
 }
 
 // Env returns the file with the endpoint for the service, which only root reads.
 func Env(home, endpoint string) ([]byte, error) {
-	return host.Render(files, "files/claude.env.tmpl", data(home, endpoint))
+	return resource.Render(files, "files/claude.env.tmpl", data(home, endpoint))
 }

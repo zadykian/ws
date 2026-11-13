@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -51,7 +51,7 @@ func TestPasswordKeepsTheFileButFixesItsMode(t *testing.T) {
 }
 
 // noWait drops the wait on a step the test does not run.
-func noWait(g host.Group) host.Group {
+func noWait(g resource.Group) resource.Group {
 	g.After = ""
 	return g
 }

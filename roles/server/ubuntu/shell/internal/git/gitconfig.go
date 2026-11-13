@@ -9,9 +9,9 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/account"
-	"github.com/zadykian/ws/engine/core/host/file"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/engine/core/resource/file"
 )
 
 // gitFiles are the templates of ~/.gitconfig and of the tokens' include.
@@ -35,7 +35,7 @@ type Config struct {
 }
 
 func (g Config) content() ([]byte, error) {
-	return host.Render(gitFiles, "files/gitconfig.tmpl", struct {
+	return resource.Render(gitFiles, "files/gitconfig.tmpl", struct {
 		Name, Email, Key, Signers string
 		Signing                   bool
 	}{g.Name, g.Email, g.Key, g.Signers, g.Signing})
@@ -43,7 +43,7 @@ func (g Config) content() ([]byte, error) {
 
 // Plan says what the rewrite loses or replaces, then plans the file. Git must accept the new file
 // before it replaces the old one.
-func (g Config) Plan(ctx context.Context) ([]host.Change, error) {
+func (g Config) Plan(ctx context.Context) ([]resource.Change, error) {
 	content, err := g.content()
 	if err != nil {
 		return nil, err

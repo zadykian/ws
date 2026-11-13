@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 )
 
 // fakeDisk keeps the files a test gives it, and records the calls that change the disk.
@@ -49,8 +49,8 @@ func booted(swaps string) *effecttest.Machine {
 	return m
 }
 
-func swapGroup(m *effecttest.Machine, d *fakeDisk, want Setting) host.Group {
-	return host.Group{Title: "Swap", Parts: swapParts(m, &effecttest.Out{}, d, want)}
+func swapGroup(m *effecttest.Machine, d *fakeDisk, want Setting) resource.Group {
+	return resource.Group{Title: "Swap", Parts: swapParts(m, &effecttest.Out{}, d, want)}
 }
 
 func ptr(n int) *int { return &n }

@@ -8,15 +8,15 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/file"
-	"github.com/zadykian/ws/engine/core/host/systemd"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/roles/server/ubuntu/network/internal/netplan"
 )
 
 // Plan checks the address, the port and netplan's files, then plans the file, and the reload that
 // a change to it calls for.
-func (d direct) Plan(ctx context.Context) ([]host.Change, error) {
+func (d direct) Plan(ctx context.Context) ([]resource.Change, error) {
 	if d.Interface == "" {
 		return d.reloaded(ctx, file.Absent{M: d.M, Path: netplan.Path})
 	}

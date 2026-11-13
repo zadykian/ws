@@ -7,9 +7,9 @@ import (
 	"path"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/file"
-	"github.com/zadykian/ws/engine/core/host/systemd"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // unitDirs are where a link can enable a unit: /etc for the units, /run for those enabled with
@@ -29,12 +29,12 @@ var outboundUnits = []string{pathUnit, timerUnit, fillUnit, outboundUnit}
 // gone, active or failed; a failed one is reset. Then the links that enable them go, in any
 // target's .wants or .requires, with their files, and systemd reads its units again. A table no
 // stop removed outlives them, as one loaded by hand with nft -f.
-func outboundOff(m effect.Machine, u effect.Units, out effect.Out) []host.Resource {
-	var rs []host.Resource
+func outboundOff(m effect.Machine, u effect.Units, out effect.Out) []resource.Resource {
+	var rs []resource.Resource
 	for _, n := range outboundUnits {
 		rs = append(rs, systemd.Unit{M: m, U: u, Out: out, Name: n, Run: systemd.Stopped})
 	}
-	gone := []host.Resource{links{m}}
+	gone := []resource.Resource{links{m}}
 	for _, n := range outboundUnits {
 		gone = append(gone, file.Absent{M: m, Path: "/etc/systemd/system/" + n})
 	}
@@ -59,8 +59,8 @@ func (c removeLink) Apply(ctx context.Context) error {
 }
 
 // Plan plans the removal of each link that is named for a unit.
-func (l links) Plan(context.Context) ([]host.Change, error) {
-	var cs []host.Change
+func (l links) Plan(context.Context) ([]resource.Change, error) {
+	var cs []resource.Change
 	for _, root := range unitDirs {
 		names, err := l.m.ReadDir(root)
 		if errors.Is(err, fs.ErrNotExist) {
@@ -106,7 +106,7 @@ func (c destroy) Apply(ctx context.Context) error {
 }
 
 // Plan plans the removal where the kernel holds the table. No nft, or no table, is none to remove.
-func (t table) Plan(ctx context.Context) ([]host.Change, error) {
+func (t table) Plan(ctx context.Context) ([]resource.Change, error) {
 	if !systemd.Booted(t.m) {
 		t.out.Say("outbound table: not looked for, systemd is not running")
 		return nil, nil
@@ -114,5 +114,5 @@ func (t table) Plan(ctx context.Context) ([]host.Change, error) {
 	if _, err := t.m.RunRoot(ctx, "nft", "list", "table", "inet", "ws"); err != nil {
 		return nil, nil //nolint:nilerr // a failed list is no table in force
 	}
-	return []host.Change{destroy{t.m}}, nil
+	return []resource.Change{destroy{t.m}}, nil
 }

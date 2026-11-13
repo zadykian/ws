@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 )
 
 // A malformed config makes Fresh load its defaults and exit 0, so these tests are its only check.
@@ -53,7 +53,7 @@ func withoutComments(data []byte) []byte {
 
 // renderedAt renders the template for the home.
 func renderedAt(t *testing.T, home string) []byte {
-	data, err := host.Render(templates, "files/config.json.tmpl", struct{ Home string }{home})
+	data, err := resource.Render(templates, "files/config.json.tmpl", struct{ Home string }{home})
 	if err != nil {
 		t.Fatal(err)
 	}

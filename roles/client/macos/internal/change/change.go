@@ -9,7 +9,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -102,7 +102,7 @@ func Apply(ctx context.Context, m effect.Machine, out effect.Out, c step.Change)
 		if err := m.Pass(ctx, c.Root, c.Name, c.Args...); err != nil {
 			return fmt.Errorf("%s failed: %w", c.Line(), err)
 		}
-	case host.Change:
+	case resource.Change:
 		if err := c.Apply(ctx); err != nil {
 			return fmt.Errorf("cannot %s: %w", step.Headline(c), err)
 		}

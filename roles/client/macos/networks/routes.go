@@ -9,8 +9,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/check"
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/file"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
@@ -69,7 +69,7 @@ func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 	} else if err != nil {
 		return nil, err
 	}
-	var res host.Resource = file.Absent{M: r.M, Path: routesFile}
+	var res resource.Resource = file.Absent{M: r.M, Path: routesFile}
 	if len(networks) > 0 {
 		res = file.File{M: r.M, Path: routesFile, Content: []byte(routesText(networks)), Mode: 0o644}
 	}

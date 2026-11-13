@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 // inContainer reports whether the machine is a container, which has no SSH to lose: Docker, Podman
@@ -35,7 +35,7 @@ type keyCheck struct {
 // Plan fails where authorized_keys, or a directory above it, is a link: the user owns the home and
 // root reads the file. It also fails where the file is missing, holds no key, or is one sshd won't
 // use, outside a container.
-func (k keyCheck) Plan(context.Context) ([]host.Change, error) {
+func (k keyCheck) Plan(context.Context) ([]resource.Change, error) {
 	if inContainer(k.m) {
 		return nil, nil
 	}

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -15,7 +15,7 @@ func TestLocaleRefusals(t *testing.T) {
 	for _, name := range []string{"", "en_US.UTF-8 UTF-8", "english", "en_us.utf8", "en_US.UTF-8\n#", "xx_YY.UTF-8", "en_US"} {
 		m := effecttest.NewMachine()
 		m.Files[supportedFile] = []byte(supported)
-		g := host.Group{Title: "Locale", Parts: localeParts(m, name)}
+		g := resource.Group{Title: "Locale", Parts: localeParts(m, name)}
 		if _, err := g.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "base_locale") {
 			t.Errorf("locale %q: error = %v, want a refusal naming base_locale", name, err)
 		}
@@ -41,7 +41,7 @@ func TestLocale(t *testing.T) {
 		}
 		m.Results["locale -a"] = effecttest.Result{Out: []byte(tt.avail)}
 		m.Results["locale-gen"] = effecttest.Result{}
-		g := host.Group{Title: "Locale", Parts: localeParts(m, "en_US.UTF-8")}
+		g := resource.Group{Title: "Locale", Parts: localeParts(m, "en_US.UTF-8")}
 		// The fake's `locale -a` stays unchanged after locale-gen, so a run that generates fails its
 		// check that the second plan is empty.
 		_, err := step.Run(t.Context(), []step.Step{g}, &effecttest.Out{}, false)
@@ -69,7 +69,7 @@ func TestLocaleOfOtherForms(t *testing.T) {
 		m := effecttest.NewMachine()
 		m.Files[supportedFile] = []byte(supported)
 		m.Results["locale -a"] = effecttest.Result{Out: []byte("C\n")}
-		g := host.Group{Title: "Locale", Parts: localeParts(m, name)}
+		g := resource.Group{Title: "Locale", Parts: localeParts(m, name)}
 		if _, err := g.Plan(t.Context()); err != nil {
 			t.Fatalf("%s: %v", name, err)
 		}

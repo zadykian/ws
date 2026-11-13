@@ -6,9 +6,9 @@ import (
 	"context"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/account"
-	"github.com/zadykian/ws/engine/core/host/apt"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/engine/core/resource/apt"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -35,36 +35,36 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units,
 	ss := []step.Step{
 		// nftables brings nft, which loads the outbound table. Its own service stays off, as the
 		// package leaves it. Recommends: apt's default, as the role installed them.
-		host.Group{Title: packagesStep, Parts: []host.Resource{
+		resource.Group{Title: packagesStep, Parts: []resource.Resource{
 			apt.Packages{M: m, Out: out, Recommends: true,
 				Names: []string{"openssh-server", "ufw", "fail2ban", "nftables", "sudo"}},
 		}},
-		host.Group{Title: keysStep, Parts: []host.Resource{keyCheck{m, account.User{Name: v.User, Home: v.Home}}}},
-		host.Lazy{Title: sudoStep, After: packagesStep, Parts: func(context.Context) ([]host.Resource, error) {
+		resource.Group{Title: keysStep, Parts: []resource.Resource{keyCheck{m, account.User{Name: v.User, Home: v.Home}}}},
+		resource.Lazy{Title: sudoStep, After: packagesStep, Parts: func(context.Context) ([]resource.Resource, error) {
 			return sudoParts(m, v.User)
 		}},
 	}
 	// Ubuntu's installer puts its user in lxd, whose socket lxd-installer opens to the group: that
 	// group is root, as a container of LXD's can mount the host. lxd-installer outlives its group.
 	if v.User != "root" {
-		ss = append(ss, host.Group{Title: lxdStep, After: packagesStep, Parts: []host.Resource{
-			host.Left{M: m, User: v.User, Group: "lxd"},
+		ss = append(ss, resource.Group{Title: lxdStep, After: packagesStep, Parts: []resource.Resource{
+			resource.Left{M: m, User: v.User, Group: "lxd"},
 			apt.Purged{M: m, Names: []string{"lxd-installer"}},
 		}})
 	}
 	ss = append(ss,
-		host.Lazy{Title: sshdStep, After: packagesStep, Parts: func(context.Context) ([]host.Resource, error) {
+		resource.Lazy{Title: sshdStep, After: packagesStep, Parts: func(context.Context) ([]resource.Resource, error) {
 			return sshd(m, u, out, v.User)
 		}},
-		host.Group{Title: ufwStep, After: packagesStep, Parts: firewall(m, u, out)},
-		host.Lazy{Title: fail2banStep, After: packagesStep, Parts: func(context.Context) ([]host.Resource, error) {
+		resource.Group{Title: ufwStep, After: packagesStep, Parts: firewall(m, u, out)},
+		resource.Lazy{Title: fail2banStep, After: packagesStep, Parts: func(context.Context) ([]resource.Resource, error) {
 			return fail2ban(m, u, out)
 		}},
 	)
 	if !v.Security.Outbound {
-		return append(ss, host.Group{Title: offStep, Parts: outboundOff(m, u, out)})
+		return append(ss, resource.Group{Title: offStep, Parts: outboundOff(m, u, out)})
 	}
-	return append(ss, host.Lazy{Title: outboundStep, After: packagesStep, Parts: func(context.Context) ([]host.Resource, error) {
+	return append(ss, resource.Lazy{Title: outboundStep, After: packagesStep, Parts: func(context.Context) ([]resource.Resource, error) {
 		return outbound(m, u, out)
 	}})
 }

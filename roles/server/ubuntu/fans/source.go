@@ -2,7 +2,7 @@ package fans
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host/fetch"
+	"github.com/zadykian/ws/engine/core/resource/fetch"
 )
 
 // sourceDir is where DKMS finds the driver's source. The tree is staged beside it.

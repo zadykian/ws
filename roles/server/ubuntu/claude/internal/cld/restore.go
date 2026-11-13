@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/account"
-	"github.com/zadykian/ws/engine/core/host/systemd"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // Restore has the user's systemd restore cld's sessions as it starts, which brings back the
@@ -101,7 +101,7 @@ func (s setupRestore) Apply(ctx context.Context) error {
 // Plan compares cld-restore.service with what cld writes. It also looks for the link that
 // systemctl --user enable makes, as cld enables the unit at every run but reports only whether it
 // wrote its file.
-func (r Restore) Plan(ctx context.Context) ([]host.Change, error) {
+func (r Restore) Plan(ctx context.Context) ([]resource.Change, error) {
 	if !systemd.Booted(r.M) {
 		r.Out.Say("Claude restore: skipped, systemd is not running")
 		return nil, nil
@@ -117,11 +117,11 @@ func (r Restore) Plan(ctx context.Context) ([]host.Change, error) {
 		return nil, err
 	}
 	if stale.Match(out) {
-		return []host.Change{setupRestore{r}}, nil
+		return []resource.Change{setupRestore{r}}, nil
 	}
 	_, err = r.M.Stat(r.Account.Home + "/.config/systemd/user/default.target.wants/cld-restore.service")
 	if errors.Is(err, fs.ErrNotExist) {
-		return []host.Change{setupRestore{r}}, nil
+		return []resource.Change{setupRestore{r}}, nil
 	}
 	return nil, err
 }

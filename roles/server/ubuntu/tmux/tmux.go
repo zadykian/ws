@@ -4,8 +4,8 @@ package tmux
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/apt"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/apt"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -18,7 +18,7 @@ import (
 // and no secrets.
 func Steps(_ values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
 	return []step.Step{
-		host.Group{Title: "Tmux", Parts: []host.Resource{
+		resource.Group{Title: "Tmux", Parts: []resource.Resource{
 			apt.Packages{M: m, Out: out, Recommends: true, Names: []string{"tmux"}},
 			Snap{M: m, Out: out},
 		}},

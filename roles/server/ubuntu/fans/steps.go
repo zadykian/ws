@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/engine/core/host/apt"
-	"github.com/zadykian/ws/engine/core/host/file"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/apt"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -41,37 +41,37 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units,
 func steps(f values.Fans, m effect.Machine, u effect.Units, out effect.Out, exe func() (string, error)) []step.Step {
 	vendor := f.BoardVendor
 	return []step.Step{
-		host.Group{Title: boardStep, Parts: []host.Resource{board{m, out, vendor}}},
-		host.Lazy{Title: packagesStep, After: boardStep, Parts: gated(m, vendor, func(ctx context.Context) ([]host.Resource, error) {
+		resource.Group{Title: boardStep, Parts: []resource.Resource{board{m, out, vendor}}},
+		resource.Lazy{Title: packagesStep, After: boardStep, Parts: gated(m, vendor, func(ctx context.Context) ([]resource.Resource, error) {
 			kernel, err := kernelRelease(ctx, m)
 			if err != nil {
 				return nil, err
 			}
-			return []host.Resource{apt.Packages{M: m, Out: out, Recommends: true, Names: []string{"dkms", "linux-headers-generic", "linux-headers-" + kernel}}}, nil
+			return []resource.Resource{apt.Packages{M: m, Out: out, Recommends: true, Names: []string{"dkms", "linux-headers-generic", "linux-headers-" + kernel}}}, nil
 		})},
-		host.Lazy{Title: sourceStep, After: packagesStep, Parts: gated(m, vendor, func(context.Context) ([]host.Resource, error) {
-			conf, err := host.Render(files, "files/dkms.conf.tmpl", struct{ Version string }{nct6687Short})
+		resource.Lazy{Title: sourceStep, After: packagesStep, Parts: gated(m, vendor, func(context.Context) ([]resource.Resource, error) {
+			conf, err := resource.Render(files, "files/dkms.conf.tmpl", struct{ Version string }{nct6687Short})
 			if err != nil {
 				return nil, err
 			}
-			return []host.Resource{
+			return []resource.Resource{
 				sourceTree(m),
 				file.File{M: m, Path: sourceDir + "/dkms.conf", Content: conf, Mode: 0o644},
 			}, nil
 		})},
-		host.Lazy{Title: driverStep, After: sourceStep, Parts: gated(m, vendor, func(context.Context) ([]host.Resource, error) {
-			return []host.Resource{driver{m}}, nil
+		resource.Lazy{Title: driverStep, After: sourceStep, Parts: gated(m, vendor, func(context.Context) ([]resource.Resource, error) {
+			return []resource.Resource{driver{m}}, nil
 		})},
-		host.Lazy{Title: modulesStep, After: driverStep, Parts: gated(m, vendor, func(context.Context) ([]host.Resource, error) {
+		resource.Lazy{Title: modulesStep, After: driverStep, Parts: gated(m, vendor, func(context.Context) ([]resource.Resource, error) {
 			return moduleParts(m, out)
 		})},
-		host.Lazy{Title: serviceStep, After: modulesStep, Parts: gated(m, vendor, serviceParts(m, u, out, f, exe))},
+		resource.Lazy{Title: serviceStep, After: modulesStep, Parts: gated(m, vendor, serviceParts(m, u, out, f, exe))},
 	}
 }
 
 // moduleParts keeps Linux's own driver off the chip, loads nct6687 at boot and now. The directory
 // of the modules to load at boot is systemd's, which a machine without systemd may lack.
-func moduleParts(m effect.Machine, out effect.Out) ([]host.Resource, error) {
+func moduleParts(m effect.Machine, out effect.Out) ([]resource.Resource, error) {
 	blacklist, err := files.ReadFile("files/modprobe.conf")
 	if err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func moduleParts(m effect.Machine, out effect.Out) ([]host.Resource, error) {
 	if err != nil {
 		return nil, err
 	}
-	return []host.Resource{
+	return []resource.Resource{
 		file.File{M: m, Path: "/etc/modprobe.d/ws-fans.conf", Content: blacklist, Mode: 0o644},
 		file.Dir{M: m, Path: "/etc/modules-load.d", Mode: 0o755},
 		file.File{M: m, Path: "/etc/modules-load.d/ws-fans.conf", Content: load, Mode: 0o644},

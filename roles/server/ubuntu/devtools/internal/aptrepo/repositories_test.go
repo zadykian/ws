@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 )
 
 const curl = "curl -fsSL --retry 5 --retry-delay 10 --retry-all-errors "
@@ -44,7 +44,7 @@ func newFixture(t *testing.T) fixture {
 	return f
 }
 
-func (f fixture) plan(_ *testing.T) ([]host.Change, error) {
+func (f fixture) plan(_ *testing.T) ([]resource.Change, error) {
 	return Repositories{M: f.m, List: f.repos, Replaced: replaced}.Plan(context.Background())
 }
 
@@ -58,7 +58,7 @@ func replaced(release string) []string {
 	}
 }
 
-func apply(t *testing.T, changes []host.Change) {
+func apply(t *testing.T, changes []resource.Change) {
 	for _, c := range changes {
 		if err := c.Apply(context.Background()); err != nil {
 			t.Fatal(err)
