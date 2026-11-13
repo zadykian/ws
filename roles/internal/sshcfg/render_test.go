@@ -10,8 +10,8 @@ import (
 
 func inputs() sshcfg.Inputs {
 	return sshcfg.Inputs{
-		User: "me", Server: netip.MustParseAddr("10.99.0.1"), Patterns: "UseKeychain",
-		IdentityPub: "~/.ssh/id_ed25519.pub",
+		Hosts:    []sshcfg.Host{{Name: "ws", Addr: netip.MustParseAddr("10.99.0.1"), User: "me"}},
+		Patterns: "UseKeychain", IdentityPub: "~/.ssh/id_ed25519.pub",
 	}
 }
 
