@@ -16,8 +16,8 @@ import (
 // OpenStore returns the store that a command edits, or why the command doesn't run.
 type OpenStore func() (secrets.Store, error)
 
-// SecretsEdit returns set, unset and keys, which edit the store that open returns.
-func SecretsEdit(p enginecli.Env, open OpenStore) []*cobra.Command {
+// secretsEdit returns set, unset and keys, which edit the store that open returns.
+func secretsEdit(p enginecli.Env, open OpenStore) []*cobra.Command {
 	return []*cobra.Command{newSecretsSetCmd(p, open), {
 		Use:   "unset KIND NAME",
 		Short: "drop an entry",

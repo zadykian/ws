@@ -36,7 +36,7 @@ linters:
             - github.com/zadykian/ws/engine/core/
           deny:
             - pkg: github.com/zadykian/ws/
-              desc: engine/core imports engine/core alone, as other modules build on it
+              desc: engine/core imports engine/core alone, as the layer below the sides
         engine:
           files:
             - "${base-path}/engine/**"
@@ -63,6 +63,17 @@ linters:
               desc: a role reaches no command, as its side's cli package wires the role
             - pkg: github.com/zadykian/ws/roles/server/ubuntu/cli
               desc: a role reaches no command, as its side's cli package wires the role
+        roleimports:
+          list-mode: lax
+          files:
+            - "${base-path}/roles/**"
+            - "!${base-path}/roles/*/*/cli/**"
+          allow:
+            - github.com/zadykian/ws/engine/core/
+            - github.com/zadykian/ws/roles/
+          deny:
+            - pkg: github.com/zadykian/ws/
+              desc: a role imports engine/core and roles alone, as the rest sits above the roles
         client:
           list-mode: lax
           files:

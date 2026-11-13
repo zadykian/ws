@@ -2,17 +2,16 @@ package fetch_test
 
 import (
 	"context"
-	"crypto/sha256"
 	"errors"
-	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/resource/fetch"
+	"github.com/zadykian/ws/engine/core/resource/resourcetest"
 )
 
-func sumOf(body string) string { return fmt.Sprintf("%x", sha256.Sum256([]byte(body))) }
+var sumOf = resourcetest.SumOf
 
 func pinned(m *effecttest.Machine, sums map[string]string) fetch.PinnedFile {
 	return fetch.PinnedFile{M: m, Version: "1.2", Path: "/usr/local/bin/x", Mode: 0o755, SHA256: sums,

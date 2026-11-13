@@ -17,9 +17,12 @@ import (
 // runs its own of ws server ubuntu secrets on ws as root, over the wizard's ssh, with a value on
 // ssh's stdin.
 func newMacSecretsCmd(p enginecli.Env) *cobra.Command {
-	c := enginecli.Group("secrets", "edit ws's secrets file, over ssh", append([]*cobra.Command{{Use: "init",
-		Short: "make ws's age identity and an empty secrets file on ws", Args: cobra.NoArgs}},
-		ubuntucli.SecretsEdit(p, nil)...)...)
+	c := enginecli.Group("secrets", "edit ws's secrets file, over ssh", ubuntucli.Secrets(p, nil)...)
+	for _, sub := range c.Commands() {
+		if sub.Name() == "init" {
+			sub.Short, sub.Long = "make ws's age identity and an empty secrets file on ws", ""
+		}
+	}
 	forward(c, p)
 	return c
 }

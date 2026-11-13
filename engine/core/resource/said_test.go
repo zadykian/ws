@@ -39,3 +39,50 @@ func TestSaidKeepsAChangesKindAndItem(t *testing.T) {
 		t.Errorf("%T: kind %s, itemized %v; want restart and an item", changes[0], step.KindOf(changes[0]), ok)
 	}
 }
+
+type forcedChange struct{ change }
+
+func (forcedChange) Forced() bool { return true }
+
+type warnedChange struct{ change }
+
+func (warnedChange) Warned() bool { return false }
+
+type earlyChange struct{ change }
+
+func (earlyChange) Early() bool { return true }
+
+type titledChange struct{ change }
+
+func (titledChange) Title() string { return "a title" }
+
+type excerptedChange struct{ change }
+
+func (excerptedChange) Excerpt() string { return "an excerpt" }
+
+func TestSaidRefusesAChangeWithAMarkerItWouldDrop(t *testing.T) {
+	var log []string
+	c := change{"m", &log, nil}
+	for name, marked := range map[string]resource.Change{
+		"forced": forcedChange{c}, "warned": warnedChange{c}, "early": earlyChange{c},
+		"titled": titledChange{c}, "excerpted": excerptedChange{c},
+	} {
+		changes, err := resource.Said{Out: &effecttest.Out{}, Part: part{marked}}.Plan(context.Background())
+		if err == nil || changes != nil {
+			t.Errorf("%s: Plan = %v, %v; want an error and no changes", name, changes, err)
+		}
+	}
+}
+
+func TestSaidStillSaysAnUnmarkedChange(t *testing.T) {
+	var log []string
+	out := &effecttest.Out{}
+	changes, err := resource.Said{Out: out, Part: part{change{"plain", &log, nil}}}.Plan(context.Background())
+	if err != nil || len(changes) != 1 {
+		t.Fatalf("Plan = %v, %v; want one change", changes, err)
+	}
+	_ = changes[0].Apply(context.Background())
+	if len(out.Lines) != 1 || out.Lines[0] != "say: plain" {
+		t.Errorf("said %q; want plain", out.Lines)
+	}
+}

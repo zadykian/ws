@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"slices"
 	"strings"
 
 	"github.com/zadykian/ws/roles/client/macos/internal/gitcfg"
@@ -37,12 +38,14 @@ type waiting struct {
 	Key  keys.NamedKey
 	Gh   string
 	Text string
+	// Notes are the warnings that the plan took before the registration's, which come first.
+	Notes []string
 }
 
 func (w waiting) String() string { return w.Text }
 
 // Apply plans the registration with gh installed, adds the key where the plan does, and says the
-// lines that the plan keeps.
+// lines that the plan keeps, the warnings taken before the registration's first.
 func (w waiting) Apply(ctx context.Context) error {
 	reg, _, err := w.Git.register(ctx, w.Key, w.Gh, false)
 	if err != nil {
@@ -51,6 +54,7 @@ func (w waiting) Apply(ctx context.Context) error {
 	if reg != nil {
 		w.Git.add(ctx, *reg)
 	}
+	w.Git.notes = append(slices.Clone(w.Notes), w.Git.notes...)
 	w.Git.withNotes(nil)
 	return nil
 }

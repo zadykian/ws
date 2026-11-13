@@ -14,16 +14,22 @@ import (
 func newSecretsCmd(p enginecli.Env) *cobra.Command {
 	open := func() (secrets.Store, error) { return serverSecretsStore(p) }
 	return enginecli.Group("secrets", "keep ws's secrets file, with its identity as a systemd credential",
-		append([]*cobra.Command{{
-			Use:   "init",
-			Short: "make ws's age identity and an empty secrets file",
-			Long: "It makes ws's age identity in memory, which systemd-creds encrypts by the host's key as the " +
-				"credential " + secrets.CredstorePath + ", for a unit's LoadCredentialEncrypted=" +
-				secrets.CredentialName + ". It makes an empty " + secrets.FilePath + ", root's and 600. A credential " +
-				"or a file that is there stays.",
-			Args: cobra.NoArgs,
-			RunE: func(c *cobra.Command, _ []string) error { return serverSecretsInit(c, p) },
-		}}, SecretsEdit(p, open)...)...)
+		Secrets(p, open)...)
+}
+
+// Secrets returns the commands of the secrets group: init, then set, unset and keys, which edit the
+// store that open returns. Both sides build their group from it.
+func Secrets(p enginecli.Env, open OpenStore) []*cobra.Command {
+	return append([]*cobra.Command{{
+		Use:   "init",
+		Short: "make ws's age identity and an empty secrets file",
+		Long: "It makes ws's age identity in memory, which systemd-creds encrypts by the host's key as the " +
+			"credential " + secrets.CredstorePath + ", for a unit's LoadCredentialEncrypted=" +
+			secrets.CredentialName + ". It makes an empty " + secrets.FilePath + ", root's and 600. A credential " +
+			"or a file that is there stays.",
+		Args: cobra.NoArgs,
+		RunE: func(c *cobra.Command, _ []string) error { return serverSecretsInit(c, p) },
+	}}, secretsEdit(p, open)...)
 }
 
 // serverSecretsStore returns ws's store, to root alone: the file and the host's key are root's.
