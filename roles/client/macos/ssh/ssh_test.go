@@ -66,8 +66,8 @@ func TestSSHApplyThenPlanIsEmpty(t *testing.T) {
 	}
 }
 
-// TestSSHNamesTheTunnelsAddress pins the literal: the tunnel's address is part of the wire, so a
-// change to tunnel.Server must change this line on purpose.
+// TestSSHNamesTheTunnelsAddress pins the literal at slot 0: the tunnel's address is part of the
+// wire, so a change to the slot's end must change this line on purpose.
 func TestSSHNamesTheTunnelsAddress(t *testing.T) {
 	m := sshMachine()
 	s := sshStep(m, &effecttest.Out{})
@@ -80,6 +80,23 @@ func TestSSHNamesTheTunnelsAddress(t *testing.T) {
 	}
 	if got := string(m.Files["/h/.ssh/config.d/ws"]); !strings.Contains(got, "HostName 10.99.0.1\n") {
 		t.Errorf("config.d/ws = %q; want HostName 10.99.0.1", got)
+	}
+}
+
+func TestSSHNamesTheServersEndAtItsSlot(t *testing.T) {
+	m := sshMachine()
+	c := sshConf(m, &effecttest.Out{})
+	c.Conf.Slot = "1"
+	s := c.Step()
+	p, err := s.Plan(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Apply(context.Background(), p); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(m.Files["/h/.ssh/config.d/ws"]); !strings.Contains(got, "HostName 10.99.1.1\n") {
+		t.Errorf("config.d/ws = %q; want HostName 10.99.1.1", got)
 	}
 }
 
