@@ -35,6 +35,13 @@ func TestZshWarnsInOrderUnderALinkedConfig(t *testing.T) {
 	unreadable.Files["/h/.config/ws/zshrc"] = zsh.Hook
 	unreadable.Files["/h/.zshrc"] = []byte("export EDITOR=vi\n")
 	unreadable.Root["/h/.zshrc"] = effect.Attrs{}
+	noHook, _ := linkedConfig()
+	noHook.Dirs["/h/.config/ws"] = 0o700
+	noHook.Files["/h/.zshrc"] = []byte("source ~/.config/ws/zshrc\n")
+	noLine, _ := linkedConfig()
+	noLine.Dirs["/h/.config/ws"] = 0o700
+	noLine.Files["/h/.config/ws/zshrc"] = zsh.Hook
+	noLine.Files["/h/.zshrc"] = []byte("export EDITOR=vi\n")
 	cases := []struct {
 		name    string
 		m       *effecttest.Machine
@@ -46,6 +53,8 @@ func TestZshWarnsInOrderUnderALinkedConfig(t *testing.T) {
 			"warn: /h/.config/ws/zshrc is not ws's: move it away, and the next run writes ws's and sources it", linkWarn}, false},
 		{"linked zshrc without the line", linkedRc, 1, []string{
 			"warn: /h/.zshrc is a link to /dots/zshrc: add 'source ~/.config/ws/zshrc' at the end of that file", linkWarn}, false},
+		{"only the hook missing", noHook, 1, []string{linkWarn}, false},
+		{"only the line missing", noLine, 2, []string{linkWarn}, false},
 		{"zshrc unreadable", unreadable, 0, []string{linkWarn}, true},
 	}
 	for _, c := range cases {
