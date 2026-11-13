@@ -59,3 +59,29 @@ func ExitOne(t *testing.T) error {
 	}
 	return err
 }
+
+// UsersToken is a secret in the user's file, which a report never quotes.
+const UsersToken = "FAKETOKEN0123"
+
+// UsersText opens on a secret, as the lines beside ws's at a file's top are what a diff quotes.
+const UsersText = "[url \"https://oauth2:" + UsersToken + "@example.test/\"]\n    insteadOf = https://example.test/\n"
+
+// CheckUsersFile plans the step over the user's file that holds UsersText. The report and the log
+// show ws's line alone of the file. --check's diff shows the lines beside it too.
+func CheckUsersFile(t *testing.T, s step.Step, line string) {
+	p, err := s.Plan(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var shown, diffs strings.Builder
+	for _, c := range p.Changes {
+		shown.WriteString(step.PendingOf(c).Text + step.ExcerptOf(c))
+		diffs.WriteString(c.String())
+	}
+	if strings.Contains(shown.String(), UsersToken) || !strings.Contains(shown.String(), line) {
+		t.Errorf("report = %q, want %q and none of the user's text", shown.String(), line)
+	}
+	if !strings.Contains(diffs.String(), UsersToken) {
+		t.Errorf("--check's diff lost its context: %q", diffs.String())
+	}
+}
