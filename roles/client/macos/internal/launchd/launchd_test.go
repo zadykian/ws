@@ -45,9 +45,9 @@ func TestLaunchctlTriesABootstrapTenTimes(t *testing.T) {
 func TestLaunchctlFallsBackWhereASignalIsRefused(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	m.Results["launchctl kill SIGHUP system/x"] = effecttest.Result{Err: errors.New("not running")}
-	m.Results["launchctl kickstart -k system/"+launchd.Label] = effecttest.Result{}
+	m.Results["launchctl kickstart -k system/x"] = effecttest.Result{}
 	l := launchctl(m, out, "kill", "SIGHUP", "system/x")
-	l.Signal = true
+	l.Signal, l.Label = true, "x"
 	if err := l.Apply(context.Background()); err != nil || len(m.Calls) != 2 {
 		t.Errorf("Apply = %v, calls %q; want a kickstart after the signal", err, m.Calls)
 	}
@@ -56,8 +56,37 @@ func TestLaunchctlFallsBackWhereASignalIsRefused(t *testing.T) {
 func TestLaunchctlWarnsWhereTheRoutesSignalFails(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	l := launchctl(m, out, "kill", "SIGHUP", "system/x")
-	l.Routes = true
-	if err := l.Apply(context.Background()); err != nil || len(out.Lines) != 1 || !strings.HasPrefix(out.Lines[0], "warn: cannot signal") {
+	l.Routes, l.Label = true, "x"
+	if err := l.Apply(context.Background()); err != nil || len(out.Lines) != 1 || !strings.HasPrefix(out.Lines[0], "warn: cannot signal x,") {
 		t.Errorf("Apply = %v, said %q; want a warning alone", err, out.Lines)
+	}
+}
+
+func TestForNamesTheFilesOfOneServersDaemon(t *testing.T) {
+	want := launchd.Daemon{
+		Name: "lab", Label: "com.github.zadykian.ws-tunnel.lab",
+		Plist: "/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.lab.plist",
+		Dir:   "/etc/ws-tunnel/lab", Conf: "/etc/ws-tunnel/lab/tunnel.conf",
+		State: "/var/run/ws-tunnel.lab.state", Log: "/var/log/ws-tunnel.lab.log",
+	}
+	if got := launchd.For("lab"); got != want {
+		t.Errorf("For(lab) = %+v, want %+v", got, want)
+	}
+}
+
+func TestInstalledNamesTheServersThatHaveAPlist(t *testing.T) {
+	m := effecttest.NewMachine()
+	if got, err := launchd.Installed(m); err != nil || len(got) != 0 {
+		t.Errorf("Installed = %q, %v; want none where the directory is missing", got, err)
+	}
+	dir := "/Library/LaunchDaemons/"
+	m.Dirs[dir[:len(dir)-1]] = 0o755
+	for _, f := range []string{"com.github.zadykian.ws-tunnel.ws.plist", "com.github.zadykian.ws-tunnel.lab.plist",
+		"com.github.zadykian.ws-tunnel.plist", "com.github.zadykian.ws-tunnel.a.b.plist", "com.apple.x.plist"} {
+		m.Files[dir+f] = []byte("x")
+	}
+	got, err := launchd.Installed(m)
+	if err != nil || len(got) != 2 || got[0] != "lab" || got[1] != "ws" {
+		t.Errorf("Installed = %q, %v; want lab and ws alone", got, err)
 	}
 }

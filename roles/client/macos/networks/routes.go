@@ -79,7 +79,7 @@ func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 	}
 	if _, err := r.M.Run(ctx, "launchctl", "print", "system/"+launchd.Label); err == nil {
 		cs = append(cs, launchd.Launchctl{M: r.M, Out: r.Out,
-			Args: []string{"kill", "SIGHUP", "system/" + launchd.Label}, Routes: true})
+			Args: []string{"kill", "SIGHUP", "system/" + launchd.Label}, Label: launchd.Label, Routes: true})
 	}
 	return cs, nil
 }
