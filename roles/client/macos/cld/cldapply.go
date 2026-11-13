@@ -3,13 +3,7 @@ package cld
 import (
 	"context"
 	"strings"
-
-	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/step"
 )
-
-// Apply applies the changes, which install or update cld.
-func (c *Cld) Apply(ctx context.Context, p step.Plan) error { return resource.Group{}.Apply(ctx, p) }
 
 // Apply installs cld. A failure is a warning, and the next run tries again.
 func (i cldInstall) Apply(ctx context.Context) error {

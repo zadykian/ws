@@ -42,7 +42,7 @@ func (m Mac) steps(check bool) []step.Step {
 		(&git.Git{Conf: m.Conf, Home: m.Home, XDG: m.XDG, M: m.M, Out: m.Out}).Step(),
 		(&ghostty.Ghostty{Home: m.Home, Settings: ghostty.Settings, M: m.M, Out: m.Out}).Step(),
 		(&zed.Zed{Home: m.Home, Settings: zed.Settings, Keymap: zed.Keymap, M: m.M, Out: m.Out}).Step(),
-		&cld.Cld{Home: m.Home, M: m.M, Out: m.Out, Check: check},
+		(&cld.Cld{Home: m.Home, M: m.M, Out: m.Out, Check: check}).Step(),
 		(&zsh.Zsh{Home: m.Home, Hook: zsh.Hook, M: m.M, Out: m.Out, Now: time.Now}).Step(),
 		&tunnel.Tunnel{Conf: m.Conf, Home: m.Home, Plist: tunnel.Plist, M: m.M, Out: m.Out, Text: m.Text,
 			Check: check},
