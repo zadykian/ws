@@ -21,7 +21,7 @@ func newMacSigning(status session.Status, listed string) (*stages.Signing, *effe
 	m := effecttest.NewMachine()
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\nWS_USER=ada\n")
 	out := &effecttest.Out{}
-	ws := macSession(m, remote.SSH{M: m, Lock: "/l", Ways: host.MacWays{M: m, Conf: "/h/mac.conf"}}, out, status)
+	ws := macSession(m, remote.SSH{M: m, Lock: "/l", Ways: host.MacWays{M: m, Conf: "/h/mac.conf"}}, out, status, nil)
 	g := gh.CLI{M: m, Out: &effecttest.Out{}, LookPath: found}
 	m.Results["/bin/gh auth status -h github.com"] = effecttest.Result{}
 	m.Results["/bin/gh ssh-key add /l/signing.pub --type signing --title ws1"] = effecttest.Result{}
