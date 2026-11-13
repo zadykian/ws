@@ -1,4 +1,4 @@
-package host
+package paths
 
 import (
 	"errors"
@@ -11,9 +11,9 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 )
 
-// makeParents makes each directory between home and target that is missing, top first, as the
+// MakeParents makes each directory between home and target that is missing, top first, as the
 // owner's at 0755, and leaves an existing one alone. Without a home it does nothing.
-func makeParents(m effect.Machine, home, target string, uid, gid int) error {
+func MakeParents(m effect.Machine, home, target string, uid, gid int) error {
 	if home == "" {
 		return nil
 	}
@@ -30,9 +30,9 @@ func makeParents(m effect.Machine, home, target string, uid, gid int) error {
 	return nil
 }
 
-// guardHome fails unless target lies strictly below home by a local path, and fails on the first
+// GuardHome fails unless target lies strictly below home by a local path, and fails on the first
 // link at target or at a directory between home and it.
-func guardHome(m effect.Machine, home, target string) error {
+func GuardHome(m effect.Machine, home, target string) error {
 	rel, ok := strings.CutPrefix(target, home+"/")
 	if !ok || !filepath.IsLocal(rel) {
 		return fmt.Errorf("%s is not a path below the home %s", target, home)

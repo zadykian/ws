@@ -7,6 +7,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/host/internal/paths"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -42,7 +43,7 @@ func (c setDir) Apply(context.Context) error {
 	if err := c.d.guard(); err != nil {
 		return err
 	}
-	if err := makeParents(c.d.M, c.d.home, c.d.Path, c.d.UID, c.d.GID); err != nil {
+	if err := paths.MakeParents(c.d.M, c.d.home, c.d.Path, c.d.UID, c.d.GID); err != nil {
 		return err
 	}
 	if !c.exists {
@@ -61,7 +62,7 @@ func (d Dir) guard() error {
 	if d.home == "" {
 		return nil
 	}
-	return guardHome(d.M, d.home, d.Path)
+	return paths.GuardHome(d.M, d.home, d.Path)
 }
 
 // Plan reads the directory's owner and mode.
@@ -91,14 +92,14 @@ func (d Dir) Report(context.Context) ([]step.Item, error) {
 		return nil, err
 	}
 	attrs := effect.Attrs{UID: d.UID, GID: d.GID, Mode: d.Mode.Perm()}
-	want, conflict := attrsText(attrs), ""
+	want, conflict := paths.AttrsText(attrs), ""
 	got, err := d.M.RootAttrs(d.Path)
 	switch {
 	case d.CreateOnly:
-		want = present
+		want = paths.Present
 	case got != attrs:
-		conflict = attrsChanged
+		conflict = paths.AttrsChanged
 	}
-	item := step.Item{Kind: step.DirItem, Name: d.Path, Want: want, Found: missing}
-	return reportPath(item, attrsText(got), conflict, err)
+	item := step.Item{Kind: step.DirItem, Name: d.Path, Want: want, Found: paths.Missing}
+	return reportPath(item, paths.AttrsText(got), conflict, err)
 }

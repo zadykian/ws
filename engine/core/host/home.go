@@ -4,6 +4,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/host/internal/paths"
 )
 
 // ReadHome reads the file at rel below the user's home, as root. The user owns the home, and a link
@@ -12,7 +13,7 @@ import (
 // fs.ErrNotExist.
 func (u User) ReadHome(m effect.Machine, rel string) ([]byte, error) {
 	at := u.Home + "/" + rel
-	if err := guardHome(m, u.Home, at); err != nil {
+	if err := paths.GuardHome(m, u.Home, at); err != nil {
 		return nil, err
 	}
 	return m.ReadRootFile(at)

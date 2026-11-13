@@ -8,6 +8,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/host/internal/paths"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -58,7 +59,7 @@ func (c writeFile) Apply(context.Context) error {
 	if err := c.f.guard(); err != nil {
 		return err
 	}
-	if err := makeParents(c.f.M, c.f.home, c.f.Path, c.f.UID, c.f.GID); err != nil {
+	if err := paths.MakeParents(c.f.M, c.f.home, c.f.Path, c.f.UID, c.f.GID); err != nil {
 		return err
 	}
 	if c.f.edit != nil {
@@ -81,7 +82,7 @@ func (f File) guard() error {
 	if f.home == "" {
 		return nil
 	}
-	return guardHome(f.M, f.home, f.Path)
+	return paths.GuardHome(f.M, f.home, f.Path)
 }
 
 // Plan reads the file and its attributes as root.
@@ -114,7 +115,7 @@ func (f File) Report(context.Context) ([]step.Item, error) {
 	if err := f.guard(); err != nil {
 		return nil, err
 	}
-	before, got, ok, err := readRoot(f.M, f.Path)
+	before, got, ok, err := paths.ReadRoot(f.M, f.Path)
 	if !ok {
 		return []step.Item{f.item(nil, nil)}, err
 	}
@@ -125,11 +126,11 @@ func (f File) Report(context.Context) ([]step.Item, error) {
 // A file that exists and differs stands against ws. A secret shows no diff and no sum, as a sum
 // would let a guess be checked.
 func (f File) item(before []byte, got *effect.Attrs) step.Item {
-	item := step.Item{Kind: step.FileItem, Name: f.Path, Want: attrsText(f.attrs()), Found: missing}
+	item := step.Item{Kind: step.FileItem, Name: f.Path, Want: paths.AttrsText(f.attrs()), Found: paths.Missing}
 	if got == nil {
 		return item
 	}
-	item.Found = attrsText(*got)
+	item.Found = paths.AttrsText(*got)
 	switch {
 	case !bytes.Equal(before, f.Content):
 		item.Found += ", other content"
@@ -138,7 +139,7 @@ func (f File) item(before []byte, got *effect.Attrs) step.Item {
 			item.Diff = effect.Diff(f.Path, before, f.Content)
 		}
 	case *got != f.attrs():
-		item.Conflict = attrsChanged
+		item.Conflict = paths.AttrsChanged
 	}
 	return item
 }

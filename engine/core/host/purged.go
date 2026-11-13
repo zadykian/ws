@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/host/internal/paths"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -57,7 +58,7 @@ func (p Purged) Report(ctx context.Context) ([]step.Item, error) {
 	}
 	items := make([]step.Item, len(p.Names))
 	for i, name := range p.Names {
-		items[i] = step.Item{Kind: step.PackageItem, Name: name, Want: missing, Found: states[name].text()}
+		items[i] = step.Item{Kind: step.PackageItem, Name: name, Want: paths.Missing, Found: states[name].text()}
 		if states[name].Installed() {
 			items[i].Conflict = "installed, and ws purges it"
 		}

@@ -6,6 +6,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/host/internal/paths"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -39,7 +40,7 @@ func (a Absent) guard() error {
 	if a.home == "" {
 		return nil
 	}
-	return guardHome(a.M, a.home, a.Path)
+	return paths.GuardHome(a.M, a.home, a.Path)
 }
 
 // Plan plans the removal of a path that exists.
@@ -63,5 +64,5 @@ func (a Absent) Report(context.Context) ([]step.Item, error) {
 		return nil, err
 	}
 	_, err := a.M.RootAttrs(a.Path)
-	return reportPath(step.Item{Kind: step.FileItem, Name: a.Path, Want: missing, Found: missing}, present, "", err)
+	return reportPath(step.Item{Kind: step.FileItem, Name: a.Path, Want: paths.Missing, Found: paths.Missing}, paths.Present, "", err)
 }

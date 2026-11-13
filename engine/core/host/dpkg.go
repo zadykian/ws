@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/host/internal/paths"
 )
 
 // PackageState is what dpkg-query says of a package: its version and its status, such as ii, rc or
@@ -68,7 +69,7 @@ func (s PackageState) text() string {
 	case s.settingsLeft():
 		return "settings left"
 	case !s.present():
-		return missing
+		return paths.Missing
 	}
 	return s.Version + " (" + s.Status + ")"
 }
