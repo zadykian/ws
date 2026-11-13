@@ -1,4 +1,4 @@
-package network
+package netplan
 
 import (
 	"slices"
@@ -54,7 +54,7 @@ func TestNetplanProblems(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NetplanProblems(ok(), settingsOf(tt.yaml), "/tmp/root", cable); !slices.Equal(got, tt.want) {
+			if got := Problems(ok(), settingsOf(tt.yaml), "/tmp/root", cable); !slices.Equal(got, tt.want) {
 				t.Errorf("got %q, want %q", got, tt.want)
 			}
 		})
@@ -79,7 +79,7 @@ func TestNetplanProblemsRefusals(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := NetplanProblems(tt.generated, tt.got, root, cable)
+			got := Problems(tt.generated, tt.got, root, cable)
 			if len(got) != 1 || got[0] != tt.want {
 				t.Fatalf("got %q, want [%q]", got, tt.want)
 			}

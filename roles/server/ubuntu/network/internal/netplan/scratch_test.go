@@ -1,4 +1,4 @@
-package network
+package netplan
 
 import (
 	"context"
@@ -28,14 +28,14 @@ func netplanMachine() *effecttest.Machine {
 
 func TestCheckNetplan(t *testing.T) {
 	m := netplanMachine()
-	problems, err := checkNetplan(context.Background(), m, []byte("file"), cable)
+	problems, err := Check(context.Background(), m, []byte("file"), cable)
 	if err != nil || len(problems) != 0 {
 		t.Fatalf("problems = %q, err = %v", problems, err)
 	}
 	for _, want := range []string{
 		"root cp -a /etc/netplan/. " + scratch + "/etc/netplan/",
 		"root cp -a /lib/netplan/. " + scratch + "/lib/netplan/",
-		"write root " + scratch + netplanPath + " 600",
+		"write root " + scratch + Path + " 600",
 		"root rm -rf -- " + scratch,
 	} {
 		if !slices.Contains(m.Calls, want) {
@@ -47,7 +47,7 @@ func TestCheckNetplan(t *testing.T) {
 			t.Errorf("copied a directory the machine lacks: %s", call)
 		}
 	}
-	if _, left := m.Files[scratch+netplanPath]; left {
+	if _, left := m.Files[scratch+Path]; left {
 		t.Error("the scratch file was left")
 	}
 }
@@ -57,7 +57,7 @@ func TestCheckNetplanWordsNetplansRefusal(t *testing.T) {
 	m.Results["/usr/libexec/netplan/configure --root-dir "+scratch] = effecttest.Result{
 		Err: &exec.ExitError{Stderr: []byte("Command failed: bad key.\n  password: hunter2\n")},
 	}
-	problems, err := checkNetplan(context.Background(), m, nil, cable)
+	problems, err := Check(context.Background(), m, nil, cable)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +72,7 @@ func TestCheckNetplanWordsNetplansRefusal(t *testing.T) {
 func TestCheckNetplanFails(t *testing.T) {
 	m := netplanMachine()
 	m.Results["cp -a /etc/netplan/. "+scratch+"/etc/netplan/"] = effecttest.Result{Err: fs.ErrPermission}
-	if _, err := checkNetplan(context.Background(), m, nil, cable); !errors.Is(err, fs.ErrPermission) {
+	if _, err := Check(context.Background(), m, nil, cable); !errors.Is(err, fs.ErrPermission) {
 		t.Errorf("err = %v, want a permission error", err)
 	}
 	if !slices.Contains(m.Calls, "root rm -rf -- "+scratch) {

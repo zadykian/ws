@@ -1,4 +1,4 @@
-package network
+package netplan
 
 import (
 	"fmt"
@@ -16,13 +16,13 @@ type settings struct {
 	} `yaml:"network"`
 }
 
-// NetplanProblems returns what keeps netplan from setting up the direct link on port alone.
+// Problems returns what keeps netplan from setting up the direct link on port alone.
 // generated is the result of netplan's configure, run on root, and got that of `netplan get`
 // there. The settings may hold secrets, such as Wi-Fi passwords, so no message quotes them. An
 // entry of another name that fits the port is refused: it keeps a networkd file of its own, which
 // networkd may take first. A match: on the port's own entry that may fit other interfaces is
 // refused too, as they would take the direct link's settings.
-func NetplanProblems(generated, got Result, root string, port Port) []string {
+func Problems(generated, got Result, root string, port Port) []string {
 	if generated.RC != 0 {
 		return []string{fmt.Sprintf("netplan rejects its files with the direct link's: %s.", errorLine(generated, root))}
 	}

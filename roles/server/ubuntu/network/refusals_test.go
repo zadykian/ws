@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/server/ubuntu/network/internal/netplan"
 )
 
 func TestTheStepRefuses(t *testing.T) {
@@ -38,7 +39,7 @@ func TestTheStepRefuses(t *testing.T) {
 			if err == nil || !strings.Contains(err.Error(), tt.want) {
 				t.Fatalf("err = %v, want one with %q", err, tt.want)
 			}
-			if _, ok := r.m.Files[netplanPath]; ok {
+			if _, ok := r.m.Files[netplan.Path]; ok {
 				t.Error("the file landed")
 			}
 		})
@@ -51,10 +52,10 @@ func TestCheckLeavesTheMachineAlone(t *testing.T) {
 	if err != nil || !changed {
 		t.Fatalf("changed = %v, err = %v", changed, err)
 	}
-	if slices.Contains(r.m.Calls, "root netplan generate") || slices.Contains(r.m.Calls, "write root "+netplanPath+" 600") {
+	if slices.Contains(r.m.Calls, "root netplan generate") || slices.Contains(r.m.Calls, "write root "+netplan.Path+" 600") {
 		t.Errorf("--check changed the machine: %q", r.m.Calls)
 	}
-	if _, ok := r.m.Files[netplanPath]; ok {
+	if _, ok := r.m.Files[netplan.Path]; ok {
 		t.Error("the file landed")
 	}
 }

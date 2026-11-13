@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/server/ubuntu/network/internal/netplan"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -52,10 +53,10 @@ func TestTheFileLandsAndNetworkdReloads(t *testing.T) {
 	if err != nil || !changed {
 		t.Fatalf("changed = %v, err = %v", changed, err)
 	}
-	if got := string(r.m.Files[netplanPath]); !strings.Contains(got, `addresses: ["10.77.0.1/30"]`) {
+	if got := string(r.m.Files[netplan.Path]); !strings.Contains(got, `addresses: ["10.77.0.1/30"]`) {
 		t.Errorf("the file:\n%s", got)
 	}
-	if mode := r.m.Modes[netplanPath]; mode != 0o600 {
+	if mode := r.m.Modes[netplan.Path]; mode != 0o600 {
 		t.Errorf("mode = %o, want 600", mode)
 	}
 	gen, rel := slices.Index(r.m.Calls, "root netplan generate"), slices.Index(r.m.Calls, "root networkctl reload")
@@ -70,13 +71,13 @@ func TestTheFileLandsAndNetworkdReloads(t *testing.T) {
 
 func TestACleanMachineChangesNothing(t *testing.T) {
 	r := newRig("enp5s0", "10.77.0.1/30")
-	file, err := Render("enp5s0", "10.77.0.1/30")
+	file, err := netplan.Render("enp5s0", "10.77.0.1/30")
 	if err != nil {
 		t.Fatal(err)
 	}
-	r.m.Files[netplanPath] = file
-	r.m.Modes[netplanPath] = 0o600
-	r.m.Root[netplanPath] = effect.Attrs{Mode: 0o600}
+	r.m.Files[netplan.Path] = file
+	r.m.Modes[netplan.Path] = 0o600
+	r.m.Root[netplan.Path] = effect.Attrs{Mode: 0o600}
 	if changed, err := r.run(t, true); err != nil || changed {
 		t.Errorf("changed = %v, err = %v", changed, err)
 	}

@@ -1,4 +1,4 @@
-package network
+package netplan
 
 import (
 	"context"
@@ -11,12 +11,12 @@ import (
 // netplanDirs are the directories whose files netplan merges.
 var netplanDirs = []string{"lib/netplan", "etc/netplan", "run/netplan"}
 
-// checkNetplan has netplan merge its files with the direct link's in a scratch root, and returns
+// Check has netplan merge its files with the direct link's in a scratch root, and returns
 // what keeps it from setting up the port alone. netplan generate, run in a snap's shell, ignores
 // --root-dir and generates the machine's files over D-Bus. So the step runs configure, which
 // writes under the root only. The settings may hold secrets, such as Wi-Fi passwords, so no
 // message quotes what netplan prints, and the root is gone as the check ends.
-func checkNetplan(ctx context.Context, m effect.Machine, file []byte, port Port) ([]string, error) {
+func Check(ctx context.Context, m effect.Machine, file []byte, port Port) ([]string, error) {
 	made, err := m.RunRoot(ctx, "mktemp", "-d", "--suffix=.netplan")
 	if err != nil {
 		return nil, fmt.Errorf("making a scratch root for netplan: %w", err)
@@ -37,10 +37,10 @@ func checkNetplan(ctx context.Context, m effect.Machine, file []byte, port Port)
 			return nil, fmt.Errorf("copying netplan's files into the scratch root: %w", err)
 		}
 	}
-	if err := m.WriteRootFile(root+netplanPath, file, 0o600); err != nil {
+	if err := m.WriteRootFile(root+Path, file, 0o600); err != nil {
 		return nil, err
 	}
 	generated := runRoot(ctx, m, "/usr/libexec/netplan/configure", "--root-dir", root)
 	got := runRoot(ctx, m, "netplan", "get", "--root-dir", root)
-	return NetplanProblems(generated, got, root, port), nil
+	return Problems(generated, got, root, port), nil
 }
