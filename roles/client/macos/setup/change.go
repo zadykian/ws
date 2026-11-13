@@ -98,7 +98,7 @@ func Apply(ctx context.Context, m effect.Machine, out effect.Out, c step.Change)
 		out.Say("kept the old %s as %s", c.Path, c.To)
 	case Run:
 		if err := m.Pass(ctx, c.Root, c.Name, c.Args...); err != nil {
-			return fmt.Errorf("%s failed: %w", c.line(), err)
+			return fmt.Errorf("%s failed: %w", c.Line(), err)
 		}
 	case host.Change:
 		if err := c.Apply(ctx); err != nil {

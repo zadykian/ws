@@ -135,9 +135,9 @@ func (c Cable) Apply(ctx context.Context, p step.Plan) error {
 		if other := cableOther(string(info)); other != "" {
 			return fmt.Errorf("networksetup -getinfo %q shows %s after %v: set it by hand in System "+
 				"Settings › Network, as docs/mac.md's The cable says, or empty mac.conf's WS_CABLE_SERVICE",
-				c.Conf.CableService, other, run.line())
+				c.Conf.CableService, other, run.Line())
 		}
-		c.Out.Say("ran %s", run.line())
+		c.Out.Say("ran %s", run.Line())
 	}
 	return nil
 }

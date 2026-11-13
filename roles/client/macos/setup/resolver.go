@@ -62,15 +62,15 @@ func (r *Resolver) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, nil
 	}
 	if len(r.Addresses) == 0 {
-		cs, err := plan(ctx, nil, host.Absent{M: r.M, Path: file})
+		cs, err := Plan(ctx, nil, host.Absent{M: r.M, Path: file})
 		return step.Plan{Changes: cs}, err
 	}
-	cs, err := plan(ctx, nil, host.Dir{M: r.M, Path: resolverDir, Mode: 0o755})
+	cs, err := Plan(ctx, nil, host.Dir{M: r.M, Path: resolverDir, Mode: 0o755})
 	if err != nil {
 		return step.Plan{}, err
 	}
 	want := resolverCmdHeader + "\nnameserver " + strings.Join(r.Addresses, "\nnameserver ") + "\n"
-	cs, err = plan(ctx, cs, host.File{M: r.M, Path: file, Content: []byte(want), Mode: 0o644})
+	cs, err = Plan(ctx, cs, host.File{M: r.M, Path: file, Content: []byte(want), Mode: 0o644})
 	return step.Plan{Changes: cs}, err
 }
 

@@ -14,10 +14,11 @@ type Run struct {
 
 // String is the line that --check prints.
 func (r Run) String() string {
-	return "would run " + r.line()
+	return "would run " + r.Line()
 }
 
-func (r Run) line() string {
+// Line is how --check and a run's lines show the command.
+func (r Run) Line() string {
 	if r.Label != "" {
 		return r.Label
 	}

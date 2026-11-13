@@ -70,7 +70,7 @@ func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 	if len(networks) > 0 {
 		res = host.File{M: r.M, Path: file, Content: []byte(routesText(networks)), Mode: 0o644}
 	}
-	cs, err := plan(ctx, nil, res)
+	cs, err := Plan(ctx, nil, res)
 	if err != nil || len(cs) == 0 || r.Check {
 		return cs, err
 	}

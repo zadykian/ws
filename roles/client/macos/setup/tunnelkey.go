@@ -24,7 +24,7 @@ func (t *Tunnel) key(ctx context.Context) ([]step.Change, error) {
 	var cs []step.Change
 	var err error
 	for _, d := range []host.Dir{{M: t.M, Path: tunnelDir, Mode: 0o700}, {M: t.M, Path: tunnelDir + "/routes.d", Mode: 0o755}} {
-		if cs, err = plan(ctx, cs, d); err != nil {
+		if cs, err = Plan(ctx, cs, d); err != nil {
 			return nil, err
 		}
 	}
@@ -37,7 +37,7 @@ func (t *Tunnel) key(ctx context.Context) ([]step.Change, error) {
 		return nil, err
 	}
 	// A Dir sets a file's owner and mode as a directory's, and never makes it here, as it exists.
-	return plan(ctx, cs, host.Dir{M: t.M, Path: tunnelKeyFile, Mode: 0o600})
+	return Plan(ctx, cs, host.Dir{M: t.M, Path: tunnelKeyFile, Mode: 0o600})
 }
 
 func (t *Tunnel) makeKey(ctx context.Context) error {

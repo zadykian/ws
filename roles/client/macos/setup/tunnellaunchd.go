@@ -31,12 +31,12 @@ func launchctlAction(loaded, plist, program, key, conf bool) []Launchctl {
 
 // daemon plans tunnel.conf, the plist and launchd's action, where mac.conf has WS_PUBLIC_KEY.
 func (t *Tunnel) daemon(ctx context.Context) ([]step.Change, error) {
-	cs, err := plan(ctx, nil, host.File{M: t.M, Path: tunnelDir + "/tunnel.conf", Content: []byte(tunnelConf(t.Conf)), Mode: 0o600})
+	cs, err := Plan(ctx, nil, host.File{M: t.M, Path: tunnelDir + "/tunnel.conf", Content: []byte(tunnelConf(t.Conf)), Mode: 0o600})
 	if err != nil {
 		return nil, err
 	}
 	conf := len(cs)
-	if cs, err = plan(ctx, cs, host.File{M: t.M, Path: tunnelPlist, Content: t.Plist, Mode: 0o644}); err != nil {
+	if cs, err = Plan(ctx, cs, host.File{M: t.M, Path: tunnelPlist, Content: t.Plist, Mode: 0o644}); err != nil {
 		return nil, err
 	}
 	plist := len(cs) > conf
