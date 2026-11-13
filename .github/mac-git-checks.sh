@@ -33,7 +33,7 @@ fi
 # The job's runs before these had no git keys, so they must have left ~/.gitconfig alone.
 ! grep -qs config/ws/gitconfig ~/.gitconfig ||
     error "ws client macos apply included ~/.config/ws/gitconfig in ~/.gitconfig without git's keys"
-trap 'git_restore; [ ! -f "$tmp/job.conf" ] || cp "$tmp/job.conf" "$conf"; rm -rf "$tmp"' EXIT
+trap 'git_restore; [ ! -f "$tmp/job.conf" ] || conf_write "$conf" <"$tmp/job.conf"; rm -rf "$tmp"' EXIT
 [ ! -f ~/.gitconfig ] || mv ~/.gitconfig "$tmp/gitconfig"
 gitconfig_aside=1
 # git's XDG file is the cases' own, so that the runner's changes nothing.
