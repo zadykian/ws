@@ -109,8 +109,7 @@ func tunnelRun(ctx context.Context, stdout io.Writer) error {
 		return err
 	}
 	defer tn.Close()
-	d := daemon.New(local.OSMachine{}, tn, tn.Name(), launchd.Dir, stateFile, stdout)
-	d.Log = logFile
+	d := daemon.New(local.OSMachine{}, tn, tn.Name(), daemonPaths(), stdout)
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	go d.Signals(ctx, sigs)
