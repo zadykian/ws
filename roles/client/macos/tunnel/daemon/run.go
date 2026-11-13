@@ -7,7 +7,6 @@ import (
 
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/settings"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/uapi"
-	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 // Run sets up the utun, then keeps the tunnel up until Stop, or until ctx ends. It logs why it
@@ -19,7 +18,7 @@ func (d *Daemon) Run(ctx context.Context) error {
 		return err
 	}
 	defer d.stop()
-	d.say("started on %s, %s", d.Tun, tunnel.Address)
+	d.say("started on %s, %s", d.Tun, d.set.Conf.Slot.Mac())
 	d.choose(ctx)
 	d.later(Tick, d.TickEvery)
 	for {
@@ -64,7 +63,8 @@ func (d *Daemon) start(ctx context.Context) error {
 	if d.key, err = settings.ReadKey(d.M, d.Dir); err != nil {
 		return err
 	}
-	address := tunnel.Address.String()
+	s := d.set.Conf.Slot
+	address := s.Mac().String()
 	text, err := uapi.SetPrivateKey(d.key)
 	if err == nil {
 		err = d.Dev.IpcSet(text)
@@ -76,7 +76,7 @@ func (d *Daemon) start(ctx context.Context) error {
 		err = d.run(ctx, "ifconfig", d.Tun, "up")
 	}
 	if err == nil {
-		err = d.run(ctx, "route", "-q", "-n", "add", "-inet", tunnel.Server.String()+"/32", "-interface", d.Tun)
+		err = d.run(ctx, "route", "-q", "-n", "add", "-inet", s.Server().String()+"/32", "-interface", d.Tun)
 	}
 	if err != nil {
 		return fmt.Errorf("cannot set up %s: %w", d.Tun, err)
