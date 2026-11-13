@@ -86,11 +86,11 @@ section](#routes-and-resolvers-of-another-repository)). The networks go in the s
 with ws's `Written by` line, which names `ws client macos apply`, so a domain whose file is another
 script's, or written by hand, stops the run. To move a domain from such a script, have it remove
 its file first, with `ws client macos resolver DOMAIN` and no address. A key emptied or removed
-takes back what earlier runs wrote, and only that. `--check` shows each change: a diff, a removal,
-or a line where the server's `routes.d` is missing. Root's files go through sudo, by the code that
-writes `ws server ubuntu apply`'s. Sudo never changes a file in the home, nor one a link names. A
-file there that the user may not change stops the run: sudo would leave root's files where the
-user's go.
+takes back what earlier runs wrote, and only that, but a domain another server names stays.
+`--check` shows each change: a diff, a removal, or a line where the server's `routes.d` is missing.
+Root's files go through sudo, by the code that writes `ws server ubuntu apply`'s. Sudo never changes
+a file in the home, nor one a link names. A file there that the user may not change stops the run:
+sudo would leave root's files where the user's go.
 
 ## ssh's hosts
 
