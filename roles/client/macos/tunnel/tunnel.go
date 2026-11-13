@@ -191,7 +191,6 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 		file.Dir{M: t.M, Path: tunnelLibexec, Mode: 0o755},
 		file.File{M: t.M, Path: tunnelLibexec + "/ws", Content: self, Mode: 0o755, Secret: true},
 		file.Dir{M: t.M, Path: launchd.Dir, Mode: 0o700},
-		file.Dir{M: t.M, Path: launchd.Dir + "/routes.d", Mode: 0o755},
 		file.Fixed(key),
 	}
 	if t.public != "" {
@@ -203,7 +202,7 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 		if _, err := t.M.Run(ctx, "launchctl", "print", "system/"+d.Label); err == nil {
 			daemon.Found = daemon.Want
 		}
-		parts = append(parts, file.Dir{M: t.M, Path: d.Dir, Mode: 0o700},
+		parts = append(parts, file.Dir{M: t.M, Path: d.Dir, Mode: 0o700}, file.Dir{M: t.M, Path: d.Routes, Mode: 0o755},
 			file.File{M: t.M, Path: d.Conf, Content: []byte(tunnelConf(t.Conf)), Mode: 0o600},
 			file.File{M: t.M, Path: d.Plist, Content: t.plist(), Mode: 0o644}, file.Fixed{daemon})
 	}
