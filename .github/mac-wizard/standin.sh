@@ -3,6 +3,8 @@
 # Mac, its user and ws give the wizard, on GitHub's macOS runner.
 
 set -eu
+# shellcheck source=.github/mac-conf.sh
+. "$(dirname "$0")/../mac-conf.sh"
 
 sw_vers
 # ws client macos apply stops where a directory above root's copies isn't root's alone, as on a Mac
@@ -22,8 +24,8 @@ done
 mkdir -p ~/.config/ws
 [ -d ~/.ssh ] || mkdir -m 700 ~/.ssh
 ssh-keygen -q -t ed25519 -N '' -f ~/.ssh/id_ed25519 </dev/null
-printf '%s\n' "WS_USER=$(id -un)" WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' \
-    >~/.config/ws/mac.conf
+printf '%s\n' "WS_USER=$(id -un)" WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' |
+    conf_write ~/.config/ws/mac.conf
 # PATH as a shell that predates Homebrew has it, without the directories that hold brew, for the
 # cases that give it to the wizard.
 path=
