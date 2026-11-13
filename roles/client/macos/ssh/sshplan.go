@@ -41,15 +41,6 @@ type sshFacts struct {
 	Include step.Item
 }
 
-// sshChanges returns the changes that bring ~/.ssh to the new text of config.d/ws and to an
-// Include of it first in ~/.ssh/config.
-func sshChanges(f sshFacts, text []byte) []step.Change {
-	cs := append([]step.Change(nil), f.Dirs...)
-	dir := f.Home + "/.ssh"
-	cs = append(cs, file.UserFile{M: f.M, Out: f.Out, Path: dir + "/config.d/ws", Text: text, Mode: sshFileMode}.Change(f.Ws)...)
-	return append(cs, f.Config...)
-}
-
 // sshDirs is ~/.ssh and its config.d. A run sets the mode of config.d, which holds the hosts.
 func sshDirs(m effect.Machine, out effect.Out, home string) file.UserDirs {
 	return file.UserDirs{
@@ -65,6 +56,8 @@ type refusal func(ctx context.Context) error
 func (r refusal) Plan(ctx context.Context) ([]resource.Change, error) { return nil, r(ctx) }
 
 // parts reads ~/.ssh and the Mac, and returns the parts of the step in the order of its changes.
+// They are the refusal, the key's copy, the directories, config.d/ws, the Include and the copy's
+// report.
 func (s SSH) parts(ctx context.Context) ([]resource.Resource, error) {
 	f, err := s.read(ctx)
 	if err != nil {
@@ -80,16 +73,19 @@ func (s SSH) parts(ctx context.Context) ([]resource.Resource, error) {
 		include.Conflict = fmt.Sprintf("line %d sets its own values for ws: those in config.d/ws, read "+
 			"first, win where both set a key", own[0].Line)
 	}
-	seen := reports{sshDirs(s.M, s.Out, s.Home), s.wsFile(text), file.Fixed{include}}
+	var copies reports
 	if keys.Copied(key.File, key.Text, s.Home) {
-		seen = append(seen, keys.CopyDirs(s.M, s.Out, s.Home))
+		copies = append(copies, keys.CopyDirs(s.M, s.Out, s.Home))
 	}
-	seen = append(seen, keys.CopyReport(s.M, s.Out, key.File, key.Text, s.Home)...)
+	copies = append(copies, keys.CopyReport(s.M, s.Out, key.File, key.Text, s.Home)...)
 	copied, err := keys.PlanCopy(s.M, s.Out, key.File, key.Text, s.Home)
 	return []resource.Resource{
 		s.refusal(f, text),
 		resource.Planned{Changes: copied, Err: err},
-		resource.Planned{Changes: sshChanges(f, text), Seen: seen},
+		resource.Planned{Changes: f.Dirs, Seen: sshDirs(s.M, s.Out, s.Home)},
+		resource.Planned{Changes: s.wsFile(text).Change(f.Ws), Seen: s.wsFile(text)},
+		resource.Planned{Changes: f.Config, Seen: file.Fixed{include}},
+		resource.Planned{Seen: copies},
 	}, nil
 }
 
