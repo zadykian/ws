@@ -1,4 +1,4 @@
-package devtools
+package aptrepo
 
 import (
 	"context"
@@ -45,7 +45,17 @@ func newFixture(t *testing.T) fixture {
 }
 
 func (f fixture) plan(_ *testing.T) ([]host.Change, error) {
-	return Repositories{M: f.m, List: f.repos, Replaced: replacedFiles}.Plan(context.Background())
+	return Repositories{M: f.m, List: f.repos, Replaced: replaced}.Plan(context.Background())
+}
+
+// replaced is the sources and keys that the fixture's run removes, as the role lists them.
+func replaced(release string) []string {
+	return []string{
+		"/etc/apt/sources.list.d/nodesource.list",
+		"/etc/apt/sources.list.d/dotnet-ubuntu-backports-" + release + ".sources",
+		"/etc/apt/sources.list.d/github-cli.list",
+		"/etc/apt/trusted.gpg.d/githubcli-archive-keyring.gpg",
+	}
 }
 
 func apply(t *testing.T, changes []host.Change) {

@@ -1,6 +1,10 @@
 package devtools
 
-import "slices"
+import (
+	"slices"
+
+	"github.com/zadykian/ws/roles/server/ubuntu/devtools/internal/aptrepo"
+)
 
 // The versions and sources devtools installs from.
 const (
@@ -27,25 +31,13 @@ var (
 	ubuntuSDKs = []string{"10.0"}
 )
 
-// Repository is a third-party apt repository: a deb822 .sources file, with its key in
-// /etc/apt/keyrings. The role removes both files of a repository it no longer needs. A key fetched
-// again must hold a certificate at least, and each one's primary fingerprint must be pinned here. A
-// renewed key keeps its fingerprint, and a key the vendor drops leaves the rest pinned. Another
-// key, in place of them or beside them, is not pinned.
-type Repository struct {
-	Name, Key, URIs, Suites, Components string
-	// Fingerprints are the primary fingerprints of the certificates the key file may hold.
-	Fingerprints []string
-	Needed       bool
-}
-
 // repositories returns the repositories for the Ubuntu release, by its codename.
-func repositories(release string) []Repository {
+func repositories(release string) []aptrepo.Repository {
 	backports := false
 	for _, sdk := range dotnetSDKs {
 		backports = backports || !slices.Contains(ubuntuSDKs, sdk)
 	}
-	return []Repository{
+	return []aptrepo.Repository{
 		// Ubuntu's archive has an older Node.
 		{
 			Name: "nodesource", Key: "https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key",

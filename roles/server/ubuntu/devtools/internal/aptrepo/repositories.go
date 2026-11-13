@@ -1,4 +1,5 @@
-package devtools
+// Package aptrepo sets up the apt repositories of third parties: each one's key and .sources file.
+package aptrepo
 
 import (
 	"context"
@@ -18,6 +19,18 @@ const (
 	keyring    = "/etc/apt/keyrings"
 	sourcesDir = "/etc/apt/sources.list.d"
 )
+
+// Repository is a third-party apt repository: a deb822 .sources file, with its key in
+// /etc/apt/keyrings. The role removes both files of a repository it no longer needs. A key fetched
+// again must hold a certificate at least, and each one's primary fingerprint must be pinned here. A
+// renewed key keeps its fingerprint, and a key the vendor drops leaves the rest pinned. Another
+// key, in place of them or beside them, is not pinned.
+type Repository struct {
+	Name, Key, URIs, Suites, Components string
+	// Fingerprints are the primary fingerprints of the certificates the key file may hold.
+	Fingerprints []string
+	Needed       bool
+}
 
 // Repositories sets up the apt repositories: it removes the sources they replace and those no
 // longer needed, then writes each needed repository's key and .sources file. Apt refuses two

@@ -6,6 +6,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/server/ubuntu/devtools/internal/aptrepo"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools/internal/golang"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -25,7 +26,7 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units,
 	user := host.User{Name: v.User, Home: v.Home}
 	steps := []step.Step{
 		host.Group{Title: repoStep, Parts: []host.Resource{
-			Repositories{M: m, List: repositories, Replaced: replacedFiles},
+			aptrepo.Repositories{M: m, List: repositories, Replaced: replacedFiles},
 			host.File{M: m, Path: "/etc/apt/apt.conf.d/52unattended-upgrades-github-cli", Content: ghUpgrades, Mode: 0o644},
 		}},
 		host.Group{Title: "Devtools packages", After: repoStep, Parts: []host.Resource{
