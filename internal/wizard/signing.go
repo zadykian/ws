@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"errors"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -26,14 +27,14 @@ type SigningGitHub interface {
 	// add adds line, or names it to add.
 	add(ctx context.Context, ws *Session, line string) error
 	// side is the side that the stage acts on.
-	side() Side
+	side() guided.Side
 }
 
 // Name is the stage's name.
 func (*Signing) Name() string { return signingStage }
 
 // Side is its GitHub's: the Mac, whose gh login takes ws's signing key, or ws.
-func (s *Signing) Side() Side { return s.GitHub.side() }
+func (s *Signing) Side() guided.Side { return s.GitHub.side() }
 
 // WaitsOn is ws's run, which makes the key.
 func (*Signing) WaitsOn() string { return runStage }

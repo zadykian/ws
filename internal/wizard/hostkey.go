@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/zadykian/ws/engine/core/remote"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
@@ -33,7 +34,7 @@ type HostKey struct {
 func (*HostKey) Name() string { return hostStage }
 
 // Side is the Mac: known_hosts holds ws's host key.
-func (*HostKey) Side() Side { return OnMac }
+func (*HostKey) Side() guided.Side { return OnMac }
 
 // WaitsOn is ws client macos apply, which writes config.d/ws.
 func (*HostKey) WaitsOn() string { return setupStage }

@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"errors"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -23,7 +24,7 @@ type WsClaude struct {
 func (*WsClaude) Name() string { return claudeStage }
 
 // Side is ws: the claude login of WS_USER.
-func (*WsClaude) Side() Side { return OnWs }
+func (*WsClaude) Side() guided.Side { return OnWs }
 
 // WaitsOn is ws's run.
 func (*WsClaude) WaitsOn() string { return runStage }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/zadykian/ws/engine/core/remote"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -46,7 +47,7 @@ type Sudo struct {
 func (*Sudo) Name() string { return sudoStage }
 
 // Side is ws: how its scripts reach root.
-func (*Sudo) Side() Side { return OnWs }
+func (*Sudo) Side() guided.Side { return OnWs }
 
 // WaitsOn is the stage that checks the login, without which sudo answers nothing.
 func (*Sudo) WaitsOn() string { return loginStage }

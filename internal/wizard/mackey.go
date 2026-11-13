@@ -1,6 +1,7 @@
 package wizard
 
 import (
+	guided "github.com/zadykian/ws/engine/core/wizard"
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -29,7 +30,7 @@ type MacKey struct {
 func (*MacKey) Name() string { return macKey }
 
 // Side is the Mac: its ssh key.
-func (*MacKey) Side() Side { return OnMac }
+func (*MacKey) Side() guided.Side { return OnMac }
 
 // WaitsOn is Answers, which gives mac.conf the lines that this stage reads.
 func (*MacKey) WaitsOn() string { return answers }

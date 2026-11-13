@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 	"io"
 	"strings"
 	"time"
@@ -68,7 +69,7 @@ type wizardEffects struct {
 	// text takes what a run prints on stdout.
 	text io.Writer
 	obs  step.Observer
-	hand *wizard.Hand
+	hand *guided.Hand
 	// sudo is the stage that finds how to reach root on ws. A run takes it from the scan before it, so
 	// that its password is asked once.
 	sudo *wizard.Sudo
@@ -83,7 +84,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	p, ask, out, prog, hand := e.p, e.ask, e.out, e.prog, e.hand
 	check := o.check
 	conf := confPath(p.getenv, p.pwd)
-	lock := wizard.LockPath(p.lockDir())
+	lock := guided.LockPath(p.lockDir())
 	scratch := lock + "/mac.conf"
 	// Under --check the stages after Answers read the mac.conf that it would write, a file in the lock,
 	// as the old script pointed WS_CONF there.

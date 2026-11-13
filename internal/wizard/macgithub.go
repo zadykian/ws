@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -18,7 +19,7 @@ type MacGitHub struct {
 	Check bool
 }
 
-func (*MacGitHub) side() Side { return OnMac }
+func (*MacGitHub) side() guided.Side { return OnMac }
 
 type signingAdd struct{ title string }
 

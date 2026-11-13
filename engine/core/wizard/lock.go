@@ -1,5 +1,3 @@
-// Package wizard holds ws client macos wizard. It has the lock and the sleep guard of a run, the
-// closing list of what stays by hand, and the stages, each a step.Step.
 package wizard
 
 import (

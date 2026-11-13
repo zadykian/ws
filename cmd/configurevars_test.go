@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"encoding/base64"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 	"io"
 	"slices"
 	"strings"
@@ -17,7 +18,7 @@ import (
 // lockCalls counts the calls of the wizard's lock that hold what.
 func lockCalls(calls []string, what string) int {
 	return len(slices.DeleteFunc(slices.Clone(calls), func(call string) bool {
-		return !strings.Contains(call, what) || !strings.Contains(call, wizard.LockName)
+		return !strings.Contains(call, what) || !strings.Contains(call, guided.LockName)
 	}))
 }
 
@@ -40,7 +41,7 @@ func TestVarsReachTakesTheLockOnceAndLetsItGo(t *testing.T) {
 
 func TestVarsReachLeavesAnotherRunsLock(t *testing.T) {
 	p, m := macTerminal()
-	m.Dirs["/tmp/"+wizard.LockName] = 0o700
+	m.Dirs["/tmp/"+guided.LockName] = 0o700
 	r := &varsReach{p: p}
 	if _, err := r.reach(context.Background(), tui.Offscreen(r.p.machine)); err == nil || !strings.Contains(err.Error(), "another run holds") {
 		t.Fatalf("err = %v", err)

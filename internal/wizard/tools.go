@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"fmt"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 	"strings"
 	"time"
 
@@ -32,7 +33,7 @@ type Tools struct {
 func (*Tools) Name() string { return toolsStage }
 
 // Side is the Mac: the Command Line Tools.
-func (*Tools) Side() Side { return OnMac }
+func (*Tools) Side() guided.Side { return OnMac }
 
 // WaitsOn is empty: the tools come first.
 func (*Tools) WaitsOn() string { return "" }

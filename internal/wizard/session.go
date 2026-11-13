@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"github.com/zadykian/ws/engine/core/remote"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/role"
@@ -46,7 +47,7 @@ type Reach interface {
 	// rerun says how to run ws server ubuntu apply again, for a stop that needs it.
 	rerun() string
 	// hand adds what stays by hand of this way's ws, as the status s read it.
-	hand(h *Hand, s wsStatus)
+	hand(h *guided.Hand, s wsStatus)
 }
 
 // Scripts are what a Session runs on ws: the remote script and the files script. Events hears a
@@ -100,7 +101,7 @@ func (s *Session) claude(ctx context.Context) error {
 }
 
 // Hand adds what stays by hand of ws to the list, from the remote script's status.
-func (s *Session) Hand(ctx context.Context, h *Hand) {
+func (s *Session) Hand(ctx context.Context, h *guided.Hand) {
 	st, _ := s.status(ctx)
 	s.reach.hand(h, st)
 }

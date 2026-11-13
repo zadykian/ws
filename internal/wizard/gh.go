@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"fmt"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 	"os/exec"
 	"strings"
 
@@ -47,7 +48,7 @@ type GhCLI struct {
 func (*Gh) Name() string { return ghStage }
 
 // Side is the Mac: gh's login and the Mac's key among the account's.
-func (*Gh) Side() Side { return OnMac }
+func (*Gh) Side() guided.Side { return OnMac }
 
 // WaitsOn is Homebrew, which gh comes from. Under --check, where the Mac key is still to be made,
 // Plan says it would add the key once made, as wizard-gh.sh did.

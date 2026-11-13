@@ -3,6 +3,7 @@ package wizard
 import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/remote"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 )
 
 // loginStage names the stage in its messages.
@@ -31,7 +32,7 @@ type Login struct {
 func (*Login) Name() string { return loginStage }
 
 // Side is the Mac: the stage checks the Mac's login and changes nothing on ws.
-func (*Login) Side() Side { return OnMac }
+func (*Login) Side() guided.Side { return OnMac }
 
 // WaitsOn is the Host key stage, without which ssh logs in nowhere.
 func (*Login) WaitsOn() string { return hostStage }

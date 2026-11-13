@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 	"slices"
 	"testing"
 
@@ -14,7 +15,7 @@ import (
 )
 
 func queueOf(p process) []tui.Stage {
-	return wizardQueue(wizardStages(wizardEffects{p: p, hand: &wizard.Hand{}, sudo: &wizard.Sudo{}}, wizardOptions{}))
+	return wizardQueue(wizardStages(wizardEffects{p: p, hand: &guided.Hand{}, sudo: &wizard.Sudo{}}, wizardOptions{}))
 }
 
 func stageOf(t *testing.T, queue []tui.Stage, name string) tui.Stage {

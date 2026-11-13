@@ -2,6 +2,7 @@ package wizard
 
 import (
 	"context"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 	"slices"
 	"strings"
 	"testing"
@@ -27,7 +28,7 @@ func TestWsHand(t *testing.T) {
 		r.Want = func() (conf.Conf, error) { return conf.Conf{Target: tc.target}, nil }
 		far.Reach = r
 		ws.reach = far
-		h := &Hand{}
+		h := &guided.Hand{}
 		ws.Hand(context.Background(), h)
 		var got []string
 		for _, l := range h.Lines() {

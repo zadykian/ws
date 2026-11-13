@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"fmt"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -15,12 +16,12 @@ import (
 type WsGitHub struct {
 	M    effect.Machine
 	Out  effect.Out
-	Hand *Hand
+	Hand *guided.Hand
 	// named is set once this run named the key in what stays by hand, all that the stage can do.
 	named bool
 }
 
-func (*WsGitHub) side() Side { return OnWs }
+func (*WsGitHub) side() guided.Side { return OnWs }
 
 type signingByHand struct{ why string }
 

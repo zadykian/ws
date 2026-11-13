@@ -1,11 +1,11 @@
 package cmd
 
 import (
+	guided "github.com/zadykian/ws/engine/core/wizard"
 	"slices"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/internal/wizard"
 )
 
 // wizardProcess returns a root process on a machine that holds vars as host_vars, booted or not,
@@ -25,7 +25,7 @@ func wizardProcess(vars string, booted bool, status string) (process, *effecttes
 // the signing key wait on the run.
 func TestServerWizardStagesReadHostVars(t *testing.T) {
 	p, m := wizardProcess("---\nsecurity_outbound: false\nws_user: root\n", false, "")
-	stages := serverWizardStages(wizardEffects{p: p, hand: &wizard.Hand{}}, wizardOptions{})
+	stages := serverWizardStages(wizardEffects{p: p, hand: &guided.Hand{}}, wizardOptions{})
 	var got []string
 	for _, s := range stages {
 		got = append(got, s.Name()+" < "+s.WaitsOn())

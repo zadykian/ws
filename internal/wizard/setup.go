@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"errors"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 	"os/exec"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -36,7 +37,7 @@ type Setup struct {
 func (*Setup) Name() string { return setupStage }
 
 // Side is the Mac: ws client macos apply.
-func (*Setup) Side() Side { return OnMac }
+func (*Setup) Side() guided.Side { return OnMac }
 
 // WaitsOn is Homebrew, which ws client macos apply needs. Under --check, ws client macos apply's
 // plan stands alone, as setup_after in sh did, and the git step says itself what waits on the

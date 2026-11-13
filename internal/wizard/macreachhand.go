@@ -2,6 +2,7 @@ package wizard
 
 import (
 	"cmp"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 
 	"github.com/zadykian/ws/roles/client/macos/conf"
 )
@@ -10,7 +11,7 @@ import (
 // remote script's status. ws's gh login is a step of ws server ubuntu apply, by token.github, so
 // the list leaves it out. mac.conf has WS_LAN_ADDRESS with WS_LAN alone, so the lease names an
 // address only with a LAN. Off the LAN, away's lines take the router's place.
-func (r MacReach) hand(h *Hand, s wsStatus) {
+func (r MacReach) hand(h *guided.Hand, s wsStatus) {
 	_, c, err := loadConf(confFile{r.Conf, runStage, r.SSH.M, r.Out})
 	if err != nil {
 		return
@@ -43,7 +44,7 @@ func (r MacReach) hand(h *Hand, s wsStatus) {
 // away adds what stays by hand of a cloud VM or a VM on the Mac, which have no router. Where the
 // run asked ws's address, mac.conf's way must lead to it. A cloud VM's provider must let the tunnel
 // in (docs/mac-targets.md).
-func away(h *Hand, c conf.Conf, first string) {
+func away(h *guided.Hand, c conf.Conf, first string) {
 	target := c.Target
 	way := "WS_LAN_ADDRESS"
 	if target == "cloud" {

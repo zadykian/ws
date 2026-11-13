@@ -1,6 +1,7 @@
 package wizard
 
 import (
+	guided "github.com/zadykian/ws/engine/core/wizard"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/step"
@@ -9,7 +10,7 @@ import (
 // TestEveryStageStatesItsSide fails where a stage is added with no side, as a screen could not
 // put it in a list.
 func TestEveryStageStatesItsSide(t *testing.T) {
-	want := map[string]Side{
+	want := map[string]guided.Side{
 		macUpdateStage: OnMac, toolsStage: OnMac, homebrewStage: OnMac, answers: OnMac, macKey: OnMac,
 		ghStage: OnMac, setupStage: OnMac, hostStage: OnMac, loginStage: OnMac, sudoStage: OnWs,
 		installStage: OnWs, runStage: OnWs, claudeStage: OnWs, signingStage: OnMac, tunnelStage: OnMac,
@@ -22,7 +23,7 @@ func TestEveryStageStatesItsSide(t *testing.T) {
 		t.Fatalf("%d stages, %d wanted", len(stages), len(want))
 	}
 	for _, s := range stages {
-		got, ok := SideOf(s)
+		got, ok := guided.SideOf(s)
 		if !ok {
 			t.Errorf("%s states no side", s.Name())
 			continue

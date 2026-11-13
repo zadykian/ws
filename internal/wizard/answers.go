@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 	"path"
 	"strings"
 
@@ -41,7 +42,7 @@ type Answers struct {
 func (*Answers) Name() string { return answers }
 
 // Side is the Mac: mac.conf.
-func (*Answers) Side() Side { return OnMac }
+func (*Answers) Side() guided.Side { return OnMac }
 
 // WaitsOn is Homebrew: on a new Mac, a --check run stops there, as the install does.
 func (*Answers) WaitsOn() string { return homebrewStage }

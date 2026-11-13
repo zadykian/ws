@@ -2,6 +2,7 @@ package wizard
 
 import (
 	"context"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 	"strings"
 	"testing"
 
@@ -15,7 +16,7 @@ func newWsSigning(status wsStatus, login, listed string) (*Signing, *WsGitHub) {
 	ws, m := wsSession(status)
 	m.Results[loginCmd] = effecttest.Result{Out: []byte(login)}
 	m.Results[keysCmd] = effecttest.Result{Out: []byte(listed)}
-	g := &WsGitHub{M: m, Out: &effecttest.Out{}, Hand: &Hand{}}
+	g := &WsGitHub{M: m, Out: &effecttest.Out{}, Hand: &guided.Hand{}}
 	return &Signing{Ws: ws, GitHub: g}, g
 }
 

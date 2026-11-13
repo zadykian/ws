@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"fmt"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 
 	"github.com/zadykian/ws/engine/core/check"
 	"github.com/zadykian/ws/engine/core/effect"
@@ -25,7 +26,7 @@ type WsInstall struct {
 func (*WsInstall) Name() string { return installStage }
 
 // Side is ws: this release is installed there.
-func (*WsInstall) Side() Side { return OnWs }
+func (*WsInstall) Side() guided.Side { return OnWs }
 
 // WaitsOn is the Sudo stage, which the remote script needs.
 func (*WsInstall) WaitsOn() string { return sudoStage }

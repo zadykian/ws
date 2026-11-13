@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"errors"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
@@ -43,7 +44,7 @@ type WsRun struct {
 func (*WsRun) Name() string { return runStage }
 
 // Side is ws: ws server ubuntu apply runs there.
-func (*WsRun) Side() Side { return OnWs }
+func (*WsRun) Side() guided.Side { return OnWs }
 
 // WaitsOn is Await, or the stage that installs this ws on ws.
 func (r *WsRun) WaitsOn() string { return cmp.Or(r.Await, installStage) }

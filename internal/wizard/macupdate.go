@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"fmt"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/check"
@@ -29,7 +30,7 @@ type MacUpdate struct {
 func (*MacUpdate) Name() string { return macUpdateStage }
 
 // Side is the Mac: the stage installs ws's tool before the others.
-func (*MacUpdate) Side() Side { return OnMac }
+func (*MacUpdate) Side() guided.Side { return OnMac }
 
 // WaitsOn is empty: the stage comes before the others.
 func (*MacUpdate) WaitsOn() string { return "" }

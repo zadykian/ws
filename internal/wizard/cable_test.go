@@ -2,6 +2,7 @@ package wizard
 
 import (
 	"context"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 	"strings"
 	"testing"
 
@@ -93,7 +94,7 @@ func TestCableApplyEnvPortOutsideList(t *testing.T) {
 func TestCableHand(t *testing.T) {
 	c, _, _ := newCable(t, wsStatus{}, "eth0 - -\n", nil)
 	c.ports = []cablePort{{"eth0", "-", "-"}}
-	var h Hand
+	var h guided.Hand
 	c.Hand(context.Background(), &h)
 	var b strings.Builder
 	h.Close(context.Background(), &b)

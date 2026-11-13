@@ -1,3 +1,5 @@
+// Package wizard runs the guided run: its stages in order, the lock that keeps a second run out, and
+// the list of what stays by hand. A side's stages are in the side's own package.
 package wizard
 
 import (

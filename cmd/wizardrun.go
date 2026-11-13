@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 	"os/signal"
 	"slices"
 	"syscall"
@@ -50,7 +51,7 @@ func (w wizardRun) start(before ...func(effect.Out) step.Step) error {
 
 // lines is the plain run: the stages under the lock, then what stays by hand.
 func (w wizardRun) lines(ctx context.Context, term *effect.Terminal, out progOut) error {
-	hand := &wizard.Hand{}
+	hand := &guided.Hand{}
 	closing := func(ctx context.Context) {
 		hand.Close(ctx, w.c.OutOrStdout())
 		term.Flush()
@@ -58,7 +59,7 @@ func (w wizardRun) lines(ctx context.Context, term *effect.Terminal, out progOut
 	talks, _ := w.p.machine.(effect.Foreground)
 	stages := w.side.stages(wizardEffects{p: w.p, prog: w.c.CommandPath(), talks: talks, ask: signalPrompt{term},
 		hidden: term, out: out, text: w.c.OutOrStdout(), obs: out, hand: hand, sudo: &wizard.Sudo{}}, w.o)
-	_, err := wizard.Run(ctx, w.p.machine, step.Options{Observer: out, Check: w.o.check}, stages, w.p.lockDir(),
+	_, err := guided.Run(ctx, w.p.machine, step.Options{Observer: out, Check: w.o.check}, stages, w.p.lockDir(),
 		w.side.pid, closing)
 	// The runner names the stage before the stage's own message.
 	return unwrapStep(err)
@@ -101,7 +102,7 @@ func (w wizardRun) config() tui.Config {
 
 // plainStages returns the stages for their names and machines alone: none of them runs.
 func (w wizardRun) plainStages() []step.Step {
-	return w.side.stages(wizardEffects{p: w.p, hand: &wizard.Hand{}, sudo: &wizard.Sudo{}}, w.o)
+	return w.side.stages(wizardEffects{p: w.p, hand: &guided.Hand{}, sudo: &wizard.Sudo{}}, w.o)
 }
 
 // effects returns the stages' effects on b, whose stdout waits for the screen's end.
@@ -109,7 +110,7 @@ func (w wizardRun) effects(b *tui.Bridge, sudo *wizard.Sudo) wizardEffects {
 	p, on := w.p, b.Effects()
 	p.machine = on.M
 	return wizardEffects{p: p, prog: w.c.CommandPath(), talks: on.Talks, ask: b, hidden: b, out: b, text: on.Text, obs: b,
-		hand: &wizard.Hand{}, sudo: sudo, stop: b.Options(step.Options{}).Stop}
+		hand: &guided.Hand{}, sudo: sudo, stop: b.Options(step.Options{}).Stop}
 }
 
 // scan is a check of every stage, beside the lists. ws speaks for its roles once the stage that
@@ -127,7 +128,7 @@ func (w wizardRun) scan(sudo *wizard.Sudo) tui.Work {
 				reportRoles(run.Name(), states, err, b.Report)
 			}}
 		}
-		_, err := wizard.Run(ctx, e.p.machine, o, stages, w.p.lockDir(), w.side.pid, nil)
+		_, err := guided.Run(ctx, e.p.machine, o, stages, w.p.lockDir(), w.side.pid, nil)
 		return unwrapStep(err)
 	}
 }
@@ -166,7 +167,7 @@ func (w wizardRun) work(o wizardOptions, sudo *wizard.Sudo) tui.Work {
 		e.events = b
 		closing := func(ctx context.Context) { e.hand.Close(ctx, e.text) }
 		so := b.Options(step.Options{Check: o.check, LeftOut: o.left})
-		_, err := wizard.Run(ctx, e.p.machine, so, w.side.stages(e, o), w.p.lockDir(), w.side.pid, closing)
+		_, err := guided.Run(ctx, e.p.machine, so, w.side.stages(e, o), w.p.lockDir(), w.side.pid, closing)
 		return unwrapStep(err)
 	}
 }

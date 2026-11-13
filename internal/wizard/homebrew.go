@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -43,7 +44,7 @@ type Homebrew struct {
 func (*Homebrew) Name() string { return homebrewStage }
 
 // Side is the Mac: Homebrew.
-func (*Homebrew) Side() Side { return OnMac }
+func (*Homebrew) Side() guided.Side { return OnMac }
 
 // WaitsOn is Tools: the installer needs the Command Line Tools.
 func (*Homebrew) WaitsOn() string { return toolsStage }

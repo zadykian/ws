@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 	"io/fs"
 	"strconv"
 	"strings"
@@ -36,7 +37,7 @@ type WsValues struct {
 func (*WsValues) Name() string { return valuesStage }
 
 // Side is ws: its host_vars.
-func (*WsValues) Side() Side { return OnWs }
+func (*WsValues) Side() guided.Side { return OnWs }
 
 // WaitsOn is empty: the stage is ws's first.
 func (*WsValues) WaitsOn() string { return "" }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/zadykian/ws/engine/core/remote"
+	guided "github.com/zadykian/ws/engine/core/wizard"
 	"regexp"
 	"strings"
 
@@ -69,7 +70,7 @@ func (*Cable) Name() string { return cableStage }
 func (*Cable) Locks() string { return setupStage }
 
 // Side is the Mac: the cable's service, after ws's port in host_vars.yml.
-func (*Cable) Side() Side { return OnMac }
+func (*Cable) Side() guided.Side { return OnMac }
 
 // WaitsOn is Homebrew: under --check on a new Mac, Answers is skipped and writes no mac.conf to
 // read. Plan says itself that the stage is after ws's run, as wizard-cable.sh's cable_after did.
