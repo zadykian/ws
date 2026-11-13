@@ -26,7 +26,7 @@ func dropResources(m effect.Machine, u effect.Units, out effect.Out, cable strin
 	if err != nil {
 		return nil, err
 	}
-	service, err := Service(MacInterfaces(cable))
+	service, err := service(MacInterfaces(cable))
 	if err != nil {
 		return nil, err
 	}

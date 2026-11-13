@@ -6,7 +6,7 @@ import (
 )
 
 func TestDropsServiceRunsTheScriptOnTheInterfaces(t *testing.T) {
-	got, err := Service(MacInterfaces("enp5s0"))
+	got, err := service(MacInterfaces("enp5s0"))
 	if err != nil {
 		t.Fatal(err)
 	}
