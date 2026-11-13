@@ -75,3 +75,13 @@ func TestTheQueueScreenHoldsItsBoxesUntilTheScanEnds(t *testing.T) {
 		t.Errorf("scanning %v, only = %q", s.Scanning, s.list.only())
 	}
 }
+
+func TestAnEmptyQueueTakesItsKeysWithoutPanicking(t *testing.T) {
+	s := openQueue("ws", testTheme, nil, make(chan Choice, 1))
+	s = queueSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, list.ScannedMsg{},
+		press('j'), tea.KeyPressMsg{Code: tea.KeyDown}, tea.KeyPressMsg{Code: tea.KeyPgUp},
+		press('/'), press('t'))
+	if got := queueShown(s); !strings.Contains(got, "ws") {
+		t.Errorf("no title in:\n%s", got)
+	}
+}
