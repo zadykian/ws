@@ -1,4 +1,4 @@
-package setup_test
+package keys_test
 
 import (
 	"context"
@@ -8,20 +8,20 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
-	"github.com/zadykian/ws/roles/client/macos/setup"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
 // keyUses are the two uses, each with the variable, the words and the page that its stops name.
 var keyUses = []struct {
-	use               setup.KeyUse
+	use               keys.KeyUse
 	name, words, page string
 	conf              func(pub string) conf.Conf
 }{
-	{setup.LoginKey, "WS_IDENTITY_PUB_KEY", "ws's login key", "docs/mac.md",
+	{keys.LoginKey, "WS_IDENTITY_PUB_KEY", "ws's login key", "docs/mac.md",
 		func(pub string) conf.Conf { return conf.Conf{IdentityPubKey: pub} }},
-	{setup.SigningKey, "WS_GIT_SIGNING_PUB_KEY", "git's signing key", "docs/mac-git.md",
+	{keys.SigningKey, "WS_GIT_SIGNING_PUB_KEY", "git's signing key", "docs/mac-git.md",
 		func(pub string) conf.Conf { return conf.Conf{GitSigningPubKey: pub} }},
 }
 
@@ -76,7 +76,7 @@ func TestReadKeyStops(t *testing.T) {
 		for _, u := range keyUses {
 			m := effecttest.NewMachine()
 			pub := tc.set(m)
-			_, err := setup.ReadKey(context.Background(), m, u.conf(pub), mactest.AgentHome, u.use)
+			_, err := keys.ReadKey(context.Background(), m, u.conf(pub), mactest.AgentHome, u.use)
 			want := strings.NewReplacer("VAR", u.name, "WORDS", u.words, "PAGE", u.page).Replace(tc.want)
 			if err == nil || !strings.Contains(err.Error(), want) {
 				t.Errorf("%s, %s: err = %v; want %q", tc.name, u.name, err, want)
@@ -121,7 +121,7 @@ func TestReadKeyReads(t *testing.T) {
 		for _, u := range keyUses {
 			m := effecttest.NewMachine()
 			pub := tc.set(m)
-			k, err := setup.ReadKey(context.Background(), m, u.conf(pub), mactest.AgentHome, u.use)
+			k, err := keys.ReadKey(context.Background(), m, u.conf(pub), mactest.AgentHome, u.use)
 			if err != nil || k.Pub != tc.pub || k.File != tc.file || k.Text != tc.text || k.Key.Base64 == "" {
 				t.Errorf("%s, %s: ReadKey = %+v, %v; want %s, %s, text %q", tc.name, u.name, k, err, tc.pub, tc.file, tc.text)
 			}

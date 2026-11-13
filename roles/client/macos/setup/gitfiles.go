@@ -6,13 +6,14 @@ import (
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/gitcfg"
+	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
 // list returns the files of ~/.config/ws: the script for a key of Secretive's, the allowed signers
 // and gitconfig.
-func (g *Git) list(key NamedKey, gh string) []userfile.File {
+func (g *Git) list(key keys.NamedKey, gh string) []userfile.File {
 	dir := g.Home + "/.config/ws"
 	in := gitcfg.Inputs{Name: g.Conf.GitName, Email: g.Conf.GitEmail, Key: key.File, Gh: gh, Dir: dir}
 	file := func(path, text string, mode fs.FileMode) userfile.File {
@@ -29,20 +30,20 @@ func (g *Git) list(key NamedKey, gh string) []userfile.File {
 
 // dirs is ws's directory, with the directory of ws's copies where git signs with a copy.
 func (g *Git) dirs(pub, text string) userfile.Dirs {
-	if Copied(pub, text, g.Home) {
-		return CopyDirs(g.M, g.Home)
+	if keys.Copied(pub, text, g.Home) {
+		return keys.CopyDirs(g.M, g.Home)
 	}
 	return userfile.WsDirs(g.M, g.Home)
 }
 
 // files plans ~/.config/ws and the files in it.
-func (g *Git) files(key NamedKey, gh string) ([]step.Change, error) {
+func (g *Git) files(key keys.NamedKey, gh string) ([]step.Change, error) {
 	cs, link, err := g.dirs(key.File, key.Text).Plan()
 	if err != nil {
 		return nil, err
 	}
-	if Copied(key.File, key.Text, g.Home) {
-		cs = append(cs, CopyChange(g.M, key.File, key.Text)...)
+	if keys.Copied(key.File, key.Text, g.Home) {
+		cs = append(cs, keys.CopyChange(g.M, key.File, key.Text)...)
 	}
 	for _, f := range g.list(key, gh) {
 		planned, err := f.Plan()
@@ -61,7 +62,7 @@ func (g *Git) Report(ctx context.Context) ([]step.Item, error) {
 	if g.Conf.GitName == "" {
 		return nil, nil
 	}
-	key, err := ReadKey(ctx, g.M, g.Conf, g.Home, SigningKey)
+	key, err := keys.ReadKey(ctx, g.M, g.Conf, g.Home, keys.SigningKey)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +78,7 @@ func (g *Git) Report(ctx context.Context) ([]step.Item, error) {
 	for _, f := range g.list(key, gh) {
 		parts = append(parts, f)
 	}
-	pub := CopyReport(g.M, key.File, key.Text, g.Home)
+	pub := keys.CopyReport(g.M, key.File, key.Text, g.Home)
 	if len(pub) == 0 {
 		pub = []step.Reporter{userfile.Path{M: g.M, Kind: step.FileItem, Path: key.File}}
 	}

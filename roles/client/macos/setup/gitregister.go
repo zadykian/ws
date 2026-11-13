@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/roles/client/macos/internal/gitcfg"
+	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 )
 
 // Register adds the key to the signing keys of gh's login.
@@ -56,7 +57,7 @@ func unverified(err error, pub string) string {
 // the Mac's name. That way GitHub verifies the commits the key signs. Without a login or its
 // write:ssh_signing_key scope, or on another error of gh's, it warns, at each run until one adds
 // the key. Before gh is installed, it says what it would add with gh there.
-func (g *Git) register(ctx context.Context, key NamedKey, gh string, installing bool) (*Register, string, error) {
+func (g *Git) register(ctx context.Context, key keys.NamedKey, gh string, installing bool) (*Register, string, error) {
 	title, err := g.M.Run(ctx, "hostname", "-s")
 	if err != nil {
 		return nil, "", fmt.Errorf("hostname failed: %w", err)

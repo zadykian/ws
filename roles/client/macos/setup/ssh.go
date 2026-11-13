@@ -10,6 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
+	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
@@ -54,7 +55,7 @@ func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	key, err := ReadKey(ctx, s.M, s.Conf, s.Home, LoginKey)
+	key, err := keys.ReadKey(ctx, s.M, s.Conf, s.Home, keys.LoginKey)
 	if err != nil {
 		return step.Plan{}, err
 	}
@@ -71,7 +72,7 @@ func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
 		s.Out.Warn("line %d of ~/.ssh/config, %s, sets its own values for %s: those in config.d/ws, "+
 			"read first, win where both set a key", h.Line, h.Text, h.Names)
 	}
-	copied, err := PlanCopy(s.M, key.File, key.Text, s.Home)
+	copied, err := keys.PlanCopy(s.M, key.File, key.Text, s.Home)
 	if err != nil {
 		return step.Plan{}, err
 	}
@@ -79,7 +80,7 @@ func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
 }
 
 // config returns the text of config.d/ws.
-func (s SSH) config(ctx context.Context, f sshFacts, key NamedKey) []byte {
+func (s SSH) config(ctx context.Context, f sshFacts, key keys.NamedKey) []byte {
 	return []byte(sshcfg.Config(sshcfg.Inputs{
 		User: s.Conf.User, Patterns: sshcfg.IgnoreUnknown(string(f.UserConfig.Text), "UseKeychain"),
 		IdentityPub: key.Pub, IdentityAgent: key.Agent, CldTabs: s.cldTabs(ctx),
@@ -96,7 +97,7 @@ func (s SSH) Report(ctx context.Context) ([]step.Item, error) {
 	if err != nil {
 		return nil, err
 	}
-	key, err := ReadKey(ctx, s.M, s.Conf, s.Home, LoginKey)
+	key, err := keys.ReadKey(ctx, s.M, s.Conf, s.Home, keys.LoginKey)
 	if err != nil {
 		return nil, err
 	}
@@ -110,10 +111,10 @@ func (s SSH) Report(ctx context.Context) ([]step.Item, error) {
 		s.wsFile(s.config(ctx, f, key)),
 		userfile.Fixed{include},
 	}
-	if Copied(key.File, key.Text, s.Home) {
-		parts = append(parts, CopyDirs(s.M, s.Home))
+	if keys.Copied(key.File, key.Text, s.Home) {
+		parts = append(parts, keys.CopyDirs(s.M, s.Home))
 	}
-	return userfile.Gather(ctx, append(parts, CopyReport(s.M, key.File, key.Text, s.Home)...)...)
+	return userfile.Gather(ctx, append(parts, keys.CopyReport(s.M, key.File, key.Text, s.Home)...)...)
 }
 
 // Apply applies the changes in order.

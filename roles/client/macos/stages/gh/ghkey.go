@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
@@ -16,14 +16,14 @@ func (e noKey) Error() string { return e.err.Error() }
 
 func (e noKey) Unwrap() error { return e.err }
 
-// Key returns the .pub of the Mac's key for ws, as setup.ReadKey finds it from mac.conf, and its
+// Key returns the .pub of the Mac's key for ws, as keys.ReadKey finds it from mac.conf, and its
 // type and base64.
 func (g CLI) Key(ctx context.Context) (pub, key string, err error) {
 	_, c, err := (conf.File{Path: g.Conf, Stage: stage.GitHub, M: g.M, Out: g.Out}).Load()
 	if err != nil {
 		return "", "", err
 	}
-	k, err := setup.ReadKey(ctx, g.M, c, g.Home, setup.LoginKey)
+	k, err := keys.ReadKey(ctx, g.M, c, g.Home, keys.LoginKey)
 	if err != nil {
 		return "", "", noKey{err}
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
+	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 )
 
 // Git sets git up from mac.conf's WS_GIT_NAME, WS_GIT_EMAIL and WS_GIT_SIGNING_PUB_KEY, and leaves it
@@ -62,7 +63,7 @@ func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	key, err := ReadKey(ctx, g.M, g.Conf, g.Home, SigningKey)
+	key, err := keys.ReadKey(ctx, g.M, g.Conf, g.Home, keys.SigningKey)
 	if err != nil {
 		return step.Plan{}, err
 	}

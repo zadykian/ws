@@ -7,7 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
@@ -37,7 +37,7 @@ func (k *MacKey) changes(ctx context.Context, c conf.Conf) ([]step.Change, error
 	if c.IdentityPubKey != "" {
 		return k.named(ctx, c)
 	}
-	keys, _, err := setup.SecretiveKeys(ctx, k.M, k.Home)
+	keys, _, err := keys.SecretiveKeys(ctx, k.M, k.Home)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", stage.Key, err)
 	}
@@ -50,7 +50,7 @@ func (k *MacKey) named(ctx context.Context, c conf.Conf) ([]step.Change, error) 
 	if pub := sshcfg.Expand(c.IdentityPubKey, k.Home); c.IdentityAgent == "" && !sshcfg.SecretiveKey(pub, k.Home) {
 		return nil, k.fileKey(ctx, strings.TrimSuffix(pub, ".pub"))
 	}
-	key, err := setup.ReadKey(ctx, k.M, c, k.Home, setup.LoginKey)
+	key, err := keys.ReadKey(ctx, k.M, c, k.Home, keys.LoginKey)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (k *MacKey) named(ctx context.Context, c conf.Conf) ([]step.Change, error) 
 			"or start the agent, then run the wizard again", stage.Key, agent, pub)
 	}
 	// The stages after this one offer the key, and ssh reads its .pub for that.
-	return setup.PlanCopy(k.M, pub, key.Text, k.Home)
+	return keys.PlanCopy(k.M, pub, key.Text, k.Home)
 }
 
 // Asked reports whether the stage asks for a key. It asks for ws's where mac.conf names none. It
@@ -74,7 +74,7 @@ func (k *MacKey) gitQuestion(ctx context.Context, c conf.Conf) ([]step.Change, e
 	if !gitAsked(c) {
 		return nil, nil
 	}
-	keys, _, err := setup.SecretiveKeys(ctx, k.M, k.Home)
+	keys, _, err := keys.SecretiveKeys(ctx, k.M, k.Home)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", stage.Key, err)
 	}

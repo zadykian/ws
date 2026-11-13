@@ -1,4 +1,6 @@
-package setup
+// Package keys reads the keys that mac.conf names for a use, asks Secretive's agent for its keys,
+// and plans ws's copies of their .pub files.
+package keys
 
 import (
 	"context"
