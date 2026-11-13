@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/zadykian/ws/internal/sshcfg"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
+	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
 // made has the user make what in Secretive's app, installed where missing, and returns the key

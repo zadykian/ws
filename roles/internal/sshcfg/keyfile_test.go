@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/zadykian/ws/internal/sshcfg"
+	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
 func TestParsePub(t *testing.T) {

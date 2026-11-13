@@ -3,7 +3,7 @@ package sshcfg_test
 import (
 	"testing"
 
-	"github.com/zadykian/ws/internal/sshcfg"
+	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
 func TestIgnoreUnknown(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/internal/sshcfg"
+	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
 func inputs() sshcfg.Inputs {

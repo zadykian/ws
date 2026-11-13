@@ -10,7 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/internal/sshcfg"
+	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
 // The labels of p256 and gitP256, by their comments and fingerprints.

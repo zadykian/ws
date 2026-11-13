@@ -6,9 +6,9 @@ import (
 	"slices"
 	"time"
 
-	"github.com/zadykian/ws/internal/sshcfg"
 	"github.com/zadykian/ws/roles/client/macos/setup"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
+	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
 // fresh returns the first key that Secretive's agent lists and before lacks, or none. An agent that

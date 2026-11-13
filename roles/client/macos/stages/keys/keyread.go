@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/zadykian/ws/internal/sshcfg"
+	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
 // listed reports whether the agent at the socket lists the key. The zero key is listed by none.

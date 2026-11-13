@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/internal/sshcfg"
+	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
 // With no terminal, Apply stops at ws's question, before git's.
