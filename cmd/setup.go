@@ -12,6 +12,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
@@ -134,11 +135,11 @@ type setupRun func(ctx context.Context, m effect.Machine, out effect.Out, text i
 // each change and makes none.
 func runMacApply(c *cobra.Command, p process, only []string, check bool) error {
 	if c.Flags().Changed("only") && len(only) == 0 {
-		return usageError{errors.New("--only names no step")}
+		return engine.UsageError{Err: errors.New("--only names no step")}
 	}
 	for _, name := range only {
 		if !slices.Contains(macos.Names(), name) {
-			return usageError{fmt.Errorf("no step is named %q", name)}
+			return engine.UsageError{Err: fmt.Errorf("no step is named %q", name)}
 		}
 	}
 	settings, err := loadMacConf(p)

@@ -94,7 +94,7 @@ func (w wizardRun) round() tui.Round {
 }
 
 // config is what the wizard's screens draw with. A signal ends a plain wizard through its context,
-// with status 1, so here too a signal is an error of the run, not signalExit.
+// with status 1, so here too a signal is an error of the run, not engine.SignalExit.
 func (w wizardRun) config() tui.Config {
 	cfg := screenConfig(w.c, w.p)
 	cfg.Cut = func(s syscall.Signal) error { return fmt.Errorf("stopped by %v", s) }

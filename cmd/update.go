@@ -12,6 +12,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/core/update"
 )
 
@@ -54,7 +55,7 @@ func runUpdate(c *cobra.Command, p process) error {
 	go func() {
 		select {
 		case s := <-signals:
-			cancel(signalExit{s.(syscall.Signal)}) //nolint:forcetypeassert // Notify's signals are syscall.Signal
+			cancel(engine.SignalExit{Sig: s.(syscall.Signal)}) //nolint:forcetypeassert // Notify's signals are syscall.Signal
 		case <-ctx.Done():
 		}
 	}()
@@ -62,7 +63,7 @@ func runUpdate(c *cobra.Command, p process) error {
 		Binary: "ws-" + p.goos + "-" + p.goarch, PID: p.pid}
 	r, err := u.Run(ctx)
 	if err != nil {
-		var cut signalExit
+		var cut engine.SignalExit
 		if errors.As(context.Cause(ctx), &cut) {
 			return cut
 		}

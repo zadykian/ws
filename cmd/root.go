@@ -8,23 +8,11 @@ import (
 	"io"
 	"os"
 	"strings"
-	"syscall"
 
 	"github.com/spf13/cobra"
+
+	"github.com/zadykian/ws/engine"
 )
-
-// usageError is an error of the command line: a wrong command, flag or count of arguments.
-type usageError struct{ err error }
-
-func (e usageError) Error() string { return e.err.Error() }
-
-func (e usageError) Unwrap() error { return e.err }
-
-// signalExit is the error of a run that a signal cancelled. ws exits with 128 plus the signal's
-// number, as a shell reports it.
-type signalExit struct{ sig syscall.Signal }
-
-func (e signalExit) Error() string { return e.sig.String() }
 
 // group returns a command that only holds others. Alone it prints its help, and an unknown
 // subcommand is a usage error.
@@ -47,12 +35,12 @@ func newRoot(p process, groups ...*cobra.Command) *cobra.Command {
 	root.SilenceErrors = true
 	root.SilenceUsage = true
 	root.CompletionOptions.DisableDefaultCmd = true
-	root.SetFlagErrorFunc(func(_ *cobra.Command, err error) error { return usageError{err} })
+	root.SetFlagErrorFunc(func(_ *cobra.Command, err error) error { return engine.UsageError{Err: err} })
 	walk(root, func(c *cobra.Command) {
 		if args := c.Args; args != nil {
 			c.Args = func(c *cobra.Command, a []string) error {
 				if err := args(c, a); err != nil {
-					return usageError{err}
+					return engine.UsageError{Err: err}
 				}
 				return nil
 			}
@@ -81,15 +69,15 @@ func execute(ctx context.Context, root *cobra.Command, args []string, stdin io.R
 	if err == nil {
 		return 0
 	}
-	var cut signalExit
+	var cut engine.SignalExit
 	if errors.As(err, &cut) {
-		return 128 + int(cut.sig)
+		return 128 + int(cut.Sig)
 	}
 	path := cmd.CommandPath()
 	for line := range strings.SplitSeq(err.Error(), "\n") {
 		_, _ = fmt.Fprintf(stderr, "%s: %s\n", path, line)
 	}
-	var usage usageError
+	var usage engine.UsageError
 	if errors.As(err, &usage) {
 		_, _ = fmt.Fprintf(stderr, "Run '%s --help' for usage.\n", path)
 		return 2

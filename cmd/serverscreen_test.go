@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/role"
@@ -136,7 +137,7 @@ func TestApplyOnScreenStopsPastTheCurrentStep(t *testing.T) {
 		return stepOf{"two", func(context.Context) error { reached = true; return nil }}
 	})
 	_, err := applyOnScreen(c, p, role.Config{M: m, Out: &effecttest.Out{}}, []role.Role{waits, next})
-	if !errors.Is(err, signalExit{syscall.SIGINT}) || reached {
+	if !errors.Is(err, engine.SignalExit{Sig: syscall.SIGINT}) || reached {
 		t.Errorf("err = %v, the next role reached = %v", err, reached)
 	}
 }

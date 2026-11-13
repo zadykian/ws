@@ -11,6 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/core/effect/units"
@@ -114,11 +115,11 @@ type serverRun struct {
 // roles read. The steps of --only follow the values, so they are checked last.
 func prepareServer(c *cobra.Command, p process, opts applyOptions) (serverRun, error) {
 	if c.Flags().Changed("only") && len(opts.Only) == 0 {
-		return serverRun{}, usageError{errors.New("--only names no role")}
+		return serverRun{}, engine.UsageError{Err: errors.New("--only names no role")}
 	}
 	_, err := role.Select(ubuntu.Roles(values.Values{}, secrets.Secrets{}), opts.Only)
 	if err != nil {
-		return serverRun{}, usageError{err}
+		return serverRun{}, engine.UsageError{Err: err}
 	}
 	text, err := p.machine.ReadFile(osRelease)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
@@ -146,10 +147,10 @@ func prepareServer(c *cobra.Command, p process, opts applyOptions) (serverRun, e
 		Prepare: prepareSteps(p.machine, out)}
 	r := serverRun{cfg: cfg, values: v, term: term, out: out}
 	if r.list, err = r.roles(sec); err != nil {
-		return serverRun{}, usageError{err}
+		return serverRun{}, engine.UsageError{Err: err}
 	}
 	if err := cfg.CheckSteps(r.list); err != nil {
-		return serverRun{}, usageError{err}
+		return serverRun{}, engine.UsageError{Err: err}
 	}
 	return r, nil
 }

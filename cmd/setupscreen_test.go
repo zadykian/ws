@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/effect/local"
@@ -133,7 +134,7 @@ func TestSetupOnScreenStopsPastTheCurrentStep(t *testing.T) {
 		return err
 	}
 	err := setupOnScreen(c, p, tui.NewGroup("", nil), run, step.Options{Check: true})
-	if !errors.Is(err, signalExit{syscall.SIGINT}) || reached {
+	if !errors.Is(err, engine.SignalExit{Sig: syscall.SIGINT}) || reached {
 		t.Errorf("err = %v, the next step reached = %v", err, reached)
 	}
 }

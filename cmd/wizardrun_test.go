@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
@@ -58,7 +59,7 @@ func TestWizardConfigEndsACutAsAPlainRunDoes(t *testing.T) {
 	p, _ := macTerminal()
 	c, _ := screenCommand(t, "")
 	err := wizardRun{c, p, testSide(), wizardOptions{}}.config().Cut(syscall.SIGINT)
-	var cut signalExit
+	var cut engine.SignalExit
 	if err == nil || errors.As(err, &cut) {
 		t.Errorf("err = %v, want one of status 1", err)
 	}

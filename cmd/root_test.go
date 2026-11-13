@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
@@ -49,7 +50,7 @@ func runGroups(p process, args ...string) (status int, stdout, stderr string) {
 func TestExecuteExitsAsAShellReportsASignal(t *testing.T) {
 	root := newRoot(fakeProcess())
 	root.AddCommand(&cobra.Command{Use: "cut", RunE: func(*cobra.Command, []string) error {
-		return signalExit{syscall.SIGTERM}
+		return engine.SignalExit{Sig: syscall.SIGTERM}
 	}})
 	var out, errs bytes.Buffer
 	status := execute(context.Background(), root, []string{"cut"}, strings.NewReader(""), &out, &errs)

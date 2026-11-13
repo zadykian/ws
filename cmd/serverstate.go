@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
@@ -49,7 +50,7 @@ func runState(c *cobra.Command, p process, opts applyOptions, asJSON bool) error
 	// plan, as ikeward's install does, and a report has no use for them.
 	list, err := r.roles(secrets.Secrets{Unread: true})
 	if err != nil {
-		return usageError{err}
+		return engine.UsageError{Err: err}
 	}
 	if drawsReport(c, p) {
 		p.machine = r.cfg.M // ws_home confines it.

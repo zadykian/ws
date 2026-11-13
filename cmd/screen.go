@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/tui"
 )
 
@@ -53,7 +54,7 @@ func runTitle(c *cobra.Command, check bool) string {
 func screenConfig(c *cobra.Command, p process) tui.Config {
 	return tui.Config{
 		In: c.InOrStdin(), Out: c.ErrOrStderr(), Text: c.OutOrStdout(), Theme: tui.NewTheme(p.getenv),
-		Machine: p.machine, Cut: func(s syscall.Signal) error { return signalExit{s} },
+		Machine: p.machine, Cut: func(s syscall.Signal) error { return engine.SignalExit{Sig: s} },
 	}
 }
 
