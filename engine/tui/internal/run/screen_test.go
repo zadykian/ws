@@ -14,18 +14,18 @@ import (
 )
 
 // sent gives r each message.
-func sent(r RunScreen, msgs ...tea.Msg) RunScreen {
+func sent(r Screen, msgs ...tea.Msg) Screen {
 	for _, msg := range msgs {
 		model, _ := r.Update(msg)
-		r = model.(RunScreen)
+		r = model.(Screen)
 	}
 	return r
 }
 
 // shown is the words of r's frame.
-func shown(r RunScreen) string { return stripped(r.View().Content) }
+func shown(r Screen) string { return stripped(r.View().Content) }
 
-func testRun() RunScreen {
+func testRun() Screen {
 	screen := NewRunScreen("ws server ubuntu apply", testTheme,
 		list.Group{Name: "base", Steps: []string{"Packages", "Locale"}}, list.Group{Name: "ssh", Steps: []string{"Keys"}})
 	return sent(screen, tea.WindowSizeMsg{Width: 80, Height: 24})

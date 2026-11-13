@@ -50,7 +50,7 @@ type StateSection = run.StateSection
 
 // RunScreen follows a run: its steps by role with the current one marked, a window on what the run
 // prints, a bar of the steps ended and the elapsed time.
-type RunScreen = run.RunScreen
+type RunScreen = run.Screen
 
 // Run draws screen on c.Out, runs work in a goroutine beside it, and returns once the terminal is
 // back.

@@ -36,10 +36,10 @@ var stopNowButton = key.NewBinding(key.WithKeys("ctrl+c"), key.WithHelp("ctrl+c"
 // tickMsg is the clock, for the elapsed time. It carries the time, so that Update reads no clock.
 type tickMsg struct{ at time.Time }
 
-// RunScreen follows a run: its steps by role with the current one marked, a window on what the run
+// Screen follows a run: its steps by role with the current one marked, a window on what the run
 // prints, a bar of the steps ended and the elapsed time. Bridge.Observe and effect.Out send it what
 // it shows. The keys scroll the window, as the steps list follows the run by itself.
-type RunScreen struct {
+type Screen struct {
 	title   string
 	theme   widget.Theme
 	steps   list.StepList
@@ -56,8 +56,8 @@ type RunScreen struct {
 }
 
 // NewRunScreen returns the screen of a run of groups, which name every step before the run starts.
-func NewRunScreen(title string, theme widget.Theme, groups ...list.Group) RunScreen {
-	return RunScreen{
+func NewRunScreen(title string, theme widget.Theme, groups ...list.Group) Screen {
+	return Screen{
 		title:  title,
 		theme:  theme,
 		steps:  list.NewStepList(groups),
@@ -67,17 +67,17 @@ func NewRunScreen(title string, theme widget.Theme, groups ...list.Group) RunScr
 }
 
 // Init starts the clock.
-func (r RunScreen) Init() tea.Cmd {
+func (r Screen) Init() tea.Cmd {
 	return func() tea.Msg { return tickMsg{time.Now()} }
 }
 
 // Update takes the run's events and lines, the clock, the window's size and the keys.
-func (r RunScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (r Screen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return r.Updated(msg)
 }
 
 // Updated is Update by its own type, for a screen that draws a run its way.
-func (r RunScreen) Updated(msg tea.Msg) (RunScreen, tea.Cmd) {
+func (r Screen) Updated(msg tea.Msg) (Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case step.Event:
 		r.steps = r.steps.Take(msg)
@@ -103,7 +103,7 @@ func (r RunScreen) Updated(msg tea.Msg) (RunScreen, tea.Cmd) {
 }
 
 // fitted sizes the output to its pane, past a change of the window or of the footer's rows.
-func (r RunScreen) fitted() RunScreen {
+func (r Screen) fitted() Screen {
 	if r.pane != nil {
 		r.output = r.output.Fit(r.pane(r.window))
 		return r
@@ -114,29 +114,29 @@ func (r RunScreen) fitted() RunScreen {
 
 // OutputIn returns the screen with its output sized by pane in a window, for a host that draws the
 // output elsewhere.
-func (r RunScreen) OutputIn(pane func(window widget.Size) widget.Size) RunScreen {
+func (r Screen) OutputIn(pane func(window widget.Size) widget.Size) Screen {
 	r.pane = pane
 	return r
 }
 
 // Output is the window on what the run prints.
-func (r RunScreen) Output() widget.OutputPane {
+func (r Screen) Output() widget.OutputPane {
 	return r.output
 }
 
 // Theme is the theme that styles the screen.
-func (r RunScreen) Theme() widget.Theme {
+func (r Screen) Theme() widget.Theme {
 	return r.theme
 }
 
 // Window is the size of the terminal, as the screen last heard it.
-func (r RunScreen) Window() widget.Size {
+func (r Screen) Window() widget.Size {
 	return r.window
 }
 
 // pressed moves the focus or the window, or asks the session to stop. Up, Down and Home are no
 // buttons, as a row of all the keys would take two lines of an 80-column window.
-func (r RunScreen) pressed(msg tea.KeyPressMsg) (RunScreen, tea.Cmd) {
+func (r Screen) pressed(msg tea.KeyPressMsg) (Screen, tea.Cmd) {
 	var place int
 	r.footer, place = r.footer.Update(msg)
 	page := max(r.output.Size.Height, 1)
@@ -162,7 +162,7 @@ func (r RunScreen) pressed(msg tea.KeyPressMsg) (RunScreen, tea.Cmd) {
 // Layout is the screen with its panes empty, as what fills them depends on their sizes. The window
 // holds the focus alone, so that a window too short for two panes shows it, under the current
 // step's name.
-func (r RunScreen) Layout() widget.Layout {
+func (r Screen) Layout() widget.Layout {
 	title := "Output"
 	if at := r.steps.At(); at >= 0 {
 		title = r.steps[at].Label()
@@ -179,7 +179,7 @@ func (r RunScreen) Layout() widget.Layout {
 }
 
 // View draws the screen.
-func (r RunScreen) View() tea.View {
+func (r Screen) View() tea.View {
 	l := r.Layout()
 	sizes := l.PaneSizes(r.window.Width, r.window.Height)
 	l.Panes[0].Body = r.steps.View(r.theme, sizes[0].Height)
@@ -188,7 +188,7 @@ func (r RunScreen) View() tea.View {
 }
 
 // status is the title's right side: the steps ended, their bar where it fits, and the elapsed time.
-func (r RunScreen) status() string {
+func (r Screen) status() string {
 	count := fmt.Sprintf("%d/%d", r.steps.Ended(), len(r.steps))
 	clock := elapsed(r.now.Sub(r.started))
 	room := r.window.Width - lipgloss.Width(r.title) - lipgloss.Width(count) - lipgloss.Width(clock) - statusGaps
