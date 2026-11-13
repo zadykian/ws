@@ -30,7 +30,7 @@ type Found struct {
 // comment mark.
 var userWrittenBy = []byte("Written by ")
 
-// Gather joins the items of the parts, and keeps those before a failure, as host.Group does.
+// Gather joins the items of the parts, and keeps those before a failure, as resource.Group does.
 func Gather(ctx context.Context, parts ...step.Reporter) ([]step.Item, error) {
 	var items []step.Item
 	for _, p := range parts {

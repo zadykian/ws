@@ -3,12 +3,13 @@
 # Without that line, a run with no terminal must stop where WS_HOST_KEY is missing or names another
 # key. --check, under StrictHostKeyChecking accept-new in ~/.ssh/config, must show the line it would
 # add. Where known_hosts is a link, it must stop, as a run must, which prints that line for its
-# file. With a mac.conf of no way to ws, a run must stop, naming docs/router.md. None may change
-# known_hosts. WS_HOST_KEY=yes, with the Mac's own mac.conf, must then add the same line back.
-# With a mac.conf whose way to ws doesn't answer, ws's address now must come from WS_FIRST_ADDRESS.
-# That run's closing list must name mac.conf's WS_PORT in the router's forwards, and ws's lease at
-# no address, as mac.conf has no LAN. A cloud VM's copy must name mac.conf's way to ws, and no
-# lease. The Mac's own mac.conf then puts the way back.
+# file. With a mac.conf of no way to ws, a run must stop, naming
+# roles/server/ubuntu/network/router.md. None may change known_hosts. WS_HOST_KEY=yes, with the
+# Mac's own mac.conf, must then add the same line back. With a mac.conf whose way to ws doesn't
+# answer, ws's address now must come from WS_FIRST_ADDRESS. That run's closing list must name
+# mac.conf's WS_PORT in the router's forwards, and ws's lease at no address, as mac.conf has no LAN.
+# A cloud VM's copy must name mac.conf's way to ws, and no lease. The Mac's own mac.conf then puts
+# the way back.
 
 set -u
 
@@ -72,7 +73,7 @@ sed -e 's/^WS_REMOTE=.*/WS_REMOTE=/' -e 's/^WS_REMOTE_PORT=.*/WS_REMOTE_PORT=/' 
     ~/.config/ws/mac.conf >"$none"
 out=$(WS_CONF=$none "$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
-expect 1 'and no WS_REMOTE_PORT; set those in mac.conf as docs/router.md has them'
+expect 1 'and no WS_REMOTE_PORT; set those in mac.conf as roles/server/ubuntu/network/router.md has them'
 out=$(WS_HOST_KEY=yes "$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
@@ -96,7 +97,7 @@ status=$?
 printf '%s\n' "$out"
 [ "$status" = 0 ] || error "ws client macos wizard with WS_FIRST_ADDRESS=127.0.0.1 exited $status"
 cmp -s "$hosts" "$RUNNER_TEMP/hosts" || error "ws client macos wizard with WS_FIRST_ADDRESS wrote another $hosts"
-lease="- ws's lease: static, as docs/router.md has it, as this run reached ws at 127.0.0.1."
+lease="- ws's lease: static, as roles/server/ubuntu/network/router.md has it, as this run reached ws at 127.0.0.1."
 forwards="- The router's forwards to ws, UDP 51821 and TCP 22022, for 192.0.2.1,"
 if ! printf '%s\n' "$out" | grep -qxF -e "$lease" ||
     ! printf '%s\n' "$out" | grep -qF -e "$forwards"; then
@@ -109,7 +110,7 @@ out=$(WS_CONF=$RUNNER_TEMP/cloud.conf WS_FIRST_ADDRESS=127.0.0.1 WS_HOST_KEY=$fp
 status=$?
 printf '%s\n' "$out"
 way="- ws's address: WS_REMOTE in mac.conf must lead to ws, as this run reached it at 127.0.0.1"
-if [ "$status" != 0 ] || ! printf '%s\n' "$out" | grep -qF -e "$way (docs/mac-targets.md)." ||
+if [ "$status" != 0 ] || ! printf '%s\n' "$out" | grep -qF -e "$way (roles/client/macos/conf/README.md)." ||
     printf '%s\n' "$out" | grep -q "^- ws's lease: "; then
     error "ws client macos wizard on a cloud VM with WS_FIRST_ADDRESS exited $status, or named its lease"
 fi

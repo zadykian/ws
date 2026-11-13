@@ -121,8 +121,8 @@ done
 [ "$(grep -oF "(WS_LAN_ADDRESS): " "$RUNNER_TEMP/tty" | wc -l)" -eq 3 ] ||
     error 'ws client macos wizard asked WS_LAN_ADDRESS other than 3 times, for 2 bad answers'
 
-# The defaults: a machine on the LAN, the router's LAN and lease (docs/router.md), and the shell
-# role's git identity.
+# The defaults: a machine on the LAN, the router's LAN and lease
+# (roles/server/ubuntu/network/router.md), and the shell role's git identity.
 printf '%s\n' '+WS_TARGET=lan' '+WS_LAN=10.88.0.0/24' '+WS_LAN_ADDRESS=10.88.0.10' \
     '+WS_GIT_NAME=zadykian' '+WS_GIT_EMAIL=me@zadykian.dev' '+WS_TUNNEL_NETWORKS=' \
     '+WS_RESOLVERS=' >"$RUNNER_TEMP/added"

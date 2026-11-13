@@ -1,5 +1,5 @@
 // Package zed is the zed role as Go steps: the settings of Zed's server for Go and C#, and the
-// open-file limit of ws_user's logins. See docs/zed.md.
+// open-file limit of ws_user's logins. See roles/server/ubuntu/zed/README.md.
 package zed
 
 import (

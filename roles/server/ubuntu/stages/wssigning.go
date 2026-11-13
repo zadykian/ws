@@ -54,7 +54,7 @@ func (s *WsGitHub) Lacks(ctx context.Context, ws *session.Session, line string) 
 // Add lists the key in what stays by hand, to add on GitHub, as ws holds no token that may.
 func (s *WsGitHub) Add(_ context.Context, _ *session.Session, line string) error {
 	s.Hand.Add("ws's signing key on GitHub: add it as a signing key at https://github.com/settings/ssh/new, "+
-		"so that GitHub shows ws's commits as verified (docs/server-wizard.md): %s", line)
+		"so that GitHub shows ws's commits as verified (roles/server/ubuntu/stages/README.md): %s", line)
 	s.Out.Say("%s: GitHub lacks ws's signing key, which the list at the end names", SigningStage)
 	s.named = true
 	return nil

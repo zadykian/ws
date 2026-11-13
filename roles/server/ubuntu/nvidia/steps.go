@@ -1,6 +1,7 @@
 // Package nvidia is the nvidia role as Go steps. On a machine with NVIDIA's GPU, they install
 // NVIDIA's headless driver from Ubuntu's archive, with the modules that Canonical builds and signs
-// for the kernel. ws-fans reads the GPU's temperature by its nvidia-smi. See docs/nvidia.md.
+// for the kernel. ws-fans reads the GPU's temperature by its nvidia-smi. See
+// roles/server/ubuntu/nvidia/README.md.
 package nvidia
 
 import (

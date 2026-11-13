@@ -102,7 +102,7 @@ func (v *Values) derive() {
 
 // underHome refuses a signing key or an allowed signers file that is not below ws_home. A role
 // reaches such a file through the account, by a path under the home, so that it can refuse a link
-// there (docs/security.md).
+// there (roles/server/ubuntu/security/README.md).
 func (v *Values) underHome() error {
 	home := path.Clean(v.Home)
 	for _, k := range []struct{ key, val string }{

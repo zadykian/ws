@@ -22,7 +22,7 @@ const (
 )
 
 // Zsh writes ~/.config/ws/zshrc, a hook that turns off at each prompt the modes that a dropped ssh
-// leaves on (docs/mac-ghostty.md). It adds the line that sources the hook at the end of ~/.zshrc,
+// leaves on (roles/client/macos/ghostty/README.md). It adds the line that sources the hook at the end of ~/.zshrc,
 // and keeps the old file as ~/.zshrc.TIME~, as the ssh step keeps ~/.ssh/config. It warns, and leaves
 // ~/.zshrc, where the hook is not ws's or ~/.zshrc is a link that lacks the line.
 type Zsh struct {

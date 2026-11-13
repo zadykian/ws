@@ -1,5 +1,5 @@
-// Package paths holds what the host resources share: the states of a report, the reading of a file
-// as root and the guards of a user's home.
+// Package paths holds what the resource packages share: the states of a report, the reading of a
+// file as root and the guards of a user's home.
 package paths
 
 import (

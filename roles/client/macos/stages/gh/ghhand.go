@@ -18,5 +18,5 @@ func (g *Gh) Hand(ctx context.Context, hand *guided.Hand) {
 		}
 	}
 	hand.Add("Pushes from the Mac's clones to GitHub: gh auth setup-git, which has git take gh's login " +
-		"(docs/mac-git.md).")
+		"(roles/client/macos/git/README.md).")
 }

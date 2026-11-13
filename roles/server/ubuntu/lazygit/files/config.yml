@@ -7,8 +7,8 @@
 ---
 gui:
   # JetBrains Dark, the theme of Zed and Fresh. Each colour is Zed's, from the key named beside
-  # it (docs/lazygit.md#the-theme). The background stays the terminal's, as lazygit has no key
-  # for it.
+  # it (roles/server/ubuntu/lazygit/README.md#the-theme). The background stays the terminal's, as
+  # lazygit has no key for it.
   theme:
     activeBorderColor: ["#467ff2", bold]  # border.focused
     inactiveBorderColor: ["#393b41"]  # border

@@ -1,5 +1,5 @@
 // Package tmux is the tmux role as Go steps: tmux from Ubuntu's archive, in place of its snap. See
-// docs/tmux.md.
+// roles/server/ubuntu/tmux/README.md.
 package tmux
 
 import (

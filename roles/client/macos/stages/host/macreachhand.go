@@ -21,10 +21,10 @@ func (r MacReach) Hand(h *guided.Hand, s session.Status) {
 	session.Fans(h, s)
 	if c.Target != "cloud" && s.OutboundOff {
 		h.Add("ws's outbound table: off, as ws's /etc/ws/host_vars.yml names security_outbound: false, as for " +
-			"a cloud VM; remove that line, then run the wizard with --update (docs/security.md, Outbound).")
+			"a cloud VM; remove that line, then run the wizard with --update (roles/server/ubuntu/security/README.md, Outbound).")
 	}
 	h.Add("macOS's local network: where it asks whether Ghostty, Zed or another app may find " +
-		"devices there, allow it (docs/mac.md, ssh's hosts).")
+		"devices there, allow it (roles/client/macos/README.md, ssh's hosts).")
 	first := r.SSH.First()
 	if c.Target != "lan" {
 		away(h, c, first)
@@ -35,17 +35,17 @@ func (r MacReach) Hand(h *guided.Hand, s session.Status) {
 		if c.LANAddress != "" {
 			lease += " at " + c.LANAddress
 		}
-		h.Add("ws's lease: %s, as docs/router.md has it, as this run reached ws at %s.", lease, first)
+		h.Add("ws's lease: %s, as roles/server/ubuntu/network/router.md has it, as this run reached ws at %s.", lease, first)
 	}
 	if c.Remote != "" {
-		h.Add("The router's forwards to ws, UDP %s and TCP %s, for %s, as docs/router.md has them.",
+		h.Add("The router's forwards to ws, UDP %s and TCP %s, for %s, as roles/server/ubuntu/network/router.md has them.",
 			cmp.Or(c.Port, "51820"), cmp.Or(c.RemotePort, "22022"), c.Remote)
 	}
 }
 
 // away adds what stays by hand of a cloud VM or a VM on the Mac, which have no router. Where the
 // run asked ws's address, mac.conf's way must lead to it. A cloud VM's provider must let the tunnel
-// in (docs/mac-targets.md).
+// in (roles/client/macos/conf/README.md).
 func away(h *guided.Hand, c conf.Conf, first string) {
 	target := c.Target
 	way := "WS_LAN_ADDRESS"
@@ -54,10 +54,10 @@ func away(h *guided.Hand, c conf.Conf, first string) {
 	}
 	if first != "" {
 		h.Add("ws's address: %s in mac.conf must lead to ws, as this run reached it at %s "+
-			"(docs/mac-targets.md).", way, first)
+			"(roles/client/macos/conf/README.md).", way, first)
 	}
 	if target == "cloud" {
-		h.Add("The provider's firewall: UDP %s open to ws, for the tunnel (docs/mac-targets.md).",
+		h.Add("The provider's firewall: UDP %s open to ws, for the tunnel (roles/client/macos/conf/README.md).",
 			cmp.Or(c.Port, "51820"))
 	}
 }

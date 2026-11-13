@@ -1,5 +1,5 @@
 // Package base is the base role as Go steps: the packages every machine gets, the locale, the
-// time zone, unattended upgrades and the swap file. See docs/base.md.
+// time zone, unattended upgrades and the swap file. See roles/server/ubuntu/base/README.md.
 package base
 
 import (

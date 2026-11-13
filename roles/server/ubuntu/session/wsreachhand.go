@@ -9,16 +9,16 @@ import guided "github.com/zadykian/ws/engine/core/wizard"
 func (r WsReach) Hand(h *guided.Hand, s Status) {
 	Fans(h, s)
 	if c, err := r.Read(); err == nil && c.Target == "lan" {
-		h.Add("ws's lease, on a machine on the LAN: static, as docs/router.md has it.")
+		h.Add("ws's lease, on a machine on the LAN: static, as roles/server/ubuntu/network/router.md has it.")
 	}
 	h.Add("Each device's ssh key on ws: ssh-import-id gh:LOGIN, run as WS_USER, adds the keys that GitHub " +
-		"lists for LOGIN (docs/security.md, SSH and the firewall).")
+		"lists for LOGIN (roles/server/ubuntu/security/README.md, SSH and the firewall).")
 }
 
 // Fans adds the fans' driver where Secure Boot refused it, as the remote script's status read.
 func Fans(h *guided.Hand, s Status) {
 	if s.FansRefused {
 		h.Add("ws's fans' driver: with Secure Boot on, DKMS's key, enrolled at ws's console " +
-			"(docs/fans.md, Secure Boot).")
+			"(roles/server/ubuntu/fans/README.md, Secure Boot).")
 	}
 }

@@ -16,8 +16,8 @@ type Way struct {
 	Inet bool
 }
 
-// errNoWay says that no direct way leads to ws: mac.conf gives none and the Host key stage asked no
-// address.
+// errNoWay says that no direct way leads to ws: Ways is nil or finds none and the lock holds no
+// first address, or ssh -G fails.
 var errNoWay = errors.New("ssh finds no direct way to ws")
 
 // Login tells whether ssh logs in to ws at w as WS_USER by the Mac's key, and runs a command. It

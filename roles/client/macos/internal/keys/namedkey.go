@@ -16,8 +16,8 @@ import (
 // KeyUse is what mac.conf names a key for.
 type KeyUse int
 
-// The uses are ws's login key, WS_IDENTITY_PUB_KEY (docs/mac.md), and git's signing key,
-// WS_GIT_SIGNING_PUB_KEY (docs/mac-git.md).
+// The uses are ws's login key, WS_IDENTITY_PUB_KEY (roles/client/macos/README.md), and git's signing key,
+// WS_GIT_SIGNING_PUB_KEY (roles/client/macos/git/README.md).
 const (
 	LoginKey KeyUse = iota
 	SigningKey
@@ -25,8 +25,8 @@ const (
 
 // keyUses holds the variable, the words and the page of each use, which every stop names.
 var keyUses = [...]struct{ name, words, page string }{
-	LoginKey:   {"WS_IDENTITY_PUB_KEY", "ws's login key", "docs/mac.md"},
-	SigningKey: {"WS_GIT_SIGNING_PUB_KEY", "git's signing key", "docs/mac-git.md"},
+	LoginKey:   {"WS_IDENTITY_PUB_KEY", "ws's login key", "roles/client/macos/README.md"},
+	SigningKey: {"WS_GIT_SIGNING_PUB_KEY", "git's signing key", "roles/client/macos/git/README.md"},
 }
 
 // named returns the .pub that mac.conf names for the use, and the agent it names for it.
@@ -63,8 +63,8 @@ type NamedKey struct {
 }
 
 // ReadKey reads the key that mac.conf names for u. It asks Secretive's agent where mac.conf names
-// none, or names one of Secretive's, whose key needs no file: macOS 27 denies ws Secretive's
-// (docs/mac.md). Each stop names u's variable, and the missing one u's page.
+// none, or names one of Secretive's. That key needs no file: macOS 27 denies ws Secretive's
+// (roles/client/macos/README.md). Each stop names u's variable, and the missing one u's page.
 func ReadKey(ctx context.Context, m effect.Machine, c conf.Conf, home string, u KeyUse) (NamedKey, error) {
 	name := keyUses[u].name
 	pub, agent := u.named(c)

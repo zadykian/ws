@@ -13,9 +13,10 @@ import (
 )
 
 // SigningKey makes the SSH key that signs commits, once, with no passphrase: tools and claude
-// commit unattended, and the key only signs. docs/shell.md says how to revoke it, under Signing.
-// ssh-keygen refuses a path whose directory is missing, as a container's ~/.ssh may be, so the
-// directory comes first. A key in the home itself needs none. The user makes the key, and owns it.
+// commit unattended, and the key only signs. roles/server/ubuntu/shell/README.md says how to revoke
+// it, under Signing. ssh-keygen refuses a path whose directory is missing, as a container's ~/.ssh
+// may be, so the directory comes first. A key in the home itself needs none. The user makes the
+// key, and owns it.
 func SigningKey(m effect.Machine, a account.Account, key string) []resource.Resource {
 	gen := keygen{M: m, User: a.User, Path: key}
 	if dir := plan.Below(a, path.Dir(key)); dir != "" {

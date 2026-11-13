@@ -5,7 +5,7 @@
 #   tools/run -path NAME      prints the path of the tool's executable, or of its file
 #
 # lazygit-schema is a file to read, not to run: lazygit's config schema, which gotest hands the
-# lazygit role's test (docs/lazygit.md).
+# lazygit role's test (roles/server/ubuntu/lazygit/README.md).
 #
 # Each tool comes from its GitHub release, and Go from go.dev, for Linux or macOS on amd64 or
 # arm64. The first run downloads it into .cache/tools and checks its SHA-256. A bump changes a tool's version and its

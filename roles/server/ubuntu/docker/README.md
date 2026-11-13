@@ -1,0 +1,89 @@
+# docker
+
+The `docker` role installs Docker Engine with its buildx and compose plugins, from Docker's apt
+repository, and writes `/etc/docker/daemon.json`. Its code is Go, in `roles/server/ubuntu/docker`,
+as steps of `ws server ubuntu apply`. They are the repository, the packages, the check of the
+routes, the user's leaving the `docker` group, the configuration, the check of `docker0` and the
+user's rootless daemon. Docker's apt key is pinned by its SHA-256 in `repository.go`: a changed key
+fails the run. Without systemd booted, as in CI's container, the steps that need it skip and say so.
+
+## Logs and restarts
+
+`daemon.json` rotates each container's log at 10 MB and keeps 3 files. A container keeps the log
+settings Docker created it with. Containers keep running while Docker restarts (`live-restore`).
+
+## The slice
+
+`dockerd` and every container run in `docker.slice`, capped at half the RAM and half the CPUs, with
+no swap. `docker_memory_max`, `docker_cpu_quota` and `docker_memory_swap_max` set other limits, in
+systemd's syntax (`16G`, `400%`). A running container moves into the slice when it next starts.
+`containerd`, which pulls and unpacks images, stays outside the slice's limits.
+
+## Names
+
+Containers resolve names as the host does. The `dns` of `daemon.json` is the default bridge's
+address, `172.17.0.1` (`docker_bridge_ip`), where systemd-resolved listens too. ufw lets Docker's
+networks reach port 53 there through their bridges, `docker0` and `br-ID`, whatever their subnets.
+A network given a bridge name of its own gets no answers. A running container takes the new `dns`
+when it next starts. The role deletes the rules it gave ufw for a former `docker_bridge_ip`.
+
+`docker0` takes a new `docker_bridge_ip` or `docker_bridge_prefix_length` only when Docker starts
+with no container running, as after a reboot. Until then lookups to a new address get no answers,
+and the role stops after it restarts Docker. Reboot, or stop every container and restart Docker,
+then apply again. `--check` shows the move.
+
+## The address pool
+
+Docker takes each new network's subnet, a `/20`, from `172.16.0.0/12` (`docker_address_pool`). A
+network created before the pool moves keeps its subnet until created again, as by
+`docker compose down` and `up`.
+
+Docker leaves out of the pool only the subnets of the main routing table's on-link routes. So the
+role stops, before it writes `daemon.json`, on any other route into the pool, such as one a VPN
+keeps in a table of its own. It stops on any route into the default bridge's subnet too. It reads
+the routes as they stand during the run: a VPN that is down shows none.
+
+## Published ports
+
+A port published without an address, as in `-p 8080:80` or compose's `"8080:80"`, goes on
+`127.0.0.1` (`docker_publish_ip`) rather than on every address. The `ip` of `daemon.json` sets that
+for the default bridge, and `default-network-opts` for each network created afterwards. A network
+created before keeps publishing on every address until created again, as by
+`docker compose down` and `up`. The default bridge takes `ip` when Docker starts with no container
+running, as after a reboot. Docker's published ports get past ufw:
+[SSH and the firewall](../security/README.md#ssh-and-the-firewall).
+
+## Outbound
+
+Unless `security_outbound` is false, a container reaches no host of the LAN, the cable or `wg0`,
+nor of another private network around the server. The `security` role's table drops what it
+starts there, so a TCP connect hangs ([Outbound](../security/README.md#outbound)).
+
+## Build cache
+
+BuildKit drops build cache that no build has used for 90 days (`docker_build_cache_keep_days`). It
+collects when Docker starts and after each build, so idle cache goes at the next build or restart.
+As Docker's own policy does, it also drops the least used cache, down to 10% of the disk. It does
+so while the disk has less than 20% free or the cache takes more than 80% of it.
+`docker_build_cache_reserved_space`, `docker_build_cache_max_used_space` and
+`docker_build_cache_min_free_space` set other sizes, in the format of `daemon.json`: `50G`, `50GB`
+or `50GiB`, but not `50Gi`. Cache that an image shares frees no space until the image is removed.
+
+## The rootless daemon
+
+Where `ws_user` isn't root, it runs its own daemon, and the role takes it out of the `docker` group,
+which amounts to root. The user keeps the group until its session ends. `docker` reaches the daemon
+by the `rootless` context, which Docker's tool makes. The system's daemon stays for root, and for
+SigNoz: `sudo docker ps` lists its containers.
+
+The role installs `docker-ce-rootless-extras`, `uidmap`, `slirp4netns` and `apparmor`, and fails
+where `/etc/subuid` or `/etc/subgid` gives the user fewer than 65536 ids. It enables lingering, so
+that the user's systemd runs without a login, and delegates the `io` controller to it.
+
+The daemon's `daemon.json` is `~/.config/docker/daemon.json`. It has the log and cache values, the
+published address and `cgroup-parent`, so that the containers stay in the user's `docker.slice` with
+the same limits. It has no `bip`, address pools or `live-restore`: its bridges live in rootlesskit's
+namespace, and a restart stops the user's containers. Its `dns` is slirp4netns's 10.0.2.3, whose
+queries reach the host's resolver. slirp4netns runs as the user, so the outbound table drops them
+where `/etc/resolv.conf` names a private resolver in place of systemd-resolved's stub. A container
+asks the resolver of the host by `--dns 127.0.0.53`. A rootless container binds no port below 1024.

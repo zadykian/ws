@@ -1,5 +1,5 @@
 // Package lazygit is the lazygit role as Go steps: lazygit from Ubuntu's archive, the wrapper in
-// front of it, and its config. See docs/lazygit.md.
+// front of it, and its config. See roles/server/ubuntu/lazygit/README.md.
 package lazygit
 
 import (

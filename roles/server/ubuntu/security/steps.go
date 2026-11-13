@@ -1,5 +1,5 @@
 // Package security is the security role as Go steps: sshd by key only, ufw, fail2ban and nft's
-// outbound table. See docs/security.md.
+// outbound table. See roles/server/ubuntu/security/README.md.
 package security
 
 import (

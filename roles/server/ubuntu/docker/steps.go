@@ -1,7 +1,7 @@
 // Package docker is the docker role as Go steps. They set up Docker Engine from Docker's apt
 // repository, its daemon.json, docker.slice, the build cache's collection and the containers' DNS
 // through the host. For a ws_user other than root, they set up a rootless daemon of its own. See
-// docs/docker.md.
+// roles/server/ubuntu/docker/README.md.
 package docker
 
 import (

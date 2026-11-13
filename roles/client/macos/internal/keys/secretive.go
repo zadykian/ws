@@ -19,7 +19,7 @@ import (
 var ErrAgentDown = errors.New("Secretive's agent does not answer") //nolint:staticcheck // Secretive is a name
 
 // SecretiveKeys returns the keys that Secretive's agent lists, and whether its socket is there. It
-// asks the agent, as macOS 27 denies ws the files of Secretive's container (docs/mac.md). A socket
+// asks the agent, as macOS 27 denies ws the files of Secretive's container (roles/client/macos/README.md). A socket
 // with no agent is ErrAgentDown.
 func SecretiveKeys(ctx context.Context, m effect.Machine, home string) ([]sshcfg.AgentKey, bool, error) {
 	socket := home + "/" + sshcfg.SecretiveData + "/socket.ssh"

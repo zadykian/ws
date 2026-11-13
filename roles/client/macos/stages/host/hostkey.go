@@ -61,11 +61,11 @@ func noWay(c conf.Conf) error {
 	how := "set those in mac.conf"
 	switch c.Target {
 	case "lan":
-		how += " as docs/router.md has them"
+		how += " as roles/server/ubuntu/network/router.md has them"
 	case "mac-vm":
-		how = "start the VM, or set WS_LAN to the Mac's network for it, as docs/mac-targets.md says"
+		how = "start the VM, or set WS_LAN to the Mac's network for it, as roles/client/macos/conf/README.md says"
 	default:
-		how += ", as docs/mac-targets.md says"
+		how += ", as roles/client/macos/conf/README.md says"
 	}
 	return errors.New(stage.Host + ": ssh finds no direct way to ws from this network: no cable, no address in " +
 		"WS_LAN and no WS_REMOTE_PORT; " + how)

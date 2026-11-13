@@ -124,7 +124,7 @@ wizard --update
 printf '%s\n' "$out" | grep -qx -e "- The cable: dock the Mac at the display .* steps\. Where the \
 cable plugs into enp7s0, which ws keeps down, run the line with WS_CABLE_PORT=PORT in the \
 environment\. Without the cable, run the line once with WS_CABLE_SERVICE= in the environment \
-(docs/mac-wizard\.md, The cable)\." && [ "$status" = 0 ] ||
+(roles/client/macos/stages/README\.md, The cable)\." && [ "$status" = 0 ] ||
     error "ws client macos wizard --update undocked exited $status, or named no dock, or no enp7s0"
 wizard run WS_CABLE_PORT=enp4s0
 printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: WS_CABLE_PORT comes from the environment, and \
@@ -147,7 +147,7 @@ WS_CABLE_PORT, or set it to nothing for none" && unnamed && [ "$status" = 1 ] ||
     error "ws client macos wizard docked with no terminal exited $status, or named no WS_CABLE_PORT"
 sed -e 's/^WS_TARGET=.*/WS_TARGET=cloud/' -e '/^WS_CABLE_/d' "$conf" >"$RUNNER_TEMP/cloud.conf"
 wizard run WS_CONF="$RUNNER_TEMP/cloud.conf"
-firewall="- The provider's firewall: UDP 51820 open to ws, for the tunnel (docs/mac-targets.md)."
+firewall="- The provider's firewall: UDP 51820 open to ws, for the tunnel (roles/client/macos/conf/README.md)."
 if [ "$status" != 0 ] || ! printf '%s\n' "$out" | grep -qxF -e "$firewall" ||
     printf '%s\n' "$out" | grep -q -e '^ws client macos wizard: Cable: ' -e '^- The cable: ' \
         -e '^- The router' || sudo grep -q '^network_direct_link_interface:' "$vars"; then

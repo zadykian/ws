@@ -30,7 +30,7 @@ func noAnswer(w remote.Way) string {
 // ask asks ws's address now, where ws doesn't answer at its way with an ed25519 key, as a new ws
 // with a lease from the router's pool. WS_FIRST_ADDRESS gives it, else the answer at the terminal,
 // where none stops the run, as before Ubuntu's install. The question names where ws's machine shows
-// it (docs/mac-targets.md). ssh takes it as HostName for the rest of the run, from the lock's file
+// it (roles/client/macos/conf/README.md). ssh takes it as HostName for the rest of the run, from the lock's file
 // that the later stages read, and the stage reads ws's key there.
 func (q firstQuestion) ask(ctx context.Context, target string, w remote.Way) (remote.Way, string, error) {
 	none := noAnswer(w)

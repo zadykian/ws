@@ -4,7 +4,7 @@
 # place, as resolvers.sh says. It watches from before the table's load, which reads what came first.
 [Unit]
 Description=Watch resolved's DNS servers for the outbound table
-Documentation=https://github.com/zadykian/ws/blob/main/docs/security.md#outbound
+Documentation=https://github.com/zadykian/ws/blob/main/roles/server/ubuntu/security/README.md#outbound
 DefaultDependencies=no
 Before=security-outbound.service shutdown.target
 Conflicts=shutdown.target

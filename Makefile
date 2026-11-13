@@ -122,9 +122,9 @@ gotest:
 		LAZYGIT_SCHEMA=$$schema CGO_ENABLED=1 "$$go" test -race -count=1 ./...
 
 # The gates of each file of FILES, by its kind, as the lint plugin runs them after Claude edits a
-# file (docs/checks.md). A workflow takes actionlint and zizmor too. Every file takes vale, which
-# reads the comments alone of a file other than Markdown. A file of no kind passes, as each gate
-# passes over the files not of its kind.
+# file (.github/workflows/README.md). A workflow takes actionlint and zizmor too. Every file takes
+# vale, which reads the comments alone of a file other than Markdown. A file of no kind passes, as
+# each gate passes over the files not of its kind.
 lint-file:
 	@status=0; for file in $(FILES); do \
 		case $$file in \

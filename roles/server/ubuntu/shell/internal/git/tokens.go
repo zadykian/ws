@@ -13,7 +13,8 @@ import (
 )
 
 // Tokens is git's tokens for servers besides GitHub. Each URL's in a file of its own, which the
-// URL's helper in ~/.config/git/tokens.gitconfig reads (docs/shell.md#git-credentials). So no token
+// URL's credential program in ~/.config/git/tokens.gitconfig reads
+// (roles/server/ubuntu/shell/README.md#git-credentials). So no token
 // goes in a template, or in the diff a dry run shows. Without entries, as in CI, ws leaves the
 // tokens and their helpers alone, so that a run without the secrets file changes nothing. With the
 // secrets file as the whole truth, a URL that the entries omit loses its token and its helper;

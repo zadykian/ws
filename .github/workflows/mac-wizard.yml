@@ -37,8 +37,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # The wizard runs from the clone in ~/repository/ws, where docs/mac.md puts it. So the
-      # checkout is copied there, as ci.yml's playbook job copies it into root's home.
+      # The wizard runs from the clone in ~/repository/ws, where roles/client/macos/README.md puts
+      # it. So the checkout is copied there, as ci.yml's playbook job copies it into root's home.
       - name: Put the checkout at ~/repository/ws
         run: |
           mkdir -p ~/repository

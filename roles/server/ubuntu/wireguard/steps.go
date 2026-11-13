@@ -1,6 +1,6 @@
 // Package wireguard is the wireguard role as Go steps. It sets up wg0, the server's end of a
 // WireGuard tunnel for the Mac, from networkd's own files. It also sets up the drops that keep
-// Docker's containers off the Mac. See docs/wireguard.md.
+// Docker's containers off the Mac. See roles/server/ubuntu/wireguard/README.md.
 package wireguard
 
 import (
