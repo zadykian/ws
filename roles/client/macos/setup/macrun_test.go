@@ -160,3 +160,17 @@ func TestRunAsksLeftOutOnlyOfAStepWithARow(t *testing.T) {
 type observed func(step.Event)
 
 func (f observed) Observe(e step.Event) { f(e) }
+
+func TestRunReturnsAStepsErrorAsItIs(t *testing.T) {
+	for _, parent := range []string{"", "tools"} {
+		o := step.Options{Parent: parent}
+		steps := func() []step.Step {
+			return []step.Step{&pending{name: "git"}, ending{name: "zed", plan: errors.New("boom")}}
+		}
+		_, want := step.RunWith(t.Context(), steps(), o)
+		_, got := run(t.Context(), steps(), o)
+		if want == nil || got == nil || got.Error() != want.Error() {
+			t.Errorf("parent %q: error = %v, want step.RunWith's %v", parent, got, want)
+		}
+	}
+}
