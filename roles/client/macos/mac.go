@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/cable"
 	"github.com/zadykian/ws/roles/client/macos/cld"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/ghostty"
@@ -37,7 +38,7 @@ type Mac struct {
 func (m Mac) steps(check bool) []step.Step {
 	return []step.Step{
 		m.ssh(false),
-		setup.Cable{Conf: m.Conf, M: m.M, Out: m.Out},
+		cable.Cable{Conf: m.Conf, M: m.M, Out: m.Out},
 		&git.Git{Conf: m.Conf, Home: m.Home, XDG: m.XDG, M: m.M, Out: m.Out},
 		&ghostty.Ghostty{Home: m.Home, Settings: ghostty.Settings, M: m.M, Out: m.Out},
 		&zed.Zed{Home: m.Home, Settings: zed.Settings, Keymap: zed.Keymap, M: m.M, Out: m.Out},

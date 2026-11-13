@@ -1,4 +1,4 @@
-package setup_test
+package cable_test
 
 import (
 	"strings"

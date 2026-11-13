@@ -1,4 +1,4 @@
-package setup_test
+package cable_test
 
 import (
 	"context"
@@ -7,16 +7,16 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/cable"
 	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/client/macos/setup"
 )
 
 const cableSet = "Manual Configuration\nIP address: 10.77.0.2\nSubnet mask: 255.255.255.252\nRouter: (null)\n"
 
-func cableStep(m *effecttest.Machine, out *effecttest.Out, list, info string) setup.Cable {
+func cableStep(m *effecttest.Machine, out *effecttest.Out, list, info string) cable.Cable {
 	m.Results["/usr/sbin/networksetup -listallnetworkservices"] = effecttest.Result{Out: []byte(list)}
 	m.Results["/usr/sbin/networksetup -getinfo Dock"] = effecttest.Result{Out: []byte(info)}
-	return setup.Cable{
+	return cable.Cable{
 		Conf: conf.Conf{CableService: "Dock"}, M: m, Out: out,
 		LookPath: func(string) (string, error) { return "/usr/sbin/networksetup", nil },
 	}
@@ -47,7 +47,7 @@ func TestCablePlans(t *testing.T) {
 
 func TestCableWithoutServiceLeavesTheNetworkAlone(t *testing.T) {
 	m := effecttest.NewMachine()
-	p, err := setup.Cable{M: m, Out: &effecttest.Out{}}.Plan(context.Background())
+	p, err := cable.Cable{M: m, Out: &effecttest.Out{}}.Plan(context.Background())
 	if err != nil || len(p.Changes) != 0 || len(m.Calls) != 0 {
 		t.Errorf("Plan = %v, %v, calls %v; want none", p.Changes, err, m.Calls)
 	}

@@ -1,4 +1,5 @@
-package setup
+// Package cable gives the Mac's cable service its Manual Configuration of the cable's address.
+package cable
 
 import (
 	"strings"
