@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 // publicKey asks root's copy of ws for the Mac's public key. It returns "" where there is no copy
@@ -67,7 +68,7 @@ func (t *Tunnel) publish(ctx context.Context) error {
 		return err
 	}
 	for _, c := range cs {
-		if err := Apply(ctx, t.M, t.Out, c); err != nil {
+		if err := change.Apply(ctx, t.M, t.Out, c); err != nil {
 			return err
 		}
 	}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 // The states that a report's items share.
@@ -136,9 +137,9 @@ func (f userFile) change(found path) []step.Change {
 	}
 	switch {
 	case !found.Exists || !bytes.Equal(found.Text, f.Text):
-		return []step.Change{Write{f.Path, found.Text, f.Text, found.Exists, mode}}
+		return []step.Change{change.Write{Path: f.Path, Before: found.Text, After: f.Text, Exists: found.Exists, Mode: mode}}
 	case f.Mode != 0 && found.Mode.Perm() != f.Mode:
-		return []step.Change{SetMode{f.Path, f.Mode}}
+		return []step.Change{change.SetMode{Path: f.Path, Mode: f.Mode}}
 	}
 	return nil
 }

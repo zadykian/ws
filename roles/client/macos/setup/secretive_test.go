@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
 	"github.com/zadykian/ws/roles/client/macos/setup"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
@@ -63,13 +64,13 @@ func TestPlanCopy(t *testing.T) {
 		}
 	}
 	got, err := setup.PlanCopy(m, pub, mactest.AgentKey, mactest.AgentHome)
-	if err != nil || len(got) != 4 || got[2] != (setup.MakeDir{Path: "/h/" + sshcfg.KeyCopies, Mode: 0o755}) ||
-		got[3] != (setup.KeyCopy{Path: pub, Text: mactest.AgentKey}) {
+	if err != nil || len(got) != 4 || got[2] != (change.MakeDir{Path: "/h/" + sshcfg.KeyCopies, Mode: 0o755}) ||
+		got[3] != (change.KeyCopy{Path: pub, Text: mactest.AgentKey}) {
 		t.Fatalf("a missing copy: %v, %v; want the directories, then the copy", got, err)
 	}
 	m.Results["mkdir -p /h/"+sshcfg.KeyCopies] = effecttest.Result{}
 	for _, c := range got {
-		if err := setup.Apply(context.Background(), m, &effecttest.Out{}, c); err != nil {
+		if err := change.Apply(context.Background(), m, &effecttest.Out{}, c); err != nil {
 			t.Fatal(err)
 		}
 	}

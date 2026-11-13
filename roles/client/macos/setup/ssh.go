@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -117,7 +118,7 @@ func (s SSH) Report(ctx context.Context) ([]step.Item, error) {
 // Apply applies the changes in order.
 func (s SSH) Apply(ctx context.Context, p step.Plan) error {
 	for _, c := range p.Changes {
-		if err := Apply(ctx, s.M, s.Out, c); err != nil {
+		if err := change.Apply(ctx, s.M, s.Out, c); err != nil {
 			return err
 		}
 	}

@@ -11,6 +11,7 @@ import (
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 const resolverDir = "/etc/resolver"
@@ -89,11 +90,11 @@ func (n *Networks) resolvers(ctx context.Context) ([]step.Change, error) {
 		}
 		// The directory is planned once: a second mkdir would fail where the directory is new.
 		if i == 0 {
-			if cs, err = Plan(ctx, cs, host.Dir{M: n.M, Path: resolverDir, Mode: 0o755}); err != nil {
+			if cs, err = change.Plan(ctx, cs, host.Dir{M: n.M, Path: resolverDir, Mode: 0o755}); err != nil {
 				return nil, err
 			}
 		}
-		if cs, err = Plan(ctx, cs, host.File{M: n.M, Path: file, Content: []byte(resolverText(r.Addresses)), Mode: 0o644}); err != nil {
+		if cs, err = change.Plan(ctx, cs, host.File{M: n.M, Path: file, Content: []byte(resolverText(r.Addresses)), Mode: 0o644}); err != nil {
 			return nil, err
 		}
 	}

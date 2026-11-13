@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/mac"
 	"github.com/zadykian/ws/roles/client/macos/setup"
 )
@@ -25,9 +26,9 @@ func TestZshMakesTheHookAndZshrcThenNothing(t *testing.T) {
 	m := effecttest.NewMachine()
 	s := zshStep(m, &effecttest.Out{})
 	p, err := s.Plan(context.Background())
-	want := []step.Change{setup.MakeDir{Path: "/h/.config", Mode: 0o755}, setup.MakeDir{Path: "/h/.config/ws", Mode: 0o700},
-		setup.Write{Path: "/h/.config/ws/zshrc", After: mac.Zshrc, Mode: 0o644},
-		setup.Write{Path: "/h/.zshrc", After: []byte(zshSource), Mode: 0o644}}
+	want := []step.Change{change.MakeDir{Path: "/h/.config", Mode: 0o755}, change.MakeDir{Path: "/h/.config/ws", Mode: 0o700},
+		change.Write{Path: "/h/.config/ws/zshrc", After: mac.Zshrc, Mode: 0o644},
+		change.Write{Path: "/h/.zshrc", After: []byte(zshSource), Mode: 0o644}}
 	if err != nil || !reflect.DeepEqual(p.Changes, want) {
 		t.Fatalf("Plan = %v, %v; want %v", p.Changes, err, want)
 	}

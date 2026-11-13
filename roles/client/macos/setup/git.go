@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 // Git sets git up from mac.conf's WS_GIT_NAME, WS_GIT_EMAIL and WS_GIT_SIGNING_PUB_KEY, and leaves it
@@ -85,7 +86,7 @@ func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 	if reg != nil {
 		cs = append(cs, *reg)
 	} else if waits != "" {
-		cs = append(cs, Remark(waits))
+		cs = append(cs, change.Remark(waits))
 	}
 	return step.Plan{Changes: g.withNotes(cs)}, nil
 }
@@ -94,12 +95,12 @@ func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 func (g *Git) Apply(ctx context.Context, p step.Plan) error {
 	n := 0
 	for ; n < len(p.Changes); n++ {
-		c, ok := p.Changes[n].(Run)
+		c, ok := p.Changes[n].(change.Run)
 		if !ok {
 			break
 		}
 		g.Out.Say("installing gh")
-		if err := Apply(ctx, g.M, g.Out, c); err != nil {
+		if err := change.Apply(ctx, g.M, g.Out, c); err != nil {
 			return err
 		}
 	}
@@ -122,7 +123,7 @@ func (g *Git) Apply(ctx context.Context, p step.Plan) error {
 			g.add(ctx, c)
 			continue
 		}
-		if err := Apply(ctx, g.M, g.Out, c); err != nil {
+		if err := change.Apply(ctx, g.M, g.Out, c); err != nil {
 			return err
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 const (
@@ -38,7 +39,7 @@ func (z *Zed) files() ([]step.Change, error) {
 		cs = append(cs, planned...)
 	}
 	if _, err := z.M.Stat(dir + "/settings.json"); err != nil {
-		cs = append(cs, Write{dir + "/settings.json", nil, []byte(zedSeed), false, 0o644})
+		cs = append(cs, change.Write{Path: dir + "/settings.json", Before: nil, After: []byte(zedSeed), Exists: false, Mode: 0o644})
 	}
 	link.warn(z.Out, len(cs), "Zed's files go there")
 	return cs, nil

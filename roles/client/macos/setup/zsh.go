@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 const (
@@ -96,7 +97,7 @@ func (z *Zsh) rcLines() userLines {
 // Apply makes the directories and writes the files.
 func (z *Zsh) Apply(ctx context.Context, p step.Plan) error {
 	for _, c := range p.Changes {
-		if err := Apply(ctx, z.M, z.Out, c); err != nil {
+		if err := change.Apply(ctx, z.M, z.Out, c); err != nil {
 			return err
 		}
 	}

@@ -1,4 +1,6 @@
-package setup
+// Package change holds the changes that the Mac's roles plan and apply: a write of the user's file, a
+// command, a key copy. Each says what it would do, and Apply does it.
+package change
 
 import (
 	"bytes"

@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 // TestUserFilePlanAgreesWithReport finds that a report stands off where a plan changes the file or
@@ -46,7 +47,7 @@ func TestUserFilePlanAgreesWithReport(t *testing.T) {
 			got = "not ws's"
 		case planErr != nil:
 			got = "fails"
-		case len(cs) == 1 && cs[0] == SetMode{file, c.mode}:
+		case len(cs) == 1 && cs[0] == change.SetMode{Path: file, Mode: c.mode}:
 			got = "mode"
 		case len(cs) == 1:
 			got = "write"

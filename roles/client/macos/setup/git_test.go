@@ -10,6 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
 	"github.com/zadykian/ws/roles/client/macos/setup"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
@@ -39,7 +40,7 @@ func gitStep(m *effecttest.Machine, look func(string) (string, error)) *setup.Gi
 func prereqs(p step.Plan) []step.Change {
 	var cs []step.Change
 	for _, c := range p.Changes {
-		if run, ok := c.(setup.Run); ok {
+		if run, ok := c.(change.Run); ok {
 			cs = append(cs, run)
 		}
 	}
@@ -85,7 +86,7 @@ func TestGitPlansGh(t *testing.T) {
 func TestGitApplyInstallsGh(t *testing.T) {
 	m, _ := gitReady()
 	m.Results["brew install gh"] = effecttest.Result{}
-	install := setup.Run{Name: "brew", Args: []string{"install", "gh"}}
+	install := change.Run{Name: "brew", Args: []string{"install", "gh"}}
 	err := gitStep(m, nil).Apply(context.Background(), step.Plan{Changes: []step.Change{install}})
 	if err != nil || m.Calls[0] != "run brew install gh" {
 		t.Errorf("Apply = %v, calls %q; want brew install gh first", err, m.Calls)
@@ -231,7 +232,7 @@ func TestGitSetsTheModeOfWsDirectoryAndWarnsOfALinkedOne(t *testing.T) {
 	m, g := gitReady()
 	m.Dirs[gitHome+"/.config/ws"] = 0o755
 	p, err := g.Plan(context.Background())
-	if err != nil || len(p.Changes) != 4 || p.Changes[0] != (setup.SetMode{Path: gitHome + "/.config/ws", Mode: 0o700}) {
+	if err != nil || len(p.Changes) != 4 || p.Changes[0] != (change.SetMode{Path: gitHome + "/.config/ws", Mode: 0o700}) {
 		t.Fatalf("Plan = %v, %v; want the mode and two writes", p.Changes, err)
 	}
 	m, g = gitReady()

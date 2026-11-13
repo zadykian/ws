@@ -10,6 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -91,7 +92,7 @@ func copyChange(m effect.Machine, pub, text string) []step.Change {
 	if old, err := m.ReadFile(pub); err == nil && string(old) == text {
 		return nil
 	}
-	return []step.Change{KeyCopy{pub, text}}
+	return []step.Change{change.KeyCopy{Path: pub, Text: text}}
 }
 
 // copied says whether ws keeps a copy of the .pub at pub: one in ws's directory of copies, with text

@@ -1,4 +1,4 @@
-package setup
+package change
 
 import "github.com/zadykian/ws/engine/core/step"
 

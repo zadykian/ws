@@ -123,13 +123,13 @@ func (p *pending) Plan(context.Context) (step.Plan, error) {
 	if p.made {
 		return step.Plan{}, nil
 	}
-	return step.Plan{Changes: []step.Change{change("x")}}, nil
+	return step.Plan{Changes: []step.Change{pendingChange("x")}}, nil
 }
 func (p *pending) Apply(context.Context, step.Plan) error { p.made = true; return nil }
 
-type change string
+type pendingChange string
 
-func (c change) String() string { return string(c) }
+func (c pendingChange) String() string { return string(c) }
 
 func TestRunAsksLeftOutOnlyOfAStepWithARow(t *testing.T) {
 	keepSSH := func(_, name string) bool { return name != "ssh" }

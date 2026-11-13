@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 // Cable gives the service that mac.conf's WS_CABLE_SERVICE names a Manual Configuration of the
@@ -108,7 +109,7 @@ func (c Cable) Plan(ctx context.Context) (step.Plan, error) {
 			service, router)
 	}
 	return step.Plan{Changes: []step.Change{
-		Run{
+		change.Run{
 			Root: true, Name: program, Args: []string{"-setmanual", service, cableClient, cableMask},
 			Label: fmt.Sprintf("networksetup -setmanual %q %s %s", service, cableClient, cableMask),
 		},
@@ -121,10 +122,10 @@ func (c Cable) Plan(ctx context.Context) (step.Plan, error) {
 // mac.conf's WS_CABLE_SERVICE.
 func (c Cable) Apply(ctx context.Context, p step.Plan) error {
 	for _, ch := range p.Changes {
-		if err := Apply(ctx, c.M, c.Out, ch); err != nil {
+		if err := change.Apply(ctx, c.M, c.Out, ch); err != nil {
 			return err
 		}
-		run, ok := ch.(Run)
+		run, ok := ch.(change.Run)
 		if !ok {
 			continue
 		}

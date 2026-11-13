@@ -11,6 +11,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 // resolverCmdHeader is the first line of the files that ws client macos resolver writes. Those of
@@ -62,15 +63,15 @@ func (r *Resolver) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, nil
 	}
 	if len(r.Addresses) == 0 {
-		cs, err := Plan(ctx, nil, host.Absent{M: r.M, Path: file})
+		cs, err := change.Plan(ctx, nil, host.Absent{M: r.M, Path: file})
 		return step.Plan{Changes: cs}, err
 	}
-	cs, err := Plan(ctx, nil, host.Dir{M: r.M, Path: resolverDir, Mode: 0o755})
+	cs, err := change.Plan(ctx, nil, host.Dir{M: r.M, Path: resolverDir, Mode: 0o755})
 	if err != nil {
 		return step.Plan{}, err
 	}
 	want := resolverCmdHeader + "\nnameserver " + strings.Join(r.Addresses, "\nnameserver ") + "\n"
-	cs, err = Plan(ctx, cs, host.File{M: r.M, Path: file, Content: []byte(want), Mode: 0o644})
+	cs, err = change.Plan(ctx, cs, host.File{M: r.M, Path: file, Content: []byte(want), Mode: 0o644})
 	return step.Plan{Changes: cs}, err
 }
 

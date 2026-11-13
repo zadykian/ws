@@ -10,6 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/setup"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
@@ -137,7 +138,7 @@ func (k *MacKey) name(ctx context.Context, use keyUse, key sshcfg.AgentKey) erro
 		return err
 	}
 	for _, c := range copied {
-		if err := setup.Apply(ctx, k.M, k.Out, c); err != nil {
+		if err := change.Apply(ctx, k.M, k.Out, c); err != nil {
 			return err
 		}
 	}

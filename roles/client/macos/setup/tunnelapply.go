@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 // Apply applies the changes of the plan in order, so that root's copy of ws is there when the key
@@ -20,7 +21,7 @@ func (t *Tunnel) Apply(ctx context.Context, p step.Plan) error {
 		case KeyMake:
 			err = t.makeKey(ctx)
 		default:
-			err = Apply(ctx, t.M, t.Out, c)
+			err = change.Apply(ctx, t.M, t.Out, c)
 		}
 		if err != nil {
 			return err

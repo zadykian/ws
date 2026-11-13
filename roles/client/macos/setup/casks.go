@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 const (
@@ -56,7 +57,7 @@ func (b brewCasks) cask(ctx context.Context, name string, there bool, missing st
 		return nil, false, errors.New("install Homebrew first: https://brew.sh")
 	}
 	if _, err := b.m.Run(ctx, "brew", "list", "--cask", name); err != nil {
-		return []step.Change{Run{Name: "brew", Args: []string{"install", "--cask", name}}}, true, nil
+		return []step.Change{change.Run{Name: "brew", Args: []string{"install", "--cask", name}}}, true, nil
 	}
 	b.out.Warn("%s", caskGone(name, missing))
 	return nil, false, nil
@@ -100,10 +101,10 @@ func (b brewCasks) font(ctx context.Context, home string) ([]step.Change, error)
 // again; where the app's fails, the other changes wait for it.
 func (b brewCasks) install(ctx context.Context, p step.Plan, app string) error {
 	for _, c := range p.Changes {
-		if r, ok := c.(Run); ok {
+		if r, ok := c.(change.Run); ok {
 			cask := r.Args[len(r.Args)-1]
 			b.out.Say("installing %s", cask)
-			if err := Apply(ctx, b.m, b.out, c); err != nil {
+			if err := change.Apply(ctx, b.m, b.out, c); err != nil {
 				b.out.Warn("brew install --cask %s failed", cask)
 				b.failed[cask] = true
 			}
@@ -112,7 +113,7 @@ func (b brewCasks) install(ctx context.Context, p step.Plan, app string) error {
 		if b.failed[app] {
 			continue
 		}
-		if err := Apply(ctx, b.m, b.out, c); err != nil {
+		if err := change.Apply(ctx, b.m, b.out, c); err != nil {
 			return err
 		}
 	}

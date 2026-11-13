@@ -1,4 +1,4 @@
-package setup_test
+package change_test
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 func TestAFileChangeNamesItsFileInAReport(t *testing.T) {
@@ -16,8 +16,8 @@ func TestAFileChangeNamesItsFileInAReport(t *testing.T) {
 		change step.Change
 		want   string
 	}{
-		{setup.Write{Path: "/f", After: []byte("a\n")}, "would create /f"},
-		{setup.Write{Path: "/f", Before: []byte("b\n"), After: []byte("a\n"), Exists: true}, "would write /f"},
+		{change.Write{Path: "/f", After: []byte("a\n")}, "would create /f"},
+		{change.Write{Path: "/f", Before: []byte("b\n"), After: []byte("a\n"), Exists: true}, "would write /f"},
 	}
 	for _, tt := range tests {
 		got, _, _ := strings.Cut(step.PendingOf(tt.change).Text, "\n")
@@ -34,13 +34,13 @@ func TestApply(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	m.Results["cp -p /a /a~"] = effecttest.Result{}
 	for _, c := range []interface{ String() string }{
-		setup.MakeDir{Path: "/d", Mode: 0o700},
-		setup.Write{Path: "/d/f", After: []byte("x\n"), Mode: 0o600},
-		setup.SetMode{Path: "/d/f", Mode: 0o644},
-		setup.Backup{Path: "/a", To: "/a~"},
-		setup.Remark("a line"),
+		change.MakeDir{Path: "/d", Mode: 0o700},
+		change.Write{Path: "/d/f", After: []byte("x\n"), Mode: 0o600},
+		change.SetMode{Path: "/d/f", Mode: 0o644},
+		change.Backup{Path: "/a", To: "/a~"},
+		change.Remark("a line"),
 	} {
-		if err := setup.Apply(context.Background(), m, out, c); err != nil {
+		if err := change.Apply(context.Background(), m, out, c); err != nil {
 			t.Fatalf("Apply(%v): %v", c, err)
 		}
 	}
@@ -62,7 +62,7 @@ func TestApplySaysAHostChangeByItsHeadline(t *testing.T) {
 	if err != nil || len(cs) != 1 {
 		t.Fatalf("Plan = %v, %v; want one change", cs, err)
 	}
-	if err := setup.Apply(context.Background(), m, out, cs[0]); err != nil {
+	if err := change.Apply(context.Background(), m, out, cs[0]); err != nil {
 		t.Fatal(err)
 	}
 	if string(m.Files["/e/f"]) != "x\n" || len(out.Lines) != 1 || out.Lines[0] != "say: create /e/f" {
@@ -75,14 +75,11 @@ func TestAChangeSaysItsKind(t *testing.T) {
 		change step.Change
 		want   step.ChangeKind
 	}{
-		{setup.Write{Path: "/f"}, step.Write},
-		{setup.MakeDir{Path: "/d"}, step.Write},
-		{setup.Install{Path: "/b"}, step.Install},
-		{setup.Run{Name: "brew", Args: []string{"install"}}, step.Install},
-		{setup.Run{Name: "open"}, step.OtherChange},
-		{setup.Launchctl{}, step.Restart},
-		{setup.Remark("a line"), step.OtherChange},
-		{setup.KeyMake{}, step.OtherChange},
+		{change.Write{Path: "/f"}, step.Write},
+		{change.MakeDir{Path: "/d"}, step.Write},
+		{change.Run{Name: "brew", Args: []string{"install"}}, step.Install},
+		{change.Run{Name: "open"}, step.OtherChange},
+		{change.Remark("a line"), step.OtherChange},
 	}
 	for _, tt := range tests {
 		if got := step.KindOf(tt.change); got != tt.want {

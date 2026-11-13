@@ -10,6 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 // errLinked is a plan's error for a link that lacks ws's lines: a run would replace the link with a
@@ -106,11 +107,11 @@ func (l userLines) changes(found path, link string, holds bool, err error) ([]st
 	case holds:
 		return nil, nil
 	case !found.Exists:
-		return []step.Change{Write{l.Path, nil, l.after(found, false), false, l.Mode}}, nil
+		return []step.Change{change.Write{Path: l.Path, Before: nil, After: l.after(found, false), Exists: false, Mode: l.Mode}}, nil
 	case link != "":
 		return nil, linesError{errLinked, fmt.Sprintf("%s is a link to %s: %s", l.Path, link, l.remedy())}
 	}
-	return []step.Change{keep(l.Path, l.Now), Write{l.Path, found.Text, l.after(found, false), true, found.Mode.Perm()}}, nil
+	return []step.Change{keep(l.Path, l.Now), change.Write{Path: l.Path, Before: found.Text, After: l.after(found, false), Exists: true, Mode: found.Mode.Perm()}}, nil
 }
 
 // plan writes the lines where missing: none, a new file, or the old file kept and rewritten.
@@ -141,9 +142,9 @@ func (l userLines) Report(ctx context.Context) ([]step.Item, error) {
 }
 
 // keep copies the old file to PATH.TIME~. This is the one stamp of the copies.
-func keep(file string, now func() time.Time) Backup {
+func keep(file string, now func() time.Time) change.Backup {
 	if now == nil {
 		now = time.Now
 	}
-	return Backup{file, file + "." + now().Format("20060102150405") + "~"}
+	return change.Backup{Path: file, To: file + "." + now().Format("20060102150405") + "~"}
 }

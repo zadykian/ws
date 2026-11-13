@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 // programAndCopy plans ~/.local/bin/ws and root's copy of it. Every directory above the copy must
@@ -21,7 +22,7 @@ func (t *Tunnel) programAndCopy(ctx context.Context, self []byte) ([]step.Change
 	}
 	own := len(cs)
 	for _, dir := range []string{"/usr/local", "/usr/local/libexec"} {
-		if cs, err = Plan(ctx, cs, host.Dir{M: t.M, Path: dir, Mode: 0o755}); err != nil {
+		if cs, err = change.Plan(ctx, cs, host.Dir{M: t.M, Path: dir, Mode: 0o755}); err != nil {
 			return nil, err
 		}
 	}
@@ -38,12 +39,12 @@ func (t *Tunnel) programAndCopy(ctx context.Context, self []byte) ([]step.Change
 				dir, a.UID, a.GID, a.Mode.Perm())
 		}
 	}
-	if cs, err = Plan(ctx, cs, host.Dir{M: t.M, Path: tunnelLibexec, Mode: 0o755}); err != nil {
+	if cs, err = change.Plan(ctx, cs, host.Dir{M: t.M, Path: tunnelLibexec, Mode: 0o755}); err != nil {
 		return nil, err
 	}
 	before := len(cs)
 	// Secret: no diff shows a program.
-	cs, err = Plan(ctx, cs, host.File{M: t.M, Path: tunnelLibexec + "/ws", Content: self, Mode: 0o755, Secret: true})
+	cs, err = change.Plan(ctx, cs, host.File{M: t.M, Path: tunnelLibexec + "/ws", Content: self, Mode: 0o755, Secret: true})
 	t.copied = len(cs) > before
 	// Until Apply has made those changes, root's copy is not one to run as root.
 	t.untrusted = len(cs) > own

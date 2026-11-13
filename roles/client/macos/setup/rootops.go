@@ -7,6 +7,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 // applyInOrder applies the changes of a plan in order, with launchctl's signal as a change.
@@ -16,7 +17,7 @@ func applyInOrder(ctx context.Context, m effect.Machine, out effect.Out, p step.
 		if l, ok := c.(Launchctl); ok {
 			err = launchctl(ctx, m, out, time.Sleep, l)
 		} else {
-			err = Apply(ctx, m, out, c)
+			err = change.Apply(ctx, m, out, c)
 		}
 		if err != nil {
 			return err
