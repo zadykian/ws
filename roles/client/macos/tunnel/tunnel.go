@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
@@ -29,7 +30,7 @@ const tunnelLibexec = "/usr/local/libexec/ws-tunnel"
 type Tunnel struct {
 	Conf conf.Conf
 	Home string
-	// Plist is the text of roles/client/macos/mac/com.github.zadykian.ws-tunnel.plist.
+	// Plist is the text of roles/client/macos/tunnel/files/com.github.zadykian.ws-tunnel.plist.
 	Plist []byte
 	// Self returns the bytes of this ws, which a build from the clone made. Nil means the
 	// executable's file.
@@ -188,6 +189,9 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 	}
 	return file.Gather(ctx, parts...)
 }
+
+// said has a core file change say its headline once it applies, as the Mac's changes do.
+func (t *Tunnel) said(r resource.Resource) resource.Said { return resource.Said{Out: t.Out, Part: r} }
 
 func (t *Tunnel) sleep(d time.Duration) {
 	if t.Sleep != nil {

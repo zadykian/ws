@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/zadykian/ws/engine/core/resource/file"
 	"io"
 	"io/fs"
 	"strings"
 
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 // publicKey asks root's copy of ws for the Mac's public key. It returns "" where there is no copy
@@ -68,12 +68,7 @@ func (t *Tunnel) publish(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	for _, c := range cs {
-		if err := change.Apply(ctx, t.M, t.Out, c); err != nil {
-			return err
-		}
-	}
-	return nil
+	return resource.Group{}.Apply(ctx, step.Plan{Changes: cs})
 }
 
 // Finish prints the Mac's public key, with the commands that make it ws's peer, where the key is new
