@@ -35,8 +35,8 @@ func linesOf(out effect.Out, path string) engine.Lines {
 
 // macOf returns the Mac's steps over the process's environment and the effects given to it.
 // No other function builds a Mac. text takes what a run prints on stdout.
-func macOf(p enginecli.Env, c conf.Conf, m effect.Machine, out effect.Out, text io.Writer) macos.Mac {
-	return macos.Mac{Conf: c, Home: p.Getenv("HOME"), XDG: p.Getenv("XDG_CONFIG_HOME"), M: m, Out: out, Text: text}
+func macOf(p enginecli.Env, server string, c conf.Conf, m effect.Machine, out effect.Out, text io.Writer) macos.Mac {
+	return macos.Mac{Server: server, Conf: c, Home: p.Getenv("HOME"), XDG: p.Getenv("XDG_CONFIG_HOME"), M: m, Out: out, Text: text}
 }
 
 // newMacApplyCmd returns ws client macos apply.
