@@ -81,7 +81,8 @@ server to every YAML file, Ansible's too.
   [lazygit's](lazygit.md#the-title), above it. Zed's tab takes none.
 - `terminal.line_height` is Zed's default. Nerd glyphs may look misaligned all the same (zed#4746,
   open), and no setting helps.
-- `docs/zed.md`, Zed's page for the server, says what to do when the connection drops.
+- [Zed's page for the server](zed.md#when-the-connection-drops) says what to do when the
+  connection drops.
 
 ## The keymap
 
@@ -122,7 +123,8 @@ Zed on macOS, with a US layout:
 ### Two keys of the file's own
 
 Zed has no default key to restart a language server or to reload Zed. They are the remedies after
-a reconnect (`docs/zed.md`, "When the connection drops"). Both keys are free in Zed's defaults:
+a reconnect ([When the connection drops](zed.md#when-the-connection-drops)). Both keys are free
+in Zed's defaults:
 
 - Ctrl+Shift+R is `editor::RestartLanguageServer`, in `Editor && mode == full`.
 - Ctrl+Alt+Shift+Y is `workspace::Reload`, in the global section.

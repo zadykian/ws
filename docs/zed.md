@@ -2,7 +2,7 @@
 
 The `zed` role is Go steps in `roles/server/ubuntu/zed`. Zed itself runs on the Mac, which opens ws
 over ssh. The role writes the settings that Zed's server on ws reads, and raises the open-file limit
-that the server needs. The Mac's side is `docs/mac-zed.md`.
+that the server needs. The Mac's side is [Zed on the Mac](mac-zed.md).
 
 `~/.config/zed/settings.json` is owned by `ws_user`. A run replaces a change made to it by hand
 and keeps the old file beside the new one. The key
