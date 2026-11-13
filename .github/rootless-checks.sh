@@ -1,7 +1,7 @@
 #!/bin/bash
-# The rootless job's cases, as root on a runner that booted (docs/checks-rootless.md). It proves
-# what a container can't: the rootless daemon, and the firewall around it. Each case that expects
-# a refusal has a control, as a broken setup refuses everything.
+# The rootless job's cases, as root on a runner that booted (.github/workflows/rootless.md). It
+# proves what a container can't: the rootless daemon, and the firewall around it. Each case that
+# expects a refusal has a control, as a broken setup refuses everything.
 set -euo pipefail
 
 user=zadykian

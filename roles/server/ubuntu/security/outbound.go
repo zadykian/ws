@@ -19,7 +19,7 @@ func unitFile(m effect.Machine, name string) (file.File, error) {
 // its sets. The path unit watches from before the table loads (WantedBy=sysinit.target). It reads
 // its unit first, as no restart has run yet. nft -c checks the table in the kernel, which a
 // container without NET_ADMIN refuses. So it checks with systemd booted alone; CI's playbook job
-// runs it on the file after the run (docs/checks.md).
+// runs it on the file after the run (.github/workflows/README.md).
 func outbound(m effect.Machine, u effect.Units, out effect.Out) ([]resource.Resource, error) {
 	script, err := files.ReadFile("files/resolvers.sh")
 	if err != nil {
