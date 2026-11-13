@@ -9,7 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon"
+	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/routing"
 	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
@@ -35,7 +35,7 @@ func (w MacWays) Direct(ctx context.Context) (host, port string, ok bool) {
 	if err != nil {
 		out = nil
 	}
-	d, found := tunnel.DirectWay(daemon.ParseIfconfig(string(out), ""), tunnelConf(c), c.RemotePort)
+	d, found := tunnel.DirectWay(routing.ParseIfconfig(string(out), ""), tunnelConf(c), c.RemotePort)
 	return d.Host, d.Port, found
 }
 

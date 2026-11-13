@@ -1,6 +1,6 @@
-// Package daemon runs ws client macos tunnel's loop. It reads the Mac and the peer, asks the pure
-// functions of package tunnel what to do, and does it through effect.Machine and a Device.
-package daemon
+// Package routing reads the Mac's interfaces and resolver and carries out a plan of routes, for
+// the tunnel's loop.
+package routing
 
 import (
 	"net/netip"
