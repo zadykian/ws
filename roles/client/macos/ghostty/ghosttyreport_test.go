@@ -1,4 +1,4 @@
-package setup_test
+package ghostty_test
 
 import (
 	"strings"

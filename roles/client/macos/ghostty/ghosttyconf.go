@@ -1,4 +1,4 @@
-package setup
+package ghostty
 
 import (
 	pathpkg "path"

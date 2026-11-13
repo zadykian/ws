@@ -1,4 +1,6 @@
-package setup
+// Package ghostty installs Ghostty and its font on the Mac, and writes the settings that its config
+// reads.
+package ghostty
 
 import (
 	"context"
@@ -27,7 +29,7 @@ const (
 // updates itself, as ws.ghostty says.
 type Ghostty struct {
 	Home string
-	// Settings is the text of roles/client/macos/mac/ws.ghostty.
+	// Settings is the text of roles/client/macos/ghostty/files/ws.ghostty.
 	Settings []byte
 	M        effect.Machine
 	Out      effect.Out
@@ -102,11 +104,12 @@ func (g *Ghostty) conf() string {
 	return found
 }
 
-// files plans ws.ghostty beside Ghostty's config, roles/client/macos/mac/ws.ghostty under the header, and the line
-// that reads it at the end of that config, once. The old config stays as PATH.TIME~. Ghostty reads
-// a config-file after the file that names it (Config.zig's config-file), so ws.ghostty's settings
-// win over the config's own. It warns, and leaves the config unchanged, where ws.ghostty is not its own, the config can't be
-// read, or the config is a link that lacks the line. It stops where ws.ghostty can't be read.
+// files plans ws.ghostty beside Ghostty's config, from roles/client/macos/ghostty/files/ws.ghostty
+// under the header. It plans the line that reads it at the end of that config, once. The old config
+// stays as PATH.TIME~. Ghostty reads a config-file after the file that names it (Config.zig's
+// config-file), so ws.ghostty's settings win over the config's own. It warns, and leaves the config
+// unchanged, where ws.ghostty is not its own, the config can't be read, or the config is a link that
+// lacks the line. It stops where ws.ghostty can't be read.
 func (g *Ghostty) files(ctx context.Context) ([]step.Change, error) {
 	config := g.conf()
 	file := g.file(config)

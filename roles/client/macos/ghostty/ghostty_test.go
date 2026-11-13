@@ -1,4 +1,4 @@
-package setup_test
+package ghostty_test
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/ghostty"
 )
 
 const (
@@ -17,10 +17,10 @@ const (
 	ghosttyHead = "# Written by ws client macos apply: its next run replaces changes made here.\n"
 )
 
-func ghosttyStep(m *effecttest.Machine, out *effecttest.Out) *setup.Ghostty {
+func ghosttyStep(m *effecttest.Machine, out *effecttest.Out) *ghostty.Ghostty {
 	m.Dirs["/h/Applications/Ghostty.app"] = 0o755
 	m.Files["/h/Library/Fonts/JetBrainsMonoNerdFontMono-Regular.ttf"] = nil
-	return &setup.Ghostty{
+	return &ghostty.Ghostty{
 		Home: "/h", Settings: []byte("font-size = 13\n"), M: m, Out: out,
 		LookPath: func(string) (string, error) { return "brew", nil },
 		Real:     func(p string) (string, error) { return p, nil },

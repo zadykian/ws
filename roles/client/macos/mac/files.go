@@ -1,13 +1,8 @@
-// Package mac holds the files that the ws CLI embeds for the Mac: Ghostty's settings, Zed's and
-// the zsh hook.
+// Package mac holds the files that the ws CLI embeds for the Mac: the tunnel's plist, Zed's
+// settings and the zsh hook.
 package mac
 
 import _ "embed" // for the files' go:embed
-
-// Ghostty is ws.ghostty, the settings that ws client macos apply includes in Ghostty's config.
-//
-//go:embed ws.ghostty
-var Ghostty []byte
 
 // TunnelPlist is the LaunchDaemon's plist, which ws client macos apply installs for the tunnel.
 //

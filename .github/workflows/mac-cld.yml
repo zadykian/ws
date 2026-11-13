@@ -174,8 +174,9 @@ jobs:
           head -n 1 "$support/ws.ghostty" | grep -q "^# Written by ws client macos apply" ||
               { echo "::error::ws.ghostty has no header"; fail=1; }
           plain=roles/client/macos/mac
-          tail -n +2 "$support/ws.ghostty" | cmp -s - "$plain/ws.ghostty" ||
-              { echo "::error::ws.ghostty is not $plain/ws.ghostty under the header"; fail=1; }
+          wsghostty=roles/client/macos/ghostty/files/ws.ghostty
+          tail -n +2 "$support/ws.ghostty" | cmp -s - "$wsghostty" ||
+              { echo "::error::ws.ghostty is not $wsghostty under the header"; fail=1; }
           [ "$(grep -cx 'config-file = ?ws.ghostty' "$support/config.ghostty")" = 1 ] ||
               { echo '::error::config.ghostty does not read ws.ghostty once'; fail=1; }
           zed=~/.config/zed
@@ -192,7 +193,7 @@ jobs:
           ghostty=/Applications/Ghostty.app/Contents/MacOS/ghostty
           "$ghostty" +validate-config ||
               { echo '::error::Ghostty refuses its config, above'; fail=1; }
-          family=$(sed -n 's/^font-family = \(..*\)$/\1/p' "$plain/ws.ghostty" | tail -n 1)
+          family=$(sed -n 's/^font-family = \(..*\)$/\1/p' "$wsghostty" | tail -n 1)
           fonts=$("$ghostty" +list-fonts --family="$family") ||
               { echo "::error::ghostty +list-fonts --family='$family' failed"; fail=1; }
           printf '%s\n' "$fonts"
