@@ -30,11 +30,11 @@ type queueScreen struct {
 	// unread is why a machine reported nothing, and its steps stand as the queue named them.
 	unread string
 	// picks takes the choice, and holds one, so that sending it waits for nobody.
-	picks chan<- QueueChoice
+	picks chan<- Choice
 }
 
 // openQueue returns the lists of stages, their scan under way. The configure button comes last.
-func openQueue(title string, theme widget.Theme, stages []Stage, picks chan<- QueueChoice) queueScreen {
+func openQueue(title string, theme widget.Theme, stages []Stage, picks chan<- Choice) queueScreen {
 	buttons := append(list.Buttons(), stateButton, configureButton)
 	s := queueScreen{Screen: list.Screen{Title: title, Theme: theme, Scanning: true, Filter: widget.NewFilter()},
 		list: queueOf(stages), footer: widget.NewFooter(buttons...), picks: picks}
@@ -207,8 +207,8 @@ func withCursor(at map[string]widget.Cursor, side string, c widget.Cursor) map[s
 }
 
 // queueChoice is what the lists hold, to leave for next.
-func (s queueScreen) queueChoice(next Next) QueueChoice {
-	c := QueueChoice{Next: next, Side: s.list.side, left: s}
+func (s queueScreen) queueChoice(next Next) Choice {
+	c := Choice{Next: next, Side: s.list.side, left: s}
 	if next == NextRun || next == NextCheck {
 		c.Only, c.Partial, c.Whole = s.list.only(), s.list.partial(), s.list.ticked()
 	}
@@ -216,7 +216,7 @@ func (s queueScreen) queueChoice(next Next) QueueChoice {
 }
 
 // leave gives c to the work. A session quits with its work alone, and a screen never does.
-func (s queueScreen) leave(c QueueChoice) (queueScreen, tea.Cmd) {
+func (s queueScreen) leave(c Choice) (queueScreen, tea.Cmd) {
 	s.Left = true
 	return s, func() tea.Msg {
 		s.picks <- c

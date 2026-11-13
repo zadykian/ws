@@ -16,7 +16,7 @@ func queueFrame() queueScreen {
 		Screen: list.Screen{Title: "ws client macos wizard", Theme: testTheme, Window: widget.Size{Width: 100, Height: 30}, Scanning: true},
 		list:   queueOf(testStages()),
 		footer: widget.NewFooter(append(list.Buttons(), stateButton, configureButton)...),
-		picks:  make(chan QueueChoice, 1),
+		picks:  make(chan Choice, 1),
 	}
 }
 
@@ -31,7 +31,7 @@ func TestTheQueueScreenDrawsItsListsOverTheDetail(t *testing.T) {
 }
 
 func TestTheQueueScreenGivesItsChoiceAndWaitsForTheWorkToEnd(t *testing.T) {
-	picks := make(chan QueueChoice, 1)
+	picks := make(chan Choice, 1)
 	s := queueFrame()
 	s.picks = picks
 	s, leaving := s.leave(s.queueChoice(NextCheck))
@@ -42,7 +42,7 @@ func TestTheQueueScreenGivesItsChoiceAndWaitsForTheWorkToEnd(t *testing.T) {
 }
 
 func TestTheQueueScreenLeavesForTheStateOfTheListInFocus(t *testing.T) {
-	picks := make(chan QueueChoice, 1)
+	picks := make(chan Choice, 1)
 	s := queueFrame()
 	s.picks = picks
 	s, _ = s.pressed(tab)
@@ -66,7 +66,7 @@ func queueSent(s queueScreen, msgs ...tea.Msg) queueScreen {
 }
 
 func TestTheQueueScreenHoldsItsBoxesUntilTheScanEnds(t *testing.T) {
-	s := openQueue("ws", testTheme, testStages(), make(chan QueueChoice, 1))
+	s := openQueue("ws", testTheme, testStages(), make(chan Choice, 1))
 	if s = queueSent(s, press('a')); len(s.list.only()) != 0 {
 		t.Errorf("only = %q during the scan", s.list.only())
 	}

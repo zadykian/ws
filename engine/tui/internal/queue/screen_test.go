@@ -17,7 +17,7 @@ import (
 
 // testQueueScreen is the two lists at 100 by 30, their scan under way.
 func testQueueScreen() queueScreen {
-	s := openQueue("ws client macos wizard", testTheme, testStages(), make(chan QueueChoice, 1))
+	s := openQueue("ws client macos wizard", testTheme, testStages(), make(chan Choice, 1))
 	return queueSent(s, tea.WindowSizeMsg{Width: 100, Height: 30})
 }
 
@@ -89,7 +89,7 @@ func wsStages() []Stage {
 }
 
 func TestStagesAllOnWsStandInOneList(t *testing.T) {
-	s := openQueue("ws server ubuntu wizard", testTheme, wsStages(), make(chan QueueChoice, 1))
+	s := openQueue("ws server ubuntu wizard", testTheme, wsStages(), make(chan Choice, 1))
 	s = queueSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, list.ScannedMsg{}, press('/'), press('s'))
 	got := queueShown(s)
 	for _, want := range []string{"ws server ubuntu wizard", "ws", "/ s", "   3 [x] · Signing", "Detail"} {
@@ -103,7 +103,7 @@ func TestStagesAllOnWsStandInOneList(t *testing.T) {
 }
 
 func TestTabLeavesOneListForTheButtons(t *testing.T) {
-	s := openQueue("ws server ubuntu wizard", testTheme, wsStages(), make(chan QueueChoice, 1))
+	s := openQueue("ws server ubuntu wizard", testTheme, wsStages(), make(chan Choice, 1))
 	s = queueSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, list.ScannedMsg{}, tab)
 	if s.list.side != "ws" || s.footer.Focused() != list.PickTogglePlace {
 		t.Errorf("side %q, focus %d", s.list.side, s.footer.Focused())
@@ -117,8 +117,8 @@ func TestTabLeavesOneListForTheButtons(t *testing.T) {
 }
 
 // chosenBy returns what s gives past msgs, with the choice's channel read.
-func chosenBy(t *testing.T, msgs ...tea.Msg) QueueChoice {
-	picks := make(chan QueueChoice, 1)
+func chosenBy(t *testing.T, msgs ...tea.Msg) Choice {
+	picks := make(chan Choice, 1)
 	s := queueSent(openQueue("ws", testTheme, testStages(), picks), tea.WindowSizeMsg{Width: 100, Height: 30})
 	for _, msg := range msgs {
 		model, cmd := s.Update(msg)
@@ -129,7 +129,7 @@ func chosenBy(t *testing.T, msgs ...tea.Msg) QueueChoice {
 		}
 	}
 	t.Fatalf("no choice past %v", msgs)
-	return QueueChoice{}
+	return Choice{}
 }
 
 func TestTabWalksTheTwoListsThenTheButtons(t *testing.T) {
@@ -232,7 +232,7 @@ func TestReopenKeepsTheBoxesAndRunsNoScan(t *testing.T) {
 	var out bytes.Buffer
 	c := noKeys(&out)
 	c.In = strings.NewReader("\r")
-	got, err := Reopen(t.Context(), c, QueueChoice{Next: NextState, left: s})
+	got, err := Reopen(t.Context(), c, Choice{Next: NextState, left: s})
 	if err != nil || !slices.Equal(got.Only, []string{"Tools"}) {
 		t.Errorf("Reopen = %+v, %v", got, err)
 	}
@@ -262,7 +262,7 @@ func TestAMoveLeavesTheScreenItCameFromItsCursors(t *testing.T) {
 func TestThreeSidesDrawThreePanesAndTabWalksThem(t *testing.T) {
 	third := "VM"
 	stages := []Stage{{Name: "One", Side: "ws"}, {Name: "Two", Side: "Mac"}, {Name: "Three", Side: third}, {Name: "Four", Side: "ws"}}
-	s := queueSent(openQueue("ws", testTheme, stages, make(chan QueueChoice, 1)), tea.WindowSizeMsg{Width: 120, Height: 30})
+	s := queueSent(openQueue("ws", testTheme, stages, make(chan Choice, 1)), tea.WindowSizeMsg{Width: 120, Height: 30})
 	if got := s.list.sides(); !slices.Equal(got, []string{"ws", "Mac", third}) || len(s.list.panes()) != 3 {
 		t.Fatalf("sides %v, %d panes: want ws, Mac and the third, in the order named", got, len(s.list.panes()))
 	}

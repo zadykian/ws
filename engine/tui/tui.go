@@ -94,7 +94,7 @@ func Pick(ctx context.Context, c Config, title string, groups []Group, scan Work
 type Stage = queue.Stage
 
 // QueueChoice is what the queue's screen leaves to the wizard's loop.
-type QueueChoice = queue.QueueChoice
+type QueueChoice = queue.Choice
 
 // Next is what the queue's screen was left for.
 type Next = queue.Next
@@ -109,11 +109,11 @@ const (
 )
 
 // QueueRun follows a run of a queue on the lists that chose it, over what the run prints.
-type QueueRun = queue.QueueRun
+type QueueRun = queue.RunScreen
 
 // NewQueueRun returns the screen of a run of choice's stages.
 func NewQueueRun(title string, theme Theme, choice QueueChoice) QueueRun {
-	return queue.NewQueueRun(title, theme, choice)
+	return queue.NewRunScreen(title, theme, choice)
 }
 
 // PickStages draws a queue's lists over scan, as Pick draws a list. A QueueChoice that runs nothing,
