@@ -1,4 +1,5 @@
-package daemon
+// Package gpu reads the NVIDIA GPUs' temperatures from the stream of nvidia-smi.
+package gpu
 
 import (
 	"sync"

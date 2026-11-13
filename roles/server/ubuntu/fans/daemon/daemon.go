@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/zadykian/ws/roles/server/ubuntu/fans/daemon/internal/gpu"
 	"github.com/zadykian/ws/roles/server/ubuntu/fans/daemon/internal/missing"
 )
 
@@ -52,8 +53,8 @@ func New(cfg Config, hw Hwmon, gpus Temperatures, log func(string)) *Daemon {
 // OnHost drives the fans of the config on this machine: the GPUs by nvidia-smi, the rest by the
 // machine's hwmon, until ctx ends. It returns what Run returns.
 func OnHost(ctx context.Context, cfg Config, log func(string)) error {
-	gpus := &GPUs{}
-	go gpus.Run(ctx, NvidiaSmi())
+	gpus := &gpu.GPUs{}
+	go gpus.Run(ctx, gpu.NvidiaSmi())
 	return New(cfg, Hwmon{FS: OSSysfs{}}, gpus, log).Run(ctx)
 }
 

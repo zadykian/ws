@@ -1,4 +1,4 @@
-package daemon
+package gpu
 
 import (
 	"bufio"
