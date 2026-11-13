@@ -7,7 +7,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 )
 
-// FirstFile is the file in the lock that holds the address that the Host key or Login stage asked,
+// FirstFile is the file in the lock that holds the address that a stage asked,
 // where ws did not answer at its way. The session's ssh reads it as HostName, and a run's later
 // stages through that session.
 const FirstFile = "first"
@@ -25,7 +25,7 @@ type SSH struct {
 	Ways Ways
 }
 
-// First returns the address that the Host key stage asked, or an empty string.
+// First returns the address that a stage asked, or an empty string.
 func (s SSH) First() string {
 	b, err := s.M.ReadFile(s.Lock + "/" + FirstFile)
 	if err != nil {
@@ -42,8 +42,8 @@ type Ways interface {
 	Missing() error
 }
 
-// way finds the direct way to ws from Ways. The address that the Host key stage asked takes the place
-// of the way's host. With no way and that address, the port stays ssh's own.
+// way finds the direct way to ws from Ways. The address that a stage asked takes the place of the
+// way's host. With no way and that address, the port stays ssh's own.
 func (s SSH) way(ctx context.Context) (host, port string, found bool) {
 	if s.Ways != nil {
 		host, port, found = s.Ways.Direct(ctx)
@@ -83,10 +83,10 @@ func (s SSH) Shared(socket string) []string {
 
 // Argv returns ssh's arguments for a direct call, whose host in args is ws.
 //   - The way's host and port go before args as options, over config.d/ws's, which leads through the
-//     tunnel. The address that the Host key stage asked replaces the way's host.
+//     tunnel. The address that a stage asked replaces the way's host.
 //   - AddressFamily=inet goes on every call: the ways are IPv4 by conf and WS_REMOTE takes IPv4 alone.
-//   - The socket is direct, so that a call never rides the tunnel's master. The address that the
-//     Host key stage asked adds .1, so that a master made before it never carries a call to it.
+//   - The socket is direct, so that a call never rides the tunnel's master. The address that a
+//     stage asked adds .1, so that a master made before it never carries a call to it.
 func (s SSH) Argv(ctx context.Context, args []string) []string {
 	host, port, found := s.way(ctx)
 	socket := "direct"

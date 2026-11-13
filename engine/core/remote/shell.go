@@ -24,7 +24,7 @@ type Root interface {
 	Rooted(cmd []string, in []byte) ([]string, []byte, error)
 }
 
-// SSHShell runs a command on ws over ssh, which reaches ws at the address that the Host key stage
+// SSHShell runs a command on ws over ssh, which reaches ws at the address that a stage
 // asked, where it asked one, and reaches root by Root.
 type SSHShell struct {
 	SSH SSH
