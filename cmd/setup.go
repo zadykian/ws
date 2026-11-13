@@ -1,13 +1,11 @@
 package cmd
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -16,7 +14,6 @@ import (
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 )
@@ -46,7 +43,6 @@ func macOf(p cli.Env, c conf.Conf, m effect.Machine, out effect.Out, text io.Wri
 
 // newMacApplyCmd returns ws client macos apply.
 func newMacApplyCmd(p cli.Env) *cobra.Command {
-	var check bool
 	var only []string
 	names := macos.Names()
 	c := &cobra.Command{
@@ -56,10 +52,10 @@ func newMacApplyCmd(p cli.Env) *cobra.Command {
 			"With no --only, it runs every step, and ssh again, whose plan is empty unless cld " +
 			"changed ssh's file. It asks sudo where it needs root.",
 		Args: cobra.NoArgs,
-		RunE: func(c *cobra.Command, _ []string) error { return runMacApply(c, p, only, check) },
+		RunE: cli.Apply(macTarget(p, &only), p),
 	}
 	f := c.Flags()
-	f.BoolVar(&check, "check", false, "print each change and make none")
+	f.Bool("check", false, "print each change and make none")
 	f.StringSliceVar(&only, "only", nil, "run the named steps alone, as a list or by repeating the flag")
 	_ = c.RegisterFlagCompletionFunc("only", cobra.FixedCompletions(names, cobra.ShellCompDirectiveNoFileComp))
 	return c
@@ -93,59 +89,4 @@ func loadMacConf(p cli.Env) (settings conf.Conf, err error) {
 		return conf.Conf{}, errors.Join(all...)
 	}
 	return settings, nil
-}
-
-// setupRun runs ws client macos apply's steps on the effects given to it. It names no step in its
-// errors.
-type setupRun func(ctx context.Context, m effect.Machine, out effect.Out, text io.Writer, o step.Options) error
-
-// runMacApply runs the steps that only names, or every step, from mac.conf. Under check it prints
-// each change and makes none.
-func runMacApply(c *cobra.Command, p cli.Env, only []string, check bool) error {
-	if c.Flags().Changed("only") && len(only) == 0 {
-		return engine.UsageError{Err: errors.New("--only names no step")}
-	}
-	for _, name := range only {
-		if !slices.Contains(macos.Names(), name) {
-			return engine.UsageError{Err: fmt.Errorf("no step is named %q", name)}
-		}
-	}
-	settings, err := loadMacConf(p)
-	if err != nil {
-		return err
-	}
-	var run setupRun = func(ctx context.Context, m effect.Machine, out effect.Out, text io.Writer, o step.Options) error {
-		_, err := macOf(p, settings, m, out, text).Run(ctx, macos.Options{Options: o, Only: only})
-		return engine.Cause(err)
-	}
-	rowsOf := func(check bool) tui.Group {
-		o := macos.Options{Options: step.Options{Check: check}, Only: only}
-		return tui.NewGroup("", macOf(p, settings, nil, nil, nil).Rows(o))
-	}
-	if opensList(c, p, len(only) > 0) {
-		chosen, ok, err := pickSetup(c, p, rowsOf(true), run)
-		if err != nil || !ok {
-			return err
-		}
-		return setupOnScreen(c, p, rowsOf(chosen.Check), run, chosen)
-	}
-	if engine.DrawsScreen(cli.CallOf(c, p)) {
-		return setupOnScreen(c, p, rowsOf(check), run, step.Options{Check: check})
-	}
-	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
-	out := linesOf(term, c.CommandPath())
-	err = run(c.Context(), p.Machine, out, c.OutOrStdout(), step.Options{Observer: out, Check: check})
-	term.Flush()
-	return err
-}
-
-// setupOnScreen is a run of ws client macos apply under the run screen. The rows name the screen's
-// steps, and the run acts on the screen's effects. What a run prints on stdout waits for the
-// screen's end, as it would paint over the screen at a terminal.
-func setupOnScreen(c *cobra.Command, p cli.Env, rows tui.Group, run setupRun, o step.Options) error {
-	call := cli.CallOf(c, p)
-	return engine.DrawRun(c.Context(), call, engine.RunTitle(call, o.Check), []tui.Group{rows}, func(ctx context.Context, b *tui.Bridge) error {
-		e := b.Effects()
-		return run(ctx, e.M, b, e.Text, b.Options(o))
-	})
 }
