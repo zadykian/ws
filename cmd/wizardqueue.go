@@ -32,8 +32,8 @@ func nestedRows(stage string) []tui.Group {
 	case (&wizard.Setup{}).Name():
 		groups = []tui.Group{{Name: stage, Steps: setup.Names()}}
 	case (&wizard.WsRun{}).Name():
-		for _, r := range ubuntu.List() {
-			groups = append(groups, tui.Group{Name: r.Name})
+		for _, name := range ubuntu.Names() {
+			groups = append(groups, tui.Group{Name: name})
 		}
 	}
 	return groups

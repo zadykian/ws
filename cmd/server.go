@@ -113,7 +113,7 @@ func prepareServer(c *cobra.Command, p process, opts applyOptions) (serverRun, e
 	if c.Flags().Changed("only") && len(opts.Only) == 0 {
 		return serverRun{}, usageError{errors.New("--only names no role")}
 	}
-	_, err := role.Select(serverRoles(ubuntu.List(), values.Values{}, secrets.Secrets{}), opts.Only)
+	_, err := role.Select(ubuntu.Roles(values.Values{}, secrets.Secrets{}), opts.Only)
 	if err != nil {
 		return serverRun{}, usageError{err}
 	}
@@ -153,7 +153,7 @@ func prepareServer(c *cobra.Command, p process, opts applyOptions) (serverRun, e
 
 // roles returns the roles that --only names, closed over r's values and the secrets s.
 func (r serverRun) roles(s secrets.Secrets) ([]role.Role, error) {
-	return role.Select(serverRoles(ubuntu.List(), r.values, s), r.cfg.Only)
+	return role.Select(ubuntu.Roles(r.values, s), r.cfg.Only)
 }
 
 // runApply sets the server up as opts say.

@@ -55,7 +55,7 @@ func TestWizardQueueNestsWhatItsStagesRun(t *testing.T) {
 		t.Errorf("ws client macos apply holds %+v, want its steps by its name", nested)
 	}
 	run := stageOf(t, queue, "ws's run").Nested
-	if len(run) != len(ubuntu.List()) || run[0].Name != ubuntu.List()[0].Name || len(run[0].Steps) != 0 {
+	if len(run) != len(ubuntu.Names()) || run[0].Name != ubuntu.Names()[0] || len(run[0].Steps) != 0 {
 		t.Errorf("ws's run holds %+v, want each role unread", run)
 	}
 }
