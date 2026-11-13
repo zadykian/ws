@@ -31,7 +31,8 @@ func newConfigureCmd(p enginecli.Env) *cobra.Command {
 // which lets go of ws once they have ended.
 func macForms(in io.Reader, errw io.Writer, p enginecli.Env) func(context.Context) ([]tui.Sheet, func(context.Context), error) {
 	return func(context.Context) ([]tui.Sheet, func(context.Context), error) {
-		form := conf.Form{Conf: conf.Path(p.Getenv, p.Pwd), Defaults: shellDefaults(), M: p.Machine}
+		macConf := conf.Path(p.Getenv, p.Pwd)
+		form := conf.Form{Conf: macConf, Server: conf.ServerPath(macConf, conf.FirstServer), Defaults: shellDefaults(), M: p.Machine}
 		form, err := form.Load(effect.NewTerminal(in, errw))
 		if err != nil {
 			return nil, nil, err
