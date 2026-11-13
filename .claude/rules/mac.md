@@ -23,7 +23,7 @@ The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `rol
   itself. Each step is a role of one step, and `Run` runs them through `role.Run` as one role under
   the run's parent ([mac.go](../../roles/client/macos/mac.go)).
 - A step is pure wherever it can be: it reads, a pure function turns what it read into `Change`
-  values, and it applies them. Tests compare the values.
+  values that apply themselves. Tests compare the plan's headlines (`step.Headline`).
 - A whole file that ws writes in the user's home is a `file.UserFile`, and a directory it writes
   under a `file.UserDir`. They are core's file resources: a plan and a report read each alike. Its
   step warns or stops at a file that is not ws's
