@@ -19,6 +19,8 @@ tunnel_dir=/etc/ws-tunnel
 ws_resolvers=/etc/resolver
 conf=$HOME/.config/ws/mac.conf
 fail=0
+# shellcheck source=.github/mac-conf.sh
+. .github/mac-conf.sh
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
 error() {
@@ -44,8 +46,7 @@ until_ok() {
 
 # keys LINE... puts LINE... in mac.conf in place of its WS_TUNNEL_NETWORKS and WS_RESOLVERS.
 keys() {
-    sed -i '' -e '/^WS_TUNNEL_NETWORKS=/d' -e '/^WS_RESOLVERS=/d' "$conf"
-    [ $# = 0 ] || printf '%s\n' "$@" >>"$conf"
+    conf_set "$conf" WS_TUNNEL_NETWORKS WS_RESOLVERS "$@"
 }
 
 # setup [ARG] runs ws client macos apply, and sets out to what it printed.

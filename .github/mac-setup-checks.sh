@@ -13,14 +13,16 @@ if [ -z "${TUNNEL-}" ]; then
     exit 1
 fi
 conf=$HOME/.config/ws/mac.conf
+# shellcheck source=.github/mac-conf.sh
+. .github/mac-conf.sh
 # macOS's TMPDIR ends in a slash, which would put // in $tmp. ws client macos apply --only git finds
 # gh by Go's exec.LookPath, which drops it, so git's credential command would not read
 # "$tmp/bin/gh".
 tmpdir=${TMPDIR:-/tmp}
 tmp=$(mktemp -d "${tmpdir%/}/mac-setup-checks.XXXXXXXX")
-trap '[ ! -f "$tmp/job.conf" ] || cp "$tmp/job.conf" "$conf"; rm -rf "$tmp"' EXIT
+trap '[ ! -f "$tmp/job.conf" ] || conf_write "$conf" <"$tmp/job.conf"; rm -rf "$tmp"' EXIT
 trap 'exit 1' HUP INT TERM
-cp "$conf" "$tmp/job.conf"
+conf_print "$conf" >"$tmp/job.conf"
 nl='
 '
 fail=0
@@ -33,8 +35,10 @@ error() {
 
 # with LINE... gives conf, the job's mac.conf, its own lines and then LINE..., a line each.
 with() {
-    cp "$tmp/job.conf" "$conf"
-    [ $# = 0 ] || printf '%s\n' "$@" >>"$conf"
+    {
+        conf_print "$tmp/job.conf"
+        [ $# = 0 ] || printf '%s\n' "$@"
+    } | conf_write "$conf"
 }
 
 # setup [ARG] runs ws client macos apply, and sets out to what it printed.
