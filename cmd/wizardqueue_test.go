@@ -28,15 +28,22 @@ func stageOf(t *testing.T, queue []tui.Stage, name string) tui.Stage {
 
 func TestWizardQueueSetsEachStageOnItsMachine(t *testing.T) {
 	queue := queueOf(fakeProcess())
-	on := map[tui.Side]int{}
+	on := map[string]int{}
 	for _, s := range queue {
 		on[s.Side]++
 	}
-	if on[tui.MacSide] != 11 || on[tui.WsSide] != 4 {
+	if on["Mac"] != 11 || on["ws"] != 4 {
 		t.Errorf("sides = %v, want 11 on the Mac and 4 on ws", on)
 	}
-	if run := stageOf(t, queue, "ws's run"); run.Side != tui.WsSide || run.Waits == "" {
+	if run := stageOf(t, queue, "ws's run"); run.Side != "ws" || run.Waits == "" {
 		t.Errorf("ws's run = %+v, want it on ws, behind the install", run)
+	}
+}
+
+// The Mac's pane stands left of ws's as the stages first name them, so the first stage is the Mac's.
+func TestWizardQueueNamesTheMacFirst(t *testing.T) {
+	if queue := queueOf(fakeProcess()); queue[0].Side != "Mac" {
+		t.Errorf("the first stage is on %q, want Mac", queue[0].Side)
 	}
 }
 
