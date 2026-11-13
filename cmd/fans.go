@@ -45,9 +45,6 @@ func newFansCmd(p process) *cobra.Command {
 func fansRun(ctx context.Context, cfg fans.Config, stderr io.Writer) error {
 	ctx, stop := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
-	gpus := &fans.GPUs{}
-	go gpus.Run(ctx, fans.NvidiaSmi())
 	log := func(line string) { _, _ = fmt.Fprintln(stderr, line) }
-	d := fans.New(cfg, fans.Hwmon{FS: fans.OSSysfs{}}, gpus, log)
-	return d.Run(ctx)
+	return fans.OnHost(ctx, cfg, log)
 }

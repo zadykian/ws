@@ -3,6 +3,8 @@ package daemon
 import (
 	"os"
 	"testing"
+
+	"github.com/zadykian/ws/roles/server/ubuntu/fans/daemon/internal/missing"
 )
 
 // driver makes the nct6687 device in a directory, with the Pump Fan as channel 2 at pwm 128 under
@@ -72,13 +74,13 @@ func TestHwmonFanReleaseHandsTheFanBack(t *testing.T) {
 
 func TestHwmonFanIsMissingWhereTheHeaderIs(t *testing.T) {
 	fan := Hwmon{OSSysfs{}, driver(t)}.Fan("nct6687", "Gone Fan")
-	if _, err := fan.Speed(); !IsMissing(err) {
+	if _, err := fan.Speed(); !missing.Is(err) {
 		t.Errorf("Speed = %v, want a missing error", err)
 	}
-	if err := fan.Set(10); !IsMissing(err) {
+	if err := fan.Set(10); !missing.Is(err) {
 		t.Errorf("Set = %v, want a missing error", err)
 	}
-	if err := fan.Release(); !IsMissing(err) {
+	if err := fan.Release(); !missing.Is(err) {
 		t.Errorf("Release = %v, want a missing error", err)
 	}
 }

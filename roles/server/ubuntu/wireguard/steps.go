@@ -1,3 +1,6 @@
+// Package wireguard is the wireguard role as Go steps. It sets up wg0, the server's end of a
+// WireGuard tunnel for the Mac, from networkd's own files. It also sets up the drops that keep
+// Docker's containers off the Mac. See docs/wireguard.md.
 package wireguard
 
 import (
@@ -10,6 +13,8 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/ubuntu/wireguard/internal/drops"
+	"github.com/zadykian/ws/roles/server/ubuntu/wireguard/internal/settings"
 )
 
 // Step names. The tunnel and the key wait on the packages, which bring systemd and its group.
@@ -32,7 +37,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units,
 func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out, random io.Reader,
 	sleep func(time.Duration)) []step.Step {
 	return []step.Step{
-		host.Group{Title: settingsStep, Parts: []host.Resource{settingsCheck{v.Wireguard}}},
+		host.Group{Title: settingsStep, Parts: []host.Resource{settings.Check{W: v.Wireguard}}},
 		// networkd, its directory /etc/systemd/network and its group systemd-network come with
 		// systemd, which a container may lack, so that --only wireguard stands alone. iptables
 		// holds the containers' drops. wireguard-tools' recommends serve wg-quick, which the role
@@ -41,7 +46,7 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out, ra
 			host.Packages{M: m, Out: out, Names: []string{"wireguard-tools", "systemd", "iptables"}},
 		}},
 		// Ahead of wg0, which the drops don't need: a run that stops on wg0 still puts them in.
-		host.Lazy{Title: dropsStep, After: packagesStep, Parts: drops(m, u, out, v)},
+		host.Lazy{Title: dropsStep, After: packagesStep, Parts: drops.Parts(m, u, out, v.Network.DirectLinkInterface)},
 		host.Lazy{Title: tunnelStep, After: dropsStep, Parts: tunnel(m, u, out, random, v)},
 		host.Group{Title: keyStep, After: tunnelStep, Parts: []host.Resource{
 			ready{m: m, out: out, tries: 10, pause: time.Second, sleep: sleep},

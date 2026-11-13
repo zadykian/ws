@@ -6,13 +6,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
-
-// settingsCheck refuses the values the role cannot use, as a plan error.
-type settingsCheck struct{ w values.Wireguard }
-
-func (c settingsCheck) Plan(context.Context) ([]host.Change, error) { return nil, Settings(c.w) }
 
 // networkdCheck refuses a machine where systemd-networkd doesn't run, as on Ubuntu Desktop, whose
 // NetworkManager does its work instead: nothing would create wg0. It checks nothing without

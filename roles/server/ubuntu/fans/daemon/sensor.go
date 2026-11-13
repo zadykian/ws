@@ -3,6 +3,8 @@ package daemon
 import (
 	"strings"
 	"time"
+
+	"github.com/zadykian/ws/roles/server/ubuntu/fans/daemon/internal/missing"
 )
 
 // Temperatures reads the NVIDIA GPUs' temperatures.
@@ -40,7 +42,7 @@ func newReader(s SensorConfig, hw Hwmon, gpus Temperatures) reader {
 			}
 		}
 		if len(gone) > 0 {
-			return 0, missing("no reading of %s", strings.Join(gone, ", "))
+			return 0, missing.Errorf("no reading of %s", strings.Join(gone, ", "))
 		}
 		return highest, nil
 	}
@@ -58,7 +60,7 @@ func average(s SensorConfig) reader {
 			samples = samples[1:]
 		}
 		if len(samples) == 0 {
-			return 0, missing("no reading of %s in %v s", s.Average, s.Seconds)
+			return 0, missing.Errorf("no reading of %s in %v s", s.Average, s.Seconds)
 		}
 		sum := 0.0
 		for _, x := range samples {

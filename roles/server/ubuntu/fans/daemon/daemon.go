@@ -1,8 +1,12 @@
 package daemon
 
 import (
+	"context"
 	"fmt"
 	"time"
+
+	"github.com/zadykian/ws/roles/server/ubuntu/fans/daemon/internal/gpu"
+	"github.com/zadykian/ws/roles/server/ubuntu/fans/daemon/internal/missing"
 )
 
 // Daemon drives the fans of a config on the curves, a tick at a time.
@@ -46,6 +50,14 @@ func New(cfg Config, hw Hwmon, gpus Temperatures, log func(string)) *Daemon {
 	return d
 }
 
+// OnHost drives the fans of the config on this machine: the GPUs by nvidia-smi, the rest by the
+// machine's hwmon, until ctx ends. It returns what Run returns.
+func OnHost(ctx context.Context, cfg Config, log func(string)) error {
+	gpus := &gpu.GPUs{}
+	go gpus.Run(ctx, gpu.NvidiaSmi())
+	return New(cfg, Hwmon{FS: OSSysfs{}}, gpus, log).Run(ctx)
+}
+
 func (d *Daemon) now() time.Time {
 	if d.Now != nil {
 		return d.Now()
@@ -76,7 +88,7 @@ func (d *Daemon) Tick() error {
 		case err == nil:
 			values[name] = &t
 			d.report(name, "")
-		case IsMissing(err):
+		case missing.Is(err):
 			values[name] = nil
 			d.report(name, err.Error())
 		default:

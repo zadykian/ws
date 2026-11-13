@@ -4,6 +4,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/zadykian/ws/roles/server/ubuntu/fans/daemon/internal/missing"
 )
 
 func TestOSSysfsReads(t *testing.T) {
@@ -18,7 +20,7 @@ func TestOSSysfsReads(t *testing.T) {
 
 func TestOSSysfsMissesAFileThatIsNotThere(t *testing.T) {
 	_, err := OSSysfs{}.Read(t.TempDir() + "/none")
-	if !IsMissing(err) || !strings.Contains(err.Error(), "no such file") {
+	if !missing.Is(err) || !strings.Contains(err.Error(), "no such file") {
 		t.Errorf("Read = %v, want a missing error that says no such file", err)
 	}
 }
@@ -34,7 +36,7 @@ func TestOSSysfsWrites(t *testing.T) {
 	if got, _ := (OSSysfs{}).Read(path); got != "255" {
 		t.Errorf("file = %q, want 255", got)
 	}
-	if err := (OSSysfs{}).Write(path+"/none", "1"); !IsMissing(err) {
+	if err := (OSSysfs{}).Write(path+"/none", "1"); !missing.Is(err) {
 		t.Errorf("Write to a file that is not there = %v, want a missing error", err)
 	}
 }

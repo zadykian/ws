@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/server/ubuntu/network/internal/netplan"
 )
 
 func TestTheStepRefuses(t *testing.T) {
@@ -24,7 +25,7 @@ func TestTheStepRefuses(t *testing.T) {
 				`[{"ifname":"enp5s0","address":"00:1a:2b:3c:4d:5e","addr_info":[{"family":"inet","local":"192.168.1.5","prefixlen":24,"scope":"global","dynamic":true}]}]`)}
 		}, "enp5s0 holds 192.168.1.5/24 from DHCP, outside 10.77.0.0/30"},
 		{"a sibling entry that fits", "enp5s0", "10.77.0.1/30", func(r rig) {
-			r.m.Results["netplan get --root-dir "+scratch] = effecttest.Result{Out: []byte("network:\n  ethernets:\n    enp5s0: {}\n    lan:\n      match:\n        name: enp*\n")}
+			r.m.Results["netplan get --root-dir "+scratchDir] = effecttest.Result{Out: []byte("network:\n  ethernets:\n    enp5s0: {}\n    lan:\n      match:\n        name: enp*\n")}
 		}, "netplan's entry lan fits enp5s0"},
 		{"networkd that does not run", "enp5s0", "10.77.0.1/30", func(r rig) {
 			r.u.States = nil
@@ -38,7 +39,7 @@ func TestTheStepRefuses(t *testing.T) {
 			if err == nil || !strings.Contains(err.Error(), tt.want) {
 				t.Fatalf("err = %v, want one with %q", err, tt.want)
 			}
-			if _, ok := r.m.Files[netplanPath]; ok {
+			if _, ok := r.m.Files[netplan.Path]; ok {
 				t.Error("the file landed")
 			}
 		})
@@ -51,10 +52,10 @@ func TestCheckLeavesTheMachineAlone(t *testing.T) {
 	if err != nil || !changed {
 		t.Fatalf("changed = %v, err = %v", changed, err)
 	}
-	if slices.Contains(r.m.Calls, "root netplan generate") || slices.Contains(r.m.Calls, "write root "+netplanPath+" 600") {
+	if slices.Contains(r.m.Calls, "root netplan generate") || slices.Contains(r.m.Calls, "write root "+netplan.Path+" 600") {
 		t.Errorf("--check changed the machine: %q", r.m.Calls)
 	}
-	if _, ok := r.m.Files[netplanPath]; ok {
+	if _, ok := r.m.Files[netplan.Path]; ok {
 		t.Error("the file landed")
 	}
 }

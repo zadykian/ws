@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/zadykian/ws/roles/server/ubuntu/fans/daemon/internal/missing"
 )
 
 const hwmonRoot = "/sys/class/hwmon"
@@ -41,7 +43,7 @@ func (h Hwmon) file(device, kind, label, attribute string) (string, error) {
 			}
 		}
 	}
-	return "", missing("no %s labelled %s on a hwmon device %s", kind, label, device)
+	return "", missing.Errorf("no %s labelled %s on a hwmon device %s", kind, label, device)
 }
 
 // Temperature returns the temperature in °C of the channel labelled label.
@@ -56,7 +58,7 @@ func (h Hwmon) Temperature(device, label string) (float64, error) {
 	}
 	milli, err := strconv.Atoi(text)
 	if err != nil {
-		return 0, missing("%s holds %q, not a number", path, text)
+		return 0, missing.Errorf("%s holds %q, not a number", path, text)
 	}
 	return float64(milli) / 1000, nil
 }
