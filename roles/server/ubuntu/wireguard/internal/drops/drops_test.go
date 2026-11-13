@@ -1,4 +1,4 @@
-package wireguard
+package drops
 
 import (
 	"slices"
@@ -13,8 +13,8 @@ func TestMacInterfacesLeaveOutAnUnnamedCable(t *testing.T) {
 }
 
 func TestDropsScriptIsExecutableShell(t *testing.T) {
-	got, err := DropsScript()
+	got, err := Script()
 	if err != nil || !strings.HasPrefix(string(got), "#!/bin/sh\n") {
-		t.Errorf("DropsScript = %.20q, %v", got, err)
+		t.Errorf("Script = %.20q, %v", got, err)
 	}
 }

@@ -1,4 +1,4 @@
-package wireguard
+package drops
 
 import (
 	"context"
@@ -7,24 +7,24 @@ import (
 	"github.com/zadykian/ws/engine/core/host"
 )
 
-// drops are the resources of the script and the unit that keep Docker's containers off the Mac.
+// Parts are the resources of the script and the unit that keep Docker's containers off the Mac.
 // Through wg0 or the cable they come from the server's address, and the Mac lets them in as the
 // server's. The role runs before docker's, so a first run has the drops in place as Docker first
 // starts. Where Docker runs already, the restart puts them in force at once. Docker's daemon.json
 // leaves it on its iptables backend, which docker-user.sh needs. WantedBy=docker.service: Docker's
 // start, at boot too, starts the unit first.
-func drops(m effect.Machine, u effect.Units, out effect.Out, cable string) func(context.Context) ([]host.Resource, error) {
+func Parts(m effect.Machine, u effect.Units, out effect.Out, cable string) func(context.Context) ([]host.Resource, error) {
 	return func(context.Context) ([]host.Resource, error) {
 		return dropResources(m, u, out, cable)
 	}
 }
 
 func dropResources(m effect.Machine, u effect.Units, out effect.Out, cable string) ([]host.Resource, error) {
-	script, err := DropsScript()
+	script, err := Script()
 	if err != nil {
 		return nil, err
 	}
-	service, err := DropsService(MacInterfaces(cable))
+	service, err := Service(MacInterfaces(cable))
 	if err != nil {
 		return nil, err
 	}

@@ -66,8 +66,8 @@ func TestStepsMakeTheKeyAndTheFilesOnceAndThenPlanNothing(t *testing.T) {
 		keyFile:     private,
 		netdevFile:  "PublicKey=" + peerKey,
 		networkFile: "Address=10.99.0.1/24",
-		dropsScript: "WS-MAC",
-		dropsUnit:   "ExecStart=" + dropsScript + " wg0\n",
+		"/usr/local/lib/ws/wireguard/docker-user.sh":        "WS-MAC",
+		"/etc/systemd/system/wireguard-docker-user.service": "ExecStart=/usr/local/lib/ws/wireguard/docker-user.sh wg0\n",
 	} {
 		if !strings.Contains(string(m.Files[path]), want) {
 			t.Errorf("%s = %q, want %q in it", path, m.Files[path], want)

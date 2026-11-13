@@ -13,6 +13,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/ubuntu/wireguard/internal/drops"
 	"github.com/zadykian/ws/roles/server/ubuntu/wireguard/internal/settings"
 )
 
@@ -45,7 +46,7 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out, ra
 			host.Packages{M: m, Out: out, Names: []string{"wireguard-tools", "systemd", "iptables"}},
 		}},
 		// Ahead of wg0, which the drops don't need: a run that stops on wg0 still puts them in.
-		host.Lazy{Title: dropsStep, After: packagesStep, Parts: drops(m, u, out, v.Network.DirectLinkInterface)},
+		host.Lazy{Title: dropsStep, After: packagesStep, Parts: drops.Parts(m, u, out, v.Network.DirectLinkInterface)},
 		host.Lazy{Title: tunnelStep, After: dropsStep, Parts: tunnel(m, u, out, random, v)},
 		host.Group{Title: keyStep, After: tunnelStep, Parts: []host.Resource{
 			ready{m: m, out: out, tries: 10, pause: time.Second, sleep: sleep},

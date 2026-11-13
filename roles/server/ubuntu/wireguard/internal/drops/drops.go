@@ -1,4 +1,5 @@
-package wireguard
+// Package drops keeps Docker's containers off the Mac: a script and the unit that runs it.
+package drops
 
 import "embed"
 
@@ -12,9 +13,9 @@ const (
 	dropsUnit   = "/etc/systemd/system/wireguard-docker-user.service"
 )
 
-// DropsScript returns docker-user.sh, which drops what Docker's containers send to the Mac through
+// Script returns docker-user.sh, which drops what Docker's containers send to the Mac through
 // the interfaces given to it, but for replies to the Mac's own connections.
-func DropsScript() ([]byte, error) { return files.ReadFile("files/docker-user.sh") }
+func Script() ([]byte, error) { return files.ReadFile("files/docker-user.sh") }
 
 // MacInterfaces returns the interfaces the drops cover: wg0, and the cable where one is named.
 func MacInterfaces(cable string) []string {
