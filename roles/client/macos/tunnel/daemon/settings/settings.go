@@ -20,8 +20,8 @@ import (
 // server, the daemon's own among them, beside the key; none reads no other server.
 type Paths struct{ Conf, Key, Routes, State, Log, Root string }
 
-// Settings are tunnel.conf and routes.d as read, with the lines of routes.d left out, and the
-// other servers' directories by name.
+// Settings are tunnel.conf and routes.d as read, with the lines of routes.d left out and the
+// networks that another server's routes.d holds. Others are the other servers' directories.
 type Settings struct {
 	Conf     tunnel.Conf
 	Routes   []netip.Prefix
@@ -38,6 +38,13 @@ func ReadSettings(ctx context.Context, m effect.Machine, p Paths) (Settings, err
 	var skipped []string
 	s.Others, skipped = readOthers(ctx, m, p)
 	s.Warnings = append(s.Warnings, skipped...)
+	held := map[string][]netip.Prefix{}
+	for _, o := range s.Others {
+		held[o.Name] = o.Routes
+	}
+	var apart []string
+	s.Routes, apart = tunnel.Apart(s.Routes, held)
+	s.Warnings = append(s.Warnings, apart...)
 	text, err := m.ReadFile(p.Conf)
 	if err != nil {
 		return s, fmt.Errorf("cannot read %s: run ws client macos apply", p.Conf)
