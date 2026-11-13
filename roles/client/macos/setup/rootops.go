@@ -25,15 +25,6 @@ func applyInOrder(ctx context.Context, m effect.Machine, out effect.Out, p step.
 	return nil
 }
 
-// plan appends the changes that r plans to cs.
-func plan(ctx context.Context, cs []step.Change, r host.Resource) ([]step.Change, error) {
-	changes, err := r.Plan(ctx)
-	for _, c := range changes {
-		cs = append(cs, c)
-	}
-	return cs, err
-}
-
 // removal is host's removal of a file that no Report names, as mac.conf no longer does. It says
 // what the file's Report would.
 type removal struct {

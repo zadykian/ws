@@ -44,6 +44,9 @@ type cldUpdate struct{}
 
 func (cldUpdate) String() string { return "would run cld update" }
 
+func (cldInstall) Kind() step.ChangeKind { return step.Install }
+func (cldUpdate) Kind() step.ChangeKind  { return step.Install }
+
 func (c *Cld) bin() string { return c.Home + "/.local/bin/cld" }
 
 // has reports whether cld in ~/.local/bin is executable.

@@ -1,4 +1,3 @@
-// Package setup holds the steps of ws client macos apply, each setting up one part of the Mac.
 package setup
 
 import (

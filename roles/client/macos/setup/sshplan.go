@@ -16,13 +16,6 @@ const (
 // includeLine is the line that puts config.d/ws first in ~/.ssh/config.
 const includeLine = "Include config.d/ws"
 
-// path is what a step read of one path: whether it exists, its mode and its text.
-type path struct {
-	Exists bool
-	Mode   fs.FileMode
-	Text   []byte
-}
-
 // sshFacts is what the ssh step read of the Mac.
 type sshFacts struct {
 	Home string

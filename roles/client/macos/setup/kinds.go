@@ -17,15 +17,6 @@ func (SetMode) Kind() step.ChangeKind { return step.Write }
 // Kind is write.
 func (KeyCopy) Kind() step.ChangeKind { return step.Write }
 
-// Kind is install.
-func (Install) Kind() step.ChangeKind { return step.Install }
-
-func (cldInstall) Kind() step.ChangeKind { return step.Install }
-func (cldUpdate) Kind() step.ChangeKind  { return step.Install }
-
-// Kind is restart.
-func (Launchctl) Kind() step.ChangeKind { return step.Restart }
-
 // Kind says install for brew, the one package manager of the Mac's runs.
 func (r Run) Kind() step.ChangeKind {
 	if r.Name == "brew" {

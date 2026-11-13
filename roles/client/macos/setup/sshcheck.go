@@ -2,9 +2,6 @@ package setup
 
 import "context"
 
-// daemonLabel is the LaunchDaemon of the tunnel.
-const daemonLabel = "com.github.zadykian.ws-tunnel"
-
 // cldTabs is whether Ghostty's app is there and the cld in ~/.local/bin has restore tabs. With it,
 // ssh never runs a cld that would refuse restore tabs --watch at each connection.
 func (s SSH) cldTabs(ctx context.Context) bool {

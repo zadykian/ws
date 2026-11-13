@@ -67,13 +67,6 @@ func unnamed(u KeyUse, keys []sshcfg.AgentKey) error {
 		name, use, strings.Join(lines, "; "))
 }
 
-// KeyCopy writes ws's copy of the .pub of a key of Secretive's.
-type KeyCopy struct{ Path, Text string }
-
-func (c KeyCopy) String() string {
-	return "would write " + c.Path + ", ws's copy of a key of Secretive's"
-}
-
 // PlanCopy returns the changes that make ws's copy at pub hold text: the directories of the copies,
 // ~/.config/ws and ~/.config with them, where missing, then the copy. It returns none for a .pub
 // elsewhere and for one with no text from the agent, and no copy where it holds text already.
@@ -114,12 +107,4 @@ func keyCopy(m effect.Machine, pub, text, home string) []step.Reporter {
 		return nil
 	}
 	return []step.Reporter{userFile{M: m, Path: pub, Text: []byte(text)}}
-}
-
-func applyCopy(m effect.Machine, out effect.Out, c KeyCopy) error {
-	if err := m.WriteFile(c.Path, []byte(c.Text), 0o644); err != nil {
-		return fmt.Errorf("cannot write %s: %w", c.Path, err)
-	}
-	out.Say("wrote %s", c.Path)
-	return nil
 }

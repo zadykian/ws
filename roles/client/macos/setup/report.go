@@ -18,6 +18,13 @@ const (
 	stateInstalled = "installed"
 )
 
+// path is what a step read of one path: whether it exists, its mode and its text.
+type path struct {
+	Exists bool
+	Mode   fs.FileMode
+	Text   []byte
+}
+
 // writtenBy starts the line at the top of a file that ws writes on the Mac, after its format's
 // comment mark.
 var writtenBy = []byte("Written by ")

@@ -1,3 +1,4 @@
+// Package setup holds the steps of ws client macos apply, each setting up one part of the Mac.
 package setup
 
 import (
@@ -16,14 +17,10 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
-const (
-	// tunnelLibexec holds root's copy of ws, which the daemon runs. The user owns ~/.local/bin, so a
-	// root daemon that ran that file would let anything that runs as the user become root at its
-	// next start.
-	tunnelLibexec = "/usr/local/libexec/ws-tunnel"
-	// tunnelDir holds the Mac's key, tunnel.conf and routes.d, which only root can write.
-	tunnelDir = "/etc/ws-tunnel"
-)
+// tunnelLibexec holds root's copy of ws, which the daemon runs. The user owns ~/.local/bin, so a
+// root daemon that ran that file would let anything that runs as the user become root at its
+// next start.
+const tunnelLibexec = "/usr/local/libexec/ws-tunnel"
 
 // Tunnel sets up the tunnel to ws: ws in ~/.local/bin and root's copy of it, and the Mac's
 // WireGuard key. With WS_PUBLIC_KEY, it also sets up tunnel.conf and the LaunchDaemon that runs `ws
@@ -80,6 +77,9 @@ type Install struct {
 }
 
 func (i Install) String() string { return "would build ws into " + i.Path }
+
+// Kind is install.
+func (Install) Kind() step.ChangeKind { return step.Install }
 
 // localBin is ~/.local/bin, which holds ws's program. A run makes it where missing, and leaves its mode.
 func localBin(m effect.Machine, home string) userDirs {
