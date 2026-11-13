@@ -5,6 +5,8 @@ import (
 	"errors"
 	"io"
 	"slices"
+	"strings"
+	"syscall"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -56,5 +58,23 @@ func TestAPanicOfTheScanOutlivesTheWait(t *testing.T) {
 	})
 	if !errors.Is(err, errPanic) {
 		t.Errorf("awaitPick: %v", err)
+	}
+}
+
+func TestABridgeReportReachesTheScreen(t *testing.T) {
+	b, sent := testBridge(io.Discard)
+	b.Report("Run", nil, "refused")
+	if got := (*sent)[0].(ReportedMsg); got.Stage != "Run" || got.Problem != "refused" {
+		t.Errorf("sent %+v", got)
+	}
+}
+
+// A work past a choice ends well, whatever the cut.
+func TestAWorkPastAChoiceEndsWellWhateverTheCut(t *testing.T) {
+	c := noKeys(io.Discard)
+	c.In, c.quiet = strings.NewReader("\x03"), true
+	past := func(ctx context.Context, _ *Bridge) error { <-ctx.Done(); return nil }
+	if err := Run(t.Context(), c, recorder{&[]tea.Msg{}}, past); !errors.Is(err, testCut(syscall.SIGINT)) {
+		t.Errorf("Run: %v", err)
 	}
 }

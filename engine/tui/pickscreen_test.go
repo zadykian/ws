@@ -213,9 +213,4 @@ func TestPickEndsInTheCutOfCtrlC(t *testing.T) {
 	if _, err := Pick(t.Context(), c, "ws", nil, waitForCtx); !errors.Is(err, testCut(syscall.SIGINT)) {
 		t.Errorf("Pick: %v", err)
 	}
-	c.In, c.quiet = strings.NewReader("\x03"), true // A work past a choice ends well, whatever the cut.
-	past := func(ctx context.Context, _ *Bridge) error { <-ctx.Done(); return nil }
-	if err := Run(t.Context(), c, recorder{&[]tea.Msg{}}, past); !errors.Is(err, testCut(syscall.SIGINT)) {
-		t.Errorf("Run: %v", err)
-	}
 }

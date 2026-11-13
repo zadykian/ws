@@ -245,14 +245,6 @@ func TestReopenKeepsTheBoxesAndRunsNoScan(t *testing.T) {
 	}
 }
 
-func TestABridgeReportReachesTheScreen(t *testing.T) {
-	b, sent := testBridge(io.Discard)
-	b.Report("Run", nil, "refused")
-	if got := (*sent)[0].(ReportedMsg); got.Stage != "Run" || got.Problem != "refused" {
-		t.Errorf("sent %+v", got)
-	}
-}
-
 func TestEachSideKeepsItsCursor(t *testing.T) {
 	s := queueSent(testQueueScreen(), list.ScannedMsg{}, press('j'), press('j'), press('j'), tab)
 	if s.list.side != "ws" || s.at["Mac"] != 3 || s.at["ws"] != 0 {
