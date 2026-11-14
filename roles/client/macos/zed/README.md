@@ -80,6 +80,8 @@ server to every YAML file, Ansible's too.
   reaches a reattached tmux session and whatever runs there.
 - `terminal.toolbar.breadcrumbs` shows a title that a program in the terminal sets, such as
   [lazygit's](../../../server/ubuntu/lazygit/README.md#the-title), above it. Zed's tab takes none.
+- `file_types` reads every `.json` file as JSONC, as ws's file does, so a comment in one is no
+  error ([JSON with comments](../../../server/ubuntu/zed/README.md#json-with-comments)).
 - `terminal.line_height` is Zed's default. Nerd glyphs may look misaligned all the same (zed#4746,
   open), and no setting helps.
 - [Zed's page for the server](../../../server/ubuntu/zed/README.md#when-the-connection-drops) says what to do when the

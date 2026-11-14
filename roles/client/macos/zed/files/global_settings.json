@@ -32,7 +32,8 @@
   "languages": {
     "C# Project File": { "hard_tabs": false, "tab_size": 2 },
     "MSBuild File": { "hard_tabs": false, "tab_size": 2 },
-    "C# Solution File": { "hard_tabs": false, "tab_size": 2 }
+    "C# Solution File": { "hard_tabs": false, "tab_size": 2 },
+    "JSONC": { "prettier": { "trailingComma": "none" } }
   },
   "file_types": {
     "Dockerfile": ["Dockerfile.*", "Containerfile.*"],
@@ -41,6 +42,7 @@
       "compose.*.yml",
       "docker-compose.*.yaml",
       "docker-compose.*.yml"
-    ]
+    ],
+    "JSONC": ["*.json"]
   }
 }
