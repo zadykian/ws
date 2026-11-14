@@ -42,8 +42,9 @@ printf '%s\n' PUBLIC_KEY >/etc/wireguard/mac.pub
 ws server ubuntu apply --only wireguard
 ```
 
-The Mac's scripts fix the peer's name, `mac`, and the tunnel's addresses: a slot's `10.99.N.1`
-for the server and `10.99.N.2` for the Mac
+The Mac's scripts fix the peer's name, `mac`. A server's slot gives the tunnel's ends: `10.99.N.1`
+for the server and `10.99.N.2` for the Mac, slot 0's being `10.99.0.1` and `10.99.0.2`. The Mac's
+wizard names the pair in the server's host_vars
 ([The Mac's tunnel](../../../client/macos/README.md#the-macs-tunnel)). So where `wireguard_peers`
 holds `mac`, the run stops unless `wireguard_address` is a slot's `10.99.N.1/24`, N from 0 to 15,
 and `mac`'s address that slot's `10.99.N.2`.
@@ -77,7 +78,7 @@ Docker forwards its containers' packets ahead of ufw, and gives them the server'
 way out. Through `wg0` or the cable, the Mac would take them for the server's own, and any container
 would reach the Mac's services. So the role drops what Docker's bridges, `docker0` and the `br-` of
 each network, send through `wg0` or the cable, `network_direct_link_interface`. Replies to a
-connection the Mac opened pass, such as one to a port published on `10.99.0.1`.
+connection the Mac opened pass, such as one to a port published on wg0's address.
 
 `wireguard-docker-user.service` puts the drops, for IPv4 and IPv6, in the chain `WS-MAC`, which
 Docker's chain `DOCKER-USER` jumps to first. It runs before Docker starts, at boot, and at once where
