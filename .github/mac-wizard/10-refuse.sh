@@ -41,7 +41,7 @@ refused "another run holds $lock" "$wsbin" client macos wizard --check
 [ -d "$lock" ] || error 'a refused run removed the lock it found'
 rmdir "$lock"
 echo WS_HOOK=example/Ws | conf_write "$RUNNER_TEMP/confs/refuse/mac.conf"
-refused 'line 2: unknown key WS_HOOK' \
+refused 'line 3: unknown key WS_HOOK' \
     env WS_CONF="$RUNNER_TEMP/confs/refuse/mac.conf" "$wsbin" client macos wizard --server ws --check
 rm -r "$RUNNER_TEMP/confs/refuse"
 refused "unknown op 'stage'" \
