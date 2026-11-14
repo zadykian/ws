@@ -12,13 +12,13 @@ import (
 func TestTunnelLoadedFollowsLaunchd(t *testing.T) {
 	p := fakeProcess()
 	m := p.Machine.(*effecttest.Machine)
-	m.Results["launchctl print system/com.github.zadykian.ws-tunnel"] = effecttest.Result{Err: errors.New("not loaded")}
-	if status, _, stderr := runWs(p, "", "client", "macos", "tunnel", "loaded"); status != 1 ||
-		stderr != "ws client macos tunnel loaded: launchd has not loaded the daemon com.github.zadykian.ws-tunnel\n" {
+	m.Results["launchctl print system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{Err: errors.New("not loaded")}
+	if status, _, stderr := runWs(p, "", "client", "macos", "tunnel", "loaded", "--server", "ws"); status != 1 ||
+		stderr != "ws client macos tunnel loaded: launchd has not loaded the daemon com.github.zadykian.ws-tunnel.ws\n" {
 		t.Errorf("not loaded: status = %d, stderr = %q; want 1", status, stderr)
 	}
-	m.Results["launchctl print system/com.github.zadykian.ws-tunnel"] = effecttest.Result{}
-	if status, _, stderr := runWs(p, "", "client", "macos", "tunnel", "loaded"); status != 0 || stderr != "" {
+	m.Results["launchctl print system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{}
+	if status, _, stderr := runWs(p, "", "client", "macos", "tunnel", "loaded", "--server", "ws"); status != 0 || stderr != "" {
 		t.Errorf("loaded: status = %d, stderr = %q; want 0", status, stderr)
 	}
 }

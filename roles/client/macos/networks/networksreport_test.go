@@ -19,7 +19,7 @@ func TestNetworksReportNothingWithoutAPeer(t *testing.T) {
 
 func TestNetworksReportsRoutesAndResolvers(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Results["launchctl print system/"+launchd.Label] = effecttest.Result{}
+	m.Results["launchctl print system/"+launchd.For("ws").Label] = effecttest.Result{}
 	got := mactest.ReportOf(t, networksStep(m, conf.Conf{PublicKey: "K", TunnelNetworks: "10.1.0.0/24", Resolvers: "a.test=10.0.0.1"}))
 	for _, name := range []string{"/etc/ws-tunnel/routes.d/mac-conf", "/etc/resolver", "/etc/resolver/a.test"} {
 		if it, ok := got[name]; !ok || it.Found != "missing" {

@@ -125,7 +125,7 @@ func wizardStages(e wizardEffects, o engine.WizardOptions, name string) []step.S
 		run,
 		&stages.WsClaude{Ws: ws, Tty: p.TTY},
 		&stages.Signing{Ws: ws, GitHub: &gh.MacGitHub{Gh: ghStage.CLI, Lock: lock, Check: check}},
-		&link.Tunnel{SSH: hostKey.SSH, Ws: ws, Conf: laterServer, Check: check, MacApply: setup.Run, Hand: hand, Home: p.Getenv("HOME"),
+		&link.Tunnel{SSH: hostKey.SSH, Ws: ws, Conf: laterServer, Check: check, Server: name, MacApply: setup.Run, Hand: hand, Home: p.Getenv("HOME"),
 			Sleep: time.Sleep, M: p.Machine, Out: out},
 		cable,
 	}

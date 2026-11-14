@@ -21,7 +21,7 @@ func TestTunnelApply(t *testing.T) {
 		m.Results["sudo -v"] = effecttest.Result{}
 		m.Results[libexec+" client macos tunnel key"] = effecttest.Result{Out: []byte(keyA + "\n")}
 		if tc.shake != "" {
-			m.Results[libexec+" client macos tunnel status"] = effecttest.Result{Out: []byte(tc.shake)}
+			m.Results[libexec+" client macos tunnel status --server ws"] = effecttest.Result{Out: []byte(tc.shake)}
 		}
 		m.Results["mkdir -p /h"] = effecttest.Result{}
 		m.Results[tunnelCall(tun.SSH, "-o", "BatchMode=yes", "ws", "echo", "ok")] =
@@ -50,7 +50,7 @@ func TestTunnelApplyStops(t *testing.T) {
 }
 func TestTunnelPlanLoaded(t *testing.T) {
 	tun, m := newTunnel(keyB, session.Status{WgKey: keyB, Peered: true, MacKey: keyA}, false)
-	m.Results["launchctl print system/"+label] = effecttest.Result{Err: context.Canceled}
+	m.Results["launchctl print system/"+daemonLabel] = effecttest.Result{Err: context.Canceled}
 	if p, _ := tun.Plan(context.Background()); len(p.Changes) == 0 {
 		t.Error("Plan without ws-tunnel in launchd is empty")
 	}
