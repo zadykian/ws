@@ -50,3 +50,15 @@ func TestConfFormScopeSaysItsFileHoldsTheValues(t *testing.T) {
 		t.Errorf("lines = %q; want %q", out.Lines, want)
 	}
 }
+
+func TestConfFormSaveChangesNeitherFileWhereOneRefuses(t *testing.T) {
+	f, m := formOf(t, "", "WS_USER=ada\n")
+	m.Links[serverOfTest] = "/dot/server.conf"
+	_, err := f.Save(context.Background(), &effecttest.Out{}, map[string]string{"WS_GIT_NAME": "A B", "WS_TARGET": "cloud", "WS_REMOTE": "vm.example"})
+	if err == nil {
+		t.Fatal("Save passes a server file that is a link")
+	}
+	if mac, server := string(m.Files["/h/mac.conf"]), string(m.Files[serverOfTest]); mac != "" || server != "WS_USER=ada\n" {
+		t.Errorf("mac.conf = %q, server = %q; want both as they were", mac, server)
+	}
+}
