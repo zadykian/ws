@@ -14,7 +14,7 @@ const releases = "https://example.org/releases"
 
 func newInstall(version, url string, status session.Status) (*WsInstall, *effecttest.Machine) {
 	ws, m := sessiontest.New(status)
-	return &WsInstall{Ws: ws, Version: version, URL: url, Out: &effecttest.Out{}}, m
+	return &WsInstall{Server: "ws", Ws: ws, Version: version, URL: url, Out: &effecttest.Out{}}, m
 }
 
 func TestWsInstallPlan(t *testing.T) {
