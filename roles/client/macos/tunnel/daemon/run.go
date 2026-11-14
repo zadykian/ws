@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/settings"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/uapi"
@@ -30,6 +31,10 @@ func (d *Daemon) Run(ctx context.Context) error {
 			case Check:
 				d.choose(ctx)
 			case Tick:
+				if d.replaced() {
+					d.say("root's copy of ws is new; stops, for launchd to start the new one")
+					return nil
+				}
 				d.tick(ctx)
 				d.later(Tick, d.TickEvery)
 			case Changed:
@@ -53,6 +58,7 @@ func (d *Daemon) Run(ctx context.Context) error {
 // start reads the settings and gives the device its key, the utun its address, and ws's address a
 // route into the utun.
 func (d *Daemon) start(ctx context.Context) error {
+	d.program, _ = d.programFile()
 	d.trimLog()
 	_ = d.run(ctx, "rm", "-f", d.Paths.State, d.Paths.State+".new") // a dead run's state would mislead status
 	var err error
@@ -85,6 +91,16 @@ func (d *Daemon) start(ctx context.Context) error {
 	}
 	d.since, d.peerConf = d.Now(), d.set.Conf
 	return nil
+}
+
+// replaced tells whether a new file took the place of the program since start, as ws client macos
+// apply leaves it where it stops before it restarts the daemons.
+func (d *Daemon) replaced() bool {
+	if d.program == nil {
+		return false
+	}
+	now, err := d.programFile()
+	return err == nil && !os.SameFile(d.program, now)
 }
 
 // stop removes the state file, which says that the daemon runs.
