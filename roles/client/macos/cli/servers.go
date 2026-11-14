@@ -38,7 +38,7 @@ func newServersCmd(p enginecli.Env, server *string) *cobra.Command {
 			for _, name := range names {
 				target, slot := "-", "-"
 				if s, err := conf.Load(p.Machine, mac, conf.ServerPath(mac, name)); err != nil {
-					refused = append(refused, err)
+					refused = appendNew(refused, err)
 				} else {
 					target, slot = s.Target, fmt.Sprint(s.TunnelSlot())
 				}
@@ -47,4 +47,14 @@ func newServersCmd(p enginecli.Env, server *string) *cobra.Command {
 			return errors.Join(append(refused, w.Flush())...)
 		},
 	}
+}
+
+// appendNew adds err to errs unless one says the same: a bad mac.conf fails every server's load.
+func appendNew(errs []error, err error) []error {
+	for _, e := range errs {
+		if e.Error() == err.Error() {
+			return errs
+		}
+	}
+	return append(errs, err)
 }
