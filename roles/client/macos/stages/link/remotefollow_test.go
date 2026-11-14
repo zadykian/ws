@@ -125,6 +125,7 @@ func TestEachRunIsFollowed(t *testing.T) {
 	r, m := newRun("lan", idleRun, true, false)
 	r.Ws = macSession(m, remote.SSH{Host: "ws", M: m, Lock: "/l", Ways: host.MacWays{M: m, Conf: "/h/mac.conf"}}, r.Out.(*effecttest.Out), idleRun, h)
 	m.Results[sessiontest.Op("run")] = log
+	m.Results[sessiontest.Op("values")] = effecttest.Result{Out: []byte("---\n")}
 	plan, err := r.Plan(ctx)
 	if err != nil {
 		t.Fatal(err)

@@ -15,8 +15,8 @@ import (
 )
 
 // pairsFor runs tunnelPairs for the address and port over a host_vars that reads as file, and
-// returns the pairs and the ops that ran.
-func pairsFor(address, port, file string) ([]string, []string, error) {
+// returns the pairs.
+func pairsFor(address, port, file string) ([]string, error) {
 	m := effecttest.NewMachine()
 	m.Results[sessiontest.Op("values")] = effecttest.Result{Out: []byte(file)}
 	var w session.Want
@@ -25,18 +25,38 @@ func pairsFor(address, port, file string) ([]string, []string, error) {
 	}
 	w.Port = port
 	pairs, err := tunnelPairs(context.Background(), sessiontest.On(m, idleRun), w)
-	return pairs, m.Calls, err
+	return pairs, err
 }
 
-func TestTunnelPairsReadsNothingAtTheDefaults(t *testing.T) {
+func TestTunnelPairsPlansNothingAtTheDefaults(t *testing.T) {
 	for name, tc := range map[string]struct{ address, port string }{
 		"slot 0":    {"10.99.0.1/24", ""},
 		"the port":  {"10.99.0.1/24", "51820"},
 		"port only": {"", "51820"},
 	} {
-		pairs, calls, err := pairsFor(tc.address, tc.port, "")
-		if err != nil || len(pairs) != 0 || len(calls) != 0 {
-			t.Errorf("%s: pairs = %q, calls = %q, %v; want none", name, pairs, calls, err)
+		pairs, err := pairsFor(tc.address, tc.port, "---\n")
+		if err != nil || len(pairs) != 0 {
+			t.Errorf("%s: pairs = %q, %v; want none", name, pairs, err)
+		}
+	}
+}
+
+func TestTunnelPairsGoesBackToTheDefaults(t *testing.T) {
+	old := "wireguard_address: 10.99.1.1/24\nwireguard_port: 51821\n"
+	both := []string{"wireguard_address=10.99.0.1/24", "wireguard_port=51820"}
+	for name, tc := range map[string]struct {
+		address, port, file string
+		want                []string
+	}{
+		"slot 0 and the port": {"10.99.0.1/24", "", old, both},
+		"the port named":      {"10.99.0.1/24", "51820", old, both},
+		"the port alone":      {"", "51820", old, both[1:]},
+		"the address alone":   {"10.99.0.1/24", "51821", old, both[:1]},
+		"the defaults held":   {"10.99.0.1/24", "", "wireguard_address: 10.99.0.1/24\nwireguard_port: 51820\n", nil},
+	} {
+		pairs, err := pairsFor(tc.address, tc.port, "---\n"+tc.file)
+		if err != nil || !slices.Equal(pairs, tc.want) {
+			t.Errorf("%s: pairs = %q, %v; want %q", name, pairs, err, tc.want)
 		}
 	}
 }
@@ -53,7 +73,7 @@ func TestTunnelPairsKeepsWhatHostVarsLacks(t *testing.T) {
 		"port is held": {"10.99.1.1/24", "51821", "wireguard_port: 51821\n", both[:1]},
 		"both held":    {"10.99.1.1/24", "51821", "wireguard_address: 10.99.1.1/24\nwireguard_port: 51821\n", nil},
 	} {
-		pairs, _, err := pairsFor(tc.address, tc.port, "---\n"+tc.file)
+		pairs, err := pairsFor(tc.address, tc.port, "---\n"+tc.file)
 		if err != nil || !slices.Equal(pairs, tc.want) {
 			t.Errorf("%s: pairs = %q, %v; want %q", name, pairs, err, tc.want)
 		}
@@ -93,8 +113,9 @@ func TestWsRunPlansWhatHostVarsLacks(t *testing.T) {
 		"address": {"10.99.1.1/24", "", "", "after naming wireguard_address: 10.99.1.1/24 in ws's host_vars"},
 		"held":    {"10.99.1.1/24", "51821", "wireguard_address: 10.99.1.1/24\nwireguard_port: 51821\n", ""},
 		"slot 0":  {"10.99.0.1/24", "", "", ""},
+		"back":    {"10.99.0.1/24", "", "wireguard_address: 10.99.1.1/24\nwireguard_port: 51821\n", "after naming wireguard_address: 10.99.0.1/24 and wireguard_port: 51820 in ws's host_vars"},
 	} {
-		r, m := tunnelRun(tc.address, tc.port, "---\n"+tc.file)
+		r, _ := tunnelRun(tc.address, tc.port, "---\n"+tc.file)
 		p, err := r.Plan(context.Background())
 		got := ""
 		if len(p.Changes) > 0 {
@@ -102,9 +123,6 @@ func TestWsRunPlansWhatHostVarsLacks(t *testing.T) {
 		}
 		if err != nil || (tc.want == "") != (got == "") || !strings.Contains(got, tc.want) {
 			t.Errorf("%s: Plan = %q, %v; want %q", name, got, err, tc.want)
-		}
-		if tc.address == "10.99.0.1/24" && slices.Contains(m.Calls, "run op values") {
-			t.Errorf("%s: calls = %q; want no values op", name, m.Calls)
 		}
 	}
 }
