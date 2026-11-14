@@ -9,19 +9,24 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
-// tunnelPairs gives the host_vars pairs that bring wg0 to the Mac's want: wireguard_address where
-// the want is not the default's, wireguard_port likewise, each where host_vars differs. A want of
-// the defaults reads nothing, so a server at slot 0 on port 51820 plans no pair.
+// tunnelPairs gives the host_vars pairs that bring wg0 to the Mac's want: wireguard_address and
+// wireguard_port, each where host_vars differs. A server that goes back to the defaults gets the
+// default pair where host_vars holds another value. Where host_vars holds none and the want is the
+// default, the run plans nothing, and a first server's run keeps its bytes.
 func tunnelPairs(ctx context.Context, ws values.Store, w session.Want) ([]string, error) {
 	def := values.Default().Wireguard
-	var want [][2]string
-	if w.Address.IsValid() && w.Address.String() != def.Address {
-		want = append(want, [2]string{"wireguard_address", w.Address.String()})
+	type want struct{ key, value, standard string }
+	var wants []want
+	if w.Address.IsValid() {
+		wants = append(wants, want{"wireguard_address", w.Address.String(), def.Address})
 	}
-	if w.Port != "" && w.Port != strconv.Itoa(def.Port) {
-		want = append(want, [2]string{"wireguard_port", w.Port})
+	if port := w.Port; port != "" || w.Address.IsValid() {
+		if port == "" {
+			port = strconv.Itoa(def.Port)
+		}
+		wants = append(wants, want{"wireguard_port", port, strconv.Itoa(def.Port)})
 	}
-	if len(want) == 0 {
+	if len(wants) == 0 {
 		return nil, nil
 	}
 	f, err := values.Form{Ws: ws}.Load(ctx)
@@ -33,9 +38,9 @@ func tunnelPairs(ctx context.Context, ws values.Store, w session.Want) ([]string
 		held[field.Key] = field.Value
 	}
 	var pairs []string
-	for _, p := range want {
-		if held[p[0]] != p[1] {
-			pairs = append(pairs, p[0]+"="+p[1])
+	for _, p := range wants {
+		if held[p.key] != p.value && (held[p.key] != "" || p.value != p.standard) {
+			pairs = append(pairs, p.key+"="+p.value)
 		}
 	}
 	return pairs, nil
