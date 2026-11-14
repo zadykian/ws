@@ -114,3 +114,16 @@ func TestReloadLogsTheNetworkAnotherServerHolds(t *testing.T) {
 		t.Errorf("log = %q, want %q and the one route", lines, want)
 	}
 }
+
+func TestReloadCountsTheEndpointsOfAServerThatCame(t *testing.T) {
+	r := onTheCable(t) // its round found no other server
+	r.Paths.Root = "/etc"
+	r.m.Files[dir+"/routes.d/office"] = []byte("172.16.0.0/12\n")
+	r.m.table["ls -1 "+dir+"/routes.d"] = effecttest.Result{Out: []byte("office\n")}
+	r.m.Files["/etc/lab/tunnel.conf"] = []byte("WS_PUBLIC_KEY=" + peerKey + "\nWS_LAN_ADDRESS=172.16.4.4\n")
+	r.m.table["ls -1p /etc"] = effecttest.Result{Out: []byte("lab/\nws-tunnel/\n")}
+	r.reload(context.Background())
+	if got := r.lines()[len(r.lines())-1]; got != "read its settings again; routes: none" {
+		t.Errorf("log = %q, want the office left out, as it holds lab's endpoint", r.lines())
+	}
+}

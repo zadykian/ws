@@ -10,7 +10,8 @@ import (
 
 // reload reads tunnel.conf and routes.d again, on SIGHUP. A new key or path has the paths tried
 // again. Otherwise it changes the peer's AllowedIPs and the routes in place, which keeps the
-// session. The routes stay clear of the endpoints of the last round.
+// session. The routes stay clear of the endpoints of the last round, and of the other servers' as
+// this read finds them.
 //
 // A moved slot changes the utun's address, its route and the peer's AllowedIPs. So reload reports
 // it, and the daemon stops, for launchd to start it again at the new slot.
@@ -30,6 +31,8 @@ func (d *Daemon) reload(ctx context.Context) (moved bool) {
 		return true
 	}
 	d.set = set
+	// Another server may have come or moved since the round began, and this read finds it.
+	d.otherEnds(ctx)
 	if set.Conf != old {
 		if set.Conf.Key != old.Key {
 			if text, err := uapi.Remove(old.Key); err == nil {
