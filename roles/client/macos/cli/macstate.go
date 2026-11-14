@@ -16,7 +16,14 @@ import (
 // macDoc is what ws client macos state --json prints.
 type macDoc struct {
 	Version string        `json:"version"`
-	Steps   []step.Report `json:"steps"`
+	Steps   []step.Report `json:"steps,omitempty"`
+	Servers []serverDoc   `json:"servers,omitempty"`
+}
+
+// serverDoc is one server's steps, where the report covers several servers.
+type serverDoc struct {
+	Name  string        `json:"name"`
+	Steps []step.Report `json:"steps"`
 }
 
 // newMacStateCmd returns ws client macos state.
@@ -53,11 +60,17 @@ func macRead(p enginecli.Env, server *string) tui.StateReader {
 	}
 }
 
-// writeMacState prints the steps' reports as text.
-func writeMacState(w io.Writer, reports []step.Report) error {
+// writeMacState prints the steps' reports as text, under a line of the server's name where the
+// report covers several servers.
+func writeMacState(w io.Writer, docs []serverDoc, grouped bool) error {
 	var b strings.Builder
-	for _, r := range reports {
-		engine.WriteReport(&b, r)
+	for _, d := range docs {
+		if grouped {
+			b.WriteString(d.Name + "\n")
+		}
+		for _, r := range d.Steps {
+			engine.WriteReport(&b, r)
+		}
 	}
 	_, err := io.WriteString(w, b.String())
 	return err
