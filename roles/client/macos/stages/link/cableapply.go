@@ -30,6 +30,9 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 	if !c.lacks() {
 		return c.again(ctx, cf.CablePort)
 	}
+	if c.owner() != "" {
+		return c.write(ctx, "")
+	}
 	if v, set := c.Env("WS_CABLE_SERVICE"); set && v == "" {
 		return c.write(ctx, "")
 	}

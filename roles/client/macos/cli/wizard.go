@@ -105,7 +105,7 @@ func wizardStages(e wizardEffects, o engine.WizardOptions, name string) []step.S
 	hand.Late(ghStage.Hand)
 	setup := wizardSetup(e, o.Left, later, name)
 	login := &host.Login{SSH: hostKey.SSH, Ws: ws, Gh: ghStage.CLI, Tty: p.TTY, Check: check, Env: p.Lookup, P: ask, Out: out}
-	cable := &link.Cable{Ws: ws, SSH: hostKey.SSH, Conf: laterServer, Check: check, RunDone: run.RunDone,
+	cable := &link.Cable{Ws: ws, SSH: hostKey.SSH, Conf: laterServer, Mac: macConf, Server: name, Check: check, RunDone: run.RunDone,
 		MacApply: setup.Run, Env: p.Lookup, P: ask, Prog: prog, Tty: p.TTY, M: p.Machine, Out: out}
 	hand.Late(cable.Hand)
 	return []step.Step{

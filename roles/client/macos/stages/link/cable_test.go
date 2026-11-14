@@ -198,3 +198,42 @@ func TestCablePlanReadsNoPortsWhereTheEnvironmentNamesOne(t *testing.T) {
 		t.Errorf("Plan = %v, read ports %v; want no read of link", err, c.ports)
 	}
 }
+
+// beside makes ws's file, which names the cable's service, a sibling of lab's file at /h/servers/lab.
+func beside(c *Cable, m *effecttest.Machine, ws string) {
+	c.Mac, c.Server, c.Conf = "/h/mac.conf", "lab", "/h/servers/lab/server.conf"
+	m.Dirs["/h/servers"], m.Dirs["/h/servers/ws"], m.Dirs["/h/servers/lab"] = 0o755, 0o755, 0o755
+	m.Files["/h/servers/ws/server.conf"] = []byte(ws)
+	m.Files[c.Conf] = []byte("WS_TARGET=lan\n" + wayConf)
+	m.Results["mkdir -p /h/servers/lab"] = effecttest.Result{}
+}
+
+func TestCablePlanLeavesTheCableToTheServerThatNamesIt(t *testing.T) {
+	c, m, _ := newCable(t, session.Status{}, cableLink, nil)
+	beside(c, m, "WS_TARGET=lan\nWS_CABLE_PORT=eth1\nWS_CABLE_SERVICE=\"USB\"\n")
+	p, err := c.Plan(context.Background())
+	want := "would write WS_CABLE_SERVICE= in /h/servers/lab/server.conf: the cable reaches server ws"
+	if len(p.Changes) != 1 || err != nil || !strings.HasSuffix(p.Changes[0].String(), want) {
+		t.Errorf("Plan = %v, %v; want %q", p, err, want)
+	}
+}
+
+func TestCableApplyWritesNoCableWhereASiblingNamesOne(t *testing.T) {
+	c, m, _ := newCable(t, session.Status{}, cableLink, nil)
+	beside(c, m, "WS_TARGET=lan\nWS_CABLE_PORT=eth1\nWS_CABLE_SERVICE=\"USB\"\n")
+	if err := c.Apply(context.Background(), step.Plan{}); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(m.Files[c.Conf]); !strings.HasSuffix(got, "WS_CABLE_SERVICE=\n") || strings.Contains(got, "WS_CABLE_PORT") {
+		t.Errorf("lab's file = %q; want an empty WS_CABLE_SERVICE alone", got)
+	}
+}
+
+func TestCablePlanAsksAgainWhereTheSiblingHasNone(t *testing.T) {
+	c, m, _ := newCable(t, session.Status{}, cableLink, nil)
+	beside(c, m, "WS_TARGET=lan\nWS_CABLE_SERVICE=\n")
+	p, err := c.Plan(context.Background())
+	if err != nil || len(p.Changes) != 1 || !strings.Contains(p.Changes[0].String(), "ask ws's port") {
+		t.Errorf("Plan = %v, %v; want the question of the port", p, err)
+	}
+}
