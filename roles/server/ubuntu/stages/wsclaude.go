@@ -12,6 +12,8 @@ import (
 // WsClaude is the stage that logs WS_USER's claude in on ws, at the terminal, by the session's way:
 // ssh -t from the Mac, runuser on ws itself.
 type WsClaude struct {
+	// Server names the server that the Mac sets up, which its side takes. Empty on the server itself.
+	Server string
 	// Ws is the session to ws, whose run installs claude there.
 	Ws *session.Session
 	// Tty tells whether a terminal is there to log in at.
@@ -22,7 +24,7 @@ type WsClaude struct {
 func (*WsClaude) Name() string { return session.ClaudeStage }
 
 // Side is ws: the claude login of WS_USER.
-func (*WsClaude) Side() guided.Side { return session.Ws }
+func (c *WsClaude) Side() guided.Side { return session.SideOf(c.Server) }
 
 // WaitsOn is ws's run.
 func (*WsClaude) WaitsOn() string { return RunStage }
