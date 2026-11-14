@@ -111,7 +111,7 @@ Ghostty, which controls itself with no prompt. A `git push` to ws from a Ghostty
 watcher too, or finds it running.
 
 A restore opens an ssh connection for each pane it reopens. Where those logins fail, fail2ban bans
-the tunnel's address, `10.99.0.2`, which shuts `ssh ws` out for an hour. [ssh's
+the tunnel's address, `10.99.N.2`, which shuts `ssh ws` out for an hour. [ssh's
 hosts](../README.md#sshs-hosts) says how to lift the ban.
 
 ## The zsh hook
