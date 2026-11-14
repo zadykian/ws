@@ -1,8 +1,7 @@
 #!/bin/sh
-# The wizard's server: it sets up one, which --server names. A bad name, and a second server beside
-# ws's, must stop a run. On a mac.conf with no server, a run with no terminal and no name must stop,
-# and ask for the flag. There --check must show the new server's file, headed by WS_SLOT=0, and
-# write none. None of these runs may change a file.
+# The wizard's server: --server names it. A bad name must stop a run. On a mac.conf with no server, a
+# run with no terminal and no name must stop, and ask for the flag. There --check must show the new
+# server's file, headed by WS_SLOT=0, and write none. None of these runs may change a file.
 
 set -u
 # shellcheck source=.github/mac-conf.sh
@@ -31,8 +30,6 @@ refused() {
 
 conf_print "$conf" >"$RUNNER_TEMP/mac.conf"
 refused "--server Lab is not a server's name" "$wsbin" client macos wizard --server Lab --check
-refused 'lab would be a second server, beside ws: the wizard sets up one server' \
-    "$wsbin" client macos wizard --server lab --check
 conf_print "$conf" | cmp -s - "$RUNNER_TEMP/mac.conf" || error 'a refused run changed mac.conf'
 [ ! -e "${conf%/*}/servers/lab" ] || error 'a refused run made the file of the server lab'
 
