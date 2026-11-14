@@ -98,7 +98,7 @@ func (c *Cable) read(ctx context.Context, port string) error {
 		out, err = c.Ws.WaitPorts(ctx, port)
 	}
 	if err != nil {
-		return fmt.Errorf("%s: link failed on ws: %w", stage.Cable, err)
+		return fmt.Errorf("%s: link failed on %s: %w", stage.Cable, c.SSH.Host, err)
 	}
 	c.ports = nil
 	for _, l := range strings.Split(string(out), "\n") {
@@ -183,7 +183,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, nil
 	}
 	if !c.lacks() {
-		return c.change("name " + cf.CablePort + " in /etc/ws/host_vars.yml on ws again, and run " +
+		return c.change("name " + cf.CablePort + " in /etc/ws/host_vars.yml on " + c.SSH.Host + " again, and run " +
 			"ws server ubuntu apply --only network,wireguard there")
 	}
 	if none {
@@ -194,7 +194,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	if portSet && !c.Check {
 		// Apply reads the ports once, and names the port that the environment gives.
-		return c.change("ask ws's port of the cable, name it in /etc/ws/host_vars.yml on ws, and run " +
+		return c.change("ask " + c.SSH.Host + "'s port of the cable, name it in /etc/ws/host_vars.yml on " + c.SSH.Host + ", and run " +
 			"ws server ubuntu apply --only network,wireguard there")
 	}
 	if err := c.read(ctx, ""); err != nil {
@@ -204,7 +204,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, nil
 	}
 	if c.end() == "" {
-		return c.change("ask ws's port of the cable, name it in /etc/ws/host_vars.yml on ws, and run " +
+		return c.change("ask " + c.SSH.Host + "'s port of the cable, name it in /etc/ws/host_vars.yml on " + c.SSH.Host + ", and run " +
 			"ws server ubuntu apply --only network,wireguard there")
 	}
 	return c.change("ask the Mac's service of the cable, write it in server.conf as WS_CABLE_SERVICE, run " +
