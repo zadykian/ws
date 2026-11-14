@@ -33,7 +33,9 @@ func TestConfCommand(t *testing.T) {
 		{"argument", []string{"/a/mac.conf"}, "/e/mac.conf", 0, "WS_USER='amy'\n", ""},
 		{"missing", []string{"/none"}, "", 1, "", "ws client macos conf: /none is missing: roles/client/macos/README.md"},
 		{"refused", []string{"/bad"}, "", 1, "", "ws client macos conf: /bad, line 2: unknown key WS_NOPE"},
-		{"lines", []string{"--lines", "/pair"}, "", 0, "WS_USER='zadykian'\nWS_TARGET='lan'\nWS_SLOT='0'\nWS_PUBLIC_KEY=''\nWS_LAN='10.88.0.0/24'\n", ""},
+		{"lines", []string{"--lines", "/lines/mac.conf"}, "", 0, "WS_USER='zadykian'\nWS_TARGET='lan'\nWS_SLOT='0'\nWS_PUBLIC_KEY=''\nWS_LAN='10.88.0.0/24'\n", ""},
+		{"lines of the server's file", []string{"--lines"}, "", 0, "WS_USER='ada'\n", ""},
+		{"lines refuse a server's key in mac.conf", []string{"--lines", "/lines/bad/mac.conf"}, "", 1, "", "/lines/bad/mac.conf, line 1: WS_LAN is a server's key"},
 		{"pair", []string{"/pairs/mac.conf"}, "", 1, "", "WS_LAN and WS_LAN_ADDRESS go together"},
 		{"two files", []string{"a", "b"}, "", 2, "", "ws client macos conf: accepts at most 1 arg(s), received 2"},
 	}
@@ -44,7 +46,10 @@ func TestConfCommand(t *testing.T) {
 	m.Files["/e/servers/ws/server.conf"] = []byte("WS_USER=eve\n")
 	m.Files["/a/mac.conf"] = []byte("")
 	m.Files["/a/servers/ws/server.conf"] = []byte("WS_USER=amy\n")
-	m.Files["/pair"] = []byte("WS_LAN=10.88.0.0/24\n")
+	m.Files["/lines/mac.conf"] = []byte("WS_GIT_NAME=zed\n")
+	m.Files["/lines/servers/ws/server.conf"] = []byte("WS_USER=zadykian\nWS_LAN=10.88.0.0/24\n")
+	m.Files["/lines/bad/mac.conf"] = []byte("WS_LAN=10.88.0.0/24\n")
+	m.Files["/lines/bad/servers/ws/server.conf"] = []byte("")
 	m.Files["/pairs/mac.conf"] = []byte("")
 	m.Files["/pairs/servers/ws/server.conf"] = []byte("WS_LAN=10.88.0.0/24\n")
 	m.Files["/bad"] = []byte("WS_GIT_NAME=ada\nWS_NOPE=1\n")

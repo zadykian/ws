@@ -22,7 +22,7 @@ func Siblings(m effect.Machine, mac, server string) ([]Sibling, error) {
 		if file == server {
 			continue
 		}
-		c, err := load(m, file, ServerFile)
+		c, err := load(m, file, ServerFile.Parse)
 		if err != nil {
 			continue
 		}

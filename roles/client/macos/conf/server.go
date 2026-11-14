@@ -22,8 +22,8 @@ func ServerPath(mac, name string) string {
 // returns every refusal of both files, each in its own file's words, then what the server's file
 // takes that another server's file takes too ([clashes]).
 func Load(m effect.Machine, mac, server string) (Conf, error) {
-	macConf, macErr := load(m, mac, MacFile)
-	c, serverErr := load(m, server, ServerFile)
+	macConf, macErr := load(m, mac, MacFile.Parse)
+	c, serverErr := load(m, server, ServerFile.Parse)
 	if err := errors.Join(macErr, serverErr); err != nil {
 		return Conf{}, err
 	}
@@ -41,6 +41,18 @@ func Load(m effect.Machine, mac, server string) (Conf, error) {
 	return join(macConf, c), nil
 }
 
+// LoadLines reads mac.conf at mac and a server's file at server as Load does, but checks each line
+// alone, as Scope.Lines does. A pair of keys may then stand apart. Each file refuses the other's
+// keys, and no other server is read.
+func LoadLines(m effect.Machine, mac, server string) (Conf, error) {
+	macConf, macErr := load(m, mac, MacFile.Lines)
+	c, serverErr := load(m, server, ServerFile.Lines)
+	if err := errors.Join(macErr, serverErr); err != nil {
+		return Conf{}, err
+	}
+	return join(macConf, c), nil
+}
+
 // join returns the keys of a server's file with the Mac's keys from mac.conf.
 func join(mac, server Conf) Conf {
 	server.GitName, server.GitEmail, server.GitSigningPubKey = mac.GitName, mac.GitEmail, mac.GitSigningPubKey
@@ -48,8 +60,8 @@ func join(mac, server Conf) Conf {
 	return server
 }
 
-// load reads the file at file as its scope says.
-func load(m effect.Machine, file string, s Scope) (Conf, error) {
+// load reads the file at file, which parse checks.
+func load(m effect.Machine, file string, parse func(string) (Conf, []Error)) (Conf, error) {
 	text, err := m.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
 		return Conf{}, fmt.Errorf("%s is missing: roles/client/macos/README.md says what goes in it", file)
@@ -57,7 +69,7 @@ func load(m effect.Machine, file string, s Scope) (Conf, error) {
 	if err != nil {
 		return Conf{}, err
 	}
-	c, errs := s.Parse(string(text))
+	c, errs := parse(string(text))
 	var all []error
 	for _, e := range errs {
 		all = append(all, errors.New(e.In(file)))
