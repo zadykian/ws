@@ -51,7 +51,7 @@ func (r *Login) stop(ctx context.Context, w remote.Way) error {
 	}
 	if scanKey(ctx, r.SSH.M, w) == "" {
 		if r.Check {
-			r.Out.Say("%s: %s; a run would ask its address now", stage.Host, noAnswer(w))
+			r.Out.Say("%s: %s; a run would ask its address now", stage.Host, noAnswer(r.SSH.Host, w))
 			return nil
 		}
 		if w, _, err = (firstQuestion{r.SSH, r.Env, r.Tty, r.P, r.Out}).ask(ctx, c.Target, w); err != nil {
