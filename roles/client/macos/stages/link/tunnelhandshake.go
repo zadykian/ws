@@ -37,14 +37,10 @@ func (t *Tunnel) handshake(ctx context.Context, c conf.Conf, kick bool) error {
 	t.Sleep(2 * time.Second)
 	if !t.shake(ctx, 30) {
 		t.none = true
-		port := c.Port
-		if port == "" {
-			port = "51820"
-		}
 		t.Hand.Add("The tunnel's handshake: ws-tunnel had none with ws within 30 s, so ssh ws fails while "+
 			"a direct way works. ws must take UDP %s, through the router's forward or a cloud's firewall "+
 			"where WS_REMOTE leads through one, and ws-tunnel must stay allowed in the Background "+
-			"(roles/client/macos/README.md, The Mac's tunnel). Then run the wizard again, which checks it.", port)
+			"(roles/client/macos/README.md, The Mac's tunnel). Then run the wizard again, which checks it.", c.TunnelPort())
 		return nil
 	}
 	if !t.via(ctx, end) {

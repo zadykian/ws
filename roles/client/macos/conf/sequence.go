@@ -1,5 +1,7 @@
 package conf
 
+import "strconv"
+
 // Sequence asks the keys of the Answers stage in order. The machine that ws runs on comes first, as
 // the ways to ws follow it.
 type Sequence struct {
@@ -106,6 +108,6 @@ func (s *Sequence) lanWays() error {
 	if err != nil || remote == "" {
 		return err
 	}
-	_, err = s.get(Question{"WS_REMOTE_PORT", "The router's port forwarded to ws's 22", "22022", ""})
+	_, err = s.get(Question{"WS_REMOTE_PORT", "The router's port forwarded to ws's 22", strconv.Itoa(forwardPort), ""})
 	return err
 }
