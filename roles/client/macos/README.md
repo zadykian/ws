@@ -174,10 +174,10 @@ does not try the cable: the cable reaches the one server that names it. `-setman
 settings, whatever they were, and emptying the key leaves them. To give the service DHCP again:
 `sudo networksetup -setdhcp SERVICE`.
 
-An address, mask or router that `getinfo` leaves out, as it may undocked, counts as set. Where it
-still shows other settings after `-setmanual`, the script names them and stops. Then set the service
-by hand. In System Settings › Network, pick it › Details › TCP/IP, and Configure IPv4 Manually: the
-IP address `10.77.0.2`, the subnet mask `255.255.255.252`, no router. Or empty the key.
+An address, mask or router that `getinfo` omits, as it may undocked, counts as set. Where
+`-setmanual` leaves other settings, the script names them and stops. Then set it by hand: in System
+Settings › Network, the service › Details › TCP/IP, Configure IPv4 Manually: IP address `10.77.0.2`,
+mask `255.255.255.252`, no router. Or empty the key: the tunnel and ssh then skip the cable.
 
 Set the key once ws's end is up ([network](../../server/ubuntu/network/README.md)). Then, docked, check once that the uplink
 keeps the default route:
