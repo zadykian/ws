@@ -1,7 +1,7 @@
 // Written by github.com/zadykian/ws, whose next run replaces any change made here.
 // Zed's keys on the Mac: the Alt and F keys that Zed has an action for, and Shift twice for the
-// command palette. The Cmd and Ctrl keys stay Zed's macOS defaults, but for Cmd+T, the one key of a
-// new terminal.
+// command palette. The Cmd and Ctrl keys stay Zed's macOS defaults, but for Cmd+T, which opens a
+// new terminal in place of Ctrl+~.
 // The block of keys left out, at this file's end, says which keys Zed lacks, and why.
 [
   // The global keys. No context, so each beats Zed's defaults wherever focus is.
@@ -49,7 +49,7 @@
       "shift shift": "command_palette::Toggle"
     }
   },
-  // A new terminal opens on Cmd+T alone, which the editor and the terminal bind.
+  // A new terminal opens on Cmd+T, which the editor and the terminal bind, and not on Ctrl+~.
   {
     "context": "Workspace",
     "unbind": {
@@ -149,19 +149,10 @@
       "alt-w": "debugger::StepOver"
     }
   },
-  // The terminal: an Alt key with a letter or sign, without Shift, reaches the shell, and so do
-  // Alt+Left and Right.
+  // The terminal: an Alt key with a letter or sign, without Shift, reaches the shell, but for the
+  // global keys.
   {
     "context": "Terminal",
-    "unbind": {
-      "alt-x": "git::Branch",
-      "alt-z": "git::Fetch",
-      "alt-v": "git::Push",
-      "alt-left": "pane::ActivatePreviousItem",
-      "alt-right": "pane::ActivateNextItem",
-      // Cmd+T alone opens a terminal, as the workspace's section says
-      "cmd-n": "workspace::NewTerminal"
-    },
     "bindings": {
       // A tab beside this terminal's, in the panel or in the center
       "cmd-t": "workspace::NewTerminal",

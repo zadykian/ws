@@ -119,8 +119,8 @@ Zed on macOS, with a US layout:
 ### The terminal's rule
 
 In the terminal, an Alt key with a letter or sign, without Shift, reaches the shell (zed#26018).
-The section unbinds the global keys that would take one, Alt+X, Alt+Z and Alt+V, and Alt+Left and
-Right too. F-keys, named keys and digits stay Zed's.
+The global keys win there too: Alt+X, Alt+Z and Alt+V, and Alt+Left and Right. F-keys, named keys
+and digits stay Zed's.
 
 ### Decisions in the file
 
@@ -142,7 +142,8 @@ and Page Up and Down. Zed's macOS defaults keep them, the completion and snippet
 closes the tab, and Ctrl+C and Ctrl+R in the terminal reach the shell. Alt+click adds a cursor, and
 Shift+Alt+drag selects a column (`multi_cursor_modifier`).
 
-Cmd+T is the one key of a new terminal, so the file unbinds Zed's Ctrl+~ and the terminal's Cmd+N.
+Cmd+T opens a new terminal in place of Zed's Ctrl+~, which the file unbinds. In a terminal, Zed's
+Cmd+N opens one too.
 
 - In an editor, Cmd+T opens a terminal tab in the center (`workspace::NewCenterTerminal`). That
   covers the one-line editors too, such as the agent panel's message and the keymap editor's search.
