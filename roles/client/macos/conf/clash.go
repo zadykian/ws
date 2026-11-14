@@ -78,9 +78,9 @@ func slotClashes(c Conf, o Sibling) []Error {
 }
 
 // portClashes returns a refusal for each of c's router ports that o takes too, behind the same
-// WS_REMOTE.
+// WS_REMOTE, whatever its case: a name on the internet has none.
 func portClashes(c Conf, o Sibling) []Error {
-	if c.Remote == "" || c.Remote != o.Conf.Remote {
+	if c.Remote == "" || !strings.EqualFold(c.Remote, o.Conf.Remote) {
 		return nil
 	}
 	var errs []Error

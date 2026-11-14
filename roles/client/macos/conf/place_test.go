@@ -55,6 +55,7 @@ func TestPortsKeepAServerApartOnlyBehindARouterItShares(t *testing.T) {
 		"alone":        {Place{Slot: 1}, "r.example", "51820", "22022"},
 		"shared":       {Place{Slot: 1, Others: others}, "r.example", "51821", "22023"},
 		"third":        {Place{Slot: 2, Others: others}, "r.example", "51822", "22024"},
+		"other case":   {Place{Slot: 1, Others: others}, "R.Example", "51821", "22023"},
 		"other router": {Place{Slot: 1, Others: others}, "s.example", "51820", "22022"},
 		"no router":    {Place{Slot: 1, Others: []Sibling{{Name: "ws"}}}, "", "51820", "22022"},
 		"lower slot":   {Place{Slot: 0, Others: alone}, "r.example", "51821", "22023"},

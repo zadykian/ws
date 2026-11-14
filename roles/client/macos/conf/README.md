@@ -62,8 +62,8 @@ another's takes. Each of the two refuses until one changes, in its own file's wo
 - `WS_CABLE_SERVICE`: a cable the other names. Leave it empty in all but one server's file: the
   cable reaches that server alone ([the tunnel](../tunnel/README.md#the-cable)).
 - `WS_SLOT`: the other's slot, as each server's tunnel is the subnet of its slot.
-- `WS_PORT` and `WS_REMOTE_PORT`: the other's, behind the same `WS_REMOTE`, as the router forwards
-  a port to one server.
+- `WS_PORT` and `WS_REMOTE_PORT`: the other's, behind the same `WS_REMOTE`, in any case, as the router
+  forwards a port to one server.
 
 A file of another server that is refused stops `apply` before any step, with `--only` and with
 `--check` too, and the error names the server and `ws client macos remove NAME`. The steps read
