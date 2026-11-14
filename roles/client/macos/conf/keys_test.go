@@ -64,3 +64,20 @@ func TestKeys(t *testing.T) {
 		}
 	}
 }
+
+func TestTunnelPortAndForwardPortGiveTheirDefaults(t *testing.T) {
+	for _, tc := range []struct {
+		c             Conf
+		port, forward string
+	}{
+		{Conf{}, "51820", "22022"},
+		{Conf{Port: "51821", RemotePort: "22023"}, "51821", "22023"},
+	} {
+		if got := tc.c.TunnelPort(); got != tc.port {
+			t.Errorf("%+v: TunnelPort = %s, want %s", tc.c, got, tc.port)
+		}
+		if got := tc.c.ForwardPort(); got != tc.forward {
+			t.Errorf("%+v: ForwardPort = %s, want %s", tc.c, got, tc.forward)
+		}
+	}
+}
