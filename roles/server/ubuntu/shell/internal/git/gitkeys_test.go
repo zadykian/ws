@@ -23,8 +23,8 @@ func TestDropped(t *testing.T) {
 	}
 }
 
-func TestLocalSigning(t *testing.T) {
-	got := localSigning([]string{"user.name", "gpg.format", "commit.gpgsign", "user.signingkey", "gpg.format", "gpgx.y"})
+func TestMachineSigning(t *testing.T) {
+	got := machineSigning([]string{"user.name", "gpg.format", "commit.gpgsign", "user.signingkey", "gpg.format", "gpgx.y"})
 	if want := []string{"commit.gpgsign", "gpg.format", "user.signingkey"}; !slices.Equal(got, want) {
 		t.Errorf("got %q, want %q", got, want)
 	}

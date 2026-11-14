@@ -1,5 +1,5 @@
 # Written by github.com/zadykian/ws, whose next run replaces any change made here. Settings of
-# this machine's own go in ~/.config/git/local, included below.
+# this machine's own go in ~/.config/git/machine.gitconfig, included below.
 [user]
 	name = zadykian
 	email = me@zadykian.dev
@@ -19,4 +19,4 @@
 	path = ~/.config/git/tokens.gitconfig
 # Last, so that its settings win. git skips it where the file is missing.
 [include]
-	path = ~/.config/git/local
+	path = ~/.config/git/machine.gitconfig

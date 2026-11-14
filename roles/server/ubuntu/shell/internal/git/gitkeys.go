@@ -37,9 +37,9 @@ func dropped(old, want []string) []string {
 	return slices.Compact(lost)
 }
 
-// localSigning returns the signing settings among the keys of ~/.config/git/local, which
-// ~/.gitconfig includes last, so that they win over the role's.
-func localSigning(keys []string) []string {
+// machineSigning returns the signing settings among the keys of ~/.config/git/machine.gitconfig,
+// which ~/.gitconfig includes last, so that they win over the role's.
+func machineSigning(keys []string) []string {
 	var found []string
 	for _, k := range keys {
 		if k == "user.signingkey" || k == "commit.gpgsign" || k == "tag.gpgsign" || strings.HasPrefix(k, "gpg.") {

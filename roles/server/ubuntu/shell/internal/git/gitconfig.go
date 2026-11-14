@@ -21,8 +21,8 @@ var gitFiles embed.FS
 
 // Config is ~/.gitconfig, which ws replaces whole. A real run keeps the old file beside it, as
 // ~/.gitconfig.*~. A diff would print a credential that a file set up by hand holds, such as an
-// http.extraHeader, so it shows none. The settings of the machine's own go in ~/.config/git/local,
-// which the file includes last.
+// http.extraHeader, so it shows none. The settings of the machine's own go in
+// ~/.config/git/machine.gitconfig, which the file includes last.
 type Config struct {
 	M       effect.Machine
 	Out     effect.Out
@@ -78,35 +78,35 @@ func (g Config) notes(ctx context.Context, content []byte) error {
 		return err
 	}
 	if lost := dropped(oldKeys, wantKeys); len(lost) > 0 {
-		g.Out.Warn("writing ~/.gitconfig drops %s. Move them to ~/.config/git/local first; a real run keeps the old file beside it, as ~/.gitconfig.*~.", join(lost))
+		g.Out.Warn("writing ~/.gitconfig drops %s. Move them to ~/.config/git/machine.gitconfig first; a real run keeps the old file beside it, as ~/.gitconfig.*~.", join(lost))
 	}
 	return nil
 }
 
 // signingNotes names the signing key that the rewrite replaces, which the note on dropped keys
-// misses as the key's name stays. It also names the signing settings of ~/.config/git/local, which
-// win over the role's.
+// misses as the key's name stays. It also names the signing settings of
+// ~/.config/git/machine.gitconfig, which win over the role's.
 func (g Config) signingNotes(ctx context.Context, old []byte) error {
 	list, err := g.M.RunInput(ctx, old, "git", "config", "--file", "-", "--list")
 	if err != nil {
 		return err
 	}
 	if key, ok := signingKeyOf(lines(list), g.A.Home); ok && key != g.Key+".pub" {
-		g.Out.Warn("writing ~/.gitconfig replaces its signing key, %s, with %s.pub. To sign with the old key, set user.signingkey in ~/.config/git/local first.", key, g.Key)
+		g.Out.Warn("writing ~/.gitconfig replaces its signing key, %s, with %s.pub. To sign with the old key, set user.signingkey in ~/.config/git/machine.gitconfig first.", key, g.Key)
 	}
-	local, err := g.A.ReadHome(g.M, ".config/git/local")
+	machine, err := g.A.ReadHome(g.M, ".config/git/machine.gitconfig")
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil
 	}
 	if err != nil {
 		return err
 	}
-	keys, err := gitNames(ctx, g.M, local)
+	keys, err := gitNames(ctx, g.M, machine)
 	if err != nil {
 		return err
 	}
-	if found := localSigning(keys); len(found) > 0 {
-		g.Out.Warn("~/.config/git/local sets %s, which win over the role's signing in ~/.gitconfig. Remove them to sign with %s.", join(found), g.Key)
+	if found := machineSigning(keys); len(found) > 0 {
+		g.Out.Warn("~/.config/git/machine.gitconfig sets %s, which win over the role's signing in ~/.gitconfig. Remove them to sign with %s.", join(found), g.Key)
 	}
 	return nil
 }
