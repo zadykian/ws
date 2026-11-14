@@ -2,6 +2,7 @@ package conf
 
 import (
 	"errors"
+	"strconv"
 
 	"github.com/zadykian/ws/roles/internal/slot"
 )
@@ -33,4 +34,36 @@ func FreeSlot(others []Sibling) (slot.Slot, error) {
 		}
 	}
 	return 0, errors.New("every slot, 0 to 15, holds a server: ws client macos remove NAME frees one")
+}
+
+// Port is WS_PORT for a server behind remote: 51820 where no other server has the same, non-empty
+// WS_REMOTE. Else Port takes a port from 51820 plus the slot up that none of them takes, as the
+// router forwards a port to one server.
+func (p Place) Port(remote string) string {
+	return p.apart(remote, defaultPort, Conf.TunnelPort)
+}
+
+// RemotePort is WS_REMOTE_PORT's default behind a router: 22022, or one from 22022 plus the slot up
+// likewise.
+func (p Place) RemotePort(remote string) string {
+	return p.apart(remote, forwardPort, Conf.ForwardPort)
+}
+
+// apart returns base where no other server shares remote. Else it returns base plus the slot, or the
+// next port up that no server behind remote takes: one placed there alone took base at any slot.
+func (p Place) apart(remote string, base int, port func(Conf) string) string {
+	taken := map[string]bool{}
+	for _, o := range p.Others {
+		if remote != "" && o.Conf.Remote == remote {
+			taken[port(o.Conf)] = true
+		}
+	}
+	if len(taken) == 0 {
+		return strconv.Itoa(base)
+	}
+	n := base + int(p.Slot)
+	for taken[strconv.Itoa(n)] {
+		n++
+	}
+	return strconv.Itoa(n)
 }
