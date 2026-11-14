@@ -128,6 +128,15 @@
       "alt-5": "workspace::CloseActiveDock"
     }
   },
+  // The git graph, a tab; F6 closes it again. Focus starts in its search field, an Editor below
+  // GitGraph, where the global F6 would win. The parentheses hold, as > binds looser than ||.
+  {
+    "context": "GitGraph || (GitGraph > Editor)",
+    "bindings": {
+      "f6": "pane::CloseActiveItem",
+      "alt-6": "pane::CloseActiveItem"
+    }
+  },
   // The commit message.
   {
     "context": "CommitEditor > Editor",
