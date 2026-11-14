@@ -1,6 +1,9 @@
 package daemon
 
 import (
+	"io/fs"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -87,5 +90,39 @@ func TestRunExits(t *testing.T) {
 	r := newRig("")
 	if err := r.play(Exited); err == nil || !strings.Contains(r.log.String(), "wireguard-go has exited") {
 		t.Errorf("err = %v, log = %q", err, r.log.String())
+	}
+}
+
+func TestRunStopsOnceANewWsTakesItsPlace(t *testing.T) {
+	dir := t.TempDir()
+	old, fresh := filepath.Join(dir, "old"), filepath.Join(dir, "new")
+	for _, p := range []string{old, fresh} {
+		if err := os.WriteFile(p, []byte("ws"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	const line = "root's copy of ws is new; stops, for launchd to start the new one"
+	for _, tt := range []struct {
+		name, later string
+		stops       bool
+	}{
+		{"a new file", fresh, true},
+		{"the same file", old, false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			r := newRig("")
+			file := old
+			r.Program = func() (fs.FileInfo, error) {
+				info, err := os.Stat(file)
+				file = tt.later
+				return info, err
+			}
+			if err := r.play(Tick); err != nil {
+				t.Fatal(err)
+			}
+			if got := slices.Contains(r.lines(), line); got != tt.stops {
+				t.Errorf("log = %q, want the stop %v", r.lines(), tt.stops)
+			}
+		})
 	}
 }

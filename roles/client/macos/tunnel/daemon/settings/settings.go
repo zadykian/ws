@@ -14,10 +14,10 @@ import (
 	"github.com/zadykian/ws/roles/internal/wgkey"
 )
 
-// Paths are the daemon's files. Conf is tunnel.conf, which setup copies from mac.conf. Key is
-// private.key, the Mac's key. Routes is routes.d, whose files hold a network a line. State is what
-// the daemon writes for status, Log launchd's file for its output. Root holds the directory of each
-// server, the daemon's own among them, beside the key; none reads no other server.
+// Paths are the daemon's files. Conf is tunnel.conf, which setup copies from the server's file. Key
+// is private.key, the Mac's key. Routes is routes.d, whose files hold a network a line. State is
+// what the daemon writes for status, Log launchd's file for its output. Root holds the directory
+// of each server, the daemon's own among them, beside the key; none reads no other server.
 type Paths struct{ Conf, Key, Routes, State, Log, Root string }
 
 // Settings are tunnel.conf and routes.d as read, with the lines of routes.d left out and the

@@ -35,3 +35,9 @@ every loaded daemon read again, by SIGHUP. A daemon routes at once what a gone s
 The cable reaches one server, the one whose file has `WS_CABLE_SERVICE`. Its `tunnel.conf` says
 `WS_CABLE=yes`, and only its daemon and its direct way try `10.77.0.1`, first. The other servers
 leave the cable out, as they would try an address that is no server of theirs.
+
+## A new copy of ws
+
+A daemon looks at root's copy of `ws` at each tick, 10 s after the last. Where a new file took its
+place, as after an `apply` that stopped before it restarted the daemons, it logs `root's copy of ws
+is new; stops, for launchd to start the new one`, and launchd starts the new copy.
