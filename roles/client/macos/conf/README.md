@@ -40,13 +40,14 @@ server's file is `servers/ws/server.conf` beside it. Each key's meaning is in
 `--server NAME` picks the server, and its file is `servers/NAME/server.conf`. A name is a
 lower-case letter, then up to 11 lower-case letters, digits and `-`, other than `direct`,
 `first` and `key`. With one server, the flag may be left out. With none, the wizard asks the name,
-`ws` by default. With several, it refuses and lists them. `WS_SLOT`, from 0 to 15, is the slot. The
+`ws` by default. A name that no file holds sets up a new server, beside the others. With several
+and no flag, it refuses and lists them. `WS_SLOT`, from 0 to 15, is the slot. The
 wizard writes the smallest that no other server holds in a file that lacks it, and `WS_PORT` after
 it. `WS_PORT` is 51820, or 51820 plus the slot behind a router that another server shares, or the
 next port up that none of those takes. The default of `WS_REMOTE_PORT` follows 22022 likewise. A
 LAN and `WS_TUNNEL_NETWORKS` stay
 clear of the slots' `10.99.0.0/20`. A directory of a bad name that holds `server.conf` is refused
-too.
+too. The wizard writes an empty `WS_CABLE_SERVICE` in a server's file where another's names one.
 
 ## What two servers may not share
 
