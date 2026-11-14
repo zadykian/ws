@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
@@ -221,6 +222,25 @@ func TestAnswersCheckCopiesTheOtherServersFiles(t *testing.T) {
 	}
 	if got := string(m.Files["/lock/servers/ws/server.conf"]); got != all {
 		t.Errorf("ws's scratch = %q, want the rehearsal", got)
+	}
+}
+
+// TestAnswersCheckRefusesAnUnreadableSiblingAsTheRunDoes words the refusal as Setup's: the server,
+// the cause and the way out.
+func TestAnswersCheckRefusesAnUnreadableSiblingAsTheRunDoes(t *testing.T) {
+	const all = "WS_TARGET=lan\nWS_LAN=\nWS_REMOTE=\nWS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
+	a, _ := newAnswers(t, "WS_GIT_NAME=\nWS_GIT_EMAIL=\n", all)
+	a.Check, a.Scratch, a.ServerScratch = true, "/lock/mac.conf", "/lock/servers/ws/server.conf"
+	m := a.M.(*effecttest.Machine)
+	lab := "/h/.config/ws/servers/lab/server.conf"
+	m.Dirs["/h/.config/ws/servers"], m.Dirs["/h/.config/ws/servers/ws"], m.Dirs["/h/.config/ws/servers/lab"] = 0o755, 0o755, 0o755
+	m.Files[lab], m.Root[lab] = []byte("WS_USER=ada\n"), effect.Attrs{}
+	for _, dir := range []string{"/lock", "/lock/servers/ws"} {
+		m.Results["mkdir -p "+dir] = effecttest.Result{}
+	}
+	want := "server lab: open " + lab + ": permission denied: fix its file, or ws client macos remove lab"
+	if _, err := a.Plan(context.Background()); err == nil || err.Error() != want {
+		t.Errorf("Plan = %v, want %q", err, want)
 	}
 }
 

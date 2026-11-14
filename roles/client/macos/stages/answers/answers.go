@@ -266,7 +266,7 @@ func (a *Answers) copyOthers(ctx context.Context) error {
 		}
 		text, err := a.M.ReadFile(file)
 		if err != nil {
-			return fmt.Errorf("%s: cannot read %s", stage.Answers, file)
+			return conf.RefuseSibling(n, err)
 		}
 		if err := a.writeScratch(ctx, conf.ServerPath(a.Scratch, n), text); err != nil {
 			return err
