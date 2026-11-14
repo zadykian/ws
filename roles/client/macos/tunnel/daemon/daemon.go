@@ -6,7 +6,9 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/netip"
+	"os"
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -35,10 +37,14 @@ type Daemon struct {
 	// CheckEvery is how often a round looks for the handshake. TickEvery is how long a tick comes
 	// after the last tick ended. ChangeWait is how long the loop waits after a network change.
 	CheckEvery, TickEvery, ChangeWait time.Duration
+	// Program returns the file of the program that runs, root's copy of ws. Nil means the
+	// executable's file.
+	Program func() (fs.FileInfo, error)
 	// Events is the channel of the loop. Signals, timers and the watch of network changes send to
 	// it through Send.
 	Events chan Event
 
+	program    fs.FileInfo // the program's file as start found it, nil where it could not
 	set        settings.Settings
 	key        string
 	inUse      tunnel.Candidate // Tier TierNone where no path answers; empty before the first round
@@ -84,6 +90,18 @@ func (d *Daemon) Send(e Event) { d.Events <- e }
 // say logs a line, with the time.
 func (d *Daemon) say(format string, a ...any) {
 	_, _ = fmt.Fprintf(d.Out, "%s %s\n", d.Now().Format("2006-01-02 15:04:05"), fmt.Sprintf(format, a...))
+}
+
+// programFile returns the file of the program that runs.
+func (d *Daemon) programFile() (fs.FileInfo, error) {
+	if d.Program != nil {
+		return d.Program()
+	}
+	path, err := os.Executable()
+	if err != nil {
+		return nil, err
+	}
+	return os.Stat(path)
 }
 
 func (d *Daemon) later(e Event, after time.Duration) {
