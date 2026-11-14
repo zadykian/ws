@@ -74,35 +74,36 @@ case \$* in
 esac
 EOF
 chmod 755 /opt/homebrew/bin/gh
-# ws's stand-in: an sshd of its own at 127.0.0.1:22022, where mac.conf's WS_REMOTE and its port
-# lead, with a host key made here. The runner's user logs in by its own authorized_keys. The cases
-# fill it from the stand-in gh's keys, as Ubuntu's installer imports the account's keys for its
-# user. The image's file goes, so that no key is there before a case adds it. Each session runs
-# ws.sh. A second host key, ECDSA, as ws has more than one, must stay out
-# of known_hosts at each login.
-ws=$RUNNER_TEMP/ws
-mkdir -p "$ws" ~/.ssh
-rm -f ~/.ssh/authorized_keys
-ssh-keygen -q -t ed25519 -N '' -C ws -f "$ws/host_key" </dev/null
-ssh-keygen -q -t ecdsa -N '' -C ws -f "$ws/host_ecdsa" </dev/null
-ssh-keygen -l -f "$ws/host_key.pub" | awk '{ print $2 }' >"$ws/fingerprint"
-printf '%s\n' 'ListenAddress 127.0.0.1:22022' "HostKey $ws/host_key" "PidFile $ws/sshd.pid" \
-    'PasswordAuthentication no' 'KbdInteractiveAuthentication no' \
-    'PermitRootLogin prohibit-password' 'UsePAM no' 'StrictModes no' 'ExposeAuthInfo yes' \
-    "SetEnv WS_STANDIN=$ws" "ForceCommand $ws/ws.sh" "HostKey $ws/host_ecdsa" >"$ws/sshd_config"
-# sshd 9.8 and later refuse an address for a while after connections that don't log in, which the
-# cases make in a row. The stand-in takes them, where its sshd knows the setting.
-! sudo /usr/sbin/sshd -G -f "$ws/sshd_config" -o PerSourcePenalties=no >/dev/null 2>&1 ||
-    echo 'PerSourcePenalties no' >>"$ws/sshd_config"
-# ws.sh is ws's shell. It logs each command in log, with the user that runs it, which the runner's
-# sudo makes root. It logs the connection it came in by in conns, then runs the command.
-# A login's authorized_keys may give the key a command, as cloud-init's does for root. There ws.sh
-# stops as that command does, since sshd's ForceCommand runs in its place. It puts ws's programs
-# first on PATH, and roots the paths of the wizard's scripts on ws, each a line NAME=PATH of their
-# own, in root here. So it roots a command's path from /root or the wizard's state alone, with its
-# arguments, or after the script of sh -c. It roots ws's binary too, which ws client macos secrets
-# runs, bare or past sudo's options.
-cat >"$ws/ws.sh" <<'EOF'
+# standin NAME PORT makes a server's stand-in: an sshd of its own at 127.0.0.1:PORT, where the
+# server's WS_REMOTE and its port lead. Its host key is made here, and its files are in
+# $RUNNER_TEMP/NAME. The runner's user logs in by its own authorized_keys. The cases fill it from
+# the stand-in gh's keys, as Ubuntu's installer imports the account's keys for its user. The
+# image's file goes, so that no key is there before a case adds it. Each session runs ws.sh. A
+# second host key, ECDSA, as ws has more than one, must stay out of known_hosts at each login.
+standin() {
+    dir=$RUNNER_TEMP/$1
+    mkdir -p "$dir" ~/.ssh
+    rm -f ~/.ssh/authorized_keys
+    ssh-keygen -q -t ed25519 -N '' -C "$1" -f "$dir/host_key" </dev/null
+    ssh-keygen -q -t ecdsa -N '' -C "$1" -f "$dir/host_ecdsa" </dev/null
+    ssh-keygen -l -f "$dir/host_key.pub" | awk '{ print $2 }' >"$dir/fingerprint"
+    printf '%s\n' "ListenAddress 127.0.0.1:$2" "HostKey $dir/host_key" "PidFile $dir/sshd.pid" \
+        'PasswordAuthentication no' 'KbdInteractiveAuthentication no' \
+        'PermitRootLogin prohibit-password' 'UsePAM no' 'StrictModes no' 'ExposeAuthInfo yes' \
+        "SetEnv WS_STANDIN=$dir" "ForceCommand $dir/ws.sh" "HostKey $dir/host_ecdsa" >"$dir/sshd_config"
+    # sshd 9.8 and later refuse an address for a while after connections that don't log in, which the
+    # cases make in a row. The stand-in takes them, where its sshd knows the setting.
+    ! sudo /usr/sbin/sshd -G -f "$dir/sshd_config" -o PerSourcePenalties=no >/dev/null 2>&1 ||
+        echo 'PerSourcePenalties no' >>"$dir/sshd_config"
+    # ws.sh is ws's shell. It logs each command in log, with the user that runs it, which the runner's
+    # sudo makes root. It logs the connection it came in by in conns, then runs the command.
+    # A login's authorized_keys may give the key a command, as cloud-init's does for root. There ws.sh
+    # stops as that command does, since sshd's ForceCommand runs in its place. It puts ws's programs
+    # first on PATH, and roots the paths of the wizard's scripts on ws, each a line NAME=PATH of their
+    # own, in root here. So it roots a command's path from /root or the wizard's state alone, with its
+    # arguments, or after the script of sh -c. It roots ws's binary too, which ws client macos secrets
+    # runs, bare or past sudo's options.
+    cat >"$dir/ws.sh" <<'EOF'
 #!/bin/sh
 run=${SSH_ORIGINAL_COMMAND#sudo -n }
 run=${run#sudo -k -S -p \'\' }
@@ -143,39 +144,49 @@ case $SSH_ORIGINAL_COMMAND in
 *) exec /bin/sh -c "$SSH_ORIGINAL_COMMAND" ;;
 esac
 EOF
-chmod 755 "$ws/ws.sh"
-# ws's programs that the remote script runs, as stand-ins, in bin and where root's claude is.
-mkdir -p "$ws/bin" "$ws/units"
-for each in systemd-run systemctl journalctl wg mokutil modinfo ip curl getent runuser sudo; do
-    ln -s "$here/ws-standin.sh" "$ws/bin/$each"
-done
-: >"$ws/run.log"
-: >"$ws/server.log"
-: >"$ws/install.log"
-: >"$ws/sudo.log"
-sudo mkdir -p "$ws/root/root/.local/bin" "$ws/root/usr/local/bin"
-sudo ln -s "$here/ws-standin.sh" "$ws/root/usr/local/bin/ws"
-sudo ln -s "$here/ws-standin.sh" "$ws/root/root/.local/bin/claude"
-# ws's claude, root's, logged in, and ws's signing key, as the shell role and the stages leave them.
-# root's git config names that key, and the stand-in gh lists it. So no run of the wizard opens a
-# session on ws for a login.
-ssh-keygen -q -t ed25519 -N '' -C ws -f "$ws/signing" </dev/null
-sudo mkdir -p "$ws/root/root/.ssh"
-sudo cp "$ws/signing.pub" "$ws/root/root/.ssh/id_ed25519_signing.pub"
-sudo git config -f "$ws/root/root/.gitconfig" user.signingkey \
-    "$ws/root/root/.ssh/id_ed25519_signing.pub"
-cut -d ' ' -f 1-2 "$ws/signing.pub" >"$RUNNER_TEMP/gh/signing"
-# The runner's user has its own home on ws, with the same files, as the remote script reads the
-# claude and git config of the login's user. root's home serves a cloud VM's login.
-home=$ws/root/home/$(id -un)
-sudo mkdir -p "$home/.local/bin" "$home/.ssh"
-sudo ln -s "$here/ws-standin.sh" "$home/.local/bin/claude"
-sudo cp "$ws/signing.pub" "$home/.ssh/id_ed25519_signing.pub"
-sudo git config -f "$home/.gitconfig" user.signingkey "$home/.ssh/id_ed25519_signing.pub"
-sudo chown -R "$(id -un)" "$home"
-touch "$ws/claude"
-# sudo asks no password until a case removes sudo.open.
-touch "$ws/sudo.open"
+    chmod 755 "$dir/ws.sh"
+    # ws's programs that the remote script runs, as stand-ins, in bin and where root's claude is.
+    mkdir -p "$dir/bin" "$dir/units"
+    for each in systemd-run systemctl journalctl wg mokutil modinfo ip curl getent runuser sudo; do
+        ln -s "$here/ws-standin.sh" "$dir/bin/$each"
+    done
+    : >"$dir/run.log"
+    : >"$dir/server.log"
+    : >"$dir/install.log"
+    : >"$dir/sudo.log"
+    sudo mkdir -p "$dir/root/root/.local/bin" "$dir/root/usr/local/bin"
+    sudo ln -s "$here/ws-standin.sh" "$dir/root/usr/local/bin/ws"
+    sudo ln -s "$here/ws-standin.sh" "$dir/root/root/.local/bin/claude"
+    # ws's claude, root's, logged in, and ws's signing key, as the shell role and the stages leave them.
+    # root's git config names that key, and the stand-in gh lists it. So no run of the wizard opens a
+    # session on ws for a login.
+    ssh-keygen -q -t ed25519 -N '' -C "$1" -f "$dir/signing" </dev/null
+    sudo mkdir -p "$dir/root/root/.ssh"
+    sudo cp "$dir/signing.pub" "$dir/root/root/.ssh/id_ed25519_signing.pub"
+    sudo git config -f "$dir/root/root/.gitconfig" user.signingkey \
+        "$dir/root/root/.ssh/id_ed25519_signing.pub"
+    cut -d ' ' -f 1-2 "$dir/signing.pub" >>"$RUNNER_TEMP/gh/signing"
+    # The runner's user has its own home on ws, with the same files, as the remote script reads the
+    # claude and git config of the login's user. root's home serves a cloud VM's login.
+    home=$dir/root/home/$(id -un)
+    sudo mkdir -p "$home/.local/bin" "$home/.ssh"
+    sudo ln -s "$here/ws-standin.sh" "$home/.local/bin/claude"
+    sudo cp "$dir/signing.pub" "$home/.ssh/id_ed25519_signing.pub"
+    sudo git config -f "$home/.gitconfig" user.signingkey "$home/.ssh/id_ed25519_signing.pub"
+    sudo chown -R "$(id -un)" "$home"
+    touch "$dir/claude"
+    # sudo asks no password until a case removes sudo.open.
+    touch "$dir/sudo.open"
+    : >"$dir/log"
+    : >"$dir/conns"
+    sudo /usr/sbin/sshd -f "$dir/sshd_config"
+}
+standin ws 22022
+# A second server, lab, as 62-second.sh sets one up on a Mac that has ws. Its sshd listens at
+# 22023, and its wg0 on the port that its host_vars names, 51821, beside ws's 51820.
+standin lab 22023
+ws=$RUNNER_TEMP/ws
+lab=$RUNNER_TEMP/lab
 # ssh first on the wizard's PATH, as the stand-in ws's wg0 has no address in the tunnel. The Tunnel
 # stage logs in to ws through it with ssh ws echo ok, which goes to the stand-in's sshd where ws
 # client macos tunnel has a handshake. It lands in tunnel.log. A direct call, which carries
@@ -185,11 +196,18 @@ cat >/opt/homebrew/bin/ssh <<EOF
 case " \$* " in
 *' AddressFamily=inet '*) ;;
 *' ws echo ok ')
-    sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status 2>/dev/null |
+    sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status --server ws 2>/dev/null |
         grep -q '^latest handshake: [0-9]' ||
         { echo 'ssh: no handshake in the tunnel' >&2 && exit 255; }
     echo "\$*" >>'$ws/tunnel.log'
     exec /usr/bin/ssh -o HostName=127.0.0.1 -o Port=22022 "\$@"
+    ;;
+*' lab echo ok ')
+    sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status --server lab 2>/dev/null |
+        grep -q '^latest handshake: [0-9]' ||
+        { echo 'ssh: no handshake in the tunnel' >&2 && exit 255; }
+    echo "\$*" >>'$lab/tunnel.log'
+    exec /usr/bin/ssh -o HostName=127.0.0.1 -o Port=22023 "\$@"
     ;;
 esac
 exec /usr/bin/ssh "\$@"
@@ -200,14 +218,15 @@ chmod 755 /opt/homebrew/bin/ssh
 rm -f /opt/homebrew/bin/nc
 cat >/opt/homebrew/bin/nc <<'EOF'
 #!/bin/sh
-[ "$*" = '-z -G 3 -w 3 10.99.0.1 22' ] || exec /usr/bin/nc "$@"
-sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status 2>/dev/null |
-    grep -q '^latest handshake: [0-9]' && exec /usr/bin/nc -z -G 3 -w 3 127.0.0.1 22022
+case $* in
+'-z -G 3 -w 3 10.99.0.1 22') server=ws port=22022 ;;
+'-z -G 3 -w 3 10.99.1.1 22') server=lab port=22023 ;;
+*) exec /usr/bin/nc "$@" ;;
+esac
+sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status --server "$server" 2>/dev/null |
+    grep -q '^latest handshake: [0-9]' && exec /usr/bin/nc -z -G 3 -w 3 127.0.0.1 "$port"
 EOF
 chmod 755 /opt/homebrew/bin/nc
-: >"$ws/log"
-: >"$ws/conns"
-sudo /usr/sbin/sshd -f "$ws/sshd_config"
 # The releases of ws, at 127.0.0.1:22080, which WS_RELEASES_URL names job-wide. The job's build is
 # release v0.0.0, the latest, so that --update finds this ws and stays. A case that adds another
 # release writes the tag to latest. The server goes on after this step.
