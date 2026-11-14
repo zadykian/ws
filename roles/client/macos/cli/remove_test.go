@@ -8,6 +8,7 @@ import (
 
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // rmMachine takes the files of a directory that rm -rf removes, which effecttest's Run only records.
@@ -149,8 +150,9 @@ func TestRemoveRefusesTheLastServerAndAWrongName(t *testing.T) {
 		last      bool
 	}{
 		"last server":  {"ws", "ws is the Mac's one server: apply needs one, so remove leaves it", true},
-		"unknown name": {"nope", "no server named nope", false},
-		"bad name":     {"Bad_Name", "is not a server's name", false},
+		"unknown name": {"nope", "no server named nope in /h/.config/ws/servers, which holds lab and ws", false},
+		"bad name":     {"Bad_Name", "Bad_Name is not a server's name: " + conf.NameForm, false},
+		"path":         {"../ws", "../ws is not a server's name: " + conf.NameForm, false},
 	} {
 		t.Run(name, func(t *testing.T) {
 			p, m := removeFixture()
@@ -159,7 +161,7 @@ func TestRemoveRefusesTheLastServerAndAWrongName(t *testing.T) {
 				delete(m.Dirs, "/h/.config/ws/servers/lab")
 			}
 			status, _, stderr := runWs(p, "", "client", "macos", "remove", tc.arg)
-			if status != 1 || !strings.Contains(stderr, tc.want) {
+			if status != 1 || !strings.Contains(stderr, tc.want) || strings.Contains(stderr, "--server") {
 				t.Errorf("status = %d, stderr = %q; want 1 and %q", status, stderr, tc.want)
 			}
 			for _, call := range m.Calls {
