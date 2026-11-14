@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/zadykian/ws/engine"
 	enginecli "github.com/zadykian/ws/engine/cli"
@@ -50,7 +49,8 @@ func macSide(p enginecli.Env, server *string) engine.Side {
 }
 
 // wizardServer returns the server that the wizard sets up: the one that flag names, or the only one.
-// With none and no flag it returns "", and the wizard asks the name. It refuses a second server.
+// With none and no flag it returns "", and the wizard asks the name. A flag that names no server
+// sets up a new one, beside the others.
 func wizardServer(p enginecli.Env, flag string) (string, error) {
 	mac := conf.Path(p.Getenv, p.Pwd)
 	name, err := conf.Pick(p.Machine, mac, flag)
@@ -63,10 +63,8 @@ func wizardServer(p enginecli.Env, flag string) (string, error) {
 		return "", listErr
 	case len(names) == 0 && flag == "":
 		return "", nil
-	case len(names) == 0 && conf.IsName(flag):
+	case conf.IsName(flag):
 		return flag, nil
-	case len(names) > 0 && conf.IsName(flag):
-		return "", fmt.Errorf("%s would be a second server, beside %s: the wizard sets up one server", flag, conf.List(names))
 	}
 	return "", err
 }

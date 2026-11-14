@@ -16,7 +16,7 @@ Two cases check `--server`, one a job:
   apply --check` must stop, naming both servers. `--server box`, which has no file, and `--server
   Lab`, a bad name, must stop it too. `--server ws` must go on as with one server. The case's trap
   removes lab's directory.
-- `mac-wizard/16-server.sh` runs the wizard with a bad name, and with `lab` beside ws: both must
-  stop it. On a `mac.conf` with no server, a run with no terminal and no name must stop and ask for
+- `mac-wizard/16-server.sh` runs the wizard with a bad name, which must stop it.
+  On a `mac.conf` with no server, a run with no terminal and no name must stop and ask for
   `--server`. There `--check` with a name must show that server's file headed by `WS_SLOT=0`, and
   write none.
