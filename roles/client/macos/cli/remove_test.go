@@ -115,3 +115,39 @@ func TestRemoveNamesTheCableOfTheGoneServer(t *testing.T) {
 		t.Errorf("stdout = %q; want it to hold %q", stdout, want)
 	}
 }
+
+func TestRemoveRefusesTheLastServerAndAWrongName(t *testing.T) {
+	for name, tc := range map[string]struct {
+		arg, want string
+		last      bool
+	}{
+		"last server":  {"ws", "ws is the Mac's one server: apply needs one, so remove leaves it", true},
+		"unknown name": {"nope", "no server named nope", false},
+		"bad name":     {"Bad_Name", "is not a server's name", false},
+	} {
+		t.Run(name, func(t *testing.T) {
+			p, m := removeFixture()
+			if tc.last {
+				delete(m.Files, "/h/.config/ws/servers/lab/server.conf")
+				delete(m.Dirs, "/h/.config/ws/servers/lab")
+			}
+			status, _, stderr := runWs(p, "", "client", "macos", "remove", tc.arg)
+			if status != 1 || !strings.Contains(stderr, tc.want) {
+				t.Errorf("status = %d, stderr = %q; want 1 and %q", status, stderr, tc.want)
+			}
+			for _, call := range m.Calls {
+				if strings.HasPrefix(call, "run rm") {
+					t.Errorf("a refused remove ran %q", call)
+				}
+			}
+		})
+	}
+}
+
+func TestRemoveRefusesAServerFlag(t *testing.T) {
+	p, _ := removeFixture()
+	status, _, stderr := runWs(p, "", "client", "macos", "--server", "ws", "remove", "lab")
+	if status != 1 || !strings.Contains(stderr, "remove takes the server's name alone") {
+		t.Errorf("status = %d, stderr = %q", status, stderr)
+	}
+}
