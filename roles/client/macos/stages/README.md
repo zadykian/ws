@@ -189,14 +189,14 @@ journal. The wizard takes it from its own version's ws alone: another's names ot
 The stage sends `roles/server/ubuntu/session/wizard-remote.sh` to root on ws over ssh at a direct
 way, through [sudo](#sudo) where `WS_USER` isn't root. It runs `ws server ubuntu apply --json` in a
 unit of its own, `ws-wizard-STAMP`, through `systemd-run`, with root's `HOME` and a UTF-8 locale.
-That ws runs its roles ([The `playbook`
-job](../../../../.github/workflows/README.md#the-playbook-job)). The wizard prints the unit's log
-until it ends, past the [event lines](../../../../README.md#events), and stops where the run fails.
-A first run takes 20 to 40 minutes. The unit goes on where ssh drops, as when the Mac sleeps, and
-the next run of the wizard follows it to its end, and replays the log. A unit of part of ws stops a
-run of other steps, which it would leave unrun, until it ends. The stage first names `WS_USER` as
-`ws_user` in `/etc/ws/host_vars.yml` on ws, with the files script, where it isn't the server's
-default, so the roles set up that user. It writes wg0's address and port there off the defaults.
+That ws runs its roles ([The
+`playbook` job](../../../../.github/workflows/README.md#the-playbook-job)). The wizard prints the
+unit's log until it ends, past the [event lines](../../../../README.md#events), and stops where the
+run fails. A first run takes 20 to 40 minutes. The unit goes on where ssh drops, and the next run of
+the wizard follows it to its end, and replays the log. A unit of part of ws stops a run of other
+steps, until it ends. The stage first names `WS_USER` as `ws_user` in `/etc/ws/host_vars.yml` on ws,
+with the files script, where the user that host_vars names, else the default, isn't `WS_USER`, so
+the roles set up that user. It writes wg0's address and port there off the defaults.
 
 Each run writes its unit and status in `/var/lib/ws-wizard/last` on ws. A full run, as the stage's,
 with no argument, removes `/var/lib/ws-wizard/run` as it starts. As it ends, it writes these words:
