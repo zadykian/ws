@@ -33,9 +33,9 @@ all in `--only wireguard`, and among the other roles' output in a full run.
 `wg show wg0 public-key` shows it too. A dry run makes no key and says so.
 
 `wireguard_peers` names the peers, each with its address in the tunnel: by default the Mac, `mac`,
-at wg0's address plus one, `10.99.0.2` at slot 0. An empty `wireguard_peers: []` lists none. The
-role reads a peer's public key from `/etc/wireguard/NAME.pub` on the server, a line as `wg pubkey`
-prints it, in a directory only root reads:
+at wg0's address plus one, `10.99.0.2` at slot 0. An empty `wireguard_peers: []`, or a key left
+null, lists none. The role reads a peer's public key from `/etc/wireguard/NAME.pub` on the server,
+a line as `wg pubkey` prints it, in a directory only root reads:
 
 ```sh
 printf '%s\n' PUBLIC_KEY >/etc/wireguard/mac.pub
