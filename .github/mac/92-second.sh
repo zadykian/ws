@@ -55,17 +55,23 @@ shaken() {
         printf '%s\n' "$out" | grep -qx "endpoint: 127.0.0.1:$2" &&
         printf '%s\n' "$out" | grep -Eq '^latest handshake: [0-9]+ s ago$'
 }
-for _ in $(seq 1 60); do
-    shaken lab 51821 && break
-    sleep 1
-done
-shaken lab 51821 || {
+# shakes NAME PORT gives the daemon of NAME 60 s for it. A stand-in answers no ping
+# (35-standin.sh), so a daemon tries its paths again every 36 s or so. Its peer is new for each
+# try, and has no handshake for the 5 s that nothing answers at WS_LAN_ADDRESS.
+shakes() {
+    for _ in $(seq 1 60); do
+        shaken "$1" "$2" && return
+        sleep 1
+    done
+    return 1
+}
+shakes lab 51821 || {
     echo "::error::no handshake on lab's remote tier in 60 s; its status gives:"
     printf '%s\n' "$out"
     exit 1
 }
-shaken ws 51820 || {
-    echo "::error::ws's daemon lost its handshake beside lab's; its status gives:"
+shakes ws 51820 || {
+    echo "::error::ws's daemon has no handshake beside lab's in 60 s; its status gives:"
     printf '%s\n' "$out"
     exit 1
 }

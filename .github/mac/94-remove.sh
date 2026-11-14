@@ -51,9 +51,17 @@ grep -qx 'Host ws' ~/.ssh/config.d/ws || gone "config.d/ws lost its Host ws"
 ! ssh-keygen -F lab >/dev/null || gone "known_hosts still has lab"
 ssh-keygen -F ws >/dev/null || gone "known_hosts lost ws"
 launchctl print "system/$LABEL" >/dev/null || gone "ws's daemon is not loaded"
-status=$(sudo "$TUNNEL" client macos tunnel status --server ws 2>&1) || true
-printf '%s\n' "$status" | grep -Eq '^latest handshake: [0-9]+ s ago$' ||
-    gone "ws's daemon has no handshake; its status gives: $status"
+# shaken: ws's daemon has a handshake. It has 60 s for one, as the daemon may be trying its paths
+# again, with a new peer (92-second.sh).
+shaken() {
+    status=$(sudo "$TUNNEL" client macos tunnel status --server ws 2>&1) || true
+    printf '%s\n' "$status" | grep -Eq '^latest handshake: [0-9]+ s ago$'
+}
+for _ in $(seq 1 60); do
+    shaken && break
+    sleep 1
+done
+shaken || gone "ws's daemon has no handshake in 60 s; its status gives: $status"
 [ "$(ws client macos servers | awk 'NR > 1 { print $1 }')" = ws ] || gone "ws client macos servers lists more than ws"
 [ "$fail" = 0 ] || exit 1
 
