@@ -108,3 +108,19 @@ func TestTunnelPlanReachesWsAtItsSlot(t *testing.T) {
 		t.Error("Plan is empty where ssh -G ws gives slot 0's end")
 	}
 }
+
+func TestTunnelPlanNamesTheServer(t *testing.T) {
+	tun, _ := newTunnel(keyA, session.Status{WgKey: keyB, MacKey: keyB}, false)
+	tun.SSH.Host, tun.Server = "lab", "lab"
+	p, err := tun.Plan(context.Background())
+	var got []string
+	for _, c := range p.Changes {
+		got = append(got, c.String())
+	}
+	all := strings.Join(got, "\n")
+	for _, w := range []string{"/etc/wireguard/mac.pub on lab", "--only wireguard on lab,", "log in to lab through it"} {
+		if err != nil || !strings.Contains(all, w) {
+			t.Errorf("Plan = %q, %v; want %q", all, err, w)
+		}
+	}
+}
