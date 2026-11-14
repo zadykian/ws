@@ -35,17 +35,23 @@ s=$WS_STANDIN
 
 # wg0 sets up ws's wg0 as the wireguard role does. It sets its key, made once, whose public key
 # goes in wg0, and the Mac's key in mac.pub as its peer. wg0 is a wireguard-go of the runner's,
-# beside the Mac's, on UDP 51820, as mac.yml's stand-in ws. It has no address in the tunnel.
+# beside the Mac's, on UDP wireguard_port, 51820 where host_vars names none, as mac.yml's stand-in
+# ws. The Mac's address in the tunnel is the one after wireguard_address's, 10.99.0.1/24 by
+# default. wg0 has no address in the tunnel.
 wg0() {
     bin=/opt/homebrew/bin
+    vars="$s/root"/etc/ws/host_vars.yml
+    port=$(sed -n 's/^wireguard_port: "*\([0-9]*\)"*$/\1/p' "$vars" 2>/dev/null)
+    addr=$(sed -n 's/^wireguard_address: "*\([0-9.]*\)\/.*$/\1/p' "$vars" 2>/dev/null)
+    addr=${addr:-10.99.0.1}
     [ -f "$s/ws.key" ] || (umask 077 && "$bin/wg" genkey >"$s/ws.key") || return 1
     "$bin/wg" pubkey <"$s/ws.key" >"$s/wg0" || return 1
     if [ ! -f "$s/utun" ] || ! "$bin/wg" show "$(cat "$s/utun")" >/dev/null 2>&1; then
         mkdir -p /var/run/wireguard
         WG_TUN_NAME_FILE=$s/utun "$bin/wireguard-go" utun || return 1
     fi
-    "$bin/wg" set "$(cat "$s/utun")" private-key "$s/ws.key" listen-port 51820 \
-        peer "$(cat "$s/root/etc/wireguard/mac.pub")" allowed-ips 10.99.0.2/32 || return 1
+    "$bin/wg" set "$(cat "$s/utun")" private-key "$s/ws.key" listen-port "${port:-51820}" \
+        peer "$(cat "$s/root"/etc/wireguard/mac.pub)" allowed-ips "${addr%.*}.2/32" || return 1
     ifconfig "$(cat "$s/utun")" up
 }
 # direct names the port that ws's host_vars names in the netplan file, as the network role does,

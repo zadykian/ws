@@ -176,13 +176,16 @@ EOF
     sudo chown -R "$(id -un)" "$home"
     touch "$dir/claude"
     # sudo asks no password until a case removes sudo.open.
+    touch "$dir/sudo.open"
     : >"$dir/log"
     : >"$dir/conns"
     sudo /usr/sbin/sshd -f "$dir/sshd_config"
 }
 standin ws 22022
+# A second server, lab, as 62-second.sh sets one up on a Mac that has ws. Its sshd listens at
+# 22023, and its wg0 on the port that its host_vars names, 51821, beside ws's 51820.
+standin lab 22023
 ws=$RUNNER_TEMP/ws
-touch "$ws/sudo.open"
 # ssh first on the wizard's PATH, as the stand-in ws's wg0 has no address in the tunnel. The Tunnel
 # stage logs in to ws through it with ssh ws echo ok, which goes to the stand-in's sshd where ws
 # client macos tunnel has a handshake. It lands in tunnel.log. A direct call, which carries
