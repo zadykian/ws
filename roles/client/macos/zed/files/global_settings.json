@@ -16,7 +16,7 @@
   },
   "base_keymap": "Zed",
   "project_panel": { "dock": "left" },
-  "git_panel": { "dock": "left" },
+  "git_panel": { "dock": "right", "default_width": 600 },
   "outline_panel": { "dock": "left" },
   "auto_install_extensions": {
     "jetbrains-themes": true,

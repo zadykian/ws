@@ -71,8 +71,9 @@ server to every YAML file, Ansible's too.
 
 - `ws` through the tunnel needs no Local Network grant. Only a direct way does ([The Mac](../README.md)),
   so the seed names `ws` alone.
-- The terminal docks right, as the project, git and outline panels dock left. A resize of a terminal
-  docked at a side duplicates its lines (zed#65316, open).
+- The terminal and the git panel dock right, the git panel 600 pixels wide, as the project and
+  outline panels dock left. A dock shows one panel at a time, so F2 and F3 swap the two. A resize
+  of a terminal docked at a side duplicates its lines (zed#65316, open).
 - `terminal.shell` stays unset, as Zed runs it on ws too (zed#65548). `option_as_meta` gives the
   Alt keys in Zed's terminal, at the cost of Option's special characters. `detect_venv` is `off`:
   with it on, a venv in the directory has Zed type its activation line into every new tab, which
@@ -119,18 +120,16 @@ Zed on macOS, with a US layout:
 ### The terminal's rule
 
 In the terminal, an Alt key with a letter or sign, without Shift, reaches the shell (zed#26018).
-The section unbinds the global keys that would take one, Alt+X, Alt+Z and Alt+V, and Alt+Left and
-Right too. F-keys, named keys and digits stay Zed's.
+The global keys win there too: Alt+X, Alt+Z and Alt+V, and Alt+Left and Right. F-keys, named keys
+and digits stay Zed's.
 
 ### Decisions in the file
 
 - **Command palette:** Shift twice opens it in every context, from the global section, beside
   Zed's Cmd+Shift+P.
-- **Agent:** F7 and Alt+7 open the agent panel (`agent::ToggleFocus`).
 - **Edit predictions:** Tab and Alt+Tab stay Zed's.
-- F7 replaces Zed's F7, step over while stopped, and F10 steps over too.
 - The global keys win in the agent panel, so its Alt+Left and Right are the tab keys there.
-- **Keys whose action Zed lacks keep Zed's:** F3 tests, F4 NuGet, F10 build and Alt+Delete safe
+- **Keys whose action Zed lacks keep Zed's:** F10 build and Alt+Delete safe
   delete.
 - **Code actions:** Alt+Enter opens the full menu, as no binding picks a kind (zed#14470).
 - Next error can skip gopls's unused-variable errors (zed#64790).
@@ -142,7 +141,8 @@ and Page Up and Down. Zed's macOS defaults keep them, the completion and snippet
 closes the tab, and Ctrl+C and Ctrl+R in the terminal reach the shell. Alt+click adds a cursor, and
 Shift+Alt+drag selects a column (`multi_cursor_modifier`).
 
-Cmd+T is the one key of a new terminal, so the file unbinds Zed's Ctrl+~ and the terminal's Cmd+N.
+Cmd+T opens a new terminal in place of Zed's Ctrl+~, which the file unbinds. In a terminal, Zed's
+Cmd+N opens one too.
 
 - In an editor, Cmd+T opens a terminal tab in the center (`workspace::NewCenterTerminal`). That
   covers the one-line editors too, such as the agent panel's message and the keymap editor's search.

@@ -145,6 +145,8 @@ that Fresh lacks. Tests hold the template to its rules.
   `normal`. Fresh's `normal` passes only its UI actions on to the explorer and the panels
   ([Other limits](#other-limits)).
 - Tree and Panel bind in `file_explorer`, and Terminal in `terminal`.
+- F4 and alt+4 close the git log in `mode:git-log`, the mode of its plugin, as Zed's close its git
+  graph. A map's binding there comes before the plugin's own.
 
 ### Strokes
 
@@ -161,17 +163,17 @@ for each.
 
 ### The shell keys
 
-20 keys are `noop` in `terminal`, so the shell in Fresh's terminal gets them. A `noop` there
-ends Fresh's lookup, so no other binding can take the key:
+18 keys are `noop` in `terminal`, so the shell in Fresh's terminal gets them. A `noop` there
+ends Fresh's lookup, so no other binding can take the key. The default map would fire each:
 
-- The map's own alt+left and alt+right would switch tabs over the shell.
-- The default map fires 18 more:
-  - ctrl+q quits Fresh, and alt+w closes the tab;
-  - alt+e, alt+f, alt+g, alt+h, alt+s, alt+x and alt+v open a menu;
-  - ctrl+p, ctrl+; and ctrl+' open Quick Open: these three and ctrl+q are the four guards;
-  - alt+r, alt+j, alt+/, alt+[, alt+] and alt+` do the editor's work.
-- Fresh's own ways out stay: ctrl+space and ctrl+] (`terminal_escape`), F9 (keyboard capture) and
-  alt+o (the dock's focus).
+- ctrl+q quits Fresh, and alt+w closes the tab;
+- alt+e, alt+f, alt+g, alt+h, alt+s, alt+x and alt+v open a menu;
+- ctrl+p, ctrl+; and ctrl+' open Quick Open: these three and ctrl+q are the four guards;
+- alt+r, alt+j, alt+/, alt+[, alt+] and alt+` do the editor's work.
+
+The map's own alt+left and alt+right switch tabs over the shell, as Zed's do in its terminal.
+Fresh's own ways out stay: ctrl+space and ctrl+] (`terminal_escape`), F9 (keyboard capture) and
+alt+o (the dock's focus).
 
 ### Other limits
 
@@ -180,7 +182,7 @@ ends Fresh's lookup, so no other binding can take the key:
   editor.
 - Fresh's `normal` passes on only its UI actions: menus, quick open, splits, tabs, the terminal's
   and the explorer's toggles. With focus in the explorer or a panel, the map's other keys do
-  nothing. F6 there opens Fresh's remote menu, not the git log.
+  nothing.
 - The prefix reaches the editor pressed twice: ctrl+b by default, ctrl+q in cld's sessions. So
   Fresh's quit on ctrl+q takes two presses in cld's sessions, and ctrl+b two in tmux.
 - A folder with a project marker opens Restricted, with every server off
@@ -197,7 +199,7 @@ What stays unproven until the maintainer's trial on the Mac:
 - The arm64 binary: its hash matched, and it never ran.
 - gopls with Fresh, and Roslyn past initialise: diagnostics and navigation.
 - Termius on the iPad, whose Alt keys need its "Use Option as meta key".
-- Fresh's terminal keys, known by source alone: the 20 `noop` keys reach the shell, and
+- Fresh's terminal keys, known by source alone: the 18 `noop` keys reach the shell, and
   ctrl+space, ctrl+], F9 and alt+o leave the terminal. Also `self_update` at run time.
 - The wrapper when it dies with Fresh: the pane keeps asking.
 - Italic modifiers in the theme.
