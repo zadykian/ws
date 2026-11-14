@@ -68,6 +68,14 @@ func decode(data []byte) (Values, error) {
 	if err := dec.Decode(&v); err != nil && !errors.Is(err, io.EOF) {
 		return Values{}, err
 	}
+	// A key set to null decodes to a nil list, like a key left out: the file's own text tells them apart.
+	var keys map[string]yaml.Node
+	if err := yaml.Unmarshal(data, &keys); err != nil {
+		return Values{}, err
+	}
+	if _, given := keys["wireguard_peers"]; given && v.Wireguard.Peers == nil {
+		v.Wireguard.Peers = []WireguardPeer{}
+	}
 	v.derive()
 	return v, nil
 }
@@ -86,7 +94,7 @@ func Load(m effect.Machine, path string) (Values, error) {
 }
 
 // derive fills the values that follow ws_home when the file leaves them empty. It lists the Mac
-// at wg0's address plus one where wireguard_peers is unset: an empty list keeps no peer.
+// at wg0's address plus one where the file has no wireguard_peers: an empty or null list keeps no peer.
 func (v *Values) derive() {
 	if v.Home == "" {
 		v.Home = "/root"
