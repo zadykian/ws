@@ -14,7 +14,8 @@ NETWORK` at each read. Neither depends on which reads first.
 A network that holds another server's endpoint goes out as one that holds the daemon's own: the
 packets of that server's tunnel must not enter this one. The endpoints are the other's
 `WS_LAN_ADDRESS` and its `WS_REMOTE`, as the resolver gives it at the start of each round and at
-each read.
+each read. The daemon looks up the other servers' remotes at once, with 2 s for them all. One
+with no answer by then counts as unresolved, as one that fails does, until the next round or read.
 
 ## Routes
 

@@ -36,7 +36,8 @@ type Daemon struct {
 	Now   func() time.Time
 	// CheckEvery is how often a round looks for the handshake. TickEvery is how long a tick comes
 	// after the last tick ended. ChangeWait is how long the loop waits after a network change.
-	CheckEvery, TickEvery, ChangeWait time.Duration
+	// LookupWait bounds the lookups of the other servers' remotes, which hold up the loop.
+	CheckEvery, TickEvery, ChangeWait, LookupWait time.Duration
 	// Program returns the file of the program that runs, root's copy of ws. Nil means the
 	// executable's file.
 	Program func() (fs.FileInfo, error)
@@ -80,7 +81,8 @@ const (
 func New(m effect.Machine, dev Device, tun string, p settings.Paths, out io.Writer) *Daemon {
 	return &Daemon{
 		M: m, Dev: dev, Tun: tun, Paths: p, Out: out, Now: time.Now,
-		CheckEvery: time.Second, TickEvery: 10 * time.Second, ChangeWait: 2 * time.Second, Events: make(chan Event, 64),
+		CheckEvery: time.Second, TickEvery: 10 * time.Second, ChangeWait: 2 * time.Second, LookupWait: 2 * time.Second,
+		Events: make(chan Event, 64),
 	}
 }
 
