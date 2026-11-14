@@ -22,9 +22,9 @@ func installDaemons(m *effecttest.Machine, names ...string) {
 }
 
 func networksStep(m *effecttest.Machine, c conf.Conf) *networks.Networks {
-	m.Root["/etc/ws-tunnel/routes.d"] = effect.Attrs{Mode: 0o755}
+	m.Root["/etc/ws-tunnel/ws/routes.d"] = effect.Attrs{Mode: 0o755}
 	installDaemons(m, "ws")
-	return &networks.Networks{Conf: c, M: m, Out: &effecttest.Out{}}
+	return &networks.Networks{Server: "ws", Conf: c, M: m, Out: &effecttest.Out{}}
 }
 
 func networksPlan(t *testing.T, s *networks.Networks) []string {
@@ -59,15 +59,15 @@ func TestNetworksWritesRoutesAndResolversAndSignalsTheDaemon(t *testing.T) {
 
 func TestNetworksSaysWhatCheckWouldPutBeforeRoutesDExists(t *testing.T) {
 	m := effecttest.NewMachine()
-	s := &networks.Networks{Conf: conf.Conf{PublicKey: "K", TunnelNetworks: "10.1.0.0/24 10.2.0.0/24"}, M: m, Out: &effecttest.Out{}, Check: true}
+	s := &networks.Networks{Server: "ws", Conf: conf.Conf{PublicKey: "K", TunnelNetworks: "10.1.0.0/24 10.2.0.0/24"}, M: m, Out: &effecttest.Out{}, Check: true}
 	got := networksPlan(t, s)
-	want := "would put 10.1.0.0/24 10.2.0.0/24 in /etc/ws-tunnel/routes.d/mac-conf once routes.d is made"
+	want := "would put 10.1.0.0/24 10.2.0.0/24 in /etc/ws-tunnel/ws/routes.d/server-conf once routes.d is made"
 	if len(got) != 1 || got[0] != want {
 		t.Errorf("Plan = %q; want %q", got, want)
 	}
 	s.Check = false
 	if _, err := s.Plan(context.Background()); err == nil ||
-		err.Error() != "/etc/ws-tunnel/routes.d is missing: run ws client macos apply first" {
+		err.Error() != "/etc/ws-tunnel/ws/routes.d is missing: run ws client macos apply --server ws first" {
 		t.Errorf("Plan error = %v", err)
 	}
 }
@@ -92,6 +92,28 @@ func TestNetworksRemovesTheResolverOfADomainMacConfDropped(t *testing.T) {
 	m.Dirs["/etc/resolver"] = 0o755
 	m.Files["/etc/resolver/theirs.test"] = []byte("nameserver 1.1.1.1\n")
 	got := networksPlan(t, networksStep(m, conf.Conf{PublicKey: "K", Resolvers: "kept.test=10.0.0.1"}))
+	if len(got) != 1 || !strings.Contains(got[0], "/etc/resolver/gone.test") {
+		t.Errorf("Plan = %q; want gone.test's removal alone", got)
+	}
+}
+
+func TestNetworksKeepsTheResolverOfADomainAnotherServerNames(t *testing.T) {
+	m := effecttest.NewMachine()
+	for _, f := range []string{"gone.test", "lab.test"} {
+		m.Files["/etc/resolver/"+f] = []byte(resolverHead + "nameserver 10.0.0.1\n")
+		m.Root["/etc/resolver/"+f] = effect.Attrs{Mode: 0o644}
+	}
+	m.Root["/etc/resolver"] = effect.Attrs{Mode: 0o755}
+	m.Dirs["/etc/resolver"] = 0o755
+	const mac = "/h/.config/ws/mac.conf"
+	for _, n := range []string{"ws", "lab"} {
+		m.Dirs["/h/.config/ws/servers"], m.Dirs["/h/.config/ws/servers/"+n] = 0o755, 0o755
+		m.Files[conf.ServerPath(mac, n)] = nil
+	}
+	m.Files[conf.ServerPath(mac, "lab")] = []byte("WS_RESOLVERS=lab.test=10.0.0.1\n")
+	s := networksStep(m, conf.Conf{PublicKey: "K"})
+	s.MacConf = mac
+	got := networksPlan(t, s)
 	if len(got) != 1 || !strings.Contains(got[0], "/etc/resolver/gone.test") {
 		t.Errorf("Plan = %q; want gone.test's removal alone", got)
 	}
@@ -149,7 +171,7 @@ func TestNetworksApplySaysEachChangeInOrder(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := s.Out.(*effecttest.Out).Lines
-	if len(out) != 2 || !strings.Contains(out[0], "routes.d/mac-conf") ||
+	if len(out) != 2 || !strings.Contains(out[0], "/etc/ws-tunnel/ws/routes.d/server-conf") ||
 		out[1] != "say: ran launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.ws" {
 		t.Errorf("out = %q; want the routes file, then the signal", out)
 	}

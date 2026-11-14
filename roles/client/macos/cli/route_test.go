@@ -24,10 +24,12 @@ func TestTunnelLoadedFollowsLaunchd(t *testing.T) {
 }
 
 func TestTunnelRoutesCheckShowsTheFileAndWritesNothing(t *testing.T) {
-	p := fakeProcess()
+	p := withEnv(fakeProcess(), map[string]string{"WS_CONF": "/e/mac.conf"})
 	m := p.Machine.(*effecttest.Machine)
-	m.Root["/etc/ws-tunnel/routes.d"] = effect.Attrs{Mode: 0o755}
-	status, _, stderr := runWs(p, "", "client", "macos", "tunnel", "routes", "--check", "test", "198.51.100.0/24")
+	m.Root["/etc/ws-tunnel/ws/routes.d"] = effect.Attrs{Mode: 0o755}
+	m.Files["/e/servers/ws/server.conf"] = []byte("WS_USER=ada\n")
+	withServerDirs(m)
+	status, _, stderr := runWs(p, "", "client", "macos", "tunnel", "routes", "--server", "ws", "--check", "test", "198.51.100.0/24")
 	if status != 0 || !strings.Contains(stderr, "+198.51.100.0/24") {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
@@ -39,8 +41,17 @@ func TestTunnelRoutesCheckShowsTheFileAndWritesNothing(t *testing.T) {
 }
 
 func TestRouteCommandsPrintTheErrorAndExit1(t *testing.T) {
-	status, _, stderr := runWs(fakeProcess(), "", "client", "macos", "tunnel", "routes", "test", "0.0.0.0/0")
+	p := withEnv(fakeProcess(), map[string]string{"WS_CONF": "/e/mac.conf"})
+	m := p.Machine.(*effecttest.Machine)
+	m.Files["/e/servers/ws/server.conf"] = []byte("WS_USER=ada\n")
+	withServerDirs(m)
+	status, _, stderr := runWs(p, "", "client", "macos", "tunnel", "routes", "--server", "ws", "test", "0.0.0.0/0")
 	if want := "ws client macos tunnel routes: test: 0.0.0.0/0 overlaps the tunnels' 10.99.0.0/20\n"; status != 1 || stderr != want {
 		t.Errorf("routes: status = %d, stderr = %q; want 1, %q", status, stderr, want)
+	}
+	status, _, stderr = runWs(p, "", "client", "macos", "tunnel", "routes", "test", "10.1.0.0/24")
+	want := "ws client macos tunnel routes: --server is required: it names the server whose tunnel takes the networks\n"
+	if status != 1 || stderr != want {
+		t.Errorf("no --server: status = %d, stderr = %q; want 1, %q", status, stderr, want)
 	}
 }

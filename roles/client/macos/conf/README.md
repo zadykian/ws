@@ -44,6 +44,19 @@ lists them. `WS_SLOT`, from 0 to 15, is the slot: the wizard writes `WS_SLOT=0` 
 lacks it. A LAN and `WS_TUNNEL_NETWORKS` stay clear of the slots' `10.99.0.0/20`. A directory of a
 bad name that holds `server.conf` is refused too.
 
+## What two servers may not share
+
+`ws client macos apply` reads every server's file, and refuses a server whose file takes what
+another's takes. Each of the two refuses until one changes, in its own file's words:
+
+- `WS_TUNNEL_NETWORKS`: a network that overlaps one of the other's, as a network goes through one
+  server's tunnel.
+- `WS_RESOLVERS`: a domain the other names, as `/etc/resolver` holds one file a domain.
+- `WS_CABLE_SERVICE`: a cable the other names. Leave it empty in all but one server's file: the
+  cable reaches that server alone ([the tunnel](../tunnel/README.md#the-cable)).
+
+A file of another server that is missing or refused is left out: a run for that server refuses it.
+
 ## A machine on the LAN
 
 `WS_TARGET=lan`, the default, is a machine at home, behind [The router](../../../server/ubuntu/network/router.md), with a cable to

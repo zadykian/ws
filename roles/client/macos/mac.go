@@ -50,7 +50,7 @@ func (m Mac) steps(check bool) []step.Step {
 		(&zsh.Zsh{Home: m.Home, Hook: zsh.Hook, M: m.M, Out: m.Out, Now: time.Now}).Step(),
 		&tunnel.Tunnel{Conf: m.Conf, Server: m.Server, MacConf: m.MacConf, Home: m.Home, Plist: tunnel.Plist, M: m.M, Out: m.Out, Text: m.Text,
 			Check: check},
-		&networks.Networks{Conf: m.Conf, M: m.M, Out: m.Out, Check: check},
+		&networks.Networks{Server: m.Server, MacConf: m.MacConf, Conf: m.Conf, M: m.M, Out: m.Out, Check: check},
 	}
 }
 

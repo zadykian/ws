@@ -19,9 +19,11 @@ import (
 
 const routesAbsent = "once routes.d is made"
 
-// Routes has the daemon route Networks, from the file Set in routes.d: a network a line. With no
-// network, it removes the file. The file outlives the daemon, but its routes go with its utun.
+// Routes has the daemon of Server route Networks, from the file Set in its routes.d: a network a
+// line. With no network, it removes the file. The file outlives the daemon, but its routes go with
+// its utun.
 type Routes struct {
+	Server   string
 	Set      string
 	Networks []string
 	M        effect.Machine
@@ -57,37 +59,32 @@ func (r *Routes) Apply(ctx context.Context, p step.Plan) error {
 // file's owner or mode alone sends the signal too.
 func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 	networks := r.Networks
-	routesFile := launchd.Dir + "/routes.d/" + r.Set
-	if _, err := r.M.RootAttrs(launchd.Dir + "/routes.d"); errors.Is(err, fs.ErrNotExist) {
+	dir := launchd.For(r.Server).Routes
+	routesFile := dir + "/" + r.Set
+	if _, err := r.M.RootAttrs(dir); errors.Is(err, fs.ErrNotExist) {
 		switch {
 		case len(networks) == 0:
 			return nil, nil
 		case r.Check && !r.Alone:
 			return []step.Change{resource.Remark("would put " + strings.Join(networks, " ") + " in " + routesFile + " " + routesAbsent)}, nil
 		}
-		return nil, fmt.Errorf("%s/routes.d is missing: run ws client macos apply first", launchd.Dir)
+		return nil, fmt.Errorf("%s is missing: run ws client macos apply --server %s first", dir, r.Server)
 	} else if err != nil {
 		return nil, err
 	}
 	var res resource.Resource = file.Absent{M: r.M, Path: routesFile}
 	if len(networks) > 0 {
-		res = file.File{M: r.M, Path: routesFile, Content: []byte(routesText(networks)), Mode: 0o644}
+		res = file.File{M: r.M, Path: routesFile, Content: []byte(routesText(r.Server, r.Set, networks)), Mode: 0o644}
 	}
 	cs, err := resource.Append(ctx, nil, resource.Said{Out: r.Out, Part: res})
 	if err != nil || len(cs) == 0 || r.Check {
 		return cs, err
 	}
-	names, err := launchd.Installed(r.M)
+	reread, err := launchd.Reread(ctx, r.M, r.Out)
 	if err != nil {
 		return nil, err
 	}
-	for _, name := range names {
-		label := launchd.For(name).Label
-		if _, err := r.M.Run(ctx, "launchctl", "print", "system/"+label); err == nil {
-			cs = append(cs, launchd.Launchctl{M: r.M, Out: r.Out,
-				Args: []string{"kill", "SIGHUP", "system/" + label}, Label: label, Routes: true})
-		}
-	}
+	cs = append(cs, reread...)
 	return cs, nil
 }
 

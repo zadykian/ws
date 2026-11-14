@@ -8,6 +8,7 @@ import (
 
 func TestCandidates(t *testing.T) {
 	lan := Conf{LAN: netip.MustParsePrefix("192.168.1.0/24"), LANServer: netip.MustParseAddr("192.168.1.10")}
+	lan.Cable = true
 	remote := lan
 	remote.Remote = "ws.example.com"
 	cable := Iface{"en5", netip.MustParseAddr("10.77.0.2")}
@@ -24,6 +25,8 @@ func TestCandidates(t *testing.T) {
 	}{
 		{"cable, LAN and remote", []Iface{cable, home}, remote, ws, []Candidate{
 			{TierCable, CableServer}, {TierLAN, lan.LANServer}, {TierRemote, ws}}, 0},
+		{"the cable of another server", []Iface{cable, home}, Conf{LAN: lan.LAN, LANServer: lan.LANServer}, netip.Addr{},
+			[]Candidate{{TierLAN, lan.LANServer}}, 0},
 		{"LAN and remote", []Iface{home}, remote, ws, []Candidate{{TierLAN, lan.LANServer}, {TierRemote, ws}}, 0},
 		{"away: remote alone", []Iface{away}, remote, ws, []Candidate{{TierRemote, ws}}, 0},
 		{"the name has no IPv4 address", []Iface{away}, remote, netip.Addr{}, nil, 1},

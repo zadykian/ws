@@ -50,6 +50,7 @@ type Daemon struct {
 	round      []tunnel.Attempt // the endpoints tried since the round began, empty between rounds
 	allowed    tunnel.Allowed   // what the last try left out
 	ends       []netip.Addr     // the endpoints of the last round, which the routes stay clear of
+	elsewhere  []netip.Addr     // the other servers' endpoints, as the last round found them
 	routed     []netip.Prefix
 	unroutable []netip.Prefix
 	told       []netip.Prefix
