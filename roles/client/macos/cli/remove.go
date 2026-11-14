@@ -5,11 +5,17 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
+	"slices"
+	"strings"
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine"
 	enginecli "github.com/zadykian/ws/engine/cli"
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/client/macos"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
@@ -38,9 +44,11 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 	if _, err := conf.Pick(p.Machine, mac, name); err != nil {
 		return err
 	}
-	if names, err := conf.Servers(p.Machine, mac); err != nil {
+	names, err := conf.Servers(p.Machine, mac)
+	if err != nil {
 		return err
-	} else if len(names) == 1 {
+	}
+	if len(names) == 1 {
 		return fmt.Errorf("%s is the Mac's one server: apply needs one, so remove leaves it", name)
 	}
 	_, release, err := wizard.Lock(c.Context(), p.Machine, p.LockDir())
@@ -54,8 +62,26 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 	if err := forgetHost(c, p, name); err != nil {
 		return err
 	}
-	_, err = fmt.Fprintf(c.OutOrStdout(), "removed %s\n", name)
-	return err
+	if _, err := fmt.Fprintf(c.OutOrStdout(), "removed %s\n", name); err != nil {
+		return err
+	}
+	rest := slices.DeleteFunc(names, func(n string) bool { return n == name })
+	return reapply(c, p, mac, rest[0])
+}
+
+// reapply runs the Mac's steps that hold a server's traces, for the server that stays. They are ssh, Zed,
+// the tunnel and the networks, and the last two prune the gone server's daemon and routes.
+func reapply(c *cobra.Command, p enginecli.Env, mac, name string) error {
+	settings, err := conf.Load(p.Machine, mac, conf.ServerPath(mac, name))
+	if err != nil {
+		return fmt.Errorf("server %s: %w", name, err)
+	}
+	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+	defer term.Flush()
+	out := linesOf(term, c.CommandPath())
+	_, err = macOf(p, name, settings, p.Machine, out, c.OutOrStdout()).Run(c.Context(), macos.Options{
+		Options: step.Options{Observer: out}, Only: []string{"ssh", "zed", "tunnel", "networks"}})
+	return engine.Cause(err)
 }
 
 // forgetHost drops name's entry from known_hosts, where ssh keeps the key under the server's name.
