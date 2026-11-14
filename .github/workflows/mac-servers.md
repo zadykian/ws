@@ -6,8 +6,9 @@ The Mac's jobs work on one server named `ws`, at slot 0, as the Mac's side says
 `servers/NAME/server.conf`, and `conf_print` joins them. `conf_server` names the server, `ws` by
 default, and a case that works on a second one sets it, then sets it back to `ws`.
 
-A server's file that `conf_write` makes gets `WS_SLOT=0` first, unless the lines hold it, as the
-wizard writes it. So a case that compares a file with the wizard's lines lists no slot.
+A server's file that `conf_write` makes gets `WS_SLOT=0` first, and `WS_PORT=51820` after it, unless
+the lines hold them, as the wizard writes them. So a case that compares a file with the wizard's
+lines lists no slot and no port.
 
 Two cases check `--server`, one a job:
 
