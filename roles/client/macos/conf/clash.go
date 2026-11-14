@@ -7,13 +7,16 @@ import (
 )
 
 // clashes returns a refusal for each network of c that overlaps one of another server's, each
-// WS_RESOLVERS domain that another names, and a cable that another names too. Both servers refuse
+// WS_RESOLVERS domain that another names, and a cable that another names too. It refuses c's slot
+// where another holds it, and a port that another takes behind the same router. Both servers refuse
 // until one changes, so no order of servers decides which does.
 func clashes(c Conf, others []Sibling) []Error {
 	var errs []Error
 	for _, o := range others {
 		errs = append(errs, networkClashes(c, o)...)
 		errs = append(errs, domainClashes(c, o)...)
+		errs = append(errs, slotClashes(c, o)...)
+		errs = append(errs, portClashes(c, o)...)
 		if c.CableService != "" && o.Conf.CableService != "" {
 			errs = append(errs, Error{Msg: fmt.Sprintf(
 				"WS_CABLE_SERVICE names a cable, as server %s's does: the cable reaches one server", o.Name)})
@@ -59,6 +62,36 @@ func domainClashes(c Conf, o Sibling) []Error {
 		if theirs[domain] {
 			errs = append(errs, Error{Msg: fmt.Sprintf(
 				"WS_RESOLVERS's %s is server %s's too: /etc/resolver holds one file a domain", domain, o.Name)})
+		}
+	}
+	return errs
+}
+
+// slotClashes returns a refusal where c holds o's slot: each server's tunnel is the subnet of its
+// own.
+func slotClashes(c Conf, o Sibling) []Error {
+	if c.TunnelSlot() != o.Conf.TunnelSlot() {
+		return nil
+	}
+	return []Error{{Msg: fmt.Sprintf("WS_SLOT=%d is server %s's slot too: each server takes its own",
+		c.TunnelSlot(), o.Name)}}
+}
+
+// portClashes returns a refusal for each of c's router ports that o takes too, behind the same
+// WS_REMOTE.
+func portClashes(c Conf, o Sibling) []Error {
+	if c.Remote == "" || c.Remote != o.Conf.Remote {
+		return nil
+	}
+	var errs []Error
+	for _, p := range []struct{ key, own, theirs string }{
+		{"WS_PORT", c.TunnelPort(), o.Conf.TunnelPort()},
+		{"WS_REMOTE_PORT", c.ForwardPort(), o.Conf.ForwardPort()},
+	} {
+		if p.own == p.theirs {
+			errs = append(errs, Error{Msg: fmt.Sprintf(
+				"%s=%s is server %s's too, behind WS_REMOTE %s: the router forwards a port to one server",
+				p.key, p.own, o.Name, c.Remote)})
 		}
 	}
 	return errs
