@@ -3,14 +3,14 @@
 # Without that line, a run with no terminal must stop where WS_HOST_KEY is missing or names another
 # key. --check, under StrictHostKeyChecking accept-new in ~/.ssh/config, must show the line it would
 # add. Where known_hosts is a link, it must stop, as a run must, which prints that line for its
-# file. With a mac.conf of no way to ws, a run must stop, naming
+# file. With a conf of no way to ws, a run must stop, naming
 # roles/server/ubuntu/network/router.md. None may change known_hosts. WS_HOST_KEY=yes, with the
-# Mac's own mac.conf, must then add the same line back. With a mac.conf whose way to ws doesn't
+# Mac's own conf, must then add the same line back. With a conf whose way to ws doesn't
 # answer, ws's address now must come from WS_FIRST_ADDRESS. That run's closing list must name
-# mac.conf's WS_PORT in the router's forwards, and ws's lease at no address, as mac.conf has no LAN.
-# As that port is not 51820, the run must name wireguard_port in ws's host_vars before ws's run.
-# A cloud VM's copy must name mac.conf's way to ws, and no lease. The Mac's own mac.conf then puts
-# the way back.
+# the server's WS_PORT in the router's forwards, and ws's lease at no address, as its file has no
+# LAN. As that port is not 51820, the run must name wireguard_port in ws's host_vars before ws's
+# run. A cloud VM's copy must name the server file's way to ws, and no lease. The Mac's own conf
+# then puts the way back.
 
 set -u
 # shellcheck source=.github/mac-conf.sh

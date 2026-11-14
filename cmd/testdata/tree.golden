@@ -42,7 +42,7 @@ Usage:
   ws client macos [command]
 
 Available Commands:
-  apply       set the Mac up from mac.conf
+  apply       set the Mac up from mac.conf and a server's file
   conf        print the checked settings of mac.conf and a server's file as shell assignments
   configure   edit mac.conf, the server's file, the secrets and ws's host_vars on forms
   remove      remove a server from the Mac
@@ -62,7 +62,7 @@ Global Flags:
 
 Use "ws client macos [command] --help" for more information about a command.
 == ws client macos apply
-It runs the steps it names, from mac.conf, in this order: ssh, cable, git, ghostty, zed, cld, zsh, tunnel, networks. With no --only, it runs every step, and ssh again, whose plan is empty unless cld changed ssh's file. It asks sudo where it needs root.
+It runs the steps it names, from mac.conf and the server's file, in this order: ssh, cable, git, ghostty, zed, cld, zsh, tunnel, networks. With no --only, it runs every step, and ssh again, whose plan is empty unless cld changed ssh's file. It asks sudo where it needs root.
 
 Usage:
   ws client macos apply [flags]

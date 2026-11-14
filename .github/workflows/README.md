@@ -67,14 +67,14 @@ and a run stop, naming its line. Once the agent lacks it, both must stop there, 
 With no terminal, a run without `gh`'s login must stop at gh, naming `gh auth login`, and `gh auth
 refresh` with one lacking the scopes or signing alone. `--check` must say each would run.
 
-`standin.sh` starts an `sshd` of its own as ws, at `127.0.0.1:22022`, where the job's `mac.conf`
+`standin.sh` starts an `sshd` of its own as ws, at `127.0.0.1:22022`, where the job's server file
 leads, with its own host key. A fresh `--check` must show the Host key stage after `ws client macos
 apply`. The first run must warn that ws faces the internet, and add ws's key to `known_hosts`, as
 `WS_HOST_KEY` gives its fingerprint. Without that line, a run with no terminal must stop without
 `WS_HOST_KEY` and with another fingerprint, and `--check` must show the line, or stop at a link, as
-a run must. With a `mac.conf` of no way to ws, a run must stop, naming [The router](../../roles/server/ubuntu/network/router.md).
+a run must. With a conf of no way to ws, a run must stop, naming [The router](../../roles/server/ubuntu/network/router.md).
 Where `WS_REMOTE` doesn't answer, ws's address must come from `WS_FIRST_ADDRESS`, and the closing
-list name `WS_PORT` and no lease's address. On a cloud VM, it must name `mac.conf`'s way, not the lease.
+list name `WS_PORT` and no lease's address. On a cloud VM, it must name the server's way.
 
 The runner's user logs in to that `sshd` by its own `authorized_keys`, which `standin.sh` empties
 and the cases fill from the stand-in `gh`'s keys. Each session runs `ws.sh`, which logs the command.

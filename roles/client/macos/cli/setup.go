@@ -45,8 +45,8 @@ func newMacApplyCmd(p enginecli.Env, server *string) *cobra.Command {
 	names := macos.Names()
 	c := &cobra.Command{
 		Use:   "apply",
-		Short: "set the Mac up from mac.conf",
-		Long: "It runs the steps it names, from mac.conf, in this order: " + strings.Join(names, ", ") + ". " +
+		Short: "set the Mac up from mac.conf and a server's file",
+		Long: "It runs the steps it names, from mac.conf and the server's file, in this order: " + strings.Join(names, ", ") + ". " +
 			"With no --only, it runs every step, and ssh again, whose plan is empty unless cld " +
 			"changed ssh's file. It asks sudo where it needs root.",
 		Args: cobra.NoArgs,

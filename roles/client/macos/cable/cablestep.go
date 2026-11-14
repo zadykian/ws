@@ -12,7 +12,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
-// Cable gives the service that mac.conf's WS_CABLE_SERVICE names a Manual Configuration of the
+// Cable gives the service that the server's WS_CABLE_SERVICE names a Manual Configuration of the
 // cable's address and mask with no router. It does so through sudo, where networksetup -getinfo
 // shows other settings. With no router, the cable takes no default route from the uplink. A service
 // networksetup lacks stops the run, as does one with a router outside the cable's /30, as an uplink
@@ -39,7 +39,7 @@ func (c Cable) program() (string, error) {
 	return program, nil
 }
 
-// report says how the service stands, where mac.conf names one. A disabled one is a conflict, as no
+// report says how the service stands, where the server's file names one. A disabled one is a conflict, as no
 // run turns it on, and it keeps its address.
 func (c Cable) report(ctx context.Context) ([]step.Item, error) {
 	if c.Conf.CableService == "" {
