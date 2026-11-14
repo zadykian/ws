@@ -27,7 +27,7 @@ func (c *Cable) Hand(_ context.Context, h *wizard.Hand) {
 	if cf, err := c.Ws.Want(); err != nil || cf.Target != "lan" || !c.lacks() || c.owner() != "" {
 		return
 	}
-	text := "The cable: dock the Mac at the display that ws's cable plugs into, then run the line again, " +
+	text := "The cable: dock the Mac at the display that " + c.SSH.Host + "'s cable plugs into, then run the line again, " +
 		"which takes the cable's steps."
 	down := ""
 	for _, p := range c.ports {
@@ -39,7 +39,7 @@ func (c *Cable) Hand(_ context.Context, h *wizard.Hand) {
 		}
 	}
 	if down != "" {
-		text += " Where the cable plugs into " + down + ", which ws keeps down, run the line with " +
+		text += " Where the cable plugs into " + down + ", which " + c.SSH.Host + " keeps down, run the line with " +
 			"WS_CABLE_PORT=PORT in the environment."
 	}
 	h.Add("%s", text+" Without the cable, run the line once with WS_CABLE_SERVICE= in the environment "+
