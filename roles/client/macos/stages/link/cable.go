@@ -139,7 +139,7 @@ func (c *Cable) end() string {
 	return ""
 }
 
-// lacks tells whether mac.conf has no line of WS_CABLE_SERVICE yet.
+// lacks tells whether the server's file has no line of WS_CABLE_SERVICE yet.
 func (c *Cable) lacks() bool {
 	text, _ := c.M.ReadFile(c.Conf)
 	return !regexp.MustCompile(`(?m)^[ \t]*WS_CABLE_SERVICE=`).Match(text)

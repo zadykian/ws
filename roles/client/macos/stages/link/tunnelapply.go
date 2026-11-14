@@ -53,7 +53,7 @@ func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 		return errors.New(stage.Tunnel + ": " + t.SSH.Host + " has no wg0 key: mend what it printed, then run the wizard again")
 	}
 	if wg0 != c.PublicKey {
-		file := conf.File{Path: t.Conf, Stage: stage.Tunnel, M: t.M, Out: t.Out}
+		file := conf.File{Path: t.Conf, Scope: conf.ServerFile, Stage: stage.Tunnel, M: t.M, Out: t.Out}
 		if err := file.Set(ctx, "WS_PUBLIC_KEY", wg0); err != nil {
 			return err
 		}

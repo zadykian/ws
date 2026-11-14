@@ -11,16 +11,16 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
-// file is mac.conf.
+// file is the server's file.
 func (c *Cable) file() conf.File {
-	return conf.File{Path: c.Conf, Stage: stage.Cable, M: c.M, Out: c.Out}
+	return conf.File{Path: c.Conf, Scope: conf.ServerFile, Stage: stage.Cable, M: c.M, Out: c.Out}
 }
 
 // Apply takes ws's port of the cable, where none holds ws's end, from WS_CABLE_PORT or the
 // terminal, the one with carrier by default. link names it in /etc/ws/host_vars.yml on ws. Then ws
 // server ubuntu apply --only network,wireguard runs there, as both roles read it: the network role
 // must give it 10.77.0.1 as ws's end. After that, service takes the Mac's service. none, as either
-// answer, writes an empty WS_CABLE_SERVICE. Where mac.conf has a service, again takes the stage's
+// answer, writes an empty WS_CABLE_SERVICE. Where the server's file has a service, again takes the stage's
 // steps.
 func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 	cf, err := conf.Read(c.M, c.Conf)
@@ -83,7 +83,7 @@ func (c *Cable) holds(ctx context.Context, port string) bool {
 }
 
 // again names WS_CABLE_PORT in /etc/ws/host_vars.yml on ws where ws's status names none or another.
-// That holds after ws's install, a failed roles' run or a change in mac.conf. Then it runs the
+// That holds after ws's install, a failed roles' run or a change in the server's file. Then it runs the
 // roles there, with no question and no dock. It stops on a port that ws lacks.
 func (c *Cable) again(ctx context.Context, port string) error {
 	s, ok := c.Ws.Status(ctx)
@@ -107,7 +107,7 @@ func (c *Cable) again(ctx context.Context, port string) error {
 
 // service takes the Mac's service of the cable, from WS_CABLE_SERVICE in the environment or the
 // terminal. The default is the one service with a 169.254 address, which an adapter gives itself
-// where no DHCP server answers. It writes it in mac.conf, and runs ws client macos apply, which
+// where no DHCP server answers. It writes it in the server's file, and runs ws client macos apply, which
 // gives it 10.77.0.2. Then ping must reach ws's end over it. none writes an empty WS_CABLE_SERVICE.
 func (c *Cable) service(ctx context.Context) error {
 	out, err := c.M.Run(ctx, "networksetup", "-listallnetworkservices")

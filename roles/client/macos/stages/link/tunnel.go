@@ -26,7 +26,7 @@ type Tunnel struct {
 	Ws *session.Session
 	// SSH is the Mac's ssh to ws.
 	SSH remote.SSH
-	// Conf is mac.conf's path. Check is set under --check.
+	// Conf is the server's file's path. Check is set under --check.
 	Conf  string
 	Check bool
 	// Server is the name of the server whose daemon ws-tunnel is.
@@ -88,8 +88,8 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in server.conf to wg0's key, which that run makes"))
 	case wg0 != c.PublicKey:
 		if t.Check {
-			// Under --check mac.conf is the scratch file, as for the stages before.
-			if err := (conf.File{Path: t.Conf, Stage: stage.Tunnel, M: t.M, Out: t.Out}).Show("WS_PUBLIC_KEY", wg0); err != nil {
+			// Under --check the server's file is the scratch file, as for the stages before.
+			if err := (conf.File{Path: t.Conf, Scope: conf.ServerFile, Stage: stage.Tunnel, M: t.M, Out: t.Out}).Show("WS_PUBLIC_KEY", wg0); err != nil {
 				return step.Plan{}, err
 			}
 		}
