@@ -81,6 +81,13 @@ The tunnel is `absent` before apply sets its daemon up, `stopped` where launchd 
 file ws refuses shows `-` for its target and slot. Its errors follow the rows, with exit code 1. The
 command takes no `--server`.
 
+`ws client macos remove NAME` takes a server off the Mac, as the user and under the wizard's lock. It
+refuses the Mac's last server, as apply needs one, and takes no `--server`: the argument is the
+consent. It deletes `servers/NAME` and NAME's entry in `known_hosts`, then runs the steps `ssh`,
+`zed`, `tunnel` and `networks` for a server that stays, so that its daemon, hosts and routes go
+too. Where NAME held the cable, it prints a line to do by hand: the cable's service keeps
+`10.77.0.2`. The server itself is not changed.
+
 ## A machine on the LAN
 
 `WS_TARGET=lan`, the default, is a machine at home, behind [The router](../../../server/ubuntu/network/router.md), with a cable to
