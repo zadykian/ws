@@ -13,7 +13,7 @@ func Command(p enginecli.Env) *cobra.Command {
 	g := enginecli.Group("macos", "the commands for a Mac",
 		newConfCmd(p, &server), newConfigureCmd(p, &server), newMacApplyCmd(p, &server), newMacStateCmd(p, &server), newWizardCmd(p, &server),
 		newResolverCmd(p), newTunnelCmd(p, &server), newMacSecretsCmd(p, &server),
-		newServersCmd(p, &server))
+		newServersCmd(p, &server), newRemoveCmd(p, &server))
 	g.PersistentFlags().StringVar(&server, "server", "", "the server to act on, which may be left out where there is one")
 	return g
 }
