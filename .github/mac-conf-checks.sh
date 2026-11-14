@@ -1,10 +1,10 @@
 #!/bin/sh
 # The mac job's checks of the server's WS_TUNNEL_NETWORKS and WS_RESOLVERS, which ws client macos
-# apply writes. The job runs it from the repository's root after mac-ws-checks.sh, with the tunnel's
-# daemon loaded and WS_PUBLIC_KEY in the server's file (.github/workflows/mac.yml). It takes ws's
-# path from the job's TUNNEL, and stops without it. The keys' network must go into the daemon's utun, and
-# their domain show in scutil --dns. A second run and --check must print nothing. Emptied or
-# removed, the keys must take both back, and spare a script's own files. Each failure prints an
+# apply writes. The job runs it from the repository's root after mac-ws-checks.sh. The tunnel's
+# daemon is loaded, and WS_PUBLIC_KEY is in the server's file (.github/workflows/mac.yml). It takes
+# ws's path from the job's TUNNEL, and stops without it. The keys' network must go into the daemon's
+# utun, and their domain show in scutil --dns. A second run and --check must print nothing. Emptied
+# or removed, the keys must take both back, and spare a script's own files. Each failure prints an
 # ::error:: line, and any fails the script at its end. Last, it runs mac-setup-checks.sh, whose
 # cases run ws setup's own steps. The conf's rules are go test's (roles/client/macos/conf).
 #
