@@ -22,11 +22,7 @@ func tunnelConf(c conf.Conf) string {
 	if c.CableService != "" {
 		b.WriteString("WS_CABLE=yes\n")
 	}
-	port := c.Port
-	if port == "" {
-		port = "51820"
-	}
-	b.WriteString("WS_PORT=" + port + "\n")
+	b.WriteString("WS_PORT=" + c.TunnelPort() + "\n")
 	slot := c.Slot
 	if slot == "" {
 		slot = "0"

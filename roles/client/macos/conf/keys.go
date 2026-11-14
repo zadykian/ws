@@ -22,6 +22,23 @@ func (c Conf) TunnelSlot() slot.Slot {
 	return s
 }
 
+// TunnelPort gives the UDP port of wg0 on the server: WS_PORT, or 51820 where it has none.
+func (c Conf) TunnelPort() string {
+	if c.Port == "" {
+		return strconv.Itoa(defaultPort)
+	}
+	return c.Port
+}
+
+// ForwardPort gives the TCP port the router forwards to ws's 22: WS_REMOTE_PORT, or 22022 where it
+// has none.
+func (c Conf) ForwardPort() string {
+	if c.RemotePort == "" {
+		return strconv.Itoa(forwardPort)
+	}
+	return c.RemotePort
+}
+
 // key is one of mac.conf's keys: where its value goes, its check, and the form its message names.
 // A check gets whether the value was in quotes.
 type key struct {
