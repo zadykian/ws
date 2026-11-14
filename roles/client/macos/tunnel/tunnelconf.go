@@ -7,7 +7,7 @@ import (
 )
 
 // tunnelConf is tunnel.conf, the values the daemon takes from mac.conf, so that a root daemon reads
-// no file the user can write.
+// no file the user can write. WS_CABLE=yes is for the one server that names the cable.
 func tunnelConf(c conf.Conf) string {
 	var b strings.Builder
 	b.WriteString("# Written by github.com/zadykian/ws: ws client macos apply, from ~/.config/ws/mac.conf.\n")
@@ -18,6 +18,9 @@ func tunnelConf(c conf.Conf) string {
 	}
 	if c.Remote != "" {
 		b.WriteString("WS_REMOTE=" + c.Remote + "\n")
+	}
+	if c.CableService != "" {
+		b.WriteString("WS_CABLE=yes\n")
 	}
 	port := c.Port
 	if port == "" {

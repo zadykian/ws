@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -34,16 +35,24 @@ func newTunnelLoadedCmd(p enginecli.Env, server *string) *cobra.Command {
 }
 
 // newTunnelRoutesCmd returns ws client macos tunnel routes.
-func newTunnelRoutesCmd(p enginecli.Env) *cobra.Command {
+func newTunnelRoutesCmd(p enginecli.Env, server *string) *cobra.Command {
 	var check bool
 	c := &cobra.Command{
 		Use:   "routes NAME [CIDR...]",
 		Short: "route the networks into the tunnel, or drop NAME",
-		Long:  "It has the tunnel take the networks of NAME, or drop the file of NAME where it gets none.",
-		Args:  cobra.MinimumNArgs(1),
+		Long: "It has the tunnel of --server, which is required, take the networks of NAME, or drop the file of NAME " +
+			"where it gets none.",
+		Args: cobra.MinimumNArgs(1),
 		RunE: func(c *cobra.Command, args []string) error {
+			if *server == "" {
+				return errors.New("--server is required: it names the server whose tunnel takes the networks")
+			}
+			name, err := pickServer(p, server)
+			if err != nil {
+				return err
+			}
 			return runRoute(c, check, func(out effect.Out) step.Step {
-				return &networks.Routes{Set: args[0], Networks: args[1:], M: p.Machine, Out: out, Check: check, Alone: true}
+				return &networks.Routes{Server: name, Set: args[0], Networks: args[1:], M: p.Machine, Out: out, Check: check, Alone: true}
 			})
 		},
 	}

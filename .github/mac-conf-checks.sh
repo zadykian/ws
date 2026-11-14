@@ -72,7 +72,7 @@ shown() {
 
 utun=$(sudo "$TUNNEL" client macos tunnel status | awk -F': ' '$1 == "interface" { print $2 }')
 # A script's own route and resolver, which the keys must spare.
-must "$TUNNEL" client macos tunnel routes own 198.51.100.0/24
+must "$TUNNEL" client macos tunnel routes --server ws own 198.51.100.0/24
 must "$TUNNEL" client macos resolver own.test 198.51.100.53
 
 keys 'WS_TUNNEL_NETWORKS="203.0.113.0/24"' 'WS_RESOLVERS="conf.test=203.0.113.53,203.0.113.54"'
@@ -85,7 +85,7 @@ else
     *) error "--check showed no resolver: $out" ;;
     esac
 fi
-! sudo test -e "$tunnel_dir/routes.d/mac-conf" || error '--check wrote routes.d/mac-conf'
+! sudo test -e "$tunnel_dir/ws/routes.d/server-conf" || error '--check wrote routes.d/server-conf'
 ! test -e "$ws_resolvers/conf.test" || error "--check wrote $ws_resolvers/conf.test"
 
 setup || error "ws client macos apply with the keys failed: $out"
@@ -120,14 +120,14 @@ setup || error "ws client macos apply with the keys emptied failed: $out"
 printf '%s\n' "$out"
 until_ok 20 eval '! routed 203.0.113.1' || error "203.0.113.1 is still routed into $utun"
 until_ok 20 eval '! shown conf.test 203.0.113.53' || error 'scutil --dns still shows conf.test'
-! sudo test -e "$tunnel_dir/routes.d/mac-conf" || error 'routes.d/mac-conf outlived its key'
+! sudo test -e "$tunnel_dir/ws/routes.d/server-conf" || error 'routes.d/server-conf outlived its key'
 ! test -e "$ws_resolvers/conf.test" || error "$ws_resolvers/conf.test outlived its key"
-sudo test -e "$tunnel_dir/routes.d/own" || error 'the emptied key took routes.d/own too'
+sudo test -e "$tunnel_dir/ws/routes.d/own" || error 'the emptied key took routes.d/own too'
 routed 198.51.100.1 || error "198.51.100.1, routes.d/own's, left $utun"
 shown own.test 198.51.100.53 || error 'the removed key took own.test too'
 
 keys
-must "$TUNNEL" client macos tunnel routes own
+must "$TUNNEL" client macos tunnel routes --server ws own
 must "$TUNNEL" client macos resolver own.test
 
 sh .github/mac-setup-checks.sh || fail=1

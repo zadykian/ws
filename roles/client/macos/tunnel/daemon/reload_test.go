@@ -98,3 +98,32 @@ func TestReloadStopsWhereTheSlotMoves(t *testing.T) {
 		t.Errorf("log = %q, want %q", got, want)
 	}
 }
+
+func TestReloadLogsTheNetworkAnotherServerHolds(t *testing.T) {
+	r := onTheCable(t)
+	r.Paths.Root = "/etc"
+	r.m.Files[dir+"/routes.d/office"] = []byte("172.16.0.0/12\n10.50.0.0/16\n")
+	r.m.Files["/etc/lab/routes.d/office"] = []byte("10.50.0.0/16\n")
+	r.m.table["ls -1 "+dir+"/routes.d"] = effecttest.Result{Out: []byte("office\n")}
+	r.m.table["ls -1p /etc"] = effecttest.Result{Out: []byte("lab/\nws-tunnel/\n")}
+	r.m.table["ls -1 /etc/lab/routes.d"] = effecttest.Result{Out: []byte("office\n")}
+	r.reload(context.Background())
+	lines := r.lines()
+	want := "leaves 10.50.0.0/16 out: server lab's routes.d holds 10.50.0.0/16"
+	if !slices.Contains(lines, want) || lines[len(lines)-1] != "read its settings again; routes: 172.16.0.0/12" {
+		t.Errorf("log = %q, want %q and the one route", lines, want)
+	}
+}
+
+func TestReloadCountsTheEndpointsOfAServerThatCame(t *testing.T) {
+	r := onTheCable(t) // its round found no other server
+	r.Paths.Root = "/etc"
+	r.m.Files[dir+"/routes.d/office"] = []byte("172.16.0.0/12\n")
+	r.m.table["ls -1 "+dir+"/routes.d"] = effecttest.Result{Out: []byte("office\n")}
+	r.m.Files["/etc/lab/tunnel.conf"] = []byte("WS_PUBLIC_KEY=" + peerKey + "\nWS_LAN_ADDRESS=172.16.4.4\n")
+	r.m.table["ls -1p /etc"] = effecttest.Result{Out: []byte("lab/\nws-tunnel/\n")}
+	r.reload(context.Background())
+	if got := r.lines()[len(r.lines())-1]; got != "read its settings again; routes: none" {
+		t.Errorf("log = %q, want the office left out, as it holds lab's endpoint", r.lines())
+	}
+}
