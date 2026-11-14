@@ -10,7 +10,7 @@ A server's file that `conf_write` makes gets `WS_SLOT=0` first, and `WS_PORT=518
 the lines hold them, as the wizard writes them. So a case that compares a file with the wizard's
 lines lists no slot and no port.
 
-Five cases of the `mac` job and two of the wizard's work on a second server:
+Four cases of the `mac` job and two of the wizard's work on a second server:
 
 - `mac/22-server.sh` makes a second server's file, `lab`, at slot 1, beside ws's. Then `ws client macos
   apply --check` must stop, naming both servers. `--server box`, which has no file, and `--server
@@ -35,4 +35,5 @@ Five cases of the `mac` job and two of the wizard's work on a second server:
   handshake, and one login through the tunnel. It must leave ws's files as they were. The next run
   must print nothing.
 
-The new cases run last, as `checks.sh` and the job stop at the first that fails.
+Cases 90, 92 and 94 of the `mac` job run last, as `checks.sh` and the job stop at the first that
+fails.
