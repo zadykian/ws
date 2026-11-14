@@ -83,7 +83,7 @@ the Mac's display, if any:
   target needs both.
 - The VM needs a public IPv4 address, as the tunnel takes IPv4 alone.
 - The provider's firewall must let in TCP `WS_REMOTE_PORT`, and UDP 51820, the tunnel's, or the port
-  that `WS_PORT` sets. The closing list says so.
+  that `WS_PORT` sets, which moves wg0's listen port on ws too. The closing list says so.
 - The VM's default user takes the provider's keys, which must be the GitHub account's
   ([Login](../stages/README.md#login)).
 - Where ws doesn't answer at its way, the Host key stage asks the VM's public address, as the

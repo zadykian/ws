@@ -58,16 +58,16 @@ there is one ([The server's name](conf/README.md#the-servers-name)).
 address inside it, the router's static lease for it. The script stops on one outside, and on the
 LAN's network or broadcast address. `WS_REMOTE` is the router's name on the internet, and
 `WS_REMOTE_PORT` the port it forwards to ws's 22. The tunnel takes UDP 51820 every way, which the
-router forwards too; `WS_PORT` sets another. A way without its values is left out. The router's
-side is in [The router](../../server/ubuntu/network/router.md). `WS_PUBLIC_KEY` goes in last, once ws has the Mac's key, in the
-order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE` names the network service of the
-display's adapter, in quotes where it holds a blank, and `WS_CABLE_PORT` ws's port of the cable:
-[The cable](#the-cable). `WS_GIT_NAME` and `WS_GIT_EMAIL`, which go together, are the author of
-git's commits on the Mac, the name in quotes where it holds a blank. `WS_GIT_SIGNING_PUB_KEY` is the
-`.pub` of the key that signs them, by its path from `/` or `~/`: [git on the Mac](git/README.md).
-`WS_IDENTITY_PUB_KEY` is the `.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the
-socket of its agent, in quotes where it holds a blank: [ssh's hosts](#sshs-hosts). A run makes
-`~/.config/ws` at mode 700, and sets that mode where it differs.
+router forwards too; `WS_PORT` sets another, which wg0 listens on. A way without its values is left
+out. The router's side is in [The router](../../server/ubuntu/network/router.md). `WS_PUBLIC_KEY` goes in last, once ws has the Mac's
+key, in the order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE` names the network
+service of the display's adapter, in quotes where it holds a blank, and `WS_CABLE_PORT` ws's port of
+the cable: [The cable](#the-cable). `WS_GIT_NAME` and `WS_GIT_EMAIL`, which go together, are the
+author of git's commits on the Mac, the name in quotes where it holds a blank.
+`WS_GIT_SIGNING_PUB_KEY` is the `.pub` of the key that signs them, by its path from `/` or `~/`:
+[git on the Mac](git/README.md). `WS_IDENTITY_PUB_KEY` is the `.pub` of the key that ssh offers ws,
+and `WS_IDENTITY_AGENT` the socket of its agent, in quotes where it holds a blank: [ssh's
+hosts](#sshs-hosts). A run makes `~/.config/ws` at mode 700, and sets that mode where it differs.
 
 `WS_USER` is the user ssh logs in as: the server's `ws_user`, `zadykian` by default, or `root` for a
 `WS_TARGET` of `cloud`, which may have no other user. The other targets refuse `WS_USER=root`. A key
