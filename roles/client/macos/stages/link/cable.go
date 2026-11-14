@@ -178,7 +178,8 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 		in && c.holds(ctx, cf.CablePort)) {
 		return step.Plan{}, nil
 	}
-	if c.Check && !none && (!in || !c.RunDone(ctx, session.Want{Target: cf.Target, User: cf.User})) {
+	if c.Check && !none && (!in || !c.RunDone(ctx, session.Want{Target: cf.Target, User: cf.User,
+		Address: cf.TunnelSlot().Wg0(), Port: cf.Port})) {
 		c.Out.Say("%s: after %s", stage.Cable, stages.RunStage)
 		return step.Plan{}, nil
 	}
