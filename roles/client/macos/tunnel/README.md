@@ -14,13 +14,16 @@ NETWORK` at each read. Neither depends on which reads first.
 A network that holds another server's endpoint goes out as one that holds the daemon's own: the
 packets of that server's tunnel must not enter this one. The endpoints are the other's
 `WS_LAN_ADDRESS` and its `WS_REMOTE`, as the resolver gives it at the start of each round and at
-each read.
+each read. The daemon looks up the other servers' remotes at once, with 2 s for them all. One
+with no answer by then counts as unresolved, as one that fails does, until the next round or read.
 
 ## Routes
 
-A daemon deletes a route only where `route -n get` says the route goes through its own utun. It
-leaves one that goes through another utun or the Mac's own interface alone, and logs `leaves the
-route to NETWORK alone: it goes through IFACE, not UTUN`.
+A daemon deletes a route only where `route -n get` names the network itself, by its destination
+and mask, and says the route goes through its own utun. A wider route or the default that answers
+in its place counts as gone. A /32 counts with no mask line, as a host route's answer may hold
+none. A daemon leaves a route that goes through another utun or the Mac's own interface alone, and
+logs `leaves the route to NETWORK alone: it goes through IFACE, not UTUN`.
 
 ## Reading again
 

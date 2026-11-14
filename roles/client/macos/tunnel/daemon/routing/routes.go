@@ -3,6 +3,7 @@ package routing
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/netip"
 	"strings"
 
@@ -20,7 +21,13 @@ func RunRoutes(ctx context.Context, m effect.Machine, plan tunnel.RoutePlan, tun
 		if err != nil {
 			continue // no route to delete
 		}
-		if via := routeInterface(string(out)); via != tun {
+		route, via := routeOf(string(out))
+		if route != n {
+			// route get answers with the best match, as a wider route or the default, where the
+			// network's own is gone. That route is not the network's to delete.
+			continue
+		}
+		if via != tun {
 			logs = append(logs, fmt.Sprintf("leaves the route to %s alone: it goes through %s, not %s", n, via, tun))
 			continue
 		}
@@ -36,12 +43,35 @@ func RunRoutes(ctx context.Context, m effect.Machine, plan tunnel.RoutePlan, tun
 	return failed, logs
 }
 
-// routeInterface returns the interface that route -n get names, empty where it names none.
-func routeInterface(out string) string {
+// routeOf returns the network of the route that route -n get names, from its destination and mask,
+// and its interface. A host route's answer may hold no mask line, so a destination with none is a
+// /32. The network is invalid where the answer gives none, as the default's "default" is none.
+func routeOf(out string) (route netip.Prefix, iface string) {
+	var dest, mask netip.Addr
+	masked := false
 	for _, line := range strings.Split(out, "\n") {
-		if v, ok := strings.CutPrefix(strings.TrimSpace(line), "interface:"); ok {
-			return strings.TrimSpace(v)
+		key, v, _ := strings.Cut(strings.TrimSpace(line), ":")
+		v = strings.TrimSpace(v)
+		switch key {
+		case "destination":
+			dest, _ = netip.ParseAddr(v)
+		case "mask":
+			mask, _ = netip.ParseAddr(v)
+			masked = true
+		case "interface":
+			iface = v
 		}
 	}
-	return ""
+	bits := 32
+	if masked {
+		ones, size := net.IPMask(mask.AsSlice()).Size()
+		if size == 0 {
+			return netip.Prefix{}, iface // a mask that is no address, or not of leading ones
+		}
+		bits = ones
+	}
+	if !dest.Is4() {
+		return netip.Prefix{}, iface
+	}
+	return netip.PrefixFrom(dest, bits), iface
 }
