@@ -127,12 +127,12 @@ func TestSSHStopsWhereABlockNamesTheServer(t *testing.T) {
 	}
 }
 
-func TestSSHStopsAtTheLineTheRunLeaves(t *testing.T) {
+func TestSSHStopsAtTheLineAsTheFileHasIt(t *testing.T) {
 	m := sshMachine()
 	m.Files["/h/.ssh/config"] = []byte("Host ws\n  User x\n")
 	_, err := sshStep(m, &effecttest.Out{}).Plan(context.Background())
-	if err == nil || !strings.HasPrefix(err.Error(), "line 3 of ~/.ssh/config, Host ws, sets its own values for ws:") {
-		t.Errorf("Plan err = %v, want a stop at line 3", err)
+	if err == nil || !strings.HasPrefix(err.Error(), "line 1 of ~/.ssh/config, Host ws, sets its own values for ws:") {
+		t.Errorf("Plan err = %v, want a stop at line 1", err)
 	}
 }
 

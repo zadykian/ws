@@ -57,8 +57,8 @@ func TestSSHReportStopsAtTheUsersHostAndLeavesTheRestOut(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := fmt.Sprintf("%+v", reports[0].Items)
-	if !strings.Contains(got, "line 3 of ~/.ssh/config, Host ws, sets its own values for ws") {
-		t.Errorf("items = %s, want the stop at line 3", got)
+	if !strings.Contains(got, "line 1 of ~/.ssh/config, Host ws, sets its own values for ws") {
+		t.Errorf("items = %s, want the stop at line 1", got)
 	}
 	if strings.Contains(got, "hidden") {
 		t.Errorf("items = %s, which show the user's file", got)

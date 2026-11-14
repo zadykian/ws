@@ -110,8 +110,8 @@ func (s SSH) refusal(f sshFacts, hosts []sshcfg.Host, text []byte) refusal {
 		if f.Stop != nil {
 			return f.Stop
 		}
-		// The line is counted in the text the run leaves, so that each Plan names the same line.
-		own := sshcfg.OwnHosts(string(s.configLines().After(f.UserConfig, f.IncludeLine > 0)), names(hosts)...)
+		// The line is counted in ~/.ssh/config as it stands, the number the wizard's question gives.
+		own := sshcfg.OwnHosts(string(f.UserConfig.Text), names(hosts)...)
 		if len(own) > 0 {
 			return fmt.Errorf("line %d of ~/.ssh/config, %s, sets its own values for %s: remove it, as "+
 				"config.d/ws holds each server's host", own[0].Line, own[0].Text, own[0].Names)
