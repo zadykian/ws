@@ -13,6 +13,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // macTarget is ws client macos apply's side of the verbs. only holds the steps that --only names,
@@ -37,6 +38,9 @@ func macTarget(p enginecli.Env, only *[]string, server *string) engine.Target {
 			if err != nil {
 				return engine.Run{}, err
 			}
+			if err := refuseBadSibling(p.Machine, conf.Path(p.Getenv, p.Pwd), name); err != nil {
+				return engine.Run{}, err
+			}
 			run := engine.Run{M: c.Machine}
 			run.Groups = func(check bool) []tui.Group {
 				o := macos.Options{Options: step.Options{Check: check}, Only: *only}
@@ -55,24 +59,33 @@ func macTarget(p enginecli.Env, only *[]string, server *string) engine.Target {
 }
 
 // macReport readies what ws client macos state reports. The ssh step that runs again is left out:
-// under a read it would repeat the first.
+// under a read it would repeat the first. With several servers and no --server it reports each.
 func macReport(p enginecli.Env, server *string) func(context.Context, engine.Call) (engine.Report, error) {
 	return func(context.Context, engine.Call) (engine.Report, error) {
-		name, settings, err := loadMacConf(p, server)
+		confs, grouped, err := stateConfs(p, server)
 		if err != nil {
 			return engine.Report{}, err
 		}
 		return engine.Report{Read: macRead(p, server), Print: func(ctx context.Context, c engine.Call) error {
 			term := effect.NewTerminal(strings.NewReader(""), c.Err)
-			reports, err := macOf(p, name, settings, p.Machine, linesOf(term, c.Path), nil).State(ctx)
+			var docs []serverDoc
+			for _, sc := range confs {
+				reports, err := macOf(p, sc.Name, sc.Conf, p.Machine, linesOf(term, c.Path), nil).State(ctx)
+				docs = append(docs, serverDoc{Name: sc.Name, Steps: reports})
+				if err != nil {
+					term.Flush()
+					return err
+				}
+			}
 			term.Flush()
-			if err != nil {
-				return err
-			}
 			if c.JSON {
-				return engine.WriteJSON(c.Out, macDoc{Version: p.Version, Steps: reports})
+				doc := macDoc{Version: p.Version, Steps: docs[0].Steps}
+				if grouped {
+					doc = macDoc{Version: p.Version, Servers: docs}
+				}
+				return engine.WriteJSON(c.Out, doc)
 			}
-			return writeMacState(c.Out, reports)
+			return writeMacState(c.Out, docs, grouped)
 		}}, nil
 	}
 }
