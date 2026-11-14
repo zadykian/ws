@@ -18,18 +18,18 @@ const hostPrint = "ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub"
 // the answer at the terminal, must be yes, or hold that fingerprint as the console's ssh-keygen
 // prints it. --check asks nothing.
 func (h *Key) trust(ctx context.Context, w remote.Way, fp string) error {
-	o := offer(w, fp)
+	o := offer(h.SSH.Host, w, fp)
 	if h.Check {
-		h.Out.Say("%s: %s; a run would ask whether ws's console shows it", stage.Host, o)
+		h.Out.Say("%s: %s; a run would ask whether %s's console shows it", stage.Host, o, h.SSH.Host)
 		return nil
 	}
 	answer, set := h.Env("WS_HOST_KEY")
 	if !set {
 		if !h.Tty {
-			return fmt.Errorf("%s: %s, and no terminal is there to compare it with ws's console: set "+
-				"WS_HOST_KEY to yes where it shows it, as %s prints it", stage.Host, o, hostPrint)
+			return fmt.Errorf("%s: %s, and no terminal is there to compare it with %s's console: set "+
+				"WS_HOST_KEY to yes where it shows it, as %s prints it", stage.Host, o, h.SSH.Host, hostPrint)
 		}
-		h.Out.Say("%s: %s. At ws's console, %s prints the one it has", stage.Host, o, hostPrint)
+		h.Out.Say("%s: %s. At %s's console, %s prints the one it has", stage.Host, o, h.SSH.Host, hostPrint)
 		var err error
 		if answer, err = h.P.Ask(ctx, effect.Question{Text: "Answer yes where the two match, or paste what it prints"}); err != nil {
 			return fmt.Errorf("%s: the terminal ended before the answer", stage.Host)
@@ -39,6 +39,6 @@ func (h *Key) trust(ctx context.Context, w remote.Way, fp string) error {
 	if slices.Contains(words, fp) || (len(words) == 1 && strings.EqualFold(words[0], "yes")) {
 		return nil
 	}
-	return fmt.Errorf("%s: '%s' is neither yes nor %s, the key that ws offers at %s:%s: compare that with "+
-		"ws's console, and check ws's address", stage.Host, answer, fp, w.Host, w.Port)
+	return fmt.Errorf("%s: '%s' is neither yes nor %s, the key that %s offers at %s:%s: compare that with "+
+		"%[4]s's console, and check %[4]s's address", stage.Host, answer, fp, h.SSH.Host, w.Host, w.Port)
 }
