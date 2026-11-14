@@ -80,3 +80,24 @@ func TestSequenceRun(t *testing.T) {
 		t.Errorf("without a name: asked %v, %v", asked, err)
 	}
 }
+
+func TestSequenceAsksTheRouterPortOfAServerBesideAnother(t *testing.T) {
+	var defaults []string
+	ask := func(q Question) (string, error) {
+		if q.Key == "WS_REMOTE_PORT" {
+			defaults = append(defaults, q.Def)
+		}
+		return map[string]string{"WS_REMOTE": "r.example"}[q.Key], nil
+	}
+	place := &Place{Slot: 1, Others: []Sibling{{Name: "ws", Conf: Conf{Remote: "r.example"}}}}
+	for _, p := range []*Place{nil, place} {
+		s := newSequence(nil, ask)
+		s.Place = p
+		if err := s.lanWays(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if want := []string{"22022", "22023"}; !reflect.DeepEqual(defaults, want) {
+		t.Errorf("WS_REMOTE_PORT defaults %v, want %v", defaults, want)
+	}
+}

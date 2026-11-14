@@ -43,3 +43,27 @@ func TestFreeSlotRefusesWhereEverySlotIsHeld(t *testing.T) {
 		t.Errorf("FreeSlot error = %v, want %q", err, want)
 	}
 }
+
+func TestPortsKeepAServerApartOnlyBehindARouterItShares(t *testing.T) {
+	others := []Sibling{{Name: "ws", Conf: Conf{Remote: "r.example"}}}
+	// lab was placed at slot 1 while no other server shared its router, so it took the base ports.
+	alone := []Sibling{{Name: "lab", Conf: Conf{Remote: "r.example", Slot: "1"}}}
+	for name, tc := range map[string]struct {
+		p                 Place
+		remote, port, fwd string
+	}{
+		"alone":        {Place{Slot: 1}, "r.example", "51820", "22022"},
+		"shared":       {Place{Slot: 1, Others: others}, "r.example", "51821", "22023"},
+		"third":        {Place{Slot: 2, Others: others}, "r.example", "51822", "22024"},
+		"other router": {Place{Slot: 1, Others: others}, "s.example", "51820", "22022"},
+		"no router":    {Place{Slot: 1, Others: []Sibling{{Name: "ws"}}}, "", "51820", "22022"},
+		"lower slot":   {Place{Slot: 0, Others: alone}, "r.example", "51821", "22023"},
+	} {
+		if got := tc.p.Port(tc.remote); got != tc.port {
+			t.Errorf("%s: Port = %s, want %s", name, got, tc.port)
+		}
+		if got := tc.p.RemotePort(tc.remote); got != tc.fwd {
+			t.Errorf("%s: RemotePort = %s, want %s", name, got, tc.fwd)
+		}
+	}
+}
