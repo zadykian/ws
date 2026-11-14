@@ -83,6 +83,16 @@ There is no msbuild-lsp yet. Its v0.7.0 of 2026-07-24 is the latest release, and
 `language-server.zip` by SHA-256, as otelcol's `.deb` is, name it in
 `lsp.msbuild-project-tools.binary`, and add `msbuild-lsp` to the Mac's extensions.
 
+## JSON with comments
+
+ws's file and the Mac's read every `.json` file as JSONC. So the JSON server takes a comment in one
+with no error 521, "Comments are not permitted in JSON". Zed names the language to the server,
+which allows comments in JSONC alone. A trailing comma in such a file warns, where JSON fails it.
+
+The `*.json` glob replaces Zed's own list for JSONC, and matches every file on it. Prettier's
+`jsonc` parser adds trailing commas, so `trailingComma` is `none`, and a formatted `package.json`
+stays JSON. A project that installs its own Prettier ignores the option, and its config governs.
+
 ## Secrets in ssh's arguments
 
 `~/.bashrc` sources `~/.secrets/env` above its interactive guard, so that non-interactive shells
