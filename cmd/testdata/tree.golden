@@ -101,7 +101,7 @@ Global Flags:
       --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos remove
-It deletes servers/NAME beside mac.conf and leaves the server as it is. It refuses the Mac's last server, as apply needs one, and takes no --server: the argument is the consent.
+It deletes servers/NAME beside mac.conf and NAME's entry in known_hosts, and leaves the server as it is. It refuses the Mac's last server, as apply needs one, and takes no --server: the argument is the consent.
 
 Usage:
   ws client macos remove NAME [flags]
