@@ -166,6 +166,30 @@ func TestAnswersCheckPassesALinkThatLacksNoKey(t *testing.T) {
 	}
 }
 
+// TestAnswersCheckCopiesTheOtherServersFiles keeps lab's file as it stands, refused for its slot,
+// so that the stages after see it beside ws's rehearsal and refuse it as the run would.
+func TestAnswersCheckCopiesTheOtherServersFiles(t *testing.T) {
+	const all = "WS_TARGET=lan\nWS_LAN=\nWS_REMOTE=\nWS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
+	const lab = "WS_USER=ada\nWS_SLOT=99\n"
+	a, _ := newAnswers(t, "WS_GIT_NAME=\nWS_GIT_EMAIL=\n", all)
+	a.Check, a.Scratch, a.ServerScratch = true, "/lock/mac.conf", "/lock/servers/ws/server.conf"
+	m := a.M.(*effecttest.Machine)
+	m.Dirs["/h/.config/ws/servers"], m.Dirs["/h/.config/ws/servers/ws"], m.Dirs["/h/.config/ws/servers/lab"] = 0o755, 0o755, 0o755
+	m.Files["/h/.config/ws/servers/lab/server.conf"] = []byte(lab)
+	for _, dir := range []string{"/lock", "/lock/servers/ws", "/lock/servers/lab"} {
+		m.Results["mkdir -p "+dir] = effecttest.Result{}
+	}
+	if _, err := a.Plan(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(m.Files["/lock/servers/lab/server.conf"]); got != lab {
+		t.Errorf("lab's scratch = %q, want its file as it stands", got)
+	}
+	if got := string(m.Files["/lock/servers/ws/server.conf"]); got != all {
+		t.Errorf("ws's scratch = %q, want the rehearsal", got)
+	}
+}
+
 func TestAnswersCheckRefusesABadEnvironment(t *testing.T) {
 	a, _ := newAnswers(t, "", "")
 	a.Check, a.Scratch = true, "/lock/mac.conf"
