@@ -20,7 +20,7 @@ func (c *Cable) owner() string {
 	return ""
 }
 
-// Hand adds the dock to what stays by hand, where mac.conf has no WS_CABLE_SERVICE yet, as no port
+// Hand adds the dock to what stays by hand, where the server's file has no WS_CABLE_SERVICE yet, as no port
 // of ws's had carrier. It names WS_CABLE_PORT for the ports that ws keeps down, whose carrier link
 // can't read, and an empty WS_CABLE_SERVICE for a Mac without the cable.
 func (c *Cable) Hand(_ context.Context, h *wizard.Hand) {
