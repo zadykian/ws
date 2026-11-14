@@ -56,6 +56,11 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 		return err
 	}
 	defer release()
+	// The steps below skip a server whose file ws refuses, so such a file stops the removal before
+	// it starts. NAME's own file is out of the count: a clash with it ends with the removal.
+	if err := refuseBadSibling(without{p.Machine, conf.ServerPath(mac, name)}, mac, name); err != nil {
+		return err
+	}
 	// A file that ws refuses goes all the same, as remove is the way out of it, and names no cable.
 	var cable string
 	if gone, err := conf.Load(p.Machine, mac, conf.ServerPath(mac, name)); err == nil {
@@ -71,7 +76,10 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 		return err
 	}
 	rest := slices.DeleteFunc(names, func(n string) bool { return n == name })
-	err = reapply(c, p, mac, rest[0])
+	if err = reapply(c, p, mac, rest[0]); err != nil {
+		err = fmt.Errorf("%w: then ws client macos apply --server %s takes %s's daemon, hosts and routes off",
+			err, rest[0], name)
+	}
 	if cable != "" {
 		_, _ = fmt.Fprintf(c.OutOrStdout(), "By hand: the cable's service %s keeps 10.77.0.2: name it in another server's "+
 			"WS_CABLE_SERVICE, or delete it in System Settings\n", cable)
@@ -92,6 +100,21 @@ func reapply(c *cobra.Command, p enginecli.Env, mac, name string) error {
 	_, err = macOf(p, name, settings, p.Machine, out, c.OutOrStdout()).Run(c.Context(), macos.Options{
 		Options: step.Options{Observer: out}, Only: []string{"ssh", "zed", "tunnel", "networks"}})
 	return engine.Cause(err)
+}
+
+// without is the Mac's machine with the server's file at file out of sight. conf.Servers leaves
+// that server out, so the others load as they will once it goes.
+type without struct {
+	effect.Machine
+	file string
+}
+
+// Stat reports the hidden file as missing.
+func (w without) Stat(file string) (effect.Info, error) {
+	if file == w.file {
+		return effect.Info{}, fs.ErrNotExist
+	}
+	return w.Machine.Stat(file)
 }
 
 // forgetHost drops name's entry from known_hosts, where ssh keeps the key under the server's name.
