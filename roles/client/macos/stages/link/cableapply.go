@@ -143,7 +143,7 @@ func (c *Cable) service(ctx context.Context) error {
 	return nil
 }
 
-// write writes value as mac.conf's WS_CABLE_SERVICE, in double quotes, after ws's end as
+// write writes value as the server file's WS_CABLE_SERVICE, in double quotes, after ws's end as
 // WS_CABLE_PORT, or empty for none, which the wizard never asks again.
 func (c *Cable) write(ctx context.Context, value string) error {
 	lines := "WS_CABLE_SERVICE=\n"
