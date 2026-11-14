@@ -11,19 +11,14 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
-)
-
-const (
-	label = "com.github.zadykian.ws-tunnel"
-	// wsEnd is ws's end of the tunnel.
-	wsEnd = "10.99.0.1"
 )
 
 // Tunnel is the stage of the keys' exchange of the WireGuard tunnel between the Mac and ws. The
 // Mac's key goes to wg0's mac.pub on ws, where wg0 takes it as its peer, and ws server ubuntu apply
 // --only wireguard runs there. Both go through the remote script over its direct way, as a change
-// of wg0's peers ends the tunnel's sessions. Then mac.conf's WS_PUBLIC_KEY follows wg0's key, and
+// of wg0's peers ends the tunnel's sessions. Then the server file's WS_PUBLIC_KEY follows wg0's key, and
 // ws client macos apply runs again, which loads ws-tunnel. Last, ws-tunnel must show a handshake,
 // and ssh ws log in through it. Without a handshake, the closing list says so, and the run goes on.
 type Tunnel struct {
@@ -31,9 +26,11 @@ type Tunnel struct {
 	Ws *session.Session
 	// SSH is the Mac's ssh to ws.
 	SSH remote.SSH
-	// Conf is mac.conf's path. Check is set under --check.
+	// Conf is the server's file's path. Check is set under --check.
 	Conf  string
 	Check bool
+	// Server is the name of the server whose daemon ws-tunnel is.
+	Server string
 	// MacApply runs ws client macos apply, as the Setup stage's Run does, again once WS_PUBLIC_KEY is
 	// wg0's.
 	MacApply func(ctx context.Context, check bool) (bool, error)
@@ -73,30 +70,34 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 		t.Out.Say("%s: after ws client macos apply", stage.Tunnel)
 		return step.Plan{}, nil
 	}
+	end := c.TunnelSlot().Server()
 	s, ok := t.Ws.Status(ctx)
 	if ok && c.PublicKey != "" && s.WgKey == c.PublicKey && s.Peered && mac != "" && s.MacKey == mac &&
-		t.loaded(ctx) && (t.SSH.First() != "" || t.none || (t.port(ctx) && t.via(ctx))) {
+		t.loaded(ctx) && (t.SSH.First() != "" || t.none || (t.port(ctx, end) && t.via(ctx, end))) {
 		return step.Plan{}, nil
 	}
 	var ch []step.Change
 	if s.MacKey != mac {
-		ch = append(ch, tunnelChange("write the Mac's key, "+mac+", to /etc/wireguard/mac.pub on ws"))
+		ch = append(ch, tunnelChange("write the Mac's key, "+mac+", to /etc/wireguard/mac.pub on "+t.SSH.Host))
 	}
 	if s.MacKey != mac || !s.Peered {
-		ch = append(ch, tunnelChange("run ws server ubuntu apply --only wireguard on ws, for wg0's peer"))
+		ch = append(ch, tunnelChange("run ws server ubuntu apply --only wireguard on "+t.SSH.Host+", for wg0's peer"))
 	}
 	switch wg0 := s.WgKey; {
 	case wg0 == "":
-		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in mac.conf to wg0's key, which that run makes"))
+		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in server.conf to wg0's key, which that run makes"))
 	case wg0 != c.PublicKey:
 		if t.Check {
-			// Under --check mac.conf is the scratch file, as for the stages before.
-			if err := (conf.File{Path: t.Conf, Stage: stage.Tunnel, M: t.M, Out: t.Out}).Show("WS_PUBLIC_KEY", wg0); err != nil {
+			// Under --check the server's file is the scratch file, as for the stages before.
+			if err := (conf.File{Path: t.Conf, Scope: conf.ServerFile, Stage: stage.Tunnel, M: t.M, Out: t.Out}).Show("WS_PUBLIC_KEY", wg0); err != nil {
 				return step.Plan{}, err
 			}
 		}
-		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in mac.conf to wg0's key, "+wg0))
+		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in server.conf to wg0's key, "+wg0))
 	}
 	return step.Plan{Changes: append(ch, tunnelChange("run ws client macos apply again, which loads ws-tunnel, and wait up "+
-		"to 30 s for ws-tunnel's handshake, then log in to ws through it"))}, nil
+		"to 30 s for ws-tunnel's handshake, then log in to "+t.SSH.Host+" through it"))}, nil
 }
+
+// label is the label of the server's daemon in launchd.
+func (t Tunnel) label() string { return launchd.For(t.Server).Label }

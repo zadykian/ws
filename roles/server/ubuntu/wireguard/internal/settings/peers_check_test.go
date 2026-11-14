@@ -11,6 +11,10 @@ func peers(p ...values.WireguardPeer) values.Wireguard {
 	return values.Wireguard{Address: "10.99.0.1/24", Port: 51820, Peers: p}
 }
 
+func slotMac(address, mac string) values.Wireguard {
+	return values.Wireguard{Address: address, Port: 51820, Peers: []values.WireguardPeer{{Name: "mac", Address: mac}}}
+}
+
 func TestSettingsPeers(t *testing.T) {
 	mac := values.WireguardPeer{Name: "mac", Address: "10.99.0.2"}
 	for name, tc := range map[string]struct {
@@ -31,7 +35,12 @@ func TestSettingsPeers(t *testing.T) {
 		"wg0's address":     {peers(values.WireguardPeer{Name: "tv", Address: "10.99.0.1"}), "tv's address, 10.99.0.1, is wg0's too."},
 		"another's":         {peers(mac, values.WireguardPeer{Name: "tv", Address: "10.99.0.2"}), "tv's address, 10.99.0.2, is mac's too."},
 		"the Mac elsewhere": {peers(values.WireguardPeer{Name: "mac", Address: "10.99.0.5"}), "mac's address is 10.99.0.5, but the Mac's scripts fix it at 10.99.0.2."},
-		"the Mac's subnet":  {values.Wireguard{Address: "10.98.0.1/24", Port: 51820, Peers: []values.WireguardPeer{{Name: "mac", Address: "10.99.0.2"}}}, "the Mac's scripts fix wg0 at 10.99.0.1/24"},
+		"the Mac's subnet":  {values.Wireguard{Address: "10.98.0.1/24", Port: 51820, Peers: []values.WireguardPeer{{Name: "mac", Address: "10.99.0.2"}}}, "the Mac's scripts fix wg0 at a slot's 10.99.N.1/24, N from 0 to 15."},
+		"slot 1":            {slotMac("10.99.1.1/24", "10.99.1.2"), ""},
+		"the last slot":     {slotMac("10.99.15.1/24", "10.99.15.2"), ""},
+		"mac at slot 0":     {slotMac("10.99.1.1/24", "10.99.0.2"), "fix it at 10.99.1.2"},
+		"past the slots":    {slotMac("10.99.16.1/24", "10.99.16.2"), "slot's 10.99.N.1/24"},
+		"a wide subnet":     {slotMac("10.99.1.1/20", "10.99.1.2"), "slot's 10.99.N.1/24"},
 		"another subnet":    {values.Wireguard{Address: "10.98.0.1/24", Port: 51820, Peers: []values.WireguardPeer{{Name: "tv", Address: "10.98.0.9"}}}, ""},
 	} {
 		t.Run(name, func(t *testing.T) {

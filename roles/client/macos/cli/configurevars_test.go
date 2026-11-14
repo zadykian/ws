@@ -27,7 +27,7 @@ func lockCalls(calls []string, what string) int {
 
 func TestVarsReachTakesTheLockOnceAndLetsItGo(t *testing.T) {
 	p, m := macTerminal()
-	r := &varsReach{p: p}
+	r := &varsReach{server: "ws", p: p}
 	for range 2 {
 		if _, err := r.reach(context.Background(), tui.Offscreen(r.p.Machine)); err == nil || !strings.Contains(err.Error(), "no direct way") {
 			t.Fatalf("err = %v", err)
@@ -45,7 +45,7 @@ func TestVarsReachTakesTheLockOnceAndLetsItGo(t *testing.T) {
 func TestVarsReachLeavesAnotherRunsLock(t *testing.T) {
 	p, m := macTerminal()
 	m.Dirs["/tmp/"+wizard.LockName] = 0o700
-	r := &varsReach{p: p}
+	r := &varsReach{server: "ws", p: p}
 	if _, err := r.reach(context.Background(), tui.Offscreen(r.p.Machine)); err == nil || !strings.Contains(err.Error(), "another run holds") {
 		t.Fatalf("err = %v", err)
 	}
@@ -64,7 +64,7 @@ type farWs struct {
 }
 
 func newFarWs(m *effecttest.Machine, file string) farWs {
-	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22\n")
+	writeConfs(m, "", "WS_USER=ada\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22\n")
 	return farWs{Machine: m, file: file, ops: make(chan []string, 64)}
 }
 
@@ -93,7 +93,7 @@ func TestVarsReachKeepsTheSudoItIsGiven(t *testing.T) {
 	ws := newFarWs(m, "")
 	p.Machine = ws
 	sudo := &host.Sudo{}
-	r := &varsReach{p: p, sudo: sudo}
+	r := &varsReach{server: "ws", p: p, sudo: sudo}
 	defer r.close(context.Background())
 	got, err := r.reach(context.Background(), tui.Offscreen(r.p.Machine))
 	if err != nil {
@@ -116,7 +116,7 @@ func TestVarsSheetOpensWithWhatWsHolds(t *testing.T) {
 	p, m := macTerminal()
 	ws := newFarWs(m, "ws_user: ada\n")
 	p.Machine = ws
-	r := &varsReach{p: p}
+	r := &varsReach{server: "ws", p: p}
 	defer r.close(context.Background())
 	sheet, err := ubuntucli.HostVarsSheet(r.reach).Open(context.Background(), tui.Offscreen(r.p.Machine))
 	if err != nil {

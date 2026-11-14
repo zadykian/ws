@@ -17,16 +17,16 @@ What each document holds. How to write them is in the `writing` skill and [writi
   mean by each.
 - A page lives beside the code it describes, as that directory's `README.md`. A second page stands
   beside it, named for its subject, where the cap keeps two apart or no package fits:
-  `zed/projects.md`, `network/router.md`, and `.github/workflows/rootless.md` and `mac-cld.md`. CI's
-  page is `.github/workflows/README.md`, never `.github/README.md`, which GitHub would show in
-  place of the root's.
+  `zed/projects.md`, `network/router.md`, and `.github/workflows/rootless.md`, `mac-cld.md` and
+  `mac-servers.md`. CI's page is `.github/workflows/README.md`, never `.github/README.md`, which
+  GitHub would show in place of the root's.
 - A role's page is the `README.md` in its directory, `roles/server/ubuntu/NAME/`: what it sets up
   and the values that change it. It gives the role's caveats too, such as what a run replaces or
   what a dry run shows.
 - [The Mac's README](../../roles/client/macos/README.md) is the Mac's side, `roles/client/macos/`
   and the ws CLI. [Its git](../../roles/client/macos/git/README.md) is its git, and
   [its stages](../../roles/client/macos/stages/README.md) its wizard. [Its conf](../../roles/client/macos/conf/README.md)
-  is the wizard's targets, and [ghostty](../../roles/client/macos/ghostty/README.md) its Ghostty
+  is the wizard's targets, [the tunnel's](../../roles/client/macos/tunnel/README.md) the daemons' rules, and [ghostty](../../roles/client/macos/ghostty/README.md) its Ghostty
   and cld, [zed](../../roles/client/macos/zed/README.md) its Zed. [The secrets](../../roles/server/ubuntu/secrets/README.md)
   is the secrets file. [The server's stages](../../roles/server/ubuntu/stages/README.md) are
   `ws server ubuntu wizard`, the stages run on ws. [The router](../../roles/server/ubuntu/network/router.md)

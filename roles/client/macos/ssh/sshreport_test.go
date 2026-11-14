@@ -49,15 +49,19 @@ func TestSSHReportsAChangeToItsFile(t *testing.T) {
 	}
 }
 
-func TestSSHReportLeavesTheUsersConfigOut(t *testing.T) {
+func TestSSHReportStopsAtTheUsersHostAndLeavesTheRestOut(t *testing.T) {
 	m := sshMachine()
 	m.Files["/h/.ssh/config"] = []byte("Host ws\n    IdentityFile ~/.ssh/hidden\n")
-	it := mactest.ReportOf(t, sshStep(m, &effecttest.Out{}))["/h/.ssh/config"]
-	if it.Found != "lacks it" || !strings.Contains(it.Conflict, "line 1") || it.Diff != "" {
-		t.Errorf("config = %+v, want the Include lacking, and line 1 named", it)
+	reports, err := step.Read(t.Context(), []step.Step{sshStep(m, &effecttest.Out{})})
+	if err != nil {
+		t.Fatal(err)
 	}
-	if strings.Contains(fmt.Sprintf("%+v", it), "hidden") {
-		t.Errorf("config = %+v, which shows the user's file", it)
+	got := fmt.Sprintf("%+v", reports[0].Items)
+	if !strings.Contains(got, "line 1 of ~/.ssh/config, Host ws, sets its own values for ws") {
+		t.Errorf("items = %s, want the stop at line 1", got)
+	}
+	if strings.Contains(got, "hidden") {
+		t.Errorf("items = %s, which show the user's file", got)
 	}
 }
 

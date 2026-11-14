@@ -19,7 +19,7 @@ ikeward_profile: /root/vpn/vpnclient    # vpnclient.p12 and vpnclient.sswan
 ikeward_dns: 10.20.0.53                 # the remote network's resolver
 ikeward_domains: [example.internal]     # the domains whose names go to it alone
 ikeward_floors: [10.20.0.0/16]          # the ranges kept off the uplink from boot on
-ikeward_forward_from: [10.99.0.2]       # the WireGuard peers that reach the VPN: the Mac
+ikeward_forward_from: [10.99.0.2]       # the WireGuard peers that reach the VPN: the Mac, at .2 of its slot
 ```
 
 Put the two files in [the secrets file](../shell/README.md#the-secrets-file), whole. Add the `.p12`'s
@@ -90,7 +90,7 @@ ufw's default rules forward pings from any interface. So with forwarding on, any
 the VPN, as ikeward's page on
 [NAT](https://github.com/zadykian/ikeward/blob/v0.3.0/docs/nat.md#networks-the-server-forwards)
 says. The Mac sends the VPN's networks and domains into the tunnel with `WS_TUNNEL_NETWORKS` and
-`WS_RESOLVERS` in [mac.conf](../../../client/macos/README.md#macconf), or with a private repository's script
+`WS_RESOLVERS` in [server.conf](../../../client/macos/README.md#macconf), or with a private repository's script
 ([Routes and resolvers of another repository](../../../client/macos/README.md#routes-and-resolvers-of-another-repository)).
 
 ## Dry runs

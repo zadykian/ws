@@ -30,15 +30,12 @@ func (k KeyMake) Apply(ctx context.Context) error {
 	return nil
 }
 
-// key plans /etc/ws-tunnel, routes.d and the Mac's key: made where missing, and its owner and mode
+// key plans /etc/ws-tunnel and the Mac's key: made where missing, and its owner and mode
 // set where they differ. It sets keyMade.
 func (t *Tunnel) key(ctx context.Context) ([]step.Change, error) {
-	var cs []step.Change
-	var err error
-	for _, d := range []file.Dir{{M: t.M, Path: launchd.Dir, Mode: 0o700}, {M: t.M, Path: launchd.Dir + "/routes.d", Mode: 0o755}} {
-		if cs, err = resource.Append(ctx, cs, t.said(d)); err != nil {
-			return nil, err
-		}
+	cs, err := resource.Append(ctx, nil, t.said(file.Dir{M: t.M, Path: launchd.Dir, Mode: 0o700}))
+	if err != nil {
+		return nil, err
 	}
 	_, err = t.M.RootAttrs(tunnelKeyFile)
 	t.keyMade = errors.Is(err, fs.ErrNotExist)

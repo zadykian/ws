@@ -4,7 +4,7 @@
 # Without WS_PUBLIC_KEY, ws client macos apply prints the Mac's key, which the wizard drops. The
 # stand-in made the ssh key that mac.conf names, ~/.ssh/id_ed25519. The wizard must add its .pub to
 # the stand-in gh's login, titled with the Mac's name.
-# It must add the environment's answers at the end of mac.conf, and leave no lock or file of its
+# It must add the environment's answers at the end of the file of each key, and leave no lock or file of its
 # own in $TMPDIR. It must warn that ws, reached through WS_REMOTE, faces the internet, and add ws's
 # host key to known_hosts under ws, as WS_HOST_KEY gives its fingerprint. The runner on the stand-in ws
 # takes no key yet, so that run must stop at Login, and add none to the user's authorized_keys. The
@@ -17,6 +17,8 @@
 # tunnel once. The closing list must name no step of the tunnel.
 
 set -u
+# shellcheck source=.github/mac-conf.sh
+. "$(dirname "$0")/../mac-conf.sh"
 
 wsbin=$HOME/.local/bin/ws
 tmp=${TMPDIR:-/tmp}
@@ -71,7 +73,7 @@ fi
 mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /opt/homebrew/bin/wg /etc/ws-tunnel/private.key)
 [ "$(sudo cat "$RUNNER_TEMP/ws/root/etc/wireguard/mac.pub")" = "$mac" ] ||
     error "ws client macos wizard gave the stand-in ws no mac.pub of the Mac's key, $mac"
-launchctl print system/com.github.zadykian.ws-tunnel >/dev/null 2>&1 ||
+launchctl print system/com.github.zadykian.ws-tunnel.ws >/dev/null 2>&1 ||
     error "ws client macos wizard loaded no daemon with wg0's key"
 sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status | grep -q '^latest handshake: [0-9]' &&
     [ "$(cat "$RUNNER_TEMP/ws/tunnel.log" 2>/dev/null | wc -l)" -eq 1 ] ||
@@ -79,9 +81,11 @@ sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status | grep -q '^late
 ! grep -q 'WireGuard public key' "$RUNNER_TEMP/run.out" || error "ws client macos wizard printed ws client macos apply's key"
 printf '%s\n' "WS_USER=$(id -un)" WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' \
     WS_TARGET=lan WS_LAN= WS_GIT_NAME= WS_TUNNEL_NETWORKS= WS_RESOLVERS= \
-    "WS_PUBLIC_KEY=$(cat "$RUNNER_TEMP/ws/wg0")" |
-    cmp -s - ~/.config/ws/mac.conf ||
-    error "ws client macos wizard wrote another mac.conf than standin.sh's lines, the answers and wg0's key"
+    "WS_PUBLIC_KEY=$(cat "$RUNNER_TEMP/ws/wg0")" | conf_write "$RUNNER_TEMP/run/mac.conf"
+conf_print "$RUNNER_TEMP/run/mac.conf" >"$RUNNER_TEMP/run.conf"
+conf_print ~/.config/ws/mac.conf | cmp -s - "$RUNNER_TEMP/run.conf" ||
+    error "ws client macos wizard wrote other files than standin.sh's lines, the answers and wg0's key"
+rm -r "$RUNNER_TEMP/run" "$RUNNER_TEMP/run.conf"
 if [ "$(sed -n 2p "$RUNNER_TEMP/run.out")" != 'What stays by hand:' ] ||
     grep -qi 'tunnel' "$RUNNER_TEMP/run.out"; then
     error "ws client macos wizard listed nothing by hand, or a step of the tunnel"

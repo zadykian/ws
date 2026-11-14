@@ -25,9 +25,10 @@ jobs:
   # run screen. ssh -G must give ws the tunnel's end. A stand-in ws is a second wireguard-go on the
   # runner, with the Mac's key as its peer. It answers the tunnel's handshakes on loopback, as the
   # LAN (127.0.0.0/8) and as WS_REMOTE (localhost). The daemon's status must show each in turn.
-  # Last, ws client macos tunnel routes and ws client macos resolver, then mac.conf's. A stand-in
-  # that makes no utun fails the job, as the daemon's device makes one too. Gated as ci.yml's
-  # playbook job.
+  # Last, ws client macos tunnel routes --server ws and ws client macos resolver, then the keys'.
+  # Then a second server's cases, 90-clash, 92-second and 94-remove (mac-servers.md). A stand-in
+  # that makes no utun fails the job, as the daemon's device makes one. Gated as ci.yml's playbook
+  # job.
   mac:
     if: >-
       (github.event.action != 'opened' || !github.event.pull_request.draft) &&
@@ -45,7 +46,7 @@ jobs:
       HOMEBREW_NO_AUTO_UPDATE: "1"
       HOMEBREW_NO_INSTALL_CLEANUP: "1"
       HOMEBREW_NO_ENV_HINTS: "1"
-      LABEL: com.github.zadykian.ws-tunnel
+      LABEL: com.github.zadykian.ws-tunnel.ws
       TUNNEL: /usr/local/libexec/ws-tunnel/ws
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -63,5 +64,7 @@ jobs:
       - name: The daemon's status and log
         if: always()
         run: |
-          sudo "$TUNNEL" client macos tunnel status || true
-          sudo cat /var/log/ws-tunnel.log || true
+          sudo "$TUNNEL" client macos tunnel status --server ws || true
+          sudo cat /var/log/ws-tunnel.ws.log || true
+          sudo "$TUNNEL" client macos tunnel status --server lab || true
+          sudo cat /var/log/ws-tunnel.lab.log || true

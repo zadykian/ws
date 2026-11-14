@@ -5,6 +5,8 @@
 # would write there, from the environment's answers, and write none.
 
 set -u
+# shellcheck source=.github/mac-conf.sh
+. "$(dirname "$0")/../mac-conf.sh"
 
 # The one line of the gh stage that a run says where the account holds the Mac's key.
 known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
@@ -27,15 +29,15 @@ for args in '' --check; do
     [ -z "${out#"$known"}" ] || error "ws client macos wizard${args:+ $args} printed what it should not"
 done
 
-conf=$RUNNER_TEMP/tools.conf
+conf=$RUNNER_TEMP/confs/tools/mac.conf
 user=$(id -un)
 out=$(WS_CONF=$conf WS_USER=$user WS_TARGET=lan WS_LAN='' WS_REMOTE=localhost WS_REMOTE_PORT=22022 \
     WS_GIT_NAME='' WS_TUNNEL_NETWORKS='' WS_RESOLVERS='' PATH=$path \
-    "$wsbin" client macos wizard --check 2>&1)
+    "$wsbin" client macos wizard --server ws --check 2>&1)
 status=$?
 printf '%s\n' "$out"
 printf '%s\n' "$out" | grep -qx '+WS_REMOTE=localhost' && [ "$status" = 0 ] ||
     error "ws client macos wizard --check exited $status, with no line the wizard would write to $conf"
-[ ! -e "$conf" ] || error "ws client macos wizard --check wrote $conf"
-rm -f "$conf"
+[ ! -e "$conf" ] && [ ! -e "$(conf_server_file "$conf")" ] || error "ws client macos wizard --check wrote $conf or the server's file"
+rm -rf "${conf%/*}"
 exit "$fail"

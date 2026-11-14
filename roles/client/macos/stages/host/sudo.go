@@ -31,6 +31,8 @@ const (
 // needs no password, or the password, asked once a run. The password stays in this struct and in
 // ssh's stdin, never in an argument, a message or the environment.
 type Sudo struct {
+	// Server names the server that the Mac sets up, which its side takes. Empty on the server itself.
+	Server string
 	// SSH is the Mac's ssh to ws.
 	SSH remote.SSH
 	// Tty tells whether a terminal is there to ask. Check is set under --check.
@@ -46,16 +48,16 @@ type Sudo struct {
 func (*Sudo) Name() string { return stage.Sudo }
 
 // Side is ws: how its scripts reach root.
-func (*Sudo) Side() guided.Side { return session.Ws }
+func (s *Sudo) Side() guided.Side { return session.SideOf(s.Server) }
 
 // WaitsOn is the stage that checks the login, without which sudo answers nothing.
 func (*Sudo) WaitsOn() string { return stage.Login }
 
 // sudoAsk is the change that asks for the password.
-type sudoAsk struct{ user string }
+type sudoAsk struct{ user, server string }
 
 func (a sudoAsk) String() string {
-	return stage.Sudo + ": would ask for " + a.user + "'s sudo password on ws, at the terminal"
+	return stage.Sudo + ": would ask for " + a.user + "'s sudo password on " + a.server + ", at the terminal"
 }
 
 // Plan reads how a script reaches root. Under --check at a terminal it asks too, as the Answers
@@ -73,17 +75,17 @@ func (s *Sudo) Plan(ctx context.Context) (step.Plan, error) {
 		s.way = sudoLogin
 		return step.Plan{}, nil
 	}
-	_, err = s.SSH.Run(ctx, "-o", "BatchMode=yes", "ws", "sudo", "-n", "true")
+	_, err = s.SSH.Run(ctx, "-o", "BatchMode=yes", s.SSH.Host, "sudo", "-n", "true")
 	switch {
 	case err == nil:
 		s.way = sudoOpen
 		return step.Plan{}, nil
 	case strings.Contains(err.Error(), "exit status 255"):
-		return step.Plan{}, errors.New(stage.Sudo + ": ssh to ws failed: " + remote.Stderr(err))
+		return step.Plan{}, errors.New(stage.Sudo + ": ssh to " + s.SSH.Host + " failed: " + remote.Stderr(err))
 	case s.Check && s.Tty:
 		return step.Plan{}, s.ask(ctx, w.User)
 	}
-	return step.Plan{Changes: []step.Change{sudoAsk{w.User}}}, nil
+	return step.Plan{Changes: []step.Change{sudoAsk{w.User, s.SSH.Host}}}, nil
 }
 
 // Apply asks for the password.
@@ -99,15 +101,15 @@ func (s *Sudo) Apply(ctx context.Context, p step.Plan) error {
 // behind a wrong password, sudo would read the script's lines as its next two tries.
 func (s *Sudo) ask(ctx context.Context, user string) error {
 	if !s.Tty {
-		return fmt.Errorf("%s: %s's sudo on ws asks for a password, and no terminal is here to ask it: "+
-			"run the wizard at a terminal", stage.Sudo, user)
+		return fmt.Errorf("%s: %s's sudo on %s asks for a password, and no terminal is here to ask it: "+
+			"run the wizard at a terminal", stage.Sudo, user, s.SSH.Host)
 	}
 	for try := 1; ; try++ {
-		password, err := s.P.AskHidden(ctx, user+"'s sudo password on ws")
+		password, err := s.P.AskHidden(ctx, user+"'s sudo password on "+s.SSH.Host)
 		if err != nil {
 			return fmt.Errorf("%s: %w", stage.Sudo, err)
 		}
-		_, err = s.SSH.RunInput(ctx, []byte(password+"\n"), "-o", "BatchMode=yes", "ws",
+		_, err = s.SSH.RunInput(ctx, []byte(password+"\n"), "-o", "BatchMode=yes", s.SSH.Host,
 			"sudo", "-k", "-S", "-p", "''", "true")
 		if err == nil {
 			s.way, s.password = sudoAsked, password
@@ -115,12 +117,12 @@ func (s *Sudo) ask(ctx context.Context, user string) error {
 		}
 		why := remote.Stderr(err)
 		if !strings.Contains(why, "Authentication failed") {
-			return fmt.Errorf("%s: sudo on ws stopped: %s", stage.Sudo, why)
+			return fmt.Errorf("%s: sudo on %s stopped: %s", stage.Sudo, s.SSH.Host, why)
 		}
 		if try == sudoTries {
-			return fmt.Errorf("%s: sudo on ws refused the password %d times", stage.Sudo, sudoTries)
+			return fmt.Errorf("%s: sudo on %s refused the password %d times", stage.Sudo, s.SSH.Host, sudoTries)
 		}
-		s.Out.Say("%s: sudo on ws refused the password", stage.Sudo)
+		s.Out.Say("%s: sudo on %s refused the password", stage.Sudo, s.SSH.Host)
 	}
 }
 
@@ -139,5 +141,5 @@ func (s *Sudo) Rooted(cmd []string, in []byte) ([]string, []byte, error) {
 	case sudoAsked:
 		return append([]string{"sudo", "-k", "-S", "-p", ""}, cmd...), append([]byte(s.password+"\n"), in...), nil
 	}
-	return nil, nil, errors.New(stage.Sudo + ": the stage has not read how to reach root on ws")
+	return nil, nil, errors.New(stage.Sudo + ": the stage has not read how to reach root on " + s.SSH.Host)
 }

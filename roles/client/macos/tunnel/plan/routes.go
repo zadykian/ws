@@ -7,11 +7,12 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/check"
+	"github.com/zadykian/ws/roles/internal/slot"
 )
 
 // ParseRoutes reads the files of routes.d, a map of file name to contents, into the networks to
 // route into the tunnel. It gives each once, in the order of the file names. A line that is no
-// network, or that overlaps the tunnel's or the cable's subnet, is left out with a warning.
+// network, or that overlaps the tunnels' or the cable's subnet, is left out with a warning.
 func ParseRoutes(files map[string][]byte) (nets []netip.Prefix, warnings []string) {
 	names := make([]string, 0, len(files))
 	for name := range files {
@@ -25,7 +26,7 @@ func ParseRoutes(files map[string][]byte) (nets []netip.Prefix, warnings []strin
 				continue
 			}
 			p, ok := check.CIDR(line)
-			if !ok || p.Overlaps(TunnelNet) || p.Overlaps(CableNet) {
+			if !ok || p.Overlaps(slot.Range) || p.Overlaps(CableNet) {
 				warnings = append(warnings,
 					fmt.Sprintf("routes.d/%s: leaves out '%s', not a network it can route", name, line))
 				continue

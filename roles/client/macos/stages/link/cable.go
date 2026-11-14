@@ -27,19 +27,23 @@ const cableEnd = "10.77.0.1"
 //
 // Docked, the Mac's cable gives that port carrier, which the files script's link lists among ws's
 // wired ports. The stage names the port in /etc/ws/host_vars.yml on ws, whose network role gives it
-// 10.77.0.1 as ws's end. Then it names the Mac's service of the cable in mac.conf's
+// 10.77.0.1 as ws's end. Then it names the Mac's service of the cable in the server file's
 // WS_CABLE_SERVICE. There ws client macos apply gives that 10.77.0.2 as the Mac's end. It names the
-// port in mac.conf's WS_CABLE_PORT too, which the stage names on ws again after ws's install.
-// Undocked, the first setup waits, and the closing list says to dock the Mac.
+// port in the server file's WS_CABLE_PORT too, which the stage names on ws again after ws's install.
+// Undocked, the first setup waits, and the closing list says to dock the Mac. Where another server's
+// file names a service, that server has the Mac's one cable, and the stage writes an empty one.
 type Cable struct {
 	// Ws is the session to ws, whose files script lists and names the ports. ws is read only where
 	// its ssh logs in, in this run.
 	Ws *session.Session
 	// SSH is the Mac's ssh to ws.
 	SSH remote.SSH
-	// Conf is mac.conf's path. Check is set under --check.
-	Conf  string
-	Check bool
+	// Conf is the server's file. Mac is mac.conf's path, whose servers/ holds the other servers'
+	// files, and Server is this server's name. Check is set under --check.
+	Conf   string
+	Mac    string
+	Server string
+	Check  bool
 	// RunDone is ws's run's verdict, which the stage waits on under --check.
 	RunDone func(ctx context.Context, w session.Want) bool
 	// MacApply runs ws client macos apply, as the Setup stage's Run does, which gives the Mac's
@@ -94,7 +98,7 @@ func (c *Cable) read(ctx context.Context, port string) error {
 		out, err = c.Ws.WaitPorts(ctx, port)
 	}
 	if err != nil {
-		return fmt.Errorf("%s: link failed on ws: %w", stage.Cable, err)
+		return fmt.Errorf("%s: link failed on %s: %w", stage.Cable, c.SSH.Host, err)
 	}
 	c.ports = nil
 	for _, l := range strings.Split(string(out), "\n") {
@@ -135,13 +139,13 @@ func (c *Cable) end() string {
 	return ""
 }
 
-// lacks tells whether mac.conf has no line of WS_CABLE_SERVICE yet.
+// lacks tells whether the server's file has no line of WS_CABLE_SERVICE yet.
 func (c *Cable) lacks() bool {
 	text, _ := c.M.ReadFile(c.Conf)
 	return !regexp.MustCompile(`(?m)^[ \t]*WS_CABLE_SERVICE=`).Match(text)
 }
 
-// Plan is empty off the LAN, and where mac.conf's WS_CABLE_SERVICE is empty, or its WS_CABLE_PORT
+// Plan is empty off the LAN, and where the server file's WS_CABLE_SERVICE is empty, or its WS_CABLE_PORT
 // is empty or the cable that ws's status names. Without the service, Plan is empty too where no
 // port that link lists has carrier, as the Mac isn't docked. The stage waits then, and Hand names
 // the dock in the closing list. WS_CABLE_PORT in the environment ends the wait, as for a port that
@@ -151,6 +155,11 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	cf, err := conf.Read(c.M, c.Conf)
 	if err != nil || cf.Target != "lan" {
 		return step.Plan{}, err
+	}
+	if c.lacks() {
+		if o := c.owner(); o != "" {
+			return c.change("write WS_CABLE_SERVICE= in " + c.Conf + ": the cable reaches server " + o)
+		}
 	}
 	// Under --check, no direct way to ws yet means that ws's run is not done either. in stays
 	// false, and the plan says the stage comes after it, as wizard-cable.sh's cable_after did.
@@ -169,23 +178,24 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 		in && c.holds(ctx, cf.CablePort)) {
 		return step.Plan{}, nil
 	}
-	if c.Check && !none && (!in || !c.RunDone(ctx, session.Want{Target: cf.Target, User: cf.User})) {
+	if c.Check && !none && (!in || !c.RunDone(ctx, session.Want{Target: cf.Target, User: cf.User,
+		Address: cf.TunnelSlot().Wg0(), Port: cf.Port})) {
 		c.Out.Say("%s: after %s", stage.Cable, stages.RunStage)
 		return step.Plan{}, nil
 	}
 	if !c.lacks() {
-		return c.change("name " + cf.CablePort + " in /etc/ws/host_vars.yml on ws again, and run " +
+		return c.change("name " + cf.CablePort + " in /etc/ws/host_vars.yml on " + c.SSH.Host + " again, and run " +
 			"ws server ubuntu apply --only network,wireguard there")
 	}
 	if none {
-		return c.change("write an empty WS_CABLE_SERVICE in mac.conf, for no cable")
+		return c.change("write an empty WS_CABLE_SERVICE in server.conf, for no cable")
 	}
 	if !in {
 		return c.change("ask for the cable's port and service")
 	}
 	if portSet && !c.Check {
 		// Apply reads the ports once, and names the port that the environment gives.
-		return c.change("ask ws's port of the cable, name it in /etc/ws/host_vars.yml on ws, and run " +
+		return c.change("ask " + c.SSH.Host + "'s port of the cable, name it in /etc/ws/host_vars.yml on " + c.SSH.Host + ", and run " +
 			"ws server ubuntu apply --only network,wireguard there")
 	}
 	if err := c.read(ctx, ""); err != nil {
@@ -195,10 +205,10 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, nil
 	}
 	if c.end() == "" {
-		return c.change("ask ws's port of the cable, name it in /etc/ws/host_vars.yml on ws, and run " +
+		return c.change("ask " + c.SSH.Host + "'s port of the cable, name it in /etc/ws/host_vars.yml on " + c.SSH.Host + ", and run " +
 			"ws server ubuntu apply --only network,wireguard there")
 	}
-	return c.change("ask the Mac's service of the cable, write it in mac.conf as WS_CABLE_SERVICE, run " +
+	return c.change("ask the Mac's service of the cable, write it in server.conf as WS_CABLE_SERVICE, run " +
 		"ws client macos apply, which gives it 10.77.0.2, and ping " + cableEnd)
 }
 

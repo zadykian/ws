@@ -24,7 +24,7 @@ func macSession(m *effecttest.Machine, ssh remote.SSH, out *effecttest.Out, stat
 
 func TestWsClaudeLoginTakesTheTerminal(t *testing.T) {
 	m := effecttest.NewMachine()
-	ws := macSession(m, remote.SSH{M: m, F: m, Lock: "/l"}, &effecttest.Out{}, session.Status{Claude: "login"})
+	ws := macSession(m, remote.SSH{Host: "ws", M: m, F: m, Lock: "/l"}, &effecttest.Out{}, session.Status{Claude: "login"})
 	c := &stages.WsClaude{Ws: ws, Tty: true}
 	_ = c.Apply(context.Background(), step.Plan{})
 	got := callsWith(m, `claude auth login`)
@@ -36,7 +36,7 @@ func TestWsClaudeLoginTakesTheTerminal(t *testing.T) {
 func TestWsClaudeApply(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\nWS_USER=ada\n")
-	ws := macSession(m, remote.SSH{M: m, Lock: "/l", Ways: MacWays{M: m, Conf: "/h/mac.conf"}}, &effecttest.Out{},
+	ws := macSession(m, remote.SSH{Host: "ws", M: m, Lock: "/l", Ways: MacWays{M: m, Conf: "/h/mac.conf"}}, &effecttest.Out{},
 		session.Status{Claude: "login"})
 	if err := (&stages.WsClaude{Ws: ws}).Apply(context.Background(), step.Plan{}); err == nil ||
 		!strings.Contains(err.Error(), "no terminal") {
@@ -48,5 +48,22 @@ func TestWsClaudeApply(t *testing.T) {
 	}
 	if !strings.Contains(strings.Join(m.Calls, "\n"), `ws exec bash -lc "claude auth login"`) {
 		t.Errorf("calls = %q; want the login", m.Calls)
+	}
+}
+
+func TestMacReachWantsTheSlotsAddressAndThePort(t *testing.T) {
+	for name, tc := range map[string]struct{ file, addr, port string }{
+		"no slot":      {"WS_TARGET=lan\n", "10.99.0.1/24", ""},
+		"slot 1":       {"WS_TARGET=lan\nWS_SLOT=1\nWS_PORT=51821\n", "10.99.1.1/24", "51821"},
+		"last slot":    {"WS_TARGET=lan\nWS_SLOT=15\n", "10.99.15.1/24", ""},
+		"port alone":   {"WS_TARGET=lan\nWS_PORT=51820\n", "10.99.0.1/24", "51820"},
+		"unset values": {"WS_TARGET=lan\nWS_USER=ada\n", "10.99.0.1/24", ""},
+	} {
+		m := effecttest.NewMachine()
+		m.Files["/h/server.conf"] = []byte(tc.file)
+		w, err := MacReach{SSH: remote.SSH{M: m}, Conf: "/h/server.conf"}.Want()
+		if err != nil || w.Address.String() != tc.addr || w.Port != tc.port {
+			t.Errorf("%s: Want = %v, %q, %v; want %s, %q", name, w.Address, w.Port, err, tc.addr, tc.port)
+		}
 	}
 }

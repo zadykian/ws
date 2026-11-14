@@ -31,6 +31,7 @@ func fakeSteps() (*effecttest.Machine, []step.Step) {
 	m.Results["networkctl reload"] = effecttest.Result{}
 	u := &effecttest.Units{States: map[string]effect.UnitState{"systemd-networkd.service": {Active: true}}}
 	v := values.Default()
+	v.Wireguard.Peers = []values.WireguardPeer{{Name: "mac", Address: "10.99.0.2"}}
 	random := bytes.NewReader(bytes.Repeat([]byte{5}, 32))
 	return m, steps(v, m, u, &effecttest.Out{}, random, func(time.Duration) {})
 }

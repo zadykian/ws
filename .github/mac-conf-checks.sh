@@ -1,12 +1,12 @@
 #!/bin/sh
-# The mac job's checks of mac.conf's WS_TUNNEL_NETWORKS and WS_RESOLVERS, which ws client macos
-# apply writes. The job runs it from the repository's root after mac-ws-checks.sh, with the tunnel's
-# daemon loaded and WS_PUBLIC_KEY in mac.conf (.github/workflows/mac.yml). It takes ws's path from
-# the job's TUNNEL, and stops without it. The keys' network must go into the daemon's utun, and
-# their domain show in scutil --dns. A second run and --check must print nothing. Emptied or
-# removed, the keys must take both back, and spare a script's own files. Each failure prints an
+# The mac job's checks of the server's WS_TUNNEL_NETWORKS and WS_RESOLVERS, which ws client macos
+# apply writes. The job runs it from the repository's root after mac-ws-checks.sh. The tunnel's
+# daemon is loaded, and WS_PUBLIC_KEY is in the server's file (.github/workflows/mac.yml). It takes
+# ws's path from the job's TUNNEL, and stops without it. The keys' network must go into the daemon's
+# utun, and their domain show in scutil --dns. A second run and --check must print nothing. Emptied
+# or removed, the keys must take both back, and spare a script's own files. Each failure prints an
 # ::error:: line, and any fails the script at its end. Last, it runs mac-setup-checks.sh, whose
-# cases run ws setup's own steps. mac.conf's rules are go test's (roles/client/macos/conf).
+# cases run ws setup's own steps. The conf's rules are go test's (roles/client/macos/conf).
 #
 # shellcheck source-path=SCRIPTDIR/..
 
@@ -19,6 +19,8 @@ tunnel_dir=/etc/ws-tunnel
 ws_resolvers=/etc/resolver
 conf=$HOME/.config/ws/mac.conf
 fail=0
+# shellcheck source=.github/mac-conf.sh
+. .github/mac-conf.sh
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
 error() {
@@ -42,10 +44,9 @@ until_ok() {
     done
 }
 
-# keys LINE... puts LINE... in mac.conf in place of its WS_TUNNEL_NETWORKS and WS_RESOLVERS.
+# keys LINE... puts LINE... in the server's file in place of its WS_TUNNEL_NETWORKS and WS_RESOLVERS.
 keys() {
-    sed -i '' -e '/^WS_TUNNEL_NETWORKS=/d' -e '/^WS_RESOLVERS=/d' "$conf"
-    [ $# = 0 ] || printf '%s\n' "$@" >>"$conf"
+    conf_set "$conf" WS_TUNNEL_NETWORKS WS_RESOLVERS "$@"
 }
 
 # setup [ARG] runs ws client macos apply, and sets out to what it printed.
@@ -71,7 +72,7 @@ shown() {
 
 utun=$(sudo "$TUNNEL" client macos tunnel status | awk -F': ' '$1 == "interface" { print $2 }')
 # A script's own route and resolver, which the keys must spare.
-must "$TUNNEL" client macos tunnel routes own 198.51.100.0/24
+must "$TUNNEL" client macos tunnel routes --server ws own 198.51.100.0/24
 must "$TUNNEL" client macos resolver own.test 198.51.100.53
 
 keys 'WS_TUNNEL_NETWORKS="203.0.113.0/24"' 'WS_RESOLVERS="conf.test=203.0.113.53,203.0.113.54"'
@@ -84,7 +85,7 @@ else
     *) error "--check showed no resolver: $out" ;;
     esac
 fi
-! sudo test -e "$tunnel_dir/routes.d/mac-conf" || error '--check wrote routes.d/mac-conf'
+! sudo test -e "$tunnel_dir/ws/routes.d/server-conf" || error '--check wrote routes.d/server-conf'
 ! test -e "$ws_resolvers/conf.test" || error "--check wrote $ws_resolvers/conf.test"
 
 setup || error "ws client macos apply with the keys failed: $out"
@@ -119,14 +120,14 @@ setup || error "ws client macos apply with the keys emptied failed: $out"
 printf '%s\n' "$out"
 until_ok 20 eval '! routed 203.0.113.1' || error "203.0.113.1 is still routed into $utun"
 until_ok 20 eval '! shown conf.test 203.0.113.53' || error 'scutil --dns still shows conf.test'
-! sudo test -e "$tunnel_dir/routes.d/mac-conf" || error 'routes.d/mac-conf outlived its key'
+! sudo test -e "$tunnel_dir/ws/routes.d/server-conf" || error 'routes.d/server-conf outlived its key'
 ! test -e "$ws_resolvers/conf.test" || error "$ws_resolvers/conf.test outlived its key"
-sudo test -e "$tunnel_dir/routes.d/own" || error 'the emptied key took routes.d/own too'
+sudo test -e "$tunnel_dir/ws/routes.d/own" || error 'the emptied key took routes.d/own too'
 routed 198.51.100.1 || error "198.51.100.1, routes.d/own's, left $utun"
 shown own.test 198.51.100.53 || error 'the removed key took own.test too'
 
 keys
-must "$TUNNEL" client macos tunnel routes own
+must "$TUNNEL" client macos tunnel routes --server ws own
 must "$TUNNEL" client macos resolver own.test
 
 sh .github/mac-setup-checks.sh || fail=1

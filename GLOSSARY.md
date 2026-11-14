@@ -79,7 +79,16 @@ ws's lines in a user's file that holds other text too, such as `Include config.d
 Core's `file.UserLines` hold them.
 _Avoid_: include line
 
+**server's name**:
+What `--server` takes, and the directory `servers/NAME/` of the server's file: a lower-case letter,
+then up to 11 lower-case letters, digits and `-`, other than `direct`, `first` and `key`.
+
+**slot**:
+A server's number from 0 to 15, kept as `WS_SLOT` in its file. The wizard writes the smallest that
+no other server holds in a file that lacks it. Slot N's tunnel is `10.99.N.0/24`, inside
+`10.99.0.0/20`, with the server at `.1` and the Mac at `.2`.
+
 **ws's directory**:
-`~/.config/ws` on the Mac, mode 700, which holds `mac.conf` and the files that git, zsh and the
-tunnel read. A run sets that mode where it differs.
+`~/.config/ws` on the Mac, mode 700, which holds `mac.conf`, `servers/` and the files that git, zsh
+and the tunnel read. A run sets that mode where it differs.
 _Avoid_: config directory

@@ -7,13 +7,11 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/check"
+	"github.com/zadykian/ws/roles/internal/slot"
 )
 
-// The tunnel's two ends and its subnet, and the cable's subnet and ws's end of it.
+// The cable's subnet and ws's end of it.
 var (
-	Server      = netip.MustParseAddr("10.99.0.1")
-	Address     = netip.MustParseAddr("10.99.0.2")
-	TunnelNet   = netip.MustParsePrefix("10.99.0.0/24")
 	CableNet    = netip.MustParsePrefix("10.77.0.0/30")
 	CableServer = netip.MustParseAddr("10.77.0.1")
 )
@@ -21,13 +19,15 @@ var (
 // DefaultPort is WireGuard's, for a tunnel.conf with no WS_PORT.
 const DefaultPort = 51820
 
-// Conf is tunnel.conf: the KEY=value lines that setup copies from mac.conf.
+// Conf is tunnel.conf: the KEY=value lines that setup copies from the server's file.
 type Conf struct {
 	Key       string // ws's public key
 	LAN       netip.Prefix
 	LANServer netip.Addr
 	Remote    string // a name or an address, resolved anew at each try
+	Cable     bool   // WS_CABLE=yes: the cable reaches this server
 	Port      uint16
+	Slot      slot.Slot // WS_SLOT; slot 0 where tunnel.conf has none
 }
 
 // ParseConf reads the text of tunnel.conf, which it never runs. It fails on a line it does not
@@ -69,6 +69,13 @@ func (c *Conf) set(name, value string) bool {
 	case "WS_REMOTE":
 		c.Remote = value
 		return check.Name(value)
+	case "WS_CABLE":
+		c.Cable = value == "yes"
+		return c.Cable
+	case "WS_SLOT":
+		s, ok := slot.Parse(value)
+		c.Slot = s
+		return ok
 	case "WS_PORT":
 		n, err := strconv.ParseUint(value, 10, 16)
 		c.Port = uint16(n)

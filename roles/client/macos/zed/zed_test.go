@@ -16,13 +16,18 @@ import (
 const zedKeymap = "// Written by github.com/zadykian/ws, whose next run replaces any change.\n[]\n"
 
 func zedStep(m *effecttest.Machine, out *effecttest.Out) resource.Lazy {
+	return zedOf(m, out).Step()
+}
+
+// zedOf is the step's struct for the server ws, with Zed and its font there.
+func zedOf(m *effecttest.Machine, out *effecttest.Out) *zed.Zed {
 	m.Dirs["/h/Applications/Zed.app"] = 0o755
 	m.Files["/h/Library/Fonts/JetBrainsMonoNerdFontMono-Regular.ttf"] = nil
-	return (&zed.Zed{
+	return &zed.Zed{
 		Home: "/h", Settings: []byte("// Written by ws client macos apply: its next run replaces changes made here.\n{}\n"),
-		Keymap: []byte(zedKeymap), M: m, Out: out,
+		Keymap: []byte(zedKeymap), Server: "ws", M: m, Out: out,
 		LookPath: func(string) (string, error) { return "brew", nil },
-	}).Step()
+	}
 }
 
 func TestZedAppAndFontThereNeedNoBrew(t *testing.T) {
@@ -110,6 +115,38 @@ func TestZedSeedIsJSONWithItsCommentsDropped(t *testing.T) {
 	if err := json.Unmarshal([]byte(strings.Join(lines, "\n")), &seed); err != nil ||
 		len(seed.Connections) != 1 || seed.Connections[0].Host != "ws" {
 		t.Errorf("seed = %+v, %v; want the host ws", seed, err)
+	}
+}
+
+func TestZedSeedsEachServerInNameOrder(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Dirs["/h/.config/ws/servers"], m.Dirs["/h/.config/ws/servers/lab"] = 0o755, 0o755
+	m.Files["/h/.config/ws/mac.conf"], m.Files["/h/.config/ws/servers/lab/server.conf"] = nil, nil
+	z := zedOf(m, &effecttest.Out{})
+	z.MacConf = "/h/.config/ws/mac.conf"
+	s := z.Step()
+	p, _ := s.Plan(context.Background())
+	if err := s.Apply(context.Background(), p); err != nil {
+		t.Fatal(err)
+	}
+	want := "{ \"ssh_connections\": [{ \"host\": \"lab\" }, { \"host\": \"ws\" }] }\n"
+	if got := string(m.Files["/h/.config/zed/settings.json"]); !strings.HasSuffix(got, "\n"+want) {
+		t.Errorf("settings.json = %q, want it to end with %q", got, want)
+	}
+}
+
+func TestZedSeedOfOneServerIsTheLineCIGreps(t *testing.T) {
+	m := effecttest.NewMachine()
+	s := zedStep(m, &effecttest.Out{})
+	p, _ := s.Plan(context.Background())
+	if err := s.Apply(context.Background(), p); err != nil {
+		t.Fatal(err)
+	}
+	want := "// Zed's own settings, which its UI writes. ws wrote this once, where it was missing; ws's\n" +
+		"// settings are in global_settings.json, and a key set here wins over them.\n" +
+		"{ \"ssh_connections\": [{ \"host\": \"ws\" }] }\n"
+	if got := string(m.Files["/h/.config/zed/settings.json"]); got != want {
+		t.Errorf("settings.json = %q, want %q", got, want)
 	}
 }
 

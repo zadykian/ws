@@ -6,7 +6,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 )
 
-// Read reads and parses mac.conf at path, and fails on its first error.
+// Read reads and parses a conf file at path, of either scope, and fails on its first error.
 func Read(m effect.Machine, path string) (Conf, error) {
 	text, err := m.ReadFile(path)
 	if err != nil {

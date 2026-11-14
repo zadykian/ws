@@ -38,7 +38,7 @@ const (
 // Mac is the Mac, one of the wizard's two machines, and the title of its list. The other is
 // session.Ws.
 // A stage that changes both is the Mac's where its last change lands there.
-// The Tunnel stage is one: its last write is WS_PUBLIC_KEY in mac.conf.
+// The Tunnel stage is one: its last write is WS_PUBLIC_KEY in the server's file.
 const Mac guided.Side = "Client (macOS)"
 
 // Todo is the change that a stage reports where it waits on another.

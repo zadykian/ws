@@ -2,17 +2,24 @@ package networks
 
 import (
 	"slices"
+	"strings"
 	"testing"
 )
 
 func TestRoutesAndResolverTexts(t *testing.T) {
-	if got, want := routesText([]string{"10.1.0.0/24", "10.2.0.0/24"}),
-		"# Written by github.com/zadykian/ws: ws client macos tunnel routes mac-conf.\n10.1.0.0/24\n10.2.0.0/24\n"; got != want {
+	if got, want := routesText("ws", "server-conf", []string{"10.1.0.0/24", "10.2.0.0/24"}),
+		"# Written by github.com/zadykian/ws: ws client macos tunnel routes --server ws server-conf.\n10.1.0.0/24\n10.2.0.0/24\n"; got != want {
 		t.Errorf("routesText = %q; want %q", got, want)
 	}
 	if got, want := resolverText([]string{"10.0.0.1", "10.0.0.2"}),
 		resolverHeader+"\nnameserver 10.0.0.1\nnameserver 10.0.0.2\n"; got != want {
 		t.Errorf("resolverText = %q; want %q", got, want)
+	}
+}
+
+func TestResolverHeaderNamesTheServersFile(t *testing.T) {
+	if want := "from WS_RESOLVERS in a server's server.conf."; !strings.HasSuffix(resolverHeader, want) {
+		t.Errorf("resolverHeader = %q; want it to end with %q", resolverHeader, want)
 	}
 }
 

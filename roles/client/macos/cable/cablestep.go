@@ -12,7 +12,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
-// Cable gives the service that mac.conf's WS_CABLE_SERVICE names a Manual Configuration of the
+// Cable gives the service that the server's WS_CABLE_SERVICE names a Manual Configuration of the
 // cable's address and mask with no router. It does so through sudo, where networksetup -getinfo
 // shows other settings. With no router, the cable takes no default route from the uplink. A service
 // networksetup lacks stops the run, as does one with a router outside the cable's /30, as an uplink
@@ -39,7 +39,7 @@ func (c Cable) program() (string, error) {
 	return program, nil
 }
 
-// report says how the service stands, where mac.conf names one. A disabled one is a conflict, as no
+// report says how the service stands, where the server's file names one. A disabled one is a conflict, as no
 // run turns it on, and it keeps its address.
 func (c Cable) report(ctx context.Context) ([]step.Item, error) {
 	if c.Conf.CableService == "" {
@@ -82,11 +82,11 @@ func (c Cable) plan(ctx context.Context) (step.Plan, error) {
 	}
 	listed, disabled := serviceListed(string(list), service)
 	if !listed {
-		return step.Plan{}, fmt.Errorf("networksetup -listallnetworkservices lacks %q, mac.conf's "+
+		return step.Plan{}, fmt.Errorf("networksetup -listallnetworkservices lacks %q, server.conf's "+
 			"WS_CABLE_SERVICE: name the display's adapter's service as the list prints it", service)
 	}
 	if disabled {
-		c.Out.Warn("networksetup lists %q, mac.conf's WS_CABLE_SERVICE, as disabled, so the cable "+
+		c.Out.Warn("networksetup lists %q, server.conf's WS_CABLE_SERVICE, as disabled, so the cable "+
 			"carries nothing: turn it on in System Settings › Network", service)
 	}
 	info, err := c.M.RunShown(ctx, false, program, "-getinfo", service)
@@ -99,7 +99,7 @@ func (c Cable) plan(ctx context.Context) (step.Plan, error) {
 	}
 	if router := uplinkRouter(string(info)); router != "" {
 		return step.Plan{}, fmt.Errorf("networksetup -getinfo %q shows Router: %s, so the service routes "+
-			"to another network: mac.conf's WS_CABLE_SERVICE must name the display's adapter's service",
+			"to another network: server.conf's WS_CABLE_SERVICE must name the display's adapter's service",
 			service, router)
 	}
 	return step.Plan{Changes: []step.Change{setManual{c, resource.Command{

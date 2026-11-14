@@ -17,6 +17,8 @@ const RunStage = "ws's run"
 // script starts it and follows it. A run goes on where ssh drops, and the next run of the wizard
 // follows it. The Mac's wizard and ws's both run it, each on its own session.
 type WsRun struct {
+	// Server names the server that the Mac sets up, which its side takes. Empty on the server itself.
+	Server string
 	// Ws is the session to ws, whose files script names ws_user and the tunnel's peer.
 	Ws *session.Session
 	// Await names the stage that must be done first. A run needs one: the Mac's list names the stage
@@ -43,7 +45,7 @@ type WsRun struct {
 func (*WsRun) Name() string { return RunStage }
 
 // Side is ws: ws server ubuntu apply runs there.
-func (*WsRun) Side() guided.Side { return session.Ws }
+func (r *WsRun) Side() guided.Side { return session.SideOf(r.Server) }
 
 // WaitsOn is Await.
 func (r *WsRun) WaitsOn() string { return r.Await }
@@ -65,6 +67,8 @@ type runChange struct {
 	cloud bool
 	// user is the ws_user that host_vars is to name before the run, where it names another.
 	user string
+	// pairs are the host_vars pairs for wg0, which the run writes first.
+	pairs []string
 }
 
 func (c runChange) String() string { return RunStage + ": would " + c.text }
@@ -81,7 +85,11 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	if r.partDone(ctx, c) {
+	pairs, err := tunnelPairs(ctx, r.Ws, c)
+	if err != nil {
+		return step.Plan{}, err
+	}
+	if len(pairs) == 0 && r.partDone(ctx, c) {
 		return step.Plan{}, nil
 	}
 	how := "run ws server ubuntu apply on ws in a unit of its own, and follow its log"
@@ -97,6 +105,9 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 		user = c.User
 		how += ", after naming ws_user: " + user + " in ws's host_vars"
 	}
+	if len(pairs) > 0 {
+		how += ", after naming " + naming(pairs) + " in ws's host_vars"
+	}
 	if c.Target == "cloud" {
 		how += ", after naming security_outbound: false in ws's host_vars"
 	}
@@ -108,7 +119,7 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 			how += "; its last full run exited " + last
 		}
 	}
-	return step.Plan{Changes: []step.Change{runChange{text: how, cloud: c.Target == "cloud", user: user}}}, nil
+	return step.Plan{Changes: []step.Change{runChange{text: how, cloud: c.Target == "cloud", user: user, pairs: pairs}}}, nil
 }
 
 // partDone is RunDone for what this run takes. A part that ran is all there is to do, and a part

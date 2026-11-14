@@ -12,7 +12,7 @@ import (
 	"golang.zx2c4.com/wireguard/tun/tuntest"
 
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/uapi"
-	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
+	"github.com/zadykian/ws/roles/internal/slot"
 )
 
 // The keys are 32 equal bytes in base64.
@@ -42,7 +42,7 @@ func TestDeviceKeepsThePeerThatIpcSetGave(t *testing.T) {
 	key, _ := uapi.SetPrivateKey(macKey)
 	peer, _ := uapi.Peer{
 		Key: peerKey, Endpoint: netip.MustParseAddrPort("10.77.0.1:51820"),
-		Allowed: []netip.Prefix{netip.PrefixFrom(tunnel.Server, 32)}, Keepalive: 25,
+		Allowed: []netip.Prefix{netip.PrefixFrom(slot.Slot(0).Server(), 32)}, Keepalive: 25,
 	}.Add()
 	for _, text := range []string{key, peer} {
 		if err := tn.IpcSet(text); err != nil {

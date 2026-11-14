@@ -16,7 +16,7 @@ const (
 	// ifaces has an address on the cable's subnet and one on the LAN.
 	ifaces = "en5: flags=8863<UP,BROADCAST,RUNNING> mtu 1500\n\tinet 10.77.0.2 netmask 0xfffffffc\n" +
 		"en0: flags=8863<UP,BROADCAST,RUNNING> mtu 1500\n\tinet 192.168.1.20 netmask 0xffffff00\n"
-	confAll = "WS_LAN=192.168.1.0/24\nWS_LAN_ADDRESS=192.168.1.7\nWS_REMOTE=ws.example.org\n"
+	confAll = "WS_CABLE=yes\nWS_LAN=192.168.1.0/24\nWS_LAN_ADDRESS=192.168.1.7\nWS_REMOTE=ws.example.org\n"
 )
 
 // peerText is what the device reports of the peer, with a handshake at the time at.
@@ -57,7 +57,7 @@ func TestChooseTakesTheFirstWayThatAnswers(t *testing.T) {
 	if got := added(r); !slices.Equal(got, []string{"10.77.0.1:51820"}) {
 		t.Errorf("endpoints = %q, want the cable's alone", got)
 	}
-	state, _ := tunnel.ParseState(string(r.m.Files[r.StateFile]))
+	state, _ := tunnel.ParseState(string(r.m.Files[r.Paths.State]))
 	if state.Tier != tunnel.TierCable || state.Endpoint != "10.77.0.1:51820" || !state.Since.Equal(t0) {
 		t.Errorf("state = %+v", state)
 	}
@@ -84,7 +84,7 @@ func TestChooseMovesOnFromAWayThatIsSilent(t *testing.T) {
 	if got := r.lines(); !slices.Equal(got, want) {
 		t.Errorf("log = %q, want %q", got, want)
 	}
-	if state, _ := tunnel.ParseState(string(r.m.Files[r.StateFile])); state.Tier != tunnel.TierNone {
+	if state, _ := tunnel.ParseState(string(r.m.Files[r.Paths.State])); state.Tier != tunnel.TierNone {
 		t.Errorf("state = %+v, want tier none", state)
 	}
 }

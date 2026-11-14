@@ -13,14 +13,16 @@ if [ -z "${TUNNEL-}" ]; then
     exit 1
 fi
 conf=$HOME/.config/ws/mac.conf
+# shellcheck source=.github/mac-conf.sh
+. .github/mac-conf.sh
 # macOS's TMPDIR ends in a slash, which would put // in $tmp. ws client macos apply --only git finds
 # gh by Go's exec.LookPath, which drops it, so git's credential command would not read
 # "$tmp/bin/gh".
 tmpdir=${TMPDIR:-/tmp}
 tmp=$(mktemp -d "${tmpdir%/}/mac-setup-checks.XXXXXXXX")
-trap '[ ! -f "$tmp/job.conf" ] || cp "$tmp/job.conf" "$conf"; rm -rf "$tmp"' EXIT
+trap '[ ! -f "$tmp/job.conf" ] || conf_write "$conf" <"$tmp/job.conf"; rm -rf "$tmp"' EXIT
 trap 'exit 1' HUP INT TERM
-cp "$conf" "$tmp/job.conf"
+conf_print "$conf" >"$tmp/job.conf"
 nl='
 '
 fail=0
@@ -33,13 +35,17 @@ error() {
 
 # with LINE... gives conf, the job's mac.conf, its own lines and then LINE..., a line each.
 with() {
-    cp "$tmp/job.conf" "$conf"
-    [ $# = 0 ] || printf '%s\n' "$@" >>"$conf"
+    {
+        conf_print "$tmp/job.conf"
+        [ $# = 0 ] || printf '%s\n' "$@"
+    } | conf_write "$conf"
 }
 
-# setup [ARG] runs ws client macos apply, and sets out to what it printed.
+# setup [ARG] runs ws client macos apply, on the step that only names where it does, and sets out to
+# what it printed.
+only=
 setup() {
-    out=$(ws client macos apply "$@" 2>&1)
+    out=$(ws client macos apply ${only:+--only "$only"} "$@" 2>&1)
 }
 
 # prints TEXT [ARG] runs ws client macos apply, which must print TEXT alone.
@@ -63,7 +69,9 @@ stops() {
 }
 
 # The cable's service. Empty, it must leave the network alone, and ws client macos apply print
-# nothing.
+# nothing. They run the cable step alone. A service adds WS_CABLE=yes to tunnel.conf. A full apply
+# would write that file, and print it.
+only=cable
 with 'WS_CABLE_SERVICE='
 prints ''
 prints '' --check
@@ -144,7 +152,7 @@ prints '' --check
 logged
 # A disabled service draws a warning on every run, and still gets the settings.
 with 'WS_CABLE_SERVICE="ws stand-in bridge"'
-warning="ws client macos apply: warning: networksetup lists \"ws stand-in bridge\", mac.conf's"
+warning="ws client macos apply: warning: networksetup lists \"ws stand-in bridge\", server.conf's"
 warning="$warning WS_CABLE_SERVICE, as disabled, so the cable carries nothing: turn it on in"
 warning="$warning System Settings › Network"
 prints "$warning${nl}ws client macos apply: ran networksetup -setmanual \"ws stand-in bridge\" $args"
@@ -154,7 +162,7 @@ logged "4 -setmanual ws stand-in bridge $args"
 # or is a glob that matches one.
 for service in 'ws stand-in absent' 'ws stand-in' 'stand-in 10/100/1G/2.5G LAN' 'ws stand-in*'; do
     with "WS_CABLE_SERVICE=\"$service\""
-    stops "ws client macos apply: networksetup -listallnetworkservices lacks \"$service\", mac.conf's"
+    stops "ws client macos apply: networksetup -listallnetworkservices lacks \"$service\", server.conf's"
 done
 logged
 # A -setmanual that fails stops ws client macos apply.
@@ -190,6 +198,7 @@ printf '%s\n' 'DHCP Configuration' 'IP address: 192.0.2.10' 'Router: 192.0.2.1' 
     >"$tmp/info-ws_stand_in_no_op"
 stops 'ws client macos apply: networksetup -getinfo "ws stand-in no-op" shows Router: 192.0.2.1, so the'
 logged
+only=
 # shellcheck source=.github/mac-identity-checks.sh
 . .github/mac-identity-checks.sh
 # shellcheck source=.github/mac-git-checks.sh
