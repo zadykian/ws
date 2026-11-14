@@ -15,16 +15,16 @@ import (
 // default, the run plans nothing, and a first server's run keeps its bytes.
 func tunnelPairs(ctx context.Context, ws values.Store, w session.Want) ([]string, error) {
 	def := values.Default().Wireguard
-	type want struct{ key, value, standard string }
+	type want struct{ key, value string }
 	var wants []want
 	if w.Address.IsValid() {
-		wants = append(wants, want{"wireguard_address", w.Address.String(), def.Address})
+		wants = append(wants, want{"wireguard_address", w.Address.String()})
 	}
 	if port := w.Port; port != "" || w.Address.IsValid() {
 		if port == "" {
 			port = strconv.Itoa(def.Port)
 		}
-		wants = append(wants, want{"wireguard_port", port, strconv.Itoa(def.Port)})
+		wants = append(wants, want{"wireguard_port", port})
 	}
 	if len(wants) == 0 {
 		return nil, nil
@@ -39,7 +39,7 @@ func tunnelPairs(ctx context.Context, ws values.Store, w session.Want) ([]string
 	}
 	var pairs []string
 	for _, p := range wants {
-		if held[p.key] != p.value && (held[p.key] != "" || p.value != p.standard) {
+		if held[p.key] != p.value {
 			pairs = append(pairs, p.key+"="+p.value)
 		}
 	}
