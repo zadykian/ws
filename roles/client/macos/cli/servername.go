@@ -41,7 +41,7 @@ func (a *askServer) Plan(ctx context.Context) (step.Plan, error) {
 			if !conf.IsName(s) {
 				return errors.New("not a server's name: " + conf.NameForm)
 			}
-			return a.free(s)
+			return freeName(a.m, a.home, s)
 		}})
 	if err != nil {
 		return step.Plan{}, err
@@ -50,9 +50,11 @@ func (a *askServer) Plan(ctx context.Context) (step.Plan, error) {
 	return step.Plan{}, nil
 }
 
-// free refuses a name that ~/.ssh/config sets its own values for: config.d/ws would not win there.
-func (a *askServer) free(name string) error {
-	text, err := a.m.ReadFile(a.home + "/.ssh/config")
+// freeName refuses a name that ~/.ssh/config at home sets its own values for: config.d/ws would not
+// win there. The wizard checks a new name before it writes the server's file, as apply refuses
+// the file later.
+func freeName(m effect.Machine, home, name string) error {
+	text, err := m.ReadFile(home + "/.ssh/config")
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil
 	}

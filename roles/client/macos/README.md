@@ -126,7 +126,7 @@ report shows the file as a conflict. Where `~/.ssh/config.d` is a link, the scri
 writes `config.d/ws` there. It stops where `config.d/ws` is a file it did not write, rather than
 replace it. It stops where a `Host` or `Match` of `~/.ssh/config`'s own names a server, whose
 settings would come after those of `config.d/ws`: remove it, as its `IdentityFile` would add a key
-to ws's. The wizard refuses such a name when it asks the server's name.
+to ws's. The wizard refuses such a name for a new server, asked or given by `--server`, first.
 
 ssh keeps the first `IgnoreUnknown` it reads too. `config.d/ws` needs one for the file key's
 `UseKeychain`, which only Apple's ssh knows, and keeps it with an agent's key. So it carries the
