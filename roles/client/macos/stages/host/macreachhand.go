@@ -1,7 +1,6 @@
 package host
 
 import (
-	"cmp"
 	guided "github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
@@ -39,7 +38,7 @@ func (r MacReach) Hand(h *guided.Hand, s session.Status) {
 	}
 	if c.Remote != "" {
 		h.Add("The router's forwards to ws, UDP %s and TCP %s, for %s, as roles/server/ubuntu/network/router.md has them.",
-			cmp.Or(c.Port, "51820"), cmp.Or(c.RemotePort, "22022"), c.Remote)
+			c.TunnelPort(), c.ForwardPort(), c.Remote)
 	}
 }
 
@@ -58,6 +57,6 @@ func away(h *guided.Hand, c conf.Conf, first string) {
 	}
 	if target == "cloud" {
 		h.Add("The provider's firewall: UDP %s open to ws, for the tunnel (roles/client/macos/conf/README.md).",
-			cmp.Or(c.Port, "51820"))
+			c.TunnelPort())
 	}
 }
