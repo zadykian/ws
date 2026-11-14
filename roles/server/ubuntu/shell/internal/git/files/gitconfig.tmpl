@@ -17,6 +17,10 @@
 [tag]
 	gpgsign = true
 {{ end -}}
+# A fetch drops the remote-tracking branches that the remote deleted, a landed pull request's
+# say, so that Zed's and lazygit's branch lists hold none.
+[fetch]
+	prune = true
 # GitHub CLI's credential helper, byte for byte as `gh auth setup-git` writes it, the space after
 # the empty helper's = included, so that running that changes nothing here. The empty helper
 # drops any set before it.

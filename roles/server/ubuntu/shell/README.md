@@ -23,6 +23,9 @@ credential. It names instead the keys a real run would drop, without their value
 since one may be a URL, which names a host. A real run keeps the old file beside the new one, as
 `~/.gitconfig.*~`: its name ends in the run's PID and time.
 
+`~/.gitconfig` sets `fetch.prune`, so a fetch drops the remote-tracking branches that the remote
+deleted, a landed pull request's say. A `false` in `~/.config/git/machine.gitconfig` keeps them.
+
 ## Signing
 
 `~/.gitconfig` signs each commit with an SSH key of the machine's own: `ws_git_signing_key`
