@@ -85,8 +85,10 @@ command takes no `--server`.
 refuses the Mac's last server, as apply needs one, and takes no `--server`: the argument is the
 consent. It deletes `servers/NAME` and NAME's entry in `known_hosts`, then runs the steps `ssh`,
 `zed`, `tunnel` and `networks` for a server that stays, so that its daemon, hosts and routes go
-too. Where NAME held the cable, it prints a line to do by hand: the cable's service keeps
-`10.77.0.2`. The server itself is not changed.
+too. A server that stays and whose file ws refuses, NAME's clashes aside, stops it before it
+deletes anything, as those steps would skip that server. Where a step fails, `ws client macos
+apply` for a server that stays ends the removal. Where NAME held the cable, it prints a line to do
+by hand: the cable's service keeps `10.77.0.2`. The server itself is not changed.
 
 ## A machine on the LAN
 

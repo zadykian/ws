@@ -105,6 +105,33 @@ func TestRemoveRunsTheStepsForTheServerThatStays(t *testing.T) {
 		}
 		last = at
 	}
+	if want := "then ws client macos apply --server ws takes lab's daemon, hosts and routes off"; !strings.Contains(stderr, want) {
+		t.Errorf("stderr = %q; want it to name apply: %q", stderr, want)
+	}
+}
+
+func TestRemoveRefusesWhereAServerThatStaysHasABadFile(t *testing.T) {
+	p, m := removeFixture()
+	m.Files["/h/.config/ws/servers/abc/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=99\n")
+	m.Dirs["/h/.config/ws/servers/abc"] = 0o755
+	status, _, stderr := runWs(p, "", "client", "macos", "remove", "lab")
+	if want := ": fix its file, or ws client macos remove abc"; status != 1 || !strings.Contains(stderr, "server abc: ") ||
+		!strings.Contains(stderr, want) {
+		t.Errorf("status = %d, stderr = %q; want 1 and %q", status, stderr, want)
+	}
+	if slices.Contains(m.Calls, "run rm -rf /h/.config/ws/servers/lab") {
+		t.Error("remove deleted lab's files though abc's steps would skip a server")
+	}
+}
+
+// TestRemoveTakesAServerThatClashesWithOneThatStays checks that a clash with the gone server's file does
+// not stop its removal, which is the way out of the clash.
+func TestRemoveTakesAServerThatClashesWithOneThatStays(t *testing.T) {
+	p, m := removeFixture()
+	m.Files["/h/.config/ws/servers/lab/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=0\n")
+	if _, stdout, stderr := runWs(p, "", "client", "macos", "remove", "lab"); !strings.HasPrefix(stdout, "removed lab\n") {
+		t.Errorf("stdout = %q, stderr = %q; want removed lab", stdout, stderr)
+	}
 }
 
 func TestRemoveNamesTheCableOfTheGoneServer(t *testing.T) {
