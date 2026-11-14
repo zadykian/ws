@@ -18,9 +18,11 @@ each read.
 
 ## Routes
 
-A daemon deletes a route only where `route -n get` says the route goes through its own utun. It
-leaves one that goes through another utun or the Mac's own interface alone, and logs `leaves the
-route to NETWORK alone: it goes through IFACE, not UTUN`.
+A daemon deletes a route only where `route -n get` names the network itself, by its destination
+and mask, and says the route goes through its own utun. A wider route or the default that answers
+in its place counts as gone. A /32 counts with no mask line, as a host route's answer may hold
+none. A daemon leaves a route that goes through another utun or the Mac's own interface alone, and
+logs `leaves the route to NETWORK alone: it goes through IFACE, not UTUN`.
 
 ## Reading again
 
