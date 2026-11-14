@@ -47,7 +47,9 @@ it. `WS_PORT` is 51820, or 51820 plus the slot behind a router that another serv
 next port up that none of those takes. The default of `WS_REMOTE_PORT` follows 22022 likewise. A
 LAN and `WS_TUNNEL_NETWORKS` stay
 clear of the slots' `10.99.0.0/20`. A directory of a bad name that holds `server.conf` is refused
-too. The wizard writes an empty `WS_CABLE_SERVICE` in a server's file where another's names one.
+too. The wizard stops before it writes a new server's file where another server's file is
+refused, as its slot and ports would be that file's. The wizard writes an empty `WS_CABLE_SERVICE`
+in a server's file where another's names one.
 
 ## What two servers may not share
 
