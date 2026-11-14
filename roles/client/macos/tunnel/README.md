@@ -24,5 +24,8 @@ route to NETWORK alone: it goes through IFACE, not UTUN`.
 
 ## Reading again
 
+An `apply` that writes a server's `tunnel.conf` has every other loaded daemon read again, by
+SIGHUP, so that each counts that server's endpoints at once.
+
 `ws client macos tunnel routes` and the removal of a server's daemon, at the next `apply`, have
 every loaded daemon read again, by SIGHUP. A daemon routes at once what a gone server held.

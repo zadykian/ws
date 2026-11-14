@@ -29,7 +29,8 @@ func launchctlAction(d launchd.Daemon, loaded, plist, program, key, conf bool) [
 	return nil
 }
 
-// daemon plans tunnel.conf, the plist and launchd's action, where mac.conf has WS_PUBLIC_KEY.
+// daemon plans tunnel.conf, the plist and launchd's action, where mac.conf has WS_PUBLIC_KEY. A
+// changed tunnel.conf has the other loaded daemons read again: they count its endpoints too.
 func (t *Tunnel) daemon(ctx context.Context) ([]step.Change, error) {
 	d := launchd.For(t.Server)
 	cs, err := resource.Append(ctx, nil, t.said(file.Dir{M: t.M, Path: d.Dir, Mode: 0o700}))
@@ -52,7 +53,11 @@ func (t *Tunnel) daemon(ctx context.Context) ([]step.Change, error) {
 		l.M, l.Out, l.Sleep, l.Label = t.M, t.Out, t.sleep, d.Label
 		cs = append(cs, l)
 	}
-	return cs, nil
+	if conf == 0 {
+		return cs, nil
+	}
+	others, err := launchd.Reread(ctx, t.M, t.Out, t.Server)
+	return append(cs, others...), err
 }
 
 // plist returns the template of the plist with the server's name in it. A name is of a-z, 0-9 and

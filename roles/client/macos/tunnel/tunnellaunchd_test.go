@@ -179,3 +179,14 @@ func TestTunnelKicksTheOtherDaemonsWithNoPublicKey(t *testing.T) {
 		t.Errorf("Plan = %q; want the copy and lab's kickstart", got)
 	}
 }
+
+func TestTunnelSignalsTheOtherDaemonsWhereTunnelConfChanged(t *testing.T) {
+	m := daemonMachine()
+	m.Files["/etc/ws-tunnel/ws/tunnel.conf"] = []byte("old\n")
+	otherDaemon(m, "lab")
+	got := tunnelChanges(t, daemonStep(m))
+	want := "would run launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.lab"
+	if len(got) != 3 || got[2] != want {
+		t.Errorf("Plan = %q; want the conf, its SIGHUP and lab's, as lab counts its endpoints", got)
+	}
+}
