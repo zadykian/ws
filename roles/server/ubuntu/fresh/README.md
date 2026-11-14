@@ -141,7 +141,7 @@ that Fresh lacks. Tests hold the template to its rules.
 
 ### Contexts
 
-- Global, Text and Code bind in `normal` alone. A global binding loses to the default map's
+- Global and Code bind in `normal` alone. A global binding loses to the default map's
   `normal`. Fresh's `normal` passes only its UI actions on to the explorer and the panels
   ([Other limits](#other-limits)).
 - Tree and Panel bind in `file_explorer`, and Terminal in `terminal`.
@@ -155,7 +155,7 @@ for each.
 
 - A stroke with Shift and a sign gets two forms: tmux sends the sign without Shift, and a direct
   terminal sends the key with Shift.
-- alt+shift+space arrives as alt+space, and a test keeps the two bound alike.
+- alt+shift+space arrives as alt+space, so a map that binds one binds both.
 - Through tmux, ctrl+backspace arrives as ctrl+h. Fresh's default map binds both to
   `delete_word_backward`, so either way it deletes a word.
 - The map binds neither ctrl+h nor ctrl+backspace: a binding of either in a map warns at each
