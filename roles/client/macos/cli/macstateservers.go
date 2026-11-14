@@ -18,7 +18,7 @@ type serverConf struct {
 func refusedReport(sc serverConf) step.Report {
 	return step.Report{Step: "server.conf", Items: []step.Item{{
 		Kind: step.CheckItem, Name: sc.Name, Want: "a file ws accepts", Found: sc.Err.Error(),
-		Conflict: badFileHint(sc.Name),
+		Conflict: conf.BadFileHint(sc.Name),
 	}}}
 }
 
