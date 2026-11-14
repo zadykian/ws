@@ -8,10 +8,11 @@ where every stage runs, by the same rules ([The server's wizard](../../../../rol
 server ubuntu configure`'s forms, and its `s` reads ws on ws.
 
 The wizard's stages are one queue, shown as two lists side by side: `Client (macOS)` and `Server
-(Ubuntu)`, by the machine a stage runs on. A narrow window stacks them, and one too short for that
-keeps the list in focus. The numbers run across both lists, in the order of the run. Stage 3 can
-stand in `Server (Ubuntu)` between two stages of `Client (macOS)`, and the order, the locks and the
-count hold across the machines. A stage's own steps stand under it, indented, with no number.
+(Ubuntu)`, by the machine a stage runs on. The Mac's wizard names the server: `Server lab (Ubuntu)`.
+A narrow window stacks them, and one too short for that keeps the list in focus. The numbers run
+across both lists, in the order of the run. Stage 3 can stand in `Server (Ubuntu)` between two
+stages of `Client (macOS)`, and the order, the locks and the count hold across the machines. A
+stage's own steps stand under it, indented, with no number.
 
 Tab walks the lists, then the buttons, which add `state` and `configure` to the list's, and
 Shift-Tab walks back. Each list keeps its cursor. `a`, `n`, `i`, `p` and `/` act on both lists, and
