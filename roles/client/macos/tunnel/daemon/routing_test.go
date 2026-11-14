@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/netip"
 	"slices"
+	"sync"
 	"testing"
 	"time"
 
@@ -120,6 +121,73 @@ func TestChooseCountsTheOtherServersEndpointsAtTheStartOfARound(t *testing.T) {
 		t.Fatal(err)
 	}
 	if want := []netip.Addr{netip.MustParseAddr("192.168.7.7")}; !slices.Equal(r.elsewhere, want) {
+		t.Errorf("elsewhere = %v, want %v", r.elsewhere, want)
+	}
+}
+
+// heldMachine holds each lookup of the resolver until hold returns, outside fakeMachine's lock,
+// as a slow resolver would. hold takes the name looked up.
+type heldMachine struct {
+	*fakeMachine
+	hold func(ctx context.Context, name string) error
+}
+
+func (m heldMachine) Run(ctx context.Context, name string, args ...string) ([]byte, error) {
+	if name == "dscacheutil" {
+		if err := m.hold(ctx, args[len(args)-1]); err != nil {
+			return nil, err
+		}
+	}
+	return m.fakeMachine.Run(ctx, name, args...)
+}
+
+func TestOtherEndsLooksUpTheRemotesAtOnce(t *testing.T) {
+	r := newRig("")
+	r.LookupWait = 10 * time.Second
+	// Each lookup answers once both have begun. Lookups in turn would hold the first until
+	// LookupWait cuts it off.
+	var begun sync.WaitGroup
+	begun.Add(2)
+	both := make(chan struct{})
+	go func() { begun.Wait(); close(both) }()
+	r.M = heldMachine{r.m, func(ctx context.Context, _ string) error {
+		begun.Done()
+		select {
+		case <-both:
+			return nil
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}}
+	r.m.table["dscacheutil -q host -a name a.example.org"] = effecttest.Result{Out: []byte("ip_address: 172.16.4.4\n")}
+	r.m.table["dscacheutil -q host -a name b.example.org"] = effecttest.Result{Out: []byte("ip_address: 172.16.5.5\n")}
+	r.set.Others = []settings.Other{
+		{Name: "a", Conf: tunnel.Conf{Remote: "a.example.org"}},
+		{Name: "b", Conf: tunnel.Conf{Remote: "b.example.org"}},
+	}
+	r.otherEnds(context.Background())
+	if want := []netip.Addr{netip.MustParseAddr("172.16.4.4"), netip.MustParseAddr("172.16.5.5")}; !slices.Equal(r.elsewhere, want) {
+		t.Errorf("elsewhere = %v, want %v", r.elsewhere, want)
+	}
+}
+
+func TestOtherEndsCountsALookupCutOffAsUnresolved(t *testing.T) {
+	r := newRig("")
+	r.LookupWait = 50 * time.Millisecond
+	r.M = heldMachine{r.m, func(ctx context.Context, name string) error {
+		if name == "slow.example.org" {
+			<-ctx.Done()
+			return ctx.Err()
+		}
+		return nil
+	}}
+	r.m.table["dscacheutil -q host -a name lab.example.org"] = effecttest.Result{Out: []byte("ip_address: 172.16.4.4\n")}
+	r.set.Others = []settings.Other{
+		{Name: "slow", Conf: tunnel.Conf{LANServer: inLAN, Remote: "slow.example.org"}},
+		{Name: "lab", Conf: tunnel.Conf{Remote: "lab.example.org"}},
+	}
+	r.otherEnds(context.Background())
+	if want := []netip.Addr{inLAN, netip.MustParseAddr("172.16.4.4")}; !slices.Equal(r.elsewhere, want) {
 		t.Errorf("elsewhere = %v, want %v", r.elsewhere, want)
 	}
 }
