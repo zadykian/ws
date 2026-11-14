@@ -39,3 +39,14 @@ func TestRoutesAloneRefusesAMissingRoutesDirUnderCheck(t *testing.T) {
 		t.Errorf("Plan error = %v", err)
 	}
 }
+
+func TestRoutesSignalsEachLoadedDaemonAlone(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Root["/etc/ws-tunnel/routes.d"] = effect.Attrs{Mode: 0o755}
+	installDaemons(m, "lab", "ws")
+	m.Results["launchctl print system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{}
+	p, err := (&networks.Routes{Set: "lab", Networks: []string{"10.1.0.0/24"}, M: m}).Plan(context.Background())
+	if err != nil || len(p.Changes) != 2 || p.Changes[1].String() != "would run launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.ws" {
+		t.Errorf("Plan = %v, %v; want the file and a signal to ws alone", p, err)
+	}
+}

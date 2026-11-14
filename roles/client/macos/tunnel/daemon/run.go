@@ -54,15 +54,15 @@ func (d *Daemon) Run(ctx context.Context) error {
 // route into the utun.
 func (d *Daemon) start(ctx context.Context) error {
 	d.trimLog()
-	_ = d.run(ctx, "rm", "-f", d.StateFile, d.StateFile+".new") // a dead run's state would mislead status
+	_ = d.run(ctx, "rm", "-f", d.Paths.State, d.Paths.State+".new") // a dead run's state would mislead status
 	var err error
-	if d.set, err = settings.ReadSettings(ctx, d.M, d.Dir); err != nil {
+	if d.set, err = settings.ReadSettings(ctx, d.M, d.Paths); err != nil {
 		return err
 	}
 	for _, w := range d.set.Warnings {
 		d.say("%s", w)
 	}
-	if d.key, err = settings.ReadKey(d.M, d.Dir); err != nil {
+	if d.key, err = settings.ReadKey(d.M, d.Paths.Key); err != nil {
 		return err
 	}
 	s := d.set.Conf.Slot
@@ -89,6 +89,6 @@ func (d *Daemon) start(ctx context.Context) error {
 
 // stop removes the state file, which says that the daemon runs.
 func (d *Daemon) stop() {
-	_ = d.run(context.Background(), "rm", "-f", d.StateFile, d.StateFile+".new")
+	_ = d.run(context.Background(), "rm", "-f", d.Paths.State, d.Paths.State+".new")
 	d.say("stopped")
 }

@@ -24,7 +24,7 @@ func (t *Tunnel) pub() string {
 
 // loaded tells whether launchd has ws-tunnel loaded. Anyone may read its system domain.
 func (t *Tunnel) loaded(ctx context.Context) bool {
-	_, err := t.M.Run(ctx, "launchctl", "print", "system/"+label)
+	_, err := t.M.Run(ctx, "launchctl", "print", "system/"+t.label())
 	return err == nil
 }
 

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/settings"
 )
 
 // peerKey is ws's key in tunnel.conf, and macKey the Mac's own, each 32 equal bytes in base64.
@@ -19,6 +20,12 @@ const (
 
 // dir is the settings' directory the rig reads.
 const dir = "/etc/ws-tunnel"
+
+// paths are the daemon's files under dir.
+var paths = settings.Paths{
+	Conf: dir + "/tunnel.conf", Key: dir + "/private.key", Routes: dir + "/routes.d",
+	State: "/var/run/ws-tunnel.state",
+}
 
 var errTest = errors.New("no")
 
@@ -73,7 +80,7 @@ func newRig(conf string) *rig {
 	m.Files[dir+"/private.key"] = []byte(macKey + "\n")
 	m.Files[dir+"/tunnel.conf"] = []byte("WS_PUBLIC_KEY=" + peerKey + "\n" + conf)
 	r := &rig{m: m, dev: &fakeDevice{}, log: &bytes.Buffer{}, now: t0}
-	r.Daemon = New(m, r.dev, "utun4", dir, "/var/run/ws-tunnel.state", r.log)
+	r.Daemon = New(m, r.dev, "utun4", paths, r.log)
 	r.Now = func() time.Time { return r.now }
 	return r
 }

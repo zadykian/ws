@@ -13,7 +13,7 @@ import (
 )
 
 func tunnelStep(m *effecttest.Machine) *tunnel.Tunnel {
-	return &tunnel.Tunnel{Home: "/h", M: m, Out: &effecttest.Out{}, Self: func() ([]byte, error) { return []byte("ws"), nil }}
+	return &tunnel.Tunnel{Server: "ws", Home: "/h", M: m, Out: &effecttest.Out{}, Self: func() ([]byte, error) { return []byte("ws"), nil }}
 }
 
 func lines(p []string) string { return strings.Join(p, "\n") }
