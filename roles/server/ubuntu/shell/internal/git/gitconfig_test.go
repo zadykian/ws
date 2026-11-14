@@ -49,9 +49,9 @@ func TestGitconfigShowsNoContent(t *testing.T) {
 func TestGitconfigNamesWhatARewriteLoses(t *testing.T) {
 	m, sm, out, g := gitFixture(true)
 	m.Files["/home/ws/.gitconfig"] = []byte("OLD")
-	m.Files["/home/ws/.config/git/local"] = []byte("LOCAL")
+	m.Files["/home/ws/.config/git/machine.gitconfig"] = []byte("MACHINE")
 	sm.answers["OLD"] = "user.name\nhttp.https://x.y.extraheader\nuser.signingkey=/home/ws/other\n"
-	sm.answers["LOCAL"] = "gpg.format\nuser.name\n"
+	sm.answers["MACHINE"] = "gpg.format\nuser.name\n"
 	sm.answers["# Written"] = "user.name\n"
 	if _, err := g.Plan(context.Background()); err != nil {
 		t.Fatal(err)

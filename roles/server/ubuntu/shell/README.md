@@ -8,7 +8,7 @@ them by hand. A machine's own settings go in files they read where they exist:
   non-interactive shells get it too, and which the role writes from the secrets file:
   [Secrets](#secrets);
 - `~/.bash_aliases`, which `~/.bashrc` sources too;
-- `~/.config/git/local`, which `~/.gitconfig` includes last, so that its settings win.
+- `~/.config/git/machine.gitconfig`, which `~/.gitconfig` includes last, so that its settings win.
 
 A link at a file the role writes as root fails the step of that file alone. So does a link at a
 directory between the home and that file ([Links under the home](../security/README.md#links-under-the-home)).
@@ -19,9 +19,12 @@ An installer that appends to `~/.bashrc` or `~/.profile`, a line that adds its d
 `~/.gitconfig` has gh's credential helper already, as `gh auth setup-git` writes it, so running
 that changes nothing. A dry run shows no diff of `~/.gitconfig`, as one set up by hand may hold a
 credential. It names instead the keys a real run would drop, without their values: move them to
-`~/.config/git/local` first. A subsection shows as `*`, as in `http.*.extraheader`, since one may
-be a URL, which names a host. A real run keeps the old file beside the new one, as
+`~/.config/git/machine.gitconfig` first. A subsection shows as `*`, as in `http.*.extraheader`,
+since one may be a URL, which names a host. A real run keeps the old file beside the new one, as
 `~/.gitconfig.*~`: its name ends in the run's PID and time.
+
+`~/.gitconfig` sets `fetch.prune`, so a fetch drops the remote-tracking branches that the remote
+deleted, a landed pull request's say. A `false` in `~/.config/git/machine.gitconfig` keeps them.
 
 ## Signing
 
@@ -42,8 +45,9 @@ on a commit another key signed, an older machine's say, though GitHub verifies i
 keys.
 
 A run replaces the signing key a `~/.gitconfig` set up by hand names, and says so: to keep that key,
-set it in `~/.config/git/local` first. A signing setting there, such as `user.signingkey` or
-`commit.gpgsign` or `tag.gpgsign`, wins over the role's, and the run names any it finds.
+set it in `~/.config/git/machine.gitconfig` first. A signing setting there, such as
+`user.signingkey` or `commit.gpgsign` or `tag.gpgsign`, wins over the role's, and the run names any
+it finds.
 
 `shell_git_signing: false` turns it all off: no key and no signing in `~/.gitconfig`. A key
 made before stays, on the machine and on GitHub. A dry run makes no key, so on a machine without
