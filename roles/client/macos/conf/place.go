@@ -3,6 +3,7 @@ package conf
 import (
 	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/zadykian/ws/roles/internal/slot"
 )
@@ -54,7 +55,7 @@ func (p Place) RemotePort(remote string) string {
 func (p Place) apart(remote string, base int, port func(Conf) string) string {
 	taken := map[string]bool{}
 	for _, o := range p.Others {
-		if remote != "" && o.Conf.Remote == remote {
+		if remote != "" && strings.EqualFold(o.Conf.Remote, remote) {
 			taken[port(o.Conf)] = true
 		}
 	}
