@@ -63,5 +63,7 @@ jobs:
       - name: The daemon's status and log
         if: always()
         run: |
-          sudo "$TUNNEL" client macos tunnel status || true
+          sudo "$TUNNEL" client macos tunnel status --server ws || true
           sudo cat /var/log/ws-tunnel.ws.log || true
+          sudo "$TUNNEL" client macos tunnel status --server lab || true
+          sudo cat /var/log/ws-tunnel.lab.log || true
