@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"strings"
 	"testing"
@@ -70,8 +71,26 @@ func TestRemoveDeletesTheServersFilesAndItsHostKey(t *testing.T) {
 	}
 }
 
-// TestRemoveRunsTheStepsForTheServerThatStays checks that ssh, Zed and the tunnel run, in that order, and
-// stop at the tunnel's copy of ws, which the fake machine cannot hold.
+// TestRemoveKeepsTheServerWhereTheHostCannotBeForgotten checks that a failed ssh-keygen -R stops
+// remove before it deletes the server's files, so that a second remove finds the server whole.
+func TestRemoveKeepsTheServerWhereTheHostCannotBeForgotten(t *testing.T) {
+	p, m := removeFixture()
+	m.Results["ssh-keygen -R lab"] = effecttest.Result{Err: errors.New("exit 1")}
+	status, stdout, stderr := runWs(p, "", "client", "macos", "remove", "lab")
+	if status == 0 || !strings.Contains(stderr, "cannot drop lab from /h/.ssh/known_hosts") {
+		t.Errorf("status = %d, stderr = %q; want the host's failure", status, stderr)
+	}
+	if strings.Contains(stdout, "removed") {
+		t.Errorf("stdout = %q; want no removal", stdout)
+	}
+	if slices.Contains(m.Calls, "run rm -rf /h/.config/ws/servers/lab") {
+		t.Error("remove deleted the server's directory before the host went")
+	}
+	if _, ok := m.Files["/h/.config/ws/servers/lab/server.conf"]; !ok {
+		t.Error("the server's file is gone")
+	}
+}
+
 func TestRemoveLeavesAKnownHostsThatIsALink(t *testing.T) {
 	p, m := removeFixture()
 	m.Links["/h/.ssh/known_hosts"] = "/d/known_hosts"
