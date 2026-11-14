@@ -73,7 +73,7 @@ fi
 mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /opt/homebrew/bin/wg /etc/ws-tunnel/private.key)
 [ "$(sudo cat "$RUNNER_TEMP/ws/root/etc/wireguard/mac.pub")" = "$mac" ] ||
     error "ws client macos wizard gave the stand-in ws no mac.pub of the Mac's key, $mac"
-launchctl print system/com.github.zadykian.ws-tunnel >/dev/null 2>&1 ||
+launchctl print system/com.github.zadykian.ws-tunnel.ws >/dev/null 2>&1 ||
     error "ws client macos wizard loaded no daemon with wg0's key"
 sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status | grep -q '^latest handshake: [0-9]' &&
     [ "$(cat "$RUNNER_TEMP/ws/tunnel.log" 2>/dev/null | wc -l)" -eq 1 ] ||

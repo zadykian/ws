@@ -15,12 +15,12 @@ func TestTrimLogStartsTheLogAnewPastTheLimit(t *testing.T) {
 	}{{"at the limit", LogLimit, LogLimit}, {"past the limit", LogLimit + 1, 0}} {
 		t.Run(tt.name, func(t *testing.T) {
 			r := newRig("")
-			r.Log = filepath.Join(t.TempDir(), "ws-tunnel.log")
-			if err := os.WriteFile(r.Log, []byte(strings.Repeat("x", tt.size)), 0o600); err != nil {
+			r.Paths.Log = filepath.Join(t.TempDir(), "ws-tunnel.log")
+			if err := os.WriteFile(r.Paths.Log, []byte(strings.Repeat("x", tt.size)), 0o600); err != nil {
 				t.Fatal(err)
 			}
 			r.trimLog()
-			fi, err := os.Stat(r.Log)
+			fi, err := os.Stat(r.Paths.Log)
 			if err != nil || fi.Size() != int64(tt.want) {
 				t.Errorf("size = %v, err = %v, want %d", fi, err, tt.want)
 			}
@@ -33,9 +33,9 @@ func TestTrimLogStartsTheLogAnewPastTheLimit(t *testing.T) {
 
 func TestTrimLogLeavesAMissingLogAlone(t *testing.T) {
 	r := newRig("")
-	r.Log = filepath.Join(t.TempDir(), "none.log")
+	r.Paths.Log = filepath.Join(t.TempDir(), "none.log")
 	r.trimLog()
-	r.Log = ""
+	r.Paths.Log = ""
 	r.trimLog()
 	if r.log.Len() != 0 {
 		t.Errorf("log = %q, want none", r.log.String())

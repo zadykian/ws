@@ -26,11 +26,12 @@ type Device interface {
 type Daemon struct {
 	M   effect.Machine
 	Dev Device
-	// Tun is the utun's name, StateFile the file that status reads, and Dir the settings' directory.
-	Tun, StateFile, Dir string
-	Out                 io.Writer // the log
-	Log                 string    // the log's file, which trimLog starts anew past LogLimit; empty for none
-	Now                 func() time.Time
+	Tun string // the utun's name
+	// Paths are the daemon's files: State is what status reads, and Log is the file that trimLog
+	// starts anew past LogLimit, empty for none.
+	Paths settings.Paths
+	Out   io.Writer // the log
+	Now   func() time.Time
 	// CheckEvery is how often a round looks for the handshake. TickEvery is how long a tick comes
 	// after the last tick ended. ChangeWait is how long the loop waits after a network change.
 	CheckEvery, TickEvery, ChangeWait time.Duration
@@ -68,10 +69,10 @@ const (
 	Exited               // wireguard-go has exited
 )
 
-// New returns a Daemon with an Events channel, for the settings in dir.
-func New(m effect.Machine, dev Device, tun, dir, stateFile string, out io.Writer) *Daemon {
+// New returns a Daemon with an Events channel, for the files at p.
+func New(m effect.Machine, dev Device, tun string, p settings.Paths, out io.Writer) *Daemon {
 	return &Daemon{
-		M: m, Dev: dev, Tun: tun, Dir: dir, StateFile: stateFile, Out: out, Now: time.Now,
+		M: m, Dev: dev, Tun: tun, Paths: p, Out: out, Now: time.Now,
 		CheckEvery: time.Second, TickEvery: 10 * time.Second, ChangeWait: 2 * time.Second, Events: make(chan Event, 64),
 	}
 }
