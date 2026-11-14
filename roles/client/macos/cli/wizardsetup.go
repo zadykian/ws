@@ -14,7 +14,7 @@ import (
 )
 
 // wizardSetup returns the stage that runs the steps of ws client macos apply in the wizard's
-// process. Until mac.conf has WS_PUBLIC_KEY, the Tunnel step prints the Mac's key and the commands
+// process. Until the server's file has WS_PUBLIC_KEY, the Tunnel step prints the Mac's key and the commands
 // that make it ws's peer at every run. The Tunnel stage takes that over, so the text goes nowhere
 // then. mac is the file to read, and name the server whose file lies beside it: both are Answers'
 // would-be files under --check. shown is the real mac.conf, whose directory a refusal of another
