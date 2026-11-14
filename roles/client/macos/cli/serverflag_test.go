@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 
@@ -11,7 +12,7 @@ import (
 func TestServerFlagNamesTheServerOfApplyAndState(t *testing.T) {
 	m := effecttest.NewMachine()
 	writeConfs(m, "", "WS_USER=ada\n")
-	m.Files[conf.ServerPath("/h/.config/ws/mac.conf", "box")] = []byte("WS_USER=bob\n")
+	m.Files[conf.ServerPath("/h/.config/ws/mac.conf", "box")] = []byte("WS_USER=bob\nWS_SLOT=1\n")
 	m.Dirs["/h/.config/ws/servers/box"] = 0o755
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
@@ -27,8 +28,8 @@ func TestServerFlagNamesTheServerOfApplyAndState(t *testing.T) {
 
 func TestServerFlagNamesTheServerOfConf(t *testing.T) {
 	m := effecttest.NewMachine()
-	for _, name := range []string{"ws", "box"} {
-		m.Files[conf.ServerPath("/h/.config/ws/mac.conf", name)] = []byte("WS_USER=" + name + "\n")
+	for slot, name := range []string{"ws", "box"} {
+		m.Files[conf.ServerPath("/h/.config/ws/mac.conf", name)] = []byte("WS_USER=" + name + "\nWS_SLOT=" + strconv.Itoa(slot) + "\n")
 	}
 	m.Files["/h/.config/ws/mac.conf"] = nil
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
