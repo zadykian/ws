@@ -81,7 +81,7 @@ _Avoid_: include line
 
 **server's name**:
 What `--server` takes, and the directory `servers/NAME/` of the server's file: a lower-case letter,
-then up to 11 lower-case letters, digits and `-`.
+then up to 11 lower-case letters, digits and `-`, other than `direct`, `first` and `key`.
 
 **slot**:
 A server's number from 0 to 15, kept as `WS_SLOT` in its file. The wizard writes 0 in a file that

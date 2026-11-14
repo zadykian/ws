@@ -12,13 +12,18 @@ import (
 )
 
 // NameForm says what a server's name looks like, in the words of each refusal of a bad one.
-const NameForm = "a lower-case letter, then up to 11 lower-case letters, digits and -"
+const NameForm = "a lower-case letter, then up to 11 lower-case letters, digits and -, " +
+	"other than direct, first and key"
 
 // maxName is the longest a server's name goes, which the ssh alias and the daemon's suffix share.
 const maxName = 12
 
-// IsName reports whether s is a server's name.
+// IsName reports whether s is a server's name. Three words are not: direct, first and key name
+// ssh's direct master socket, ws's first-server file and the key reader's link beside the servers'.
 func IsName(s string) bool {
+	if s == "direct" || s == "first" || s == "key" {
+		return false
+	}
 	if s == "" || len(s) > maxName || s[0] < 'a' || s[0] > 'z' {
 		return false
 	}

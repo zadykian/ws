@@ -23,6 +23,7 @@ func machineWith(names ...string) *effecttest.Machine {
 func TestIsName(t *testing.T) {
 	for s, want := range map[string]bool{
 		"ws": true, "a": true, "box-2": true, "abcdefghijkl": true,
+		"direct": false, "first": false, "key": false, "first2": true,
 		"": false, "Lab": false, "1box": false, "-box": false, "box_2": false, "abcdefghijklm": false,
 	} {
 		if got := IsName(s); got != want {
