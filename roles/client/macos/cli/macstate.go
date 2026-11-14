@@ -50,13 +50,24 @@ func newMacStateCmd(p enginecli.Env, server *string) *cobra.Command {
 // screen on a Mac that may have none: the header then says so, and the wizard stays.
 func macRead(p enginecli.Env, server *string) tui.StateReader {
 	return func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
-		name, settings, err := loadMacConf(p, server)
+		confs, grouped, err := stateConfs(p, server)
 		if err != nil {
 			return nil, err
 		}
-		// The read takes the screen's effects as a run does, as the steps don't own the terminal under it.
-		reports, err := macOf(p, name, settings, b.Effects().M, b, nil).State(ctx)
-		return []tui.StateSection{{Reports: reports}}, err
+		var sections []tui.StateSection
+		for _, sc := range confs {
+			// The read takes the screen's effects as a run does, as the steps don't own the terminal under it.
+			reports, err := macOf(p, sc.Name, sc.Conf, b.Effects().M, b, nil).State(ctx)
+			section := tui.StateSection{Reports: reports}
+			if grouped {
+				section.Name = sc.Name
+			}
+			sections = append(sections, section)
+			if err != nil {
+				return sections, err
+			}
+		}
+		return sections, nil
 	}
 }
 

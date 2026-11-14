@@ -64,13 +64,21 @@ func pickServer(p enginecli.Env, server *string) (string, error) {
 	return conf.Pick(p.Machine, conf.Path(p.Getenv, p.Pwd), *server)
 }
 
-// loadMacConf refuses root, picks the server that --server names, and reads mac.conf and the server's
-// file: the commands that act on the Mac's own files share it. It returns the server's name.
-func loadMacConf(p enginecli.Env, server *string) (name string, settings conf.Conf, err error) {
+// refuseRoot stops the commands that act on the Mac's own files where they run as root.
+func refuseRoot(p enginecli.Env) error {
 	if p.Euid == 0 {
 		// As root, with HOME kept, it would leave root's files in the user's ~/.ssh, and run the
 		// user's ~/.local/bin/cld.
-		return "", conf.Conf{}, errors.New("run it as yourself, not root: it asks sudo where it needs root")
+		return errors.New("run it as yourself, not root: it asks sudo where it needs root")
+	}
+	return nil
+}
+
+// loadMacConf refuses root, picks the server that --server names, and reads mac.conf and the server's
+// file: the commands that act on the Mac's own files share it. It returns the server's name.
+func loadMacConf(p enginecli.Env, server *string) (name string, settings conf.Conf, err error) {
+	if err := refuseRoot(p); err != nil {
+		return "", conf.Conf{}, err
 	}
 	mac := conf.Path(p.Getenv, p.Pwd)
 	name, err = pickServer(p, server)
