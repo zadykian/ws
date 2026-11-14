@@ -71,8 +71,9 @@ server to every YAML file, Ansible's too.
 
 - `ws` through the tunnel needs no Local Network grant. Only a direct way does ([The Mac](../README.md)),
   so the seed names `ws` alone.
-- The terminal docks right, as the project, git and outline panels dock left. A resize of a terminal
-  docked at a side duplicates its lines (zed#65316, open).
+- The terminal and the git panel dock right, the git panel 600 pixels wide, as the project and
+  outline panels dock left. A dock shows one panel at a time, so F2 and F5 swap the two. A resize
+  of a terminal docked at a side duplicates its lines (zed#65316, open).
 - `terminal.shell` stays unset, as Zed runs it on ws too (zed#65548). `option_as_meta` gives the
   Alt keys in Zed's terminal, at the cost of Option's special characters. `detect_venv` is `off`:
   with it on, a venv in the directory has Zed type its activation line into every new tab, which
