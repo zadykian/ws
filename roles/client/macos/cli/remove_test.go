@@ -91,3 +91,27 @@ func TestRemoveWithNoKnownHostsHasNoKeyToDrop(t *testing.T) {
 		t.Errorf("stdout = %q; want removed lab", stdout)
 	}
 }
+
+// TestRemoveRunsTheStepsForTheServerThatStays checks that ssh, Zed and the tunnel run, in that order, and
+// stop at the tunnel's copy of ws, which the fake machine cannot hold.
+func TestRemoveRunsTheStepsForTheServerThatStays(t *testing.T) {
+	p, _ := removeFixture()
+	_, _, stderr := runWs(p, "", "client", "macos", "remove", "lab")
+	last := -1
+	for _, want := range []string{"wrote /h/.ssh/config.d/ws", "wrote /h/.config/zed/settings.json", "made the Mac's WireGuard key"} {
+		at := strings.Index(stderr, want)
+		if at <= last {
+			t.Errorf("stderr = %q; want %q after the step before it", stderr, want)
+		}
+		last = at
+	}
+}
+
+func TestRemoveNamesTheCableOfTheGoneServer(t *testing.T) {
+	p, m := removeFixture()
+	m.Files["/h/.config/ws/servers/lab/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=1\nWS_TARGET=lan\nWS_CABLE_PORT=eth1\nWS_CABLE_SERVICE=\"USB 10/100/1000 LAN\"\n")
+	_, stdout, _ := runWs(p, "", "client", "macos", "remove", "lab")
+	if want := "By hand: the cable's service USB 10/100/1000 LAN keeps 10.77.0.2"; !strings.Contains(stdout, want) {
+		t.Errorf("stdout = %q; want it to hold %q", stdout, want)
+	}
+}
