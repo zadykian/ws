@@ -240,12 +240,17 @@ func TestEachShellKeyIsNoopInTheTerminal(t *testing.T) {
 	_, c := load(t)
 	bound := byWhen(c)
 	for _, key := range []string{
-		"ctrl+q", "alt+x", "alt+v", "alt+Left", "alt+Right", "alt+e", "alt+f", "alt+g", "alt+h",
-		"alt+s", "alt+w", "alt+r", "alt+j", "alt+/", "alt+[", "alt+]", "alt+`", "ctrl+p", "ctrl+;",
-		"ctrl+'",
+		"ctrl+q", "alt+x", "alt+v", "alt+e", "alt+f", "alt+g", "alt+h", "alt+s", "alt+w", "alt+r",
+		"alt+j", "alt+/", "alt+[", "alt+]", "alt+`", "ctrl+p", "ctrl+;", "ctrl+'",
 	} {
 		if bound["terminal "+key] != "noop" {
 			t.Errorf("%s is %q in the terminal; want noop", key, bound["terminal "+key])
+		}
+	}
+	// The map's tab keys switch tabs over the shell, as Zed's do in its terminal.
+	for _, tab := range []string{"alt+Left", "alt+Right"} {
+		if got := bound["terminal "+tab]; got != "" {
+			t.Errorf("%s is %q in the terminal; want the map's tab key", tab, got)
 		}
 	}
 	for _, way := range []string{"ctrl+Space", "ctrl+]", "F9", "alt+o"} {

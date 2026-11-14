@@ -161,17 +161,17 @@ for each.
 
 ### The shell keys
 
-20 keys are `noop` in `terminal`, so the shell in Fresh's terminal gets them. A `noop` there
-ends Fresh's lookup, so no other binding can take the key:
+18 keys are `noop` in `terminal`, so the shell in Fresh's terminal gets them. A `noop` there
+ends Fresh's lookup, so no other binding can take the key. The default map would fire each:
 
-- The map's own alt+left and alt+right would switch tabs over the shell.
-- The default map fires 18 more:
-  - ctrl+q quits Fresh, and alt+w closes the tab;
-  - alt+e, alt+f, alt+g, alt+h, alt+s, alt+x and alt+v open a menu;
-  - ctrl+p, ctrl+; and ctrl+' open Quick Open: these three and ctrl+q are the four guards;
-  - alt+r, alt+j, alt+/, alt+[, alt+] and alt+` do the editor's work.
-- Fresh's own ways out stay: ctrl+space and ctrl+] (`terminal_escape`), F9 (keyboard capture) and
-  alt+o (the dock's focus).
+- ctrl+q quits Fresh, and alt+w closes the tab;
+- alt+e, alt+f, alt+g, alt+h, alt+s, alt+x and alt+v open a menu;
+- ctrl+p, ctrl+; and ctrl+' open Quick Open: these three and ctrl+q are the four guards;
+- alt+r, alt+j, alt+/, alt+[, alt+] and alt+` do the editor's work.
+
+The map's own alt+left and alt+right switch tabs over the shell, as Zed's do in its terminal.
+Fresh's own ways out stay: ctrl+space and ctrl+] (`terminal_escape`), F9 (keyboard capture) and
+alt+o (the dock's focus).
 
 ### Other limits
 
@@ -197,7 +197,7 @@ What stays unproven until the maintainer's trial on the Mac:
 - The arm64 binary: its hash matched, and it never ran.
 - gopls with Fresh, and Roslyn past initialise: diagnostics and navigation.
 - Termius on the iPad, whose Alt keys need its "Use Option as meta key".
-- Fresh's terminal keys, known by source alone: the 20 `noop` keys reach the shell, and
+- Fresh's terminal keys, known by source alone: the 18 `noop` keys reach the shell, and
   ctrl+space, ctrl+], F9 and alt+o leave the terminal. Also `self_update` at run time.
 - The wrapper when it dies with Fresh: the pane keeps asking.
 - Italic modifiers in the theme.
