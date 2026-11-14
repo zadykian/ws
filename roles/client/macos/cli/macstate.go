@@ -34,6 +34,7 @@ func newMacStateCmd(p enginecli.Env, server *string) *cobra.Command {
 		Long: "It reads alone and applies nothing, as ws client macos apply --check does, and needs what it needs: " +
 			"mac.conf, and not root. The Mac's steps report the packages, services and files ws manages " +
 			"there, and a step that fails stands in the report as a check. The exit code stays 0. " +
+			"With several servers, one whose file ws refuses stands in the report with the refusal. " +
 			"A report holds no secret.\n\n" +
 			"At a terminal it draws the state screen on stderr, where sudo's password comes through a question. " +
 			"--plain prints the report as text, and so does a pipe. " +
@@ -57,7 +58,13 @@ func macRead(p enginecli.Env, server *string) tui.StateReader {
 		var sections []tui.StateSection
 		for _, sc := range confs {
 			// The read takes the screen's effects as a run does, as the steps don't own the terminal under it.
-			reports, err := macOf(p, sc.Name, sc.Conf, b.Effects().M, b, nil).State(ctx)
+			var reports []step.Report
+			var err error
+			if sc.Err != nil {
+				reports = []step.Report{refusedReport(sc)}
+			} else {
+				reports, err = macOf(p, sc.Name, sc.Conf, b.Effects().M, b, nil).State(ctx)
+			}
 			section := tui.StateSection{Reports: reports}
 			if grouped {
 				section.Name = sc.Name

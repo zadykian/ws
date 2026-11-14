@@ -20,8 +20,13 @@ func refuseBadSibling(m effect.Machine, mac, name string) error {
 			continue
 		}
 		if _, err := conf.Load(m, mac, conf.ServerPath(mac, n)); err != nil {
-			return fmt.Errorf("server %s: %w: fix its file, or ws client macos remove %s", n, err, n)
+			return fmt.Errorf("server %s: %w: %s", n, err, badFileHint(n))
 		}
 	}
 	return nil
+}
+
+// badFileHint is the way out of a server's file that ws refuses.
+func badFileHint(name string) string {
+	return "fix its file, or ws client macos remove " + name
 }

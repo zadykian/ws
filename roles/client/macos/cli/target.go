@@ -70,6 +70,10 @@ func macReport(p enginecli.Env, server *string) func(context.Context, engine.Cal
 			term := effect.NewTerminal(strings.NewReader(""), c.Err)
 			var docs []serverDoc
 			for _, sc := range confs {
+				if sc.Err != nil {
+					docs = append(docs, serverDoc{Name: sc.Name, Steps: []step.Report{refusedReport(sc)}})
+					continue
+				}
 				reports, err := macOf(p, sc.Name, sc.Conf, p.Machine, linesOf(term, c.Path), nil).State(ctx)
 				docs = append(docs, serverDoc{Name: sc.Name, Steps: reports})
 				if err != nil {

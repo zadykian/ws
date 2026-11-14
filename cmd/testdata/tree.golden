@@ -279,7 +279,7 @@ Global Flags:
       --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos state
-It reads alone and applies nothing, as ws client macos apply --check does, and needs what it needs: mac.conf, and not root. The Mac's steps report the packages, services and files ws manages there, and a step that fails stands in the report as a check. The exit code stays 0. A report holds no secret.
+It reads alone and applies nothing, as ws client macos apply --check does, and needs what it needs: mac.conf, and not root. The Mac's steps report the packages, services and files ws manages there, and a step that fails stands in the report as a check. The exit code stays 0. With several servers, one whose file ws refuses stands in the report with the refusal. A report holds no secret.
 
 At a terminal it draws the state screen on stderr, where sudo's password comes through a question. --plain prints the report as text, and so does a pipe. The text is on stdout and ws's own lines on stderr. --json prints the version of ws, then each step with its items and changes.
 
