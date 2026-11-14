@@ -41,10 +41,10 @@ func (MacReach) Rerun() string { return "run the wizard with --update" }
 // Claude runs the login in a session of ssh -t, through a login shell, whose PATH has ~/.local/bin,
 // where claude is.
 func (r MacReach) Claude(ctx context.Context) error {
-	r.Out.Say("%s: claude auth login runs as WS_USER on ws: take its steps at this terminal, "+
-		"and open the address it shows in the Mac's browser", session.ClaudeStage)
+	r.Out.Say("%s: claude auth login runs as WS_USER on %s: take its steps at this terminal, "+
+		"and open the address it shows in the Mac's browser", session.ClaudeStage, r.SSH.Host)
 	if err := r.SSH.Pass(ctx, "-t", r.SSH.Host, `exec bash -lc "claude auth login"`); err != nil {
-		return errors.New(session.ClaudeStage + ": WS_USER's claude on ws still has no login, as above; run the wizard again")
+		return errors.New(session.ClaudeStage + ": WS_USER's claude on " + r.SSH.Host + " still has no login, as above; run the wizard again")
 	}
 	return nil
 }
