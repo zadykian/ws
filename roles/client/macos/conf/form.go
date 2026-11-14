@@ -27,9 +27,14 @@ type Form struct {
 	// Defaults is the text of the shell role's defaults, whose git identity ws's git takes.
 	Defaults []byte
 	M        effect.Machine
+	// Scope is the file that the form shows and saves: Both, the zero value, takes each key.
+	Scope Scope
 	// file is what the files held at the last load, joined.
 	file Conf
 }
+
+// has tells whether the form shows and saves the key, by its scope.
+func (f Form) has(key string) bool { return f.Scope == Both || KeyScope(key) == f.Scope }
 
 // of returns the file of the scope, which says its refusals to out.
 func (f Form) of(s Scope, out effect.Out) File {
@@ -96,6 +101,9 @@ func (f Form) Fields(edits map[string]string) []form.Field {
 	asked, vals := f.walk(edits)
 	fields := make([]form.Field, 0, len(asked))
 	for _, q := range asked {
+		if !f.has(q.Key) {
+			continue
+		}
 		field := form.Field{Key: q.Key, Text: q.Text, Value: f.file.Value(q.Key), Valid: func(raw string) error {
 			if why := q.Refusal(fieldValue(q, raw), vals["WS_LAN"]); why != "" {
 				return errors.New(why)
@@ -121,7 +129,7 @@ func (f Form) settings(edits map[string]string) []Setting {
 	asked, vals := f.walk(edits)
 	var changes []Setting
 	for _, q := range asked {
-		if v := f.wanted(q, edits); v != f.file.Value(q.Key) {
+		if v := f.wanted(q, edits); f.has(q.Key) && v != f.file.Value(q.Key) {
 			changes = append(changes, Setting{Key: q.Key, Value: v})
 		}
 	}
@@ -130,7 +138,7 @@ func (f Form) settings(edits map[string]string) []Setting {
 		gone = slices.Concat(gone, []string{"WS_CABLE_SERVICE", "WS_CABLE_PORT"})
 	}
 	for _, key := range gone {
-		if _, shows := vals[key]; !shows && f.file.Value(key) != "" {
+		if _, shows := vals[key]; !shows && f.has(key) && f.file.Value(key) != "" {
 			changes = append(changes, Setting{Key: key})
 		}
 	}
@@ -142,7 +150,7 @@ func (f Form) settings(edits map[string]string) []Setting {
 func (f Form) Save(ctx context.Context, out effect.Out, edits map[string]string) (Form, error) {
 	changes := f.settings(edits)
 	if len(changes) == 0 {
-		out.Say("%s and %s hold these values already", f.Conf, f.Server)
+		out.Say("%s these values already", f.holding())
 		return f, nil
 	}
 	for _, s := range []Scope{MacFile, ServerFile} {
@@ -169,4 +177,15 @@ func (f Form) Save(ctx context.Context, out effect.Out, edits map[string]string)
 		out.Say("emptied %s", strings.Join(emptied, " "))
 	}
 	return f.Load(out)
+}
+
+// holding names the files that the form saves, with the verb that says they hold what they hold.
+func (f Form) holding() string {
+	switch f.Scope {
+	case MacFile:
+		return f.Conf + " holds"
+	case ServerFile:
+		return f.Server + " holds"
+	}
+	return f.Conf + " and " + f.Server + " hold"
 }
