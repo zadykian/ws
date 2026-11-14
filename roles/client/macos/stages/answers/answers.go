@@ -130,25 +130,31 @@ func (a *Answers) place(text map[conf.Scope]string, c conf.Conf) (*conf.Place, e
 	return p, nil
 }
 
-// collect asks for the values that the files lack, in order, and returns their lines.
-func (a *Answers) collect(ctx context.Context, text map[conf.Scope]string, c conf.Conf, place *conf.Place) (string, error) {
+// collect asks for the values that the files lack, in order, and returns their lines and the
+// server's WS_REMOTE.
+func (a *Answers) collect(ctx context.Context, text map[conf.Scope]string, c conf.Conf, place *conf.Place) (string, string, error) {
 	ask := &asker{conf: a.Conf, prog: a.Prog, env: a.Env, p: a.P, tty: a.Tty, out: a.Out}
 	seq := a.sequence(c, text, place, func(q conf.Question) (string, error) { return ask.ask(ctx, q) })
 	ask.lan = func() string { return seq.Vals["WS_LAN"] }
 	err := seq.Run()
-	return ask.lines, err
+	return ask.lines, seq.Vals["WS_REMOTE"], err
 }
 
 // compose splits the lines by the file of their keys, and returns each file with its lines added,
-// mac.conf first. A server's file that lacks WS_SLOT and gets lines gets its place's slot first. A
-// file refused with its lines is said, and stops the stage.
-func (a *Answers) compose(text map[conf.Scope]string, lines string, place *conf.Place) ([]part, error) {
+// mac.conf first. A server's file that lacks WS_SLOT and gets lines gets its place first: the slot,
+// then WS_PORT where it has none. That keeps servers behind one remote apart. The stage stops at a
+// file refused with its lines, and says it.
+func (a *Answers) compose(text map[conf.Scope]string, lines, remote string, place *conf.Place) ([]part, error) {
 	var parts []part
 	for _, p := range []part{{file: a.file(conf.MacFile), scratch: a.Scratch}, {file: a.file(conf.ServerFile), scratch: a.ServerScratch}} {
 		var err error
 		kept := p.file.Scope.Keep(lines)
 		if p.file.Scope == conf.ServerFile && kept != "" && !conf.HasLine(text[conf.ServerFile], "WS_SLOT") {
-			kept = "WS_SLOT=" + strconv.Itoa(int(place.Slot)) + "\n" + kept
+			head := "WS_SLOT=" + strconv.Itoa(int(place.Slot)) + "\n"
+			if !conf.HasLine(text[conf.ServerFile], "WS_PORT") {
+				head += conf.Line("WS_PORT", place.Port(remote)) + "\n"
+			}
+			kept = head + kept
 		}
 		p.before, p.after, err = p.file.Compose(kept)
 		if errors.Is(err, conf.ErrRefused) {
@@ -182,11 +188,11 @@ func (a *Answers) Apply(ctx context.Context, _ step.Plan) error {
 	if err != nil {
 		return err
 	}
-	lines, err := a.collect(ctx, text, c, place)
+	lines, remote, err := a.collect(ctx, text, c, place)
 	if err != nil {
 		return err
 	}
-	parts, err := a.compose(text, lines, place)
+	parts, err := a.compose(text, lines, remote, place)
 	if err != nil {
 		return err
 	}
@@ -206,11 +212,11 @@ func (a *Answers) rehearse(ctx context.Context, text map[conf.Scope]string, c co
 	if err != nil {
 		return err
 	}
-	lines, err := a.collect(ctx, text, c, place)
+	lines, remote, err := a.collect(ctx, text, c, place)
 	if err != nil {
 		return err
 	}
-	parts, err := a.compose(text, lines, place)
+	parts, err := a.compose(text, lines, remote, place)
 	if err != nil {
 		return err
 	}
