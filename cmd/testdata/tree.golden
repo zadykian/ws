@@ -267,7 +267,7 @@ Global Flags:
       --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos servers
-It lists each server of servers/ beside mac.conf: its target, its slot, and its tunnel, which is absent, stopped, starting, or the tier and endpoint it holds. A server whose file ws refuses shows - and its errors follow the list, with exit code 1. It reads alone, as the user, and takes no --server.
+It lists each server of servers/ beside mac.conf: its target, its slot, and its tunnel, which is absent, stopped, starting, unreadable, or the tier and endpoint it holds. A server whose file ws refuses shows - and its errors follow the list, with exit code 1. It reads alone, as the user, and takes no --server.
 
 Usage:
   ws client macos servers [flags]

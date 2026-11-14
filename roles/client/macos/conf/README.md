@@ -78,10 +78,11 @@ lab   cloud   1     stopped
 ws    lan     0     lan 10.88.0.10:51820
 ```
 
-The tunnel is `absent` before apply sets its daemon up, `stopped` where launchd has not loaded it,
-`starting` before the daemon writes its state, or the tier and endpoint it holds. A server whose
-file ws refuses shows `-` for its target and slot. Its errors follow the rows, with exit code 1. The
-command takes no `--server`.
+The tunnel is `absent` before apply sets its daemon up, and `stopped` where launchd has not loaded
+it. Before the daemon writes its state, it reads `starting`, and `unreadable` where ws can't read
+the state. Else the column shows the tier and endpoint that the state holds. A server whose file ws
+refuses shows `-` for its target and slot. Its errors follow the rows, with exit code 1. The command
+takes no `--server`.
 
 `ws client macos remove NAME` takes a server off the Mac, as the user and under the wizard's lock. It
 refuses the Mac's last server, as apply needs one, and takes no `--server`: the argument is the
