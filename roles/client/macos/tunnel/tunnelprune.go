@@ -2,6 +2,7 @@ package tunnel
 
 import (
 	"context"
+	"path"
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/resource"
@@ -19,11 +20,17 @@ func (t *Tunnel) gone(ctx context.Context) ([]string, error) {
 	if err != nil || !slices.Contains(servers, t.Server) {
 		return nil, err
 	}
+	// Any entry keeps its daemon, with or without a server.conf: one moved aside for an edit, or
+	// behind a link to a volume not mounted, leaves the server there.
+	beside, err := t.M.ReadDir(path.Dir(path.Dir(conf.ServerPath(t.MacConf, t.Server))))
+	if err != nil {
+		return nil, err
+	}
 	found, err := launchd.Found(ctx, t.M)
 	if err != nil {
 		return nil, err
 	}
-	return slices.DeleteFunc(found, func(n string) bool { return !conf.IsName(n) || slices.Contains(servers, n) }), nil
+	return slices.DeleteFunc(found, func(n string) bool { return !conf.IsName(n) || slices.Contains(beside, n) }), nil
 }
 
 // prune plans, for each server that is gone, a bootout where launchd has its daemon loaded, then

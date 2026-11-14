@@ -54,6 +54,21 @@ func TestTunnelRemovesTheDaemonOfAServerThatIsGone(t *testing.T) {
 	}
 }
 
+func TestTunnelKeepsTheDaemonOfAServerWhoseDirectoryStays(t *testing.T) {
+	for name, keep := range map[string]func(*effecttest.Machine){
+		"a directory with no server.conf": func(m *effecttest.Machine) { m.Dirs["/h/.config/ws/servers/lab"] = 0o755 },
+		"a link to a volume not mounted": func(m *effecttest.Machine) {
+			m.Links["/h/.config/ws/servers/lab"] = "/Volumes/gone/lab"
+		},
+	} {
+		m := laterMachine()
+		keep(m)
+		if got := lines(tunnelChanges(t, pruneStep(m))); strings.Contains(got, "lab") {
+			t.Errorf("%s: Plan touches lab's daemon:\n%s", name, got)
+		}
+	}
+}
+
 func TestTunnelLeavesTheDaemonsAloneWhereTheServersLackItsOwn(t *testing.T) {
 	m := laterMachine()
 	delete(m.Files, "/h/.config/ws/servers/ws/server.conf")
