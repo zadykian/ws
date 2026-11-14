@@ -10,10 +10,10 @@ import (
 )
 
 // loginStop is the change that stops the run with what to do: the stage adds no key.
-type loginStop struct{}
+type loginStop struct{ server string }
 
-func (loginStop) String() string {
-	return stage.Login + ": would stop, as WS_USER on ws refuses the Mac's key"
+func (c loginStop) String() string {
+	return stage.Login + ": would stop, as WS_USER on " + c.server + " refuses the Mac's key"
 }
 
 // Plan is empty where WS_USER logs in. Under --check it shows that a run would stop.
@@ -30,7 +30,7 @@ func (r *Login) Plan(ctx context.Context) (step.Plan, error) {
 			return step.Plan{}, err
 		}
 	}
-	return step.Plan{Changes: []step.Change{loginStop{}}}, nil
+	return step.Plan{Changes: []step.Change{loginStop{r.SSH.Host}}}, nil
 }
 
 // Apply stops, naming the Mac's key and the user that holds it without the wizard. Where ws
