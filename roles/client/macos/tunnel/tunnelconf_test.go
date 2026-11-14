@@ -7,7 +7,8 @@ import (
 )
 
 func TestTunnelConf(t *testing.T) {
-	head := "# Written by github.com/zadykian/ws: ws client macos apply, from ~/.config/ws/mac.conf.\nWS_PUBLIC_KEY=K\n"
+	head := "# Written by github.com/zadykian/ws: ws client macos apply, from ~/.config/ws/servers/lab/server.conf.\n" +
+		"WS_PUBLIC_KEY=K\n"
 	tests := []struct {
 		name string
 		c    conf.Conf
@@ -19,7 +20,7 @@ func TestTunnelConf(t *testing.T) {
 		{"the cable", conf.Conf{PublicKey: "K", CableService: "USB LAN"}, head + "WS_CABLE=yes\nWS_PORT=51820\nWS_SLOT=0\n"},
 	}
 	for _, tt := range tests {
-		if got := tunnelConf(tt.c); got != tt.want {
+		if got := tunnelConf(tt.c, "lab"); got != tt.want {
 			t.Errorf("%s: tunnelConf = %q; want %q", tt.name, got, tt.want)
 		}
 	}

@@ -203,7 +203,7 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 			daemon.Found = daemon.Want
 		}
 		parts = append(parts, file.Dir{M: t.M, Path: d.Dir, Mode: 0o700}, file.Dir{M: t.M, Path: d.Routes, Mode: 0o755},
-			file.File{M: t.M, Path: d.Conf, Content: []byte(tunnelConf(t.Conf)), Mode: 0o600},
+			file.File{M: t.M, Path: d.Conf, Content: []byte(tunnelConf(t.Conf, t.Server)), Mode: 0o600},
 			file.File{M: t.M, Path: d.Plist, Content: t.plist(), Mode: 0o644}, file.Fixed{daemon})
 	}
 	return file.Gather(ctx, parts...)
