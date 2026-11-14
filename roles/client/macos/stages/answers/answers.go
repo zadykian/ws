@@ -34,7 +34,7 @@ type Answers struct {
 	Tty bool
 	// Check makes Plan rehearse the stage. It asks, shows the diff of each file, and writes what
 	// mac.conf and the server's file would be to Scratch and ServerScratch, which the stages after
-	// it read.
+	// it read. It copies each other server's file beside them, as the stages list the servers there.
 	Check         bool
 	Scratch       string
 	ServerScratch string
@@ -225,11 +225,43 @@ func (a *Answers) rehearse(ctx context.Context, text map[conf.Scope]string, c co
 			a.Out.Say("would make %s", path.Dir(p.file.Path))
 		}
 		a.Out.Diff(p.file.Path, []byte(p.before), []byte(p.after))
-		if _, err := a.M.Run(ctx, "mkdir", "-p", path.Dir(p.scratch)); err != nil {
-			return fmt.Errorf("%s: cannot make %s", stage.Answers, path.Dir(p.scratch))
+		if err := a.writeScratch(ctx, p.scratch, []byte(p.after)); err != nil {
+			return err
 		}
-		if err := a.M.WriteFile(p.scratch, []byte(p.after), 0o600); err != nil {
-			return fmt.Errorf("%s: cannot write %s", stage.Answers, p.scratch)
+	}
+	return a.copyOthers(ctx)
+}
+
+// writeScratch writes text to the scratch file at file, in a directory it makes.
+func (a *Answers) writeScratch(ctx context.Context, file string, text []byte) error {
+	if _, err := a.M.Run(ctx, "mkdir", "-p", path.Dir(file)); err != nil {
+		return fmt.Errorf("%s: cannot make %s", stage.Answers, path.Dir(file))
+	}
+	if err := a.M.WriteFile(file, text, 0o600); err != nil {
+		return fmt.Errorf("%s: cannot write %s", stage.Answers, file)
+	}
+	return nil
+}
+
+// copyOthers copies the file of each other server beside mac.conf, as it stands, to the scratch's
+// servers/. The run reads them beside the server's file. So a refused one or a clash refuses the
+// rehearsal too, and the steps plan for the servers that the run would list.
+func (a *Answers) copyOthers(ctx context.Context) error {
+	names, err := conf.Servers(a.M, a.Conf)
+	if err != nil {
+		return err
+	}
+	for _, n := range names {
+		file := conf.ServerPath(a.Conf, n)
+		if file == a.Server {
+			continue
+		}
+		text, err := a.M.ReadFile(file)
+		if err != nil {
+			return fmt.Errorf("%s: cannot read %s", stage.Answers, file)
+		}
+		if err := a.writeScratch(ctx, conf.ServerPath(a.Scratch, n), text); err != nil {
+			return err
 		}
 	}
 	return nil
