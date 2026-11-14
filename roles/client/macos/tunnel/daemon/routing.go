@@ -9,10 +9,27 @@ import (
 	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
-// allow sorts routes.d by the endpoints hosts, and logs a network once as it goes out. told holds
+// otherEnds sets the endpoints of the other servers: each one's LAN address, and its remote as
+// the system's resolver gives it now. A network that holds one would send that server's own
+// packets into this server's tunnel.
+func (d *Daemon) otherEnds(ctx context.Context) {
+	d.elsewhere = nil
+	for _, o := range d.set.Others {
+		if o.Conf.LANServer.IsValid() {
+			d.elsewhere = append(d.elsewhere, o.Conf.LANServer)
+		}
+		if o.Conf.Remote != "" {
+			if a := routing.Resolve(ctx, d.M, o.Conf.Remote); a.IsValid() {
+				d.elsewhere = append(d.elsewhere, a)
+			}
+		}
+	}
+}
+
+// allow sorts routes.d by the endpoints hosts and those of the other servers, and logs a network once as it goes out. told holds
 // the networks logged until keepOut takes them back.
 func (d *Daemon) allow(hosts []netip.Addr) tunnel.Allowed {
-	a := tunnel.AllowedFor(d.set.Routes, hosts, d.told)
+	a := tunnel.AllowedFor(d.set.Routes, append(slices.Clone(hosts), d.elsewhere...), d.told)
 	for _, line := range a.Logs {
 		d.say("%s", line)
 	}
