@@ -28,8 +28,8 @@
       // The agent panel; replaces Zed's F7, which steps over while stopped, as F10 steps over too
       "f7": "agent::ToggleFocus",
       "alt-7": "agent::ToggleFocus",
-      "f5": "git_panel::ToggleFocus",
-      "alt-5": "git_panel::ToggleFocus",
+      "f3": "git_panel::ToggleFocus",
+      "alt-3": "git_panel::ToggleFocus",
       "f1": "project_panel::ToggleFocus",
       "alt-1": "project_panel::ToggleFocus",
       "f2": "terminal_panel::Toggle",
@@ -119,13 +119,12 @@
       "alt-1": "workspace::CloseActiveDock"
     }
   },
-  // The git panel; F5 hides it again.
+  // The git panel; F3 hides it again.
   {
     "context": "GitPanel",
     "bindings": {
-      // Replaces Zed's F5, which reruns the debugger
-      "f5": "workspace::CloseActiveDock",
-      "alt-5": "workspace::CloseActiveDock"
+      "f3": "workspace::CloseActiveDock",
+      "alt-3": "workspace::CloseActiveDock"
     }
   },
   // The git graph, a tab; F6 closes it again. Focus starts in its search field, an Editor below

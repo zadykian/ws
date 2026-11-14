@@ -72,7 +72,7 @@ server to every YAML file, Ansible's too.
 - `ws` through the tunnel needs no Local Network grant. Only a direct way does ([The Mac](../README.md)),
   so the seed names `ws` alone.
 - The terminal and the git panel dock right, the git panel 600 pixels wide, as the project and
-  outline panels dock left. A dock shows one panel at a time, so F2 and F5 swap the two. A resize
+  outline panels dock left. A dock shows one panel at a time, so F2 and F3 swap the two. A resize
   of a terminal docked at a side duplicates its lines (zed#65316, open).
 - `terminal.shell` stays unset, as Zed runs it on ws too (zed#65548). `option_as_meta` gives the
   Alt keys in Zed's terminal, at the cost of Option's special characters. `detect_venv` is `off`:
@@ -131,7 +131,7 @@ and digits stay Zed's.
 - **Edit predictions:** Tab and Alt+Tab stay Zed's.
 - F7 replaces Zed's F7, step over while stopped, and F10 steps over too.
 - The global keys win in the agent panel, so its Alt+Left and Right are the tab keys there.
-- **Keys whose action Zed lacks keep Zed's:** F3 tests, F4 NuGet, F10 build and Alt+Delete safe
+- **Keys whose action Zed lacks keep Zed's:** F4 NuGet, F10 build and Alt+Delete safe
   delete.
 - **Code actions:** Alt+Enter opens the full menu, as no binding picks a kind (zed#14470).
 - Next error can skip gopls's unused-variable errors (zed#64790).

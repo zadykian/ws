@@ -25,9 +25,9 @@
         { "key": "Left", "modifiers": ["alt"], "action": "prev_buffer", "when": "normal" },
         { "key": "Left", "modifiers": ["alt", "shift"], "action": "prev_split", "when": "normal" },
         { "key": "F1", "modifiers": ["alt"], "action": "focus_file_explorer", "when": "normal" },
-        // a review view, not a staging panel
-        { "key": "F5", "action": "start_review_diff", "when": "normal" },
-        { "key": "5", "modifiers": ["alt"], "action": "start_review_diff", "when": "normal" },
+        // a review view, not a staging panel; replaces find_next, which alt+shift+/ keeps
+        { "key": "F3", "action": "start_review_diff", "when": "normal" },
+        { "key": "3", "modifiers": ["alt"], "action": "start_review_diff", "when": "normal" },
         { "key": "F1", "action": "toggle_file_explorer", "when": "normal" },
         { "key": "1", "modifiers": ["alt"], "action": "toggle_file_explorer", "when": "normal" },
         // opens or focuses; toggle_utility_dock hides it
@@ -182,7 +182,7 @@
   // alt+shift+0: the terminal sets the font size.
   // alt+shift+Enter: the terminal owns the window.
   // alt+x, alt+z, alt+v, alt+c, alt+a: no git command in Fresh: the shell does this.
-  // F5, alt+5: no git panel in Fresh.
+  // F3, alt+3 in the git panel: no git panel in Fresh.
   // F7, alt+7: no agent panel: the orchestrator isn't one.
   // F13: no context menu action.
   // alt+shift+-, alt+shift+], alt+shift+[: no syntax-tree selection or motion in Fresh.
