@@ -34,9 +34,9 @@
       "alt-1": "project_panel::ToggleFocus",
       "f2": "terminal_panel::Toggle",
       "alt-2": "terminal_panel::Toggle",
-      // The log: Zed's git graph
-      "f6": "git_graph::Open",
-      "alt-6": "git_graph::Open",
+      // The log: Zed's git graph; replaces Zed's F4, debugger start, which Alt+Shift+F9 keeps
+      "f4": "git_graph::Open",
+      "alt-4": "git_graph::Open",
       "alt-x": "git::Branch",
       "alt-z": "git::Fetch",
       "alt-v": "git::Push",
@@ -127,13 +127,13 @@
       "alt-3": "workspace::CloseActiveDock"
     }
   },
-  // The git graph, a tab; F6 closes it again. Focus starts in its search field, an Editor below
-  // GitGraph, where the global F6 would win. The parentheses hold, as > binds looser than ||.
+  // The git graph, a tab; F4 closes it again. Focus starts in its search field, an Editor below
+  // GitGraph, where the global F4 would win. The parentheses hold, as > binds looser than ||.
   {
     "context": "GitGraph || (GitGraph > Editor)",
     "bindings": {
-      "f6": "pane::CloseActiveItem",
-      "alt-6": "pane::CloseActiveItem"
+      "f4": "pane::CloseActiveItem",
+      "alt-4": "pane::CloseActiveItem"
     }
   },
   // The commit message.

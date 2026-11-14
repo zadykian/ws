@@ -131,7 +131,7 @@ and digits stay Zed's.
 - **Edit predictions:** Tab and Alt+Tab stay Zed's.
 - F7 replaces Zed's F7, step over while stopped, and F10 steps over too.
 - The global keys win in the agent panel, so its Alt+Left and Right are the tab keys there.
-- **Keys whose action Zed lacks keep Zed's:** F4 NuGet, F10 build and Alt+Delete safe
+- **Keys whose action Zed lacks keep Zed's:** F10 build and Alt+Delete safe
   delete.
 - **Code actions:** Alt+Enter opens the full menu, as no binding picks a kind (zed#14470).
 - Next error can skip gopls's unused-variable errors (zed#64790).

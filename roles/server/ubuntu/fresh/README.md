@@ -145,7 +145,7 @@ that Fresh lacks. Tests hold the template to its rules.
   `normal`. Fresh's `normal` passes only its UI actions on to the explorer and the panels
   ([Other limits](#other-limits)).
 - Tree and Panel bind in `file_explorer`, and Terminal in `terminal`.
-- F6 and alt+6 close the git log in `mode:git-log`, the mode of its plugin, as Zed's close its git
+- F4 and alt+4 close the git log in `mode:git-log`, the mode of its plugin, as Zed's close its git
   graph. A map's binding there comes before the plugin's own.
 
 ### Strokes
@@ -182,7 +182,7 @@ alt+o (the dock's focus).
   editor.
 - Fresh's `normal` passes on only its UI actions: menus, quick open, splits, tabs, the terminal's
   and the explorer's toggles. With focus in the explorer or a panel, the map's other keys do
-  nothing. F6 there opens Fresh's remote menu, not the git log.
+  nothing.
 - The prefix reaches the editor pressed twice: ctrl+b by default, ctrl+q in cld's sessions. So
   Fresh's quit on ctrl+q takes two presses in cld's sessions, and ctrl+b two in tmux.
 - A folder with a project marker opens Restricted, with every server off
