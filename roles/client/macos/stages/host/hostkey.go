@@ -41,10 +41,10 @@ func (*Key) Side() guided.Side { return stage.Mac }
 func (*Key) WaitsOn() string { return stage.Setup }
 
 // hostAdd is the change that adds ws's key to known_hosts.
-type hostAdd struct{ file string }
+type hostAdd struct{ server, file string }
 
 func (c hostAdd) String() string {
-	return stage.Host + ": would add ws's key to " + c.file
+	return stage.Host + ": would add " + c.server + "'s key to " + c.file
 }
 
 // conf reads mac.conf.
@@ -57,7 +57,7 @@ func (h *Key) known(ctx context.Context, file string) bool {
 }
 
 // noWay is the stop where no way leads to ws, naming what ws's target needs.
-func noWay(c conf.Conf) error {
+func noWay(server string, c conf.Conf) error {
 	how := "set those in server.conf"
 	switch c.Target {
 	case "lan":
@@ -67,7 +67,7 @@ func noWay(c conf.Conf) error {
 	default:
 		how += ", as roles/client/macos/conf/README.md says"
 	}
-	return errors.New(stage.Host + ": ssh finds no direct way to ws from this network: no cable, no address in " +
+	return errors.New(stage.Host + ": ssh finds no direct way to " + server + " from this network: no cable, no address in " +
 		"WS_LAN and no WS_REMOTE_PORT; " + how)
 }
 
@@ -79,7 +79,7 @@ func (h *Key) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	way, err := h.SSH.Way(ctx)
 	if err != nil {
-		return step.Plan{}, noWay(c)
+		return step.Plan{}, noWay(h.SSH.Host, c)
 	}
 	if h.known(ctx, way.KnownHosts) {
 		return step.Plan{}, nil
@@ -90,5 +90,5 @@ func (h *Key) Plan(ctx context.Context) (step.Plan, error) {
 			return step.Plan{}, err
 		}
 	}
-	return step.Plan{Changes: []step.Change{hostAdd{way.KnownHosts}}}, nil
+	return step.Plan{Changes: []step.Change{hostAdd{h.SSH.Host, way.KnownHosts}}}, nil
 }
