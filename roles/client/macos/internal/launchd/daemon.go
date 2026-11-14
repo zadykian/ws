@@ -15,15 +15,16 @@ const (
 )
 
 // Daemon is one server's tunnel daemon: its launchd job and the files it keeps.
-type Daemon struct{ Name, Label, Plist, Dir, Conf, State, Log string }
+type Daemon struct{ Name, Label, Plist, Dir, Routes, Conf, State, Log string }
 
-// For returns the daemon of the server called name. Dir is root's.
+// For returns the daemon of the server called name. Dir is root's, and Routes is the directory in
+// it of the networks that this server's tunnel takes.
 func For(name string) Daemon {
 	label := labelPrefix + name
 	dir := Dir + "/" + name
 	return Daemon{
 		Name: name, Label: label, Plist: daemons + "/" + label + ".plist",
-		Dir: dir, Conf: dir + "/tunnel.conf",
+		Dir: dir, Routes: dir + "/routes.d", Conf: dir + "/tunnel.conf",
 		State: "/var/run/ws-tunnel." + name + ".state", Log: "/var/log/ws-tunnel." + name + ".log",
 	}
 }

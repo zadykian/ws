@@ -2,10 +2,11 @@ package networks
 
 import "strings"
 
-// routesText is routes.d/mac-conf: the networks of WS_TUNNEL_NETWORKS, a network a line, which the
-// daemon adds to the peer's AllowedIPs and routes into its utun.
-func routesText(networks []string) string {
-	return "# Written by github.com/zadykian/ws: ws client macos tunnel routes mac-conf.\n" + strings.Join(networks, "\n") + "\n"
+// routesText is a file of a server's routes.d: the networks of a set, a network a line. The
+// server's daemon adds them to the peer's AllowedIPs and routes them into its utun.
+func routesText(server, set string, networks []string) string {
+	return "# Written by github.com/zadykian/ws: ws client macos tunnel routes --server " + server + " " + set + ".\n" +
+		strings.Join(networks, "\n") + "\n"
 }
 
 // resolverHeader is the first line of the files in /etc/resolver that ws writes, by which a run
