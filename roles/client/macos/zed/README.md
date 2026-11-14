@@ -47,7 +47,7 @@ arrays replace rather than merge, so the connections can sit in no other file. Z
 `~/.ssh/config` has no `Include`, so it does not list `ws`, which lives in `~/.ssh/config.d/ws`. Zed
 connects with the system `ssh`, so `host: "ws"` resolves through that file, with its user, key and
 keepalive. Nothing else is set there: no `username`, `port` or `args`. A server added later is
-not added to a `settings.json` that exists.
+not added to a `settings.json` that exists ([below](#a-settingsjson-that-exists-already)).
 
 A linked `~/.config/zed`, as GNU stow's folding makes, draws a warning where the step plans a write:
 Zed's files go through the link.
@@ -59,7 +59,12 @@ file is there on every later run, and the step never reads it. Zed's first write
 template, whose `theme` (One Light and One Dark, mode `system`) would win over ws's. So:
 
 - delete the `theme` block of `settings.json`, or the theme stays Zed's;
-- add `ws` in Remote Projects by hand, as the seed would have.
+- add each server in Remote Projects by hand, as the seed would have.
+
+A server added once the file is there is missing from it too, and the run says nothing of it. The
+step keeps no record of the servers that the seed held, so it cannot tell a later one. Add
+`{ "host": "NAME" }`, NAME the server's, at the end of `ssh_connections`. An entry put before
+others shifts their indices, by which Zed records the projects opened on them.
 
 ## Extensions
 
@@ -70,8 +75,8 @@ server to every YAML file, Ansible's too.
 
 ## Other facts
 
-- `ws` through the tunnel needs no Local Network grant. Only a direct way does ([The Mac](../README.md)),
-  so the seed names `ws` alone.
+- A server through its tunnel needs no Local Network grant. Only a direct way does ([The Mac](../README.md)),
+  so the seed names each server's host alone, which goes through its tunnel.
 - The terminal and the git panel dock right, the git panel 600 pixels wide, as the project and
   outline panels dock left. A dock shows one panel at a time, so F2 and F3 swap the two. A resize
   of a terminal docked at a side duplicates its lines (zed#65316, open).
