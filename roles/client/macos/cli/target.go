@@ -13,6 +13,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // macTarget is ws client macos apply's side of the verbs. only holds the steps that --only names,
@@ -35,6 +36,9 @@ func macTarget(p enginecli.Env, only *[]string, server *string) engine.Target {
 			}
 			name, settings, err := loadMacConf(p, server)
 			if err != nil {
+				return engine.Run{}, err
+			}
+			if err := refuseBadSibling(p.Machine, conf.Path(p.Getenv, p.Pwd), name); err != nil {
 				return engine.Run{}, err
 			}
 			run := engine.Run{M: c.Machine}
