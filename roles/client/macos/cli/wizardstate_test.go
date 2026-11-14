@@ -93,8 +93,8 @@ func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
 		<-ws.ops
 		_, _ = keys.Write([]byte("q"))
 	}()
-	read, done := macState(p, wsServer(), string(session.Ws), &host.Sudo{})
-	err := tui.RunState(c.Context(), engine.ScreenConfig(enginecli.CallOf(c, p)), string(session.Ws), read)
+	read, done := macState(p, wsServer(), string(session.SideOf("ws")), &host.Sudo{})
+	err := tui.RunState(c.Context(), engine.ScreenConfig(enginecli.CallOf(c, p)), string(session.SideOf("ws")), read)
 	done(c.Context())
 	if err != nil {
 		t.Fatal(err)

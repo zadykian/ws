@@ -98,9 +98,9 @@ func wizardStages(e wizardEffects, o engine.WizardOptions, name string) []step.S
 	sudo := e.sudo
 	ws := session.New(host.MacReach{SSH: hostKey.SSH, Sudo: sudo, Conf: laterServer, Out: out},
 		session.Scripts{Remote: session.RemoteScript, Files: session.RemoteFilesScript, Events: e.events})
-	sudo.SSH, sudo.Tty, sudo.Check, sudo.P, sudo.Out = hostKey.SSH, p.TTY, check, e.hidden, out
-	install := &tools.WsInstall{Ws: ws, Version: p.Version, URL: p.Releases, Out: out}
-	run := &stages.WsRun{Ws: ws, Await: install.Name(), Check: check, Out: out, Version: p.Version, Update: o.Update, Only: o.Only}
+	sudo.SSH, sudo.Tty, sudo.Check, sudo.P, sudo.Out, sudo.Server = hostKey.SSH, p.TTY, check, e.hidden, out, name
+	install := &tools.WsInstall{Server: name, Ws: ws, Version: p.Version, URL: p.Releases, Out: out}
+	run := &stages.WsRun{Server: name, Ws: ws, Await: install.Name(), Check: check, Out: out, Version: p.Version, Update: o.Update, Only: o.Only}
 	hand.Late(ws.Hand)
 	hand.Late(ghStage.Hand)
 	setup := wizardSetup(e, o.Left, later, name)
@@ -123,7 +123,7 @@ func wizardStages(e wizardEffects, o engine.WizardOptions, name string) []step.S
 		sudo,
 		install,
 		run,
-		&stages.WsClaude{Ws: ws, Tty: p.TTY},
+		&stages.WsClaude{Server: name, Ws: ws, Tty: p.TTY},
 		&stages.Signing{Ws: ws, GitHub: &gh.MacGitHub{Gh: ghStage.CLI, Lock: lock, Check: check}},
 		&link.Tunnel{SSH: hostKey.SSH, Ws: ws, Conf: laterServer, Check: check, Server: name, MacApply: setup.Run, Hand: hand, Home: p.Getenv("HOME"),
 			Sleep: time.Sleep, M: p.Machine, Out: out},
