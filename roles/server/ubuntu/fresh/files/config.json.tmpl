@@ -36,6 +36,9 @@
         // a log with no graph
         { "key": "F6", "action": "show_git_log", "when": "normal" },
         { "key": "6", "modifiers": ["alt"], "action": "show_git_log", "when": "normal" },
+        // the git log plugin's mode, over each of its panels
+        { "key": "F6", "action": "git_log_close", "when": "mode:git-log" },
+        { "key": "6", "modifiers": ["alt"], "action": "git_log_close", "when": "mode:git-log" },
         { "key": "Up", "modifiers": ["alt"], "action": "move_line_up", "when": "normal" },
         { "key": "Down", "modifiers": ["alt"], "action": "move_line_down", "when": "normal" },
         { "key": "Up", "modifiers": ["alt", "shift"], "action": "add_cursor_above", "when": "normal" },

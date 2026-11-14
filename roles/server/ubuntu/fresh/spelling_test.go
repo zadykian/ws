@@ -7,9 +7,10 @@ import (
 )
 
 // Fresh reads a misspelt when as normal, drops a key it can't name and ignores a modifier it
-// doesn't know, so that the plain key binds. Each spelling is checked here.
+// doesn't know, so that the plain key binds. Each spelling is checked here. A mode is a plugin's,
+// named by its defineMode: git-log is plugins/git_log.ts's.
 var (
-	whens     = []string{"normal", "file_explorer", "terminal"}
+	whens     = []string{"normal", "file_explorer", "terminal", "mode:git-log"}
 	modifiers = []string{"ctrl", "alt", "shift", "super"}
 	keyNames  = regexp.MustCompile(`^(F([1-9]|1[0-9]|2[0-4])|Up|Down|Left|Right|Home|End|PageUp|PageDown|` +
 		`Enter|Esc|Tab|Space|Backspace|Delete|[^A-Z\s])$`)

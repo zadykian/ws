@@ -145,6 +145,8 @@ that Fresh lacks. Tests hold the template to its rules.
   `normal`. Fresh's `normal` passes only its UI actions on to the explorer and the panels
   ([Other limits](#other-limits)).
 - Tree and Panel bind in `file_explorer`, and Terminal in `terminal`.
+- F6 and alt+6 close the git log in `mode:git-log`, the mode of its plugin, as Zed's close its git
+  graph. A map's binding there comes before the plugin's own.
 
 ### Strokes
 
