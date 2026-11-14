@@ -19,7 +19,7 @@ var (
 // DefaultPort is WireGuard's, for a tunnel.conf with no WS_PORT.
 const DefaultPort = 51820
 
-// Conf is tunnel.conf: the KEY=value lines that setup copies from mac.conf.
+// Conf is tunnel.conf: the KEY=value lines that setup copies from the server's file.
 type Conf struct {
 	Key       string // ws's public key
 	LAN       netip.Prefix

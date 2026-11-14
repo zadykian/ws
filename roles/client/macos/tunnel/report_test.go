@@ -74,7 +74,7 @@ func TestTunnelReportsADaemonLaunchdLacks(t *testing.T) {
 func TestTunnelWithoutAPeerReportsNoDaemon(t *testing.T) {
 	got := mactest.ReportOf(t, tunnelStep(effecttest.NewMachine()))
 	if _, ok := got[daemonName]; ok {
-		t.Errorf("items = %v, want no daemon before mac.conf names a peer", got)
+		t.Errorf("items = %v, want no daemon before the server's file names a peer", got)
 	}
 	if it := got[tunnelKey]; it.Kind != step.FileItem || it.Found != "missing" {
 		t.Errorf("key = %+v", it)
