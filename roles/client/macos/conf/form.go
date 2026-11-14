@@ -145,7 +145,7 @@ func (f Form) settings(edits map[string]string) []Setting {
 	return changes
 }
 
-// Save writes the changes, each to the file of its key, mac.conf first, and returns the form of what
+// Save composes and checks the changes of both files, then writes each to the file of its key, mac.conf first, and returns the form of what
 // they then hold. It says the keys that it emptied, as some of them no longer show.
 func (f Form) Save(ctx context.Context, out effect.Out, edits map[string]string) (Form, error) {
 	changes := f.settings(edits)
@@ -153,6 +153,11 @@ func (f Form) Save(ctx context.Context, out effect.Out, edits map[string]string)
 		out.Say("%s these values already", f.holding())
 		return f, nil
 	}
+	type edit struct {
+		file  File
+		after string
+	}
+	var composed []edit
 	for _, s := range []Scope{MacFile, ServerFile} {
 		var own []Setting
 		for _, c := range changes {
@@ -163,7 +168,15 @@ func (f Form) Save(ctx context.Context, out effect.Out, edits map[string]string)
 		if len(own) == 0 {
 			continue
 		}
-		if err := f.of(s, out).SetAll(ctx, own...); err != nil {
+		file := f.of(s, out)
+		_, after, err := file.change(own...)
+		if err != nil {
+			return f, err
+		}
+		composed = append(composed, edit{file, after})
+	}
+	for _, e := range composed {
+		if err := e.file.Write(ctx, e.after); err != nil {
 			return f, err
 		}
 	}

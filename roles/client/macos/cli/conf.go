@@ -1,10 +1,7 @@
 package cli
 
 import (
-	"errors"
-	"fmt"
 	"io"
-	"io/fs"
 
 	"github.com/spf13/cobra"
 
@@ -46,20 +43,13 @@ func runConf(c *cobra.Command, p enginecli.Env, server *string, args []string, l
 		_, err = io.WriteString(c.OutOrStdout(), settings.Assignments())
 		return err
 	}
-	text, err := p.Machine.ReadFile(file)
-	if errors.Is(err, fs.ErrNotExist) {
-		return fmt.Errorf("%s is missing: roles/client/macos/README.md says what goes in it", file)
-	}
+	name, err := conf.Pick(p.Machine, file, *server)
 	if err != nil {
 		return err
 	}
-	settings, errs := conf.Lines(string(text))
-	if len(errs) > 0 {
-		var all []error
-		for _, e := range errs {
-			all = append(all, errors.New(e.In(file)))
-		}
-		return errors.Join(all...)
+	settings, err := conf.LoadLines(p.Machine, file, conf.ServerPath(file, name))
+	if err != nil {
+		return err
 	}
 	_, err = io.WriteString(c.OutOrStdout(), settings.Assignments())
 	return err

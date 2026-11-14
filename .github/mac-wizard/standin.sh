@@ -18,7 +18,7 @@ for dir in /usr/local /usr/local/libexec; do
         sudo chmod 755 "$dir"
     fi
 done
-# mac.conf's answers: ws by the router's name and port alone, as a Mac away from home has it. The
+# The conf's answers: ws by the router's name and port alone, as a Mac away from home has it. The
 # file ~/.ssh/id_ed25519, made here, is ws's key, as the wizard makes none in a file. Nor can a run
 # with no terminal ask for one of Secretive's.
 mkdir -p ~/.config/ws

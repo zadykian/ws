@@ -32,3 +32,12 @@ func TestParseListsNoMacForAnAddressItCannotRead(t *testing.T) {
 		t.Errorf("Parse = %v, %v; want no peer", got.Wireguard.Peers, err)
 	}
 }
+
+func TestParseTakesANullPeerListAsNoPeer(t *testing.T) {
+	for _, in := range []string{"wireguard_peers:\n", "wireguard_peers: ~\n", "wireguard_peers: null\n", "wireguard_address: 10.98.0.1/24\nwireguard_peers:\n"} {
+		got, err := Parse([]byte(in))
+		if err != nil || len(got.Wireguard.Peers) != 0 {
+			t.Errorf("Parse(%q) = %v, %v; want no peer", in, got.Wireguard.Peers, err)
+		}
+	}
+}

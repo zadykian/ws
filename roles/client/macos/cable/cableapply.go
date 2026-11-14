@@ -10,7 +10,7 @@ import (
 // setManual runs networksetup -setmanual, then reads the service again. Where it still shows other
 // settings, as a profile that manages it would leave them, the run stops with the remedy. That is
 // to set it by hand in System Settings › Network, as roles/client/macos/README.md's The cable says, or to empty
-// mac.conf's WS_CABLE_SERVICE.
+// the server's WS_CABLE_SERVICE.
 type setManual struct {
 	c Cable
 	resource.Command
