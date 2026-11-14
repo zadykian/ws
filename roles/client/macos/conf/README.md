@@ -65,6 +65,22 @@ another's takes. Each of the two refuses until one changes, in its own file's wo
 
 A file of another server that is missing or refused is left out: a run for that server refuses it.
 
+## The servers
+
+`ws client macos servers` lists each server by name, with its target, slot and tunnel, as the
+user:
+
+```text
+NAME  TARGET  SLOT  TUNNEL
+lab   cloud   1     stopped
+ws    lan     0     lan 10.88.0.10:51820
+```
+
+The tunnel is `absent` before apply sets its daemon up, `stopped` where launchd has not loaded it,
+`starting` before the daemon writes its state, or the tier and endpoint it holds. A server whose
+file ws refuses shows `-` for its target and slot. Its errors follow the rows, with exit code 1. The
+command takes no `--server`.
+
 ## A machine on the LAN
 
 `WS_TARGET=lan`, the default, is a machine at home, behind [The router](../../../server/ubuntu/network/router.md), with a cable to
