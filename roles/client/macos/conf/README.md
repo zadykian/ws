@@ -39,11 +39,14 @@ server's file is `servers/ws/server.conf` beside it. Each key's meaning is in
 
 `--server NAME` picks the server, and its file is `servers/NAME/server.conf`. A name is a
 lower-case letter, then up to 11 lower-case letters, digits and `-`, other than `direct`,
-`first` and `key`. With one server, the flag may
-be left out. With none, the wizard asks the name, `ws` by default. With several, it refuses and
-lists them. `WS_SLOT`, from 0 to 15, is the slot: the wizard writes `WS_SLOT=0` in a file that
-lacks it. A LAN and `WS_TUNNEL_NETWORKS` stay clear of the slots' `10.99.0.0/20`. A directory of a
-bad name that holds `server.conf` is refused too.
+`first` and `key`. With one server, the flag may be left out. With none, the wizard asks the name,
+`ws` by default. With several, it refuses and lists them. `WS_SLOT`, from 0 to 15, is the slot. The
+wizard writes the smallest that no other server holds in a file that lacks it, and `WS_PORT` after
+it. `WS_PORT` is 51820, or 51820 plus the slot behind a router that another server shares, or the
+next port up that none of those takes. The default of `WS_REMOTE_PORT` follows 22022 likewise. A
+LAN and `WS_TUNNEL_NETWORKS` stay
+clear of the slots' `10.99.0.0/20`. A directory of a bad name that holds `server.conf` is refused
+too.
 
 ## What two servers may not share
 
@@ -55,6 +58,9 @@ another's takes. Each of the two refuses until one changes, in its own file's wo
 - `WS_RESOLVERS`: a domain the other names, as `/etc/resolver` holds one file a domain.
 - `WS_CABLE_SERVICE`: a cable the other names. Leave it empty in all but one server's file: the
   cable reaches that server alone ([the tunnel](../tunnel/README.md#the-cable)).
+- `WS_SLOT`: the other's slot, as each server's tunnel is the subnet of its slot.
+- `WS_PORT` and `WS_REMOTE_PORT`: the other's, behind the same `WS_REMOTE`, as the router forwards
+  a port to one server.
 
 A file of another server that is missing or refused is left out: a run for that server refuses it.
 
