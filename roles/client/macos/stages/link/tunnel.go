@@ -78,10 +78,10 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	var ch []step.Change
 	if s.MacKey != mac {
-		ch = append(ch, tunnelChange("write the Mac's key, "+mac+", to /etc/wireguard/mac.pub on ws"))
+		ch = append(ch, tunnelChange("write the Mac's key, "+mac+", to /etc/wireguard/mac.pub on "+t.SSH.Host))
 	}
 	if s.MacKey != mac || !s.Peered {
-		ch = append(ch, tunnelChange("run ws server ubuntu apply --only wireguard on ws, for wg0's peer"))
+		ch = append(ch, tunnelChange("run ws server ubuntu apply --only wireguard on "+t.SSH.Host+", for wg0's peer"))
 	}
 	switch wg0 := s.WgKey; {
 	case wg0 == "":
@@ -96,7 +96,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in server.conf to wg0's key, "+wg0))
 	}
 	return step.Plan{Changes: append(ch, tunnelChange("run ws client macos apply again, which loads ws-tunnel, and wait up "+
-		"to 30 s for ws-tunnel's handshake, then log in to ws through it"))}, nil
+		"to 30 s for ws-tunnel's handshake, then log in to "+t.SSH.Host+" through it"))}, nil
 }
 
 // label is the label of the server's daemon in launchd.

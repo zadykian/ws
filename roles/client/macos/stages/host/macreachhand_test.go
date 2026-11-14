@@ -53,3 +53,14 @@ func TestMacHandNamesTheServer(t *testing.T) {
 		}
 	}
 }
+
+func TestMacHandNamesTheServerInTheOutboundLine(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\nWS_USER=ada\n")
+	r := MacReach{SSH: remote.SSH{Host: "lab", M: m, Lock: "/l"}, Conf: "/h/mac.conf", Out: &effecttest.Out{}}
+	h := &guided.Hand{}
+	r.Hand(h, session.Status{OutboundOff: true})
+	if got := strings.Join(h.Lines(), "\n"); !strings.Contains(got, "lab's outbound table: off, as lab's /etc/ws/host_vars.yml names") {
+		t.Errorf("Hand = %q; want lab's outbound line", got)
+	}
+}
