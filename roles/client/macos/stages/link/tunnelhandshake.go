@@ -32,7 +32,7 @@ func (t *Tunnel) handshake(ctx context.Context, c conf.Conf, kick bool) error {
 		if err := t.M.Pass(ctx, true, "launchctl", "kickstart", "-k", "system/"+t.label()); err != nil {
 			return fmt.Errorf("%s: launchctl kickstart -k system/%s failed", stage.Tunnel, t.label())
 		}
-		t.Out.Say("%s: ran launchctl kickstart -k system/%s, for wg0's new peer on ws", stage.Tunnel, t.label())
+		t.Out.Say("%s: ran launchctl kickstart -k system/%s, for wg0's new peer on %s", stage.Tunnel, t.label(), t.SSH.Host)
 	}
 	t.Sleep(2 * time.Second)
 	if !t.shake(ctx, 30) {
@@ -44,7 +44,7 @@ func (t *Tunnel) handshake(ctx context.Context, c conf.Conf, kick bool) error {
 		return nil
 	}
 	if !t.via(ctx, end) {
-		return errors.New(stage.Tunnel + ": ssh -G " + t.SSH.Host + " gives another host than " + end.String() + ", ws's end of the " +
+		return errors.New(stage.Tunnel + ": ssh -G " + t.SSH.Host + " gives another host than " + end.String() + ", " + t.SSH.Host + "'s end of the " +
 			"tunnel, which ws client macos apply's config.d/ws names")
 	}
 	out, err := t.SSH.Tunnel(ctx, "-o", "BatchMode=yes", t.SSH.Host, "echo", "ok")

@@ -48,15 +48,15 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 				out = append(out, p.name)
 			}
 		}
-		port, err := c.ask(ctx, "WS_CABLE_PORT", "ws's port of the cable", one(c.up()), c.names(), out)
+		port, err := c.ask(ctx, "WS_CABLE_PORT", c.SSH.Host+"'s port of the cable", one(c.up()), c.names(), out)
 		if err != nil {
 			return err
 		}
 		if port == "" {
 			return c.write(ctx, "")
 		}
-		c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on ws, and ws server ubuntu apply --only network,wireguard "+
-			"runs there in a unit of its own", stage.Cable, port)
+		c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on %s, and ws server ubuntu apply --only network,wireguard "+
+			"runs there in a unit of its own", stage.Cable, port, c.SSH.Host)
 		if err := c.name(ctx, port); err != nil {
 			return err
 		}
@@ -64,8 +64,8 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 			return err
 		}
 		if c.end() != port {
-			return fmt.Errorf("%s: ws's %s lacks %s after ws server ubuntu apply --only network,wireguard: plug the "+
-				"Mac's cable into it, or mend what that printed, then run the wizard again", stage.Cable, port, cableEnd)
+			return fmt.Errorf("%s: %s's %s lacks %s after ws server ubuntu apply --only network,wireguard: plug the "+
+				"Mac's cable into it, or mend what that printed, then run the wizard again", stage.Cable, c.SSH.Host, port, cableEnd)
 		}
 	}
 	return c.service(ctx)
@@ -88,20 +88,20 @@ func (c *Cable) holds(ctx context.Context, port string) bool {
 func (c *Cable) again(ctx context.Context, port string) error {
 	s, ok := c.Ws.Status(ctx)
 	if !ok {
-		return fmt.Errorf("%s: status failed on ws", stage.Cable)
+		return fmt.Errorf("%s: status failed on %s", stage.Cable, c.SSH.Host)
 	}
 	if err := c.read(ctx, ""); err != nil {
 		return err
 	}
 	if !slices.Contains(c.names(), port) {
-		return fmt.Errorf("%s: WS_CABLE_PORT=%s names none of ws's wired ports, %s: set it to one", stage.Cable,
-			port, strings.Join(c.names(), ", "))
+		return fmt.Errorf("%s: WS_CABLE_PORT=%s names none of %s's wired ports, %s: set it to one", stage.Cable,
+			port, c.SSH.Host, strings.Join(c.names(), ", "))
 	}
 	if s.Cable == port {
 		return nil
 	}
-	c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on ws again, and ws server ubuntu apply --only network,wireguard "+
-		"runs there in a unit of its own", stage.Cable, port)
+	c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on %s again, and ws server ubuntu apply --only network,wireguard "+
+		"runs there in a unit of its own", stage.Cable, port, c.SSH.Host)
 	return c.name(ctx, port)
 }
 
@@ -137,13 +137,13 @@ func (c *Cable) service(ctx context.Context) error {
 		return err
 	}
 	if _, err := c.M.Run(ctx, "ping", "-c", "1", "-t", "3", cableEnd); err != nil {
-		return fmt.Errorf("%s: ping -c 1 -t 3 %s, ws's end of the cable, got no answer: server.conf's "+
-			"WS_CABLE_SERVICE must name the service of the adapter that the cable plugs into", stage.Cable, cableEnd)
+		return fmt.Errorf("%s: ping -c 1 -t 3 %s, %s's end of the cable, got no answer: server.conf's "+
+			"WS_CABLE_SERVICE must name the service of the adapter that the cable plugs into", stage.Cable, cableEnd, c.SSH.Host)
 	}
 	return nil
 }
 
-// write writes value as mac.conf's WS_CABLE_SERVICE, in double quotes, after ws's end as
+// write writes value as the server file's WS_CABLE_SERVICE, in double quotes, after ws's end as
 // WS_CABLE_PORT, or empty for none, which the wizard never asks again.
 func (c *Cable) write(ctx context.Context, value string) error {
 	lines := "WS_CABLE_SERVICE=\n"
