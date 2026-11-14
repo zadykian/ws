@@ -41,12 +41,16 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 		return errors.New("remove takes the server's name alone")
 	}
 	mac := conf.Path(p.Getenv, p.Pwd)
-	if _, err := conf.Pick(p.Machine, mac, name); err != nil {
-		return err
+	if !conf.IsName(name) {
+		return fmt.Errorf("%s is not a server's name: %s", name, conf.NameForm)
 	}
 	names, err := conf.Servers(p.Machine, mac)
 	if err != nil {
 		return err
+	}
+	if !slices.Contains(names, name) {
+		return fmt.Errorf("no server named %s in %s, which holds %s", name,
+			path.Dir(path.Dir(conf.ServerPath(mac, name))), conf.List(names))
 	}
 	if len(names) == 1 {
 		return fmt.Errorf("%s is the Mac's one server: apply needs one, so remove leaves it", name)
