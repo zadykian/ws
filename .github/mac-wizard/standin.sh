@@ -186,6 +186,7 @@ standin ws 22022
 # 22023, and its wg0 on the port that its host_vars names, 51821, beside ws's 51820.
 standin lab 22023
 ws=$RUNNER_TEMP/ws
+lab=$RUNNER_TEMP/lab
 # ssh first on the wizard's PATH, as the stand-in ws's wg0 has no address in the tunnel. The Tunnel
 # stage logs in to ws through it with ssh ws echo ok, which goes to the stand-in's sshd where ws
 # client macos tunnel has a handshake. It lands in tunnel.log. A direct call, which carries
@@ -195,11 +196,18 @@ cat >/opt/homebrew/bin/ssh <<EOF
 case " \$* " in
 *' AddressFamily=inet '*) ;;
 *' ws echo ok ')
-    sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status 2>/dev/null |
+    sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status --server ws 2>/dev/null |
         grep -q '^latest handshake: [0-9]' ||
         { echo 'ssh: no handshake in the tunnel' >&2 && exit 255; }
     echo "\$*" >>'$ws/tunnel.log'
     exec /usr/bin/ssh -o HostName=127.0.0.1 -o Port=22022 "\$@"
+    ;;
+*' lab echo ok ')
+    sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status --server lab 2>/dev/null |
+        grep -q '^latest handshake: [0-9]' ||
+        { echo 'ssh: no handshake in the tunnel' >&2 && exit 255; }
+    echo "\$*" >>'$lab/tunnel.log'
+    exec /usr/bin/ssh -o HostName=127.0.0.1 -o Port=22023 "\$@"
     ;;
 esac
 exec /usr/bin/ssh "\$@"
@@ -210,9 +218,13 @@ chmod 755 /opt/homebrew/bin/ssh
 rm -f /opt/homebrew/bin/nc
 cat >/opt/homebrew/bin/nc <<'EOF'
 #!/bin/sh
-[ "$*" = '-z -G 3 -w 3 10.99.0.1 22' ] || exec /usr/bin/nc "$@"
-sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status 2>/dev/null |
-    grep -q '^latest handshake: [0-9]' && exec /usr/bin/nc -z -G 3 -w 3 127.0.0.1 22022
+case $* in
+'-z -G 3 -w 3 10.99.0.1 22') server=ws port=22022 ;;
+'-z -G 3 -w 3 10.99.1.1 22') server=lab port=22023 ;;
+*) exec /usr/bin/nc "$@" ;;
+esac
+sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status --server "$server" 2>/dev/null |
+    grep -q '^latest handshake: [0-9]' && exec /usr/bin/nc -z -G 3 -w 3 127.0.0.1 "$port"
 EOF
 chmod 755 /opt/homebrew/bin/nc
 # The releases of ws, at 127.0.0.1:22080, which WS_RELEASES_URL names job-wide. The job's build is
