@@ -25,9 +25,6 @@
       // Ctrl+Cmd+F stays Zed's too
       "alt-shift-enter": "zed::ToggleFullScreen",
       "alt-f1": "pane::RevealInProjectPanel",
-      // The agent panel; replaces Zed's F7, which steps over while stopped, as F10 steps over too
-      "f7": "agent::ToggleFocus",
-      "alt-7": "agent::ToggleFocus",
       "f3": "git_panel::ToggleFocus",
       "alt-3": "git_panel::ToggleFocus",
       "f1": "project_panel::ToggleFocus",

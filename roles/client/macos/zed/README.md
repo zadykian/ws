@@ -127,9 +127,7 @@ and digits stay Zed's.
 
 - **Command palette:** Shift twice opens it in every context, from the global section, beside
   Zed's Cmd+Shift+P.
-- **Agent:** F7 and Alt+7 open the agent panel (`agent::ToggleFocus`).
 - **Edit predictions:** Tab and Alt+Tab stay Zed's.
-- F7 replaces Zed's F7, step over while stopped, and F10 steps over too.
 - The global keys win in the agent panel, so its Alt+Left and Right are the tab keys there.
 - **Keys whose action Zed lacks keep Zed's:** F10 build and Alt+Delete safe
   delete.
