@@ -30,16 +30,20 @@ const cableEnd = "10.77.0.1"
 // 10.77.0.1 as ws's end. Then it names the Mac's service of the cable in mac.conf's
 // WS_CABLE_SERVICE. There ws client macos apply gives that 10.77.0.2 as the Mac's end. It names the
 // port in mac.conf's WS_CABLE_PORT too, which the stage names on ws again after ws's install.
-// Undocked, the first setup waits, and the closing list says to dock the Mac.
+// Undocked, the first setup waits, and the closing list says to dock the Mac. Where another server's
+// file names a service, that server has the Mac's one cable, and the stage writes an empty one.
 type Cable struct {
 	// Ws is the session to ws, whose files script lists and names the ports. ws is read only where
 	// its ssh logs in, in this run.
 	Ws *session.Session
 	// SSH is the Mac's ssh to ws.
 	SSH remote.SSH
-	// Conf is mac.conf's path. Check is set under --check.
-	Conf  string
-	Check bool
+	// Conf is the server's file. Mac is mac.conf's path, whose servers/ holds the other servers'
+	// files, and Server is this server's name. Check is set under --check.
+	Conf   string
+	Mac    string
+	Server string
+	Check  bool
 	// RunDone is ws's run's verdict, which the stage waits on under --check.
 	RunDone func(ctx context.Context, w session.Want) bool
 	// MacApply runs ws client macos apply, as the Setup stage's Run does, which gives the Mac's
@@ -151,6 +155,11 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	cf, err := conf.Read(c.M, c.Conf)
 	if err != nil || cf.Target != "lan" {
 		return step.Plan{}, err
+	}
+	if c.lacks() {
+		if o := c.owner(); o != "" {
+			return c.change("write WS_CABLE_SERVICE= in " + c.Conf + ": the cable reaches server " + o)
+		}
 	}
 	// Under --check, no direct way to ws yet means that ws's run is not done either. in stays
 	// false, and the plan says the stage comes after it, as wizard-cable.sh's cable_after did.

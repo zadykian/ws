@@ -15,15 +15,17 @@ import (
 // with no token, so the stage checks them on ws. ws's gh has no account permission that may add the
 // key, so where GitHub lacks it, the key goes to what stays by hand.
 type WsGitHub struct {
-	M    effect.Machine
-	Out  effect.Out
-	Hand *guided.Hand
+	// Server names the server that the Mac sets up, which its side takes. Empty on the server itself.
+	Server string
+	M      effect.Machine
+	Out    effect.Out
+	Hand   *guided.Hand
 	// named is set once this run named the key in what stays by hand, all that the stage can do.
 	named bool
 }
 
 // Side is ws: the stage acts through ws's own gh.
-func (*WsGitHub) Side() guided.Side { return session.Ws }
+func (s *WsGitHub) Side() guided.Side { return session.SideOf(s.Server) }
 
 type signingByHand struct{ why string }
 

@@ -58,16 +58,16 @@ there is one ([The server's name](conf/README.md#the-servers-name)).
 address inside it, the router's static lease for it. The script stops on one outside, and on the
 LAN's network or broadcast address. `WS_REMOTE` is the router's name on the internet, and
 `WS_REMOTE_PORT` the port it forwards to ws's 22. The tunnel takes UDP 51820 every way, which the
-router forwards too; `WS_PORT` sets another. A way without its values is left out. The router's
-side is in [The router](../../server/ubuntu/network/router.md). `WS_PUBLIC_KEY` goes in last, once ws has the Mac's key, in the
-order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE` names the network service of the
-display's adapter, in quotes where it holds a blank, and `WS_CABLE_PORT` ws's port of the cable:
-[The cable](#the-cable). `WS_GIT_NAME` and `WS_GIT_EMAIL`, which go together, are the author of
-git's commits on the Mac, the name in quotes where it holds a blank. `WS_GIT_SIGNING_PUB_KEY` is the
-`.pub` of the key that signs them, by its path from `/` or `~/`: [git on the Mac](git/README.md).
-`WS_IDENTITY_PUB_KEY` is the `.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the
-socket of its agent, in quotes where it holds a blank: [ssh's hosts](#sshs-hosts). A run makes
-`~/.config/ws` at mode 700, and sets that mode where it differs.
+router forwards too; `WS_PORT` sets another, which wg0 listens on. A way without its values is left
+out. The router's side is in [The router](../../server/ubuntu/network/router.md). `WS_PUBLIC_KEY` goes in last, once ws has the Mac's
+key, in the order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE` names the network
+service of the display's adapter, in quotes where it holds a blank, and `WS_CABLE_PORT` ws's port of
+the cable: [The cable](#the-cable). `WS_GIT_NAME` and `WS_GIT_EMAIL`, which go together, are the
+author of git's commits on the Mac, the name in quotes where it holds a blank.
+`WS_GIT_SIGNING_PUB_KEY` is the `.pub` of the key that signs them, by its path from `/` or `~/`:
+[git on the Mac](git/README.md). `WS_IDENTITY_PUB_KEY` is the `.pub` of the key that ssh offers ws,
+and `WS_IDENTITY_AGENT` the socket of its agent, in quotes where it holds a blank: [ssh's
+hosts](#sshs-hosts). A run makes `~/.config/ws` at mode 700, and sets that mode where it differs.
 
 `WS_USER` is the user ssh logs in as: the server's `ws_user`, `zadykian` by default, or `root` for a
 `WS_TARGET` of `cloud`, which may have no other user. The other targets refuse `WS_USER=root`. A key
@@ -174,10 +174,10 @@ does not try the cable: the cable reaches the one server that names it. `-setman
 settings, whatever they were, and emptying the key leaves them. To give the service DHCP again:
 `sudo networksetup -setdhcp SERVICE`.
 
-An address, mask or router that `getinfo` leaves out, as it may undocked, counts as set. Where it
-still shows other settings after `-setmanual`, the script names them and stops. Then set the service
-by hand. In System Settings › Network, pick it › Details › TCP/IP, and Configure IPv4 Manually: the
-IP address `10.77.0.2`, the subnet mask `255.255.255.252`, no router. Or empty the key.
+An address, mask or router that `getinfo` omits, as it may undocked, counts as set. Where
+`-setmanual` leaves other settings, the script names them and stops. Then set it by hand: in System
+Settings › Network, the service › Details › TCP/IP, Configure IPv4 Manually: IP address `10.77.0.2`,
+mask `255.255.255.252`, no router. Or empty the key: the tunnel and ssh then skip the cable.
 
 Set the key once ws's end is up ([network](../../server/ubuntu/network/README.md)). Then, docked, check once that the uplink
 keeps the default route:

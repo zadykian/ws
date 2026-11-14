@@ -87,7 +87,7 @@ func TestAnswersAskAndWrite(t *testing.T) {
 	if err != nil || !changed {
 		t.Fatalf("Run = %v, %v", changed, err)
 	}
-	const server = "WS_USER=ada\nWS_TARGET=lan\nWS_LAN=10.88.0.0/24\nWS_LAN_ADDRESS=10.88.0.10\nWS_REMOTE=\n" +
+	const server = "WS_USER=ada\nWS_SLOT=0\nWS_PORT=51820\nWS_TARGET=lan\nWS_LAN=10.88.0.0/24\nWS_LAN_ADDRESS=10.88.0.10\nWS_REMOTE=\n" +
 		"WS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
 	if got := string(m.Files[serverPathForTest]); got != server {
 		t.Errorf("server file = %q, want %q", got, server)
@@ -109,7 +109,7 @@ func TestAnswersFromEnvironment(t *testing.T) {
 	if _, err := step.Run(context.Background(), []step.Step{homebrewDone{}, a}, out, false); err != nil {
 		t.Fatalf("Run = %v", err)
 	}
-	if got := string(a.M.(*effecttest.Machine).Files[serverPathForTest]); !strings.HasPrefix(got, "WS_TARGET=cloud\nWS_REMOTE=r.example\n") {
+	if got := string(a.M.(*effecttest.Machine).Files[serverPathForTest]); !strings.HasPrefix(got, "WS_SLOT=0\nWS_PORT=51820\nWS_TARGET=cloud\nWS_REMOTE=r.example\n") {
 		t.Errorf("server file = %q", got)
 	}
 }
@@ -133,7 +133,7 @@ func TestAnswersCheckWritesTheScratchFile(t *testing.T) {
 	if p, err := a.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
 		t.Fatalf("Plan = %v, %v", p, err)
 	}
-	if got := string(m.Files["/lock/servers/ws/server.conf"]); !strings.HasPrefix(got, "WS_USER=ada\nWS_TARGET=cloud\n") {
+	if got := string(m.Files["/lock/servers/ws/server.conf"]); !strings.HasPrefix(got, "WS_USER=ada\nWS_SLOT=0\nWS_PORT=51820\nWS_TARGET=cloud\n") {
 		t.Errorf("server scratch = %q", got)
 	}
 	if got := string(m.Files["/lock/mac.conf"]); got != "WS_GIT_NAME=\n" {
@@ -175,23 +175,31 @@ func TestAnswersCheckRefusesABadEnvironment(t *testing.T) {
 	}
 }
 
-func TestAnswersHeadASlotlessServerFileWithTheSlot(t *testing.T) {
-	for name, tc := range map[string]struct{ server, slot, want string }{
-		"new file":      {"", "0", "WS_SLOT=0\nWS_TARGET=lan\n"},
-		"no slot given": {"", "", "WS_TARGET=lan\n"},
-		"slot kept":     {"WS_SLOT=3\n", "0", "WS_SLOT=3\nWS_TARGET=lan\n"},
-		"file lacking":  {"WS_USER=ada\n", "0", "WS_USER=ada\nWS_SLOT=0\nWS_TARGET=lan\n"},
+func TestAnswersPlaceAServerFileThatLacksItsSlot(t *testing.T) {
+	const box = "WS_SLOT=0\nWS_TARGET=lan\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22022\n"
+	for name, tc := range map[string]struct{ server, other, remote, want string }{
+		"new file":     {"", "", "none", "WS_SLOT=0\nWS_PORT=51820\nWS_TARGET=lan\n"},
+		"slot kept":    {"WS_SLOT=3\n", "", "none", "WS_SLOT=3\nWS_TARGET=lan\n"},
+		"file lacking": {"WS_USER=ada\n", "", "none", "WS_USER=ada\nWS_SLOT=0\nWS_PORT=51820\nWS_TARGET=lan\n"},
+		"port kept":    {"WS_PORT=51830\n", "", "none", "WS_PORT=51830\nWS_SLOT=0\nWS_TARGET=lan\n"},
+		"beside one":   {"", box, "none", "WS_SLOT=1\nWS_PORT=51820\nWS_TARGET=lan\n"},
+		"same router":  {"", box, "r.example", "WS_SLOT=1\nWS_PORT=51821\nWS_TARGET=lan\nWS_LAN=\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22023\n"},
 	} {
 		a, out := newAnswers(t, "WS_GIT_NAME=ada\nWS_GIT_EMAIL=a@b.c\n", tc.server)
-		a.Slot = tc.slot
+		m := a.M.(*effecttest.Machine)
+		if tc.other != "" {
+			m.Dirs["/h/.config/ws/servers"] = 0o755
+			m.Dirs["/h/.config/ws/servers/box"] = 0o755
+			m.Files["/h/.config/ws/servers/box/server.conf"] = []byte(tc.other)
+		}
 		a.P.(*effecttest.Prompt).Answers = map[string]string{
 			"The machine ws runs on: lan, cloud or mac-vm (WS_TARGET) [lan]":                          "",
 			"ws's home LAN (WS_LAN) [10.88.0.0/24, or none]":                                          "none",
-			"The router's name on the internet (WS_REMOTE) [none]":                                    "none",
+			"The router's name on the internet (WS_REMOTE) [none]":                                    tc.remote,
+			"The router's port forwarded to ws's 22 (WS_REMOTE_PORT) [22023, or none]":                "",
 			"More networks through the tunnel, split by blanks (WS_TUNNEL_NETWORKS) [none]":           "",
 			"Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks (WS_RESOLVERS) [none]": "",
 		}
-		m := a.M.(*effecttest.Machine)
 		m.Results["mkdir -p /h/.config/ws"] = effecttest.Result{}
 		m.Results["mkdir -p /h/.config/ws/servers/ws"] = effecttest.Result{}
 		if _, err := step.Run(context.Background(), []step.Step{homebrewDone{}, a}, out, false); err != nil {
@@ -200,8 +208,8 @@ func TestAnswersHeadASlotlessServerFileWithTheSlot(t *testing.T) {
 		if got := string(m.Files[serverPathForTest]); !strings.HasPrefix(got, tc.want) {
 			t.Errorf("%s: server file = %q, want it to start with %q", name, got, tc.want)
 		}
-		if got := string(m.Files[confPathForTest]); strings.Contains(got, "WS_SLOT") {
-			t.Errorf("%s: mac.conf = %q, want no slot", name, got)
+		if got := string(m.Files[confPathForTest]); strings.Contains(got, "WS_SLOT") || strings.Contains(got, "WS_PORT") {
+			t.Errorf("%s: mac.conf = %q, want no slot or port", name, got)
 		}
 	}
 }
