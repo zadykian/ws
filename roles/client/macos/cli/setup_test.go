@@ -128,7 +128,7 @@ func TestMacStateWritesReports(t *testing.T) {
 		{Step: "git", Changes: []step.Pending{{Text: "write ~/.gitconfig\n+a\n"}}},
 		{Step: "zed", After: "git"},
 	}
-	if err := writeMacState(&b, reports); err != nil {
+	if err := writeMacState(&b, []serverDoc{{Steps: reports}}, false); err != nil {
 		t.Fatal(err)
 	}
 	want := "  git\n    pending: write ~/.gitconfig\n  zed\n    not read: after git\n"

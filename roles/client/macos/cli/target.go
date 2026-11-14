@@ -73,10 +73,11 @@ func macReport(p enginecli.Env, server *string) func(context.Context, engine.Cal
 			if err != nil {
 				return err
 			}
+			docs := []serverDoc{{Name: name, Steps: reports}}
 			if c.JSON {
 				return engine.WriteJSON(c.Out, macDoc{Version: p.Version, Steps: reports})
 			}
-			return writeMacState(c.Out, reports)
+			return writeMacState(c.Out, docs, false)
 		}}, nil
 	}
 }
