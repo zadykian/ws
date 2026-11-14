@@ -9,8 +9,8 @@ type Sibling struct {
 }
 
 // Siblings returns the servers of servers/ beside mac.conf at mac, other than the one whose file is
-// at server, sorted by name. It leaves out a file that is missing or refused: a run for that
-// server refuses it itself. This is the one way to read the other servers.
+// at server, sorted by name. It leaves out a file that is missing or refused: apply refuses such a
+// file before its steps run. This is the one way to read the other servers.
 func Siblings(m effect.Machine, mac, server string) ([]Sibling, error) {
 	names, err := Servers(m, mac)
 	if err != nil {

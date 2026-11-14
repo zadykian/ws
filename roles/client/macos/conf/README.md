@@ -63,7 +63,9 @@ another's takes. Each of the two refuses until one changes, in its own file's wo
 - `WS_PORT` and `WS_REMOTE_PORT`: the other's, behind the same `WS_REMOTE`, as the router forwards
   a port to one server.
 
-A file of another server that is missing or refused is left out: a run for that server refuses it.
+A file of another server that is refused stops `apply` before any step, with `--only` and with
+`--check` too, and the error names the server and `ws client macos remove NAME`. The steps read
+every server's file, and the networks step would remove the resolver files of one it cannot read.
 
 ## The servers
 
@@ -89,6 +91,13 @@ too. A server that stays and whose file ws refuses, NAME's clashes aside, stops 
 deletes anything, as those steps would skip that server. Where a step fails, `ws client macos
 apply` for a server that stays ends the removal. Where NAME held the cable, it prints a line to do
 by hand: the cable's service keeps `10.77.0.2`. The server itself is not changed.
+
+`ws client macos state` with several servers and no `--server` reports each one, its steps under a
+line with its name. Its `--json` then lists them in `servers`, each with its `steps`, and holds no
+top `steps`. With one server, or `--server`, it prints what it did before.
+
+`ws client macos configure` shows the keys of `mac.conf` on a sheet, then those of
+`servers/NAME/server.conf` on the next, each file's own, before the secrets and host_vars.
 
 ## A machine on the LAN
 
