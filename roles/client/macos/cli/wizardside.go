@@ -50,7 +50,7 @@ func macSide(p enginecli.Env, server *string) engine.Side {
 
 // wizardServer returns the server that the wizard sets up: the one that flag names, or the only one.
 // With none and no flag it returns "", and the wizard asks the name. A flag that names no server
-// sets up a new one, beside the others.
+// sets up a new one, beside the others, if ~/.ssh/config has no Host of its own for the name.
 func wizardServer(p enginecli.Env, flag string) (string, error) {
 	mac := conf.Path(p.Getenv, p.Pwd)
 	name, err := conf.Pick(p.Machine, mac, flag)
@@ -64,6 +64,9 @@ func wizardServer(p enginecli.Env, flag string) (string, error) {
 	case len(names) == 0 && flag == "":
 		return "", nil
 	case conf.IsName(flag):
+		if err := freeName(p.Machine, p.Getenv("HOME"), flag); err != nil {
+			return "", err
+		}
 		return flag, nil
 	}
 	return "", err

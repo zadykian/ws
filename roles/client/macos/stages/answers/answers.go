@@ -117,8 +117,12 @@ func (a *Answers) Plan(ctx context.Context) (step.Plan, error) {
 }
 
 // place returns where the server sits beside the Mac's others: the slot its file holds, else the
-// smallest that no other server holds.
+// smallest that no other server holds. It stops on a server whose file is refused: the new one
+// would take that server's slot and ports.
 func (a *Answers) place(text map[conf.Scope]string, c conf.Conf) (*conf.Place, error) {
+	if err := conf.RefuseBadSibling(a.M, a.Conf, a.Server); err != nil {
+		return nil, err
+	}
 	others, err := conf.Siblings(a.M, a.Conf, a.Server)
 	if err != nil {
 		return nil, err

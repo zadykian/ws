@@ -17,14 +17,15 @@ func sibling(keys string) []Sibling {
 
 func TestClashesRefuseWhatTwoServersCannotShare(t *testing.T) {
 	for name, tc := range map[string]struct{ own, theirs, want string }{
-		"own inside":    {"WS_TUNNEL_NETWORKS=10.1.0.0/24", "WS_TUNNEL_NETWORKS=10.1.0.0/16", "WS_TUNNEL_NETWORKS's 10.1.0.0/24 overlaps server lab's 10.1.0.0/16: a network goes through one server's tunnel"},
-		"theirs inside": {"WS_TUNNEL_NETWORKS=10.1.0.0/16", "WS_TUNNEL_NETWORKS=10.1.2.0/24", "WS_TUNNEL_NETWORKS's 10.1.0.0/16 overlaps server lab's 10.1.2.0/24: a network goes through one server's tunnel"},
-		"same domain":   {"WS_RESOLVERS=corp.test=10.0.0.1", "WS_RESOLVERS=\"a.test=10.0.0.2 corp.test=10.0.0.3\"", "WS_RESOLVERS's corp.test is server lab's too: /etc/resolver holds one file a domain"},
-		"same slot":     {"WS_SLOT=1", "WS_SLOT=1", "WS_SLOT=1 is server lab's slot too: each server takes its own"},
-		"no line is 0":  {"WS_TARGET=lan", "WS_SLOT=0", "WS_SLOT=0 is server lab's slot too: each server takes its own"},
-		"same port":     {"WS_REMOTE=r.example\nWS_REMOTE_PORT=22023\nWS_SLOT=1", "WS_REMOTE=r.example\nWS_REMOTE_PORT=22022", "WS_PORT=51820 is server lab's too, behind WS_REMOTE r.example: the router forwards a port to one server"},
-		"same forward":  {"WS_REMOTE=r.example\nWS_PORT=51821\nWS_SLOT=1", "WS_REMOTE=r.example\nWS_PORT=51820", "WS_REMOTE_PORT=22022 is server lab's too, behind WS_REMOTE r.example: the router forwards a port to one server"},
-		"second cable":  {"WS_CABLE_SERVICE=\"USB LAN\"", "WS_CABLE_SERVICE=\"Thunderbolt Ethernet\"", "WS_CABLE_SERVICE names a cable, as server lab's does: the cable reaches one server"},
+		"own inside":           {"WS_TUNNEL_NETWORKS=10.1.0.0/24", "WS_TUNNEL_NETWORKS=10.1.0.0/16", "WS_TUNNEL_NETWORKS's 10.1.0.0/24 overlaps server lab's 10.1.0.0/16: a network goes through one server's tunnel"},
+		"theirs inside":        {"WS_TUNNEL_NETWORKS=10.1.0.0/16", "WS_TUNNEL_NETWORKS=10.1.2.0/24", "WS_TUNNEL_NETWORKS's 10.1.0.0/16 overlaps server lab's 10.1.2.0/24: a network goes through one server's tunnel"},
+		"same domain":          {"WS_RESOLVERS=corp.test=10.0.0.1", "WS_RESOLVERS=\"a.test=10.0.0.2 corp.test=10.0.0.3\"", "WS_RESOLVERS's corp.test is server lab's too: /etc/resolver holds one file a domain"},
+		"same slot":            {"WS_SLOT=1", "WS_SLOT=1", "WS_SLOT=1 is server lab's slot too: each server takes its own"},
+		"no line is 0":         {"WS_TARGET=lan", "WS_SLOT=0", "WS_SLOT=0 is server lab's slot too: each server takes its own"},
+		"same port":            {"WS_REMOTE=r.example\nWS_REMOTE_PORT=22023\nWS_SLOT=1", "WS_REMOTE=r.example\nWS_REMOTE_PORT=22022", "WS_PORT=51820 is server lab's too, behind WS_REMOTE r.example: the router forwards a port to one server"},
+		"same in another case": {"WS_REMOTE=R.Example\nWS_REMOTE_PORT=22023\nWS_SLOT=1", "WS_REMOTE=r.example\nWS_REMOTE_PORT=22022", "WS_PORT=51820 is server lab's too, behind WS_REMOTE R.Example: the router forwards a port to one server"},
+		"same forward":         {"WS_REMOTE=r.example\nWS_PORT=51821\nWS_SLOT=1", "WS_REMOTE=r.example\nWS_PORT=51820", "WS_REMOTE_PORT=22022 is server lab's too, behind WS_REMOTE r.example: the router forwards a port to one server"},
+		"second cable":         {"WS_CABLE_SERVICE=\"USB LAN\"", "WS_CABLE_SERVICE=\"Thunderbolt Ethernet\"", "WS_CABLE_SERVICE names a cable, as server lab's does: the cable reaches one server"},
 	} {
 		got := clashes(parse(t, tc.own), sibling(tc.theirs))
 		if len(got) != 1 || !strings.Contains(got[0].Msg, tc.want) {

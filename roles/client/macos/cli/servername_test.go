@@ -59,7 +59,7 @@ func TestAskServerRefusesAHostOfTheUsersOwn(t *testing.T) {
 	if err := valid("ws"); err != nil {
 		t.Errorf("Valid(ws) = %v, want none: no Host names it", err)
 	}
-	if err := (&askServer{m: effecttest.NewMachine(), home: "/h"}).free("box"); err != nil {
+	if err := freeName(effecttest.NewMachine(), "/h", "box"); err != nil {
 		t.Errorf("free(box) with no ~/.ssh/config = %v", err)
 	}
 }

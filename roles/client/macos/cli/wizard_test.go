@@ -52,8 +52,10 @@ func TestWizardCommandRuns(t *testing.T) {
 		!strings.Contains(stderr, "ws client macos wizard: Answers: no terminal to ask WS_TARGET: set WS_TARGET") {
 		t.Errorf("status = %d, stderr = %q; want the refusal to ask with no terminal", status, stderr)
 	}
-	// The server is named first, by a read of the directory of servers alone.
-	calls := slices.DeleteFunc(slices.Clone(p.Machine.(*effecttest.Machine).Calls), func(c string) bool { return strings.HasPrefix(c, "readdir ") })
+	// The server is named first, by a read of the directory of servers and of ~/.ssh/config alone.
+	calls := slices.DeleteFunc(slices.Clone(p.Machine.(*effecttest.Machine).Calls), func(c string) bool {
+		return strings.HasPrefix(c, "readdir ") || c == "read /.ssh/config"
+	})
 	if len(calls) == 0 || calls[0] != "mkdir /t/ws-wizard.lock 700" {
 		t.Errorf("calls = %v; want the lock first", calls)
 	}

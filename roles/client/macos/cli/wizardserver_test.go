@@ -37,3 +37,18 @@ func TestWizardServerNamesTheServerToSetUp(t *testing.T) {
 		}
 	}
 }
+
+func TestWizardServerRefusesANewNameThatSSHConfigHolds(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/h/.ssh/config"] = []byte("Host a\n  User x\nHost box lab\n  User y\n")
+	m.Files[conf.ServerPath("/h/.config/ws/mac.conf", "box")] = nil
+	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
+	p.Machine = withServerDirs(m)
+	want := "line 3 of ~/.ssh/config, Host box lab, sets its own values for lab: pick another name, or remove it"
+	if got, err := wizardServer(p, "lab"); got != "" || err == nil || err.Error() != want {
+		t.Errorf("wizardServer(lab) = %q, %v; want the refusal %q", got, err, want)
+	}
+	if got, err := wizardServer(p, "box"); got != "box" || err != nil {
+		t.Errorf("wizardServer(box) = %q, %v; want the server that is set up already", got, err)
+	}
+}

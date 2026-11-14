@@ -47,7 +47,9 @@ it. `WS_PORT` is 51820, or 51820 plus the slot behind a router that another serv
 next port up that none of those takes. The default of `WS_REMOTE_PORT` follows 22022 likewise. A
 LAN and `WS_TUNNEL_NETWORKS` stay
 clear of the slots' `10.99.0.0/20`. A directory of a bad name that holds `server.conf` is refused
-too. The wizard writes an empty `WS_CABLE_SERVICE` in a server's file where another's names one.
+too. The wizard stops before it writes a new server's file where another server's file is
+refused, as its slot and ports would be that file's. The wizard writes an empty `WS_CABLE_SERVICE`
+in a server's file where another's names one.
 
 ## What two servers may not share
 
@@ -60,8 +62,8 @@ another's takes. Each of the two refuses until one changes, in its own file's wo
 - `WS_CABLE_SERVICE`: a cable the other names. Leave it empty in all but one server's file: the
   cable reaches that server alone ([the tunnel](../tunnel/README.md#the-cable)).
 - `WS_SLOT`: the other's slot, as each server's tunnel is the subnet of its slot.
-- `WS_PORT` and `WS_REMOTE_PORT`: the other's, behind the same `WS_REMOTE`, as the router forwards
-  a port to one server.
+- `WS_PORT` and `WS_REMOTE_PORT`: the other's, behind the same `WS_REMOTE`, in any case, as the router
+  forwards a port to one server.
 
 A file of another server that is refused stops `apply` before any step, with `--only` and with
 `--check` too, and the error names the server and `ws client macos remove NAME`. The steps read
