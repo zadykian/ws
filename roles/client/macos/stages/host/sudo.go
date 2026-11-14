@@ -31,6 +31,8 @@ const (
 // needs no password, or the password, asked once a run. The password stays in this struct and in
 // ssh's stdin, never in an argument, a message or the environment.
 type Sudo struct {
+	// Server names the server that the Mac sets up, which its side takes. Empty on the server itself.
+	Server string
 	// SSH is the Mac's ssh to ws.
 	SSH remote.SSH
 	// Tty tells whether a terminal is there to ask. Check is set under --check.
@@ -46,7 +48,7 @@ type Sudo struct {
 func (*Sudo) Name() string { return stage.Sudo }
 
 // Side is ws: how its scripts reach root.
-func (*Sudo) Side() guided.Side { return session.Ws }
+func (s *Sudo) Side() guided.Side { return session.SideOf(s.Server) }
 
 // WaitsOn is the stage that checks the login, without which sudo answers nothing.
 func (*Sudo) WaitsOn() string { return stage.Login }

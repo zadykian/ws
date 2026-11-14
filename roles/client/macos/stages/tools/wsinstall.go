@@ -15,7 +15,9 @@ import (
 
 // WsInstall is the stage that puts this ws's release on ws, by the remote script's install.
 type WsInstall struct {
-	Ws *session.Session
+	// Server names the server that the Mac sets up, which its side takes. Empty on the server itself.
+	Server string
+	Ws     *session.Session
 	// URL is the address of the releases that Version comes from.
 	Version, URL string
 	Out          effect.Out
@@ -25,7 +27,7 @@ type WsInstall struct {
 func (*WsInstall) Name() string { return stage.Install }
 
 // Side is ws: this release is installed there.
-func (*WsInstall) Side() guided.Side { return session.Ws }
+func (i *WsInstall) Side() guided.Side { return session.SideOf(i.Server) }
 
 // WaitsOn is the Sudo stage, which the remote script needs.
 func (*WsInstall) WaitsOn() string { return stage.Sudo }

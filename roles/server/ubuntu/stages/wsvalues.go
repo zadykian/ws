@@ -23,6 +23,8 @@ const valuesStage, outboundKey, userKey = "ws's values", "security_outbound", "w
 // each key that host_vars lacks, and names it there even at its default. So a later run, from ws or
 // the Mac, reads the file and asks nothing.
 type WsValues struct {
+	// Server names the server that the Mac sets up, which its side takes. Empty on the server itself.
+	Server string
 	// Vars is host_vars' path. Set writes one key of it, as ws server ubuntu values set does.
 	Vars string
 	Set  func(key, value string) error
@@ -38,7 +40,7 @@ type WsValues struct {
 func (*WsValues) Name() string { return valuesStage }
 
 // Side is ws: its host_vars.
-func (*WsValues) Side() guided.Side { return session.Ws }
+func (v *WsValues) Side() guided.Side { return session.SideOf(v.Server) }
 
 // WaitsOn is empty: the stage is ws's first.
 func (*WsValues) WaitsOn() string { return "" }

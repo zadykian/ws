@@ -17,6 +17,8 @@ const RunStage = "ws's run"
 // script starts it and follows it. A run goes on where ssh drops, and the next run of the wizard
 // follows it. The Mac's wizard and ws's both run it, each on its own session.
 type WsRun struct {
+	// Server names the server that the Mac sets up, which its side takes. Empty on the server itself.
+	Server string
 	// Ws is the session to ws, whose files script names ws_user and the tunnel's peer.
 	Ws *session.Session
 	// Await names the stage that must be done first. A run needs one: the Mac's list names the stage
@@ -43,7 +45,7 @@ type WsRun struct {
 func (*WsRun) Name() string { return RunStage }
 
 // Side is ws: ws server ubuntu apply runs there.
-func (*WsRun) Side() guided.Side { return session.Ws }
+func (r *WsRun) Side() guided.Side { return session.SideOf(r.Server) }
 
 // WaitsOn is Await.
 func (r *WsRun) WaitsOn() string { return r.Await }

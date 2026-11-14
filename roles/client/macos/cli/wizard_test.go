@@ -151,12 +151,29 @@ func TestWizardStagesStateTheirSides(t *testing.T) {
 		if !ok {
 			t.Errorf("%s states no side", s.Name())
 		}
-		if m == session.Ws {
+		if m == session.SideOf("ws") {
 			onWs++
 		}
 	}
 	if len(stages) != 15 || onWs != 4 {
 		t.Errorf("%d stages, %d on ws; want 15 and 4", len(stages), onWs)
+	}
+}
+
+// TestWizardStagesNameTheServerInTheirSide checks that the stages on ws name the server that the
+// wizard sets up, and that the stages on the Mac do not.
+func TestWizardStagesNameTheServerInTheirSide(t *testing.T) {
+	var out strings.Builder
+	stages := wizardStages(wizardEffects{p: fakeProcess(), prog: "ws client macos wizard", text: &out, hand: &wizard.Hand{},
+		sudo: &host.Sudo{}}, engine.WizardOptions{}, "lab")
+	onLab := 0
+	for _, s := range stages {
+		if m, _ := wizard.SideOf(s); m == session.SideOf("lab") {
+			onLab++
+		}
+	}
+	if onLab != 4 || session.SideOf("lab") != "Server lab (Ubuntu)" {
+		t.Errorf("%d stages on %s; want 4 on Server lab (Ubuntu)", onLab, session.SideOf("lab"))
 	}
 }
 
