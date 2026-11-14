@@ -93,3 +93,23 @@ func TestWizardSetupStopsWhereTheRunDoes(t *testing.T) {
 		t.Errorf("unreached = %q; want every step", got.skipped)
 	}
 }
+
+// TestWizardSetupListsTheServersBesideItsFile runs ssh's check for lab, new beside ws at slot 0.
+// lab's own file names no slot yet, and Answers' would-be one gives it slot 1. The steps load ws
+// beside that one, as the run will, and so find no clash.
+func TestWizardSetupListsTheServersBesideItsFile(t *testing.T) {
+	p, m := macTerminal()
+	m.Files["/h/.config/ws/servers/lab/server.conf"], m.Dirs["/h/.config/ws/servers/lab"] = []byte("WS_USER=ada\n"), 0o755
+	m.Files["/lock/mac.conf"] = m.Files["/h/.config/ws/mac.conf"]
+	m.Files["/lock/servers/ws/server.conf"] = []byte("WS_USER=ada\n")
+	m.Files["/lock/servers/lab/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=1\n")
+	m.Dirs["/lock/servers"], m.Dirs["/lock/servers/ws"], m.Dirs["/lock/servers/lab"] = 0o755, 0o755, 0o755
+	for _, file := range []string{"new", "whole"} {
+		m.Results["ssh -G -F /tmp/x/"+file+" lab"] = effecttest.Result{}
+	}
+	left := func(parent, name string) bool { return parent == "ws client macos apply" && name != "ssh" }
+	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}}, left, "/lock/mac.conf", "lab")
+	if _, err := s.Run(context.Background(), true); err != nil {
+		t.Errorf("Run = %v, want the plan of the servers beside /lock/mac.conf", err)
+	}
+}

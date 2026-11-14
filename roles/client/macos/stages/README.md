@@ -82,8 +82,8 @@ and stops. The Cable stage asks `WS_CABLE_PORT` and `WS_CABLE_SERVICE` ([The cab
 The other keys, such as `WS_USER` and `WS_PORT`, keep their defaults until set by hand.
 
 Under `--check`, the wizard asks too, and shows the lines it would add as a diff. `ws client macos
-apply --check` then reads the files it would write, in the lock, which `WS_CONF` names. `WS_CONF`
-names another `mac.conf` for both scripts.
+apply --check` then reads the files it would write, in the lock, which `WS_CONF` names, beside a
+copy of each other server's file. `WS_CONF` names another `mac.conf` for both scripts.
 
 ## The Mac's key
 
