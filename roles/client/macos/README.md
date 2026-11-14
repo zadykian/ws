@@ -4,8 +4,8 @@ The Mac reaches the server, ws, over the cable from the 2.5GbE port of the displ
 reaches it over the LAN, or elsewhere through the router's port forwards. `ws client macos apply`
 sets up its end of the cable ([The cable](#the-cable)), git ([git on the Mac](git/README.md)), Zed
 ([Zed on the Mac](zed/README.md)) and one host for ssh, `ws`. It goes through a WireGuard tunnel that
-ends on ws, at `10.99.0.1` whichever way the Mac connects. The sessions of `ssh ws` and Zed stay
-open as the Mac moves between the cable, the LAN and elsewhere, with a pause of a few seconds
+ends on ws, at its slot's `10.99.N.1` whichever way the Mac connects. The sessions of `ssh ws` and
+Zed stay open as the Mac moves between the cable, the LAN and elsewhere, with a pause of a few seconds
 ([Zed](../../server/ubuntu/zed/README.md#when-the-connection-drops)). What it gives up: `ssh ws` fails where UDP is blocked and
 while the tunnel is down, and bulk copies run at wireguard-go's speed. To reach ws by hand, give ssh
 a direct way: `ssh -o HostName=ADDRESS -o Port=PORT ws`, as ufw lets SSH in on every interface.
@@ -96,7 +96,7 @@ sudo would leave root's files where the user's go.
 
 The script writes `~/.ssh/config.d/ws`, with a host for each server of `servers/`, named as the
 server is, at its tunnel's `10.99.N.1` from the first run, whichever network the Mac is on. A
-server's host is `ws` at `10.99.0.1` for slot 0. So `ssh NAME` fails until the keys' exchange ends
+server's `10.99.N.1` is `10.99.0.1` at slot 0. So `ssh NAME` fails until the keys' exchange ends
 ([The Mac's tunnel](#the-macs-tunnel)), where a direct way serves. It logs in as the server's
 `WS_USER` with the key below, and checks the server's host key under its name (`HostKeyAlias`). A
 server whose `server.conf` fails to load stops the run. A session ends after 120 s without word
@@ -145,9 +145,9 @@ prints the Mac's public key again, with the commands of [The Mac's tunnel](#the-
 
 Through the forward, ws takes logins from the internet: by key alone, as everywhere, with fail2ban
 banning the address of the network the Mac is on after 5 failed ones. Over the tunnel, ws sees
-the Mac as `10.99.0.2`. Failed logins over the tunnel ban it, which shuts `ssh ws` out for an
+the Mac as `10.99.N.2`. Failed logins over the tunnel ban it, which shuts `ssh ws` out for an
 hour. `ssh -o HostName=ADDRESS -o Port=PORT ws` comes from another address, and from there
-`fail2ban-client set sshd unbanip 10.99.0.2` lifts the ban.
+`fail2ban-client set sshd unbanip 10.99.N.2` lifts the ban.
 
 Unless `security_outbound` is false, ws opens no connection to the Mac over the cable, the LAN or
 the tunnel ([The firewall](../../server/ubuntu/wireguard/README.md#the-firewall), [Outbound](../../server/ubuntu/security/README.md#outbound)). That
@@ -227,10 +227,10 @@ A server with no directory beside `mac.conf` has its daemon removed at the next 
 where loaded, then its plist, `/etc/ws-tunnel/NAME`, state file and log. Nothing goes unless
 `mac.conf`'s servers list the one that `apply` runs for.
 
-The tunnel's end on the Mac is `10.99.0.2`, on a utun of wireguard-go's, and ws's is `10.99.0.1`, at
-slot 0. `WS_SLOT` N gives `10.99.N.2` and `10.99.N.1`, and a moved slot restarts the daemon. So a
-run of the `wireguard` role stops where its variables give either end another address ([The tunnel](../../server/ubuntu/wireguard/README.md#the-tunnel)).
-The daemon points the Mac's end at the first of these that answers, each on UDP 51820:
+The tunnel's ends are `10.99.N.2` on the Mac, on a utun of wireguard-go's, and `10.99.N.1` on ws, N
+being `WS_SLOT`. A moved slot restarts the daemon. The wizard names the pair in ws's host_vars ([The
+tunnel](../../server/ubuntu/wireguard/README.md#the-tunnel)). The daemon points the Mac's end at the
+first of these that answers, each on UDP 51820:
 
 - the cable, `10.77.0.1`, where one of the Mac's addresses lies in `10.77.0.0/30`;
 - the LAN, `WS_LAN_ADDRESS`, where one lies in `WS_LAN`;
@@ -243,7 +243,7 @@ tunnel sends again what the pause lost.
 
 The daemon tries the ways again 2 s after macOS posts a network change, where the Mac's addresses
 changed. Besides, 10 s after each check ends, it checks them again, in case it missed one, and
-pings `10.99.0.1`. Three pings missed in a row have it try the ways again, as after the home's
+pings `10.99.N.1`. Three pings missed in a row have it try the ways again, as after the home's
 address changed. While none answers, it tries them all again 10 s after each round, which takes up
 to 5 s a way. A way that comes back while the Mac's addresses stay as they were is taken at the
 next change or failure.
@@ -267,7 +267,7 @@ ufw allow in on CABLE_INTERFACE to any port 5201 proto tcp
 iperf3 -s
 ```
 
-then, on the Mac, compare `iperf3 -c 10.99.0.1` with `iperf3 -c 10.77.0.1`, each with `-R` too, and
+then, on the Mac, compare `iperf3 -c 10.99.N.1` with `iperf3 -c 10.77.0.1`, each with `-R` too, and
 delete the two rules after. Bulk copies run at that speed: for faster ones, give rsync a direct way,
 such as `rsync -e 'ssh -o HostName=ADDRESS -o Port=PORT' -a DIR ws:`. Besides, check `ws client
 macos tunnel status` docked, on the home Wi-Fi and on a phone's hotspot, and `ethtool

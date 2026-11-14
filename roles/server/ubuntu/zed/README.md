@@ -164,7 +164,7 @@ What survives depends on the kind of reconnect:
   Unsaved edits stay on the Mac. Tabs are often lost (zed#51697), the project panel collapses
   (zed#56049), and a multi-root project may return with one folder (zed#41708).
 - Zed updates itself about twice a week, and each update costs a new daemon.
-- A move between networks costs a pause of a few seconds, not a reconnect: `ws` is `10.99.0.1` from
+- A move between networks costs a pause of a few seconds, not a reconnect: `ws` is `10.99.N.1` from
   every network.
 
 ### The daemon
