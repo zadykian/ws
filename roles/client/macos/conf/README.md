@@ -38,7 +38,8 @@ server's file is `servers/ws/server.conf` beside it. Each key's meaning is in
 ## The server's name
 
 `--server NAME` picks the server, and its file is `servers/NAME/server.conf`. A name is a
-lower-case letter, then up to 11 lower-case letters, digits and `-`. With one server, the flag may
+lower-case letter, then up to 11 lower-case letters, digits and `-`, other than `direct`,
+`first` and `key`. With one server, the flag may
 be left out. With none, the wizard asks the name, `ws` by default. With several, it refuses and
 lists them. `WS_SLOT`, from 0 to 15, is the slot: the wizard writes `WS_SLOT=0` in a file that
 lacks it. A LAN and `WS_TUNNEL_NETWORKS` stay clear of the slots' `10.99.0.0/20`. A directory of a
