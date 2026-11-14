@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"io"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -33,7 +34,7 @@ func TestMacConfigureWritesWhatAFormSaves(t *testing.T) {
 		root := enginecli.Root(p, clientGroup(p), serverGroup(p))
 		ended <- enginecli.Execute(context.Background(), root, []string{"client", "macos", "configure"}, in, io.Discard, io.Discard)
 	}()
-	if _, err := keys.Write([]byte("\t\tr.example\x13")); err != nil {
+	if _, err := keys.Write([]byte("\x0e\t\tr.example\x13")); err != nil {
 		t.Fatal(err)
 	}
 	// A save holds the keys, so Esc goes on until one lands past it, far enough apart to read as keys.
@@ -54,11 +55,12 @@ func TestMacConfigureWritesWhatAFormSaves(t *testing.T) {
 
 func TestConfSheetDrawsWhatTheFormGives(t *testing.T) {
 	_, m := macTerminal()
-	form, err := conf.Form{Conf: "/h/.config/ws/mac.conf", Server: "/h/.config/ws/servers/ws/server.conf", M: m}.Load(&effecttest.Out{})
+	form, err := conf.Form{Conf: "/h/.config/ws/mac.conf", Server: "/h/.config/ws/servers/ws/server.conf", Scope: conf.ServerFile, M: m}.
+		Load(&effecttest.Out{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	specs := confSheet(form).Fields(map[string]string{"WS_TARGET": "cloud"})
+	specs := confSheet("servers/ws/server.conf", form).Fields(map[string]string{"WS_TARGET": "cloud"})
 	if got := specs[0]; got.Label != "WS_TARGET" || got.Kind != tui.ChoiceField || got.Value != "lan" {
 		t.Errorf("target = %+v", got)
 	}
@@ -92,5 +94,28 @@ func TestMacConfigureRefusals(t *testing.T) {
 		if status != 1 || stdout != "" || !strings.Contains(stderr, tc.want) || strings.Contains(stderr, enterScreen) {
 			t.Errorf("%s: status = %d, stdout = %q, stderr = %q", name, status, stdout, stderr)
 		}
+	}
+}
+
+func TestMacFormsShowMacConfApartFromTheServersFile(t *testing.T) {
+	p, m := macTerminal()
+	writeConfs(m, "", "WS_USER=ada\n")
+	sheets, done, err := macForms(strings.NewReader(""), io.Discard, p, new(string))(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done(t.Context())
+	if len(sheets) < 2 || sheets[0].Name != "mac.conf" || sheets[1].Name != "servers/ws/server.conf" {
+		t.Fatalf("sheets = %v; want mac.conf, then the server's file", sheets)
+	}
+	var mac, server []string
+	for _, f := range sheets[0].Fields(nil) {
+		mac = append(mac, f.Label)
+	}
+	for _, f := range sheets[1].Fields(nil) {
+		server = append(server, f.Label)
+	}
+	if strings.Join(mac, " ") != "WS_GIT_NAME" || slices.Contains(server, "WS_GIT_NAME") || !slices.Contains(server, "WS_TARGET") {
+		t.Errorf("mac.conf shows %v, the server's file %v", mac, server)
 	}
 }
