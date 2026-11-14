@@ -70,11 +70,12 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 	if gone, err := conf.Load(p.Machine, mac, conf.ServerPath(mac, name)); err == nil {
 		cable = gone.CableService
 	}
-	if _, err := p.Machine.Run(c.Context(), "rm", "-rf", path.Dir(conf.ServerPath(mac, name))); err != nil {
-		return fmt.Errorf("cannot remove the files of %s: %w", name, err)
-	}
+	// The host goes first: its failure then leaves the server whole, and remove runs again.
 	if err := forgetHost(c, p, name); err != nil {
 		return err
+	}
+	if _, err := p.Machine.Run(c.Context(), "rm", "-rf", path.Dir(conf.ServerPath(mac, name))); err != nil {
+		return fmt.Errorf("cannot remove the files of %s: %w", name, err)
 	}
 	if _, err := fmt.Fprintf(c.OutOrStdout(), "removed %s\n", name); err != nil {
 		return err
@@ -137,7 +138,7 @@ func forgetHost(c *cobra.Command, p enginecli.Env, name string) error {
 		return err
 	}
 	if _, err := p.Machine.Run(c.Context(), "ssh-keygen", "-R", name); err != nil {
-		return fmt.Errorf("cannot drop %s from %s", name, file)
+		return fmt.Errorf("cannot drop %s from %s: %w", name, file, err)
 	}
 	return nil
 }
