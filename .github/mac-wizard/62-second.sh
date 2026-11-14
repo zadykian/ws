@@ -2,8 +2,9 @@
 # A second server, lab, on the Mac where ws has its tunnel. Its stand-in is standin.sh's second, at
 # 127.0.0.1:22023. With no terminal a key with a default needs its variable. --check must show
 # WS_SLOT=1 and WS_PORT=51821, and write no file. The wizard asks for no WS_USER, so lab's file holds
-# that line before the run. The run must set lab's host_vars to 10.99.1.1/24 and 51821. It must give
-# lab a daemon with a handshake and one login, and leave ws's files. The next run prints nothing.
+# that line before the run. --check must then show WS_SLOT=1 again, beside ws's slot 0, and leave the
+# file. The run must set lab's host_vars to 10.99.1.1/24 and 51821. It must give lab a daemon with a
+# handshake and one login, and leave ws's files. The next run prints nothing.
 
 set -u
 # shellcheck source=.github/mac-conf.sh
@@ -52,7 +53,15 @@ shown=$(printf '%s\n' "$out" | tr -d '\r')
     printf '%s\n' "$shown" | grep -qx '+WS_REMOTE_PORT=22023' && [ ! -e "${labconf%/*}" ] ||
     error "--check for lab exited $status, showed no WS_SLOT=1, WS_PORT=51821 and WS_REMOTE_PORT=22023, or wrote lab's file"
 
-mkdir -p "${labconf%/*}" && echo "WS_USER=$(id -un)" >"$labconf"
+user="WS_USER=$(id -un)"
+mkdir -p "${labconf%/*}" && echo "$user" >"$labconf"
+wizard --check
+shown=$(printf '%s\n' "$out" | tr -d '\r')
+if [ "$status" != 0 ] || ! printf '%s\n' "$shown" | grep -qx '+WS_SLOT=1' ||
+    ! printf '%s\n' "$user" | cmp -s - "$labconf"; then
+    error "--check for lab's own file exited $status, showed no WS_SLOT=1, or changed the file"
+fi
+
 wizard
 [ "$status" = 0 ] || error "ws client macos wizard --server lab exited $status"
 
