@@ -44,9 +44,11 @@ Usage:
 Available Commands:
   apply       set the Mac up from mac.conf
   conf        print the checked settings of mac.conf and a server's file as shell assignments
-  configure   edit mac.conf, the secrets and ws's host_vars on forms
+  configure   edit mac.conf, the server's file, the secrets and ws's host_vars on forms
+  remove      remove a server from the Mac
   resolver    send DOMAIN's names to the nameservers, or drop it
   secrets     edit ws's secrets file, over ssh
+  servers     list the Mac's servers with their target, slot and tunnel
   state       report what the Mac's steps would change
   tunnel      the Mac's tunnel to ws
   wizard      set the Mac up in stages
@@ -87,13 +89,25 @@ Global Flags:
       --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos configure
-It shows the keys that ws client macos wizard would ask, by WS_TARGET, with what mac.conf holds, and writes them on Ctrl-S. Ctrl-N goes to ws's secrets, which show as set or not, never their values, then to ws's host_vars, both read over ssh. It needs a terminal: anywhere else, edit the file by hand.
+It shows the keys that ws client macos wizard would ask, by WS_TARGET, with what the files hold: mac.conf's, then those of the server's file, servers/NAME/server.conf. It writes them on Ctrl-S. Ctrl-N goes on to ws's secrets, which show as set or not, never their values, then to ws's host_vars, both read over ssh. It needs a terminal: anywhere else, edit the file by hand.
 
 Usage:
   ws client macos configure [flags]
 
 Flags:
   -h, --help   help for configure
+
+Global Flags:
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
+== ws client macos remove
+It deletes servers/NAME beside mac.conf and NAME's entry in known_hosts, and leaves the server as it is. It refuses the Mac's last server, as apply needs one, and takes no --server: the argument is the consent.
+
+Usage:
+  ws client macos remove NAME [flags]
+
+Flags:
+  -h, --help   help for remove
 
 Global Flags:
       --plain           print lines, with no full-screen display
@@ -248,6 +262,18 @@ Usage:
 
 Flags:
   -h, --help   help for unset
+
+Global Flags:
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
+== ws client macos servers
+It lists each server of servers/ beside mac.conf: its target, its slot, and its tunnel, which is absent, stopped, starting, or the tier and endpoint it holds. A server whose file ws refuses shows - and its errors follow the list, with exit code 1. It reads alone, as the user, and takes no --server.
+
+Usage:
+  ws client macos servers [flags]
+
+Flags:
+  -h, --help   help for servers
 
 Global Flags:
       --plain           print lines, with no full-screen display

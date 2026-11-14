@@ -38,11 +38,16 @@ server's file is `servers/ws/server.conf` beside it. Each key's meaning is in
 ## The server's name
 
 `--server NAME` picks the server, and its file is `servers/NAME/server.conf`. A name is a
-lower-case letter, then up to 11 lower-case letters, digits and `-`. With one server, the flag may
-be left out. With none, the wizard asks the name, `ws` by default. With several, it refuses and
-lists them. `WS_SLOT`, from 0 to 15, is the slot: the wizard writes `WS_SLOT=0` in a file that
-lacks it. A LAN and `WS_TUNNEL_NETWORKS` stay clear of the slots' `10.99.0.0/20`. A directory of a
-bad name that holds `server.conf` is refused too.
+lower-case letter, then up to 11 lower-case letters, digits and `-`, other than `direct`,
+`first` and `key`. With one server, the flag may be left out. With none, the wizard asks the name,
+`ws` by default. A name that no file holds sets up a new server, beside the others. With several
+and no flag, it refuses and lists them. `WS_SLOT`, from 0 to 15, is the slot. The
+wizard writes the smallest that no other server holds in a file that lacks it, and `WS_PORT` after
+it. `WS_PORT` is 51820, or 51820 plus the slot behind a router that another server shares, or the
+next port up that none of those takes. The default of `WS_REMOTE_PORT` follows 22022 likewise. A
+LAN and `WS_TUNNEL_NETWORKS` stay
+clear of the slots' `10.99.0.0/20`. A directory of a bad name that holds `server.conf` is refused
+too. The wizard writes an empty `WS_CABLE_SERVICE` in a server's file where another's names one.
 
 ## What two servers may not share
 
@@ -54,8 +59,45 @@ another's takes. Each of the two refuses until one changes, in its own file's wo
 - `WS_RESOLVERS`: a domain the other names, as `/etc/resolver` holds one file a domain.
 - `WS_CABLE_SERVICE`: a cable the other names. Leave it empty in all but one server's file: the
   cable reaches that server alone ([the tunnel](../tunnel/README.md#the-cable)).
+- `WS_SLOT`: the other's slot, as each server's tunnel is the subnet of its slot.
+- `WS_PORT` and `WS_REMOTE_PORT`: the other's, behind the same `WS_REMOTE`, as the router forwards
+  a port to one server.
 
-A file of another server that is missing or refused is left out: a run for that server refuses it.
+A file of another server that is refused stops `apply` before any step, with `--only` and with
+`--check` too, and the error names the server and `ws client macos remove NAME`. The steps read
+every server's file, and the networks step would remove the resolver files of one it cannot read.
+
+## The servers
+
+`ws client macos servers` lists each server by name, with its target, slot and tunnel, as the
+user:
+
+```text
+NAME  TARGET  SLOT  TUNNEL
+lab   cloud   1     stopped
+ws    lan     0     lan 10.88.0.10:51820
+```
+
+The tunnel is `absent` before apply sets its daemon up, `stopped` where launchd has not loaded it,
+`starting` before the daemon writes its state, or the tier and endpoint it holds. A server whose
+file ws refuses shows `-` for its target and slot. Its errors follow the rows, with exit code 1. The
+command takes no `--server`.
+
+`ws client macos remove NAME` takes a server off the Mac, as the user and under the wizard's lock. It
+refuses the Mac's last server, as apply needs one, and takes no `--server`: the argument is the
+consent. It deletes `servers/NAME` and NAME's entry in `known_hosts`, then runs the steps `ssh`,
+`zed`, `tunnel` and `networks` for a server that stays, so that its daemon, hosts and routes go
+too. A server that stays and whose file ws refuses, NAME's clashes aside, stops it before it
+deletes anything, as those steps would skip that server. Where a step fails, `ws client macos
+apply` for a server that stays ends the removal. Where NAME held the cable, it prints a line to do
+by hand: the cable's service keeps `10.77.0.2`. The server itself is not changed.
+
+`ws client macos state` with several servers and no `--server` reports each one, its steps under a
+line with its name. Its `--json` then lists them in `servers`, each with its `steps`, and holds no
+top `steps`. With one server, or `--server`, it prints what it did before.
+
+`ws client macos configure` shows the keys of `mac.conf` on a sheet, then those of
+`servers/NAME/server.conf` on the next, each file's own, before the secrets and host_vars.
 
 ## A machine on the LAN
 
@@ -82,7 +124,7 @@ the Mac's display, if any:
   target needs both.
 - The VM needs a public IPv4 address, as the tunnel takes IPv4 alone.
 - The provider's firewall must let in TCP `WS_REMOTE_PORT`, and UDP 51820, the tunnel's, or the port
-  that `WS_PORT` sets. The closing list says so.
+  that `WS_PORT` sets, which moves wg0's listen port on ws too. The closing list says so.
 - The VM's default user takes the provider's keys, which must be the GitHub account's
   ([Login](../stages/README.md#login)).
 - Where ws doesn't answer at its way, the Host key stage asks the VM's public address, as the

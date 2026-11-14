@@ -20,6 +20,15 @@ import (
 // by hand.
 const Ws guided.Side = "Server (Ubuntu)"
 
+// SideOf returns the side of the server that the Mac names. Where it has no name, as in ws's own
+// wizard, that is Ws. Else the list's title holds the name, as the Mac works on several servers.
+func SideOf(server string) guided.Side {
+	if server == "" {
+		return Ws
+	}
+	return guided.Side("Server " + server + " (Ubuntu)")
+}
+
 // Session is the one way to ws of a wizard's run: the Mac's over ssh, or ws's own on the machine
 // itself. It runs the remote script and the files script, which share ws's status. The stages take
 // the session, never another stage, for what they read of ws.

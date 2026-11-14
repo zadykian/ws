@@ -249,7 +249,7 @@ lacks the peer, as after one that failed. Both go over a direct way, outside the
 sessions the change ends ([The tunnel](../../../server/ubuntu/wireguard/README.md#the-tunnel)). Then `WS_PUBLIC_KEY` in `server.conf`
 takes `wg0`'s key, in place of its line, and `ws client macos apply` runs again, which loads
 ws-tunnel ([The Mac's tunnel](../README.md#the-macs-tunnel)): allow it in the Background. Then a handshake
-must come within 30 s, and `ssh ws` log in once. Where none came, or the run asked ws's address, the
+must come within 30 s, and `ssh NAME` log in once. Where none came, or the run asked ws's address, the
 run goes on, and the closing list says what to do. The stage asks sudo's password only where it
 acts.
 
@@ -269,10 +269,10 @@ The answer goes in `server.conf` as `WS_CABLE_SERVICE`, then `ws client macos ap
 `10.77.0.2` ([The cable](../README.md#the-cable)), and `ping 10.77.0.1` must get an answer.
 
 `none` as either answer writes an empty `WS_CABLE_SERVICE`, so the wizard asks neither again, as
-where ws has no cable. From the environment, at a terminal too, `WS_CABLE_PORT` and
-`WS_CABLE_SERVICE` give the answers. `server.conf` keeps the port as `WS_CABLE_PORT`, to change there.
-Where `host_vars.yml` lacks it, as after ws's install, the stage names it there and runs the roles,
-undocked too, but stops on a port ws lacks. `--check` asks nothing, and says what it would do.
+where ws has no cable or another server has it. From the environment, at a terminal too,
+`WS_CABLE_PORT` and `WS_CABLE_SERVICE` give the answers. `server.conf` keeps the port as
+`WS_CABLE_PORT`. Where `host_vars.yml` lacks it, as after ws's install, the stage names it there and
+runs the roles, undocked too, but stops on a port ws lacks. `--check` only says what it would do.
 
 Undocked, an empty `WS_CABLE_SERVICE` in the environment ends the wait, for a Mac without the cable.
 So does `WS_CABLE_PORT`, for a port that ws keeps down, as no netplan file names it, so the files
@@ -285,7 +285,7 @@ After a run in which a stage acted, the wizard lists each of these that applies:
 - With Secure Boot on, where the kernel refuses the fans' driver, DKMS's key, enrolled at ws's
   console ([Secure Boot](../../../server/ubuntu/fans/README.md#secure-boot)).
 - What [The Mac](../README.md) leaves by hand: macOS's grant of the local network to an app.
-- ws's lease, made static, where the Host key stage asked ws's address, and the router's forwards
+- The server's lease, made static, where the Host key stage asked ws's address, and the router's forwards
   where `server.conf` has `WS_REMOTE` ([The router](../../../server/ubuntu/network/router.md)). Off the LAN, `server.conf`'s way to ws
   instead, and a cloud VM's firewall for the tunnel ([The wizard's targets](../conf/README.md)).
 - ws's outbound table, which `security_outbound: false` in ws's `host_vars.yml` keeps off, where
