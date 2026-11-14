@@ -20,12 +20,12 @@ import (
 func (t *Tunnel) handshake(ctx context.Context, c conf.Conf, kick bool) error {
 	end, mac := c.TunnelSlot().Server(), c.TunnelSlot().Mac()
 	if first := t.SSH.First(); first != "" {
-		once := "server.conf's way leads to ws"
+		once := "server.conf's way leads to " + t.SSH.Host
 		if c.Target == "lan" {
-			once = "ws's lease is static"
+			once = t.SSH.Host + "'s lease is static"
 		}
-		t.Hand.Add("The tunnel's handshake: ws-tunnel goes to ws's ways, not %s, where this run reached "+
-			"ws; once %s, run the wizard again, which checks it.", first, once)
+		t.Hand.Add("The tunnel's handshake: ws-tunnel goes to %s's ways, not %s, where this run reached "+
+			"%s; once %s, run the wizard again, which checks it.", t.SSH.Host, first, t.SSH.Host, once)
 		return nil
 	}
 	if kick {
@@ -37,10 +37,10 @@ func (t *Tunnel) handshake(ctx context.Context, c conf.Conf, kick bool) error {
 	t.Sleep(2 * time.Second)
 	if !t.shake(ctx, 30) {
 		t.none = true
-		t.Hand.Add("The tunnel's handshake: ws-tunnel had none with ws within 30 s, so ssh %s fails while "+
-			"a direct way works. ws must take UDP %s, through the router's forward or a cloud's firewall "+
+		t.Hand.Add("The tunnel's handshake: ws-tunnel had none with %s within 30 s, so ssh %s fails while "+
+			"a direct way works. %s must take UDP %s, through the router's forward or a cloud's firewall "+
 			"where WS_REMOTE leads through one, and ws-tunnel must stay allowed in the Background "+
-			"(roles/client/macos/README.md, The Mac's tunnel). Then run the wizard again, which checks it.", t.SSH.Host, c.TunnelPort())
+			"(roles/client/macos/README.md, The Mac's tunnel). Then run the wizard again, which checks it.", t.SSH.Host, t.SSH.Host, t.SSH.Host, c.TunnelPort())
 		return nil
 	}
 	if !t.via(ctx, end) {
