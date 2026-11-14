@@ -11,10 +11,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-// Label is the LaunchDaemon of the tunnel.
-const Label = "com.github.zadykian.ws-tunnel"
-
-// Dir holds the Mac's key, tunnel.conf and routes.d, which only root can write.
+// Dir holds the Mac's key and routes.d, and a directory of tunnel.conf per server, which only root can write.
 const Dir = "/etc/ws-tunnel"
 
 // Launchctl has launchd run or signal the daemon, through sudo.
@@ -24,6 +21,8 @@ type Launchctl struct {
 	// Sleep waits between the tries of a bootstrap. Nil means time.Sleep.
 	Sleep func(time.Duration)
 	Args  []string
+	// Label is the daemon that Args act on, which a warning and the fallback to kickstart name.
+	Label string
 	// Signal marks `kill SIGHUP`, which a daemon that is not running refuses: kickstart starts it
 	// then, and it reads tunnel.conf as it starts.
 	Signal bool
@@ -51,11 +50,11 @@ func (l Launchctl) Apply(ctx context.Context) error {
 			break
 		}
 		if l.Routes {
-			l.Out.Warn("cannot signal %s, which reads routes.d when it next starts", Label)
+			l.Out.Warn("cannot signal %s, which reads routes.d when it next starts", l.Label)
 			return nil
 		}
 		if l.Signal {
-			return Launchctl{M: l.M, Out: l.Out, Args: []string{"kickstart", "-k", "system/" + Label}}.Apply(ctx)
+			return Launchctl{M: l.M, Out: l.Out, Args: []string{"kickstart", "-k", "system/" + l.Label}}.Apply(ctx)
 		}
 		if l.Args[0] != "bootstrap" || tries >= 10 {
 			return fmt.Errorf("launchctl %s failed: %w; is ws-tunnel on under System Settings › "+
