@@ -31,7 +31,7 @@ func (h *Key) add(ctx context.Context) error {
 	line := scanKey(ctx, h.M, way)
 	if line == "" {
 		if h.Check {
-			h.Out.Say("%s: %s; a run would ask its address now", stage.Host, noAnswer(way))
+			h.Out.Say("%s: %s; a run would ask its address now", stage.Host, noAnswer(h.SSH.Host, way))
 			return nil
 		}
 		if way, line, err = h.question().ask(ctx, c.Target, way); err != nil {
