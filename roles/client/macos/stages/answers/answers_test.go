@@ -201,11 +201,11 @@ func TestAnswersCheckPassesALinkThatLacksNoKey(t *testing.T) {
 	}
 }
 
-// TestAnswersCheckCopiesTheOtherServersFiles keeps lab's file as it stands, refused for its slot,
-// so that the stages after see it beside ws's rehearsal and refuse it as the run would.
+// TestAnswersCheckCopiesTheOtherServersFiles keeps lab's file as it stands, so that the stages
+// after see it beside ws's rehearsal as the run would.
 func TestAnswersCheckCopiesTheOtherServersFiles(t *testing.T) {
 	const all = "WS_TARGET=lan\nWS_LAN=\nWS_REMOTE=\nWS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
-	const lab = "WS_USER=ada\nWS_SLOT=99\n"
+	const lab = "WS_USER=ada\nWS_SLOT=5\n"
 	a, _ := newAnswers(t, "WS_GIT_NAME=\nWS_GIT_EMAIL=\n", all)
 	a.Check, a.Scratch, a.ServerScratch = true, "/lock/mac.conf", "/lock/servers/ws/server.conf"
 	m := a.M.(*effecttest.Machine)
