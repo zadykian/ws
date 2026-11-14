@@ -195,12 +195,12 @@ in order.
 
 The keys come first, in this order. A run of the `wireguard` role makes ws's key and prints its
 public key. `ws client macos apply`, without `WS_PUBLIC_KEY`, makes the Mac's key, which only root
-reads. It prints its public key with the two commands that make the Mac ws's peer, over a direct
-way, as `ssh ws` needs this done first. ADDRESS and PORT are that way:
+reads. It prints its public key with the two commands that make the Mac the server's peer, over a
+direct way, as `ssh NAME`, the server's host, needs this done first. ADDRESS and PORT are that way:
 
 ```sh
-ssh -o HostName=ADDRESS -o Port=PORT ws "printf '%s\n' 'MAC_PUBLIC_KEY' | tee /etc/wireguard/mac.pub
->/dev/null" ssh -o HostName=ADDRESS -o Port=PORT ws ws server ubuntu apply --only wireguard
+ssh -o HostName=ADDRESS -o Port=PORT NAME "printf '%s\n' 'MAC_PUBLIC_KEY' | tee /etc/wireguard/mac.pub >/dev/null"
+ssh -o HostName=ADDRESS -o Port=PORT NAME ws server ubuntu apply --only wireguard
 ```
 
 For a `WS_USER` other than root, both go through `sudo` and `ssh -t`, for the password.
