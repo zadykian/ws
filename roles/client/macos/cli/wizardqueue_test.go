@@ -35,10 +35,10 @@ func TestWizardQueueSetsEachStageOnItsMachine(t *testing.T) {
 	for _, s := range queue {
 		on[s.Side]++
 	}
-	if on[string(stage.Mac)] != 11 || on[string(session.Ws)] != 4 {
+	if on[string(stage.Mac)] != 11 || on[string(session.SideOf("ws"))] != 4 {
 		t.Errorf("sides = %v, want 11 on the Mac and 4 on ws", on)
 	}
-	if run := stageOf(t, queue, "ws's run"); run.Side != string(session.Ws) || run.Waits == "" {
+	if run := stageOf(t, queue, "ws's run"); run.Side != string(session.SideOf("ws")) || run.Waits == "" {
 		t.Errorf("ws's run = %+v, want it on ws, behind the install", run)
 	}
 }
