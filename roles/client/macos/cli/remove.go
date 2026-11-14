@@ -56,6 +56,11 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 		return err
 	}
 	defer release()
+	// A file that ws refuses goes all the same, as remove is the way out of it, and names no cable.
+	var cable string
+	if gone, err := conf.Load(p.Machine, mac, conf.ServerPath(mac, name)); err == nil {
+		cable = gone.CableService
+	}
 	if _, err := p.Machine.Run(c.Context(), "rm", "-rf", path.Dir(conf.ServerPath(mac, name))); err != nil {
 		return fmt.Errorf("cannot remove the files of %s: %w", name, err)
 	}
@@ -66,7 +71,12 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 		return err
 	}
 	rest := slices.DeleteFunc(names, func(n string) bool { return n == name })
-	return reapply(c, p, mac, rest[0])
+	err = reapply(c, p, mac, rest[0])
+	if cable != "" {
+		_, _ = fmt.Fprintf(c.OutOrStdout(), "By hand: the cable's service %s keeps 10.77.0.2: name it in another server's "+
+			"WS_CABLE_SERVICE, or delete it in System Settings\n", cable)
+	}
+	return err
 }
 
 // reapply runs the Mac's steps that hold a server's traces, for the server that stays. They are ssh, Zed,
