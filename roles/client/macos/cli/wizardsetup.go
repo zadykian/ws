@@ -24,6 +24,9 @@ func wizardSetup(e wizardEffects, left func(parent, name string) bool, mac, name
 		if err != nil {
 			return false, err
 		}
+		if err := refuseBadSibling(p.Machine, mac, name); err != nil {
+			return false, err
+		}
 		w := io.Discard
 		if c.PublicKey != "" {
 			w = e.text

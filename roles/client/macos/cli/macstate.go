@@ -16,7 +16,14 @@ import (
 // macDoc is what ws client macos state --json prints.
 type macDoc struct {
 	Version string        `json:"version"`
-	Steps   []step.Report `json:"steps"`
+	Steps   []step.Report `json:"steps,omitempty"`
+	Servers []serverDoc   `json:"servers,omitempty"`
+}
+
+// serverDoc is one server's steps, where the report covers several servers.
+type serverDoc struct {
+	Name  string        `json:"name"`
+	Steps []step.Report `json:"steps"`
 }
 
 // newMacStateCmd returns ws client macos state.
@@ -43,21 +50,38 @@ func newMacStateCmd(p enginecli.Env, server *string) *cobra.Command {
 // screen on a Mac that may have none: the header then says so, and the wizard stays.
 func macRead(p enginecli.Env, server *string) tui.StateReader {
 	return func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
-		name, settings, err := loadMacConf(p, server)
+		confs, grouped, err := stateConfs(p, server)
 		if err != nil {
 			return nil, err
 		}
-		// The read takes the screen's effects as a run does, as the steps don't own the terminal under it.
-		reports, err := macOf(p, name, settings, b.Effects().M, b, nil).State(ctx)
-		return []tui.StateSection{{Reports: reports}}, err
+		var sections []tui.StateSection
+		for _, sc := range confs {
+			// The read takes the screen's effects as a run does, as the steps don't own the terminal under it.
+			reports, err := macOf(p, sc.Name, sc.Conf, b.Effects().M, b, nil).State(ctx)
+			section := tui.StateSection{Reports: reports}
+			if grouped {
+				section.Name = sc.Name
+			}
+			sections = append(sections, section)
+			if err != nil {
+				return sections, err
+			}
+		}
+		return sections, nil
 	}
 }
 
-// writeMacState prints the steps' reports as text.
-func writeMacState(w io.Writer, reports []step.Report) error {
+// writeMacState prints the steps' reports as text, under a line of the server's name where the
+// report covers several servers.
+func writeMacState(w io.Writer, docs []serverDoc, grouped bool) error {
 	var b strings.Builder
-	for _, r := range reports {
-		engine.WriteReport(&b, r)
+	for _, d := range docs {
+		if grouped {
+			b.WriteString(d.Name + "\n")
+		}
+		for _, r := range d.Steps {
+			engine.WriteReport(&b, r)
+		}
 	}
 	_, err := io.WriteString(w, b.String())
 	return err

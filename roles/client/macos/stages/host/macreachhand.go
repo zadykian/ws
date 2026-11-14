@@ -1,7 +1,6 @@
 package host
 
 import (
-	"cmp"
 	guided "github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
@@ -27,7 +26,7 @@ func (r MacReach) Hand(h *guided.Hand, s session.Status) {
 		"devices there, allow it (roles/client/macos/README.md, ssh's hosts).")
 	first := r.SSH.First()
 	if c.Target != "lan" {
-		away(h, c, first)
+		away(h, c, r.SSH.Host, first)
 		return
 	}
 	if first != "" {
@@ -35,29 +34,30 @@ func (r MacReach) Hand(h *guided.Hand, s session.Status) {
 		if c.LANAddress != "" {
 			lease += " at " + c.LANAddress
 		}
-		h.Add("ws's lease: %s, as roles/server/ubuntu/network/router.md has it, as this run reached ws at %s.", lease, first)
+		h.Add("%s's lease: %s, as roles/server/ubuntu/network/router.md has it, as this run reached %s at %s.",
+			r.SSH.Host, lease, r.SSH.Host, first)
 	}
 	if c.Remote != "" {
-		h.Add("The router's forwards to ws, UDP %s and TCP %s, for %s, as roles/server/ubuntu/network/router.md has them.",
-			cmp.Or(c.Port, "51820"), cmp.Or(c.RemotePort, "22022"), c.Remote)
+		h.Add("The router's forwards to %s, UDP %s and TCP %s, for %s, as roles/server/ubuntu/network/router.md has them.",
+			r.SSH.Host, c.TunnelPort(), c.ForwardPort(), c.Remote)
 	}
 }
 
 // away adds what stays by hand of a cloud VM or a VM on the Mac, which have no router. Where the
 // run asked ws's address, mac.conf's way must lead to it. A cloud VM's provider must let the tunnel
 // in (roles/client/macos/conf/README.md).
-func away(h *guided.Hand, c conf.Conf, first string) {
+func away(h *guided.Hand, c conf.Conf, server, first string) {
 	target := c.Target
 	way := "WS_LAN_ADDRESS"
 	if target == "cloud" {
 		way = "WS_REMOTE"
 	}
 	if first != "" {
-		h.Add("ws's address: %s in server.conf must lead to ws, as this run reached it at %s "+
-			"(roles/client/macos/conf/README.md).", way, first)
+		h.Add("%s's address: %s in server.conf must lead to %s, as this run reached it at %s "+
+			"(roles/client/macos/conf/README.md).", server, way, server, first)
 	}
 	if target == "cloud" {
-		h.Add("The provider's firewall: UDP %s open to ws, for the tunnel (roles/client/macos/conf/README.md).",
-			cmp.Or(c.Port, "51820"))
+		h.Add("The provider's firewall: UDP %s open to %s, for the tunnel (roles/client/macos/conf/README.md).",
+			c.TunnelPort(), server)
 	}
 }
