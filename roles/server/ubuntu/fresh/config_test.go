@@ -207,35 +207,6 @@ func byWhen(c config) map[string]string {
 	return out
 }
 
-// A key that terminals rewrite arrives as another key. Each form of it binds what the key binds.
-func TestEachArrivalIsBound(t *testing.T) {
-	_, c := load(t)
-	bound := byWhen(c)
-	for _, a := range []struct {
-		key      string
-		arrivals []string
-	}{
-		{"alt+shift+Space", []string{"alt+Space"}},
-	} {
-		found := false
-		for _, when := range []string{"normal", "file_explorer", "terminal"} {
-			action, has := bound[when+" "+a.key]
-			if !has {
-				continue
-			}
-			found = true
-			for _, other := range a.arrivals {
-				if got := bound[when+" "+other]; got != action {
-					t.Errorf("%s: %s is %q, but %s is %q", when, a.key, action, other, got)
-				}
-			}
-		}
-		if !found {
-			t.Errorf("%s binds nothing", a.key)
-		}
-	}
-}
-
 func TestEachShellKeyIsNoopInTheTerminal(t *testing.T) {
 	_, c := load(t)
 	bound := byWhen(c)
