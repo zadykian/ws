@@ -44,7 +44,7 @@ Usage:
 Available Commands:
   apply       set the Mac up from mac.conf
   conf        print the checked settings of mac.conf and a server's file as shell assignments
-  configure   edit mac.conf, the secrets and ws's host_vars on forms
+  configure   edit mac.conf, the server's file, the secrets and ws's host_vars on forms
   remove      remove a server from the Mac
   resolver    send DOMAIN's names to the nameservers, or drop it
   secrets     edit ws's secrets file, over ssh
@@ -89,7 +89,7 @@ Global Flags:
       --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos configure
-It shows the keys that ws client macos wizard would ask, by WS_TARGET, with what mac.conf holds, and writes them on Ctrl-S. Ctrl-N goes to ws's secrets, which show as set or not, never their values, then to ws's host_vars, both read over ssh. It needs a terminal: anywhere else, edit the file by hand.
+It shows the keys that ws client macos wizard would ask, by WS_TARGET, with what the files hold: mac.conf's, then those of the server's file, servers/NAME/server.conf. It writes them on Ctrl-S. Ctrl-N goes on to ws's secrets, which show as set or not, never their values, then to ws's host_vars, both read over ssh. It needs a terminal: anywhere else, edit the file by hand.
 
 Usage:
   ws client macos configure [flags]
