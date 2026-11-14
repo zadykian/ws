@@ -11,6 +11,9 @@ type Sequence struct {
 	Lacks func(key string) bool
 	// Ask gets the value for a key that mac.conf lacks.
 	Ask func(q Question) (string, error)
+	// Place is where the server sits beside the others, which gives its router port a default that
+	// keeps it apart from a server behind the same router. Nil gives none.
+	Place *Place
 	// Role gives the shell role's default of that name, which ws's git takes.
 	Role func(name string) string
 }
@@ -108,6 +111,10 @@ func (s *Sequence) lanWays() error {
 	if err != nil || remote == "" {
 		return err
 	}
-	_, err = s.get(Question{"WS_REMOTE_PORT", "The router's port forwarded to ws's 22", strconv.Itoa(forwardPort), ""})
+	def := strconv.Itoa(forwardPort)
+	if s.Place != nil {
+		def = s.Place.RemotePort(remote)
+	}
+	_, err = s.get(Question{"WS_REMOTE_PORT", "The router's port forwarded to ws's 22", def, ""})
 	return err
 }
