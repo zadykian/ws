@@ -2,6 +2,7 @@ package networks
 
 import (
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -13,6 +14,12 @@ func TestRoutesAndResolverTexts(t *testing.T) {
 	if got, want := resolverText([]string{"10.0.0.1", "10.0.0.2"}),
 		resolverHeader+"\nnameserver 10.0.0.1\nnameserver 10.0.0.2\n"; got != want {
 		t.Errorf("resolverText = %q; want %q", got, want)
+	}
+}
+
+func TestResolverHeaderNamesTheServersFile(t *testing.T) {
+	if want := "from WS_RESOLVERS in a server's server.conf."; !strings.HasSuffix(resolverHeader, want) {
+		t.Errorf("resolverHeader = %q; want it to end with %q", resolverHeader, want)
 	}
 }
 

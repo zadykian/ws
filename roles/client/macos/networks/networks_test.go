@@ -12,7 +12,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/networks"
 )
 
-const resolverHead = "# Written by github.com/zadykian/ws: ws client macos apply, from WS_RESOLVERS in ~/.config/ws/mac.conf.\n"
+const resolverHead = "# Written by github.com/zadykian/ws: ws client macos apply, from WS_RESOLVERS in a server's server.conf.\n"
 
 func installDaemons(m *effecttest.Machine, names ...string) {
 	m.Dirs["/Library/LaunchDaemons"] = 0o755
