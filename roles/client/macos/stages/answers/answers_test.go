@@ -147,6 +147,40 @@ func TestAnswersCheckWritesTheScratchFile(t *testing.T) {
 	}
 }
 
+// TestAnswersLeavesAFileThatGainsNothing asks for the server's keys alone, so mac.conf, a link
+// with no final newline, is neither written nor said.
+func TestAnswersLeavesAFileThatGainsNothing(t *testing.T) {
+	const mac = "WS_GIT_NAME=ada\nWS_GIT_EMAIL=a@b.c"
+	for _, check := range []bool{false, true} {
+		a, out := newAnswers(t, mac, "WS_USER=ada\n")
+		a.Check, a.Scratch, a.ServerScratch = check, "/lock/mac.conf", "/lock/servers/ws/server.conf"
+		a.Env = func(k string) (string, bool) {
+			return map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "r.example"}[k], k == "WS_TARGET" || k == "WS_REMOTE"
+		}
+		m := a.M.(*effecttest.Machine)
+		m.Links[confPathForTest] = "/dot/mac.conf"
+		m.Results["mkdir -p /h/.config/ws/servers/ws"] = effecttest.Result{}
+		m.Results["mkdir -p /lock"] = effecttest.Result{}
+		m.Results["mkdir -p /lock/servers/ws"] = effecttest.Result{}
+		a.P.(*effecttest.Prompt).Answers = map[string]string{
+			"The VM's SSH port (WS_REMOTE_PORT) [22]":                                                 "",
+			"More networks through the tunnel, split by blanks (WS_TUNNEL_NETWORKS) [none]":           "",
+			"Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks (WS_RESOLVERS) [none]": "",
+		}
+		if _, err := step.Run(context.Background(), []step.Step{homebrewDone{}, a}, out, check); err != nil {
+			t.Fatalf("check=%v: Run = %v", check, err)
+		}
+		if got := string(m.Files[confPathForTest]); got != mac {
+			t.Errorf("check=%v: mac.conf = %q, want it as it was", check, got)
+		}
+		for _, l := range out.Lines {
+			if strings.Contains(l, confPathForTest) && (strings.Contains(l, "wrote") || strings.Contains(l, "diff")) {
+				t.Errorf("check=%v: out has %q, want nothing of mac.conf", check, l)
+			}
+		}
+	}
+}
+
 func TestAnswersCheckPassesALinkThatLacksNoKey(t *testing.T) {
 	const all = "WS_TARGET=lan\nWS_LAN=\nWS_REMOTE=\nWS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
 	a, out := newAnswers(t, "WS_GIT_NAME=\nWS_GIT_EMAIL=\n", all)
@@ -158,8 +192,8 @@ func TestAnswersCheckPassesALinkThatLacksNoKey(t *testing.T) {
 	if p, err := a.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
 		t.Fatalf("Plan = %v, %v", p, err)
 	}
-	if got := out.Lines; len(got) != 2 || got[0] != "diff: "+confPathForTest+"\n" || got[1] != "diff: "+serverPathForTest+"\n" {
-		t.Errorf("out = %q, want an empty diff of each file", got)
+	if got := out.Lines; len(got) != 0 {
+		t.Errorf("out = %q, want no diff of a file that gains nothing", got)
 	}
 	if got := string(m.Files["/lock/servers/ws/server.conf"]); got != all {
 		t.Errorf("scratch = %q", got)

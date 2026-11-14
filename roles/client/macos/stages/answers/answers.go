@@ -59,6 +59,8 @@ type part struct {
 	file          conf.File
 	scratch       string
 	before, after string
+	// gains tells whether the answers add lines to the file. A file with none is left alone.
+	gains bool
 }
 
 func (a *Answers) file(s conf.Scope) conf.File {
@@ -156,6 +158,7 @@ func (a *Answers) compose(text map[conf.Scope]string, lines, remote string, plac
 			}
 			kept = head + kept
 		}
+		p.gains = kept != ""
 		p.before, p.after, err = p.file.Compose(kept)
 		if errors.Is(err, conf.ErrRefused) {
 			return nil, a.refusal(p.file.Path, lines)
@@ -197,6 +200,9 @@ func (a *Answers) Apply(ctx context.Context, _ step.Plan) error {
 		return err
 	}
 	for _, p := range parts {
+		if !p.gains {
+			continue
+		}
 		if err := p.file.Write(ctx, p.after); err != nil {
 			return err
 		}
@@ -221,10 +227,12 @@ func (a *Answers) rehearse(ctx context.Context, text map[conf.Scope]string, c co
 		return err
 	}
 	for _, p := range parts {
-		if _, err := a.M.Stat(path.Dir(p.file.Path)); err != nil {
-			a.Out.Say("would make %s", path.Dir(p.file.Path))
+		if p.gains {
+			if _, err := a.M.Stat(path.Dir(p.file.Path)); err != nil {
+				a.Out.Say("would make %s", path.Dir(p.file.Path))
+			}
+			a.Out.Diff(p.file.Path, []byte(p.before), []byte(p.after))
 		}
-		a.Out.Diff(p.file.Path, []byte(p.before), []byte(p.after))
 		if err := a.writeScratch(ctx, p.scratch, []byte(p.after)); err != nil {
 			return err
 		}
