@@ -80,6 +80,16 @@ case $new in
 esac
 case $new in *' started on '*) error 'the daemon started again on a SIGHUP' ;; esac
 
+# A /32's answer of route -n get may hold no mask line, as a host route's. The daemon must take it
+# for the network's own route all the same, and delete it once routes.d drops it.
+must "$TUNNEL" client macos tunnel routes --server ws host 192.0.2.77/32
+# shellcheck disable=SC2329 # called through until_ok
+hosted() { route -n get 192.0.2.77 | grep -q "interface: $utun\$"; }
+until_ok 20 hosted || error "192.0.2.77 is not routed into the daemon's $utun"
+route -n get -inet 192.0.2.77/32 || true
+must "$TUNNEL" client macos tunnel routes --server ws host
+until_ok 20 eval '! hosted' || error "192.0.2.77/32 is still routed into $utun"
+
 # shellcheck disable=SC2329 # called through until_ok
 shown() {
     scutil --dns | awk '/^resolver #/ { d = 0 } /domain *: example\.test$/ { d = 1 }
