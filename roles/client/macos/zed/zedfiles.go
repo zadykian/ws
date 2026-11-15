@@ -11,11 +11,6 @@ import (
 )
 
 const (
-	// zedHeader is the first line of global_settings.json, by which a run knows a file for its own.
-	zedHeader = "// Written by ws client macos apply: its next run replaces changes made here."
-	// zedKeymapMark starts the first line of keymap.json, which carries its own header. It does not
-	// name the command, so the file stays ws's if the command changes.
-	zedKeymapMark = "// Written by github.com/zadykian/ws"
 	// zedSeedHead is the start of settings.json where the file is missing. Zed writes that file from
 	// its UI and merges it over global_settings.json. The connections to the servers can sit in no
 	// other file, as an opened project is recorded by its index in this list.
@@ -25,8 +20,8 @@ const (
 )
 
 // files plans Zed's directory and its three files. global_settings.json is Settings, replaced on
-// each run, and left with a warning where its first line is not ws's. keymap.json is Keymap,
-// replaced and left on the same terms with its own mark. settings.json is written where nothing is there, and never read.
+// each run, and left with a warning where its first line lacks the mark. keymap.json is Keymap,
+// replaced and left on the same terms. settings.json is written where nothing is there, and never read.
 func (z *Zed) files(ctx context.Context) ([]step.Change, error) {
 	dir := z.Home + "/.config/zed"
 	cs, link, err := z.dirs().Plan()
@@ -67,16 +62,7 @@ func (z *Zed) dirs() file.UserDirs {
 func (z *Zed) whole() []file.UserFile {
 	dir := z.Home + "/.config/zed"
 	return []file.UserFile{
-		{M: z.M, Out: z.Out, Path: dir + "/global_settings.json", Text: z.Settings, Mode: 0o644, Own: zedOwn(zedHeader, true), Warn: true},
-		{M: z.M, Out: z.Out, Path: dir + "/keymap.json", Text: z.Keymap, Mode: 0o644, Own: zedOwn(zedKeymapMark, false), Warn: true},
-	}
-}
-
-// zedOwn returns the test of a file's first line: equal to mark, or starting with it where exact is
-// false.
-func zedOwn(mark string, exact bool) func([]byte) bool {
-	return func(have []byte) bool {
-		first, _, _ := strings.Cut(string(have), "\n")
-		return first == mark || (!exact && strings.HasPrefix(first, mark))
+		{M: z.M, Out: z.Out, Path: dir + "/global_settings.json", Text: z.Settings, Mode: 0o644, Own: file.Ours, Warn: true},
+		{M: z.M, Out: z.Out, Path: dir + "/keymap.json", Text: z.Keymap, Mode: 0o644, Own: file.Ours, Warn: true},
 	}
 }

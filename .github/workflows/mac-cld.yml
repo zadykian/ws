@@ -181,7 +181,8 @@ jobs:
           version=$(~/.local/bin/cld version) ||
               { echo '::error::~/.local/bin/cld version failed'; exit 1; }
           echo "$version"
-          head -n 1 /etc/ws/ghostty | grep -q "^# Written by ws client macos apply" ||
+          mark='Written by github.com/zadykian/ws, whose next run replaces any change made here.'
+          [ "$(head -n 1 /etc/ws/ghostty)" = "# $mark" ] ||
               { echo "::error::/etc/ws/ghostty has no header"; fail=1; }
           plain=roles/client/macos/zed/files
           wsghostty=roles/client/macos/ghostty/files/ws.ghostty
@@ -190,13 +191,13 @@ jobs:
           [ "$(grep -cx 'config-file = ?/etc/ws/ghostty' "$support/config.ghostty")" = 1 ] ||
               { echo '::error::config.ghostty does not read /etc/ws/ghostty once'; fail=1; }
           zed=~/.config/zed
-          head -n 1 "$zed/global_settings.json" | grep -q '^// Written by ws client macos apply' ||
+          [ "$(head -n 1 "$zed/global_settings.json")" = "// $mark" ] ||
               { echo '::error::global_settings.json has no ws header'; fail=1; }
           cmp -s "$zed/global_settings.json" "$plain/global_settings.json" ||
               { echo "::error::global_settings.json differs from the one in $plain"; fail=1; }
           grep -qxF '{ "ssh_connections": [{ "host": "ws" }] }' "$zed/settings.json" ||
               { echo '::error::settings.json has no seed for the host ws'; fail=1; }
-          head -n 1 "$zed/keymap.json" | grep -q '^// Written by github.com/zadykian/ws' ||
+          [ "$(head -n 1 "$zed/keymap.json")" = "// $mark" ] ||
               { echo '::error::keymap.json has no ws mark'; fail=1; }
           cmp -s "$zed/keymap.json" "$plain/keymap.json" ||
               { echo "::error::keymap.json is not $plain/keymap.json"; fail=1; }

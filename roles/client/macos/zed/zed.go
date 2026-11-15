@@ -12,9 +12,9 @@ import (
 // where Zed can't be installed, so that the run goes on to the tunnel. Zed then updates itself.
 type Zed struct {
 	Home string
-	// Settings is global_settings.json whole, its first line zedHeader.
+	// Settings is global_settings.json whole, its first line file.Header("//").
 	Settings []byte
-	// Keymap is keymap.json whole, its first line starting with zedKeymapMark.
+	// Keymap is keymap.json whole, its first line file.Header("//").
 	Keymap []byte
 	// Server is the run's server, and MacConf is values.yml's path, whose servers/ the seed lists.
 	Server  string

@@ -10,13 +10,13 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/roles/client/macos/ghostty"
 )
 
-const (
-	ghosttyDir  = "/h/Library/Application Support/com.mitchellh.ghostty"
-	ghosttyHead = "# Written by ws client macos apply: its next run replaces changes made here.\n"
-)
+const ghosttyDir = "/h/Library/Application Support/com.mitchellh.ghostty"
+
+var ghosttyHead = file.Header("#") + "\n"
 
 func ghosttyStep(m *effecttest.Machine, out *effecttest.Out) resource.Lazy {
 	m.Dirs["/h/Applications/Ghostty.app"] = 0o755

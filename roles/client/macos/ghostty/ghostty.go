@@ -17,8 +17,6 @@ import (
 )
 
 const (
-	// ghosttyHeader starts the first line of ws's settings, which says that a run replaces them.
-	ghosttyHeader = "# Written by ws client macos apply"
 	// settingsFile is ws's settings, root's, which Ghostty's config reads.
 	settingsFile = etcws.Dir + "/ghostty"
 	// ghosttyLine is the line of Ghostty's config that reads settingsFile.
@@ -125,7 +123,7 @@ func (g *Ghostty) settings() []resource.Said {
 
 // want is what /etc/ws/ghostty holds.
 func (g *Ghostty) want() []byte {
-	return append([]byte(ghosttyHeader+": its next run replaces changes made here.\n"), g.Settings...)
+	return append([]byte(file.Header("#")+"\n"), g.Settings...)
 }
 
 func (g *Ghostty) resolve() func(string) (string, error) {

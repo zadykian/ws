@@ -3,14 +3,15 @@ package zed
 import (
 	"strings"
 	"testing"
+
+	"github.com/zadykian/ws/engine/core/resource/file"
 )
 
-func TestTheMacsZedFilesCarryTheMarksOfOwnership(t *testing.T) {
-	first, _, _ := strings.Cut(string(Settings), "\n")
-	if first != zedHeader {
-		t.Errorf("global_settings.json starts with %q; want %q", first, zedHeader)
-	}
-	if !strings.HasPrefix(string(Keymap), zedKeymapMark) {
-		t.Errorf("keymap.json does not start with %q", zedKeymapMark)
+func TestTheMacsZedFilesStartWithTheHeader(t *testing.T) {
+	for name, text := range map[string][]byte{"global_settings.json": Settings, "keymap.json": Keymap} {
+		first, _, _ := strings.Cut(string(text), "\n")
+		if first != file.Header("//") {
+			t.Errorf("%s starts with %q; want %q", name, first, file.Header("//"))
+		}
 	}
 }
