@@ -29,9 +29,10 @@ deleted, a landed pull request's say. A `false` in `~/.config/git/machine.gitcon
 
 ## Signing
 
-`~/.gitconfig` signs each commit with an SSH key of the machine's own: `WS_GIT_SIGNING_KEY`
-in the values file, `~/.ssh/id_ed25519_signing` by default. The key lies below `WS_HOME`, or the
-run fails. The role makes it once, an ed25519 key with no passphrase, as tools and claude commit
+`~/.gitconfig` signs each commit with an SSH key of the machine's own: the `.pub`
+that `WS_GIT_SIGNING_PUB_KEY` names in the values file, `~/.ssh/id_ed25519_signing.pub` by default.
+The private key lies beside it, without `.pub`. The `.pub` lies below `WS_HOME`, or the run fails.
+The role makes the pair once, an ed25519 key with no passphrase, as tools and claude commit
 unattended. The key only signs. The role does not register it with GitHub: [The signing key](../devtools/README.md#the-signing-key).
 
 To revoke the key, delete it in the account's settings on GitHub, then delete
