@@ -66,7 +66,8 @@ the cable: [The cable](#the-cable). `WS_GIT_SIGNING_PUB_KEY` is the `.pub` of th
 commits on the Mac, by its path from `/` or `~/`:
 [git on the Mac](git/README.md). `WS_IDENTITY_PUB_KEY` is the `.pub` of the key that ssh offers ws,
 and `WS_IDENTITY_AGENT` the socket of its agent, in quotes where it holds a blank: [ssh's
-hosts](#sshs-hosts). A run makes `~/.config/ws` at mode 700, and sets that mode where it differs.
+hosts](#sshs-hosts). A run makes `~/.config/ws` at mode 700, and sets that mode where it differs. It
+makes `/etc/ws` through sudo, for git's allowed signers, at mode 755.
 
 `WS_USER` is the user ssh logs in as: the server's `ws_user`, `zadykian` by default, or `root` for a
 `WS_TARGET` of `cloud`, which may have no other user. The other targets refuse `WS_USER=root`. A key

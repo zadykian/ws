@@ -39,9 +39,10 @@ To revoke the key, delete it in the account's settings on GitHub, then delete
 registers it, at its Signing key stage, or add the `.pub` by hand. A key deleted on GitHub alone
 comes back the same way.
 
-`git verify-commit` trusts the key for `me@zadykian.dev` through `shell_git_allowed_signers`,
-`~/.config/git/allowed_signers` by default, also below `ws_home`. Each run replaces a change made
-to it, and keeps the old file beside it, as `allowed_signers.*~`. So `git verify-commit` fails here
+`git verify-commit` trusts the key for `me@zadykian.dev` through `/etc/ws/allowed_signers`,
+root's and 644, the Mac's path too. A run that changes nothing reads it as the user. Each run
+replaces a change made to it. A `host_vars.yml` that names `shell_git_allowed_signers` is refused.
+So `git verify-commit` fails here
 on a commit another key signed, an older machine's say, though GitHub verifies it by the account's
 keys.
 

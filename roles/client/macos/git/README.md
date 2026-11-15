@@ -5,7 +5,9 @@
 `~/.config/ws/gitconfig`, from the settings that `roles/internal/gitcfg` holds for both sides, the
 fetch's prune among them. The author is `gitcfg.Name` and `gitcfg.Email`, `zadykian` and
 `me@zadykian.dev`. Each commit is signed with `WS_GIT_SIGNING_PUB_KEY`, which
-`~/.config/ws/allowed_signers` trusts for the email in `git verify-commit`. It names gh's credential
+`/etc/ws/allowed_signers` trusts for the email in `git verify-commit`. That file is root's and 644,
+as on ws. A run writes it through sudo and reads it as the user, so that a run that changes nothing
+asks for no password. An old `~/.config/ws/allowed_signers` stays, unused. It names gh's credential
 command too, as `gh auth setup-git` does, so that pushes to GitHub take gh's login, and installs
 Homebrew's gh where `PATH` has none.
 
