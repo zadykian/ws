@@ -110,8 +110,8 @@ lab_pid=$!
 trap 'kill "$lab_pid"' EXIT
 
 install -d -m 755 /etc/ws
-printf '%s\n' --- "WS_USER: $user" >/etc/ws/host_vars.yml
-chmod 600 /etc/ws/host_vars.yml
+printf '%s\n' --- "WS_USER: $user" >/etc/ws/values.yml
+chmod 600 /etc/ws/values.yml
 
 # The controls: each of these holds before ws, and the opposite after it.
 must "the private address answers before the table" up "http://$target/"
@@ -229,7 +229,7 @@ must "a second init keeps both" test "$sums" = \
     "$(sha256sum /etc/ws/secrets.age /etc/credstore.encrypted/ws-secrets)"
 
 # ws server ubuntu wizard runs ws server ubuntu apply in a unit, as the Mac's wizard does, and a
-# second run with nothing changed starts none. A value set in host_vars has the next start one. The
+# second run with nothing changed starts none. A value set in values.yml has the next start one. The
 # unit's ws adds --only shell,git to apply, so that a full run, as the stamp has it, fits the job.
 # This comes last: ws is that stand-in from here on.
 refused "the wizard asks with no terminal" ws server ubuntu wizard --plain </dev/null

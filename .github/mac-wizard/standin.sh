@@ -184,7 +184,7 @@ EOF
 }
 standin ws 22022
 # A second server, lab, as 62-second.sh sets one up on a Mac that has ws. Its sshd listens at
-# 22023, and its wg0 on the port that its host_vars names, 51821, beside ws's 51820.
+# 22023, and its wg0 on the port that its values.yml names, 51821, beside ws's 51820.
 standin lab 22023
 ws=$RUNNER_TEMP/ws
 lab=$RUNNER_TEMP/lab

@@ -3,7 +3,7 @@
 # 127.0.0.1:22023. With no terminal a key with a default needs its variable. --check must show
 # WS_SLOT=1 and WS_TUNNEL_PORT=51821, and write no file. The wizard asks for no WS_USER, so lab's file holds
 # that line before the run. --check must then show WS_SLOT=1 again, beside ws's slot 0, and leave the
-# file. The run must set lab's host_vars to 10.99.1.1/24 and 51821. It must give lab a daemon with a
+# file. The run must set lab's values.yml to 10.99.1.1/24 and 51821. It must give lab a daemon with a
 # handshake and one login, and leave ws's files. The next run prints nothing.
 
 set -u
@@ -70,10 +70,10 @@ wizard
 for line in WS_SLOT=1 WS_TUNNEL_PORT=51821 WS_REMOTE_PORT=22023 "WS_PUBLIC_KEY=$(cat "$lab/wg0" 2>/dev/null)"; do
     grep -qxF -e "$line" "$labconf" || error "lab's file lacks $line"
 done
-vars="$lab/root"/etc/ws/host_vars.yml
+vars="$lab/root"/etc/ws/values.yml
 sudo grep -Eqx 'WS_TUNNEL_ADDRESS: "?10\.99\.1\.1/24"?' "$vars" ||
-    error "lab's host_vars names no WS_TUNNEL_ADDRESS 10.99.1.1/24"
-sudo grep -qx 'WS_TUNNEL_PORT: 51821' "$vars" || error "lab's host_vars names no WS_TUNNEL_PORT 51821"
+    error "lab's values.yml names no WS_TUNNEL_ADDRESS 10.99.1.1/24"
+sudo grep -qx 'WS_TUNNEL_PORT: 51821' "$vars" || error "lab's values.yml names no WS_TUNNEL_PORT 51821"
 mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /opt/homebrew/bin/wg /etc/ws-tunnel/private.key)
 [ "$(sudo cat "$lab/root"/etc/wireguard/mac.pub)" = "$mac" ] ||
     error "lab's stand-in has no mac.pub of the Mac's key"

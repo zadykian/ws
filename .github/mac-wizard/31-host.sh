@@ -8,7 +8,7 @@
 # Mac's own conf, must then add the same line back. With a conf whose way to ws doesn't
 # answer, ws's address now must come from WS_FIRST_ADDRESS. That run's closing list must name
 # the server's WS_TUNNEL_PORT in the router's forwards, and ws's lease at no address, as its file has no
-# LAN. As that port is not 51820, the run must name WS_TUNNEL_PORT in ws's host_vars before ws's
+# LAN. As that port is not 51820, the run must name WS_TUNNEL_PORT in ws's values.yml before ws's
 # run. A cloud VM's copy must name the server file's way to ws, and no lease. The Mac's own conf
 # then puts the way back.
 
@@ -101,8 +101,8 @@ status=$?
 printf '%s\n' "$out"
 [ "$status" = 0 ] || error "ws client macos wizard with WS_FIRST_ADDRESS=127.0.0.1 exited $status"
 cmp -s "$hosts" "$RUNNER_TEMP/hosts" || error "ws client macos wizard with WS_FIRST_ADDRESS wrote another $hosts"
-sudo grep -qx 'WS_TUNNEL_PORT: 51821' "$RUNNER_TEMP/ws/root"/etc/ws/host_vars.yml ||
-    error "ws client macos wizard with WS_TUNNEL_PORT=51821 named no WS_TUNNEL_PORT in ws's host_vars"
+sudo grep -qx 'WS_TUNNEL_PORT: 51821' "$RUNNER_TEMP/ws/root"/etc/ws/values.yml ||
+    error "ws client macos wizard with WS_TUNNEL_PORT=51821 named no WS_TUNNEL_PORT in ws's values.yml"
 lease="- ws's lease: static, as roles/server/ubuntu/cable/router.md has it, as this run reached ws at 127.0.0.1."
 forwards="- The router's forwards to ws, UDP 51821 and TCP 22022, for 192.0.2.1,"
 if ! printf '%s\n' "$out" | grep -qxF -e "$lease" ||
@@ -121,7 +121,7 @@ if [ "$status" != 0 ] || ! printf '%s\n' "$out" | grep -qF -e "$way (roles/clien
     error "ws client macos wizard on a cloud VM with WS_FIRST_ADDRESS exited $status, or named its lease"
 fi
 sudo sed -i '' -e '/^WS_SECURITY_OUTBOUND:/d' -e '/^WS_TUNNEL_PORT:/d' \
-    "$RUNNER_TEMP/ws/root"/etc/ws/host_vars.yml
+    "$RUNNER_TEMP/ws/root"/etc/ws/values.yml
 sudo rm -f "$RUNNER_TEMP/ws/values.log"
 rm -r "$RUNNER_TEMP/confs/cloud"
 "$wsbin" client macos wizard </dev/null || error "ws client macos wizard with the Mac's own mac.conf exited $?"
