@@ -3,12 +3,12 @@ package tunnel
 import (
 	"testing"
 
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 func TestTunnelConf(t *testing.T) {
-	head := "# Written by github.com/zadykian/ws: ws client macos apply, from /etc/ws/servers/lab/values.yml.\n" +
-		"WS_PUBLIC_KEY=K\n"
+	head := file.Header("#") + "\nWS_PUBLIC_KEY=K\n"
 	tests := []struct {
 		name string
 		c    values.Conf
@@ -20,7 +20,7 @@ func TestTunnelConf(t *testing.T) {
 		{"the cable", values.Conf{PublicKey: "K", CableService: "USB LAN"}, head + "WS_CABLE=yes\nWS_TUNNEL_PORT=51820\nWS_SLOT=0\n"},
 	}
 	for _, tt := range tests {
-		if got := tunnelConf(tt.c, "lab"); got != tt.want {
+		if got := tunnelConf(tt.c); got != tt.want {
 			t.Errorf("%s: tunnelConf = %q; want %q", tt.name, got, tt.want)
 		}
 	}
