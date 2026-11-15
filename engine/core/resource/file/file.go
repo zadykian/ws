@@ -59,7 +59,7 @@ func (writeFile) Kind() step.ChangeKind { return step.Write }
 func (c writeFile) Item() step.Item { return c.f.item(c.before, c.got) }
 
 // Apply looks for a link on the way again, as the user may make one after Plan. A backup or an edit
-// reads as root, outside the bound that the writes keep.
+// reads as root, a home file through one open below the home, as the writes keep their bound.
 func (c writeFile) Apply(context.Context) error {
 	if err := c.f.guard(); err != nil {
 		return err
@@ -68,7 +68,7 @@ func (c writeFile) Apply(context.Context) error {
 		return err
 	}
 	if c.f.edit != nil {
-		before, err := c.f.M.ReadRootFile(c.f.Path)
+		before, _, err := c.f.read()
 		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return err
 		}
@@ -90,19 +90,29 @@ func (f File) guard() error {
 	return paths.GuardHome(f.M, f.Home, f.Path)
 }
 
+// read reads the file with its owner and mode as root. A home file goes through one open below the
+// home, as the account may swap a link in after the guard. Another file is read by name.
+func (f File) read() ([]byte, effect.Attrs, error) {
+	if f.Home != "" {
+		return f.M.ReadHomeFile(f.Home, f.Path)
+	}
+	before, err := f.M.ReadRootFile(f.Path)
+	if err != nil {
+		return nil, effect.Attrs{}, err
+	}
+	got, err := f.M.RootAttrs(f.Path)
+	return before, got, err
+}
+
 // Plan reads the file and its attributes as root.
 func (f File) Plan(context.Context) ([]resource.Change, error) {
 	if err := f.guard(); err != nil {
 		return nil, err
 	}
-	before, err := f.M.ReadRootFile(f.Path)
+	before, got, err := f.read()
 	if errors.Is(err, fs.ErrNotExist) {
 		return []resource.Change{writeFile{f: f, why: "create"}}, nil
 	}
-	if err != nil {
-		return nil, err
-	}
-	got, err := f.M.RootAttrs(f.Path)
 	if err != nil {
 		return nil, err
 	}
@@ -120,8 +130,11 @@ func (f File) Report(context.Context) ([]step.Item, error) {
 	if err := f.guard(); err != nil {
 		return nil, err
 	}
-	before, got, ok, err := paths.ReadRoot(f.M, f.Path)
-	if !ok {
+	before, got, err := f.read()
+	if errors.Is(err, fs.ErrNotExist) {
+		return []step.Item{f.item(nil, nil)}, nil
+	}
+	if err != nil {
 		return []step.Item{f.item(nil, nil)}, err
 	}
 	return []step.Item{f.item(before, &got)}, nil
