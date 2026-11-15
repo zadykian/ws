@@ -1,8 +1,9 @@
 # shellcheck shell=sh
 # The mac job's checks of ws client macos apply's git step. mac-setup-checks.sh sources them last,
 # so that they run with its functions and the job's mac.conf. The runner must lack the files the
-# step writes, but ~/.gitconfig, which goes aside. As the script exits, on a signal too, the files
-# go, and the runner's ~/.gitconfig comes back.
+# step writes, but ~/.gitconfig, which goes aside. The job's own git files go aside too, as its conf
+# with git's keys does. As the script exits, on a signal too, the files go, and the job's files and
+# the runner's ~/.gitconfig come back.
 #
 # shellcheck disable=SC2154 # tmp, conf and the functions are mac-setup-checks.sh's
 key=$HOME/.ssh/id_ed25519_signing
@@ -21,20 +22,40 @@ git_made() {
 git_restore() {
     [ -z "${agent-}" ] || kill "$agent" || true
     git_made rm -rf
+    for each in gitconfig allowed_signers; do
+        [ ! -f "$tmp/job-git/$each" ] || mv "$tmp/job-git/$each" "$files/$each"
+    done
+    for each in "$tmp"/job-git/.gitconfig.*~; do
+        [ ! -f "$each" ] || mv "$each" ~/
+    done
     [ -f "$tmp/gitconfig" ] || [ -n "${gitconfig_aside-}" ] || return 0
     rm -f ~/.gitconfig
     [ ! -f "$tmp/gitconfig" ] || mv "$tmp/gitconfig" ~/.gitconfig
 }
 
+# The job's runs had git's keys, so they made ~/.config/ws's files, which go aside as ~/.gitconfig
+# does. So do the copies of the runner's ~/.gitconfig that those runs left beside it. The cases then
+# start from a conf with git off, and the job's conf comes back at the end.
+# shellcheck disable=SC2034 # prints, in mac-setup-checks.sh, reads it
+exact=1
+mkdir "$tmp/job-git"
+for each in gitconfig allowed_signers; do
+    [ ! -f "$files/$each" ] || mv "$files/$each" "$tmp/job-git/$each"
+done
+for each in ~/.gitconfig.*~; do
+    [ ! -f "$each" ] || mv "$each" "$tmp/job-git/"
+done
 found=$(git_made ls -d 2>/dev/null) || true
 if [ -n "$found" ]; then
     error "the runner has what git's cases would make: $(echo "$found" | tr '\n' ' ')"
     exit 1
 fi
-# The job's runs before these had no git keys, so they must have left ~/.gitconfig alone.
-! grep -qs config/ws/gitconfig ~/.gitconfig ||
-    error "ws client macos apply included ~/.config/ws/gitconfig in ~/.gitconfig without git's keys"
-trap 'git_restore; [ ! -f "$tmp/job.conf" ] || conf_write "$conf" <"$tmp/job.conf"; rm -rf "$tmp"' EXIT
+# The job's runs before these had git's keys, so they must have included the file in ~/.gitconfig.
+grep -qs config/ws/gitconfig ~/.gitconfig ||
+    error "ws client macos apply did not include ~/.config/ws/gitconfig in ~/.gitconfig with git's keys"
+mv "$tmp/job.conf" "$tmp/job-git.conf"
+grep -v '^WS_GIT_' "$tmp/job-git.conf" >"$tmp/job.conf" || true
+trap 'git_restore; [ ! -f "$tmp/job-git.conf" ] || conf_write "$conf" <"$tmp/job-git.conf"; rm -rf "$tmp"' EXIT
 [ ! -f ~/.gitconfig ] || mv ~/.gitconfig "$tmp/gitconfig"
 gitconfig_aside=1
 # git's XDG file is the cases' own, so that the runner's changes nothing.

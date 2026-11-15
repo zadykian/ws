@@ -21,6 +21,8 @@ conf=$HOME/.config/ws/mac.conf
 fail=0
 # shellcheck source=.github/mac-conf.sh
 . .github/mac-conf.sh
+# shellcheck source=.github/mac-quiet.sh
+. .github/mac-quiet.sh
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
 error() {
@@ -99,7 +101,7 @@ esac
 for args in '' --check; do
     if ! setup ${args:+"$args"}; then
         error "a second ws client macos apply${args:+ $args} failed: $out"
-    elif [ -n "$out" ]; then
+    elif [ -n "$(unlisted "$out")" ]; then
         error "a second ws client macos apply${args:+ $args} printed what it should not: $out"
     fi
 done

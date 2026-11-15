@@ -15,6 +15,8 @@ fi
 conf=$HOME/.config/ws/mac.conf
 # shellcheck source=.github/mac-conf.sh
 . .github/mac-conf.sh
+# shellcheck source=.github/mac-quiet.sh
+. .github/mac-quiet.sh
 # macOS's TMPDIR ends in a slash, which would put // in $tmp. ws client macos apply --only git finds
 # gh by Go's exec.LookPath, which drops it, so git's credential command would not read
 # "$tmp/bin/gh".
@@ -44,16 +46,20 @@ with() {
 # setup [ARG] runs ws client macos apply, on the step that only names where it does, and sets out to
 # what it printed.
 only=
+exact=
 setup() {
     out=$(ws client macos apply ${only:+--only "$only"} "$@" 2>&1)
 }
 
-# prints TEXT [ARG] runs ws client macos apply, which must print TEXT alone.
+# prints TEXT [ARG] runs ws client macos apply, which must print TEXT alone, less the line of a key
+# that GitHub lists already, unless exact is set.
 prints() {
     text=$1
     shift
     setup "$@" || error "ws client macos apply${*:+ $*} failed: $out"
-    [ "$out" = "$text" ] || error "ws client macos apply${*:+ $*} printed '$out', not '$text'"
+    got=$out
+    [ -n "$exact" ] || got=$(unlisted "$out")
+    [ "$got" = "$text" ] || error "ws client macos apply${*:+ $*} printed '$got', not '$text'"
 }
 
 # stops TEXT [ARG] runs ws client macos apply, which must stop with one line that starts with TEXT.

@@ -8,6 +8,8 @@
 set -eo pipefail
 # shellcheck source=.github/mac-conf.sh
 . .github/mac-conf.sh
+# shellcheck source=.github/mac-quiet.sh
+. .github/mac-quiet.sh
 
 conf=$HOME/.config/ws/mac.conf
 lab=${LABEL%.ws}.lab
@@ -95,7 +97,7 @@ listed() { ws client macos servers | awk -v n="$1" '$1 == n { $1 = $1; print }';
     exit 1
 }
 
-if ! out=$(ws client macos apply --check --server lab 2>&1) || [ -n "$out" ]; then
+if ! out=$(ws client macos apply --check --server lab 2>&1) || [ -n "$(unlisted "$out")" ]; then
     echo '::error::ws client macos apply --check --server lab printed what it should not:'
     printf '%s\n' "$out"
     exit 1
