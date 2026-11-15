@@ -10,14 +10,16 @@ import (
 
 // ReadHome reads the file at rel below the user's home, as root. The user owns the home, and a link
 // there would send root's read to whatever it names. So ReadHome refuses a link at the file or on
-// the way, and a rel that is not local, before any call to the machine. A missing file gives
-// fs.ErrNotExist.
+// the way, and a rel that is not local, before any call to the machine. The read then opens each
+// directory below the home, and the file, following no link, so that a link swapped in after that
+// check fails too. A missing file gives fs.ErrNotExist.
 func (u User) ReadHome(m effect.Machine, rel string) ([]byte, error) {
 	at := u.Home + "/" + rel
 	if err := paths.GuardHome(m, u.Home, at); err != nil {
 		return nil, err
 	}
-	return m.ReadRootFile(at)
+	body, _, err := m.ReadHomeFile(u.Home, at)
+	return body, err
 }
 
 // File is a file at rel below the account's home, owned by the account. Plan and Report refuse a
