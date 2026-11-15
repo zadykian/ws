@@ -25,16 +25,15 @@ var gitFiles embed.FS
 // http.extraHeader, so it shows none. The settings of the machine's own go in
 // ~/.config/git/machine.gitconfig, which the file includes last.
 type Config struct {
-	M       effect.Machine
-	Out     effect.Out
-	A       account.Account
-	Key     string
-	Signers string
+	M   effect.Machine
+	Out effect.Out
+	A   account.Account
+	Key string
 }
 
 func (g Config) content() ([]byte, error) {
 	settings := gitcfg.Settings(gitcfg.Inputs{Key: g.Key + ".pub",
-		Signers: g.Signers, Gh: "/usr/bin/gh"})
+		Signers: gitcfg.Signers, Gh: "/usr/bin/gh"})
 	return resource.Render(gitFiles, "files/gitconfig.tmpl", struct{ Settings string }{settings})
 }
 

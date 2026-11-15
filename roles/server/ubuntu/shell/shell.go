@@ -38,11 +38,11 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units,
 	return append(steps, user.WithAccount(m, keyStep, "", func(a account.Account) ([]resource.Resource, error) {
 		return git.SigningKey(m, a, v.GitSigningKey), nil
 	}), user.WithAccount(m, "Shell allowed signers", keyStep, func(a account.Account) ([]resource.Resource, error) {
-		return git.AllowedSigners(m, a, v.GitSigningKey, v.Shell.GitAllowedSigners), nil
+		return git.AllowedSigners(m, a, v.GitSigningKey), nil
 	}), user.WithAccount(m, "Shell git config", "", func(a account.Account) ([]resource.Resource, error) {
 		return []resource.Resource{git.Config{
 			M: m, Out: out, A: a,
-			Key: v.GitSigningKey, Signers: v.Shell.GitAllowedSigners,
+			Key: v.GitSigningKey,
 		}}, nil
 	}), user.WithAccount(m, "Shell secret env", "", func(a account.Account) ([]resource.Resource, error) {
 		return []resource.Resource{secretenv.Env{M: m, A: a, Env: s.Env, Whole: s.Whole}}, nil

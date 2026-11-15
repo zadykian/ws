@@ -59,7 +59,7 @@ func TestSetTwiceChangesNothing(t *testing.T) {
 func TestSetTakesAKeyBelowTheFilesHome(t *testing.T) {
 	for _, tc := range [][3]string{
 		{"ws_user: root\n", "ws_git_signing_key", "/root/.ssh/k"},
-		{"ws_home: /srv/x\n", "shell_git_allowed_signers", "/srv/x/signers"},
+		{"ws_home: /srv/x\n", "ws_git_signing_key", "/srv/x/k"},
 	} {
 		if _, err := Set([]byte(tc[0]), tc[1], tc[2]); err != nil {
 			t.Errorf("%s at %s in %q: %v", tc[1], tc[2], tc[0], err)

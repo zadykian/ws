@@ -2,8 +2,6 @@ package values
 
 // Shell is roles/shell's keys.
 type Shell struct {
-	// GitAllowedSigners is the allowed signers file. Empty, it lies under Home.
-	GitAllowedSigners string `yaml:"shell_git_allowed_signers"`
 	// GitClones are the repositories cloned once each.
 	GitClones []GitClone `yaml:"shell_git_clones"`
 }
