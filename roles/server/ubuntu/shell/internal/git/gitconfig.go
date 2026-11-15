@@ -12,6 +12,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/account"
 	"github.com/zadykian/ws/engine/core/resource/file"
+	"github.com/zadykian/ws/roles/internal/gitcfg"
 )
 
 // gitFiles are the templates of ~/.gitconfig and of the tokens' include.
@@ -34,9 +35,9 @@ type Config struct {
 }
 
 func (g Config) content() ([]byte, error) {
-	return resource.Render(gitFiles, "files/gitconfig.tmpl", struct {
-		Name, Email, Key, Signers string
-	}{g.Name, g.Email, g.Key, g.Signers})
+	settings := gitcfg.Settings(gitcfg.Inputs{Name: g.Name, Email: g.Email, Key: g.Key + ".pub",
+		Signers: g.Signers, Gh: "/usr/bin/gh"})
+	return resource.Render(gitFiles, "files/gitconfig.tmpl", struct{ Settings string }{settings})
 }
 
 // Plan says what the rewrite loses or replaces, then plans the file. Git must accept the new file

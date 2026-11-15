@@ -9,12 +9,13 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/roles/internal/gitcfg"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/plan"
 )
 
 // signersHeader is the first line of the allowed signers file.
-const signersHeader = "# Written by github.com/zadykian/ws, whose next run replaces any change made here.\n"
+const signersHeader = "# Written by github.com/zadykian/ws, whose next run replaces any change made here."
 
 // signers trusts the signing key for the email in git verify-commit. A file set up by hand is kept
 // beside it, as ~/.gitconfig is.
@@ -40,7 +41,7 @@ func (s signers) Plan(ctx context.Context) ([]resource.Change, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%s.pub %w", s.Key, err)
 	}
-	f := s.A.File(s.M, plan.Below(s.A, s.Path), []byte(signersHeader+s.Email+" "+key.String()+"\n"), 0o644)
+	f := s.A.File(s.M, plan.Below(s.A, s.Path), []byte(gitcfg.AllowedSigners(signersHeader, s.Email, key.String())), 0o644)
 	f.Backup = true
 	return f.Plan(ctx)
 }

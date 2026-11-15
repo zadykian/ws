@@ -23,12 +23,12 @@ func gitFixture() (*effecttest.Machine, stdinMachine, *effecttest.Out, Config) {
 
 func TestGitconfigIsTheRolesRendering(t *testing.T) {
 	_, _, _, g := gitFixture()
-	want, err := os.ReadFile("testdata/gitconfig_signing")
+	want, err := os.ReadFile("testdata/gitconfig")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if got, err := g.content(); err != nil || string(got) != string(want) {
-		t.Errorf("gitconfig_signing: differs from the role's rendering (%v)", err)
+		t.Errorf("testdata/gitconfig: differs from the role's rendering (%v)", err)
 	}
 }
 
