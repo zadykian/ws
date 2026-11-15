@@ -62,8 +62,8 @@ gitconfig_aside=1
 XDG_CONFIG_HOME=$tmp/xdg
 export XDG_CONFIG_HOME
 
-# signed makes a commit in a new repository, which git must sign with the key as ws's name and
-# email, in roles/internal/gitcfg, and verify with the allowed signers, which name the email.
+# signed makes a commit in a new repository. Git must sign it with the key as ws's name and
+# email, in roles/internal/gitcfg. It must verify it with the allowed signers, which name the email.
 signed() {
     rm -rf "$tmp/repo"
     git init -q "$tmp/repo"
@@ -261,8 +261,8 @@ prints "$listed" --check
     [ "$(cat "$tmp/keys")" = "$(awk '{ print $1, $2 }' "$key.pub")" ] ||
     error "the stand-in logged another add, or holds other keys, than $key.pub's"
 
-# Where PATH has no gh, ws client macos apply --check must say that Homebrew would install it, name the gh at Homebrew's prefix as git's
-# credential command, and name the add. A run must install it, once. The stand-in brew's prefix is
+# Where PATH has no gh, ws client macos apply --check must say that Homebrew would install it. It must name the gh at Homebrew's prefix
+# as git's credential command, and name the add. A run must install it, once. The stand-in brew's prefix is
 # $tmp/brew, where its install puts the stand-in gh, and it passes other commands to the runner's
 # brew.
 brew=$(command -v brew)

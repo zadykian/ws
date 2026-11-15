@@ -1,13 +1,13 @@
 #!/bin/sh
 # The Mac key stage with a key of an agent's, on the Mac that 40-again.sh leaves. The stand-in for
 # Secretive's agent is an ssh-agent at its socket that holds a P-256 key, whose .pub is in
-# PublicKeys. With a mac.conf of its own that names that .pub in WS_IDENTITY_PUB_KEY, --check must print
-# nothing of the stage while the agent lists the key and mac.conf names git's key. With no
+# PublicKeys. Take a mac.conf of its own that names that .pub in WS_IDENTITY_PUB_KEY. Then --check
+# must print nothing of the stage while the agent lists the key and mac.conf names git's key. With no
 # WS_GIT_SIGNING_PUB_KEY, or an empty one, it must say it would ask for git's key, offering that
 # key as ws's login key. With no terminal, a run must stop there, naming that key's line for git.
 # With no WS_IDENTITY_PUB_KEY and PublicKeys closed, as macOS 27 denies ws Secretive's files,
-# --check must offer the agent's key for ws's login. A run with no terminal must name its line. Once the agent lacks ws's key, a run and
-# --check must stop at the stage, naming the socket, before ws client macos apply's. None may change
+# --check must offer the agent's key for ws's login. A run with no terminal must name its line.
+# Once the agent lacks ws's key, a run and --check must stop at the stage, naming the socket, before ws client macos apply's. None may change
 # that mac.conf, nor the Mac's own or ssh's files. The stand-in goes after.
 
 set -u
