@@ -224,8 +224,8 @@ passed, and `host_vars.yml` is as that run read it.
 
 ## Signing key
 
-The stage is done where `WS_USER`'s `~/.gitconfig` on ws names no signing key file, as
-`shell_git_signing: false` leaves it ([Signing](../../../server/ubuntu/shell/README.md#signing)), or where the Mac's gh lists ws's
+The stage is done where `WS_USER`'s `~/.gitconfig` on ws names no signing key file
+([Signing](../../../server/ubuntu/shell/README.md#signing)), or where the Mac's gh lists ws's
 public signing key. ws's `status` prints that key and its hostname, read as `WS_USER`, who can write
 those files, so that root never reads through them. Else it runs `gh ssh-key add --type signing
 --title HOSTNAME` on the Mac, from a file in the lock. The Mac's gh login has the

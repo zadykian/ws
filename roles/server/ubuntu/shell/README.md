@@ -49,9 +49,8 @@ set it in `~/.config/git/machine.gitconfig` first. A signing setting there, such
 `user.signingkey` or `commit.gpgsign` or `tag.gpgsign`, wins over the role's, and the run names any
 it finds.
 
-`shell_git_signing: false` turns it all off: no key and no signing in `~/.gitconfig`. A key
-made before stays, on the machine and on GitHub. A dry run makes no key, so on a machine without
-one it shows the key's creation and skips the allowed signers file.
+A dry run makes no key, so on a machine without one it shows the key's creation and skips the
+allowed signers file.
 
 ## Secrets
 

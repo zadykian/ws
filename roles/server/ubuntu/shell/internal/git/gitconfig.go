@@ -29,7 +29,6 @@ type Config struct {
 	A       account.Account
 	Name    string
 	Email   string
-	Signing bool
 	Key     string
 	Signers string
 }
@@ -37,8 +36,7 @@ type Config struct {
 func (g Config) content() ([]byte, error) {
 	return resource.Render(gitFiles, "files/gitconfig.tmpl", struct {
 		Name, Email, Key, Signers string
-		Signing                   bool
-	}{g.Name, g.Email, g.Key, g.Signers, g.Signing})
+	}{g.Name, g.Email, g.Key, g.Signers})
 }
 
 // Plan says what the rewrite loses or replaces, then plans the file. Git must accept the new file
@@ -64,10 +62,8 @@ func (g Config) notes(ctx context.Context, content []byte) error {
 	if err != nil {
 		return err
 	}
-	if g.Signing {
-		if err := g.signingNotes(ctx, old); err != nil {
-			return err
-		}
+	if err := g.signingNotes(ctx, old); err != nil {
+		return err
 	}
 	oldKeys, err := gitNames(ctx, g.M, old)
 	if err != nil {

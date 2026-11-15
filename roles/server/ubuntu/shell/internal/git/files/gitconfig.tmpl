@@ -3,7 +3,6 @@
 [user]
 	name = {{ .Name }}
 	email = {{ .Email }}
-{{ if .Signing -}}
 # Each commit and tag signed with the machine's SSH key, which the allowed signers file trusts for the
 # email above. The public key's path, so that an agent holding the key signs too; otherwise
 # ssh-keygen reads the private key beside it.
@@ -16,7 +15,6 @@
 	gpgsign = true
 [tag]
 	gpgsign = true
-{{ end -}}
 # A fetch drops the remote-tracking branches that the remote deleted, a landed pull request's
 # say, so that Zed's and lazygit's branch lists hold none.
 [fetch]

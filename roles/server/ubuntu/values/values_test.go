@@ -92,6 +92,7 @@ func TestParseRefusesAKeyOutsideTheHome(t *testing.T) {
 func TestParseRefuses(t *testing.T) {
 	tests := map[string]string{
 		"unknown key":   "nonsense: 1\n",
+		"a dropped key": "shell_git_signing: false\n",
 		"duplicate key": "base_locale: a\nbase_locale: b\n",
 		"wrong type":    "base_swappiness: lots\n",
 		"unknown field": "wireguard_peers:\n  - name: a\n    key: b\n",

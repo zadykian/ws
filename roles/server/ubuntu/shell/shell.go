@@ -35,16 +35,13 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units,
 			}).Parts(ctx)
 		}},
 	}
-	if v.Shell.GitSigning {
-		steps = append(steps, user.WithAccount(m, keyStep, "", func(a account.Account) ([]resource.Resource, error) {
-			return git.SigningKey(m, a, v.GitSigningKey), nil
-		}), user.WithAccount(m, "Shell allowed signers", keyStep, func(a account.Account) ([]resource.Resource, error) {
-			return git.AllowedSigners(m, a, v.GitSigningKey, v.Shell.GitAllowedSigners, v.Shell.GitEmail), nil
-		}))
-	}
-	return append(steps, user.WithAccount(m, "Shell git config", "", func(a account.Account) ([]resource.Resource, error) {
+	return append(steps, user.WithAccount(m, keyStep, "", func(a account.Account) ([]resource.Resource, error) {
+		return git.SigningKey(m, a, v.GitSigningKey), nil
+	}), user.WithAccount(m, "Shell allowed signers", keyStep, func(a account.Account) ([]resource.Resource, error) {
+		return git.AllowedSigners(m, a, v.GitSigningKey, v.Shell.GitAllowedSigners, v.Shell.GitEmail), nil
+	}), user.WithAccount(m, "Shell git config", "", func(a account.Account) ([]resource.Resource, error) {
 		return []resource.Resource{git.Config{
-			M: m, Out: out, A: a, Name: v.Shell.GitName, Email: v.Shell.GitEmail, Signing: v.Shell.GitSigning,
+			M: m, Out: out, A: a, Name: v.Shell.GitName, Email: v.Shell.GitEmail,
 			Key: v.GitSigningKey, Signers: v.Shell.GitAllowedSigners,
 		}}, nil
 	}), user.WithAccount(m, "Shell secret env", "", func(a account.Account) ([]resource.Resource, error) {

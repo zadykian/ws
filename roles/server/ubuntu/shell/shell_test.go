@@ -26,11 +26,6 @@ func TestStepsAreTheRolesInOrder(t *testing.T) {
 	if want := []string{"Shell packages", "Shell files", keyStep, "Shell allowed signers", "Shell git config", "Shell secret env", "Shell git tokens", "Shell clones"}; !slices.Equal(got, want) {
 		t.Errorf("steps = %v, want %v", got, want)
 	}
-	v := values.Default()
-	v.Shell.GitSigning = false
-	if got := stepNames(v, secrets.Secrets{}); slices.Contains(got, keyStep) {
-		t.Errorf("steps without signing = %v, want no key", got)
-	}
 }
 
 func TestALinkKeepsAReportFromThePathsBehindIt(t *testing.T) {
