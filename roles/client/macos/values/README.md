@@ -9,26 +9,30 @@ outbound table on a cloud VM.
 
 `~/.config/ws/mac.conf` holds the Mac's keys, which no server changes:
 
-```sh
-WS_GIT_SIGNING_PUB_KEY=~/.ssh/KEY.pub
-WS_IDENTITY_PUB_KEY=~/.ssh/KEY.pub
-WS_IDENTITY_AGENT=~/PATH/socket.ssh
+```yaml
+WS_GIT_SIGNING_PUB_KEY: ~/.ssh/KEY.pub
+WS_IDENTITY_PUB_KEY: ~/.ssh/KEY.pub
+WS_IDENTITY_AGENT: ~/PATH/socket.ssh
 ```
 
 `~/.config/ws/servers/ws/server.conf`, beside it, holds every other key:
 
-```sh
-WS_SLOT=0
-WS_PUBLIC_KEY=WS_KEY
-WS_LAN=10.88.0.0/24
-WS_LAN_ADDRESS=10.88.0.10
-WS_CABLE_SERVICE="USB 10/100/1G/2.5G LAN"
-WS_REMOTE=ws.example.com
-WS_REMOTE_PORT=22022
-WS_TUNNEL_NETWORKS="10.20.0.0/16 198.51.100.0/24"
-WS_RESOLVERS="example.internal=10.20.0.53,10.20.0.54"
+```yaml
+WS_SLOT: 0
+WS_PUBLIC_KEY: WS_KEY
+WS_LAN: 10.88.0.0/24
+WS_LAN_ADDRESS: 10.88.0.10
+WS_CABLE_SERVICE: USB 10/100/1G/2.5G LAN
+WS_REMOTE: ws.example.com
+WS_REMOTE_PORT: 22022
+WS_TUNNEL_NETWORKS: 10.20.0.0/16 198.51.100.0/24
+WS_RESOLVERS: example.internal=10.20.0.53,10.20.0.54
 ```
 
+Both are YAML files of `KEY: value` lines, one a line. The key is at the line's start with its colon
+right after it, and the value fits the line, in quotes where YAML needs them. Comments and blank
+lines stay. The wizard and `configure` read and edit that form alone. A quoted key, a space before
+the colon, a flow map, a value wrapped over lines and a `---` marker are refused, with their line.
 A key in the other file is refused, with the file it goes in. `WS_VALUES` names `mac.conf`, and the
 server's file is `servers/ws/server.conf` beside it. Each key's meaning is in
 [mac.conf](../README.md#macconf).

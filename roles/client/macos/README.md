@@ -45,7 +45,7 @@ they hold ws's line, and none of their text.
 
 ## mac.conf
 
-The repository names no server, so the values go in two files of `KEY=value` lines that the script
+The repository names no server, so the values go in two YAML files of `KEY: value` lines that the script
 reads without running them. `~/.config/ws/mac.conf` holds the Mac's keys, which
 `WS_GIT_SIGNING_PUB_KEY`, `WS_IDENTITY_PUB_KEY` and `WS_IDENTITY_AGENT` are.
 `~/.config/ws/servers/ws/server.conf` holds every other key. A key in the other file is refused.
@@ -61,17 +61,16 @@ it forwards to ws's 22. The tunnel takes UDP 51820 every way, which the router f
 `WS_TUNNEL_PORT` sets another, which wg0 listens on. A way without its values is left out. The
 router's side is in [The router](../../server/ubuntu/cable/router.md). `WS_PUBLIC_KEY` goes in
 last, once ws has the Mac's key, in the order of [The Mac's tunnel](#the-macs-tunnel).
-`WS_CABLE_SERVICE` names the network service of the display's adapter, in quotes where it holds a
-blank, and `WS_CABLE_PORT` ws's port of the cable: [The cable](#the-cable). `WS_GIT_SIGNING_PUB_KEY`
-is the `.pub` of the key that signs git's commits on the Mac, by its path from `/` or `~/`: [git on
-the Mac](git/README.md). `WS_IDENTITY_PUB_KEY` is the `.pub` of the key that ssh offers ws, and
-`WS_IDENTITY_AGENT` the socket of its agent, in quotes where it holds a blank: [ssh's
-hosts](#sshs-hosts). A run makes `~/.config/ws` at mode 700, and sets that mode where it differs. It
-makes `/etc/ws` through sudo, for git's allowed signers, at mode 755.
+`WS_CABLE_SERVICE` names the network service of the display's adapter, and `WS_CABLE_PORT` ws's port
+of the cable: [The cable](#the-cable). `WS_GIT_SIGNING_PUB_KEY` is the `.pub` of the key that signs
+git's commits on the Mac, by its path from `/` or `~/`: [git on the Mac](git/README.md).
+`WS_IDENTITY_PUB_KEY` is the `.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the
+socket of its agent: [ssh's hosts](#sshs-hosts). A run makes `~/.config/ws` at mode 700, and sets
+that mode where it differs. It makes `/etc/ws` through sudo, for git's allowed signers, at mode 755.
 
 `WS_USER` is the user ssh logs in as: ws's key too, `zadykian` by default, or `root` for a
 `WS_TARGET` of `cloud`, which may have no other user. The other targets refuse `WS_USER=root`. A key
-with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does: that user for
+with an empty value, as `WS_REMOTE: ""`, takes its default, as a missing line does: that user for
 `WS_USER` and 51820 for `WS_TUNNEL_PORT`. `WS_IDENTITY_PUB_KEY` has none: the script stops without it
 ([ssh's hosts](#sshs-hosts)). Nor has `WS_GIT_SIGNING_PUB_KEY`
 ([git on the Mac](git/README.md)).

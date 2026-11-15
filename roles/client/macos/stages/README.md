@@ -72,7 +72,7 @@ answer comes from the first of these that has one:
 
 A bad answer at the terminal is asked again, with the form the key takes. From the environment, it
 stops the run. ws's address and git's email take a value where asked. The wizard adds the answers at
-the end of each file, keeps their comments and order, and adds `WS_SLOT=0` to a server's file that
+the end of each file, keeps their comments and order, and adds `WS_SLOT: 0` to a server's file that
 lacks it. It writes `mac.conf`, then the server's file, once `ws client macos apply` would take
 both. It stops before it asks on a file it can't read, or on a line that `ws client macos apply`
 would refuse. Where a file is a link and lacks a key, it prints the lines to add to the link's file,
