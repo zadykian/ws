@@ -12,7 +12,7 @@ set -eo pipefail
 pid() { sudo launchctl print "system/$LABEL" | awk '$1 == "pid" { print $3; exit }'; }
 was=$(pid) || true
 lines=$(sudo awk 'END { print NR }' /var/log/ws-tunnel.ws.log)
-conf_set ~/.config/ws/mac.conf 'WS_LAN_ADDRESS: 127.0.0.2'
+conf_set ~/.config/ws/values.yml 'WS_LAN_ADDRESS: 127.0.0.2'
 ws client macos apply 2>&1 | tee "$RUNNER_TEMP/hup.out" ||
     {
         echo '::error::ws client macos apply with a new WS_LAN_ADDRESS failed'

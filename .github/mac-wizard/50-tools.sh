@@ -32,7 +32,7 @@ for args in '' --check; do
     [ -z "${rest#"$known"}" ] || error "ws client macos wizard${args:+ $args} printed what it should not"
 done
 
-conf=$RUNNER_TEMP/confs/tools/mac.conf
+conf=$RUNNER_TEMP/confs/tools/values.yml
 user=$(id -un)
 out=$(WS_VALUES=$conf WS_USER=$user WS_TARGET=lan WS_LAN='' WS_REMOTE=localhost WS_REMOTE_PORT=22022 \
     WS_TUNNEL_NETWORKS='' WS_RESOLVERS='' PATH=$path \

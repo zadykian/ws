@@ -2,7 +2,7 @@
 # The cases of the mac, mac-wizard and mac-cld jobs write and read a conf, the file that WS_VALUES
 # names, through these functions. A conf is YAML, a KEY: value a line, and a case writes each value
 # as the file holds it, in quotes where YAML needs them. They source this file and never run it. A conf's layout lives
-# here alone: mac.conf holds the Mac's three keys, and servers/ws/server.conf, beside it, every
+# here alone: the Mac's values.yml holds the Mac's three keys, and servers/ws/values.yml, beside it, every
 # other key. roles/client/macos/values/scope.go lists the three keys too.
 
 # conf_server names the server whose file goes with a conf. A case sets it to another name, and
@@ -11,11 +11,11 @@ conf_server=ws
 
 # conf_server_file CONF prints the path of the server's file that goes with CONF.
 conf_server_file() {
-    echo "${1%/*}/servers/$conf_server/server.conf"
+    echo "${1%/*}/servers/$conf_server/values.yml"
 }
 
 # conf_split SCOPE prints the lines of stdin that go in the file of SCOPE, mac or server. A line
-# with no key stays with mac.conf.
+# with no key stays with values.yml.
 conf_split() {
     awk -v scope="$1" '
         BEGIN {

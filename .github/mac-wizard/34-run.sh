@@ -1,6 +1,6 @@
 #!/bin/sh
 # ws's run on the Mac that 33-login.sh leaves. The wizard must have run ws server ubuntu apply four
-# times by now. One ran in 30-run.sh, one for the port that 31-host.sh's mac.conf names, and one as
+# times by now. One ran in 30-run.sh, one for the port that 31-host.sh's values.yml names, and one as
 # its cloud VM. The fourth ran after that case took the port and the outbound line out of values.yml,
 # which makes the next run due. Each run of the wizard since must have read ws's status alone. A run
 # must read it once, and once more after a run of ws server ubuntu apply. Once ws's run stamp is
@@ -100,9 +100,9 @@ wizard
 started 1 2 && sudo grep -qx "WS_USER: \"$(id -un)\"" "$vars" && [ "$status" = 0 ] ||
     error "a run with another WS_USER exited $status, or named no WS_USER: $(id -un)"
 
-WS_VALUES=$RUNNER_TEMP/confs/cloud/mac.conf
+WS_VALUES=$RUNNER_TEMP/confs/cloud/values.yml
 export WS_VALUES
-conf_print ~/.config/ws/mac.conf | sed 's/^WS_TARGET:.*/WS_TARGET: cloud/' | conf_write "$WS_VALUES"
+conf_print ~/.config/ws/values.yml | sed 's/^WS_TARGET:.*/WS_TARGET: cloud/' | conf_write "$WS_VALUES"
 out=$("$wsbin" client macos wizard --check </dev/null 2>&1)
 printf '%s\n' "$out" | grep -q 'after naming WS_SECURITY_OUTBOUND: false in ' ||
     error "ws client macos wizard --check on a cloud VM named no values.yml line before the run: $out"

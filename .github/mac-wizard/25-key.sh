@@ -1,19 +1,19 @@
 #!/bin/sh
-# The Mac key stage on a fresh Mac. The case has a mac.conf of its own that holds every answer but
+# The Mac key stage on a fresh Mac. The case has a values.yml of its own that holds every answer but
 # names no key for ws. With it and no terminal, a run must stop at the stage, naming
 # WS_IDENTITY_PUB_KEY, before ws client macos apply's. A --check must say that a run at a terminal
 # would ask for ws's login key, with a new key the default, as the runner's agent lists none. With a
 # copy that names a missing key, a run must stop at the stage, naming it, as the wizard makes no key
 # in a file. With one that names standin.sh's key, --check must say nothing of the stage. None of
-# these may change that mac.conf, or leave a lock or file of the wizard's in $TMPDIR.
+# these may change that values.yml, or leave a lock or file of the wizard's in $TMPDIR.
 
 set -u
 # shellcheck source=.github/mac-conf.sh
 . "$(dirname "$0")/../mac-conf.sh"
 
 wsbin=$HOME/.local/bin/ws
-conf=$RUNNER_TEMP/confs/key/mac.conf
-named=$RUNNER_TEMP/confs/named/mac.conf
+conf=$RUNNER_TEMP/confs/key/values.yml
+named=$RUNNER_TEMP/confs/named/values.yml
 tmp=${TMPDIR:-/tmp}
 tmp=${tmp%/}
 fail=0
@@ -47,7 +47,7 @@ printf '%s\n' "$out" | grep -qxF "$want" && [ "$status" = 0 ] ||
 out=$(WS_VALUES=$named "$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
-stop="ws client macos wizard: Mac key: $RUNNER_TEMP/none.pub, named in mac.conf's WS_IDENTITY_PUB_KEY, is missing"
+stop="ws client macos wizard: Mac key: $RUNNER_TEMP/none.pub, named in values.yml's WS_IDENTITY_PUB_KEY, is missing"
 printf '%s\n' "$out" | grep -qF "$stop" && [ "$status" = 1 ] ||
     error "ws client macos wizard exited $status, naming no missing key"
 ! printf '%s\n' "$out" | grep -qE "$applied" || error 'ws client macos wizard ran ws client macos apply, with no key'

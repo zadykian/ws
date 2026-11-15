@@ -21,7 +21,7 @@ set -u
 known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
 
 wsbin=$HOME/.local/bin/ws
-conf=$HOME/.config/ws/mac.conf
+conf=$HOME/.config/ws/values.yml
 ws=$RUNNER_TEMP/ws
 peer=$ws/root/etc/wireguard/mac.pub
 wg=/opt/homebrew/bin/wg
@@ -61,7 +61,7 @@ wizard --check
 printf '%s\n' "$out" | grep -qx -- "-WS_PUBLIC_KEY: $old" &&
     printf '%s\n' "$out" | grep -qx "+WS_PUBLIC_KEY: $new" && conf_print "$conf" | cmp -s - "$RUNNER_TEMP/first" &&
     [ "$status" = 0 ] ||
-    error "--check exited $status, showed no WS_PUBLIC_KEY of wg0's new key, or changed mac.conf"
+    error "--check exited $status, showed no WS_PUBLIC_KEY of wg0's new key, or changed values.yml"
 n=$(logins)
 wizard
 [ "$(conf_print "$conf")" = "$(sed "s|^WS_PUBLIC_KEY:.*|WS_PUBLIC_KEY: $new|" "$RUNNER_TEMP/first")" ] && [ "$status" = 0 ] &&

@@ -8,7 +8,7 @@ set -eo pipefail
 # shellcheck source=.github/mac-conf.sh
 . .github/mac-conf.sh
 
-conf=$HOME/.config/ws/mac.conf
+conf=$HOME/.config/ws/values.yml
 trap 'rm -rf "${conf%/*}/servers/lab" "${conf%/*}/servers/box"' EXIT
 
 # ws's own ports, which the slot and port cases clash with.

@@ -17,9 +17,9 @@ known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's au
 
 wsbin=$HOME/.local/bin/ws
 tunnel=/usr/local/libexec/ws-tunnel/ws
-conf=$HOME/.config/ws/mac.conf
+conf=$HOME/.config/ws/values.yml
 lab=$RUNNER_TEMP/lab
-labconf=${conf%/*}/servers/lab/server.conf
+labconf=${conf%/*}/servers/lab/values.yml
 fail=0
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
@@ -84,7 +84,7 @@ handshake lab || error "lab's daemon has no handshake with its stand-in"
 handshake ws || error "ws's daemon lost its handshake beside lab's"
 grep -qx '    HostName 10.99.1.1' ~/.ssh/config.d/ws || error "the run wrote no Host lab in config.d/ws for the tunnel"
 grep -q '^lab ' ~/.ssh/known_hosts || error "the run added no line for lab's host key to known_hosts"
-conf_print "$conf" | cmp -s - "$RUNNER_TEMP/ws.before" || error "the run for lab changed mac.conf or ws's file"
+conf_print "$conf" | cmp -s - "$RUNNER_TEMP/ws.before" || error "the run for lab changed values.yml or ws's file"
 
 answers=
 wizard

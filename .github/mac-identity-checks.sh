@@ -1,7 +1,7 @@
 # shellcheck shell=sh
 # The mac job's checks of the key that ws client macos apply's config.d/ws gives ws.
 # mac-setup-checks.sh sources them before git's, so that they run with its functions and the job's
-# mac.conf. They end with config.d/ws as the job's runs wrote it.
+# values.yml. They end with config.d/ws as the job's runs wrote it.
 #
 # shellcheck disable=SC2154 # tmp, conf and the functions are mac-setup-checks.sh's
 ws=$HOME/.ssh/config.d/ws
@@ -34,14 +34,14 @@ agented() {
     keyed 'identitiesonly yes' "identityagent $2" "identityfile $1"
 }
 
-# job: with the job's mac.conf, a run must give config.d/ws the job's lines again.
+# job: with the job's values.yml, a run must give config.d/ws the job's lines again.
 job() {
     with
     prints "ws client macos apply: wrote $ws"
     cmp -s "$ws" "$tmp/ws" || error "ws client macos apply left another config.d/ws than the job's"
 }
 
-# The job's mac.conf names the file key ~/.ssh/id_ed25519, which ws must take by its four lines, in
+# The job's values.yml names the file key ~/.ssh/id_ed25519, which ws must take by its four lines, in
 # their order.
 keyed 'identitiesonly yes' 'identityfile ~/.ssh/id_ed25519'
 four=$(printf '    %s\n' 'IdentityFile ~/.ssh/id_ed25519' 'IdentitiesOnly yes' 'UseKeychain yes' \
@@ -61,7 +61,7 @@ agented "$tmp/key.pub" "$socket"
 # macos apply. So must a certificate, and a line that is no key, which ws client macos apply must
 # not print as a key's type.
 with "WS_IDENTITY_PUB_KEY: $tmp/none.pub"
-stops "ws client macos apply: $tmp/none.pub, mac.conf's WS_IDENTITY_PUB_KEY, is missing"
+stops "ws client macos apply: $tmp/none.pub, values.yml's WS_IDENTITY_PUB_KEY, is missing"
 cp "$tmp/key" "$tmp/mixed.pub"
 with "WS_IDENTITY_PUB_KEY: $tmp/mixed.pub"
 stops "ws client macos apply: $tmp/mixed.pub holds no public key alone"
@@ -126,7 +126,7 @@ if ! SSH_AUTH_SOCK=$data/socket.ssh ssh-add -q "$tmp/p256"; then
 fi
 rm "$tmp/p256"
 # An empty WS_IDENTITY_PUB_KEY must stop ws client macos apply, --check too, though the agent holds
-# one key: ws takes no key that mac.conf leaves out. The stop must give the line that names the key,
+# one key: ws takes no key that values.yml leaves out. The stop must give the line that names the key,
 # by ws's copy of its .pub, with its comment and fingerprint. PublicKeys is closed, as macOS 27
 # denies ws the files of Secretive's container: ws must ask the agent. With the line, ws must take
 # the agent and the key, and write the copy where ws lacks it, as a run shows and --check says.
@@ -134,13 +134,13 @@ chmod 000 "$data/PublicKeys"
 name=$(pubname "$tmp/p256.pub")
 copy=$HOME/.config/ws/secretive/$name
 cop=\~/.config/ws/secretive/$name
-# unnamed KEY USE PUB... prints ws client macos apply's stop where mac.conf names no KEY, the key
+# unnamed KEY USE PUB... prints ws client macos apply's stop where values.yml names no KEY, the key
 # for USE. It gives the line that names the key of each .pub of PUB..., in their order, by the
 # comment ws.
 unnamed() {
-    printf "ws client macos apply: mac.conf names no %s, %s: run ws client macos wizard, or add one of these lines to" \
+    printf "ws client macos apply: values.yml names no %s, %s: run ws client macos wizard, or add one of these lines to" \
         "$1" "$2"
-    printf ' mac.conf, '
+    printf ' values.yml, '
     unnamed_key=$1 unnamed_sep=
     shift 2
     for pub in "$@"; do
@@ -163,7 +163,7 @@ prints "ws client macos apply: would write $copy, ws's copy of a key of Secretiv
 prints "ws client macos apply: wrote $copy"
 cmp -s "$copy" "$tmp/p256.pub" || error "$copy is not the .pub of the agent's key"
 prints ''
-# A .pub in the container that mac.conf names, as a Mac before macOS 27 wrote, must become ws's copy.
+# A .pub in the container that values.yml names, as a Mac before macOS 27 wrote, must become ws's copy.
 with "WS_IDENTITY_PUB_KEY: $sec/PublicKeys/$name"
 prints ''
 chmod 755 "$data/PublicKeys"

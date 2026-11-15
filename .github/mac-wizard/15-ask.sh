@@ -1,20 +1,20 @@
 #!/bin/sh
-# The Answers stage on a fresh Mac, which none of these runs may change. mac.conf stays as
+# The Answers stage on a fresh Mac, which none of these runs may change. values.yml stays as
 # standin.sh wrote it, and no lock or file of the wizard's stays in $TMPDIR. With no terminal, a
 # missing answer must stop a run and --check within 60 s, naming the key. A bad answer from the
 # environment must stop --check, with the form the key takes. --check must show the environment's
-# answers as the lines it would add to mac.conf and to the server's file. The same answers, typed at a terminal of script's
+# answers as the lines it would add to values.yml and to the server's file. The same answers, typed at a terminal of script's
 # after bad ones, must show the same lines, each bad one asked again with its form. Empty lines must
-# take the defaults. On a mac.conf of the Mac's key alone, a cloud VM must be asked no LAN, and need
+# take the defaults. On a values.yml of the Mac's key alone, a cloud VM must be asked no LAN, and need
 # its name. A VM on the Mac must be asked no router's name, and need its address. Each must show its
-# defaults. mac-vm on standin.sh's mac.conf, which holds WS_REMOTE, must stop, naming the key.
+# defaults. mac-vm on standin.sh's values.yml, which holds WS_REMOTE, must stop, naming the key.
 
 set -u
 # shellcheck source=.github/mac-conf.sh
 . "$(dirname "$0")/../mac-conf.sh"
 
 wsbin=$HOME/.local/bin/ws
-conf=$HOME/.config/ws/mac.conf
+conf=$HOME/.config/ws/values.yml
 tmp=${TMPDIR:-/tmp}
 tmp=${tmp%/}
 fail=0
@@ -25,9 +25,9 @@ error() {
     fail=1
 }
 
-# kept NAME: the run NAME must leave mac.conf and $TMPDIR as they were.
+# kept NAME: the run NAME must leave values.yml and $TMPDIR as they were.
 kept() {
-    conf_print "$conf" | cmp -s - "$RUNNER_TEMP/mac.conf" || error "$1 changed mac.conf"
+    conf_print "$conf" | cmp -s - "$RUNNER_TEMP/values.yml" || error "$1 changed values.yml"
     for left in "$tmp/ws-wizard.lock" "$tmp"/ws.*; do
         [ ! -e "$left" ] || error "$1 left $left"
     done
@@ -57,8 +57,8 @@ quick() {
     kept "$*"
 }
 
-# added FILE prints the lines that the diffs of mac.conf and of the server's file add, in the
-# wizard's output FILE, mac.conf's first.
+# added FILE prints the lines that the diffs of values.yml and of the server's file add, in the
+# wizard's output FILE, values.yml's first.
 added() {
     tr -d '\r' <"$1" |
         awk -v f="+++ $conf" -v g="+++ $(conf_server_file "$conf")" '
@@ -87,7 +87,7 @@ typed() {
     kept "ws client macos wizard --check with $what"
 }
 
-conf_print "$conf" >"$RUNNER_TEMP/mac.conf"
+conf_print "$conf" >"$RUNNER_TEMP/values.yml"
 quick 'ws client macos wizard: Answers: no terminal to ask WS_TARGET: set WS_TARGET' "$wsbin" client macos wizard
 quick 'ws client macos wizard: Answers: no terminal to ask WS_TARGET: set WS_TARGET' "$wsbin" client macos wizard --check
 quick 'WS_TARGET=home is not lan, cloud or mac-vm' env WS_TARGET=home "$wsbin" client macos wizard --check
@@ -134,11 +134,11 @@ printf '%s\n' '+WS_TARGET: lan' \
     '+WS_RESOLVERS: ""' >"$RUNNER_TEMP/added"
 typed 'five empty lines' '' '' '' '' ''
 
-conf=$RUNNER_TEMP/confs/target/mac.conf
+conf=$RUNNER_TEMP/confs/target/values.yml
 WS_VALUES=$conf
 export WS_VALUES
 echo 'WS_IDENTITY_PUB_KEY: ~/.ssh/id_ed25519.pub' | conf_write "$conf"
-conf_print "$conf" >"$RUNNER_TEMP/mac.conf"
+conf_print "$conf" >"$RUNNER_TEMP/values.yml"
 quick 'ws client macos wizard: Answers: no terminal to ask WS_REMOTE: set WS_REMOTE' \
     env WS_TARGET=cloud "$wsbin" client macos wizard --server ws --check
 printf '%s\n' '+WS_SLOT: 0' '+WS_TUNNEL_PORT: 51820' '+WS_TARGET: cloud' \

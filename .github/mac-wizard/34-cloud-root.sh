@@ -3,7 +3,7 @@
 # with the account's keys there. ws client macos apply on a cloud target that names no WS_USER must
 # write ssh's User as root. --check after it must read ws's status as root, with no sudo behind it,
 # and ask for no password. Else Setup is pending, and --check skips the stages that read ws. ws
-# client macos apply on mac.conf then gives ssh the runner again, and the key file goes.
+# client macos apply on values.yml then gives ssh the runner again, and the key file goes.
 
 set -u
 # shellcheck source=.github/mac-conf.sh
@@ -19,9 +19,9 @@ error() {
     fail=1
 }
 
-WS_VALUES=$RUNNER_TEMP/confs/cloud/mac.conf
+WS_VALUES=$RUNNER_TEMP/confs/cloud/values.yml
 export WS_VALUES
-conf_print ~/.config/ws/mac.conf | sed -e 's/^WS_TARGET:.*/WS_TARGET: cloud/' -e '/^WS_USER:/d' | conf_write "$WS_VALUES"
+conf_print ~/.config/ws/values.yml | sed -e 's/^WS_TARGET:.*/WS_TARGET: cloud/' -e '/^WS_USER:/d' | conf_write "$WS_VALUES"
 sudo install -d -m 700 ~root/.ssh
 sudo install -m 600 "$RUNNER_TEMP/gh/keys" ~root/.ssh/authorized_keys
 "$wsbin" client macos apply </dev/null || error "ws client macos apply on a cloud target exited $?"
@@ -39,5 +39,5 @@ printf '%s\n' "$out" | grep -q '^ws client macos wizard: Sudo: ' && error "ws cl
 sudo rm -f ~root/.ssh/authorized_keys
 rm -rf "${WS_VALUES%/*}"
 unset WS_VALUES
-"$wsbin" client macos apply </dev/null || error "ws client macos apply back on mac.conf exited $?"
+"$wsbin" client macos apply </dev/null || error "ws client macos apply back on values.yml exited $?"
 exit "$fail"

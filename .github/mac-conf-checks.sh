@@ -17,7 +17,7 @@ if [ -z "${TUNNEL-}" ]; then
 fi
 tunnel_dir=/etc/ws-tunnel
 ws_resolvers=/etc/resolver
-conf=$HOME/.config/ws/mac.conf
+conf=$HOME/.config/ws/values.yml
 fail=0
 # shellcheck source=.github/mac-conf.sh
 . .github/mac-conf.sh
@@ -87,7 +87,7 @@ else
     *) error "--check showed no resolver: $out" ;;
     esac
 fi
-! sudo test -e "$tunnel_dir/ws/routes.d/server-conf" || error '--check wrote routes.d/server-conf'
+! sudo test -e "$tunnel_dir/ws/routes.d/values" || error '--check wrote routes.d/values'
 ! test -e "$ws_resolvers/conf.test" || error "--check wrote $ws_resolvers/conf.test"
 
 setup || error "ws client macos apply with the keys failed: $out"
@@ -122,7 +122,7 @@ setup || error "ws client macos apply with the keys emptied failed: $out"
 printf '%s\n' "$out"
 until_ok 20 eval '! routed 203.0.113.1' || error "203.0.113.1 is still routed into $utun"
 until_ok 20 eval '! shown conf.test 203.0.113.53' || error 'scutil --dns still shows conf.test'
-! sudo test -e "$tunnel_dir/ws/routes.d/server-conf" || error 'routes.d/server-conf outlived its key'
+! sudo test -e "$tunnel_dir/ws/routes.d/values" || error 'routes.d/values outlived its key'
 ! test -e "$ws_resolvers/conf.test" || error "$ws_resolvers/conf.test outlived its key"
 sudo test -e "$tunnel_dir/ws/routes.d/own" || error 'the emptied key took routes.d/own too'
 routed 198.51.100.1 || error "198.51.100.1, routes.d/own's, left $utun"

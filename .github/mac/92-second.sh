@@ -11,7 +11,7 @@ set -eo pipefail
 # shellcheck source=.github/mac-quiet.sh
 . .github/mac-quiet.sh
 
-conf=$HOME/.config/ws/mac.conf
+conf=$HOME/.config/ws/values.yml
 lab=${LABEL%.ws}.lab
 wg=$(brew --prefix wireguard-tools)/bin/wg
 go=$(brew --prefix wireguard-go)/bin/wireguard-go

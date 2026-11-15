@@ -1,6 +1,6 @@
 # shellcheck shell=sh
 # The mac job's checks of ws client macos apply's git step. mac-setup-checks.sh sources them last,
-# so that they run with its functions and the job's mac.conf. The runner must lack the files the
+# so that they run with its functions and the job's values.yml. The runner must lack the files the
 # step writes, but ~/.gitconfig, which goes aside. The job's own git files go aside too, as its conf
 # with git's keys does. As the script exits, on a signal too, the files go, and the job's files and
 # the runner's ~/.gitconfig come back.
@@ -176,9 +176,9 @@ rm "$tmp/xdg/git/config" ~/.gitconfig
 # Secretive's agent is not there. So must a key that is missing, and a .pub that holds more than a
 # public key's line, as a private key does.
 with 'WS_GIT_SIGNING_PUB_KEY: ""'
-stops "ws client macos apply: mac.conf names no WS_GIT_SIGNING_PUB_KEY, git's signing key: run ws client macos wizard"
+stops "ws client macos apply: values.yml names no WS_GIT_SIGNING_PUB_KEY, git's signing key: run ws client macos wizard"
 with 'WS_GIT_SIGNING_PUB_KEY: ~/.ssh/ws.pub'
-stops "ws client macos apply: $HOME/.ssh/ws.pub, mac.conf's WS_GIT_SIGNING_PUB_KEY, is missing"
+stops "ws client macos apply: $HOME/.ssh/ws.pub, values.yml's WS_GIT_SIGNING_PUB_KEY, is missing"
 cp "$key" "$tmp/mixed.pub"
 with "WS_GIT_SIGNING_PUB_KEY: $tmp/mixed.pub"
 stops "ws client macos apply: $tmp/mixed.pub holds no public key alone"
@@ -221,7 +221,7 @@ prints "$listed"
 prints "$listed" --check
 # In a subshell, as macOS's sh keeps a variable set for a function's call after it.
 (SSH_AUTH_SOCK=$tmp/none && export SSH_AUTH_SOCK && signed && exit "$fail") || fail=1
-# ws keeps the file key that the job's mac.conf names, though Secretive's one key is there. The
+# ws keeps the file key that the job's values.yml names, though Secretive's one key is there. The
 # agent and Secretive's container then go, so that the cases below give ws no key of theirs.
 [ "$(ssh -G ws | awk '$1 == "identityfile" { print $2 }')" = \~/.ssh/id_ed25519 ] ||
     error "ssh -G ws gives git's signing key, Secretive's one key, as ws's"
