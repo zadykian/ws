@@ -8,23 +8,25 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
+	"github.com/zadykian/ws/roles/internal/etcws"
 )
 
 const (
-	// zshHeader is the hook's first line, by which a run knows the file for its own.
-	zshHeader = "# Written by ws client macos apply: its next run replaces changes made here."
+	// hookFile is the hook, root's, which a run replaces whole.
+	hookFile = etcws.Dir + "/zshrc"
 	// zshLine is the line of ~/.zshrc that sources the hook.
-	zshLine = "source ~/.config/ws/zshrc"
+	zshLine = "source " + hookFile
 )
 
-// Zsh writes ~/.config/ws/zshrc, a hook that turns off at each prompt the modes that a dropped ssh
+// Zsh writes /etc/ws/zshrc, a hook that turns off at each prompt the modes that a dropped ssh
 // leaves on (roles/client/macos/ghostty/README.md). It adds the line that sources the hook at the end of ~/.zshrc,
 // and keeps the old file as ~/.zshrc.TIME~, as the ssh step keeps ~/.ssh/config. It warns, and leaves
-// ~/.zshrc, where the hook is not ws's or ~/.zshrc is a link that lacks the line.
+// ~/.zshrc, where ~/.zshrc is a link that lacks the line.
 type Zsh struct {
 	Home string
-	// Hook is roles/client/macos/zsh/files/zshrc, its first line zshHeader.
+	// Hook is roles/client/macos/zsh/files/zshrc.
 	Hook []byte
 	M    effect.Machine
 	Out  effect.Out
@@ -32,15 +34,7 @@ type Zsh struct {
 	Now func() time.Time
 }
 
-func (z *Zsh) hook() string { return z.Home + "/.config/ws/zshrc" }
-
 func (z *Zsh) rc() string { return z.Home + "/.zshrc" }
-
-// zshOwn says whether the hook's first line is ws's.
-func zshOwn(have []byte) bool {
-	first, _, _ := strings.Cut(string(have), "\n")
-	return first == zshHeader
-}
 
 // zshSources says whether a line of text is zshLine, spaces aside.
 func zshSources(text []byte) bool {
@@ -62,7 +56,11 @@ func (z *Zsh) rcLines() file.UserLines {
 	}
 }
 
-// hookFile is the hook, mode 644.
-func (z *Zsh) hookFile() file.UserFile {
-	return file.UserFile{M: z.M, Out: z.Out, Path: z.hook(), Text: z.Hook, Mode: 0o644, Own: zshOwn}
+// hookParts is /etc/ws and the hook in it, each saying its change as it applies.
+func (z *Zsh) hookParts() []resource.Resource {
+	var parts []resource.Resource
+	for _, r := range etcws.Files(z.M, hookFile, z.Hook) {
+		parts = append(parts, resource.Said{Out: z.Out, Part: r})
+	}
+	return parts
 }
