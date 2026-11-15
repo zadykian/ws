@@ -10,9 +10,9 @@ import (
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
-// validate stops where ssh refuses the new config.d/ws, alone or as ssh will read it after the
+// validate stops where ssh refuses the new /etc/ws/ssh_config, alone or as ssh will read it after the
 // run. It checks the new file first, then ~/.ssh/config, then the system's file. ~/.ssh/config's
-// Include of config.d/ws is left out, as it would read the file that the run replaces. It writes
+// Include of /etc/ws/ssh_config is left out, as it would read the file that the run replaces. It writes
 // its files in a directory of its own, and removes it.
 func (s SSH) validate(ctx context.Context, f sshFacts, hosts []sshcfg.Host, text []byte) error {
 	out, err := s.M.Run(ctx, "mktemp", "-d")
@@ -63,15 +63,15 @@ func (s SSH) validate(ctx context.Context, f sshFacts, hosts []sshcfg.Host, text
 		}
 		e := strings.ReplaceAll(stderrOf(err), user, s.Home+"/.ssh/config")
 		switch {
-		case strings.Contains(e, s.Home+"/.ssh/config.d/ws"):
-			return fmt.Errorf("ssh refuses the old config.d/ws, which ~/.ssh/config also reads, as %s: "+
-				"move it away, and run ws client macos apply again", e)
+		case strings.Contains(e, sshcfg.File):
+			return fmt.Errorf("ssh refuses /etc/ws/ssh_config, which ~/.ssh/config also reads, as %s: "+
+				"remove that Include, and run ws client macos apply again", e)
 		case strings.Contains(e, "Bad configuration option"):
-			return fmt.Errorf("ssh refuses ~/.ssh/config read after the new config.d/ws, as %s; "+
-				"config.d/ws's IgnoreUnknown, read first, carries only ~/.ssh/config's own "+
+			return fmt.Errorf("ssh refuses ~/.ssh/config read after the new /etc/ws/ssh_config, as %s; "+
+				"its IgnoreUnknown, read first, carries only ~/.ssh/config's own "+
 				"patterns, so one for a file it includes must be there too", e)
 		}
-		return fmt.Errorf("ssh refuses ~/.ssh/config read after the new config.d/ws, as %s", e)
+		return fmt.Errorf("ssh refuses ~/.ssh/config read after the new /etc/ws/ssh_config, as %s", e)
 	}
 	return nil
 }
@@ -83,7 +83,7 @@ func readsAs(h sshcfg.Host, out []byte) error {
 		key, val, _ := strings.Cut(l, " ")
 		switch {
 		case key == "hostname" && val != h.Addr.String(), key == "user" && val != h.User:
-			return fmt.Errorf("ssh reads %s as %s: config.d/ws sets %s at %s, which another file "+
+			return fmt.Errorf("ssh reads %s as %s: /etc/ws/ssh_config sets %s at %s, which another file "+
 				"of ssh's changes", h.Name, strings.TrimSpace(l), h.User, h.Addr)
 		}
 	}

@@ -26,8 +26,8 @@ func TestSSHWritesTheCopyItNames(t *testing.T) {
 	if string(m.Files[mactest.CopyOf(mactest.AgentKey)]) != mactest.AgentKey {
 		t.Errorf("the copy holds %q", m.Files[mactest.CopyOf(mactest.AgentKey)])
 	}
-	if got := string(m.Files["/h/.ssh/config.d/ws"]); !strings.Contains(got, "IdentityFile "+sshcfg.AgentKeys(mactest.AgentKey)[0].Pub()+"\n") {
-		t.Errorf("config.d/ws names no copy: %s", got)
+	if got := string(m.Files["/etc/ws/ssh_config"]); !strings.Contains(got, "IdentityFile "+sshcfg.AgentKeys(mactest.AgentKey)[0].Pub()+"\n") {
+		t.Errorf("/etc/ws/ssh_config names no copy: %s", got)
 	}
 	if again, err := s.Plan(context.Background()); err != nil || len(again.Changes) != 0 {
 		t.Errorf("second Plan = %v, %v; want none", again.Changes, err)

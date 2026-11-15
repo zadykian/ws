@@ -82,7 +82,7 @@ func TestSetupCheckWithNoStepPlansSSHOnce(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
 	_, stdout, stderr := runWs(p, "", "client", "macos", "apply", "--check")
-	if n := strings.Count(stdout+stderr, "+++ /h/.ssh/config.d/ws"); n != 1 {
+	if n := strings.Count(stdout+stderr, "+++ /etc/ws/ssh_config"); n != 1 {
 		t.Errorf("the config.d/ws diff prints %d times; want 1\n%s%s", n, stdout, stderr)
 	}
 }

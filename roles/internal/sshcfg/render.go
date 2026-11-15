@@ -1,4 +1,4 @@
-// Package sshcfg holds the text of ~/.ssh/config.d/ws, the reading of ssh_config files and of a
+// Package sshcfg holds the text of /etc/ws/ssh_config, the reading of ssh_config files and of a
 // .pub's line, all pure.
 package sshcfg
 
@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-// Header starts config.d/ws's first line, by which a run knows a file for its own.
+// Header starts the text of /etc/ws/ssh_config.
 const Header = "# Written by ws client macos apply"
 
 // Host is one server's block.

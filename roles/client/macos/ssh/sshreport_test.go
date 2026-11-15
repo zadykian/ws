@@ -16,8 +16,8 @@ import (
 func TestSSHReportsAFreshHome(t *testing.T) {
 	got := mactest.ReportOf(t, sshStep(sshMachine(), &effecttest.Out{}))
 	for name, want := range map[string]string{
-		"/h/.ssh": "present", "/h/.ssh/config.d": "mode 700", "/h/.ssh/config.d/ws": "mode 600",
-		"/h/.ssh/config": "holds Include config.d/ws",
+		"/h/.ssh": "present", "/etc/ws/ssh_config": "owner 0:0, mode 644",
+		"/h/.ssh/config": "holds Include /etc/ws/ssh_config",
 	} {
 		if got[name].Want != want || got[name].Found != "missing" || got[name].Conflict != "" {
 			t.Errorf("%s = %+v, want %q and missing", name, got[name], want)
@@ -35,17 +35,14 @@ func TestSSHAgainReportsNothing(t *testing.T) {
 }
 
 func TestSSHReportsAChangeToItsFile(t *testing.T) {
-	const file = "/h/.ssh/config.d/ws"
+	const file = "/etc/ws/ssh_config"
 	m := sshMachine()
-	m.Dirs["/h/.ssh"], m.Dirs["/h/.ssh/config.d"] = 0o700, 0o755
+	m.Dirs["/h/.ssh"] = 0o700
 	m.Files[file], m.Modes[file] = []byte(sshcfg.Header+"\nHost ws\n"), 0o600
 	got := mactest.ReportOf(t, sshStep(m, &effecttest.Out{}))
-	if it := got[file]; it.Found != "mode 600, other content" || !strings.Contains(it.Conflict, "by hand") ||
+	if it := got[file]; it.Found != "owner 0:0, mode 600, other content" || !strings.Contains(it.Conflict, "by hand") ||
 		!strings.Contains(it.Diff, "+    HostName") {
 		t.Errorf("file = %+v, want a conflict and its diff", it)
-	}
-	if it := got["/h/.ssh/config.d"]; it.Found != "mode 755" || it.Conflict == "" {
-		t.Errorf("directory = %+v, want its mode to stand against ws", it)
 	}
 }
 
@@ -67,7 +64,7 @@ func TestSSHReportStopsAtTheUsersHostAndLeavesTheRestOut(t *testing.T) {
 
 func TestSSHReportShowsAnIncludeBelowASettingAsOutOfPlace(t *testing.T) {
 	m := sshMachine()
-	m.Files["/h/.ssh/config"] = []byte("Host a\n    User x\nInclude config.d/ws\n")
+	m.Files["/h/.ssh/config"] = []byte("Host a\n    User x\nInclude /etc/ws/ssh_config\n")
 	items, err := sshStep(m, &effecttest.Out{}).(step.Reporter).Report(context.Background())
 	i := slices.IndexFunc(items, func(it step.Item) bool { return it.Name == "/h/.ssh/config" })
 	if err != nil || i < 0 || items[i].Found != "out of place" || !strings.Contains(items[i].Conflict, "below other settings") {
@@ -88,13 +85,13 @@ func TestSSHReportsWsCopyOfAKey(t *testing.T) {
 func TestSSHReportShowsWsLinesAloneOfAUsersFile(t *testing.T) {
 	m := sshMachine()
 	m.Files["/h/.ssh/config"] = []byte(mactest.UsersText)
-	mactest.CheckUsersFile(t, sshStep(m, &effecttest.Out{}), "+Include config.d/ws")
+	mactest.CheckUsersFile(t, sshStep(m, &effecttest.Out{}), "+Include /etc/ws/ssh_config")
 }
 
 // A report warns of nothing: a plan says the warnings, and a report only reads.
 func TestSSHReportWarnsNothing(t *testing.T) {
 	m, out := sshMachine(), &effecttest.Out{}
-	m.Files["/h/.ssh/config"] = []byte("Include config.d/ws\nHost ws\n  User x\n")
+	m.Files["/h/.ssh/config"] = []byte("Include /etc/ws/ssh_config\nHost ws\n  User x\n")
 	if _, err := sshStep(m, out).(step.Reporter).Report(context.Background()); err != nil || len(out.Lines) != 0 {
 		t.Errorf("Report = %v, said %q; want no warning", err, out.Lines)
 	}

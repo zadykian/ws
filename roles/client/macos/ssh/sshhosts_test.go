@@ -40,13 +40,13 @@ func TestSSHWritesASecondServersBlockFromItsFile(t *testing.T) {
 	if err := s.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
-	got := string(m.Files["/h/.ssh/config.d/ws"])
+	got := string(m.Files["/etc/ws/ssh_config"])
 	for _, want := range []string{
 		"Host lab\n    HostName 10.99.1.1\n    Port 22\n    User root\n    HostKeyAlias lab\n",
 		"Host ws\n    HostName 10.99.0.1\n    Port 22\n    User me\n    HostKeyAlias ws\n",
 	} {
 		if !strings.Contains(got, want) {
-			t.Errorf("config.d/ws lacks %q:\n%s", want, got)
+			t.Errorf("/etc/ws/ssh_config lacks %q:\n%s", want, got)
 		}
 	}
 }
@@ -89,7 +89,7 @@ func TestSSHStopsWhereABlockNamesASecondServer(t *testing.T) {
 		"WS_USER", "root",
 		"WS_SLOT", "1",
 	))
-	m.Files["/h/.ssh/config"] = []byte("Include config.d/ws\nHost lab\n  User x\n")
+	m.Files["/h/.ssh/config"] = []byte("Include /etc/ws/ssh_config\nHost lab\n  User x\n")
 	c := sshConf(m, &effecttest.Out{})
 	c.MacConf = macConf
 	_, err := c.Step().Plan(context.Background())
