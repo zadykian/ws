@@ -2,7 +2,8 @@
 
 With `WS_GIT_NAME` and `WS_GIT_EMAIL` in `mac.conf`, `ws client macos apply` sets up git on the Mac
 ([The Mac](../README.md)), as the `shell` role does on ws ([Signing](../../../server/ubuntu/shell/README.md#signing)). It writes
-`~/.config/ws/gitconfig`: the author, and each commit signed with `WS_GIT_SIGNING_PUB_KEY`, which
+`~/.config/ws/gitconfig`, from the settings that `roles/internal/gitcfg` holds for both sides, the
+fetch's prune among them: the author, and each commit signed with `WS_GIT_SIGNING_PUB_KEY`, which
 `~/.config/ws/allowed_signers` trusts for the email in `git verify-commit`. It names gh's credential
 command too, as `gh auth setup-git` does, so that pushes to GitHub take gh's login, and installs
 Homebrew's gh where `PATH` has none. Without the two keys, the script leaves git alone, and emptying
