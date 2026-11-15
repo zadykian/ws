@@ -1,6 +1,6 @@
 package values
 
-// Default returns each key's default value, with the keys that follow ws_home or the machine's
+// Default returns each key's default value, with the keys that follow WS_HOME or the machine's
 // size left empty (see derive and each key).
 func Default() Values {
 	return Values{

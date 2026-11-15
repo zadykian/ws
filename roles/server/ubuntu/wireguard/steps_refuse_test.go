@@ -14,7 +14,7 @@ func TestStepsStopOnTheSettings(t *testing.T) {
 	v := values.Default()
 	v.Wireguard.Port = 0
 	ss := steps(v, effecttest.NewMachine(), &effecttest.Units{}, &effecttest.Out{}, bytes.NewReader(nil), nil)
-	if _, err := step.Run(t.Context(), ss, &effecttest.Out{}, true); err == nil || !strings.Contains(err.Error(), "wireguard_port") {
+	if _, err := step.Run(t.Context(), ss, &effecttest.Out{}, true); err == nil || !strings.Contains(err.Error(), "WS_TUNNEL_PORT") {
 		t.Errorf("run = %v, want the refusal", err)
 	}
 }

@@ -41,7 +41,7 @@ func TestSettingsAddressAndPort(t *testing.T) {
 
 func TestSettingsNamesEveryProblem(t *testing.T) {
 	err := Validate(values.Wireguard{Address: "10.99.0.255/24", Port: 0})
-	if err == nil || !strings.Contains(err.Error(), "wireguard_port") || !strings.Contains(err.Error(), "wireguard_address") {
+	if err == nil || !strings.Contains(err.Error(), "WS_TUNNEL_PORT") || !strings.Contains(err.Error(), "WS_TUNNEL_ADDRESS") {
 		t.Errorf("Validate = %v, want both the port and the address named", err)
 	}
 }

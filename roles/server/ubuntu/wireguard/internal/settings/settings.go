@@ -31,16 +31,16 @@ const (
 func Validate(w values.Wireguard) error {
 	var problems []string
 	if w.Port < 1 || w.Port > maxPort {
-		problems = append(problems, fmt.Sprintf("wireguard_port is %d, not a port from 1 to %d.", w.Port, maxPort))
+		problems = append(problems, fmt.Sprintf("WS_TUNNEL_PORT is %d, not a port from 1 to %d.", w.Port, maxPort))
 	}
 	server, err := netip.ParsePrefix(w.Address)
 	if err != nil || !server.Addr().Is4() {
-		problems = append(problems, fmt.Sprintf("wireguard_address is %s, not an IPv4 address with its prefix length, as %s.", w.Address, slot.Slot(0).Wg0()))
+		problems = append(problems, fmt.Sprintf("WS_TUNNEL_ADDRESS is %s, not an IPv4 address with its prefix length, as %s.", w.Address, slot.Slot(0).Wg0()))
 		return errors.New(strings.Join(problems, " "))
 	}
 	subnet := server.Masked()
 	if !isHost(server.Addr(), subnet) {
-		problems = append(problems, fmt.Sprintf("wireguard_address is %s, not a host's address in %s.", w.Address, subnet))
+		problems = append(problems, fmt.Sprintf("WS_TUNNEL_ADDRESS is %s, not a host's address in %s.", w.Address, subnet))
 	}
 	problems = append(problems, peerProblems(w, server)...)
 	if len(problems) == 0 {

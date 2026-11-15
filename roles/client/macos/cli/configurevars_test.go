@@ -114,7 +114,7 @@ func TestVarsReachKeepsTheSudoItIsGiven(t *testing.T) {
 
 func TestVarsSheetOpensWithWhatWsHolds(t *testing.T) {
 	p, m := macTerminal()
-	ws := newFarWs(m, "ws_user: ada\n")
+	ws := newFarWs(m, "WS_USER: ada\n")
 	p.Machine = ws
 	r := &varsReach{server: "ws", p: p}
 	defer r.close(context.Background())
@@ -123,8 +123,8 @@ func TestVarsSheetOpensWithWhatWsHolds(t *testing.T) {
 		t.Fatal(err)
 	}
 	specs := sheet.Fields(nil)
-	user := slices.IndexFunc(specs, func(s tui.FieldSpec) bool { return s.Label == "ws_user" })
-	outbound := slices.IndexFunc(specs, func(s tui.FieldSpec) bool { return s.Label == "security_outbound" })
+	user := slices.IndexFunc(specs, func(s tui.FieldSpec) bool { return s.Label == "WS_USER" })
+	outbound := slices.IndexFunc(specs, func(s tui.FieldSpec) bool { return s.Label == "WS_SECURITY_OUTBOUND" })
 	if user < 0 || specs[user].Value != "ada" || specs[user].Default != "" {
 		t.Errorf("user at %d of %+v", user, specs)
 	}
@@ -138,7 +138,7 @@ func TestVarsSheetOpensWithWhatWsHolds(t *testing.T) {
 
 func TestMacConfigureSavesHostVarsAndLetsTheLockGo(t *testing.T) {
 	p, m := macTerminal()
-	ws := newFarWs(m, "ws_user: ada\n")
+	ws := newFarWs(m, "WS_USER: ada\n")
 	p.Machine = ws
 	in, keys := io.Pipe()
 	defer func() { _ = keys.Close() }()
@@ -176,7 +176,7 @@ func TestMacConfigureSavesHostVarsAndLetsTheLockGo(t *testing.T) {
 		}
 	}
 	pair, err := base64.StdEncoding.DecodeString(saved[1])
-	if err != nil || !strings.HasPrefix(string(pair), "ws_user=adax") {
+	if err != nil || !strings.HasPrefix(string(pair), "WS_USER=adax") {
 		t.Errorf("saved %q: %v", pair, err)
 	}
 	for {

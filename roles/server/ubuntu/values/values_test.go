@@ -21,7 +21,7 @@ func TestParseEmptyGivesDefault(t *testing.T) {
 }
 
 func TestParseReadsZedNofile(t *testing.T) {
-	for in, want := range map[string]int{"": 65536, "zed_nofile: 4096\n": 4096} {
+	for in, want := range map[string]int{"": 65536, "WS_ZED_NOFILE: 4096\n": 4096} {
 		got, err := Parse([]byte(in))
 		if err != nil || got.Zed.Nofile != want {
 			t.Errorf("Parse(%q) = %d, %v; want %d", in, got.Zed.Nofile, err, want)
@@ -30,7 +30,7 @@ func TestParseReadsZedNofile(t *testing.T) {
 }
 
 func TestParseKeepsDefaultsBesideAGivenKey(t *testing.T) {
-	got, err := Parse([]byte("base_swap_size_mb: 64\nsecurity_outbound: false\n"))
+	got, err := Parse([]byte("WS_BASE_SWAP_SIZE_MB: 64\nWS_SECURITY_OUTBOUND: false\n"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,9 +45,9 @@ func TestParseKeepsDefaultsBesideAGivenKey(t *testing.T) {
 func TestParseDerivesFromTheUser(t *testing.T) {
 	tests := []struct{ in, home, key string }{
 		{"", "/home/zadykian", "/home/zadykian/.ssh/id_ed25519_signing"},
-		{"ws_user: root\n", "/root", "/root/.ssh/id_ed25519_signing"},
-		{"ws_user: dev\n", "/home/dev", "/home/dev/.ssh/id_ed25519_signing"},
-		{"ws_home: /srv/x\n", "/srv/x", "/srv/x/.ssh/id_ed25519_signing"},
+		{"WS_USER: root\n", "/root", "/root/.ssh/id_ed25519_signing"},
+		{"WS_USER: dev\n", "/home/dev", "/home/dev/.ssh/id_ed25519_signing"},
+		{"WS_HOME: /srv/x\n", "/srv/x", "/srv/x/.ssh/id_ed25519_signing"},
 	}
 	for _, tt := range tests {
 		got, err := Parse([]byte(tt.in))
@@ -62,8 +62,8 @@ func TestParseDerivesFromTheUser(t *testing.T) {
 
 func TestParseKeepsAKeyBelowTheHome(t *testing.T) {
 	for _, in := range []string{
-		"ws_user: root\nws_git_signing_key: /root/k\n",
-		"ws_home: /srv/x\nws_git_signing_key: /srv/x/a/../b/k\n",
+		"WS_USER: root\nWS_GIT_SIGNING_KEY: /root/k\n",
+		"WS_HOME: /srv/x\nWS_GIT_SIGNING_KEY: /srv/x/a/../b/k\n",
 	} {
 		if _, err := Parse([]byte(in)); err != nil {
 			t.Errorf("Parse(%q): %v", in, err)
@@ -73,17 +73,17 @@ func TestParseKeepsAKeyBelowTheHome(t *testing.T) {
 
 func TestParseRefusesAKeyOutsideTheHome(t *testing.T) {
 	tests := map[string]string{
-		"outside":          "ws_git_signing_key: /etc/key\n",
-		"dot dot":          "ws_git_signing_key: /home/zadykian/../root/key\n",
-		"the home":         "ws_git_signing_key: /home/zadykian\n",
-		"a sibling":        "ws_git_signing_key: /home/zadykian2/key\n",
-		"relative":         "ws_git_signing_key: key\n",
-		"outside, root":    "ws_user: root\nws_git_signing_key: /tmp/key\n",
-		"outside, ws_home": "ws_home: /srv/x\nws_git_signing_key: /home/zadykian/key\n",
+		"outside":          "WS_GIT_SIGNING_KEY: /etc/key\n",
+		"dot dot":          "WS_GIT_SIGNING_KEY: /home/zadykian/../root/key\n",
+		"the home":         "WS_GIT_SIGNING_KEY: /home/zadykian\n",
+		"a sibling":        "WS_GIT_SIGNING_KEY: /home/zadykian2/key\n",
+		"relative":         "WS_GIT_SIGNING_KEY: key\n",
+		"outside, root":    "WS_USER: root\nWS_GIT_SIGNING_KEY: /tmp/key\n",
+		"outside, WS_HOME": "WS_HOME: /srv/x\nWS_GIT_SIGNING_KEY: /home/zadykian/key\n",
 	}
 	for name, in := range tests {
 		_, err := Parse([]byte(in))
-		if err == nil || !strings.Contains(err.Error(), "is outside ws_home") {
+		if err == nil || !strings.Contains(err.Error(), "is outside WS_HOME") {
 			t.Errorf("%s: Parse(%q) = %v", name, in, err)
 		}
 	}
@@ -95,9 +95,9 @@ func TestParseRefuses(t *testing.T) {
 		"a dropped key":  "shell_git_signing: false\n",
 		"a dropped name": "shell_git_name: a\n",
 		"a dropped path": "shell_git_allowed_signers: /etc/ws/allowed_signers\n",
-		"duplicate key":  "base_locale: a\nbase_locale: b\n",
-		"wrong type":     "base_swappiness: lots\n",
-		"unknown field":  "wireguard_peers:\n  - name: a\n    key: b\n",
+		"duplicate key":  "WS_BASE_LOCALE: a\nWS_BASE_LOCALE: b\n",
+		"wrong type":     "WS_BASE_SWAPPINESS: lots\n",
+		"unknown field":  "WS_TUNNEL_PEERS:\n  - name: a\n    key: b\n",
 		"not a mapping":  "- a\n",
 		"a secret key":   "shell_secret_env:\n  TOKEN: hunter2\n",
 		"a password":     "ikeward_p12_password: hunter2\n",

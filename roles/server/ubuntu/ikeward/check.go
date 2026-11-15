@@ -16,13 +16,13 @@ import (
 // removal of a peer's rule compares the two.
 func check(v values.Ikeward) error {
 	if !path.IsAbs(v.Profile) {
-		return fmt.Errorf("ikeward_profile is %s, which is not an absolute path", v.Profile)
+		return fmt.Errorf("WS_IKEWARD_PROFILE is %s, which is not an absolute path", v.Profile)
 	}
 	if v.DNS == "" {
-		return errors.New("a profile needs ikeward_dns, the remote network's resolver")
+		return errors.New("a profile needs WS_IKEWARD_DNS, the remote network's resolver")
 	}
 	if len(v.Domains) == 0 {
-		return errors.New("a profile needs at least one domain in ikeward_domains")
+		return errors.New("a profile needs at least one domain in WS_IKEWARD_DOMAINS")
 	}
 	var bad []string
 	for _, p := range v.ForwardFrom {
@@ -31,7 +31,7 @@ func check(v values.Ikeward) error {
 		}
 	}
 	if len(bad) > 0 {
-		return fmt.Errorf("ikeward_forward_from holds %s: each peer is an IPv4 address, as 10.99.0.2, "+
+		return fmt.Errorf("WS_IKEWARD_FORWARD_FROM holds %s: each peer is an IPv4 address, as 10.99.0.2, "+
 			"with no prefix length", strings.Join(bad, ", "))
 	}
 	return nil

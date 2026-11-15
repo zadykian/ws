@@ -21,7 +21,7 @@ func checkClones(clones []values.GitClone) error {
 	for _, c := range clones {
 		if c.Repo == "" || strings.Contains(c.Repo, "\n") || hasUserInfo(c.Repo) ||
 			c.Dest == "" || strings.ContainsAny(c.Dest, "*?[") {
-			return errors.New("each entry of shell_git_clones needs a repo, with no user name or token in a URL of http:// or https://, and a dest without *, ? or [")
+			return errors.New("each entry of WS_SHELL_GIT_CLONES needs a repo, with no user name or token in a URL of http:// or https://, and a dest without *, ? or [")
 		}
 	}
 	return nil

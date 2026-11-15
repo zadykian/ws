@@ -637,7 +637,7 @@ Global Flags:
 
 Use "ws server ubuntu values [command] --help" for more information about a command.
 == ws server ubuntu values set
-An empty VALUE takes the key's line out, which gives its default back. A list's VALUE is split by commas. A table, such as fans_curves, stays the file's to edit by hand.
+An empty VALUE takes the key's line out, which gives its default back. A list's VALUE is split by commas. A table, such as WS_FANS_CURVES, stays the file's to edit by hand.
 
 The next ws server ubuntu apply takes the key.
 

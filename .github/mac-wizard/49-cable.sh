@@ -41,15 +41,15 @@ vars="$ws/root"/etc/ws/host_vars.yml
 netplan=$ws/root/etc/netplan/60-direct-link.yaml
 fail=0
 
-# unnamed: host_vars names no port, whatever else it holds: a run's ws_user stays there.
+# unnamed: host_vars names no port, whatever else it holds: a run's WS_USER stays there.
 unnamed() {
-    ! sudo grep -qs '^network_direct_link_interface:' "$vars"
+    ! sudo grep -qs '^WS_CABLE_PORT:' "$vars"
 }
 
-# unname takes out of host_vars what a new install lacks, and keeps ws_user.
+# unname takes out of host_vars what a new install lacks, and keeps WS_USER.
 unname() {
-    unnamed || sudo sed -i '' -e '/^network_direct_link_interface:/d' \
-        -e '/^security_outbound:/d' "$vars"
+    unnamed || sudo sed -i '' -e '/^WS_CABLE_PORT:/d' \
+        -e '/^WS_SECURITY_OUTBOUND:/d' "$vars"
 }
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
@@ -143,7 +143,7 @@ conf_write "$conf" <"$RUNNER_TEMP/cable.conf"
 wizard run WS_CABLE_PORT=enp7s0
 printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: ws's enp7s0 lacks 10\.77\.0\.1 after \
 ws server ubuntu apply --only network,wireguard: plug the Mac's cable into it, or mend what that printed, \
-then run the wizard again" && sudo grep -qx 'network_direct_link_interface: "enp7s0"' "$vars" &&
+then run the wizard again" && sudo grep -qx 'WS_CABLE_PORT: "enp7s0"' "$vars" &&
     [ "$status" = 1 ] || error "ws client macos wizard with WS_CABLE_PORT=enp7s0 exited $status, or no host_vars"
 unname
 echo 1 | sudo tee "$net/enp5s0/carrier" >/dev/null
@@ -157,7 +157,7 @@ wizard run WS_CONF="$RUNNER_TEMP/confs/cloud/mac.conf"
 firewall="- The provider's firewall: UDP 51820 open to ws, for the tunnel (roles/client/macos/conf/README.md)."
 if [ "$status" != 0 ] || ! printf '%s\n' "$out" | grep -qxF -e "$firewall" ||
     printf '%s\n' "$out" | grep -q -e '^ws client macos wizard: Cable: ' -e '^- The cable: ' \
-        -e '^- The router' || sudo grep -q '^network_direct_link_interface:' "$vars"; then
+        -e '^- The router' || sudo grep -q '^WS_CABLE_PORT:' "$vars"; then
     error "ws client macos wizard with WS_TARGET=cloud exited $status, or took the cable's steps"
 fi
 unname
@@ -188,7 +188,7 @@ EOF
 chmod 755 "$ws/bin/ip"
 links=$(grep -c '^root: sh -s -- link$' "$ws/log")
 wizard run WS_CABLE_PORT=enp5s0
-sudo grep -qx 'network_direct_link_interface: "enp5s0"' "$vars" &&
+sudo grep -qx 'WS_CABLE_PORT: "enp5s0"' "$vars" &&
     conf_print "$conf" | cmp -s - "$RUNNER_TEMP/cable.conf" &&
     printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: no terminal to ask WS_CABLE_SERVICE: set \
 WS_CABLE_SERVICE, or set it to nothing for none" && [ "$status" = 1 ] &&
@@ -236,7 +236,7 @@ printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: after ws's run" 
 wizard run
 printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: enp5s0 goes in /etc/ws/host_vars\.yml on ws \
 again, and ws server ubuntu apply --only network,wireguard runs there in a unit of its own" &&
-    sudo grep -qx 'network_direct_link_interface: "enp5s0"' "$vars" && [ "$status" = 0 ] &&
+    sudo grep -qx 'WS_CABLE_PORT: "enp5s0"' "$vars" && [ "$status" = 0 ] &&
     [ "$(grep -c '' "$ws/server.log")" = $((runs + 2)) ] && [ "$(conf_print "$conf")" = "$kept" ] ||
     error "ws client macos wizard without host_vars exited $status, named no enp5s0, or changed mac.conf"
 sudo rm -f "$netplan"

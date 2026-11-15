@@ -135,7 +135,7 @@ func (s *Session) NamePeer(ctx context.Context, key string) error {
 	return err
 }
 
-// NameUser names ws_user in ws's host_vars.
+// NameUser names WS_USER in ws's host_vars.
 func (s *Session) NameUser(ctx context.Context, user string) error {
 	_, err := s.do(ctx, opNameUser, []string{user})
 	return err
@@ -153,7 +153,7 @@ func (s *Session) Run(ctx context.Context, args []string) error {
 	return err
 }
 
-// Outbound names security_outbound: false in ws's host_vars.
+// Outbound names WS_SECURITY_OUTBOUND: false in ws's host_vars.
 func (s *Session) Outbound(ctx context.Context) error {
 	_, err := s.do(ctx, opOutbound)
 	return err

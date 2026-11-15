@@ -56,7 +56,7 @@ func macProblems(w values.Wireguard, server netip.Prefix) []string {
 	}
 	s, ok := slot.Find(server.Addr())
 	if !ok || server != s.Wg0() {
-		return []string{fmt.Sprintf("wireguard_address is %s, but the Mac's scripts fix wg0 at a slot's 10.99.N.1/24, N from 0 to %d.", server, slot.Last)}
+		return []string{fmt.Sprintf("WS_TUNNEL_ADDRESS is %s, but the Mac's scripts fix wg0 at a slot's 10.99.N.1/24, N from 0 to %d.", server, slot.Last)}
 	}
 	if ip, err := netip.ParseAddr(mac.Address); err == nil && ip.Is4() && ip != s.Mac() {
 		return []string{fmt.Sprintf("mac's address is %s, but the Mac's scripts fix it at %s.", ip, s.Mac())}

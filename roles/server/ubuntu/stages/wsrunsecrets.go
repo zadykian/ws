@@ -15,7 +15,7 @@ func done(s session.Status, version string, c session.Want) bool {
 	return idle(s, version) && named(s, c) && (c.Target != "cloud" || s.Run.Off)
 }
 
-// named tells whether ws's values give ws_user the user that ssh logs in as. It compares with the
+// named tells whether ws's values give WS_USER the user that ssh logs in as. It compares with the
 // server's default, so that a default that moves leaves a WS_USER of the old one named in
 // host_vars.
 func named(s session.Status, c session.Want) bool {

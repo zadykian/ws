@@ -12,7 +12,7 @@ import (
 
 const noCachePath = "/etc/sudoers.d/ws-no-cache"
 
-// sudoParts makes the step's parts: the check of ws_user's way to root, where another user holds
+// sudoParts makes the step's parts: the check of WS_USER's way to root, where another user holds
 // it, then the drop-in that ends sudo's cache. visudo reads it before it
 // is in place, though a broken one would not lock anyone out: sudo-rs skips the file with an error.
 // sudo skips a name with a dot, so the file under check has no effect.

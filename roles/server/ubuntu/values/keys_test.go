@@ -22,14 +22,14 @@ func TestKeysHoldEachKindAndNoTable(t *testing.T) {
 		kinds[k.Name] = k.Kind
 	}
 	for name, want := range map[string]Kind{
-		"ws_user": Text, "base_swappiness": Number, "base_swap_size_mb": Number, "fans_interval": Decimal,
-		"security_outbound": Switch, "ikeward_domains": List, "zed_nofile": Number,
+		"WS_USER": Text, "WS_BASE_SWAPPINESS": Number, "WS_BASE_SWAP_SIZE_MB": Number, "WS_FANS_INTERVAL": Decimal,
+		"WS_SECURITY_OUTBOUND": Switch, "WS_IKEWARD_DOMAINS": List, "WS_ZED_NOFILE": Number,
 	} {
 		if got, ok := kinds[name]; !ok || got != want {
 			t.Errorf("%s: kind = %v, %t, want %v", name, got, ok, want)
 		}
 	}
-	for _, table := range []string{"fans_curves", "fans_step", "claude_telemetry_env", "wireguard_peers", ""} {
+	for _, table := range []string{"WS_FANS_CURVES", "WS_FANS_STEP", "WS_CLAUDE_TELEMETRY_ENV", "WS_TUNNEL_PEERS", ""} {
 		if _, ok := kinds[table]; ok {
 			t.Errorf("key %q is a table, or has no name", table)
 		}
@@ -40,19 +40,19 @@ func TestCheckRefusesWhatTheKindCantTake(t *testing.T) {
 	for _, tc := range []struct {
 		key, value, want string
 	}{
-		{"base_swappiness", "ten", "a whole number"},
-		{"base_swappiness", "1.5", "a whole number"},
-		{"fans_interval", "soon", "a number"},
-		{"fans_interval", "NaN", "a number"},
-		{"fans_interval", "Inf", "a number"},
-		{"security_outbound", "yes", "true or false"},
-		{"ws_user", "a\nb", "one line"},
-		{"ikeward_domains", "a\rb", "one line"},
-		{"base_swappiness", "20", ""},
-		{"base_swappiness", "", ""},
-		{"fans_interval", "2.5", ""},
-		{"security_outbound", "false", ""},
-		{"ws_user", "ada", ""},
+		{"WS_BASE_SWAPPINESS", "ten", "a whole number"},
+		{"WS_BASE_SWAPPINESS", "1.5", "a whole number"},
+		{"WS_FANS_INTERVAL", "soon", "a number"},
+		{"WS_FANS_INTERVAL", "NaN", "a number"},
+		{"WS_FANS_INTERVAL", "Inf", "a number"},
+		{"WS_SECURITY_OUTBOUND", "yes", "true or false"},
+		{"WS_USER", "a\nb", "one line"},
+		{"WS_IKEWARD_DOMAINS", "a\rb", "one line"},
+		{"WS_BASE_SWAPPINESS", "20", ""},
+		{"WS_BASE_SWAPPINESS", "", ""},
+		{"WS_FANS_INTERVAL", "2.5", ""},
+		{"WS_SECURITY_OUTBOUND", "false", ""},
+		{"WS_USER", "ada", ""},
 	} {
 		err := keyOf(t, tc.key).Check(tc.value)
 		if tc.want == "" && err != nil {
@@ -65,13 +65,13 @@ func TestCheckRefusesWhatTheKindCantTake(t *testing.T) {
 }
 
 func TestTextGivesTheValueAsALine(t *testing.T) {
-	v, err := Parse([]byte("ikeward_domains: [a.example, b.example]\nfans_interval: 1.5\n"))
+	v, err := Parse([]byte("WS_IKEWARD_DOMAINS: [a.example, b.example]\nWS_FANS_INTERVAL: 1.5\n"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	for name, want := range map[string]string{
-		"ikeward_domains": "a.example, b.example", "fans_interval": "1.5", "security_outbound": "true",
-		"base_swappiness": "10", "base_swap_size_mb": "", "ws_home": "/home/zadykian", "ikeward_dns": "",
+		"WS_IKEWARD_DOMAINS": "a.example, b.example", "WS_FANS_INTERVAL": "1.5", "WS_SECURITY_OUTBOUND": "true",
+		"WS_BASE_SWAPPINESS": "10", "WS_BASE_SWAP_SIZE_MB": "", "WS_HOME": "/home/zadykian", "WS_IKEWARD_DNS": "",
 	} {
 		if got := v.Text(keyOf(t, name)); got != want {
 			t.Errorf("%s = %q, want %q", name, got, want)
@@ -79,7 +79,7 @@ func TestTextGivesTheValueAsALine(t *testing.T) {
 	}
 	size := 0
 	v.Base.SwapSizeMB = &size
-	if got := v.Text(keyOf(t, "base_swap_size_mb")); got != "0" {
+	if got := v.Text(keyOf(t, "WS_BASE_SWAP_SIZE_MB")); got != "0" {
 		t.Errorf("a swap of 0 reads %q", got)
 	}
 }
@@ -88,13 +88,13 @@ func TestLineQuotesWhatReadsAsAnotherType(t *testing.T) {
 	for _, tc := range []struct {
 		key, value, want string
 	}{
-		{"docker_memory_swap_max", "0", "docker_memory_swap_max: \"0\"\n"},
-		{"ws_user", "a #b", "ws_user: 'a #b'\n"},
-		{"ikeward_domains", ",", "ikeward_domains: []\n"},
-		{"ikeward_domains", "a.example , b.example", "ikeward_domains: [a.example, b.example]\n"},
-		{"fans_interval", "1.50", "fans_interval: 1.5\n"},
-		{"security_outbound", "false", "security_outbound: false\n"},
-		{"base_swappiness", "20", "base_swappiness: 20\n"},
+		{"WS_DOCKER_MEMORY_SWAP_MAX", "0", "WS_DOCKER_MEMORY_SWAP_MAX: \"0\"\n"},
+		{"WS_USER", "a #b", "WS_USER: 'a #b'\n"},
+		{"WS_IKEWARD_DOMAINS", ",", "WS_IKEWARD_DOMAINS: []\n"},
+		{"WS_IKEWARD_DOMAINS", "a.example , b.example", "WS_IKEWARD_DOMAINS: [a.example, b.example]\n"},
+		{"WS_FANS_INTERVAL", "1.50", "WS_FANS_INTERVAL: 1.5\n"},
+		{"WS_SECURITY_OUTBOUND", "false", "WS_SECURITY_OUTBOUND: false\n"},
+		{"WS_BASE_SWAPPINESS", "20", "WS_BASE_SWAPPINESS: 20\n"},
 	} {
 		if got, err := keyOf(t, tc.key).line(tc.value); err != nil || got != tc.want {
 			t.Errorf("%s %q = %q, %v, want %q", tc.key, tc.value, got, err, tc.want)
@@ -104,7 +104,7 @@ func TestLineQuotesWhatReadsAsAnotherType(t *testing.T) {
 
 func TestLineKeepsALongValueOnOneLine(t *testing.T) {
 	long := "/home/zadykian/" + strings.Repeat("word ", 60) + "end"
-	line, err := keyOf(t, "ws_git_signing_key").line(long)
+	line, err := keyOf(t, "WS_GIT_SIGNING_KEY").line(long)
 	if err != nil {
 		t.Fatal(err)
 	}

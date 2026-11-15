@@ -38,12 +38,12 @@ type Values struct {
 // Shared holds the keys that the roles share.
 type Shared struct {
 	// User is the user the roles set the machine up for.
-	User string `yaml:"ws_user"`
+	User string `yaml:"WS_USER"`
 	// Home is the user's home. Left empty, it follows User: /root for root, else /home/USER.
-	Home string `yaml:"ws_home"`
+	Home string `yaml:"WS_HOME"`
 	// GitSigningKey is the SSH key that signs git's commits, with its public key beside it as .pub.
 	// Left empty, it defaults to Home/.ssh/id_ed25519_signing.
-	GitSigningKey string `yaml:"ws_git_signing_key"`
+	GitSigningKey string `yaml:"WS_GIT_SIGNING_KEY"`
 }
 
 // Parse returns the values that data gives over Default. It refuses a key that no role knows, a key
@@ -73,7 +73,7 @@ func decode(data []byte) (Values, error) {
 	if err := yaml.Unmarshal(data, &keys); err != nil {
 		return Values{}, err
 	}
-	if _, given := keys["wireguard_peers"]; given && v.Wireguard.Peers == nil {
+	if _, given := keys["WS_TUNNEL_PEERS"]; given && v.Wireguard.Peers == nil {
 		v.Wireguard.Peers = []WireguardPeer{}
 	}
 	v.derive()
@@ -93,8 +93,8 @@ func Load(m effect.Machine, path string) (Values, error) {
 	return v, nil
 }
 
-// derive fills the values that follow ws_home when the file leaves them empty. It lists the Mac
-// at wg0's address plus one where the file has no wireguard_peers: an empty or null list keeps no peer.
+// derive fills the values that follow WS_HOME when the file leaves them empty. It lists the Mac
+// at wg0's address plus one where the file has no WS_TUNNEL_PEERS: an empty or null list keeps no peer.
 func (v *Values) derive() {
 	if v.Home == "" {
 		v.Home = "/root"
@@ -112,12 +112,12 @@ func (v *Values) derive() {
 	}
 }
 
-// underHome refuses a signing key that is not below ws_home. A role reaches it through the account,
+// underHome refuses a signing key that is not below WS_HOME. A role reaches it through the account,
 // by a path under the home, so that it can refuse a link there (roles/server/ubuntu/security/README.md).
 func (v *Values) underHome() error {
 	home := path.Clean(v.Home)
 	if !strings.HasPrefix(path.Clean(v.GitSigningKey), strings.TrimSuffix(home, "/")+"/") {
-		return fmt.Errorf("ws_git_signing_key: %s is outside ws_home %s", v.GitSigningKey, v.Home)
+		return fmt.Errorf("WS_GIT_SIGNING_KEY: %s is outside WS_HOME %s", v.GitSigningKey, v.Home)
 	}
 	return nil
 }

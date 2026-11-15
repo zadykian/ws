@@ -31,11 +31,11 @@ type zoneLink struct {
 // Plan refuses a zone that is no file under /usr/share/zoneinfo.
 func (z zoneLink) Plan(ctx context.Context) ([]resource.Change, error) {
 	if z.Zone == "" || path.IsAbs(z.Zone) || path.Clean(z.Zone) != z.Zone || strings.HasPrefix(z.Zone, "../") {
-		return nil, fmt.Errorf("base_timezone is %q: it takes a name under /usr/share/zoneinfo, such as Etc/UTC", z.Zone)
+		return nil, fmt.Errorf("WS_BASE_TIMEZONE is %q: it takes a name under /usr/share/zoneinfo, such as Etc/UTC", z.Zone)
 	}
 	target := "/usr/share/zoneinfo/" + z.Zone
 	if info, err := z.M.Stat(target); errors.Is(err, fs.ErrNotExist) || (err == nil && info.Mode.IsDir()) {
-		return nil, fmt.Errorf("base_timezone is %q: %s is no zone file", z.Zone, target)
+		return nil, fmt.Errorf("WS_BASE_TIMEZONE is %q: %s is no zone file", z.Zone, target)
 	} else if err != nil {
 		return nil, err
 	}

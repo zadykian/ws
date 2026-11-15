@@ -23,7 +23,7 @@ const fillRecord = "/run/security-resolvers.conf"
 // .path unit, before it.
 var outboundUnits = []string{pathUnit, timerUnit, fillUnit, outboundUnit}
 
-// outboundOff takes the outbound table off, as security_outbound: false wants. The stop of
+// outboundOff takes the outbound table off, as WS_SECURITY_OUTBOUND: false wants. The stop of
 // security-outbound.service removes its table, but not after systemd reloads without the unit's
 // file, which drops ExecStop. So the units stop first, by D-Bus, which sees a unit whose file is
 // gone, active or failed; a failed one is reset. Then the links that enable them go, in any

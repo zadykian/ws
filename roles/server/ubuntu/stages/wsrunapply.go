@@ -11,7 +11,7 @@ import (
 
 // Apply runs ws server ubuntu apply in a unit of its own through the remote script, or follows the
 // run that goes on there, with its log on stderr. On a cloud VM the outbound table would drop the
-// provider's metadata service. So host_vars names security_outbound: false before the run, as ws
+// provider's metadata service. So host_vars names WS_SECURITY_OUTBOUND: false before the run, as ws
 // server ubuntu apply reads its values from that file. A unit that the run followed may have begun
 // before a change to that file: a run of its own follows then.
 func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
@@ -27,7 +27,7 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 	}
 	if c.user != "" {
 		if err := r.Ws.NameUser(ctx, c.user); err != nil {
-			return fmt.Errorf("%s: ws's host_vars lacks ws_user: %s: %s; mend that, then run the wizard again",
+			return fmt.Errorf("%s: ws's host_vars lacks WS_USER: %s: %s; mend that, then run the wizard again",
 				RunStage, c.user, remote.Stderr(err))
 		}
 	}
@@ -64,12 +64,12 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 	return nil
 }
 
-// outbound names security_outbound: false in ws's host_vars by the remote script's outbound op, and
+// outbound names WS_SECURITY_OUTBOUND: false in ws's host_vars by the remote script's outbound op, and
 // stops with its error where that fails.
 func (r *WsRun) outbound(ctx context.Context) error {
 	if err := r.Ws.Outbound(ctx); err != nil {
 		lines := strings.Split(strings.TrimSpace(err.Error()), "\n")
-		return fmt.Errorf("%s: ws's host_vars lacks security_outbound: false: %s; mend that, or run the "+
+		return fmt.Errorf("%s: ws's host_vars lacks WS_SECURITY_OUTBOUND: false: %s; mend that, or run the "+
 			"wizard with --update, which runs ws server ubuntu apply again", RunStage, lines[len(lines)-1])
 	}
 	return nil

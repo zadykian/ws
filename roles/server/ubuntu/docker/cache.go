@@ -29,7 +29,7 @@ func DefaultCache(size uint64) Cache {
 // fixed. A negative age would be read as 0, which leaves the age out.
 func (c Cache) Check(keepDays int) error {
 	if keepDays < 0 || keepDays > maxKeepDays {
-		return fmt.Errorf("docker_build_cache_keep_days is %d: it takes a whole number of days up to %d, or 0 for no age limit",
+		return fmt.Errorf("WS_DOCKER_BUILD_CACHE_KEEP_DAYS is %d: it takes a whole number of days up to %d, or 0 for no age limit",
 			keepDays, maxKeepDays)
 	}
 	for _, s := range [][2]string{{"reserved_space", c.Reserved}, {"max_used_space", c.MaxUsed}, {"min_free_space", c.MinFree}} {

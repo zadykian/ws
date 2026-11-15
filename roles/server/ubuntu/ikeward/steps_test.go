@@ -41,8 +41,8 @@ func TestTheDownloadStepRefusesBadValuesBeforeAnythingChanges(t *testing.T) {
 	v.DNS = ""
 	m := effecttest.NewMachine()
 	_, err := step.Run(t.Context(), steps(v, held, m, &effecttest.Out{}, 1, time.Millisecond), &effecttest.Out{}, true)
-	if err == nil || !strings.Contains(err.Error(), "ikeward_dns") {
-		t.Errorf("error = %v, want one naming ikeward_dns", err)
+	if err == nil || !strings.Contains(err.Error(), "WS_IKEWARD_DNS") {
+		t.Errorf("error = %v, want one naming WS_IKEWARD_DNS", err)
 	}
 	if len(m.Calls) != 0 {
 		t.Errorf("calls = %q, want none", m.Calls)

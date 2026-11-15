@@ -139,7 +139,7 @@ func prepareServer(call engine.Call, p enginecli.Env, opts applyOptions) (server
 	if err != nil {
 		return serverRun{}, err
 	}
-	// ws_home is known now: the machine's writes under it stay inside it.
+	// WS_HOME is known now: the machine's writes under it stay inside it.
 	if m, ok := p.Machine.(local.OSMachine); ok {
 		m.Confine = v.Home
 		p.Machine = m

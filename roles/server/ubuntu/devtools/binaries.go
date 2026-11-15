@@ -53,7 +53,7 @@ func dockerLSURL(version, arch string) string {
 }
 
 // download is the step that puts r's binary at /usr/local/bin/name, root's and mode 0755 so any
-// ws_user can run it. An architecture with no pin fails the step's Plan, before any URL exists.
+// WS_USER can run it. An architecture with no pin fails the step's Plan, before any URL exists.
 func download(m effect.Machine, name string, r release, url func(version, arch string) string) resource.Group {
 	return resource.Group{Title: "Devtools " + name, Parts: []resource.Resource{fetch.PinnedFile{M: m,
 		Version: r.version, URL: url, SHA256: r.sha256, Path: "/usr/local/bin/" + name, Mode: 0o755}}}

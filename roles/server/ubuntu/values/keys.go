@@ -31,7 +31,7 @@ func (k Kind) String() string {
 }
 
 // Key is a key of the file that a line of text holds: a scalar, or a list of strings. A table, such
-// as fans_curves, stays the file's to edit.
+// as WS_FANS_CURVES, stays the file's to edit.
 type Key struct {
 	Name string
 	Kind Kind

@@ -1,5 +1,5 @@
 // Package zed is the zed role as Go steps: the settings of Zed's server for Go and C#, and the
-// open-file limit of ws_user's logins. See roles/server/ubuntu/zed/README.md.
+// open-file limit of WS_USER's logins. See roles/server/ubuntu/zed/README.md.
 package zed
 
 import (
@@ -45,11 +45,11 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units,
 	}
 }
 
-// limitsPath is where the limit for ws_user's logins lives. limits.conf(5) says a `*` line does
-// not apply to root, which a cloud VM may use as ws_user, so the user is named.
+// limitsPath is where the limit for WS_USER's logins lives. limits.conf(5) says a `*` line does
+// not apply to root, which a cloud VM may use as WS_USER, so the user is named.
 const limitsPath = "/etc/security/limits.d/ws-zed.conf"
 
-// limitsFile raises ws_user's soft open-file limit: sshd's logins start at 1024, past which Zed's
+// limitsFile raises WS_USER's soft open-file limit: sshd's logins start at 1024, past which Zed's
 // server busy-loops (zed#62995).
 func limitsFile(v values.Values) []byte {
 	return []byte(fmt.Sprintf("# Written by github.com/zadykian/ws, whose next run replaces any change made here.\n"+

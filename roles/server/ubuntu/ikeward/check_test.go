@@ -21,8 +21,8 @@ func TestCheckRefusesWhatTheRoleCannotUse(t *testing.T) {
 		want   string
 	}{
 		"relative profile": {func(v *values.Ikeward) { v.Profile = "vpn/vpnclient" }, "not an absolute path"},
-		"no resolver":      {func(v *values.Ikeward) { v.DNS = "" }, "ikeward_dns"},
-		"no domain":        {func(v *values.Ikeward) { v.Domains = nil }, "ikeward_domains"},
+		"no resolver":      {func(v *values.Ikeward) { v.DNS = "" }, "WS_IKEWARD_DNS"},
+		"no domain":        {func(v *values.Ikeward) { v.Domains = nil }, "WS_IKEWARD_DOMAINS"},
 		"a peer's prefix":  {func(v *values.Ikeward) { v.ForwardFrom = []string{"10.99.0.2", "10.99.0.3/32"} }, "10.99.0.3/32"},
 		"a peer's name":    {func(v *values.Ikeward) { v.ForwardFrom = []string{"mac"} }, "mac"},
 	} {

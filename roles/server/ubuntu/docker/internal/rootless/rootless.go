@@ -1,4 +1,4 @@
-// Package rootless sets up ws_user's own Docker daemon: its subordinate ids, its drop-ins and the
+// Package rootless sets up WS_USER's own Docker daemon: its subordinate ids, its drop-ins and the
 // tool that installs its unit.
 package rootless
 
@@ -13,7 +13,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
-// Resources makes the resources of ws_user's own daemon from its daemon.json and
+// Resources makes the resources of WS_USER's own daemon from its daemon.json and
 // docker.slice, which the role works out from the values.
 func Resources(m effect.Machine, u effect.Units, out effect.Out, a account.Account,
 	daemonJSON, slice []byte) ([]resource.Resource, error) {

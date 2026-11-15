@@ -62,19 +62,19 @@ func TestServerSecretsSheetSetsOnWs(t *testing.T) {
 
 // The host_vars sheet reads the file by the files script, run here as root with no ssh.
 func TestServerVarsSheetReadsOnWs(t *testing.T) {
-	p, m := wizardProcess("---\nws_user: ada\n", false, "")
-	m.Results["env SUDO_USER=ada sh -s -- values"] = effecttest.Result{Out: []byte("ws_user: ada\n")}
+	p, m := wizardProcess("---\nWS_USER: ada\n", false, "")
+	m.Results["env SUDO_USER=ada sh -s -- values"] = effecttest.Result{Out: []byte("WS_USER: ada\n")}
 	sheet, err := HostVarsSheet(serverOpen).Open(context.Background(), tui.Offscreen(p.Machine))
 	if err != nil {
 		t.Fatal(err)
 	}
 	user := ""
 	for _, f := range sheet.Fields(nil) {
-		if f.Label == "ws_user" {
+		if f.Label == "WS_USER" {
 			user = f.Value
 		}
 	}
 	if user != "ada" {
-		t.Errorf("ws_user = %q of %+v", user, sheet.Fields(nil))
+		t.Errorf("WS_USER = %q of %+v", user, sheet.Fields(nil))
 	}
 }

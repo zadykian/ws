@@ -3,14 +3,14 @@ package values
 // Fans is roles/fans' keys.
 type Fans struct {
 	// BoardVendor is the board's DMI vendor, which the driver is built for.
-	BoardVendor string       `yaml:"fans_board_vendor"`
-	Sensors     []FanSensor  `yaml:"fans_sensors"`
-	Curves      []FanCurve   `yaml:"fans_curves"`
-	Controls    []FanControl `yaml:"fans_controls"`
+	BoardVendor string       `yaml:"WS_FANS_BOARD_VENDOR"`
+	Sensors     []FanSensor  `yaml:"WS_FANS_SENSORS"`
+	Curves      []FanCurve   `yaml:"WS_FANS_CURVES"`
+	Controls    []FanControl `yaml:"WS_FANS_CONTROLS"`
 	// Step is the most a fan's percent moves in a tick, up and down.
-	Step FanPair `yaml:"fans_step"`
+	Step FanPair `yaml:"WS_FANS_STEP"`
 	// Interval is the seconds between two reads.
-	Interval float64 `yaml:"fans_interval"`
+	Interval float64 `yaml:"WS_FANS_INTERVAL"`
 }
 
 // FanPair is a value for rising and a value for falling.

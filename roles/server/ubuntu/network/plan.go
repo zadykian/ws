@@ -21,16 +21,16 @@ func (d direct) Plan(ctx context.Context) ([]resource.Change, error) {
 		return d.reloaded(ctx, file.Absent{M: d.M, Path: netplan.Path})
 	}
 	if strings.ContainsAny(d.Interface, "/ \t\n") {
-		return nil, fmt.Errorf("network_direct_link_interface %q is not an interface's name", d.Interface)
+		return nil, fmt.Errorf("WS_CABLE_PORT %q is not an interface's name", d.Interface)
 	}
 	if _, err := d.M.Stat("/sys/class/net/" + d.Interface); errors.Is(err, fs.ErrNotExist) {
-		effect.SayLasting(d.Out, "this machine has no interface %s, so the direct link stays as it is; network_direct_link_interface names the port of the Mac's cable, as ip link lists it", d.Interface)
+		effect.SayLasting(d.Out, "this machine has no interface %s, so the direct link stays as it is; WS_CABLE_PORT names the port of the Mac's cable, as ip link lists it", d.Interface)
 		return nil, nil
 	} else if err != nil {
 		return nil, err
 	}
 	if problems := AddressProblems(d.Address); len(problems) > 0 {
-		return nil, fmt.Errorf("network_direct_link_address: %s", strings.Join(problems, " "))
+		return nil, fmt.Errorf("WS_CABLE_ADDRESS: %s", strings.Join(problems, " "))
 	}
 	rendered, err := netplan.Render(d.Interface, d.Address)
 	if err != nil {

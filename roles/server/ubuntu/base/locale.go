@@ -41,11 +41,11 @@ func (c generate) Apply(ctx context.Context) error {
 func (g generated) Plan(ctx context.Context) ([]resource.Change, error) {
 	supported, err := g.M.ReadFile(supportedFile)
 	if err != nil {
-		return nil, fmt.Errorf("base_locale %q: reading %s: %w", g.Name, supportedFile, err)
+		return nil, fmt.Errorf("WS_BASE_LOCALE %q: reading %s: %w", g.Name, supportedFile, err)
 	}
 	line, ok := entry(string(supported), g.Name)
 	if !ok {
-		return nil, fmt.Errorf("base_locale is %q: %s lacks it; it takes a name such as en_US.UTF-8", g.Name, supportedFile)
+		return nil, fmt.Errorf("WS_BASE_LOCALE is %q: %s lacks it; it takes a name such as en_US.UTF-8", g.Name, supportedFile)
 	}
 	have, err := g.M.Run(ctx, "locale", "-a")
 	if err != nil {

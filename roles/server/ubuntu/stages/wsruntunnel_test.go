@@ -42,8 +42,8 @@ func TestTunnelPairsPlansNothingAtTheDefaults(t *testing.T) {
 }
 
 func TestTunnelPairsGoesBackToTheDefaults(t *testing.T) {
-	old := "wireguard_address: 10.99.1.1/24\nwireguard_port: 51821\n"
-	both := []string{"wireguard_address=10.99.0.1/24", "wireguard_port=51820"}
+	old := "WS_TUNNEL_ADDRESS: 10.99.1.1/24\nWS_TUNNEL_PORT: 51821\n"
+	both := []string{"WS_TUNNEL_ADDRESS=10.99.0.1/24", "WS_TUNNEL_PORT=51820"}
 	for name, tc := range map[string]struct {
 		address, port, file string
 		want                []string
@@ -52,7 +52,7 @@ func TestTunnelPairsGoesBackToTheDefaults(t *testing.T) {
 		"the port named":      {"10.99.0.1/24", "51820", old, both},
 		"the port alone":      {"", "51820", old, both[1:]},
 		"the address alone":   {"10.99.0.1/24", "51821", old, both[:1]},
-		"the defaults held":   {"10.99.0.1/24", "", "wireguard_address: 10.99.0.1/24\nwireguard_port: 51820\n", nil},
+		"the defaults held":   {"10.99.0.1/24", "", "WS_TUNNEL_ADDRESS: 10.99.0.1/24\nWS_TUNNEL_PORT: 51820\n", nil},
 	} {
 		pairs, err := pairsFor(tc.address, tc.port, "---\n"+tc.file)
 		if err != nil || !slices.Equal(pairs, tc.want) {
@@ -62,7 +62,7 @@ func TestTunnelPairsGoesBackToTheDefaults(t *testing.T) {
 }
 
 func TestTunnelPairsKeepsWhatHostVarsLacks(t *testing.T) {
-	both := []string{"wireguard_address=10.99.1.1/24", "wireguard_port=51821"}
+	both := []string{"WS_TUNNEL_ADDRESS=10.99.1.1/24", "WS_TUNNEL_PORT=51821"}
 	for name, tc := range map[string]struct {
 		address, port, file string
 		want                []string
@@ -70,8 +70,8 @@ func TestTunnelPairsKeepsWhatHostVarsLacks(t *testing.T) {
 		"both":         {"10.99.1.1/24", "51821", "", both},
 		"address":      {"10.99.1.1/24", "", "", both[:1]},
 		"port":         {"", "51821", "", both[1:]},
-		"port is held": {"10.99.1.1/24", "51821", "wireguard_port: 51821\n", both[:1]},
-		"both held":    {"10.99.1.1/24", "51821", "wireguard_address: 10.99.1.1/24\nwireguard_port: 51821\n", nil},
+		"port is held": {"10.99.1.1/24", "51821", "WS_TUNNEL_PORT: 51821\n", both[:1]},
+		"both held":    {"10.99.1.1/24", "51821", "WS_TUNNEL_ADDRESS: 10.99.1.1/24\nWS_TUNNEL_PORT: 51821\n", nil},
 	} {
 		pairs, err := pairsFor(tc.address, tc.port, "---\n"+tc.file)
 		if err != nil || !slices.Equal(pairs, tc.want) {
@@ -109,11 +109,11 @@ func (r wantReach) Want() (session.Want, error) {
 
 func TestWsRunPlansWhatHostVarsLacks(t *testing.T) {
 	for name, tc := range map[string]struct{ address, port, file, want string }{
-		"both":    {"10.99.1.1/24", "51821", "", "after naming wireguard_address: 10.99.1.1/24 and wireguard_port: 51821 in ws's host_vars"},
-		"address": {"10.99.1.1/24", "", "", "after naming wireguard_address: 10.99.1.1/24 in ws's host_vars"},
-		"held":    {"10.99.1.1/24", "51821", "wireguard_address: 10.99.1.1/24\nwireguard_port: 51821\n", ""},
+		"both":    {"10.99.1.1/24", "51821", "", "after naming WS_TUNNEL_ADDRESS: 10.99.1.1/24 and WS_TUNNEL_PORT: 51821 in ws's host_vars"},
+		"address": {"10.99.1.1/24", "", "", "after naming WS_TUNNEL_ADDRESS: 10.99.1.1/24 in ws's host_vars"},
+		"held":    {"10.99.1.1/24", "51821", "WS_TUNNEL_ADDRESS: 10.99.1.1/24\nWS_TUNNEL_PORT: 51821\n", ""},
 		"slot 0":  {"10.99.0.1/24", "", "", ""},
-		"back":    {"10.99.0.1/24", "", "wireguard_address: 10.99.1.1/24\nwireguard_port: 51821\n", "after naming wireguard_address: 10.99.0.1/24 and wireguard_port: 51820 in ws's host_vars"},
+		"back":    {"10.99.0.1/24", "", "WS_TUNNEL_ADDRESS: 10.99.1.1/24\nWS_TUNNEL_PORT: 51821\n", "after naming WS_TUNNEL_ADDRESS: 10.99.0.1/24 and WS_TUNNEL_PORT: 51820 in ws's host_vars"},
 	} {
 		r, _ := tunnelRun(tc.address, tc.port, "---\n"+tc.file)
 		p, err := r.Plan(context.Background())
@@ -151,7 +151,7 @@ func TestWsRunWritesTheTunnelBeforeTheUser(t *testing.T) {
 	if err != nil || len(p.Changes) != 1 {
 		t.Fatalf("Plan = %v, %v; want one change", p.Changes, err)
 	}
-	pairs := pairsOp("wireguard_address=10.99.1.1/24", "wireguard_port=51821")
+	pairs := pairsOp("WS_TUNNEL_ADDRESS=10.99.1.1/24", "WS_TUNNEL_PORT=51821")
 	m.Results[pairs] = effecttest.Result{}
 	m.Results[sessiontest.Op("user", "alice")] = effecttest.Result{}
 	m.Results[sessiontest.Op("run")] = effecttest.Result{}
@@ -171,9 +171,9 @@ func TestWsRunStopsWhereTheTunnelCannotBeWritten(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	m.Results[pairsOp("wireguard_address=10.99.1.1/24")] = effecttest.Result{Err: errors.New("denied")}
+	m.Results[pairsOp("WS_TUNNEL_ADDRESS=10.99.1.1/24")] = effecttest.Result{Err: errors.New("denied")}
 	err = r.Apply(context.Background(), p)
-	if err == nil || !strings.Contains(err.Error(), "cannot write wireguard_address: 10.99.1.1/24 into ws's host_vars") {
+	if err == nil || !strings.Contains(err.Error(), "cannot write WS_TUNNEL_ADDRESS: 10.99.1.1/24 into ws's host_vars") {
 		t.Errorf("Apply where the write fails = %v; want the stop", err)
 	}
 	if slices.Contains(m.Calls, "run op run") {

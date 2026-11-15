@@ -18,7 +18,7 @@ const ufwComment = "WireGuard"
 // firewall lets in UDP on the port on every interface, as the Mac reaches the port over the
 // cable, the LAN and the router's forward. Inside the tunnel, ufw takes wg0 as any interface: it
 // lets in SSH, and forwards only ping and what the ikeward role lets through to the VPN. Docker
-// forwards ahead of it. A rule for a port that wireguard_port named before is removed; one made by
+// forwards ahead of it. A rule for a port that WS_TUNNEL_PORT named before is removed; one made by
 // hand, without the comment, stays.
 func firewall(m effect.Machine, out effect.Out, port int) ufw.Rules {
 	rule := ufw.Rule{Action: "allow", Proto: "udp", To: ufw.Any, ToPort: strconv.Itoa(port),
