@@ -20,7 +20,7 @@ func TestGitReportsWhatItManages(t *testing.T) {
 	if it := got["gh"]; it.Kind != step.PackageItem || it.Found != "installed" {
 		t.Errorf("gh = %+v", it)
 	}
-	if it := got[dir+"allowed_signers"]; it.Want != "mode 644" || it.Found != "missing" {
+	if it := got["/etc/ws/allowed_signers"]; it.Want != "owner 0:0, mode 644" || it.Found != "missing" {
 		t.Errorf("allowed_signers = %+v", it)
 	}
 	if it := got[dir+"gitconfig"]; !strings.Contains(it.Conflict, "no Written by line") || it.Diff == "" {

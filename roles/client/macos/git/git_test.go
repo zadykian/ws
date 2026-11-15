@@ -119,30 +119,37 @@ func gitConfig(m *effecttest.Machine, text, paths, names string) {
 func gitReady() (*effecttest.Machine, *git.Git) {
 	m := effecttest.NewMachine()
 	m.Files[gitPub] = []byte(gitKey)
-	m.Dirs[gitHome+"/.config"], m.Dirs[gitHome+"/.config/ws"] = 0o755, 0o700
+	m.Dirs[gitHome+"/.config"], m.Dirs[gitHome+"/.config/ws"], m.Dirs["/etc/ws"] = 0o755, 0o700, 0o755
 	gitConfig(m, includeText, gitHome+"/.config/ws/gitconfig\n", "include.path\n")
 	return m, gitStep(m, nil)
 }
 
 func TestGitWritesAllowedSignersAndGitconfig(t *testing.T) {
 	m, g := gitReady()
+	delete(m.Dirs, "/etc/ws")
 	p, err := g.Step().Plan(context.Background())
-	if err != nil || len(p.Changes) != 3 {
-		t.Fatalf("Plan = %v, %v; want two writes and the line", p.Changes, err)
+	if err != nil || len(p.Changes) != 4 {
+		t.Fatalf("Plan = %v, %v; want /etc/ws, two writes and the line", p.Changes, err)
 	}
 	if err := g.Step().Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
 	dir := gitHome + "/.config/ws/"
-	if got := string(m.Files[dir+"allowed_signers"]); !strings.HasSuffix(got, "\nme@zadykian.dev ssh-ed25519 AAAAC3Nz\n") {
+	if got := string(m.Files["/etc/ws/allowed_signers"]); !strings.HasSuffix(got, "\nme@zadykian.dev ssh-ed25519 AAAAC3Nz\n") {
 		t.Errorf("allowed_signers = %q", got)
 	}
 	if got := string(m.Files[dir+"gitconfig"]); !strings.Contains(got, "signingkey = \""+gitPub+"\"") ||
 		!strings.Contains(got, "helper = !/opt/bin/gh auth git-credential") {
 		t.Errorf("gitconfig = %q", got)
 	}
+	m.Calls = nil
 	if again, err := g.Step().Plan(context.Background()); err != nil || len(again.Changes) != 0 {
 		t.Errorf("Plan after Apply = %v, %v; want nothing", again.Changes, err)
+	}
+	for _, c := range m.Calls {
+		if strings.HasPrefix(c, "read root /etc/ws") || strings.HasPrefix(c, "stat root /etc/ws") {
+			t.Errorf("the second plan asked for root: %q", c)
+		}
 	}
 }
 

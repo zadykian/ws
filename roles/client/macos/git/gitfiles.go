@@ -8,25 +8,33 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
+	"github.com/zadykian/ws/roles/internal/etcws"
 	"github.com/zadykian/ws/roles/internal/gitcfg"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
-// list returns the files of ~/.config/ws: the script for a key of Secretive's, the allowed signers
-// and gitconfig.
-func (g *Git) list(key keys.NamedKey, gh string) []file.UserFile {
+// part is a file or a directory that a run plans and a report reads.
+type part interface {
+	resource.Resource
+	step.Reporter
+}
+
+// list returns the script for a key of Secretive's, root's allowed signers and gitconfig. The
+// signers lie in /etc/ws, which a run writes through sudo.
+func (g *Git) list(key keys.NamedKey, gh string) []part {
 	dir := g.Home + "/.config/ws"
-	in := gitcfg.Inputs{Key: key.File, Gh: gh,
-		Signers: dir + "/allowed_signers"}
+	in := gitcfg.Inputs{Key: key.File, Gh: gh, Signers: gitcfg.Signers}
 	userFile := func(path, text string, mode fs.FileMode) file.UserFile {
 		return file.UserFile{M: g.M, Out: g.Out, Path: path, Text: []byte(text), Mode: mode}
 	}
-	var list []file.UserFile
+	var list []part
 	if sshcfg.SecretiveKey(key.File, g.Home) {
 		in.Program = dir + "/secretive-ssh-keygen"
 		list = append(list, userFile(in.Program, wrapper(g.Home+"/"+sshcfg.SecretiveData), 0o755))
 	}
-	list = append(list, userFile(dir+"/allowed_signers", gitcfg.AllowedSigners(header, key.Key.String()), 0o644))
+	for _, r := range etcws.Files(g.M, gitcfg.Signers, []byte(gitcfg.AllowedSigners(header, key.Key.String()))) {
+		list = append(list, resource.Said{Out: g.Out, Part: r})
+	}
 	return append(list, userFile(dir+"/gitconfig", config(in), 0o644))
 }
 

@@ -8,12 +8,13 @@
 # shellcheck disable=SC2154 # tmp, conf and the functions are mac-setup-checks.sh's
 key=$HOME/.ssh/id_ed25519_signing
 files=$HOME/.config/ws
+signers=/etc/ws/allowed_signers
 secretive=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent
 tab=$(printf '\t')
 
 # git_made COMMAND... runs COMMAND with the files that git's cases make as its last arguments.
 git_made() {
-    "$@" "$key" "$key.pub" "$files/gitconfig" "$files/allowed_signers" ~/.gitconfig.*~ \
+    "$@" "$key" "$key.pub" "$files/gitconfig" ~/.gitconfig.*~ \
         "$files/secretive-ssh-keygen" "$secretive"
 }
 
@@ -22,9 +23,9 @@ git_made() {
 git_restore() {
     [ -z "${agent-}" ] || kill "$agent" || true
     git_made rm -rf
-    for each in gitconfig allowed_signers; do
-        [ ! -f "$tmp/job-git/$each" ] || mv "$tmp/job-git/$each" "$files/$each"
-    done
+    sudo rm -f "$signers"
+    [ ! -f "$tmp/job-git/gitconfig" ] || mv "$tmp/job-git/gitconfig" "$files/gitconfig"
+    [ ! -f "$tmp/job-git/allowed_signers" ] || sudo mv "$tmp/job-git/allowed_signers" "$signers"
     for each in "$tmp"/job-git/.gitconfig.*~; do
         [ ! -f "$each" ] || mv "$each" ~/
     done
@@ -39,13 +40,12 @@ git_restore() {
 # shellcheck disable=SC2034 # prints, in mac-setup-checks.sh, reads it
 exact=1
 mkdir "$tmp/job-git"
-for each in gitconfig allowed_signers; do
-    [ ! -f "$files/$each" ] || mv "$files/$each" "$tmp/job-git/$each"
-done
+[ ! -f "$files/gitconfig" ] || mv "$files/gitconfig" "$tmp/job-git/gitconfig"
+[ ! -f "$signers" ] || sudo mv "$signers" "$tmp/job-git/allowed_signers"
 for each in ~/.gitconfig.*~; do
     [ ! -f "$each" ] || mv "$each" "$tmp/job-git/"
 done
-found=$(git_made ls -d 2>/dev/null) || true
+found=$(git_made ls -d "$signers" 2>/dev/null) || true
 if [ -n "$found" ]; then
     error "the runner has what git's cases would make: $(echo "$found" | tr '\n' ' ')"
     exit 1
@@ -103,10 +103,10 @@ case $out in
 *"$nl+++ $files/gitconfig$nl"*"${nl}ws client macos apply: would run $add") ;;
 *) error "ws client macos apply --check showed no gitconfig or add: $out" ;;
 esac
-for each in "$files/gitconfig" "$files/allowed_signers" ~/.gitconfig; do
+for each in "$files/gitconfig" "$signers" ~/.gitconfig; do
     [ ! -e "$each" ] || error "ws client macos apply --check made $each"
 done
-prints "ws client macos apply: wrote $files/allowed_signers${nl}ws client macos apply: wrote $files/gitconfig${nl}\
+prints "ws client macos apply: create $signers${nl}ws client macos apply: wrote $files/gitconfig${nl}\
 ws client macos apply: wrote $HOME/.gitconfig${nl}ws client macos apply: ran $add"
 prints "$listed"
 prints "$listed" --check
@@ -214,7 +214,7 @@ esac
 [ ! -e "$files/secretive-ssh-keygen" ] || error "ws client macos apply --check wrote $files/secretive-ssh-keygen"
 [ ! -e "$copy" ] || error "ws client macos apply --check wrote $copy"
 prints "ws client macos apply: wrote $copy${nl}ws client macos apply: wrote $files/secretive-ssh-keygen${nl}\
-ws client macos apply: wrote $files/allowed_signers${nl}ws client macos apply: wrote $files/gitconfig${nl}\
+ws client macos apply: write $signers${nl}ws client macos apply: wrote $files/gitconfig${nl}\
 ws client macos apply: wrote $HOME/.gitconfig${nl}ws client macos apply: ran gh ssh-key add $copy --type signing\
  --title $title"
 prints "$listed"
@@ -237,7 +237,7 @@ chmod -R u+rwx "$secretive" && rm -rf "$secretive" "$files/secretive"
 with "$signing"
 rm "$tmp/login"
 warning=$(warned "$key.pub")
-prints "ws client macos apply: wrote $files/allowed_signers${nl}ws client macos apply: wrote $files/gitconfig$nl$warning"
+prints "ws client macos apply: write $signers${nl}ws client macos apply: wrote $files/gitconfig$nl$warning"
 prints "$warning"
 prints "$warning" --check
 touch "$tmp/login"
