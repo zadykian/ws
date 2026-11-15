@@ -24,7 +24,7 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units,
 			return AllowedSigners(m, a, v.GitSigningPubKey), nil
 		}),
 		user.WithAccount(m, "Git config", "", func(a account.Account) ([]resource.Resource, error) {
-			return []resource.Resource{Config{M: m, Out: out, A: a, Key: v.GitSigningPubKey}}, nil
+			return []resource.Resource{Config{M: m, Out: out, A: a, Key: v.GitSigningPubKey, Creds: Credentials(s.Git), Whole: s.Whole}}, nil
 		}),
 		user.WithAccount(m, "Git tokens", "", func(a account.Account) ([]resource.Resource, error) {
 			return []resource.Resource{Tokens{M: m, A: a, Creds: Credentials(s.Git), Whole: s.Whole}}, nil

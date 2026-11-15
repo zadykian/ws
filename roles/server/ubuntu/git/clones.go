@@ -41,7 +41,7 @@ func hasUserInfo(repo string) bool {
 // Clones clones each repository whose dest is missing, once: a clone is never pulled or reset, as
 // once made it belongs to the user. It runs git clone, not a module that asks the server where dest
 // is missing, so that a dry run lists each missing dest offline. It runs as the user, whose
-// ~/.gitconfig gives the tokens, in the user's home.
+// ~/.gitconfig includes /etc/ws/gitconfig, which gives the tokens, in the user's home.
 type Clones struct {
 	M      effect.Machine
 	A      account.Account

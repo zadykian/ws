@@ -7,18 +7,33 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 func gitFixture() (*effecttest.Machine, stdinMachine, *effecttest.Out, Config) {
 	m := effecttest.NewMachine()
 	m.Results["git config --file - --name-only --list"] = effecttest.Result{}
-	m.Results["git config --file - --list"] = effecttest.Result{}
-	sm := stdinMachine{Machine: m, answers: map[string]string{}}
+	m.Results["git config --file - --type path --get-all include.path"] = effecttest.Result{}
+	m.Results["git config --file - --get-regexp "+helperPattern] = effecttest.Result{}
+	sm := stdinMachine{Machine: m, answers: map[string]string{}, paths: map[string]string{}, helpers: map[string]string{}}
 	out := &effecttest.Out{}
 	a := account.Account{User: account.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
 	return m, sm, out, Config{M: sm, Out: out, A: a,
 		Key: "/home/ws/.ssh/id_ed25519_signing.pub"}
+}
+
+func apply(t *testing.T, g Config) []resource.Change {
+	got, err := g.Plan(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range got {
+		if err := c.Apply(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return got
 }
 
 func TestGitconfigIsTheRolesRendering(t *testing.T) {
@@ -32,32 +47,64 @@ func TestGitconfigIsTheRolesRendering(t *testing.T) {
 	}
 }
 
-func TestGitconfigShowsNoContent(t *testing.T) {
-	m, _, out, g := gitFixture()
-	m.Files["/home/ws/.gitconfig"] = []byte("[http]\n\textraheader = secret\n")
-	got, err := g.Plan(context.Background())
-	if err != nil || len(got) != 1 || strings.Contains(got[0].String(), "secret") || !strings.Contains(got[0].String(), "content not shown") {
-		t.Fatalf("plan %v, %v", got, err)
+func TestGitconfigIsRootsAndTheUsersFileHoldsTheInclude(t *testing.T) {
+	m, _, _, g := gitFixture()
+	apply(t, g)
+	want, _ := g.content()
+	if string(m.Files["/etc/ws/gitconfig"]) != string(want) || m.Modes["/etc/ws/gitconfig"] != 0o644 || m.Owners["/etc/ws/gitconfig"] != [2]int{0, 0} {
+		t.Errorf("/etc/ws/gitconfig %o %v", m.Modes["/etc/ws/gitconfig"], m.Owners["/etc/ws/gitconfig"])
 	}
-	if len(out.Lines) != 0 {
-		t.Errorf("said %q for keys that git does not list", out.Lines)
+	const rc = "/home/ws/.gitconfig"
+	if string(m.Files[rc]) != "[include]\n\tpath = /etc/ws/gitconfig\n" || m.Modes[rc] != 0o644 || m.Owners[rc] != [2]int{1000, 1000} {
+		t.Errorf("%s %q %o %v", rc, m.Files[rc], m.Modes[rc], m.Owners[rc])
 	}
 }
 
-func TestGitconfigNamesWhatARewriteLoses(t *testing.T) {
+func TestGitconfigKeepsTheUsersFileAndNamesItsOwnSettings(t *testing.T) {
 	m, sm, out, g := gitFixture()
-	m.Files["/home/ws/.gitconfig"] = []byte("OLD")
-	m.Files["/home/ws/.config/git/machine.gitconfig"] = []byte("MACHINE")
-	sm.answers["OLD"] = "user.name\nhttp.https://x.y.extraheader\nuser.signingkey=/home/ws/other\n"
-	sm.answers["MACHINE"] = "gpg.format\nuser.name\n"
-	sm.answers["# Written"] = "user.name\n"
-	if _, err := g.Plan(context.Background()); err != nil {
-		t.Fatal(err)
+	const rc = "/home/ws/.gitconfig"
+	old := "[user]\n\temail = a@b.c\n[http]\n\textraheader = hunter2\n"
+	m.Files[rc] = []byte(old)
+	sm.answers["[user]"] = "user.email\nhttp.extraheader\n"
+	got := apply(t, g)
+	if !strings.HasPrefix(string(m.Files[rc]), "[include]\n\tpath = /etc/ws/gitconfig\n\n[user]") {
+		t.Errorf("%s = %q", rc, m.Files[rc])
 	}
-	all := strings.Join(out.Lines, "\n")
-	for _, want := range []string{"drops http.*.extraheader", "signing key, /home/ws/other,", "sets gpg.format"} {
-		if !strings.Contains(all, want) {
-			t.Errorf("no %q in %q", want, all)
+	var kept string
+	for path, text := range m.Files {
+		if strings.HasPrefix(path, rc+".") && string(text) == old {
+			kept = path
 		}
+	}
+	if kept == "" {
+		t.Errorf("no kept copy among %v", m.Files)
+	}
+	for _, c := range got {
+		if strings.Contains(c.String(), "hunter2") {
+			t.Errorf("a change shows %q", c.String())
+		}
+	}
+	if all := strings.Join(out.Lines, "\n"); !strings.Contains(all, "own settings of user.email, below the include") {
+		t.Errorf("said %q", all)
+	}
+}
+
+func TestGitconfigSecondPlanIsEmpty(t *testing.T) {
+	_, sm, _, g := gitFixture()
+	apply(t, g)
+	sm.paths["[include]"] = "/etc/ws/gitconfig\n"
+	sm.answers["[include]"] = "include.path\n"
+	if got, err := g.Plan(context.Background()); err != nil || len(got) != 0 {
+		t.Fatalf("plan %v, %v", got, err)
+	}
+}
+
+func TestGitconfigRefusesAnIncludeBelowTheUsersSettings(t *testing.T) {
+	m, sm, _, g := gitFixture()
+	m.Files["/home/ws/.gitconfig"] = []byte("[user]\n\tname = x\n[include]\n\tpath = /etc/ws/gitconfig\n")
+	sm.answers["[user]"] = "user.name\ninclude.path\n"
+	sm.paths["[user]"] = "/etc/ws/gitconfig\n"
+	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "below its own settings") {
+		t.Errorf("err = %v", err)
 	}
 }
