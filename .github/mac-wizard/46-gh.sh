@@ -7,6 +7,8 @@
 
 set -u
 
+# shellcheck source=.github/mac-quiet.sh
+. "$(dirname "$0")/../mac-quiet.sh"
 known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
 
 wsbin=$HOME/.local/bin/ws
@@ -50,5 +52,5 @@ expect 0 "would run gh auth refresh $flow" --check
 rm "$state/nosign" "$RUNNER_TEMP/gh.keys"
 out=$("$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
-[ "$status" = 0 ] && [ "$out" = "$known" ] || error "ws client macos wizard with the login back exited $status: '$out'"
+[ "$status" = 0 ] && [ "$(unlisted "$out")" = "$known" ] || error "ws client macos wizard with the login back exited $status: '$out'"
 exit "$fail"

@@ -8,6 +8,8 @@
 
 set -u
 
+# shellcheck source=.github/mac-quiet.sh
+. "$(dirname "$0")/../mac-quiet.sh"
 # The one line of the gh stage that a run says where the account holds the Mac's key.
 known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
 
@@ -29,7 +31,8 @@ error() {
 quiet() {
     out=$("$wsbin" client macos wizard </dev/null 2>&1)
     status=$?
-    [ "$status" = 0 ] && [ -z "${out#"$known"}" ] || error "ws client macos wizard $1 exited $status: '$out'"
+    rest=$(unlisted "$out")
+    [ "$status" = 0 ] && [ -z "${rest#"$known"}" ] || error "ws client macos wizard $1 exited $status: '$out'"
 }
 
 : >"$state/signing"

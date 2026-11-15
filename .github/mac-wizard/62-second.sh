@@ -10,6 +10,8 @@ set -u
 # shellcheck source=.github/mac-conf.sh
 . "$(dirname "$0")/../mac-conf.sh"
 
+# shellcheck source=.github/mac-quiet.sh
+. "$(dirname "$0")/../mac-quiet.sh"
 # The one line of the gh stage that a run says where the account holds the Mac's key.
 known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
 
@@ -86,5 +88,6 @@ conf_print "$conf" | cmp -s - "$RUNNER_TEMP/ws.before" || error "the run for lab
 
 answers=
 wizard
-[ "$status" = 0 ] && [ -z "${out#"$known"}" ] || error "the next run for lab exited $status, or printed what it should not"
+rest=$(unlisted "$out")
+[ "$status" = 0 ] && [ -z "${rest#"$known"}" ] || error "the next run for lab exited $status, or printed what it should not"
 exit "$fail"
