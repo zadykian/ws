@@ -69,7 +69,7 @@ and `WS_IDENTITY_AGENT` the socket of its agent, in quotes where it holds a blan
 hosts](#sshs-hosts). A run makes `~/.config/ws` at mode 700, and sets that mode where it differs. It
 makes `/etc/ws` through sudo, for git's allowed signers, at mode 755.
 
-`WS_USER` is the user ssh logs in as: the server's `WS_USER`, `zadykian` by default, or `root` for a
+`WS_USER` is the user ssh logs in as: ws's key too, `zadykian` by default, or `root` for a
 `WS_TARGET` of `cloud`, which may have no other user. The other targets refuse `WS_USER=root`. A key
 with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does: that user for
 `WS_USER` and 51820 for `WS_PORT`. `WS_IDENTITY_PUB_KEY` has none: the script stops without it

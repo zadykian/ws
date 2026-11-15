@@ -192,7 +192,7 @@ That ws runs its roles ([The
 unit's log until it ends, past the [event lines](../../../../README.md#events), and stops where the
 run fails. A first run takes 20 to 40 minutes. The unit goes on where ssh drops, and the next run of
 the wizard follows it to its end, and replays the log. A unit of part of ws stops a run of other
-steps, until it ends. The stage first names `WS_USER` as `WS_USER` in `/etc/ws/host_vars.yml` on ws,
+steps, until it ends. The stage first names `WS_USER` in `/etc/ws/host_vars.yml` on ws,
 with the files script, where the user that host_vars names, else the default, isn't `WS_USER`, so
 the roles set up that user. It writes wg0's address and port there off the defaults.
 
