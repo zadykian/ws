@@ -11,6 +11,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // macSession returns the Mac's session over ssh, whose remote script answers status on m with the
@@ -35,7 +36,7 @@ func TestWsClaudeLoginTakesTheTerminal(t *testing.T) {
 
 func TestWsClaudeApply(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\nWS_USER=ada\n")
+	m.Files["/h/mac.conf"] = []byte(values.Text("WS_TARGET", "lan", "WS_USER", "ada"))
 	ws := macSession(m, remote.SSH{Host: "ws", M: m, Lock: "/l", Ways: MacWays{M: m, Conf: "/h/mac.conf"}}, &effecttest.Out{},
 		session.Status{Claude: "login"})
 	if err := (&stages.WsClaude{Ws: ws}).Apply(context.Background(), step.Plan{}); err == nil ||
@@ -53,11 +54,11 @@ func TestWsClaudeApply(t *testing.T) {
 
 func TestMacReachWantsTheSlotsAddressAndThePort(t *testing.T) {
 	for name, tc := range map[string]struct{ file, addr, port string }{
-		"no slot":      {"WS_TARGET=lan\n", "10.99.0.1/24", ""},
-		"slot 1":       {"WS_TARGET=lan\nWS_SLOT=1\nWS_TUNNEL_PORT=51821\n", "10.99.1.1/24", "51821"},
-		"last slot":    {"WS_TARGET=lan\nWS_SLOT=15\n", "10.99.15.1/24", ""},
-		"port alone":   {"WS_TARGET=lan\nWS_TUNNEL_PORT=51820\n", "10.99.0.1/24", "51820"},
-		"unset values": {"WS_TARGET=lan\nWS_USER=ada\n", "10.99.0.1/24", ""},
+		"no slot":      {values.Text("WS_TARGET", "lan"), "10.99.0.1/24", ""},
+		"slot 1":       {values.Text("WS_TARGET", "lan", "WS_SLOT", "1", "WS_TUNNEL_PORT", "51821"), "10.99.1.1/24", "51821"},
+		"last slot":    {values.Text("WS_TARGET", "lan", "WS_SLOT", "15"), "10.99.15.1/24", ""},
+		"port alone":   {values.Text("WS_TARGET", "lan", "WS_TUNNEL_PORT", "51820"), "10.99.0.1/24", "51820"},
+		"unset values": {values.Text("WS_TARGET", "lan", "WS_USER", "ada"), "10.99.0.1/24", ""},
 	} {
 		m := effecttest.NewMachine()
 		m.Files["/h/server.conf"] = []byte(tc.file)

@@ -8,21 +8,22 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 func TestMacWaysFromAddresses(t *testing.T) {
-	const lan = "WS_LAN=192.168.1.0/24\nWS_LAN_ADDRESS=192.168.1.5\n"
+	var lan = values.Text("WS_LAN", "192.168.1.0/24", "WS_LAN_ADDRESS", "192.168.1.5")
 	for name, tc := range map[string]struct{ conf, ifconfig, want string }{
 		"lan": {lan, "en0: flags=8863<UP> mtu 1500\n\tinet 192.168.1.20 netmask 0xffffff00\n",
 			"-o HostName=192.168.1.5 -o Port=22 "},
-		"cable": {lan + "WS_CABLE_SERVICE=USB\n", "en5: flags=8863<UP> mtu 1500\n\tinet 10.77.0.2 netmask 0xfffffffc\n",
+		"cable": {lan + values.Text("WS_CABLE_SERVICE", "USB"), "en5: flags=8863<UP> mtu 1500\n\tinet 10.77.0.2 netmask 0xfffffffc\n",
 			"-o HostName=10.77.0.1 -o Port=22 "},
 		"remote": {wayConf, "", "-o HostName=ws.example.org -o Port=22022 "},
 		"remote over a lan out of reach": {lan + wayConf, "en0: flags=8863<UP> mtu 1500\n\tinet 172.16.0.2 netmask 0xffff0000\n",
 			"-o HostName=ws.example.org -o Port=22022 "},
 	} {
 		m := effecttest.NewMachine()
-		m.Files["/c"] = []byte("WS_TARGET=lan\n" + tc.conf)
+		m.Files["/c"] = []byte(values.Text("WS_TARGET", "lan") + tc.conf)
 		m.Results["ifconfig"] = effecttest.Result{Out: []byte(tc.ifconfig)}
 		got := strings.Join(remote.SSH{Host: "ws", M: m, Lock: "/t/l", Ways: MacWays{M: m, Conf: "/c"}}.Argv(context.Background(), []string{"ws"}), " ")
 		if !strings.Contains(got, tc.want) {
@@ -38,7 +39,7 @@ func TestMacWaysSayWhyMacConfLeavesNone(t *testing.T) {
 	if _, err := s.Way(context.Background()); err == nil || !strings.Contains(err.Error(), "no server.conf at /h/mac.conf") {
 		t.Errorf("Way with no mac.conf = %v", err)
 	}
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=moon\n")
+	m.Files["/h/mac.conf"] = []byte(values.Text("WS_TARGET", "moon"))
 	if _, err := s.Way(context.Background()); err == nil || !strings.Contains(err.Error(), "/h/mac.conf, line 1") {
 		t.Errorf("Way with a refused mac.conf = %v", err)
 	}

@@ -7,12 +7,13 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/remote"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 func TestLoginNamesTheServer(t *testing.T) {
 	r, m := newLogin(effecttest.Result{})
 	r.SSH.Host = "lab"
-	m.Files["/h/mac.conf"] = append(m.Files["/h/mac.conf"], "WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub\n"...)
+	m.Files["/h/mac.conf"] = append(m.Files["/h/mac.conf"], values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id_ed25519.pub")...)
 	m.Files["/h/.ssh/id_ed25519.pub"] = []byte("ssh-ed25519 AAAA mac\n")
 	m.Results["ssh-keygen -l -f /h/.ssh/id_ed25519.pub"] = effecttest.Result{}
 	w := remote.Way{Host: "10.1.1.2", Port: "22", User: "ada"}

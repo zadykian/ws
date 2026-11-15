@@ -8,6 +8,8 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"strings"
 	"testing"
+
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 func TestMacHand(t *testing.T) {
@@ -40,7 +42,7 @@ func TestMacHandNamesTheServer(t *testing.T) {
 			"UDP 51820 open to lab, for"}},
 	} {
 		m := effecttest.NewMachine()
-		m.Files["/h/mac.conf"] = []byte("WS_TARGET=" + tc.target + "\nWS_USER=ada\n" + extra["cloud"])
+		m.Files["/h/mac.conf"] = []byte(values.Text("WS_TARGET", tc.target, "WS_USER", "ada") + extra["cloud"])
 		m.Files["/l/"+remote.FirstFile] = []byte("10.0.0.5\n")
 		r := MacReach{SSH: remote.SSH{Host: "lab", M: m, Lock: "/l"}, Conf: "/h/mac.conf", Out: &effecttest.Out{}}
 		h := &guided.Hand{}
@@ -56,7 +58,7 @@ func TestMacHandNamesTheServer(t *testing.T) {
 
 func TestMacHandNamesTheServerInTheOutboundLine(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\nWS_USER=ada\n")
+	m.Files["/h/mac.conf"] = []byte(values.Text("WS_TARGET", "lan", "WS_USER", "ada"))
 	r := MacReach{SSH: remote.SSH{Host: "lab", M: m, Lock: "/l"}, Conf: "/h/mac.conf", Out: &effecttest.Out{}}
 	h := &guided.Hand{}
 	r.Hand(h, session.Status{OutboundOff: true})

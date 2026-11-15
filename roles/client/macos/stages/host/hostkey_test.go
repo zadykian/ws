@@ -8,21 +8,23 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 const (
 	hostLine = "ssh-ed25519 AAAAC3"
 	hostFP   = "SHA256:abc"
 	hostsOf  = "/h/.ssh/known_hosts"
-	// wayConf gives the direct way WS_REMOTE on its port, as every Mac has one.
-	wayConf = "WS_REMOTE=ws.example.org\nWS_REMOTE_PORT=22022\n"
 )
+
+// wayConf gives the direct way WS_REMOTE on its port, as every Mac has one.
+var wayConf = values.Text("WS_REMOTE", "ws.example.org", "WS_REMOTE_PORT", "22022")
 
 // newHost returns the stage on a machine whose ws answers at 10.1.1.2:22 with hostLine, and whose
 // known_hosts lacks ws.
 func newHost(env map[string]string) (*Key, *effecttest.Machine) {
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + wayConf)
+	m.Files["/h/mac.conf"] = []byte(values.Text("WS_TARGET", "lan") + wayConf)
 	m.Dirs["/l"] = 0o700
 	s := remote.SSH{Host: "ws", M: m, Lock: "/l", Home: "/h", Ways: MacWays{M: m, Conf: "/h/mac.conf"}}
 	m.Results[wayCall(s)] = effecttest.Result{Out: []byte("user root\nhostname 10.1.1.2\nport 22\n" +
@@ -45,7 +47,7 @@ func TestHostKeyPlan(t *testing.T) {
 	if p, err := h.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
 		t.Errorf("Plan of a known key = %v, %v; want none", p, err)
 	}
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n")
+	m.Files["/h/mac.conf"] = []byte(values.Text("WS_TARGET", "lan"))
 	_, err := h.Plan(context.Background())
 	if err == nil || !strings.Contains(err.Error(), "and no WS_REMOTE_PORT; set those in server.conf as roles/server/ubuntu/cable/router.md has them") {
 		t.Errorf("Plan with no way: %v", err)

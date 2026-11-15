@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 func TestLoginPlan(t *testing.T) {
@@ -33,7 +34,7 @@ func TestLoginStops(t *testing.T) {
 		r, m := newLogin(effecttest.Result{Err: sshFailed(tc.sshErr)})
 		m.Results[wayCall(r.SSH)] = effecttest.Result{Out: []byte("user " + tc.user + "\nhostname 10.1.1.2\nport 22\n" +
 			"userknownhostsfile ~/.ssh/known_hosts\n")}
-		m.Files["/h/mac.conf"] = append(m.Files["/h/mac.conf"], "WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub\n"...)
+		m.Files["/h/mac.conf"] = append(m.Files["/h/mac.conf"], values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id_ed25519.pub")...)
 		m.Files["/h/.ssh/id_ed25519.pub"] = []byte("ssh-ed25519 AAAA mac\n")
 		m.Results["ssh-keygen -l -f /h/.ssh/id_ed25519.pub"] = effecttest.Result{}
 		err := r.Apply(context.Background(), step.Plan{})
