@@ -46,7 +46,7 @@ until_ok() {
     done
 }
 
-# keys LINE... puts LINE... in the server's file in place of its WS_TUNNEL_NETWORKS and WS_RESOLVERS.
+# keys 'KEY: value'... puts those lines in the server's file in place of its WS_TUNNEL_NETWORKS and WS_RESOLVERS.
 keys() {
     conf_set "$conf" WS_TUNNEL_NETWORKS WS_RESOLVERS "$@"
 }
@@ -77,7 +77,7 @@ utun=$(sudo "$TUNNEL" client macos tunnel status | awk -F': ' '$1 == "interface"
 must "$TUNNEL" client macos tunnel routes --server ws own 198.51.100.0/24
 must "$TUNNEL" client macos resolver own.test 198.51.100.53
 
-keys 'WS_TUNNEL_NETWORKS="203.0.113.0/24"' 'WS_RESOLVERS="conf.test=203.0.113.53,203.0.113.54"'
+keys 'WS_TUNNEL_NETWORKS: 203.0.113.0/24' 'WS_RESOLVERS: conf.test=203.0.113.53,203.0.113.54'
 if ! setup --check; then
     error "ws client macos apply --check with the keys failed: $out"
 else
@@ -106,7 +106,7 @@ for args in '' --check; do
     fi
 done
 
-keys 'WS_RESOLVERS="conf.test=203.0.113.53,203.0.113.54,203.0.113.55,203.0.113.56"'
+keys 'WS_RESOLVERS: conf.test=203.0.113.53,203.0.113.54,203.0.113.55,203.0.113.56'
 if setup --check; then
     error 'ws client macos apply took 4 nameservers for a domain'
 else
@@ -117,7 +117,7 @@ else
 fi
 
 # WS_TUNNEL_NETWORKS emptied, and WS_RESOLVERS removed.
-keys 'WS_TUNNEL_NETWORKS='
+keys 'WS_TUNNEL_NETWORKS: ""'
 setup || error "ws client macos apply with the keys emptied failed: $out"
 printf '%s\n' "$out"
 until_ok 20 eval '! routed 203.0.113.1' || error "203.0.113.1 is still routed into $utun"

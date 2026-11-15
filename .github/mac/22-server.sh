@@ -15,8 +15,8 @@ trap 'rm -rf "$second"' EXIT
 conf_server=lab
 {
     cat "$conf"
-    echo WS_USER=lab
-    echo WS_SLOT=1
+    echo 'WS_USER: lab'
+    echo 'WS_SLOT: 1'
 } | conf_write "$conf"
 conf_server=ws
 
