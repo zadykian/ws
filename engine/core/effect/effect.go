@@ -12,6 +12,17 @@ import (
 // fetch and not retry it.
 var ErrSHA256 = errors.New("SHA-256")
 
+// ErrNotRegular is what a read of a home file wraps where the path is no regular file, such as a
+// FIFO or a directory.
+var ErrNotRegular = errors.New("not a regular file")
+
+// ErrTooLarge is what a read of a home file wraps where it holds more than HomeFileMax bytes.
+var ErrTooLarge = errors.New("too large")
+
+// HomeFileMax is the most that ReadHomeFile reads: 1 MiB, far above any home file ws reads, so that
+// a file that the account grows never fills root's memory.
+const HomeFileMax = 1 << 20
+
 // Question is what ws asks, with its default and its check of the answer.
 type Question struct {
 	Text    string
@@ -94,6 +105,11 @@ type Machine interface {
 	// ReadRootFile reads a file that only root may read, and returns fs.ErrNotExist where the
 	// file is missing.
 	ReadRootFile(path string) ([]byte, error)
+	// ReadHomeFile reads a file below home, with its owner and mode, as ws's own user: root on the
+	// server. It opens each directory below home, and the file, so that a link fails, even one
+	// swapped in after a check. It reads a regular file of HomeFileMax bytes at most, and takes the
+	// owner and mode from the same open. It returns fs.ErrNotExist where the file is missing.
+	ReadHomeFile(home, path string) ([]byte, Attrs, error)
 	// RootAttrs returns the owner and mode of a file, read through sudo, and fs.ErrNotExist where
 	// the file is missing.
 	RootAttrs(path string) (Attrs, error)
