@@ -14,7 +14,7 @@ Each role has a page of its own. A role is Go steps of ws:
   ws starts to the internet and ikeward, but what the network needs, such as DHCP and DNS. The
   table is off where `WS_SECURITY_OUTBOUND` is false, as a cloud VM wants.
 - [`cable`](roles/server/ubuntu/cable): the server's end of a cable to the Mac, as Go steps.
-- [`wireguard`](roles/server/ubuntu/wireguard): `wg0`, the server's end of a WireGuard tunnel for the Mac.
+- [`tunnel`](roles/server/ubuntu/tunnel): `wg0`, the server's end of a WireGuard tunnel for the Mac.
 - [`ikeward`](roles/server/ubuntu/ikeward): ikeward's IKEv2 VPN, where a profile is given, and the WireGuard
   peers' way into it.
 - [`nvidia`](roles/server/ubuntu/nvidia): NVIDIA's headless driver from Ubuntu's archive, on a machine with an
@@ -164,7 +164,7 @@ secrets file's `token.github` ([gh](roles/server/ubuntu/devtools/README.md#gh)).
 selected repositories; Metadata and Actions read; Contents, Pull requests, Issues and Workflows read
 and write; and no account permission. These stay manual:
 
-- other peers' public keys on the server, as in [The tunnel](roles/server/ubuntu/wireguard/README.md#the-tunnel);
+- other peers' public keys on the server, as in [The tunnel](roles/server/ubuntu/tunnel/README.md#the-tunnel);
 - another device's SSH key on the server: `ssh-import-id gh:LOGIN`, run as `WS_USER`
   ([SSH and the firewall](roles/server/ubuntu/security/README.md#ssh-and-the-firewall));
 - the VPN's profile, age-encrypted on the server, and the `ikeward` role's variables, as in

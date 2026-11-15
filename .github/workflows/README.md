@@ -137,7 +137,7 @@ without ws's gh login. The next must print nothing, as a run must where root's g
 key. Without claude's login, a run must stop at claude on ws, naming `claude auth login`, and
 `--check` must say it would run it. The next must print nothing.
 
-The stand-in `ws server ubuntu apply --only wireguard` makes ws's `wg0`, a `wireguard-go` on UDP
+The stand-in `ws server ubuntu apply --only tunnel` makes ws's `wg0`, a `wireguard-go` on UDP
 51820, with the Mac's key in `mac.pub` as its peer. A fresh `--check` must show the Tunnel stage
 after ws's run. The first run must write `mac.pub`, run that, give `WS_PUBLIC_KEY` `wg0`'s key, and
 load the daemon. It must log in once through the tunnel, by stand-ins of `ssh` and `nc`, as `wg0`

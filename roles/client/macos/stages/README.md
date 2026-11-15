@@ -242,9 +242,9 @@ the stage stops, naming `claude auth login`. Where ws lacks claude, it stops.
 ## The tunnel
 
 The stage writes the Mac's WireGuard key to `wg0`'s `mac.pub` on ws, where that holds another, and
-`ws server ubuntu apply --only wireguard` gives `wg0` that peer. That run goes again where `wg0`
+`ws server ubuntu apply --only tunnel` gives `wg0` that peer. That run goes again where `wg0`
 lacks the peer, as after one that failed. Both go over a direct way, outside the tunnel, whose
-sessions the change ends ([The tunnel](../../../server/ubuntu/wireguard/README.md#the-tunnel)). Then `WS_PUBLIC_KEY` in `server.conf`
+sessions the change ends ([The tunnel](../../../server/ubuntu/tunnel/README.md#the-tunnel)). Then `WS_PUBLIC_KEY` in `server.conf`
 takes `wg0`'s key, in place of its line, and `ws client macos apply` runs again, which loads
 ws-tunnel ([The Mac's tunnel](../README.md#the-macs-tunnel)): allow it in the Background. Then a handshake
 must come within 30 s, and `ssh NAME` log in once. Where none came, or the run asked ws's address, the
@@ -259,7 +259,7 @@ Mac skip it. The wizard's files script lists ws's wired ports but the uplink, ea
 and IPv4 addresses. Where none has carrier, as the Mac isn't docked, the stage waits, and the
 closing list says to dock the Mac and run the line again. Docked, the stage asks ws's port of the
 cable, the one with carrier by default. It names the port in `/etc/ws/host_vars.yml` on ws, which
-both roles read, then runs `ws server ubuntu apply --only cable,wireguard` there; the next run of
+both roles read, then runs `ws server ubuntu apply --only cable,tunnel` there; the next run of
 the wizard runs the whole, as `host_vars.yml` changed. Once the port holds `10.77.0.1`, the stage
 asks the Mac's service of the cable. A screen asks it and the port as a choice. The default is the
 one service with a `169.254` address, which an adapter gives itself where no DHCP server answers.

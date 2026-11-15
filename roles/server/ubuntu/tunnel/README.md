@@ -1,11 +1,11 @@
-# wireguard
+# tunnel
 
-The `wireguard` role sets up `wg0`, the server's end of a WireGuard tunnel for the Mac:
+The `tunnel` role sets up `wg0`, the server's end of a WireGuard tunnel for the Mac:
 `10.99.N.1/24` at its slot, N, on UDP port 51820, from networkd's own files. Its key is made on
 the server, and each peer's public key is read from `/etc/wireguard`. It keeps Docker's
 containers from reaching the Mac through the tunnel or the cable.
 
-Its code is Go, in `roles/server/ubuntu/wireguard`, as steps of `ws server ubuntu apply`. They check
+Its code is Go, in `roles/server/ubuntu/tunnel`, as steps of `ws server ubuntu apply`. They check
 the settings, install `wireguard-tools`, `systemd` and `iptables`, and put in the drops that keep
 the containers off the Mac. Then they make the tunnel: the key, wg0's files, the firewall and the
 reload of networkd. The last step shows the public key and waits for `wg0`. Without systemd booted,
@@ -18,7 +18,7 @@ the home LAN, or the internet through the router's forward ([The router](../cabl
 tunnel the server keeps one address. WireGuard knows a peer by its key, not by the address its
 packets come from, so the Mac's sessions outlive a move from one way to another.
 
-The `wireguard` role sets up the server's end, `wg0`, at its slot's `10.99.N.1/24`, slot 0's
+The `tunnel` role sets up the server's end, `wg0`, at its slot's `10.99.N.1/24`, slot 0's
 `10.99.0.1/24` by default (`WS_TUNNEL_ADDRESS`), on UDP port 51820 (`WS_TUNNEL_PORT`). It does so
 from networkd's own files, `/etc/systemd/network/60-wg0.netdev` and `60-wg0.network`. Boot doesn't
 wait for `wg0`.
@@ -29,7 +29,7 @@ the step that derives the public key reads it, on the server. networkd reads it 
 `systemd-network`, so the file is
 `root:systemd-network`, mode 0640, as systemd.netdev(5) asks, and each run sets them again. The
 role's last step shows the public key, which the Mac's end of the tunnel needs. It comes last of
-all in `--only wireguard`, and among the other roles' output in a full run.
+all in `--only tunnel`, and among the other roles' output in a full run.
 `wg show wg0 public-key` shows it too. A dry run makes no key and says so.
 
 `WS_TUNNEL_PEERS` names the peers, each with its address in the tunnel: by default the Mac, `mac`,
@@ -39,7 +39,7 @@ a line as `wg pubkey` prints it, in a directory only root reads:
 
 ```sh
 printf '%s\n' PUBLIC_KEY >/etc/wireguard/mac.pub
-ws server ubuntu apply --only wireguard
+ws server ubuntu apply --only tunnel
 ```
 
 The Mac's scripts fix the peer's name, `mac`. A server's slot gives the tunnel's ends: `10.99.N.1`
@@ -85,7 +85,7 @@ Docker's chain `DOCKER-USER` jumps to first. It runs before Docker starts, at bo
 a run changes the drops, which last through Docker's restarts. Where the unit fails, Docker starts
 without them, and `systemctl status wireguard-docker-user` shows why.
 
-The drops take a change of `WS_CABLE_PORT` as the `wireguard` role next runs, so run
-`ws server ubuntu apply --only cable,wireguard` after one. Unless `WS_SECURITY_OUTBOUND` is false,
+The drops take a change of `WS_CABLE_PORT` as the `tunnel` role next runs, so run
+`ws server ubuntu apply --only cable,tunnel` after one. Unless `WS_SECURITY_OUTBOUND` is false,
 they are a second layer: the `security` role's table drops what the containers start through `wg0`
 or the cable too ([Outbound](../security/README.md#outbound)).

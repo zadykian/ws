@@ -24,9 +24,9 @@ theirs. Boot doesn't wait for the link, which is up only while the Mac is docked
 `10.77.0.2/30`, with no router, from `ws client macos apply` ([The cable](../../../client/macos/README.md#the-cable)). ufw
 lets in SSH over the cable, as over any interface. Unless `WS_SECURITY_OUTBOUND` is false, the
 `security` role's table drops what the server and its containers start over the cable, whatever the
-port ([Outbound](../security/README.md#outbound)). The `wireguard` role's drops keep the containers off it by
+port ([Outbound](../security/README.md#outbound)). The `tunnel` role's drops keep the containers off it by
 the port's name: a second layer, or the only one with the table off. So a change of the port needs a
-run of that role too ([The firewall](../wireguard/README.md#the-firewall)).
+run of that role too ([The firewall](../tunnel/README.md#the-firewall)).
 
 The run stops where the port looks like an uplink: it carries a default route, in any routing
 table, or holds an IPv4 lease outside the cable's subnet. A static address outside it, as an

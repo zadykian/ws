@@ -53,7 +53,7 @@ reads without running them. `~/.config/ws/mac.conf` holds the Mac's keys, which
 `--server NAME`, on every `ws client macos` command, picks the server, which may be left out where
 there is one ([The server's name](conf/README.md#the-servers-name)).
 
-`WS_PUBLIC_KEY` is ws's WireGuard public key, which the `wireguard` role prints: [The Mac's
+`WS_PUBLIC_KEY` is ws's WireGuard public key, which the `tunnel` role prints: [The Mac's
 tunnel](#the-macs-tunnel), below. `WS_LAN` is the home LAN, and `WS_LAN_ADDRESS` ws's address inside
 it, the router's static lease for it. The script stops on one outside, and on the LAN's network or
 broadcast address. `WS_REMOTE` is the router's name on the internet, and `WS_REMOTE_PORT` the port
@@ -150,7 +150,7 @@ hour. `ssh -o HostName=ADDRESS -o Port=PORT ws` comes from another address, and 
 `fail2ban-client set sshd unbanip 10.99.N.2` lifts the ban.
 
 Unless `WS_SECURITY_OUTBOUND` is false, ws opens no connection to the Mac over the cable, the LAN or
-the tunnel ([The firewall](../../server/ubuntu/wireguard/README.md#the-firewall), [Outbound](../../server/ubuntu/security/README.md#outbound)). That
+the tunnel ([The firewall](../../server/ubuntu/tunnel/README.md#the-firewall), [Outbound](../../server/ubuntu/security/README.md#outbound)). That
 holds for its bridged containers and its users, but those who can become root. On a VM on the Mac,
 DHCP and DNS still go to the Mac, which serves them.
 
@@ -193,14 +193,14 @@ in order.
 
 ## The Mac's tunnel
 
-The keys come first, in this order. A run of the `wireguard` role makes ws's key and prints its
+The keys come first, in this order. A run of the `tunnel` role makes ws's key and prints its
 public key. `ws client macos apply`, without `WS_PUBLIC_KEY`, makes the Mac's key, which only root
 reads. It prints its public key with the two commands that make the Mac the server's peer, over a
 direct way, as `ssh NAME`, the server's host, needs this done first. ADDRESS and PORT are that way:
 
 ```sh
 ssh -o HostName=ADDRESS -o Port=PORT NAME "printf '%s\n' 'MAC_PUBLIC_KEY' | tee /etc/wireguard/mac.pub >/dev/null"
-ssh -o HostName=ADDRESS -o Port=PORT NAME ws server ubuntu apply --only wireguard
+ssh -o HostName=ADDRESS -o Port=PORT NAME ws server ubuntu apply --only tunnel
 ```
 
 For a `WS_USER` other than root, both go through `sudo` and `ssh -t`, for the password.
@@ -229,7 +229,7 @@ where loaded, then its plist, `/etc/ws-tunnel/NAME`, state file and log. Nothing
 
 The tunnel's ends are `10.99.N.2` on the Mac, on a utun of wireguard-go's, and `10.99.N.1` on ws, N
 being `WS_SLOT`. A moved slot restarts the daemon. The wizard names the pair in ws's host_vars ([The
-tunnel](../../server/ubuntu/wireguard/README.md#the-tunnel)). The daemon points the Mac's end at the
+tunnel](../../server/ubuntu/tunnel/README.md#the-tunnel)). The daemon points the Mac's end at the
 first of these that answers, each on UDP 51820:
 
 - the cable, `10.77.0.1`, where one of the Mac's addresses lies in `10.77.0.0/30`;

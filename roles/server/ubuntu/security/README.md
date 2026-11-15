@@ -10,7 +10,7 @@ and DNS.
 ws turns SSH's passwords off: everyone logs in by key. Where `WS_USER` is another user, root
 cannot log in at all, and `WS_USER` takes root by `sudo` with its password. Where `WS_USER` is
 root, a cloud VM's, root logs in by key. ufw then lets in
-SSH on port 22 and WireGuard on UDP port 51820 ([wireguard](../wireguard/README.md)). It lets in DNS lookups
+SSH on port 22 and WireGuard on UDP port 51820 ([tunnel](../tunnel/README.md)). It lets in DNS lookups
 from Docker's bridges to the host's resolver too ([docker](../docker/README.md)), and nothing else. fail2ban
 bans an address for an hour after 5 failed logins in 10 minutes. sshd's own penalties slow one
 that keeps failing. Both hold on every network, with no peer or network exempt. SSH takes only the
@@ -169,9 +169,9 @@ links, `/usr/local/lib/ws/security` and the table, even one loaded by hand. `--c
 removal. Off leaves:
 
 - ufw's default, which allows every outgoing connection;
-- the `wireguard` role's chain `WS-MAC`, which drops what Docker's containers send through `wg0`
+- the `tunnel` role's chain `WS-MAC`, which drops what Docker's containers send through `wg0`
   or the cable, but for replies to the Mac's own connections
-  ([The firewall](../wireguard/README.md#the-firewall)).
+  ([The firewall](../tunnel/README.md#the-firewall)).
 
 So Docker's containers reach a cloud's metadata service, and the VPC or the LAN, too. Only the
 table's `containers` chain drops what they forward: Docker forwards it ahead of ufw's rules, and
