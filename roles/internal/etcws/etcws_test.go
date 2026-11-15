@@ -26,3 +26,14 @@ func TestFilesMakeTheDirectoryBeforeTheFile(t *testing.T) {
 		t.Errorf("changes = %q, want %q", got, want)
 	}
 }
+
+func TestTopIsTheDirectoryAlone(t *testing.T) {
+	m := effecttest.NewMachine()
+	changes, err := etcws.Top(m).Plan(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(changes) != 1 || !strings.HasPrefix(changes[0].String(), "create directory /etc/ws, owner 0:0, mode 755") {
+		t.Errorf("changes = %q, want one that makes /etc/ws at 755", changes)
+	}
+}

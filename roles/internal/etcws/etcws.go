@@ -17,11 +17,17 @@ const (
 	FileMode fs.FileMode = 0o644
 )
 
+// Top is /etc/ws itself, made where missing. Everyone may read it, so a run that changes nothing
+// asks for no password.
+func Top(m effect.Machine) file.PublicDir {
+	return file.PublicDir{M: m, Path: Dir, Mode: DirMode}
+}
+
 // Files returns the directory and then the file at path, whole, root's. Everyone may read them, so
 // a run that changes nothing asks for no password.
 func Files(m effect.Machine, path string, content []byte) []resource.Resource {
 	return []resource.Resource{
-		file.PublicDir{M: m, Path: Dir, Mode: DirMode},
+		Top(m),
 		file.Public{M: m, Path: path, Content: content, Mode: FileMode},
 	}
 }
