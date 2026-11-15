@@ -8,6 +8,7 @@
 key=$HOME/.ssh/id_ed25519_signing
 files=$HOME/.config/ws
 secretive=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent
+tab=$(printf '\t')
 
 # git_made COMMAND... runs COMMAND with the files that git's cases make as its last arguments.
 git_made() {
@@ -205,7 +206,7 @@ with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com \
     "WS_GIT_SIGNING_PUB_KEY=~/${copy#"$HOME/"}"
 setup --check || error "ws client macos apply --check failed: $out"
 case $out in
-*"+++ $files/secretive-ssh-keygen$nl"*"$nl+    program = \"$files/secretive-ssh-keygen\""*) ;;
+*"+++ $files/secretive-ssh-keygen$nl"*"$nl+${tab}program = \"$files/secretive-ssh-keygen\""*) ;;
 *) error "ws client macos apply --check showed no wrapper, or no gpg.ssh.program: $out" ;;
 esac
 [ ! -e "$files/secretive-ssh-keygen" ] || error "ws client macos apply --check wrote $files/secretive-ssh-keygen"
@@ -283,7 +284,7 @@ prints ''
 with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com "$signing"
 setup --check || error "ws client macos apply --check failed: $out"
 case $out in
-"ws client macos apply: would run brew install gh$nl"*"$nl+    helper = !$tmp/brew/bin/gh auth\
+"ws client macos apply: would run brew install gh$nl"*"$nl+${tab}helper = !$tmp/brew/bin/gh auth\
  git-credential$nl"*"${nl}ws client macos apply: would run $add once gh is installed, where it has a login\
  that lacks the key") ;;
 *) error "ws client macos apply --check showed no install of gh, another credential command, or no add: $out" ;;

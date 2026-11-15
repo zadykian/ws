@@ -1,50 +1,17 @@
 package git
 
-import "strings"
+import "github.com/zadykian/ws/roles/internal/gitcfg"
 
 // header is the first line of each file the step writes.
 const header = "# Written by ws client macos apply from ~/.config/ws/mac.conf: its next run replaces changes " +
 	"made here."
 
-// inputs are the values of ~/.config/ws/gitconfig.
-type inputs struct {
-	Name, Email string
-	// Key is the signing key's .pub, as an absolute path.
-	Key string
-	// Gh is the absolute path of GitHub's CLI.
-	Gh string
-	// Dir is ~/.config/ws, where the step writes its files.
-	Dir string
-	// Program is gpg.ssh.program, or empty to sign with ssh-keygen as found.
-	Program string
-}
-
-// config returns ~/.config/ws/gitconfig: the identity, and each commit and tag signed with the key,
-// through Program where there is one. The allowed signers file trusts the key for the email. Then
-// gh's credential command follows, as gh auth setup-git writes it, after an empty value that drops
-// any set before it. The name and the paths go in quotes, which mac.conf's values cannot end.
-func config(in inputs) string {
-	var b strings.Builder
-	b.WriteString(header + "\n")
-	b.WriteString("# ~/.gitconfig includes it at its top, so that its own settings win where both set one.\n")
-	b.WriteString("[user]\n    name = \"" + in.Name + "\"\n    email = " + in.Email + "\n")
-	b.WriteString("    signingkey = \"" + in.Key + "\"\n")
-	b.WriteString("[commit]\n    gpgsign = true\n[tag]\n    gpgsign = true\n")
-	for _, host := range []string{"github.com", "gist.github.com"} {
-		b.WriteString("[credential \"https://" + host + "\"]\n    helper =\n")
-		b.WriteString("    helper = !" + in.Gh + " auth git-credential\n")
-	}
-	b.WriteString("[gpg]\n    format = ssh\n")
-	b.WriteString("[gpg \"ssh\"]\n    allowedSignersFile = \"" + in.Dir + "/allowed_signers\"\n")
-	if in.Program != "" {
-		b.WriteString("    program = \"" + in.Program + "\"\n")
-	}
-	return b.String()
-}
-
-// allowedSigners returns the file that trusts the key for the email in git verify-commit.
-func allowedSigners(email, public string) string {
-	return header + "\n" + email + " " + public + "\n"
+// config returns ~/.config/ws/gitconfig: its header, and the settings that ws shares with the Mac.
+// The file is ~/.gitconfig's first include, so that ~/.gitconfig's own settings win.
+func config(in gitcfg.Inputs) string {
+	return header + "\n" +
+		"# ~/.gitconfig includes it at its top, so that its own settings win where both set one.\n" +
+		gitcfg.Settings(in)
 }
 
 // wrapper returns the script that gives ssh-keygen Secretive's agent, for a key that Secretive

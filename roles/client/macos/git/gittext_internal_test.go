@@ -3,35 +3,32 @@ package git
 import (
 	"strings"
 	"testing"
+
+	"github.com/zadykian/ws/roles/internal/gitcfg"
 )
 
-func TestConfigSignsWithTheKey(t *testing.T) {
-	in := inputs{Name: "A B", Email: "a@b.c", Key: "/h/k.pub", Gh: "/opt/gh", Dir: "/h/.config/ws"}
+func TestConfigSharesTheSettingsUnderItsHeader(t *testing.T) {
+	in := gitcfg.Inputs{Name: "A B", Email: "a@b.c", Key: "/h/k.pub", Signers: "/h/.config/ws/allowed_signers",
+		Gh: "/opt/gh"}
 	got := config(in)
 	for _, want := range []string{
-		"    name = \"A B\"\n    email = a@b.c\n    signingkey = \"/h/k.pub\"\n",
-		"[commit]\n    gpgsign = true\n[tag]\n    gpgsign = true\n",
-		"[credential \"https://github.com\"]\n    helper =\n    helper = !/opt/gh auth git-credential\n",
-		"[credential \"https://gist.github.com\"]\n    helper =\n",
-		"    allowedSignersFile = \"/h/.config/ws/allowed_signers\"\n",
+		header + "\n# ~/.gitconfig includes it at its top",
+		"\tname = \"A B\"\n\temail = a@b.c\n",
+		"\tsigningkey = \"/h/k.pub\"\n",
+		"[fetch]\n\tprune = true\n",
+		"[credential \"https://github.com\"]\n\thelper = \n\thelper = !/opt/gh auth git-credential\n",
+		"\tallowedSignersFile = \"/h/.config/ws/allowed_signers\"\n",
 	} {
 		if !strings.Contains(got, want) {
-			t.Errorf("Config lacks %q:\n%s", want, got)
+			t.Errorf("config lacks %q:\n%s", want, got)
 		}
 	}
 	if strings.Contains(got, "program") {
-		t.Errorf("Config names a program with none given:\n%s", got)
+		t.Errorf("config names a program with none given:\n%s", got)
 	}
 	in.Program = "/h/.config/ws/secretive-ssh-keygen"
-	if got := config(in); !strings.HasSuffix(got, "    program = \"/h/.config/ws/secretive-ssh-keygen\"\n") {
-		t.Errorf("Config ends %q", got)
-	}
-}
-
-func TestAllowedSignersTrustsTheKeyForTheEmail(t *testing.T) {
-	got := allowedSigners("a@b.c", "ssh-ed25519 AAAA")
-	if !strings.HasSuffix(got, "\na@b.c ssh-ed25519 AAAA\n") || !strings.HasPrefix(got, header) {
-		t.Errorf("AllowedSigners = %q", got)
+	if got := config(in); !strings.Contains(got, "\tprogram = \"/h/.config/ws/secretive-ssh-keygen\"\n") {
+		t.Errorf("config lacks the program:\n%s", got)
 	}
 }
 
