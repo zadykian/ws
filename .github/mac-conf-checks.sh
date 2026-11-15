@@ -15,7 +15,7 @@ if [ -z "${TUNNEL-}" ]; then
     echo "::error::TUNNEL, ws's path, is unset: mac.yml's job sets it"
     exit 1
 fi
-tunnel_dir=/etc/ws-tunnel
+tunnel_dir=/etc/ws/tunnel
 ws_resolvers=/etc/resolver
 conf=$HOME/.config/ws/values.yml
 fail=0

@@ -15,7 +15,7 @@ ws client macos apply | tee "$RUNNER_TEMP/first.out" ||
     }
 fail=0
 wg=$(brew --prefix wireguard-tools)/bin/wg
-mac=$(sudo sh -c '"$1" pubkey <"$2"' sh "$wg" /etc/ws-tunnel/private.key) ||
+mac=$(sudo sh -c '"$1" pubkey <"$2"' sh "$wg" /etc/ws/tunnel/private.key) ||
     {
         echo "::error::cannot read the Mac's public key"
         exit 1
@@ -37,9 +37,9 @@ printf '%s\n' "$mac" | cmp -s - ~/.config/ws/tunnel.pub ||
         echo "::error::~/.config/ws/tunnel.pub holds no '$mac'"
         fail=1
     }
-[ "$(sudo stat -f '%Su:%Sg %Lp' /etc/ws-tunnel/private.key)" = "root:wheel 600" ] ||
+[ "$(sudo stat -f '%Su:%Sg %Lp' /etc/ws/tunnel/private.key)" = "root:wheel 600" ] ||
     {
-        echo "::error::/etc/ws-tunnel/private.key is not root's, 600"
+        echo "::error::/etc/ws/tunnel/private.key is not root's, 600"
         fail=1
     }
 [ "$(stat -f '%Su:%Sg %Lp' /usr/local/libexec/ws-tunnel/ws)" = "root:wheel 755" ] ||

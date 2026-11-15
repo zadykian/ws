@@ -42,7 +42,7 @@ stop="ws client macos wizard: Login: $(id -un) on ws doesn't log in by the Mac's
 if [ "$status" != 1 ] || ! grep -qF "$stop" "$RUNNER_TEMP/stop.err"; then
     error "ws client macos wizard exited $status, or did not stop at Login, where the user takes no key"
 fi
-for each in /usr/local/libexec/ws-tunnel/ws /etc/ws-tunnel/private.key ~/.ssh/config.d/ws; do
+for each in /usr/local/libexec/ws-tunnel/ws /etc/ws/tunnel/private.key ~/.ssh/config.d/ws; do
     sudo test -f "$each" || error "ws client macos wizard made no $each"
 done
 added="ssh-key add $HOME/.ssh/id_ed25519.pub --title $(hostname -s)"
@@ -70,7 +70,7 @@ if ! printf '\n%s\n' '--only tunnel' | cmp -s - "$RUNNER_TEMP/ws/server.log" ||
     error "ws client macos wizard ran no ws server ubuntu apply on ws, once, then with --only tunnel, with root's HOME"
 fi
 ! grep -q '"event"' "$RUNNER_TEMP/run.err" || error "ws client macos wizard printed an event line of the run's log"
-mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /opt/homebrew/bin/wg /etc/ws-tunnel/private.key)
+mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /opt/homebrew/bin/wg /etc/ws/tunnel/private.key)
 [ "$(sudo cat "$RUNNER_TEMP/ws/root/etc/wireguard/mac.pub")" = "$mac" ] ||
     error "ws client macos wizard gave the stand-in ws no mac.pub of the Mac's key, $mac"
 launchctl print system/com.github.zadykian.ws-tunnel.ws >/dev/null 2>&1 ||

@@ -69,7 +69,7 @@ wizard
     [ "$(logins)" -eq $((n + 1)) ] ||
     error "a run with wg0's new key exited $status, or put no WS_PUBLIC_KEY in its line's place"
 
-mac=$(sudo sh -c '"$0" pubkey <"$1"' "$wg" /etc/ws-tunnel/private.key)
+mac=$(sudo sh -c '"$0" pubkey <"$1"' "$wg" /etc/ws/tunnel/private.key)
 tagged=$(grep -cx -- '--only tunnel' "$ws/server.log")
 standin_set peer "$mac" remove
 wizard

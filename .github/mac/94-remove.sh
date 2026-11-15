@@ -45,7 +45,7 @@ gone() {
 [ -f "$servers/ws/values.yml" ] || gone "the server ws's values.yml is gone"
 [ ! -e "/Library/LaunchDaemons/$lab.plist" ] || gone "lab's plist is still there"
 ! launchctl print "system/$lab" >/dev/null 2>&1 || gone "lab's daemon is still loaded"
-for path in /etc/ws-tunnel/lab /var/run/ws-tunnel.lab.state /var/log/ws-tunnel.lab.log; do
+for path in /etc/ws/tunnel/lab /var/run/ws-tunnel.lab.state /var/log/ws-tunnel.lab.log; do
     ! sudo test -e "$path" || gone "$path is still there"
 done
 ! grep -qx 'Host lab' ~/.ssh/config.d/ws || gone "config.d/ws still has a Host lab"

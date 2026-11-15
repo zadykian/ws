@@ -74,7 +74,7 @@ vars="$lab/root"/etc/ws/values.yml
 sudo grep -Eqx 'WS_TUNNEL_ADDRESS: "?10\.99\.1\.1/24"?' "$vars" ||
     error "lab's values.yml names no WS_TUNNEL_ADDRESS 10.99.1.1/24"
 sudo grep -qx 'WS_TUNNEL_PORT: 51821' "$vars" || error "lab's values.yml names no WS_TUNNEL_PORT 51821"
-mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /opt/homebrew/bin/wg /etc/ws-tunnel/private.key)
+mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /opt/homebrew/bin/wg /etc/ws/tunnel/private.key)
 [ "$(sudo cat "$lab/root"/etc/wireguard/mac.pub)" = "$mac" ] ||
     error "lab's stand-in has no mac.pub of the Mac's key"
 grep -qx -- '--only tunnel' "$lab/server.log" || error "lab's stand-in ran no ws server ubuntu apply --only tunnel"
