@@ -20,7 +20,7 @@ func formOf(t *testing.T, mac, server string) (Form, *effecttest.Machine) {
 	m.Files["/h/mac.conf"], m.Files[serverOfTest] = []byte(mac), []byte(server)
 	m.Results["mkdir -p /h"] = effecttest.Result{}
 	m.Results["mkdir -p /h/servers/ws"] = effecttest.Result{}
-	f, err := Form{Conf: "/h/mac.conf", Server: serverOfTest, Defaults: []byte("shell_git_name: A B\nshell_git_email: a@b.dev\n"), M: m}.
+	f, err := Form{Conf: "/h/mac.conf", Server: serverOfTest, M: m}.
 		Load(&effecttest.Out{})
 	if err != nil {
 		t.Fatal(err)
@@ -53,7 +53,7 @@ func keysOf(fields []form.Field) []string {
 }
 
 func TestConfFormShowsTheKeysOfATarget(t *testing.T) {
-	tail := []string{"WS_GIT_NAME", "WS_TUNNEL_NETWORKS", "WS_RESOLVERS"}
+	tail := []string{"WS_TUNNEL_NETWORKS", "WS_RESOLVERS"}
 	for target, want := range map[string][]string{
 		"lan":    slices.Concat([]string{"WS_TARGET", "WS_LAN", "WS_LAN_ADDRESS", "WS_REMOTE"}, tail),
 		"cloud":  slices.Concat([]string{"WS_TARGET", "WS_REMOTE", "WS_REMOTE_PORT"}, tail),
@@ -78,12 +78,9 @@ func fieldOf(t *testing.T, fields []form.Field, key string) form.Field {
 
 func TestConfFormEditLeadsTheWalk(t *testing.T) {
 	f, _ := formOf(t, "", "")
-	fields := f.Fields(map[string]string{"WS_REMOTE": "ws.example", "WS_GIT_NAME": "Me"})
+	fields := f.Fields(map[string]string{"WS_REMOTE": "ws.example"})
 	if got := fieldOf(t, fields, "WS_REMOTE_PORT").Text; got != "The router's port forwarded to ws's 22 (the wizard offers 22022)" {
 		t.Errorf("port's text = %q", got)
-	}
-	if got := fieldOf(t, fields, "WS_GIT_EMAIL").Default; got != "a@b.dev" {
-		t.Errorf("email's default = %q", got)
 	}
 	if got := fieldOf(t, f.Fields(nil), "WS_TARGET").Options; !slices.Equal(got, targets) {
 		t.Errorf("target's options = %v", got)
@@ -123,15 +120,12 @@ func TestConfFormSave(t *testing.T) {
 	}{
 		"a needed default": {"", map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "vm.example"}, "",
 			"WS_TARGET=cloud\nWS_REMOTE=vm.example\nWS_REMOTE_PORT=22\n"},
-		"no optional default": {"", map[string]string{"WS_GIT_NAME": "A B"},
-			"WS_GIT_NAME=\"A B\"\nWS_GIT_EMAIL=a@b.dev\n", ""},
 		"to a cloud VM": {way + "WS_CABLE_PORT=enp1s0\n", map[string]string{"WS_TARGET": "cloud"}, "",
 			"WS_LAN=\nWS_LAN_ADDRESS=\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22022\nWS_CABLE_PORT=\nWS_TARGET=cloud\n"},
 		"a cleared field": {way, map[string]string{"WS_REMOTE": ""}, "",
 			"WS_LAN=10.88.0.0/24\nWS_LAN_ADDRESS=10.88.0.10\nWS_REMOTE=\nWS_REMOTE_PORT=\n"},
 		"none and quotes": {"WS_TUNNEL_NETWORKS=10.20.0.0/16\n",
-			map[string]string{"WS_TUNNEL_NETWORKS": "none", "WS_GIT_NAME": `"Me"`, "WS_GIT_EMAIL": "me@b.dev"},
-			"WS_GIT_NAME=Me\nWS_GIT_EMAIL=me@b.dev\n", "WS_TUNNEL_NETWORKS=\n"},
+			map[string]string{"WS_TUNNEL_NETWORKS": "none"}, "", "WS_TUNNEL_NETWORKS=\n"},
 		"a mended pair": {"WS_LAN=10.88.0.0/24\n", nil, "", "WS_LAN=10.88.0.0/24\nWS_LAN_ADDRESS=10.88.0.10\n"},
 	} {
 		f, m := formOf(t, "", tc.server)
@@ -187,13 +181,7 @@ func TestConfFormSaveSaysWhatItEmptied(t *testing.T) {
 }
 
 func TestConfFormSaveRefusals(t *testing.T) {
-	signed := "WS_GIT_NAME=Me\nWS_GIT_EMAIL=me@b.dev\nWS_GIT_SIGNING_PUB_KEY=~/.ssh/k.pub\n"
-	f, m := formOf(t, signed, "")
-	_, err := f.Save(context.Background(), &effecttest.Out{}, map[string]string{"WS_GIT_NAME": ""})
-	if !errors.Is(err, ErrRefused) || string(m.Files["/h/mac.conf"]) != signed {
-		t.Errorf("a signing key with no name: %v, mac.conf = %q", err, m.Files["/h/mac.conf"])
-	}
-	f, m = formOf(t, "", "")
+	f, m := formOf(t, "", "")
 	m.Links[serverOfTest] = "/dotfiles/server.conf"
 	out := &effecttest.Out{}
 	if _, err := f.Save(context.Background(), out, map[string]string{"WS_REMOTE": "r.example"}); !errors.Is(err, ErrRefused) {

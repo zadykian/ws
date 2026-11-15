@@ -13,6 +13,8 @@
 # apply, and its --check, must print nothing. Each failure is an ::error::, and the status 1.
 
 set -u
+# shellcheck source=.github/mac-quiet.sh
+. .github/mac-quiet.sh
 
 fail=0
 # The LocalCommand that the ssh step of ws client macos apply writes, as ssh -G prints it.
@@ -88,7 +90,7 @@ quiet() {
     for args in '' --check; do
         if ! out=$(ws client macos apply ${args:+"$args"} 2>&1); then
             error "ws client macos apply${args:+ $args} failed:"
-        elif [ -n "$out" ]; then
+        elif [ -n "$(unlisted "$out")" ]; then
             error "ws client macos apply${args:+ $args} printed what it should not:"
         else
             continue

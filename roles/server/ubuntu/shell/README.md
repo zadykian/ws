@@ -23,7 +23,8 @@ credential. It names instead the keys a real run would drop, without their value
 since one may be a URL, which names a host. A real run keeps the old file beside the new one, as
 `~/.gitconfig.*~`: its name ends in the run's PID and time.
 
-`~/.gitconfig` sets `fetch.prune`, so a fetch drops the remote-tracking branches that the remote
+`~/.gitconfig` takes its settings from `roles/internal/gitcfg`, which the Mac writes too, so that
+both sides prune. It sets `fetch.prune`, so a fetch drops the remote-tracking branches that the remote
 deleted, a landed pull request's say. A `false` in `~/.config/git/machine.gitconfig` keeps them.
 
 ## Signing
@@ -38,9 +39,10 @@ To revoke the key, delete it in the account's settings on GitHub, then delete
 registers it, at its Signing key stage, or add the `.pub` by hand. A key deleted on GitHub alone
 comes back the same way.
 
-`git verify-commit` trusts the key for `shell_git_email` through `shell_git_allowed_signers`,
-`~/.config/git/allowed_signers` by default, also below `ws_home`. Each run replaces a change made
-to it, and keeps the old file beside it, as `allowed_signers.*~`. So `git verify-commit` fails here
+`git verify-commit` trusts the key for `me@zadykian.dev` through `/etc/ws/allowed_signers`,
+root's and 644, the Mac's path too. A run that changes nothing reads it as the user. Each run
+replaces a change made to it. A `host_vars.yml` that names `shell_git_allowed_signers` is refused.
+So `git verify-commit` fails here
 on a commit another key signed, an older machine's say, though GitHub verifies it by the account's
 keys.
 
@@ -49,9 +51,8 @@ set it in `~/.config/git/machine.gitconfig` first. A signing setting there, such
 `user.signingkey` or `commit.gpgsign` or `tag.gpgsign`, wins over the role's, and the run names any
 it finds.
 
-`shell_git_signing: false` turns it all off: no key and no signing in `~/.gitconfig`. A key
-made before stays, on the machine and on GitHub. A dry run makes no key, so on a machine without
-one it shows the key's creation and skips the allowed signers file.
+A dry run makes no key, so on a machine without one it shows the key's creation and skips the
+allowed signers file.
 
 ## Secrets
 

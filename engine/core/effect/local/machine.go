@@ -248,6 +248,9 @@ func (OSMachine) Stat(path string) (effect.Info, error) {
 		return effect.Info{}, err
 	}
 	info.Mode = fi.Mode()
+	if st, ok := fi.Sys().(*syscall.Stat_t); ok {
+		info.UID, info.GID = int(st.Uid), int(st.Gid)
+	}
 	return info, nil
 }
 

@@ -3,8 +3,9 @@
 # section per key or step. mac-conf-checks.sh runs it last, from the repository's root, once ws
 # client macos apply has set up the Mac (.github/workflows/mac.yml). As it runs ws client macos
 # apply, sudo included, and edits the job's mac.conf, it stops without the job's TUNNEL. It puts the
-# file back as it exits, on a signal too. Each failure prints an ::error:: line, and any fails the
-# script at its end. Last, it sources the cases of ws's key and git: mac-identity-checks.sh and
+# file back as it exits, on a signal too. A case that wants a silent run takes out git's line of a
+# listed key, with mac-quiet.sh's unlisted. Each failure prints an ::error:: line, and any fails
+# the script at its end. Last, it sources the cases of ws's key and git: mac-identity-checks.sh and
 # mac-git-checks.sh.
 
 set -eu
@@ -15,6 +16,8 @@ fi
 conf=$HOME/.config/ws/mac.conf
 # shellcheck source=.github/mac-conf.sh
 . .github/mac-conf.sh
+# shellcheck source=.github/mac-quiet.sh
+. .github/mac-quiet.sh
 # macOS's TMPDIR ends in a slash, which would put // in $tmp. ws client macos apply --only git finds
 # gh by Go's exec.LookPath, which drops it, so git's credential command would not read
 # "$tmp/bin/gh".
@@ -44,16 +47,20 @@ with() {
 # setup [ARG] runs ws client macos apply, on the step that only names where it does, and sets out to
 # what it printed.
 only=
+exact=
 setup() {
     out=$(ws client macos apply ${only:+--only "$only"} "$@" 2>&1)
 }
 
-# prints TEXT [ARG] runs ws client macos apply, which must print TEXT alone.
+# prints TEXT [ARG] runs ws client macos apply, which must print TEXT alone, less the line of a key
+# that GitHub lists already, unless exact is set.
 prints() {
     text=$1
     shift
     setup "$@" || error "ws client macos apply${*:+ $*} failed: $out"
-    [ "$out" = "$text" ] || error "ws client macos apply${*:+ $*} printed '$out', not '$text'"
+    got=$out
+    [ -n "$exact" ] || got=$(unlisted "$out")
+    [ "$got" = "$text" ] || error "ws client macos apply${*:+ $*} printed '$got', not '$text'"
 }
 
 # stops TEXT [ARG] runs ws client macos apply, which must stop with one line that starts with TEXT.

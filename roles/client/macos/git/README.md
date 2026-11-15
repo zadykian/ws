@@ -1,12 +1,15 @@
 # git on the Mac
 
-With `WS_GIT_NAME` and `WS_GIT_EMAIL` in `mac.conf`, `ws client macos apply` sets up git on the Mac
+`ws client macos apply` sets up git on the Mac on each run
 ([The Mac](../README.md)), as the `shell` role does on ws ([Signing](../../../server/ubuntu/shell/README.md#signing)). It writes
-`~/.config/ws/gitconfig`: the author, and each commit signed with `WS_GIT_SIGNING_PUB_KEY`, which
-`~/.config/ws/allowed_signers` trusts for the email in `git verify-commit`. It names gh's credential
+`~/.config/ws/gitconfig`, from the settings that `roles/internal/gitcfg` holds for both sides, the
+fetch's prune among them. The author is `gitcfg.Name` and `gitcfg.Email`, `zadykian` and
+`me@zadykian.dev`. Each commit is signed with `WS_GIT_SIGNING_PUB_KEY`, which
+`/etc/ws/allowed_signers` trusts for the email in `git verify-commit`. That file is root's and 644,
+as on ws. A run writes it through sudo and reads it as the user, so that a run that changes nothing
+asks for no password. An old `~/.config/ws/allowed_signers` stays, unused. It names gh's credential
 command too, as `gh auth setup-git` does, so that pushes to GitHub take gh's login, and installs
-Homebrew's gh where `PATH` has none. Without the two keys, the script leaves git alone, and emptying
-them leaves the files and the include as they are.
+Homebrew's gh where `PATH` has none.
 
 `WS_GIT_SIGNING_PUB_KEY` has no default, and the script makes no key. Where `mac.conf` names none,
 or an empty one, the script stops with the line that would name each P-256 key of Secretive's

@@ -1,10 +1,8 @@
-package gitcfg_test
+package git
 
 import (
 	"strings"
 	"testing"
-
-	"github.com/zadykian/ws/roles/client/macos/internal/gitcfg"
 )
 
 const dir = "/h/.config/ws"
@@ -22,7 +20,7 @@ func TestIncludedFindsTheIncludeFirstAndOnce(t *testing.T) {
 		"below": {[]string{dir + "/gitconfig"}, "user.name", false, "below its own settings"},
 		"twice": {[]string{dir + "/gitconfig", dir + "/gitconfig"}, "include.path", false, "2 times"},
 	} {
-		got, err := gitcfg.Included(tc.paths, tc.first, dir)
+		got, err := included(tc.paths, tc.first, dir)
 		if got != tc.want || (err == nil) != (tc.err == "") || (err != nil && !strings.Contains(err.Error(), tc.err)) {
 			t.Errorf("%s: Included = %v, %v; want %v, %q", name, got, err, tc.want, tc.err)
 		}
@@ -31,10 +29,10 @@ func TestIncludedFindsTheIncludeFirstAndOnce(t *testing.T) {
 
 func TestOwnListsEachSettingOnce(t *testing.T) {
 	names := []string{"core.editor", "user.name", "gpg.format", "user.name", "user.signingkey", "gpg.ssh.program"}
-	if got, want := gitcfg.Own(names), "user.name, gpg.format, user.signingkey, gpg.ssh.program"; got != want {
+	if got, want := ownSettings(names), "user.name, gpg.format, user.signingkey, gpg.ssh.program"; got != want {
 		t.Errorf("Own = %q, want %q", got, want)
 	}
-	if got := gitcfg.Own(nil); got != "" {
+	if got := ownSettings(nil); got != "" {
 		t.Errorf("Own(nil) = %q", got)
 	}
 }

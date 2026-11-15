@@ -12,20 +12,20 @@ func TestConfFormScopeShowsOneFilesKeys(t *testing.T) {
 	f, _ := formOf(t, "", "")
 	edits := map[string]string{"WS_TARGET": "cloud"}
 	f.Scope = MacFile
-	if got, want := keysOf(f.Fields(edits)), []string{"WS_GIT_NAME"}; !slices.Equal(got, want) {
+	if got, want := keysOf(f.Fields(edits)), []string(nil); !slices.Equal(got, want) {
 		t.Errorf("mac.conf: keys = %v; want %v", got, want)
 	}
 	f.Scope = ServerFile
 	got := keysOf(f.Fields(edits))
-	if slices.Contains(got, "WS_GIT_NAME") || !slices.Contains(got, "WS_TARGET") || !slices.Contains(got, "WS_REMOTE") {
-		t.Errorf("server file: keys = %v; want WS_TARGET and WS_REMOTE, and no WS_GIT_NAME", got)
+	if !slices.Contains(got, "WS_TARGET") || !slices.Contains(got, "WS_REMOTE") {
+		t.Errorf("server file: keys = %v; want WS_TARGET and WS_REMOTE", got)
 	}
 }
 
 func TestConfFormScopeSavesToItsFileAlone(t *testing.T) {
-	edits := map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "vm.example", "WS_GIT_NAME": "A B"}
+	edits := map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "vm.example"}
 	for scope, want := range map[Scope][2]string{
-		MacFile:    {"WS_GIT_NAME=\"A B\"\nWS_GIT_EMAIL=a@b.dev\n", ""},
+		MacFile:    {"", ""},
 		ServerFile: {"", "WS_TARGET=cloud\nWS_REMOTE=vm.example\nWS_REMOTE_PORT=22\n"},
 	} {
 		f, m := formOf(t, "", "")
@@ -54,7 +54,7 @@ func TestConfFormScopeSaysItsFileHoldsTheValues(t *testing.T) {
 func TestConfFormSaveChangesNeitherFileWhereOneRefuses(t *testing.T) {
 	f, m := formOf(t, "", "WS_USER=ada\n")
 	m.Links[serverOfTest] = "/dot/server.conf"
-	_, err := f.Save(context.Background(), &effecttest.Out{}, map[string]string{"WS_GIT_NAME": "A B", "WS_TARGET": "cloud", "WS_REMOTE": "vm.example"})
+	_, err := f.Save(context.Background(), &effecttest.Out{}, map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "vm.example"})
 	if err == nil {
 		t.Fatal("Save passes a server file that is a link")
 	}

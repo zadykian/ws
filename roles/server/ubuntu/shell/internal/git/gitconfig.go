@@ -12,6 +12,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/account"
 	"github.com/zadykian/ws/engine/core/resource/file"
+	"github.com/zadykian/ws/roles/internal/gitcfg"
 )
 
 // gitFiles are the templates of ~/.gitconfig and of the tokens' include.
@@ -24,21 +25,15 @@ var gitFiles embed.FS
 // http.extraHeader, so it shows none. The settings of the machine's own go in
 // ~/.config/git/machine.gitconfig, which the file includes last.
 type Config struct {
-	M       effect.Machine
-	Out     effect.Out
-	A       account.Account
-	Name    string
-	Email   string
-	Signing bool
-	Key     string
-	Signers string
+	M   effect.Machine
+	Out effect.Out
+	A   account.Account
+	Key string
 }
 
 func (g Config) content() ([]byte, error) {
-	return resource.Render(gitFiles, "files/gitconfig.tmpl", struct {
-		Name, Email, Key, Signers string
-		Signing                   bool
-	}{g.Name, g.Email, g.Key, g.Signers, g.Signing})
+	settings := gitcfg.Settings(gitcfg.Inputs{Key: g.Key + ".pub", Gh: "/usr/bin/gh"})
+	return resource.Render(gitFiles, "files/gitconfig.tmpl", struct{ Settings string }{settings})
 }
 
 // Plan says what the rewrite loses or replaces, then plans the file. Git must accept the new file
@@ -64,10 +59,8 @@ func (g Config) notes(ctx context.Context, content []byte) error {
 	if err != nil {
 		return err
 	}
-	if g.Signing {
-		if err := g.signingNotes(ctx, old); err != nil {
-			return err
-		}
+	if err := g.signingNotes(ctx, old); err != nil {
+		return err
 	}
 	oldKeys, err := gitNames(ctx, g.M, old)
 	if err != nil {

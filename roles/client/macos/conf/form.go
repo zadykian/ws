@@ -15,7 +15,7 @@ const configureStage = "Configure"
 
 // wayKeys are the keys that an edit can hide. conf refuses one past the edit that hid it, as
 // WS_LAN on a cloud VM, and a key that doesn't show has no field to clear it by.
-var wayKeys = []string{"WS_LAN", "WS_LAN_ADDRESS", "WS_REMOTE", "WS_REMOTE_PORT", "WS_GIT_EMAIL"}
+var wayKeys = []string{"WS_LAN", "WS_LAN_ADDRESS", "WS_REMOTE", "WS_REMOTE_PORT"}
 
 // Form is mac.conf and a server's file as a form. It shows the keys that the Answers stage would ask
 // where the files lacked them all, as the edits so far lead it. A key that the stage never asks
@@ -24,9 +24,7 @@ type Form struct {
 	// Conf is mac.conf's path, and Server the server's file's.
 	Conf   string
 	Server string
-	// Defaults is the text of the shell role's defaults, whose git identity ws's git takes.
-	Defaults []byte
-	M        effect.Machine
+	M      effect.Machine
 	// Scope is the file that the form shows and saves: Both, the zero value, takes each key.
 	Scope Scope
 	// file is what the files held at the last load, joined.
@@ -68,7 +66,6 @@ func (f Form) walk(edits map[string]string) ([]Question, map[string]string) {
 			asked = append(asked, q)
 			return f.wanted(q, edits), nil
 		},
-		Role: func(name string) string { return Default(f.Defaults, name) },
 	}
 	_ = s.Run() // ask returns no error, which is what would stop the walk.
 	return asked, s.Vals

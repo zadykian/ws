@@ -115,7 +115,7 @@ func TestMacFormsShowMacConfApartFromTheServersFile(t *testing.T) {
 	for _, f := range sheets[1].Fields(nil) {
 		server = append(server, f.Label)
 	}
-	if strings.Join(mac, " ") != "WS_GIT_NAME" || slices.Contains(server, "WS_GIT_NAME") || !slices.Contains(server, "WS_TARGET") {
+	if len(mac) != 0 || !slices.Contains(server, "WS_TARGET") {
 		t.Errorf("mac.conf shows %v, the server's file %v", mac, server)
 	}
 }

@@ -7,26 +7,35 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/internal/gitcfg"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
+	"github.com/zadykian/ws/roles/internal/etcws"
+	"github.com/zadykian/ws/roles/internal/gitcfg"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
-// list returns the files of ~/.config/ws: the script for a key of Secretive's, the allowed signers
-// and gitconfig.
-func (g *Git) list(key keys.NamedKey, gh string) []file.UserFile {
+// part is a file or a directory that a run plans and a report reads.
+type part interface {
+	resource.Resource
+	step.Reporter
+}
+
+// list returns the script for a key of Secretive's, root's allowed signers and gitconfig. The
+// signers lie in /etc/ws, which a run writes through sudo.
+func (g *Git) list(key keys.NamedKey, gh string) []part {
 	dir := g.Home + "/.config/ws"
-	in := gitcfg.Inputs{Name: g.Conf.GitName, Email: g.Conf.GitEmail, Key: key.File, Gh: gh, Dir: dir}
+	in := gitcfg.Inputs{Key: key.File, Gh: gh}
 	userFile := func(path, text string, mode fs.FileMode) file.UserFile {
 		return file.UserFile{M: g.M, Out: g.Out, Path: path, Text: []byte(text), Mode: mode}
 	}
-	var list []file.UserFile
+	var list []part
 	if sshcfg.SecretiveKey(key.File, g.Home) {
 		in.Program = dir + "/secretive-ssh-keygen"
-		list = append(list, userFile(in.Program, gitcfg.Wrapper(g.Home+"/"+sshcfg.SecretiveData), 0o755))
+		list = append(list, userFile(in.Program, wrapper(g.Home+"/"+sshcfg.SecretiveData), 0o755))
 	}
-	list = append(list, userFile(dir+"/allowed_signers", gitcfg.AllowedSigners(g.Conf.GitEmail, key.Key.String()), 0o644))
-	return append(list, userFile(dir+"/gitconfig", gitcfg.Config(in), 0o644))
+	for _, r := range etcws.Files(g.M, gitcfg.Signers, []byte(gitcfg.AllowedSigners(header, key.Key.String()))) {
+		list = append(list, resource.Said{Out: g.Out, Part: r})
+	}
+	return append(list, userFile(dir+"/gitconfig", config(in), 0o644))
 }
 
 // dirs is ws's directory, with the directory of ws's copies where git signs with a copy.
@@ -58,9 +67,6 @@ func (g *Git) files(ctx context.Context, key keys.NamedKey, gh string) ([]step.C
 // report says how gh, the signing key, the files and ~/.gitconfig's include stand. The key shows by
 // its .pub alone, and ~/.gitconfig by the include, as the file is the user's.
 func (g *Git) report(ctx context.Context) ([]step.Item, error) {
-	if g.Conf.GitName == "" {
-		return nil, nil
-	}
 	key, err := keys.ReadKey(ctx, g.M, g.Conf, g.Home, keys.SigningKey)
 	if err != nil {
 		return nil, err

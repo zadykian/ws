@@ -94,7 +94,7 @@ ubuntu secrets` edits ws's file ([The secrets file](roles/server/ubuntu/shell/RE
 a machine go in `/etc/ws/host_vars.yml`, which only root reads, and every run reads them. `ws_user:
 NAME` sets up the user NAME instead of `zadykian`, the default, whose account must exist. `ws_user:
 root` sets up a cloud VM with no other user. `ws_home` follows the user as `/home/NAME`; `ws_home:
-DIR` sets another home. `ws_git_signing_key` and `shell_git_allowed_signers` lie below it, or the
+DIR` sets another home. `ws_git_signing_key` lies below it, or the
 run fails. A cloud VM names `security_outbound: false` there before its first run
 ([Outbound](roles/server/ubuntu/security/README.md#outbound)). `ws server ubuntu values set KEY VALUE` writes one key, and
 an empty VALUE gives its default back. On ws, `sudo ws server ubuntu configure` writes them on a

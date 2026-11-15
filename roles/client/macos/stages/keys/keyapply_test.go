@@ -10,7 +10,7 @@ import (
 
 // With no terminal, Apply stops at ws's question, before git's.
 func TestMacKeyApplyStopsAtTheQuestion(t *testing.T) {
-	k, m, _ := newMacKey(t, gitConf)
+	k, m, _ := newMacKey(t, "")
 	agent(m, p256)
 	p, err := k.Plan(context.Background())
 	if err != nil || len(p.Changes) != 2 {
@@ -28,7 +28,7 @@ func TestMacKeyApplyStopsAtTheQuestion(t *testing.T) {
 // mac.conf can name a copy before ws client macos apply makes its directory. Apply makes the
 // directory, and sets ~/.config/ws's mode, before the copy, so that a second plan finds nothing.
 func TestMacKeyApplyMakesTheCopiesDirectory(t *testing.T) {
-	k, m, _ := newMacKey(t, "WS_IDENTITY_PUB_KEY="+listed(p256)[0].Pub()+"\n")
+	k, m, _ := newMacKey(t, gitKey+"WS_IDENTITY_PUB_KEY="+listed(p256)[0].Pub()+"\n")
 	agent(m, p256)
 	delete(m.Dirs, "/h/"+sshcfg.KeyCopies)
 	m.Dirs["/h/.config/ws"] = 0o755

@@ -64,12 +64,12 @@ func (k *MacKey) named(ctx context.Context, c conf.Conf) ([]step.Change, error) 
 }
 
 // Asked reports whether the stage asks for a key. It asks for ws's where mac.conf names none. It
-// asks for git's where git has a name and mac.conf no key for it. An empty value names none.
+// asks for git's where mac.conf names none for it. An empty value names none.
 func Asked(c conf.Conf) bool { return c.IdentityPubKey == "" || gitAsked(c) }
 
-func gitAsked(c conf.Conf) bool { return c.GitName != "" && c.GitSigningPubKey == "" }
+func gitAsked(c conf.Conf) bool { return c.GitSigningPubKey == "" }
 
-// gitQuestion asks for git's key after ws's key's changes, whichever, where git has a name, no key.
+// gitQuestion asks for git's key after ws's key's changes, whichever, where mac.conf names none.
 func (k *MacKey) gitQuestion(ctx context.Context, c conf.Conf) ([]step.Change, error) {
 	if !gitAsked(c) {
 		return nil, nil

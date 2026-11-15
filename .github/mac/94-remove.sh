@@ -4,6 +4,8 @@
 # remove refuses a name with no file, and the Mac's last server.
 
 set -eo pipefail
+# shellcheck source=.github/mac-quiet.sh
+. .github/mac-quiet.sh
 
 lab=${LABEL%.ws}.lab
 servers=$HOME/.config/ws/servers
@@ -71,7 +73,7 @@ out=$(ws client macos apply --check 2>&1) || {
     printf '%s\n' "$out"
     exit 1
 }
-if [ -n "$out" ]; then
+if [ -n "$(unlisted "$out")" ]; then
     echo '::error::ws client macos apply --check printed what it should not with ws alone:'
     printf '%s\n' "$out"
     exit 1

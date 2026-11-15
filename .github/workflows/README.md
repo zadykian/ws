@@ -183,10 +183,10 @@ client macos apply --check` must change nothing: it writes no file, keeps no cop
 or `~/.zshrc`, and installs no formula or cask. It must note the install of Zed's cask. Stand-ins
 for Ghostty's and Zed's apps, the font and cld, which `ws client macos apply` leaves alone, spare
 the job's runs their downloads. The job's `mac.conf` names a file key, made in case 20, as ws's
-login key. Without ws's WireGuard key, `ws client macos apply` must make the Mac's key and load no
-daemon, while `ssh -G ws` gives the tunnel's end. The public key it prints must be the Mac's, as
-must the key in the command that gives it to ws. With a stand-in's key it must load the daemon,
-which must run. Then a second run and `--check` must print nothing. Under `script`, `--check` must
+login key and git's. Without ws's WireGuard key, `ws client macos apply` must make the Mac's key and
+load no daemon, and `ssh -G ws` gives the tunnel's end. The public key it prints must be the Mac's,
+as must the key in the command that gives it to ws. With a stand-in's key it must load and run the
+daemon. A second run and `--check` must print nothing. Under `script`, `--check` must
 draw [the run screen](../../engine/tui/README.md#the-run-screen) and leave it. `ssh -G` must give `ws` the tunnel's end.
 The stand-in for ws is a second wireguard-go on the runner, with the printed key as its peer. It
 answers on loopback both as the LAN and as `WS_REMOTE`, and `ws client macos tunnel status` must
@@ -216,9 +216,9 @@ closed, as macOS 27 denies ws the files of Secretive's container. With that line
 `WS_IDENTITY_PUB_KEY` names must become the copy. With more keys in the agent, the stop must give a
 line for each P-256 key alone. A `.pub` that is missing or unreadable, or holds a private key, a
 certificate or a line that is no key, must stop `ws client macos apply` too. So must a key that
-ssh-keygen cannot read or ws's OpenSSH lacks
-([mac-identity-checks.sh](../mac-identity-checks.sh)). With `WS_GIT_NAME` and
-`WS_GIT_EMAIL`, it must stop on an empty `WS_GIT_SIGNING_PUB_KEY`, or one that is missing or
+ssh-keygen cannot read or ws's OpenSSH lacks ([mac-identity-checks.sh](../mac-identity-checks.sh)).
+Git's cases start without the job's git files, with a stand-in `gh` on `PATH`. It must stop on an
+empty `WS_GIT_SIGNING_PUB_KEY`, or one that is missing or
 unreadable, or a `.pub` that holds more than a public key. With a file key there, an ed25519 key
 with no passphrase, git must sign a commit and verify it. A `~/.gitconfig` must get the include of
 `~/.config/ws/gitconfig` at its top, once, keep its own lines, and name its own settings. An include

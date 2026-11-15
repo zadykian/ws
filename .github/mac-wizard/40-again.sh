@@ -4,6 +4,8 @@
 
 set -u
 
+# shellcheck source=.github/mac-quiet.sh
+. "$(dirname "$0")/../mac-quiet.sh"
 # The one line of the gh stage that a run says where the account holds the Mac's key.
 known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
 
@@ -13,7 +15,10 @@ fail=0
 for args in '' --check; do
     if ! out=$("$wsbin" client macos wizard ${args:+"$args"} 2>&1); then
         echo "::error::ws client macos wizard${args:+ $args} failed:"
-    elif [ -n "${out#"$known"}" ]; then
+    elif
+        rest=$(unlisted "$out")
+        [ -n "${rest#"$known"}" ]
+    then
         echo "::error::ws client macos wizard${args:+ $args} printed what it should not:"
     else
         continue

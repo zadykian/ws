@@ -12,13 +12,14 @@ conf=$HOME/.config/ws/mac.conf
 fail=0
 
 conf_print "$conf" >"$RUNNER_TEMP/mac.conf.env"
-printf '%s\n' "WS_USER=$(id -un)" WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' |
+printf '%s\n' "WS_USER=$(id -un)" WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' \
+    'WS_GIT_SIGNING_PUB_KEY=~/.ssh/id_ed25519.pub' |
     conf_write "$conf"
 # script gives the wizard a terminal of its own, its stdin typed there, and its output on stdout.
 # macOS's script writes its stdin's end to the terminal ahead of the lines it still holds, so the
 # end comes 5 s after them.
 {
-    printf '%s\n' '' 10.77.0.0/30 none none '' '' ''
+    printf '%s\n' '' 10.77.0.0/30 none '' '' ''
     sleep 5
 } | script -q /dev/null "$wsbin" --plain client macos wizard >"$RUNNER_TEMP/tty" 2>&1
 status=$?

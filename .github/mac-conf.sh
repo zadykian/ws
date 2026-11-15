@@ -1,8 +1,8 @@
 # shellcheck shell=sh
 # The cases of the mac, mac-wizard and mac-cld jobs write and read a conf, the file that WS_CONF
 # names, through these functions. They source this file and never run it. A conf's layout lives
-# here alone: mac.conf holds the Mac's five keys, and servers/ws/server.conf, beside it, every
-# other key. roles/client/macos/conf/scope.go lists the five keys too.
+# here alone: mac.conf holds the Mac's three keys, and servers/ws/server.conf, beside it, every
+# other key. roles/client/macos/conf/scope.go lists the three keys too.
 
 # conf_server names the server whose file goes with a conf. A case sets it to another name, and
 # sets it back, where it works on a second server.
@@ -18,7 +18,7 @@ conf_server_file() {
 conf_split() {
     awk -v scope="$1" '
         BEGIN {
-            n = split("WS_GIT_NAME WS_GIT_EMAIL WS_GIT_SIGNING_PUB_KEY WS_IDENTITY_PUB_KEY WS_IDENTITY_AGENT", keys, " ")
+            n = split("WS_GIT_SIGNING_PUB_KEY WS_IDENTITY_PUB_KEY WS_IDENTITY_AGENT", keys, " ")
             for (i = 1; i <= n; i++) mac[keys[i]] = 1
         }
         {

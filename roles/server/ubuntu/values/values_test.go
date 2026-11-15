@@ -63,7 +63,7 @@ func TestParseDerivesFromTheUser(t *testing.T) {
 func TestParseKeepsAKeyBelowTheHome(t *testing.T) {
 	for _, in := range []string{
 		"ws_user: root\nws_git_signing_key: /root/k\n",
-		"ws_home: /srv/x\nshell_git_allowed_signers: /srv/x/a/../b/signers\n",
+		"ws_home: /srv/x\nws_git_signing_key: /srv/x/a/../b/k\n",
 	} {
 		if _, err := Parse([]byte(in)); err != nil {
 			t.Errorf("Parse(%q): %v", in, err)
@@ -76,8 +76,8 @@ func TestParseRefusesAKeyOutsideTheHome(t *testing.T) {
 		"outside":          "ws_git_signing_key: /etc/key\n",
 		"dot dot":          "ws_git_signing_key: /home/zadykian/../root/key\n",
 		"the home":         "ws_git_signing_key: /home/zadykian\n",
-		"a sibling":        "shell_git_allowed_signers: /home/zadykian2/signers\n",
-		"relative":         "shell_git_allowed_signers: signers\n",
+		"a sibling":        "ws_git_signing_key: /home/zadykian2/key\n",
+		"relative":         "ws_git_signing_key: key\n",
 		"outside, root":    "ws_user: root\nws_git_signing_key: /tmp/key\n",
 		"outside, ws_home": "ws_home: /srv/x\nws_git_signing_key: /home/zadykian/key\n",
 	}
@@ -91,13 +91,16 @@ func TestParseRefusesAKeyOutsideTheHome(t *testing.T) {
 
 func TestParseRefuses(t *testing.T) {
 	tests := map[string]string{
-		"unknown key":   "nonsense: 1\n",
-		"duplicate key": "base_locale: a\nbase_locale: b\n",
-		"wrong type":    "base_swappiness: lots\n",
-		"unknown field": "wireguard_peers:\n  - name: a\n    key: b\n",
-		"not a mapping": "- a\n",
-		"a secret key":  "shell_secret_env:\n  TOKEN: hunter2\n",
-		"a password":    "ikeward_p12_password: hunter2\n",
+		"unknown key":    "nonsense: 1\n",
+		"a dropped key":  "shell_git_signing: false\n",
+		"a dropped name": "shell_git_name: a\n",
+		"a dropped path": "shell_git_allowed_signers: /etc/ws/allowed_signers\n",
+		"duplicate key":  "base_locale: a\nbase_locale: b\n",
+		"wrong type":     "base_swappiness: lots\n",
+		"unknown field":  "wireguard_peers:\n  - name: a\n    key: b\n",
+		"not a mapping":  "- a\n",
+		"a secret key":   "shell_secret_env:\n  TOKEN: hunter2\n",
+		"a password":     "ikeward_p12_password: hunter2\n",
 	}
 	for name, in := range tests {
 		if _, err := Parse([]byte(in)); err == nil {

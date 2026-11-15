@@ -105,9 +105,6 @@ func (v *Values) derive() {
 	if v.GitSigningKey == "" {
 		v.GitSigningKey = v.Home + "/.ssh/id_ed25519_signing"
 	}
-	if v.Shell.GitAllowedSigners == "" {
-		v.Shell.GitAllowedSigners = v.Home + "/.config/git/allowed_signers"
-	}
 	if v.Wireguard.Peers == nil {
 		if p, err := netip.ParsePrefix(v.Wireguard.Address); err == nil && p.Addr().Is4() {
 			v.Wireguard.Peers = []WireguardPeer{{Name: "mac", Address: p.Addr().Next().String()}}
@@ -115,18 +112,12 @@ func (v *Values) derive() {
 	}
 }
 
-// underHome refuses a signing key or an allowed signers file that is not below ws_home. A role
-// reaches such a file through the account, by a path under the home, so that it can refuse a link
-// there (roles/server/ubuntu/security/README.md).
+// underHome refuses a signing key that is not below ws_home. A role reaches it through the account,
+// by a path under the home, so that it can refuse a link there (roles/server/ubuntu/security/README.md).
 func (v *Values) underHome() error {
 	home := path.Clean(v.Home)
-	for _, k := range []struct{ key, val string }{
-		{"ws_git_signing_key", v.GitSigningKey},
-		{"shell_git_allowed_signers", v.Shell.GitAllowedSigners},
-	} {
-		if !strings.HasPrefix(path.Clean(k.val), strings.TrimSuffix(home, "/")+"/") {
-			return fmt.Errorf("%s: %s is outside ws_home %s", k.key, k.val, v.Home)
-		}
+	if !strings.HasPrefix(path.Clean(v.GitSigningKey), strings.TrimSuffix(home, "/")+"/") {
+		return fmt.Errorf("ws_git_signing_key: %s is outside ws_home %s", v.GitSigningKey, v.Home)
 	}
 	return nil
 }

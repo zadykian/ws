@@ -170,6 +170,7 @@ func (m *Machine) Stat(path string) (effect.Info, error) {
 	}
 	if mode, ok := m.Dirs[target]; ok {
 		info.Mode = mode | fs.ModeDir
+		info.UID, info.GID = m.ownerOf(target)
 		return info, nil
 	}
 	if _, ok := m.Files[target]; ok {
@@ -177,12 +178,22 @@ func (m *Machine) Stat(path string) (effect.Info, error) {
 		if mode, ok := m.Modes[target]; ok {
 			info.Mode = mode
 		}
+		info.UID, info.GID = m.ownerOf(target)
 		return info, nil
 	}
 	if info.Link != "" {
 		return info, nil
 	}
 	return effect.Info{}, &fs.PathError{Op: "stat", Path: path, Err: fs.ErrNotExist}
+}
+
+// ownerOf is the owner that RootAttrs reports: Owners, else Root's, else root. The caller holds the lock.
+func (m *Machine) ownerOf(path string) (uid, gid int) {
+	if o, ok := m.Owners[path]; ok {
+		return o[0], o[1]
+	}
+	a := m.Root[path]
+	return a.UID, a.GID
 }
 
 // ReadDir returns the names of the files, links and directories directly under the directory.

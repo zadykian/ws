@@ -96,14 +96,14 @@ quick 'WS_LAN=10.77.0.0/30 is not an IPv4 network, as 10.88.0.0/24, clear of 10.
 quick "WS_LAN_ADDRESS=198.51.100.1 is not a host's IPv4 address inside WS_LAN, 192.0.2.0/24" \
     env WS_TARGET=lan WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=198.51.100.1 "$wsbin" client macos wizard --check
 quick "WS_TARGET=mac-vm has another target's key: WS_REMOTE" env WS_TARGET=mac-vm \
-    WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=192.0.2.10 WS_GIT_NAME= WS_TUNNEL_NETWORKS= WS_RESOLVERS= \
+    WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=192.0.2.10 WS_TUNNEL_NETWORKS= WS_RESOLVERS= \
     "$wsbin" client macos wizard --check
 
-printf '%s\n' '+WS_GIT_NAME="Jane Doe"' '+WS_GIT_EMAIL=jane@example.com' '+WS_TARGET=lan' \
+printf '%s\n' '+WS_TARGET=lan' \
     '+WS_LAN=192.0.2.0/24' '+WS_LAN_ADDRESS=192.0.2.10' \
     '+WS_TUNNEL_NETWORKS="198.51.100.0/24 203.0.113.0/24"' '+WS_RESOLVERS=example.test=192.0.2.53' >"$RUNNER_TEMP/added"
-env WS_TARGET=lan WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=192.0.2.10 WS_GIT_NAME='Jane Doe' \
-    WS_GIT_EMAIL=jane@example.com WS_TUNNEL_NETWORKS='198.51.100.0/24 203.0.113.0/24' \
+env WS_TARGET=lan WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=192.0.2.10 \
+    WS_TUNNEL_NETWORKS='198.51.100.0/24 203.0.113.0/24' \
     WS_RESOLVERS=example.test=192.0.2.53 \
     "$wsbin" client macos wizard --check </dev/null >"$RUNNER_TEMP/env" 2>&1
 status=$?
@@ -114,12 +114,12 @@ added "$RUNNER_TEMP/env" | cmp -s - "$RUNNER_TEMP/added" ||
 kept "ws client macos wizard --check with the environment's answers"
 
 typed 'the answers typed' home '' 10.77.0.0/30 192.0.2.0/24 198.51.100.1 '' 192.0.2.10 \
-    '"Jane Doe"' jane@ jane@example.com '198.51.100.0/24 203.0.113.0/24' example.test=192.0.2.53
+    '198.51.100.0/24 203.0.113.0/24' example.test=192.0.2.53
 for asked in 'WS_TARGET=home is not lan, cloud or mac-vm' \
     'The machine ws runs on: lan, cloud or mac-vm (WS_TARGET) [lan]: ' \
     'WS_LAN=10.77.0.0/30 is not an IPv4 network' \
     "WS_LAN_ADDRESS=198.51.100.1 is not a host's IPv4 address inside WS_LAN, 192.0.2.0/24" \
-    'Answers: WS_LAN and WS_LAN_ADDRESS go together' 'WS_GIT_EMAIL=jane@ is not an email address' \
+    'Answers: WS_LAN and WS_LAN_ADDRESS go together' \
     "ws's home LAN (WS_LAN) [10.88.0.0/24, or none]: " \
     "ws's address on the LAN (WS_LAN_ADDRESS): "; do
     grep -qF "$asked" "$RUNNER_TEMP/tty" || error "ws client macos wizard asked with no '$asked'"
@@ -128,11 +128,11 @@ done
     error 'ws client macos wizard asked WS_LAN_ADDRESS other than 3 times, for 2 bad answers'
 
 # The defaults: a machine on the LAN, the router's LAN and lease
-# (roles/server/ubuntu/network/router.md), and the shell role's git identity.
-printf '%s\n' '+WS_GIT_NAME=zadykian' '+WS_GIT_EMAIL=me@zadykian.dev' '+WS_TARGET=lan' \
+# (roles/server/ubuntu/network/router.md).
+printf '%s\n' '+WS_TARGET=lan' \
     '+WS_LAN=10.88.0.0/24' '+WS_LAN_ADDRESS=10.88.0.10' '+WS_TUNNEL_NETWORKS=' \
     '+WS_RESOLVERS=' >"$RUNNER_TEMP/added"
-typed 'seven empty lines' '' '' '' '' '' '' ''
+typed 'five empty lines' '' '' '' '' ''
 
 conf=$RUNNER_TEMP/confs/target/mac.conf
 WS_CONF=$conf
@@ -141,18 +141,18 @@ echo 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' | conf_write "$conf"
 conf_print "$conf" >"$RUNNER_TEMP/mac.conf"
 quick 'ws client macos wizard: Answers: no terminal to ask WS_REMOTE: set WS_REMOTE' \
     env WS_TARGET=cloud "$wsbin" client macos wizard --server ws --check
-printf '%s\n' '+WS_GIT_NAME=zadykian' '+WS_GIT_EMAIL=me@zadykian.dev' '+WS_SLOT=0' '+WS_PORT=51820' '+WS_TARGET=cloud' \
+printf '%s\n' '+WS_SLOT=0' '+WS_PORT=51820' '+WS_TARGET=cloud' \
     '+WS_REMOTE=ws.example.test' '+WS_REMOTE_PORT=22' '+WS_TUNNEL_NETWORKS=' \
     '+WS_RESOLVERS=' >"$RUNNER_TEMP/added"
-typed 'a cloud VM' cloud '' ws.example.test '' '' '' '' ''
+typed 'a cloud VM' cloud '' ws.example.test '' '' ''
 for asked in 'Answers: WS_TARGET=cloud needs WS_REMOTE and WS_REMOTE_PORT' \
     "The VM's SSH port (WS_REMOTE_PORT) [22]: "; do
     grep -qF "$asked" "$RUNNER_TEMP/tty" || error "ws client macos wizard asked a cloud VM with no '$asked'"
 done
-printf '%s\n' '+WS_GIT_NAME=zadykian' '+WS_GIT_EMAIL=me@zadykian.dev' '+WS_SLOT=0' '+WS_PORT=51820' '+WS_TARGET=mac-vm' \
+printf '%s\n' '+WS_SLOT=0' '+WS_PORT=51820' '+WS_TARGET=mac-vm' \
     '+WS_LAN=192.168.64.0/24' '+WS_LAN_ADDRESS=192.168.64.2' '+WS_TUNNEL_NETWORKS=' \
     '+WS_RESOLVERS=' >"$RUNNER_TEMP/added"
-typed 'a VM on the Mac' mac-vm '' '' 192.168.64.2 '' '' '' ''
+typed 'a VM on the Mac' mac-vm '' '' 192.168.64.2 '' '' ''
 for asked in "The Mac's network for its VMs (WS_LAN) [192.168.64.0/24]: " \
     'Answers: WS_LAN and WS_LAN_ADDRESS go together'; do
     grep -qF "$asked" "$RUNNER_TEMP/tty" || error "ws client macos wizard asked a VM on the Mac with no '$asked'"

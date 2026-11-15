@@ -11,10 +11,9 @@ import (
 
 func TestAllowedSignersTrustTheKeyOnce(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Dirs["/home/ws/.config"] = 0o700
 	a := account.Account{User: account.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
 	const key = "/home/ws/.ssh/k"
-	rs := AllowedSigners(m, a, key, "/home/ws/.config/git/allowed_signers", "me@x.dev")
+	rs := AllowedSigners(m, a, key)
 	run := func() []string {
 		var shown []string
 		for _, r := range rs {
@@ -35,11 +34,14 @@ func TestAllowedSignersTrustTheKeyOnce(t *testing.T) {
 		t.Errorf("without the key: %q, want nothing", got)
 	}
 	m.Files[key+".pub"] = []byte("ssh-ed25519 AAAA comment\n")
-	if got := run(); len(got) != 1 || !strings.Contains(got[0], "me@x.dev ssh-ed25519 AAAA\n") {
-		t.Errorf("with the key: %q", got)
+	if got := run(); len(got) != 2 || !strings.Contains(got[1], "me@zadykian.dev ssh-ed25519 AAAA\n") {
+		t.Errorf("with the key: %q, want /etc/ws and the file", got)
 	}
-	if got := run(); got != nil || m.Dirs["/home/ws/.config"] != 0o700 {
-		t.Errorf("second run: %q, .config mode %o", got, m.Dirs["/home/ws/.config"])
+	if got := run(); got != nil {
+		t.Errorf("second run: %q", got)
+	}
+	if a := m.Owners["/etc/ws/allowed_signers"]; a != [2]int{} || m.Dirs["/etc/ws"] != 0o755 {
+		t.Errorf("owner %v, /etc/ws mode %o; want root's, 755", a, m.Dirs["/etc/ws"])
 	}
 	m.Files[key+".pub"] = []byte("-----BEGIN\nx\n")
 	if _, err := rs[len(rs)-1].Plan(context.Background()); err == nil {

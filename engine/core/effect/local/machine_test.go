@@ -70,6 +70,9 @@ func TestOSMachineStat(t *testing.T) {
 	if _, err := m.Stat(filepath.Join(dir, "missing")); !errors.Is(err, fs.ErrNotExist) {
 		t.Errorf("Stat(missing) err = %v, want ErrNotExist", err)
 	}
+	if info.UID != os.Getuid() || info.GID != os.Getgid() {
+		t.Errorf("Stat(sub) owner = %d:%d, want %d:%d", info.UID, info.GID, os.Getuid(), os.Getgid())
+	}
 }
 
 // A link whose target fails to stat for another reason than a missing file, ENOTDIR or ELOOP here,

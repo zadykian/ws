@@ -7,7 +7,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-// Step is git as a step of resources. It plans alone where mac.conf gives no git name.
+// Step is git as a step of resources.
 func (g *Git) Step() resource.Lazy {
 	return resource.Lazy{Title: "git", Parts: g.parts}
 }
@@ -15,9 +15,6 @@ func (g *Git) Step() resource.Lazy {
 // parts is one part, which reads the Mac when it plans or reports, so that a report warns of
 // nothing.
 func (g *Git) parts(context.Context) ([]resource.Resource, error) {
-	if g.Conf.GitName == "" {
-		return nil, nil
-	}
 	return []resource.Resource{gitPart{g}}, nil
 }
 

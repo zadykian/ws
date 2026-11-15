@@ -8,6 +8,8 @@ set -u
 # shellcheck source=.github/mac-conf.sh
 . "$(dirname "$0")/../mac-conf.sh"
 
+# shellcheck source=.github/mac-quiet.sh
+. "$(dirname "$0")/../mac-quiet.sh"
 # The one line of the gh stage that a run says where the account holds the Mac's key.
 known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
 
@@ -26,13 +28,14 @@ for args in '' --check; do
     status=$?
     printf '%s\n' "$out"
     [ "$status" = 0 ] || error "ws client macos wizard${args:+ $args} exited $status"
-    [ -z "${out#"$known"}" ] || error "ws client macos wizard${args:+ $args} printed what it should not"
+    rest=$(unlisted "$out")
+    [ -z "${rest#"$known"}" ] || error "ws client macos wizard${args:+ $args} printed what it should not"
 done
 
 conf=$RUNNER_TEMP/confs/tools/mac.conf
 user=$(id -un)
 out=$(WS_CONF=$conf WS_USER=$user WS_TARGET=lan WS_LAN='' WS_REMOTE=localhost WS_REMOTE_PORT=22022 \
-    WS_GIT_NAME='' WS_TUNNEL_NETWORKS='' WS_RESOLVERS='' PATH=$path \
+    WS_TUNNEL_NETWORKS='' WS_RESOLVERS='' PATH=$path \
     "$wsbin" client macos wizard --server ws --check 2>&1)
 status=$?
 printf '%s\n' "$out"

@@ -49,9 +49,6 @@ func Default() Values {
 		Ikeward:  Ikeward{},
 		Network:  Network{DirectLinkAddress: "10.77.0.1/30"},
 		Security: Security{Outbound: true},
-		Shell: Shell{
-			GitName: "zadykian", GitEmail: "me@zadykian.dev", GitSigning: true,
-		},
 		Signoz: Signoz{
 			Dir: "/opt/signoz", URL: "http://127.0.0.1:3301", RetentionDays: 90,
 			Dashboards: []string{"host", "claude"},

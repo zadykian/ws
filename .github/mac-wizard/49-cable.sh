@@ -27,6 +27,8 @@ set -u
 # shellcheck source=.github/mac-conf.sh
 . "$(dirname "$0")/../mac-conf.sh"
 
+# shellcheck source=.github/mac-quiet.sh
+. "$(dirname "$0")/../mac-quiet.sh"
 # The one line of the gh stage that a run says where the account holds the Mac's key.
 known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
 
@@ -117,11 +119,13 @@ chmod 755 /opt/homebrew/bin/networksetup /opt/homebrew/bin/ping
 
 links=$(grep -c '^root: sh -s -- link$' "$ws/log")
 wizard run
-[ "$status" = 0 ] && [ -z "${out#"$known"}" ] &&
+rest=$(unlisted "$out")
+[ "$status" = 0 ] && [ -z "${rest#"$known"}" ] &&
     [ "$(grep -c '^root: sh -s -- link$' "$ws/log")" = $((links + 1)) ] ||
     error "ws client macos wizard with no port with carrier exited $status, or read link other than once"
 wizard --check
-[ "$status" = 0 ] && [ -z "${out#"$known"}" ] || error "ws client macos wizard --check with no carrier exited $status"
+rest=$(unlisted "$out")
+[ "$status" = 0 ] && [ -z "${rest#"$known"}" ] || error "ws client macos wizard --check with no carrier exited $status"
 wizard --update
 printf '%s\n' "$out" | grep -qx -e "- The cable: dock the Mac at the display .* steps\. Where the \
 cable plugs into enp7s0, which ws keeps down, run the line with WS_CABLE_PORT=PORT in the \
@@ -216,7 +220,8 @@ grep -qF "(WS_CABLE_SERVICE) [ws stand-in adapter, or none]: " "$RUNNER_TEMP/tty
         "kept no port"
 links=$(grep -c '^root: sh -s -- link$' "$ws/log")
 wizard run
-[ "$status" = 0 ] && [ -z "${out#"$known"}" ] &&
+rest=$(unlisted "$out")
+[ "$status" = 0 ] && [ -z "${rest#"$known"}" ] &&
     [ "$(grep -c '^root: sh -s -- link$' "$ws/log")" = "$links" ] ||
     error "the next run exited $status, or read link"
 # ws's install again, undocked: host_vars' port and the netplan file go, and enp5s0 loses carrier.
@@ -257,7 +262,8 @@ wizard run WS_CABLE_SERVICE=
     [ "$(logged setmanual.log) $(logged ping.log)" = '1 2' ] ||
     error "ws client macos wizard with WS_CABLE_SERVICE= exited $status, or wrote another line, or acted"
 wizard run
-[ "$status" = 0 ] && [ -z "${out#"$known"}" ] || error "the run after none exited $status"
+rest=$(unlisted "$out")
+[ "$status" = 0 ] && [ -z "${rest#"$known"}" ] || error "the run after none exited $status"
 
 conf_write "$conf" <"$RUNNER_TEMP/cable.conf"
 rm -rf /opt/homebrew/bin/networksetup /opt/homebrew/bin/ping "$RUNNER_TEMP/cable.conf" \
@@ -268,5 +274,6 @@ wizard run
 [ "$status" = 0 ] && [ "$(tail -n 1 "$ws/server.log")" = '' ] ||
     error "the run after host_vars lost the port exited $status, or ran no ws server ubuntu apply"
 wizard run
-[ "$status" = 0 ] && [ -z "${out#"$known"}" ] || error "ws client macos wizard after it exited $status"
+rest=$(unlisted "$out")
+[ "$status" = 0 ] && [ -z "${rest#"$known"}" ] || error "ws client macos wizard after it exited $status"
 exit "$fail"

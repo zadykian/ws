@@ -15,6 +15,8 @@ set -u
 # shellcheck source=.github/mac-conf.sh
 . "$(dirname "$0")/../mac-conf.sh"
 
+# shellcheck source=.github/mac-quiet.sh
+. "$(dirname "$0")/../mac-quiet.sh"
 # The one line of the gh stage that a run says where the account holds the Mac's key.
 known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
 
@@ -96,7 +98,8 @@ standin_set listen-port 51820
 wizard
 [ "$status" = 0 ] || error "a run once UDP 51820 answers again exited $status"
 wizard
-[ "$status" = 0 ] && [ -z "${out#"$known"}" ] ||
+rest=$(unlisted "$out")
+[ "$status" = 0 ] && [ -z "${rest#"$known"}" ] ||
     error "the last run exited $status, or printed what it should not"
 
 pub=$HOME/.config/ws/tunnel.pub

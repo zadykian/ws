@@ -10,32 +10,30 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
-func gitFixture(signing bool) (*effecttest.Machine, stdinMachine, *effecttest.Out, Config) {
+func gitFixture() (*effecttest.Machine, stdinMachine, *effecttest.Out, Config) {
 	m := effecttest.NewMachine()
 	m.Results["git config --file - --name-only --list"] = effecttest.Result{}
 	m.Results["git config --file - --list"] = effecttest.Result{}
 	sm := stdinMachine{Machine: m, answers: map[string]string{}}
 	out := &effecttest.Out{}
 	a := account.Account{User: account.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
-	return m, sm, out, Config{M: sm, Out: out, A: a, Name: "zadykian", Email: "me@zadykian.dev",
-		Signing: signing, Key: "/home/ws/.ssh/id_ed25519_signing", Signers: "/home/ws/.config/git/allowed_signers"}
+	return m, sm, out, Config{M: sm, Out: out, A: a,
+		Key: "/home/ws/.ssh/id_ed25519_signing"}
 }
 
 func TestGitconfigIsTheRolesRendering(t *testing.T) {
-	for file, signing := range map[string]bool{"gitconfig_signing": true, "gitconfig_unsigned": false} {
-		_, _, _, g := gitFixture(signing)
-		want, err := os.ReadFile("testdata/" + file) //nolint:gosec // the name is one of the test's own constants
-		if err != nil {
-			t.Fatal(err)
-		}
-		if got, err := g.content(); err != nil || string(got) != string(want) {
-			t.Errorf("%s: differs from the role's rendering (%v)", file, err)
-		}
+	_, _, _, g := gitFixture()
+	want, err := os.ReadFile("testdata/gitconfig")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, err := g.content(); err != nil || string(got) != string(want) {
+		t.Errorf("testdata/gitconfig: differs from the role's rendering (%v)", err)
 	}
 }
 
 func TestGitconfigShowsNoContent(t *testing.T) {
-	m, _, out, g := gitFixture(true)
+	m, _, out, g := gitFixture()
 	m.Files["/home/ws/.gitconfig"] = []byte("[http]\n\textraheader = secret\n")
 	got, err := g.Plan(context.Background())
 	if err != nil || len(got) != 1 || strings.Contains(got[0].String(), "secret") || !strings.Contains(got[0].String(), "content not shown") {
@@ -47,7 +45,7 @@ func TestGitconfigShowsNoContent(t *testing.T) {
 }
 
 func TestGitconfigNamesWhatARewriteLoses(t *testing.T) {
-	m, sm, out, g := gitFixture(true)
+	m, sm, out, g := gitFixture()
 	m.Files["/home/ws/.gitconfig"] = []byte("OLD")
 	m.Files["/home/ws/.config/git/machine.gitconfig"] = []byte("MACHINE")
 	sm.answers["OLD"] = "user.name\nhttp.https://x.y.extraheader\nuser.signingkey=/home/ws/other\n"

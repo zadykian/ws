@@ -50,9 +50,8 @@ func TestSetupWaitsOnTheMacKey(t *testing.T) {
 	// the key.
 	for conf, want := range map[string]string{
 		"WS_USER=ada\n": "ws client macos apply: after Mac key",
-		"WS_IDENTITY_PUB_KEY=~/k.pub\nWS_GIT_NAME=Ada\nWS_GIT_SIGNING_PUB_KEY=\n":        "ws client macos apply: after Mac key",
-		"WS_IDENTITY_PUB_KEY=~/k.pub\nWS_GIT_NAME=Ada\nWS_GIT_SIGNING_PUB_KEY=~/k.pub\n": "ws client macos apply: would apply the steps above",
-		"WS_IDENTITY_PUB_KEY=~/k.pub\n":                                                  "ws client macos apply: would apply the steps above",
+		"WS_IDENTITY_PUB_KEY=~/k.pub\nWS_GIT_SIGNING_PUB_KEY=\n":        "ws client macos apply: after Mac key",
+		"WS_IDENTITY_PUB_KEY=~/k.pub\nWS_GIT_SIGNING_PUB_KEY=~/k.pub\n": "ws client macos apply: would apply the steps above",
 	} {
 		m := effecttest.NewMachine()
 		m.Results["sudo -v"] = effecttest.Result{}
