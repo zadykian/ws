@@ -7,12 +7,13 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 	"github.com/zadykian/ws/roles/client/macos/networks"
 	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
-const resolverHead = "# Written by github.com/zadykian/ws: ws client macos apply, from WS_RESOLVERS in a server's values.yml.\n"
+const resolverHead = "# " + file.Mark + ": ws client macos apply, from WS_RESOLVERS.\n"
 
 func installDaemons(m *effecttest.Machine, names ...string) {
 	m.Dirs["/Library/LaunchDaemons"] = 0o755
@@ -75,6 +76,16 @@ func TestNetworksSaysWhatCheckWouldPutBeforeRoutesDExists(t *testing.T) {
 func TestNetworksStopsAtAResolverOfAnotherScript(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/etc/resolver/a.test"] = []byte("nameserver 1.1.1.1\n")
+	m.Root["/etc/resolver/a.test"] = effect.Attrs{Mode: 0o644}
+	_, err := networksStep(m, values.Conf{PublicKey: "K", Resolvers: "a.test=10.0.0.1"}).Plan(context.Background())
+	if err == nil || !strings.HasPrefix(err.Error(), "/etc/resolver/a.test is another script's, or written by hand") {
+		t.Errorf("Plan error = %v", err)
+	}
+}
+
+func TestNetworksStopsAtAResolverWithTheOldHeader(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/etc/resolver/a.test"] = []byte("# Written by github.com/zadykian/ws: ws client macos apply, from WS_RESOLVERS in a server's values.yml.\nnameserver 1.1.1.1\n")
 	m.Root["/etc/resolver/a.test"] = effect.Attrs{Mode: 0o644}
 	_, err := networksStep(m, values.Conf{PublicKey: "K", Resolvers: "a.test=10.0.0.1"}).Plan(context.Background())
 	if err == nil || !strings.HasPrefix(err.Error(), "/etc/resolver/a.test is another script's, or written by hand") {
