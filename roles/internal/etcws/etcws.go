@@ -3,6 +3,8 @@
 package etcws
 
 import (
+	"context"
+	"fmt"
 	"io/fs"
 	pathpkg "path"
 	"slices"
@@ -11,6 +13,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // Dir is the directory, DirMode its mode and FileMode a file's.
@@ -39,4 +42,30 @@ func Files(m effect.Machine, path string, content []byte) []resource.Resource {
 		parts = append(parts, file.PublicDir{M: m, Path: d, Mode: DirMode})
 	}
 	return append(parts, file.Public{M: m, Path: path, Content: content, Mode: FileMode})
+}
+
+// Holds tells whether p lies in /etc/ws, where root owns each file. A file elsewhere is the user's.
+func Holds(p string) bool {
+	return strings.HasPrefix(pathpkg.Clean(p), Dir+"/")
+}
+
+// Write puts content in the file at path, in /etc/ws, outside a step, saying each change to out. A
+// file and directories as wanted run no sudo, and say nothing. It returns an error and changes
+// nothing where a directory on the way is closed to other users, as the tunnel's is. Making it
+// public would open what it keeps.
+func Write(ctx context.Context, m effect.Machine, out effect.Out, path string, content []byte) error {
+	for d := pathpkg.Dir(path); d != Dir && strings.HasPrefix(d, Dir+"/"); d = pathpkg.Dir(d) {
+		info, err := m.Stat(d)
+		if err == nil && info.Mode.IsDir() && info.Mode.Perm()&0o005 == 0 {
+			return fmt.Errorf("%s is closed to other users: %s lies in it, and ws would open it", d, path)
+		}
+	}
+	var changes []step.Change
+	for _, part := range Files(m, path, content) {
+		var err error
+		if changes, err = resource.Append(ctx, changes, resource.Said{Out: out, Part: part}); err != nil {
+			return err
+		}
+	}
+	return resource.Group{}.Apply(ctx, step.Plan{Changes: changes})
 }
