@@ -1,24 +1,39 @@
 # git
 
-The `git` role, Go steps in `roles/server/ubuntu/git`, writes `~/.gitconfig`, the signing key, the
-allowed signers, git's tokens and the clones. It runs after `shell`. Each run replaces any change
-made to `~/.gitconfig` by hand. A machine's own settings go in
-`~/.config/git/machine.gitconfig`, which `~/.gitconfig` includes last, so that its settings win.
+The `git` role, Go steps in `roles/server/ubuntu/git`, writes `/etc/ws/gitconfig`, the signing key,
+the allowed signers, git's tokens and the clones. It runs after `shell`. `/etc/ws/gitconfig` is
+root's and 644, and each run replaces any change made to it. `~/.gitconfig` stays the user's, with
+one include of ws's at its top, so that the file's own settings win:
 
-`~/.gitconfig` has gh's credential program already, as `gh auth setup-git` writes it, so running
-that changes nothing. A dry run shows no diff of `~/.gitconfig`, as one set up by hand may hold a
-credential. It names instead the keys a real run would drop, without their values: move them to
-`~/.config/git/machine.gitconfig` first. A subsection shows as `*`, as in `http.*.extraheader`,
-since one may be a URL, which names a host. A real run keeps the old file beside the new one, as
-`~/.gitconfig.*~`: its name ends in the run's PID and time.
+```ini
+[include]
+	path = /etc/ws/gitconfig
+```
 
-`~/.gitconfig` takes its settings from `roles/internal/gitcfg`, which the Mac writes too, so that
-both sides prune. It sets `fetch.prune`, so a fetch drops the remote-tracking branches that the remote
-deleted, a landed pull request's say. A `false` in `~/.config/git/machine.gitconfig` keeps them.
+A run adds the include once, and makes the file where none exists. It keeps a `~/.gitconfig` that
+lacks the include beside the new one, as `~/.gitconfig.*~`: the name ends in the run's time. The
+dry run shows ws's lines alone, as the file may hold a credential, an `http.extraHeader` say. A
+link at `~/.gitconfig` or on the way is refused. So is an include below the file's own settings,
+which it then overrides, or a second one: the run stops, and the include must go to the top, once.
+Where the file sets identity or signing of its own, such as `user.email` or `user.signingkey`, the
+run names them: they win over `/etc/ws/gitconfig`'s. So it names those of git's XDG file,
+`~/.config/git/config`, which lose to them. The Mac writes the same file at the same
+path.
+
+`/etc/ws/gitconfig` has gh's credential program already, as `gh auth setup-git` writes it, so
+nothing needs running on ws. Where it runs, gh writes its two credential sections to `~/.gitconfig`
+with `--global`, below the include. Their empty `helper =` line resets the helpers of
+`/etc/ws/tokens.gitconfig` for the URLs under them: a token for a path on GitHub stops answering.
+Remove those sections where they stand. Each run warns of a section of `~/.gitconfig` that resets
+a token's helper, by the section's name alone.
+
+`/etc/ws/gitconfig` takes its settings from `roles/internal/gitcfg`, which the Mac writes too, so
+that both sides prune. It sets `fetch.prune`, so a fetch drops the remote-tracking branches that
+the remote deleted, a landed pull request's say. A `false` in `~/.gitconfig` keeps them.
 
 ## Signing
 
-`~/.gitconfig` signs each commit with an SSH key of the machine's own: the `.pub`
+`/etc/ws/gitconfig` signs each commit with an SSH key of the machine's own: the `.pub`
 that `WS_GIT_SIGNING_PUB_KEY` names in the values file, `~/.ssh/id_ed25519_signing.pub` by default.
 The private key lies beside it, without `.pub`. The `.pub` lies below `WS_HOME`, or the run fails.
 The role makes the pair once, an ed25519 key with no passphrase, as tools and claude commit
@@ -36,10 +51,9 @@ So `git verify-commit` fails here
 on a commit another key signed, an older machine's say, though GitHub verifies it by the account's
 keys.
 
-A run replaces the signing key a `~/.gitconfig` set up by hand names, and says so: to keep that key,
-set it in `~/.config/git/machine.gitconfig` first. A signing setting there, such as
-`user.signingkey` or `commit.gpgsign` or `tag.gpgsign`, wins over the role's, and the run names any
-it finds.
+A signing setting in `~/.gitconfig`, such as `user.signingkey`, `commit.gpgsign` or `tag.gpgsign`,
+wins over the role's. The run that adds the include names any it finds, and a later run does not.
+To sign with another key, set it there.
 
 A dry run makes no key, so on a machine without one it shows the key's creation and skips the
 allowed signers file.
@@ -57,10 +71,10 @@ path on it, which covers the repositories below it. Each entry takes:
 
 A URL of `http://` fails the run, as git would send its token in clear. Each token goes in a 640
 file of `/etc/ws/tokens`, a 750 directory, named for its URL. `/etc/ws/tokens.gitconfig`, which
-`~/.gitconfig` includes, gets a program for each URL, which answers git's request for a credential
-from that file. Root owns them all, with the account's group, so that the account reads a token
-and cannot change it. The program ignores git's requests to store or erase one, so a token the
-server refuses stays until the entry changes. Where two URLs match, the longer one wins. gh's
+`/etc/ws/gitconfig` includes, gets a program for each URL, which answers git's request for a
+credential from that file. Root owns them all, with the account's group, so that the account reads
+a token and cannot change it. The program ignores git's requests to store or erase one, so a token
+the server refuses stays until the entry changes. Where two URLs match, the longer one wins. gh's
 program still answers for GitHub, except below an entry's URL there.
 
 With `--secrets`, a URL that the table lacks loses its token and its program. Without it, as in
