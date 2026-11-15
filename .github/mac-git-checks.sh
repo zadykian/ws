@@ -35,7 +35,7 @@ git_restore() {
 
 # The job's runs had git's keys, so they made ~/.config/ws's files, which go aside as ~/.gitconfig
 # does. So do the copies of the runner's ~/.gitconfig that those runs left beside it. The cases then
-# start from a conf with git off, and the job's conf comes back at the end.
+# start from a conf with no git key, and the job's conf comes back at the end.
 # shellcheck disable=SC2034 # prints, in mac-setup-checks.sh, reads it
 exact=1
 mkdir "$tmp/job-git"
@@ -62,14 +62,14 @@ gitconfig_aside=1
 XDG_CONFIG_HOME=$tmp/xdg
 export XDG_CONFIG_HOME
 
-# signed makes a commit in a new repository, which git must sign with the key as WS_GIT_NAME and
-# WS_GIT_EMAIL, and verify with the allowed signers, which name the email.
+# signed makes a commit in a new repository, which git must sign with the key as ws's name and
+# email, in roles/internal/gitcfg, and verify with the allowed signers, which name the email.
 signed() {
     rm -rf "$tmp/repo"
     git init -q "$tmp/repo"
     git -C "$tmp/repo" commit -q --allow-empty -m ws || error "git cannot make a signed commit"
     got=$(git -C "$tmp/repo" log -1 --format='%an <%ae> %G? %GS') || true
-    [ "$got" = 'ws stand-in #1 <ws@example.com> G ws@example.com' ] ||
+    [ "$got" = 'zadykian <me@zadykian.dev> G me@zadykian.dev' ] ||
         error "git log shows '$got' for the commit"
 }
 
@@ -88,13 +88,13 @@ if [ "$(command -v gh)" != "$tmp/bin/gh" ]; then
     exit 1
 fi
 
-# With WS_GIT_NAME, WS_GIT_EMAIL and a file key with no passphrase as WS_GIT_SIGNING_PUB_KEY,
+# With a file key with no passphrase as WS_GIT_SIGNING_PUB_KEY,
 # --check must show the files' diffs and the add to gh's login, and write none. A run must write
 # the files. It must add the key to gh's login, titled with the Mac's name, and say so. Its
 # credential command for GitHub must be gh's, and a second run and --check say the key is listed.
 ssh-keygen -q -t ed25519 -N '' -C ws -f "$key"
 signing=WS_GIT_SIGNING_PUB_KEY=$key.pub
-with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com "$signing"
+with "$signing"
 title=$(hostname -s)
 add="gh ssh-key add $key.pub --type signing --title $title"
 listed="ws client macos apply: git's key is among GitHub's signing keys already"
@@ -149,7 +149,7 @@ tail -n +4 ~/.gitconfig | cmp -s - ~/.gitconfig.*~ || error "ws client macos app
 # must stay one, and once its file has the include at its top, ws client macos apply must take it.
 printf '[include]\n\tpath = .config/ws/gitconfig\n' >~/.gitconfig
 prints "$listed"
-with 'WS_GIT_NAME="ws stand-in #2"' WS_GIT_EMAIL=ws@example.com "$signing"
+with "$signing"
 printf '[user]\n\tname = someone\n[include]\n\tpath = ~/.config/ws/gitconfig\n' >~/.gitconfig
 stops "ws client macos apply: $HOME/.gitconfig includes ~/.config/ws/gitconfig below its own settings"
 printf '[include]\n\tpath = %s\n[user]\n\tname = someone\n[include]\n\tpath = %s\n' \
@@ -159,7 +159,7 @@ printf '[user]\n\tname = someone\n' >"$tmp/linked"
 rm ~/.gitconfig
 ln -s "$tmp/linked" ~/.gitconfig
 stops "ws client macos apply: $HOME/.gitconfig is a link to $tmp/linked: put"
-with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com "$signing"
+with "$signing"
 printf '[include]\n\tpath = ~/.config/ws/gitconfig\n[user]\n\tname = someone\n' >"$tmp/linked"
 prints "$listed"
 [ -L ~/.gitconfig ] || error "ws client macos apply replaced the link ~/.gitconfig"
@@ -175,17 +175,17 @@ rm "$tmp/xdg/git/config" ~/.gitconfig
 # An empty WS_GIT_SIGNING_PUB_KEY must stop ws client macos apply, with no line to add while
 # Secretive's agent is not there. So must a key that is missing, and a .pub that holds more than a
 # public key's line, as a private key does.
-with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com WS_GIT_SIGNING_PUB_KEY=
+with WS_GIT_SIGNING_PUB_KEY=
 stops "ws client macos apply: mac.conf names no WS_GIT_SIGNING_PUB_KEY, git's signing key: run ws client macos wizard"
-with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com 'WS_GIT_SIGNING_PUB_KEY=~/.ssh/ws.pub'
+with 'WS_GIT_SIGNING_PUB_KEY=~/.ssh/ws.pub'
 stops "ws client macos apply: $HOME/.ssh/ws.pub, mac.conf's WS_GIT_SIGNING_PUB_KEY, is missing"
 cp "$key" "$tmp/mixed.pub"
-with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com "WS_GIT_SIGNING_PUB_KEY=$tmp/mixed.pub"
+with "WS_GIT_SIGNING_PUB_KEY=$tmp/mixed.pub"
 stops "ws client macos apply: $tmp/mixed.pub holds no public key alone"
 # So must one it cannot read, where the user cannot, as on the runner: root reads it.
 cp "$key.pub" "$tmp/unread-git.pub" && chmod 000 "$tmp/unread-git.pub"
 if ! cat "$tmp/unread-git.pub" >/dev/null 2>&1; then
-    with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com \
+    with \
         "WS_GIT_SIGNING_PUB_KEY=$tmp/unread-git.pub"
     stops "ws client macos apply: cannot read $tmp/unread-git.pub"
 fi
@@ -202,9 +202,9 @@ if [ -z "$agent" ] || ! SSH_AUTH_SOCK=$secretive/Data/socket.ssh ssh-add -q "$tm
     exit 1
 fi
 rm "$tmp/p256"
-with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com WS_GIT_SIGNING_PUB_KEY=
+with WS_GIT_SIGNING_PUB_KEY=
 stops "$(unnamed WS_GIT_SIGNING_PUB_KEY "git's signing key" "$tmp/p256.pub")"
-with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com \
+with \
     "WS_GIT_SIGNING_PUB_KEY=~/${copy#"$HOME/"}"
 setup --check || error "ws client macos apply --check failed: $out"
 case $out in
@@ -234,7 +234,7 @@ chmod -R u+rwx "$secretive" && rm -rf "$secretive" "$files/secretive"
 # warning that names the scope. Another error must draw its last line, its final period dropped, as
 # must an add that leaves the account without the key. Then, where the account lacks the key,
 # --check must show the add, a run must add it, and a second run and --check say GitHub lists it.
-with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com "$signing"
+with "$signing"
 rm "$tmp/login"
 warning=$(warned "$key.pub")
 prints "ws client macos apply: wrote $files/allowed_signers${nl}ws client macos apply: wrote $files/gitconfig$nl$warning"
@@ -261,8 +261,7 @@ prints "$listed" --check
     [ "$(cat "$tmp/keys")" = "$(awk '{ print $1, $2 }' "$key.pub")" ] ||
     error "the stand-in logged another add, or holds other keys, than $key.pub's"
 
-# Where PATH has no gh, ws client macos apply must leave it so without git's keys. With them,
-# --check must say that Homebrew would install it, name the gh at Homebrew's prefix as git's
+# Where PATH has no gh, ws client macos apply --check must say that Homebrew would install it, name the gh at Homebrew's prefix as git's
 # credential command, and name the add. A run must install it, once. The stand-in brew's prefix is
 # $tmp/brew, where its install puts the stand-in gh, and it passes other commands to the runner's
 # brew.
@@ -281,9 +280,7 @@ path=$PATH
 PATH=$tmp/brew/bin$(echo "$PATH" | tr : '\n' | while read -r each; do
     [ -x "$each/gh" ] || printf ':%s' "$each"
 done)
-with
-prints ''
-with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com "$signing"
+with "$signing"
 setup --check || error "ws client macos apply --check failed: $out"
 case $out in
 "ws client macos apply: would run brew install gh$nl"*"$nl+${tab}helper = !$tmp/brew/bin/gh auth\
@@ -291,7 +288,7 @@ case $out in
  that lacks the key") ;;
 *) error "ws client macos apply --check showed no install of gh, another credential command, or no add: $out" ;;
 esac
-[ ! -f "$tmp/brew.log" ] || error "ws client macos apply installed gh without git's keys, or under --check"
+[ ! -f "$tmp/brew.log" ] || error "ws client macos apply installed gh under --check"
 prints "ws client macos apply: installing gh${nl}ws client macos apply: wrote $files/gitconfig$nl$warning"
 prints "$warning"
 [ "$(cat "$tmp/brew.log")" = 'install gh' ] || error "ws client macos apply ran brew install gh other than once"

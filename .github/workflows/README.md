@@ -217,8 +217,8 @@ closed, as macOS 27 denies ws the files of Secretive's container. With that line
 line for each P-256 key alone. A `.pub` that is missing or unreadable, or holds a private key, a
 certificate or a line that is no key, must stop `ws client macos apply` too. So must a key that
 ssh-keygen cannot read or ws's OpenSSH lacks ([mac-identity-checks.sh](../mac-identity-checks.sh)).
-Git's cases start without the job's git files, with a stand-in `gh` on `PATH`. With `WS_GIT_NAME`
-and `WS_GIT_EMAIL`, it must stop on an empty `WS_GIT_SIGNING_PUB_KEY`, or one that is missing or
+Git's cases start without the job's git files, with a stand-in `gh` on `PATH`. It must stop on an
+empty `WS_GIT_SIGNING_PUB_KEY`, or one that is missing or
 unreadable, or a `.pub` that holds more than a public key. With a file key there, an ed25519 key
 with no passphrase, git must sign a commit and verify it. A `~/.gitconfig` must get the include of
 `~/.config/ws/gitconfig` at its top, once, keep its own lines, and name its own settings. An include
