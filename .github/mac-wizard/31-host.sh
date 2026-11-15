@@ -7,7 +7,7 @@
 # roles/server/ubuntu/network/router.md. None may change known_hosts. WS_HOST_KEY=yes, with the
 # Mac's own conf, must then add the same line back. With a conf whose way to ws doesn't
 # answer, ws's address now must come from WS_FIRST_ADDRESS. That run's closing list must name
-# the server's WS_PORT in the router's forwards, and ws's lease at no address, as its file has no
+# the server's WS_TUNNEL_PORT in the router's forwards, and ws's lease at no address, as its file has no
 # LAN. As that port is not 51820, the run must name WS_TUNNEL_PORT in ws's host_vars before ws's
 # run. A cloud VM's copy must name the server file's way to ws, and no lease. The Mac's own conf
 # then puts the way back.
@@ -87,7 +87,7 @@ cmp -s "$hosts" "$RUNNER_TEMP/hosts" || error "ws client macos wizard with WS_HO
 conf=$RUNNER_TEMP/confs/first/mac.conf
 {
     conf_print ~/.config/ws/mac.conf | sed 's/^WS_REMOTE=.*/WS_REMOTE=192.0.2.1/'
-    echo WS_PORT=51821
+    echo WS_TUNNEL_PORT=51821
 } | conf_write "$conf"
 cp "$RUNNER_TEMP/hosts.without" "$hosts"
 out=$(WS_CONF=$conf "$wsbin" client macos wizard </dev/null 2>&1)
@@ -102,7 +102,7 @@ printf '%s\n' "$out"
 [ "$status" = 0 ] || error "ws client macos wizard with WS_FIRST_ADDRESS=127.0.0.1 exited $status"
 cmp -s "$hosts" "$RUNNER_TEMP/hosts" || error "ws client macos wizard with WS_FIRST_ADDRESS wrote another $hosts"
 sudo grep -qx 'WS_TUNNEL_PORT: 51821' "$RUNNER_TEMP/ws/root"/etc/ws/host_vars.yml ||
-    error "ws client macos wizard with WS_PORT=51821 named no WS_TUNNEL_PORT in ws's host_vars"
+    error "ws client macos wizard with WS_TUNNEL_PORT=51821 named no WS_TUNNEL_PORT in ws's host_vars"
 lease="- ws's lease: static, as roles/server/ubuntu/network/router.md has it, as this run reached ws at 127.0.0.1."
 forwards="- The router's forwards to ws, UDP 51821 and TCP 22022, for 192.0.2.1,"
 if ! printf '%s\n' "$out" | grep -qxF -e "$lease" ||

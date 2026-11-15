@@ -145,7 +145,7 @@ func (a *Answers) collect(ctx context.Context, text map[conf.Scope]string, c con
 
 // compose splits the lines by the file of their keys, and returns each file with its lines added,
 // mac.conf first. A server's file that lacks WS_SLOT and gets lines gets its place first: the slot,
-// then WS_PORT where it has none. That keeps servers behind one remote apart. The stage stops at a
+// then WS_TUNNEL_PORT where it has none. That keeps servers behind one remote apart. The stage stops at a
 // file refused with its lines, and says it.
 func (a *Answers) compose(text map[conf.Scope]string, lines, remote string, place *conf.Place) ([]part, error) {
 	var parts []part
@@ -154,8 +154,8 @@ func (a *Answers) compose(text map[conf.Scope]string, lines, remote string, plac
 		kept := p.file.Scope.Keep(lines)
 		if p.file.Scope == conf.ServerFile && kept != "" && !conf.HasLine(text[conf.ServerFile], "WS_SLOT") {
 			head := "WS_SLOT=" + strconv.Itoa(int(place.Slot)) + "\n"
-			if !conf.HasLine(text[conf.ServerFile], "WS_PORT") {
-				head += conf.Line("WS_PORT", place.Port(remote)) + "\n"
+			if !conf.HasLine(text[conf.ServerFile], "WS_TUNNEL_PORT") {
+				head += conf.Line("WS_TUNNEL_PORT", place.Port(remote)) + "\n"
 			}
 			kept = head + kept
 		}

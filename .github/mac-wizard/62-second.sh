@@ -1,7 +1,7 @@
 #!/bin/sh
 # A second server, lab, on the Mac where ws has its tunnel. Its stand-in is standin.sh's second, at
 # 127.0.0.1:22023. With no terminal a key with a default needs its variable. --check must show
-# WS_SLOT=1 and WS_PORT=51821, and write no file. The wizard asks for no WS_USER, so lab's file holds
+# WS_SLOT=1 and WS_TUNNEL_PORT=51821, and write no file. The wizard asks for no WS_USER, so lab's file holds
 # that line before the run. --check must then show WS_SLOT=1 again, beside ws's slot 0, and leave the
 # file. The run must set lab's host_vars to 10.99.1.1/24 and 51821. It must give lab a daemon with a
 # handshake and one login, and leave ws's files. The next run prints nothing.
@@ -51,9 +51,9 @@ answers="WS_REMOTE=localhost WS_REMOTE_PORT=22023 WS_TARGET=lan WS_LAN= WS_TUNNE
 wizard --check
 shown=$(printf '%s\n' "$out" | tr -d '\r')
 [ "$status" = 0 ] && printf '%s\n' "$shown" | grep -qx '+WS_SLOT=1' &&
-    printf '%s\n' "$shown" | grep -qx '+WS_PORT=51821' &&
+    printf '%s\n' "$shown" | grep -qx '+WS_TUNNEL_PORT=51821' &&
     printf '%s\n' "$shown" | grep -qx '+WS_REMOTE_PORT=22023' && [ ! -e "${labconf%/*}" ] ||
-    error "--check for lab exited $status, showed no WS_SLOT=1, WS_PORT=51821 and WS_REMOTE_PORT=22023, or wrote lab's file"
+    error "--check for lab exited $status, showed no WS_SLOT=1, WS_TUNNEL_PORT=51821 and WS_REMOTE_PORT=22023, or wrote lab's file"
 
 user="WS_USER=$(id -un)"
 mkdir -p "${labconf%/*}" && echo "$user" >"$labconf"
@@ -67,7 +67,7 @@ fi
 wizard
 [ "$status" = 0 ] || error "ws client macos wizard --server lab exited $status"
 
-for line in WS_SLOT=1 WS_PORT=51821 WS_REMOTE_PORT=22023 "WS_PUBLIC_KEY=$(cat "$lab/wg0" 2>/dev/null)"; do
+for line in WS_SLOT=1 WS_TUNNEL_PORT=51821 WS_REMOTE_PORT=22023 "WS_PUBLIC_KEY=$(cat "$lab/wg0" 2>/dev/null)"; do
     grep -qxF -e "$line" "$labconf" || error "lab's file lacks $line"
 done
 vars="$lab/root"/etc/ws/host_vars.yml

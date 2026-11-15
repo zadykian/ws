@@ -8,7 +8,7 @@ import (
 	"github.com/zadykian/ws/roles/internal/slot"
 )
 
-// defaultPort is the UDP port of wg0 where WS_PORT is empty, and forwardPort the TCP port that a
+// defaultPort is the UDP port of wg0 where WS_TUNNEL_PORT is empty, and forwardPort the TCP port that a
 // router forwards to ws's 22 where WS_REMOTE_PORT is.
 const (
 	defaultPort = 51820
@@ -37,7 +37,7 @@ func FreeSlot(others []Sibling) (slot.Slot, error) {
 	return 0, errors.New("every slot, 0 to 15, holds a server: ws client macos remove NAME frees one")
 }
 
-// Port is WS_PORT for a server behind remote: 51820 where no other server has the same, non-empty
+// Port is WS_TUNNEL_PORT for a server behind remote: 51820 where no other server has the same, non-empty
 // WS_REMOTE. Else Port takes a port from 51820 plus the slot up that none of them takes, as the
 // router forwards a port to one server.
 func (p Place) Port(remote string) string {

@@ -55,7 +55,7 @@ func TestRouteLogsAFailureOnce(t *testing.T) {
 }
 
 func TestWriteState(t *testing.T) {
-	r := newRig("WS_PORT=51822\n")
+	r := newRig("WS_TUNNEL_PORT=51822\n")
 	if err := r.start(context.Background()); err != nil {
 		t.Fatal(err)
 	}

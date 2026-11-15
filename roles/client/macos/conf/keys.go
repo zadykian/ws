@@ -22,7 +22,7 @@ func (c Conf) TunnelSlot() slot.Slot {
 	return s
 }
 
-// TunnelPort gives the UDP port of wg0 on the server: WS_PORT, or 51820 where it has none.
+// TunnelPort gives the UDP port of wg0 on the server: WS_TUNNEL_PORT, or 51820 where it has none.
 func (c Conf) TunnelPort() string {
 	if c.Port == "" {
 		return strconv.Itoa(defaultPort)
@@ -82,7 +82,7 @@ var keys = []key{
 	{"WS_REMOTE", func(c *Conf) *string { return &c.Remote }, plain(check.Name),
 		"a host name or an IPv4 address"},
 	{"WS_REMOTE_PORT", func(c *Conf) *string { return &c.RemotePort }, plain(check.Port), port},
-	{"WS_PORT", func(c *Conf) *string { return &c.Port }, plain(check.Port), port},
+	{"WS_TUNNEL_PORT", func(c *Conf) *string { return &c.Port }, plain(check.Port), port},
 	{"WS_TUNNEL_NETWORKS", func(c *Conf) *string { return &c.TunnelNetworks },
 		plain(func(v string) bool { return check.Networks(v, tunnel.CableNet, slot.Range) }),
 		"IPv4 networks split by blanks, as 10.20.0.0/16, each clear of " + keptNames},
