@@ -8,7 +8,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/zadykian/ws/roles/client/macos/internal/gitcfg"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 )
 
@@ -86,7 +85,7 @@ func (g *Git) listed(ctx context.Context, gh, public string) (bool, error) {
 func unverified(err error, pub string) string {
 	status, stderr := ghFailure(err)
 	return fmt.Sprintf("%s. Until a later run adds %s, GitHub shows the commits it signs as unverified",
-		gitcfg.Why(status, stderr), pub)
+		why(status, stderr), pub)
 }
 
 // register plans to add the key to the signing keys of gh's login where they lack it, titled with

@@ -1,15 +1,13 @@
-// Package gitcfg holds the texts of the git step of ws client macos apply, as pure functions: the
-// files it writes, and what it makes of git's answers.
-package gitcfg
+package git
 
 import "strings"
 
-// Header is the first line of each file the step writes.
-const Header = "# Written by ws client macos apply from ~/.config/ws/mac.conf: its next run replaces changes " +
+// header is the first line of each file the step writes.
+const header = "# Written by ws client macos apply from ~/.config/ws/mac.conf: its next run replaces changes " +
 	"made here."
 
-// Inputs are the values of ~/.config/ws/gitconfig.
-type Inputs struct {
+// inputs are the values of ~/.config/ws/gitconfig.
+type inputs struct {
 	Name, Email string
 	// Key is the signing key's .pub, as an absolute path.
 	Key string
@@ -21,13 +19,13 @@ type Inputs struct {
 	Program string
 }
 
-// Config returns ~/.config/ws/gitconfig: the identity, and each commit and tag signed with the key,
+// config returns ~/.config/ws/gitconfig: the identity, and each commit and tag signed with the key,
 // through Program where there is one. The allowed signers file trusts the key for the email. Then
 // gh's credential command follows, as gh auth setup-git writes it, after an empty value that drops
 // any set before it. The name and the paths go in quotes, which mac.conf's values cannot end.
-func Config(in Inputs) string {
+func config(in inputs) string {
 	var b strings.Builder
-	b.WriteString(Header + "\n")
+	b.WriteString(header + "\n")
 	b.WriteString("# ~/.gitconfig includes it at its top, so that its own settings win where both set one.\n")
 	b.WriteString("[user]\n    name = \"" + in.Name + "\"\n    email = " + in.Email + "\n")
 	b.WriteString("    signingkey = \"" + in.Key + "\"\n")
@@ -44,14 +42,14 @@ func Config(in Inputs) string {
 	return b.String()
 }
 
-// AllowedSigners returns the file that trusts the key for the email in git verify-commit.
-func AllowedSigners(email, public string) string {
-	return Header + "\n" + email + " " + public + "\n"
+// allowedSigners returns the file that trusts the key for the email in git verify-commit.
+func allowedSigners(email, public string) string {
+	return header + "\n" + email + " " + public + "\n"
 }
 
-// Wrapper returns the script that gives ssh-keygen Secretive's agent, for a key that Secretive
+// wrapper returns the script that gives ssh-keygen Secretive's agent, for a key that Secretive
 // holds. So a terminal and an IDE sign alike, whatever agent the app that runs git has.
-func Wrapper(secretive string) string {
+func wrapper(secretive string) string {
 	return "#!/bin/sh\n" +
 		"# Written by ws client macos apply: git's gpg.ssh.program, ssh-keygen with Secretive's agent, which\n" +
 		"# holds the signing key. Its next run replaces changes made here.\n" +

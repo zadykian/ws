@@ -1,4 +1,4 @@
-package gitcfg
+package git
 
 import (
 	"errors"
@@ -14,11 +14,11 @@ func ours(path, dir string) bool {
 	return path == dir+"/gitconfig" || path == ".config/ws/gitconfig"
 }
 
-// Included reports whether ~/.gitconfig includes ~/.config/ws/gitconfig. Its error says what makes
+// included reports whether ~/.gitconfig includes ~/.config/ws/gitconfig. Its error says what makes
 // the include wrong, after the file's name: the include comes twice or sits below the file's own
 // settings, which it then overrides. paths are the file's include.path values, and first is the
 // name of its first setting, as git config --name-only --list prints it.
-func Included(paths []string, first, dir string) (bool, error) {
+func included(paths []string, first, dir string) (bool, error) {
 	count := 0
 	for _, p := range paths {
 		if ours(p, dir) {
@@ -44,9 +44,9 @@ func Included(paths []string, first, dir string) (bool, error) {
 var ownSetting = regexp.MustCompile(`^(user\.(name|email|signingkey)|(commit|tag)\.gpgsign|` +
 	`gpg\.(format|ssh\.program|ssh\.allowedsignersfile))$`)
 
-// Own returns the settings of identity and signing among names, once each, in their order, joined
+// ownSettings returns the settings of identity and signing among names, once each, in their order, joined
 // by ", ". names are those that git config --name-only --list prints.
-func Own(names []string) string {
+func ownSettings(names []string) string {
 	var list []string
 	for _, n := range names {
 		if ownSetting.MatchString(n) && !slices.Contains(list, n) {

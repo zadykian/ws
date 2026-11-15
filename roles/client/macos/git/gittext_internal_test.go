@@ -1,15 +1,13 @@
-package gitcfg_test
+package git
 
 import (
 	"strings"
 	"testing"
-
-	"github.com/zadykian/ws/roles/client/macos/internal/gitcfg"
 )
 
 func TestConfigSignsWithTheKey(t *testing.T) {
-	in := gitcfg.Inputs{Name: "A B", Email: "a@b.c", Key: "/h/k.pub", Gh: "/opt/gh", Dir: "/h/.config/ws"}
-	got := gitcfg.Config(in)
+	in := inputs{Name: "A B", Email: "a@b.c", Key: "/h/k.pub", Gh: "/opt/gh", Dir: "/h/.config/ws"}
+	got := config(in)
 	for _, want := range []string{
 		"    name = \"A B\"\n    email = a@b.c\n    signingkey = \"/h/k.pub\"\n",
 		"[commit]\n    gpgsign = true\n[tag]\n    gpgsign = true\n",
@@ -25,20 +23,20 @@ func TestConfigSignsWithTheKey(t *testing.T) {
 		t.Errorf("Config names a program with none given:\n%s", got)
 	}
 	in.Program = "/h/.config/ws/secretive-ssh-keygen"
-	if got := gitcfg.Config(in); !strings.HasSuffix(got, "    program = \"/h/.config/ws/secretive-ssh-keygen\"\n") {
+	if got := config(in); !strings.HasSuffix(got, "    program = \"/h/.config/ws/secretive-ssh-keygen\"\n") {
 		t.Errorf("Config ends %q", got)
 	}
 }
 
 func TestAllowedSignersTrustsTheKeyForTheEmail(t *testing.T) {
-	got := gitcfg.AllowedSigners("a@b.c", "ssh-ed25519 AAAA")
-	if !strings.HasSuffix(got, "\na@b.c ssh-ed25519 AAAA\n") || !strings.HasPrefix(got, gitcfg.Header) {
+	got := allowedSigners("a@b.c", "ssh-ed25519 AAAA")
+	if !strings.HasSuffix(got, "\na@b.c ssh-ed25519 AAAA\n") || !strings.HasPrefix(got, header) {
 		t.Errorf("AllowedSigners = %q", got)
 	}
 }
 
 func TestWrapperSetsSecretivesSocket(t *testing.T) {
-	got := gitcfg.Wrapper("/S/Data")
+	got := wrapper("/S/Data")
 	if !strings.Contains(got, "SSH_AUTH_SOCK='/S/Data/socket.ssh'\nexport SSH_AUTH_SOCK\nexec ssh-keygen \"$@\"\n") {
 		t.Errorf("Wrapper = %q", got)
 	}

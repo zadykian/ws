@@ -1,9 +1,7 @@
-package gitcfg_test
+package git
 
 import (
 	"testing"
-
-	"github.com/zadykian/ws/roles/client/macos/internal/gitcfg"
 )
 
 func TestWhyNamesWhatGhLacks(t *testing.T) {
@@ -17,7 +15,7 @@ func TestWhyNamesWhatGhLacks(t *testing.T) {
 		"other":     {1, "one\nHTTP 500: Server Error.\n", "gh failed: HTTP 500: Server Error"},
 		"no errors": {2, "", "gh failed: exit 2"},
 	} {
-		if got := gitcfg.Why(tc.status, tc.stderr); got != tc.want {
+		if got := why(tc.status, tc.stderr); got != tc.want {
 			t.Errorf("%s: Why = %q, want %q", name, got, tc.want)
 		}
 	}
