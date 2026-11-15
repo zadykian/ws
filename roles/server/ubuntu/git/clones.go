@@ -1,4 +1,4 @@
-package shell
+package git
 
 import (
 	"context"
@@ -38,18 +38,18 @@ func hasUserInfo(repo string) bool {
 	return false
 }
 
-// clones clones each repository whose dest is missing, once: a clone is never pulled or reset, as
+// Clones clones each repository whose dest is missing, once: a clone is never pulled or reset, as
 // once made it belongs to the user. It runs git clone, not a module that asks the server where dest
 // is missing, so that a dry run lists each missing dest offline. It runs as the user, whose
 // ~/.gitconfig gives the tokens, in the user's home.
-type clones struct {
+type Clones struct {
 	M      effect.Machine
 	A      account.Account
 	Clones []values.GitClone
 }
 
 type cloneRepo struct {
-	c    clones
+	c    Clones
 	repo string
 	dest string
 }
@@ -61,7 +61,7 @@ func (c cloneRepo) Apply(ctx context.Context) error {
 }
 
 // Plan checks the clones, then lists those whose dest is missing, a relative one under the home.
-func (c clones) Plan(context.Context) ([]resource.Change, error) {
+func (c Clones) Plan(context.Context) ([]resource.Change, error) {
 	if err := checkClones(c.Clones); err != nil {
 		return nil, err
 	}

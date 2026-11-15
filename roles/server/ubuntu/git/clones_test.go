@@ -1,4 +1,4 @@
-package shell
+package git
 
 import (
 	"context"
@@ -37,7 +37,7 @@ func TestClonesRunOnceAsTheUser(t *testing.T) {
 	m := effecttest.NewMachine()
 	a := account.Account{User: account.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
 	m.Results["runuser -u ws -- env -C /home/ws HOME=/home/ws git -C /home/ws clone -- https://h/a work/a"] = effecttest.Result{}
-	cl := clones{M: m, A: a, Clones: []values.GitClone{
+	cl := Clones{M: m, A: a, Clones: []values.GitClone{
 		{Repo: "https://h/a", Dest: "work/a"}, {Repo: "https://h/b", Dest: "/srv/b"},
 	}}
 	m.Dirs["/srv/b"] = 0o755
