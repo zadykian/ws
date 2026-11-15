@@ -13,10 +13,10 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/internal/plan"
 )
 
-// SigningKey makes the SSH key that signs commits, given its .pub's path, once, with no passphrase: tools and claude
-// commit unattended, and the key only signs. roles/server/ubuntu/shell/README.md says how to revoke
-// it, under Signing. ssh-keygen refuses a path whose directory is missing, as a container's ~/.ssh
-// may be, so the directory comes first. A key in the home itself needs none. The user makes the
+// SigningKey makes the SSH key that signs commits, given its .pub's path, once, with no passphrase:
+// tools and claude commit unattended, and the key only signs. roles/server/ubuntu/git/README.md
+// says how to revoke it, under Signing. ssh-keygen refuses a path whose directory is missing, as a
+// container's ~/.ssh may be, so the directory comes first. A key in the home itself needs none. The user makes the
 // key, and owns it.
 func SigningKey(m effect.Machine, a account.Account, pub string) []resource.Resource {
 	gen := keygen{M: m, User: a.User, Path: strings.TrimSuffix(pub, ".pub")}

@@ -1,7 +1,7 @@
 # git on the Mac
 
 `ws client macos apply` sets up git on the Mac on each run
-([The Mac](../README.md)), as the `shell` role does on ws ([Signing](../../../server/ubuntu/shell/README.md#signing)). It writes
+([The Mac](../README.md)), as the `shell` role does on ws ([Signing](../../../server/ubuntu/git/README.md#signing)). It writes
 `~/.config/ws/gitconfig`, from the settings that `roles/internal/gitcfg` holds for both sides, the
 fetch's prune among them. The author is `gitcfg.Name` and `gitcfg.Email`, `zadykian` and
 `me@zadykian.dev`. Each commit is signed with `WS_GIT_SIGNING_PUB_KEY`, which
