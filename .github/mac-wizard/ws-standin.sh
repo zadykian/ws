@@ -27,7 +27,7 @@
 #   root's;
 # - uplink names the port of the default route. addr/PORT holds a port's IPv4 addresses, which ws
 #   server ubuntu apply --only cable,wireguard gives the port that host_vars names, with carrier.
-#   That run writes the port in root's netplan file, as the network role does, or removes the file.
+#   That run writes the port in root's netplan file, as the cable role does, or removes the file.
 
 set -u
 
@@ -54,7 +54,7 @@ wg0() {
         peer "$(cat "$s/root"/etc/wireguard/mac.pub)" allowed-ips "${addr%.*}.2/32" || return 1
     ifconfig "$(cat "$s/utun")" up
 }
-# direct names the port that ws's host_vars names in the netplan file, as the network role does,
+# direct names the port that ws's host_vars names in the netplan file, as the cable role does,
 # or removes the file where host_vars names none. It gives the port ws's end of the cable,
 # 10.77.0.1/30, once networkd sees carrier, which the cases' sysfs shows.
 direct() {

@@ -61,7 +61,7 @@ func noWay(server string, c conf.Conf) error {
 	how := "set those in server.conf"
 	switch c.Target {
 	case "lan":
-		how += " as roles/server/ubuntu/network/router.md has them"
+		how += " as roles/server/ubuntu/cable/router.md has them"
 	case "mac-vm":
 		how = "start the VM, or set WS_LAN to the Mac's network for it, as roles/client/macos/conf/README.md says"
 	default:

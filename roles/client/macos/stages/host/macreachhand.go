@@ -34,11 +34,11 @@ func (r MacReach) Hand(h *guided.Hand, s session.Status) {
 		if c.LANAddress != "" {
 			lease += " at " + c.LANAddress
 		}
-		h.Add("%s's lease: %s, as roles/server/ubuntu/network/router.md has it, as this run reached %s at %s.",
+		h.Add("%s's lease: %s, as roles/server/ubuntu/cable/router.md has it, as this run reached %s at %s.",
 			r.SSH.Host, lease, r.SSH.Host, first)
 	}
 	if c.Remote != "" {
-		h.Add("The router's forwards to %s, UDP %s and TCP %s, for %s, as roles/server/ubuntu/network/router.md has them.",
+		h.Add("The router's forwards to %s, UDP %s and TCP %s, for %s, as roles/server/ubuntu/cable/router.md has them.",
 			r.SSH.Host, c.TunnelPort(), c.ForwardPort(), c.Remote)
 	}
 }

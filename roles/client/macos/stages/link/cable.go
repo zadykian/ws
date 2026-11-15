@@ -18,7 +18,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
-// cableEnd is ws's end of the cable, given to its port by the network role. The Mac's service gets
+// cableEnd is ws's end of the cable, given to its port by the cable role. The Mac's service gets
 // the other end.
 const cableEnd = "10.77.0.1"
 
@@ -26,7 +26,7 @@ const cableEnd = "10.77.0.1"
 // a machine on the LAN alone.
 //
 // Docked, the Mac's cable gives that port carrier, which the files script's link lists among ws's
-// wired ports. The stage names the port in /etc/ws/host_vars.yml on ws, whose network role gives it
+// wired ports. The stage names the port in /etc/ws/host_vars.yml on ws, whose cable role gives it
 // 10.77.0.1 as ws's end. Then it names the Mac's service of the cable in the server file's
 // WS_CABLE_SERVICE. There ws client macos apply gives that 10.77.0.2 as the Mac's end. It names the
 // port in the server file's WS_CABLE_PORT too, which the stage names on ws again after ws's install.

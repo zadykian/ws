@@ -18,7 +18,7 @@ func (c *Cable) file() conf.File {
 
 // Apply takes ws's port of the cable, where none holds ws's end, from WS_CABLE_PORT or the
 // terminal, the one with carrier by default. link names it in /etc/ws/host_vars.yml on ws. Then ws
-// server ubuntu apply --only cable,wireguard runs there, as both roles read it: the network role
+// server ubuntu apply --only cable,wireguard runs there, as both roles read it: the cable role
 // must give it 10.77.0.1 as ws's end. After that, service takes the Mac's service. none, as either
 // answer, writes an empty WS_CABLE_SERVICE. Where the server's file has a service, again takes the stage's
 // steps.
@@ -71,7 +71,7 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 	return c.service(ctx)
 }
 
-// name puts the port in ws's /etc/ws/host_vars.yml and runs the network and wireguard roles there.
+// name puts the port in ws's /etc/ws/host_vars.yml and runs the cable and wireguard roles there.
 func (c *Cable) name(ctx context.Context, port string) error {
 	return c.Ws.NameCable(ctx, port)
 }

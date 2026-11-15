@@ -8,7 +8,7 @@
 # - link lists ws's wired ports but the uplinks, those that a default route names, a line each. A
 #   line holds the port, its carrier, 1 or 0, or - where the port is down, and its IPv4 addresses,
 #   or -. link PORT names that port in ws's /etc/ws/host_vars.yml as
-#   WS_CABLE_PORT, the port of the Mac's cable, which the network and wireguard
+#   WS_CABLE_PORT, the port of the Mac's cable, which the cable and wireguard
 #   roles read.
 # - user NAME names NAME in that file as WS_USER, for ws server ubuntu apply.
 # - peer KEY writes KEY, the Mac's WireGuard key, to mac.pub where that holds another.

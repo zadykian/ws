@@ -4,7 +4,7 @@
 # key. --check, under StrictHostKeyChecking accept-new in ~/.ssh/config, must show the line it would
 # add. Where known_hosts is a link, it must stop, as a run must, which prints that line for its
 # file. With a conf of no way to ws, a run must stop, naming
-# roles/server/ubuntu/network/router.md. None may change known_hosts. WS_HOST_KEY=yes, with the
+# roles/server/ubuntu/cable/router.md. None may change known_hosts. WS_HOST_KEY=yes, with the
 # Mac's own conf, must then add the same line back. With a conf whose way to ws doesn't
 # answer, ws's address now must come from WS_FIRST_ADDRESS. That run's closing list must name
 # the server's WS_TUNNEL_PORT in the router's forwards, and ws's lease at no address, as its file has no
@@ -77,7 +77,7 @@ conf_print ~/.config/ws/mac.conf |
     conf_write "$none"
 out=$(WS_CONF=$none "$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
-expect 1 'and no WS_REMOTE_PORT; set those in server.conf as roles/server/ubuntu/network/router.md has them'
+expect 1 'and no WS_REMOTE_PORT; set those in server.conf as roles/server/ubuntu/cable/router.md has them'
 out=$(WS_HOST_KEY=yes "$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
@@ -103,7 +103,7 @@ printf '%s\n' "$out"
 cmp -s "$hosts" "$RUNNER_TEMP/hosts" || error "ws client macos wizard with WS_FIRST_ADDRESS wrote another $hosts"
 sudo grep -qx 'WS_TUNNEL_PORT: 51821' "$RUNNER_TEMP/ws/root"/etc/ws/host_vars.yml ||
     error "ws client macos wizard with WS_TUNNEL_PORT=51821 named no WS_TUNNEL_PORT in ws's host_vars"
-lease="- ws's lease: static, as roles/server/ubuntu/network/router.md has it, as this run reached ws at 127.0.0.1."
+lease="- ws's lease: static, as roles/server/ubuntu/cable/router.md has it, as this run reached ws at 127.0.0.1."
 forwards="- The router's forwards to ws, UDP 51821 and TCP 22022, for 192.0.2.1,"
 if ! printf '%s\n' "$out" | grep -qxF -e "$lease" ||
     ! printf '%s\n' "$out" | grep -qF -e "$forwards"; then

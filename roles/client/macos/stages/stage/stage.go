@@ -29,7 +29,7 @@ const (
 	Sudo = "Sudo"
 	// Install is the stage of ws's binary on ws.
 	Install = "ws on ws"
-	// Cable is the stage of the direct link.
+	// Cable is the stage of the cable.
 	Cable = "Cable"
 	// Tunnel is the stage of the tunnel.
 	Tunnel = "Tunnel"
