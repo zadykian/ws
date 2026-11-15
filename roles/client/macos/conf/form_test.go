@@ -20,7 +20,7 @@ func formOf(t *testing.T, mac, server string) (Form, *effecttest.Machine) {
 	m.Files["/h/mac.conf"], m.Files[serverOfTest] = []byte(mac), []byte(server)
 	m.Results["mkdir -p /h"] = effecttest.Result{}
 	m.Results["mkdir -p /h/servers/ws"] = effecttest.Result{}
-	f, err := Form{Conf: "/h/mac.conf", Server: serverOfTest, Defaults: []byte("shell_git_name: A B\nshell_git_email: a@b.dev\n"), M: m}.
+	f, err := Form{Conf: "/h/mac.conf", Server: serverOfTest, M: m}.
 		Load(&effecttest.Out{})
 	if err != nil {
 		t.Fatal(err)

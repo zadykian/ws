@@ -36,7 +36,7 @@ func macForms(in io.Reader, errw io.Writer, p enginecli.Env, server *string) fun
 			return nil, nil, err
 		}
 		macConf := conf.Path(p.Getenv, p.Pwd)
-		form := conf.Form{Conf: macConf, Server: conf.ServerPath(macConf, name), Defaults: shellDefaults(), M: p.Machine}
+		form := conf.Form{Conf: macConf, Server: conf.ServerPath(macConf, name), M: p.Machine}
 		form, err = form.Load(effect.NewTerminal(in, errw))
 		if err != nil {
 			return nil, nil, err

@@ -15,8 +15,7 @@ func scripted(asked *[]string, answers map[string]string) func(Question) (string
 }
 
 func newSequence(lines map[string]bool, ask func(Question) (string, error)) *Sequence {
-	return &Sequence{Vals: map[string]string{}, Lacks: func(k string) bool { return !lines[k] }, Ask: ask,
-		Role: func(name string) string { return "role " + name }}
+	return &Sequence{Vals: map[string]string{}, Lacks: func(k string) bool { return !lines[k] }, Ask: ask}
 }
 
 func TestSequenceGetKeepsMacConf(t *testing.T) {

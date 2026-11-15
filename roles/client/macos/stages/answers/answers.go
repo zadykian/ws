@@ -26,8 +26,6 @@ type Answers struct {
 	// Conf is mac.conf's path, and Server the server's file's.
 	Conf   string
 	Server string
-	// Defaults is the text of the shell role's defaults, whose git identity ws's git takes.
-	Defaults []byte
 	// Prog prefixes the messages of a refused answer.
 	Prog string
 	// Tty tells whether stdin is a terminal, which the questions need.
@@ -86,7 +84,7 @@ func (a *Answers) load() (map[conf.Scope]string, conf.Conf, error) {
 // ask.
 func (a *Answers) sequence(c conf.Conf, text map[conf.Scope]string, place *conf.Place, ask func(conf.Question) (string, error)) *conf.Sequence {
 	vals := map[string]string{"WS_TARGET": c.Target, "WS_LAN": c.LAN, "WS_REMOTE": c.Remote}
-	return &conf.Sequence{Vals: vals, Lacks: func(key string) bool { return !conf.HasLine(text[conf.KeyScope(key)], key) }, Ask: ask, Place: place, Role: func(name string) string { return conf.Default(a.Defaults, name) }}
+	return &conf.Sequence{Vals: vals, Lacks: func(key string) bool { return !conf.HasLine(text[conf.KeyScope(key)], key) }, Ask: ask, Place: place}
 }
 
 // Plan finds the first key that its file lacks, or the file that is refused with all its keys.

@@ -27,7 +27,7 @@ func newAnswers(t *testing.T, mac, server string) (*Answers, *effecttest.Out) {
 		m.Files[serverPathForTest] = []byte(server)
 	}
 	out := &effecttest.Out{}
-	return &Answers{Conf: confPathForTest, Server: serverPathForTest, Defaults: []byte("shell_git_name: ada\nshell_git_email: ada@example.com\n"), Prog: "ws client macos wizard", Tty: true, M: m, P: &effecttest.Prompt{T: t}, Out: out,
+	return &Answers{Conf: confPathForTest, Server: serverPathForTest, Prog: "ws client macos wizard", Tty: true, M: m, P: &effecttest.Prompt{T: t}, Out: out,
 		Env: func(string) (string, bool) { return "", false }}, out
 }
 

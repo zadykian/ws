@@ -14,8 +14,6 @@ type Sequence struct {
 	// Place is where the server sits beside the others, which gives its router port a default that
 	// keeps it apart from a server behind the same router. Nil gives none.
 	Place *Place
-	// Role gives the shell role's default of that name, which ws's git takes.
-	Role func(name string) string
 }
 
 // get returns the key's value: mac.conf's, or the answer where it has no line.
