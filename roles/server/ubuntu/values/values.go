@@ -29,7 +29,7 @@ type Values struct {
 	Ikeward  Ikeward  `yaml:",inline"`
 	Cable    Cable    `yaml:",inline"`
 	Security Security `yaml:",inline"`
-	Shell    Shell    `yaml:",inline"`
+	Git      Git      `yaml:",inline"`
 	Signoz   Signoz   `yaml:",inline"`
 	Tunnel   Tunnel   `yaml:",inline"`
 	Zed      Zed      `yaml:",inline"`

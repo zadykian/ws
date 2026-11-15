@@ -134,7 +134,7 @@ To revoke a token, revoke it on the server first, then remove its entry and run 
 
 ## Clones
 
-`WS_SHELL_GIT_CLONES` lists repositories to clone once, as the machine's `host_vars.yml` sets it,
+`WS_GIT_CLONES` lists repositories to clone once, as the machine's `host_vars.yml` sets it,
 and is empty by default. Each entry takes:
 
 - `repo`: the repository's URL or path, with no token, which [Git credentials](#git-credentials)

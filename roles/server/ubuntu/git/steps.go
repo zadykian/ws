@@ -30,7 +30,7 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units,
 			return []resource.Resource{Tokens{M: m, A: a, Creds: Credentials(s.Git), Whole: s.Whole}}, nil
 		}),
 		user.WithAccount(m, "Git clones", "", func(a account.Account) ([]resource.Resource, error) {
-			return []resource.Resource{Clones{M: m, A: a, Clones: v.Shell.GitClones}}, nil
+			return []resource.Resource{Clones{M: m, A: a, Clones: v.Git.Clones}}, nil
 		}),
 	}
 }

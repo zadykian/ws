@@ -1,9 +1,9 @@
 package values
 
-// Shell is roles/shell's keys.
-type Shell struct {
-	// GitClones are the repositories cloned once each.
-	GitClones []GitClone `yaml:"WS_SHELL_GIT_CLONES"`
+// Git is the git role's keys.
+type Git struct {
+	// Clones are the repositories cloned once each.
+	Clones []GitClone `yaml:"WS_GIT_CLONES"`
 }
 
 // GitClone is a repository, without a token, and where ws clones it.
