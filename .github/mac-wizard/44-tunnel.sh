@@ -21,7 +21,7 @@ set -u
 known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
 
 wsbin=$HOME/.local/bin/ws
-conf=$HOME/.config/ws/values.yml
+conf=/etc/ws/values.yml
 ws=$RUNNER_TEMP/ws
 peer=$ws/root/etc/wireguard/mac.pub
 wg=/opt/homebrew/bin/wg

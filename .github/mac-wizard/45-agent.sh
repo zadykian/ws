@@ -37,7 +37,7 @@ keys() {
 
 # files prints the Mac's own values.yml and ssh's files.
 files() {
-    conf_print ~/.config/ws/values.yml
+    conf_print /etc/ws/values.yml
     cat ~/.ssh/config ~/.ssh/config.d/ws ~/.ssh/id_ed25519.pub
 }
 
@@ -56,7 +56,7 @@ name=$(ssh-keygen -E md5 -l -f "$RUNNER_TEMP/agent.pub" |
 copy=$HOME/.config/ws/secretive/$name
 pub=$data/PublicKeys/$name
 cp "$RUNNER_TEMP/agent.pub" "$pub"
-conf_print ~/.config/ws/values.yml | conf_write "$conf"
+conf_print /etc/ws/values.yml | conf_write "$conf"
 conf_set "$conf" "WS_IDENTITY_PUB_KEY: ~/${pub#"$HOME"/}"
 conf_print "$conf" >"$RUNNER_TEMP/agent.conf.before"
 files >"$RUNNER_TEMP/agent.files"
@@ -79,7 +79,7 @@ stop="$stop WS_GIT_SIGNING_PUB_KEY: ~/.config/ws/secretive/$name for $label; or 
 [ "$status" = 1 ] && [ "$(printf '%s\n' "$out" | grep -cxF "$stop")" = 1 ] ||
     error "ws client macos wizard with no terminal exited $status, naming no line for git's key"
 rm -f "$copy"
-conf_print ~/.config/ws/values.yml | grep -v '^WS_IDENTITY_PUB_KEY' | conf_write "$conf"
+conf_print /etc/ws/values.yml | grep -v '^WS_IDENTITY_PUB_KEY' | conf_write "$conf"
 chmod 000 "$data/PublicKeys"
 keys --check
 want="ws client macos wizard: Mac key: would ask for ws's login key, in Secretive: $label; make a new one (the default)"

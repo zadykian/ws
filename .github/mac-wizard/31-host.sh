@@ -72,7 +72,7 @@ printf '%s\n' "$out" | grep -qxF "$line" || error "ws client macos wizard printe
 rm "$hosts"
 mv "$RUNNER_TEMP/hosts.file" "$hosts"
 none=$RUNNER_TEMP/confs/none/values.yml
-conf_print ~/.config/ws/values.yml |
+conf_print /etc/ws/values.yml |
     sed -e 's/^WS_REMOTE:.*/WS_REMOTE: ""/' -e 's/^WS_REMOTE_PORT:.*/WS_REMOTE_PORT: ""/' |
     conf_write "$none"
 out=$(WS_VALUES=$none "$wsbin" client macos wizard </dev/null 2>&1)
@@ -85,7 +85,7 @@ printf '%s\n' "$out"
 cmp -s "$hosts" "$RUNNER_TEMP/hosts" || error "ws client macos wizard with WS_HOST_KEY=yes wrote another $hosts"
 
 conf=$RUNNER_TEMP/confs/first/values.yml
-conf_print ~/.config/ws/values.yml | sed -e 's/^WS_REMOTE:.*/WS_REMOTE: 192.0.2.1/' \
+conf_print /etc/ws/values.yml | sed -e 's/^WS_REMOTE:.*/WS_REMOTE: 192.0.2.1/' \
     -e 's/^WS_TUNNEL_PORT:.*/WS_TUNNEL_PORT: 51821/' | conf_write "$conf"
 cp "$RUNNER_TEMP/hosts.without" "$hosts"
 out=$(WS_VALUES=$conf "$wsbin" client macos wizard </dev/null 2>&1)

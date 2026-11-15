@@ -8,7 +8,7 @@ set -eo pipefail
 . .github/mac-quiet.sh
 
 lab=${LABEL%.ws}.lab
-servers=$HOME/.config/ws/servers
+servers=/etc/ws/servers
 
 # fails WHY ARG...: ws client macos remove ARG... must exit 1, with WHY in what it prints.
 fails() {

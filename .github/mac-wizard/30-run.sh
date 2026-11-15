@@ -84,7 +84,7 @@ printf '%s\n' "WS_USER: $(id -un)" 'WS_REMOTE: localhost' 'WS_REMOTE_PORT: 22022
     'WS_TARGET: lan' 'WS_LAN: ""' 'WS_TUNNEL_NETWORKS: ""' 'WS_RESOLVERS: ""' \
     "WS_PUBLIC_KEY: $(cat "$RUNNER_TEMP/ws/wg0")" | conf_write "$RUNNER_TEMP/run/values.yml"
 conf_print "$RUNNER_TEMP/run/values.yml" >"$RUNNER_TEMP/run.conf"
-conf_print ~/.config/ws/values.yml | cmp -s - "$RUNNER_TEMP/run.conf" ||
+conf_print /etc/ws/values.yml | cmp -s - "$RUNNER_TEMP/run.conf" ||
     error "ws client macos wizard wrote other files than standin.sh's lines, the answers and wg0's key"
 rm -r "$RUNNER_TEMP/run" "$RUNNER_TEMP/run.conf"
 if [ "$(sed -n 2p "$RUNNER_TEMP/run.out")" != 'What stays by hand:' ] ||

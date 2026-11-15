@@ -102,7 +102,7 @@ started 1 2 && sudo grep -qx "WS_USER: \"$(id -un)\"" "$vars" && [ "$status" = 0
 
 WS_VALUES=$RUNNER_TEMP/confs/cloud/values.yml
 export WS_VALUES
-conf_print ~/.config/ws/values.yml | sed 's/^WS_TARGET:.*/WS_TARGET: cloud/' | conf_write "$WS_VALUES"
+conf_print /etc/ws/values.yml | sed 's/^WS_TARGET:.*/WS_TARGET: cloud/' | conf_write "$WS_VALUES"
 out=$("$wsbin" client macos wizard --check </dev/null 2>&1)
 printf '%s\n' "$out" | grep -q 'after naming WS_SECURITY_OUTBOUND: false in ' ||
     error "ws client macos wizard --check on a cloud VM named no values.yml line before the run: $out"

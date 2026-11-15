@@ -17,7 +17,7 @@ known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's au
 
 wsbin=$HOME/.local/bin/ws
 tunnel=/usr/local/libexec/ws-tunnel/ws
-conf=$HOME/.config/ws/values.yml
+conf=/etc/ws/values.yml
 lab=$RUNNER_TEMP/lab
 labconf=${conf%/*}/servers/lab/values.yml
 fail=0
@@ -56,7 +56,7 @@ shown=$(printf '%s\n' "$out" | tr -d '\r')
     error "--check for lab exited $status, showed no WS_SLOT: 1, WS_TUNNEL_PORT: 51821 and WS_REMOTE_PORT: 22023, or wrote lab's file"
 
 user="WS_USER: $(id -un)"
-mkdir -p "${labconf%/*}" && echo "$user" >"$labconf"
+sudo mkdir -p "${labconf%/*}" && echo "$user" | sudo tee "$labconf" >/dev/null
 wizard --check
 shown=$(printf '%s\n' "$out" | tr -d '\r')
 if [ "$status" != 0 ] || ! printf '%s\n' "$shown" | grep -qx '+WS_SLOT: 1' ||

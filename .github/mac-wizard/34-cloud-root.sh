@@ -21,7 +21,7 @@ error() {
 
 WS_VALUES=$RUNNER_TEMP/confs/cloud/values.yml
 export WS_VALUES
-conf_print ~/.config/ws/values.yml | sed -e 's/^WS_TARGET:.*/WS_TARGET: cloud/' -e '/^WS_USER:/d' | conf_write "$WS_VALUES"
+conf_print /etc/ws/values.yml | sed -e 's/^WS_TARGET:.*/WS_TARGET: cloud/' -e '/^WS_USER:/d' | conf_write "$WS_VALUES"
 sudo install -d -m 700 ~root/.ssh
 sudo install -m 600 "$RUNNER_TEMP/gh/keys" ~root/.ssh/authorized_keys
 "$wsbin" client macos apply </dev/null || error "ws client macos apply on a cloud target exited $?"

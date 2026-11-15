@@ -17,7 +17,7 @@ if [ -z "${TUNNEL-}" ]; then
 fi
 tunnel_dir=/etc/ws/tunnel
 ws_resolvers=/etc/resolver
-conf=$HOME/.config/ws/values.yml
+conf=/etc/ws/values.yml
 fail=0
 # shellcheck source=.github/mac-conf.sh
 . .github/mac-conf.sh

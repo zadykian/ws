@@ -1,9 +1,10 @@
 # shellcheck shell=sh
 # The cases of the mac, mac-wizard and mac-cld jobs write and read a conf, the file that WS_VALUES
-# names, through these functions. A conf is YAML, a KEY: value a line, and a case writes each value
-# as the file holds it, in quotes where YAML needs them. They source this file and never run it. A conf's layout lives
-# here alone: the Mac's values.yml holds the Mac's three keys, and servers/ws/values.yml, beside it, every
-# other key. roles/client/macos/values/scope.go lists the three keys too.
+# names, through these functions. A conf in /etc/ws is root's, and they write it through sudo. A
+# conf is YAML, a KEY: value a line, and a case writes each value as the file holds it, in quotes
+# where YAML needs them. They source this file and never run it. A conf's layout lives here alone:
+# the Mac's values.yml holds the Mac's three keys, and servers/ws/values.yml, beside it, every other
+# key. roles/client/macos/values/scope.go lists the three keys too.
 
 # conf_server names the server whose file goes with a conf. A case sets it to another name, and
 # sets it back, where it works on a second server.
@@ -33,20 +34,35 @@ conf_split() {
         }'
 }
 
+# conf_as FILE CMD... runs CMD through sudo where FILE is in /etc/ws, root's, and as the runner
+# elsewhere, as ws client macos does.
+conf_as() {
+    case $1 in
+    /etc/ws/*)
+        shift
+        sudo "$@"
+        ;;
+    *)
+        shift
+        "$@"
+        ;;
+    esac
+}
+
 # conf_write CONF puts each KEY: value line of stdin in the file of its key, CONF or the server's
 # file, in place of what they held. The server's file goes, with its directory, where it gets no
 # line. A server's file that it makes and that holds no WS_SLOT gets WS_SLOT: 0 first, as the wizard
 # gives it. WS_TUNNEL_PORT: 51820 follows, where the lines hold no WS_TUNNEL_PORT. It reads stdin first, so that
-# conf_print CONF | ... | conf_write CONF is safe. It writes in place, so that CONF keeps its inode
-# and its mode.
+# conf_print CONF | ... | conf_write CONF is safe. It writes in place, through tee, so that CONF
+# keeps its inode and its mode, and through sudo where CONF is in /etc/ws.
 conf_write() {
-    mkdir -p "${1%/*}"
+    conf_as "$1" mkdir -p "${1%/*}"
     conf_lines=$(
         cat
         echo .
     )
     conf_lines=${conf_lines%.}
-    printf '%s' "$conf_lines" | conf_split mac >"$1"
+    printf '%s' "$conf_lines" | conf_split mac | conf_as "$1" tee "$1" >/dev/null
     conf_part=$(
         printf '%s' "$conf_lines" | conf_split server
         echo .
@@ -54,17 +70,17 @@ conf_write() {
     conf_part=${conf_part%.}
     conf_dest=$(conf_server_file "$1")
     if [ -n "$conf_part" ]; then
-        mkdir -p "${conf_dest%/*}"
+        conf_as "$1" mkdir -p "${conf_dest%/*}"
         if ! printf '%s' "$conf_part" | grep -q '^WS_SLOT:'; then
             printf '%s' "$conf_part" | grep -q '^WS_TUNNEL_PORT:' || conf_part="WS_TUNNEL_PORT: 51820
 $conf_part"
             conf_part="WS_SLOT: 0
 $conf_part"
         fi
-        printf '%s' "$conf_part" >"$conf_dest"
+        printf '%s' "$conf_part" | conf_as "$1" tee "$conf_dest" >/dev/null
     else
-        rm -rf "${conf_dest%/*}"
-        rmdir "${conf_dest%/*/*}" 2>/dev/null || true
+        conf_as "$1" rm -rf "${conf_dest%/*}"
+        conf_as "$1" rmdir "${conf_dest%/*/*}" 2>/dev/null || true
     fi
 }
 
