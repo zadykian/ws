@@ -22,8 +22,8 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/shell"
 	"github.com/zadykian/ws/roles/server/ubuntu/signoz"
 	"github.com/zadykian/ws/roles/server/ubuntu/tmux"
+	"github.com/zadykian/ws/roles/server/ubuntu/tunnel"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
-	"github.com/zadykian/ws/roles/server/ubuntu/wireguard"
 	"github.com/zadykian/ws/roles/server/ubuntu/zed"
 )
 
@@ -42,7 +42,7 @@ var all = []entry{
 	{"base", base.Steps},
 	{"security", security.Steps},
 	{"cable", cable.Steps},
-	{"wireguard", wireguard.Steps},
+	{"wireguard", tunnel.Steps},
 	{"ikeward", ikeward.Steps},
 	{"nvidia", nvidia.Steps},
 	{"fans", fans.Steps},

@@ -1,7 +1,7 @@
-// Package wireguard is the wireguard role as Go steps. It sets up wg0, the server's end of a
+// Package tunnel is the tunnel role as Go steps. It sets up wg0, the server's end of a
 // WireGuard tunnel for the Mac, from networkd's own files. It also sets up the drops that keep
-// Docker's containers off the Mac. See roles/server/ubuntu/wireguard/README.md.
-package wireguard
+// Docker's containers off the Mac. See roles/server/ubuntu/tunnel/README.md.
+package tunnel
 
 import (
 	"crypto/rand"
@@ -14,8 +14,8 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
-	"github.com/zadykian/ws/roles/server/ubuntu/wireguard/internal/drops"
-	"github.com/zadykian/ws/roles/server/ubuntu/wireguard/internal/settings"
+	"github.com/zadykian/ws/roles/server/ubuntu/tunnel/internal/drops"
+	"github.com/zadykian/ws/roles/server/ubuntu/tunnel/internal/settings"
 )
 
 // Step names. The tunnel and the key wait on the packages, which bring systemd and its group.

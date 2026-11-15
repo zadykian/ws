@@ -1,4 +1,4 @@
-package wireguard
+package tunnel
 
 import (
 	"github.com/zadykian/ws/engine/core/resource"

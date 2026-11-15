@@ -1,4 +1,4 @@
-package wireguard
+package tunnel
 
 import (
 	"fmt"
