@@ -13,10 +13,6 @@ import (
 	"github.com/zadykian/ws/roles/internal/gitcfg"
 )
 
-// includeText is what goes at the top of ~/.gitconfig, so that the file's own settings come after
-// the include and win.
-const includeText = "[include]\n    path = ~/.config/ws/gitconfig\n"
-
 // lines runs git config on the file and returns the lines it prints. A status of 1 is no value.
 func (g *Git) lines(ctx context.Context, file string, args ...string) ([]string, error) {
 	out, err := g.M.Run(ctx, "git", append([]string{"config", "--file", file}, args...)...)
@@ -38,14 +34,14 @@ func (g *Git) lines(ctx context.Context, file string, args ...string) ([]string,
 // step stops before it acts, as the ssh step does for ssh's Include.
 func (g *Git) gitconfigLines() file.UserLines {
 	return file.UserLines{
-		M: g.M, Out: g.Out, Path: g.Home + "/.gitconfig", Lines: includeText, Top: true, Mode: 0o644, Now: g.Now,
-		Shown: "[include] path = ~/.config/ws/gitconfig",
-		Name:  "the include of ~/.config/ws/gitconfig",
+		M: g.M, Out: g.Out, Path: g.Home + "/.gitconfig", Lines: gitcfg.Include, Top: true, Mode: 0o644, Now: g.Now,
+		Shown: "[include] path = " + gitcfg.Path,
+		Name:  "the include of " + gitcfg.Path,
 		Has:   g.included,
 	}
 }
 
-// included says whether the file includes ~/.config/ws/gitconfig, as git reads it.
+// included says whether the file includes /etc/ws/gitconfig, as git reads it.
 func (g *Git) included(ctx context.Context, _ effect.Machine, path string, _ []byte) (bool, error) {
 	paths, err := g.lines(ctx, path, "--type", "path", "--get-all", "include.path")
 	if err != nil {
@@ -59,7 +55,7 @@ func (g *Git) included(ctx context.Context, _ effect.Machine, path string, _ []b
 	if len(names) > 0 {
 		first = names[0]
 	}
-	holds, err := included(paths, first, g.Home+"/.config/ws")
+	holds, err := gitcfg.Included(paths, first)
 	if err != nil {
 		return false, file.Misplaced("%s %v", path, err)
 	}
@@ -76,19 +72,15 @@ func (g *Git) includeChanges(ctx context.Context, found file.Found, lines []step
 	if rc := g.Home + "/.gitconfig"; found.Exists {
 		names, _ := g.lines(ctx, rc, "--name-only", "--list")
 		if own := gitcfg.Own(names); own != "" {
-			g.note("%s's own settings of %s, below the include, win over ~/.config/ws/gitconfig's",
-				rc, own)
+			g.note("%s's own settings of %s, below the include, win over %s's",
+				rc, own, gitcfg.Path)
 		}
 	}
-	xdg := g.XDG
-	if xdg == "" {
-		xdg = g.Home + "/.config"
-	}
-	if _, err := g.M.Stat(xdg + "/git/config"); err == nil {
-		names, _ := g.lines(ctx, xdg+"/git/config", "--name-only", "--list")
+	xdg := gitcfg.XDGFile(g.XDG, g.Home)
+	if _, err := g.M.Stat(xdg); err == nil {
+		names, _ := g.lines(ctx, xdg, "--name-only", "--list")
 		if own := gitcfg.Own(names); own != "" {
-			g.note("%s/git/config's settings of %s come before the include in ~/.gitconfig, so "+
-				"~/.config/ws/gitconfig's win over them", xdg, own)
+			g.note("%s", gitcfg.XDGNote(xdg, own, gitcfg.Path))
 		}
 	}
 	return lines

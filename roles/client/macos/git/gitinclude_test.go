@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
+	"github.com/zadykian/ws/roles/internal/gitcfg"
 )
 
 func TestGitWarnsOfOwnSettingsBelowTheInclude(t *testing.T) {
@@ -29,8 +30,8 @@ func TestGitWarnsOfXDGSettingsThatLose(t *testing.T) {
 	m.Results["git config --file "+xdg+" --name-only --list"] = effecttest.Result{Out: []byte("user.email\n")}
 	m.Results["git config --file "+gitConfigFile+" --type path --get-all include.path"] = effecttest.Result{Err: mactest.ExitOne(t)}
 	p := mustPlan(t, g)
-	if last := p.Changes[len(p.Changes)-1].String(); !strings.Contains(last, "settings of user.email come before the include") {
-		t.Errorf("last change = %q; want the warning of user.email", last)
+	if last := p.Changes[len(p.Changes)-1].String(); !strings.Contains(last, gitcfg.XDGNote(xdg, "user.email", gitcfg.Path)) {
+		t.Errorf("last change = %q; want the warning of user.email, with %s the winner", last, gitcfg.Path)
 	}
 	if len(out.Lines) != 0 {
 		t.Errorf("Plan said %q; want the warning once the changes are made", out.Lines)

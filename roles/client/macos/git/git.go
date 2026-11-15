@@ -1,4 +1,4 @@
-// Package git sets up git's identity and signing key in ~/.config/ws/gitconfig, and gh.
+// Package git sets up git's identity and signing key in /etc/ws/gitconfig, and gh.
 package git
 
 import (
@@ -14,9 +14,8 @@ import (
 )
 
 // Git sets git up from values.yml's WS_GIT_SIGNING_PUB_KEY on each run. It writes git's identity,
-// gitcfg.Name and gitcfg.Email, and the Mac's own signing key to ~/.config/ws/gitconfig, as the
-// git role does on ws. ~/.gitconfig includes that file at
-// its top. gh, from Homebrew where missing, takes git's pushes to GitHub, and registers the key
+// gitcfg.Name and gitcfg.Email, and the Mac's own signing key to /etc/ws/gitconfig, as the
+// git role does on ws. ~/.gitconfig includes that file at its top. gh, from Homebrew where missing, takes git's pushes to GitHub, and registers the key
 // there. It stops where the key or ~/.gitconfig is not as it can use, before it acts. Without a
 // login for gh, or its write:ssh_signing_key scope, it warns, at each run until one adds the key.
 type Git struct {

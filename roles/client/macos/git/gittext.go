@@ -6,8 +6,8 @@ import "github.com/zadykian/ws/roles/internal/gitcfg"
 const header = "# Written by ws client macos apply from /etc/ws/values.yml: its next run replaces changes " +
 	"made here."
 
-// config returns ~/.config/ws/gitconfig: its header, and the settings that ws shares with the Mac.
-// The file is ~/.gitconfig's first include, so that ~/.gitconfig's own settings win.
+// config returns /etc/ws/gitconfig: its header, and the settings that ws shares with the server.
+// ~/.gitconfig includes it at its top, so that its own settings win.
 func config(in gitcfg.Inputs) string {
 	return header + "\n" +
 		"# ~/.gitconfig includes it at its top, so that its own settings win where both set one.\n" +

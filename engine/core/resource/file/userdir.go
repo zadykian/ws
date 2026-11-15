@@ -22,9 +22,6 @@ type UserDir struct {
 	Out  effect.Out
 	Path string
 	Mode fs.FileMode
-	// Fix says whether a run sets Mode where the mode differs. Otherwise a run makes the directory
-	// where missing and leaves the mode of one that exists.
-	Fix bool
 }
 
 // read stats the directory. A missing path is not an error. found is set for a path that exists,
@@ -44,19 +41,16 @@ func (d UserDir) read() (found Found, info effect.Info, err error) {
 	return found, info, nil
 }
 
-// change returns the change that brings the directory, as read in found, to its mode, or none.
+// change returns the change that makes the directory where missing, or none. A run leaves the mode
+// of a directory that exists.
 func (d UserDir) change(found Found) []step.Change {
-	switch {
-	case !found.Exists:
+	if !found.Exists {
 		return []step.Change{UserMkdir{M: d.M, Path: d.Path, Mode: d.Mode}}
-	case d.Fix && found.Mode.Perm() != d.Mode:
-		return []step.Change{UserChmod{M: d.M, Path: d.Path, Mode: d.Mode}}
 	}
 	return nil
 }
 
-// Plan makes the directory where missing, or sets its mode where Fix asks for it. It stops at a
-// path that is no directory.
+// Plan makes the directory where missing. It stops at a path that is no directory.
 func (d UserDir) Plan(context.Context) ([]resource.Change, error) {
 	found, _, err := d.read()
 	if err != nil {
@@ -70,9 +64,6 @@ func (d UserDir) Plan(context.Context) ([]resource.Change, error) {
 func (d UserDir) Report(context.Context) ([]step.Item, error) {
 	found, _, err := d.read()
 	p := UserPath{Kind: step.DirItem, Path: d.Path}
-	if d.Fix {
-		p.Mode = d.Mode
-	}
 	switch {
 	case errors.Is(err, errNotDir):
 		item := p.itemOf(found)
@@ -123,13 +114,4 @@ func (ds UserDirs) Report(ctx context.Context) ([]step.Item, error) {
 		parts[i] = d
 	}
 	return Gather(ctx, parts...)
-}
-
-// WsDirs is ~/.config and ws's directory in it, which git writes under. A run sets
-// the mode of ws's directory.
-func WsDirs(m effect.Machine, out effect.Out, home string) UserDirs {
-	return UserDirs{
-		{M: m, Out: out, Path: home + "/.config", Mode: 0o755},
-		{M: m, Out: out, Path: home + "/.config/ws", Mode: 0o700, Fix: true},
-	}
 }

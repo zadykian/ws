@@ -2,7 +2,6 @@ package git
 
 import (
 	"context"
-	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
@@ -19,48 +18,42 @@ type part interface {
 	step.Reporter
 }
 
-// list returns the script for a key of Secretive's, root's allowed signers and gitconfig. The
-// signers lie in /etc/ws, which a run writes through sudo. Where ws keeps a copy of the key's .pub,
-// the copy's parts make /etc/ws, and the list leaves it out, as a plan holds it once.
+// keygen is the script that gives ssh-keygen Secretive's agent, which git signs through.
+const keygen = etcws.Dir + "/secretive-ssh-keygen"
+
+// list returns the script for a key of Secretive's, root's allowed signers and gitconfig, all in
+// /etc/ws, which a run writes through sudo. Where ws keeps a copy of the key's .pub, the copy's parts
+// make /etc/ws, and the list leaves it out, as a plan holds it once.
 func (g *Git) list(key keys.NamedKey, gh string) []part {
-	dir := g.Home + "/.config/ws"
 	in := gitcfg.Inputs{Key: key.File, Gh: gh}
-	userFile := func(path, text string, mode fs.FileMode) file.UserFile {
-		return file.UserFile{M: g.M, Out: g.Out, Path: path, Text: []byte(text), Mode: mode}
+	var rs []resource.Resource
+	if !keys.Copied(key.File, key.Text) {
+		rs = append(rs, etcws.Top(g.M))
 	}
-	var list []part
 	if sshcfg.SecretiveKey(key.File, g.Home) {
-		in.Program = dir + "/secretive-ssh-keygen"
-		list = append(list, userFile(in.Program, wrapper(g.Home+"/"+sshcfg.SecretiveData), 0o755))
+		in.Program = keygen
+		rs = append(rs, file.Public{M: g.M, Path: keygen, Content: []byte(wrapper(g.Home + "/" + sshcfg.SecretiveData)), Mode: 0o755})
 	}
-	signers := etcws.Files
-	if keys.Copied(key.File, key.Text) {
-		signers = etcws.Inside
-	}
-	for _, r := range signers(g.M, gitcfg.Signers, []byte(gitcfg.AllowedSigners(header, key.Key.String()))) {
+	rs = append(rs, etcws.Inside(g.M, gitcfg.Signers, []byte(gitcfg.AllowedSigners(header, key.Key.String())))...)
+	rs = append(rs, etcws.Inside(g.M, gitcfg.Path, []byte(config(in)))...)
+	var list []part
+	for _, r := range rs {
 		list = append(list, resource.Said{Out: g.Out, Part: r})
 	}
-	return append(list, userFile(dir+"/gitconfig", config(in), 0o644))
+	return list
 }
 
-// files plans ~/.config/ws, ws's copy of the key's .pub where git signs with a copy, and the files in
-// ~/.config/ws.
+// files plans ws's copy of the key's .pub where git signs with a copy, and the files in /etc/ws.
 func (g *Git) files(ctx context.Context, key keys.NamedKey, gh string) ([]step.Change, error) {
-	cs, link, err := file.WsDirs(g.M, g.Out, g.Home).Plan()
+	cs, err := keys.PlanCopy(ctx, g.M, g.Out, key.File, key.Text)
 	if err != nil {
 		return nil, err
 	}
-	copied, err := keys.PlanCopy(ctx, g.M, g.Out, key.File, key.Text)
-	if err != nil {
-		return nil, err
-	}
-	cs = append(cs, copied...)
 	for _, f := range g.list(key, gh) {
 		if cs, err = resource.Append(ctx, cs, f); err != nil {
 			return nil, err
 		}
 	}
-	link.Warn(g.Out, len(cs), "ws's files go there")
 	return cs, nil
 }
 
@@ -79,7 +72,7 @@ func (g *Git) report(ctx context.Context) ([]step.Item, error) {
 	if install != nil {
 		tool.Found = file.StateMissing
 	}
-	parts := []step.Reporter{file.Fixed{tool}, file.WsDirs(g.M, g.Out, g.Home)}
+	parts := []step.Reporter{file.Fixed{tool}}
 	for _, f := range g.list(key, gh) {
 		parts = append(parts, f)
 	}

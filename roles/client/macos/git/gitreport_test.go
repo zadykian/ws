@@ -14,8 +14,7 @@ import (
 
 func TestGitReportsWhatItManages(t *testing.T) {
 	m, g := gitReady()
-	dir := gitHome + "/.config/ws/"
-	m.Files[dir+"gitconfig"] = []byte("[user]\n    name = other\n")
+	m.Files["/etc/ws/gitconfig"] = []byte("[user]\n    name = other\n")
 	got := mactest.ReportOf(t, g.Step())
 	if it := got["gh"]; it.Kind != step.PackageItem || it.Found != "installed" {
 		t.Errorf("gh = %+v", it)
@@ -23,11 +22,8 @@ func TestGitReportsWhatItManages(t *testing.T) {
 	if it := got["/etc/ws/allowed_signers"]; it.Want != "owner 0:0, mode 644" || it.Found != "missing" {
 		t.Errorf("allowed_signers = %+v", it)
 	}
-	if it := got[dir+"gitconfig"]; !strings.Contains(it.Conflict, "no Written by line") || it.Diff == "" {
-		t.Errorf("gitconfig = %+v, want a file ws did not write, with its diff", it)
-	}
-	if it := got[gitHome+"/.config"]; it.Kind != step.DirItem || it.Found != "present" {
-		t.Errorf("~/.config = %+v", it)
+	if it := got["/etc/ws/gitconfig"]; !strings.Contains(it.Found, "other content") || it.Diff == "" {
+		t.Errorf("gitconfig = %+v, want other content, with its diff", it)
 	}
 	if it := got[gitConfigFile]; it.Want != it.Found || it.Diff != "" {
 		t.Errorf("~/.gitconfig = %+v, want its include held, and no diff", it)
