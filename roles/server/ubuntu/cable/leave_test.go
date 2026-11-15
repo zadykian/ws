@@ -1,11 +1,11 @@
-package network
+package cable
 
 import (
 	"slices"
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/roles/server/ubuntu/network/internal/netplan"
+	"github.com/zadykian/ws/roles/server/ubuntu/cable/internal/netplan"
 )
 
 func TestWithoutSystemdNothingReloads(t *testing.T) {

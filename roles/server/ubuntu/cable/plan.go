@@ -1,4 +1,4 @@
-package network
+package cable
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/resource/systemd"
-	"github.com/zadykian/ws/roles/server/ubuntu/network/internal/netplan"
+	"github.com/zadykian/ws/roles/server/ubuntu/cable/internal/netplan"
 )
 
 // Plan checks the address, the port and netplan's files, then plans the file, and the reload that

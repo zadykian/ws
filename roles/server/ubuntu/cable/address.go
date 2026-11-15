@@ -1,6 +1,6 @@
-// Package network sets up the server's end of the cable to the Mac: an address on the cable's
+// Package cable sets up the server's end of the cable to the Mac: an address on the cable's
 // port, from a netplan file of its own. The checks that come before the file are pure.
-package network
+package cable
 
 import (
 	"fmt"

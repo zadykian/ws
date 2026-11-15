@@ -7,6 +7,7 @@ import (
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/base"
+	"github.com/zadykian/ws/roles/server/ubuntu/cable"
 	"github.com/zadykian/ws/roles/server/ubuntu/claude"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools"
 	"github.com/zadykian/ws/roles/server/ubuntu/docker"
@@ -14,7 +15,6 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/fresh"
 	"github.com/zadykian/ws/roles/server/ubuntu/ikeward"
 	"github.com/zadykian/ws/roles/server/ubuntu/lazygit"
-	"github.com/zadykian/ws/roles/server/ubuntu/network"
 	"github.com/zadykian/ws/roles/server/ubuntu/nvidia"
 	"github.com/zadykian/ws/roles/server/ubuntu/otelcol"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
@@ -41,7 +41,7 @@ type entry struct {
 var all = []entry{
 	{"base", base.Steps},
 	{"security", security.Steps},
-	{"network", network.Steps},
+	{"network", cable.Steps},
 	{"wireguard", wireguard.Steps},
 	{"ikeward", ikeward.Steps},
 	{"nvidia", nvidia.Steps},

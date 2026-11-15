@@ -1,4 +1,4 @@
-package network
+package cable
 
 import (
 	"encoding/json"

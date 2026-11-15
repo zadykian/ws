@@ -1,4 +1,4 @@
-package network
+package cable
 
 import (
 	"slices"
@@ -8,7 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/server/ubuntu/network/internal/netplan"
+	"github.com/zadykian/ws/roles/server/ubuntu/cable/internal/netplan"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )

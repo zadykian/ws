@@ -1,4 +1,4 @@
-package network
+package cable
 
 import (
 	"slices"
@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/server/ubuntu/network/internal/netplan"
+	"github.com/zadykian/ws/roles/server/ubuntu/cable/internal/netplan"
 )
 
 func TestTheStepRefuses(t *testing.T) {

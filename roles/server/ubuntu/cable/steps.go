@@ -1,4 +1,4 @@
-package network
+package cable
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"

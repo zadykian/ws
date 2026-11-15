@@ -1,4 +1,4 @@
-package network
+package cable
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zadykian/ws/roles/server/ubuntu/network/internal/netplan"
+	"github.com/zadykian/ws/roles/server/ubuntu/cable/internal/netplan"
 )
 
 // checkPort reads the port and the default routes, refuses an uplink, and returns the port as
