@@ -89,5 +89,6 @@ no other server holds in a file that lacks it. Slot N's tunnel is `10.99.N.0/24`
 **ws's directory**:
 `~/.config/ws` on the Mac, mode 700, which holds the files that git reads. A run
 sets that mode where it differs. `/etc/ws`, root's and 755 on both sides, holds `values.yml` and
-`servers/` on the Mac, which only sudo writes.
+`servers/` on the Mac, which only sudo writes. On ws it also holds git's tokens, the env file and
+the fans' config.
 _Avoid_: config directory
