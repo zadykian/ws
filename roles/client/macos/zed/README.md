@@ -44,7 +44,7 @@ the three once on a remote project.
 The seed holds a connection for each server known at its write, in name order, as `{ "host": "ws" }`.
 Zed records an opened project by its index in the list of `ssh_connections` in `settings.json`, and
 arrays replace rather than merge, so the connections can sit in no other file. Zed's reader of
-`~/.ssh/config` has no `Include`, so it does not list `ws`, which lives in `~/.ssh/config.d/ws`. Zed
+`~/.ssh/config` has no `Include`, so it does not list `ws`, which lives in `/etc/ws/ssh_config`. Zed
 connects with the system `ssh`, so `host: "ws"` resolves through that file, with its user, key and
 keepalive. Nothing else is set there: no `username`, `port` or `args`. A server added later is
 not added to a `settings.json` that exists ([below](#a-settingsjson-that-exists-already)).

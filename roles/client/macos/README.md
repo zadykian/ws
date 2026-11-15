@@ -59,15 +59,15 @@ it, the router's static lease for it. The script stops on one outside, and on th
 broadcast address. `WS_REMOTE` is the router's name on the internet, and `WS_REMOTE_PORT` the port
 it forwards to ws's 22. The tunnel takes UDP 51820 every way, which the router forwards too;
 `WS_TUNNEL_PORT` sets another, which wg0 listens on. A way without its values is left out. The
-router's side is in [The router](../../server/ubuntu/cable/router.md). `WS_PUBLIC_KEY` goes in
-last, once ws has the Mac's key, in the order of [The Mac's tunnel](#the-macs-tunnel).
-`WS_CABLE_SERVICE` names the network service of the display's adapter, and `WS_CABLE_PORT` ws's port
-of the cable: [The cable](#the-cable). `WS_GIT_SIGNING_PUB_KEY` is the `.pub` of the key that signs
-git's commits on the Mac, by its path from `/` or `~/`: [git on the Mac](git/README.md).
-`WS_IDENTITY_PUB_KEY` is the `.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the
-socket of its agent: [ssh's hosts](#sshs-hosts). A run makes `~/.config/ws` at mode 700, and sets
-that mode where it differs. It makes `/etc/ws` through sudo, for git's allowed signers and the
-tunnel's key, at mode 755.
+router's side is in [The router](../../server/ubuntu/cable/router.md). `WS_PUBLIC_KEY` goes in last,
+once ws has the Mac's key, in the order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE`
+names the network service of the display's adapter, and `WS_CABLE_PORT` ws's port of the cable: [The
+cable](#the-cable). `WS_GIT_SIGNING_PUB_KEY` is the `.pub` of the key that signs git's commits on
+the Mac, by its path from `/` or `~/`: [git on the Mac](git/README.md). `WS_IDENTITY_PUB_KEY` is the
+`.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the socket of its agent: [ssh's
+hosts](#sshs-hosts). A run makes `~/.config/ws` at mode 700, and sets that mode where it differs. It
+makes `/etc/ws` through sudo, for git's allowed signers, ssh's hosts and the tunnel's key, at mode
+755.
 
 `WS_USER` is the user ssh logs in as: ws's key too, `zadykian` by default, or `root` for a
 `WS_TARGET` of `cloud`, which may have no other user. The other targets refuse `WS_USER=root`. A key
@@ -94,13 +94,13 @@ sudo would leave root's files where the user's go.
 
 ## ssh's hosts
 
-The script writes `~/.ssh/config.d/ws`, with a host for each server of `servers/`, named as the
-server is, at its tunnel's `10.99.N.1` from the first run, whichever network the Mac is on. A
-server's `10.99.N.1` is `10.99.0.1` at slot 0. So `ssh NAME` fails until the keys' exchange ends
-([The Mac's tunnel](#the-macs-tunnel)), where a direct way serves. It logs in as the server's
-`WS_USER` with the key below, and checks the server's host key under its name (`HostKeyAlias`). A
-server whose `values.yml` fails to load stops the run. A session ends after 120 s without word
-from the server, far longer than a switch of the tunnel takes.
+The script writes `/etc/ws/ssh_config`, root's and 644. It holds a host for each server of
+`servers/`, named as the server is, at its tunnel's `10.99.N.1` from the first run, whichever
+network the Mac is on. A server's `10.99.N.1` is `10.99.0.1` at slot 0. So `ssh NAME` fails until
+the keys' exchange ends ([The Mac's tunnel](#the-macs-tunnel)), where a direct way serves. It logs
+in as the server's `WS_USER` with the key below, and checks the server's host key under its name
+(`HostKeyAlias`). A server whose `values.yml` fails to load stops the run. A session ends after 120
+s without word from the server, far longer than a switch of the tunnel takes.
 
 ssh offers ws one key alone (`IdentitiesOnly`): the one whose `.pub` `WS_IDENTITY_PUB_KEY` names, as
 ws's copy of a key of Secretive's ([Secretive's keys](git/README.md#secretives-keys)) or a file key.
@@ -114,27 +114,27 @@ reads the file beside the `.pub`, its passphrase kept in the Keychain. The scrip
 line, as a private key or a certificate does. So does a key that ssh-keygen cannot read, or one of a
 type that ws's OpenSSH lacks, as Secretive's ML-DSA keys on macOS 26.
 
-The script puts `Include config.d/ws` first in `~/.ssh/config`, as ssh keeps the first value it
-reads for each key. So neither the file's own settings nor the other files of `config.d` override
-ws's. Where the line is missing, the script adds it at the top and keeps the old file as
+The script puts `Include /etc/ws/ssh_config` first in `~/.ssh/config`, as ssh keeps the first value
+it reads for each key. So neither the file's own settings nor those of other files override ws's.
+Where the line is missing, the script adds it at the top and keeps the old file as
 `~/.ssh/config.TIME~`. Where the line sits below other settings, the script stops. The line also
-counts by `~/.ssh/` or the home's full path, in quotes, or as the first of several paths.
+counts in quotes, or as the first of several paths.
 
 Where `~/.ssh/config` is a link, as a dotfiles manager makes it, the script reads the file it points
 to. It stops where the line is missing there, rather than replace the link with a file, and the
-report shows the file as a conflict. Where `~/.ssh/config.d` is a link, the script warns as it
-writes `config.d/ws` there. It stops where `config.d/ws` is a file it did not write, rather than
-replace it. It stops where a `Host` or `Match` of `~/.ssh/config`'s own names a server, whose
-settings would come after those of `config.d/ws`: remove it, as its `IdentityFile` would add a key
-to ws's. The wizard refuses such a name for a new server, asked or given by `--server`, first.
+report shows the file as a conflict. The script leaves `~/.ssh/config.d/ws` and its `Include` alone:
+a user's old line stays the user's. It stops where a `Host` or `Match` of `~/.ssh/config`'s own
+names a server, whose settings would come after those of `/etc/ws/ssh_config`: remove it, as its
+`IdentityFile` would add a key to ws's. The wizard refuses such a name for a new server, asked or
+given by `--server`, first.
 
-ssh keeps the first `IgnoreUnknown` it reads too. `config.d/ws` needs one for the file key's
+ssh keeps the first `IgnoreUnknown` it reads too. `/etc/ws/ssh_config` needs one for the file key's
 `UseKeychain`, which only Apple's ssh knows, and keeps it with an agent's key. So it carries the
 patterns of every `IgnoreUnknown` in `~/.ssh/config`. Run the script again after a change to those.
 A pattern in a file that `~/.ssh/config` includes must be in `~/.ssh/config` too, as the script
 reads no other file.
 
-Before it writes, the script has `ssh -G`, for each server, read the new `config.d/ws` alone.
+Before it writes, the script has `ssh -G`, for each server, read the new `/etc/ws/ssh_config` alone.
 Then it reads it first, `~/.ssh/config` next, without its own Include of the old file, and the
 system's file last. Where ssh refuses either, or reads a server at another address or user than
 its block sets, the script stops and changes nothing, under `--check` too. The system's file goes

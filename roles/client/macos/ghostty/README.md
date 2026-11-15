@@ -76,8 +76,8 @@ The script sets cld up wherever it runs, whatever the terminal. It:
   release, which checks the binary's SHA-256. Each run then has `cld update` replace it where a
   newer release is out, and says so only then. A release before 0.6.0 lacks `cld update`, so
   `install.sh` replaces it. A cld built from a clone is left alone;
-- adds the two lines that start cld's watcher to each server's `Host` in `config.d/ws`, where Ghostty's
-  app is there, once the cld installed has `restore tabs`.
+- adds the two lines that start cld's watcher to each server's `Host` in `/etc/ws/ssh_config`, where
+  Ghostty's app is there, once the cld installed has `restore tabs`.
 
 A restore needs Ghostty 1.4 or newer, which cld checks, by Ghostty's AppleScript rather than its
 version. The cask and the stable channel of `ws.ghostty` bring Ghostty's stable releases alone, so a
