@@ -101,7 +101,7 @@ top `steps`. With one server, or `--server`, it prints what it did before.
 
 ## A machine on the LAN
 
-`WS_TARGET=lan`, the default, is a machine at home, behind [The router](../../../server/ubuntu/network/router.md), with a cable to
+`WS_TARGET=lan`, the default, is a machine at home, behind [The router](../../../server/ubuntu/cable/router.md), with a cable to
 the Mac's display, if any:
 
 - `WS_LAN` is the home LAN, `10.88.0.0/24` by default, and `WS_LAN_ADDRESS` ws's static lease

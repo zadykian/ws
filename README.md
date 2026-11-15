@@ -1,7 +1,7 @@
 # ws
 
 Sets up my development server from code. `ws server ubuntu apply` runs on the machine itself. It
-sets up packages, SSH by key and a firewall, and a direct link and a WireGuard tunnel to the Mac. It
+sets up packages, SSH by key and a firewall, and a cable and a WireGuard tunnel to the Mac. It
 sets up Docker, the shell, tmux, lazygit, the Fresh editor and Zed's server. It sets up claude and
 [cld](https://github.com/zadykian/cld), and SigNoz with a collector for the machine's telemetry.
 Running it again is safe, and `--check` shows how a machine differs from the repository.
@@ -13,7 +13,7 @@ Each role has a page of its own. A role is Go steps of ws:
 - [`security`](roles/server/ubuntu/security): SSH by key only, ufw and fail2ban, and a table that keeps what
   ws starts to the internet and ikeward, but what the network needs, such as DHCP and DNS. The
   table is off where `WS_SECURITY_OUTBOUND` is false, as a cloud VM wants.
-- [`network`](roles/server/ubuntu/network): the server's end of a cable to the Mac, as Go steps.
+- [`cable`](roles/server/ubuntu/cable): the server's end of a cable to the Mac, as Go steps.
 - [`wireguard`](roles/server/ubuntu/wireguard): `wg0`, the server's end of a WireGuard tunnel for the Mac.
 - [`ikeward`](roles/server/ubuntu/ikeward): ikeward's IKEv2 VPN, where a profile is given, and the WireGuard
   peers' way into it.
@@ -176,7 +176,7 @@ and write; and no account permission. These stay manual:
   `~/.config/ws/forbidden-words`, mode 600, on each machine that commits
   ([The hooks](.github/workflows/README.md#the-hooks)).
 
-The router takes a few steps once, by hand: [The router](roles/server/ubuntu/network/router.md).
+The router takes a few steps once, by hand: [The router](roles/server/ubuntu/cable/router.md).
 
 ## Checks
 

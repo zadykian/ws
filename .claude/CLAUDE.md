@@ -11,7 +11,7 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 - `roles/server/ubuntu/NAME`: a role per directory, as Go steps, with its page, `README.md`,
   and a line in the root README. `roles/server/ubuntu` lists the roles in the order they run, and
   `roles/server/ubuntu/values` types the machine's values: `/etc/ws/host_vars.yml`, on the machine
-  alone, such as the cable's port ([The direct link](../roles/server/ubuntu/network/README.md#the-direct-link)). Each role
+  alone, such as the cable's port ([The cable](../roles/server/ubuntu/cable/README.md#the-cable)). Each role
   holds its pins, and embeds its templates and files. ws-fans, the fans' service, is
   `ws server ubuntu fans`, in `roles/server/ubuntu/fans/daemon`.
 - `go.mod` and `go.sum`: the Go module `github.com/zadykian/ws`, at the root.
@@ -27,7 +27,7 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   `ghostty/files/ws.ghostty`, Ghostty's settings, `zed/files/`, Zed's settings and keymap, and
   `zsh/files/zshrc`, the zsh hook that turns off the modes that a drop leaves on.
 - The pages sit beside their code, as the `README.md` of a role or a package. A second page stands
-  beside one where the cap keeps two apart: `zed/projects.md`, `network/router.md`,
+  beside one where the cap keeps two apart: `zed/projects.md`, `cable/router.md`,
   `.github/workflows/rootless.md`, `mac-cld.md` and `mac-servers.md`. `.tools/README.md` holds the
   gates and `.github/workflows/README.md` CI.
 - `.tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`

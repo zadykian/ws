@@ -14,7 +14,7 @@ as in CI's container, the unit, networkd, ufw and the wait skip and say so.
 ## The tunnel
 
 The Mac reaches the server through a WireGuard tunnel whichever way it connects: over the cable,
-the home LAN, or the internet through the router's forward ([The router](../network/router.md)). Inside the
+the home LAN, or the internet through the router's forward ([The router](../cable/router.md)). Inside the
 tunnel the server keeps one address. WireGuard knows a peer by its key, not by the address its
 packets come from, so the Mac's sessions outlive a move from one way to another.
 
@@ -86,6 +86,6 @@ a run changes the drops, which last through Docker's restarts. Where the unit fa
 without them, and `systemctl status wireguard-docker-user` shows why.
 
 The drops take a change of `WS_CABLE_PORT` as the `wireguard` role next runs, so run
-`ws server ubuntu apply --only network,wireguard` after one. Unless `WS_SECURITY_OUTBOUND` is false,
+`ws server ubuntu apply --only cable,wireguard` after one. Unless `WS_SECURITY_OUTBOUND` is false,
 they are a second layer: the `security` role's table drops what the containers start through `wg0`
 or the cable too ([Outbound](../security/README.md#outbound)).

@@ -59,7 +59,7 @@ it, the router's static lease for it. The script stops on one outside, and on th
 broadcast address. `WS_REMOTE` is the router's name on the internet, and `WS_REMOTE_PORT` the port
 it forwards to ws's 22. The tunnel takes UDP 51820 every way, which the router forwards too;
 `WS_TUNNEL_PORT` sets another, which wg0 listens on. A way without its values is left out. The
-router's side is in [The router](../../server/ubuntu/network/router.md). `WS_PUBLIC_KEY` goes in
+router's side is in [The router](../../server/ubuntu/cable/router.md). `WS_PUBLIC_KEY` goes in
 last, once ws has the Mac's key, in the order of [The Mac's tunnel](#the-macs-tunnel).
 `WS_CABLE_SERVICE` names the network service of the display's adapter, in quotes where it holds a
 blank, and `WS_CABLE_PORT` ws's port of the cable: [The cable](#the-cable). `WS_GIT_SIGNING_PUB_KEY`
@@ -179,7 +179,7 @@ An address, mask or router that `getinfo` omits, as it may undocked, counts as s
 Settings › Network, the service › Details › TCP/IP, Configure IPv4 Manually: IP address `10.77.0.2`,
 mask `255.255.255.252`, no router. Or empty the key: the tunnel and ssh then skip the cable.
 
-Set the key once ws's end is up ([network](../../server/ubuntu/network/README.md)). Then, docked, check once that the uplink
+Set the key once ws's end is up ([cable](../../server/ubuntu/cable/README.md)). Then, docked, check once that the uplink
 keeps the default route:
 
 ```sh

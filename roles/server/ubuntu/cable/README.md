@@ -1,9 +1,9 @@
-# network
+# cable
 
-The `network` role, Go steps in `roles/server/ubuntu/network`, sets up the server's end of a cable to
+The `cable` role, Go steps in `roles/server/ubuntu/cable`, sets up the server's end of a cable to
 the Mac, `10.77.0.1/30` on the port `WS_CABLE_PORT` names, from a netplan file.
 
-## The direct link
+## The cable
 
 The Mac can plug into the server with a cable of its own, from its dock's 2.5GbE port to a port of
 the server's, outside the router. Name the server's port in `/etc/ws/host_vars.yml` on the
@@ -15,9 +15,9 @@ WS_CABLE_PORT: enp5s0
 ```
 
 The file lives outside ws, so a new release keeps it. Every run reads it,
-so none removes the direct link for want of the value.
+so none removes the cable for want of the value.
 
-The step then writes `/etc/netplan/60-direct-link.yaml`, which gives that interface `10.77.0.1/30`
+The step then writes `/etc/netplan/60-cable.yaml`, which gives that interface `10.77.0.1/30`
 (`WS_CABLE_ADDRESS`), and no DHCP, gateway or DNS. netplan merges the file with the other
 files' entries of the port's name, as the installer's: its settings win, and its address joins
 theirs. Boot doesn't wait for the link, which is up only while the Mac is docked. The Mac takes
@@ -29,7 +29,7 @@ the port's name: a second layer, or the only one with the table off. So a change
 run of that role too ([The firewall](../wireguard/README.md#the-firewall)).
 
 The run stops where the port looks like an uplink: it carries a default route, in any routing
-table, or holds an IPv4 lease outside the direct link's subnet. A static address outside it, as an
+table, or holds an IPv4 lease outside the cable's subnet. A static address outside it, as an
 earlier run's, doesn't count, so `WS_CABLE_ADDRESS` can change.
 
 A name with a slash or a space stops the run, as no interface has one.
@@ -41,7 +41,7 @@ counts where it fits the port's name or any of its alternative names, which `ip 
 netplan keeps such an entry apart, and networkd would take the first of the two.
 
 A `match:` on the port's own entry must hold the port's MAC address, or a name without a glob. One
-that may fit other interfaces stops the run, as the direct link's file would turn their DHCP off.
+that may fit other interfaces stops the run, as the cable's file would turn their DHCP off.
 The run stops too where netplan hands the port to NetworkManager rather than networkd, as on Ubuntu
 Desktop, and where systemd-networkd isn't running. netplan's settings may hold secrets, such as
 Wi-Fi passwords, so the run prints none of them, even with `-v`. A networkd file of another
