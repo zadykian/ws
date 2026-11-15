@@ -11,19 +11,19 @@ The checks of `rootless`, `mac-cld` and a Mac's servers have pages: [rootless](r
 ## The `playbook` job
 
 CI also builds ws from the tree, never from a release, in an Ubuntu 26.04 container with no git, so
-that the build is `devel`. It runs `ws server ubuntu apply` twice from root's home, as `zadykian`
-and as root, a cloud VM's user. The steps that need a booted systemd skip and say so, and the second
-run's last line must be `changed: none`. Under `script`, `ws server ubuntu apply --check` must then
-draw [the run screen](../../engine/tui/README.md#the-run-screen) and end on `would change: none`. Then `nft -c`, with
-the container's NET_ADMIN, checks the outbound table the run wrote and the users it names, and a
-find that the user owns its home. The Zed wrapper's [checks](../zed-terminal-checks.sh) run
-on the files it installed, and Fresh's on the config it loaded. Root's leg has no table. The run
-leaves out its own check ([Outbound](../../roles/server/ubuntu/security/README.md#outbound)). Its `/etc/ws/values.yml` gives a
-swap file of 64 MiB, as the runner's disk has no room for one of its RAM's size. With no NVIDIA GPU,
-`nvidia` checks its names alone, and with no MSI board, `fans` leaves its fans alone. With no VPN
-profile, `ikeward` does nothing. `ws server ubuntu wizard --check --plain` then asks nothing, as the
-values name both its keys, and its run skips, with no booted systemd ([The server's
-wizard](../../roles/server/ubuntu/stages/README.md)).
+the build is `devel`. It runs `ws server ubuntu apply` twice from root's home, as `zadykian` and as
+root, a cloud VM's user. The steps that need booted systemd skip and say so, and the second run's
+last line must be `changed: none`. Under `script`, `ws server ubuntu apply --check` must then draw
+[the run screen](../../engine/tui/README.md#the-run-screen) and end on `would change: none`. Then
+`nft -c`, with the container's NET_ADMIN, checks the outbound table the run wrote and the users it
+names, and a find that the user owns its home. The Zed wrapper's [checks](../zed-terminal-checks.sh)
+run on the files it installed, and Fresh's on the config it loaded. The user's empty commit must
+sign and verify. Root's leg has no table, and the run leaves out its own check
+([Outbound](../../roles/server/ubuntu/security/README.md#outbound)). Its `/etc/ws/values.yml` sets a
+64 MiB swap file for the small disk. With no NVIDIA GPU, `nvidia` checks its names alone, and with
+no MSI board, `fans` leaves its fans alone. Without a VPN profile, `ikeward` does nothing.
+`ws server ubuntu wizard --check --plain` then asks nothing, as the values name both its keys, and
+its run skips, as systemd isn't booted ([the wizard](../../roles/server/ubuntu/stages/README.md)).
 
 ## The install script
 
