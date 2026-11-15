@@ -1,4 +1,4 @@
-// Package shell is the shell role as Go steps: WS_USER's bash and ~/.secrets/env. See
+// Package shell is the shell role as Go steps: WS_USER's bash and /etc/ws/env. See
 // roles/server/ubuntu/shell/README.md.
 package shell
 
