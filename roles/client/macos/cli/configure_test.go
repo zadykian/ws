@@ -41,8 +41,8 @@ func TestMacConfigureWritesWhatAFormSaves(t *testing.T) {
 	for {
 		select {
 		case status := <-ended:
-			if got, want := string(m.Files["/h/.config/ws/servers/ws/server.conf"]), values.Text("WS_USER", "ada", "WS_REMOTE", "r.example"); status != 0 || got != want {
-				t.Errorf("status = %d, mac.conf = %q; want %q", status, got, want)
+			if got, want := string(m.Files["/h/.config/ws/servers/ws/values.yml"]), values.Text("WS_USER", "ada", "WS_REMOTE", "r.example"); status != 0 || got != want {
+				t.Errorf("status = %d, values.yml = %q; want %q", status, got, want)
 			}
 			return
 		case <-time.After(150 * time.Millisecond):
@@ -55,12 +55,12 @@ func TestMacConfigureWritesWhatAFormSaves(t *testing.T) {
 
 func TestConfSheetDrawsWhatTheFormGives(t *testing.T) {
 	_, m := macTerminal()
-	form, err := values.Form{Conf: "/h/.config/ws/mac.conf", Server: "/h/.config/ws/servers/ws/server.conf", Scope: values.ServerFile, M: m}.
+	form, err := values.Form{Conf: "/h/.config/ws/values.yml", Server: "/h/.config/ws/servers/ws/values.yml", Scope: values.ServerFile, M: m}.
 		Load(&effecttest.Out{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	specs := confSheet("servers/ws/server.conf", form).Fields(map[string]string{"WS_TARGET": "cloud"})
+	specs := confSheet("servers/ws/values.yml", form).Fields(map[string]string{"WS_TARGET": "cloud"})
 	if got := specs[0]; got.Label != "WS_TARGET" || got.Kind != tui.ChoiceField || got.Value != "lan" {
 		t.Errorf("target = %+v", got)
 	}
@@ -77,15 +77,15 @@ func TestMacConfigureRefusals(t *testing.T) {
 	root, _ := macTerminal()
 	root.Euid = 0
 	bad, badFiles := macTerminal()
-	badFiles.Files["/h/.config/ws/mac.conf"] = []byte("no line\n")
+	badFiles.Files["/h/.config/ws/values.yml"] = []byte("no line\n")
 	plain, _ := macTerminal()
 	for name, tc := range map[string]struct {
 		p    enginecli.Env
 		args []string
 		want string
 	}{
-		"no terminal": {away, []string{"client", "macos", "configure"}, "edit mac.conf by hand"},
-		"--plain":     {plain, []string{"--plain", "client", "macos", "configure"}, "edit mac.conf by hand"},
+		"no terminal": {away, []string{"client", "macos", "configure"}, "edit values.yml by hand"},
+		"--plain":     {plain, []string{"--plain", "client", "macos", "configure"}, "edit values.yml by hand"},
 		"linux":       {linux, []string{"client", "macos", "configure"}, "not Linux"},
 		"root":        {root, []string{"client", "macos", "configure"}, "not root"},
 		"a bad line":  {bad, []string{"client", "macos", "configure"}, "write one KEY: value a line"},
@@ -105,8 +105,8 @@ func TestMacFormsShowMacConfApartFromTheServersFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer done(t.Context())
-	if len(sheets) < 2 || sheets[0].Name != "mac.conf" || sheets[1].Name != "servers/ws/server.conf" {
-		t.Fatalf("sheets = %v; want mac.conf, then the server's file", sheets)
+	if len(sheets) < 2 || sheets[0].Name != "values.yml" || sheets[1].Name != "servers/ws/values.yml" {
+		t.Fatalf("sheets = %v; want values.yml, then the server's file", sheets)
 	}
 	var mac, server []string
 	for _, f := range sheets[0].Fields(nil) {
@@ -116,6 +116,6 @@ func TestMacFormsShowMacConfApartFromTheServersFile(t *testing.T) {
 		server = append(server, f.Label)
 	}
 	if len(mac) != 0 || !slices.Contains(server, "WS_TARGET") {
-		t.Errorf("mac.conf shows %v, the server's file %v", mac, server)
+		t.Errorf("values.yml shows %v, the server's file %v", mac, server)
 	}
 }

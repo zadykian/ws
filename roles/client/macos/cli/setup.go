@@ -45,8 +45,8 @@ func newMacApplyCmd(p enginecli.Env, server *string) *cobra.Command {
 	names := macos.Names()
 	c := &cobra.Command{
 		Use:   "apply",
-		Short: "set the Mac up from mac.conf and a server's file",
-		Long: "It runs the steps it names, from mac.conf and the server's file, in this order: " + strings.Join(names, ", ") + ". " +
+		Short: "set the Mac up from values.yml and a server's file",
+		Long: "It runs the steps it names, from values.yml and the server's file, in this order: " + strings.Join(names, ", ") + ". " +
 			"With no --only, it runs every step, and ssh again, whose plan is empty unless cld " +
 			"changed ssh's file. It asks sudo where it needs root.",
 		Args: cobra.NoArgs,
@@ -74,7 +74,7 @@ func refuseRoot(p enginecli.Env) error {
 	return nil
 }
 
-// loadMacConf refuses root, picks the server that --server names, and reads mac.conf and the server's
+// loadMacConf refuses root, picks the server that --server names, and reads values.yml and the server's
 // file: the commands that act on the Mac's own files share it. It returns the server's name.
 func loadMacConf(p enginecli.Env, server *string) (name string, settings values.Conf, err error) {
 	if err := refuseRoot(p); err != nil {

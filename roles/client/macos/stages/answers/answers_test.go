@@ -12,11 +12,11 @@ import (
 )
 
 const (
-	confPathForTest   = "/h/.config/ws/mac.conf"
-	serverPathForTest = "/h/.config/ws/servers/ws/server.conf"
+	confPathForTest   = "/h/.config/ws/values.yml"
+	serverPathForTest = "/h/.config/ws/servers/ws/values.yml"
 )
 
-// newAnswers returns the stage over a Mac whose mac.conf holds mac, and a server's file holds
+// newAnswers returns the stage over a Mac whose values.yml holds mac, and a server's file holds
 // server; a text left empty is a file that is missing.
 func newAnswers(t *testing.T, mac, server string) (*Answers, *effecttest.Out) {
 	m := effecttest.NewMachine()
@@ -105,7 +105,7 @@ func TestAnswersAskAndWrite(t *testing.T) {
 		t.Errorf("server file = %q, want %q", got, server)
 	}
 	if got := string(m.Files[confPathForTest]); got != "# mine" {
-		t.Errorf("mac.conf = %q, want it as it was", got)
+		t.Errorf("values.yml = %q, want it as it was", got)
 	}
 }
 

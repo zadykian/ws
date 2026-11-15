@@ -16,7 +16,7 @@ import (
 )
 
 // varsReach is the way to ws of the values.yml and secrets sheets, of the wizard's state screen and of
-// ws client macos secrets. It starts with the first read, so that mac.conf draws with ws out of
+// ws client macos secrets. It starts with the first read, so that values.yml draws with ws out of
 // reach.
 type varsReach struct {
 	p enginecli.Env

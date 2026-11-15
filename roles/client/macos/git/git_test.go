@@ -50,7 +50,7 @@ func prereqs(p step.Plan) []step.Change {
 
 func TestGitWithoutAKeyStopsAndNamesTheLine(t *testing.T) {
 	_, err := (&git.Git{M: effecttest.NewMachine(), Out: &effecttest.Out{}}).Step().Plan(context.Background())
-	if err == nil || !strings.Contains(err.Error(), "mac.conf names no WS_GIT_SIGNING_PUB_KEY") {
+	if err == nil || !strings.Contains(err.Error(), "values.yml names no WS_GIT_SIGNING_PUB_KEY") {
 		t.Errorf("Plan err = %v, want the stop that names the line", err)
 	}
 }

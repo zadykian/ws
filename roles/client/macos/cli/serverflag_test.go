@@ -12,7 +12,7 @@ import (
 func TestServerFlagNamesTheServerOfApplyAndState(t *testing.T) {
 	m := effecttest.NewMachine()
 	writeConfs(m, "", values.Text("WS_USER", "ada"))
-	m.Files[values.ServerPath("/h/.config/ws/mac.conf", "box")] = []byte(values.Text("WS_USER", "bob", "WS_SLOT", "1"))
+	m.Files[values.ServerPath("/h/.config/ws/values.yml", "box")] = []byte(values.Text("WS_USER", "bob", "WS_SLOT", "1"))
 	m.Dirs["/h/.config/ws/servers/box"] = 0o755
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
@@ -29,9 +29,9 @@ func TestServerFlagNamesTheServerOfApplyAndState(t *testing.T) {
 func TestServerFlagNamesTheServerOfConf(t *testing.T) {
 	m := effecttest.NewMachine()
 	for slot, name := range []string{"ws", "box"} {
-		m.Files[values.ServerPath("/h/.config/ws/mac.conf", name)] = []byte(values.Text("WS_USER", name, "WS_SLOT", strconv.Itoa(slot)))
+		m.Files[values.ServerPath("/h/.config/ws/values.yml", name)] = []byte(values.Text("WS_USER", name, "WS_SLOT", strconv.Itoa(slot)))
 	}
-	m.Files["/h/.config/ws/mac.conf"] = nil
+	m.Files["/h/.config/ws/values.yml"] = nil
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = withServerDirs(m)
 	if status, stdout, _ := runWs(p, "", "client", "macos", "values", "print", "--server", "box"); status != 0 || !strings.HasPrefix(stdout, "WS_USER='box'\n") {

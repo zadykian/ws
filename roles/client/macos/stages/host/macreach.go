@@ -10,7 +10,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
-// MacReach is the Mac's way to ws: ssh at the direct way that mac.conf gives, root by Sudo.
+// MacReach is the Mac's way to ws: ssh at the direct way that values.yml gives, root by Sudo.
 type MacReach struct {
 	SSH remote.SSH
 	// Sudo is how a command reaches root. Nil runs it as the login, as the tests do.
@@ -29,7 +29,7 @@ func (r MacReach) Want() (session.Want, error) {
 	return session.Want{Target: c.Target, User: c.User, Address: c.TunnelSlot().Wg0(), Port: c.Port}, err
 }
 
-// User returns WS_USER from mac.conf.
+// User returns WS_USER from values.yml.
 func (r MacReach) User() (string, error) {
 	c, err := r.Want()
 	return c.User, err

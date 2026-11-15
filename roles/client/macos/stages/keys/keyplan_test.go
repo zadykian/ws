@@ -58,10 +58,10 @@ func TestMacKeyPlan(t *testing.T) {
 	}
 }
 
-// A file key that mac.conf names must be there: the stage makes none.
+// A file key that values.yml names must be there: the stage makes none.
 func TestMacKeyPlanNeedsAFileKey(t *testing.T) {
 	k, m, _ := newMacKey(t, gitKey+values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id_ed25519.pub"))
-	if got := planned(k); !strings.Contains(got, "/h/.ssh/id_ed25519.pub, named in mac.conf's WS_IDENTITY_PUB_KEY, is missing") {
+	if got := planned(k); !strings.Contains(got, "/h/.ssh/id_ed25519.pub, named in values.yml's WS_IDENTITY_PUB_KEY, is missing") {
 		t.Errorf("Plan of a missing key = %q", got)
 	}
 	m.Files["/h/.ssh/id_ed25519"], m.Files["/h/.ssh/id_ed25519.pub"] = []byte("p"), []byte(pubText)
@@ -101,7 +101,7 @@ func TestMacKeyPlanTakesTheAgentsKey(t *testing.T) {
 	}
 }
 
-// git's question marks ws's login key, which mac.conf names. An empty WS_GIT_SIGNING_PUB_KEY names none.
+// git's question marks ws's login key, which values.yml names. An empty WS_GIT_SIGNING_PUB_KEY names none.
 func TestMacKeyPlanAsksForGitsKey(t *testing.T) {
 	k, m, _ := newMacKey(t, values.Text("WS_GIT_SIGNING_PUB_KEY", ""))
 	agent(m, p256)

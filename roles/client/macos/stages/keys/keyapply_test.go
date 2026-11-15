@@ -26,7 +26,7 @@ func TestMacKeyApplyStopsAtTheQuestion(t *testing.T) {
 	}
 }
 
-// mac.conf can name a copy before ws client macos apply makes its directory. Apply makes the
+// values.yml can name a copy before ws client macos apply makes its directory. Apply makes the
 // directory, and sets ~/.config/ws's mode, before the copy, so that a second plan finds nothing.
 func TestMacKeyApplyMakesTheCopiesDirectory(t *testing.T) {
 	k, m, _ := newMacKey(t, gitKey+values.Text("WS_IDENTITY_PUB_KEY", listed(p256)[0].Pub()))

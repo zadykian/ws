@@ -14,9 +14,9 @@ func newValuesCmd(p enginecli.Env, server *string) *cobra.Command {
 	var lines bool
 	c := &cobra.Command{
 		Use:   "print [FILE]",
-		Short: "print the checked settings of mac.conf and a server's file as shell assignments",
-		Long: "It reads FILE, else $WS_VALUES, else ~/.config/ws/mac.conf, and the server's file, " +
-			"servers/NAME/server.conf beside it, of the server that --server names, and prints the checked settings as shell assignments, " +
+		Short: "print the checked settings of values.yml and a server's file as shell assignments",
+		Long: "It reads FILE, else $WS_VALUES, else ~/.config/ws/values.yml, and the server's file, " +
+			"servers/NAME/values.yml beside it, of the server that --server names, and prints the checked settings as shell assignments, " +
 			"or the errors of a file it refuses.",
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(c *cobra.Command, args []string) error { return runValuesPrint(c, p, server, args, lines) },

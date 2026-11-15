@@ -14,7 +14,7 @@ func TestMacKeyFileKey(t *testing.T) {
 		fp    string // the .pub's fingerprint, where the key's is aa
 		want  string
 	}{
-		"neither":  {nil, "", "/h/k.pub, named in mac.conf's WS_IDENTITY_PUB_KEY, is missing"},
+		"neither":  {nil, "", "/h/k.pub, named in values.yml's WS_IDENTITY_PUB_KEY, is missing"},
 		"both":     {map[string]string{"/h/k": "p", "/h/k.pub": pubText}, "aa", ""},
 		"orphan":   {map[string]string{"/h/k.pub": pubText}, "", "is there without its private key"},
 		"mismatch": {map[string]string{"/h/k": "p", "/h/k.pub": pubText}, "bb", "is not /h/k's public key"},

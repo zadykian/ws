@@ -31,7 +31,7 @@ type Tunnel struct {
 	Conf values.Conf
 	// Server is the name of the server whose daemon this is.
 	Server string
-	// MacConf is mac.conf's path, beside which the servers' directories are.
+	// MacConf is values.yml's path, beside which the servers' directories are.
 	MacConf string
 	Home    string
 	// Plist is the text of roles/client/macos/tunnel/files/ws-tunnel.plist: a template, with @NAME@

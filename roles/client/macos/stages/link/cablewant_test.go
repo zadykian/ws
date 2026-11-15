@@ -10,7 +10,7 @@ import (
 
 func TestCablePlanAsksRunDoneForTheTunnelPair(t *testing.T) {
 	c, m, _ := newCable(t, session.Status{}, cableLink, nil)
-	m.Files["/h/mac.conf"] = []byte(values.Text("WS_TARGET", "lan", "WS_SLOT", "2", "WS_TUNNEL_PORT", "51999") + wayConf)
+	m.Files["/h/values.yml"] = []byte(values.Text("WS_TARGET", "lan", "WS_SLOT", "2", "WS_TUNNEL_PORT", "51999") + wayConf)
 	c.Check = true
 	var got session.Want
 	c.RunDone = func(_ context.Context, w session.Want) bool { got = w; return false }

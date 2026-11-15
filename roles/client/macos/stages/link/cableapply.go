@@ -137,8 +137,8 @@ func (c *Cable) service(ctx context.Context) error {
 		return err
 	}
 	if _, err := c.M.Run(ctx, "ping", "-c", "1", "-t", "3", cableEnd); err != nil {
-		return fmt.Errorf("%s: ping -c 1 -t 3 %s, %s's end of the cable, got no answer: server.conf's "+
-			"WS_CABLE_SERVICE must name the service of the adapter that the cable plugs into", stage.Cable, cableEnd, c.SSH.Host)
+		return fmt.Errorf("%s: ping -c 1 -t 3 %s, %s's end of the cable, got no answer: WS_CABLE_SERVICE in "+
+			"the server's values.yml must name the service of the adapter that the cable plugs into", stage.Cable, cableEnd, c.SSH.Host)
 	}
 	return nil
 }

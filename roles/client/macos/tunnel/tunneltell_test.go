@@ -57,7 +57,7 @@ func TestTunnelFinishNamesTheServerAsTheHost(t *testing.T) {
 		"as ssh box needs this done first. ADDRESS and PORT are that way:\n\n" +
 		"    ssh -o HostName=ADDRESS -o Port=PORT box \"printf '%s\\n' 'PUB' | tee /etc/wireguard/mac.pub >/dev/null\"\n" +
 		"    ssh -o HostName=ADDRESS -o Port=PORT box ws server ubuntu apply --only tunnel\n" +
-		"\nThen set WS_PUBLIC_KEY in ~/.config/ws/servers/NAME/server.conf to box's key, which that run prints, and run\n" +
+		"\nThen set WS_PUBLIC_KEY in ~/.config/ws/servers/NAME/values.yml to box's key, which that run prints, and run\n" +
 		"ws client macos apply again, which installs the tunnel's daemon.\n"
 	if text.String() != want {
 		t.Errorf("Finish printed\n%s\nwant\n%s", text.String(), want)

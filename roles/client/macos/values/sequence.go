@@ -5,18 +5,18 @@ import "strconv"
 // Sequence asks the keys of the Answers stage in order. The machine that ws runs on comes first, as
 // the ways to ws follow it.
 type Sequence struct {
-	// Vals holds the keys' values so far: mac.conf's, then the answers.
+	// Vals holds the keys' values so far: values.yml's, then the answers.
 	Vals map[string]string
-	// Lacks reports whether mac.conf has no line for the key.
+	// Lacks reports whether values.yml has no line for the key.
 	Lacks func(key string) bool
-	// Ask gets the value for a key that mac.conf lacks.
+	// Ask gets the value for a key that values.yml lacks.
 	Ask func(q Question) (string, error)
 	// Place is where the server sits beside the others, which gives its router port a default that
 	// keeps it apart from a server behind the same router. Nil gives none.
 	Place *Place
 }
 
-// get returns the key's value: mac.conf's, or the answer where it has no line.
+// get returns the key's value: values.yml's, or the answer where it has no line.
 func (s *Sequence) get(q Question) (string, error) {
 	if !s.Lacks(q.Key) {
 		return s.Vals[q.Key], nil

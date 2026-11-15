@@ -71,7 +71,7 @@ func Expand(path, home string) string {
 	return path
 }
 
-// NamedIdentity is the key of mac.conf's WS_IDENTITY_PUB_KEY and WS_IDENTITY_AGENT. A key of
+// NamedIdentity is the key of values.yml's WS_IDENTITY_PUB_KEY and WS_IDENTITY_AGENT. A key of
 // Secretive's takes its agent where WS_IDENTITY_AGENT names none.
 func NamedIdentity(pub, agent, home string) Identity {
 	if agent == "" && SecretiveKey(Expand(pub, home), home) {

@@ -1,10 +1,10 @@
-// Package values reads ~/.config/ws/mac.conf, the Mac's settings, as YAML without running it. Parse
+// Package values reads ~/.config/ws/values.yml, the Mac's settings, as YAML without running it. Parse
 // and Lines take its text; File and Read reach the file through a machine.
 package values
 
 import "fmt"
 
-// Parse reads the text of mac.conf as Lines does, and where every line passes, returns the first
+// Parse reads the text of values.yml as Lines does, and where every line passes, returns the first
 // refusal of the keys that go together.
 func Parse(text string) (Conf, []Error) { return Both.Parse(text) }
 
@@ -77,7 +77,7 @@ func lookup(name string) (key, bool) {
 }
 
 // Value returns the value of the key named name, as the file gives it or by the key's default. It
-// returns nothing for a name that mac.conf has no key of.
+// returns nothing for a name that values.yml has no key of.
 func (c Conf) Value(name string) string {
 	k, ok := lookup(name)
 	if !ok {

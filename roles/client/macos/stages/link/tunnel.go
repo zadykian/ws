@@ -46,7 +46,7 @@ type Tunnel struct {
 // Name is the stage's name.
 func (*Tunnel) Name() string { return stage.Tunnel }
 
-// Side is the Mac: the stage ends in the Mac's WireGuard configuration and mac.conf.
+// Side is the Mac: the stage ends in the Mac's WireGuard configuration and values.yml.
 func (*Tunnel) Side() wizard.Side { return stage.Mac }
 
 // WaitsOn is ws's run, which makes wg0.
@@ -85,7 +85,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	switch wg0 := s.WgKey; {
 	case wg0 == "":
-		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in server.conf to wg0's key, which that run makes"))
+		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in the server's values.yml to wg0's key, which that run makes"))
 	case wg0 != c.PublicKey:
 		if t.Check {
 			// Under --check the server's file is the scratch file, as for the stages before.
@@ -93,7 +93,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 				return step.Plan{}, err
 			}
 		}
-		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in server.conf to wg0's key, "+wg0))
+		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in the server's values.yml to wg0's key, "+wg0))
 	}
 	return step.Plan{Changes: append(ch, tunnelChange("run ws client macos apply again, which loads ws-tunnel, and wait up "+
 		"to 30 s for ws-tunnel's handshake, then log in to "+t.SSH.Host+" through it"))}, nil

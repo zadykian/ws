@@ -13,7 +13,7 @@ import (
 
 func TestAnswersCheckWritesTheScratchFile(t *testing.T) {
 	a, out := newAnswers(t, "", "")
-	a.Check, a.Scratch, a.ServerScratch = true, "/lock/mac.conf", "/lock/servers/ws/server.conf"
+	a.Check, a.Scratch, a.ServerScratch = true, "/lock/values.yml", "/lock/servers/ws/values.yml"
 	a.Env = func(k string) (string, bool) {
 		return map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "r.example"}[k], k == "WS_TARGET" || k == "WS_REMOTE"
 	}
@@ -29,7 +29,7 @@ func TestAnswersCheckWritesTheScratchFile(t *testing.T) {
 	if p, err := a.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
 		t.Fatalf("Plan = %v, %v", p, err)
 	}
-	if got := string(m.Files["/lock/servers/ws/server.conf"]); !strings.HasPrefix(got, values.Text(
+	if got := string(m.Files["/lock/servers/ws/values.yml"]); !strings.HasPrefix(got, values.Text(
 		"WS_USER", "ada",
 		"WS_SLOT", "0",
 		"WS_TUNNEL_PORT", "51820",
@@ -45,18 +45,18 @@ func TestAnswersCheckWritesTheScratchFile(t *testing.T) {
 	}
 }
 
-// TestAnswersLeavesAFileThatGainsNothing asks for the server's keys alone, so mac.conf, a link
+// TestAnswersLeavesAFileThatGainsNothing asks for the server's keys alone, so values.yml, a link
 // with no final newline, is neither written nor said.
 func TestAnswersLeavesAFileThatGainsNothing(t *testing.T) {
 	var mac = values.Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub")
 	for _, check := range []bool{false, true} {
 		a, out := newAnswers(t, mac, values.Text("WS_USER", "ada"))
-		a.Check, a.Scratch, a.ServerScratch = check, "/lock/mac.conf", "/lock/servers/ws/server.conf"
+		a.Check, a.Scratch, a.ServerScratch = check, "/lock/values.yml", "/lock/servers/ws/values.yml"
 		a.Env = func(k string) (string, bool) {
 			return map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "r.example"}[k], k == "WS_TARGET" || k == "WS_REMOTE"
 		}
 		m := a.M.(*effecttest.Machine)
-		m.Links[confPathForTest] = "/dot/mac.conf"
+		m.Links[confPathForTest] = "/dot/values.yml"
 		m.Results["mkdir -p /h/.config/ws/servers/ws"] = effecttest.Result{}
 		m.Results["mkdir -p /lock"] = effecttest.Result{}
 		m.Results["mkdir -p /lock/servers/ws"] = effecttest.Result{}
@@ -69,11 +69,11 @@ func TestAnswersLeavesAFileThatGainsNothing(t *testing.T) {
 			t.Fatalf("check=%v: Run = %v", check, err)
 		}
 		if got := string(m.Files[confPathForTest]); got != mac {
-			t.Errorf("check=%v: mac.conf = %q, want it as it was", check, got)
+			t.Errorf("check=%v: values.yml = %q, want it as it was", check, got)
 		}
 		for _, l := range out.Lines {
 			if strings.Contains(l, confPathForTest) && (strings.Contains(l, "wrote") || strings.Contains(l, "diff")) {
-				t.Errorf("check=%v: out has %q, want nothing of mac.conf", check, l)
+				t.Errorf("check=%v: out has %q, want nothing of values.yml", check, l)
 			}
 		}
 	}
@@ -88,9 +88,9 @@ func TestAnswersCheckPassesALinkThatLacksNoKey(t *testing.T) {
 		"WS_RESOLVERS", "",
 	)
 	a, out := newAnswers(t, "", all)
-	a.Check, a.Scratch, a.ServerScratch = true, "/lock/mac.conf", "/lock/servers/ws/server.conf"
+	a.Check, a.Scratch, a.ServerScratch = true, "/lock/values.yml", "/lock/servers/ws/values.yml"
 	m := a.M.(*effecttest.Machine)
-	m.Links[serverPathForTest], m.Dirs["/h/.config/ws"], m.Dirs["/h/.config/ws/servers/ws"] = "/dot/server.conf", 0o755, 0o755
+	m.Links[serverPathForTest], m.Dirs["/h/.config/ws"], m.Dirs["/h/.config/ws/servers/ws"] = "/dot/values.yml", 0o755, 0o755
 	m.Results["mkdir -p /lock"] = effecttest.Result{}
 	m.Results["mkdir -p /lock/servers/ws"] = effecttest.Result{}
 	if p, err := a.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
@@ -99,7 +99,7 @@ func TestAnswersCheckPassesALinkThatLacksNoKey(t *testing.T) {
 	if got := out.Lines; len(got) != 0 {
 		t.Errorf("out = %q, want no diff of a file that gains nothing", got)
 	}
-	if got := string(m.Files["/lock/servers/ws/server.conf"]); got != all {
+	if got := string(m.Files["/lock/servers/ws/values.yml"]); got != all {
 		t.Errorf("scratch = %q", got)
 	}
 }
@@ -116,20 +116,20 @@ func TestAnswersCheckCopiesTheOtherServersFiles(t *testing.T) {
 	)
 	var lab = values.Text("WS_USER", "ada", "WS_SLOT", "5")
 	a, _ := newAnswers(t, "", all)
-	a.Check, a.Scratch, a.ServerScratch = true, "/lock/mac.conf", "/lock/servers/ws/server.conf"
+	a.Check, a.Scratch, a.ServerScratch = true, "/lock/values.yml", "/lock/servers/ws/values.yml"
 	m := a.M.(*effecttest.Machine)
 	m.Dirs["/h/.config/ws/servers"], m.Dirs["/h/.config/ws/servers/ws"], m.Dirs["/h/.config/ws/servers/lab"] = 0o755, 0o755, 0o755
-	m.Files["/h/.config/ws/servers/lab/server.conf"] = []byte(lab)
+	m.Files["/h/.config/ws/servers/lab/values.yml"] = []byte(lab)
 	for _, dir := range []string{"/lock", "/lock/servers/ws", "/lock/servers/lab"} {
 		m.Results["mkdir -p "+dir] = effecttest.Result{}
 	}
 	if _, err := a.Plan(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	if got := string(m.Files["/lock/servers/lab/server.conf"]); got != lab {
+	if got := string(m.Files["/lock/servers/lab/values.yml"]); got != lab {
 		t.Errorf("lab's scratch = %q, want its file as it stands", got)
 	}
-	if got := string(m.Files["/lock/servers/ws/server.conf"]); got != all {
+	if got := string(m.Files["/lock/servers/ws/values.yml"]); got != all {
 		t.Errorf("ws's scratch = %q, want the rehearsal", got)
 	}
 }
@@ -145,9 +145,9 @@ func TestAnswersCheckRefusesAnUnreadableSiblingAsTheRunDoes(t *testing.T) {
 		"WS_RESOLVERS", "",
 	)
 	a, _ := newAnswers(t, "", all)
-	a.Check, a.Scratch, a.ServerScratch = true, "/lock/mac.conf", "/lock/servers/ws/server.conf"
+	a.Check, a.Scratch, a.ServerScratch = true, "/lock/values.yml", "/lock/servers/ws/values.yml"
 	m := a.M.(*effecttest.Machine)
-	lab := "/h/.config/ws/servers/lab/server.conf"
+	lab := "/h/.config/ws/servers/lab/values.yml"
 	m.Dirs["/h/.config/ws/servers"], m.Dirs["/h/.config/ws/servers/ws"], m.Dirs["/h/.config/ws/servers/lab"] = 0o755, 0o755, 0o755
 	m.Files[lab], m.Root[lab] = []byte(values.Text("WS_USER", "ada")), effect.Attrs{}
 	for _, dir := range []string{"/lock", "/lock/servers/ws"} {
@@ -161,7 +161,7 @@ func TestAnswersCheckRefusesAnUnreadableSiblingAsTheRunDoes(t *testing.T) {
 
 func TestAnswersCheckRefusesABadEnvironment(t *testing.T) {
 	a, _ := newAnswers(t, "", "")
-	a.Check, a.Scratch = true, "/lock/mac.conf"
+	a.Check, a.Scratch = true, "/lock/values.yml"
 	a.Env = func(k string) (string, bool) { return "home", k == "WS_TARGET" }
 	if _, err := a.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "WS_TARGET comes from the environment") {
 		t.Errorf("Plan = %v", err)
@@ -200,7 +200,7 @@ func TestAnswersPlaceAServerFileThatLacksItsSlot(t *testing.T) {
 		if tc.other != "" {
 			m.Dirs["/h/.config/ws/servers"] = 0o755
 			m.Dirs["/h/.config/ws/servers/box"] = 0o755
-			m.Files["/h/.config/ws/servers/box/server.conf"] = []byte(tc.other)
+			m.Files["/h/.config/ws/servers/box/values.yml"] = []byte(tc.other)
 		}
 		a.P.(*effecttest.Prompt).Answers = map[string]string{
 			"The machine ws runs on: lan, cloud or mac-vm (WS_TARGET) [lan]":                          "",
@@ -219,7 +219,7 @@ func TestAnswersPlaceAServerFileThatLacksItsSlot(t *testing.T) {
 			t.Errorf("%s: server file = %q, want it to start with %q", name, got, tc.want)
 		}
 		if got := string(m.Files[confPathForTest]); strings.Contains(got, "WS_SLOT") || strings.Contains(got, "WS_TUNNEL_PORT") {
-			t.Errorf("%s: mac.conf = %q, want no slot or port", name, got)
+			t.Errorf("%s: values.yml = %q, want no slot or port", name, got)
 		}
 	}
 }

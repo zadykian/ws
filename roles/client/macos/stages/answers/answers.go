@@ -1,4 +1,4 @@
-// Package answers is the wizard stage that asks for the values of mac.conf and a server's file, and
+// Package answers is the wizard stage that asks for the values of values.yml and a server's file, and
 // writes them.
 package answers
 
@@ -19,11 +19,11 @@ import (
 // errMissing stops Plan's walk over the keys at the first that its file lacks.
 var errMissing = errors.New("a file lacks a key")
 
-// Answers is the stage that gives mac.conf and a server's file the values they lack. Each value
+// Answers is the stage that gives values.yml and a server's file the values they lack. Each value
 // comes from the environment, under its key's name, or is asked at the terminal. Each goes in the
 // file of its key. The stage runs before any stage that reads them.
 type Answers struct {
-	// Conf is mac.conf's path, and Server the server's file's.
+	// Conf is values.yml's path, and Server the server's file's.
 	Conf   string
 	Server string
 	// Prog prefixes the messages of a refused answer.
@@ -31,7 +31,7 @@ type Answers struct {
 	// Tty tells whether stdin is a terminal, which the questions need.
 	Tty bool
 	// Check makes Plan rehearse the stage. It asks, shows the diff of each file, and writes what
-	// mac.conf and the server's file would be to Scratch and ServerScratch, which the stages after
+	// values.yml and the server's file would be to Scratch and ServerScratch, which the stages after
 	// it read. It copies each other server's file beside them, as the stages list the servers there.
 	Check         bool
 	Scratch       string
@@ -46,7 +46,7 @@ type Answers struct {
 // Name is the stage's name.
 func (*Answers) Name() string { return stage.Answers }
 
-// Side is the Mac: mac.conf.
+// Side is the Mac: values.yml.
 func (*Answers) Side() guided.Side { return stage.Mac }
 
 // WaitsOn is Homebrew: on a new Mac, a --check run stops there, as the install does.
@@ -144,7 +144,7 @@ func (a *Answers) collect(ctx context.Context, text map[values.Scope]string, c v
 }
 
 // compose splits the lines by the file of their keys, and returns each file with its lines added,
-// mac.conf first. A server's file that lacks WS_SLOT and gets lines gets its place first: the slot,
+// values.yml first. A server's file that lacks WS_SLOT and gets lines gets its place first: the slot,
 // then WS_TUNNEL_PORT where it has none. That keeps servers behind one remote apart. The stage stops at a
 // file refused with its lines, and says it.
 func (a *Answers) compose(text map[values.Scope]string, lines, remote string, place *values.Place) ([]part, error) {
@@ -252,7 +252,7 @@ func (a *Answers) writeScratch(ctx context.Context, file string, text []byte) er
 	return nil
 }
 
-// copyOthers copies the file of each other server beside mac.conf, as it stands, to the scratch's
+// copyOthers copies the file of each other server beside values.yml, as it stands, to the scratch's
 // servers/. The run reads them beside the server's file. So a refused one or a clash refuses the
 // rehearsal too, and the steps plan for the servers that the run would list.
 func (a *Answers) copyOthers(ctx context.Context) error {

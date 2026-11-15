@@ -19,7 +19,7 @@ import (
 // console. It goes in known_hosts under the name ws, which config.d/ws's HostKeyAlias gives each
 // way to ws.
 type Key struct {
-	// Conf is mac.conf's path, Lock the run's lock, whose host.pub holds the key to fingerprint.
+	// Conf is values.yml's path, Lock the run's lock, whose host.pub holds the key to fingerprint.
 	Conf, Lock string
 	// Tty tells whether a terminal is there to ask. Check is set under --check, which asks nothing.
 	Tty, Check bool
@@ -47,7 +47,7 @@ func (c hostAdd) String() string {
 	return stage.Host + ": would add " + c.server + "'s key to " + c.file
 }
 
-// conf reads mac.conf.
+// conf reads values.yml.
 func (h *Key) conf() (values.Conf, error) { return values.Read(h.M, h.Conf) }
 
 // known tells whether known_hosts holds a key under ws. It reads no key of ws's, as ws's sshd counts
@@ -58,7 +58,7 @@ func (h *Key) known(ctx context.Context, file string) bool {
 
 // noWay is the stop where no way leads to ws, naming what ws's target needs.
 func noWay(server string, c values.Conf) error {
-	how := "set those in server.conf"
+	how := "set those in the server's values.yml"
 	switch c.Target {
 	case "lan":
 		how += " as roles/server/ubuntu/cable/router.md has them"

@@ -35,13 +35,13 @@ func IsName(s string) bool {
 	return true
 }
 
-// serversDir returns the directory of the servers beside mac.conf at mac.
+// serversDir returns the directory of the servers beside values.yml at mac.
 func serversDir(mac string) string {
 	return path.Join(path.Dir(mac), "servers")
 }
 
-// Servers returns the names of the servers beside mac.conf at mac: the directories of servers/ that
-// hold a server.conf, in order. A directory with a file and a bad name is refused.
+// Servers returns the names of the servers beside values.yml at mac: the directories of servers/ that
+// hold a values.yml, in order. A directory with a file and a bad name is refused.
 func Servers(m effect.Machine, mac string) ([]string, error) {
 	dir := serversDir(mac)
 	entries, err := m.ReadDir(dir)

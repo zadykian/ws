@@ -16,7 +16,7 @@ func newServersCmd(p enginecli.Env, server *string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "servers",
 		Short: "list the Mac's servers with their target, slot and tunnel",
-		Long: "It lists each server of servers/ beside mac.conf: its target, its slot, and its tunnel, which is absent, " +
+		Long: "It lists each server of servers/ beside values.yml: its target, its slot, and its tunnel, which is absent, " +
 			"stopped, starting, unreadable, or the tier and endpoint it holds. A server whose file ws refuses shows - and its errors " +
 			"follow the list, with exit code 1. It reads alone, as the user, and takes no --server.",
 		Args: cobra.NoArgs,
@@ -49,7 +49,7 @@ func newServersCmd(p enginecli.Env, server *string) *cobra.Command {
 	}
 }
 
-// appendNew adds err to errs unless one says the same: a bad mac.conf fails every server's load.
+// appendNew adds err to errs unless one says the same: a bad values.yml fails every server's load.
 func appendNew(errs []error, err error) []error {
 	for _, e := range errs {
 		if e.Error() == err.Error() {

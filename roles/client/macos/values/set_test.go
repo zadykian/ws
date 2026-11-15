@@ -34,9 +34,9 @@ func TestReplaceQuotesWhereYAMLNeedsIt(t *testing.T) {
 
 func TestConfSetAllPassesAPairTogether(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte(Text("WS_TARGET", "lan"))
+	m.Files["/h/values.yml"] = []byte(Text("WS_TARGET", "lan"))
 	m.Results["mkdir -p /h"] = effecttest.Result{}
-	f := File{Path: "/h/mac.conf", Stage: "Configure", M: m, Out: &effecttest.Out{}}
+	f := File{Path: "/h/values.yml", Stage: "Configure", M: m, Out: &effecttest.Out{}}
 	if err := f.Set(context.Background(), "WS_LAN", "10.88.0.0/24"); err == nil {
 		t.Error("set of half a pair = nil; want a refusal")
 	}
@@ -45,16 +45,16 @@ func TestConfSetAllPassesAPairTogether(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := Text("WS_TARGET", "lan", "WS_LAN", "10.88.0.0/24", "WS_LAN_ADDRESS", "10.88.0.10")
-	if got := string(m.Files["/h/mac.conf"]); got != want {
-		t.Errorf("mac.conf = %q; want %q", got, want)
+	if got := string(m.Files["/h/values.yml"]); got != want {
+		t.Errorf("values.yml = %q; want %q", got, want)
 	}
 }
 
 func TestConfSet(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte(Text("WS_TARGET", "lan", "WS_PUBLIC_KEY", "x"))
+	m.Files["/h/values.yml"] = []byte(Text("WS_TARGET", "lan", "WS_PUBLIC_KEY", "x"))
 	m.Results["mkdir -p /h"] = effecttest.Result{}
-	f := File{Path: "/h/mac.conf", Stage: "Tunnel", M: m, Out: &effecttest.Out{}}
+	f := File{Path: "/h/values.yml", Stage: "Tunnel", M: m, Out: &effecttest.Out{}}
 	if err := f.Set(context.Background(), "WS_PUBLIC_KEY", "bad"); err == nil {
 		t.Error("set of a bad key = nil; want a refusal")
 	}
@@ -62,21 +62,21 @@ func TestConfSet(t *testing.T) {
 	if err := f.Set(context.Background(), "WS_PUBLIC_KEY", key); err != nil {
 		t.Fatal(err)
 	}
-	if got := string(m.Files["/h/mac.conf"]); got != Text("WS_TARGET", "lan", "WS_PUBLIC_KEY", key) {
-		t.Errorf("mac.conf = %q", got)
+	if got := string(m.Files["/h/values.yml"]); got != Text("WS_TARGET", "lan", "WS_PUBLIC_KEY", key) {
+		t.Errorf("values.yml = %q", got)
 	}
 }
 
 func TestConfSetRefusesAWrappedValue(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET: lan\nWS_TUNNEL_NETWORKS: 10.1.0.0/16\n  10.2.0.0/16\n")
+	m.Files["/h/values.yml"] = []byte("WS_TARGET: lan\nWS_TUNNEL_NETWORKS: 10.1.0.0/16\n  10.2.0.0/16\n")
 	m.Results["mkdir -p /h"] = effecttest.Result{}
 	var out effecttest.Out
-	f := File{Path: "/h/mac.conf", Stage: "Configure", M: m, Out: &out}
+	f := File{Path: "/h/values.yml", Stage: "Configure", M: m, Out: &out}
 	if err := f.Set(context.Background(), "WS_TUNNEL_NETWORKS", "10.3.0.0/16"); !errors.Is(err, ErrRefused) {
 		t.Errorf("set of a wrapped value: %v; want a refusal", err)
 	}
-	if len(out.Lines) != 1 || !strings.Contains(out.Lines[0], "mac.conf, line 3: write one KEY: value a line") {
+	if len(out.Lines) != 1 || !strings.Contains(out.Lines[0], "values.yml, line 3: write one KEY: value a line") {
 		t.Errorf("out = %v; want the refusal of line 3", out.Lines)
 	}
 }

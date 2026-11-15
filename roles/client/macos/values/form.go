@@ -17,11 +17,11 @@ const configureStage = "Configure"
 // WS_LAN on a cloud VM, and a key that doesn't show has no field to clear it by.
 var wayKeys = []string{"WS_LAN", "WS_LAN_ADDRESS", "WS_REMOTE", "WS_REMOTE_PORT"}
 
-// Form is mac.conf and a server's file as a form. It shows the keys that the Answers stage would ask
+// Form is values.yml and a server's file as a form. It shows the keys that the Answers stage would ask
 // where the files lacked them all, as the edits so far lead it. A key that the stage never asks
 // stays the file's. Each key is saved to its own file.
 type Form struct {
-	// Conf is mac.conf's path, and Server the server's file's.
+	// Conf is values.yml's path, and Server the server's file's.
 	Conf   string
 	Server string
 	M      effect.Machine
@@ -142,7 +142,7 @@ func (f Form) settings(edits map[string]string) []Setting {
 	return changes
 }
 
-// Save composes and checks the changes of both files, then writes each to the file of its key, mac.conf first, and returns the form of what
+// Save composes and checks the changes of both files, then writes each to the file of its key, values.yml first, and returns the form of what
 // they then hold. It says the keys that it emptied, as some of them no longer show.
 func (f Form) Save(ctx context.Context, out effect.Out, edits map[string]string) (Form, error) {
 	changes := f.settings(edits)

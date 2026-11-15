@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// Scope is the file that a text is: the Mac's mac.conf, or a server's file beside it. Each file
+// Scope is the file that a text is: the Mac's values.yml, or a server's file beside it. Each file
 // refuses the other's keys.
 type Scope int
 
@@ -18,7 +18,7 @@ const (
 	ServerFile
 )
 
-// macKeys are the keys of mac.conf. Every other key is a server's, so a new key is one unless it
+// macKeys are the keys of values.yml. Every other key is a server's, so a new key is one unless it
 // is listed here.
 var macKeys = []string{
 	"WS_GIT_SIGNING_PUB_KEY", "WS_IDENTITY_PUB_KEY", "WS_IDENTITY_AGENT",
@@ -29,9 +29,9 @@ func (s Scope) refuse(name string) string {
 	mac := slices.Contains(macKeys, name)
 	switch {
 	case s == MacFile && !mac:
-		return name + " is a server's key: it goes in servers/NAME/server.conf, beside mac.conf"
+		return name + " is a server's key: it goes in servers/NAME/values.yml, beside the Mac's values.yml"
 	case s == ServerFile && mac:
-		return name + " is the Mac's key: it goes in mac.conf"
+		return name + " is the Mac's key: it goes in the Mac's values.yml"
 	}
 	return ""
 }

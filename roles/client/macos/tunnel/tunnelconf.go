@@ -11,7 +11,7 @@ import (
 func tunnelConf(c values.Conf, server string) string {
 	var b strings.Builder
 	b.WriteString("# Written by github.com/zadykian/ws: ws client macos apply, from ~/.config/ws/servers/" +
-		server + "/server.conf.\n")
+		server + "/values.yml.\n")
 	b.WriteString("WS_PUBLIC_KEY=" + c.PublicKey + "\n")
 	if c.LAN != "" {
 		b.WriteString("WS_LAN=" + c.LAN + "\n")

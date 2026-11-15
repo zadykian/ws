@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	confPathForTest = "/h/.config/ws/mac.conf"
+	confPathForTest = "/h/.config/ws/values.yml"
 	// pubText is the text of a public key file.
 	pubText  = "ssh-ed25519 AAAAC3 me@mac\n"
 	p256     = "ecdsa-sha2-nistp256 AAAA me\n"

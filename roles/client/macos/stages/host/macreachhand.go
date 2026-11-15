@@ -10,7 +10,7 @@ import (
 
 // Hand adds what stays by hand of ws, the router and the Mac to the list. ws's part comes from the
 // remote script's status. ws's gh login is a step of ws server ubuntu apply, by token.github, so
-// the list leaves it out. mac.conf has WS_LAN_ADDRESS with WS_LAN alone, so the lease names an
+// the list leaves it out. values.yml has WS_LAN_ADDRESS with WS_LAN alone, so the lease names an
 // address only with a LAN. Off the LAN, away's lines take the router's place.
 func (r MacReach) Hand(h *guided.Hand, s session.Status) {
 	_, c, err := (values.File{Path: r.Conf, Stage: stages.RunStage, M: r.SSH.M, Out: r.Out}).Load()
@@ -44,7 +44,7 @@ func (r MacReach) Hand(h *guided.Hand, s session.Status) {
 }
 
 // away adds what stays by hand of a cloud VM or a VM on the Mac, which have no router. Where the
-// run asked ws's address, mac.conf's way must lead to it. A cloud VM's provider must let the tunnel
+// run asked ws's address, the server's values.yml must lead to it. A cloud VM's provider must let the tunnel
 // in (roles/client/macos/values/README.md).
 func away(h *guided.Hand, c values.Conf, server, first string) {
 	target := c.Target
@@ -53,7 +53,7 @@ func away(h *guided.Hand, c values.Conf, server, first string) {
 		way = "WS_REMOTE"
 	}
 	if first != "" {
-		h.Add("%s's address: %s in server.conf must lead to %s, as this run reached it at %s "+
+		h.Add("%s's address: %s in the server's values.yml must lead to %s, as this run reached it at %s "+
 			"(roles/client/macos/values/README.md).", server, way, server, first)
 	}
 	if target == "cloud" {

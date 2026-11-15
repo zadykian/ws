@@ -53,7 +53,7 @@ type heldStatus struct {
 type Reach interface {
 	// Shell runs a command as root on ws.
 	Shell() remote.Shell
-	// Want reads the target, WS_USER, WS_SLOT and WS_TUNNEL_PORT that ws's run is to leave: server.conf's
+	// Want reads the target, WS_USER, WS_SLOT and WS_TUNNEL_PORT that ws's run is to leave: values.yml's
 	// on the Mac, and values.yml's on ws.
 	Want() (Want, error)
 	// User returns WS_USER, whose claude and git config the stages read.
@@ -67,7 +67,7 @@ type Reach interface {
 }
 
 // Want is what ws's run is to leave: the target, lan or cloud, WS_USER, and wg0's address and port.
-// The server reads no other key of server.conf. ws's own wizard reads no conf and leaves Address
+// The server reads no other key of values.yml. ws's own wizard reads no conf and leaves Address
 // and Port zero, so its run writes no tunnel pair.
 type Want struct {
 	Target, User string

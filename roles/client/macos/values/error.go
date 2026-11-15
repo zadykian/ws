@@ -2,7 +2,7 @@ package values
 
 import "fmt"
 
-// Error is a refusal of mac.conf: of the line Line, or of the file as a whole where Line is 0.
+// Error is a refusal of values.yml: of the line Line, or of the file as a whole where Line is 0.
 type Error struct {
 	Line int
 	Msg  string

@@ -146,7 +146,7 @@ func pairsOp(pairs ...string) string {
 
 func TestWsRunWritesTheTunnelBeforeTheUser(t *testing.T) {
 	r, m := tunnelRun("10.99.1.1/24", "51821", "---\n")
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\nWS_USER=alice\n")
+	m.Files["/h/values.yml"] = []byte("WS_TARGET=lan\nWS_USER=alice\n")
 	p, err := r.Plan(context.Background())
 	if err != nil || len(p.Changes) != 1 {
 		t.Fatalf("Plan = %v, %v; want one change", p.Changes, err)

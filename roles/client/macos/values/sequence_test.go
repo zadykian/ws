@@ -23,7 +23,7 @@ func TestSequenceGetKeepsMacConf(t *testing.T) {
 	s := newSequence(map[string]bool{"WS_LAN": true}, scripted(&asked, nil))
 	s.Vals["WS_LAN"] = "10.1.0.0/24"
 	if v, err := s.get(Question{Key: "WS_LAN"}); v != "10.1.0.0/24" || err != nil || len(asked) != 0 {
-		t.Errorf("get = %q, %v, asked %v; want mac.conf's value, nothing asked", v, err, asked)
+		t.Errorf("get = %q, %v, asked %v; want values.yml's value, nothing asked", v, err, asked)
 	}
 	s.Ask = func(Question) (string, error) { return "", errors.New("stop") }
 	if _, err := s.get(Question{Key: "WS_REMOTE"}); err == nil || s.Vals["WS_REMOTE"] != "" {

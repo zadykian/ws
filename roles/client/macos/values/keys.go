@@ -8,7 +8,7 @@ import (
 	"github.com/zadykian/ws/roles/internal/slot"
 )
 
-// Conf is mac.conf's settings, each key's value as the file gives it, with the default of a key
+// Conf is values.yml's settings, each key's value as the file gives it, with the default of a key
 // that has no line or an empty value.
 type Conf struct {
 	User, Target, Slot, PublicKey, LAN, LANAddress, Remote, RemotePort, Port string
@@ -39,7 +39,7 @@ func (c Conf) ForwardPort() string {
 	return c.RemotePort
 }
 
-// key is one of mac.conf's keys: where its value goes, its check, and the form its message names.
+// key is one of values.yml's keys: where its value goes, its check, and the form its message names.
 type key struct {
 	name  string
 	field func(*Conf) *string
@@ -58,7 +58,7 @@ const port = "a port, 1 to 65535"
 const keyFile = "a public key's file, as ~/.ssh/NAME.pub: a path from / or ~/ to .pub, " +
 	"of letters, digits and ._/@+-"
 
-// keys is mac.conf's keys in the order of the file's docs, with their checks.
+// keys is values.yml's keys in the order of the file's docs, with their checks.
 var keys = []key{
 	{"WS_USER", func(c *Conf) *string { return &c.User }, check.User,
 		"a user name of 32 characters at most: letters, digits, ., _ and -, no - first"},

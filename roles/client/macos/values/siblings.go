@@ -6,13 +6,13 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 )
 
-// Sibling is another server's file beside mac.conf, parsed by the server's scope.
+// Sibling is another server's file beside values.yml, parsed by the server's scope.
 type Sibling struct {
 	Name, File string
 	Conf       Conf
 }
 
-// Siblings returns the servers of servers/ beside mac.conf at mac, other than the one whose file is
+// Siblings returns the servers of servers/ beside values.yml at mac, other than the one whose file is
 // at server, sorted by name. It leaves out a file that is missing or refused: apply refuses such a
 // file before its steps run. This is the one way to read the other servers.
 func Siblings(m effect.Machine, mac, server string) ([]Sibling, error) {

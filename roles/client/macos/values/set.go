@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// Setting is a value for one of mac.conf's keys.
+// Setting is a value for one of values.yml's keys.
 type Setting struct{ Key, Value string }
 
 // replace returns the text with the first line of key set to value and the later lines of key
@@ -35,8 +35,8 @@ func replace(text, key, value string) string {
 	return strings.Join(out, "")
 }
 
-// change returns mac.conf's text, and its text with the settings, where the whole passes the package's
-// checks and mac.conf is no link. They go through as one, as a pair of keys passes together alone.
+// change returns values.yml's text, and its text with the settings, where the whole passes the package's
+// checks and values.yml is no link. They go through as one, as a pair of keys passes together alone.
 func (f File) change(settings ...Setting) (before, after string, err error) {
 	before, err = f.Read()
 	if err != nil {
@@ -62,12 +62,12 @@ func (f File) change(settings ...Setting) (before, after string, err error) {
 	return before, after, nil
 }
 
-// Set gives key the value in mac.conf, as change checks.
+// Set gives key the value in values.yml, as change checks.
 func (f File) Set(ctx context.Context, key, value string) error {
 	return f.SetAll(ctx, Setting{Key: key, Value: value})
 }
 
-// SetAll writes the settings in mac.conf, as change checks.
+// SetAll writes the settings in values.yml, as change checks.
 func (f File) SetAll(ctx context.Context, settings ...Setting) error {
 	_, after, err := f.change(settings...)
 	if err != nil {

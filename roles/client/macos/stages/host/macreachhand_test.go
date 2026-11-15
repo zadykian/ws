@@ -38,13 +38,13 @@ func TestMacHandNamesTheServer(t *testing.T) {
 		want   []string
 	}{
 		"lan": {"lan", []string{"lab's lease: static, as", "reached lab at 10.0.0.5.", "The router's forwards to lab, UDP 51820"}},
-		"cloud": {"cloud", []string{"lab's address: WS_REMOTE in server.conf must lead to lab, as this run reached it at 10.0.0.5",
+		"cloud": {"cloud", []string{"lab's address: WS_REMOTE in the server's values.yml must lead to lab, as this run reached it at 10.0.0.5",
 			"UDP 51820 open to lab, for"}},
 	} {
 		m := effecttest.NewMachine()
-		m.Files["/h/mac.conf"] = []byte(values.Text("WS_TARGET", tc.target, "WS_USER", "ada") + extra["cloud"])
+		m.Files["/h/values.yml"] = []byte(values.Text("WS_TARGET", tc.target, "WS_USER", "ada") + extra["cloud"])
 		m.Files["/l/"+remote.FirstFile] = []byte("10.0.0.5\n")
-		r := MacReach{SSH: remote.SSH{Host: "lab", M: m, Lock: "/l"}, Conf: "/h/mac.conf", Out: &effecttest.Out{}}
+		r := MacReach{SSH: remote.SSH{Host: "lab", M: m, Lock: "/l"}, Conf: "/h/values.yml", Out: &effecttest.Out{}}
 		h := &guided.Hand{}
 		r.Hand(h, session.Status{})
 		got := strings.Join(h.Lines(), "\n")
@@ -58,8 +58,8 @@ func TestMacHandNamesTheServer(t *testing.T) {
 
 func TestMacHandNamesTheServerInTheOutboundLine(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte(values.Text("WS_TARGET", "lan", "WS_USER", "ada"))
-	r := MacReach{SSH: remote.SSH{Host: "lab", M: m, Lock: "/l"}, Conf: "/h/mac.conf", Out: &effecttest.Out{}}
+	m.Files["/h/values.yml"] = []byte(values.Text("WS_TARGET", "lan", "WS_USER", "ada"))
+	r := MacReach{SSH: remote.SSH{Host: "lab", M: m, Lock: "/l"}, Conf: "/h/values.yml", Out: &effecttest.Out{}}
 	h := &guided.Hand{}
 	r.Hand(h, session.Status{OutboundOff: true})
 	if got := strings.Join(h.Lines(), "\n"); !strings.Contains(got, "lab's outbound table: off, as lab's /etc/ws/values.yml names") {

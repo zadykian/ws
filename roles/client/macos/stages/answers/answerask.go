@@ -22,7 +22,7 @@ type asker struct {
 	tty  bool
 	out  effect.Out
 	told bool
-	// lines holds the lines for the answers, to add to mac.conf.
+	// lines holds the lines for the answers, to add to values.yml.
 	lines string
 	// lan gives WS_LAN's value, which WS_LAN_ADDRESS must lie in.
 	lan func() string

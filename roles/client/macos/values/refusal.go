@@ -2,7 +2,7 @@ package values
 
 import "strings"
 
-// Refusal says why mac.conf can't take the value for the key, or is empty where it can. lan is the
+// Refusal says why values.yml can't take the value for the key, or is empty where it can. lan is the
 // value of WS_LAN, which WS_LAN_ADDRESS must lie in.
 func (q Question) Refusal(value, lan string) string {
 	switch {

@@ -12,13 +12,13 @@ import (
 // FirstServer is the name of the one server that ws sets up for now.
 const FirstServer = "ws"
 
-// ServerPath returns the path of the server called name's file, in a directory beside mac.conf.
+// ServerPath returns the path of the server called name's file, in a directory beside values.yml.
 func ServerPath(mac, name string) string {
-	return path.Join(path.Dir(mac), "servers", name, "server.conf")
+	return path.Join(path.Dir(mac), "servers", name, "values.yml")
 }
 
-// Load reads mac.conf at mac and a server's file at server, and parses each by its scope. It
-// returns them joined: the Mac's keys from mac.conf, every other from the server's file. It
+// Load reads values.yml at mac and a server's file at server, and parses each by its scope. It
+// returns them joined: the Mac's keys from values.yml, every other from the server's file. It
 // returns every refusal of both files, each in its own file's words, then what the server's file
 // takes that another server's file takes too ([clashes]).
 func Load(m effect.Machine, mac, server string) (Conf, error) {
@@ -41,7 +41,7 @@ func Load(m effect.Machine, mac, server string) (Conf, error) {
 	return join(macConf, c), nil
 }
 
-// LoadLines reads mac.conf at mac and a server's file at server as Load does, but checks each line
+// LoadLines reads values.yml at mac and a server's file at server as Load does, but checks each line
 // alone, as Scope.Lines does. A pair of keys may then stand apart. Each file refuses the other's
 // keys, and no other server is read.
 func LoadLines(m effect.Machine, mac, server string) (Conf, error) {
@@ -53,7 +53,7 @@ func LoadLines(m effect.Machine, mac, server string) (Conf, error) {
 	return join(macConf, c), nil
 }
 
-// join returns the keys of a server's file with the Mac's keys from mac.conf.
+// join returns the keys of a server's file with the Mac's keys from values.yml.
 func join(mac, server Conf) Conf {
 	server.GitSigningPubKey, server.IdentityPubKey, server.IdentityAgent = mac.GitSigningPubKey, mac.IdentityPubKey, mac.IdentityAgent
 	return server

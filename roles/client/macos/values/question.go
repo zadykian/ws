@@ -8,7 +8,7 @@ import (
 // targets are WS_TARGET's values, in the order that a choice offers them.
 var targets = []string{"lan", "cloud", "mac-vm"}
 
-// Question is what the Answers stage asks for one of mac.conf's keys. A Need makes an empty answer
+// Question is what the Answers stage asks for one of values.yml's keys. A Need makes an empty answer
 // refused, and is the message that says so.
 type Question struct {
 	Key, Text, Def, Need string
@@ -61,7 +61,7 @@ func (q Question) Reply(raw string) string {
 	return raw
 }
 
-// HasLine reports whether the text of mac.conf has a line for the key. A key is at the line's start with
+// HasLine reports whether the text of values.yml has a line for the key. A key is at the line's start with
 // its colon right after it, the form that the reader takes and the writers edit.
 func HasLine(text, key string) bool {
 	for _, l := range strings.Split(text, "\n") {

@@ -24,16 +24,16 @@ var wayConf = values.Text("WS_REMOTE", "ws.example.org", "WS_REMOTE_PORT", "2202
 // known_hosts lacks ws.
 func newHost(env map[string]string) (*Key, *effecttest.Machine) {
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte(values.Text("WS_TARGET", "lan") + wayConf)
+	m.Files["/h/values.yml"] = []byte(values.Text("WS_TARGET", "lan") + wayConf)
 	m.Dirs["/l"] = 0o700
-	s := remote.SSH{Host: "ws", M: m, Lock: "/l", Home: "/h", Ways: MacWays{M: m, Conf: "/h/mac.conf"}}
+	s := remote.SSH{Host: "ws", M: m, Lock: "/l", Home: "/h", Ways: MacWays{M: m, Conf: "/h/values.yml"}}
 	m.Results[wayCall(s)] = effecttest.Result{Out: []byte("user root\nhostname 10.1.1.2\nport 22\n" +
 		"userknownhostsfile ~/.ssh/known_hosts\n")}
 	m.Results["ssh-keygen -F ws -f "+hostsOf] = effecttest.Result{Err: errors.New("none")}
 	m.Results["ssh-keyscan -T 10 -t ed25519 -p 22 10.1.1.2"] = effecttest.Result{
 		Out: []byte("10.1.1.2 " + hostLine + "\n")}
 	m.Results["ssh-keygen -l -f /l/host.pub"] = effecttest.Result{Out: []byte("256 " + hostFP + " ws (ED25519)\n")}
-	return &Key{Conf: "/h/mac.conf", Lock: "/l", Tty: true, M: m, Out: &effecttest.Out{},
+	return &Key{Conf: "/h/values.yml", Lock: "/l", Tty: true, M: m, Out: &effecttest.Out{},
 		SSH: s,
 		Env: func(k string) (string, bool) { v, ok := env[k]; return v, ok }}, m
 }
@@ -47,9 +47,9 @@ func TestHostKeyPlan(t *testing.T) {
 	if p, err := h.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
 		t.Errorf("Plan of a known key = %v, %v; want none", p, err)
 	}
-	m.Files["/h/mac.conf"] = []byte(values.Text("WS_TARGET", "lan"))
+	m.Files["/h/values.yml"] = []byte(values.Text("WS_TARGET", "lan"))
 	_, err := h.Plan(context.Background())
-	if err == nil || !strings.Contains(err.Error(), "and no WS_REMOTE_PORT; set those in server.conf as roles/server/ubuntu/cable/router.md has them") {
+	if err == nil || !strings.Contains(err.Error(), "and no WS_REMOTE_PORT; set those in the server's values.yml as roles/server/ubuntu/cable/router.md has them") {
 		t.Errorf("Plan with no way: %v", err)
 	}
 }

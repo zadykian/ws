@@ -11,16 +11,16 @@ import (
 	"github.com/zadykian/ws/engine/core/form"
 )
 
-const serverOfTest = "/h/servers/ws/server.conf"
+const serverOfTest = "/h/servers/ws/values.yml"
 
-// formOf returns the form of the text of mac.conf and of a server's file.
+// formOf returns the form of the text of values.yml and of a server's file.
 func formOf(t *testing.T, mac, server string) (Form, *effecttest.Machine) {
 	t.Helper()
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"], m.Files[serverOfTest] = []byte(mac), []byte(server)
+	m.Files["/h/values.yml"], m.Files[serverOfTest] = []byte(mac), []byte(server)
 	m.Results["mkdir -p /h"] = effecttest.Result{}
 	m.Results["mkdir -p /h/servers/ws"] = effecttest.Result{}
-	f, err := Form{Conf: "/h/mac.conf", Server: serverOfTest, M: m}.
+	f, err := Form{Conf: "/h/values.yml", Server: serverOfTest, M: m}.
 		Load(&effecttest.Out{})
 	if err != nil {
 		t.Fatal(err)
@@ -38,7 +38,7 @@ func TestConfFormLoadReadsTheFile(t *testing.T) {
 func TestConfFormLoadRefusesABadLine(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files[serverOfTest] = []byte("no line\n")
-	if _, err := (Form{Conf: "/h/mac.conf", Server: serverOfTest, M: m}).Load(&effecttest.Out{}); err == nil {
+	if _, err := (Form{Conf: "/h/values.yml", Server: serverOfTest, M: m}).Load(&effecttest.Out{}); err == nil {
 		t.Error("Load = nil; want a refusal")
 	}
 }
@@ -149,8 +149,8 @@ func TestConfFormSave(t *testing.T) {
 		if _, err := f.Save(context.Background(), &effecttest.Out{}, tc.edits); err != nil {
 			t.Errorf("%s: %v", name, err)
 		}
-		if got := string(m.Files["/h/mac.conf"]); got != tc.wantMac {
-			t.Errorf("%s: mac.conf = %q; want %q", name, got, tc.wantMac)
+		if got := string(m.Files["/h/values.yml"]); got != tc.wantMac {
+			t.Errorf("%s: values.yml = %q; want %q", name, got, tc.wantMac)
 		}
 		if got := string(m.Files[serverOfTest]); got != tc.wantServer {
 			t.Errorf("%s: server file = %q; want %q", name, got, tc.wantServer)
@@ -181,7 +181,7 @@ func TestConfFormSaveOfNoChangeWritesNothing(t *testing.T) {
 	if got := string(m.Files[serverOfTest]); got != "# mine\n"+Text("WS_REMOTE", "r.example") {
 		t.Errorf("server file = %q", got)
 	}
-	if want := []string{"say: /h/mac.conf and " + serverOfTest + " hold these values already"}; !slices.Equal(out.Lines, want) {
+	if want := []string{"say: /h/values.yml and " + serverOfTest + " hold these values already"}; !slices.Equal(out.Lines, want) {
 		t.Errorf("said %q; want %q", out.Lines, want)
 	}
 }
@@ -199,7 +199,7 @@ func TestConfFormSaveSaysWhatItEmptied(t *testing.T) {
 
 func TestConfFormSaveRefusals(t *testing.T) {
 	f, m := formOf(t, "", "")
-	m.Links[serverOfTest] = "/dotfiles/server.conf"
+	m.Links[serverOfTest] = "/dotfiles/values.yml"
 	out := &effecttest.Out{}
 	if _, err := f.Save(context.Background(), out, map[string]string{"WS_REMOTE": "r.example"}); !errors.Is(err, ErrRefused) {
 		t.Errorf("a link: %v", err)

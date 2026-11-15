@@ -11,8 +11,8 @@ func TestScopeRefusesTheOtherFilesKeys(t *testing.T) {
 		{Both, Text("WS_TARGET", "lan", "WS_GIT_SIGNING_PUB_KEY", "~/k.pub"), ""},
 		{MacFile, Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"), ""},
 		{ServerFile, Text("WS_TARGET", "lan"), ""},
-		{MacFile, Text("WS_TARGET", "lan"), "WS_TARGET is a server's key: it goes in servers/NAME/server.conf, beside mac.conf"},
-		{ServerFile, Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"), "WS_GIT_SIGNING_PUB_KEY is the Mac's key: it goes in mac.conf"},
+		{MacFile, Text("WS_TARGET", "lan"), "WS_TARGET is a server's key: it goes in servers/NAME/values.yml, beside the Mac's values.yml"},
+		{ServerFile, Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"), "WS_GIT_SIGNING_PUB_KEY is the Mac's key: it goes in the Mac's values.yml"},
 	} {
 		_, errs := c.scope.Lines(c.text)
 		if c.want == "" {

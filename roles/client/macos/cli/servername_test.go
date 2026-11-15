@@ -80,7 +80,7 @@ func TestWizardAsksTheServersNameAndAsksAgainOnABadOne(t *testing.T) {
 		!strings.Contains(stderr, "The server's name [ws]: ") || strings.Contains(stderr, "no terminal to ask the server's name") {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
-	if !strings.Contains(strings.Join(p.Machine.(*effecttest.Machine).Calls, "\n"), "read /.config/ws/servers/box/server.conf") {
+	if !strings.Contains(strings.Join(p.Machine.(*effecttest.Machine).Calls, "\n"), "read /.config/ws/servers/box/values.yml") {
 		t.Errorf("calls = %v; want the stages on box", p.Machine.(*effecttest.Machine).Calls)
 	}
 }
@@ -89,7 +89,7 @@ func TestWizardTakesWsWithAnEmptyAnswer(t *testing.T) {
 	p, _ := testWizardProcess("darwin", 501)
 	p.TTY = true
 	runWs(p, "\n", "client", "macos", "wizard", "--check")
-	if !strings.Contains(strings.Join(p.Machine.(*effecttest.Machine).Calls, "\n"), "read /.config/ws/servers/ws/server.conf") {
+	if !strings.Contains(strings.Join(p.Machine.(*effecttest.Machine).Calls, "\n"), "read /.config/ws/servers/ws/values.yml") {
 		t.Errorf("calls = %v; want the stages on ws", p.Machine.(*effecttest.Machine).Calls)
 	}
 }
@@ -109,7 +109,7 @@ func TestWizardAsksNothingWhereAServerExistsOrIsNamed(t *testing.T) {
 		p.TTY = true
 		if name == "one server" {
 			m := p.Machine.(*effecttest.Machine)
-			m.Files[values.ServerPath("/.config/ws/mac.conf", "box")] = nil
+			m.Files[values.ServerPath("/.config/ws/values.yml", "box")] = nil
 			withServerDirs(m)
 		}
 		_, _, stderr := runWs(p, "", append([]string{"client", "macos", "wizard", "--check"}, args...)...)

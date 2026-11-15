@@ -25,7 +25,7 @@ import (
 type Mac struct {
 	// Server is the name of the server that the steps act for.
 	Server string
-	// MacConf is mac.conf's path, whose servers/ the ssh and tunnel steps list.
+	// MacConf is values.yml's path, whose servers/ the ssh and tunnel steps list.
 	MacConf string
 	Conf    values.Conf
 	Home    string

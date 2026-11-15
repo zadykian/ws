@@ -13,7 +13,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
-// Git sets git up from mac.conf's WS_GIT_SIGNING_PUB_KEY on each run. It writes git's identity,
+// Git sets git up from values.yml's WS_GIT_SIGNING_PUB_KEY on each run. It writes git's identity,
 // gitcfg.Name and gitcfg.Email, and the Mac's own signing key to ~/.config/ws/gitconfig, as the
 // git role does on ws. ~/.gitconfig includes that file at
 // its top. gh, from Homebrew where missing, takes git's pushes to GitHub, and registers the key

@@ -20,7 +20,7 @@ import (
 func (t *Tunnel) handshake(ctx context.Context, c values.Conf, kick bool) error {
 	end, mac := c.TunnelSlot().Server(), c.TunnelSlot().Mac()
 	if first := t.SSH.First(); first != "" {
-		once := "server.conf's way leads to " + t.SSH.Host
+		once := "the server's values.yml leads to " + t.SSH.Host
 		if c.Target == "lan" {
 			once = t.SSH.Host + "'s lease is static"
 		}

@@ -11,11 +11,11 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 )
 
-// ErrRefused is returned where mac.conf with the new lines would fail the package's checks, which Out has
+// ErrRefused is returned where values.yml with the new lines would fail the package's checks, which Out has
 // said.
-var ErrRefused = errors.New("mac.conf would be refused")
+var ErrRefused = errors.New("values.yml would be refused")
 
-// File is mac.conf, or a server's file, on a machine, which the Mac's stages add lines to. Stage names the stage that
+// File is values.yml, or a server's file, on a machine, which the Mac's stages add lines to. Stage names the stage that
 // holds it, in the messages.
 type File struct {
 	Path  string
@@ -26,7 +26,7 @@ type File struct {
 	Out   effect.Out
 }
 
-// Read returns the text of mac.conf, empty where mac.conf is missing.
+// Read returns the text of values.yml, empty where values.yml is missing.
 func (f File) Read() (string, error) {
 	text, err := f.M.ReadFile(f.Path)
 	if errors.Is(err, fs.ErrNotExist) {
@@ -35,9 +35,9 @@ func (f File) Read() (string, error) {
 	return string(text), err
 }
 
-// Compose returns mac.conf's text, and its text with the lines appended, where the whole passes the
-// package's checks. It appends the lines whose keys mac.conf lacks: a line of a key that mac.conf
-// has stays out, so a value set by hand stays. Where mac.conf is a link, as a dotfiles manager makes
+// Compose returns values.yml's text, and its text with the lines appended, where the whole passes the
+// package's checks. It appends the lines whose keys values.yml lacks: a line of a key that values.yml
+// has stays out, so a value set by hand stays. Where values.yml is a link, as a dotfiles manager makes
 // it, and there are lines to add, it says them and stops. f.Stage names the stage in the messages.
 func (f File) Compose(lines string) (before, after string, err error) {
 	before, err = f.Read()
@@ -80,7 +80,7 @@ func (f File) Add(ctx context.Context, lines string) error {
 	return f.Write(ctx, text)
 }
 
-// Write puts the text in mac.conf, keeping its mode.
+// Write puts the text in values.yml, keeping its mode.
 func (f File) Write(ctx context.Context, text string) error {
 	mode := fs.FileMode(0o644)
 	if info, err := f.M.Stat(f.Path); err == nil {
@@ -96,7 +96,7 @@ func (f File) Write(ctx context.Context, text string) error {
 	return nil
 }
 
-// Load reads mac.conf and says each line that the package refuses, which ws client macos apply would
+// Load reads values.yml and says each line that the package refuses, which ws client macos apply would
 // stop at.
 func (f File) Load() (string, Conf, error) {
 	text, err := f.Read()

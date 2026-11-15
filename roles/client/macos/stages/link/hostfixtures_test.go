@@ -32,16 +32,16 @@ const loginTo = "ssh -o ControlMaster=auto -o ControlPath=/l/direct -o ControlPe
 // 10.1.1.2:22 with hostLine, and whose known_hosts lacks the name.
 func newHostNamed(name string, env map[string]string) (*host.Key, *effecttest.Machine) {
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte(values.Text("WS_TARGET", "lan") + wayConf)
+	m.Files["/h/values.yml"] = []byte(values.Text("WS_TARGET", "lan") + wayConf)
 	m.Dirs["/l"] = 0o700
-	s := remote.SSH{Host: name, M: m, Lock: "/l", Home: "/h", Ways: host.MacWays{M: m, Conf: "/h/mac.conf"}}
+	s := remote.SSH{Host: name, M: m, Lock: "/l", Home: "/h", Ways: host.MacWays{M: m, Conf: "/h/values.yml"}}
 	m.Results[wayCall(s)] = effecttest.Result{Out: []byte("user root\nhostname 10.1.1.2\nport 22\n" +
 		"userknownhostsfile ~/.ssh/known_hosts\n")}
 	m.Results["ssh-keygen -F "+name+" -f "+hostsOf] = effecttest.Result{Err: errors.New("none")}
 	m.Results["ssh-keyscan -T 10 -t ed25519 -p 22 10.1.1.2"] = effecttest.Result{
 		Out: []byte("10.1.1.2 " + hostLine + "\n")}
 	m.Results["ssh-keygen -l -f /l/host.pub"] = effecttest.Result{Out: []byte("256 " + hostFP + " " + name + " (ED25519)\n")}
-	return &host.Key{Conf: "/h/mac.conf", Lock: "/l", Tty: true, M: m, Out: &effecttest.Out{},
+	return &host.Key{Conf: "/h/values.yml", Lock: "/l", Tty: true, M: m, Out: &effecttest.Out{},
 		SSH: s,
 		Env: func(k string) (string, bool) { v, ok := env[k]; return v, ok }}, m
 }
@@ -57,13 +57,13 @@ func newLoginNamed(name string, login effecttest.Result) (*host.Login, *effectte
 	m.Results["ssh-keygen -F "+name+" -f "+hostsOf] = effecttest.Result{}
 	m.Results[loginTo+name+" echo ok"] = login
 	ws := macSession(m, h.SSH, h.Out.(*effecttest.Out), session.Status{}, nil)
-	return &host.Login{SSH: h.SSH, Ws: ws, Gh: gh.CLI{Conf: "/h/mac.conf", Home: "/h", M: m, Out: h.Out}, Tty: h.Tty, Env: h.Env, P: h.P, Out: h.Out}, m
+	return &host.Login{SSH: h.SSH, Ws: ws, Gh: gh.CLI{Conf: "/h/values.yml", Home: "/h", M: m, Out: h.Out}, Tty: h.Tty, Env: h.Env, P: h.P, Out: h.Out}, m
 }
 
 // macSession returns the Mac's session over ssh, whose remote script answers status on m with the
 // value's text. A run's events go to events, which may be nil.
 func macSession(m *effecttest.Machine, ssh remote.SSH, out *effecttest.Out, status session.Status, events step.Observer) *session.Session {
-	ws := session.New(sessiontest.Reach{Reach: host.MacReach{SSH: ssh, Conf: "/h/mac.conf", Out: out}, M: m},
+	ws := session.New(sessiontest.Reach{Reach: host.MacReach{SSH: ssh, Conf: "/h/values.yml", Out: out}, M: m},
 		session.Scripts{Remote: []byte("x"), Files: []byte("y"), Events: events})
 	m.Results[sessiontest.Op("status")] = effecttest.Result{Out: sessiontest.Text(status)}
 	return ws

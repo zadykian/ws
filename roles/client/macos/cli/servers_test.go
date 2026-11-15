@@ -11,11 +11,11 @@ import (
 
 // serversFixture is ws on the LAN with a running tunnel, and lab in the cloud with none.
 func serversFixture() (*effecttest.Machine, func(...string) (int, string, string)) {
-	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e/mac.conf"})
+	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e/values.yml"})
 	m := p.Machine.(*effecttest.Machine)
-	m.Files["/e/mac.conf"] = []byte("")
-	m.Files["/e/servers/ws/server.conf"] = []byte(values.Text("WS_USER", "ada"))
-	m.Files["/e/servers/lab/server.conf"] = []byte(values.Text(
+	m.Files["/e/values.yml"] = []byte("")
+	m.Files["/e/servers/ws/values.yml"] = []byte(values.Text("WS_USER", "ada"))
+	m.Files["/e/servers/lab/values.yml"] = []byte(values.Text(
 		"WS_TARGET", "cloud",
 		"WS_SLOT", "1",
 		"WS_REMOTE", "192.0.2.9",
@@ -59,29 +59,29 @@ func TestServersRefusesAServerFlag(t *testing.T) {
 
 func TestServersNamesTheFileItRefuses(t *testing.T) {
 	m, run := serversFixture()
-	m.Files["/e/servers/lab/server.conf"] = []byte(values.Text("WS_TARGET", "moon"))
+	m.Files["/e/servers/lab/values.yml"] = []byte(values.Text("WS_TARGET", "moon"))
 	status, stdout, stderr := run()
 	if status != 1 || !strings.Contains(stdout, "lab   -       -     absent\n") || !strings.Contains(stdout, "ws    lan     0     lan ") {
 		t.Errorf("status = %d, stdout = %q; want 1 with every row, lab as -", status, stdout)
 	}
-	if !strings.Contains(stderr, "/e/servers/lab/server.conf") || !strings.Contains(stderr, "WS_TARGET") {
+	if !strings.Contains(stderr, "/e/servers/lab/values.yml") || !strings.Contains(stderr, "WS_TARGET") {
 		t.Errorf("stderr = %q, want lab's errors", stderr)
 	}
 }
 
 func TestServersWithNoneSaysHowToAddOne(t *testing.T) {
-	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e/mac.conf"})
+	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e/values.yml"})
 	status, _, stderr := runWs(p, "", "client", "macos", "servers")
-	if status != 1 || !strings.Contains(stderr, "no server beside /e/mac.conf: ws client macos wizard adds one") {
+	if status != 1 || !strings.Contains(stderr, "no server beside /e/values.yml: ws client macos wizard adds one") {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
 }
 
 func TestServersSaysAMissingMacConfOnce(t *testing.T) {
 	m, run := serversFixture()
-	delete(m.Files, "/e/mac.conf")
+	delete(m.Files, "/e/values.yml")
 	_, _, stderr := run()
-	if n := strings.Count(stderr, "/e/mac.conf is missing"); n != 1 {
-		t.Errorf("stderr says mac.conf is missing %d times, want once: %q", n, stderr)
+	if n := strings.Count(stderr, "/e/values.yml is missing"); n != 1 {
+		t.Errorf("stderr says values.yml is missing %d times, want once: %q", n, stderr)
 	}
 }

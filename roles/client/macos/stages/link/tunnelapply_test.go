@@ -33,8 +33,8 @@ func TestTunnelApply(t *testing.T) {
 		if err := tun.Apply(context.Background(), step.Plan{}); err != nil {
 			t.Fatalf("%s: Apply = %v", name, err)
 		}
-		if got := string(m.Files["/h/mac.conf"]); !strings.Contains(got, values.Text("WS_PUBLIC_KEY", keyB)) || !ran {
-			t.Errorf("%s: mac.conf = %q, setup ran %v; want wg0's key and a run", name, got, ran)
+		if got := string(m.Files["/h/values.yml"]); !strings.Contains(got, values.Text("WS_PUBLIC_KEY", keyB)) || !ran {
+			t.Errorf("%s: values.yml = %q, setup ran %v; want wg0's key and a run", name, got, ran)
 		}
 		if got := strings.Join(tun.Hand.Lines(), "\n"); !strings.Contains(got, tc.hand) || (tc.hand != "") != tun.none {
 			t.Errorf("%s: closing list = %q, none = %v", name, got, tun.none)

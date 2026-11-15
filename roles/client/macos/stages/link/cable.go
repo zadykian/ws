@@ -38,7 +38,7 @@ type Cable struct {
 	Ws *session.Session
 	// SSH is the Mac's ssh to ws.
 	SSH remote.SSH
-	// Conf is the server's file. Mac is mac.conf's path, whose servers/ holds the other servers'
+	// Conf is the server's file. Mac is values.yml's path, whose servers/ holds the other servers'
 	// files, and Server is this server's name. Check is set under --check.
 	Conf   string
 	Mac    string
@@ -78,7 +78,7 @@ func (*Cable) Locks() string { return stage.Setup }
 // Side is the Mac: the cable's service, after ws's port in values.yml.
 func (*Cable) Side() wizard.Side { return stage.Mac }
 
-// WaitsOn is Homebrew: under --check on a new Mac, Answers is skipped and writes no mac.conf to
+// WaitsOn is Homebrew: under --check on a new Mac, Answers is skipped and writes no values.yml to
 // read. Plan says itself that the stage is after ws's run, as wizard-cable.sh's cable_after did.
 // That run makes /etc/ws/values.yml on ws, where it has no cable to see off the LAN.
 func (*Cable) WaitsOn() string { return stage.Homebrew }
@@ -188,7 +188,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 			"ws server ubuntu apply --only cable,tunnel there")
 	}
 	if none {
-		return c.change("write an empty WS_CABLE_SERVICE in server.conf, for no cable")
+		return c.change("write an empty WS_CABLE_SERVICE in the server's values.yml, for no cable")
 	}
 	if !in {
 		return c.change("ask for the cable's port and service")
@@ -208,7 +208,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 		return c.change("ask " + c.SSH.Host + "'s port of the cable, name it in /etc/ws/values.yml on " + c.SSH.Host + ", and run " +
 			"ws server ubuntu apply --only cable,tunnel there")
 	}
-	return c.change("ask the Mac's service of the cable, write it in server.conf as WS_CABLE_SERVICE, run " +
+	return c.change("ask the Mac's service of the cable, write it as WS_CABLE_SERVICE in the server's values.yml, run " +
 		"ws client macos apply, which gives it 10.77.0.2, and ping " + cableEnd)
 }
 

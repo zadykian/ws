@@ -32,7 +32,7 @@ func newMacStateCmd(p enginecli.Env, server *string) *cobra.Command {
 		Use:   "state",
 		Short: "report what the Mac's steps would change",
 		Long: "It reads alone and applies nothing, as ws client macos apply --check does, and needs what it needs: " +
-			"mac.conf, and not root. The Mac's steps report the packages, services and files ws manages " +
+			"values.yml, and not root. The Mac's steps report the packages, services and files ws manages " +
 			"there, and a step that fails stands in the report as a check. The exit code stays 0. " +
 			"With several servers, one whose file ws refuses stands in the report with the refusal. " +
 			"A report holds no secret.\n\n" +
@@ -47,7 +47,7 @@ func newMacStateCmd(p enginecli.Env, server *string) *cobra.Command {
 	return c
 }
 
-// macRead is the state screen's read of the Mac. It takes mac.conf itself, as the wizard opens the
+// macRead is the state screen's read of the Mac. It takes values.yml itself, as the wizard opens the
 // screen on a Mac that may have none: the header then says so, and the wizard stays.
 func macRead(p enginecli.Env, server *string) tui.StateReader {
 	return func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {

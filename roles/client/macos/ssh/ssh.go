@@ -21,7 +21,7 @@ type SSH struct {
 	Conf values.Conf
 	// Server is the name of the server that the run acts for.
 	Server string
-	// MacConf is mac.conf's path, whose servers/ holds the other servers' files.
+	// MacConf is values.yml's path, whose servers/ holds the other servers' files.
 	MacConf string
 	Home    string
 	M       effect.Machine

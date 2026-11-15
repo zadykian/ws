@@ -7,7 +7,7 @@ import (
 )
 
 // Known returns the names of the servers that a run lists, sorted with no repeats. They are those
-// of servers/ beside mac.conf at mac, and current if servers/ lacks it. With no servers/, the list
+// of servers/ beside values.yml at mac, and current if servers/ lacks it. With no servers/, the list
 // holds current alone.
 func Known(m effect.Machine, mac, current string) ([]string, error) {
 	names, err := Servers(m, mac)

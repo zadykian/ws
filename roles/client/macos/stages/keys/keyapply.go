@@ -29,7 +29,7 @@ func (k *MacKey) Apply(ctx context.Context, p step.Plan) error {
 	return nil
 }
 
-// refused words the stop where mac.conf with a new line would be refused.
+// refused words the stop where values.yml with a new line would be refused.
 func refused(err error) error {
 	if errors.Is(err, values.ErrRefused) {
 		return fmt.Errorf("%s: ssh has no usable key for ws, as above; mend that, then run the wizard again", stage.Key)

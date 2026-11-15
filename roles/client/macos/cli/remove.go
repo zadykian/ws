@@ -24,7 +24,7 @@ func newRemoveCmd(p enginecli.Env, server *string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "remove NAME",
 		Short: "remove a server from the Mac",
-		Long: "It deletes servers/NAME beside mac.conf and NAME's entry in known_hosts, and leaves the server as it " +
+		Long: "It deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it " +
 			"is. It refuses the Mac's last server, as apply needs one, and takes no --server: the argument is the consent.",
 		Args: cobra.ExactArgs(1),
 		RunE: func(c *cobra.Command, args []string) error { return runRemove(c, p, *server, args[0]) },

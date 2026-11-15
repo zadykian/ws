@@ -7,10 +7,10 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
-const macPath = "/h/.config/ws/mac.conf"
+const macPath = "/h/.config/ws/values.yml"
 
 func TestServerPathIsBesideMacConf(t *testing.T) {
-	if got, want := ServerPath(macPath, "box"), "/h/.config/ws/servers/box/server.conf"; got != want {
+	if got, want := ServerPath(macPath, "box"), "/h/.config/ws/servers/box/values.yml"; got != want {
 		t.Errorf("ServerPath = %q, want %q", got, want)
 	}
 }
@@ -51,8 +51,8 @@ func TestLoadRefusesEachFilesStrayKeyInItsOwnWords(t *testing.T) {
 	m.Files[server] = []byte(Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"))
 	_, err := Load(m, macPath, server)
 	want := []string{
-		macPath + ", line 1: WS_TARGET is a server's key: it goes in servers/NAME/server.conf, beside mac.conf",
-		server + ", line 1: WS_GIT_SIGNING_PUB_KEY is the Mac's key: it goes in mac.conf",
+		macPath + ", line 1: WS_TARGET is a server's key: it goes in servers/NAME/values.yml, beside the Mac's values.yml",
+		server + ", line 1: WS_GIT_SIGNING_PUB_KEY is the Mac's key: it goes in the Mac's values.yml",
 	}
 	if err == nil || err.Error() != strings.Join(want, "\n") {
 		t.Errorf("err = %v, want %q", err, want)
@@ -69,7 +69,7 @@ func TestLoadSaysWhichFileIsMissing(t *testing.T) {
 	}
 	delete(m.Files, macPath)
 	if _, err = Load(m, macPath, server); err == nil || !strings.HasPrefix(err.Error(), macPath+" is missing:") {
-		t.Errorf("err = %v, want mac.conf missing", err)
+		t.Errorf("err = %v, want values.yml missing", err)
 	}
 }
 

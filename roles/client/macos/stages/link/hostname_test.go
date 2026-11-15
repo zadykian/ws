@@ -111,12 +111,12 @@ func TestStagesNameTheServerInEachSSHCall(t *testing.T) {
 	})
 	t.Run("claude login", func(t *testing.T) {
 		h, m := newHostNamed("lab", nil)
-		_ = host.MacReach{SSH: h.SSH, Conf: "/h/mac.conf", Out: h.Out}.Claude(ctx)
+		_ = host.MacReach{SSH: h.SSH, Conf: "/h/values.yml", Out: h.Out}.Claude(ctx)
 		namesTheServer(t, "claude login", m)
 	})
 	t.Run("a command as root", func(t *testing.T) {
 		h, m := newHostNamed("lab", nil)
-		_, _ = host.MacReach{SSH: h.SSH, Conf: "/h/mac.conf", Out: h.Out}.Shell().Run(ctx, nil, "true")
+		_, _ = host.MacReach{SSH: h.SSH, Conf: "/h/values.yml", Out: h.Out}.Shell().Run(ctx, nil, "true")
 		namesTheServer(t, "a command as root", m)
 	})
 	t.Run("tunnel", func(t *testing.T) {

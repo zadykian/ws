@@ -22,7 +22,7 @@ import (
 // They leave the machine, units and out that Steps gets unused.
 func macTarget(p enginecli.Env, only *[]string, server *string) engine.Target {
 	return engine.Target{Wizard: macSide(p, server), Change: macChange, State: macReport(p, server), Refuse: func(engine.Call) string { return wizardRefusal(p) },
-		NoScreen: "it needs a terminal and no --plain: anywhere else, edit mac.conf by hand",
+		NoScreen: "it needs a terminal and no --plain: anywhere else, edit values.yml by hand",
 		Sheets: func(ctx context.Context, c engine.Call) ([]tui.Sheet, func(context.Context), error) {
 			return macForms(c.In, c.Err, p, server)(ctx)
 		}, Prepare: func(_ context.Context, c engine.Call) (engine.Run, error) {

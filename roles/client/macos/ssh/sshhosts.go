@@ -7,8 +7,8 @@ import (
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
-// hosts returns a block's inputs for each server that mac.conf knows. The run's own come from its
-// conf, every other's from its server.conf. A file that fails to load stops the step.
+// hosts returns a block's inputs for each server that values.yml knows. The run's own come from its
+// conf, every other's from its values.yml. A file that fails to load stops the step.
 func (s SSH) hosts() ([]sshcfg.Host, error) {
 	names, err := values.Known(s.M, s.MacConf, s.Server)
 	if err != nil {

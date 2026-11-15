@@ -56,8 +56,8 @@ func TestSetupWaitsOnTheMacKey(t *testing.T) {
 	} {
 		m := effecttest.NewMachine()
 		m.Results["sudo -v"] = effecttest.Result{}
-		m.Files["/h/mac.conf"] = []byte(conf)
-		s := &Setup{Conf: "/h/mac.conf", M: m, LookPath: func(string) (string, error) { return "/brew", nil },
+		m.Files["/h/values.yml"] = []byte(conf)
+		s := &Setup{Conf: "/h/values.yml", M: m, LookPath: func(string) (string, error) { return "/brew", nil },
 			Run: func(context.Context, bool) (bool, error) { return true, nil }}
 		p, err := s.Plan(context.Background())
 		if err != nil || len(p.Changes) != 1 || p.Changes[0].String() != want {

@@ -49,7 +49,7 @@ func TestMacKeyQuestionForLogin(t *testing.T) {
 	}
 	want := values.Text("WS_IDENTITY_PUB_KEY", listed(gitP256)[0].Pub(), "WS_IDENTITY_AGENT", "~/"+sshcfg.SecretiveData+"/socket.ssh")
 	if got := string(m.Files[confPathForTest]); got != want {
-		t.Errorf("mac.conf = %q, want %q", got, want)
+		t.Errorf("values.yml = %q, want %q", got, want)
 	}
 }
 
@@ -76,7 +76,7 @@ func TestMacKeyQuestionForGit(t *testing.T) {
 		t.Errorf("asked %+v, want the options %q", c.asked, want)
 	}
 	if got := string(m.Files[confPathForTest]); got != values.Text("WS_IDENTITY_PUB_KEY", login, "WS_GIT_SIGNING_PUB_KEY", login) {
-		t.Errorf("mac.conf = %q, want git's line added", got)
+		t.Errorf("values.yml = %q, want git's line added", got)
 	}
 }
 
@@ -91,12 +91,12 @@ func TestMacKeyQuestionMakesANewKey(t *testing.T) {
 		t.Fatalf("ask = %v, saying %q", err, out.Lines)
 	}
 	if got := string(m.Files[confPathForTest]); got != values.Text("WS_GIT_SIGNING_PUB_KEY", listed(gitP256)[0].Pub()) {
-		t.Errorf("mac.conf = %q, want the new key's line in place of the empty one", got)
+		t.Errorf("values.yml = %q, want the new key's line in place of the empty one", got)
 	}
 }
 
 func TestMacKeyQuestionWithNoTerminal(t *testing.T) {
-	want := "Mac key: no terminal to ask for git's signing key: add one of these lines to mac.conf, " +
+	want := "Mac key: no terminal to ask for git's signing key: add one of these lines to values.yml, " +
 		values.Line("WS_GIT_SIGNING_PUB_KEY", listed(p256)[0].Pub()) + " for " + p256Label + "; or run the wizard at a terminal"
 	if err := noTerminal(gitUse, listed(p256, mldsa)); err == nil || err.Error() != want {
 		t.Errorf("noTerminal = %v, want %q", err, want)
@@ -114,7 +114,7 @@ func TestMacKeyName(t *testing.T) {
 		t.Fatal(err)
 	}
 	if got := string(m.Files[confPathForTest]); got != values.Text("WS_GIT_SIGNING_PUB_KEY", listed(gitP256)[0].Pub()) {
-		t.Errorf("mac.conf = %q", got)
+		t.Errorf("values.yml = %q", got)
 	}
 	if string(m.Files[copyOf(gitP256)]) != gitP256 {
 		t.Errorf("the copy holds %q", m.Files[copyOf(gitP256)])

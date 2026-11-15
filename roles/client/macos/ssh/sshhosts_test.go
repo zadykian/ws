@@ -9,13 +9,13 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
-const macConf = "/h/.config/ws/mac.conf"
+const macConf = "/h/.config/ws/values.yml"
 
-// withLab adds a server named lab at slot 1, with its own user, beside mac.conf.
+// withLab adds a server named lab at slot 1, with its own user, beside values.yml.
 func withLab(m *effecttest.Machine, text string) {
 	m.Dirs["/h/.config/ws/servers"], m.Dirs["/h/.config/ws/servers/lab"] = 0o755, 0o755
 	m.Files[macConf] = nil
-	m.Files["/h/.config/ws/servers/lab/server.conf"] = []byte(text)
+	m.Files["/h/.config/ws/servers/lab/values.yml"] = []byte(text)
 	for _, file := range []string{"new", "whole"} {
 		m.Results["ssh -G -F /tmp/x/"+file+" lab"] = effecttest.Result{}
 	}

@@ -14,7 +14,7 @@ import (
 
 func newAsker(p effect.Prompt, env map[string]string) (*asker, *effecttest.Out) {
 	out := &effecttest.Out{}
-	return &asker{conf: "/h/mac.conf", prog: "ws client macos wizard", p: p, tty: true, out: out, lan: func() string { return "" },
+	return &asker{conf: "/h/values.yml", prog: "ws client macos wizard", p: p, tty: true, out: out, lan: func() string { return "" },
 		env: func(k string) (string, bool) { v, ok := env[k]; return v, ok }}, out
 }
 
@@ -50,7 +50,7 @@ func TestAskerAsksTheMaintainerAgain(t *testing.T) {
 	}
 	want := "The VM's SSH port (WS_REMOTE_PORT) [22]: ws client macos wizard: Answers: WS_REMOTE_PORT=99999 is not a port, 1 to 65535\n" +
 		"The VM's SSH port (WS_REMOTE_PORT) [22]: "
-	if w.String() != want || len(out.Lines) != 1 || !strings.HasPrefix(out.Lines[0], "say: Answers: values for /h/mac.conf;") {
+	if w.String() != want || len(out.Lines) != 1 || !strings.HasPrefix(out.Lines[0], "say: Answers: values for /h/values.yml;") {
 		t.Errorf("terminal = %q, out %v", w.String(), out.Lines)
 	}
 	if _, err := a.ask(context.Background(), q); err == nil || !strings.Contains(err.Error(), "terminal ended before WS_REMOTE_PORT's answer") {

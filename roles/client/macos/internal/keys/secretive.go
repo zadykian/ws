@@ -32,7 +32,7 @@ func SecretiveKeys(ctx context.Context, m effect.Machine, home string) ([]sshcfg
 	// ssh-add exits 1 and says so on its standard output for an agent with no keys.
 	if err != nil && !strings.Contains(string(out), "The agent has no identities") {
 		return nil, true, fmt.Errorf("%w at %s: open Secretive, then run this again, or name another key in "+
-			"mac.conf's WS_IDENTITY_PUB_KEY", ErrAgentDown, socket)
+			"values.yml's WS_IDENTITY_PUB_KEY", ErrAgentDown, socket)
 	}
 	return sshcfg.AgentKeys(string(out)), true, nil
 }
@@ -50,7 +50,7 @@ func held(keys []sshcfg.AgentKey, pub, home string) (sshcfg.AgentKey, bool) {
 	return sshcfg.AgentKey{}, false
 }
 
-// unnamed is the stop where mac.conf names no key for the use. It gives the line that would name
+// unnamed is the stop where values.yml names no key for the use. It gives the line that would name
 // each P-256 key of keys, the agent's, by its comment and fingerprint. ws's OpenSSH reads no other
 // key of Secretive's.
 func unnamed(u KeyUse, keys []sshcfg.AgentKey) error {
@@ -62,10 +62,10 @@ func unnamed(u KeyUse, keys []sshcfg.AgentKey) error {
 		}
 	}
 	if len(lines) == 0 {
-		return fmt.Errorf("mac.conf names no %s, %s: run ws client macos wizard to pick or make one in Secretive, or "+
+		return fmt.Errorf("values.yml names no %s, %s: run ws client macos wizard to pick or make one in Secretive, or "+
 			"name a key's .pub there", name, use)
 	}
-	return fmt.Errorf("mac.conf names no %s, %s: run ws client macos wizard, or add one of these lines to mac.conf, %s",
+	return fmt.Errorf("values.yml names no %s, %s: run ws client macos wizard, or add one of these lines to values.yml, %s",
 		name, use, strings.Join(lines, "; "))
 }
 

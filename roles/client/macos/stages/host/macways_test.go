@@ -32,19 +32,19 @@ func TestMacWaysFromAddresses(t *testing.T) {
 	}
 }
 
-// A mac.conf that is missing or refused says so, in place of ssh's want of a way.
+// A values.yml that is missing or refused says so, in place of ssh's want of a way.
 func TestMacWaysSayWhyMacConfLeavesNone(t *testing.T) {
 	m := effecttest.NewMachine()
-	s := remote.SSH{Host: "ws", M: m, Lock: "/l", Home: "/h", Ways: MacWays{M: m, Conf: "/h/mac.conf"}}
-	if _, err := s.Way(context.Background()); err == nil || !strings.Contains(err.Error(), "no server.conf at /h/mac.conf") {
-		t.Errorf("Way with no mac.conf = %v", err)
+	s := remote.SSH{Host: "ws", M: m, Lock: "/l", Home: "/h", Ways: MacWays{M: m, Conf: "/h/values.yml"}}
+	if _, err := s.Way(context.Background()); err == nil || !strings.Contains(err.Error(), "no values.yml at /h/values.yml") {
+		t.Errorf("Way with no values.yml = %v", err)
 	}
-	m.Files["/h/mac.conf"] = []byte(values.Text("WS_TARGET", "moon"))
-	if _, err := s.Way(context.Background()); err == nil || !strings.Contains(err.Error(), "/h/mac.conf, line 1") {
-		t.Errorf("Way with a refused mac.conf = %v", err)
+	m.Files["/h/values.yml"] = []byte(values.Text("WS_TARGET", "moon"))
+	if _, err := s.Way(context.Background()); err == nil || !strings.Contains(err.Error(), "/h/values.yml, line 1") {
+		t.Errorf("Way with a refused values.yml = %v", err)
 	}
-	m.Root["/h/mac.conf"] = effect.Attrs{}
+	m.Root["/h/values.yml"] = effect.Attrs{}
 	if _, err := s.Way(context.Background()); err == nil || !strings.Contains(err.Error(), "permission denied") {
-		t.Errorf("Way with an unreadable mac.conf = %v", err)
+		t.Errorf("Way with an unreadable values.yml = %v", err)
 	}
 }

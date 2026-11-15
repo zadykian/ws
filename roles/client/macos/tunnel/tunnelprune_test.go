@@ -14,7 +14,7 @@ import (
 // server lab: its plist, directory, state file and log, loaded.
 func laterMachine() *effecttest.Machine {
 	m := daemonMachine()
-	m.Files["/h/.config/ws/servers/ws/server.conf"] = []byte("x")
+	m.Files["/h/.config/ws/servers/ws/values.yml"] = []byte("x")
 	m.Dirs["/h/.config/ws/servers"], m.Dirs["/h/.config/ws/servers/ws"] = 0o755, 0o755
 	otherDaemon(m, "lab")
 	m.Dirs["/var/run"], m.Dirs["/var/log"] = 0o755, 0o755
@@ -30,7 +30,7 @@ func laterMachine() *effecttest.Machine {
 
 func pruneStep(m *effecttest.Machine) *tunnel.Tunnel {
 	s := daemonStep(m)
-	s.MacConf = "/h/.config/ws/mac.conf"
+	s.MacConf = "/h/.config/ws/values.yml"
 	return s
 }
 
@@ -56,7 +56,7 @@ func TestTunnelRemovesTheDaemonOfAServerThatIsGone(t *testing.T) {
 
 func TestTunnelKeepsTheDaemonOfAServerWhoseDirectoryStays(t *testing.T) {
 	for name, keep := range map[string]func(*effecttest.Machine){
-		"a directory with no server.conf": func(m *effecttest.Machine) { m.Dirs["/h/.config/ws/servers/lab"] = 0o755 },
+		"a directory with no values.yml": func(m *effecttest.Machine) { m.Dirs["/h/.config/ws/servers/lab"] = 0o755 },
 		"a link to a volume not mounted": func(m *effecttest.Machine) {
 			m.Links["/h/.config/ws/servers/lab"] = "/Volumes/gone/lab"
 		},
@@ -71,7 +71,7 @@ func TestTunnelKeepsTheDaemonOfAServerWhoseDirectoryStays(t *testing.T) {
 
 func TestTunnelLeavesTheDaemonsAloneWhereTheServersLackItsOwn(t *testing.T) {
 	m := laterMachine()
-	delete(m.Files, "/h/.config/ws/servers/ws/server.conf")
+	delete(m.Files, "/h/.config/ws/servers/ws/values.yml")
 	if got := tunnelChanges(t, pruneStep(m)); len(got) != 0 {
 		t.Errorf("Plan = %q; want none where servers/ does not list ws", got)
 	}
@@ -112,7 +112,7 @@ func TestTunnelDoesNotKickADaemonItPrunes(t *testing.T) {
 
 func TestTunnelHasTheDaemonsThatStayReadAgainOnceAServerGoes(t *testing.T) {
 	m := laterMachine()
-	m.Files["/h/.config/ws/servers/box/server.conf"] = []byte("x")
+	m.Files["/h/.config/ws/servers/box/values.yml"] = []byte("x")
 	m.Dirs["/h/.config/ws/servers/box"] = 0o755
 	otherDaemon(m, "box")
 	m.Results["ls -1 /etc/ws-tunnel"] = effecttest.Result{Out: []byte("box\nlab\nprivate.key\nws\n")}

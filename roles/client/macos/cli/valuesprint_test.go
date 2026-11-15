@@ -12,7 +12,7 @@ import (
 // withServerDirs makes a directory of each server file that m holds, as a machine's directory listing needs.
 func withServerDirs(m *effecttest.Machine) *effecttest.Machine {
 	for f := range m.Files {
-		if dir := path.Dir(f); path.Base(f) == "server.conf" {
+		if dir := path.Dir(f); path.Base(f) == "values.yml" {
 			m.Dirs[dir], m.Dirs[path.Dir(dir)] = 0o755, 0o755
 		}
 	}
@@ -30,31 +30,31 @@ func TestValuesPrintCommand(t *testing.T) {
 		wantErr    string
 	}{
 		{"home", nil, "", 0, "WS_USER='ada'\n", ""},
-		{"env", nil, "/e/mac.conf", 0, "WS_USER='eve'\n", ""},
-		{"argument", []string{"/a/mac.conf"}, "/e/mac.conf", 0, "WS_USER='amy'\n", ""},
+		{"env", nil, "/e/values.yml", 0, "WS_USER='eve'\n", ""},
+		{"argument", []string{"/a/values.yml"}, "/e/values.yml", 0, "WS_USER='amy'\n", ""},
 		{"missing", []string{"/none"}, "", 1, "", "ws client macos values print: /none is missing: roles/client/macos/README.md"},
 		{"refused", []string{"/bad"}, "", 1, "", "ws client macos values print: /bad, line 2: unknown key WS_NOPE"},
-		{"lines", []string{"--lines", "/lines/mac.conf"}, "", 0, "WS_USER='zadykian'\nWS_TARGET='lan'\nWS_SLOT='0'\nWS_PUBLIC_KEY=''\nWS_LAN='10.88.0.0/24'\n", ""},
+		{"lines", []string{"--lines", "/lines/values.yml"}, "", 0, "WS_USER='zadykian'\nWS_TARGET='lan'\nWS_SLOT='0'\nWS_PUBLIC_KEY=''\nWS_LAN='10.88.0.0/24'\n", ""},
 		{"lines of the server's file", []string{"--lines"}, "", 0, "WS_USER='ada'\n", ""},
-		{"lines refuse a server's key in mac.conf", []string{"--lines", "/lines/bad/mac.conf"}, "", 1, "", "/lines/bad/mac.conf, line 1: WS_LAN is a server's key"},
-		{"pair", []string{"/pairs/mac.conf"}, "", 1, "", "WS_LAN and WS_LAN_ADDRESS go together"},
+		{"lines refuse a server's key in values.yml", []string{"--lines", "/lines/bad/values.yml"}, "", 1, "", "/lines/bad/values.yml, line 1: WS_LAN is a server's key"},
+		{"pair", []string{"/pairs/values.yml"}, "", 1, "", "WS_LAN and WS_LAN_ADDRESS go together"},
 		{"two files", []string{"a", "b"}, "", 2, "", "ws client macos values print: accepts at most 1 arg(s), received 2"},
 	}
 	m := effecttest.NewMachine()
-	m.Files["/h/.config/ws/mac.conf"] = []byte("")
-	m.Files["/h/.config/ws/servers/ws/server.conf"] = []byte(values.Text("WS_USER", "ada"))
-	m.Files["/e/mac.conf"] = []byte("")
-	m.Files["/e/servers/ws/server.conf"] = []byte(values.Text("WS_USER", "eve"))
-	m.Files["/a/mac.conf"] = []byte("")
-	m.Files["/a/servers/ws/server.conf"] = []byte(values.Text("WS_USER", "amy"))
-	m.Files["/lines/mac.conf"] = []byte(values.Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"))
-	m.Files["/lines/servers/ws/server.conf"] = []byte(values.Text("WS_USER", "zadykian", "WS_LAN", "10.88.0.0/24"))
-	m.Files["/lines/bad/mac.conf"] = []byte(values.Text("WS_LAN", "10.88.0.0/24"))
-	m.Files["/lines/bad/servers/ws/server.conf"] = []byte("")
-	m.Files["/pairs/mac.conf"] = []byte("")
-	m.Files["/pairs/servers/ws/server.conf"] = []byte(values.Text("WS_LAN", "10.88.0.0/24"))
+	m.Files["/h/.config/ws/values.yml"] = []byte("")
+	m.Files["/h/.config/ws/servers/ws/values.yml"] = []byte(values.Text("WS_USER", "ada"))
+	m.Files["/e/values.yml"] = []byte("")
+	m.Files["/e/servers/ws/values.yml"] = []byte(values.Text("WS_USER", "eve"))
+	m.Files["/a/values.yml"] = []byte("")
+	m.Files["/a/servers/ws/values.yml"] = []byte(values.Text("WS_USER", "amy"))
+	m.Files["/lines/values.yml"] = []byte(values.Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"))
+	m.Files["/lines/servers/ws/values.yml"] = []byte(values.Text("WS_USER", "zadykian", "WS_LAN", "10.88.0.0/24"))
+	m.Files["/lines/bad/values.yml"] = []byte(values.Text("WS_LAN", "10.88.0.0/24"))
+	m.Files["/lines/bad/servers/ws/values.yml"] = []byte("")
+	m.Files["/pairs/values.yml"] = []byte("")
+	m.Files["/pairs/servers/ws/values.yml"] = []byte(values.Text("WS_LAN", "10.88.0.0/24"))
 	m.Files["/bad"] = []byte(values.Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub", "WS_NOPE", "1"))
-	m.Files["/servers/ws/server.conf"] = []byte("")
+	m.Files["/servers/ws/values.yml"] = []byte("")
 	withServerDirs(m)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -79,7 +79,7 @@ func TestValuesPrintReportsEachLineOfARefusedFile(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{})
 	m := effecttest.NewMachine()
 	m.Files["/bad"] = []byte(values.Text("WS_NOPE", "1", "WS_NOPE2", "1"))
-	m.Files["/servers/ws/server.conf"] = []byte("")
+	m.Files["/servers/ws/values.yml"] = []byte("")
 	p.Machine = withServerDirs(m)
 	status, _, stderr := runWs(p, "", "client", "macos", "values", "print", "/bad")
 	want := "ws client macos values print: /bad, line 1: unknown key WS_NOPE\nws client macos values print: /bad, line 2: unknown key WS_NOPE2\n"

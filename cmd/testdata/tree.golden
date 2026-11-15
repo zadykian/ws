@@ -42,8 +42,8 @@ Usage:
   ws client macos [command]
 
 Available Commands:
-  apply       set the Mac up from mac.conf and a server's file
-  configure   edit mac.conf, the server's file, the secrets and ws's values.yml on forms
+  apply       set the Mac up from values.yml and a server's file
+  configure   edit the Mac's values.yml, the server's file, the secrets and ws's values.yml on forms
   remove      remove a server from the Mac
   resolver    send DOMAIN's names to the nameservers, or drop it
   secrets     edit ws's secrets file, over ssh
@@ -62,7 +62,7 @@ Global Flags:
 
 Use "ws client macos [command] --help" for more information about a command.
 == ws client macos apply
-It runs the steps it names, from mac.conf and the server's file, in this order: ssh, cable, git, ghostty, zed, cld, zsh, tunnel, networks. With no --only, it runs every step, and ssh again, whose plan is empty unless cld changed ssh's file. It asks sudo where it needs root.
+It runs the steps it names, from values.yml and the server's file, in this order: ssh, cable, git, ghostty, zed, cld, zsh, tunnel, networks. With no --only, it runs every step, and ssh again, whose plan is empty unless cld changed ssh's file. It asks sudo where it needs root.
 
 Usage:
   ws client macos apply [flags]
@@ -76,7 +76,7 @@ Global Flags:
       --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos configure
-It shows the keys that ws client macos wizard would ask, by WS_TARGET, with what the files hold: mac.conf's, then those of the server's file, servers/NAME/server.conf. It writes them on Ctrl-S. Ctrl-N goes on to ws's secrets, which show as set or not, never their values, then to ws's values.yml, both read over ssh. It needs a terminal: anywhere else, edit the file by hand.
+It shows the keys that ws client macos wizard would ask, by WS_TARGET, with what the files hold: the Mac's values.yml, then those of the server's file, servers/NAME/values.yml. It writes them on Ctrl-S. Ctrl-N goes on to ws's secrets, which show as set or not, never their values, then to ws's values.yml, both read over ssh. It needs a terminal: anywhere else, edit the file by hand.
 
 Usage:
   ws client macos configure [flags]
@@ -88,7 +88,7 @@ Global Flags:
       --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos remove
-It deletes servers/NAME beside mac.conf and NAME's entry in known_hosts, and leaves the server as it is. It refuses the Mac's last server, as apply needs one, and takes no --server: the argument is the consent.
+It deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it is. It refuses the Mac's last server, as apply needs one, and takes no --server: the argument is the consent.
 
 Usage:
   ws client macos remove NAME [flags]
@@ -254,7 +254,7 @@ Global Flags:
       --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos servers
-It lists each server of servers/ beside mac.conf: its target, its slot, and its tunnel, which is absent, stopped, starting, unreadable, or the tier and endpoint it holds. A server whose file ws refuses shows - and its errors follow the list, with exit code 1. It reads alone, as the user, and takes no --server.
+It lists each server of servers/ beside values.yml: its target, its slot, and its tunnel, which is absent, stopped, starting, unreadable, or the tier and endpoint it holds. A server whose file ws refuses shows - and its errors follow the list, with exit code 1. It reads alone, as the user, and takes no --server.
 
 Usage:
   ws client macos servers [flags]
@@ -266,7 +266,7 @@ Global Flags:
       --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos state
-It reads alone and applies nothing, as ws client macos apply --check does, and needs what it needs: mac.conf, and not root. The Mac's steps report the packages, services and files ws manages there, and a step that fails stands in the report as a check. The exit code stays 0. With several servers, one whose file ws refuses stands in the report with the refusal. A report holds no secret.
+It reads alone and applies nothing, as ws client macos apply --check does, and needs what it needs: values.yml, and not root. The Mac's steps report the packages, services and files ws manages there, and a step that fails stands in the report as a check. The exit code stays 0. With several servers, one whose file ws refuses stands in the report with the refusal. A report holds no secret.
 
 At a terminal it draws the state screen on stderr, where sudo's password comes through a question. --plain prints the report as text, and so does a pipe. The text is on stdout and ws's own lines on stderr. --json prints the version of ws, then each step with its items and changes.
 
@@ -371,7 +371,7 @@ Usage:
   ws client macos values [command]
 
 Available Commands:
-  print       print the checked settings of mac.conf and a server's file as shell assignments
+  print       print the checked settings of values.yml and a server's file as shell assignments
 
 Flags:
   -h, --help   help for values
@@ -382,7 +382,7 @@ Global Flags:
 
 Use "ws client macos values [command] --help" for more information about a command.
 == ws client macos values print
-It reads FILE, else $WS_VALUES, else ~/.config/ws/mac.conf, and the server's file, servers/NAME/server.conf beside it, of the server that --server names, and prints the checked settings as shell assignments, or the errors of a file it refuses.
+It reads FILE, else $WS_VALUES, else ~/.config/ws/values.yml, and the server's file, servers/NAME/values.yml beside it, of the server that --server names, and prints the checked settings as shell assignments, or the errors of a file it refuses.
 
 Usage:
   ws client macos values print [FILE] [flags]

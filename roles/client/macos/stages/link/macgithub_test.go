@@ -20,9 +20,9 @@ func found(name string) (string, error) { return "/bin/" + name, nil }
 
 func newMacSigning(status session.Status, listed string) (*stages.Signing, *effecttest.Machine) {
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte(values.Text("WS_TARGET", "lan", "WS_USER", "ada"))
+	m.Files["/h/values.yml"] = []byte(values.Text("WS_TARGET", "lan", "WS_USER", "ada"))
 	out := &effecttest.Out{}
-	ws := macSession(m, remote.SSH{Host: "ws", M: m, Lock: "/l", Ways: host.MacWays{M: m, Conf: "/h/mac.conf"}}, out, status, nil)
+	ws := macSession(m, remote.SSH{Host: "ws", M: m, Lock: "/l", Ways: host.MacWays{M: m, Conf: "/h/values.yml"}}, out, status, nil)
 	g := gh.CLI{M: m, Out: &effecttest.Out{}, LookPath: found}
 	m.Results["/bin/gh auth status -h github.com"] = effecttest.Result{}
 	m.Results["/bin/gh ssh-key add /l/signing.pub --type signing --title ws1"] = effecttest.Result{}

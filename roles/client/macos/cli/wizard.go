@@ -83,8 +83,8 @@ func wizardStages(e wizardEffects, o engine.WizardOptions, name string) []step.S
 	check := o.Check
 	macConf := values.Path(p.Getenv, p.Pwd)
 	lock := wizard.LockPath(p.LockDir())
-	scratch := lock + "/mac.conf"
-	// Under --check the stages after Answers read the mac.conf that it would write, a file in the lock,
+	scratch := lock + "/values.yml"
+	// Under --check the stages after Answers read the values.yml that it would write, a file in the lock,
 	// as the old script pointed WS_VALUES there.
 	later, laterServer := macConf, values.ServerPath(macConf, name)
 	if check {

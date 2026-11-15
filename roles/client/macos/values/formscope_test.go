@@ -13,7 +13,7 @@ func TestConfFormScopeShowsOneFilesKeys(t *testing.T) {
 	edits := map[string]string{"WS_TARGET": "cloud"}
 	f.Scope = MacFile
 	if got, want := keysOf(f.Fields(edits)), []string(nil); !slices.Equal(got, want) {
-		t.Errorf("mac.conf: keys = %v; want %v", got, want)
+		t.Errorf("values.yml: keys = %v; want %v", got, want)
 	}
 	f.Scope = ServerFile
 	got := keysOf(f.Fields(edits))
@@ -33,8 +33,8 @@ func TestConfFormScopeSavesToItsFileAlone(t *testing.T) {
 		if _, err := f.Save(context.Background(), &effecttest.Out{}, edits); err != nil {
 			t.Fatal(err)
 		}
-		if mac, server := string(m.Files["/h/mac.conf"]), string(m.Files[serverOfTest]); mac != want[0] || server != want[1] {
-			t.Errorf("scope %d: mac.conf = %q, server = %q; want %q", scope, mac, server, want)
+		if mac, server := string(m.Files["/h/values.yml"]), string(m.Files[serverOfTest]); mac != want[0] || server != want[1] {
+			t.Errorf("scope %d: values.yml = %q, server = %q; want %q", scope, mac, server, want)
 		}
 	}
 }
@@ -53,12 +53,12 @@ func TestConfFormScopeSaysItsFileHoldsTheValues(t *testing.T) {
 
 func TestConfFormSaveChangesNeitherFileWhereOneRefuses(t *testing.T) {
 	f, m := formOf(t, "", Text("WS_USER", "ada"))
-	m.Links[serverOfTest] = "/dot/server.conf"
+	m.Links[serverOfTest] = "/dot/values.yml"
 	_, err := f.Save(context.Background(), &effecttest.Out{}, map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "vm.example"})
 	if err == nil {
 		t.Fatal("Save passes a server file that is a link")
 	}
-	if mac, server := string(m.Files["/h/mac.conf"]), string(m.Files[serverOfTest]); mac != "" || server != Text("WS_USER", "ada") {
-		t.Errorf("mac.conf = %q, server = %q; want both as they were", mac, server)
+	if mac, server := string(m.Files["/h/values.yml"]), string(m.Files[serverOfTest]); mac != "" || server != Text("WS_USER", "ada") {
+		t.Errorf("values.yml = %q, server = %q; want both as they were", mac, server)
 	}
 }

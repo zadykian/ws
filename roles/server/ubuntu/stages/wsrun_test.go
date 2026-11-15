@@ -92,9 +92,9 @@ func TestWsRunIsDoneAtValuesSum(t *testing.T) {
 	}
 }
 
-// asks sets the user that mac.conf wants ws's run to leave.
+// asks sets the user that values.yml wants ws's run to leave.
 func asks(m *effecttest.Machine, user string) {
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\nWS_USER=" + user + "\n")
+	m.Files["/h/values.yml"] = []byte("WS_TARGET=lan\nWS_USER=" + user + "\n")
 }
 
 func TestWsRunNamesWsUser(t *testing.T) {

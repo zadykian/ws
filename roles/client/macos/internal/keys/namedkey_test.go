@@ -36,42 +36,42 @@ const (
 func TestReadKeyStops(t *testing.T) {
 	for _, tc := range []struct {
 		name string
-		set  func(m *effecttest.Machine) string // returns the .pub that mac.conf names
+		set  func(m *effecttest.Machine) string // returns the .pub that values.yml names
 		want string                             // VAR, WORDS and PAGE stand for the use's
 	}{
 		{"none named, no agent", func(*effecttest.Machine) string { return "" },
-			"mac.conf names no VAR, WORDS: run ws client macos wizard to pick or make one in Secretive"},
+			"values.yml names no VAR, WORDS: run ws client macos wizard to pick or make one in Secretive"},
 		{"none named, two agent keys", func(m *effecttest.Machine) string {
 			mactest.AgentMachine(m, mactest.AgentKey, mldsa)
 			return ""
-		}, "mac.conf names no VAR, WORDS: run ws client macos wizard, or add one of these lines to mac.conf, " +
+		}, "values.yml names no VAR, WORDS: run ws client macos wizard, or add one of these lines to values.yml, " +
 			values.Line("VAR", sshcfg.AgentKeys(mactest.AgentKey)[0].Pub()) + " for " + sshcfg.AgentKeys(mactest.AgentKey)[0].Label()},
 		{"missing", func(*effecttest.Machine) string { return filePub },
-			fileLine + ", mac.conf's VAR, is missing: make the key first, as PAGE says"},
+			fileLine + ", values.yml's VAR, is missing: make the key first, as PAGE says"},
 		{"unreadable", func(m *effecttest.Machine) string {
 			m.Root[fileLine] = m.Root[mactest.AgentSock]
 			return filePub
-		}, "cannot read " + fileLine + ": make it readable, or name another in mac.conf's VAR"},
+		}, "cannot read " + fileLine + ": make it readable, or name another in values.yml's VAR"},
 		{"denied in Secretive's container, no key listed", func(m *effecttest.Machine) string {
 			mactest.AgentMachine(m)
 			m.Root[inBox] = m.Root[mactest.AgentSock]
 			return inBox
-		}, "cannot read " + inBox + ", and Secretive's agent lists no key of it: open Secretive, or name another in mac.conf's VAR"},
+		}, "cannot read " + inBox + ", and Secretive's agent lists no key of it: open Secretive, or name another in values.yml's VAR"},
 		{"certificate", fileText("ssh-ed25519-cert-v01@openssh.com AAAA\n"),
-			fileLine + " is a certificate: name its key's own .pub in mac.conf's VAR"},
+			fileLine + " is a certificate: name its key's own .pub in values.yml's VAR"},
 		{"type ws lacks", fileText("ssh-mldsa-65 AAAA\n"),
-			fileLine + " holds a key of type ssh-mldsa-65, which ws's OpenSSH lacks: name the .pub of a P-256 or ed25519 key in mac.conf's VAR"},
+			fileLine + " holds a key of type ssh-mldsa-65, which ws's OpenSSH lacks: name the .pub of a P-256 or ed25519 key in values.yml's VAR"},
 		{"type ws lacks, in the agent", func(m *effecttest.Machine) string {
 			mactest.AgentMachine(m, mldsa)
 			return sshcfg.AgentKeys(mldsa)[0].Pub()
-		}, "which ws's OpenSSH lacks: name the .pub of a P-256 or ed25519 key in mac.conf's VAR"},
+		}, "which ws's OpenSSH lacks: name the .pub of a P-256 or ed25519 key in values.yml's VAR"},
 		{"private key", fileText("-----BEGIN OPENSSH PRIVATE KEY-----\nAAAA\n-----END OPENSSH PRIVATE KEY-----\n"),
 			fileLine + " holds no public key alone"},
 		{"ssh-keygen fails", func(m *effecttest.Machine) string {
 			fileText(fileKey)(m)
 			m.Results["ssh-keygen -l -f "+fileLine] = effecttest.Result{Err: errors.New("bad")}
 			return filePub
-		}, "ssh-keygen cannot read " + fileLine + ": name the .pub of a P-256 or ed25519 key in mac.conf's VAR"},
+		}, "ssh-keygen cannot read " + fileLine + ": name the .pub of a P-256 or ed25519 key in values.yml's VAR"},
 	} {
 		for _, u := range keyUses {
 			m := effecttest.NewMachine()

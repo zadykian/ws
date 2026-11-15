@@ -24,7 +24,7 @@ func labCable(t *testing.T, status session.Status, link string, env map[string]s
 			m.Results[strings.TrimSuffix(k, "ws")+"lab"] = v
 		}
 	}
-	m.Files["/h/mac.conf"] = []byte(values.Text("WS_TARGET", "lan") + wayConf)
+	m.Files["/h/values.yml"] = []byte(values.Text("WS_TARGET", "lan") + wayConf)
 	return c, m, p
 }
 
@@ -39,7 +39,7 @@ func TestCablePlanNamesTheServer(t *testing.T) {
 		"unnamed": {"", "", nil, "ask lab's port of the cable, name it in /etc/ws/values.yml on lab, and"},
 	} {
 		c, m, _ := labCable(t, session.Status{Cable: tc.cable}, cableLink, tc.env)
-		m.Files["/h/mac.conf"] = append(m.Files["/h/mac.conf"], tc.conf...)
+		m.Files["/h/values.yml"] = append(m.Files["/h/values.yml"], tc.conf...)
 		p, err := c.Plan(context.Background())
 		var got []string
 		for _, ch := range p.Changes {

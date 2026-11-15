@@ -14,7 +14,7 @@ import (
 )
 
 // sshMachine answers the commands that the ssh step runs, with ssh happy, and has the file key that
-// sshStep's mac.conf names.
+// sshStep's values.yml names.
 func sshMachine() *effecttest.Machine {
 	m := effecttest.NewMachine()
 	m.Files["/h/.ssh/id_ed25519.pub"] = []byte("ssh-ed25519 AAAA me\n")

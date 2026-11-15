@@ -9,7 +9,7 @@ import (
 
 const serversDirPath = "/h/.config/ws/servers"
 
-// machineWith returns a machine whose servers/ holds a server.conf in each directory named.
+// machineWith returns a machine whose servers/ holds a values.yml in each directory named.
 func machineWith(names ...string) *effecttest.Machine {
 	m := effecttest.NewMachine()
 	m.Dirs[serversDirPath] = 0o755
@@ -60,7 +60,7 @@ func TestServersRefusesABadNameThatHoldsAServerFile(t *testing.T) {
 	m := machineWith("ws")
 	m.Dirs[serversDirPath+"/Lab"] = 0o755
 	if got, err := Servers(m, macPath); err != nil || len(got) != 1 {
-		t.Errorf("Servers = %v, %v; a bad name with no server.conf is not a server", got, err)
+		t.Errorf("Servers = %v, %v; a bad name with no values.yml is not a server", got, err)
 	}
 }
 func TestPickTakesTheOneServerOrTheNamedOne(t *testing.T) {
