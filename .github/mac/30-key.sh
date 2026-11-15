@@ -32,9 +32,9 @@ grep -qxF "$give" "$RUNNER_TEMP/first.out" ||
         fail=1
     }
 printf '%s\n' "$key" >"$RUNNER_TEMP/mac.pub"
-printf '%s\n' "$mac" | cmp -s - ~/.config/ws/tunnel.pub ||
+printf '%s\n' "$mac" | cmp -s - /etc/ws/tunnel.pub ||
     {
-        echo "::error::~/.config/ws/tunnel.pub holds no '$mac'"
+        echo "::error::/etc/ws/tunnel.pub holds no '$mac'"
         fail=1
     }
 [ "$(sudo stat -f '%Su:%Sg %Lp' /etc/ws/tunnel/private.key)" = "root:wheel 600" ] ||

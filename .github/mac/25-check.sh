@@ -13,8 +13,8 @@ ws client macos apply --check 2>&1 | tee "$RUNNER_TEMP/check.out" ||
         exit 1
     }
 fail=0
-for path in ~/.ssh/config.d ~/.ssh/config.*~ ~/.config/zed ~/.config/ws/zshrc ~/.zshrc.*~ \
-    /etc/ws/tunnel /usr/local/libexec/ws-tunnel "/Library/LaunchDaemons/$LABEL.plist"; do
+for path in ~/.ssh/config.d ~/.ssh/config.*~ ~/.config/zed ~/.zshrc.*~ \
+    /etc/ws/tunnel /etc/ws/zshrc /etc/ws/ghostty /usr/local/libexec/ws-tunnel "/Library/LaunchDaemons/$LABEL.plist"; do
     if sudo test -e "$path"; then
         echo "::error::ws client macos apply --check made $path"
         fail=1

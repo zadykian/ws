@@ -102,8 +102,8 @@ rest=$(unlisted "$out")
 [ "$status" = 0 ] && [ -z "${rest#"$known"}" ] ||
     error "the last run exited $status, or printed what it should not"
 
-pub=$HOME/.config/ws/tunnel.pub
-rm "$pub"
+pub=/etc/ws/tunnel.pub
+sudo rm -f "$pub"
 wizard --check
 printf '%s\n' "$out" | grep -qxF "+$mac" &&
     printf '%s\n' "$out" | grep -qx "ws client macos wizard: Tunnel: after ws's run" &&

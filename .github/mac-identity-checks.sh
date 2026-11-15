@@ -100,7 +100,8 @@ secretive_restore() {
     [ -z "${secretive_agent-}" ] || kill "$secretive_agent" || true
     secretive_agent=
     chmod -R u+rwx "$secretive" 2>/dev/null || true
-    rm -rf "$secretive" "$HOME/.config/ws/secretive"
+    rm -rf "$secretive"
+    sudo rm -rf /etc/ws/secretive
 }
 # pubname PUB prints the name that Secretive gives the .pub, and ws's copy keeps: its MD5 in hex.
 pubname() {
@@ -132,8 +133,7 @@ rm "$tmp/p256"
 # the agent and the key, and write the copy where ws lacks it, as a run shows and --check says.
 chmod 000 "$data/PublicKeys"
 name=$(pubname "$tmp/p256.pub")
-copy=$HOME/.config/ws/secretive/$name
-cop=\~/.config/ws/secretive/$name
+copy=/etc/ws/secretive/$name
 # unnamed KEY USE PUB... prints ws client macos apply's stop where values.yml names no KEY, the key
 # for USE. It gives the line that names the key of each .pub of PUB..., in their order, by the
 # comment ws.
@@ -144,7 +144,7 @@ unnamed() {
     unnamed_key=$1 unnamed_sep=
     shift 2
     for pub in "$@"; do
-        printf '%s%s: ~/.config/ws/secretive/%s for ws (%s)' "$unnamed_sep" "$unnamed_key" \
+        printf '%s%s: /etc/ws/secretive/%s for ws (%s)' "$unnamed_sep" "$unnamed_key" \
             "$(pubname "$pub")" "$(ssh-keygen -l -f "$pub" | awk '{ print $2 }')"
         unnamed_sep='; '
     done
@@ -152,15 +152,15 @@ unnamed() {
 with 'WS_IDENTITY_PUB_KEY: ""'
 stops "$(unnamed WS_IDENTITY_PUB_KEY "ws's login key" "$tmp/p256.pub")"
 stops "$(unnamed WS_IDENTITY_PUB_KEY "ws's login key" "$tmp/p256.pub")" --check
-mkdir -p "${copy%/*}"
-cp "$tmp/p256.pub" "$copy"
+sudo mkdir -p "${copy%/*}"
+sudo cp "$tmp/p256.pub" "$copy"
 sec=\~/${data#"$HOME/"}
-with "WS_IDENTITY_PUB_KEY: $cop"
-agented "$cop" "$sec/socket.ssh"
-rm "$copy"
-prints "ws client macos apply: would write $copy, ws's copy of a key of Secretive's" --check
+with "WS_IDENTITY_PUB_KEY: $copy"
+agented "$copy" "$sec/socket.ssh"
+sudo rm "$copy"
+prints "ws client macos apply: create $copy$nl$(diff -u -L "$copy" -L "$copy" /dev/null "$tmp/p256.pub")" --check
 [ ! -e "$copy" ] || error "ws client macos apply --check wrote $copy"
-prints "ws client macos apply: wrote $copy"
+prints "ws client macos apply: create $copy"
 cmp -s "$copy" "$tmp/p256.pub" || error "$copy is not the .pub of the agent's key"
 prints ''
 # A .pub in the container that values.yml names, as a Mac before macOS 27 wrote, must become ws's copy.
