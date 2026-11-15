@@ -110,9 +110,9 @@ printf '%s\n' "$out" | grep -qxF "+$mac" &&
     [ ! -e "$pub" ] && [ "$status" = 0 ] ||
     error "--check without tunnel.pub exited $status, wrote it, or showed no Tunnel after ws's run"
 wizard
-printf '%s\n' "$out" | grep -qxF "ws client macos wizard: wrote $pub" &&
+printf '%s\n' "$out" | grep -qxF "ws client macos wizard: create $pub" &&
     ! printf '%s\n' "$out" | grep -q '^ws client macos wizard: Tunnel: ' &&
     [ "$(cat "$pub")" = "$mac" ] && [ "$status" = 0 ] ||
-    error "a run without tunnel.pub exited $status, wrote no Mac's key there, or acted at Tunnel"
+    error "a run without tunnel.pub exited $status, created no Mac's key there, or acted at Tunnel"
 rm -rf "$RUNNER_TEMP/first"
 exit "$fail"

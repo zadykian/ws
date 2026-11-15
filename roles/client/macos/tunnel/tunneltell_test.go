@@ -11,11 +11,10 @@ import (
 
 func TestTunnelWritesThePublicKeyWhereTheWizardReadsIt(t *testing.T) {
 	m := daemonMachine()
-	delete(m.Files, "/h/.config/ws/tunnel.pub")
-	delete(m.Dirs, "/h/.config/ws")
+	delete(m.Files, "/etc/ws/tunnel.pub")
 	got := lines(tunnelChanges(t, daemonStep(m)))
-	if !strings.Contains(got, "would make /h/.config/ws, mode 700\n") || !strings.HasSuffix(got, "+PUB\n") {
-		t.Errorf("Plan =\n%s\nwant the directory and tunnel.pub", got)
+	if !strings.HasPrefix(got, "create /etc/ws/tunnel.pub\n") || !strings.HasSuffix(got, "+PUB\n") {
+		t.Errorf("Plan =\n%s\nwant /etc/ws/tunnel.pub, root's", got)
 	}
 }
 
@@ -76,7 +75,7 @@ func TestTunnelFinishPrintsNothingUnderCheck(t *testing.T) {
 func TestTunnelDoesNotRunRootsCopyWhereItOrItsDirectoryIsToChange(t *testing.T) {
 	m := daemonMachine()
 	m.Root["/usr/local/libexec/ws-tunnel"] = effect.Attrs{UID: 501, GID: 20, Mode: 0o777}
-	delete(m.Files, "/h/.config/ws/tunnel.pub")
+	delete(m.Files, "/etc/ws/tunnel.pub")
 	tunnelChanges(t, daemonStep(m))
 	for _, c := range m.Calls {
 		if strings.Contains(c, "ws client macos tunnel key") {
@@ -85,7 +84,7 @@ func TestTunnelDoesNotRunRootsCopyWhereItOrItsDirectoryIsToChange(t *testing.T) 
 	}
 }
 
-func TestTunnelReportsWsDirectoryOnceItHoldsTheKey(t *testing.T) {
+func TestTunnelReportsThePublicKeyAsRootsOnceItHoldsTheKey(t *testing.T) {
 	m := daemonMachine()
 	s := daemonStep(m)
 	tunnelChanges(t, s)
@@ -94,9 +93,9 @@ func TestTunnelReportsWsDirectoryOnceItHoldsTheKey(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, it := range items {
-		if it.Name == "/h/.config/ws" && it.Want == "mode 700" {
+		if it.Name == "/etc/ws/tunnel.pub" && it.Want == "owner 0:0, mode 644" {
 			return
 		}
 	}
-	t.Errorf("Report = %+v, want /h/.config/ws at mode 700", items)
+	t.Errorf("Report = %+v, want /etc/ws/tunnel.pub at owner 0:0, mode 644", items)
 }

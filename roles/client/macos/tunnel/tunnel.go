@@ -170,7 +170,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 }
 
 // Report says how ws, root's copy, the key and the daemon stand. A program shows no diff, and the
-// key shows by its owner and mode alone: no report reads it. tunnel.pub compares with what Plan
+// key shows by its owner and mode alone: no report reads it. /etc/ws/tunnel.pub compares with what Plan
 // asked root's ws for, as a second sudo would add nothing.
 func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 	self, err := t.self()
@@ -196,7 +196,7 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 		file.Fixed(key),
 	}
 	if t.public != "" {
-		parts = append(parts, file.WsDirs(t.M, t.Out, t.Home), t.pub())
+		parts = append(parts, t.pub())
 	}
 	if t.Conf.PublicKey != "" {
 		d := launchd.For(t.Server)

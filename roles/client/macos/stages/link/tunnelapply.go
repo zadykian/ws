@@ -16,7 +16,7 @@ import (
 // peer op writes the key, then ws server ubuntu apply --only tunnel runs in a unit of its own.
 // It sets WS_PUBLIC_KEY to wg0's key, where it differs, and runs ws client macos apply again. Last,
 // it waits for the handshake and logs in, or, where the run asked ws's address, leaves that to a
-// later run. It takes root's key rather than tunnel.pub, which the user can write, as the key it
+// later run. It takes root's key rather than tunnel.pub, a copy that may lag the key, as the key it
 // sends becomes ws's peer.
 func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 	switch err := local.Validate(ctx, t.M); {

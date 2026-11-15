@@ -33,8 +33,7 @@ func daemonMachine() *effecttest.Machine {
 		m.Root[path] = mode
 	}
 	m.Results["/usr/local/libexec/ws-tunnel/ws client macos tunnel key"] = effecttest.Result{Out: []byte("PUB\n")}
-	m.Files["/h/.config/ws/tunnel.pub"] = []byte("PUB\n")
-	m.Dirs["/h/.config"], m.Dirs["/h/.config/ws"] = 0o755, 0o700
+	m.Files["/etc/ws/tunnel.pub"] = []byte("PUB\n")
 	m.Dirs["/Library/LaunchDaemons"], m.Dirs["/etc/ws"] = 0o755, 0o755
 	m.Results["launchctl print system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{}
 	return m
