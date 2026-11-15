@@ -77,7 +77,7 @@ lacks it. It writes `mac.conf`, then the server's file, once `ws client macos ap
 both. It stops before it asks on a file it can't read, or on a line that `ws client macos apply`
 would refuse. Where a file is a link and lacks a key, it prints the lines to add to the link's file,
 and stops. The Cable stage asks `WS_CABLE_PORT` and `WS_CABLE_SERVICE` ([The cable](#the-cable)).
-The other keys, such as `WS_USER` and `WS_PORT`, keep their defaults until set by hand.
+The other keys, such as `WS_USER` and `WS_TUNNEL_PORT`, keep their defaults until set by hand.
 
 Under `--check`, the wizard asks too, and shows the lines it would add as a diff. `ws client macos
 apply --check` then reads the files it would write, in the lock, which `WS_CONF` names, beside a

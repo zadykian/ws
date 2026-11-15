@@ -74,7 +74,7 @@ apply`. The first run must warn that ws faces the internet, and add ws's key to 
 `WS_HOST_KEY` and with another fingerprint, and `--check` must show the line, or stop at a link, as
 a run must. With a conf of no way to ws, a run must stop, naming [The router](../../roles/server/ubuntu/network/router.md).
 Where `WS_REMOTE` doesn't answer, ws's address must come from `WS_FIRST_ADDRESS`, and the closing
-list name `WS_PORT` and no lease's address. On a cloud VM, it must name the server's way.
+list name `WS_TUNNEL_PORT` and no lease's address. On a cloud VM, it must name the server's way.
 
 The runner's user logs in to that `sshd` by its own `authorized_keys`, which `standin.sh` empties
 and the cases fill from the stand-in `gh`'s keys. Each session runs `ws.sh`, which logs the command.
