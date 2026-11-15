@@ -62,14 +62,14 @@ _Avoid_: remote, connection
 
 **User's directory**:
 A directory below the Mac's home that a step writes under, such as `~/.ssh`. A run makes it where
-missing, and stops where the path is no directory. It leaves the mode of one that exists, but for
-ws's directory. Core's `file.UserDir` holds it.
+missing, and stops where the path is no directory. It leaves the mode of one that exists. Core's
+`file.UserDir` holds it.
 _Avoid_: folder
 
 **User's file**:
-A whole file below the Mac's home that ws writes as the user, not root, such as
-`~/.config/ws/gitconfig`. A plan and a report read it alike. Core's `file.UserFile` holds it. On the
-server, root writes a home file.
+A whole file below the Mac's home that ws writes as the user, not root, such as Zed's
+`~/.config/zed/global_settings.json`. A plan and a report read it alike. Core's `file.UserFile`
+holds it. On the server, root writes a home file.
 _Avoid_: dotfile
 
 **User's lines**: ws's lines in a user's file that holds other text too, such as `Include
@@ -88,8 +88,7 @@ no other server holds in a file that lacks it. Slot N's tunnel is `10.99.N.0/24`
 `10.99.0.0/20`, with the server at `.1` and the Mac at `.2`.
 
 **ws's directory**:
-`~/.config/ws` on the Mac, mode 700, which holds the files that git reads. A run
-sets that mode where it differs. `/etc/ws`, root's and 755 on both sides, holds `values.yml` and
-`servers/` on the Mac, which only sudo writes. On ws it also holds git's tokens, the env file and
-the fans' config.
+`/etc/ws`, root's and 755 on both sides, holds git's `gitconfig` and `allowed_signers`. On the Mac
+it also holds `values.yml` and `servers/`, which only sudo writes, and the script
+`secretive-ssh-keygen`. On ws it holds git's tokens, the env file and the fans' config.
 _Avoid_: config directory

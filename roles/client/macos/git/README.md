@@ -2,12 +2,13 @@
 
 `ws client macos apply` sets up git on the Mac on each run
 ([The Mac](../README.md)), as the `git` role does on ws ([Signing](../../../server/ubuntu/git/README.md#signing)). It writes
-`~/.config/ws/gitconfig`, from the settings that `roles/internal/gitcfg` holds for both sides, the
+`/etc/ws/gitconfig`, from the settings that `roles/internal/gitcfg` holds for both sides, the
 fetch's prune among them. The author is `gitcfg.Name` and `gitcfg.Email`, `zadykian` and
 `me@zadykian.dev`. Each commit is signed with `WS_GIT_SIGNING_PUB_KEY`, which
-`/etc/ws/allowed_signers` trusts for the email in `git verify-commit`. That file is root's and 644,
-as on ws. A run writes it through sudo and reads it as the user, so that a run that changes nothing
-asks for no password. An old `~/.config/ws/allowed_signers` stays, unused. It names gh's credential
+`/etc/ws/allowed_signers` trusts for the email in `git verify-commit`. That file, the
+gitconfig and the script below are root's and 644, as on ws, bar the script's 755. A run writes
+them through sudo and reads them as the user, so that a run that changes nothing asks for no
+password. It names gh's credential
 command too, as `gh auth setup-git` does, so that pushes to GitHub take gh's login, and installs
 Homebrew's gh where `PATH` has none.
 
@@ -26,20 +27,20 @@ prompt while the Mac is unlocked. The login key may sign too, but asks for Touch
 default, so a rebase would ask at each commit. The wizard names ws's copy of its `.pub`,
 `/etc/ws/secretive/NAME.pub`, in `WS_GIT_SIGNING_PUB_KEY`. `NAME` is that of Secretive's Public
 Key Path, and the script writes the copy from the agent ([Secretive's keys](#secretives-keys)). git
-then signs through `~/.config/ws/secretive-ssh-keygen`, which gives `ssh-keygen` Secretive's agent,
+then signs through `/etc/ws/secretive-ssh-keygen`, which gives `ssh-keygen` Secretive's agent,
 so that a terminal, an editor and other apps sign alike. The key never leaves the Secure Enclave,
 and signs only while the Mac is unlocked. ssh offers ws the key of `WS_IDENTITY_PUB_KEY` alone,
 whichever keys Secretive holds ([ssh's hosts](../README.md#sshs-hosts)).
 
-`~/.gitconfig` includes `~/.config/ws/gitconfig` at its top, so that its own settings win where both
-set one. Where the include is missing, the script adds it at the top, or makes the file, and keeps
-the old file as `~/.gitconfig.TIME~`. It names the file's own settings of identity and signing,
+`~/.gitconfig` includes `/etc/ws/gitconfig` at its top, as on ws, so that its own settings win
+where both set one. Where the include is missing, the script adds it at the top, or makes the file,
+and keeps the old file as `~/.gitconfig.TIME~`. It names the file's own settings of identity and signing,
 which then win, such as a `user.email`. Where the include sits below the file's own settings, which
 it then overrides, or comes twice, the script stops: keep one, at the top. Where `~/.gitconfig` is a
 link that lacks the include, the script stops: put it at the top of the file the link points to.
 Each stop comes before the script changes anything for git, and the report shows the file as a
 conflict there. git reads its XDG file,
-`~/.config/git/config`, before `~/.gitconfig`, so `~/.config/ws/gitconfig` wins over the settings
+`~/.config/git/config`, before `~/.gitconfig`, so `/etc/ws/gitconfig` wins over the settings
 there. The script names those of identity and signing as it adds the include.
 
 GitHub verifies a commit by the signing keys of its author's account. Where those of gh's login lack

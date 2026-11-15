@@ -221,7 +221,7 @@ Git's cases start without the job's git files, with a stand-in `gh` on `PATH`. I
 empty `WS_GIT_SIGNING_PUB_KEY`, or one that is missing or
 unreadable, or a `.pub` that holds more than a public key. With a file key there, an ed25519 key
 with no passphrase, git must sign a commit and verify it. A `~/.gitconfig` must get the include of
-`~/.config/ws/gitconfig` at its top, once, keep its own lines, and name its own settings. An include
+`/etc/ws/gitconfig` at its top, once, keep its own lines, and name its own settings. An include
 below them, or a second one, must stop `ws client macos apply` before it writes a file, as must a
 link that lacks the include. One whose file has it must pass. The settings of git's XDG file must be
 named. With a key that an agent holds at Secretive's socket and `PublicKeys` closed, an empty
