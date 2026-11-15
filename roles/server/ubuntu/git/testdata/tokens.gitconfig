@@ -6,9 +6,9 @@
 # match, the last wins, so the URLs go in order, each after those it extends.
 [credential "https://a.example/x"]
 	helper =
-	helper = "!f() { test \"$1\" != get || cat ~/.config/git/tokens/a.example_x; }; f"
+	helper = "!f() { test \"$1\" != get || cat /etc/ws/tokens/a.example_x; }; f"
 [credential "https://b.example"]
 	helper =
-	helper = "!f() { test \"$1\" != get || cat ~/.config/git/tokens/b.example; }; f"
+	helper = "!f() { test \"$1\" != get || cat /etc/ws/tokens/b.example; }; f"
 [http "https://b.example"]
 	proactiveAuth = basic

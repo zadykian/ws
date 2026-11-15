@@ -11,7 +11,7 @@ import (
 
 func tokenFixture(creds ...Credential) (*effecttest.Machine, Tokens) {
 	m := effecttest.NewMachine()
-	m.Results["git config --file /home/ws/.config/git/tokens.gitconfig.ws-check --name-only --list"] = effecttest.Result{}
+	m.Results["git config --file /etc/ws/tokens.gitconfig.ws-check --name-only --list"] = effecttest.Result{}
 	m.Results["git config --file - --name-only --list"] = effecttest.Result{
 		Out: []byte("credential.https://kept.example.helper\n")}
 	a := account.Account{User: account.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
@@ -38,23 +38,23 @@ func TestTokensAreWrittenOnceAndNeverShown(t *testing.T) {
 		Credential{URL: "https://a.example", Token: "hunter2", ProactiveAuth: true},
 		Credential{URL: "https://b.example", Token: "hunter3", Username: "bob"},
 	)
-	m.Files["/home/ws/.config/git/tokens/kept.example"] = []byte("old")
-	m.Files["/home/ws/.config/git/tokens.gitconfig"] = []byte("[credential \"https://kept.example\"]\n")
+	m.Files["/etc/ws/tokens/kept.example"] = []byte("old")
+	m.Files["/etc/ws/tokens.gitconfig"] = []byte("[credential \"https://kept.example\"]\n")
 	for _, s := range applyTokens(t, tk) {
 		if strings.Contains(s, "hunter") {
 			t.Errorf("a change shows a token: %q", s)
 		}
 	}
-	if got := string(m.Files["/home/ws/.config/git/tokens/b.example"]); got != "username=bob\npassword=hunter3\n" {
+	if got := string(m.Files["/etc/ws/tokens/b.example"]); got != "username=bob\npassword=hunter3\n" {
 		t.Errorf("b's token file = %q", got)
 	}
-	if got := string(m.Files["/home/ws/.config/git/tokens/a.example"]); got != "username=token\npassword=hunter2\n" {
+	if got := string(m.Files["/etc/ws/tokens/a.example"]); got != "username=token\npassword=hunter2\n" {
 		t.Errorf("a's token file = %q", got)
 	}
-	if got := string(m.Files["/home/ws/.config/git/tokens/kept.example"]); got != "old" {
+	if got := string(m.Files["/etc/ws/tokens/kept.example"]); got != "old" {
 		t.Errorf("the token of an omitted URL = %q, want it kept", got)
 	}
-	cfg := string(m.Files["/home/ws/.config/git/tokens.gitconfig"])
+	cfg := string(m.Files["/etc/ws/tokens.gitconfig"])
 	if !strings.Contains(cfg, `[credential "https://kept.example"]`) || !strings.Contains(cfg, `[http "https://a.example"]`) {
 		t.Errorf("tokens.gitconfig = %q", cfg)
 	}
@@ -83,17 +83,17 @@ func TestTokensRefuseBeforeWriting(t *testing.T) {
 func TestTokensOfADroppedURLGoWithTheWholeTruth(t *testing.T) {
 	m, tk := tokenFixture(Credential{URL: "https://a.example", Token: "hunter2"})
 	tk.Whole = true
-	m.Files["/home/ws/.config/git/tokens/kept.example"] = []byte("old")
-	m.Files["/home/ws/.config/git/tokens.gitconfig"] = []byte("[credential \"https://kept.example\"]\n")
+	m.Files["/etc/ws/tokens/kept.example"] = []byte("old")
+	m.Files["/etc/ws/tokens.gitconfig"] = []byte("[credential \"https://kept.example\"]\n")
 	for _, s := range applyTokens(t, tk) {
 		if strings.Contains(s, "hunter") {
 			t.Errorf("a change shows a token: %q", s)
 		}
 	}
-	if _, ok := m.Files["/home/ws/.config/git/tokens/kept.example"]; ok {
+	if _, ok := m.Files["/etc/ws/tokens/kept.example"]; ok {
 		t.Error("the token of a dropped URL stays")
 	}
-	if cfg := string(m.Files["/home/ws/.config/git/tokens.gitconfig"]); strings.Contains(cfg, "kept.example") ||
+	if cfg := string(m.Files["/etc/ws/tokens.gitconfig"]); strings.Contains(cfg, "kept.example") ||
 		!strings.Contains(cfg, `[credential "https://a.example"]`) {
 		t.Errorf("tokens.gitconfig = %q", cfg)
 	}
@@ -113,21 +113,31 @@ func TestTokensWithAnEmptyTableAndNoFileChangeNothing(t *testing.T) {
 func TestTokensWithAnEmptyTableRemoveWhatTheFileHeld(t *testing.T) {
 	m, tk := tokenFixture()
 	tk.Whole = true
-	m.Files["/home/ws/.config/git/tokens/kept.example"] = []byte("old")
-	m.Files["/home/ws/.config/git/tokens.gitconfig"] = []byte("[credential \"https://kept.example\"]\n")
+	m.Files["/etc/ws/tokens/kept.example"] = []byte("old")
+	m.Files["/etc/ws/tokens.gitconfig"] = []byte("[credential \"https://kept.example\"]\n")
 	applyTokens(t, tk)
-	if _, ok := m.Files["/home/ws/.config/git/tokens/kept.example"]; ok {
+	if _, ok := m.Files["/etc/ws/tokens/kept.example"]; ok {
 		t.Error("the token stays")
 	}
-	if cfg := string(m.Files["/home/ws/.config/git/tokens.gitconfig"]); strings.Contains(cfg, "kept.example") {
+	if cfg := string(m.Files["/etc/ws/tokens.gitconfig"]); strings.Contains(cfg, "kept.example") {
 		t.Errorf("tokens.gitconfig = %q", cfg)
 	}
 }
 
-func TestTokensRefuseALinkAtATokenFile(t *testing.T) {
+func TestTokensAreRootsWithTheAccountsGroup(t *testing.T) {
 	m, tk := tokenFixture(Credential{URL: "https://a.example", Token: "hunter2"})
-	m.Links["/home/ws/.config/git/tokens/a.example"] = "/etc/shadow"
-	if _, err := tk.Plan(context.Background()); err == nil {
-		t.Error("no error for a link at a token file")
+	applyTokens(t, tk)
+	for _, p := range []string{"/etc/ws/tokens", "/etc/ws/tokens/a.example", "/etc/ws/tokens.gitconfig"} {
+		if got := m.Owners[p]; got != [2]int{0, 1000} {
+			t.Errorf("owner of %s = %v, want 0:1000", p, got)
+		}
+	}
+	if got := m.Dirs["/etc/ws/tokens"]; got != 0o750 {
+		t.Errorf("mode of the directory = %o, want 750", got)
+	}
+	for _, p := range []string{"/etc/ws/tokens/a.example", "/etc/ws/tokens.gitconfig"} {
+		if got := m.Modes[p]; got != 0o640 {
+			t.Errorf("mode of %s = %o, want 640", p, got)
+		}
 	}
 }

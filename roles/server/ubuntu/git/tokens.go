@@ -13,7 +13,7 @@ import (
 )
 
 // Tokens is git's tokens for servers besides GitHub. Each URL's in a file of its own, which the
-// URL's credential program in ~/.config/git/tokens.gitconfig reads
+// URL's credential program in /etc/ws/tokens.gitconfig reads
 // (roles/server/ubuntu/git/README.md#git-credentials). So no token
 // goes in a template, or in the diff a dry run shows. Without entries, as in CI, ws leaves the
 // tokens and their helpers alone, so that a run without the secrets file changes nothing. With the
@@ -33,9 +33,8 @@ func (t Tokens) Plan(ctx context.Context) ([]resource.Change, error) {
 	if len(t.Creds) == 0 && !t.Whole {
 		return nil, nil
 	}
-	config := ".config/git/tokens.gitconfig"
 	var keys []string
-	old, err := t.A.ReadHome(t.M, config)
+	old, err := t.M.ReadRootFile(tokensPath)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
@@ -58,11 +57,10 @@ func (t Tokens) Plan(ctx context.Context) ([]resource.Change, error) {
 	if err != nil {
 		return nil, err
 	}
-	const rel = ".config/git/tokens"
-	rs := []resource.Resource{t.A.Dir(t.M, rel, 0o700)}
+	rs := []resource.Resource{file.Dir{M: t.M, Path: tokensDir, Mode: 0o750, GID: t.A.GID}}
 	if t.Whole {
 		for _, u := range dropped {
-			rs = append(rs, t.A.Absent(t.M, rel+"/"+credentialFile(u)))
+			rs = append(rs, file.Absent{M: t.M, Path: tokensDir + "/" + credentialFile(u)})
 		}
 	}
 	for _, c := range t.Creds {
@@ -70,11 +68,11 @@ func (t Tokens) Plan(ctx context.Context) ([]resource.Change, error) {
 		if username == "" {
 			username = "token"
 		}
-		f := t.A.File(t.M, rel+"/"+credentialFile(c.URL),
-			[]byte("username="+username+"\npassword="+c.Token+"\n"), 0o600)
-		f.Secret = true
-		rs = append(rs, f)
+		rs = append(rs, file.File{M: t.M, Path: tokensDir + "/" + credentialFile(c.URL),
+			Content: []byte("username=" + username + "\npassword=" + c.Token + "\n"),
+			Mode:    0o640, GID: t.A.GID, Secret: true})
 	}
-	rs = append(rs, file.Validated{File: t.A.File(t.M, ".config/git/tokens.gitconfig", content, 0o600), Check: configCheck})
+	rs = append(rs, file.Validated{File: file.File{M: t.M, Path: tokensPath, Content: content,
+		Mode: 0o640, GID: t.A.GID}, Check: configCheck})
 	return plan.All(ctx, rs...)
 }
