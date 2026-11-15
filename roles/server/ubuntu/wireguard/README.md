@@ -1,9 +1,9 @@
 # wireguard
 
 The `wireguard` role sets up `wg0`, the server's end of a WireGuard tunnel for the Mac:
-`10.99.0.1/24` on UDP port 51820, from networkd's own files. Its key is made on the server, and
-each peer's public key is read from `/etc/wireguard`. It keeps Docker's containers from reaching
-the Mac through the tunnel or the cable.
+`10.99.N.1/24` at its slot, N, on UDP port 51820, from networkd's own files. Its key is made on
+the server, and each peer's public key is read from `/etc/wireguard`. It keeps Docker's
+containers from reaching the Mac through the tunnel or the cable.
 
 Its code is Go, in `roles/server/ubuntu/wireguard`, as steps of `ws server ubuntu apply`. They check
 the settings, install `wireguard-tools`, `systemd` and `iptables`, and put in the drops that keep
@@ -18,9 +18,10 @@ the home LAN, or the internet through the router's forward ([The router](../netw
 tunnel the server keeps one address. WireGuard knows a peer by its key, not by the address its
 packets come from, so the Mac's sessions outlive a move from one way to another.
 
-The `wireguard` role sets up the server's end, `wg0`, at `10.99.0.1/24` (`wireguard_address`) on
-UDP port 51820 (`wireguard_port`). It does so from networkd's own files,
-`/etc/systemd/network/60-wg0.netdev` and `60-wg0.network`. Boot doesn't wait for `wg0`.
+The `wireguard` role sets up the server's end, `wg0`, at its slot's `10.99.N.1/24`, slot 0's
+`10.99.0.1/24` by default (`wireguard_address`), on UDP port 51820 (`wireguard_port`). It does so
+from networkd's own files, `/etc/systemd/network/60-wg0.netdev` and `60-wg0.network`. Boot doesn't
+wait for `wg0`.
 
 The first run makes the server's private key on the server, in
 `/etc/systemd/network/60-wg0.key`, by ws's own key code. ws never copies, shows or diffs it: only
@@ -32,18 +33,21 @@ all in `--only wireguard`, and among the other roles' output in a full run.
 `wg show wg0 public-key` shows it too. A dry run makes no key and says so.
 
 `wireguard_peers` names the peers, each with its address in the tunnel: by default the Mac, `mac`,
-at `10.99.0.2`. The role reads a peer's public key from `/etc/wireguard/NAME.pub` on the server, a
-line as `wg pubkey` prints it, in a directory only root reads:
+at wg0's address plus one, `10.99.0.2` at slot 0. An empty `wireguard_peers: []`, or a key left
+null, lists none. The role reads a peer's public key from `/etc/wireguard/NAME.pub` on the server,
+a line as `wg pubkey` prints it, in a directory only root reads:
 
 ```sh
 printf '%s\n' PUBLIC_KEY >/etc/wireguard/mac.pub
 ws server ubuntu apply --only wireguard
 ```
 
-The Mac's scripts fix the peer's name, `mac`, and the tunnel's addresses: `10.99.0.1` for the
-server and `10.99.0.2` for the Mac ([The Mac's tunnel](../../../client/macos/README.md#the-macs-tunnel)). So where
-`wireguard_peers` holds `mac`, the run stops unless `wireguard_address` is `10.99.0.1/24` and
-`mac`'s address `10.99.0.2`.
+The Mac's scripts fix the peer's name, `mac`. A server's slot gives the tunnel's ends: `10.99.N.1`
+for the server and `10.99.N.2` for the Mac, slot 0's being `10.99.0.1` and `10.99.0.2`. The Mac's
+wizard names the pair in the server's host_vars
+([The Mac's tunnel](../../../client/macos/README.md#the-macs-tunnel)). So where `wireguard_peers`
+holds `mac`, the run stops unless `wireguard_address` is a slot's `10.99.N.1/24`, N from 0 to 15,
+and `mac`'s address that slot's `10.99.N.2`.
 
 The repository holds no peer's key, as access to a machine is granted on the machine, as SSH's
 `authorized_keys` is. Anyone may run `ws server ubuntu apply`, and a key in the repository would let
@@ -74,7 +78,7 @@ Docker forwards its containers' packets ahead of ufw, and gives them the server'
 way out. Through `wg0` or the cable, the Mac would take them for the server's own, and any container
 would reach the Mac's services. So the role drops what Docker's bridges, `docker0` and the `br-` of
 each network, send through `wg0` or the cable, `network_direct_link_interface`. Replies to a
-connection the Mac opened pass, such as one to a port published on `10.99.0.1`.
+connection the Mac opened pass, such as one to a port published on wg0's address.
 
 `wireguard-docker-user.service` puts the drops, for IPv4 and IPv6, in the chain `WS-MAC`, which
 Docker's chain `DOCKER-USER` jumps to first. It runs before Docker starts, at boot, and at once where

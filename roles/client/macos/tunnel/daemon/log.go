@@ -8,13 +8,13 @@ const LogLimit = 1 << 20
 // trimLog starts the log anew past LogLimit, at the daemon's start and at each tick. launchd opened
 // the file to append, so the next line goes at its new end.
 func (d *Daemon) trimLog() {
-	if d.Log == "" {
+	if d.Paths.Log == "" {
 		return
 	}
-	if fi, err := os.Stat(d.Log); err != nil || fi.Size() <= LogLimit {
+	if fi, err := os.Stat(d.Paths.Log); err != nil || fi.Size() <= LogLimit {
 		return
 	}
-	if err := os.Truncate(d.Log, 0); err != nil {
+	if err := os.Truncate(d.Paths.Log, 0); err != nil {
 		d.say("cannot start the log anew: %v", err)
 		return
 	}

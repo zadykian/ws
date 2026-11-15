@@ -15,7 +15,9 @@ import (
 
 // WsInstall is the stage that puts this ws's release on ws, by the remote script's install.
 type WsInstall struct {
-	Ws *session.Session
+	// Server names the server that the Mac sets up, which its side takes. Empty on the server itself.
+	Server string
+	Ws     *session.Session
 	// URL is the address of the releases that Version comes from.
 	Version, URL string
 	Out          effect.Out
@@ -25,15 +27,15 @@ type WsInstall struct {
 func (*WsInstall) Name() string { return stage.Install }
 
 // Side is ws: this release is installed there.
-func (*WsInstall) Side() guided.Side { return session.Ws }
+func (i *WsInstall) Side() guided.Side { return session.SideOf(i.Server) }
 
 // WaitsOn is the Sudo stage, which the remote script needs.
 func (*WsInstall) WaitsOn() string { return stage.Sudo }
 
-type wsInstall struct{ version string }
+type wsInstall struct{ version, server string }
 
 func (c wsInstall) String() string {
-	return fmt.Sprintf("%s: would install ws %s on ws", stage.Install, c.version)
+	return fmt.Sprintf("%s: would install ws %s on %s", stage.Install, c.version, c.server)
 }
 
 // Plan is empty where ws holds this version. It stops where ws holds a newer release than this
@@ -46,16 +48,16 @@ func (i *WsInstall) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	if have := s.Version; ok && check.Release(i.Version) && check.Release(have) &&
 		semver.Compare(have, i.Version) > 0 {
-		return step.Plan{}, fmt.Errorf("%s: ws holds %s, newer than this ws's %s: run ws client macos wizard --update "+
-			"to bring this ws to the newest", stage.Install, have, i.Version)
+		return step.Plan{}, fmt.Errorf("%s: %s holds %s, newer than this ws's %s: run ws client macos wizard --update "+
+			"to bring this ws to the newest", stage.Install, i.Server, have, i.Version)
 	}
 	if !check.Release(i.Version) {
 		return step.Plan{}, fmt.Errorf("%s: this ws is %s, not a release: put a linux build of the same tree at "+
-			"/usr/local/bin/ws on ws by hand (.tools/build), then run the wizard again", stage.Install, i.Version)
+			"/usr/local/bin/ws on %s by hand (.tools/build), then run the wizard again", stage.Install, i.Version, i.Server)
 	}
 	if !check.ReleasesURL(i.URL) {
 		return step.Plan{}, fmt.Errorf("%s: WS_RELEASES_URL is %q: it must start with https://, or with "+
 			"http://127.0.0.1: and hold no blank or quote", stage.Install, i.URL)
 	}
-	return step.Plan{Changes: []step.Change{wsInstall{i.Version}}}, nil
+	return step.Plan{Changes: []step.Change{wsInstall{i.Version, i.Server}}}, nil
 }

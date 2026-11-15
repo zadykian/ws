@@ -31,7 +31,7 @@ func TestConfSetAllPassesAPairTogether(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n")
 	m.Results["mkdir -p /h"] = effecttest.Result{}
-	f := File{"/h/mac.conf", "Configure", m, &effecttest.Out{}}
+	f := File{Path: "/h/mac.conf", Stage: "Configure", M: m, Out: &effecttest.Out{}}
 	if err := f.Set(context.Background(), "WS_LAN", "10.88.0.0/24"); err == nil {
 		t.Error("set of half a pair = nil; want a refusal")
 	}
@@ -49,7 +49,7 @@ func TestConfSet(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\nWS_PUBLIC_KEY=x\n")
 	m.Results["mkdir -p /h"] = effecttest.Result{}
-	f := File{"/h/mac.conf", "Tunnel", m, &effecttest.Out{}}
+	f := File{Path: "/h/mac.conf", Stage: "Tunnel", M: m, Out: &effecttest.Out{}}
 	if err := f.Set(context.Background(), "WS_PUBLIC_KEY", "bad"); err == nil {
 		t.Error("set of a bad key = nil; want a refusal")
 	}

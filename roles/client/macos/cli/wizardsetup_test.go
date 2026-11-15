@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
@@ -24,11 +25,11 @@ func (l *lastEvents) Observe(e step.Event) {
 
 func TestWizardSetupPassesTheObserverOn(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte("WS_USER=ada\n")
+	m.Files["/h/mac.conf"], m.Files["/h/servers/ws/server.conf"] = []byte(""), []byte("WS_USER=ada\n")
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
 	var got lastEvents
-	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}, obs: &got}, nil, "/h/mac.conf")
+	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}, obs: &got}, nil, "/h/mac.conf", "/h/mac.conf", "ws")
 	// The fake machine fails ssh's plan, and each step ends all the same.
 	_, _ = s.Run(context.Background(), true)
 	var want lastEvents
@@ -55,10 +56,10 @@ func (l *leftEvents) Observe(e step.Event) {
 func setupOf(t *testing.T, e wizardEffects, left func(parent, name string) bool) *tools.Setup {
 	t.Helper()
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte("WS_USER=ada\n")
+	m.Files["/h/mac.conf"], m.Files["/h/servers/ws/server.conf"] = []byte(""), []byte("WS_USER=ada\n")
 	e.p = withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	e.p.Machine, e.text, e.out = m, io.Discard, &effecttest.Out{}
-	return wizardSetup(e, left, "/h/mac.conf")
+	return wizardSetup(e, left, "/h/mac.conf", "/h/mac.conf", "ws")
 }
 
 func TestWizardSetupWaitsOnTheMacKeyStage(t *testing.T) {
@@ -91,5 +92,41 @@ func TestWizardSetupStopsWhereTheRunDoes(t *testing.T) {
 	}
 	if len(got.skipped) != len(macos.Names()) {
 		t.Errorf("unreached = %q; want every step", got.skipped)
+	}
+}
+
+// TestWizardSetupListsTheServersBesideItsFile runs ssh's check for lab, new beside ws at slot 0.
+// lab's own file names no slot yet, and Answers' would-be one gives it slot 1. The steps load ws
+// beside that one, as the run will, and so find no clash.
+func TestWizardSetupListsTheServersBesideItsFile(t *testing.T) {
+	p, m := macTerminal()
+	m.Files["/h/.config/ws/servers/lab/server.conf"], m.Dirs["/h/.config/ws/servers/lab"] = []byte("WS_USER=ada\n"), 0o755
+	m.Files["/lock/mac.conf"] = m.Files["/h/.config/ws/mac.conf"]
+	m.Files["/lock/servers/ws/server.conf"] = []byte("WS_USER=ada\n")
+	m.Files["/lock/servers/lab/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=1\n")
+	m.Dirs["/lock/servers"], m.Dirs["/lock/servers/ws"], m.Dirs["/lock/servers/lab"] = 0o755, 0o755, 0o755
+	for _, file := range []string{"new", "whole"} {
+		m.Results["ssh -G -F /tmp/x/"+file+" lab"] = effecttest.Result{}
+	}
+	left := func(parent, name string) bool { return parent == "ws client macos apply" && name != "ssh" }
+	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}}, left, "/lock/mac.conf", "/h/.config/ws/mac.conf", "lab")
+	if _, err := s.Run(context.Background(), true); err != nil {
+		t.Errorf("Run = %v, want the plan of the servers beside /lock/mac.conf", err)
+	}
+}
+
+// TestWizardSetupNamesTheRealFileOfARefusedSibling checks as --check does: ws's file is a copy in
+// the lock, refused for its slot. The refusal names the real file, as the run's does.
+func TestWizardSetupNamesTheRealFileOfARefusedSibling(t *testing.T) {
+	p, m := macTerminal()
+	m.Files["/lock/mac.conf"] = m.Files["/h/.config/ws/mac.conf"]
+	m.Files["/lock/servers/ws/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=99\n")
+	m.Files["/lock/servers/lab/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=1\n")
+	m.Dirs["/lock/servers"], m.Dirs["/lock/servers/ws"], m.Dirs["/lock/servers/lab"] = 0o755, 0o755, 0o755
+	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}}, nil, "/lock/mac.conf", "/h/.config/ws/mac.conf", "lab")
+	_, err := s.Run(context.Background(), true)
+	if err == nil || !strings.Contains(err.Error(), "server ws: /h/.config/ws/servers/ws/server.conf, line 2") || strings.Contains(err.Error(), "/lock") ||
+		!strings.Contains(err.Error(), "fix its file, or ws client macos remove ws") {
+		t.Errorf("Run = %v, want ws's real file refused, with the way out", err)
 	}
 }

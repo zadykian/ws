@@ -7,6 +7,7 @@ import (
 
 func TestDirectWay(t *testing.T) {
 	lan := Conf{LAN: netip.MustParsePrefix("192.168.1.0/24"), LANServer: netip.MustParseAddr("192.168.1.10")}
+	lan.Cable = true
 	remote := lan
 	remote.Remote = "ws.example.com"
 	cable := Iface{"en5", netip.MustParseAddr("10.77.0.2")}
@@ -20,7 +21,8 @@ func TestDirectWay(t *testing.T) {
 		want   Direct
 		found  bool
 	}{
-		{"the cable", []Iface{cable}, Conf{}, "", Direct{"10.77.0.1", "22"}, true},
+		{"the cable", []Iface{cable}, Conf{Cable: true}, "", Direct{"10.77.0.1", "22"}, true},
+		{"the cable of another server", []Iface{cable}, Conf{}, "", Direct{}, false},
 		{"the LAN", []Iface{home}, remote, "22022", Direct{"192.168.1.10", "22"}, true},
 		{"WS_REMOTE", []Iface{away}, remote, "22022", Direct{"ws.example.com", "22022"}, true},
 		{"the cable before the LAN", []Iface{home, cable}, remote, "22022", Direct{"10.77.0.1", "22"}, true},

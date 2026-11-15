@@ -70,6 +70,7 @@ type Side struct {
 	Nested func(stage string) []tui.Group
 	// WsRun finds the stage of ws's run in list.
 	WsRun func(list []step.Step) (WsRun, bool)
-	// Before builds the steps that run first, on lines, before the lock and the screen.
-	Before func(o WizardOptions) []func(effect.Out) step.Step
+	// Before builds the steps that run first, on lines, before the lock and the screen. ask is the
+	// terminal that the plain run reads its answers from.
+	Before func(o WizardOptions, ask effect.Prompt) []func(effect.Out) step.Step
 }

@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/settings"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/uapi"
-	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 // Run sets up the utun, then keeps the tunnel up until Stop, or until ctx ends. It logs why it
@@ -19,7 +19,7 @@ func (d *Daemon) Run(ctx context.Context) error {
 		return err
 	}
 	defer d.stop()
-	d.say("started on %s, %s", d.Tun, tunnel.Address)
+	d.say("started on %s, %s", d.Tun, d.set.Conf.Slot.Mac())
 	d.choose(ctx)
 	d.later(Tick, d.TickEvery)
 	for {
@@ -31,6 +31,10 @@ func (d *Daemon) Run(ctx context.Context) error {
 			case Check:
 				d.choose(ctx)
 			case Tick:
+				if d.replaced() {
+					d.say("root's copy of ws is new; stops, for launchd to start the new one")
+					return nil
+				}
 				d.tick(ctx)
 				d.later(Tick, d.TickEvery)
 			case Changed:
@@ -38,7 +42,9 @@ func (d *Daemon) Run(ctx context.Context) error {
 			case Settled:
 				d.settleChange(ctx)
 			case Reload:
-				d.reload(ctx)
+				if d.reload(ctx) {
+					return nil
+				}
 			case Stop:
 				return nil
 			case Exited:
@@ -52,19 +58,21 @@ func (d *Daemon) Run(ctx context.Context) error {
 // start reads the settings and gives the device its key, the utun its address, and ws's address a
 // route into the utun.
 func (d *Daemon) start(ctx context.Context) error {
+	d.program, _ = d.programFile()
 	d.trimLog()
-	_ = d.run(ctx, "rm", "-f", d.StateFile, d.StateFile+".new") // a dead run's state would mislead status
+	_ = d.run(ctx, "rm", "-f", d.Paths.State, d.Paths.State+".new") // a dead run's state would mislead status
 	var err error
-	if d.set, err = settings.ReadSettings(ctx, d.M, d.Dir); err != nil {
+	if d.set, err = settings.ReadSettings(ctx, d.M, d.Paths); err != nil {
 		return err
 	}
 	for _, w := range d.set.Warnings {
 		d.say("%s", w)
 	}
-	if d.key, err = settings.ReadKey(d.M, d.Dir); err != nil {
+	if d.key, err = settings.ReadKey(d.M, d.Paths.Key); err != nil {
 		return err
 	}
-	address := tunnel.Address.String()
+	s := d.set.Conf.Slot
+	address := s.Mac().String()
 	text, err := uapi.SetPrivateKey(d.key)
 	if err == nil {
 		err = d.Dev.IpcSet(text)
@@ -76,7 +84,7 @@ func (d *Daemon) start(ctx context.Context) error {
 		err = d.run(ctx, "ifconfig", d.Tun, "up")
 	}
 	if err == nil {
-		err = d.run(ctx, "route", "-q", "-n", "add", "-inet", tunnel.Server.String()+"/32", "-interface", d.Tun)
+		err = d.run(ctx, "route", "-q", "-n", "add", "-inet", s.Server().String()+"/32", "-interface", d.Tun)
 	}
 	if err != nil {
 		return fmt.Errorf("cannot set up %s: %w", d.Tun, err)
@@ -85,8 +93,18 @@ func (d *Daemon) start(ctx context.Context) error {
 	return nil
 }
 
+// replaced tells whether a new file took the place of the program since start, as ws client macos
+// apply leaves it where it stops before it restarts the daemons.
+func (d *Daemon) replaced() bool {
+	if d.program == nil {
+		return false
+	}
+	now, err := d.programFile()
+	return err == nil && !os.SameFile(d.program, now)
+}
+
 // stop removes the state file, which says that the daemon runs.
 func (d *Daemon) stop() {
-	_ = d.run(context.Background(), "rm", "-f", d.StateFile, d.StateFile+".new")
+	_ = d.run(context.Background(), "rm", "-f", d.Paths.State, d.Paths.State+".new")
 	d.say("stopped")
 }

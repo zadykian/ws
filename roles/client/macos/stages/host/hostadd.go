@@ -26,12 +26,12 @@ func (h *Key) add(ctx context.Context) error {
 	}
 	way, err := h.SSH.Way(ctx)
 	if err != nil {
-		return noWay(c)
+		return noWay(h.SSH.Host, c)
 	}
 	line := scanKey(ctx, h.M, way)
 	if line == "" {
 		if h.Check {
-			h.Out.Say("%s: %s; a run would ask its address now", stage.Host, noAnswer(way))
+			h.Out.Say("%s: %s; a run would ask its address now", stage.Host, noAnswer(h.SSH.Host, way))
 			return nil
 		}
 		if way, line, err = h.question().ask(ctx, c.Target, way); err != nil {
@@ -40,8 +40,8 @@ func (h *Key) add(ctx context.Context) error {
 	}
 	// ssh -G prints the host name in lower case, which WS_REMOTE may not be.
 	if way.Host == strings.ToLower(c.Remote) {
-		h.Out.Say("%s: warning: through WS_REMOTE, ws's new sshd faces the internet, with any password "+
-			"login its installer allowed, until ws's run sets up its security role", stage.Host)
+		h.Out.Say("%s: warning: through WS_REMOTE, %s's new sshd faces the internet, with any password "+
+			"login its installer allowed, until ws's run sets up its security role", stage.Host, h.SSH.Host)
 	}
 	fp, err := h.fingerprint(ctx, line)
 	if err != nil {
@@ -53,16 +53,16 @@ func (h *Key) add(ctx context.Context) error {
 	return h.write(way.KnownHosts, line)
 }
 
-// write adds ws's line to known_hosts, or shows it under --check.
+// write adds the server's line to known_hosts, under its name,, or shows it under --check.
 func (h *Key) write(file, line string) error {
 	info, err := h.M.Stat(file)
 	if err == nil && info.Link != "" {
 		why := fmt.Sprintf("%s is a link to %s, which the wizard leaves", file, info.Link)
 		if h.Check {
-			return fmt.Errorf("%s: %s: a run would print ws's line for its file", stage.Host, why)
+			return fmt.Errorf("%s: %s: a run would print %s's line for its file", stage.Host, why, h.SSH.Host)
 		}
 		h.Out.Say("%s: %s: add this line to its file, then run the wizard again", stage.Host, why)
-		h.Out.Raw("ws %s", line)
+		h.Out.Raw("%s %s", h.SSH.Host, line)
 		return fmt.Errorf("%s: %s", stage.Host, "known_hosts is left as it is")
 	}
 	mode := fs.FileMode(0o600)
@@ -77,7 +77,7 @@ func (h *Key) write(file, line string) error {
 	if after != "" && !strings.HasSuffix(after, "\n") {
 		after += "\n"
 	}
-	after += "ws " + line + "\n"
+	after += h.SSH.Host + " " + line + "\n"
 	if h.Check {
 		h.Out.Diff(file, before, []byte(after))
 		return nil

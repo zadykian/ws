@@ -15,7 +15,7 @@ import (
 
 func TestSetupCommand(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\n")
+	writeConfs(m, "", "WS_USER=ada\n")
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
 	status, _, stderr := runWs(p, "", "client", "macos", "apply", "--only", "ssh", "--bogus")
@@ -24,8 +24,8 @@ func TestSetupCommand(t *testing.T) {
 	}
 	p = fakeProcess()
 	p.Machine = m
-	if status, _, stderr = runWs(p, "", "client", "macos", "apply", "--only", "ssh"); status != 1 || !strings.Contains(stderr, "is missing") {
-		t.Errorf("without HOME: status = %d, stderr = %q; want a missing mac.conf", status, stderr)
+	if status, _, stderr = runWs(p, "", "client", "macos", "apply", "--only", "ssh"); status != 1 || !strings.Contains(stderr, "no server in") {
+		t.Errorf("without HOME: status = %d, stderr = %q; want no server", status, stderr)
 	}
 }
 
@@ -61,7 +61,7 @@ func TestMacChangeSaysAnEmptyDiffAsOneEmptyLine(t *testing.T) {
 
 func TestSetupWithNoStepRunsThemAll(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\n")
+	writeConfs(m, "", "WS_USER=ada\n")
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
 	status, _, stderr := runWs(p, "", "client", "macos", "apply")
@@ -87,7 +87,7 @@ func TestSetupCheckWithNoStepPlansSSHOnce(t *testing.T) {
 }
 
 func TestSetupStepNamesCompleteOnly(t *testing.T) {
-	c := newMacApplyCmd(fakeProcess())
+	c := newMacApplyCmd(fakeProcess(), new(string))
 	got, _ := c.GetFlagCompletionFunc("only")
 	names, _ := got(c, nil, "")
 	if want := []string{"ssh", "cable", "git", "ghostty", "zed", "cld", "zsh", "tunnel", "networks"}; !reflect.DeepEqual(names, want) {
@@ -108,8 +108,8 @@ func TestMacStateRefusesRootAndArgs(t *testing.T) {
 			t.Errorf("%q: status = %d, stderr = %q", args, status, stderr)
 		}
 	}
-	if status, _, stderr := runWs(fakeProcess(), "", "client", "macos", "state"); status != 1 || !strings.Contains(stderr, "is missing") {
-		t.Errorf("no mac.conf: status = %d, stderr = %q", status, stderr)
+	if status, _, stderr := runWs(fakeProcess(), "", "client", "macos", "state"); status != 1 || !strings.Contains(stderr, "no server in") {
+		t.Errorf("no server: status = %d, stderr = %q", status, stderr)
 	}
 }
 
@@ -128,7 +128,7 @@ func TestMacStateWritesReports(t *testing.T) {
 		{Step: "git", Changes: []step.Pending{{Text: "write ~/.gitconfig\n+a\n"}}},
 		{Step: "zed", After: "git"},
 	}
-	if err := writeMacState(&b, reports); err != nil {
+	if err := writeMacState(&b, []serverDoc{{Steps: reports}}, false); err != nil {
 		t.Fatal(err)
 	}
 	want := "  git\n    pending: write ~/.gitconfig\n  zed\n    not read: after git\n"
@@ -146,7 +146,7 @@ func TestMacStateWritesReports(t *testing.T) {
 
 func TestMacStateReadsMacConf(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\n")
+	writeConfs(m, "", "WS_USER=ada\n")
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
 	status, stdout, _ := runWs(p, "", "client", "macos", "state", "--json")
@@ -162,7 +162,7 @@ const altScreen = "\x1b[?1049h"
 // macStateAtTerminal returns a process that stands at a terminal, with a Mac that has a mac.conf.
 func macStateAtTerminal() enginecli.Env {
 	m := effecttest.NewMachine()
-	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\n")
+	writeConfs(m, "", "WS_USER=ada\n")
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h", "TERM": "xterm-256color"})
 	p.Machine = m
 	p.TTY, p.ErrTTY, p.OutTTY = true, true, true
@@ -170,7 +170,12 @@ func macStateAtTerminal() enginecli.Env {
 }
 
 func TestMacReadSaysThatMacConfIsMissing(t *testing.T) {
-	_, err := macRead(fakeProcess())(t.Context(), nil)
+	m := effecttest.NewMachine()
+	writeConfs(m, "", "")
+	delete(m.Files, "/h/.config/ws/mac.conf")
+	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
+	p.Machine = m
+	_, err := macRead(p, new(string))(t.Context(), nil)
 	if err == nil || !strings.Contains(err.Error(), "is missing") {
 		t.Errorf("err = %v", err)
 	}

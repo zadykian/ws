@@ -33,3 +33,11 @@ func TestCheckRefusesWhatTheRoleCannotUse(t *testing.T) {
 		}
 	}
 }
+
+func TestCheckTakesAMacAtSlotOne(t *testing.T) {
+	v := good()
+	v.ForwardFrom = []string{"10.99.1.2"}
+	if err := check(v); err != nil {
+		t.Errorf("a Mac at slot 1: %v", err)
+	}
+}

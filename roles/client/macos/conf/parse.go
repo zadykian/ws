@@ -9,8 +9,12 @@ import (
 
 // Parse reads the text of mac.conf as Lines does, and where every line passes, returns the first
 // refusal of the keys that go together.
-func Parse(text string) (Conf, []Error) {
-	c, errs := Lines(text)
+func Parse(text string) (Conf, []Error) { return Both.Parse(text) }
+
+// Parse reads the text as Lines does, and where every line passes, returns the first refusal of
+// the keys that go together.
+func (s Scope) Parse(text string) (Conf, []Error) {
+	c, errs := s.Lines(text)
 	if len(errs) == 0 {
 		errs = pairs(c)
 	}
@@ -21,8 +25,11 @@ func Parse(text string) (Conf, []Error) {
 // pair of quotes. It skips blank lines and lines starting with #. It returns the error of every
 // other line, of any other key and of a value of the wrong form. An empty value, KEY= or KEY="", is
 // the key's default, as a missing line is. A later line of a key replaces an earlier one.
-func Lines(text string) (Conf, []Error) {
-	c := Conf{Target: "lan"}
+func Lines(text string) (Conf, []Error) { return Both.Lines(text) }
+
+// Lines reads the text as the package's Lines does, and refuses a key of the other file as well.
+func (s Scope) Lines(text string) (Conf, []Error) {
+	c := Conf{Target: "lan", Slot: "0"}
 	var errs []Error
 	for i, line := range strings.Split(text, "\n") {
 		line = strings.Trim(line, " \t")
@@ -37,6 +44,10 @@ func Lines(text string) (Conf, []Error) {
 		k, ok := lookup(name)
 		if !ok {
 			errs = append(errs, Error{i + 1, "unknown key " + name})
+			continue
+		}
+		if msg := s.refuse(name); msg != "" {
+			errs = append(errs, Error{i + 1, msg})
 			continue
 		}
 		value, quoted := unquote(raw)
@@ -93,9 +104,12 @@ func unquote(raw string) (string, bool) {
 	return raw, false
 }
 
-// defaults sets the keys with a default other than empty to it, but WS_USER, which Lines sets last.
+// defaults sets the keys with a default other than empty to it (the target and the slot), but WS_USER, which Lines sets last.
 func (c *Conf) defaults() {
 	if c.Target == "" {
 		c.Target = "lan"
+	}
+	if c.Slot == "" {
+		c.Slot = "0"
 	}
 }

@@ -11,7 +11,8 @@
 # - units/NAME is a unit's log, as the journal holds it, and units/NAME.on is there while it runs;
 # - run.log holds systemd-run's arguments, and server.log the arguments of ws server ubuntu apply
 #   past its --json, which it requires, a line each. values.log holds those of ws server ubuntu
-#   values set, a line each, each argument in brackets;
+#   values set, a line each, each argument in brackets. It writes the pair in root's host_vars
+#   too, as ws does, where the wizard reads it back;
 # - secrets.log holds the arguments of ws server ubuntu secrets, a line each, secrets.in its last
 #   stdin, and keys what its keys prints;
 # - creds/UNIT holds a unit's credentials, and seen/ the identity and the secrets file that
@@ -34,17 +35,23 @@ s=$WS_STANDIN
 
 # wg0 sets up ws's wg0 as the wireguard role does. It sets its key, made once, whose public key
 # goes in wg0, and the Mac's key in mac.pub as its peer. wg0 is a wireguard-go of the runner's,
-# beside the Mac's, on UDP 51820, as mac.yml's stand-in ws. It has no address in the tunnel.
+# beside the Mac's, on UDP wireguard_port, 51820 where host_vars names none, as mac.yml's stand-in
+# ws. The Mac's address in the tunnel is the one after wireguard_address's, 10.99.0.1/24 by
+# default. wg0 has no address in the tunnel.
 wg0() {
     bin=/opt/homebrew/bin
+    vars="$s/root"/etc/ws/host_vars.yml
+    port=$(sed -n 's/^wireguard_port: "*\([0-9]*\)"*$/\1/p' "$vars" 2>/dev/null)
+    addr=$(sed -n 's/^wireguard_address: "*\([0-9.]*\)\/.*$/\1/p' "$vars" 2>/dev/null)
+    addr=${addr:-10.99.0.1}
     [ -f "$s/ws.key" ] || (umask 077 && "$bin/wg" genkey >"$s/ws.key") || return 1
     "$bin/wg" pubkey <"$s/ws.key" >"$s/wg0" || return 1
     if [ ! -f "$s/utun" ] || ! "$bin/wg" show "$(cat "$s/utun")" >/dev/null 2>&1; then
         mkdir -p /var/run/wireguard
         WG_TUN_NAME_FILE=$s/utun "$bin/wireguard-go" utun || return 1
     fi
-    "$bin/wg" set "$(cat "$s/utun")" private-key "$s/ws.key" listen-port 51820 \
-        peer "$(cat "$s/root/etc/wireguard/mac.pub")" allowed-ips 10.99.0.2/32 || return 1
+    "$bin/wg" set "$(cat "$s/utun")" private-key "$s/ws.key" listen-port "${port:-51820}" \
+        peer "$(cat "$s/root"/etc/wireguard/mac.pub)" allowed-ips "${addr%.*}.2/32" || return 1
     ifconfig "$(cat "$s/utun")" up
 }
 # direct names the port that ws's host_vars names in the netplan file, as the network role does,
@@ -169,7 +176,16 @@ ws)
             shift 3
             printf '[%s]' "$@" >>"$s/values.log"
             echo >>"$s/values.log"
-            exit 0
+            # set -- KEY VALUE: the key's line goes, and a value that is not empty comes last.
+            vars="$s/root"/etc/ws/host_vars.yml
+            mkdir -p "${vars%/*}" || exit 1
+            umask 077
+            {
+                grep -v "^$2:" "$vars" 2>/dev/null
+                [ -z "$3" ] || echo "$2: $3"
+            } >"$vars.new"
+            mv -f "$vars.new" "$vars"
+            exit
         fi
         if [ "$2 ${3-}" = 'state --json' ]; then
             echo "report of $(cat "$s/ws.version") with $HOME and $LC_ALL"

@@ -8,14 +8,23 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 	"github.com/zadykian/ws/roles/client/macos/networks"
 )
 
-const resolverHead = "# Written by github.com/zadykian/ws: ws client macos apply, from WS_RESOLVERS in ~/.config/ws/mac.conf.\n"
+const resolverHead = "# Written by github.com/zadykian/ws: ws client macos apply, from WS_RESOLVERS in a server's server.conf.\n"
+
+func installDaemons(m *effecttest.Machine, names ...string) {
+	m.Dirs["/Library/LaunchDaemons"] = 0o755
+	for _, n := range names {
+		m.Files["/Library/LaunchDaemons/"+launchd.For(n).Label+".plist"] = []byte("x")
+	}
+}
 
 func networksStep(m *effecttest.Machine, c conf.Conf) *networks.Networks {
-	m.Root["/etc/ws-tunnel/routes.d"] = effect.Attrs{Mode: 0o755}
-	return &networks.Networks{Conf: c, M: m, Out: &effecttest.Out{}}
+	m.Root["/etc/ws-tunnel/ws/routes.d"] = effect.Attrs{Mode: 0o755}
+	installDaemons(m, "ws")
+	return &networks.Networks{Server: "ws", Conf: c, M: m, Out: &effecttest.Out{}}
 }
 
 func networksPlan(t *testing.T, s *networks.Networks) []string {
@@ -38,11 +47,11 @@ func TestNetworksPlansNothingWithNoNetworksAndNoResolvers(t *testing.T) {
 
 func TestNetworksWritesRoutesAndResolversAndSignalsTheDaemon(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Results["launchctl print system/com.github.zadykian.ws-tunnel"] = effecttest.Result{}
+	m.Results["launchctl print system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{}
 	s := networksStep(m, conf.Conf{PublicKey: "K", TunnelNetworks: "10.1.0.0/24", Resolvers: "a.test=10.0.0.1"})
 	got := networksPlan(t, s)
 	if len(got) != 4 || !strings.Contains(got[0], "+10.1.0.0/24") ||
-		got[1] != "would run launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel" ||
+		got[1] != "would run launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.ws" ||
 		got[2] != "create directory /etc/resolver, owner 0:0, mode 755" || !strings.Contains(got[3], "+nameserver 10.0.0.1") {
 		t.Errorf("Plan = %q", got)
 	}
@@ -50,15 +59,15 @@ func TestNetworksWritesRoutesAndResolversAndSignalsTheDaemon(t *testing.T) {
 
 func TestNetworksSaysWhatCheckWouldPutBeforeRoutesDExists(t *testing.T) {
 	m := effecttest.NewMachine()
-	s := &networks.Networks{Conf: conf.Conf{PublicKey: "K", TunnelNetworks: "10.1.0.0/24 10.2.0.0/24"}, M: m, Out: &effecttest.Out{}, Check: true}
+	s := &networks.Networks{Server: "ws", Conf: conf.Conf{PublicKey: "K", TunnelNetworks: "10.1.0.0/24 10.2.0.0/24"}, M: m, Out: &effecttest.Out{}, Check: true}
 	got := networksPlan(t, s)
-	want := "would put 10.1.0.0/24 10.2.0.0/24 in /etc/ws-tunnel/routes.d/mac-conf once routes.d is made"
+	want := "would put 10.1.0.0/24 10.2.0.0/24 in /etc/ws-tunnel/ws/routes.d/server-conf once routes.d is made"
 	if len(got) != 1 || got[0] != want {
 		t.Errorf("Plan = %q; want %q", got, want)
 	}
 	s.Check = false
 	if _, err := s.Plan(context.Background()); err == nil ||
-		err.Error() != "/etc/ws-tunnel/routes.d is missing: run ws client macos apply first" {
+		err.Error() != "/etc/ws-tunnel/ws/routes.d is missing: run ws client macos apply --server ws first" {
 		t.Errorf("Plan error = %v", err)
 	}
 }
@@ -88,10 +97,32 @@ func TestNetworksRemovesTheResolverOfADomainMacConfDropped(t *testing.T) {
 	}
 }
 
+func TestNetworksKeepsTheResolverOfADomainAnotherServerNames(t *testing.T) {
+	m := effecttest.NewMachine()
+	for _, f := range []string{"gone.test", "lab.test"} {
+		m.Files["/etc/resolver/"+f] = []byte(resolverHead + "nameserver 10.0.0.1\n")
+		m.Root["/etc/resolver/"+f] = effect.Attrs{Mode: 0o644}
+	}
+	m.Root["/etc/resolver"] = effect.Attrs{Mode: 0o755}
+	m.Dirs["/etc/resolver"] = 0o755
+	const mac = "/h/.config/ws/mac.conf"
+	for _, n := range []string{"ws", "lab"} {
+		m.Dirs["/h/.config/ws/servers"], m.Dirs["/h/.config/ws/servers/"+n] = 0o755, 0o755
+		m.Files[conf.ServerPath(mac, n)] = nil
+	}
+	m.Files[conf.ServerPath(mac, "lab")] = []byte("WS_RESOLVERS=lab.test=10.0.0.1\n")
+	s := networksStep(m, conf.Conf{PublicKey: "K"})
+	s.MacConf = mac
+	got := networksPlan(t, s)
+	if len(got) != 1 || !strings.Contains(got[0], "/etc/resolver/gone.test") {
+		t.Errorf("Plan = %q; want gone.test's removal alone", got)
+	}
+}
+
 func TestNetworksWarnsWhereTheDaemonCannotBeSignalled(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Results["launchctl print system/com.github.zadykian.ws-tunnel"] = effecttest.Result{}
-	m.Results["launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel"] = effecttest.Result{Err: context.Canceled}
+	m.Results["launchctl print system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{}
+	m.Results["launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{Err: context.Canceled}
 	s := networksStep(m, conf.Conf{PublicKey: "K", TunnelNetworks: "10.1.0.0/24"})
 	p, err := s.Plan(context.Background())
 	if err != nil {
@@ -101,7 +132,7 @@ func TestNetworksWarnsWhereTheDaemonCannotBeSignalled(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := s.Out.(*effecttest.Out).Lines
-	if last := out[len(out)-1]; !strings.HasPrefix(last, "warn: cannot signal com.github.zadykian.ws-tunnel") {
+	if last := out[len(out)-1]; !strings.HasPrefix(last, "warn: cannot signal com.github.zadykian.ws-tunnel.ws") {
 		t.Errorf("out = %q; want the warning", out)
 	}
 }
@@ -129,8 +160,8 @@ func TestNetworksPlansNothingUntilMacConfHasWsKey(t *testing.T) {
 
 func TestNetworksApplySaysEachChangeInOrder(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Results["launchctl print system/com.github.zadykian.ws-tunnel"] = effecttest.Result{}
-	m.Results["launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel"] = effecttest.Result{}
+	m.Results["launchctl print system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{}
+	m.Results["launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{}
 	s := networksStep(m, conf.Conf{PublicKey: "K", TunnelNetworks: "10.1.0.0/24"})
 	p, err := s.Plan(context.Background())
 	if err != nil {
@@ -140,8 +171,8 @@ func TestNetworksApplySaysEachChangeInOrder(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := s.Out.(*effecttest.Out).Lines
-	if len(out) != 2 || !strings.Contains(out[0], "routes.d/mac-conf") ||
-		out[1] != "say: ran launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel" {
+	if len(out) != 2 || !strings.Contains(out[0], "/etc/ws-tunnel/ws/routes.d/server-conf") ||
+		out[1] != "say: ran launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.ws" {
 		t.Errorf("out = %q; want the routes file, then the signal", out)
 	}
 }

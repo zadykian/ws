@@ -13,17 +13,18 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // macTarget is ws client macos apply's side of the verbs. only holds the steps that --only names,
 // read when the command runs.
 // The Mac's roles take their machine and out from Mac, which Run fills from the run's effects.
 // They leave the machine, units and out that Steps gets unused.
-func macTarget(p enginecli.Env, only *[]string) engine.Target {
-	return engine.Target{Wizard: macSide(p), Change: macChange, State: macReport(p), Refuse: func(engine.Call) string { return wizardRefusal(p) },
+func macTarget(p enginecli.Env, only *[]string, server *string) engine.Target {
+	return engine.Target{Wizard: macSide(p, server), Change: macChange, State: macReport(p, server), Refuse: func(engine.Call) string { return wizardRefusal(p) },
 		NoScreen: "it needs a terminal and no --plain: anywhere else, edit mac.conf by hand",
 		Sheets: func(ctx context.Context, c engine.Call) ([]tui.Sheet, func(context.Context), error) {
-			return macForms(c.In, c.Err, p)(ctx)
+			return macForms(c.In, c.Err, p, server)(ctx)
 		}, Prepare: func(_ context.Context, c engine.Call) (engine.Run, error) {
 			if c.Selected && len(*only) == 0 {
 				return engine.Run{}, engine.UsageError{Err: errors.New("--only names no step")}
@@ -33,17 +34,20 @@ func macTarget(p enginecli.Env, only *[]string) engine.Target {
 					return engine.Run{}, engine.UsageError{Err: fmt.Errorf("no step is named %q", name)}
 				}
 			}
-			settings, err := loadMacConf(p)
+			name, settings, err := loadMacConf(p, server)
 			if err != nil {
+				return engine.Run{}, err
+			}
+			if err := refuseBadSibling(p.Machine, conf.Path(p.Getenv, p.Pwd), name); err != nil {
 				return engine.Run{}, err
 			}
 			run := engine.Run{M: c.Machine}
 			run.Groups = func(check bool) []tui.Group {
 				o := macos.Options{Options: step.Options{Check: check}, Only: *only}
-				return []tui.Group{tui.NewGroup("", macOf(p, settings, nil, nil, nil).Rows(o))}
+				return []tui.Group{tui.NewGroup("", macOf(p, name, settings, nil, nil, nil).Rows(o))}
 			}
 			run.Do = func(ctx context.Context, e engine.Effects, o step.Options) (string, error) {
-				_, err := macOf(p, settings, e.M, e.Out, e.Text).Run(ctx, macos.Options{Options: o, Only: *only})
+				_, err := macOf(p, name, settings, e.M, e.Out, e.Text).Run(ctx, macos.Options{Options: o, Only: *only})
 				return "", engine.Cause(err)
 			}
 			run.Choose = func(choice tui.Choice) (engine.Run, step.Options, error) {
@@ -55,24 +59,37 @@ func macTarget(p enginecli.Env, only *[]string) engine.Target {
 }
 
 // macReport readies what ws client macos state reports. The ssh step that runs again is left out:
-// under a read it would repeat the first.
-func macReport(p enginecli.Env) func(context.Context, engine.Call) (engine.Report, error) {
+// under a read it would repeat the first. With several servers and no --server it reports each.
+func macReport(p enginecli.Env, server *string) func(context.Context, engine.Call) (engine.Report, error) {
 	return func(context.Context, engine.Call) (engine.Report, error) {
-		settings, err := loadMacConf(p)
+		confs, grouped, err := stateConfs(p, server)
 		if err != nil {
 			return engine.Report{}, err
 		}
-		return engine.Report{Read: macRead(p), Print: func(ctx context.Context, c engine.Call) error {
+		return engine.Report{Read: macRead(p, server), Print: func(ctx context.Context, c engine.Call) error {
 			term := effect.NewTerminal(strings.NewReader(""), c.Err)
-			reports, err := macOf(p, settings, p.Machine, linesOf(term, c.Path), nil).State(ctx)
+			var docs []serverDoc
+			for _, sc := range confs {
+				if sc.Err != nil {
+					docs = append(docs, serverDoc{Name: sc.Name, Steps: []step.Report{refusedReport(sc)}})
+					continue
+				}
+				reports, err := macOf(p, sc.Name, sc.Conf, p.Machine, linesOf(term, c.Path), nil).State(ctx)
+				docs = append(docs, serverDoc{Name: sc.Name, Steps: reports})
+				if err != nil {
+					term.Flush()
+					return err
+				}
+			}
 			term.Flush()
-			if err != nil {
-				return err
-			}
 			if c.JSON {
-				return engine.WriteJSON(c.Out, macDoc{Version: p.Version, Steps: reports})
+				doc := macDoc{Version: p.Version, Steps: docs[0].Steps}
+				if grouped {
+					doc = macDoc{Version: p.Version, Servers: docs}
+				}
+				return engine.WriteJSON(c.Out, doc)
 			}
-			return writeMacState(c.Out, reports)
+			return writeMacState(c.Out, docs, grouped)
 		}}, nil
 	}
 }

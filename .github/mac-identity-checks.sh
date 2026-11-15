@@ -106,7 +106,7 @@ secretive_restore() {
 pubname() {
     ssh-keygen -E md5 -l -f "$1" | sed -e 's/^[0-9]* MD5://' -e 's/ .*//' -e 's/://g' -e 's/$/.pub/'
 }
-trap 'secretive_restore; [ ! -f "$tmp/job.conf" ] || cp "$tmp/job.conf" "$conf"; rm -rf "$tmp"' EXIT
+trap 'secretive_restore; [ ! -f "$tmp/job.conf" ] || conf_write "$conf" <"$tmp/job.conf"; rm -rf "$tmp"' EXIT
 mkdir -p "$data/PublicKeys"
 ssh-keygen -q -t ecdsa -b 256 -N '' -C ws -f "$tmp/p256"
 # Before Secretive's agent has its socket, ws must keep the file key.

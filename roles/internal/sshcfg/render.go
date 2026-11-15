@@ -3,19 +3,29 @@
 package sshcfg
 
 import (
+	"cmp"
 	"fmt"
 	"net/netip"
+	"slices"
 	"strings"
 )
 
 // Header starts config.d/ws's first line, by which a run knows a file for its own.
 const Header = "# Written by ws client macos apply"
 
+// Host is one server's block.
+type Host struct {
+	// Name is the server's name: its Host, and the alias of its key in known_hosts.
+	Name string
+	// Addr is the tunnel's end, the server's address on it.
+	Addr netip.Addr
+	User string
+}
+
 // Inputs are what config.d/ws's text depends on.
 type Inputs struct {
-	User string
-	// Server is the tunnel's end, ws's address on it.
-	Server netip.Addr
+	// Hosts are the servers, each given a block, in name order.
+	Hosts []Host
 	// CldTabs is whether ssh's hosts start cld's tab restorer.
 	CldTabs bool
 	// Patterns are the IgnoreUnknown patterns, joined by commas.
@@ -26,9 +36,9 @@ type Inputs struct {
 	IdentityAgent string
 }
 
-// Config returns config.d/ws: one Host ws, at the tunnel's end. The tunnel is the one address ws
-// has whichever way the Mac is connected, and Port 22 is ws's own, whatever a Host * of the
-// user's sets.
+// Config returns config.d/ws: a Host for each server, at the tunnel's end. The tunnel is the one
+// address a server has, whichever way the Mac is connected. Port 22 is the server's own, whatever
+// a Host * of the user's sets.
 func Config(in Inputs) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, `%s from ~/.config/ws/mac.conf: its next run replaces changes made here.
@@ -38,17 +48,24 @@ func Config(in Inputs) string {
 # those.
 IgnoreUnknown %s
 
-# ws through the tunnel. One known_hosts entry, ws's. 30 s between checks, 3 of them unanswered
+`, Header, in.Patterns)
+	hosts := slices.SortedFunc(slices.Values(in.Hosts), func(a, b Host) int { return cmp.Compare(a.Name, b.Name) })
+	for i, h := range hosts {
+		if i > 0 {
+			b.WriteString("\n")
+		}
+		fmt.Fprintf(&b, `# %[1]s through the tunnel. One known_hosts entry, %[1]s's. 30 s between checks, 3 of them unanswered
 # before ssh gives up.
-Host ws
-    HostName %s
+Host %[1]s
+    HostName %[2]s
     Port 22
-    User %s
-    HostKeyAlias ws
-%s    ServerAliveInterval 30
-`, Header, in.Patterns, in.Server, in.User, identityLines(in))
-	if in.CldTabs {
-		b.WriteString(cldLines)
+    User %[3]s
+    HostKeyAlias %[1]s
+%[4]s    ServerAliveInterval 30
+`, h.Name, h.Addr, h.User, identityLines(in))
+		if in.CldTabs {
+			b.WriteString(cldLines)
+		}
 	}
 	return b.String()
 }

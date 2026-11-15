@@ -1,6 +1,6 @@
 #!/bin/sh
 # The Tunnel stage on the Mac that 43-terminal.sh leaves, whose tunnel has a handshake with the
-# stand-in ws. mac.conf's WS_PUBLIC_KEY goes first. With a new key for the stand-in's wg0, as a ws
+# stand-in ws. The server's WS_PUBLIC_KEY goes first. With a new key for the stand-in's wg0, as a ws
 # installed again has, --check must show that line replaced, and change nothing. A run must replace
 # it in place, have ws client macos tunnel take the key, and log in to ws through the tunnel.
 # Without wg0's peer, as a tagged run that failed leaves it, a run must run ws server ubuntu apply
@@ -12,6 +12,8 @@
 # ws client macos apply stage, and leave the Tunnel stage alone.
 
 set -u
+# shellcheck source=.github/mac-conf.sh
+. "$(dirname "$0")/../mac-conf.sh"
 
 # The one line of the gh stage that a run says where the account holds the Mac's key.
 known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
@@ -46,20 +48,21 @@ standin_set() {
     sudo sh -c '"$0" set "$(cat "$1/utun")" "$2" "$3" ${4+"$4"}' "$wg" "$ws" "$@"
 }
 
-{ grep '^WS_PUBLIC_KEY=' "$conf" && grep -v '^WS_PUBLIC_KEY=' "$conf"; } >"$RUNNER_TEMP/first"
-cp "$RUNNER_TEMP/first" "$conf"
+{ conf_print "$conf" | grep '^WS_PUBLIC_KEY=' && conf_print "$conf" | grep -v '^WS_PUBLIC_KEY='; } >"$RUNNER_TEMP/first"
+conf_write "$conf" <"$RUNNER_TEMP/first"
+conf_print "$conf" >"$RUNNER_TEMP/first"
 old=$(cat "$ws/wg0")
 sudo sh -c 'umask 077 && "$0" genkey >"$1/ws.key" && "$0" pubkey <"$1/ws.key" >"$1/wg0"' "$wg" "$ws"
 new=$(cat "$ws/wg0")
 standin_set private-key "$ws/ws.key"
 wizard --check
 printf '%s\n' "$out" | grep -qx -- "-WS_PUBLIC_KEY=$old" &&
-    printf '%s\n' "$out" | grep -qx "+WS_PUBLIC_KEY=$new" && cmp -s "$conf" "$RUNNER_TEMP/first" &&
+    printf '%s\n' "$out" | grep -qx "+WS_PUBLIC_KEY=$new" && conf_print "$conf" | cmp -s - "$RUNNER_TEMP/first" &&
     [ "$status" = 0 ] ||
     error "--check exited $status, showed no WS_PUBLIC_KEY of wg0's new key, or changed mac.conf"
 n=$(logins)
 wizard
-sed "1s|.*|WS_PUBLIC_KEY=$new|" "$RUNNER_TEMP/first" | cmp -s - "$conf" && [ "$status" = 0 ] &&
+[ "$(conf_print "$conf")" = "$(sed "s|^WS_PUBLIC_KEY=.*|WS_PUBLIC_KEY=$new|" "$RUNNER_TEMP/first")" ] && [ "$status" = 0 ] &&
     printf '%s\n' "$out" | grep -q '^ws client macos wizard: ran launchctl kill SIGHUP ' &&
     [ "$(logins)" -eq $((n + 1)) ] ||
     error "a run with wg0's new key exited $status, or put no WS_PUBLIC_KEY in its line's place"
@@ -82,7 +85,7 @@ printf '%s\n' "$out" | grep -q '^ws client macos wizard: Tunnel: ran launchctl k
     error "a run without mac.pub on ws exited $status, or gave wg0 no peer and the daemon no restart"
 
 standin_set listen-port 51821
-sudo launchctl kickstart -k system/com.github.zadykian.ws-tunnel
+sudo launchctl kickstart -k system/com.github.zadykian.ws-tunnel.ws
 start=$(date +%s)
 wizard
 listed="^- The tunnel's handshake: .* 30 s, .* UDP 51820, .* router's forward .* Background "

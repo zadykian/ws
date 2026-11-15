@@ -20,6 +20,19 @@ func (f fixedWays) Direct(context.Context) (string, string, bool) {
 
 func (f fixedWays) Missing() error { return f.missing }
 
+// TestSSHRoom holds the longest lock that a server's name of 12 characters still fits.
+func TestSSHRoom(t *testing.T) {
+	for lock, want := range map[string]bool{
+		"/" + strings.Repeat("l", 72): true,
+		"/" + strings.Repeat("l", 73): false,
+	} {
+		s := SSH{Host: "ws", M: effecttest.NewMachine(), Lock: lock}
+		if got := s.room(); got != want {
+			t.Errorf("room of a lock of %d characters = %v; want %v", len(lock), got, want)
+		}
+	}
+}
+
 func TestSSHArgv(t *testing.T) {
 	const shared = "-o ConnectTimeout=10 -o StrictHostKeyChecking=yes -o UpdateHostKeys=no -o CheckHostIP=no " +
 		"-o ServerAliveInterval=15 -o PermitLocalCommand=no"
@@ -44,7 +57,7 @@ func TestSSHArgv(t *testing.T) {
 		if tc.first != "" {
 			m.Files[tc.lock+"/"+FirstFile] = []byte(tc.first + "\n")
 		}
-		got := strings.Join(SSH{M: m, Lock: tc.lock, Ways: tc.ways}.Argv(context.Background(), []string{"ws"}), " ")
+		got := strings.Join(SSH{Host: "ws", M: m, Lock: tc.lock, Ways: tc.ways}.Argv(context.Background(), []string{"ws"}), " ")
 		if got != tc.want {
 			t.Errorf("%s: argv = %q; want %q", name, got, tc.want)
 		}
@@ -54,7 +67,7 @@ func TestSSHArgv(t *testing.T) {
 func TestSSHTunnelTakesNoWayOptions(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/t/l/"+FirstFile] = []byte("10.0.0.5\n")
-	s := SSH{M: m, Lock: "/t/l", Ways: fixedWays{host: "ws.example.org", port: "22022"}}
+	s := SSH{Host: "ws", M: m, Lock: "/t/l", Ways: fixedWays{host: "ws.example.org", port: "22022"}}
 	m.Results[tunnelCall(s, "ws", "true")] = effecttest.Result{}
 	if _, err := s.Tunnel(context.Background(), "ws", "true"); err != nil {
 		t.Fatal(err)

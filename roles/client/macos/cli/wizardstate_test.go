@@ -48,7 +48,7 @@ func TestWsReadGivesTheRolesAndReadsWsAgain(t *testing.T) {
 	p, m := macTerminal()
 	ws := newReportingWs(m, p.Version)
 	p.Machine = ws
-	reach := &varsReach{p: p, sudo: &host.Sudo{}}
+	reach := &varsReach{server: "ws", p: p, sudo: &host.Sudo{}}
 	defer reach.close(context.Background())
 	read := ubuntucli.StateRead(reach.reach, p.Version)
 	for range 2 {
@@ -72,7 +72,7 @@ func TestWsReadGivesTheRolesAndReadsWsAgain(t *testing.T) {
 func TestWsReadRefusesAnotherVersion(t *testing.T) {
 	p, m := macTerminal()
 	p.Machine = newReportingWs(m, "v0.0.1")
-	reach := &varsReach{p: p, sudo: &host.Sudo{}}
+	reach := &varsReach{server: "ws", p: p, sudo: &host.Sudo{}}
 	defer reach.close(context.Background())
 	if _, err := ubuntucli.StateRead(reach.reach, p.Version)(t.Context(), tui.Offscreen(p.Machine)); err == nil || !strings.Contains(err.Error(), "holds v0.0.1") {
 		t.Errorf("err = %v", err)
@@ -93,8 +93,8 @@ func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
 		<-ws.ops
 		_, _ = keys.Write([]byte("q"))
 	}()
-	read, done := macState(p, string(session.Ws), &host.Sudo{})
-	err := tui.RunState(c.Context(), engine.ScreenConfig(enginecli.CallOf(c, p)), string(session.Ws), read)
+	read, done := macState(p, wsServer(), string(session.SideOf("ws")), &host.Sudo{})
+	err := tui.RunState(c.Context(), engine.ScreenConfig(enginecli.CallOf(c, p)), string(session.SideOf("ws")), read)
 	done(c.Context())
 	if err != nil {
 		t.Fatal(err)
@@ -104,11 +104,17 @@ func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
 	}
 }
 
+// wsServer returns the server flag of a Mac whose server is called ws.
+func wsServer() *string {
+	name := "ws"
+	return &name
+}
+
 // The Mac's read is local, so a run's lock on ws stays out of it.
 func TestWizardStateOfTheMacTakesNoLock(t *testing.T) {
 	p, m := macTerminal()
 	c := screenCommand(t, "q")
-	read, done := macState(p, string(stage.Mac), &host.Sudo{})
+	read, done := macState(p, wsServer(), string(stage.Mac), &host.Sudo{})
 	if err := tui.RunState(c.Context(), engine.ScreenConfig(enginecli.CallOf(c, p)), string(stage.Mac), read); err != nil || done != nil {
 		t.Fatalf("err = %v, done = %v", err, done != nil)
 	}

@@ -1,22 +1,24 @@
 #!/bin/sh
-# ws's run on the Mac that 33-login.sh leaves. The wizard must have run ws server ubuntu apply three
-# times by now. One ran in 30-run.sh, and one as 31-host.sh's cloud VM. The third ran after that
-# case took the outbound line out of host_vars, which makes the next run due. Each run of the wizard
-# since must have read ws's status alone. A run must read it once, and once more after a run of ws
-# server ubuntu apply. Once ws's run stamp is gone, a run whose unit is cut off before its stamp
-# must stop at the stage. The next must start a unit of its own. That one must end with what stays
-# by hand: ws's fans' driver, as the stand-in's Secure Boot refuses it, and the router's forwards,
-# for WS_REMOTE. A run while another's unit runs, as one that a dropped ssh left, must follow that
-# unit, and start none. With WS_TARGET=cloud, a run must name security_outbound: false in ws's
-# host_vars first. One that follows a unit that began without the line must then start one of its
-# own. The next run must start none. Without the line, a run must write it, and run ws server ubuntu
-# apply. A host_vars with another ws_user must get WS_USER's by a full run, and the line stays for
-# the cases after it. --check --update, with no WS_TARGET in the environment, and --check on a cloud
-# VM must name the run that each would start. Back on the LAN, the closing list of --update must
-# name the table that the line keeps off. Once the line goes by hand, the next run must run ws
-# server ubuntu apply.
+# ws's run on the Mac that 33-login.sh leaves. The wizard must have run ws server ubuntu apply four
+# times by now. One ran in 30-run.sh, one for the port that 31-host.sh's mac.conf names, and one as
+# its cloud VM. The fourth ran after that case took the port and the outbound line out of host_vars,
+# which makes the next run due. Each run of the wizard since must have read ws's status alone. A run
+# must read it once, and once more after a run of ws server ubuntu apply. Once ws's run stamp is
+# gone, a run whose unit is cut off before its stamp must stop at the stage. The next must start a
+# unit of its own. That one must end with what stays by hand: ws's fans' driver, as the stand-in's
+# Secure Boot refuses it, and the router's forwards, for WS_REMOTE. A run while another's unit runs,
+# as one that a dropped ssh left, must follow that unit, and start none. With WS_TARGET=cloud, a run
+# must name security_outbound: false in ws's host_vars first. One that follows a unit that began
+# without the line must then start one of its own. The next run must start none. Without the line, a
+# run must write it, and run ws server ubuntu apply. A host_vars with another ws_user must get
+# WS_USER's by a full run, and the line stays for the cases after it. --check --update, with no
+# WS_TARGET in the environment, and --check on a cloud VM must name the run that each would start.
+# Back on the LAN, the closing list of --update must name the table that the line keeps off. Once
+# the line goes by hand, the next run must run ws server ubuntu apply.
 
 set -u
+# shellcheck source=.github/mac-conf.sh
+. "$(dirname "$0")/../mac-conf.sh"
 
 wsbin=$HOME/.local/bin/ws
 remote_sh=$HOME/repository/ws/roles/server/ubuntu/session/wizard-remote.sh
@@ -55,8 +57,8 @@ started() {
 }
 
 grep -q '^root: sh -s -- status$' "$ws/log" &&
-    [ "$(grep -c '^root: sh -s -- run$' "$ws/log")" = 3 ] ||
-    error "the wizard ran ws server ubuntu apply other than three times, or read ws's status no time since"
+    [ "$(grep -c '^root: sh -s -- run$' "$ws/log")" = 4 ] ||
+    error "the wizard ran ws server ubuntu apply other than four times, or read ws's status no time since"
 sudo rm "$stamp"
 touch "$ws/server.cut" "$ws/sb" "$ws/nct6687"
 wizard
@@ -98,9 +100,9 @@ wizard
 started 1 2 && sudo grep -qx "ws_user: \"$(id -un)\"" "$vars" && [ "$status" = 0 ] ||
     error "a run with another ws_user exited $status, or named no ws_user: $(id -un)"
 
-WS_CONF=$RUNNER_TEMP/cloud.conf
+WS_CONF=$RUNNER_TEMP/confs/cloud/mac.conf
 export WS_CONF
-sed 's/^WS_TARGET=.*/WS_TARGET=cloud/' ~/.config/ws/mac.conf >"$WS_CONF"
+conf_print ~/.config/ws/mac.conf | sed 's/^WS_TARGET=.*/WS_TARGET=cloud/' | conf_write "$WS_CONF"
 out=$("$wsbin" client macos wizard --check </dev/null 2>&1)
 printf '%s\n' "$out" | grep -q 'after naming security_outbound: false in ' ||
     error "ws client macos wizard --check on a cloud VM named no host_vars line before the run: $out"
@@ -123,7 +125,7 @@ sudo sed -i '' '/^security_outbound:/d' "$vars"
 wizard
 started 1 2 && sudo grep -qx 'security_outbound: false' "$vars" && [ "$status" = 0 ] ||
     error "a cloud VM's run without the line exited $status, or ran no ws server ubuntu apply"
-rm "$WS_CONF"
+rm -r "${WS_CONF%/*}"
 unset WS_CONF
 "$wsbin" client macos wizard --update </dev/null >"$RUNNER_TEMP/run.out" 2>&1
 grep -q "^- ws's outbound table: off, as ws's /etc/ws/host_vars.yml names security_outbound: false, " \

@@ -6,7 +6,9 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/netip"
+	"os"
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -26,18 +28,24 @@ type Device interface {
 type Daemon struct {
 	M   effect.Machine
 	Dev Device
-	// Tun is the utun's name, StateFile the file that status reads, and Dir the settings' directory.
-	Tun, StateFile, Dir string
-	Out                 io.Writer // the log
-	Log                 string    // the log's file, which trimLog starts anew past LogLimit; empty for none
-	Now                 func() time.Time
+	Tun string // the utun's name
+	// Paths are the daemon's files: State is what status reads, and Log is the file that trimLog
+	// starts anew past LogLimit, empty for none.
+	Paths settings.Paths
+	Out   io.Writer // the log
+	Now   func() time.Time
 	// CheckEvery is how often a round looks for the handshake. TickEvery is how long a tick comes
 	// after the last tick ended. ChangeWait is how long the loop waits after a network change.
-	CheckEvery, TickEvery, ChangeWait time.Duration
+	// LookupWait bounds the lookups of the other servers' remotes, which hold up the loop.
+	CheckEvery, TickEvery, ChangeWait, LookupWait time.Duration
+	// Program returns the file of the program that runs, root's copy of ws. Nil means the
+	// executable's file.
+	Program func() (fs.FileInfo, error)
 	// Events is the channel of the loop. Signals, timers and the watch of network changes send to
 	// it through Send.
 	Events chan Event
 
+	program    fs.FileInfo // the program's file as start found it, nil where it could not
 	set        settings.Settings
 	key        string
 	inUse      tunnel.Candidate // Tier TierNone where no path answers; empty before the first round
@@ -49,6 +57,7 @@ type Daemon struct {
 	round      []tunnel.Attempt // the endpoints tried since the round began, empty between rounds
 	allowed    tunnel.Allowed   // what the last try left out
 	ends       []netip.Addr     // the endpoints of the last round, which the routes stay clear of
+	elsewhere  []netip.Addr     // the other servers' endpoints, as the last round found them
 	routed     []netip.Prefix
 	unroutable []netip.Prefix
 	told       []netip.Prefix
@@ -68,11 +77,12 @@ const (
 	Exited               // wireguard-go has exited
 )
 
-// New returns a Daemon with an Events channel, for the settings in dir.
-func New(m effect.Machine, dev Device, tun, dir, stateFile string, out io.Writer) *Daemon {
+// New returns a Daemon with an Events channel, for the files at p.
+func New(m effect.Machine, dev Device, tun string, p settings.Paths, out io.Writer) *Daemon {
 	return &Daemon{
-		M: m, Dev: dev, Tun: tun, Dir: dir, StateFile: stateFile, Out: out, Now: time.Now,
-		CheckEvery: time.Second, TickEvery: 10 * time.Second, ChangeWait: 2 * time.Second, Events: make(chan Event, 64),
+		M: m, Dev: dev, Tun: tun, Paths: p, Out: out, Now: time.Now,
+		CheckEvery: time.Second, TickEvery: 10 * time.Second, ChangeWait: 2 * time.Second, LookupWait: 2 * time.Second,
+		Events: make(chan Event, 64),
 	}
 }
 
@@ -82,6 +92,18 @@ func (d *Daemon) Send(e Event) { d.Events <- e }
 // say logs a line, with the time.
 func (d *Daemon) say(format string, a ...any) {
 	_, _ = fmt.Fprintf(d.Out, "%s %s\n", d.Now().Format("2006-01-02 15:04:05"), fmt.Sprintf(format, a...))
+}
+
+// programFile returns the file of the program that runs.
+func (d *Daemon) programFile() (fs.FileInfo, error) {
+	if d.Program != nil {
+		return d.Program()
+	}
+	path, err := os.Executable()
+	if err != nil {
+		return nil, err
+	}
+	return os.Stat(path)
 }
 
 func (d *Daemon) later(e Event, after time.Duration) {

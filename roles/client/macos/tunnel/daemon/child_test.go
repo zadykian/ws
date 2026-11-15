@@ -5,12 +5,14 @@ import (
 	"context"
 	"testing"
 	"time"
+
+	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/settings"
 )
 
 func TestChildLines(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	d := New(nil, nil, "utun5", "/d", "/s", &bytes.Buffer{})
+	d := New(nil, nil, "utun5", settings.Paths{}, &bytes.Buffer{})
 	go d.Watch(ctx, time.Hour, Child("printf", "a\nb\n"))
 	for range 2 {
 		select {
@@ -31,7 +33,7 @@ func TestChildMissing(t *testing.T) {
 }
 
 func TestExit(t *testing.T) {
-	d := New(nil, nil, "utun5", "/d", "/s", &bytes.Buffer{})
+	d := New(nil, nil, "utun5", settings.Paths{}, &bytes.Buffer{})
 	done := make(chan struct{})
 	close(done)
 	go d.Exit(context.Background(), done)
@@ -46,7 +48,7 @@ func TestExit(t *testing.T) {
 }
 
 func TestExitCancelled(t *testing.T) {
-	d := New(nil, nil, "utun5", "/d", "/s", &bytes.Buffer{})
+	d := New(nil, nil, "utun5", settings.Paths{}, &bytes.Buffer{})
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	d.Exit(ctx, make(chan struct{}))

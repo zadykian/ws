@@ -16,8 +16,11 @@ type Zed struct {
 	Settings []byte
 	// Keymap is keymap.json whole, its first line starting with zedKeymapMark.
 	Keymap []byte
-	M      effect.Machine
-	Out    effect.Out
+	// Server is the run's server, and MacConf is mac.conf's path, whose servers/ the seed lists.
+	Server  string
+	MacConf string
+	M       effect.Machine
+	Out     effect.Out
 	// LookPath finds a program on the user's PATH. Nil means exec.LookPath.
 	LookPath func(string) (string, error)
 	failed   map[string]bool // the casks whose install failed, so the plan skips them for the run

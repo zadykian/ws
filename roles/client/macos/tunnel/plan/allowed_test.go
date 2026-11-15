@@ -4,6 +4,8 @@ import (
 	"net/netip"
 	"reflect"
 	"testing"
+
+	"github.com/zadykian/ws/roles/internal/slot"
 )
 
 func addrs(s ...string) []netip.Addr {
@@ -44,7 +46,7 @@ func TestAllowedFor(t *testing.T) {
 				t.Errorf("got %+v, want %v out %v with %d logs", got, tc.want, tc.out, tc.logs)
 			}
 			ips := ""
-			for i, p := range got.IPs() {
+			for i, p := range got.IPs(slot.Slot(0).Server()) {
 				if i > 0 {
 					ips += " "
 				}

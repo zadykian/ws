@@ -35,7 +35,7 @@ func (w wizardRun) start() error {
 	defer stop()
 	term := effect.NewTerminal(w.c.In, w.c.Err)
 	out := Lines{Out: term, Prog: w.c.Path, Seen: map[string]bool{}, Change: w.t.Wizard.Change}
-	if before := w.sideBefore(); len(before) > 0 {
+	if before := w.sideBefore(term); len(before) > 0 {
 		steps := make([]step.Step, len(before))
 		for i, build := range before {
 			steps[i] = build(out)
@@ -210,10 +210,11 @@ func (w wizardRun) newSudo() any {
 	return w.t.Wizard.NewSudo()
 }
 
-// sideBefore builds the steps that run first.
-func (w wizardRun) sideBefore() []func(effect.Out) step.Step {
+// sideBefore builds the steps that run first. They ask on term, which the plain run asks on too: a
+// second reader of the same input would keep what the first had read.
+func (w wizardRun) sideBefore(term effect.Prompt) []func(effect.Out) step.Step {
 	if w.t.Wizard.Before == nil {
 		return nil
 	}
-	return w.t.Wizard.Before(w.o)
+	return w.t.Wizard.Before(w.o, term)
 }

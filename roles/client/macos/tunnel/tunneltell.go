@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"strings"
 
@@ -69,8 +68,9 @@ func (t *Tunnel) publish(ctx context.Context) error {
 	return resource.Group{}.Apply(ctx, step.Plan{Changes: cs})
 }
 
-// Finish prints the Mac's public key, with the commands that make it ws's peer, where the key is new
-// or mac.conf has no WS_PUBLIC_KEY yet. A check prints nothing of it.
+// Finish prints the Mac's public key, with the commands that make it the server's peer. It prints
+// where the key is new or the server's file has no WS_PUBLIC_KEY yet, and a check prints nothing of
+// it. The commands name the server as ssh's host, which is its Host in config.d/ws.
 func (t *Tunnel) Finish(ctx context.Context) error {
 	if t.Check || (!t.madeKey && t.Conf.PublicKey != "") {
 		return nil
@@ -87,14 +87,15 @@ func (t *Tunnel) Finish(ctx context.Context) error {
 	if t.Conf.User != "root" {
 		sudo, tty = "sudo ", "-t "
 	}
-	ssh := "ssh " + tty + "-o HostName=ADDRESS -o Port=PORT ws"
-	_, _ = fmt.Fprintf(t.Text, "The Mac's WireGuard public key is %s\nMake it ws's peer, mac, with a direct way to ws, "+
-		"as ssh ws needs this done first. ADDRESS and PORT are that way:\n\n"+
+	name := t.Server
+	ssh := "ssh " + tty + "-o HostName=ADDRESS -o Port=PORT " + name
+	_, _ = fmt.Fprintf(t.Text, "The Mac's WireGuard public key is %s\nMake it %s's peer, mac, with a direct way to %s, "+
+		"as ssh %s needs this done first. ADDRESS and PORT are that way:\n\n"+
 		"    %s \"printf '%%s\\n' '%s' | %stee /etc/wireguard/mac.pub >/dev/null\"\n"+
-		"    %s %sws server ubuntu apply --only wireguard\n", public, ssh, public, sudo, ssh, sudo)
+		"    %s %sws server ubuntu apply --only wireguard\n", public, name, name, name, ssh, public, sudo, ssh, sudo)
 	if t.Conf.PublicKey == "" {
-		_, _ = io.WriteString(t.Text, "\nThen set WS_PUBLIC_KEY in ~/.config/ws/mac.conf to ws's key, which that run prints, and run\n"+
-			"ws client macos apply again, which installs the tunnel's daemon.\n")
+		_, _ = fmt.Fprintf(t.Text, "\nThen set WS_PUBLIC_KEY in ~/.config/ws/servers/NAME/server.conf to %s's key, which that run prints, and run\n"+
+			"ws client macos apply again, which installs the tunnel's daemon.\n", name)
 	}
 	return nil
 }

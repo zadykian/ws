@@ -5,8 +5,8 @@ the top pull request alone, as it holds every change below it. `lint`, `install`
 on each. A stack opens as drafts, as a pull request opens before its link, and only a later event
 names the stack. So these five skip a draft's `opened` run and start on `ready_for_review`, which
 the other three skip. A newer push to a pull request cancels the runs of the push before it.
-The checks of `rootless` and `mac-cld` are on their own pages ([rootless](rootless.md),
-[mac-cld](mac-cld.md)), and the gates of `make lint` on [theirs](../../.tools/README.md).
+The checks of `rootless`, `mac-cld` and a Mac's servers have pages: [rootless](rootless.md),
+[mac-cld](mac-cld.md) and [mac-servers](mac-servers.md). So have [the gates](../../.tools/README.md).
 
 ## The `playbook` job
 
@@ -47,14 +47,14 @@ A workflow of its own, `mac-wizard.yml`, runs `ws client macos wizard` on GitHub
 from a copy of the checkout at `~/repository/ws`. `standin.sh` gives the wizard what a new Mac and
 user would, such as `mac.conf`'s answers, dash, and a logged-in `gh`, first on the wizard's `PATH`.
 Then `checks.sh` runs the cases beside it in order, stopping at the first failure
-([checks.sh](../mac-wizard/checks.sh)). The wizard must refuse an unknown flag, root and a
-removed `WS_HOOK` line, as an unknown key, and a removed op of the files script. A run must stop
-where another holds the lock, leaving it. A fresh `--check`, by sh and dash, must find brew with its
-directories off `PATH`. As `ws client macos apply --check` must, it must change nothing, and leave
-no lock or temporary file. The job's `mac.conf` names `~/.ssh/id_ed25519` as ws's key, which
-`standin.sh` makes, as the wizard makes none in a file. With no terminal and a `mac.conf` that names
-none, a run must stop at the Mac key stage, naming `WS_IDENTITY_PUB_KEY`, making nothing, and
-`--check` must show the question, a new key the default. A named key that is missing must stop a
+([checks.sh](../mac-wizard/checks.sh)). The wizard must refuse an unknown flag, root and a removed
+`WS_HOOK` line, as an unknown key, with `--server ws`, and a removed op of the files script. A run
+must stop where another holds the lock, leaving it. A fresh `--check`, by sh and dash, must find
+brew with its directories off `PATH`. As `ws client macos apply --check` must, it must change
+nothing, and leave no lock or temporary file. The job's `mac.conf` names `~/.ssh/id_ed25519` as ws's
+key, which `standin.sh` makes, as the wizard makes none in a file. With no terminal and a `mac.conf`
+that names none, a run must stop at the Mac key stage, naming `WS_IDENTITY_PUB_KEY`, making nothing,
+and `--check` must show the question, a new key the default. A named key that is missing must stop a
 run. The first run, with that `PATH` too, must add that key to that login, install what `ws client
 macos apply` installs. It must drop the Mac's key that it prints, and leave no tunnel step by hand,
 as the Tunnel stage below takes it. A second run and `--check` must print nothing, by sh and dash:
@@ -67,14 +67,14 @@ and a run stop, naming its line. Once the agent lacks it, both must stop there, 
 With no terminal, a run without `gh`'s login must stop at gh, naming `gh auth login`, and `gh auth
 refresh` with one lacking the scopes or signing alone. `--check` must say each would run.
 
-`standin.sh` starts an `sshd` of its own as ws, at `127.0.0.1:22022`, where the job's `mac.conf`
+`standin.sh` starts an `sshd` of its own as ws, at `127.0.0.1:22022`, where the job's server file
 leads, with its own host key. A fresh `--check` must show the Host key stage after `ws client macos
 apply`. The first run must warn that ws faces the internet, and add ws's key to `known_hosts`, as
 `WS_HOST_KEY` gives its fingerprint. Without that line, a run with no terminal must stop without
 `WS_HOST_KEY` and with another fingerprint, and `--check` must show the line, or stop at a link, as
-a run must. With a `mac.conf` of no way to ws, a run must stop, naming [The router](../../roles/server/ubuntu/network/router.md).
+a run must. With a conf of no way to ws, a run must stop, naming [The router](../../roles/server/ubuntu/network/router.md).
 Where `WS_REMOTE` doesn't answer, ws's address must come from `WS_FIRST_ADDRESS`, and the closing
-list name `WS_PORT` and no lease's address. On a cloud VM, it must name `mac.conf`'s way, not the lease.
+list name `WS_PORT` and no lease's address. On a cloud VM, it must name the server's way.
 
 The runner's user logs in to that `sshd` by its own `authorized_keys`, which `standin.sh` empties
 and the cases fill from the stand-in `gh`'s keys. Each session runs `ws.sh`, which logs the command.
@@ -156,12 +156,12 @@ Typed, an empty line must take the `169.254` one, and `ping` answer. The next mu
 and one after ws's install or a failed roles' run name it again. Off the LAN, a run and `--check`
 must skip it, a cloud VM's naming its firewall.
 
-The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
-must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop
-`--check`, with the form the key takes. `--check` must show the environment's answers as the lines
-it would add to `mac.conf`, and the first run must add them at its end. Typed at a terminal of
-`script`'s after bad ones, each asked again, the same answers must show the same lines, and empty
-lines the defaults, for each target. After the first run, they must write the same `mac.conf`.
+The cases give the other answers in the environment. With no terminal, a missing answer must stop a
+run and `--check` within 60 s, naming its key. A bad one from the environment must stop `--check`,
+with the form the key takes. `--check` must show the environment's answers as the lines it would add
+to `mac.conf` and the server's file, and the first run must add them at their ends. Typed at a
+terminal of `script`'s after bad ones, each asked again, the same answers must show the same lines,
+and empty lines the defaults, for each target. After the first run, they must write the same files.
 
 Last, the wizard with that `PATH` must find the runner's Command Line Tools and brew, so that a
 second run and `--check` print nothing. Where `WS_CONF` names no file, `--check` must show the lines
@@ -191,11 +191,11 @@ draw [the run screen](../../engine/tui/README.md#the-run-screen) and leave it. `
 The stand-in for ws is a second wireguard-go on the runner, with the printed key as its peer. It
 answers on loopback both as the LAN and as `WS_REMOTE`, and `ws client macos tunnel status` must
 show a handshake on each in turn. The daemon must take the SIGHUPs for a new `tunnel.conf` and
-`routes.d` in place, with the same pid. Then a network that `ws client macos tunnel routes` adds
-must be routed into the daemon's utun, and a domain `ws client macos resolver` adds must show in
-`scutil --dns`. `ws client macos tunnel loaded`, `ws client macos tunnel routes` and `ws client
-macos resolver` must do the same, with `--check` showing the diff and writing nothing
-([mac-ws-checks.sh](../mac-ws-checks.sh)). Next, `mac.conf`'s `WS_TUNNEL_NETWORKS` and
+its `routes.d` in place, with the same pid. Then a network that `ws client macos tunnel routes
+--server ws` adds must be routed into the daemon's utun, and a domain `ws client macos resolver`
+adds must show in `scutil --dns`. `ws client macos tunnel loaded`, `ws client macos tunnel routes`
+and `ws client macos resolver` must do the same, with `--check` showing the diff and writing
+nothing ([mac-ws-checks.sh](../mac-ws-checks.sh)). Next, the server's `WS_TUNNEL_NETWORKS` and
 `WS_RESOLVERS` must give a route and a resolver, each shown by `--check` first. A second run and
 `--check` must print nothing, and a fourth nameserver must be refused. Emptied or removed, the keys
 must take both back, and spare a script's own. Last, `ws client macos apply` must read an empty

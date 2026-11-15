@@ -19,6 +19,12 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 	if !ok {
 		return fmt.Errorf("%s: unknown change %T", RunStage, p.Changes[0])
 	}
+	if len(c.pairs) > 0 {
+		if err := r.Ws.SetValues(ctx, c.pairs); err != nil {
+			return fmt.Errorf("%s: cannot write %s into ws's host_vars: %s; mend that, then run the wizard again",
+				RunStage, naming(c.pairs), remote.Stderr(err))
+		}
+	}
 	if c.user != "" {
 		if err := r.Ws.NameUser(ctx, c.user); err != nil {
 			return fmt.Errorf("%s: ws's host_vars lacks ws_user: %s: %s; mend that, then run the wizard again",

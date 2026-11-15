@@ -17,6 +17,8 @@ en5: flags=8822<BROADCAST,SMART,SIMPLEX,MULTICAST> mtu 1500
 	inet 10.77.0.2 netmask 0xfffffffc broadcast 10.77.0.3
 utun4: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1420
 	inet 10.99.0.2 --> 10.99.0.2 netmask 0xffffffff
+utun6: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1420
+	inet 10.99.3.2 --> 10.99.3.2 netmask 0xffffffff
 utun5: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1500
 	inet 100.64.0.1 --> 100.64.0.1 netmask 0xffffffff
 `

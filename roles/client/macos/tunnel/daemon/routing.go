@@ -4,15 +4,42 @@ import (
 	"context"
 	"net/netip"
 	"slices"
+	"sync"
 
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/routing"
 	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
-// allow sorts routes.d by the endpoints hosts, and logs a network once as it goes out. told holds
+// otherEnds sets the endpoints of the other servers: each one's LAN address, and its remote as
+// the system's resolver gives it now. A network that holds one would send that server's own
+// packets into this server's tunnel. The loop waits on the lookups, so they run at once, under
+// LookupWait for all: a lookup cut off counts as unresolved, as a failed one does.
+func (d *Daemon) otherEnds(ctx context.Context) {
+	ctx, cancel := context.WithTimeout(ctx, d.LookupWait)
+	defer cancel()
+	remotes := make([]netip.Addr, len(d.set.Others))
+	var lookups sync.WaitGroup
+	for i, o := range d.set.Others {
+		if o.Conf.Remote != "" {
+			lookups.Go(func() { remotes[i] = routing.Resolve(ctx, d.M, o.Conf.Remote) })
+		}
+	}
+	lookups.Wait()
+	d.elsewhere = nil
+	for i, o := range d.set.Others {
+		if o.Conf.LANServer.IsValid() {
+			d.elsewhere = append(d.elsewhere, o.Conf.LANServer)
+		}
+		if remotes[i].IsValid() {
+			d.elsewhere = append(d.elsewhere, remotes[i])
+		}
+	}
+}
+
+// allow sorts routes.d by the endpoints hosts and those of the other servers, and logs a network once as it goes out. told holds
 // the networks logged until keepOut takes them back.
 func (d *Daemon) allow(hosts []netip.Addr) tunnel.Allowed {
-	a := tunnel.AllowedFor(d.set.Routes, hosts, d.told)
+	a := tunnel.AllowedFor(d.set.Routes, append(slices.Clone(hosts), d.elsewhere...), d.told)
 	for _, line := range a.Logs {
 		d.say("%s", line)
 	}
@@ -53,13 +80,13 @@ func (d *Daemon) writeState(ctx context.Context) {
 	if d.inUse.Host.IsValid() {
 		s.Endpoint = netip.AddrPortFrom(d.inUse.Host, d.set.Conf.Port).String()
 	}
-	next := d.StateFile + ".new"
+	next := d.Paths.State + ".new"
 	if err := d.M.WriteFile(next, []byte(s.Encode()), 0o644); err != nil {
 		d.say("cannot write %s: %v", next, err)
 		return
 	}
-	if err := d.run(ctx, "mv", "-f", next, d.StateFile); err != nil {
-		d.say("cannot write %s: %v", d.StateFile, err)
+	if err := d.run(ctx, "mv", "-f", next, d.Paths.State); err != nil {
+		d.say("cannot write %s: %v", d.Paths.State, err)
 	}
 }
 

@@ -70,7 +70,7 @@ named in a rule. By the kind of machine ws runs on, they hold:
   table, and passes;
 - on a VM on the Mac, the Mac's network for its VMs: the Mac is the gateway and the DHCP server,
   and NATs what ws sends on;
-- on each, `wg0`, `10.99.0.0/24`.
+- on each, `wg0`, `10.99.N.0/24`, a slot's.
 
 So, but for DHCP and resolved's lookups, the server opens no connection to the Mac or another host
 of these, nor to a gateway at a private address. From the server, a UDP send there fails at once
@@ -162,7 +162,7 @@ run ([The direct link](../network/README.md#the-direct-link)):
 security_outbound: false
 ```
 
-The Mac's wizard writes the line before the run where `mac.conf` has `WS_TARGET=cloud`
+The Mac's wizard writes the line before the run where the server's file has `WS_TARGET=cloud`
 ([ws's run](../../../client/macos/stages/README.md#wss-run)). A run with `security_outbound` false stops the table's units
 by D-Bus, and resets one that failed, even where its file is gone. It then removes the units, their
 links, `/usr/local/lib/ws/security` and the table, even one loaded by hand. `--check` shows each

@@ -11,7 +11,7 @@ import (
 
 func TestSSHWay(t *testing.T) {
 	m := effecttest.NewMachine()
-	s := SSH{M: m, Lock: "/l", Home: "/h", Ways: fixedWays{host: "10.1.1.2", port: "22"}}
+	s := SSH{Host: "ws", M: m, Lock: "/l", Home: "/h", Ways: fixedWays{host: "10.1.1.2", port: "22"}}
 	m.Results[wayCall(s)] = effecttest.Result{Out: []byte(
 		"user root\nhostname 10.1.1.2\nport 22\nuserknownhostsfile ~/.ssh/known_hosts ~/x\naddressfamily inet\n")}
 	w, err := s.Way(context.Background())
@@ -23,7 +23,7 @@ func TestSSHWay(t *testing.T) {
 
 func TestSSHWayNeedsAWayOrFirst(t *testing.T) {
 	m := effecttest.NewMachine()
-	s := SSH{M: m, Lock: "/l", Home: "/h", Ways: fixedWays{}}
+	s := SSH{Host: "ws", M: m, Lock: "/l", Home: "/h", Ways: fixedWays{}}
 	if _, err := s.Way(context.Background()); !errors.Is(err, errNoWay) {
 		t.Errorf("Way with no way and no first = %v; want errNoWay", err)
 	}
@@ -41,7 +41,7 @@ func TestSSHWayNeedsAWayOrFirst(t *testing.T) {
 // The transport takes its direct way from Ways alone, and a Ways without one names its reason.
 func TestSSHWayNamesTheReasonOfWays(t *testing.T) {
 	reason := errors.New("no cable")
-	s := SSH{M: effecttest.NewMachine(), Ways: fixedWays{missing: reason}}
+	s := SSH{Host: "ws", M: effecttest.NewMachine(), Ways: fixedWays{missing: reason}}
 	if _, err := s.Way(context.Background()); !errors.Is(err, reason) {
 		t.Errorf("Way = %v, want %v", err, reason)
 	}

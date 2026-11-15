@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  The tunnel's LaunchDaemon, which ws client macos apply copies to /Library/LaunchDaemons: launchd
-  runs `ws client macos tunnel run` as root from boot, before any login, starts it again 10 s after
-  it exits, and appends its output to /var/log/ws-tunnel.log.
+  A server's tunnel LaunchDaemon, which ws client macos apply copies to /Library/LaunchDaemons with
+  @NAME@ the server's name: launchd runs `ws client macos tunnel run` for it as root from
+  boot, before any login, starts it again 10 s after it exits, and appends its output to
+  /var/log/ws-tunnel.@NAME@.log.
 -->
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>com.github.zadykian.ws-tunnel</string>
+	<string>com.github.zadykian.ws-tunnel.@NAME@</string>
 	<key>ProgramArguments</key>
 	<array>
 		<string>/usr/local/libexec/ws-tunnel/ws</string>
@@ -16,6 +17,8 @@
 		<string>macos</string>
 		<string>tunnel</string>
 		<string>run</string>
+		<string>--server</string>
+		<string>@NAME@</string>
 	</array>
 	<key>RunAtLoad</key>
 	<true/>
@@ -24,8 +27,8 @@
 	<key>ThrottleInterval</key>
 	<integer>10</integer>
 	<key>StandardOutPath</key>
-	<string>/var/log/ws-tunnel.log</string>
+	<string>/var/log/ws-tunnel.@NAME@.log</string>
 	<key>StandardErrorPath</key>
-	<string>/var/log/ws-tunnel.log</string>
+	<string>/var/log/ws-tunnel.@NAME@.log</string>
 </dict>
 </plist>

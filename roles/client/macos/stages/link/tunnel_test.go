@@ -20,15 +20,18 @@ const (
 	keyB = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB="
 )
 
+// daemonLabel is the launchd label of ws's daemon.
+const daemonLabel = "com.github.zadykian.ws-tunnel.ws"
+
 // newTunnel returns the stage over a Mac whose mac.conf holds WS_PUBLIC_KEY pub, with ws's status.
 func newTunnel(pub string, status session.Status, check bool) (*Tunnel, *effecttest.Machine) {
 	r, m := newRun("lan", status, false, check)
 	m.Files["/h/mac.conf"] = append(m.Files["/h/mac.conf"], []byte("WS_PUBLIC_KEY="+pub+"\n")...)
 	m.Files["/h/.config/ws/tunnel.pub"] = []byte(keyA + "\n")
-	m.Results["launchctl print system/"+label] = effecttest.Result{}
+	m.Results["launchctl print system/"+daemonLabel] = effecttest.Result{}
 	m.Results["nc -z -G 3 -w 3 10.99.0.1 22"] = effecttest.Result{}
 	m.Results["ssh -G ws"] = effecttest.Result{Out: []byte("user root\nhostname 10.99.0.1\n")}
-	return &Tunnel{SSH: remote.SSH{M: m, Lock: "/l", Ways: host.MacWays{M: m, Conf: "/h/mac.conf"}}, Ws: r.Ws, Conf: "/h/mac.conf", Check: check, Home: "/h", M: m, Out: r.Out}, m
+	return &Tunnel{SSH: remote.SSH{Host: "ws", M: m, Lock: "/l", Ways: host.MacWays{M: m, Conf: "/h/mac.conf"}}, Ws: r.Ws, Conf: "/h/mac.conf", Check: check, Server: "ws", Home: "/h", M: m, Out: r.Out}, m
 }
 
 func TestStagesGiveTheWordsOfNoTicket(t *testing.T) {
@@ -51,7 +54,7 @@ func TestTunnelPlan(t *testing.T) {
 		"peer":      {keyB, session.Status{WgKey: keyB, MacKey: keyA}, "run ws server ubuntu apply --only wireguard"},
 		"other key": {keyB, session.Status{WgKey: keyB, Peered: true, MacKey: keyB}, "write the Mac's key, " + keyA},
 		"new wg0": {keyA, session.Status{WgKey: keyB, Peered: true, MacKey: keyA},
-			"set WS_PUBLIC_KEY in mac.conf to wg0's key, " + keyB},
+			"set WS_PUBLIC_KEY in server.conf to wg0's key, " + keyB},
 		"no wg0": {"", session.Status{}, "to wg0's key, which that run makes"},
 	} {
 		tun, _ := newTunnel(tc.pub, tc.status, false)
@@ -86,6 +89,38 @@ func TestTunnelPlanShowsConfsDiffUnderCheck(t *testing.T) {
 		shown := strings.Contains(out, "-WS_PUBLIC_KEY="+keyA+"\n+WS_PUBLIC_KEY="+keyB)
 		if shown != check || !strings.Contains(string(m.Files["/h/mac.conf"]), "WS_PUBLIC_KEY="+keyA) {
 			t.Errorf("check %v: diff shown %v, mac.conf %q", check, shown, m.Files["/h/mac.conf"])
+		}
+	}
+}
+
+func TestTunnelPlanReachesWsAtItsSlot(t *testing.T) {
+	tun, m := newTunnel(keyB, session.Status{WgKey: keyB, Peered: true, MacKey: keyA}, false)
+	m.Files["/h/mac.conf"] = append(m.Files["/h/mac.conf"], "WS_SLOT=1\n"...)
+	m.Results["nc -z -G 3 -w 3 10.99.1.1 22"] = effecttest.Result{}
+	m.Results["ssh -G ws"] = effecttest.Result{Out: []byte("user root\nhostname 10.99.1.1\n")}
+	delete(m.Results, "nc -z -G 3 -w 3 10.99.0.1 22")
+	p, err := tun.Plan(context.Background())
+	if err != nil || len(p.Changes) != 0 {
+		t.Errorf("Plan = %v, %v; want it done at slot 1's end", p, err)
+	}
+	m.Results["ssh -G ws"] = effecttest.Result{Out: []byte("user root\nhostname 10.99.0.1\n")}
+	if p, _ := tun.Plan(context.Background()); len(p.Changes) == 0 {
+		t.Error("Plan is empty where ssh -G ws gives slot 0's end")
+	}
+}
+
+func TestTunnelPlanNamesTheServer(t *testing.T) {
+	tun, _ := newTunnel(keyA, session.Status{WgKey: keyB, MacKey: keyB}, false)
+	tun.SSH.Host, tun.Server = "lab", "lab"
+	p, err := tun.Plan(context.Background())
+	var got []string
+	for _, c := range p.Changes {
+		got = append(got, c.String())
+	}
+	all := strings.Join(got, "\n")
+	for _, w := range []string{"/etc/wireguard/mac.pub on lab", "--only wireguard on lab,", "log in to lab through it"} {
+		if err != nil || !strings.Contains(all, w) {
+			t.Errorf("Plan = %q, %v; want %q", all, err, w)
 		}
 	}
 }

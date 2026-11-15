@@ -23,8 +23,12 @@ import (
 // Mac is what the Mac's steps read and act through. It holds the order of ws client macos apply's
 // steps, so that no caller builds them itself.
 type Mac struct {
-	Conf conf.Conf
-	Home string
+	// Server is the name of the server that the steps act for.
+	Server string
+	// MacConf is mac.conf's path, whose servers/ the ssh and tunnel steps list.
+	MacConf string
+	Conf    conf.Conf
+	Home    string
 	// XDG is XDG_CONFIG_HOME, which may be empty.
 	XDG string
 	M   effect.Machine
@@ -41,12 +45,12 @@ func (m Mac) steps(check bool) []step.Step {
 		cable.Cable{Conf: m.Conf, M: m.M, Out: m.Out}.Step(),
 		(&git.Git{Conf: m.Conf, Home: m.Home, XDG: m.XDG, M: m.M, Out: m.Out}).Step(),
 		(&ghostty.Ghostty{Home: m.Home, Settings: ghostty.Settings, M: m.M, Out: m.Out}).Step(),
-		(&zed.Zed{Home: m.Home, Settings: zed.Settings, Keymap: zed.Keymap, M: m.M, Out: m.Out}).Step(),
+		(&zed.Zed{Home: m.Home, Settings: zed.Settings, Keymap: zed.Keymap, Server: m.Server, MacConf: m.MacConf, M: m.M, Out: m.Out}).Step(),
 		(&cld.Cld{Home: m.Home, M: m.M, Out: m.Out, Check: check}).Step(),
 		(&zsh.Zsh{Home: m.Home, Hook: zsh.Hook, M: m.M, Out: m.Out, Now: time.Now}).Step(),
-		&tunnel.Tunnel{Conf: m.Conf, Home: m.Home, Plist: tunnel.Plist, M: m.M, Out: m.Out, Text: m.Text,
+		&tunnel.Tunnel{Conf: m.Conf, Server: m.Server, MacConf: m.MacConf, Home: m.Home, Plist: tunnel.Plist, M: m.M, Out: m.Out, Text: m.Text,
 			Check: check},
-		&networks.Networks{Conf: m.Conf, M: m.M, Out: m.Out, Check: check},
+		&networks.Networks{Server: m.Server, MacConf: m.MacConf, Conf: m.Conf, M: m.M, Out: m.Out, Check: check},
 	}
 }
 
