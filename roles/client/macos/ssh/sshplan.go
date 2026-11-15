@@ -73,11 +73,10 @@ func (s SSH) parts(ctx context.Context) ([]resource.Resource, error) {
 	}
 	text := s.config(ctx, f, key, hosts)
 	var copies reports
-	if keys.Copied(key.File, key.Text, s.Home) {
-		copies = append(copies, keys.CopyDirs(s.M, s.Out, s.Home))
+	for _, part := range keys.CopyParts(s.M, s.Out, key.File, key.Text) {
+		copies = append(copies, part)
 	}
-	copies = append(copies, keys.CopyReport(s.M, s.Out, key.File, key.Text, s.Home)...)
-	copied, err := keys.PlanCopy(s.M, s.Out, key.File, key.Text, s.Home)
+	copied, err := keys.PlanCopy(ctx, s.M, s.Out, key.File, key.Text)
 	return []resource.Resource{
 		s.refusal(f, hosts, text),
 		resource.Planned{Changes: copied, Err: err},

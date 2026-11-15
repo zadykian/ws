@@ -13,7 +13,6 @@ import (
 
 func TestSSHWritesTheCopyItNames(t *testing.T) {
 	m, out := mactest.AgentMachine(sshMachine(), mactest.AgentKey), &effecttest.Out{}
-	m.Results["mkdir -p /h/.config/ws/secretive"] = effecttest.Result{}
 	c := sshConf(m, out)
 	c.Conf.IdentityPubKey = sshcfg.AgentKeys(mactest.AgentKey)[0].Pub()
 	s := c.Step()
@@ -40,7 +39,7 @@ func TestSSHReportsTheDirectoryOfTheCopyItNames(t *testing.T) {
 	c := sshConf(m, &effecttest.Out{})
 	c.Conf.IdentityPubKey = sshcfg.AgentKeys(mactest.AgentKey)[0].Pub()
 	got := mactest.ReportOf(t, c.Step())
-	for _, name := range []string{"/h/.config", "/h/.config/ws", "/h/" + sshcfg.KeyCopies} {
+	for _, name := range []string{"/etc/ws", sshcfg.KeyCopies} {
 		if it := got[name]; it.Kind != step.DirItem || it.Found != "missing" {
 			t.Errorf("%s = %+v, want a directory, missing", name, it)
 		}

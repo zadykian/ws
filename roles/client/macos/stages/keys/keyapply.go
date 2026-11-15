@@ -12,7 +12,7 @@ import (
 )
 
 // Apply makes what the plan lists, in order. A change but a question is PlanCopy's: a directory
-// of the copies, its mode, or the copy.
+// of the copies with /etc/ws, its mode, or the copy.
 func (k *MacKey) Apply(ctx context.Context, p step.Plan) error {
 	for _, c := range p.Changes {
 		var err error

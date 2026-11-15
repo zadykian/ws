@@ -79,7 +79,7 @@ func TestSSHReportsWsCopyOfAKey(t *testing.T) {
 	c := sshConf(mactest.AgentMachine(sshMachine(), mactest.AgentKey), &effecttest.Out{})
 	c.Conf.IdentityPubKey = sshcfg.AgentKeys(mactest.AgentKey)[0].Pub()
 	it := mactest.ReportOf(t, c.Step())[mactest.CopyOf(mactest.AgentKey)]
-	if it.Kind != step.FileItem || it.Want != "present" || it.Found != "missing" {
+	if it.Kind != step.FileItem || it.Want != "owner 0:0, mode 644" || it.Found != "missing" {
 		t.Errorf("copy = %+v, want a file that is missing", it)
 	}
 }

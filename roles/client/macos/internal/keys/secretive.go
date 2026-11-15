@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/zadykian/ws/engine/core/resource/file"
 	"io/fs"
 	"path/filepath"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/values"
+	"github.com/zadykian/ws/roles/internal/etcws"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -69,44 +70,35 @@ func unnamed(u KeyUse, keys []sshcfg.AgentKey) error {
 		name, use, strings.Join(lines, "; "))
 }
 
-// PlanCopy returns the changes that make ws's copy at pub hold text: the directories of the copies,
-// ~/.config/ws and ~/.config with them, where missing, then the copy. It returns none for a .pub
-// elsewhere and for one with no text from the agent, and no copy where it holds text already.
-func PlanCopy(m effect.Machine, out effect.Out, pub, text, home string) ([]step.Change, error) {
-	if !Copied(pub, text, home) {
-		return nil, nil
-	}
-	cs, _, err := CopyDirs(m, out, home).Plan()
-	if err != nil {
-		return nil, err
-	}
-	return append(cs, CopyChange(m, out, pub, text)...), nil
+// Copied says whether ws keeps a copy of the .pub at pub: one in ws's directory of copies, with
+// text from the agent. A path that leads out of the directory is none.
+func Copied(pub, text string) bool {
+	return text != "" && sshcfg.KeyCopy(pub)
 }
 
-// CopyDirs is ws's directory with the directory of ws's copies in it.
-func CopyDirs(m effect.Machine, out effect.Out, home string) file.UserDirs {
-	return append(file.WsDirs(m, out, home), file.UserDir{M: m, Out: out, Path: home + "/" + sshcfg.KeyCopies, Mode: 0o755})
-}
-
-// CopyChange returns the write of ws's copy at pub, or none where it holds text already.
-func CopyChange(m effect.Machine, out effect.Out, pub, text string) []step.Change {
-	if old, err := m.ReadFile(pub); err == nil && string(old) == text {
+// CopyParts returns /etc/ws, the directory of the copies and ws's copy of the .pub at pub, which
+// say their changes as they apply. It returns none for a .pub elsewhere and for one with no text
+// from the agent. A run writes the copy through sudo where its text differs.
+func CopyParts(m effect.Machine, out effect.Out, pub, text string) []resource.Said {
+	if !Copied(pub, text) {
 		return nil
 	}
-	return []step.Change{Copy{M: m, Out: out, Path: pub, Text: text}}
-}
-
-// Copied says whether ws keeps a copy of the .pub at pub: one in ws's directory of copies, with text
-// from the agent.
-func Copied(pub, text, home string) bool {
-	return text != "" && strings.HasPrefix(pub, home+"/"+sshcfg.KeyCopies+"/")
-}
-
-// CopyReport reports ws's copy of a .pub, where it keeps one. A run writes the copy where its text
-// differs, and leaves its mode.
-func CopyReport(m effect.Machine, out effect.Out, pub, text, home string) []step.Reporter {
-	if !Copied(pub, text, home) {
-		return nil
+	var parts []resource.Said
+	for _, r := range etcws.Files(m, pub, []byte(text)) {
+		parts = append(parts, resource.Said{Out: out, Part: r})
 	}
-	return []step.Reporter{file.UserFile{M: m, Out: out, Path: pub, Text: []byte(text)}}
+	return parts
+}
+
+// PlanCopy returns the changes that make ws's copy at pub hold text, with the directories of the
+// copies where missing. It returns none where the copy holds text already.
+func PlanCopy(ctx context.Context, m effect.Machine, out effect.Out, pub, text string) ([]step.Change, error) {
+	var cs []step.Change
+	for _, part := range CopyParts(m, out, pub, text) {
+		var err error
+		if cs, err = resource.Append(ctx, cs, part); err != nil {
+			return nil, err
+		}
+	}
+	return cs, nil
 }

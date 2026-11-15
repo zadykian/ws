@@ -14,7 +14,6 @@ import (
 // copyingSSH is a fresh Mac whose key is an agent's, so that ssh writes a copy of it.
 func copyingSSH(out *effecttest.Out) step.Step {
 	m := mactest.AgentMachine(sshMachine(), mactest.AgentKey)
-	m.Results["mkdir -p /h/.config/ws/secretive"] = effecttest.Result{}
 	c := sshConf(m, out)
 	c.Conf.IdentityPubKey = sshcfg.AgentKeys(mactest.AgentKey)[0].Pub()
 	return c.Step()
@@ -35,9 +34,9 @@ func TestSSHPlansAndAppliesInOrder(t *testing.T) {
 		heads = append(heads, step.Headline(c))
 	}
 	wantHeads := []string{
-		"would make /h/.config, mode 755", "would make /h/.config/ws, mode 700",
-		"would make /h/.config/ws/secretive, mode 755",
-		"would write " + copied + ", ws's copy of a key of Secretive's",
+		"create directory /etc/ws, owner 0:0, mode 755",
+		"create directory /etc/ws/secretive, owner 0:0, mode 755",
+		"create " + copied,
 		"would make /h/.ssh, mode 700", "would make /h/.ssh/config.d, mode 700",
 		"would create /h/.ssh/config.d/ws", "would create /h/.ssh/config",
 	}
@@ -47,7 +46,9 @@ func TestSSHPlansAndAppliesInOrder(t *testing.T) {
 	if err := s.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
-	said := []string{"say: wrote " + copied, "say: wrote /h/.ssh/config.d/ws", "say: wrote /h/.ssh/config"}
+	said := []string{"say: create directory /etc/ws, owner 0:0, mode 755",
+		"say: create directory /etc/ws/secretive, owner 0:0, mode 755", "say: create " + copied,
+		"say: wrote /h/.ssh/config.d/ws", "say: wrote /h/.ssh/config"}
 	if !slices.Equal(out.Lines, said) {
 		t.Errorf("said %q; want %q", out.Lines, said)
 	}
@@ -63,7 +64,7 @@ func TestSSHReportsItsFilesInOrder(t *testing.T) {
 		names = append(names, it.Name)
 	}
 	want := []string{"/h/.ssh", "/h/.ssh/config.d", "/h/.ssh/config.d/ws", "/h/.ssh/config",
-		"/h/.config", "/h/.config/ws", "/h/.config/ws/secretive", mactest.CopyOf(mactest.AgentKey)}
+		"/etc/ws", "/etc/ws/secretive", mactest.CopyOf(mactest.AgentKey)}
 	if !slices.Equal(names, want) {
 		t.Errorf("items %q; want %q", names, want)
 	}
