@@ -8,12 +8,12 @@ import (
 )
 
 func TestConfigSharesTheSettingsUnderItsHeader(t *testing.T) {
-	in := gitcfg.Inputs{Name: "A B", Email: "a@b.c", Key: "/h/k.pub", Signers: "/h/.config/ws/allowed_signers",
+	in := gitcfg.Inputs{Key: "/h/k.pub", Signers: "/h/.config/ws/allowed_signers",
 		Gh: "/opt/gh"}
 	got := config(in)
 	for _, want := range []string{
 		header + "\n# ~/.gitconfig includes it at its top",
-		"\tname = \"A B\"\n\temail = a@b.c\n",
+		"\tname = \"zadykian\"\n\temail = me@zadykian.dev\n",
 		"\tsigningkey = \"/h/k.pub\"\n",
 		"[fetch]\n\tprune = true\n",
 		"[credential \"https://github.com\"]\n\thelper = \n\thelper = !/opt/gh auth git-credential\n",

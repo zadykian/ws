@@ -14,7 +14,7 @@ func TestAllowedSignersTrustTheKeyOnce(t *testing.T) {
 	m.Dirs["/home/ws/.config"] = 0o700
 	a := account.Account{User: account.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
 	const key = "/home/ws/.ssh/k"
-	rs := AllowedSigners(m, a, key, "/home/ws/.config/git/allowed_signers", "me@x.dev")
+	rs := AllowedSigners(m, a, key, "/home/ws/.config/git/allowed_signers")
 	run := func() []string {
 		var shown []string
 		for _, r := range rs {
@@ -35,7 +35,7 @@ func TestAllowedSignersTrustTheKeyOnce(t *testing.T) {
 		t.Errorf("without the key: %q, want nothing", got)
 	}
 	m.Files[key+".pub"] = []byte("ssh-ed25519 AAAA comment\n")
-	if got := run(); len(got) != 1 || !strings.Contains(got[0], "me@x.dev ssh-ed25519 AAAA\n") {
+	if got := run(); len(got) != 1 || !strings.Contains(got[0], "me@zadykian.dev ssh-ed25519 AAAA\n") {
 		t.Errorf("with the key: %q", got)
 	}
 	if got := run(); got != nil || m.Dirs["/home/ws/.config"] != 0o700 {

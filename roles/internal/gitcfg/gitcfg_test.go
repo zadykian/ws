@@ -8,9 +8,9 @@ import (
 )
 
 func TestSettingsIsTheSharedText(t *testing.T) {
-	got := gitcfg.Settings(gitcfg.Inputs{Name: "A B", Email: "a@b.c", Key: "/h/k.pub", Signers: "/h/s",
+	got := gitcfg.Settings(gitcfg.Inputs{Key: "/h/k.pub", Signers: "/h/s",
 		Gh: "/opt/gh", Program: "/h/sign"})
-	want := "[user]\n\tname = \"A B\"\n\temail = a@b.c\n" +
+	want := "[user]\n\tname = \"zadykian\"\n\temail = me@zadykian.dev\n" +
 		"# Each commit and tag signed with the machine's SSH key, which the allowed signers file trusts for the\n" +
 		"# email above. The public key's path, so that an agent holding the key signs too; otherwise\n" +
 		"# ssh-keygen reads the private key beside it.\n" +
@@ -31,9 +31,9 @@ func TestSettingsIsTheSharedText(t *testing.T) {
 	}
 }
 
-func TestSettingsQuotesTheNameAndPathsAndNamesNoProgramWithoutOne(t *testing.T) {
-	got := gitcfg.Settings(gitcfg.Inputs{Name: `A "B" \C`, Key: `/h/"k".pub`, Signers: `/h/s\x`})
-	for _, want := range []string{`name = "A \"B\" \\C"`, `signingkey = "/h/\"k\".pub"`, `"/h/s\\x"`} {
+func TestSettingsQuotesThePathsAndNamesNoProgramWithoutOne(t *testing.T) {
+	got := gitcfg.Settings(gitcfg.Inputs{Key: `/h/"k".pub`, Signers: `/h/s\x`})
+	for _, want := range []string{`signingkey = "/h/\"k\".pub"`, `"/h/s\\x"`} {
 		if !strings.Contains(got, want) {
 			t.Errorf("Settings lacks %s:\n%s", want, got)
 		}
@@ -44,7 +44,7 @@ func TestSettingsQuotesTheNameAndPathsAndNamesNoProgramWithoutOne(t *testing.T) 
 }
 
 func TestAllowedSignersTrustsTheKeyForTheEmail(t *testing.T) {
-	if got, want := gitcfg.AllowedSigners("# h", "a@b.c", "ssh-ed25519 AAAA"), "# h\na@b.c ssh-ed25519 AAAA\n"; got != want {
+	if got, want := gitcfg.AllowedSigners("# h", "ssh-ed25519 AAAA"), "# h\nme@zadykian.dev ssh-ed25519 AAAA\n"; got != want {
 		t.Errorf("AllowedSigners = %q, want %q", got, want)
 	}
 }

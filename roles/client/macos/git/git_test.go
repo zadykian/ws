@@ -134,7 +134,7 @@ func TestGitWritesAllowedSignersAndGitconfig(t *testing.T) {
 		t.Fatal(err)
 	}
 	dir := gitHome + "/.config/ws/"
-	if got := string(m.Files[dir+"allowed_signers"]); !strings.HasSuffix(got, "\na@b.c ssh-ed25519 AAAAC3Nz\n") {
+	if got := string(m.Files[dir+"allowed_signers"]); !strings.HasSuffix(got, "\nme@zadykian.dev ssh-ed25519 AAAAC3Nz\n") {
 		t.Errorf("allowed_signers = %q", got)
 	}
 	if got := string(m.Files[dir+"gitconfig"]); !strings.Contains(got, "signingkey = \""+gitPub+"\"") ||

@@ -17,7 +17,7 @@ func gitFixture() (*effecttest.Machine, stdinMachine, *effecttest.Out, Config) {
 	sm := stdinMachine{Machine: m, answers: map[string]string{}}
 	out := &effecttest.Out{}
 	a := account.Account{User: account.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
-	return m, sm, out, Config{M: sm, Out: out, A: a, Name: "zadykian", Email: "me@zadykian.dev",
+	return m, sm, out, Config{M: sm, Out: out, A: a,
 		Key: "/home/ws/.ssh/id_ed25519_signing", Signers: "/home/ws/.config/git/allowed_signers"}
 }
 

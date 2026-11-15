@@ -16,7 +16,7 @@ import (
 // and gitconfig.
 func (g *Git) list(key keys.NamedKey, gh string) []file.UserFile {
 	dir := g.Home + "/.config/ws"
-	in := gitcfg.Inputs{Name: g.Conf.GitName, Email: g.Conf.GitEmail, Key: key.File, Gh: gh,
+	in := gitcfg.Inputs{Key: key.File, Gh: gh,
 		Signers: dir + "/allowed_signers"}
 	userFile := func(path, text string, mode fs.FileMode) file.UserFile {
 		return file.UserFile{M: g.M, Out: g.Out, Path: path, Text: []byte(text), Mode: mode}
@@ -26,7 +26,7 @@ func (g *Git) list(key keys.NamedKey, gh string) []file.UserFile {
 		in.Program = dir + "/secretive-ssh-keygen"
 		list = append(list, userFile(in.Program, wrapper(g.Home+"/"+sshcfg.SecretiveData), 0o755))
 	}
-	list = append(list, userFile(dir+"/allowed_signers", gitcfg.AllowedSigners(header, g.Conf.GitEmail, key.Key.String()), 0o644))
+	list = append(list, userFile(dir+"/allowed_signers", gitcfg.AllowedSigners(header, key.Key.String()), 0o644))
 	return append(list, userFile(dir+"/gitconfig", config(in), 0o644))
 }
 

@@ -3,9 +3,14 @@ package gitcfg
 
 import "strings"
 
+// Name and Email are the identity of every commit, on ws and on the Mac alike.
+const (
+	Name  = "zadykian"
+	Email = "me@zadykian.dev"
+)
+
 // Inputs are the values of the settings.
 type Inputs struct {
-	Name, Email string
 	// Key is the signing key's .pub, Signers the allowed signers file and Gh GitHub's CLI, each as an
 	// absolute path. Program is gpg.ssh.program, or empty to sign with ssh-keygen as found.
 	Key, Signers, Gh, Program string
@@ -15,7 +20,7 @@ type Inputs struct {
 // and the paths go in quotes. The email and gh's command stay bare, as gh auth setup-git writes them.
 func Settings(in Inputs) string {
 	var b strings.Builder
-	b.WriteString("[user]\n\tname = " + quote(in.Name) + "\n\temail = " + in.Email + "\n")
+	b.WriteString("[user]\n\tname = " + quote(Name) + "\n\temail = " + Email + "\n")
 	b.WriteString("# Each commit and tag signed with the machine's SSH key, which the allowed signers file " +
 		"trusts for the\n# email above. The public key's path, so that an agent holding the key signs " +
 		"too; otherwise\n# ssh-keygen reads the private key beside it.\n")
@@ -39,9 +44,9 @@ func Settings(in Inputs) string {
 	return b.String()
 }
 
-// AllowedSigners returns the file that trusts the key for the email, under its header.
-func AllowedSigners(header, email, key string) string {
-	return header + "\n" + email + " " + key + "\n"
+// AllowedSigners returns the file that trusts the key for Email, under its header.
+func AllowedSigners(header, key string) string {
+	return header + "\n" + Email + " " + key + "\n"
 }
 
 // quote puts s in quotes for a git config file, with \ and " escaped.
