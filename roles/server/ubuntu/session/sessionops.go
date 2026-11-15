@@ -123,15 +123,15 @@ func (s *Session) WaitPorts(ctx context.Context, port string) ([]byte, error) {
 	return s.do(ctx, opWait, []string{port})
 }
 
-// NameCable names the port in ws's host_vars and runs the cable and wireguard roles there.
+// NameCable names the port in ws's host_vars and runs the cable and tunnel roles there.
 func (s *Session) NameCable(ctx context.Context, port string) error {
-	_, err := s.do(ctx, opNameCable, []string{port}, []string{"--only", "cable,wireguard"})
+	_, err := s.do(ctx, opNameCable, []string{port}, []string{"--only", "cable,tunnel"})
 	return err
 }
 
-// NamePeer puts the Mac's key in ws's wg0 peer file and runs the wireguard role there.
+// NamePeer puts the Mac's key in ws's wg0 peer file and runs the tunnel role there.
 func (s *Session) NamePeer(ctx context.Context, key string) error {
-	_, err := s.do(ctx, opNamePeer, []string{key}, []string{"--only", "wireguard"})
+	_, err := s.do(ctx, opNamePeer, []string{key}, []string{"--only", "tunnel"})
 	return err
 }
 

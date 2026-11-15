@@ -42,7 +42,7 @@ var all = []entry{
 	{"base", base.Steps},
 	{"security", security.Steps},
 	{"cable", cable.Steps},
-	{"wireguard", tunnel.Steps},
+	{"tunnel", tunnel.Steps},
 	{"ikeward", ikeward.Steps},
 	{"nvidia", nvidia.Steps},
 	{"fans", fans.Steps},

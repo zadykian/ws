@@ -43,8 +43,8 @@ func TestFollowHandsEventsOnAndPassesTheLog(t *testing.T) {
 	m := effecttest.NewMachine()
 	h := &heard{}
 	r := newFollow(m, h)
-	m.Results[sessiontest.Op("run", "--only", "wireguard")] = effecttest.Result{Out: []byte(runLog)}
-	if err := r.Run(context.Background(), []string{"--only", "wireguard"}); err != nil {
+	m.Results[sessiontest.Op("run", "--only", "tunnel")] = effecttest.Result{Out: []byte(runLog)}
+	if err := r.Run(context.Background(), []string{"--only", "tunnel"}); err != nil {
 		t.Fatal(err)
 	}
 	if got := h.steps(); !slices.Equal(got, []string{"ssh/keys"}) {
@@ -137,7 +137,7 @@ func TestEachRunIsFollowed(t *testing.T) {
 	c, m, _ := newCable(t, session.Status{}, cableLink, nil)
 	c.Ws = macSession(m, c.SSH, c.Out.(*effecttest.Out), session.Status{Run: idleRun.Run}, h)
 	m.Results[sessiontest.Op("link", "eth1")] = effecttest.Result{}
-	m.Results[sessiontest.Op("run", "--only", "cable,wireguard")] = log
+	m.Results[sessiontest.Op("run", "--only", "cable,tunnel")] = log
 	if err := c.name(ctx, "eth1"); err != nil {
 		t.Fatal(err)
 	}
@@ -147,7 +147,7 @@ func TestEachRunIsFollowed(t *testing.T) {
 	m.Results["sudo -v"] = effecttest.Result{}
 	m.Results[libexec+" client macos tunnel key"] = effecttest.Result{Out: []byte(keyA + "\n")}
 	m.Results[sessiontest.Op("peer", keyA)] = effecttest.Result{}
-	m.Results[sessiontest.Op("run", "--only", "wireguard")] = log
+	m.Results[sessiontest.Op("run", "--only", "tunnel")] = log
 	if err := tun.Apply(ctx, step.Plan{}); err == nil || !strings.Contains(err.Error(), "lacks the Mac's key") {
 		t.Errorf("Apply = %v; want the stop past the run", err)
 	}

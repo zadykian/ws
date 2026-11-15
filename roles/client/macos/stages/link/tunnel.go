@@ -17,7 +17,7 @@ import (
 
 // Tunnel is the stage of the keys' exchange of the WireGuard tunnel between the Mac and ws. The
 // Mac's key goes to wg0's mac.pub on ws, where wg0 takes it as its peer, and ws server ubuntu apply
-// --only wireguard runs there. Both go through the remote script over its direct way, as a change
+// --only tunnel runs there. Both go through the remote script over its direct way, as a change
 // of wg0's peers ends the tunnel's sessions. Then the server file's WS_PUBLIC_KEY follows wg0's key, and
 // ws client macos apply runs again, which loads ws-tunnel. Last, ws-tunnel must show a handshake,
 // and ssh ws log in through it. Without a handshake, the closing list says so, and the run goes on.
@@ -81,7 +81,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 		ch = append(ch, tunnelChange("write the Mac's key, "+mac+", to /etc/wireguard/mac.pub on "+t.SSH.Host))
 	}
 	if s.MacKey != mac || !s.Peered {
-		ch = append(ch, tunnelChange("run ws server ubuntu apply --only wireguard on "+t.SSH.Host+", for wg0's peer"))
+		ch = append(ch, tunnelChange("run ws server ubuntu apply --only tunnel on "+t.SSH.Host+", for wg0's peer"))
 	}
 	switch wg0 := s.WgKey; {
 	case wg0 == "":

@@ -1,4 +1,4 @@
-// Package settings refuses the values the wireguard role cannot use.
+// Package settings refuses the values the tunnel role cannot use.
 package settings
 
 import (

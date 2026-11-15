@@ -40,7 +40,7 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out, ra
 	return []step.Step{
 		resource.Group{Title: settingsStep, Parts: []resource.Resource{settings.Check{W: v.Tunnel}}},
 		// networkd, its directory /etc/systemd/network and its group systemd-network come with
-		// systemd, which a container may lack, so that --only wireguard stands alone. iptables
+		// systemd, which a container may lack, so that --only tunnel stands alone. iptables
 		// holds the containers' drops. wireguard-tools' recommends serve wg-quick, which the role
 		// doesn't use.
 		resource.Group{Title: packagesStep, After: settingsStep, Parts: []resource.Resource{

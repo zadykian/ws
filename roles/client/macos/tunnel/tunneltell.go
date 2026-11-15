@@ -92,7 +92,7 @@ func (t *Tunnel) Finish(ctx context.Context) error {
 	_, _ = fmt.Fprintf(t.Text, "The Mac's WireGuard public key is %s\nMake it %s's peer, mac, with a direct way to %s, "+
 		"as ssh %s needs this done first. ADDRESS and PORT are that way:\n\n"+
 		"    %s \"printf '%%s\\n' '%s' | %stee /etc/wireguard/mac.pub >/dev/null\"\n"+
-		"    %s %sws server ubuntu apply --only wireguard\n", public, name, name, name, ssh, public, sudo, ssh, sudo)
+		"    %s %sws server ubuntu apply --only tunnel\n", public, name, name, name, ssh, public, sudo, ssh, sudo)
 	if t.Conf.PublicKey == "" {
 		_, _ = fmt.Fprintf(t.Text, "\nThen set WS_PUBLIC_KEY in ~/.config/ws/servers/NAME/server.conf to %s's key, which that run prints, and run\n"+
 			"ws client macos apply again, which installs the tunnel's daemon.\n", name)

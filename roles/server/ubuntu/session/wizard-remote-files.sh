@@ -8,7 +8,7 @@
 # - link lists ws's wired ports but the uplinks, those that a default route names, a line each. A
 #   line holds the port, its carrier, 1 or 0, or - where the port is down, and its IPv4 addresses,
 #   or -. link PORT names that port in ws's /etc/ws/host_vars.yml as
-#   WS_CABLE_PORT, the port of the Mac's cable, which the cable and wireguard
+#   WS_CABLE_PORT, the port of the Mac's cable, which the cable and tunnel
 #   roles read.
 # - user NAME names NAME in that file as WS_USER, for ws server ubuntu apply.
 # - peer KEY writes KEY, the Mac's WireGuard key, to mac.pub where that holds another.
@@ -115,7 +115,7 @@ user() {
 }
 
 # peer KEY writes KEY, a WireGuard public key, to mac.pub, which wg0's peer mac takes at the
-# wireguard role's next run, where mac.pub holds another. Its directory is root's alone, as
+# tunnel role's next run, where mac.pub holds another. Its directory is root's alone, as
 # wireguard-tools makes it.
 peer() {
     printf '%s\n' "$1" | grep -qxE '[A-Za-z0-9+/]{43}=' && [ "${#1}" = 44 ] ||
