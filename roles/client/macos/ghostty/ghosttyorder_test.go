@@ -38,8 +38,8 @@ func TestGhosttyPlansAndAppliesInOrder(t *testing.T) {
 		"would run brew install --cask ghostty",
 		"would run brew install --cask font-jetbrains-mono-nerd-font",
 	}
-	if len(heads) != 5 || !slices.Equal(heads[:2], want) {
-		t.Fatalf("headlines %q; want the casks first, then three files", heads)
+	if len(heads) != 6 || !slices.Equal(heads[:2], want) {
+		t.Fatalf("headlines %q; want the casks first, then four changes", heads)
 	}
 	if err := s.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
@@ -57,7 +57,7 @@ func TestGhosttyReportsInOrder(t *testing.T) {
 	for _, it := range items {
 		names = append(names, it.Name)
 	}
-	want := []string{"ghostty", "font-jetbrains-mono-nerd-font", ghosttyDir, ghosttyDir + "/ws.ghostty", ghosttyDir + "/config.ghostty"}
+	want := []string{"ghostty", "font-jetbrains-mono-nerd-font", "/etc/ws", "/etc/ws/ghostty", ghosttyDir, ghosttyDir + "/config.ghostty"}
 	if err != nil || !slices.Equal(names, want) {
 		t.Errorf("items %q, %v; want %q", names, err, want)
 	}

@@ -25,7 +25,7 @@ func (g *Ghostty) parts(context.Context) ([]resource.Resource, error) {
 	return []resource.Resource{app, app.Then(b.FontResource(g.Home)), app.Then(ghosttyFiles{g})}, nil
 }
 
-// ghosttyFiles is ws.ghostty and the line that reads it.
+// ghosttyFiles is /etc/ws/ghostty and the line that reads it.
 type ghosttyFiles struct{ g *Ghostty }
 
 // Plan returns the changes of the files, which warn where they can't be planned.
@@ -34,10 +34,13 @@ func (f ghosttyFiles) Plan(ctx context.Context) ([]resource.Change, error) {
 	return resource.Planned{Changes: changes, Err: err}.Plan(ctx)
 }
 
-// Report says how ws.ghostty and the line that reads it stand. A config that is a link lacking the
+// Report says how /etc/ws/ghostty and the line that reads it stand. A config that is a link lacking the
 // line stands against ws: a run only warns of it.
 func (f ghosttyFiles) Report(ctx context.Context) ([]step.Item, error) {
 	config := f.g.conf()
-	wsFile := f.g.file(config)
-	return file.Gather(ctx, f.g.dirs(config), wsFile, f.g.configLines(config, wsFile.Path))
+	var parts []step.Reporter
+	for _, part := range f.g.settings() {
+		parts = append(parts, part)
+	}
+	return file.Gather(ctx, append(parts, f.g.dirs(config), f.g.configLines(config))...)
 }

@@ -3,6 +3,7 @@ package ghostty
 import (
 	"context"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -13,34 +14,40 @@ import (
 )
 
 func fileChanges(t *testing.T, m *effecttest.Machine, holds bool) []step.Change {
-	g := &Ghostty{M: m, Out: &effecttest.Out{}}
-	dir := "/h/.config/ghostty"
-	ws, err := resource.Append(context.Background(), nil, file.UserFile{M: m, Path: dir + "/ws.ghostty", Text: []byte("new\n"), Mode: 0o644})
-	if err != nil {
-		t.Fatal(err)
+	g := &Ghostty{M: m, Out: &effecttest.Out{}, Settings: []byte("new\n")}
+	var settings []step.Change
+	for _, part := range g.settings() {
+		var err error
+		if settings, err = resource.Append(context.Background(), settings, part); err != nil {
+			t.Fatal(err)
+		}
 	}
 	var lines []step.Change
 	if !holds {
-		lines = []step.Change{file.UserWrite{Path: dir + "/config"}}
+		lines = []step.Change{file.UserWrite{Path: "/h/.config/ghostty/config"}}
 	}
-	return g.fileChanges(ws, nil, file.UserDirLink{}, holds, lines, nil)
+	return g.fileChanges(settings, nil, file.UserDirLink{}, holds, lines, nil)
 }
 
-func TestGhosttyFileChangesWriteBothFiles(t *testing.T) {
+func TestGhosttyFileChangesMakeRootsDirectoryThenWriteBothFiles(t *testing.T) {
 	cs := fileChanges(t, effecttest.NewMachine(), false)
-	if _, ok := cs[0].(file.UserWrite); len(cs) != 2 || !ok {
-		t.Errorf("changes = %v; want two files", cs)
+	heads := []string{}
+	for _, c := range cs {
+		heads = append(heads, strings.SplitN(step.Headline(c), "\n", 2)[0])
+	}
+	want := []string{"create directory /etc/ws, owner 0:0, mode 755", "create /etc/ws/ghostty"}
+	if len(heads) != 3 || !slices.Equal(heads[:2], want) {
+		t.Errorf("headlines %q; want %q", heads, want)
 	}
 }
 
-func TestGhosttyFileChangesSetTheModeOfAFileThatMatches(t *testing.T) {
+func TestGhosttyFileChangesPlanNothingForAFileThatMatches(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Dirs["/h/.config/ghostty"] = 0o755
-	m.Files["/h/.config/ghostty/ws.ghostty"] = []byte("new\n")
-	m.Modes["/h/.config/ghostty/ws.ghostty"] = 0o600
-	cs := fileChanges(t, m, true)
-	if len(cs) != 1 || !slices.ContainsFunc(cs, func(c step.Change) bool { _, ok := c.(file.UserChmod); return ok }) {
-		t.Errorf("changes = %v; want the mode alone", cs)
+	m.Dirs["/etc/ws"] = 0o755
+	g := &Ghostty{M: m, Out: &effecttest.Out{}, Settings: []byte("new\n")}
+	m.Files["/etc/ws/ghostty"] = g.want()
+	if cs := fileChanges(t, m, true); len(cs) != 0 {
+		t.Errorf("changes = %v; want none", cs)
 	}
 }
 
@@ -49,7 +56,7 @@ func TestGhosttyKeepsTheOldConfigAsTheTimeStamped(t *testing.T) {
 	m.Files["/h/.config/ghostty/config"] = []byte("theme = x\n")
 	out := &effecttest.Out{}
 	g := &Ghostty{M: m, Out: out, Home: "/h", Now: func() time.Time { return time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC) }}
-	cs, err := g.configLines("/h/.config/ghostty/config", "/h/.config/ghostty/ws.ghostty").Plan(t.Context())
+	cs, err := g.configLines("/h/.config/ghostty/config").Plan(t.Context())
 	want := file.UserBackup{M: m, Out: out, Path: "/h/.config/ghostty/config", To: "/h/.config/ghostty/config.20260102030405~"}
 	if err != nil || len(cs) != 2 || cs[0] != step.Change(want) {
 		t.Errorf("changes = %v, %v; want %v first", cs, err, want)

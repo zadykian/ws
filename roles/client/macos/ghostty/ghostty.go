@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -14,23 +13,26 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/brew"
+	"github.com/zadykian/ws/roles/internal/etcws"
 )
 
 const (
-	// ghosttyHeader starts ws.ghostty's first line, by which a run knows a file for its own.
+	// ghosttyHeader starts the first line of ws's settings, which says that a run replaces them.
 	ghosttyHeader = "# Written by ws client macos apply"
-	// ghosttyLine is the line of Ghostty's config that reads ws.ghostty.
-	ghosttyLine = "config-file = ?ws.ghostty"
+	// settingsFile is ws's settings, root's, which Ghostty's config reads.
+	settingsFile = etcws.Dir + "/ghostty"
+	// ghosttyLine is the line of Ghostty's config that reads settingsFile.
+	ghosttyLine = "config-file = ?" + settingsFile
 )
 
 // Ghostty sets up Ghostty, the Mac's terminal. It installs Ghostty and the font its settings name
-// from Homebrew's casks where missing, and writes ws.ghostty, those settings, which Ghostty's
+// from Homebrew's casks where missing, and writes /etc/ws/ghostty, those settings, which Ghostty's
 // config reads. It warns where Ghostty can't be installed, or Ghostty's config is not the step's to
 // change, so that the run goes on to the tunnel. It stops where it can't write a file. Ghostty then
-// updates itself, as ws.ghostty says.
+// updates itself, as /etc/ws/ghostty says.
 type Ghostty struct {
 	Home string
-	// Settings is the text of roles/client/macos/ghostty/files/ws.ghostty.
+	// Settings is the text of roles/client/macos/ghostty/files/ws.ghostty, which /etc/ws/ghostty holds.
 	Settings []byte
 	M        effect.Machine
 	Out      effect.Out
@@ -74,27 +76,25 @@ func (g *Ghostty) conf() string {
 	return found
 }
 
-// files plans ws.ghostty beside Ghostty's config, from roles/client/macos/ghostty/files/ws.ghostty
-// under the header. It plans the line that reads it at the end of that config, once. The old config
-// stays as PATH.TIME~. Ghostty reads a config-file after the file that names it (Config.zig's
-// config-file), so ws.ghostty's settings win over the config's own. It warns, and leaves the config
-// unchanged, where ws.ghostty is not its own, the config can't be read, or the config is a link that
-// lacks the line. It stops where ws.ghostty can't be read.
+// files plans /etc/ws/ghostty, from roles/client/macos/ghostty/files/ws.ghostty under the header, as
+// root's, and replaced whole. It plans the line that reads it at the end of Ghostty's config, once.
+// The old config stays as PATH.TIME~. Ghostty reads a config-file after the file that names it
+// (Config.zig's config-file), so /etc/ws/ghostty's settings win over the config's own. It warns, and
+// leaves the config unchanged, where the config can't be read, or the config is a link that lacks
+// the line.
 func (g *Ghostty) files(ctx context.Context) ([]step.Change, error) {
 	config := g.conf()
-	wsFile := g.file(config)
-	ws, err := resource.Append(ctx, nil, wsFile)
-	switch {
-	case errors.Is(err, file.ErrNotWs):
-		g.Out.Warn("%s is not ws client macos apply's: move it away, as the script writes its own", wsFile.Path)
-		return nil, nil
-	case err != nil:
-		return nil, err
+	var settings []step.Change
+	for _, part := range g.settings() {
+		var err error
+		if settings, err = resource.Append(ctx, settings, part); err != nil {
+			return nil, err
+		}
 	}
-	lines := g.configLines(config, wsFile.Path)
+	lines := g.configLines(config)
 	found, link, holds, err := lines.Read(ctx)
 	if err != nil {
-		g.Out.Warn("cannot read %s, Ghostty's config, so ws.ghostty stays out", config)
+		g.Out.Warn("cannot read %s, Ghostty's config, so %s stays out", config, settingsFile)
 		return nil, nil
 	}
 	changes, stop := lines.Changes(found, link, holds, nil)
@@ -105,7 +105,7 @@ func (g *Ghostty) files(ctx context.Context) ([]step.Change, error) {
 	if err != nil {
 		return nil, err
 	}
-	return g.fileChanges(ws, dirs, dl, holds, changes, stop), nil
+	return g.fileChanges(settings, dirs, dl, holds, changes, stop), nil
 }
 
 // dirs is the directory of Ghostty's config alone. Its parent is ~/Library/Application Support on
@@ -114,18 +114,16 @@ func (g *Ghostty) dirs(config string) file.UserDirs {
 	return file.UserDirs{{M: g.M, Out: g.Out, Path: filepath.Dir(config), Mode: 0o755}}
 }
 
-// file is ws.ghostty, beside Ghostty's config.
-func (g *Ghostty) file(config string) file.UserFile {
-	return file.UserFile{M: g.M, Out: g.Out, Path: filepath.Dir(config) + "/ws.ghostty", Text: g.want(), Mode: 0o644, Own: ghosttyOwn}
+// settings is /etc/ws and ws's settings in it, each saying its change as it applies.
+func (g *Ghostty) settings() []resource.Said {
+	var parts []resource.Said
+	for _, r := range etcws.Files(g.M, settingsFile, g.want()) {
+		parts = append(parts, resource.Said{Out: g.Out, Part: r})
+	}
+	return parts
 }
 
-// ghosttyOwn says whether ws.ghostty's first line is ws's.
-func ghosttyOwn(have []byte) bool {
-	first, _, _ := strings.Cut(string(have), "\n")
-	return strings.HasPrefix(first, ghosttyHeader)
-}
-
-// want is what ws.ghostty holds.
+// want is what /etc/ws/ghostty holds.
 func (g *Ghostty) want() []byte {
 	return append([]byte(ghosttyHeader+": its next run replaces changes made here.\n"), g.Settings...)
 }

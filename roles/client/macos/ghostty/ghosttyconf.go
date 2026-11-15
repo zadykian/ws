@@ -21,18 +21,26 @@ func ghosttyConfigs(home string) []string {
 // line that names file. The line counts with or without the ? and the quotes Ghostty takes, and
 // its path may be relative to conf's directory, under ~/ or full (src/cli/args.zig's
 // LineIterator). A path counts by its directory with links resolved, as Ghostty resolves a
-// relative one (src/config/path.zig). resolve resolves the links of a directory.
+// relative one (src/config/path.zig). resolve resolves the links of a directory. Where file's
+// directory does not resolve, as /etc/ws before the first run, the cleaned paths are compared.
 func ghosttyIncludes(conf, text, file, home string, resolve func(string) (string, error)) bool {
 	want, err := resolve(pathpkg.Dir(file))
-	if err != nil {
-		return false
+	unresolved := err != nil
+	if unresolved {
+		want = pathpkg.Dir(file)
 	}
 	for _, line := range strings.Split(text, "\n") {
 		p, ok := ghosttyConfigFile(line, pathpkg.Dir(conf), home)
 		if !ok || pathpkg.Base(p) != pathpkg.Base(file) {
 			continue
 		}
-		if got, err := resolve(pathpkg.Dir(p)); err == nil && got == want {
+		got := pathpkg.Dir(p)
+		if !unresolved {
+			if got, err = resolve(got); err != nil {
+				continue
+			}
+		}
+		if got == want {
 			return true
 		}
 	}
