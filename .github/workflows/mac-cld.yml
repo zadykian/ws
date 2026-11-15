@@ -114,7 +114,7 @@ jobs:
               ': would run brew install --cask zed$' \
               ': would run brew install --cask font-jetbrains-mono-nerd-font$' \
               ': would install cld into ~/.local/bin ' \
-              ": would add the lines that start cld's watcher to config.d/ws, " \
+              ": would add the lines that start cld's watcher to /etc/ws/ssh_config, " \
               '^+window-save-state = always$' '^+config-file = ?/etc/ws/ghostty$'; do
               grep -q -- "$line" "$RUNNER_TEMP/check.out" ||
                   { echo "::error::ws client macos apply --check showed no line '$line'"; fail=1; }
@@ -282,5 +282,5 @@ jobs:
       - name: The files written
         if: always()
         run: |
-          cat ~/.ssh/config.d/ws || true
+          cat /etc/ws/ssh_config || true
           cat "$HOME/Library/Application Support/com.mitchellh.ghostty/"* || true

@@ -1,10 +1,10 @@
 # shellcheck shell=sh
-# The mac job's checks of the key that ws client macos apply's config.d/ws gives ws.
+# The mac job's checks of the key that ws client macos apply's /etc/ws/ssh_config gives ws.
 # mac-setup-checks.sh sources them before git's, so that they run with its functions and the job's
-# values.yml. They end with config.d/ws as the job's runs wrote it.
+# values.yml. They end with /etc/ws/ssh_config as the job's runs wrote it.
 #
 # shellcheck disable=SC2154 # tmp, conf and the functions are mac-setup-checks.sh's
-ws=$HOME/.ssh/config.d/ws
+ws=/etc/ws/ssh_config
 cp "$ws" "$tmp/ws"
 
 # keyed LINE... checks that ssh -G gives ws LINE..., a line each, of its settings for the key.
@@ -15,15 +15,16 @@ keyed() {
     [ "$got" = "$(printf '%s\n' "$@")" ] || error "ssh -G ws gives '$got', not '$*'"
 }
 
-# changes SED... edits the job's config.d/ws with sed's arguments SED... into the file a run must
-# write. --check must print the diff to it alone, and a second run and --check print nothing.
+# changes SED... edits the job's /etc/ws/ssh_config with sed's arguments SED... into the file a run
+# must write, as root. --check must print the write and its diff alone, and a second run and --check
+# print nothing.
 changes() {
     sed "$@" "$tmp/ws" >"$tmp/want"
-    prints "$(diff -u -L "$ws" -L "$ws" "$ws" "$tmp/want")" --check
-    prints "ws client macos apply: wrote $ws"
+    prints "ws client macos apply: write $ws$nl$(diff -u -L "$ws" -L "$ws" "$ws" "$tmp/want")" --check
+    prints "ws client macos apply: write $ws"
     prints ''
     prints '' --check
-    cmp -s "$ws" "$tmp/want" || error "ws client macos apply wrote another config.d/ws than --check showed"
+    cmp -s "$ws" "$tmp/want" || error "ws client macos apply wrote another /etc/ws/ssh_config than --check showed"
 }
 
 # agented PUB SOCKET: changes, with the file key's lines replaced by those of the agent at SOCKET,
@@ -34,11 +35,11 @@ agented() {
     keyed 'identitiesonly yes' "identityagent $2" "identityfile $1"
 }
 
-# job: with the job's values.yml, a run must give config.d/ws the job's lines again.
+# job: with the job's values.yml, a run must give /etc/ws/ssh_config the job's lines again.
 job() {
     with
-    prints "ws client macos apply: wrote $ws"
-    cmp -s "$ws" "$tmp/ws" || error "ws client macos apply left another config.d/ws than the job's"
+    prints "ws client macos apply: write $ws"
+    cmp -s "$ws" "$tmp/ws" || error "ws client macos apply left another /etc/ws/ssh_config than the job's"
 }
 
 # The job's values.yml names the file key ~/.ssh/id_ed25519, which ws must take by its four lines, in
@@ -47,7 +48,7 @@ keyed 'identitiesonly yes' 'identityfile ~/.ssh/id_ed25519'
 four=$(printf '    %s\n' 'IdentityFile ~/.ssh/id_ed25519' 'IdentitiesOnly yes' 'UseKeychain yes' \
     'AddKeysToAgent yes')
 [ "$(sed -n '/^    IdentityFile /,/^    AddKeysToAgent /p' "$ws")" = "$four" ] ||
-    error "config.d/ws gives the file key other lines than its four, in their order"
+    error "/etc/ws/ssh_config gives the file key other lines than its four, in their order"
 # WS_IDENTITY_PUB_KEY must give ws the file beside the .pub in place of the file key. WS_IDENTITY_AGENT must
 # give it the agent at its socket, by a path with a blank here.
 ssh-keygen -q -t ed25519 -N '' -C ws -f "$tmp/key"
@@ -83,7 +84,7 @@ for line in 'ws-token AAAA' 'ssh-ws stand-in!'; do
     with "WS_IDENTITY_PUB_KEY: $tmp/token.pub"
     stops "ws client macos apply: $tmp/token.pub holds no public key alone"
 done
-# Without them, config.d/ws must be the job's again.
+# Without them, /etc/ws/ssh_config must be the job's again.
 job
 
 # A stand-in for Secretive: ssh-agent at its socket under the runner's HOME, holding a P-256 key.
@@ -167,7 +168,7 @@ prints ''
 with "WS_IDENTITY_PUB_KEY: $sec/PublicKeys/$name"
 prints ''
 chmod 755 "$data/PublicKeys"
-# The job's file key, named beside the agent, must give config.d/ws the job's lines again (sed -n p
+# The job's file key, named beside the agent, must give /etc/ws/ssh_config the job's lines again (sed -n p
 # changes nothing).
 with
 changes -n p
@@ -195,6 +196,6 @@ with "WS_IDENTITY_PUB_KEY: $sec/PublicKeys/ws.pub"
 mldsa="ws client macos apply: $data/PublicKeys/ws.pub holds a key of type ssh-mldsa-65, which ws's OpenSSH lacks"
 stops "$mldsa"
 stops "$mldsa" --check
-# Without Secretive's agent, config.d/ws must be the job's again.
+# Without Secretive's agent, /etc/ws/ssh_config must be the job's again.
 secretive_restore
 job

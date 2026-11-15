@@ -82,7 +82,7 @@ launchctl print system/com.github.zadykian.ws-tunnel.lab >/dev/null 2>&1 || erro
 handshake lab || error "lab's daemon has no handshake with its stand-in"
 [ "$(wc -l <"$lab/tunnel.log")" -eq 1 ] || error "the wizard logged in to lab through the tunnel other than once"
 handshake ws || error "ws's daemon lost its handshake beside lab's"
-grep -qx '    HostName 10.99.1.1' ~/.ssh/config.d/ws || error "the run wrote no Host lab in config.d/ws for the tunnel"
+grep -qx '    HostName 10.99.1.1' /etc/ws/ssh_config || error "the run wrote no Host lab in /etc/ws/ssh_config for the tunnel"
 grep -q '^lab ' ~/.ssh/known_hosts || error "the run added no line for lab's host key to known_hosts"
 conf_print "$conf" | cmp -s - "$RUNNER_TEMP/ws.before" || error "the run for lab changed values.yml or ws's file"
 

@@ -42,7 +42,7 @@ stop="ws client macos wizard: Login: $(id -un) on ws doesn't log in by the Mac's
 if [ "$status" != 1 ] || ! grep -qF "$stop" "$RUNNER_TEMP/stop.err"; then
     error "ws client macos wizard exited $status, or did not stop at Login, where the user takes no key"
 fi
-for each in /usr/local/libexec/ws-tunnel/ws /etc/ws/tunnel/private.key ~/.ssh/config.d/ws; do
+for each in /usr/local/libexec/ws-tunnel/ws /etc/ws/tunnel/private.key /etc/ws/ssh_config; do
     sudo test -f "$each" || error "ws client macos wizard made no $each"
 done
 added="ssh-key add $HOME/.ssh/id_ed25519.pub --title $(hostname -s)"

@@ -123,6 +123,6 @@ sudo sed -i '' -e '/^WS_SECURITY_OUTBOUND:/d' -e '/^WS_TUNNEL_PORT:/d' \
 sudo rm -f "$RUNNER_TEMP/ws/values.log"
 rm -r "$RUNNER_TEMP/confs/cloud"
 "$wsbin" client macos wizard </dev/null || error "ws client macos wizard with the Mac's own values.yml exited $?"
-grep -qx '    HostName 10.99.0.1' ~/.ssh/config.d/ws || error 'ws client macos wizard wrote no config.d/ws for the tunnel'
+grep -qx '    HostName 10.99.0.1' /etc/ws/ssh_config || error 'ws client macos wizard wrote no /etc/ws/ssh_config for the tunnel'
 rm -f "$RUNNER_TEMP/hosts" "$RUNNER_TEMP/hosts.without" "${none%/*}" "${conf%/*}" "$RUNNER_TEMP/ssh.config"
 exit "$fail"

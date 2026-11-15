@@ -36,7 +36,7 @@ status=$?
 printf '%s\n' "$out"
 [ "$status" = 0 ] || error "ws client macos wizard --check exited $status"
 ! printf '%s\n' "$out" | grep -q ': after Homebrew$' || error "ws client macos wizard --check found no brew"
-printf '%s\n' "$out" | grep -qx '+Include config.d/ws' ||
+printf '%s\n' "$out" | grep -qx '+Include /etc/ws/ssh_config' ||
     error "ws client macos wizard --check showed no Include for ~/.ssh/config"
 printf '%s\n' "$out" | grep -q '^ws client macos wizard: gh on the Mac: would run gh ssh-key add ' ||
     error "ws client macos wizard --check showed no key it would add to gh's login"

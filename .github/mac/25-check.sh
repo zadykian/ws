@@ -35,7 +35,7 @@ grep -q ': would run brew install --cask zed$' "$RUNNER_TEMP/check.out" ||
         echo "::error::ws client macos apply --check showed no brew install of Zed's cask"
         fail=1
     }
-grep -q '^+Include config.d/ws$' "$RUNNER_TEMP/check.out" ||
+grep -q '^+Include /etc/ws/ssh_config$' "$RUNNER_TEMP/check.out" ||
     {
         echo "::error::ws client macos apply --check showed no Include for ~/.ssh/config"
         fail=1

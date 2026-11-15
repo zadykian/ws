@@ -38,7 +38,7 @@ keys() {
 # files prints the Mac's own values.yml and ssh's files.
 files() {
     conf_print /etc/ws/values.yml
-    cat ~/.ssh/config ~/.ssh/config.d/ws ~/.ssh/id_ed25519.pub
+    cat ~/.ssh/config /etc/ws/ssh_config ~/.ssh/id_ed25519.pub
 }
 
 if [ -e "$container" ]; then
@@ -100,7 +100,7 @@ for args in '' --check; do
     keys ${args:+"$args"}
     [ "$status" = 1 ] && [ "$mac" = "$want" ] ||
         error "ws client macos wizard${args:+ $args} exited $status, with '$mac', not '$want'"
-    ! printf '%s\n' "$out" | grep -qE '^ws client macos wizard: (ws client macos apply: would apply|wrote [^ ]*/\.ssh/config\.d/ws|ran launchctl |made the Mac.s WireGuard key)' || error "ws client macos wizard${args:+ $args} ran ws client macos apply"
+    ! printf '%s\n' "$out" | grep -qE '^ws client macos wizard: (ws client macos apply: would apply|(create|write) /etc/ws/ssh_config|ran launchctl |made the Mac.s WireGuard key)' || error "ws client macos wizard${args:+ $args} ran ws client macos apply"
 done
 conf_print "$conf" | cmp -s - "$RUNNER_TEMP/agent.conf.before" || error "ws client macos wizard changed $conf"
 files | cmp -s - "$RUNNER_TEMP/agent.files" || error "ws client macos wizard changed the Mac's own files"

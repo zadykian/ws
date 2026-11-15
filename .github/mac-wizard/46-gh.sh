@@ -34,7 +34,7 @@ expect() {
     printf '%s\n' "$out"
     printf '%s\n' "$out" | grep '^ws client macos wizard: gh on the Mac: ' | grep -qF -e "$want" &&
         [ "$status" = "$want_status" ] || error "ws client macos wizard $* exited $status, with no '$want'"
-    ! printf '%s\n' "$out" | grep -qE '^ws client macos wizard: (ws client macos apply: would apply|wrote [^ ]*/\.ssh/config\.d/ws|ran launchctl |made the Mac.s WireGuard key)' || error "ws client macos wizard $* ran ws client macos apply"
+    ! printf '%s\n' "$out" | grep -qE '^ws client macos wizard: (ws client macos apply: would apply|(create|write) /etc/ws/ssh_config|ran launchctl |made the Mac.s WireGuard key)' || error "ws client macos wizard $* ran ws client macos apply"
     cmp -s "$state/keys" "$RUNNER_TEMP/gh.keys" || error "ws client macos wizard $* changed the login's keys"
 }
 
