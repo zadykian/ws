@@ -247,3 +247,14 @@ func TestHomeDirFixesAWrongModeAndOwner(t *testing.T) {
 		t.Errorf("Apply = %v, mode %o", err, m.Dirs["/home/ws/.ssh"])
 	}
 }
+
+func TestLinesSetsTheMachinePathOwnerAndHome(t *testing.T) {
+	m := effecttest.NewMachine()
+	a := account.Account{User: ws, UID: 1000, GID: 1001}
+	got := a.Lines(m, ".bashrc", file.UserLines{Lines: "x\n", Shown: "x", Top: true, Mode: 0o644})
+	r := got.Rules
+	if r.M != m || r.Path != "/home/ws/.bashrc" || r.Lines != "x\n" || !r.Top || r.Mode != 0o644 ||
+		got.UID != 1000 || got.GID != 1001 || got.Home != "/home/ws" {
+		t.Errorf("Lines = %+v", got)
+	}
+}

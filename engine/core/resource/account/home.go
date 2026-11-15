@@ -41,3 +41,11 @@ func (a Account) Dir(m effect.Machine, rel string, mode fs.FileMode) file.Dir {
 func (a Account) Absent(m effect.Machine, rel string) file.Absent {
 	return file.Absent{M: m, Path: a.Home + "/" + rel, Home: a.Home}
 }
+
+// Lines is ws's lines in the file at rel below the account's home, by l's rules. l gives Lines,
+// Shown, Name, Top, Mode, Has and Now. Lines sets the machine, the path, the owner and the home.
+// It refuses any link at the file or on the way, as File does.
+func (a Account) Lines(m effect.Machine, rel string, l file.UserLines) file.HomeLines {
+	l.M, l.Path = m, a.Home+"/"+rel
+	return file.HomeLines{Rules: l, UID: a.UID, GID: a.GID, Home: a.Home}
+}

@@ -75,7 +75,8 @@ _Avoid_: dotfile
 **User's lines**: ws's lines in a user's file that holds other text too, such as `Include
 /etc/ws/ssh_config` at the top of `~/.ssh/config`. A run adds them once, at the top or the end, and
 keeps the old file as `PATH.TIME~`. At a link that lacks them, or lines out of place, the step warns
-or stops. Core's `file.UserLines` hold them. _Avoid_: include line
+or stops. Core's `file.UserLines` hold them on the Mac, and `file.HomeLines`, read and written as
+root, on ws. _Avoid_: include line
 
 **server's name**:
 What `--server` takes, and the directory `servers/NAME/` of the server's file: a lower-case letter,

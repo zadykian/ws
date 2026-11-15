@@ -13,10 +13,10 @@ import (
 )
 
 // HomeLines is ws's lines in a file of the account's home that holds other text too, by
-// UserLines' rules, read and written as root as File is. The user owns the home, so a link at the
-// file or on the way is refused, even where the file holds the lines: root follows none.
+// UserLines' rules, read and written as root as File is. The user owns the home, so root refuses a
+// link at the file or on the way, even where the file holds the lines.
 type HomeLines struct {
-	// Rules gives M, Path, Lines, Shown, Name, Top, Mode (a new file's), Has and Now. It is a field,
+	// Rules gives M, Path, Lines, Shown, Name, Top, Mode (a new file's), Has and Now. It stays a field,
 	// not embedded, so that UserLines' Read and Changes, which act as the user, stay out.
 	Rules UserLines
 	// UID and GID own a new file. An existing file keeps its owner and mode.
@@ -110,8 +110,8 @@ func (k homeKeep) Apply(context.Context) error {
 	return k.M.WriteAtomic(k.To, text, a)
 }
 
-// homeWrite is File's write of the file with ws's lines, which a report shows as ws's lines alone:
-// the rest of the file is the user's, and may hold a secret.
+// homeWrite is File's write of the file with ws's lines. A report shows ws's lines alone, as the
+// rest of the file is the user's and may hold a secret.
 type homeWrite struct{ writeFile }
 
 // String is the write's title and what ws adds, as the dry run shows no other line of the file.
