@@ -4,14 +4,14 @@ import (
 	"context"
 
 	"github.com/zadykian/ws/engine/core/wizard"
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // owner returns the name of the other server whose file names a cable's service, or an empty
 // string. A Mac has one cable, so that server keeps it. This server's file gets an empty
-// WS_CABLE_SERVICE then, which conf.Load's cable clash lets by.
+// WS_CABLE_SERVICE then, which values.Load's cable clash lets by.
 func (c *Cable) owner() string {
-	others, _ := conf.Siblings(c.M, c.Mac, conf.ServerPath(c.Mac, c.Server))
+	others, _ := values.Siblings(c.M, c.Mac, values.ServerPath(c.Mac, c.Server))
 	for _, o := range others {
 		if o.Conf.CableService != "" {
 			return o.Name

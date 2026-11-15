@@ -7,13 +7,13 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // file is the server's file.
-func (c *Cable) file() conf.File {
-	return conf.File{Path: c.Conf, Scope: conf.ServerFile, Stage: stage.Cable, M: c.M, Out: c.Out}
+func (c *Cable) file() values.File {
+	return values.File{Path: c.Conf, Scope: values.ServerFile, Stage: stage.Cable, M: c.M, Out: c.Out}
 }
 
 // Apply takes ws's port of the cable, where none holds ws's end, from WS_CABLE_PORT or the
@@ -23,7 +23,7 @@ func (c *Cable) file() conf.File {
 // answer, writes an empty WS_CABLE_SERVICE. Where the server's file has a service, again takes the stage's
 // steps.
 func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
-	cf, err := conf.Read(c.M, c.Conf)
+	cf, err := values.Read(c.M, c.Conf)
 	if err != nil {
 		return err
 	}

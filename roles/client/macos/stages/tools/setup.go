@@ -9,9 +9,9 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/keys"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // Setup is the stage that has ws client macos apply set up the Mac from mac.conf, after sudo's
@@ -85,7 +85,7 @@ func (s *Setup) unnamed() bool {
 	if err != nil {
 		return false
 	}
-	c, errs := conf.Lines(string(text))
+	c, errs := values.Lines(string(text))
 	return len(errs) == 0 && keys.Asked(c)
 }
 

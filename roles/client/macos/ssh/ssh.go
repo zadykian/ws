@@ -8,8 +8,8 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -18,7 +18,7 @@ import (
 // where the key that ssh offers ws is wrong, and where ssh refuses the new file, alone or as ssh
 // reads it whole.
 type SSH struct {
-	Conf conf.Conf
+	Conf values.Conf
 	// Server is the name of the server that the run acts for.
 	Server string
 	// MacConf is mac.conf's path, whose servers/ holds the other servers' files.

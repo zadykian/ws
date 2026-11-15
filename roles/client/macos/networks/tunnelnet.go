@@ -24,7 +24,7 @@ type resolver struct {
 	Addresses []string
 }
 
-// resolvers splits WS_RESOLVERS, which conf checked.
+// resolvers splits WS_RESOLVERS, which values checked.
 func resolvers(list string) []resolver {
 	var rs []resolver
 	for _, pair := range strings.Fields(list) {

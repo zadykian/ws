@@ -15,8 +15,8 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // tunnelLibexec holds root's copy of ws, which the daemon runs. The user owns ~/.local/bin, so a
@@ -28,7 +28,7 @@ const tunnelLibexec = "/usr/local/libexec/ws-tunnel"
 // WireGuard key. With WS_PUBLIC_KEY, it also sets up tunnel.conf and the LaunchDaemon that runs `ws
 // client macos tunnel run`. Without WS_PUBLIC_KEY, ws's key, it installs no daemon yet.
 type Tunnel struct {
-	Conf conf.Conf
+	Conf values.Conf
 	// Server is the name of the server whose daemon this is.
 	Server string
 	// MacConf is mac.conf's path, beside which the servers' directories are.

@@ -9,7 +9,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -30,7 +30,7 @@ var keyUses = [...]struct{ name, words, page string }{
 }
 
 // named returns the .pub that mac.conf names for the use, and the agent it names for it.
-func (u KeyUse) named(c conf.Conf) (pub, agent string) {
+func (u KeyUse) named(c values.Conf) (pub, agent string) {
 	if u == SigningKey {
 		return c.GitSigningPubKey, ""
 	}
@@ -65,7 +65,7 @@ type NamedKey struct {
 // ReadKey reads the key that mac.conf names for u. It asks Secretive's agent where mac.conf names
 // none, or names one of Secretive's. That key needs no file: macOS 27 denies ws Secretive's
 // (roles/client/macos/README.md). Each stop names u's variable, and the missing one u's page.
-func ReadKey(ctx context.Context, m effect.Machine, c conf.Conf, home string, u KeyUse) (NamedKey, error) {
+func ReadKey(ctx context.Context, m effect.Machine, c values.Conf, home string, u KeyUse) (NamedKey, error) {
 	name := keyUses[u].name
 	pub, agent := u.named(c)
 	// An agent that does not answer leaves a named .pub to read, and a stop with no line to add.

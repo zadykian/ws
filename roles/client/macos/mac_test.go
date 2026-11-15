@@ -11,9 +11,9 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/networks"
 	"github.com/zadykian/ws/roles/client/macos/tunnel"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 func TestNamesComeInSetupShsOrder(t *testing.T) {
@@ -22,7 +22,7 @@ func TestNamesComeInSetupShsOrder(t *testing.T) {
 		t.Errorf("Names = %q; want %q", got, want)
 	}
 	var got []string
-	for _, s := range (macos.Mac{Conf: conf.Conf{}, Home: "/h"}).Rows(macos.Options{Options: step.Options{Check: true}}) {
+	for _, s := range (macos.Mac{Conf: values.Conf{}, Home: "/h"}).Rows(macos.Options{Options: step.Options{Check: true}}) {
 		got = append(got, s.Name())
 	}
 	if !slices.Equal(got, want) {
@@ -94,7 +94,7 @@ func TestMacCldTakesTheCheck(t *testing.T) {
 func TestMacStateReadsUnderACheck(t *testing.T) {
 	m := effecttest.NewMachine()
 	var text bytes.Buffer
-	mac := macos.Mac{Conf: conf.Conf{User: "ada"}, Home: "/h", M: m, Out: &effecttest.Out{}, Text: &text}
+	mac := macos.Mac{Conf: values.Conf{User: "ada"}, Home: "/h", M: m, Out: &effecttest.Out{}, Text: &text}
 	reports, err := mac.State(t.Context())
 	if err != nil {
 		t.Fatalf("State: %v", err)

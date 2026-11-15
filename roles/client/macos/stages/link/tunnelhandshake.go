@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/zadykian/ws/engine/core/remote"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	"strings"
 	"time"
 )
@@ -17,7 +17,7 @@ import (
 // The Mac's new peer reaches ws by a restart, so that it handshakes at once. Without a
 // handshake, it adds the tunnel to the closing list, and the run goes on, as the later stages reach
 // ws by a direct way, outside the tunnel.
-func (t *Tunnel) handshake(ctx context.Context, c conf.Conf, kick bool) error {
+func (t *Tunnel) handshake(ctx context.Context, c values.Conf, kick bool) error {
 	end, mac := c.TunnelSlot().Server(), c.TunnelSlot().Mac()
 	if first := t.SSH.First(); first != "" {
 		once := "server.conf's way leads to " + t.SSH.Host

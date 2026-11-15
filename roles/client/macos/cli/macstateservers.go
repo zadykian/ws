@@ -3,13 +3,13 @@ package cli
 import (
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // serverConf is a server's name and its settings, or the refusal of its file.
 type serverConf struct {
 	Name string
-	Conf conf.Conf
+	Conf values.Conf
 	Err  error
 }
 
@@ -18,7 +18,7 @@ type serverConf struct {
 func refusedReport(sc serverConf) step.Report {
 	return step.Report{Step: "server.conf", Items: []step.Item{{
 		Kind: step.CheckItem, Name: sc.Name, Want: "a file ws accepts", Found: sc.Err.Error(),
-		Conflict: conf.BadFileHint(sc.Name),
+		Conflict: values.BadFileHint(sc.Name),
 	}}}
 }
 
@@ -27,14 +27,14 @@ func refusedReport(sc serverConf) step.Report {
 // refused carries the refusal in Err. Otherwise it returns the one that loadMacConf picks.
 func stateConfs(p enginecli.Env, server *string) (confs []serverConf, grouped bool, err error) {
 	if *server == "" && p.Euid != 0 {
-		mac := conf.Path(p.Getenv, p.Pwd)
-		names, err := conf.Servers(p.Machine, mac)
+		mac := values.Path(p.Getenv, p.Pwd)
+		names, err := values.Servers(p.Machine, mac)
 		if err != nil {
 			return nil, false, err
 		}
 		if len(names) > 1 {
 			for _, n := range names {
-				c, err := conf.Load(p.Machine, mac, conf.ServerPath(mac, n))
+				c, err := values.Load(p.Machine, mac, values.ServerPath(mac, n))
 				confs = append(confs, serverConf{n, c, err})
 			}
 			return confs, true, nil

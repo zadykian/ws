@@ -9,7 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 func newAsker(p effect.Prompt, env map[string]string) (*asker, *effecttest.Out) {
@@ -20,10 +20,10 @@ func newAsker(p effect.Prompt, env map[string]string) (*asker, *effecttest.Out) 
 
 func TestAskerTakesTheEnvironmentFirst(t *testing.T) {
 	a, out := newAsker(&effecttest.Prompt{T: t}, map[string]string{"WS_REMOTE": "r.example", "WS_RESOLVERS": ""})
-	if v, err := a.ask(context.Background(), conf.Question{Key: "WS_REMOTE"}); v != "r.example" || err != nil {
+	if v, err := a.ask(context.Background(), values.Question{Key: "WS_REMOTE"}); v != "r.example" || err != nil {
 		t.Errorf("ask = %q, %v", v, err)
 	}
-	if v, err := a.ask(context.Background(), conf.Question{Key: "WS_RESOLVERS"}); v != "" || err != nil || len(out.Lines) != 0 {
+	if v, err := a.ask(context.Background(), values.Question{Key: "WS_RESOLVERS"}); v != "" || err != nil || len(out.Lines) != 0 {
 		t.Errorf("an empty value set: ask = %q, %v, out %v", v, err, out.Lines)
 	}
 	if a.lines != "WS_REMOTE=r.example\nWS_RESOLVERS=\n" {
@@ -33,7 +33,7 @@ func TestAskerTakesTheEnvironmentFirst(t *testing.T) {
 
 func TestAskerRefusesABadEnvironment(t *testing.T) {
 	a, out := newAsker(&effecttest.Prompt{T: t}, map[string]string{"WS_REMOTE_PORT": "99999"})
-	_, err := a.ask(context.Background(), conf.Question{Key: "WS_REMOTE_PORT"})
+	_, err := a.ask(context.Background(), values.Question{Key: "WS_REMOTE_PORT"})
 	if err == nil || !strings.Contains(err.Error(), "WS_REMOTE_PORT comes from the environment") ||
 		len(out.Lines) != 1 || !strings.Contains(out.Lines[0], "is not a port") {
 		t.Errorf("ask = %v, out %v", err, out.Lines)
@@ -44,7 +44,7 @@ func TestAskerAsksTheMaintainerAgain(t *testing.T) {
 	var w bytes.Buffer
 	term := effect.NewTerminal(strings.NewReader("99999\n\n"), &w)
 	a, out := newAsker(term, nil)
-	q := conf.Question{Key: "WS_REMOTE_PORT", Text: "The VM's SSH port", Def: "22", Need: "needs a port"}
+	q := values.Question{Key: "WS_REMOTE_PORT", Text: "The VM's SSH port", Def: "22", Need: "needs a port"}
 	if v, err := a.ask(context.Background(), q); v != "22" || err != nil {
 		t.Fatalf("ask = %q, %v", v, err)
 	}
@@ -61,7 +61,7 @@ func TestAskerAsksTheMaintainerAgain(t *testing.T) {
 func TestAskerRefusesWithoutATerminal(t *testing.T) {
 	a, out := newAsker(&effecttest.Prompt{T: t}, nil)
 	a.tty = false
-	_, err := a.ask(context.Background(), conf.Question{Key: "WS_TARGET"})
+	_, err := a.ask(context.Background(), values.Question{Key: "WS_TARGET"})
 	if err == nil || err.Error() != "Answers: no terminal to ask WS_TARGET: set WS_TARGET" || len(out.Lines) != 0 {
 		t.Errorf("ask with no terminal = %v, saying %q", err, out.Lines)
 	}
@@ -82,7 +82,7 @@ func (c *chooser) Choose(_ context.Context, q effect.ChoiceQuestion) (string, er
 func TestAskerChoosesTheTargetOnAScreen(t *testing.T) {
 	c := &chooser{Prompt: &effecttest.Prompt{T: t}, answer: "mac-vm"}
 	a, _ := newAsker(c, nil)
-	q := conf.Question{Key: "WS_TARGET", Text: "The machine ws runs on", Def: "lan", Need: "needs"}
+	q := values.Question{Key: "WS_TARGET", Text: "The machine ws runs on", Def: "lan", Need: "needs"}
 	if v, err := a.ask(context.Background(), q); v != "mac-vm" || err != nil || a.lines != "WS_TARGET=mac-vm\n" {
 		t.Fatalf("ask = %q, %v, lines %q", v, err, a.lines)
 	}
@@ -96,7 +96,7 @@ func TestAskerChoosesTheTargetOnAScreen(t *testing.T) {
 func TestAskerAsksALineOfAKeyWithNoOptions(t *testing.T) {
 	c := &chooser{Prompt: &effecttest.Prompt{T: t, Answers: map[string]string{"The VM's SSH port (WS_REMOTE_PORT) [22]": ""}}}
 	a, _ := newAsker(c, nil)
-	q := conf.Question{Key: "WS_REMOTE_PORT", Text: "The VM's SSH port", Def: "22", Need: "needs a port"}
+	q := values.Question{Key: "WS_REMOTE_PORT", Text: "The VM's SSH port", Def: "22", Need: "needs a port"}
 	if v, err := a.ask(context.Background(), q); v != "22" || err != nil || len(c.asked) != 0 {
 		t.Errorf("ask = %q, %v, choices %+v", v, err, c.asked)
 	}

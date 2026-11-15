@@ -10,9 +10,9 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // Tunnel is the stage of the keys' exchange of the WireGuard tunnel between the Mac and ws. The
@@ -61,7 +61,7 @@ func (c tunnelChange) String() string { return stage.Tunnel + ": would " + strin
 // through it. Where the run asked ws's address, ws isn't at the ways that ws-tunnel tries. Where
 // the check found no handshake, ws-tunnel has none. A later run checks those two.
 func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
-	c, err := conf.Read(t.M, t.Conf)
+	c, err := values.Read(t.M, t.Conf)
 	if err != nil {
 		return step.Plan{}, err
 	}
@@ -89,7 +89,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 	case wg0 != c.PublicKey:
 		if t.Check {
 			// Under --check the server's file is the scratch file, as for the stages before.
-			if err := (conf.File{Path: t.Conf, Scope: conf.ServerFile, Stage: stage.Tunnel, M: t.M, Out: t.Out}).Show("WS_PUBLIC_KEY", wg0); err != nil {
+			if err := (values.File{Path: t.Conf, Scope: values.ServerFile, Stage: stage.Tunnel, M: t.M, Out: t.Out}).Show("WS_PUBLIC_KEY", wg0); err != nil {
 				return step.Plan{}, err
 			}
 		}

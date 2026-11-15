@@ -9,10 +9,10 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 	"github.com/zadykian/ws/roles/client/macos/stages/tools"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
 )
 
@@ -52,18 +52,18 @@ func macSide(p enginecli.Env, server *string) engine.Side {
 // With none and no flag it returns "", and the wizard asks the name. A flag that names no server
 // sets up a new one, beside the others, if ~/.ssh/config has no Host of its own for the name.
 func wizardServer(p enginecli.Env, flag string) (string, error) {
-	mac := conf.Path(p.Getenv, p.Pwd)
-	name, err := conf.Pick(p.Machine, mac, flag)
+	mac := values.Path(p.Getenv, p.Pwd)
+	name, err := values.Pick(p.Machine, mac, flag)
 	if err == nil {
 		return name, nil
 	}
-	names, listErr := conf.Servers(p.Machine, mac)
+	names, listErr := values.Servers(p.Machine, mac)
 	switch {
 	case listErr != nil:
 		return "", listErr
 	case len(names) == 0 && flag == "":
 		return "", nil
-	case conf.IsName(flag):
+	case values.IsName(flag):
 		if err := freeName(p.Machine, p.Getenv("HOME"), flag); err != nil {
 			return "", err
 		}

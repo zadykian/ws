@@ -9,8 +9,8 @@ import (
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
 )
 
@@ -35,14 +35,14 @@ func macForms(in io.Reader, errw io.Writer, p enginecli.Env, server *string) fun
 		if err != nil {
 			return nil, nil, err
 		}
-		macConf := conf.Path(p.Getenv, p.Pwd)
-		form := conf.Form{Conf: macConf, Server: conf.ServerPath(macConf, name), M: p.Machine}
+		macConf := values.Path(p.Getenv, p.Pwd)
+		form := values.Form{Conf: macConf, Server: values.ServerPath(macConf, name), M: p.Machine}
 		form, err = form.Load(effect.NewTerminal(in, errw))
 		if err != nil {
 			return nil, nil, err
 		}
 		macForm, serverForm := form, form
-		macForm.Scope, serverForm.Scope = conf.MacFile, conf.ServerFile
+		macForm.Scope, serverForm.Scope = values.MacFile, values.ServerFile
 		// One way to root serves both of ws's sheets, so that sudo's password is asked once.
 		vars := &varsReach{p: p, server: name, sudo: &host.Sudo{}}
 		return []tui.Sheet{confSheet("mac.conf", macForm), confSheet("servers/"+name+"/server.conf", serverForm), vars.secretsSheet(), ubuntucli.ValuesSheet(vars.reach)}, vars.close, nil
@@ -50,7 +50,7 @@ func macForms(in io.Reader, errw io.Writer, p enginecli.Env, server *string) fun
 }
 
 // confSheet is one of the two files on the Configure screen, the form's scope, under name.
-func confSheet(name string, form conf.Form) tui.Sheet {
+func confSheet(name string, form values.Form) tui.Sheet {
 	return tui.Sheet{
 		Name:   name,
 		Fields: func(edits map[string]string) []tui.FieldSpec { return enginecli.FieldSpecs(form.Fields(edits)) },

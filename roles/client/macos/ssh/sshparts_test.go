@@ -6,7 +6,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 func partsOf(m *effecttest.Machine) SSH {
@@ -17,7 +17,7 @@ func partsOf(m *effecttest.Machine) SSH {
 	m.Results["ssh -G -F /tmp/x/new ws"] = effecttest.Result{}
 	m.Results["ssh -G -F /tmp/x/whole ws"] = effecttest.Result{}
 	return SSH{
-		Conf: conf.Conf{User: "me", IdentityPubKey: "~/.ssh/id_ed25519.pub"}, Home: "/h", M: m, Out: &effecttest.Out{}}
+		Conf: values.Conf{User: "me", IdentityPubKey: "~/.ssh/id_ed25519.pub"}, Home: "/h", M: m, Out: &effecttest.Out{}}
 }
 
 func TestSSHPartsPlanTheChangesOfAFreshHomeInOrder(t *testing.T) {

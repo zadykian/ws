@@ -14,8 +14,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // cableEnd is ws's end of the cable, given to its port by the cable role. The Mac's service gets
@@ -152,7 +152,7 @@ func (c *Cable) lacks() bool {
 // ws keeps down. It reads ws only where the login reached it in this run. Under --check it says
 // that the stage is after ws's run, where that run has changes to make.
 func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
-	cf, err := conf.Read(c.M, c.Conf)
+	cf, err := values.Read(c.M, c.Conf)
 	if err != nil || cf.Target != "lan" {
 		return step.Plan{}, err
 	}

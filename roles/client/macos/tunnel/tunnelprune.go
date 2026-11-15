@@ -8,21 +8,21 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // gone returns the servers whose daemon has files on the Mac and which no longer have a directory
 // beside mac.conf. It returns none unless mac.conf's servers list this one: that shows the listing
 // is this Mac's own, so a stray WS_CONF removes no live daemon.
 func (t *Tunnel) gone(ctx context.Context) ([]string, error) {
-	servers, err := conf.Servers(t.M, t.MacConf)
+	servers, err := values.Servers(t.M, t.MacConf)
 	if err != nil || !slices.Contains(servers, t.Server) {
 		return nil, err
 	}
 	// Any entry keeps its daemon, with or without a server.conf: one moved aside for an edit, or
 	// behind a link to a volume not mounted, leaves the server there.
-	beside, err := t.M.ReadDir(path.Dir(path.Dir(conf.ServerPath(t.MacConf, t.Server))))
+	beside, err := t.M.ReadDir(path.Dir(path.Dir(values.ServerPath(t.MacConf, t.Server))))
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func (t *Tunnel) gone(ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return slices.DeleteFunc(found, func(n string) bool { return !conf.IsName(n) || slices.Contains(beside, n) }), nil
+	return slices.DeleteFunc(found, func(n string) bool { return !values.IsName(n) || slices.Contains(beside, n) }), nil
 }
 
 // prune plans, for each server that is gone, a bootout where launchd has its daemon loaded, then

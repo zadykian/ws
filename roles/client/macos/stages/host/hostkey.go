@@ -11,8 +11,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // Key is the stage of ws's host key: the ed25519 key that ws offers, matched against ws's
@@ -48,7 +48,7 @@ func (c hostAdd) String() string {
 }
 
 // conf reads mac.conf.
-func (h *Key) conf() (conf.Conf, error) { return conf.Read(h.M, h.Conf) }
+func (h *Key) conf() (values.Conf, error) { return values.Read(h.M, h.Conf) }
 
 // known tells whether known_hosts holds a key under ws. It reads no key of ws's, as ws's sshd counts
 // each connection that doesn't log in against the Mac's address (PerSourcePenalties).
@@ -57,15 +57,15 @@ func (h *Key) known(ctx context.Context, file string) bool {
 }
 
 // noWay is the stop where no way leads to ws, naming what ws's target needs.
-func noWay(server string, c conf.Conf) error {
+func noWay(server string, c values.Conf) error {
 	how := "set those in server.conf"
 	switch c.Target {
 	case "lan":
 		how += " as roles/server/ubuntu/cable/router.md has them"
 	case "mac-vm":
-		how = "start the VM, or set WS_LAN to the Mac's network for it, as roles/client/macos/conf/README.md says"
+		how = "start the VM, or set WS_LAN to the Mac's network for it, as roles/client/macos/values/README.md says"
 	default:
-		how += ", as roles/client/macos/conf/README.md says"
+		how += ", as roles/client/macos/values/README.md says"
 	}
 	return errors.New(stage.Host + ": ssh finds no direct way to " + server + " from this network: no cable, no address in " +
 		"WS_LAN and no WS_REMOTE_PORT; " + how)

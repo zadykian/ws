@@ -11,9 +11,9 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -73,7 +73,7 @@ func option(key sshcfg.AgentKey, login string) string {
 
 // login names the .pub of mac.conf's key for ws's login, where Secretive holds it, for git's
 // question to mark.
-func (k *MacKey) login(c conf.Conf) string {
+func (k *MacKey) login(c values.Conf) string {
 	if pub := sshcfg.Expand(c.IdentityPubKey, k.Home); c.IdentityPubKey != "" && sshcfg.SecretiveKey(pub, k.Home) {
 		return path.Base(pub)
 	}
@@ -119,7 +119,7 @@ func noTerminal(use keyUse, keys []sshcfg.AgentKey) error {
 	var lines []string
 	for _, key := range keys {
 		if key.P256() {
-			lines = append(lines, conf.Line(use.key, key.Pub())+" for "+key.Label())
+			lines = append(lines, values.Line(use.key, key.Pub())+" for "+key.Label())
 		}
 	}
 	if len(lines) == 0 {
@@ -141,9 +141,9 @@ func (k *MacKey) name(ctx context.Context, use keyUse, key sshcfg.AgentKey) erro
 	if err := (resource.Group{}).Apply(ctx, step.Plan{Changes: copied}); err != nil {
 		return err
 	}
-	settings := []conf.Setting{{Key: use.key, Value: key.Pub()}}
+	settings := []values.Setting{{Key: use.key, Value: key.Pub()}}
 	if use == loginUse {
-		settings = append(settings, conf.Setting{Key: "WS_IDENTITY_AGENT", Value: "~/" + sshcfg.SecretiveData + "/socket.ssh"})
+		settings = append(settings, values.Setting{Key: "WS_IDENTITY_AGENT", Value: "~/" + sshcfg.SecretiveData + "/socket.ssh"})
 	}
 	return refused(k.file().SetAll(ctx, settings...))
 }

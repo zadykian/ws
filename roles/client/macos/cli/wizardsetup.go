@@ -9,8 +9,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/tools"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // wizardSetup returns the stage that runs the steps of ws client macos apply in the wizard's
@@ -26,7 +26,7 @@ func wizardSetup(e wizardEffects, left func(parent, name string) bool, mac, show
 	p := e.p
 	s := &tools.Setup{Conf: mac, M: p.Machine}
 	s.Run = func(ctx context.Context, check bool) (bool, error) {
-		c, err := conf.Load(p.Machine, mac, conf.ServerPath(mac, name))
+		c, err := values.Load(p.Machine, mac, values.ServerPath(mac, name))
 		if err != nil {
 			return false, err
 		}

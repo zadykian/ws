@@ -5,7 +5,7 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // Hand adds what stays by hand of ws, the router and the Mac to the list. ws's part comes from the
@@ -13,7 +13,7 @@ import (
 // the list leaves it out. mac.conf has WS_LAN_ADDRESS with WS_LAN alone, so the lease names an
 // address only with a LAN. Off the LAN, away's lines take the router's place.
 func (r MacReach) Hand(h *guided.Hand, s session.Status) {
-	_, c, err := (conf.File{Path: r.Conf, Stage: stages.RunStage, M: r.SSH.M, Out: r.Out}).Load()
+	_, c, err := (values.File{Path: r.Conf, Stage: stages.RunStage, M: r.SSH.M, Out: r.Out}).Load()
 	if err != nil {
 		return
 	}
@@ -45,8 +45,8 @@ func (r MacReach) Hand(h *guided.Hand, s session.Status) {
 
 // away adds what stays by hand of a cloud VM or a VM on the Mac, which have no router. Where the
 // run asked ws's address, mac.conf's way must lead to it. A cloud VM's provider must let the tunnel
-// in (roles/client/macos/conf/README.md).
-func away(h *guided.Hand, c conf.Conf, server, first string) {
+// in (roles/client/macos/values/README.md).
+func away(h *guided.Hand, c values.Conf, server, first string) {
 	target := c.Target
 	way := "WS_LAN_ADDRESS"
 	if target == "cloud" {
@@ -54,10 +54,10 @@ func away(h *guided.Hand, c conf.Conf, server, first string) {
 	}
 	if first != "" {
 		h.Add("%s's address: %s in server.conf must lead to %s, as this run reached it at %s "+
-			"(roles/client/macos/conf/README.md).", server, way, server, first)
+			"(roles/client/macos/values/README.md).", server, way, server, first)
 	}
 	if target == "cloud" {
-		h.Add("The provider's firewall: UDP %s open to %s, for the tunnel (roles/client/macos/conf/README.md).",
+		h.Add("The provider's firewall: UDP %s open to %s, for the tunnel (roles/client/macos/values/README.md).",
 			c.TunnelPort(), server)
 	}
 }

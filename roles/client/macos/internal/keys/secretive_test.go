@@ -10,9 +10,9 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -42,7 +42,7 @@ func TestSecretiveKeys(t *testing.T) {
 func TestReadKeyTakesTheAgentsKeyWithNoFile(t *testing.T) {
 	m := mactest.AgentMachine(effecttest.NewMachine(), mactest.AgentKey)
 	pub := sshcfg.AgentKeys(mactest.AgentKey)[0].Pub()
-	id, err := keys.ReadKey(context.Background(), m, conf.Conf{IdentityPubKey: pub}, mactest.AgentHome, keys.LoginKey)
+	id, err := keys.ReadKey(context.Background(), m, values.Conf{IdentityPubKey: pub}, mactest.AgentHome, keys.LoginKey)
 	if err != nil {
 		t.Fatal(err)
 	}

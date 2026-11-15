@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	enginecli "github.com/zadykian/ws/engine/cli"
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // newConfCmd returns ws client macos conf.
@@ -27,27 +27,27 @@ func newConfCmd(p enginecli.Env, server *string) *cobra.Command {
 
 // runConf prints the settings of FILE, or of the file that the environment names.
 func runConf(c *cobra.Command, p enginecli.Env, server *string, args []string, lines bool) error {
-	file := conf.Path(p.Getenv, p.Pwd)
+	file := values.Path(p.Getenv, p.Pwd)
 	if len(args) == 1 {
 		file = args[0]
 	}
 	if !lines {
-		name, err := conf.Pick(p.Machine, file, *server)
+		name, err := values.Pick(p.Machine, file, *server)
 		if err != nil {
 			return err
 		}
-		settings, err := conf.Load(p.Machine, file, conf.ServerPath(file, name))
+		settings, err := values.Load(p.Machine, file, values.ServerPath(file, name))
 		if err != nil {
 			return err
 		}
 		_, err = io.WriteString(c.OutOrStdout(), settings.Assignments())
 		return err
 	}
-	name, err := conf.Pick(p.Machine, file, *server)
+	name, err := values.Pick(p.Machine, file, *server)
 	if err != nil {
 		return err
 	}
-	settings, err := conf.LoadLines(p.Machine, file, conf.ServerPath(file, name))
+	settings, err := values.LoadLines(p.Machine, file, values.ServerPath(file, name))
 	if err != nil {
 		return err
 	}

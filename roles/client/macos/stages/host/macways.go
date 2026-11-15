@@ -8,9 +8,9 @@ import (
 	"net/netip"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/routing"
 	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // MacWays is the Mac's way to ws: the direct way that mac.conf and the Mac's addresses give.
@@ -27,7 +27,7 @@ func (w MacWays) Direct(ctx context.Context) (host, port string, ok bool) {
 	if err != nil {
 		return "", "", false
 	}
-	c, errs := conf.Parse(string(text))
+	c, errs := values.Parse(string(text))
 	if len(errs) > 0 {
 		return "", "", false
 	}
@@ -39,8 +39,8 @@ func (w MacWays) Direct(ctx context.Context) (host, port string, ok bool) {
 	return d.Host, d.Port, found
 }
 
-// tunnelConf takes the keys of mac.conf that a direct way reads. conf checked them already.
-func tunnelConf(c conf.Conf) tunnel.Conf {
+// tunnelConf takes the keys of mac.conf that a direct way reads. values checked them already.
+func tunnelConf(c values.Conf) tunnel.Conf {
 	t := tunnel.Conf{Remote: c.Remote, Cable: c.CableService != ""}
 	t.LAN, _ = netip.ParsePrefix(c.LAN)
 	t.LANServer, _ = netip.ParseAddr(c.LANAddress)
@@ -50,7 +50,7 @@ func tunnelConf(c conf.Conf) tunnel.Conf {
 // Missing says why no way leads to ws: a mac.conf that is missing or refused gives none, and it
 // names that rather than ssh. It returns nil where mac.conf is sound.
 func (w MacWays) Missing() error {
-	_, err := conf.Read(w.M, w.Conf)
+	_, err := values.Read(w.M, w.Conf)
 	switch {
 	case errors.Is(err, fs.ErrNotExist):
 		return fmt.Errorf("ws is out of reach: no server.conf at %s; the wizard or ws client macos configure writes it", w.Conf)

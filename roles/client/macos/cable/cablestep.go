@@ -9,7 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // Cable gives the service that the server's WS_CABLE_SERVICE names a Manual Configuration of the
@@ -18,7 +18,7 @@ import (
 // networksetup lacks stops the run, as does one with a router outside the cable's /30, as an uplink
 // has. A disabled one draws a warning. Without WS_CABLE_SERVICE, it leaves the network alone.
 type Cable struct {
-	Conf conf.Conf
+	Conf values.Conf
 	M    effect.Machine
 	Out  effect.Out
 	// LookPath finds a program on the user's PATH. Nil means exec.LookPath.

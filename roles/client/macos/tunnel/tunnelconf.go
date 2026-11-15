@@ -3,12 +3,12 @@ package tunnel
 import (
 	"strings"
 
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // tunnelConf is tunnel.conf, the values the daemon takes from the file of server, so that a root
 // daemon reads no file the user can write. WS_CABLE=yes is for the one server that names the cable.
-func tunnelConf(c conf.Conf, server string) string {
+func tunnelConf(c values.Conf, server string) string {
 	var b strings.Builder
 	b.WriteString("# Written by github.com/zadykian/ws: ws client macos apply, from ~/.config/ws/servers/" +
 		server + "/server.conf.\n")

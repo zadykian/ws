@@ -7,7 +7,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 const (
@@ -39,7 +39,7 @@ func (z *Zed) files(ctx context.Context) ([]step.Change, error) {
 		}
 	}
 	if _, err := z.M.Stat(dir + "/settings.json"); err != nil {
-		names, err := conf.Known(z.M, z.MacConf, z.Server)
+		names, err := values.Known(z.M, z.MacConf, z.Server)
 		if err != nil {
 			return nil, err
 		}

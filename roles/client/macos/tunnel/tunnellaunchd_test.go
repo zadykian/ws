@@ -9,8 +9,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/tunnel"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 const doneConf = "# Written by github.com/zadykian/ws: ws client macos apply, from ~/.config/ws/servers/ws/server.conf.\n" +
@@ -42,7 +42,7 @@ func daemonMachine() *effecttest.Machine {
 
 func daemonStep(m *effecttest.Machine) *tunnel.Tunnel {
 	s := tunnelStep(m)
-	s.Conf = conf.Conf{PublicKey: "K"}
+	s.Conf = values.Conf{PublicKey: "K"}
 	s.Plist = []byte("plist")
 	s.Sleep = func(time.Duration) {}
 	return s
@@ -174,7 +174,7 @@ func TestTunnelKicksTheOtherDaemonsWithNoPublicKey(t *testing.T) {
 	m.Files["/usr/local/libexec/ws-tunnel/ws"] = []byte("old")
 	otherDaemon(m, "lab")
 	s := daemonStep(m)
-	s.Conf = conf.Conf{}
+	s.Conf = values.Conf{}
 	got := tunnelChanges(t, s)
 	if len(got) != 2 || got[1] != "would run launchctl kickstart -k system/com.github.zadykian.ws-tunnel.lab" {
 		t.Errorf("Plan = %q; want the copy and lab's kickstart", got)

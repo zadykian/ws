@@ -12,8 +12,8 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 const resolverDir = "/etc/resolver"
@@ -26,7 +26,7 @@ type Networks struct {
 	Server string
 	// MacConf is mac.conf's path, whose servers/ holds the other servers' files.
 	MacConf string
-	Conf    conf.Conf
+	Conf    values.Conf
 	M       effect.Machine
 	Out     effect.Out
 	// Check is set under --check, which signals no daemon.
@@ -109,7 +109,7 @@ func (n *Networks) resolvers(ctx context.Context) ([]step.Change, error) {
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
-	siblings, err := conf.Siblings(n.M, n.MacConf, conf.ServerPath(n.MacConf, n.Server))
+	siblings, err := values.Siblings(n.M, n.MacConf, values.ServerPath(n.MacConf, n.Server))
 	if err != nil {
 		return nil, err
 	}

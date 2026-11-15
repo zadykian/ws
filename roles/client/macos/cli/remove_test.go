@@ -9,7 +9,7 @@ import (
 
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // rmMachine takes the files of a directory that rm -rf removes, which effecttest's Run only records.
@@ -170,8 +170,8 @@ func TestRemoveRefusesTheLastServerAndAWrongName(t *testing.T) {
 	}{
 		"last server":  {"ws", "ws is the Mac's one server: apply needs one, so remove leaves it", true},
 		"unknown name": {"nope", "no server named nope in /h/.config/ws/servers, which holds lab and ws", false},
-		"bad name":     {"Bad_Name", "Bad_Name is not a server's name: " + conf.NameForm, false},
-		"path":         {"../ws", "../ws is not a server's name: " + conf.NameForm, false},
+		"bad name":     {"Bad_Name", "Bad_Name is not a server's name: " + values.NameForm, false},
+		"path":         {"../ws", "../ws is not a server's name: " + values.NameForm, false},
 	} {
 		t.Run(name, func(t *testing.T) {
 			p, m := removeFixture()

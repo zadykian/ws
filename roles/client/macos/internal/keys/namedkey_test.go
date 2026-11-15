@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -17,12 +17,12 @@ import (
 var keyUses = []struct {
 	use               keys.KeyUse
 	name, words, page string
-	conf              func(pub string) conf.Conf
+	conf              func(pub string) values.Conf
 }{
 	{keys.LoginKey, "WS_IDENTITY_PUB_KEY", "ws's login key", "roles/client/macos/README.md",
-		func(pub string) conf.Conf { return conf.Conf{IdentityPubKey: pub} }},
+		func(pub string) values.Conf { return values.Conf{IdentityPubKey: pub} }},
 	{keys.SigningKey, "WS_GIT_SIGNING_PUB_KEY", "git's signing key", "roles/client/macos/git/README.md",
-		func(pub string) conf.Conf { return conf.Conf{GitSigningPubKey: pub} }},
+		func(pub string) values.Conf { return values.Conf{GitSigningPubKey: pub} }},
 }
 
 const (

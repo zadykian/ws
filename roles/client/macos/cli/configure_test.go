@@ -11,7 +11,7 @@ import (
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 func TestMacConfigureAtATerminalDrawsAForm(t *testing.T) {
@@ -55,7 +55,7 @@ func TestMacConfigureWritesWhatAFormSaves(t *testing.T) {
 
 func TestConfSheetDrawsWhatTheFormGives(t *testing.T) {
 	_, m := macTerminal()
-	form, err := conf.Form{Conf: "/h/.config/ws/mac.conf", Server: "/h/.config/ws/servers/ws/server.conf", Scope: conf.ServerFile, M: m}.
+	form, err := values.Form{Conf: "/h/.config/ws/mac.conf", Server: "/h/.config/ws/servers/ws/server.conf", Scope: values.ServerFile, M: m}.
 		Load(&effecttest.Out{})
 	if err != nil {
 		t.Fatal(err)

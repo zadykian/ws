@@ -6,13 +6,13 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 func TestServerFlagNamesTheServerOfApplyAndState(t *testing.T) {
 	m := effecttest.NewMachine()
 	writeConfs(m, "", "WS_USER=ada\n")
-	m.Files[conf.ServerPath("/h/.config/ws/mac.conf", "box")] = []byte("WS_USER=bob\nWS_SLOT=1\n")
+	m.Files[values.ServerPath("/h/.config/ws/mac.conf", "box")] = []byte("WS_USER=bob\nWS_SLOT=1\n")
 	m.Dirs["/h/.config/ws/servers/box"] = 0o755
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
@@ -29,7 +29,7 @@ func TestServerFlagNamesTheServerOfApplyAndState(t *testing.T) {
 func TestServerFlagNamesTheServerOfConf(t *testing.T) {
 	m := effecttest.NewMachine()
 	for slot, name := range []string{"ws", "box"} {
-		m.Files[conf.ServerPath("/h/.config/ws/mac.conf", name)] = []byte("WS_USER=" + name + "\nWS_SLOT=" + strconv.Itoa(slot) + "\n")
+		m.Files[values.ServerPath("/h/.config/ws/mac.conf", name)] = []byte("WS_USER=" + name + "\nWS_SLOT=" + strconv.Itoa(slot) + "\n")
 	}
 	m.Files["/h/.config/ws/mac.conf"] = nil
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})

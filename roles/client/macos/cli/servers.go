@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	enginecli "github.com/zadykian/ws/engine/cli"
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // newServersCmd returns ws client macos servers.
@@ -24,8 +24,8 @@ func newServersCmd(p enginecli.Env, server *string) *cobra.Command {
 			if *server != "" {
 				return errors.New("servers lists every server: leave out --server")
 			}
-			mac := conf.Path(p.Getenv, p.Pwd)
-			names, err := conf.Servers(p.Machine, mac)
+			mac := values.Path(p.Getenv, p.Pwd)
+			names, err := values.Servers(p.Machine, mac)
 			if err != nil {
 				return err
 			}
@@ -37,7 +37,7 @@ func newServersCmd(p enginecli.Env, server *string) *cobra.Command {
 			fmt.Fprintln(w, "NAME\tTARGET\tSLOT\tTUNNEL") //nolint:errcheck // tabwriter buffers, and Flush returns the error
 			for _, name := range names {
 				target, slot := "-", "-"
-				if s, err := conf.Load(p.Machine, mac, conf.ServerPath(mac, name)); err != nil {
+				if s, err := values.Load(p.Machine, mac, values.ServerPath(mac, name)); err != nil {
 					refused = appendNew(refused, err)
 				} else {
 					target, slot = s.Target, fmt.Sprint(s.TunnelSlot())
