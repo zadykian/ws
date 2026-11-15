@@ -66,7 +66,8 @@ of the cable: [The cable](#the-cable). `WS_GIT_SIGNING_PUB_KEY` is the `.pub` of
 git's commits on the Mac, by its path from `/` or `~/`: [git on the Mac](git/README.md).
 `WS_IDENTITY_PUB_KEY` is the `.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the
 socket of its agent: [ssh's hosts](#sshs-hosts). A run makes `~/.config/ws` at mode 700, and sets
-that mode where it differs. It makes `/etc/ws` through sudo, for git's allowed signers, at mode 755.
+that mode where it differs. It makes `/etc/ws` through sudo, for git's allowed signers and the
+tunnel's key, at mode 755.
 
 `WS_USER` is the user ssh logs in as: ws's key too, `zadykian` by default, or `root` for a
 `WS_TARGET` of `cloud`, which may have no other user. The other targets refuse `WS_USER=root`. A key
@@ -215,9 +216,9 @@ client macos apply` copies `ws` from `~/.local/bin`, which a run makes if missin
 that file would let anything that runs as the user become root. The daemon holds WireGuard's device
 itself, so it needs no `wg` or `wireguard-go`. `apply` restarts each where the copy changed.
 
-The settings are in `/etc/ws/tunnel`, which only root reads. It holds the Mac's key, which `ws
-client macos tunnel key` makes once, and a directory `NAME` per server, with its `tunnel.conf`
-and its `routes.d` ([the daemons](tunnel/README.md)). `ws client macos apply` keeps the public key in
+The settings are in `/etc/ws/tunnel`, in ws's directory, which only root reads. It holds the Mac's
+key, which `ws client macos tunnel key` makes once, and a directory `NAME` per server, with its
+`tunnel.conf` and its `routes.d` ([the daemons](tunnel/README.md)). `ws client macos apply` keeps the public key in
 `~/.config/ws/tunnel.pub`, which the wizard reads, and copies `tunnel.conf` from the server's file,
 so the daemon reads no file the user can write. In System Settings › General › Login Items &
 Extensions, its "Allow in the Background" must stay on.
