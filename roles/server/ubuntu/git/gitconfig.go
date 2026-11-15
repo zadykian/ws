@@ -1,5 +1,5 @@
-// Package git sets up the shell role's git: ~/.gitconfig, the key that signs commits, the allowed
-// signers and the tokens for servers besides GitHub.
+// Package git is the git role as Go steps: ~/.gitconfig, the key that signs commits, the allowed
+// signers, the tokens for servers besides GitHub and the clones. See roles/server/ubuntu/git/README.md.
 package git
 
 import (

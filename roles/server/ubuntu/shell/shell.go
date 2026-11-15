@@ -1,5 +1,5 @@
-// Package shell is the shell role as Go steps: WS_USER's bash, git, the key that signs commits,
-// ~/.secrets/env, git's tokens and the clones. See roles/server/ubuntu/shell/README.md.
+// Package shell is the shell role as Go steps: WS_USER's bash and ~/.secrets/env. See
+// roles/server/ubuntu/shell/README.md.
 package shell
 
 import (
@@ -11,7 +11,6 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/apt"
 	"github.com/zadykian/ws/engine/core/resource/fetch"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/server/ubuntu/git"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/secretenv"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -35,22 +34,7 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units,
 			}).Parts(ctx)
 		}},
 	}
-	return append(steps, user.WithAccount(m, keyStep, "", func(a account.Account) ([]resource.Resource, error) {
-		return git.SigningKey(m, a, v.GitSigningPubKey), nil
-	}), user.WithAccount(m, "Shell allowed signers", keyStep, func(a account.Account) ([]resource.Resource, error) {
-		return git.AllowedSigners(m, a, v.GitSigningPubKey), nil
-	}), user.WithAccount(m, "Shell git config", "", func(a account.Account) ([]resource.Resource, error) {
-		return []resource.Resource{git.Config{
-			M: m, Out: out, A: a,
-			Key: v.GitSigningPubKey,
-		}}, nil
-	}), user.WithAccount(m, "Shell secret env", "", func(a account.Account) ([]resource.Resource, error) {
+	return append(steps, user.WithAccount(m, "Shell secret env", "", func(a account.Account) ([]resource.Resource, error) {
 		return []resource.Resource{secretenv.Env{M: m, A: a, Env: s.Env, Whole: s.Whole}}, nil
-	}), user.WithAccount(m, "Shell git tokens", "", func(a account.Account) ([]resource.Resource, error) {
-		return []resource.Resource{git.Tokens{M: m, A: a, Creds: git.Credentials(s.Git), Whole: s.Whole}}, nil
-	}), user.WithAccount(m, "Shell clones", "", func(a account.Account) ([]resource.Resource, error) {
-		return []resource.Resource{git.Clones{M: m, A: a, Clones: v.Shell.GitClones}}, nil
 	}))
 }
-
-const keyStep = "Shell signing key"
