@@ -11,8 +11,8 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/apt"
 	"github.com/zadykian/ws/engine/core/resource/fetch"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/server/ubuntu/git"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
-	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/git"
 	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/secretenv"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
