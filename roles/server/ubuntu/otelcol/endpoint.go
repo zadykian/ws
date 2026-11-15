@@ -1,6 +1,6 @@
 // Package otelcol is the otelcol role as Go steps. They set up node_exporter, and the
 // OpenTelemetry Collector with its configuration. The collector feeds SigNoz and, where
-// ~/.secrets/env names one, a remote collector for claude's metrics. See
+// /etc/ws/env names one, a remote collector for claude's metrics. See
 // roles/server/ubuntu/otelcol/README.md.
 package otelcol
 
@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// variable is the setting of ~/.secrets/env that names the remote collector.
+// variable is the setting of /etc/ws/env that names the remote collector.
 const variable = "OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT"
 
 var assignment = regexp.MustCompile(`^[[:space:]]*(?:export[[:space:]]+)?` + variable + `=(.*)$`)
@@ -41,7 +41,7 @@ var (
 )
 
 // errEndpoint leaves the value out, as the value is a secret.
-var errEndpoint = errors.New("OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT in ~/.secrets/env is neither " +
+var errEndpoint = errors.New("OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT in /etc/ws/env is neither " +
 	"http://HOST:PORT nor https://HOST:PORT, with PORT from 1 to 65535, or it leads to the " +
 	"collector's own receiver")
 

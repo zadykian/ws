@@ -7,9 +7,9 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/resource/account"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/resource/systemd"
+	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
 const (
@@ -17,10 +17,10 @@ const (
 	configDir = "/etc/otelcol-contrib"
 )
 
-// remoteEndpoint reads the remote collector's endpoint from the user's ~/.secrets/env, or ""
-// where the file or the variable is missing. A bad value stops the run.
-func remoteEndpoint(m effect.Machine, user account.User) (string, error) {
-	env, err := user.ReadHome(m, ".secrets/env")
+// remoteEndpoint reads the remote collector's endpoint from /etc/ws/env, or "" where the file or
+// the variable is missing. A bad value stops the run.
+func remoteEndpoint(m effect.Machine) (string, error) {
+	env, err := m.ReadRootFile(secrets.EnvPath)
 	if errors.Is(err, fs.ErrNotExist) {
 		return "", nil
 	}
@@ -41,9 +41,9 @@ func remoteEndpoint(m effect.Machine, user account.User) (string, error) {
 // one's. The remote endpoint is a stand-in there, as its value is only in the service's
 // environment. A change of any of them restarts the collector: a new endpoint needs a restart, as
 // the collector's reload rereads its config alone.
-func configuration(m effect.Machine, u effect.Units, out effect.Out, user account.User) func(context.Context) ([]resource.Resource, error) {
+func configuration(m effect.Machine, u effect.Units, out effect.Out) func(context.Context) ([]resource.Resource, error) {
 	return func(context.Context) ([]resource.Resource, error) {
-		endpoint, err := remoteEndpoint(m, user)
+		endpoint, err := remoteEndpoint(m)
 		if err != nil {
 			return nil, err
 		}
@@ -71,7 +71,7 @@ func configuration(m effect.Machine, u effect.Units, out effect.Out, user accoun
 		watch := []resource.Resource{journalFile, claudeFile, config}
 		parts := []resource.Resource{file.Dir{M: m, Path: dropIns, Mode: 0o755}, journalFile, claudeFile}
 		if endpoint != "" {
-			env, err := Env(user.Home, endpoint)
+			env, err := Env(endpoint)
 			if err != nil {
 				return nil, err
 			}

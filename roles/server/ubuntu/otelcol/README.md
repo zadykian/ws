@@ -27,7 +27,7 @@ VM. It:
 - scrapes temperatures and fans from node_exporter on `127.0.0.1:9100` every 60 seconds, as the
   host's metrics have none;
 - sends it all to SigNoz's intake on `127.0.0.1:14318`, with the host's name added as `host.name`;
-- sends claude's metrics to a remote collector too, where `~/.secrets/env` sets
+- sends claude's metrics to a remote collector too, where `/etc/ws/env` sets
   `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT`: [below](#claudes-metrics-elsewhere).
 
 A journal line's message is its body and its priority its severity; its other fields are
@@ -54,7 +54,7 @@ enables it again once the role's config is in place.
 
 ## claude's metrics elsewhere
 
-`~/.secrets/env` is the file of secrets the shell reads, which the `shell` role writes from
+`/etc/ws/env` is the file of secrets the shell reads, which the `shell` role writes from
 the secrets file's `[env]` table ([Secrets](../shell/README.md#secrets)). The role reads it as it plans. Where it sets
 `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT`, the collector sends claude's metrics there as well, over
 OTLP/gRPC. The value is a URL, `http://HOST:PORT` for gRPC without TLS or `https://HOST:PORT`. The

@@ -34,12 +34,12 @@ func TestConfigHasClaudesPipelineOnlyWithAnEndpoint(t *testing.T) {
 	}
 }
 
-func TestEnvNamesTheHomeAndHoldsTheEndpoint(t *testing.T) {
-	out, err := otelcol.Env("/home/ws", "http://c.example:4317")
+func TestEnvNamesTheEnvFileAndHoldsTheEndpoint(t *testing.T) {
+	out, err := otelcol.Env("http://c.example:4317")
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"/home/ws/.secrets/env", "\nOTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT=http://c.example:4317\n"} {
+	for _, want := range []string{"/etc/ws/env", "\nOTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT=http://c.example:4317\n"} {
 		if !strings.Contains(string(out), want) {
 			t.Errorf("env = %q, want it to hold %q", out, want)
 		}

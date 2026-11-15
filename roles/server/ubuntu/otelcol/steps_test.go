@@ -9,7 +9,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 const validate = "env OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT=http://remote.invalid:4317 /usr/bin/otelcol-contrib validate --config=/etc/otelcol-contrib/config.yaml.ws-check"
@@ -20,13 +19,11 @@ func fakeSteps(t *testing.T, env string) (*effecttest.Machine, []step.Step) {
 	m.Packages["prometheus-node-exporter"] = effecttest.Package{Version: "1", Status: "ii"}
 	m.Results[validate] = effecttest.Result{}
 	if env != "" {
-		m.Files["/home/ws/.secrets/env"] = []byte(env)
+		m.Files["/etc/ws/env"] = []byte(env)
 	}
 	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
 	t.Cleanup(srv.Close)
-	v := values.Default()
-	v.User, v.Home = "ws", "/home/ws"
-	return m, steps(v, m, &effecttest.Units{}, &effecttest.Out{}, srv.URL)
+	return m, steps(m, &effecttest.Units{}, &effecttest.Out{}, srv.URL)
 }
 
 func TestStepsWaitOnTheirPredecessorsInOrder(t *testing.T) {
