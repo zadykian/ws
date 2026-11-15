@@ -18,7 +18,7 @@ func withServerDirs(m *effecttest.Machine) *effecttest.Machine {
 	return m
 }
 
-func TestConfCommand(t *testing.T) {
+func TestValuesPrintCommand(t *testing.T) {
 	env := map[string]string{"HOME": "/h", "WS_CONF": ""}
 	tests := []struct {
 		name       string
@@ -31,13 +31,13 @@ func TestConfCommand(t *testing.T) {
 		{"home", nil, "", 0, "WS_USER='ada'\n", ""},
 		{"env", nil, "/e/mac.conf", 0, "WS_USER='eve'\n", ""},
 		{"argument", []string{"/a/mac.conf"}, "/e/mac.conf", 0, "WS_USER='amy'\n", ""},
-		{"missing", []string{"/none"}, "", 1, "", "ws client macos conf: /none is missing: roles/client/macos/README.md"},
-		{"refused", []string{"/bad"}, "", 1, "", "ws client macos conf: /bad, line 2: unknown key WS_NOPE"},
+		{"missing", []string{"/none"}, "", 1, "", "ws client macos values print: /none is missing: roles/client/macos/README.md"},
+		{"refused", []string{"/bad"}, "", 1, "", "ws client macos values print: /bad, line 2: unknown key WS_NOPE"},
 		{"lines", []string{"--lines", "/lines/mac.conf"}, "", 0, "WS_USER='zadykian'\nWS_TARGET='lan'\nWS_SLOT='0'\nWS_PUBLIC_KEY=''\nWS_LAN='10.88.0.0/24'\n", ""},
 		{"lines of the server's file", []string{"--lines"}, "", 0, "WS_USER='ada'\n", ""},
 		{"lines refuse a server's key in mac.conf", []string{"--lines", "/lines/bad/mac.conf"}, "", 1, "", "/lines/bad/mac.conf, line 1: WS_LAN is a server's key"},
 		{"pair", []string{"/pairs/mac.conf"}, "", 1, "", "WS_LAN and WS_LAN_ADDRESS go together"},
-		{"two files", []string{"a", "b"}, "", 2, "", "ws client macos conf: accepts at most 1 arg(s), received 2"},
+		{"two files", []string{"a", "b"}, "", 2, "", "ws client macos values print: accepts at most 1 arg(s), received 2"},
 	}
 	m := effecttest.NewMachine()
 	m.Files["/h/.config/ws/mac.conf"] = []byte("")
@@ -60,7 +60,7 @@ func TestConfCommand(t *testing.T) {
 			env["WS_CONF"] = tt.wsConf
 			p := withEnv(fakeProcess(), env)
 			p.Machine = m
-			got, stdout, stderr := runWs(p, "", append([]string{"client", "macos", "conf"}, tt.args...)...)
+			got, stdout, stderr := runWs(p, "", append([]string{"client", "macos", "values", "print"}, tt.args...)...)
 			if got != tt.wantStatus {
 				t.Errorf("status = %d, want %d", got, tt.wantStatus)
 			}
@@ -74,14 +74,14 @@ func TestConfCommand(t *testing.T) {
 	}
 }
 
-func TestConfReportsEachLineOfARefusedFile(t *testing.T) {
+func TestValuesPrintReportsEachLineOfARefusedFile(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{})
 	m := effecttest.NewMachine()
 	m.Files["/bad"] = []byte("WS_NOPE=1\nWS_NOPE2=1\n")
 	m.Files["/servers/ws/server.conf"] = []byte("")
 	p.Machine = withServerDirs(m)
-	status, _, stderr := runWs(p, "", "client", "macos", "conf", "/bad")
-	want := "ws client macos conf: /bad, line 1: unknown key WS_NOPE\nws client macos conf: /bad, line 2: unknown key WS_NOPE2\n"
+	status, _, stderr := runWs(p, "", "client", "macos", "values", "print", "/bad")
+	want := "ws client macos values print: /bad, line 1: unknown key WS_NOPE\nws client macos values print: /bad, line 2: unknown key WS_NOPE2\n"
 	if status != 1 || stderr != want {
 		t.Errorf("status = %d, stderr = %q; want 1, %q", status, stderr, want)
 	}

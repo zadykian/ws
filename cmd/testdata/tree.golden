@@ -43,7 +43,6 @@ Usage:
 
 Available Commands:
   apply       set the Mac up from mac.conf and a server's file
-  conf        print the checked settings of mac.conf and a server's file as shell assignments
   configure   edit mac.conf, the server's file, the secrets and ws's values.yml on forms
   remove      remove a server from the Mac
   resolver    send DOMAIN's names to the nameservers, or drop it
@@ -51,6 +50,7 @@ Available Commands:
   servers     list the Mac's servers with their target, slot and tunnel
   state       report what the Mac's steps would change
   tunnel      the Mac's tunnel to ws
+  values      print the Mac's values
   wizard      set the Mac up in stages
 
 Flags:
@@ -71,19 +71,6 @@ Flags:
       --check          print each change and make none
   -h, --help           help for apply
       --only strings   run the named steps alone, as a list or by repeating the flag
-
-Global Flags:
-      --plain           print lines, with no full-screen display
-      --server string   the server to act on, which may be left out where there is one
-== ws client macos conf
-It reads FILE, else $WS_CONF, else ~/.config/ws/mac.conf, and the server's file, servers/NAME/server.conf beside it, of the server that --server names, and prints the checked settings as shell assignments, or the errors of a file it refuses.
-
-Usage:
-  ws client macos conf [FILE] [flags]
-
-Flags:
-  -h, --help    help for conf
-      --lines   check each line alone, as a wizard checks an answer before the file holds its key
 
 Global Flags:
       --plain           print lines, with no full-screen display
@@ -372,6 +359,37 @@ Usage:
 
 Flags:
   -h, --help   help for status
+
+Global Flags:
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
+== ws client macos values
+print the Mac's values
+
+Usage:
+  ws client macos values [flags]
+  ws client macos values [command]
+
+Available Commands:
+  print       print the checked settings of mac.conf and a server's file as shell assignments
+
+Flags:
+  -h, --help   help for values
+
+Global Flags:
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
+
+Use "ws client macos values [command] --help" for more information about a command.
+== ws client macos values print
+It reads FILE, else $WS_CONF, else ~/.config/ws/mac.conf, and the server's file, servers/NAME/server.conf beside it, of the server that --server names, and prints the checked settings as shell assignments, or the errors of a file it refuses.
+
+Usage:
+  ws client macos values print [FILE] [flags]
+
+Flags:
+  -h, --help    help for print
+      --lines   check each line alone, as a wizard checks an answer before the file holds its key
 
 Global Flags:
       --plain           print lines, with no full-screen display
