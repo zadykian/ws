@@ -30,21 +30,10 @@ func (s *Sequence) get(q Question) (string, error) {
 	return v, err
 }
 
-// Run asks the keys in order. git's email is asked only with a name, and needs a value then. git's
-// identity defaults to ws's own.
+// Run asks the keys in order.
 func (s *Sequence) Run() error {
 	if err := s.ways(); err != nil {
 		return err
-	}
-	name, err := s.get(Question{"WS_GIT_NAME", "git's name on the Mac", s.Role("shell_git_name"), ""})
-	if err != nil {
-		return err
-	}
-	if name != "" {
-		if _, err := s.get(Question{"WS_GIT_EMAIL", "git's email on the Mac", s.Role("shell_git_email"),
-			"WS_GIT_NAME and WS_GIT_EMAIL go together"}); err != nil {
-			return err
-		}
 	}
 	for _, q := range []Question{
 		{"WS_TUNNEL_NETWORKS", "More networks through the tunnel, split by blanks", "", ""},

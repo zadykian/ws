@@ -41,13 +41,11 @@ func TestAnswersLoadRefusesABadLine(t *testing.T) {
 
 func TestAnswersPlan(t *testing.T) {
 	const all = "WS_TARGET=lan\nWS_LAN=\nWS_REMOTE=\nWS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
-	const mac = "WS_GIT_NAME=\nWS_GIT_EMAIL=\n"
 	for name, tc := range map[string]struct{ mac, server, want string }{
-		"no file":   {"", "", "would ask for the values that " + serverPathForTest + " lacks, from WS_TARGET on"},
-		"a gap":     {mac, strings.Replace(all, "WS_REMOTE=\n", "", 1), "from WS_REMOTE on"},
-		"the Mac's": {"", all, "would ask for the values that " + confPathForTest + " lacks, from WS_GIT_NAME on"},
-		"complete":  {mac, all, ""},
-		"refused":   {mac, all + "WS_TARGET=cloud\nWS_REMOTE_PORT=22\n", "ws client macos apply would refuse " + serverPathForTest},
+		"no file":  {"", "", "would ask for the values that " + serverPathForTest + " lacks, from WS_TARGET on"},
+		"a gap":    {"", strings.Replace(all, "WS_REMOTE=\n", "", 1), "from WS_REMOTE on"},
+		"complete": {"", all, ""},
+		"refused":  {"", all + "WS_TARGET=cloud\nWS_REMOTE_PORT=22\n", "ws client macos apply would refuse " + serverPathForTest},
 	} {
 		a, _ := newAnswers(t, tc.mac, tc.server)
 		p, err := a.Plan(context.Background())
@@ -76,8 +74,6 @@ func TestAnswersAskAndWrite(t *testing.T) {
 		"ws's home LAN (WS_LAN) [10.88.0.0/24, or none]":                                          "",
 		"ws's address on the LAN (WS_LAN_ADDRESS) [10.88.0.10]":                                   "",
 		"The router's name on the internet (WS_REMOTE) [none]":                                    "none",
-		"git's name on the Mac (WS_GIT_NAME) [ada, or none]":                                      "",
-		"git's email on the Mac (WS_GIT_EMAIL) [ada@example.com]":                                 "",
 		"More networks through the tunnel, split by blanks (WS_TUNNEL_NETWORKS) [none]":           "",
 		"Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks (WS_RESOLVERS) [none]": "",
 	}
@@ -93,8 +89,8 @@ func TestAnswersAskAndWrite(t *testing.T) {
 	if got := string(m.Files[serverPathForTest]); got != server {
 		t.Errorf("server file = %q, want %q", got, server)
 	}
-	if got, want := string(m.Files[confPathForTest]), "# mine\nWS_GIT_NAME=ada\nWS_GIT_EMAIL=ada@example.com\n"; got != want {
-		t.Errorf("mac.conf = %q, want %q", got, want)
+	if got := string(m.Files[confPathForTest]); got != "# mine" {
+		t.Errorf("mac.conf = %q, want it as it was", got)
 	}
 }
 
@@ -103,7 +99,7 @@ func TestAnswersFromEnvironment(t *testing.T) {
 	a.Env = func(k string) (string, bool) {
 		return map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "r.example"}[k], k == "WS_TARGET" || k == "WS_REMOTE"
 	}
-	a.P.(*effecttest.Prompt).Answers = map[string]string{"The VM's SSH port (WS_REMOTE_PORT) [22]": "", "git's name on the Mac (WS_GIT_NAME) [ada, or none]": "none",
+	a.P.(*effecttest.Prompt).Answers = map[string]string{"The VM's SSH port (WS_REMOTE_PORT) [22]": "",
 		"More networks through the tunnel, split by blanks (WS_TUNNEL_NETWORKS) [none]": "", "Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks (WS_RESOLVERS) [none]": ""}
 	a.M.(*effecttest.Machine).Results["mkdir -p /h/.config/ws"] = effecttest.Result{}
 	a.M.(*effecttest.Machine).Results["mkdir -p /h/.config/ws/servers/ws"] = effecttest.Result{}
@@ -127,7 +123,6 @@ func TestAnswersCheckWritesTheScratchFile(t *testing.T) {
 	m.Results["mkdir -p /lock/servers/ws"] = effecttest.Result{}
 	a.P.(*effecttest.Prompt).Answers = map[string]string{
 		"The VM's SSH port (WS_REMOTE_PORT) [22]":                                                 "",
-		"git's name on the Mac (WS_GIT_NAME) [ada, or none]":                                      "none",
 		"More networks through the tunnel, split by blanks (WS_TUNNEL_NETWORKS) [none]":           "",
 		"Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks (WS_RESOLVERS) [none]": "",
 	}
@@ -136,9 +131,6 @@ func TestAnswersCheckWritesTheScratchFile(t *testing.T) {
 	}
 	if got := string(m.Files["/lock/servers/ws/server.conf"]); !strings.HasPrefix(got, "WS_USER=ada\nWS_SLOT=0\nWS_PORT=51820\nWS_TARGET=cloud\n") {
 		t.Errorf("server scratch = %q", got)
-	}
-	if got := string(m.Files["/lock/mac.conf"]); got != "WS_GIT_NAME=\n" {
-		t.Errorf("mac scratch = %q, want the answer for git's name alone", got)
 	}
 	if got := string(m.Files[serverPathForTest]); got != "WS_USER=ada\n" {
 		t.Errorf("server file changed to %q", got)

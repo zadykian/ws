@@ -72,7 +72,7 @@ func TestWizardPutsHomebrewFirstAndSetsWsConf(t *testing.T) {
 
 func TestWizardCheckShowsTheAnswersDiff(t *testing.T) {
 	p, env := testWizardProcess("darwin", 501)
-	for k, v := range map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "r.example", "WS_REMOTE_PORT": "22", "WS_GIT_NAME": "",
+	for k, v := range map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "r.example", "WS_REMOTE_PORT": "22",
 		"WS_TUNNEL_NETWORKS": "", "WS_RESOLVERS": ""} {
 		env[k] = v
 	}
@@ -85,9 +85,6 @@ func TestWizardCheckShowsTheAnswersDiff(t *testing.T) {
 	}
 	if got := string(m.Files["/t/ws-wizard.lock/servers/ws/server.conf"]); !strings.HasPrefix(got, "WS_SLOT=0\nWS_PORT=51820\nWS_TARGET=cloud\n") {
 		t.Errorf("scratch server file = %q", got)
-	}
-	if got := string(m.Files["/t/ws-wizard.lock/mac.conf"]); got != "WS_GIT_NAME=\n" {
-		t.Errorf("scratch mac.conf = %q", got)
 	}
 }
 

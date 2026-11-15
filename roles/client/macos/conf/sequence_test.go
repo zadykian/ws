@@ -3,7 +3,6 @@ package conf
 import (
 	"errors"
 	"reflect"
-	"slices"
 	"testing"
 )
 
@@ -67,17 +66,13 @@ func TestSequenceWays(t *testing.T) {
 
 func TestSequenceRun(t *testing.T) {
 	var asked []string
-	answers := map[string]string{"WS_TARGET": "cloud", "WS_GIT_NAME": "Ada"}
+	answers := map[string]string{"WS_TARGET": "cloud"}
 	if err := newSequence(map[string]bool{"WS_TUNNEL_NETWORKS": true}, scripted(&asked, answers)).Run(); err != nil {
 		t.Fatal(err)
 	}
-	want := []string{"WS_TARGET", "WS_REMOTE", "WS_REMOTE_PORT", "WS_GIT_NAME", "WS_GIT_EMAIL", "WS_RESOLVERS"}
+	want := []string{"WS_TARGET", "WS_REMOTE", "WS_REMOTE_PORT", "WS_RESOLVERS"}
 	if !reflect.DeepEqual(asked, want) {
 		t.Errorf("asked %v, want %v", asked, want)
-	}
-	asked = nil
-	if err := newSequence(nil, scripted(&asked, nil)).Run(); err != nil || slices.Contains(asked, "WS_GIT_EMAIL") {
-		t.Errorf("without a name: asked %v, %v", asked, err)
 	}
 }
 

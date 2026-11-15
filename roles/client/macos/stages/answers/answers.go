@@ -74,19 +74,18 @@ func (a *Answers) file(s conf.Scope) conf.File {
 // load reads both files and says each line that conf refuses, which ws client macos apply would
 // stop at. It returns the text of each file, and the keys that they set.
 func (a *Answers) load() (map[conf.Scope]string, conf.Conf, error) {
-	mac, macConf, macErr := a.file(conf.MacFile).Load()
+	mac, _, macErr := a.file(conf.MacFile).Load()
 	server, c, serverErr := a.file(conf.ServerFile).Load()
 	if err := errors.Join(macErr, serverErr); err != nil {
 		return nil, c, err
 	}
-	c.GitName = macConf.GitName
 	return map[conf.Scope]string{conf.MacFile: mac, conf.ServerFile: server}, c, nil
 }
 
 // sequence returns the walk over the keys, which gets the value of a key that its file lacks from
 // ask.
 func (a *Answers) sequence(c conf.Conf, text map[conf.Scope]string, place *conf.Place, ask func(conf.Question) (string, error)) *conf.Sequence {
-	vals := map[string]string{"WS_TARGET": c.Target, "WS_LAN": c.LAN, "WS_GIT_NAME": c.GitName, "WS_REMOTE": c.Remote}
+	vals := map[string]string{"WS_TARGET": c.Target, "WS_LAN": c.LAN, "WS_REMOTE": c.Remote}
 	return &conf.Sequence{Vals: vals, Lacks: func(key string) bool { return !conf.HasLine(text[conf.KeyScope(key)], key) }, Ask: ask, Place: place, Role: func(name string) string { return conf.Default(a.Defaults, name) }}
 }
 
