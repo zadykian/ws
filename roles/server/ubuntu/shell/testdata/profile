@@ -1,4 +1,4 @@
-# ~/.profile: executed by Bourne-compatible login shells.
+# ws's lines for ~/.profile, which sources them at its top.
 #
 # Written by github.com/zadykian/ws, whose next run replaces any change made here.
 
@@ -15,11 +15,4 @@ export PATH
 # rustup's env file puts ~/.cargo/bin first on PATH, once too.
 if [ -f "$HOME/.cargo/env" ]; then
   . "$HOME/.cargo/env"
-fi
-
-# After PATH, so that ~/.bashrc runs with the session's.
-if [ "$BASH" ]; then
-  if [ -f ~/.bashrc ]; then
-    . ~/.bashrc
-  fi
 fi
