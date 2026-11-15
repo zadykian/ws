@@ -33,11 +33,17 @@ func Top(m effect.Machine) file.PublicDir {
 // at path, whole, all root's. Everyone may read them, so a run that changes nothing asks for no
 // password.
 func Files(m effect.Machine, path string, content []byte) []resource.Resource {
-	parts := []resource.Resource{Top(m)}
+	return append([]resource.Resource{Top(m)}, Inside(m, path, content)...)
+}
+
+// Inside returns each directory under /etc/ws down to the file's own, and then the file at path, for
+// a plan that holds /etc/ws already. A plan holds it once, as a second make fails.
+func Inside(m effect.Machine, path string, content []byte) []resource.Resource {
 	var dirs []string
 	for d := pathpkg.Dir(path); d != Dir && strings.HasPrefix(d, Dir+"/"); d = pathpkg.Dir(d) {
 		dirs = append(dirs, d)
 	}
+	var parts []resource.Resource
 	for _, d := range slices.Backward(dirs) {
 		parts = append(parts, file.PublicDir{M: m, Path: d, Mode: DirMode})
 	}

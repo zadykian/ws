@@ -61,6 +61,24 @@ func TestFilesMakeEachDirectoryBetween(t *testing.T) {
 	}
 }
 
+func TestInsideLeavesOutTheTop(t *testing.T) {
+	m := effecttest.NewMachine()
+	var got []string
+	for _, r := range etcws.Inside(m, etcws.Dir+"/secretive/a.pub", []byte("a\n")) {
+		changes, err := r.Plan(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, c := range changes {
+			got = append(got, strings.SplitN(c.String(), "\n", 2)[0])
+		}
+	}
+	want := []string{"create directory /etc/ws/secretive, owner 0:0, mode 755", "create /etc/ws/secretive/a.pub"}
+	if strings.Join(got, "|") != strings.Join(want, "|") {
+		t.Errorf("changes = %q, want %q", got, want)
+	}
+}
+
 func TestHolds(t *testing.T) {
 	for p, want := range map[string]bool{
 		"/etc/ws/x": true, "/etc/ws/servers/a/values.yml": true,
