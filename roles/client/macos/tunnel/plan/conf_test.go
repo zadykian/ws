@@ -33,6 +33,7 @@ func TestParseConf(t *testing.T) {
 		{"bad network", "WS_LAN=192.168.1.5/24\n", Conf{}, "tunnel.conf: cannot take 'WS_LAN=192.168.1.5/24'"},
 		{"bad slot", "WS_SLOT=16\n", Conf{}, "tunnel.conf: cannot take 'WS_SLOT=16'"},
 		{"bad port", "WS_TUNNEL_PORT=0\n", Conf{}, "tunnel.conf: cannot take 'WS_TUNNEL_PORT=0'"},
+		{"old port", "WS_PORT=51821\n", Conf{}, "tunnel.conf: cannot take 'WS_PORT=51821'"},
 		{"unknown name", "WS_OTHER=1\n", Conf{}, "tunnel.conf: cannot take 'WS_OTHER=1'"},
 		{"no =", "WS_TUNNEL_PORT\n", Conf{}, "tunnel.conf: cannot take 'WS_TUNNEL_PORT'"},
 		{"empty value", "WS_REMOTE=\n", Conf{}, "tunnel.conf: cannot take 'WS_REMOTE='"},

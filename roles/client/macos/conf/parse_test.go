@@ -29,6 +29,8 @@ func TestParse(t *testing.T) {
 			[]Error{{1, "unknown key WS_NOPE"}}},
 		{"the removed key", "WS_HOOK=me/tools@v1.0.0\n", Conf{User: "zadykian", Target: "lan", Slot: "0"},
 			[]Error{{1, "unknown key WS_HOOK"}}},
+		{"the old port key", "WS_PORT=51821\n", Conf{User: "zadykian", Target: "lan", Slot: "0"},
+			[]Error{{1, "unknown key WS_PORT"}}},
 		{"the removed name", "WS_GIT_NAME=Ada\nWS_GIT_EMAIL=a@b.c\n", Conf{User: "zadykian", Target: "lan", Slot: "0"},
 			[]Error{{1, "unknown key WS_GIT_NAME"}, {2, "unknown key WS_GIT_EMAIL"}}},
 		{"not a line", "ws_user=a\nWS_USER\n=a\n", Conf{User: "zadykian", Target: "lan", Slot: "0"},
