@@ -77,7 +77,7 @@ sudo grep -qx 'WS_TUNNEL_PORT: 51821' "$vars" || error "lab's host_vars names no
 mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /opt/homebrew/bin/wg /etc/ws-tunnel/private.key)
 [ "$(sudo cat "$lab/root"/etc/wireguard/mac.pub)" = "$mac" ] ||
     error "lab's stand-in has no mac.pub of the Mac's key"
-grep -qx -- '--only wireguard' "$lab/server.log" || error "lab's stand-in ran no ws server ubuntu apply --only wireguard"
+grep -qx -- '--only tunnel' "$lab/server.log" || error "lab's stand-in ran no ws server ubuntu apply --only tunnel"
 launchctl print system/com.github.zadykian.ws-tunnel.lab >/dev/null 2>&1 || error "the run loaded no daemon for lab"
 handshake lab || error "lab's daemon has no handshake with its stand-in"
 [ "$(wc -l <"$lab/tunnel.log")" -eq 1 ] || error "the wizard logged in to lab through the tunnel other than once"
