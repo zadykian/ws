@@ -2,8 +2,8 @@
 
 The Mac's jobs work on one server named `ws`, at slot 0, as the Mac's side says
 ([The two files](../../roles/client/macos/values/README.md)). The cases write its files through
-[mac-conf.sh](../mac-conf.sh): `conf_write` splits the lines of stdin between `mac.conf` and
-`servers/NAME/server.conf`, and `conf_print` joins them. `conf_server` names the server, `ws` by
+[mac-conf.sh](../mac-conf.sh): `conf_write` splits the lines of stdin between `values.yml` and
+`servers/NAME/values.yml`, and `conf_print` joins them. `conf_server` names the server, `ws` by
 default, and a case that works on a second one sets it, then sets it back to `ws`.
 
 A server's file that `conf_write` makes gets `WS_SLOT: 0` first, and `WS_TUNNEL_PORT: 51820` after it,
@@ -24,7 +24,7 @@ Four cases of the `mac` job and two of the wizard's work on a second server:
 - `mac/94-remove.sh` runs `remove lab`: its files, daemon, host and `known_hosts` line must go, and
   ws's stay. `remove box` and `remove ws` must refuse.
 - `mac-wizard/16-server.sh` runs the wizard with a bad name, which must stop it.
-  On a `mac.conf` with no server, a run with no terminal and no name must stop and ask for
+  On a `values.yml` with no server, a run with no terminal and no name must stop and ask for
   `--server`. There `--check` with a name must show that server's file headed by `WS_SLOT: 0`, and
   write none.
 - `mac-wizard/62-second.sh` runs the wizard for lab, the last case. `standin.sh` makes a second

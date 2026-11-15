@@ -2,11 +2,10 @@
 
 [The terminal UI](../../README.md) holds what every screen shares, such as the modes and the
 fields.
-
-`ws client macos configure` edits `mac.conf` and the server's file on a form, ws's secrets file on a
-second, and ws's values.yml on a third. A form has a field for each key: the key, its value and its
-help. A key shows where the wizard's Answers stage would ask it, by `WS_TARGET`, and an edit moves
-the fields at once, as a `WS_REMOTE` brings its port. A key that the stage never asks, such as
+`ws client macos configure` edits `values.yml` and the server's file on a form, ws's secrets file on
+a second, and ws's values.yml on a third. A form has a field for each key: the key, its value and
+its help. A key shows where the wizard's Answers stage would ask it, by `WS_TARGET`, and an edit
+moves the fields at once, as a `WS_REMOTE` brings its port. A key that the stage never asks, such as
 `WS_USER`, stays the file's. The screen draws or stops: with no terminal, or under `--plain`, it
 refuses, and the file stays open to an editor. A line that `ws client macos apply` would refuse
 stops it before the screen, as a form has no field for it. Keys that disagree open, as the form
@@ -17,7 +16,7 @@ to the buttons. A key that needs a value shows the wizard's default in brackets,
 it. An optional key's default stays in its help as an offer, and an empty field is an empty value,
 as `none` is. Esc with edits unsaved asks for a second Esc in the title's place, at any width, and
 Ctrl-C drops them with status 130.
-Ctrl-N walks the forms: `mac.conf`, the secrets, then values.yml.
+Ctrl-N walks the forms: the Mac's `values.yml`, the secrets, then ws's.
 
 The secrets form has a field for the tokens and the VPN password, and for each env and git entry the
 file holds. A field shows no value: its help says whether the entry is set, and a new value replaces
@@ -34,27 +33,27 @@ with a `WS_TARGET` other than `lan`, as values would refuse it. The wizard asks 
 again, even an empty one. Under the form, the screen shows the keys a save emptied, or why it
 failed, which keeps the edits. A short window keeps the field's input and the end of those words.
 At one row it keeps the input alone, and the status still counts the edits.
-
 The secrets form reads the entries by `ws server ubuntu secrets keys`, and the values form
-`/etc/ws/values.yml`, over ssh once each shows, so `mac.conf` draws with ws out of reach. A read
-that fails shows why, and Ctrl-S tries again. The first read takes the wizard's lock, and asks
-sudo's password where ws wants one. Both last until the screen ends, so a save asks nothing, and a
-wizard's run shows there as the lock's holder. The values.yml form shows every key with a line, and
-a table stays the file's. A list goes as its items with commas, and an emptied field takes the key's
-line out, which gives its default back. A save runs `ws server ubuntu values set` on ws for each key
-that changed, in one login, so ws's own check refuses a value. A save that failed part way wrote the
-first keys, and a second writes them again as they are.
+`/etc/ws/values.yml`, over ssh once each shows, so the Mac's `values.yml` draws with ws out of
+reach. A read that fails shows why, and Ctrl-S tries again. The first read takes the wizard's lock,
+and asks sudo's password where ws wants one. Both last until the screen ends, so a save asks
+nothing, and a wizard's run shows there as the lock's holder. The values.yml form shows every key
+with a line, and a table stays the file's. A list goes as its items with commas, and an emptied
+field takes the key's line out, which gives its default back. A save runs
+`ws server ubuntu values set` on ws for each key that changed, in one login, so ws's own check
+refuses a value. A save that failed part way wrote the first keys, and a second writes them again as
+they are.
 
 ## On ws
 
-`sudo ws server ubuntu configure` draws the secrets form and the values form on ws itself, as
-root. It has no `mac.conf` form. Each reads and writes as on the Mac, with no ssh, lock or sudo. The
-secrets form edits ws's file as `ws server ubuntu secrets` does. The values.yml form runs the same
-files script, here on `sh`'s standard input. The secrets form, now first, reads as the screen opens.
-With no terminal, or under `--plain`, it refuses: `ws server ubuntu secrets` and `ws server ubuntu
-values set` edit the same files on lines. `e` and the `configure` button of `ws server ubuntu
-wizard`'s list open it, and the list comes back to a new scan ([The server's
-wizard](../../../../roles/server/ubuntu/stages/README.md)).
+`sudo ws server ubuntu configure` draws the secrets form and the values form on ws itself, as root.
+It has no form for the Mac's `values.yml`. Each reads and writes as on the Mac, with no ssh, lock or
+sudo. The secrets form edits ws's file as `ws server ubuntu secrets` does. The form of ws's
+`values.yml` runs the same files script, here on `sh`'s standard input. The secrets form, now first,
+reads as the screen opens. With no terminal, or under `--plain`, it refuses: `ws server ubuntu
+secrets` and `ws server ubuntu values set` edit the same files on lines. `e` and the `configure`
+button of `ws server ubuntu wizard`'s list open it, and the list comes back to a new scan ([The
+server's wizard](../../../../roles/server/ubuntu/stages/README.md)).
 
 ## After a save
 

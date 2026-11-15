@@ -35,13 +35,13 @@ stage acted ends with what stays by hand of ws.
    GitHub as a signing key.
 
 ws's run is done where the last full run exited 0, by this ws, with the secrets file and
-`values.yml` unchanged since. Both wizards read that one stamp, so a run from either side after
-the other's, with nothing changed, applies nothing. A change to `values.yml`, by the values
-stage, `ws server ubuntu values set`, Configure or by hand, makes the next run due. ws's values name
-its target, which the stage reads in place of `mac.conf`. With no booted systemd, as in a container,
-the stage says so and skips: run `sudo ws server ubuntu apply` there. The remote script reads the
-claude and the signing key of `WS_USER`, values.yml's `WS_USER`, where the Mac's reads those of the
-user that ssh logs in as.
+`values.yml` unchanged since. Both wizards read that one stamp, so a run from either side after the
+other's, with nothing changed, applies nothing. A change to `values.yml`, by the values stage, `ws
+server ubuntu values set`, Configure or by hand, makes the next run due. ws's values name its
+target, which the stage reads in place of the Mac's `values.yml`. With no booted systemd, as in a
+container, the stage says so and skips: run `sudo ws server ubuntu apply` there. The remote script
+reads the claude and the signing key of `WS_USER`, values.yml's `WS_USER`, where the Mac's reads
+those of the user that ssh logs in as.
 
 The Mac's other stages stay the Mac's: the tunnel and the cable. The list at the end names ws's
 fans' driver where Secure Boot refused it, and the router's static lease on the LAN. It names the

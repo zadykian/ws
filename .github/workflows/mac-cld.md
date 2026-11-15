@@ -3,7 +3,7 @@
 A second workflow, `mac-cld.yml`, sets up Ghostty, Zed and cld on another macOS runner, as [Ghostty
 and cld on the Mac](../../roles/client/macos/ghostty/README.md) and [Zed on the
 Mac](../../roles/client/macos/zed/README.md) say. It has stand-ins for ws's key and for a logged-in
-`gh`, and a file key that `mac.conf` names for ws's login and for git's signing. On a runner without
+`gh`, and a file key that `values.yml` names for ws's login and for git's signing. On a runner without
 Ghostty, Zed, its font or cld, `--check` must change nothing, and note the casks, cld, the ssh lines
 and the files of Ghostty and Zed. Where the
 casks `ghostty` and `zed` fail, a run must warn and install cld alone. A run must then install the

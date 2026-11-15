@@ -47,7 +47,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   for SQL Server and Ansible.
 - [The dashboards](../../roles/server/ubuntu/signoz/internal/dashboards/dashboards/README.md) says what each dashboard reads,
   and how to refresh them from SigNoz.
-- ws is public, and names no server ([mac.conf](../../roles/client/macos/README.md#macconf)). So no doc holds a
+- ws is public, and names no server ([values.yml](../../roles/client/macos/README.md#the-macs-valuesyml)). So no doc holds a
   server's address, a secret or a word of the local list (CLAUDE.md).
 - A change goes together across the role, its comments, its page, its line in the README, and
   `.github/workflows/README.md` where CI changes.

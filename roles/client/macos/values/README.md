@@ -7,7 +7,7 @@ outbound table on a cloud VM.
 
 ## The two files
 
-`~/.config/ws/mac.conf` holds the Mac's keys, which no server changes:
+`~/.config/ws/values.yml` holds the Mac's keys, which no server changes:
 
 ```yaml
 WS_GIT_SIGNING_PUB_KEY: ~/.ssh/KEY.pub
@@ -15,7 +15,7 @@ WS_IDENTITY_PUB_KEY: ~/.ssh/KEY.pub
 WS_IDENTITY_AGENT: ~/PATH/socket.ssh
 ```
 
-`~/.config/ws/servers/ws/server.conf`, beside it, holds every other key:
+`~/.config/ws/servers/ws/values.yml`, beside it, holds every other key:
 
 ```yaml
 WS_SLOT: 0
@@ -33,13 +33,13 @@ Both are YAML files of `KEY: value` lines, one a line. The key is at the line's 
 right after it, and the value fits the line, in quotes where YAML needs them. Comments and blank
 lines stay. The wizard and `configure` read and edit that form alone. A quoted key, a space before
 the colon, a flow map, a value wrapped over lines and a `---` marker are refused, with their line.
-A key in the other file is refused, with the file it goes in. `WS_VALUES` names `mac.conf`, and the
-server's file is `servers/ws/server.conf` beside it. Each key's meaning is in
-[mac.conf](../README.md#macconf).
+A key in the other file is refused, with the file it goes in. `WS_VALUES` names `values.yml`,
+and the server's file is `servers/ws/values.yml` beside it. Each key's meaning is in
+[values.yml](../README.md#the-macs-valuesyml).
 
 ## The server's name
 
-`--server NAME` picks the server, and its file is `servers/NAME/server.conf`. A name is a lower-case
+`--server NAME` picks the server, and its file is `servers/NAME/values.yml`. A name is a lower-case
 letter, then up to 11 lower-case letters, digits and `-`, other than `direct`, `first` and `key`.
 With one server, the flag may be left out. With none, the wizard asks the name, `ws` by default. A
 name that no file holds sets up a new server, beside the others. With several and no flag, it
@@ -47,10 +47,10 @@ refuses and lists them. `WS_SLOT`, from 0 to 15, is the slot. The wizard writes 
 other server holds in a file that lacks it, and `WS_TUNNEL_PORT` after it. `WS_TUNNEL_PORT` is
 51820, or 51820 plus the slot behind a router that another server shares, or the next port up that
 none of those takes. The default of `WS_REMOTE_PORT` follows 22022 likewise. A LAN and
-`WS_TUNNEL_NETWORKS` stay clear of the slots' `10.99.0.0/20`. A directory of a bad name that holds
-`server.conf` is refused too. The wizard stops before it writes a new server's file where another
-server's file is refused, as its slot and ports would be that file's. The wizard writes an empty
-`WS_CABLE_SERVICE` in a server's file where another's names one.
+`WS_TUNNEL_NETWORKS` stay clear of the slots' `10.99.0.0/20`. A directory of a bad name that holds A
+server's `values.yml` is refused too. The wizard stops before it writes a new server's file where
+another server's file is refused, as its slot and ports would be that file's. The wizard writes an
+empty `WS_CABLE_SERVICE` in a server's file where another's names one.
 
 ## What two servers may not share
 
@@ -100,8 +100,8 @@ by hand: the cable's service keeps `10.77.0.2`. The server itself is not changed
 line with its name. Its `--json` then lists them in `servers`, each with its `steps`, and holds no
 top `steps`. With one server, or `--server`, it prints what it did before.
 
-`ws client macos configure` shows the keys of `mac.conf` on a sheet, then those of
-`servers/NAME/server.conf` on the next, each file's own, before the secrets and values.yml.
+`ws client macos configure` shows the keys of `values.yml` on a sheet, then those of
+`servers/NAME/values.yml` on the next, each file's own, before the secrets and ws's values.yml.
 
 ## A machine on the LAN
 
