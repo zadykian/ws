@@ -57,6 +57,8 @@ type Info struct {
 	Mode fs.FileMode
 	// Link is where the path points, or empty where the path is no link.
 	Link string
+	// UID and GID are the owner of the file a link points to.
+	UID, GID int
 }
 
 // Lasting keeps a line past the screen that draws it. It stands beside Out, whose fakes in other
