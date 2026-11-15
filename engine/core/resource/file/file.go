@@ -168,7 +168,7 @@ func (f File) conflict(before []byte) string {
 	switch {
 	case f.edit != nil:
 		return "a line differs from what ws sets"
-	case bytes.Contains(f.Content, writtenBy) && !bytes.Contains(before, writtenBy):
+	case bytes.Contains(f.Content, []byte(Mark)) && !bytes.Contains(before, []byte(Mark)):
 		return "holds no Written by line: ws did not write it"
 	}
 	return "differs from what ws writes: a change by hand, or another version of ws"
