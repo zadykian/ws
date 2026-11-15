@@ -34,7 +34,7 @@ func (g *Git) list(key keys.NamedKey, gh string) []part {
 		in.Program = keygen
 		rs = append(rs, file.Public{M: g.M, Path: keygen, Content: []byte(wrapper(g.Home + "/" + sshcfg.SecretiveData)), Mode: 0o755})
 	}
-	rs = append(rs, etcws.Inside(g.M, gitcfg.Signers, []byte(gitcfg.AllowedSigners(header, key.Key.String())))...)
+	rs = append(rs, etcws.Inside(g.M, gitcfg.Signers, []byte(gitcfg.AllowedSigners(file.Header("#"), key.Key.String())))...)
 	rs = append(rs, etcws.Inside(g.M, gitcfg.Path, []byte(config(in)))...)
 	var list []part
 	for _, r := range rs {

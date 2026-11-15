@@ -8,10 +8,9 @@ import (
 	"net/netip"
 	"slices"
 	"strings"
-)
 
-// Header starts the text of /etc/ws/ssh_config.
-const Header = "# Written by ws client macos apply"
+	"github.com/zadykian/ws/engine/core/resource/file"
+)
 
 // Host is one server's block.
 type Host struct {
@@ -41,14 +40,14 @@ type Inputs struct {
 // a Host * of the user's sets.
 func Config(in Inputs) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, `%s from /etc/ws/values.yml: its next run replaces changes made here.
+	fmt.Fprintf(&b, `%s
 
 # Only Apple's ssh knows UseKeychain. ssh keeps the first IgnoreUnknown it reads, this one, so it
 # carries the patterns of ~/.ssh/config's own too: run ws client macos apply again after a change to
 # those.
 IgnoreUnknown %s
 
-`, Header, in.Patterns)
+`, file.Header("#"), in.Patterns)
 	hosts := slices.SortedFunc(slices.Values(in.Hosts), func(a, b Host) int { return cmp.Compare(a.Name, b.Name) })
 	for i, h := range hosts {
 		if i > 0 {
