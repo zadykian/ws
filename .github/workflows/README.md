@@ -164,7 +164,7 @@ terminal of `script`'s after bad ones, each asked again, the same answers must s
 and empty lines the defaults, for each target. After the first run, they must write the same files.
 
 Last, the wizard with that `PATH` must find the runner's Command Line Tools and brew, so that a
-second run and `--check` print nothing. Where `WS_CONF` names no file, `--check` must show the lines
+second run and `--check` print nothing. Where `WS_VALUES` names no file, `--check` must show the lines
 it would write there, from the answers in the environment, and write none. The case that reads
 [`homebrew.go`](../../roles/client/macos/stages/tools/homebrew.go)'s pins must download Homebrew's `.pkg` and match its
 SHA-256 and signer, the signer as `pkgSigner` reads it. The log shows `pkgutil`'s chain. The `.pkg`

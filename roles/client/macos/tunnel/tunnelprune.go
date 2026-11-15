@@ -14,7 +14,7 @@ import (
 
 // gone returns the servers whose daemon has files on the Mac and which no longer have a directory
 // beside mac.conf. It returns none unless mac.conf's servers list this one: that shows the listing
-// is this Mac's own, so a stray WS_CONF removes no live daemon.
+// is this Mac's own, so a stray WS_VALUES removes no live daemon.
 func (t *Tunnel) gone(ctx context.Context) ([]string, error) {
 	servers, err := values.Servers(t.M, t.MacConf)
 	if err != nil || !slices.Contains(servers, t.Server) {

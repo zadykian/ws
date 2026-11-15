@@ -9,7 +9,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
-// daemonOf returns the daemon of --server, or the one installed: status runs under sudo, with no WS_CONF.
+// daemonOf returns the daemon of --server, or the one installed: status runs under sudo, with no WS_VALUES.
 func daemonOf(m effect.Machine, server string) (launchd.Daemon, error) {
 	if server != "" {
 		if !values.IsName(server) {

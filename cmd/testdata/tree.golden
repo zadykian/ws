@@ -382,7 +382,7 @@ Global Flags:
 
 Use "ws client macos values [command] --help" for more information about a command.
 == ws client macos values print
-It reads FILE, else $WS_CONF, else ~/.config/ws/mac.conf, and the server's file, servers/NAME/server.conf beside it, of the server that --server names, and prints the checked settings as shell assignments, or the errors of a file it refuses.
+It reads FILE, else $WS_VALUES, else ~/.config/ws/mac.conf, and the server's file, servers/NAME/server.conf beside it, of the server that --server names, and prints the checked settings as shell assignments, or the errors of a file it refuses.
 
 Usage:
   ws client macos values print [FILE] [flags]

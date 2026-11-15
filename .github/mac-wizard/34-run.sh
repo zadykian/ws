@@ -100,9 +100,9 @@ wizard
 started 1 2 && sudo grep -qx "WS_USER: \"$(id -un)\"" "$vars" && [ "$status" = 0 ] ||
     error "a run with another WS_USER exited $status, or named no WS_USER: $(id -un)"
 
-WS_CONF=$RUNNER_TEMP/confs/cloud/mac.conf
-export WS_CONF
-conf_print ~/.config/ws/mac.conf | sed 's/^WS_TARGET=.*/WS_TARGET=cloud/' | conf_write "$WS_CONF"
+WS_VALUES=$RUNNER_TEMP/confs/cloud/mac.conf
+export WS_VALUES
+conf_print ~/.config/ws/mac.conf | sed 's/^WS_TARGET=.*/WS_TARGET=cloud/' | conf_write "$WS_VALUES"
 out=$("$wsbin" client macos wizard --check </dev/null 2>&1)
 printf '%s\n' "$out" | grep -q 'after naming WS_SECURITY_OUTBOUND: false in ' ||
     error "ws client macos wizard --check on a cloud VM named no values.yml line before the run: $out"
@@ -125,8 +125,8 @@ sudo sed -i '' '/^WS_SECURITY_OUTBOUND:/d' "$vars"
 wizard
 started 1 2 && sudo grep -qx 'WS_SECURITY_OUTBOUND: false' "$vars" && [ "$status" = 0 ] ||
     error "a cloud VM's run without the line exited $status, or ran no ws server ubuntu apply"
-rm -r "${WS_CONF%/*}"
-unset WS_CONF
+rm -r "${WS_VALUES%/*}"
+unset WS_VALUES
 "$wsbin" client macos wizard --update </dev/null >"$RUNNER_TEMP/run.out" 2>&1
 grep -q "^- ws's outbound table: off, as ws's /etc/ws/values.yml names WS_SECURITY_OUTBOUND: false, " \
     "$RUNNER_TEMP/run.out" || error "ws client macos wizard --update on the LAN named no table left off"

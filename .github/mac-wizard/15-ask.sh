@@ -135,8 +135,8 @@ printf '%s\n' '+WS_TARGET=lan' \
 typed 'five empty lines' '' '' '' '' ''
 
 conf=$RUNNER_TEMP/confs/target/mac.conf
-WS_CONF=$conf
-export WS_CONF
+WS_VALUES=$conf
+export WS_VALUES
 echo 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' | conf_write "$conf"
 conf_print "$conf" >"$RUNNER_TEMP/mac.conf"
 quick 'ws client macos wizard: Answers: no terminal to ask WS_REMOTE: set WS_REMOTE' \

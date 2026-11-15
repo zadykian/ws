@@ -19,9 +19,9 @@ error() {
     fail=1
 }
 
-WS_CONF=$RUNNER_TEMP/confs/cloud/mac.conf
-export WS_CONF
-conf_print ~/.config/ws/mac.conf | sed -e 's/^WS_TARGET=.*/WS_TARGET=cloud/' -e '/^WS_USER=/d' | conf_write "$WS_CONF"
+WS_VALUES=$RUNNER_TEMP/confs/cloud/mac.conf
+export WS_VALUES
+conf_print ~/.config/ws/mac.conf | sed -e 's/^WS_TARGET=.*/WS_TARGET=cloud/' -e '/^WS_USER=/d' | conf_write "$WS_VALUES"
 sudo install -d -m 700 ~root/.ssh
 sudo install -m 600 "$RUNNER_TEMP/gh/keys" ~root/.ssh/authorized_keys
 "$wsbin" client macos apply </dev/null || error "ws client macos apply on a cloud target exited $?"
@@ -37,7 +37,7 @@ printf '%s\n' "$out"
 [ "$(wc -l <"$ws/sudo.log")" -eq "$sudos" ] || error "ws client macos wizard ran sudo on ws as root"
 printf '%s\n' "$out" | grep -q '^ws client macos wizard: Sudo: ' && error "ws client macos wizard spoke of sudo as root"
 sudo rm -f ~root/.ssh/authorized_keys
-rm -rf "${WS_CONF%/*}"
-unset WS_CONF
+rm -rf "${WS_VALUES%/*}"
+unset WS_VALUES
 "$wsbin" client macos apply </dev/null || error "ws client macos apply back on mac.conf exited $?"
 exit "$fail"

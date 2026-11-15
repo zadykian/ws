@@ -29,7 +29,7 @@ error() {
 # keys ARG...: ws client macos wizard ARGs, with that mac.conf and no terminal. It prints the
 # output, and sets status, and mac to the Mac key stage's lines.
 keys() {
-    out=$(WS_CONF=$conf "$wsbin" client macos wizard "$@" </dev/null 2>&1)
+    out=$(WS_VALUES=$conf "$wsbin" client macos wizard "$@" </dev/null 2>&1)
     status=$?
     printf '%s\n' "$out"
     mac=$(printf '%s\n' "$out" | grep '^ws client macos wizard: Mac key: ')

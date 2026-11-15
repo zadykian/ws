@@ -19,7 +19,7 @@ func withServerDirs(m *effecttest.Machine) *effecttest.Machine {
 }
 
 func TestValuesPrintCommand(t *testing.T) {
-	env := map[string]string{"HOME": "/h", "WS_CONF": ""}
+	env := map[string]string{"HOME": "/h", "WS_VALUES": ""}
 	tests := []struct {
 		name       string
 		args       []string
@@ -57,7 +57,7 @@ func TestValuesPrintCommand(t *testing.T) {
 	withServerDirs(m)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			env["WS_CONF"] = tt.wsConf
+			env["WS_VALUES"] = tt.wsConf
 			p := withEnv(fakeProcess(), env)
 			p.Machine = m
 			got, stdout, stderr := runWs(p, "", append([]string{"client", "macos", "values", "print"}, tt.args...)...)

@@ -213,7 +213,7 @@ func (a *Answers) Apply(ctx context.Context, _ step.Plan) error {
 
 // rehearse does Apply's asking under --check, and shows the diff of each file instead of writing
 // it. The stages after read the files it writes to the scratch paths, so that they check against
-// what the run would make. The old script did the same: it pointed WS_CONF at a file in the lock.
+// what the run would make. The old script did the same: it pointed WS_VALUES at a file in the lock.
 func (a *Answers) rehearse(ctx context.Context, text map[values.Scope]string, c values.Conf) error {
 	place, err := a.place(text, c)
 	if err != nil {

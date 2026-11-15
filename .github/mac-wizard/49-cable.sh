@@ -153,7 +153,7 @@ WS_CABLE_PORT, or set it to nothing for none" && unnamed && [ "$status" = 1 ] ||
     error "ws client macos wizard docked with no terminal exited $status, or named no WS_CABLE_PORT"
 conf_print "$conf" | sed -e 's/^WS_TARGET=.*/WS_TARGET=cloud/' -e '/^WS_CABLE_/d' |
     conf_write "$RUNNER_TEMP/confs/cloud/mac.conf"
-wizard run WS_CONF="$RUNNER_TEMP/confs/cloud/mac.conf"
+wizard run WS_VALUES="$RUNNER_TEMP/confs/cloud/mac.conf"
 firewall="- The provider's firewall: UDP 51820 open to ws, for the tunnel (roles/client/macos/conf/README.md)."
 if [ "$status" != 0 ] || ! printf '%s\n' "$out" | grep -qxF -e "$firewall" ||
     printf '%s\n' "$out" | grep -q -e '^ws client macos wizard: Cable: ' -e '^- The cable: ' \
@@ -165,7 +165,7 @@ rm -r "$RUNNER_TEMP/confs/cloud"
 conf_print "$conf" | sed -e 's/^WS_TARGET=.*/WS_TARGET=mac-vm/' -e 's|^WS_LAN=.*|WS_LAN=192.0.2.0/24|' \
     -e '/^WS_REMOTE/d' -e '/^WS_CABLE_/d' | conf_write "$RUNNER_TEMP/confs/vm/mac.conf"
 conf_set "$RUNNER_TEMP/confs/vm/mac.conf" WS_LAN_ADDRESS=192.0.2.10
-wizard --check WS_CONF="$RUNNER_TEMP/confs/vm/mac.conf"
+wizard --check WS_VALUES="$RUNNER_TEMP/confs/vm/mac.conf"
 if [ "$status" != 0 ] || printf '%s\n' "$out" | grep -q '^ws client macos wizard: Cable: '; then
     error "ws client macos wizard --check with WS_TARGET=mac-vm exited $status, or took the cable's steps"
 fi

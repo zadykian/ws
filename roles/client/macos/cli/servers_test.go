@@ -10,7 +10,7 @@ import (
 
 // serversFixture is ws on the LAN with a running tunnel, and lab in the cloud with none.
 func serversFixture() (*effecttest.Machine, func(...string) (int, string, string)) {
-	p := withEnv(fakeProcess(), map[string]string{"WS_CONF": "/e/mac.conf"})
+	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e/mac.conf"})
 	m := p.Machine.(*effecttest.Machine)
 	m.Files["/e/mac.conf"] = []byte("")
 	m.Files["/e/servers/ws/server.conf"] = []byte("WS_USER=ada\n")
@@ -64,7 +64,7 @@ func TestServersNamesTheFileItRefuses(t *testing.T) {
 }
 
 func TestServersWithNoneSaysHowToAddOne(t *testing.T) {
-	p := withEnv(fakeProcess(), map[string]string{"WS_CONF": "/e/mac.conf"})
+	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e/mac.conf"})
 	status, _, stderr := runWs(p, "", "client", "macos", "servers")
 	if status != 1 || !strings.Contains(stderr, "no server beside /e/mac.conf: ws client macos wizard adds one") {
 		t.Errorf("status = %d, stderr = %q", status, stderr)

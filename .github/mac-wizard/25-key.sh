@@ -30,21 +30,21 @@ printf '%s\n' "WS_USER=$(id -un)" WS_REMOTE=localhost WS_REMOTE_PORT=22022 WS_TA
     WS_TUNNEL_NETWORKS= WS_RESOLVERS= |
     conf_write "$conf"
 conf_print "$conf" >"$RUNNER_TEMP/key.conf.before"
-out=$(WS_CONF=$conf "$wsbin" client macos wizard </dev/null 2>&1)
+out=$(WS_VALUES=$conf "$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
 none="no terminal to ask for ws's login key, and Secretive's agent lists no P-256 key: "
 printf '%s\n' "$out" | grep -q "^ws client macos wizard: Mac key: $none.*WS_IDENTITY_PUB_KEY" &&
     [ "$status" = 1 ] || error "ws client macos wizard, with no terminal, exited $status, naming no WS_IDENTITY_PUB_KEY"
 ! printf '%s\n' "$out" | grep -qE "$applied" || error 'ws client macos wizard ran ws client macos apply after the Mac key'
-out=$(WS_CONF=$conf "$wsbin" client macos wizard --check </dev/null 2>&1)
+out=$(WS_VALUES=$conf "$wsbin" client macos wizard --check </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
 want="ws client macos wizard: Mac key: would ask for ws's login key, in Secretive: make a new one (the default)"
 printf '%s\n' "$out" | grep -qxF "$want" && [ "$status" = 0 ] ||
     error "ws client macos wizard --check exited $status, saying no '$want'"
 { conf_print "$conf" && echo "WS_IDENTITY_PUB_KEY=$RUNNER_TEMP/none.pub"; } | conf_write "$named"
-out=$(WS_CONF=$named "$wsbin" client macos wizard </dev/null 2>&1)
+out=$(WS_VALUES=$named "$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
 stop="ws client macos wizard: Mac key: $RUNNER_TEMP/none.pub, named in mac.conf's WS_IDENTITY_PUB_KEY, is missing"
@@ -52,7 +52,7 @@ printf '%s\n' "$out" | grep -qF "$stop" && [ "$status" = 1 ] ||
     error "ws client macos wizard exited $status, naming no missing key"
 ! printf '%s\n' "$out" | grep -qE "$applied" || error 'ws client macos wizard ran ws client macos apply, with no key'
 { conf_print "$conf" && echo 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub'; } | conf_write "$named"
-out=$(WS_CONF=$named "$wsbin" client macos wizard --check </dev/null 2>&1)
+out=$(WS_VALUES=$named "$wsbin" client macos wizard --check </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
 ! printf '%s\n' "$out" | grep -q '^ws client macos wizard: Mac key: ' && [ "$status" = 0 ] ||

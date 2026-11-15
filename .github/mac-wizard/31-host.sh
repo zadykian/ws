@@ -75,7 +75,7 @@ none=$RUNNER_TEMP/confs/none/mac.conf
 conf_print ~/.config/ws/mac.conf |
     sed -e 's/^WS_REMOTE=.*/WS_REMOTE=/' -e 's/^WS_REMOTE_PORT=.*/WS_REMOTE_PORT=/' |
     conf_write "$none"
-out=$(WS_CONF=$none "$wsbin" client macos wizard </dev/null 2>&1)
+out=$(WS_VALUES=$none "$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
 expect 1 'and no WS_REMOTE_PORT; set those in server.conf as roles/server/ubuntu/cable/router.md has them'
 out=$(WS_HOST_KEY=yes "$wsbin" client macos wizard </dev/null 2>&1)
@@ -90,13 +90,13 @@ conf=$RUNNER_TEMP/confs/first/mac.conf
     echo WS_TUNNEL_PORT=51821
 } | conf_write "$conf"
 cp "$RUNNER_TEMP/hosts.without" "$hosts"
-out=$(WS_CONF=$conf "$wsbin" client macos wizard </dev/null 2>&1)
+out=$(WS_VALUES=$conf "$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
 expect 1 "doesn't answer at 192.0.2.1:22022 with an ed25519 key, and no terminal is there to ask"
-out=$(WS_CONF=$conf WS_FIRST_ADDRESS=ws.test "$wsbin" client macos wizard </dev/null 2>&1)
+out=$(WS_VALUES=$conf WS_FIRST_ADDRESS=ws.test "$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
 expect 1 'ws client macos wizard: Host key: WS_FIRST_ADDRESS=ws.test is not an IPv4 address'
-out=$(WS_CONF=$conf WS_FIRST_ADDRESS=127.0.0.1 WS_HOST_KEY=$fp "$wsbin" client macos wizard </dev/null 2>&1)
+out=$(WS_VALUES=$conf WS_FIRST_ADDRESS=127.0.0.1 WS_HOST_KEY=$fp "$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
 [ "$status" = 0 ] || error "ws client macos wizard with WS_FIRST_ADDRESS=127.0.0.1 exited $status"
@@ -111,7 +111,7 @@ if ! printf '%s\n' "$out" | grep -qxF -e "$lease" ||
 fi
 conf_print "$conf" | sed 's/^WS_TARGET=.*/WS_TARGET=cloud/' | conf_write "$RUNNER_TEMP/confs/cloud/mac.conf"
 cp "$RUNNER_TEMP/hosts.without" "$hosts"
-out=$(WS_CONF=$RUNNER_TEMP/confs/cloud/mac.conf WS_FIRST_ADDRESS=127.0.0.1 WS_HOST_KEY=$fp "$wsbin" client macos wizard \
+out=$(WS_VALUES=$RUNNER_TEMP/confs/cloud/mac.conf WS_FIRST_ADDRESS=127.0.0.1 WS_HOST_KEY=$fp "$wsbin" client macos wizard \
     </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"

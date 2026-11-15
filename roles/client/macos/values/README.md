@@ -29,7 +29,7 @@ WS_TUNNEL_NETWORKS="10.20.0.0/16 198.51.100.0/24"
 WS_RESOLVERS="example.internal=10.20.0.53,10.20.0.54"
 ```
 
-A key in the other file is refused, with the file it goes in. `WS_CONF` names `mac.conf`, and the
+A key in the other file is refused, with the file it goes in. `WS_VALUES` names `mac.conf`, and the
 server's file is `servers/ws/server.conf` beside it. Each key's meaning is in
 [mac.conf](../README.md#macconf).
 

@@ -85,7 +85,7 @@ func wizardStages(e wizardEffects, o engine.WizardOptions, name string) []step.S
 	lock := wizard.LockPath(p.LockDir())
 	scratch := lock + "/mac.conf"
 	// Under --check the stages after Answers read the mac.conf that it would write, a file in the lock,
-	// as the old script pointed WS_CONF there.
+	// as the old script pointed WS_VALUES there.
 	later, laterServer := macConf, values.ServerPath(macConf, name)
 	if check {
 		later, laterServer = scratch, values.ServerPath(scratch, name)
@@ -141,9 +141,9 @@ func runWizard(c *cobra.Command, p enginecli.Env, server *string, o engine.Wizar
 		return err
 	}
 	*server = name
-	// Homebrew's bin comes first in PATH, as a shell started before its install lacks it, and WS_CONF
+	// Homebrew's bin comes first in PATH, as a shell started before its install lacks it, and WS_VALUES
 	// is set for the scripts that stages run.
 	_ = p.Setenv("PATH", "/opt/homebrew/bin:"+p.Getenv("PATH"))
-	_ = p.Setenv("WS_CONF", values.Path(p.Getenv, p.Pwd))
+	_ = p.Setenv("WS_VALUES", values.Path(p.Getenv, p.Pwd))
 	return engine.Wizard(c.Context(), enginecli.CallOf(c, p), macTarget(p, new([]string), server), o)
 }

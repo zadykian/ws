@@ -1,7 +1,7 @@
 #!/bin/sh
 # The wizard on the Mac that 40-again.sh leaves, with standin.sh's PATH, which lacks brew. Its Tools
 # and Homebrew stages must find the runner's Command Line Tools and brew, so that a run and
-# --check print nothing at all. Where WS_CONF names no file, --check must show the lines the wizard
+# --check print nothing at all. Where WS_VALUES names no file, --check must show the lines the wizard
 # would write there, from the environment's answers, and write none.
 
 set -u
@@ -34,7 +34,7 @@ done
 
 conf=$RUNNER_TEMP/confs/tools/mac.conf
 user=$(id -un)
-out=$(WS_CONF=$conf WS_USER=$user WS_TARGET=lan WS_LAN='' WS_REMOTE=localhost WS_REMOTE_PORT=22022 \
+out=$(WS_VALUES=$conf WS_USER=$user WS_TARGET=lan WS_LAN='' WS_REMOTE=localhost WS_REMOTE_PORT=22022 \
     WS_TUNNEL_NETWORKS='' WS_RESOLVERS='' PATH=$path \
     "$wsbin" client macos wizard --server ws --check 2>&1)
 status=$?

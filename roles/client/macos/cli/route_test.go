@@ -24,7 +24,7 @@ func TestTunnelLoadedFollowsLaunchd(t *testing.T) {
 }
 
 func TestTunnelRoutesCheckShowsTheFileAndWritesNothing(t *testing.T) {
-	p := withEnv(fakeProcess(), map[string]string{"WS_CONF": "/e/mac.conf"})
+	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e/mac.conf"})
 	m := p.Machine.(*effecttest.Machine)
 	m.Root["/etc/ws-tunnel/ws/routes.d"] = effect.Attrs{Mode: 0o755}
 	m.Files["/e/servers/ws/server.conf"] = []byte("WS_USER=ada\n")
@@ -41,7 +41,7 @@ func TestTunnelRoutesCheckShowsTheFileAndWritesNothing(t *testing.T) {
 }
 
 func TestRouteCommandsPrintTheErrorAndExit1(t *testing.T) {
-	p := withEnv(fakeProcess(), map[string]string{"WS_CONF": "/e/mac.conf"})
+	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e/mac.conf"})
 	m := p.Machine.(*effecttest.Machine)
 	m.Files["/e/servers/ws/server.conf"] = []byte("WS_USER=ada\n")
 	withServerDirs(m)

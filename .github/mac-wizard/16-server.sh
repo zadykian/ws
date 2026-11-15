@@ -39,8 +39,8 @@ box=$RUNNER_TEMP/confs/server/mac.conf
 printf '%s\n' 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' \
     'WS_GIT_SIGNING_PUB_KEY=~/.ssh/id_ed25519.pub' | conf_write "$box"
 refused "no terminal to ask the server's name: pass --server NAME" \
-    env WS_CONF="$box" "$wsbin" client macos wizard --check
-env WS_CONF="$box" WS_TARGET=cloud WS_REMOTE=ws.example.test WS_REMOTE_PORT=22 \
+    env WS_VALUES="$box" "$wsbin" client macos wizard --check
+env WS_VALUES="$box" WS_TARGET=cloud WS_REMOTE=ws.example.test WS_REMOTE_PORT=22 \
     WS_TUNNEL_NETWORKS= WS_RESOLVERS= "$wsbin" client macos wizard --server box --check </dev/null >"$RUNNER_TEMP/box" 2>&1
 status=$?
 cat "$RUNNER_TEMP/box"
