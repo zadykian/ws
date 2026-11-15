@@ -9,17 +9,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
 )
-
-func TestGitWithoutNameReportsNothing(t *testing.T) {
-	_, g := gitReady()
-	g.Conf = conf.Conf{}
-	if got := mactest.ReportOf(t, g.Step()); len(got) != 0 {
-		t.Errorf("items = %v, want none", got)
-	}
-}
 
 func TestGitReportsWhatItManages(t *testing.T) {
 	m, g := gitReady()

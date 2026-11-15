@@ -13,8 +13,8 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 )
 
-// Git sets git up from mac.conf's WS_GIT_NAME, WS_GIT_EMAIL and WS_GIT_SIGNING_PUB_KEY, and leaves it
-// alone without them. It writes git's identity and a signing key of the Mac's own to
+// Git sets git up from mac.conf's WS_GIT_SIGNING_PUB_KEY on each run. It writes git's identity,
+// gitcfg.Name and gitcfg.Email, and a signing key of the Mac's own to
 // ~/.config/ws/gitconfig, as the shell role sets them up on ws. ~/.gitconfig includes that file at
 // its top. gh, from Homebrew where missing, takes git's pushes to GitHub, and registers the key
 // there. It stops where the key or ~/.gitconfig is not as it can use, before it acts. Without a
@@ -49,9 +49,6 @@ func (g *Git) look(name string) (string, error) {
 
 // plan reads the signing key and gh, and plans to install gh.
 func (g *Git) plan(ctx context.Context) (step.Plan, error) {
-	if g.Conf.GitName == "" {
-		return step.Plan{}, nil
-	}
 	g.notes = nil
 	found, link, holds, err := g.gitconfigLines().Read(ctx)
 	lines, err := g.gitconfigLines().Changes(found, link, holds, err)

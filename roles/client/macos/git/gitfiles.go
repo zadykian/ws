@@ -59,9 +59,6 @@ func (g *Git) files(ctx context.Context, key keys.NamedKey, gh string) ([]step.C
 // report says how gh, the signing key, the files and ~/.gitconfig's include stand. The key shows by
 // its .pub alone, and ~/.gitconfig by the include, as the file is the user's.
 func (g *Git) report(ctx context.Context) ([]step.Item, error) {
-	if g.Conf.GitName == "" {
-		return nil, nil
-	}
 	key, err := keys.ReadKey(ctx, g.M, g.Conf, g.Home, keys.SigningKey)
 	if err != nil {
 		return nil, err
