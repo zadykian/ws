@@ -15,7 +15,7 @@ const configureStage = "Configure"
 
 // wayKeys are the keys that an edit can hide. conf refuses one past the edit that hid it, as
 // WS_LAN on a cloud VM, and a key that doesn't show has no field to clear it by.
-var wayKeys = []string{"WS_LAN", "WS_LAN_ADDRESS", "WS_REMOTE", "WS_REMOTE_PORT", "WS_GIT_EMAIL"}
+var wayKeys = []string{"WS_LAN", "WS_LAN_ADDRESS", "WS_REMOTE", "WS_REMOTE_PORT"}
 
 // Form is mac.conf and a server's file as a form. It shows the keys that the Answers stage would ask
 // where the files lacked them all, as the edits so far lead it. A key that the stage never asks

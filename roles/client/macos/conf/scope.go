@@ -21,7 +21,7 @@ const (
 // macKeys are the keys of mac.conf. Every other key is a server's, so a new key is one unless it
 // is listed here.
 var macKeys = []string{
-	"WS_GIT_NAME", "WS_GIT_EMAIL", "WS_GIT_SIGNING_PUB_KEY", "WS_IDENTITY_PUB_KEY", "WS_IDENTITY_AGENT",
+	"WS_GIT_SIGNING_PUB_KEY", "WS_IDENTITY_PUB_KEY", "WS_IDENTITY_AGENT",
 }
 
 // refuse returns the message for the key name where the scope is the other file's, else nothing.

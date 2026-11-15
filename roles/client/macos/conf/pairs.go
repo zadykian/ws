@@ -33,8 +33,6 @@ func pairs(c Conf) []Error {
 			strings.Join(away, " ") + " (roles/client/macos/conf/README.md)")
 	}
 	switch {
-	case (c.GitName == "") != (c.GitEmail == ""):
-		return refuse("WS_GIT_NAME and WS_GIT_EMAIL go together")
 	case c.IdentityAgent != "" && c.IdentityPubKey == "":
 		return refuse("WS_IDENTITY_AGENT needs WS_IDENTITY_PUB_KEY")
 	}

@@ -53,8 +53,6 @@ func TestKeys(t *testing.T) {
 		{"WS_RESOLVERS", "Example.internal=10.20.0.53", false},
 		{"WS_CABLE_PORT", "enp5s0", true},
 		{"WS_CABLE_PORT", "-enp5s0", false},
-		{"WS_GIT_EMAIL", "ws@example.com", true},
-		{"WS_GIT_EMAIL", "ws", false},
 		{"WS_GIT_SIGNING_PUB_KEY", "~/.ssh/ws.pub", true},
 		{"WS_IDENTITY_PUB_KEY", "~/.ssh/ws", false},
 	}

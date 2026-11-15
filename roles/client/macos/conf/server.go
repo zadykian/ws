@@ -55,8 +55,7 @@ func LoadLines(m effect.Machine, mac, server string) (Conf, error) {
 
 // join returns the keys of a server's file with the Mac's keys from mac.conf.
 func join(mac, server Conf) Conf {
-	server.GitName, server.GitEmail, server.GitSigningPubKey = mac.GitName, mac.GitEmail, mac.GitSigningPubKey
-	server.IdentityPubKey, server.IdentityAgent = mac.IdentityPubKey, mac.IdentityAgent
+	server.GitSigningPubKey, server.IdentityPubKey, server.IdentityAgent = mac.GitSigningPubKey, mac.IdentityPubKey, mac.IdentityAgent
 	return server
 }
 

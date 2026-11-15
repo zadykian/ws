@@ -13,7 +13,7 @@ import (
 type Conf struct {
 	User, Target, Slot, PublicKey, LAN, LANAddress, Remote, RemotePort, Port string
 	TunnelNetworks, Resolvers, CableService, CablePort                       string
-	GitName, GitEmail, GitSigningPubKey, IdentityPubKey, IdentityAgent       string
+	GitSigningPubKey, IdentityPubKey, IdentityAgent                          string
 }
 
 // TunnelSlot gives the slot that c.Slot names. Load has checked it, and an empty one is slot 0.
@@ -94,11 +94,6 @@ var keys = []key{
 			"in quotes where it holds a blank"},
 	{"WS_CABLE_PORT", func(c *Conf) *string { return &c.CablePort }, plain(check.CablePort),
 		"a port of ws's, as enp5s0: up to 15 letters, digits and ._-, no - first"},
-	{"WS_GIT_NAME", func(c *Conf) *string { return &c.GitName }, check.GitName,
-		`a name, in quotes where it holds a blank, with no " or \`},
-	{"WS_GIT_EMAIL", func(c *Conf) *string { return &c.GitEmail }, plain(check.GitEmail),
-		"an email address, as ws@example.com: letters, digits and ._%+- before the @, and " +
-			"a host name after it"},
 	{"WS_GIT_SIGNING_PUB_KEY", func(c *Conf) *string { return &c.GitSigningPubKey }, plain(check.KeyFile), keyFile},
 	{"WS_IDENTITY_PUB_KEY", func(c *Conf) *string { return &c.IdentityPubKey }, plain(check.KeyFile), keyFile},
 	{"WS_IDENTITY_AGENT", func(c *Conf) *string { return &c.IdentityAgent }, check.Socket,

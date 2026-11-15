@@ -143,7 +143,7 @@ func TestAnswersCheckWritesTheScratchFile(t *testing.T) {
 // TestAnswersLeavesAFileThatGainsNothing asks for the server's keys alone, so mac.conf, a link
 // with no final newline, is neither written nor said.
 func TestAnswersLeavesAFileThatGainsNothing(t *testing.T) {
-	const mac = "WS_GIT_NAME=ada\nWS_GIT_EMAIL=a@b.c"
+	const mac = "WS_GIT_SIGNING_PUB_KEY=~/k.pub"
 	for _, check := range []bool{false, true} {
 		a, out := newAnswers(t, mac, "WS_USER=ada\n")
 		a.Check, a.Scratch, a.ServerScratch = check, "/lock/mac.conf", "/lock/servers/ws/server.conf"
@@ -176,7 +176,7 @@ func TestAnswersLeavesAFileThatGainsNothing(t *testing.T) {
 
 func TestAnswersCheckPassesALinkThatLacksNoKey(t *testing.T) {
 	const all = "WS_TARGET=lan\nWS_LAN=\nWS_REMOTE=\nWS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
-	a, out := newAnswers(t, "WS_GIT_NAME=\nWS_GIT_EMAIL=\n", all)
+	a, out := newAnswers(t, "", all)
 	a.Check, a.Scratch, a.ServerScratch = true, "/lock/mac.conf", "/lock/servers/ws/server.conf"
 	m := a.M.(*effecttest.Machine)
 	m.Links[serverPathForTest], m.Dirs["/h/.config/ws"], m.Dirs["/h/.config/ws/servers/ws"] = "/dot/server.conf", 0o755, 0o755
@@ -198,7 +198,7 @@ func TestAnswersCheckPassesALinkThatLacksNoKey(t *testing.T) {
 func TestAnswersCheckCopiesTheOtherServersFiles(t *testing.T) {
 	const all = "WS_TARGET=lan\nWS_LAN=\nWS_REMOTE=\nWS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
 	const lab = "WS_USER=ada\nWS_SLOT=5\n"
-	a, _ := newAnswers(t, "WS_GIT_NAME=\nWS_GIT_EMAIL=\n", all)
+	a, _ := newAnswers(t, "", all)
 	a.Check, a.Scratch, a.ServerScratch = true, "/lock/mac.conf", "/lock/servers/ws/server.conf"
 	m := a.M.(*effecttest.Machine)
 	m.Dirs["/h/.config/ws/servers"], m.Dirs["/h/.config/ws/servers/ws"], m.Dirs["/h/.config/ws/servers/lab"] = 0o755, 0o755, 0o755
@@ -221,7 +221,7 @@ func TestAnswersCheckCopiesTheOtherServersFiles(t *testing.T) {
 // the cause and the way out.
 func TestAnswersCheckRefusesAnUnreadableSiblingAsTheRunDoes(t *testing.T) {
 	const all = "WS_TARGET=lan\nWS_LAN=\nWS_REMOTE=\nWS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
-	a, _ := newAnswers(t, "WS_GIT_NAME=\nWS_GIT_EMAIL=\n", all)
+	a, _ := newAnswers(t, "", all)
 	a.Check, a.Scratch, a.ServerScratch = true, "/lock/mac.conf", "/lock/servers/ws/server.conf"
 	m := a.M.(*effecttest.Machine)
 	lab := "/h/.config/ws/servers/lab/server.conf"
@@ -255,7 +255,7 @@ func TestAnswersPlaceAServerFileThatLacksItsSlot(t *testing.T) {
 		"beside one":   {"", box, "none", "WS_SLOT=1\nWS_PORT=51820\nWS_TARGET=lan\n"},
 		"same router":  {"", box, "r.example", "WS_SLOT=1\nWS_PORT=51821\nWS_TARGET=lan\nWS_LAN=\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22023\n"},
 	} {
-		a, out := newAnswers(t, "WS_GIT_NAME=ada\nWS_GIT_EMAIL=a@b.c\n", tc.server)
+		a, out := newAnswers(t, "WS_GIT_SIGNING_PUB_KEY=~/k.pub\n", tc.server)
 		m := a.M.(*effecttest.Machine)
 		if tc.other != "" {
 			m.Dirs["/h/.config/ws/servers"] = 0o755

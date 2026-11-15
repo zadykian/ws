@@ -14,8 +14,8 @@ func TestParse(t *testing.T) {
 		{"empty", "", Conf{User: "zadykian", Target: "lan", Slot: "0"}, nil},
 		{"values", "WS_USER=ada\nWS_TARGET='lan'\n  WS_PORT=1\n",
 			Conf{User: "ada", Target: "lan", Slot: "0", Port: "1"}, nil},
-		{"quotes", "WS_GIT_NAME=\"Ada L\"\nWS_GIT_EMAIL='a@b.c'", Conf{User: "zadykian", Target: "lan", Slot: "0",
-			GitName: "Ada L", GitEmail: "a@b.c"}, nil},
+		{"quotes", "WS_CABLE_SERVICE=\"USB LAN\"\nWS_CABLE_PORT='en1'", Conf{User: "zadykian", Target: "lan", Slot: "0",
+			CableService: "USB LAN", CablePort: "en1"}, nil},
 		{"comments", "# a\n\n  \t# b\n", Conf{User: "zadykian", Target: "lan", Slot: "0"}, nil},
 		{"later line", "WS_USER=a\nWS_USER=b\nWS_USER=\n", Conf{User: "zadykian", Target: "lan", Slot: "0"}, nil},
 		{"empty values", "WS_USER=\nWS_TARGET=\"\"\nWS_PORT=\n", Conf{User: "zadykian", Target: "lan", Slot: "0"}, nil},
@@ -29,10 +29,12 @@ func TestParse(t *testing.T) {
 			[]Error{{1, "unknown key WS_NOPE"}}},
 		{"the removed key", "WS_HOOK=me/tools@v1.0.0\n", Conf{User: "zadykian", Target: "lan", Slot: "0"},
 			[]Error{{1, "unknown key WS_HOOK"}}},
+		{"the removed name", "WS_GIT_NAME=Ada\nWS_GIT_EMAIL=a@b.c\n", Conf{User: "zadykian", Target: "lan", Slot: "0"},
+			[]Error{{1, "unknown key WS_GIT_NAME"}, {2, "unknown key WS_GIT_EMAIL"}}},
 		{"not a line", "ws_user=a\nWS_USER\n=a\n", Conf{User: "zadykian", Target: "lan", Slot: "0"},
 			[]Error{{1, "not a KEY=value line"}, {2, "not a KEY=value line"}, {3, "not a KEY=value line"}}},
-		{"bare blank", "WS_GIT_NAME=Ada L\n", Conf{User: "zadykian", Target: "lan", Slot: "0"},
-			[]Error{{1, "WS_GIT_NAME=Ada L is not " + find(t, "WS_GIT_NAME").form}}},
+		{"bare blank", "WS_CABLE_SERVICE=USB LAN\n", Conf{User: "zadykian", Target: "lan", Slot: "0"},
+			[]Error{{1, "WS_CABLE_SERVICE=USB LAN is not " + find(t, "WS_CABLE_SERVICE").form}}},
 		{"carriage return", "WS_USER=a\r\n", Conf{User: "zadykian", Target: "lan", Slot: "0"},
 			[]Error{{1, "WS_USER=a\r is not " + find(t, "WS_USER").form}}},
 	}
@@ -57,11 +59,11 @@ func TestLines(t *testing.T) {
 }
 
 func TestValue(t *testing.T) {
-	c, errs := Lines("WS_GIT_NAME=\"A B\"\n")
+	c, errs := Lines("WS_GIT_SIGNING_PUB_KEY=\"~/k.pub\"\n")
 	if len(errs) > 0 {
 		t.Fatal(errs)
 	}
-	for name, want := range map[string]string{"WS_GIT_NAME": "A B", "WS_TARGET": "lan", "WS_LAN": "", "NOT_A_KEY": ""} {
+	for name, want := range map[string]string{"WS_GIT_SIGNING_PUB_KEY": "~/k.pub", "WS_TARGET": "lan", "WS_LAN": "", "NOT_A_KEY": ""} {
 		if got := c.Value(name); got != want {
 			t.Errorf("Value(%s) = %q; want %q", name, got, want)
 		}

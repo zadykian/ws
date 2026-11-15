@@ -63,7 +63,7 @@ func TestConfSet(t *testing.T) {
 }
 
 func TestLine(t *testing.T) {
-	if got := Line("WS_GIT_NAME", "Ada L"); got != `WS_GIT_NAME="Ada L"` {
+	if got := Line("WS_CABLE_SERVICE", "USB LAN"); got != `WS_CABLE_SERVICE="USB LAN"` {
 		t.Errorf("Line = %q", got)
 	}
 }
