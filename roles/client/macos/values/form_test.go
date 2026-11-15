@@ -29,7 +29,7 @@ func formOf(t *testing.T, mac, server string) (Form, *effecttest.Machine) {
 }
 
 func TestConfFormLoadReadsTheFile(t *testing.T) {
-	f, _ := formOf(t, "", "WS_TARGET=cloud\n")
+	f, _ := formOf(t, "", Text("WS_TARGET", "cloud"))
 	if got := f.file.Target; got != "cloud" {
 		t.Errorf("target = %q", got)
 	}
@@ -59,7 +59,7 @@ func TestConfFormShowsTheKeysOfATarget(t *testing.T) {
 		"cloud":  slices.Concat([]string{"WS_TARGET", "WS_REMOTE", "WS_REMOTE_PORT"}, tail),
 		"mac-vm": slices.Concat([]string{"WS_TARGET", "WS_LAN", "WS_LAN_ADDRESS"}, tail),
 	} {
-		f, _ := formOf(t, "", "WS_LAN=10.88.0.0/24\nWS_LAN_ADDRESS=10.88.0.10\n")
+		f, _ := formOf(t, "", Text("WS_LAN", "10.88.0.0/24", "WS_LAN_ADDRESS", "10.88.0.10"))
 		if got := keysOf(f.Fields(map[string]string{"WS_TARGET": target})); !slices.Equal(got, want) {
 			t.Errorf("%s: keys = %v; want %v", target, got, want)
 		}
@@ -88,15 +88,15 @@ func TestConfFormEditLeadsTheWalk(t *testing.T) {
 }
 
 func TestConfFormFieldsLeaveTheFile(t *testing.T) {
-	f, m := formOf(t, "", "WS_REMOTE=r.example\n")
+	f, m := formOf(t, "", Text("WS_REMOTE", "r.example"))
 	f.Fields(map[string]string{"WS_REMOTE": "other.example"})
-	if got := string(m.Files[serverOfTest]); got != "WS_REMOTE=r.example\n" {
+	if got := string(m.Files[serverOfTest]); got != Text("WS_REMOTE", "r.example") {
 		t.Errorf("server file = %q", got)
 	}
 }
 
 func TestConfFormValidReadsTheForm(t *testing.T) {
-	f, _ := formOf(t, "", "WS_TARGET=cloud\nWS_REMOTE=vm.example\nWS_REMOTE_PORT=22\n")
+	f, _ := formOf(t, "", Text("WS_TARGET", "cloud", "WS_REMOTE", "vm.example", "WS_REMOTE_PORT", "22"))
 	remote := fieldOf(t, f.Fields(nil), "WS_REMOTE")
 	if err := remote.Valid(""); err == nil || err.Error() != "WS_TARGET=cloud needs WS_REMOTE and WS_REMOTE_PORT" {
 		t.Errorf("empty name: %v", err)
@@ -111,7 +111,12 @@ func TestConfFormValidReadsTheForm(t *testing.T) {
 }
 
 func TestConfFormSave(t *testing.T) {
-	way := "WS_LAN=10.88.0.0/24\nWS_LAN_ADDRESS=10.88.0.10\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22022\n"
+	way := Text(
+		"WS_LAN", "10.88.0.0/24",
+		"WS_LAN_ADDRESS", "10.88.0.10",
+		"WS_REMOTE", "r.example",
+		"WS_REMOTE_PORT", "22022",
+	)
 	for name, tc := range map[string]struct {
 		server     string
 		edits      map[string]string
@@ -119,14 +124,26 @@ func TestConfFormSave(t *testing.T) {
 		wantServer string
 	}{
 		"a needed default": {"", map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "vm.example"}, "",
-			"WS_TARGET=cloud\nWS_REMOTE=vm.example\nWS_REMOTE_PORT=22\n"},
-		"to a cloud VM": {way + "WS_CABLE_PORT=enp1s0\n", map[string]string{"WS_TARGET": "cloud"}, "",
-			"WS_LAN=\nWS_LAN_ADDRESS=\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22022\nWS_CABLE_PORT=\nWS_TARGET=cloud\n"},
+			Text("WS_TARGET", "cloud", "WS_REMOTE", "vm.example", "WS_REMOTE_PORT", "22")},
+		"to a cloud VM": {way + Text("WS_CABLE_PORT", "enp1s0"), map[string]string{"WS_TARGET": "cloud"}, "",
+			Text(
+				"WS_LAN", "",
+				"WS_LAN_ADDRESS", "",
+				"WS_REMOTE", "r.example",
+				"WS_REMOTE_PORT", "22022",
+				"WS_CABLE_PORT", "",
+				"WS_TARGET", "cloud",
+			)},
 		"a cleared field": {way, map[string]string{"WS_REMOTE": ""}, "",
-			"WS_LAN=10.88.0.0/24\nWS_LAN_ADDRESS=10.88.0.10\nWS_REMOTE=\nWS_REMOTE_PORT=\n"},
-		"none and quotes": {"WS_TUNNEL_NETWORKS=10.20.0.0/16\n",
-			map[string]string{"WS_TUNNEL_NETWORKS": "none"}, "", "WS_TUNNEL_NETWORKS=\n"},
-		"a mended pair": {"WS_LAN=10.88.0.0/24\n", nil, "", "WS_LAN=10.88.0.0/24\nWS_LAN_ADDRESS=10.88.0.10\n"},
+			Text(
+				"WS_LAN", "10.88.0.0/24",
+				"WS_LAN_ADDRESS", "10.88.0.10",
+				"WS_REMOTE", "",
+				"WS_REMOTE_PORT", "",
+			)},
+		"none and quotes": {Text("WS_TUNNEL_NETWORKS", "10.20.0.0/16"),
+			map[string]string{"WS_TUNNEL_NETWORKS": "none"}, "", Text("WS_TUNNEL_NETWORKS", "")},
+		"a mended pair": {Text("WS_LAN", "10.88.0.0/24"), nil, "", Text("WS_LAN", "10.88.0.0/24", "WS_LAN_ADDRESS", "10.88.0.10")},
 	} {
 		f, m := formOf(t, "", tc.server)
 		if _, err := f.Save(context.Background(), &effecttest.Out{}, tc.edits); err != nil {
@@ -156,12 +173,12 @@ func TestConfFormSaveReturnsWhatTheFileHolds(t *testing.T) {
 }
 
 func TestConfFormSaveOfNoChangeWritesNothing(t *testing.T) {
-	f, m := formOf(t, "# mine\n", "# mine\nWS_REMOTE=r.example\n")
+	f, m := formOf(t, "# mine\n", "# mine\n"+Text("WS_REMOTE", "r.example"))
 	out := &effecttest.Out{}
 	if _, err := f.Save(context.Background(), out, nil); err != nil {
 		t.Fatal(err)
 	}
-	if got := string(m.Files[serverOfTest]); got != "# mine\nWS_REMOTE=r.example\n" {
+	if got := string(m.Files[serverOfTest]); got != "# mine\n"+Text("WS_REMOTE", "r.example") {
 		t.Errorf("server file = %q", got)
 	}
 	if want := []string{"say: /h/mac.conf and " + serverOfTest + " hold these values already"}; !slices.Equal(out.Lines, want) {
@@ -170,7 +187,7 @@ func TestConfFormSaveOfNoChangeWritesNothing(t *testing.T) {
 }
 
 func TestConfFormSaveSaysWhatItEmptied(t *testing.T) {
-	f, _ := formOf(t, "", "WS_REMOTE=r.example\nWS_REMOTE_PORT=22022\n")
+	f, _ := formOf(t, "", Text("WS_REMOTE", "r.example", "WS_REMOTE_PORT", "22022"))
 	out := &effecttest.Out{}
 	if _, err := f.Save(context.Background(), out, map[string]string{"WS_REMOTE": ""}); err != nil {
 		t.Fatal(err)
@@ -187,7 +204,7 @@ func TestConfFormSaveRefusals(t *testing.T) {
 	if _, err := f.Save(context.Background(), out, map[string]string{"WS_REMOTE": "r.example"}); !errors.Is(err, ErrRefused) {
 		t.Errorf("a link: %v", err)
 	}
-	if said := strings.Join(out.Lines, "\n"); !strings.Contains(said, "is a link") || !strings.Contains(said, "WS_REMOTE=r.example") {
+	if said := strings.Join(out.Lines, "\n"); !strings.Contains(said, "is a link") || !strings.Contains(said, Line("WS_REMOTE", "r.example")) {
 		t.Errorf("said %q", said)
 	}
 }

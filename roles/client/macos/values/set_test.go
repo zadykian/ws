@@ -29,7 +29,7 @@ func TestReplaceQuotesABlank(t *testing.T) {
 
 func TestConfSetAllPassesAPairTogether(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n")
+	m.Files["/h/mac.conf"] = []byte(Text("WS_TARGET", "lan"))
 	m.Results["mkdir -p /h"] = effecttest.Result{}
 	f := File{Path: "/h/mac.conf", Stage: "Configure", M: m, Out: &effecttest.Out{}}
 	if err := f.Set(context.Background(), "WS_LAN", "10.88.0.0/24"); err == nil {
@@ -39,7 +39,7 @@ func TestConfSetAllPassesAPairTogether(t *testing.T) {
 	if err := f.SetAll(context.Background(), pair...); err != nil {
 		t.Fatal(err)
 	}
-	want := "WS_TARGET=lan\nWS_LAN=10.88.0.0/24\nWS_LAN_ADDRESS=10.88.0.10\n"
+	want := Text("WS_TARGET", "lan", "WS_LAN", "10.88.0.0/24", "WS_LAN_ADDRESS", "10.88.0.10")
 	if got := string(m.Files["/h/mac.conf"]); got != want {
 		t.Errorf("mac.conf = %q; want %q", got, want)
 	}
@@ -47,7 +47,7 @@ func TestConfSetAllPassesAPairTogether(t *testing.T) {
 
 func TestConfSet(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\nWS_PUBLIC_KEY=x\n")
+	m.Files["/h/mac.conf"] = []byte(Text("WS_TARGET", "lan", "WS_PUBLIC_KEY", "x"))
 	m.Results["mkdir -p /h"] = effecttest.Result{}
 	f := File{Path: "/h/mac.conf", Stage: "Tunnel", M: m, Out: &effecttest.Out{}}
 	if err := f.Set(context.Background(), "WS_PUBLIC_KEY", "bad"); err == nil {
@@ -57,7 +57,7 @@ func TestConfSet(t *testing.T) {
 	if err := f.Set(context.Background(), "WS_PUBLIC_KEY", key); err != nil {
 		t.Fatal(err)
 	}
-	if got := string(m.Files["/h/mac.conf"]); got != "WS_TARGET=lan\nWS_PUBLIC_KEY="+key+"\n" {
+	if got := string(m.Files["/h/mac.conf"]); got != Text("WS_TARGET", "lan", "WS_PUBLIC_KEY", key) {
 		t.Errorf("mac.conf = %q", got)
 	}
 }

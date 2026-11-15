@@ -26,7 +26,7 @@ func TestConfFormScopeSavesToItsFileAlone(t *testing.T) {
 	edits := map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "vm.example"}
 	for scope, want := range map[Scope][2]string{
 		MacFile:    {"", ""},
-		ServerFile: {"", "WS_TARGET=cloud\nWS_REMOTE=vm.example\nWS_REMOTE_PORT=22\n"},
+		ServerFile: {"", Text("WS_TARGET", "cloud", "WS_REMOTE", "vm.example", "WS_REMOTE_PORT", "22")},
 	} {
 		f, m := formOf(t, "", "")
 		f.Scope = scope
@@ -52,13 +52,13 @@ func TestConfFormScopeSaysItsFileHoldsTheValues(t *testing.T) {
 }
 
 func TestConfFormSaveChangesNeitherFileWhereOneRefuses(t *testing.T) {
-	f, m := formOf(t, "", "WS_USER=ada\n")
+	f, m := formOf(t, "", Text("WS_USER", "ada"))
 	m.Links[serverOfTest] = "/dot/server.conf"
 	_, err := f.Save(context.Background(), &effecttest.Out{}, map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "vm.example"})
 	if err == nil {
 		t.Fatal("Save passes a server file that is a link")
 	}
-	if mac, server := string(m.Files["/h/mac.conf"]), string(m.Files[serverOfTest]); mac != "" || server != "WS_USER=ada\n" {
+	if mac, server := string(m.Files["/h/mac.conf"]), string(m.Files[serverOfTest]); mac != "" || server != Text("WS_USER", "ada") {
 		t.Errorf("mac.conf = %q, server = %q; want both as they were", mac, server)
 	}
 }
