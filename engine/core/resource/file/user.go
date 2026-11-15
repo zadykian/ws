@@ -26,10 +26,6 @@ type Found struct {
 	Text   []byte
 }
 
-// userWrittenBy starts the line at the top of a file that ws writes on the Mac, after its format's
-// comment mark.
-var userWrittenBy = []byte("Written by ")
-
 // Gather joins the items of the parts, and keeps those before a failure, as resource.Group does.
 func Gather(ctx context.Context, parts ...step.Reporter) ([]step.Item, error) {
 	var items []step.Item
@@ -181,7 +177,7 @@ func (f UserFile) Report(context.Context) ([]step.Item, error) {
 	case !bytes.Equal(found.Text, f.Text):
 		item.Found += ", other content"
 		item.Conflict = "differs from what ws writes: a change by hand, or another version of ws"
-		if bytes.Contains(f.Text, userWrittenBy) && !bytes.Contains(found.Text, userWrittenBy) {
+		if bytes.Contains(f.Text, []byte(Mark)) && !bytes.Contains(found.Text, []byte(Mark)) {
 			item.Conflict = "holds no Written by line: ws did not write it"
 		}
 		if !f.Binary {

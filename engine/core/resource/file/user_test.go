@@ -87,3 +87,19 @@ func TestUserFileStopsOrWarnsWhereNotWs(t *testing.T) {
 		}
 	}
 }
+
+// TestUserFileReportsAFileWithoutTheMark finds the conflict that names the missing line where the
+// found text lacks Mark, and the plain one where it holds it.
+func TestUserFileReportsAFileWithoutTheMark(t *testing.T) {
+	for found, want := range map[string]string{
+		"# Written by ws client macos apply\n": "holds no Written by line: ws did not write it",
+		Header("#") + " old\n":                 "differs from what ws writes: a change by hand, or another version of ws",
+	} {
+		m := effecttest.NewMachine()
+		m.Files["/h/f"] = []byte(found)
+		items, err := UserFile{M: m, Path: "/h/f", Text: []byte(Header("#") + "\n")}.Report(context.Background())
+		if err != nil || len(items) != 1 || items[0].Conflict != want {
+			t.Errorf("Report of %q = %+v, %v; want the conflict %q", found, items, err, want)
+		}
+	}
+}
