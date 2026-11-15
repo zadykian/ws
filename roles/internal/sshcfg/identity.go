@@ -12,9 +12,9 @@ import (
 
 // Identity is the key that ssh offers ws.
 type Identity struct {
-	// Pub is the key's .pub as config.d/ws names it: ws's copy from /, or a path with ~/ for the home.
+	// Pub is the key's .pub as /etc/ws/ssh_config names it: ws's copy from /, or a path with ~/ for the home.
 	Pub string
-	// Agent is its agent's socket as config.d/ws names it, or empty for a key in a file.
+	// Agent is its agent's socket as /etc/ws/ssh_config names it, or empty for a key in a file.
 	Agent string
 	// Text is what the .pub holds, or would hold as ws's copy.
 	Text string

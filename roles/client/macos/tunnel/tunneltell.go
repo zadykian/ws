@@ -65,7 +65,7 @@ func (t *Tunnel) publish(ctx context.Context) error {
 
 // Finish prints the Mac's public key, with the commands that make it the server's peer. It prints
 // where the key is new or the server's file has no WS_PUBLIC_KEY yet, and a check prints nothing of
-// it. The commands name the server as ssh's host, which is its Host in config.d/ws.
+// it. The commands name the server as ssh's host, which is its Host in /etc/ws/ssh_config.
 func (t *Tunnel) Finish(ctx context.Context) error {
 	if t.Check || (!t.madeKey && t.Conf.PublicKey != "") {
 		return nil

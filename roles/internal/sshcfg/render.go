@@ -22,7 +22,7 @@ type Host struct {
 	User string
 }
 
-// Inputs are what config.d/ws's text depends on.
+// Inputs are what /etc/ws/ssh_config's text depends on.
 type Inputs struct {
 	// Hosts are the servers, each given a block, in name order.
 	Hosts []Host
@@ -36,7 +36,7 @@ type Inputs struct {
 	IdentityAgent string
 }
 
-// Config returns config.d/ws: a Host for each server, at the tunnel's end. The tunnel is the one
+// Config returns /etc/ws/ssh_config: a Host for each server, at the tunnel's end. The tunnel is the one
 // address a server has, whichever way the Mac is connected. Port 22 is the server's own, whatever
 // a Host * of the user's sets.
 func Config(in Inputs) string {

@@ -22,8 +22,7 @@ func (g *Ghostty) configLines(config string) file.UserLines {
 // directory, whose link warns once, and then lines, those to Ghostty's config. A stop of the
 // config's, such as a link that lacks the line, warns. The config stays unchanged.
 func (g *Ghostty) fileChanges(settings, dirs []step.Change, link file.UserDirLink, holds bool, lines []step.Change, stop error) []step.Change {
-	// A linked directory, as GNU stow's folding makes, gets the warning that ssh gives for
-	// ~/.ssh/config.d.
+	// A linked directory, as GNU stow's folding makes, gets a warning.
 	if !holds {
 		link.Warn(g.Out, 1, "the line that reads "+settingsFile+" goes there")
 	}

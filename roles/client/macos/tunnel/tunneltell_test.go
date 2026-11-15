@@ -43,7 +43,7 @@ func TestTunnelFinishPrintsTheKeyWhereMacConfLacksWsKey(t *testing.T) {
 	}
 }
 
-// A server not named ws is the commands' host, as config.d/ws names its Host after it, and the
+// A server not named ws is the commands' host, as /etc/ws/ssh_config names its Host after it, and the
 // Mac becomes its peer.
 func TestTunnelFinishNamesTheServerAsTheHost(t *testing.T) {
 	var text bytes.Buffer
