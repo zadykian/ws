@@ -54,8 +54,6 @@ its last change lands there, as the Tunnel and the Cable do.
 | ws's address on the LAN | `WS_LAN_ADDRESS` | `10.88.0.10`, where the LAN holds it | with a LAN |
 | The router's name on the internet | `WS_REMOTE` | none | but on a VM on the Mac |
 | The router's port forwarded to ws's 22 | `WS_REMOTE_PORT` | `22022` | with a name |
-| git's name on the Mac | `WS_GIT_NAME` | the `shell` role's, `zadykian` | always |
-| git's email on the Mac | `WS_GIT_EMAIL` | the `shell` role's, `me@zadykian.dev` | with a name |
 | More networks through the tunnel | `WS_TUNNEL_NETWORKS` | none | always |
 | Nameservers behind the tunnel | `WS_RESOLVERS` | none | always |
 
@@ -63,7 +61,7 @@ Each answer goes in the file of its key, which [mac.conf](../README.md#macconf) 
 first. `WS_TARGET` names ws's machine: one on the LAN, a cloud VM, which needs `WS_REMOTE` and
 `WS_REMOTE_PORT`, or a VM on the Mac, which needs `WS_LAN`. The table gives the questions on the
 LAN, and [The wizard's targets](../conf/README.md) the others, with the keys that each refuses. The
-defaults are [The router](../../../server/ubuntu/network/router.md)'s LAN, lease and forward, and ws's own git identity. A key's
+defaults are [The router](../../../server/ubuntu/network/router.md)'s LAN, lease and forward. A key's
 answer comes from the first of these that has one:
 
 - the file's line for the key, even an empty one, so the wizard never asks it again;
@@ -94,8 +92,8 @@ the line to drop for the wizard to ask.
 
 Where `mac.conf` names none, or an empty one, the wizard asks for ws's login key. It offers each
 P-256 key of Secretive's agent, by comment and SHA256 fingerprint, and a new one. The new one is the
-default, so that a keypress never takes a key made for another use. Where git has a name, and
-`mac.conf` an empty `WS_GIT_SIGNING_PUB_KEY` or none, it asks for git's key too, the login key
+default, so that a keypress never takes a key made for another use. Where
+`mac.conf` has an empty `WS_GIT_SIGNING_PUB_KEY` or none, it asks for git's key too, the login key
 marked ([git](../git/README.md)). One key may serve both. For a new key, the wizard installs Secretive's
 cask where its app is missing, and opens the app. It waits up to 15 minutes for a P-256 key made
 there, in the Mac's Secure Enclave, which it never leaves. Where the agent wasn't there to ask, a
@@ -294,7 +292,7 @@ After a run in which a stage acted, the wizard lists each of these that applies:
   LAN `server.conf`'s way leading to ws, UDP let through to ws, or ws-tunnel allowed in the Background.
   Then the wizard again, which checks it.
 - `gh auth setup-git`, where git's config names no credential command of gh's for github.com, as `ws
-  client macos apply`'s does with git's name ([git](../git/README.md)). Through it, pushes from the Mac's
+  client macos apply`'s does ([git](../git/README.md)). Through it, pushes from the Mac's
   clones take gh's login.
 - The cable, where no port of ws's had carrier: the line again, docked, or with `WS_CABLE_PORT` for
   a port that ws keeps down. Without the cable, the line once with an empty `WS_CABLE_SERVICE`.

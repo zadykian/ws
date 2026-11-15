@@ -10,8 +10,6 @@ outbound table on a cloud VM.
 `~/.config/ws/mac.conf` holds the Mac's keys, which no server changes:
 
 ```sh
-WS_GIT_NAME="NAME"
-WS_GIT_EMAIL=NAME@example.com
 WS_GIT_SIGNING_PUB_KEY=~/.ssh/KEY.pub
 WS_IDENTITY_PUB_KEY=~/.ssh/KEY.pub
 WS_IDENTITY_AGENT=~/PATH/socket.ssh

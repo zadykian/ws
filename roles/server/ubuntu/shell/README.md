@@ -39,7 +39,7 @@ To revoke the key, delete it in the account's settings on GitHub, then delete
 registers it, at its Signing key stage, or add the `.pub` by hand. A key deleted on GitHub alone
 comes back the same way.
 
-`git verify-commit` trusts the key for `shell_git_email` through `shell_git_allowed_signers`,
+`git verify-commit` trusts the key for `me@zadykian.dev` through `shell_git_allowed_signers`,
 `~/.config/git/allowed_signers` by default, also below `ws_home`. Each run replaces a change made
 to it, and keeps the old file beside it, as `allowed_signers.*~`. So `git verify-commit` fails here
 on a commit another key signed, an older machine's say, though GitHub verifies it by the account's
