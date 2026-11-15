@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 const (
@@ -26,7 +27,7 @@ const daemonLabel = "com.github.zadykian.ws-tunnel.ws"
 // newTunnel returns the stage over a Mac whose mac.conf holds WS_PUBLIC_KEY pub, with ws's status.
 func newTunnel(pub string, status session.Status, check bool) (*Tunnel, *effecttest.Machine) {
 	r, m := newRun("lan", status, false, check)
-	m.Files["/h/mac.conf"] = append(m.Files["/h/mac.conf"], []byte("WS_PUBLIC_KEY="+pub+"\n")...)
+	m.Files["/h/mac.conf"] = append(m.Files["/h/mac.conf"], []byte(values.Text("WS_PUBLIC_KEY", pub))...)
 	m.Files["/h/.config/ws/tunnel.pub"] = []byte(keyA + "\n")
 	m.Results["launchctl print system/"+daemonLabel] = effecttest.Result{}
 	m.Results["nc -z -G 3 -w 3 10.99.0.1 22"] = effecttest.Result{}
@@ -86,8 +87,8 @@ func TestTunnelPlanShowsConfsDiffUnderCheck(t *testing.T) {
 			t.Fatal(err)
 		}
 		out := strings.Join(tun.Out.(*effecttest.Out).Lines, "\n")
-		shown := strings.Contains(out, "-WS_PUBLIC_KEY="+keyA+"\n+WS_PUBLIC_KEY="+keyB)
-		if shown != check || !strings.Contains(string(m.Files["/h/mac.conf"]), "WS_PUBLIC_KEY="+keyA) {
+		shown := strings.Contains(out, "-"+values.Line("WS_PUBLIC_KEY", keyA)+"\n+"+values.Line("WS_PUBLIC_KEY", keyB))
+		if shown != check || !strings.Contains(string(m.Files["/h/mac.conf"]), values.Line("WS_PUBLIC_KEY", keyA)) {
 			t.Errorf("check %v: diff shown %v, mac.conf %q", check, shown, m.Files["/h/mac.conf"])
 		}
 	}
@@ -95,7 +96,7 @@ func TestTunnelPlanShowsConfsDiffUnderCheck(t *testing.T) {
 
 func TestTunnelPlanReachesWsAtItsSlot(t *testing.T) {
 	tun, m := newTunnel(keyB, session.Status{WgKey: keyB, Peered: true, MacKey: keyA}, false)
-	m.Files["/h/mac.conf"] = append(m.Files["/h/mac.conf"], "WS_SLOT=1\n"...)
+	m.Files["/h/mac.conf"] = append(m.Files["/h/mac.conf"], values.Text("WS_SLOT", "1")...)
 	m.Results["nc -z -G 3 -w 3 10.99.1.1 22"] = effecttest.Result{}
 	m.Results["ssh -G ws"] = effecttest.Result{Out: []byte("user root\nhostname 10.99.1.1\n")}
 	delete(m.Results, "nc -z -G 3 -w 3 10.99.0.1 22")

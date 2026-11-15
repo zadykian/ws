@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/session/sessiontest"
 )
@@ -23,7 +24,7 @@ func labCable(t *testing.T, status session.Status, link string, env map[string]s
 			m.Results[strings.TrimSuffix(k, "ws")+"lab"] = v
 		}
 	}
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + wayConf)
+	m.Files["/h/mac.conf"] = []byte(values.Text("WS_TARGET", "lan") + wayConf)
 	return c, m, p
 }
 
@@ -33,7 +34,7 @@ func TestCablePlanNamesTheServer(t *testing.T) {
 		env         map[string]string
 		want        string
 	}{
-		"another": {"WS_CABLE_PORT=eth1\nWS_CABLE_SERVICE=\"USB\"\n", "eth0", nil, "eth1 in /etc/ws/values.yml on lab again"},
+		"another": {values.Text("WS_CABLE_PORT", "eth1", "WS_CABLE_SERVICE", "USB"), "eth0", nil, "eth1 in /etc/ws/values.yml on lab again"},
 		"forced":  {"", "", map[string]string{"WS_CABLE_PORT": "eth1"}, "ask lab's port of the cable, name it in /etc/ws/values.yml on lab, and"},
 		"unnamed": {"", "", nil, "ask lab's port of the cable, name it in /etc/ws/values.yml on lab, and"},
 	} {

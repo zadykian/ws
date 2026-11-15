@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/stages/gh"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/session/sessiontest"
 )
@@ -16,9 +17,10 @@ const (
 	hostLine = "ssh-ed25519 AAAAC3"
 	hostFP   = "SHA256:abc"
 	hostsOf  = "/h/.ssh/known_hosts"
-	// wayConf gives the direct way WS_REMOTE on its port, as every Mac has one.
-	wayConf = "WS_REMOTE=ws.example.org\nWS_REMOTE_PORT=22022\n"
 )
+
+// wayConf gives the direct way WS_REMOTE on its port, as every Mac has one.
+var wayConf = values.Text("WS_REMOTE", "ws.example.org", "WS_REMOTE_PORT", "22022")
 
 // loginTo is the login's call up to the host, which a server's name follows.
 const loginTo = "ssh -o ControlMaster=auto -o ControlPath=/l/direct -o ControlPersist=30m " +
@@ -30,7 +32,7 @@ const loginTo = "ssh -o ControlMaster=auto -o ControlPath=/l/direct -o ControlPe
 // 10.1.1.2:22 with hostLine, and whose known_hosts lacks the name.
 func newHostNamed(name string, env map[string]string) (*host.Key, *effecttest.Machine) {
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + wayConf)
+	m.Files["/h/mac.conf"] = []byte(values.Text("WS_TARGET", "lan") + wayConf)
 	m.Dirs["/l"] = 0o700
 	s := remote.SSH{Host: name, M: m, Lock: "/l", Home: "/h", Ways: host.MacWays{M: m, Conf: "/h/mac.conf"}}
 	m.Results[wayCall(s)] = effecttest.Result{Out: []byte("user root\nhostname 10.1.1.2\nport 22\n" +
