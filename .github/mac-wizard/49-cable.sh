@@ -154,7 +154,7 @@ WS_CABLE_PORT, or set it to nothing for none" && unnamed && [ "$status" = 1 ] ||
 conf_print "$conf" | sed -e 's/^WS_TARGET=.*/WS_TARGET=cloud/' -e '/^WS_CABLE_/d' |
     conf_write "$RUNNER_TEMP/confs/cloud/mac.conf"
 wizard run WS_VALUES="$RUNNER_TEMP/confs/cloud/mac.conf"
-firewall="- The provider's firewall: UDP 51820 open to ws, for the tunnel (roles/client/macos/conf/README.md)."
+firewall="- The provider's firewall: UDP 51820 open to ws, for the tunnel (roles/client/macos/values/README.md)."
 if [ "$status" != 0 ] || ! printf '%s\n' "$out" | grep -qxF -e "$firewall" ||
     printf '%s\n' "$out" | grep -q -e '^ws client macos wizard: Cable: ' -e '^- The cable: ' \
         -e '^- The router' || sudo grep -q '^WS_CABLE_PORT:' "$vars"; then

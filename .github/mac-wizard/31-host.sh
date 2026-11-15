@@ -116,7 +116,7 @@ out=$(WS_VALUES=$RUNNER_TEMP/confs/cloud/mac.conf WS_FIRST_ADDRESS=127.0.0.1 WS_
 status=$?
 printf '%s\n' "$out"
 way="- ws's address: WS_REMOTE in server.conf must lead to ws, as this run reached it at 127.0.0.1"
-if [ "$status" != 0 ] || ! printf '%s\n' "$out" | grep -qF -e "$way (roles/client/macos/conf/README.md)." ||
+if [ "$status" != 0 ] || ! printf '%s\n' "$out" | grep -qF -e "$way (roles/client/macos/values/README.md)." ||
     printf '%s\n' "$out" | grep -q "^- ws's lease: "; then
     error "ws client macos wizard on a cloud VM with WS_FIRST_ADDRESS exited $status, or named its lease"
 fi
