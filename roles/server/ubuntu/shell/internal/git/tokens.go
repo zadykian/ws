@@ -9,7 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/account"
 	"github.com/zadykian/ws/engine/core/resource/file"
-	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/plan"
+	"github.com/zadykian/ws/roles/server/ubuntu/internal/plan"
 )
 
 // Tokens is git's tokens for servers besides GitHub. Each URL's in a file of its own, which the

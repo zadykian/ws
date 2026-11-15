@@ -12,7 +12,7 @@ import (
 	"github.com/zadykian/ws/roles/internal/etcws"
 	"github.com/zadykian/ws/roles/internal/gitcfg"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
-	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/plan"
+	"github.com/zadykian/ws/roles/server/ubuntu/internal/plan"
 )
 
 // signersHeader is the first line of the allowed signers file.

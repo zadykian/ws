@@ -10,7 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/account"
-	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/plan"
+	"github.com/zadykian/ws/roles/server/ubuntu/internal/plan"
 )
 
 // SigningKey makes the SSH key that signs commits, given its .pub's path, once, with no passphrase: tools and claude
