@@ -26,7 +26,7 @@ func TestAskerTakesTheEnvironmentFirst(t *testing.T) {
 	if v, err := a.ask(context.Background(), values.Question{Key: "WS_RESOLVERS"}); v != "" || err != nil || len(out.Lines) != 0 {
 		t.Errorf("an empty value set: ask = %q, %v, out %v", v, err, out.Lines)
 	}
-	if a.lines != "WS_REMOTE=r.example\nWS_RESOLVERS=\n" {
+	if a.lines != values.Text("WS_REMOTE", "r.example", "WS_RESOLVERS", "") {
 		t.Errorf("lines = %q", a.lines)
 	}
 }
@@ -83,7 +83,7 @@ func TestAskerChoosesTheTargetOnAScreen(t *testing.T) {
 	c := &chooser{Prompt: &effecttest.Prompt{T: t}, answer: "mac-vm"}
 	a, _ := newAsker(c, nil)
 	q := values.Question{Key: "WS_TARGET", Text: "The machine ws runs on", Def: "lan", Need: "needs"}
-	if v, err := a.ask(context.Background(), q); v != "mac-vm" || err != nil || a.lines != "WS_TARGET=mac-vm\n" {
+	if v, err := a.ask(context.Background(), q); v != "mac-vm" || err != nil || a.lines != values.Text("WS_TARGET", "mac-vm") {
 		t.Fatalf("ask = %q, %v, lines %q", v, err, a.lines)
 	}
 	want := effect.ChoiceQuestion{Text: "The machine ws runs on (WS_TARGET)", Options: []string{"lan", "cloud", "mac-vm"}, Default: "lan"}

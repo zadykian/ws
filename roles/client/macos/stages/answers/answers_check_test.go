@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 func TestAnswersCheckWritesTheScratchFile(t *testing.T) {
@@ -17,7 +18,7 @@ func TestAnswersCheckWritesTheScratchFile(t *testing.T) {
 		return map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "r.example"}[k], k == "WS_TARGET" || k == "WS_REMOTE"
 	}
 	m := a.M.(*effecttest.Machine)
-	m.Files[serverPathForTest] = []byte("WS_USER=ada\n")
+	m.Files[serverPathForTest] = []byte(values.Text("WS_USER", "ada"))
 	m.Results["mkdir -p /lock"] = effecttest.Result{}
 	m.Results["mkdir -p /lock/servers/ws"] = effecttest.Result{}
 	a.P.(*effecttest.Prompt).Answers = map[string]string{
@@ -28,10 +29,15 @@ func TestAnswersCheckWritesTheScratchFile(t *testing.T) {
 	if p, err := a.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
 		t.Fatalf("Plan = %v, %v", p, err)
 	}
-	if got := string(m.Files["/lock/servers/ws/server.conf"]); !strings.HasPrefix(got, "WS_USER=ada\nWS_SLOT=0\nWS_TUNNEL_PORT=51820\nWS_TARGET=cloud\n") {
+	if got := string(m.Files["/lock/servers/ws/server.conf"]); !strings.HasPrefix(got, values.Text(
+		"WS_USER", "ada",
+		"WS_SLOT", "0",
+		"WS_TUNNEL_PORT", "51820",
+		"WS_TARGET", "cloud",
+	)) {
 		t.Errorf("server scratch = %q", got)
 	}
-	if got := string(m.Files[serverPathForTest]); got != "WS_USER=ada\n" {
+	if got := string(m.Files[serverPathForTest]); got != values.Text("WS_USER", "ada") {
 		t.Errorf("server file changed to %q", got)
 	}
 	if len(out.Lines) == 0 || !strings.HasPrefix(out.Lines[len(out.Lines)-1], "diff: "+serverPathForTest) {
@@ -42,9 +48,9 @@ func TestAnswersCheckWritesTheScratchFile(t *testing.T) {
 // TestAnswersLeavesAFileThatGainsNothing asks for the server's keys alone, so mac.conf, a link
 // with no final newline, is neither written nor said.
 func TestAnswersLeavesAFileThatGainsNothing(t *testing.T) {
-	const mac = "WS_GIT_SIGNING_PUB_KEY=~/k.pub"
+	var mac = values.Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub")
 	for _, check := range []bool{false, true} {
-		a, out := newAnswers(t, mac, "WS_USER=ada\n")
+		a, out := newAnswers(t, mac, values.Text("WS_USER", "ada"))
 		a.Check, a.Scratch, a.ServerScratch = check, "/lock/mac.conf", "/lock/servers/ws/server.conf"
 		a.Env = func(k string) (string, bool) {
 			return map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "r.example"}[k], k == "WS_TARGET" || k == "WS_REMOTE"
@@ -74,7 +80,13 @@ func TestAnswersLeavesAFileThatGainsNothing(t *testing.T) {
 }
 
 func TestAnswersCheckPassesALinkThatLacksNoKey(t *testing.T) {
-	const all = "WS_TARGET=lan\nWS_LAN=\nWS_REMOTE=\nWS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
+	var all = values.Text(
+		"WS_TARGET", "lan",
+		"WS_LAN", "",
+		"WS_REMOTE", "",
+		"WS_TUNNEL_NETWORKS", "",
+		"WS_RESOLVERS", "",
+	)
 	a, out := newAnswers(t, "", all)
 	a.Check, a.Scratch, a.ServerScratch = true, "/lock/mac.conf", "/lock/servers/ws/server.conf"
 	m := a.M.(*effecttest.Machine)
@@ -95,8 +107,14 @@ func TestAnswersCheckPassesALinkThatLacksNoKey(t *testing.T) {
 // TestAnswersCheckCopiesTheOtherServersFiles keeps lab's file as it stands, so that the stages
 // after see it beside ws's rehearsal as the run would.
 func TestAnswersCheckCopiesTheOtherServersFiles(t *testing.T) {
-	const all = "WS_TARGET=lan\nWS_LAN=\nWS_REMOTE=\nWS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
-	const lab = "WS_USER=ada\nWS_SLOT=5\n"
+	var all = values.Text(
+		"WS_TARGET", "lan",
+		"WS_LAN", "",
+		"WS_REMOTE", "",
+		"WS_TUNNEL_NETWORKS", "",
+		"WS_RESOLVERS", "",
+	)
+	var lab = values.Text("WS_USER", "ada", "WS_SLOT", "5")
 	a, _ := newAnswers(t, "", all)
 	a.Check, a.Scratch, a.ServerScratch = true, "/lock/mac.conf", "/lock/servers/ws/server.conf"
 	m := a.M.(*effecttest.Machine)
@@ -119,13 +137,19 @@ func TestAnswersCheckCopiesTheOtherServersFiles(t *testing.T) {
 // TestAnswersCheckRefusesAnUnreadableSiblingAsTheRunDoes words the refusal as Setup's: the server,
 // the cause and the way out.
 func TestAnswersCheckRefusesAnUnreadableSiblingAsTheRunDoes(t *testing.T) {
-	const all = "WS_TARGET=lan\nWS_LAN=\nWS_REMOTE=\nWS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
+	var all = values.Text(
+		"WS_TARGET", "lan",
+		"WS_LAN", "",
+		"WS_REMOTE", "",
+		"WS_TUNNEL_NETWORKS", "",
+		"WS_RESOLVERS", "",
+	)
 	a, _ := newAnswers(t, "", all)
 	a.Check, a.Scratch, a.ServerScratch = true, "/lock/mac.conf", "/lock/servers/ws/server.conf"
 	m := a.M.(*effecttest.Machine)
 	lab := "/h/.config/ws/servers/lab/server.conf"
 	m.Dirs["/h/.config/ws/servers"], m.Dirs["/h/.config/ws/servers/ws"], m.Dirs["/h/.config/ws/servers/lab"] = 0o755, 0o755, 0o755
-	m.Files[lab], m.Root[lab] = []byte("WS_USER=ada\n"), effect.Attrs{}
+	m.Files[lab], m.Root[lab] = []byte(values.Text("WS_USER", "ada")), effect.Attrs{}
 	for _, dir := range []string{"/lock", "/lock/servers/ws"} {
 		m.Results["mkdir -p "+dir] = effecttest.Result{}
 	}
@@ -145,16 +169,33 @@ func TestAnswersCheckRefusesABadEnvironment(t *testing.T) {
 }
 
 func TestAnswersPlaceAServerFileThatLacksItsSlot(t *testing.T) {
-	const box = "WS_SLOT=0\nWS_TARGET=lan\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22022\n"
+	var box = values.Text(
+		"WS_SLOT", "0",
+		"WS_TARGET", "lan",
+		"WS_REMOTE", "r.example",
+		"WS_REMOTE_PORT", "22022",
+	)
 	for name, tc := range map[string]struct{ server, other, remote, want string }{
-		"new file":     {"", "", "none", "WS_SLOT=0\nWS_TUNNEL_PORT=51820\nWS_TARGET=lan\n"},
-		"slot kept":    {"WS_SLOT=3\n", "", "none", "WS_SLOT=3\nWS_TARGET=lan\n"},
-		"file lacking": {"WS_USER=ada\n", "", "none", "WS_USER=ada\nWS_SLOT=0\nWS_TUNNEL_PORT=51820\nWS_TARGET=lan\n"},
-		"port kept":    {"WS_TUNNEL_PORT=51830\n", "", "none", "WS_TUNNEL_PORT=51830\nWS_SLOT=0\nWS_TARGET=lan\n"},
-		"beside one":   {"", box, "none", "WS_SLOT=1\nWS_TUNNEL_PORT=51820\nWS_TARGET=lan\n"},
-		"same router":  {"", box, "r.example", "WS_SLOT=1\nWS_TUNNEL_PORT=51821\nWS_TARGET=lan\nWS_LAN=\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22023\n"},
+		"new file":  {"", "", "none", values.Text("WS_SLOT", "0", "WS_TUNNEL_PORT", "51820", "WS_TARGET", "lan")},
+		"slot kept": {values.Text("WS_SLOT", "3"), "", "none", values.Text("WS_SLOT", "3", "WS_TARGET", "lan")},
+		"file lacking": {values.Text("WS_USER", "ada"), "", "none", values.Text(
+			"WS_USER", "ada",
+			"WS_SLOT", "0",
+			"WS_TUNNEL_PORT", "51820",
+			"WS_TARGET", "lan",
+		)},
+		"port kept":  {values.Text("WS_TUNNEL_PORT", "51830"), "", "none", values.Text("WS_TUNNEL_PORT", "51830", "WS_SLOT", "0", "WS_TARGET", "lan")},
+		"beside one": {"", box, "none", values.Text("WS_SLOT", "1", "WS_TUNNEL_PORT", "51820", "WS_TARGET", "lan")},
+		"same router": {"", box, "r.example", values.Text(
+			"WS_SLOT", "1",
+			"WS_TUNNEL_PORT", "51821",
+			"WS_TARGET", "lan",
+			"WS_LAN", "",
+			"WS_REMOTE", "r.example",
+			"WS_REMOTE_PORT", "22023",
+		)},
 	} {
-		a, out := newAnswers(t, "WS_GIT_SIGNING_PUB_KEY=~/k.pub\n", tc.server)
+		a, out := newAnswers(t, values.Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"), tc.server)
 		m := a.M.(*effecttest.Machine)
 		if tc.other != "" {
 			m.Dirs["/h/.config/ws/servers"] = 0o755

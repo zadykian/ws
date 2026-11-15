@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 const (
@@ -31,7 +32,7 @@ func newAnswers(t *testing.T, mac, server string) (*Answers, *effecttest.Out) {
 }
 
 func TestAnswersLoadRefusesABadLine(t *testing.T) {
-	a, out := newAnswers(t, "", "WS_TARGET=moon\n")
+	a, out := newAnswers(t, "", values.Text("WS_TARGET", "moon"))
 	if _, _, err := a.load(); err == nil || !strings.Contains(err.Error(), "cannot read "+serverPathForTest) ||
 		len(out.Lines) != 1 {
 		t.Errorf("Plan = %v, out %v", err, out.Lines)
@@ -39,12 +40,18 @@ func TestAnswersLoadRefusesABadLine(t *testing.T) {
 }
 
 func TestAnswersPlan(t *testing.T) {
-	const all = "WS_TARGET=lan\nWS_LAN=\nWS_REMOTE=\nWS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
+	var all = values.Text(
+		"WS_TARGET", "lan",
+		"WS_LAN", "",
+		"WS_REMOTE", "",
+		"WS_TUNNEL_NETWORKS", "",
+		"WS_RESOLVERS", "",
+	)
 	for name, tc := range map[string]struct{ mac, server, want string }{
 		"no file":  {"", "", "would ask for the values that " + serverPathForTest + " lacks, from WS_TARGET on"},
-		"a gap":    {"", strings.Replace(all, "WS_REMOTE=\n", "", 1), "from WS_REMOTE on"},
+		"a gap":    {"", strings.Replace(all, values.Text("WS_REMOTE", ""), "", 1), "from WS_REMOTE on"},
 		"complete": {"", all, ""},
-		"refused":  {"", all + "WS_TARGET=cloud\nWS_REMOTE_PORT=22\n", "ws client macos apply would refuse " + serverPathForTest},
+		"refused":  {"", all + values.Text("WS_TARGET", "cloud", "WS_REMOTE_PORT", "22"), "ws client macos apply would refuse " + serverPathForTest},
 	} {
 		a, _ := newAnswers(t, tc.mac, tc.server)
 		p, err := a.Plan(context.Background())
@@ -67,7 +74,7 @@ func (homebrewDone) Plan(context.Context) (step.Plan, error) { return step.Plan{
 func (homebrewDone) Apply(context.Context, step.Plan) error  { return nil }
 
 func TestAnswersAskAndWrite(t *testing.T) {
-	a, out := newAnswers(t, "# mine", "WS_USER=ada")
+	a, out := newAnswers(t, "# mine", values.Text("WS_USER", "ada"))
 	a.P.(*effecttest.Prompt).Answers = map[string]string{
 		"The machine ws runs on: lan, cloud or mac-vm (WS_TARGET) [lan]":                          "",
 		"ws's home LAN (WS_LAN) [10.88.0.0/24, or none]":                                          "",
@@ -83,8 +90,17 @@ func TestAnswersAskAndWrite(t *testing.T) {
 	if err != nil || !changed {
 		t.Fatalf("Run = %v, %v", changed, err)
 	}
-	const server = "WS_USER=ada\nWS_SLOT=0\nWS_TUNNEL_PORT=51820\nWS_TARGET=lan\nWS_LAN=10.88.0.0/24\nWS_LAN_ADDRESS=10.88.0.10\nWS_REMOTE=\n" +
-		"WS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
+	var server = values.Text(
+		"WS_USER", "ada",
+		"WS_SLOT", "0",
+		"WS_TUNNEL_PORT", "51820",
+		"WS_TARGET", "lan",
+		"WS_LAN", "10.88.0.0/24",
+		"WS_LAN_ADDRESS", "10.88.0.10",
+		"WS_REMOTE", "",
+		"WS_TUNNEL_NETWORKS", "",
+		"WS_RESOLVERS", "",
+	)
 	if got := string(m.Files[serverPathForTest]); got != server {
 		t.Errorf("server file = %q, want %q", got, server)
 	}
@@ -105,7 +121,12 @@ func TestAnswersFromEnvironment(t *testing.T) {
 	if _, err := step.Run(context.Background(), []step.Step{homebrewDone{}, a}, out, false); err != nil {
 		t.Fatalf("Run = %v", err)
 	}
-	if got := string(a.M.(*effecttest.Machine).Files[serverPathForTest]); !strings.HasPrefix(got, "WS_SLOT=0\nWS_TUNNEL_PORT=51820\nWS_TARGET=cloud\nWS_REMOTE=r.example\n") {
+	if got := string(a.M.(*effecttest.Machine).Files[serverPathForTest]); !strings.HasPrefix(got, values.Text(
+		"WS_SLOT", "0",
+		"WS_TUNNEL_PORT", "51820",
+		"WS_TARGET", "cloud",
+		"WS_REMOTE", "r.example",
+	)) {
 		t.Errorf("server file = %q", got)
 	}
 }
