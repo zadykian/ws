@@ -21,12 +21,13 @@ error() {
 
 # The clone shares the tree's .cache, which holds the pinned Go. The link is excluded, as git's
 # ignore of a directory does not match a link: else the build is +dirty. The clone's tag v0.0.0
-# goes, for the build to print the tag it sits at.
+# goes, for the build to print the tag it sits at. The Mac's git signs a tag, which then takes a
+# message: the build's tag goes unsigned.
 git clone -q ~/repository/ws "$src" || exit 1
 ln -s ~/repository/ws/.cache "$src/.cache"
 echo /.cache >>"$src/.git/info/exclude"
 git -C "$src" tag -d v0.0.0 >/dev/null
-git -C "$src" tag v0.0.1
+git -C "$src" -c tag.gpgsign=false tag v0.0.1
 mkdir -p "$releases/download/v0.0.1"
 sh "$src/.tools/build" darwin arm64 "$releases/download/v0.0.1/ws-darwin-arm64" || exit 1
 cp "$src/install.sh" "$releases/download/v0.0.1/install.sh"

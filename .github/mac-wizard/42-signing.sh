@@ -1,10 +1,10 @@
 #!/bin/sh
 # The stage Signing key, through standin.sh's gh and ws, on the Mac that 41-remote.sh leaves. First
-# ws's signing key is off the Mac's gh login. --check must then say it would run gh ssh-key add
-# --type signing, titled with ws's hostname, and change nothing. A run must add the key to the
-# signing keys alone, and list what stays by hand, which no longer holds ws's gh login. The next
-# run must print nothing. Where the login's git config on ws names no signing key, a run must print
-# nothing, with the key off the login.
+# ws's signing key is off the Mac's gh login, which keeps the Mac's own. --check must then say it
+# would run gh ssh-key add --type signing, titled with ws's hostname, and change nothing. A run
+# must add the key to the signing keys alone, and list what stays by hand, which no longer holds
+# ws's gh login. The next run must print nothing. Where the login's git config on ws names no
+# signing key, a run must print nothing, with the key off the login.
 
 set -u
 
@@ -27,6 +27,13 @@ error() {
     fail=1
 }
 
+# off takes ws's signing key off the login's signing keys, and leaves the Mac's own, which the
+# Mac's git step would add again.
+off() {
+    grep -vxF "$key" "$state/signing" >"$state/signing.rest" || true
+    mv "$state/signing.rest" "$state/signing"
+}
+
 # quiet: a run with no terminal must print nothing.
 quiet() {
     out=$("$wsbin" client macos wizard </dev/null 2>&1)
@@ -35,12 +42,14 @@ quiet() {
     [ "$status" = 0 ] && [ -z "${rest#"$known"}" ] || error "ws client macos wizard $1 exited $status: '$out'"
 }
 
-: >"$state/signing"
+off
+cp "$state/signing" "$state/signing.before"
 out=$("$wsbin" client macos wizard --check </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
 printf '%s\n' "$out" | grep -qxF "ws client macos wizard: Signing key: would run $add for ws's signing key" &&
-    [ "$status" = 0 ] && [ ! -s "$state/signing" ] || error "ws client macos wizard --check exited $status"
+    [ "$status" = 0 ] && [ "$(cat "$state/signing")" = "$(cat "$state/signing.before")" ] ||
+    error "ws client macos wizard --check exited $status"
 out=$("$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
@@ -49,13 +58,14 @@ printf '%s\n' "$out" | grep -qxF "ws client macos wizard: Signing key: ran $add 
     printf '%s\n' "$out" | grep -qF -e "$login" &&
     ! printf '%s\n' "$out" | grep -qF "ws's gh login" &&
     [ "$status" = 0 ] &&
-    [ "$(cat "$state/signing")" = "$key" ] && [ "$(grep -cxF "$key" "$state/keys")" = 0 ] ||
+    [ "$(cat "$state/signing")" = "$(cat "$state/signing.before" && echo "$key")" ] &&
+    [ "$(grep -cxF "$key" "$state/keys")" = 0 ] ||
     error "ws client macos wizard exited $status, adding other than the signing key to the signing keys"
 quiet 'after the key was added'
-: >"$state/signing"
+off
 sudo git config -f "$ws/root/home/$(id -un)/.gitconfig" --unset user.signingkey
 quiet 'with no signing key on ws'
 sudo git config -f "$ws/root/home/$(id -un)/.gitconfig" user.signingkey \
     "$ws/root/home/$(id -un)/.ssh/id_ed25519_signing.pub"
-echo "$key" >"$state/signing"
+echo "$key" >>"$state/signing"
 exit "$fail"
