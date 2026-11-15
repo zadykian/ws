@@ -32,7 +32,7 @@ container, the steps from up on skip and say so.
 
 ## Retention
 
-SigNoz keeps traces, metrics and logs for 90 days, `signoz_retention_days`; its own default is 15
+SigNoz keeps traces, metrics and logs for 90 days, `WS_SIGNOZ_RETENTION_DAYS`; its own default is 15
 days, and 30 for metrics. The role sets it through SigNoz's API before anything is sent, as a change
 applies only to data that comes in after it. It sets it after SigNoz's schema migrator has finished
 too, as the migrator sets its own. Settings › General in the UI shows it; rules set there to keep
@@ -57,7 +57,7 @@ text, a tool's input or output, or a command. claude sends them all, and they si
 and traces ([claude](../claude/README.md#telemetry)). The dashboard was written for this repository, and
 `roles/server/ubuntu/signoz/internal/dashboards/dashboards` says what it reads.
 
-The role creates each dashboard of `signoz_dashboards` through SigNoz's API, from
+The role creates each dashboard of `WS_SIGNOZ_DASHBOARDS` through SigNoz's API, from
 `roles/server/ubuntu/signoz/internal/dashboards/dashboards/NAME.json`.
 That file must hold NAME as its `name`, or a run fails, and a test with it. The role replaces a
 dashboard where it differs from its file. So a change made to it in the UI lasts until the next

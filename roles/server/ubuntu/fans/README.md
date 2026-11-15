@@ -22,7 +22,7 @@ DKMS holds. `/etc/modprobe.d/ws-fans.conf` keeps `nct6683` off the chip, and `/e
 load.d/ws-fans.conf` loads `nct6687` at boot. The run unloads a loaded `nct6683`, as
 after `sensors-detect`, and loads `nct6687`.
 
-The role does all this where DMI names the board's maker `fans_board_vendor`, MSI. A machine with
+The role does all this where DMI names the board's maker `WS_FANS_BOARD_VENDOR`, MSI. A machine with
 another board, as a cloud VM or CI's container, is left alone, and the run says so.
 
 ### Secure Boot
@@ -100,12 +100,12 @@ System Fan #3 to #6 are left out, so the board's curves drive them.
 
 ## Variables
 
-- `fans_board_vendor`: the board's maker, as DMI names it, where the role drives the fans.
+- `WS_FANS_BOARD_VENDOR`: the board's maker, as DMI names it, where the role drives the fans.
   Empty, it drives none.
-- `fans_sensors`, `fans_curves` and `fans_controls`: the sensors, the curves and the fans, as
-  above. Each sensor names only sensors above it.
-- `fans_step`: how far a fan's speed moves at most in a tick, up and down, in %.
-- `fans_interval`: the tick, in seconds.
+- `WS_FANS_SENSORS`, `WS_FANS_CURVES` and `WS_FANS_CONTROLS`: the sensors, the curves and the fans,
+  as above. Each sensor names only sensors above it.
+- `WS_FANS_STEP`: how far a fan's speed moves at most in a tick, up and down, in %.
+- `WS_FANS_INTERVAL`: the tick, in seconds.
 
 With `nct6687` loaded, node_exporter reads the fans' speeds too, for SigNoz ([otelcol](../otelcol/README.md)).
 `ws server ubuntu apply --check` builds no driver, and says what it would build.

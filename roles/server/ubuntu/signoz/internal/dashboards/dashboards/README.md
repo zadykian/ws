@@ -1,6 +1,6 @@
 # The dashboards
 
-The role keeps a dashboard in SigNoz for each file here that `signoz_dashboards` names: `host.json`,
+The role keeps a dashboard in SigNoz for each file here that `WS_SIGNOZ_DASHBOARDS` names: `host.json`,
 shown as Host, and `claude.json`, shown as Claude. It finds each by the fixed `name` in its file,
 which must be the file's name without `.json`, as a run checks.
 

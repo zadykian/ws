@@ -10,8 +10,9 @@ The `base` role sets up the ground every machine stands on. It runs as Go steps 
 - a swap file, `/swapfile`, the size of the RAM rounded up to a whole GiB.
 
 Its steps are Packages, Locale, Timezone, Upgrades, Swap and Swappiness, in that order. Each plans
-from reads alone, so that `--check` prints what a run would change. The values are `base_packages`,
-`base_locale`, `base_timezone`, `base_swap_size_mb` and `base_swappiness` of the values file ([the README](../../../../README.md#running-it-again)).
+from reads alone, so that `--check` prints what a run would change. The values are `WS_BASE_PACKAGES`,
+`WS_BASE_LOCALE`, `WS_BASE_TIMEZONE`, `WS_BASE_SWAP_SIZE_MB` and `WS_BASE_SWAPPINESS` of the
+values file ([the README](../../../../README.md#running-it-again)).
 
 A step that needs a booted systemd skips without one, as in CI's container, and says so: the
 units of Upgrades, `swapon` and `swapoff` of Swap, and `systemd-sysctl` of Swappiness.
@@ -33,7 +34,7 @@ role's where no one answers. Where the package's is taken, the next run writes t
 
 ## The swap file
 
-`base_swap_size_mb` sets another size in MiB, and 0 none. The file replaces the installer's
+`WS_BASE_SWAP_SIZE_MB` sets another size in MiB, and 0 none. The file replaces the installer's
 `/swap.img`. The swap's plan is a function of `/proc/swaps`, `/proc/meminfo`, the free space of `/`
 from `statfs` and the size, mode and owner of `/swapfile`, with table tests. A run stops before it
 changes the swap where the disk lacks room for the file and 2 GiB more. It stops too where swapping
@@ -45,5 +46,5 @@ swap area, and a rename gives it its name. So a run cut short leaves no file tha
 refuse.
 
 The kernel's swappiness is 10, not its default 60, so that under memory pressure it frees the page
-cache in preference to swapping memory out. `base_swappiness` sets another, from 0 to 200, in
+cache in preference to swapping memory out. `WS_BASE_SWAPPINESS` sets another, from 0 to 200, in
 `/etc/sysctl.d/99-swappiness.conf`, and a value outside that range stops the Swap step too.

@@ -12,7 +12,7 @@ stage acted ends with what stays by hand of ws.
 
 1. ws's values: each key that `/etc/ws/host_vars.yml` lacks. The target comes first: `lan` for a
    machine on the LAN or a VM on the Mac, which keeps the outbound table on, and `cloud` for a cloud
-   VM, which names `security_outbound: false`. Then `ws_user`, by default the user that ran sudo.
+   VM, which names `WS_SECURITY_OUTBOUND: false`. Then `WS_USER`, by default the user that ran sudo.
    Root takes it on a cloud VM alone, which may have no other login. Each answer is written, a
    default too, by `ws server ubuntu values set`'s code, so that a later run from either side asks
    nothing. With no terminal, the stage stops and names `sudo ws server ubuntu values set KEY
@@ -21,7 +21,7 @@ stage acted ends with what stays by hand of ws.
    wizard sends over ssh, here on `sh`'s standard input. The unit goes on where the login drops, and
    reads [ws's secrets file](../secrets/README.md#wss-file) where its credential stands beside it. A run
    follows the unit that runs, whichever wizard started it. The Mac's wizard first writes
-   `wireguard_address` and `wireguard_port` into `host_vars.yml`, where they differ from what the
+   `WS_TUNNEL_ADDRESS` and `WS_TUNNEL_PORT` into `host_vars.yml`, where they differ from what the
    server's file gives. A server back at slot 0 and port 51820 gets the defaults, and one that holds
    none gets nothing. ws's own wizard writes neither.
 3. claude on ws: `WS_USER`'s claude, logged in, as `claude auth status` says. Else the stage runs
@@ -40,7 +40,7 @@ the other's, with nothing changed, applies nothing. A change to `host_vars.yml`,
 stage, `ws server ubuntu values set`, Configure or by hand, makes the next run due. ws's values name
 its target, which the stage reads in place of `mac.conf`. With no booted systemd, as in a container,
 the stage says so and skips: run `sudo ws server ubuntu apply` there. The remote script reads the
-claude and the signing key of `WS_USER`, host_vars' `ws_user`, where the Mac's reads those of the
+claude and the signing key of `WS_USER`, host_vars' `WS_USER`, where the Mac's reads those of the
 user that ssh logs in as.
 
 The Mac's other stages stay the Mac's: the tunnel and the cable. The list at the end names ws's

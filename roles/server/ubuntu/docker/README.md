@@ -15,26 +15,26 @@ settings Docker created it with. Containers keep running while Docker restarts (
 ## The slice
 
 `dockerd` and every container run in `docker.slice`, capped at half the RAM and half the CPUs, with
-no swap. `docker_memory_max`, `docker_cpu_quota` and `docker_memory_swap_max` set other limits, in
-systemd's syntax (`16G`, `400%`). A running container moves into the slice when it next starts.
+no swap. `WS_DOCKER_MEMORY_MAX`, `WS_DOCKER_CPU_QUOTA` and `WS_DOCKER_MEMORY_SWAP_MAX` set other limits,
+in systemd's syntax (`16G`, `400%`). A running container moves into the slice when it next starts.
 `containerd`, which pulls and unpacks images, stays outside the slice's limits.
 
 ## Names
 
 Containers resolve names as the host does. The `dns` of `daemon.json` is the default bridge's
-address, `172.17.0.1` (`docker_bridge_ip`), where systemd-resolved listens too. ufw lets Docker's
+address, `172.17.0.1` (`WS_DOCKER_BRIDGE_IP`), where systemd-resolved listens too. ufw lets Docker's
 networks reach port 53 there through their bridges, `docker0` and `br-ID`, whatever their subnets.
 A network given a bridge name of its own gets no answers. A running container takes the new `dns`
-when it next starts. The role deletes the rules it gave ufw for a former `docker_bridge_ip`.
+when it next starts. The role deletes the rules it gave ufw for a former `WS_DOCKER_BRIDGE_IP`.
 
-`docker0` takes a new `docker_bridge_ip` or `docker_bridge_prefix_length` only when Docker starts
+`docker0` takes a new `WS_DOCKER_BRIDGE_IP` or `WS_DOCKER_BRIDGE_PREFIX_LENGTH` only when Docker starts
 with no container running, as after a reboot. Until then lookups to a new address get no answers,
 and the role stops after it restarts Docker. Reboot, or stop every container and restart Docker,
 then apply again. `--check` shows the move.
 
 ## The address pool
 
-Docker takes each new network's subnet, a `/20`, from `172.16.0.0/12` (`docker_address_pool`). A
+Docker takes each new network's subnet, a `/20`, from `172.16.0.0/12` (`WS_DOCKER_ADDRESS_POOL`). A
 network created before the pool moves keeps its subnet until created again, as by
 `docker compose down` and `up`.
 
@@ -46,7 +46,7 @@ the routes as they stand during the run: a VPN that is down shows none.
 ## Published ports
 
 A port published without an address, as in `-p 8080:80` or compose's `"8080:80"`, goes on
-`127.0.0.1` (`docker_publish_ip`) rather than on every address. The `ip` of `daemon.json` sets that
+`127.0.0.1` (`WS_DOCKER_PUBLISH_IP`) rather than on every address. The `ip` of `daemon.json` sets that
 for the default bridge, and `default-network-opts` for each network created afterwards. A network
 created before keeps publishing on every address until created again, as by
 `docker compose down` and `up`. The default bridge takes `ip` when Docker starts with no container
@@ -55,23 +55,23 @@ running, as after a reboot. Docker's published ports get past ufw:
 
 ## Outbound
 
-Unless `security_outbound` is false, a container reaches no host of the LAN, the cable or `wg0`,
+Unless `WS_SECURITY_OUTBOUND` is false, a container reaches no host of the LAN, the cable or `wg0`,
 nor of another private network around the server. The `security` role's table drops what it
 starts there, so a TCP connect hangs ([Outbound](../security/README.md#outbound)).
 
 ## Build cache
 
-BuildKit drops build cache that no build has used for 90 days (`docker_build_cache_keep_days`). It
+BuildKit drops build cache that no build has used for 90 days (`WS_DOCKER_BUILD_CACHE_KEEP_DAYS`). It
 collects when Docker starts and after each build, so idle cache goes at the next build or restart.
 As Docker's own policy does, it also drops the least used cache, down to 10% of the disk. It does
 so while the disk has less than 20% free or the cache takes more than 80% of it.
-`docker_build_cache_reserved_space`, `docker_build_cache_max_used_space` and
-`docker_build_cache_min_free_space` set other sizes, in the format of `daemon.json`: `50G`, `50GB`
+`WS_DOCKER_BUILD_CACHE_RESERVED_SPACE`, `WS_DOCKER_BUILD_CACHE_MAX_USED_SPACE` and
+`WS_DOCKER_BUILD_CACHE_MIN_FREE_SPACE` set other sizes, in the format of `daemon.json`: `50G`, `50GB`
 or `50GiB`, but not `50Gi`. Cache that an image shares frees no space until the image is removed.
 
 ## The rootless daemon
 
-Where `ws_user` isn't root, it runs its own daemon, and the role takes it out of the `docker` group,
+Where `WS_USER` isn't root, it runs its own daemon, and the role takes it out of the `docker` group,
 which amounts to root. The user keeps the group until its session ends. `docker` reaches the daemon
 by the `rootless` context, which Docker's tool makes. The system's daemon stays for root, and for
 SigNoz: `sudo docker ps` lists its containers.

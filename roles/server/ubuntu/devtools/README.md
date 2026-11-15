@@ -34,8 +34,8 @@ user's home. Once there, rustup updates itself, so ws leaves it alone.
   Zed's debugger runs it for Go.
 - roslyn-language-server, C#'s server, is the server of VS Code's C# extension. It comes from
   nuget.org with `dotnet tool` at the version `pins.go` pins, and runs on the .NET 10 of this role.
-- They go in `ws_user`'s home: `~/go/bin/gopls`, `~/go/bin/dlv` and
-  `~/.dotnet/tools/roslyn-language-server`. Their paths follow `ws_home`, so the `zed` and
+- They go in `WS_USER`'s home: `~/go/bin/gopls`, `~/go/bin/dlv` and
+  `~/.dotnet/tools/roslyn-language-server`. Their paths follow `WS_HOME`, so the `zed` and
   `fresh` roles find them with this role not run.
 
 ## The SQL and Docker servers
@@ -43,7 +43,7 @@ user's home. Once there, rustup updates itself, so ws leaves it alone.
 postgres-language-server and docker-language-server are release binaries, each pinned in
 `roles/server/ubuntu/devtools/binaries.go` by version and by SHA-256 for `amd64` and `arm64`. The
 role downloads the one for the machine, by the architecture that dpkg names, to `/usr/local/bin`,
-owned by root with mode 0755, so any `ws_user` can run it. A failed download is tried five times,
+owned by root with mode 0755, so any `WS_USER` can run it. A failed download is tried five times,
 ten seconds apart. A machine of another architecture fails the step. The settings name both by path,
 so Zed downloads neither. Fresh names them too. `ws server ubuntu apply --only zed` does not install
 them: pass `--only devtools,zed`, or `devtools,fresh`.
@@ -76,7 +76,7 @@ A project's `postgres-language-server.jsonc` holds `db` fields, never a `connect
 
 ## The npm servers
 
-The role installs four packages into `~/.local/lib/language-servers`, owned by `ws_user`, from the
+The role installs four packages into `~/.local/lib/language-servers`, owned by `WS_USER`, from the
 `package.json` and `package-lock.json` in `roles/server/ubuntu/devtools/internal/npm/servers`:
 
 - `@ansible/ansible-language-server`, for Ansible.
@@ -85,7 +85,7 @@ The role installs four packages into `~/.local/lib/language-servers`, owned by `
 - `sql-formatter`, linked as `/usr/local/bin/sql-formatter`, root's, so a project's settings name
   the bare command.
 
-`npm ci --ignore-scripts` runs as `ws_user`. It fails where the lock and `package.json` disagree or
+`npm ci --ignore-scripts` runs as `WS_USER`. It fails where the lock and `package.json` disagree or
 a sha512 `integrity` differs, so these downloads are checked, though not against a SHA-256. The
 step keeps `node_modules/.ws-sha256`, the digest of both files, and runs again where it differs. It
 waits for the step of the Node packages, which sets up npm.

@@ -44,7 +44,7 @@ cells change.
 
 ## The config
 
-`Lazygit config` writes `~/.config/lazygit/config.yml` for `ws_user`, from `files/config.yml`. A
+`Lazygit config` writes `~/.config/lazygit/config.yml` for `WS_USER`, from `files/config.yml`. A
 run replaces a change made to it by hand, and keeps the old file beside the new one.
 
 - Settings of your own go in `~/.lazygit.yml`. lazygit loads it over the config in each repository

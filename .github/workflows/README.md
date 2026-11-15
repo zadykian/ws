@@ -95,7 +95,7 @@ through `sudo`, sent as the wizard sends it. `ws.sh` roots its paths in a direct
 puts the stand-ins of [ws-standin.sh](../mac-wizard/ws-standin.sh) for ws's programs first
 on its `PATH`. `status` must print the stamps and the stand-ins' states. Those are `wg0`'s key, the
 Mac's key for it and as its peer, and ws's signing key or `none`. They are also its hostname,
-claude's login, Secure Boot that refuses the fans' driver, and `host_vars.yml`'s `ws_user` and
+claude's login, Secure Boot that refuses the fans' driver, and `host_vars.yml`'s `WS_USER` and
 outbound table. `state` must print ws's report and exit with its status. Like a full `run`, it has
 root's `HOME` and a UTF-8 locale. A full `run` must run `ws server ubuntu apply` with `--json` alone
 in a unit of its own. It must print the log, event lines too. It must stamp ws's version, `-` here,
@@ -104,7 +104,7 @@ the line, which stops on a link, it stamps `off` and that file's sum. A tagged r
 start its own unit and leave that stamp. A run must follow a full unit or one of its steps, and
 refuse another's. A full run cut off must remove the last stamp, so the next starts a unit. The
 files script, `roles/server/ubuntu/session/wizard-remote-files.sh`: its `link` must list the wired ports,
-`user NAME` name `ws_user`, `values` print `host_vars.yml` and `values PAIR...` run `ws server
+`user NAME` name `WS_USER`, `values` print `host_vars.yml` and `values PAIR...` run `ws server
 ubuntu values set` on each. `link PORT` must name one there, mode 600 in a 755 directory, once,
 which `status` names once the roles give `10.77.0.1`. With ws's secrets file and its credential, a
 run must start a unit that loads the credential and runs `--secrets` on that file, and stamp its

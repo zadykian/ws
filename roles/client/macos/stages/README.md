@@ -192,7 +192,7 @@ That ws runs its roles ([The
 unit's log until it ends, past the [event lines](../../../../README.md#events), and stops where the
 run fails. A first run takes 20 to 40 minutes. The unit goes on where ssh drops, and the next run of
 the wizard follows it to its end, and replays the log. A unit of part of ws stops a run of other
-steps, until it ends. The stage first names `WS_USER` as `ws_user` in `/etc/ws/host_vars.yml` on ws,
+steps, until it ends. The stage first names `WS_USER` as `WS_USER` in `/etc/ws/host_vars.yml` on ws,
 with the files script, where the user that host_vars names, else the default, isn't `WS_USER`, so
 the roles set up that user. It writes wg0's address and port there off the defaults.
 
@@ -215,7 +215,7 @@ either. The stage sends nothing. Without them the run has no secrets. Then the r
 as they find it ([The profile](../../../server/ubuntu/ikeward/README.md#the-profile)).
 
 On a cloud VM, the outbound table drops the metadata service ([Outbound](../../../server/ubuntu/security/README.md#outbound)). So
-with `WS_TARGET=cloud`, the stage names `security_outbound: false` in ws's `/etc/ws/host_vars.yml`
+with `WS_TARGET=cloud`, the stage names `WS_SECURITY_OUTBOUND: false` in ws's `/etc/ws/host_vars.yml`
 before the run, which reads its values there. It reads the line as YAML does, with blanks or a
 carriage return after the value too. The stage is done there once a run that began with the line
 passed, and `host_vars.yml` is as that run read it.
@@ -286,7 +286,7 @@ After a run in which a stage acted, the wizard lists each of these that applies:
 - The server's lease, made static, where the Host key stage asked ws's address, and the router's forwards
   where `server.conf` has `WS_REMOTE` ([The router](../../../server/ubuntu/network/router.md)). Off the LAN, `server.conf`'s way to ws
   instead, and a cloud VM's firewall for the tunnel ([The wizard's targets](../conf/README.md)).
-- ws's outbound table, which `security_outbound: false` in ws's `host_vars.yml` keeps off, where
+- ws's outbound table, which `WS_SECURITY_OUTBOUND: false` in ws's `host_vars.yml` keeps off, where
   `WS_TARGET` isn't `cloud`, as after a move from a cloud VM: that line removed, then `--update`.
 - The tunnel's handshake, where the run asked ws's address or none came. A static lease, or off the
   LAN `server.conf`'s way leading to ws, UDP let through to ws, or ws-tunnel allowed in the Background.

@@ -13,8 +13,8 @@ with the latest release instead, which it reads over HTTP.
 ## User settings
 
 Next, `cld setup config user` adds to `~/.claude/settings.json` what it lacks. It adds the
-permission set `claude_permissions` names, `read-only` by default. It adds cld's choices of model,
-effort, theme, editor mode, auto-compact and update channel. With `claude_notifications`, it adds
+permission set `WS_CLAUDE_PERMISSIONS` names, `read-only` by default. It adds cld's choices of model,
+effort, theme, editor mode, auto-compact and update channel. With `WS_CLAUDE_NOTIFICATIONS`, it adds
 the channel claude notifies on. It keeps every value already there. `--check` runs cld on a copy of
 the file and lists the keys it would add. A cld that predates the command gets it from the role's
 `cld update` first; `--check`, which updates nothing, notes that cld lacks it.
@@ -52,7 +52,7 @@ Four of the keys add content to the logs and traces:
 So SigNoz holds what each session was asked and answered, and what it ran and read, for 90 days
 ([Retention](../signoz/README.md#retention)). That includes a secret a command printed or a file held. The
 logs and traces stay on the server: the collector sends only claude's metrics elsewhere. SigNoz's
-UI listens on loopback alone. A copy of `claude_telemetry_env` without these keys stops the role
+UI listens on loopback alone. A copy of `WS_CLAUDE_TELEMETRY_ENV` without these keys stops the role
 setting them, and leaves them in `env` until removed by hand.
 
 The role replaces an endpoint already in `env`. To keep sending claude's metrics to a remote
@@ -64,14 +64,14 @@ the role removes still applies where the shell exports it, as from `~/.secrets/e
 
 ## Plugin marketplaces
 
-`claude_marketplaces`, empty by default, lists the plugin marketplaces the role adds for `ws_user`,
+`WS_CLAUDE_MARKETPLACES`, empty by default, lists the plugin marketplaces the role adds for `WS_USER`,
 each a `name` and a `source`. The source is what `claude plugin marketplace add` takes: a GitHub
 `owner/repo`, a git URL or an absolute path. The first two take a branch or tag as `#REF`. A git URL
 off GitHub ends in `.git`, as claude reads one without it as a hosted `marketplace.json`. The name
 is the one the marketplace's own `marketplace.json` gives, as `add` takes none:
 
 ```yaml
-claude_marketplaces:
+WS_CLAUDE_MARKETPLACES:
   - name: acme-plugins
     source: https://git.example.internal/team/plugins.git
 ```
