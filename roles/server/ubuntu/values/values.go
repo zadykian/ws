@@ -27,7 +27,7 @@ type Values struct {
 	Docker    Docker    `yaml:",inline"`
 	Fans      Fans      `yaml:",inline"`
 	Ikeward   Ikeward   `yaml:",inline"`
-	Network   Network   `yaml:",inline"`
+	Cable     Cable     `yaml:",inline"`
 	Security  Security  `yaml:",inline"`
 	Shell     Shell     `yaml:",inline"`
 	Signoz    Signoz    `yaml:",inline"`

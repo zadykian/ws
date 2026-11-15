@@ -47,7 +47,7 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out, ra
 			apt.Packages{M: m, Out: out, Names: []string{"wireguard-tools", "systemd", "iptables"}},
 		}},
 		// Ahead of wg0, which the drops don't need: a run that stops on wg0 still puts them in.
-		resource.Lazy{Title: dropsStep, After: packagesStep, Parts: drops.Parts(m, u, out, v.Network.DirectLinkInterface)},
+		resource.Lazy{Title: dropsStep, After: packagesStep, Parts: drops.Parts(m, u, out, v.Cable.Port)},
 		resource.Lazy{Title: tunnelStep, After: dropsStep, Parts: tunnel(m, u, out, random, v)},
 		resource.Group{Title: keyStep, After: tunnelStep, Parts: []resource.Resource{
 			ready{m: m, out: out, tries: 10, pause: time.Second, sleep: sleep},

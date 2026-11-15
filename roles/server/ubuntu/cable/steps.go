@@ -11,6 +11,6 @@ import (
 // Steps returns the role's one step: the direct link to the Mac. The role takes no secrets.
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units, out effect.Out) []step.Step {
 	return []step.Step{resource.Group{Title: "Direct link", Parts: []resource.Resource{
-		direct{M: m, U: u, Out: out, Interface: v.Network.DirectLinkInterface, Address: v.Network.DirectLinkAddress},
+		direct{M: m, U: u, Out: out, Interface: v.Cable.Port, Address: v.Cable.Address},
 	}}}
 }

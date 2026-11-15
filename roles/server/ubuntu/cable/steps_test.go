@@ -38,7 +38,7 @@ func newRig(iface, address string) rig {
 	m.Results["networkctl reload"] = effecttest.Result{}
 	u := &effecttest.Units{States: map[string]effect.UnitState{"systemd-networkd.service": {Active: true}}}
 	v := values.Default()
-	v.Network.DirectLinkInterface, v.Network.DirectLinkAddress = iface, address
+	v.Cable.Port, v.Cable.Address = iface, address
 	out := &effecttest.Out{}
 	return rig{m, u, out, Steps(v, secrets.Secrets{}, m, u, out)}
 }
