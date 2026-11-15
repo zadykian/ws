@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/roles/internal/etcws"
 )
 
 // ErrRefused is returned where values.yml with the new lines would fail the package's checks, which Out has
@@ -80,8 +81,16 @@ func (f File) Add(ctx context.Context, lines string) error {
 	return f.Write(ctx, text)
 }
 
-// Write puts the text in values.yml, keeping its mode.
+// Write puts the text in values.yml. A file in /etc/ws is root's, 644, written through sudo where it
+// differs. Any other is outside /etc/ws, which is the user's: it keeps its mode, as WS_VALUES may
+// name it anywhere.
 func (f File) Write(ctx context.Context, text string) error {
+	if etcws.Holds(f.Path) {
+		if err := etcws.Write(ctx, f.M, f.Out, f.Path, []byte(text)); err != nil {
+			return fmt.Errorf("cannot write %s: %w", f.Path, err)
+		}
+		return nil
+	}
 	mode := fs.FileMode(0o644)
 	if info, err := f.M.Stat(f.Path); err == nil {
 		mode = info.Mode.Perm()

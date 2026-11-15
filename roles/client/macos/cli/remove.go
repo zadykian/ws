@@ -17,6 +17,7 @@ import (
 	"github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/client/macos"
 	"github.com/zadykian/ws/roles/client/macos/values"
+	"github.com/zadykian/ws/roles/internal/etcws"
 )
 
 // newRemoveCmd returns ws client macos remove.
@@ -74,7 +75,12 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 	if err := forgetHost(c, p, name); err != nil {
 		return err
 	}
-	if _, err := p.Machine.Run(c.Context(), "rm", "-rf", path.Dir(values.ServerPath(mac, name))); err != nil {
+	dir := path.Dir(values.ServerPath(mac, name))
+	rm := p.Machine.Run
+	if etcws.Holds(dir) {
+		rm = p.Machine.RunRoot
+	}
+	if _, err := rm(c.Context(), "rm", "-rf", dir); err != nil {
 		return fmt.Errorf("cannot remove the files of %s: %w", name, err)
 	}
 	if _, err := fmt.Fprintf(c.OutOrStdout(), "removed %s\n", name); err != nil {
