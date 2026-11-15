@@ -46,10 +46,10 @@ they hold ws's line, and none of their text.
 ## The Mac's values.yml
 
 The repository names no server, so the values go in two YAML files of `KEY: value` lines that the script
-reads without running them. `~/.config/ws/values.yml` holds the Mac's keys, which
-`WS_GIT_SIGNING_PUB_KEY`, `WS_IDENTITY_PUB_KEY` and `WS_IDENTITY_AGENT` are.
-`~/.config/ws/servers/ws/values.yml` holds every other key. A key in the other file is refused.
-[The two files](values/README.md#the-two-files) shows both.
+reads without running them. `/etc/ws/values.yml` holds the Mac's keys: `WS_GIT_SIGNING_PUB_KEY`,
+`WS_IDENTITY_PUB_KEY` and `WS_IDENTITY_AGENT`. `/etc/ws/servers/ws/values.yml` holds every other key,
+and a key in the other file is refused. Both are root's, written through sudo. A `WS_VALUES` file
+outside `/etc/ws` is the user's. [The two files](values/README.md#the-two-files) shows both.
 `--server NAME`, on every `ws client macos` command, picks the server, which may be left out where
 there is one ([The server's name](values/README.md#the-servers-name)).
 
