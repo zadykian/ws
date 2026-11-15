@@ -137,7 +137,7 @@ func TestEachRunIsFollowed(t *testing.T) {
 	c, m, _ := newCable(t, session.Status{}, cableLink, nil)
 	c.Ws = macSession(m, c.SSH, c.Out.(*effecttest.Out), session.Status{Run: idleRun.Run}, h)
 	m.Results[sessiontest.Op("link", "eth1")] = effecttest.Result{}
-	m.Results[sessiontest.Op("run", "--only", "network,wireguard")] = log
+	m.Results[sessiontest.Op("run", "--only", "cable,wireguard")] = log
 	if err := c.name(ctx, "eth1"); err != nil {
 		t.Fatal(err)
 	}

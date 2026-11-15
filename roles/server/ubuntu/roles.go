@@ -41,7 +41,7 @@ type entry struct {
 var all = []entry{
 	{"base", base.Steps},
 	{"security", security.Steps},
-	{"network", cable.Steps},
+	{"cable", cable.Steps},
 	{"wireguard", wireguard.Steps},
 	{"ikeward", ikeward.Steps},
 	{"nvidia", nvidia.Steps},

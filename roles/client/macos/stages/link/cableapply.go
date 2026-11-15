@@ -18,7 +18,7 @@ func (c *Cable) file() conf.File {
 
 // Apply takes ws's port of the cable, where none holds ws's end, from WS_CABLE_PORT or the
 // terminal, the one with carrier by default. link names it in /etc/ws/host_vars.yml on ws. Then ws
-// server ubuntu apply --only network,wireguard runs there, as both roles read it: the network role
+// server ubuntu apply --only cable,wireguard runs there, as both roles read it: the network role
 // must give it 10.77.0.1 as ws's end. After that, service takes the Mac's service. none, as either
 // answer, writes an empty WS_CABLE_SERVICE. Where the server's file has a service, again takes the stage's
 // steps.
@@ -55,7 +55,7 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 		if port == "" {
 			return c.write(ctx, "")
 		}
-		c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on %s, and ws server ubuntu apply --only network,wireguard "+
+		c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on %s, and ws server ubuntu apply --only cable,wireguard "+
 			"runs there in a unit of its own", stage.Cable, port, c.SSH.Host)
 		if err := c.name(ctx, port); err != nil {
 			return err
@@ -64,7 +64,7 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 			return err
 		}
 		if c.end() != port {
-			return fmt.Errorf("%s: %s's %s lacks %s after ws server ubuntu apply --only network,wireguard: plug the "+
+			return fmt.Errorf("%s: %s's %s lacks %s after ws server ubuntu apply --only cable,wireguard: plug the "+
 				"Mac's cable into it, or mend what that printed, then run the wizard again", stage.Cable, c.SSH.Host, port, cableEnd)
 		}
 	}
@@ -100,7 +100,7 @@ func (c *Cable) again(ctx context.Context, port string) error {
 	if s.Cable == port {
 		return nil
 	}
-	c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on %s again, and ws server ubuntu apply --only network,wireguard "+
+	c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on %s again, and ws server ubuntu apply --only cable,wireguard "+
 		"runs there in a unit of its own", stage.Cable, port, c.SSH.Host)
 	return c.name(ctx, port)
 }

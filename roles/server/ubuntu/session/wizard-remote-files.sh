@@ -58,7 +58,7 @@ ports() {
 }
 
 # link_wait PORT runs link once PORT holds 10.77.0.1. The address comes from networkd a moment
-# after the network role's networkctl reload, and later for a port that was down. It reads ip each
+# after the cable role's networkctl reload, and later for a port that was down. It reads ip each
 # second, 10 s at most, so that the wizard waits in one login, which a key may take a touch for.
 link_wait() {
     ports | grep -qxF -- "${1-}" || die "'${1-}' is none of the wired ports that link lists"

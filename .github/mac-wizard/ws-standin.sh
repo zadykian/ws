@@ -26,7 +26,7 @@
 # - ws.key is wg0's key, which ws server ubuntu apply --only wireguard makes, and utun names wg0,
 #   root's;
 # - uplink names the port of the default route. addr/PORT holds a port's IPv4 addresses, which ws
-#   server ubuntu apply --only network,wireguard gives the port that host_vars names, with carrier.
+#   server ubuntu apply --only cable,wireguard gives the port that host_vars names, with carrier.
 #   That run writes the port in root's netplan file, as the network role does, or removes the file.
 
 set -u
@@ -211,7 +211,7 @@ ws)
             exit 1
         fi
         [ "$*" != '--only wireguard' ] || wg0 || exit 1
-        [ "$*" != '--only network,wireguard' ] || direct
+        [ "$*" != '--only cable,wireguard' ] || direct
         echo 'PLAY RECAP'
         exit "$(cat "$s/server.status" 2>/dev/null || echo 0)"
         ;;

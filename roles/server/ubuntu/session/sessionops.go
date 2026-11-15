@@ -123,9 +123,9 @@ func (s *Session) WaitPorts(ctx context.Context, port string) ([]byte, error) {
 	return s.do(ctx, opWait, []string{port})
 }
 
-// NameCable names the port in ws's host_vars and runs the network and wireguard roles there.
+// NameCable names the port in ws's host_vars and runs the cable and wireguard roles there.
 func (s *Session) NameCable(ctx context.Context, port string) error {
-	_, err := s.do(ctx, opNameCable, []string{port}, []string{"--only", "network,wireguard"})
+	_, err := s.do(ctx, opNameCable, []string{port}, []string{"--only", "cable,wireguard"})
 	return err
 }
 
