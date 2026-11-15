@@ -8,7 +8,7 @@ import (
 )
 
 func TestSettingsIsTheSharedText(t *testing.T) {
-	got := gitcfg.Settings(gitcfg.Inputs{Key: "/h/k.pub", Signers: "/h/s",
+	got := gitcfg.Settings(gitcfg.Inputs{Key: "/h/k.pub",
 		Gh: "/opt/gh", Program: "/h/sign"})
 	want := "[user]\n\tname = \"zadykian\"\n\temail = me@zadykian.dev\n" +
 		"# Each commit and tag signed with the machine's SSH key, which the allowed signers file trusts for the\n" +
@@ -16,7 +16,7 @@ func TestSettingsIsTheSharedText(t *testing.T) {
 		"# ssh-keygen reads the private key beside it.\n" +
 		"\tsigningkey = \"/h/k.pub\"\n" +
 		"[gpg]\n\tformat = ssh\n" +
-		"[gpg \"ssh\"]\n\tallowedSignersFile = \"/h/s\"\n\tprogram = \"/h/sign\"\n" +
+		"[gpg \"ssh\"]\n\tallowedSignersFile = \"/etc/ws/allowed_signers\"\n\tprogram = \"/h/sign\"\n" +
 		"[commit]\n\tgpgsign = true\n[tag]\n\tgpgsign = true\n" +
 		"# A fetch drops the remote-tracking branches that the remote deleted, a landed pull request's\n" +
 		"# say, so that Zed's and lazygit's branch lists hold none.\n" +
@@ -31,9 +31,9 @@ func TestSettingsIsTheSharedText(t *testing.T) {
 	}
 }
 
-func TestSettingsQuotesThePathsAndNamesNoProgramWithoutOne(t *testing.T) {
-	got := gitcfg.Settings(gitcfg.Inputs{Key: `/h/"k".pub`, Signers: `/h/s\x`})
-	for _, want := range []string{`signingkey = "/h/\"k\".pub"`, `"/h/s\\x"`} {
+func TestSettingsQuotesTheKeyAndNamesNoProgramWithoutOne(t *testing.T) {
+	got := gitcfg.Settings(gitcfg.Inputs{Key: `/h/"k".pub`})
+	for _, want := range []string{`signingkey = "/h/\"k\".pub"`} {
 		if !strings.Contains(got, want) {
 			t.Errorf("Settings lacks %s:\n%s", want, got)
 		}

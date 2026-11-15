@@ -32,8 +32,7 @@ type Config struct {
 }
 
 func (g Config) content() ([]byte, error) {
-	settings := gitcfg.Settings(gitcfg.Inputs{Key: g.Key + ".pub",
-		Signers: gitcfg.Signers, Gh: "/usr/bin/gh"})
+	settings := gitcfg.Settings(gitcfg.Inputs{Key: g.Key + ".pub", Gh: "/usr/bin/gh"})
 	return resource.Render(gitFiles, "files/gitconfig.tmpl", struct{ Settings string }{settings})
 }
 

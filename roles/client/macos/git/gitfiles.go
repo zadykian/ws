@@ -23,7 +23,7 @@ type part interface {
 // signers lie in /etc/ws, which a run writes through sudo.
 func (g *Git) list(key keys.NamedKey, gh string) []part {
 	dir := g.Home + "/.config/ws"
-	in := gitcfg.Inputs{Key: key.File, Gh: gh, Signers: gitcfg.Signers}
+	in := gitcfg.Inputs{Key: key.File, Gh: gh}
 	userFile := func(path, text string, mode fs.FileMode) file.UserFile {
 		return file.UserFile{M: g.M, Out: g.Out, Path: path, Text: []byte(text), Mode: mode}
 	}

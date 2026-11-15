@@ -8,8 +8,7 @@ import (
 )
 
 func TestConfigSharesTheSettingsUnderItsHeader(t *testing.T) {
-	in := gitcfg.Inputs{Key: "/h/k.pub", Signers: "/h/.config/ws/allowed_signers",
-		Gh: "/opt/gh"}
+	in := gitcfg.Inputs{Key: "/h/k.pub", Gh: "/opt/gh"}
 	got := config(in)
 	for _, want := range []string{
 		header + "\n# ~/.gitconfig includes it at its top",
@@ -17,7 +16,7 @@ func TestConfigSharesTheSettingsUnderItsHeader(t *testing.T) {
 		"\tsigningkey = \"/h/k.pub\"\n",
 		"[fetch]\n\tprune = true\n",
 		"[credential \"https://github.com\"]\n\thelper = \n\thelper = !/opt/gh auth git-credential\n",
-		"\tallowedSignersFile = \"/h/.config/ws/allowed_signers\"\n",
+		"\tallowedSignersFile = \"/etc/ws/allowed_signers\"\n",
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("config lacks %q:\n%s", want, got)

@@ -18,9 +18,9 @@ const Signers = etcws.Dir + "/allowed_signers"
 
 // Inputs are the values of the settings.
 type Inputs struct {
-	// Key is the signing key's .pub, Signers the allowed signers file and Gh GitHub's CLI, each as an
-	// absolute path. Program is gpg.ssh.program, or empty to sign with ssh-keygen as found.
-	Key, Signers, Gh, Program string
+	// Key is the signing key's .pub and Gh GitHub's CLI, each as an absolute path. Program is
+	// gpg.ssh.program, or empty to sign with ssh-keygen as found.
+	Key, Gh, Program string
 }
 
 // Settings returns the sections of identity, signing, fetch and credentials, with tabs. The name
@@ -33,7 +33,7 @@ func Settings(in Inputs) string {
 		"too; otherwise\n# ssh-keygen reads the private key beside it.\n")
 	b.WriteString("\tsigningkey = " + quote(in.Key) + "\n")
 	b.WriteString("[gpg]\n\tformat = ssh\n")
-	b.WriteString("[gpg \"ssh\"]\n\tallowedSignersFile = " + quote(in.Signers) + "\n")
+	b.WriteString("[gpg \"ssh\"]\n\tallowedSignersFile = " + quote(Signers) + "\n")
 	if in.Program != "" {
 		b.WriteString("\tprogram = " + quote(in.Program) + "\n")
 	}
