@@ -18,8 +18,13 @@ func TestServerPathIsBesideMacConf(t *testing.T) {
 func TestLoadJoinsTheTwoFiles(t *testing.T) {
 	m := effecttest.NewMachine()
 	server := ServerPath(macPath, FirstServer)
-	m.Files[macPath] = []byte("WS_GIT_SIGNING_PUB_KEY=~/g.pub\nWS_IDENTITY_AGENT=~/a.sock\nWS_IDENTITY_PUB_KEY=~/k.pub\n")
-	m.Files[server] = []byte("WS_TARGET=cloud\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22\nWS_USER=ada\n")
+	m.Files[macPath] = []byte(Text("WS_GIT_SIGNING_PUB_KEY", "~/g.pub", "WS_IDENTITY_AGENT", "~/a.sock", "WS_IDENTITY_PUB_KEY", "~/k.pub"))
+	m.Files[server] = []byte(Text(
+		"WS_TARGET", "cloud",
+		"WS_REMOTE", "r.example",
+		"WS_REMOTE_PORT", "22",
+		"WS_USER", "ada",
+	))
 	c, err := Load(m, macPath, server)
 	if err != nil {
 		t.Fatal(err)
@@ -42,8 +47,8 @@ func TestLoadKeepsADefaultWhereAFileHasNoLine(t *testing.T) {
 func TestLoadRefusesEachFilesStrayKeyInItsOwnWords(t *testing.T) {
 	m := effecttest.NewMachine()
 	server := ServerPath(macPath, FirstServer)
-	m.Files[macPath] = []byte("WS_TARGET=lan\n")
-	m.Files[server] = []byte("WS_GIT_SIGNING_PUB_KEY=~/k.pub\n")
+	m.Files[macPath] = []byte(Text("WS_TARGET", "lan"))
+	m.Files[server] = []byte(Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"))
 	_, err := Load(m, macPath, server)
 	want := []string{
 		macPath + ", line 1: WS_TARGET is a server's key: it goes in servers/NAME/server.conf, beside mac.conf",
@@ -72,8 +77,8 @@ func TestLoadRefusesANetworkThatAnotherServerRoutes(t *testing.T) {
 	m := machineWith("ws", "lab")
 	server := ServerPath(macPath, "ws")
 	m.Files[macPath] = nil
-	m.Files[server] = []byte("WS_TUNNEL_NETWORKS=10.1.0.0/24\n")
-	m.Files[ServerPath(macPath, "lab")] = []byte("WS_TUNNEL_NETWORKS=10.1.0.0/16\n")
+	m.Files[server] = []byte(Text("WS_TUNNEL_NETWORKS", "10.1.0.0/24"))
+	m.Files[ServerPath(macPath, "lab")] = []byte(Text("WS_TUNNEL_NETWORKS", "10.1.0.0/16"))
 	_, err := Load(m, macPath, server)
 	if want := server + ": WS_TUNNEL_NETWORKS's 10.1.0.0/24 overlaps server lab's"; err == nil || !strings.HasPrefix(err.Error(), want) {
 		t.Errorf("err = %v, want %q first", err, want)
