@@ -40,8 +40,8 @@ func TestTimezoneRefusals(t *testing.T) {
 		m := effecttest.NewMachine()
 		m.Files["/usr/share/zoneinfo/Europe/Paris"] = []byte("tz")
 		g := resource.Group{Title: "Timezone", Parts: timezoneParts(m, zone)}
-		if _, err := g.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "base_timezone") {
-			t.Errorf("zone %q: error = %v, want a refusal naming base_timezone", zone, err)
+		if _, err := g.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "WS_BASE_TIMEZONE") {
+			t.Errorf("zone %q: error = %v, want a refusal naming WS_BASE_TIMEZONE", zone, err)
 		}
 	}
 }

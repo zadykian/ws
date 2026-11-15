@@ -117,7 +117,7 @@ func (c addMarketplace) Apply(ctx context.Context) error {
 		return fmt.Errorf("claude plugin marketplace add: %w", err)
 	}
 	if added.Marketplace != c.mk.Name {
-		return fmt.Errorf("the marketplace from %s names itself %s, not %s. claude has added it as %s: give that name in claude_marketplaces",
+		return fmt.Errorf("the marketplace from %s names itself %s, not %s. claude has added it as %s: give that name in WS_CLAUDE_MARKETPLACES",
 			c.mk.Source, added.Marketplace, c.mk.Name, added.Marketplace)
 	}
 	all, err := c.p.list(ctx)

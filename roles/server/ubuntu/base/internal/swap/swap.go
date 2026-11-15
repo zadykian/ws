@@ -29,7 +29,7 @@ type swap struct {
 	active bool // plans the swapon and the swapoff of the installer's file, not the file's own
 }
 
-// swapParts keeps /swapfile, base_swap_size_mb MiB, in /etc/fstab and swapped to; none where the
+// swapParts keeps /swapfile, WS_BASE_SWAP_SIZE_MB MiB, in /etc/fstab and swapped to; none where the
 // size is 0. It takes the place of /swap.img, which Ubuntu Server's installer makes.
 func swapParts(m effect.Machine, out effect.Out, d disk, want Setting) []resource.Resource {
 	s := swap{M: m, Out: out, Disk: d, Want: want}
@@ -53,7 +53,7 @@ func Parts(m effect.Machine, out effect.Out, want Setting) []resource.Resource {
 // state reads what the plan needs.
 func (s swap) state() (swapState, error) {
 	if sw := s.Want.Swappiness; sw < 0 || sw > 200 {
-		return swapState{}, fmt.Errorf("base_swappiness is %d: it takes a whole number from 0 to 200", sw)
+		return swapState{}, fmt.Errorf("WS_BASE_SWAPPINESS is %d: it takes a whole number from 0 to 200", sw)
 	}
 	swaps, err := s.M.ReadFile("/proc/swaps")
 	if err != nil {
@@ -94,7 +94,7 @@ func wantMiB(size *int, meminfoText string) (int64, error) {
 		return ramSwapMiB(total), err
 	}
 	if *size < 0 {
-		return 0, fmt.Errorf("base_swap_size_mb is %d: it takes a whole number of MiB, or 0 for none", *size)
+		return 0, fmt.Errorf("WS_BASE_SWAP_SIZE_MB is %d: it takes a whole number of MiB, or 0 for none", *size)
 	}
 	return int64(*size), nil
 }

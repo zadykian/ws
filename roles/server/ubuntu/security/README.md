@@ -7,8 +7,8 @@ and DNS.
 
 ## SSH and the firewall
 
-ws turns SSH's passwords off: everyone logs in by key. Where `ws_user` is another user, root
-cannot log in at all, and `ws_user` takes root by `sudo` with its password. Where `ws_user` is
+ws turns SSH's passwords off: everyone logs in by key. Where `WS_USER` is another user, root
+cannot log in at all, and `WS_USER` takes root by `sudo` with its password. Where `WS_USER` is
 root, a cloud VM's, root logs in by key. ufw then lets in
 SSH on port 22 and WireGuard on UDP port 51820 ([wireguard](../wireguard/README.md)). It lets in DNS lookups
 from Docker's bridges to the host's resolver too ([docker](../docker/README.md)), and nothing else. fail2ban
@@ -16,18 +16,18 @@ bans an address for an hour after 5 failed logins in 10 minutes. sshd's own pena
 that keeps failing. Both hold on every network, with no peer or network exempt. SSH takes only the
 keys imported from the GitHub account during Ubuntu's install; a cloud VM has no installer
 ([A new machine](../../../../README.md#a-new-machine)). Over SSH, keep the session that ran ws open until a
-new one logs in. The steps stop before they turn passwords off if `ws_user` has no key to log in
+new one logs in. The steps stop before they turn passwords off if `WS_USER` has no key to log in
 with, or a file of keys that sshd passes over, outside a container. sshd's drop-in lands only after
 `sshd -G` accepts it, and sshd reloads after a change.
 
-Where `ws_user` is another user, the step "sudo" checks, before sshd's, that it may run `sudo`
+Where `WS_USER` is another user, the step "sudo" checks, before sshd's, that it may run `sudo`
 and has a password to give. Closing root's login then leaves a way to root. A container skips
 the check. sudo asks for the password at every command (`/etc/sudoers.d/ws-no-cache`,
-`timestamp_timeout=0`). What `ws_user` runs, such as claude, then cannot take root after the
+`timestamp_timeout=0`). What `WS_USER` runs, such as claude, then cannot take root after the
 maintainer's own `sudo`. That holds where sudo asks. A cloud image's default user has a `NOPASSWD`
 rule, which ws leaves in place, so what that user runs holds root, past the outbound table too. Give
 the user a password and remove the rule by hand.
-The step "lxd" takes `ws_user` out of the `lxd` group, which is root, and purges `lxd-installer`.
+The step "lxd" takes `WS_USER` out of the `lxd` group, which is root, and purges `lxd-installer`.
 
 Docker's published ports get past ufw, so Docker publishes a port that names no address on
 `127.0.0.1` ([docker](../docker/README.md)): reach it through an SSH tunnel. A port published on another
@@ -35,7 +35,7 @@ address, as in `-p 0.0.0.0:8080:80`, is open to every network the host is on.
 
 ## Outbound
 
-Unless `security_outbound` is false, as below, an nftables table of ws's own, `inet ws`, keeps
+Unless `WS_SECURITY_OUTBOUND` is false, as below, an nftables table of ws's own, `inet ws`, keeps
 what the server and Docker's containers start to the internet and to `ikeward0`, ikeward's VPN
 ([ikeward](../ikeward/README.md)). Elsewhere, only what the list below names passes.
 `security-outbound.service` loads the table from `/usr/local/lib/ws/security/outbound.nft` at
@@ -106,7 +106,7 @@ The caveats:
 - root gets past the table. Its programs meet the table, but it can stop `security-outbound`,
   delete the table, or send by AF_PACKET, which the table never sees. So can any user who can
   become root: the `sudo` group's members, as the installer's user or a cloud image's `ubuntu`,
-  and the `docker` group's. `ws_user` is `zadykian` by default
+  and the `docker` group's. `WS_USER` is `zadykian` by default
   ([values.go](../values/values.go)), and has a rootless daemon, not that group
   ([The rootless daemon](../docker/README.md#the-rootless-daemon)). The table binds the other users and the
   bridged containers.
@@ -126,7 +126,7 @@ The caveats:
   ws's packets to it drop until its next one.
 - An IPv6 route through a global gateway, rather than a link-local one, drops as if on the link.
 - The drops name no link: they cover the cable and `wg0` while their subnets, of
-  `network_direct_link_address` and `wireguard_address`, lie in the ranges above.
+  `WS_CABLE_ADDRESS` and `WS_TUNNEL_ADDRESS`, lie in the ranges above.
 - A Docker network given a bridge name of its own, not `br-`, is no bridge to the table: the
   server's packets to its containers drop, and theirs go out unchecked.
 - Docker's macvlan and ipvlan networks never meet the table, nor does AF_PACKET from a
@@ -152,18 +152,18 @@ table or set flushed or deleted by hand. In a container, where systemd is not ru
 the files, but skips the check, the comparison, the units and ufw. CI checks the file after its runs
 ([The `playbook` job](../../../../.github/workflows/README.md#the-playbook-job)).
 
-`security_outbound`, true by default, turns the table on. A cloud VM wants it false: the table
+`WS_SECURITY_OUTBOUND`, true by default, turns the table on. A cloud VM wants it false: the table
 drops the cloud's metadata service at `169.254.169.254`, which cloud-init, the guest agent and
 instance credentials need. On a new machine, name it in `/etc/ws/host_vars.yml` before the first
 run ([The direct link](../network/README.md#the-direct-link)):
 
 ```yaml
 ---
-security_outbound: false
+WS_SECURITY_OUTBOUND: false
 ```
 
 The Mac's wizard writes the line before the run where the server's file has `WS_TARGET=cloud`
-([ws's run](../../../client/macos/stages/README.md#wss-run)). A run with `security_outbound` false stops the table's units
+([ws's run](../../../client/macos/stages/README.md#wss-run)). A run with `WS_SECURITY_OUTBOUND` false stops the table's units
 by D-Bus, and resets one that failed, even where its file is gone. It then removes the units, their
 links, `/usr/local/lib/ws/security` and the table, even one loaded by hand. `--check` shows each
 removal. Off leaves:
@@ -179,14 +179,14 @@ table's `containers` chain drops what they forward: Docker forwards it ahead of 
 
 ## Links under the home
 
-`ws_user` owns `ws_home`, so a link there could send ws, which runs as root, to any file: its reads,
+`WS_USER` owns `WS_HOME`, so a link there could send ws, which runs as root, to any file: its reads,
 `chown`, `chmod` and backups would follow it. ws reaches a file there as root through the account
 alone: as a home file (`Account.File`, `Account.Dir`), a removal (`Account.Absent`) or the guarded
 read (`User.ReadHome`). Each refuses a link at the file, or at a directory between the home and it,
-and names the link and its target. The `claude` role acts as `ws_user` for its reads and writes
+and names the link and its target. The `claude` role acts as `WS_USER` for its reads and writes
 there, so a link reaches only what the user could reach: `settings.json` may link into a clone of
 dotfiles. `ws server ubuntu state` goes past a step that fails, so it reports no step that a refusal
 covers. Replace the link with the file itself. The check looks as the step plans, and a home file or
 a removal looks again as it applies. A link made after that fails at the write: `ws server ubuntu
-apply` makes its writes under `ws_home` through an `os.Root`, which refuses a link that leaves the
+apply` makes its writes under `WS_HOME` through an `os.Root`, which refuses a link that leaves the
 home. Its reads, `cat`, `rm` and `git` stay outside that bound.

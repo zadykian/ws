@@ -23,7 +23,7 @@ const (
 // Steps returns the role's steps in order. The check of the values comes first, then the binary's
 // download. The forwarding for the WireGuard peers follows, so that a peer taken off the list
 // loses its way in even while the VPN is down. Then come the install from the profile of the
-// secrets, and the wait for the VPN. Without ikeward_profile it returns none, as in CI's
+// secrets, and the wait for the VPN. Without WS_IKEWARD_PROFILE it returns none, as in CI's
 // container: the VPN, the file and ufw's rules stay unchanged.
 func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
 	return steps(v.Ikeward, s, m, out, statusTries, statusWait)
@@ -43,7 +43,7 @@ func steps(v values.Ikeward, s secrets.Secrets, m effect.Machine, out effect.Out
 			return err
 		}
 		if !s.Unread && !(profile{files: s.File}).present() {
-			return fmt.Errorf("ikeward_profile is %s, and the secrets hold no profile for it", v.Profile)
+			return fmt.Errorf("WS_IKEWARD_PROFILE is %s, and the secrets hold no profile for it", v.Profile)
 		}
 		return nil
 	}

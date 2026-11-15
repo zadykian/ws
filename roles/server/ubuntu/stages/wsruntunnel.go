@@ -9,8 +9,8 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
-// tunnelPairs gives the host_vars pairs that bring wg0 to the Mac's want: wireguard_address and
-// wireguard_port, each where host_vars differs. A server that goes back to the defaults gets the
+// tunnelPairs gives the host_vars pairs that bring wg0 to the Mac's want: WS_TUNNEL_ADDRESS and
+// WS_TUNNEL_PORT, each where host_vars differs. A server that goes back to the defaults gets the
 // default pair where host_vars holds another value. Where host_vars holds none and the want is the
 // default, the run plans nothing, and a first server's run keeps its bytes.
 func tunnelPairs(ctx context.Context, ws values.Store, w session.Want) ([]string, error) {
@@ -18,13 +18,13 @@ func tunnelPairs(ctx context.Context, ws values.Store, w session.Want) ([]string
 	type want struct{ key, value string }
 	var wants []want
 	if w.Address.IsValid() {
-		wants = append(wants, want{"wireguard_address", w.Address.String()})
+		wants = append(wants, want{"WS_TUNNEL_ADDRESS", w.Address.String()})
 	}
 	if port := w.Port; port != "" || w.Address.IsValid() {
 		if port == "" {
 			port = strconv.Itoa(def.Port)
 		}
-		wants = append(wants, want{"wireguard_port", port})
+		wants = append(wants, want{"WS_TUNNEL_PORT", port})
 	}
 	if len(wants) == 0 {
 		return nil, nil
@@ -46,7 +46,7 @@ func tunnelPairs(ctx context.Context, ws values.Store, w session.Want) ([]string
 	return pairs, nil
 }
 
-// naming says what a run writes before it starts, as "wireguard_address: A and wireguard_port: P".
+// naming says what a run writes before it starts, as "WS_TUNNEL_ADDRESS: A and WS_TUNNEL_PORT: P".
 func naming(pairs []string) string {
 	named := make([]string, len(pairs))
 	for i, p := range pairs {

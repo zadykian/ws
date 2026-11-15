@@ -59,4 +59,4 @@ wizard](../../../../roles/server/ubuntu/stages/README.md)).
 ## After a save
 
 Only the file changes: the next `ws server ubuntu apply` takes it. The wizard's next run names
-`ws_user` and, on a cloud VM, `security_outbound` again ([The Mac's wizard](../../../../roles/client/macos/stages/README.md)).
+`WS_USER` and, on a cloud VM, `WS_SECURITY_OUTBOUND` again ([The Mac's wizard](../../../../roles/client/macos/stages/README.md)).

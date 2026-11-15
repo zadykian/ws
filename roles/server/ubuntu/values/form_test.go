@@ -33,20 +33,20 @@ func varsField(t *testing.T, f values.Form, key string) form.Field {
 }
 
 func TestVarsFormShowsWhatTheFileGives(t *testing.T) {
-	far, _ := farVars("---\nbase_swappiness: 20\nikeward_domains: [a.example, b.example]\n")
+	far, _ := farVars("---\nWS_BASE_SWAPPINESS: 20\nWS_IKEWARD_DOMAINS: [a.example, b.example]\n")
 	f, err := far.Load(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := varsField(t, f, "base_swappiness"); got.Value != "20" || got.Text != "a whole number, default 10" ||
+	if got := varsField(t, f, "WS_BASE_SWAPPINESS"); got.Value != "20" || got.Text != "a whole number, default 10" ||
 		got.Default != "" || got.Valid("ten") == nil {
 		t.Errorf("swappiness = %+v", got)
 	}
-	if got := varsField(t, f, "ikeward_domains"); got.Value != "a.example, b.example" ||
+	if got := varsField(t, f, "WS_IKEWARD_DOMAINS"); got.Value != "a.example, b.example" ||
 		got.Text != "a list, split by commas" {
 		t.Errorf("domains = %+v", got)
 	}
-	if got := varsField(t, f, "security_outbound"); got.Value != "true" || len(got.Options) != 2 {
+	if got := varsField(t, f, "WS_SECURITY_OUTBOUND"); got.Value != "true" || len(got.Options) != 2 {
 		t.Errorf("outbound = %+v", got)
 	}
 }
@@ -63,22 +63,22 @@ func TestVarsFormLoadSaysWhyItFails(t *testing.T) {
 }
 
 func TestVarsFormSavesTheEditsInOneLogin(t *testing.T) {
-	far, m := farVars("---\nbase_swappiness: 20\n")
+	far, m := farVars("---\nWS_BASE_SWAPPINESS: 20\n")
 	f, err := far.Load(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
-	// ws_user=a b, and base_timezone= in front of it, as the keys go in order.
-	op := []string{"values", "YmFzZV90aW1lem9uZT0=", "d3NfdXNlcj1hIGI="}
+	// WS_USER=a b, and WS_BASE_TIMEZONE= in front of it, as the keys go in order.
+	op := []string{"values", "V1NfQkFTRV9USU1FWk9ORT0=", "V1NfVVNFUj1hIGI="}
 	m.Results[sessiontest.Op(op...)] = effecttest.Result{}
-	m.Results[sessiontest.Op("values")] = effecttest.Result{Out: []byte("---\nws_user: a b\n")}
+	m.Results[sessiontest.Op("values")] = effecttest.Result{Out: []byte("---\nWS_USER: a b\n")}
 	out := &effecttest.Out{}
-	f, err = f.Save(context.Background(), out, map[string]string{"ws_user": "a b", "base_timezone": ""})
+	f, err = f.Save(context.Background(), out, map[string]string{"WS_USER": "a b", "WS_BASE_TIMEZONE": ""})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := varsField(t, f, "ws_user").Value; got != "a b" {
-		t.Errorf("reads ws_user as %q", got)
+	if got := varsField(t, f, "WS_USER").Value; got != "a b" {
+		t.Errorf("reads WS_USER as %q", got)
 	}
 	if said := strings.Join(out.Lines, "\n"); !strings.Contains(said, "next ws server ubuntu apply") {
 		t.Errorf("said %q", said)
@@ -96,9 +96,9 @@ func TestVarsFormSaveWithNoEditsReachesNoWs(t *testing.T) {
 
 func TestVarsFormSaveSaysWhatWsRefused(t *testing.T) {
 	far, m := farVars("---\n")
-	op := []string{"values", "YmFzZV9zd2FwcGluZXNzPXRlbg=="}
+	op := []string{"values", "V1NfQkFTRV9TV0FQUElORVNTPXRlbg=="}
 	m.Results[sessiontest.Op(op...)] = effecttest.Result{Err: errors.New("a whole number\nexit status 1")}
-	_, err := far.Save(context.Background(), &effecttest.Out{}, map[string]string{"base_swappiness": "ten"})
+	_, err := far.Save(context.Background(), &effecttest.Out{}, map[string]string{"WS_BASE_SWAPPINESS": "ten"})
 	if err == nil || !strings.Contains(err.Error(), "a whole number") {
 		t.Errorf("err = %v", err)
 	}

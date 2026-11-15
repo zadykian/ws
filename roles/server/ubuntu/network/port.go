@@ -35,7 +35,7 @@ func (d direct) checkPort(ctx context.Context) (netplan.Port, error) {
 		return netplan.Port{}, err
 	}
 	if len(problems) > 0 {
-		return netplan.Port{}, fmt.Errorf("network_direct_link_interface names the port of the Mac's cable, not an uplink, yet %s", strings.Join(problems, " and "))
+		return netplan.Port{}, fmt.Errorf("WS_CABLE_PORT names the port of the Mac's cable, not an uplink, yet %s", strings.Join(problems, " and "))
 	}
 	// networkd's Driver= reads udev's ID_NET_DRIVER. A module fact lacks a driver built into the
 	// kernel, as virtio_net may be.

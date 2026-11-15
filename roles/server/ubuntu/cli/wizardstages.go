@@ -32,7 +32,7 @@ func serverWizardStages(p enginecli.Env, e engine.WizardEffects, o engine.Wizard
 }
 
 // serverSession is ws's session to itself on m: the scripts run here as root, as the Mac's ssh logs
-// in as host_vars' ws_user. talks runs claude's login, and events hears ws's run.
+// in as host_vars' WS_USER. talks runs claude's login, and events hears ws's run.
 func serverSession(m effect.Machine, talks effect.Foreground, out effect.Out, events step.Observer) *session.Session {
 	want := func() (session.Want, error) { return wsWant(m) }
 	return session.New(session.WsReach{M: m, Read: want, Here: talks, Out: out},
@@ -46,7 +46,7 @@ func serverOpen(_ context.Context, b *tui.Bridge) (*session.Session, error) {
 }
 
 // wsWant is what ws's run is to leave, as host_vars names it: a cloud VM where it turns the outbound
-// table off, and its ws_user.
+// table off, and its WS_USER.
 func wsWant(m effect.Machine) (session.Want, error) {
 	v, err := values.Load(m, serverVars)
 	target := "lan"

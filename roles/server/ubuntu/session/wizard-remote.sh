@@ -6,7 +6,7 @@
 #   ssh -o HostName=ADDRESS -o Port=PORT ws sh -s -- OP [ARG...] <roles/server/ubuntu/session/wizard-remote.sh
 #
 # - status prints what the wizard reads of ws, a line each, as NAME VALUE, with - for a value that
-#   is missing. user is the ws_user that host_vars names. run is the ws version and status of the
+#   is missing. user is the WS_USER that host_vars names. run is the ws version and status of the
 #   last full run, and off where host_vars turned the outbound table off as the run began, else on.
 #   Then come the SHA-256 of that run's secrets file and of host_vars, each or -. ws is the version
 #   that ws prints. last is the unit and status of the last run. active is the run's unit that runs
@@ -29,7 +29,7 @@
 # - install TAG URL installs ws's release TAG from the releases at URL. It runs that release's
 #   install.sh, which checks the binary against the release's ws.sha256 file. TAG is vX.Y.Z, and
 #   URL starts with https://, or with http://127.0.0.1: for CI's stand-in, as the wizard checks them.
-# - outbound names security_outbound: false in ws's host_vars, which keeps the outbound table off
+# - outbound names WS_SECURITY_OUTBOUND: false in ws's host_vars, which keeps the outbound table off
 #   for a cloud VM. It runs before the run, as ws server ubuntu apply reads its values from that
 #   file.
 #
@@ -77,11 +77,11 @@ stamp() {
     awk -v n="${2:-2}" 'NF == n { print; exit }' "$1" 2>/dev/null | first
 }
 
-# cable prints the port that host_vars names as network_direct_link_interface, as link writes it,
+# cable prints the port that host_vars names as WS_CABLE_PORT, as link writes it,
 # bare or in either quotes: the last such line. It prints - for none, and where the network role's
 # netplan file lacks it, as after a roles' run that failed, so that the Cable stage runs them again.
 cable() {
-    port=$(awk -v q="'" '/^network_direct_link_interface[ \t]*:/ {
+    port=$(awk -v q="'" '/^WS_CABLE_PORT[ \t]*:/ {
         v = $0
         sub(/^[^:]*:[ \t]*/, "", v)
         sub(/[ \t]+#.*$/, "", v)
@@ -120,7 +120,7 @@ status() {
     echo "last $(stamp "$state/last")"
     echo "active $(active | first)"
     echo "ws $("$ws" version 2>/dev/null | first)"
-    echo "user $(sed -n "s/^ws_user:[[:space:]]*[\"']\{0,1\}\([^\"' #]*\).*/\1/p" "$vars" \
+    echo "user $(sed -n "s/^WS_USER:[[:space:]]*[\"']\{0,1\}\([^\"' #]*\).*/\1/p" "$vars" \
         2>/dev/null | tail -n 1 | first)"
     echo "mac.pub $(head -n 1 "$peer" 2>/dev/null | first)"
     echo "wg0 $(wg show wg0 public-key 2>/dev/null | first)"
@@ -184,16 +184,16 @@ exit "$status"
 EOF
 }
 
-# off prints the script of host_vars VARS's security_outbound line, which runs as OP VARS. check
+# off prints the script of host_vars VARS's WS_SECURITY_OUTBOUND line, which runs as OP VARS. check
 # succeeds where the last such line is false, no or off, in any case, as YAML reads it. A comment,
-# blanks or a carriage return may follow. write names security_outbound: false otherwise, by a
+# blanks or a carriage return may follow. write names WS_SECURITY_OUTBOUND: false otherwise, by a
 # rename that keeps the file's other lines and mode, and not through a link. It makes the directory
 # 0755 and a new file 0600, as the file may hold secrets.
 off() {
     cat <<'EOF'
 vars=$2
-awk '/^security_outbound:/ { line = $0 } END { print line }' "$vars" 2>/dev/null |
-    grep -Eiqx 'security_outbound:[[:space:]]*(false|no|off)([[:space:]]*|[[:space:]]+#.*)' && exit 0
+awk '/^WS_SECURITY_OUTBOUND:/ { line = $0 } END { print line }' "$vars" 2>/dev/null |
+    grep -Eiqx 'WS_SECURITY_OUTBOUND:[[:space:]]*(false|no|off)([[:space:]]*|[[:space:]]+#.*)' && exit 0
 [ "$1" = write ] || exit 1
 if [ -L "$vars" ]; then
     echo "wizard-remote.sh: $vars is a link to $(readlink "$vars"): name the line in its file by hand" >&2
@@ -205,9 +205,9 @@ umask 077
 {
     [ -s "$vars" ] || echo ---
     cat "$vars" 2>/dev/null | awk '
-        /^security_outbound:/ { if (!done++) print "security_outbound: false"; next }
+        /^WS_SECURITY_OUTBOUND:/ { if (!done++) print "WS_SECURITY_OUTBOUND: false"; next }
         { print }
-        END { if (!done) print "security_outbound: false" }'
+        END { if (!done) print "WS_SECURITY_OUTBOUND: false" }'
 } >"$vars.new" && mv -f "$vars.new" "$vars" && echo "wizard-remote.sh: wrote $vars" >&2
 EOF
 }

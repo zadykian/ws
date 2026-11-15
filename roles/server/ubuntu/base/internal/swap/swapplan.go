@@ -27,7 +27,7 @@ func planSwap(s swapState) (swapSteps, error) {
 		}
 		if free < s.WantMiB+diskSpareMiB {
 			return swapSteps{}, fmt.Errorf("/ has %d MiB available, too little for a swap file of %d MiB and %d MiB more: "+
-				"set base_swap_size_mb lower, or 0 for none", s.DiskMiB, s.WantMiB, diskSpareMiB)
+				"set WS_BASE_SWAP_SIZE_MB lower, or 0 for none", s.DiskMiB, s.WantMiB, diskSpareMiB)
 		}
 	}
 	_, onFile := s.Areas[swapFile]

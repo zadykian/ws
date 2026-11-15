@@ -3,29 +3,29 @@ package values
 // Base is roles/base's keys.
 type Base struct {
 	// Packages are the apt packages the role installs.
-	Packages []string `yaml:"base_packages"`
+	Packages []string `yaml:"WS_BASE_PACKAGES"`
 	// Locale is the system locale.
-	Locale string `yaml:"base_locale"`
+	Locale string `yaml:"WS_BASE_LOCALE"`
 	// Timezone is the system's time zone.
-	Timezone string `yaml:"base_timezone"`
+	Timezone string `yaml:"WS_BASE_TIMEZONE"`
 	// SwapSizeMB is the swap file's size in MiB, and 0 is none. Nil, unset, is the RAM rounded up to a
 	// whole GiB.
-	SwapSizeMB *int `yaml:"base_swap_size_mb,omitempty"`
+	SwapSizeMB *int `yaml:"WS_BASE_SWAP_SIZE_MB,omitempty"`
 	// Swappiness is vm.swappiness.
-	Swappiness int `yaml:"base_swappiness"`
+	Swappiness int `yaml:"WS_BASE_SWAPPINESS"`
 }
 
 // Claude is roles/claude's keys.
 type Claude struct {
 	// Permissions is the permission set that cld adds to claude's user settings: read-only, cld
 	// or none.
-	Permissions string `yaml:"claude_permissions"`
+	Permissions string `yaml:"WS_CLAUDE_PERMISSIONS"`
 	// Notifications is the channel claude notifies on. Empty sets none.
-	Notifications string `yaml:"claude_notifications"`
+	Notifications string `yaml:"WS_CLAUDE_NOTIFICATIONS"`
 	// TelemetryEnv is the environment that sends claude's telemetry to the collector.
-	TelemetryEnv map[string]string `yaml:"claude_telemetry_env"`
+	TelemetryEnv map[string]string `yaml:"WS_CLAUDE_TELEMETRY_ENV"`
 	// Marketplaces are the plugin marketplaces the role adds for the user.
-	Marketplaces []Marketplace `yaml:"claude_marketplaces"`
+	Marketplaces []Marketplace `yaml:"WS_CLAUDE_MARKETPLACES"`
 }
 
 // Marketplace is a plugin marketplace: the name claude gives it and where it comes from.
@@ -37,26 +37,26 @@ type Marketplace struct {
 // Devtools is roles/devtools' keys.
 type Devtools struct {
 	// ChromiumLibraries are the apt packages that a headless Chromium needs.
-	ChromiumLibraries []string `yaml:"devtools_chromium_libraries"`
+	ChromiumLibraries []string `yaml:"WS_DEVTOOLS_CHROMIUM_LIBRARIES"`
 }
 
 // Docker is roles/docker's keys. A string left empty, and the quota and memory limits, follow
 // the machine: memory, CPUs and the disk of Docker's root.
 type Docker struct {
-	Packages           []string `yaml:"docker_packages"`
-	LogMaxSize         string   `yaml:"docker_log_max_size"`
-	LogMaxFile         int      `yaml:"docker_log_max_file"`
-	MemoryMax          string   `yaml:"docker_memory_max"`
-	CPUQuota           string   `yaml:"docker_cpu_quota"`
-	MemorySwapMax      string   `yaml:"docker_memory_swap_max"`
-	BridgeIP           string   `yaml:"docker_bridge_ip"`
-	BridgePrefixLength int      `yaml:"docker_bridge_prefix_length"`
-	AddressPool        string   `yaml:"docker_address_pool"`
-	AddressPoolSize    int      `yaml:"docker_address_pool_size"`
-	PublishIP          string   `yaml:"docker_publish_ip"`
-	BuildCacheKeepDays int      `yaml:"docker_build_cache_keep_days"`
+	Packages           []string `yaml:"WS_DOCKER_PACKAGES"`
+	LogMaxSize         string   `yaml:"WS_DOCKER_LOG_MAX_SIZE"`
+	LogMaxFile         int      `yaml:"WS_DOCKER_LOG_MAX_FILE"`
+	MemoryMax          string   `yaml:"WS_DOCKER_MEMORY_MAX"`
+	CPUQuota           string   `yaml:"WS_DOCKER_CPU_QUOTA"`
+	MemorySwapMax      string   `yaml:"WS_DOCKER_MEMORY_SWAP_MAX"`
+	BridgeIP           string   `yaml:"WS_DOCKER_BRIDGE_IP"`
+	BridgePrefixLength int      `yaml:"WS_DOCKER_BRIDGE_PREFIX_LENGTH"`
+	AddressPool        string   `yaml:"WS_DOCKER_ADDRESS_POOL"`
+	AddressPoolSize    int      `yaml:"WS_DOCKER_ADDRESS_POOL_SIZE"`
+	PublishIP          string   `yaml:"WS_DOCKER_PUBLISH_IP"`
+	BuildCacheKeepDays int      `yaml:"WS_DOCKER_BUILD_CACHE_KEEP_DAYS"`
 	// The build cache's limits, each in the form 12GB. Empty, each is a share of the disk.
-	BuildCacheReservedSpace string `yaml:"docker_build_cache_reserved_space"`
-	BuildCacheMaxUsedSpace  string `yaml:"docker_build_cache_max_used_space"`
-	BuildCacheMinFreeSpace  string `yaml:"docker_build_cache_min_free_space"`
+	BuildCacheReservedSpace string `yaml:"WS_DOCKER_BUILD_CACHE_RESERVED_SPACE"`
+	BuildCacheMaxUsedSpace  string `yaml:"WS_DOCKER_BUILD_CACHE_MAX_USED_SPACE"`
+	BuildCacheMinFreeSpace  string `yaml:"WS_DOCKER_BUILD_CACHE_MIN_FREE_SPACE"`
 }

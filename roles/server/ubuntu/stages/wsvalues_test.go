@@ -18,10 +18,10 @@ func newValues(vars string) *WsValues {
 
 func TestWsValuesPlanNamesWhatHostVarsLacks(t *testing.T) {
 	for vars, want := range map[string]string{
-		"":                                      "would ask security_outbound and ws_user, and name each in /etc/ws/host_vars.yml",
-		"ws_user: a\n":                          "would ask security_outbound,",
-		"security_outbound: true\n":             "would ask ws_user,",
-		"security_outbound: true\nws_user: a\n": "",
+		"":                             "would ask WS_SECURITY_OUTBOUND and WS_USER, and name each in /etc/ws/host_vars.yml",
+		"WS_USER: a\n":                 "would ask WS_SECURITY_OUTBOUND,",
+		"WS_SECURITY_OUTBOUND: true\n": "would ask WS_USER,",
+		"WS_SECURITY_OUTBOUND: true\nWS_USER: a\n": "",
 	} {
 		p, err := newValues(vars).Plan(context.Background())
 		got := ""
@@ -36,7 +36,7 @@ func TestWsValuesPlanNamesWhatHostVarsLacks(t *testing.T) {
 
 const (
 	targetQuestion = "ws's target: lan for a machine on the LAN or a VM on the Mac, cloud for a cloud VM (lan, cloud)"
-	userQuestion   = "ws_user, the user that ws is set up for"
+	userQuestion   = "WS_USER, the user that ws is set up for"
 )
 
 // valuesApply applies the stage's plan over host_vars' text, with a terminal where answers are
@@ -61,10 +61,10 @@ func TestWsValuesWritesEachAnswer(t *testing.T) {
 		vars, user, target string
 		want               []string
 	}{
-		"lan":        {"", "alice", "", []string{"security_outbound=true", "ws_user=alice"}},
-		"cloud root": {"", "", "cloud", []string{"security_outbound=false", "ws_user=root"}},
-		"named off":  {"security_outbound: false\n", "root", "", []string{"ws_user=root"}},
-		"user named": {"ws_user: bob\n", "alice", "cloud", []string{"security_outbound=false"}},
+		"lan":        {"", "alice", "", []string{"WS_SECURITY_OUTBOUND=true", "WS_USER=alice"}},
+		"cloud root": {"", "", "cloud", []string{"WS_SECURITY_OUTBOUND=false", "WS_USER=root"}},
+		"named off":  {"WS_SECURITY_OUTBOUND: false\n", "root", "", []string{"WS_USER=root"}},
+		"user named": {"WS_USER: bob\n", "alice", "cloud", []string{"WS_SECURITY_OUTBOUND=false"}},
 	} {
 		set, err := valuesApply(t, tc.vars, tc.user, map[string]string{targetQuestion: tc.target, userQuestion: ""})
 		if err != nil || !slices.Equal(set, tc.want) {
@@ -74,8 +74,8 @@ func TestWsValuesWritesEachAnswer(t *testing.T) {
 }
 
 func TestWsValuesWithNoTerminalNamesTheCommand(t *testing.T) {
-	set, err := valuesApply(t, "ws_user: a\n", "", nil)
-	if err == nil || !strings.Contains(err.Error(), "sudo ws server ubuntu values set security_outbound VALUE") || set != nil {
+	set, err := valuesApply(t, "WS_USER: a\n", "", nil)
+	if err == nil || !strings.Contains(err.Error(), "sudo ws server ubuntu values set WS_SECURITY_OUTBOUND VALUE") || set != nil {
 		t.Errorf("Apply = %v; wrote %q", err, set)
 	}
 }
@@ -91,7 +91,7 @@ func TestUserRefusal(t *testing.T) {
 	}
 }
 
-// ws_user offers sudo's user, else root on a cloud VM alone.
+// WS_USER offers sudo's user, else root on a cloud VM alone.
 func TestWsUserOffered(t *testing.T) {
 	for _, tc := range []struct {
 		user, want string

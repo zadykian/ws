@@ -8,9 +8,9 @@
 # unit of its own. That one must end with what stays by hand: ws's fans' driver, as the stand-in's
 # Secure Boot refuses it, and the router's forwards, for WS_REMOTE. A run while another's unit runs,
 # as one that a dropped ssh left, must follow that unit, and start none. With WS_TARGET=cloud, a run
-# must name security_outbound: false in ws's host_vars first. One that follows a unit that began
+# must name WS_SECURITY_OUTBOUND: false in ws's host_vars first. One that follows a unit that began
 # without the line must then start one of its own. The next run must start none. Without the line, a
-# run must write it, and run ws server ubuntu apply. A host_vars with another ws_user must get
+# run must write it, and run ws server ubuntu apply. A host_vars with another WS_USER must get
 # WS_USER's by a full run, and the line stays for the cases after it. --check --update, with no
 # WS_TARGET in the environment, and --check on a cloud VM must name the run that each would start.
 # Back on the LAN, the closing list of --update must name the table that the line keeps off. Once
@@ -95,16 +95,16 @@ out=$(env -u WS_TARGET "$wsbin" client macos wizard --check --update </dev/null 
 printf '%s\n' "$out" | grep -q "^ws client macos wizard: ws's run: would run ws server ubuntu apply on ws in a unit of its own, " ||
     error "ws client macos wizard --check --update named no run of ws server ubuntu apply: $out"
 
-echo 'ws_user: "other"' | sudo tee "$vars" >/dev/null
+echo 'WS_USER: "other"' | sudo tee "$vars" >/dev/null
 wizard
-started 1 2 && sudo grep -qx "ws_user: \"$(id -un)\"" "$vars" && [ "$status" = 0 ] ||
-    error "a run with another ws_user exited $status, or named no ws_user: $(id -un)"
+started 1 2 && sudo grep -qx "WS_USER: \"$(id -un)\"" "$vars" && [ "$status" = 0 ] ||
+    error "a run with another WS_USER exited $status, or named no WS_USER: $(id -un)"
 
 WS_CONF=$RUNNER_TEMP/confs/cloud/mac.conf
 export WS_CONF
 conf_print ~/.config/ws/mac.conf | sed 's/^WS_TARGET=.*/WS_TARGET=cloud/' | conf_write "$WS_CONF"
 out=$("$wsbin" client macos wizard --check </dev/null 2>&1)
-printf '%s\n' "$out" | grep -q 'after naming security_outbound: false in ' ||
+printf '%s\n' "$out" | grep -q 'after naming WS_SECURITY_OUTBOUND: false in ' ||
     error "ws client macos wizard --check on a cloud VM named no host_vars line before the run: $out"
 echo 20 >"$ws/server.wait"
 ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sudo -n sh -s -- run <"$remote_sh" >/dev/null 2>&1 &
@@ -117,20 +117,20 @@ wizard
 rm "$ws/server.wait"
 grep -q '^wizard-remote\.sh: following ws-wizard-' "$RUNNER_TEMP/run.err" &&
     started 1 3 &&
-    stamped off && sudo grep -qx 'security_outbound: false' "$vars" &&
+    stamped off && sudo grep -qx 'WS_SECURITY_OUTBOUND: false' "$vars" &&
     [ "$status" = 0 ] || error "a cloud VM's run after a unit without the line exited $status"
 wizard
 started 0 1 && [ "$status" = 0 ] || error "the next run with WS_TARGET=cloud exited $status"
-sudo sed -i '' '/^security_outbound:/d' "$vars"
+sudo sed -i '' '/^WS_SECURITY_OUTBOUND:/d' "$vars"
 wizard
-started 1 2 && sudo grep -qx 'security_outbound: false' "$vars" && [ "$status" = 0 ] ||
+started 1 2 && sudo grep -qx 'WS_SECURITY_OUTBOUND: false' "$vars" && [ "$status" = 0 ] ||
     error "a cloud VM's run without the line exited $status, or ran no ws server ubuntu apply"
 rm -r "${WS_CONF%/*}"
 unset WS_CONF
 "$wsbin" client macos wizard --update </dev/null >"$RUNNER_TEMP/run.out" 2>&1
-grep -q "^- ws's outbound table: off, as ws's /etc/ws/host_vars.yml names security_outbound: false, " \
+grep -q "^- ws's outbound table: off, as ws's /etc/ws/host_vars.yml names WS_SECURITY_OUTBOUND: false, " \
     "$RUNNER_TEMP/run.out" || error "ws client macos wizard --update on the LAN named no table left off"
-sudo sed -i '' '/^security_outbound:/d' "$vars"
+sudo sed -i '' '/^WS_SECURITY_OUTBOUND:/d' "$vars"
 wizard
 started 1 2 && [ "$status" = 0 ] || error "a run after the line went by hand exited $status, or ran no ws server ubuntu apply"
 exit "$fail"

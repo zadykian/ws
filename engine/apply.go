@@ -17,7 +17,7 @@ func Apply(ctx context.Context, c Call, t Target) error {
 	if err != nil {
 		return err
 	}
-	c.Machine = run.M // ws_home confines it.
+	c.Machine = run.M // WS_HOME confines it.
 	term := effect.NewTerminal(strings.NewReader(""), c.Err)
 	lines := Lines{Out: term, Prog: c.Path, Seen: map[string]bool{}, Change: t.Change}
 	o := step.Options{Check: c.Check}

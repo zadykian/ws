@@ -69,7 +69,7 @@ and `WS_IDENTITY_AGENT` the socket of its agent, in quotes where it holds a blan
 hosts](#sshs-hosts). A run makes `~/.config/ws` at mode 700, and sets that mode where it differs. It
 makes `/etc/ws` through sudo, for git's allowed signers, at mode 755.
 
-`WS_USER` is the user ssh logs in as: the server's `ws_user`, `zadykian` by default, or `root` for a
+`WS_USER` is the user ssh logs in as: ws's key too, `zadykian` by default, or `root` for a
 `WS_TARGET` of `cloud`, which may have no other user. The other targets refuse `WS_USER=root`. A key
 with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does: that user for
 `WS_USER` and 51820 for `WS_PORT`. `WS_IDENTITY_PUB_KEY` has none: the script stops without it
@@ -149,7 +149,7 @@ the Mac as `10.99.N.2`. Failed logins over the tunnel ban it, which shuts `ssh w
 hour. `ssh -o HostName=ADDRESS -o Port=PORT ws` comes from another address, and from there
 `fail2ban-client set sshd unbanip 10.99.N.2` lifts the ban.
 
-Unless `security_outbound` is false, ws opens no connection to the Mac over the cable, the LAN or
+Unless `WS_SECURITY_OUTBOUND` is false, ws opens no connection to the Mac over the cable, the LAN or
 the tunnel ([The firewall](../../server/ubuntu/wireguard/README.md#the-firewall), [Outbound](../../server/ubuntu/security/README.md#outbound)). That
 holds for its bridged containers and its users, but those who can become root. On a VM on the Mac,
 DHCP and DNS still go to the Mac, which serves them.

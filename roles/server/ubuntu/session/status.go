@@ -11,7 +11,7 @@ type Status struct {
 	Active string
 	// Version is what ws's binary prints as its version.
 	Version string
-	// User is the ws_user that host_vars names.
+	// User is the WS_USER that host_vars names.
 	User string
 	// MacKey is the Mac's key that wg0's peer takes, and WgKey is wg0's own.
 	MacKey, WgKey string

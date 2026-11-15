@@ -11,7 +11,7 @@ import (
 )
 
 // wizardProcess returns a root process on a machine that holds vars as host_vars, booted or not,
-// whose remote script reports status as host_vars' ws_user reads it.
+// whose remote script reports status as host_vars' WS_USER reads it.
 func wizardProcess(vars string, booted bool, status string) (enginecli.Env, *effecttest.Machine) {
 	p, m := valuesProcess(vars)
 	p.GOOS = "linux"
@@ -26,7 +26,7 @@ func wizardProcess(vars string, booted bool, status string) (enginecli.Env, *eff
 // ws's run waits on ws's values, and reads the target and the user that host_vars names. claude and
 // the signing key wait on the run.
 func TestServerWizardStagesReadHostVars(t *testing.T) {
-	p, m := wizardProcess("---\nsecurity_outbound: false\nws_user: root\n", false, "")
+	p, m := wizardProcess("---\nWS_SECURITY_OUTBOUND: false\nWS_USER: root\n", false, "")
 	stages := serverWizardStages(p, engine.WizardEffects{Machine: p.Machine, Hand: &wizard.Hand{}}, engine.WizardOptions{})
 	var got []string
 	for _, s := range stages {

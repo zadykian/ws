@@ -136,7 +136,7 @@ func TestApplyOpensNoListWithCheck(t *testing.T) {
 	}
 }
 
-// The server's run takes a machine that ws_home confines, apart from the call's: the screen's run
+// The server's run takes a machine that WS_HOME confines, apart from the call's: the screen's run
 // and the list's scan must act on it.
 func TestApplyActsOnTheRunsMachineNotTheCalls(t *testing.T) {
 	for _, selected := range []bool{true, false} {

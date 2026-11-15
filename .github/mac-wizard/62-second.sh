@@ -71,9 +71,9 @@ for line in WS_SLOT=1 WS_PORT=51821 WS_REMOTE_PORT=22023 "WS_PUBLIC_KEY=$(cat "$
     grep -qxF -e "$line" "$labconf" || error "lab's file lacks $line"
 done
 vars="$lab/root"/etc/ws/host_vars.yml
-sudo grep -Eqx 'wireguard_address: "?10\.99\.1\.1/24"?' "$vars" ||
-    error "lab's host_vars names no wireguard_address 10.99.1.1/24"
-sudo grep -qx 'wireguard_port: 51821' "$vars" || error "lab's host_vars names no wireguard_port 51821"
+sudo grep -Eqx 'WS_TUNNEL_ADDRESS: "?10\.99\.1\.1/24"?' "$vars" ||
+    error "lab's host_vars names no WS_TUNNEL_ADDRESS 10.99.1.1/24"
+sudo grep -qx 'WS_TUNNEL_PORT: 51821' "$vars" || error "lab's host_vars names no WS_TUNNEL_PORT 51821"
 mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /opt/homebrew/bin/wg /etc/ws-tunnel/private.key)
 [ "$(sudo cat "$lab/root"/etc/wireguard/mac.pub)" = "$mac" ] ||
     error "lab's stand-in has no mac.pub of the Mac's key"

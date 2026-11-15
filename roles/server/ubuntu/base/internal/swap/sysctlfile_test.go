@@ -13,8 +13,8 @@ func TestSysctlFileLimits(t *testing.T) {
 		if (err == nil) != ok {
 			t.Errorf("swappiness %d: error = %v, want ok = %v", value, err, ok)
 		}
-		if err != nil && !strings.Contains(err.Error(), "base_swappiness") {
-			t.Errorf("swappiness %d: error %v does not name base_swappiness", value, err)
+		if err != nil && !strings.Contains(err.Error(), "WS_BASE_SWAPPINESS") {
+			t.Errorf("swappiness %d: error %v does not name WS_BASE_SWAPPINESS", value, err)
 		}
 	}
 }

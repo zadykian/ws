@@ -19,7 +19,7 @@ const ClaudeStage = "claude on ws"
 // ws, root there, and host_vars names the target and WS_USER.
 type WsReach struct {
 	M effect.Machine
-	// Read reads host_vars' target and ws_user.
+	// Read reads host_vars' target and WS_USER.
 	Read func() (Want, error)
 	// Here runs claude's login at the terminal.
 	Here effect.Foreground

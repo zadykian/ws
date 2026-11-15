@@ -11,16 +11,16 @@
 # the same steps, must follow that unit and start none. One of other steps during a part's unit must
 # refuse it. A full run whose unit is cut off must exit 1 and remove the run stamp that the one
 # before left. The next must start a unit of its own, as must one after outbound. That one stamps
-# off and the file's sum in run, as /etc/ws/host_vars.yml names security_outbound: false. That file
+# off and the file's sum in run, as /etc/ws/host_vars.yml names WS_SECURITY_OUTBOUND: false. That file
 # has mode 0600, in a directory of 0755. One with an argument, as --diff, must leave that stamp.
 # The files script's link must list ws's wired ports but the uplink and a bridge's member, with
 # their carrier and IPv4 addresses. link PORT must name one in ws's /etc/ws/host_vars.yml once. ws
 # server ubuntu apply --only network,wireguard must then give it 10.77.0.1, and status's cable name
-# it. The remote script's outbound must add security_outbound: false there once, which status must
+# it. The remote script's outbound must add WS_SECURITY_OUTBOUND: false there once, which status must
 # then read as off. So must it read false with a blank after it, and no with CRLF. The last line
 # counts, as in YAML: Off with a comment by hand must read as off, and stay, and true after it as
 # on. Through a link, outbound must stop, but where the linked file holds the line. The files
-# script's user must name ws_user there, which status reads, and refuse no user's name and a link.
+# script's user must name WS_USER there, which status reads, and refuse no user's name and a link.
 # Its values must print the file, and values PAIR... run ws server ubuntu values set on each pair,
 # an empty value too. The stand-ins' state goes back.
 
@@ -62,7 +62,7 @@ wsv() {
     cat "$ws/ws.version" 2>/dev/null || echo -
 }
 
-# states WANT...: status must print the stamps, no unit that runs, ws's version, no ws_user, then the
+# states WANT...: status must print the stamps, no unit that runs, ws's version, no WS_USER, then the
 # lines WANT.
 states() {
     remote status
@@ -179,8 +179,8 @@ values=$(sudo shasum -a 256 "$vars" | cut -d ' ' -f 1)
 [ "$status" = 0 ] && [ "$(units)" -eq $((n + 2)) ] && [ "$(stamp run)" = "$sha 0 off - $values" ] ||
     error "a full run after outbound exited $status, with run '$(stamp run)'"
 host_vars="$ws/root"/etc/ws
-sudo grep -qx 'security_outbound: false' "$host_vars/host_vars.yml" ||
-    error "outbound named no security_outbound: false in host_vars"
+sudo grep -qx 'WS_SECURITY_OUTBOUND: false' "$host_vars/host_vars.yml" ||
+    error "outbound named no WS_SECURITY_OUTBOUND: false in host_vars"
 [ "$(sudo stat -f %Lp "$host_vars")" = 755 ] &&
     [ "$(sudo stat -f %Lp "$host_vars/host_vars.yml")" = 600 ] ||
     error "outbound made /etc/ws or its host_vars.yml with another mode"
@@ -197,16 +197,16 @@ files() {
 
 files user zadykian
 remote status
-if ! printf '%s\n' "$out" | grep -qx 'user zadykian' || ! sudo grep -qx 'ws_user: "zadykian"' "$vars"; then
-    error "the files script's user named no ws_user, or status read another"
+if ! printf '%s\n' "$out" | grep -qx 'user zadykian' || ! sudo grep -qx 'WS_USER: "zadykian"' "$vars"; then
+    error "the files script's user named no WS_USER, or status read another"
 fi
 files user a,b
 ! sudo grep -q 'a,b' "$vars" && [ "$status" = 1 ] || error "its user with no user's name exited $status"
 files values
 [ "$status" = 0 ] && [ "$out" = "$(sudo cat "$vars")" ] || error "its values printed '$out', and exited $status"
-files values "$(printf 'ws_git_signing_key=a b' | base64)" "$(printf 'ws_home=' | base64)"
+files values "$(printf 'WS_GIT_SIGNING_KEY=a b' | base64)" "$(printf 'WS_HOME=' | base64)"
 [ "$status" = 0 ] && [ "$(sudo cat "$ws/values.log")" = "$(printf '%s\n' \
-    '[--][ws_git_signing_key][a b]' '[--][ws_home][]')" ] || error "its values PAIR... exited $status"
+    '[--][WS_GIT_SIGNING_KEY][a b]' '[--][WS_HOME][]')" ] || error "its values PAIR... exited $status"
 files values '%%'
 [ "$status" = 1 ] || error "its values with no base64 exited $status"
 sudo rm -r "${vars%/*}" "$ws/values.log"
@@ -231,7 +231,7 @@ files link
 files link enp4s0
 [ "$status" = 1 ] && [ ! -e "$vars" ] || error "its link of the uplink exited $status"
 files link enp5s0
-printf '%s\n' --- 'network_direct_link_interface: "enp5s0"' | sudo cmp -s - "$vars" &&
+printf '%s\n' --- 'WS_CABLE_PORT: "enp5s0"' | sudo cmp -s - "$vars" &&
     [ "$status" = 0 ] && [ "$out" = "wizard-remote-files.sh: wrote $vars" ] ||
     error "its link enp5s0 exited $status"
 files link enp5s0
@@ -247,7 +247,7 @@ printf '%s\n' "$out" | grep -qx 'enp5s0 1 10\.77\.0\.1/30' &&
 remote status
 printf '%s\n' "$out" | grep -qx 'cable enp5s0' || error "status named no cable enp5s0"
 remote outbound
-printf '%s\n' --- 'network_direct_link_interface: "enp5s0"' 'security_outbound: false' |
+printf '%s\n' --- 'WS_CABLE_PORT: "enp5s0"' 'WS_SECURITY_OUTBOUND: false' |
     sudo cmp -s - "$vars" && [ "$status" = 0 ] && [ "$out" = "wizard-remote.sh: wrote $vars" ] ||
     error "the remote script's outbound exited $status"
 remote outbound
@@ -255,20 +255,20 @@ rest=$(unlisted "$out")
 [ "$status" = 0 ] && [ -z "${rest#"$known"}" ] || error "its outbound again exited $status"
 remote status
 printf '%s\n' "$out" | grep -qx 'outbound off' || error "status read no outbound off"
-printf '%s\n' --- 'security_outbound: false ' | sudo tee "$vars" >/dev/null
+printf '%s\n' --- 'WS_SECURITY_OUTBOUND: false ' | sudo tee "$vars" >/dev/null
 remote status
 printf '%s\n' "$out" | grep -qx 'outbound off' || error "status read false with a blank after as on"
-printf -- '---\r\nsecurity_outbound: no\r\n' | sudo tee "$vars" >/dev/null
+printf -- '---\r\nWS_SECURITY_OUTBOUND: no\r\n' | sudo tee "$vars" >/dev/null
 remote status
 printf '%s\n' "$out" | grep -qx 'outbound off' || error "status read no with CRLF as on"
-printf '%s\n' --- 'security_outbound: true' 'security_outbound: Off  # by hand' |
+printf '%s\n' --- 'WS_SECURITY_OUTBOUND: true' 'WS_SECURITY_OUTBOUND: Off  # by hand' |
     sudo tee "$vars" >/dev/null
 remote outbound
 rest=$(unlisted "$out")
 [ "$status" = 0 ] && [ -z "${rest#"$known"}" ] || error "its outbound with Off by hand exited $status"
 remote status
 printf '%s\n' "$out" | grep -qx 'outbound off' || error "status read Off by hand as on"
-echo 'security_outbound: true' | sudo tee -a "$vars" >/dev/null
+echo 'WS_SECURITY_OUTBOUND: true' | sudo tee -a "$vars" >/dev/null
 sudo mv "$vars" "$vars.real" && sudo ln -s host_vars.yml.real "$vars"
 remote status
 printf '%s\n' "$out" | grep -qx 'outbound on' || error "status read true after Off as off"
@@ -278,7 +278,7 @@ printf '%s\n' "$out" | grep -qF "$vars is a link to host_vars.yml.real" && [ "$s
 files user zadykian
 printf '%s\n' "$out" | grep -qF "$vars is a link to host_vars.yml.real" && [ "$status" = 1 ] ||
     error "its user through a link exited $status"
-echo 'security_outbound: false' | sudo tee -a "$vars.real" >/dev/null
+echo 'WS_SECURITY_OUTBOUND: false' | sudo tee -a "$vars.real" >/dev/null
 remote outbound
 rest=$(unlisted "$out")
 [ "$status" = 0 ] && [ -z "${rest#"$known"}" ] || error "its outbound through a link to the line exited $status"

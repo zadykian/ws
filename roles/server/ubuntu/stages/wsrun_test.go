@@ -27,8 +27,8 @@ func TestWsRunPlan(t *testing.T) {
 		"update":     {"lan", idleRun, "run ws server ubuntu apply on ws", true, false},
 		"cloud done": {"cloud", session.Status{Run: off, OutboundOff: true}, "", false, false},
 		"cloud host_vars": {"cloud", session.Status{Run: session.Stamp{Version: "v1.2.3", Exit: "0", Off: true, Vars: "aa11"}, Vars: "bb22"},
-			"after naming security_outbound: false in ws's host_vars", false, false},
-		"cloud run": {"cloud", idleRun, "after naming security_outbound: false in ws's host_vars", false, false},
+			"after naming WS_SECURITY_OUTBOUND: false in ws's host_vars", false, false},
+		"cloud run": {"cloud", idleRun, "after naming WS_SECURITY_OUTBOUND: false in ws's host_vars", false, false},
 		"follows":   {"lan", session.Status{Active: "ws-wizard-1"}, "follow ws-wizard-1, which runs on ws", false, true},
 		"failed":    {"lan", session.Status{Run: session.Stamp{Version: "v1.2.3", Exit: "1"}}, "its last full run exited 1", false, true},
 	} {
@@ -100,9 +100,9 @@ func asks(m *effecttest.Machine, user string) {
 func TestWsRunNamesWsUser(t *testing.T) {
 	for name, tc := range map[string]struct{ named, want, plan string }{
 		"the default": {"", values.Default().User, ""},
-		"none named":  {"", "alice", "after naming ws_user: alice in ws's host_vars"},
+		"none named":  {"", "alice", "after naming WS_USER: alice in ws's host_vars"},
 		"named":       {"alice", "alice", ""},
-		"another":     {"other", "alice", "after naming ws_user: alice in ws's host_vars"},
+		"another":     {"other", "alice", "after naming WS_USER: alice in ws's host_vars"},
 	} {
 		s := idleRun
 		s.User = tc.named
@@ -124,7 +124,7 @@ func TestWsRunNamesWsUserBeforeTheRun(t *testing.T) {
 	asks(m, "alice")
 	p, _ := r.Plan(context.Background())
 	err := r.Apply(context.Background(), p)
-	if err == nil || !strings.Contains(err.Error(), "ws's host_vars lacks ws_user: alice") {
+	if err == nil || !strings.Contains(err.Error(), "ws's host_vars lacks WS_USER: alice") {
 		t.Fatalf("Apply where the files script fails = %v; want the stop", err)
 	}
 	m.Results[sessiontest.Op("user", "alice")] = effecttest.Result{}

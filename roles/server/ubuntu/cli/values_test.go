@@ -26,7 +26,7 @@ func TestWriteVarsKeepsTheModeOfAFile(t *testing.T) {
 	m.Dirs["/etc/ws"] = 0o700
 	m.Files[serverVars] = []byte("---\n")
 	m.Modes[serverVars] = 0o640
-	if err := writeVars(m, []byte("---\nws_user: ada\n")); err != nil {
+	if err := writeVars(m, []byte("---\nWS_USER: ada\n")); err != nil {
 		t.Fatal(err)
 	}
 	if m.Dirs["/etc/ws"] != 0o700 || m.Modes[serverVars] != 0o640 {
@@ -45,19 +45,19 @@ func valuesProcess(file string) (enginecli.Env, *effecttest.Machine) {
 }
 
 func TestValuesSetWritesOneKey(t *testing.T) {
-	p, m := valuesProcess("---\n# the machine\nws_user: ada\n")
-	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "values", "set", "base_swappiness", "20")
+	p, m := valuesProcess("---\n# the machine\nWS_USER: ada\n")
+	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "values", "set", "WS_BASE_SWAPPINESS", "20")
 	if status != 0 || stdout != "" || !strings.Contains(stderr, "wrote "+serverVars) {
 		t.Fatalf("status = %d, stdout %q, stderr %q", status, stdout, stderr)
 	}
-	if got := string(m.Files[serverVars]); got != "---\n# the machine\nws_user: ada\nbase_swappiness: 20\n" {
+	if got := string(m.Files[serverVars]); got != "---\n# the machine\nWS_USER: ada\nWS_BASE_SWAPPINESS: 20\n" {
 		t.Errorf("file = %q", got)
 	}
 }
 
 func TestValuesSetAgainWritesNothing(t *testing.T) {
-	p, m := valuesProcess("---\nws_user: ada\n")
-	status, _, stderr := runWs(p, "", "server", "ubuntu", "values", "set", "ws_user", "ada")
+	p, m := valuesProcess("---\nWS_USER: ada\n")
+	status, _, stderr := runWs(p, "", "server", "ubuntu", "values", "set", "WS_USER", "ada")
 	if status != 0 || strings.Contains(stderr, "wrote") {
 		t.Fatalf("status = %d, stderr %q", status, stderr)
 	}
@@ -69,21 +69,21 @@ func TestValuesSetAgainWritesNothing(t *testing.T) {
 }
 
 func TestValuesSetTakesAKeyOut(t *testing.T) {
-	p, m := valuesProcess("---\nws_user: ada\nws_home: /h\n")
-	if status, _, stderr := runWs(p, "", "server", "ubuntu", "values", "set", "ws_home", ""); status != 0 {
+	p, m := valuesProcess("---\nWS_USER: ada\nWS_HOME: /h\n")
+	if status, _, stderr := runWs(p, "", "server", "ubuntu", "values", "set", "WS_HOME", ""); status != 0 {
 		t.Fatalf("status = %d: %s", status, stderr)
 	}
-	if got := string(m.Files[serverVars]); got != "---\nws_user: ada\n" {
+	if got := string(m.Files[serverVars]); got != "---\nWS_USER: ada\n" {
 		t.Errorf("file = %q", got)
 	}
 }
 
 func TestValuesSetTakesAValueWithADash(t *testing.T) {
 	p, m := valuesProcess("---\n")
-	if status, _, stderr := runWs(p, "", "server", "ubuntu", "values", "set", "--", "ws_user", "-x"); status != 0 {
+	if status, _, stderr := runWs(p, "", "server", "ubuntu", "values", "set", "--", "WS_USER", "-x"); status != 0 {
 		t.Fatalf("status = %d: %s", status, stderr)
 	}
-	if got := string(m.Files[serverVars]); got != "---\nws_user: -x\n" {
+	if got := string(m.Files[serverVars]); got != "---\nWS_USER: -x\n" {
 		t.Errorf("file = %q", got)
 	}
 }
@@ -100,11 +100,11 @@ func TestValuesSetRefuses(t *testing.T) {
 		args []string
 		want string
 	}{
-		{"not root", notRoot, []string{"ws_user", "ada"}, "run it as root"},
-		{"a link", linked, []string{"ws_user", "ada"}, "is a link to /srv/vars.yml"},
-		{"a table", plain, []string{"fans_curves", "1"}, "no line holds fans_curves"},
-		{"a wrong kind", plain, []string{"base_swappiness", "ten"}, "a whole number"},
-		{"no value", plain, []string{"ws_user"}, "accepts 2 arg"},
+		{"not root", notRoot, []string{"WS_USER", "ada"}, "run it as root"},
+		{"a link", linked, []string{"WS_USER", "ada"}, "is a link to /srv/vars.yml"},
+		{"a table", plain, []string{"WS_FANS_CURVES", "1"}, "no line holds WS_FANS_CURVES"},
+		{"a wrong kind", plain, []string{"WS_BASE_SWAPPINESS", "ten"}, "a whole number"},
+		{"no value", plain, []string{"WS_USER"}, "accepts 2 arg"},
 	} {
 		args := append([]string{"server", "ubuntu", "values", "set"}, tc.args...)
 		if status, _, stderr := runWs(tc.p, "", args...); status == 0 || !strings.Contains(stderr, tc.want) {

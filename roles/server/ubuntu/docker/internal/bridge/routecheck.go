@@ -35,7 +35,7 @@ func (c Routes) Plan(ctx context.Context) ([]resource.Change, error) {
 	}
 	if len(found) > 0 {
 		return nil, fmt.Errorf("the Docker networks would overlap these routes, which it does not avoid: %s. "+
-			"Set docker_address_pool and docker_bridge_ip clear of them. A moved pool serves the networks created "+
+			"Set WS_DOCKER_ADDRESS_POOL and WS_DOCKER_BRIDGE_IP clear of them. A moved pool serves the networks created "+
 			"afterwards, as by docker compose down and up. docker0 takes a moved bridge as Docker starts with no "+
 			"container running, as after a reboot", strings.Join(found, ", "))
 	}

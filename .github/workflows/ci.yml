@@ -112,8 +112,8 @@ jobs:
       - name: Write the values
         run: |
           install -d -m 755 /etc/ws
-          printf '%s\n' --- 'base_swap_size_mb: 64' \
-              "ws_user: $WS_USER" "security_outbound: $OUTBOUND" >/etc/ws/host_vars.yml
+          printf '%s\n' --- 'WS_BASE_SWAP_SIZE_MB: 64' \
+              "WS_USER: $WS_USER" "WS_SECURITY_OUTBOUND: $OUTBOUND" >/etc/ws/host_vars.yml
           chmod 600 /etc/ws/host_vars.yml
       # From root's home, 0700 on any machine, as after sudo -i: a command run as the user must not
       # rest on the directory it starts in.

@@ -1,12 +1,12 @@
 # ws
 
-ws sets up one development server from code, for one user, `ws_user`, and the Mac that works
+ws sets up one development server from code, for one user, `WS_USER`, and the Mac that works
 on it. These are the words its code and its docs use, for the server's side and for the Mac's.
 
 ## Language
 
 **Account**:
-`ws_user` as the server knows it: its name, its home, its uid and its primary gid.
+`WS_USER` as the server knows it: its name, its home, its uid and its primary gid.
 _Avoid_: owner, ids
 
 **Entry**:

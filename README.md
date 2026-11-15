@@ -12,7 +12,7 @@ Each role has a page of its own. A role is Go steps of ws:
   as Go steps.
 - [`security`](roles/server/ubuntu/security): SSH by key only, ufw and fail2ban, and a table that keeps what
   ws starts to the internet and ikeward, but what the network needs, such as DHCP and DNS. The
-  table is off where `security_outbound` is false, as a cloud VM wants.
+  table is off where `WS_SECURITY_OUTBOUND` is false, as a cloud VM wants.
 - [`network`](roles/server/ubuntu/network): the server's end of a cable to the Mac, as Go steps.
 - [`wireguard`](roles/server/ubuntu/wireguard): `wg0`, the server's end of a WireGuard tunnel for the Mac.
 - [`ikeward`](roles/server/ubuntu/ikeward): ikeward's IKEv2 VPN, where a profile is given, and the WireGuard
@@ -29,7 +29,7 @@ Each role has a page of its own. A role is Go steps of ws:
 - [`devtools`](roles/server/ubuntu/devtools): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go,
   gopls, Delve, roslyn-language-server, the SQL, Docker and npm language servers, and rustup.
 - [`docker`](roles/server/ubuntu/docker): Docker Engine, its `daemon.json`, a slice for its containers and
-  `ws_user`'s rootless daemon.
+  `WS_USER`'s rootless daemon.
 - [`claude`](roles/server/ubuntu/claude): claude, its user settings and telemetry, its sessions after a reboot,
   and plugin marketplaces from a list.
 - [`signoz`](roles/server/ubuntu/signoz): SigNoz in Docker, which keeps the machine's telemetry for 90 days.
@@ -91,11 +91,11 @@ role's other steps are planned and left out. A step that waits on one of them wi
 skipped, and says so, and `--check` shows what the same run would change. A left-out step whose plan
 fails warns, and the run goes on. `--secrets FILE` gives the roles their secrets, and `ws server
 ubuntu secrets` edits ws's file ([The secrets file](roles/server/ubuntu/shell/README.md#the-secrets-file)). The values of
-a machine go in `/etc/ws/host_vars.yml`, which only root reads, and every run reads them. `ws_user:
-NAME` sets up the user NAME instead of `zadykian`, the default, whose account must exist. `ws_user:
-root` sets up a cloud VM with no other user. `ws_home` follows the user as `/home/NAME`; `ws_home:
-DIR` sets another home. `ws_git_signing_key` lies below it, or the
-run fails. A cloud VM names `security_outbound: false` there before its first run
+a machine go in `/etc/ws/host_vars.yml`, which only root reads, and every run reads them. `WS_USER:
+NAME` sets up the user NAME instead of `zadykian`, the default, whose account must exist. `WS_USER:
+root` sets up a cloud VM with no other user. `WS_HOME` follows the user as `/home/NAME`; `WS_HOME:
+DIR` sets another home. `WS_GIT_SIGNING_KEY` lies below it, or the
+run fails. A cloud VM names `WS_SECURITY_OUTBOUND: false` there before its first run
 ([Outbound](roles/server/ubuntu/security/README.md#outbound)). `ws server ubuntu values set KEY VALUE` writes one key, and
 an empty VALUE gives its default back. On ws, `sudo ws server ubuntu configure` writes them on a
 form, and so does `ws client macos configure` from the Mac ([The Configure
@@ -165,7 +165,7 @@ selected repositories; Metadata and Actions read; Contents, Pull requests, Issue
 and write; and no account permission. These stay manual:
 
 - other peers' public keys on the server, as in [The tunnel](roles/server/ubuntu/wireguard/README.md#the-tunnel);
-- another device's SSH key on the server: `ssh-import-id gh:LOGIN`, run as `ws_user`
+- another device's SSH key on the server: `ssh-import-id gh:LOGIN`, run as `WS_USER`
   ([SSH and the firewall](roles/server/ubuntu/security/README.md#ssh-and-the-firewall));
 - the VPN's profile, age-encrypted on the server, and the `ikeward` role's variables, as in
   [The profile](roles/server/ubuntu/ikeward/README.md#the-profile);

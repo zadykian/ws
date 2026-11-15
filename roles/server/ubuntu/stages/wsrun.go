@@ -19,7 +19,7 @@ const RunStage = "ws's run"
 type WsRun struct {
 	// Server names the server that the Mac sets up, which its side takes. Empty on the server itself.
 	Server string
-	// Ws is the session to ws, whose files script names ws_user and the tunnel's peer.
+	// Ws is the session to ws, whose files script names WS_USER and the tunnel's peer.
 	Ws *session.Session
 	// Await names the stage that must be done first. A run needs one: the Mac's list names the stage
 	// that installs this ws on ws, and ws's own names its values.
@@ -65,7 +65,7 @@ type runChange struct {
 	text string
 	// cloud is set for a cloud VM, whose run turns the outbound table off.
 	cloud bool
-	// user is the ws_user that host_vars is to name before the run, where it names another.
+	// user is the WS_USER that host_vars is to name before the run, where it names another.
 	user string
 	// pairs are the host_vars pairs for wg0, which the run writes first.
 	pairs []string
@@ -103,13 +103,13 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	user := ""
 	if !named(s, c) {
 		user = c.User
-		how += ", after naming ws_user: " + user + " in ws's host_vars"
+		how += ", after naming WS_USER: " + user + " in ws's host_vars"
 	}
 	if len(pairs) > 0 {
 		how += ", after naming " + naming(pairs) + " in ws's host_vars"
 	}
 	if c.Target == "cloud" {
-		how += ", after naming security_outbound: false in ws's host_vars"
+		how += ", after naming WS_SECURITY_OUTBOUND: false in ws's host_vars"
 	}
 	if r.Check {
 		unit, last := s.Active, s.Run.Exit

@@ -110,7 +110,7 @@ lab_pid=$!
 trap 'kill "$lab_pid"' EXIT
 
 install -d -m 755 /etc/ws
-printf '%s\n' --- "ws_user: $user" >/etc/ws/host_vars.yml
+printf '%s\n' --- "WS_USER: $user" >/etc/ws/host_vars.yml
 chmod 600 /etc/ws/host_vars.yml
 
 # The controls: each of these holds before ws, and the opposite after it.
@@ -233,7 +233,7 @@ must "a second init keeps both" test "$sums" = \
 # unit's ws adds --only shell to apply, so that a full run, as the stamp has it, fits the job. This
 # comes last: ws is that stand-in from here on.
 refused "the wizard asks with no terminal" ws server ubuntu wizard --plain </dev/null
-ws server ubuntu values set security_outbound true
+ws server ubuntu values set WS_SECURITY_OUTBOUND true
 real=$(mktemp -d)/ws
 mv /usr/local/bin/ws "$real"
 printf '%s\n' '#!/bin/sh' \
@@ -250,6 +250,6 @@ EOF
 must "the wizard runs ws server ubuntu apply in a unit" ws server ubuntu wizard --plain </dev/null
 out=$(ws server ubuntu wizard --plain 2>&1 </dev/null)
 refused "a second wizard starts a unit" grep -q ws-wizard- <<<"$out"
-ws server ubuntu values set base_swappiness 10
+ws server ubuntu values set WS_BASE_SWAPPINESS 10
 out=$(ws server ubuntu wizard --plain 2>&1 </dev/null)
 must "a wizard after a value's change starts a unit" grep -q ws-wizard- <<<"$out"

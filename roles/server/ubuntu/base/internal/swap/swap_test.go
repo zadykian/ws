@@ -72,9 +72,9 @@ func TestSwapRefusals(t *testing.T) {
 		avail int64
 		text  string
 	}{
-		{"negative size", Setting{SizeMiB: ptr(-1)}, 100000, "base_swap_size_mb is -1"},
-		{"swappiness too high", Setting{Swappiness: 201}, 100000, "base_swappiness is 201"},
-		{"swappiness negative", Setting{Swappiness: -1}, 100000, "base_swappiness is -1"},
+		{"negative size", Setting{SizeMiB: ptr(-1)}, 100000, "WS_BASE_SWAP_SIZE_MB is -1"},
+		{"swappiness too high", Setting{Swappiness: 201}, 100000, "WS_BASE_SWAPPINESS is 201"},
+		{"swappiness negative", Setting{Swappiness: -1}, 100000, "WS_BASE_SWAPPINESS is -1"},
 		{"disk too small", Setting{SizeMiB: ptr(1024)}, 3000, "too little for a swap file"},
 	} {
 		m, d := booted(""), &fakeDisk{avail: tt.avail}

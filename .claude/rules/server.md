@@ -24,11 +24,11 @@ steps, and each role's README says what it sets up.
   ([secrets.go](../../roles/server/ubuntu/secrets/secrets.go), [ws's secrets](../../roles/server/ubuntu/secrets/README.md)).
 - `secrets.Store` alone reads and writes ws's secrets file and makes its credential; cmd keeps
   the commands and the root check ([store.go](../../roles/server/ubuntu/secrets/store.go)).
-- The roles set the machine up for `ws_user`, `zadykian` by default, in `ws_home`. A step run as
-  `ws_user` sets `HOME` and starts in it: root needs no sudo, a container has none, and `HOME` would
+- The roles set the machine up for `WS_USER`, `zadykian` by default, in `WS_HOME`. A step run as
+  `WS_USER` sets `HOME` and starts in it: root needs no sudo, a container has none, and `HOME` would
   otherwise be the caller's ([claude's install](../../roles/server/ubuntu/claude/install.go)).
-- Root reaches a file under `ws_home` through the account (`Account.File`, `Account.Dir`,
-  `Account.Absent`, `User.ReadHome`), or the step acts as `ws_user`, as claude's does. The user owns
+- Root reaches a file under `WS_HOME` through the account (`Account.File`, `Account.Dir`,
+  `Account.Absent`, `User.ReadHome`), or the step acts as `WS_USER`, as claude's does. The user owns
   the home and could link a file elsewhere ([Links under the home](../../roles/server/ubuntu/security/README.md#links-under-the-home)).
 - A line the maintainer acts on past a run, such as a key to copy, goes through
   `effect.SayLasting`, as a screen's window goes with it ([The run screen](../../engine/tui/README.md#the-run-screen)).

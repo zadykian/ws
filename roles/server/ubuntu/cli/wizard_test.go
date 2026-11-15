@@ -16,7 +16,7 @@ import (
 
 // After a full run of this ws, from the Mac or from ws, with nothing changed, no apply runs.
 func TestServerWizardAfterARunAppliesNothing(t *testing.T) {
-	p, m := wizardProcess("---\nsecurity_outbound: true\nws_user: ada\n", true,
+	p, m := wizardProcess("---\nWS_SECURITY_OUTBOUND: true\nWS_USER: ada\n", true,
 		"run v1.2.3 0 on - -\nactive -\nuser ada\noutbound on\nsecrets -\nvars -\nclaude ok\nsigning none\n")
 	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "wizard", "--plain")
 	if status != 0 || stdout != "" || slices.ContainsFunc(m.Calls, func(c string) bool { return strings.Contains(c, "-- run") }) {
@@ -33,7 +33,7 @@ func TestServerWizardAsksTheValuesAndSkipsUnbooted(t *testing.T) {
 	if status != 0 || !strings.Contains(stderr, "isn't booted") {
 		t.Fatalf("status %d, stderr %q", status, stderr)
 	}
-	if got := string(m.Files[serverVars]); got != "---\nsecurity_outbound: false\nws_user: root\n" {
+	if got := string(m.Files[serverVars]); got != "---\nWS_SECURITY_OUTBOUND: false\nWS_USER: root\n" {
 		t.Errorf("host_vars = %q", got)
 	}
 	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "run caffeinate") }) {
@@ -50,14 +50,14 @@ func TestServerWizardCheckAsksNothing(t *testing.T) {
 	}
 	p.Euid = 0
 	status, _, stderr := runWs(p, "", "server", "ubuntu", "wizard", "--check", "--plain")
-	if status != 0 || !strings.Contains(stderr, "would ask security_outbound and ws_user") || len(m.Files[serverVars]) != 0 {
+	if status != 0 || !strings.Contains(stderr, "would ask WS_SECURITY_OUTBOUND and WS_USER") || len(m.Files[serverVars]) != 0 {
 		t.Errorf("status %d, stderr %q, host_vars %q", status, stderr, m.Files[serverVars])
 	}
 }
 
 // At a terminal the stages open as ws's list alone, and q leaves it with nothing run.
 func TestServerWizardAtATerminalOpensOneList(t *testing.T) {
-	p, m := wizardProcess("---\nsecurity_outbound: true\nws_user: ada\n", false, "claude ok\nsigning none\n")
+	p, m := wizardProcess("---\nWS_SECURITY_OUTBOUND: true\nWS_USER: ada\n", false, "claude ok\nsigning none\n")
 	p = withEnv(p, map[string]string{"TERM": "xterm"})
 	p.TTY, p.ErrTTY = true, true
 	status, stdout, stderr := runWs(p, "q", "server", "ubuntu", "wizard")
@@ -75,7 +75,7 @@ func ranWs(call string) bool { return strings.HasSuffix(call, "sh -s -- run") }
 // screenServer is ws server ubuntu wizard at a terminal. The machine is booted and its remote script
 // reports a good last run. It reads the keys that the lists read, past the scan.
 func screenServer(keys io.ReadWriter) (int, *effecttest.Machine) {
-	p, m := wizardProcess("---\nsecurity_outbound: true\nws_user: ada\n", true,
+	p, m := wizardProcess("---\nWS_SECURITY_OUTBOUND: true\nWS_USER: ada\n", true,
 		"run v1.2.3 0 on - -\nactive -\nuser ada\noutbound on\nsecrets -\nvars -\nclaude ok\nsigning none\n")
 	p = withEnv(p, map[string]string{"TERM": "xterm"})
 	p.TTY, p.ErrTTY, p.Machine = true, true, freed{m}
@@ -111,7 +111,7 @@ func TestServerWizardStateKeyReadsWs(t *testing.T) {
 
 // Where GitHub lacks ws's signing key, the list at the end names it, and each device's key.
 func TestServerWizardListsTheSigningKeyByHand(t *testing.T) {
-	p, m := wizardProcess("---\nsecurity_outbound: true\nws_user: ada\n", true,
+	p, m := wizardProcess("---\nWS_SECURITY_OUTBOUND: true\nWS_USER: ada\n", true,
 		"run v1.2.3 0 on - -\nactive -\nuser ada\noutbound on\nsecrets -\nvars -\nclaude ok\nsigning ssh-ed25519 AAA\n")
 	m.Results["runuser -l ada -c gh api user --jq .login 2>/dev/null || git config --global github.user"] =
 		effecttest.Result{}
@@ -159,7 +159,7 @@ func TestServerWizardConfigureKeyOpensTheForms(t *testing.T) {
 
 // Under --check at a terminal the run goes straight to its screen, with no list and no caffeinate.
 func TestServerWizardCheckAtATerminalGoesStraightToTheRun(t *testing.T) {
-	p, m := wizardProcess("---\nsecurity_outbound: true\nws_user: ada\n", true,
+	p, m := wizardProcess("---\nWS_SECURITY_OUTBOUND: true\nWS_USER: ada\n", true,
 		"run v1.2.3 0 on - -\nactive -\nuser ada\noutbound on\nsecrets -\nvars -\nclaude ok\nsigning none\n")
 	p = withEnv(p, map[string]string{"TERM": "xterm"})
 	p.TTY, p.ErrTTY = true, true

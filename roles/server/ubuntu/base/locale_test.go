@@ -16,8 +16,8 @@ func TestLocaleRefusals(t *testing.T) {
 		m := effecttest.NewMachine()
 		m.Files[supportedFile] = []byte(supported)
 		g := resource.Group{Title: "Locale", Parts: localeParts(m, name)}
-		if _, err := g.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "base_locale") {
-			t.Errorf("locale %q: error = %v, want a refusal naming base_locale", name, err)
+		if _, err := g.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "WS_BASE_LOCALE") {
+			t.Errorf("locale %q: error = %v, want a refusal naming WS_BASE_LOCALE", name, err)
 		}
 	}
 }

@@ -6,9 +6,9 @@
 PasswordAuthentication no
 KbdInteractiveAuthentication no
 {{- if .Root }}
-# ws_user is root, who logs in by key only.
+# WS_USER is root, who logs in by key only.
 PermitRootLogin prohibit-password
 {{- else }}
-# ws_user logs in, and takes root by sudo with its password.
+# WS_USER logs in, and takes root by sudo with its password.
 PermitRootLogin no
 {{- end }}

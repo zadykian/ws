@@ -98,7 +98,7 @@ func TestSSHDClosesRootsLoginWhereWsUserIsAnother(t *testing.T) {
 		m.Files["/etc/group"] = []byte("")
 		run(t, ss)
 		if got := string(m.Files["/etc/ssh/sshd_config.d/10-keys-only.conf"]); !strings.Contains(got, want) {
-			t.Errorf("ws_user %s: drop-in = %q, want %q", user, got, want)
+			t.Errorf("WS_USER %s: drop-in = %q, want %q", user, got, want)
 		}
 	}
 }

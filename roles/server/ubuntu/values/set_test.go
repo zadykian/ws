@@ -6,11 +6,11 @@ import (
 )
 
 func TestSpanFindsTheLinesOfAKey(t *testing.T) {
-	lines := strings.SplitAfter("---\n# a\nbase_timezone: x\n\nbase_packages:\n  - git\n- jq\n\n# b\nws_user : y\n"+
-		"ws_user_name: z\n", "\n")
+	lines := strings.SplitAfter("---\n# a\nWS_BASE_TIMEZONE: x\n\nWS_BASE_PACKAGES:\n  - git\n- jq\n\n# b\nWS_USER : y\n"+
+		"WS_USER_NAME: z\n", "\n")
 	lines = lines[:len(lines)-1]
 	for name, want := range map[string][2]int{
-		"base_timezone": {2, 3}, "base_packages": {4, 7}, "ws_user": {9, 10}, "ws_home": {11, 11},
+		"WS_BASE_TIMEZONE": {2, 3}, "WS_BASE_PACKAGES": {4, 7}, "WS_USER": {9, 10}, "WS_HOME": {11, 11},
 	} {
 		if start, end := span(lines, name); start != want[0] || end != want[1] {
 			t.Errorf("%s: span = %d, %d, want %v", name, start, end, want)
@@ -19,21 +19,21 @@ func TestSpanFindsTheLinesOfAKey(t *testing.T) {
 }
 
 func TestSetEditsOneLineAndKeepsTheRest(t *testing.T) {
-	const file = "---\n# the machine\nbase_timezone: UTC\n\n# the link\nbase_packages:\n  - git\n  - jq\n\n# the cable\n" +
-		"network_direct_link_interface: enp1\n"
+	const file = "---\n# the machine\nWS_BASE_TIMEZONE: UTC\n\n# the link\nWS_BASE_PACKAGES:\n  - git\n  - jq\n\n# the cable\n" +
+		"WS_CABLE_PORT: enp1\n"
 	for _, tc := range []struct {
 		name, data, key, value, want string
 	}{
-		{"replaces", file, "base_timezone", "Asia/Tbilisi",
+		{"replaces", file, "WS_BASE_TIMEZONE", "Asia/Tbilisi",
 			strings.Replace(file, "UTC", "Asia/Tbilisi", 1)},
-		{"replaces a block list", file, "base_packages", "git, tmux",
-			strings.Replace(file, "base_packages:\n  - git\n  - jq\n", "base_packages: [git, tmux]\n", 1)},
-		{"adds at the end", file, "base_swappiness", "20", file + "base_swappiness: 20\n"},
-		{"takes a line out", file, "base_timezone", "", strings.Replace(file, "base_timezone: UTC\n", "", 1)},
-		{"takes a list out", file, "base_packages", "", strings.Replace(file, "base_packages:\n  - git\n  - jq\n", "", 1)},
-		{"leaves a key that no line holds", file, "base_swappiness", "", file},
-		{"starts an empty file", "", "ws_user", "ada", "---\nws_user: ada\n"},
-		{"ends the last line", "ws_user: ada", "base_swappiness", "20", "ws_user: ada\nbase_swappiness: 20\n"},
+		{"replaces a block list", file, "WS_BASE_PACKAGES", "git, tmux",
+			strings.Replace(file, "WS_BASE_PACKAGES:\n  - git\n  - jq\n", "WS_BASE_PACKAGES: [git, tmux]\n", 1)},
+		{"adds at the end", file, "WS_BASE_SWAPPINESS", "20", file + "WS_BASE_SWAPPINESS: 20\n"},
+		{"takes a line out", file, "WS_BASE_TIMEZONE", "", strings.Replace(file, "WS_BASE_TIMEZONE: UTC\n", "", 1)},
+		{"takes a list out", file, "WS_BASE_PACKAGES", "", strings.Replace(file, "WS_BASE_PACKAGES:\n  - git\n  - jq\n", "", 1)},
+		{"leaves a key that no line holds", file, "WS_BASE_SWAPPINESS", "", file},
+		{"starts an empty file", "", "WS_USER", "ada", "---\nWS_USER: ada\n"},
+		{"ends the last line", "WS_USER: ada", "WS_BASE_SWAPPINESS", "20", "WS_USER: ada\nWS_BASE_SWAPPINESS: 20\n"},
 	} {
 		got, err := Set([]byte(tc.data), tc.key, tc.value)
 		if err != nil {
@@ -45,11 +45,11 @@ func TestSetEditsOneLineAndKeepsTheRest(t *testing.T) {
 }
 
 func TestSetTwiceChangesNothing(t *testing.T) {
-	once, err := Set([]byte("---\n"), "ikeward_domains", "a.example,b.example")
+	once, err := Set([]byte("---\n"), "WS_IKEWARD_DOMAINS", "a.example,b.example")
 	if err != nil {
 		t.Fatal(err)
 	}
-	twice, err := Set(once, "ikeward_domains", "a.example, b.example")
+	twice, err := Set(once, "WS_IKEWARD_DOMAINS", "a.example, b.example")
 	if err != nil || string(twice) != string(once) {
 		t.Errorf("twice = %q, %v, want %q", twice, err, once)
 	}
@@ -58,15 +58,15 @@ func TestSetTwiceChangesNothing(t *testing.T) {
 // The new line holds no home of its own: the file's home judges its path.
 func TestSetTakesAKeyBelowTheFilesHome(t *testing.T) {
 	for _, tc := range [][3]string{
-		{"ws_user: root\n", "ws_git_signing_key", "/root/.ssh/k"},
-		{"ws_home: /srv/x\n", "ws_git_signing_key", "/srv/x/k"},
+		{"WS_USER: root\n", "WS_GIT_SIGNING_KEY", "/root/.ssh/k"},
+		{"WS_HOME: /srv/x\n", "WS_GIT_SIGNING_KEY", "/srv/x/k"},
 	} {
 		if _, err := Set([]byte(tc[0]), tc[1], tc[2]); err != nil {
 			t.Errorf("%s at %s in %q: %v", tc[1], tc[2], tc[0], err)
 		}
 	}
-	if _, err := Set([]byte("ws_user: root\n"), "ws_git_signing_key", "/home/zadykian/k"); err == nil ||
-		!strings.Contains(err.Error(), "is outside ws_home /root") {
+	if _, err := Set([]byte("WS_USER: root\n"), "WS_GIT_SIGNING_KEY", "/home/zadykian/k"); err == nil ||
+		!strings.Contains(err.Error(), "is outside WS_HOME /root") {
 		t.Errorf("a key outside the file's home: %v", err)
 	}
 }
@@ -76,11 +76,11 @@ func TestSetRefuses(t *testing.T) {
 		name, data, key, value, want string
 	}{
 		{"an unknown key", "", "no_such_key", "1", "no line holds no_such_key"},
-		{"a table", "", "fans_curves", "1", "no line holds fans_curves"},
-		{"a wrong kind", "", "base_swappiness", "ten", "a whole number"},
-		{"a broken file", "ws_user: [\n", "ws_home", "/h", "yaml"},
-		{"a key of a quoted name", "\"ws_user\": ada\n", "ws_user", "bob", "edit it by hand"},
-		{"a document that ended", "ws_home: /h\n...\n", "ws_user", "bob", "edit it by hand"},
+		{"a table", "", "WS_FANS_CURVES", "1", "no line holds WS_FANS_CURVES"},
+		{"a wrong kind", "", "WS_BASE_SWAPPINESS", "ten", "a whole number"},
+		{"a broken file", "WS_USER: [\n", "WS_HOME", "/h", "yaml"},
+		{"a key of a quoted name", "\"WS_USER\": ada\n", "WS_USER", "bob", "edit it by hand"},
+		{"a document that ended", "WS_HOME: /h\n...\n", "WS_USER", "bob", "edit it by hand"},
 	} {
 		if _, err := Set([]byte(tc.data), tc.key, tc.value); err == nil || !strings.Contains(err.Error(), tc.want) {
 			t.Errorf("%s: err = %v, want %q", tc.name, err, tc.want)
@@ -89,8 +89,8 @@ func TestSetRefuses(t *testing.T) {
 }
 
 func TestNamedFindsAKeyWhateverItsValue(t *testing.T) {
-	data := []byte("---\nws_user: alice\n# security_outbound: false\nbase_locale:\n")
-	for name, want := range map[string]bool{"ws_user": true, "base_locale": true, "security_outbound": false, "ws": false} {
+	data := []byte("---\nWS_USER: alice\n# WS_SECURITY_OUTBOUND: false\nWS_BASE_LOCALE:\n")
+	for name, want := range map[string]bool{"WS_USER": true, "WS_BASE_LOCALE": true, "WS_SECURITY_OUTBOUND": false, "ws": false} {
 		if Named(data, name) != want {
 			t.Errorf("Named(%q) = %v", name, !want)
 		}

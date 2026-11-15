@@ -15,7 +15,7 @@ func State(ctx context.Context, c Call, t Target) error {
 	}
 	if DrawsReport(c) {
 		if report.M != nil {
-			c.Machine = report.M // ws_home confines it.
+			c.Machine = report.M // WS_HOME confines it.
 		}
 		return tui.RunState(ctx, ScreenConfig(c), c.Path, report.Read)
 	}

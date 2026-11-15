@@ -3,9 +3,10 @@
 The `ikeward` role keeps the server on an IKEv2 VPN with
 [ikeward](https://github.com/zadykian/ikeward), from a client profile that hwdsl2's `ikev2setup.sh`
 makes. It lets the WireGuard peers it names reach the VPN through the server too. Its steps are Go
-code in `roles/server/ubuntu/ikeward`. Without a profile, it does nothing, as in CI's container. Unless
-`security_outbound` is false, the `security` role keeps what the server and its containers start off
-the LAN, but what the network needs, such as DHCP and DNS. It leaves `ikeward0` open to them ([Outbound](../security/README.md#outbound)).
+code in `roles/server/ubuntu/ikeward`. Without a profile, it does nothing, as in CI's container.
+Unless `WS_SECURITY_OUTBOUND` is false, the `security` role keeps what the server and its containers
+start off the LAN, but what the network needs, such as DHCP and DNS. It leaves `ikeward0` open to
+them ([Outbound](../security/README.md#outbound)).
 
 ## The profile
 
@@ -15,11 +16,11 @@ They hold the client's key, so they stay out of this repository, age-encrypted, 
 role's variables go in the machine's `host_vars.yml` ([Values](../../../../README.md#running-it-again)):
 
 ```yaml
-ikeward_profile: /root/vpn/vpnclient    # vpnclient.p12 and vpnclient.sswan
-ikeward_dns: 10.20.0.53                 # the remote network's resolver
-ikeward_domains: [example.internal]     # the domains whose names go to it alone
-ikeward_floors: [10.20.0.0/16]          # the ranges kept off the uplink from boot on
-ikeward_forward_from: [10.99.0.2]       # the WireGuard peers that reach the VPN: the Mac, at .2 of its slot
+WS_IKEWARD_PROFILE: /root/vpn/vpnclient    # vpnclient.p12 and vpnclient.sswan
+WS_IKEWARD_DNS: 10.20.0.53                 # the remote network's resolver
+WS_IKEWARD_DOMAINS: [example.internal]     # the domains whose names go to it alone
+WS_IKEWARD_FLOORS: [10.20.0.0/16]          # the ranges kept off the uplink from boot on
+WS_IKEWARD_FORWARD_FROM: [10.99.0.2]       # the WireGuard peers that reach the VPN: the Mac, at .2 of its slot
 ```
 
 Put the two files in [the secrets file](../shell/README.md#the-secrets-file), whole. Add the `.p12`'s
@@ -33,7 +34,7 @@ ws client macos secrets set file vpn_sswan vpnclient.sswan
 ws client macos secrets set password vpn_p12
 ```
 
-`ikeward_profile` is an absolute path, less the extension, that names the files `install` writes.
+`WS_IKEWARD_PROFILE` is an absolute path, less the extension, that names the files `install` writes.
 The values go to `ikeward install`'s flags: `--dns`, a `--domain` for each domain and a `--floor`
 for each range. A profile needs the resolver and a domain, or the run stops before it changes
 anything; the floors may be left out.
@@ -51,7 +52,7 @@ the `.p12`.
   new pin replaces it.
 - It writes the two files, which the secrets file gives, under their names, into
   `/run/ikeward-profile`, which only root may enter. It removes them once `install` has run, whether
-  a step failed or not. Where `ikeward_profile` is set and the secrets hold no profile, the run
+  a step failed or not. Where `WS_IKEWARD_PROFILE` is set and the secrets hold no profile, the run
   fails before anything changes.
 - `ikeward install --dry-run` reads them, with the password on its standard input. The run stops
   where ikeward refuses the profile or a value, and shows ikeward's error.
@@ -73,8 +74,8 @@ role downloads ikeward and writes the forwarding's file, no more.
 
 ## Forwarding
 
-`ikeward_forward_from` names the WireGuard peers that reach the VPN through the server, each by its
-address in the tunnel, as `wireguard_peers` gives it. ikeward's NAT rule gives what they send the
+`WS_IKEWARD_FORWARD_FROM` names the WireGuard peers that reach the VPN through the server, each by its
+address in the tunnel, as `WS_TUNNEL_PEERS` gives it. ikeward's NAT rule gives what they send the
 address the VPN assigned. For them, the role:
 
 - writes `/etc/sysctl.d/99-ikeward.conf`, `net.ipv4.ip_forward = 1`, and puts it in force. Docker
@@ -102,7 +103,7 @@ step waits on the download and shows nothing more, as it has no binary to ask.
 
 ## By hand
 
-The role never removes the VPN. Without `ikeward_profile`, it leaves the VPN, the file and ufw's
+The role never removes the VPN. Without `WS_IKEWARD_PROFILE`, it leaves the VPN, the file and ufw's
 rules as they are. ikeward's
 [Stop and uninstall](https://github.com/zadykian/ikeward/blob/v0.3.0/README.md#stop-and-uninstall)
 says how to stop it or remove it. The VPN's server, and the profile `ikev2setup.sh` makes there,
