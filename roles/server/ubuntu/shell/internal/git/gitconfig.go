@@ -32,7 +32,7 @@ type Config struct {
 }
 
 func (g Config) content() ([]byte, error) {
-	settings := gitcfg.Settings(gitcfg.Inputs{Key: g.Key + ".pub", Gh: "/usr/bin/gh"})
+	settings := gitcfg.Settings(gitcfg.Inputs{Key: g.Key, Gh: "/usr/bin/gh"})
 	return resource.Render(gitFiles, "files/gitconfig.tmpl", struct{ Settings string }{settings})
 }
 
@@ -84,8 +84,8 @@ func (g Config) signingNotes(ctx context.Context, old []byte) error {
 	if err != nil {
 		return err
 	}
-	if key, ok := signingKeyOf(lines(list), g.A.Home); ok && key != g.Key+".pub" {
-		g.Out.Warn("writing ~/.gitconfig replaces its signing key, %s, with %s.pub. To sign with the old key, set user.signingkey in ~/.config/git/machine.gitconfig first.", key, g.Key)
+	if key, ok := signingKeyOf(lines(list), g.A.Home); ok && key != g.Key {
+		g.Out.Warn("writing ~/.gitconfig replaces its signing key, %s, with %s. To sign with the old key, set user.signingkey in ~/.config/git/machine.gitconfig first.", key, g.Key)
 	}
 	machine, err := g.A.ReadHome(g.M, ".config/git/machine.gitconfig")
 	if errors.Is(err, fs.ErrNotExist) {

@@ -59,7 +59,7 @@ func TestALinkKeepsAReportFromThePathsBehindIt(t *testing.T) {
 func TestALinkAtAFileStopsItsStepAlone(t *testing.T) {
 	v := values.Default()
 	v.User, v.Home = "ws", "/home/ws"
-	v.GitSigningKey = "/home/ws/.ssh/id_signing"
+	v.GitSigningPubKey = "/home/ws/.ssh/id_signing.pub"
 	m := effecttest.NewMachine()
 	m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
 	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}

@@ -41,9 +41,9 @@ type Shared struct {
 	User string `yaml:"WS_USER"`
 	// Home is the user's home. Left empty, it follows User: /root for root, else /home/USER.
 	Home string `yaml:"WS_HOME"`
-	// GitSigningKey is the SSH key that signs git's commits, with its public key beside it as .pub.
-	// Left empty, it defaults to Home/.ssh/id_ed25519_signing.
-	GitSigningKey string `yaml:"WS_GIT_SIGNING_KEY"`
+	// GitSigningPubKey is the public key's path of the SSH key that signs git's commits. The private
+	// key lies beside it, without .pub. Left empty, it defaults to Home/.ssh/id_ed25519_signing.pub.
+	GitSigningPubKey string `yaml:"WS_GIT_SIGNING_PUB_KEY"`
 }
 
 // Parse returns the values that data gives over Default. It refuses a key that no role knows, a key
@@ -102,8 +102,8 @@ func (v *Values) derive() {
 			v.Home = "/home/" + v.User
 		}
 	}
-	if v.GitSigningKey == "" {
-		v.GitSigningKey = v.Home + "/.ssh/id_ed25519_signing"
+	if v.GitSigningPubKey == "" {
+		v.GitSigningPubKey = v.Home + "/.ssh/id_ed25519_signing.pub"
 	}
 	if v.Wireguard.Peers == nil {
 		if p, err := netip.ParsePrefix(v.Wireguard.Address); err == nil && p.Addr().Is4() {
@@ -116,8 +116,8 @@ func (v *Values) derive() {
 // by a path under the home, so that it can refuse a link there (roles/server/ubuntu/security/README.md).
 func (v *Values) underHome() error {
 	home := path.Clean(v.Home)
-	if !strings.HasPrefix(path.Clean(v.GitSigningKey), strings.TrimSuffix(home, "/")+"/") {
-		return fmt.Errorf("WS_GIT_SIGNING_KEY: %s is outside WS_HOME %s", v.GitSigningKey, v.Home)
+	if !strings.HasPrefix(path.Clean(v.GitSigningPubKey), strings.TrimSuffix(home, "/")+"/") {
+		return fmt.Errorf("WS_GIT_SIGNING_PUB_KEY: %s is outside WS_HOME %s", v.GitSigningPubKey, v.Home)
 	}
 	return nil
 }
