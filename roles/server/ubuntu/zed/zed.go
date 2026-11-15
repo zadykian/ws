@@ -52,8 +52,7 @@ const limitsPath = "/etc/security/limits.d/ws-zed.conf"
 // limitsFile raises WS_USER's soft open-file limit: sshd's logins start at 1024, past which Zed's
 // server busy-loops (zed#62995).
 func limitsFile(v values.Values) []byte {
-	return []byte(fmt.Sprintf("# Written by github.com/zadykian/ws, whose next run replaces any change made here.\n"+
-		"%s soft nofile %d\n", v.User, v.Zed.Nofile))
+	return []byte(fmt.Sprintf("%s\n%s soft nofile %d\n", file.Header("#"), v.User, v.Zed.Nofile))
 }
 
 // settingsFile renders ~/.config/zed/settings.json: the paths of the language servers lie under the

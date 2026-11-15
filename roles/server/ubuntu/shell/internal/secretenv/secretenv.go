@@ -7,15 +7,14 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+
+	"github.com/zadykian/ws/engine/core/resource/file"
 )
 
-// envHeader is the top of /etc/ws/env; ws replaces only a file that starts with its first
-// words.
-const (
-	envMark   = "# Written by github.com/zadykian/ws"
-	envHeader = envMark + " from the [env] table of the secrets file. Its next run with\n" +
-		"# that file replaces any change made here: set a value in the secrets file.\n"
-)
+// envMark starts /etc/ws/env; ws replaces only a file that starts with it. envHeader is its top.
+const envMark = "# " + file.Mark
+
+var envHeader = file.Header("#") + "\n# From the [env] table of the secrets file: set a value there.\n"
 
 // envName is a name the shell takes as a variable.
 var envName = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)

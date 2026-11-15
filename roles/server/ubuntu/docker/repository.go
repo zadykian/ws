@@ -25,15 +25,17 @@ var ascSHA256 = "1500c1f56fa9e26b9b8f42452a553675796ade0807cdce11975eb98170b3a57
 // sourcesPath is the file that names Docker's repository.
 const sourcesPath = "/etc/apt/sources.list.d/docker.sources"
 
-// Sources returns the deb822 source of Docker's repository for a release and an architecture.
+// Sources returns the deb822 source of Docker's repository for a release and an architecture, under
+// ws's header.
 func Sources(release, arch string) []byte {
-	return fmt.Appendf(nil, `Types: deb
+	return fmt.Appendf(nil, `%s
+Types: deb
 URIs: https://download.docker.com/linux/ubuntu
 Suites: %s
 Components: stable
 Architectures: %s
 Signed-By: %s
-`, release, arch, keyPath)
+`, file.Header("#"), release, arch, keyPath)
 }
 
 // release reads the Ubuntu release's codename from os-release.

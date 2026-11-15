@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/internal/ufw"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -102,6 +103,9 @@ func TestStepsApplyOnceAndThenPlanNothing(t *testing.T) {
 		if !strings.Contains(string(m.Files[path]), want) {
 			t.Errorf("%s = %q, want it to hold %q", path, m.Files[path], want)
 		}
+	}
+	if sources := string(m.Files[sourcesPath]); !strings.HasPrefix(sources, file.Header("#")+"\nTypes: deb\n") {
+		t.Errorf("%s = %q, want ws's header on its first line", sourcesPath, sources)
 	}
 }
 

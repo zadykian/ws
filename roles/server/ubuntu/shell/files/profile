@@ -1,6 +1,5 @@
-# ws's lines for ~/.profile, which sources them at its top.
-#
 # Written by github.com/zadykian/ws, whose next run replaces any change made here.
+# ws's lines for ~/.profile, which sources them at its top.
 
 # Where ws's roles install tools: claude and cld in ~/.local/bin, and Go in /usr/local/go/bin. What
 # `go install` builds, gopls among them, goes in ~/go/bin, and .NET's global tools in
