@@ -37,3 +37,26 @@ func TestTopIsTheDirectoryAlone(t *testing.T) {
 		t.Errorf("changes = %q, want one that makes /etc/ws at 755", changes)
 	}
 }
+
+func TestFilesMakeEachDirectoryBetween(t *testing.T) {
+	m := effecttest.NewMachine()
+	var got []string
+	for _, r := range etcws.Files(m, etcws.Dir+"/servers/lab/values.yml", []byte("a\n")) {
+		changes, err := r.Plan(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, c := range changes {
+			got = append(got, strings.SplitN(c.String(), "\n", 2)[0])
+		}
+	}
+	want := []string{
+		"create directory /etc/ws, owner 0:0, mode 755",
+		"create directory /etc/ws/servers, owner 0:0, mode 755",
+		"create directory /etc/ws/servers/lab, owner 0:0, mode 755",
+		"create /etc/ws/servers/lab/values.yml",
+	}
+	if strings.Join(got, "|") != strings.Join(want, "|") {
+		t.Errorf("changes = %q, want %q", got, want)
+	}
+}

@@ -4,6 +4,9 @@ package etcws
 
 import (
 	"io/fs"
+	pathpkg "path"
+	"slices"
+	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
@@ -23,11 +26,17 @@ func Top(m effect.Machine) file.PublicDir {
 	return file.PublicDir{M: m, Path: Dir, Mode: DirMode}
 }
 
-// Files returns the directory and then the file at path, whole, root's. Everyone may read them, so
-// a run that changes nothing asks for no password.
+// Files returns /etc/ws, then each directory under it down to the file's own, and then the file
+// at path, whole, all root's. Everyone may read them, so a run that changes nothing asks for no
+// password.
 func Files(m effect.Machine, path string, content []byte) []resource.Resource {
-	return []resource.Resource{
-		Top(m),
-		file.Public{M: m, Path: path, Content: content, Mode: FileMode},
+	parts := []resource.Resource{Top(m)}
+	var dirs []string
+	for d := pathpkg.Dir(path); d != Dir && strings.HasPrefix(d, Dir+"/"); d = pathpkg.Dir(d) {
+		dirs = append(dirs, d)
 	}
+	for _, d := range slices.Backward(dirs) {
+		parts = append(parts, file.PublicDir{M: m, Path: d, Mode: DirMode})
+	}
+	return append(parts, file.Public{M: m, Path: path, Content: content, Mode: FileMode})
 }
