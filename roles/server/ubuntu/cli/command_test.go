@@ -120,7 +120,7 @@ func TestServerFansRefusesAConfigThatFailsItsCheck(t *testing.T) {
 	if status, _, _ = runWs(p, "", "server", "ubuntu", "fans", "a", "b"); status != 2 {
 		t.Errorf("two configs: status = %d, want 2", status)
 	}
-	if status, _, stderr = runWs(p, "", "server", "ubuntu", "fans"); status != 1 || !strings.Contains(stderr, "/etc/ws-fans.json") {
+	if status, _, stderr = runWs(p, "", "server", "ubuntu", "fans"); status != 1 || !strings.Contains(stderr, "/etc/ws/fans.json") {
 		t.Errorf("no config: status = %d, stderr = %q", status, stderr)
 	}
 }

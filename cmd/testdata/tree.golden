@@ -481,7 +481,7 @@ Flags:
 Global Flags:
       --plain   print lines, with no full-screen display
 == ws server ubuntu fans
-CONFIG is the file that the fans role writes, /etc/ws-fans.json by default.
+CONFIG is the file that the fans role writes, /etc/ws/fans.json by default.
 
 Usage:
   ws server ubuntu fans [CONFIG] [flags]
