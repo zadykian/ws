@@ -26,11 +26,7 @@ func CablePort(s string) bool {
 }
 
 // CableService reports whether s is a network service as networksetup -listallnetworkservices
-// prints it: no * first, a mark of a disabled service, and no control character. A blank needs
-// quotes, as in a shell's assignment.
-func CableService(s string, quoted bool) bool {
-	if strings.HasPrefix(s, "*") || hasControl(s) {
-		return false
-	}
-	return quoted || !strings.Contains(s, " ")
+// prints it: no * first, a mark of a disabled service, and no control character.
+func CableService(s string) bool {
+	return !strings.HasPrefix(s, "*") && !hasControl(s)
 }

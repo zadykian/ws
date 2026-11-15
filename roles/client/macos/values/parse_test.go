@@ -40,8 +40,8 @@ func TestParse(t *testing.T) {
 			[]Error{{1, "unknown key WS_GIT_NAME"}, {2, "unknown key WS_GIT_EMAIL"}}},
 		{"not a line", "ws_user=a\nWS_USER\n=a\n", Conf{User: "zadykian", Target: "lan", Slot: "0"},
 			[]Error{{1, "not a KEY=value line"}, {2, "not a KEY=value line"}, {3, "not a KEY=value line"}}},
-		{"bare blank", "WS_CABLE_SERVICE=USB LAN\n", Conf{User: "zadykian", Target: "lan", Slot: "0"},
-			[]Error{{1, "WS_CABLE_SERVICE=USB LAN is not " + find(t, "WS_CABLE_SERVICE").form}}},
+		{"bare blank", "WS_CABLE_SERVICE=USB LAN\n", Conf{User: "zadykian", Target: "lan", Slot: "0",
+			CableService: "USB LAN"}, nil},
 		{"carriage return", "WS_USER=a\r\n", Conf{User: "zadykian", Target: "lan", Slot: "0"},
 			[]Error{{1, "WS_USER=a\r is not " + find(t, "WS_USER").form}}},
 	}

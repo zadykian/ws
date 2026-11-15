@@ -11,11 +11,8 @@ func KeyFile(s string) bool {
 }
 
 // Socket reports whether s is an agent's socket: a path from / or ~/, of letters, digits, blanks
-// and ._/@+-. An app's socket may hold a blank, which needs quotes, as in a shell's assignment.
-func Socket(s string, quoted bool) bool {
+// and ._/@+-. An app's socket may hold a blank.
+func Socket(s string) bool {
 	p := strings.TrimPrefix(s, "~")
-	if len(p) < 2 || p[0] != '/' || !only(p, letters+digits+"._/@+ -") {
-		return false
-	}
-	return quoted || !strings.Contains(p, " ")
+	return len(p) >= 2 && p[0] == '/' && only(p, letters+digits+"._/@+ -")
 }

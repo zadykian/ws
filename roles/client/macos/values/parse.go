@@ -50,8 +50,8 @@ func (s Scope) Lines(text string) (Conf, []Error) {
 			errs = append(errs, Error{i + 1, msg})
 			continue
 		}
-		value, quoted := unquote(raw)
-		if value != "" && !k.ok(value, quoted) {
+		value, _ := unquote(raw)
+		if value != "" && !k.ok(value) {
 			errs = append(errs, Error{i + 1, fmt.Sprintf("%s=%s is not %s", name, value, k.form)})
 			continue
 		}
