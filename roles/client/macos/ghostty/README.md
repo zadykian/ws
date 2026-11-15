@@ -33,20 +33,19 @@ Regular`, finds no font, and Ghostty falls back to its own JetBrains Mono, which
 
 ## Ghostty's settings
 
-The settings are in
-[`roles/client/macos/ghostty/files/ws.ghostty`](files/ws.ghostty),
-which `ws` embeds and the script writes, under its header, to `ws.ghostty`. That file goes beside
-the config file that Ghostty's menu opens: `config.ghostty` or `config` in `~/Library/Application
+The settings are in [`roles/client/macos/ghostty/files/ws.ghostty`](files/ws.ghostty), which `ws`
+embeds and the script writes, under its header, to `/etc/ws/ghostty`, as root. The config file that
+Ghostty's menu opens is `config.ghostty` or `config` in `~/Library/Application
 Support/com.mitchellh.ghostty`, then in `~/.config/ghostty`. That is the first that holds anything,
 else the first that exists. Where none exists, the script makes the first. It adds `config-file =
-?ws.ghostty` at the end of that file, once, and keeps the old file as `PATH.TIME~`. Ghostty reads an
-included file after the file that names it, so each setting of `ws.ghostty` wins over the config's
-own. A later `font-family` adds a fallback rather than replace the list, so `ws.ghostty` empties it
-first. Change the settings in `roles/client/macos/ghostty/files/ws.ghostty`, build `ws` again and
-run it.
+?/etc/ws/ghostty` at the end of that file, once, and keeps the old file as `PATH.TIME~`. Ghostty
+reads an included file after the file that names it, so each setting of `/etc/ws/ghostty` wins over
+the config's own. A later `font-family` adds a fallback rather than replace the list, so
+`/etc/ws/ghostty` empties it first. Change the settings in
+`roles/client/macos/ghostty/files/ws.ghostty`, build `ws` again and run it.
 
-The script replaces `ws.ghostty` at each run. It warns and changes neither file where `ws.ghostty`
-is one it did not write, or where it can't read the config. Where the config is a link, as a
+The script replaces `/etc/ws/ghostty` at each run. It warns and changes neither file where it
+can't read the config. Where the config is a link, as a
 dotfiles manager makes it, and lacks the line, the script warns: add the line to the file the link
 points to. Where the config's directory is a link, the files go where it points, and the script says
 so.
@@ -119,8 +118,8 @@ hosts](../README.md#sshs-hosts) says how to lift the ban.
 A dropped ssh leaves Ghostty in the modes that Fresh, tmux and cld's sessions turned on, as their
 resets never reach the Mac. Each mouse move then types `^[[<35;42;17M` at the prompt, and some Ctrl
 keys arrive as escape codes. `ws client macos apply` writes
-[`roles/client/macos/zsh/files/zshrc`](../zsh/files/zshrc) as `~/.config/ws/zshrc`, and adds
-`source ~/.config/ws/zshrc` at the end of `~/.zshrc`. It keeps the old file as `~/.zshrc.TIME~`, and
+[`roles/client/macos/zsh/files/zshrc`](../zsh/files/zshrc) as `/etc/ws/zshrc`, and adds
+`source /etc/ws/zshrc` at the end of `~/.zshrc`. It keeps the old file as `~/.zshrc.TIME~`, and
 warns where `~/.zshrc` is a link that lacks the line.
 
 Before each prompt, the hook turns off the reports of the mouse, focus and the colour scheme, and

@@ -219,7 +219,7 @@ itself, so it needs no `wg` or `wireguard-go`. `apply` restarts each where the c
 The settings are in `/etc/ws/tunnel`, in ws's directory, which only root reads. It holds the Mac's
 key, which `ws client macos tunnel key` makes once, and a directory `NAME` per server, with its
 `tunnel.conf` and its `routes.d` ([the daemons](tunnel/README.md)). `ws client macos apply` keeps the public key in
-`~/.config/ws/tunnel.pub`, which the wizard reads, and copies `tunnel.conf` from the server's file,
+`/etc/ws/tunnel.pub`, which the wizard reads, and copies `tunnel.conf` from the server's file,
 so the daemon reads no file the user can write. In System Settings › General › Login Items &
 Extensions, its "Allow in the Background" must stay on.
 
