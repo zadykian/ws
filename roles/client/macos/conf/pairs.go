@@ -32,8 +32,7 @@ func pairs(c Conf) []Error {
 		return refuse("WS_TARGET=" + c.Target + " has another target's key: " +
 			strings.Join(away, " ") + " (roles/client/macos/conf/README.md)")
 	}
-	switch {
-	case c.IdentityAgent != "" && c.IdentityPubKey == "":
+	if c.IdentityAgent != "" && c.IdentityPubKey == "" {
 		return refuse("WS_IDENTITY_AGENT needs WS_IDENTITY_PUB_KEY")
 	}
 	return nil
