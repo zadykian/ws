@@ -1,7 +1,7 @@
 # A Mac's servers in CI
 
 The Mac's jobs work on one server named `ws`, at slot 0, as the Mac's side says
-([The two files](../../roles/client/macos/conf/README.md)). The cases write its files through
+([The two files](../../roles/client/macos/values/README.md)). The cases write its files through
 [mac-conf.sh](../mac-conf.sh): `conf_write` splits the lines of stdin between `mac.conf` and
 `servers/NAME/server.conf`, and `conf_print` joins them. `conf_server` names the server, `ws` by
 default, and a case that works on a second one sets it, then sets it back to `ws`.

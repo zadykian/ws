@@ -60,7 +60,7 @@ its last change lands there, as the Tunnel and the Cable do.
 Each answer goes in the file of its key, which [mac.conf](../README.md#macconf) explains, but the
 first. `WS_TARGET` names ws's machine: one on the LAN, a cloud VM, which needs `WS_REMOTE` and
 `WS_REMOTE_PORT`, or a VM on the Mac, which needs `WS_LAN`. The table gives the questions on the
-LAN, and [The wizard's targets](../conf/README.md) the others, with the keys that each refuses. The
+LAN, and [The wizard's targets](../values/README.md) the others, with the keys that each refuses. The
 defaults are [The router](../../../server/ubuntu/cable/router.md)'s LAN, lease and forward. A key's
 answer comes from the first of these that has one:
 
@@ -130,7 +130,7 @@ for a direct way to `ws` ([ssh's hosts](../README.md#sshs-hosts)). Where no way 
 [The router](../../../server/ubuntu/cable/router.md), or off the LAN what the target needs, as a VM on the Mac started. A new ws
 has a lease from the router's pool, not its static address. So where ws gives no key within 10 s,
 the stage asks ws's address now, as the router's leases show it. Off the LAN, [The wizard's
-targets](../conf/README.md) says where it shows. ssh takes that address for the rest of the run, and
+targets](../values/README.md) says where it shows. ssh takes that address for the rest of the run, and
 `mac.conf` keeps nothing of it. An empty answer stops the run, as before Ubuntu's install.
 
 The stage shows the key's fingerprint. At ws's console, `ssh-keygen -lf
@@ -285,7 +285,7 @@ After a run in which a stage acted, the wizard lists each of these that applies:
 - What [The Mac](../README.md) leaves by hand: macOS's grant of the local network to an app.
 - The server's lease, made static, where the Host key stage asked ws's address, and the router's forwards
   where `server.conf` has `WS_REMOTE` ([The router](../../../server/ubuntu/cable/router.md)). Off the LAN, `server.conf`'s way to ws
-  instead, and a cloud VM's firewall for the tunnel ([The wizard's targets](../conf/README.md)).
+  instead, and a cloud VM's firewall for the tunnel ([The wizard's targets](../values/README.md)).
 - ws's outbound table, which `WS_SECURITY_OUTBOUND: false` in ws's `values.yml` keeps off, where
   `WS_TARGET` isn't `cloud`, as after a move from a cloud VM: that line removed, then `--update`.
 - The tunnel's handshake, where the run asked ws's address or none came. A static lease, or off the
