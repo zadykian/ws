@@ -1,13 +1,20 @@
 // Package gitcfg holds git's settings that ws and the Mac both write, as pure text.
 package gitcfg
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/zadykian/ws/roles/internal/etcws"
+)
 
 // Name and Email are the identity of every commit, on ws and on the Mac alike.
 const (
 	Name  = "zadykian"
 	Email = "me@zadykian.dev"
 )
+
+// Signers is the allowed signers file, root's, the same path on both sides.
+const Signers = etcws.Dir + "/allowed_signers"
 
 // Inputs are the values of the settings.
 type Inputs struct {
