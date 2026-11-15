@@ -51,7 +51,7 @@ func TestAnswersPlan(t *testing.T) {
 		"no file":  {"", "", "would ask for the values that " + serverPathForTest + " lacks, from WS_TARGET on"},
 		"a gap":    {"", strings.Replace(all, values.Text("WS_REMOTE", ""), "", 1), "from WS_REMOTE on"},
 		"complete": {"", all, ""},
-		"refused":  {"", all + values.Text("WS_TARGET", "cloud", "WS_REMOTE_PORT", "22"), "ws client macos apply would refuse " + serverPathForTest},
+		"refused":  {"", strings.Replace(all, values.Text("WS_TARGET", "lan"), values.Text("WS_TARGET", "cloud", "WS_REMOTE_PORT", "22"), 1), "ws client macos apply would refuse " + serverPathForTest},
 	} {
 		a, _ := newAnswers(t, tc.mac, tc.server)
 		p, err := a.Plan(context.Background())

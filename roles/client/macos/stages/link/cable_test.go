@@ -90,6 +90,21 @@ func TestCableApplyAsksPortAndService(t *testing.T) {
 	}
 }
 
+func TestCableApplyAddsTheServiceAfterAPortSetByHand(t *testing.T) {
+	c, m, p := newCable(t, session.Status{}, cableLink, nil)
+	linked(m)
+	m.Files["/h/mac.conf"] = []byte(values.Text("WS_TARGET", "lan", "WS_CABLE_PORT", "eth1"))
+	p.Answers["ws's port of the cable, of eth0, eth1 (carrier) (WS_CABLE_PORT) [eth1, or none]"] = "eth1"
+	p.Answers["The Mac's service of the cable, of Wi-Fi, USB LAN (WS_CABLE_SERVICE) [USB LAN, or none]"] = "USB LAN"
+	if err := c.Apply(context.Background(), step.Plan{}); err != nil {
+		t.Fatal(err)
+	}
+	want := values.Text("WS_TARGET", "lan", "WS_CABLE_PORT", "eth1", "WS_CABLE_SERVICE", "USB LAN")
+	if got := string(m.Files["/h/mac.conf"]); got != want {
+		t.Errorf("mac.conf = %q; want %q", got, want)
+	}
+}
+
 func TestCableApplyNone(t *testing.T) {
 	c, m, p := newCable(t, session.Status{}, cableLink, nil)
 	p.Answers["ws's port of the cable, of eth0, eth1 (carrier) (WS_CABLE_PORT) [eth1, or none]"] = "none"
@@ -213,7 +228,7 @@ func TestCablePlanLeavesTheCableToTheServerThatNamesIt(t *testing.T) {
 	c, m, _ := newCable(t, session.Status{}, cableLink, nil)
 	beside(c, m, values.Text("WS_TARGET", "lan", "WS_CABLE_PORT", "eth1", "WS_CABLE_SERVICE", "USB"))
 	p, err := c.Plan(context.Background())
-	want := "would write WS_CABLE_SERVICE= in /h/servers/lab/server.conf: the cable reaches server ws"
+	want := "would write " + values.Line("WS_CABLE_SERVICE", "") + " in /h/servers/lab/server.conf: the cable reaches server ws"
 	if len(p.Changes) != 1 || err != nil || !strings.HasSuffix(p.Changes[0].String(), want) {
 		t.Errorf("Plan = %v, %v; want %q", p, err, want)
 	}

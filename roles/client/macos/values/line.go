@@ -1,13 +1,30 @@
 package values
 
-import "strings"
+import (
+	"regexp"
+	"strconv"
+	"strings"
+)
 
-// Line is the key's line for mac.conf, the value in quotes where it holds a blank.
+// bare matches a value that YAML reads back as itself after a key and a colon. It has no reserved
+// first character (@ and % included), no # or :, and no blank last.
+var bare = regexp.MustCompile(`^[A-Za-z0-9_./=+~][A-Za-z0-9_./=+@~%, -]*$`)
+
+// Line is the key's line for a values file, as YAML: the value bare where YAML reads it back as
+// the same text, else in double quotes. An empty value is "", and ~ and null are quoted, as YAML
+// reads them as nothing. The values are ASCII, where Go's escapes and YAML's agree.
 func Line(key, value string) string {
-	if strings.ContainsAny(value, " \t") {
-		return key + `="` + value + `"`
+	switch {
+	case bare.MatchString(value) && !strings.HasSuffix(value, " ") && !isNull(value):
+		return key + ": " + value
+	default:
+		return key + ": " + strconv.Quote(value)
 	}
-	return key + "=" + value
+}
+
+// isNull reports whether YAML reads a bare v as the empty value.
+func isNull(v string) bool {
+	return v == "~" || v == "null" || v == "Null" || v == "NULL"
 }
 
 // Text returns the lines that give each key its value, in the order given: Text(KEY, VALUE, ...).

@@ -143,8 +143,8 @@ func (c *Cable) service(ctx context.Context) error {
 	return nil
 }
 
-// write writes value as the server file's WS_CABLE_SERVICE, in double quotes, after ws's end as
-// WS_CABLE_PORT, or empty for none, which the wizard never asks again.
+// write adds value as the server file's WS_CABLE_SERVICE, or empty for none, which the wizard never
+// asks again, after ws's end as WS_CABLE_PORT. A port that the file has stays.
 func (c *Cable) write(ctx context.Context, value string) error {
 	lines := values.Text("WS_CABLE_SERVICE", "")
 	if value != "" {

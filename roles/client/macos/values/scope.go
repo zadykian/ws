@@ -44,12 +44,12 @@ func KeyScope(key string) Scope {
 	return ServerFile
 }
 
-// Keep returns the KEY=value lines of the text whose key goes in the scope, in order. Both keeps
+// Keep returns the KEY: value lines of the text whose key goes in the scope, in order. Both keeps
 // every line.
 func (s Scope) Keep(lines string) string {
 	var kept strings.Builder
 	for _, line := range strings.SplitAfter(lines, "\n") {
-		key, _, _ := strings.Cut(line, "=")
+		key, _ := lineKey(line)
 		if s == Both || KeyScope(key) == s {
 			kept.WriteString(line)
 		}

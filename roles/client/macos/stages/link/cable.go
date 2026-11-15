@@ -142,7 +142,7 @@ func (c *Cable) end() string {
 // lacks tells whether the server's file has no line of WS_CABLE_SERVICE yet.
 func (c *Cable) lacks() bool {
 	text, _ := c.M.ReadFile(c.Conf)
-	return !regexp.MustCompile(`(?m)^[ \t]*WS_CABLE_SERVICE=`).Match(text)
+	return !values.HasLine(string(text), "WS_CABLE_SERVICE")
 }
 
 // Plan is empty off the LAN, and where the server file's WS_CABLE_SERVICE is empty, or its WS_CABLE_PORT
@@ -158,7 +158,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	if c.lacks() {
 		if o := c.owner(); o != "" {
-			return c.change("write WS_CABLE_SERVICE= in " + c.Conf + ": the cable reaches server " + o)
+			return c.change("write " + values.Line("WS_CABLE_SERVICE", "") + " in " + c.Conf + ": the cable reaches server " + o)
 		}
 	}
 	// Under --check, no direct way to ws yet means that ws's run is not done either. in stays

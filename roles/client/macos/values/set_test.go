@@ -2,6 +2,8 @@ package values
 
 import (
 	"context"
+	"errors"
+	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
@@ -9,11 +11,12 @@ import (
 
 func TestReplace(t *testing.T) {
 	for name, tc := range map[string]struct{ text, want string }{
-		"missing":  {"A=1\n", "A=1\nK=v\n"},
-		"no break": {"A=1", "A=1\nK=v\n"},
-		"set":      {"A=1\nK=old\nB=2\n", "A=1\nK=v\nB=2\n"},
-		"twice":    {"K=a\nA=1\nK=b\n", "K=v\nA=1\n"},
-		"empty":    {"", "K=v\n"},
+		"missing":  {"A: 1\n", "A: 1\nK: v\n"},
+		"no break": {"A: 1", "A: 1\nK: v\n"},
+		"set":      {"A: 1\nK: old\nB: 2\n", "A: 1\nK: v\nB: 2\n"},
+		"twice":    {"K: a\nA: 1\nK: b\n", "K: v\nA: 1\n"},
+		"comment":  {"# K: x\nK: a\n", "# K: x\nK: v\n"},
+		"empty":    {"", "K: v\n"},
 	} {
 		if got := replace(tc.text, "K", "v"); got != tc.want {
 			t.Errorf("%s: replace = %q; want %q", name, got, tc.want)
@@ -21,9 +24,11 @@ func TestReplace(t *testing.T) {
 	}
 }
 
-func TestReplaceQuotesABlank(t *testing.T) {
-	if got, want := replace("K=old\n", "K", "a b"), "K=\"a b\"\n"; got != want {
-		t.Errorf("replace = %q; want %q", got, want)
+func TestReplaceQuotesWhereYAMLNeedsIt(t *testing.T) {
+	for value, want := range map[string]string{"a b": "K: a b\n", "a: b": "K: \"a: b\"\n", "": "K: \"\"\n"} {
+		if got := replace("K: old\n", "K", value); got != want {
+			t.Errorf("replace %q = %q; want %q", value, got, want)
+		}
 	}
 }
 
@@ -59,5 +64,19 @@ func TestConfSet(t *testing.T) {
 	}
 	if got := string(m.Files["/h/mac.conf"]); got != Text("WS_TARGET", "lan", "WS_PUBLIC_KEY", key) {
 		t.Errorf("mac.conf = %q", got)
+	}
+}
+
+func TestConfSetRefusesAWrappedValue(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/h/mac.conf"] = []byte("WS_TARGET: lan\nWS_TUNNEL_NETWORKS: 10.1.0.0/16\n  10.2.0.0/16\n")
+	m.Results["mkdir -p /h"] = effecttest.Result{}
+	var out effecttest.Out
+	f := File{Path: "/h/mac.conf", Stage: "Configure", M: m, Out: &out}
+	if err := f.Set(context.Background(), "WS_TUNNEL_NETWORKS", "10.3.0.0/16"); !errors.Is(err, ErrRefused) {
+		t.Errorf("set of a wrapped value: %v; want a refusal", err)
+	}
+	if len(out.Lines) != 1 || !strings.Contains(out.Lines[0], "mac.conf, line 3: write one KEY: value a line") {
+		t.Errorf("out = %v; want the refusal of line 3", out.Lines)
 	}
 }

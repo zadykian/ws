@@ -177,7 +177,7 @@ func TestMacConfigureSavesValuesAndLetsTheLockGo(t *testing.T) {
 		}
 	}
 	pair, err := base64.StdEncoding.DecodeString(saved[1])
-	if err != nil || !strings.HasPrefix(string(pair), macvalues.Line("WS_USER", "adax")) {
+	if err != nil || !strings.HasPrefix(string(pair), "WS_USER=adax") {
 		t.Errorf("saved %q: %v", pair, err)
 	}
 	for {

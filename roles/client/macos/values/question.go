@@ -1,7 +1,6 @@
 package values
 
 import (
-	"regexp"
 	"slices"
 	"strings"
 )
@@ -62,7 +61,13 @@ func (q Question) Reply(raw string) string {
 	return raw
 }
 
-// HasLine reports whether the text of mac.conf has a line for the key.
+// HasLine reports whether the text of mac.conf has a line for the key. A key is at the line's start with
+// its colon right after it, the form that the reader takes and the writers edit.
 func HasLine(text, key string) bool {
-	return regexp.MustCompile(`(?m)^[ \t]*` + key + `=`).MatchString(text)
+	for _, l := range strings.Split(text, "\n") {
+		if k, ok := lineKey(l); ok && k == key {
+			return true
+		}
+	}
+	return false
 }

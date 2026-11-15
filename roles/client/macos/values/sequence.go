@@ -87,7 +87,7 @@ func (s *Sequence) lanWays() error {
 	}
 	if lan != "" {
 		def := ""
-		if _, errs := Parse("WS_LAN=" + lan + "\nWS_LAN_ADDRESS=10.88.0.10\n"); len(errs) == 0 {
+		if _, errs := Parse(Text("WS_LAN", lan, "WS_LAN_ADDRESS", "10.88.0.10")); len(errs) == 0 {
 			def = "10.88.0.10"
 		}
 		if _, err := s.get(Question{"WS_LAN_ADDRESS", "ws's address on the LAN", def, "WS_LAN and WS_LAN_ADDRESS go together"}); err != nil {

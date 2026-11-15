@@ -88,7 +88,7 @@ func TestMacConfigureRefusals(t *testing.T) {
 		"--plain":     {plain, []string{"--plain", "client", "macos", "configure"}, "edit mac.conf by hand"},
 		"linux":       {linux, []string{"client", "macos", "configure"}, "not Linux"},
 		"root":        {root, []string{"client", "macos", "configure"}, "not root"},
-		"a bad line":  {bad, []string{"client", "macos", "configure"}, "not a KEY=value line"},
+		"a bad line":  {bad, []string{"client", "macos", "configure"}, "write one KEY: value a line"},
 	} {
 		status, stdout, stderr := runWs(tc.p, "", tc.args...)
 		if status != 1 || stdout != "" || !strings.Contains(stderr, tc.want) || strings.Contains(stderr, enterScreen) {

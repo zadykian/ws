@@ -35,14 +35,22 @@ func (f File) Read() (string, error) {
 	return string(text), err
 }
 
-// Compose returns mac.conf's text, and its text with the lines appended, whose keys mac.conf lacks,
-// where the whole passes the package's checks. Where mac.conf is a link, as a dotfiles manager makes it, and
-// there are lines to add, it says them and stops. f.Stage names the stage in the messages.
+// Compose returns mac.conf's text, and its text with the lines appended, where the whole passes the
+// package's checks. It appends the lines whose keys mac.conf lacks: a line of a key that mac.conf
+// has stays out, so a value set by hand stays. Where mac.conf is a link, as a dotfiles manager makes
+// it, and there are lines to add, it says them and stops. f.Stage names the stage in the messages.
 func (f File) Compose(lines string) (before, after string, err error) {
 	before, err = f.Read()
 	if err != nil {
 		return "", "", fmt.Errorf("%s: cannot read %s", f.Stage, f.Path)
 	}
+	var add strings.Builder
+	for _, l := range strings.SplitAfter(lines, "\n") {
+		if key, ok := lineKey(l); !ok || !HasLine(before, key) {
+			add.WriteString(l)
+		}
+	}
+	lines = add.String()
 	after = before
 	if after != "" && !strings.HasSuffix(after, "\n") {
 		after += "\n"

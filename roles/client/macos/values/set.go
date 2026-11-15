@@ -17,7 +17,7 @@ func replace(text, key, value string) string {
 		if l == "" {
 			continue
 		}
-		if name, _, ok := strings.Cut(strings.TrimLeft(l, " \t"), "="); ok && name == key {
+		if name, ok := lineKey(l); ok && name == key {
 			if !done {
 				out = append(out, Text(key, value))
 			}

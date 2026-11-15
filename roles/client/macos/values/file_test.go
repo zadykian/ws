@@ -41,3 +41,16 @@ func TestConfFileRefusesAndLeavesLinks(t *testing.T) {
 		t.Errorf("a link: %v, out = %v, files = %v", err, out.Lines, m.Files)
 	}
 }
+
+func TestConfFileAddKeepsAValueSetByHand(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/h/mac.conf"] = []byte(Text("WS_CABLE_PORT", "eth1"))
+	f := File{Path: "/h/mac.conf", Stage: "Cable", M: m, Out: &effecttest.Out{}}
+	m.Results["mkdir -p /h"] = effecttest.Result{}
+	if err := f.Add(context.Background(), Text("WS_CABLE_PORT", "eth2", "WS_CABLE_SERVICE", "USB")); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := string(m.Files[f.Path]), Text("WS_CABLE_PORT", "eth1", "WS_CABLE_SERVICE", "USB"); got != want {
+		t.Errorf("mac.conf = %q; want %q", got, want)
+	}
+}

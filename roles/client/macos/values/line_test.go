@@ -6,8 +6,44 @@ import (
 )
 
 func TestLine(t *testing.T) {
-	if got := Line("WS_CABLE_SERVICE", "USB LAN"); got != `WS_CABLE_SERVICE="USB LAN"` {
-		t.Errorf("Line = %q", got)
+	for _, tt := range []struct{ key, value, want string }{
+		{"WS_SLOT", "0", "WS_SLOT: 0"},
+		{"WS_REMOTE_PORT", "22022", "WS_REMOTE_PORT: 22022"},
+		{"WS_CABLE_SERVICE", "USB LAN", "WS_CABLE_SERVICE: USB LAN"},
+		{"WS_CABLE_SERVICE", "USB 10/100/1G/2.5G LAN", "WS_CABLE_SERVICE: USB 10/100/1G/2.5G LAN"},
+		{"WS_IDENTITY_PUB_KEY", "~/.ssh/k.pub", "WS_IDENTITY_PUB_KEY: ~/.ssh/k.pub"},
+		{"WS_RESOLVERS", "example.internal=10.20.0.53", "WS_RESOLVERS: example.internal=10.20.0.53"},
+		{"WS_PUBLIC_KEY", "ab+/cd=", "WS_PUBLIC_KEY: ab+/cd="},
+		{"WS_LAN", "", `WS_LAN: ""`},
+		{"WS_USER", "a: b", `WS_USER: "a: b"`},
+		{"WS_USER", "#x", `WS_USER: "#x"`},
+		{"WS_USER", "~", `WS_USER: "~"`},
+		{"WS_USER", "null", `WS_USER: "null"`},
+		{"WS_USER", " x", `WS_USER: " x"`},
+		{"WS_USER", "x ", `WS_USER: "x "`},
+		{"WS_USER", "@x", `WS_USER: "@x"`},
+		{"WS_USER", "%x", `WS_USER: "%x"`},
+		{"WS_USER", "-x", `WS_USER: "-x"`},
+		{"WS_USER", "a\"b", `WS_USER: "a\"b"`},
+	} {
+		if got := Line(tt.key, tt.value); got != tt.want {
+			t.Errorf("Line(%q, %q) = %q, want %q", tt.key, tt.value, got, tt.want)
+		}
+	}
+}
+
+// TestLineReadsBackAsItself holds the writer to the reader: each value comes back from entries as
+// it went in.
+func TestLineReadsBackAsItself(t *testing.T) {
+	for _, value := range []string{
+		"0", "22022", "USB 10/100/1G/2.5G LAN", "~/.ssh/k.pub", "example.internal=10.20.0.53", "",
+		"a: b", "#x", "~", "null", "Null", " x", "x ", "@x", "%x", "-x", "a, b", "yes", "1e3", "a\tb",
+		"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+/=", "a'b", `a"b`,
+	} {
+		got, errs := entries(Line("WS_USER", value) + "\n")
+		if len(errs) > 0 || len(got) != 1 || got[0].err != "" || got[0].value != value {
+			t.Errorf("%q came back as %+v, %v", value, got, errs)
+		}
 	}
 }
 

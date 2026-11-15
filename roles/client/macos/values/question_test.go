@@ -29,7 +29,7 @@ func TestQuestionReply(t *testing.T) {
 }
 
 func TestHasLine(t *testing.T) {
-	if !HasLine("# c\n  WS_LAN=1\n", "WS_LAN") || HasLine("X_WS_LAN=1\nWS_LAN_ADDRESS=2\n", "WS_LAN") {
+	if !HasLine("# c\nWS_LAN: 1\n", "WS_LAN") || HasLine("X_WS_LAN: 1\nWS_LAN_ADDRESS: 2\n# WS_LAN: 3\n", "WS_LAN") {
 		t.Error("HasLine takes a line of another key, or misses its own")
 	}
 }

@@ -1,11 +1,8 @@
-// Package values reads ~/.config/ws/mac.conf, the Mac's settings, without running it. Parse and Lines
-// take its text; File and Read reach the file through a machine.
+// Package values reads ~/.config/ws/mac.conf, the Mac's settings, as YAML without running it. Parse
+// and Lines take its text; File and Read reach the file through a machine.
 package values
 
-import (
-	"fmt"
-	"strings"
-)
+import "fmt"
 
 // Parse reads the text of mac.conf as Lines does, and where every line passes, returns the first
 // refusal of the keys that go together.
@@ -21,42 +18,35 @@ func (s Scope) Parse(text string) (Conf, []Error) {
 	return c, errs
 }
 
-// Lines reads the text of mac.conf, each line alone: a KEY=value a line, the value bare or in a
-// pair of quotes. It skips blank lines and lines starting with #. It returns the error of every
-// other line, of any other key and of a value of the wrong form. An empty value, KEY= or KEY="", is
-// the key's default, as a missing line is. A later line of a key replaces an earlier one.
+// Lines reads the text of a values file: YAML, a KEY: value a line. It reports an error for a key
+// that is not the file's, a key given twice, a value that is no scalar, and a value of the wrong
+// form. An empty value, KEY: or KEY: "", is the key's default, as a missing line is.
 func Lines(text string) (Conf, []Error) { return Both.Lines(text) }
 
 // Lines reads the text as the package's Lines does, and refuses a key of the other file as well.
 func (s Scope) Lines(text string) (Conf, []Error) {
 	c := Conf{Target: "lan", Slot: "0"}
-	var errs []Error
-	for i, line := range strings.Split(text, "\n") {
-		line = strings.Trim(line, " \t")
-		if line == "" || line[0] == '#' {
-			continue
-		}
-		name, raw, found := strings.Cut(line, "=")
-		if !found || name == "" || name[0] < 'A' || name[0] > 'Z' {
-			errs = append(errs, Error{i + 1, "not a KEY=value line"})
-			continue
-		}
-		k, ok := lookup(name)
+	pairs, errs := entries(text)
+	for _, e := range pairs {
+		k, ok := lookup(e.key)
 		if !ok {
-			errs = append(errs, Error{i + 1, "unknown key " + name})
+			errs = append(errs, Error{e.line, "unknown key " + e.key})
 			continue
 		}
-		if msg := s.refuse(name); msg != "" {
-			errs = append(errs, Error{i + 1, msg})
+		if msg := s.refuse(e.key); msg != "" {
+			errs = append(errs, Error{e.line, msg})
 			continue
 		}
-		value, _ := unquote(raw)
-		if value != "" && !k.ok(value) {
-			errs = append(errs, Error{i + 1, fmt.Sprintf("%s=%s is not %s", name, value, k.form)})
+		if e.err != "" {
+			errs = append(errs, Error{e.line, e.err})
 			continue
 		}
-		*k.field(&c) = value
-		if value == "" {
+		if e.value != "" && !k.ok(e.value) {
+			errs = append(errs, Error{e.line, fmt.Sprintf("%s=%s is not %s", e.key, e.value, k.form)})
+			continue
+		}
+		*k.field(&c) = e.value
+		if e.value == "" {
 			c.defaults()
 		}
 	}
@@ -94,14 +84,6 @@ func (c Conf) Value(name string) string {
 		return ""
 	}
 	return *k.field(&c)
-}
-
-// unquote takes off a pair of quotes, " or ', around raw, and says whether there was one.
-func unquote(raw string) (string, bool) {
-	if len(raw) >= 2 && (raw[0] == '"' || raw[0] == '\'') && raw[len(raw)-1] == raw[0] {
-		return raw[1 : len(raw)-1], true
-	}
-	return raw, false
 }
 
 // defaults sets the keys with a default other than empty to it (the target and the slot), but WS_USER, which Lines sets last.
