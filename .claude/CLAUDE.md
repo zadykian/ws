@@ -2,8 +2,8 @@
 
 ws sets up the maintainer's development server from code: `ws server ubuntu apply`, which runs on
 the machine itself, each role as Go steps. Its roles set up packages, SSH by key and a firewall, the
-links to the Mac, an IKEv2 VPN where a profile is given, and the fans. Then the shell, tmux,
-lazygit, Fresh, Docker, claude, SigNoz with its collector, and Zed's server. `roles/client/macos/`
+links to the Mac, an IKEv2 VPN where a profile is given, and the fans. Then the shell, git,
+tmux, lazygit, Fresh, Docker, claude, SigNoz with its collector, and Zed's server. `roles/client/macos/`
 sets up the Mac that works on the server. The rest is the docs, the lint gates' tools and CI.
 
 ## Layout

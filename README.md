@@ -2,8 +2,8 @@
 
 Sets up my development server from code. `ws server ubuntu apply` runs on the machine itself. It
 sets up packages, SSH by key and a firewall, and a cable and a WireGuard tunnel to the Mac. It
-sets up Docker, the shell, tmux, lazygit, the Fresh editor and Zed's server. It sets up claude and
-[cld](https://github.com/zadykian/cld), and SigNoz with a collector for the machine's telemetry.
+sets up Docker, the shell, git, tmux, lazygit, the Fresh editor and Zed's server. It sets up claude
+and [cld](https://github.com/zadykian/cld), and SigNoz with a collector for the machine's telemetry.
 Running it again is safe, and `--check` shows how a machine differs from the repository.
 
 Each role has a page of its own. A role is Go steps of ws:
@@ -20,9 +20,10 @@ Each role has a page of its own. A role is Go steps of ws:
 - [`nvidia`](roles/server/ubuntu/nvidia): NVIDIA's headless driver from Ubuntu's archive, on a machine with an
   NVIDIA GPU.
 - [`fans`](roles/server/ubuntu/fans): fan curves for the board's headers, and the driver that sets them.
-- [`shell`](roles/server/ubuntu/shell): `~/.bashrc`, `~/.profile`, `~/.gitconfig`, `~/.secrets/env` from the
-  secrets file, a key that signs commits, git's tokens for servers besides GitHub, and clones of
-  repositories.
+- [`shell`](roles/server/ubuntu/shell): `~/.bashrc`, `~/.profile` and `~/.secrets/env` from the secrets
+  file.
+- [`git`](roles/server/ubuntu/git): `~/.gitconfig`, a key that signs commits, git's tokens for servers
+  besides GitHub, and clones of repositories.
 - [`tmux`](roles/server/ubuntu/tmux): tmux from Ubuntu's archive.
 - [`lazygit`](roles/server/ubuntu/lazygit): lazygit from Ubuntu's archive, in JetBrains Dark, with the
   repository and its branch in the terminal's title.

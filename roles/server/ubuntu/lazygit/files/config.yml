@@ -35,7 +35,7 @@ git:
   # lazygit commits with --no-verify, past the checks of .githooks, where a summary starts with this
   # prefix, WIP by default. Empty, it never does.
   skipHookPrefix: ""
-  # git signs each commit, as the shell role sets it, and its key asks for no passphrase. So lazygit
+  # git signs each commit, as the git role sets it, and its key asks for no passphrase. So lazygit
   # signs in place, where it would leave its screen for each commit, amend or rebase.
   overrideGpg: true
   # delta draws diffs on Zed's colours: plus-style and minus-style on editor.diff_hunk.added and

@@ -1,5 +1,5 @@
-// Package plan holds what the shell role's parts share: joining the changes of resources and
-// naming a path below the account's home.
+// Package plan holds what the shell and git roles' parts share: joining the changes of resources
+// and naming a path below the account's home.
 package plan
 
 import (
