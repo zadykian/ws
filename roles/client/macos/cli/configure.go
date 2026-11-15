@@ -18,10 +18,10 @@ import (
 func newConfigureCmd(p enginecli.Env, server *string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "configure",
-		Short: "edit mac.conf, the server's file, the secrets and ws's host_vars on forms",
+		Short: "edit mac.conf, the server's file, the secrets and ws's values.yml on forms",
 		Long: "It shows the keys that ws client macos wizard would ask, by WS_TARGET, with what the files hold: " +
 			"mac.conf's, then those of the server's file, servers/NAME/server.conf. It writes them on Ctrl-S. " +
-			"Ctrl-N goes on to ws's secrets, which show as set or not, never their values, then to ws's host_vars, both read over ssh. It needs a terminal: anywhere else, edit the file by hand.",
+			"Ctrl-N goes on to ws's secrets, which show as set or not, never their values, then to ws's values.yml, both read over ssh. It needs a terminal: anywhere else, edit the file by hand.",
 		Args: cobra.NoArgs,
 		RunE: enginecli.Configure(macTarget(p, new([]string), server), p),
 	}
@@ -45,7 +45,7 @@ func macForms(in io.Reader, errw io.Writer, p enginecli.Env, server *string) fun
 		macForm.Scope, serverForm.Scope = conf.MacFile, conf.ServerFile
 		// One way to root serves both of ws's sheets, so that sudo's password is asked once.
 		vars := &varsReach{p: p, server: name, sudo: &host.Sudo{}}
-		return []tui.Sheet{confSheet("mac.conf", macForm), confSheet("servers/"+name+"/server.conf", serverForm), vars.secretsSheet(), ubuntucli.HostVarsSheet(vars.reach)}, vars.close, nil
+		return []tui.Sheet{confSheet("mac.conf", macForm), confSheet("servers/"+name+"/server.conf", serverForm), vars.secretsSheet(), ubuntucli.ValuesSheet(vars.reach)}, vars.close, nil
 	}
 }
 

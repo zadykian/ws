@@ -12,7 +12,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 )
 
-// Store is where the form reads and writes host_vars: ws's session, whose operations run on ws.
+// Store is where the form reads and writes values.yml: ws's session, whose operations run on ws.
 type Store interface {
 	// Values reads the file, empty for a missing file.
 	Values(ctx context.Context) ([]byte, error)
@@ -20,12 +20,12 @@ type Store interface {
 	SetValues(ctx context.Context, pairs []string) error
 }
 
-// Form is ws's host_vars as a form: the keys that a line holds, with what the file gives each.
+// Form is ws's values.yml as a form: the keys that a line holds, with what the file gives each.
 // A table stays the file's to edit by hand. The file is root's on ws, so the files script reads it.
 type Form struct {
 	// Ws is the session whose operations read and write the file.
 	Ws Store
-	// file is what host_vars gave at the last load.
+	// file is what values.yml gave at the last load.
 	file Values
 }
 
@@ -33,10 +33,10 @@ type Form struct {
 func (f Form) Load(ctx context.Context) (Form, error) {
 	text, err := f.Ws.Values(ctx)
 	if err != nil {
-		return f, errors.New("host_vars on ws: " + remote.Stderr(err))
+		return f, errors.New("values.yml on ws: " + remote.Stderr(err))
 	}
 	if f.file, err = Parse(text); err != nil {
-		return f, fmt.Errorf("host_vars on ws: %w", err)
+		return f, fmt.Errorf("values.yml on ws: %w", err)
 	}
 	return f, nil
 }
@@ -65,7 +65,7 @@ func (f Form) Fields() []form.Field {
 // them until the next ws server ubuntu apply.
 func (f Form) Save(ctx context.Context, out effect.Out, edits map[string]string) (Form, error) {
 	if len(edits) == 0 {
-		out.Say("host_vars holds these values already")
+		out.Say("values.yml holds these values already")
 		return f, nil
 	}
 	var pairs []string
@@ -73,8 +73,8 @@ func (f Form) Save(ctx context.Context, out effect.Out, edits map[string]string)
 		pairs = append(pairs, key+"="+edits[key])
 	}
 	if err := f.Ws.SetValues(ctx, pairs); err != nil {
-		return f, errors.New("host_vars on ws: " + remote.Stderr(err))
+		return f, errors.New("values.yml on ws: " + remote.Stderr(err))
 	}
-	out.Say("wrote host_vars: the next ws server ubuntu apply takes it")
+	out.Say("wrote values.yml: the next ws server ubuntu apply takes it")
 	return f.Load(ctx)
 }

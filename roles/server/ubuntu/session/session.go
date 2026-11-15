@@ -54,7 +54,7 @@ type Reach interface {
 	// Shell runs a command as root on ws.
 	Shell() remote.Shell
 	// Want reads the target, WS_USER, WS_SLOT and WS_TUNNEL_PORT that ws's run is to leave: server.conf's
-	// on the Mac, and host_vars' on ws.
+	// on the Mac, and values.yml's on ws.
 	Want() (Want, error)
 	// User returns WS_USER, whose claude and git config the stages read.
 	User() (string, error)

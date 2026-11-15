@@ -19,7 +19,7 @@ func (r MacReach) Hand(h *guided.Hand, s session.Status) {
 	}
 	session.Fans(h, s)
 	if c.Target != "cloud" && s.OutboundOff {
-		h.Add("%s's outbound table: off, as %[1]s's /etc/ws/host_vars.yml names WS_SECURITY_OUTBOUND: false, as for "+
+		h.Add("%s's outbound table: off, as %[1]s's /etc/ws/values.yml names WS_SECURITY_OUTBOUND: false, as for "+
 			"a cloud VM; remove that line, then run the wizard with --update (roles/server/ubuntu/security/README.md, Outbound).", r.SSH.Host)
 	}
 	h.Add("macOS's local network: where it asks whether Ghostty, Zed or another app may find " +

@@ -68,7 +68,7 @@ func On(m *effecttest.Machine, status session.Status) *session.Session {
 	return over(Reach{M: m}, m, status)
 }
 
-// New returns ws's own session, whose host_vars names ada, and whose remote script answers status
+// New returns ws's own session, whose values.yml names ada, and whose remote script answers status
 // with the value's text.
 func New(status session.Status) (*session.Session, *effecttest.Machine) {
 	m := effecttest.NewMachine()

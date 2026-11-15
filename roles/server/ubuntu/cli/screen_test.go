@@ -87,7 +87,7 @@ func TestServerApplyRefusesAStepItsRoleLacks(t *testing.T) {
 	if status != 2 || stderr != want {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
-	if want := []string{"read /etc/os-release", "read /etc/ws/host_vars.yml"}; !slices.Equal(m.Calls, want) {
+	if want := []string{"read /etc/os-release", "read /etc/ws/values.yml"}; !slices.Equal(m.Calls, want) {
 		t.Errorf("calls = %q, want %q", m.Calls, want)
 	}
 }

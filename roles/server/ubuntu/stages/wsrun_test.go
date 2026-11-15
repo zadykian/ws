@@ -26,9 +26,9 @@ func TestWsRunPlan(t *testing.T) {
 		"first run":  {"lan", session.Status{}, "run ws server ubuntu apply on ws", false, false},
 		"update":     {"lan", idleRun, "run ws server ubuntu apply on ws", true, false},
 		"cloud done": {"cloud", session.Status{Run: off, OutboundOff: true}, "", false, false},
-		"cloud host_vars": {"cloud", session.Status{Run: session.Stamp{Version: "v1.2.3", Exit: "0", Off: true, Vars: "aa11"}, Vars: "bb22"},
-			"after naming WS_SECURITY_OUTBOUND: false in ws's host_vars", false, false},
-		"cloud run": {"cloud", idleRun, "after naming WS_SECURITY_OUTBOUND: false in ws's host_vars", false, false},
+		"cloud values.yml": {"cloud", session.Status{Run: session.Stamp{Version: "v1.2.3", Exit: "0", Off: true, Vars: "aa11"}, Vars: "bb22"},
+			"after naming WS_SECURITY_OUTBOUND: false in ws's values.yml", false, false},
+		"cloud run": {"cloud", idleRun, "after naming WS_SECURITY_OUTBOUND: false in ws's values.yml", false, false},
 		"follows":   {"lan", session.Status{Active: "ws-wizard-1"}, "follow ws-wizard-1, which runs on ws", false, true},
 		"failed":    {"lan", session.Status{Run: session.Stamp{Version: "v1.2.3", Exit: "1"}}, "its last full run exited 1", false, true},
 	} {
@@ -66,9 +66,9 @@ func TestWsRunIsDoneAtWsFilesSum(t *testing.T) {
 	}
 }
 
-// The run is done where its stamp names the sum of ws's host_vars that the status reads now. So a
+// The run is done where its stamp names the sum of ws's values.yml that the status reads now. So a
 // change by either wizard, Configure or by hand makes it due.
-func TestWsRunIsDoneAtHostVarsSum(t *testing.T) {
+func TestWsRunIsDoneAtValuesSum(t *testing.T) {
 	at := func(vars string) session.Stamp { return session.Stamp{Version: "v1.2.3", Exit: "0", Vars: vars} }
 	for name, tc := range map[string]struct {
 		run       session.Stamp
@@ -100,9 +100,9 @@ func asks(m *effecttest.Machine, user string) {
 func TestWsRunNamesWsUser(t *testing.T) {
 	for name, tc := range map[string]struct{ named, want, plan string }{
 		"the default": {"", values.Default().User, ""},
-		"none named":  {"", "alice", "after naming WS_USER: alice in ws's host_vars"},
+		"none named":  {"", "alice", "after naming WS_USER: alice in ws's values.yml"},
 		"named":       {"alice", "alice", ""},
-		"another":     {"other", "alice", "after naming WS_USER: alice in ws's host_vars"},
+		"another":     {"other", "alice", "after naming WS_USER: alice in ws's values.yml"},
 	} {
 		s := idleRun
 		s.User = tc.named
@@ -124,7 +124,7 @@ func TestWsRunNamesWsUserBeforeTheRun(t *testing.T) {
 	asks(m, "alice")
 	p, _ := r.Plan(context.Background())
 	err := r.Apply(context.Background(), p)
-	if err == nil || !strings.Contains(err.Error(), "ws's host_vars lacks WS_USER: alice") {
+	if err == nil || !strings.Contains(err.Error(), "ws's values.yml lacks WS_USER: alice") {
 		t.Fatalf("Apply where the files script fails = %v; want the stop", err)
 	}
 	m.Results[sessiontest.Op("user", "alice")] = effecttest.Result{}
@@ -223,8 +223,8 @@ func TestOnlyArgsQuoteForWsShell(t *testing.T) {
 	}
 }
 
-// A run whose stamp names host_vars as the status reads it after the run runs once.
-func TestWsRunApplyOnceWhereItsStampNamesHostVars(t *testing.T) {
+// A run whose stamp names values.yml as the status reads it after the run runs once.
+func TestWsRunApplyOnceWhereItsStampNamesValues(t *testing.T) {
 	r, m := newRun("lan", session.Status{Run: session.Stamp{Version: "v1.2.3", Exit: "0", Vars: "aa11"}, Vars: "aa11"}, true, false)
 	p, _ := r.Plan(context.Background())
 	m.Results[sessiontest.Op("run")] = effecttest.Result{}
@@ -251,7 +251,7 @@ func TestWsRunApplyCloudAgain(t *testing.T) {
 		}
 	}
 	if runs != 2 || !strings.Contains(strings.Join(m.Calls, "\n"), "op outbound") {
-		t.Errorf("calls = %q; want two runs, as the stamp names another host_vars, and outbound", m.Calls)
+		t.Errorf("calls = %q; want two runs, as the stamp names another values.yml, and outbound", m.Calls)
 	}
 }
 

@@ -32,20 +32,20 @@ func serverWizardStages(p enginecli.Env, e engine.WizardEffects, o engine.Wizard
 }
 
 // serverSession is ws's session to itself on m: the scripts run here as root, as the Mac's ssh logs
-// in as host_vars' WS_USER. talks runs claude's login, and events hears ws's run.
+// in as values.yml's WS_USER. talks runs claude's login, and events hears ws's run.
 func serverSession(m effect.Machine, talks effect.Foreground, out effect.Out, events step.Observer) *session.Session {
 	want := func() (session.Want, error) { return wsWant(m) }
 	return session.New(session.WsReach{M: m, Read: want, Here: talks, Out: out},
 		session.Scripts{Remote: session.RemoteScript, Files: session.RemoteFilesScript, Events: events})
 }
 
-// serverOpen is ws's session through a screen, for the host_vars sheet and the state screen, which
+// serverOpen is ws's session through a screen, for the values.yml sheet and the state screen, which
 // run no login and print nothing. It runs on the screen's machine.
 func serverOpen(_ context.Context, b *tui.Bridge) (*session.Session, error) {
 	return serverSession(b.Effects().M, nil, nil, nil), nil
 }
 
-// wsWant is what ws's run is to leave, as host_vars names it: a cloud VM where it turns the outbound
+// wsWant is what ws's run is to leave, as values.yml names it: a cloud VM where it turns the outbound
 // table off, and its WS_USER.
 func wsWant(m effect.Machine) (session.Want, error) {
 	v, err := values.Load(m, serverVars)

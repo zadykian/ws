@@ -33,7 +33,7 @@ func serverTarget(p enginecli.Env, opts *applyOptions) engine.Target {
 		return runOf(r.cfg, r.list), nil
 	}, Refuse: func(engine.Call) string {
 		if p.Euid != 0 {
-			return "run it as root, by sudo: ws's secrets and host_vars are root's"
+			return "run it as root, by sudo: ws's secrets and values.yml are root's"
 		}
 		return ""
 	}, NoScreen: "it needs a terminal and no --plain: anywhere else, run ws server ubuntu secrets " +

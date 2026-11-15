@@ -14,7 +14,7 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/session/sessiontest"
 )
 
-// pairsFor runs tunnelPairs for the address and port over a host_vars that reads as file, and
+// pairsFor runs tunnelPairs for the address and port over a values.yml that reads as file, and
 // returns the pairs.
 func pairsFor(address, port, file string) ([]string, error) {
 	m := effecttest.NewMachine()
@@ -61,7 +61,7 @@ func TestTunnelPairsGoesBackToTheDefaults(t *testing.T) {
 	}
 }
 
-func TestTunnelPairsKeepsWhatHostVarsLacks(t *testing.T) {
+func TestTunnelPairsKeepsWhatValuesLacks(t *testing.T) {
 	both := []string{"WS_TUNNEL_ADDRESS=10.99.1.1/24", "WS_TUNNEL_PORT=51821"}
 	for name, tc := range map[string]struct {
 		address, port, file string
@@ -80,7 +80,7 @@ func TestTunnelPairsKeepsWhatHostVarsLacks(t *testing.T) {
 	}
 }
 
-// tunnelRun is newRun over a Want at the address and the port, whose host_vars reads as file.
+// tunnelRun is newRun over a Want at the address and the port, whose values.yml reads as file.
 func tunnelRun(address, port, file string) (*WsRun, *effecttest.Machine) {
 	r, m := newRun("lan", idleRun, false, false)
 	var a netip.Prefix
@@ -107,13 +107,13 @@ func (r wantReach) Want() (session.Want, error) {
 	return w, err
 }
 
-func TestWsRunPlansWhatHostVarsLacks(t *testing.T) {
+func TestWsRunPlansWhatValuesLacks(t *testing.T) {
 	for name, tc := range map[string]struct{ address, port, file, want string }{
-		"both":    {"10.99.1.1/24", "51821", "", "after naming WS_TUNNEL_ADDRESS: 10.99.1.1/24 and WS_TUNNEL_PORT: 51821 in ws's host_vars"},
-		"address": {"10.99.1.1/24", "", "", "after naming WS_TUNNEL_ADDRESS: 10.99.1.1/24 in ws's host_vars"},
+		"both":    {"10.99.1.1/24", "51821", "", "after naming WS_TUNNEL_ADDRESS: 10.99.1.1/24 and WS_TUNNEL_PORT: 51821 in ws's values.yml"},
+		"address": {"10.99.1.1/24", "", "", "after naming WS_TUNNEL_ADDRESS: 10.99.1.1/24 in ws's values.yml"},
 		"held":    {"10.99.1.1/24", "51821", "WS_TUNNEL_ADDRESS: 10.99.1.1/24\nWS_TUNNEL_PORT: 51821\n", ""},
 		"slot 0":  {"10.99.0.1/24", "", "", ""},
-		"back":    {"10.99.0.1/24", "", "WS_TUNNEL_ADDRESS: 10.99.1.1/24\nWS_TUNNEL_PORT: 51821\n", "after naming WS_TUNNEL_ADDRESS: 10.99.0.1/24 and WS_TUNNEL_PORT: 51820 in ws's host_vars"},
+		"back":    {"10.99.0.1/24", "", "WS_TUNNEL_ADDRESS: 10.99.1.1/24\nWS_TUNNEL_PORT: 51821\n", "after naming WS_TUNNEL_ADDRESS: 10.99.0.1/24 and WS_TUNNEL_PORT: 51820 in ws's values.yml"},
 	} {
 		r, _ := tunnelRun(tc.address, tc.port, "---\n"+tc.file)
 		p, err := r.Plan(context.Background())
@@ -127,10 +127,10 @@ func TestWsRunPlansWhatHostVarsLacks(t *testing.T) {
 	}
 }
 
-func TestWsRunStopsWhereHostVarsCannotBeRead(t *testing.T) {
+func TestWsRunStopsWhereValuesCannotBeRead(t *testing.T) {
 	r, m := tunnelRun("10.99.1.1/24", "", "")
 	m.Results[sessiontest.Op("values")] = effecttest.Result{Err: errors.New("ssh: no route")}
-	if _, err := r.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "host_vars on ws") {
+	if _, err := r.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "values.yml on ws") {
 		t.Errorf("Plan where the read fails = %v; want the stop", err)
 	}
 }
@@ -173,7 +173,7 @@ func TestWsRunStopsWhereTheTunnelCannotBeWritten(t *testing.T) {
 	}
 	m.Results[pairsOp("WS_TUNNEL_ADDRESS=10.99.1.1/24")] = effecttest.Result{Err: errors.New("denied")}
 	err = r.Apply(context.Background(), p)
-	if err == nil || !strings.Contains(err.Error(), "cannot write WS_TUNNEL_ADDRESS: 10.99.1.1/24 into ws's host_vars") {
+	if err == nil || !strings.Contains(err.Error(), "cannot write WS_TUNNEL_ADDRESS: 10.99.1.1/24 into ws's values.yml") {
 		t.Errorf("Apply where the write fails = %v; want the stop", err)
 	}
 	if slices.Contains(m.Calls, "run op run") {

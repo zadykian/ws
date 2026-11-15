@@ -19,11 +19,11 @@ import (
 // or ws's own.
 type SessionOpen func(ctx context.Context, b *tui.Bridge) (*session.Session, error)
 
-// HostVarsSheet is the host_vars form before its read, which open reaches ws for. The password that
+// ValuesSheet is the values form before its read, which open reaches ws for. The password that
 // sudo asks stays with the session, so that a save asks none.
-func HostVarsSheet(open SessionOpen) tui.Sheet {
+func ValuesSheet(open SessionOpen) tui.Sheet {
 	return tui.Sheet{
-		Name:   "host_vars",
+		Name:   "values",
 		Fields: func(map[string]string) []tui.FieldSpec { return nil },
 		Open: func(ctx context.Context, b *tui.Bridge) (tui.Sheet, error) {
 			ws, err := open(ctx, b)
@@ -39,10 +39,10 @@ func HostVarsSheet(open SessionOpen) tui.Sheet {
 	}
 }
 
-// varsSheet is ws's host_vars on the Configure screen, as form read it.
+// varsSheet is ws's values.yml on the Configure screen, as form read it.
 func varsSheet(form values.Form) tui.Sheet {
 	return tui.Sheet{
-		Name:   "host_vars",
+		Name:   "values",
 		Fields: func(map[string]string) []tui.FieldSpec { return enginecli.FieldSpecs(form.Fields()) },
 		Save: func(ctx context.Context, b *tui.Bridge, edits map[string]string) (tui.Sheet, error) {
 			next, err := form.Save(ctx, b, edits)

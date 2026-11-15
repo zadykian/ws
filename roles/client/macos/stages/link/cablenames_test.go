@@ -33,9 +33,9 @@ func TestCablePlanNamesTheServer(t *testing.T) {
 		env         map[string]string
 		want        string
 	}{
-		"another": {"WS_CABLE_PORT=eth1\nWS_CABLE_SERVICE=\"USB\"\n", "eth0", nil, "eth1 in /etc/ws/host_vars.yml on lab again"},
-		"forced":  {"", "", map[string]string{"WS_CABLE_PORT": "eth1"}, "ask lab's port of the cable, name it in /etc/ws/host_vars.yml on lab, and"},
-		"unnamed": {"", "", nil, "ask lab's port of the cable, name it in /etc/ws/host_vars.yml on lab, and"},
+		"another": {"WS_CABLE_PORT=eth1\nWS_CABLE_SERVICE=\"USB\"\n", "eth0", nil, "eth1 in /etc/ws/values.yml on lab again"},
+		"forced":  {"", "", map[string]string{"WS_CABLE_PORT": "eth1"}, "ask lab's port of the cable, name it in /etc/ws/values.yml on lab, and"},
+		"unnamed": {"", "", nil, "ask lab's port of the cable, name it in /etc/ws/values.yml on lab, and"},
 	} {
 		c, m, _ := labCable(t, session.Status{Cable: tc.cable}, cableLink, tc.env)
 		m.Files["/h/mac.conf"] = append(m.Files["/h/mac.conf"], tc.conf...)

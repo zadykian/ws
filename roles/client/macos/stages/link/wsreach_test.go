@@ -13,7 +13,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-// On ws, the login runs by runuser as host_vars' WS_USER, and a missing claude names ws server
+// On ws, the login runs by runuser as values.yml's WS_USER, and a missing claude names ws server
 // ubuntu apply.
 func TestWsClaudeHere(t *testing.T) {
 	ws, m := sessiontest.New(session.Status{Claude: "none"})

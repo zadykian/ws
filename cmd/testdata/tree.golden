@@ -44,7 +44,7 @@ Usage:
 Available Commands:
   apply       set the Mac up from mac.conf and a server's file
   conf        print the checked settings of mac.conf and a server's file as shell assignments
-  configure   edit mac.conf, the server's file, the secrets and ws's host_vars on forms
+  configure   edit mac.conf, the server's file, the secrets and ws's values.yml on forms
   remove      remove a server from the Mac
   resolver    send DOMAIN's names to the nameservers, or drop it
   secrets     edit ws's secrets file, over ssh
@@ -89,7 +89,7 @@ Global Flags:
       --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos configure
-It shows the keys that ws client macos wizard would ask, by WS_TARGET, with what the files hold: mac.conf's, then those of the server's file, servers/NAME/server.conf. It writes them on Ctrl-S. Ctrl-N goes on to ws's secrets, which show as set or not, never their values, then to ws's host_vars, both read over ssh. It needs a terminal: anywhere else, edit the file by hand.
+It shows the keys that ws client macos wizard would ask, by WS_TARGET, with what the files hold: mac.conf's, then those of the server's file, servers/NAME/server.conf. It writes them on Ctrl-S. Ctrl-N goes on to ws's secrets, which show as set or not, never their values, then to ws's values.yml, both read over ssh. It needs a terminal: anywhere else, edit the file by hand.
 
 Usage:
   ws client macos configure [flags]
@@ -416,7 +416,7 @@ Usage:
 
 Available Commands:
   apply       set the server up, each role as Go steps
-  configure   edit ws's secrets and host_vars on forms, on ws
+  configure   edit ws's secrets and values.yml on forms, on ws
   fans        drive the board's fans on the curves of CONFIG until SIGTERM
   secrets     keep ws's secrets file, with its identity as a systemd credential
   state       report what the server holds of what ws manages, and what apply would change
@@ -452,7 +452,7 @@ Flags:
 Global Flags:
       --plain   print lines, with no full-screen display
 == ws server ubuntu configure
-The forms of ws client macos configure that edit ws, read and written here as root, with no ssh. ws's secrets show as set or not, never their values. Ctrl-N goes to host_vars. Ctrl-S writes a form. It needs a terminal: anywhere else, run ws server ubuntu secrets and ws server ubuntu values set.
+The forms of ws client macos configure that edit ws, read and written here as root, with no ssh. ws's secrets show as set or not, never their values. Ctrl-N goes to ws's values. Ctrl-S writes a form. It needs a terminal: anywhere else, run ws server ubuntu secrets and ws server ubuntu values set.
 
 Usage:
   ws server ubuntu configure [flags]
@@ -627,7 +627,7 @@ Usage:
   ws server ubuntu values [command]
 
 Available Commands:
-  set         write one key of /etc/ws/host_vars.yml
+  set         write one key of /etc/ws/values.yml
 
 Flags:
   -h, --help   help for values
@@ -650,7 +650,7 @@ Flags:
 Global Flags:
       --plain   print lines, with no full-screen display
 == ws server ubuntu wizard
-The stages of ws client macos wizard that act on ws, run as root on ws: ws's values, which it asks where host_vars lacks them, then ws server ubuntu apply, in a unit of its own that goes on where the login drops, then claude's login, and ws's signing key on GitHub. Either wizard follows the other's unit, and after the other's run, with nothing changed, runs no apply. At a terminal the stages open as ws's list, and the ones chosen run: e opens ws server ubuntu configure's forms. Under --check each stage prints what it would do and changes nothing.
+The stages of ws client macos wizard that act on ws, run as root on ws: ws's values, which it asks where values.yml lacks them, then ws server ubuntu apply, in a unit of its own that goes on where the login drops, then claude's login, and ws's signing key on GitHub. Either wizard follows the other's unit, and after the other's run, with nothing changed, runs no apply. At a terminal the stages open as ws's list, and the ones chosen run: e opens ws server ubuntu configure's forms. Under --check each stage prints what it would do and changes nothing.
 
 Usage:
   ws server ubuntu wizard [flags]

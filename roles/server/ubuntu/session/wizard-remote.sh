@@ -6,18 +6,18 @@
 #   ssh -o HostName=ADDRESS -o Port=PORT ws sh -s -- OP [ARG...] <roles/server/ubuntu/session/wizard-remote.sh
 #
 # - status prints what the wizard reads of ws, a line each, as NAME VALUE, with - for a value that
-#   is missing. user is the WS_USER that host_vars names. run is the ws version and status of the
-#   last full run, and off where host_vars turned the outbound table off as the run began, else on.
-#   Then come the SHA-256 of that run's secrets file and of host_vars, each or -. ws is the version
+#   is missing. user is the WS_USER that values.yml names. run is the ws version and status of the
+#   last full run, and off where values.yml turned the outbound table off as the run began, else on.
+#   Then come the SHA-256 of that run's secrets file and of values.yml, each or -. ws is the version
 #   that ws prints. last is the unit and status of the last run. active is the run's unit that runs
 #   now. mac.pub is the Mac's key that wg0's peer takes, and wg0 is wg0's own key.
 #   signing is the type and base64 of ws's public signing key, or none, and hostname is ws's. claude
 #   is ok, none or login. fans is refused where Secure Boot refuses nct6687, the fans' driver, else
 #   ok. peer is ok where wg0 has mac.pub's key as a peer. outbound
-#   is off where host_vars, /etc/ws/host_vars.yml, turns the security role's outbound table off, else
-#   on. cable is the port of the Mac's cable that host_vars and the cable role's netplan file name.
+#   is off where values.yml, /etc/ws/values.yml, turns the security role's outbound table off, else
+#   on. cable is the port of the Mac's cable that values.yml and the cable role's netplan file name.
 #   secrets is the SHA-256 of ws's secrets file, as a run would stamp it, or -, and vars that of
-#   host_vars.
+#   values.yml.
 # - state prints ws server ubuntu state --json, which changes nothing, on stdout alone. It has the
 #   HOME and the locale of a run's unit, so that it reads what a run would.
 # - run [ARG...] runs ws server ubuntu apply --json ARGs in a unit of its own, ws-wizard-STAMP,
@@ -29,7 +29,7 @@
 # - install TAG URL installs ws's release TAG from the releases at URL. It runs that release's
 #   install.sh, which checks the binary against the release's ws.sha256 file. TAG is vX.Y.Z, and
 #   URL starts with https://, or with http://127.0.0.1: for CI's stand-in, as the wizard checks them.
-# - outbound names WS_SECURITY_OUTBOUND: false in ws's host_vars, which keeps the outbound table off
+# - outbound names WS_SECURITY_OUTBOUND: false in ws's values.yml, which keeps the outbound table off
 #   for a cloud VM. It runs before the run, as ws server ubuntu apply reads its values from that
 #   file.
 #
@@ -43,7 +43,7 @@ set -eu
 # own.
 state=/var/lib/ws-wizard
 ws=/usr/local/bin/ws
-vars=/etc/ws/host_vars.yml
+vars=/etc/ws/values.yml
 secrets=/etc/ws/secrets.age
 credential=/etc/credstore.encrypted/ws-secrets
 peer=/etc/wireguard/mac.pub
@@ -77,7 +77,7 @@ stamp() {
     awk -v n="${2:-2}" 'NF == n { print; exit }' "$1" 2>/dev/null | first
 }
 
-# cable prints the port that host_vars names as WS_CABLE_PORT, as link writes it,
+# cable prints the port that values.yml names as WS_CABLE_PORT, as link writes it,
 # bare or in either quotes: the last such line. It prints - for none, and where the cable role's
 # netplan file lacks it, as after a roles' run that failed, so that the Cable stage runs them again.
 cable() {
@@ -154,8 +154,8 @@ status() {
 # [ARG...]. It runs WS server ubuntu apply --json ARGs, whose event lines reach the wizard through
 # the unit's log. Its last steps write STATE/last as UNIT and the status, each by a rename. A full
 # run, which has no ARG, writes STATE/run too. It holds the version that WS printed before the run,
-# or - where WS prints none, and the status. Then off where host_vars turned the outbound table off
-# as the run began, else on. Last come the SHA-256 of the secrets file, or -, and that of host_vars
+# or - where WS prints none, and the status. Then off where values.yml turned the outbound table off
+# as the run began, else on. Last come the SHA-256 of the secrets file, or -, and that of values.yml
 # as the run began, or -. It removes it as it starts. A unit with the identity as its credential
 # adds --secrets and the file.
 job() {
@@ -184,7 +184,7 @@ exit "$status"
 EOF
 }
 
-# off prints the script of host_vars VARS's WS_SECURITY_OUTBOUND line, which runs as OP VARS. check
+# off prints the script of values.yml VARS's WS_SECURITY_OUTBOUND line, which runs as OP VARS. check
 # succeeds where the last such line is false, no or off, in any case, as YAML reads it. A comment,
 # blanks or a carriage return may follow. write names WS_SECURITY_OUTBOUND: false otherwise, by a
 # rename that keeps the file's other lines and mode, and not through a link. It makes the directory

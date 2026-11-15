@@ -14,9 +14,9 @@ import (
 func newServerConfigureCmd(p enginecli.Env) *cobra.Command {
 	return &cobra.Command{
 		Use:   "configure",
-		Short: "edit ws's secrets and host_vars on forms, on ws",
+		Short: "edit ws's secrets and values.yml on forms, on ws",
 		Long: "The forms of ws client macos configure that edit ws, read and written here as root, with no ssh. ws's " +
-			"secrets show as set or not, never their values. Ctrl-N goes to host_vars. Ctrl-S writes a form. " +
+			"secrets show as set or not, never their values. Ctrl-N goes to ws's values. Ctrl-S writes a form. " +
 			"It needs a terminal: anywhere else, run ws server ubuntu secrets and ws server ubuntu values set.",
 		Args: cobra.NoArgs,
 		RunE: enginecli.Configure(serverTarget(p, new(applyOptions)), p),
@@ -25,7 +25,7 @@ func newServerConfigureCmd(p enginecli.Env) *cobra.Command {
 
 // serverSheets are the forms of ws server ubuntu configure and of ws server ubuntu wizard's list.
 func serverSheets(p enginecli.Env) []tui.Sheet {
-	return []tui.Sheet{serverSecretsSheet(p), HostVarsSheet(serverOpen)}
+	return []tui.Sheet{serverSecretsSheet(p), ValuesSheet(serverOpen)}
 }
 
 // serverSecretsSheet is ws's secrets file, edited here as ws server ubuntu secrets edits it.

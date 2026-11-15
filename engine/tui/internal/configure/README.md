@@ -35,7 +35,7 @@ again, even an empty one. Under the form, the screen shows the keys a save empti
 failed, which keeps the edits. A short window keeps the field's input and the end of those words.
 At one row it keeps the input alone, and the status still counts the edits.
 
-The secrets form reads the entries by `ws server ubuntu secrets keys`, and the host_vars form
+The secrets form reads the entries by `ws server ubuntu secrets keys`, and the values form
 `/etc/ws/host_vars.yml`, over ssh once each shows, so `mac.conf` draws with ws out of reach. A read
 that fails shows why, and Ctrl-S tries again. The first read takes the wizard's lock, and asks
 sudo's password where ws wants one. Both last until the screen ends, so a save asks nothing, and a
@@ -47,7 +47,7 @@ first keys, and a second writes them again as they are.
 
 ## On ws
 
-`sudo ws server ubuntu configure` draws the secrets form and the host_vars form on ws itself, as
+`sudo ws server ubuntu configure` draws the secrets form and the values form on ws itself, as
 root. It has no `mac.conf` form. Each reads and writes as on the Mac, with no ssh, lock or sudo. The
 secrets form edits ws's file as `ws server ubuntu secrets` does. The host_vars form runs the same
 files script, here on `sh`'s standard input. The secrets form, now first, reads as the screen opens.

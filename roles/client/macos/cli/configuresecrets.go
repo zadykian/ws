@@ -7,7 +7,7 @@ import (
 	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
 )
 
-// secretsSheet is ws's secrets sheet before its read, which reaches ws as the host_vars sheet does.
+// secretsSheet is ws's secrets sheet before its read, which reaches ws as the values.yml sheet does.
 func (r *varsReach) secretsSheet() tui.Sheet {
 	return tui.Sheet{
 		Name:   "secrets",

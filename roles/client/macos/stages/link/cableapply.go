@@ -17,7 +17,7 @@ func (c *Cable) file() conf.File {
 }
 
 // Apply takes ws's port of the cable, where none holds ws's end, from WS_CABLE_PORT or the
-// terminal, the one with carrier by default. link names it in /etc/ws/host_vars.yml on ws. Then ws
+// terminal, the one with carrier by default. link names it in /etc/ws/values.yml on ws. Then ws
 // server ubuntu apply --only cable,tunnel runs there, as both roles read it: the cable role
 // must give it 10.77.0.1 as ws's end. After that, service takes the Mac's service. none, as either
 // answer, writes an empty WS_CABLE_SERVICE. Where the server's file has a service, again takes the stage's
@@ -55,7 +55,7 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 		if port == "" {
 			return c.write(ctx, "")
 		}
-		c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on %s, and ws server ubuntu apply --only cable,tunnel "+
+		c.Out.Say("%s: %s goes in /etc/ws/values.yml on %s, and ws server ubuntu apply --only cable,tunnel "+
 			"runs there in a unit of its own", stage.Cable, port, c.SSH.Host)
 		if err := c.name(ctx, port); err != nil {
 			return err
@@ -71,7 +71,7 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 	return c.service(ctx)
 }
 
-// name puts the port in ws's /etc/ws/host_vars.yml and runs the cable and tunnel roles there.
+// name puts the port in ws's /etc/ws/values.yml and runs the cable and tunnel roles there.
 func (c *Cable) name(ctx context.Context, port string) error {
 	return c.Ws.NameCable(ctx, port)
 }
@@ -82,7 +82,7 @@ func (c *Cable) holds(ctx context.Context, port string) bool {
 	return ok && s.Cable == port
 }
 
-// again names WS_CABLE_PORT in /etc/ws/host_vars.yml on ws where ws's status names none or another.
+// again names WS_CABLE_PORT in /etc/ws/values.yml on ws where ws's status names none or another.
 // That holds after ws's install, a failed roles' run or a change in the server's file. Then it runs the
 // roles there, with no question and no dock. It stops on a port that ws lacks.
 func (c *Cable) again(ctx context.Context, port string) error {
@@ -100,7 +100,7 @@ func (c *Cable) again(ctx context.Context, port string) error {
 	if s.Cable == port {
 		return nil
 	}
-	c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on %s again, and ws server ubuntu apply --only cable,tunnel "+
+	c.Out.Say("%s: %s goes in /etc/ws/values.yml on %s again, and ws server ubuntu apply --only cable,tunnel "+
 		"runs there in a unit of its own", stage.Cable, port, c.SSH.Host)
 	return c.name(ctx, port)
 }

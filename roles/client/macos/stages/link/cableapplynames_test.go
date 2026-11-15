@@ -19,7 +19,7 @@ func TestCableApplyNamesTheServer(t *testing.T) {
 	if err := c.Apply(context.Background(), step.Plan{}); err != nil {
 		t.Fatal(err)
 	}
-	if got := strings.Join(c.Out.(*effecttest.Out).Lines, "\n"); !strings.Contains(got, "eth1 goes in /etc/ws/host_vars.yml on lab, and") {
+	if got := strings.Join(c.Out.(*effecttest.Out).Lines, "\n"); !strings.Contains(got, "eth1 goes in /etc/ws/values.yml on lab, and") {
 		t.Errorf("said %q; want lab for the file's machine", got)
 	}
 }
