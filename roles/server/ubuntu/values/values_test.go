@@ -62,8 +62,8 @@ func TestParseDerivesFromTheUser(t *testing.T) {
 
 func TestParseKeepsAKeyBelowTheHome(t *testing.T) {
 	for _, in := range []string{
-		"WS_USER: root\nWS_GIT_SIGNING_PUB_KEY: /root/k\n",
-		"WS_HOME: /srv/x\nWS_GIT_SIGNING_PUB_KEY: /srv/x/a/../b/k\n",
+		"WS_USER: root\nWS_GIT_SIGNING_PUB_KEY: /root/k.pub\n",
+		"WS_HOME: /srv/x\nWS_GIT_SIGNING_PUB_KEY: /srv/x/a/../b/k.pub\n",
 	} {
 		if _, err := Parse([]byte(in)); err != nil {
 			t.Errorf("Parse(%q): %v", in, err)
@@ -120,5 +120,16 @@ func TestParseRefuses(t *testing.T) {
 		} else if strings.Contains(err.Error(), "hunter2") {
 			t.Errorf("%s: the error shows the value: %v", name, err)
 		}
+	}
+}
+
+func TestParseRefusesASigningKeyThatIsNoPub(t *testing.T) {
+	_, err := Parse([]byte("WS_GIT_SIGNING_PUB_KEY: /home/zadykian/.ssh/k\n"))
+	if err == nil || !strings.Contains(err.Error(), ".pub") {
+		t.Errorf("a key with no .pub: %v", err)
+	}
+	_, err = Parse([]byte("WS_GIT_SIGNING_KEY: /home/zadykian/.ssh/k\n"))
+	if err == nil || !strings.Contains(err.Error(), "WS_GIT_SIGNING_KEY") {
+		t.Errorf("the old key: %v", err)
 	}
 }

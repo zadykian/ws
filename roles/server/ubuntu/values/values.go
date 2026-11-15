@@ -47,13 +47,16 @@ type Shared struct {
 }
 
 // Parse returns the values that data gives over Default. It refuses a key that no role knows, a key
-// twice, and a path that underHome refuses. Empty data gives Default.
+// twice, a path that underHome refuses, and a signing key that is no .pub's path. Empty data gives Default.
 func Parse(data []byte) (Values, error) {
 	v, err := decode(data)
 	if err != nil {
 		return Values{}, err
 	}
 	if err := v.underHome(); err != nil {
+		return Values{}, err
+	}
+	if err := v.signingPub(); err != nil {
 		return Values{}, err
 	}
 	return v, nil
@@ -118,6 +121,15 @@ func (v *Values) underHome() error {
 	home := path.Clean(v.Home)
 	if !strings.HasPrefix(path.Clean(v.GitSigningPubKey), strings.TrimSuffix(home, "/")+"/") {
 		return fmt.Errorf("WS_GIT_SIGNING_PUB_KEY: %s is outside WS_HOME %s", v.GitSigningPubKey, v.Home)
+	}
+	return nil
+}
+
+// signingPub refuses a signing key that is no .pub's path: ws finds the private key by cutting the
+// suffix, as the Mac's check does.
+func (v *Values) signingPub() error {
+	if !strings.HasSuffix(v.GitSigningPubKey, ".pub") {
+		return fmt.Errorf("WS_GIT_SIGNING_PUB_KEY: %s is not a .pub's path", v.GitSigningPubKey)
 	}
 	return nil
 }
