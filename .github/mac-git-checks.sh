@@ -60,27 +60,8 @@ warned() {
         "signs as unverified"
 }
 
-# A stand-in gh goes in $tmp/bin, first on PATH, logged in while $tmp/login is there. It logs each
-# call, and lists and adds the account's signing keys in $tmp/keys, for ws client macos apply's
-# commands alone. With $tmp/error, it fails with that text; with $tmp/lost, an add keeps no key.
-: >"$tmp/keys"
-touch "$tmp/login"
-cat >"$tmp/bin/gh" <<'EOF'
-#!/bin/sh
-state=${0%/bin/*}
-echo "$*" >>"$state/gh.log"
-if [ ! -f "$state/login" ]; then
-    echo 'To get started with GitHub CLI, please run:  gh auth login' >&2
-    exit 4
-fi
-[ ! -f "$state/error" ] || { cat "$state/error" >&2 && exit 1; }
-case $* in
-'api --paginate user/ssh_signing_keys --jq .[].key') cat "$state/keys" ;;
-'ssh-key add '*) [ -f "$state/lost" ] || awk '{ print $1, $2 }' "$3" >>"$state/keys" ;;
-*) echo "gh: the stand-in takes no $*" >&2 && exit 2 ;;
-esac
-EOF
-chmod 755 "$tmp/bin/gh"
+# The stand-in gh, in $tmp/bin, is first on PATH. See mac-gh.sh for its files in $tmp.
+sh .github/mac-gh.sh "$tmp"
 if [ "$(command -v gh)" != "$tmp/bin/gh" ]; then
     error "gh is $(command -v gh), not the stand-in, so git's cases go"
     exit 1

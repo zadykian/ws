@@ -57,6 +57,12 @@ jobs:
         run: |
           sh .tools/build darwin arm64 ~/.local/bin/ws
           echo ~/.local/bin >>"$GITHUB_PATH"
+      # The cases' git step lists and adds signing keys through gh: this one is logged in, and a
+      # second run adds no key.
+      - name: A stand-in gh, logged in
+        run: |
+          sh .github/mac-gh.sh "$RUNNER_TEMP/gh"
+          echo "$RUNNER_TEMP/gh/bin" >>"$GITHUB_PATH"
       # The cases, in .github/mac, run in order from the clone: a new step adds a case there and
       # nothing here.
       - name: The cases
