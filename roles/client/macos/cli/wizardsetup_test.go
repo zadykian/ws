@@ -12,6 +12,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos"
 	"github.com/zadykian/ws/roles/client/macos/stages/tools"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // lastEvents keeps the steps that end, each after its parent.
@@ -25,7 +26,7 @@ func (l *lastEvents) Observe(e step.Event) {
 
 func TestWizardSetupPassesTheObserverOn(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"], m.Files["/h/servers/ws/server.conf"] = []byte(""), []byte("WS_USER=ada\n")
+	m.Files["/h/mac.conf"], m.Files["/h/servers/ws/server.conf"] = []byte(""), []byte(values.Text("WS_USER", "ada"))
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
 	var got lastEvents
@@ -56,7 +57,7 @@ func (l *leftEvents) Observe(e step.Event) {
 func setupOf(t *testing.T, e wizardEffects, left func(parent, name string) bool) *tools.Setup {
 	t.Helper()
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"], m.Files["/h/servers/ws/server.conf"] = []byte(""), []byte("WS_USER=ada\n")
+	m.Files["/h/mac.conf"], m.Files["/h/servers/ws/server.conf"] = []byte(""), []byte(values.Text("WS_USER", "ada"))
 	e.p = withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	e.p.Machine, e.text, e.out = m, io.Discard, &effecttest.Out{}
 	return wizardSetup(e, left, "/h/mac.conf", "/h/mac.conf", "ws")
@@ -100,10 +101,10 @@ func TestWizardSetupStopsWhereTheRunDoes(t *testing.T) {
 // beside that one, as the run will, and so find no clash.
 func TestWizardSetupListsTheServersBesideItsFile(t *testing.T) {
 	p, m := macTerminal()
-	m.Files["/h/.config/ws/servers/lab/server.conf"], m.Dirs["/h/.config/ws/servers/lab"] = []byte("WS_USER=ada\n"), 0o755
+	m.Files["/h/.config/ws/servers/lab/server.conf"], m.Dirs["/h/.config/ws/servers/lab"] = []byte(values.Text("WS_USER", "ada")), 0o755
 	m.Files["/lock/mac.conf"] = m.Files["/h/.config/ws/mac.conf"]
-	m.Files["/lock/servers/ws/server.conf"] = []byte("WS_USER=ada\n")
-	m.Files["/lock/servers/lab/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=1\n")
+	m.Files["/lock/servers/ws/server.conf"] = []byte(values.Text("WS_USER", "ada"))
+	m.Files["/lock/servers/lab/server.conf"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "1"))
 	m.Dirs["/lock/servers"], m.Dirs["/lock/servers/ws"], m.Dirs["/lock/servers/lab"] = 0o755, 0o755, 0o755
 	for _, file := range []string{"new", "whole"} {
 		m.Results["ssh -G -F /tmp/x/"+file+" lab"] = effecttest.Result{}
@@ -120,8 +121,8 @@ func TestWizardSetupListsTheServersBesideItsFile(t *testing.T) {
 func TestWizardSetupNamesTheRealFileOfARefusedSibling(t *testing.T) {
 	p, m := macTerminal()
 	m.Files["/lock/mac.conf"] = m.Files["/h/.config/ws/mac.conf"]
-	m.Files["/lock/servers/ws/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=99\n")
-	m.Files["/lock/servers/lab/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=1\n")
+	m.Files["/lock/servers/ws/server.conf"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "99"))
+	m.Files["/lock/servers/lab/server.conf"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "1"))
 	m.Dirs["/lock/servers"], m.Dirs["/lock/servers/ws"], m.Dirs["/lock/servers/lab"] = 0o755, 0o755, 0o755
 	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}}, nil, "/lock/mac.conf", "/h/.config/ws/mac.conf", "lab")
 	_, err := s.Run(context.Background(), true)

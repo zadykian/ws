@@ -6,13 +6,14 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // twoServers is ws and lab on a Mac.
 func twoServers() *effecttest.Machine {
 	m := effecttest.NewMachine()
 	keyed(m)
-	m.Files["/h/.config/ws/servers/lab/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=1\n")
+	m.Files["/h/.config/ws/servers/lab/server.conf"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "1"))
 	m.Dirs["/h/.config/ws/servers/lab"] = 0o755
 	return m
 }
@@ -62,7 +63,7 @@ func TestMacStateOfOneServerKeepsItsBytes(t *testing.T) {
 // refusedLab is two servers where lab's slot is out of range.
 func refusedLab() *effecttest.Machine {
 	m := twoServers()
-	m.Files["/h/.config/ws/servers/lab/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=99\n")
+	m.Files["/h/.config/ws/servers/lab/server.conf"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "99"))
 	return m
 }
 

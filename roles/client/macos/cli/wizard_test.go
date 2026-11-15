@@ -14,6 +14,7 @@ import (
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/remote"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // testWizardProcess returns the process of a Mac whose Command Line Tools and Homebrew are there, and
@@ -83,7 +84,7 @@ func TestWizardCheckShowsTheAnswersDiff(t *testing.T) {
 	if status != 0 || !strings.Contains(stderr, "+WS_TARGET=cloud") {
 		t.Errorf("status = %d, stderr = %q; want the diff of the server's file", status, stderr)
 	}
-	if got := string(m.Files["/t/ws-wizard.lock/servers/ws/server.conf"]); !strings.HasPrefix(got, "WS_SLOT=0\nWS_TUNNEL_PORT=51820\nWS_TARGET=cloud\n") {
+	if got := string(m.Files["/t/ws-wizard.lock/servers/ws/server.conf"]); !strings.HasPrefix(got, values.Text("WS_SLOT", "0", "WS_TUNNEL_PORT", "51820", "WS_TARGET", "cloud")) {
 		t.Errorf("scratch server file = %q", got)
 	}
 }

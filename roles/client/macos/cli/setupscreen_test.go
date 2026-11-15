@@ -6,11 +6,12 @@ import (
 
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // keyed gives the Mac a mac.conf that names the file key it has for ws's login, as ssh's step needs.
 func keyed(m *effecttest.Machine) {
-	writeConfs(m, "WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub\n", "WS_USER=ada\n")
+	writeConfs(m, values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id_ed25519.pub"), values.Text("WS_USER", "ada"))
 	m.Files["/h/.ssh/id_ed25519.pub"] = []byte("ssh-ed25519 AAAA ada\n")
 	m.Results["ssh-keygen -l -f /h/.ssh/id_ed25519.pub"] = effecttest.Result{}
 }

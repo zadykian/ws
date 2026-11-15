@@ -15,6 +15,7 @@ import (
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/tui"
+	macvalues "github.com/zadykian/ws/roles/client/macos/values"
 	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
 )
 
@@ -64,7 +65,7 @@ type farWs struct {
 }
 
 func newFarWs(m *effecttest.Machine, file string) farWs {
-	writeConfs(m, "", "WS_USER=ada\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22\n")
+	writeConfs(m, "", macvalues.Text("WS_USER", "ada", "WS_REMOTE", "r.example", "WS_REMOTE_PORT", "22"))
 	return farWs{Machine: m, file: file, ops: make(chan []string, 64)}
 }
 
@@ -176,7 +177,7 @@ func TestMacConfigureSavesValuesAndLetsTheLockGo(t *testing.T) {
 		}
 	}
 	pair, err := base64.StdEncoding.DecodeString(saved[1])
-	if err != nil || !strings.HasPrefix(string(pair), "WS_USER=adax") {
+	if err != nil || !strings.HasPrefix(string(pair), macvalues.Line("WS_USER", "adax")) {
 		t.Errorf("saved %q: %v", pair, err)
 	}
 	for {

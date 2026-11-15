@@ -33,7 +33,7 @@ func (m rmMachine) Run(ctx context.Context, name string, args ...string) ([]byte
 func removeFixture() (enginecli.Env, *effecttest.Machine) {
 	m := effecttest.NewMachine()
 	keyed(m)
-	m.Files["/h/.config/ws/servers/lab/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=1\n")
+	m.Files["/h/.config/ws/servers/lab/server.conf"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "1"))
 	m.Dirs["/h/.config/ws/servers/lab"] = 0o755
 	m.Files["/h/.ssh/known_hosts"] = []byte("ws ssh-ed25519 AAAA\nlab ssh-ed25519 BBBB\n")
 	m.Dirs["/Applications/Zed.app"] = 0o755
@@ -132,7 +132,7 @@ func TestRemoveRunsTheStepsForTheServerThatStays(t *testing.T) {
 
 func TestRemoveRefusesWhereAServerThatStaysHasABadFile(t *testing.T) {
 	p, m := removeFixture()
-	m.Files["/h/.config/ws/servers/abc/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=99\n")
+	m.Files["/h/.config/ws/servers/abc/server.conf"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "99"))
 	m.Dirs["/h/.config/ws/servers/abc"] = 0o755
 	status, _, stderr := runWs(p, "", "client", "macos", "remove", "lab")
 	if want := ": fix its file, or ws client macos remove abc"; status != 1 || !strings.Contains(stderr, "server abc: ") ||
@@ -148,7 +148,7 @@ func TestRemoveRefusesWhereAServerThatStaysHasABadFile(t *testing.T) {
 // not stop its removal, which is the way out of the clash.
 func TestRemoveTakesAServerThatClashesWithOneThatStays(t *testing.T) {
 	p, m := removeFixture()
-	m.Files["/h/.config/ws/servers/lab/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=0\n")
+	m.Files["/h/.config/ws/servers/lab/server.conf"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "0"))
 	if _, stdout, stderr := runWs(p, "", "client", "macos", "remove", "lab"); !strings.HasPrefix(stdout, "removed lab\n") {
 		t.Errorf("stdout = %q, stderr = %q; want removed lab", stdout, stderr)
 	}
@@ -156,7 +156,13 @@ func TestRemoveTakesAServerThatClashesWithOneThatStays(t *testing.T) {
 
 func TestRemoveNamesTheCableOfTheGoneServer(t *testing.T) {
 	p, m := removeFixture()
-	m.Files["/h/.config/ws/servers/lab/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=1\nWS_TARGET=lan\nWS_CABLE_PORT=eth1\nWS_CABLE_SERVICE=\"USB 10/100/1000 LAN\"\n")
+	m.Files["/h/.config/ws/servers/lab/server.conf"] = []byte(values.Text(
+		"WS_USER", "ada",
+		"WS_SLOT", "1",
+		"WS_TARGET", "lan",
+		"WS_CABLE_PORT", "eth1",
+		"WS_CABLE_SERVICE", "USB 10/100/1000 LAN",
+	))
 	_, stdout, _ := runWs(p, "", "client", "macos", "remove", "lab")
 	if want := "By hand: the cable's service USB 10/100/1000 LAN keeps 10.77.0.2"; !strings.Contains(stdout, want) {
 		t.Errorf("stdout = %q; want it to hold %q", stdout, want)

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // withServerDirs makes a directory of each server file that m holds, as a machine's directory listing needs.
@@ -41,18 +42,18 @@ func TestValuesPrintCommand(t *testing.T) {
 	}
 	m := effecttest.NewMachine()
 	m.Files["/h/.config/ws/mac.conf"] = []byte("")
-	m.Files["/h/.config/ws/servers/ws/server.conf"] = []byte("WS_USER=ada\n")
+	m.Files["/h/.config/ws/servers/ws/server.conf"] = []byte(values.Text("WS_USER", "ada"))
 	m.Files["/e/mac.conf"] = []byte("")
-	m.Files["/e/servers/ws/server.conf"] = []byte("WS_USER=eve\n")
+	m.Files["/e/servers/ws/server.conf"] = []byte(values.Text("WS_USER", "eve"))
 	m.Files["/a/mac.conf"] = []byte("")
-	m.Files["/a/servers/ws/server.conf"] = []byte("WS_USER=amy\n")
-	m.Files["/lines/mac.conf"] = []byte("WS_GIT_SIGNING_PUB_KEY=~/k.pub\n")
-	m.Files["/lines/servers/ws/server.conf"] = []byte("WS_USER=zadykian\nWS_LAN=10.88.0.0/24\n")
-	m.Files["/lines/bad/mac.conf"] = []byte("WS_LAN=10.88.0.0/24\n")
+	m.Files["/a/servers/ws/server.conf"] = []byte(values.Text("WS_USER", "amy"))
+	m.Files["/lines/mac.conf"] = []byte(values.Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"))
+	m.Files["/lines/servers/ws/server.conf"] = []byte(values.Text("WS_USER", "zadykian", "WS_LAN", "10.88.0.0/24"))
+	m.Files["/lines/bad/mac.conf"] = []byte(values.Text("WS_LAN", "10.88.0.0/24"))
 	m.Files["/lines/bad/servers/ws/server.conf"] = []byte("")
 	m.Files["/pairs/mac.conf"] = []byte("")
-	m.Files["/pairs/servers/ws/server.conf"] = []byte("WS_LAN=10.88.0.0/24\n")
-	m.Files["/bad"] = []byte("WS_GIT_SIGNING_PUB_KEY=~/k.pub\nWS_NOPE=1\n")
+	m.Files["/pairs/servers/ws/server.conf"] = []byte(values.Text("WS_LAN", "10.88.0.0/24"))
+	m.Files["/bad"] = []byte(values.Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub", "WS_NOPE", "1"))
 	m.Files["/servers/ws/server.conf"] = []byte("")
 	withServerDirs(m)
 	for _, tt := range tests {
@@ -77,7 +78,7 @@ func TestValuesPrintCommand(t *testing.T) {
 func TestValuesPrintReportsEachLineOfARefusedFile(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{})
 	m := effecttest.NewMachine()
-	m.Files["/bad"] = []byte("WS_NOPE=1\nWS_NOPE2=1\n")
+	m.Files["/bad"] = []byte(values.Text("WS_NOPE", "1", "WS_NOPE2", "1"))
 	m.Files["/servers/ws/server.conf"] = []byte("")
 	p.Machine = withServerDirs(m)
 	status, _, stderr := runWs(p, "", "client", "macos", "values", "print", "/bad")

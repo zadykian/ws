@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // serversFixture is ws on the LAN with a running tunnel, and lab in the cloud with none.
@@ -13,8 +14,13 @@ func serversFixture() (*effecttest.Machine, func(...string) (int, string, string
 	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e/mac.conf"})
 	m := p.Machine.(*effecttest.Machine)
 	m.Files["/e/mac.conf"] = []byte("")
-	m.Files["/e/servers/ws/server.conf"] = []byte("WS_USER=ada\n")
-	m.Files["/e/servers/lab/server.conf"] = []byte("WS_TARGET=cloud\nWS_SLOT=1\nWS_REMOTE=192.0.2.9\nWS_REMOTE_PORT=22\n")
+	m.Files["/e/servers/ws/server.conf"] = []byte(values.Text("WS_USER", "ada"))
+	m.Files["/e/servers/lab/server.conf"] = []byte(values.Text(
+		"WS_TARGET", "cloud",
+		"WS_SLOT", "1",
+		"WS_REMOTE", "192.0.2.9",
+		"WS_REMOTE_PORT", "22",
+	))
 	withServerDirs(m)
 	m.Files["/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.ws.plist"] = []byte("plist")
 	m.Results["launchctl print system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{}
@@ -53,7 +59,7 @@ func TestServersRefusesAServerFlag(t *testing.T) {
 
 func TestServersNamesTheFileItRefuses(t *testing.T) {
 	m, run := serversFixture()
-	m.Files["/e/servers/lab/server.conf"] = []byte("WS_TARGET=moon\n")
+	m.Files["/e/servers/lab/server.conf"] = []byte(values.Text("WS_TARGET", "moon"))
 	status, stdout, stderr := run()
 	if status != 1 || !strings.Contains(stdout, "lab   -       -     absent\n") || !strings.Contains(stdout, "ws    lan     0     lan ") {
 		t.Errorf("status = %d, stdout = %q; want 1 with every row, lab as -", status, stdout)

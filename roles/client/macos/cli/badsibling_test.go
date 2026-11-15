@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // badSiblingFixture is ws beside lab, whose file is refused for a slot out of range, and the
@@ -13,7 +14,7 @@ import (
 func badSiblingFixture() (*effecttest.Machine, string) {
 	m := effecttest.NewMachine()
 	keyed(m)
-	m.Files["/h/.config/ws/servers/lab/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=99\n")
+	m.Files["/h/.config/ws/servers/lab/server.conf"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "99"))
 	m.Dirs["/h/.config/ws/servers/lab"] = 0o755
 	m.Dirs["/etc/resolver"] = 0o755
 	resolver := "/etc/resolver/lab.test"
