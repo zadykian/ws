@@ -13,7 +13,7 @@ fail=0
 
 conf_print "$conf" >"$RUNNER_TEMP/mac.conf.env"
 printf '%s\n' "WS_USER=$(id -un)" WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' \
-    WS_GIT_NAME=zadykian WS_GIT_EMAIL=me@zadykian.dev 'WS_GIT_SIGNING_PUB_KEY=~/.ssh/id_ed25519.pub' |
+    'WS_GIT_SIGNING_PUB_KEY=~/.ssh/id_ed25519.pub' |
     conf_write "$conf"
 # script gives the wizard a terminal of its own, its stdin typed there, and its output on stdout.
 # macOS's script writes its stdin's end to the terminal ahead of the lines it still holds, so the

@@ -2,11 +2,11 @@
 # The Mac key stage with a key of an agent's, on the Mac that 40-again.sh leaves. The stand-in for
 # Secretive's agent is an ssh-agent at its socket that holds a P-256 key, whose .pub is in
 # PublicKeys. With a mac.conf of its own that names that .pub in WS_IDENTITY_PUB_KEY, --check must print
-# nothing of the stage while the agent lists the key. With git's name too, it must say it would ask
-# for git's key, offering that key as ws's login key, an empty WS_GIT_SIGNING_PUB_KEY too. With no
-# terminal, a run must stop there, naming that key's line for git. With no WS_IDENTITY_PUB_KEY and
-# PublicKeys closed, as macOS 27 denies ws Secretive's files, --check must offer the agent's key for
-# ws's login. A run with no terminal must name its line. Once the agent lacks ws's key, a run and
+# nothing of the stage while the agent lists the key and mac.conf names git's key. With no
+# WS_GIT_SIGNING_PUB_KEY, or an empty one, it must say it would ask for git's key, offering that
+# key as ws's login key. With no terminal, a run must stop there, naming that key's line for git.
+# With no WS_IDENTITY_PUB_KEY and PublicKeys closed, as macOS 27 denies ws Secretive's files,
+# --check must offer the agent's key for ws's login. A run with no terminal must name its line. Once the agent lacks ws's key, a run and
 # --check must stop at the stage, naming the socket, before ws client macos apply's. None may change
 # that mac.conf, nor the Mac's own or ssh's files. The stand-in goes after.
 
@@ -60,17 +60,17 @@ cp "$RUNNER_TEMP/agent.pub" "$pub"
 conf_print "$conf" >"$RUNNER_TEMP/agent.conf.before"
 files >"$RUNNER_TEMP/agent.files"
 
+conf_set "$conf" 'WS_GIT_SIGNING_PUB_KEY=~/.ssh/id_ed25519.pub'
 keys --check
 [ "$status" = 0 ] && [ -z "$mac" ] || error "ws client macos wizard --check exited $status, with '$mac'"
-conf_set "$conf" 'WS_GIT_NAME="Jane Doe"' WS_GIT_EMAIL=jane@example.com
 label="ws ($(ssh-keygen -l -f "$RUNNER_TEMP/agent.pub" | cut -d ' ' -f 2))"
 want="ws client macos wizard: Mac key: would ask for git's signing key, in Secretive: $label, ws's login key;"
 want="$want make a new one (the default)"
-for empty in '' WS_GIT_SIGNING_PUB_KEY=; do
-    [ -z "$empty" ] || conf_set "$conf" "$empty"
+for empty in WS_GIT_SIGNING_PUB_KEY WS_GIT_SIGNING_PUB_KEY=; do
+    conf_set "$conf" "$empty"
     keys --check
     [ "$status" = 0 ] && [ "$mac" = "$want" ] ||
-        error "ws client macos wizard --check with git's name${empty:+ and $empty} exited $status, with '$mac', not '$want'"
+        error "ws client macos wizard --check with $empty exited $status, with '$mac', not '$want'"
 done
 keys
 stop="ws client macos wizard: Mac key: no terminal to ask for git's signing key: add one of these lines to mac.conf,"

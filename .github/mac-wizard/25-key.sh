@@ -26,7 +26,7 @@ error() {
 }
 
 printf '%s\n' "WS_USER=$(id -un)" WS_REMOTE=localhost WS_REMOTE_PORT=22022 WS_TARGET=lan WS_LAN= \
-    WS_GIT_NAME=zadykian WS_GIT_EMAIL=me@zadykian.dev 'WS_GIT_SIGNING_PUB_KEY=~/.ssh/id_ed25519.pub' \
+    'WS_GIT_SIGNING_PUB_KEY=~/.ssh/id_ed25519.pub' \
     WS_TUNNEL_NETWORKS= WS_RESOLVERS= |
     conf_write "$conf"
 conf_print "$conf" >"$RUNNER_TEMP/key.conf.before"

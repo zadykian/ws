@@ -36,8 +36,8 @@ conf_print "$conf" | cmp -s - "$RUNNER_TEMP/mac.conf" || error 'a refused run ch
 # A mac.conf of the Mac's keys alone, so with no server: the wizard asks the name, and the answers
 # of a cloud VM make box's file.
 box=$RUNNER_TEMP/confs/server/mac.conf
-printf '%s\n' 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' WS_GIT_NAME=zadykian \
-    WS_GIT_EMAIL=me@zadykian.dev 'WS_GIT_SIGNING_PUB_KEY=~/.ssh/id_ed25519.pub' | conf_write "$box"
+printf '%s\n' 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' \
+    'WS_GIT_SIGNING_PUB_KEY=~/.ssh/id_ed25519.pub' | conf_write "$box"
 refused "no terminal to ask the server's name: pass --server NAME" \
     env WS_CONF="$box" "$wsbin" client macos wizard --check
 env WS_CONF="$box" WS_TARGET=cloud WS_REMOTE=ws.example.test WS_REMOTE_PORT=22 \
