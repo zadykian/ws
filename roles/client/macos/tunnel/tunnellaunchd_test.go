@@ -13,7 +13,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
-const doneConf = "# Written by github.com/zadykian/ws: ws client macos apply, from ~/.config/ws/servers/ws/values.yml.\n" +
+const doneConf = "# Written by github.com/zadykian/ws: ws client macos apply, from /etc/ws/servers/ws/values.yml.\n" +
 	"WS_PUBLIC_KEY=K\nWS_TUNNEL_PORT=51820\nWS_SLOT=0\n"
 
 // daemonMachine is a Mac with ws, root's copy, the key, tunnel.conf and the plist in place.

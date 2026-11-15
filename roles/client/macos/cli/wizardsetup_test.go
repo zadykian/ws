@@ -101,8 +101,8 @@ func TestWizardSetupStopsWhereTheRunDoes(t *testing.T) {
 // beside that one, as the run will, and so find no clash.
 func TestWizardSetupListsTheServersBesideItsFile(t *testing.T) {
 	p, m := macTerminal()
-	m.Files["/h/.config/ws/servers/lab/values.yml"], m.Dirs["/h/.config/ws/servers/lab"] = []byte(values.Text("WS_USER", "ada")), 0o755
-	m.Files["/lock/values.yml"] = m.Files["/h/.config/ws/values.yml"]
+	m.Files["/etc/ws/servers/lab/values.yml"], m.Dirs["/etc/ws/servers/lab"] = []byte(values.Text("WS_USER", "ada")), 0o755
+	m.Files["/lock/values.yml"] = m.Files["/etc/ws/values.yml"]
 	m.Files["/lock/servers/ws/values.yml"] = []byte(values.Text("WS_USER", "ada"))
 	m.Files["/lock/servers/lab/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "1"))
 	m.Dirs["/lock/servers"], m.Dirs["/lock/servers/ws"], m.Dirs["/lock/servers/lab"] = 0o755, 0o755, 0o755
@@ -110,7 +110,7 @@ func TestWizardSetupListsTheServersBesideItsFile(t *testing.T) {
 		m.Results["ssh -G -F /tmp/x/"+file+" lab"] = effecttest.Result{}
 	}
 	left := func(parent, name string) bool { return parent == "ws client macos apply" && name != "ssh" }
-	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}}, left, "/lock/values.yml", "/h/.config/ws/values.yml", "lab")
+	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}}, left, "/lock/values.yml", "/etc/ws/values.yml", "lab")
 	if _, err := s.Run(context.Background(), true); err != nil {
 		t.Errorf("Run = %v, want the plan of the servers beside /lock/values.yml", err)
 	}
@@ -120,13 +120,13 @@ func TestWizardSetupListsTheServersBesideItsFile(t *testing.T) {
 // the lock, refused for its slot. The refusal names the real file, as the run's does.
 func TestWizardSetupNamesTheRealFileOfARefusedSibling(t *testing.T) {
 	p, m := macTerminal()
-	m.Files["/lock/values.yml"] = m.Files["/h/.config/ws/values.yml"]
+	m.Files["/lock/values.yml"] = m.Files["/etc/ws/values.yml"]
 	m.Files["/lock/servers/ws/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "99"))
 	m.Files["/lock/servers/lab/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "1"))
 	m.Dirs["/lock/servers"], m.Dirs["/lock/servers/ws"], m.Dirs["/lock/servers/lab"] = 0o755, 0o755, 0o755
-	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}}, nil, "/lock/values.yml", "/h/.config/ws/values.yml", "lab")
+	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}}, nil, "/lock/values.yml", "/etc/ws/values.yml", "lab")
 	_, err := s.Run(context.Background(), true)
-	if err == nil || !strings.Contains(err.Error(), "server ws: /h/.config/ws/servers/ws/values.yml, line 2") || strings.Contains(err.Error(), "/lock") ||
+	if err == nil || !strings.Contains(err.Error(), "server ws: /etc/ws/servers/ws/values.yml, line 2") || strings.Contains(err.Error(), "/lock") ||
 		!strings.Contains(err.Error(), "fix its file, or ws client macos remove ws") {
 		t.Errorf("Run = %v, want ws's real file refused, with the way out", err)
 	}

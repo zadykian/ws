@@ -24,9 +24,9 @@ func TestSetupCommand(t *testing.T) {
 		t.Errorf("status = %d, stderr = %q; want a usage error", status, stderr)
 	}
 	p = fakeProcess()
-	p.Machine = m
+	p.Machine = effecttest.NewMachine()
 	if status, _, stderr = runWs(p, "", "client", "macos", "apply", "--only", "ssh"); status != 1 || !strings.Contains(stderr, "no server in") {
-		t.Errorf("without HOME: status = %d, stderr = %q; want no server", status, stderr)
+		t.Errorf("with no file: status = %d, stderr = %q; want no server", status, stderr)
 	}
 }
 
@@ -173,7 +173,7 @@ func macStateAtTerminal() enginecli.Env {
 func TestMacReadSaysThatMacConfIsMissing(t *testing.T) {
 	m := effecttest.NewMachine()
 	writeConfs(m, "", "")
-	delete(m.Files, "/h/.config/ws/values.yml")
+	delete(m.Files, "/etc/ws/values.yml")
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
 	_, err := macRead(p, new(string))(t.Context(), nil)

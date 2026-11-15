@@ -41,8 +41,8 @@ func TestValuesPrintCommand(t *testing.T) {
 		{"two files", []string{"a", "b"}, "", 2, "", "ws client macos values print: accepts at most 1 arg(s), received 2"},
 	}
 	m := effecttest.NewMachine()
-	m.Files["/h/.config/ws/values.yml"] = []byte("")
-	m.Files["/h/.config/ws/servers/ws/values.yml"] = []byte(values.Text("WS_USER", "ada"))
+	m.Files["/etc/ws/values.yml"] = []byte("")
+	m.Files["/etc/ws/servers/ws/values.yml"] = []byte(values.Text("WS_USER", "ada"))
 	m.Files["/e/values.yml"] = []byte("")
 	m.Files["/e/servers/ws/values.yml"] = []byte(values.Text("WS_USER", "eve"))
 	m.Files["/a/values.yml"] = []byte("")

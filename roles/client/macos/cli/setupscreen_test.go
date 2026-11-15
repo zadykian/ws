@@ -60,7 +60,7 @@ func TestMacApplyDrawsNothingWithPlain(t *testing.T) {
 
 // writeConfs puts the Mac's values.yml and the server's file at their paths in the home.
 func writeConfs(m *effecttest.Machine, mac, server string) {
-	m.Files["/h/.config/ws/values.yml"] = []byte(mac)
-	m.Files["/h/.config/ws/servers/ws/values.yml"] = []byte(server)
-	m.Dirs["/h/.config/ws/servers"], m.Dirs["/h/.config/ws/servers/ws"] = 0o755, 0o755
+	m.Files["/etc/ws/values.yml"] = []byte(mac)
+	m.Files["/etc/ws/servers/ws/values.yml"] = []byte(server)
+	m.Dirs["/etc/ws/servers"], m.Dirs["/etc/ws/servers/ws"] = 0o755, 0o755
 }

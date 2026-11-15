@@ -1,16 +1,20 @@
 package values
 
-import "strings"
+import (
+	"strings"
 
-// homeFile is values.yml's place under the home.
-const homeFile = ".config/ws/values.yml"
+	"github.com/zadykian/ws/roles/internal/etcws"
+)
+
+// rootsFile is values.yml's place: root's, in /etc/ws.
+const rootsFile = etcws.Dir + "/values.yml"
 
 // Path returns values.yml's path from WS_VALUES, a path from / as ws client macos apply gets it, else
-// from the home.
+// /etc/ws.
 func Path(getenv func(string) string, pwd string) string {
 	switch file := getenv("WS_VALUES"); {
 	case file == "":
-		return getenv("HOME") + "/" + homeFile
+		return rootsFile
 	case strings.HasPrefix(file, "/"):
 		return file
 	default:

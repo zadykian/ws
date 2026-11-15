@@ -13,8 +13,8 @@ import (
 func twoServers() *effecttest.Machine {
 	m := effecttest.NewMachine()
 	keyed(m)
-	m.Files["/h/.config/ws/servers/lab/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "1"))
-	m.Dirs["/h/.config/ws/servers/lab"] = 0o755
+	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "1"))
+	m.Dirs["/etc/ws/servers/lab"] = 0o755
 	return m
 }
 
@@ -63,7 +63,7 @@ func TestMacStateOfOneServerKeepsItsBytes(t *testing.T) {
 // refusedLab is two servers where lab's slot is out of range.
 func refusedLab() *effecttest.Machine {
 	m := twoServers()
-	m.Files["/h/.config/ws/servers/lab/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "99"))
+	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "99"))
 	return m
 }
 

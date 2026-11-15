@@ -126,7 +126,7 @@ func (ds UserDirs) Report(ctx context.Context) ([]step.Item, error) {
 }
 
 // WsDirs is ~/.config and ws's directory in it, which git, zsh and the tunnel write under. A run
-// sets the mode of ws's directory, which holds values.yml.
+// sets the mode of ws's directory.
 func WsDirs(m effect.Machine, out effect.Out, home string) UserDirs {
 	return UserDirs{
 		{M: m, Out: out, Path: home + "/.config", Mode: 0o755},

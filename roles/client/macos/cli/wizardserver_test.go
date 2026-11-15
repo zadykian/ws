@@ -9,7 +9,7 @@ import (
 )
 
 func TestWizardServerNamesTheServerToSetUp(t *testing.T) {
-	const servers = "/h/.config/ws/servers"
+	const servers = "/etc/ws/servers"
 	for _, tc := range []struct {
 		have []string
 		flag string
@@ -27,7 +27,7 @@ func TestWizardServerNamesTheServerToSetUp(t *testing.T) {
 	} {
 		m := effecttest.NewMachine()
 		for _, name := range tc.have {
-			m.Files[values.ServerPath("/h/.config/ws/values.yml", name)] = nil
+			m.Files[values.ServerPath("/etc/ws/values.yml", name)] = nil
 		}
 		p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 		p.Machine = withServerDirs(m)
@@ -41,7 +41,7 @@ func TestWizardServerNamesTheServerToSetUp(t *testing.T) {
 func TestWizardServerRefusesANewNameThatSSHConfigHolds(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/h/.ssh/config"] = []byte("Host a\n  User x\nHost box lab\n  User y\n")
-	m.Files[values.ServerPath("/h/.config/ws/values.yml", "box")] = nil
+	m.Files[values.ServerPath("/etc/ws/values.yml", "box")] = nil
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = withServerDirs(m)
 	want := "line 3 of ~/.ssh/config, Host box lab, sets its own values for lab: pick another name, or remove it"
