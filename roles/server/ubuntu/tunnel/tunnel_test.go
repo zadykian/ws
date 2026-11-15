@@ -27,7 +27,7 @@ func TestNetdevWithoutPeersEndsAtThePort(t *testing.T) {
 }
 
 func TestNetworkGivesWg0ItsAddress(t *testing.T) {
-	got, err := Network(values.Wireguard{Address: "10.99.0.1/24"})
+	got, err := Network(values.Tunnel{Address: "10.99.0.1/24"})
 	if err != nil || !strings.HasSuffix(string(got), "[Network]\nAddress=10.99.0.1/24\n") {
 		t.Errorf("Network = %q, %v", got, err)
 	}

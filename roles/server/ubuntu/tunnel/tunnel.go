@@ -26,6 +26,6 @@ func Netdev(port int, peers []Peer) ([]byte, error) {
 }
 
 // Network returns wg0's .network, which gives it its address with the tunnel's prefix length.
-func Network(w values.Wireguard) ([]byte, error) {
+func Network(w values.Tunnel) ([]byte, error) {
 	return resource.Render(wg0Files, "files/60-wg0.network.tmpl", w)
 }

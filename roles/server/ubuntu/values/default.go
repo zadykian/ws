@@ -53,7 +53,7 @@ func Default() Values {
 			Dir: "/opt/signoz", URL: "http://127.0.0.1:3301", RetentionDays: 90,
 			Dashboards: []string{"host", "claude"},
 		},
-		Wireguard: Wireguard{
+		Tunnel: Tunnel{
 			Address: "10.99.0.1/24", Port: 51820,
 		},
 		Zed: Zed{Nofile: 65536},

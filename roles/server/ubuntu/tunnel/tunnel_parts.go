@@ -40,15 +40,15 @@ func tunnel(m effect.Machine, u effect.Units, out effect.Out, random io.Reader, 
 		if err != nil {
 			return nil, err
 		}
-		peers, err := peerKeys(m, out, v.Wireguard)
+		peers, err := peerKeys(m, out, v.Tunnel)
 		if err != nil {
 			return nil, err
 		}
-		netdev, err := Netdev(v.Wireguard.Port, peers)
+		netdev, err := Netdev(v.Tunnel.Port, peers)
 		if err != nil {
 			return nil, err
 		}
-		network, err := Network(v.Wireguard)
+		network, err := Network(v.Tunnel)
 		if err != nil {
 			return nil, err
 		}
@@ -56,7 +56,7 @@ func tunnel(m effect.Machine, u effect.Units, out effect.Out, random io.Reader, 
 		netdevRes := file.File{M: m, Path: netdevFile, Content: netdev, Mode: 0o640, GID: gid}
 		networkRes := file.File{M: m, Path: networkFile, Content: network, Mode: 0o644}
 		return []resource.Resource{
-			networkdCheck{m, u}, k, netdevRes, networkRes, firewall(m, out, v.Wireguard.Port),
+			networkdCheck{m, u}, k, netdevRes, networkRes, firewall(m, out, v.Tunnel.Port),
 			wg0{m: m, watch: []resource.Resource{k, netdevRes, networkRes}},
 		}, nil
 	}

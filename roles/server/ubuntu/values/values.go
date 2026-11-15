@@ -20,19 +20,19 @@ import (
 // Values is every key of the file. A key left out of the file keeps the default that Default gives.
 // Each role's keys sit in a struct of its name, inlined, so that a role's steps read v.Role.Key.
 type Values struct {
-	Shared    `yaml:",inline"`
-	Base      Base      `yaml:",inline"`
-	Claude    Claude    `yaml:",inline"`
-	Devtools  Devtools  `yaml:",inline"`
-	Docker    Docker    `yaml:",inline"`
-	Fans      Fans      `yaml:",inline"`
-	Ikeward   Ikeward   `yaml:",inline"`
-	Cable     Cable     `yaml:",inline"`
-	Security  Security  `yaml:",inline"`
-	Shell     Shell     `yaml:",inline"`
-	Signoz    Signoz    `yaml:",inline"`
-	Wireguard Wireguard `yaml:",inline"`
-	Zed       Zed       `yaml:",inline"`
+	Shared   `yaml:",inline"`
+	Base     Base     `yaml:",inline"`
+	Claude   Claude   `yaml:",inline"`
+	Devtools Devtools `yaml:",inline"`
+	Docker   Docker   `yaml:",inline"`
+	Fans     Fans     `yaml:",inline"`
+	Ikeward  Ikeward  `yaml:",inline"`
+	Cable    Cable    `yaml:",inline"`
+	Security Security `yaml:",inline"`
+	Shell    Shell    `yaml:",inline"`
+	Signoz   Signoz   `yaml:",inline"`
+	Tunnel   Tunnel   `yaml:",inline"`
+	Zed      Zed      `yaml:",inline"`
 }
 
 // Shared holds the keys that the roles share.
@@ -76,8 +76,8 @@ func decode(data []byte) (Values, error) {
 	if err := yaml.Unmarshal(data, &keys); err != nil {
 		return Values{}, err
 	}
-	if _, given := keys["WS_TUNNEL_PEERS"]; given && v.Wireguard.Peers == nil {
-		v.Wireguard.Peers = []WireguardPeer{}
+	if _, given := keys["WS_TUNNEL_PEERS"]; given && v.Tunnel.Peers == nil {
+		v.Tunnel.Peers = []TunnelPeer{}
 	}
 	v.derive()
 	return v, nil
@@ -108,9 +108,9 @@ func (v *Values) derive() {
 	if v.GitSigningPubKey == "" {
 		v.GitSigningPubKey = v.Home + "/.ssh/id_ed25519_signing.pub"
 	}
-	if v.Wireguard.Peers == nil {
-		if p, err := netip.ParsePrefix(v.Wireguard.Address); err == nil && p.Addr().Is4() {
-			v.Wireguard.Peers = []WireguardPeer{{Name: "mac", Address: p.Addr().Next().String()}}
+	if v.Tunnel.Peers == nil {
+		if p, err := netip.ParsePrefix(v.Tunnel.Address); err == nil && p.Addr().Is4() {
+			v.Tunnel.Peers = []TunnelPeer{{Name: "mac", Address: p.Addr().Next().String()}}
 		}
 	}
 }

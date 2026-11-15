@@ -28,7 +28,7 @@ const (
 // name of lowercase letters, digits and dashes, which names its key's file. It has an IPv4 address
 // of its own too, a host's in that subnet but not wg0's. With the peer mac, wg0 and mac take the
 // addresses the Mac's scripts fix. It names every problem it finds.
-func Validate(w values.Wireguard) error {
+func Validate(w values.Tunnel) error {
 	var problems []string
 	if w.Port < 1 || w.Port > maxPort {
 		problems = append(problems, fmt.Sprintf("WS_TUNNEL_PORT is %d, not a port from 1 to %d.", w.Port, maxPort))

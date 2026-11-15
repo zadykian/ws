@@ -18,7 +18,7 @@ var publicKey = regexp.MustCompile(`^[A-Za-z0-9+/]{43}=$`)
 // it, in the directory only root reads. Access to the machine is granted on the machine, as SSH's
 // authorized_keys is: a key in the repository would let its peer into every machine it sets up. A
 // peer without the file is left out, and the run names it. A file that holds no key is an error.
-func peerKeys(m effect.Machine, out effect.Out, w values.Wireguard) ([]Peer, error) {
+func peerKeys(m effect.Machine, out effect.Out, w values.Tunnel) ([]Peer, error) {
 	var peers []Peer
 	for _, p := range w.Peers {
 		path := "/etc/wireguard/" + p.Name + ".pub"

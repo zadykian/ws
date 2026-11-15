@@ -28,7 +28,7 @@ func TestSettingsAddressAndPort(t *testing.T) {
 		"a single address": {"10.99.0.1/32", 51820, ""},
 	} {
 		t.Run(name, func(t *testing.T) {
-			err := Validate(values.Wireguard{Address: tc.address, Port: tc.port})
+			err := Validate(values.Tunnel{Address: tc.address, Port: tc.port})
 			switch {
 			case tc.want == "" && err != nil:
 				t.Errorf("Validate = %v, want none", err)
@@ -40,7 +40,7 @@ func TestSettingsAddressAndPort(t *testing.T) {
 }
 
 func TestSettingsNamesEveryProblem(t *testing.T) {
-	err := Validate(values.Wireguard{Address: "10.99.0.255/24", Port: 0})
+	err := Validate(values.Tunnel{Address: "10.99.0.255/24", Port: 0})
 	if err == nil || !strings.Contains(err.Error(), "WS_TUNNEL_PORT") || !strings.Contains(err.Error(), "WS_TUNNEL_ADDRESS") {
 		t.Errorf("Validate = %v, want both the port and the address named", err)
 	}

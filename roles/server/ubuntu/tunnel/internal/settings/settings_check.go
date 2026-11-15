@@ -8,7 +8,7 @@ import (
 )
 
 // Check refuses the values the role cannot use, as a plan error.
-type Check struct{ W values.Wireguard }
+type Check struct{ W values.Tunnel }
 
 // Plan fails with the refusal of the settings check, or plans nothing.
 func (c Check) Plan(context.Context) ([]resource.Change, error) { return nil, Validate(c.W) }

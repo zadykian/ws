@@ -14,7 +14,7 @@ import (
 // default pair where host_vars holds another value. Where host_vars holds none and the want is the
 // default, the run plans nothing, and a first server's run keeps its bytes.
 func tunnelPairs(ctx context.Context, ws values.Store, w session.Want) ([]string, error) {
-	def := values.Default().Wireguard
+	def := values.Default().Tunnel
 	type want struct{ key, value string }
 	var wants []want
 	if w.Address.IsValid() {

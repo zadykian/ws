@@ -13,9 +13,9 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/apt"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
 	"github.com/zadykian/ws/roles/server/ubuntu/tunnel/internal/drops"
 	"github.com/zadykian/ws/roles/server/ubuntu/tunnel/internal/settings"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // Step names. The tunnel and the key wait on the packages, which bring systemd and its group.
@@ -38,7 +38,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units,
 func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out, random io.Reader,
 	sleep func(time.Duration)) []step.Step {
 	return []step.Step{
-		resource.Group{Title: settingsStep, Parts: []resource.Resource{settings.Check{W: v.Wireguard}}},
+		resource.Group{Title: settingsStep, Parts: []resource.Resource{settings.Check{W: v.Tunnel}}},
 		// networkd, its directory /etc/systemd/network and its group systemd-network come with
 		// systemd, which a container may lack, so that --only wireguard stands alone. iptables
 		// holds the containers' drops. wireguard-tools' recommends serve wg-quick, which the role
