@@ -40,9 +40,9 @@ type OSMachine struct {
 	// context, as WriteRootFile has none.
 	Ticket func() error
 	// Confine is a directory that Mkdir, Chmod, Chown, Symlink, WriteFile and WriteAtomic stay
-	// inside for a path under it: a link there that leaves it fails the write. ws_user owns the
-	// ws_home, and can swap a directory in it for a link as root applies, which would hand the
-	// target to ws_user. Empty means no limit.
+	// inside for a path under it: a link there that leaves it fails the write. WS_USER owns the
+	// WS_HOME, and can swap a directory in it for a link as root applies, which would hand the
+	// target to WS_USER. Empty means no limit.
 	Confine string
 }
 

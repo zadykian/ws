@@ -41,7 +41,7 @@ type Report struct {
 
 // Run is a prepared apply.
 type Run struct {
-	// M is the machine of the run and of its screen: the server's is confined to ws_home.
+	// M is the machine of the run and of its screen: the server's is confined to WS_HOME.
 	M effect.Machine
 	// Groups names the steps of the run screen, as the run would plan them with check.
 	Groups func(check bool) []tui.Group

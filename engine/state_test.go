@@ -35,7 +35,7 @@ func TestStateStopsWhereTheTargetPreparesNoReport(t *testing.T) {
 	}
 }
 
-// The server's report takes a machine that ws_home confines, apart from the call's: the state
+// The server's report takes a machine that WS_HOME confines, apart from the call's: the state
 // screen's read must act on it.
 func TestStateReadsOnTheReportsMachineNotTheCalls(t *testing.T) {
 	keys, press := io.Pipe()

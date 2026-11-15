@@ -12,7 +12,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 )
 
-// Account is ws_user as the machine knows it: the name, the home, the uid and the primary gid.
+// Account is WS_USER as the machine knows it: the name, the home, the uid and the primary gid.
 type Account struct {
 	User
 	UID, GID int
