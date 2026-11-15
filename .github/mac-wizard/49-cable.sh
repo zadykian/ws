@@ -137,7 +137,7 @@ printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: WS_CABLE_PORT co
 'enp4s0' is none of enp5s0, enp6s0, enp7s0: set it to one, or to nothing for none" &&
     unnamed && [ "$status" = 1 ] || error "ws client macos wizard with the uplink's port exited $status"
 wizard run WS_CABLE_PORT=
-unnamed && [ "$status" = 0 ] && [ "$(conf_print "$conf" | tail -n 1)" = WS_CABLE_SERVICE= ] ||
+unnamed && [ "$status" = 0 ] && [ "$(conf_print "$conf" | tail -n 1)" = 'WS_CABLE_SERVICE: ""' ] ||
     error "ws client macos wizard with WS_CABLE_PORT= exited $status, or wrote another line, or values.yml"
 conf_write "$conf" <"$RUNNER_TEMP/cable.conf"
 wizard run WS_CABLE_PORT=enp7s0
@@ -151,7 +151,7 @@ wizard run
 printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: no terminal to ask WS_CABLE_PORT: set \
 WS_CABLE_PORT, or set it to nothing for none" && unnamed && [ "$status" = 1 ] ||
     error "ws client macos wizard docked with no terminal exited $status, or named no WS_CABLE_PORT"
-conf_print "$conf" | sed -e 's/^WS_TARGET=.*/WS_TARGET=cloud/' -e '/^WS_CABLE_/d' |
+conf_print "$conf" | sed -e 's/^WS_TARGET:.*/WS_TARGET: cloud/' -e '/^WS_CABLE_/d' |
     conf_write "$RUNNER_TEMP/confs/cloud/mac.conf"
 wizard run WS_VALUES="$RUNNER_TEMP/confs/cloud/mac.conf"
 firewall="- The provider's firewall: UDP 51820 open to ws, for the tunnel (roles/client/macos/values/README.md)."
@@ -162,9 +162,9 @@ if [ "$status" != 0 ] || ! printf '%s\n' "$out" | grep -qxF -e "$firewall" ||
 fi
 unname
 rm -r "$RUNNER_TEMP/confs/cloud"
-conf_print "$conf" | sed -e 's/^WS_TARGET=.*/WS_TARGET=mac-vm/' -e 's|^WS_LAN=.*|WS_LAN=192.0.2.0/24|' \
+conf_print "$conf" | sed -e 's/^WS_TARGET:.*/WS_TARGET: mac-vm/' -e 's|^WS_LAN:.*|WS_LAN: 192.0.2.0/24|' \
     -e '/^WS_REMOTE/d' -e '/^WS_CABLE_/d' | conf_write "$RUNNER_TEMP/confs/vm/mac.conf"
-conf_set "$RUNNER_TEMP/confs/vm/mac.conf" WS_LAN_ADDRESS=192.0.2.10
+conf_set "$RUNNER_TEMP/confs/vm/mac.conf" 'WS_LAN_ADDRESS: 192.0.2.10'
 wizard --check WS_VALUES="$RUNNER_TEMP/confs/vm/mac.conf"
 if [ "$status" != 0 ] || printf '%s\n' "$out" | grep -q '^ws client macos wizard: Cable: '; then
     error "ws client macos wizard --check with WS_TARGET=mac-vm exited $status, or took the cable's steps"
@@ -213,8 +213,8 @@ status=$?
 tr -d '\r' <"$RUNNER_TEMP/tty"
 grep -qF "(WS_CABLE_SERVICE) [ws stand-in adapter, or none]: " "$RUNNER_TEMP/tty" &&
     grep -qF "ws client macos wizard: Cable: 'ws stand-in absent' is none of those" "$RUNNER_TEMP/tty" &&
-    [ "$status" = 0 ] && [ "$(conf_print "$conf" | tail -n 1)" = 'WS_CABLE_SERVICE="ws stand-in adapter"' ] &&
-    conf_print "$conf" | grep -qx WS_CABLE_PORT=enp5s0 &&
+    [ "$status" = 0 ] && [ "$(conf_print "$conf" | tail -n 1)" = 'WS_CABLE_SERVICE: ws stand-in adapter' ] &&
+    conf_print "$conf" | grep -qx 'WS_CABLE_PORT: enp5s0' &&
     [ "$(logged setmanual.log) $(logged ping.log)" = '1 1' ] ||
     error "ws client macos wizard at a terminal exited $status, set the adapter or pinged other than once, or" \
         "kept no port"
@@ -258,7 +258,7 @@ cable plugs into" && [ "$status" = 1 ] &&
 rm "$cable/silent"
 conf_write "$conf" <"$RUNNER_TEMP/cable.conf"
 wizard run WS_CABLE_SERVICE=
-[ "$status" = 0 ] && [ "$(conf_print "$conf" | tail -n 1)" = WS_CABLE_SERVICE= ] &&
+[ "$status" = 0 ] && [ "$(conf_print "$conf" | tail -n 1)" = 'WS_CABLE_SERVICE: ""' ] &&
     [ "$(logged setmanual.log) $(logged ping.log)" = '1 2' ] ||
     error "ws client macos wizard with WS_CABLE_SERVICE= exited $status, or wrote another line, or acted"
 wizard run

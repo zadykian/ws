@@ -56,17 +56,18 @@ name=$(ssh-keygen -E md5 -l -f "$RUNNER_TEMP/agent.pub" |
 copy=$HOME/.config/ws/secretive/$name
 pub=$data/PublicKeys/$name
 cp "$RUNNER_TEMP/agent.pub" "$pub"
-{ conf_print ~/.config/ws/mac.conf && echo "WS_IDENTITY_PUB_KEY=~/${pub#"$HOME"/}"; } | conf_write "$conf"
+conf_print ~/.config/ws/mac.conf | conf_write "$conf"
+conf_set "$conf" "WS_IDENTITY_PUB_KEY: ~/${pub#"$HOME"/}"
 conf_print "$conf" >"$RUNNER_TEMP/agent.conf.before"
 files >"$RUNNER_TEMP/agent.files"
 
-conf_set "$conf" 'WS_GIT_SIGNING_PUB_KEY=~/.ssh/id_ed25519.pub'
+conf_set "$conf" 'WS_GIT_SIGNING_PUB_KEY: ~/.ssh/id_ed25519.pub'
 keys --check
 [ "$status" = 0 ] && [ -z "$mac" ] || error "ws client macos wizard --check exited $status, with '$mac'"
 label="ws ($(ssh-keygen -l -f "$RUNNER_TEMP/agent.pub" | cut -d ' ' -f 2))"
 want="ws client macos wizard: Mac key: would ask for git's signing key, in Secretive: $label, ws's login key;"
 want="$want make a new one (the default)"
-for empty in WS_GIT_SIGNING_PUB_KEY WS_GIT_SIGNING_PUB_KEY=; do
+for empty in WS_GIT_SIGNING_PUB_KEY 'WS_GIT_SIGNING_PUB_KEY: ""'; do
     conf_set "$conf" "$empty"
     keys --check
     [ "$status" = 0 ] && [ "$mac" = "$want" ] ||
@@ -74,7 +75,7 @@ for empty in WS_GIT_SIGNING_PUB_KEY WS_GIT_SIGNING_PUB_KEY=; do
 done
 keys
 stop="ws client macos wizard: Mac key: no terminal to ask for git's signing key: add one of these lines to mac.conf,"
-stop="$stop WS_GIT_SIGNING_PUB_KEY=~/.config/ws/secretive/$name for $label; or run the wizard at a terminal"
+stop="$stop WS_GIT_SIGNING_PUB_KEY: ~/.config/ws/secretive/$name for $label; or run the wizard at a terminal"
 [ "$status" = 1 ] && [ "$(printf '%s\n' "$out" | grep -cxF "$stop")" = 1 ] ||
     error "ws client macos wizard with no terminal exited $status, naming no line for git's key"
 rm -f "$copy"
@@ -86,7 +87,7 @@ want="ws client macos wizard: Mac key: would ask for ws's login key, in Secretiv
     error "ws client macos wizard --check with no WS_IDENTITY_PUB_KEY exited $status, with '$mac', not '$want'"
 keys
 stop="ws client macos wizard: Mac key: no terminal to ask for ws's login key: add one of these lines to mac.conf,"
-stop="$stop WS_IDENTITY_PUB_KEY=~/.config/ws/secretive/$name for $label; or run the wizard at a terminal"
+stop="$stop WS_IDENTITY_PUB_KEY: ~/.config/ws/secretive/$name for $label; or run the wizard at a terminal"
 [ "$status" = 1 ] && [ "$(printf '%s\n' "$out" | grep -cxF "$stop")" = 1 ] ||
     error "ws client macos wizard with no terminal exited $status, naming no line for ws's key"
 chmod 755 "$data/PublicKeys"

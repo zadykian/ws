@@ -25,9 +25,9 @@ error() {
     fail=1
 }
 
-printf '%s\n' "WS_USER=$(id -un)" WS_REMOTE=localhost WS_REMOTE_PORT=22022 WS_TARGET=lan WS_LAN= \
-    'WS_GIT_SIGNING_PUB_KEY=~/.ssh/id_ed25519.pub' \
-    WS_TUNNEL_NETWORKS= WS_RESOLVERS= |
+printf '%s\n' "WS_USER: $(id -un)" 'WS_REMOTE: localhost' 'WS_REMOTE_PORT: 22022' 'WS_TARGET: lan' 'WS_LAN: ""' \
+    'WS_GIT_SIGNING_PUB_KEY: ~/.ssh/id_ed25519.pub' \
+    'WS_TUNNEL_NETWORKS: ""' 'WS_RESOLVERS: ""' |
     conf_write "$conf"
 conf_print "$conf" >"$RUNNER_TEMP/key.conf.before"
 out=$(WS_VALUES=$conf "$wsbin" client macos wizard </dev/null 2>&1)
@@ -43,7 +43,7 @@ printf '%s\n' "$out"
 want="ws client macos wizard: Mac key: would ask for ws's login key, in Secretive: make a new one (the default)"
 printf '%s\n' "$out" | grep -qxF "$want" && [ "$status" = 0 ] ||
     error "ws client macos wizard --check exited $status, saying no '$want'"
-{ conf_print "$conf" && echo "WS_IDENTITY_PUB_KEY=$RUNNER_TEMP/none.pub"; } | conf_write "$named"
+{ conf_print "$conf" && echo "WS_IDENTITY_PUB_KEY: $RUNNER_TEMP/none.pub"; } | conf_write "$named"
 out=$(WS_VALUES=$named "$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
@@ -51,7 +51,7 @@ stop="ws client macos wizard: Mac key: $RUNNER_TEMP/none.pub, named in mac.conf'
 printf '%s\n' "$out" | grep -qF "$stop" && [ "$status" = 1 ] ||
     error "ws client macos wizard exited $status, naming no missing key"
 ! printf '%s\n' "$out" | grep -qE "$applied" || error 'ws client macos wizard ran ws client macos apply, with no key'
-{ conf_print "$conf" && echo 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub'; } | conf_write "$named"
+{ conf_print "$conf" && echo 'WS_IDENTITY_PUB_KEY: ~/.ssh/id_ed25519.pub'; } | conf_write "$named"
 out=$(WS_VALUES=$named "$wsbin" client macos wizard --check </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"

@@ -73,7 +73,7 @@ rm "$hosts"
 mv "$RUNNER_TEMP/hosts.file" "$hosts"
 none=$RUNNER_TEMP/confs/none/mac.conf
 conf_print ~/.config/ws/mac.conf |
-    sed -e 's/^WS_REMOTE=.*/WS_REMOTE=/' -e 's/^WS_REMOTE_PORT=.*/WS_REMOTE_PORT=/' |
+    sed -e 's/^WS_REMOTE:.*/WS_REMOTE: ""/' -e 's/^WS_REMOTE_PORT:.*/WS_REMOTE_PORT: ""/' |
     conf_write "$none"
 out=$(WS_VALUES=$none "$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
@@ -85,10 +85,8 @@ printf '%s\n' "$out"
 cmp -s "$hosts" "$RUNNER_TEMP/hosts" || error "ws client macos wizard with WS_HOST_KEY=yes wrote another $hosts"
 
 conf=$RUNNER_TEMP/confs/first/mac.conf
-{
-    conf_print ~/.config/ws/mac.conf | sed 's/^WS_REMOTE=.*/WS_REMOTE=192.0.2.1/'
-    echo WS_TUNNEL_PORT=51821
-} | conf_write "$conf"
+conf_print ~/.config/ws/mac.conf | sed -e 's/^WS_REMOTE:.*/WS_REMOTE: 192.0.2.1/' \
+    -e 's/^WS_TUNNEL_PORT:.*/WS_TUNNEL_PORT: 51821/' | conf_write "$conf"
 cp "$RUNNER_TEMP/hosts.without" "$hosts"
 out=$(WS_VALUES=$conf "$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
@@ -109,7 +107,7 @@ if ! printf '%s\n' "$out" | grep -qxF -e "$lease" ||
     ! printf '%s\n' "$out" | grep -qF -e "$forwards"; then
     error "ws client macos wizard with WS_FIRST_ADDRESS listed another lease or forwards by hand"
 fi
-conf_print "$conf" | sed 's/^WS_TARGET=.*/WS_TARGET=cloud/' | conf_write "$RUNNER_TEMP/confs/cloud/mac.conf"
+conf_print "$conf" | sed 's/^WS_TARGET:.*/WS_TARGET: cloud/' | conf_write "$RUNNER_TEMP/confs/cloud/mac.conf"
 cp "$RUNNER_TEMP/hosts.without" "$hosts"
 out=$(WS_VALUES=$RUNNER_TEMP/confs/cloud/mac.conf WS_FIRST_ADDRESS=127.0.0.1 WS_HOST_KEY=$fp "$wsbin" client macos wizard \
     </dev/null 2>&1)

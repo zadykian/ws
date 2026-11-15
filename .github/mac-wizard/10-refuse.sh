@@ -40,7 +40,7 @@ mkdir "$lock"
 refused "another run holds $lock" "$wsbin" client macos wizard --check
 [ -d "$lock" ] || error 'a refused run removed the lock it found'
 rmdir "$lock"
-echo WS_HOOK=example/Ws | conf_write "$RUNNER_TEMP/confs/refuse/mac.conf"
+echo 'WS_HOOK: example/Ws' | conf_write "$RUNNER_TEMP/confs/refuse/mac.conf"
 refused 'line 3: unknown key WS_HOOK' \
     env WS_VALUES="$RUNNER_TEMP/confs/refuse/mac.conf" "$wsbin" client macos wizard --server ws --check
 rm -r "$RUNNER_TEMP/confs/refuse"
