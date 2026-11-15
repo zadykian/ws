@@ -22,7 +22,7 @@ func installDaemons(m *effecttest.Machine, names ...string) {
 }
 
 func networksStep(m *effecttest.Machine, c values.Conf) *networks.Networks {
-	m.Root["/etc/ws-tunnel/ws/routes.d"] = effect.Attrs{Mode: 0o755}
+	m.Root["/etc/ws/tunnel/ws/routes.d"] = effect.Attrs{Mode: 0o755}
 	installDaemons(m, "ws")
 	return &networks.Networks{Server: "ws", Conf: c, M: m, Out: &effecttest.Out{}}
 }
@@ -61,13 +61,13 @@ func TestNetworksSaysWhatCheckWouldPutBeforeRoutesDExists(t *testing.T) {
 	m := effecttest.NewMachine()
 	s := &networks.Networks{Server: "ws", Conf: values.Conf{PublicKey: "K", TunnelNetworks: "10.1.0.0/24 10.2.0.0/24"}, M: m, Out: &effecttest.Out{}, Check: true}
 	got := networksPlan(t, s)
-	want := "would put 10.1.0.0/24 10.2.0.0/24 in /etc/ws-tunnel/ws/routes.d/values once routes.d is made"
+	want := "would put 10.1.0.0/24 10.2.0.0/24 in /etc/ws/tunnel/ws/routes.d/values once routes.d is made"
 	if len(got) != 1 || got[0] != want {
 		t.Errorf("Plan = %q; want %q", got, want)
 	}
 	s.Check = false
 	if _, err := s.Plan(context.Background()); err == nil ||
-		err.Error() != "/etc/ws-tunnel/ws/routes.d is missing: run ws client macos apply --server ws first" {
+		err.Error() != "/etc/ws/tunnel/ws/routes.d is missing: run ws client macos apply --server ws first" {
 		t.Errorf("Plan error = %v", err)
 	}
 }
@@ -171,7 +171,7 @@ func TestNetworksApplySaysEachChangeInOrder(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := s.Out.(*effecttest.Out).Lines
-	if len(out) != 2 || !strings.Contains(out[0], "/etc/ws-tunnel/ws/routes.d/values") ||
+	if len(out) != 2 || !strings.Contains(out[0], "/etc/ws/tunnel/ws/routes.d/values") ||
 		out[1] != "say: ran launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.ws" {
 		t.Errorf("out = %q; want the routes file, then the signal", out)
 	}

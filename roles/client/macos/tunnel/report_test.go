@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	tunnelKey  = "/etc/ws-tunnel/private.key"
+	tunnelKey  = "/etc/ws/tunnel/private.key"
 	rootWs     = "/usr/local/libexec/ws-tunnel/ws"
 	daemonName = "com.github.zadykian.ws-tunnel.ws"
 )
@@ -21,8 +21,8 @@ func TestTunnelReportsAMacThatIsDone(t *testing.T) {
 	m := daemonMachine()
 	got := mactest.ReportOf(t, daemonStep(m))
 	for _, name := range []string{
-		"/h/.local/bin/ws", rootWs, "/etc/ws-tunnel", "/etc/ws-tunnel/ws/routes.d", "/etc/ws-tunnel/ws", tunnelKey,
-		"/h/.config/ws/tunnel.pub", "/etc/ws-tunnel/ws/tunnel.conf", daemonName,
+		"/h/.local/bin/ws", rootWs, "/etc/ws", "/etc/ws/tunnel", "/etc/ws/tunnel/ws/routes.d", "/etc/ws/tunnel/ws", tunnelKey,
+		"/h/.config/ws/tunnel.pub", "/etc/ws/tunnel/ws/tunnel.conf", daemonName,
 		"/Library/LaunchDaemons/" + daemonName + ".plist",
 	} {
 		if it, ok := got[name]; !ok || it.Found != it.Want || it.Conflict != "" || it.Diff != "" {

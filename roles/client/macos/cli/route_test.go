@@ -27,7 +27,7 @@ func TestTunnelLoadedFollowsLaunchd(t *testing.T) {
 func TestTunnelRoutesCheckShowsTheFileAndWritesNothing(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e/values.yml"})
 	m := p.Machine.(*effecttest.Machine)
-	m.Root["/etc/ws-tunnel/ws/routes.d"] = effect.Attrs{Mode: 0o755}
+	m.Root["/etc/ws/tunnel/ws/routes.d"] = effect.Attrs{Mode: 0o755}
 	m.Files["/e/servers/ws/values.yml"] = []byte(values.Text("WS_USER", "ada"))
 	withServerDirs(m)
 	status, _, stderr := runWs(p, "", "client", "macos", "tunnel", "routes", "--server", "ws", "--check", "test", "198.51.100.0/24")

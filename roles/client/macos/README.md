@@ -81,7 +81,7 @@ domain comes once and in lower case, with up to 3 addresses split by commas. Onc
 tunnel's daemon, `ws client macos apply` hands both to the code of `ws client macos tunnel routes`
 and `ws client macos resolver`, whose caveats hold ([their
 section](#routes-and-resolvers-of-another-repository)). The networks go in the server's
-`/etc/ws-tunnel/NAME/routes.d/values`, a name no other script may take. Each resolver starts
+`/etc/ws/tunnel/NAME/routes.d/values`, a name no other script may take. Each resolver starts
 with ws's `Written by` line, which names `ws client macos apply`, so a domain whose file is another
 script's, or written by hand, stops the run. To move a domain from such a script, have it remove
 its file first, with `ws client macos resolver DOMAIN` and no address. A key emptied or removed
@@ -215,7 +215,7 @@ client macos apply` copies `ws` from `~/.local/bin`, which a run makes if missin
 that file would let anything that runs as the user become root. The daemon holds WireGuard's device
 itself, so it needs no `wg` or `wireguard-go`. `apply` restarts each where the copy changed.
 
-The settings are in `/etc/ws-tunnel`, which only root reads. It holds the Mac's key, which `ws
+The settings are in `/etc/ws/tunnel`, which only root reads. It holds the Mac's key, which `ws
 client macos tunnel key` makes once, and a directory `NAME` per server, with its `tunnel.conf`
 and its `routes.d` ([the daemons](tunnel/README.md)). `ws client macos apply` keeps the public key in
 `~/.config/ws/tunnel.pub`, which the wizard reads, and copies `tunnel.conf` from the server's file,
@@ -223,7 +223,7 @@ so the daemon reads no file the user can write. In System Settings â€º General â
 Extensions, its "Allow in the Background" must stay on.
 
 A server with no directory beside `values.yml` has its daemon removed at the next `apply`: booted out
-where loaded, then its plist, `/etc/ws-tunnel/NAME`, state file and log. Nothing goes unless
+where loaded, then its plist, `/etc/ws/tunnel/NAME`, state file and log. Nothing goes unless
 `values.yml`'s servers list the one that `apply` runs for.
 
 The tunnel's ends are `10.99.N.2` on the Mac, on a utun of wireguard-go's, and `10.99.N.1` on ws, N
@@ -279,7 +279,7 @@ domain's names to nameservers behind it. It calls `ws`, which changes only what 
 `--check` makes each print its diffs and change nothing:
 
 - `ws client macos tunnel routes [--check] --server SERVER NAME CIDR...`, which writes the IPv4
-  networks to `/etc/ws-tunnel/SERVER/routes.d/NAME` and has the daemons read them again. SERVER's
+  networks to `/etc/ws/tunnel/SERVER/routes.d/NAME` and has the daemons read them again. SERVER's
   daemon adds them to the peer's AllowedIPs and routes them into its utun, without closing a
   connection. It leaves out for the time being one that holds the endpoint in use, or one that
   holds a way's endpoint while none answers. `NAME` is of `a-z`, `0-9` and `-`, `values`

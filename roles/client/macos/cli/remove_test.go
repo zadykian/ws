@@ -39,7 +39,7 @@ func removeFixture() (enginecli.Env, *effecttest.Machine) {
 	m.Dirs["/Applications/Zed.app"] = 0o755
 	m.Results["mv -f /h/.local/bin/ws.new /h/.local/bin/ws"] = effecttest.Result{}
 	m.Results["/usr/local/libexec/ws-tunnel/ws client macos tunnel key"] = effecttest.Result{Out: []byte("PUB\n")}
-	m.Results["ls -1 /etc/ws-tunnel"] = effecttest.Result{}
+	m.Results["ls -1 /etc/ws/tunnel"] = effecttest.Result{}
 	m.Files["/h/.local/bin/ws"] = []byte("ws")
 	m.Files["/h/Library/Fonts/JetBrainsMonoNerdFontMono-Regular.ttf"] = []byte("f")
 	m.Results["mktemp -d"] = effecttest.Result{Out: []byte("/tmp/x\n")}

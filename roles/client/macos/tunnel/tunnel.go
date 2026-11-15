@@ -17,6 +17,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 	"github.com/zadykian/ws/roles/client/macos/values"
+	"github.com/zadykian/ws/roles/internal/etcws"
 )
 
 // tunnelLibexec holds root's copy of ws, which the daemon runs. The user owns ~/.local/bin, so a
@@ -190,6 +191,7 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 		file.Dir{M: t.M, Path: "/usr/local/libexec", Mode: 0o755},
 		file.Dir{M: t.M, Path: tunnelLibexec, Mode: 0o755},
 		file.File{M: t.M, Path: tunnelLibexec + "/ws", Content: self, Mode: 0o755, Secret: true},
+		etcws.Top(t.M),
 		file.Dir{M: t.M, Path: launchd.Dir, Mode: 0o700},
 		file.Fixed(key),
 	}

@@ -19,7 +19,7 @@ const (
 )
 
 // dir is the settings' directory the rig reads.
-const dir = "/etc/ws-tunnel"
+const dir = "/etc/ws/tunnel"
 
 // paths are the daemon's files under dir.
 var paths = settings.Paths{

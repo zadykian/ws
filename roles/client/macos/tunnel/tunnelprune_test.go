@@ -18,13 +18,13 @@ func laterMachine() *effecttest.Machine {
 	m.Dirs["/h/.config/ws/servers"], m.Dirs["/h/.config/ws/servers/ws"] = 0o755, 0o755
 	otherDaemon(m, "lab")
 	m.Dirs["/var/run"], m.Dirs["/var/log"] = 0o755, 0o755
-	for _, f := range []string{"/var/run/ws-tunnel.lab.state", "/var/log/ws-tunnel.lab.log", "/etc/ws-tunnel/lab/tunnel.conf"} {
+	for _, f := range []string{"/var/run/ws-tunnel.lab.state", "/var/log/ws-tunnel.lab.log", "/etc/ws/tunnel/lab/tunnel.conf"} {
 		m.Files[f] = []byte("x")
 		m.Root[f] = effect.Attrs{Mode: 0o600}
 	}
-	m.Root["/etc/ws-tunnel/lab"] = effect.Attrs{Mode: 0o700}
+	m.Root["/etc/ws/tunnel/lab"] = effect.Attrs{Mode: 0o700}
 	m.Root["/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.lab.plist"] = effect.Attrs{Mode: 0o644}
-	m.Results["ls -1 /etc/ws-tunnel"] = effecttest.Result{Out: []byte("lab\nprivate.key\nws\n")}
+	m.Results["ls -1 /etc/ws/tunnel"] = effecttest.Result{Out: []byte("lab\nprivate.key\nws\n")}
 	return m
 }
 
@@ -38,7 +38,7 @@ func TestTunnelRemovesTheDaemonOfAServerThatIsGone(t *testing.T) {
 	got := lines(tunnelChanges(t, pruneStep(laterMachine())))
 	for _, want := range []string{
 		"would run launchctl bootout system/com.github.zadykian.ws-tunnel.lab",
-		"remove /Library/LaunchDaemons/com.github.zadykian.ws-tunnel.lab.plist", "remove /etc/ws-tunnel/lab",
+		"remove /Library/LaunchDaemons/com.github.zadykian.ws-tunnel.lab.plist", "remove /etc/ws/tunnel/lab",
 		"remove /var/run/ws-tunnel.lab.state", "remove /var/log/ws-tunnel.lab.log",
 	} {
 		if !strings.Contains(got, want) {
@@ -94,7 +94,7 @@ func TestTunnelPrunesNothingTheSecondTimeAndAppliesNothingInPlan(t *testing.T) {
 	if err := s.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
-	m.Results["ls -1 /etc/ws-tunnel"] = effecttest.Result{Out: []byte("private.key\nws\n")}
+	m.Results["ls -1 /etc/ws/tunnel"] = effecttest.Result{Out: []byte("private.key\nws\n")}
 	if got := tunnelChanges(t, pruneStep(m)); len(got) != 0 {
 		t.Errorf("second Plan = %q; want none", got)
 	}
@@ -115,7 +115,7 @@ func TestTunnelHasTheDaemonsThatStayReadAgainOnceAServerGoes(t *testing.T) {
 	m.Files["/h/.config/ws/servers/box/values.yml"] = []byte("x")
 	m.Dirs["/h/.config/ws/servers/box"] = 0o755
 	otherDaemon(m, "box")
-	m.Results["ls -1 /etc/ws-tunnel"] = effecttest.Result{Out: []byte("box\nlab\nprivate.key\nws\n")}
+	m.Results["ls -1 /etc/ws/tunnel"] = effecttest.Result{Out: []byte("box\nlab\nprivate.key\nws\n")}
 	got := lines(tunnelChanges(t, pruneStep(m)))
 	if !strings.Contains(got, "would run launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.box") {
 		t.Errorf("Plan does not signal box:\n%s", got)

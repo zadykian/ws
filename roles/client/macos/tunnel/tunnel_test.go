@@ -40,8 +40,9 @@ func TestTunnelPlansTheCopyAndTheKeyOnAFreshMac(t *testing.T) {
 		"create directory /usr/local/libexec, owner 0:0, mode 755",
 		"create directory /usr/local/libexec/ws-tunnel, owner 0:0, mode 755",
 		"create /usr/local/libexec/ws-tunnel/ws (content not shown)",
-		"create directory /etc/ws-tunnel, owner 0:0, mode 700",
-		"would make the Mac's WireGuard key, /etc/ws-tunnel/private.key",
+		"create directory /etc/ws, owner 0:0, mode 755",
+		"create directory /etc/ws/tunnel, owner 0:0, mode 700",
+		"would make the Mac's WireGuard key, /etc/ws/tunnel/private.key",
 	})
 	if got != want {
 		t.Errorf("Plan =\n%s\nwant\n%s", got, want)
@@ -53,13 +54,13 @@ func TestTunnelPlansNothingOnceDone(t *testing.T) {
 	m.Files["/h/.local/bin/ws"] = []byte("ws")
 	for path, mode := range map[string]effect.Attrs{
 		"/usr/local": {Mode: 0o755}, "/usr/local/libexec": {Mode: 0o755}, "/usr/local/libexec/ws-tunnel": {Mode: 0o755},
-		"/etc/ws-tunnel": {Mode: 0o700}, "/etc/ws-tunnel/private.key": {Mode: 0o600},
+		"/etc/ws/tunnel": {Mode: 0o700}, "/etc/ws/tunnel/private.key": {Mode: 0o600},
 	} {
 		m.Root[path] = mode
 	}
 	m.Results["/usr/local/libexec/ws-tunnel/ws client macos tunnel key"] = effecttest.Result{Out: []byte("PUB\n")}
 	m.Files["/h/.config/ws/tunnel.pub"] = []byte("PUB\n")
-	m.Dirs["/h/.config"], m.Dirs["/h/.config/ws"] = 0o755, 0o700
+	m.Dirs["/h/.config"], m.Dirs["/h/.config/ws"], m.Dirs["/etc/ws"] = 0o755, 0o700, 0o755
 	m.Files["/usr/local/libexec/ws-tunnel/ws"] = []byte("ws")
 	m.Root["/usr/local/libexec/ws-tunnel/ws"] = effect.Attrs{Mode: 0o755}
 	if got := tunnelChanges(t, tunnelStep(m)); len(got) != 0 {
@@ -97,11 +98,11 @@ func TestTunnelApplyInstallsCopiesAndMakesTheKey(t *testing.T) {
 	}
 	out := lines(s.Out.(*effecttest.Out).Lines)
 	if !strings.Contains(out, "say: create /usr/local/libexec/ws-tunnel/ws (content not shown)\n") ||
-		!strings.Contains(out, "say: made the Mac's WireGuard key, /etc/ws-tunnel/private.key") {
+		!strings.Contains(out, "say: made the Mac's WireGuard key, /etc/ws/tunnel/private.key") {
 		t.Errorf("out = %q; want the copy and the key", out)
 	}
 	m.Files["/h/.local/bin/ws"] = []byte("ws")
-	m.Root["/etc/ws-tunnel/private.key"] = effect.Attrs{Mode: 0o600}
+	m.Root["/etc/ws/tunnel/private.key"] = effect.Attrs{Mode: 0o600}
 	if got := tunnelChanges(t, tunnelStep(m)); len(got) != 0 {
 		t.Errorf("a second Plan = %q; want none", got)
 	}
