@@ -110,7 +110,7 @@ func TestNetworksKeepsTheResolverOfADomainAnotherServerNames(t *testing.T) {
 		m.Dirs["/h/.config/ws/servers"], m.Dirs["/h/.config/ws/servers/"+n] = 0o755, 0o755
 		m.Files[values.ServerPath(mac, n)] = nil
 	}
-	m.Files[values.ServerPath(mac, "lab")] = []byte("WS_RESOLVERS=lab.test=10.0.0.1\n")
+	m.Files[values.ServerPath(mac, "lab")] = []byte(values.Text("WS_RESOLVERS", "lab.test=10.0.0.1"))
 	s := networksStep(m, values.Conf{PublicKey: "K"})
 	s.MacConf = mac
 	got := networksPlan(t, s)

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 const macConf = "/h/.config/ws/mac.conf"
@@ -22,7 +23,13 @@ func withLab(m *effecttest.Machine, text string) {
 
 func TestSSHWritesASecondServersBlockFromItsFile(t *testing.T) {
 	m := sshMachine()
-	withLab(m, "WS_TARGET=cloud\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22\nWS_USER=root\nWS_SLOT=1\n")
+	withLab(m, values.Text(
+		"WS_TARGET", "cloud",
+		"WS_REMOTE", "r.example",
+		"WS_REMOTE_PORT", "22",
+		"WS_USER", "root",
+		"WS_SLOT", "1",
+	))
 	c := sshConf(m, &effecttest.Out{})
 	c.MacConf = macConf
 	s := c.Step()
@@ -46,7 +53,7 @@ func TestSSHWritesASecondServersBlockFromItsFile(t *testing.T) {
 
 func TestSSHStopsWhereAnotherServersFileFails(t *testing.T) {
 	m := sshMachine()
-	withLab(m, "WS_SLOT=99\n")
+	withLab(m, values.Text("WS_SLOT", "99"))
 	c := sshConf(m, &effecttest.Out{})
 	c.MacConf = macConf
 	_, err := c.Step().Plan(context.Background())
@@ -57,7 +64,13 @@ func TestSSHStopsWhereAnotherServersFileFails(t *testing.T) {
 
 func TestSSHStopsWhereSSHReadsAServerAtAnotherAddress(t *testing.T) {
 	m := sshMachine()
-	withLab(m, "WS_TARGET=cloud\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22\nWS_USER=root\nWS_SLOT=1\n")
+	withLab(m, values.Text(
+		"WS_TARGET", "cloud",
+		"WS_REMOTE", "r.example",
+		"WS_REMOTE_PORT", "22",
+		"WS_USER", "root",
+		"WS_SLOT", "1",
+	))
 	m.Results["ssh -G -F /tmp/x/whole lab"] = effecttest.Result{Out: []byte("user root\nhostname 10.99.7.1\n")}
 	c := sshConf(m, &effecttest.Out{})
 	c.MacConf = macConf
@@ -69,7 +82,13 @@ func TestSSHStopsWhereSSHReadsAServerAtAnotherAddress(t *testing.T) {
 
 func TestSSHStopsWhereABlockNamesASecondServer(t *testing.T) {
 	m := sshMachine()
-	withLab(m, "WS_TARGET=cloud\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22\nWS_USER=root\nWS_SLOT=1\n")
+	withLab(m, values.Text(
+		"WS_TARGET", "cloud",
+		"WS_REMOTE", "r.example",
+		"WS_REMOTE_PORT", "22",
+		"WS_USER", "root",
+		"WS_SLOT", "1",
+	))
 	m.Files["/h/.ssh/config"] = []byte("Include config.d/ws\nHost lab\n  User x\n")
 	c := sshConf(m, &effecttest.Out{})
 	c.MacConf = macConf
