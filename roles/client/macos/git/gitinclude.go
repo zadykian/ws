@@ -10,6 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/internal/gitcfg"
 )
 
 // includeText is what goes at the top of ~/.gitconfig, so that the file's own settings come after
@@ -74,7 +75,7 @@ func (g *Git) includeChanges(ctx context.Context, found file.Found, lines []step
 	}
 	if rc := g.Home + "/.gitconfig"; found.Exists {
 		names, _ := g.lines(ctx, rc, "--name-only", "--list")
-		if own := ownSettings(names); own != "" {
+		if own := gitcfg.Own(names); own != "" {
 			g.note("%s's own settings of %s, below the include, win over ~/.config/ws/gitconfig's",
 				rc, own)
 		}
@@ -85,7 +86,7 @@ func (g *Git) includeChanges(ctx context.Context, found file.Found, lines []step
 	}
 	if _, err := g.M.Stat(xdg + "/git/config"); err == nil {
 		names, _ := g.lines(ctx, xdg+"/git/config", "--name-only", "--list")
-		if own := ownSettings(names); own != "" {
+		if own := gitcfg.Own(names); own != "" {
 			g.note("%s/git/config's settings of %s come before the include in ~/.gitconfig, so "+
 				"~/.config/ws/gitconfig's win over them", xdg, own)
 		}

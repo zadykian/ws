@@ -3,9 +3,6 @@ package git
 import (
 	"errors"
 	"fmt"
-	"regexp"
-	"slices"
-	"strings"
 )
 
 // ours reports whether an include path names ~/.config/ws/gitconfig, as git config prints an include
@@ -39,19 +36,4 @@ func included(paths []string, first, dir string) (bool, error) {
 		return false, fmt.Errorf("includes ~/.config/ws/gitconfig %d times: keep the one at the top", count)
 	}
 	return true, nil
-}
-
-var ownSetting = regexp.MustCompile(`^(user\.(name|email|signingkey)|(commit|tag)\.gpgsign|` +
-	`gpg\.(format|ssh\.program|ssh\.allowedsignersfile))$`)
-
-// ownSettings returns the settings of identity and signing among names, once each, in their order, joined
-// by ", ". names are those that git config --name-only --list prints.
-func ownSettings(names []string) string {
-	var list []string
-	for _, n := range names {
-		if ownSetting.MatchString(n) && !slices.Contains(list, n) {
-			list = append(list, n)
-		}
-	}
-	return strings.Join(list, ", ")
 }
