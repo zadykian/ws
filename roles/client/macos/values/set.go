@@ -19,7 +19,7 @@ func replace(text, key, value string) string {
 		}
 		if name, _, ok := strings.Cut(strings.TrimLeft(l, " \t"), "="); ok && name == key {
 			if !done {
-				out = append(out, Line(key, value)+"\n")
+				out = append(out, Text(key, value))
 			}
 			done = true
 			continue
@@ -30,7 +30,7 @@ func replace(text, key, value string) string {
 		if n := len(out); n > 0 && !strings.HasSuffix(out[n-1], "\n") {
 			out[n-1] += "\n"
 		}
-		out = append(out, Line(key, value)+"\n")
+		out = append(out, Text(key, value))
 	}
 	return strings.Join(out, "")
 }
@@ -84,12 +84,4 @@ func (f File) Show(key, value string) error {
 	}
 	f.Out.Diff(f.Path, []byte(before), []byte(after))
 	return nil
-}
-
-// Line is the key's line for mac.conf, the value in quotes where it holds a blank.
-func Line(key, value string) string {
-	if strings.ContainsAny(value, " \t") {
-		return key + `="` + value + `"`
-	}
-	return key + "=" + value
 }

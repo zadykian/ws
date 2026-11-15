@@ -11,6 +11,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -57,7 +58,7 @@ func unnamed(u KeyUse, keys []sshcfg.AgentKey) error {
 	var lines []string
 	for _, k := range keys {
 		if k.P256() {
-			lines = append(lines, name+"="+k.Pub()+" for "+k.Label())
+			lines = append(lines, values.Line(name, k.Pub())+" for "+k.Label())
 		}
 	}
 	if len(lines) == 0 {

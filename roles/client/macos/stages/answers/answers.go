@@ -153,9 +153,9 @@ func (a *Answers) compose(text map[values.Scope]string, lines, remote string, pl
 		var err error
 		kept := p.file.Scope.Keep(lines)
 		if p.file.Scope == values.ServerFile && kept != "" && !values.HasLine(text[values.ServerFile], "WS_SLOT") {
-			head := "WS_SLOT=" + strconv.Itoa(int(place.Slot)) + "\n"
+			head := values.Text("WS_SLOT", strconv.Itoa(int(place.Slot)))
 			if !values.HasLine(text[values.ServerFile], "WS_TUNNEL_PORT") {
-				head += values.Line("WS_TUNNEL_PORT", place.Port(remote)) + "\n"
+				head += values.Text("WS_TUNNEL_PORT", place.Port(remote))
 			}
 			kept = head + kept
 		}

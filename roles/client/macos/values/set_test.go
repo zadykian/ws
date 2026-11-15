@@ -61,9 +61,3 @@ func TestConfSet(t *testing.T) {
 		t.Errorf("mac.conf = %q", got)
 	}
 }
-
-func TestLine(t *testing.T) {
-	if got := Line("WS_CABLE_SERVICE", "USB LAN"); got != `WS_CABLE_SERVICE="USB LAN"` {
-		t.Errorf("Line = %q", got)
-	}
-}

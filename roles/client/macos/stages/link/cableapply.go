@@ -146,9 +146,9 @@ func (c *Cable) service(ctx context.Context) error {
 // write writes value as the server file's WS_CABLE_SERVICE, in double quotes, after ws's end as
 // WS_CABLE_PORT, or empty for none, which the wizard never asks again.
 func (c *Cable) write(ctx context.Context, value string) error {
-	lines := "WS_CABLE_SERVICE=\n"
+	lines := values.Text("WS_CABLE_SERVICE", "")
 	if value != "" {
-		lines = "WS_CABLE_PORT=" + c.end() + "\nWS_CABLE_SERVICE=\"" + value + "\"\n"
+		lines = values.Text("WS_CABLE_PORT", c.end(), "WS_CABLE_SERVICE", value)
 	}
 	return c.file().Add(ctx, lines)
 }

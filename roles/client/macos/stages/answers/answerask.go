@@ -54,7 +54,7 @@ func (a *asker) ask(ctx context.Context, q values.Question) (string, error) {
 			return "", err
 		}
 	}
-	a.lines += values.Line(q.Key, value) + "\n"
+	a.lines += values.Text(q.Key, value)
 	return value, nil
 }
 

@@ -12,9 +12,9 @@ func (q Question) Refusal(value, lan string) string {
 		return q.Key + " holds a newline, which would add a line of its own"
 	}
 	read := Lines
-	text := Line(q.Key, value)
+	text := Text(q.Key, value)
 	if q.Key == "WS_LAN_ADDRESS" {
-		read, text = Parse, "WS_LAN="+lan+"\n"+text
+		read, text = Parse, Text("WS_LAN", lan, q.Key, value)
 	}
 	if _, errs := read(text); len(errs) > 0 {
 		return errs[0].Msg
