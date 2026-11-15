@@ -11,7 +11,7 @@ import (
 )
 
 // installRustup is rustup's own installer, which curl pipes into sh. `--no-modify-path` leaves PATH
-// to the shell role's .profile, which sources rustup's env file.
+// to /etc/ws/profile, which sources rustup's env file.
 const installRustup = "set -o pipefail && " +
 	"curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | " +
 	"sh -s -- -y --no-modify-path --default-toolchain stable"

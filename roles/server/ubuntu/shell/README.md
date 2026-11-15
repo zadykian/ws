@@ -1,19 +1,35 @@
 # shell
 
-The `shell` role, Go steps in `roles/server/ubuntu/shell`, writes `~/.bashrc` with ble.sh and
-bash-completion, and `PATH` in `~/.profile`. Each run replaces any change made to them by hand. A
-machine's own settings go in files they read where they exist:
+The `shell` role, Go steps in `roles/server/ubuntu/shell`, writes ws's lines for bash to two
+files in `/etc/ws`, root's and 644. It puts one line of each at the top of the user's file:
 
-- `/etc/ws/env`, which `~/.bashrc` sources first, above its interactive guard, so that
-  non-interactive shells get it too, and which the role writes from the secrets file:
-  [Secrets](#secrets);
-- `~/.bash_aliases`, which `~/.bashrc` sources too.
+- `/etc/ws/bashrc`, which `~/.bashrc` sources with `. /etc/ws/bashrc`. It sources `/etc/ws/env`,
+  which the role writes from the secrets file ([Secrets](#secrets)), and sets `DOTNET_RUNTIME_ID`.
+  Its own guard of a shell that is not interactive follows, then ble.sh and bash-completion. The
+  guard returns from that file alone, so `~/.bashrc` goes on to its own.
+- `/etc/ws/profile`, which `~/.profile` sources with `. /etc/ws/profile`. It sets `PATH` for the
+  tools that ws's roles install, and sources rustup's env file.
 
-A link at a file the role writes as root fails the step of that file alone. So does a link at a
-directory between the home and that file ([Links under the home](../security/README.md#links-under-the-home)).
+`~/.bashrc` and `~/.profile` stay the user's, as `~/.zshrc` does on the Mac. The lines go at the
+top, not at the end. Stock's guard returns first in a shell that is not interactive, which needs the
+env file too, and `~/.profile` runs `~/.bashrc` before its end. A missing file is made with the line
+alone. Before it adds the line, the run keeps the old file beside it as `PATH.TIME~`. A
+file that has the line stays untouched, so a second run changes nothing. A user's settings go in
+those two files, below the line.
 
-An installer that appends to `~/.bashrc` or `~/.profile`, a line that adds its directory to
-`PATH`, say, loses that line on the next run: move it to `~/.bash_aliases`.
+A `~/.profile` that the run makes holds the line alone, so it does not run `~/.bashrc`, as stock's
+file does. On an account made without `/etc/skel`, a login shell then reads no `/etc/ws/bashrc`: no
+env file, no `DOTNET_RUNTIME_ID`, no ble.sh. To have them, add stock's lines that run `~/.bashrc` to
+that `~/.profile`:
+
+```sh
+if [ -n "$BASH_VERSION" ] && [ -f "$HOME/.bashrc" ]; then
+  . "$HOME/.bashrc"
+fi
+```
+
+A link at one of the user's files, or at a directory between the home and it, fails the step
+alone ([Links under the home](../security/README.md#links-under-the-home)).
 
 ## Secrets
 
