@@ -7,7 +7,7 @@ import (
 
 func TestSpanFindsTheLinesOfAKey(t *testing.T) {
 	lines := strings.SplitAfter("---\n# a\nWS_BASE_TIMEZONE: x\n\nWS_BASE_PACKAGES:\n  - git\n- jq\n\n# b\nWS_USER : y\n"+
-		"ws_user_name: z\n", "\n")
+		"WS_USER_NAME: z\n", "\n")
 	lines = lines[:len(lines)-1]
 	for name, want := range map[string][2]int{
 		"WS_BASE_TIMEZONE": {2, 3}, "WS_BASE_PACKAGES": {4, 7}, "WS_USER": {9, 10}, "WS_HOME": {11, 11},
