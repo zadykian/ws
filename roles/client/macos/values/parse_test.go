@@ -19,19 +19,24 @@ func TestParse(t *testing.T) {
 		{"comments", "# a\n\n  \t# b\n", Conf{User: "zadykian", Target: "lan", Slot: "0"}, nil},
 		{"later line", "WS_USER=a\nWS_USER=b\nWS_USER=\n", Conf{User: "zadykian", Target: "lan", Slot: "0"}, nil},
 		{"empty values", "WS_USER=\nWS_TARGET=\"\"\nWS_TUNNEL_PORT=\n", Conf{User: "zadykian", Target: "lan", Slot: "0"}, nil},
-		{"cloud", "WS_TARGET=cloud\nWS_REMOTE=h\nWS_REMOTE_PORT=22\n", Conf{User: "root", Target: "cloud", Slot: "0", Remote: "h", RemotePort: "22"}, nil},
-		{"cloud, last line", "WS_USER=\nWS_TARGET=cloud\nWS_REMOTE=h\nWS_REMOTE_PORT=22\n", Conf{User: "root", Target: "cloud", Slot: "0", Remote: "h", RemotePort: "22"}, nil},
-		{"slot", "WS_SLOT=15\n", Conf{User: "zadykian", Target: "lan", Slot: "15"}, nil},
+		{"cloud", Text("WS_TARGET", "cloud", "WS_REMOTE", "h", "WS_REMOTE_PORT", "22"), Conf{User: "root", Target: "cloud", Slot: "0", Remote: "h", RemotePort: "22"}, nil},
+		{"cloud, last line", Text(
+			"WS_USER", "",
+			"WS_TARGET", "cloud",
+			"WS_REMOTE", "h",
+			"WS_REMOTE_PORT", "22",
+		), Conf{User: "root", Target: "cloud", Slot: "0", Remote: "h", RemotePort: "22"}, nil},
+		{"slot", Text("WS_SLOT", "15"), Conf{User: "zadykian", Target: "lan", Slot: "15"}, nil},
 		{"empty slot", "WS_SLOT=3\nWS_SLOT=\n", Conf{User: "zadykian", Target: "lan", Slot: "0"}, nil},
-		{"slot past 15", "WS_SLOT=16\n", Conf{User: "zadykian", Target: "lan", Slot: "0"},
+		{"slot past 15", Text("WS_SLOT", "16"), Conf{User: "zadykian", Target: "lan", Slot: "0"},
 			[]Error{{1, "WS_SLOT=16 is not " + find(t, "WS_SLOT").form}}},
-		{"unknown key", "WS_NOPE=1\n", Conf{User: "zadykian", Target: "lan", Slot: "0"},
+		{"unknown key", Text("WS_NOPE", "1"), Conf{User: "zadykian", Target: "lan", Slot: "0"},
 			[]Error{{1, "unknown key WS_NOPE"}}},
-		{"the removed key", "WS_HOOK=me/tools@v1.0.0\n", Conf{User: "zadykian", Target: "lan", Slot: "0"},
+		{"the removed key", Text("WS_HOOK", "me/tools@v1.0.0"), Conf{User: "zadykian", Target: "lan", Slot: "0"},
 			[]Error{{1, "unknown key WS_HOOK"}}},
-		{"the old port key", "WS_PORT=51821\n", Conf{User: "zadykian", Target: "lan", Slot: "0"},
+		{"the old port key", Text("WS_PORT", "51821"), Conf{User: "zadykian", Target: "lan", Slot: "0"},
 			[]Error{{1, "unknown key WS_PORT"}}},
-		{"the removed name", "WS_GIT_NAME=Ada\nWS_GIT_EMAIL=a@b.c\n", Conf{User: "zadykian", Target: "lan", Slot: "0"},
+		{"the removed name", Text("WS_GIT_NAME", "Ada", "WS_GIT_EMAIL", "a@b.c"), Conf{User: "zadykian", Target: "lan", Slot: "0"},
 			[]Error{{1, "unknown key WS_GIT_NAME"}, {2, "unknown key WS_GIT_EMAIL"}}},
 		{"not a line", "ws_user=a\nWS_USER\n=a\n", Conf{User: "zadykian", Target: "lan", Slot: "0"},
 			[]Error{{1, "not a KEY=value line"}, {2, "not a KEY=value line"}, {3, "not a KEY=value line"}}},
@@ -52,10 +57,10 @@ func TestParse(t *testing.T) {
 }
 
 func TestLines(t *testing.T) {
-	if _, errs := Lines("WS_LAN=10.88.0.0/24\n"); len(errs) != 0 {
+	if _, errs := Lines(Text("WS_LAN", "10.88.0.0/24")); len(errs) != 0 {
 		t.Errorf("Lines refused a key that goes with another: %v", errs)
 	}
-	if _, errs := Parse("WS_LAN=10.88.0.0/24\n"); len(errs) != 1 {
+	if _, errs := Parse(Text("WS_LAN", "10.88.0.0/24")); len(errs) != 1 {
 		t.Errorf("Parse took a key that goes with another: %v", errs)
 	}
 }

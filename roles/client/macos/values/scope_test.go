@@ -8,11 +8,11 @@ func TestScopeRefusesTheOtherFilesKeys(t *testing.T) {
 		text  string
 		want  string
 	}{
-		{Both, "WS_TARGET=lan\nWS_GIT_SIGNING_PUB_KEY=~/k.pub\n", ""},
-		{MacFile, "WS_GIT_SIGNING_PUB_KEY=~/k.pub\n", ""},
-		{ServerFile, "WS_TARGET=lan\n", ""},
-		{MacFile, "WS_TARGET=lan\n", "WS_TARGET is a server's key: it goes in servers/NAME/server.conf, beside mac.conf"},
-		{ServerFile, "WS_GIT_SIGNING_PUB_KEY=~/k.pub\n", "WS_GIT_SIGNING_PUB_KEY is the Mac's key: it goes in mac.conf"},
+		{Both, Text("WS_TARGET", "lan", "WS_GIT_SIGNING_PUB_KEY", "~/k.pub"), ""},
+		{MacFile, Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"), ""},
+		{ServerFile, Text("WS_TARGET", "lan"), ""},
+		{MacFile, Text("WS_TARGET", "lan"), "WS_TARGET is a server's key: it goes in servers/NAME/server.conf, beside mac.conf"},
+		{ServerFile, Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"), "WS_GIT_SIGNING_PUB_KEY is the Mac's key: it goes in mac.conf"},
 	} {
 		_, errs := c.scope.Lines(c.text)
 		if c.want == "" {
@@ -28,11 +28,11 @@ func TestScopeRefusesTheOtherFilesKeys(t *testing.T) {
 }
 
 func TestScopeParseKeepsTheKeysThatGoTogether(t *testing.T) {
-	_, errs := ServerFile.Parse("WS_LAN=10.88.0.0/24\n")
+	_, errs := ServerFile.Parse(Text("WS_LAN", "10.88.0.0/24"))
 	if len(errs) != 1 || errs[0].Msg != "WS_LAN and WS_LAN_ADDRESS go together" {
 		t.Errorf("errors = %v, want the pair's refusal", errs)
 	}
-	if _, errs := MacFile.Parse("WS_GIT_SIGNING_PUB_KEY=~/k.pub\n"); len(errs) != 0 {
+	if _, errs := MacFile.Parse(Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub")); len(errs) != 0 {
 		t.Errorf("errors = %v, want none", errs)
 	}
 }
@@ -46,9 +46,9 @@ func TestEveryKeyHasAScope(t *testing.T) {
 }
 
 func TestScopeKeepSplitsLinesByKey(t *testing.T) {
-	const lines = "WS_TARGET=lan\nWS_GIT_SIGNING_PUB_KEY=~/k.pub\nWS_REMOTE=\n"
+	var lines = Text("WS_TARGET", "lan", "WS_GIT_SIGNING_PUB_KEY", "~/k.pub", "WS_REMOTE", "")
 	for scope, want := range map[Scope]string{
-		MacFile: "WS_GIT_SIGNING_PUB_KEY=~/k.pub\n", ServerFile: "WS_TARGET=lan\nWS_REMOTE=\n", Both: lines,
+		MacFile: Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"), ServerFile: Text("WS_TARGET", "lan", "WS_REMOTE", ""), Both: lines,
 	} {
 		if got := scope.Keep(lines); got != want {
 			t.Errorf("scope %d keeps %q, want %q", scope, got, want)
