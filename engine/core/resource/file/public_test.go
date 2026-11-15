@@ -74,3 +74,32 @@ func TestPublicReadsAsRootWhereTheUserCannot(t *testing.T) {
 		t.Errorf("plan = %q, calls %q; want none, read as root", got, m.Calls)
 	}
 }
+func TestPublicReportsFromTheUsersRead(t *testing.T) {
+	m := effecttest.NewMachine()
+	p := file.Public{M: m, Path: "/etc/x", Content: []byte("a\n"), Mode: 0o644}
+	items, err := p.Report(context.Background())
+	if err != nil || len(items) != 1 || items[0].Found != "missing" {
+		t.Fatalf("missing report = %+v, %v", items, err)
+	}
+	m.Files["/etc/x"] = []byte("b\n")
+	items, err = p.Report(context.Background())
+	if err != nil || len(items) != 1 || items[0].Conflict == "" || len(rootCalls(m)) != 0 {
+		t.Errorf("report = %+v, %v, root calls %q; want a conflict, none as root", items, err, rootCalls(m))
+	}
+}
+
+func TestPublicDir(t *testing.T) {
+	m := effecttest.NewMachine()
+	d := file.PublicDir{M: m, Path: "/etc/ws", Mode: 0o755}
+	if got := applyAll(t, d); len(got) != 1 || !strings.HasPrefix(got[0], "create directory /etc/ws") {
+		t.Errorf("first plan = %q, want a create", got)
+	}
+	m.Calls = nil
+	if got := applyAll(t, d); got != nil || len(rootCalls(m)) != 0 {
+		t.Errorf("second plan = %q, root calls %q; want none", got, rootCalls(m))
+	}
+	m.Dirs["/etc/ws"] = 0o700
+	if got := applyAll(t, d); len(got) != 1 || !strings.HasPrefix(got[0], "set owner 0:0 and mode 755 of /etc/ws") {
+		t.Errorf("mode plan = %q", got)
+	}
+}
