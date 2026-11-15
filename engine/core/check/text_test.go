@@ -19,17 +19,6 @@ func TestText(t *testing.T) {
 		{"service blank bare", CableService("USB LAN", false), false},
 		{"service bare", CableService("Ethernet", false), true},
 		{"service disabled", CableService("*Ethernet", true), false},
-		{"name", GitName("Ada Lovelace", true), true},
-		{"name blank bare", GitName("Ada Lovelace", false), false},
-		{"name quote", GitName(`Ada "A"`, true), false},
-		{"name backslash", GitName(`Ada\`, true), false},
-		{"email", GitEmail("ws@example.com"), true},
-		{"email plus", GitEmail("a.b+c%d@ex-ample.org"), true},
-		{"email at first", GitEmail("@example.com"), false},
-		{"email no at", GitEmail("example.com"), false},
-		{"email two ats", GitEmail("a@b@example.com"), false},
-		{"email bad host", GitEmail("a@-example.com"), false},
-		{"email bad local", GitEmail("a b@example.com"), false},
 	}
 	for _, tt := range tests {
 		if tt.got != tt.want {

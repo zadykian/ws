@@ -34,19 +34,3 @@ func CableService(s string, quoted bool) bool {
 	}
 	return quoted || !strings.Contains(s, " ")
 }
-
-// GitName reports whether s is a name that git's config takes in quotes, which a " would end and a
-// \ escape. A blank needs quotes, as in a shell's assignment.
-func GitName(s string, quoted bool) bool {
-	if hasControl(s) || strings.ContainsAny(s, `"\`) {
-		return false
-	}
-	return quoted || !strings.Contains(s, " ")
-}
-
-// GitEmail reports whether s is an email address: letters, digits and ._%+- before the @, and a
-// host name after it.
-func GitEmail(s string) bool {
-	local, host, found := strings.Cut(s, "@")
-	return found && local != "" && only(local, letters+digits+"._%+-") && Name(host)
-}
