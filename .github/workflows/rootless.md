@@ -36,7 +36,7 @@ file](../../roles/server/ubuntu/secrets/README.md#wss-file)).
 Last, `ws server ubuntu wizard`. With no terminal it stops where host_vars lacks a key. Then it runs
 `ws server ubuntu apply` in a unit, with the credential, and a second run starts no unit. One after
 `ws server ubuntu values set` changes host_vars starts one. The unit's ws is a stand-in that adds
-`--only shell` to apply, so that a full run, as its stamp has it, fits the job. The user's claude
+`--only shell,git` to apply, so that a full run, as its stamp has it, fits the job. The user's claude
 is a stand-in too, with a login
 ([The server's wizard](../../roles/server/ubuntu/stages/README.md)).
 

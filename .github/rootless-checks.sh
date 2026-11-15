@@ -230,14 +230,14 @@ must "a second init keeps both" test "$sums" = \
 
 # ws server ubuntu wizard runs ws server ubuntu apply in a unit, as the Mac's wizard does, and a
 # second run with nothing changed starts none. A value set in host_vars has the next start one. The
-# unit's ws adds --only shell to apply, so that a full run, as the stamp has it, fits the job. This
-# comes last: ws is that stand-in from here on.
+# unit's ws adds --only shell,git to apply, so that a full run, as the stamp has it, fits the job.
+# This comes last: ws is that stand-in from here on.
 refused "the wizard asks with no terminal" ws server ubuntu wizard --plain </dev/null
 ws server ubuntu values set WS_SECURITY_OUTBOUND true
 real=$(mktemp -d)/ws
 mv /usr/local/bin/ws "$real"
 printf '%s\n' '#!/bin/sh' \
-    "[ \"\$1 \$2 \$3\" != 'server ubuntu apply' ] || { shift 3; exec $real server ubuntu apply --only shell \"\$@\"; }" \
+    "[ \"\$1 \$2 \$3\" != 'server ubuntu apply' ] || { shift 3; exec $real server ubuntu apply --only shell,git \"\$@\"; }" \
     "exec $real \"\$@\"" >/usr/local/bin/ws
 chmod 755 /usr/local/bin/ws
 # The user's claude is a stand-in with a login, as that run installs none.
