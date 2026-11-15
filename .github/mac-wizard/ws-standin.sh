@@ -60,7 +60,7 @@ wg0() {
 direct() {
     port=$(sed -n 's/^WS_CABLE_PORT: "\(.*\)"$/\1/p' \
         "$s/root"/etc/ws/host_vars.yml 2>/dev/null)
-    netplan=$s/root/etc/netplan/60-direct-link.yaml
+    netplan=$s/root/etc/netplan/60-cable.yaml
     rm -f "$netplan"
     [ -z "$port" ] || { mkdir -p "${netplan%/*}" && echo "    \"$port\":" >"$netplan"; } || return 1
     [ -n "$port" ] && [ "$(cat "$s/root/sys/class/net/$port/carrier" 2>/dev/null)" = 1 ] ||

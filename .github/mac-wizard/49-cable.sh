@@ -38,7 +38,7 @@ ws=$RUNNER_TEMP/ws
 cable=$RUNNER_TEMP/cable
 net=$ws/root/sys/class/net
 vars="$ws/root"/etc/ws/host_vars.yml
-netplan=$ws/root/etc/netplan/60-direct-link.yaml
+netplan=$ws/root/etc/netplan/60-cable.yaml
 fail=0
 
 # unnamed: host_vars names no port, whatever else it holds: a run's WS_USER stays there.

@@ -11,7 +11,7 @@ import (
 // netplanDirs are the directories whose files netplan merges.
 var netplanDirs = []string{"lib/netplan", "etc/netplan", "run/netplan"}
 
-// Check has netplan merge its files with the direct link's in a scratch root, and returns
+// Check has netplan merge its files with the cable's in a scratch root, and returns
 // what keeps it from setting up the port alone. netplan generate, run in a snap's shell, ignores
 // --root-dir and generates the machine's files over D-Bus. So the step runs configure, which
 // writes under the root only. The settings may hold secrets, such as Wi-Fi passwords, so no

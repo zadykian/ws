@@ -61,7 +61,7 @@ func TestCheckNetplanWordsNetplansRefusal(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := []string{"netplan rejects its files with the direct link's: bad key."}; !slices.Equal(problems, want) {
+	if want := []string{"netplan rejects its files with the cable's: bad key."}; !slices.Equal(problems, want) {
 		t.Errorf("problems = %q, want %q", problems, want)
 	}
 	if !slices.Contains(m.Calls, "root rm -rf -- "+scratch) {

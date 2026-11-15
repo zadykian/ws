@@ -52,12 +52,12 @@ func (r Route) devices() []string {
 // UplinkProblems returns why the interfaces of links look like an uplink. routes are the default
 // routes of every table, for both families. An uplink carries a default route, in any table, or
 // holds an IPv4 address from DHCP, which ip calls dynamic, outside the subnet of address, the
-// direct link's. A static address outside it, as an earlier run's address, does not count: DHCP's
+// cable's. A static address outside it, as an earlier run's address, does not count: DHCP's
 // are the ones the file takes away.
 func UplinkProblems(links []Link, routes []Route, address string) ([]string, error) {
 	own, err := netip.ParsePrefix(address)
 	if err != nil {
-		return nil, fmt.Errorf("the direct link's address: %w", err)
+		return nil, fmt.Errorf("the cable's address: %w", err)
 	}
 	subnet := own.Masked()
 	var problems []string

@@ -26,7 +26,7 @@ func TestUplinkProblems(t *testing.T) {
 		want                []string
 	}{
 		{"a port with no route and no lease", `[{"ifname":"enp5s0","addr_info":[]}]`, `[]`, nil},
-		{"the direct link's own address", `[{"ifname":"enp5s0","addr_info":[{"family":"inet","local":"10.77.0.1","prefixlen":30,"scope":"global"}]}]`, `[]`, nil},
+		{"the cable's own address", `[{"ifname":"enp5s0","addr_info":[{"family":"inet","local":"10.77.0.1","prefixlen":30,"scope":"global"}]}]`, `[]`, nil},
 		{"a static address outside the subnet", `[{"ifname":"enp5s0","addr_info":[{"family":"inet","local":"192.168.1.5","prefixlen":24,"scope":"global"}]}]`, `[]`, nil},
 		{"a lease inside the subnet", `[{"ifname":"enp5s0","addr_info":[{"family":"inet","local":"10.77.0.2","prefixlen":30,"scope":"global","dynamic":true}]}]`, `[]`, nil},
 		{"a lease outside the subnet", `[{"ifname":"enp5s0","addr_info":[{"family":"inet","local":"192.168.1.5","prefixlen":24,"scope":"global","dynamic":true}]}]`,
