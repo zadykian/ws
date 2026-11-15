@@ -38,7 +38,7 @@ for `/etc/ws/env`.
 
 With it set, the role writes `/etc/ws/env` 0640, root's with the account's group: `WS_USER` reads it
 and cannot change it.
-The file opens with a `# Written by github.com/zadykian/ws` line, then `export NAME=VALUE` for
+The file opens with ws's header line, then `export NAME=VALUE` for
 each name, the value quoted for the shell. Each run replaces the file, so a change goes in
 `[env]`. The `otelcol` role reads the file later in the same run:
 [claude's metrics elsewhere](../otelcol/README.md#claudes-metrics-elsewhere).

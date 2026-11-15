@@ -57,9 +57,10 @@ steps, and each role's README says what it sets up.
   `/usr/local/go` does ([claude's marketplaces](../../roles/server/ubuntu/claude/marketplaces.go)).
 - A step that needs a booted machine's systemd checks `systemd.Booted`: without one, as in CI's
   container, it skips and says so.
-- A file a role writes has a `# Written by github.com/zadykian/ws` line at its top, where its format
-  takes comments, as the roles' embedded templates and files do. Each run replaces a change made to
-  it by hand ([shell](../../roles/server/ubuntu/shell/README.md), [git](../../roles/server/ubuntu/git/README.md)).
+- A file ws writes whole, on the server or the Mac, has one line at its top, where its format
+  takes comments: `file.Header(sign)`. The roles' templates and files spell it out. Its words,
+  `Written by github.com/zadykian/ws`, are `file.Mark`, and `file.Ours` tests a first line for them.
+  Each run replaces a change made to it by hand ([shell](../../roles/server/ubuntu/shell/README.md), [git](../../roles/server/ubuntu/git/README.md)).
 - A tool that updates itself, such as claude or rustup, is installed only where missing
   ([claude's install](../../roles/server/ubuntu/claude/install.go)).
 - A role given the secrets of `ws server ubuntu apply --secrets`, changes nothing where they are

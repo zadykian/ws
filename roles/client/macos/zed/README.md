@@ -28,7 +28,7 @@ The step writes both files in `~/.config/zed`, a path that macOS gives no XDG lo
 
 - `global_settings.json` is [the file in `roles/client/macos/zed/files/`](files/global_settings.json), whole, with
   the header as its first line. Each run replaces it, so changes made there are lost. A file whose
-  first line is not the header is left, with a warning: move it away, and the next run writes
+  first line lacks the header's mark is left, with a warning: move it away, and the next run writes
   ws's. Zed parses it as it parses `settings.json`, so the header comment is valid.
 - `settings.json` is Zed's own, which its UI writes. The step writes a seed there once, where
   nothing is, and never reads the file after. A file of any content, or a link, counts as there.
@@ -98,12 +98,12 @@ server to every YAML file, Ansible's too.
 The step also writes `~/.config/zed/keymap.json`, which is
 [`roles/client/macos/zed/files/keymap.json`](files/keymap.json) whole. That plain file is the source of the keys,
 and a `//` comment beside a binding gives its reason. `base_keymap` stays `Zed`.
-The file carries its own header, and the step takes the start of line 1,
-`// Written by github.com/zadykian/ws`, as ws's mark.
+Both files start with the one header, and the step takes the mark in line 1,
+`Written by github.com/zadykian/ws`, as ws's.
 
-- Where the file is missing, or its first line starts with the mark, the step writes it whole.
-- Where the first line does not, the step leaves the file and warns once: move it away, and the
-  next run writes ws's.
+- Where the file is missing, or its first line holds the mark, the step writes it whole.
+- Where the first line does not, as in a file with an older header, the step leaves the file. It
+  warns once: move it away, and the next run writes ws's.
 - Zed's keymap editor writes this file too (zed#8829). A change made there is replaced at the next
   run while line 1 stands. Delete line 1 to keep the file, and ws leaves it.
 
