@@ -13,7 +13,7 @@ them ([Outbound](../security/README.md#outbound)).
 ikeward reads two of the profile's files, `NAME.p12` and `NAME.sswan`, as
 [its page on the profile](https://github.com/zadykian/ikeward/blob/v0.3.0/docs/profile.md) says.
 They hold the client's key, so they stay out of this repository, age-encrypted, on the server. The
-role's variables go in the machine's `host_vars.yml` ([Values](../../../../README.md#running-it-again)):
+role's variables go in the machine's `values.yml` ([Values](../../../../README.md#running-it-again)):
 
 ```yaml
 WS_IKEWARD_PROFILE: /root/vpn/vpnclient    # vpnclient.p12 and vpnclient.sswan

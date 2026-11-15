@@ -18,7 +18,7 @@ draw [the run screen](../../engine/tui/README.md#the-run-screen) and end on `wou
 the container's NET_ADMIN, checks the outbound table the run wrote and the users it names, and a
 find that the user owns its home. The Zed wrapper's [checks](../zed-terminal-checks.sh) run
 on the files it installed, and Fresh's on the config it loaded. Root's leg has no table. The run
-leaves out its own check ([Outbound](../../roles/server/ubuntu/security/README.md#outbound)). Its `/etc/ws/host_vars.yml` gives a
+leaves out its own check ([Outbound](../../roles/server/ubuntu/security/README.md#outbound)). Its `/etc/ws/values.yml` gives a
 swap file of 64 MiB, as the runner's disk has no room for one of its RAM's size. With no NVIDIA GPU,
 `nvidia` checks its names alone, and with no MSI board, `fans` leaves its fans alone. With no VPN
 profile, `ikeward` does nothing. `ws server ubuntu wizard --check --plain` then asks nothing, as the
@@ -95,16 +95,16 @@ through `sudo`, sent as the wizard sends it. `ws.sh` roots its paths in a direct
 puts the stand-ins of [ws-standin.sh](../mac-wizard/ws-standin.sh) for ws's programs first
 on its `PATH`. `status` must print the stamps and the stand-ins' states. Those are `wg0`'s key, the
 Mac's key for it and as its peer, and ws's signing key or `none`. They are also its hostname,
-claude's login, Secure Boot that refuses the fans' driver, and `host_vars.yml`'s `WS_USER` and
+claude's login, Secure Boot that refuses the fans' driver, and `values.yml`'s `WS_USER` and
 outbound table. `state` must print ws's report and exit with its status. Like a full `run`, it has
 root's `HOME` and a UTF-8 locale. A full `run` must run `ws server ubuntu apply` with `--json` alone
 in a unit of its own. It must print the log, event lines too. It must stamp ws's version, `-` here,
-0, `on`, and `-` for the sums of the secrets file and `host_vars.yml`. After its `outbound` writes
+0, `on`, and `-` for the sums of the secrets file and `values.yml`. After its `outbound` writes
 the line, which stops on a link, it stamps `off` and that file's sum. A tagged run after it must
 start its own unit and leave that stamp. A run must follow a full unit or one of its steps, and
 refuse another's. A full run cut off must remove the last stamp, so the next starts a unit. The
 files script, `roles/server/ubuntu/session/wizard-remote-files.sh`: its `link` must list the wired ports,
-`user NAME` name `WS_USER`, `values` print `host_vars.yml` and `values PAIR...` run `ws server
+`user NAME` name `WS_USER`, `values` print `values.yml` and `values PAIR...` run `ws server
 ubuntu values set` on each. `link PORT` must name one there, mode 600 in a 755 directory, once,
 which `status` names once the roles give `10.77.0.1`. With ws's secrets file and its credential, a
 run must start a unit that loads the credential and runs `--secrets` on that file, and stamp its
@@ -127,7 +127,7 @@ closes. Without the stamp, a run whose unit is cut off must stop at the stage, a
 start a unit of its own. That run must end with what stays by hand: the fans' driver and the
 router's forwards. A run while a unit runs, as a dropped ssh's, must follow that unit. With
 `WS_TARGET=cloud`, a run must turn the outbound table off, and the next none. A run after
-`host_vars.yml` changed, as a case or the Cable stage changes it, must run apply.
+`values.yml` changed, as a case or the Cable stage changes it, must run apply.
 
 `standin.sh` logs ws's claude in, and the Mac's gh lists ws's signing key, so no run may open a
 session on ws for a login. A fresh `--check` must show the Signing key and claude on ws after ws's

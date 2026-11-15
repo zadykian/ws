@@ -10,7 +10,7 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 
 - `roles/server/ubuntu/NAME`: a role per directory, as Go steps, with its page, `README.md`,
   and a line in the root README. `roles/server/ubuntu` lists the roles in the order they run, and
-  `roles/server/ubuntu/values` types the machine's values: `/etc/ws/host_vars.yml`, on the machine
+  `roles/server/ubuntu/values` types the machine's values: `/etc/ws/values.yml`, on the machine
   alone, such as the cable's port ([The cable](../roles/server/ubuntu/cable/README.md#the-cable)). Each role
   holds its pins, and embeds its templates and files. ws-fans, the fans' service, is
   `ws server ubuntu fans`, in `roles/server/ubuntu/fans/daemon`.

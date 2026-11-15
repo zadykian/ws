@@ -39,7 +39,7 @@ hand. The stages, in order, the first two of which install what the rest needs:
 11. Signing key: ws's public signing key among the signing keys of the Mac's gh login, below.
 12. claude on ws: `WS_USER`'s claude there, logged in, below.
 13. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
-14. Cable: on the LAN, ws's port of the cable in its `host_vars.yml`, and the Mac's service, below.
+14. Cable: on the LAN, ws's port of the cable in its `values.yml`, and the Mac's service, below.
 
 Each stage states the side it acts on, in its own file by `Side()`. Sudo, ws on ws, ws's run
 and claude on ws are ws's, and the rest are the Mac's. A stage that changes both is the Mac's where
@@ -192,14 +192,14 @@ That ws runs its roles ([The
 unit's log until it ends, past the [event lines](../../../../README.md#events), and stops where the
 run fails. A first run takes 20 to 40 minutes. The unit goes on where ssh drops, and the next run of
 the wizard follows it to its end, and replays the log. A unit of part of ws stops a run of other
-steps, until it ends. The stage first names `WS_USER` in `/etc/ws/host_vars.yml` on ws,
-with the files script, where the user that host_vars names, else the default, isn't `WS_USER`, so
+steps, until it ends. The stage first names `WS_USER` in `/etc/ws/values.yml` on ws,
+with the files script, where the user that values.yml names, else the default, isn't `WS_USER`, so
 the roles set up that user. It writes wg0's address and port there off the defaults.
 
 Each run writes its unit and status in `/var/lib/ws-wizard/last` on ws. A full run, as the stage's,
 with no argument, removes `/var/lib/ws-wizard/run` as it starts. As it ends, it writes these words:
 ws's version, or `-` where it has none, and the status there. Then `off` where the values turned the
-outbound table off, else `on`, and the SHA-256 of the secrets file and of `host_vars.yml`, each or
+outbound table off, else `on`, and the SHA-256 of the secrets file and of `values.yml`, each or
 `-`. The stage is done where that status is 0, the version is this ws's, both sums are those of the
 files now, and no unit runs. So a second run runs no apply, and one after a run cut short starts
 again, as does one after either file changed: by a wizard, Configure or by hand. A unit that began
@@ -215,10 +215,10 @@ either. The stage sends nothing. Without them the run has no secrets. Then the r
 as they find it ([The profile](../../../server/ubuntu/ikeward/README.md#the-profile)).
 
 On a cloud VM, the outbound table drops the metadata service ([Outbound](../../../server/ubuntu/security/README.md#outbound)). So
-with `WS_TARGET=cloud`, the stage names `WS_SECURITY_OUTBOUND: false` in ws's `/etc/ws/host_vars.yml`
+with `WS_TARGET=cloud`, the stage names `WS_SECURITY_OUTBOUND: false` in ws's `/etc/ws/values.yml`
 before the run, which reads its values there. It reads the line as YAML does, with blanks or a
 carriage return after the value too. The stage is done there once a run that began with the line
-passed, and `host_vars.yml` is as that run read it.
+passed, and `values.yml` is as that run read it.
 
 ## Signing key
 
@@ -258,9 +258,9 @@ cable](../../../server/ubuntu/cable/README.md#the-cable)). A cloud VM and a VM o
 Mac skip it. The wizard's files script lists ws's wired ports but the uplink, each with its carrier
 and IPv4 addresses. Where none has carrier, as the Mac isn't docked, the stage waits, and the
 closing list says to dock the Mac and run the line again. Docked, the stage asks ws's port of the
-cable, the one with carrier by default. It names the port in `/etc/ws/host_vars.yml` on ws, which
+cable, the one with carrier by default. It names the port in `/etc/ws/values.yml` on ws, which
 both roles read, then runs `ws server ubuntu apply --only cable,tunnel` there; the next run of
-the wizard runs the whole, as `host_vars.yml` changed. Once the port holds `10.77.0.1`, the stage
+the wizard runs the whole, as `values.yml` changed. Once the port holds `10.77.0.1`, the stage
 asks the Mac's service of the cable. A screen asks it and the port as a choice. The default is the
 one service with a `169.254` address, which an adapter gives itself where no DHCP server answers.
 The answer goes in `server.conf` as `WS_CABLE_SERVICE`, then `ws client macos apply` gives the service
@@ -269,7 +269,7 @@ The answer goes in `server.conf` as `WS_CABLE_SERVICE`, then `ws client macos ap
 `none` as either answer writes an empty `WS_CABLE_SERVICE`, so the wizard asks neither again, as
 where ws has no cable or another server has it. From the environment, at a terminal too,
 `WS_CABLE_PORT` and `WS_CABLE_SERVICE` give the answers. `server.conf` keeps the port as
-`WS_CABLE_PORT`. Where `host_vars.yml` lacks it, as after ws's install, the stage names it there and
+`WS_CABLE_PORT`. Where `values.yml` lacks it, as after ws's install, the stage names it there and
 runs the roles, undocked too, but stops on a port ws lacks. `--check` only says what it would do.
 
 Undocked, an empty `WS_CABLE_SERVICE` in the environment ends the wait, for a Mac without the cable.
@@ -286,7 +286,7 @@ After a run in which a stage acted, the wizard lists each of these that applies:
 - The server's lease, made static, where the Host key stage asked ws's address, and the router's forwards
   where `server.conf` has `WS_REMOTE` ([The router](../../../server/ubuntu/cable/router.md)). Off the LAN, `server.conf`'s way to ws
   instead, and a cloud VM's firewall for the tunnel ([The wizard's targets](../conf/README.md)).
-- ws's outbound table, which `WS_SECURITY_OUTBOUND: false` in ws's `host_vars.yml` keeps off, where
+- ws's outbound table, which `WS_SECURITY_OUTBOUND: false` in ws's `values.yml` keeps off, where
   `WS_TARGET` isn't `cloud`, as after a move from a cloud VM: that line removed, then `--update`.
 - The tunnel's handshake, where the run asked ws's address or none came. A static lease, or off the
   LAN `server.conf`'s way leading to ws, UDP let through to ws, or ws-tunnel allowed in the Background.

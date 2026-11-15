@@ -154,7 +154,7 @@ the files, but skips the check, the comparison, the units and ufw. CI checks the
 
 `WS_SECURITY_OUTBOUND`, true by default, turns the table on. A cloud VM wants it false: the table
 drops the cloud's metadata service at `169.254.169.254`, which cloud-init, the guest agent and
-instance credentials need. On a new machine, name it in `/etc/ws/host_vars.yml` before the first
+instance credentials need. On a new machine, name it in `/etc/ws/values.yml` before the first
 run ([The cable](../cable/README.md#the-cable)):
 
 ```yaml

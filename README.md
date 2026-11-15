@@ -92,7 +92,7 @@ role's other steps are planned and left out. A step that waits on one of them wi
 skipped, and says so, and `--check` shows what the same run would change. A left-out step whose plan
 fails warns, and the run goes on. `--secrets FILE` gives the roles their secrets, and `ws server
 ubuntu secrets` edits ws's file ([The secrets file](roles/server/ubuntu/shell/README.md#the-secrets-file)). The values of
-a machine go in `/etc/ws/host_vars.yml`, which only root reads, and every run reads them. `WS_USER:
+a machine go in `/etc/ws/values.yml`, which only root reads, and every run reads them. `WS_USER:
 NAME` sets up the user NAME instead of `zadykian`, the default, whose account must exist. `WS_USER:
 root` sets up a cloud VM with no other user. `WS_HOME` follows the user as `/home/NAME`; `WS_HOME:
 DIR` sets another home. `WS_GIT_SIGNING_PUB_KEY` lies below it, or the

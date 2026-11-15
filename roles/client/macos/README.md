@@ -24,7 +24,7 @@ ws client macos apply
 
 `ws client macos wizard`, in its place, asks first for the values below ([The Mac's
 wizard](stages/README.md)), and `ws client macos configure` changes them later on a form, with ws's
-secrets and host_vars ([The Configure screen](../../../engine/tui/internal/configure/README.md)). `ws client macos
+secrets and values.yml ([The Configure screen](../../../engine/tui/internal/configure/README.md)). `ws client macos
 apply --only STEP` runs one step, and `--check` shows each change and makes none. At a terminal it
 draws [the run screen](../../../engine/tui/README.md#the-run-screen), past [the list of
 steps](../../../engine/tui/README.md#the-list-of-steps) where it gets neither, and `--plain` keeps
@@ -228,7 +228,7 @@ where loaded, then its plist, `/etc/ws-tunnel/NAME`, state file and log. Nothing
 `mac.conf`'s servers list the one that `apply` runs for.
 
 The tunnel's ends are `10.99.N.2` on the Mac, on a utun of wireguard-go's, and `10.99.N.1` on ws, N
-being `WS_SLOT`. A moved slot restarts the daemon. The wizard names the pair in ws's host_vars ([The
+being `WS_SLOT`. A moved slot restarts the daemon. The wizard names the pair in ws's values.yml ([The
 tunnel](../../server/ubuntu/tunnel/README.md#the-tunnel)). The daemon points the Mac's end at the
 first of these that answers, each on UDP 51820:
 

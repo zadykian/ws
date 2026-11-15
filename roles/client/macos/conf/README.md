@@ -97,7 +97,7 @@ line with its name. Its `--json` then lists them in `servers`, each with its `st
 top `steps`. With one server, or `--server`, it prints what it did before.
 
 `ws client macos configure` shows the keys of `mac.conf` on a sheet, then those of
-`servers/NAME/server.conf` on the next, each file's own, before the secrets and host_vars.
+`servers/NAME/server.conf` on the next, each file's own, before the secrets and values.yml.
 
 ## A machine on the LAN
 
@@ -159,5 +159,5 @@ the cloud VM's run would turn that machine's outbound table off. `ws client maco
 key of another target's ways: `WS_LAN` on a cloud VM, `WS_REMOTE` on a VM on the Mac, and
 `WS_CABLE_SERVICE` or `WS_CABLE_PORT` off the LAN. Then run the wizard, which asks the new target's
 ways. A new machine offers another host key, so run `ssh-keygen -R NAME` first, NAME the server's
-name. From a cloud VM, remove `WS_SECURITY_OUTBOUND: false` from ws's `host_vars.yml` too, as the
+name. From a cloud VM, remove `WS_SECURITY_OUTBOUND: false` from ws's `values.yml` too, as the
 closing list says, then run the wizard with `--update`.

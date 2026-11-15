@@ -29,11 +29,11 @@ Four cases of the `mac` job and two of the wizard's work on a second server:
   write none.
 - `mac-wizard/62-second.sh` runs the wizard for lab, the last case. `standin.sh` makes a second
   stand-in server for it at `127.0.0.1:22023`, with files and logs of its own, so that ws's counts
-  of runs hold. Its wg0 listens on the `WS_TUNNEL_PORT` of its host_vars. On lab's file made by
+  of runs hold. Its wg0 listens on the `WS_TUNNEL_PORT` of its values.yml. On lab's file made by
   hand, which holds `WS_USER` alone, `--check` must show `WS_SLOT=1` and leave the file. The run
-  must give lab slot 1, port 51821, a host_vars of 10.99.1.1/24 and 51821, a daemon with a
-  handshake, and one login through the tunnel. It must leave ws's files as they were. The next run
-  must print nothing.
+  must give lab slot 1, and put 51821 and 10.99.1.1/24 in its values.yml. It must give lab a daemon
+  with a handshake, and one login through the tunnel. It must leave ws's files as they were. The
+  next run must print nothing.
 
 Cases 90, 92 and 94 of the `mac` job run last, as `checks.sh` and the job stop at the first that
 fails.
