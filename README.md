@@ -20,10 +20,10 @@ Each role has a page of its own. A role is Go steps of ws:
 - [`nvidia`](roles/server/ubuntu/nvidia): NVIDIA's headless driver from Ubuntu's archive, on a machine with an
   NVIDIA GPU.
 - [`fans`](roles/server/ubuntu/fans): fan curves for the board's headers, and the driver that sets them.
-- [`shell`](roles/server/ubuntu/shell): `~/.bashrc`, `~/.profile` and `/etc/ws/env` from the secrets
-  file.
-- [`git`](roles/server/ubuntu/git): `~/.gitconfig`, a key that signs commits, git's tokens for servers
-  besides GitHub, and clones of repositories.
+- [`shell`](roles/server/ubuntu/shell): `/etc/ws/bashrc` and `/etc/ws/profile`, one line of each at the top of
+  `~/.bashrc` and `~/.profile`, and `/etc/ws/env` from the secrets file.
+- [`git`](roles/server/ubuntu/git): `/etc/ws/gitconfig` and its include in `~/.gitconfig`, a key that
+  signs commits, git's tokens for servers besides GitHub, and clones of repositories.
 - [`tmux`](roles/server/ubuntu/tmux): tmux from Ubuntu's archive.
 - [`lazygit`](roles/server/ubuntu/lazygit): lazygit from Ubuntu's archive, in JetBrains Dark, with the
   repository and its branch in the terminal's title.

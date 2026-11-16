@@ -3,15 +3,15 @@ package tunnel
 import (
 	"strings"
 
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
-// tunnelConf is tunnel.conf, the values the daemon takes from the file of server, so that a root
+// tunnelConf is tunnel.conf, the values the daemon takes from the server's values file, so that a root
 // daemon reads no file the user can write. WS_CABLE=yes is for the one server that names the cable.
-func tunnelConf(c values.Conf, server string) string {
+func tunnelConf(c values.Conf) string {
 	var b strings.Builder
-	b.WriteString("# Written by github.com/zadykian/ws: ws client macos apply, from /etc/ws/servers/" +
-		server + "/values.yml.\n")
+	b.WriteString(file.Header("#") + "\n")
 	b.WriteString("WS_PUBLIC_KEY=" + c.PublicKey + "\n")
 	if c.LAN != "" {
 		b.WriteString("WS_LAN=" + c.LAN + "\n")

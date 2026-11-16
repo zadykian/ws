@@ -3,7 +3,6 @@ package git_test
 import (
 	"context"
 	"errors"
-	"github.com/zadykian/ws/engine/core/resource/file"
 	"slices"
 	"strings"
 	"testing"
@@ -102,7 +101,7 @@ func TestGitApplyInstallsGh(t *testing.T) {
 }
 
 const (
-	includeText   = "[include]\n    path = ~/.config/ws/gitconfig\n"
+	includeText   = "[include]\n\tpath = /etc/ws/gitconfig\n"
 	gitConfigFile = gitHome + "/.gitconfig"
 )
 
@@ -119,8 +118,8 @@ func gitConfig(m *effecttest.Machine, text, paths, names string) {
 func gitReady() (*effecttest.Machine, *git.Git) {
 	m := effecttest.NewMachine()
 	m.Files[gitPub] = []byte(gitKey)
-	m.Dirs[gitHome+"/.config"], m.Dirs[gitHome+"/.config/ws"], m.Dirs["/etc/ws"] = 0o755, 0o700, 0o755
-	gitConfig(m, includeText, gitHome+"/.config/ws/gitconfig\n", "include.path\n")
+	m.Dirs["/etc/ws"] = 0o755
+	gitConfig(m, includeText, "/etc/ws/gitconfig\n", "include.path\n")
 	return m, gitStep(m, nil)
 }
 
@@ -134,11 +133,10 @@ func TestGitWritesAllowedSignersAndGitconfig(t *testing.T) {
 	if err := g.Step().Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
-	dir := gitHome + "/.config/ws/"
 	if got := string(m.Files["/etc/ws/allowed_signers"]); !strings.HasSuffix(got, "\nme@zadykian.dev ssh-ed25519 AAAAC3Nz\n") {
 		t.Errorf("allowed_signers = %q", got)
 	}
-	if got := string(m.Files[dir+"gitconfig"]); !strings.Contains(got, "signingkey = \""+gitPub+"\"") ||
+	if got := string(m.Files["/etc/ws/gitconfig"]); !strings.Contains(got, "signingkey = \""+gitPub+"\"") ||
 		!strings.Contains(got, "helper = !/opt/bin/gh auth git-credential") {
 		t.Errorf("gitconfig = %q", got)
 	}
@@ -153,20 +151,14 @@ func TestGitWritesAllowedSignersAndGitconfig(t *testing.T) {
 	}
 }
 
-func TestGitFixesAModeAndMakesDirectories(t *testing.T) {
+func TestGitFixesAModeOfGitconfig(t *testing.T) {
 	m, g := gitReady()
-	delete(m.Dirs, gitHome+"/.config/ws")
-	p, err := g.Step().Plan(context.Background())
-	if err != nil || len(p.Changes) != 4 || p.Changes[0].String() != "would make "+gitHome+"/.config/ws, mode 700" {
-		t.Fatalf("Plan = %v, %v; want the directory and two writes", p.Changes, err)
-	}
-	m, g = gitReady()
 	if err := g.Step().Apply(context.Background(), mustPlan(t, g)); err != nil {
 		t.Fatal(err)
 	}
-	m.Modes[gitHome+"/.config/ws/gitconfig"] = 0o600
+	m.Modes["/etc/ws/gitconfig"] = 0o600
 	if p, err := g.Step().Plan(context.Background()); err != nil || len(p.Changes) != 2 {
-		t.Errorf("Plan with a wrong mode = %v, %v; want one change", p.Changes, err)
+		t.Errorf("Plan with a wrong mode = %v, %v; want the mode and the note", p.Changes, err)
 	}
 }
 
@@ -203,7 +195,7 @@ func gitWithConfig(text, paths, names string) (*effecttest.Machine, *effecttest.
 }
 
 func TestGitStopsAtAnIncludeBelowSettings(t *testing.T) {
-	_, _, g := gitWithConfig("x", gitHome+"/.config/ws/gitconfig\n", "user.name\ninclude.path\n")
+	_, _, g := gitWithConfig("x", "/etc/ws/gitconfig\n", "user.name\ninclude.path\n")
 	if _, err := g.Step().Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "below its own settings") {
 		t.Errorf("err = %v; want an include below the file's settings", err)
 	}
@@ -240,21 +232,5 @@ func TestGitRefusesAnAgentKeyOfATypeWsLacks(t *testing.T) {
 	g.Home, g.Conf.GitSigningPubKey = mactest.AgentHome, mactest.CopyOf(line)
 	if _, err := g.Step().Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "which ws's OpenSSH lacks") {
 		t.Errorf("err = %v, want a type that ws's OpenSSH lacks", err)
-	}
-}
-
-func TestGitSetsTheModeOfWsDirectoryAndWarnsOfALinkedOne(t *testing.T) {
-	m, g := gitReady()
-	m.Dirs[gitHome+"/.config/ws"] = 0o755
-	p, err := g.Step().Plan(context.Background())
-	if err != nil || len(p.Changes) != 4 || p.Changes[0].(file.UserChmod).Path != gitHome+"/.config/ws" {
-		t.Fatalf("Plan = %v, %v; want the mode and two writes", p.Changes, err)
-	}
-	m, g = gitReady()
-	out := g.Out.(*effecttest.Out)
-	m.Dirs["/dots"], m.Links[gitHome+"/.config"] = 0o755, "/dots"
-	if _, err := g.Step().Plan(context.Background()); err != nil || !strings.Contains(strings.Join(out.Lines, "\n"),
-		gitHome+"/.config is a link to /dots: ws's files go there") {
-		t.Errorf("Plan = %v, out %v; want the warning", err, out.Lines)
 	}
 }

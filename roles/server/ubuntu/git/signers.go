@@ -9,14 +9,12 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/roles/internal/etcws"
 	"github.com/zadykian/ws/roles/internal/gitcfg"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 	"github.com/zadykian/ws/roles/server/ubuntu/internal/plan"
 )
-
-// signersHeader is the first line of the allowed signers file.
-const signersHeader = "# Written by github.com/zadykian/ws, whose next run replaces any change made here."
 
 // signers trusts the signing key for gitcfg.Email in git verify-commit, in root's /etc/ws.
 type signers struct {
@@ -40,7 +38,7 @@ func (s signers) Plan(ctx context.Context) ([]resource.Change, error) {
 		return nil, fmt.Errorf("%s %w", s.Key, err)
 	}
 	var changes []resource.Change
-	for _, r := range etcws.Files(s.M, gitcfg.Signers, []byte(gitcfg.AllowedSigners(signersHeader, key.String()))) {
+	for _, r := range etcws.Files(s.M, gitcfg.Signers, []byte(gitcfg.AllowedSigners(file.Header("#"), key.String()))) {
 		more, err := r.Plan(ctx)
 		if err != nil {
 			return nil, err

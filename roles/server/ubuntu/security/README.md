@@ -189,4 +189,6 @@ dotfiles. `ws server ubuntu state` goes past a step that fails, so it reports no
 covers. Replace the link with the file itself. The check looks as the step plans, and a home file or
 a removal looks again as it applies. A link made after that fails at the write: `ws server ubuntu
 apply` makes its writes under `WS_HOME` through an `os.Root`, which refuses a link that leaves the
-home. Its reads, `cat`, `rm` and `git` stay outside that bound.
+home. A read of a home file opens each directory below the home, and the file, following no
+link. It reads a regular file of 1 MiB at most, with its owner and mode from that open. `rm` and
+`git` stay outside the bound.

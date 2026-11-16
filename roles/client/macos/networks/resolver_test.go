@@ -8,10 +8,11 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/roles/client/macos/networks"
 )
 
-const resolverCmdHeader = "# Written by github.com/zadykian/ws: ws client macos resolver, which removes this file when given no address."
+const resolverCmdHeader = "# " + file.Mark + ": ws client macos resolver, which removes this file when given no address."
 
 func resolverPlan(m *effecttest.Machine, domain string, addresses ...string) (string, error) {
 	p, err := (&networks.Resolver{Domain: domain, Addresses: addresses, M: m, Out: &effecttest.Out{}}).Plan(context.Background())

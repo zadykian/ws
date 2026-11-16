@@ -89,11 +89,11 @@ states "mac.pub $mac" "wg0 $key" "signing $(cut -d ' ' -f 1-2 "$ws/signing.pub")
 touch "$ws/claude"
 rm "$ws/sb" "$ws/wg0"
 sudo rm "$peer"
-sudo git config -f "$ws/root/home/$(id -un)/.gitconfig" --unset user.signingkey
+sudo git config -f "$ws/root/ws-gitconfig" --unset user.signingkey
 states 'mac.pub -' 'wg0 -' 'signing none' "hostname $(hostname)" 'claude ok' 'fans ok' 'cable -' \
     'peer -' 'outbound on' 'secrets -' 'vars -'
 rm "$ws/nct6687"
-sudo git config -f "$ws/root/home/$(id -un)/.gitconfig" user.signingkey \
+sudo git config -f "$ws/root/ws-gitconfig" user.signingkey \
     "$ws/root/home/$(id -un)/.ssh/id_ed25519_signing.pub"
 mv "$RUNNER_TEMP/wg0" "$ws/wg0"
 sudo mv "$RUNNER_TEMP/mac.pub" "$peer"

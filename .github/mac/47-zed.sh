@@ -7,7 +7,7 @@ set -eo pipefail
 
 dir=~/.config/zed
 fail=0
-head -n 1 "$dir/global_settings.json" | grep -qxF '// Written by ws client macos apply: its next run replaces changes made here.' ||
+head -n 1 "$dir/global_settings.json" | grep -qxF '// Written by github.com/zadykian/ws, whose next run replaces any change made here.' ||
     {
         echo '::error::global_settings.json has no ws header'
         fail=1

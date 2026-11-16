@@ -158,13 +158,16 @@ EOF
     sudo ln -s "$here/ws-standin.sh" "$dir/root/usr/local/bin/ws"
     sudo ln -s "$here/ws-standin.sh" "$dir/root/root/.local/bin/claude"
     # ws's claude, root's, logged in, and ws's signing key, as the git role and the stages leave them.
-    # root's git config names that key, and the stand-in gh lists it. So no run of the wizard opens a
-    # session on ws for a login.
+    # A file of the stand-in's own names that key, as /etc/ws/gitconfig does. Each home's ~/.gitconfig
+    # includes it, and the status reads it through --includes. It stays out of the stand-in's /etc/ws,
+    # which a case may remove. The stand-in gh lists the key. So no run of the wizard opens a session
+    # on ws for a login.
     ssh-keygen -q -t ed25519 -N '' -C "$1" -f "$dir/signing" </dev/null
     sudo mkdir -p "$dir/root/root/.ssh"
     sudo cp "$dir/signing.pub" "$dir/root/root/.ssh/id_ed25519_signing.pub"
-    sudo git config -f "$dir/root/root/.gitconfig" user.signingkey \
-        "$dir/root/root/.ssh/id_ed25519_signing.pub"
+    sudo git config -f "$dir/root/ws-gitconfig" user.signingkey \
+        "$dir/root/home/$(id -un)/.ssh/id_ed25519_signing.pub"
+    sudo git config -f "$dir/root/root/.gitconfig" include.path "$dir/root/ws-gitconfig"
     cut -d ' ' -f 1-2 "$dir/signing.pub" >>"$RUNNER_TEMP/gh/signing"
     # The runner's user has its own home on ws, with the same files, as the remote script reads the
     # claude and git config of the login's user. root's home serves a cloud VM's login.
@@ -172,7 +175,7 @@ EOF
     sudo mkdir -p "$home/.local/bin" "$home/.ssh"
     sudo ln -s "$here/ws-standin.sh" "$home/.local/bin/claude"
     sudo cp "$dir/signing.pub" "$home/.ssh/id_ed25519_signing.pub"
-    sudo git config -f "$home/.gitconfig" user.signingkey "$home/.ssh/id_ed25519_signing.pub"
+    sudo git config -f "$home/.gitconfig" include.path "$dir/root/ws-gitconfig"
     sudo chown -R "$(id -un)" "$home"
     touch "$dir/claude"
     # sudo asks no password until a case removes sudo.open.

@@ -7,15 +7,16 @@
 #
 # shellcheck disable=SC2154 # tmp, conf and the functions are mac-setup-checks.sh's
 key=$HOME/.ssh/id_ed25519_signing
-files=$HOME/.config/ws
+gitconfig=/etc/ws/gitconfig
+keygen=/etc/ws/secretive-ssh-keygen
 signers=/etc/ws/allowed_signers
 secretive=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent
 tab=$(printf '\t')
 
-# git_made COMMAND... runs COMMAND with the files that git's cases make as its last arguments.
+# git_made COMMAND... runs COMMAND with the files that git's cases make in the home as its last
+# arguments. The files in /etc/ws are root's.
 git_made() {
-    "$@" "$key" "$key.pub" "$files/gitconfig" ~/.gitconfig.*~ \
-        "$files/secretive-ssh-keygen" "$secretive"
+    "$@" "$key" "$key.pub" ~/.gitconfig.*~ "$secretive"
 }
 
 # git_restore removes the files that git's cases made, and puts the runner's ~/.gitconfig back. It
@@ -23,8 +24,8 @@ git_made() {
 git_restore() {
     [ -z "${agent-}" ] || kill "$agent" || true
     git_made rm -rf
-    sudo rm -f "$signers"
-    [ ! -f "$tmp/job-git/gitconfig" ] || mv "$tmp/job-git/gitconfig" "$files/gitconfig"
+    sudo rm -f "$signers" "$gitconfig" "$keygen"
+    [ ! -f "$tmp/job-git/gitconfig" ] || sudo mv "$tmp/job-git/gitconfig" "$gitconfig"
     [ ! -f "$tmp/job-git/allowed_signers" ] || sudo mv "$tmp/job-git/allowed_signers" "$signers"
     for each in "$tmp"/job-git/.gitconfig.*~; do
         [ ! -f "$each" ] || mv "$each" ~/
@@ -34,25 +35,25 @@ git_restore() {
     [ ! -f "$tmp/gitconfig" ] || mv "$tmp/gitconfig" ~/.gitconfig
 }
 
-# The job's runs had git's keys, so they made ~/.config/ws's files, which go aside as ~/.gitconfig
+# The job's runs had git's keys, so they made /etc/ws's files, which go aside as ~/.gitconfig
 # does. So do the copies of the runner's ~/.gitconfig that those runs left beside it. The cases then
 # start from a conf with no git key, and the job's conf comes back at the end.
 # shellcheck disable=SC2034 # prints, in mac-setup-checks.sh, reads it
 exact=1
 mkdir "$tmp/job-git"
-[ ! -f "$files/gitconfig" ] || mv "$files/gitconfig" "$tmp/job-git/gitconfig"
+[ ! -f "$gitconfig" ] || sudo mv "$gitconfig" "$tmp/job-git/gitconfig"
 [ ! -f "$signers" ] || sudo mv "$signers" "$tmp/job-git/allowed_signers"
 for each in ~/.gitconfig.*~; do
     [ ! -f "$each" ] || mv "$each" "$tmp/job-git/"
 done
-found=$(git_made ls -d "$signers" 2>/dev/null) || true
+found=$(git_made ls -d "$signers" "$gitconfig" "$keygen" 2>/dev/null) || true
 if [ -n "$found" ]; then
     error "the runner has what git's cases would make: $(echo "$found" | tr '\n' ' ')"
     exit 1
 fi
 # The job's runs before these had git's keys, so they must have included the file in ~/.gitconfig.
-grep -qs config/ws/gitconfig ~/.gitconfig ||
-    error "ws client macos apply did not include ~/.config/ws/gitconfig in ~/.gitconfig with git's keys"
+grep -qs /etc/ws/gitconfig ~/.gitconfig ||
+    error "ws client macos apply did not include /etc/ws/gitconfig in ~/.gitconfig with git's keys"
 mv "$tmp/job.conf" "$tmp/job-git.conf"
 grep -v '^WS_GIT_' "$tmp/job-git.conf" >"$tmp/job.conf" || true
 trap 'git_restore; [ ! -f "$tmp/job-git.conf" ] || conf_write "$conf" <"$tmp/job-git.conf"; rm -rf "$tmp"' EXIT
@@ -100,13 +101,13 @@ add="gh ssh-key add $key.pub --type signing --title $title"
 listed="ws client macos apply: git's key is among GitHub's signing keys already"
 setup --check || error "ws client macos apply --check failed: $out"
 case $out in
-*"$nl+++ $files/gitconfig$nl"*"${nl}ws client macos apply: would run $add") ;;
+*"$nl+++ $gitconfig$nl"*"${nl}ws client macos apply: would run $add") ;;
 *) error "ws client macos apply --check showed no gitconfig or add: $out" ;;
 esac
-for each in "$files/gitconfig" "$signers" ~/.gitconfig; do
+for each in "$gitconfig" "$signers" ~/.gitconfig; do
     [ ! -e "$each" ] || error "ws client macos apply --check made $each"
 done
-prints "ws client macos apply: create $signers${nl}ws client macos apply: wrote $files/gitconfig${nl}\
+prints "ws client macos apply: create $signers${nl}ws client macos apply: create $gitconfig${nl}\
 ws client macos apply: wrote $HOME/.gitconfig${nl}ws client macos apply: ran $add"
 prints "$listed"
 prints "$listed" --check
@@ -117,7 +118,7 @@ for host in github.com gist.github.com; do
 done
 signed
 own_warning="ws client macos apply: warning: $HOME/.gitconfig's own settings of user.email, user.name,"
-own_warning="$own_warning commit.gpgsign, below the include, win over ~/.config/ws/gitconfig's"
+own_warning="$own_warning commit.gpgsign, below the include, win over /etc/ws/gitconfig's"
 # A ~/.gitconfig of the user's own must get the include at its top, once, and keep the old file and
 # its mode. Its own settings of identity and signing, which win, must be named in its order.
 # --check must show it all, and change nothing.
@@ -139,28 +140,28 @@ case $out in
 *) error "ws client macos apply printed '$out' for a ~/.gitconfig of its own" ;;
 esac
 prints "$listed"
-[ "$(git config --file ~/.gitconfig --get-all include.path)" = \~/.config/ws/gitconfig ] ||
-    error "ws client macos apply left ~/.gitconfig with includes other than one of ~/.config/ws/gitconfig"
+[ "$(git config --file ~/.gitconfig --get-all include.path)" = /etc/ws/gitconfig ] ||
+    error "ws client macos apply left ~/.gitconfig with includes other than one of /etc/ws/gitconfig"
 tail -n +4 ~/.gitconfig | cmp -s - ~/.gitconfig.*~ || error "ws client macos apply lost ~/.gitconfig's own lines"
 [ -n "$(find ~/.gitconfig -perm 600)" ] || error "ws client macos apply changed ~/.gitconfig's mode 600"
-# An include by a path from the home must pass too. One below the file's own settings, or one at the
-# top and again below them, must stop ws client macos apply, as must a link that lacks the include.
+# One include alone must pass. One below the file's own settings, or one at the top and again below
+# them, must stop ws client macos apply, as must a link that lacks the include.
 # Each must stop before the step acts: with another name, the step would write gitconfig. The link
 # must stay one, and once its file has the include at its top, ws client macos apply must take it.
-printf '[include]\n\tpath = .config/ws/gitconfig\n' >~/.gitconfig
+printf '[include]\n\tpath = /etc/ws/gitconfig\n' >~/.gitconfig
 prints "$listed"
 with "$signing"
-printf '[user]\n\tname = someone\n[include]\n\tpath = ~/.config/ws/gitconfig\n' >~/.gitconfig
-stops "ws client macos apply: $HOME/.gitconfig includes ~/.config/ws/gitconfig below its own settings"
+printf '[user]\n\tname = someone\n[include]\n\tpath = /etc/ws/gitconfig\n' >~/.gitconfig
+stops "ws client macos apply: $HOME/.gitconfig includes /etc/ws/gitconfig below its own settings"
 printf '[include]\n\tpath = %s\n[user]\n\tname = someone\n[include]\n\tpath = %s\n' \
-    \~/.config/ws/gitconfig .config/ws/gitconfig >~/.gitconfig
-stops "ws client macos apply: $HOME/.gitconfig includes ~/.config/ws/gitconfig 2 times: keep the one at the top"
+    /etc/ws/gitconfig /etc/ws/gitconfig >~/.gitconfig
+stops "ws client macos apply: $HOME/.gitconfig includes /etc/ws/gitconfig 2 times: keep the one at the top"
 printf '[user]\n\tname = someone\n' >"$tmp/linked"
 rm ~/.gitconfig
 ln -s "$tmp/linked" ~/.gitconfig
 stops "ws client macos apply: $HOME/.gitconfig is a link to $tmp/linked: put"
 with "$signing"
-printf '[include]\n\tpath = ~/.config/ws/gitconfig\n[user]\n\tname = someone\n' >"$tmp/linked"
+printf '[include]\n\tpath = /etc/ws/gitconfig\n[user]\n\tname = someone\n' >"$tmp/linked"
 prints "$listed"
 [ -L ~/.gitconfig ] || error "ws client macos apply replaced the link ~/.gitconfig"
 rm ~/.gitconfig
@@ -169,7 +170,7 @@ rm ~/.gitconfig
 mkdir -p "$tmp/xdg/git"
 printf '[user]\n\temail = someone@example.com\n' >"$tmp/xdg/git/config"
 prints "ws client macos apply: wrote $HOME/.gitconfig$nl$listed${nl}ws client macos apply: warning: $tmp/xdg/git/config's\
- settings of user.email come before the include in ~/.gitconfig, so ~/.config/ws/gitconfig's win\
+ settings of user.email come before the include in ~/.gitconfig, so /etc/ws/gitconfig's win\
  over them"
 rm "$tmp/xdg/git/config" ~/.gitconfig
 # An empty WS_GIT_SIGNING_PUB_KEY must stop ws client macos apply, with no line to add while
@@ -208,13 +209,13 @@ with \
     "WS_GIT_SIGNING_PUB_KEY: $copy"
 setup --check || error "ws client macos apply --check failed: $out"
 case $out in
-*"+++ $files/secretive-ssh-keygen$nl"*"$nl+${tab}program = \"$files/secretive-ssh-keygen\""*) ;;
+*"+++ $keygen$nl"*"$nl+${tab}program = \"$keygen\""*) ;;
 *) error "ws client macos apply --check showed no wrapper, or no gpg.ssh.program: $out" ;;
 esac
-[ ! -e "$files/secretive-ssh-keygen" ] || error "ws client macos apply --check wrote $files/secretive-ssh-keygen"
+[ ! -e "$keygen" ] || error "ws client macos apply --check wrote $keygen"
 [ ! -e "$copy" ] || error "ws client macos apply --check wrote $copy"
-prints "ws client macos apply: create directory /etc/ws/secretive, owner 0:0, mode 755${nl}ws client macos apply: create $copy${nl}ws client macos apply: wrote $files/secretive-ssh-keygen${nl}\
-ws client macos apply: write $signers${nl}ws client macos apply: wrote $files/gitconfig${nl}\
+prints "ws client macos apply: create directory /etc/ws/secretive, owner 0:0, mode 755${nl}ws client macos apply: create $copy${nl}ws client macos apply: create $keygen${nl}\
+ws client macos apply: write $signers${nl}ws client macos apply: write $gitconfig${nl}\
 ws client macos apply: wrote $HOME/.gitconfig${nl}ws client macos apply: ran gh ssh-key add $copy --type signing\
  --title $title"
 prints "$listed"
@@ -237,7 +238,7 @@ chmod -R u+rwx "$secretive" && rm -rf "$secretive" && sudo rm -rf /etc/ws/secret
 with "$signing"
 rm "$tmp/login"
 warning=$(warned "$key.pub")
-prints "ws client macos apply: write $signers${nl}ws client macos apply: wrote $files/gitconfig$nl$warning"
+prints "ws client macos apply: write $signers${nl}ws client macos apply: write $gitconfig$nl$warning"
 prints "$warning"
 prints "$warning" --check
 touch "$tmp/login"
@@ -289,7 +290,7 @@ case $out in
 *) error "ws client macos apply --check showed no install of gh, another credential command, or no add: $out" ;;
 esac
 [ ! -f "$tmp/brew.log" ] || error "ws client macos apply installed gh under --check"
-prints "ws client macos apply: installing gh${nl}ws client macos apply: wrote $files/gitconfig$nl$warning"
+prints "ws client macos apply: installing gh${nl}ws client macos apply: write $gitconfig$nl$warning"
 prints "$warning"
 [ "$(cat "$tmp/brew.log")" = 'install gh' ] || error "ws client macos apply ran brew install gh other than once"
 PATH=$path

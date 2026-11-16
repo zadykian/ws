@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/roles/internal/gitcfg"
 )
 
@@ -11,7 +12,7 @@ func TestConfigSharesTheSettingsUnderItsHeader(t *testing.T) {
 	in := gitcfg.Inputs{Key: "/h/k.pub", Gh: "/opt/gh"}
 	got := config(in)
 	for _, want := range []string{
-		header + "\n# ~/.gitconfig includes it at its top",
+		file.Header("#") + "\n# ~/.gitconfig includes it at its top",
 		"\tname = \"zadykian\"\n\temail = me@zadykian.dev\n",
 		"\tsigningkey = \"/h/k.pub\"\n",
 		"[fetch]\n\tprune = true\n",
@@ -33,6 +34,9 @@ func TestConfigSharesTheSettingsUnderItsHeader(t *testing.T) {
 
 func TestWrapperSetsSecretivesSocket(t *testing.T) {
 	got := wrapper("/S/Data")
+	if !strings.HasPrefix(got, "#!/bin/sh\n"+file.Header("#")+"\n") {
+		t.Errorf("Wrapper = %q, want the header on line 2", got)
+	}
 	if !strings.Contains(got, "SSH_AUTH_SOCK='/S/Data/socket.ssh'\nexport SSH_AUTH_SOCK\nexec ssh-keygen \"$@\"\n") {
 		t.Errorf("Wrapper = %q", got)
 	}

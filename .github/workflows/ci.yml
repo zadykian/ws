@@ -186,6 +186,26 @@ jobs:
           runuser -u "$WS_USER" -- env -C "$home" HOME="$home" fresh --cmd config show \
               >"$RUNNER_TEMP/fresh.json"
           .github/fresh-config-check.sh "$home/.config/fresh/config.json" "$RUNNER_TEMP/fresh.json"
+      # An empty commit, made as the user in a new repository, has git sign and verify with the
+      # key's own path. It reads the git role's key, ~/.gitconfig's include of /etc/ws/gitconfig,
+      # and /etc/ws/allowed_signers as git reads them. The file's text alone cannot tell that git
+      # opens a path.
+      - name: Check that the user signs a commit
+        shell: bash
+        run: |
+          home=$(getent passwd "$WS_USER" | cut -d: -f6)
+          repo=$(runuser -u "$WS_USER" -- mktemp -d)
+          git_as_user() {
+              runuser -u "$WS_USER" -- env -C "$repo" HOME="$home" git "$@"
+          }
+          git_as_user init -q
+          git_as_user commit -q --allow-empty -m check
+          status=$(git_as_user log -1 --format=%G?)
+          rm -rf "$repo"
+          if [ "$status" != G ]; then
+              echo "::error::The user's empty commit shows signature status '$status', not G."
+              exit 1
+          fi
 
   # The rootless daemon and the firewall around it, which need a booted systemd. A container has
   # none, so this job runs on the runner itself, and ws sets the runner up as it would a machine.

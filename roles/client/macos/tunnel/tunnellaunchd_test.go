@@ -9,12 +9,12 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/roles/client/macos/tunnel"
 	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
-const doneConf = "# Written by github.com/zadykian/ws: ws client macos apply, from /etc/ws/servers/ws/values.yml.\n" +
-	"WS_PUBLIC_KEY=K\nWS_TUNNEL_PORT=51820\nWS_SLOT=0\n"
+var doneConf = file.Header("#") + "\nWS_PUBLIC_KEY=K\nWS_TUNNEL_PORT=51820\nWS_SLOT=0\n"
 
 // daemonMachine is a Mac with ws, root's copy, the key, tunnel.conf and the plist in place.
 func daemonMachine() *effecttest.Machine {
@@ -188,5 +188,17 @@ func TestTunnelSignalsTheOtherDaemonsWhereTunnelConfChanged(t *testing.T) {
 	want := "would run launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.lab"
 	if len(got) != 3 || got[2] != want {
 		t.Errorf("Plan = %q; want the conf, its SIGHUP and lab's, as lab counts its endpoints", got)
+	}
+}
+
+func TestTunnelRereadsWhereTunnelConfHoldsTheOldHeader(t *testing.T) {
+	m := daemonMachine()
+	m.Files["/etc/ws/tunnel/ws/tunnel.conf"] = []byte("# Written by github.com/zadykian/ws: ws client macos apply, from /etc/ws/servers/ws/values.yml.\n" +
+		"WS_PUBLIC_KEY=K\nWS_TUNNEL_PORT=51820\nWS_SLOT=0\n")
+	otherDaemon(m, "lab")
+	got := tunnelChanges(t, daemonStep(m))
+	if len(got) != 3 || got[1] != "would run launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.ws" ||
+		got[2] != "would run launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.lab" {
+		t.Errorf("Plan = %q; want the conf, its SIGHUP and lab's", got)
 	}
 }

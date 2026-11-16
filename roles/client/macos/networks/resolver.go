@@ -16,7 +16,7 @@ import (
 
 // resolverCmdHeader is the first line of the files that ws client macos resolver writes. Those of
 // the networks step have their own, so each owner leaves the other's.
-const resolverCmdHeader = "# Written by github.com/zadykian/ws: ws client macos resolver, which removes this file when given no address."
+const resolverCmdHeader = "# " + file.Mark + ": ws client macos resolver, which removes this file when given no address."
 
 // Resolver has macOS ask the nameservers Addresses, up to 3, for Domain and the names under it, and
 // the Mac's own for the rest. It writes /etc/resolver/Domain (resolver(5)). With no address, it

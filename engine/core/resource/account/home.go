@@ -10,14 +10,16 @@ import (
 
 // ReadHome reads the file at rel below the user's home, as root. The user owns the home, and a link
 // there would send root's read to whatever it names. So ReadHome refuses a link at the file or on
-// the way, and a rel that is not local, before any call to the machine. A missing file gives
-// fs.ErrNotExist.
+// the way, and a rel that is not local, before any call to the machine. The read then opens each
+// directory below the home, and the file, following no link, so that a link swapped in after that
+// check fails too. A missing file gives fs.ErrNotExist.
 func (u User) ReadHome(m effect.Machine, rel string) ([]byte, error) {
 	at := u.Home + "/" + rel
 	if err := paths.GuardHome(m, u.Home, at); err != nil {
 		return nil, err
 	}
-	return m.ReadRootFile(at)
+	body, _, err := m.ReadHomeFile(u.Home, at)
+	return body, err
 }
 
 // File is a file at rel below the account's home, owned by the account. Plan and Report refuse a
@@ -40,4 +42,12 @@ func (a Account) Dir(m effect.Machine, rel string, mode fs.FileMode) file.Dir {
 // way as File does, as it plans, reports and applies.
 func (a Account) Absent(m effect.Machine, rel string) file.Absent {
 	return file.Absent{M: m, Path: a.Home + "/" + rel, Home: a.Home}
+}
+
+// Lines is ws's lines in the file at rel below the account's home, by l's rules. l gives Lines,
+// Shown, Name, Top, Mode, Has and Now. Lines sets the machine, the path, the owner and the home.
+// It refuses any link at the file or on the way, as File does.
+func (a Account) Lines(m effect.Machine, rel string, l file.UserLines) file.HomeLines {
+	l.M, l.Path = m, a.Home+"/"+rel
+	return file.HomeLines{Rules: l, UID: a.UID, GID: a.GID, Home: a.Home}
 }

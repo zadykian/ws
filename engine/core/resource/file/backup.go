@@ -16,16 +16,13 @@ var backupName = func(path string) string {
 }
 
 // backup copies the file to its backup name, with its owner and mode, where the file exists and
-// its content is not the new one. A file is read as root, so a secret stays in the copy's mode.
+// its content is not the new one. One read gives the copy its content, owner and mode. So a link
+// swapped in after the guard is never copied, and a secret stays in the copy's mode.
 func (f File) backup(content []byte) error {
-	before, err := f.M.ReadRootFile(f.Path)
-	if errors.Is(err, fs.ErrNotExist) || bytes.Equal(before, content) {
+	before, a, err := f.read()
+	if errors.Is(err, fs.ErrNotExist) || (err == nil && bytes.Equal(before, content)) {
 		return nil
 	}
-	if err != nil {
-		return err
-	}
-	a, err := f.M.RootAttrs(f.Path)
 	if err != nil {
 		return err
 	}

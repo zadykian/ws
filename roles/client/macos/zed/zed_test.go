@@ -10,10 +10,14 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/roles/client/macos/zed"
 )
 
-const zedKeymap = "// Written by github.com/zadykian/ws, whose next run replaces any change.\n[]\n"
+var (
+	zedHead   = file.Header("//") + "\n"
+	zedKeymap = zedHead + "[]\n"
+)
 
 func zedStep(m *effecttest.Machine, out *effecttest.Out) resource.Lazy {
 	return zedOf(m, out).Step()
@@ -24,7 +28,7 @@ func zedOf(m *effecttest.Machine, out *effecttest.Out) *zed.Zed {
 	m.Dirs["/h/Applications/Zed.app"] = 0o755
 	m.Files["/h/Library/Fonts/JetBrainsMonoNerdFontMono-Regular.ttf"] = nil
 	return &zed.Zed{
-		Home: "/h", Settings: []byte("// Written by ws client macos apply: its next run replaces changes made here.\n{}\n"),
+		Home: "/h", Settings: []byte(zedHead + "{}\n"),
 		Keymap: []byte(zedKeymap), Server: "ws", M: m, Out: out,
 		LookPath: func(string) (string, error) { return "brew", nil },
 	}
@@ -84,7 +88,7 @@ func TestZedFirstRunMakesTheDirectoriesAndWritesTheFile(t *testing.T) {
 	if err := s.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
-	want := "// Written by ws client macos apply: its next run replaces changes made here.\n{}\n"
+	want := zedHead + "{}\n"
 	if got := string(m.Files["/h/.config/zed/global_settings.json"]); got != want {
 		t.Errorf("global_settings.json = %q", got)
 	}
@@ -219,5 +223,21 @@ func TestZedLeavesAKeymapWithAnotherFirstLineAndWarnsOnce(t *testing.T) {
 	if got := string(m.Files["/h/.config/zed/keymap.json"]); got != "[]\n" ||
 		strings.Count(strings.Join(out.Lines, "\n"), "keymap.json is not ws's: move it away") != 1 {
 		t.Errorf("keymap.json = %q, out %v; want it left, with one warning", got, out.Lines)
+	}
+}
+
+func TestZedLeavesSettingsWithTheOldHeader(t *testing.T) {
+	m, out := effecttest.NewMachine(), &effecttest.Out{}
+	s := zedStep(m, out)
+	m.Dirs["/h/.config/zed"] = 0o755
+	old := "// Written by ws client macos apply: its next run replaces changes made here.\n{}\n"
+	m.Files["/h/.config/zed/global_settings.json"] = []byte(old)
+	p, _ := s.Plan(context.Background())
+	if err := s.Apply(context.Background(), p); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(m.Files["/h/.config/zed/global_settings.json"]); got != old ||
+		strings.Count(strings.Join(out.Lines, "\n"), "global_settings.json is not ws's: move it away") != 1 {
+		t.Errorf("global_settings.json = %q, out %v; want it left, with one warning", got, out.Lines)
 	}
 }

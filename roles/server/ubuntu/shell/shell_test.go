@@ -90,7 +90,7 @@ func TestShellFilesTakeDpkgsArchitecture(t *testing.T) {
 	if _, err := step.Run(t.Context(), []step.Step{steps[1]}, &effecttest.Out{}, false); err != nil {
 		t.Fatal(err)
 	}
-	if got := string(m.Files["/home/ws/.bashrc"]); !strings.Contains(got, "DOTNET_RUNTIME_ID=linux-arm64") {
-		t.Errorf(".bashrc = %q, want the arm64 runtime ID", got)
+	if got := string(m.Files["/etc/ws/bashrc"]); !strings.Contains(got, "DOTNET_RUNTIME_ID=linux-arm64") {
+		t.Errorf("/etc/ws/bashrc = %q, want the arm64 runtime ID", got)
 	}
 }

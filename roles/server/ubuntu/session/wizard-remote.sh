@@ -104,10 +104,11 @@ as_login() {
     runuser -u "$user" -- "$@"
 }
 
-# signing_key prints the type and base64 of the public key that the user's git config signs with.
-# That is the .pub that user.signingkey names, or none where that config names no key file.
+# signing_key prints the type and base64 of the public key that the user's git config signs with. That
+# is the .pub that user.signingkey names, or none where that config names no key file. The key is in
+# /etc/ws/gitconfig, which the user's file includes, so git reads the includes.
 signing_key() {
-    if pub=$(as_login git config -f "$gitconfig" user.signingkey) && as_login test -f "$pub"; then
+    if pub=$(as_login git config -f "$gitconfig" --includes user.signingkey) && as_login test -f "$pub"; then
         as_login cut -d ' ' -f 1-2 "$pub"
     else
         echo none

@@ -247,3 +247,48 @@ func TestHomeDirFixesAWrongModeAndOwner(t *testing.T) {
 		t.Errorf("Apply = %v, mode %o", err, m.Dirs["/home/ws/.ssh"])
 	}
 }
+
+func TestLinesSetsTheMachinePathOwnerAndHome(t *testing.T) {
+	m := effecttest.NewMachine()
+	a := account.Account{User: ws, UID: 1000, GID: 1001}
+	got := a.Lines(m, ".bashrc", file.UserLines{Lines: "x\n", Shown: "x", Top: true, Mode: 0o644})
+	r := got.Rules
+	if r.M != m || r.Path != "/home/ws/.bashrc" || r.Lines != "x\n" || !r.Top || r.Mode != 0o644 ||
+		got.UID != 1000 || got.GID != 1001 || got.Home != "/home/ws" {
+		t.Errorf("Lines = %+v", got)
+	}
+}
+
+func TestReadHomeReadsThroughOneOpenBelowTheHome(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/home/ws/.config/x/f"] = []byte("body")
+	if _, err := ws.ReadHome(m, ".config/x/f"); err != nil {
+		t.Fatal(err)
+	}
+	calls := strings.Join(m.Calls, "\n")
+	if !strings.Contains(calls, "read home /home/ws/.config/x/f") || strings.Contains(calls, "read root") {
+		t.Errorf("calls %v; want one read of the home file and none by name", m.Calls)
+	}
+}
+
+// linkHidden is a machine whose Stat misses the link at a path, as a link swapped in after the
+// guard.
+type linkHidden struct {
+	*effecttest.Machine
+	at string
+}
+
+func (h linkHidden) Stat(p string) (effect.Info, error) {
+	if p == h.at {
+		return effect.Info{Mode: 0o644}, nil
+	}
+	return h.Machine.Stat(p)
+}
+
+func TestReadHomeRefusesALinkSwappedInAfterTheGuard(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/etc/shadow"], m.Links["/home/ws/f"] = []byte("root:x\n"), "/etc/shadow"
+	if got, err := ws.ReadHome(linkHidden{m, "/home/ws/f"}, "f"); err == nil || len(got) != 0 {
+		t.Errorf("ReadHome = %q, %v; want a refusal and no target", got, err)
+	}
+}

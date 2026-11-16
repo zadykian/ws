@@ -63,9 +63,9 @@ printf '%s\n' "$out" | grep -qxF "ws client macos wizard: Signing key: ran $add 
     error "ws client macos wizard exited $status, adding other than the signing key to the signing keys"
 quiet 'after the key was added'
 off
-sudo git config -f "$ws/root/home/$(id -un)/.gitconfig" --unset user.signingkey
+sudo git config -f "$ws/root/ws-gitconfig" --unset user.signingkey
 quiet 'with no signing key on ws'
-sudo git config -f "$ws/root/home/$(id -un)/.gitconfig" user.signingkey \
+sudo git config -f "$ws/root/ws-gitconfig" user.signingkey \
     "$ws/root/home/$(id -un)/.ssh/id_ed25519_signing.pub"
 echo "$key" >>"$state/signing"
 exit "$fail"

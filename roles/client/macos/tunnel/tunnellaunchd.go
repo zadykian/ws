@@ -39,7 +39,7 @@ func (t *Tunnel) daemon(ctx context.Context) ([]step.Change, error) {
 		cs, err = resource.Append(ctx, cs, t.said(file.Dir{M: t.M, Path: d.Routes, Mode: 0o755}))
 	}
 	if err == nil {
-		cs, err = resource.Append(ctx, cs, t.said(file.File{M: t.M, Path: d.Conf, Content: []byte(tunnelConf(t.Conf, t.Server)), Mode: 0o600}))
+		cs, err = resource.Append(ctx, cs, t.said(file.File{M: t.M, Path: d.Conf, Content: []byte(tunnelConf(t.Conf)), Mode: 0o600}))
 	}
 	if err != nil {
 		return nil, err

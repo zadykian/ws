@@ -1,6 +1,5 @@
-# ~/.profile: executed by Bourne-compatible login shells.
-#
 # Written by github.com/zadykian/ws, whose next run replaces any change made here.
+# ws's lines for ~/.profile, which sources them at its top.
 
 # Where ws's roles install tools: claude and cld in ~/.local/bin, and Go in /usr/local/go/bin. What
 # `go install` builds, gopls among them, goes in ~/go/bin, and .NET's global tools in
@@ -15,11 +14,4 @@ export PATH
 # rustup's env file puts ~/.cargo/bin first on PATH, once too.
 if [ -f "$HOME/.cargo/env" ]; then
   . "$HOME/.cargo/env"
-fi
-
-# After PATH, so that ~/.bashrc runs with the session's.
-if [ "$BASH" ]; then
-  if [ -f ~/.bashrc ]; then
-    . ~/.bashrc
-  fi
 fi

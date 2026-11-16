@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
@@ -35,12 +36,12 @@ func TestSSHAgainReportsNothing(t *testing.T) {
 }
 
 func TestSSHReportsAChangeToItsFile(t *testing.T) {
-	const file = "/etc/ws/ssh_config"
+	const path = "/etc/ws/ssh_config"
 	m := sshMachine()
 	m.Dirs["/h/.ssh"] = 0o700
-	m.Files[file], m.Modes[file] = []byte(sshcfg.Header+"\nHost ws\n"), 0o600
+	m.Files[path], m.Modes[path] = []byte(file.Header("#")+"\nHost ws\n"), 0o600
 	got := mactest.ReportOf(t, sshStep(m, &effecttest.Out{}))
-	if it := got[file]; it.Found != "owner 0:0, mode 600, other content" || !strings.Contains(it.Conflict, "by hand") ||
+	if it := got[path]; it.Found != "owner 0:0, mode 600, other content" || !strings.Contains(it.Conflict, "by hand") ||
 		!strings.Contains(it.Diff, "+    HostName") {
 		t.Errorf("file = %+v, want a conflict and its diff", it)
 	}

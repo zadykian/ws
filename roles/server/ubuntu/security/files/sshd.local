@@ -1,4 +1,4 @@
-# Written by github.com/zadykian/ws's security role; edit it there.
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
 #
 # The sshd jail, on the journal, enabled whatever Ubuntu's defaults-debian.conf says. That file
 # still sets its ban action, nftables, and jail.conf its limit of 5 failed logins in 10 minutes.
