@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
+	"github.com/zadykian/ws/roles/internal/etcws"
 )
 
 // tunnelKeyFile is the Mac's WireGuard key, in a file only root reads.
@@ -30,10 +31,14 @@ func (k KeyMake) Apply(ctx context.Context) error {
 	return nil
 }
 
-// key plans /etc/ws-tunnel and the Mac's key: made where missing, and its owner and mode
+// key plans /etc/ws, /etc/ws/tunnel and the Mac's key: made where missing, and its owner and mode
 // set where they differ. It sets keyMade.
 func (t *Tunnel) key(ctx context.Context) ([]step.Change, error) {
-	cs, err := resource.Append(ctx, nil, t.said(file.Dir{M: t.M, Path: launchd.Dir, Mode: 0o700}))
+	cs, err := resource.Append(ctx, nil, t.said(etcws.Top(t.M)))
+	if err != nil {
+		return nil, err
+	}
+	cs, err = resource.Append(ctx, cs, t.said(file.Dir{M: t.M, Path: launchd.Dir, Mode: 0o700}))
 	if err != nil {
 		return nil, err
 	}

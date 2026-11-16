@@ -6,16 +6,17 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/check"
+	"github.com/zadykian/ws/roles/internal/etcws"
 )
 
 // pubFile is the Mac's public key, which ws client macos apply writes from root's key at each run.
-// It needs no sudo, whose timestamp lapses during ws's run.
-func (t *Tunnel) pubFile() string { return t.Home + "/.config/ws/tunnel.pub" }
+// Anyone may read it, so it needs no sudo, whose timestamp lapses during ws's run.
+const pubFile = etcws.Dir + "/tunnel.pub"
 
 // pub returns the Mac's public key from tunnel.pub, or an empty string where it holds none, as
 // before ws client macos apply first wrote it.
 func (t *Tunnel) pub() string {
-	b, err := t.M.ReadFile(t.pubFile())
+	b, err := t.M.ReadFile(pubFile)
 	if key := strings.TrimSpace(string(b)); err == nil && check.Key(key) {
 		return key
 	}
@@ -36,7 +37,7 @@ func (t *Tunnel) port(ctx context.Context, end netip.Addr) bool {
 	return err == nil
 }
 
-// via tells whether ssh -G of the server gives ws's end of the tunnel, as config.d/ws does.
+// via tells whether ssh -G of the server gives ws's end of the tunnel, as /etc/ws/ssh_config does.
 func (t *Tunnel) via(ctx context.Context, end netip.Addr) bool {
 	out, err := t.M.Run(ctx, "ssh", "-G", t.SSH.Host)
 	for _, l := range strings.Split(string(out), "\n") {

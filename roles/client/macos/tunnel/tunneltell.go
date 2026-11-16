@@ -10,6 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/internal/etcws"
 )
 
 // publicKey asks root's copy of ws for the Mac's public key. It returns "" where there is no copy
@@ -30,33 +31,27 @@ func (t *Tunnel) publicKey(ctx context.Context) (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
-// pubFile is the Mac's public key where the wizard's Tunnel stage reads it without sudo.
-func (t *Tunnel) pubFile() string { return t.Home + "/.config/ws/tunnel.pub" }
+// pubFile is the Mac's public key, root's and readable by all, where the wizard's Tunnel stage reads
+// it without sudo.
+const pubFile = etcws.Dir + "/tunnel.pub"
 
-// tell plans ~/.config/ws/tunnel.pub, once the key is made, and keeps the key for Finish.
+// tell plans /etc/ws/tunnel.pub, once the key is made, and keeps the key for Finish. Its directory,
+// /etc/ws, is the one that key plans.
 func (t *Tunnel) tell(ctx context.Context) ([]step.Change, error) {
 	public, err := t.publicKey(ctx)
 	if err != nil || public == "" {
 		return nil, err
 	}
 	t.public = public
-	cs, link, err := file.WsDirs(t.M, t.Out, t.Home).Plan()
-	if err != nil {
-		return nil, err
-	}
-	if cs, err = resource.Append(ctx, cs, t.pub()); err != nil {
-		return nil, err
-	}
-	link.Warn(t.Out, len(cs), "ws's files go there")
-	return cs, nil
+	return resource.Append(ctx, nil, t.pub())
 }
 
-// pub is tunnel.pub, which holds the key that tell read. Its mode is the user's.
-func (t *Tunnel) pub() file.UserFile {
-	return file.UserFile{M: t.M, Out: t.Out, Path: t.pubFile(), Text: []byte(t.public + "\n")}
+// pub is tunnel.pub, which holds the key that tell read, saying its change as it applies.
+func (t *Tunnel) pub() resource.Said {
+	return t.said(file.Public{M: t.M, Path: pubFile, Content: []byte(t.public + "\n"), Mode: etcws.FileMode})
 }
 
-// publish writes tunnel.pub after the changes, where the key or root's copy was missing when the
+// publish writes /etc/ws/tunnel.pub after the changes, where the key or root's copy was missing when the
 // step planned, so that the next plan is empty.
 func (t *Tunnel) publish(ctx context.Context) error {
 	t.keyMade = false
@@ -70,7 +65,7 @@ func (t *Tunnel) publish(ctx context.Context) error {
 
 // Finish prints the Mac's public key, with the commands that make it the server's peer. It prints
 // where the key is new or the server's file has no WS_PUBLIC_KEY yet, and a check prints nothing of
-// it. The commands name the server as ssh's host, which is its Host in config.d/ws.
+// it. The commands name the server as ssh's host, which is its Host in /etc/ws/ssh_config.
 func (t *Tunnel) Finish(ctx context.Context) error {
 	if t.Check || (!t.madeKey && t.Conf.PublicKey != "") {
 		return nil
@@ -94,7 +89,7 @@ func (t *Tunnel) Finish(ctx context.Context) error {
 		"    %s \"printf '%%s\\n' '%s' | %stee /etc/wireguard/mac.pub >/dev/null\"\n"+
 		"    %s %sws server ubuntu apply --only tunnel\n", public, name, name, name, ssh, public, sudo, ssh, sudo)
 	if t.Conf.PublicKey == "" {
-		_, _ = fmt.Fprintf(t.Text, "\nThen set WS_PUBLIC_KEY in ~/.config/ws/servers/NAME/values.yml to %s's key, which that run prints, and run\n"+
+		_, _ = fmt.Fprintf(t.Text, "\nThen set WS_PUBLIC_KEY in /etc/ws/servers/NAME/values.yml to %s's key, which that run prints, and run\n"+
 			"ws client macos apply again, which installs the tunnel's daemon.\n", name)
 	}
 	return nil

@@ -1,4 +1,4 @@
-// Package sshcfg holds the text of ~/.ssh/config.d/ws, the reading of ssh_config files and of a
+// Package sshcfg holds the text of /etc/ws/ssh_config, the reading of ssh_config files and of a
 // .pub's line, all pure.
 package sshcfg
 
@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-// Header starts config.d/ws's first line, by which a run knows a file for its own.
+// Header starts the text of /etc/ws/ssh_config.
 const Header = "# Written by ws client macos apply"
 
 // Host is one server's block.
@@ -22,7 +22,7 @@ type Host struct {
 	User string
 }
 
-// Inputs are what config.d/ws's text depends on.
+// Inputs are what /etc/ws/ssh_config's text depends on.
 type Inputs struct {
 	// Hosts are the servers, each given a block, in name order.
 	Hosts []Host
@@ -36,12 +36,12 @@ type Inputs struct {
 	IdentityAgent string
 }
 
-// Config returns config.d/ws: a Host for each server, at the tunnel's end. The tunnel is the one
+// Config returns /etc/ws/ssh_config: a Host for each server, at the tunnel's end. The tunnel is the one
 // address a server has, whichever way the Mac is connected. Port 22 is the server's own, whatever
 // a Host * of the user's sets.
 func Config(in Inputs) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, `%s from ~/.config/ws/values.yml: its next run replaces changes made here.
+	fmt.Fprintf(&b, `%s from /etc/ws/values.yml: its next run replaces changes made here.
 
 # Only Apple's ssh knows UseKeychain. ssh keeps the first IgnoreUnknown it reads, this one, so it
 # carries the patterns of ~/.ssh/config's own too: run ws client macos apply again after a change to

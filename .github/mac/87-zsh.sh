@@ -1,5 +1,5 @@
 #!/bin/bash
-# ws client macos apply writes ~/.config/ws/zshrc, roles/client/macos/zsh/files/zshrc whole, and ends
+# ws client macos apply writes /etc/ws/zshrc, as root, roles/client/macos/zsh/files/zshrc whole, and ends
 # ~/.zshrc with the line that sources it. An interactive zsh prints the resets before each prompt,
 # and the alternate screen's reset after a 255 from ssh, or from cld with --host, alone. Functions
 # stand in for both.
@@ -7,12 +7,12 @@
 set -eo pipefail
 
 fail=0
-cmp -s ~/.config/ws/zshrc roles/client/macos/zsh/files/zshrc ||
+cmp -s /etc/ws/zshrc roles/client/macos/zsh/files/zshrc ||
     {
-        echo '::error::~/.config/ws/zshrc is not roles/client/macos/zsh/files/zshrc'
+        echo '::error::/etc/ws/zshrc is not roles/client/macos/zsh/files/zshrc'
         fail=1
     }
-[ "$(tail -n 1 ~/.zshrc)" = 'source ~/.config/ws/zshrc' ] ||
+[ "$(tail -n 1 ~/.zshrc)" = 'source /etc/ws/zshrc' ] ||
     {
         echo '::error::~/.zshrc does not end with the line that sources the hook'
         fail=1

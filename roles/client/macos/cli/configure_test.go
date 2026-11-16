@@ -26,7 +26,7 @@ func TestMacConfigureAtATerminalDrawsAForm(t *testing.T) {
 func TestMacConfigureWritesWhatAFormSaves(t *testing.T) {
 	p, m := macTerminal()
 	writeConfs(m, "", values.Text("WS_USER", "ada"))
-	m.Results["mkdir -p /h/.config/ws/servers/ws"] = effecttest.Result{}
+	m.Results["mkdir -p /etc/ws/servers/ws"] = effecttest.Result{}
 	in, keys := io.Pipe()
 	defer func() { _ = keys.Close() }()
 	ended := make(chan int, 1)
@@ -41,7 +41,7 @@ func TestMacConfigureWritesWhatAFormSaves(t *testing.T) {
 	for {
 		select {
 		case status := <-ended:
-			if got, want := string(m.Files["/h/.config/ws/servers/ws/values.yml"]), values.Text("WS_USER", "ada", "WS_REMOTE", "r.example"); status != 0 || got != want {
+			if got, want := string(m.Files["/etc/ws/servers/ws/values.yml"]), values.Text("WS_USER", "ada", "WS_REMOTE", "r.example"); status != 0 || got != want {
 				t.Errorf("status = %d, values.yml = %q; want %q", status, got, want)
 			}
 			return
@@ -55,7 +55,7 @@ func TestMacConfigureWritesWhatAFormSaves(t *testing.T) {
 
 func TestConfSheetDrawsWhatTheFormGives(t *testing.T) {
 	_, m := macTerminal()
-	form, err := values.Form{Conf: "/h/.config/ws/values.yml", Server: "/h/.config/ws/servers/ws/values.yml", Scope: values.ServerFile, M: m}.
+	form, err := values.Form{Conf: "/etc/ws/values.yml", Server: "/etc/ws/servers/ws/values.yml", Scope: values.ServerFile, M: m}.
 		Load(&effecttest.Out{})
 	if err != nil {
 		t.Fatal(err)
@@ -77,7 +77,7 @@ func TestMacConfigureRefusals(t *testing.T) {
 	root, _ := macTerminal()
 	root.Euid = 0
 	bad, badFiles := macTerminal()
-	badFiles.Files["/h/.config/ws/values.yml"] = []byte("no line\n")
+	badFiles.Files["/etc/ws/values.yml"] = []byte("no line\n")
 	plain, _ := macTerminal()
 	for name, tc := range map[string]struct {
 		p    enginecli.Env

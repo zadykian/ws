@@ -50,7 +50,7 @@ func (a *askServer) Plan(ctx context.Context) (step.Plan, error) {
 	return step.Plan{}, nil
 }
 
-// freeName refuses a name that ~/.ssh/config at home sets its own values for: config.d/ws would not
+// freeName refuses a name that ~/.ssh/config at home sets its own values for: /etc/ws/ssh_config would not
 // win there. The wizard checks a new name before it writes the server's file, as apply refuses
 // the file later.
 func freeName(m effect.Machine, home, name string) error {

@@ -7,7 +7,7 @@ import (
 )
 
 func TestTunnelConf(t *testing.T) {
-	head := "# Written by github.com/zadykian/ws: ws client macos apply, from ~/.config/ws/servers/lab/values.yml.\n" +
+	head := "# Written by github.com/zadykian/ws: ws client macos apply, from /etc/ws/servers/lab/values.yml.\n" +
 		"WS_PUBLIC_KEY=K\n"
 	tests := []struct {
 		name string

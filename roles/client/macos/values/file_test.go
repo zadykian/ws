@@ -44,13 +44,52 @@ func TestConfFileRefusesAndLeavesLinks(t *testing.T) {
 
 func TestConfFileAddKeepsAValueSetByHand(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte(Text("WS_CABLE_PORT", "eth1"))
-	f := File{Path: "/h/mac.conf", Stage: "Cable", M: m, Out: &effecttest.Out{}}
+	m.Files["/h/values.yml"] = []byte(Text("WS_CABLE_PORT", "eth1"))
+	f := File{Path: "/h/values.yml", Stage: "Cable", M: m, Out: &effecttest.Out{}}
 	m.Results["mkdir -p /h"] = effecttest.Result{}
 	if err := f.Add(context.Background(), Text("WS_CABLE_PORT", "eth2", "WS_CABLE_SERVICE", "USB")); err != nil {
 		t.Fatal(err)
 	}
 	if got, want := string(m.Files[f.Path]), Text("WS_CABLE_PORT", "eth1", "WS_CABLE_SERVICE", "USB"); got != want {
-		t.Errorf("mac.conf = %q; want %q", got, want)
+		t.Errorf("values.yml = %q; want %q", got, want)
+	}
+}
+
+func TestWriteInRootsDirectoryGoesThroughSudo(t *testing.T) {
+	m := effecttest.NewMachine()
+	var out effecttest.Out
+	f := File{Path: "/etc/ws/servers/lab/values.yml", Stage: "Answers", M: m, Out: &out}
+	if err := f.Write(context.Background(), Text("WS_TARGET", "lan")); err != nil {
+		t.Fatal(err)
+	}
+	if string(m.Files[f.Path]) != Text("WS_TARGET", "lan") || m.Modes[f.Path] != 0o644 || m.Owners[f.Path] != [2]int{} {
+		t.Errorf("file = %q, mode %o, owner %v; want root's at 644", m.Files[f.Path], m.Modes[f.Path], m.Owners[f.Path])
+	}
+	if _, ok := m.Dirs["/etc/ws/servers/lab"]; !ok {
+		t.Errorf("dirs = %v, want /etc/ws/servers/lab made", m.Dirs)
+	}
+	for _, c := range m.Calls {
+		if strings.HasPrefix(c, "run ") {
+			t.Errorf("call %q: the user ran a command", c)
+		}
+	}
+}
+
+func TestWriteUnderTheHomeStaysTheUsers(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["mkdir -p /h/ws"] = effecttest.Result{}
+	m.Files["/h/ws/values.yml"] = []byte("old\n")
+	m.Modes["/h/ws/values.yml"] = 0o600
+	f := File{Path: "/h/ws/values.yml", Stage: "Answers", M: m, Out: &effecttest.Out{}}
+	if err := f.Write(context.Background(), "new\n"); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range m.Calls {
+		if strings.HasPrefix(c, "root ") {
+			t.Errorf("call %q: sudo wrote a file in the home", c)
+		}
+	}
+	if string(m.Files[f.Path]) != "new\n" || m.Modes[f.Path] != 0o600 {
+		t.Errorf("file = %q, mode %o; want the text, mode kept", m.Files[f.Path], m.Modes[f.Path])
 	}
 }

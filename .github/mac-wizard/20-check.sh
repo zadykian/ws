@@ -36,7 +36,7 @@ status=$?
 printf '%s\n' "$out"
 [ "$status" = 0 ] || error "ws client macos wizard --check exited $status"
 ! printf '%s\n' "$out" | grep -q ': after Homebrew$' || error "ws client macos wizard --check found no brew"
-printf '%s\n' "$out" | grep -qx '+Include config.d/ws' ||
+printf '%s\n' "$out" | grep -qx '+Include /etc/ws/ssh_config' ||
     error "ws client macos wizard --check showed no Include for ~/.ssh/config"
 printf '%s\n' "$out" | grep -q '^ws client macos wizard: gh on the Mac: would run gh ssh-key add ' ||
     error "ws client macos wizard --check showed no key it would add to gh's login"
@@ -58,7 +58,7 @@ printf '%s\n' "$out" | grep -qx "ws client macos wizard: Tunnel: after ws's run"
     error "ws client macos wizard --check showed no Tunnel stage after ws's run"
 printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: after ws's run" ||
     error "ws client macos wizard --check showed no Cable stage after ws's run"
-for made in ~/.ssh/config.d ~/.ssh/config.*~ /etc/ws-tunnel /usr/local/libexec/ws-tunnel \
+for made in ~/.ssh/config.d ~/.ssh/config.*~ /etc/ws/tunnel /usr/local/libexec/ws-tunnel \
     /Library/LaunchDaemons/com.github.zadykian.ws-tunnel.ws.plist; do
     ! sudo test -e "$made" || error "ws client macos wizard --check made $made"
 done

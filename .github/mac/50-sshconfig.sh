@@ -3,7 +3,7 @@
 
 set -eo pipefail
 
-head -n 1 ~/.ssh/config | grep -qx 'Include config.d/ws' ||
+head -n 1 ~/.ssh/config | grep -qx 'Include /etc/ws/ssh_config' ||
     {
         echo '::error::the Include is not first'
         cat ~/.ssh/config
@@ -20,13 +20,8 @@ ls ~/.ssh/config.*~ ||
         echo '::error::ws client macos apply kept no copy of the old ~/.ssh/config'
         exit 1
     }
-[ "$(stat -f %Lp ~/.ssh/config.d)" = 700 ] ||
+[ "$(stat -f '%Su:%Sg %Lp' /etc/ws/ssh_config)" = 'root:wheel 644' ] ||
     {
-        echo '::error::~/.ssh/config.d is not 700'
-        exit 1
-    }
-[ "$(stat -f %Lp ~/.ssh/config.d/ws)" = 600 ] ||
-    {
-        echo '::error::~/.ssh/config.d/ws is not 600'
+        echo '::error::/etc/ws/ssh_config is not root:wheel 644'
         exit 1
     }

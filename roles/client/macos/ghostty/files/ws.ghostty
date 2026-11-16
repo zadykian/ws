@@ -1,5 +1,5 @@
-# The Mac's Ghostty settings, which ws client macos apply writes to ws.ghostty, beside Ghostty's
-# config.
+# The Mac's Ghostty settings, which ws client macos apply writes to /etc/ws/ghostty, which
+# Ghostty's config includes.
 # Ghostty reads them after the config's own, so each wins over the config's value, and
 # shell-integration-features replaces the config's whole list. Its ssh-terminfo installs Ghostty's
 # terminfo on ws at the first ssh from Ghostty, so ws installs none itself.

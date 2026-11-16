@@ -63,7 +63,7 @@ _Avoid_: remote, connection
 **User's directory**:
 A directory below the Mac's home that a step writes under, such as `~/.ssh`. A run makes it where
 missing, and stops where the path is no directory. It leaves the mode of one that exists, but for
-ws's directory and ssh's `config.d`. Core's `file.UserDir` holds it.
+ws's directory. Core's `file.UserDir` holds it.
 _Avoid_: folder
 
 **User's file**:
@@ -72,12 +72,10 @@ A whole file below the Mac's home that ws writes as the user, not root, such as
 server, root writes a home file.
 _Avoid_: dotfile
 
-**User's lines**:
-ws's lines in a user's file that holds other text too, such as `Include config.d/ws` at the top of
-`~/.ssh/config`. A run adds them once, at the top or the end, and keeps the old file as
-`PATH.TIME~`. At a link that lacks them, or lines out of place, the step warns or stops.
-Core's `file.UserLines` hold them.
-_Avoid_: include line
+**User's lines**: ws's lines in a user's file that holds other text too, such as `Include
+/etc/ws/ssh_config` at the top of `~/.ssh/config`. A run adds them once, at the top or the end, and
+keeps the old file as `PATH.TIME~`. At a link that lacks them, or lines out of place, the step warns
+or stops. Core's `file.UserLines` hold them. _Avoid_: include line
 
 **server's name**:
 What `--server` takes, and the directory `servers/NAME/` of the server's file: a lower-case letter,
@@ -89,6 +87,7 @@ no other server holds in a file that lacks it. Slot N's tunnel is `10.99.N.0/24`
 `10.99.0.0/20`, with the server at `.1` and the Mac at `.2`.
 
 **ws's directory**:
-`~/.config/ws` on the Mac, mode 700, which holds `values.yml`, `servers/` and the files that git, zsh
-and the tunnel read. A run sets that mode where it differs.
+`~/.config/ws` on the Mac, mode 700, which holds the files that git reads. A run
+sets that mode where it differs. `/etc/ws`, root's and 755 on both sides, holds `values.yml` and
+`servers/` on the Mac, which only sudo writes.
 _Avoid_: config directory

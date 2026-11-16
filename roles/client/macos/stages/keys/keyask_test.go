@@ -125,11 +125,11 @@ func TestMacKeyName(t *testing.T) {
 func TestMacKeyNameMakesTheCopiesDirectoryFirst(t *testing.T) {
 	k, m, _ := newMacKey(t, values.Text("WS_GIT_SIGNING_PUB_KEY", ""))
 	agent(m, gitP256)
-	delete(m.Dirs, "/h/"+sshcfg.KeyCopies)
+	delete(m.Dirs, sshcfg.KeyCopies)
 	if err := k.name(context.Background(), gitUse, listed(gitP256)[0]); err != nil {
 		t.Fatal(err)
 	}
-	made, wrote := slices.Index(m.Calls, "mkdir /h/"+sshcfg.KeyCopies+" 755"), slices.Index(m.Calls, "write "+copyOf(gitP256)+" 644")
+	made, wrote := slices.Index(m.Calls, "mkdir "+sshcfg.KeyCopies+" 755"), slices.Index(m.Calls, "atomic "+copyOf(gitP256)+" 644")
 	if made < 0 || wrote < made {
 		t.Errorf("mkdir at %d, the copy at %d, in %q", made, wrote, m.Calls)
 	}

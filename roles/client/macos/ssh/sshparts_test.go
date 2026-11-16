@@ -23,15 +23,15 @@ func partsOf(m *effecttest.Machine) SSH {
 func TestSSHPartsPlanTheChangesOfAFreshHomeInOrder(t *testing.T) {
 	s := partsOf(effecttest.NewMachine())
 	p, err := resource.Lazy{Title: "ssh", Parts: s.parts}.Plan(t.Context())
-	if err != nil || len(p.Changes) != 4 || !strings.HasPrefix(p.Changes[2].String(), "--- /dev/null\n+++ /h/.ssh/config.d/ws") {
-		t.Errorf("Plan = %v, %v; want 4 changes, the third config.d/ws's diff", p.Changes, err)
+	if err != nil || len(p.Changes) != 4 || !strings.HasPrefix(p.Changes[2].String(), "create /etc/ws/ssh_config\n") {
+		t.Errorf("Plan = %v, %v; want 4 changes, the third /etc/ws/ssh_config's diff", p.Changes, err)
 	}
 }
 
 func TestSSHPartsRefuseBeforeTheyPlanAnyChange(t *testing.T) {
 	m := effecttest.NewMachine()
 	s := partsOf(m)
-	m.Files["/h/.ssh/config"] = []byte("Host a\nInclude config.d/ws\n")
+	m.Files["/h/.ssh/config"] = []byte("Host a\nInclude /etc/ws/ssh_config\n")
 	parts, err := s.parts(t.Context())
 	if err != nil {
 		t.Fatalf("parts = %v; a refusal belongs to the plan, as a report reads on", err)
@@ -43,7 +43,7 @@ func TestSSHPartsRefuseBeforeTheyPlanAnyChange(t *testing.T) {
 
 func TestSSHPartsAreOneAResource(t *testing.T) {
 	parts, err := partsOf(effecttest.NewMachine()).parts(t.Context())
-	if err != nil || len(parts) != 6 {
-		t.Errorf("parts = %d, %v; want the refusal, the copy, the directories, the file, the Include and the copy's report", len(parts), err)
+	if err != nil || len(parts) != 7 {
+		t.Errorf("parts = %d, %v; want the refusal, the copy, ~/.ssh, /etc/ws, the file, the Include and the copy's report", len(parts), err)
 	}
 }

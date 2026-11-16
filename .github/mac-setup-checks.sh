@@ -13,7 +13,7 @@ if [ -z "${TUNNEL-}" ]; then
     echo "::error::TUNNEL is unset: this runs ws client macos apply, with sudo, in mac.yml's job alone"
     exit 1
 fi
-conf=$HOME/.config/ws/values.yml
+conf=/etc/ws/values.yml
 # shellcheck source=.github/mac-conf.sh
 . .github/mac-conf.sh
 # shellcheck source=.github/mac-quiet.sh

@@ -46,10 +46,10 @@ they hold ws's line, and none of their text.
 ## The Mac's values.yml
 
 The repository names no server, so the values go in two YAML files of `KEY: value` lines that the script
-reads without running them. `~/.config/ws/values.yml` holds the Mac's keys, which
-`WS_GIT_SIGNING_PUB_KEY`, `WS_IDENTITY_PUB_KEY` and `WS_IDENTITY_AGENT` are.
-`~/.config/ws/servers/ws/values.yml` holds every other key. A key in the other file is refused.
-[The two files](values/README.md#the-two-files) shows both.
+reads without running them. `/etc/ws/values.yml` holds the Mac's keys: `WS_GIT_SIGNING_PUB_KEY`,
+`WS_IDENTITY_PUB_KEY` and `WS_IDENTITY_AGENT`. `/etc/ws/servers/ws/values.yml` holds every other key,
+and a key in the other file is refused. Both are root's, written through sudo. A `WS_VALUES` file
+outside `/etc/ws` is the user's. [The two files](values/README.md#the-two-files) shows both.
 `--server NAME`, on every `ws client macos` command, picks the server, which may be left out where
 there is one ([The server's name](values/README.md#the-servers-name)).
 
@@ -59,14 +59,15 @@ it, the router's static lease for it. The script stops on one outside, and on th
 broadcast address. `WS_REMOTE` is the router's name on the internet, and `WS_REMOTE_PORT` the port
 it forwards to ws's 22. The tunnel takes UDP 51820 every way, which the router forwards too;
 `WS_TUNNEL_PORT` sets another, which wg0 listens on. A way without its values is left out. The
-router's side is in [The router](../../server/ubuntu/cable/router.md). `WS_PUBLIC_KEY` goes in
-last, once ws has the Mac's key, in the order of [The Mac's tunnel](#the-macs-tunnel).
-`WS_CABLE_SERVICE` names the network service of the display's adapter, and `WS_CABLE_PORT` ws's port
-of the cable: [The cable](#the-cable). `WS_GIT_SIGNING_PUB_KEY` is the `.pub` of the key that signs
-git's commits on the Mac, by its path from `/` or `~/`: [git on the Mac](git/README.md).
-`WS_IDENTITY_PUB_KEY` is the `.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the
-socket of its agent: [ssh's hosts](#sshs-hosts). A run makes `~/.config/ws` at mode 700, and sets
-that mode where it differs. It makes `/etc/ws` through sudo, for git's allowed signers, at mode 755.
+router's side is in [The router](../../server/ubuntu/cable/router.md). `WS_PUBLIC_KEY` goes in last,
+once ws has the Mac's key, in the order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE`
+names the network service of the display's adapter, and `WS_CABLE_PORT` ws's port of the cable: [The
+cable](#the-cable). `WS_GIT_SIGNING_PUB_KEY` is the `.pub` of the key that signs git's commits on
+the Mac, by its path from `/` or `~/`: [git on the Mac](git/README.md). `WS_IDENTITY_PUB_KEY` is the
+`.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the socket of its agent: [ssh's
+hosts](#sshs-hosts). A run makes `~/.config/ws` at mode 700, and sets that mode where it differs. It
+makes `/etc/ws` through sudo, for git's allowed signers, ssh's hosts and the tunnel's key, at mode
+755.
 
 `WS_USER` is the user ssh logs in as: ws's key too, `zadykian` by default, or `root` for a
 `WS_TARGET` of `cloud`, which may have no other user. The other targets refuse `WS_USER=root`. A key
@@ -81,7 +82,7 @@ domain comes once and in lower case, with up to 3 addresses split by commas. Onc
 tunnel's daemon, `ws client macos apply` hands both to the code of `ws client macos tunnel routes`
 and `ws client macos resolver`, whose caveats hold ([their
 section](#routes-and-resolvers-of-another-repository)). The networks go in the server's
-`/etc/ws-tunnel/NAME/routes.d/values`, a name no other script may take. Each resolver starts
+`/etc/ws/tunnel/NAME/routes.d/values`, a name no other script may take. Each resolver starts
 with ws's `Written by` line, which names `ws client macos apply`, so a domain whose file is another
 script's, or written by hand, stops the run. To move a domain from such a script, have it remove
 its file first, with `ws client macos resolver DOMAIN` and no address. A key emptied or removed
@@ -93,13 +94,13 @@ sudo would leave root's files where the user's go.
 
 ## ssh's hosts
 
-The script writes `~/.ssh/config.d/ws`, with a host for each server of `servers/`, named as the
-server is, at its tunnel's `10.99.N.1` from the first run, whichever network the Mac is on. A
-server's `10.99.N.1` is `10.99.0.1` at slot 0. So `ssh NAME` fails until the keys' exchange ends
-([The Mac's tunnel](#the-macs-tunnel)), where a direct way serves. It logs in as the server's
-`WS_USER` with the key below, and checks the server's host key under its name (`HostKeyAlias`). A
-server whose `values.yml` fails to load stops the run. A session ends after 120 s without word
-from the server, far longer than a switch of the tunnel takes.
+The script writes `/etc/ws/ssh_config`, root's and 644. It holds a host for each server of
+`servers/`, named as the server is, at its tunnel's `10.99.N.1` from the first run, whichever
+network the Mac is on. A server's `10.99.N.1` is `10.99.0.1` at slot 0. So `ssh NAME` fails until
+the keys' exchange ends ([The Mac's tunnel](#the-macs-tunnel)), where a direct way serves. It logs
+in as the server's `WS_USER` with the key below, and checks the server's host key under its name
+(`HostKeyAlias`). A server whose `values.yml` fails to load stops the run. A session ends after 120
+s without word from the server, far longer than a switch of the tunnel takes.
 
 ssh offers ws one key alone (`IdentitiesOnly`): the one whose `.pub` `WS_IDENTITY_PUB_KEY` names, as
 ws's copy of a key of Secretive's ([Secretive's keys](git/README.md#secretives-keys)) or a file key.
@@ -113,27 +114,27 @@ reads the file beside the `.pub`, its passphrase kept in the Keychain. The scrip
 line, as a private key or a certificate does. So does a key that ssh-keygen cannot read, or one of a
 type that ws's OpenSSH lacks, as Secretive's ML-DSA keys on macOS 26.
 
-The script puts `Include config.d/ws` first in `~/.ssh/config`, as ssh keeps the first value it
-reads for each key. So neither the file's own settings nor the other files of `config.d` override
-ws's. Where the line is missing, the script adds it at the top and keeps the old file as
+The script puts `Include /etc/ws/ssh_config` first in `~/.ssh/config`, as ssh keeps the first value
+it reads for each key. So neither the file's own settings nor those of other files override ws's.
+Where the line is missing, the script adds it at the top and keeps the old file as
 `~/.ssh/config.TIME~`. Where the line sits below other settings, the script stops. The line also
-counts by `~/.ssh/` or the home's full path, in quotes, or as the first of several paths.
+counts in quotes, or as the first of several paths.
 
 Where `~/.ssh/config` is a link, as a dotfiles manager makes it, the script reads the file it points
 to. It stops where the line is missing there, rather than replace the link with a file, and the
-report shows the file as a conflict. Where `~/.ssh/config.d` is a link, the script warns as it
-writes `config.d/ws` there. It stops where `config.d/ws` is a file it did not write, rather than
-replace it. It stops where a `Host` or `Match` of `~/.ssh/config`'s own names a server, whose
-settings would come after those of `config.d/ws`: remove it, as its `IdentityFile` would add a key
-to ws's. The wizard refuses such a name for a new server, asked or given by `--server`, first.
+report shows the file as a conflict. The script leaves `~/.ssh/config.d/ws` and its `Include` alone:
+a user's old line stays the user's. It stops where a `Host` or `Match` of `~/.ssh/config`'s own
+names a server, whose settings would come after those of `/etc/ws/ssh_config`: remove it, as its
+`IdentityFile` would add a key to ws's. The wizard refuses such a name for a new server, asked or
+given by `--server`, first.
 
-ssh keeps the first `IgnoreUnknown` it reads too. `config.d/ws` needs one for the file key's
+ssh keeps the first `IgnoreUnknown` it reads too. `/etc/ws/ssh_config` needs one for the file key's
 `UseKeychain`, which only Apple's ssh knows, and keeps it with an agent's key. So it carries the
 patterns of every `IgnoreUnknown` in `~/.ssh/config`. Run the script again after a change to those.
 A pattern in a file that `~/.ssh/config` includes must be in `~/.ssh/config` too, as the script
 reads no other file.
 
-Before it writes, the script has `ssh -G`, for each server, read the new `config.d/ws` alone.
+Before it writes, the script has `ssh -G`, for each server, read the new `/etc/ws/ssh_config` alone.
 Then it reads it first, `~/.ssh/config` next, without its own Include of the old file, and the
 system's file last. Where ssh refuses either, or reads a server at another address or user than
 its block sets, the script stops and changes nothing, under `--check` too. The system's file goes
@@ -215,15 +216,15 @@ client macos apply` copies `ws` from `~/.local/bin`, which a run makes if missin
 that file would let anything that runs as the user become root. The daemon holds WireGuard's device
 itself, so it needs no `wg` or `wireguard-go`. `apply` restarts each where the copy changed.
 
-The settings are in `/etc/ws-tunnel`, which only root reads. It holds the Mac's key, which `ws
-client macos tunnel key` makes once, and a directory `NAME` per server, with its `tunnel.conf`
-and its `routes.d` ([the daemons](tunnel/README.md)). `ws client macos apply` keeps the public key in
-`~/.config/ws/tunnel.pub`, which the wizard reads, and copies `tunnel.conf` from the server's file,
+The settings are in `/etc/ws/tunnel`, in ws's directory, which only root reads. It holds the Mac's
+key, which `ws client macos tunnel key` makes once, and a directory `NAME` per server, with its
+`tunnel.conf` and its `routes.d` ([the daemons](tunnel/README.md)). `ws client macos apply` keeps the public key in
+`/etc/ws/tunnel.pub`, which the wizard reads, and copies `tunnel.conf` from the server's file,
 so the daemon reads no file the user can write. In System Settings › General › Login Items &
 Extensions, its "Allow in the Background" must stay on.
 
 A server with no directory beside `values.yml` has its daemon removed at the next `apply`: booted out
-where loaded, then its plist, `/etc/ws-tunnel/NAME`, state file and log. Nothing goes unless
+where loaded, then its plist, `/etc/ws/tunnel/NAME`, state file and log. Nothing goes unless
 `values.yml`'s servers list the one that `apply` runs for.
 
 The tunnel's ends are `10.99.N.2` on the Mac, on a utun of wireguard-go's, and `10.99.N.1` on ws, N
@@ -279,7 +280,7 @@ domain's names to nameservers behind it. It calls `ws`, which changes only what 
 `--check` makes each print its diffs and change nothing:
 
 - `ws client macos tunnel routes [--check] --server SERVER NAME CIDR...`, which writes the IPv4
-  networks to `/etc/ws-tunnel/SERVER/routes.d/NAME` and has the daemons read them again. SERVER's
+  networks to `/etc/ws/tunnel/SERVER/routes.d/NAME` and has the daemons read them again. SERVER's
   daemon adds them to the peer's AllowedIPs and routes them into its utun, without closing a
   connection. It leaves out for the time being one that holds the endpoint in use, or one that
   holds a way's endpoint while none answers. `NAME` is of `a-z`, `0-9` and `-`, `values`

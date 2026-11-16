@@ -8,7 +8,7 @@ set -eo pipefail
 . .github/mac-quiet.sh
 
 lab=${LABEL%.ws}.lab
-servers=$HOME/.config/ws/servers
+servers=/etc/ws/servers
 
 # fails WHY ARG...: ws client macos remove ARG... must exit 1, with WHY in what it prints.
 fails() {
@@ -45,11 +45,11 @@ gone() {
 [ -f "$servers/ws/values.yml" ] || gone "the server ws's values.yml is gone"
 [ ! -e "/Library/LaunchDaemons/$lab.plist" ] || gone "lab's plist is still there"
 ! launchctl print "system/$lab" >/dev/null 2>&1 || gone "lab's daemon is still loaded"
-for path in /etc/ws-tunnel/lab /var/run/ws-tunnel.lab.state /var/log/ws-tunnel.lab.log; do
+for path in /etc/ws/tunnel/lab /var/run/ws-tunnel.lab.state /var/log/ws-tunnel.lab.log; do
     ! sudo test -e "$path" || gone "$path is still there"
 done
-! grep -qx 'Host lab' ~/.ssh/config.d/ws || gone "config.d/ws still has a Host lab"
-grep -qx 'Host ws' ~/.ssh/config.d/ws || gone "config.d/ws lost its Host ws"
+! grep -qx 'Host lab' /etc/ws/ssh_config || gone "/etc/ws/ssh_config still has a Host lab"
+grep -qx 'Host ws' /etc/ws/ssh_config || gone "/etc/ws/ssh_config lost its Host ws"
 ! ssh-keygen -F lab >/dev/null || gone "known_hosts still has lab"
 ssh-keygen -F ws >/dev/null || gone "known_hosts lost ws"
 launchctl print "system/$LABEL" >/dev/null || gone "ws's daemon is not loaded"

@@ -66,7 +66,7 @@ func TestWizardPutsHomebrewFirstAndSetsWsConf(t *testing.T) {
 	p, env := testWizardProcess("darwin", 501)
 	env["PATH"], env["HOME"] = "/usr/bin", "/h"
 	runWs(p, "", "client", "macos", "wizard", "--check")
-	if env["PATH"] != "/opt/homebrew/bin:/usr/bin" || env["WS_VALUES"] != "/h/.config/ws/values.yml" {
+	if env["PATH"] != "/opt/homebrew/bin:/usr/bin" || env["WS_VALUES"] != "/etc/ws/values.yml" {
 		t.Errorf("PATH = %q, WS_VALUES = %q", env["PATH"], env["WS_VALUES"])
 	}
 }

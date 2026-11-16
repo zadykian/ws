@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	dir  = "/etc/ws-tunnel"
+	dir  = "/etc/ws/tunnel"
 	conf = "WS_PUBLIC_KEY=AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=\nWS_REMOTE=ws.example.org\n"
 )
 
@@ -64,7 +64,7 @@ func TestReadSettingsNoRoutes(t *testing.T) {
 
 func TestReadSettingsFails(t *testing.T) {
 	tests := []struct{ name, conf, want string }{
-		{"missing", "", "cannot read /etc/ws-tunnel/tunnel.conf: run ws client macos apply"},
+		{"missing", "", "cannot read /etc/ws/tunnel/tunnel.conf: run ws client macos apply"},
 		{"bad line", "WS_TUNNEL_PORT=0\n", "tunnel.conf: cannot take 'WS_TUNNEL_PORT=0'"},
 		{"no key", "WS_REMOTE=a.b\n", "no WS_PUBLIC_KEY"},
 	}

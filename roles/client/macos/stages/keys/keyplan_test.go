@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
@@ -24,11 +23,12 @@ func agent(m *effecttest.Machine, lines ...string) {
 	m.Files[socket], m.Modes[socket] = nil, fs.ModeSocket
 	m.Results[listKeys] = effecttest.Result{Out: []byte(strings.Join(lines, ""))}
 	m.Results["mkdir -p /h/.config/ws"] = effecttest.Result{}
-	m.Dirs["/h/.config"], m.Dirs["/h/.config/ws"], m.Dirs["/h/"+sshcfg.KeyCopies] = 0o755, 0o700, 0o755
+	m.Dirs["/h/.config"], m.Dirs["/h/.config/ws"] = 0o755, 0o700
+	m.Dirs["/etc/ws"], m.Dirs[sshcfg.KeyCopies] = 0o755, 0o755
 }
 
 // copyOf is the path of ws's copy of the line's key.
-func copyOf(line string) string { return sshcfg.Expand(sshcfg.AgentKeys(line)[0].Pub(), "/h") }
+func copyOf(line string) string { return sshcfg.AgentKeys(line)[0].Pub() }
 
 func planned(k *MacKey) string {
 	p, err := k.Plan(context.Background())
@@ -78,14 +78,14 @@ func TestMacKeyPlanNeedsAFileKey(t *testing.T) {
 // must offer the agent's keys alone, and plan the copy of the one named that the stages after it
 // read.
 func TestMacKeyPlanTakesTheAgentsKey(t *testing.T) {
-	k, m, out := newMacKey(t, "")
+	k, m, _ := newMacKey(t, "")
 	agent(m, p256)
 	if got := planned(k); !strings.Contains(got, ": "+p256Label+"; make a new one (the default)]") {
 		t.Errorf("Plan = %q, want the agent's key offered", got)
 	}
 	m.Files[confPathForTest] = []byte(gitKey + values.Text("WS_IDENTITY_PUB_KEY", listed(p256)[0].Pub()))
 	p, err := k.Plan(context.Background())
-	if err != nil || len(p.Changes) != 1 || p.Changes[0] != (keys.Copy{M: m, Out: out, Path: copyOf(p256), Text: p256}) {
+	if err != nil || len(p.Changes) != 1 || !strings.HasPrefix(p.Changes[0].String(), "create "+copyOf(p256)+"\n") {
 		t.Fatalf("Plan = %v, %v; want the copy alone", p.Changes, err)
 	}
 	for _, call := range m.Calls {

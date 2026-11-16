@@ -13,7 +13,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
-const doneConf = "# Written by github.com/zadykian/ws: ws client macos apply, from ~/.config/ws/servers/ws/values.yml.\n" +
+const doneConf = "# Written by github.com/zadykian/ws: ws client macos apply, from /etc/ws/servers/ws/values.yml.\n" +
 	"WS_PUBLIC_KEY=K\nWS_TUNNEL_PORT=51820\nWS_SLOT=0\n"
 
 // daemonMachine is a Mac with ws, root's copy, the key, tunnel.conf and the plist in place.
@@ -21,21 +21,20 @@ func daemonMachine() *effecttest.Machine {
 	m := effecttest.NewMachine()
 	m.Files["/h/.local/bin/ws"] = []byte("ws")
 	m.Files["/usr/local/libexec/ws-tunnel/ws"] = []byte("ws")
-	m.Files["/etc/ws-tunnel/ws/tunnel.conf"] = []byte(doneConf)
+	m.Files["/etc/ws/tunnel/ws/tunnel.conf"] = []byte(doneConf)
 	m.Files["/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.ws.plist"] = []byte("plist")
 	for path, mode := range map[string]effect.Attrs{
 		"/usr/local": {Mode: 0o755}, "/usr/local/libexec": {Mode: 0o755}, "/usr/local/libexec/ws-tunnel": {Mode: 0o755},
-		"/usr/local/libexec/ws-tunnel/ws": {Mode: 0o755}, "/etc/ws-tunnel": {Mode: 0o700}, "/etc/ws-tunnel/ws": {Mode: 0o700},
-		"/etc/ws-tunnel/ws/routes.d": {Mode: 0o755}, "/etc/ws-tunnel/private.key": {Mode: 0o600},
-		"/etc/ws-tunnel/ws/tunnel.conf":                                 {Mode: 0o600},
+		"/usr/local/libexec/ws-tunnel/ws": {Mode: 0o755}, "/etc/ws/tunnel": {Mode: 0o700}, "/etc/ws/tunnel/ws": {Mode: 0o700},
+		"/etc/ws/tunnel/ws/routes.d": {Mode: 0o755}, "/etc/ws/tunnel/private.key": {Mode: 0o600},
+		"/etc/ws/tunnel/ws/tunnel.conf":                                 {Mode: 0o600},
 		"/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.ws.plist": {Mode: 0o644},
 	} {
 		m.Root[path] = mode
 	}
 	m.Results["/usr/local/libexec/ws-tunnel/ws client macos tunnel key"] = effecttest.Result{Out: []byte("PUB\n")}
-	m.Files["/h/.config/ws/tunnel.pub"] = []byte("PUB\n")
-	m.Dirs["/h/.config"], m.Dirs["/h/.config/ws"] = 0o755, 0o700
-	m.Dirs["/Library/LaunchDaemons"] = 0o755
+	m.Files["/etc/ws/tunnel.pub"] = []byte("PUB\n")
+	m.Dirs["/Library/LaunchDaemons"], m.Dirs["/etc/ws"] = 0o755, 0o755
 	m.Results["launchctl print system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{}
 	return m
 }
@@ -66,7 +65,7 @@ func TestTunnelBootstrapsTheDaemonWhereLaunchdLacksIt(t *testing.T) {
 
 func TestTunnelSignalsTheDaemonWhereTunnelConfAloneChanged(t *testing.T) {
 	m := daemonMachine()
-	m.Files["/etc/ws-tunnel/ws/tunnel.conf"] = []byte("old\n")
+	m.Files["/etc/ws/tunnel/ws/tunnel.conf"] = []byte("old\n")
 	got := tunnelChanges(t, daemonStep(m))
 	if len(got) != 2 || got[1] != "would run launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.ws" {
 		t.Errorf("Plan = %q; want the conf and a SIGHUP", got)
@@ -94,7 +93,7 @@ func TestTunnelKicksTheDaemonWhereWsChanged(t *testing.T) {
 
 func TestTunnelStartsTheDaemonWhereSIGHUPFails(t *testing.T) {
 	m := daemonMachine()
-	m.Files["/etc/ws-tunnel/ws/tunnel.conf"] = []byte("old\n")
+	m.Files["/etc/ws/tunnel/ws/tunnel.conf"] = []byte("old\n")
 	m.Results["launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{Err: errors.New("no")}
 	m.Results["launchctl kickstart -k system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{}
 	s := daemonStep(m)
@@ -183,7 +182,7 @@ func TestTunnelKicksTheOtherDaemonsWithNoPublicKey(t *testing.T) {
 
 func TestTunnelSignalsTheOtherDaemonsWhereTunnelConfChanged(t *testing.T) {
 	m := daemonMachine()
-	m.Files["/etc/ws-tunnel/ws/tunnel.conf"] = []byte("old\n")
+	m.Files["/etc/ws/tunnel/ws/tunnel.conf"] = []byte("old\n")
 	otherDaemon(m, "lab")
 	got := tunnelChanges(t, daemonStep(m))
 	want := "would run launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.lab"

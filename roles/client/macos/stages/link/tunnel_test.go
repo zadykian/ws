@@ -28,7 +28,7 @@ const daemonLabel = "com.github.zadykian.ws-tunnel.ws"
 func newTunnel(pub string, status session.Status, check bool) (*Tunnel, *effecttest.Machine) {
 	r, m := newRun("lan", status, false, check)
 	m.Files["/h/values.yml"] = append(m.Files["/h/values.yml"], []byte(values.Text("WS_PUBLIC_KEY", pub))...)
-	m.Files["/h/.config/ws/tunnel.pub"] = []byte(keyA + "\n")
+	m.Files["/etc/ws/tunnel.pub"] = []byte(keyA + "\n")
 	m.Results["launchctl print system/"+daemonLabel] = effecttest.Result{}
 	m.Results["nc -z -G 3 -w 3 10.99.0.1 22"] = effecttest.Result{}
 	m.Results["ssh -G ws"] = effecttest.Result{Out: []byte("user root\nhostname 10.99.0.1\n")}
@@ -73,7 +73,7 @@ func TestTunnelPlan(t *testing.T) {
 
 func TestTunnelPlanWaits(t *testing.T) {
 	tun, m := newTunnel(keyB, session.Status{Peered: true}, true)
-	delete(m.Files, "/h/.config/ws/tunnel.pub")
+	delete(m.Files, "/etc/ws/tunnel.pub")
 	p, err := tun.Plan(context.Background())
 	if err != nil || len(p.Changes) != 0 || !strings.Contains(tun.Out.(*effecttest.Out).Lines[0], "after ws client macos apply") {
 		t.Errorf("Plan = %v, %v; want it to wait on ws client macos apply", p, err)

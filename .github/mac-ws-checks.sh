@@ -53,7 +53,7 @@ if ! out=$("$TUNNEL" client macos tunnel routes --server ws --check test 198.51.
 else
     case $out in *'+198.51.100.0/24'*) ;; *) error "--check showed no diff: $out" ;; esac
 fi
-! sudo test -e /etc/ws-tunnel/ws/routes.d/test || error '--check wrote ws/routes.d/test'
+! sudo test -e /etc/ws/tunnel/ws/routes.d/test || error '--check wrote ws/routes.d/test'
 
 # The daemon takes each SIGHUP of ws client macos tunnel routes in place. It keeps its pid and logs
 # a reload of its routes.d. A daemon that died of a SIGHUP, and that launchd started again, would log a
@@ -68,7 +68,7 @@ until_ok 20 routed || error "198.51.100.1 is not routed into the daemon's $utun"
 route -n get 198.51.100.1 || true
 must "$TUNNEL" client macos tunnel routes --server ws test
 until_ok 20 eval '! routed' || error "198.51.100.1 is still routed into $utun"
-! sudo test -e /etc/ws-tunnel/ws/routes.d/test || error 'ws/routes.d/test outlived its removal'
+! sudo test -e /etc/ws/tunnel/ws/routes.d/test || error 'ws/routes.d/test outlived its removal'
 now=$(pid)
 if [ "$was" = none ] || [ "$now" != "$was" ]; then
     error "the daemon was pid $was before ws client macos tunnel routes's SIGHUPs, and is pid $now"

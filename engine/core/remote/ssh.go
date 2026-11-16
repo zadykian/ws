@@ -21,9 +21,9 @@ type SSH struct {
 	Lock string
 	// Home is the user's, which a ~/ in known_hosts' path means.
 	Home string
-	// Ways finds the direct way to ws. Nil means none, and ssh leads through config.d/ws.
+	// Ways finds the direct way to ws. Nil means none, and ssh leads through /etc/ws/ssh_config.
 	Ways Ways
-	// Host is the server's name, its Host in config.d/ws, which every call names.
+	// Host is the server's name, its Host in /etc/ws/ssh_config, which every call names.
 	Host string
 }
 
@@ -76,7 +76,7 @@ func (s SSH) room() bool {
 //   - A call that uses a master takes the master's options, so those that every caller needs are
 //     here. BatchMode stays with the calls, as only a login reads it.
 //   - A master lives 30 minutes past its last call, which outlasts a Homebrew install between two.
-//   - It runs no LocalCommand, as config.d/ws's that starts cld's watcher in a Ghostty pane.
+//   - It runs no LocalCommand, as /etc/ws/ssh_config's that starts cld's watcher in a Ghostty pane.
 func (s SSH) Shared(socket string) []string {
 	var a []string
 	if s.room() {
@@ -88,7 +88,7 @@ func (s SSH) Shared(socket string) []string {
 }
 
 // Argv returns ssh's arguments for a direct call, whose host in args is the server.
-//   - The way's host and port go before args as options, over config.d/ws's, which leads through the
+//   - The way's host and port go before args as options, over /etc/ws/ssh_config's, which leads through the
 //     tunnel. The address that a stage asked replaces the way's host.
 //   - AddressFamily=inet goes on every call: the ways are IPv4 by values and WS_REMOTE takes IPv4 alone.
 //   - The socket is direct, so that a call never rides the tunnel's master. The address that a
@@ -114,7 +114,7 @@ func (s SSH) Run(ctx context.Context, args ...string) ([]byte, error) {
 	return s.M.Run(ctx, "ssh", s.Argv(ctx, args)...)
 }
 
-// Tunnel runs ssh through the tunnel, as config.d/ws leads, on a master of its own in the lock and
+// Tunnel runs ssh through the tunnel, as /etc/ws/ssh_config leads, on a master of its own in the lock and
 // with none of the way's options.
 func (s SSH) Tunnel(ctx context.Context, args ...string) ([]byte, error) {
 	return s.M.Run(ctx, "ssh", append(s.Shared("%n"), args...)...)

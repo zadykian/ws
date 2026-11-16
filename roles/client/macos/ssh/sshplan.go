@@ -1,7 +1,6 @@
 package ssh
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io/fs"
@@ -11,6 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
+	"github.com/zadykian/ws/roles/internal/etcws"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -20,20 +20,18 @@ const (
 	sshFileMode fs.FileMode = 0o600
 )
 
-// includeLine is the line that puts config.d/ws first in ~/.ssh/config.
-const includeLine = "Include config.d/ws"
+// includeLine is the line that puts /etc/ws/ssh_config first in ~/.ssh/config.
+const includeLine = "Include " + sshcfg.File
 
 // sshFacts is what the ssh step read of the Mac.
 type sshFacts struct {
 	M    effect.Machine
 	Out  effect.Out
 	Home string
-	// Dirs plans ~/.ssh and ~/.ssh/config.d, and DirLink is the last of them that is a link.
+	// Dirs plans ~/.ssh.
 	Dirs       []step.Change
-	DirLink    file.UserDirLink
-	Ws         file.Found // ~/.ssh/config.d/ws
 	UserConfig file.Found // ~/.ssh/config, whose text is the file a link points to
-	// IncludeLine is the line of its Include of config.d/ws, or 0.
+	// IncludeLine is the line of its Include of /etc/ws/ssh_config, or 0.
 	IncludeLine int
 	// Config plans ~/.ssh/config, or Stop says why a run can't. Include is how it stands.
 	Config  []step.Change
@@ -41,12 +39,9 @@ type sshFacts struct {
 	Include step.Item
 }
 
-// sshDirs is ~/.ssh and its config.d. A run sets the mode of config.d, which holds the hosts.
+// sshDirs is ~/.ssh alone: the hosts are in /etc/ws, and a run leaves ~/.ssh/config.d be.
 func sshDirs(m effect.Machine, out effect.Out, home string) file.UserDirs {
-	return file.UserDirs{
-		{M: m, Out: out, Path: home + "/.ssh", Mode: sshDirMode},
-		{M: m, Out: out, Path: home + "/.ssh/config.d", Mode: sshDirMode, Fix: true},
-	}
+	return file.UserDirs{{M: m, Out: out, Path: home + "/.ssh", Mode: sshDirMode}}
 }
 
 // refusal is a part that plans no change: it stops a plan, or warns, as a report never does.
@@ -56,8 +51,8 @@ type refusal func(ctx context.Context) error
 func (r refusal) Plan(ctx context.Context) ([]resource.Change, error) { return nil, r(ctx) }
 
 // parts reads ~/.ssh and the Mac, and returns the parts of the step in the order of its changes.
-// They are the refusal, the key's copy, the directories, config.d/ws, the Include and the copy's
-// report.
+// They are the refusal, the key's copy, ~/.ssh, /etc/ws and its ssh_config, the Include and the
+// copy's report.
 func (s SSH) parts(ctx context.Context) ([]resource.Resource, error) {
 	f, err := s.read(ctx)
 	if err != nil {
@@ -73,19 +68,26 @@ func (s SSH) parts(ctx context.Context) ([]resource.Resource, error) {
 	}
 	text := s.config(ctx, f, key, hosts)
 	var copies reports
-	if keys.Copied(key.File, key.Text, s.Home) {
-		copies = append(copies, keys.CopyDirs(s.M, s.Out, s.Home))
+	for _, part := range keys.CopyParts(s.M, s.Out, key.File, key.Text) {
+		copies = append(copies, part)
 	}
-	copies = append(copies, keys.CopyReport(s.M, s.Out, key.File, key.Text, s.Home)...)
-	copied, err := keys.PlanCopy(s.M, s.Out, key.File, key.Text, s.Home)
-	return []resource.Resource{
+	copied, err := keys.PlanCopy(ctx, s.M, s.Out, key.File, key.Text)
+	parts := []resource.Resource{
 		s.refusal(f, hosts, text),
 		resource.Planned{Changes: copied, Err: err},
 		resource.Planned{Changes: f.Dirs, Seen: sshDirs(s.M, s.Out, s.Home)},
-		resource.Planned{Changes: s.wsFile(text).Change(f.Ws), Seen: s.wsFile(text)},
+	}
+	files := etcws.Files
+	if len(copies) > 0 {
+		files = etcws.Inside // the copy's parts make /etc/ws, and a plan holds it once
+	}
+	for _, r := range files(s.M, sshcfg.File, text) {
+		parts = append(parts, resource.Said{Out: s.Out, Part: r})
+	}
+	return append(parts,
 		resource.Planned{Changes: f.Config, Seen: file.Fixed{f.Include}},
 		resource.Planned{Seen: copies},
-	}, nil
+	), nil
 }
 
 // reports is the files that the step reports, in order.
@@ -114,13 +116,10 @@ func (s SSH) refusal(f sshFacts, hosts []sshcfg.Host, text []byte) refusal {
 		own := sshcfg.OwnHosts(string(f.UserConfig.Text), names(hosts)...)
 		if len(own) > 0 {
 			return fmt.Errorf("line %d of ~/.ssh/config, %s, sets its own values for %s: remove it, as "+
-				"config.d/ws holds each server's host", own[0].Line, own[0].Text, own[0].Names)
+				"/etc/ws/ssh_config holds each server's host", own[0].Line, own[0].Text, own[0].Names)
 		}
 		if err := s.validate(ctx, f, hosts, text); err != nil {
 			return err
-		}
-		if f.DirLink.Path == s.Home+"/.ssh/config.d" && !bytes.Equal(f.Ws.Text, text) {
-			s.Out.Warn("~/.ssh/config.d is a link to %s: config.d/ws goes there", f.DirLink.To)
 		}
 		return nil
 	}

@@ -28,10 +28,9 @@ func keyAndRest(line string) (key, rest string) {
 	return line[:i], afterKey.ReplaceAllString(line[i:], "")
 }
 
-// IncludeAt reports where the ssh_config text has `Include want`, want under ~/.ssh, and its line.
-// The line counts by ~/.ssh/ or the home's full path too, in quotes, before a comment, or with
-// other paths after it.
-func IncludeAt(text, want, home string) (Place, int) {
+// IncludeAt reports where the ssh_config text has `Include want`, an absolute path, and its line.
+// The line counts in quotes, before a comment, or with other paths after it.
+func IncludeAt(text, want string) (Place, int) {
 	settings := false
 	for n, line := range strings.Split(text, "\n") {
 		line = strings.TrimRight(strings.TrimLeft(line, " \t"), " \t\r")
@@ -44,7 +43,6 @@ func IncludeAt(text, want, home string) (Place, int) {
 		} else if i := strings.IndexAny(path, " \t"); i >= 0 {
 			path = path[:i]
 		}
-		path = strings.TrimPrefix(strings.TrimPrefix(path, "~/.ssh/"), home+"/.ssh/")
 		if strings.EqualFold(key, "include") && path == want {
 			if settings {
 				return Below, n + 1

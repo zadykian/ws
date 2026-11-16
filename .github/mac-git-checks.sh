@@ -190,12 +190,12 @@ if ! cat "$tmp/unread-git.pub" >/dev/null 2>&1; then
     stops "ws client macos apply: cannot read $tmp/unread-git.pub"
 fi
 
-# A key of Secretive's, held by an agent at its socket, named by ~/ as ws's copy of its .pub, with
+# A key of Secretive's, held by an agent at its socket, named as ws's copy of its .pub, with
 # PublicKeys closed, as on macOS 27. --check must show the wrapper and gpg.ssh.program, and write
 # neither. git must sign with the agent, through the wrapper, whatever SSH_AUTH_SOCK names.
 mkdir -p "$secretive/Data/PublicKeys" && chmod 000 "$secretive/Data/PublicKeys"
 ssh-keygen -q -t ecdsa -b 256 -N '' -C ws -f "$tmp/p256"
-copy=$files/secretive/$(pubname "$tmp/p256.pub")
+copy=/etc/ws/secretive/$(pubname "$tmp/p256.pub")
 agent=$(ssh-agent -s -a "$secretive/Data/socket.ssh" | sed -n 's/^SSH_AGENT_PID=\([0-9]*\);.*/\1/p')
 if [ -z "$agent" ] || ! SSH_AUTH_SOCK=$secretive/Data/socket.ssh ssh-add -q "$tmp/p256"; then
     error "no ssh-agent at Secretive's socket took the key"
@@ -205,7 +205,7 @@ rm "$tmp/p256"
 with 'WS_GIT_SIGNING_PUB_KEY: ""'
 stops "$(unnamed WS_GIT_SIGNING_PUB_KEY "git's signing key" "$tmp/p256.pub")"
 with \
-    "WS_GIT_SIGNING_PUB_KEY: ~/${copy#"$HOME/"}"
+    "WS_GIT_SIGNING_PUB_KEY: $copy"
 setup --check || error "ws client macos apply --check failed: $out"
 case $out in
 *"+++ $files/secretive-ssh-keygen$nl"*"$nl+${tab}program = \"$files/secretive-ssh-keygen\""*) ;;
@@ -213,7 +213,7 @@ case $out in
 esac
 [ ! -e "$files/secretive-ssh-keygen" ] || error "ws client macos apply --check wrote $files/secretive-ssh-keygen"
 [ ! -e "$copy" ] || error "ws client macos apply --check wrote $copy"
-prints "ws client macos apply: wrote $copy${nl}ws client macos apply: wrote $files/secretive-ssh-keygen${nl}\
+prints "ws client macos apply: create directory /etc/ws/secretive, owner 0:0, mode 755${nl}ws client macos apply: create $copy${nl}ws client macos apply: wrote $files/secretive-ssh-keygen${nl}\
 ws client macos apply: write $signers${nl}ws client macos apply: wrote $files/gitconfig${nl}\
 ws client macos apply: wrote $HOME/.gitconfig${nl}ws client macos apply: ran gh ssh-key add $copy --type signing\
  --title $title"
@@ -227,7 +227,7 @@ prints "$listed" --check
     error "ssh -G ws gives git's signing key, Secretive's one key, as ws's"
 kill "$agent" || true
 agent=
-chmod -R u+rwx "$secretive" && rm -rf "$secretive" "$files/secretive"
+chmod -R u+rwx "$secretive" && rm -rf "$secretive" && sudo rm -rf /etc/ws/secretive
 
 # Logged out, gh must draw a warning at each run, and nothing else where the files are written.
 # With gh's login, a 404, the answer to a login without the scope of signing keys, must draw a

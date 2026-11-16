@@ -70,7 +70,7 @@ func (c *Cld) restoreTabs(ctx context.Context) bool {
 	return err == nil
 }
 
-// gains reports whether config.d/ws would gain the lines that start cld's watcher. They come where
+// gains reports whether /etc/ws/ssh_config would gain the lines that start cld's watcher. They come where
 // ssh has no lines yet, and Ghostty's app is there or --check would install it, as Homebrew has not
 // the cask.
 func (c *Cld) gains(ctx context.Context) bool {
@@ -100,7 +100,7 @@ func (c *Cld) plan(ctx context.Context) step.Plan {
 		cs, tabs = []step.Change{cldInstall{c}}, c.Check
 	}
 	if tabs && c.gains(ctx) {
-		cs = append(cs, resource.Remark("would add the lines that start cld's watcher to config.d/ws, "+
+		cs = append(cs, resource.Remark("would add the lines that start cld's watcher to /etc/ws/ssh_config, "+
 			"where that cld has restore tabs"))
 	}
 	return step.Plan{Changes: cs}

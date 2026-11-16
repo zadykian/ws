@@ -8,7 +8,7 @@ set -u
 . "$(dirname "$0")/../mac-conf.sh"
 
 wsbin=$HOME/.local/bin/ws
-conf=$HOME/.config/ws/values.yml
+conf=/etc/ws/values.yml
 fail=0
 
 conf_print "$conf" >"$RUNNER_TEMP/values.yml.env"

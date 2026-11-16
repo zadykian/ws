@@ -16,7 +16,7 @@ import (
 )
 
 // Key is the stage of ws's host key: the ed25519 key that ws offers, matched against ws's
-// console. It goes in known_hosts under the name ws, which config.d/ws's HostKeyAlias gives each
+// console. It goes in known_hosts under the name ws, which /etc/ws/ssh_config's HostKeyAlias gives each
 // way to ws.
 type Key struct {
 	// Conf is values.yml's path, Lock the run's lock, whose host.pub holds the key to fingerprint.
@@ -37,7 +37,7 @@ func (*Key) Name() string { return stage.Host }
 // Side is the Mac: known_hosts holds ws's host key.
 func (*Key) Side() guided.Side { return stage.Mac }
 
-// WaitsOn is ws client macos apply, which writes config.d/ws.
+// WaitsOn is ws client macos apply, which writes /etc/ws/ssh_config.
 func (*Key) WaitsOn() string { return stage.Setup }
 
 // hostAdd is the change that adds ws's key to known_hosts.

@@ -8,8 +8,8 @@ set -eo pipefail
 # shellcheck source=.github/mac-conf.sh
 . .github/mac-conf.sh
 
-conf=$HOME/.config/ws/values.yml
-trap 'rm -rf "${conf%/*}/servers/lab" "${conf%/*}/servers/box"' EXIT
+conf=/etc/ws/values.yml
+trap 'sudo rm -rf "${conf%/*}/servers/lab" "${conf%/*}/servers/box"' EXIT
 
 # ws's own ports, which the slot and port cases clash with.
 for line in 'WS_REMOTE: localhost' 'WS_REMOTE_PORT: 22022' 'WS_TUNNEL_PORT: 51820'; do
@@ -53,7 +53,7 @@ server box 'WS_SLOT: 2' 'WS_CABLE_SERVICE: Box'
 server lab 'WS_SLOT: 1' 'WS_CABLE_SERVICE: Lab'
 refused "WS_CABLE_SERVICE names a cable, as server box's does" lab
 
-rm -rf "${conf%/*}/servers/box"
+sudo rm -rf "${conf%/*}/servers/box"
 server lab 'WS_SLOT: 0'
 refused "WS_SLOT=0 is server ws's slot too" lab
 

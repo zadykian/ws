@@ -1,7 +1,7 @@
 # The tunnel daemons
 
 `ws client macos tunnel run --server NAME` is the daemon of one server ([The Mac](../README.md)).
-Each has its own utun and its own directory, `/etc/ws-tunnel/NAME`, with `tunnel.conf` and
+Each has its own utun and its own directory, `/etc/ws/tunnel/NAME`, with `tunnel.conf` and
 `routes.d`. The Mac's key sits beside the directories. A daemon reads the other servers' directories
 too, so that two of them keep apart. It writes nothing there.
 

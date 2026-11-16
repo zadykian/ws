@@ -14,8 +14,8 @@ import (
 func badSiblingFixture() (*effecttest.Machine, string) {
 	m := effecttest.NewMachine()
 	keyed(m)
-	m.Files["/h/.config/ws/servers/lab/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "99"))
-	m.Dirs["/h/.config/ws/servers/lab"] = 0o755
+	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "99"))
+	m.Dirs["/etc/ws/servers/lab"] = 0o755
 	m.Dirs["/etc/resolver"] = 0o755
 	resolver := "/etc/resolver/lab.test"
 	m.Files[resolver] = []byte("# ws\nnameserver 10.30.0.53\n")

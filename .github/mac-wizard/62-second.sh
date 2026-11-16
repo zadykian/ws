@@ -17,7 +17,7 @@ known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's au
 
 wsbin=$HOME/.local/bin/ws
 tunnel=/usr/local/libexec/ws-tunnel/ws
-conf=$HOME/.config/ws/values.yml
+conf=/etc/ws/values.yml
 lab=$RUNNER_TEMP/lab
 labconf=${conf%/*}/servers/lab/values.yml
 fail=0
@@ -56,7 +56,7 @@ shown=$(printf '%s\n' "$out" | tr -d '\r')
     error "--check for lab exited $status, showed no WS_SLOT: 1, WS_TUNNEL_PORT: 51821 and WS_REMOTE_PORT: 22023, or wrote lab's file"
 
 user="WS_USER: $(id -un)"
-mkdir -p "${labconf%/*}" && echo "$user" >"$labconf"
+sudo mkdir -p "${labconf%/*}" && echo "$user" | sudo tee "$labconf" >/dev/null
 wizard --check
 shown=$(printf '%s\n' "$out" | tr -d '\r')
 if [ "$status" != 0 ] || ! printf '%s\n' "$shown" | grep -qx '+WS_SLOT: 1' ||
@@ -74,7 +74,7 @@ vars="$lab/root"/etc/ws/values.yml
 sudo grep -Eqx 'WS_TUNNEL_ADDRESS: "?10\.99\.1\.1/24"?' "$vars" ||
     error "lab's values.yml names no WS_TUNNEL_ADDRESS 10.99.1.1/24"
 sudo grep -qx 'WS_TUNNEL_PORT: 51821' "$vars" || error "lab's values.yml names no WS_TUNNEL_PORT 51821"
-mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /opt/homebrew/bin/wg /etc/ws-tunnel/private.key)
+mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /opt/homebrew/bin/wg /etc/ws/tunnel/private.key)
 [ "$(sudo cat "$lab/root"/etc/wireguard/mac.pub)" = "$mac" ] ||
     error "lab's stand-in has no mac.pub of the Mac's key"
 grep -qx -- '--only tunnel' "$lab/server.log" || error "lab's stand-in ran no ws server ubuntu apply --only tunnel"
@@ -82,7 +82,7 @@ launchctl print system/com.github.zadykian.ws-tunnel.lab >/dev/null 2>&1 || erro
 handshake lab || error "lab's daemon has no handshake with its stand-in"
 [ "$(wc -l <"$lab/tunnel.log")" -eq 1 ] || error "the wizard logged in to lab through the tunnel other than once"
 handshake ws || error "ws's daemon lost its handshake beside lab's"
-grep -qx '    HostName 10.99.1.1' ~/.ssh/config.d/ws || error "the run wrote no Host lab in config.d/ws for the tunnel"
+grep -qx '    HostName 10.99.1.1' /etc/ws/ssh_config || error "the run wrote no Host lab in /etc/ws/ssh_config for the tunnel"
 grep -q '^lab ' ~/.ssh/known_hosts || error "the run added no line for lab's host key to known_hosts"
 conf_print "$conf" | cmp -s - "$RUNNER_TEMP/ws.before" || error "the run for lab changed values.yml or ws's file"
 

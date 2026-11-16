@@ -208,7 +208,7 @@ lacks, or one with a router outside the cable's `/30`. It must stop too on a `-s
 or changes nothing, and name what differs ([mac-setup-checks.sh](../mac-setup-checks.sh)).
 `ssh -G` must give `ws` the file key that the job's `values.yml` names, by its four lines. It must
 give it the file or the agent that `WS_IDENTITY_PUB_KEY` and `WS_IDENTITY_AGENT` name, with
-`--check` showing `config.d/ws`'s diff alone. An empty `WS_IDENTITY_PUB_KEY` must stop `ws client
+`--check` showing `/etc/ws/ssh_config`'s diff. An empty `WS_IDENTITY_PUB_KEY` must stop `ws client
 macos apply`, though an agent at Secretive's socket holds a P-256 key. The stop must give the line
 that names the key, by ws's copy of its `.pub`, with its comment and fingerprint. `PublicKeys` is
 closed, as macOS 27 denies ws the files of Secretive's container. With that line, `ssh -G` must give

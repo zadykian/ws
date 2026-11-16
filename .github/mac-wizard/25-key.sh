@@ -17,7 +17,7 @@ named=$RUNNER_TEMP/confs/named/values.yml
 tmp=${TMPDIR:-/tmp}
 tmp=${tmp%/}
 fail=0
-applied='^ws client macos wizard: (ws client macos apply: would apply|wrote [^ ]*/\.ssh/config\.d/ws|ran launchctl |made the Mac.s WireGuard key)'
+applied='^ws client macos wizard: (ws client macos apply: would apply|(create|write) /etc/ws/ssh_config|ran launchctl |made the Mac.s WireGuard key)'
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
 error() {

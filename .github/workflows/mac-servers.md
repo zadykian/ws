@@ -3,7 +3,8 @@
 The Mac's jobs work on one server named `ws`, at slot 0, as the Mac's side says
 ([The two files](../../roles/client/macos/values/README.md)). The cases write its files through
 [mac-conf.sh](../mac-conf.sh): `conf_write` splits the lines of stdin between `values.yml` and
-`servers/NAME/values.yml`, and `conf_print` joins them. `conf_server` names the server, `ws` by
+`servers/NAME/values.yml`, and `conf_print` joins them. Both sit in `/etc/ws`, so `conf_write` writes
+them through sudo. `conf_server` names the server, `ws` by
 default, and a case that works on a second one sets it, then sets it back to `ws`.
 
 A server's file that `conf_write` makes gets `WS_SLOT: 0` first, and `WS_TUNNEL_PORT: 51820` after it,

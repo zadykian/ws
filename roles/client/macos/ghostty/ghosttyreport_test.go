@@ -18,7 +18,7 @@ func TestGhosttyReportsAFreshMac(t *testing.T) {
 	if it := got["font-jetbrains-mono-nerd-font"]; it.Found != "installed" {
 		t.Errorf("font = %+v", it)
 	}
-	for _, name := range []string{ghosttyDir, ghosttyDir + "/ws.ghostty", ghosttyDir + "/config.ghostty"} {
+	for _, name := range []string{"/etc/ws", ghosttyDir, "/etc/ws/ghostty", ghosttyDir + "/config.ghostty"} {
 		if it := got[name]; it.Found != "missing" || it.Conflict != "" {
 			t.Errorf("%s = %+v, want it missing", name, it)
 		}
@@ -28,8 +28,8 @@ func TestGhosttyReportsAFreshMac(t *testing.T) {
 func TestGhosttyReportsAFileChangedByHand(t *testing.T) {
 	m := effecttest.NewMachine()
 	s := ghosttyStep(m, &effecttest.Out{})
-	m.Files[ghosttyDir+"/ws.ghostty"] = []byte(ghosttyHead + "font-size = 20\n")
-	it := mactest.ReportOf(t, s)[ghosttyDir+"/ws.ghostty"]
+	m.Files["/etc/ws/ghostty"] = []byte(ghosttyHead + "font-size = 20\n")
+	it := mactest.ReportOf(t, s)["/etc/ws/ghostty"]
 	if !strings.Contains(it.Conflict, "by hand") || !strings.Contains(it.Diff, "-font-size = 20") {
 		t.Errorf("file = %+v, want a conflict and its diff", it)
 	}
@@ -51,14 +51,14 @@ func TestGhosttyReportShowsWsLinesAloneOfAUsersFile(t *testing.T) {
 	m := effecttest.NewMachine()
 	s := ghosttyStep(m, &effecttest.Out{})
 	m.Files["/h/.config/ghostty/config"] = []byte(mactest.UsersText)
-	mactest.CheckUsersFile(t, s, "+config-file = ?ws.ghostty")
+	mactest.CheckUsersFile(t, s, "+config-file = ?/etc/ws/ghostty")
 }
 
 // A report warns of nothing: a plan says the warnings, and a report only reads.
 func TestGhosttyReportWarnsNothing(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	s := ghosttyStep(m, out)
-	m.Files[ghosttyDir+"/ws.ghostty"] = []byte("not ws's\n")
+	m.Files["/etc/ws/ghostty"] = []byte("not ws's\n")
 	if _, err := s.Report(context.Background()); err != nil || len(out.Lines) != 0 {
 		t.Errorf("Report = %v, said %q; want no warning", err, out.Lines)
 	}

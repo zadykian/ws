@@ -19,7 +19,7 @@ func TestRunSetsUpTheUtun(t *testing.T) {
 	}
 	want := []string{
 		"rm -f /var/run/ws-tunnel.state /var/run/ws-tunnel.state.new",
-		"ls -1 /etc/ws-tunnel/routes.d",
+		"ls -1 /etc/ws/tunnel/routes.d",
 		"ifconfig utun4 inet 10.99.0.2/32 10.99.0.2 alias",
 		"ifconfig utun4 up",
 		"route -q -n add -inet 10.99.0.1/32 -interface utun4",
@@ -65,8 +65,8 @@ func TestRunFailsToStart(t *testing.T) {
 		spoil func(*rig)
 		want  string
 	}{
-		{"no conf", func(r *rig) { delete(r.m.Files, dir+"/tunnel.conf") }, "cannot read /etc/ws-tunnel/tunnel.conf"},
-		{"no key", func(r *rig) { delete(r.m.Files, dir+"/private.key") }, "cannot read /etc/ws-tunnel/private.key"},
+		{"no conf", func(r *rig) { delete(r.m.Files, dir+"/tunnel.conf") }, "cannot read /etc/ws/tunnel/tunnel.conf"},
+		{"no key", func(r *rig) { delete(r.m.Files, dir+"/private.key") }, "cannot read /etc/ws/tunnel/private.key"},
 		{"no address", func(r *rig) {
 			r.m.table["ifconfig utun4 up"] = effecttest.Result{Err: errTest}
 		}, "cannot set up utun4"},

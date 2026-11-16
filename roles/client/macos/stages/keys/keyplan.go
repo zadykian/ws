@@ -60,7 +60,7 @@ func (k *MacKey) named(ctx context.Context, c values.Conf) ([]step.Change, error
 			"or start the agent, then run the wizard again", stage.Key, agent, pub)
 	}
 	// The stages after this one offer the key, and ssh reads its .pub for that.
-	return keys.PlanCopy(k.M, k.Out, pub, key.Text, k.Home)
+	return keys.PlanCopy(ctx, k.M, k.Out, pub, key.Text)
 }
 
 // Asked reports whether the stage asks for a key. It asks for ws's where values.yml names none. It

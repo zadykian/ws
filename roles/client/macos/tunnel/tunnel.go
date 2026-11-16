@@ -17,6 +17,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 	"github.com/zadykian/ws/roles/client/macos/values"
+	"github.com/zadykian/ws/roles/internal/etcws"
 )
 
 // tunnelLibexec holds root's copy of ws, which the daemon runs. The user owns ~/.local/bin, so a
@@ -169,7 +170,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 }
 
 // Report says how ws, root's copy, the key and the daemon stand. A program shows no diff, and the
-// key shows by its owner and mode alone: no report reads it. tunnel.pub compares with what Plan
+// key shows by its owner and mode alone: no report reads it. /etc/ws/tunnel.pub compares with what Plan
 // asked root's ws for, as a second sudo would add nothing.
 func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 	self, err := t.self()
@@ -190,11 +191,12 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 		file.Dir{M: t.M, Path: "/usr/local/libexec", Mode: 0o755},
 		file.Dir{M: t.M, Path: tunnelLibexec, Mode: 0o755},
 		file.File{M: t.M, Path: tunnelLibexec + "/ws", Content: self, Mode: 0o755, Secret: true},
+		etcws.Top(t.M),
 		file.Dir{M: t.M, Path: launchd.Dir, Mode: 0o700},
 		file.Fixed(key),
 	}
 	if t.public != "" {
-		parts = append(parts, file.WsDirs(t.M, t.Out, t.Home), t.pub())
+		parts = append(parts, t.pub())
 	}
 	if t.Conf.PublicKey != "" {
 		d := launchd.For(t.Server)

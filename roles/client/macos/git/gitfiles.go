@@ -20,7 +20,8 @@ type part interface {
 }
 
 // list returns the script for a key of Secretive's, root's allowed signers and gitconfig. The
-// signers lie in /etc/ws, which a run writes through sudo.
+// signers lie in /etc/ws, which a run writes through sudo. Where ws keeps a copy of the key's .pub,
+// the copy's parts make /etc/ws, and the list leaves it out, as a plan holds it once.
 func (g *Git) list(key keys.NamedKey, gh string) []part {
 	dir := g.Home + "/.config/ws"
 	in := gitcfg.Inputs{Key: key.File, Gh: gh}
@@ -32,29 +33,28 @@ func (g *Git) list(key keys.NamedKey, gh string) []part {
 		in.Program = dir + "/secretive-ssh-keygen"
 		list = append(list, userFile(in.Program, wrapper(g.Home+"/"+sshcfg.SecretiveData), 0o755))
 	}
-	for _, r := range etcws.Files(g.M, gitcfg.Signers, []byte(gitcfg.AllowedSigners(header, key.Key.String()))) {
+	signers := etcws.Files
+	if keys.Copied(key.File, key.Text) {
+		signers = etcws.Inside
+	}
+	for _, r := range signers(g.M, gitcfg.Signers, []byte(gitcfg.AllowedSigners(header, key.Key.String()))) {
 		list = append(list, resource.Said{Out: g.Out, Part: r})
 	}
 	return append(list, userFile(dir+"/gitconfig", config(in), 0o644))
 }
 
-// dirs is ws's directory, with the directory of ws's copies where git signs with a copy.
-func (g *Git) dirs(pub, text string) file.UserDirs {
-	if keys.Copied(pub, text, g.Home) {
-		return keys.CopyDirs(g.M, g.Out, g.Home)
-	}
-	return file.WsDirs(g.M, g.Out, g.Home)
-}
-
-// files plans ~/.config/ws and the files in it.
+// files plans ~/.config/ws, ws's copy of the key's .pub where git signs with a copy, and the files in
+// ~/.config/ws.
 func (g *Git) files(ctx context.Context, key keys.NamedKey, gh string) ([]step.Change, error) {
-	cs, link, err := g.dirs(key.File, key.Text).Plan()
+	cs, link, err := file.WsDirs(g.M, g.Out, g.Home).Plan()
 	if err != nil {
 		return nil, err
 	}
-	if keys.Copied(key.File, key.Text, g.Home) {
-		cs = append(cs, keys.CopyChange(g.M, g.Out, key.File, key.Text)...)
+	copied, err := keys.PlanCopy(ctx, g.M, g.Out, key.File, key.Text)
+	if err != nil {
+		return nil, err
 	}
+	cs = append(cs, copied...)
 	for _, f := range g.list(key, gh) {
 		if cs, err = resource.Append(ctx, cs, f); err != nil {
 			return nil, err
@@ -79,11 +79,14 @@ func (g *Git) report(ctx context.Context) ([]step.Item, error) {
 	if install != nil {
 		tool.Found = file.StateMissing
 	}
-	parts := []step.Reporter{file.Fixed{tool}, g.dirs(key.File, key.Text)}
+	parts := []step.Reporter{file.Fixed{tool}, file.WsDirs(g.M, g.Out, g.Home)}
 	for _, f := range g.list(key, gh) {
 		parts = append(parts, f)
 	}
-	pub := keys.CopyReport(g.M, g.Out, key.File, key.Text, g.Home)
+	var pub []step.Reporter
+	for _, part := range keys.CopyParts(g.M, g.Out, key.File, key.Text) {
+		pub = append(pub, part)
+	}
 	if len(pub) == 0 {
 		pub = []step.Reporter{file.UserPath{M: g.M, Kind: step.FileItem, Path: key.File}}
 	}

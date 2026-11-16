@@ -15,7 +15,7 @@ const (
 	cldLatest = "curl -fsSIL --retry 3 -o /dev/null -w %{url_effective} " +
 		"https://github.com/zadykian/cld/releases/latest"
 	cldBin  = "/h/.local/bin/cld"
-	cldLine = "would add the lines that start cld's watcher to config.d/ws, where that cld has restore tabs"
+	cldLine = "would add the lines that start cld's watcher to /etc/ws/ssh_config, where that cld has restore tabs"
 	cldNo   = "no"
 )
 

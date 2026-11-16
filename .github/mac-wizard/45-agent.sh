@@ -37,8 +37,8 @@ keys() {
 
 # files prints the Mac's own values.yml and ssh's files.
 files() {
-    conf_print ~/.config/ws/values.yml
-    cat ~/.ssh/config ~/.ssh/config.d/ws ~/.ssh/id_ed25519.pub
+    conf_print /etc/ws/values.yml
+    cat ~/.ssh/config /etc/ws/ssh_config ~/.ssh/id_ed25519.pub
 }
 
 if [ -e "$container" ]; then
@@ -53,10 +53,10 @@ SSH_AUTH_SOCK=$data/socket.ssh ssh-add -q "$RUNNER_TEMP/agent"
 # Secretive names a key's .pub by its MD5 fingerprint, and ws's copy takes that name.
 name=$(ssh-keygen -E md5 -l -f "$RUNNER_TEMP/agent.pub" |
     sed -e 's/^[0-9]* MD5://' -e 's/ .*//' -e 's/://g' -e 's/$/.pub/')
-copy=$HOME/.config/ws/secretive/$name
+copy=/etc/ws/secretive/$name
 pub=$data/PublicKeys/$name
 cp "$RUNNER_TEMP/agent.pub" "$pub"
-conf_print ~/.config/ws/values.yml | conf_write "$conf"
+conf_print /etc/ws/values.yml | conf_write "$conf"
 conf_set "$conf" "WS_IDENTITY_PUB_KEY: ~/${pub#"$HOME"/}"
 conf_print "$conf" >"$RUNNER_TEMP/agent.conf.before"
 files >"$RUNNER_TEMP/agent.files"
@@ -75,11 +75,11 @@ for empty in WS_GIT_SIGNING_PUB_KEY 'WS_GIT_SIGNING_PUB_KEY: ""'; do
 done
 keys
 stop="ws client macos wizard: Mac key: no terminal to ask for git's signing key: add one of these lines to values.yml,"
-stop="$stop WS_GIT_SIGNING_PUB_KEY: ~/.config/ws/secretive/$name for $label; or run the wizard at a terminal"
+stop="$stop WS_GIT_SIGNING_PUB_KEY: /etc/ws/secretive/$name for $label; or run the wizard at a terminal"
 [ "$status" = 1 ] && [ "$(printf '%s\n' "$out" | grep -cxF "$stop")" = 1 ] ||
     error "ws client macos wizard with no terminal exited $status, naming no line for git's key"
-rm -f "$copy"
-conf_print ~/.config/ws/values.yml | grep -v '^WS_IDENTITY_PUB_KEY' | conf_write "$conf"
+sudo rm -f "$copy"
+conf_print /etc/ws/values.yml | grep -v '^WS_IDENTITY_PUB_KEY' | conf_write "$conf"
 chmod 000 "$data/PublicKeys"
 keys --check
 want="ws client macos wizard: Mac key: would ask for ws's login key, in Secretive: $label; make a new one (the default)"
@@ -87,7 +87,7 @@ want="ws client macos wizard: Mac key: would ask for ws's login key, in Secretiv
     error "ws client macos wizard --check with no WS_IDENTITY_PUB_KEY exited $status, with '$mac', not '$want'"
 keys
 stop="ws client macos wizard: Mac key: no terminal to ask for ws's login key: add one of these lines to values.yml,"
-stop="$stop WS_IDENTITY_PUB_KEY: ~/.config/ws/secretive/$name for $label; or run the wizard at a terminal"
+stop="$stop WS_IDENTITY_PUB_KEY: /etc/ws/secretive/$name for $label; or run the wizard at a terminal"
 [ "$status" = 1 ] && [ "$(printf '%s\n' "$out" | grep -cxF "$stop")" = 1 ] ||
     error "ws client macos wizard with no terminal exited $status, naming no line for ws's key"
 chmod 755 "$data/PublicKeys"
@@ -100,7 +100,7 @@ for args in '' --check; do
     keys ${args:+"$args"}
     [ "$status" = 1 ] && [ "$mac" = "$want" ] ||
         error "ws client macos wizard${args:+ $args} exited $status, with '$mac', not '$want'"
-    ! printf '%s\n' "$out" | grep -qE '^ws client macos wizard: (ws client macos apply: would apply|wrote [^ ]*/\.ssh/config\.d/ws|ran launchctl |made the Mac.s WireGuard key)' || error "ws client macos wizard${args:+ $args} ran ws client macos apply"
+    ! printf '%s\n' "$out" | grep -qE '^ws client macos wizard: (ws client macos apply: would apply|(create|write) /etc/ws/ssh_config|ran launchctl |made the Mac.s WireGuard key)' || error "ws client macos wizard${args:+ $args} ran ws client macos apply"
 done
 conf_print "$conf" | cmp -s - "$RUNNER_TEMP/agent.conf.before" || error "ws client macos wizard changed $conf"
 files | cmp -s - "$RUNNER_TEMP/agent.files" || error "ws client macos wizard changed the Mac's own files"

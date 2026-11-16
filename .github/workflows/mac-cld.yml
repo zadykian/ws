@@ -44,7 +44,7 @@ jobs:
       HOMEBREW_NO_AUTO_UPDATE: "1"
       HOMEBREW_NO_INSTALL_CLEANUP: "1"
       HOMEBREW_NO_ENV_HINTS: "1"
-      # The file of the regular style of the font that ws.ghostty names.
+      # The file of the regular style of the font that /etc/ws/ghostty names.
       FONT: JetBrainsMonoNerdFontMono-Regular.ttf
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -88,12 +88,12 @@ jobs:
           done
           # shellcheck source=.github/mac-conf.sh
           . .github/mac-conf.sh
-          mkdir -p ~/.config/ws ~/.ssh
+          mkdir -p ~/.ssh
           ssh-keygen -q -t ed25519 -N '' -C ws -f ~/.ssh/id_ed25519 </dev/null
           printf '%s\n' "WS_PUBLIC_KEY: $(openssl rand -base64 32)" \
               'WS_IDENTITY_PUB_KEY: ~/.ssh/id_ed25519.pub' \
               'WS_GIT_SIGNING_PUB_KEY: ~/.ssh/id_ed25519.pub' |
-              conf_write ~/.config/ws/values.yml
+              conf_write /etc/ws/values.yml
           exit "$fail"
       # --check shows the casks' installs, Zed's among them, cld's, the ssh lines that may
       # follow, and both of Ghostty's files, and writes none of them.
@@ -114,8 +114,8 @@ jobs:
               ': would run brew install --cask zed$' \
               ': would run brew install --cask font-jetbrains-mono-nerd-font$' \
               ': would install cld into ~/.local/bin ' \
-              ": would add the lines that start cld's watcher to config.d/ws, " \
-              '^+window-save-state = always$' '^+config-file = ?ws.ghostty$'; do
+              ": would add the lines that start cld's watcher to /etc/ws/ssh_config, " \
+              '^+window-save-state = always$' '^+config-file = ?/etc/ws/ghostty$'; do
               grep -q -- "$line" "$RUNNER_TEMP/check.out" ||
                   { echo "::error::ws client macos apply --check showed no line '$line'"; fail=1; }
           done
@@ -151,10 +151,11 @@ jobs:
           done
           sh .github/mac-cld-checks.sh lines no || fail=1
           exit "$fail"
-      # Ghostty's `+validate-config` reads its config as the app does, ws.ghostty and its theme
-      # included, and names each line it refuses. It leaves the fonts alone, and a font-family that
-      # names no font falls back to Ghostty's own JetBrains Mono, which looks the same. So
-      # +list-fonts, which looks a family up as the config does, must find ws.ghostty's last one.
+      # Ghostty's `+validate-config` reads its config as the app does, /etc/ws/ghostty and its
+      # theme included, and names each line it refuses. It leaves the fonts alone, and a font-family
+      # that names no font falls back to Ghostty's own JetBrains Mono, which looks the same. So
+      # +list-fonts, which looks a family up as the config does, must find the last one of
+      # /etc/ws/ghostty.
       # The release of cld that install.sh installed has restore tabs, or not yet: ssh's lines must
       # follow it either way.
       - name: ws client macos apply installs Ghostty, Zed, the font and Ghostty's settings
@@ -180,14 +181,14 @@ jobs:
           version=$(~/.local/bin/cld version) ||
               { echo '::error::~/.local/bin/cld version failed'; exit 1; }
           echo "$version"
-          head -n 1 "$support/ws.ghostty" | grep -q "^# Written by ws client macos apply" ||
-              { echo "::error::ws.ghostty has no header"; fail=1; }
+          head -n 1 /etc/ws/ghostty | grep -q "^# Written by ws client macos apply" ||
+              { echo "::error::/etc/ws/ghostty has no header"; fail=1; }
           plain=roles/client/macos/zed/files
           wsghostty=roles/client/macos/ghostty/files/ws.ghostty
-          tail -n +2 "$support/ws.ghostty" | cmp -s - "$wsghostty" ||
-              { echo "::error::ws.ghostty is not $wsghostty under the header"; fail=1; }
-          [ "$(grep -cx 'config-file = ?ws.ghostty' "$support/config.ghostty")" = 1 ] ||
-              { echo '::error::config.ghostty does not read ws.ghostty once'; fail=1; }
+          tail -n +2 /etc/ws/ghostty | cmp -s - "$wsghostty" ||
+              { echo "::error::/etc/ws/ghostty is not $wsghostty under the header"; fail=1; }
+          [ "$(grep -cx 'config-file = ?/etc/ws/ghostty' "$support/config.ghostty")" = 1 ] ||
+              { echo '::error::config.ghostty does not read /etc/ws/ghostty once'; fail=1; }
           zed=~/.config/zed
           head -n 1 "$zed/global_settings.json" | grep -q '^// Written by ws client macos apply' ||
               { echo '::error::global_settings.json has no ws header'; fail=1; }
@@ -281,5 +282,5 @@ jobs:
       - name: The files written
         if: always()
         run: |
-          cat ~/.ssh/config.d/ws || true
+          cat /etc/ws/ssh_config || true
           cat "$HOME/Library/Application Support/com.mitchellh.ghostty/"* || true

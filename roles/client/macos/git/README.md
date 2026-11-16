@@ -24,7 +24,7 @@ The wizard asks for git's key where `values.yml` names none ([The Mac's
 key](../stages/README.md#the-macs-key)). A new one, made in Secretive's app at Notify, signs with no
 prompt while the Mac is unlocked. The login key may sign too, but asks for Touch ID at each use by
 default, so a rebase would ask at each commit. The wizard names ws's copy of its `.pub`,
-`~/.config/ws/secretive/NAME.pub`, in `WS_GIT_SIGNING_PUB_KEY`. `NAME` is that of Secretive's Public
+`/etc/ws/secretive/NAME.pub`, in `WS_GIT_SIGNING_PUB_KEY`. `NAME` is that of Secretive's Public
 Key Path, and the script writes the copy from the agent ([Secretive's keys](#secretives-keys)). git
 then signs through `~/.config/ws/secretive-ssh-keygen`, which gives `ssh-keygen` Secretive's agent,
 so that a terminal, an editor and other apps sign alike. The key never leaves the Secure Enclave,
@@ -55,13 +55,13 @@ authentication keys, so a key that serves both goes on each.
 
 ## Secretive's keys
 
-macOS 27 denies other apps the files of Secretive's container, with no prompt
-([Secretive's issue](https://github.com/maxgoedjen/secretive/issues/839)). Its socket still answers,
-so the script and the wizard ask the agent, with `ssh-add -L`. ssh and git need a key's `.pub` to
-pick it from the agent, so they keep a copy in `~/.config/ws/secretive`, under Secretive's name for
-it. A run makes that directory, with `~/.config` and `~/.config/ws`, and the plan and the report
-show them. No app then needs Full Disk Access. A `.pub` in `Data/PublicKeys` that `values.yml` names
-becomes that copy where the agent lists the key.
+macOS 27 denies other apps the files of Secretive's container, with no prompt ([Secretive's
+issue](https://github.com/maxgoedjen/secretive/issues/839)). Its socket still answers, so the
+script and the wizard ask the agent, with `ssh-add -L`. ssh and git need a key's `.pub` to pick it
+from the agent, so they keep a copy in `/etc/ws/secretive`, under Secretive's name for it. A run
+makes that directory, root's, with `/etc/ws`, and the plan and the report show them. No app then
+needs Full Disk Access. A `.pub` in `Data/PublicKeys` that `values.yml` names becomes that copy
+where the agent lists the key.
 
 The socket stays after Secretive quits, and nothing answers there. The script then stops, and says
 to open Secretive, unless `WS_IDENTITY_PUB_KEY` names a key.

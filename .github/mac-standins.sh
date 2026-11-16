@@ -7,7 +7,7 @@
 #
 # - Ghostty.app and Zed.app, empty directories in ~/Applications, and the regular style of their
 #   font, an empty file in ~/Library/Fonts, which spare their casks. ws client macos apply writes
-#   ws.ghostty, as on a Mac with Ghostty;
+#   /etc/ws/ghostty, as on a Mac with Ghostty;
 # - wireguard-tools from Homebrew where missing, whose wg and wireguard-go make the stand-in ws.
 #   The daemon needs neither, so this is the one download, a small formula, that the jobs make;
 # - ~/.local/bin/cld, whose version names no release, so that ws client macos apply neither installs

@@ -42,8 +42,8 @@ func TestSSHPlanOfAFreshHome(t *testing.T) {
 	if err != nil || len(p.Changes) != 4 {
 		t.Fatalf("Plan = %v, %v; want 4 changes", p.Changes, err)
 	}
-	if !strings.HasPrefix(p.Changes[2].String(), "--- /dev/null\n+++ /h/.ssh/config.d/ws\n") {
-		t.Errorf("third change = %s, want config.d/ws's diff", p.Changes[2])
+	if !strings.HasPrefix(p.Changes[2].String(), "create /etc/ws/ssh_config\n") {
+		t.Errorf("third change = %s, want /etc/ws/ssh_config's diff", p.Changes[2])
 	}
 }
 
@@ -60,7 +60,7 @@ func TestSSHApplyThenPlanIsEmpty(t *testing.T) {
 	if again, err := s.Plan(context.Background()); err != nil || len(again.Changes) != 0 {
 		t.Errorf("second Plan = %v, %v; want none", again.Changes, err)
 	}
-	if got := string(m.Files["/h/.ssh/config"]); got != "Include config.d/ws\n" {
+	if got := string(m.Files["/h/.ssh/config"]); got != "Include /etc/ws/ssh_config\n" {
 		t.Errorf("~/.ssh/config = %q", got)
 	}
 }
@@ -77,8 +77,8 @@ func TestSSHNamesTheTunnelsAddress(t *testing.T) {
 	if err := s.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
-	if got := string(m.Files["/h/.ssh/config.d/ws"]); !strings.Contains(got, "HostName 10.99.0.1\n") {
-		t.Errorf("config.d/ws = %q; want HostName 10.99.0.1", got)
+	if got := string(m.Files["/etc/ws/ssh_config"]); !strings.Contains(got, "HostName 10.99.0.1\n") {
+		t.Errorf("/etc/ws/ssh_config = %q; want HostName 10.99.0.1", got)
 	}
 }
 
@@ -94,24 +94,14 @@ func TestSSHNamesTheServersEndAtItsSlot(t *testing.T) {
 	if err := s.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
-	if got := string(m.Files["/h/.ssh/config.d/ws"]); !strings.Contains(got, "HostName 10.99.1.1\n") {
-		t.Errorf("config.d/ws = %q; want HostName 10.99.1.1", got)
-	}
-}
-
-func TestSSHRefusesAFileThatIsNotWss(t *testing.T) {
-	m := sshMachine()
-	m.Dirs["/h/.ssh"], m.Dirs["/h/.ssh/config.d"] = 0o700, 0o700
-	m.Files["/h/.ssh/config.d/ws"] = []byte("Host mine\n")
-	_, err := sshStep(m, &effecttest.Out{}).Plan(context.Background())
-	if err == nil || !strings.Contains(err.Error(), "is not ws client macos apply's") {
-		t.Errorf("Plan err = %v, want a refusal of a file that is not ws's", err)
+	if got := string(m.Files["/etc/ws/ssh_config"]); !strings.Contains(got, "HostName 10.99.1.1\n") {
+		t.Errorf("/etc/ws/ssh_config = %q; want HostName 10.99.1.1", got)
 	}
 }
 
 func TestSSHRefusesAnIncludeBelowASetting(t *testing.T) {
 	m := sshMachine()
-	m.Files["/h/.ssh/config"] = []byte("Host a\nInclude config.d/ws\n")
+	m.Files["/h/.ssh/config"] = []byte("Host a\nInclude /etc/ws/ssh_config\n")
 	_, err := sshStep(m, &effecttest.Out{}).Plan(context.Background())
 	if err == nil || !strings.Contains(err.Error(), "line 2 of /h/.ssh/config") {
 		t.Errorf("Plan err = %v, want a refusal of the Include below a setting", err)
@@ -120,7 +110,7 @@ func TestSSHRefusesAnIncludeBelowASetting(t *testing.T) {
 
 func TestSSHStopsWhereABlockNamesTheServer(t *testing.T) {
 	m := sshMachine()
-	m.Files["/h/.ssh/config"] = []byte("Include config.d/ws\nHost ws\n  User x\n")
+	m.Files["/h/.ssh/config"] = []byte("Include /etc/ws/ssh_config\nHost ws\n  User x\n")
 	_, err := sshStep(m, &effecttest.Out{}).Plan(context.Background())
 	if err == nil || !strings.HasPrefix(err.Error(), "line 2 of ~/.ssh/config, Host ws, sets its own values for ws:") {
 		t.Errorf("Plan err = %v, want a stop at line 2", err)

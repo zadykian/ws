@@ -9,10 +9,11 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/internal/etcws"
 )
 
-// Dir holds the Mac's key and a directory per server, which only root can write.
-const Dir = "/etc/ws-tunnel"
+// Dir holds the Mac's key and a directory per server, root's and 700.
+const Dir = etcws.Dir + "/tunnel"
 
 // Launchctl has launchd run or signal the daemon, through sudo.
 type Launchctl struct {

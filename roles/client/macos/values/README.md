@@ -7,7 +7,7 @@ outbound table on a cloud VM.
 
 ## The two files
 
-`~/.config/ws/values.yml` holds the Mac's keys, which no server changes:
+`/etc/ws/values.yml`, root's, holds the Mac's keys, which no server changes:
 
 ```yaml
 WS_GIT_SIGNING_PUB_KEY: ~/.ssh/KEY.pub
@@ -15,7 +15,7 @@ WS_IDENTITY_PUB_KEY: ~/.ssh/KEY.pub
 WS_IDENTITY_AGENT: ~/PATH/socket.ssh
 ```
 
-`~/.config/ws/servers/ws/values.yml`, beside it, holds every other key:
+`/etc/ws/servers/ws/values.yml`, beside it, holds every other key:
 
 ```yaml
 WS_SLOT: 0

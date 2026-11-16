@@ -7,9 +7,9 @@ set -eo pipefail
 # shellcheck source=.github/mac-conf.sh
 . .github/mac-conf.sh
 
-conf=$HOME/.config/ws/values.yml
+conf=/etc/ws/values.yml
 second=${conf%/*}/servers/lab
-trap 'rm -rf "$second"' EXIT
+trap 'sudo rm -rf "$second"' EXIT
 
 # Lab's file, as a second server's: conf_server names it, and values.yml keeps its lines.
 conf_server=lab
