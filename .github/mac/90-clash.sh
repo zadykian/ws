@@ -12,7 +12,7 @@ conf=$HOME/.config/ws/mac.conf
 trap 'rm -rf "${conf%/*}/servers/lab" "${conf%/*}/servers/box"' EXIT
 
 # ws's own ports, which the slot and port cases clash with.
-for line in WS_REMOTE=localhost WS_REMOTE_PORT=22022 WS_PORT=51820; do
+for line in WS_REMOTE=localhost WS_REMOTE_PORT=22022 WS_TUNNEL_PORT=51820; do
     conf_print "$conf" | grep -qx "$line" || {
         echo "::error::ws's file lacks $line, which the cases below clash with"
         exit 1
@@ -57,7 +57,7 @@ rm -rf "${conf%/*}/servers/box"
 server lab WS_SLOT=0
 refused "WS_SLOT=0 is server ws's slot too" lab
 
-server lab WS_SLOT=1 WS_REMOTE=localhost WS_REMOTE_PORT=22023 WS_PORT=51820
-refused "WS_PORT=51820 is server ws's too, behind WS_REMOTE localhost" lab
-server lab WS_SLOT=1 WS_REMOTE=localhost WS_REMOTE_PORT=22022 WS_PORT=51821
+server lab WS_SLOT=1 WS_REMOTE=localhost WS_REMOTE_PORT=22023 WS_TUNNEL_PORT=51820
+refused "WS_TUNNEL_PORT=51820 is server ws's too, behind WS_REMOTE localhost" lab
+server lab WS_SLOT=1 WS_REMOTE=localhost WS_REMOTE_PORT=22022 WS_TUNNEL_PORT=51821
 refused "WS_REMOTE_PORT=22022 is server ws's too, behind WS_REMOTE localhost" lab

@@ -65,7 +65,7 @@ func TestReadSettingsNoRoutes(t *testing.T) {
 func TestReadSettingsFails(t *testing.T) {
 	tests := []struct{ name, conf, want string }{
 		{"missing", "", "cannot read /etc/ws-tunnel/tunnel.conf: run ws client macos apply"},
-		{"bad line", "WS_PORT=0\n", "tunnel.conf: cannot take 'WS_PORT=0'"},
+		{"bad line", "WS_TUNNEL_PORT=0\n", "tunnel.conf: cannot take 'WS_TUNNEL_PORT=0'"},
 		{"no key", "WS_REMOTE=a.b\n", "no WS_PUBLIC_KEY"},
 	}
 	for _, tt := range tests {
@@ -109,7 +109,7 @@ func TestReadSettingsOthers(t *testing.T) {
 		p.Conf:                   conf,
 		dir + "/lab/tunnel.conf": "WS_PUBLIC_KEY=AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=\nWS_REMOTE=lab.example.org\n",
 		dir + "/lab/routes.d/a":  "10.50.0.0/16\n",
-		dir + "/bad/tunnel.conf": "WS_PORT=0\n",
+		dir + "/bad/tunnel.conf": "WS_TUNNEL_PORT=0\n",
 		dir + "/bad/routes.d/a":  "not a network\n10.60.0.0/16\n",
 		dir + "/gone/routes.d/a": "10.70.0.0/16\n",
 		dir + "/private.key":     "key",

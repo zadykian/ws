@@ -44,7 +44,7 @@ func TestKeys(t *testing.T) {
 		{"WS_LAN_ADDRESS", "10.88.0.2", true},
 		{"WS_REMOTE", "vm.example.com", true},
 		{"WS_REMOTE_PORT", "22", true},
-		{"WS_PORT", "51820", true},
+		{"WS_TUNNEL_PORT", "51820", true},
 		{"WS_TUNNEL_NETWORKS", "10.20.0.0/16 10.30.0.0/16", true},
 		{"WS_TUNNEL_NETWORKS", "10.99.0.0/24", false},
 		{"WS_TUNNEL_NETWORKS", "10.99.15.0/24", false},

@@ -28,7 +28,7 @@ type signers struct {
 // Plan reads the public key. A dry run makes no key, so where there is none yet it plans nothing,
 // and the key's creation shows the change.
 func (s signers) Plan(ctx context.Context) ([]resource.Change, error) {
-	pub, err := s.A.ReadHome(s.M, plan.Below(s.A, s.Key)+".pub")
+	pub, err := s.A.ReadHome(s.M, plan.Below(s.A, s.Key))
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, nil
 	}
@@ -37,7 +37,7 @@ func (s signers) Plan(ctx context.Context) ([]resource.Change, error) {
 	}
 	key, err := sshcfg.ParsePub(string(pub))
 	if err != nil {
-		return nil, fmt.Errorf("%s.pub %w", s.Key, err)
+		return nil, fmt.Errorf("%s %w", s.Key, err)
 	}
 	var changes []resource.Change
 	for _, r := range etcws.Files(s.M, gitcfg.Signers, []byte(gitcfg.AllowedSigners(signersHeader, key.String()))) {

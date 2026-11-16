@@ -204,9 +204,9 @@ files user a,b
 ! sudo grep -q 'a,b' "$vars" && [ "$status" = 1 ] || error "its user with no user's name exited $status"
 files values
 [ "$status" = 0 ] && [ "$out" = "$(sudo cat "$vars")" ] || error "its values printed '$out', and exited $status"
-files values "$(printf 'WS_GIT_SIGNING_KEY=a b' | base64)" "$(printf 'WS_HOME=' | base64)"
+files values "$(printf 'WS_GIT_SIGNING_PUB_KEY=a b' | base64)" "$(printf 'WS_HOME=' | base64)"
 [ "$status" = 0 ] && [ "$(sudo cat "$ws/values.log")" = "$(printf '%s\n' \
-    '[--][WS_GIT_SIGNING_KEY][a b]' '[--][WS_HOME][]')" ] || error "its values PAIR... exited $status"
+    '[--][WS_GIT_SIGNING_PUB_KEY][a b]' '[--][WS_HOME][]')" ] || error "its values PAIR... exited $status"
 files values '%%'
 [ "$status" = 1 ] || error "its values with no base64 exited $status"
 sudo rm -r "${vars%/*}" "$ws/values.log"

@@ -16,7 +16,7 @@ var (
 	CableServer = netip.MustParseAddr("10.77.0.1")
 )
 
-// DefaultPort is WireGuard's, for a tunnel.conf with no WS_PORT.
+// DefaultPort is WireGuard's, for a tunnel.conf with no WS_TUNNEL_PORT.
 const DefaultPort = 51820
 
 // Conf is tunnel.conf: the KEY=value lines that setup copies from the server's file.
@@ -76,7 +76,7 @@ func (c *Conf) set(name, value string) bool {
 		s, ok := slot.Parse(value)
 		c.Slot = s
 		return ok
-	case "WS_PORT":
+	case "WS_TUNNEL_PORT":
 		n, err := strconv.ParseUint(value, 10, 16)
 		c.Port = uint16(n)
 		return check.Port(value) && err == nil

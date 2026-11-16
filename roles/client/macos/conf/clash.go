@@ -85,7 +85,7 @@ func portClashes(c Conf, o Sibling) []Error {
 	}
 	var errs []Error
 	for _, p := range []struct{ key, own, theirs string }{
-		{"WS_PORT", c.TunnelPort(), o.Conf.TunnelPort()},
+		{"WS_TUNNEL_PORT", c.TunnelPort(), o.Conf.TunnelPort()},
 		{"WS_REMOTE_PORT", c.ForwardPort(), o.Conf.ForwardPort()},
 	} {
 		if p.own == p.theirs {

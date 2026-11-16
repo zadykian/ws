@@ -35,7 +35,7 @@ conf_split() {
 # conf_write CONF puts each KEY=value line of stdin in the file of its key, CONF or the server's
 # file, in place of what they held. The server's file goes, with its directory, where it gets no
 # line. A server's file that it makes and that holds no WS_SLOT gets WS_SLOT=0 first, as the wizard
-# gives it. WS_PORT=51820 follows, where the lines hold no WS_PORT. It reads stdin first, so that
+# gives it. WS_TUNNEL_PORT=51820 follows, where the lines hold no WS_TUNNEL_PORT. It reads stdin first, so that
 # conf_print CONF | ... | conf_write CONF is safe. It writes in place, so that CONF keeps its inode
 # and its mode.
 conf_write() {
@@ -55,7 +55,7 @@ conf_write() {
     if [ -n "$conf_part" ]; then
         mkdir -p "${conf_dest%/*}"
         if ! printf '%s' "$conf_part" | grep -q '^WS_SLOT='; then
-            printf '%s' "$conf_part" | grep -q '^WS_PORT=' || conf_part="WS_PORT=51820
+            printf '%s' "$conf_part" | grep -q '^WS_TUNNEL_PORT=' || conf_part="WS_TUNNEL_PORT=51820
 $conf_part"
             conf_part="WS_SLOT=0
 $conf_part"
