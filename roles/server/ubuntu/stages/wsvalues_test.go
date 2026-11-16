@@ -9,16 +9,16 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
-// newValues returns the stage over host_vars' text.
+// newValues returns the stage over values.yml's text.
 func newValues(vars string) *WsValues {
 	m := effecttest.NewMachine()
-	m.Files["/etc/ws/host_vars.yml"] = []byte(vars)
-	return &WsValues{Vars: "/etc/ws/host_vars.yml", M: m}
+	m.Files["/etc/ws/values.yml"] = []byte(vars)
+	return &WsValues{Vars: "/etc/ws/values.yml", M: m}
 }
 
-func TestWsValuesPlanNamesWhatHostVarsLacks(t *testing.T) {
+func TestWsValuesPlanNamesWhatValuesLacks(t *testing.T) {
 	for vars, want := range map[string]string{
-		"":                             "would ask WS_SECURITY_OUTBOUND and WS_USER, and name each in /etc/ws/host_vars.yml",
+		"":                             "would ask WS_SECURITY_OUTBOUND and WS_USER, and name each in /etc/ws/values.yml",
 		"WS_USER: a\n":                 "would ask WS_SECURITY_OUTBOUND,",
 		"WS_SECURITY_OUTBOUND: true\n": "would ask WS_USER,",
 		"WS_SECURITY_OUTBOUND: true\nWS_USER: a\n": "",
@@ -39,7 +39,7 @@ const (
 	userQuestion   = "WS_USER, the user that ws is set up for"
 )
 
-// valuesApply applies the stage's plan over host_vars' text, with a terminal where answers are
+// valuesApply applies the stage's plan over values.yml's text, with a terminal where answers are
 // given, and returns the keys it wrote, as KEY=VALUE.
 func valuesApply(t *testing.T, vars, user string, answers map[string]string) ([]string, error) {
 	v := newValues(vars)
@@ -55,7 +55,7 @@ func valuesApply(t *testing.T, vars, user string, answers map[string]string) ([]
 }
 
 // Each key is written as answered, the defaults too. The defaults are sudo's user on the LAN, root
-// at a cloud VM's root login, and root where host_vars names the table off already.
+// at a cloud VM's root login, and root where values.yml names the table off already.
 func TestWsValuesWritesEachAnswer(t *testing.T) {
 	for name, tc := range map[string]struct {
 		vars, user, target string

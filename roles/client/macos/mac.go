@@ -11,11 +11,11 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/cable"
 	"github.com/zadykian/ws/roles/client/macos/cld"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/ghostty"
 	"github.com/zadykian/ws/roles/client/macos/git"
 	"github.com/zadykian/ws/roles/client/macos/networks"
 	"github.com/zadykian/ws/roles/client/macos/tunnel"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/client/macos/zed"
 	"github.com/zadykian/ws/roles/client/macos/zsh"
 )
@@ -25,9 +25,9 @@ import (
 type Mac struct {
 	// Server is the name of the server that the steps act for.
 	Server string
-	// MacConf is mac.conf's path, whose servers/ the ssh and tunnel steps list.
+	// MacConf is values.yml's path, whose servers/ the ssh and tunnel steps list.
 	MacConf string
-	Conf    conf.Conf
+	Conf    values.Conf
 	Home    string
 	// XDG is XDG_CONFIG_HOME, which may be empty.
 	XDG string

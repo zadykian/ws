@@ -65,9 +65,9 @@ type runChange struct {
 	text string
 	// cloud is set for a cloud VM, whose run turns the outbound table off.
 	cloud bool
-	// user is the WS_USER that host_vars is to name before the run, where it names another.
+	// user is the WS_USER that values.yml is to name before the run, where it names another.
 	user string
-	// pairs are the host_vars pairs for wg0, which the run writes first.
+	// pairs are the pairs of values.yml for wg0, which the run writes first.
 	pairs []string
 }
 
@@ -103,13 +103,13 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	user := ""
 	if !named(s, c) {
 		user = c.User
-		how += ", after naming WS_USER: " + user + " in ws's host_vars"
+		how += ", after naming WS_USER: " + user + " in ws's values.yml"
 	}
 	if len(pairs) > 0 {
-		how += ", after naming " + naming(pairs) + " in ws's host_vars"
+		how += ", after naming " + naming(pairs) + " in ws's values.yml"
 	}
 	if c.Target == "cloud" {
-		how += ", after naming WS_SECURITY_OUTBOUND: false in ws's host_vars"
+		how += ", after naming WS_SECURITY_OUTBOUND: false in ws's values.yml"
 	}
 	if r.Check {
 		unit, last := s.Active, s.Run.Exit

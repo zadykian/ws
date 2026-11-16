@@ -36,7 +36,7 @@ type Gh struct {
 
 // CLI is the Mac's gh, as the stages that read its login and the Mac's key run it.
 type CLI struct {
-	// Conf is mac.conf's path, and Home the user's.
+	// Conf is values.yml's path, and Home the user's.
 	Conf, Home string
 	// LookPath finds a program on PATH.
 	LookPath func(string) (string, error)

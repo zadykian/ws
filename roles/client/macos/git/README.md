@@ -11,7 +11,7 @@ asks for no password. An old `~/.config/ws/allowed_signers` stays, unused. It na
 command too, as `gh auth setup-git` does, so that pushes to GitHub take gh's login, and installs
 Homebrew's gh where `PATH` has none.
 
-`WS_GIT_SIGNING_PUB_KEY` has no default, and the script makes no key. Where `mac.conf` names none,
+`WS_GIT_SIGNING_PUB_KEY` has no default, and the script makes no key. Where `values.yml` names none,
 or an empty one, the script stops with the line that would name each P-256 key of Secretive's
 agent. A `.pub` that is missing or that the script cannot read stops it too, as does one that holds
 more than a public key's line, as a private key does. So does a certificate, or a key of a type that
@@ -20,7 +20,7 @@ ws's OpenSSH lacks: git takes the seven that ssh takes, as GitHub takes no other
 the word to open Secretive. A file key with no passphrase signs unattended, in
 a rebase too: `ssh-keygen -t ed25519 -N '' -f ~/.ssh/NAME` makes one.
 
-The wizard asks for git's key where `mac.conf` names none ([The Mac's
+The wizard asks for git's key where `values.yml` names none ([The Mac's
 key](../stages/README.md#the-macs-key)). A new one, made in Secretive's app at Notify, signs with no
 prompt while the Mac is unlocked. The login key may sign too, but asks for Touch ID at each use by
 default, so a rebase would ask at each commit. The wizard names ws's copy of its `.pub`,
@@ -60,8 +60,8 @@ macOS 27 denies other apps the files of Secretive's container, with no prompt
 so the script and the wizard ask the agent, with `ssh-add -L`. ssh and git need a key's `.pub` to
 pick it from the agent, so they keep a copy in `~/.config/ws/secretive`, under Secretive's name for
 it. A run makes that directory, with `~/.config` and `~/.config/ws`, and the plan and the report
-show them. No app then needs Full Disk Access. A `.pub` in `Data/PublicKeys` that `mac.conf` names becomes
-that copy where the agent lists the key.
+show them. No app then needs Full Disk Access. A `.pub` in `Data/PublicKeys` that `values.yml` names
+becomes that copy where the agent lists the key.
 
 The socket stays after Secretive quits, and nothing answers there. The script then stops, and says
 to open Secretive, unless `WS_IDENTITY_PUB_KEY` names a key.

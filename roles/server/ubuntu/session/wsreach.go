@@ -16,10 +16,10 @@ import (
 const ClaudeStage = "claude on ws"
 
 // WsReach is ws's way to itself, for ws server ubuntu wizard: the scripts run as the user that runs
-// ws, root there, and host_vars names the target and WS_USER.
+// ws, root there. The target and WS_USER are those that values.yml names.
 type WsReach struct {
 	M effect.Machine
-	// Read reads host_vars' target and WS_USER.
+	// Read reads values.yml's target and WS_USER.
 	Read func() (Want, error)
 	// Here runs claude's login at the terminal.
 	Here effect.Foreground
@@ -34,7 +34,7 @@ func (r WsReach) Shell() remote.Shell {
 // Want reads the target and WS_USER through Read.
 func (r WsReach) Want() (Want, error) { return r.Read() }
 
-// User returns WS_USER, or the default where host_vars names none.
+// User returns WS_USER, or the default where values.yml names none.
 func (r WsReach) User() (string, error) {
 	c, err := r.Read()
 	return cmp.Or(c.User, values.Default().User), err

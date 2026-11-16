@@ -42,15 +42,15 @@ Usage:
   ws client macos [command]
 
 Available Commands:
-  apply       set the Mac up from mac.conf and a server's file
-  conf        print the checked settings of mac.conf and a server's file as shell assignments
-  configure   edit mac.conf, the server's file, the secrets and ws's host_vars on forms
+  apply       set the Mac up from values.yml and a server's file
+  configure   edit the Mac's values.yml, the server's file, the secrets and ws's values.yml on forms
   remove      remove a server from the Mac
   resolver    send DOMAIN's names to the nameservers, or drop it
   secrets     edit ws's secrets file, over ssh
   servers     list the Mac's servers with their target, slot and tunnel
   state       report what the Mac's steps would change
   tunnel      the Mac's tunnel to ws
+  values      print the Mac's values
   wizard      set the Mac up in stages
 
 Flags:
@@ -62,7 +62,7 @@ Global Flags:
 
 Use "ws client macos [command] --help" for more information about a command.
 == ws client macos apply
-It runs the steps it names, from mac.conf and the server's file, in this order: ssh, cable, git, ghostty, zed, cld, zsh, tunnel, networks. With no --only, it runs every step, and ssh again, whose plan is empty unless cld changed ssh's file. It asks sudo where it needs root.
+It runs the steps it names, from values.yml and the server's file, in this order: ssh, cable, git, ghostty, zed, cld, zsh, tunnel, networks. With no --only, it runs every step, and ssh again, whose plan is empty unless cld changed ssh's file. It asks sudo where it needs root.
 
 Usage:
   ws client macos apply [flags]
@@ -75,21 +75,8 @@ Flags:
 Global Flags:
       --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
-== ws client macos conf
-It reads FILE, else $WS_CONF, else ~/.config/ws/mac.conf, and the server's file, servers/NAME/server.conf beside it, of the server that --server names, and prints the checked settings as shell assignments, or the errors of a file it refuses.
-
-Usage:
-  ws client macos conf [FILE] [flags]
-
-Flags:
-  -h, --help    help for conf
-      --lines   check each line alone, as a wizard checks an answer before the file holds its key
-
-Global Flags:
-      --plain           print lines, with no full-screen display
-      --server string   the server to act on, which may be left out where there is one
 == ws client macos configure
-It shows the keys that ws client macos wizard would ask, by WS_TARGET, with what the files hold: mac.conf's, then those of the server's file, servers/NAME/server.conf. It writes them on Ctrl-S. Ctrl-N goes on to ws's secrets, which show as set or not, never their values, then to ws's host_vars, both read over ssh. It needs a terminal: anywhere else, edit the file by hand.
+It shows the keys that ws client macos wizard would ask, by WS_TARGET, with what the files hold: the Mac's values.yml, then those of the server's file, servers/NAME/values.yml. It writes them on Ctrl-S. Ctrl-N goes on to ws's secrets, which show as set or not, never their values, then to ws's values.yml, both read over ssh. It needs a terminal: anywhere else, edit the file by hand.
 
 Usage:
   ws client macos configure [flags]
@@ -101,7 +88,7 @@ Global Flags:
       --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos remove
-It deletes servers/NAME beside mac.conf and NAME's entry in known_hosts, and leaves the server as it is. It refuses the Mac's last server, as apply needs one, and takes no --server: the argument is the consent.
+It deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it is. It refuses the Mac's last server, as apply needs one, and takes no --server: the argument is the consent.
 
 Usage:
   ws client macos remove NAME [flags]
@@ -267,7 +254,7 @@ Global Flags:
       --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos servers
-It lists each server of servers/ beside mac.conf: its target, its slot, and its tunnel, which is absent, stopped, starting, unreadable, or the tier and endpoint it holds. A server whose file ws refuses shows - and its errors follow the list, with exit code 1. It reads alone, as the user, and takes no --server.
+It lists each server of servers/ beside values.yml: its target, its slot, and its tunnel, which is absent, stopped, starting, unreadable, or the tier and endpoint it holds. A server whose file ws refuses shows - and its errors follow the list, with exit code 1. It reads alone, as the user, and takes no --server.
 
 Usage:
   ws client macos servers [flags]
@@ -279,7 +266,7 @@ Global Flags:
       --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos state
-It reads alone and applies nothing, as ws client macos apply --check does, and needs what it needs: mac.conf, and not root. The Mac's steps report the packages, services and files ws manages there, and a step that fails stands in the report as a check. The exit code stays 0. With several servers, one whose file ws refuses stands in the report with the refusal. A report holds no secret.
+It reads alone and applies nothing, as ws client macos apply --check does, and needs what it needs: values.yml, and not root. The Mac's steps report the packages, services and files ws manages there, and a step that fails stands in the report as a check. The exit code stays 0. With several servers, one whose file ws refuses stands in the report with the refusal. A report holds no secret.
 
 At a terminal it draws the state screen on stderr, where sudo's password comes through a question. --plain prints the report as text, and so does a pipe. The text is on stdout and ws's own lines on stderr. --json prints the version of ws, then each step with its items and changes.
 
@@ -376,6 +363,37 @@ Flags:
 Global Flags:
       --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
+== ws client macos values
+print the Mac's values
+
+Usage:
+  ws client macos values [flags]
+  ws client macos values [command]
+
+Available Commands:
+  print       print the checked settings of values.yml and a server's file as shell assignments
+
+Flags:
+  -h, --help   help for values
+
+Global Flags:
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
+
+Use "ws client macos values [command] --help" for more information about a command.
+== ws client macos values print
+It reads FILE, else $WS_VALUES, else ~/.config/ws/values.yml, and the server's file, servers/NAME/values.yml beside it, of the server that --server names, and prints the checked settings as shell assignments, or the errors of a file it refuses.
+
+Usage:
+  ws client macos values print [FILE] [flags]
+
+Flags:
+  -h, --help    help for print
+      --lines   check each line alone, as a wizard checks an answer before the file holds its key
+
+Global Flags:
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos wizard
 At a terminal the stages open as two lists, by the machine each runs on, and the ones chosen run. The stages run under a lock, and what stays by hand is listed after a run in which a stage acted. Under --check each stage prints what it would do and changes nothing.
 
@@ -416,7 +434,7 @@ Usage:
 
 Available Commands:
   apply       set the server up, each role as Go steps
-  configure   edit ws's secrets and host_vars on forms, on ws
+  configure   edit ws's secrets and values.yml on forms, on ws
   fans        drive the board's fans on the curves of CONFIG until SIGTERM
   secrets     keep ws's secrets file, with its identity as a systemd credential
   state       report what the server holds of what ws manages, and what apply would change
@@ -452,7 +470,7 @@ Flags:
 Global Flags:
       --plain   print lines, with no full-screen display
 == ws server ubuntu configure
-The forms of ws client macos configure that edit ws, read and written here as root, with no ssh. ws's secrets show as set or not, never their values. Ctrl-N goes to host_vars. Ctrl-S writes a form. It needs a terminal: anywhere else, run ws server ubuntu secrets and ws server ubuntu values set.
+The forms of ws client macos configure that edit ws, read and written here as root, with no ssh. ws's secrets show as set or not, never their values. Ctrl-N goes to ws's values. Ctrl-S writes a form. It needs a terminal: anywhere else, run ws server ubuntu secrets and ws server ubuntu values set.
 
 Usage:
   ws server ubuntu configure [flags]
@@ -627,7 +645,7 @@ Usage:
   ws server ubuntu values [command]
 
 Available Commands:
-  set         write one key of /etc/ws/host_vars.yml
+  set         write one key of /etc/ws/values.yml
 
 Flags:
   -h, --help   help for values
@@ -650,7 +668,7 @@ Flags:
 Global Flags:
       --plain   print lines, with no full-screen display
 == ws server ubuntu wizard
-The stages of ws client macos wizard that act on ws, run as root on ws: ws's values, which it asks where host_vars lacks them, then ws server ubuntu apply, in a unit of its own that goes on where the login drops, then claude's login, and ws's signing key on GitHub. Either wizard follows the other's unit, and after the other's run, with nothing changed, runs no apply. At a terminal the stages open as ws's list, and the ones chosen run: e opens ws server ubuntu configure's forms. Under --check each stage prints what it would do and changes nothing.
+The stages of ws client macos wizard that act on ws, run as root on ws: ws's values, which it asks where values.yml lacks them, then ws server ubuntu apply, in a unit of its own that goes on where the login drops, then claude's login, and ws's signing key on GitHub. Either wizard follows the other's unit, and after the other's run, with nothing changed, runs no apply. At a terminal the stages open as ws's list, and the ones chosen run: e opens ws server ubuntu configure's forms. Under --check each stage prints what it would do and changes nothing.
 
 Usage:
   ws server ubuntu wizard [flags]

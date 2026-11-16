@@ -92,7 +92,7 @@ role's other steps are planned and left out. A step that waits on one of them wi
 skipped, and says so, and `--check` shows what the same run would change. A left-out step whose plan
 fails warns, and the run goes on. `--secrets FILE` gives the roles their secrets, and `ws server
 ubuntu secrets` edits ws's file ([The secrets file](roles/server/ubuntu/shell/README.md#the-secrets-file)). The values of
-a machine go in `/etc/ws/host_vars.yml`, which only root reads, and every run reads them. `WS_USER:
+a machine go in `/etc/ws/values.yml`, which only root reads, and every run reads them. `WS_USER:
 NAME` sets up the user NAME instead of `zadykian`, the default, whose account must exist. `WS_USER:
 root` sets up a cloud VM with no other user. `WS_HOME` follows the user as `/home/NAME`; `WS_HOME:
 DIR` sets another home. `WS_GIT_SIGNING_PUB_KEY` lies below it, or the
@@ -146,7 +146,7 @@ ws's own lines on stderr. `--json` prints the version of ws, then each role with
 and changes.
 
 `ws client macos state` does the same for the Mac, as `ws client macos apply --check` reads it: it
-needs `mac.conf` and a server's file, and not root. On the screen, sudo's password comes through a
+needs `values.yml` and a server's file, and not root. On the screen, sudo's password comes through a
 question. `--json` prints the version of ws, then each step ([What the Mac reports](roles/client/macos/README.md#what-the-mac-reports)).
 
 ```sh

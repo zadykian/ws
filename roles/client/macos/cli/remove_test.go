@@ -9,7 +9,7 @@ import (
 
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // rmMachine takes the files of a directory that rm -rf removes, which effecttest's Run only records.
@@ -33,7 +33,7 @@ func (m rmMachine) Run(ctx context.Context, name string, args ...string) ([]byte
 func removeFixture() (enginecli.Env, *effecttest.Machine) {
 	m := effecttest.NewMachine()
 	keyed(m)
-	m.Files["/h/.config/ws/servers/lab/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=1\n")
+	m.Files["/h/.config/ws/servers/lab/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "1"))
 	m.Dirs["/h/.config/ws/servers/lab"] = 0o755
 	m.Files["/h/.ssh/known_hosts"] = []byte("ws ssh-ed25519 AAAA\nlab ssh-ed25519 BBBB\n")
 	m.Dirs["/Applications/Zed.app"] = 0o755
@@ -86,7 +86,7 @@ func TestRemoveKeepsTheServerWhereTheHostCannotBeForgotten(t *testing.T) {
 	if slices.Contains(m.Calls, "run rm -rf /h/.config/ws/servers/lab") {
 		t.Error("remove deleted the server's directory before the host went")
 	}
-	if _, ok := m.Files["/h/.config/ws/servers/lab/server.conf"]; !ok {
+	if _, ok := m.Files["/h/.config/ws/servers/lab/values.yml"]; !ok {
 		t.Error("the server's file is gone")
 	}
 }
@@ -132,7 +132,7 @@ func TestRemoveRunsTheStepsForTheServerThatStays(t *testing.T) {
 
 func TestRemoveRefusesWhereAServerThatStaysHasABadFile(t *testing.T) {
 	p, m := removeFixture()
-	m.Files["/h/.config/ws/servers/abc/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=99\n")
+	m.Files["/h/.config/ws/servers/abc/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "99"))
 	m.Dirs["/h/.config/ws/servers/abc"] = 0o755
 	status, _, stderr := runWs(p, "", "client", "macos", "remove", "lab")
 	if want := ": fix its file, or ws client macos remove abc"; status != 1 || !strings.Contains(stderr, "server abc: ") ||
@@ -148,7 +148,7 @@ func TestRemoveRefusesWhereAServerThatStaysHasABadFile(t *testing.T) {
 // not stop its removal, which is the way out of the clash.
 func TestRemoveTakesAServerThatClashesWithOneThatStays(t *testing.T) {
 	p, m := removeFixture()
-	m.Files["/h/.config/ws/servers/lab/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=0\n")
+	m.Files["/h/.config/ws/servers/lab/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "0"))
 	if _, stdout, stderr := runWs(p, "", "client", "macos", "remove", "lab"); !strings.HasPrefix(stdout, "removed lab\n") {
 		t.Errorf("stdout = %q, stderr = %q; want removed lab", stdout, stderr)
 	}
@@ -156,7 +156,13 @@ func TestRemoveTakesAServerThatClashesWithOneThatStays(t *testing.T) {
 
 func TestRemoveNamesTheCableOfTheGoneServer(t *testing.T) {
 	p, m := removeFixture()
-	m.Files["/h/.config/ws/servers/lab/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=1\nWS_TARGET=lan\nWS_CABLE_PORT=eth1\nWS_CABLE_SERVICE=\"USB 10/100/1000 LAN\"\n")
+	m.Files["/h/.config/ws/servers/lab/values.yml"] = []byte(values.Text(
+		"WS_USER", "ada",
+		"WS_SLOT", "1",
+		"WS_TARGET", "lan",
+		"WS_CABLE_PORT", "eth1",
+		"WS_CABLE_SERVICE", "USB 10/100/1000 LAN",
+	))
 	_, stdout, _ := runWs(p, "", "client", "macos", "remove", "lab")
 	if want := "By hand: the cable's service USB 10/100/1000 LAN keeps 10.77.0.2"; !strings.Contains(stdout, want) {
 		t.Errorf("stdout = %q; want it to hold %q", stdout, want)
@@ -170,13 +176,13 @@ func TestRemoveRefusesTheLastServerAndAWrongName(t *testing.T) {
 	}{
 		"last server":  {"ws", "ws is the Mac's one server: apply needs one, so remove leaves it", true},
 		"unknown name": {"nope", "no server named nope in /h/.config/ws/servers, which holds lab and ws", false},
-		"bad name":     {"Bad_Name", "Bad_Name is not a server's name: " + conf.NameForm, false},
-		"path":         {"../ws", "../ws is not a server's name: " + conf.NameForm, false},
+		"bad name":     {"Bad_Name", "Bad_Name is not a server's name: " + values.NameForm, false},
+		"path":         {"../ws", "../ws is not a server's name: " + values.NameForm, false},
 	} {
 		t.Run(name, func(t *testing.T) {
 			p, m := removeFixture()
 			if tc.last {
-				delete(m.Files, "/h/.config/ws/servers/lab/server.conf")
+				delete(m.Files, "/h/.config/ws/servers/lab/values.yml")
 				delete(m.Dirs, "/h/.config/ws/servers/lab")
 			}
 			status, _, stderr := runWs(p, "", "client", "macos", "remove", tc.arg)

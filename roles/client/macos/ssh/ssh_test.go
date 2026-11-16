@@ -9,12 +9,12 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/ssh"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // sshMachine answers the commands that the ssh step runs, with ssh happy, and has the file key that
-// sshStep's mac.conf names.
+// sshStep's values.yml names.
 func sshMachine() *effecttest.Machine {
 	m := effecttest.NewMachine()
 	m.Files["/h/.ssh/id_ed25519.pub"] = []byte("ssh-ed25519 AAAA me\n")
@@ -29,7 +29,7 @@ func sshMachine() *effecttest.Machine {
 
 func sshConf(m *effecttest.Machine, out *effecttest.Out) ssh.SSH {
 	return ssh.SSH{
-		Server: "ws", Conf: conf.Conf{User: "me", IdentityPubKey: "~/.ssh/id_ed25519.pub"}, Home: "/h", M: m, Out: out,
+		Server: "ws", Conf: values.Conf{User: "me", IdentityPubKey: "~/.ssh/id_ed25519.pub"}, Home: "/h", M: m, Out: out,
 		Now: func() time.Time { return time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC) },
 	}
 }

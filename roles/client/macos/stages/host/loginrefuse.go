@@ -29,5 +29,5 @@ func (r *Login) refuse(ctx context.Context, w remote.Way, sshErr string) error {
 	return fmt.Errorf("%s: %s on %s doesn't log in by the Mac's key, %s, and the wizard adds no key to %[3]s. %[3]s takes "+
 		"its keys from the GitHub account at its install: Ubuntu's installer imports them for its user, and on a "+
 		"cloud VM, cloud-init gives its default user the provider's keys, which must be the account's. Set WS_USER "+
-		"in server.conf to that user, then run the wizard again%[5]s", stage.Login, w.User, r.SSH.Host, pub, sshErr)
+		"in the server's values.yml to that user, then run the wizard again%[5]s", stage.Login, w.User, r.SSH.Host, pub, sshErr)
 }

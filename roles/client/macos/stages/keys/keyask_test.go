@@ -10,6 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -17,9 +18,10 @@ import (
 const (
 	p256Label = "me (SHA256:cJ6AyISHokEeHuTfufIqhhSS0gxHZRUMDHlKvXD4FHw)"
 	gitLabel  = "me (SHA256:CcCKY/wrEaUM+I629sBixyeWSgyCiAj+RsdArzoziXo)"
-	// gitKey names git's key, so that the stage does not ask for it.
-	gitKey = "WS_GIT_SIGNING_PUB_KEY=~/g.pub\n"
 )
+
+// gitKey names git's key, so that the stage does not ask for it.
+var gitKey = values.Text("WS_GIT_SIGNING_PUB_KEY", "~/g.pub")
 
 // chooser answers each choice with answer, the default where empty, and keeps the questions.
 type chooser struct {
@@ -45,9 +47,9 @@ func TestMacKeyQuestionForLogin(t *testing.T) {
 	if want := []string{p256Label, gitLabel, newKey}; len(c.asked) != 1 || !slices.Equal(c.asked[0].Options, want) {
 		t.Errorf("asked %+v, want the options %q", c.asked, want)
 	}
-	want := "WS_IDENTITY_PUB_KEY=" + listed(gitP256)[0].Pub() + "\nWS_IDENTITY_AGENT=~/" + sshcfg.SecretiveData + "/socket.ssh\n"
+	want := values.Text("WS_IDENTITY_PUB_KEY", listed(gitP256)[0].Pub(), "WS_IDENTITY_AGENT", "~/"+sshcfg.SecretiveData+"/socket.ssh")
 	if got := string(m.Files[confPathForTest]); got != want {
-		t.Errorf("mac.conf = %q, want %q", got, want)
+		t.Errorf("values.yml = %q, want %q", got, want)
 	}
 }
 
@@ -63,7 +65,7 @@ func TestMacKeyQuestionString(t *testing.T) {
 // One key may serve both: git's question marks the login key, which the answer names for git too.
 func TestMacKeyQuestionForGit(t *testing.T) {
 	login := listed(p256)[0].Pub()
-	k, m, _ := newMacKey(t, "WS_IDENTITY_PUB_KEY="+login+"\n")
+	k, m, _ := newMacKey(t, values.Text("WS_IDENTITY_PUB_KEY", login))
 	agent(m, p256, gitP256)
 	c := &chooser{answer: p256Label + ", ws's login key"}
 	k.Tty, k.P = true, c
@@ -73,13 +75,13 @@ func TestMacKeyQuestionForGit(t *testing.T) {
 	if want := []string{p256Label + ", ws's login key", gitLabel, newKey}; !slices.Equal(c.asked[0].Options, want) {
 		t.Errorf("asked %+v, want the options %q", c.asked, want)
 	}
-	if got := string(m.Files[confPathForTest]); got != "WS_IDENTITY_PUB_KEY="+login+"\nWS_GIT_SIGNING_PUB_KEY="+login+"\n" {
-		t.Errorf("mac.conf = %q, want git's line added", got)
+	if got := string(m.Files[confPathForTest]); got != values.Text("WS_IDENTITY_PUB_KEY", login, "WS_GIT_SIGNING_PUB_KEY", login) {
+		t.Errorf("values.yml = %q, want git's line added", got)
 	}
 }
 
 func TestMacKeyQuestionMakesANewKey(t *testing.T) {
-	k, m, out := newMacKey(t, "WS_GIT_SIGNING_PUB_KEY=\n")
+	k, m, out := newMacKey(t, values.Text("WS_GIT_SIGNING_PUB_KEY", ""))
 	agent(m, p256)
 	m.Dirs["/h/Applications/Secretive.app"] = 0o755
 	m.Results["open -a Secretive"] = effecttest.Result{}
@@ -88,14 +90,14 @@ func TestMacKeyQuestionMakesANewKey(t *testing.T) {
 	if err := k.ask(context.Background(), gitUse); err != nil {
 		t.Fatalf("ask = %v, saying %q", err, out.Lines)
 	}
-	if got := string(m.Files[confPathForTest]); got != "WS_GIT_SIGNING_PUB_KEY="+listed(gitP256)[0].Pub()+"\n" {
-		t.Errorf("mac.conf = %q, want the new key's line in place of the empty one", got)
+	if got := string(m.Files[confPathForTest]); got != values.Text("WS_GIT_SIGNING_PUB_KEY", listed(gitP256)[0].Pub()) {
+		t.Errorf("values.yml = %q, want the new key's line in place of the empty one", got)
 	}
 }
 
 func TestMacKeyQuestionWithNoTerminal(t *testing.T) {
-	want := "Mac key: no terminal to ask for git's signing key: add one of these lines to mac.conf, " +
-		"WS_GIT_SIGNING_PUB_KEY=" + listed(p256)[0].Pub() + " for " + p256Label + "; or run the wizard at a terminal"
+	want := "Mac key: no terminal to ask for git's signing key: add one of these lines to values.yml, " +
+		values.Line("WS_GIT_SIGNING_PUB_KEY", listed(p256)[0].Pub()) + " for " + p256Label + "; or run the wizard at a terminal"
 	if err := noTerminal(gitUse, listed(p256, mldsa)); err == nil || err.Error() != want {
 		t.Errorf("noTerminal = %v, want %q", err, want)
 	}
@@ -106,13 +108,13 @@ func TestMacKeyQuestionWithNoTerminal(t *testing.T) {
 
 // name writes ws's copy of the key's .pub, and its line in place of an empty one.
 func TestMacKeyName(t *testing.T) {
-	k, m, _ := newMacKey(t, "WS_GIT_SIGNING_PUB_KEY=\n")
+	k, m, _ := newMacKey(t, values.Text("WS_GIT_SIGNING_PUB_KEY", ""))
 	agent(m, gitP256)
 	if err := k.name(context.Background(), gitUse, listed(gitP256)[0]); err != nil {
 		t.Fatal(err)
 	}
-	if got := string(m.Files[confPathForTest]); got != "WS_GIT_SIGNING_PUB_KEY="+listed(gitP256)[0].Pub()+"\n" {
-		t.Errorf("mac.conf = %q", got)
+	if got := string(m.Files[confPathForTest]); got != values.Text("WS_GIT_SIGNING_PUB_KEY", listed(gitP256)[0].Pub()) {
+		t.Errorf("values.yml = %q", got)
 	}
 	if string(m.Files[copyOf(gitP256)]) != gitP256 {
 		t.Errorf("the copy holds %q", m.Files[copyOf(gitP256)])
@@ -121,7 +123,7 @@ func TestMacKeyName(t *testing.T) {
 
 // name makes the copies' directory before it writes the copy, as the plan of the copy says.
 func TestMacKeyNameMakesTheCopiesDirectoryFirst(t *testing.T) {
-	k, m, _ := newMacKey(t, "WS_GIT_SIGNING_PUB_KEY=\n")
+	k, m, _ := newMacKey(t, values.Text("WS_GIT_SIGNING_PUB_KEY", ""))
 	agent(m, gitP256)
 	delete(m.Dirs, "/h/"+sshcfg.KeyCopies)
 	if err := k.name(context.Background(), gitUse, listed(gitP256)[0]); err != nil {

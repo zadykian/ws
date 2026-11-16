@@ -1,12 +1,12 @@
 # A Mac's servers in CI
 
 The Mac's jobs work on one server named `ws`, at slot 0, as the Mac's side says
-([The two files](../../roles/client/macos/conf/README.md)). The cases write its files through
-[mac-conf.sh](../mac-conf.sh): `conf_write` splits the lines of stdin between `mac.conf` and
-`servers/NAME/server.conf`, and `conf_print` joins them. `conf_server` names the server, `ws` by
+([The two files](../../roles/client/macos/values/README.md)). The cases write its files through
+[mac-conf.sh](../mac-conf.sh): `conf_write` splits the lines of stdin between `values.yml` and
+`servers/NAME/values.yml`, and `conf_print` joins them. `conf_server` names the server, `ws` by
 default, and a case that works on a second one sets it, then sets it back to `ws`.
 
-A server's file that `conf_write` makes gets `WS_SLOT=0` first, and `WS_TUNNEL_PORT=51820` after it,
+A server's file that `conf_write` makes gets `WS_SLOT: 0` first, and `WS_TUNNEL_PORT: 51820` after it,
 unless the lines hold them, as the wizard writes them. So a case that compares a file with the
 wizard's lines lists no slot and no port.
 
@@ -24,16 +24,16 @@ Four cases of the `mac` job and two of the wizard's work on a second server:
 - `mac/94-remove.sh` runs `remove lab`: its files, daemon, host and `known_hosts` line must go, and
   ws's stay. `remove box` and `remove ws` must refuse.
 - `mac-wizard/16-server.sh` runs the wizard with a bad name, which must stop it.
-  On a `mac.conf` with no server, a run with no terminal and no name must stop and ask for
-  `--server`. There `--check` with a name must show that server's file headed by `WS_SLOT=0`, and
+  On a `values.yml` with no server, a run with no terminal and no name must stop and ask for
+  `--server`. There `--check` with a name must show that server's file headed by `WS_SLOT: 0`, and
   write none.
 - `mac-wizard/62-second.sh` runs the wizard for lab, the last case. `standin.sh` makes a second
   stand-in server for it at `127.0.0.1:22023`, with files and logs of its own, so that ws's counts
-  of runs hold. Its wg0 listens on the `WS_TUNNEL_PORT` of its host_vars. On lab's file made by
-  hand, which holds `WS_USER` alone, `--check` must show `WS_SLOT=1` and leave the file. The run
-  must give lab slot 1, port 51821, a host_vars of 10.99.1.1/24 and 51821, a daemon with a
-  handshake, and one login through the tunnel. It must leave ws's files as they were. The next run
-  must print nothing.
+  of runs hold. Its wg0 listens on the `WS_TUNNEL_PORT` of its values.yml. On lab's file made by
+  hand, which holds `WS_USER` alone, `--check` must show `WS_SLOT: 1` and leave the file. The run
+  must give lab slot 1, and put 51821 and 10.99.1.1/24 in its values.yml. It must give lab a daemon
+  with a handshake, and one login through the tunnel. It must leave ws's files as they were. The
+  next run must print nothing.
 
 Cases 90, 92 and 94 of the `mac` job run last, as `checks.sh` and the job stop at the first that
 fails.

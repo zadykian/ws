@@ -21,7 +21,7 @@ set -u
 known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
 
 wsbin=$HOME/.local/bin/ws
-conf=$HOME/.config/ws/mac.conf
+conf=$HOME/.config/ws/values.yml
 ws=$RUNNER_TEMP/ws
 peer=$ws/root/etc/wireguard/mac.pub
 wg=/opt/homebrew/bin/wg
@@ -50,7 +50,7 @@ standin_set() {
     sudo sh -c '"$0" set "$(cat "$1/utun")" "$2" "$3" ${4+"$4"}' "$wg" "$ws" "$@"
 }
 
-{ conf_print "$conf" | grep '^WS_PUBLIC_KEY=' && conf_print "$conf" | grep -v '^WS_PUBLIC_KEY='; } >"$RUNNER_TEMP/first"
+{ conf_print "$conf" | grep '^WS_PUBLIC_KEY:' && conf_print "$conf" | grep -v '^WS_PUBLIC_KEY:'; } >"$RUNNER_TEMP/first"
 conf_write "$conf" <"$RUNNER_TEMP/first"
 conf_print "$conf" >"$RUNNER_TEMP/first"
 old=$(cat "$ws/wg0")
@@ -58,13 +58,13 @@ sudo sh -c 'umask 077 && "$0" genkey >"$1/ws.key" && "$0" pubkey <"$1/ws.key" >"
 new=$(cat "$ws/wg0")
 standin_set private-key "$ws/ws.key"
 wizard --check
-printf '%s\n' "$out" | grep -qx -- "-WS_PUBLIC_KEY=$old" &&
-    printf '%s\n' "$out" | grep -qx "+WS_PUBLIC_KEY=$new" && conf_print "$conf" | cmp -s - "$RUNNER_TEMP/first" &&
+printf '%s\n' "$out" | grep -qx -- "-WS_PUBLIC_KEY: $old" &&
+    printf '%s\n' "$out" | grep -qx "+WS_PUBLIC_KEY: $new" && conf_print "$conf" | cmp -s - "$RUNNER_TEMP/first" &&
     [ "$status" = 0 ] ||
-    error "--check exited $status, showed no WS_PUBLIC_KEY of wg0's new key, or changed mac.conf"
+    error "--check exited $status, showed no WS_PUBLIC_KEY of wg0's new key, or changed values.yml"
 n=$(logins)
 wizard
-[ "$(conf_print "$conf")" = "$(sed "s|^WS_PUBLIC_KEY=.*|WS_PUBLIC_KEY=$new|" "$RUNNER_TEMP/first")" ] && [ "$status" = 0 ] &&
+[ "$(conf_print "$conf")" = "$(sed "s|^WS_PUBLIC_KEY:.*|WS_PUBLIC_KEY: $new|" "$RUNNER_TEMP/first")" ] && [ "$status" = 0 ] &&
     printf '%s\n' "$out" | grep -q '^ws client macos wizard: ran launchctl kill SIGHUP ' &&
     [ "$(logins)" -eq $((n + 1)) ] ||
     error "a run with wg0's new key exited $status, or put no WS_PUBLIC_KEY in its line's place"

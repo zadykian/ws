@@ -13,7 +13,7 @@ them ([Outbound](../security/README.md#outbound)).
 ikeward reads two of the profile's files, `NAME.p12` and `NAME.sswan`, as
 [its page on the profile](https://github.com/zadykian/ikeward/blob/v0.3.0/docs/profile.md) says.
 They hold the client's key, so they stay out of this repository, age-encrypted, on the server. The
-role's variables go in the machine's `host_vars.yml` ([Values](../../../../README.md#running-it-again)):
+role's variables go in the machine's `values.yml` ([Values](../../../../README.md#running-it-again)):
 
 ```yaml
 WS_IKEWARD_PROFILE: /root/vpn/vpnclient    # vpnclient.p12 and vpnclient.sswan
@@ -90,8 +90,10 @@ without the comment, stays, unless its peer is listed: the run then takes it as 
 ufw's default rules forward pings from any interface. So with forwarding on, any peer's pings reach
 the VPN, as ikeward's page on
 [NAT](https://github.com/zadykian/ikeward/blob/v0.3.0/docs/nat.md#networks-the-server-forwards)
-says. The Mac sends the VPN's networks and domains into the tunnel with `WS_TUNNEL_NETWORKS` and
-`WS_RESOLVERS` in [server.conf](../../../client/macos/README.md#macconf), or with a private repository's script
+says. A server's values.yml sends the VPN's networks and domains into the tunnel, as
+`WS_TUNNEL_NETWORKS` and `WS_RESOLVERS`
+([the two files](../../../client/macos/values/README.md#the-two-files)). A private repository's script
+may do it instead
 ([Routes and resolvers of another repository](../../../client/macos/README.md#routes-and-resolvers-of-another-repository)).
 
 ## Dry runs

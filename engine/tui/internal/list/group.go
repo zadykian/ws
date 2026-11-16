@@ -63,7 +63,7 @@ func (l PickList) Holds(parent string) bool {
 }
 
 // Joined returns the list with a row for e's step, where a run has it and no scan named it. A new
-// Mac has no mac.conf to name a stage's steps by, and no role of ws has steps before ws is there.
+// Mac has no values.yml to name a stage's steps by, and no role of ws has steps before ws is there.
 // The step goes after its group's last, in place of the group's unread row. A group the list lacks
 // is the stage's own, which has no heading and comes first.
 func (l PickList) Joined(e step.Event) PickList {

@@ -16,7 +16,7 @@ type Zed struct {
 	Settings []byte
 	// Keymap is keymap.json whole, its first line starting with zedKeymapMark.
 	Keymap []byte
-	// Server is the run's server, and MacConf is mac.conf's path, whose servers/ the seed lists.
+	// Server is the run's server, and MacConf is values.yml's path, whose servers/ the seed lists.
 	Server  string
 	MacConf string
 	M       effect.Machine

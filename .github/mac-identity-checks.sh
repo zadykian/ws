@@ -1,7 +1,7 @@
 # shellcheck shell=sh
 # The mac job's checks of the key that ws client macos apply's config.d/ws gives ws.
 # mac-setup-checks.sh sources them before git's, so that they run with its functions and the job's
-# mac.conf. They end with config.d/ws as the job's runs wrote it.
+# values.yml. They end with config.d/ws as the job's runs wrote it.
 #
 # shellcheck disable=SC2154 # tmp, conf and the functions are mac-setup-checks.sh's
 ws=$HOME/.ssh/config.d/ws
@@ -34,14 +34,14 @@ agented() {
     keyed 'identitiesonly yes' "identityagent $2" "identityfile $1"
 }
 
-# job: with the job's mac.conf, a run must give config.d/ws the job's lines again.
+# job: with the job's values.yml, a run must give config.d/ws the job's lines again.
 job() {
     with
     prints "ws client macos apply: wrote $ws"
     cmp -s "$ws" "$tmp/ws" || error "ws client macos apply left another config.d/ws than the job's"
 }
 
-# The job's mac.conf names the file key ~/.ssh/id_ed25519, which ws must take by its four lines, in
+# The job's values.yml names the file key ~/.ssh/id_ed25519, which ws must take by its four lines, in
 # their order.
 keyed 'identitiesonly yes' 'identityfile ~/.ssh/id_ed25519'
 four=$(printf '    %s\n' 'IdentityFile ~/.ssh/id_ed25519' 'IdentitiesOnly yes' 'UseKeychain yes' \
@@ -51,36 +51,36 @@ four=$(printf '    %s\n' 'IdentityFile ~/.ssh/id_ed25519' 'IdentitiesOnly yes' '
 # WS_IDENTITY_PUB_KEY must give ws the file beside the .pub in place of the file key. WS_IDENTITY_AGENT must
 # give it the agent at its socket, by a path with a blank here.
 ssh-keygen -q -t ed25519 -N '' -C ws -f "$tmp/key"
-with "WS_IDENTITY_PUB_KEY=$tmp/key.pub"
+with "WS_IDENTITY_PUB_KEY: $tmp/key.pub"
 changes "s|^    IdentityFile ~/.ssh/id_ed25519\$|    IdentityFile $tmp/key|"
 keyed 'identitiesonly yes' "identityfile $tmp/key"
 socket="$tmp/ws agent.sock"
-with "WS_IDENTITY_PUB_KEY=$tmp/key.pub" "WS_IDENTITY_AGENT=\"$socket\""
+with "WS_IDENTITY_PUB_KEY: $tmp/key.pub" "WS_IDENTITY_AGENT: $socket"
 agented "$tmp/key.pub" "$socket"
 # A .pub that is missing, holds a private key or holds no key ssh-keygen reads must stop ws client
 # macos apply. So must a certificate, and a line that is no key, which ws client macos apply must
 # not print as a key's type.
-with "WS_IDENTITY_PUB_KEY=$tmp/none.pub"
-stops "ws client macos apply: $tmp/none.pub, mac.conf's WS_IDENTITY_PUB_KEY, is missing"
+with "WS_IDENTITY_PUB_KEY: $tmp/none.pub"
+stops "ws client macos apply: $tmp/none.pub, values.yml's WS_IDENTITY_PUB_KEY, is missing"
 cp "$tmp/key" "$tmp/mixed.pub"
-with "WS_IDENTITY_PUB_KEY=$tmp/mixed.pub"
+with "WS_IDENTITY_PUB_KEY: $tmp/mixed.pub"
 stops "ws client macos apply: $tmp/mixed.pub holds no public key alone"
 echo 'ssh-ed25519 AAAA ws' >"$tmp/bad.pub"
-with "WS_IDENTITY_PUB_KEY=$tmp/bad.pub"
+with "WS_IDENTITY_PUB_KEY: $tmp/bad.pub"
 stops "ws client macos apply: ssh-keygen cannot read $tmp/bad.pub"
 # So must one it cannot read, where the user cannot, as on the runner: root reads it.
 cp "$tmp/key.pub" "$tmp/unread.pub" && chmod 000 "$tmp/unread.pub"
 if ! cat "$tmp/unread.pub" >/dev/null 2>&1; then
-    with "WS_IDENTITY_PUB_KEY=$tmp/unread.pub"
+    with "WS_IDENTITY_PUB_KEY: $tmp/unread.pub"
     stops "ws client macos apply: cannot read $tmp/unread.pub"
 fi
 ssh-keygen -q -s "$tmp/key" -I ws "$tmp/key.pub"
-with "WS_IDENTITY_PUB_KEY=$tmp/key-cert.pub"
+with "WS_IDENTITY_PUB_KEY: $tmp/key-cert.pub"
 stops "ws client macos apply: $tmp/key-cert.pub is a certificate"
 rm "$tmp/key-cert.pub"
 for line in 'ws-token AAAA' 'ssh-ws stand-in!'; do
     echo "$line" >"$tmp/token.pub"
-    with "WS_IDENTITY_PUB_KEY=$tmp/token.pub"
+    with "WS_IDENTITY_PUB_KEY: $tmp/token.pub"
     stops "ws client macos apply: $tmp/token.pub holds no public key alone"
 done
 # Without them, config.d/ws must be the job's again.
@@ -126,7 +126,7 @@ if ! SSH_AUTH_SOCK=$data/socket.ssh ssh-add -q "$tmp/p256"; then
 fi
 rm "$tmp/p256"
 # An empty WS_IDENTITY_PUB_KEY must stop ws client macos apply, --check too, though the agent holds
-# one key: ws takes no key that mac.conf leaves out. The stop must give the line that names the key,
+# one key: ws takes no key that values.yml leaves out. The stop must give the line that names the key,
 # by ws's copy of its .pub, with its comment and fingerprint. PublicKeys is closed, as macOS 27
 # denies ws the files of Secretive's container: ws must ask the agent. With the line, ws must take
 # the agent and the key, and write the copy where ws lacks it, as a run shows and --check says.
@@ -134,28 +134,28 @@ chmod 000 "$data/PublicKeys"
 name=$(pubname "$tmp/p256.pub")
 copy=$HOME/.config/ws/secretive/$name
 cop=\~/.config/ws/secretive/$name
-# unnamed KEY USE PUB... prints ws client macos apply's stop where mac.conf names no KEY, the key
+# unnamed KEY USE PUB... prints ws client macos apply's stop where values.yml names no KEY, the key
 # for USE. It gives the line that names the key of each .pub of PUB..., in their order, by the
 # comment ws.
 unnamed() {
-    printf "ws client macos apply: mac.conf names no %s, %s: run ws client macos wizard, or add one of these lines to" \
+    printf "ws client macos apply: values.yml names no %s, %s: run ws client macos wizard, or add one of these lines to" \
         "$1" "$2"
-    printf ' mac.conf, '
+    printf ' values.yml, '
     unnamed_key=$1 unnamed_sep=
     shift 2
     for pub in "$@"; do
-        printf '%s%s=~/.config/ws/secretive/%s for ws (%s)' "$unnamed_sep" "$unnamed_key" \
+        printf '%s%s: ~/.config/ws/secretive/%s for ws (%s)' "$unnamed_sep" "$unnamed_key" \
             "$(pubname "$pub")" "$(ssh-keygen -l -f "$pub" | awk '{ print $2 }')"
         unnamed_sep='; '
     done
 }
-with 'WS_IDENTITY_PUB_KEY='
+with 'WS_IDENTITY_PUB_KEY: ""'
 stops "$(unnamed WS_IDENTITY_PUB_KEY "ws's login key" "$tmp/p256.pub")"
 stops "$(unnamed WS_IDENTITY_PUB_KEY "ws's login key" "$tmp/p256.pub")" --check
 mkdir -p "${copy%/*}"
 cp "$tmp/p256.pub" "$copy"
 sec=\~/${data#"$HOME/"}
-with "WS_IDENTITY_PUB_KEY=$cop"
+with "WS_IDENTITY_PUB_KEY: $cop"
 agented "$cop" "$sec/socket.ssh"
 rm "$copy"
 prints "ws client macos apply: would write $copy, ws's copy of a key of Secretive's" --check
@@ -163,8 +163,8 @@ prints "ws client macos apply: would write $copy, ws's copy of a key of Secretiv
 prints "ws client macos apply: wrote $copy"
 cmp -s "$copy" "$tmp/p256.pub" || error "$copy is not the .pub of the agent's key"
 prints ''
-# A .pub in the container that mac.conf names, as a Mac before macOS 27 wrote, must become ws's copy.
-with "WS_IDENTITY_PUB_KEY=$sec/PublicKeys/$name"
+# A .pub in the container that values.yml names, as a Mac before macOS 27 wrote, must become ws's copy.
+with "WS_IDENTITY_PUB_KEY: $sec/PublicKeys/$name"
 prints ''
 chmod 755 "$data/PublicKeys"
 # The job's file key, named beside the agent, must give config.d/ws the job's lines again (sed -n p
@@ -175,23 +175,23 @@ changes -n p
 # The ed25519 key, which Secretive never makes, must get none.
 ssh-keygen -q -t ecdsa -b 256 -N '' -C ws -f "$tmp/second"
 SSH_AUTH_SOCK=$data/socket.ssh ssh-add -q "$tmp/key" "$tmp/second" || error "the agent took no more keys"
-with 'WS_IDENTITY_PUB_KEY='
+with 'WS_IDENTITY_PUB_KEY: ""'
 stops "$(unnamed WS_IDENTITY_PUB_KEY "ws's login key" "$tmp/p256.pub" "$tmp/second.pub")"
 stops "$(unnamed WS_IDENTITY_PUB_KEY "ws's login key" "$tmp/p256.pub" "$tmp/second.pub")" --check
 cp "$tmp/key.pub" "$data/PublicKeys/other.pub"
 # Whatever the agent holds, WS_IDENTITY_PUB_KEY names ws's key: a .pub of its own, or one of
 # Secretive's, which takes its agent unless WS_IDENTITY_AGENT names another.
-with "WS_IDENTITY_PUB_KEY=$tmp/key.pub"
+with "WS_IDENTITY_PUB_KEY: $tmp/key.pub"
 changes "s|^    IdentityFile ~/.ssh/id_ed25519\$|    IdentityFile $tmp/key|"
-with "WS_IDENTITY_PUB_KEY=$sec/PublicKeys/other.pub"
+with "WS_IDENTITY_PUB_KEY: $sec/PublicKeys/other.pub"
 agented "$sec/PublicKeys/other.pub" "$sec/socket.ssh"
-with "WS_IDENTITY_PUB_KEY=$sec/PublicKeys/other.pub" "WS_IDENTITY_AGENT=\"$socket\""
+with "WS_IDENTITY_PUB_KEY: $sec/PublicKeys/other.pub" "WS_IDENTITY_AGENT: $socket"
 agented "$sec/PublicKeys/other.pub" "$socket"
 # A key of a type that ws's OpenSSH lacks, as Secretive's ML-DSA, must stop ws client macos apply,
 # --check too.
 rm "$data/PublicKeys/other.pub"
 echo 'ssh-mldsa-65 AAAADHNzaC1tbGRzYS02NQ== ws' >"$data/PublicKeys/ws.pub"
-with "WS_IDENTITY_PUB_KEY=$sec/PublicKeys/ws.pub"
+with "WS_IDENTITY_PUB_KEY: $sec/PublicKeys/ws.pub"
 mldsa="ws client macos apply: $data/PublicKeys/ws.pub holds a key of type ssh-mldsa-65, which ws's OpenSSH lacks"
 stops "$mldsa"
 stops "$mldsa" --check

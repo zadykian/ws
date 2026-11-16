@@ -7,7 +7,7 @@
 # - wait PORT prints what link prints, below, once PORT holds 10.77.0.1, or after 10 s.
 # - link lists ws's wired ports but the uplinks, those that a default route names, a line each. A
 #   line holds the port, its carrier, 1 or 0, or - where the port is down, and its IPv4 addresses,
-#   or -. link PORT names that port in ws's /etc/ws/host_vars.yml as
+#   or -. link PORT names that port in ws's /etc/ws/values.yml as
 #   WS_CABLE_PORT, the port of the Mac's cable, which the cable and tunnel
 #   roles read.
 # - user NAME names NAME in that file as WS_USER, for ws server ubuntu apply.
@@ -24,7 +24,7 @@ set -eu
 # for wg0. CI's stand-in for ws roots each, a line NAME=PATH, in a directory of its own.
 net=/sys/class/net
 ws=/usr/local/bin/ws
-vars=/etc/ws/host_vars.yml
+vars=/etc/ws/values.yml
 peer=/etc/wireguard/mac.pub
 
 # say prints a message of the script's on stderr.

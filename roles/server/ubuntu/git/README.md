@@ -31,7 +31,7 @@ comes back the same way.
 
 `git verify-commit` trusts the key for `me@zadykian.dev` through `/etc/ws/allowed_signers`,
 root's and 644, the Mac's path too. A run that changes nothing reads it as the user. Each run
-replaces a change made to it. A `host_vars.yml` that names `shell_git_allowed_signers` is refused.
+replaces a change made to it. A `values.yml` that names `shell_git_allowed_signers` is refused.
 So `git verify-commit` fails here
 on a commit another key signed, an older machine's say, though GitHub verifies it by the account's
 keys.
@@ -71,7 +71,7 @@ To revoke a token, revoke it on the server first, then remove its entry and run 
 
 ## Clones
 
-`WS_GIT_CLONES` lists repositories to clone once, as the machine's `host_vars.yml` sets it,
+`WS_GIT_CLONES` lists repositories to clone once, as the machine's `values.yml` sets it,
 and is empty by default. Each entry takes:
 
 - `repo`: the repository's URL or path, with no token, which [Git credentials](#git-credentials)

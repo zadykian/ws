@@ -57,7 +57,7 @@ The Mac's read is `ws client macos state`'s, and ws's is `ws server ubuntu state
 the wizard's lock. sudo's password carries from the scan. A scan that stopped before it leaves the
 state screen to ask, and the run keeps the answer.
 
-A read that fails shows in the header and ends nothing. A Mac with no `mac.conf` fails so, and so
+A read that fails shows in the header and ends nothing. A Mac with no `values.yml` fails so, and so
 does a ws at another version or with none. A first run's address, which the Host key stage asked,
 goes with the scan's lock. ws's read then fails until a run sets the way up.
 

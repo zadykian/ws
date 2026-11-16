@@ -24,7 +24,7 @@ ws client macos apply
 
 `ws client macos wizard`, in its place, asks first for the values below ([The Mac's
 wizard](stages/README.md)), and `ws client macos configure` changes them later on a form, with ws's
-secrets and host_vars ([The Configure screen](../../../engine/tui/internal/configure/README.md)). `ws client macos
+secrets and values.yml ([The Configure screen](../../../engine/tui/internal/configure/README.md)). `ws client macos
 apply --only STEP` runs one step, and `--check` shows each change and makes none. At a terminal it
 draws [the run screen](../../../engine/tui/README.md#the-run-screen), past [the list of
 steps](../../../engine/tui/README.md#the-list-of-steps) where it gets neither, and `--plain` keeps
@@ -43,15 +43,15 @@ disabled, which no run turns on. No report reads a private key: `private.key` sh
 mode, a signing key by its `.pub`. `~/.ssh/config`, `~/.gitconfig` and Ghostty's config show whether
 they hold ws's line, and none of their text.
 
-## mac.conf
+## The Mac's values.yml
 
-The repository names no server, so the values go in two files of `KEY=value` lines that the script
-reads without running them. `~/.config/ws/mac.conf` holds the Mac's keys, which
+The repository names no server, so the values go in two YAML files of `KEY: value` lines that the script
+reads without running them. `~/.config/ws/values.yml` holds the Mac's keys, which
 `WS_GIT_SIGNING_PUB_KEY`, `WS_IDENTITY_PUB_KEY` and `WS_IDENTITY_AGENT` are.
-`~/.config/ws/servers/ws/server.conf` holds every other key. A key in the other file is refused.
-[The two files](conf/README.md#the-two-files) shows both.
+`~/.config/ws/servers/ws/values.yml` holds every other key. A key in the other file is refused.
+[The two files](values/README.md#the-two-files) shows both.
 `--server NAME`, on every `ws client macos` command, picks the server, which may be left out where
-there is one ([The server's name](conf/README.md#the-servers-name)).
+there is one ([The server's name](values/README.md#the-servers-name)).
 
 `WS_PUBLIC_KEY` is ws's WireGuard public key, which the `tunnel` role prints: [The Mac's
 tunnel](#the-macs-tunnel), below. `WS_LAN` is the home LAN, and `WS_LAN_ADDRESS` ws's address inside
@@ -61,17 +61,16 @@ it forwards to ws's 22. The tunnel takes UDP 51820 every way, which the router f
 `WS_TUNNEL_PORT` sets another, which wg0 listens on. A way without its values is left out. The
 router's side is in [The router](../../server/ubuntu/cable/router.md). `WS_PUBLIC_KEY` goes in
 last, once ws has the Mac's key, in the order of [The Mac's tunnel](#the-macs-tunnel).
-`WS_CABLE_SERVICE` names the network service of the display's adapter, in quotes where it holds a
-blank, and `WS_CABLE_PORT` ws's port of the cable: [The cable](#the-cable). `WS_GIT_SIGNING_PUB_KEY`
-is the `.pub` of the key that signs git's commits on the Mac, by its path from `/` or `~/`: [git on
-the Mac](git/README.md). `WS_IDENTITY_PUB_KEY` is the `.pub` of the key that ssh offers ws, and
-`WS_IDENTITY_AGENT` the socket of its agent, in quotes where it holds a blank: [ssh's
-hosts](#sshs-hosts). A run makes `~/.config/ws` at mode 700, and sets that mode where it differs. It
-makes `/etc/ws` through sudo, for git's allowed signers, at mode 755.
+`WS_CABLE_SERVICE` names the network service of the display's adapter, and `WS_CABLE_PORT` ws's port
+of the cable: [The cable](#the-cable). `WS_GIT_SIGNING_PUB_KEY` is the `.pub` of the key that signs
+git's commits on the Mac, by its path from `/` or `~/`: [git on the Mac](git/README.md).
+`WS_IDENTITY_PUB_KEY` is the `.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the
+socket of its agent: [ssh's hosts](#sshs-hosts). A run makes `~/.config/ws` at mode 700, and sets
+that mode where it differs. It makes `/etc/ws` through sudo, for git's allowed signers, at mode 755.
 
 `WS_USER` is the user ssh logs in as: ws's key too, `zadykian` by default, or `root` for a
 `WS_TARGET` of `cloud`, which may have no other user. The other targets refuse `WS_USER=root`. A key
-with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does: that user for
+with an empty value, as `WS_REMOTE: ""`, takes its default, as a missing line does: that user for
 `WS_USER` and 51820 for `WS_TUNNEL_PORT`. `WS_IDENTITY_PUB_KEY` has none: the script stops without it
 ([ssh's hosts](#sshs-hosts)). Nor has `WS_GIT_SIGNING_PUB_KEY`
 ([git on the Mac](git/README.md)).
@@ -82,7 +81,7 @@ domain comes once and in lower case, with up to 3 addresses split by commas. Onc
 tunnel's daemon, `ws client macos apply` hands both to the code of `ws client macos tunnel routes`
 and `ws client macos resolver`, whose caveats hold ([their
 section](#routes-and-resolvers-of-another-repository)). The networks go in the server's
-`/etc/ws-tunnel/NAME/routes.d/server-conf`, a name no other script may take. Each resolver starts
+`/etc/ws-tunnel/NAME/routes.d/values`, a name no other script may take. Each resolver starts
 with ws's `Written by` line, which names `ws client macos apply`, so a domain whose file is another
 script's, or written by hand, stops the run. To move a domain from such a script, have it remove
 its file first, with `ws client macos resolver DOMAIN` and no address. A key emptied or removed
@@ -99,7 +98,7 @@ server is, at its tunnel's `10.99.N.1` from the first run, whichever network the
 server's `10.99.N.1` is `10.99.0.1` at slot 0. So `ssh NAME` fails until the keys' exchange ends
 ([The Mac's tunnel](#the-macs-tunnel)), where a direct way serves. It logs in as the server's
 `WS_USER` with the key below, and checks the server's host key under its name (`HostKeyAlias`). A
-server whose `server.conf` fails to load stops the run. A session ends after 120 s without word
+server whose `values.yml` fails to load stops the run. A session ends after 120 s without word
 from the server, far longer than a switch of the tunnel takes.
 
 ssh offers ws one key alone (`IdentitiesOnly`): the one whose `.pub` `WS_IDENTITY_PUB_KEY` names, as
@@ -223,12 +222,12 @@ and its `routes.d` ([the daemons](tunnel/README.md)). `ws client macos apply` ke
 so the daemon reads no file the user can write. In System Settings › General › Login Items &
 Extensions, its "Allow in the Background" must stay on.
 
-A server with no directory beside `mac.conf` has its daemon removed at the next `apply`: booted out
+A server with no directory beside `values.yml` has its daemon removed at the next `apply`: booted out
 where loaded, then its plist, `/etc/ws-tunnel/NAME`, state file and log. Nothing goes unless
-`mac.conf`'s servers list the one that `apply` runs for.
+`values.yml`'s servers list the one that `apply` runs for.
 
 The tunnel's ends are `10.99.N.2` on the Mac, on a utun of wireguard-go's, and `10.99.N.1` on ws, N
-being `WS_SLOT`. A moved slot restarts the daemon. The wizard names the pair in ws's host_vars ([The
+being `WS_SLOT`. A moved slot restarts the daemon. The wizard names the pair in ws's values.yml ([The
 tunnel](../../server/ubuntu/tunnel/README.md#the-tunnel)). The daemon points the Mac's end at the
 first of these that answers, each on UDP 51820:
 
@@ -283,7 +282,7 @@ domain's names to nameservers behind it. It calls `ws`, which changes only what 
   networks to `/etc/ws-tunnel/SERVER/routes.d/NAME` and has the daemons read them again. SERVER's
   daemon adds them to the peer's AllowedIPs and routes them into its utun, without closing a
   connection. It leaves out for the time being one that holds the endpoint in use, or one that
-  holds a way's endpoint while none answers. `NAME` is of `a-z`, `0-9` and `-`, `server-conf`
+  holds a way's endpoint while none answers. `NAME` is of `a-z`, `0-9` and `-`, `values`
   aside. A network that overlaps the tunnels' `10.99.0.0/20` or the cable's `10.77.0.0/30`, as
   `0.0.0.0/0` does, is refused. As in `ws client macos tunnel routes --server ws example
   198.51.100.0/24`. - `ws client macos resolver [--check] DOMAIN ADDRESS...`, which writes

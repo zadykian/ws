@@ -13,7 +13,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos"
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // macTarget is ws client macos apply's side of the verbs. only holds the steps that --only names,
@@ -22,7 +22,7 @@ import (
 // They leave the machine, units and out that Steps gets unused.
 func macTarget(p enginecli.Env, only *[]string, server *string) engine.Target {
 	return engine.Target{Wizard: macSide(p, server), Change: macChange, State: macReport(p, server), Refuse: func(engine.Call) string { return wizardRefusal(p) },
-		NoScreen: "it needs a terminal and no --plain: anywhere else, edit mac.conf by hand",
+		NoScreen: "it needs a terminal and no --plain: anywhere else, edit values.yml by hand",
 		Sheets: func(ctx context.Context, c engine.Call) ([]tui.Sheet, func(context.Context), error) {
 			return macForms(c.In, c.Err, p, server)(ctx)
 		}, Prepare: func(_ context.Context, c engine.Call) (engine.Run, error) {
@@ -38,7 +38,7 @@ func macTarget(p enginecli.Env, only *[]string, server *string) engine.Target {
 			if err != nil {
 				return engine.Run{}, err
 			}
-			if err := refuseBadSibling(p.Machine, conf.Path(p.Getenv, p.Pwd), name); err != nil {
+			if err := refuseBadSibling(p.Machine, values.Path(p.Getenv, p.Pwd), name); err != nil {
 				return engine.Run{}, err
 			}
 			run := engine.Run{M: c.Machine}

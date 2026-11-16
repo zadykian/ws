@@ -41,7 +41,7 @@ type Inputs struct {
 // a Host * of the user's sets.
 func Config(in Inputs) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, `%s from ~/.config/ws/mac.conf: its next run replaces changes made here.
+	fmt.Fprintf(&b, `%s from ~/.config/ws/values.yml: its next run replaces changes made here.
 
 # Only Apple's ssh knows UseKeychain. ssh keeps the first IgnoreUnknown it reads, this one, so it
 # carries the patterns of ~/.ssh/config's own too: run ws client macos apply again after a change to

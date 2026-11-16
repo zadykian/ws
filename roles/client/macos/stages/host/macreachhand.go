@@ -5,21 +5,21 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // Hand adds what stays by hand of ws, the router and the Mac to the list. ws's part comes from the
 // remote script's status. ws's gh login is a step of ws server ubuntu apply, by token.github, so
-// the list leaves it out. mac.conf has WS_LAN_ADDRESS with WS_LAN alone, so the lease names an
+// the list leaves it out. values.yml has WS_LAN_ADDRESS with WS_LAN alone, so the lease names an
 // address only with a LAN. Off the LAN, away's lines take the router's place.
 func (r MacReach) Hand(h *guided.Hand, s session.Status) {
-	_, c, err := (conf.File{Path: r.Conf, Stage: stages.RunStage, M: r.SSH.M, Out: r.Out}).Load()
+	_, c, err := (values.File{Path: r.Conf, Stage: stages.RunStage, M: r.SSH.M, Out: r.Out}).Load()
 	if err != nil {
 		return
 	}
 	session.Fans(h, s)
 	if c.Target != "cloud" && s.OutboundOff {
-		h.Add("%s's outbound table: off, as %[1]s's /etc/ws/host_vars.yml names WS_SECURITY_OUTBOUND: false, as for "+
+		h.Add("%s's outbound table: off, as %[1]s's /etc/ws/values.yml names WS_SECURITY_OUTBOUND: false, as for "+
 			"a cloud VM; remove that line, then run the wizard with --update (roles/server/ubuntu/security/README.md, Outbound).", r.SSH.Host)
 	}
 	h.Add("macOS's local network: where it asks whether Ghostty, Zed or another app may find " +
@@ -44,20 +44,20 @@ func (r MacReach) Hand(h *guided.Hand, s session.Status) {
 }
 
 // away adds what stays by hand of a cloud VM or a VM on the Mac, which have no router. Where the
-// run asked ws's address, mac.conf's way must lead to it. A cloud VM's provider must let the tunnel
-// in (roles/client/macos/conf/README.md).
-func away(h *guided.Hand, c conf.Conf, server, first string) {
+// run asked ws's address, the server's values.yml must lead to it. A cloud VM's provider must let the tunnel
+// in (roles/client/macos/values/README.md).
+func away(h *guided.Hand, c values.Conf, server, first string) {
 	target := c.Target
 	way := "WS_LAN_ADDRESS"
 	if target == "cloud" {
 		way = "WS_REMOTE"
 	}
 	if first != "" {
-		h.Add("%s's address: %s in server.conf must lead to %s, as this run reached it at %s "+
-			"(roles/client/macos/conf/README.md).", server, way, server, first)
+		h.Add("%s's address: %s in the server's values.yml must lead to %s, as this run reached it at %s "+
+			"(roles/client/macos/values/README.md).", server, way, server, first)
 	}
 	if target == "cloud" {
-		h.Add("The provider's firewall: UDP %s open to %s, for the tunnel (roles/client/macos/conf/README.md).",
+		h.Add("The provider's firewall: UDP %s open to %s, for the tunnel (roles/client/macos/values/README.md).",
 			c.TunnelPort(), server)
 	}
 }

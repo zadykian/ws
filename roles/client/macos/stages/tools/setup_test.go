@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 func TestSetup(t *testing.T) {
@@ -49,14 +50,14 @@ func TestSetupWaitsOnTheMacKey(t *testing.T) {
 	// Under --check the Mac key stage writes no line, so ws client macos apply's plan would stop for
 	// the key.
 	for conf, want := range map[string]string{
-		"WS_USER=ada\n": "ws client macos apply: after Mac key",
-		"WS_IDENTITY_PUB_KEY=~/k.pub\nWS_GIT_SIGNING_PUB_KEY=\n":        "ws client macos apply: after Mac key",
-		"WS_IDENTITY_PUB_KEY=~/k.pub\nWS_GIT_SIGNING_PUB_KEY=~/k.pub\n": "ws client macos apply: would apply the steps above",
+		values.Text("WS_USER", "ada"): "ws client macos apply: after Mac key",
+		values.Text("WS_IDENTITY_PUB_KEY", "~/k.pub", "WS_GIT_SIGNING_PUB_KEY", ""):        "ws client macos apply: after Mac key",
+		values.Text("WS_IDENTITY_PUB_KEY", "~/k.pub", "WS_GIT_SIGNING_PUB_KEY", "~/k.pub"): "ws client macos apply: would apply the steps above",
 	} {
 		m := effecttest.NewMachine()
 		m.Results["sudo -v"] = effecttest.Result{}
-		m.Files["/h/mac.conf"] = []byte(conf)
-		s := &Setup{Conf: "/h/mac.conf", M: m, LookPath: func(string) (string, error) { return "/brew", nil },
+		m.Files["/h/values.yml"] = []byte(conf)
+		s := &Setup{Conf: "/h/values.yml", M: m, LookPath: func(string) (string, error) { return "/brew", nil },
 			Run: func(context.Context, bool) (bool, error) { return true, nil }}
 		p, err := s.Plan(context.Background())
 		if err != nil || len(p.Changes) != 1 || p.Changes[0].String() != want {

@@ -1,6 +1,6 @@
 #!/bin/sh
 # The wizard's refusals, which leave the runner as they found it: an unknown flag, root, and a
-# run while another holds the lock, which it must leave. So must the removed key WS_HOOK in mac.conf,
+# run while another holds the lock, which it must leave. So must the removed key WS_HOOK in values.yml,
 # an unknown one, and a removed op of the files script, run as root as on ws. -h prints the help.
 
 set -u
@@ -40,9 +40,9 @@ mkdir "$lock"
 refused "another run holds $lock" "$wsbin" client macos wizard --check
 [ -d "$lock" ] || error 'a refused run removed the lock it found'
 rmdir "$lock"
-echo WS_HOOK=example/Ws | conf_write "$RUNNER_TEMP/confs/refuse/mac.conf"
+echo 'WS_HOOK: example/Ws' | conf_write "$RUNNER_TEMP/confs/refuse/values.yml"
 refused 'line 3: unknown key WS_HOOK' \
-    env WS_CONF="$RUNNER_TEMP/confs/refuse/mac.conf" "$wsbin" client macos wizard --server ws --check
+    env WS_VALUES="$RUNNER_TEMP/confs/refuse/values.yml" "$wsbin" client macos wizard --server ws --check
 rm -r "$RUNNER_TEMP/confs/refuse"
 refused "unknown op 'stage'" \
     sudo sh "$HOME/repository/ws/roles/server/ubuntu/session/wizard-remote-files.sh" stage

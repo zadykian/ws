@@ -1,5 +1,5 @@
 #!/bin/bash
-# mac.conf's keys.
+# values.yml's keys.
 
 set -eo pipefail
 

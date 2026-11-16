@@ -11,11 +11,12 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 func TestSetupCommand(t *testing.T) {
 	m := effecttest.NewMachine()
-	writeConfs(m, "", "WS_USER=ada\n")
+	writeConfs(m, "", values.Text("WS_USER", "ada"))
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
 	status, _, stderr := runWs(p, "", "client", "macos", "apply", "--only", "ssh", "--bogus")
@@ -61,7 +62,7 @@ func TestMacChangeSaysAnEmptyDiffAsOneEmptyLine(t *testing.T) {
 
 func TestSetupWithNoStepRunsThemAll(t *testing.T) {
 	m := effecttest.NewMachine()
-	writeConfs(m, "", "WS_USER=ada\n")
+	writeConfs(m, "", values.Text("WS_USER", "ada"))
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
 	status, _, stderr := runWs(p, "", "client", "macos", "apply")
@@ -146,7 +147,7 @@ func TestMacStateWritesReports(t *testing.T) {
 
 func TestMacStateReadsMacConf(t *testing.T) {
 	m := effecttest.NewMachine()
-	writeConfs(m, "", "WS_USER=ada\n")
+	writeConfs(m, "", values.Text("WS_USER", "ada"))
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
 	status, stdout, _ := runWs(p, "", "client", "macos", "state", "--json")
@@ -159,10 +160,10 @@ func TestMacStateReadsMacConf(t *testing.T) {
 // altScreen is what a screen writes first: the switch to the alternate screen.
 const altScreen = "\x1b[?1049h"
 
-// macStateAtTerminal returns a process that stands at a terminal, with a Mac that has a mac.conf.
+// macStateAtTerminal returns a process that stands at a terminal, with a Mac that has a values.yml.
 func macStateAtTerminal() enginecli.Env {
 	m := effecttest.NewMachine()
-	writeConfs(m, "", "WS_USER=ada\n")
+	writeConfs(m, "", values.Text("WS_USER", "ada"))
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h", "TERM": "xterm-256color"})
 	p.Machine = m
 	p.TTY, p.ErrTTY, p.OutTTY = true, true, true
@@ -172,7 +173,7 @@ func macStateAtTerminal() enginecli.Env {
 func TestMacReadSaysThatMacConfIsMissing(t *testing.T) {
 	m := effecttest.NewMachine()
 	writeConfs(m, "", "")
-	delete(m.Files, "/h/.config/ws/mac.conf")
+	delete(m.Files, "/h/.config/ws/values.yml")
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
 	_, err := macRead(p, new(string))(t.Context(), nil)

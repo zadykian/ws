@@ -8,8 +8,8 @@ import (
 	"github.com/zadykian/ws/engine/core/check"
 	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // Apply gives ws's wg0 the Mac's key as its peer, where mac.pub holds another or wg0 lacks it. The
@@ -25,7 +25,7 @@ func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 	case err != nil:
 		return errors.New(stage.Tunnel + ": sudo -v failed; the Mac's key is root's, as an admin of the Mac")
 	}
-	c, err := conf.Read(t.M, t.Conf)
+	c, err := values.Read(t.M, t.Conf)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 		return errors.New(stage.Tunnel + ": " + t.SSH.Host + " has no wg0 key: mend what it printed, then run the wizard again")
 	}
 	if wg0 != c.PublicKey {
-		file := conf.File{Path: t.Conf, Scope: conf.ServerFile, Stage: stage.Tunnel, M: t.M, Out: t.Out}
+		file := values.File{Path: t.Conf, Scope: values.ServerFile, Stage: stage.Tunnel, M: t.M, Out: t.Out}
 		if err := file.Set(ctx, "WS_PUBLIC_KEY", wg0); err != nil {
 			return err
 		}

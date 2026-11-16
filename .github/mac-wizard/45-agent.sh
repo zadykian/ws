@@ -1,14 +1,14 @@
 #!/bin/sh
 # The Mac key stage with a key of an agent's, on the Mac that 40-again.sh leaves. The stand-in for
 # Secretive's agent is an ssh-agent at its socket that holds a P-256 key, whose .pub is in
-# PublicKeys. Take a mac.conf of its own that names that .pub in WS_IDENTITY_PUB_KEY. Then --check
-# must print nothing of the stage while the agent lists the key and mac.conf names git's key. With no
+# PublicKeys. Take a values.yml of its own that names that .pub in WS_IDENTITY_PUB_KEY. Then --check
+# must print nothing of the stage while the agent lists the key and values.yml names git's key. With no
 # WS_GIT_SIGNING_PUB_KEY, or an empty one, it must say it would ask for git's key, offering that
 # key as ws's login key. With no terminal, a run must stop there, naming that key's line for git.
 # With no WS_IDENTITY_PUB_KEY and PublicKeys closed, as macOS 27 denies ws Secretive's files,
 # --check must offer the agent's key for ws's login. A run with no terminal must name its line.
 # Once the agent lacks ws's key, a run and --check must stop at the stage, naming the socket, before ws client macos apply's. None may change
-# that mac.conf, nor the Mac's own or ssh's files. The stand-in goes after.
+# that values.yml, nor the Mac's own or ssh's files. The stand-in goes after.
 
 set -u
 # shellcheck source=.github/mac-conf.sh
@@ -17,7 +17,7 @@ set -u
 wsbin=$HOME/.local/bin/ws
 container=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent
 data=$container/Data
-conf=$RUNNER_TEMP/confs/agent/mac.conf
+conf=$RUNNER_TEMP/confs/agent/values.yml
 fail=0
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
@@ -26,18 +26,18 @@ error() {
     fail=1
 }
 
-# keys ARG...: ws client macos wizard ARGs, with that mac.conf and no terminal. It prints the
+# keys ARG...: ws client macos wizard ARGs, with that values.yml and no terminal. It prints the
 # output, and sets status, and mac to the Mac key stage's lines.
 keys() {
-    out=$(WS_CONF=$conf "$wsbin" client macos wizard "$@" </dev/null 2>&1)
+    out=$(WS_VALUES=$conf "$wsbin" client macos wizard "$@" </dev/null 2>&1)
     status=$?
     printf '%s\n' "$out"
     mac=$(printf '%s\n' "$out" | grep '^ws client macos wizard: Mac key: ')
 }
 
-# files prints the Mac's own mac.conf and ssh's files.
+# files prints the Mac's own values.yml and ssh's files.
 files() {
-    conf_print ~/.config/ws/mac.conf
+    conf_print ~/.config/ws/values.yml
     cat ~/.ssh/config ~/.ssh/config.d/ws ~/.ssh/id_ed25519.pub
 }
 
@@ -56,37 +56,38 @@ name=$(ssh-keygen -E md5 -l -f "$RUNNER_TEMP/agent.pub" |
 copy=$HOME/.config/ws/secretive/$name
 pub=$data/PublicKeys/$name
 cp "$RUNNER_TEMP/agent.pub" "$pub"
-{ conf_print ~/.config/ws/mac.conf && echo "WS_IDENTITY_PUB_KEY=~/${pub#"$HOME"/}"; } | conf_write "$conf"
+conf_print ~/.config/ws/values.yml | conf_write "$conf"
+conf_set "$conf" "WS_IDENTITY_PUB_KEY: ~/${pub#"$HOME"/}"
 conf_print "$conf" >"$RUNNER_TEMP/agent.conf.before"
 files >"$RUNNER_TEMP/agent.files"
 
-conf_set "$conf" 'WS_GIT_SIGNING_PUB_KEY=~/.ssh/id_ed25519.pub'
+conf_set "$conf" 'WS_GIT_SIGNING_PUB_KEY: ~/.ssh/id_ed25519.pub'
 keys --check
 [ "$status" = 0 ] && [ -z "$mac" ] || error "ws client macos wizard --check exited $status, with '$mac'"
 label="ws ($(ssh-keygen -l -f "$RUNNER_TEMP/agent.pub" | cut -d ' ' -f 2))"
 want="ws client macos wizard: Mac key: would ask for git's signing key, in Secretive: $label, ws's login key;"
 want="$want make a new one (the default)"
-for empty in WS_GIT_SIGNING_PUB_KEY WS_GIT_SIGNING_PUB_KEY=; do
+for empty in WS_GIT_SIGNING_PUB_KEY 'WS_GIT_SIGNING_PUB_KEY: ""'; do
     conf_set "$conf" "$empty"
     keys --check
     [ "$status" = 0 ] && [ "$mac" = "$want" ] ||
         error "ws client macos wizard --check with $empty exited $status, with '$mac', not '$want'"
 done
 keys
-stop="ws client macos wizard: Mac key: no terminal to ask for git's signing key: add one of these lines to mac.conf,"
-stop="$stop WS_GIT_SIGNING_PUB_KEY=~/.config/ws/secretive/$name for $label; or run the wizard at a terminal"
+stop="ws client macos wizard: Mac key: no terminal to ask for git's signing key: add one of these lines to values.yml,"
+stop="$stop WS_GIT_SIGNING_PUB_KEY: ~/.config/ws/secretive/$name for $label; or run the wizard at a terminal"
 [ "$status" = 1 ] && [ "$(printf '%s\n' "$out" | grep -cxF "$stop")" = 1 ] ||
     error "ws client macos wizard with no terminal exited $status, naming no line for git's key"
 rm -f "$copy"
-conf_print ~/.config/ws/mac.conf | grep -v '^WS_IDENTITY_PUB_KEY' | conf_write "$conf"
+conf_print ~/.config/ws/values.yml | grep -v '^WS_IDENTITY_PUB_KEY' | conf_write "$conf"
 chmod 000 "$data/PublicKeys"
 keys --check
 want="ws client macos wizard: Mac key: would ask for ws's login key, in Secretive: $label; make a new one (the default)"
 [ "$status" = 0 ] && [ "$mac" = "$want" ] ||
     error "ws client macos wizard --check with no WS_IDENTITY_PUB_KEY exited $status, with '$mac', not '$want'"
 keys
-stop="ws client macos wizard: Mac key: no terminal to ask for ws's login key: add one of these lines to mac.conf,"
-stop="$stop WS_IDENTITY_PUB_KEY=~/.config/ws/secretive/$name for $label; or run the wizard at a terminal"
+stop="ws client macos wizard: Mac key: no terminal to ask for ws's login key: add one of these lines to values.yml,"
+stop="$stop WS_IDENTITY_PUB_KEY: ~/.config/ws/secretive/$name for $label; or run the wizard at a terminal"
 [ "$status" = 1 ] && [ "$(printf '%s\n' "$out" | grep -cxF "$stop")" = 1 ] ||
     error "ws client macos wizard with no terminal exited $status, naming no line for ws's key"
 chmod 755 "$data/PublicKeys"

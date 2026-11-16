@@ -3,7 +3,7 @@ package git
 import "github.com/zadykian/ws/roles/internal/gitcfg"
 
 // header is the first line of each file the step writes.
-const header = "# Written by ws client macos apply from ~/.config/ws/mac.conf: its next run replaces changes " +
+const header = "# Written by ws client macos apply from ~/.config/ws/values.yml: its next run replaces changes " +
 	"made here."
 
 // config returns ~/.config/ws/gitconfig: its header, and the settings that ws shares with the Mac.

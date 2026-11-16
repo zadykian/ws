@@ -15,10 +15,9 @@ func TestText(t *testing.T) {
 		{"port of 15", CablePort(strings.Repeat("a", 15)), true},
 		{"port of 16", CablePort(strings.Repeat("a", 16)), false},
 		{"port hyphen first", CablePort("-e"), false},
-		{"service", CableService("USB 10/100/1000 LAN", true), true},
-		{"service blank bare", CableService("USB LAN", false), false},
-		{"service bare", CableService("Ethernet", false), true},
-		{"service disabled", CableService("*Ethernet", true), false},
+		{"service", CableService("USB 10/100/1000 LAN"), true},
+		{"service bare", CableService("Ethernet"), true},
+		{"service disabled", CableService("*Ethernet"), false},
 	}
 	for _, tt := range tests {
 		if tt.got != tt.want {

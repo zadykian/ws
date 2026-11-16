@@ -34,7 +34,7 @@ func TestServerWizardAsksTheValuesAndSkipsUnbooted(t *testing.T) {
 		t.Fatalf("status %d, stderr %q", status, stderr)
 	}
 	if got := string(m.Files[serverVars]); got != "---\nWS_SECURITY_OUTBOUND: false\nWS_USER: root\n" {
-		t.Errorf("host_vars = %q", got)
+		t.Errorf("values.yml = %q", got)
 	}
 	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "run caffeinate") }) {
 		t.Errorf("caffeinate ran on ws: calls %q", m.Calls)
@@ -51,7 +51,7 @@ func TestServerWizardCheckAsksNothing(t *testing.T) {
 	p.Euid = 0
 	status, _, stderr := runWs(p, "", "server", "ubuntu", "wizard", "--check", "--plain")
 	if status != 0 || !strings.Contains(stderr, "would ask WS_SECURITY_OUTBOUND and WS_USER") || len(m.Files[serverVars]) != 0 {
-		t.Errorf("status %d, stderr %q, host_vars %q", status, stderr, m.Files[serverVars])
+		t.Errorf("status %d, stderr %q, values.yml %q", status, stderr, m.Files[serverVars])
 	}
 }
 

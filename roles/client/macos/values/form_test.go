@@ -1,0 +1,210 @@
+package values
+
+import (
+	"context"
+	"errors"
+	"slices"
+	"strings"
+	"testing"
+
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/form"
+)
+
+const serverOfTest = "/h/servers/ws/values.yml"
+
+// formOf returns the form of the text of values.yml and of a server's file.
+func formOf(t *testing.T, mac, server string) (Form, *effecttest.Machine) {
+	t.Helper()
+	m := effecttest.NewMachine()
+	m.Files["/h/values.yml"], m.Files[serverOfTest] = []byte(mac), []byte(server)
+	m.Results["mkdir -p /h"] = effecttest.Result{}
+	m.Results["mkdir -p /h/servers/ws"] = effecttest.Result{}
+	f, err := Form{Conf: "/h/values.yml", Server: serverOfTest, M: m}.
+		Load(&effecttest.Out{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return f, m
+}
+
+func TestConfFormLoadReadsTheFile(t *testing.T) {
+	f, _ := formOf(t, "", Text("WS_TARGET", "cloud"))
+	if got := f.file.Target; got != "cloud" {
+		t.Errorf("target = %q", got)
+	}
+}
+
+func TestConfFormLoadRefusesABadLine(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files[serverOfTest] = []byte("no line\n")
+	if _, err := (Form{Conf: "/h/values.yml", Server: serverOfTest, M: m}).Load(&effecttest.Out{}); err == nil {
+		t.Error("Load = nil; want a refusal")
+	}
+}
+
+// keysOf lists the keys that show.
+func keysOf(fields []form.Field) []string {
+	keys := make([]string, 0, len(fields))
+	for _, f := range fields {
+		keys = append(keys, f.Key)
+	}
+	return keys
+}
+
+func TestConfFormShowsTheKeysOfATarget(t *testing.T) {
+	tail := []string{"WS_TUNNEL_NETWORKS", "WS_RESOLVERS"}
+	for target, want := range map[string][]string{
+		"lan":    slices.Concat([]string{"WS_TARGET", "WS_LAN", "WS_LAN_ADDRESS", "WS_REMOTE"}, tail),
+		"cloud":  slices.Concat([]string{"WS_TARGET", "WS_REMOTE", "WS_REMOTE_PORT"}, tail),
+		"mac-vm": slices.Concat([]string{"WS_TARGET", "WS_LAN", "WS_LAN_ADDRESS"}, tail),
+	} {
+		f, _ := formOf(t, "", Text("WS_LAN", "10.88.0.0/24", "WS_LAN_ADDRESS", "10.88.0.10"))
+		if got := keysOf(f.Fields(map[string]string{"WS_TARGET": target})); !slices.Equal(got, want) {
+			t.Errorf("%s: keys = %v; want %v", target, got, want)
+		}
+	}
+}
+
+// fieldOf finds the key's field.
+func fieldOf(t *testing.T, fields []form.Field, key string) form.Field {
+	t.Helper()
+	at := slices.IndexFunc(fields, func(f form.Field) bool { return f.Key == key })
+	if at < 0 {
+		t.Fatalf("no field of %s in %v", key, keysOf(fields))
+	}
+	return fields[at]
+}
+
+func TestConfFormEditLeadsTheWalk(t *testing.T) {
+	f, _ := formOf(t, "", "")
+	fields := f.Fields(map[string]string{"WS_REMOTE": "ws.example"})
+	if got := fieldOf(t, fields, "WS_REMOTE_PORT").Text; got != "The router's port forwarded to ws's 22 (the wizard offers 22022)" {
+		t.Errorf("port's text = %q", got)
+	}
+	if got := fieldOf(t, f.Fields(nil), "WS_TARGET").Options; !slices.Equal(got, targets) {
+		t.Errorf("target's options = %v", got)
+	}
+}
+
+func TestConfFormFieldsLeaveTheFile(t *testing.T) {
+	f, m := formOf(t, "", Text("WS_REMOTE", "r.example"))
+	f.Fields(map[string]string{"WS_REMOTE": "other.example"})
+	if got := string(m.Files[serverOfTest]); got != Text("WS_REMOTE", "r.example") {
+		t.Errorf("server file = %q", got)
+	}
+}
+
+func TestConfFormValidReadsTheForm(t *testing.T) {
+	f, _ := formOf(t, "", Text("WS_TARGET", "cloud", "WS_REMOTE", "vm.example", "WS_REMOTE_PORT", "22"))
+	remote := fieldOf(t, f.Fields(nil), "WS_REMOTE")
+	if err := remote.Valid(""); err == nil || err.Error() != "WS_TARGET=cloud needs WS_REMOTE and WS_REMOTE_PORT" {
+		t.Errorf("empty name: %v", err)
+	}
+	if err := fieldOf(t, f.Fields(nil), "WS_TUNNEL_NETWORKS").Valid(""); err != nil {
+		t.Errorf("empty networks: %v", err)
+	}
+	address := fieldOf(t, f.Fields(map[string]string{"WS_TARGET": "lan", "WS_LAN": "10.88.0.0/24"}), "WS_LAN_ADDRESS")
+	if err := address.Valid("10.9.0.1"); err == nil {
+		t.Error("an address outside the LAN passes")
+	}
+}
+
+func TestConfFormSave(t *testing.T) {
+	way := Text(
+		"WS_LAN", "10.88.0.0/24",
+		"WS_LAN_ADDRESS", "10.88.0.10",
+		"WS_REMOTE", "r.example",
+		"WS_REMOTE_PORT", "22022",
+	)
+	for name, tc := range map[string]struct {
+		server     string
+		edits      map[string]string
+		wantMac    string
+		wantServer string
+	}{
+		"a needed default": {"", map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "vm.example"}, "",
+			Text("WS_TARGET", "cloud", "WS_REMOTE", "vm.example", "WS_REMOTE_PORT", "22")},
+		"to a cloud VM": {way + Text("WS_CABLE_PORT", "enp1s0"), map[string]string{"WS_TARGET": "cloud"}, "",
+			Text(
+				"WS_LAN", "",
+				"WS_LAN_ADDRESS", "",
+				"WS_REMOTE", "r.example",
+				"WS_REMOTE_PORT", "22022",
+				"WS_CABLE_PORT", "",
+				"WS_TARGET", "cloud",
+			)},
+		"a cleared field": {way, map[string]string{"WS_REMOTE": ""}, "",
+			Text(
+				"WS_LAN", "10.88.0.0/24",
+				"WS_LAN_ADDRESS", "10.88.0.10",
+				"WS_REMOTE", "",
+				"WS_REMOTE_PORT", "",
+			)},
+		"none and quotes": {Text("WS_TUNNEL_NETWORKS", "10.20.0.0/16"),
+			map[string]string{"WS_TUNNEL_NETWORKS": "none"}, "", Text("WS_TUNNEL_NETWORKS", "")},
+		"a mended pair": {Text("WS_LAN", "10.88.0.0/24"), nil, "", Text("WS_LAN", "10.88.0.0/24", "WS_LAN_ADDRESS", "10.88.0.10")},
+	} {
+		f, m := formOf(t, "", tc.server)
+		if _, err := f.Save(context.Background(), &effecttest.Out{}, tc.edits); err != nil {
+			t.Errorf("%s: %v", name, err)
+		}
+		if got := string(m.Files["/h/values.yml"]); got != tc.wantMac {
+			t.Errorf("%s: values.yml = %q; want %q", name, got, tc.wantMac)
+		}
+		if got := string(m.Files[serverOfTest]); got != tc.wantServer {
+			t.Errorf("%s: server file = %q; want %q", name, got, tc.wantServer)
+		}
+	}
+}
+
+func TestConfFormSaveReturnsWhatTheFileHolds(t *testing.T) {
+	f, _ := formOf(t, "", "")
+	next, err := f.Save(context.Background(), &effecttest.Out{}, map[string]string{"WS_REMOTE": "r.example"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := fieldOf(t, next.Fields(nil), "WS_REMOTE").Value; got != "r.example" {
+		t.Errorf("value = %q", got)
+	}
+	if got := fieldOf(t, f.Fields(nil), "WS_REMOTE").Value; got != "" {
+		t.Errorf("the form before the save holds %q", got)
+	}
+}
+
+func TestConfFormSaveOfNoChangeWritesNothing(t *testing.T) {
+	f, m := formOf(t, "# mine\n", "# mine\n"+Text("WS_REMOTE", "r.example"))
+	out := &effecttest.Out{}
+	if _, err := f.Save(context.Background(), out, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(m.Files[serverOfTest]); got != "# mine\n"+Text("WS_REMOTE", "r.example") {
+		t.Errorf("server file = %q", got)
+	}
+	if want := []string{"say: /h/values.yml and " + serverOfTest + " hold these values already"}; !slices.Equal(out.Lines, want) {
+		t.Errorf("said %q; want %q", out.Lines, want)
+	}
+}
+
+func TestConfFormSaveSaysWhatItEmptied(t *testing.T) {
+	f, _ := formOf(t, "", Text("WS_REMOTE", "r.example", "WS_REMOTE_PORT", "22022"))
+	out := &effecttest.Out{}
+	if _, err := f.Save(context.Background(), out, map[string]string{"WS_REMOTE": ""}); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Contains(out.Lines, "say: emptied WS_REMOTE WS_REMOTE_PORT") {
+		t.Errorf("said %q", out.Lines)
+	}
+}
+
+func TestConfFormSaveRefusals(t *testing.T) {
+	f, m := formOf(t, "", "")
+	m.Links[serverOfTest] = "/dotfiles/values.yml"
+	out := &effecttest.Out{}
+	if _, err := f.Save(context.Background(), out, map[string]string{"WS_REMOTE": "r.example"}); !errors.Is(err, ErrRefused) {
+		t.Errorf("a link: %v", err)
+	}
+	if said := strings.Join(out.Lines, "\n"); !strings.Contains(said, "is a link") || !strings.Contains(said, Line("WS_REMOTE", "r.example")) {
+		t.Errorf("said %q", said)
+	}
+}

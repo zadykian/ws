@@ -22,7 +22,7 @@ func TestGitSignsWithTheCopyOfTheAgentsKey(t *testing.T) {
 	m.Results["env SSH_AUTH_SOCK="+socket+" ssh-add -L"] = effecttest.Result{Out: []byte(line)}
 	key := sshcfg.AgentKeys(line)[0]
 	pub := sshcfg.Expand(key.Pub(), home)
-	// A mac.conf from before macOS 27, whose .pub ws may not read.
+	// A values.yml from before macOS 27, whose .pub ws may not read.
 	in := data + "/PublicKeys/" + key.Name
 	m.Root[in] = m.Root[socket]
 	g.Conf.GitSigningPubKey = in

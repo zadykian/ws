@@ -13,7 +13,7 @@ wsbin=$HOME/.local/bin/ws
 tmp=${TMPDIR:-/tmp}
 tmp=${tmp%/}
 fail=0
-# mac.conf's answers that standin.sh leaves out, from the environment, each empty for no value.
+# values.yml's answers that standin.sh leaves out, from the environment, each empty for no value.
 export WS_TARGET=lan WS_LAN='' WS_TUNNEL_NETWORKS='' WS_RESOLVERS=''
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.

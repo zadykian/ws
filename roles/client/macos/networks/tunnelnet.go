@@ -11,7 +11,7 @@ func routesText(server, set string, networks []string) string {
 
 // resolverHeader is the first line of the files in /etc/resolver that ws writes, by which a run
 // knows them for its own.
-const resolverHeader = "# Written by github.com/zadykian/ws: ws client macos apply, from WS_RESOLVERS in a server's server.conf."
+const resolverHeader = "# Written by github.com/zadykian/ws: ws client macos apply, from WS_RESOLVERS in a server's values.yml."
 
 // resolverText is /etc/resolver/DOMAIN: a nameserver line for each address (resolver(5)).
 func resolverText(addresses []string) string {
@@ -24,7 +24,7 @@ type resolver struct {
 	Addresses []string
 }
 
-// resolvers splits WS_RESOLVERS, which conf checked.
+// resolvers splits WS_RESOLVERS, which values checked.
 func resolvers(list string) []resolver {
 	var rs []resolver
 	for _, pair := range strings.Fields(list) {

@@ -9,18 +9,18 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
-// Git sets git up from mac.conf's WS_GIT_SIGNING_PUB_KEY on each run. It writes git's identity,
+// Git sets git up from values.yml's WS_GIT_SIGNING_PUB_KEY on each run. It writes git's identity,
 // gitcfg.Name and gitcfg.Email, and the Mac's own signing key to ~/.config/ws/gitconfig, as the
 // git role does on ws. ~/.gitconfig includes that file at
 // its top. gh, from Homebrew where missing, takes git's pushes to GitHub, and registers the key
 // there. It stops where the key or ~/.gitconfig is not as it can use, before it acts. Without a
 // login for gh, or its write:ssh_signing_key scope, it warns, at each run until one adds the key.
 type Git struct {
-	Conf conf.Conf
+	Conf values.Conf
 	Home string
 	// XDG is git's XDG config directory, XDG_CONFIG_HOME or ~/.config, whose git/config git reads
 	// before ~/.gitconfig.

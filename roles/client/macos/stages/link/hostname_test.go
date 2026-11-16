@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 )
 
@@ -111,12 +111,12 @@ func TestStagesNameTheServerInEachSSHCall(t *testing.T) {
 	})
 	t.Run("claude login", func(t *testing.T) {
 		h, m := newHostNamed("lab", nil)
-		_ = host.MacReach{SSH: h.SSH, Conf: "/h/mac.conf", Out: h.Out}.Claude(ctx)
+		_ = host.MacReach{SSH: h.SSH, Conf: "/h/values.yml", Out: h.Out}.Claude(ctx)
 		namesTheServer(t, "claude login", m)
 	})
 	t.Run("a command as root", func(t *testing.T) {
 		h, m := newHostNamed("lab", nil)
-		_, _ = host.MacReach{SSH: h.SSH, Conf: "/h/mac.conf", Out: h.Out}.Shell().Run(ctx, nil, "true")
+		_, _ = host.MacReach{SSH: h.SSH, Conf: "/h/values.yml", Out: h.Out}.Shell().Run(ctx, nil, "true")
 		namesTheServer(t, "a command as root", m)
 	})
 	t.Run("tunnel", func(t *testing.T) {
@@ -126,7 +126,7 @@ func TestStagesNameTheServerInEachSSHCall(t *testing.T) {
 		m.Results[libexec+" client macos tunnel status --server lab"] = effecttest.Result{Out: []byte("latest handshake: 5 s ago\n")}
 		m.Results[tunnelCall(tun.SSH, "-o", "BatchMode=yes", "lab", "echo", "ok")] = effecttest.Result{Out: []byte("ok\n")}
 		tun.Sleep = func(time.Duration) {}
-		if err := tun.handshake(ctx, conf.Conf{}, false); err != nil {
+		if err := tun.handshake(ctx, values.Conf{}, false); err != nil {
 			t.Errorf("handshake = %v", err)
 		}
 		namesTheServer(t, "tunnel", m)

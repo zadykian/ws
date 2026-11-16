@@ -123,7 +123,7 @@ func (s *Session) WaitPorts(ctx context.Context, port string) ([]byte, error) {
 	return s.do(ctx, opWait, []string{port})
 }
 
-// NameCable names the port in ws's host_vars and runs the cable and tunnel roles there.
+// NameCable names the port in ws's values.yml and runs the cable and tunnel roles there.
 func (s *Session) NameCable(ctx context.Context, port string) error {
 	_, err := s.do(ctx, opNameCable, []string{port}, []string{"--only", "cable,tunnel"})
 	return err
@@ -135,7 +135,7 @@ func (s *Session) NamePeer(ctx context.Context, key string) error {
 	return err
 }
 
-// NameUser names WS_USER in ws's host_vars.
+// NameUser names WS_USER in ws's values.yml.
 func (s *Session) NameUser(ctx context.Context, user string) error {
 	_, err := s.do(ctx, opNameUser, []string{user})
 	return err
@@ -153,16 +153,16 @@ func (s *Session) Run(ctx context.Context, args []string) error {
 	return err
 }
 
-// Outbound names WS_SECURITY_OUTBOUND: false in ws's host_vars.
+// Outbound names WS_SECURITY_OUTBOUND: false in ws's values.yml.
 func (s *Session) Outbound(ctx context.Context) error {
 	_, err := s.do(ctx, opOutbound)
 	return err
 }
 
-// Values reads ws's host_vars, as the files script prints it: empty where the file is missing.
+// Values reads ws's values.yml, as the files script prints it: empty where the file is missing.
 func (s *Session) Values(ctx context.Context) ([]byte, error) { return s.do(ctx, opValues) }
 
-// SetValues writes each KEY=VALUE pair of pairs into ws's host_vars in one login. A pair goes as
+// SetValues writes each KEY=VALUE pair of pairs into ws's values.yml in one login. A pair goes as
 // base64, as the files script says.
 func (s *Session) SetValues(ctx context.Context, pairs []string) error {
 	enc := make([]string, len(pairs))

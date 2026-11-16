@@ -11,7 +11,7 @@ import (
 // userName is the form of a user's name that Ubuntu's adduser takes.
 var userName = regexp.MustCompile(`^[a-z][-a-z0-9_]*$`)
 
-// askUser asks WS_USER and names it in host_vars. cloud is the target's, as root is WS_USER on a
+// askUser asks WS_USER and names it in values.yml. cloud is the target's, as root is WS_USER on a
 // cloud VM alone.
 func (v *WsValues) askUser(ctx context.Context, cloud bool) error {
 	user, err := v.P.Ask(ctx, effect.Question{Text: "WS_USER, the user that ws is set up for",

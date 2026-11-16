@@ -1,16 +1,16 @@
 #!/bin/sh
 # ws's run on the Mac that 33-login.sh leaves. The wizard must have run ws server ubuntu apply four
-# times by now. One ran in 30-run.sh, one for the port that 31-host.sh's mac.conf names, and one as
-# its cloud VM. The fourth ran after that case took the port and the outbound line out of host_vars,
+# times by now. One ran in 30-run.sh, one for the port that 31-host.sh's values.yml names, and one as
+# its cloud VM. The fourth ran after that case took the port and the outbound line out of values.yml,
 # which makes the next run due. Each run of the wizard since must have read ws's status alone. A run
 # must read it once, and once more after a run of ws server ubuntu apply. Once ws's run stamp is
 # gone, a run whose unit is cut off before its stamp must stop at the stage. The next must start a
 # unit of its own. That one must end with what stays by hand: ws's fans' driver, as the stand-in's
 # Secure Boot refuses it, and the router's forwards, for WS_REMOTE. A run while another's unit runs,
 # as one that a dropped ssh left, must follow that unit, and start none. With WS_TARGET=cloud, a run
-# must name WS_SECURITY_OUTBOUND: false in ws's host_vars first. One that follows a unit that began
+# must name WS_SECURITY_OUTBOUND: false in ws's values.yml first. One that follows a unit that began
 # without the line must then start one of its own. The next run must start none. Without the line, a
-# run must write it, and run ws server ubuntu apply. A host_vars with another WS_USER must get
+# run must write it, and run ws server ubuntu apply. A values.yml with another WS_USER must get
 # WS_USER's by a full run, and the line stays for the cases after it. --check --update, with no
 # WS_TARGET in the environment, and --check on a cloud VM must name the run that each would start.
 # Back on the LAN, the closing list of --update must name the table that the line keeps off. Once
@@ -24,11 +24,11 @@ wsbin=$HOME/.local/bin/ws
 remote_sh=$HOME/repository/ws/roles/server/ubuntu/session/wizard-remote.sh
 ws=$RUNNER_TEMP/ws
 stamp=$ws/root/var/lib/ws-wizard/run
-vars="$ws/root"/etc/ws/host_vars.yml
+vars="$ws/root"/etc/ws/values.yml
 fail=0
 
 # stamped TABLE: the run's stamp must name a full run that passed, TABLE, and no secrets file, with
-# host_vars' sum or none.
+# values.yml's sum or none.
 stamped() {
     grep -Eq " 0 $1 - (-|[0-9a-f]{64})\$" "$stamp"
 }
@@ -100,12 +100,12 @@ wizard
 started 1 2 && sudo grep -qx "WS_USER: \"$(id -un)\"" "$vars" && [ "$status" = 0 ] ||
     error "a run with another WS_USER exited $status, or named no WS_USER: $(id -un)"
 
-WS_CONF=$RUNNER_TEMP/confs/cloud/mac.conf
-export WS_CONF
-conf_print ~/.config/ws/mac.conf | sed 's/^WS_TARGET=.*/WS_TARGET=cloud/' | conf_write "$WS_CONF"
+WS_VALUES=$RUNNER_TEMP/confs/cloud/values.yml
+export WS_VALUES
+conf_print ~/.config/ws/values.yml | sed 's/^WS_TARGET:.*/WS_TARGET: cloud/' | conf_write "$WS_VALUES"
 out=$("$wsbin" client macos wizard --check </dev/null 2>&1)
 printf '%s\n' "$out" | grep -q 'after naming WS_SECURITY_OUTBOUND: false in ' ||
-    error "ws client macos wizard --check on a cloud VM named no host_vars line before the run: $out"
+    error "ws client macos wizard --check on a cloud VM named no values.yml line before the run: $out"
 echo 20 >"$ws/server.wait"
 ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sudo -n sh -s -- run <"$remote_sh" >/dev/null 2>&1 &
 tries=0
@@ -125,10 +125,10 @@ sudo sed -i '' '/^WS_SECURITY_OUTBOUND:/d' "$vars"
 wizard
 started 1 2 && sudo grep -qx 'WS_SECURITY_OUTBOUND: false' "$vars" && [ "$status" = 0 ] ||
     error "a cloud VM's run without the line exited $status, or ran no ws server ubuntu apply"
-rm -r "${WS_CONF%/*}"
-unset WS_CONF
+rm -r "${WS_VALUES%/*}"
+unset WS_VALUES
 "$wsbin" client macos wizard --update </dev/null >"$RUNNER_TEMP/run.out" 2>&1
-grep -q "^- ws's outbound table: off, as ws's /etc/ws/host_vars.yml names WS_SECURITY_OUTBOUND: false, " \
+grep -q "^- ws's outbound table: off, as ws's /etc/ws/values.yml names WS_SECURITY_OUTBOUND: false, " \
     "$RUNNER_TEMP/run.out" || error "ws client macos wizard --update on the LAN named no table left off"
 sudo sed -i '' '/^WS_SECURITY_OUTBOUND:/d' "$vars"
 wizard

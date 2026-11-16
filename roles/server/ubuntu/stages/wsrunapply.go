@@ -11,7 +11,7 @@ import (
 
 // Apply runs ws server ubuntu apply in a unit of its own through the remote script, or follows the
 // run that goes on there, with its log on stderr. On a cloud VM the outbound table would drop the
-// provider's metadata service. So host_vars names WS_SECURITY_OUTBOUND: false before the run, as ws
+// provider's metadata service. So values.yml names WS_SECURITY_OUTBOUND: false before the run, as ws
 // server ubuntu apply reads its values from that file. A unit that the run followed may have begun
 // before a change to that file: a run of its own follows then.
 func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
@@ -21,13 +21,13 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 	}
 	if len(c.pairs) > 0 {
 		if err := r.Ws.SetValues(ctx, c.pairs); err != nil {
-			return fmt.Errorf("%s: cannot write %s into ws's host_vars: %s; mend that, then run the wizard again",
+			return fmt.Errorf("%s: cannot write %s into ws's values.yml: %s; mend that, then run the wizard again",
 				RunStage, naming(c.pairs), remote.Stderr(err))
 		}
 	}
 	if c.user != "" {
 		if err := r.Ws.NameUser(ctx, c.user); err != nil {
-			return fmt.Errorf("%s: ws's host_vars lacks WS_USER: %s: %s; mend that, then run the wizard again",
+			return fmt.Errorf("%s: ws's values.yml lacks WS_USER: %s: %s; mend that, then run the wizard again",
 				RunStage, c.user, remote.Stderr(err))
 		}
 	}
@@ -52,7 +52,7 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 	if s, ok := r.Ws.Status(ctx); !ok {
 		return fail()
 	} else if !sameVars(s) {
-		r.Out.Say("%s: the unit it followed began before ws's host_vars took its last change, "+
+		r.Out.Say("%s: the unit it followed began before ws's values.yml took its last change, "+
 			"so ws server ubuntu apply runs again", RunStage)
 		if err := r.run(ctx); err != nil {
 			return err
@@ -64,12 +64,12 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 	return nil
 }
 
-// outbound names WS_SECURITY_OUTBOUND: false in ws's host_vars by the remote script's outbound op, and
+// outbound names WS_SECURITY_OUTBOUND: false in ws's values.yml by the remote script's outbound op, and
 // stops with its error where that fails.
 func (r *WsRun) outbound(ctx context.Context) error {
 	if err := r.Ws.Outbound(ctx); err != nil {
 		lines := strings.Split(strings.TrimSpace(err.Error()), "\n")
-		return fmt.Errorf("%s: ws's host_vars lacks WS_SECURITY_OUTBOUND: false: %s; mend that, or run the "+
+		return fmt.Errorf("%s: ws's values.yml lacks WS_SECURITY_OUTBOUND: false: %s; mend that, or run the "+
 			"wizard with --update, which runs ws server ubuntu apply again", RunStage, lines[len(lines)-1])
 	}
 	return nil

@@ -16,7 +16,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/client/macos"
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // newRemoveCmd returns ws client macos remove.
@@ -24,7 +24,7 @@ func newRemoveCmd(p enginecli.Env, server *string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "remove NAME",
 		Short: "remove a server from the Mac",
-		Long: "It deletes servers/NAME beside mac.conf and NAME's entry in known_hosts, and leaves the server as it " +
+		Long: "It deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it " +
 			"is. It refuses the Mac's last server, as apply needs one, and takes no --server: the argument is the consent.",
 		Args: cobra.ExactArgs(1),
 		RunE: func(c *cobra.Command, args []string) error { return runRemove(c, p, *server, args[0]) },
@@ -40,17 +40,17 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 	if server != "" {
 		return errors.New("remove takes the server's name alone")
 	}
-	mac := conf.Path(p.Getenv, p.Pwd)
-	if !conf.IsName(name) {
-		return fmt.Errorf("%s is not a server's name: %s", name, conf.NameForm)
+	mac := values.Path(p.Getenv, p.Pwd)
+	if !values.IsName(name) {
+		return fmt.Errorf("%s is not a server's name: %s", name, values.NameForm)
 	}
-	names, err := conf.Servers(p.Machine, mac)
+	names, err := values.Servers(p.Machine, mac)
 	if err != nil {
 		return err
 	}
 	if !slices.Contains(names, name) {
 		return fmt.Errorf("no server named %s in %s, which holds %s", name,
-			path.Dir(path.Dir(conf.ServerPath(mac, name))), conf.List(names))
+			path.Dir(path.Dir(values.ServerPath(mac, name))), values.List(names))
 	}
 	if len(names) == 1 {
 		return fmt.Errorf("%s is the Mac's one server: apply needs one, so remove leaves it", name)
@@ -62,19 +62,19 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 	defer release()
 	// The steps below skip a server whose file ws refuses, so such a file stops the removal before
 	// it starts. NAME's own file is out of the count: a clash with it ends with the removal.
-	if err := refuseBadSibling(without{p.Machine, conf.ServerPath(mac, name)}, mac, name); err != nil {
+	if err := refuseBadSibling(without{p.Machine, values.ServerPath(mac, name)}, mac, name); err != nil {
 		return err
 	}
 	// A file that ws refuses goes all the same, as remove is the way out of it, and names no cable.
 	var cable string
-	if gone, err := conf.Load(p.Machine, mac, conf.ServerPath(mac, name)); err == nil {
+	if gone, err := values.Load(p.Machine, mac, values.ServerPath(mac, name)); err == nil {
 		cable = gone.CableService
 	}
 	// The host goes first: its failure then leaves the server whole, and remove runs again.
 	if err := forgetHost(c, p, name); err != nil {
 		return err
 	}
-	if _, err := p.Machine.Run(c.Context(), "rm", "-rf", path.Dir(conf.ServerPath(mac, name))); err != nil {
+	if _, err := p.Machine.Run(c.Context(), "rm", "-rf", path.Dir(values.ServerPath(mac, name))); err != nil {
 		return fmt.Errorf("cannot remove the files of %s: %w", name, err)
 	}
 	if _, err := fmt.Fprintf(c.OutOrStdout(), "removed %s\n", name); err != nil {
@@ -95,7 +95,7 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 // reapply runs the Mac's steps that hold a server's traces, for the server that stays. They are ssh, Zed,
 // the tunnel and the networks, and the last two prune the gone server's daemon and routes.
 func reapply(c *cobra.Command, p enginecli.Env, mac, name string) error {
-	settings, err := conf.Load(p.Machine, mac, conf.ServerPath(mac, name))
+	settings, err := values.Load(p.Machine, mac, values.ServerPath(mac, name))
 	if err != nil {
 		return fmt.Errorf("server %s: %w", name, err)
 	}
@@ -107,7 +107,7 @@ func reapply(c *cobra.Command, p enginecli.Env, mac, name string) error {
 	return engine.Cause(err)
 }
 
-// without is the Mac's machine with the server's file at file out of sight. conf.Servers leaves
+// without is the Mac's machine with the server's file at file out of sight. values.Servers leaves
 // that server out, so the others load as they will once it goes.
 type without struct {
 	effect.Machine

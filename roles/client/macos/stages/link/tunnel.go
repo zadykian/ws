@@ -10,9 +10,9 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // Tunnel is the stage of the keys' exchange of the WireGuard tunnel between the Mac and ws. The
@@ -46,7 +46,7 @@ type Tunnel struct {
 // Name is the stage's name.
 func (*Tunnel) Name() string { return stage.Tunnel }
 
-// Side is the Mac: the stage ends in the Mac's WireGuard configuration and mac.conf.
+// Side is the Mac: the stage ends in the Mac's WireGuard configuration and values.yml.
 func (*Tunnel) Side() wizard.Side { return stage.Mac }
 
 // WaitsOn is ws's run, which makes wg0.
@@ -61,7 +61,7 @@ func (c tunnelChange) String() string { return stage.Tunnel + ": would " + strin
 // through it. Where the run asked ws's address, ws isn't at the ways that ws-tunnel tries. Where
 // the check found no handshake, ws-tunnel has none. A later run checks those two.
 func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
-	c, err := conf.Read(t.M, t.Conf)
+	c, err := values.Read(t.M, t.Conf)
 	if err != nil {
 		return step.Plan{}, err
 	}
@@ -85,15 +85,15 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	switch wg0 := s.WgKey; {
 	case wg0 == "":
-		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in server.conf to wg0's key, which that run makes"))
+		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in the server's values.yml to wg0's key, which that run makes"))
 	case wg0 != c.PublicKey:
 		if t.Check {
 			// Under --check the server's file is the scratch file, as for the stages before.
-			if err := (conf.File{Path: t.Conf, Scope: conf.ServerFile, Stage: stage.Tunnel, M: t.M, Out: t.Out}).Show("WS_PUBLIC_KEY", wg0); err != nil {
+			if err := (values.File{Path: t.Conf, Scope: values.ServerFile, Stage: stage.Tunnel, M: t.M, Out: t.Out}).Show("WS_PUBLIC_KEY", wg0); err != nil {
 				return step.Plan{}, err
 			}
 		}
-		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in server.conf to wg0's key, "+wg0))
+		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in the server's values.yml to wg0's key, "+wg0))
 	}
 	return step.Plan{Changes: append(ch, tunnelChange("run ws client macos apply again, which loads ws-tunnel, and wait up "+
 		"to 30 s for ws-tunnel's handshake, then log in to "+t.SSH.Host+" through it"))}, nil

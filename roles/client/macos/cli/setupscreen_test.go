@@ -6,16 +6,17 @@ import (
 
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
-// keyed gives the Mac a mac.conf that names the file key it has for ws's login, as ssh's step needs.
+// keyed gives the Mac a values.yml that names the file key it has for ws's login, as ssh's step needs.
 func keyed(m *effecttest.Machine) {
-	writeConfs(m, "WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub\n", "WS_USER=ada\n")
+	writeConfs(m, values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id_ed25519.pub"), values.Text("WS_USER", "ada"))
 	m.Files["/h/.ssh/id_ed25519.pub"] = []byte("ssh-ed25519 AAAA ada\n")
 	m.Results["ssh-keygen -l -f /h/.ssh/id_ed25519.pub"] = effecttest.Result{}
 }
 
-// macTerminal returns a process with a terminal, as the Mac's user, with a mac.conf and what ssh's
+// macTerminal returns a process with a terminal, as the Mac's user, with a values.yml and what ssh's
 // step looks at.
 func macTerminal() (enginecli.Env, *effecttest.Machine) {
 	m := effecttest.NewMachine()
@@ -57,9 +58,9 @@ func TestMacApplyDrawsNothingWithPlain(t *testing.T) {
 	}
 }
 
-// writeConfs puts the Mac's mac.conf and the server's file at their paths in the home.
+// writeConfs puts the Mac's values.yml and the server's file at their paths in the home.
 func writeConfs(m *effecttest.Machine, mac, server string) {
-	m.Files["/h/.config/ws/mac.conf"] = []byte(mac)
-	m.Files["/h/.config/ws/servers/ws/server.conf"] = []byte(server)
+	m.Files["/h/.config/ws/values.yml"] = []byte(mac)
+	m.Files["/h/.config/ws/servers/ws/values.yml"] = []byte(server)
 	m.Dirs["/h/.config/ws/servers"], m.Dirs["/h/.config/ws/servers/ws"] = 0o755, 0o755
 }

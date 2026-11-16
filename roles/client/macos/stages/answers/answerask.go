@@ -7,8 +7,8 @@ import (
 	"io"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // asker gets the answers of the Answers stage: from the environment, which sets a key even to
@@ -22,7 +22,7 @@ type asker struct {
 	tty  bool
 	out  effect.Out
 	told bool
-	// lines holds the lines for the answers, to add to mac.conf.
+	// lines holds the lines for the answers, to add to values.yml.
 	lines string
 	// lan gives WS_LAN's value, which WS_LAN_ADDRESS must lie in.
 	lan func() string
@@ -30,7 +30,7 @@ type asker struct {
 
 // ask returns the answer to q, and keeps its line. The environment's bad value stops the run, and a
 // bad answer is asked again.
-func (a *asker) ask(ctx context.Context, q conf.Question) (string, error) {
+func (a *asker) ask(ctx context.Context, q values.Question) (string, error) {
 	value, set := a.env(q.Key)
 	if set {
 		if why := q.Refusal(value, a.lan()); why != "" {
@@ -54,13 +54,13 @@ func (a *asker) ask(ctx context.Context, q conf.Question) (string, error) {
 			return "", err
 		}
 	}
-	a.lines += conf.Line(q.Key, value) + "\n"
+	a.lines += values.Text(q.Key, value)
 	return value, nil
 }
 
 // reply asks the maintainer for q's value. A screen draws a key that takes one of a few as a choice
 // among them, and a line takes any other, as the plain prompt does every key.
-func (a *asker) reply(ctx context.Context, q conf.Question) (string, error) {
+func (a *asker) reply(ctx context.Context, q values.Question) (string, error) {
 	if c, ok := a.p.(effect.Choosing); ok && q.Options() != nil {
 		return c.Choose(ctx, effect.ChoiceQuestion{Text: q.Text + " (" + q.Key + ")", Options: q.Options(), Default: q.Def})
 	}

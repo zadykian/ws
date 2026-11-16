@@ -13,7 +13,7 @@ const (
 	Tools = "Tools"
 	// Homebrew is the stage of Homebrew.
 	Homebrew = "Homebrew"
-	// Answers is the stage that gives mac.conf the values it lacks.
+	// Answers is the stage that gives values.yml the values it lacks.
 	Answers = "Answers"
 	// Key is the stage of the Mac's key.
 	Key = "Mac key"

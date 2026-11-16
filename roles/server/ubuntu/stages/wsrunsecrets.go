@@ -9,21 +9,21 @@ import (
 )
 
 // done tells whether ws's last full run, by this version, exited 0 and no run's unit runs there. On
-// a cloud VM, that run must have begun with host_vars turning the outbound table off, which
-// host_vars, the same since, still does.
+// a cloud VM, that run must have begun with values.yml turning the outbound table off, which
+// values.yml, the same since, still does.
 func done(s session.Status, version string, c session.Want) bool {
 	return idle(s, version) && named(s, c) && (c.Target != "cloud" || s.Run.Off)
 }
 
 // named tells whether ws's values give WS_USER the user that ssh logs in as. It compares with the
 // server's default, so that a default that moves leaves a WS_USER of the old one named in
-// host_vars.
+// values.yml.
 func named(s session.Status, c session.Want) bool {
 	return cmp.Or(s.User, values.Default().User) == c.User
 }
 
 // idle tells whether ws's last full run, made by a ws of this version, exited 0. The run must have
-// read ws's secrets file and host_vars as they are now, and no run's unit may run there now.
+// read ws's secrets file and values.yml as they are now, and no run's unit may run there now.
 func idle(s session.Status, version string) bool {
 	return s.Active == "" && s.Run.Exit == "0" && s.Run.Version == version && sameSecrets(s) && sameVars(s)
 }
@@ -33,8 +33,8 @@ func idle(s session.Status, version string) bool {
 // read. So the wizard reads one sum, whichever machine it runs on.
 func sameSecrets(s session.Status) bool { return s.Run.Exit != "" && s.Run.Secrets == s.Secrets }
 
-// sameVars tells whether ws's last full run read ws's host_vars as it stands now, by the sum that
-// the stamp names after the secrets file's. So a change to host_vars, by either wizard, Configure
+// sameVars tells whether ws's last full run read ws's values.yml as it stands now, by the sum that
+// the stamp names after the secrets file's. So a change to values.yml, by either wizard, Configure
 // or by hand, makes the next run due.
 func sameVars(s session.Status) bool { return s.Run.Exit != "" && s.Run.Vars == s.Vars }
 

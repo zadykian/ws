@@ -11,9 +11,9 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/git"
 	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -32,7 +32,7 @@ func gitStep(m *effecttest.Machine, look func(string) (string, error)) *git.Git 
 		look = func(name string) (string, error) { return "/opt/bin/" + name, nil }
 	}
 	return &git.Git{
-		Conf: conf.Conf{GitSigningPubKey: gitPub},
+		Conf: values.Conf{GitSigningPubKey: gitPub},
 		Home: gitHome, M: m, Out: &effecttest.Out{}, LookPath: look,
 	}
 }
@@ -50,7 +50,7 @@ func prereqs(p step.Plan) []step.Change {
 
 func TestGitWithoutAKeyStopsAndNamesTheLine(t *testing.T) {
 	_, err := (&git.Git{M: effecttest.NewMachine(), Out: &effecttest.Out{}}).Step().Plan(context.Background())
-	if err == nil || !strings.Contains(err.Error(), "mac.conf names no WS_GIT_SIGNING_PUB_KEY") {
+	if err == nil || !strings.Contains(err.Error(), "values.yml names no WS_GIT_SIGNING_PUB_KEY") {
 		t.Errorf("Plan err = %v, want the stop that names the line", err)
 	}
 }

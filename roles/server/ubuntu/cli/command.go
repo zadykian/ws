@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	serverVars = "/etc/ws/host_vars.yml"
+	serverVars = "/etc/ws/values.yml"
 	osRelease  = "/etc/os-release"
 )
 

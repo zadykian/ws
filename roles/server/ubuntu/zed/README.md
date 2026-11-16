@@ -6,7 +6,7 @@ that the server needs. The Mac's side is [Zed on the Mac](../../../client/macos/
 
 `~/.config/zed/settings.json` is owned by `WS_USER`. A run replaces a change made to it by hand
 and keeps the old file beside the new one. The key
-`WS_ZED_NOFILE` of `/etc/ws/host_vars.yml` sets the limit, 65536 by default.
+`WS_ZED_NOFILE` of `/etc/ws/values.yml` sets the limit, 65536 by default.
 
 ## What runs where
 

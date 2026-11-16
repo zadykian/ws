@@ -44,7 +44,7 @@ _Avoid_: vault
 ## The Mac's side
 
 **Named key**:
-The key whose `.pub` `mac.conf` names for a use: ws's login, by `WS_IDENTITY_PUB_KEY`, or git's
+The key whose `.pub` `values.yml` names for a use: ws's login, by `WS_IDENTITY_PUB_KEY`, or git's
 signing, by `WS_GIT_SIGNING_PUB_KEY`. Either ws's copy of a key of Secretive's agent, or a file
 key.
 _Avoid_: picked key, git key
@@ -89,6 +89,6 @@ no other server holds in a file that lacks it. Slot N's tunnel is `10.99.N.0/24`
 `10.99.0.0/20`, with the server at `.1` and the Mac at `.2`.
 
 **ws's directory**:
-`~/.config/ws` on the Mac, mode 700, which holds `mac.conf`, `servers/` and the files that git, zsh
+`~/.config/ws` on the Mac, mode 700, which holds `values.yml`, `servers/` and the files that git, zsh
 and the tunnel read. A run sets that mode where it differs.
 _Avoid_: config directory

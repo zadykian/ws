@@ -1,6 +1,6 @@
 # shellcheck shell=sh
 # The mac job's checks of ws client macos apply's git step. mac-setup-checks.sh sources them last,
-# so that they run with its functions and the job's mac.conf. The runner must lack the files the
+# so that they run with its functions and the job's values.yml. The runner must lack the files the
 # step writes, but ~/.gitconfig, which goes aside. The job's own git files go aside too, as its conf
 # with git's keys does. As the script exits, on a signal too, the files go, and the job's files and
 # the runner's ~/.gitconfig come back.
@@ -93,7 +93,7 @@ fi
 # the files. It must add the key to gh's login, titled with the Mac's name, and say so. Its
 # credential command for GitHub must be gh's, and a second run and --check say the key is listed.
 ssh-keygen -q -t ed25519 -N '' -C ws -f "$key"
-signing=WS_GIT_SIGNING_PUB_KEY=$key.pub
+signing="WS_GIT_SIGNING_PUB_KEY: $key.pub"
 with "$signing"
 title=$(hostname -s)
 add="gh ssh-key add $key.pub --type signing --title $title"
@@ -175,18 +175,18 @@ rm "$tmp/xdg/git/config" ~/.gitconfig
 # An empty WS_GIT_SIGNING_PUB_KEY must stop ws client macos apply, with no line to add while
 # Secretive's agent is not there. So must a key that is missing, and a .pub that holds more than a
 # public key's line, as a private key does.
-with WS_GIT_SIGNING_PUB_KEY=
-stops "ws client macos apply: mac.conf names no WS_GIT_SIGNING_PUB_KEY, git's signing key: run ws client macos wizard"
-with 'WS_GIT_SIGNING_PUB_KEY=~/.ssh/ws.pub'
-stops "ws client macos apply: $HOME/.ssh/ws.pub, mac.conf's WS_GIT_SIGNING_PUB_KEY, is missing"
+with 'WS_GIT_SIGNING_PUB_KEY: ""'
+stops "ws client macos apply: values.yml names no WS_GIT_SIGNING_PUB_KEY, git's signing key: run ws client macos wizard"
+with 'WS_GIT_SIGNING_PUB_KEY: ~/.ssh/ws.pub'
+stops "ws client macos apply: $HOME/.ssh/ws.pub, values.yml's WS_GIT_SIGNING_PUB_KEY, is missing"
 cp "$key" "$tmp/mixed.pub"
-with "WS_GIT_SIGNING_PUB_KEY=$tmp/mixed.pub"
+with "WS_GIT_SIGNING_PUB_KEY: $tmp/mixed.pub"
 stops "ws client macos apply: $tmp/mixed.pub holds no public key alone"
 # So must one it cannot read, where the user cannot, as on the runner: root reads it.
 cp "$key.pub" "$tmp/unread-git.pub" && chmod 000 "$tmp/unread-git.pub"
 if ! cat "$tmp/unread-git.pub" >/dev/null 2>&1; then
     with \
-        "WS_GIT_SIGNING_PUB_KEY=$tmp/unread-git.pub"
+        "WS_GIT_SIGNING_PUB_KEY: $tmp/unread-git.pub"
     stops "ws client macos apply: cannot read $tmp/unread-git.pub"
 fi
 
@@ -202,10 +202,10 @@ if [ -z "$agent" ] || ! SSH_AUTH_SOCK=$secretive/Data/socket.ssh ssh-add -q "$tm
     exit 1
 fi
 rm "$tmp/p256"
-with WS_GIT_SIGNING_PUB_KEY=
+with 'WS_GIT_SIGNING_PUB_KEY: ""'
 stops "$(unnamed WS_GIT_SIGNING_PUB_KEY "git's signing key" "$tmp/p256.pub")"
 with \
-    "WS_GIT_SIGNING_PUB_KEY=~/${copy#"$HOME/"}"
+    "WS_GIT_SIGNING_PUB_KEY: ~/${copy#"$HOME/"}"
 setup --check || error "ws client macos apply --check failed: $out"
 case $out in
 *"+++ $files/secretive-ssh-keygen$nl"*"$nl+${tab}program = \"$files/secretive-ssh-keygen\""*) ;;
@@ -221,7 +221,7 @@ prints "$listed"
 prints "$listed" --check
 # In a subshell, as macOS's sh keeps a variable set for a function's call after it.
 (SSH_AUTH_SOCK=$tmp/none && export SSH_AUTH_SOCK && signed && exit "$fail") || fail=1
-# ws keeps the file key that the job's mac.conf names, though Secretive's one key is there. The
+# ws keeps the file key that the job's values.yml names, though Secretive's one key is there. The
 # agent and Secretive's container then go, so that the cases below give ws no key of theirs.
 [ "$(ssh -G ws | awk '$1 == "identityfile" { print $2 }')" = \~/.ssh/id_ed25519 ] ||
     error "ssh -G ws gives git's signing key, Secretive's one key, as ws's"

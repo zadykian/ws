@@ -7,23 +7,23 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // file is the server's file.
-func (c *Cable) file() conf.File {
-	return conf.File{Path: c.Conf, Scope: conf.ServerFile, Stage: stage.Cable, M: c.M, Out: c.Out}
+func (c *Cable) file() values.File {
+	return values.File{Path: c.Conf, Scope: values.ServerFile, Stage: stage.Cable, M: c.M, Out: c.Out}
 }
 
 // Apply takes ws's port of the cable, where none holds ws's end, from WS_CABLE_PORT or the
-// terminal, the one with carrier by default. link names it in /etc/ws/host_vars.yml on ws. Then ws
+// terminal, the one with carrier by default. link names it in /etc/ws/values.yml on ws. Then ws
 // server ubuntu apply --only cable,tunnel runs there, as both roles read it: the cable role
 // must give it 10.77.0.1 as ws's end. After that, service takes the Mac's service. none, as either
 // answer, writes an empty WS_CABLE_SERVICE. Where the server's file has a service, again takes the stage's
 // steps.
 func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
-	cf, err := conf.Read(c.M, c.Conf)
+	cf, err := values.Read(c.M, c.Conf)
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 		if port == "" {
 			return c.write(ctx, "")
 		}
-		c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on %s, and ws server ubuntu apply --only cable,tunnel "+
+		c.Out.Say("%s: %s goes in /etc/ws/values.yml on %s, and ws server ubuntu apply --only cable,tunnel "+
 			"runs there in a unit of its own", stage.Cable, port, c.SSH.Host)
 		if err := c.name(ctx, port); err != nil {
 			return err
@@ -71,7 +71,7 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 	return c.service(ctx)
 }
 
-// name puts the port in ws's /etc/ws/host_vars.yml and runs the cable and tunnel roles there.
+// name puts the port in ws's /etc/ws/values.yml and runs the cable and tunnel roles there.
 func (c *Cable) name(ctx context.Context, port string) error {
 	return c.Ws.NameCable(ctx, port)
 }
@@ -82,7 +82,7 @@ func (c *Cable) holds(ctx context.Context, port string) bool {
 	return ok && s.Cable == port
 }
 
-// again names WS_CABLE_PORT in /etc/ws/host_vars.yml on ws where ws's status names none or another.
+// again names WS_CABLE_PORT in /etc/ws/values.yml on ws where ws's status names none or another.
 // That holds after ws's install, a failed roles' run or a change in the server's file. Then it runs the
 // roles there, with no question and no dock. It stops on a port that ws lacks.
 func (c *Cable) again(ctx context.Context, port string) error {
@@ -100,7 +100,7 @@ func (c *Cable) again(ctx context.Context, port string) error {
 	if s.Cable == port {
 		return nil
 	}
-	c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on %s again, and ws server ubuntu apply --only cable,tunnel "+
+	c.Out.Say("%s: %s goes in /etc/ws/values.yml on %s again, and ws server ubuntu apply --only cable,tunnel "+
 		"runs there in a unit of its own", stage.Cable, port, c.SSH.Host)
 	return c.name(ctx, port)
 }
@@ -137,18 +137,18 @@ func (c *Cable) service(ctx context.Context) error {
 		return err
 	}
 	if _, err := c.M.Run(ctx, "ping", "-c", "1", "-t", "3", cableEnd); err != nil {
-		return fmt.Errorf("%s: ping -c 1 -t 3 %s, %s's end of the cable, got no answer: server.conf's "+
-			"WS_CABLE_SERVICE must name the service of the adapter that the cable plugs into", stage.Cable, cableEnd, c.SSH.Host)
+		return fmt.Errorf("%s: ping -c 1 -t 3 %s, %s's end of the cable, got no answer: WS_CABLE_SERVICE in "+
+			"the server's values.yml must name the service of the adapter that the cable plugs into", stage.Cable, cableEnd, c.SSH.Host)
 	}
 	return nil
 }
 
-// write writes value as the server file's WS_CABLE_SERVICE, in double quotes, after ws's end as
-// WS_CABLE_PORT, or empty for none, which the wizard never asks again.
+// write adds value as the server file's WS_CABLE_SERVICE, or empty for none, which the wizard never
+// asks again, after ws's end as WS_CABLE_PORT. A port that the file has stays.
 func (c *Cable) write(ctx context.Context, value string) error {
-	lines := "WS_CABLE_SERVICE=\n"
+	lines := values.Text("WS_CABLE_SERVICE", "")
 	if value != "" {
-		lines = "WS_CABLE_PORT=" + c.end() + "\nWS_CABLE_SERVICE=\"" + value + "\"\n"
+		lines = values.Text("WS_CABLE_PORT", c.end(), "WS_CABLE_SERVICE", value)
 	}
 	return c.file().Add(ctx, lines)
 }

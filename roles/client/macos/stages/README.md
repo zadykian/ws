@@ -39,7 +39,7 @@ hand. The stages, in order, the first two of which install what the rest needs:
 11. Signing key: ws's public signing key among the signing keys of the Mac's gh login, below.
 12. claude on ws: `WS_USER`'s claude there, logged in, below.
 13. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
-14. Cable: on the LAN, ws's port of the cable in its `host_vars.yml`, and the Mac's service, below.
+14. Cable: on the LAN, ws's port of the cable in its `values.yml`, and the Mac's service, below.
 
 Each stage states the side it acts on, in its own file by `Side()`. Sudo, ws on ws, ws's run
 and claude on ws are ws's, and the rest are the Mac's. A stage that changes both is the Mac's where
@@ -57,10 +57,10 @@ its last change lands there, as the Tunnel and the Cable do.
 | More networks through the tunnel | `WS_TUNNEL_NETWORKS` | none | always |
 | Nameservers behind the tunnel | `WS_RESOLVERS` | none | always |
 
-Each answer goes in the file of its key, which [mac.conf](../README.md#macconf) explains, but the
+Each answer goes in the file of its key, which [values.yml](../README.md#the-macs-valuesyml) explains, but the
 first. `WS_TARGET` names ws's machine: one on the LAN, a cloud VM, which needs `WS_REMOTE` and
 `WS_REMOTE_PORT`, or a VM on the Mac, which needs `WS_LAN`. The table gives the questions on the
-LAN, and [The wizard's targets](../conf/README.md) the others, with the keys that each refuses. The
+LAN, and [The wizard's targets](../values/README.md) the others, with the keys that each refuses. The
 defaults are [The router](../../../server/ubuntu/cable/router.md)'s LAN, lease and forward. A key's
 answer comes from the first of these that has one:
 
@@ -72,35 +72,35 @@ answer comes from the first of these that has one:
 
 A bad answer at the terminal is asked again, with the form the key takes. From the environment, it
 stops the run. ws's address and git's email take a value where asked. The wizard adds the answers at
-the end of each file, keeps their comments and order, and adds `WS_SLOT=0` to a server's file that
-lacks it. It writes `mac.conf`, then the server's file, once `ws client macos apply` would take
+the end of each file, keeps their comments and order, and adds `WS_SLOT: 0` to a server's file that
+lacks it. It writes `values.yml`, then the server's file, once `ws client macos apply` would take
 both. It stops before it asks on a file it can't read, or on a line that `ws client macos apply`
 would refuse. Where a file is a link and lacks a key, it prints the lines to add to the link's file,
 and stops. The Cable stage asks `WS_CABLE_PORT` and `WS_CABLE_SERVICE` ([The cable](#the-cable)).
 The other keys, such as `WS_USER` and `WS_TUNNEL_PORT`, keep their defaults until set by hand.
 
 Under `--check`, the wizard asks too, and shows the lines it would add as a diff. `ws client macos
-apply --check` then reads the files it would write, in the lock, which `WS_CONF` names, beside a
-copy of each other server's file. `WS_CONF` names another `mac.conf` for both scripts.
+apply --check` then reads the files it would write, in the lock, which `WS_VALUES` names, beside a
+copy of each other server's file. `WS_VALUES` names another `values.yml` for both scripts.
 
 ## The Mac's key
 
-ssh offers ws the key whose `.pub` `mac.conf`'s `WS_IDENTITY_PUB_KEY` names
-([mac.conf](../README.md#macconf)). Where that is a file, as `~/.ssh/id_ed25519.pub`, the key and its
+ssh offers ws the key whose `.pub` `values.yml`'s `WS_IDENTITY_PUB_KEY` names
+([values.yml](../README.md#the-macs-valuesyml)). Where that is a file, as `~/.ssh/id_ed25519.pub`, the key and its
 `.pub` must be there, as the wizard makes no key in a file. Where one is missing, it stops, naming
 the line to drop for the wizard to ask.
 
-Where `mac.conf` names none, or an empty one, the wizard asks for ws's login key. It offers each
+Where `values.yml` names none, or an empty one, the wizard asks for ws's login key. It offers each
 P-256 key of Secretive's agent, by comment and SHA256 fingerprint, and a new one. The new one is the
 default, so that a keypress never takes a key made for another use. Where
-`mac.conf` has an empty `WS_GIT_SIGNING_PUB_KEY` or none, it asks for git's key too, the login key
+`values.yml` has an empty `WS_GIT_SIGNING_PUB_KEY` or none, it asks for git's key too, the login key
 marked ([git](../git/README.md)). One key may serve both. For a new key, the wizard installs Secretive's
 cask where its app is missing, and opens the app. It waits up to 15 minutes for a P-256 key made
 there, in the Mac's Secure Enclave, which it never leaves. Where the agent wasn't there to ask, a
 key it lists once it starts stops the wizard, as no answer named it. ws's key takes Secretive's
 default protection, which asks for Touch ID at each login. The wizard takes each key from the agent,
 and writes a copy of its `.pub` ([Secretive's keys](../git/README.md#secretives-keys)). The copies and the
-agent go in `mac.conf`, as `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_PUB_KEY`.
+agent go in `values.yml`, as `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_PUB_KEY`.
 With no terminal, the wizard stops at the first question, naming the line of each such key. Under
 `--check`, the ws client macos apply stage waits on the answer, as `ws client macos apply` stops
 without the key.
@@ -130,8 +130,8 @@ for a direct way to `ws` ([ssh's hosts](../README.md#sshs-hosts)). Where no way 
 [The router](../../../server/ubuntu/cable/router.md), or off the LAN what the target needs, as a VM on the Mac started. A new ws
 has a lease from the router's pool, not its static address. So where ws gives no key within 10 s,
 the stage asks ws's address now, as the router's leases show it. Off the LAN, [The wizard's
-targets](../conf/README.md) says where it shows. ssh takes that address for the rest of the run, and
-`mac.conf` keeps nothing of it. An empty answer stops the run, as before Ubuntu's install.
+targets](../values/README.md) says where it shows. ssh takes that address for the rest of the run, and
+`values.yml` keeps nothing of it. An empty answer stops the run, as before Ubuntu's install.
 
 The stage shows the key's fingerprint. At ws's console, `ssh-keygen -lf
 /etc/ssh/ssh_host_ed25519_key.pub` prints ws's own: answer `yes` where they match, or paste what it
@@ -192,14 +192,14 @@ That ws runs its roles ([The
 unit's log until it ends, past the [event lines](../../../../README.md#events), and stops where the
 run fails. A first run takes 20 to 40 minutes. The unit goes on where ssh drops, and the next run of
 the wizard follows it to its end, and replays the log. A unit of part of ws stops a run of other
-steps, until it ends. The stage first names `WS_USER` in `/etc/ws/host_vars.yml` on ws,
-with the files script, where the user that host_vars names, else the default, isn't `WS_USER`, so
+steps, until it ends. The stage first names `WS_USER` in `/etc/ws/values.yml` on ws,
+with the files script, where the user that values.yml names, else the default, isn't `WS_USER`, so
 the roles set up that user. It writes wg0's address and port there off the defaults.
 
 Each run writes its unit and status in `/var/lib/ws-wizard/last` on ws. A full run, as the stage's,
 with no argument, removes `/var/lib/ws-wizard/run` as it starts. As it ends, it writes these words:
 ws's version, or `-` where it has none, and the status there. Then `off` where the values turned the
-outbound table off, else `on`, and the SHA-256 of the secrets file and of `host_vars.yml`, each or
+outbound table off, else `on`, and the SHA-256 of the secrets file and of `values.yml`, each or
 `-`. The stage is done where that status is 0, the version is this ws's, both sums are those of the
 files now, and no unit runs. So a second run runs no apply, and one after a run cut short starts
 again, as does one after either file changed: by a wizard, Configure or by hand. A unit that began
@@ -215,10 +215,10 @@ either. The stage sends nothing. Without them the run has no secrets. Then the r
 as they find it ([The profile](../../../server/ubuntu/ikeward/README.md#the-profile)).
 
 On a cloud VM, the outbound table drops the metadata service ([Outbound](../../../server/ubuntu/security/README.md#outbound)). So
-with `WS_TARGET=cloud`, the stage names `WS_SECURITY_OUTBOUND: false` in ws's `/etc/ws/host_vars.yml`
+with `WS_TARGET=cloud`, the stage names `WS_SECURITY_OUTBOUND: false` in ws's `/etc/ws/values.yml`
 before the run, which reads its values there. It reads the line as YAML does, with blanks or a
 carriage return after the value too. The stage is done there once a run that began with the line
-passed, and `host_vars.yml` is as that run read it.
+passed, and `values.yml` is as that run read it.
 
 ## Signing key
 
@@ -244,7 +244,7 @@ the stage stops, naming `claude auth login`. Where ws lacks claude, it stops.
 The stage writes the Mac's WireGuard key to `wg0`'s `mac.pub` on ws, where that holds another, and
 `ws server ubuntu apply --only tunnel` gives `wg0` that peer. That run goes again where `wg0`
 lacks the peer, as after one that failed. Both go over a direct way, outside the tunnel, whose
-sessions the change ends ([The tunnel](../../../server/ubuntu/tunnel/README.md#the-tunnel)). Then `WS_PUBLIC_KEY` in `server.conf`
+sessions the change ends ([The tunnel](../../../server/ubuntu/tunnel/README.md#the-tunnel)). Then `WS_PUBLIC_KEY` in a server's `values.yml`
 takes `wg0`'s key, in place of its line, and `ws client macos apply` runs again, which loads
 ws-tunnel ([The Mac's tunnel](../README.md#the-macs-tunnel)): allow it in the Background. Then a handshake
 must come within 30 s, and `ssh NAME` log in once. Where none came, or the run asked ws's address, the
@@ -253,23 +253,23 @@ acts.
 
 ## The cable
 
-The stage sets up the cable from the Mac's display to a port of ws's, outside the router ([The
-cable](../../../server/ubuntu/cable/README.md#the-cable)). A cloud VM and a VM on the
-Mac skip it. The wizard's files script lists ws's wired ports but the uplink, each with its carrier
-and IPv4 addresses. Where none has carrier, as the Mac isn't docked, the stage waits, and the
-closing list says to dock the Mac and run the line again. Docked, the stage asks ws's port of the
-cable, the one with carrier by default. It names the port in `/etc/ws/host_vars.yml` on ws, which
-both roles read, then runs `ws server ubuntu apply --only cable,tunnel` there; the next run of
-the wizard runs the whole, as `host_vars.yml` changed. Once the port holds `10.77.0.1`, the stage
-asks the Mac's service of the cable. A screen asks it and the port as a choice. The default is the
-one service with a `169.254` address, which an adapter gives itself where no DHCP server answers.
-The answer goes in `server.conf` as `WS_CABLE_SERVICE`, then `ws client macos apply` gives the service
+The stage sets up the cable from the Mac's display to a port of ws's, outside the router
+([The cable](../../../server/ubuntu/cable/README.md#the-cable)). A cloud VM and a VM on the Mac skip
+it. The wizard's files script lists ws's wired ports but the uplink, each with its carrier and IPv4
+addresses. Where none has carrier, as the Mac isn't docked, the stage waits, and the closing list
+says to dock the Mac and run the line again. Docked, the stage asks ws's port of the cable, the one
+with carrier by default. It names the port in `/etc/ws/values.yml` on ws, which both roles read,
+then runs `ws server ubuntu apply --only cable,tunnel` there; the next run of the wizard runs the
+whole, as `values.yml` changed. Once the port holds `10.77.0.1`, the stage asks the Mac's service of
+the cable. A screen asks it and the port as a choice. The default is the one service with a
+`169.254` address, which an adapter gives itself where no DHCP server answers. The answer goes in a
+server's `values.yml` as `WS_CABLE_SERVICE`, then `ws client macos apply` gives the service
 `10.77.0.2` ([The cable](../README.md#the-cable)), and `ping 10.77.0.1` must get an answer.
 
 `none` as either answer writes an empty `WS_CABLE_SERVICE`, so the wizard asks neither again, as
 where ws has no cable or another server has it. From the environment, at a terminal too,
-`WS_CABLE_PORT` and `WS_CABLE_SERVICE` give the answers. `server.conf` keeps the port as
-`WS_CABLE_PORT`. Where `host_vars.yml` lacks it, as after ws's install, the stage names it there and
+`WS_CABLE_PORT` and `WS_CABLE_SERVICE` give the answers. A server's `values.yml` keeps the port as
+`WS_CABLE_PORT`. Where `values.yml` lacks it, as after ws's install, the stage names it there and
 runs the roles, undocked too, but stops on a port ws lacks. `--check` only says what it would do.
 
 Undocked, an empty `WS_CABLE_SERVICE` in the environment ends the wait, for a Mac without the cable.
@@ -283,14 +283,16 @@ After a run in which a stage acted, the wizard lists each of these that applies:
 - With Secure Boot on, where the kernel refuses the fans' driver, DKMS's key, enrolled at ws's
   console ([Secure Boot](../../../server/ubuntu/fans/README.md#secure-boot)).
 - What [The Mac](../README.md) leaves by hand: macOS's grant of the local network to an app.
-- The server's lease, made static, where the Host key stage asked ws's address, and the router's forwards
-  where `server.conf` has `WS_REMOTE` ([The router](../../../server/ubuntu/cable/router.md)). Off the LAN, `server.conf`'s way to ws
-  instead, and a cloud VM's firewall for the tunnel ([The wizard's targets](../conf/README.md)).
-- ws's outbound table, which `WS_SECURITY_OUTBOUND: false` in ws's `host_vars.yml` keeps off, where
+- The server's lease, made static, where the Host key stage asked ws's address, and the router's
+  forwards where a server's `values.yml` has `WS_REMOTE`
+  ([The router](../../../server/ubuntu/cable/router.md)). Off the LAN, a server's `values.yml`'s way
+  to ws instead, and a cloud VM's firewall for the tunnel
+  ([The wizard's targets](../values/README.md)).
+- ws's outbound table, which `WS_SECURITY_OUTBOUND: false` in ws's `values.yml` keeps off, where
   `WS_TARGET` isn't `cloud`, as after a move from a cloud VM: that line removed, then `--update`.
 - The tunnel's handshake, where the run asked ws's address or none came. A static lease, or off the
-  LAN `server.conf`'s way leading to ws, UDP let through to ws, or ws-tunnel allowed in the Background.
-  Then the wizard again, which checks it.
+  LAN, a server's `values.yml` way leading to ws, UDP let through to ws, or ws-tunnel allowed in the
+  Background. Then the wizard again, which checks it.
 - `gh auth setup-git`, where git's config names no credential command of gh's for github.com, as `ws
   client macos apply`'s does ([git](../git/README.md)). Through it, pushes from the Mac's
   clones take gh's login.

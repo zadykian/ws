@@ -10,6 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -35,7 +36,7 @@ func planned(k *MacKey) string {
 }
 
 func TestMacKeyPlan(t *testing.T) {
-	const conf = gitKey + "WS_IDENTITY_PUB_KEY=~/k.pub\nWS_IDENTITY_AGENT=/s\n"
+	conf := gitKey + values.Text("WS_IDENTITY_PUB_KEY", "~/k.pub", "WS_IDENTITY_AGENT", "/s")
 	k, m, _ := newMacKey(t, conf)
 	m.Files["/h/k.pub"] = []byte(pubText)
 	m.Results["ssh-keygen -l -f /h/k.pub"] = effecttest.Result{Out: []byte("256 SHA256:aa me\n")}
@@ -57,10 +58,10 @@ func TestMacKeyPlan(t *testing.T) {
 	}
 }
 
-// A file key that mac.conf names must be there: the stage makes none.
+// A file key that values.yml names must be there: the stage makes none.
 func TestMacKeyPlanNeedsAFileKey(t *testing.T) {
-	k, m, _ := newMacKey(t, gitKey+"WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub\n")
-	if got := planned(k); !strings.Contains(got, "/h/.ssh/id_ed25519.pub, named in mac.conf's WS_IDENTITY_PUB_KEY, is missing") {
+	k, m, _ := newMacKey(t, gitKey+values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id_ed25519.pub"))
+	if got := planned(k); !strings.Contains(got, "/h/.ssh/id_ed25519.pub, named in values.yml's WS_IDENTITY_PUB_KEY, is missing") {
 		t.Errorf("Plan of a missing key = %q", got)
 	}
 	m.Files["/h/.ssh/id_ed25519"], m.Files["/h/.ssh/id_ed25519.pub"] = []byte("p"), []byte(pubText)
@@ -82,7 +83,7 @@ func TestMacKeyPlanTakesTheAgentsKey(t *testing.T) {
 	if got := planned(k); !strings.Contains(got, ": "+p256Label+"; make a new one (the default)]") {
 		t.Errorf("Plan = %q, want the agent's key offered", got)
 	}
-	m.Files[confPathForTest] = []byte(gitKey + "WS_IDENTITY_PUB_KEY=" + listed(p256)[0].Pub() + "\n")
+	m.Files[confPathForTest] = []byte(gitKey + values.Text("WS_IDENTITY_PUB_KEY", listed(p256)[0].Pub()))
 	p, err := k.Plan(context.Background())
 	if err != nil || len(p.Changes) != 1 || p.Changes[0] != (keys.Copy{M: m, Out: out, Path: copyOf(p256), Text: p256}) {
 		t.Fatalf("Plan = %v, %v; want the copy alone", p.Changes, err)
@@ -100,14 +101,14 @@ func TestMacKeyPlanTakesTheAgentsKey(t *testing.T) {
 	}
 }
 
-// git's question marks ws's login key, which mac.conf names. An empty WS_GIT_SIGNING_PUB_KEY names none.
+// git's question marks ws's login key, which values.yml names. An empty WS_GIT_SIGNING_PUB_KEY names none.
 func TestMacKeyPlanAsksForGitsKey(t *testing.T) {
-	k, m, _ := newMacKey(t, "WS_GIT_SIGNING_PUB_KEY=\n")
+	k, m, _ := newMacKey(t, values.Text("WS_GIT_SIGNING_PUB_KEY", ""))
 	agent(m, p256)
 	if got := planned(k); strings.Count(got, "would ask for") != 2 {
 		t.Errorf("Plan with neither key = %q, want both questions", got)
 	}
-	m.Files[confPathForTest] = []byte("WS_IDENTITY_PUB_KEY=" + listed(p256)[0].Pub() + "\n")
+	m.Files[confPathForTest] = []byte(values.Text("WS_IDENTITY_PUB_KEY", listed(p256)[0].Pub()))
 	m.Files[copyOf(p256)] = []byte(p256)
 	want := "[Mac key: would ask for git's signing key, in Secretive: " + p256Label + ", ws's login key; " +
 		"make a new one (the default)] <nil>"

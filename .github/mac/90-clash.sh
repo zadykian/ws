@@ -8,11 +8,11 @@ set -eo pipefail
 # shellcheck source=.github/mac-conf.sh
 . .github/mac-conf.sh
 
-conf=$HOME/.config/ws/mac.conf
+conf=$HOME/.config/ws/values.yml
 trap 'rm -rf "${conf%/*}/servers/lab" "${conf%/*}/servers/box"' EXIT
 
 # ws's own ports, which the slot and port cases clash with.
-for line in WS_REMOTE=localhost WS_REMOTE_PORT=22022 WS_TUNNEL_PORT=51820; do
+for line in 'WS_REMOTE: localhost' 'WS_REMOTE_PORT: 22022' 'WS_TUNNEL_PORT: 51820'; do
     conf_print "$conf" | grep -qx "$line" || {
         echo "::error::ws's file lacks $line, which the cases below clash with"
         exit 1
@@ -40,24 +40,24 @@ refused() {
     fi
 }
 
-server box WS_SLOT=2 WS_TUNNEL_NETWORKS=198.51.100.0/24
-server lab WS_SLOT=1 WS_TUNNEL_NETWORKS=198.51.100.0/25
+server box 'WS_SLOT: 2' 'WS_TUNNEL_NETWORKS: 198.51.100.0/24'
+server lab 'WS_SLOT: 1' 'WS_TUNNEL_NETWORKS: 198.51.100.0/25'
 refused "WS_TUNNEL_NETWORKS's 198.51.100.0/25 overlaps server box's 198.51.100.0/24" lab
 refused 'fix its file, or ws client macos remove' ws
 
-server box WS_SLOT=2 WS_RESOLVERS=example.test=198.51.100.53
-server lab WS_SLOT=1 WS_RESOLVERS=example.test=198.51.100.54
+server box 'WS_SLOT: 2' 'WS_RESOLVERS: example.test=198.51.100.53'
+server lab 'WS_SLOT: 1' 'WS_RESOLVERS: example.test=198.51.100.54'
 refused "WS_RESOLVERS's example.test is server box's too" lab
 
-server box WS_SLOT=2 WS_CABLE_SERVICE=Box
-server lab WS_SLOT=1 WS_CABLE_SERVICE=Lab
+server box 'WS_SLOT: 2' 'WS_CABLE_SERVICE: Box'
+server lab 'WS_SLOT: 1' 'WS_CABLE_SERVICE: Lab'
 refused "WS_CABLE_SERVICE names a cable, as server box's does" lab
 
 rm -rf "${conf%/*}/servers/box"
-server lab WS_SLOT=0
+server lab 'WS_SLOT: 0'
 refused "WS_SLOT=0 is server ws's slot too" lab
 
-server lab WS_SLOT=1 WS_REMOTE=localhost WS_REMOTE_PORT=22023 WS_TUNNEL_PORT=51820
+server lab 'WS_SLOT: 1' 'WS_REMOTE: localhost' 'WS_REMOTE_PORT: 22023' 'WS_TUNNEL_PORT: 51820'
 refused "WS_TUNNEL_PORT=51820 is server ws's too, behind WS_REMOTE localhost" lab
-server lab WS_SLOT=1 WS_REMOTE=localhost WS_REMOTE_PORT=22022 WS_TUNNEL_PORT=51821
+server lab 'WS_SLOT: 1' 'WS_REMOTE: localhost' 'WS_REMOTE_PORT: 22022' 'WS_TUNNEL_PORT: 51821'
 refused "WS_REMOTE_PORT=22022 is server ws's too, behind WS_REMOTE localhost" lab

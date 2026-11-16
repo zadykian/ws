@@ -11,10 +11,10 @@
 # the same steps, must follow that unit and start none. One of other steps during a part's unit must
 # refuse it. A full run whose unit is cut off must exit 1 and remove the run stamp that the one
 # before left. The next must start a unit of its own, as must one after outbound. That one stamps
-# off and the file's sum in run, as /etc/ws/host_vars.yml names WS_SECURITY_OUTBOUND: false. That file
+# off and the file's sum in run, as /etc/ws/values.yml names WS_SECURITY_OUTBOUND: false. That file
 # has mode 0600, in a directory of 0755. One with an argument, as --diff, must leave that stamp.
 # The files script's link must list ws's wired ports but the uplink and a bridge's member, with
-# their carrier and IPv4 addresses. link PORT must name one in ws's /etc/ws/host_vars.yml once. ws
+# their carrier and IPv4 addresses. link PORT must name one in ws's /etc/ws/values.yml once. ws
 # server ubuntu apply --only cable,tunnel must then give it 10.77.0.1, and status's cable name
 # it. The remote script's outbound must add WS_SECURITY_OUTBOUND: false there once, which status must
 # then read as off. So must it read false with a blank after it, and no with CRLF. The last line
@@ -35,7 +35,7 @@ remote_sh=$HOME/repository/ws/roles/server/ubuntu/session/wizard-remote.sh
 ws=$RUNNER_TEMP/ws
 stamps=$ws/root/var/lib/ws-wizard
 peer=$ws/root/etc/wireguard/mac.pub
-vars="$ws/root"/etc/ws/host_vars.yml
+vars="$ws/root"/etc/ws/values.yml
 fail=0
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
@@ -72,8 +72,8 @@ states() {
 }
 
 # The Tunnel stage's wg0 and mac.pub go aside, for the states, and come back after. So do the
-# host_vars that 34-run.sh leaves, and the run's stamp, which names its sum.
-sudo mv "$vars" "$RUNNER_TEMP/host_vars.yml"
+# values.yml that 34-run.sh leaves, and the run's stamp, which names its sum.
+sudo mv "$vars" "$RUNNER_TEMP/values.yml"
 sudo cp -p "$stamps/run" "$RUNNER_TEMP/run.stamp"
 mv "$ws/wg0" "$RUNNER_TEMP/wg0"
 sudo mv "$peer" "$RUNNER_TEMP/mac.pub"
@@ -178,13 +178,13 @@ remote run
 values=$(sudo shasum -a 256 "$vars" | cut -d ' ' -f 1)
 [ "$status" = 0 ] && [ "$(units)" -eq $((n + 2)) ] && [ "$(stamp run)" = "$sha 0 off - $values" ] ||
     error "a full run after outbound exited $status, with run '$(stamp run)'"
-host_vars="$ws/root"/etc/ws
-sudo grep -qx 'WS_SECURITY_OUTBOUND: false' "$host_vars/host_vars.yml" ||
-    error "outbound named no WS_SECURITY_OUTBOUND: false in host_vars"
-[ "$(sudo stat -f %Lp "$host_vars")" = 755 ] &&
-    [ "$(sudo stat -f %Lp "$host_vars/host_vars.yml")" = 600 ] ||
-    error "outbound made /etc/ws or its host_vars.yml with another mode"
-sudo rm -r "$host_vars"
+ws_dir="$ws/root"/etc/ws
+sudo grep -qx 'WS_SECURITY_OUTBOUND: false' "$ws_dir/values.yml" ||
+    error "outbound named no WS_SECURITY_OUTBOUND: false in values.yml"
+[ "$(sudo stat -f %Lp "$ws_dir")" = 755 ] &&
+    [ "$(sudo stat -f %Lp "$ws_dir/values.yml")" = 600 ] ||
+    error "outbound made /etc/ws or its values.yml with another mode"
+sudo rm -r "$ws_dir"
 remote run --diff
 [ "$status" = 0 ] && [ "$(stamp run)" = "$sha 0 off - $values" ] || error "a run with --diff stamped run"
 
@@ -269,14 +269,14 @@ rest=$(unlisted "$out")
 remote status
 printf '%s\n' "$out" | grep -qx 'outbound off' || error "status read Off by hand as on"
 echo 'WS_SECURITY_OUTBOUND: true' | sudo tee -a "$vars" >/dev/null
-sudo mv "$vars" "$vars.real" && sudo ln -s host_vars.yml.real "$vars"
+sudo mv "$vars" "$vars.real" && sudo ln -s values.yml.real "$vars"
 remote status
 printf '%s\n' "$out" | grep -qx 'outbound on' || error "status read true after Off as off"
 remote outbound
-printf '%s\n' "$out" | grep -qF "$vars is a link to host_vars.yml.real" && [ "$status" = 1 ] ||
+printf '%s\n' "$out" | grep -qF "$vars is a link to values.yml.real" && [ "$status" = 1 ] ||
     error "its outbound through a link exited $status"
 files user zadykian
-printf '%s\n' "$out" | grep -qF "$vars is a link to host_vars.yml.real" && [ "$status" = 1 ] ||
+printf '%s\n' "$out" | grep -qF "$vars is a link to values.yml.real" && [ "$status" = 1 ] ||
     error "its user through a link exited $status"
 echo 'WS_SECURITY_OUTBOUND: false' | sudo tee -a "$vars.real" >/dev/null
 remote outbound
@@ -286,6 +286,6 @@ sudo rm -rf "$ws/root/sys" "$ws/addr" "${vars%/*}" \
     "$ws/root/etc/netplan"
 rm -f "$ws/uplink"
 sudo mkdir -m 755 "${vars%/*}"
-sudo mv "$RUNNER_TEMP/host_vars.yml" "$vars"
+sudo mv "$RUNNER_TEMP/values.yml" "$vars"
 sudo mv "$RUNNER_TEMP/run.stamp" "$stamps/run"
 exit "$fail"

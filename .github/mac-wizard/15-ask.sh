@@ -1,20 +1,20 @@
 #!/bin/sh
-# The Answers stage on a fresh Mac, which none of these runs may change. mac.conf stays as
+# The Answers stage on a fresh Mac, which none of these runs may change. values.yml stays as
 # standin.sh wrote it, and no lock or file of the wizard's stays in $TMPDIR. With no terminal, a
 # missing answer must stop a run and --check within 60 s, naming the key. A bad answer from the
 # environment must stop --check, with the form the key takes. --check must show the environment's
-# answers as the lines it would add to mac.conf and to the server's file. The same answers, typed at a terminal of script's
+# answers as the lines it would add to values.yml and to the server's file. The same answers, typed at a terminal of script's
 # after bad ones, must show the same lines, each bad one asked again with its form. Empty lines must
-# take the defaults. On a mac.conf of the Mac's key alone, a cloud VM must be asked no LAN, and need
+# take the defaults. On a values.yml of the Mac's key alone, a cloud VM must be asked no LAN, and need
 # its name. A VM on the Mac must be asked no router's name, and need its address. Each must show its
-# defaults. mac-vm on standin.sh's mac.conf, which holds WS_REMOTE, must stop, naming the key.
+# defaults. mac-vm on standin.sh's values.yml, which holds WS_REMOTE, must stop, naming the key.
 
 set -u
 # shellcheck source=.github/mac-conf.sh
 . "$(dirname "$0")/../mac-conf.sh"
 
 wsbin=$HOME/.local/bin/ws
-conf=$HOME/.config/ws/mac.conf
+conf=$HOME/.config/ws/values.yml
 tmp=${TMPDIR:-/tmp}
 tmp=${tmp%/}
 fail=0
@@ -25,9 +25,9 @@ error() {
     fail=1
 }
 
-# kept NAME: the run NAME must leave mac.conf and $TMPDIR as they were.
+# kept NAME: the run NAME must leave values.yml and $TMPDIR as they were.
 kept() {
-    conf_print "$conf" | cmp -s - "$RUNNER_TEMP/mac.conf" || error "$1 changed mac.conf"
+    conf_print "$conf" | cmp -s - "$RUNNER_TEMP/values.yml" || error "$1 changed values.yml"
     for left in "$tmp/ws-wizard.lock" "$tmp"/ws.*; do
         [ ! -e "$left" ] || error "$1 left $left"
     done
@@ -57,8 +57,8 @@ quick() {
     kept "$*"
 }
 
-# added FILE prints the lines that the diffs of mac.conf and of the server's file add, in the
-# wizard's output FILE, mac.conf's first.
+# added FILE prints the lines that the diffs of values.yml and of the server's file add, in the
+# wizard's output FILE, values.yml's first.
 added() {
     tr -d '\r' <"$1" |
         awk -v f="+++ $conf" -v g="+++ $(conf_server_file "$conf")" '
@@ -87,7 +87,7 @@ typed() {
     kept "ws client macos wizard --check with $what"
 }
 
-conf_print "$conf" >"$RUNNER_TEMP/mac.conf"
+conf_print "$conf" >"$RUNNER_TEMP/values.yml"
 quick 'ws client macos wizard: Answers: no terminal to ask WS_TARGET: set WS_TARGET' "$wsbin" client macos wizard
 quick 'ws client macos wizard: Answers: no terminal to ask WS_TARGET: set WS_TARGET' "$wsbin" client macos wizard --check
 quick 'WS_TARGET=home is not lan, cloud or mac-vm' env WS_TARGET=home "$wsbin" client macos wizard --check
@@ -99,9 +99,9 @@ quick "WS_TARGET=mac-vm has another target's key: WS_REMOTE" env WS_TARGET=mac-v
     WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=192.0.2.10 WS_TUNNEL_NETWORKS= WS_RESOLVERS= \
     "$wsbin" client macos wizard --check
 
-printf '%s\n' '+WS_TARGET=lan' \
-    '+WS_LAN=192.0.2.0/24' '+WS_LAN_ADDRESS=192.0.2.10' \
-    '+WS_TUNNEL_NETWORKS="198.51.100.0/24 203.0.113.0/24"' '+WS_RESOLVERS=example.test=192.0.2.53' >"$RUNNER_TEMP/added"
+printf '%s\n' '+WS_TARGET: lan' \
+    '+WS_LAN: 192.0.2.0/24' '+WS_LAN_ADDRESS: 192.0.2.10' \
+    '+WS_TUNNEL_NETWORKS: 198.51.100.0/24 203.0.113.0/24' '+WS_RESOLVERS: example.test=192.0.2.53' >"$RUNNER_TEMP/added"
 env WS_TARGET=lan WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=192.0.2.10 \
     WS_TUNNEL_NETWORKS='198.51.100.0/24 203.0.113.0/24' \
     WS_RESOLVERS=example.test=192.0.2.53 \
@@ -129,29 +129,29 @@ done
 
 # The defaults: a machine on the LAN, the router's LAN and lease
 # (roles/server/ubuntu/cable/router.md).
-printf '%s\n' '+WS_TARGET=lan' \
-    '+WS_LAN=10.88.0.0/24' '+WS_LAN_ADDRESS=10.88.0.10' '+WS_TUNNEL_NETWORKS=' \
-    '+WS_RESOLVERS=' >"$RUNNER_TEMP/added"
+printf '%s\n' '+WS_TARGET: lan' \
+    '+WS_LAN: 10.88.0.0/24' '+WS_LAN_ADDRESS: 10.88.0.10' '+WS_TUNNEL_NETWORKS: ""' \
+    '+WS_RESOLVERS: ""' >"$RUNNER_TEMP/added"
 typed 'five empty lines' '' '' '' '' ''
 
-conf=$RUNNER_TEMP/confs/target/mac.conf
-WS_CONF=$conf
-export WS_CONF
-echo 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' | conf_write "$conf"
-conf_print "$conf" >"$RUNNER_TEMP/mac.conf"
+conf=$RUNNER_TEMP/confs/target/values.yml
+WS_VALUES=$conf
+export WS_VALUES
+echo 'WS_IDENTITY_PUB_KEY: ~/.ssh/id_ed25519.pub' | conf_write "$conf"
+conf_print "$conf" >"$RUNNER_TEMP/values.yml"
 quick 'ws client macos wizard: Answers: no terminal to ask WS_REMOTE: set WS_REMOTE' \
     env WS_TARGET=cloud "$wsbin" client macos wizard --server ws --check
-printf '%s\n' '+WS_SLOT=0' '+WS_TUNNEL_PORT=51820' '+WS_TARGET=cloud' \
-    '+WS_REMOTE=ws.example.test' '+WS_REMOTE_PORT=22' '+WS_TUNNEL_NETWORKS=' \
-    '+WS_RESOLVERS=' >"$RUNNER_TEMP/added"
+printf '%s\n' '+WS_SLOT: 0' '+WS_TUNNEL_PORT: 51820' '+WS_TARGET: cloud' \
+    '+WS_REMOTE: ws.example.test' '+WS_REMOTE_PORT: 22' '+WS_TUNNEL_NETWORKS: ""' \
+    '+WS_RESOLVERS: ""' >"$RUNNER_TEMP/added"
 typed 'a cloud VM' cloud '' ws.example.test '' '' ''
 for asked in 'Answers: WS_TARGET=cloud needs WS_REMOTE and WS_REMOTE_PORT' \
     "The VM's SSH port (WS_REMOTE_PORT) [22]: "; do
     grep -qF "$asked" "$RUNNER_TEMP/tty" || error "ws client macos wizard asked a cloud VM with no '$asked'"
 done
-printf '%s\n' '+WS_SLOT=0' '+WS_TUNNEL_PORT=51820' '+WS_TARGET=mac-vm' \
-    '+WS_LAN=192.168.64.0/24' '+WS_LAN_ADDRESS=192.168.64.2' '+WS_TUNNEL_NETWORKS=' \
-    '+WS_RESOLVERS=' >"$RUNNER_TEMP/added"
+printf '%s\n' '+WS_SLOT: 0' '+WS_TUNNEL_PORT: 51820' '+WS_TARGET: mac-vm' \
+    '+WS_LAN: 192.168.64.0/24' '+WS_LAN_ADDRESS: 192.168.64.2' '+WS_TUNNEL_NETWORKS: ""' \
+    '+WS_RESOLVERS: ""' >"$RUNNER_TEMP/added"
 typed 'a VM on the Mac' mac-vm '' '' 192.168.64.2 '' '' ''
 for asked in "The Mac's network for its VMs (WS_LAN) [192.168.64.0/24]: " \
     'Answers: WS_LAN and WS_LAN_ADDRESS go together'; do

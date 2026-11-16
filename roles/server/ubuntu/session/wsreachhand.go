@@ -3,8 +3,8 @@ package session
 import guided "github.com/zadykian/ws/engine/core/wizard"
 
 // Hand adds what stays by hand of ws alone, after a run of ws's own wizard. That is the Mac's
-// list, less the tunnel, the cable and the Mac's own lines. ws's host_vars names its target, so its
-// outbound table follows that, and no mac.conf names another. The wizard adds no device's key to
+// list, less the tunnel, the cable and the Mac's own lines. ws's values.yml names its target, so its
+// outbound table follows that, and the Mac's values.yml names no other. The wizard adds no device's key to
 // ws, so each goes from GitHub by hand.
 func (r WsReach) Hand(h *guided.Hand, s Status) {
 	Fans(h, s)

@@ -14,6 +14,7 @@ import (
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/remote"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // testWizardProcess returns the process of a Mac whose Command Line Tools and Homebrew are there, and
@@ -65,8 +66,8 @@ func TestWizardPutsHomebrewFirstAndSetsWsConf(t *testing.T) {
 	p, env := testWizardProcess("darwin", 501)
 	env["PATH"], env["HOME"] = "/usr/bin", "/h"
 	runWs(p, "", "client", "macos", "wizard", "--check")
-	if env["PATH"] != "/opt/homebrew/bin:/usr/bin" || env["WS_CONF"] != "/h/.config/ws/mac.conf" {
-		t.Errorf("PATH = %q, WS_CONF = %q", env["PATH"], env["WS_CONF"])
+	if env["PATH"] != "/opt/homebrew/bin:/usr/bin" || env["WS_VALUES"] != "/h/.config/ws/values.yml" {
+		t.Errorf("PATH = %q, WS_VALUES = %q", env["PATH"], env["WS_VALUES"])
 	}
 }
 
@@ -80,10 +81,10 @@ func TestWizardCheckShowsTheAnswersDiff(t *testing.T) {
 	m.Results["mkdir -p /t/ws-wizard.lock"] = effecttest.Result{}
 	m.Results["mkdir -p /t/ws-wizard.lock/servers/ws"] = effecttest.Result{}
 	status, _, stderr := runWs(p, "", "client", "macos", "wizard", "--check", "--server", "ws")
-	if status != 0 || !strings.Contains(stderr, "+WS_TARGET=cloud") {
+	if status != 0 || !strings.Contains(stderr, "+WS_TARGET: cloud") {
 		t.Errorf("status = %d, stderr = %q; want the diff of the server's file", status, stderr)
 	}
-	if got := string(m.Files["/t/ws-wizard.lock/servers/ws/server.conf"]); !strings.HasPrefix(got, "WS_SLOT=0\nWS_TUNNEL_PORT=51820\nWS_TARGET=cloud\n") {
+	if got := string(m.Files["/t/ws-wizard.lock/servers/ws/values.yml"]); !strings.HasPrefix(got, values.Text("WS_SLOT", "0", "WS_TUNNEL_PORT", "51820", "WS_TARGET", "cloud")) {
 		t.Errorf("scratch server file = %q", got)
 	}
 }

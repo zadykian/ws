@@ -1,7 +1,7 @@
 #!/bin/sh
 # The wizard on the Mac that 40-again.sh leaves, with standin.sh's PATH, which lacks brew. Its Tools
 # and Homebrew stages must find the runner's Command Line Tools and brew, so that a run and
-# --check print nothing at all. Where WS_CONF names no file, --check must show the lines the wizard
+# --check print nothing at all. Where WS_VALUES names no file, --check must show the lines the wizard
 # would write there, from the environment's answers, and write none.
 
 set -u
@@ -32,14 +32,14 @@ for args in '' --check; do
     [ -z "${rest#"$known"}" ] || error "ws client macos wizard${args:+ $args} printed what it should not"
 done
 
-conf=$RUNNER_TEMP/confs/tools/mac.conf
+conf=$RUNNER_TEMP/confs/tools/values.yml
 user=$(id -un)
-out=$(WS_CONF=$conf WS_USER=$user WS_TARGET=lan WS_LAN='' WS_REMOTE=localhost WS_REMOTE_PORT=22022 \
+out=$(WS_VALUES=$conf WS_USER=$user WS_TARGET=lan WS_LAN='' WS_REMOTE=localhost WS_REMOTE_PORT=22022 \
     WS_TUNNEL_NETWORKS='' WS_RESOLVERS='' PATH=$path \
     "$wsbin" client macos wizard --server ws --check 2>&1)
 status=$?
 printf '%s\n' "$out"
-printf '%s\n' "$out" | grep -qx '+WS_REMOTE=localhost' && [ "$status" = 0 ] ||
+printf '%s\n' "$out" | grep -qx '+WS_REMOTE: localhost' && [ "$status" = 0 ] ||
     error "ws client macos wizard --check exited $status, with no line the wizard would write to $conf"
 [ ! -e "$conf" ] && [ ! -e "$(conf_server_file "$conf")" ] || error "ws client macos wizard --check wrote $conf or the server's file"
 rm -rf "${conf%/*}"

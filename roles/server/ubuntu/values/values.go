@@ -1,4 +1,4 @@
-// Package values holds the machine's values, ws's host_vars.yml, as one typed struct. The file
+// Package values holds the machine's values, ws's values.yml, as one typed struct. The file
 // is parsed once, and a key that no role knows is refused.
 package values
 

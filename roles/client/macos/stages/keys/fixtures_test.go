@@ -6,7 +6,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
-const confPathForTest = "/h/.config/ws/mac.conf"
+const confPathForTest = "/h/.config/ws/values.yml"
 
 // callsWith returns the calls of m that hold word.
 func callsWith(m *effecttest.Machine, word string) []string {

@@ -4,8 +4,8 @@ import (
 	"cmp"
 	"context"
 	"github.com/zadykian/ws/engine/core/wizard"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"sync"
 
@@ -15,8 +15,8 @@ import (
 	"github.com/zadykian/ws/engine/tui"
 )
 
-// varsReach is the way to ws of the host_vars and secrets sheets, of the wizard's state screen and of
-// ws client macos secrets. It starts with the first read, so that mac.conf draws with ws out of
+// varsReach is the way to ws of the values.yml and secrets sheets, of the wizard's state screen and of
+// ws client macos secrets. It starts with the first read, so that values.yml draws with ws out of
 // reach.
 type varsReach struct {
 	p enginecli.Env
@@ -50,8 +50,8 @@ func (r *varsReach) reachOn(ctx context.Context, m effect.Machine, t rootTalk) (
 	if err != nil {
 		return nil, err
 	}
-	macConf := conf.Path(r.p.Getenv, r.p.Pwd)
-	server := conf.ServerPath(macConf, r.server)
+	macConf := values.Path(r.p.Getenv, r.p.Pwd)
+	server := values.ServerPath(macConf, r.server)
 	ssh := remote.SSH{M: m, Lock: lock, Home: r.p.Getenv("HOME"), Host: r.server,
 		Ways: host.MacWays{M: m, Conf: server}}
 	sudo := cmp.Or(r.sudo, &host.Sudo{})

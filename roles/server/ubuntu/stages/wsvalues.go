@@ -15,17 +15,17 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
-// valuesStage names the stage in its messages. outboundKey is the key of host_vars that the target
+// valuesStage names the stage in its messages. outboundKey is the key of values.yml that the target
 // names, as a cloud VM turns the outbound table off, and userKey the user that ws is set up for.
 const valuesStage, outboundKey, userKey = "ws's values", "WS_SECURITY_OUTBOUND", "WS_USER"
 
 // WsValues is the stage of ws's values on ws itself, which ws server ubuntu wizard runs. It asks
-// each key that host_vars lacks, and names it there even at its default. So a later run, from ws or
+// each key that values.yml lacks, and names it there even at its default. So a later run, from ws or
 // the Mac, reads the file and asks nothing.
 type WsValues struct {
 	// Server names the server that the Mac sets up, which its side takes. Empty on the server itself.
 	Server string
-	// Vars is host_vars' path. Set writes one key of it, as ws server ubuntu values set does.
+	// Vars is values.yml's path. Set writes one key of it, as ws server ubuntu values set does.
 	Vars string
 	Set  func(key, value string) error
 	// User is the user that ran sudo, which WS_USER offers first. Empty at a root login.
@@ -39,20 +39,20 @@ type WsValues struct {
 // Name is the stage's name.
 func (*WsValues) Name() string { return valuesStage }
 
-// Side is ws: its host_vars.
+// Side is ws: its values.yml.
 func (v *WsValues) Side() guided.Side { return session.SideOf(v.Server) }
 
 // WaitsOn is empty: the stage is ws's first.
 func (*WsValues) WaitsOn() string { return "" }
 
-// valuesAsk is the change that asks the keys that host_vars lacks, and names them there.
+// valuesAsk is the change that asks the keys that values.yml lacks, and names them there.
 type valuesAsk struct{ vars, keys string }
 
 func (c valuesAsk) String() string {
 	return valuesStage + ": would ask " + c.keys + ", and name each in " + c.vars
 }
 
-// Plan finds the keys that host_vars lacks.
+// Plan finds the keys that values.yml lacks.
 func (v *WsValues) Plan(context.Context) (step.Plan, error) {
 	data, err := v.M.ReadFile(v.Vars)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
@@ -70,7 +70,7 @@ func (v *WsValues) Plan(context.Context) (step.Plan, error) {
 	return step.Plan{Changes: []step.Change{valuesAsk{v.Vars, strings.Join(lacks, " and ")}}}, nil
 }
 
-// Apply asks each key that host_vars lacks, and names it there once answered. Without a terminal it
+// Apply asks each key that values.yml lacks, and names it there once answered. Without a terminal it
 // stops, naming the command that names a key by hand.
 func (v *WsValues) Apply(ctx context.Context, p step.Plan) error {
 	c, ok := p.Changes[0].(valuesAsk)
@@ -89,7 +89,7 @@ func (v *WsValues) Apply(ctx context.Context, p step.Plan) error {
 }
 
 // target tells whether ws is a cloud VM: it asks where keys holds the target, and names the answer
-// in host_vars, else reads the target that host_vars names.
+// in values.yml, else reads the target that values.yml names.
 func (v *WsValues) target(ctx context.Context, keys string) (bool, error) {
 	if !strings.Contains(keys, outboundKey) {
 		vals, err := values.Load(v.M, v.Vars)
@@ -104,7 +104,7 @@ func (v *WsValues) target(ctx context.Context, keys string) (bool, error) {
 	return target == "cloud", v.set(outboundKey, strconv.FormatBool(target != "cloud"))
 }
 
-// set names key in host_vars, with the stage's name before an error.
+// set names key in values.yml, with the stage's name before an error.
 func (v *WsValues) set(key, value string) error {
 	if err := v.Set(key, value); err != nil {
 		return fmt.Errorf("%s: %w", valuesStage, err)

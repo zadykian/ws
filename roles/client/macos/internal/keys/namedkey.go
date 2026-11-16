@@ -1,4 +1,4 @@
-// Package keys reads the keys that mac.conf names for a use, asks Secretive's agent for its keys,
+// Package keys reads the keys that values.yml names for a use, asks Secretive's agent for its keys,
 // and plans ws's copies of their .pub files.
 package keys
 
@@ -9,11 +9,11 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
-// KeyUse is what mac.conf names a key for.
+// KeyUse is what values.yml names a key for.
 type KeyUse int
 
 // The uses are ws's login key, WS_IDENTITY_PUB_KEY (roles/client/macos/README.md), and git's signing key,
@@ -29,8 +29,8 @@ var keyUses = [...]struct{ name, words, page string }{
 	SigningKey: {"WS_GIT_SIGNING_PUB_KEY", "git's signing key", "roles/client/macos/git/README.md"},
 }
 
-// named returns the .pub that mac.conf names for the use, and the agent it names for it.
-func (u KeyUse) named(c conf.Conf) (pub, agent string) {
+// named returns the .pub that values.yml names for the use, and the agent it names for it.
+func (u KeyUse) named(c values.Conf) (pub, agent string) {
 	if u == SigningKey {
 		return c.GitSigningPubKey, ""
 	}
@@ -38,7 +38,7 @@ func (u KeyUse) named(c conf.Conf) (pub, agent string) {
 }
 
 // refused is the stop where the .pub of file is no key that ws takes, err being why. The remedy
-// names the variable of mac.conf that names the file. A nil err passes.
+// names the variable of values.yml that names the file. A nil err passes.
 func (u KeyUse) refused(file string, err error) error {
 	name := keyUses[u].name
 	var typ sshcfg.TypeError
@@ -46,26 +46,26 @@ func (u KeyUse) refused(file string, err error) error {
 	case err == nil:
 		return nil
 	case errors.Is(err, sshcfg.ErrCertificate):
-		return fmt.Errorf("%s %w: name its key's own .pub in mac.conf's %s", file, err, name)
+		return fmt.Errorf("%s %w: name its key's own .pub in values.yml's %s", file, err, name)
 	case errors.As(err, &typ):
-		return fmt.Errorf("%s %w: name the .pub of a P-256 or ed25519 key in mac.conf's %s", file, err, name)
+		return fmt.Errorf("%s %w: name the .pub of a P-256 or ed25519 key in values.yml's %s", file, err, name)
 	}
 	return fmt.Errorf("%s %w", file, err)
 }
 
-// NamedKey is the key that mac.conf names for a use, read and checked.
+// NamedKey is the key that values.yml names for a use, read and checked.
 type NamedKey struct {
-	Pub   string           // as mac.conf names it, ~/ kept, or ws's copy for a key the agent holds
+	Pub   string           // as values.yml names it, ~/ kept, or ws's copy for a key the agent holds
 	File  string           // Pub with ~/ the home
 	Key   sshcfg.PublicKey // its type and base64
 	Text  string           // what the .pub holds, or what ws's copy will
 	Agent string           // the socket ssh asks: WS_IDENTITY_AGENT, else Secretive's for its key
 }
 
-// ReadKey reads the key that mac.conf names for u. It asks Secretive's agent where mac.conf names
+// ReadKey reads the key that values.yml names for u. It asks Secretive's agent where values.yml names
 // none, or names one of Secretive's. That key needs no file: macOS 27 denies ws Secretive's
 // (roles/client/macos/README.md). Each stop names u's variable, and the missing one u's page.
-func ReadKey(ctx context.Context, m effect.Machine, c conf.Conf, home string, u KeyUse) (NamedKey, error) {
+func ReadKey(ctx context.Context, m effect.Machine, c values.Conf, home string, u KeyUse) (NamedKey, error) {
 	name := keyUses[u].name
 	pub, agent := u.named(c)
 	// An agent that does not answer leaves a named .pub to read, and a stop with no line to add.
@@ -88,20 +88,20 @@ func ReadKey(ctx context.Context, m effect.Machine, c conf.Conf, home string, u 
 	text, err := m.ReadFile(file)
 	switch {
 	case errors.Is(err, fs.ErrNotExist):
-		return k, fmt.Errorf("%s, mac.conf's %s, is missing: make the key first, as %s says",
+		return k, fmt.Errorf("%s, values.yml's %s, is missing: make the key first, as %s says",
 			file, name, keyUses[u].page)
 	case errors.Is(err, fs.ErrPermission) && sshcfg.SecretiveKey(file, home):
 		return k, fmt.Errorf("cannot read %s, and Secretive's agent lists no key of it: open Secretive, "+
-			"or name another in mac.conf's %s", file, name)
+			"or name another in values.yml's %s", file, name)
 	case err != nil:
-		return k, fmt.Errorf("cannot read %s: make it readable, or name another in mac.conf's %s", file, name)
+		return k, fmt.Errorf("cannot read %s: make it readable, or name another in values.yml's %s", file, name)
 	}
 	if k.Key, err = sshcfg.ParsePub(string(text)); err != nil {
 		return k, u.refused(file, err)
 	}
 	if _, err := m.Run(ctx, "ssh-keygen", "-l", "-f", file); err != nil {
 		return k, fmt.Errorf("ssh-keygen cannot read %s: name the .pub of a P-256 or ed25519 key in "+
-			"mac.conf's %s", file, name)
+			"values.yml's %s", file, name)
 	}
 	k.Text = string(text)
 	return k, nil

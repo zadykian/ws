@@ -6,13 +6,13 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 func TestServerFlagNamesTheServerOfApplyAndState(t *testing.T) {
 	m := effecttest.NewMachine()
-	writeConfs(m, "", "WS_USER=ada\n")
-	m.Files[conf.ServerPath("/h/.config/ws/mac.conf", "box")] = []byte("WS_USER=bob\nWS_SLOT=1\n")
+	writeConfs(m, "", values.Text("WS_USER", "ada"))
+	m.Files[values.ServerPath("/h/.config/ws/values.yml", "box")] = []byte(values.Text("WS_USER", "bob", "WS_SLOT", "1"))
 	m.Dirs["/h/.config/ws/servers/box"] = 0o755
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
@@ -29,15 +29,15 @@ func TestServerFlagNamesTheServerOfApplyAndState(t *testing.T) {
 func TestServerFlagNamesTheServerOfConf(t *testing.T) {
 	m := effecttest.NewMachine()
 	for slot, name := range []string{"ws", "box"} {
-		m.Files[conf.ServerPath("/h/.config/ws/mac.conf", name)] = []byte("WS_USER=" + name + "\nWS_SLOT=" + strconv.Itoa(slot) + "\n")
+		m.Files[values.ServerPath("/h/.config/ws/values.yml", name)] = []byte(values.Text("WS_USER", name, "WS_SLOT", strconv.Itoa(slot)))
 	}
-	m.Files["/h/.config/ws/mac.conf"] = nil
+	m.Files["/h/.config/ws/values.yml"] = nil
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = withServerDirs(m)
-	if status, stdout, _ := runWs(p, "", "client", "macos", "conf", "--server", "box"); status != 0 || !strings.HasPrefix(stdout, "WS_USER='box'\n") {
+	if status, stdout, _ := runWs(p, "", "client", "macos", "values", "print", "--server", "box"); status != 0 || !strings.HasPrefix(stdout, "WS_USER='box'\n") {
 		t.Errorf("--server box: status = %d, stdout = %q", status, stdout)
 	}
-	if status, _, stderr := runWs(p, "", "client", "macos", "conf"); status != 1 || !strings.Contains(stderr, "several servers") {
+	if status, _, stderr := runWs(p, "", "client", "macos", "values", "print"); status != 1 || !strings.Contains(stderr, "several servers") {
 		t.Errorf("no flag: status = %d, stderr = %q", status, stderr)
 	}
 }

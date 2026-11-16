@@ -121,9 +121,9 @@ func TestZedSeedIsJSONWithItsCommentsDropped(t *testing.T) {
 func TestZedSeedsEachServerInNameOrder(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Dirs["/h/.config/ws/servers"], m.Dirs["/h/.config/ws/servers/lab"] = 0o755, 0o755
-	m.Files["/h/.config/ws/mac.conf"], m.Files["/h/.config/ws/servers/lab/server.conf"] = nil, nil
+	m.Files["/h/.config/ws/values.yml"], m.Files["/h/.config/ws/servers/lab/values.yml"] = nil, nil
 	z := zedOf(m, &effecttest.Out{})
-	z.MacConf = "/h/.config/ws/mac.conf"
+	z.MacConf = "/h/.config/ws/values.yml"
 	s := z.Step()
 	p, _ := s.Plan(context.Background())
 	if err := s.Apply(context.Background(), p); err != nil {

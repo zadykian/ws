@@ -13,6 +13,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // idleRun is ws's status after a full run of this ws, v1.2.3, that exited 0.
@@ -30,7 +31,7 @@ func newCable(t *testing.T, status session.Status, link string, env map[string]s
 	m.Results["mkdir -p /h"] = effecttest.Result{}
 	m.Results[sessiontest.Op("link")] = effecttest.Result{Out: []byte(link)}
 	p := &effecttest.Prompt{T: t, Answers: map[string]string{}}
-	c := &Cable{Ws: ws, SSH: root.SSH, Conf: "/h/mac.conf",
+	c := &Cable{Ws: ws, SSH: root.SSH, Conf: "/h/values.yml",
 		RunDone:  func(context.Context, session.Want) bool { return true },
 		MacApply: func(context.Context, bool) (bool, error) { return false, nil },
 		Env:      func(k string) (string, bool) { v, ok := env[k]; return v, ok }, P: p, Tty: true, M: m, Out: out}
@@ -42,9 +43,9 @@ func TestCablePlan(t *testing.T) {
 		conf, cable, link, want string
 		env                     map[string]string
 	}{
-		"done":       {"WS_CABLE_SERVICE=\n", "", cableLink, "", nil},
-		"named":      {"WS_CABLE_PORT=eth1\nWS_CABLE_SERVICE=\"USB\"\n", "eth1", cableLink, "", nil},
-		"another":    {"WS_CABLE_PORT=eth1\nWS_CABLE_SERVICE=\"USB\"\n", "eth0", cableLink, "again", nil},
+		"done":       {values.Text("WS_CABLE_SERVICE", ""), "", cableLink, "", nil},
+		"named":      {values.Text("WS_CABLE_PORT", "eth1", "WS_CABLE_SERVICE", "USB"), "eth1", cableLink, "", nil},
+		"another":    {values.Text("WS_CABLE_PORT", "eth1", "WS_CABLE_SERVICE", "USB"), "eth0", cableLink, "again", nil},
 		"undocked":   {"", "", "eth0 - -\n", "", nil},
 		"forced":     {"", "", "eth0 - -\n", "ask ws's port", map[string]string{"WS_CABLE_PORT": "eth0"}},
 		"docked":     {"", "", cableLink, "ask ws's port", nil},
@@ -52,7 +53,7 @@ func TestCablePlan(t *testing.T) {
 		"none given": {"", "", cableLink, "empty WS_CABLE_SERVICE", map[string]string{"WS_CABLE_SERVICE": ""}},
 	} {
 		c, m, _ := newCable(t, session.Status{Cable: tc.cable}, tc.link, tc.env)
-		m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + wayConf + tc.conf)
+		m.Files["/h/values.yml"] = []byte(values.Text("WS_TARGET", "lan") + wayConf + tc.conf)
 		p, err := c.Plan(context.Background())
 		got := errText(err)
 		for _, ch := range p.Changes {
@@ -84,16 +85,31 @@ func TestCableApplyAsksPortAndService(t *testing.T) {
 	if err := c.Apply(context.Background(), step.Plan{}); err != nil {
 		t.Fatal(err)
 	}
-	if got := string(m.Files["/h/mac.conf"]); !strings.Contains(got, "WS_CABLE_PORT=eth1\nWS_CABLE_SERVICE=\"USB LAN\"\n") {
-		t.Errorf("mac.conf = %q; want the port and the service", got)
+	if got := string(m.Files["/h/values.yml"]); !strings.Contains(got, values.Text("WS_CABLE_PORT", "eth1", "WS_CABLE_SERVICE", "USB LAN")) {
+		t.Errorf("values.yml = %q; want the port and the service", got)
+	}
+}
+
+func TestCableApplyAddsTheServiceAfterAPortSetByHand(t *testing.T) {
+	c, m, p := newCable(t, session.Status{}, cableLink, nil)
+	linked(m)
+	m.Files["/h/values.yml"] = []byte(values.Text("WS_TARGET", "lan", "WS_CABLE_PORT", "eth1"))
+	p.Answers["ws's port of the cable, of eth0, eth1 (carrier) (WS_CABLE_PORT) [eth1, or none]"] = "eth1"
+	p.Answers["The Mac's service of the cable, of Wi-Fi, USB LAN (WS_CABLE_SERVICE) [USB LAN, or none]"] = "USB LAN"
+	if err := c.Apply(context.Background(), step.Plan{}); err != nil {
+		t.Fatal(err)
+	}
+	want := values.Text("WS_TARGET", "lan", "WS_CABLE_PORT", "eth1", "WS_CABLE_SERVICE", "USB LAN")
+	if got := string(m.Files["/h/values.yml"]); got != want {
+		t.Errorf("values.yml = %q; want %q", got, want)
 	}
 }
 
 func TestCableApplyNone(t *testing.T) {
 	c, m, p := newCable(t, session.Status{}, cableLink, nil)
 	p.Answers["ws's port of the cable, of eth0, eth1 (carrier) (WS_CABLE_PORT) [eth1, or none]"] = "none"
-	if err := c.Apply(context.Background(), step.Plan{}); err != nil || !strings.Contains(string(m.Files["/h/mac.conf"]), "WS_CABLE_SERVICE=\n") {
-		t.Errorf("Apply with none = %v, mac.conf %q; want an empty service", err, m.Files["/h/mac.conf"])
+	if err := c.Apply(context.Background(), step.Plan{}); err != nil || !strings.Contains(string(m.Files["/h/values.yml"]), values.Text("WS_CABLE_SERVICE", "")) {
+		t.Errorf("Apply with none = %v, values.yml %q; want an empty service", err, m.Files["/h/values.yml"])
 	}
 }
 
@@ -118,8 +134,8 @@ func TestCableApplyChoosesPortAndServiceOnAScreen(t *testing.T) {
 	if err := c.Apply(context.Background(), step.Plan{}); err != nil {
 		t.Fatal(err)
 	}
-	if got := string(m.Files["/h/mac.conf"]); !strings.Contains(got, "WS_CABLE_PORT=eth1\nWS_CABLE_SERVICE=\"USB LAN\"\n") {
-		t.Errorf("mac.conf = %q; want the port and the service", got)
+	if got := string(m.Files["/h/values.yml"]); !strings.Contains(got, values.Text("WS_CABLE_PORT", "eth1", "WS_CABLE_SERVICE", "USB LAN")) {
+		t.Errorf("values.yml = %q; want the port and the service", got)
 	}
 	want := []effect.ChoiceQuestion{{Options: []string{"eth0", "eth1 (carrier)", "none"}, Default: "eth1 (carrier)"},
 		{Options: []string{"Wi-Fi", "USB LAN", "none"}, Default: "USB LAN"}}
@@ -134,8 +150,8 @@ func TestCableApplyChoosesNoneOnAScreen(t *testing.T) {
 	c, m, p := newCable(t, session.Status{}, "eth0 1 -\neth1 1 -\n", nil)
 	ch := &chooser{Prompt: p, answers: map[string]string{"ws's port of the cable (WS_CABLE_PORT)": "none"}}
 	c.P = ch
-	if err := c.Apply(context.Background(), step.Plan{}); err != nil || !strings.Contains(string(m.Files["/h/mac.conf"]), "WS_CABLE_SERVICE=\n") {
-		t.Errorf("Apply with none = %v, mac.conf %q; want an empty service", err, m.Files["/h/mac.conf"])
+	if err := c.Apply(context.Background(), step.Plan{}); err != nil || !strings.Contains(string(m.Files["/h/values.yml"]), values.Text("WS_CABLE_SERVICE", "")) {
+		t.Errorf("Apply with none = %v, values.yml %q; want an empty service", err, m.Files["/h/values.yml"])
 	}
 	if len(ch.asked) != 1 || ch.asked[0].Default != "none" {
 		t.Errorf("asked %+v; want none first, as two ports have carrier", ch.asked)
@@ -165,7 +181,7 @@ func TestCableHand(t *testing.T) {
 
 func TestCablePlanAfterRunUnderCheck(t *testing.T) {
 	c, m, _ := newCable(t, session.Status{}, cableLink, nil)
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + wayConf)
+	m.Files["/h/values.yml"] = []byte(values.Text("WS_TARGET", "lan") + wayConf)
 	c.Check = true
 	c.RunDone = func(context.Context, session.Want) bool { return false }
 	p, err := c.Plan(context.Background())
@@ -177,7 +193,7 @@ func TestCablePlanAfterRunUnderCheck(t *testing.T) {
 
 func TestCablePlanAfterRunWithNoWayUnderCheck(t *testing.T) {
 	c, m, _ := newCable(t, session.Status{}, cableLink, nil)
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + wayConf)
+	m.Files["/h/values.yml"] = []byte(values.Text("WS_TARGET", "lan") + wayConf)
 	c.Check = true
 	for k := range m.Results {
 		if strings.HasPrefix(k, "ssh -G") {
@@ -193,7 +209,7 @@ func TestCablePlanAfterRunWithNoWayUnderCheck(t *testing.T) {
 
 func TestCablePlanReadsNoPortsWhereTheEnvironmentNamesOne(t *testing.T) {
 	c, m, _ := newCable(t, session.Status{}, cableLink, map[string]string{"WS_CABLE_PORT": "eth1"})
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + wayConf)
+	m.Files["/h/values.yml"] = []byte(values.Text("WS_TARGET", "lan") + wayConf)
 	if _, err := c.Plan(context.Background()); err != nil || len(c.ports) != 0 {
 		t.Errorf("Plan = %v, read ports %v; want no read of link", err, c.ports)
 	}
@@ -201,18 +217,18 @@ func TestCablePlanReadsNoPortsWhereTheEnvironmentNamesOne(t *testing.T) {
 
 // beside makes ws's file, which names the cable's service, a sibling of lab's file at /h/servers/lab.
 func beside(c *Cable, m *effecttest.Machine, ws string) {
-	c.Mac, c.Server, c.Conf = "/h/mac.conf", "lab", "/h/servers/lab/server.conf"
+	c.Mac, c.Server, c.Conf = "/h/values.yml", "lab", "/h/servers/lab/values.yml"
 	m.Dirs["/h/servers"], m.Dirs["/h/servers/ws"], m.Dirs["/h/servers/lab"] = 0o755, 0o755, 0o755
-	m.Files["/h/servers/ws/server.conf"] = []byte(ws)
-	m.Files[c.Conf] = []byte("WS_TARGET=lan\n" + wayConf)
+	m.Files["/h/servers/ws/values.yml"] = []byte(ws)
+	m.Files[c.Conf] = []byte(values.Text("WS_TARGET", "lan") + wayConf)
 	m.Results["mkdir -p /h/servers/lab"] = effecttest.Result{}
 }
 
 func TestCablePlanLeavesTheCableToTheServerThatNamesIt(t *testing.T) {
 	c, m, _ := newCable(t, session.Status{}, cableLink, nil)
-	beside(c, m, "WS_TARGET=lan\nWS_CABLE_PORT=eth1\nWS_CABLE_SERVICE=\"USB\"\n")
+	beside(c, m, values.Text("WS_TARGET", "lan", "WS_CABLE_PORT", "eth1", "WS_CABLE_SERVICE", "USB"))
 	p, err := c.Plan(context.Background())
-	want := "would write WS_CABLE_SERVICE= in /h/servers/lab/server.conf: the cable reaches server ws"
+	want := "would write " + values.Line("WS_CABLE_SERVICE", "") + " in /h/servers/lab/values.yml: the cable reaches server ws"
 	if len(p.Changes) != 1 || err != nil || !strings.HasSuffix(p.Changes[0].String(), want) {
 		t.Errorf("Plan = %v, %v; want %q", p, err, want)
 	}
@@ -220,18 +236,18 @@ func TestCablePlanLeavesTheCableToTheServerThatNamesIt(t *testing.T) {
 
 func TestCableApplyWritesNoCableWhereASiblingNamesOne(t *testing.T) {
 	c, m, _ := newCable(t, session.Status{}, cableLink, nil)
-	beside(c, m, "WS_TARGET=lan\nWS_CABLE_PORT=eth1\nWS_CABLE_SERVICE=\"USB\"\n")
+	beside(c, m, values.Text("WS_TARGET", "lan", "WS_CABLE_PORT", "eth1", "WS_CABLE_SERVICE", "USB"))
 	if err := c.Apply(context.Background(), step.Plan{}); err != nil {
 		t.Fatal(err)
 	}
-	if got := string(m.Files[c.Conf]); !strings.HasSuffix(got, "WS_CABLE_SERVICE=\n") || strings.Contains(got, "WS_CABLE_PORT") {
+	if got := string(m.Files[c.Conf]); !strings.HasSuffix(got, values.Text("WS_CABLE_SERVICE", "")) || strings.Contains(got, "WS_CABLE_PORT") {
 		t.Errorf("lab's file = %q; want an empty WS_CABLE_SERVICE alone", got)
 	}
 }
 
 func TestCablePlanAsksAgainWhereTheSiblingHasNone(t *testing.T) {
 	c, m, _ := newCable(t, session.Status{}, cableLink, nil)
-	beside(c, m, "WS_TARGET=lan\nWS_CABLE_SERVICE=\n")
+	beside(c, m, values.Text("WS_TARGET", "lan", "WS_CABLE_SERVICE", ""))
 	p, err := c.Plan(context.Background())
 	if err != nil || len(p.Changes) != 1 || !strings.Contains(p.Changes[0].String(), "ask ws's port") {
 		t.Errorf("Plan = %v, %v; want the question of the port", p, err)

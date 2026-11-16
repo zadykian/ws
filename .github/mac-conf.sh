@@ -1,8 +1,9 @@
 # shellcheck shell=sh
-# The cases of the mac, mac-wizard and mac-cld jobs write and read a conf, the file that WS_CONF
-# names, through these functions. They source this file and never run it. A conf's layout lives
-# here alone: mac.conf holds the Mac's three keys, and servers/ws/server.conf, beside it, every
-# other key. roles/client/macos/conf/scope.go lists the three keys too.
+# The cases of the mac, mac-wizard and mac-cld jobs write and read a conf, the file that WS_VALUES
+# names, through these functions. A conf is YAML, a KEY: value a line, and a case writes each value
+# as the file holds it, in quotes where YAML needs them. They source this file and never run it. A conf's layout lives
+# here alone: the Mac's values.yml holds the Mac's three keys, and servers/ws/values.yml, beside it, every
+# other key. roles/client/macos/values/scope.go lists the three keys too.
 
 # conf_server names the server whose file goes with a conf. A case sets it to another name, and
 # sets it back, where it works on a second server.
@@ -10,11 +11,11 @@ conf_server=ws
 
 # conf_server_file CONF prints the path of the server's file that goes with CONF.
 conf_server_file() {
-    echo "${1%/*}/servers/$conf_server/server.conf"
+    echo "${1%/*}/servers/$conf_server/values.yml"
 }
 
 # conf_split SCOPE prints the lines of stdin that go in the file of SCOPE, mac or server. A line
-# with no key stays with mac.conf.
+# with no key stays with values.yml.
 conf_split() {
     awk -v scope="$1" '
         BEGIN {
@@ -24,18 +25,18 @@ conf_split() {
         {
             key = $0
             server = 0
-            if (key ~ /^[A-Za-z_][A-Za-z0-9_]*=/) {
-                sub(/=.*/, "", key)
+            if (key ~ /^[A-Za-z_][A-Za-z0-9_]*:/) {
+                sub(/:.*/, "", key)
                 server = !(key in mac)
             }
             if (server == (scope == "server")) print
         }'
 }
 
-# conf_write CONF puts each KEY=value line of stdin in the file of its key, CONF or the server's
+# conf_write CONF puts each KEY: value line of stdin in the file of its key, CONF or the server's
 # file, in place of what they held. The server's file goes, with its directory, where it gets no
-# line. A server's file that it makes and that holds no WS_SLOT gets WS_SLOT=0 first, as the wizard
-# gives it. WS_TUNNEL_PORT=51820 follows, where the lines hold no WS_TUNNEL_PORT. It reads stdin first, so that
+# line. A server's file that it makes and that holds no WS_SLOT gets WS_SLOT: 0 first, as the wizard
+# gives it. WS_TUNNEL_PORT: 51820 follows, where the lines hold no WS_TUNNEL_PORT. It reads stdin first, so that
 # conf_print CONF | ... | conf_write CONF is safe. It writes in place, so that CONF keeps its inode
 # and its mode.
 conf_write() {
@@ -54,10 +55,10 @@ conf_write() {
     conf_dest=$(conf_server_file "$1")
     if [ -n "$conf_part" ]; then
         mkdir -p "${conf_dest%/*}"
-        if ! printf '%s' "$conf_part" | grep -q '^WS_SLOT='; then
-            printf '%s' "$conf_part" | grep -q '^WS_TUNNEL_PORT=' || conf_part="WS_TUNNEL_PORT=51820
+        if ! printf '%s' "$conf_part" | grep -q '^WS_SLOT:'; then
+            printf '%s' "$conf_part" | grep -q '^WS_TUNNEL_PORT:' || conf_part="WS_TUNNEL_PORT: 51820
 $conf_part"
-            conf_part="WS_SLOT=0
+            conf_part="WS_SLOT: 0
 $conf_part"
         fi
         printf '%s' "$conf_part" >"$conf_dest"
@@ -74,20 +75,20 @@ conf_print() {
     [ ! -f "$conf_part" ] || cat "$conf_part"
 }
 
-# conf_set CONF LINE... handles each LINE in turn. A KEY=value LINE takes the place of KEY's first
+# conf_set CONF LINE... handles each LINE in turn. A KEY: value LINE takes the place of KEY's first
 # line and drops the later ones, or goes at the end where CONF has no KEY. A bare KEY drops its
 # lines.
 conf_set() {
     conf_file=$1
     shift
     for conf_arg in "$@"; do
-        conf_print "$conf_file" | conf_key=${conf_arg%%=*} conf_line=$conf_arg awk '
+        conf_print "$conf_file" | conf_key=${conf_arg%%:*} conf_line=$conf_arg awk '
             BEGIN {
                 key = ENVIRON["conf_key"]
                 line = ENVIRON["conf_line"]
                 n = length(key) + 1
             }
-            substr($0, 1, n) == key "=" {
+            substr($0, 1, n) == key ":" {
                 if (!done && line != key) print line
                 done = 1
                 next

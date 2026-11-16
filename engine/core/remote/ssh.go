@@ -56,8 +56,8 @@ func (s SSH) way(ctx context.Context) (host, port string, found bool) {
 	return host, port, found
 }
 
-// longestSocket is the longest name of a socket in the lock: direct, direct.1, or the server's name,
-// which conf holds to 12 characters (conf's maxName). The engine may not import conf.
+// longestSocket is the longest name of a socket in the lock: direct, direct.1, or a server's name.
+// The Mac's values package holds that to 12 characters (maxName). The engine may not import it.
 const longestSocket = 12
 
 // room tells whether the lock's path leaves room for a socket's. A master binds its socket at the
@@ -90,7 +90,7 @@ func (s SSH) Shared(socket string) []string {
 // Argv returns ssh's arguments for a direct call, whose host in args is the server.
 //   - The way's host and port go before args as options, over config.d/ws's, which leads through the
 //     tunnel. The address that a stage asked replaces the way's host.
-//   - AddressFamily=inet goes on every call: the ways are IPv4 by conf and WS_REMOTE takes IPv4 alone.
+//   - AddressFamily=inet goes on every call: the ways are IPv4 by values and WS_REMOTE takes IPv4 alone.
 //   - The socket is direct, so that a call never rides the tunnel's master. The address that a
 //     stage asked adds .1, so that a master made before it never carries a call to it.
 func (s SSH) Argv(ctx context.Context, args []string) []string {

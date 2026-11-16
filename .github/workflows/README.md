@@ -18,7 +18,7 @@ draw [the run screen](../../engine/tui/README.md#the-run-screen) and end on `wou
 the container's NET_ADMIN, checks the outbound table the run wrote and the users it names, and a
 find that the user owns its home. The Zed wrapper's [checks](../zed-terminal-checks.sh) run
 on the files it installed, and Fresh's on the config it loaded. Root's leg has no table. The run
-leaves out its own check ([Outbound](../../roles/server/ubuntu/security/README.md#outbound)). Its `/etc/ws/host_vars.yml` gives a
+leaves out its own check ([Outbound](../../roles/server/ubuntu/security/README.md#outbound)). Its `/etc/ws/values.yml` gives a
 swap file of 64 MiB, as the runner's disk has no room for one of its RAM's size. With no NVIDIA GPU,
 `nvidia` checks its names alone, and with no MSI board, `fans` leaves its fans alone. With no VPN
 profile, `ikeward` does nothing. `ws server ubuntu wizard --check --plain` then asks nothing, as the
@@ -45,21 +45,21 @@ and fails where they differ from the repository's, in `roles/server/ubuntu/signo
 
 A workflow of its own, `mac-wizard.yml`, runs `ws client macos wizard` on GitHub's macOS runner,
 from a copy of the checkout at `~/repository/ws`. `standin.sh` gives the wizard what a new Mac and
-user would, such as `mac.conf`'s answers, dash, and a logged-in `gh`, first on the wizard's `PATH`.
+user would, such as `values.yml`'s answers, dash, and a logged-in `gh`, first on the wizard's `PATH`.
 Then `checks.sh` runs the cases beside it in order, stopping at the first failure
 ([checks.sh](../mac-wizard/checks.sh)). The wizard must refuse an unknown flag, root and a removed
 `WS_HOOK` line, as an unknown key, with `--server ws`, and a removed op of the files script. A run
 must stop where another holds the lock, leaving it. A fresh `--check`, by sh and dash, must find
 brew with its directories off `PATH`. As `ws client macos apply --check` must, it must change
-nothing, and leave no lock or temporary file. The job's `mac.conf` names `~/.ssh/id_ed25519` as ws's
-key, which `standin.sh` makes, as the wizard makes none in a file. With no terminal and a `mac.conf`
+nothing, and leave no lock or temporary file. The job's `values.yml` names `~/.ssh/id_ed25519` as ws's
+key, which `standin.sh` makes, as the wizard makes none in a file. With no terminal and a `values.yml`
 that names none, a run must stop at the Mac key stage, naming `WS_IDENTITY_PUB_KEY`, making nothing,
 and `--check` must show the question, a new key the default. A named key that is missing must stop a
 run. The first run, with that `PATH` too, must add that key to that login, install what `ws client
 macos apply` installs. It must drop the Mac's key that it prints, and leave no tunnel step by hand,
 as the Tunnel stage below takes it. A second run and `--check` must print nothing, by sh and dash:
 here and below, nothing but gh's line that GitHub lists the key. Then a stand-in `ssh-agent` at
-Secretive's socket holds a P-256 key, which a `mac.conf` of its own names as ws's. While it lists
+Secretive's socket holds a P-256 key, which a `values.yml` of its own names as ws's. While it lists
 the key, `--check` must print nothing of the Mac key stage. With git's name, it must ask for git's
 key, marking that key as ws's, an empty one too, and a run must stop, naming its line. With no
 `WS_IDENTITY_PUB_KEY` and `PublicKeys` closed, `--check` must offer the agent's key for ws's login,
@@ -95,16 +95,16 @@ through `sudo`, sent as the wizard sends it. `ws.sh` roots its paths in a direct
 puts the stand-ins of [ws-standin.sh](../mac-wizard/ws-standin.sh) for ws's programs first
 on its `PATH`. `status` must print the stamps and the stand-ins' states. Those are `wg0`'s key, the
 Mac's key for it and as its peer, and ws's signing key or `none`. They are also its hostname,
-claude's login, Secure Boot that refuses the fans' driver, and `host_vars.yml`'s `WS_USER` and
+claude's login, Secure Boot that refuses the fans' driver, and `values.yml`'s `WS_USER` and
 outbound table. `state` must print ws's report and exit with its status. Like a full `run`, it has
 root's `HOME` and a UTF-8 locale. A full `run` must run `ws server ubuntu apply` with `--json` alone
 in a unit of its own. It must print the log, event lines too. It must stamp ws's version, `-` here,
-0, `on`, and `-` for the sums of the secrets file and `host_vars.yml`. After its `outbound` writes
+0, `on`, and `-` for the sums of the secrets file and `values.yml`. After its `outbound` writes
 the line, which stops on a link, it stamps `off` and that file's sum. A tagged run after it must
 start its own unit and leave that stamp. A run must follow a full unit or one of its steps, and
 refuse another's. A full run cut off must remove the last stamp, so the next starts a unit. The
 files script, `roles/server/ubuntu/session/wizard-remote-files.sh`: its `link` must list the wired ports,
-`user NAME` name `WS_USER`, `values` print `host_vars.yml` and `values PAIR...` run `ws server
+`user NAME` name `WS_USER`, `values` print `values.yml` and `values PAIR...` run `ws server
 ubuntu values set` on each. `link PORT` must name one there, mode 600 in a 755 directory, once,
 which `status` names once the roles give `10.77.0.1`. With ws's secrets file and its credential, a
 run must start a unit that loads the credential and runs `--secrets` on that file, and stamp its
@@ -127,7 +127,7 @@ closes. Without the stamp, a run whose unit is cut off must stop at the stage, a
 start a unit of its own. That run must end with what stays by hand: the fans' driver and the
 router's forwards. A run while a unit runs, as a dropped ssh's, must follow that unit. With
 `WS_TARGET=cloud`, a run must turn the outbound table off, and the next none. A run after
-`host_vars.yml` changed, as a case or the Cable stage changes it, must run apply.
+`values.yml` changed, as a case or the Cable stage changes it, must run apply.
 
 `standin.sh` logs ws's claude in, and the Mac's gh lists ws's signing key, so no run may open a
 session on ws for a login. A fresh `--check` must show the Signing key and claude on ws after ws's
@@ -159,12 +159,12 @@ must skip it, a cloud VM's naming its firewall.
 The cases give the other answers in the environment. With no terminal, a missing answer must stop a
 run and `--check` within 60 s, naming its key. A bad one from the environment must stop `--check`,
 with the form the key takes. `--check` must show the environment's answers as the lines it would add
-to `mac.conf` and the server's file, and the first run must add them at their ends. Typed at a
+to `values.yml` and the server's file, and the first run must add them at their ends. Typed at a
 terminal of `script`'s after bad ones, each asked again, the same answers must show the same lines,
 and empty lines the defaults, for each target. After the first run, they must write the same files.
 
 Last, the wizard with that `PATH` must find the runner's Command Line Tools and brew, so that a
-second run and `--check` print nothing. Where `WS_CONF` names no file, `--check` must show the lines
+second run and `--check` print nothing. Where `WS_VALUES` names no file, `--check` must show the lines
 it would write there, from the answers in the environment, and write none. The case that reads
 [`homebrew.go`](../../roles/client/macos/stages/tools/homebrew.go)'s pins must download Homebrew's `.pkg` and match its
 SHA-256 and signer, the signer as `pkgSigner` reads it. The log shows `pkgutil`'s chain. The `.pkg`
@@ -182,7 +182,7 @@ CI also sets up a Mac, by [its cases](../mac), in the order of [The Mac](../../r
 client macos apply --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config`
 or `~/.zshrc`, and installs no formula or cask. It must note the install of Zed's cask. Stand-ins
 for Ghostty's and Zed's apps, the font and cld, which `ws client macos apply` leaves alone, spare
-the job's runs their downloads. The job's `mac.conf` names a file key, made in case 20, as ws's
+the job's runs their downloads. The job's `values.yml` names a file key, made in case 20, as ws's
 login key and git's. Without ws's WireGuard key, `ws client macos apply` must make the Mac's key and
 load no daemon, and `ssh -G ws` gives the tunnel's end. The public key it prints must be the Mac's,
 as must the key in the command that gives it to ws. With a stand-in's key it must load and run the
@@ -199,14 +199,14 @@ nothing ([mac-ws-checks.sh](../mac-ws-checks.sh)). Next, the server's `WS_TUNNEL
 `WS_RESOLVERS` must give a route and a resolver, each shown by `--check` first. A second run and
 `--check` must print nothing, and a fourth nameserver must be refused. Emptied or removed, the keys
 must take both back, and spare a script's own. Last, `ws client macos apply` must read an empty
-value in `mac.conf` as its key's default, and still stop on a value of the wrong form. It must also
+value in `values.yml` as its key's default, and still stop on a value of the wrong form. It must also
 stop on a `WS_LAN_ADDRESS` outside `WS_LAN`, and on the LAN's network or broadcast address
 ([mac-conf-checks.sh](../mac-conf-checks.sh)). With `WS_CABLE_SERVICE` empty, `ws client
 macos apply` must print nothing. Set, it must run one `networksetup -setmanual`, a stand-in's,
 through sudo, and then none. It must warn of a disabled service. It must stop on one networksetup
 lacks, or one with a router outside the cable's `/30`. It must stop too on a `-setmanual` that fails
 or changes nothing, and name what differs ([mac-setup-checks.sh](../mac-setup-checks.sh)).
-`ssh -G` must give `ws` the file key that the job's `mac.conf` names, by its four lines. It must
+`ssh -G` must give `ws` the file key that the job's `values.yml` names, by its four lines. It must
 give it the file or the agent that `WS_IDENTITY_PUB_KEY` and `WS_IDENTITY_AGENT` name, with
 `--check` showing `config.d/ws`'s diff alone. An empty `WS_IDENTITY_PUB_KEY` must stop `ws client
 macos apply`, though an agent at Secretive's socket holds a P-256 key. The stop must give the line
@@ -227,7 +227,7 @@ link that lacks the include. One whose file has it must pass. The settings of gi
 named. With a key that an agent holds at Secretive's socket and `PublicKeys` closed, an empty
 `WS_GIT_SIGNING_PUB_KEY` must stop with its line. Named, `--check` must show the wrapper and write
 none. A run must write ws's copy of the key's `.pub`, and git sign whatever `SSH_AUTH_SOCK` names.
-`ws` must keep the file key that `mac.conf` names. git's credential command for GitHub must be a
+`ws` must keep the file key that `values.yml` names. git's credential command for GitHub must be a
 stand-in gh's, which must add the key to its login once. Logged out, gh must draw a warning at each
 run. Logged in, `ws client macos apply` must warn of a 404 or another error of gh's, and of an add
 that leaves the account without the key. It must add the key where the account lacks it, and

@@ -12,6 +12,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos"
 	"github.com/zadykian/ws/roles/client/macos/stages/tools"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // lastEvents keeps the steps that end, each after its parent.
@@ -25,11 +26,11 @@ func (l *lastEvents) Observe(e step.Event) {
 
 func TestWizardSetupPassesTheObserverOn(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"], m.Files["/h/servers/ws/server.conf"] = []byte(""), []byte("WS_USER=ada\n")
+	m.Files["/h/values.yml"], m.Files["/h/servers/ws/values.yml"] = []byte(""), []byte(values.Text("WS_USER", "ada"))
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
 	var got lastEvents
-	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}, obs: &got}, nil, "/h/mac.conf", "/h/mac.conf", "ws")
+	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}, obs: &got}, nil, "/h/values.yml", "/h/values.yml", "ws")
 	// The fake machine fails ssh's plan, and each step ends all the same.
 	_, _ = s.Run(context.Background(), true)
 	var want lastEvents
@@ -56,14 +57,14 @@ func (l *leftEvents) Observe(e step.Event) {
 func setupOf(t *testing.T, e wizardEffects, left func(parent, name string) bool) *tools.Setup {
 	t.Helper()
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"], m.Files["/h/servers/ws/server.conf"] = []byte(""), []byte("WS_USER=ada\n")
+	m.Files["/h/values.yml"], m.Files["/h/servers/ws/values.yml"] = []byte(""), []byte(values.Text("WS_USER", "ada"))
 	e.p = withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	e.p.Machine, e.text, e.out = m, io.Discard, &effecttest.Out{}
-	return wizardSetup(e, left, "/h/mac.conf", "/h/mac.conf", "ws")
+	return wizardSetup(e, left, "/h/values.yml", "/h/values.yml", "ws")
 }
 
 func TestWizardSetupWaitsOnTheMacKeyStage(t *testing.T) {
-	// setupOf's mac.conf names no key for ws, which the Mac key stage would ask for.
+	// setupOf's values.yml names no key for ws, which the Mac key stage would ask for.
 	s := setupOf(t, wizardEffects{}, nil)
 	s.LookPath = func(string) (string, error) { return "/brew", nil }
 	p, err := s.Plan(context.Background())
@@ -100,18 +101,18 @@ func TestWizardSetupStopsWhereTheRunDoes(t *testing.T) {
 // beside that one, as the run will, and so find no clash.
 func TestWizardSetupListsTheServersBesideItsFile(t *testing.T) {
 	p, m := macTerminal()
-	m.Files["/h/.config/ws/servers/lab/server.conf"], m.Dirs["/h/.config/ws/servers/lab"] = []byte("WS_USER=ada\n"), 0o755
-	m.Files["/lock/mac.conf"] = m.Files["/h/.config/ws/mac.conf"]
-	m.Files["/lock/servers/ws/server.conf"] = []byte("WS_USER=ada\n")
-	m.Files["/lock/servers/lab/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=1\n")
+	m.Files["/h/.config/ws/servers/lab/values.yml"], m.Dirs["/h/.config/ws/servers/lab"] = []byte(values.Text("WS_USER", "ada")), 0o755
+	m.Files["/lock/values.yml"] = m.Files["/h/.config/ws/values.yml"]
+	m.Files["/lock/servers/ws/values.yml"] = []byte(values.Text("WS_USER", "ada"))
+	m.Files["/lock/servers/lab/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "1"))
 	m.Dirs["/lock/servers"], m.Dirs["/lock/servers/ws"], m.Dirs["/lock/servers/lab"] = 0o755, 0o755, 0o755
 	for _, file := range []string{"new", "whole"} {
 		m.Results["ssh -G -F /tmp/x/"+file+" lab"] = effecttest.Result{}
 	}
 	left := func(parent, name string) bool { return parent == "ws client macos apply" && name != "ssh" }
-	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}}, left, "/lock/mac.conf", "/h/.config/ws/mac.conf", "lab")
+	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}}, left, "/lock/values.yml", "/h/.config/ws/values.yml", "lab")
 	if _, err := s.Run(context.Background(), true); err != nil {
-		t.Errorf("Run = %v, want the plan of the servers beside /lock/mac.conf", err)
+		t.Errorf("Run = %v, want the plan of the servers beside /lock/values.yml", err)
 	}
 }
 
@@ -119,13 +120,13 @@ func TestWizardSetupListsTheServersBesideItsFile(t *testing.T) {
 // the lock, refused for its slot. The refusal names the real file, as the run's does.
 func TestWizardSetupNamesTheRealFileOfARefusedSibling(t *testing.T) {
 	p, m := macTerminal()
-	m.Files["/lock/mac.conf"] = m.Files["/h/.config/ws/mac.conf"]
-	m.Files["/lock/servers/ws/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=99\n")
-	m.Files["/lock/servers/lab/server.conf"] = []byte("WS_USER=ada\nWS_SLOT=1\n")
+	m.Files["/lock/values.yml"] = m.Files["/h/.config/ws/values.yml"]
+	m.Files["/lock/servers/ws/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "99"))
+	m.Files["/lock/servers/lab/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "1"))
 	m.Dirs["/lock/servers"], m.Dirs["/lock/servers/ws"], m.Dirs["/lock/servers/lab"] = 0o755, 0o755, 0o755
-	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}}, nil, "/lock/mac.conf", "/h/.config/ws/mac.conf", "lab")
+	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}}, nil, "/lock/values.yml", "/h/.config/ws/values.yml", "lab")
 	_, err := s.Run(context.Background(), true)
-	if err == nil || !strings.Contains(err.Error(), "server ws: /h/.config/ws/servers/ws/server.conf, line 2") || strings.Contains(err.Error(), "/lock") ||
+	if err == nil || !strings.Contains(err.Error(), "server ws: /h/.config/ws/servers/ws/values.yml, line 2") || strings.Contains(err.Error(), "/lock") ||
 		!strings.Contains(err.Error(), "fix its file, or ws client macos remove ws") {
 		t.Errorf("Run = %v, want ws's real file refused, with the way out", err)
 	}

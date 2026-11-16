@@ -9,15 +9,15 @@ import (
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/tools"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // wizardSetup returns the stage that runs the steps of ws client macos apply in the wizard's
 // process. Until the server's file has WS_PUBLIC_KEY, the Tunnel step prints the Mac's key and the commands
 // that make it ws's peer at every run. The Tunnel stage takes that over, so the text goes nowhere
 // then. mac is the file to read, and name the server whose file lies beside it: both are Answers'
-// would-be files under --check. shown is the real mac.conf, whose directory a refusal of another
+// would-be files under --check. shown is the real values.yml, whose directory a refusal of another
 // server's file names in place of mac's, as the run's refusal does. The steps list the servers beside mac too, so that under --check
 // they see the others that Answers copied there, as the run sees them. obs takes the steps'
 // events, which name the stage: each of a stage's runs reports them again, a check before it
@@ -26,7 +26,7 @@ func wizardSetup(e wizardEffects, left func(parent, name string) bool, mac, show
 	p := e.p
 	s := &tools.Setup{Conf: mac, M: p.Machine}
 	s.Run = func(ctx context.Context, check bool) (bool, error) {
-		c, err := conf.Load(p.Machine, mac, conf.ServerPath(mac, name))
+		c, err := values.Load(p.Machine, mac, values.ServerPath(mac, name))
 		if err != nil {
 			return false, err
 		}

@@ -7,7 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // replies is a prompt that gives each answer in turn and keeps the questions.
@@ -30,7 +30,7 @@ func TestAskServerOffersWsAndSetsTheName(t *testing.T) {
 		t.Fatal(err)
 	}
 	q := ask.got[0]
-	if name != "box" || q.Text != "The server's name" || q.Default != conf.FirstServer {
+	if name != "box" || q.Text != "The server's name" || q.Default != values.FirstServer {
 		t.Errorf("name = %q, question = %+v; want box, the server's name with ws offered", name, q)
 	}
 	if err := q.Valid("Lab"); err == nil {
@@ -76,11 +76,11 @@ func TestWizardAsksTheServersNameAndAsksAgainOnABadOne(t *testing.T) {
 	p, _ := testWizardProcess("darwin", 501)
 	p.TTY = true
 	status, _, stderr := runWs(p, "Lab\nbox\n", "client", "macos", "wizard", "--check")
-	if status != 1 || !strings.Contains(stderr, "The server's name [ws]: not a server's name: "+conf.NameForm+"\n") ||
+	if status != 1 || !strings.Contains(stderr, "The server's name [ws]: not a server's name: "+values.NameForm+"\n") ||
 		!strings.Contains(stderr, "The server's name [ws]: ") || strings.Contains(stderr, "no terminal to ask the server's name") {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
-	if !strings.Contains(strings.Join(p.Machine.(*effecttest.Machine).Calls, "\n"), "read /.config/ws/servers/box/server.conf") {
+	if !strings.Contains(strings.Join(p.Machine.(*effecttest.Machine).Calls, "\n"), "read /.config/ws/servers/box/values.yml") {
 		t.Errorf("calls = %v; want the stages on box", p.Machine.(*effecttest.Machine).Calls)
 	}
 }
@@ -89,7 +89,7 @@ func TestWizardTakesWsWithAnEmptyAnswer(t *testing.T) {
 	p, _ := testWizardProcess("darwin", 501)
 	p.TTY = true
 	runWs(p, "\n", "client", "macos", "wizard", "--check")
-	if !strings.Contains(strings.Join(p.Machine.(*effecttest.Machine).Calls, "\n"), "read /.config/ws/servers/ws/server.conf") {
+	if !strings.Contains(strings.Join(p.Machine.(*effecttest.Machine).Calls, "\n"), "read /.config/ws/servers/ws/values.yml") {
 		t.Errorf("calls = %v; want the stages on ws", p.Machine.(*effecttest.Machine).Calls)
 	}
 }
@@ -109,7 +109,7 @@ func TestWizardAsksNothingWhereAServerExistsOrIsNamed(t *testing.T) {
 		p.TTY = true
 		if name == "one server" {
 			m := p.Machine.(*effecttest.Machine)
-			m.Files[conf.ServerPath("/.config/ws/mac.conf", "box")] = nil
+			m.Files[values.ServerPath("/.config/ws/values.yml", "box")] = nil
 			withServerDirs(m)
 		}
 		_, _, stderr := runWs(p, "", append([]string{"client", "macos", "wizard", "--check"}, args...)...)

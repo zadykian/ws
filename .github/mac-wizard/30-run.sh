@@ -2,7 +2,7 @@
 # The first run, with standin.sh's PATH, which lacks brew. The wizard must still find brew,
 # so that ws client macos apply copies ws for root, makes the Mac's key, and writes ssh's files.
 # Without WS_PUBLIC_KEY, ws client macos apply prints the Mac's key, which the wizard drops. The
-# stand-in made the ssh key that mac.conf names, ~/.ssh/id_ed25519. The wizard must add its .pub to
+# stand-in made the ssh key that values.yml names, ~/.ssh/id_ed25519. The wizard must add its .pub to
 # the stand-in gh's login, titled with the Mac's name.
 # It must add the environment's answers at the end of the file of each key, and leave no lock or file of its
 # own in $TMPDIR. It must warn that ws, reached through WS_REMOTE, faces the internet, and add ws's
@@ -12,7 +12,7 @@
 # wizard runs again. It must run ws server ubuntu
 # apply once, with --json alone, in a unit with root's HOME, stamp its status 0, and print no event. Then the Mac's
 # key must go to the stand-in ws's mac.pub, and ws server ubuntu apply --only tunnel run there.
-# wg0's key must end mac.conf as WS_PUBLIC_KEY, and ws client macos apply, run again, load the
+# wg0's key must end values.yml as WS_PUBLIC_KEY, and ws client macos apply, run again, load the
 # daemon, which must have a handshake with the stand-in ws. The wizard must log in to ws through the
 # tunnel once. The closing list must name no step of the tunnel.
 
@@ -24,7 +24,7 @@ wsbin=$HOME/.local/bin/ws
 tmp=${TMPDIR:-/tmp}
 tmp=${tmp%/}
 fail=0
-# mac.conf's answers that standin.sh leaves out, from the environment, each empty for no value.
+# values.yml's answers that standin.sh leaves out, from the environment, each empty for no value.
 export WS_TARGET=lan WS_LAN='' WS_TUNNEL_NETWORKS='' WS_RESOLVERS=''
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
@@ -79,12 +79,12 @@ sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status | grep -q '^late
     [ "$(cat "$RUNNER_TEMP/ws/tunnel.log" 2>/dev/null | wc -l)" -eq 1 ] ||
     error "ws client macos wizard had no handshake, or logged in to ws through the tunnel other than once"
 ! grep -q 'WireGuard public key' "$RUNNER_TEMP/run.out" || error "ws client macos wizard printed ws client macos apply's key"
-printf '%s\n' "WS_USER=$(id -un)" WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' \
-    'WS_GIT_SIGNING_PUB_KEY=~/.ssh/id_ed25519.pub' \
-    WS_TARGET=lan WS_LAN= WS_TUNNEL_NETWORKS= WS_RESOLVERS= \
-    "WS_PUBLIC_KEY=$(cat "$RUNNER_TEMP/ws/wg0")" | conf_write "$RUNNER_TEMP/run/mac.conf"
-conf_print "$RUNNER_TEMP/run/mac.conf" >"$RUNNER_TEMP/run.conf"
-conf_print ~/.config/ws/mac.conf | cmp -s - "$RUNNER_TEMP/run.conf" ||
+printf '%s\n' "WS_USER: $(id -un)" 'WS_REMOTE: localhost' 'WS_REMOTE_PORT: 22022' 'WS_IDENTITY_PUB_KEY: ~/.ssh/id_ed25519.pub' \
+    'WS_GIT_SIGNING_PUB_KEY: ~/.ssh/id_ed25519.pub' \
+    'WS_TARGET: lan' 'WS_LAN: ""' 'WS_TUNNEL_NETWORKS: ""' 'WS_RESOLVERS: ""' \
+    "WS_PUBLIC_KEY: $(cat "$RUNNER_TEMP/ws/wg0")" | conf_write "$RUNNER_TEMP/run/values.yml"
+conf_print "$RUNNER_TEMP/run/values.yml" >"$RUNNER_TEMP/run.conf"
+conf_print ~/.config/ws/values.yml | cmp -s - "$RUNNER_TEMP/run.conf" ||
     error "ws client macos wizard wrote other files than standin.sh's lines, the answers and wg0's key"
 rm -r "$RUNNER_TEMP/run" "$RUNNER_TEMP/run.conf"
 if [ "$(sed -n 2p "$RUNNER_TEMP/run.out")" != 'What stays by hand:' ] ||

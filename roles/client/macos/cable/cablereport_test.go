@@ -7,8 +7,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 func TestCableReportsItsAddress(t *testing.T) {
@@ -27,7 +27,7 @@ func TestCableReportsItsAddress(t *testing.T) {
 		t.Errorf("disabled = %+v, want a conflict: no run turns it on", it)
 	}
 	s := cableStep(m, &effecttest.Out{}, list, cableSet)
-	s.Conf = conf.Conf{}
+	s.Conf = values.Conf{}
 	if got := mactest.ReportOf(t, s.Step()); len(got) != 0 {
 		t.Errorf("items = %v, want none without a service", got)
 	}

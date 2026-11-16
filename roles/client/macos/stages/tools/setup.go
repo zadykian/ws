@@ -9,19 +9,19 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/keys"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
-// Setup is the stage that has ws client macos apply set up the Mac from mac.conf, after sudo's
+// Setup is the stage that has ws client macos apply set up the Mac from values.yml, after sudo's
 // password rather than amid its lines. ws client macos apply changes only what differs, and is
 // silent then, so a plan is empty once its own plan is.
 type Setup struct {
 	// Run plans the steps of ws client macos apply, or applies them where check is not set, and
 	// reports whether any had changes to make.
 	Run func(ctx context.Context, check bool) (bool, error)
-	// Conf is the mac.conf that Run reads.
+	// Conf is the values.yml that Run reads.
 	Conf string
 	// LookPath finds a program on PATH. Nil means exec.LookPath.
 	LookPath func(string) (string, error)
@@ -77,7 +77,7 @@ func (s *Setup) Plan(ctx context.Context) (step.Plan, error) {
 	return step.Plan{Changes: []step.Change{stage.Todo(stage.Setup + ": would apply the steps above")}}, nil
 }
 
-// unnamed reports whether mac.conf lacks a key that the Mac key stage asks for. Under --check that
+// unnamed reports whether values.yml lacks a key that the Mac key stage asks for. Under --check that
 // stage writes no line, and ws client macos apply would stop for the key, or plan without the one
 // that a run names. A file that cannot be read is Run's to report.
 func (s *Setup) unnamed() bool {
@@ -85,7 +85,7 @@ func (s *Setup) unnamed() bool {
 	if err != nil {
 		return false
 	}
-	c, errs := conf.Lines(string(text))
+	c, errs := values.Lines(string(text))
 	return len(errs) == 0 && keys.Asked(c)
 }
 

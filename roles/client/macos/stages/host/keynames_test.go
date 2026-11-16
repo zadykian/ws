@@ -9,12 +9,13 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/remote"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // labHost is newHost for the server lab, whose lines must not name ws.
 func labHost(env map[string]string) (*Key, *effecttest.Machine) {
 	h, m := newHost(env)
-	m.Results[wayCall(remote.SSH{Host: "lab", M: m, Lock: "/l", Home: "/h", Ways: MacWays{M: m, Conf: "/h/mac.conf"}})] = m.Results[wayCall(h.SSH)]
+	m.Results[wayCall(remote.SSH{Host: "lab", M: m, Lock: "/l", Home: "/h", Ways: MacWays{M: m, Conf: "/h/values.yml"}})] = m.Results[wayCall(h.SSH)]
 	h.SSH.Host = "lab"
 	m.Results["ssh-keygen -F lab -f "+hostsOf] = effecttest.Result{Err: errors.New("none")}
 	return h, m
@@ -26,7 +27,7 @@ func TestHostKeyPlanNamesTheServer(t *testing.T) {
 	if err != nil || len(p.Changes) != 1 || !strings.Contains(p.Changes[0].String(), "would add lab's key to") {
 		t.Errorf("Plan = %v, %v; want lab's key", p, err)
 	}
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n")
+	m.Files["/h/values.yml"] = []byte(values.Text("WS_TARGET", "lan"))
 	if _, err = h.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "no direct way to lab from this network") {
 		t.Errorf("Plan with no way = %v; want lab", err)
 	}

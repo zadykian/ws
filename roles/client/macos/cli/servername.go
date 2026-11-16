@@ -8,7 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -36,10 +36,10 @@ func (a *askServer) Plan(ctx context.Context) (step.Plan, error) {
 	if !a.tty {
 		return step.Plan{}, errors.New("no terminal to ask the server's name: pass --server NAME")
 	}
-	name, err := a.ask.Ask(ctx, effect.Question{Text: "The server's name", Default: conf.FirstServer,
+	name, err := a.ask.Ask(ctx, effect.Question{Text: "The server's name", Default: values.FirstServer,
 		Valid: func(s string) error {
-			if !conf.IsName(s) {
-				return errors.New("not a server's name: " + conf.NameForm)
+			if !values.IsName(s) {
+				return errors.New("not a server's name: " + values.NameForm)
 			}
 			return freeName(a.m, a.home, s)
 		}})

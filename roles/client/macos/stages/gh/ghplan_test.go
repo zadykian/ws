@@ -9,11 +9,12 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 func newGh(look func(string) (string, error)) (*Gh, *effecttest.Machine) {
 	m := effecttest.NewMachine()
-	m.Files[confPathForTest] = []byte("WS_IDENTITY_PUB_KEY=~/k.pub\n")
+	m.Files[confPathForTest] = []byte(values.Text("WS_IDENTITY_PUB_KEY", "~/k.pub"))
 	m.Files["/h/k.pub"] = []byte(pubText)
 	m.Results["ssh-keygen -l -f /h/k.pub"] = effecttest.Result{Out: []byte("256 SHA256:aa me\n")}
 	m.Results["hostname -s"] = effecttest.Result{Out: []byte("mac\n")}
@@ -123,7 +124,7 @@ func TestGhPlanMissingKey(t *testing.T) {
 func TestGhKeyOfTheAgent(t *testing.T) {
 	g, m := newGh(found)
 	agent(m, p256)
-	m.Files[confPathForTest] = []byte("WS_IDENTITY_PUB_KEY=" + copyOf(p256) + "\n")
+	m.Files[confPathForTest] = []byte(values.Text("WS_IDENTITY_PUB_KEY", copyOf(p256)))
 	pub, key, err := g.Key(context.Background())
 	if err != nil || pub != copyOf(p256) || key != strings.TrimSuffix(strings.TrimSuffix(p256, "\n"), " me") {
 		t.Errorf("key = %q, %q, %v", pub, key, err)

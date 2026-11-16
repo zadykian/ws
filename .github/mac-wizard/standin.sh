@@ -24,9 +24,9 @@ done
 mkdir -p ~/.config/ws
 [ -d ~/.ssh ] || mkdir -m 700 ~/.ssh
 ssh-keygen -q -t ed25519 -N '' -f ~/.ssh/id_ed25519 </dev/null
-printf '%s\n' "WS_USER=$(id -un)" WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' \
-    'WS_GIT_SIGNING_PUB_KEY=~/.ssh/id_ed25519.pub' |
-    conf_write ~/.config/ws/mac.conf
+printf '%s\n' "WS_USER: $(id -un)" 'WS_REMOTE: localhost' 'WS_REMOTE_PORT: 22022' 'WS_IDENTITY_PUB_KEY: ~/.ssh/id_ed25519.pub' \
+    'WS_GIT_SIGNING_PUB_KEY: ~/.ssh/id_ed25519.pub' |
+    conf_write ~/.config/ws/values.yml
 # PATH as a shell that predates Homebrew has it, without the directories that hold brew, for the
 # cases that give it to the wizard.
 path=
@@ -184,7 +184,7 @@ EOF
 }
 standin ws 22022
 # A second server, lab, as 62-second.sh sets one up on a Mac that has ws. Its sshd listens at
-# 22023, and its wg0 on the port that its host_vars names, 51821, beside ws's 51820.
+# 22023, and its wg0 on the port that its values.yml names, 51821, beside ws's 51820.
 standin lab 22023
 ws=$RUNNER_TEMP/ws
 lab=$RUNNER_TEMP/lab

@@ -6,17 +6,17 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
-func (k *MacKey) file() conf.File {
-	return conf.File{Path: k.Conf, Stage: stage.Key, M: k.M, Out: k.Out}
+func (k *MacKey) file() values.File {
+	return values.File{Path: k.Conf, Stage: stage.Key, M: k.M, Out: k.Out}
 }
 
-// Plan finds what the key that ssh offers ws lacks: a question where mac.conf names none, or ws's
+// Plan finds what the key that ssh offers ws lacks: a question where values.yml names none, or ws's
 // copy of a key of Secretive's. A file key must be there, and an agent's key listed by its agent.
 func (k *MacKey) Plan(ctx context.Context) (step.Plan, error) {
 	_, c, err := k.file().Load()
@@ -31,9 +31,9 @@ func (k *MacKey) Plan(ctx context.Context) (step.Plan, error) {
 	return step.Plan{Changes: append(cs, git...)}, err
 }
 
-// changes checks ws's key where mac.conf names it, and asks for one where it names none, an empty
+// changes checks ws's key where values.yml names it, and asks for one where it names none, an empty
 // value included.
-func (k *MacKey) changes(ctx context.Context, c conf.Conf) ([]step.Change, error) {
+func (k *MacKey) changes(ctx context.Context, c values.Conf) ([]step.Change, error) {
 	if c.IdentityPubKey != "" {
 		return k.named(ctx, c)
 	}
@@ -44,9 +44,9 @@ func (k *MacKey) changes(ctx context.Context, c conf.Conf) ([]step.Change, error
 	return []step.Change{askKey{loginUse, keyQuestion(loginUse, keys, k.login(c))}}, nil
 }
 
-// named checks the key that mac.conf names for ws. ws's copy of a key of Secretive's comes from
+// named checks the key that values.yml names for ws. ws's copy of a key of Secretive's comes from
 // the agent, which must list the key.
-func (k *MacKey) named(ctx context.Context, c conf.Conf) ([]step.Change, error) {
+func (k *MacKey) named(ctx context.Context, c values.Conf) ([]step.Change, error) {
 	if pub := sshcfg.Expand(c.IdentityPubKey, k.Home); c.IdentityAgent == "" && !sshcfg.SecretiveKey(pub, k.Home) {
 		return nil, k.fileKey(ctx, strings.TrimSuffix(pub, ".pub"))
 	}
@@ -63,14 +63,14 @@ func (k *MacKey) named(ctx context.Context, c conf.Conf) ([]step.Change, error) 
 	return keys.PlanCopy(k.M, k.Out, pub, key.Text, k.Home)
 }
 
-// Asked reports whether the stage asks for a key. It asks for ws's where mac.conf names none. It
-// asks for git's where mac.conf names none for it. An empty value names none.
-func Asked(c conf.Conf) bool { return c.IdentityPubKey == "" || gitAsked(c) }
+// Asked reports whether the stage asks for a key. It asks for ws's where values.yml names none. It
+// asks for git's where values.yml names none for it. An empty value names none.
+func Asked(c values.Conf) bool { return c.IdentityPubKey == "" || gitAsked(c) }
 
-func gitAsked(c conf.Conf) bool { return c.GitSigningPubKey == "" }
+func gitAsked(c values.Conf) bool { return c.GitSigningPubKey == "" }
 
-// gitQuestion asks for git's key after ws's key's changes, whichever, where mac.conf names none.
-func (k *MacKey) gitQuestion(ctx context.Context, c conf.Conf) ([]step.Change, error) {
+// gitQuestion asks for git's key after ws's key's changes, whichever, where values.yml names none.
+func (k *MacKey) gitQuestion(ctx context.Context, c values.Conf) ([]step.Change, error) {
 	if !gitAsked(c) {
 		return nil, nil
 	}

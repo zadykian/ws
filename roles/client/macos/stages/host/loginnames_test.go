@@ -7,12 +7,13 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/remote"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 func TestLoginNamesTheServer(t *testing.T) {
 	r, m := newLogin(effecttest.Result{})
 	r.SSH.Host = "lab"
-	m.Files["/h/mac.conf"] = append(m.Files["/h/mac.conf"], "WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub\n"...)
+	m.Files["/h/values.yml"] = append(m.Files["/h/values.yml"], values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id_ed25519.pub")...)
 	m.Files["/h/.ssh/id_ed25519.pub"] = []byte("ssh-ed25519 AAAA mac\n")
 	m.Results["ssh-keygen -l -f /h/.ssh/id_ed25519.pub"] = effecttest.Result{}
 	w := remote.Way{Host: "10.1.1.2", Port: "22", User: "ada"}
@@ -42,7 +43,7 @@ func TestLoginNamesTheServer(t *testing.T) {
 func TestMacReachClaudeNamesTheServer(t *testing.T) {
 	m := effecttest.NewMachine()
 	out := &effecttest.Out{}
-	r := MacReach{SSH: remote.SSH{Host: "lab", M: m, F: m, Lock: "/l"}, Conf: "/h/mac.conf", Out: out}
+	r := MacReach{SSH: remote.SSH{Host: "lab", M: m, F: m, Lock: "/l"}, Conf: "/h/values.yml", Out: out}
 	err := r.Claude(context.Background())
 	said := strings.Join(out.Lines, "\n")
 	if err == nil || !strings.Contains(err.Error(), "WS_USER's claude on lab still has no login") ||

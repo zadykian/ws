@@ -6,7 +6,7 @@ set -eo pipefail
 # shellcheck source=.github/mac-conf.sh
 . .github/mac-conf.sh
 
-conf_set ~/.config/ws/mac.conf "WS_PUBLIC_KEY=$(cat "$RUNNER_TEMP/ws.pub")"
+conf_set ~/.config/ws/values.yml "WS_PUBLIC_KEY: $(cat "$RUNNER_TEMP/ws.pub")"
 ws client macos apply || {
     echo "::error::ws client macos apply with ws's key failed"
     exit 1

@@ -24,7 +24,7 @@ type Env struct {
 	GOOS   string
 	// GOARCH names a release's binary for this machine, with GOOS.
 	GOARCH string
-	// Pwd is the directory a relative WS_CONF is taken from.
+	// Pwd is the directory a relative WS_VALUES is taken from.
 	Pwd string
 	// TTY tells whether stdin is a terminal, which the questions need.
 	TTY bool

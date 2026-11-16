@@ -1,4 +1,4 @@
-// Package check holds the pure checks of the forms that mac.conf and tunnel.conf take: an address,
+// Package check holds the pure checks of the forms that values.yml and tunnel.conf take: an address,
 // a network, a name, a port and a key.
 package check
 

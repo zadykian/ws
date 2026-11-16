@@ -25,7 +25,7 @@ func TestMacHelpAndErrors(t *testing.T) {
 		{"resolver flag", []string{"client", "macos", "resolver", "--nope", "x"}, 2, "", "ws client macos resolver: unknown flag: --nope"},
 		{"wizard flag", []string{"client", "macos", "wizard", "--bogus"}, 2, "", "ws client macos wizard: unknown flag: --bogus\nRun 'ws client macos wizard --help' for usage.\n"},
 		{"wizard help", []string{"client", "macos", "wizard", "-h"}, 0, "--check", ""},
-		{"conf two files", []string{"client", "macos", "conf", "a", "b"}, 2, "", "ws client macos conf: accepts at most 1 arg(s), received 2"},
+		{"values print two files", []string{"client", "macos", "values", "print", "a", "b"}, 2, "", "ws client macos values print: accepts at most 1 arg(s), received 2"},
 		{"apply an argument", []string{"client", "macos", "apply", "ssh"}, 2, "", "ws client macos apply: unknown command \"ssh\" for \"ws client macos apply\""},
 		{"secrets alone", []string{"client", "macos", "secrets"}, 0, "Available Commands:", ""},
 		{"secrets unknown", []string{"client", "macos", "secrets", "nope"}, 2, "", "ws client macos secrets: unknown command \"nope\""},

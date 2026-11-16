@@ -15,6 +15,7 @@ import (
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/tui"
+	macvalues "github.com/zadykian/ws/roles/client/macos/values"
 	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
 )
 
@@ -64,7 +65,7 @@ type farWs struct {
 }
 
 func newFarWs(m *effecttest.Machine, file string) farWs {
-	writeConfs(m, "", "WS_USER=ada\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22\n")
+	writeConfs(m, "", macvalues.Text("WS_USER", "ada", "WS_REMOTE", "r.example", "WS_REMOTE_PORT", "22"))
 	return farWs{Machine: m, file: file, ops: make(chan []string, 64)}
 }
 
@@ -118,7 +119,7 @@ func TestVarsSheetOpensWithWhatWsHolds(t *testing.T) {
 	p.Machine = ws
 	r := &varsReach{server: "ws", p: p}
 	defer r.close(context.Background())
-	sheet, err := ubuntucli.HostVarsSheet(r.reach).Open(context.Background(), tui.Offscreen(r.p.Machine))
+	sheet, err := ubuntucli.ValuesSheet(r.reach).Open(context.Background(), tui.Offscreen(r.p.Machine))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -136,7 +137,7 @@ func TestVarsSheetOpensWithWhatWsHolds(t *testing.T) {
 	}
 }
 
-func TestMacConfigureSavesHostVarsAndLetsTheLockGo(t *testing.T) {
+func TestMacConfigureSavesValuesAndLetsTheLockGo(t *testing.T) {
 	p, m := macTerminal()
 	ws := newFarWs(m, "WS_USER: ada\n")
 	p.Machine = ws
@@ -152,7 +153,7 @@ func TestMacConfigureSavesHostVarsAndLetsTheLockGo(t *testing.T) {
 			t.Error(err)
 		}
 	}
-	// The secrets sheet's read holds the keys, so Ctrl-N goes on until host_vars' read lands.
+	// The secrets sheet's read holds the keys, so Ctrl-N goes on until values.yml's read lands.
 	for read := false; !read; {
 		select {
 		case op := <-ws.ops:

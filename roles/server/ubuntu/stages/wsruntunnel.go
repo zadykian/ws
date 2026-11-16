@@ -9,9 +9,9 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
-// tunnelPairs gives the host_vars pairs that bring wg0 to the Mac's want: WS_TUNNEL_ADDRESS and
-// WS_TUNNEL_PORT, each where host_vars differs. A server that goes back to the defaults gets the
-// default pair where host_vars holds another value. Where host_vars holds none and the want is the
+// tunnelPairs gives the pairs of values.yml that bring wg0 to the Mac's want: WS_TUNNEL_ADDRESS and
+// WS_TUNNEL_PORT, each where values.yml differs. A server that goes back to the defaults gets the
+// default pair where values.yml holds another value. Where values.yml holds none and the want is the
 // default, the run plans nothing, and a first server's run keeps its bytes.
 func tunnelPairs(ctx context.Context, ws values.Store, w session.Want) ([]string, error) {
 	def := values.Default().Tunnel

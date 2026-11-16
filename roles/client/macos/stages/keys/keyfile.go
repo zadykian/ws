@@ -11,11 +11,11 @@ import (
 func (k *MacKey) fileKey(ctx context.Context, key string) error {
 	switch {
 	case !k.exists(key) && !k.exists(key+".pub"):
-		return fmt.Errorf("%s: %s, named in mac.conf's WS_IDENTITY_PUB_KEY, is missing: make the key, or drop the "+
+		return fmt.Errorf("%s: %s, named in values.yml's WS_IDENTITY_PUB_KEY, is missing: make the key, or drop the "+
 			"line for the wizard to ask for one of Secretive's", stage.Key, key+".pub")
 	case !k.exists(key):
 		return fmt.Errorf("%s: %s.pub is there without its private key, %s: remove it, or name the agent that "+
-			"holds the key in mac.conf's WS_IDENTITY_AGENT", stage.Key, key, key)
+			"holds the key in values.yml's WS_IDENTITY_AGENT", stage.Key, key, key)
 	case !k.same(ctx, key):
 		return fmt.Errorf("%s: %s.pub is not %s's public key: ssh-keygen -y -f %s >%s.pub writes it",
 			stage.Key, key, key, key, key)

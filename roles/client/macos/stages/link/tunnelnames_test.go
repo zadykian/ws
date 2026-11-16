@@ -9,7 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/core/wizard"
-	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 )
 
@@ -36,7 +36,7 @@ func TestTunnelKickNamesTheServer(t *testing.T) {
 	tun.SSH.Host, tun.Server = "lab", "lab"
 	m.Results["launchctl kickstart -k system/"+tun.label()] = effecttest.Result{}
 	tun.Hand, tun.Sleep = &wizard.Hand{}, func(time.Duration) {}
-	_ = tun.handshake(context.Background(), conf.Conf{}, true)
+	_ = tun.handshake(context.Background(), values.Conf{}, true)
 	if got := strings.Join(tun.Out.(*effecttest.Out).Lines, "\n"); !strings.Contains(got, "wg0's new peer on lab") {
 		t.Errorf("said %q; want lab", got)
 	}

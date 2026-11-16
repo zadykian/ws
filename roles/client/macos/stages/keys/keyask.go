@@ -11,9 +11,9 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
+	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -21,7 +21,7 @@ import (
 // takes a key made for another use.
 const newKey = "make a new one"
 
-// keyUse is what a key serves: its name in the question, its key in mac.conf, and what to make in
+// keyUse is what a key serves: its name in the question, its key in values.yml, and what to make in
 // Secretive's app.
 type keyUse struct{ name, key, make string }
 
@@ -33,7 +33,7 @@ var (
 	gitUse = keyUse{"git's signing key", "WS_GIT_SIGNING_PUB_KEY", "a P-256 key for git's signing, at Notify"}
 )
 
-// askKey is the change that asks which of Secretive's keys serves the use, and names it in mac.conf.
+// askKey is the change that asks which of Secretive's keys serves the use, and names it in values.yml.
 type askKey struct {
 	use keyUse
 	q   effect.ChoiceQuestion
@@ -71,9 +71,9 @@ func option(key sshcfg.AgentKey, login string) string {
 	return key.Label()
 }
 
-// login names the .pub of mac.conf's key for ws's login, where Secretive holds it, for git's
+// login names the .pub of values.yml's key for ws's login, where Secretive holds it, for git's
 // question to mark.
-func (k *MacKey) login(c conf.Conf) string {
+func (k *MacKey) login(c values.Conf) string {
 	if pub := sshcfg.Expand(c.IdentityPubKey, k.Home); c.IdentityPubKey != "" && sshcfg.SecretiveKey(pub, k.Home) {
 		return path.Base(pub)
 	}
@@ -81,7 +81,7 @@ func (k *MacKey) login(c conf.Conf) string {
 }
 
 // ask lists the agent's keys again, with the login key that an earlier answer may have named. It
-// names the key answered in mac.conf, or with no terminal, it stops and names each key's line.
+// names the key answered in values.yml, or with no terminal, it stops and names each key's line.
 func (k *MacKey) ask(ctx context.Context, use keyUse) error {
 	keys, _, err := keys.SecretiveKeys(ctx, k.M, k.Home)
 	if err != nil {
@@ -119,18 +119,18 @@ func noTerminal(use keyUse, keys []sshcfg.AgentKey) error {
 	var lines []string
 	for _, key := range keys {
 		if key.P256() {
-			lines = append(lines, conf.Line(use.key, key.Pub())+" for "+key.Label())
+			lines = append(lines, values.Line(use.key, key.Pub())+" for "+key.Label())
 		}
 	}
 	if len(lines) == 0 {
 		return fmt.Errorf("%s: no terminal to ask for %s, and Secretive's agent lists no P-256 key: run the wizard "+
-			"at a terminal to make one, or name a key's .pub in mac.conf's %s", stage.Key, use.name, use.key)
+			"at a terminal to make one, or name a key's .pub in values.yml's %s", stage.Key, use.name, use.key)
 	}
-	return fmt.Errorf("%s: no terminal to ask for %s: add one of these lines to mac.conf, %s; or run the wizard "+
+	return fmt.Errorf("%s: no terminal to ask for %s: add one of these lines to values.yml, %s; or run the wizard "+
 		"at a terminal", stage.Key, use.name, strings.Join(lines, "; "))
 }
 
-// name names the key in mac.conf, once it plans and writes ws's copy of its .pub, with the
+// name names the key in values.yml, once it plans and writes ws's copy of its .pub, with the
 // directories of the copies, which ssh and git read.
 // For ws's login key, it names Secretive's agent too, which holds the private key.
 func (k *MacKey) name(ctx context.Context, use keyUse, key sshcfg.AgentKey) error {
@@ -141,9 +141,9 @@ func (k *MacKey) name(ctx context.Context, use keyUse, key sshcfg.AgentKey) erro
 	if err := (resource.Group{}).Apply(ctx, step.Plan{Changes: copied}); err != nil {
 		return err
 	}
-	settings := []conf.Setting{{Key: use.key, Value: key.Pub()}}
+	settings := []values.Setting{{Key: use.key, Value: key.Pub()}}
 	if use == loginUse {
-		settings = append(settings, conf.Setting{Key: "WS_IDENTITY_AGENT", Value: "~/" + sshcfg.SecretiveData + "/socket.ssh"})
+		settings = append(settings, values.Setting{Key: "WS_IDENTITY_AGENT", Value: "~/" + sshcfg.SecretiveData + "/socket.ssh"})
 	}
 	return refused(k.file().SetAll(ctx, settings...))
 }
