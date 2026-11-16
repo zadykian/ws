@@ -1,4 +1,4 @@
-// Package secretenv writes ~/.secrets/env, which ~/.bashrc and the otelcol role read, from the
+// Package secretenv writes /etc/ws/env, which ~/.bashrc and the otelcol role read, from the
 // secrets file's [env] table.
 package secretenv
 
@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// envHeader is the top of ~/.secrets/env; ws replaces only a file that starts with its first
+// envHeader is the top of /etc/ws/env; ws replaces only a file that starts with its first
 // words.
 const (
 	envMark   = "# Written by github.com/zadykian/ws"
@@ -51,7 +51,7 @@ func checkEnvNames(env map[string]string) error {
 	return nil
 }
 
-// renderEnv returns the content of ~/.secrets/env, a line per name in order.
+// renderEnv returns the content of /etc/ws/env, a line per name in order.
 func renderEnv(env map[string]string) []byte {
 	var b strings.Builder
 	b.WriteString(envHeader)

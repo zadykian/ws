@@ -3,19 +3,20 @@ package fans
 import (
 	"encoding/json"
 
+	"github.com/zadykian/ws/roles/internal/etcws"
 	daemon "github.com/zadykian/ws/roles/server/ubuntu/fans/daemon"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // configPath is the file that ws server ubuntu fans reads.
-const configPath = "/etc/ws-fans.json"
+const configPath = etcws.Dir + "/fans.json"
 
 // pair converts a value for rising and one for falling.
 func pair(p values.FanPair) daemon.Pair {
 	return daemon.Pair{Up: p.Up, Down: p.Down}
 }
 
-// Config returns the text of /etc/ws-fans.json for the values. The daemon's own loader checks it
+// Config returns the text of /etc/ws/fans.json for the values. The daemon's own loader checks it
 // before the role writes it, so that a config the daemon would refuse never replaces a good one.
 func Config(f values.Fans) ([]byte, error) {
 	c := daemon.Config{Interval: f.Interval, Step: pair(f.Step)}

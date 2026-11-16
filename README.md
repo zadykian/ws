@@ -20,7 +20,7 @@ Each role has a page of its own. A role is Go steps of ws:
 - [`nvidia`](roles/server/ubuntu/nvidia): NVIDIA's headless driver from Ubuntu's archive, on a machine with an
   NVIDIA GPU.
 - [`fans`](roles/server/ubuntu/fans): fan curves for the board's headers, and the driver that sets them.
-- [`shell`](roles/server/ubuntu/shell): `~/.bashrc`, `~/.profile` and `~/.secrets/env` from the secrets
+- [`shell`](roles/server/ubuntu/shell): `~/.bashrc`, `~/.profile` and `/etc/ws/env` from the secrets
   file.
 - [`git`](roles/server/ubuntu/git): `~/.gitconfig`, a key that signs commits, git's tokens for servers
   besides GitHub, and clones of repositories.

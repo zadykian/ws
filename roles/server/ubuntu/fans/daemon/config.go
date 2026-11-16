@@ -1,5 +1,5 @@
 // Package daemon is ws-fans, the daemon of ws server ubuntu fans. It drives the board's fans on the
-// curves of the config in /etc/ws-fans.json. As it stops, it hands them back to the board's own
+// curves of the config in /etc/ws/fans.json. As it stops, it hands them back to the board's own
 // curves.
 package daemon
 
@@ -13,7 +13,7 @@ import (
 // percentFull is the top of a speed, in %.
 const percentFull = 100
 
-// Config is /etc/ws-fans.json. Interval is the tick in seconds and Step the most a fan's speed
+// Config is /etc/ws/fans.json. Interval is the tick in seconds and Step the most a fan's speed
 // moves in a tick, in %.
 type Config struct {
 	Interval float64         `json:"interval"`

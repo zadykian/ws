@@ -55,12 +55,13 @@ path on it, which covers the repositories below it. Each entry takes:
 - `proactive_auth`: `true` for a server that sends no 401, so that git sends the token with its
   first request, by `http.<url>.proactiveAuth`.
 
-A URL of `http://` fails the run, as git would send its token in clear. Each token goes in a 0600
-file of `~/.config/git/tokens`, named for its URL. `~/.config/git/tokens.gitconfig`, which
+A URL of `http://` fails the run, as git would send its token in clear. Each token goes in a 640
+file of `/etc/ws/tokens`, a 750 directory, named for its URL. `/etc/ws/tokens.gitconfig`, which
 `~/.gitconfig` includes, gets a program for each URL, which answers git's request for a credential
-from that file. The program ignores git's requests to store or erase one, so a token the server
-refuses stays until the entry changes. Where two URLs match, the longer one wins. gh's program still
-answers for GitHub, except below an entry's URL there.
+from that file. Root owns them all, with the account's group, so that the account reads a token
+and cannot change it. The program ignores git's requests to store or erase one, so a token the
+server refuses stays until the entry changes. Where two URLs match, the longer one wins. gh's
+program still answers for GitHub, except below an entry's URL there.
 
 With `--secrets`, a URL that the table lacks loses its token and its program. Without it, as in
 CI's run, the role leaves the tokens and `tokens.gitconfig` as they are. No token reaches

@@ -95,7 +95,7 @@ stays JSON. A project that installs its own Prettier ignores the option, and its
 
 ## Secrets in ssh's arguments
 
-`~/.bashrc` sources `~/.secrets/env` above its interactive guard, so that non-interactive shells
+`~/.bashrc` sources `/etc/ws/env` above its interactive guard, so that non-interactive shells
 get the values too ([shell](../shell/README.md)). Zed captures each project's environment with the login
 shell, `bash -l -i -c 'cd DIR; zed --printenv'`. So the capture holds every value of the
 `[env]` table of the secrets file ([Secrets](../shell/README.md#secrets)).

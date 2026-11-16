@@ -66,3 +66,11 @@ func TestServiceSkipsItsUnitWithoutSystemd(t *testing.T) {
 		t.Errorf("calls = %q, want none", u.Calls)
 	}
 }
+
+func TestServiceMakesTheDirectoryOfItsConfig(t *testing.T) {
+	m, u := serviceMachine(), &effecttest.Units{}
+	applyService(t, m, u)
+	if m.Dirs["/etc/ws"] != 0o755 || configPath != "/etc/ws/fans.json" {
+		t.Errorf("/etc/ws mode = %o, config at %s", m.Dirs["/etc/ws"], configPath)
+	}
+}

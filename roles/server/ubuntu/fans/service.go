@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/resource/systemd"
+	"github.com/zadykian/ws/roles/internal/etcws"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -44,9 +45,10 @@ func serviceParts(m effect.Machine, u effect.Units, out effect.Out, f values.Fan
 		conf := file.File{M: m, Path: configPath, Content: config, Mode: 0o644}
 		unitFile := file.File{M: m, Path: unitPath, Content: unit, Mode: 0o644}
 		watch := []resource.Resource{binary, conf, unitFile}
-		return append(watch,
+		// /etc/ws goes outside watch: a directory never restarts the unit.
+		return append([]resource.Resource{etcws.Top(m)}, append(watch,
 			systemd.DaemonReload{M: m, U: u, Watch: []resource.Resource{unitFile}},
-			systemd.Unit{M: m, U: u, Out: out, Name: "ws-fans.service", Enabled: true, Run: systemd.Running, Watch: watch}), nil
+			systemd.Unit{M: m, U: u, Out: out, Name: "ws-fans.service", Enabled: true, Run: systemd.Running, Watch: watch})...), nil
 	}
 }
 

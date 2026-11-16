@@ -43,7 +43,7 @@ Then run `ws server ubuntu apply` again, or `modprobe nct6687 && systemctl resta
 ## ws-fans
 
 `ws-fans.service` runs `ws server ubuntu fans`, from a copy of ws in `/usr/local/lib/ws-fans`: an
-update of ws leaves the running service alone until the next run. It reads `/etc/ws-fans.json`,
+update of ws leaves the running service alone until the next run. It reads `/etc/ws/fans.json`,
 which the role writes from its variables, below. The daemon's own loader checks a new config before
 the role writes it. A change to the copy, the config or the unit restarts the service. Without
 systemd running, as in CI's container, the role leaves the unit and the modules alone. The log,

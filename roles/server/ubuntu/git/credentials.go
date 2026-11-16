@@ -7,7 +7,16 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/roles/internal/etcws"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
+)
+
+// tokensDir holds each token in a file of its own, and tokensPath the credential programs that
+// read them. Root owns both, with the account's group, so that the account reads a token and cannot
+// change it.
+const (
+	tokensDir  = etcws.Dir + "/tokens"
+	tokensPath = etcws.Dir + "/tokens.gitconfig"
 )
 
 // Credential is one server's token, from the [git] table of the secrets file.
@@ -26,7 +35,7 @@ func Credentials(git map[string]secrets.Git) []Credential {
 	return all
 }
 
-// section is one URL's helper in ~/.config/git/tokens.gitconfig.
+// section is one URL's credential program in /etc/ws/tokens.gitconfig.
 type section struct {
 	URL, File string
 	Proactive bool
@@ -35,7 +44,7 @@ type section struct {
 // notFile matches each run of characters other than letters, digits, ., _ and -.
 var notFile = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
 
-// credentialFile returns the name of a URL's token in ~/.config/git/tokens: the URL without its
+// credentialFile returns the name of a URL's token in /etc/ws/tokens: the URL without its
 // scheme, each run of other characters as _.
 func credentialFile(url string) string {
 	return notFile.ReplaceAllString(strings.TrimPrefix(url, "https://"), "_")
@@ -86,7 +95,7 @@ func sections(keys []string, creds []Credential) []section {
 	return all
 }
 
-// tokensConfig renders ~/.config/git/tokens.gitconfig: the helpers, which name the tokens' files
+// tokensConfig renders /etc/ws/tokens.gitconfig: the programs, which name the tokens' files
 // and never a token.
 func tokensConfig(s []section) ([]byte, error) {
 	return resource.Render(gitFiles, "files/tokens.gitconfig.tmpl", struct{ Sections []section }{s})

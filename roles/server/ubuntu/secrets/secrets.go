@@ -3,11 +3,15 @@
 // share this format. Nothing here prints a value: an error names a kind, a name, a key or a line.
 package secrets
 
+// EnvPath is the file of Secrets.Env, root's with the account's group, which ~/.bashrc sources and
+// the otelcol role reads.
+const EnvPath = "/etc/ws/env"
+
 // Secrets is the decrypted file. The names of its fields are those of the tables.
 type Secrets struct {
 	// Token holds the tokens that ws knows by name.
 	Token Tokens
-	// Env is the content of ~/.secrets/env: names to values.
+	// Env is the content of /etc/ws/env: names to values.
 	Env map[string]string
 	// Git is git's credentials, by the URL of the server, besides GitHub's.
 	Git map[string]Git

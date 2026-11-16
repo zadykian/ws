@@ -73,7 +73,7 @@ syntax error names its line alone.
 [token]
 github = "MY_TOKEN"                 # also azure_devops
 
-[env]                               # ~/.secrets/env: any shell name
+[env]                               # /etc/ws/env: any shell name
 MY_TOKEN = "${token.github}"
 
 [git."https://git.example.com"]     # an https:// URL
@@ -90,7 +90,7 @@ vpn_p12 = "PASSWORD"                # left out where the .p12 has none
 ```
 
 - `[token]` names `github` and `azure_devops`, the tokens ws knows.
-- `[env]` is the content of `~/.secrets/env` ([Secrets](../shell/README.md#secrets)).
+- `[env]` is the content of `/etc/ws/env` ([Secrets](../shell/README.md#secrets)).
 - `[git."URL"]` is a server's token in git's store ([Git credentials](../git/README.md#git-credentials)).
 - `[file]` and `[password]` are the ikeward profile's ([The profile](../ikeward/README.md#the-profile)). A
   TOML string can't hold the `.p12`'s bytes, so a file is base64. ws decodes it once parsed.
@@ -107,5 +107,5 @@ token.github, which is missing`.
 ## The whole truth
 
 The file is the truth of what it names. With `--secrets`, a run removes the git tokens for URLs
-the file lacks, and `~/.secrets/env` where `[env]` is empty. Without it, as in CI, a run keeps
+the file lacks, and `/etc/ws/env` where `[env]` is empty. Without it, as in CI, a run keeps
 both. So an entry dropped from the file goes with the next run.

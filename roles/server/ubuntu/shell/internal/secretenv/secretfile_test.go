@@ -30,18 +30,21 @@ func TestSecretEnvIsWrittenOnceAndNeverShown(t *testing.T) {
 				t.Fatal(err)
 			}
 		}
-		if !strings.Contains(string(m.Files["/home/ws/.secrets/env"]), "export TOKEN=hunter2\n") {
-			t.Fatalf("file = %q", m.Files["/home/ws/.secrets/env"])
+		if !strings.Contains(string(m.Files["/etc/ws/env"]), "export TOKEN=hunter2\n") {
+			t.Fatalf("file = %q", m.Files["/etc/ws/env"])
 		}
 	}
-	if m.Dirs["/home/ws/.secrets"] != 0o700 {
-		t.Errorf("directory mode %o", m.Dirs["/home/ws/.secrets"])
+	if got := m.Owners["/etc/ws/env"]; got != [2]int{0, 1000} {
+		t.Errorf("owner = %v, want 0:1000", got)
+	}
+	if got := m.Modes["/etc/ws/env"]; got != 0o640 {
+		t.Errorf("mode %o, want 640", got)
 	}
 }
 
 func TestSecretEnvLeavesTheFileWithoutValues(t *testing.T) {
 	m, s := envFixture(nil)
-	m.Files["/home/ws/.secrets/env"] = []byte("by hand")
+	m.Files["/etc/ws/env"] = []byte("by hand")
 	if changes, err := s.Plan(context.Background()); err != nil || len(changes) != 0 {
 		t.Errorf("got %v, %v", changes, err)
 	}
@@ -49,7 +52,7 @@ func TestSecretEnvLeavesTheFileWithoutValues(t *testing.T) {
 
 func TestSecretEnvRefusesAFileWrittenByHand(t *testing.T) {
 	m, s := envFixture(map[string]string{"A": "new-secret"})
-	m.Files["/home/ws/.secrets/env"] = []byte("export OLD=old-secret\n")
+	m.Files["/etc/ws/env"] = []byte("export OLD=old-secret\n")
 	_, err := s.Plan(context.Background())
 	if err == nil {
 		t.Fatalf("got %v", err)
@@ -62,7 +65,7 @@ func TestSecretEnvRefusesAFileWrittenByHand(t *testing.T) {
 func TestSecretEnvGoesWithTheWholeTruthAndAnEmptyTable(t *testing.T) {
 	m, s := envFixture(nil)
 	s.Whole = true
-	m.Files["/home/ws/.secrets/env"] = []byte(envHeader + "export A=hunter2\n")
+	m.Files["/etc/ws/env"] = []byte(envHeader + "export A=hunter2\n")
 	changes, err := s.Plan(context.Background())
 	if err != nil || len(changes) != 1 {
 		t.Fatalf("got %v, %v", changes, err)
@@ -73,7 +76,7 @@ func TestSecretEnvGoesWithTheWholeTruthAndAnEmptyTable(t *testing.T) {
 	if err := changes[0].Apply(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := m.Files["/home/ws/.secrets/env"]; ok {
+	if _, ok := m.Files["/etc/ws/env"]; ok {
 		t.Error("the file stays")
 	}
 	if changes, err := s.Plan(context.Background()); err != nil || len(changes) != 0 {
@@ -84,7 +87,7 @@ func TestSecretEnvGoesWithTheWholeTruthAndAnEmptyTable(t *testing.T) {
 func TestSecretEnvWithTheWholeTruthKeepsAFileWrittenByHandOutOfTheWay(t *testing.T) {
 	m, s := envFixture(nil)
 	s.Whole = true
-	m.Files["/home/ws/.secrets/env"] = []byte("export A=hunter2\n")
+	m.Files["/etc/ws/env"] = []byte("export A=hunter2\n")
 	if _, err := s.Plan(context.Background()); err == nil || strings.Contains(err.Error(), "hunter2") {
 		t.Errorf("got %v", err)
 	}

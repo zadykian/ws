@@ -10,13 +10,15 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/roles/server/ubuntu/internal/plan"
+	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
-// Env is ~/.secrets/env, for ~/.bashrc and the otelcol role, from the secrets file's
-// [env] table. Without a secrets file, as in CI, ws leaves ~/.secrets alone, even a file it wrote,
-// so that a run without it changes nothing. With one and an empty [env], ws removes the file it
-// wrote.
+// Env is /etc/ws/env, for ~/.bashrc and the otelcol role, from the secrets file's [env] table.
+// Root owns it, with the account's group, so that the account reads it and cannot change it.
+// Without a secrets file, as in CI, ws leaves it alone, even a file it wrote, so that a run without
+// it changes nothing. With one and an empty [env], ws removes the file it wrote.
 type Env struct {
 	M   effect.Machine
 	A   account.Account
@@ -36,18 +38,16 @@ func (s Env) Plan(ctx context.Context) ([]resource.Change, error) {
 	if err := checkEnvNames(s.Env); err != nil {
 		return nil, err
 	}
-	path := s.A.Home + "/.secrets/env"
-	old, err := s.A.ReadHome(s.M, ".secrets/env")
+	old, err := s.M.ReadRootFile(secrets.EnvPath)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
 	if err == nil && !bytes.HasPrefix(old, []byte(envMark)) {
-		return nil, fmt.Errorf("%s lacks the line '%s' at its top, so it was written by hand: move its values into the secrets file's [env] table, remove the file, then run ws again", path, envMark)
+		return nil, fmt.Errorf("%s lacks the line '%s' at its top, so it was written by hand: move its values into the secrets file's [env] table, remove the file, then run ws again", secrets.EnvPath, envMark)
 	}
 	if len(s.Env) == 0 {
-		return plan.All(ctx, s.A.Absent(s.M, ".secrets/env"))
+		return plan.All(ctx, file.Absent{M: s.M, Path: secrets.EnvPath})
 	}
-	f := s.A.File(s.M, ".secrets/env", renderEnv(s.Env), 0o600)
-	f.Secret = true
-	return plan.All(ctx, s.A.Dir(s.M, ".secrets", 0o700), f)
+	return plan.All(ctx, file.File{M: s.M, Path: secrets.EnvPath, Content: renderEnv(s.Env),
+		Mode: 0o640, GID: s.A.GID, Secret: true})
 }

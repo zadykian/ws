@@ -7,7 +7,7 @@
 {{ range .Sections -}}
 [credential "{{ .URL }}"]
 	helper =
-	helper = "!f() { test \"$1\" != get || cat ~/.config/git/tokens/{{ .File }}; }; f"
+	helper = "!f() { test \"$1\" != get || cat /etc/ws/tokens/{{ .File }}; }; f"
 {{ if .Proactive -}}
 [http "{{ .URL }}"]
 	proactiveAuth = basic

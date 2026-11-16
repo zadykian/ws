@@ -2,7 +2,7 @@
 #
 # It starts from SigNoz's config for a collector on a VM, with every port on loopback. It adds the
 # journal and node_exporter's temperatures, and leaves the per-process metrics out. Where
-# ~/.secrets/env sets OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT, claude's metrics go there too.
+# /etc/ws/env sets OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT, claude's metrics go there too.
 
 extensions:
   health_check:

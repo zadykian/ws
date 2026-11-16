@@ -4,7 +4,7 @@ The `shell` role, Go steps in `roles/server/ubuntu/shell`, writes `~/.bashrc` wi
 bash-completion, and `PATH` in `~/.profile`. Each run replaces any change made to them by hand. A
 machine's own settings go in files they read where they exist:
 
-- `~/.secrets/env`, which `~/.bashrc` sources first, above its interactive guard, so that
+- `/etc/ws/env`, which `~/.bashrc` sources first, above its interactive guard, so that
   non-interactive shells get it too, and which the role writes from the secrets file:
   [Secrets](#secrets);
 - `~/.bash_aliases`, which `~/.bashrc` sources too.
@@ -18,9 +18,10 @@ An installer that appends to `~/.bashrc` or `~/.profile`, a line that adds its d
 ## Secrets
 
 The `[env]` table of [the secrets file](#the-secrets-file), empty by default, maps names to values
-for `~/.secrets/env`.
+for `/etc/ws/env`.
 
-With it set, the role makes `~/.secrets` 0700 and writes `env` 0600, both owned by `WS_USER`.
+With it set, the role writes `/etc/ws/env` 0640, root's with the account's group: `WS_USER` reads it
+and cannot change it.
 The file opens with a `# Written by github.com/zadykian/ws` line, then `export NAME=VALUE` for
 each name, the value quoted for the shell. Each run replaces the file, so a change goes in
 `[env]`. The `otelcol` role reads the file later in the same run:
@@ -30,12 +31,12 @@ each name, the value quoted for the shell. Each run replaces the file, so a chan
   other, and its message names no value.
 - A value is a string, so `"0123"` and `"on"` stay as written.
 - An `env` without that line at its top, as one written by hand, fails the run before the role
-  touches `~/.secrets`, in a dry run too. Move its values into `[env]`, then remove the file.
+  touches it, in a dry run too. Move its values into `[env]`, then remove the file.
 - The role neither prints nor diffs the file, so a dry run says only that it would change.
 
-Without `--secrets`, the role leaves `~/.secrets` alone, even a file it wrote, so that a run
+Without `--secrets`, the role leaves `/etc/ws/env` alone, even a file it wrote, so that a run
 without the secrets file, as CI's, changes nothing. With `--secrets` and an empty `[env]`, the run
-removes `~/.secrets/env`, if ws wrote it.
+removes `/etc/ws/env`, if ws wrote it.
 
 ## The secrets file
 
