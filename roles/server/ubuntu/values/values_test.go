@@ -92,7 +92,7 @@ func TestParseRefusesAKeyOutsideTheHome(t *testing.T) {
 func TestParseRefusesAnOldKey(t *testing.T) {
 	for _, old := range []string{
 		"docker_log_max_size: 1m", "ws_user: ada", "wireguard_peers: []",
-		"network_direct_link_interface: enp5s0",
+		"network_direct_link_interface: enp5s0", "WS_SHELL_GIT_CLONES: []",
 	} {
 		key, _, _ := strings.Cut(old, ":")
 		if _, err := Parse([]byte(old + "\n")); err == nil || !strings.Contains(err.Error(), key) {

@@ -58,13 +58,13 @@ steps, and each role's README says what it sets up.
   container, it skips and says so.
 - A file a role writes has a `# Written by github.com/zadykian/ws` line at its top, where its format
   takes comments, as the roles' embedded templates and files do. Each run replaces a change made to
-  it by hand ([shell](../../roles/server/ubuntu/shell/README.md)).
+  it by hand ([shell](../../roles/server/ubuntu/shell/README.md), [git](../../roles/server/ubuntu/git/README.md)).
 - A tool that updates itself, such as claude or rustup, is installed only where missing
   ([claude's install](../../roles/server/ubuntu/claude/install.go)).
 - A role given the secrets of `ws server ubuntu apply --secrets`, changes nothing where they are
   absent. With them, the file is the whole truth: a run removes what it lacks, such as a git token.
   So a run without them, as CI's, keeps what a run with them made
-  ([Git credentials](../../roles/server/ubuntu/shell/README.md#git-credentials)).
+  ([Git credentials](../../roles/server/ubuntu/git/README.md#git-credentials)).
 
 ## Downloads and keys
 

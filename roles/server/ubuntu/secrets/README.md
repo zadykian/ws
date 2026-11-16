@@ -91,7 +91,7 @@ vpn_p12 = "PASSWORD"                # left out where the .p12 has none
 
 - `[token]` names `github` and `azure_devops`, the tokens ws knows.
 - `[env]` is the content of `~/.secrets/env` ([Secrets](../shell/README.md#secrets)).
-- `[git."URL"]` is a server's token in git's store ([Git credentials](../shell/README.md#git-credentials)).
+- `[git."URL"]` is a server's token in git's store ([Git credentials](../git/README.md#git-credentials)).
 - `[file]` and `[password]` are the ikeward profile's ([The profile](../ikeward/README.md#the-profile)). A
   TOML string can't hold the `.p12`'s bytes, so a file is base64. ws decodes it once parsed.
 

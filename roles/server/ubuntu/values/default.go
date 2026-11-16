@@ -47,13 +47,13 @@ func Default() Values {
 		},
 		Fans:     defaultFans(),
 		Ikeward:  Ikeward{},
-		Network:  Network{DirectLinkAddress: "10.77.0.1/30"},
+		Cable:    Cable{Address: "10.77.0.1/30"},
 		Security: Security{Outbound: true},
 		Signoz: Signoz{
 			Dir: "/opt/signoz", URL: "http://127.0.0.1:3301", RetentionDays: 90,
 			Dashboards: []string{"host", "claude"},
 		},
-		Wireguard: Wireguard{
+		Tunnel: Tunnel{
 			Address: "10.99.0.1/24", Port: 51820,
 		},
 		Zed: Zed{Nofile: 65536},

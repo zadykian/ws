@@ -1,9 +1,9 @@
 package values
 
-// Shell is roles/shell's keys.
-type Shell struct {
-	// GitClones are the repositories cloned once each.
-	GitClones []GitClone `yaml:"WS_SHELL_GIT_CLONES"`
+// Git is the git role's keys.
+type Git struct {
+	// Clones are the repositories cloned once each.
+	Clones []GitClone `yaml:"WS_GIT_CLONES"`
 }
 
 // GitClone is a repository, without a token, and where ws clones it.
@@ -20,15 +20,15 @@ type Signoz struct {
 	Dashboards    []string `yaml:"WS_SIGNOZ_DASHBOARDS"`
 }
 
-// Wireguard is the wireguard role's keys.
-type Wireguard struct {
-	Address string          `yaml:"WS_TUNNEL_ADDRESS"`
-	Port    int             `yaml:"WS_TUNNEL_PORT"`
-	Peers   []WireguardPeer `yaml:"WS_TUNNEL_PEERS"`
+// Tunnel is the tunnel role's keys.
+type Tunnel struct {
+	Address string       `yaml:"WS_TUNNEL_ADDRESS"`
+	Port    int          `yaml:"WS_TUNNEL_PORT"`
+	Peers   []TunnelPeer `yaml:"WS_TUNNEL_PEERS"`
 }
 
-// WireguardPeer is a peer by its name and its address in the tunnel.
-type WireguardPeer struct {
+// TunnelPeer is a peer by its name and its address in the tunnel.
+type TunnelPeer struct {
 	Name    string `yaml:"name,omitempty"`
 	Address string `yaml:"address,omitempty"`
 }

@@ -18,7 +18,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
-// cableEnd is ws's end of the cable, given to its port by the network role. The Mac's service gets
+// cableEnd is ws's end of the cable, given to its port by the cable role. The Mac's service gets
 // the other end.
 const cableEnd = "10.77.0.1"
 
@@ -26,7 +26,7 @@ const cableEnd = "10.77.0.1"
 // a machine on the LAN alone.
 //
 // Docked, the Mac's cable gives that port carrier, which the files script's link lists among ws's
-// wired ports. The stage names the port in /etc/ws/host_vars.yml on ws, whose network role gives it
+// wired ports. The stage names the port in /etc/ws/host_vars.yml on ws, whose cable role gives it
 // 10.77.0.1 as ws's end. Then it names the Mac's service of the cable in the server file's
 // WS_CABLE_SERVICE. There ws client macos apply gives that 10.77.0.2 as the Mac's end. It names the
 // port in the server file's WS_CABLE_PORT too, which the stage names on ws again after ws's install.
@@ -185,7 +185,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	if !c.lacks() {
 		return c.change("name " + cf.CablePort + " in /etc/ws/host_vars.yml on " + c.SSH.Host + " again, and run " +
-			"ws server ubuntu apply --only network,wireguard there")
+			"ws server ubuntu apply --only cable,tunnel there")
 	}
 	if none {
 		return c.change("write an empty WS_CABLE_SERVICE in server.conf, for no cable")
@@ -196,7 +196,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	if portSet && !c.Check {
 		// Apply reads the ports once, and names the port that the environment gives.
 		return c.change("ask " + c.SSH.Host + "'s port of the cable, name it in /etc/ws/host_vars.yml on " + c.SSH.Host + ", and run " +
-			"ws server ubuntu apply --only network,wireguard there")
+			"ws server ubuntu apply --only cable,tunnel there")
 	}
 	if err := c.read(ctx, ""); err != nil {
 		return step.Plan{}, err
@@ -206,7 +206,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	if c.end() == "" {
 		return c.change("ask " + c.SSH.Host + "'s port of the cable, name it in /etc/ws/host_vars.yml on " + c.SSH.Host + ", and run " +
-			"ws server ubuntu apply --only network,wireguard there")
+			"ws server ubuntu apply --only cable,tunnel there")
 	}
 	return c.change("ask the Mac's service of the cable, write it in server.conf as WS_CABLE_SERVICE, run " +
 		"ws client macos apply, which gives it 10.77.0.2, and ping " + cableEnd)

@@ -8,7 +8,7 @@
 # --check say what it would do, neither writing ws's host_vars. With WS_TARGET=cloud, a run must
 # skip the stage, and its closing list name the provider's firewall, but neither the dock nor the
 # router's forwards. With WS_TARGET=mac-vm, --check must skip it too. With WS_CABLE_PORT, a run
-# must name enp5s0 there, and run ws server ubuntu apply --only network,wireguard. It must read its
+# must name enp5s0 there, and run ws server ubuntu apply --only cable,tunnel. It must read its
 # late 10.77.0.1 in one login of the files script's wait, and stop at the Mac's service.
 #
 # The Mac's services are a stand-in networksetup's, and ping a stand-in's. Typed at a terminal of
@@ -38,7 +38,7 @@ ws=$RUNNER_TEMP/ws
 cable=$RUNNER_TEMP/cable
 net=$ws/root/sys/class/net
 vars="$ws/root"/etc/ws/host_vars.yml
-netplan=$ws/root/etc/netplan/60-direct-link.yaml
+netplan=$ws/root/etc/netplan/60-cable.yaml
 fail=0
 
 # unnamed: host_vars names no port, whatever else it holds: a run's WS_USER stays there.
@@ -142,7 +142,7 @@ unnamed && [ "$status" = 0 ] && [ "$(conf_print "$conf" | tail -n 1)" = WS_CABLE
 conf_write "$conf" <"$RUNNER_TEMP/cable.conf"
 wizard run WS_CABLE_PORT=enp7s0
 printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: ws's enp7s0 lacks 10\.77\.0\.1 after \
-ws server ubuntu apply --only network,wireguard: plug the Mac's cable into it, or mend what that printed, \
+ws server ubuntu apply --only cable,tunnel: plug the Mac's cable into it, or mend what that printed, \
 then run the wizard again" && sudo grep -qx 'WS_CABLE_PORT: "enp7s0"' "$vars" &&
     [ "$status" = 1 ] || error "ws client macos wizard with WS_CABLE_PORT=enp7s0 exited $status, or no host_vars"
 unname
@@ -172,7 +172,7 @@ fi
 rm -r "$RUNNER_TEMP/confs/vm"
 wizard --check
 printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: would ask ws's port of the cable, name it \
-in /etc/ws/host_vars\.yml on ws, and run ws server ubuntu apply --only network,wireguard there" &&
+in /etc/ws/host_vars\.yml on ws, and run ws server ubuntu apply --only cable,tunnel there" &&
     unnamed && [ "$status" = 0 ] || error "ws client macos wizard --check docked exited $status"
 # ws's ip, the stand-in's, but that the first read of enp5s0's addresses after the roles' run finds
 # none. On ws, networkd likewise gives it 10.77.0.1 a moment after their networkctl reload. The
@@ -192,7 +192,7 @@ sudo grep -qx 'WS_CABLE_PORT: "enp5s0"' "$vars" &&
     conf_print "$conf" | cmp -s - "$RUNNER_TEMP/cable.conf" &&
     printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: no terminal to ask WS_CABLE_SERVICE: set \
 WS_CABLE_SERVICE, or set it to nothing for none" && [ "$status" = 1 ] &&
-    [ "$(tail -n 1 "$ws/server.log")" = '--only network,wireguard' ] && [ -e "$cable/late" ] &&
+    [ "$(tail -n 1 "$ws/server.log")" = '--only cable,tunnel' ] && [ -e "$cable/late" ] &&
     [ "$(grep -c '^root: sh -s -- link$' "$ws/log")" = $((links + 1)) ] &&
     [ "$(grep -c '^root: sh -s -- wait enp5s0$' "$ws/log")" = 1 ] ||
     error "ws client macos wizard with WS_CABLE_PORT exited $status, or wrote no host_vars, ran no roles, or" \
@@ -235,7 +235,7 @@ printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: after ws's run" 
     [ "$status" = 0 ] || error "ws client macos wizard --check without host_vars exited $status"
 wizard run
 printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: enp5s0 goes in /etc/ws/host_vars\.yml on ws \
-again, and ws server ubuntu apply --only network,wireguard runs there in a unit of its own" &&
+again, and ws server ubuntu apply --only cable,tunnel runs there in a unit of its own" &&
     sudo grep -qx 'WS_CABLE_PORT: "enp5s0"' "$vars" && [ "$status" = 0 ] &&
     [ "$(grep -c '' "$ws/server.log")" = $((runs + 2)) ] && [ "$(conf_print "$conf")" = "$kept" ] ||
     error "ws client macos wizard without host_vars exited $status, named no enp5s0, or changed mac.conf"

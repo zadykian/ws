@@ -68,7 +68,7 @@ func TestCablePlan(t *testing.T) {
 // of which USB LAN has a 169.254 address.
 func linked(m *effecttest.Machine) {
 	m.Results[sessiontest.Op("link", "eth1")] = effecttest.Result{}
-	m.Results[sessiontest.Op("run", "--only", "network,wireguard")] = effecttest.Result{}
+	m.Results[sessiontest.Op("run", "--only", "cable,tunnel")] = effecttest.Result{}
 	m.Results[sessiontest.Op("wait", "eth1")] = effecttest.Result{Out: []byte("eth1 1 10.77.0.1/24\n")}
 	m.Results["networksetup -listallnetworkservices"] = effecttest.Result{Out: []byte("An asterisk (*) denotes that a network service is disabled.\nWi-Fi\nUSB LAN\n")}
 	m.Results["networksetup -getinfo Wi-Fi"] = effecttest.Result{Out: []byte("IP address: 10.0.0.2\n")}

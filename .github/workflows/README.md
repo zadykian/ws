@@ -72,7 +72,7 @@ leads, with its own host key. A fresh `--check` must show the Host key stage aft
 apply`. The first run must warn that ws faces the internet, and add ws's key to `known_hosts`, as
 `WS_HOST_KEY` gives its fingerprint. Without that line, a run with no terminal must stop without
 `WS_HOST_KEY` and with another fingerprint, and `--check` must show the line, or stop at a link, as
-a run must. With a conf of no way to ws, a run must stop, naming [The router](../../roles/server/ubuntu/network/router.md).
+a run must. With a conf of no way to ws, a run must stop, naming [The router](../../roles/server/ubuntu/cable/router.md).
 Where `WS_REMOTE` doesn't answer, ws's address must come from `WS_FIRST_ADDRESS`, and the closing
 list name `WS_TUNNEL_PORT` and no lease's address. On a cloud VM, it must name the server's way.
 
@@ -137,7 +137,7 @@ without ws's gh login. The next must print nothing, as a run must where root's g
 key. Without claude's login, a run must stop at claude on ws, naming `claude auth login`, and
 `--check` must say it would run it. The next must print nothing.
 
-The stand-in `ws server ubuntu apply --only wireguard` makes ws's `wg0`, a `wireguard-go` on UDP
+The stand-in `ws server ubuntu apply --only tunnel` makes ws's `wg0`, a `wireguard-go` on UDP
 51820, with the Mac's key in `mac.pub` as its peer. A fresh `--check` must show the Tunnel stage
 after ws's run. The first run must write `mac.pub`, run that, give `WS_PUBLIC_KEY` `wg0`'s key, and
 load the daemon. It must log in once through the tunnel, by stand-ins of `ssh` and `nc`, as `wg0`

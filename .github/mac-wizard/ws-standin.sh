@@ -23,17 +23,17 @@
 # - with server.cut, ws server ubuntu apply kills the unit's job, as a stop or a reboot would;
 # - wg0 holds wg0's key, sb turns Secure Boot on, nct6687 builds the fans' driver, and claude logs
 #   in;
-# - ws.key is wg0's key, which ws server ubuntu apply --only wireguard makes, and utun names wg0,
+# - ws.key is wg0's key, which ws server ubuntu apply --only tunnel makes, and utun names wg0,
 #   root's;
 # - uplink names the port of the default route. addr/PORT holds a port's IPv4 addresses, which ws
-#   server ubuntu apply --only network,wireguard gives the port that host_vars names, with carrier.
-#   That run writes the port in root's netplan file, as the network role does, or removes the file.
+#   server ubuntu apply --only cable,tunnel gives the port that host_vars names, with carrier.
+#   That run writes the port in root's netplan file, as the cable role does, or removes the file.
 
 set -u
 
 s=$WS_STANDIN
 
-# wg0 sets up ws's wg0 as the wireguard role does. It sets its key, made once, whose public key
+# wg0 sets up ws's wg0 as the tunnel role does. It sets its key, made once, whose public key
 # goes in wg0, and the Mac's key in mac.pub as its peer. wg0 is a wireguard-go of the runner's,
 # beside the Mac's, on UDP WS_TUNNEL_PORT, 51820 where host_vars names none, as mac.yml's stand-in
 # ws. The Mac's address in the tunnel is the one after WS_TUNNEL_ADDRESS's, 10.99.0.1/24 by
@@ -54,13 +54,13 @@ wg0() {
         peer "$(cat "$s/root"/etc/wireguard/mac.pub)" allowed-ips "${addr%.*}.2/32" || return 1
     ifconfig "$(cat "$s/utun")" up
 }
-# direct names the port that ws's host_vars names in the netplan file, as the network role does,
+# direct names the port that ws's host_vars names in the netplan file, as the cable role does,
 # or removes the file where host_vars names none. It gives the port ws's end of the cable,
 # 10.77.0.1/30, once networkd sees carrier, which the cases' sysfs shows.
 direct() {
     port=$(sed -n 's/^WS_CABLE_PORT: "\(.*\)"$/\1/p' \
         "$s/root"/etc/ws/host_vars.yml 2>/dev/null)
-    netplan=$s/root/etc/netplan/60-direct-link.yaml
+    netplan=$s/root/etc/netplan/60-cable.yaml
     rm -f "$netplan"
     [ -z "$port" ] || { mkdir -p "${netplan%/*}" && echo "    \"$port\":" >"$netplan"; } || return 1
     [ -n "$port" ] && [ "$(cat "$s/root/sys/class/net/$port/carrier" 2>/dev/null)" = 1 ] ||
@@ -210,8 +210,8 @@ ws)
             kill -9 "$PPID"
             exit 1
         fi
-        [ "$*" != '--only wireguard' ] || wg0 || exit 1
-        [ "$*" != '--only network,wireguard' ] || direct
+        [ "$*" != '--only tunnel' ] || wg0 || exit 1
+        [ "$*" != '--only cable,tunnel' ] || direct
         echo 'PLAY RECAP'
         exit "$(cat "$s/server.status" 2>/dev/null || echo 0)"
         ;;

@@ -24,7 +24,7 @@ type Status struct {
 	Claude string
 	// FansRefused is set where Secure Boot refuses nct6687, the fans' driver.
 	FansRefused bool
-	// Cable is the port of the Mac's cable that host_vars and the network role's netplan file name.
+	// Cable is the port of the Mac's cable that host_vars and the cable role's netplan file name.
 	Cable string
 	// Peered is set where wg0 has MacKey as a peer.
 	Peered bool

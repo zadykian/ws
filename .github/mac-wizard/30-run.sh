@@ -11,7 +11,7 @@
 # case then puts the account's keys there, as Ubuntu's installer imports them for its user, and the
 # wizard runs again. It must run ws server ubuntu
 # apply once, with --json alone, in a unit with root's HOME, stamp its status 0, and print no event. Then the Mac's
-# key must go to the stand-in ws's mac.pub, and ws server ubuntu apply --only wireguard run there.
+# key must go to the stand-in ws's mac.pub, and ws server ubuntu apply --only tunnel run there.
 # wg0's key must end mac.conf as WS_PUBLIC_KEY, and ws client macos apply, run again, load the
 # daemon, which must have a handshake with the stand-in ws. The wizard must log in to ws through the
 # tunnel once. The closing list must name no step of the tunnel.
@@ -64,10 +64,10 @@ PATH=$(cat "$RUNNER_TEMP/path") "$wsbin" client macos wizard >"$RUNNER_TEMP/run.
 status=$?
 cat "$RUNNER_TEMP/run.err" "$RUNNER_TEMP/run.out"
 [ "$status" = 0 ] || error "ws client macos wizard exited $status, with the account's keys in the user's file"
-if ! printf '\n%s\n' '--only wireguard' | cmp -s - "$RUNNER_TEMP/ws/server.log" ||
+if ! printf '\n%s\n' '--only tunnel' | cmp -s - "$RUNNER_TEMP/ws/server.log" ||
     ! grep -q -- '--setenv=HOME=/root ' "$RUNNER_TEMP/ws/run.log" ||
     ! grep -Eq ' 0 on - (-|[0-9a-f]{64})$' "$RUNNER_TEMP/ws/root/var/lib/ws-wizard/run"; then
-    error "ws client macos wizard ran no ws server ubuntu apply on ws, once, then with --only wireguard, with root's HOME"
+    error "ws client macos wizard ran no ws server ubuntu apply on ws, once, then with --only tunnel, with root's HOME"
 fi
 ! grep -q '"event"' "$RUNNER_TEMP/run.err" || error "ws client macos wizard printed an event line of the run's log"
 mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /opt/homebrew/bin/wg /etc/ws-tunnel/private.key)

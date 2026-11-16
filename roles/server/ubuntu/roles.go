@@ -7,14 +7,15 @@ import (
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/base"
+	"github.com/zadykian/ws/roles/server/ubuntu/cable"
 	"github.com/zadykian/ws/roles/server/ubuntu/claude"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools"
 	"github.com/zadykian/ws/roles/server/ubuntu/docker"
 	"github.com/zadykian/ws/roles/server/ubuntu/fans"
 	"github.com/zadykian/ws/roles/server/ubuntu/fresh"
+	"github.com/zadykian/ws/roles/server/ubuntu/git"
 	"github.com/zadykian/ws/roles/server/ubuntu/ikeward"
 	"github.com/zadykian/ws/roles/server/ubuntu/lazygit"
-	"github.com/zadykian/ws/roles/server/ubuntu/network"
 	"github.com/zadykian/ws/roles/server/ubuntu/nvidia"
 	"github.com/zadykian/ws/roles/server/ubuntu/otelcol"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
@@ -22,8 +23,8 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/shell"
 	"github.com/zadykian/ws/roles/server/ubuntu/signoz"
 	"github.com/zadykian/ws/roles/server/ubuntu/tmux"
+	"github.com/zadykian/ws/roles/server/ubuntu/tunnel"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
-	"github.com/zadykian/ws/roles/server/ubuntu/wireguard"
 	"github.com/zadykian/ws/roles/server/ubuntu/zed"
 )
 
@@ -41,12 +42,13 @@ type entry struct {
 var all = []entry{
 	{"base", base.Steps},
 	{"security", security.Steps},
-	{"network", network.Steps},
-	{"wireguard", wireguard.Steps},
+	{"cable", cable.Steps},
+	{"tunnel", tunnel.Steps},
 	{"ikeward", ikeward.Steps},
 	{"nvidia", nvidia.Steps},
 	{"fans", fans.Steps},
 	{"shell", shell.Steps},
+	{"git", git.Steps},
 	{"tmux", tmux.Steps},
 	{"lazygit", lazygit.Steps},
 	{"devtools", devtools.Steps},

@@ -15,7 +15,7 @@
 # has mode 0600, in a directory of 0755. One with an argument, as --diff, must leave that stamp.
 # The files script's link must list ws's wired ports but the uplink and a bridge's member, with
 # their carrier and IPv4 addresses. link PORT must name one in ws's /etc/ws/host_vars.yml once. ws
-# server ubuntu apply --only network,wireguard must then give it 10.77.0.1, and status's cable name
+# server ubuntu apply --only cable,tunnel must then give it 10.77.0.1, and status's cable name
 # it. The remote script's outbound must add WS_SECURITY_OUTBOUND: false there once, which status must
 # then read as off. So must it read false with a blank after it, and no with CRLF. The last line
 # counts, as in YAML: Off with a comment by hand must read as off, and stay, and true after it as
@@ -239,11 +239,11 @@ rest=$(unlisted "$out")
 [ "$status" = 0 ] && [ -z "${rest#"$known"}" ] || error "its link enp5s0 again exited $status"
 remote status
 printf '%s\n' "$out" | grep -qx 'cable -' || error "status named a cable before the roles' run"
-remote run --only network,wireguard
+remote run --only cable,tunnel
 files link
 printf '%s\n' "$out" | grep -qx 'enp5s0 1 10\.77\.0\.1/30' &&
-    [ "$(tail -n 1 "$ws/server.log")" = '--only network,wireguard' ] ||
-    error "ws server ubuntu apply --only network,wireguard gave enp5s0 no 10.77.0.1/30"
+    [ "$(tail -n 1 "$ws/server.log")" = '--only cable,tunnel' ] ||
+    error "ws server ubuntu apply --only cable,tunnel gave enp5s0 no 10.77.0.1/30"
 remote status
 printf '%s\n' "$out" | grep -qx 'cable enp5s0' || error "status named no cable enp5s0"
 remote outbound

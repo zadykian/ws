@@ -8,7 +8,7 @@
 # - link lists ws's wired ports but the uplinks, those that a default route names, a line each. A
 #   line holds the port, its carrier, 1 or 0, or - where the port is down, and its IPv4 addresses,
 #   or -. link PORT names that port in ws's /etc/ws/host_vars.yml as
-#   WS_CABLE_PORT, the port of the Mac's cable, which the network and wireguard
+#   WS_CABLE_PORT, the port of the Mac's cable, which the cable and tunnel
 #   roles read.
 # - user NAME names NAME in that file as WS_USER, for ws server ubuntu apply.
 # - peer KEY writes KEY, the Mac's WireGuard key, to mac.pub where that holds another.
@@ -58,7 +58,7 @@ ports() {
 }
 
 # link_wait PORT runs link once PORT holds 10.77.0.1. The address comes from networkd a moment
-# after the network role's networkctl reload, and later for a port that was down. It reads ip each
+# after the cable role's networkctl reload, and later for a port that was down. It reads ip each
 # second, 10 s at most, so that the wizard waits in one login, which a key may take a touch for.
 link_wait() {
     ports | grep -qxF -- "${1-}" || die "'${1-}' is none of the wired ports that link lists"
@@ -115,7 +115,7 @@ user() {
 }
 
 # peer KEY writes KEY, a WireGuard public key, to mac.pub, which wg0's peer mac takes at the
-# wireguard role's next run, where mac.pub holds another. Its directory is root's alone, as
+# tunnel role's next run, where mac.pub holds another. Its directory is root's alone, as
 # wireguard-tools makes it.
 peer() {
     printf '%s\n' "$1" | grep -qxE '[A-Za-z0-9+/]{43}=' && [ "${#1}" = 44 ] ||

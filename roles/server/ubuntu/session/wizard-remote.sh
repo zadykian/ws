@@ -15,7 +15,7 @@
 #   is ok, none or login. fans is refused where Secure Boot refuses nct6687, the fans' driver, else
 #   ok. peer is ok where wg0 has mac.pub's key as a peer. outbound
 #   is off where host_vars, /etc/ws/host_vars.yml, turns the security role's outbound table off, else
-#   on. cable is the port of the Mac's cable that host_vars and the network role's netplan file name.
+#   on. cable is the port of the Mac's cable that host_vars and the cable role's netplan file name.
 #   secrets is the SHA-256 of ws's secrets file, as a run would stamp it, or -, and vars that of
 #   host_vars.
 # - state prints ws server ubuntu state --json, which changes nothing, on stdout alone. It has the
@@ -48,7 +48,7 @@ secrets=/etc/ws/secrets.age
 credential=/etc/credstore.encrypted/ws-secrets
 peer=/etc/wireguard/mac.pub
 module=/sys/module/nct6687
-netplan=/etc/netplan/60-direct-link.yaml
+netplan=/etc/netplan/60-cable.yaml
 
 # The user whom ssh logs in as, whose claude and git config the status reads: sudo's SUDO_USER, or
 # root at a root login. ws server ubuntu wizard names WS_USER as SUDO_USER. The git config names
@@ -78,7 +78,7 @@ stamp() {
 }
 
 # cable prints the port that host_vars names as WS_CABLE_PORT, as link writes it,
-# bare or in either quotes: the last such line. It prints - for none, and where the network role's
+# bare or in either quotes: the last such line. It prints - for none, and where the cable role's
 # netplan file lacks it, as after a roles' run that failed, so that the Cable stage runs them again.
 cable() {
     port=$(awk -v q="'" '/^WS_CABLE_PORT[ \t]*:/ {

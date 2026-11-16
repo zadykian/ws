@@ -9,7 +9,7 @@ import guided "github.com/zadykian/ws/engine/core/wizard"
 func (r WsReach) Hand(h *guided.Hand, s Status) {
 	Fans(h, s)
 	if c, err := r.Read(); err == nil && c.Target == "lan" {
-		h.Add("ws's lease, on a machine on the LAN: static, as roles/server/ubuntu/network/router.md has it.")
+		h.Add("ws's lease, on a machine on the LAN: static, as roles/server/ubuntu/cable/router.md has it.")
 	}
 	h.Add("Each device's ssh key on ws: ssh-import-id gh:LOGIN, run as WS_USER, adds the keys that GitHub " +
 		"lists for LOGIN (roles/server/ubuntu/security/README.md, SSH and the firewall).")

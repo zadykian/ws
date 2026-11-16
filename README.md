@@ -1,9 +1,9 @@
 # ws
 
 Sets up my development server from code. `ws server ubuntu apply` runs on the machine itself. It
-sets up packages, SSH by key and a firewall, and a direct link and a WireGuard tunnel to the Mac. It
-sets up Docker, the shell, tmux, lazygit, the Fresh editor and Zed's server. It sets up claude and
-[cld](https://github.com/zadykian/cld), and SigNoz with a collector for the machine's telemetry.
+sets up packages, SSH by key and a firewall, and a cable and a WireGuard tunnel to the Mac. It
+sets up Docker, the shell, git, tmux, lazygit, the Fresh editor and Zed's server. It sets up claude
+and [cld](https://github.com/zadykian/cld), and SigNoz with a collector for the machine's telemetry.
 Running it again is safe, and `--check` shows how a machine differs from the repository.
 
 Each role has a page of its own. A role is Go steps of ws:
@@ -13,16 +13,17 @@ Each role has a page of its own. A role is Go steps of ws:
 - [`security`](roles/server/ubuntu/security): SSH by key only, ufw and fail2ban, and a table that keeps what
   ws starts to the internet and ikeward, but what the network needs, such as DHCP and DNS. The
   table is off where `WS_SECURITY_OUTBOUND` is false, as a cloud VM wants.
-- [`network`](roles/server/ubuntu/network): the server's end of a cable to the Mac, as Go steps.
-- [`wireguard`](roles/server/ubuntu/wireguard): `wg0`, the server's end of a WireGuard tunnel for the Mac.
+- [`cable`](roles/server/ubuntu/cable): the server's end of a cable to the Mac, as Go steps.
+- [`tunnel`](roles/server/ubuntu/tunnel): `wg0`, the server's end of a WireGuard tunnel for the Mac.
 - [`ikeward`](roles/server/ubuntu/ikeward): ikeward's IKEv2 VPN, where a profile is given, and the WireGuard
   peers' way into it.
 - [`nvidia`](roles/server/ubuntu/nvidia): NVIDIA's headless driver from Ubuntu's archive, on a machine with an
   NVIDIA GPU.
 - [`fans`](roles/server/ubuntu/fans): fan curves for the board's headers, and the driver that sets them.
-- [`shell`](roles/server/ubuntu/shell): `~/.bashrc`, `~/.profile`, `~/.gitconfig`, `~/.secrets/env` from the
-  secrets file, a key that signs commits, git's tokens for servers besides GitHub, and clones of
-  repositories.
+- [`shell`](roles/server/ubuntu/shell): `~/.bashrc`, `~/.profile` and `~/.secrets/env` from the secrets
+  file.
+- [`git`](roles/server/ubuntu/git): `~/.gitconfig`, a key that signs commits, git's tokens for servers
+  besides GitHub, and clones of repositories.
 - [`tmux`](roles/server/ubuntu/tmux): tmux from Ubuntu's archive.
 - [`lazygit`](roles/server/ubuntu/lazygit): lazygit from Ubuntu's archive, in JetBrains Dark, with the
   repository and its branch in the terminal's title.
@@ -164,7 +165,7 @@ secrets file's `token.github` ([gh](roles/server/ubuntu/devtools/README.md#gh)).
 selected repositories; Metadata and Actions read; Contents, Pull requests, Issues and Workflows read
 and write; and no account permission. These stay manual:
 
-- other peers' public keys on the server, as in [The tunnel](roles/server/ubuntu/wireguard/README.md#the-tunnel);
+- other peers' public keys on the server, as in [The tunnel](roles/server/ubuntu/tunnel/README.md#the-tunnel);
 - another device's SSH key on the server: `ssh-import-id gh:LOGIN`, run as `WS_USER`
   ([SSH and the firewall](roles/server/ubuntu/security/README.md#ssh-and-the-firewall));
 - the VPN's profile, age-encrypted on the server, and the `ikeward` role's variables, as in
@@ -176,7 +177,7 @@ and write; and no account permission. These stay manual:
   `~/.config/ws/forbidden-words`, mode 600, on each machine that commits
   ([The hooks](.github/workflows/README.md#the-hooks)).
 
-The router takes a few steps once, by hand: [The router](roles/server/ubuntu/network/router.md).
+The router takes a few steps once, by hand: [The router](roles/server/ubuntu/cable/router.md).
 
 ## Checks
 

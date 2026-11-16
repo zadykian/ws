@@ -37,7 +37,7 @@ func TestTunnelFinishPrintsTheKeyWhereMacConfLacksWsKey(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, want := range []string{"public key is PUB\nMake it ws's peer, mac, with a direct way to ws, as ssh ws needs", "ssh -t -o HostName=ADDRESS -o Port=PORT ws \"printf '%s\\n' 'PUB' | sudo tee /etc/wireguard/mac.pub",
-		"ssh -t -o HostName=ADDRESS -o Port=PORT ws sudo ws server ubuntu apply --only wireguard\n", "Then set WS_PUBLIC_KEY"} {
+		"ssh -t -o HostName=ADDRESS -o Port=PORT ws sudo ws server ubuntu apply --only tunnel\n", "Then set WS_PUBLIC_KEY"} {
 		if !strings.Contains(text.String(), want) {
 			t.Errorf("Finish printed %q; want %q in it", text.String(), want)
 		}
@@ -56,7 +56,7 @@ func TestTunnelFinishNamesTheServerAsTheHost(t *testing.T) {
 	want := "The Mac's WireGuard public key is PUB\nMake it box's peer, mac, with a direct way to box, " +
 		"as ssh box needs this done first. ADDRESS and PORT are that way:\n\n" +
 		"    ssh -o HostName=ADDRESS -o Port=PORT box \"printf '%s\\n' 'PUB' | tee /etc/wireguard/mac.pub >/dev/null\"\n" +
-		"    ssh -o HostName=ADDRESS -o Port=PORT box ws server ubuntu apply --only wireguard\n" +
+		"    ssh -o HostName=ADDRESS -o Port=PORT box ws server ubuntu apply --only tunnel\n" +
 		"\nThen set WS_PUBLIC_KEY in ~/.config/ws/servers/NAME/server.conf to box's key, which that run prints, and run\n" +
 		"ws client macos apply again, which installs the tunnel's daemon.\n"
 	if text.String() != want {

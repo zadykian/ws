@@ -13,7 +13,7 @@ import (
 )
 
 // Apply gives ws's wg0 the Mac's key as its peer, where mac.pub holds another or wg0 lacks it. The
-// peer op writes the key, then ws server ubuntu apply --only wireguard runs in a unit of its own.
+// peer op writes the key, then ws server ubuntu apply --only tunnel runs in a unit of its own.
 // It sets WS_PUBLIC_KEY to wg0's key, where it differs, and runs ws client macos apply again. Last,
 // it waits for the handshake and logs in, or, where the run asked ws's address, leaves that to a
 // later run. It takes root's key rather than tunnel.pub, which the user can write, as the key it
@@ -38,14 +38,14 @@ func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 	peered := s.MacKey != mac || !s.Peered
 	if peered {
 		t.Out.Say("%s: the Mac's key goes to /etc/wireguard/mac.pub on %s, and ws server ubuntu apply --only "+
-			"wireguard runs there in a unit of its own, which gives wg0 that peer", stage.Tunnel, t.SSH.Host)
+			"tunnel runs there in a unit of its own, which gives wg0 that peer", stage.Tunnel, t.SSH.Host)
 		if err := t.Ws.NamePeer(ctx, mac); err != nil {
 			return err
 		}
 		var ok bool
 		if s, ok = t.Ws.Status(ctx); !ok || !s.Peered {
 			return errors.New(stage.Tunnel + ": " + t.SSH.Host + "'s wg0 lacks the Mac's key after ws server ubuntu apply --only " +
-				"wireguard: mend what it printed, then run the wizard again")
+				"tunnel: mend what it printed, then run the wizard again")
 		}
 	}
 	wg0 := s.WgKey

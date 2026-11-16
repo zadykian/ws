@@ -1,0 +1,16 @@
+package cable
+
+import (
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
+)
+
+// Steps returns the role's one step: the cable to the Mac. The role takes no secrets.
+func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units, out effect.Out) []step.Step {
+	return []step.Step{resource.Group{Title: "Cable", Parts: []resource.Resource{
+		direct{M: m, U: u, Out: out, Interface: v.Cable.Port, Address: v.Cable.Address},
+	}}}
+}

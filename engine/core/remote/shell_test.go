@@ -11,7 +11,7 @@ import (
 func TestShellWord(t *testing.T) {
 	for word, want := range map[string]string{
 		"status":                     "status",
-		"--only=network,wireguard":   "--only=network,wireguard",
+		"--only=cable,tunnel":        "--only=cable,tunnel",
 		"https://example.test/a+b@c": "https://example.test/a+b@c",
 		"":                           "''",
 		"signoz up":                  "'signoz up'",

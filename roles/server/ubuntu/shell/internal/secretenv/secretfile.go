@@ -10,7 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/account"
-	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/plan"
+	"github.com/zadykian/ws/roles/server/ubuntu/internal/plan"
 )
 
 // Env is ~/.secrets/env, for ~/.bashrc and the otelcol role, from the secrets file's

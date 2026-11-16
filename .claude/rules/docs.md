@@ -17,7 +17,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   mean by each.
 - A page lives beside the code it describes, as that directory's `README.md`. A second page stands
   beside it, named for its subject, where the cap keeps two apart or no package fits:
-  `zed/projects.md`, `network/router.md`, and `.github/workflows/rootless.md`, `mac-cld.md` and
+  `zed/projects.md`, `cable/router.md`, and `.github/workflows/rootless.md`, `mac-cld.md` and
   `mac-servers.md`. CI's page is `.github/workflows/README.md`, never `.github/README.md`, which
   GitHub would show in place of the root's.
 - A role's page is the `README.md` in its directory, `roles/server/ubuntu/NAME/`: what it sets up
@@ -29,7 +29,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   is the wizard's targets, [the tunnel's](../../roles/client/macos/tunnel/README.md) the daemons' rules, and [ghostty](../../roles/client/macos/ghostty/README.md) its Ghostty
   and cld, [zed](../../roles/client/macos/zed/README.md) its Zed. [The secrets](../../roles/server/ubuntu/secrets/README.md)
   is the secrets file. [The server's stages](../../roles/server/ubuntu/stages/README.md) are
-  `ws server ubuntu wizard`, the stages run on ws. [The router](../../roles/server/ubuntu/network/router.md)
+  `ws server ubuntu wizard`, the stages run on ws. [The router](../../roles/server/ubuntu/cable/router.md)
   is the router's steps, taken once by hand.
 - [The TUI's README](../../engine/tui/README.md) is the terminal UI: its modes, `--plain`, the
   layout and the keys. [Configure](../../engine/tui/internal/configure/README.md) is its Configure

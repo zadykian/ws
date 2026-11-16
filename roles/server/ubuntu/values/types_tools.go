@@ -21,12 +21,12 @@ type Ikeward struct {
 	ForwardFrom []string `yaml:"WS_IKEWARD_FORWARD_FROM"`
 }
 
-// Network is roles/network's keys.
-type Network struct {
-	// DirectLinkInterface is the cable's port. Empty, the role sets up no direct link.
-	DirectLinkInterface string `yaml:"WS_CABLE_PORT"`
-	// DirectLinkAddress is the server's address on the cable, with its prefix length.
-	DirectLinkAddress string `yaml:"WS_CABLE_ADDRESS"`
+// Cable is roles/cable's keys.
+type Cable struct {
+	// Port is the cable's port. Empty, the role sets up no cable.
+	Port string `yaml:"WS_CABLE_PORT"`
+	// Address is the server's address on the cable, with its prefix length.
+	Address string `yaml:"WS_CABLE_ADDRESS"`
 }
 
 // Security is roles/security's keys.

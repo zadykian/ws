@@ -10,7 +10,7 @@ and DNS.
 ws turns SSH's passwords off: everyone logs in by key. Where `WS_USER` is another user, root
 cannot log in at all, and `WS_USER` takes root by `sudo` with its password. Where `WS_USER` is
 root, a cloud VM's, root logs in by key. ufw then lets in
-SSH on port 22 and WireGuard on UDP port 51820 ([wireguard](../wireguard/README.md)). It lets in DNS lookups
+SSH on port 22 and WireGuard on UDP port 51820 ([tunnel](../tunnel/README.md)). It lets in DNS lookups
 from Docker's bridges to the host's resolver too ([docker](../docker/README.md)), and nothing else. fail2ban
 bans an address for an hour after 5 failed logins in 10 minutes. sshd's own penalties slow one
 that keeps failing. Both hold on every network, with no peer or network exempt. SSH takes only the
@@ -112,7 +112,7 @@ The caveats:
   bridged containers.
 - The router answers at its public address too, which the table takes for the internet: the
   packet leaves by the same gateway. A rule on the router drops it for a machine on the LAN
-  ([The router](../network/router.md)).
+  ([The router](../cable/router.md)).
 - A private DNS server of resolved's, as the router, hears only resolved's lookups. A program that
   asks it for names itself, not resolved at `127.0.0.53`, gets no answer. chrony, which the `base`
   role installs, keeps time from Ubuntu's pools on the internet.
@@ -155,7 +155,7 @@ the files, but skips the check, the comparison, the units and ufw. CI checks the
 `WS_SECURITY_OUTBOUND`, true by default, turns the table on. A cloud VM wants it false: the table
 drops the cloud's metadata service at `169.254.169.254`, which cloud-init, the guest agent and
 instance credentials need. On a new machine, name it in `/etc/ws/host_vars.yml` before the first
-run ([The direct link](../network/README.md#the-direct-link)):
+run ([The cable](../cable/README.md#the-cable)):
 
 ```yaml
 ---
@@ -169,9 +169,9 @@ links, `/usr/local/lib/ws/security` and the table, even one loaded by hand. `--c
 removal. Off leaves:
 
 - ufw's default, which allows every outgoing connection;
-- the `wireguard` role's chain `WS-MAC`, which drops what Docker's containers send through `wg0`
+- the `tunnel` role's chain `WS-MAC`, which drops what Docker's containers send through `wg0`
   or the cable, but for replies to the Mac's own connections
-  ([The firewall](../wireguard/README.md#the-firewall)).
+  ([The firewall](../tunnel/README.md#the-firewall)).
 
 So Docker's containers reach a cloud's metadata service, and the VPC or the LAN, too. Only the
 table's `containers` chain drops what they forward: Docker forwards it ahead of ufw's rules, and

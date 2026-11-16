@@ -51,7 +51,7 @@ func TestTunnelPlan(t *testing.T) {
 		want   string
 	}{
 		"done":      {keyB, session.Status{WgKey: keyB, Peered: true, MacKey: keyA}, ""},
-		"peer":      {keyB, session.Status{WgKey: keyB, MacKey: keyA}, "run ws server ubuntu apply --only wireguard"},
+		"peer":      {keyB, session.Status{WgKey: keyB, MacKey: keyA}, "run ws server ubuntu apply --only tunnel"},
 		"other key": {keyB, session.Status{WgKey: keyB, Peered: true, MacKey: keyB}, "write the Mac's key, " + keyA},
 		"new wg0": {keyA, session.Status{WgKey: keyB, Peered: true, MacKey: keyA},
 			"set WS_PUBLIC_KEY in server.conf to wg0's key, " + keyB},
@@ -118,7 +118,7 @@ func TestTunnelPlanNamesTheServer(t *testing.T) {
 		got = append(got, c.String())
 	}
 	all := strings.Join(got, "\n")
-	for _, w := range []string{"/etc/wireguard/mac.pub on lab", "--only wireguard on lab,", "log in to lab through it"} {
+	for _, w := range []string{"/etc/wireguard/mac.pub on lab", "--only tunnel on lab,", "log in to lab through it"} {
 		if err != nil || !strings.Contains(all, w) {
 			t.Errorf("Plan = %q, %v; want %q", all, err, w)
 		}

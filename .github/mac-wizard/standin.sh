@@ -158,7 +158,7 @@ EOF
     sudo mkdir -p "$dir/root/root/.local/bin" "$dir/root/usr/local/bin"
     sudo ln -s "$here/ws-standin.sh" "$dir/root/usr/local/bin/ws"
     sudo ln -s "$here/ws-standin.sh" "$dir/root/root/.local/bin/claude"
-    # ws's claude, root's, logged in, and ws's signing key, as the shell role and the stages leave them.
+    # ws's claude, root's, logged in, and ws's signing key, as the git role and the stages leave them.
     # root's git config names that key, and the stand-in gh lists it. So no run of the wizard opens a
     # session on ws for a login.
     ssh-keygen -q -t ed25519 -N '' -C "$1" -f "$dir/signing" </dev/null

@@ -78,8 +78,8 @@ WS_CLAUDE_MARKETPLACES:
 
 A source that names a private server stays out of this repository: its list goes in the machine's
 `host_vars.yml`. A private source needs the VPN of the `ikeward` role
-([A run](../ikeward/README.md#a-run)), and a token for its host from the `shell` role
-([Git credentials](../shell/README.md#git-credentials)). Both roles run before `claude`.
+([A run](../ikeward/README.md#a-run)), and a token for its host from the `git` role
+([Git credentials](../git/README.md#git-credentials)). Both roles run before `claude`.
 The sessions' unit needs a booted systemd, so in CI's container the restore step skips.
 
 The role adds each name that `claude plugin marketplace list` lacks, so the next run finds it and

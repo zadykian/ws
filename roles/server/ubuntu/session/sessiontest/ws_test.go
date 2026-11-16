@@ -63,10 +63,10 @@ func TestWsPasses(t *testing.T) {
 
 func TestWsKeepsAWordWhole(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Results[Op("run", "--only", "network")] = effecttest.Result{Out: []byte("two")}
-	m.Results[Op("run", "--only network")] = effecttest.Result{Out: []byte("one")}
+	m.Results[Op("run", "--only", "cable")] = effecttest.Result{Out: []byte("two")}
+	m.Results[Op("run", "--only cable")] = effecttest.Result{Out: []byte("one")}
 	var f remote.Shell = Ws{M: m}
-	for want, op := range map[string][]string{"two": {"run", "--only", "network"}, "one": {"run", "--only network"}} {
+	for want, op := range map[string][]string{"two": {"run", "--only", "cable"}, "one": {"run", "--only cable"}} {
 		if out, err := f.Run(context.Background(), nil, script(op...)...); err != nil || string(out) != want {
 			t.Errorf("Run of %q = %q, %v; want %q", op, out, err, want)
 		}
