@@ -110,6 +110,29 @@ func TestWhenOnPlansAsWithout(t *testing.T) {
 	}
 }
 
+func TestWhenNegatedWant(t *testing.T) {
+	for _, tc := range []struct {
+		name, vendor, cond string
+		said               []string
+	}{
+		{"the vendor", "0x1234", `{ gpu_vendor = "!0x1234" }`,
+			[]string{`say: file/a: off on this machine, as its gpu_vendor is "0x1234"`}},
+		{"another vendor", "0x1af4", `{ gpu_vendor = "!0x1234" }`, nil},
+		{"an empty want", "0x1af4", `{ gpu_vendor = "!" }`,
+			[]string{"say: file/a: off on this machine, as its gpu_vendor is not \"\""}},
+	} {
+		m := effecttest.NewMachine()
+		withPCIDevice(m, "0x030000", tc.vendor)
+		got, said := planGated(t, m, tc.cond)
+		if (got != nil) != (tc.said == nil) || !slices.Equal(said, tc.said) {
+			t.Errorf("%s: plan = %q, said %q; want on %v, and %q", tc.name, got, said, tc.said == nil, tc.said)
+		}
+	}
+	if got, said := planGated(t, effecttest.NewMachine(), `{ gpu_vendor = "!0x1234" }`); got == nil || said != nil {
+		t.Errorf("no PCI devices: plan = %q, said %q; want on", got, said)
+	}
+}
+
 func TestWhenIsReadAtPlan(t *testing.T) {
 	m := effecttest.NewMachine()
 	units := loadOne(t, Env{M: m, Out: &effecttest.Out{}}, gatedFile(`{ board_vendor = "`+acme+`" }`), map[string]string{"a": "x"})
@@ -140,7 +163,8 @@ func TestWhenRefusesAWantOfAnotherForm(t *testing.T) {
 	for _, tc := range []struct {
 		want string
 		ok   bool
-	}{{"0x12AB", false}, {"12ab", false}, {"0x1234 ", false}, {"0x12345", false}, {"0x1234", true}, {"", true}} {
+	}{{"0x12AB", false}, {"12ab", false}, {"0x1234 ", false}, {"0x12345", false}, {"0x1234", true}, {"", true},
+		{"!0x12AB", false}, {"!0x1234", true}, {"!", true}} {
 		want, ok := tc.want, tc.ok
 		_, err := Load(e, tree(map[string]string{"r/units.toml": gatedFile(`{ gpu_vendor = "` + want + `" }`), "r/a": "x"}))
 		refused := err != nil && strings.Contains(err.Error(), `when: gpu_vendor "`+want+`" is not of the form ^0x[0-9a-f]{4}$`)
