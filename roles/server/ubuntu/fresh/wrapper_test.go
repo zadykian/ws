@@ -1,18 +1,13 @@
-package fresh
+package fresh_test
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
 // setup says how run builds the wrapper's surroundings. env is the one variable the wrapper sees
@@ -121,21 +116,5 @@ func TestTheWrapperPassesNoConfigWhereThereIsNone(t *testing.T) {
 func TestTheWrapperRunsWithNoTmuxBinary(t *testing.T) {
 	if _, _, code := run(t, setup{env: "TMUX=/tmp/s,1,0", terminal: true}); code != 7 {
 		t.Errorf("exit %d, want Fresh's", code)
-	}
-}
-
-func TestTheWrapperIsWrittenForEveryUser(t *testing.T) {
-	m, v := userMachine()
-	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
-	m.Packages = effecttest.Packages{"fresh-editor": {Version: version, Status: "ii"}}
-	out := &effecttest.Out{}
-	if _, err := step.Run(context.Background(), Steps(v, secrets.Secrets{}, m, &effecttest.Units{}, out), out, false); err != nil {
-		t.Fatal(err)
-	}
-	if got := m.Files[wrapperPath]; !bytes.Equal(got, wrapper) {
-		t.Errorf("%s holds %q", wrapperPath, got)
-	}
-	if got := m.Modes[wrapperPath]; got != 0o755 {
-		t.Errorf("mode %o", got)
 	}
 }

@@ -46,7 +46,8 @@ role downloads the one for the machine, by the architecture that dpkg names, to 
 owned by root with mode 0755, so any `WS_USER` can run it. A failed download is tried five times,
 ten seconds apart. A machine of another architecture fails the step. The settings name both by path,
 so Zed downloads neither. Fresh names them too. `ws server ubuntu apply --only zed` does not install
-them: pass `--only devtools,zed`, or `devtools,fresh`.
+them: pass `--only devtools,zed`. `mise bootstrap` writes Fresh's config, and
+`ws server ubuntu apply --only devtools` installs the servers it names.
 
 - docker-language-server's telemetry is off, and its experimental `removeOverlappingIssues` drops
   the diagnostics that rcjsuen's server also gives. Check the option on each bump.

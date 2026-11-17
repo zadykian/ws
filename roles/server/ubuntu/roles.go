@@ -11,7 +11,6 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/claude"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools"
 	"github.com/zadykian/ws/roles/server/ubuntu/docker"
-	"github.com/zadykian/ws/roles/server/ubuntu/fresh"
 	"github.com/zadykian/ws/roles/server/ubuntu/git"
 	"github.com/zadykian/ws/roles/server/ubuntu/ikeward"
 	"github.com/zadykian/ws/roles/server/ubuntu/otelcol"
@@ -46,7 +45,6 @@ var all = []entry{
 	{"claude", claude.Steps},
 	{"signoz", signoz.Steps},
 	{"otelcol", otelcol.Steps},
-	{"fresh", fresh.Steps},
 	// zed is described in `roles/server/ubuntu/zed/README.md`.
 	{"zed", zed.Steps},
 }

@@ -1,29 +1,33 @@
 # fresh
 
-The `fresh` role is Go steps in `roles/server/ubuntu/fresh`. It installs the Fresh editor on ws from
-the `.deb` of a pinned release. Fresh runs in a terminal, and its config is a plain template.
+The `fresh` role sets up the Fresh editor from `mise bootstrap`. Its `mise.server.toml` writes a
+wrapper that carries Fresh's keys through tmux. Its `units.toml` holds the units: the `.deb` of a
+pinned release, and the config and the theme of `WS_USER`. Fresh runs in a terminal, and its
+config is a plain template.
 
 ## The install
 
-- `Fresh install` plans from the pin in `download.go`: a version and, for amd64 and arm64, a
+- The unit `deb/fresh` plans from the pin in `units.toml`: a version and, for amd64 and arm64, a
   SHA-256. Where `dpkg-query` lists another version, it fetches `fresh-editor_VERSION_ARCH.deb`
   from the project's GitHub release into `/var/cache/ws/` and checks the file against the SHA-256.
   Before dpkg reads it, it checks the file's own name and version against the pin. It removes the
   file once the package installs. A dry run on a new machine shows the install.
-- Where `dpkg-query` lists the pinned version as installed, the step only removes a leftover file.
+- Where `dpkg-query` lists the pinned version as installed, the unit only removes a leftover file.
   A second run changes nothing.
-- Any other architecture fails the step.
+- Any other architecture fails the unit.
+- The wrapper lands at `/usr/local/bin/fresh` after mise's packages and before the units, so on a
+  first run before the `.deb`. It runs nothing before a call, which does no harm.
 
 The release's `.deb` needs `libc6` 2.30 and `libgcc-s1` 4.2 alone. So it installs on a physical
 machine on the LAN, on a cloud VM and on a VM on the Mac. The testing `.deb` lacks the grammars
 for JS, TS and Templ, and needs `libc6` 2.39.
 
-The role needs no other role and no secret. No step needs a booted systemd, so it runs whole in
+The role needs no other role and no secret. No unit needs a booted systemd, so it runs whole in
 CI's container.
 
 ## The config
 
-`Fresh config` writes `~/.config/fresh/config.json` for `WS_USER`, from the template
+The unit `file/fresh-config` writes `~/.config/fresh/config.json` for `WS_USER`, from the template
 `files/config.json.tmpl`, which fills in the user's home for the language servers' paths. A
 run replaces a change made to it by hand and keeps the old file beside the new one, as
 [zed](../zed/README.md) does for its settings.
@@ -38,7 +42,7 @@ Fresh load its defaults and exit 0.
   keys left out. Fresh skips the comments.
 - The file starts with a comment that says ws wrote it. Fresh reads JSONC.
 - `~/.config/fresh` stays the user's, as Fresh writes `tsconfig.json` and `types/` there.
-- The step fails where `~/.config`, the directory or `config.json` is a link. The user owns
+- The unit fails where `~/.config`, the directory or `config.json` is a link. The user owns
   `~/.config`, and a link would send ws's root to whatever it names.
 
 ## The servers
@@ -56,7 +60,7 @@ path that `devtools.ServerPaths` gives it for the user's home.
   initialises, but project load and navigation are unverified.
 
 The role needs no server installed to succeed, as it only names paths. The `devtools` role
-installs them, so a user wanting both passes `--only devtools,fresh`.
+installs them, so a machine wanting both holds both roles.
 
 ## Trust each project
 
@@ -67,7 +71,7 @@ it, so ws cannot. A folder with no marker is trusted at once.
 
 ## A new version
 
-1. Change `version`, `tag` and both sums in `download.go`. Check the `.deb`'s `Depends`.
+1. Change `version`, the tag in `url` and both sums in `units.toml`. Check the `.deb`'s `Depends`.
 2. From the tag's source, take every name of `define_action_str_mapping!` in
    `crates/fresh-editor/src/input/keybindings.rs`, and the handler names of `registerCommand` at
    the top level of `plugins/`, leaving out `plugins/examples`.
@@ -81,10 +85,10 @@ A name with no action loads with no error, so the list is the only check of a ta
 
 ## The theme
 
-`Fresh config` also writes `~/.config/fresh/themes/jetbrains-dark.json`, and `config.json` names it
-by its `name`, `JetBrains Dark`, which Zed's `theme.dark` names too. The values are
-Zed's, from `artemevsevev/zed-theme-jetbrains` at `4385ff2c112e693716badf22e8fb348bede26f93`,
-Apache-2.0, by Artem Evsevev. Only the dark theme is used.
+The unit `file/fresh-theme` writes `~/.config/fresh/themes/jetbrains-dark.json`, and `config.json`
+names it by its `name`, `JetBrains Dark`, which Zed's `theme.dark` names too. The values are Zed's,
+from `artemevsevev/zed-theme-jetbrains` at `4385ff2c112e693716badf22e8fb348bede26f93`, Apache-2.0,
+by Artem Evsevev. Only the dark theme is used.
 
 Rules a change keeps:
 
@@ -101,7 +105,7 @@ Limits:
 
 ## The wrapper
 
-`Fresh wrapper` writes `/usr/local/bin/fresh`, mode 0755, from `files/fresh`. It comes before the
+`mise.server.toml` writes `/usr/local/bin/fresh`, mode 0755, from `files/fresh`. It comes before the
 `.deb`'s `/usr/bin/fresh` on every `PATH` of Ubuntu's.
 
 Fresh asks for its keys by the kitty protocol, which tmux ignores. With no fix, 0 of 29 Shift+Ctrl

@@ -24,22 +24,6 @@ func TestNamesHaveEachRoleOnce(t *testing.T) {
 	}
 }
 
-func TestZedRunsAfterFresh(t *testing.T) {
-	names := Names()
-	i := slices.Index(names, "zed")
-	if i < 1 || names[i-1] != "fresh" {
-		t.Errorf("zed is misplaced in %v", names)
-	}
-}
-
-func TestFreshRunsJustBeforeZed(t *testing.T) {
-	names := Names()
-	i := slices.Index(names, "fresh")
-	if i < 1 || names[i-1] != "otelcol" || names[i+1] != "zed" {
-		t.Errorf("fresh is misplaced in %v", names)
-	}
-}
-
 func TestRolesCloseOverTheValuesAndSecrets(t *testing.T) {
 	var gotV []values.Values
 	var gotS []secrets.Secrets

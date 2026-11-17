@@ -12,9 +12,9 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
-// load builds a machine with the account's home, its ids and the architecture, and loads the role's
+// loadUnits builds a machine with the account's home, its ids and the architecture, and loads the role's
 // units for the user and home.
-func load(t *testing.T, user, home, arch string) (*effecttest.Machine, map[string]kind.Unit) {
+func loadUnits(t *testing.T, user, home, arch string) (*effecttest.Machine, map[string]kind.Unit) {
 	fsys := fstest.MapFS{}
 	for _, name := range []string{"units.toml", "files/config.json.tmpl", "files/themes/jetbrains-dark.json"} {
 		text, err := os.ReadFile(name) //nolint:gosec // a file of the role, named above
@@ -53,7 +53,7 @@ func load(t *testing.T, user, home, arch string) (*effecttest.Machine, map[strin
 	return m, byName
 }
 
-func run(t *testing.T, us map[string]kind.Unit, names ...string) error {
+func runUnits(t *testing.T, us map[string]kind.Unit, names ...string) error {
 	var list []kind.Unit
 	for _, n := range names {
 		list = append(list, us[n])
@@ -64,7 +64,7 @@ func run(t *testing.T, us map[string]kind.Unit, names ...string) error {
 
 // The .deb is the pin: the release's file for the architecture, checked by its sum.
 func TestFreshDebIsThePin(t *testing.T) {
-	_, us := load(t, "zadykian", "/home/zadykian", "arm64")
+	_, us := loadUnits(t, "zadykian", "/home/zadykian", "arm64")
 	p, err := us["deb/fresh"].Step.Plan(t.Context())
 	if err != nil || len(p.Changes) != 3 || p.Changes[2].String() != "install fresh-editor 0.5.7-1" {
 		t.Fatalf("plan = %v, %v; want the directory, the fetch and the install", p.Changes, err)
@@ -76,7 +76,7 @@ func TestFreshDebIsThePin(t *testing.T) {
 }
 
 func TestFreshDebFailsWithNoSum(t *testing.T) {
-	_, us := load(t, "zadykian", "/home/zadykian", "riscv64")
+	_, us := loadUnits(t, "zadykian", "/home/zadykian", "riscv64")
 	if _, err := us["deb/fresh"].Step.Plan(t.Context()); err == nil {
 		t.Error("no error")
 	}
@@ -85,8 +85,8 @@ func TestFreshDebFailsWithNoSum(t *testing.T) {
 // The servers sit under the user's home: a literal home would point four servers nowhere.
 func TestFreshConfigNamesTheHomesServers(t *testing.T) {
 	for user, home := range map[string]string{"zadykian": "/home/zadykian", "root": "/root"} {
-		m, us := load(t, user, home, "amd64")
-		if err := run(t, us, "file/fresh-config", "file/fresh-theme"); err != nil {
+		m, us := loadUnits(t, user, home, "amd64")
+		if err := runUnits(t, us, "file/fresh-config", "file/fresh-theme"); err != nil {
 			t.Fatal(err)
 		}
 		path := home + "/.config/fresh/config.json"
@@ -96,7 +96,7 @@ func TestFreshConfigNamesTheHomesServers(t *testing.T) {
 		if _, ok := m.Files[home+"/.config/fresh/themes/jetbrains-dark.json"]; !ok {
 			t.Errorf("%s: no theme", user)
 		}
-		if err := run(t, us, "file/fresh-config", "file/fresh-theme"); err != nil {
+		if err := runUnits(t, us, "file/fresh-config", "file/fresh-theme"); err != nil {
 			t.Fatal(err)
 		}
 		if p, err := us["file/fresh-config"].Step.Plan(t.Context()); err != nil || len(p.Changes) != 0 {
@@ -108,10 +108,10 @@ func TestFreshConfigNamesTheHomesServers(t *testing.T) {
 // A link on the way is refused, in root's home too, where WS_USER is root on a cloud VM.
 func TestFreshConfigRefusesALink(t *testing.T) {
 	for user, home := range map[string]string{"zadykian": "/home/zadykian", "root": "/root"} {
-		m, us := load(t, user, home, "amd64")
+		m, us := loadUnits(t, user, home, "amd64")
 		m.Links[home+"/.config"] = "/srv/target"
 		for _, name := range []string{"file/fresh-config", "file/fresh-theme"} {
-			if err := run(t, us, name); err == nil || !strings.Contains(err.Error(), home+"/.config is a link to /srv/target") {
+			if err := runUnits(t, us, name); err == nil || !strings.Contains(err.Error(), home+"/.config is a link to /srv/target") {
 				t.Errorf("%s: %s = %v, want the link refused", user, name, err)
 			}
 		}
