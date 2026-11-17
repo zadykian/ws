@@ -40,6 +40,8 @@ type spec struct {
 	Service map[string]serviceSpec `toml:"service"`
 	// State is one small state with a cheap check.
 	State map[string]stateSpec `toml:"state"`
+	// Guard is a check that fails where a later unit would lock the machine out.
+	Guard map[string]guardSpec `toml:"guard"`
 }
 
 // parse fills the spec's text, named name in errors, with e.Data and pure's funcs, and decodes it.
