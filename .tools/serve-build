@@ -1,0 +1,68 @@
+#!/bin/sh
+# Points a checkout's pin of ws at this tree's build, served on loopback in the release's place.
+# CI's playbook job and a trial of a role run it so:
+#
+#   .tools/serve-build CHECKOUT DIR
+#   DIR/serve-releases DIR 8765 [PORT_FILE] &
+#
+# The tree pins the last release, which may lack what the tree's specs need. So this builds ws for
+# linux amd64, as the version that CHECKOUT/mise.toml pins, into DIR/download/vVERSION/, and
+# serve-releases into DIR, both by .tools/build. Then it writes CHECKOUT/mise.local.toml, ws's
+# whole entry with its URL on port 8765, and CHECKOUT/mise.local.lock, with the build's SHA-256.
+# mise loads them over mise.toml and mise.lock, and git ignores them. The caller serves DIR, on
+# that port, as the URL names it. Run it from anywhere.
+
+set -eu
+
+port=8765
+
+# die prints a message of the script's and exits with status 1.
+die() {
+    printf '.tools/serve-build: %s\n' "$*" >&2
+    exit 1
+}
+
+# pinned prints the version of ws's entry in the mise.toml $1.
+pinned() {
+    awk '/^\[/ { entry = ($0 == "[tools.\"http:ws\"]") }
+        entry && $1 == "version" { gsub(/"/, "", $3); print $3; exit }' "$1"
+}
+
+main() {
+    [ $# -eq 2 ] || die "usage: .tools/serve-build CHECKOUT DIR"
+    [ -f "$1/mise.toml" ] || die "$1 holds no mise.toml"
+    checkout=$(cd "$1" && pwd)
+    mkdir -p "$2"
+    dir=$(cd "$2" && pwd)
+    tools=$(cd "$(dirname "$0")" && pwd)
+    version=$(pinned "$checkout/mise.toml")
+    case $version in
+    [0-9]*.[0-9]*.[0-9]*) ;;
+    *) die "$checkout/mise.toml pins no version of ws: '$version'" ;;
+    esac
+    file=download/v$version/ws-linux-amd64
+    sh "$tools/build" linux amd64 "$dir/$file"
+    sh "$tools/build" linux amd64 "$dir/serve-releases" ./.tools/serve-releases
+    sum=$(sha256sum <"$dir/$file" | awk '{ print $1 }')
+    cat >"$checkout/mise.local.toml" <<TOML
+# ws's build of a tree, which .tools/serve-build serves in the release's place: never committed.
+[tools."http:ws"]
+version = "$version"
+bin = "ws"
+url = "http://127.0.0.1:$port/download/v{{ version }}/ws-linux-amd64"
+TOML
+    cat >"$checkout/mise.local.lock" <<TOML
+lockfile_version = 4
+
+[[tools."http:ws"]]
+version = "$version"
+backend = "http:ws"
+specifiers = ["$version"]
+
+[tools."http:ws"."platforms.linux-x64"]
+checksum = "sha256:$sum"
+url = "http://127.0.0.1:$port/$file"
+TOML
+}
+
+main "$@"
