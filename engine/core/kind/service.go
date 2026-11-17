@@ -51,12 +51,19 @@ func (s serviceSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.
 			paths = append(paths, f.Path)
 		}
 	}
+	said := make([]bool, len(s.File))
 	return func(ctx context.Context) ([]resource.Resource, error) {
 		var all, watch []resource.Resource
-		for _, f := range s.File {
+		for i, f := range s.File {
 			b, err := f.resources(ctx, e, dir)
 			if err != nil {
 				return nil, err
+			}
+			if b.left {
+				f.sayLeft(e, &said[i])
+			}
+			if b.file == nil {
+				continue
 			}
 			all, watch = append(all, b.all...), append(watch, b.file)
 		}

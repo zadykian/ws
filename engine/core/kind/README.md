@@ -21,10 +21,10 @@ Its templates and sources sit beside it, and a path in the spec is relative to t
 - **The order.** Units run by name, each moved behind the unit that its `after` names, ahead of the
   next by name. An `after` that no spec holds, or a loop, fails the load.
 - **Two renders.** Both are Go templates over the side's values, and a key the values lack is an
-  error. The spec's text fills as it loads, with `add`, `mul`, `div` and `fail MSG`, which stops
-  the render with MSG. A unit's template fills as it plans, as an earlier unit may make the
-  account or the file that it reads. It takes `envvar FILE NAME` and the facts `mem_mib`, `cpus`,
-  `fs_bytes PATH...`, `uid NAME`, `installed_version NAME` and `kernel_release` too.
+  error. The spec's text fills as it loads, with `add`, `mul`, `div`, `exports` and `fail MSG`,
+  which stops the render with MSG. A unit's template fills as it plans, as an earlier unit may
+  make the account or the file that it reads. It takes `envvar FILE NAME` and the facts `mem_mib`,
+  `cpus`, `fs_bytes PATH...`, `uid NAME`, `installed_version NAME` and `kernel_release` too.
   `installed_version` gives dpkg's version of an installed package, else "", and
   `kernel_release` the running kernel's, as `uname -r` prints it.
 - **when.** Any unit takes `when = { FACT = "WANT" }`, and runs where every FACT of the machine
@@ -67,6 +67,7 @@ line = ". /etc/x"           # or a line at the top of the owner's file, which ke
 has = ["cmd"]               # says whether the file, on stdin, holds the line: 0 yes, 1 no
 group_of = "USER"           # a file of root's takes this account's primary group
 ours = false                # refuse a file there without ws's '# Written by' line at its top
+absent_when_empty = false   # remove the file where its template gives white space alone
 after = "KIND/NAME"
 ```
 
@@ -91,6 +92,10 @@ after = "KIND/NAME"
 - `group_of` and `ours` take a file of root's. With `ours`, a file there whose first line lacks
   `# Written by github.com/zadykian/ws` fails the plan, a dry run's too, before a write or a
   removal. A file by hand is never lost, and the error names its path alone.
+- A `secret` file's template alone may call `secrets`, the side's secrets, as `(secrets).Env`.
+  On a machine with no secrets file, as in CI, the unit leaves the file and says so. `exports MAP`
+  gives a line `export NAME=VALUE` a name, sorted, each value quoted for the shell. A name that the
+  shell does not take fails the plan, and the error names no value.
 
 ### deb
 

@@ -30,6 +30,8 @@ func pure() template.FuncMap {
 		},
 		// fail stops the render with msg, where a template finds the machine or the values unfit.
 		"fail": func(msg string) (string, error) { return "", errors.New(msg) },
+		// exports is an env file's lines, `export NAME=VALUE`, sorted, the values quoted for the shell.
+		"exports": exports,
 	}
 }
 

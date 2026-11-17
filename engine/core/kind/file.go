@@ -1,6 +1,7 @@
 package kind
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -44,6 +45,8 @@ type filePart struct {
 	GroupOf string `toml:"group_of"`
 	// Ours refuses to replace or remove a file there that lacks ws's mark at its top (fileguard.go).
 	Ours bool `toml:"ours"`
+	// AbsentWhenEmpty removes the file where its template gives white space alone.
+	AbsentWhenEmpty bool `toml:"absent_when_empty"`
 }
 
 // check refuses a file's fields that no plan could take. dir holds its template or source.
@@ -67,6 +70,8 @@ func (f filePart) check(dir fs.FS) error {
 		return errors.New("an absent file takes a path, an owner and ours alone")
 	case f.Absent:
 		return nil
+	case f.AbsentWhenEmpty && f.Template == "":
+		return errors.New("absent_when_empty goes with template")
 	case (f.Template == "") == (f.Source == ""):
 		return errors.New("a file takes a template or a source")
 	}
@@ -74,26 +79,40 @@ func (f filePart) check(dir fs.FS) error {
 	return err
 }
 
-// content is the file's text: its template filled as it plans, or its source unchanged.
+// content is the file's text: its template filled as it plans, or its source unchanged. A secret
+// file's template may read the secrets.
 func (f filePart) content(ctx context.Context, e Env, dir fs.FS) ([]byte, error) {
-	if f.Template != "" {
-		return render(ctx, e, dir, f.Template)
+	switch {
+	case f.Template == "":
+		return fs.ReadFile(dir, f.Source)
+	case f.Secret:
+		return renderSecret(ctx, e, dir, f.Template)
 	}
-	return fs.ReadFile(dir, f.Source)
+	return render(ctx, e, dir, f.Template)
 }
 
 // built is a file's resources: the file itself, which a service watches, the whole list in order,
-// and its owner.
+// and its owner. left is a secret file with no resource, as the machine holds no secrets file.
 type built struct {
 	file  resource.Resource
 	all   []resource.Resource
 	owner account.Account
+	left  bool
+}
+
+// sayLeft says once a unit that a secret file stays unchanged, as a read makes the unit's parts
+// twice: to plan and to report.
+func (f filePart) sayLeft(e Env, said *bool) {
+	if !*said {
+		e.Out.Say("%s: left as it is: %v", f.Path, ErrNoSecrets)
+		*said = true
+	}
 }
 
 // resources makes the file's resources as its unit plans. A missing directory above a file of
 // root's is made, root's at 0755, and an existing one left alone. An account's file makes its own
 // parents, the account's. systemd reads its units again where a file in /etc/systemd/system
-// changes.
+// changes. A secret file whose template finds no secrets file gives no resource, and is left.
 func (f filePart) resources(ctx context.Context, e Env, dir fs.FS) (built, error) {
 	owner, err := ownerOf(ctx, e, f.Owner)
 	if err != nil {
@@ -109,21 +128,32 @@ func (f filePart) resources(ctx context.Context, e Env, dir fs.FS) (built, error
 	if owner.Home != "" && !below {
 		return built{}, fmt.Errorf("%s is not below %s, the home of its owner %s", f.Path, owner.Home, owner.Name)
 	}
+	content, gone := []byte(nil), f.Absent
+	if f.Line == "" && !f.Absent {
+		content, err = f.content(ctx, e, dir)
+		if errors.Is(err, ErrNoSecrets) {
+			return built{left: true}, nil
+		}
+		if err != nil {
+			return built{}, err
+		}
+		gone = f.AbsentWhenEmpty && len(bytes.TrimSpace(content)) == 0
+	}
 	var b built
 	switch {
 	case f.Line != "":
 		b.file = f.lines(e, owner, rel)
-	case f.Absent && owner.Home != "":
+	case gone && owner.Home != "":
 		b.file = owner.Absent(e.M, rel)
-	case f.Absent:
+	case gone:
 		b.file = file.Absent{M: e.M, Path: f.Path}
 	default:
-		b.file, err = f.written(ctx, e, dir, owner, rel)
+		b.file, err = f.written(ctx, e, owner, rel, content)
 		if err != nil {
 			return built{}, err
 		}
 	}
-	for d := path.Dir(f.Path); owner.Home == "" && !f.Absent && d != "/"; d = path.Dir(d) {
+	for d := path.Dir(f.Path); owner.Home == "" && !gone && d != "/"; d = path.Dir(d) {
 		b.all = append(b.all, file.Dir{M: e.M, Path: d, Mode: 0o755, CreateOnly: true})
 	}
 	slices.Reverse(b.all)
@@ -140,11 +170,7 @@ func (f filePart) resources(ctx context.Context, e Env, dir fs.FS) (built, error
 
 // written is the file with its content, checked before it replaces the live one where it has a
 // check that this machine can run.
-func (f filePart) written(ctx context.Context, e Env, dir fs.FS, owner account.Account, rel string) (resource.Resource, error) {
-	content, err := f.content(ctx, e, dir)
-	if err != nil {
-		return nil, err
-	}
+func (f filePart) written(ctx context.Context, e Env, owner account.Account, rel string, content []byte) (resource.Resource, error) {
 	mode := fs.FileMode(f.Mode)
 	if mode == 0 {
 		mode = 0o644
@@ -235,9 +261,13 @@ func (s fileSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.Res
 			return nil, err
 		}
 	}
+	said := false
 	return func(ctx context.Context) ([]resource.Resource, error) {
 		b, err := s.resources(ctx, e, dir)
-		if err != nil {
+		if b.left {
+			s.sayLeft(e, &said)
+		}
+		if err != nil || b.file == nil {
 			return nil, err
 		}
 		watch := []resource.Resource{b.file}
