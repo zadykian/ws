@@ -93,6 +93,12 @@ func (u Unit) Plan(ctx context.Context) ([]resource.Change, error) {
 		forced := verb == "restart" || verb == "reload"
 		settle := forced || (verb == "start" && owed)
 		cs = append(cs, unitCall{u, verb, func(ctx context.Context) error {
+			if forced {
+				// A watched change that did not apply leaves the restart owed, with its mark.
+				if wait, err := waiting(ctx, u.Watch); err != nil || wait {
+					return err
+				}
+			}
 			if err := do(ctx, u.Name); err != nil {
 				return err
 			}
@@ -191,6 +197,30 @@ func unitState(s effect.UnitState) string {
 		run = "failed"
 	}
 	return boot + ", " + run
+}
+
+// ByRestart is a watched change that the restart itself settles, such as a service's drift from
+// what its files load. A restart does not wait for it.
+type ByRestart interface {
+	ByRestart() bool
+}
+
+// waiting reports whether a watched resource still has a change to make as the restart applies.
+// Such is a write that a check refused, or one that an earlier failure left out. The
+// restart would then serve the old file, so it waits, owed, for the run that makes the change.
+func waiting(ctx context.Context, rs []resource.Resource) (bool, error) {
+	for _, r := range rs {
+		cs, err := r.Plan(ctx)
+		if err != nil {
+			return false, err
+		}
+		for _, c := range cs {
+			if b, ok := c.(ByRestart); !ok || !b.ByRestart() {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
 }
 
 // anyChange reports whether any of the resources has a change to make.

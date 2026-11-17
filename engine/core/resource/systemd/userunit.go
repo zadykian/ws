@@ -60,8 +60,14 @@ func (c userCall) String() string { return c.verb + " " + c.u.Account.Name + "'s
 
 func (userCall) Kind() step.ChangeKind { return step.Restart }
 
-// Apply reloads the manager first, as a watched file may be one of the unit's.
+// Apply reloads the manager first, as a watched file may be one of the unit's. A restart waits,
+// owed, where a watched change did not apply.
 func (c userCall) Apply(ctx context.Context) error {
+	if c.forced {
+		if wait, err := waiting(ctx, c.u.Watch); err != nil || wait {
+			return err
+		}
+	}
 	if _, err := c.u.systemctl(ctx, "daemon-reload"); err != nil {
 		return err
 	}
