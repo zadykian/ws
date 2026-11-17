@@ -29,12 +29,13 @@ Its templates and sources sit beside it, and a path in the spec is relative to t
   gives its WANT. Elsewhere it plans nothing, and says so in a line. An empty WANT holds on no
   machine, so a value left empty turns the unit off. The facts are read as the unit plans, so that
   one can follow an earlier unit. macOS has no sysfs, and gives neither. A FACT that the table
-  lacks fails the load, and a new fact is one entry of `whenFacts`, in `when.go`.
+  lacks fails the load. So does a WANT of a form that its FACT never gives, which would turn the
+  unit off on every machine. A new fact is one entry of `whenFacts`, in `when.go`.
 
   | FACT | What the machine gives |
   | --- | --- |
   | `board_vendor` | The board's maker, from `/sys/class/dmi/id/board_vendor` |
-  | `gpu_vendor` | The PCI vendor of a device of class `0x03`, such as `0x1234`, from `/sys/bus/pci/devices` |
+  | `gpu_vendor` | The PCI vendor of a device of class `0x03`, from `/sys/bus/pci/devices`: `0x` and four hex digits in lower case, such as `0x1234` |
 
 - **Load and plan.** Each kind checks its fields as the spec loads, so a bad field fails before any
   unit runs. The resources are made as each unit plans.

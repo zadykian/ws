@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"maps"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -17,22 +18,34 @@ import (
 // give. The unit is on where every key holds. A spec writes it `when = { FACT = "WANT" }`.
 type when map[string]string
 
-// fact reports whether the machine gives want. A machine that lacks the fact's source, as macOS
-// lacks sysfs, gives none.
-type fact func(ctx context.Context, m effect.Machine, want string) (bool, error)
+// fact is one fact that a when may name.
+type fact struct {
+	// holds reports whether the machine gives want. A machine that lacks the fact's source, as
+	// macOS lacks sysfs, gives none.
+	holds func(ctx context.Context, m effect.Machine, want string) (bool, error)
+	// form is the form of a want that the machine can give, or nil for any. A want of another
+	// form would turn its unit off on every machine, so the load refuses it.
+	form *regexp.Regexp
+}
 
 // whenFacts are the facts that a when may name. A new fact is one entry here, its reader below.
 var whenFacts = map[string]fact{
-	"board_vendor": boardVendor,
-	"gpu_vendor":   gpuVendor,
+	"board_vendor": {holds: boardVendor},
+	// sysfs writes a vendor as 0x and four hex digits in lower case.
+	"gpu_vendor": {holds: gpuVendor, form: regexp.MustCompile(`^0x[0-9a-f]{4}$`)},
 }
 
-// check refuses a key that no fact has, as the spec loads.
+// check refuses a key that no fact has, and a want of a form that its fact never gives, as the
+// spec loads. An empty want is of any form: it turns the unit off.
 func (w when) check() error {
 	for _, key := range slices.Sorted(maps.Keys(w)) {
-		if _, ok := whenFacts[key]; !ok {
+		f, ok := whenFacts[key]
+		if !ok {
 			return fmt.Errorf("when: no fact %q; the facts are %s", key,
 				strings.Join(slices.Sorted(maps.Keys(whenFacts)), ", "))
+		}
+		if want := w[key]; want != "" && f.form != nil && !f.form.MatchString(want) {
+			return fmt.Errorf("when: %s %q is not of the form %s", key, want, f.form)
 		}
 	}
 	return nil
@@ -53,7 +66,7 @@ func (w when) gate(e Env, unit string, parts func(context.Context) ([]resource.R
 			ok := false
 			if want != "" {
 				var err error
-				if ok, err = whenFacts[key](ctx, e.M, want); err != nil {
+				if ok, err = whenFacts[key].holds(ctx, e.M, want); err != nil {
 					return nil, fmt.Errorf("when %s: %w", key, err)
 				}
 			}

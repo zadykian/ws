@@ -135,6 +135,21 @@ func TestWhenRefusesAnUnknownFact(t *testing.T) {
 	}
 }
 
+func TestWhenRefusesAWantOfAnotherForm(t *testing.T) {
+	e, _, _, _ := testEnv(false)
+	for _, tc := range []struct {
+		want string
+		ok   bool
+	}{{"0x12AB", false}, {"12ab", false}, {"0x1234 ", false}, {"0x12345", false}, {"0x1234", true}, {"", true}} {
+		want, ok := tc.want, tc.ok
+		_, err := Load(e, tree(map[string]string{"r/units.toml": gatedFile(`{ gpu_vendor = "` + want + `" }`), "r/a": "x"}))
+		refused := err != nil && strings.Contains(err.Error(), `when: gpu_vendor "`+want+`" is not of the form ^0x[0-9a-f]{4}$`)
+		if ok != (err == nil) || !ok && !refused {
+			t.Errorf("load with gpu_vendor %q = %v, want loaded %v", want, err, ok)
+		}
+	}
+}
+
 func TestWhenOnEveryKind(t *testing.T) {
 	const off = "when = { board_vendor = \"" + acme + "\" }\n"
 	for name, spec := range map[string]string{
