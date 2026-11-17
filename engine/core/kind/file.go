@@ -40,10 +40,17 @@ type filePart struct {
 	Line string `toml:"line"`
 	// Has is a command that says whether the file's text, on its standard input, holds Line.
 	Has []string `toml:"has"`
+	// GroupOf gives a file of root's the primary group of this account, which may then read it.
+	GroupOf string `toml:"group_of"`
+	// Ours refuses to replace or remove a file there that lacks ws's mark at its top (fileguard.go).
+	Ours bool `toml:"ours"`
 }
 
 // check refuses a file's fields that no plan could take. dir holds its template or source.
 func (f filePart) check(dir fs.FS) error {
+	if err := f.checkGuards(); err != nil {
+		return err
+	}
 	switch {
 	case !path.IsAbs(f.Path) || path.Clean(f.Path) != f.Path:
 		return fmt.Errorf("path %q is not a clean absolute path", f.Path)
@@ -56,8 +63,8 @@ func (f filePart) check(dir fs.FS) error {
 	case f.Secret && len(f.Check) > 0:
 		// A refusal's error carries what the checker prints, which may quote the content.
 		return errors.New("a secret file takes no check, as a refusal's error shows the checker's output")
-	case f.Absent && (f.Template != "" || f.Source != "" || len(f.Check) > 0 || f.Secret || f.Mode != 0):
-		return errors.New("an absent file takes a path and an owner alone")
+	case f.Absent && (f.Template != "" || f.Source != "" || len(f.Check) > 0 || f.Secret || f.Mode != 0 || f.GroupOf != ""):
+		return errors.New("an absent file takes a path, an owner and ours alone")
 	case f.Absent:
 		return nil
 	case (f.Template == "") == (f.Source == ""):
@@ -120,6 +127,9 @@ func (f filePart) resources(ctx context.Context, e Env, dir fs.FS) (built, error
 		b.all = append(b.all, file.Dir{M: e.M, Path: d, Mode: 0o755, CreateOnly: true})
 	}
 	slices.Reverse(b.all)
+	if f.Ours {
+		b.all = append(b.all, ours{m: e.M, path: f.Path})
+	}
 	b.all = append(b.all, b.file)
 	if strings.HasPrefix(f.Path, "/etc/systemd/system/") {
 		b.all = append(b.all, systemd.DaemonReload{M: e.M, U: e.U, Watch: []resource.Resource{b.file}})
@@ -140,6 +150,13 @@ func (f filePart) written(ctx context.Context, e Env, dir fs.FS, owner account.A
 		mode = 0o644
 	}
 	w := file.File{M: e.M, Path: f.Path, Content: content, Mode: mode}
+	if f.GroupOf != "" {
+		a, err := account.User{Name: f.GroupOf}.Lookup(ctx, e.M)
+		if err != nil {
+			return nil, err
+		}
+		w.GID = a.GID
+	}
 	if owner.Home != "" {
 		w = owner.File(e.M, rel, content, mode)
 	}

@@ -62,9 +62,11 @@ enabled = false             # service starts at boot
 reload = false              # reload service, not restart it
 user_service = "z.service"  # a unit of the owner's own systemd, restarted where the file changes
 secret = false              # keep the content out of the diff; takes no check
-absent = false              # remove the file; takes a path and an owner alone
+absent = false              # remove the file; takes a path, an owner and ours alone
 line = ". /etc/x"           # or a line at the top of the owner's file, which keeps its own text
 has = ["cmd"]               # says whether the file, on stdin, holds the line: 0 yes, 1 no
+group_of = "USER"           # a file of root's takes this account's primary group
+ours = false                # refuse a file there without ws's '# Written by' line at its top
 after = "KIND/NAME"
 ```
 
@@ -86,6 +88,9 @@ after = "KIND/NAME"
 - Without `has`, a line of the file that equals the line, spaces aside, holds it. A line of more
   than one line needs `has`. Any exit of `has` but 0 and 1 fails the plan with its stderr.
 - A `line` takes `owner`, `mode`, `check`, `has`, `after` and `when` alone.
+- `group_of` and `ours` take a file of root's. With `ours`, a file there whose first line lacks
+  `# Written by github.com/zadykian/ws` fails the plan, a dry run's too, before a write or a
+  removal. A file by hand is never lost, and the error names its path alone.
 
 ### deb
 
