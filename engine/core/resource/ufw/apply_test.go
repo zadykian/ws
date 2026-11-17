@@ -6,7 +6,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/roles/server/ubuntu/internal/ufw"
+	"github.com/zadykian/ws/engine/core/resource/ufw"
 )
 
 func TestDefaultsRunUfw(t *testing.T) {

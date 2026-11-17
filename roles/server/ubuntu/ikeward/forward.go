@@ -3,7 +3,7 @@ package ikeward
 import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/roles/server/ubuntu/internal/ufw"
+	"github.com/zadykian/ws/engine/core/resource/ufw"
 )
 
 // comment marks the ufw rules the role owns, as ufw show added prints them.

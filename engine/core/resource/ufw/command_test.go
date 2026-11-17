@@ -3,7 +3,7 @@ package ufw_test
 import (
 	"testing"
 
-	"github.com/zadykian/ws/roles/server/ubuntu/internal/ufw"
+	"github.com/zadykian/ws/engine/core/resource/ufw"
 )
 
 func TestRuleStringIsTheCommandLine(t *testing.T) {
