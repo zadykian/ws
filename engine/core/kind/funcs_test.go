@@ -35,7 +35,8 @@ func TestFactsReadTheMachine(t *testing.T) {
 }
 
 func TestFactsFailWhereTheMachineLacksThem(t *testing.T) {
-	for _, text := range []string{`{{mem_mib}}`, `{{cpus}}`, `{{fs_bytes "/none"}}`, `{{uid "nobody"}}`, `{{div 1 0}}`} {
+	for _, text := range []string{`{{mem_mib}}`, `{{cpus}}`, `{{fs_bytes "/none"}}`, `{{uid "nobody"}}`, `{{div 1 0}}`,
+		`{{installed_version "a"}}`} {
 		dir := fstest.MapFS{"t.tmpl": {Data: []byte(text)}}
 		if got, err := render(t.Context(), Env{M: effecttest.NewMachine()}, dir, "t.tmpl"); err == nil {
 			t.Errorf("render %s = %q, want an error", text, got)
@@ -65,5 +66,14 @@ func TestRenderFailsOnAMissingKey(t *testing.T) {
 func TestSpecFuncsReadNothing(t *testing.T) {
 	if _, err := fill("t", []byte("{{mem_mib}}"), pure(), nil); err == nil {
 		t.Error("a spec's text took mem_mib, which reads the machine before any unit ran")
+	}
+}
+
+func TestInstalledVersion(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Packages = effecttest.Packages{"a": {Version: "1.2-3", Status: "ii"}, "b": {Version: "4.5", Status: "rc"}}
+	dir := fstest.MapFS{"t.tmpl": {Data: []byte(`{{installed_version "a"}}|{{installed_version "b"}}|{{installed_version "c"}}`)}}
+	if got, err := render(t.Context(), Env{M: m}, dir, "t.tmpl"); err != nil || string(got) != "1.2-3||" {
+		t.Errorf("render = %q, %v; want 1.2-3, then none for b and c", got, err)
 	}
 }
