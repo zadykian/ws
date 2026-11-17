@@ -101,6 +101,20 @@ func TestWhenOffPlansNothing(t *testing.T) {
 	}
 }
 
+func TestWhenEmptyWantSaysSo(t *testing.T) {
+	m := effecttest.NewMachine()
+	withBoard(m, acme)
+	withPCIDevice(m, "0x030000", "0x1234")
+	got, said := planGated(t, m, `{ board_vendor = "", gpu_vendor = "0x1234" }`)
+	want := []string{"say: file/a: off on this machine, as its when gives no board_vendor"}
+	if got != nil || !slices.Equal(said, want) {
+		t.Errorf("plan = %q, said %q; want none and %q", got, said, want)
+	}
+	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.Contains(c, " /sys/") }) {
+		t.Errorf("calls %q; want no fact read", m.Calls)
+	}
+}
+
 func TestWhenOnPlansAsWithout(t *testing.T) {
 	m := effecttest.NewMachine()
 	withBoard(m, acme)
@@ -120,7 +134,7 @@ func TestWhenNegatedWant(t *testing.T) {
 			[]string{`say: file/a: off on this machine, as its gpu_vendor is "0x1234"`}},
 		{"another vendor", "0x1af4", `{ gpu_vendor = "!0x1234" }`, nil},
 		{"an empty want", "0x1af4", `{ gpu_vendor = "!" }`,
-			[]string{"say: file/a: off on this machine, as its gpu_vendor is not \"\""}},
+			[]string{"say: file/a: off on this machine, as its when gives no gpu_vendor"}},
 	} {
 		m := effecttest.NewMachine()
 		withPCIDevice(m, "0x030000", tc.vendor)

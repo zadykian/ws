@@ -30,10 +30,10 @@ Its templates and sources sit beside it, and a path in the spec is relative to t
 - **when.** Any unit takes `when = { FACT = "WANT" }`, and runs where every FACT of the machine
   gives its WANT, and `"!WANT"` where it does not. Elsewhere it plans nothing, and says so in a
   line. An empty WANT, negated or not, holds on no machine, so a value left empty turns the unit
-  off. The facts are read as the unit plans, so that one can follow an earlier unit. macOS has no
-  sysfs, and gives neither. A FACT that the table lacks fails the load. So does a WANT of a form
-  that its FACT never gives, which would turn the unit off on every machine. A new fact is one
-  entry of `whenFacts`, in `when.go`.
+  off, and its line says that the `when` gives no FACT. The facts are read as the unit plans, so
+  that one can follow an earlier unit. macOS has no sysfs, and gives neither. A FACT that the
+  table lacks fails the load. So does a WANT of a form that its FACT never gives, which would turn
+  the unit off on every machine. A new fact is one entry of `whenFacts`, in `when.go`.
 
   | FACT | What the machine gives |
   | --- | --- |
