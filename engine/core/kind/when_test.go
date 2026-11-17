@@ -1,6 +1,7 @@
 package kind
 
 import (
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -176,13 +177,26 @@ func TestWhenRefusesAWantOfAnotherForm(t *testing.T) {
 
 func TestWhenOnEveryKind(t *testing.T) {
 	const off = "when = { board_vendor = \"" + acme + "\" }\n"
-	for name, spec := range map[string]string{
+	sum := strings.Repeat("0", 64)
+	samples := map[string]string{
+		"file": "[file.a]\npath = \"/etc/a\"\nsource = \"a\"\n" + off,
+		"deb": "[deb.a]\npackage = \"a\"\nversion = \"1\"\nurl = \"https://x/a.deb\"\nsha256 = { amd64 = \"" + sum + "\" }\n" +
+			off,
+		"packages": "[packages.a]\ntemplate = \"a\"\n" + off,
+		"dkms": "[dkms.a]\nmodule = \"m\"\nversion = \"1\"\nurl = \"https://x/m.tar.gz\"\nsha256 = \"" + sum + "\"\n" +
+			"load = \"m\"\n" + off,
 		"guard":   "[guard.a]\nsudo_right = \"u\"\n" + off,
 		"state":   "[state.a]\npurged = \"p\"\n" + off,
 		"service": "[service.a]\nunit = \"a.service\"\nenabled = true\nrun = \"running\"\n" + off,
-	} {
+	}
+	for f := range reflect.TypeFor[spec]().Fields() {
+		if _, ok := samples[f.Tag.Get("toml")]; !ok {
+			t.Errorf("the kind %s has no sample here, so nothing shows that when turns it off", f.Tag.Get("toml"))
+		}
+	}
+	for name, spec := range samples {
 		e, m, _, out := testEnv(true)
-		units := loadOne(t, e, spec, nil)
+		units := loadOne(t, e, spec, map[string]string{"a": "x"})
 		if got := headlines(t, units[0].Step); got != nil || len(out.Lines) != 1 {
 			t.Errorf("%s: plan = %q, said %q; want none and the off line", name, got, out.Lines)
 		}
