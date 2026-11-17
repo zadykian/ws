@@ -1,0 +1,14 @@
+# The units of fresh: its .deb and the user's config and theme. They run after mise's own parts.
+[bootstrap.packages]
+"ws:deb/fresh" = "in-sync"
+"ws:file/fresh-config" = "in-sync"
+"ws:file/fresh-theme" = "in-sync"
+
+# The wrapper carries Fresh's keys through tmux. It comes before the .deb's /usr/bin/fresh on every
+# PATH of Ubuntu's. It runs nothing before a call, so it may land before the .deb.
+[bootstrap.files."/usr/local/bin/fresh"]
+source = "files/fresh"
+owner = "root"
+group = "root"
+mode = "0755"
+phase = "post-packages"
