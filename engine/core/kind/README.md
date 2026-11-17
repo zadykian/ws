@@ -29,7 +29,7 @@ Its templates and sources sit beside it, and a path in the spec is relative to t
 
 ## The kinds
 
-The kinds `state` and `guard` follow, with `ws unit`, which plans and applies the units for mise.
+`ws unit`, which plans and applies the units for mise, follows.
 
 ### file
 
@@ -96,3 +96,46 @@ source = "name"
 - `in_force` and `loads` run as root. A load that fails, or nothing in force, counts as a
   difference. Each part must exist first.
 - Without booted systemd it plans no unit, compares nothing, and says so.
+
+### state
+
+```toml
+[state.NAME]                # exactly one of the keys below
+linger = "USER"             # USER's systemd starts at boot
+subids = "USER"             # the range 100000-165535 where a file gives USER none of 65536
+purged = "package"          # removed with its settings
+http = "http://127.0.0.1:PORT/"  # answers 200, waited for 30 times, 2 s apart
+ufw = { comment = "ws: NAME", rules = [{ action = "allow", proto = "udp", to_port = "53", dir = "in" }] }
+routes = { pool = "CIDR", net = "CIDR", dev = "docker0", hint = "…" }  # refuses an overlap
+addr = { iface = "docker0", want = "CIDR", hint = "…" }                # refuses a missing address
+left = { user = "USER", group = "GROUP" }
+run = { user = "USER", command = ["cmd"], creates = ["/path"] }        # or check = ["cmd"]
+```
+
+- A new state is one field of `stateSpec`, of a type that makes its resource.
+- `ufw` owns the rules that carry its comment: those in `rules` are added, the others deleted. A
+  rule's address or port left out is any.
+- `routes` fails where a route of the moment overlaps `pool`, but for an on-link route of the main
+  table, or `net` on a device other than `dev`. `addr` fails where `iface` lacks `want`. Each error
+  ends with `hint`, as the run cannot mend either.
+- `run` runs its command as `user`, with the system's `PATH`: on Linux by runuser, in the user's
+  systemd session, and on macOS by sudo. It takes exactly one of `creates`, which runs where a path
+  is missing, and `check`, which runs where the check, as `user` too, exits other than 0. A
+  procedure that stays a command of ws runs this way.
+- Without booted systemd, `linger`, `http`, `ufw` and `addr` skip, and each says so. So does `run`
+  on Linux, where it needs the user's session; macOS has no systemd, and runs it.
+
+### guard
+
+```toml
+[guard.NAME]                # plans nothing; fails where a later unit would lock the machine out
+login_key = "USER"          # with home: USER holds a key that sshd takes
+home = "/home/USER"
+sudo_right = "USER"         # or: USER has the right to sudo, and a password for it to ask
+```
+
+- `login_key` reads `home/.ssh/authorized_keys` through the home's link guard. It fails where the
+  file holds no key, or sshd would pass it over for its owner or mode.
+- `sudo_right` passes for root, which needs no sudo.
+- A container, which has no login to lose, passes each. A unit that would close a login waits on the
+  guard by its `after`.
