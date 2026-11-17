@@ -13,8 +13,7 @@ The checks of `rootless`, `mac-cld` and a Mac's servers have pages: [rootless](r
 CI also builds ws from the tree, never from a release, in an Ubuntu 26.04 container with no git, so
 the build is `devel`. It runs `ws server ubuntu apply` twice from root's home, as `zadykian` and as
 root, a cloud VM's user. The steps that need booted systemd skip and say so, and the second run's
-last line must be `changed: none`. Under `script`, `ws server ubuntu apply --check` must then draw
-[the run screen](../../engine/tui/README.md#the-run-screen) and end on `would change: none`. Then
+last line must be `changed: none`. Then
 `nft -c`, with the container's NET_ADMIN, checks the outbound table the run wrote and the users it
 names, and a find that the user owns its home. The Zed wrapper's [checks](../zed-terminal-checks.sh)
 run on the files it installed, and Fresh's on the config it loaded. The user's empty commit must
@@ -55,8 +54,7 @@ the job's runs their downloads. The job's `values.yml` names a file key, made in
 login key and git's. Without ws's WireGuard key, `ws client macos apply` must make the Mac's key and
 load no daemon, and `ssh -G ws` gives the tunnel's end. The public key it prints must be the Mac's,
 as must the key in the command that gives it to ws. With a stand-in's key it must load and run the
-daemon. A second run and `--check` must print nothing. Under `script`, `--check` must
-draw [the run screen](../../engine/tui/README.md#the-run-screen) and leave it. `ssh -G` must give `ws` the tunnel's end.
+daemon. A second run and `--check` must print nothing. `ssh -G` must give `ws` the tunnel's end.
 The stand-in for ws is a second wireguard-go on the runner, with the printed key as its peer. It
 answers on loopback both as the LAN and as `WS_REMOTE`, and `ws client macos tunnel status` must
 show a handshake on each in turn. The daemon must take the SIGHUPs for a new `tunnel.conf` and
