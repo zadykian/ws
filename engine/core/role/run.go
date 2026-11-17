@@ -25,7 +25,7 @@ type Config struct {
 	Prepare []step.Step
 	// Stop is the Stop of every step.Options here. Nil never stops.
 	Stop func() error
-	// LeftOut leaves steps out beside Only, as the Mac's runs and the wizard's do. Nil leaves none
+	// LeftOut leaves steps out beside Only, as the Mac's runs do. Nil leaves none
 	// out. Run takes it; State does too, though no caller of State sets it.
 	LeftOut func(parent, step string) bool
 }

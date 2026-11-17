@@ -39,10 +39,9 @@ func runValuesSet(c *cobra.Command, p enginecli.Env, key, value string) error {
 	return setServerValue(p.Machine, linesOf(term, c.CommandPath()), key, value)
 }
 
-// setServerValue writes key in the file, by rename and with its owner and mode, as the wizard's own
-// writes do, and says so on out. It writes nothing where the file holds the value already, and a
-// link stays the maintainer's to edit, as a rename would replace it. ws server ubuntu wizard writes
-// its values through it too.
+// setServerValue writes key in the file, by rename and with its owner and mode, and says so on out.
+// It writes nothing where the file holds the value already, and a link stays the maintainer's to
+// edit, as a rename would replace it.
 func setServerValue(m effect.Machine, out effect.Out, key, value string) error {
 	info, err := m.Stat(serverVars)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {

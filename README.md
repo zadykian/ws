@@ -45,7 +45,8 @@ Each role has a page of its own. A role is Go steps of ws:
 
 On a new Mac with Apple silicon, one line installs ws's binary. Then write `values.yml`
 ([The Mac's values](roles/client/macos/values/README.md)) and set up the rest ([The
-Mac](roles/client/macos/README.md)):
+Mac](roles/client/macos/README.md)). [The Mac's runbook](roles/client/macos/runbook.md) lists the
+steps by hand, and [the server's](roles/server/ubuntu/runbook.md) its own:
 
 ```sh
 curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sh
@@ -69,9 +70,7 @@ curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | 
 sudo ws server ubuntu apply
 ```
 
-It runs the roles in order. Then do what stays by hand, below. Over plain ssh, `sudo ws server
-ubuntu wizard` asks ws's values and runs `ws server ubuntu apply` in a unit, which goes on where the
-login drops ([The server's wizard](roles/server/ubuntu/stages)).
+It runs the roles in order. Then do what stays by hand, below.
 
 ## Running it again
 
@@ -96,8 +95,7 @@ root` sets up a cloud VM with no other user. `WS_HOME` follows the user as `/hom
 DIR` sets another home. `WS_GIT_SIGNING_PUB_KEY` lies below it, or the
 run fails. A cloud VM names `WS_SECURITY_OUTBOUND: false` there before its first run
 ([Outbound](roles/server/ubuntu/security/README.md#outbound)). `ws server ubuntu values set KEY VALUE` writes one key, and
-an empty VALUE gives its default back. On ws, `sudo ws server ubuntu configure` writes them on a
-form ([The Configure screen](engine/tui/internal/configure)). ws's last line names the roles that changed,
+an empty VALUE gives its default back. ws's last line names the roles that changed,
 `changed: none` on a second run.
 
 ## Dry runs
@@ -119,7 +117,7 @@ A dry run checks no file it would write. ws runs a file's check, such as `nft -c
 `sudo ws server ubuntu apply --json` prints each event of the run as a line of JSON on stdout:
 `planned`, `started`, `done`, `failed` or `skipped`, with the role, the step, the first line of each
 change and the error. So a line holds no file's text: `ws server ubuntu state --json` has the diffs.
-ws's own lines stay on stderr, and no screen is drawn.
+ws's own lines stay on stderr.
 
 ## State
 
@@ -136,15 +134,12 @@ sudo ws server ubuntu state
 sudo ws server ubuntu state --json
 ```
 
-At a terminal `ws server ubuntu state` draws the state screen on stderr: the tabs Packages,
-Services, Files, Conflicts and Pending, with `/` to filter, `r` to read again and `q` to quit.
-`--plain`, a pipe, a file on stdout or `--json` skips the screen. Then the report is on stdout and
-ws's own lines on stderr. `--json` prints the version of ws, then each role with its steps, items
-and changes.
+The report is on stdout and ws's own lines on stderr. `--json` prints the version of ws, then each
+role with its steps, items and changes.
 
 `ws client macos state` does the same for the Mac, as `ws client macos apply --check` reads it: it
-needs `values.yml` and a server's file, and not root. On the screen, sudo's password comes through a
-question. `--json` prints the version of ws, then each step ([What the Mac reports](roles/client/macos/README.md#what-the-mac-reports)).
+needs `values.yml` and a server's file, and not root. `--json` prints the version of ws, then each
+step ([What the Mac reports](roles/client/macos/README.md#what-the-mac-reports)).
 
 ```sh
 ws client macos state
@@ -183,8 +178,6 @@ release that `install.sh` installs: [Releases](engine/core/update). The rules wo
 pull request breaks the rules of zadykian/toolkit's skills, and the issues workflow where an issue
 strays from its issue form. The hooks in `.githooks` check each commit before git makes it.
 [Checks](.github/workflows) and [The gates](.tools) have the details.
-
-On a terminal, ws draws a full-screen display, and `--plain` keeps its lines: [The terminal UI](engine/tui).
 
 ## Pull requests
 

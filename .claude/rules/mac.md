@@ -34,10 +34,6 @@ The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `rol
 - Effects are passed in: a step holds `effect.Prompt`, `effect.Out` and `effect.Machine` as fields
   and a function takes them as parameters. Tests use the fakes of
   [effecttest](../../engine/core/effect/effecttest/effecttest.go), never the real ones.
-- A step that wants sudo's password ahead of its lines calls `local.Validate`, never `sudo -v`
-  by `Pass`, which would ask over a screen ([the TUI](../../engine/tui/README.md#commands)).
-- A command that asks the maintainer, for a passphrase or a login, runs by `effect.Foreground`.
-  A step holds it as `F` beside `M`. `Pass` would keep the screen on the terminal ([the TUI](../../engine/tui/README.md#commands)).
 - No cgo: ws builds with `CGO_ENABLED=0`. The race detector's cgo is the tests' alone
   ([Makefile](../../Makefile)).
 - `--server NAME` is `ws client macos`'s persistent flag, bound once in `Command` and read through a

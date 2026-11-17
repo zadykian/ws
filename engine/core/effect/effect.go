@@ -72,22 +72,6 @@ type Info struct {
 	UID, GID int
 }
 
-// Lasting keeps a line past the screen that draws it. It stands beside Out, whose fakes in other
-// modules go on compiling: effect is public.
-type Lasting interface {
-	SayLasting(format string, a ...any)
-}
-
-// SayLasting says a line that the maintainer acts on past a run, such as a key to copy. An out that
-// doesn't draw a screen loses no line, so it takes a Say, and a plain run's output stays as before.
-func SayLasting(out Out, format string, a ...any) {
-	if l, ok := out.(Lasting); ok {
-		l.SayLasting(format, a...)
-		return
-	}
-	out.Say(format, a...)
-}
-
 // Machine reads and changes a machine.
 type Machine interface {
 	// Stat returns fs.ErrNotExist where the path is missing, and describes any link, one whose
@@ -154,17 +138,10 @@ type Machine interface {
 	Exec(name string, args, env []string) error
 }
 
-// Lines runs a command whose output ws reads as it comes. It stands beside Machine, as Foreground does.
+// Lines runs a command whose output ws reads as it comes. It stands beside Machine.
 type Lines interface {
 	// PassLines is PassInput with each line of the output, without its newline, offered to take
 	// first. A line that take takes stays off Stderr. take runs on a goroutine of the command's, a
 	// call at a time, and every call ends before PassLines returns.
 	PassLines(ctx context.Context, stdin []byte, take func(line string) bool, name string, args ...string) error
-}
-
-// Foreground runs a command that talks to the maintainer. It stands beside Machine, whose fakes in
-// other modules go on compiling: effect is public.
-type Foreground interface {
-	// PassForeground is Pass on the terminal itself. A screen suspends first, and draws again after.
-	PassForeground(ctx context.Context, root bool, name string, args ...string) error
 }

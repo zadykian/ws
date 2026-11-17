@@ -48,7 +48,7 @@ func serverRefusal(euid int, osRelease []byte) string {
 // Command returns ws server ubuntu, the commands that set up an Ubuntu server.
 func Command(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("ubuntu", "the commands for an Ubuntu server", newApplyCmd(p), newStateCmd(p), newFansCmd(p),
-		newValuesCmd(p), newSecretsCmd(p), newServerWizardCmd(p), newServerConfigureCmd(p))
+		newValuesCmd(p), newSecretsCmd(p))
 }
 
 // applyOptions are apply's flags: the runner's, and the --secrets path, which the runner never reads.
@@ -71,7 +71,7 @@ func newApplyCmd(p enginecli.Env) *cobra.Command {
 			"The last line names the roles that changed.\n\n" +
 			"--json prints each event of the run as a line of JSON on stdout: planned, started, done, failed " +
 			"or skipped, with the step, the first line of each change and the error. ws's own lines stay on " +
-			"stderr, and no screen is drawn.",
+			"stderr.",
 		Args: cobra.NoArgs,
 		RunE: enginecli.Apply(serverTarget(p, &opts), p),
 	}

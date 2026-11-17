@@ -8,17 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/engine/tui"
 )
-
-// RoleSections turns the roles' reports into the state screen's sections.
-func RoleSections(states []role.RoleState) []tui.StateSection {
-	sections := make([]tui.StateSection, len(states))
-	for i, s := range states {
-		sections[i] = tui.StateSection{Name: s.Role, Reports: s.Steps}
-	}
-	return sections
-}
 
 // WriteJSON prints doc as indented JSON.
 func WriteJSON(w io.Writer, doc any) error {

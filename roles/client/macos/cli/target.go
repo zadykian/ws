@@ -11,7 +11,6 @@ import (
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos"
 	"github.com/zadykian/ws/roles/client/macos/values"
 )
@@ -38,17 +37,9 @@ func macTarget(p enginecli.Env, only *[]string, server *string) engine.Target {
 			return engine.Run{}, err
 		}
 		run := engine.Run{M: c.Machine}
-		run.Groups = func(check bool) []tui.Group {
-			o := macos.Options{Options: step.Options{Check: check}, Only: *only}
-			return []tui.Group{tui.NewGroup("", macOf(p, name, settings, nil, nil, nil).Rows(o))}
-		}
 		run.Do = func(ctx context.Context, e engine.Effects, o step.Options) (string, error) {
 			_, err := macOf(p, name, settings, e.M, e.Out, e.Text).Run(ctx, macos.Options{Options: o, Only: *only})
 			return "", engine.Cause(err)
-		}
-		run.Choose = func(choice tui.Choice) (engine.Run, step.Options, error) {
-			left := func(_, name string) bool { return !slices.Contains(choice.Only, name) }
-			return run, step.Options{Check: choice.Check, LeftOut: left}, nil
 		}
 		return run, nil
 	}}
@@ -62,7 +53,7 @@ func macReport(p enginecli.Env, server *string) func(context.Context, engine.Cal
 		if err != nil {
 			return engine.Report{}, err
 		}
-		return engine.Report{Read: macRead(p, server), Print: func(ctx context.Context, c engine.Call) error {
+		return engine.Report{Print: func(ctx context.Context, c engine.Call) error {
 			term := effect.NewTerminal(strings.NewReader(""), c.Err)
 			var docs []serverDoc
 			for _, sc := range confs {

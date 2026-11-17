@@ -7,7 +7,6 @@ import (
 	"io/fs"
 	"strings"
 
-	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/resource/systemd"
@@ -24,7 +23,7 @@ func (d direct) Plan(ctx context.Context) ([]resource.Change, error) {
 		return nil, fmt.Errorf("WS_CABLE_PORT %q is not an interface's name", d.Interface)
 	}
 	if _, err := d.M.Stat("/sys/class/net/" + d.Interface); errors.Is(err, fs.ErrNotExist) {
-		effect.SayLasting(d.Out, "this machine has no interface %s, so the cable stays as it is; WS_CABLE_PORT names the port of the Mac's cable, as ip link lists it", d.Interface)
+		d.Out.Say("this machine has no interface %s, so the cable stays as it is; WS_CABLE_PORT names the port of the Mac's cable, as ip link lists it", d.Interface)
 		return nil, nil
 	} else if err != nil {
 		return nil, err

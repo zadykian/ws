@@ -61,11 +61,11 @@ encrypts, in armor. `ws` decrypts it in its process with an X25519 identity. A r
 `--secrets`, as CI's, has no secrets. [ws's secrets](../secrets/README.md) says the file's tables, its
 references and its values.
 
-The identity stays in ws's credential, made by `ws server ubuntu secrets init`, or by `ws client
-macos secrets init` from the Mac ([ws's file](../secrets/README.md#wss-file)). `ws server ubuntu apply`
-reads it from the systemd credential `ws-secrets`, in `$CREDENTIALS_DIRECTORY`, for `--secrets` and
-`--check` alike. Without the credential it fails and names `LoadCredential`. It reads no standard
-input and no terminal. The wizard starts the run as a unit with
+The identity stays in ws's credential, made by `ws server ubuntu secrets init`, or by `ssh -t NAME
+sudo ws server ubuntu secrets init` from the Mac ([ws's file](../secrets/README.md#wss-file)). `ws
+server ubuntu apply` reads it from the systemd credential `ws-secrets`, in `$CREDENTIALS_DIRECTORY`,
+for `--secrets` and `--check` alike. Without the credential it fails and names `LoadCredential`. It
+reads no standard input and no terminal. A unit that runs it has
 `LoadCredentialEncrypted=ws-secrets`. By hand, on a server, as root, with ws's file:
 
 ```sh

@@ -1,0 +1,129 @@
+# The Mac's runbook
+
+A person does these steps in this order, as no wizard asks them. Each step is done once the check
+beside it holds. Run `ws client macos apply` where a step says so: it sets up the Mac's end
+([The Mac](README.md)).
+
+## Tools
+
+1. Install the command line tools with `xcode-select --install`, and wait for it to end.
+2. Install Homebrew from its `.pkg`, which `ws client macos apply` needs:
+   - Download `Homebrew.pkg` 7.0.10 from
+     `https://github.com/Homebrew/brew/releases/download/7.0.10/Homebrew.pkg`.
+   - Check its SHA-256 with `shasum -a 256 Homebrew.pkg`. It must be
+     `ae13b8b0ac910730d3e982a9e7518288d17fd0ad272e42f412027e8ab4555575`.
+   - Check its signer with `pkgutil --check-signature Homebrew.pkg`. It must be
+     `Developer ID Installer: Patrick Linnane (927JGANW46)`.
+   - Install it with `sudo installer -pkg Homebrew.pkg -target /`.
+3. Install ws with `install.sh` ([Releases](../../../engine/core/update/README.md)), and put
+   `~/.local/bin` on `PATH`.
+4. Install gh with `brew install gh`, which the GitHub steps need.
+
+## Answers
+
+Write the Mac's values in `/etc/ws/values.yml` and each server's in
+`/etc/ws/servers/NAME/values.yml`, as root, through sudo ([The two
+files](values/README.md#the-two-files)). The files' check refuses a clash.
+
+1. Pick a slot, 0 to 15, that no server has: `WS_SLOT`.
+2. Pick the ports: 51820 for the tunnel and 22022 for the router's forward to ws's 22. Where
+   `WS_REMOTE` repeats on another server, add the slot to each.
+3. Set the rest that differs from its default: `WS_TARGET`, `WS_LAN`, `WS_LAN_ADDRESS`,
+   `WS_REMOTE`, `WS_REMOTE_PORT`, `WS_TUNNEL_NETWORKS` and `WS_RESOLVERS`. The
+   [router's page](../../server/ubuntu/cable/router.md) gives the LAN's defaults.
+
+## The Mac's key
+
+1. Install Secretive with `brew install --cask secretive`, open it and make a P-256 key for the login
+   and one for git's signing. One key may serve both. The key stays in the Mac's Secure Enclave.
+2. List the keys with `ssh-add -L`, with `SSH_AUTH_SOCK` set to Secretive's agent socket.
+3. Copy each key's `.pub` to `/etc/ws/secretive/`, as root.
+4. Set `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_PUB_KEY` in
+   `/etc/ws/values.yml` ([Secretive's keys](git/README.md#secretives-keys)).
+
+## GitHub
+
+1. Run `gh auth login --scopes write:public_key,write:ssh_signing_key`, at github.com's device flow.
+2. Add the key for ws with `gh ssh-key add` and the login key's `.pub`.
+
+GitHub is the only source of the server's keys: nothing copies a key to the server. Ubuntu's
+installer imports the account's keys for ws's user, so run this step before its install. In the
+installer, turn OpenSSH on, import the keys from GitHub and leave password login off.
+
+## Apply
+
+Run `ws client macos apply`. A second run changes nothing.
+
+## ws's host key
+
+1. Read ws's key with `ssh-keyscan -t ed25519 ADDRESS`, ADDRESS being ws's LAN address, or the
+   router's name and port off the LAN. A new ws has a lease from the router's pool.
+2. At ws's console, `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` prints ws's own
+   fingerprint. Compare it with the scan's, from `ssh-keygen -lf -`.
+3. Where they match, append the scan's line to `~/.ssh/known_hosts`, with NAME, the server's name, in
+   place of the address. A new ws faces the internet until its `security` role runs.
+
+## Login
+
+Log in with `ssh -o HostName=ADDRESS NAME`, as the tunnel is not up yet. It must log in as `WS_USER`
+by the Mac's key. A cloud VM gives its default user the provider's keys, which must be the account's.
+Where ssh names another host key, drop the old one with `ssh-keygen -R NAME`.
+
+## Sudo
+
+At ws, `sudo -n true` must pass for `WS_USER`. Where sudo wants a password, type it at the prompt of
+a command that needs root. A user outside sudoers cannot go on.
+
+## ws on ws
+
+1. At ws, run `curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sudo
+   sh`, so that ws lands in `/usr/local/bin`, which sudo reaches. Check it with `ws version`.
+2. Set the values there: `sudo ws server ubuntu values set KEY VALUE` for each that differs from its
+   default. On a cloud VM, set `WS_SECURITY_OUTBOUND` to false, as the outbound table drops the
+   metadata service ([Outbound](../../server/ubuntu/security/README.md#outbound)). At slot N other
+   than 0, set `WS_TUNNEL_ADDRESS` to `10.99.N.1/24`, and `WS_TUNNEL_PORT` to the Mac's. Edit
+   `WS_TUNNEL_PEERS` by hand in `/etc/ws/values.yml`, as `values set` leaves it: `mac` at
+   `10.99.N.2` ([The tunnel](../../server/ubuntu/tunnel/README.md#the-tunnel)).
+3. Make the secrets, as [the server's runbook](../../server/ubuntu/runbook.md) says, with `ssh -t NAME
+   sudo ws server ubuntu secrets ...`.
+4. Run it as the server's runbook says, with `ssh -t NAME sudo systemd-run --pty --wait -p
+   LoadCredentialEncrypted=ws-secrets ws server ubuntu apply --secrets /etc/ws/secrets.age`. A
+   first run takes 20 to 40 minutes. Use `tmux` there: a dropped ssh ends the run.
+
+## claude
+
+Run `ssh -t NAME claude auth login`, and open the address it shows in the Mac's browser.
+
+## Signing key
+
+Copy the server's signing key, which `~/.gitconfig` there names, and add it with `gh ssh-key add
+--type signing --title HOSTNAME`. The Mac's gh login holds the scope: ws's token has no account
+permission ([Signing](../../server/ubuntu/git/README.md#signing)).
+
+## The tunnel
+
+1. Copy the Mac's `/etc/ws/tunnel.pub` to ws's `/etc/wireguard/mac.pub`, as root, and run `sudo ws
+   server ubuntu apply --only tunnel` there ([The tunnel](../../server/ubuntu/tunnel/README.md#the-tunnel)).
+2. Put wg0's public key, which that page names, in `WS_PUBLIC_KEY` of the server's `values.yml`.
+3. Run `ws client macos apply` again, and allow ws-tunnel in the Background.
+4. Ping the server's tunnel address, `10.99.N.1` for slot N, and run `ssh NAME`. A handshake must
+   come within 30 s.
+
+## The cable
+
+Skip it on a cloud VM and a VM on the Mac.
+
+1. Dock the Mac. At ws, list the wired ports with their carrier: `ip -br link` and `ip -br addr`.
+2. Set `WS_CABLE_PORT` at ws, and `WS_CABLE_SERVICE` on the Mac. `networksetup
+   -listallnetworkservices` lists the services, and the cable's has a `169.254` address.
+3. Run `sudo ws server ubuntu apply --only cable,tunnel` at ws, then `ws client macos apply`.
+4. Ping `10.77.0.1`. The Mac's end is `10.77.0.2` ([The cable](README.md#the-cable)).
+
+## What stays by hand
+
+- With Secure Boot on, where the kernel refuses the fans' driver, DKMS's key, enrolled at ws's
+  console ([Secure Boot](../../server/ubuntu/fans/README.md#secure-boot)).
+- macOS's grant of the local network to an app.
+- The server's lease, made static, and the router's forwards where `WS_REMOTE` is set
+  ([The router](../../server/ubuntu/cable/router.md)).
+- `gh auth setup-git`, where git's config names no credential command of gh's for github.com.

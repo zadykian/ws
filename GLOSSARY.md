@@ -49,17 +49,6 @@ signing, by `WS_GIT_SIGNING_PUB_KEY`. Either ws's copy of a key of Secretive's a
 key.
 _Avoid_: picked key, git key
 
-**Operation**:
-One job that the wizard asks of ws, a method of the session. It sends an op of the remote or the
-files script, or two in turn, as naming the cable's port and then running its roles. Its row in
-the session's table says whether it changes ws, so that the next status reads ws again.
-_Avoid_: command, request
-
-**Session**:
-The wizard's one way to ws: from the Mac over ssh, root by sudo, or ws's own on the machine. A
-stage asks it each operation. It holds what ws's status read until an operation changes ws.
-_Avoid_: remote, connection
-
 **User's directory**:
 A directory below the Mac's home that a step writes under, such as `~/.ssh`. A run makes it where
 missing, and stops where the path is no directory. It leaves the mode of one that exists. Core's

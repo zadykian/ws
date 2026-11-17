@@ -7,7 +7,7 @@ import (
 
 func TestServerApplyHelpNamesJSON(t *testing.T) {
 	status, stdout, _ := runWs(fakeProcess(), "", "server", "ubuntu", "apply", "-h")
-	if status != 0 || !strings.Contains(stdout, "--json") || !strings.Contains(stdout, "no screen is drawn") {
+	if status != 0 || !strings.Contains(stdout, "--json") {
 		t.Errorf("status = %d, help = %q", status, stdout)
 	}
 }
@@ -21,21 +21,21 @@ func TestServerApplyJSONRefusesNonRootOnStdoutAlone(t *testing.T) {
 	}
 }
 
-// A terminal changes nothing for --json: the events reach stdout, and no screen takes them.
-func TestServerApplyJSONDrawsNoScreenAtATerminal(t *testing.T) {
-	p, _ := serverTerminal()
+// The events reach stdout and ws's own lines stderr.
+func TestServerApplyJSONPrintsTheEventsOnStdout(t *testing.T) {
+	p, _ := serverProcess()
 	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "apply", "--json", "--check", "--only", "tmux")
-	if status != 0 || !strings.Contains(stdout, `"event":"done","parent":"tmux"`) || strings.Contains(stderr, enterScreen) {
+	if status != 0 || !strings.Contains(stdout, `"event":"done","parent":"tmux"`) {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
 }
 
-// With no selection the list would open here. The run ends in Prepare, so that no role runs.
-func TestServerApplyJSONOpensNoListAtATerminal(t *testing.T) {
-	p, m := serverTerminal()
+// The run ends in Prepare, so that no role runs.
+func TestServerApplyJSONReportsAFailureOnStdout(t *testing.T) {
+	p, m := serverProcess()
 	m.Packages = nil
-	status, stdout, stderr := runWs(p, "q", "server", "ubuntu", "apply", "--json")
-	if status != 1 || !strings.Contains(stdout, `"event":"failed"`) || strings.Contains(stderr, enterScreen) {
+	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "apply", "--json")
+	if status != 1 || !strings.Contains(stdout, `"event":"failed"`) {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
 }

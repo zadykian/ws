@@ -59,9 +59,6 @@ func unwritable(dir string) bool {
 // sudoWrite fills a new file beside path through sudo, gives it owner, as uid:gid, and perm, and
 // renames it over path.
 func (m OSMachine) sudoWrite(path string, data []byte, owner string, perm fs.FileMode) error {
-	if err := m.ticket(true); err != nil {
-		return err
-	}
 	tmp := filepath.Join(filepath.Dir(path), "."+filepath.Base(path)+".ws-new")
 	mode := strconv.FormatUint(uint64(perm.Perm()), 8)
 	cmd := m.command(context.Background(),

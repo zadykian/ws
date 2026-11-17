@@ -31,8 +31,6 @@ steps, and each role's README says what it sets up.
   `Account.Absent`, `User.ReadHome`), or the step acts as `WS_USER`, as claude's does. The user owns
   the home and could link a file elsewhere ([Links under the home](../../roles/server/ubuntu/security/README.md#links-under-the-home)).
 - ws's lines in a home file are `Account.Lines`, which refuses any link, at the file or on the way.
-- A line the maintainer acts on past a run, such as a key to copy, goes through
-  `effect.SayLasting`, as a screen's window goes with it ([The run screen](../../engine/tui/README.md#the-run-screen)).
 - A version is pinned in the package of the role that installs it. SigNoz's images are pinned in
   `roles/server/ubuntu/signoz/casting.yaml`, as its compose files are forged from it.
 - A restart or a reload that a watched change calls for is `resource.Forced`. `Group.Apply` runs it

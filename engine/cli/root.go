@@ -12,9 +12,6 @@ import (
 	"github.com/zadykian/ws/engine"
 )
 
-// PlainFlag names the persistent flag that keeps a command to lines.
-const PlainFlag = "plain"
-
 // Group returns a command that only holds others. Alone it prints its help, and an unknown
 // subcommand is a usage error.
 func Group(use, short string, cmds ...*cobra.Command) *cobra.Command {
@@ -32,7 +29,6 @@ func Group(use, short string, cmds ...*cobra.Command) *cobra.Command {
 func Root(p Env, groups ...*cobra.Command) *cobra.Command {
 	root := Group("ws", "set up the server and the Mac that works on it", Version(p), Update(p))
 	root.AddCommand(groups...)
-	root.PersistentFlags().Bool(PlainFlag, false, "print lines, with no full-screen display")
 	root.SilenceErrors = true
 	root.SilenceUsage = true
 	root.CompletionOptions.DisableDefaultCmd = true

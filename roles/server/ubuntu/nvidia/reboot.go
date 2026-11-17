@@ -37,7 +37,7 @@ func (r reboot) Plan(ctx context.Context) ([]resource.Change, error) {
 		return nil, err
 	}
 	if running := strings.TrimSpace(string(loaded)); running != installed {
-		effect.SayLasting(r.out, "nvidia: the kernel runs NVIDIA's driver %s, and %s is installed. Reboot to load it: until then, ws-fans reads no GPU.",
+		r.out.Say("nvidia: the kernel runs NVIDIA's driver %s, and %s is installed. Reboot to load it: until then, ws-fans reads no GPU.",
 			cmp.Or(running, "none"), installed)
 	}
 	return nil, nil

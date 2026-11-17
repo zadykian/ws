@@ -14,7 +14,7 @@ a direct way: `ssh -o HostName=ADDRESS -o Port=PORT ws`, as ufw lets SSH in on e
 The Mac's side is Go: one binary, `ws`, of isolated steps, which `go test` checks on each pull
 request. It runs as the user, with sudo where it needs root. It sets up Ghostty, cld and a zsh
 hook ([Ghostty and cld on the Mac](ghostty/README.md)). It installs Ghostty, Zed and a font from
-Homebrew, [installed](https://brew.sh) first. `install.sh` puts `ws` in `~/.local/bin` (put it on
+Homebrew, installed first by [the runbook](runbook.md). `install.sh` puts `ws` in `~/.local/bin` (put it on
 `PATH` by hand) from a release ([Releases](../../../engine/core/update/README.md)). `ws` embeds the files it installs, so it
 needs no clone. Write the values below in `values.yml` first ([The two
 files](values/README.md#the-two-files)). Then:
@@ -24,9 +24,7 @@ ws client macos apply
 ```
 
 `ws client macos apply --only STEP` runs one step, and `--check` shows each change and makes none.
-At a terminal it draws [the run screen](../../../engine/tui/README.md#the-run-screen), past [the
-list of steps](../../../engine/tui/README.md#the-list-of-steps) where it gets neither, and `--plain`
-keeps its lines. `ws client macos state` reports what a check reads, and changes nothing
+`ws client macos state` reports what a check reads, and changes nothing
 ([State](../../../README.md#state)). `ws client macos` holds the Mac's commands, darwin alone. `ws
 version` prints its version, and `ws update` replaces it with the latest release
 ([Update](../../../engine/core/update/README.md#update)).

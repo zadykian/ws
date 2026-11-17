@@ -21,7 +21,7 @@ func twoServers() *effecttest.Machine {
 func TestMacStateGroupsSeveralServersUnderTheirNames(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = twoServers()
-	status, stdout, stderr := runWs(p, "", "client", "macos", "state", "--plain")
+	status, stdout, stderr := runWs(p, "client", "macos", "state")
 	if status != 0 || !strings.Contains(stdout, "lab\n  ") || !strings.Contains(stdout, "ws\n  ") ||
 		strings.Index(stdout, "lab\n") > strings.Index(stdout, "ws\n") {
 		t.Errorf("status = %d, stdout = %q, stderr = %q; want a section for lab, then ws", status, stdout, stderr)
@@ -31,7 +31,7 @@ func TestMacStateGroupsSeveralServersUnderTheirNames(t *testing.T) {
 func TestMacStateJSONListsServersWhereThereAreSeveral(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = twoServers()
-	status, stdout, _ := runWs(p, "", "client", "macos", "state", "--json")
+	status, stdout, _ := runWs(p, "client", "macos", "state", "--json")
 	var doc struct {
 		Steps   []json.RawMessage `json:"steps"`
 		Servers []struct {
@@ -50,11 +50,11 @@ func TestMacStateJSONListsServersWhereThereAreSeveral(t *testing.T) {
 func TestMacStateOfOneServerKeepsItsBytes(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = twoServers()
-	status, stdout, _ := runWs(p, "", "client", "macos", "state", "--json", "--server", "lab")
+	status, stdout, _ := runWs(p, "client", "macos", "state", "--json", "--server", "lab")
 	if status != 0 || strings.Contains(stdout, `"servers"`) || !strings.Contains(stdout, `"steps"`) {
 		t.Errorf("status = %d, stdout = %q; want steps alone", status, stdout)
 	}
-	status, stdout, _ = runWs(p, "", "client", "macos", "state", "--plain", "--server", "lab")
+	status, stdout, _ = runWs(p, "client", "macos", "state", "--server", "lab")
 	if status != 0 || strings.HasPrefix(stdout, "lab\n") {
 		t.Errorf("status = %d, stdout = %q; want no header with --server", status, stdout)
 	}
@@ -70,7 +70,7 @@ func refusedLab() *effecttest.Machine {
 func TestMacStateKeepsTheGoodServersBesideARefusedFile(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = refusedLab()
-	status, stdout, stderr := runWs(p, "", "client", "macos", "state", "--plain")
+	status, stdout, stderr := runWs(p, "client", "macos", "state")
 	if status != 0 || !strings.Contains(stdout, "lab\n  values.yml\n") ||
 		!strings.Contains(stdout, "fix its file, or ws client macos remove lab") ||
 		!strings.Contains(stdout, "ws\n  ") {
@@ -81,7 +81,7 @@ func TestMacStateKeepsTheGoodServersBesideARefusedFile(t *testing.T) {
 func TestMacStateJSONCarriesARefusedFile(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = refusedLab()
-	status, stdout, _ := runWs(p, "", "client", "macos", "state", "--json")
+	status, stdout, _ := runWs(p, "client", "macos", "state", "--json")
 	var doc struct {
 		Servers []struct {
 			Name  string
