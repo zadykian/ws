@@ -37,7 +37,7 @@ var syntaxLine = regexp.MustCompile(`^yaml: (?:line \d+: )?(.*)$`)
 // entries reads the text as one KEY: value pair a line, in the order of the file, with blank lines
 // and comments between. A line of any other form comes back as the one error, with its line. Those
 // forms are a quoted key, a space before the colon, a flow map, `? KEY`, a BOM, a value wrapped over
-// lines, and a --- or ... marker. The pairs are those that HasLine, replace and Keep find, by
+// lines, and a --- or ... marker. The pairs are those that replace and Keep find, by
 // lineKey. A key given twice, or a value that is no scalar, comes back as the entry's err: the
 // caller checks the key first.
 func entries(text string) ([]entry, []Error) {

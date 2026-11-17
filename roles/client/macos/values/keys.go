@@ -8,6 +8,13 @@ import (
 	"github.com/zadykian/ws/roles/internal/slot"
 )
 
+// defaultPort is the UDP port of wg0 where WS_TUNNEL_PORT is empty, and forwardPort the TCP port that a
+// router forwards to ws's 22 where WS_REMOTE_PORT is.
+const (
+	defaultPort = 51820
+	forwardPort = 22022
+)
+
 // Conf is values.yml's settings, each key's value as the file gives it, with the default of a key
 // that has no line or an empty value.
 type Conf struct {
