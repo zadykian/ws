@@ -27,3 +27,7 @@ content = '''{{ exec(command="ws=$(mise which ws 2>/dev/null) || { echo 'ws unit
 # ws's own directory, which a first run with no values.yml lacks: mise makes no missing parent.
 [bootstrap.directories."/etc/ws"]
 mode = "0755"
+
+# Shared by zed, security and tunnel: mise makes no missing parent.
+[bootstrap.directories."/usr/local/lib/ws"]
+mode = "0755"
