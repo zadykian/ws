@@ -143,8 +143,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   `.tools/lint/`, yamllint's, golangci-lint's, Vale's and rumdl's, are never weakened.
 - ws's layers import downward: cobra lives in `cmd`, the `cli` packages and `.tools/`;
   `engine/core` imports itself alone; a role imports `engine/core`, `roles/internal` and its own
-  side, but not that side's `cli`. The Mac imports the server's `values`, `secrets`, `session`,
-  `stages` and `cli` alone.
+  side, but not that side's `cli`. The Mac imports nothing of the server's side.
   depguard's lists in [golangci.yml](../.tools/lint/golangci.yml) fail an import across them.
 - The caps are those of the
   [writing](https://github.com/zadykian/toolkit/blob/main/skills/writing/SKILL.md#the-caps-and-vale)

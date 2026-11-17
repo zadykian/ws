@@ -83,15 +83,9 @@ linters:
           list-mode: lax
           files:
             - "${base-path}/roles/client/**"
-          allow:
-            - github.com/zadykian/ws/roles/server/ubuntu/cli
-            - github.com/zadykian/ws/roles/server/ubuntu/secrets
-            - github.com/zadykian/ws/roles/server/ubuntu/session
-            - github.com/zadykian/ws/roles/server/ubuntu/stages
-            - github.com/zadykian/ws/roles/server/ubuntu/values
           deny:
             - pkg: github.com/zadykian/ws/roles/server
-              desc: the Mac imports the server's values, secrets, session, stages and cli alone
+              desc: the Mac imports nothing of the server, so that the sides change apart
         server:
           files:
             - "${base-path}/roles/server/**"
