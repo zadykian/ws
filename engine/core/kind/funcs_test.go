@@ -77,3 +77,10 @@ func TestInstalledVersion(t *testing.T) {
 		t.Errorf("render = %q, %v; want 1.2-3, then none for b and c", got, err)
 	}
 }
+
+func TestFailStopsTheRender(t *testing.T) {
+	got, err := fill("t", []byte(`a{{if true}}{{fail "no kernel fits"}}{{end}}`), pure(), nil)
+	if err == nil || !strings.Contains(err.Error(), "no kernel fits") {
+		t.Errorf("fill = %q, %v; want the render stopped with fail's message", got, err)
+	}
+}

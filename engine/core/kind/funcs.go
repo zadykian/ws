@@ -28,6 +28,8 @@ func pure() template.FuncMap {
 			}
 			return a / b, nil
 		},
+		// fail stops the render with msg, where a template finds the machine or the values unfit.
+		"fail": func(msg string) (string, error) { return "", errors.New(msg) },
 	}
 }
 

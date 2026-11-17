@@ -21,10 +21,11 @@ Its templates and sources sit beside it, and a path in the spec is relative to t
 - **The order.** Units run by name, each moved behind the unit that its `after` names, ahead of the
   next by name. An `after` that no spec holds, or a loop, fails the load.
 - **Two renders.** Both are Go templates over the side's values, and a key the values lack is an
-  error. The spec's text fills as it loads, with `add`, `mul` and `div`. A unit's template fills as
-  it plans, as an earlier unit may make the account or the file that it reads. It takes
-  `envvar FILE NAME` and the facts `mem_mib`, `cpus`, `fs_bytes PATH...`, `uid NAME` and
-  `installed_version NAME` too. The last gives dpkg's version of an installed package, else "".
+  error. The spec's text fills as it loads, with `add`, `mul`, `div` and `fail MSG`, which stops
+  the render with MSG. A unit's template fills as it plans, as an earlier unit may make the
+  account or the file that it reads. It takes `envvar FILE NAME` and the facts `mem_mib`, `cpus`,
+  `fs_bytes PATH...`, `uid NAME` and `installed_version NAME` too. The last gives dpkg's version
+  of an installed package, else "".
 - **when.** Any unit takes `when = { FACT = "WANT" }`, and runs where every FACT of the machine
   gives its WANT. Elsewhere it plans nothing, and says so in a line. An empty WANT holds on no
   machine, so a value left empty turns the unit off. The facts are read as the unit plans, so that
