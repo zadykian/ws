@@ -116,7 +116,7 @@ A dry run checks no file it would write. ws runs a file's check, such as `nft -c
 `sudo ws server ubuntu apply --json` prints each event of the run as a line of JSON on stdout:
 `planned`, `started`, `done`, `failed` or `skipped`, with the role, the step, the first line of each
 change and the error. So a line holds no file's text: `ws server ubuntu state --json` has the diffs.
-ws's own lines stay on stderr, and no screen is drawn.
+ws's own lines stay on stderr.
 
 ## State
 
@@ -133,15 +133,12 @@ sudo ws server ubuntu state
 sudo ws server ubuntu state --json
 ```
 
-At a terminal `ws server ubuntu state` draws the state screen on stderr: the tabs Packages,
-Services, Files, Conflicts and Pending, with `/` to filter, `r` to read again and `q` to quit.
-`--plain`, a pipe, a file on stdout or `--json` skips the screen. Then the report is on stdout and
-ws's own lines on stderr. `--json` prints the version of ws, then each role with its steps, items
-and changes.
+The report is on stdout and ws's own lines on stderr. `--json` prints the version of ws, then each
+role with its steps, items and changes.
 
 `ws client macos state` does the same for the Mac, as `ws client macos apply --check` reads it: it
-needs `values.yml` and a server's file, and not root. On the screen, sudo's password comes through a
-question. `--json` prints the version of ws, then each step ([What the Mac reports](roles/client/macos/README.md#what-the-mac-reports)).
+needs `values.yml` and a server's file, and not root. `--json` prints the version of ws, then each
+step ([What the Mac reports](roles/client/macos/README.md#what-the-mac-reports)).
 
 ```sh
 ws client macos state

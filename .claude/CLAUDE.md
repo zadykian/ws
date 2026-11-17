@@ -15,8 +15,8 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   holds its pins, and embeds its templates and files. ws-fans, the fans' service, is
   `ws server ubuntu fans`, in `roles/server/ubuntu/fans/daemon`.
 - `go.mod` and `go.sum`: the Go module `github.com/zadykian/ws`, at the root.
-  `main.go` runs `cmd`, which composes the root, `--plain` and the exit codes with the two sides'
-  commands. `engine/cli` builds the root, `--plain` and the exit codes. `engine/core` holds `step`,
+  `main.go` runs `cmd`, which composes the root and the exit codes with the two sides'
+  commands. `engine/cli` builds the root and the exit codes. `engine/core` holds `step`,
   `effect`, with `effect/effecttest`, `effect/local` and `effect/units`, and `resource`, with
   `resource/resourcetest`, the resources the steps share. They are public, as the roles import them
   from outside `engine/`.
