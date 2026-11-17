@@ -1,0 +1,5 @@
+{{- /* DKMS, and the headers it builds nct6687 against: the running kernel's, and the generic
+metapackage's, which brings each new kernel's, so that DKMS builds the driver again for it. */ -}}
+dkms
+linux-headers-generic
+linux-headers-{{ kernel_release }}

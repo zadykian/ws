@@ -21,20 +21,24 @@ Its templates and sources sit beside it, and a path in the spec is relative to t
 - **The order.** Units run by name, each moved behind the unit that its `after` names, ahead of the
   next by name. An `after` that no spec holds, or a loop, fails the load.
 - **Two renders.** Both are Go templates over the side's values, and a key the values lack is an
-  error. The spec's text fills as it loads, with `add`, `mul` and `div`. A unit's template fills as
-  it plans, as an earlier unit may make the account or the file that it reads. It takes
-  `envvar FILE NAME` and the facts `mem_mib`, `cpus`, `fs_bytes PATH...`, `uid NAME` and
-  `installed_version NAME` too. The last gives dpkg's version of an installed package, else "".
+  error. The spec's text fills as it loads, with `add`, `mul`, `div` and `fail MSG`, which stops
+  the render with MSG. A unit's template fills as it plans, as an earlier unit may make the
+  account or the file that it reads. It takes `envvar FILE NAME` and the facts `mem_mib`, `cpus`,
+  `fs_bytes PATH...`, `uid NAME`, `installed_version NAME` and `kernel_release` too.
+  `installed_version` gives dpkg's version of an installed package, else "", and
+  `kernel_release` the running kernel's, as `uname -r` prints it.
 - **when.** Any unit takes `when = { FACT = "WANT" }`, and runs where every FACT of the machine
-  gives its WANT. Elsewhere it plans nothing, and says so in a line. An empty WANT holds on no
-  machine, so a value left empty turns the unit off. The facts are read as the unit plans, so that
-  one can follow an earlier unit. macOS has no sysfs, and gives neither. A FACT that the table
-  lacks fails the load, and a new fact is one entry of `whenFacts`, in `when.go`.
+  gives its WANT, and `"!WANT"` where it does not. Elsewhere it plans nothing, and says so in a
+  line. An empty WANT, negated or not, holds on no machine, so a value left empty turns the unit
+  off, and its line says that the `when` gives no FACT. The facts are read as the unit plans, so
+  that one can follow an earlier unit. macOS has no sysfs, and gives neither. A FACT that the
+  table lacks fails the load. So does a WANT of a form that its FACT never gives, which would turn
+  the unit off on every machine. A new fact is one entry of `whenFacts`, in `when.go`.
 
   | FACT | What the machine gives |
   | --- | --- |
   | `board_vendor` | The board's maker, from `/sys/class/dmi/id/board_vendor` |
-  | `gpu_vendor` | The PCI vendor of a device of class `0x03`, such as `0x1234`, from `/sys/bus/pci/devices` |
+  | `gpu_vendor` | The PCI vendor of a device of class `0x03`, from `/sys/bus/pci/devices`: `0x` and four hex digits in lower case, such as `0x1234` |
 
 - **Load and plan.** Each kind checks its fields as the spec loads, so a bad field fails before any
   unit runs. The resources are made as each unit plans.
@@ -93,6 +97,7 @@ checked before apt-get installs it. Where the version that dpkg lists is the pin
 ```toml
 [packages.NAME]
 template = "names.tmpl"     # the names, at white space; NAME=VERSION pins one, * as a glob
+simulate = false            # check that apt finds each name, and install none
 ```
 
 - mise's own apt takes a fixed list. This kind's list follows the machine, as its template fills
@@ -101,6 +106,39 @@ template = "names.tmpl"     # the names, at white space; NAME=VERSION pins one, 
 - A word that is no package's name, such as an option or a path, fails the plan. So does a word
   that ends in a dash, which apt-get reads as a removal. A template that gives no name plans
   nothing.
+- `simulate` runs `apt-get install -s` of the names as the unit plans, and fails with apt's error
+  where one is missing. It changes nothing, so it tries a role's names on a machine that installs
+  none of them. It reads apt's lists as an earlier `apt-get update` left them.
+
+### dkms
+
+```toml
+[dkms.NAME]
+module = "name"             # DKMS's name of the source, as its dkms.conf gives it
+version = "1.0"             # DKMS's version of the pin
+url = "https://host/name.tar.gz"
+sha256 = "…"
+strip = 1                   # leading parts of each name dropped as the tarball unpacks
+conf = "dkms.conf"          # a source written as the tree's dkms.conf, {version} for version
+load = "name"               # the module loaded once built
+unload = ["other"]          # loaded modules unloaded first; goes with load
+hint = "…"                  # follows the line of a refused load; goes with load
+```
+
+- The tarball waits in `/var/cache/ws`, checked against its SHA-256, and unpacks whole as
+  `/usr/src/MODULE-VERSION`, so a new version is a new tree. `conf` replaces the tree's own
+  `dkms.conf`, so that the version is pinned in one place.
+- DKMS adds the version, then builds and installs it for the running kernel, `uname -r`. It builds
+  it again for each later kernel by itself. Another version of the module in DKMS goes first, with
+  its source. A version that `dkms status` gives in no plain word's form is left alone, with a
+  warning. Before `/usr/sbin/dkms` exists, as in a dry run before its package, DKMS holds nothing.
+- The packages of DKMS and of the kernel's headers are the role's own: a `packages` unit that this
+  one waits on by `after`.
+- `load` is loaded by `modprobe` once built, after each module of `unload` that the kernel holds is
+  unloaded. Without booted systemd it loads nothing, and says so.
+- With Secure Boot on, the kernel refuses the module until DKMS's key is enrolled, by hand at the
+  console. The run says so, with `hint`, and goes on. The mark `/run/ws-refused-LOAD` keeps the
+  runs until the next reboot from trying again. Any other failure of the load fails the unit.
 
 ### service
 
@@ -136,6 +174,7 @@ routes = { pool = "CIDR", net = "CIDR", dev = "docker0", hint = "…" }  # refus
 addr = { iface = "docker0", want = "CIDR", hint = "…" }                # refuses a missing address
 left = { user = "USER", group = "GROUP" }
 run = { user = "USER", command = ["cmd"], creates = ["/path"] }        # or check = ["cmd"]
+reboot = { module = "name", package = "name", hint = "…" }             # notes a reboot that is due
 ```
 
 - A new state is one field of `stateSpec`, of a type that makes its resource.
@@ -148,8 +187,11 @@ run = { user = "USER", command = ["cmd"], creates = ["/path"] }        # or chec
   systemd session, and on macOS by sudo. It takes exactly one of `creates`, which runs where a path
   is missing, and `check`, which runs where the check, as `user` too, exits other than 0. A
   procedure that stays a command of ws runs this way.
-- Without booted systemd, `linger`, `http`, `ufw` and `addr` skip, and each says so. So does `run`
-  on Linux, where it needs the user's session; macOS has no systemd, and runs it.
+- `reboot` plans nothing. Where `package` is installed and `/sys/module/MODULE/version` is not its
+  upstream version, without the epoch or the revision, it warns that a reboot is due, with `hint`
+  after. It suits a module that loads at boot alone, as a display's driver.
+- Without booted systemd, `linger`, `http`, `ufw`, `addr` and `reboot` skip, and each says so. So
+  does `run` on Linux, where it needs the user's session; macOS has no systemd, and runs it.
 
 ### guard
 

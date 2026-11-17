@@ -50,6 +50,7 @@ type stateSpec struct {
 	Addr   *addrState   `toml:"addr"`
 	Left   *leftState   `toml:"left"`
 	Run    *runState    `toml:"run"`
+	Reboot *rebootState `toml:"reboot"`
 }
 
 // stateKeys are the keys of stateSpec's states, in their order.

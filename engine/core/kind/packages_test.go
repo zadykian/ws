@@ -1,6 +1,7 @@
 package kind
 
 import (
+	"errors"
 	"slices"
 	"strings"
 	"testing"
@@ -80,5 +81,37 @@ func TestPackagesRefusesFieldsNoPlanTakes(t *testing.T) {
 		if _, err := Load(e, tree(map[string]string{"r/units.toml": spec})); err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("load of\n%s= %v, want %q", spec, err, want)
 		}
+	}
+}
+
+// simulatedUnit is packages/a, whose names are only simulated.
+const simulatedUnit = packagesUnit + "simulate = true\n"
+
+func TestPackagesSimulateChecksEachName(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["apt-get install -s a1 b2"] = effecttest.Result{}
+	units := loadOne(t, Env{M: m, Out: &effecttest.Out{}}, simulatedUnit, map[string]string{"a.tmpl": "a1\nb2\n"})
+	if got := headlines(t, units[0].Step); got != nil {
+		t.Errorf("plan = %q, want none", got)
+	}
+	if !slices.Equal(m.Calls, []string{"run apt-get install -s a1 b2"}) {
+		t.Errorf("calls = %q, want the simulation alone: no dpkg-query, update or install", m.Calls)
+	}
+}
+
+func TestPackagesSimulateFailsOnAMissingName(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["apt-get install -s a1"] = effecttest.Result{Err: errors.New("E: Unable to locate package a1")}
+	units := loadOne(t, Env{M: m, Out: &effecttest.Out{}}, simulatedUnit, map[string]string{"a.tmpl": "a1\n"})
+	if _, err := units[0].Step.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "Unable to locate package a1") {
+		t.Errorf("plan = %v, want apt's error", err)
+	}
+}
+
+func TestPackagesSimulateRefusesABadName(t *testing.T) {
+	m := effecttest.NewMachine()
+	units := loadOne(t, Env{M: m, Out: &effecttest.Out{}}, simulatedUnit, map[string]string{"a.tmpl": "a1 -o x\n"})
+	if _, err := units[0].Step.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "no package's name") || len(m.Calls) != 0 {
+		t.Errorf("plan = %v, calls %q; want a refusal before apt-get runs", err, m.Calls)
 	}
 }

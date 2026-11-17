@@ -1,6 +1,7 @@
 package kind
 
 import (
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -100,6 +101,20 @@ func TestWhenOffPlansNothing(t *testing.T) {
 	}
 }
 
+func TestWhenEmptyWantSaysSo(t *testing.T) {
+	m := effecttest.NewMachine()
+	withBoard(m, acme)
+	withPCIDevice(m, "0x030000", "0x1234")
+	got, said := planGated(t, m, `{ board_vendor = "", gpu_vendor = "0x1234" }`)
+	want := []string{"say: file/a: off on this machine, as its when gives no board_vendor"}
+	if got != nil || !slices.Equal(said, want) {
+		t.Errorf("plan = %q, said %q; want none and %q", got, said, want)
+	}
+	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.Contains(c, " /sys/") }) {
+		t.Errorf("calls %q; want no fact read", m.Calls)
+	}
+}
+
 func TestWhenOnPlansAsWithout(t *testing.T) {
 	m := effecttest.NewMachine()
 	withBoard(m, acme)
@@ -107,6 +122,29 @@ func TestWhenOnPlansAsWithout(t *testing.T) {
 	got, said := planGated(t, m, `{ board_vendor = "`+acme+`", gpu_vendor = "0x1234" }`)
 	if !slices.Contains(got, "create /etc/a") || said != nil {
 		t.Errorf("plan = %q, said %q; want the write of /etc/a, and no line", got, said)
+	}
+}
+
+func TestWhenNegatedWant(t *testing.T) {
+	for _, tc := range []struct {
+		name, vendor, cond string
+		said               []string
+	}{
+		{"the vendor", "0x1234", `{ gpu_vendor = "!0x1234" }`,
+			[]string{`say: file/a: off on this machine, as its gpu_vendor is "0x1234"`}},
+		{"another vendor", "0x1af4", `{ gpu_vendor = "!0x1234" }`, nil},
+		{"an empty want", "0x1af4", `{ gpu_vendor = "!" }`,
+			[]string{"say: file/a: off on this machine, as its when gives no gpu_vendor"}},
+	} {
+		m := effecttest.NewMachine()
+		withPCIDevice(m, "0x030000", tc.vendor)
+		got, said := planGated(t, m, tc.cond)
+		if (got != nil) != (tc.said == nil) || !slices.Equal(said, tc.said) {
+			t.Errorf("%s: plan = %q, said %q; want on %v, and %q", tc.name, got, said, tc.said == nil, tc.said)
+		}
+	}
+	if got, said := planGated(t, effecttest.NewMachine(), `{ gpu_vendor = "!0x1234" }`); got == nil || said != nil {
+		t.Errorf("no PCI devices: plan = %q, said %q; want on", got, said)
 	}
 }
 
@@ -135,15 +173,44 @@ func TestWhenRefusesAnUnknownFact(t *testing.T) {
 	}
 }
 
+func TestWhenRefusesAWantOfAnotherForm(t *testing.T) {
+	e, _, _, _ := testEnv(false)
+	for _, tc := range []struct {
+		want string
+		ok   bool
+	}{{"0x12AB", false}, {"12ab", false}, {"0x1234 ", false}, {"0x12345", false}, {"0x1234", true}, {"", true},
+		{"!0x12AB", false}, {"!0x1234", true}, {"!", true}} {
+		want, ok := tc.want, tc.ok
+		_, err := Load(e, tree(map[string]string{"r/units.toml": gatedFile(`{ gpu_vendor = "` + want + `" }`), "r/a": "x"}))
+		refused := err != nil && strings.Contains(err.Error(), `when: gpu_vendor "`+want+`" is not of the form ^0x[0-9a-f]{4}$`)
+		if ok != (err == nil) || !ok && !refused {
+			t.Errorf("load with gpu_vendor %q = %v, want loaded %v", want, err, ok)
+		}
+	}
+}
+
 func TestWhenOnEveryKind(t *testing.T) {
 	const off = "when = { board_vendor = \"" + acme + "\" }\n"
-	for name, spec := range map[string]string{
+	sum := strings.Repeat("0", 64)
+	samples := map[string]string{
+		"file": "[file.a]\npath = \"/etc/a\"\nsource = \"a\"\n" + off,
+		"deb": "[deb.a]\npackage = \"a\"\nversion = \"1\"\nurl = \"https://x/a.deb\"\nsha256 = { amd64 = \"" + sum + "\" }\n" +
+			off,
+		"packages": "[packages.a]\ntemplate = \"a\"\n" + off,
+		"dkms": "[dkms.a]\nmodule = \"m\"\nversion = \"1\"\nurl = \"https://x/m.tar.gz\"\nsha256 = \"" + sum + "\"\n" +
+			"load = \"m\"\n" + off,
 		"guard":   "[guard.a]\nsudo_right = \"u\"\n" + off,
 		"state":   "[state.a]\npurged = \"p\"\n" + off,
 		"service": "[service.a]\nunit = \"a.service\"\nenabled = true\nrun = \"running\"\n" + off,
-	} {
+	}
+	for f := range reflect.TypeFor[spec]().Fields() {
+		if _, ok := samples[f.Tag.Get("toml")]; !ok {
+			t.Errorf("the kind %s has no sample here, so nothing shows that when turns it off", f.Tag.Get("toml"))
+		}
+	}
+	for name, spec := range samples {
 		e, m, _, out := testEnv(true)
-		units := loadOne(t, e, spec, nil)
+		units := loadOne(t, e, spec, map[string]string{"a": "x"})
 		if got := headlines(t, units[0].Step); got != nil || len(out.Lines) != 1 {
 			t.Errorf("%s: plan = %q, said %q; want none and the off line", name, got, out.Lines)
 		}

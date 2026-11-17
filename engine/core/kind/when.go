@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"maps"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -14,25 +15,47 @@ import (
 )
 
 // when is a unit's condition: each key a fact of the machine, and its value what the fact must
-// give. The unit is on where every key holds. A spec writes it `when = { FACT = "WANT" }`.
+// give. The unit is on where every key holds. A spec writes it `when = { FACT = "WANT" }`, or
+// `"!WANT"` where the fact must not give WANT.
 type when map[string]string
 
-// fact reports whether the machine gives want. A machine that lacks the fact's source, as macOS
-// lacks sysfs, gives none.
-type fact func(ctx context.Context, m effect.Machine, want string) (bool, error)
+// not marks a want that its fact must not give.
+const not = "!"
+
+// want splits a key's value into what the fact gives and whether the unit wants it not given.
+func (w when) want(key string) (string, bool) {
+	want, negated := strings.CutPrefix(w[key], not)
+	return want, negated
+}
+
+// fact is one fact that a when may name.
+type fact struct {
+	// holds reports whether the machine gives want. A machine that lacks the fact's source, as
+	// macOS lacks sysfs, gives none.
+	holds func(ctx context.Context, m effect.Machine, want string) (bool, error)
+	// form is the form of a want that the machine can give, or nil for any. A want of another
+	// form would turn its unit off on every machine, so the load refuses it.
+	form *regexp.Regexp
+}
 
 // whenFacts are the facts that a when may name. A new fact is one entry here, its reader below.
 var whenFacts = map[string]fact{
-	"board_vendor": boardVendor,
-	"gpu_vendor":   gpuVendor,
+	"board_vendor": {holds: boardVendor},
+	// sysfs writes a vendor as 0x and four hex digits in lower case.
+	"gpu_vendor": {holds: gpuVendor, form: regexp.MustCompile(`^0x[0-9a-f]{4}$`)},
 }
 
-// check refuses a key that no fact has, as the spec loads.
+// check refuses a key that no fact has, and a want of a form that its fact never gives, as the
+// spec loads. An empty want is of any form: it turns the unit off, negated or not.
 func (w when) check() error {
 	for _, key := range slices.Sorted(maps.Keys(w)) {
-		if _, ok := whenFacts[key]; !ok {
+		f, ok := whenFacts[key]
+		if !ok {
 			return fmt.Errorf("when: no fact %q; the facts are %s", key,
 				strings.Join(slices.Sorted(maps.Keys(whenFacts)), ", "))
+		}
+		if want, _ := w.want(key); want != "" && f.form != nil && !f.form.MatchString(want) {
+			return fmt.Errorf("when: %s %q is not of the form %s", key, w[key], f.form)
 		}
 	}
 	return nil
@@ -40,23 +63,40 @@ func (w when) check() error {
 
 // gate makes the unit's parts only where every key holds, and says why where one does not. It
 // reads the facts as the unit plans, so that a fact can follow an earlier unit. An empty want
-// holds on no machine, so that a value left empty turns the unit off.
+// holds on no machine, so that a value left empty turns the unit off. Its line names the empty
+// want, and comes before any fact is read, as no fact of the machine is the cause. It says its line
+// once, as a read makes the parts twice: to plan, and to report.
 func (w when) gate(e Env, unit string, parts func(context.Context) ([]resource.Resource, error)) func(context.Context) ([]resource.Resource, error) {
 	if len(w) == 0 {
 		return parts
 	}
+	said := false
+	off := func(format string, args ...any) {
+		if !said {
+			e.Out.Say("%s: off on this machine, as "+format, append([]any{unit}, args...)...)
+			said = true
+		}
+	}
 	return func(ctx context.Context) ([]resource.Resource, error) {
-		for _, key := range slices.Sorted(maps.Keys(w)) {
-			want := w[key]
-			ok := false
-			if want != "" {
-				var err error
-				if ok, err = whenFacts[key](ctx, e.M, want); err != nil {
-					return nil, fmt.Errorf("when %s: %w", key, err)
-				}
+		keys := slices.Sorted(maps.Keys(w))
+		for _, key := range keys {
+			if want, _ := w.want(key); want == "" {
+				off("its when gives no %s", key)
+				return nil, nil
 			}
-			if !ok {
-				e.Out.Say("%s: off on this machine, as its %s is not %q", unit, key, want)
+		}
+		for _, key := range keys {
+			want, negated := w.want(key)
+			gives, err := whenFacts[key].holds(ctx, e.M, want)
+			if err != nil {
+				return nil, fmt.Errorf("when %s: %w", key, err)
+			}
+			if gives == negated {
+				if negated {
+					off("its %s is %q", key, want)
+				} else {
+					off("its %s is not %q", key, want)
+				}
 				return nil, nil
 			}
 		}
