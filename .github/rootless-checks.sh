@@ -1,8 +1,11 @@
 #!/bin/bash
 # The rootless job's cases, as root on a runner that booted (.github/workflows/rootless.md). It
 # proves what a container can't: the rootless daemon, and the firewall around it. Each case that
-# expects a refusal has a control, as a broken setup refuses everything.
+# expects a refusal has a control, as a broken setup refuses everything. Run as
+# `rootless-checks.sh DIR`, DIR being .tools/serve-build's for the tree in /opt/ws.
 set -euo pipefail
+
+rel=$1
 
 user=zadykian
 home=/home/$user
@@ -17,6 +20,8 @@ sudo_form='printf "%s\n" "$1" | sudo -S -p "" -v; sudo -n true; rc=$?; exit "$rc
 unset XDG_CONFIG_HOME
 sed -i '/^XDG_/d' /etc/environment
 export HOME=/root DEBIAN_FRONTEND=noninteractive
+# A tool installs only as a lock holds it, here the build's in mise.local.lock, as in playbook.
+export MISE_LOCKED=1
 
 fail() {
     echo "::error::$*"
@@ -76,11 +81,16 @@ if [ -e "$key" ]; then
 fi
 
 # The image's Docker predates what --net=host means on a rootless daemon, and ws must install its
-# own. The purge leaves docker0, which the route check accepts.
+# own. The purge leaves docker0, which the route check accepts. The image's source of Docker goes
+# too, as apt refuses one repository signed by two keys, and mise adds its own. Docker's ufw rules
+# need ufw, which security installs only after the bootstrap.
 apt-get update
 apt-get purge -y docker-ce docker-ce-cli containerd.io
 rm -rf /etc/docker /var/lib/docker /var/lib/containerd
-apt-get install -y --no-install-recommends netcat-openbsd
+for f in /etc/apt/sources.list.d/*; do
+    if [ -f "$f" ] && grep -q download.docker.com "$f"; then rm -f "$f"; fi
+done
+apt-get install -y --no-install-recommends netcat-openbsd ufw
 
 # The account as Ubuntu's installer leaves it, with the groups ws must take away.
 groupadd --force docker
@@ -117,12 +127,23 @@ chmod 600 /etc/ws/values.yml
 must "the private address answers before the table" up "http://$target/"
 must "sudo's password is cached before the drop-in" as bash -c "$sudo_form" bash "$password"
 
+# As on a new machine: install.sh runs the bootstrap, which installs ws, then ws sets up the
+# firewall, a role still in Go. Each runs twice, and the second run of each must change nothing.
+# The tree must be root's alone for install.sh's guard.
+chown -R 0:0 /opt/ws
+chmod -R go-w /opt/ws
 log=$(mktemp)
-ws server ubuntu apply --only security,docker
-ws server ubuntu apply --only security,docker 2>&1 | tee "$log"
+"$(dirname "$0")/bootstrap.sh" "$rel"
+ws server ubuntu apply --only security
+must "the first bootstrap leaves nothing to do" \
+    mise -C /opt/ws bootstrap plan --detailed-exitcode </dev/null
+mise -C /opt/ws bootstrap </dev/null
+ws server ubuntu apply --only security 2>&1 | tee "$log"
 if [ "$(tail -n 1 "$log")" != 'ws server ubuntu apply: changed: none' ]; then
     fail "The second run of ws server ubuntu apply changed something."
 fi
+must "the second bootstrap leaves nothing to do" \
+    mise -C /opt/ws bootstrap plan --detailed-exitcode </dev/null
 
 groups=$(id -nG "$user")
 must "the user keeps sudo" grep -qw sudo <<<"$groups"
