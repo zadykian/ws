@@ -29,7 +29,7 @@ Its templates and sources sit beside it, and a path in the spec is relative to t
 
 ## The kinds
 
-`ws unit`, which plans and applies the units for mise, follows.
+The kinds follow, and then [`ws unit`](#ws-unit), which plans and applies the units for mise.
 
 ### file
 
@@ -139,3 +139,35 @@ sudo_right = "USER"         # or: USER has the right to sudo, and a password for
 - `sudo_right` passes for root, which needs no sudo.
 - A container, which has no login to lose, passes each. A unit that would close a login waits on the
   guard by its `after`.
+
+## ws unit
+
+`ws unit` plans and applies the units for mise's plugin `ws`, a package manager plugin. Each unit is
+a package, `"ws:KIND/NAME" = "in-sync"` under `[bootstrap.packages]`. It sits at ws's root, and on
+the server it runs as root.
+
+| Command | What it does |
+| --- | --- |
+| `ws unit list [--toml]` | Prints each unit in the order units run, or as a line of `[bootstrap.packages]`. |
+| `ws unit read UNIT...` | Plans the units and those they wait on, and prints `NAME`, a tab, and a state. |
+| `ws unit write UNIT... [--dry-run]` | Plans, applies and plans again, in the units' order. |
+| `ws unit verify` | Fails where mise's plan lacks a unit of the specs. |
+
+- **The states.** `read` prints a line per unit named, in the order given, on stdout. The state is
+  `in-sync`; the first change's headline, with `(+N more)` after it for the rest; `after UNIT`,
+  where it waits on a unit with changes; or `fails: WHY`. A failed plan stops no other unit's read.
+  mise takes the state for the version, so it plans an update for any but `in-sync`.
+- **The write.** A unit that a named one waits on is planned and left out. A named unit behind one
+  with changes is skipped, and the write exits 1. `--dry-run` applies nothing and prints each
+  change, file diffs included. The last line names the units that changed.
+- **Where it reads.** The specs sit below `$WS_UNITS`, else below the side's own directory: the
+  server's is `/opt/ws/roles/server/ubuntu`, the checkout of `mise bootstrap --from-dir /opt/ws`.
+  The values are the side's file, `/etc/ws/values.yml` on the server, and confine the machine's
+  writes under `WS_HOME`.
+- **verify.** mise drops the units of a plugin that it refuses, with a warning and exit 0. `verify`
+  reads `mise bootstrap packages status --json`, and fails where the `ws` manager is missing or not
+  available, or lacks a unit of the specs. With every unit there, it prints one line that never
+  changes, for a file whose template runs it.
+- **Exit codes.** 0 done. 1 a failure: a spec or values that fail to load, a plan, an apply, a
+  refused check, a SHA-256 or a skipped unit. `read` and `write` as a user other than root fail
+  too. 2 a usage error, such as a unit that no spec holds. ws's own lines go to stderr.

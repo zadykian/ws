@@ -53,7 +53,7 @@ _Avoid_: vault
 
 **Unit**:
 One resource of a kind, named `KIND/NAME`, as `file/sshd`, that a spec names. It plans and applies
-as a step does.
+as a step does, which `ws unit` runs for mise ([ws unit](engine/core/kind/README.md#ws-unit)).
 _Avoid_: package, step
 
 ## The Mac's side
