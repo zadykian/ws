@@ -28,8 +28,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   [its values](../../roles/client/macos/values/README.md)
   the Mac's values files, [the tunnel's](../../roles/client/macos/tunnel/README.md) the daemons' rules, and [ghostty](../../roles/client/macos/ghostty/README.md) its Ghostty
   and cld, [zed](../../roles/client/macos/zed/README.md) its Zed. [The secrets](../../roles/server/ubuntu/secrets/README.md)
-  is the secrets file. [The server's stages](../../roles/server/ubuntu/stages/README.md) are
-  `ws server ubuntu wizard`, the stages run on ws. [The router](../../roles/server/ubuntu/cable/router.md)
+  is the secrets file. [The router](../../roles/server/ubuntu/cable/router.md)
   is the router's steps, taken once by hand.
 - [The TUI's README](../../engine/tui/README.md) is the terminal UI: its modes, `--plain`, the
   layout and the keys. [Configure](../../engine/tui/internal/configure/README.md) is its Configure

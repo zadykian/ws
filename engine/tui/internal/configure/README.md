@@ -52,8 +52,7 @@ sudo. The secrets form edits ws's file as `ws server ubuntu secrets` does. The f
 `values.yml` runs the same files script, here on `sh`'s standard input. The secrets form, now first,
 reads as the screen opens. With no terminal, or under `--plain`, it refuses: `ws server ubuntu
 secrets` and `ws server ubuntu values set` edit the same files on lines. `e` and the `configure`
-button of `ws server ubuntu wizard`'s list open it, and the list comes back to a new scan ([The
-server's wizard](../../../../roles/server/ubuntu/stages/README.md)).
+button of `ws server ubuntu wizard`'s list open it, and the list comes back to a new scan.
 
 ## After a save
 

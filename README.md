@@ -69,9 +69,7 @@ curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | 
 sudo ws server ubuntu apply
 ```
 
-It runs the roles in order. Then do what stays by hand, below. Over plain ssh, `sudo ws server
-ubuntu wizard` asks ws's values and runs `ws server ubuntu apply` in a unit, which goes on where the
-login drops ([The server's wizard](roles/server/ubuntu/stages)).
+It runs the roles in order. Then do what stays by hand, below.
 
 ## Running it again
 
@@ -96,8 +94,7 @@ root` sets up a cloud VM with no other user. `WS_HOME` follows the user as `/hom
 DIR` sets another home. `WS_GIT_SIGNING_PUB_KEY` lies below it, or the
 run fails. A cloud VM names `WS_SECURITY_OUTBOUND: false` there before its first run
 ([Outbound](roles/server/ubuntu/security/README.md#outbound)). `ws server ubuntu values set KEY VALUE` writes one key, and
-an empty VALUE gives its default back. On ws, `sudo ws server ubuntu configure` writes them on a
-form ([The Configure screen](engine/tui/internal/configure)). ws's last line names the roles that changed,
+an empty VALUE gives its default back. ws's last line names the roles that changed,
 `changed: none` on a second run.
 
 ## Dry runs

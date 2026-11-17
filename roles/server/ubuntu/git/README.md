@@ -40,9 +40,8 @@ The role makes the pair once, an ed25519 key with no passphrase, as tools and cl
 unattended. The key only signs. The role does not register it with GitHub: [The signing key](../devtools/README.md#the-signing-key).
 
 To revoke the key, delete it in the account's settings on GitHub, then delete
-`~/.ssh/id_ed25519_signing` and its `.pub`. The next run makes a new key. The Mac's wizard
-registers it, at its Signing key stage, or add the `.pub` by hand. A key deleted on GitHub alone
-comes back the same way.
+`~/.ssh/id_ed25519_signing` and its `.pub`. The next run makes a new key, and its `.pub` goes to
+the account by hand. A key deleted on GitHub alone needs that too.
 
 `git verify-commit` trusts the key for `me@zadykian.dev` through `/etc/ws/allowed_signers`,
 root's and 644, the Mac's path too. A run that changes nothing reads it as the user. Each run
