@@ -19,13 +19,18 @@ import (
 type base struct {
 	// After names the one unit, KIND/NAME, that this one waits on.
 	After string `toml:"after"`
+	// When is the machine's facts that the unit needs; without them it plans nothing.
+	When when `toml:"when"`
 }
 
 func (b base) waits() string { return b.After }
 
+func (b base) condition() when { return b.When }
+
 // unitKind is one unit's spec, of any kind.
 type unitKind interface {
 	waits() string
+	condition() when
 	// parts checks the spec and returns what makes the unit's resources as it plans. dir holds the
 	// spec's own files, its templates and sources.
 	parts(e Env, dir fs.FS) (func(context.Context) ([]resource.Resource, error), error)
@@ -36,6 +41,8 @@ type unitKind interface {
 type spec struct {
 	File map[string]fileSpec `toml:"file"`
 	Deb  map[string]debSpec  `toml:"deb"`
+	// Packages is apt's packages, whose names a template gives.
+	Packages map[string]packagesSpec `toml:"packages"`
 	// Service is a systemd unit, with the files that one restart covers.
 	Service map[string]serviceSpec `toml:"service"`
 	// State is one small state with a cheap check.
