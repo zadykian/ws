@@ -32,6 +32,8 @@ What each document holds. How to write them is in the `writing` skill and [writi
   is the secrets file. [The router](../../roles/server/ubuntu/cable/router.md)
   is the router's steps, taken once by hand. [The Mac's runbook](../../roles/client/macos/runbook.md)
   and [the server's](../../roles/server/ubuntu/runbook.md) are each side's steps by hand.
+- [The kind package's README](../../engine/core/kind/README.md) says what a unit and a kind are:
+  the spec, each kind's fields, and where the specs sit.
 - [The update package's README](../../engine/core/update/README.md) says how to install and update
   ws, and how a release is cut.
 - [The tools' README](../../.tools/README.md) says what each gate of `make lint` runs.

@@ -18,8 +18,9 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   `main.go` runs `cmd`, which composes the root and the exit codes with the two sides'
   commands. `engine/cli` builds the root and the exit codes. `engine/core` holds `step`,
   `effect`, with `effect/effecttest`, `effect/local` and `effect/units`, and `resource`, with
-  `resource/resourcetest`, the resources the steps share. They are public, as the roles import them
-  from outside `engine/`.
+  `resource/resourcetest`, the resources the steps share, and `kind`, the kinds that a role's
+  `units.toml` names as units ([kind](../engine/core/kind/README.md)). They are public, as the roles
+  import them from outside `engine/`.
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
 - `install.sh`: installs ws's binary from a release ([Releases](../engine/core/update/README.md)).

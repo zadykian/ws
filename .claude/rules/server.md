@@ -2,6 +2,7 @@
 paths:
   - "roles/server/**"
   - "engine/core/resource/**"
+  - "engine/core/kind/**"
 ---
 
 # server
@@ -34,10 +35,14 @@ steps, and each role's README says what it sets up.
 - A version is pinned in the package of the role that installs it. SigNoz's images are pinned in
   `roles/server/ubuntu/signoz/casting.yaml`, as its compose files are forged from it.
 - A restart or a reload that a watched change calls for is `resource.Forced`. `Group.Apply` runs it
-  after a failed change too, as the next run finds the file right and plans none.
+  after a failed change too, as the next run finds the file right and plans none. It waits, owed,
+  where a watched change itself did not apply, such as a file that its check refused
+  ([unit.go](../../engine/core/resource/systemd/unit.go)).
 
 ## Runs
 
+- A kind names no role's word: a role's fact comes in by its spec and its templates
+  ([kind](../../engine/core/kind/README.md)).
 - A second run plans nothing, which CI's `playbook` job checks
   ([The `playbook` job](../../.github/workflows/README.md#the-playbook-job)). A step that only reads plans no change.
 - A dry run, `--check`, applies nothing and shows how the machine differs
