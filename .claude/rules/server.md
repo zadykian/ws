@@ -43,6 +43,8 @@ steps, and each role's README says what it sets up.
 
 - A kind names no role's word: a role's fact comes in by its spec and its templates
   ([kind](../../engine/core/kind/README.md)).
+- A unit that suits some machines alone, by their hardware or a value, says so by `when`. A new
+  fact is an entry of `whenFacts` ([kind](../../engine/core/kind/README.md#the-specs)).
 - A second run plans nothing, which CI's `playbook` job checks
   ([The `playbook` job](../../.github/workflows/README.md#the-playbook-job)). A step that only reads plans no change.
 - A dry run, `--check`, applies nothing and shows how the machine differs
