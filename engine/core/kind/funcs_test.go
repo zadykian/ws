@@ -69,6 +69,13 @@ func TestSpecFuncsReadNothing(t *testing.T) {
 	}
 }
 
+func TestJSONQuotesAsGosEncoder(t *testing.T) {
+	got, err := fill("t", []byte(`{{ json "a\"b<" }} {{ json 3 }} {{ json .User }}`), pure(), map[string]string{"User": "u&"})
+	if want := `"a\"b\u003c" 3 "u\u0026"`; err != nil || string(got) != want {
+		t.Errorf("fill = %s, %v; want %s", got, err, want)
+	}
+}
+
 func TestInstalledVersion(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Packages = effecttest.Packages{"a": {Version: "1.2-3", Status: "ii"}, "b": {Version: "4.5", Status: "rc"}}
