@@ -37,12 +37,3 @@ func TestWriteRoles(t *testing.T) {
 		t.Errorf("got\n%s\nwant\n%s", b.String(), want)
 	}
 }
-
-func TestRoleSectionsNameTheRoles(t *testing.T) {
-	reports := []step.Report{{Step: "Packages"}}
-	got := RoleSections([]role.RoleState{{Role: "base", Steps: reports}, {Role: "docker"}})
-	if len(got) != 2 || got[0].Name != "base" || len(got[0].Reports) != 1 || got[0].Reports[0].Step != "Packages" ||
-		got[1].Name != "docker" {
-		t.Errorf("sections = %+v", got)
-	}
-}

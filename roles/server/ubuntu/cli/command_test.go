@@ -146,7 +146,7 @@ func TestServerStateRefusesNonRootAndOtherArgs(t *testing.T) {
 }
 
 func TestServerStateRefusesAStepItsRoleLacks(t *testing.T) {
-	p, _ := serverTerminal()
+	p, _ := serverProcess()
 	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "state", "--only", "tmux/no such")
 	if status != 2 || stdout != "" || !strings.Contains(stderr, `no step "no such" in tmux`) {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
@@ -162,21 +162,16 @@ func TestServerStateHelp(t *testing.T) {
 	}
 }
 
-func TestServerStateDrawsTheScreenAtATerminal(t *testing.T) {
-	p, _ := serverTerminal()
-	p.OutTTY = true
-	status, stdout, stderr := runWs(p, "q", "server", "ubuntu", "state", "--only", "tmux")
-	if status != 0 || stdout != "" || !strings.Contains(stderr, enterScreen) {
-		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
-	}
-	status, stdout, stderr = runWs(p, "", "server", "ubuntu", "state", "--json", "--only", "tmux")
-	if status != 0 || !strings.Contains(stdout, `"role": "tmux"`) || strings.Contains(stderr, enterScreen) {
-		t.Errorf("--json: status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
+func TestServerStatePrintsJSON(t *testing.T) {
+	p, _ := serverProcess()
+	status, stdout, _ := runWs(p, "", "server", "ubuntu", "state", "--json", "--only", "tmux")
+	if status != 0 || !strings.Contains(stdout, `"role": "tmux"`) {
+		t.Errorf("status = %d, stdout = %q", status, stdout)
 	}
 }
 
 func TestPrepareServerGivesTheRolesTheMachinesUnits(t *testing.T) {
-	p, _ := serverTerminal()
+	p, _ := serverProcess()
 	c := &cobra.Command{Use: "apply"}
 	c.SetContext(t.Context())
 	r, err := prepareServer(enginecli.CallOf(c, p), p, applyOptions{})

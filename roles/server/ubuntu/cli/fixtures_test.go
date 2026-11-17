@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"time"
-
 	"github.com/spf13/cobra"
 
 	enginecli "github.com/zadykian/ws/engine/cli"
@@ -24,17 +22,3 @@ func serverGroup(p enginecli.Env) *cobra.Command {
 
 // withEnv returns p with the environment env, for Getenv, Lookup and Setenv.
 func withEnv(p enginecli.Env, env map[string]string) enginecli.Env { return clitest.WithEnv(p, env) }
-
-const (
-	// enterScreen and leaveScreen are how a terminal's alternate screen starts and ends.
-	enterScreen = "\x1b[?1049h"
-	leaveScreen = "\x1b[?1049l"
-)
-
-// repeating types keys again and again, so that one lands once the list takes it.
-type repeating string
-
-func (r repeating) Read(b []byte) (int, error) {
-	time.Sleep(5 * time.Millisecond)
-	return copy(b, r), nil
-}

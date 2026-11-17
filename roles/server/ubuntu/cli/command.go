@@ -71,7 +71,7 @@ func newApplyCmd(p enginecli.Env) *cobra.Command {
 			"The last line names the roles that changed.\n\n" +
 			"--json prints each event of the run as a line of JSON on stdout: planned, started, done, failed " +
 			"or skipped, with the step, the first line of each change and the error. ws's own lines stay on " +
-			"stderr, and no screen is drawn.",
+			"stderr.",
 		Args: cobra.NoArgs,
 		RunE: enginecli.Apply(serverTarget(p, &opts), p),
 	}

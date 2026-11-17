@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"context"
 	"io"
 	"strings"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/zadykian/ws/engine"
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/engine/tui"
 )
 
 // macDoc is what ws client macos state --json prints.
@@ -36,8 +34,6 @@ func newMacStateCmd(p enginecli.Env, server *string) *cobra.Command {
 			"there, and a step that fails stands in the report as a check. The exit code stays 0. " +
 			"With several servers, one whose file ws refuses stands in the report with the refusal. " +
 			"A report holds no secret.\n\n" +
-			"At a terminal it draws the state screen on stderr, where sudo's password comes through a question. " +
-			"--plain prints the report as text, and so does a pipe. " +
 			"The text is on stdout and ws's own lines on stderr. --json prints the version of ws, then " +
 			"each step with its items and changes.",
 		Args: cobra.NoArgs,
@@ -45,37 +41,6 @@ func newMacStateCmd(p enginecli.Env, server *string) *cobra.Command {
 	}
 	c.Flags().Bool("json", false, "print the report as JSON")
 	return c
-}
-
-// macRead is the state screen's read of the Mac. It takes values.yml itself, as the screen opens
-// on a Mac that may have none: the header then says so.
-func macRead(p enginecli.Env, server *string) tui.StateReader {
-	return func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
-		confs, grouped, err := stateConfs(p, server)
-		if err != nil {
-			return nil, err
-		}
-		var sections []tui.StateSection
-		for _, sc := range confs {
-			// The read takes the screen's effects as a run does, as the steps don't own the terminal under it.
-			var reports []step.Report
-			var err error
-			if sc.Err != nil {
-				reports = []step.Report{refusedReport(sc)}
-			} else {
-				reports, err = macOf(p, sc.Name, sc.Conf, b.Effects().M, b, nil).State(ctx)
-			}
-			section := tui.StateSection{Reports: reports}
-			if grouped {
-				section.Name = sc.Name
-			}
-			sections = append(sections, section)
-			if err != nil {
-				return sections, err
-			}
-		}
-		return sections, nil
-	}
 }
 
 // writeMacState prints the steps' reports as text, under a line of the server's name where the

@@ -15,7 +15,6 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/apt"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/server/ubuntu"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -49,12 +48,6 @@ func serverReport(c engine.Call, p enginecli.Env, opts applyOptions) (engine.Rep
 		return engine.Report{}, engine.UsageError{Err: err}
 	}
 	return engine.Report{
-		M: r.cfg.M,
-		Read: func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
-			// The read takes the screen's effects as a run does, as the steps don't own the terminal under it.
-			states, err := role.State(ctx, onScreen(r.cfg, b), list)
-			return engine.RoleSections(states), err
-		},
 		Print: func(ctx context.Context, c engine.Call) error {
 			states, err := role.State(ctx, r.cfg, list)
 			r.term.Flush()
@@ -71,15 +64,7 @@ func serverReport(c engine.Call, p enginecli.Env, opts applyOptions) (engine.Rep
 
 // runOf is the run of the roles in list under cfg's options.
 func runOf(cfg role.Config, list []role.Role) engine.Run {
-	run := engine.Run{M: cfg.M, Listed: 1}
-	run.Groups = func(check bool) []tui.Group {
-		cfg.Check = check
-		groups := []tui.Group{tui.NewGroup(role.Prepare, cfg.Prepare)}
-		for _, r := range list {
-			groups = append(groups, tui.NewGroup(r.Name, cfg.Steps(r)))
-		}
-		return groups
-	}
+	run := engine.Run{M: cfg.M}
 	run.Do = func(ctx context.Context, e engine.Effects, o step.Options) (string, error) {
 		at := cfg
 		at.M, at.Out, at.Observer, at.Stop = e.M, e.Out, o.Observer, o.Stop
@@ -89,11 +74,6 @@ func runOf(cfg role.Config, list []role.Role) engine.Run {
 			return "", err
 		}
 		return role.Summary(changed, o.Check), nil
-	}
-	run.Choose = func(choice tui.Choice) (engine.Run, step.Options, error) {
-		cfg.Only = choice.Only
-		chosen, err := role.Select(list, cfg.Only)
-		return runOf(cfg, chosen), step.Options{Check: choice.Check}, err
 	}
 	return run
 }
@@ -161,15 +141,6 @@ func prepareSteps(m effect.Machine, out effect.Out) []step.Step {
 	return []step.Step{resource.Group{Title: "Packages", Parts: []resource.Resource{apt.Packages{
 		M: m, Out: out, Names: []string{"ca-certificates"},
 	}}}}
-}
-
-// onScreen is cfg as a work beside a screen takes it: on the screen's effects, with its output and
-// its events on b.
-func onScreen(cfg role.Config, b *tui.Bridge) role.Config {
-	e, o := b.Effects(), b.Options(step.Options{})
-	cfg.M, cfg.Observer, cfg.Stop = e.M, o.Observer, o.Stop
-	cfg.Out, cfg.Prepare = b, prepareSteps(e.M, b)
-	return cfg
 }
 
 // loadSecrets reads the identity from the unit's credential and decrypts the file, or returns no

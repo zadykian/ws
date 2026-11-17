@@ -116,7 +116,7 @@ func TestMacStateRefusesRootAndArgs(t *testing.T) {
 
 func TestMacStateHelp(t *testing.T) {
 	status, stdout, _ := runWs(fakeProcess(), "", "client", "macos", "state", "-h")
-	for _, want := range []string{"--json", "applies nothing", "a question"} {
+	for _, want := range []string{"--json", "applies nothing"} {
 		if status != 0 || !strings.Contains(stdout, want) {
 			t.Errorf("status = %d, help = %q, want it to hold %q", status, stdout, want)
 		}
@@ -157,16 +157,12 @@ func TestMacStateReadsMacConf(t *testing.T) {
 	}
 }
 
-// altScreen is what a screen writes first: the switch to the alternate screen.
-const altScreen = "\x1b[?1049h"
-
-// macStateAtTerminal returns a process that stands at a terminal, with a Mac that has a values.yml.
-func macStateAtTerminal() enginecli.Env {
+// macStateProcess returns a process with a Mac that has a values.yml.
+func macStateProcess() enginecli.Env {
 	m := effecttest.NewMachine()
 	writeConfs(m, "", values.Text("WS_USER", "ada"))
-	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h", "TERM": "xterm-256color"})
+	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
-	p.TTY, p.ErrTTY, p.OutTTY = true, true, true
 	return p
 }
 
@@ -176,33 +172,17 @@ func TestMacReadSaysThatMacConfIsMissing(t *testing.T) {
 	delete(m.Files, "/etc/ws/values.yml")
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
-	_, err := macRead(p, new(string))(t.Context(), nil)
-	if err == nil || !strings.Contains(err.Error(), "is missing") {
-		t.Errorf("err = %v", err)
+	status, _, stderr := runWs(p, "", "client", "macos", "state")
+	if status == 0 || !strings.Contains(stderr, "is missing") {
+		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
 }
 
-func TestMacStateDrawsTheScreenAtATerminal(t *testing.T) {
-	status, stdout, stderr := runWs(macStateAtTerminal(), "q", "client", "macos", "state")
-	if status != 0 || stdout != "" || !strings.Contains(stderr, altScreen) {
-		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
-	}
-}
-
-func TestMacStatePrintsTextWithPlainOrJSON(t *testing.T) {
-	for _, flag := range []string{"--plain", "--json"} {
-		status, stdout, stderr := runWs(macStateAtTerminal(), "", "client", "macos", "state", flag)
-		if status != 0 || stdout == "" || strings.Contains(stderr, altScreen) {
-			t.Errorf("%s: status = %d, stdout = %q, stderr = %q", flag, status, stdout, stderr)
+func TestMacStatePrintsTextOrJSON(t *testing.T) {
+	for _, args := range [][]string{{"state"}, {"state", "--json"}} {
+		status, stdout, stderr := runWs(macStateProcess(), "", append([]string{"client", "macos"}, args...)...)
+		if status != 0 || stdout == "" || stderr != "" {
+			t.Errorf("%v: status = %d, stdout = %q, stderr = %q", args, status, stdout, stderr)
 		}
-	}
-}
-
-func TestMacStatePrintsTextToAPipeOrAFile(t *testing.T) {
-	p := macStateAtTerminal()
-	p.OutTTY = false
-	status, stdout, stderr := runWs(p, "", "client", "macos", "state")
-	if status != 0 || stdout == "" || strings.Contains(stderr, altScreen) {
-		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
 }

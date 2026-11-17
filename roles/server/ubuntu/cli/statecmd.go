@@ -17,8 +17,7 @@ func newStateCmd(p enginecli.Env) *cobra.Command {
 			"steps, what stands against them, and the changes that apply would make. A step that fails stands " +
 			"in the report as a check, and the exit code stays 0. It takes no secrets, so a report holds none and " +
 			"says nothing of what they write.\n\n" +
-			"At a terminal it draws the state screen on stderr, where the tabs, a filter and r to read again are. " +
-			"--plain prints the report as text, and so does a pipe. The text is on stdout and ws's own lines on stderr. --json prints the version of ws, then " +
+			"The text is on stdout and ws's own lines on stderr. --json prints the version of ws, then " +
 			"each role with its steps, items and changes.",
 		Args: cobra.NoArgs,
 		RunE: enginecli.State(serverTarget(p, &opts), p),

@@ -14,7 +14,7 @@ type serverConf struct {
 }
 
 // refusedReport is the report of a server whose file ws refuses: a check that holds the
-// refusal and the way out, for the screen, the text and the JSON alike.
+// refusal and the way out, for the text and the JSON alike.
 func refusedReport(sc serverConf) step.Report {
 	return step.Report{Step: "values.yml", Items: []step.Item{{
 		Kind: step.CheckItem, Name: sc.Name, Want: "a file ws accepts", Found: sc.Err.Error(),

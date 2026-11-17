@@ -5,12 +5,8 @@ import (
 
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/cli/clitest"
-)
-
-const (
-	// enterScreen and leaveScreen are how a terminal's alternate screen starts and ends.
-	enterScreen = "\x1b[?1049h"
-	leaveScreen = "\x1b[?1049l"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // fakeProcess returns an Env that touches nothing of the test's own.
@@ -27,4 +23,18 @@ func runWs(p enginecli.Env, stdin string, args ...string) (status int, stdout, s
 // clientGroup is ws client, over this package's commands.
 func clientGroup(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("client", "the client's systems", Command(p))
+}
+
+// keyed gives the Mac a values.yml that names the file key it has for ws's login, as ssh's step needs.
+func keyed(m *effecttest.Machine) {
+	writeConfs(m, values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id_ed25519.pub"), values.Text("WS_USER", "ada"))
+	m.Files["/h/.ssh/id_ed25519.pub"] = []byte("ssh-ed25519 AAAA ada\n")
+	m.Results["ssh-keygen -l -f /h/.ssh/id_ed25519.pub"] = effecttest.Result{}
+}
+
+// writeConfs puts the Mac's values.yml and the server's file at their paths in the home.
+func writeConfs(m *effecttest.Machine, mac, server string) {
+	m.Files["/etc/ws/values.yml"] = []byte(mac)
+	m.Files["/etc/ws/servers/ws/values.yml"] = []byte(server)
+	m.Dirs["/etc/ws/servers"], m.Dirs["/etc/ws/servers/ws"] = 0o755, 0o755
 }
