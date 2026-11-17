@@ -6,8 +6,11 @@ sets up Docker, the shell, git, tmux, lazygit, the Fresh editor and Zed's server
 and [cld](https://github.com/zadykian/cld), and SigNoz with a collector for the machine's telemetry.
 Running it again is safe, and `--check` shows how a machine differs from the repository.
 
-Each role has a page of its own. A role is Go steps of ws:
+Each role has a page of its own. A role is Go steps of ws, or, once moved to mise, its config and
+its spec of ws's units:
 
+- [`frame`](roles/server/ubuntu/frame): what each role of mise's config leans on, and
+  `/usr/local/bin/ws`, the pinned binary.
 - [`base`](roles/server/ubuntu/base): packages, the locale, the timezone, security updates and a swap file,
   as Go steps.
 - [`security`](roles/server/ubuntu/security): SSH by key only, ufw and fail2ban, and a table that keeps what

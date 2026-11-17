@@ -22,7 +22,10 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   `units.toml` names as units ([kind](../engine/core/kind/README.md)). They are public, as the roles
   import them from outside `engine/`.
 - `mise.toml` and `mise.lock`: mise's config that both sides share, its settings and the pin of
-  ws, a release, with the release's SHA-256 for each target in the lock.
+  ws, a release, with the release's SHA-256 for each target in the lock. `mise.server.toml` is
+  the server's part, and `plugins/ws` the plugin that hands ws's units to `ws unit`. A role moved
+  to mise holds its spec, `units.toml`, and its mise files beside its page, and `mise/conf.d`
+  links its directory ([The frame](../roles/server/ubuntu/frame/README.md)).
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
 - `install.sh`: installs ws's binary from a release ([Releases](../engine/core/update/README.md)).
