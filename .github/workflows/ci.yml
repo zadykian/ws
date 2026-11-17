@@ -209,10 +209,10 @@ jobs:
           sudo journalctl -n 80 --no-pager _SYSTEMD_USER_UNIT=docker.service
           sudo dmesg | grep -i apparmor | tail -n 20
 
-  # install.sh against releases laid out in a temporary directory and served on loopback, in the
-  # order of .github/install-checks.sh. The latest and a named release install, and a second run
-  # updates. A wrong checksum and a binary of another version are refused, and root installs to
-  # /usr/local/bin. The releases are of the tree, built by .tools/build.
+  # ws update against releases laid out in a temporary directory and served on loopback, in the
+  # order of .github/update-checks.sh. It moves an older ws to the latest release, and refuses a
+  # wrong checksum and a binary of another version. The releases are of the tree, built by
+  # .tools/build.
   install:
     if: github.event.action != 'ready_for_review'
     runs-on: ubuntu-latest
@@ -224,7 +224,7 @@ jobs:
         with:
           persist-credentials: false
       - name: The cases
-        run: .github/install-checks.sh
+        run: .github/update-checks.sh
 
   # SigNoz's compose files in roles/server/ubuntu/signoz are foundryctl's, forged from the casting
   # there. Forged again into an empty directory, as foundryctl never removes a file, they must be

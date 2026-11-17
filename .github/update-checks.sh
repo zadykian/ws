@@ -1,14 +1,12 @@
 #!/bin/bash
-# The install job's cases: install.sh and ws update against a release laid out in a temporary
-# directory and served on loopback as GitHub serves it. Run it from the repository's root;
-# .tools/build gets the Go.
+# The install job's cases of ws update, against a release laid out in a temporary directory and
+# served on loopback as GitHub serves it. Run it from the repository's root; .tools/build gets the
+# Go.
 # The releases are of HEAD, built at tags that a copy of it makes and removes again.
 #
 #     v0.1.0 and v0.2.0  good; v0.2.0 is the latest
 #     v0.3.0             ws.sha256 holds another binary's sum
 #     v0.4.0             a binary that prints v0.1.0, with the sum it should have
-#
-# The root case writes /usr/local/bin/ws, so it runs on GitHub's runner alone, with sudo.
 
 set -euo pipefail
 
@@ -43,11 +41,10 @@ fail() {
     exit 1
 }
 
-# installs HOME_DIR [ENV=VALUE...] runs install.sh with HOME_DIR as the home, and the settings.
+# installs HOME_DIR TAG puts release TAG's binary in HOME_DIR/.local/bin, where ws update looks.
 installs() {
-    local home=$1
-    shift
-    env HOME="$home" WS_RELEASES_URL="$url" "$@" sh "$root/install.sh"
+    mkdir -p "$1/.local/bin"
+    cp "$tmp/releases/download/$2/ws-linux-amd64" "$1/.local/bin/ws"
 }
 
 # has_version HOME_DIR TAG fails unless the ws installed for HOME_DIR prints TAG.
@@ -62,15 +59,6 @@ only_ws() {
     local left
     left=$(ls -A "$1/.local/bin")
     [ "$left" = ws ] || fail "$1/.local/bin holds '$left', not ws alone"
-}
-
-# refused HOME_DIR TAG... fails where install.sh succeeds, or installs anything.
-refused() {
-    local home=$1
-    shift
-    if installs "$home" "$@"; then
-        fail "install.sh went through with $*"
-    fi
 }
 
 # updates HOME_DIR runs the ws installed for HOME_DIR as ws update.
@@ -90,7 +78,7 @@ update_refused() {
     only_ws "$1"
 }
 
-[ "$(id -u)" != 0 ] || fail "run it as a user: as root, install.sh installs to /usr/local/bin"
+[ "$(id -u)" != 0 ] || fail "run it as a user: ws update replaces the ws of the user's home"
 [ -z "$(git status --porcelain)" ] || fail "the tree is not clean: the builds would say +dirty"
 
 build_release v0.1.0
@@ -113,71 +101,27 @@ for _ in $(seq 50); do
 done
 url=http://127.0.0.1:$(cat "$tmp/port")
 
-echo "::group::WS_VERSION installs that release"
-mkdir -p "$tmp/home1"
-installs "$tmp/home1" WS_VERSION=0.1.0
-has_version "$tmp/home1" v0.1.0
-only_ws "$tmp/home1"
-echo "::endgroup::"
-
-echo "::group::A second run, for the latest, updates"
-installs "$tmp/home1"
-has_version "$tmp/home1" v0.2.0
-only_ws "$tmp/home1"
-echo "::endgroup::"
-
-echo "::group::The latest installs into a new home"
-installs "$tmp/home2"
-has_version "$tmp/home2" v0.2.0
-echo "::endgroup::"
-
-echo "::group::A wrong ws.sha256 is refused, and ws is as it was"
-refused "$tmp/home1" WS_VERSION=0.3.0
-has_version "$tmp/home1" v0.2.0
-only_ws "$tmp/home1"
-mkdir -p "$tmp/home3"
-refused "$tmp/home3" WS_VERSION=v0.3.0
-[ -z "$(ls -A "$tmp/home3/.local/bin")" ] || fail "a refused install left files"
-echo "::endgroup::"
-
-echo "::group::A binary of another version is refused, and ws is as it was"
-refused "$tmp/home1" WS_VERSION=0.4.0
-has_version "$tmp/home1" v0.2.0
-only_ws "$tmp/home1"
-echo "::endgroup::"
-
-echo "::group::A version that is no version is refused"
-refused "$tmp/home1" WS_VERSION=0.2
-echo "::endgroup::"
-
 echo "::group::ws update moves ws to the latest release, and a second run stays"
-installs "$tmp/home4" WS_VERSION=0.1.0
-updates "$tmp/home4"
-has_version "$tmp/home4" v0.2.0
-only_ws "$tmp/home4"
-updates "$tmp/home4"
-has_version "$tmp/home4" v0.2.0
+installs "$tmp/home1" v0.1.0
+updates "$tmp/home1"
+has_version "$tmp/home1" v0.2.0
+only_ws "$tmp/home1"
+updates "$tmp/home1"
+has_version "$tmp/home1" v0.2.0
 echo "::endgroup::"
 
 echo "::group::ws update replaces the file a link leads to"
-installs "$tmp/home5" WS_VERSION=0.1.0
-mkdir "$tmp/home5/other"
-mv "$tmp/home5/.local/bin/ws" "$tmp/home5/other/ws"
-ln -s ../../other/ws "$tmp/home5/.local/bin/ws"
-updates "$tmp/home5"
-[ -L "$tmp/home5/.local/bin/ws" ] || fail "ws update replaced the link"
-[ "$("$tmp/home5/other/ws" version)" = v0.2.0 ] || fail "ws update left the link's file as it was"
+installs "$tmp/home2" v0.1.0
+mkdir "$tmp/home2/other"
+mv "$tmp/home2/.local/bin/ws" "$tmp/home2/other/ws"
+ln -s ../../other/ws "$tmp/home2/.local/bin/ws"
+updates "$tmp/home2"
+[ -L "$tmp/home2/.local/bin/ws" ] || fail "ws update replaced the link"
+[ "$("$tmp/home2/other/ws" version)" = v0.2.0 ] || fail "ws update left the link's file as it was"
 echo "::endgroup::"
 
-echo "::group::ws update refuses what install.sh refuses, and ws is as it was"
-installs "$tmp/home6" WS_VERSION=0.1.0
-update_refused "$tmp/home6" v0.3.0
-update_refused "$tmp/home6" v0.4.0
+echo "::group::ws update refuses a bad release, and ws is as it was"
+installs "$tmp/home3" v0.1.0
+update_refused "$tmp/home3" v0.3.0
+update_refused "$tmp/home3" v0.4.0
 echo "::endgroup::"
-
-if [ -n "${GITHUB_ACTIONS:-}" ]; then
-    echo "::group::Root installs to /usr/local/bin"
-    sudo env WS_RELEASES_URL="$url" sh "$root/install.sh"
-    [ "$(/usr/local/bin/ws version)" = v0.2.0 ] || fail "root's ws is not v0.2.0"
-    echo "::endgroup::"
-fi

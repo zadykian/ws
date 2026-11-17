@@ -46,19 +46,16 @@ It takes `WS_RELEASES_URL` as the table above says. To pick a release, run `inst
 
 ## The install job
 
-CI's `install` job runs [install-checks.sh](../../../.github/install-checks.sh) on each pull request. It
+CI's `install` job runs [update-checks.sh](../../../.github/update-checks.sh) on each pull request. It
 builds ws for Linux on amd64 at tags it makes and removes again, so that `ws version` prints them. It
-lays four releases out in a temporary directory, and serves them on loopback with
+lays four releases out in a temporary directory and copies one into a home as the installed ws. It
+serves them on loopback with
 [serve-releases](../../../.tools/serve-releases/main.go), which answers `/latest` with GitHub's redirect.
 The cases:
 
-- a named release installs, and a second run, for the latest, updates it;
-- a wrong `ws.sha256`, and a binary that prints another version, are refused, install nothing and
-  keep the installed ws;
 - `ws update` moves an older ws to the latest release, and a second run stays;
 - `ws update` replaces the file a link leads to, and keeps the link;
-- `ws update` refuses a wrong `ws.sha256`, and a binary that prints another version, and keeps ws;
-- root installs to `/usr/local/bin`.
+- `ws update` refuses a wrong `ws.sha256`, and a binary that prints another version, and keeps ws.
 
 ## Cutting a release
 

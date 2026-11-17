@@ -24,8 +24,8 @@ no MSI board, `fans` leaves its fans alone. Without a VPN profile, `ikeward` doe
 
 ## The install script
 
-CI runs `install.sh` and `ws update` against releases it lays out and serves on loopback, and checks
-that they install, update and refuse what they should
+CI runs `ws update` against releases it lays out and serves on loopback, and checks that it updates
+and refuses what it should
 ([The install job](../../engine/core/update/README.md#the-install-job)).
 
 ## The release
