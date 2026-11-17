@@ -60,9 +60,10 @@ make shell                        # ShellCheck and shfmt -d -i 4 on every shell 
 make gotest                       # the Go gates run at the root, the module; so do govet and gofmt
 ```
 
-The gates are `shell`, `yamllint`, `tombi`, `sizecheck`, `vale`, `lychee`, `rumdl`, `actionlint`, `zizmor`,
-`gitleaks`, `gofmt`, `govet`, `golangci-lint`, `govulncheck` and `gotest`
-([The gates](../.tools/README.md)). `make lint` needs Python 3.12 to 3.14, on Linux or on macOS on arm64.
+The gates are `shell`, `yamllint`, `tombi`, `stylua`, `sizecheck`, `vale`, `lychee`, `rumdl`,
+`actionlint`, `zizmor`, `gitleaks`, `gofmt`, `govet`, `golangci-lint`, `govulncheck` and `gotest`
+([The gates](../.tools/README.md)). `make lint` needs Python 3.12 to 3.14 and unzip, on Linux or
+on macOS on arm64.
 It installs yamllint into `.cache`, and `.tools/run` downloads the rest there.
 
 The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `playbook` builds ws and runs `ws server ubuntu
@@ -144,7 +145,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   `//nolint:NAME // reason`, `# yamllint disable-line rule:NAME` or
   `# shellcheck disable=SCNNNN`, each with the reason beside it. Never lower a severity, add an
   exclusion or keep a baseline: every file passes every gate outright. The linters' configs in
-  `.tools/lint/`, yamllint's, golangci-lint's, Vale's, rumdl's and tombi's, are never weakened.
+  `.tools/lint/`, yamllint's, golangci-lint's, Vale's, rumdl's, tombi's and StyLua's, are never weakened.
 - ws's layers import downward: cobra lives in `cmd`, the `cli` packages and `.tools/`;
   `engine/core` imports itself alone; a role imports `engine/core`, `roles/internal` and its own
   side, but not that side's `cli`. The Mac imports nothing of the server's side.

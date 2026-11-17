@@ -1,0 +1,6 @@
+# StyLua, run by `make stylua` on the Lua files. Lua 5.1, the Lua that mise runs a plugin in. An
+# indent of 4 spaces, as .editorconfig's, and lines of 100 columns, as rumdl's.
+syntax = "Lua51"
+column_width = 100
+indent_type = "Spaces"
+indent_width = 4

@@ -13,7 +13,7 @@ check files take `FILES`, as in `make vale FILES=README.md`:
   shell script, found by extension or shebang;
 - `yamllint`: `yamllint --strict`, as `lint/yamllint.yml` sets it, on the YAML files it finds
   itself;
-- `sizecheck`: 300 lines a file, for Markdown, YAML, shell and Go;
+- `sizecheck`: 300 lines a file, for Markdown, YAML, shell, Go and Lua;
 - `vale`: Vale's three rules (`lint/vale.ini`): sentences of 30 words or fewer, no wordy phrases
   and no needless variants. It checks the Markdown files, and the comments of every other file written
   here. Vale would read such a file's code too. So `.tools/vale-comments` gives Vale the
@@ -27,6 +27,9 @@ check files take `FILES`, as in `make vale FILES=README.md`:
   of 100 columns, an indent of 4 and no schema, offline. A role's spec, `units.toml`, is a Go
   template, which ws's strict load checks once rendered.
   `(cd .tools/lint && ../run tombi format --offline ../../PATH)` formats a file;
+- `stylua`: StyLua's check on the Lua files, as `lint/stylua.toml` sets it: Lua 5.1, mise's, an
+  indent of 4 spaces and lines of 100 columns.
+  `.tools/run stylua --config-path .tools/lint/stylua.toml PATH` formats a file;
 - `actionlint` and `zizmor`: the workflows, zizmor with its online audits where `GH_TOKEN` is set;
 - `gitleaks`: every commit, for secrets, or those that `LOG_OPTS` picks with git log's options;
 - `gofmt`, `govet`, `golangci-lint`, `govulncheck` and `gotest`: the Go module at the root.
@@ -70,6 +73,7 @@ After each edit, `make lint-file FILES=PATH` runs the gates of the file's kind o
 - YAML: `yamllint`, `vale` and `sizecheck`, and for a workflow `actionlint` and `zizmor`;
 - Go: `gofmt`, `govet`, `golangci-lint`, `govulncheck`, `gotest`, `vale` and `sizecheck`;
 - TOML: `tombi` and `vale`, but a spec, `vale` alone;
+- Lua: `stylua`, `vale` and `sizecheck`;
 - any other file: `shell` on a script, by extension or shebang, `vale` and `sizecheck`.
 
 [writing]: https://github.com/zadykian/toolkit/blob/main/skills/writing/SKILL.md#the-caps-and-vale

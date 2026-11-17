@@ -34,10 +34,10 @@ export CGO_ENABLED = 0
 TOOLS_GO := $(patsubst %/,./%,$(sort $(dir \
 	$(shell find .tools -name '*.go' ! -path '*/testdata/*'))))
 
-.PHONY: lint shell yamllint tombi sizecheck vale lychee rumdl actionlint zizmor \
+.PHONY: lint shell yamllint tombi stylua sizecheck vale lychee rumdl actionlint zizmor \
 	gitleaks gofmt govet golangci-lint govulncheck gotest lint-file lint-tree
 
-lint: shell yamllint tombi sizecheck vale lychee rumdl actionlint zizmor gitleaks \
+lint: shell yamllint tombi stylua sizecheck vale lychee rumdl actionlint zizmor gitleaks \
 	gofmt govet golangci-lint govulncheck gotest
 
 # Nothing here runs uv, which writes lint-requirements.txt from lint-requirements.in. So the install
@@ -79,6 +79,11 @@ tombi:
 	@set -ef; files=$$(.tools/files toml $(FILES)); [ -z "$$files" ] || { set --; \
 		for f in $$files; do case $$f in /*) ;; *) f="$(CURDIR)/$$f" ;; esac; \
 		set -- "$$@" "$$f"; done; cd .tools/lint && ../run tombi format --offline --check --diff "$$@"; }
+
+# StyLua's check (.tools/lint/stylua.toml) on the Lua files.
+stylua:
+	@set -ef; files=$$(.tools/files lua $(FILES)); [ -z "$$files" ] || \
+		.tools/run stylua --check --config-path .tools/lint/stylua.toml $$files
 
 # The size cap: 300 lines a file.
 sizecheck:
@@ -154,6 +159,7 @@ lint-file:
 		*.j2) gates='vale sizecheck' ;; \
 		units.toml | */units.toml) gates='vale' ;; \
 		*.toml) gates='tombi vale' ;; \
+		*.lua) gates='stylua vale sizecheck' ;; \
 		*) gates='shell vale sizecheck' ;; \
 		esac; \
 		$(MAKE) --no-print-directory $$gates FILES="$$file" || status=1; \

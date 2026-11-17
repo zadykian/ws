@@ -10,7 +10,7 @@
 # Each tool comes from its GitHub release, and Go from go.dev, for Linux or macOS on amd64 or
 # arm64. The first run downloads it into .cache/tools and checks its SHA-256. A bump changes a tool's version and its
 # four sums, which the release's checksums file or GitHub's asset digests give. It needs curl,
-# tar, and sha256sum or shasum. The Python tools are pinned in .github/lint-requirements.txt.
+# tar, unzip, and sha256sum or shasum. The Python tools are pinned in .github/lint-requirements.txt.
 
 set -eu
 
@@ -161,6 +161,20 @@ pin() {
             d33eee0da0f92835b3562e9767a05cee7e4eaeef47daa03bfd09da17b4b590a6 \
             b7c872db63553ccffc7253aba3ed7d4885a27d83f1ba567b1138c6315a5847e5
         ;;
+    stylua)
+        # Linux's build is musl's, which links statically. Each build is a zip.
+        version=2.6.0
+        case $os in
+        linux) member=linux-$cpu-musl ;;
+        darwin) member=macos-$cpu ;;
+        esac
+        url=$gh/JohnnyMorganz/StyLua/releases/download/v$version/stylua-$member.zip
+        member=stylua
+        pick 48ee7db28346f96f4bd545e190ab080a88a7b5a664e97649cf5d5c60426f402d \
+            278495597e3827417f3af7b9ad38011ad4a5ec725503553160ab69b7301059bb \
+            90779aa873837b2dff8eb3361bd27950303914c24265a59cae0a0d0629d71585 \
+            dab9b66d340ca5ffc8225211f1dcf89b84783e09b8cbec8c518497eba81f3c42
+        ;;
     tombi)
         version=1.9.9
         case $os in
@@ -204,7 +218,7 @@ pin() {
             e28d22b087f9ebb8d99da6e740d348c930f559961c7c3f12badda54f882195a2
         ;;
     *)
-        die "no tool $1: actionlint, go, gitleaks, golangci-lint, lazygit-schema, lychee, rumdl, shellcheck, shfmt, tombi, vale or zizmor"
+        die "no tool $1: actionlint, go, gitleaks, golangci-lint, lazygit-schema, lychee, rumdl, shellcheck, shfmt, stylua, tombi, vale or zizmor"
         ;;
     esac
 }
@@ -239,7 +253,10 @@ fetch() {
         return
     fi
     if [ -n "$member" ]; then
-        tar -xzf "$tmp/download" -C "$tmp" "$member" || die "$url has no $member"
+        case $url in
+        *.zip) unzip -q "$tmp/download" "$member" -d "$tmp" ;;
+        *) tar -xzf "$tmp/download" -C "$tmp" "$member" ;;
+        esac || die "$url has no $member"
         mv "$tmp/$member" "$tmp/download"
     fi
     if $file; then
