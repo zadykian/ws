@@ -1,5 +1,11 @@
 package values
 
+import (
+	"encoding/json"
+
+	daemon "github.com/zadykian/ws/roles/server/ubuntu/fans/daemon"
+)
+
 // Fans is roles/fans' keys.
 type Fans struct {
 	// BoardVendor is the board's DMI vendor, which the driver is built for.
@@ -48,3 +54,37 @@ type FanControl struct {
 	Curve   string   `yaml:"curve,omitempty"`
 	Percent *float64 `yaml:"percent,omitempty"`
 }
+
+// JSON returns the text of /etc/ws/fans.json, which ws server ubuntu fans reads, without its last
+// newline. The daemon's own loader checks it first, so that a config the daemon would refuse fails
+// the plan and never replaces a good one.
+func (f Fans) JSON() (string, error) {
+	c := daemon.Config{Interval: f.Interval, Step: daemonPair(f.Step)}
+	for _, s := range f.Sensors {
+		c.Sensors = append(c.Sensors, daemon.SensorConfig{
+			Name: s.Name, Hwmon: s.Hwmon, Label: s.Label, Nvidia: s.Nvidia,
+			Average: s.Average, Seconds: s.Seconds, Max: s.Max,
+		})
+	}
+	for _, cv := range f.Curves {
+		c.Curves = append(c.Curves, daemon.CurveConfig{
+			Name: cv.Name, Sensor: cv.Sensor, Points: cv.Points, Hysteresis: daemonPair(cv.Hysteresis),
+			Response: daemonPair(cv.Response),
+		})
+	}
+	for _, ct := range f.Controls {
+		c.Controls = append(c.Controls, daemon.ControlConfig{Name: ct.Name, Hwmon: ct.Hwmon, Label: ct.Label,
+			Curve: ct.Curve, Percent: ct.Percent})
+	}
+	text, err := json.MarshalIndent(c, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	if _, err := daemon.Parse(text); err != nil {
+		return "", err
+	}
+	return string(text), nil
+}
+
+// daemonPair is p as the daemon's config holds it.
+func daemonPair(p FanPair) daemon.Pair { return daemon.Pair{Up: p.Up, Down: p.Down} }

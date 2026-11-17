@@ -13,6 +13,8 @@ import (
 )
 
 const (
+	// configPath is the file that ws server ubuntu fans reads.
+	configPath = etcws.Dir + "/fans.json"
 	binaryPath = "/usr/local/lib/ws-fans"
 	unitPath   = "/etc/systemd/system/ws-fans.service"
 )
@@ -25,7 +27,7 @@ const (
 // runs.
 func serviceParts(m effect.Machine, u effect.Units, out effect.Out, f values.Fans, exe func() (string, error)) func(context.Context) ([]resource.Resource, error) {
 	return func(context.Context) ([]resource.Resource, error) {
-		config, err := Config(f)
+		config, err := f.JSON()
 		if err != nil {
 			return nil, err
 		}
@@ -42,7 +44,7 @@ func serviceParts(m effect.Machine, u effect.Units, out effect.Out, f values.Fan
 			return nil, err
 		}
 		binary := file.File{M: m, Path: binaryPath, Content: self, Mode: 0o755, Secret: true}
-		conf := file.File{M: m, Path: configPath, Content: config, Mode: 0o644}
+		conf := file.File{M: m, Path: configPath, Content: []byte(config + "\n"), Mode: 0o644}
 		unitFile := file.File{M: m, Path: unitPath, Content: unit, Mode: 0o644}
 		watch := []resource.Resource{binary, conf, unitFile}
 		// /etc/ws goes outside watch: a directory never restarts the unit.
