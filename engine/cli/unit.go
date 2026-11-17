@@ -50,7 +50,7 @@ type unitRun struct {
 // applies through it.
 func Unit(p Env, s UnitSide) *cobra.Command {
 	return Group("unit", "plan and apply the units of ws's kinds, KIND/NAME, for mise",
-		unitList(p, s), unitRead(p, s), unitWrite(p, s))
+		unitList(p, s), unitRead(p, s), unitWrite(p, s), unitVerify(p, s))
 }
 
 // unitList returns ws unit list.
