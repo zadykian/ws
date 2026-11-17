@@ -40,7 +40,7 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 - `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook`, `rootless`, `install` and
   `signoz`;
   `mac.yml`, with `mac`, whose cases are `.github/mac/NN-*.sh`; `mac-cld.yml`, with `mac-cld`;
-  `mac-wizard.yml`, with `mac-wizard`, whose cases are `.github/mac-wizard/NN-*.sh`; `rules.yml`,
+  `rules.yml`,
   the checks of zadykian/toolkit on a pull request; and `issues.yml`, its check of an issue. The
   toolkit's checks warn alone. `words.yml`, with `words`, checks a pull request and an issue for the
   list's words ([The `words` job](../.github/workflows/README.md#the-words-job)).
@@ -66,8 +66,8 @@ The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `playbook` b
 apply` twice in an Ubuntu 26.04 container and checks the config that Fresh reads, `signoz` forges
 SigNoz's compose files again, and `install` tries `install.sh`. `rootless` runs the rootless daemon
 and the firewall on a booted runner ([The rootless job](../.github/workflows/rootless.md)). `mac` sets up a
-Mac on GitHub's macOS runner, and `mac-wizard` runs the Mac's wizard on another. `mac-cld` sets up
-Ghostty and cld on a third ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `ws
+Mac on GitHub's macOS runner. `mac-cld` sets up
+Ghostty and cld on another ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `ws
 server ubuntu apply` sets up the machine that runs it, as below.
 
 The hooks check a commit for the local list's words. This checks any other text, such as a pull
@@ -81,7 +81,7 @@ LC_ALL=C tr _ ' ' <FILE | grep -ciwF -f <(sed -e 'y/_/ /' -e 's/^[[:space:]]*//'
 ## How changes land
 
 - Pull requests are stacked, each on the one below it. CI runs `lint` and `signoz` on each,
-  whatever its base, and `playbook`, `mac`, `mac-cld` and `mac-wizard` on the stack's top one alone
+  whatever its base, and `playbook`, `mac` and `mac-cld` on the stack's top one alone
   ([Checks](../.github/workflows/README.md#checks)).
 - They land on `main` by GitHub's merge commits, as
   [`/flow:land`](https://github.com/zadykian/toolkit/blob/main/skills/land/SKILL.md) does. A pull
@@ -113,9 +113,8 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([download.go](../roles/server/ubuntu/fresh/download.go)), and so are foundryctl
   ([ci.yml](../.github/workflows/ci.yml)) and the gates' tools ([.tools/run](../.tools/run)). So is ws's
   binary, against its release's `ws.sha256` ([install.sh](../install.sh),
-  [update.go](../engine/core/update/update.go)), and so are yamllint
-  ([lint-requirements.in](../.github/lint-requirements.in)) and Homebrew's `.pkg`, with its signer
-  ([homebrew.go](../roles/client/macos/stages/tools/homebrew.go)). Go is checked against the
+  [update.go](../engine/core/update/update.go)), and so is yamllint
+  ([lint-requirements.in](../.github/lint-requirements.in)). Go is checked against the
   SHA-256 its publisher lists ([devtools](../roles/server/ubuntu/devtools/README.md)). The postgres-language-server and
   docker-language-server are checked against their SHA-256
   ([binaries.go](../roles/server/ubuntu/devtools/binaries.go)). gopls and Delve are built through Go's
@@ -144,8 +143,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   `.tools/lint/`, yamllint's, golangci-lint's, Vale's and rumdl's, are never weakened.
 - ws's layers import downward: cobra lives in `cmd`, the `cli` packages and `.tools/`;
   `engine/core` imports itself alone; a role imports `engine/core`, `roles/internal` and its own
-  side, but not that side's `cli`. The Mac imports the server's `values`, `secrets`, `session`,
-  `stages` and `cli` alone.
+  side, but not that side's `cli`. The Mac imports nothing of the server's side.
   depguard's lists in [golangci.yml](../.tools/lint/golangci.yml) fail an import across them.
 - The caps are those of the
   [writing](https://github.com/zadykian/toolkit/blob/main/skills/writing/SKILL.md#the-caps-and-vale)

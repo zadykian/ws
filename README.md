@@ -43,24 +43,22 @@ Each role has a page of its own. A role is Go steps of ws:
 
 `roles/client/macos/` sets up the Mac that works on the server, and Ghostty and Zed on it: [The Mac](roles/client/macos).
 
-On a new Mac with Apple silicon, one line installs ws's binary. Then `ws client macos wizard`
-installs Apple's Command Line Tools and Homebrew, and sets up the rest ([The Mac's
-wizard](roles/client/macos/stages)):
+On a new Mac with Apple silicon, one line installs ws's binary. Then write `values.yml`
+([The Mac's values](roles/client/macos/values/README.md)) and set up the rest ([The
+Mac](roles/client/macos/README.md)):
 
 ```sh
 curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sh
-~/.local/bin/ws client macos wizard
+~/.local/bin/ws client macos apply
 ```
 
 ## A new machine
 
 Install Ubuntu Server 26.04 by hand from its installer. In it, turn OpenSSH on, import the GitHub
-account's keys, and leave password login off. Neither the Mac's wizard nor `ws server ubuntu apply`
-adds a key later. So run the Mac's line above first, which puts the Mac's key on the account
-([GitHub and Ubuntu's install](roles/client/macos/stages/README.md#github-and-ubuntus-install)). Name the installer's
-user `zadykian`, ws's default user. A cloud VM has no installer: it gives its default user the
-provider's keys, which must be the account's. A VM with root alone logs in as root, where
-`WS_TARGET=cloud`.
+account's keys, and leave password login off. `ws server ubuntu apply` adds no key later. So put the
+Mac's key on the account first. Name the installer's user `zadykian`, ws's default user. A cloud VM
+has no installer: it gives its default user the provider's keys, which must be the account's. A VM
+with root alone logs in as root, where `WS_TARGET=cloud`.
 
 Then, logged in as that user, install ws and apply it through `sudo`. `ws server ubuntu apply` logs
 nothing in before it: the `devtools` role installs gh, and its login comes by hand ([By
@@ -99,8 +97,7 @@ DIR` sets another home. `WS_GIT_SIGNING_PUB_KEY` lies below it, or the
 run fails. A cloud VM names `WS_SECURITY_OUTBOUND: false` there before its first run
 ([Outbound](roles/server/ubuntu/security/README.md#outbound)). `ws server ubuntu values set KEY VALUE` writes one key, and
 an empty VALUE gives its default back. On ws, `sudo ws server ubuntu configure` writes them on a
-form, and so does `ws client macos configure` from the Mac ([The Configure
-screen](engine/tui/internal/configure)). ws's last line names the roles that changed,
+form ([The Configure screen](engine/tui/internal/configure)). ws's last line names the roles that changed,
 `changed: none` on a second run.
 
 ## Dry runs
@@ -156,14 +153,12 @@ ws client macos state --json
 
 ## By hand
 
-Secrets are never in this repository. On a new machine, [The Mac's wizard](roles/client/macos/stages)
-checks that `WS_USER` logs in and installs its own ws on ws and runs `ws server ubuntu apply`, with
-the secrets file on ws. Then it adds ws's signing key to GitHub, logs claude in there, and gives
-`wg0` the Mac's key. Without the wizard, the claude login and the Mac's key stay manual. ws's gh
-takes a fine-grained personal access token, which `ws server ubuntu apply` logs gh in with, from the
-secrets file's `token.github` ([gh](roles/server/ubuntu/devtools/README.md#gh)). Its permissions are the account's
-selected repositories; Metadata and Actions read; Contents, Pull requests, Issues and Workflows read
-and write; and no account permission. These stay manual:
+Secrets are never in this repository. The claude login, ws's signing key on GitHub and the Mac's key
+as `wg0`'s peer stay manual. ws's gh takes a fine-grained personal access token, which `ws server
+ubuntu apply` logs gh in with, from the secrets file's `token.github`
+([gh](roles/server/ubuntu/devtools/README.md#gh)). Its permissions are the account's selected
+repositories; Metadata and Actions read; Contents, Pull requests, Issues and Workflows read and
+write; and no account permission. These stay manual:
 
 - other peers' public keys on the server, as in [The tunnel](roles/server/ubuntu/tunnel/README.md#the-tunnel);
 - another device's SSH key on the server: `ssh-import-id gh:LOGIN`, run as `WS_USER`

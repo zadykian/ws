@@ -44,9 +44,6 @@ role, so `ws server ubuntu apply` follows it by hand. It works as `cld update` d
 It takes `WS_RELEASES_URL` as the table above says. To pick a release, run `install.sh` with
 `WS_VERSION`. A ws before v0.5.1 lacks the command, so `install.sh` updates it once.
 
-`ws client macos wizard --update` stays apart: it runs `install.sh`, then the wizard with the new ws
-([The Mac's wizard](../../../roles/client/macos/stages/README.md)).
-
 ## The install job
 
 CI's `install` job runs [install-checks.sh](../../../.github/install-checks.sh) on each pull request. It

@@ -63,10 +63,10 @@ func unnamed(u KeyUse, keys []sshcfg.AgentKey) error {
 		}
 	}
 	if len(lines) == 0 {
-		return fmt.Errorf("values.yml names no %s, %s: run ws client macos wizard to pick or make one in Secretive, or "+
-			"name a key's .pub there", name, use)
+		return fmt.Errorf("values.yml names no %s, %s: make a P-256 key in Secretive, then "+
+			"name its .pub there", name, use)
 	}
-	return fmt.Errorf("values.yml names no %s, %s: run ws client macos wizard, or add one of these lines to values.yml, %s",
+	return fmt.Errorf("values.yml names no %s, %s: add one of these lines to values.yml, %s",
 		name, use, strings.Join(lines, "; "))
 }
 

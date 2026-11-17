@@ -9,7 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 )
 
-func TestTunnelWritesThePublicKeyWhereTheWizardReadsIt(t *testing.T) {
+func TestTunnelWritesThePublicKeyToItsFile(t *testing.T) {
 	m := daemonMachine()
 	delete(m.Files, "/etc/ws/tunnel.pub")
 	got := lines(tunnelChanges(t, daemonStep(m)))

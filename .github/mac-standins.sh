@@ -1,5 +1,5 @@
 #!/bin/sh
-# The stand-ins of the mac and mac-wizard jobs (.github/workflows/mac.yml, mac-wizard/standin.sh),
+# The stand-ins of the mac job (.github/workflows/mac.yml),
 # made before their first run of ws client macos apply. They spare each run the downloads, which
 # mac-cld.yml makes for real, so that the jobs' many runs that must print nothing touch no network:
 #

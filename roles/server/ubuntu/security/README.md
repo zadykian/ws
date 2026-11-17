@@ -162,11 +162,10 @@ run ([The cable](../cable/README.md#the-cable)):
 WS_SECURITY_OUTBOUND: false
 ```
 
-The Mac's wizard writes the line before the run where the server's file has `WS_TARGET=cloud`
-([ws's run](../../../client/macos/stages/README.md#wss-run)). A run with `WS_SECURITY_OUTBOUND` false stops the table's units
-by D-Bus, and resets one that failed, even where its file is gone. It then removes the units, their
-links, `/usr/local/lib/ws/security` and the table, even one loaded by hand. `--check` shows each
-removal. Off leaves:
+On a cloud VM, `WS_TARGET=cloud`, write the line before the run. A run with `WS_SECURITY_OUTBOUND`
+false stops the table's units by D-Bus, and resets one that failed, even where its file is gone. It
+then removes the units, their links, `/usr/local/lib/ws/security` and the table, even one loaded by
+hand. `--check` shows each removal. Off leaves:
 
 - ufw's default, which allows every outgoing connection;
 - the `tunnel` role's chain `WS-MAC`, which drops what Docker's containers send through `wg0`

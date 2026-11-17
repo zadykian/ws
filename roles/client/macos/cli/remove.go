@@ -14,7 +14,6 @@ import (
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/client/macos"
 	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/internal/etcws"
@@ -32,8 +31,7 @@ func newRemoveCmd(p enginecli.Env, server *string) *cobra.Command {
 	}
 }
 
-// runRemove drops the server called name from the Mac's files, under the wizard's lock, so that no run
-// writes its file meanwhile.
+// runRemove drops the server called name from the Mac's files.
 func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 	if p.Euid == 0 {
 		return errors.New("run it as yourself, not root: it asks sudo where it needs root")
@@ -56,11 +54,6 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 	if len(names) == 1 {
 		return fmt.Errorf("%s is the Mac's one server: apply needs one, so remove leaves it", name)
 	}
-	_, release, err := wizard.Lock(c.Context(), p.Machine, p.LockDir())
-	if err != nil {
-		return err
-	}
-	defer release()
 	// The steps below skip a server whose file ws refuses, so such a file stops the removal before
 	// it starts. NAME's own file is out of the count: a clash with it ends with the removal.
 	if err := refuseBadSibling(without{p.Machine, values.ServerPath(mac, name)}, mac, name); err != nil {
@@ -129,7 +122,7 @@ func (w without) Stat(file string) (effect.Info, error) {
 }
 
 // forgetHost drops name's entry from known_hosts, where ssh keeps the key under the server's name.
-// A file that is missing has none, and a link is left to the maintainer, as the wizard leaves it.
+// A file that is missing has none, and a link is left to the maintainer, as apply leaves it.
 func forgetHost(c *cobra.Command, p enginecli.Env, name string) error {
 	file := p.Getenv("HOME") + "/.ssh/known_hosts"
 	info, err := p.Machine.Stat(file)

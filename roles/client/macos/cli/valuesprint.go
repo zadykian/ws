@@ -21,7 +21,7 @@ func newValuesCmd(p enginecli.Env, server *string) *cobra.Command {
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(c *cobra.Command, args []string) error { return runValuesPrint(c, p, server, args, lines) },
 	}
-	c.Flags().BoolVar(&lines, "lines", false, "check each line alone, as a wizard checks an answer before the file holds its key")
+	c.Flags().BoolVar(&lines, "lines", false, "check each line alone")
 	return enginecli.Group("values", "print the Mac's values", c)
 }
 

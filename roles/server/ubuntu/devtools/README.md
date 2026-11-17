@@ -127,8 +127,8 @@ off".
 
 ## The signing key
 
-The role does not register the key that signs the machine's commits ([Signing](../git/README.md#signing)).
-ws's gh holds a token with repository permissions alone, which cannot add a signing key. The Mac's
-wizard adds it with the Mac's gh ([Signing key](../../../client/macos/stages/README.md#signing-key)), or add the `.pub` by
-hand in the account's settings on GitHub, as a signing key. Until then, GitHub shows the machine's
-commits as unverified, and the ruleset on `main` refuses them.
+The role does not register the key that signs the machine's commits
+([Signing](../git/README.md#signing)). ws's gh holds a token with repository permissions alone,
+which cannot add a signing key. Add the `.pub` by hand in the account's settings on GitHub, as a
+signing key. Until then, GitHub shows the machine's commits as unverified, and the ruleset on `main`
+refuses them.

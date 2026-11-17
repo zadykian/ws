@@ -8,12 +8,8 @@ plan or a diff: they name kinds, names, keys and paths.
 
 ## From the Mac
 
-`ws client macos secrets` runs its own of `ws server ubuntu secrets` on ws, as root, through the
-wizard's ssh and its way to root ([ws's file](#wss-file)). So `ws client macos secrets init` makes
-the identity on ws. A value goes on ssh's standard input, never in an argument. Where ws's sudo asks
-a password, a command that reads its value from standard input asks it at the terminal, `/dev/tty`,
-and fails, saying why, with none. With ws out of reach, a command says so and fails. The Configure
-screen sets the secrets the same way ([The Configure screen](../../../../engine/tui/internal/configure/README.md)).
+The commands run on ws, as root ([ws's file](#wss-file)). From the Mac, `ssh -t NAME sudo ws server
+ubuntu secrets init` makes the identity there. A value goes on standard input, never in an argument.
 
 ## Editing
 
@@ -22,14 +18,14 @@ through a renamed temporary file, mode 600. No plain file is made, and no editor
 the result again and refuses what a parse refuses, before it writes. Its references stay as written.
 
 ```sh
-ws client macos secrets set token github                 # also azure_devops
-ws client macos secrets set env MY_TOKEN                 # any shell name
-ws client macos secrets set password vpn_p12
-ws client macos secrets set git https://git.example.com --username bob --proactive-auth
-ws client macos secrets set file vpn_p12 vpnclient.p12   # vpn_sswan too: the file whole
-ws client macos secrets set file vpn_sswan <ws.sswan     # or the file on standard input
-ws client macos secrets unset env MY_TOKEN
-ws client macos secrets keys
+sudo ws server ubuntu secrets set token github  # also azure_devops
+sudo ws server ubuntu secrets set env MY_TOKEN  # any shell name
+sudo ws server ubuntu secrets set password vpn_p12
+sudo ws server ubuntu secrets set git https://git.example.com --username bob --proactive-auth
+sudo ws server ubuntu secrets set file vpn_p12 vpnclient.p12  # vpn_sswan too: the file whole
+sudo ws server ubuntu secrets set file vpn_sswan <ws.sswan  # or the file on standard input
+sudo ws server ubuntu secrets unset env MY_TOKEN
+sudo ws server ubuntu secrets keys
 ```
 
 A value comes from a prompt with no echo at a terminal, else from standard input, less one trailing
@@ -42,9 +38,8 @@ credential fails and names `ws server ubuntu secrets init`.
 
 ## The run
 
-The run stage of `ws client macos wizard` runs `--secrets` on ws's file, and sends nothing from the
-Mac ([ws's run](../../../client/macos/stages/README.md#wss-run)). The file's SHA-256 is in the run's stamp, so a changed file
-runs the stage again.
+A run takes `--secrets` on ws's file, and sends nothing from the Mac. The file's SHA-256 is in the
+run's stamp, so a changed file runs the stage again.
 
 ## ws's file
 
