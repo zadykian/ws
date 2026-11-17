@@ -18,8 +18,8 @@ check files take `FILES`, as in `make vale FILES=README.md`:
   and no needless variants. It checks the Markdown files, and the comments of every other file written
   here. Vale would read such a file's code too. So `.tools/vale-comments` gives Vale the
   comments alone, mirrored as Markdown, and maps each alert back to its line and column. It skips
-  shebangs and linter directives, though not a directive's reason. Of `#` comments, it reads full
-  lines alone. A doc's leading declared name is code to it;
+  shebangs and linter directives, though not a directive's reason. Of `#` comments and Lua's `--`,
+  it reads full lines alone. A doc's leading declared name is code to it;
 - `lychee`: the links to files and their headings in the Markdown files, offline;
 - `rumdl`: rumdl's rules on the Markdown files, with lines of 100 columns but in code blocks and
   tables (`lint/rumdl.toml`);
