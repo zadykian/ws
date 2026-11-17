@@ -19,7 +19,6 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/signoz"
 	"github.com/zadykian/ws/roles/server/ubuntu/tunnel"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
-	"github.com/zadykian/ws/roles/server/ubuntu/zed"
 )
 
 // entry is one role of the server, not yet closed over the machine's values and secrets.
@@ -45,8 +44,6 @@ var all = []entry{
 	{"claude", claude.Steps},
 	{"signoz", signoz.Steps},
 	{"otelcol", otelcol.Steps},
-	// zed is described in `roles/server/ubuntu/zed/README.md`.
-	{"zed", zed.Steps},
 }
 
 // Roles returns every role, in the order that they run, closed over the machine's values v and
