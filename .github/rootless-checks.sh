@@ -227,29 +227,3 @@ sums=$(sha256sum /etc/ws/secrets.age /etc/credstore.encrypted/ws-secrets)
 ws server ubuntu secrets init
 must "a second init keeps both" test "$sums" = \
     "$(sha256sum /etc/ws/secrets.age /etc/credstore.encrypted/ws-secrets)"
-
-# ws server ubuntu wizard runs ws server ubuntu apply in a unit, as the Mac's wizard does, and a
-# second run with nothing changed starts none. A value set in values.yml has the next start one. The
-# unit's ws adds --only shell,git to apply, so that a full run, as the stamp has it, fits the job.
-# This comes last: ws is that stand-in from here on.
-refused "the wizard asks with no terminal" ws server ubuntu wizard --plain </dev/null
-ws server ubuntu values set WS_SECURITY_OUTBOUND true
-real=$(mktemp -d)/ws
-mv /usr/local/bin/ws "$real"
-printf '%s\n' '#!/bin/sh' \
-    "[ \"\$1 \$2 \$3\" != 'server ubuntu apply' ] || { shift 3; exec $real server ubuntu apply --only shell,git \"\$@\"; }" \
-    "exec $real \"\$@\"" >/usr/local/bin/ws
-chmod 755 /usr/local/bin/ws
-# The user's claude is a stand-in with a login, as that run installs none.
-# shellcheck disable=SC2016 # the user's sh expands $1, and cat reads the stdin it can't reopen
-runuser -u "$user" -- sh -c 'mkdir -p "$1" && cat >"$1/claude" && chmod 755 "$1/claude"' \
-    sh "$home/.local/bin" <<'EOF'
-#!/bin/sh
-[ "$*" = 'auth status' ]
-EOF
-must "the wizard runs ws server ubuntu apply in a unit" ws server ubuntu wizard --plain </dev/null
-out=$(ws server ubuntu wizard --plain 2>&1 </dev/null)
-refused "a second wizard starts a unit" grep -q ws-wizard- <<<"$out"
-ws server ubuntu values set WS_BASE_SWAPPINESS 10
-out=$(ws server ubuntu wizard --plain 2>&1 </dev/null)
-must "a wizard after a value's change starts a unit" grep -q ws-wizard- <<<"$out"

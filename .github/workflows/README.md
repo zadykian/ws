@@ -22,8 +22,6 @@ sign and verify. Root's leg has no table, and the run leaves out its own check
 ([Outbound](../../roles/server/ubuntu/security/README.md#outbound)). Its `/etc/ws/values.yml` sets a
 64 MiB swap file for the small disk. With no NVIDIA GPU, `nvidia` checks its names alone, and with
 no MSI board, `fans` leaves its fans alone. Without a VPN profile, `ikeward` does nothing.
-`ws server ubuntu wizard --check --plain` then asks nothing, as the values name both its keys, and
-its run skips, as systemd isn't booted ([the wizard](../../roles/server/ubuntu/stages/README.md)).
 
 ## The install script
 
