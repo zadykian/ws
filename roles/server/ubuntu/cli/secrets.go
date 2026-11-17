@@ -10,16 +10,16 @@ import (
 )
 
 // newSecretsCmd returns ws server ubuntu secrets, which keeps ws's secrets file, with its
-// identity as a systemd credential. ws client macos secrets runs its commands here, over ssh.
+// identity as a systemd credential.
 func newSecretsCmd(p enginecli.Env) *cobra.Command {
 	open := func() (secrets.Store, error) { return serverSecretsStore(p) }
 	return enginecli.Group("secrets", "keep ws's secrets file, with its identity as a systemd credential",
-		Secrets(p, open)...)
+		secretsCmds(p, open)...)
 }
 
-// Secrets returns the commands of the secrets group: init, then set, unset and keys, which edit the
-// store that open returns. Both sides build their group from it.
-func Secrets(p enginecli.Env, open OpenStore) []*cobra.Command {
+// secretsCmds returns the commands of the secrets group: init, then set, unset and keys, which
+// edit the store that open returns.
+func secretsCmds(p enginecli.Env, open openStore) []*cobra.Command {
 	return append([]*cobra.Command{{
 		Use:   "init",
 		Short: "make ws's age identity and an empty secrets file",
