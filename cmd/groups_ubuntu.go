@@ -9,10 +9,10 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/local"
 )
 
-// groups returns the command groups that exist on this system: ws server, on Linux. It runs as
-// root, which ws server ubuntu apply checks, so the machine's root commands go without sudo: a
-// container has none.
+// groups returns the command groups that exist on this system: ws server and ws unit, on Linux.
+// It runs as root, which ws server ubuntu apply and ws unit write check, so the machine's root
+// commands go without sudo: a container has none.
 func groups(p cli.Env) []*cobra.Command {
 	p.Machine = local.OSMachine{Sudo: []string{}}
-	return []*cobra.Command{serverCmd(p)}
+	return []*cobra.Command{serverCmd(p), unitCmd(p)}
 }
