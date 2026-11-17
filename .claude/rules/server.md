@@ -16,6 +16,16 @@ steps, and each role's README says what it sets up.
 - A role is the Go steps of `roles/server/ubuntu/NAME`, with its page, its `README.md`, and a line in
   the root README ([README](../../README.md)). `ubuntu.Roles` lists the roles in the order they run,
   each closed over the machine's values and secrets ([roles.go](../../roles/server/ubuntu/roles.go)).
+- A role moved to mise holds its spec, `units.toml`, with its templates, and its mise files by env:
+  `mise.server.toml` for every server, `mise.booted.toml` where systemd is booted, and
+  `mise.account.toml` where `WS_USER` is not root. The link `mise/conf.d/server-NAME` loads them.
+  A role holds no plain `mise.toml`, which the Mac would load ([specs_test.go](../../roles/server/ubuntu/cli/specs_test.go)).
+- Each unit of a spec is a line `"ws:KIND/NAME" = "in-sync"` of its role's `mise.server.toml`, or
+  of its `mise.account.toml` where the spec gives it for an account alone, never of
+  `mise.booted.toml`. `TestSpecsMatchMiseLines` fails on a line missing or extra
+  ([specs_test.go](../../roles/server/ubuntu/cli/specs_test.go)).
+- A path is one role's: where two roles' mise files declare it, mise keeps the later fragment's by
+  name and drops the other with no error.
 - The server's values are one struct, `values.Values`, parsed once from the machine's file with
   unknown keys refused. A role's steps read it and add no key without a commit of their own
   ([values.go](../../roles/server/ubuntu/values/values.go)).
