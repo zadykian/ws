@@ -30,9 +30,6 @@ What each document holds. How to write them is in the `writing` skill and [writi
   and cld, [zed](../../roles/client/macos/zed/README.md) its Zed. [The secrets](../../roles/server/ubuntu/secrets/README.md)
   is the secrets file. [The router](../../roles/server/ubuntu/cable/router.md)
   is the router's steps, taken once by hand.
-- [The TUI's README](../../engine/tui/README.md) is the terminal UI: its modes, `--plain`, the
-  layout and the keys. [Configure](../../engine/tui/internal/configure/README.md) is its Configure
-  screen, and [the queue](../../engine/tui/internal/queue/README.md) the wizard's two lists.
 - [The update package's README](../../engine/core/update/README.md) says how to install and update
   ws, and how a release is cut.
 - [The tools' README](../../.tools/README.md) says what each gate of `make lint` runs.

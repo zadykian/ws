@@ -24,9 +24,7 @@ ws client macos apply
 ```
 
 `ws client macos apply --only STEP` runs one step, and `--check` shows each change and makes none.
-At a terminal it draws [the run screen](../../../engine/tui/README.md#the-run-screen), past [the
-list of steps](../../../engine/tui/README.md#the-list-of-steps) where it gets neither, and `--plain`
-keeps its lines. `ws client macos state` reports what a check reads, and changes nothing
+`ws client macos state` reports what a check reads, and changes nothing
 ([State](../../../README.md#state)). `ws client macos` holds the Mac's commands, darwin alone. `ws
 version` prints its version, and `ws update` replaces it with the latest release
 ([Update](../../../engine/core/update/README.md#update)).

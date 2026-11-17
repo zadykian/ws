@@ -181,8 +181,6 @@ pull request breaks the rules of zadykian/toolkit's skills, and the issues workf
 strays from its issue form. The hooks in `.githooks` check each commit before git makes it.
 [Checks](.github/workflows) and [The gates](.tools) have the details.
 
-On a terminal, ws draws a full-screen display, and `--plain` keeps its lines: [The terminal UI](engine/tui).
-
 ## Pull requests
 
 Pull requests land on `main` by GitHub's merge commits, as the

@@ -62,8 +62,6 @@ linters:
               desc: a role imports engine/core, as its side's cli package runs the engine
             - pkg: github.com/zadykian/ws/engine/cli
               desc: a role builds no command, as its side's cli package does
-            - pkg: github.com/zadykian/ws/engine/tui
-              desc: a role draws no screen, as its steps report events that engine/tui draws
             - pkg: github.com/zadykian/ws/roles/client/macos/cli
               desc: a role reaches no command, as its side's cli package wires the role
             - pkg: github.com/zadykian/ws/roles/server/ubuntu/cli
