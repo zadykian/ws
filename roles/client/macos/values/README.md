@@ -1,7 +1,7 @@
 # The wizard's targets
 
 The Mac's wizard sets up ws on one of three machines, which the server's file's `WS_TARGET` names ([The
-answers](../stages/README.md#the-answers)). Each target sets the questions of ws's ways and their
+answers](../README.md)). Each target sets the questions of ws's ways and their
 defaults, and what a few stages do. `ws server ubuntu apply` is the same on each, but for the
 outbound table on a cloud VM.
 
@@ -114,7 +114,7 @@ the Mac's display, if any:
   ws's 22, `22022` by default.
 - Where ws doesn't answer at its way, the Host key stage asks its address as the router's leases
   show it.
-- The Cable stage sets up the cable ([The cable](../stages/README.md#the-cable)).
+- The Cable stage sets up the cable ([The cable](../README.md)).
 - The closing list names ws's lease and the router's forwards.
 
 ## A cloud VM
@@ -130,11 +130,11 @@ the Mac's display, if any:
 - The provider's firewall must let in TCP `WS_REMOTE_PORT`, and UDP 51820, the tunnel's, or the port
   that `WS_TUNNEL_PORT` sets, which moves wg0's listen port on ws too. The closing list says so.
 - The VM's default user takes the provider's keys, which must be the GitHub account's
-  ([Login](../stages/README.md#login)).
+  ([Login](../README.md)).
 - Where ws doesn't answer at its way, the Host key stage asks the VM's public address, as the
   provider shows it.
 - ws's run turns the outbound table off, which would drop the metadata service
-  ([ws's run](../stages/README.md#wss-run)).
+  ([ws's run](../README.md)).
 - The wizard skips the Cable stage.
 
 ## A VM on the Mac

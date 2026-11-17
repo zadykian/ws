@@ -28,7 +28,7 @@ credential on ws, the read fails and says to run `ws server ubuntu secrets init`
 
 A save checks the fields that show, and the first it refuses takes the focus. Its changes then go
 in as one, through the wizard's writer, which checks the whole file and leaves a link
-([The Mac's wizard](../../../../roles/client/macos/stages/README.md)). A key that the edits left with no place goes empty, the cable's
+([The Mac's wizard](../../../../roles/client/macos/README.md)). A key that the edits left with no place goes empty, the cable's
 with a `WS_TARGET` other than `lan`, as values would refuse it. The wizard asks no key with a line
 again, even an empty one. Under the form, the screen shows the keys a save emptied, or why it
 failed, which keeps the edits. A short window keeps the field's input and the end of those words.
@@ -58,4 +58,4 @@ server's wizard](../../../../roles/server/ubuntu/stages/README.md)).
 ## After a save
 
 Only the file changes: the next `ws server ubuntu apply` takes it. The wizard's next run names
-`WS_USER` and, on a cloud VM, `WS_SECURITY_OUTBOUND` again ([The Mac's wizard](../../../../roles/client/macos/stages/README.md)).
+`WS_USER` and, on a cloud VM, `WS_SECURITY_OUTBOUND` again ([The Mac's wizard](../../../../roles/client/macos/README.md)).

@@ -45,7 +45,7 @@ Each role has a page of its own. A role is Go steps of ws:
 
 On a new Mac with Apple silicon, one line installs ws's binary. Then `ws client macos wizard`
 installs Apple's Command Line Tools and Homebrew, and sets up the rest ([The Mac's
-wizard](roles/client/macos/stages)):
+wizard](roles/client/macos/README.md)):
 
 ```sh
 curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sh
@@ -57,7 +57,7 @@ curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | 
 Install Ubuntu Server 26.04 by hand from its installer. In it, turn OpenSSH on, import the GitHub
 account's keys, and leave password login off. Neither the Mac's wizard nor `ws server ubuntu apply`
 adds a key later. So run the Mac's line above first, which puts the Mac's key on the account
-([GitHub and Ubuntu's install](roles/client/macos/stages/README.md#github-and-ubuntus-install)). Name the installer's
+([GitHub and Ubuntu's install](roles/client/macos/README.md)). Name the installer's
 user `zadykian`, ws's default user. A cloud VM has no installer: it gives its default user the
 provider's keys, which must be the account's. A VM with root alone logs in as root, where
 `WS_TARGET=cloud`.
@@ -156,7 +156,7 @@ ws client macos state --json
 
 ## By hand
 
-Secrets are never in this repository. On a new machine, [The Mac's wizard](roles/client/macos/stages)
+Secrets are never in this repository. On a new machine, [The Mac's wizard](roles/client/macos/README.md)
 checks that `WS_USER` logs in and installs its own ws on ws and runs `ws server ubuntu apply`, with
 the secrets file on ws. Then it adds ws's signing key to GitHub, logs claude in there, and gives
 `wg0` the Mac's key. Without the wizard, the claude login and the Mac's key stay manual. ws's gh

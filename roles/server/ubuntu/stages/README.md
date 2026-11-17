@@ -1,6 +1,6 @@
 # The server's wizard
 
-`sudo ws server ubuntu wizard` runs the stages of [the Mac's wizard](../../../client/macos/stages/README.md)
+`sudo ws server ubuntu wizard` runs the stages of [the Mac's wizard](../../../client/macos/README.md)
 that act on ws, on ws itself, for a login over plain ssh, such as Termius on an iPad. It runs as
 root alone, and `--check` prints what each stage would do and changes nothing. At a terminal it
 opens [the wizard's list](../../../../engine/tui/internal/queue/README.md), one, `Server (Ubuntu)`, as every stage runs on ws. `s`

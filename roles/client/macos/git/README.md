@@ -22,7 +22,7 @@ the word to open Secretive. A file key with no passphrase signs unattended, in
 a rebase too: `ssh-keygen -t ed25519 -N '' -f ~/.ssh/NAME` makes one.
 
 The wizard asks for git's key where `values.yml` names none ([The Mac's
-key](../stages/README.md#the-macs-key)). A new one, made in Secretive's app at Notify, signs with no
+key](../README.md)). A new one, made in Secretive's app at Notify, signs with no
 prompt while the Mac is unlocked. The login key may sign too, but asks for Touch ID at each use by
 default, so a rebase would ask at each commit. The wizard names ws's copy of its `.pub`,
 `/etc/ws/secretive/NAME.pub`, in `WS_GIT_SIGNING_PUB_KEY`. `NAME` is that of Secretive's Public
@@ -45,7 +45,7 @@ there. The script names those of identity and signing as it adds the include.
 
 GitHub verifies a commit by the signing keys of its author's account. Where those of gh's login lack
 the key, the script adds it with `gh ssh-key add --type signing`, titled with the Mac's name. The
-wizard does the same for ws ([Signing key](../stages/README.md#signing-key)). The login
+wizard does the same for ws ([Signing key](../README.md)). The login
 needs the `write:ssh_signing_key` scope. Without a login or the scope, or on another error of gh's,
 the script says so at each run, and goes on. Until a run adds the key, GitHub shows the Mac's
 commits as unverified, and the ruleset on `main` refuses them. `--check` reads the account's keys,

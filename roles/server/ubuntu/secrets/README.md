@@ -42,9 +42,8 @@ credential fails and names `ws server ubuntu secrets init`.
 
 ## The run
 
-The run stage of `ws client macos wizard` runs `--secrets` on ws's file, and sends nothing from the
-Mac ([ws's run](../../../client/macos/stages/README.md#wss-run)). The file's SHA-256 is in the run's stamp, so a changed file
-runs the stage again.
+A run takes `--secrets` on ws's file, and sends nothing from the Mac. The file's SHA-256 is in the
+run's stamp, so a changed file runs the stage again.
 
 ## ws's file
 

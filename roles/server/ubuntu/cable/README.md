@@ -7,7 +7,7 @@ the Mac, `10.77.0.1/30` on the port `WS_CABLE_PORT` names, from a netplan file.
 
 The Mac can plug into the server with a cable of its own, from its dock's 2.5GbE port to a port of
 the server's, outside the router. Name the server's port in `/etc/ws/values.yml` on the
-server, as `ip link` names it, or let the Mac's wizard do it ([The cable](../../../client/macos/stages/README.md#the-cable)):
+server, as `ip link` names it:
 
 ```yaml
 ---

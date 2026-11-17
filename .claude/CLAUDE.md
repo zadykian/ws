@@ -113,9 +113,8 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([download.go](../roles/server/ubuntu/fresh/download.go)), and so are foundryctl
   ([ci.yml](../.github/workflows/ci.yml)) and the gates' tools ([.tools/run](../.tools/run)). So is ws's
   binary, against its release's `ws.sha256` ([install.sh](../install.sh),
-  [update.go](../engine/core/update/update.go)), and so are yamllint
-  ([lint-requirements.in](../.github/lint-requirements.in)) and Homebrew's `.pkg`, with its signer
-  ([homebrew.go](../roles/client/macos/stages/tools/homebrew.go)). Go is checked against the
+  [update.go](../engine/core/update/update.go)), and so is yamllint
+  ([lint-requirements.in](../.github/lint-requirements.in)). Go is checked against the
   SHA-256 its publisher lists ([devtools](../roles/server/ubuntu/devtools/README.md)). The postgres-language-server and
   docker-language-server are checked against their SHA-256
   ([binaries.go](../roles/server/ubuntu/devtools/binaries.go)). gopls and Delve are built through Go's

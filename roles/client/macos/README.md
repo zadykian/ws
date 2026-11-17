@@ -23,7 +23,7 @@ ws client macos apply
 ```
 
 `ws client macos wizard`, in its place, asks first for the values below ([The Mac's
-wizard](stages/README.md)), and `ws client macos configure` changes them later on a form, with ws's
+wizard](README.md)), and `ws client macos configure` changes them later on a form, with ws's
 secrets and values.yml ([The Configure screen](../../../engine/tui/internal/configure/README.md)). `ws client macos
 apply --only STEP` runs one step, and `--check` shows each change and makes none. At a terminal it
 draws [the run screen](../../../engine/tui/README.md#the-run-screen), past [the list of
@@ -105,7 +105,7 @@ ssh offers ws one key alone (`IdentitiesOnly`): the one whose `.pub` `WS_IDENTIT
 ws's copy of a key of Secretive's ([Secretive's keys](git/README.md#secretives-keys)) or a file key.
 The script picks none by itself, not even the agent's sole key, as a key made for another use would
 go to GitHub unasked. Without the key, or with it empty, it stops: run `ws client macos wizard`,
-which asks ([The wizard](stages/README.md#the-macs-key)), or add one of the lines it gives. They name
+which asks ([The wizard](README.md)), or add one of the lines it gives. They name
 each P-256 key that Secretive's agent lists, by its comment and SHA256 fingerprint. The agent is the
 one whose socket `WS_IDENTITY_AGENT` names, else Secretive's where the `.pub` is there. Else ssh
 reads the file beside the `.pub`, its passphrase kept in the Keychain. The script stops where that
@@ -206,7 +206,7 @@ For a `WS_USER` other than root, both go through `sudo` and `ssh -t`, for the pa
 
 With ws's key as `WS_PUBLIC_KEY`, `ws client macos apply` again installs the tunnel's daemon. A new
 Mac or a rebuilt server changes one file on each side, and nothing in the repository. The wizard's
-Tunnel stage takes these steps, which stay the way by hand ([The tunnel](stages/README.md#the-tunnel)).
+Tunnel stage takes these steps, which stay the way by hand ([The tunnel](README.md)).
 
 A daemon per server, `ws client macos tunnel run --server NAME`, runs as root from launchd, from
 boot and before any login, by `/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.NAME.plist`. `ws

@@ -25,7 +25,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   what a dry run shows.
 - [The Mac's README](../../roles/client/macos/README.md) is the Mac's side, `roles/client/macos/`
   and the ws CLI. [Its git](../../roles/client/macos/git/README.md) is its git, and
-  [its stages](../../roles/client/macos/stages/README.md) its wizard. [Its values](../../roles/client/macos/values/README.md)
+  [its stages](../../roles/client/macos/README.md) its wizard. [Its values](../../roles/client/macos/values/README.md)
   is the wizard's targets, [the tunnel's](../../roles/client/macos/tunnel/README.md) the daemons' rules, and [ghostty](../../roles/client/macos/ghostty/README.md) its Ghostty
   and cld, [zed](../../roles/client/macos/zed/README.md) its Zed. [The secrets](../../roles/server/ubuntu/secrets/README.md)
   is the secrets file. [The server's stages](../../roles/server/ubuntu/stages/README.md) are
