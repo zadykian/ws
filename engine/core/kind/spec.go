@@ -36,6 +36,8 @@ type unitKind interface {
 type spec struct {
 	File map[string]fileSpec `toml:"file"`
 	Deb  map[string]debSpec  `toml:"deb"`
+	// Service is a systemd unit, with the files that one restart covers.
+	Service map[string]serviceSpec `toml:"service"`
 }
 
 // parse fills the spec's text, named name in errors, with e.Data and pure's funcs, and decodes it.

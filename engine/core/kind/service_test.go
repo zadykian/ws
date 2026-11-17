@@ -1,0 +1,126 @@
+package kind
+
+import (
+	"slices"
+	"strings"
+	"testing"
+
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
+)
+
+func TestServiceEnablesAndRuns(t *testing.T) {
+	for state, want := range map[string][]string{
+		"running":   {"enable a.service", "start a.service"},
+		"stopped":   {"enable a.service", "stop a.service"},
+		"triggered": {"enable a.service"},
+		"":          {"enable a.service"},
+	} {
+		e, _, u, _ := testEnv(true)
+		u.States = map[string]effect.UnitState{"a.service": {Active: state == "stopped"}}
+		units := loadOne(t, e, "[service.a]\nunit = \"a.service\"\nenabled = true\nrun = \""+state+"\"\n", nil)
+		if err := run(t, e, units); err != nil {
+			t.Fatalf("run %q: %v", state, err)
+		}
+		if !slices.Equal(u.Calls, want) {
+			t.Errorf("run %q: calls = %q, want %q", state, u.Calls, want)
+		}
+	}
+}
+
+func TestServiceSkipsWithoutSystemd(t *testing.T) {
+	e, m, u, out := testEnv(false)
+	m.Dirs["/etc"] = 0o755
+	units := loadOne(t, e, "[service.a]\nunit = \"a.service\"\nenabled = true\nrun = \"running\"\n"+
+		"[[service.a.file]]\npath = \"/etc/a.conf\"\nsource = \"a\"\n", map[string]string{"a": "x"})
+	if got := headlines(t, units[0].Step); !slices.Equal(got, []string{"create /etc/a.conf"}) {
+		t.Errorf("plan = %q, want the file alone", got)
+	}
+	if u.Calls != nil || !slices.Equal(out.Lines, []string{"say: a.service: skipped, systemd is not running"}) {
+		t.Errorf("calls = %q, lines %q; want none, and the skip said once", u.Calls, out.Lines)
+	}
+}
+
+func TestServiceFilesGiveOneRestart(t *testing.T) {
+	e, m, u, _ := testEnv(true)
+	m.Dirs["/etc"] = 0o755
+	m.Files["/etc/a.conf"], m.Files["/etc/b.conf"] = []byte("old"), []byte("old")
+	u.States = map[string]effect.UnitState{"a.service": {Enabled: true, Active: true}}
+	units := loadOne(t, e, "[service.a]\nunit = \"a.service\"\nenabled = true\nrun = \"running\"\n"+
+		"[[service.a.file]]\npath = \"/etc/a.conf\"\nsource = \"a\"\n"+
+		"[[service.a.file]]\npath = \"/etc/b.conf\"\ntemplate = \"b.tmpl\"\n",
+		map[string]string{"a": "new", "b.tmpl": "{{.User}}"})
+	if err := run(t, e, units); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(u.Calls, []string{"restart a.service"}) {
+		t.Errorf("calls = %q, want one restart", u.Calls)
+	}
+	if string(m.Files["/etc/a.conf"]) != "new" || string(m.Files["/etc/b.conf"]) != "u" {
+		t.Errorf("files = %q, %q; want both written", m.Files["/etc/a.conf"], m.Files["/etc/b.conf"])
+	}
+}
+
+func TestServicePartTakesAnOwner(t *testing.T) {
+	e, m, _, _ := testEnv(false)
+	withAccount(m)
+	units := loadOne(t, e, "[service.a]\nunit = \"a.service\"\n"+
+		"[[service.a.file]]\npath = \"/home/u/.a/a.conf\"\nowner = \"u\"\nmode = 0o600\nsource = \"a\"\n", map[string]string{"a": "x"})
+	if err := run(t, e, units); err != nil {
+		t.Fatal(err)
+	}
+	if got := m.Owners["/home/u/.a/a.conf"]; got != [2]int{1001, 1001} || m.Modes["/home/u/.a/a.conf"] != 0o600 {
+		t.Errorf("owner = %v, mode %o; want u's at 600", got, m.Modes["/home/u/.a/a.conf"])
+	}
+}
+
+func TestServiceRestartsOnDrift(t *testing.T) {
+	const spec = "[service.a]\nunit = \"a.service\"\nrun = \"running\"\nin_force = [\"show\"]\nloads = [\"load\", \"/etc/a.conf\"]\n" +
+		"[[service.a.file]]\npath = \"/etc/a.conf\"\nsource = \"a\"\n"
+	for _, c := range []struct {
+		inForce string
+		want    []string
+	}{
+		{"same", nil},
+		{"other", []string{"restart: what show prints is not what the files load", "note the owed restart of a.service", "restart a.service"}},
+	} {
+		e, m, u, _ := testEnv(true)
+		m.Dirs["/etc"] = 0o755
+		m.Files["/etc/a.conf"] = []byte("x")
+		u.States = map[string]effect.UnitState{"a.service": {Active: true}}
+		m.Results["load /etc/a.conf"] = effecttest.Result{Out: []byte("same")}
+		m.Results["show"] = effecttest.Result{Out: []byte(c.inForce)}
+		units := loadOne(t, e, spec, map[string]string{"a": "x"})
+		got := headlines(t, units[0].Step)
+		slices.Sort(got)
+		slices.Sort(c.want)
+		if !slices.Equal(got, c.want) {
+			t.Errorf("in force %q: plan = %q, want %q", c.inForce, got, c.want)
+		}
+		// The drift stays until the restart, which must not wait for it.
+		p, err := units[0].Step.Plan(t.Context())
+		if err == nil {
+			err = units[0].Step.Apply(t.Context(), p)
+		}
+		if restarted := slices.Contains(u.Calls, "restart a.service"); err != nil || restarted != (c.want != nil) {
+			t.Errorf("in force %q: apply = %v, calls %q; want a restart %t", c.inForce, err, u.Calls, c.want != nil)
+		}
+	}
+}
+
+func TestServiceRefusesFieldsNoPlanTakes(t *testing.T) {
+	e, _, _, _ := testEnv(false)
+	for spec, want := range map[string]string{
+		"unit = \"a\"\n":                                            "type's suffix",
+		"unit = \"a.service\"\nrun = \"up\"\n":                      `run "up" is none of`,
+		"unit = \"a.service\"\nin_force = [\"show\"]\n":             "in_force goes with loads",
+		"unit = \"a.service\"\n[[service.a.file]]\npath = \"/a\"\n": "file 1: a file takes a template or a source",
+		"unit = \"a.service\"\n[[service.a.file]]\npath = \"/a\"\nsource = \"f\"\nservice = \"b.service\"\n": "service.a.file.service",
+		"unit = \"a.service\"\n[[service.a.file]]\npath = \"/a\"\nsource = \"f\"\nafter = \"file/b\"\n":      "service.a.file.after",
+	} {
+		_, err := Load(e, tree(map[string]string{"r/units.toml": "[service.a]\n" + spec, "r/f": ""}))
+		if err == nil || !strings.Contains(err.Error(), want) {
+			t.Errorf("load of\n%s= %v, want %q", spec, err, want)
+		}
+	}
+}
