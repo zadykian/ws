@@ -190,7 +190,8 @@ func lineMirror(src []byte, marker string, directive *regexp.Regexp) *mirror {
 var unchecked = regexp.MustCompile(`^(?:\.tools/lint/vale/styles/|roles/server/ubuntu/signoz/(?:deployment/|casting\.yaml\.lock$)|` +
 	`\.github/(?:ISSUE_TEMPLATE/|lint-requirements\.txt$)|go\.sum$)|(?:^|/)(?:LICENSE|package-lock\.json)$|\.(?:md|plist)$`)
 
-// mirrorOf mirrors the file's comments by its kind: Go's, JSONC's and go.mod's, else those of #.
+// mirrorOf mirrors the file's comments by its kind: Go's, JSONC's, go.mod's and Lua's, else those
+// of #.
 func mirrorOf(file string, src []byte) (*mirror, error) {
 	base := path.Base(file)
 	switch {
@@ -198,6 +199,8 @@ func mirrorOf(file string, src []byte) (*mirror, error) {
 		return goMirror(src)
 	case strings.HasSuffix(base, ".json"), strings.HasSuffix(base, ".json.tmpl"), base == "go.mod":
 		return lineMirror(src, "//", nil), nil
+	case strings.HasSuffix(base, ".lua"):
+		return lineMirror(src, "--", nil), nil
 	}
 	return lineMirror(src, "#", hashDirective), nil
 }

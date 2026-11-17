@@ -1,0 +1,153 @@
+package kind
+
+import (
+	"bytes"
+	"context"
+	"errors"
+	"fmt"
+	"io/fs"
+	"regexp"
+	"strconv"
+	"strings"
+	"text/template"
+
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource/account"
+)
+
+// pure returns the funcs that read nothing: those of a spec's text, which fills at load, before
+// any unit has run.
+func pure() template.FuncMap {
+	return template.FuncMap{
+		"add": func(a, b int) int { return a + b },
+		"mul": func(a, b int) int { return a * b },
+		"div": func(a, b int) (int, error) {
+			if b == 0 {
+				return 0, errors.New("div by zero")
+			}
+			return a / b, nil
+		},
+	}
+}
+
+// facts returns pure's funcs and those that read the machine. A template fills with them as its
+// unit plans, when an account or a file that an earlier unit makes is there. A new func is a key
+// here.
+func facts(ctx context.Context, e Env) template.FuncMap {
+	fm := pure()
+	// envvar reads a variable of an env file that root alone may read.
+	fm["envvar"] = func(file, name string) (string, error) { return envVar(e.M, file, name) }
+	// mem_mib is the memory, MemTotal, in whole MiB.
+	fm["mem_mib"] = func() (int, error) { return memMiB(e.M) }
+	// cpus counts the processors.
+	fm["cpus"] = func() (int, error) { return cpus(e.M) }
+	// fs_bytes is the size of the filesystem that holds the first of the paths that exists.
+	fm["fs_bytes"] = func(paths ...string) (int, error) { return fsBytes(ctx, e.M, paths) }
+	// uid is a user's uid.
+	fm["uid"] = func(name string) (int, error) {
+		a, err := account.User{Name: name}.Lookup(ctx, e.M)
+		return a.UID, err
+	}
+	return fm
+}
+
+// render fills the template file name of dir with e.Data and facts' funcs.
+func render(ctx context.Context, e Env, dir fs.FS, name string) ([]byte, error) {
+	text, err := fs.ReadFile(dir, name)
+	if err != nil {
+		return nil, err
+	}
+	return fill(name, text, facts(ctx, e), e.Data)
+}
+
+// fill fills text, named name in errors, with data and funcs. A key that data lacks is an error,
+// never an empty value.
+func fill(name string, text []byte, funcs template.FuncMap, data any) ([]byte, error) {
+	t, err := template.New(name).Option("missingkey=error").Funcs(funcs).Parse(string(text))
+	if err != nil {
+		return nil, err
+	}
+	var out bytes.Buffer
+	if err := t.Execute(&out, data); err != nil {
+		return nil, fmt.Errorf("render %s: %w", name, err)
+	}
+	return out.Bytes(), nil
+}
+
+// memMiB reads MemTotal of /proc/meminfo, which the kernel gives in kB.
+func memMiB(m effect.Machine) (int, error) {
+	data, err := m.ReadFile("/proc/meminfo")
+	if err != nil {
+		return 0, err
+	}
+	for line := range strings.Lines(string(data)) {
+		f := strings.Fields(line)
+		if len(f) >= 2 && f[0] == "MemTotal:" {
+			kb, err := strconv.Atoi(f[1])
+			return kb / 1024, err
+		}
+	}
+	return 0, errors.New("/proc/meminfo has no MemTotal")
+}
+
+// cpus counts the lines of /proc/cpuinfo that start a processor, as amd64 and arm64 both write them.
+func cpus(m effect.Machine) (int, error) {
+	data, err := m.ReadFile("/proc/cpuinfo")
+	if err != nil {
+		return 0, err
+	}
+	n := 0
+	for line := range strings.Lines(string(data)) {
+		if key, _, ok := strings.Cut(line, ":"); ok && strings.TrimSpace(key) == "processor" {
+			n++
+		}
+	}
+	if n == 0 {
+		return 0, errors.New("/proc/cpuinfo names no processor")
+	}
+	return n, nil
+}
+
+// fsBytes asks stat for the size of the filesystem that holds the first path that exists. A later
+// path stands in for one that a unit has yet to make, such as a swap file's directory.
+func fsBytes(ctx context.Context, m effect.Machine, paths []string) (int, error) {
+	for _, p := range paths {
+		if _, err := m.Stat(p); err != nil {
+			continue
+		}
+		out, err := m.Run(ctx, "stat", "-f", "-c", "%S %b", p)
+		if err != nil {
+			return 0, err
+		}
+		var size, blocks int
+		if _, err := fmt.Sscan(string(out), &size, &blocks); err != nil {
+			return 0, fmt.Errorf("stat -f %s: %w", p, err)
+		}
+		return size * blocks, nil
+	}
+	return 0, fmt.Errorf("none of %q exists", paths)
+}
+
+// envVar returns the value of name in an env file: the last line that sets it, as the shell does,
+// with one pair of quotes removed. The file is read, not sourced, so that nothing in it runs as
+// root. A missing file or variable gives "".
+func envVar(m effect.Machine, file, name string) (string, error) {
+	text, err := m.ReadRootFile(file)
+	if errors.Is(err, fs.ErrNotExist) {
+		return "", nil
+	}
+	if err != nil {
+		return "", err
+	}
+	set := regexp.MustCompile(`^[[:space:]]*(?:export[[:space:]]+)?` + regexp.QuoteMeta(name) + `=(.*)$`)
+	value := ""
+	for line := range strings.Lines(string(text)) {
+		if s := set.FindStringSubmatch(strings.TrimRight(line, "\n")); s != nil {
+			value = strings.TrimSpace(s[1])
+		}
+	}
+	if n := len(value); n >= 2 && (value[0] == '"' || value[0] == '\'') && value[n-1] == value[0] {
+		value = value[1 : n-1]
+	}
+	return value, nil
+}

@@ -169,6 +169,30 @@ func TestUnitFailedRestartStaysOwed(t *testing.T) {
 	}
 }
 
+func TestUnitRestartWaitsForARefusedFile(t *testing.T) {
+	m, u, out := unitFixture(true)
+	u.States = map[string]effect.UnitState{"a.service": {Active: true}}
+	m.Files["/srv/a.conf"] = []byte("old")
+	m.Results["checker /srv/a.conf.ws-check"] = effecttest.Result{Err: errors.New("exit status 1")}
+	conf := file.Validated{File: file.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644},
+		Check: func(p string) (string, []string) { return "checker", []string{p} }}
+	unit := systemd.Unit{M: m, U: u, Out: out, Name: "a.service", Run: systemd.Running, Watch: []resource.Resource{conf}}
+	g := resource.Group{Title: "A", Parts: []resource.Resource{conf, unit}}
+	if _, err := step.Run(t.Context(), []step.Step{g}, out, false); err == nil {
+		t.Fatal("run succeeded, want the check's refusal")
+	}
+	if u.Calls != nil || string(m.Files["/srv/a.conf"]) != "old" {
+		t.Errorf("calls = %q, file %q; want no restart and the old file", u.Calls, m.Files["/srv/a.conf"])
+	}
+	m.Results["checker /srv/a.conf.ws-check"] = effecttest.Result{}
+	if _, err := step.Run(t.Context(), []step.Step{g}, out, false); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(u.Calls, []string{"restart a.service"}) {
+		t.Errorf("calls = %q, want the restart once the file is good", u.Calls)
+	}
+}
+
 type failingRestart struct{ *effecttest.Units }
 
 func (failingRestart) Restart(context.Context, string) error { return errors.New("boom") }

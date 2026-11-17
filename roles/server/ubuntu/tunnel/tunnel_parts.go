@@ -8,7 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
-	"github.com/zadykian/ws/roles/server/ubuntu/internal/ufw"
+	"github.com/zadykian/ws/engine/core/resource/ufw"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 

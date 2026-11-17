@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/zadykian/ws/roles/server/ubuntu/internal/ufw"
+	"github.com/zadykian/ws/engine/core/resource/ufw"
 )
 
 const userRules = `*filter

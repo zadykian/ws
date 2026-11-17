@@ -25,6 +25,11 @@ host's key encrypts. It alone opens the secrets file, and a unit loads it by
 `LoadCredentialEncrypted=ws-secrets`.
 _Avoid_: age key, key file
 
+**Kind**:
+A resource type that ws writes once in Go, for what mise's own parts lack, such as `file` or
+`deb`. It names no role's word ([kind](engine/core/kind/README.md)).
+_Avoid_: plugin, module
+
 **Label**:
 An entry's name as the commands and the forms give it, `KIND NAME`, as `token github`. `keys`
 prints one a line; a label never holds a value.
@@ -36,10 +41,20 @@ dpkg names it. ws checks it against a SHA-256 that the role pins or the step fin
 binary is the pinned file at its destination; a package and a tree take one as their source.
 _Avoid_: download, release asset, artifact
 
+**Spec**:
+A role's `units.toml`: TOML over the machine's values that names the role's units, a table a kind
+and a key a unit.
+_Avoid_: manifest
+
 **Secrets file**:
 `/etc/ws/secrets.age` on ws, root's and 600: TOML that age encrypts to the identity's credential,
 a table per kind. `secrets.Store` alone reads and writes it.
 _Avoid_: vault
+
+**Unit**:
+One resource of a kind, named `KIND/NAME`, as `file/sshd`, that a spec names. It plans and applies
+as a step does, which `ws unit` runs for mise ([ws unit](engine/core/kind/README.md#ws-unit)).
+_Avoid_: package, step
 
 ## The Mac's side
 

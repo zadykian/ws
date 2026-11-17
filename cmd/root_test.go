@@ -12,9 +12,9 @@ import (
 // fakeProcess returns an Env that touches nothing of the test's own.
 func fakeProcess() cli.Env { return clitest.Env() }
 
-// runWs runs args on the root of both groups, with stdin, and returns the status, stdout and stderr.
+// runWs runs args on the root of every group, with stdin, and returns the status, stdout and stderr.
 func runWs(p cli.Env, stdin string, args ...string) (status int, stdout, stderr string) {
-	return clitest.Run(p, []*cobra.Command{clientCmd(p), serverCmd(p)}, stdin, args...)
+	return clitest.Run(p, []*cobra.Command{clientCmd(p), serverCmd(p), unitCmd(p)}, stdin, args...)
 }
 
 // runGroups is runWs on the groups of this system.
@@ -24,7 +24,7 @@ func runGroups(p cli.Env, args ...string) (status int, stdout, stderr string) {
 
 func TestEveryCommandSetsArgs(t *testing.T) {
 	p := fakeProcess()
-	for _, group := range []*cobra.Command{cli.Root(p), clientCmd(p), serverCmd(p)} {
+	for _, group := range []*cobra.Command{cli.Root(p), clientCmd(p), serverCmd(p), unitCmd(p)} {
 		cli.Walk(group, func(c *cobra.Command) {
 			if c.Args == nil {
 				t.Errorf("%s: Args is nil", c.CommandPath())

@@ -15,7 +15,10 @@ func TestServerGroupOnLinux(t *testing.T) {
 	if status, stdout, _ := runGroups(p, "server", "ubuntu"); status != 0 || !strings.Contains(stdout, "\n  apply ") {
 		t.Errorf("status = %d, stdout = %q, want the commands of server ubuntu", status, stdout)
 	}
-	if _, stdout, _ := runGroups(p); !strings.Contains(stdout, "\n  server ") {
-		t.Errorf("help = %q, want a line for server", stdout)
+	if status, stdout, _ := runGroups(p, "unit"); status != 0 || !strings.Contains(stdout, "\n  list ") {
+		t.Errorf("status = %d, stdout = %q, want the commands of unit", status, stdout)
+	}
+	if _, stdout, _ := runGroups(p); !strings.Contains(stdout, "\n  server ") || !strings.Contains(stdout, "\n  unit ") {
+		t.Errorf("help = %q, want a line for server and for unit", stdout)
 	}
 }

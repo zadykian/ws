@@ -66,6 +66,15 @@ echo "# not a comment" # nor this
 	})
 }
 
+func TestLuaMirror(t *testing.T) {
+	src := "-- Says why.\nlocal s = \"-- no\" -- nor this\n  -- indented.\n# not Lua's\n"
+	m, err := mirrorOf("plugins/ws/lib/ws.lua", []byte(src))
+	if err != nil {
+		t.Fatal(err)
+	}
+	expect(t, m, map[string]origin{"Says why.": {1, 4}, "indented.": {3, 6}})
+}
+
 func TestMirrorOf(t *testing.T) {
 	for file, src := range map[string]string{"a.json": "// a\n# b\n", "c.json.tmpl": " // a\n", "Makefile": "# a\n// b\n"} {
 		if m, err := mirrorOf(file, []byte(src)); err != nil || m.texts != 1 {

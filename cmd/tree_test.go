@@ -29,11 +29,11 @@ func listing(t *testing.T, root *cobra.Command) string {
 	return sb.String()
 }
 
-// TestTreeHoldsTheCommandsAndTheirHelp holds the whole tree against a golden file, with both
-// groups on every system. A move of the commands then shows any change of a name or a text.
+// TestTreeHoldsTheCommandsAndTheirHelp holds the whole tree against a golden file, with every
+// group on every system. A move of the commands then shows any change of a name or a text.
 func TestTreeHoldsTheCommandsAndTheirHelp(t *testing.T) {
 	p := fakeProcess()
-	got := listing(t, cli.Root(p, clientCmd(p), serverCmd(p)))
+	got := listing(t, cli.Root(p, clientCmd(p), serverCmd(p), unitCmd(p)))
 	const golden = "testdata/tree.golden"
 	if *rewriteGolden {
 		if err := os.WriteFile(golden, []byte(got), 0o644); err != nil { //nolint:gosec // a test's data file

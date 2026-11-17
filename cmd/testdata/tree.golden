@@ -9,6 +9,7 @@ Available Commands:
   client      the client's systems
   help        Help about any command
   server      the server's systems
+  unit        plan and apply the units of ws's kinds, KIND/NAME, for mise
   update      update ws to the latest release
   version     print the version of this ws
 
@@ -413,6 +414,57 @@ Usage:
 
 Flags:
   -h, --help   help for set
+== ws unit
+plan and apply the units of ws's kinds, KIND/NAME, for mise
+
+Usage:
+  ws unit [flags]
+  ws unit [command]
+
+Available Commands:
+  list        print each unit, KIND/NAME, in the order the units run
+  read        print each unit's state: in-sync, or the first change that write would make
+  verify      fail where mise's plan lacks a unit of the specs
+  write       apply the units, in the order they run
+
+Flags:
+  -h, --help   help for unit
+
+Use "ws unit [command] --help" for more information about a command.
+== ws unit list
+The specs are each units.toml one level below WS_UNITS, or below /opt/ws/roles/server/ubuntu where it is unset. --toml prints each unit as a line of mise's [bootstrap.packages].
+
+Usage:
+  ws unit list [flags]
+
+Flags:
+  -h, --help   help for list
+      --toml   print the units as lines of mise's [bootstrap.packages]
+== ws unit read
+It plans each UNIT and the units it waits on, and applies nothing. It prints a line per UNIT on stdout, in the order given: the unit, a tab and its state. The state is in-sync; the headline of its first change, with " (+N more)" for the rest; "after UNIT" where it waits on a unit with changes; or "fails: " and why its plan failed. A failed plan stops no other unit's read. ws's own lines go to stderr.
+
+Usage:
+  ws unit read UNIT... [flags]
+
+Flags:
+  -h, --help   help for read
+== ws unit verify
+It reads mise's packages, by mise bootstrap packages status --json, and fails where the ws plugin is not loaded or a unit of the specs is not among its packages: mise drops a refused plugin's units with no error. It changes nothing. Where each unit is there, it prints a line that does not change.
+
+Usage:
+  ws unit verify [flags]
+
+Flags:
+  -h, --help   help for verify
+== ws unit write
+It plans, applies and plans again each UNIT, in the order the units run whatever the order given. A unit that a UNIT waits on and that is not named is planned and left out. A UNIT behind one with changes is skipped, and fails the write. --dry-run applies nothing and prints each change, file diffs included. ws's lines go to stderr, and the last one names the units that changed.
+
+Usage:
+  ws unit write UNIT... [flags]
+
+Flags:
+      --dry-run   plan the units and apply none
+  -h, --help      help for write
 == ws update
 Downloads the latest release's ws for this system, checks it against the release's ws.sha256 and that it runs, then replaces the file ws runs from, the file a symbolic link leads to.
 

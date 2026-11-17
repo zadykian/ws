@@ -13,16 +13,23 @@ check files take `FILES`, as in `make vale FILES=README.md`:
   shell script, found by extension or shebang;
 - `yamllint`: `yamllint --strict`, as `lint/yamllint.yml` sets it, on the YAML files it finds
   itself;
-- `sizecheck`: 300 lines a file, for Markdown, YAML, shell and Go;
+- `sizecheck`: 300 lines a file, for Markdown, YAML, shell, Go and Lua;
 - `vale`: Vale's three rules (`lint/vale.ini`): sentences of 30 words or fewer, no wordy phrases
   and no needless variants. It checks the Markdown files, and the comments of every other file written
   here. Vale would read such a file's code too. So `.tools/vale-comments` gives Vale the
   comments alone, mirrored as Markdown, and maps each alert back to its line and column. It skips
-  shebangs and linter directives, though not a directive's reason. Of `#` comments, it reads full
-  lines alone. A doc's leading declared name is code to it;
+  shebangs and linter directives, though not a directive's reason. Of `#` comments and Lua's `--`,
+  it reads full lines alone. A doc's leading declared name is code to it;
 - `lychee`: the links to files and their headings in the Markdown files, offline;
 - `rumdl`: rumdl's rules on the Markdown files, with lines of 100 columns but in code blocks and
   tables (`lint/rumdl.toml`);
+- `tombi`: tombi's format check on the TOML files, as `lint/tombi.toml` sets it: TOML 1.0.0, lines
+  of 100 columns, an indent of 4 and no schema, offline. A role's spec, `units.toml`, is a Go
+  template, which ws's strict load checks once rendered.
+  `(cd .tools/lint && ../run tombi format --offline ../../PATH)` formats a file;
+- `stylua`: StyLua's check on the Lua files, as `lint/stylua.toml` sets it: Lua 5.1, mise's, an
+  indent of 4 spaces and lines of 100 columns.
+  `.tools/run stylua --config-path .tools/lint/stylua.toml PATH` formats a file;
 - `actionlint` and `zizmor`: the workflows, zizmor with its online audits where `GH_TOKEN` is set;
 - `gitleaks`: every commit, for secrets, or those that `LOG_OPTS` picks with git log's options;
 - `gofmt`, `govet`, `golangci-lint`, `govulncheck` and `gotest`: the Go module at the root.
@@ -37,7 +44,8 @@ check files take `FILES`, as in `make vale FILES=README.md`:
   [the lazygit role's test](../roles/server/ubuntu/lazygit/README.md#the-config).
 
 `lint/` holds each linter's config, and the Makefile passes it by flag, so that no linter takes
-one it finds in another directory. Vale's vendored styles sit in `lint/vale/styles`.
+one it finds in another directory. tombi takes no such flag, so the Makefile runs it in `lint/`,
+where `lint/tombi.toml` is the first config it finds. Vale's vendored styles sit in `lint/vale/styles`.
 
 `.tools/sizecheck` leaves out the files nobody writes here. Those are foundryctl's compose files and
 lock, which yamllint leaves out too, and Vale's vendored styles. Data files, such
@@ -56,5 +64,16 @@ each package with the SHA-256 of each of its files. pip takes only the wheels it
 no package. uv writes the file from `.github/lint-requirements.in`, which says how, and make stops
 where the file lacks a pin of the `.in`. make installs the tools again where a file they come from
 is newer.
+
+## The gates of one file
+
+After each edit, `make lint-file FILES=PATH` runs the gates of the file's kind on that file alone:
+
+- Markdown: `vale`, `lychee`, `rumdl` and `sizecheck`;
+- YAML: `yamllint`, `vale` and `sizecheck`, and for a workflow `actionlint` and `zizmor`;
+- Go: `gofmt`, `govet`, `golangci-lint`, `govulncheck`, `gotest`, `vale` and `sizecheck`;
+- TOML: `tombi` and `vale`, but a spec, `vale` alone;
+- Lua: `stylua`, `vale` and `sizecheck`;
+- any other file: `shell` on a script, by extension or shebang, `vale` and `sizecheck`.
 
 [writing]: https://github.com/zadykian/toolkit/blob/main/skills/writing/SKILL.md#the-caps-and-vale

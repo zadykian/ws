@@ -18,8 +18,9 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   `main.go` runs `cmd`, which composes the root and the exit codes with the two sides'
   commands. `engine/cli` builds the root and the exit codes. `engine/core` holds `step`,
   `effect`, with `effect/effecttest`, `effect/local` and `effect/units`, and `resource`, with
-  `resource/resourcetest`, the resources the steps share. They are public, as the roles import them
-  from outside `engine/`.
+  `resource/resourcetest`, the resources the steps share, and `kind`, the kinds that a role's
+  `units.toml` names as units ([kind](../engine/core/kind/README.md)). They are public, as the roles
+  import them from outside `engine/`.
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
 - `install.sh`: installs ws's binary from a release ([Releases](../engine/core/update/README.md)).
@@ -34,7 +35,8 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 - `.tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
   caps them. `build` builds ws for a target, and `vale-comments` runs Vale on files' comments. Go's
   `./...` leaves out a dot directory, so the Go gates name the tools' packages too. `lint/` holds
-  the linters' configs, which the Makefile passes by flag.
+  the linters' configs, which the Makefile passes by flag, but tombi's, which tombi finds as it runs
+  there.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
 - `.claude/`: this file, the rules of `rules/`, Claude Code's `settings.json` and the lint
   plugin's `lint-gates` ([Where else to look](#where-else-to-look)).
@@ -58,9 +60,10 @@ make shell                        # ShellCheck and shfmt -d -i 4 on every shell 
 make gotest                       # the Go gates run at the root, the module; so do govet and gofmt
 ```
 
-The gates are `shell`, `yamllint`, `sizecheck`, `vale`, `lychee`, `rumdl`, `actionlint`, `zizmor`,
-`gitleaks`, `gofmt`, `govet`, `golangci-lint`, `govulncheck` and `gotest`
-([The gates](../.tools/README.md)). `make lint` needs Python 3.12 to 3.14, on Linux or on macOS on arm64.
+The gates are `shell`, `yamllint`, `tombi`, `stylua`, `sizecheck`, `vale`, `lychee`, `rumdl`,
+`actionlint`, `zizmor`, `gitleaks`, `gofmt`, `govet`, `golangci-lint`, `govulncheck` and `gotest`
+([The gates](../.tools/README.md)). `make lint` needs Python 3.12 to 3.14 and unzip, on Linux or
+on macOS on arm64.
 It installs yamllint into `.cache`, and `.tools/run` downloads the rest there.
 
 The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `playbook` builds ws and runs `ws server ubuntu
@@ -142,7 +145,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   `//nolint:NAME // reason`, `# yamllint disable-line rule:NAME` or
   `# shellcheck disable=SCNNNN`, each with the reason beside it. Never lower a severity, add an
   exclusion or keep a baseline: every file passes every gate outright. The linters' configs in
-  `.tools/lint/`, yamllint's, golangci-lint's, Vale's and rumdl's, are never weakened.
+  `.tools/lint/`, yamllint's, golangci-lint's, Vale's, rumdl's, tombi's and StyLua's, are never weakened.
 - ws's layers import downward: cobra lives in `cmd`, the `cli` packages and `.tools/`;
   `engine/core` imports itself alone; a role imports `engine/core`, `roles/internal` and its own
   side, but not that side's `cli`. The Mac imports nothing of the server's side.
