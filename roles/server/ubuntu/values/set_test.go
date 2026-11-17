@@ -87,12 +87,3 @@ func TestSetRefuses(t *testing.T) {
 		}
 	}
 }
-
-func TestNamedFindsAKeyWhateverItsValue(t *testing.T) {
-	data := []byte("---\nWS_USER: alice\n# WS_SECURITY_OUTBOUND: false\nWS_BASE_LOCALE:\n")
-	for name, want := range map[string]bool{"WS_USER": true, "WS_BASE_LOCALE": true, "WS_SECURITY_OUTBOUND": false, "ws": false} {
-		if Named(data, name) != want {
-			t.Errorf("Named(%q) = %v", name, !want)
-		}
-	}
-}

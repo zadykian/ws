@@ -24,25 +24,16 @@ import (
 // serverTarget is ws server ubuntu apply's side of the verbs. opts holds the flags, read when the
 // command runs.
 func serverTarget(p enginecli.Env, opts *applyOptions) engine.Target {
-	return engine.Target{Wizard: wizardSide(p), Prepare: func(_ context.Context, c engine.Call) (engine.Run, error) {
+	return engine.Target{Prepare: func(_ context.Context, c engine.Call) (engine.Run, error) {
 		r, err := prepareServer(c, p, *opts)
 		if err != nil {
 			return engine.Run{}, err
 		}
 		r.term.Flush() // Prepare's lines wait for no run: Apply says the run's own.
 		return runOf(r.cfg, r.list), nil
-	}, Refuse: func(engine.Call) string {
-		if p.Euid != 0 {
-			return "run it as root, by sudo: ws's secrets and values.yml are root's"
-		}
-		return ""
-	}, NoScreen: "it needs a terminal and no --plain: anywhere else, run ws server ubuntu secrets " +
-		"and ws server ubuntu values set",
-		Sheets: func(context.Context, engine.Call) ([]tui.Sheet, func(context.Context), error) {
-			return serverSheets(p), nil, nil
-		}, State: func(_ context.Context, c engine.Call) (engine.Report, error) {
-			return serverReport(c, p, *opts)
-		}}
+	}, State: func(_ context.Context, c engine.Call) (engine.Report, error) {
+		return serverReport(c, p, *opts)
+	}}
 }
 
 // serverReport readies what ws server ubuntu state reports.

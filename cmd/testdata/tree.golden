@@ -264,12 +264,10 @@ Usage:
 
 Available Commands:
   apply       set the server up, each role as Go steps
-  configure   edit ws's secrets and values.yml on forms, on ws
   fans        drive the board's fans on the curves of CONFIG until SIGTERM
   secrets     keep ws's secrets file, with its identity as a systemd credential
   state       report what the server holds of what ws manages, and what apply would change
   values      edit the machine's values
-  wizard      set ws up from its own shell, in stages
 
 Flags:
   -h, --help   help for ubuntu
@@ -296,17 +294,6 @@ Flags:
       --json           print each event of the run as a line of JSON on stdout
       --only strings   run the named roles and ROLE/STEPs alone, as a list or by repeating the flag
       --secrets FILE   read the secrets from the age-encrypted FILE
-
-Global Flags:
-      --plain   print lines, with no full-screen display
-== ws server ubuntu configure
-The forms of ws client macos configure that edit ws, read and written here as root, with no ssh. ws's secrets show as set or not, never their values. Ctrl-N goes to ws's values. Ctrl-S writes a form. It needs a terminal: anywhere else, run ws server ubuntu secrets and ws server ubuntu values set.
-
-Usage:
-  ws server ubuntu configure [flags]
-
-Flags:
-  -h, --help   help for configure
 
 Global Flags:
       --plain   print lines, with no full-screen display
@@ -494,18 +481,6 @@ Usage:
 
 Flags:
   -h, --help   help for set
-
-Global Flags:
-      --plain   print lines, with no full-screen display
-== ws server ubuntu wizard
-The stages of ws client macos wizard that act on ws, run as root on ws: ws's values, which it asks where values.yml lacks them, then ws server ubuntu apply, in a unit of its own that goes on where the login drops, then claude's login, and ws's signing key on GitHub. Either wizard follows the other's unit, and after the other's run, with nothing changed, runs no apply. At a terminal the stages open as ws's list, and the ones chosen run: e opens ws server ubuntu configure's forms. Under --check each stage prints what it would do and changes nothing.
-
-Usage:
-  ws server ubuntu wizard [flags]
-
-Flags:
-      --check   print what each stage would do and change nothing
-  -h, --help    help for wizard
 
 Global Flags:
       --plain   print lines, with no full-screen display
