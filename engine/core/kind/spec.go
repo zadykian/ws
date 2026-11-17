@@ -38,6 +38,8 @@ type spec struct {
 	Deb  map[string]debSpec  `toml:"deb"`
 	// Service is a systemd unit, with the files that one restart covers.
 	Service map[string]serviceSpec `toml:"service"`
+	// State is one small state with a cheap check.
+	State map[string]stateSpec `toml:"state"`
 }
 
 // parse fills the spec's text, named name in errors, with e.Data and pure's funcs, and decodes it.
