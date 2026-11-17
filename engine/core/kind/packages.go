@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/apt"
 )
@@ -23,6 +24,9 @@ var aptName = regexp.MustCompile(`^[a-z0-9][a-z0-9+.-]*[a-z0-9+.](=[A-Za-z0-9.+~
 type packagesSpec struct {
 	base
 	Template string `toml:"template"`
+	// Simulate checks that apt finds each name, and installs none. It tries a role's names on a
+	// machine that has no use for them, so that CI fails where the archive drops one.
+	Simulate bool `toml:"simulate"`
 }
 
 func (s packagesSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.Resource, error), error) {
@@ -46,6 +50,25 @@ func (s packagesSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource
 		if len(names) == 0 {
 			return nil, nil
 		}
+		if s.Simulate {
+			return []resource.Resource{simulated{m: e.M, template: s.Template, names: names}}, nil
+		}
 		return []resource.Resource{apt.Packages{M: e.M, Out: e.Out, Names: names, Recommends: true}}, nil
 	}, nil
+}
+
+// simulated is a packages unit that simulate sets: apt-get's simulated install of its names, which
+// reads apt's lists and changes nothing.
+type simulated struct {
+	m        effect.Machine
+	template string
+	names    []string
+}
+
+// Plan fails where apt finds no package of a name, and plans nothing otherwise.
+func (s simulated) Plan(ctx context.Context) ([]resource.Change, error) {
+	if _, err := s.m.Run(ctx, "apt-get", append([]string{"install", "-s"}, s.names...)...); err != nil {
+		return nil, fmt.Errorf("apt finds not every package that %s names: %w", s.template, err)
+	}
+	return nil, nil
 }

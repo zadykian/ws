@@ -95,6 +95,7 @@ checked before apt-get installs it. Where the version that dpkg lists is the pin
 ```toml
 [packages.NAME]
 template = "names.tmpl"     # the names, at white space; NAME=VERSION pins one, * as a glob
+simulate = false            # check that apt finds each name, and install none
 ```
 
 - mise's own apt takes a fixed list. This kind's list follows the machine, as its template fills
@@ -103,6 +104,9 @@ template = "names.tmpl"     # the names, at white space; NAME=VERSION pins one, 
 - A word that is no package's name, such as an option or a path, fails the plan. So does a word
   that ends in a dash, which apt-get reads as a removal. A template that gives no name plans
   nothing.
+- `simulate` runs `apt-get install -s` of the names as the unit plans, and fails with apt's error
+  where one is missing. It changes nothing, so it tries a role's names on a machine that installs
+  none of them. It reads apt's lists as an earlier `apt-get update` left them.
 
 ### service
 
