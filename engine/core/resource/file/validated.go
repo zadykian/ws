@@ -33,7 +33,16 @@ func (c checked) Item() step.Item { return c.Change.(writeFile).Item() }
 // Apply writes the content beside the target and runs the check on it. Only a good file is then
 // written over the target.
 func (c checked) Apply(ctx context.Context) error {
-	f := c.v.File
+	if err := c.v.try(ctx); err != nil {
+		return err
+	}
+	return c.Change.Apply(ctx)
+}
+
+// try writes the content beside the target, runs the check on it, and removes it. A refusal leaves
+// the target unchanged.
+func (v Validated) try(ctx context.Context) error {
+	f := v.File
 	pending := f.Path + ".ws-check"
 	if err := f.guard(); err != nil {
 		return err
@@ -44,7 +53,7 @@ func (c checked) Apply(ctx context.Context) error {
 	if err := f.M.WriteAtomic(pending, f.Content, f.attrs()); err != nil {
 		return err
 	}
-	name, args := c.v.Check(pending)
+	name, args := v.Check(pending)
 	out, err := f.M.RunRoot(ctx, name, args...)
 	if _, rmErr := f.M.RunRoot(ctx, "rm", "-f", pending); rmErr != nil && err == nil {
 		err = rmErr
@@ -52,7 +61,7 @@ func (c checked) Apply(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("%s refuses the new %s: %w: %s", name, f.Path, err, strings.TrimSpace(string(out)))
 	}
-	return c.Change.Apply(ctx)
+	return nil
 }
 
 // Plan plans the file's changes, each checked before it applies.
