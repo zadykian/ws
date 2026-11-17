@@ -1,0 +1,5 @@
+# tmux from Ubuntu's archive, and the removal of its snap. The package comes first, so that the
+# machine never lacks a tmux.
+[bootstrap.packages]
+"apt:tmux" = "latest"
+"ws:state/tmux-snap" = "in-sync"
