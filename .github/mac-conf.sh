@@ -1,5 +1,5 @@
 # shellcheck shell=sh
-# The cases of the mac, mac-wizard and mac-cld jobs write and read a conf, the file that WS_VALUES
+# The cases of the mac and mac-cld jobs write and read a conf, the file that WS_VALUES
 # names, through these functions. A conf in /etc/ws is root's, and they write it through sudo. A
 # conf is YAML, a KEY: value a line, and a case writes each value as the file holds it, in quotes
 # where YAML needs them. They source this file and never run it. A conf's layout lives here alone:
@@ -51,8 +51,8 @@ conf_as() {
 
 # conf_write CONF puts each KEY: value line of stdin in the file of its key, CONF or the server's
 # file, in place of what they held. The server's file goes, with its directory, where it gets no
-# line. A server's file that it makes and that holds no WS_SLOT gets WS_SLOT: 0 first, as the wizard
-# gives it. WS_TUNNEL_PORT: 51820 follows, where the lines hold no WS_TUNNEL_PORT. It reads stdin first, so that
+# line. A server's file that it makes and that holds no WS_SLOT gets WS_SLOT: 0 first, as values.yml
+# holds it. WS_TUNNEL_PORT: 51820 follows, where the lines hold no WS_TUNNEL_PORT. It reads stdin first, so that
 # conf_print CONF | ... | conf_write CONF is safe. It writes in place, through tee, so that CONF
 # keeps its inode and its mode, and through sudo where CONF is in /etc/ws.
 conf_write() {

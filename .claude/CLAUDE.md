@@ -40,7 +40,7 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 - `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook`, `rootless`, `install` and
   `signoz`;
   `mac.yml`, with `mac`, whose cases are `.github/mac/NN-*.sh`; `mac-cld.yml`, with `mac-cld`;
-  `mac-wizard.yml`, with `mac-wizard`, whose cases are `.github/mac-wizard/NN-*.sh`; `rules.yml`,
+  `rules.yml`,
   the checks of zadykian/toolkit on a pull request; and `issues.yml`, its check of an issue. The
   toolkit's checks warn alone. `words.yml`, with `words`, checks a pull request and an issue for the
   list's words ([The `words` job](../.github/workflows/README.md#the-words-job)).
@@ -66,8 +66,8 @@ The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `playbook` b
 apply` twice in an Ubuntu 26.04 container and checks the config that Fresh reads, `signoz` forges
 SigNoz's compose files again, and `install` tries `install.sh`. `rootless` runs the rootless daemon
 and the firewall on a booted runner ([The rootless job](../.github/workflows/rootless.md)). `mac` sets up a
-Mac on GitHub's macOS runner, and `mac-wizard` runs the Mac's wizard on another. `mac-cld` sets up
-Ghostty and cld on a third ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `ws
+Mac on GitHub's macOS runner. `mac-cld` sets up
+Ghostty and cld on another ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `ws
 server ubuntu apply` sets up the machine that runs it, as below.
 
 The hooks check a commit for the local list's words. This checks any other text, such as a pull
@@ -81,7 +81,7 @@ LC_ALL=C tr _ ' ' <FILE | grep -ciwF -f <(sed -e 'y/_/ /' -e 's/^[[:space:]]*//'
 ## How changes land
 
 - Pull requests are stacked, each on the one below it. CI runs `lint` and `signoz` on each,
-  whatever its base, and `playbook`, `mac`, `mac-cld` and `mac-wizard` on the stack's top one alone
+  whatever its base, and `playbook`, `mac` and `mac-cld` on the stack's top one alone
   ([Checks](../.github/workflows/README.md#checks)).
 - They land on `main` by GitHub's merge commits, as
   [`/flow:land`](https://github.com/zadykian/toolkit/blob/main/skills/land/SKILL.md) does. A pull

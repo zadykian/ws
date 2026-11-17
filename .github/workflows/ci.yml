@@ -53,7 +53,7 @@ jobs:
   # ws server ubuntu apply as on a new machine, but in a container rather than a booted system, so
   # without the steps that need a booted systemd. It runs twice, and the second run must change
   # nothing. In a stack, it runs on the top pull request alone, which holds every change below it.
-  # So do mac.yml's, mac-cld.yml's and mac-wizard.yml's jobs. Run on each of a stack of 20, these
+  # So do mac.yml's and mac-cld.yml's jobs. Run on each of a stack of 20, these
   # jobs kept its pull requests waiting for runners past 50 minutes. A stack's pull requests open as
   # drafts, before gh stack link joins them, so a draft's opened event has no stack and these
   # jobs skip it. No event follows the link: ready_for_review, once done, is the first to
