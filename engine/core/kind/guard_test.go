@@ -1,6 +1,7 @@
 package kind
 
 import (
+	"errors"
 	"io/fs"
 	"slices"
 	"strings"
@@ -118,16 +119,56 @@ func TestGuardPassesInAContainer(t *testing.T) {
 func TestGuardTakesExactlyOne(t *testing.T) {
 	e, _, _, _ := testEnv(false)
 	for spec, want := range map[string]string{
-		"after = \"\"\n": "takes login_key with home, or sudo_right",
-		"login_key = \"u\"\nhome = \"/home/u\"\nsudo_right = \"u\"\n": "takes login_key with home, or sudo_right",
-		"sudo_right = \"u\"\nhome = \"/home/u\"\n":                    "takes login_key with home, or sudo_right",
-		"login_key = \"u\"\n":                                         `home "" is not a clean absolute path`,
-		"login_key = \"u\"\nhome = \"home/u\"\n":                      `home "home/u" is not a clean absolute path`,
-		"sudo_right = \"-u\"\n":                                       `sudo_right "-u" is no user's name`,
+		"after = \"\"\n": "takes one of login_key with home, sudo_right and command",
+		"login_key = \"u\"\nhome = \"/home/u\"\nsudo_right = \"u\"\n":        "takes one of login_key with home, sudo_right and command",
+		"sudo_right = \"u\"\nhome = \"/home/u\"\n":                           "takes one of login_key with home, sudo_right and command",
+		"login_key = \"u\"\n":                                                `home "" is not a clean absolute path`,
+		"login_key = \"u\"\nhome = \"home/u\"\n":                             `home "home/u" is not a clean absolute path`,
+		"sudo_right = \"-u\"\n":                                              `sudo_right "-u" is no user's name`,
+		"command = [\"/bin/true\"]\nlogin_key = \"u\"\nhome = \"/home/u\"\n": "takes one of login_key with home, sudo_right and command",
+		"command = [\"/bin/true\"]\nsudo_right = \"u\"\n":                    "takes one of login_key with home, sudo_right and command",
+		"command = [\"/bin/true\"]\nhome = \"/home/u\"\n":                    "takes one of login_key with home, sudo_right and command",
+		"command = [\"true\"]\n":                                             `command "true": its program is no absolute path`,
+		"command = [\"\"]\n":                                                 `command "": its program is no absolute path`,
 	} {
 		_, err := Load(e, tree(map[string]string{"r/units.toml": "[guard.a]\n" + spec}))
 		if err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("load of\n%s= %v, want %q", spec, err, want)
 		}
+	}
+}
+
+const commandGuard = "[guard.a]\ncommand = [\"/usr/bin/check\", \"x\"]\n"
+
+func TestGuardCommandPassesAndSays(t *testing.T) {
+	e, m, _, out := testEnv(true)
+	m.Results["/usr/bin/check x"] = effecttest.Result{Out: []byte("first\n\nsecond\n")}
+	units := loadOne(t, e, commandGuard, nil)
+	if err := run(t, e, units); err != nil {
+		t.Fatalf("run = %v, want none", err)
+	}
+	if !slices.Contains(m.Calls, "root /usr/bin/check x") {
+		t.Errorf("calls %q, want the command as root", m.Calls)
+	}
+	if want := []string{"say: first", "say: second"}; !slices.Equal(out.Lines, want) {
+		t.Errorf("lines = %q, want %q once, though the run plans twice", out.Lines, want)
+	}
+}
+
+func TestGuardCommandFailsWithItsOutput(t *testing.T) {
+	e, m, _, _ := testEnv(true)
+	m.Results["/usr/bin/check x"] = effecttest.Result{Out: []byte("the port is an uplink\n"), Err: errors.New("exit status 1")}
+	err := guardPlan(t, e, commandGuard)
+	if err == nil || !strings.Contains(err.Error(), "exit status 1") || !strings.Contains(err.Error(), "the port is an uplink") {
+		t.Errorf("plan = %v, want the command's error and output", err)
+	}
+}
+
+func TestGuardCommandRunsInAContainer(t *testing.T) {
+	e, m, _, _ := testEnv(false)
+	m.Files["/.dockerenv"] = nil
+	m.Results["/usr/bin/check x"] = effecttest.Result{Err: errors.New("exit status 1")}
+	if err := guardPlan(t, e, commandGuard); err == nil {
+		t.Error("plan = nil, want the command's refusal in a container too")
 	}
 }

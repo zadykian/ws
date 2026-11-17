@@ -227,13 +227,17 @@ reboot = { module = "name", package = "name", hint = "…" }             # notes
 login_key = "USER"          # with home: USER holds a key that sshd takes
 home = "/home/USER"
 sudo_right = "USER"         # or: USER has the right to sudo, and a password for it to ask
+command = ["/abs/cmd"]      # or: the command, as root, exits 0
 ```
 
 - `login_key` reads `home/.ssh/authorized_keys` through the home's link guard. It fails where the
   file holds no key, or sshd would pass it over for its owner or mode.
 - `sudo_right` passes for root, which needs no sudo.
-- A container, which has no login to lose, passes each. A unit that would close a login waits on the
-  guard by its `after`.
+- A container, which has no login to lose, passes `login_key` and `sudo_right`. A unit that would
+  close a login waits on the guard by its `after`.
+- `command` is a role's own check, a command of ws where Go holds it. It runs as root on every
+  machine, containers too. Its exit 0 passes, and says each line of its output once a run. Any
+  other fails the plan with the command's error, its standard error and its output.
 
 ## ws unit
 
