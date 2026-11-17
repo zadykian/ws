@@ -47,7 +47,8 @@ type Shared struct {
 }
 
 // Parse returns the values that data gives over Default. It refuses a key that no role knows, a key
-// twice, a path that underHome refuses, and a signing key that is no .pub's path. Empty data gives Default.
+// twice, and a path that underHome refuses. It refuses a signing key that is no .pub's path, and a
+// build cache value that dockerd cannot read. Empty data gives Default.
 func Parse(data []byte) (Values, error) {
 	v, err := decode(data)
 	if err != nil {
@@ -57,6 +58,9 @@ func Parse(data []byte) (Values, error) {
 		return Values{}, err
 	}
 	if err := v.signingPub(); err != nil {
+		return Values{}, err
+	}
+	if err := v.Docker.check(); err != nil {
 		return Values{}, err
 	}
 	return v, nil
