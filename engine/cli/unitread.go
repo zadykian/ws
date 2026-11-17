@@ -1,0 +1,146 @@
+package cli
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/spf13/cobra"
+
+	"github.com/zadykian/ws/engine/core/kind"
+	"github.com/zadykian/ws/engine/core/step"
+)
+
+// unitRead returns ws unit read.
+func unitRead(p Env, s UnitSide) *cobra.Command {
+	return &cobra.Command{
+		Use:   "read UNIT...",
+		Short: "print each unit's state: " + InSync + ", or the first change that write would make",
+		Long: "It plans each UNIT and the units it waits on, and applies nothing. It prints a line per UNIT " +
+			"on stdout, in the order given: the unit, a tab and its state. The state is " + InSync + "; the " +
+			"headline of its first change, with \" (+N more)\" for the rest; \"after UNIT\" where it waits " +
+			"on a unit with changes; or \"fails: \" and why its plan failed. A failed plan stops no other " +
+			"unit's read. ws's own lines go to stderr.",
+		Args: cobra.MinimumNArgs(1),
+		RunE: func(c *cobra.Command, names []string) error {
+			if err := s.refuse(p); err != nil {
+				return err
+			}
+			r, err := loadUnits(c, p, s)
+			defer r.term.Flush()
+			if err != nil {
+				return err
+			}
+			units, err := r.closure(names)
+			if err != nil {
+				return err
+			}
+			reports, err := step.Read(c.Context(), kind.Steps(units))
+			if err != nil {
+				return err
+			}
+			state := map[string]string{}
+			for _, rep := range reports {
+				state[rep.Step] = unitState(rep)
+			}
+			var sb strings.Builder
+			for _, name := range names {
+				sb.WriteString(name + "\t" + state[name] + "\n")
+			}
+			_, err = fmt.Fprint(c.OutOrStdout(), sb.String())
+			return err
+		},
+	}
+}
+
+// unitState is a unit's report as one line: what it waits on, why its plan failed, the first
+// change it would make, or InSync. A failure goes before the changes, as mise must fail the plan.
+func unitState(r step.Report) string {
+	if r.After != "" {
+		return "after " + r.After
+	}
+	for _, it := range r.Items {
+		if it.Kind == step.CheckItem {
+			why := strings.TrimPrefix(it.Conflict, r.Step+": planning: ")
+			line, _, _ := strings.Cut(why, "\n")
+			return "fails: " + line
+		}
+	}
+	if len(r.Changes) == 0 {
+		return InSync
+	}
+	line, _, _ := strings.Cut(r.Changes[0].Text, "\n")
+	if more := len(r.Changes) - 1; more > 0 {
+		line += fmt.Sprintf(" (+%d more)", more)
+	}
+	return line
+}
+
+// unitWrite returns ws unit write.
+func unitWrite(p Env, s UnitSide) *cobra.Command {
+	c := &cobra.Command{
+		Use:   "write UNIT...",
+		Short: "apply the units, in the order they run",
+		Long: "It plans, applies and plans again each UNIT, in the order the units run whatever the order " +
+			"given. A unit that a UNIT waits on and that is not named is planned and left out. A UNIT " +
+			"behind one with changes is skipped, and fails the write. --dry-run applies nothing and " +
+			"prints each change, file diffs included. ws's lines go to stderr, and the last one names " +
+			"the units that changed.",
+		Args: cobra.MinimumNArgs(1),
+	}
+	dry := c.Flags().Bool("dry-run", false, "plan the units and apply none")
+	c.RunE = func(c *cobra.Command, names []string) error {
+		if err := s.refuse(p); err != nil {
+			return err
+		}
+		r, err := loadUnits(c, p, s)
+		defer r.term.Flush()
+		if err != nil {
+			return err
+		}
+		units, err := r.closure(names)
+		if err != nil {
+			return err
+		}
+		w := &written{Observer: step.Printer{Out: r.out}, named: map[string]bool{}}
+		for _, n := range names {
+			w.named[n] = true
+		}
+		_, err = step.RunWith(c.Context(), kind.Steps(units), step.Options{Observer: w, Check: *dry,
+			LeftOut: func(_, name string) bool { return !w.named[name] }})
+		if err != nil {
+			return err
+		}
+		verb, done := "changed", "none"
+		if *dry {
+			verb = "would change"
+		}
+		if len(w.changed) > 0 {
+			done = strings.Join(w.changed, ", ")
+		}
+		r.out.Say("%s: %s", verb, done)
+		if len(w.behind) > 0 && !*dry {
+			return fmt.Errorf("skipped %s: write the unit it waits on too", strings.Join(w.behind, ", "))
+		}
+		return nil
+	}
+	return c
+}
+
+// written follows a write: the named units that changed, and those that a unit left out kept
+// back. A tool that called the write would count those done, so they fail it.
+type written struct {
+	step.Observer
+	named   map[string]bool
+	changed []string
+	behind  []string
+}
+
+func (w *written) Observe(e step.Event) {
+	switch {
+	case e.Kind == step.Done && !e.LeftOut && len(e.Changes) > 0:
+		w.changed = append(w.changed, e.Step)
+	case e.Kind == step.Skipped && e.After != "" && w.named[e.Step]:
+		w.behind = append(w.behind, e.Step+" (after "+e.After+")")
+	}
+	w.Observer.Observe(e)
+}
