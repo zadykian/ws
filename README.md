@@ -45,7 +45,8 @@ Each role has a page of its own. A role is Go steps of ws:
 
 On a new Mac with Apple silicon, one line installs ws's binary. Then write `values.yml`
 ([The Mac's values](roles/client/macos/values/README.md)) and set up the rest ([The
-Mac](roles/client/macos/README.md)):
+Mac](roles/client/macos/README.md)). [The Mac's runbook](roles/client/macos/runbook.md) lists the
+steps by hand, and [the server's](roles/server/ubuntu/runbook.md) its own:
 
 ```sh
 curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sh

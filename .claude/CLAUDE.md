@@ -28,7 +28,8 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   `zsh/files/zshrc`, the zsh hook that turns off the modes that a drop leaves on.
 - The pages sit beside their code, as the `README.md` of a role or a package. A second page stands
   beside one where the cap keeps two apart: `zed/projects.md`, `cable/router.md`,
-  `.github/workflows/rootless.md`, `mac-cld.md` and `mac-servers.md`. `.tools/README.md` holds the
+  `.github/workflows/rootless.md`, `mac-cld.md`,
+  `mac-servers.md` and `runbook.md` of each side. `.tools/README.md` holds the
   gates and `.github/workflows/README.md` CI.
 - `.tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
   caps them. `build` builds ws for a target, and `vale-comments` runs Vale on files' comments. Go's
@@ -114,7 +115,8 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([ci.yml](../.github/workflows/ci.yml)) and the gates' tools ([.tools/run](../.tools/run)). So is ws's
   binary, against its release's `ws.sha256` ([install.sh](../install.sh),
   [update.go](../engine/core/update/update.go)), and so is yamllint
-  ([lint-requirements.in](../.github/lint-requirements.in)). Go is checked against the
+  ([lint-requirements.in](../.github/lint-requirements.in)) and Homebrew's `.pkg`, with its signer
+  ([runbook.md](../roles/client/macos/runbook.md)). Go is checked against the
   SHA-256 its publisher lists ([devtools](../roles/server/ubuntu/devtools/README.md)). The postgres-language-server and
   docker-language-server are checked against their SHA-256
   ([binaries.go](../roles/server/ubuntu/devtools/binaries.go)). gopls and Delve are built through Go's

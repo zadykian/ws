@@ -14,7 +14,7 @@ a direct way: `ssh -o HostName=ADDRESS -o Port=PORT ws`, as ufw lets SSH in on e
 The Mac's side is Go: one binary, `ws`, of isolated steps, which `go test` checks on each pull
 request. It runs as the user, with sudo where it needs root. It sets up Ghostty, cld and a zsh
 hook ([Ghostty and cld on the Mac](ghostty/README.md)). It installs Ghostty, Zed and a font from
-Homebrew, [installed](https://brew.sh) first. `install.sh` puts `ws` in `~/.local/bin` (put it on
+Homebrew, installed first by [the runbook](runbook.md). `install.sh` puts `ws` in `~/.local/bin` (put it on
 `PATH` by hand) from a release ([Releases](../../../engine/core/update/README.md)). `ws` embeds the files it installs, so it
 needs no clone. Write the values below in `values.yml` first ([The two
 files](values/README.md#the-two-files)). Then:
