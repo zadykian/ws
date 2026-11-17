@@ -87,8 +87,9 @@ func unitList(p Env, s UnitSide) *cobra.Command {
 	return c
 }
 
-// loadUnits loads the side's values and every unit of its specs. A spec that fails to load fails
-// the command with status 1, as the specs and the values are the machine's, not the command line's.
+// loadUnits loads the side's values and every unit of its specs, which name this ws by self. A spec
+// that fails to load fails the command with status 1, as the specs and the values are the
+// machine's, not the command line's.
 func loadUnits(c *cobra.Command, p Env, s UnitSide) (unitRun, error) {
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
 	r := unitRun{term: term, out: engine.Lines{Out: term, Prog: c.CommandPath(), Seen: map[string]bool{}}}
@@ -105,7 +106,11 @@ func loadUnits(c *cobra.Command, p Env, s UnitSide) (unitRun, error) {
 	if _, err := fs.Stat(specs, "."); err != nil {
 		return r, fmt.Errorf("the specs: %w", err)
 	}
-	env := kind.Env{M: m, U: s.Units, Out: r.out, Data: data, System: s.System}
+	self, err := p.Self()
+	if err != nil {
+		return r, fmt.Errorf("finding the file ws runs from: %w", err)
+	}
+	env := kind.Env{M: m, U: s.Units, Out: r.out, Data: data, System: s.System, Self: self}
 	if s.Secrets != nil {
 		env.Secrets = loadOnce(s.Secrets, m)
 	}

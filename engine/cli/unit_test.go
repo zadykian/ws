@@ -244,3 +244,15 @@ func TestUnitWritesAUnitAfterAnOffOne(t *testing.T) {
 		t.Errorf("write: status = %d, wrote a %v, b = %q, stderr = %q; want b alone", status, wrote, m.Files["/etc/b"], stderr)
 	}
 }
+
+func TestUnitSetsSelf(t *testing.T) {
+	e, _ := unitEnv(t, map[string]string{"r/units.toml": "[file.a]\npath = \"/etc{{ self }}\"\nsource = \"a\"\n", "r/a": "1\n"})
+	status, _, stderr := runUnit(e, "write", "--dry-run", "file/a")
+	if status != 0 || !strings.Contains(stderr, "/etc/h/.local/bin/ws") {
+		t.Errorf("status = %d, stderr = %q; want the path of this ws", status, stderr)
+	}
+	e.Self = func() (string, error) { return "", errors.New("no such file") }
+	if status, _, stderr := runUnit(e, "list"); status != 1 || !strings.Contains(stderr, "finding the file ws runs from") {
+		t.Errorf("without the path: status = %d, stderr = %q", status, stderr)
+	}
+}
