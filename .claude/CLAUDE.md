@@ -21,6 +21,8 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   `resource/resourcetest`, the resources the steps share, and `kind`, the kinds that a role's
   `units.toml` names as units ([kind](../engine/core/kind/README.md)). They are public, as the roles
   import them from outside `engine/`.
+- `mise.toml` and `mise.lock`: mise's config that both sides share, its settings and the pin of
+  ws, a release, with the release's SHA-256 for each target in the lock.
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
 - `install.sh`: installs ws's binary from a release ([Releases](../engine/core/update/README.md)).
@@ -116,9 +118,10 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([repository.go](../roles/server/ubuntu/docker/repository.go)). So is Fresh's `.deb`
   ([download.go](../roles/server/ubuntu/fresh/download.go)), and so are foundryctl
   ([ci.yml](../.github/workflows/ci.yml)) and the gates' tools ([.tools/run](../.tools/run)). So is ws's
-  binary, against its release's `ws.sha256` ([install.sh](../install.sh),
-  [update.go](../engine/core/update/update.go)), and so is yamllint
-  ([lint-requirements.in](../.github/lint-requirements.in)) and Homebrew's `.pkg`, with its signer
+  binary: `mise.lock` holds its SHA-256 for each target, which mise checks as it installs
+  ([mise.lock](../mise.lock)). `install.sh` and `ws update` check it against its release's
+  `ws.sha256` ([install.sh](../install.sh), [update.go](../engine/core/update/update.go)). So is
+  yamllint ([lint-requirements.in](../.github/lint-requirements.in)), and Homebrew's `.pkg`, with its signer
   ([runbook.md](../roles/client/macos/runbook.md)). Go is checked against the
   SHA-256 its publisher lists ([devtools](../roles/server/ubuntu/devtools/README.md)). The postgres-language-server and
   docker-language-server are checked against their SHA-256
