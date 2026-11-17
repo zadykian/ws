@@ -29,6 +29,26 @@ func (s Store) Edit(ctx context.Context, fn func(*Secrets) error) error {
 	return s.write(cur, id)
 }
 
+// Load reads the file whole, its references expanded, for a unit that renders from it: Whole is
+// set, as the file is the truth of what it names. A missing file gives an error that wraps
+// fs.ErrNotExist, before the credential is asked for, so that a machine with no secrets file needs
+// no credential.
+func (s Store) Load(ctx context.Context) (Secrets, error) {
+	if _, err := s.M.Stat(FilePath); err != nil {
+		return Secrets{}, err
+	}
+	id, err := credstore(s).Identity(ctx)
+	if err != nil {
+		return Secrets{}, err
+	}
+	cur, err := Load(s.M, FilePath, id)
+	if err != nil {
+		return Secrets{}, err
+	}
+	cur.Whole = true
+	return cur, nil
+}
+
 // Keys returns the file's labels, "KIND NAME", sorted and never a value.
 func (s Store) Keys(ctx context.Context) ([]string, error) {
 	cur, _, err := s.read(ctx)
