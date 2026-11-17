@@ -14,7 +14,6 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/fresh"
 	"github.com/zadykian/ws/roles/server/ubuntu/git"
 	"github.com/zadykian/ws/roles/server/ubuntu/ikeward"
-	"github.com/zadykian/ws/roles/server/ubuntu/lazygit"
 	"github.com/zadykian/ws/roles/server/ubuntu/otelcol"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/security"
@@ -42,7 +41,6 @@ var all = []entry{
 	{"tunnel", tunnel.Steps},
 	{"ikeward", ikeward.Steps},
 	{"git", git.Steps},
-	{"lazygit", lazygit.Steps},
 	{"devtools", devtools.Steps},
 	{"docker", docker.Steps},
 	{"claude", claude.Steps},
