@@ -15,8 +15,10 @@ beside it holds. Run `ws client macos apply` where a step says so: it sets up th
    - Check its signer with `pkgutil --check-signature Homebrew.pkg`. It must be
      `Developer ID Installer: Patrick Linnane (927JGANW46)`.
    - Install it with `sudo installer -pkg Homebrew.pkg -target /`.
-3. Install ws with `install.sh` ([Releases](../../../engine/core/update/README.md)), and put
-   `~/.local/bin` on `PATH`.
+3. Install ws's binary by hand. Download `ws-darwin-arm64` and `ws.sha256` from
+   `releases/latest/download` of ws's repository with `curl -fsSLO`. Check it with `shasum -a 256
+   -c --ignore-missing ws.sha256`, install it with `install -m 755 ws-darwin-arm64
+   ~/.local/bin/ws`, and put `~/.local/bin` on `PATH`.
 4. Install gh with `brew install gh`, which the GitHub steps need.
 
 ## Answers
@@ -76,14 +78,15 @@ a command that needs root. A user outside sudoers cannot go on.
 
 ## ws on ws
 
-1. At ws, run `curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sudo
-   sh`, so that ws lands in `/usr/local/bin`, which sudo reaches. Check it with `ws version`.
-2. Set the values there: `sudo ws server ubuntu values set KEY VALUE` for each that differs from its
-   default. On a cloud VM, set `WS_SECURITY_OUTBOUND` to false, as the outbound table drops the
-   metadata service ([Outbound](../../server/ubuntu/security/README.md#outbound)). At slot N other
-   than 0, set `WS_TUNNEL_ADDRESS` to `10.99.N.1/24`, and `WS_TUNNEL_PORT` to the Mac's. Edit
-   `WS_TUNNEL_PEERS` by hand in `/etc/ws/values.yml`, as `values set` leaves it: `mac` at
-   `10.99.N.2` ([The tunnel](../../server/ubuntu/tunnel/README.md#the-tunnel)).
+1. At ws, write the values first, as the server's runbook says: `/etc/ws/values.yml`, root's and
+   mode 600, with each value that differs from its default. `install.sh` reads `WS_USER` from it.
+   On a cloud VM, set `WS_SECURITY_OUTBOUND` to false, as the outbound table drops the metadata
+   service ([Outbound](../../server/ubuntu/security/README.md#outbound)). At slot N other than 0,
+   set `WS_TUNNEL_ADDRESS` to `10.99.N.1/24`, `WS_TUNNEL_PORT` to the Mac's, and
+   `WS_TUNNEL_PEERS` to `mac` at `10.99.N.2`
+   ([The tunnel](../../server/ubuntu/tunnel/README.md#the-tunnel)).
+2. Run `curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sudo sh`.
+   The bootstrap it runs puts ws in `/usr/local/bin`. Check it with `ws version`.
 3. Make the secrets, as [the server's runbook](../../server/ubuntu/runbook.md) says, with `ssh -t NAME
    sudo ws server ubuntu secrets ...`.
 4. Run it as the server's runbook says, with `ssh -t NAME sudo systemd-run --pty --wait -p

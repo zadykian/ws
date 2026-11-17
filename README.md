@@ -46,13 +46,17 @@ its spec of ws's units:
 
 `roles/client/macos/` sets up the Mac that works on the server, and Ghostty and Zed on it: [The Mac](roles/client/macos).
 
-On a new Mac with Apple silicon, one line installs ws's binary. Then write `values.yml`
+On a new Mac with Apple silicon, install ws's binary by hand, checked against its release's
+checksum. Then write `values.yml`
 ([The Mac's values](roles/client/macos/values/README.md)) and set up the rest ([The
 Mac](roles/client/macos/README.md)). [The Mac's runbook](roles/client/macos/runbook.md) lists the
 steps by hand, and [the server's](roles/server/ubuntu/runbook.md) its own:
 
 ```sh
-curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sh
+curl -fsSLO https://github.com/zadykian/ws/releases/latest/download/ws-darwin-arm64
+curl -fsSLO https://github.com/zadykian/ws/releases/latest/download/ws.sha256
+shasum -a 256 -c --ignore-missing ws.sha256
+install -d ~/.local/bin && install -m 755 ws-darwin-arm64 ~/.local/bin/ws
 ~/.local/bin/ws client macos apply
 ```
 
@@ -64,9 +68,11 @@ Mac's key on the account first. Name the installer's user `zadykian`, ws's defau
 has no installer: it gives its default user the provider's keys, which must be the account's. A VM
 with root alone logs in as root, where `WS_TARGET=cloud`.
 
-Then, logged in as that user, install ws and apply it through `sudo`. `ws server ubuntu apply` logs
-nothing in before it: the `devtools` role installs gh, and its login comes by hand ([By
-hand](#by-hand)).
+Then, logged in as that user, write `/etc/ws/values.yml` where a value differs from its default,
+root's and mode 600 ([the values](#running-it-again)). Run `install.sh` through `sudo`: it installs
+mise and runs its bootstrap, which installs ws. Then apply the roles that are still Go steps.
+`ws server ubuntu apply` logs nothing in before it: the `devtools` role installs gh, and its login
+comes by hand ([By hand](#by-hand)).
 
 ```sh
 curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sudo sh
@@ -77,14 +83,14 @@ It runs the roles in order. Then do what stays by hand, below.
 
 ## Running it again
 
-Each ws holds the roles of its release, so update ws first, then apply:
+Each release holds the roles it sets up, so run `install.sh` again first, then apply:
 
 ```sh
-sudo ws update
+curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sudo sh
 sudo ws server ubuntu apply
 ```
 
-A ws before v0.5.1 lacks `ws update`: [Update](engine/core/update/README.md#update).
+`WS_VERSION=X.Y.Z` before `sh` picks a release ([Install](engine/core/update/README.md#install)).
 
 `ws server ubuntu apply --only NAME,...` runs the roles named, in the order they run in. A name is a
 role, or a step of it by the name a run shows, as in `--only 'docker/Docker group',tmux`. That
@@ -103,7 +109,8 @@ an empty VALUE gives its default back. ws's last line names the roles that chang
 
 ## Dry runs
 
-With `--check`, ws plans its steps and shows what each would change, and nothing changes:
+With `--check`, ws plans its steps and shows what each would change, and nothing changes. For the
+roles that mise sets up, `sudo mise -C /opt/ws bootstrap plan` does:
 
 ```sh
 sudo ws server ubuntu apply --check
@@ -177,7 +184,7 @@ The router takes a few steps once, by hand: [The router](roles/server/ubuntu/cab
 CI runs `make lint`, which lints the code, the docs and the workflows, and scans the commits for
 secrets. It runs `ws server ubuntu apply` twice in a container, tries `install.sh`, forges SigNoz's
 compose files again, and sets up a Mac on GitHub's macOS runner. A pushed tag `vX.Y.Z` publishes the
-release that `install.sh` installs: [Releases](engine/core/update). The rules workflow warns where a
+release whose tree `install.sh` runs: [Releases](engine/core/update). The rules workflow warns where a
 pull request breaks the rules of zadykian/toolkit's skills, and the issues workflow where an issue
 strays from its issue form. The hooks in `.githooks` check each commit before git makes it.
 [Checks](.github/workflows) and [The gates](.tools) have the details.
