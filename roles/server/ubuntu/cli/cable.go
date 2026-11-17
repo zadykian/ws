@@ -1,10 +1,13 @@
 package cli
 
 import (
+	"strings"
+
 	"github.com/spf13/cobra"
 
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/roles/server/ubuntu/cable"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -12,7 +15,8 @@ import (
 // newCableCmd returns ws server ubuntu cable: the commands that the cable role's units run, on the
 // service manager's units u.
 func newCableCmd(p enginecli.Env, u effect.Units) *cobra.Command {
-	return enginecli.Group("cable", "the cable role's checks, which its units run", newCableCheckCmd(p, u))
+	return enginecli.Group("cable", "the cable role's check and reload, which its units run", newCableCheckCmd(p, u),
+		newCableReloadCmd(p, u))
 }
 
 // newCableCheckCmd returns ws server ubuntu cable check.
@@ -39,4 +43,33 @@ func newCableCheckCmd(p enginecli.Env, u effect.Units) *cobra.Command {
 			return cable.Check(c.Context(), p.Machine, u, v.Cable, file)
 		},
 	}
+}
+
+// newCableReloadCmd returns ws server ubuntu cable reload.
+func newCableReloadCmd(p enginecli.Env, u effect.Units) *cobra.Command {
+	c := &cobra.Command{
+		Use:   "reload",
+		Short: "put netplan's files in force where the cable's file changed since the last reload",
+		Long: "/var/lib/ws/cable-in-force holds the SHA-256 of the cable's file that the last reload put in force. Where " +
+			"the file's differs, as where it is new, changed or gone, netplan generate writes networkd's files and " +
+			"networkctl reload sets up each link whose file changed; then the mark takes the file's SHA-256, or goes " +
+			"with the file. A failed reload leaves the mark, so the reload stays due. Another netplan file's change " +
+			"never makes it due. Without booted systemd nothing is due. Before a reload it checks the live cable file " +
+			"as cable check FILE does, so that another netplan file that takes the port never goes in force with " +
+			"it.\n\n--check fails where a reload is due, and changes nothing. The cable role's run state runs it, " +
+			"after the cable's file.",
+		Args: cobra.NoArgs,
+	}
+	check := c.Flags().Bool("check", false, "fail where a reload is due, and change nothing")
+	c.RunE = func(c *cobra.Command, _ []string) error {
+		v, err := values.Load(p.Machine, serverVars)
+		if err != nil {
+			return err
+		}
+		term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+		defer term.Flush()
+		return settle(c.Context(), linesOf(term, c.CommandPath()),
+			[]resource.Resource{cable.Reload{M: p.Machine, U: u, Cable: v.Cable}}, *check)
+	}
+	return c
 }

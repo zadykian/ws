@@ -8,6 +8,11 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 )
 
+const (
+	// configure writes networkd's files, and the rest, from netplan's, under a root of its own.
+	configure = "/usr/libexec/netplan/configure"
+)
+
 // netplanDirs are the directories whose files netplan merges.
 var netplanDirs = []string{"lib/netplan", "etc/netplan", "run/netplan"}
 
@@ -17,30 +22,51 @@ var netplanDirs = []string{"lib/netplan", "etc/netplan", "run/netplan"}
 // writes under the root only. The settings may hold secrets, such as Wi-Fi passwords, so no
 // message quotes what netplan prints, and the root is gone as the check ends.
 func Check(ctx context.Context, m effect.Machine, file []byte, port Port) ([]string, error) {
+	root, done, err := scratchCopy(ctx, m)
+	if err != nil {
+		return nil, err
+	}
+	defer done()
+	if err := m.WriteRootFile(root+Path, file, 0o600); err != nil {
+		return nil, err
+	}
+	generated := runRoot(ctx, m, configure, "--root-dir", root)
+	got := runRoot(ctx, m, "netplan", "get", "--root-dir", root)
+	return Problems(generated, got, root, port), nil
+}
+
+// scratchCopy makes a scratch root that holds a copy of netplan's files, and returns it with what
+// removes it.
+func scratchCopy(ctx context.Context, m effect.Machine) (string, func(), error) {
 	made, err := m.RunRoot(ctx, "mktemp", "-d", "--suffix=.netplan")
 	if err != nil {
-		return nil, fmt.Errorf("making a scratch root for netplan: %w", err)
+		return "", nil, fmt.Errorf("making a scratch root for netplan: %w", err)
 	}
 	root := strings.TrimSpace(string(made))
-	defer func() { _, _ = m.RunRoot(context.WithoutCancel(ctx), "rm", "-rf", "--", root) }()
+	done := func() { _, _ = m.RunRoot(context.WithoutCancel(ctx), "rm", "-rf", "--", root) }
+	if err := copyNetplan(ctx, m, root); err != nil {
+		done()
+		return "", nil, err
+	}
+	return root, done, nil
+}
+
+// copyNetplan copies each of netplanDirs that the machine has into root. It makes
+// root+"/etc/netplan" where the machine lacks it.
+func copyNetplan(ctx context.Context, m effect.Machine, root string) error {
 	if _, err := m.RunRoot(ctx, "mkdir", "-p", "--", root+"/etc/netplan"); err != nil {
-		return nil, err
+		return err
 	}
 	for _, dir := range netplanDirs {
 		if info, err := m.Stat("/" + dir); err != nil || !info.Mode.IsDir() {
 			continue
 		}
 		if _, err := m.RunRoot(ctx, "mkdir", "-p", "--", root+"/"+dir); err != nil {
-			return nil, err
+			return err
 		}
 		if _, err := m.RunRoot(ctx, "cp", "-a", "/"+dir+"/.", root+"/"+dir+"/"); err != nil {
-			return nil, fmt.Errorf("copying netplan's files into the scratch root: %w", err)
+			return fmt.Errorf("copying netplan's files into the scratch root: %w", err)
 		}
 	}
-	if err := m.WriteRootFile(root+Path, file, 0o600); err != nil {
-		return nil, err
-	}
-	generated := runRoot(ctx, m, "/usr/libexec/netplan/configure", "--root-dir", root)
-	got := runRoot(ctx, m, "netplan", "get", "--root-dir", root)
-	return Problems(generated, got, root, port), nil
+	return nil
 }
