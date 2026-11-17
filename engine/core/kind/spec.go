@@ -41,6 +41,8 @@ type unitKind interface {
 type spec struct {
 	File map[string]fileSpec `toml:"file"`
 	Deb  map[string]debSpec  `toml:"deb"`
+	// Packages is apt's packages, whose names a template gives.
+	Packages map[string]packagesSpec `toml:"packages"`
 	// Service is a systemd unit, with the files that one restart covers.
 	Service map[string]serviceSpec `toml:"service"`
 	// State is one small state with a cheap check.
