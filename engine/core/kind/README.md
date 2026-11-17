@@ -24,8 +24,9 @@ Its templates and sources sit beside it, and a path in the spec is relative to t
   error. The spec's text fills as it loads, with `add`, `mul`, `div` and `fail MSG`, which stops
   the render with MSG. A unit's template fills as it plans, as an earlier unit may make the
   account or the file that it reads. It takes `envvar FILE NAME` and the facts `mem_mib`, `cpus`,
-  `fs_bytes PATH...`, `uid NAME` and `installed_version NAME` too. The last gives dpkg's version
-  of an installed package, else "".
+  `fs_bytes PATH...`, `uid NAME`, `installed_version NAME` and `kernel_release` too.
+  `installed_version` gives dpkg's version of an installed package, else "", and
+  `kernel_release` the running kernel's, as `uname -r` prints it.
 - **when.** Any unit takes `when = { FACT = "WANT" }`, and runs where every FACT of the machine
   gives its WANT, and `"!WANT"` where it does not. Elsewhere it plans nothing, and says so in a
   line. An empty WANT, negated or not, holds on no machine, so a value left empty turns the unit

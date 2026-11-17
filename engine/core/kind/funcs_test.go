@@ -84,3 +84,15 @@ func TestFailStopsTheRender(t *testing.T) {
 		t.Errorf("fill = %q, %v; want the render stopped with fail's message", got, err)
 	}
 }
+
+func TestKernelRelease(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["uname -r"] = effecttest.Result{Out: []byte("7.0.0-1-generic\n")}
+	dir := fstest.MapFS{"t.tmpl": {Data: []byte(`linux-headers-{{kernel_release}}`)}}
+	if got, err := render(t.Context(), Env{M: m}, dir, "t.tmpl"); err != nil || string(got) != "linux-headers-7.0.0-1-generic" {
+		t.Errorf("render = %q, %v; want the release, trimmed", got, err)
+	}
+	if got, err := render(t.Context(), Env{M: effecttest.NewMachine()}, dir, "t.tmpl"); err == nil {
+		t.Errorf("render without uname = %q, want an error", got)
+	}
+}

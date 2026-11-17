@@ -59,6 +59,8 @@ func facts(ctx context.Context, e Env) template.FuncMap {
 		}
 		return "", err
 	}
+	// kernel_release is the running kernel's release, as uname -r prints it.
+	fm["kernel_release"] = func() (string, error) { return kernelRelease(ctx, e.M) }
 	return fm
 }
 
