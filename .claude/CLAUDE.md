@@ -124,7 +124,8 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   binary ([binary.go](../roles/server/ubuntu/ikeward/binary.go)), otelcol's `.deb`
   ([download.go](../roles/server/ubuntu/otelcol/download.go)) and Docker's apt key
   ([repository.go](../roles/server/ubuntu/docker/repository.go)). So is Fresh's `.deb`
-  ([download.go](../roles/server/ubuntu/fresh/download.go)), and so are foundryctl
+  ([download.go](../roles/server/ubuntu/fresh/download.go)). So is nct6687's source
+  ([fans](../roles/server/ubuntu/fans/units.toml)), and so are foundryctl
   ([ci.yml](../.github/workflows/ci.yml)) and the gates' tools ([.tools/run](../.tools/run)). So is ws's
   binary: `mise.lock` holds its SHA-256 for each target, which mise checks as it installs
   ([mise.lock](../mise.lock)). `ws update` checks it against its release's `ws.sha256`
