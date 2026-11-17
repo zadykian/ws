@@ -15,9 +15,9 @@ func fakeProcess() enginecli.Env { return clitest.Env() }
 // withEnv returns p with the environment env, for Getenv, Lookup and Setenv.
 func withEnv(p enginecli.Env, env map[string]string) enginecli.Env { return clitest.WithEnv(p, env) }
 
-// runWs runs args on the root of ws client, with stdin, and returns the status, stdout and stderr.
-func runWs(p enginecli.Env, stdin string, args ...string) (status int, stdout, stderr string) {
-	return clitest.Run(p, []*cobra.Command{clientGroup(p)}, stdin, args...)
+// runWs runs args on the root of ws client, and returns the status, stdout and stderr.
+func runWs(p enginecli.Env, args ...string) (status int, stdout, stderr string) {
+	return clitest.Run(p, []*cobra.Command{clientGroup(p)}, "", args...)
 }
 
 // clientGroup is ws client, over this package's commands.

@@ -19,6 +19,3 @@ func runWs(p enginecli.Env, stdin string, args ...string) (status int, stdout, s
 func serverGroup(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("server", "the server's systems", Command(p))
 }
-
-// withEnv returns p with the environment env, for Getenv, Lookup and Setenv.
-func withEnv(p enginecli.Env, env map[string]string) enginecli.Env { return clitest.WithEnv(p, env) }

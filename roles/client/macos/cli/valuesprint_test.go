@@ -61,7 +61,7 @@ func TestValuesPrintCommand(t *testing.T) {
 			env["WS_VALUES"] = tt.wsConf
 			p := withEnv(fakeProcess(), env)
 			p.Machine = m
-			got, stdout, stderr := runWs(p, "", append([]string{"client", "macos", "values", "print"}, tt.args...)...)
+			got, stdout, stderr := runWs(p, append([]string{"client", "macos", "values", "print"}, tt.args...)...)
 			if got != tt.wantStatus {
 				t.Errorf("status = %d, want %d", got, tt.wantStatus)
 			}
@@ -81,7 +81,7 @@ func TestValuesPrintReportsEachLineOfARefusedFile(t *testing.T) {
 	m.Files["/bad"] = []byte(values.Text("WS_NOPE", "1", "WS_NOPE2", "1"))
 	m.Files["/servers/ws/values.yml"] = []byte("")
 	p.Machine = withServerDirs(m)
-	status, _, stderr := runWs(p, "", "client", "macos", "values", "print", "/bad")
+	status, _, stderr := runWs(p, "client", "macos", "values", "print", "/bad")
 	want := "ws client macos values print: /bad, line 1: unknown key WS_NOPE\nws client macos values print: /bad, line 2: unknown key WS_NOPE2\n"
 	if status != 1 || stderr != want {
 		t.Errorf("status = %d, stderr = %q; want 1, %q", status, stderr, want)

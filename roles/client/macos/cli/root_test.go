@@ -29,7 +29,7 @@ func TestMacHelpAndErrors(t *testing.T) {
 		{"apply no step", []string{"client", "macos", "apply", "--only", ""}, 2, "", "ws client macos apply: --only names no step"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			status, stdout, stderr := runWs(fakeProcess(), "", tc.args...)
+			status, stdout, stderr := runWs(fakeProcess(), tc.args...)
 			if status != tc.wantStatus || !strings.Contains(stdout, tc.wantOut) || !strings.Contains(stderr, tc.wantErr) {
 				t.Errorf("status = %d, stdout = %q, stderr = %q; want %d, %q, %q", status, stdout, stderr, tc.wantStatus, tc.wantOut, tc.wantErr)
 			}
@@ -39,7 +39,7 @@ func TestMacHelpAndErrors(t *testing.T) {
 
 func TestTunnelStatusAndKeyNeedRoot(t *testing.T) {
 	for _, sub := range []string{"status", "key"} {
-		status, stdout, stderr := runWs(fakeProcess(), "", "client", "macos", "tunnel", sub)
+		status, stdout, stderr := runWs(fakeProcess(), "client", "macos", "tunnel", sub)
 		want := "ws client macos tunnel " + sub + ": run it as root, with sudo\n"
 		if status != 1 || stdout != "" || stderr != want {
 			t.Errorf("%s: status = %d, stdout = %q, stderr = %q; want 1, nothing, %q", sub, status, stdout, stderr, want)

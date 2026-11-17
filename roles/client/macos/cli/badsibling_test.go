@@ -34,7 +34,7 @@ func TestApplyRefusesABadSiblingBeforeAnyStep(t *testing.T) {
 		m, resolver := badSiblingFixture()
 		p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 		p.Machine = m
-		status, _, stderr := runWs(p, "", args...)
+		status, _, stderr := runWs(p, args...)
 		if status != 1 || !strings.Contains(stderr, "server lab: ") || !strings.Contains(stderr, "fix its file, or ws client macos remove lab") {
 			t.Errorf("%q: status = %d, stderr = %q; want lab's file refused, naming remove", args, status, stderr)
 		}

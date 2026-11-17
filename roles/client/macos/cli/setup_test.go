@@ -19,13 +19,13 @@ func TestSetupCommand(t *testing.T) {
 	writeConfs(m, "", values.Text("WS_USER", "ada"))
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
-	status, _, stderr := runWs(p, "", "client", "macos", "apply", "--only", "ssh", "--bogus")
+	status, _, stderr := runWs(p, "client", "macos", "apply", "--only", "ssh", "--bogus")
 	if status != 2 || !strings.Contains(stderr, "ws client macos apply: unknown flag: --bogus") {
 		t.Errorf("status = %d, stderr = %q; want a usage error", status, stderr)
 	}
 	p = fakeProcess()
 	p.Machine = effecttest.NewMachine()
-	if status, _, stderr = runWs(p, "", "client", "macos", "apply", "--only", "ssh"); status != 1 || !strings.Contains(stderr, "no server in") {
+	if status, _, stderr = runWs(p, "client", "macos", "apply", "--only", "ssh"); status != 1 || !strings.Contains(stderr, "no server in") {
 		t.Errorf("with no file: status = %d, stderr = %q; want no server", status, stderr)
 	}
 }
@@ -33,7 +33,7 @@ func TestSetupCommand(t *testing.T) {
 func TestSetupRefusesRoot(t *testing.T) {
 	p := fakeProcess()
 	p.Euid = 0
-	if status, _, stderr := runWs(p, "", "client", "macos", "apply", "--only", "ssh"); status != 1 ||
+	if status, _, stderr := runWs(p, "client", "macos", "apply", "--only", "ssh"); status != 1 ||
 		!strings.HasPrefix(stderr, "ws client macos apply: run it as yourself, not root") {
 		t.Errorf("as root: status = %d, stderr = %q", status, stderr)
 	}
@@ -65,7 +65,7 @@ func TestSetupWithNoStepRunsThemAll(t *testing.T) {
 	writeConfs(m, "", values.Text("WS_USER", "ada"))
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
-	status, _, stderr := runWs(p, "", "client", "macos", "apply")
+	status, _, stderr := runWs(p, "client", "macos", "apply")
 	if status == 2 || strings.Contains(stderr, "Usage") {
 		t.Errorf("status = %d, stderr = %q; want the steps run, not the usage", status, stderr)
 	}
@@ -81,7 +81,7 @@ func TestSetupCheckWithNoStepPlansSSHOnce(t *testing.T) {
 	}
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
-	_, stdout, stderr := runWs(p, "", "client", "macos", "apply", "--check")
+	_, stdout, stderr := runWs(p, "client", "macos", "apply", "--check")
 	if n := strings.Count(stdout+stderr, "+++ /etc/ws/ssh_config"); n != 1 {
 		t.Errorf("the /etc/ws/ssh_config diff prints %d times; want 1\n%s%s", n, stdout, stderr)
 	}
@@ -99,23 +99,23 @@ func TestSetupStepNamesCompleteOnly(t *testing.T) {
 func TestMacStateRefusesRootAndArgs(t *testing.T) {
 	p := fakeProcess()
 	p.Euid = 0
-	if status, _, stderr := runWs(p, "", "client", "macos", "state"); status != 1 ||
+	if status, _, stderr := runWs(p, "client", "macos", "state"); status != 1 ||
 		!strings.HasPrefix(stderr, "ws client macos state: run it as yourself, not root") {
 		t.Errorf("as root: status = %d, stderr = %q", status, stderr)
 	}
 	for _, args := range [][]string{{"state", "extra"}, {"state", "--check"}} {
-		if status, _, stderr := runWs(fakeProcess(), "", append([]string{"client", "macos"}, args...)...); status != 2 ||
+		if status, _, stderr := runWs(fakeProcess(), append([]string{"client", "macos"}, args...)...); status != 2 ||
 			!strings.Contains(stderr, "--help' for usage.") {
 			t.Errorf("%q: status = %d, stderr = %q", args, status, stderr)
 		}
 	}
-	if status, _, stderr := runWs(fakeProcess(), "", "client", "macos", "state"); status != 1 || !strings.Contains(stderr, "no server in") {
+	if status, _, stderr := runWs(fakeProcess(), "client", "macos", "state"); status != 1 || !strings.Contains(stderr, "no server in") {
 		t.Errorf("no server: status = %d, stderr = %q", status, stderr)
 	}
 }
 
 func TestMacStateHelp(t *testing.T) {
-	status, stdout, _ := runWs(fakeProcess(), "", "client", "macos", "state", "-h")
+	status, stdout, _ := runWs(fakeProcess(), "client", "macos", "state", "-h")
 	for _, want := range []string{"--json", "applies nothing"} {
 		if status != 0 || !strings.Contains(stdout, want) {
 			t.Errorf("status = %d, help = %q, want it to hold %q", status, stdout, want)
@@ -150,7 +150,7 @@ func TestMacStateReadsMacConf(t *testing.T) {
 	writeConfs(m, "", values.Text("WS_USER", "ada"))
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
-	status, stdout, _ := runWs(p, "", "client", "macos", "state", "--json")
+	status, stdout, _ := runWs(p, "client", "macos", "state", "--json")
 	if status != 0 || !strings.Contains(stdout, `"version": "v1.2.3"`) || !strings.Contains(stdout, `"steps"`) ||
 		!strings.Contains(stdout, `"kind": "package"`) {
 		t.Errorf("status = %d, stdout = %q", status, stdout)
@@ -172,7 +172,7 @@ func TestMacReadSaysThatMacConfIsMissing(t *testing.T) {
 	delete(m.Files, "/etc/ws/values.yml")
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
-	status, _, stderr := runWs(p, "", "client", "macos", "state")
+	status, _, stderr := runWs(p, "client", "macos", "state")
 	if status == 0 || !strings.Contains(stderr, "is missing") {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
@@ -180,7 +180,7 @@ func TestMacReadSaysThatMacConfIsMissing(t *testing.T) {
 
 func TestMacStatePrintsTextOrJSON(t *testing.T) {
 	for _, args := range [][]string{{"state"}, {"state", "--json"}} {
-		status, stdout, stderr := runWs(macStateProcess(), "", append([]string{"client", "macos"}, args...)...)
+		status, stdout, stderr := runWs(macStateProcess(), append([]string{"client", "macos"}, args...)...)
 		if status != 0 || stdout == "" || stderr != "" {
 			t.Errorf("%v: status = %d, stdout = %q, stderr = %q", args, status, stdout, stderr)
 		}
