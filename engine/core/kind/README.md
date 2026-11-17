@@ -142,6 +142,7 @@ routes = { pool = "CIDR", net = "CIDR", dev = "docker0", hint = "…" }  # refus
 addr = { iface = "docker0", want = "CIDR", hint = "…" }                # refuses a missing address
 left = { user = "USER", group = "GROUP" }
 run = { user = "USER", command = ["cmd"], creates = ["/path"] }        # or check = ["cmd"]
+reboot = { module = "name", package = "name", hint = "…" }             # notes a reboot that is due
 ```
 
 - A new state is one field of `stateSpec`, of a type that makes its resource.
@@ -154,8 +155,11 @@ run = { user = "USER", command = ["cmd"], creates = ["/path"] }        # or chec
   systemd session, and on macOS by sudo. It takes exactly one of `creates`, which runs where a path
   is missing, and `check`, which runs where the check, as `user` too, exits other than 0. A
   procedure that stays a command of ws runs this way.
-- Without booted systemd, `linger`, `http`, `ufw` and `addr` skip, and each says so. So does `run`
-  on Linux, where it needs the user's session; macOS has no systemd, and runs it.
+- `reboot` plans nothing. Where `package` is installed and `/sys/module/MODULE/version` is not its
+  upstream version, without the epoch or the revision, it warns that a reboot is due, with `hint`
+  after. It suits a module that loads at boot alone, as a display's driver.
+- Without booted systemd, `linger`, `http`, `ufw`, `addr` and `reboot` skip, and each says so. So
+  does `run` on Linux, where it needs the user's session; macOS has no systemd, and runs it.
 
 ### guard
 
