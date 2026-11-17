@@ -13,11 +13,6 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
-const (
-	linkJSON = `[{"ifname":"enp5s0","address":"00:1a:2b:3c:4d:5e","addr_info":[]}]`
-	ipPrefix = "ip -j "
-)
-
 // rig is a booted machine with the cable's port, and the step on it.
 type rig struct {
 	m     *effecttest.Machine
@@ -27,16 +22,9 @@ type rig struct {
 }
 
 func newRig(iface, address string) rig {
-	m := rigMachine()
-	m.Dirs["/run/systemd/system"] = 0o755
-	m.Dirs["/sys/class/net/enp5s0"] = 0o755
-	m.Results[ipPrefix+"-4 route show default table all"] = effecttest.Result{Out: []byte("[]")}
-	m.Results[ipPrefix+"-6 route show default table all"] = effecttest.Result{Out: []byte("[ ]")}
-	m.Results[ipPrefix+"address show dev enp5s0"] = effecttest.Result{Out: []byte(linkJSON)}
-	m.Results["udevadm info --query=property --property=ID_NET_DRIVER --value /sys/class/net/enp5s0"] = effecttest.Result{Out: []byte("r8169\n")}
+	m, u := portMachine()
 	m.Results["netplan generate"] = effecttest.Result{}
 	m.Results["networkctl reload"] = effecttest.Result{}
-	u := &effecttest.Units{States: map[string]effect.UnitState{"systemd-networkd.service": {Active: true}}}
 	v := values.Default()
 	v.Cable.Port, v.Cable.Address = iface, address
 	out := &effecttest.Out{}

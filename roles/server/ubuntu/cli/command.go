@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	enginecli "github.com/zadykian/ws/engine/cli"
+	"github.com/zadykian/ws/engine/core/effect/units"
 	"github.com/zadykian/ws/engine/core/role"
 )
 
@@ -48,7 +49,7 @@ func serverRefusal(euid int, osRelease []byte) string {
 // Command returns ws server ubuntu, the commands that set up an Ubuntu server.
 func Command(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("ubuntu", "the commands for an Ubuntu server", newApplyCmd(p), newStateCmd(p), newFansCmd(p),
-		newValuesCmd(p), newSecretsCmd(p))
+		newCableCmd(p, units.OSUnits{}), newValuesCmd(p), newSecretsCmd(p))
 }
 
 // applyOptions are apply's flags: the runner's, and the --secrets path, which the runner never reads.

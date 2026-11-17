@@ -242,6 +242,7 @@ Usage:
 
 Available Commands:
   apply       set the server up, each role as Go steps
+  cable       the cable role's checks, which its units run
   fans        drive the board's fans on the curves of CONFIG until SIGTERM
   secrets     keep ws's secrets file, with its identity as a systemd credential
   state       report what the server holds of what ws manages, and what apply would change
@@ -269,6 +270,30 @@ Flags:
       --json           print each event of the run as a line of JSON on stdout
       --only strings   run the named roles and ROLE/STEPs alone, as a list or by repeating the flag
       --secrets FILE   read the secrets from the age-encrypted FILE
+== ws server ubuntu cable
+the cable role's checks, which its units run
+
+Usage:
+  ws server ubuntu cable [flags]
+  ws server ubuntu cable [command]
+
+Available Commands:
+  check       refuse a cable's port that is an uplink, and a netplan FILE that would not set it up alone
+
+Flags:
+  -h, --help   help for cable
+
+Use "ws server ubuntu cable [command] --help" for more information about a command.
+== ws server ubuntu cable check
+It reads the values of /etc/ws/values.yml. With no WS_CABLE_PORT there is no cable, and it passes. It fails where the port is missing, carries a default route or holds a lease from DHCP, or where networkd does not run on a booted machine.
+
+With FILE, the cable's new netplan file, it also merges FILE with netplan's other files in a scratch root, and fails where netplan refuses them or would hand the port to another entry. It reads FILE as root, and no message quotes it. The cable role's guard runs it, and its file's check with the new file.
+
+Usage:
+  ws server ubuntu cable check [FILE] [flags]
+
+Flags:
+  -h, --help   help for check
 == ws server ubuntu fans
 CONFIG is the file that the fans role writes, /etc/ws/fans.json by default.
 

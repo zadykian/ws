@@ -8,7 +8,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/roles/server/ubuntu/cable/internal/netplan"
 )
 
@@ -29,7 +28,7 @@ func (d direct) Plan(ctx context.Context) ([]resource.Change, error) {
 	if err != nil {
 		return nil, err
 	}
-	port, err := d.checkPort(ctx)
+	port, err := readPort(ctx, d.M, d.Interface, d.Address)
 	if err != nil {
 		return nil, err
 	}
@@ -40,12 +39,8 @@ func (d direct) Plan(ctx context.Context) ([]resource.Change, error) {
 	if len(problems) > 0 {
 		return nil, errors.New(strings.Join(problems, " "))
 	}
-	if systemd.Booted(d.M) {
-		if state, err := d.U.State(ctx, "systemd-networkd.service"); err != nil {
-			return nil, err
-		} else if !state.Active {
-			return nil, errors.New("systemd-networkd is not running, so nothing would set up the cable: ws expects netplan to render with networkd, as on Ubuntu Server, not with NetworkManager, as on Ubuntu Desktop")
-		}
+	if err := networkdRuns(ctx, d.M, d.U); err != nil {
+		return nil, err
 	}
 	return d.reloaded(ctx, file.File{M: d.M, Path: netplan.Path, Content: rendered, Mode: 0o600})
 }
