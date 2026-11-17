@@ -147,8 +147,8 @@ func TestServerStateRefusesNonRootAndOtherArgs(t *testing.T) {
 
 func TestServerStateRefusesAStepItsRoleLacks(t *testing.T) {
 	p, _ := serverProcess()
-	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "state", "--only", "tmux/no such")
-	if status != 2 || stdout != "" || !strings.Contains(stderr, `no step "no such" in tmux`) {
+	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "state", "--only", "base/no such")
+	if status != 2 || stdout != "" || !strings.Contains(stderr, `no step "no such" in base`) {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
 }
@@ -164,8 +164,8 @@ func TestServerStateHelp(t *testing.T) {
 
 func TestServerStatePrintsJSON(t *testing.T) {
 	p, _ := serverProcess()
-	status, stdout, _ := runWs(p, "", "server", "ubuntu", "state", "--json", "--only", "tmux")
-	if status != 0 || !strings.Contains(stdout, `"role": "tmux"`) {
+	status, stdout, _ := runWs(p, "", "server", "ubuntu", "state", "--json", "--only", "base")
+	if status != 0 || !strings.Contains(stdout, `"role": "base"`) {
 		t.Errorf("status = %d, stdout = %q", status, stdout)
 	}
 }

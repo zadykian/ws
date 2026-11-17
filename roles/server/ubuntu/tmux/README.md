@@ -1,7 +1,12 @@
 # tmux
 
-The `tmux` role, Go steps in `roles/server/ubuntu/tmux`, installs tmux from Ubuntu's archive, with no
-config, as cld runs tmux with `-f /dev/null`. Where tmux's snap is installed, the role removes it.
+The `tmux` role sets up tmux from `mise bootstrap`. Its `mise.server.toml` installs tmux from
+Ubuntu's archive, with no config, as cld runs tmux with `-f /dev/null`, and names the unit
+`tmux-snap` of its `units.toml`, which removes tmux's snap. The package comes first, so that the
+machine never lacks a tmux. The unit runs `snap remove tmux` where snapd is installed and lists
+the snap. It skips, and says so, without booted systemd: snapd must run to remove a snap, as in
+CI's container.
+
 Where cld's sessions run the snap's tmux, end them before a real run. cld then finds
 `/usr/bin/tmux` first on the `PATH`, while their key bindings call `/snap/bin/tmux`, which the
 removal takes away.
