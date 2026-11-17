@@ -63,6 +63,8 @@ reload = false              # reload service, not restart it
 user_service = "z.service"  # a unit of the owner's own systemd, restarted where the file changes
 secret = false              # keep the content out of the diff; takes no check
 absent = false              # remove the file; takes a path and an owner alone
+line = ". /etc/x"           # or a line at the top of the owner's file, which keeps its own text
+has = ["cmd"]               # says whether the file, on stdin, holds the line: 0 yes, 1 no
 after = "KIND/NAME"
 ```
 
@@ -77,6 +79,13 @@ after = "KIND/NAME"
   `dscl` on macOS, which the side names. A path outside it, or a link on the way, is refused, and
   the missing parents are the owner's.
 - Without booted systemd the restarts are skipped, and each says so.
+- A `line` goes at the top of its owner's file below the home, root's too, with a blank line
+  after it. A missing file is made with the line alone, at `mode`. The old file is kept as
+  `PATH.TIME~` first, and a link at the file or on the way is refused. A `check` runs on the new
+  text before that copy, so a refusal leaves the file unchanged.
+- Without `has`, a line of the file that equals the line, spaces aside, holds it. A line of more
+  than one line needs `has`. Any exit of `has` but 0 and 1 fails the plan with its stderr.
+- A `line` takes `owner`, `mode`, `check`, `has`, `after` and `when` alone.
 
 ### deb
 

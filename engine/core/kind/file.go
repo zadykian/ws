@@ -36,6 +36,10 @@ type filePart struct {
 	Secret bool `toml:"secret"`
 	// Absent removes the file, and takes no content.
 	Absent bool `toml:"absent"`
+	// Line goes at the top of the owner's file, which keeps its other text (fileline.go).
+	Line string `toml:"line"`
+	// Has is a command that says whether the file's text, on its standard input, holds Line.
+	Has []string `toml:"has"`
 }
 
 // check refuses a file's fields that no plan could take. dir holds its template or source.
@@ -47,6 +51,8 @@ func (f filePart) check(dir fs.FS) error {
 		return fmt.Errorf("mode %o is not a file's permission bits", f.Mode)
 	case f.CheckBooted && len(f.Check) == 0:
 		return errors.New("check_booted goes with check")
+	case f.Line != "" || len(f.Has) > 0:
+		return f.checkLine()
 	case f.Secret && len(f.Check) > 0:
 		// A refusal's error carries what the checker prints, which may quote the content.
 		return errors.New("a secret file takes no check, as a refusal's error shows the checker's output")
@@ -86,12 +92,20 @@ func (f filePart) resources(ctx context.Context, e Env, dir fs.FS) (built, error
 	if err != nil {
 		return built{}, err
 	}
+	// A line is the owner's file below a home, root's too, as a line goes in a file of the home.
+	if f.Line != "" && owner.Home == "" {
+		if owner.Home, err = e.System.home(ctx, e.M, "root"); err != nil {
+			return built{}, err
+		}
+	}
 	rel, below := strings.CutPrefix(f.Path, owner.Home+"/")
 	if owner.Home != "" && !below {
 		return built{}, fmt.Errorf("%s is not below %s, the home of its owner %s", f.Path, owner.Home, owner.Name)
 	}
 	var b built
 	switch {
+	case f.Line != "":
+		b.file = f.lines(e, owner, rel)
 	case f.Absent && owner.Home != "":
 		b.file = owner.Absent(e.M, rel)
 	case f.Absent:
@@ -130,16 +144,25 @@ func (f filePart) written(ctx context.Context, e Env, dir fs.FS, owner account.A
 		w = owner.File(e.M, rel, content, mode)
 	}
 	w.Secret = f.Secret
-	if len(f.Check) == 0 || f.CheckBooted && !systemd.Booted(e.M) {
-		return w, nil
+	if check := f.checker(e); check != nil {
+		return file.Validated{File: w, Check: check}, nil
 	}
-	return file.Validated{File: w, Check: func(p string) (string, []string) {
+	return w, nil
+}
+
+// checker returns the check's command for a new file at a path, or nil where the file has no check
+// that this machine can run.
+func (f filePart) checker(e Env) func(p string) (string, []string) {
+	if len(f.Check) == 0 || f.CheckBooted && !systemd.Booted(e.M) {
+		return nil
+	}
+	return func(p string) (string, []string) {
 		args := slices.Clone(f.Check[1:])
 		for i := range args {
 			args[i] = strings.ReplaceAll(args[i], "{}", p)
 		}
 		return f.Check[0], args
-	}}, nil
+	}
 }
 
 // ownerOf is the account of name, root's for an empty one. Another account's Home is its home, as
@@ -183,6 +206,9 @@ func (s fileSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.Res
 		}
 	case s.Enabled || s.Reload:
 		return nil, errors.New("enabled and reload go with service")
+	}
+	if s.Line != "" && (s.Service != "" || s.UserService != "") {
+		return nil, errors.New("a line takes no service, as the file is its owner's")
 	}
 	if s.UserService != "" {
 		if s.Owner == "" || s.Owner == "root" {
