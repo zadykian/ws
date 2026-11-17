@@ -18,7 +18,6 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/otelcol"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/security"
-	"github.com/zadykian/ws/roles/server/ubuntu/shell"
 	"github.com/zadykian/ws/roles/server/ubuntu/signoz"
 	"github.com/zadykian/ws/roles/server/ubuntu/tmux"
 	"github.com/zadykian/ws/roles/server/ubuntu/tunnel"
@@ -43,7 +42,6 @@ var all = []entry{
 	{"cable", cable.Steps},
 	{"tunnel", tunnel.Steps},
 	{"ikeward", ikeward.Steps},
-	{"shell", shell.Steps},
 	{"git", git.Steps},
 	{"tmux", tmux.Steps},
 	{"lazygit", lazygit.Steps},

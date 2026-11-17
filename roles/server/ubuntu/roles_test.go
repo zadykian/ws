@@ -24,14 +24,6 @@ func TestNamesHaveEachRoleOnce(t *testing.T) {
 	}
 }
 
-func TestGitRunsAfterShell(t *testing.T) {
-	names := Names()
-	i := slices.Index(names, "shell")
-	if i < 0 || i+1 >= len(names) || names[i+1] != "git" {
-		t.Errorf("git is misplaced in %v", names)
-	}
-}
-
 func TestZedRunsAfterFresh(t *testing.T) {
 	names := Names()
 	i := slices.Index(names, "zed")
