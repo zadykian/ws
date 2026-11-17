@@ -1,0 +1,24 @@
+# The shell's lines for every server: bash's packages and ws's bash files in /etc/ws. Its units
+# source the files from the account's home and write /etc/ws/env. The files come before the
+# units, so that a line never names a missing file.
+[bootstrap.packages]
+"apt:bash-completion" = "latest"
+"apt:ble.sh" = "latest"
+"ws:file/shell-bashrc-line" = "in-sync"
+"ws:file/shell-env" = "in-sync"
+"ws:file/shell-profile-line" = "in-sync"
+
+# ws's lines for bash. Tera fills .NET's runtime ID from mise's arch(), x64 or arm64.
+[bootstrap.files."/etc/ws/bashrc"]
+source = "files/bashrc.tera"
+template = true
+owner = "root"
+group = "root"
+mode = "0644"
+
+# ws's lines for ~/.profile.
+[bootstrap.files."/etc/ws/profile"]
+source = "files/profile"
+owner = "root"
+group = "root"
+mode = "0644"
