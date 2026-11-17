@@ -74,7 +74,8 @@ ws runs them by `KIND/NAME`, each moved behind the unit that its `after` names, 
 The machine's miserc, `/etc/mise/miserc.toml`, names the envs that load: `server`, then `booted`
 where `/run/systemd/system` is a directory, then `account` where `WS_USER` is not root. `booted`
 comes after `server`, so that its entries win. The miserc is a template of the machine's own,
-which cannot read `/etc/ws/values.yml`: a change of `WS_USER` means writing it again.
+which cannot read `/etc/ws/values.yml`. `install.sh` writes it from there, so a change of `WS_USER`
+means running `install.sh` again.
 
 ## The pin
 

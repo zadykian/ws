@@ -209,7 +209,10 @@ jobs:
           sudo journalctl -n 80 --no-pager _SYSTEMD_USER_UNIT=docker.service
           sudo dmesg | grep -i apparmor | tail -n 20
 
-  # ws update against releases laid out in a temporary directory and served on loopback, in the
+  # install.sh with the real mise, served on loopback, and a small repository in place of the
+  # release's tree: .github/install-checks.sh. The pinned mise installs, a wrong one is refused, and
+  # the bootstrap runs from the latest release's tag, with the envs that the miserc names. Then ws
+  # update against releases laid out in a temporary directory and served on loopback, in the
   # order of .github/update-checks.sh. It moves an older ws to the latest release, and refuses a
   # wrong checksum and a binary of another version. The releases are of the tree, built by
   # .tools/build.
@@ -223,7 +226,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: The cases
+      - name: install.sh's cases
+        run: .github/install-checks.sh
+      - name: ws update's cases
         run: .github/update-checks.sh
 
   # SigNoz's compose files in roles/server/ubuntu/signoz are foundryctl's, forged from the casting

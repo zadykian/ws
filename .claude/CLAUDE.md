@@ -28,7 +28,8 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   links its directory ([The frame](../roles/server/ubuntu/frame/README.md)).
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
-- `install.sh`: installs ws's binary from a release ([Releases](../engine/core/update/README.md)).
+- `install.sh`: installs mise and runs `mise bootstrap` on a release's tree
+  ([Releases](../engine/core/update/README.md)).
 - `roles/client/macos/`: the Mac's side ([The Mac](../roles/client/macos/README.md)). Its roles embed
   `ghostty/files/ws.ghostty`, Ghostty's settings, `zed/files/`, Zed's settings and keymap, and
   `zsh/files/zshrc`, the zsh hook that turns off the modes that a drop leaves on.
@@ -73,8 +74,8 @@ It installs yamllint into `.cache`, and `.tools/run` downloads the rest there.
 
 The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `playbook` builds ws and runs `ws server ubuntu
 apply` twice in an Ubuntu 26.04 container and checks the config that Fresh reads, `signoz` forges
-SigNoz's compose files again, and `install` tries `install.sh`. `rootless` runs the rootless daemon
-and the firewall on a booted runner ([The rootless job](../.github/workflows/rootless.md)). `mac` sets up a
+SigNoz's compose files again, and `install` tries `install.sh` and `ws update`. `rootless` runs the
+rootless daemon and the firewall on a booted runner ([The rootless job](../.github/workflows/rootless.md)). `mac` sets up a
 Mac on GitHub's macOS runner. `mac-cld` sets up
 Ghostty and cld on another ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `ws
 server ubuntu apply` sets up the machine that runs it, as below.
@@ -122,8 +123,10 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([download.go](../roles/server/ubuntu/fresh/download.go)), and so are foundryctl
   ([ci.yml](../.github/workflows/ci.yml)) and the gates' tools ([.tools/run](../.tools/run)). So is ws's
   binary: `mise.lock` holds its SHA-256 for each target, which mise checks as it installs
-  ([mise.lock](../mise.lock)). `install.sh` and `ws update` check it against its release's
-  `ws.sha256` ([install.sh](../install.sh), [update.go](../engine/core/update/update.go)). So is
+  ([mise.lock](../mise.lock)). `ws update` checks it against its release's `ws.sha256`
+  ([update.go](../engine/core/update/update.go)), and a Mac's runbook checks it by hand
+  ([runbook.md](../roles/client/macos/runbook.md)). So is mise's binary, whose SHA-256 for each
+  target `install.sh` holds ([install.sh](../install.sh)). So is
   yamllint ([lint-requirements.in](../.github/lint-requirements.in)), and Homebrew's `.pkg`, with its signer
   ([runbook.md](../roles/client/macos/runbook.md)). Go is checked against the
   SHA-256 its publisher lists ([devtools](../roles/server/ubuntu/devtools/README.md)). The postgres-language-server and
