@@ -209,3 +209,18 @@ func TestUnitWriteRefusedCheckIsOne(t *testing.T) {
 		t.Errorf("file = %q, want the live one kept", got)
 	}
 }
+
+func TestUnitReadOffUnitIsInSync(t *testing.T) {
+	e, m := unitEnv(t, map[string]string{
+		"r/units.toml": fileUnit("a", "/etc/a", "") + "when = { board_vendor = \"Acme Ltd.\" }\n",
+		"r/a":          "1\n",
+	})
+	status, stdout, stderr := runUnit(e, "read", "file/a")
+	if status != 0 || stdout != "file/a\tin-sync\n" || !strings.Contains(stderr, "file/a: off on this machine") {
+		t.Errorf("read: status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
+	}
+	status, _, stderr = runUnit(e, "write", "file/a")
+	if _, wrote := m.Files["/etc/a"]; status != 0 || wrote || !strings.HasSuffix(stderr, "changed: none\n") {
+		t.Errorf("write: status = %d, wrote %v, stderr = %q", status, wrote, stderr)
+	}
+}

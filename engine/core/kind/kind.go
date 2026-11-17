@@ -44,7 +44,8 @@ func (u *UnknownUnit) Error() string { return fmt.Sprintf("no unit %q", u.Name) 
 
 // Load reads each role's spec, DIR/units.toml of specs, fills it with e.Data, and returns its
 // units in the order they run. The kinds check their fields here, and make their resources as each
-// unit plans. A unit in two specs, an after that no spec holds, or a loop, fails the load.
+// unit plans, where its when holds. A unit in two specs, an after that no spec holds, or a loop,
+// fails the load.
 func Load(e Env, specs fs.FS) ([]Unit, error) {
 	files, err := fs.Glob(specs, "*/"+specFile)
 	if err != nil {
@@ -83,9 +84,13 @@ func Load(e Env, specs fs.FS) ([]Unit, error) {
 			return nil, err
 		}
 		parts, err := k.parts(e, dir)
+		if err == nil {
+			err = k.condition().check()
+		}
 		if err != nil {
 			return nil, fmt.Errorf("%s: unit %s: %w", where[name], name, err)
 		}
+		parts = k.condition().gate(e, name, parts)
 		units = append(units, Unit{name, resource.Lazy{Title: name, After: k.waits(), Parts: parts}})
 	}
 	return units, nil
