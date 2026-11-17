@@ -1,0 +1,16 @@
+{{- /* The driver without X, with nvidia-smi, and the modules of each kernel flavor installed.
+A flavor's modules go at the version of its linux-image metapackage: a newer one would pull a
+newer kernel without its headers, and DKMS would build no nct6687 for it. */ -}}
+nvidia-headless-no-dkms-595-server-open
+nvidia-utils-595-server
+{{ $a := installed_version "linux-image-generic" -}}
+{{ $b := installed_version "linux-image-generic-7.0" -}}
+{{ $c := installed_version "linux-image-generic-hwe-26.04" -}}
+{{ $d := installed_version "linux-image-generic-hwe-26.04-edge" -}}
+{{ with $a }}linux-modules-nvidia-595-server-open-generic={{ . }}{{ end }}
+{{ with $b }}linux-modules-nvidia-595-server-open-generic-7.0={{ . }}{{ end }}
+{{ with $c }}linux-modules-nvidia-595-server-open-generic-hwe-26.04={{ . }}{{ end }}
+{{ with $d }}linux-modules-nvidia-595-server-open-generic-hwe-26.04-edge={{ . }}{{ end }}
+{{ if not (or $a $b $c $d) -}}
+{{ fail "no linux-image-generic of the flavors generic, generic-7.0, generic-hwe-26.04 or generic-hwe-26.04-edge is installed, so no NVIDIA modules would follow the kernel" }}
+{{- end }}
