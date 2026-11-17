@@ -17,10 +17,9 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 )
 
-// screenGrace bounds a command's end past its context under a screen. It stays above the 2 seconds
-// that runuser gives its child, which a kill of runuser would cut short. It stays under the 5
-// seconds that a screen gives a run's cleanup.
-const screenGrace = 3 * time.Second
+// killGrace bounds a command's end past its context. It stays above the 2
+// seconds that runuser gives its child, which a kill of runuser would cut short.
+const killGrace = 3 * time.Second
 
 // OSMachine is the Machine of the machine that ws runs on.
 type OSMachine struct {
@@ -31,24 +30,16 @@ type OSMachine struct {
 	// Stderr takes what RunShown, PassInput and Pass pass on. Nil means os.Stderr.
 	Stderr io.Writer
 	// Stdin is what Pass gives a command to read. Nil means os.Stdin, where sudo can ask for a
-	// password. A screen owns the terminal, and sets NoStdin. With any Stdin, git and ssh get
+	// password. With any Stdin, git and ssh get
 	// offTerminal, as they ask at /dev/tty, past their standard input, and a command's context ends
 	// it by SIGTERM before a kill.
 	Stdin io.Reader
-	// Ticket, where set, runs before each command as root, which runs only where it passes. A screen
-	// sets it beside a Sudo that can't ask, to take sudo's password in a form. It holds a run's
-	// context, as WriteRootFile has none.
-	Ticket func() error
 	// Confine is a directory that Mkdir, Chmod, Chown, Symlink, WriteFile and WriteAtomic stay
 	// inside for a path under it: a link there that leaves it fails the write. WS_USER owns the
 	// WS_HOME, and can swap a directory in it for a link as root applies, which would hand the
 	// target to WS_USER. Empty means no limit.
 	Confine string
 }
-
-// ErrNoTicket ends a Ticket where sudo took the password and kept no ticket, as with
-// timestamp_timeout=0. A sudo that can't ask then refuses each command, and --plain asks for each.
-var ErrNoTicket = errors.New("sudo keeps no ticket here, so a screen can't run root's commands: run with --plain")
 
 // NoStdin is a Stdin that ends at once, as http.NoBody is a body.
 var NoStdin io.Reader = noStdin{}
@@ -76,13 +67,6 @@ func (m OSMachine) sudo() []string {
 		return []string{"sudo", "--"}
 	}
 	return m.Sudo
-}
-
-func (m OSMachine) ticket(root bool) error {
-	if root && m.Ticket != nil {
-		return m.Ticket()
-	}
-	return nil
 }
 
 // ReadFile reads the file.
@@ -127,17 +111,11 @@ func (m OSMachine) RunInput(ctx context.Context, stdin []byte, name string, args
 
 // RunRoot runs the command through sudo.
 func (m OSMachine) RunRoot(ctx context.Context, name string, args ...string) ([]byte, error) {
-	if err := m.ticket(true); err != nil {
-		return nil, err
-	}
 	return output(m.command(ctx, append(append(m.sudo(), name), args...)))
 }
 
 // RunShown runs the command and returns its standard output. Its standard error goes to Stderr.
 func (m OSMachine) RunShown(ctx context.Context, root bool, name string, args ...string) ([]byte, error) {
-	if err := m.ticket(root); err != nil {
-		return nil, err
-	}
 	cmd := m.command(ctx, m.argv(root, name, args))
 	cmd.Stderr = m.stderr()
 	return output(cmd)
@@ -154,9 +132,6 @@ func (m OSMachine) PassInput(ctx context.Context, stdin []byte, name string, arg
 // Pass runs the command with its standard output and error sent to Stderr, and Stdin as its
 // standard input.
 func (m OSMachine) Pass(ctx context.Context, root bool, name string, args ...string) error {
-	if err := m.ticket(root); err != nil {
-		return err
-	}
 	cmd := m.command(ctx, m.argv(root, name, args))
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = m.stdin(), m.stderr(), m.stderr()
 	return finished(cmd, cmd.Run())
@@ -204,9 +179,9 @@ func (m OSMachine) command(ctx context.Context, argv []string) *exec.Cmd {
 	if m.Stdin != nil {
 		cmd.Env = withEnv(os.Environ(), offTerminal)
 		// A raw terminal sends the command's group no Ctrl-C, so ctx's end is all that reaches it. A
-		// kill would end runuser and leave its child, whose hold on a screen's pipe holds up Wait.
+		// kill would end runuser and leave its child, whose hold on a pipe holds up Wait.
 		cmd.Cancel = func() error { return cmd.Process.Signal(syscall.SIGTERM) }
-		cmd.WaitDelay = screenGrace
+		cmd.WaitDelay = killGrace
 	}
 	return cmd
 }

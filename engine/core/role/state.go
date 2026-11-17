@@ -15,7 +15,7 @@ type RoleState struct { //nolint:revive // State names the function that reads t
 	Steps []step.Report `json:"steps"`
 }
 
-// StateDoc is what a state report's --json prints, and what the Mac's wizard reads of it.
+// StateDoc is what a state report's --json prints.
 // Version is that of the ws that read the steps.
 type StateDoc struct {
 	Version string      `json:"version"`
