@@ -24,14 +24,14 @@ WS_IKEWARD_FORWARD_FROM: [10.99.0.2]       # the WireGuard peers that reach the 
 ```
 
 Put the two files in [the secrets file](../shell/README.md#the-secrets-file), whole. Add the `.p12`'s
-password, left out where it has none ([ws's secrets](../secrets/README.md#editing)). Run the wizard,
-which runs `--secrets` ([The run](../secrets/README.md#the-run)). Then remove the plain files, which hold
+password, left out where it has none ([ws's secrets](../secrets/README.md#editing)). Run
+`ws server ubuntu apply` ([The run](../secrets/README.md#the-run)). Then remove the plain files, which hold
 the client's key:
 
 ```sh
-ws client macos secrets set file vpn_p12 vpnclient.p12
-ws client macos secrets set file vpn_sswan vpnclient.sswan
-ws client macos secrets set password vpn_p12
+sudo ws server ubuntu secrets set file vpn_p12 vpnclient.p12
+sudo ws server ubuntu secrets set file vpn_sswan vpnclient.sswan
+sudo ws server ubuntu secrets set password vpn_p12
 ```
 
 `WS_IKEWARD_PROFILE` is an absolute path, less the extension, that names the files `install` writes.

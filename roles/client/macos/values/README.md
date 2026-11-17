@@ -1,9 +1,8 @@
-# The wizard's targets
+# The Mac's values
 
-The Mac's wizard sets up ws on one of three machines, which the server's file's `WS_TARGET` names ([The
-answers](../README.md)). Each target sets the questions of ws's ways and their
-defaults, and what a few stages do. `ws server ubuntu apply` is the same on each, but for the
-outbound table on a cloud VM.
+ws is one of three machines, which the server's file's `WS_TARGET` names. Each target sets which of
+ws's ways the file names, their defaults, and what a few steps do. `ws server ubuntu apply` is the
+same on each, but for the outbound table on a cloud VM.
 
 ## The two files
 
@@ -31,7 +30,7 @@ WS_RESOLVERS: example.internal=10.20.0.53,10.20.0.54
 
 Both are YAML files of `KEY: value` lines, one a line. The key is at the line's start with its colon
 right after it, and the value fits the line, in quotes where YAML needs them. Comments and blank
-lines stay. The wizard and `configure` read and edit that form alone. A quoted key, a space before
+lines stay. ws reads that form alone. A quoted key, a space before
 the colon, a flow map, a value wrapped over lines and a `---` marker are refused, with their line.
 A key in the other file is refused, with the file it goes in. `WS_VALUES` names `values.yml`,
 and the server's file is `servers/ws/values.yml` beside it. Each key's meaning is in
@@ -41,16 +40,15 @@ and the server's file is `servers/ws/values.yml` beside it. Each key's meaning i
 
 `--server NAME` picks the server, and its file is `servers/NAME/values.yml`. A name is a lower-case
 letter, then up to 11 lower-case letters, digits and `-`, other than `direct`, `first` and `key`.
-With one server, the flag may be left out. With none, the wizard asks the name, `ws` by default. A
-name that no file holds sets up a new server, beside the others. With several and no flag, it
-refuses and lists them. `WS_SLOT`, from 0 to 15, is the slot. The wizard writes the smallest that no
-other server holds in a file that lacks it, and `WS_TUNNEL_PORT` after it. `WS_TUNNEL_PORT` is
-51820, or 51820 plus the slot behind a router that another server shares, or the next port up that
-none of those takes. The default of `WS_REMOTE_PORT` follows 22022 likewise. A LAN and
-`WS_TUNNEL_NETWORKS` stay clear of the slots' `10.99.0.0/20`. A directory of a bad name that holds A
-server's `values.yml` is refused too. The wizard stops before it writes a new server's file where
-another server's file is refused, as its slot and ports would be that file's. The wizard writes an
-empty `WS_CABLE_SERVICE` in a server's file where another's names one.
+With one server, the flag may be left out. With none, it stops and says to write
+`servers/NAME/values.yml`. A name that no file holds sets up a new server, beside the others. With
+several and no flag, it refuses and lists them. `WS_SLOT`, from 0 to 15, is the slot. A file with no
+`WS_SLOT` holds slot 0. Give each server the smallest slot that no other holds, as the check refuses
+a clash. `WS_TUNNEL_PORT` is 51820, or 51820 plus the slot behind a router that another server
+shares, or the next port up that none of those takes. The default of `WS_REMOTE_PORT` follows 22022
+likewise. A LAN and `WS_TUNNEL_NETWORKS` stay clear of the slots' `10.99.0.0/20`. A directory of a
+bad name that holds A server's `values.yml` is refused too. Where another server's file names a
+`WS_CABLE_SERVICE`, leave a server's own empty.
 
 ## What two servers may not share
 
@@ -87,7 +85,7 @@ the state. Else the column shows the tier and endpoint that the state holds. A s
 refuses shows `-` for its target and slot. Its errors follow the rows, with exit code 1. The command
 takes no `--server`.
 
-`ws client macos remove NAME` takes a server off the Mac, as the user and under the wizard's lock. It
+`ws client macos remove NAME` takes a server off the Mac, as the user. It
 refuses the Mac's last server, as apply needs one, and takes no `--server`: the argument is the
 consent. It deletes `servers/NAME` and NAME's entry in `known_hosts`, then runs the steps `ssh`,
 `zed`, `tunnel` and `networks` for a server that stays, so that its daemon, hosts and routes go
@@ -100,9 +98,6 @@ by hand: the cable's service keeps `10.77.0.2`. The server itself is not changed
 line with its name. Its `--json` then lists them in `servers`, each with its `steps`, and holds no
 top `steps`. With one server, or `--server`, it prints what it did before.
 
-`ws client macos configure` shows the keys of `values.yml` on a sheet, then those of
-`servers/NAME/values.yml` on the next, each file's own, before the secrets and ws's values.yml.
-
 ## A machine on the LAN
 
 `WS_TARGET=lan`, the default, is a machine at home, behind [The router](../../../server/ubuntu/cable/router.md), with a cable to
@@ -112,30 +107,24 @@ the Mac's display, if any:
   there, `10.88.0.10`.
 - `WS_REMOTE` is the router's name on the internet, if any, and `WS_REMOTE_PORT` its forward to
   ws's 22, `22022` by default.
-- Where ws doesn't answer at its way, the Host key stage asks its address as the router's leases
-  show it.
-- The Cable stage sets up the cable ([The cable](../README.md)).
-- The closing list names ws's lease and the router's forwards.
+- `WS_CABLE_SERVICE` and `WS_CABLE_PORT` set up the cable ([The cable](../README.md#the-cable)).
 
 ## A cloud VM
 
 `WS_TARGET=cloud` is a VM at a provider, reached through the internet alone:
 
-- The wizard asks no LAN.
+- It has no `WS_LAN`.
 - `WS_USER` defaults to `root`, as a VM may have no other user. Set it for an image whose root refuses
   a login, such as `ubuntu`. The other targets refuse `WS_USER=root`.
 - `WS_REMOTE` is the VM's name or address, and `WS_REMOTE_PORT` its SSH port, `22` by default. The
   target needs both.
 - The VM needs a public IPv4 address, as the tunnel takes IPv4 alone.
 - The provider's firewall must let in TCP `WS_REMOTE_PORT`, and UDP 51820, the tunnel's, or the port
-  that `WS_TUNNEL_PORT` sets, which moves wg0's listen port on ws too. The closing list says so.
-- The VM's default user takes the provider's keys, which must be the GitHub account's
-  ([Login](../README.md)).
-- Where ws doesn't answer at its way, the Host key stage asks the VM's public address, as the
-  provider shows it.
-- ws's run turns the outbound table off, which would drop the metadata service
-  ([ws's run](../README.md)).
-- The wizard skips the Cable stage.
+  that `WS_TUNNEL_PORT` sets, which moves wg0's listen port on ws too.
+- The VM's default user takes the provider's keys, which must be the GitHub account's.
+- Set `WS_SECURITY_OUTBOUND: false` in ws's values.yml before ws's run, as the outbound table would
+  drop the metadata service ([Outbound](../../../server/ubuntu/security/README.md#outbound)).
+- It has no cable: `WS_CABLE_SERVICE` and `WS_CABLE_PORT` are refused.
 
 ## A VM on the Mac
 
@@ -148,11 +137,11 @@ the Mac's display, if any:
   Keep it stable, by a static address in the VM or a reservation in its app's DHCP: else ssh goes
   to another host once the lease moves.
 - ssh reaches the VM there while the Mac has an address on that network, as while a VM runs
-  ([ssh's hosts](../README.md#sshs-hosts)). Else the Host key stage stops, and says to start the VM.
-- The wizard asks no `WS_REMOTE`, as only the Mac reaches the VM.
+  ([ssh's hosts](../README.md#sshs-hosts)).
+- It needs no `WS_REMOTE`, as only the Mac reaches the VM.
 - The outbound table stays on: ws's DHCP and DNS go to the Mac, which the table lets through
   ([Outbound](../../../server/ubuntu/security/README.md#outbound)).
-- The wizard skips the Cable stage.
+- It has no cable: `WS_CABLE_SERVICE` and `WS_CABLE_PORT` are refused.
 
 ## A move to another target
 
@@ -161,7 +150,8 @@ To move the server's file to another target, set `WS_TARGET`, and remove every k
 would lead to the old machine still. From the LAN to a cloud VM, the router's `WS_REMOTE` would, and
 the cloud VM's run would turn that machine's outbound table off. `ws client macos apply` refuses a
 key of another target's ways: `WS_LAN` on a cloud VM, `WS_REMOTE` on a VM on the Mac, and
-`WS_CABLE_SERVICE` or `WS_CABLE_PORT` off the LAN. Then run the wizard, which asks the new target's
+`WS_CABLE_SERVICE` or `WS_CABLE_PORT` off the LAN. Then name the new target's
 ways. A new machine offers another host key, so run `ssh-keygen -R NAME` first, NAME the server's
-name. From a cloud VM, remove `WS_SECURITY_OUTBOUND: false` from ws's `values.yml` too, as the
-closing list says, then run the wizard with `--update`.
+name. From a cloud VM, remove `WS_SECURITY_OUTBOUND: false` from ws's `values.yml` too, with
+`sudo ws server ubuntu values set WS_SECURITY_OUTBOUND ''`. Then run `sudo ws server ubuntu apply`
+on ws, and `ws client macos apply` again.

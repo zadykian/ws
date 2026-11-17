@@ -16,23 +16,20 @@ request. It runs as the user, with sudo where it needs root. It sets up Ghostty,
 hook ([Ghostty and cld on the Mac](ghostty/README.md)). It installs Ghostty, Zed and a font from
 Homebrew, [installed](https://brew.sh) first. `install.sh` puts `ws` in `~/.local/bin` (put it on
 `PATH` by hand) from a release ([Releases](../../../engine/core/update/README.md)). `ws` embeds the files it installs, so it
-needs no clone. Then:
+needs no clone. Write the values below in `values.yml` first ([The two
+files](values/README.md#the-two-files)). Then:
 
 ```sh
 ws client macos apply
 ```
 
-`ws client macos wizard`, in its place, asks first for the values below ([The Mac's
-wizard](README.md)), and `ws client macos configure` changes them later on a form, with ws's
-secrets and values.yml ([The Configure screen](../../../engine/tui/internal/configure/README.md)). `ws client macos
-apply --only STEP` runs one step, and `--check` shows each change and makes none. At a terminal it
-draws [the run screen](../../../engine/tui/README.md#the-run-screen), past [the list of
-steps](../../../engine/tui/README.md#the-list-of-steps) where it gets neither, and `--plain` keeps
-its lines.
-`ws client macos state` reports what a check reads, and changes nothing
-([State](../../../README.md#state)). `ws client macos` holds the Mac's commands ([the
-secrets](../../server/ubuntu/secrets/README.md) too), darwin alone. `ws version` prints its version,
-and `ws update` replaces it with the latest release ([Update](../../../engine/core/update/README.md#update)).
+`ws client macos apply --only STEP` runs one step, and `--check` shows each change and makes none.
+At a terminal it draws [the run screen](../../../engine/tui/README.md#the-run-screen), past [the
+list of steps](../../../engine/tui/README.md#the-list-of-steps) where it gets neither, and `--plain`
+keeps its lines. `ws client macos state` reports what a check reads, and changes nothing
+([State](../../../README.md#state)). `ws client macos` holds the Mac's commands, darwin alone. `ws
+version` prints its version, and `ws update` replaces it with the latest release
+([Update](../../../engine/core/update/README.md#update)).
 
 ## What the Mac reports
 
@@ -104,14 +101,13 @@ s without word from the server, far longer than a switch of the tunnel takes.
 ssh offers ws one key alone (`IdentitiesOnly`): the one whose `.pub` `WS_IDENTITY_PUB_KEY` names, as
 ws's copy of a key of Secretive's ([Secretive's keys](git/README.md#secretives-keys)) or a file key.
 The script picks none by itself, not even the agent's sole key, as a key made for another use would
-go to GitHub unasked. Without the key, or with it empty, it stops: run `ws client macos wizard`,
-which asks ([The wizard](README.md)), or add one of the lines it gives. They name
-each P-256 key that Secretive's agent lists, by its comment and SHA256 fingerprint. The agent is the
-one whose socket `WS_IDENTITY_AGENT` names, else Secretive's where the `.pub` is there. Else ssh
-reads the file beside the `.pub`, its passphrase kept in the Keychain. The script stops where that
-`.pub` is missing or unreadable. It stops too where the `.pub` holds other than one public key's
-line, as a private key or a certificate does. So does a key that ssh-keygen cannot read, or one of a
-type that ws's OpenSSH lacks, as Secretive's ML-DSA keys on macOS 26.
+go to GitHub unasked. Without the key, or with it empty, it stops, and gives the lines to add to
+`values.yml`. They name each P-256 key that Secretive's agent lists, by its comment and SHA256
+fingerprint. The agent is the one whose socket `WS_IDENTITY_AGENT` names, else Secretive's where the
+`.pub` is there. Else ssh reads the file beside the `.pub`, its passphrase kept in the Keychain. The
+script stops where that `.pub` is missing or unreadable. It stops too where the `.pub` holds other
+than one public key's line, as a private key or a certificate does. So does a key that ssh-keygen
+cannot read, or one of a type that ws's OpenSSH lacks, as Secretive's ML-DSA keys on macOS 26.
 
 The script puts `Include /etc/ws/ssh_config` first in `~/.ssh/config`, as ssh keeps the first value
 it reads for each key. So neither the file's own settings nor those of other files override ws's.
@@ -124,8 +120,7 @@ to. It stops where the line is missing there, rather than replace the link with 
 report shows the file as a conflict. The script leaves `~/.ssh/config.d/ws` and its `Include` alone:
 a user's old line stays the user's. It stops where a `Host` or `Match` of `~/.ssh/config`'s own
 names a server, whose settings would come after those of `/etc/ws/ssh_config`: remove it, as its
-`IdentityFile` would add a key to ws's. The wizard refuses such a name for a new server, asked or
-given by `--server`, first.
+`IdentityFile` would add a key to ws's.
 
 ssh keeps the first `IgnoreUnknown` it reads too. `/etc/ws/ssh_config` needs one for the file key's
 `UseKeychain`, which only Apple's ssh knows, and keeps it with an agent's key. So it carries the
@@ -205,8 +200,8 @@ ssh -o HostName=ADDRESS -o Port=PORT NAME ws server ubuntu apply --only tunnel
 For a `WS_USER` other than root, both go through `sudo` and `ssh -t`, for the password.
 
 With ws's key as `WS_PUBLIC_KEY`, `ws client macos apply` again installs the tunnel's daemon. A new
-Mac or a rebuilt server changes one file on each side, and nothing in the repository. The wizard's
-Tunnel stage takes these steps, which stay the way by hand ([The tunnel](README.md)).
+Mac or a rebuilt server changes one file on each side, and nothing in the repository. Do it by hand,
+as above.
 
 A daemon per server, `ws client macos tunnel run --server NAME`, runs as root from launchd, from
 boot and before any login, by `/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.NAME.plist`. `ws
@@ -218,7 +213,7 @@ itself, so it needs no `wg` or `wireguard-go`. `apply` restarts each where the c
 The settings are in `/etc/ws/tunnel`, in ws's directory, which only root reads. It holds the Mac's
 key, which `ws client macos tunnel key` makes once, and a directory `NAME` per server, with its
 `tunnel.conf` and its `routes.d` ([the daemons](tunnel/README.md)). `ws client macos apply` keeps the public key in
-`/etc/ws/tunnel.pub`, which the wizard reads, and copies `tunnel.conf` from the server's file,
+`/etc/ws/tunnel.pub`, and copies `tunnel.conf` from the server's file,
 so the daemon reads no file the user can write. In System Settings › General › Login Items &
 Extensions, its "Allow in the Background" must stay on.
 
@@ -227,7 +222,7 @@ where loaded, then its plist, `/etc/ws/tunnel/NAME`, state file and log. Nothing
 `values.yml`'s servers list the one that `apply` runs for.
 
 The tunnel's ends are `10.99.N.2` on the Mac, on a utun of wireguard-go's, and `10.99.N.1` on ws, N
-being `WS_SLOT`. A moved slot restarts the daemon. The wizard names the pair in ws's values.yml ([The
+being `WS_SLOT`. A moved slot restarts the daemon. Name the pair in ws's values.yml ([The
 tunnel](../../server/ubuntu/tunnel/README.md#the-tunnel)). The daemon points the Mac's end at the
 first of these that answers, each on UDP 51820:
 
