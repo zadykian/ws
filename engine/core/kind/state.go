@@ -86,14 +86,58 @@ func (s stateSpec) parts(e Env, _ fs.FS) (func(context.Context) ([]resource.Reso
 	return func(context.Context) ([]resource.Resource, error) { return []resource.Resource{r}, nil }, nil
 }
 
-// lingerState is a user whose systemd starts at boot. Without booted systemd it skips.
+// lingerState is a user whose systemd starts at boot, and runs: user@UID.service. Without booted
+// systemd it skips.
 type lingerState string
 
 func (s lingerState) resource(e Env) (resource.Resource, error) {
 	if err := checkUser("linger", string(s)); err != nil {
 		return nil, err
 	}
-	return systemd.Linger{M: e.M, User: account.User{Name: string(s)}, Out: e.Out}, nil
+	return lingered{e: e, user: string(s)}, nil
+}
+
+// lingered is a linger state's resource. The user's uid, which names the manager's unit, is looked
+// up as it plans, as an earlier unit may make the account. The manager's start keeps it running
+// where it stopped after lingering began; on a first run loginctl has started it already.
+type lingered struct {
+	e    Env
+	user string
+}
+
+// manager is the unit of the user's own systemd.
+func (l lingered) manager(ctx context.Context) (systemd.Unit, error) {
+	a, err := account.User{Name: l.user}.Lookup(ctx, l.e.M)
+	if err != nil {
+		return systemd.Unit{}, err
+	}
+	return systemd.Unit{M: l.e.M, U: l.e.U, Out: l.e.Out, Name: fmt.Sprintf("user@%d.service", a.UID), Run: systemd.Running}, nil
+}
+
+func (l lingered) Plan(ctx context.Context) ([]resource.Change, error) {
+	linger := systemd.Linger{M: l.e.M, User: account.User{Name: l.user}, Out: l.e.Out}
+	cs, err := linger.Plan(ctx)
+	if err != nil || !systemd.Booted(l.e.M) {
+		return cs, err
+	}
+	u, err := l.manager(ctx)
+	if err != nil {
+		return nil, err
+	}
+	more, err := u.Plan(ctx)
+	return append(cs, more...), err
+}
+
+// Report reads the manager's state. Plan says that systemd is not running, so this doesn't.
+func (l lingered) Report(ctx context.Context) ([]step.Item, error) {
+	if !systemd.Booted(l.e.M) {
+		return nil, nil
+	}
+	u, err := l.manager(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return u.Report(ctx)
 }
 
 // purgedState is a package removed with its settings, where dpkg holds anything of it.
