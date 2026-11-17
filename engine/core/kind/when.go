@@ -43,6 +43,9 @@ var whenFacts = map[string]fact{
 	"board_vendor": {holds: boardVendor},
 	// sysfs writes a vendor as 0x and four hex digits in lower case.
 	"gpu_vendor": {holds: gpuVendor, form: regexp.MustCompile(`^0x[0-9a-f]{4}$`)},
+	// The kernel takes an interface's name of 1 to 15 bytes, with no '/', ':' or white space, and
+	// neither "." nor "..".
+	"interface": {holds: netInterface, form: regexp.MustCompile(`^(?:[^/:\s.][^/:\s]{0,14}|\.[^/:\s.][^/:\s]{0,13}|\.\.[^/:\s]{1,13})$`)},
 }
 
 // check refuses a key that no fact has, and a want of a form that its fact never gives, as the
@@ -146,4 +149,16 @@ func gpuVendor(_ context.Context, m effect.Machine, want string) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+// netDevices holds an entry per network interface of the machine's namespace.
+const netDevices = "/sys/class/net"
+
+// netInterface holds where the machine has the network interface want, of any state.
+func netInterface(_ context.Context, m effect.Machine, want string) (bool, error) {
+	_, err := m.Stat(netDevices + "/" + want)
+	if errors.Is(err, fs.ErrNotExist) {
+		return false, nil
+	}
+	return err == nil, err
 }

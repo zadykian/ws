@@ -219,3 +219,28 @@ func TestWhenOnEveryKind(t *testing.T) {
 		}
 	}
 }
+
+func TestInterfaceHoldsWhereTheLinkExists(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Dirs[netDevices+"/cab0"] = 0o755
+	if got, _ := planGated(t, m, `{ interface = "cab0" }`); got == nil {
+		t.Error("cab0 exists: plan = none, want the file")
+	}
+	got, said := planGated(t, m, `{ interface = "cab1" }`)
+	if got != nil || !slices.Contains(said, `say: file/a: off on this machine, as its interface is not "cab1"`) {
+		t.Errorf("no cab1: plan = %q, said %q; want none, and why", got, said)
+	}
+}
+
+func TestInterfaceRefusesAPath(t *testing.T) {
+	e, _, _, _ := testEnv(false)
+	for want, ok := range map[string]bool{
+		"eth0": true, "enp1s0f0np0": true, ".x": true, "...": true, strings.Repeat("a", 15): true, "": true,
+		"../eth0": false, ".": false, "..": false, "a b": false, "a:1": false, strings.Repeat("a", 16): false,
+	} {
+		_, err := Load(e, tree(map[string]string{"r/units.toml": gatedFile(`{ interface = "` + want + `" }`), "r/a": "x"}))
+		if ok != (err == nil) || !ok && !strings.Contains(err.Error(), `when: interface "`+want+`" is not of the form`) {
+			t.Errorf("load with interface %q = %v, want loaded %v", want, err, ok)
+		}
+	}
+}

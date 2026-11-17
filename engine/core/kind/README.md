@@ -32,7 +32,7 @@ Its templates and sources sit beside it, and a path in the spec is relative to t
   gives its WANT, and `"!WANT"` where it does not. Elsewhere it plans nothing, and says so in a
   line. An empty WANT, negated or not, holds on no machine, so a value left empty turns the unit
   off, and its line says that the `when` gives no FACT. The facts are read as the unit plans, so
-  that one can follow an earlier unit. macOS has no sysfs, and gives neither. A FACT that the
+  that one can follow an earlier unit. macOS has no sysfs, and gives none. A FACT that the
   table lacks fails the load. So does a WANT of a form that its FACT never gives, which would turn
   the unit off on every machine. A new fact is one entry of `whenFacts`, in `when.go`.
 
@@ -40,6 +40,7 @@ Its templates and sources sit beside it, and a path in the spec is relative to t
   | --- | --- |
   | `board_vendor` | The board's maker, from `/sys/class/dmi/id/board_vendor` |
   | `gpu_vendor` | The PCI vendor of a device of class `0x03`, from `/sys/bus/pci/devices`: `0x` and four hex digits in lower case, such as `0x1234` |
+  | `interface` | A network interface of that name, of any state, from `/sys/class/net`: a name the kernel takes, with no `/` |
 
 - **Load and plan.** Each kind checks its fields as the spec loads, so a bad field fails before any
   unit runs. The resources are made as each unit plans.
