@@ -177,7 +177,7 @@ rm "$tmp/xdg/git/config" ~/.gitconfig
 # Secretive's agent is not there. So must a key that is missing, and a .pub that holds more than a
 # public key's line, as a private key does.
 with 'WS_GIT_SIGNING_PUB_KEY: ""'
-stops "ws client macos apply: values.yml names no WS_GIT_SIGNING_PUB_KEY, git's signing key: run ws client macos wizard"
+stops "ws client macos apply: values.yml names no WS_GIT_SIGNING_PUB_KEY, git's signing key: make a P-256 key in Secretive, then name its .pub there"
 with 'WS_GIT_SIGNING_PUB_KEY: ~/.ssh/ws.pub'
 stops "ws client macos apply: $HOME/.ssh/ws.pub, values.yml's WS_GIT_SIGNING_PUB_KEY, is missing"
 cp "$key" "$tmp/mixed.pub"

@@ -89,7 +89,7 @@ func TestPickRefuses(t *testing.T) {
 		{nil, "Lab", "--server Lab is not a server's name: " + NameForm},
 		{[]string{"box", "ws"}, "lab", "no server named lab in " + serversDirPath + ", which holds box and ws"},
 		{nil, "lab", "no server named lab in " + serversDirPath + ", which holds none"},
-		{nil, "", "no server in " + serversDirPath + ": ws client macos wizard adds one (roles/client/macos/README.md)"},
+		{nil, "", "no server in " + serversDirPath + ": write NAME/values.yml there, as roles/client/macos/README.md says"},
 		{[]string{"box", "lab", "ws"}, "", "several servers in " + serversDirPath + ", box, lab and ws: name one by --server"},
 		{[]string{"box", "ws"}, "", "several servers in " + serversDirPath + ", box and ws: name one by --server"},
 	} {

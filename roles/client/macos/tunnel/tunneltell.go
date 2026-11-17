@@ -31,8 +31,8 @@ func (t *Tunnel) publicKey(ctx context.Context) (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
-// pubFile is the Mac's public key, root's and readable by all, where the wizard's Tunnel stage reads
-// it without sudo.
+// pubFile is the Mac's public key, root's and readable by all, so that a read
+// takes no sudo.
 const pubFile = etcws.Dir + "/tunnel.pub"
 
 // tell plans /etc/ws/tunnel.pub, once the key is made, and keeps the key for Finish. Its directory,

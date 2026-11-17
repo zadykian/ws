@@ -112,7 +112,7 @@ func (s SSH) refusal(f sshFacts, hosts []sshcfg.Host, text []byte) refusal {
 		if f.Stop != nil {
 			return f.Stop
 		}
-		// The line is counted in ~/.ssh/config as it stands, the number the wizard's question gives.
+		// The line is counted in ~/.ssh/config as it stands.
 		own := sshcfg.OwnHosts(string(f.UserConfig.Text), names(hosts)...)
 		if len(own) > 0 {
 			return fmt.Errorf("line %d of ~/.ssh/config, %s, sets its own values for %s: remove it, as "+

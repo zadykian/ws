@@ -92,7 +92,7 @@ func Pick(m effect.Machine, mac, flag string) (string, error) {
 		}
 		return "", fmt.Errorf("no server named %s in %s, which holds %s", flag, dir, List(names))
 	case len(names) == 0:
-		return "", fmt.Errorf("no server in %s: ws client macos wizard adds one (roles/client/macos/README.md)", dir)
+		return "", fmt.Errorf("no server in %s: write NAME/values.yml there, as roles/client/macos/README.md says", dir)
 	case len(names) > 1:
 		return "", fmt.Errorf("several servers in %s, %s: name one by --server", dir, List(names))
 	}

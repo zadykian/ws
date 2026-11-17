@@ -139,7 +139,7 @@ copy=/etc/ws/secretive/$name
 # for USE. It gives the line that names the key of each .pub of PUB..., in their order, by the
 # comment ws.
 unnamed() {
-    printf "ws client macos apply: values.yml names no %s, %s: run ws client macos wizard, or add one of these lines to" \
+    printf "ws client macos apply: values.yml names no %s, %s: add one of these lines to" \
         "$1" "$2"
     printf ' values.yml, '
     unnamed_key=$1 unnamed_sep=

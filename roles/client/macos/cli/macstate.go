@@ -47,8 +47,8 @@ func newMacStateCmd(p enginecli.Env, server *string) *cobra.Command {
 	return c
 }
 
-// macRead is the state screen's read of the Mac. It takes values.yml itself, as the wizard opens the
-// screen on a Mac that may have none: the header then says so, and the wizard stays.
+// macRead is the state screen's read of the Mac. It takes values.yml itself, as the screen opens
+// on a Mac that may have none: the header then says so.
 func macRead(p enginecli.Env, server *string) tui.StateReader {
 	return func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
 		confs, grouped, err := stateConfs(p, server)

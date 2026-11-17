@@ -40,11 +40,11 @@ func TestReadKeyStops(t *testing.T) {
 		want string                             // VAR, WORDS and PAGE stand for the use's
 	}{
 		{"none named, no agent", func(*effecttest.Machine) string { return "" },
-			"values.yml names no VAR, WORDS: run ws client macos wizard to pick or make one in Secretive"},
+			"values.yml names no VAR, WORDS: make a P-256 key in Secretive, then name its .pub there"},
 		{"none named, two agent keys", func(m *effecttest.Machine) string {
 			mactest.AgentMachine(m, mactest.AgentKey, mldsa)
 			return ""
-		}, "values.yml names no VAR, WORDS: run ws client macos wizard, or add one of these lines to values.yml, " +
+		}, "values.yml names no VAR, WORDS: add one of these lines to values.yml, " +
 			values.Line("VAR", sshcfg.AgentKeys(mactest.AgentKey)[0].Pub()) + " for " + sshcfg.AgentKeys(mactest.AgentKey)[0].Label()},
 		{"missing", func(*effecttest.Machine) string { return filePub },
 			fileLine + ", values.yml's VAR, is missing: make the key first, as PAGE says"},

@@ -30,7 +30,7 @@ func newServersCmd(p enginecli.Env, server *string) *cobra.Command {
 				return err
 			}
 			if len(names) == 0 {
-				return fmt.Errorf("no server beside %s: ws client macos wizard adds one (roles/client/macos/README.md)", mac)
+				return fmt.Errorf("no server beside %s: write NAME/values.yml there, as roles/client/macos/README.md says", mac)
 			}
 			var refused []error
 			w := tabwriter.NewWriter(c.OutOrStdout(), 0, 0, 2, ' ', 0)
