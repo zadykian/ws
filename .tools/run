@@ -161,6 +161,20 @@ pin() {
             d33eee0da0f92835b3562e9767a05cee7e4eaeef47daa03bfd09da17b4b590a6 \
             b7c872db63553ccffc7253aba3ed7d4885a27d83f1ba567b1138c6315a5847e5
         ;;
+    tombi)
+        version=1.9.9
+        case $os in
+        linux) member=$cpu-unknown-linux-musl ;;
+        darwin) member=$cpu-apple-darwin ;;
+        esac
+        member=tombi-cli-$version-$member
+        url=$gh/tombi-toml/tombi/releases/download/v$version/$member.tar.gz
+        member=$member/tombi
+        pick f6094fb14fd962c9611ccd7bc73dc7e8b03fe8859fd662e022b8d0a25649b5fc \
+            a3ce42ce0825c3ff8c054e443dd8ded013ec5a708bba02e7b4a537b287c75734 \
+            6d7d545c4f33fb7e0547b31f6e0b23bffed801f9a58664563fd9e5df10f52802 \
+            3e156ba88ae4228b93071d9a4548e6dd64ae0e71d476ae09ee106a0d9a6ca070
+        ;;
     vale)
         version=3.23.0
         case $os-$arch in
@@ -190,7 +204,7 @@ pin() {
             e28d22b087f9ebb8d99da6e740d348c930f559961c7c3f12badda54f882195a2
         ;;
     *)
-        die "no tool $1: actionlint, go, gitleaks, golangci-lint, lazygit-schema, lychee, rumdl, shellcheck, shfmt, vale or zizmor"
+        die "no tool $1: actionlint, go, gitleaks, golangci-lint, lazygit-schema, lychee, rumdl, shellcheck, shfmt, tombi, vale or zizmor"
         ;;
     esac
 }

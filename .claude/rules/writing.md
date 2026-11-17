@@ -5,6 +5,7 @@ paths:
   - "**/*.yml"
   - "**/*.yaml"
   - "**/*.sh"
+  - "**/*.toml"
   - ".githooks/*"
   - ".tools/*"
 ---

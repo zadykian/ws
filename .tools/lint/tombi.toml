@@ -1,0 +1,12 @@
+# tombi, run by `make tombi` on the TOML files. tombi takes no flag for its config, so the Makefile
+# runs it in this directory, where this file is the first it finds. TOML 1.0.0, which go-toml and
+# mise both parse. Lines of 100 columns, as rumdl's, and an indent of 4, as .editorconfig's.
+# No schema: one from SchemaStore's catalog, fetched online, would change how a file formats.
+toml-version = "v1.0.0"
+
+[format.rules]
+indent-width = 4
+line-width = 100
+
+[schema]
+enabled = false

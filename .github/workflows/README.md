@@ -148,12 +148,8 @@ text in `env:` or checks out, as both print it. `words-check-test.sh` tries the 
 
 The lint plugin of the `zadykian` marketplace, which `.claude/settings.json` enables, has Claude
 Code run two targets of the `Makefile`, as [its docs][lint] say. After each edit,
-`make lint-file FILES=PATH` runs the gates of the file's kind on that file alone:
-
-- Markdown: `vale`, `lychee`, `rumdl` and `sizecheck`;
-- YAML: `yamllint`, `vale` and `sizecheck`, and for a workflow `actionlint` and `zizmor`;
-- Go: `gofmt`, `govet`, `golangci-lint`, `govulncheck`, `gotest`, `vale` and `sizecheck`;
-- any other file: `shell` on a script, by extension or shebang, `vale` and `sizecheck`.
+`make lint-file FILES=PATH` runs the gates of the file's kind on that file alone
+([The gates of one file](../../.tools/README.md#the-gates-of-one-file)).
 
 As Claude ends its turn, `make lint-tree` runs `make lint`, but its gitleaks scans only the
 branch's own commits, from `origin/main`.
