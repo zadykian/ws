@@ -43,6 +43,8 @@ type spec struct {
 	Deb  map[string]debSpec  `toml:"deb"`
 	// Packages is apt's packages, whose names a template gives.
 	Packages map[string]packagesSpec `toml:"packages"`
+	// Dkms is a module's pinned source, which DKMS builds for the running kernel.
+	Dkms map[string]dkmsSpec `toml:"dkms"`
 	// Service is a systemd unit, with the files that one restart covers.
 	Service map[string]serviceSpec `toml:"service"`
 	// State is one small state with a cheap check.

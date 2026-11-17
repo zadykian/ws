@@ -109,6 +109,28 @@ simulate = false            # check that apt finds each name, and install none
   where one is missing. It changes nothing, so it tries a role's names on a machine that installs
   none of them. It reads apt's lists as an earlier `apt-get update` left them.
 
+### dkms
+
+```toml
+[dkms.NAME]
+module = "name"             # DKMS's name of the source, as its dkms.conf gives it
+version = "1.0"             # DKMS's version of the pin
+url = "https://host/name.tar.gz"
+sha256 = "…"
+strip = 1                   # leading parts of each name dropped as the tarball unpacks
+conf = "dkms.conf"          # a source written as the tree's dkms.conf, {version} for version
+```
+
+- The tarball waits in `/var/cache/ws`, checked against its SHA-256, and unpacks whole as
+  `/usr/src/MODULE-VERSION`, so a new version is a new tree. `conf` replaces the tree's own
+  `dkms.conf`, so that the version is pinned in one place.
+- DKMS adds the version, then builds and installs it for the running kernel, `uname -r`. It builds
+  it again for each later kernel by itself. Another version of the module in DKMS goes first, with
+  its source. A version that `dkms status` gives in no plain word's form is left alone, with a
+  warning. Before `/usr/sbin/dkms` exists, as in a dry run before its package, DKMS holds nothing.
+- The packages of DKMS and of the kernel's headers are the role's own: a `packages` unit that this
+  one waits on by `after`.
+
 ### service
 
 ```toml
