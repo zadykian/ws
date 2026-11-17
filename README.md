@@ -182,7 +182,8 @@ The router takes a few steps once, by hand: [The router](roles/server/ubuntu/cab
 ## Checks
 
 CI runs `make lint`, which lints the code, the docs and the workflows, and scans the commits for
-secrets. It runs `ws server ubuntu apply` twice in a container, tries `install.sh`, forges SigNoz's
+secrets. It runs the bootstrap and `ws server ubuntu apply` twice in a container, and mise's plan
+after them must change nothing. It tries `install.sh`, forges SigNoz's
 compose files again, and sets up a Mac on GitHub's macOS runner. A pushed tag `vX.Y.Z` publishes the
 release whose tree `install.sh` runs: [Releases](engine/core/update). The rules workflow warns where a
 pull request breaks the rules of zadykian/toolkit's skills, and the issues workflow where an issue

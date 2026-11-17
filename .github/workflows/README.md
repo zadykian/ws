@@ -11,9 +11,17 @@ The checks of `rootless`, `mac-cld` and a Mac's servers have pages: [rootless](r
 ## The `playbook` job
 
 CI also builds ws from the tree, never from a release, in an Ubuntu 26.04 container with no git, so
-the build is `devel`. It runs `ws server ubuntu apply` twice from root's home, as `zadykian` and as
-root, a cloud VM's user. The steps that need booted systemd skip and say so, and the second run's
-last line must be `changed: none`. Then
+the build is `devel`. It copies the checkout to `/opt/ws`, root's alone, and
+[`.tools/serve-build`](../../.tools/serve-build) points its pin at the build, served on loopback
+in the release's place ([The pin](../../roles/server/ubuntu/frame/README.md#the-pin)). As
+`zadykian` and as root, a cloud VM's user, `install.sh` installs the pinned mise and runs the
+bootstrap on that tree in place, with `MISE_LOCKED=1`
+([playbook-bootstrap.sh](../playbook-bootstrap.sh)). Then `ws server ubuntu apply` sets up the
+roles still in Go, from root's home. Each runs twice. The parts and steps that need booted systemd
+skip and say so. `mise bootstrap plan --detailed-exitcode` must exit 0 before the second bootstrap,
+as that run would mend what it finds. The second apply's last line must be `changed: none`, and
+the plan must exit 0 again. With the frame's line of `state/ws-binary` dropped, it must exit 1
+([playbook-plan.sh](../playbook-plan.sh)): the check against a silent skip holds. Then
 `nft -c`, with the container's NET_ADMIN, checks the outbound table the run wrote and the users it
 names, and a find that the user owns its home. The Zed wrapper's [checks](../zed-terminal-checks.sh)
 run on the files it installed, and Fresh's on the config it loaded. The user's empty commit must
