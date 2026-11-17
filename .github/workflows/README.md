@@ -16,7 +16,7 @@ the build is `devel`. It copies the checkout to `/opt/ws`, root's alone, and
 in the release's place ([The pin](../../roles/server/ubuntu/frame/README.md#the-pin)). As
 `zadykian` and as root, a cloud VM's user, `install.sh` installs the pinned mise and runs the
 bootstrap on that tree in place, with `MISE_LOCKED=1`
-([playbook-bootstrap.sh](../playbook-bootstrap.sh)). Then `ws server ubuntu apply` sets up the
+([bootstrap.sh](../bootstrap.sh)). Then `ws server ubuntu apply` sets up the
 roles still in Go, from root's home. Each runs twice. The parts and steps that need booted systemd
 skip and say so. `mise bootstrap plan --detailed-exitcode` must exit 0 before the second bootstrap,
 as that run would mend what it finds. The second apply's last line must be `changed: none`, and

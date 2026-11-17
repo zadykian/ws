@@ -125,7 +125,7 @@ jobs:
               "WS_USER: $WS_USER" "WS_SECURITY_OUTBOUND: $OUTBOUND" >/etc/ws/values.yml
           chmod 600 /etc/ws/values.yml
       - name: Bootstrap
-        run: .github/playbook-bootstrap.sh "$RUNNER_TEMP/rel"
+        run: .github/bootstrap.sh "$RUNNER_TEMP/rel"
       # From root's home, 0700 on any machine, as after sudo -i: a command run as the user must not
       # rest on the directory it starts in. It sets up the roles still in Go, after mise's, as a
       # role in mise's config can be what one in Go needs.
