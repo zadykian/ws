@@ -66,6 +66,7 @@ absent = false              # remove the file; takes a path, an owner and ours a
 line = ". /etc/x"           # or a line at the top of the owner's file, which keeps its own text
 has = ["cmd"]               # says whether the file, on stdin, holds the line: 0 yes, 1 no
 group_of = "USER"           # a file of root's takes this account's primary group
+backup = false              # keep the old file beside the new one, as PATH.PID.TIME~
 ours = false                # refuse a file there without ws's '# Written by' line at its top
 absent_when_empty = false   # remove the file where its template gives white space alone
 after = "KIND/NAME"
@@ -81,6 +82,8 @@ after = "KIND/NAME"
 - An owner other than root takes the home that the system gives: `getent passwd` on Linux, and
   `dscl` on macOS, which the side names. A path outside it, or a link on the way, is refused, and
   the missing parents are the owner's.
+- A file whose `owner` names root takes root's home where its path lies below it, so a link on the
+  way is refused there too. An account's file names root where `WS_USER` is root.
 - Without booted systemd the restarts are skipped, and each says so.
 - A `line` goes at the top of its owner's file below the home, root's too, with a blank line
   after it. A missing file is made with the line alone, at `mode`. The old file is kept as

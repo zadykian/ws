@@ -23,7 +23,8 @@ type filePart struct {
 	// Mode is the file's permission bits, 0o644 where unset.
 	Mode uint32 `toml:"mode"`
 	// Owner owns the file, root by default. Another owner's file lies below that account's home,
-	// as root writes it there through the account, which refuses a link on the way.
+	// as root writes it there through the account, which refuses a link on the way. A file that
+	// names root lies anywhere, and below root's home it refuses a link on the way too.
 	Owner    string `toml:"owner"`
 	Template string `toml:"template"`
 	Source   string `toml:"source"`
@@ -45,6 +46,8 @@ type filePart struct {
 	GroupOf string `toml:"group_of"`
 	// Ours refuses to replace or remove a file there that lacks ws's mark at its top (fileguard.go).
 	Ours bool `toml:"ours"`
+	// Backup keeps the old file beside the new one, as PATH.PID.TIME~, where the content changes.
+	Backup bool `toml:"backup"`
 	// AbsentWhenEmpty removes the file where its template gives white space alone.
 	AbsentWhenEmpty bool `toml:"absent_when_empty"`
 }
@@ -118,10 +121,16 @@ func (f filePart) resources(ctx context.Context, e Env, dir fs.FS) (built, error
 	if err != nil {
 		return built{}, err
 	}
-	// A line is the owner's file below a home, root's too, as a line goes in a file of the home.
-	if f.Line != "" && owner.Home == "" {
-		if owner.Home, err = e.System.home(ctx, e.M, "root"); err != nil {
+	// A line is the owner's file below a home, root's too, as a line goes in a file of the home. A
+	// file whose spec names root lies in root's home where its path is below it, so a link on the
+	// way is refused there too. An account's file names root where WS_USER is root.
+	if owner.Home == "" && (f.Line != "" || f.Owner == "root") {
+		var home string
+		if home, err = e.System.home(ctx, e.M, "root"); err != nil {
 			return built{}, err
+		}
+		if f.Line != "" || strings.HasPrefix(f.Path, home+"/") {
+			owner.Home = home
 		}
 	}
 	rel, below := strings.CutPrefix(f.Path, owner.Home+"/")
@@ -176,6 +185,9 @@ func (f filePart) written(ctx context.Context, e Env, owner account.Account, rel
 		mode = 0o644
 	}
 	w := file.File{M: e.M, Path: f.Path, Content: content, Mode: mode}
+	if owner.Home != "" {
+		w = owner.File(e.M, rel, content, mode)
+	}
 	if f.GroupOf != "" {
 		a, err := account.User{Name: f.GroupOf}.Lookup(ctx, e.M)
 		if err != nil {
@@ -183,10 +195,8 @@ func (f filePart) written(ctx context.Context, e Env, owner account.Account, rel
 		}
 		w.GID = a.GID
 	}
-	if owner.Home != "" {
-		w = owner.File(e.M, rel, content, mode)
-	}
 	w.Secret = f.Secret
+	w.Backup = f.Backup
 	if check := f.checker(e); check != nil {
 		return file.Validated{File: w, Check: check}, nil
 	}

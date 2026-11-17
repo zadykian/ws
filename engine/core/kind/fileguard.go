@@ -20,6 +20,8 @@ const oursMark = "# " + file.Mark
 func (f filePart) checkGuards() error {
 	root := f.Owner == "" || f.Owner == "root"
 	switch {
+	case f.Backup && (f.Secret || f.Absent || f.Line != ""):
+		return errors.New("backup takes a file that ws writes whole, never a secret, an absent file or a line")
 	case f.GroupOf != "" && !root:
 		return errors.New("group_of takes a file of root's")
 	case f.GroupOf != "":
