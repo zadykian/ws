@@ -3,6 +3,6 @@
 Description=Docker's daemon and its containers
 
 [Slice]
-MemoryMax={{ .MemoryMax }}
-CPUQuota={{ .CPUQuota }}
-MemorySwapMax={{ .MemorySwapMax }}
+MemoryMax={{ or .Docker.MemoryMax (printf "%dM" (div mem_mib 2)) }}
+CPUQuota={{ or .Docker.CPUQuota (printf "%d%%" (mul cpus 50)) }}
+MemorySwapMax={{ .Docker.MemorySwapMax }}

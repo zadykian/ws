@@ -3,4 +3,4 @@
 # the host does. resolved binds it with IP_FREEBIND, before docker0 has the address, so it needs
 # no ordering against Docker.
 [Resolve]
-DNSStubListenerExtra={{ .BridgeIP }}
+DNSStubListenerExtra={{ .Docker.BridgeIP }}
