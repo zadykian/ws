@@ -216,11 +216,31 @@ func TestUnitReadOffUnitIsInSync(t *testing.T) {
 		"r/a":          "1\n",
 	})
 	status, stdout, stderr := runUnit(e, "read", "file/a")
-	if status != 0 || stdout != "file/a\tin-sync\n" || !strings.Contains(stderr, "file/a: off on this machine") {
-		t.Errorf("read: status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
+	if status != 0 || stdout != "file/a\tin-sync\n" || strings.Count(stderr, "file/a: off on this machine") != 1 {
+		t.Errorf("read: status = %d, stdout = %q, stderr = %q; want the off line once", status, stdout, stderr)
 	}
 	status, _, stderr = runUnit(e, "write", "file/a")
 	if _, wrote := m.Files["/etc/a"]; status != 0 || wrote || !strings.HasSuffix(stderr, "changed: none\n") {
 		t.Errorf("write: status = %d, wrote %v, stderr = %q", status, wrote, stderr)
+	}
+}
+
+// offUnit is the spec of file/a at /etc/a, off on a machine without the board of Acme Ltd.
+const offUnit = "[file.a]\npath = \"/etc/a\"\nsource = \"a\"\nwhen = { board_vendor = \"Acme Ltd.\" }\n"
+
+func TestUnitDryRunOffUnitChangesNothing(t *testing.T) {
+	e, m := unitEnv(t, map[string]string{"r/units.toml": offUnit, "r/a": "1\n"})
+	status, _, stderr := runUnit(e, "write", "--dry-run", "file/a")
+	if _, wrote := m.Files["/etc/a"]; status != 0 || wrote || strings.Count(stderr, "file/a: off on this machine") != 1 {
+		t.Errorf("dry run: status = %d, wrote %v, stderr = %q; want the off line once, and no file", status, wrote, stderr)
+	}
+}
+
+func TestUnitWritesAUnitAfterAnOffOne(t *testing.T) {
+	e, m := unitEnv(t, map[string]string{"r/units.toml": offUnit + fileUnit("b", "/etc/b", "file/a"), "r/a": "1\n", "r/b": "2\n"})
+	status, _, stderr := runUnit(e, "write", "file/a", "file/b")
+	if _, wrote := m.Files["/etc/a"]; status != 0 || wrote || string(m.Files["/etc/b"]) != "2\n" ||
+		!strings.HasSuffix(stderr, "changed: file/b\n") {
+		t.Errorf("write: status = %d, wrote a %v, b = %q, stderr = %q; want b alone", status, wrote, m.Files["/etc/b"], stderr)
 	}
 }

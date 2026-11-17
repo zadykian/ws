@@ -40,11 +40,13 @@ func (w when) check() error {
 
 // gate makes the unit's parts only where every key holds, and says why where one does not. It
 // reads the facts as the unit plans, so that a fact can follow an earlier unit. An empty want
-// holds on no machine, so that a value left empty turns the unit off.
+// holds on no machine, so that a value left empty turns the unit off. It says its line once, as a
+// read makes the parts twice: to plan, and to report.
 func (w when) gate(e Env, unit string, parts func(context.Context) ([]resource.Resource, error)) func(context.Context) ([]resource.Resource, error) {
 	if len(w) == 0 {
 		return parts
 	}
+	said := false
 	return func(ctx context.Context) ([]resource.Resource, error) {
 		for _, key := range slices.Sorted(maps.Keys(w)) {
 			want := w[key]
@@ -56,7 +58,10 @@ func (w when) gate(e Env, unit string, parts func(context.Context) ([]resource.R
 				}
 			}
 			if !ok {
-				e.Out.Say("%s: off on this machine, as its %s is not %q", unit, key, want)
+				if !said {
+					e.Out.Say("%s: off on this machine, as its %s is not %q", unit, key, want)
+					said = true
+				}
 				return nil, nil
 			}
 		}
