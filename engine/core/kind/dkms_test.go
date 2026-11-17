@@ -82,6 +82,10 @@ func TestDkmsRefusesBadFields(t *testing.T) {
 		{map[string]string{"sha256": `"abc"`}, "sha256 is not 64 lowercase hex digits"},
 		{map[string]string{"strip": "-1"}, "strip -1 is below 0"},
 		{map[string]string{"conf": `"none.conf"`}, "none.conf"},
+		{map[string]string{"unload": `["x"]`}, "unload and hint go with load"},
+		{map[string]string{"hint": `"h"`}, "unload and hint go with load"},
+		{map[string]string{"load": `"a b"`}, `load "a b" is no module's name`},
+		{map[string]string{"load": `"y"`, "unload": `["-r"]`}, `unload "-r" is no module's name`},
 	} {
 		_, err := Load(e, tree(map[string]string{"r/units.toml": dkmsText(body, tc.over), "r/dkms.conf": dkmsConf}))
 		if err == nil || !strings.Contains(err.Error(), "unit dkms/a: ") || !strings.Contains(err.Error(), tc.want) {

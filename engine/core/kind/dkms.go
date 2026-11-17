@@ -40,6 +40,12 @@ type dkmsSpec struct {
 	// Conf is a source of the spec's own, written as the tree's dkms.conf with {version} standing
 	// for Version, so that the pin is one place. A tree whose own dkms.conf fits needs none.
 	Conf string `toml:"conf"`
+	// Load is the module that loads once DKMS has built it, with booted systemd.
+	Load string `toml:"load"`
+	// Unload are the modules unloaded first, as another driver of the same device.
+	Unload []string `toml:"unload"`
+	// Hint follows the line that says the kernel refused Load: what to do, and what holds until then.
+	Hint string `toml:"hint"`
 }
 
 // check refuses the fields that no plan could take. dir holds the conf.
@@ -55,7 +61,17 @@ func (s dkmsSpec) check(dir fs.FS) error {
 		return errors.New("sha256 is not 64 lowercase hex digits")
 	case s.Strip < 0:
 		return fmt.Errorf("strip %d is below 0", s.Strip)
-	case s.Conf != "":
+	case s.Load == "" && (len(s.Unload) > 0 || s.Hint != ""):
+		return errors.New("unload and hint go with load")
+	case s.Load != "" && !modprobeName.MatchString(s.Load):
+		return fmt.Errorf("load %q is no module's name", s.Load)
+	}
+	for _, name := range s.Unload {
+		if !modprobeName.MatchString(name) {
+			return fmt.Errorf("unload %q is no module's name", name)
+		}
+	}
+	if s.Conf != "" {
 		_, err := fs.Stat(dir, s.Conf)
 		return err
 	}
@@ -82,7 +98,11 @@ func (s dkmsSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.Res
 			conf := strings.ReplaceAll(string(text), "{version}", s.Version)
 			parts = append(parts, file.File{M: e.M, Path: tree + "/dkms.conf", Content: []byte(conf), Mode: 0o644})
 		}
-		return append(parts, dkmsBuild{m: e.M, out: e.Out, s: s}), nil
+		parts = append(parts, dkmsBuild{m: e.M, out: e.Out, s: s})
+		if s.Load != "" {
+			parts = append(parts, dkmsModules{m: e.M, out: e.Out, load: s.Load, unload: s.Unload, hint: s.Hint})
+		}
+		return parts, nil
 	}, nil
 }
 

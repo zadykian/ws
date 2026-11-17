@@ -119,6 +119,9 @@ url = "https://host/name.tar.gz"
 sha256 = "…"
 strip = 1                   # leading parts of each name dropped as the tarball unpacks
 conf = "dkms.conf"          # a source written as the tree's dkms.conf, {version} for version
+load = "name"               # the module loaded once built
+unload = ["other"]          # loaded modules unloaded first; goes with load
+hint = "…"                  # follows the line of a refused load; goes with load
 ```
 
 - The tarball waits in `/var/cache/ws`, checked against its SHA-256, and unpacks whole as
@@ -130,6 +133,11 @@ conf = "dkms.conf"          # a source written as the tree's dkms.conf, {version
   warning. Before `/usr/sbin/dkms` exists, as in a dry run before its package, DKMS holds nothing.
 - The packages of DKMS and of the kernel's headers are the role's own: a `packages` unit that this
   one waits on by `after`.
+- `load` is loaded by `modprobe` once built, after each module of `unload` that the kernel holds is
+  unloaded. Without booted systemd it loads nothing, and says so.
+- With Secure Boot on, the kernel refuses the module until DKMS's key is enrolled, by hand at the
+  console. The run says so, with `hint`, and goes on. The mark `/run/ws-refused-LOAD` keeps the
+  runs until the next reboot from trying again. Any other failure of the load fails the unit.
 
 ### service
 
