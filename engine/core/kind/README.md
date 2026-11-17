@@ -172,6 +172,10 @@ sudo_right = "USER"         # or: USER has the right to sudo, and a password for
 a package, `"ws:KIND/NAME" = "in-sync"` under `[bootstrap.packages]`. It sits at ws's root, and on
 the server it runs as root.
 
+mise calls it through [`plugins/ws`](../../../plugins/ws), which holds no check of its own. Each
+hook runs one `ws unit read` or `ws unit write`, with every unit the hook gets, and finds ws by
+`mise which ws`, the pinned binary. The write hook runs `ws unit verify` first.
+
 | Command | What it does |
 | --- | --- |
 | `ws unit list [--toml]` | Prints each unit in the order units run, or as a line of `[bootstrap.packages]`. |
