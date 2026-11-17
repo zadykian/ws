@@ -35,6 +35,7 @@ type unitKind interface {
 // field here, of a map to a type that implements unitKind, tagged with the kind's name.
 type spec struct {
 	File map[string]fileSpec `toml:"file"`
+	Deb  map[string]debSpec  `toml:"deb"`
 }
 
 // parse fills the spec's text, named name in errors, with e.Data and pure's funcs, and decodes it.
