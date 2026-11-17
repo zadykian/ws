@@ -14,6 +14,12 @@ One value of the secrets file, by its kind and its name: a token, an env variabl
 credential, a profile file or a password.
 _Avoid_: secret, field
 
+**Frame**:
+What each role of mise's config leans on: `mise.toml` with ws's pin, the server's
+`mise.server.toml`, the plugin `plugins/ws`, the machine's miserc, and the role `frame`
+([The frame](roles/server/ubuntu/frame/README.md)).
+_Avoid_: skeleton, scaffold
+
 **Home file**:
 A file below the account's home that ws reads or writes as root, by a path under the home. The
 account owns it, and no link lies on the way to it.

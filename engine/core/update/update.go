@@ -44,7 +44,7 @@ type Updater struct {
 func (u Updater) Run(ctx context.Context) (Result, error) {
 	if !check.Release(u.Version) {
 		return Result{}, fmt.Errorf("this ws is %s, not a release: build it from its clone, "+
-			"or install a release with install.sh", u.Version)
+			"or install a release's binary", u.Version)
 	}
 	if !check.ReleasesURL(u.URL) {
 		return Result{}, fmt.Errorf("WS_RELEASES_URL is %q: it must start with https://, or with "+

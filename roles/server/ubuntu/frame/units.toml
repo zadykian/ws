@@ -1,0 +1,11 @@
+# The frame's own unit. mise installs ws under root's data directory, by version, which neither a
+# unit of systemd nor a person can name: this keeps /usr/local/bin/ws the pinned binary. The copy
+# goes in under a temporary name, so that a running ws never makes it fail.
+[state.ws-binary.run]
+user = "root"
+command = [
+    "sh",
+    "-c",
+    "install -m 0755 \"$(mise -C /opt/ws which ws)\" /usr/local/bin/.ws.new && mv -f /usr/local/bin/.ws.new /usr/local/bin/ws",
+]
+check = ["sh", "-c", "cmp -s \"$(mise -C /opt/ws which ws)\" /usr/local/bin/ws"]

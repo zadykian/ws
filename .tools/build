@@ -1,11 +1,13 @@
 #!/bin/sh
 # Builds ws for one target:
 #
-#   .tools/build GOOS GOARCH FILE
+#   .tools/build GOOS GOARCH FILE [PACKAGE]
 #
 # The targets are darwin arm64, linux amd64 and linux arm64. It uses the Go that .tools/run pins,
 # with its caches in .cache, and stamps the commit's version, as a release does. It writes FILE.new
-# and moves it over FILE, so that no one runs a half-written binary. Run it from anywhere.
+# and moves it over FILE, so that no one runs a half-written binary. Run it from anywhere. PACKAGE,
+# a path from the tree's root, builds another command of the tree in ws's place, such as a tool
+# that CI runs beside ws.
 
 set -eu
 
@@ -16,19 +18,19 @@ die() {
 }
 
 main() {
-    [ $# -eq 3 ] || die "usage: .tools/build GOOS GOARCH FILE"
+    [ $# -eq 3 ] || [ $# -eq 4 ] || die "usage: .tools/build GOOS GOARCH FILE [PACKAGE]"
     case $1-$2 in
     darwin-arm64 | linux-amd64 | linux-arm64) ;;
     *) die "$1-$2 is not a target: darwin-arm64, linux-amd64 or linux-arm64" ;;
     esac
-    goos=$1 goarch=$2 file=$3
+    goos=$1 goarch=$2 file=$3 package=${4:-.}
     root=$(cd "$(dirname "$0")/.." && pwd)
     cd "$root"
     go=$(sh .tools/run -path go) || die "cannot get the pinned Go"
     mkdir -p "$(dirname "$file")"
     GOOS=$goos GOARCH=$goarch GOPATH=$root/.cache/go GOMODCACHE=$root/.cache/go/pkg/mod \
         GOCACHE=$root/.cache/go-build GOTOOLCHAIN=local GOWORK=off CGO_ENABLED=0 \
-        "$go" build -trimpath -o "$file.new" . || die "cannot build ws"
+        "$go" build -trimpath -o "$file.new" "$package" || die "cannot build ${4:-ws}"
     mv -f "$file.new" "$file"
 }
 

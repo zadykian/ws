@@ -21,9 +21,15 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   `resource/resourcetest`, the resources the steps share, and `kind`, the kinds that a role's
   `units.toml` names as units ([kind](../engine/core/kind/README.md)). They are public, as the roles
   import them from outside `engine/`.
+- `mise.toml` and `mise.lock`: mise's config that both sides share, its settings and the pin of
+  ws, a release, with the release's SHA-256 for each target in the lock. `mise.server.toml` is
+  the server's part, and `plugins/ws` the plugin that hands ws's units to `ws unit`. A role moved
+  to mise holds its spec, `units.toml`, and its mise files beside its page, and `mise/conf.d`
+  links its directory ([The frame](../roles/server/ubuntu/frame/README.md)).
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
-- `install.sh`: installs ws's binary from a release ([Releases](../engine/core/update/README.md)).
+- `install.sh`: installs mise and runs `mise bootstrap` on a release's tree
+  ([Releases](../engine/core/update/README.md)).
 - `roles/client/macos/`: the Mac's side ([The Mac](../roles/client/macos/README.md)). Its roles embed
   `ghostty/files/ws.ghostty`, Ghostty's settings, `zed/files/`, Zed's settings and keymap, and
   `zsh/files/zshrc`, the zsh hook that turns off the modes that a drop leaves on.
@@ -33,7 +39,8 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   `mac-servers.md` and `runbook.md` of each side. `.tools/README.md` holds the
   gates and `.github/workflows/README.md` CI.
 - `.tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
-  caps them. `build` builds ws for a target, and `vale-comments` runs Vale on files' comments. Go's
+  caps them. `build` builds ws for a target, `serve-build` points a checkout's pin at the tree's build,
+  for CI and a trial, and `vale-comments` runs Vale on files' comments. Go's
   `./...` leaves out a dot directory, so the Go gates name the tools' packages too. `lint/` holds
   the linters' configs, which the Makefile passes by flag, but tombi's, which tombi finds as it runs
   there.
@@ -66,10 +73,11 @@ The gates are `shell`, `yamllint`, `tombi`, `stylua`, `sizecheck`, `vale`, `lych
 on macOS on arm64.
 It installs yamllint into `.cache`, and `.tools/run` downloads the rest there.
 
-The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `playbook` builds ws and runs `ws server ubuntu
-apply` twice in an Ubuntu 26.04 container and checks the config that Fresh reads, `signoz` forges
-SigNoz's compose files again, and `install` tries `install.sh`. `rootless` runs the rootless daemon
-and the firewall on a booted runner ([The rootless job](../.github/workflows/rootless.md)). `mac` sets up a
+The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `playbook` builds ws and runs `install.sh`'s
+bootstrap and `ws server ubuntu apply` twice each in an Ubuntu 26.04 container, with mise's plan.
+It checks the config that Fresh reads too. `signoz` forges SigNoz's compose files again, and
+`install` tries `install.sh` and `ws update`. `rootless` runs the
+rootless daemon and the firewall on a booted runner ([The rootless job](../.github/workflows/rootless.md)). `mac` sets up a
 Mac on GitHub's macOS runner. `mac-cld` sets up
 Ghostty and cld on another ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `ws
 server ubuntu apply` sets up the machine that runs it, as below.
@@ -103,8 +111,10 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
 
 - `ws server ubuntu apply` sets up the machine that runs it. CI's `playbook` job runs it in a
   container ([The `playbook` job](../.github/workflows/README.md#the-playbook-job)).
-- A second run changes nothing: CI's `playbook` job runs it twice and fails where the second run
-  reports a change ([ci.yml](../.github/workflows/ci.yml)).
+- A second run changes nothing: CI's `playbook` job runs the bootstrap and `ws server ubuntu apply`
+  twice each. It fails where the second apply reports a change, or where
+  `mise bootstrap plan --detailed-exitcode` does not exit 0, before the second bootstrap and after
+  both ([ci.yml](../.github/workflows/ci.yml)).
 - A step that needs a booted machine's systemd checks `systemd.Booted`, and skips without it, as in
   CI's container ([The `playbook` job](../.github/workflows/README.md#the-playbook-job)).
 - `release.yml` checks a release's files and notes for the local list's words before it publishes
@@ -116,9 +126,12 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([repository.go](../roles/server/ubuntu/docker/repository.go)). So is Fresh's `.deb`
   ([download.go](../roles/server/ubuntu/fresh/download.go)), and so are foundryctl
   ([ci.yml](../.github/workflows/ci.yml)) and the gates' tools ([.tools/run](../.tools/run)). So is ws's
-  binary, against its release's `ws.sha256` ([install.sh](../install.sh),
-  [update.go](../engine/core/update/update.go)), and so is yamllint
-  ([lint-requirements.in](../.github/lint-requirements.in)) and Homebrew's `.pkg`, with its signer
+  binary: `mise.lock` holds its SHA-256 for each target, which mise checks as it installs
+  ([mise.lock](../mise.lock)). `ws update` checks it against its release's `ws.sha256`
+  ([update.go](../engine/core/update/update.go)), and a Mac's runbook checks it by hand
+  ([runbook.md](../roles/client/macos/runbook.md)). So is mise's binary, whose SHA-256 for each
+  target `install.sh` holds ([install.sh](../install.sh)). So is
+  yamllint ([lint-requirements.in](../.github/lint-requirements.in)), and Homebrew's `.pkg`, with its signer
   ([runbook.md](../roles/client/macos/runbook.md)). Go is checked against the
   SHA-256 its publisher lists ([devtools](../roles/server/ubuntu/devtools/README.md)). The postgres-language-server and
   docker-language-server are checked against their SHA-256

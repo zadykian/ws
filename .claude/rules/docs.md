@@ -24,6 +24,8 @@ What each document holds. How to write them is in the `writing` skill and [writi
 - A role's page is the `README.md` in its directory, `roles/server/ubuntu/NAME/`: what it sets up
   and the values that change it. It gives the role's caveats too, such as what a run replaces or
   what a dry run shows.
+- [The frame's README](../../roles/server/ubuntu/frame/README.md) says how a role sits in mise's
+  config: its files by env, its link, its lines and their order, the miserc and the pin.
 - [The Mac's README](../../roles/client/macos/README.md) is the Mac's side, `roles/client/macos/`
   and the ws CLI. [Its git](../../roles/client/macos/git/README.md) is its git, and
   [its values](../../roles/client/macos/values/README.md)

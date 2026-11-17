@@ -1,0 +1,6 @@
+# A package manager plugin, as only those reach `mise bootstrap plan`. A package is a ws unit,
+# KIND/NAME, and its pin is "in-sync". No `requires`: mise would skip every unit while ws is
+# missing; lib/ws.lua reports them missing instead, so the plan shows them.
+[package-manager]
+supports_version_pins = true
+os = ["linux", "macos"]
