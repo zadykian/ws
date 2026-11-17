@@ -15,8 +15,6 @@ func TestTheStepRefuses(t *testing.T) {
 		arrange              func(r rig)
 		want                 string
 	}{
-		{"a bad address", "enp5s0", "10.77.0.3/30", func(rig) {}, "WS_CABLE_ADDRESS: 10.77.0.3 is the broadcast address of 10.77.0.0/30"},
-		{"a name with a slash", "../x", "10.77.0.1/30", func(rig) {}, `"../x" is not an interface's name`},
 		{"an uplink with a default route", "enp5s0", "10.77.0.1/30", func(r rig) {
 			r.m.Results[ipPrefix+"-6 route show default table all"] = effecttest.Result{Out: []byte(`[{"dev":"enp5s0","table":"main"}]`)}
 		}, "not an uplink, yet enp5s0 carries a default route, in table main"},

@@ -1,7 +1,8 @@
-package cable
+package values
 
 import (
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -34,5 +35,49 @@ func TestAddressProblems(t *testing.T) {
 				t.Errorf("AddressProblems(%q) = %q, want %q", tt.value, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestCablePortRefusesWhatJSONEscapes(t *testing.T) {
+	for _, port := range []string{"../x", "a b", "a\tb", "a\"b", `a\b`, "a<b", "a>b", "a&b", "a\x01b", "a\x7fb"} {
+		err := Cable{Port: port, Address: "10.77.0.1/30"}.check()
+		if err == nil || !strings.Contains(err.Error(), "is not an interface's name") {
+			t.Errorf("port %q: check = %v, want a refusal", port, err)
+		}
+	}
+	for _, port := range []string{"enp5s0", "enx00e04c680001", "eth0.10", "wan-1_a"} {
+		if err := (Cable{Port: port, Address: "10.77.0.1/30"}).check(); err != nil {
+			t.Errorf("port %q: check = %v, want none", port, err)
+		}
+	}
+}
+
+func TestCableAddressRefusedWithAPort(t *testing.T) {
+	err := Cable{Port: "enp5s0", Address: "10.77.0.3/30"}.check()
+	if err == nil || err.Error() != "WS_CABLE_ADDRESS: 10.77.0.3 is the broadcast address of 10.77.0.0/30, not a host's" {
+		t.Errorf("check = %v, want the address's problem", err)
+	}
+}
+
+func TestEmptyCablePortChecksNothing(t *testing.T) {
+	if err := (Cable{Address: "nonsense"}).check(); err != nil {
+		t.Errorf("check = %v, want none without a port", err)
+	}
+}
+
+func TestParseRefusesABadCable(t *testing.T) {
+	for data, want := range map[string]string{
+		"WS_CABLE_PORT: a b\n": `WS_CABLE_PORT "a b" is not an interface's name`,
+		"WS_CABLE_PORT: enp5s0\nWS_CABLE_ADDRESS: 10.77.0.0/30\n": "WS_CABLE_ADDRESS: 10.77.0.0 is the address of the subnet",
+	} {
+		if _, err := Parse([]byte(data)); err == nil || !strings.Contains(err.Error(), want) {
+			t.Errorf("Parse(%q) = %v, want %q", data, err, want)
+		}
+	}
+}
+
+func TestSetRefusesABadCablePort(t *testing.T) {
+	if _, err := Set([]byte("---\n"), "WS_CABLE_PORT", "a&b"); err == nil || !strings.Contains(err.Error(), "is not an interface's name") {
+		t.Errorf("Set = %v, want the port refused", err)
 	}
 }

@@ -63,6 +63,9 @@ func Parse(data []byte) (Values, error) {
 	if err := v.Docker.check(); err != nil {
 		return Values{}, err
 	}
+	if err := v.Cable.check(); err != nil {
+		return Values{}, err
+	}
 	return v, nil
 }
 

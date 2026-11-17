@@ -1,13 +1,32 @@
-// Package cable sets up the server's end of the cable to the Mac: an address on the cable's
-// port, from a netplan file of its own. The checks that come before the file are pure.
-package cable
+package values
 
 import (
+	"errors"
 	"fmt"
 	"net/netip"
 	"strconv"
 	"strings"
 )
+
+// check refuses the cable's values that the role's netplan file could not hold, where a port is
+// set. It refuses a port that no interface's name takes, and an address that is no host's. The
+// file quotes the port in YAML's double quotes. So check refuses each byte that would need an
+// escape there, with the others that JSON escapes. Without a port, nothing is checked, as the role
+// writes no file.
+func (c Cable) check() error {
+	if c.Port == "" {
+		return nil
+	}
+	if strings.ContainsFunc(c.Port, func(r rune) bool {
+		return r <= ' ' || r == 0x7f || strings.ContainsRune("/\"\\<>&", r)
+	}) {
+		return fmt.Errorf("WS_CABLE_PORT %q is not an interface's name", c.Port)
+	}
+	if problems := AddressProblems(c.Address); len(problems) > 0 {
+		return errors.New("WS_CABLE_ADDRESS: " + strings.Join(problems, " "))
+	}
+	return nil
+}
 
 // longestBroadcastPrefix is the longest prefix of a subnet of more than two addresses, which keeps
 // its first and its last for itself and its broadcast. A /31's two addresses are both hosts'
