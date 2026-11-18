@@ -22,11 +22,6 @@ func Default() Values {
 				"OTEL_LOG_TOOL_CONTENT":               "1",
 			},
 		},
-		Devtools: Devtools{ChromiumLibraries: []string{
-			"libasound2t64", "libatk-bridge2.0-0t64", "libatk1.0-0t64", "libcairo2", "libcups2t64",
-			"libgbm1", "libnspr4", "libnss3", "libpango-1.0-0", "libxcomposite1", "libxdamage1",
-			"libxfixes3", "libxkbcommon0", "libxrandr2",
-		}},
 		Docker: Docker{
 			LogMaxSize: "10m", LogMaxFile: 3, MemorySwapMax: "0",
 			BridgeIP: "172.17.0.1", BridgePrefixLength: 16,
