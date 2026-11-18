@@ -75,3 +75,7 @@ func load(m effect.Machine, file string, parse func(string) (Conf, []Error)) (Co
 	}
 	return c, errors.Join(all...)
 }
+
+// LoadMac reads values.yml at mac alone, which takes the Mac's keys alone: the keys of a Mac with
+// no server yet, or of every server.
+func LoadMac(m effect.Machine, mac string) (Conf, error) { return load(m, mac, MacFile.Parse) }

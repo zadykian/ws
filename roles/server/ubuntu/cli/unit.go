@@ -27,7 +27,7 @@ func UnitCmd(p enginecli.Env) *cobra.Command { return enginecli.Unit(p, unitSide
 // unitSide returns the server's side of ws unit, with its values read from vars.
 func unitSide(vars string) enginecli.UnitSide {
 	return enginecli.UnitSide{Dir: unitsDir, Units: units.OSUnits{}, Root: true,
-		Values: func(m effect.Machine) (any, effect.Machine, error) {
+		Values: func(_ context.Context, m effect.Machine) (any, effect.Machine, error) {
 			v, err := values.Load(m, vars)
 			if err != nil {
 				return nil, nil, err

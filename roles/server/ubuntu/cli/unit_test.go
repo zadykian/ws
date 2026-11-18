@@ -22,7 +22,7 @@ func TestUnitValuesConfineToHome(t *testing.T) {
 	if !side.Root || side.Dir != "/opt/ws/roles/server/ubuntu" {
 		t.Errorf("side = %+v, want root's, at /opt/ws", side)
 	}
-	data, m, err := side.Values(local.OSMachine{})
+	data, m, err := side.Values(t.Context(), local.OSMachine{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,7 +33,7 @@ func TestUnitValuesConfineToHome(t *testing.T) {
 		t.Errorf("machine = %+v, want one confined to /home/u", m)
 	}
 	fake := effecttest.NewMachine()
-	if _, m, err := side.Values(fake); err != nil || m != fake {
+	if _, m, err := side.Values(t.Context(), fake); err != nil || m != fake {
 		t.Errorf("a fake machine: %v, %v; want it unchanged", m, err)
 	}
 }
@@ -41,7 +41,7 @@ func TestUnitValuesConfineToHome(t *testing.T) {
 func TestUnitValuesRefuseAnUnknownKey(t *testing.T) {
 	fake := effecttest.NewMachine()
 	fake.Files["/v.yml"] = []byte("WS_USR: u\n")
-	if _, _, err := unitSide("/v.yml").Values(fake); err == nil {
+	if _, _, err := unitSide("/v.yml").Values(t.Context(), fake); err == nil {
 		t.Error("an unknown key loaded")
 	}
 }

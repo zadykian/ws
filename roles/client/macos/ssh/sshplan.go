@@ -105,6 +105,16 @@ func names(hosts []sshcfg.Host) []string {
 	return out
 }
 
+// ownHost stops where a Host of the user's own config names a server. The line is counted in
+// ~/.ssh/config as it stands.
+func ownHost(text string, hosts []sshcfg.Host) error {
+	if own := sshcfg.OwnHosts(text, names(hosts)...); len(own) > 0 {
+		return fmt.Errorf("line %d of ~/.ssh/config, %s, sets its own values for %s: remove it, as "+
+			"/etc/ws/ssh_config holds each server's host", own[0].Line, own[0].Text, own[0].Names)
+	}
+	return nil
+}
+
 // refusal stops where ssh can't take the files, or where the user's own Host names a server, and
 // warns of what else the run leaves to the user.
 func (s SSH) refusal(f sshFacts, hosts []sshcfg.Host, text []byte) refusal {
@@ -112,15 +122,10 @@ func (s SSH) refusal(f sshFacts, hosts []sshcfg.Host, text []byte) refusal {
 		if f.Stop != nil {
 			return f.Stop
 		}
-		// The line is counted in ~/.ssh/config as it stands.
-		own := sshcfg.OwnHosts(string(f.UserConfig.Text), names(hosts)...)
-		if len(own) > 0 {
-			return fmt.Errorf("line %d of ~/.ssh/config, %s, sets its own values for %s: remove it, as "+
-				"/etc/ws/ssh_config holds each server's host", own[0].Line, own[0].Text, own[0].Names)
-		}
-		if err := s.validate(ctx, f, hosts, text); err != nil {
+		if err := ownHost(string(f.UserConfig.Text), hosts); err != nil {
 			return err
 		}
-		return nil
+		u := userConfig{Exists: f.UserConfig.Exists, Text: string(f.UserConfig.Text), IncludeLine: f.IncludeLine}
+		return validate(ctx, s.M, s.Home, u, hosts, text)
 	}
 }

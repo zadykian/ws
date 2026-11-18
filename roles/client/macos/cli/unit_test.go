@@ -12,12 +12,14 @@ import (
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/cli/clitest"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // runOfTheUser is a spec whose run state is the Mac's user's, with a check that passes.
 const runOfTheUser = "[state.mine.run]\nuser = \"{{ .User }}\"\ncommand = [\"true\"]\ncheck = [\"test\", \"-d\", \"{{ .Home }}\"]\n"
 
-// macUnitEnv returns the user v's Env, whose WS_UNITS holds the spec, and its machine.
+// macUnitEnv returns the user v's Env, whose WS_UNITS holds the spec, and its machine, with no
+// server and a file key.
 func macUnitEnv(t *testing.T, spec string) (enginecli.Env, *effecttest.Machine) {
 	dir := t.TempDir()
 	if err := os.Mkdir(filepath.Join(dir, "r"), 0o750); err != nil {
@@ -27,6 +29,10 @@ func macUnitEnv(t *testing.T, spec string) (enginecli.Env, *effecttest.Machine) 
 		t.Fatal(err)
 	}
 	m := effecttest.NewMachine()
+	m.Files["/etc/ws/values.yml"] = []byte(values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id.pub",
+		"WS_GIT_SIGNING_PUB_KEY", "~/.ssh/id.pub"))
+	m.Files["/Users/v/.ssh/id.pub"] = []byte("ssh-ed25519 AAAA me\n")
+	m.Results["ssh-keygen -l -f /Users/v/.ssh/id.pub"] = effecttest.Result{}
 	p := withEnv(fakeProcess(), map[string]string{"WS_UNITS": dir, "USER": "v", "HOME": "/Users/v"})
 	p.Machine = m
 	return p, m

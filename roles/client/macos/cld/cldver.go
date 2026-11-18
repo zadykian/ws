@@ -15,6 +15,13 @@ func cldVersion(out string) (string, bool) {
 	return v, cldRelease.MatchString(v)
 }
 
+// IsRelease reports whether the output of cld --version names a release, which cld update keeps at
+// the latest.
+func IsRelease(out string) bool {
+	_, ok := cldVersion(out)
+	return ok
+}
+
 // cldOlder reports whether the release a comes before the release b. Both are of cldRelease's form.
 func cldOlder(a, b string) bool {
 	x, y := strings.Split(a, "."), strings.Split(b, ".")
