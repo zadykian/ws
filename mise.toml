@@ -9,7 +9,7 @@ use_versions_host = false
 # A release of ws: mise.lock holds the SHA-256 of each platform's file, which mise checks as
 # it installs. A bump moves the version here and the lock together.
 [tools."http:ws"]
-version = "0.13.0-rc.1"
+version = "0.13.0-rc.3"
 bin = "ws"
 
 [tools."http:ws".platforms]
