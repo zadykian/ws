@@ -6,7 +6,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/server/ubuntu/base"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/security"
@@ -25,7 +24,6 @@ type entry struct {
 
 // all is every role, in the order that they run.
 var all = []entry{
-	{"base", base.Steps},
 	{"security", security.Steps},
 	{"devtools", devtools.Steps},
 }

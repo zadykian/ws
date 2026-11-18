@@ -12,7 +12,7 @@ its spec of ws's units:
 - [`frame`](roles/server/ubuntu/frame): what each role of mise's config leans on, and
   `/usr/local/bin/ws`, the pinned binary.
 - [`base`](roles/server/ubuntu/base): packages, the locale, the timezone, security updates and a swap file,
-  as Go steps.
+  as mise's packages and units.
 - [`security`](roles/server/ubuntu/security): SSH by key only, ufw and fail2ban, and a table that keeps what
   ws starts to the internet and ikeward, but what the network needs, such as DHCP and DNS. The
   table is off where `WS_SECURITY_OUTBOUND` is false, as a cloud VM wants.

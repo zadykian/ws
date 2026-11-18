@@ -2,8 +2,6 @@ package values
 
 // Base is roles/base's keys.
 type Base struct {
-	// Packages are the apt packages the role installs.
-	Packages []string `yaml:"WS_BASE_PACKAGES"`
 	// Locale is the system locale.
 	Locale string `yaml:"WS_BASE_LOCALE"`
 	// Timezone is the system's time zone.

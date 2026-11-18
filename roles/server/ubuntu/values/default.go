@@ -5,15 +5,7 @@ package values
 func Default() Values {
 	return Values{
 		Shared: Shared{User: "zadykian"},
-		Base: Base{
-			Packages: []string{
-				"btop", "bubblewrap", "build-essential", "ca-certificates", "chrony", "curl",
-				"fd-find", "git", "gnupg", "gzip", "htop", "iotop", "jq", "locales", "lsb-release",
-				"ncdu", "pkg-config", "poppler-utils", "python3-pip", "python3-venv", "ripgrep",
-				"tar", "tzdata", "unattended-upgrades", "unzip", "wget", "xz-utils", "zip",
-			},
-			Locale: "en_US.UTF-8", Timezone: "Etc/UTC", Swappiness: 10,
-		},
+		Base:   Base{Locale: "en_US.UTF-8", Timezone: "Etc/UTC", Swappiness: 10},
 		Claude: Claude{
 			Permissions: "read-only",
 			TelemetryEnv: map[string]string{
