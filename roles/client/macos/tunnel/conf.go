@@ -1,3 +1,5 @@
+// Package tunnel sets up what the Mac's tunnel daemons read. That is the Mac's WireGuard key, and
+// each server's directory and tunnel.conf. launchd's unit of the tunnel runs the daemons.
 package tunnel
 
 import (

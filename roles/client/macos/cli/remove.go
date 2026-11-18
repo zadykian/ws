@@ -6,15 +6,11 @@ import (
 	"io/fs"
 	"path"
 	"slices"
-	"strings"
 
 	"github.com/spf13/cobra"
 
-	"github.com/zadykian/ws/engine"
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos"
 	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/internal/etcws"
 )
@@ -25,7 +21,8 @@ func newRemoveCmd(p enginecli.Env, server *string) *cobra.Command {
 		Use:   "remove NAME",
 		Short: "remove a server from the Mac",
 		Long: "It deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it " +
-			"is. It refuses the Mac's last server, as apply needs one, and takes no --server: the argument is the consent.",
+			"is. mise's bootstrap then takes its daemon, routes and host off. It refuses the Mac's last server, as " +
+			"apply needs one, and takes no --server: the argument is the consent.",
 		Args: cobra.ExactArgs(1),
 		RunE: func(c *cobra.Command, args []string) error { return runRemove(c, p, *server, args[0]) },
 	}
@@ -79,34 +76,16 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 	if _, err := fmt.Fprintf(c.OutOrStdout(), "removed %s\n", name); err != nil {
 		return err
 	}
-	rest := slices.DeleteFunc(names, func(n string) bool { return n == name })
-	if err = reapply(c, p, mac, rest[0]); err != nil {
-		err = fmt.Errorf("%w: then ws client macos apply --server %s takes %s's daemon, hosts and routes off, "+
-			"and mise -C /opt/ws bootstrap its host", err, rest[0], name)
-	} else if err = p.Machine.Pass(c.Context(), false, "mise", "-C", "/opt/ws", "bootstrap"); err != nil {
-		err = fmt.Errorf("mise -C /opt/ws bootstrap: %w: run it again to take %s's host off", err, name)
+	// The bootstrap takes the rest off. The unit of the tunnel's files boots the daemon out and
+	// removes its files. The networks' unit takes its resolvers, launchd's its plist, ssh's its host.
+	if err = p.Machine.Pass(c.Context(), false, "mise", "-C", "/opt/ws", "bootstrap"); err != nil {
+		err = fmt.Errorf("mise -C /opt/ws bootstrap: %w: run it again to take %s's daemon, routes and host off", err, name)
 	}
 	if cable != "" {
 		_, _ = fmt.Fprintf(c.OutOrStdout(), "By hand: the cable's service %s keeps 10.77.0.2: name it in another server's "+
 			"WS_CABLE_SERVICE, or delete it in System Settings\n", cable)
 	}
 	return err
-}
-
-// reapply runs the Mac's steps that hold a server's traces, for the server that stays. The tunnel
-// and the networks prune the gone server's daemon and routes. The bootstrap after takes its host
-// out of /etc/ws/ssh_config.
-func reapply(c *cobra.Command, p enginecli.Env, mac, name string) error {
-	settings, err := values.Load(p.Machine, mac, values.ServerPath(mac, name))
-	if err != nil {
-		return fmt.Errorf("server %s: %w", name, err)
-	}
-	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
-	defer term.Flush()
-	out := linesOf(term, c.CommandPath())
-	_, err = macOf(p, name, settings, p.Machine, out, c.OutOrStdout()).Run(c.Context(), macos.Options{
-		Options: step.Options{Observer: out}, Only: []string{"tunnel", "networks"}})
-	return engine.Cause(err)
 }
 
 // without is the Mac's machine with the server's file at file out of sight. values.Servers leaves

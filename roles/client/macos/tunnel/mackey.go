@@ -13,6 +13,13 @@ import (
 	"github.com/zadykian/ws/roles/internal/etcws"
 )
 
+// tunnelKeyFile is the Mac's WireGuard key, in a file only root reads. pubFile is its public half,
+// root's and readable by all, so that a read takes no sudo.
+const (
+	tunnelKeyFile = launchd.Dir + "/private.key"
+	pubFile       = etcws.Dir + "/tunnel.pub"
+)
+
 // MakeKey makes the Mac's WireGuard key where none is, as root, and returns the public key. It
 // makes /etc/ws and /etc/ws/tunnel first, readable by all, so that the unit's check finds the key
 // with no root. The key stays root's at 0600, and /etc/ws/tunnel.pub, readable by all, holds the

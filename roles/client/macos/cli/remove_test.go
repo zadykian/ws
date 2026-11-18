@@ -47,10 +47,6 @@ func removeFixture() (enginecli.Env, *effecttest.Machine) {
 	m.Dirs["/etc/ws/servers/lab"] = 0o755
 	m.Files["/h/.ssh/known_hosts"] = []byte("ws ssh-ed25519 AAAA\nlab ssh-ed25519 BBBB\n")
 	m.Dirs["/Applications/Zed.app"] = 0o755
-	m.Results["mv -f /h/.local/bin/ws.new /h/.local/bin/ws"] = effecttest.Result{}
-	m.Results["/usr/local/libexec/ws-tunnel/ws client macos tunnel key"] = effecttest.Result{Out: []byte("PUB\n")}
-	m.Results["ls -1 /etc/ws/tunnel"] = effecttest.Result{}
-	m.Files["/h/.local/bin/ws"] = []byte("ws")
 	m.Files["/h/Library/Fonts/JetBrainsMonoNerdFontMono-Regular.ttf"] = []byte("f")
 	m.Results["mktemp -d"] = effecttest.Result{Out: []byte("/tmp/x\n")}
 	m.Results["rm -rf /tmp/x"] = effecttest.Result{}
@@ -122,19 +118,18 @@ func TestRemoveWithNoKnownHostsHasNoKeyToDrop(t *testing.T) {
 	}
 }
 
-// TestRemoveRunsTheStepsForTheServerThatStays checks that the tunnel runs, and stops at its copy of
-// ws, which the fake machine cannot hold, before the bootstrap.
-func TestRemoveRunsTheStepsForTheServerThatStays(t *testing.T) {
+// TestRemoveRunsTheBootstrap checks that the bootstrap takes the rest of the server off, and that
+// its failure says to run it again.
+func TestRemoveRunsTheBootstrap(t *testing.T) {
+	p, _ := removeFixture()
+	status, _, stderr := runWs(p, "client", "macos", "remove", "lab")
+	if want := "run it again to take lab's daemon, routes and host off"; status != 1 || !strings.Contains(stderr, want) {
+		t.Errorf("status = %d, stderr = %q; want 1 and %q", status, stderr, want)
+	}
 	p, m := removeFixture()
-	_, _, stderr := runWs(p, "client", "macos", "remove", "lab")
-	if !strings.Contains(stderr, "made the Mac's WireGuard key") || strings.Contains(stderr, "/etc/ws/ssh_config") {
-		t.Errorf("stderr = %q; want the tunnel, and no step of ssh's", stderr)
-	}
-	if slices.Contains(m.Calls, "run mise -C /opt/ws bootstrap") {
-		t.Error("remove ran the bootstrap past a failed step")
-	}
-	if want := "then ws client macos apply --server ws takes lab's daemon, hosts and routes off, and mise -C /opt/ws bootstrap its host"; !strings.Contains(stderr, want) {
-		t.Errorf("stderr = %q; want it to name apply: %q", stderr, want)
+	m.Results["mise -C /opt/ws bootstrap"] = effecttest.Result{}
+	if status, _, stderr := runWs(p, "client", "macos", "remove", "lab"); status != 0 || !slices.Contains(m.Calls, "run mise -C /opt/ws bootstrap") {
+		t.Errorf("status = %d, stderr = %q, calls %q; want 0, the bootstrap run", status, stderr, m.Calls)
 	}
 }
 

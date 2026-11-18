@@ -75,7 +75,7 @@ func TestSetupStepNamesCompleteOnly(t *testing.T) {
 	c := newMacApplyCmd(fakeProcess(), new(string))
 	got, _ := c.GetFlagCompletionFunc("only")
 	names, _ := got(c, nil, "")
-	if want := []string{"cable", "tunnel", "networks"}; !reflect.DeepEqual(names, want) {
+	if want := []string{"cable", "networks"}; !reflect.DeepEqual(names, want) {
 		t.Errorf("--only completes %q; want %q", names, want)
 	}
 }
@@ -136,7 +136,7 @@ func TestMacStateReadsMacConf(t *testing.T) {
 	p.Machine = m
 	status, stdout, _ := runWs(p, "client", "macos", "state", "--json")
 	if status != 0 || !strings.Contains(stdout, `"version": "v1.2.3"`) || !strings.Contains(stdout, `"steps"`) ||
-		!strings.Contains(stdout, `"kind": "directory"`) {
+		!strings.Contains(stdout, `"step": "cable"`) {
 		t.Errorf("status = %d, stdout = %q", status, stdout)
 	}
 }

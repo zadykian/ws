@@ -10,7 +10,6 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/cable"
 	"github.com/zadykian/ws/roles/client/macos/networks"
-	"github.com/zadykian/ws/roles/client/macos/tunnel"
 	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
@@ -34,8 +33,6 @@ type Mac struct {
 func (m Mac) steps(check bool) []step.Step {
 	return []step.Step{
 		cable.Cable{Conf: m.Conf, M: m.M, Out: m.Out}.Step(),
-		&tunnel.Tunnel{Conf: m.Conf, Server: m.Server, MacConf: m.MacConf, Home: m.Home, Plist: tunnel.Plist, M: m.M, Out: m.Out, Text: m.Text,
-			Check: check},
 		&networks.Networks{Server: m.Server, MacConf: m.MacConf, Conf: m.Conf, M: m.M, Out: m.Out, Check: check},
 	}
 }

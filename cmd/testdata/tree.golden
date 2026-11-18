@@ -59,7 +59,7 @@ Flags:
 
 Use "ws client macos [command] --help" for more information about a command.
 == ws client macos apply
-It runs the steps it names, from values.yml and the server's file, in this order: cable, tunnel, networks. With no --only, it runs every step. It asks sudo where it needs root.
+It runs the steps it names, from values.yml and the server's file, in this order: cable, networks. With no --only, it runs every step. It asks sudo where it needs root.
 
 Usage:
   ws client macos apply [flags]
@@ -156,7 +156,7 @@ Flags:
 Global Flags:
       --server string   the server to act on, which may be left out where there is one
 == ws client macos remove
-It deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it is. It refuses the Mac's last server, as apply needs one, and takes no --server: the argument is the consent.
+It deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it is. mise's bootstrap then takes its daemon, routes and host off. It refuses the Mac's last server, as apply needs one, and takes no --server: the argument is the consent.
 
 Usage:
   ws client macos remove NAME [flags]
