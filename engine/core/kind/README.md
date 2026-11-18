@@ -30,6 +30,9 @@ Its templates and sources sit beside it, and a path in the spec is relative to t
   `installed_version` gives dpkg's version of an installed package, else "", and `kernel_release`
   the running kernel's, as `uname -r` prints it. `root_file` gives a file's text, read as root and
   trimmed, else "". A spec names no secret's file with it, as a file's diff would show the secret.
+  Both renders take `trim_suffix S SUFFIX`, S without SUFFIX. A unit's template takes the fact
+  `ssh_pub USER PATH` too: the SSH public key at PATH, below USER's home, as `TYPE BASE64`, a link
+  on the way refused, and "" for no file.
 - **when.** Any unit takes `when = { FACT = "WANT" }`, and runs where every FACT of the machine
   gives its WANT, and `"!WANT"` where it does not. Elsewhere it plans nothing, and says so in a
   line. An empty WANT, negated or not, holds on no machine, so a value left empty turns the unit
