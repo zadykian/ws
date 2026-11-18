@@ -7,7 +7,6 @@ import (
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/base"
-	"github.com/zadykian/ws/roles/server/ubuntu/cable"
 	"github.com/zadykian/ws/roles/server/ubuntu/claude"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools"
 	"github.com/zadykian/ws/roles/server/ubuntu/git"
@@ -34,7 +33,6 @@ type entry struct {
 var all = []entry{
 	{"base", base.Steps},
 	{"security", security.Steps},
-	{"cable", cable.Steps},
 	{"tunnel", tunnel.Steps},
 	{"ikeward", ikeward.Steps},
 	{"git", git.Steps},

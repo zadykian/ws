@@ -8,8 +8,8 @@
 network:
   version: 2
   ethernets:
-    {{.Interface}}:
+    "{{ .Cable.Port }}":
       dhcp4: false
       dhcp6: false
-      addresses: [{{.Address}}]
+      addresses: ["{{ .Cable.Address }}"]
       optional: true

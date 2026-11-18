@@ -1,3 +1,5 @@
+// Package netplan checks, in a scratch root, that netplan sets up the cable's port alone with its
+// file.
 package netplan
 
 import (
@@ -9,6 +11,8 @@ import (
 )
 
 const (
+	// Path is the cable's netplan file. Its name sorts after the installer's.
+	Path = "/etc/netplan/60-cable.yaml"
 	// configure writes networkd's files, and the rest, from netplan's, under a root of its own.
 	configure = "/usr/libexec/netplan/configure"
 )

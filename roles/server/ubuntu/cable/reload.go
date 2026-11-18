@@ -15,16 +15,6 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
-// reloaded plans the resource, and the two commands that put a change in force. They run on a
-// booted machine only, and still run after a failed change, as the handlers did.
-func (d direct) reloaded(ctx context.Context, r resource.Resource) ([]resource.Change, error) {
-	changes, err := r.Plan(ctx)
-	if err != nil || len(changes) == 0 || !systemd.Booted(d.M) {
-		return changes, err
-	}
-	return append(changes, inForce(d.M)...), nil
-}
-
 // inForce is the two commands that put netplan's files in force. netplan writes networkd's files
 // from its own. Then networkd's reload sets up each link whose file changed. networkd's reload alone
 // would read the old files.
@@ -104,7 +94,7 @@ func (r Reload) cableHolds(ctx context.Context) error {
 	return Check(ctx, r.M, r.U, r.Cable, netplan.Path)
 }
 
-// command is a command that a change calls for.
+// command is one of inForce's commands.
 type command struct {
 	m    effect.Machine
 	why  string
@@ -113,9 +103,6 @@ type command struct {
 }
 
 func (c command) String() string { return c.why }
-
-// Forced makes a failed run still run the command, as a handler does.
-func (command) Forced() bool { return true }
 
 func (c command) Apply(ctx context.Context) error {
 	_, err := c.m.RunRoot(ctx, c.name, c.args...)

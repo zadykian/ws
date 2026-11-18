@@ -55,7 +55,7 @@ func dockerValues(t *testing.T, yaml string) values.Values {
 // the machine.
 func dockerWrites(t *testing.T, v values.Values) *effecttest.Machine {
 	m := dockerMachine()
-	units, err := kind.Load(kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v}, os.DirFS(rolesDir))
+	units, err := kind.Load(kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v, Self: selfPath}, os.DirFS(rolesDir))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,7 +79,7 @@ func dockerWrites(t *testing.T, v values.Values) *effecttest.Machine {
 // A run stops at its first failure, so the account leaves the docker group, which amounts to root,
 // before any unit of the system's daemon may fail. Its own daemon waits on the system's.
 func TestDockerAccountLeavesTheGroupFirst(t *testing.T) {
-	e := kind.Env{M: dockerMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: dockerValues(t, "")}
+	e := kind.Env{M: dockerMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: dockerValues(t, ""), Self: selfPath}
 	units, err := kind.Load(e, os.DirFS(rolesDir))
 	if err != nil {
 		t.Fatal(err)
