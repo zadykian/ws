@@ -56,14 +56,13 @@ must be `ws.ghostty` whole, and Ghostty's config must end with the line that rea
 checks [Zed's files](../../roles/client/macos/zed/README.md): `global_settings.json` must be
 `roles/client/macos/zed/files/`'s whole, a `settings.json` there must stay byte for byte through
 another bootstrap, and a login shell must find the cask's `zed`. Case 48 checks `keymap.json`:
-`roles/client/macos/zed/files/`'s whole, a foreign one left with the bootstrap's warning, and ws's
-back once it goes. Case 87 checks [the zsh hook](../../roles/client/macos/ghostty/README.md#the-zsh-hook): `zsh -i` must
+`roles/client/macos/zed/files/`'s whole, a foreign one left with the warning of its unit's read, and
+ws's back once it goes. Case 87 checks [the zsh hook](../../roles/client/macos/ghostty/README.md#the-zsh-hook): `zsh -i` must
 reset at each prompt, and the alternate screen after a 255 from `ssh` or from `cld --host` alone.
 
-CI also sets up a Mac, by [its cases](../mac), in the order of [The Mac](../../roles/client/macos/README.md). First, `ws
-client macos apply --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config`
-or `~/.zshrc`, and installs no formula or cask. A stand-in cld, which cld's unit leaves alone,
-spares the job's runs its download. Then `mise -C /opt/ws bootstrap` with
+CI also sets up a Mac, by [its cases](../mac), in the order of [The
+Mac](../../roles/client/macos/README.md). A stand-in cld, which cld's unit leaves alone, spares the
+job's runs its download. Then `mise -C /opt/ws bootstrap` with
 [the Mac's frame](../../roles/client/macos/frame/README.md) runs as the runbook runs it, on the
 tree in `/opt/ws` with ws's build served as the pin ([mac-mise.sh](../mac-mise.sh)). It sets up
 ssh, git and cld too. Its plan must exit 0 after the first run, a second run must call no sudo,
@@ -105,8 +104,10 @@ with gh as GitHub's credential command. A `~/.gitconfig` must get the include of
 `/etc/ws/gitconfig` at its top, once, and keep its own lines, its mode and a copy. An include below
 them, a second one or a link must stop the bootstrap, as must a signing key that is empty, missing
 or more than a public key. With a key of Secretive's, git must sign through ws's wrapper whatever
-`SSH_AUTH_SOCK` names, and `ws` keep the file key ([mac-git-checks.sh](../mac-git-checks.sh)). Where
-wireguard-go makes no utun, the job fails, as the daemon's device makes a utun too.
+`SSH_AUTH_SOCK` names, and `ws` keep the file key ([mac-git-checks.sh](../mac-git-checks.sh)). Last,
+after a second server's cases, one more bootstrap must call no sudo, and its plan and `mise dot
+status --missing` must exit 0 ([96-converged.sh](../mac/96-converged.sh)). Where wireguard-go makes
+no utun, the job fails, as the daemon's device makes a utun too.
 
 ## The rules
 

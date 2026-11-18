@@ -85,8 +85,9 @@ bootstrap and `ws server ubuntu apply` twice each in an Ubuntu 26.04 container, 
 It checks the config that Fresh reads too. `signoz` forges SigNoz's compose files again, and
 `install` tries `install.sh` and `ws update`. `rootless` runs the
 rootless daemon and the firewall on a booted runner ([The rootless job](../.github/workflows/rootless.md)). `mac` sets up a
-Mac on GitHub's macOS runner. `mac-cld` sets up
-Ghostty and cld on another ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `ws
+Mac on GitHub's macOS runner by `mise bootstrap`, whose last run must call no sudo and whose plan
+must exit 0. `mac-cld` sets up
+Ghostty, Zed and cld by the bootstrap on another ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `ws
 server ubuntu apply` sets up the machine that runs it, as below.
 
 The hooks check a commit for the local list's words. This checks any other text, such as a pull

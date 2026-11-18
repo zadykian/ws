@@ -22,8 +22,9 @@ user's. They make `~/.config` first where missing.
 
 - `global_settings.json` is [the file in `roles/client/macos/zed/files/`](files/global_settings.json), whole, with
   the header as its first line. Each run replaces it, so changes made there are lost. A file whose
-  first line lacks the header's mark is left, with a warning: move it away, and the next run writes
-  ws's. Zed parses it as it parses `settings.json`, so the header comment is valid.
+  first line lacks the header's mark is left. Its read warns, as for the keymap below. Move it
+  away, and the next run writes ws's. Zed parses it as it parses `settings.json`, so the header
+  comment is valid.
 - `settings.json` is Zed's own, which its UI writes. The unit `file.zed-settings` writes a seed
   there once, from [`settings.json.tmpl`](files/settings.json.tmpl), where nothing is, and never
   reads the file after. A file of any content, or a link, counts as there.
@@ -97,8 +98,9 @@ Both files start with the one header, and the units take its first line,
 `// Written by github.com/zadykian/ws`, as ws's mark.
 
 - Where the file is missing, or its first line holds the mark, the unit writes it whole.
-- Where the first line does not, as in a file with an older header, the unit leaves the file. It
-  warns at each run: move it away, and the next run writes ws's.
+- Where the first line does not, as in a file with an older header, the unit leaves the file. Its
+  read warns, which `ws unit read file/zed-keymap`, run in `/opt/ws`, shows: mise's run hides it.
+  Move the file away, and the next run writes ws's.
 - Zed's keymap editor writes this file too (zed#8829). A change made there is replaced at the next
   run while line 1 stands. Delete line 1 to keep the file, and ws leaves it.
 

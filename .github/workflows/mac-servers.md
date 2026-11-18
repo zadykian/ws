@@ -14,7 +14,7 @@ lines it wrote lists no slot and no port.
 Four cases of the `mac` job work on a second server:
 
 - `mac/22-server.sh` makes a second server's file, `lab`, at slot 1, beside ws's. Then `ws client macos
-  apply --check` must stop, naming both servers. `--server box`, which has no file, and `--server
+  values print` must stop, naming both servers. `--server box`, which has no file, and `--server
   Lab`, a bad name, must stop it too. `--server ws` must go on as with one server. The case's trap
   removes lab's directory.
 - `mac/90-clash.sh` makes the files `lab` and `box`, which clash with ws's. The bootstrap's plan
@@ -25,5 +25,5 @@ Four cases of the `mac` job work on a second server:
 - `mac/94-remove.sh` runs `remove lab`: its files, daemon, host and `known_hosts` line must go, and
   ws's stay. `remove box` and `remove ws` must refuse, and the plan then exit 0.
 
-Cases 90, 92 and 94 of the `mac` job run last, as `checks.sh` and the job stop at the first that
-fails.
+Cases 90, 92 and 94 of the `mac` job run near the end, before case 96's last bootstrap, as
+`checks.sh` and the job stop at the first that fails.
