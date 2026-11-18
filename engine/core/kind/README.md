@@ -248,7 +248,7 @@ ws by `mise which ws`, the pinned binary. The write hook runs `ws unit verify` f
   change, file diffs included. The last line names the units that changed. A unit whose `when`
   does not hold changes nothing: alone, it ends `changed: none`.
 - **Where it reads.** The specs sit below `$WS_UNITS`, else below the side's own directory: the
-  server's is `/opt/ws/roles/server/ubuntu`, the checkout of `mise bootstrap --from-dir /opt/ws`.
+  server's is `/opt/ws/roles/server/ubuntu`, in the checkout that `install.sh` makes at `/opt/ws`.
   The values are the side's file, `/etc/ws/values.yml` on the server, and confine the machine's
   writes under `WS_HOME`.
 - **verify.** mise drops the units of a plugin that it refuses, with a warning and exit 0. `verify`

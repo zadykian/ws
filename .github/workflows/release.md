@@ -27,12 +27,13 @@ machine's miserc and runs `mise bootstrap`:
   `booted` where systemd runs, and `account` where `WS_USER` is not root
   ([The frame](../../roles/server/ubuntu/frame/README.md#the-machines-env)). After a change of
   `WS_USER`, run it again.
-- It finds the latest release once, and clones the release's tag into `/opt/ws`, then runs the
-  bootstrap on that tree. A pre-release is never the latest: only `WS_VERSION` picks one. The
-  tree pins ws's binary, and mise checks it against `mise.lock`. With `MISE_LOCKED=1`, which
-  `install.sh` sets, mise installs each tool only as a lock holds it. Run again, it checks the
-  release's tag out in `/opt/ws`, dropping any change and any file git does not track there, such
-  as a trial's `mise.local.toml`. So it brings the machine back to the release.
+- It finds the latest release once, and checks the release's tag out in `/opt/ws` by git, then
+  runs the bootstrap on that tree, in the server's run directory, `/opt/ws/roles/server`. A
+  pre-release is never the latest: only `WS_VERSION` picks one. The tree pins ws's binary, and mise
+  checks it against `mise.lock`. With `MISE_LOCKED=1`, which `install.sh` sets, mise installs each
+  tool only as a lock holds it. Run again, it checks the release's tag out in `/opt/ws`, dropping
+  any change and any file git does not track there, such as a trial's `mise.local.toml`. So it
+  brings the machine back to the release.
 - It refuses a system other than Ubuntu 26.04, by `/etc/os-release`. So does `ws unit`'s read and
   write, which the bootstrap runs.
 - It refuses a `/opt/ws` that is a link, or that holds a file or directory root does not own or
