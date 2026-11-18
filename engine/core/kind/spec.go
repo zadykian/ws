@@ -55,6 +55,8 @@ type spec struct {
 	Guard map[string]guardSpec `toml:"guard"`
 	// Compose is a project of Docker Compose, recreated where its files change.
 	Compose map[string]composeSpec `toml:"compose"`
+	// Launchd is a family of LaunchDaemons of macOS, restarted where their program changes.
+	Launchd map[string]launchdSpec `toml:"launchd"`
 }
 
 // parse fills the spec's text, named name in errors, with e.Data, pure's funcs and self, and
