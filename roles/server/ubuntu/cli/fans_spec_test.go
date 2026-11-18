@@ -43,6 +43,16 @@ func fansMachine() *effecttest.Machine {
 	return m
 }
 
+// fansValues is the values of an empty file, with those that follow WS_HOME, which git's units
+// name.
+func fansValues(t *testing.T) values.Values {
+	v, err := values.Parse(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return v
+}
+
 // fansSpecs loads the specs with the values v on m, and returns each unit's step by its name.
 func fansSpecs(t *testing.T, m *effecttest.Machine, u *effecttest.Units, out *effecttest.Out, v values.Values) map[string]step.Step {
 	steps := map[string]step.Step{}
@@ -64,7 +74,7 @@ func apply(t *testing.T, steps map[string]step.Step, name string) {
 }
 
 func TestFansUnitsRunInOrder(t *testing.T) {
-	units := loadSpecs(t, kind.Env{M: fansMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: values.Default(), Self: selfPath})
+	units := loadSpecs(t, kind.Env{M: fansMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: fansValues(t), Self: selfPath})
 	names := kind.Names(units)
 	for _, pair := range [][2]string{{"packages/fans", "dkms/fans"}, {"state/ws-binary", "service/fans"}} {
 		first, then := slices.Index(names, pair[0]), slices.Index(names, pair[1])
@@ -99,7 +109,7 @@ func TestFansOffOnAnotherBoard(t *testing.T) {
 		if tc.maker != "" {
 			withBoard(m, tc.maker)
 		}
-		v := values.Default()
+		v := fansValues(t)
 		v.Fans.BoardVendor = tc.vendor
 		steps := fansSpecs(t, m, &effecttest.Units{}, out, v)
 		var want []string
@@ -167,7 +177,7 @@ func TestFansDriverIsThePinnedSource(t *testing.T) {
 // fansService applies service/fans with the defaults on m, and returns systemd's fake.
 func fansService(t *testing.T, m *effecttest.Machine) *effecttest.Units {
 	u := &effecttest.Units{}
-	apply(t, fansSpecs(t, m, u, &effecttest.Out{}, values.Default()), "service/fans")
+	apply(t, fansSpecs(t, m, u, &effecttest.Out{}, fansValues(t)), "service/fans")
 	return u
 }
 
@@ -200,7 +210,7 @@ func TestFansServiceInstallsEnablesAndStartsThenChangesNothing(t *testing.T) {
 	}
 	m.Results[fansInForce] = effecttest.Result{Out: []byte("/usr/local/bin/ws\n")}
 	m.Results[fansLoads] = effecttest.Result{Out: []byte("/usr/local/bin/ws\n")}
-	steps := fansSpecs(t, m, u, &effecttest.Out{}, values.Default())
+	steps := fansSpecs(t, m, u, &effecttest.Out{}, fansValues(t))
 	if got, err := planned(t, steps, "service/fans"); err != nil || got != nil {
 		t.Errorf("second plan = %q, %v; want none", got, err)
 	}
@@ -212,7 +222,7 @@ func TestFansServiceRestartsOnANewWs(t *testing.T) {
 	u.Calls = nil
 	m.Results[fansInForce] = effecttest.Result{Out: []byte("/usr/local/bin/ws (deleted)\n")}
 	m.Results[fansLoads] = effecttest.Result{Out: []byte("/usr/local/bin/ws\n")}
-	apply(t, fansSpecs(t, m, u, &effecttest.Out{}, values.Default()), "service/fans")
+	apply(t, fansSpecs(t, m, u, &effecttest.Out{}, fansValues(t)), "service/fans")
 	if !slices.Contains(u.Calls, "restart ws-fans.service") {
 		t.Errorf("calls = %q, want a restart on the new ws", u.Calls)
 	}
@@ -229,7 +239,7 @@ func TestFansServiceSkipsItsUnitWithoutSystemd(t *testing.T) {
 func TestFansConfigRefusedFailsThePlan(t *testing.T) {
 	m := fansMachine()
 	m.Files["/etc/ws/fans.json"] = []byte("old\n")
-	v := values.Default()
+	v := fansValues(t)
 	v.Fans.Curves[0].Sensor = "none"
 	if _, err := planned(t, fansSpecs(t, m, &effecttest.Units{}, &effecttest.Out{}, v), "service/fans"); err == nil {
 		t.Error("plan with a curve on a missing sensor = nil, want the loader's refusal")

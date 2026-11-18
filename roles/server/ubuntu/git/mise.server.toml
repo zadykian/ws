@@ -1,0 +1,12 @@
+# git's lines for every server: git, and ssh-keygen for the key that signs commits, which the security
+# role's sshd brings too; then the role's units. gh comes from devtools.
+[bootstrap.packages]
+"apt:git" = "latest"
+"apt:openssh-client" = "latest"
+"ws:file/git-config" = "in-sync"
+"ws:file/git-include" = "in-sync"
+"ws:file/git-signers" = "in-sync"
+"ws:guard/git-check" = "in-sync"
+"ws:state/git-clones" = "in-sync"
+"ws:state/git-key" = "in-sync"
+"ws:state/git-tokens" = "in-sync"
