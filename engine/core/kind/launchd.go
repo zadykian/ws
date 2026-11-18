@@ -59,9 +59,6 @@ func cleanPath(field, p string) error {
 }
 
 func (s launchdSpec) parts(e Env, _ fs.FS) (func(context.Context) ([]resource.Resource, error), error) {
-	if e.System != MacOS {
-		return nil, errors.New("a launchd unit runs on macOS alone")
-	}
 	if !labelPrefix.MatchString(s.Prefix) {
 		return nil, fmt.Errorf("prefix %q is no start of a label: a reversed domain that ends in a dot", s.Prefix)
 	}

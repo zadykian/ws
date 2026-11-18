@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"path"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -21,6 +22,15 @@ const specFile = "units.toml"
 
 // unitName is a unit's name within its kind: a plain word, as a tool's package name holds it.
 var unitName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
+
+// kindsOn holds the systems that each kind runs on, by its table's name in a spec. A kind of
+// Linux's alone reads apt, dpkg, systemd, sysfs or /proc, which macOS lacks, so that there it would
+// read in sync having done nothing. launchd is macOS's own. A new kind is an entry here.
+var kindsOn = map[string][]System{
+	"file": {Linux, MacOS}, "state": {Linux, MacOS}, "launchd": {MacOS},
+	"deb": {Linux}, "binary": {Linux}, "packages": {Linux}, "dkms": {Linux}, "service": {Linux},
+	"guard": {Linux}, "compose": {Linux},
+}
 
 // Env is what a kind builds its units on: the machine, systemd's units, the lines, the side's
 // values and its operating system. The values fill the specs and their templates.
@@ -70,8 +80,12 @@ func Load(e Env, specs fs.FS) ([]Unit, error) {
 			return nil, err
 		}
 		for name, k := range s.units() {
-			if _, n, _ := strings.Cut(name, "/"); !unitName.MatchString(n) {
+			kind, n, _ := strings.Cut(name, "/")
+			if !unitName.MatchString(n) {
 				return nil, fmt.Errorf("%s: unit %s: a name takes letters, digits, '.', '_' and '-'", f, name)
+			}
+			if !slices.Contains(kindsOn[kind], e.System) {
+				return nil, fmt.Errorf("%s: unit %s: the kind %s does not run on %s", f, name, kind, e.System)
 			}
 			if other, twice := where[name]; twice {
 				return nil, fmt.Errorf("%s: unit %s is in %s too", f, name, other)

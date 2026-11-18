@@ -258,7 +258,7 @@ func TestLaunchdSpecRefusals(t *testing.T) {
 		t.Errorf("a name twice: load = %v, want it refused", err)
 	}
 	e.System = Linux
-	if _, err := Load(e, tree(map[string]string{"r/units.toml": ldSpec})); err == nil || !strings.Contains(err.Error(), "macOS alone") {
+	if _, err := Load(e, tree(map[string]string{"r/units.toml": ldSpec})); err == nil || !strings.Contains(err.Error(), "the kind launchd does not run on Linux") {
 		t.Errorf("on Linux: load = %v, want it refused", err)
 	}
 }

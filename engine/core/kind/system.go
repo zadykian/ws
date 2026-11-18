@@ -21,6 +21,13 @@ const (
 	MacOS
 )
 
+func (s System) String() string {
+	if s == MacOS {
+		return "macOS"
+	}
+	return "Linux"
+}
+
 // home is the home of name, as the system's database of accounts gives it.
 func (s System) home(ctx context.Context, m effect.Machine, name string) (string, error) {
 	var out []byte
