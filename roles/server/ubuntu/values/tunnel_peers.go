@@ -1,4 +1,4 @@
-package settings
+package values
 
 import (
 	"fmt"
@@ -6,13 +6,12 @@ import (
 	"regexp"
 
 	"github.com/zadykian/ws/roles/internal/slot"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 var peerName = regexp.MustCompile(`^[a-z0-9-]+$`)
 
 // peerProblems names what is wrong with the peers, given wg0's address with its prefix length.
-func peerProblems(w values.Tunnel, server netip.Prefix) []string {
+func peerProblems(w Tunnel, server netip.Prefix) []string {
 	var problems []string
 	names := map[string]bool{}
 	taken := map[netip.Addr]string{server.Addr(): "wg0"}
@@ -44,8 +43,8 @@ func peerProblems(w values.Tunnel, server netip.Prefix) []string {
 
 // macProblems checks the peer mac against the slot that wg0's address names: wg0 at that slot's
 // .1 and the Mac at its .2. Without the peer, wg0 may sit anywhere.
-func macProblems(w values.Tunnel, server netip.Prefix) []string {
-	var mac *values.TunnelPeer
+func macProblems(w Tunnel, server netip.Prefix) []string {
+	var mac *TunnelPeer
 	for i := range w.Peers {
 		if w.Peers[i].Name == macPeer {
 			mac = &w.Peers[i]

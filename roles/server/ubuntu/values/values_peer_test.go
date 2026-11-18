@@ -1,6 +1,9 @@
 package values
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestParseListsTheMacAtWg0sAddressPlusOne(t *testing.T) {
 	for in, want := range map[string]string{
@@ -26,10 +29,16 @@ func TestParseKeepsThePeersItIsGiven(t *testing.T) {
 	}
 }
 
-func TestParseListsNoMacForAnAddressItCannotRead(t *testing.T) {
-	got, err := Parse([]byte("WS_TUNNEL_ADDRESS: nope\n"))
+func TestDecodeListsNoMacForAnAddressItCannotRead(t *testing.T) {
+	got, err := decode([]byte("WS_TUNNEL_ADDRESS: nope\n"))
 	if err != nil || got.Tunnel.Peers != nil {
-		t.Errorf("Parse = %v, %v; want no peer", got.Tunnel.Peers, err)
+		t.Errorf("decode = %v, %v; want no peer", got.Tunnel.Peers, err)
+	}
+}
+
+func TestParseRefusesABadTunnelPort(t *testing.T) {
+	if _, err := Parse([]byte("WS_TUNNEL_PORT: 0\n")); err == nil || !strings.Contains(err.Error(), "WS_TUNNEL_PORT is 0") {
+		t.Errorf("Parse = %v, want the port refused", err)
 	}
 }
 

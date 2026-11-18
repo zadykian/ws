@@ -44,8 +44,8 @@ func TestStepsAreInOrderAndWaitOnTheirPredecessors(t *testing.T) {
 	for _, s := range ss {
 		names, after = append(names, s.Name()), append(after, s.WaitsOn())
 	}
-	wantNames := []string{settingsStep, packagesStep, dropsStep, tunnelStep, keyStep}
-	wantAfter := []string{"", settingsStep, packagesStep, dropsStep, tunnelStep}
+	wantNames := []string{packagesStep, dropsStep, tunnelStep, keyStep}
+	wantAfter := []string{"", packagesStep, dropsStep, tunnelStep}
 	if !slices.Equal(names, wantNames) || !slices.Equal(after, wantAfter) {
 		t.Errorf("steps = %q after %q, want %q after %q", names, after, wantNames, wantAfter)
 	}

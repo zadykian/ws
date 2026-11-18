@@ -14,22 +14,20 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/tunnel/internal/drops"
-	"github.com/zadykian/ws/roles/server/ubuntu/tunnel/internal/settings"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // Step names. The tunnel and the key wait on the packages, which bring systemd and its group.
 const (
-	settingsStep = "WireGuard settings"
 	packagesStep = "WireGuard packages"
 	dropsStep    = "WireGuard drops"
 	tunnelStep   = "WireGuard tunnel"
 	keyStep      = "WireGuard key"
 )
 
-// Steps returns the role's steps in order: the check of the settings, the packages, and the drops
-// that keep Docker's containers off the Mac. Then come wg0's key and files, and the public key with
-// the wait for wg0. The role takes no secrets.
+// Steps returns the role's steps in order: the packages, and the drops that keep Docker's
+// containers off the Mac. Then come wg0's key and files, and the public key with the wait for wg0.
+// The values' check refuses the settings the role cannot use. The role takes no secrets.
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units, out effect.Out) []step.Step {
 	return steps(v, m, u, out, rand.Reader, time.Sleep)
 }
@@ -38,12 +36,11 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units,
 func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out, random io.Reader,
 	sleep func(time.Duration)) []step.Step {
 	return []step.Step{
-		resource.Group{Title: settingsStep, Parts: []resource.Resource{settings.Check{W: v.Tunnel}}},
 		// networkd, its directory /etc/systemd/network and its group systemd-network come with
 		// systemd, which a container may lack, so that --only tunnel stands alone. iptables
 		// holds the containers' drops. wireguard-tools' recommends serve wg-quick, which the role
 		// doesn't use.
-		resource.Group{Title: packagesStep, After: settingsStep, Parts: []resource.Resource{
+		resource.Group{Title: packagesStep, Parts: []resource.Resource{
 			apt.Packages{M: m, Out: out, Names: []string{"wireguard-tools", "systemd", "iptables"}},
 		}},
 		// Ahead of wg0, which the drops don't need: a run that stops on wg0 still puts them in.
