@@ -38,7 +38,6 @@ Usage:
   ws client macos [command]
 
 Available Commands:
-  apply       set the Mac up from values.yml and a server's file
   cable       give the cable's service its Manual Configuration of the Mac's end
   cld         install cld into ~/.local/bin, and keep it at its latest release
   git         the commands of git's units
@@ -48,7 +47,6 @@ Available Commands:
   resolver    send DOMAIN's names to the nameservers, or drop it
   servers     list the Mac's servers with their target, slot and tunnel
   ssh         the commands of ssh's units
-  state       report what the Mac's steps would change
   tunnel      the Mac's tunnel to ws
   values      print the Mac's values
 
@@ -57,19 +55,6 @@ Flags:
       --server string   the server to act on, which may be left out where there is one
 
 Use "ws client macos [command] --help" for more information about a command.
-== ws client macos apply
-It runs the steps it names, from values.yml and the server's file, in this order: none, as mise -C /opt/ws bootstrap sets the Mac up. With no --only, it runs every step. It asks sudo where it needs root.
-
-Usage:
-  ws client macos apply [flags]
-
-Flags:
-      --check          print each change and make none
-  -h, --help           help for apply
-      --only strings   run the named steps alone, as a list or by repeating the flag
-
-Global Flags:
-      --server string   the server to act on, which may be left out where there is one
 == ws client macos cable
 The service that a server's WS_CABLE_SERVICE names takes 10.77.0.2/30 with no router, through sudo, where networksetup shows other settings. A service networksetup lacks, or one with a router outside the cable's /30, as an uplink has, fails it.
 
@@ -155,7 +140,7 @@ Flags:
 Global Flags:
       --server string   the server to act on, which may be left out where there is one
 == ws client macos remove
-It deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it is. mise's bootstrap then takes its daemon, routes and host off. It refuses the Mac's last server, as apply needs one, and takes no --server: the argument is the consent.
+It deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it is. mise's bootstrap then takes its daemon, routes and host off. It refuses the Mac's last server, as the bootstrap takes a Mac with none for a stray WS_VALUES and prunes no daemon, and takes no --server: the argument is the consent.
 
 Usage:
   ws client macos remove NAME [flags]
@@ -213,20 +198,6 @@ Usage:
 
 Flags:
   -h, --help   help for included
-
-Global Flags:
-      --server string   the server to act on, which may be left out where there is one
-== ws client macos state
-It reads alone and applies nothing, as ws client macos apply --check does, and needs what it needs: values.yml, and not root. The Mac's steps report the packages, services and files ws manages there, and a step that fails stands in the report as a check. The exit code stays 0. With several servers, one whose file ws refuses stands in the report with the refusal. A report holds no secret.
-
-The text is on stdout and ws's own lines on stderr. --json prints the version of ws, then each step with its items and changes.
-
-Usage:
-  ws client macos state [flags]
-
-Flags:
-  -h, --help   help for state
-      --json   print the report as JSON
 
 Global Flags:
       --server string   the server to act on, which may be left out where there is one

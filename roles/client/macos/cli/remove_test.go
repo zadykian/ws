@@ -177,7 +177,7 @@ func TestRemoveRefusesTheLastServerAndAWrongName(t *testing.T) {
 		arg, want string
 		last      bool
 	}{
-		"last server":  {"ws", "ws is the Mac's one server: apply needs one, so remove leaves it", true},
+		"last server":  {"ws", "ws is the Mac's one server: with none, the bootstrap prunes no daemon, so remove leaves it", true},
 		"unknown name": {"nope", "no server named nope in /etc/ws/servers, which holds lab and ws", false},
 		"bad name":     {"Bad_Name", "Bad_Name is not a server's name: " + values.NameForm, false},
 		"path":         {"../ws", "../ws is not a server's name: " + values.NameForm, false},

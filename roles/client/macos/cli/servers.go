@@ -58,3 +58,8 @@ func appendNew(errs []error, err error) []error {
 	}
 	return append(errs, err)
 }
+
+// pickServer returns the name of the server that --server names, or of the only one.
+func pickServer(p enginecli.Env, server *string) (string, error) {
+	return values.Pick(p.Machine, values.Path(p.Getenv, p.Pwd), *server)
+}

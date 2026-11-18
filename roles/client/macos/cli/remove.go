@@ -22,7 +22,8 @@ func newRemoveCmd(p enginecli.Env, server *string) *cobra.Command {
 		Short: "remove a server from the Mac",
 		Long: "It deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it " +
 			"is. mise's bootstrap then takes its daemon, routes and host off. It refuses the Mac's last server, as " +
-			"apply needs one, and takes no --server: the argument is the consent.",
+			"the bootstrap takes a Mac with none for a stray WS_VALUES and prunes no daemon, and takes no --server: " +
+			"the argument is the consent.",
 		Args: cobra.ExactArgs(1),
 		RunE: func(c *cobra.Command, args []string) error { return runRemove(c, p, *server, args[0]) },
 	}
@@ -49,7 +50,7 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 			path.Dir(path.Dir(values.ServerPath(mac, name))), values.List(names))
 	}
 	if len(names) == 1 {
-		return fmt.Errorf("%s is the Mac's one server: apply needs one, so remove leaves it", name)
+		return fmt.Errorf("%s is the Mac's one server: with none, the bootstrap prunes no daemon, so remove leaves it", name)
 	}
 	// The steps below skip a server whose file ws refuses, so such a file stops the removal before
 	// it starts. NAME's own file is out of the count: a clash with it ends with the removal.

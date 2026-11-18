@@ -17,7 +17,7 @@ func Apply(ctx context.Context, c Call, t Target) error {
 	}
 	c.Machine = run.M // WS_HOME confines it.
 	term := effect.NewTerminal(strings.NewReader(""), c.Err)
-	lines := Lines{Out: term, Prog: c.Path, Seen: map[string]bool{}, Change: t.Change}
+	lines := Lines{Out: term, Prog: c.Path, Seen: map[string]bool{}}
 	o := step.Options{Check: c.Check, Observer: lines}
 	var events *jsonEvents
 	if c.JSON {
