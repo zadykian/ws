@@ -29,9 +29,10 @@ jobs:
   # the tunnel's handshakes on loopback, as the LAN (127.0.0.0/8) and as WS_REMOTE (localhost). The
   # daemon's status must show each in turn.
   # Last, ws client macos tunnel routes --server ws and ws client macos resolver, then the keys'.
-  # Then a second server's cases, 90-clash, 92-second and 94-remove (mac-servers.md). A stand-in
-  # that makes no utun fails the job, as the daemon's device makes one. Gated as ci.yml's playbook
-  # job.
+  # Then a second server's cases, 90-clash, 92-second and 94-remove (mac-servers.md). Last, one
+  # more bootstrap must call no sudo, and its plan and mise dot status --missing exit 0
+  # (96-converged). A stand-in that makes no utun fails the job, as the daemon's device makes one.
+  # Gated as ci.yml's playbook job.
   mac:
     if: >-
       (github.event.action != 'opened' || !github.event.pull_request.draft) &&

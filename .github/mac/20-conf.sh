@@ -1,6 +1,6 @@
 #!/bin/bash
 # values.yml, without ws's WireGuard key. It names a file key, made here, as ws's login key, which
-# ws client macos apply needs. The runner must lack one, as mac-identity-checks.sh checks the key's
+# the bootstrap's facts need. The runner must lack one, as mac-identity-checks.sh checks the key's
 # lines. Git signs with the same key, with no passphrase.
 
 set -eo pipefail
