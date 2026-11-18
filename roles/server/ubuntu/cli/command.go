@@ -51,7 +51,7 @@ func serverRefusal(euid int, osRelease []byte) string {
 func Command(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("ubuntu", "the commands for an Ubuntu server", newApplyCmd(p), newStateCmd(p), newFansCmd(p),
 		newCableCmd(p, units.OSUnits{}), newTunnelCmd(p, units.OSUnits{}), newIkewardCmd(p, ikeward.StatusTries, ikeward.StatusWait),
-		newValuesCmd(p), newSecretsCmd(p), newSignozCmd(p))
+		newGitCmd(p), newValuesCmd(p), newSecretsCmd(p), newSignozCmd(p))
 }
 
 // applyOptions are apply's flags: the runner's, and the --secrets path, which the runner never reads.

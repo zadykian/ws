@@ -6,10 +6,7 @@ import (
 	"context"
 	"embed"
 	"errors"
-	"fmt"
 	"io/fs"
-	"os/exec"
-	"path/filepath"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
@@ -78,11 +75,8 @@ func (g Config) Plan(ctx context.Context) ([]resource.Change, error) {
 	return append(changes, include...), nil
 }
 
-// note warns of what in the user's files shadows ws's. Where the run adds the include, it names
-// the settings of identity and signing in ~/.gitconfig, which win over /etc/ws/gitconfig's below
-// the include. It names those in git's XDG file too, which lose to them. On each run, it names
-// the credential sections of ~/.gitconfig that reset a token's helper. A missing ~/.gitconfig
-// warns of nothing. The notes name settings and sections, never a value.
+// note warns of what in the user's files shadows ws's (shadow.notes). A missing ~/.gitconfig warns
+// of nothing.
 func (g Config) note(ctx context.Context, adding bool) error {
 	text, err := g.A.ReadHome(g.M, ".gitconfig")
 	if errors.Is(err, fs.ErrNotExist) {
@@ -91,67 +85,22 @@ func (g Config) note(ctx context.Context, adding bool) error {
 	if err != nil {
 		return err
 	}
-	if adding {
-		names, err := gitNames(ctx, g.M, text)
-		if err != nil {
-			return err
-		}
-		if own := gitcfg.Own(names); own != "" {
-			g.Out.Warn("~/.gitconfig's own settings of %s, below the include, win over %s's", own, gitcfg.Path)
-		}
-		if err := g.noteXDG(ctx); err != nil {
-			return err
-		}
+	notes, err := shadow{M: g.M, A: g.A, Creds: g.Creds, Whole: g.Whole}.notes(ctx, text, adding)
+	for _, n := range notes {
+		g.Out.Warn("%s", n)
 	}
-	return g.noteCredentials(ctx, text)
+	return err
 }
 
-// noteXDG warns of the settings of identity and signing in git's XDG file, which git reads before
-// ~/.gitconfig, so that /etc/ws/gitconfig's win over them. It reads below the home alone, as the
-// run has no XDG_CONFIG_HOME of the account's.
-func (g Config) noteXDG(ctx context.Context) error {
-	rel, err := filepath.Rel(g.A.Home, gitcfg.XDGFile("", g.A.Home))
-	if err != nil {
-		return err
-	}
-	text, err := g.A.ReadHome(g.M, rel)
-	if errors.Is(err, fs.ErrNotExist) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	names, err := gitNames(ctx, g.M, text)
-	if err != nil {
-		return err
-	}
-	if own := gitcfg.Own(names); own != "" {
-		g.Out.Warn("%s", gitcfg.XDGNote(g.A.Home+"/"+rel, own, gitcfg.Path))
-	}
-	return nil
-}
-
-// included says whether the text of ~/.gitconfig includes /etc/ws/gitconfig, as git reads it. Git
-// reads the text on its standard input, so that the plan holds the file's bytes alone.
+// included says whether the text of ~/.gitconfig includes /etc/ws/gitconfig (Included). An
+// include out of place is file.Misplaced's error, which the user's lines refuse.
 func (g Config) included(ctx context.Context, m effect.Machine, path string, text []byte) (bool, error) {
-	out, err := m.RunInput(ctx, text, "git", "config", "--file", "-", "--type", "path", "--get-all", "include.path")
-	var ee *exec.ExitError
-	if err != nil && (!errors.As(err, &ee) || ee.ExitCode() != 1) {
-		return false, fmt.Errorf("git config cannot read %s: %w", path, err)
+	holds, err := Included(ctx, m, path, text)
+	var out misplaced
+	if errors.As(err, &out) {
+		return false, file.Misplaced("%v", err)
 	}
-	names, err := gitNames(ctx, m, text)
-	if err != nil {
-		return false, err
-	}
-	first := ""
-	if len(names) > 0 {
-		first = names[0]
-	}
-	holds, err := gitcfg.Included(lines(out), first)
-	if err != nil {
-		return false, file.Misplaced("%s %v", path, err)
-	}
-	return holds, nil
+	return holds, err
 }
 
 // configCheck is the command that has git read a config file before it replaces the old one.

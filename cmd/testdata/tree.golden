@@ -244,6 +244,7 @@ Available Commands:
   apply       set the server up, each role as Go steps
   cable       the cable role's check and reload, which its units run
   fans        drive the board's fans on the curves of CONFIG until SIGTERM
+  git         the git role's checks and procedures, which its units run
   ikeward     the ikeward role's check, install and wait, which its units run
   secrets     keep ws's secrets file, with its identity as a systemd credential
   signoz      SigNoz's steps that the signoz role's units run
@@ -317,6 +318,63 @@ Usage:
 
 Flags:
   -h, --help   help for fans
+== ws server ubuntu git
+the git role's checks and procedures, which its units run
+
+Usage:
+  ws server ubuntu git [flags]
+  ws server ubuntu git [command]
+
+Available Commands:
+  check       refuse git's clones and tokens that the role would act on, and note what shadows ws's settings
+  clones      clone each repository of WS_GIT_CLONES whose dest is missing, as WS_USER
+  included    say by the exit status whether the git config on stdin includes /etc/ws/gitconfig at its top
+  tokens      write git's tokens from the secrets file's [git] table
+
+Flags:
+  -h, --help   help for git
+
+Use "ws server ubuntu git [command] --help" for more information about a command.
+== ws server ubuntu git check
+It reads the values of /etc/ws/values.yml and the secrets file, where there is one. It fails where an entry of WS_GIT_CLONES holds a user name or a token in its URL, or where an entry of the secrets file's [git] table is refused (roles/server/ubuntu/git/README.md#git-credentials). No message quotes a token or a repository.
+
+It prints a warning on stdout for each setting of ~/.gitconfig that shadows /etc/ws/gitconfig's, by its name, never its value. The git role's guard runs it, before the tokens and the clones.
+
+Usage:
+  ws server ubuntu git check [flags]
+
+Flags:
+  -h, --help   help for check
+== ws server ubuntu git clones
+A clone is made once and never pulled (roles/server/ubuntu/git/README.md#clones). The git role's run state runs it, after the tokens.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws server ubuntu git clones [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for clones
+== ws server ubuntu git included
+It reads the text of ~/.gitconfig on its standard input, as git does. It exits 0 where the text includes /etc/ws/gitconfig once, at its top, and 1 where it lacks the include. It exits 2 with the reason where the include sits below the file's own settings or comes twice, which it would then override, or where git cannot read the text. The git role's unit of the include runs it, and refuses the file on 2.
+
+Usage:
+  ws server ubuntu git included [flags]
+
+Flags:
+  -h, --help   help for included
+== ws server ubuntu git tokens
+Each token goes in /etc/ws/tokens, root's with the account's group, and its credential program in /etc/ws/tokens.gitconfig (roles/server/ubuntu/git/README.md#git-credentials). A machine without a secrets file keeps its tokens. The git role's run state runs it, after the role's check.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws server ubuntu git tokens [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for tokens
 == ws server ubuntu ikeward
 the ikeward role's check, install and wait, which its units run
 
