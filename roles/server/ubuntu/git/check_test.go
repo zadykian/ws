@@ -10,12 +10,12 @@ import (
 
 // checked runs Check on the fixture's machine with the default values and s.
 func checked(t *testing.T, sm stdinMachine, v values.Values, s secrets.Secrets) ([]string, error) {
-	_, _, _, g := gitFixture()
+	_, _, g := gitFixture()
 	return Check(t.Context(), sm, g.A, v, s)
 }
 
 func TestCheckWithoutASecretsFile(t *testing.T) {
-	m, sm, _, _ := gitFixture()
+	m, sm, _ := gitFixture()
 	notes, err := checked(t, sm, values.Values{}, secrets.Secrets{})
 	if err != nil || notes != nil {
 		t.Errorf("Check = %q, %v; want nothing", notes, err)
@@ -28,7 +28,7 @@ func TestCheckWithoutASecretsFile(t *testing.T) {
 }
 
 func TestCheckRefusesABadToken(t *testing.T) {
-	_, sm, _, _ := gitFixture()
+	_, sm, _ := gitFixture()
 	s := secrets.Secrets{Whole: true, Git: map[string]secrets.Git{"https://u@git.example.test/": {Token: "hunter2"}}}
 	s.Git["https://git.example.test/a b"] = secrets.Git{Token: "hunter2"}
 	_, err := checked(t, sm, values.Values{}, s)
@@ -38,7 +38,7 @@ func TestCheckRefusesABadToken(t *testing.T) {
 }
 
 func TestCheckRefusesABadClone(t *testing.T) {
-	_, sm, _, _ := gitFixture()
+	_, sm, _ := gitFixture()
 	repo := "https://me:hunter2@example.test/r.git" //nolint:gosec // G101: a fake token, which the check refuses
 	v := values.Values{Git: values.Git{Clones: []values.GitClone{{Repo: repo, Dest: "r"}}}}
 	if _, err := checked(t, sm, v, secrets.Secrets{}); err == nil || !strings.Contains(err.Error(), "WS_GIT_CLONES") ||
@@ -48,7 +48,7 @@ func TestCheckRefusesABadClone(t *testing.T) {
 }
 
 func TestCheckNamesTheUsersOwnSettingsWithoutTheInclude(t *testing.T) {
-	m, sm, _, _ := gitFixture()
+	m, sm, _ := gitFixture()
 	m.Files["/home/ws/.gitconfig"] = []byte("[user]\n\temail = a@b.c\n[http]\n\textraheader = hunter2\n")
 	sm.answers["[user]"] = "user.email\nhttp.extraheader\n"
 	notes, err := checked(t, sm, values.Values{}, secrets.Secrets{})
@@ -59,7 +59,7 @@ func TestCheckNamesTheUsersOwnSettingsWithoutTheInclude(t *testing.T) {
 }
 
 func TestCheckNamesNoOwnSettingsBelowTheInclude(t *testing.T) {
-	m, sm, _, _ := gitFixture()
+	m, sm, _ := gitFixture()
 	m.Files["/home/ws/.gitconfig"] = []byte(included + "[user]\n\temail = a@b.c\n")
 	sm.answers["[include]"] = "include.path\nuser.email\n"
 	sm.paths["[include]"] = "/etc/ws/gitconfig\n"
@@ -69,7 +69,7 @@ func TestCheckNamesNoOwnSettingsBelowTheInclude(t *testing.T) {
 }
 
 func TestCheckLeavesAMisplacedIncludeToItsUnit(t *testing.T) {
-	m, sm, _, _ := gitFixture()
+	m, sm, _ := gitFixture()
 	m.Files["/home/ws/.gitconfig"] = []byte("[user]\n\tname = x\n" + included)
 	sm.answers["[user]"] = "user.name\ninclude.path\n"
 	sm.paths["[user]"] = "/etc/ws/gitconfig\n"

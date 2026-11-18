@@ -1,3 +1,6 @@
+// Package git is the git role's procedures, which ws server ubuntu git runs for the role's units.
+// They are the check, the test of the include, the tokens and the clones. See
+// roles/server/ubuntu/git/README.md.
 package git
 
 import (

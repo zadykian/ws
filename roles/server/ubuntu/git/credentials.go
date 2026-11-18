@@ -1,6 +1,7 @@
 package git
 
 import (
+	"embed"
 	"maps"
 	"regexp"
 	"slices"
@@ -10,6 +11,11 @@ import (
 	"github.com/zadykian/ws/roles/internal/etcws"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
+
+// gitFiles is the template of the tokens' include.
+//
+//go:embed files/tokens.gitconfig.tmpl
+var gitFiles embed.FS
 
 // tokensDir holds each token in a file of its own, and tokensPath the credential programs that
 // read them. Root owns both, with the account's group, so that the account reads a token and cannot

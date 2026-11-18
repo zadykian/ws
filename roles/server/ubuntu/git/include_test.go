@@ -7,7 +7,7 @@ import (
 )
 
 func TestIncludedAtTheTop(t *testing.T) {
-	_, sm, _, _ := gitFixture()
+	_, sm, _ := gitFixture()
 	sm.paths["[include]"] = "/etc/ws/gitconfig\n"
 	sm.answers["[include]"] = "include.path\nuser.name\n"
 	if holds, err := Included(t.Context(), sm, "~/.gitconfig", []byte(included+"[user]\n\tname = x\n")); !holds || err != nil {
@@ -16,7 +16,7 @@ func TestIncludedAtTheTop(t *testing.T) {
 }
 
 func TestIncludedMissing(t *testing.T) {
-	_, sm, _, _ := gitFixture()
+	_, sm, _ := gitFixture()
 	sm.answers["[user]"] = "user.name\n"
 	if holds, err := Included(t.Context(), sm, "~/.gitconfig", []byte("[user]\n\tname = x\n")); holds || err != nil {
 		t.Errorf("Included = %v, %v; want it lacking, with no error", holds, err)
@@ -24,7 +24,7 @@ func TestIncludedMissing(t *testing.T) {
 }
 
 func TestIncludedRefusesBelowOrTwice(t *testing.T) {
-	_, sm, _, _ := gitFixture()
+	_, sm, _ := gitFixture()
 	sm.answers["[user]"] = "user.name\ninclude.path\n"
 	sm.paths["[user]"] = "/etc/ws/gitconfig\n"
 	sm.answers["[include]"] = "include.path\ninclude.path\n"

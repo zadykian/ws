@@ -76,3 +76,8 @@ func (t Tokens) Plan(ctx context.Context) ([]resource.Change, error) {
 		Mode: 0o640, GID: t.A.GID}, Check: configCheck})
 	return plan.All(ctx, rs...)
 }
+
+// configCheck is the command that has git read a config file before it replaces the old one.
+func configCheck(path string) (string, []string) {
+	return "git", []string{"config", "--file", path, "--name-only", "--list"}
+}
