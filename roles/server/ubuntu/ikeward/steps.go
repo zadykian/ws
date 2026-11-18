@@ -26,7 +26,7 @@ const (
 // secrets, and the wait for the VPN. Without WS_IKEWARD_PROFILE it returns none, as in CI's
 // container: the VPN, the file and ufw's rules stay unchanged.
 func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
-	return steps(v.Ikeward, s, m, out, statusTries, statusWait)
+	return steps(v.Ikeward, s, m, out, StatusTries, StatusWait)
 }
 
 // steps is Steps with the wait's bounds given, for a test to shorten.

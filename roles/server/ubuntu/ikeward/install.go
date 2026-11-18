@@ -30,6 +30,15 @@ type Install struct {
 	Secrets secrets.Secrets
 }
 
+// Ready fails where the secrets lack the profile's files, which install reads. The error names the
+// profile's path alone.
+func (i Install) Ready() error {
+	if !i.profile().present() {
+		return fmt.Errorf("WS_IKEWARD_PROFILE is %s, and the secrets hold no profile for it", i.Values.Profile)
+	}
+	return nil
+}
+
 func (i Install) profile() profile {
 	return profile{m: i.M, name: i.Values.Profile, files: i.Secrets.File}
 }
