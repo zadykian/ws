@@ -45,6 +45,7 @@ Available Commands:
   remove      remove a server from the Mac
   resolver    send DOMAIN's names to the nameservers, or drop it
   servers     list the Mac's servers with their target, slot and tunnel
+  ssh         the commands of ssh's units
   state       report what the Mac's steps would change
   tunnel      the Mac's tunnel to ws
   values      print the Mac's values
@@ -126,6 +127,34 @@ Usage:
 
 Flags:
   -h, --help   help for servers
+
+Global Flags:
+      --server string   the server to act on, which may be left out where there is one
+== ws client macos ssh
+the commands of ssh's units
+
+Usage:
+  ws client macos ssh [flags]
+  ws client macos ssh [command]
+
+Available Commands:
+  included    say by the exit status whether the ssh config on stdin includes /etc/ws/ssh_config at its top
+
+Flags:
+  -h, --help   help for ssh
+
+Global Flags:
+      --server string   the server to act on, which may be left out where there is one
+
+Use "ws client macos ssh [command] --help" for more information about a command.
+== ws client macos ssh included
+It exits 0 where the Include of /etc/ws/ssh_config comes before any setting, and 1 where the text lacks it. It exits 2 where the Include sits below a setting, which ssh would take first. ssh's unit of the Include runs it.
+
+Usage:
+  ws client macos ssh included [flags]
+
+Flags:
+  -h, --help   help for included
 
 Global Flags:
       --server string   the server to act on, which may be left out where there is one
