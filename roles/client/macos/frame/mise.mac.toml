@@ -1,0 +1,3 @@
+# The frame's lines for the Mac.
+[bootstrap.packages]
+"ws:state/ws-binary" = "in-sync"
