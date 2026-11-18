@@ -1,3 +1,6 @@
+// Package claude is the claude role's procedures, which no kind holds: cld's update, completion,
+// user settings and telemetry, claude's plugin marketplaces, and cld's restore at boot. Commands of
+// ws run them for the role's units. See roles/server/ubuntu/claude/README.md.
 package claude
 
 import (
@@ -12,8 +15,8 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
-// A Procedure is one of the role's own procedures, which no kind holds: the parts that a command
-// of ws settles for one of the role's units, from the values and WS_USER's account.
+// A Procedure is a procedure of the role's that no kind holds. It gives the parts that a command of
+// ws settles for a unit, from the values and WS_USER's account.
 type Procedure func(v values.Values, a account.Account, m effect.Machine, u effect.Units, out effect.Out) []resource.Resource
 
 // UpdateParts updates cld where a newer release is out.

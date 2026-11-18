@@ -7,7 +7,6 @@ import (
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/base"
-	"github.com/zadykian/ws/roles/server/ubuntu/claude"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/security"
@@ -29,7 +28,6 @@ var all = []entry{
 	{"base", base.Steps},
 	{"security", security.Steps},
 	{"devtools", devtools.Steps},
-	{"claude", claude.Steps},
 }
 
 // Roles returns every role, in the order that they run, closed over the machine's values v and
