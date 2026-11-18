@@ -39,6 +39,14 @@ func macOf(p enginecli.Env, server string, c values.Conf, m effect.Machine, out 
 	return macos.Mac{Server: server, MacConf: values.Path(p.Getenv, p.Pwd), Conf: c, Home: p.Getenv("HOME"), M: m, Out: out, Text: text}
 }
 
+// stepList names the steps in order, or says there is none, as mise's bootstrap sets the Mac up.
+func stepList(names []string) string {
+	if len(names) == 0 {
+		return "none, as mise -C /opt/ws bootstrap sets the Mac up"
+	}
+	return strings.Join(names, ", ")
+}
+
 // newMacApplyCmd returns ws client macos apply.
 func newMacApplyCmd(p enginecli.Env, server *string) *cobra.Command {
 	var only []string
@@ -46,7 +54,7 @@ func newMacApplyCmd(p enginecli.Env, server *string) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "apply",
 		Short: "set the Mac up from values.yml and a server's file",
-		Long: "It runs the steps it names, from values.yml and the server's file, in this order: " + strings.Join(names, ", ") + ". " +
+		Long: "It runs the steps it names, from values.yml and the server's file, in this order: " + stepList(names) + ". " +
 			"With no --only, it runs every step. It asks sudo where it needs root.",
 		Args: cobra.NoArgs,
 		RunE: enginecli.Apply(macTarget(p, &only, server), p),

@@ -22,8 +22,7 @@ func TestMacStateGroupsSeveralServersUnderTheirNames(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = twoServers()
 	status, stdout, stderr := runWs(p, "client", "macos", "state")
-	if status != 0 || !strings.Contains(stdout, "lab\n  ") || !strings.Contains(stdout, "ws\n  ") ||
-		strings.Index(stdout, "lab\n") > strings.Index(stdout, "ws\n") {
+	if status != 0 || stdout != "lab\nws\n" {
 		t.Errorf("status = %d, stdout = %q, stderr = %q; want a section for lab, then ws", status, stdout, stderr)
 	}
 }
@@ -42,7 +41,7 @@ func TestMacStateJSONListsServersWhereThereAreSeveral(t *testing.T) {
 	if err := json.Unmarshal([]byte(stdout), &doc); err != nil || status != 0 {
 		t.Fatalf("status = %d, err = %v, stdout = %q", status, err, stdout)
 	}
-	if len(doc.Steps) != 0 || len(doc.Servers) != 2 || doc.Servers[0].Name != "lab" || len(doc.Servers[1].Steps) == 0 {
+	if len(doc.Steps) != 0 || len(doc.Servers) != 2 || doc.Servers[0].Name != "lab" || doc.Servers[1].Name != "ws" {
 		t.Errorf("doc = %+v; want servers lab and ws, and no steps at the top", doc)
 	}
 }
@@ -51,8 +50,8 @@ func TestMacStateOfOneServerKeepsItsBytes(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = twoServers()
 	status, stdout, _ := runWs(p, "client", "macos", "state", "--json", "--server", "lab")
-	if status != 0 || strings.Contains(stdout, `"servers"`) || !strings.Contains(stdout, `"steps"`) {
-		t.Errorf("status = %d, stdout = %q; want steps alone", status, stdout)
+	if status != 0 || strings.Contains(stdout, `"servers"`) {
+		t.Errorf("status = %d, stdout = %q; want no servers' list", status, stdout)
 	}
 	status, stdout, _ = runWs(p, "client", "macos", "state", "--server", "lab")
 	if status != 0 || strings.HasPrefix(stdout, "lab\n") {
@@ -73,7 +72,7 @@ func TestMacStateKeepsTheGoodServersBesideARefusedFile(t *testing.T) {
 	status, stdout, stderr := runWs(p, "client", "macos", "state")
 	if status != 0 || !strings.Contains(stdout, "lab\n  values.yml\n") ||
 		!strings.Contains(stdout, "fix its file, or ws client macos remove lab") ||
-		!strings.Contains(stdout, "ws\n  ") {
+		!strings.HasSuffix(stdout, "\nws\n") {
 		t.Errorf("status = %d, stdout = %q, stderr = %q; want lab's refusal and ws's section", status, stdout, stderr)
 	}
 }
@@ -89,7 +88,7 @@ func TestMacStateJSONCarriesARefusedFile(t *testing.T) {
 		}
 	}
 	if err := json.Unmarshal([]byte(stdout), &doc); err != nil || status != 0 || len(doc.Servers) != 2 ||
-		!strings.Contains(stdout, "ws client macos remove lab") || len(doc.Servers[1].Steps) < 1 {
+		!strings.Contains(stdout, "ws client macos remove lab") || doc.Servers[1].Name != "ws" {
 		t.Errorf("status = %d, err = %v, stdout = %q; want both servers, lab refused", status, err, stdout)
 	}
 }

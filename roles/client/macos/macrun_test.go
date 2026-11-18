@@ -85,12 +85,6 @@ func TestMacRunRunsEachStepOnce(t *testing.T) {
 	}
 }
 
-func TestMacRunTakesOnlyTheStepsNamed(t *testing.T) {
-	if got := reached(t, Options{Only: []string{"cable"}}); !slices.Equal(got, []string{"cable"}) {
-		t.Errorf("ran %q; want cable alone", got)
-	}
-}
-
 // pending is a step with one change to make, which a second plan finds made.
 type pending struct {
 	name, waits string

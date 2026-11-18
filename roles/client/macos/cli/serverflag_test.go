@@ -21,7 +21,7 @@ func TestServerFlagNamesTheServerOfApplyAndState(t *testing.T) {
 		t.Errorf("no flag: status = %d, stderr = %q; want %q", status, stderr, want)
 	}
 	if status, stdout, stderr := runWs(p, "client", "macos", "state", "--server", "box", "--json"); status != 0 ||
-		!strings.Contains(stdout, `"steps"`) {
+		!strings.Contains(stdout, `"version"`) || strings.Contains(stdout, `"servers"`) {
 		t.Errorf("--server box: status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
 }

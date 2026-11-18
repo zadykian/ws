@@ -8,7 +8,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/cable"
 	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
@@ -27,12 +26,10 @@ type Mac struct {
 	Text io.Writer
 }
 
-// steps returns the steps in the order ws client macos apply runs them. Under check, the steps that
-// plan again after they apply plan once.
-func (m Mac) steps(check bool) []step.Step {
-	return []step.Step{
-		cable.Cable{Conf: m.Conf, M: m.M, Out: m.Out}.Step(),
-	}
+// steps returns the steps in the order ws client macos apply runs them: none, as mise's bootstrap
+// sets the Mac up. apply and state stay until they go too.
+func (Mac) steps(bool) []step.Step {
+	return nil
 }
 
 // Roles returns the steps of steps(check) as roles of one step each, named by the step, in order.

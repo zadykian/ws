@@ -23,13 +23,11 @@ func badSiblingFixture() (*effecttest.Machine, string) {
 }
 
 // TestApplyRefusesABadSiblingBeforeAnyStep settles R1071-3. A step could prune what a server it
-// cannot read holds. So a run for ws stops where lab's file is refused, with --only and with --check
-// too.
+// cannot read holds. So a run for ws stops where lab's file is refused, with --check too.
 func TestApplyRefusesABadSiblingBeforeAnyStep(t *testing.T) {
 	for _, args := range [][]string{
 		{"client", "macos", "apply", "--server", "ws"},
-		{"client", "macos", "apply", "--server", "ws", "--only", "cable"},
-		{"client", "macos", "apply", "--server", "ws", "--only", "cable", "--check"},
+		{"client", "macos", "apply", "--server", "ws", "--check"},
 	} {
 		m, resolver := badSiblingFixture()
 		p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
