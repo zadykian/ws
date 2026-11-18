@@ -26,10 +26,12 @@ type ufwRule struct {
 }
 
 // ufwState is the ufw rules that carry Comment, which the state owns: those in Rules are added,
-// and the others deleted. Without booted systemd, where ufw cannot load them, it skips.
+// and the others deleted. Owns narrows the rules it owns by their fields (ufwowns.go). Without
+// booted systemd, where ufw cannot load them, it skips.
 type ufwState struct {
-	Comment string    `toml:"comment"`
-	Rules   []ufwRule `toml:"rules"`
+	Comment string            `toml:"comment"`
+	Owns    map[string]string `toml:"owns"`
+	Rules   []ufwRule         `toml:"rules"`
 }
 
 func (s ufwState) resource(e Env) (resource.Resource, error) {
@@ -46,7 +48,11 @@ func (s ufwState) resource(e Env) (resource.Resource, error) {
 		}
 		rules = append(rules, rule)
 	}
-	return ufw.Rules{M: e.M, Out: e.Out, Comment: s.Comment, Want: rules, NeedsSystemd: true}, nil
+	owns, err := s.owns()
+	if err != nil {
+		return nil, err
+	}
+	return ufw.Rules{M: e.M, Out: e.Out, Comment: s.Comment, Want: rules, Owns: owns, NeedsSystemd: true}, nil
 }
 
 // routesState refuses a route that Pool or Net would overlap, before a program takes them

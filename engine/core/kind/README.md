@@ -212,8 +212,8 @@ reboot = { module = "name", package = "name", hint = "…" }             # notes
 ```
 
 - A new state is one field of `stateSpec`, of a type that makes its resource.
-- `ufw` owns the rules that carry its comment: those in `rules` are added, the others deleted. A
-  rule's address or port left out is any.
+- `ufw` owns the rules of its comment, and with `owns` those whose fields hold its values: those
+  in `rules` are added, the others deleted. A rule's address or port left out is any.
 - `routes` fails where a route of the moment overlaps `pool`, but for an on-link route of the main
   table, or `net` on a device other than `dev`. `addr` fails where `iface` lacks `want`. Each error
   ends with `hint`, as the run cannot mend either.
