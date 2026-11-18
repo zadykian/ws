@@ -91,7 +91,7 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 	return err
 }
 
-// reapply runs the Mac's steps that hold a server's traces, for the server that stays. They are ssh, Zed,
+// reapply runs the Mac's steps that hold a server's traces, for the server that stays. They are ssh,
 // the tunnel and the networks, and the last two prune the gone server's daemon and routes.
 func reapply(c *cobra.Command, p enginecli.Env, mac, name string) error {
 	settings, err := values.Load(p.Machine, mac, values.ServerPath(mac, name))
@@ -102,7 +102,7 @@ func reapply(c *cobra.Command, p enginecli.Env, mac, name string) error {
 	defer term.Flush()
 	out := linesOf(term, c.CommandPath())
 	_, err = macOf(p, name, settings, p.Machine, out, c.OutOrStdout()).Run(c.Context(), macos.Options{
-		Options: step.Options{Observer: out}, Only: []string{"ssh", "zed", "tunnel", "networks"}})
+		Options: step.Options{Observer: out}, Only: []string{"ssh", "tunnel", "networks"}})
 	return engine.Cause(err)
 }
 

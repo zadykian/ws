@@ -122,13 +122,13 @@ func TestRemoveWithNoKnownHostsHasNoKeyToDrop(t *testing.T) {
 	}
 }
 
-// TestRemoveRunsTheStepsForTheServerThatStays checks that ssh, Zed and the tunnel run, in that order, and
+// TestRemoveRunsTheStepsForTheServerThatStays checks that ssh and the tunnel run, in that order, and
 // stop at the tunnel's copy of ws, which the fake machine cannot hold.
 func TestRemoveRunsTheStepsForTheServerThatStays(t *testing.T) {
 	p, _ := removeFixture()
 	_, _, stderr := runWs(p, "client", "macos", "remove", "lab")
 	last := -1
-	for _, want := range []string{"create /etc/ws/ssh_config", "wrote /h/.config/zed/settings.json", "made the Mac's WireGuard key"} {
+	for _, want := range []string{"create /etc/ws/ssh_config", "made the Mac's WireGuard key"} {
 		at := strings.Index(stderr, want)
 		if at <= last {
 			t.Errorf("stderr = %q; want %q after the step before it", stderr, want)

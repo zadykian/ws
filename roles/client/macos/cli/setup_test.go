@@ -91,7 +91,7 @@ func TestSetupStepNamesCompleteOnly(t *testing.T) {
 	c := newMacApplyCmd(fakeProcess(), new(string))
 	got, _ := c.GetFlagCompletionFunc("only")
 	names, _ := got(c, nil, "")
-	if want := []string{"ssh", "cable", "git", "zed", "cld", "zsh", "tunnel", "networks"}; !reflect.DeepEqual(names, want) {
+	if want := []string{"ssh", "cable", "git", "cld", "zsh", "tunnel", "networks"}; !reflect.DeepEqual(names, want) {
 		t.Errorf("--only completes %q; want %q", names, want)
 	}
 }
