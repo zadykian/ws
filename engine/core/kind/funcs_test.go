@@ -125,3 +125,10 @@ func TestKernelRelease(t *testing.T) {
 		t.Errorf("render without uname = %q, want an error", got)
 	}
 }
+
+func TestHasPrefix(t *testing.T) {
+	got, err := fill("t", []byte(`{{ if has_prefix "http://a" "http://" }}yes{{ end }}{{ if has_prefix "https://a" "http://" }}no{{ end }}`), pure(), nil)
+	if err != nil || string(got) != "yes" {
+		t.Errorf("fill = %q, %v; want yes", got, err)
+	}
+}

@@ -2,7 +2,9 @@ package file
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os/exec"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/resource"
@@ -58,10 +60,24 @@ func (v Validated) try(ctx context.Context) error {
 	if _, rmErr := f.M.RunRoot(ctx, "rm", "-f", pending); rmErr != nil && err == nil {
 		err = rmErr
 	}
-	if err != nil {
+	switch {
+	case err != nil && f.Secret:
+		// The checker's output may quote the content, which the diff and the log never show. The
+		// machine's error holds its stderr, so the exit status alone stands for it.
+		return fmt.Errorf("%s refuses the new %s: %s", name, f.Path, exitStatus(err))
+	case err != nil:
 		return fmt.Errorf("%s refuses the new %s: %w: %s", name, f.Path, err, strings.TrimSpace(string(out)))
 	}
 	return nil
+}
+
+// exitStatus says how a check ended, with none of the text that err carries.
+func exitStatus(err error) string {
+	var ee *exec.ExitError
+	if errors.As(err, &ee) {
+		return fmt.Sprintf("exit status %d", ee.ExitCode())
+	}
+	return "it failed"
 }
 
 // Plan plans the file's changes, each checked before it applies.

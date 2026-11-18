@@ -20,16 +20,16 @@ Its templates and sources sit beside it, and a path in the spec is relative to t
 - **The order.** Units run by name, each moved behind the unit that its `after` names, ahead of the
   next by name. An `after` that no spec holds, or a loop, fails the load.
 - **Two renders.** Both are Go templates over the side's values, and a key the values lack is an
-  error. The spec's text fills as it loads, with `add`, `mul`, `div`, `exports`, `json VALUE`, which
-  quotes a value as Go's JSON encoder does, and `fail MSG`, which stops the render with MSG. It
-  takes `self` too, the path of the ws that runs the units, so that a command of ws runs before the
-  pinned binary is installed, or without booted systemd. A unit's template fills as it plans, as an
-  earlier unit may make the account or the file that it reads. It takes `envvar FILE NAME` and the
-  facts `mem_mib`, `cpus`, `fs_bytes PATH...`, `uid NAME`, `installed_version NAME`,
-  `kernel_release` and `root_file PATH` too. `installed_version` gives dpkg's version of an
-  installed package, else "", and `kernel_release` the running kernel's, as `uname -r` prints it.
-  `root_file` gives a file's text, read as root and trimmed, else "". A spec names no secret's file
-  with it, as a file's diff would show the secret.
+  error. The spec's text fills as it loads, with `add`, `mul`, `div`, `exports`,
+  `has_prefix TEXT PREFIX`, `json VALUE`, which quotes a value as Go's JSON encoder does, and
+  `fail MSG`, which stops the render with MSG. It takes `self` too, the path of the ws that runs the
+  units, so that a command of ws runs before the pinned binary is installed, or without booted
+  systemd. A unit's template fills as it plans, as an earlier unit may make the account or the file
+  that it reads. It takes `envvar FILE NAME` and the facts `mem_mib`, `cpus`, `fs_bytes PATH...`,
+  `uid NAME`, `installed_version NAME`, `kernel_release` and `root_file PATH` too.
+  `installed_version` gives dpkg's version of an installed package, else "", and `kernel_release`
+  the running kernel's, as `uname -r` prints it. `root_file` gives a file's text, read as root and
+  trimmed, else "". A spec names no secret's file with it, as a file's diff would show the secret.
 - **when.** Any unit takes `when = { FACT = "WANT" }`, and runs where every FACT of the machine
   gives its WANT, and `"!WANT"` where it does not. Elsewhere it plans nothing, and says so in a
   line. An empty WANT, negated or not, holds on no machine, so a value left empty turns the unit
@@ -67,7 +67,7 @@ service = "x.service"       # restarted where the file changes
 enabled = false             # service starts at boot
 reload = false              # reload service, not restart it
 user_service = "z.service"  # a unit of the owner's own systemd, restarted where the file changes
-secret = false              # keep the content out of the diff; takes no check
+secret = false              # keep the content out of the diff and out of a refusal's error
 absent = false              # remove the file; takes a path, an owner and ours alone
 line = ". /etc/x"           # or a line at the top of the owner's file, which keeps its own text
 has = ["cmd"]               # says whether the file, on stdin, holds the line: 0 yes, 1 no
@@ -82,7 +82,8 @@ after = "KIND/NAME"
 - A restart that a change calls for is noted in `/var/lib/ws/owed` before the change. A run that
   fails before the restart leaves it owed to the next run. A file that its check refused leaves
   the restart owed too, and the service keeps the live file.
-- A secret file takes no check, as a refusal's error shows what the checker prints.
+- A refusal of a secret file's check names the checker, the path and the exit status, never its
+  output or its stderr, which may quote the content.
 - `group` is read from `/etc/group` as the unit plans, so a package that mise installs may bring
   it, and a missing group fails the plan. It takes a file of root's, and never sits by `group_of`.
 - A file in `/etc/systemd/system` makes systemd read its units again.

@@ -149,3 +149,11 @@ func TestExportsSortsTheNames(t *testing.T) {
 		t.Errorf("exports = %q, %v; want %q", got, err, want)
 	}
 }
+
+func TestSecretFileTakesACheck(t *testing.T) {
+	e, _ := secretEnv(nil, nil)
+	units := loadOne(t, e, "[file.a]\npath = \"/etc/a.env\"\nsecret = true\ncheck = [\"c\", \"{}\"]\nsource = \"f\"\n", map[string]string{"f": "TOKEN=1\n"})
+	if len(units) != 1 {
+		t.Fatalf("units = %d, want 1", len(units))
+	}
+}
