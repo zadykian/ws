@@ -141,7 +141,7 @@ func unitWrite(p Env, s UnitSide) *cobra.Command {
 			w.named[n] = true
 		}
 		_, err = step.RunWith(c.Context(), kind.Steps(units), step.Options{Observer: w, Check: *dry,
-			LeftOut: func(_, name string) bool { return !w.named[name] }})
+			LeftOut: func(name string) bool { return !w.named[name] }})
 		if err != nil {
 			return err
 		}
