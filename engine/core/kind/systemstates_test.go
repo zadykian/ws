@@ -5,7 +5,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/pelletier/go-toml/v2"
+
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/resource/swap"
 )
 
 // supportedLocales is glibc's list of the locales it can generate, as the locales package ships it.
@@ -65,4 +68,31 @@ func TestTimezoneStateLinksTheZone(t *testing.T) {
 	if !slices.Contains(m.Calls, "stat /etc/timezone") {
 		t.Errorf("calls %q, want /etc/timezone looked for", m.Calls)
 	}
+}
+
+func TestSwapStateTakesTheRAMWithoutASize(t *testing.T) {
+	e, _, _, _ := testEnv(false)
+	// The swap's plan reads the disk of the machine that runs it, so the test reads the resource
+	// alone: its size, nil for the RAM's, and its hint.
+	for text, want := range map[string]*int{
+		"swap = { hint = \"h\" }\n":                nil,
+		"swap = { size_mib = 0, hint = \"h\" }\n":  new(0),
+		"swap = { size_mib = 64, hint = \"h\" }\n": new(64),
+	} {
+		var s stateSpec
+		if err := toml.Unmarshal([]byte(text), &s); err != nil {
+			t.Fatal(err)
+		}
+		r, err := s.Swap.resource(e)
+		got, ok := r.(swap.File)
+		if err != nil || !ok || got.Hint != "h" || got.M != e.M || (got.SizeMiB == nil) != (want == nil) ||
+			want != nil && *got.SizeMiB != *want {
+			t.Errorf("%q: resource = %+v, %v; want a swap file of %v MiB", text, r, err, want)
+		}
+	}
+}
+
+func TestSwapStateRefusesANegativeSize(t *testing.T) {
+	e, _, _, _ := testEnv(false)
+	stateRefused(t, e, "swap = { size_mib = -1, hint = \"Set WS_X\" }\n", "swap: size_mib -1 is no size: it takes a whole number of MiB, or 0 for none. Set WS_X")
 }

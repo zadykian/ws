@@ -7,6 +7,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/apt"
 	"github.com/zadykian/ws/engine/core/resource/locale"
+	swapfile "github.com/zadykian/ws/engine/core/resource/swap"
 	"github.com/zadykian/ws/engine/core/resource/timezone"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/base/internal/swap"
@@ -14,10 +15,12 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
-// The hints end a refusal of the locale or the time zone, which the values name.
+// The hints end a refusal of the locale, the time zone or the swap file's size, which the values
+// name.
 const (
 	localeHint   = "Set WS_BASE_LOCALE to one it lists, such as en_US.UTF-8"
 	timezoneHint = "Set WS_BASE_TIMEZONE to another"
+	swapHint     = "Set WS_BASE_SWAP_SIZE_MB lower, or 0 for none"
 )
 
 // Steps returns the role's steps in order: Packages, Locale, Timezone, Upgrades, Swap and
@@ -28,7 +31,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units,
 		resource.Group{Title: "Locale", Parts: []resource.Resource{locale.Locale{M: m, Name: v.Base.Locale, Hint: localeHint}}},
 		resource.Group{Title: "Timezone", Parts: []resource.Resource{timezone.Zone{M: m, Name: v.Base.Timezone, Hint: timezoneHint}}},
 		resource.Group{Title: "Upgrades", Parts: upgradesParts(m, u, out)},
-		resource.Group{Title: "Swap", Parts: swap.Parts(m, out, swap.Setting{SizeMiB: v.Base.SwapSizeMB, Swappiness: v.Base.Swappiness})},
+		resource.Group{Title: "Swap", Parts: []resource.Resource{swapfile.File{M: m, Out: out, SizeMiB: v.Base.SwapSizeMB, Hint: swapHint}}},
 		resource.Group{Title: "Swappiness", Parts: swap.Swappiness(m, out, v.Base.Swappiness)},
 	}
 }

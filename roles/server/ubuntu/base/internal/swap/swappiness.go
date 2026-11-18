@@ -1,3 +1,4 @@
+// Package swap keeps the kernel's swappiness, the last step of the base role.
 package swap
 
 import (

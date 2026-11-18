@@ -24,7 +24,7 @@ func (s swap) Plan(_ context.Context) ([]resource.Change, error) {
 	if err != nil {
 		return nil, err
 	}
-	p, err := planSwap(st)
+	p, err := planSwap(st, s.Hint)
 	if err != nil {
 		return nil, err
 	}

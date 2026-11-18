@@ -51,9 +51,10 @@ type stateSpec struct {
 	Left   *leftState   `toml:"left"`
 	Run    *runState    `toml:"run"`
 	Reboot *rebootState `toml:"reboot"`
-	// Locale and Timezone are the system's, in systemstates.go.
+	// Locale, Timezone and Swap are the system's, in systemstates.go.
 	Locale   *localeState   `toml:"locale"`
 	Timezone *timezoneState `toml:"timezone"`
+	Swap     *swapState     `toml:"swap"`
 }
 
 // stateKeys are the keys of stateSpec's states, in their order.

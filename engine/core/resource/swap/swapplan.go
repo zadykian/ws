@@ -3,8 +3,8 @@ package swap
 import "fmt"
 
 // planSwap checks that the memory and the disk have room, and returns what to change. The errors
-// are the role's asserts: they stop a run before it changes the swap.
-func planSwap(s swapState) (swapSteps, error) {
+// stop a run before it changes the swap. The disk's ends with hint.
+func planSwap(s swapState, hint string) (swapSteps, error) {
 	stale := s.stale()
 	// swapoff brings what an area holds back into memory, and the OOM killer ends processes where
 	// it does not fit. Half of the memory available leaves room for what runs meanwhile.
@@ -26,8 +26,8 @@ func planSwap(s swapState) (swapSteps, error) {
 			free += s.File.Size / mib
 		}
 		if free < s.WantMiB+diskSpareMiB {
-			return swapSteps{}, fmt.Errorf("/ has %d MiB available, too little for a swap file of %d MiB and %d MiB more: "+
-				"set WS_BASE_SWAP_SIZE_MB lower, or 0 for none", s.DiskMiB, s.WantMiB, diskSpareMiB)
+			return swapSteps{}, fmt.Errorf("/ has %d MiB available, too little for a swap file of %d MiB and %d MiB more. %s",
+				s.DiskMiB, s.WantMiB, diskSpareMiB, hint)
 		}
 	}
 	_, onFile := s.Areas[swapFile]

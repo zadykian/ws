@@ -18,6 +18,7 @@ run = { user = "USER", command = ["cmd"], creates = ["/path"] }        # or chec
 reboot = { module = "name", package = "name", hint = "…" }             # notes a reboot that is due
 locale = { name = "en_US.UTF-8", hint = "…" }                          # generated, and LANG
 timezone = { name = "Etc/UTC", hint = "…" }                            # /etc/localtime's zone
+swap = { size_mib = 1024, hint = "…" }                                 # /swapfile; 0 for none
 ```
 
 - A new state is one field of `stateSpec`, of a type that makes its resource.
@@ -41,6 +42,14 @@ timezone = { name = "Etc/UTC", hint = "…" }                            # /etc/
   `timedatectl`, and keeps `/etc/timezone` in step where the machine has it. A name that is no
   path below that directory fails the load, and one that is no zone file the plan, each with `hint`
   after.
+- `swap` keeps `/swapfile` of `size_mib` MiB, or the RAM rounded up to a whole GiB where unset, in
+  `/etc/fstab` and swapped to, and removes the installer's `/swap.img`. A file of another size is
+  made again, under another name until `mkswap` has made it a swap area. The plan reads
+  `/proc/swaps`, `/proc/meminfo`, the free space of `/` and `/swapfile`. It fails where the disk
+  lacks room for the file and 2 GiB more, with `hint` after. It fails too where swapping an area
+  off would bring back more than half the memory available. At 0 it removes the file. Without booted
+  systemd it makes the file and skips `swapon` and `swapoff`. The kernel's swap is the host's in a
+  container, so a spec turns the unit off there by `when = { container = "!yes" }`.
 - Without booted systemd, `linger`, `http`, `ufw`, `addr` and `reboot` skip, and each says so. So
   does `run` on Linux, where it needs the user's session; macOS has no systemd, and runs it. A
   `run` with `unbooted = true` needs no session, and runs there too, without the session's env.

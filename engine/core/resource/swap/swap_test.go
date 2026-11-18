@@ -49,8 +49,10 @@ func booted(swaps string) *effecttest.Machine {
 	return m
 }
 
-func swapGroup(m *effecttest.Machine, d *fakeDisk, want Setting) resource.Group {
-	return resource.Group{Title: "Swap", Parts: swapParts(m, &effecttest.Out{}, d, want)}
+// swapGroup is the step of the swap file of size MiB, nil for the RAM's, on the disk d.
+func swapGroup(m *effecttest.Machine, d *fakeDisk, size *int) resource.Group {
+	f := File{M: m, Out: &effecttest.Out{}, SizeMiB: size, Hint: "Set a lower size."}
+	return resource.Group{Title: "Swap", Parts: []resource.Resource{f.parts(d)}}
 }
 
 func ptr(n int) *int { return &n }
@@ -59,7 +61,7 @@ func TestSwapSettled(t *testing.T) {
 	m := booted("/swapfile file 4194300 0 -2\n")
 	m.Files["/etc/fstab"] = []byte("/swapfile none swap sw 0 0\n")
 	d := &fakeDisk{files: map[string]swapFileInfo{swapFile: {Exists: true, Size: 16384 * mib, Mode: 0o600}}, avail: 1}
-	p, err := swapGroup(m, d, Setting{Swappiness: 10}).Plan(t.Context())
+	p, err := swapGroup(m, d, nil).Plan(t.Context())
 	if err != nil || len(p.Changes) != 0 {
 		t.Errorf("plan = %v, %v, want none", p.Changes, err)
 	}
@@ -68,17 +70,15 @@ func TestSwapSettled(t *testing.T) {
 func TestSwapRefusals(t *testing.T) {
 	for _, tt := range []struct {
 		name  string
-		want  Setting
+		size  *int
 		avail int64
 		text  string
 	}{
-		{"negative size", Setting{SizeMiB: ptr(-1)}, 100000, "WS_BASE_SWAP_SIZE_MB is -1"},
-		{"swappiness too high", Setting{Swappiness: 201}, 100000, "WS_BASE_SWAPPINESS is 201"},
-		{"swappiness negative", Setting{Swappiness: -1}, 100000, "WS_BASE_SWAPPINESS is -1"},
-		{"disk too small", Setting{SizeMiB: ptr(1024)}, 3000, "too little for a swap file"},
+		{"negative size", ptr(-1), 100000, "the swap file's size is -1 MiB"},
+		{"disk too small", ptr(1024), 3000, "too little for a swap file of 1024 MiB and 2048 MiB more. Set a lower size."},
 	} {
 		m, d := booted(""), &fakeDisk{avail: tt.avail}
-		_, err := swapGroup(m, d, tt.want).Plan(t.Context())
+		_, err := swapGroup(m, d, tt.size).Plan(t.Context())
 		if err == nil || !strings.Contains(err.Error(), tt.text) {
 			t.Errorf("%s: error = %v, want one with %q", tt.name, err, tt.text)
 		}
