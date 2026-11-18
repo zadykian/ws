@@ -13,8 +13,8 @@ type Sibling struct {
 }
 
 // Siblings returns the servers of servers/ beside values.yml at mac, other than the one whose file is
-// at server, sorted by name. It leaves out a file that is missing or refused: apply refuses such a
-// file before its steps run. This is the one way to read the other servers.
+// at server, sorted by name. It leaves out a file that is missing or refused: the facts refuse such
+// a file before a unit runs. This is the one way to read the other servers.
 func Siblings(m effect.Machine, mac, server string) ([]Sibling, error) {
 	names, err := Servers(m, mac)
 	if err != nil {

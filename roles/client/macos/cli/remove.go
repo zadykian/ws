@@ -52,7 +52,7 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 	if len(names) == 1 {
 		return fmt.Errorf("%s is the Mac's one server: with none, the bootstrap prunes no daemon, so remove leaves it", name)
 	}
-	// The steps below skip a server whose file ws refuses, so such a file stops the removal before
+	// The units below skip a server whose file ws refuses, so such a file stops the removal before
 	// it starts. NAME's own file is out of the count: a clash with it ends with the removal.
 	if err := refuseBadSibling(without{p.Machine, values.ServerPath(mac, name)}, mac, name); err != nil {
 		return err
@@ -105,7 +105,7 @@ func (w without) Stat(file string) (effect.Info, error) {
 }
 
 // forgetHost drops name's entry from known_hosts, where ssh keeps the key under the server's name.
-// A file that is missing has none, and a link is left to the maintainer, as apply leaves it.
+// A file that is missing has none, and a link is left to the maintainer, who chose where it points.
 func forgetHost(c *cobra.Command, p enginecli.Env, name string) error {
 	file := p.Getenv("HOME") + "/.ssh/known_hosts"
 	info, err := p.Machine.Stat(file)
