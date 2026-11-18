@@ -6,11 +6,11 @@ import (
 )
 
 func TestSpanFindsTheLinesOfAKey(t *testing.T) {
-	lines := strings.SplitAfter("---\n# a\nWS_BASE_TIMEZONE: x\n\nWS_BASE_PACKAGES:\n  - git\n- jq\n\n# b\nWS_USER : y\n"+
+	lines := strings.SplitAfter("---\n# a\nWS_BASE_TIMEZONE: x\n\nWS_SIGNOZ_DASHBOARDS:\n  - git\n- jq\n\n# b\nWS_USER : y\n"+
 		"WS_USER_NAME: z\n", "\n")
 	lines = lines[:len(lines)-1]
 	for name, want := range map[string][2]int{
-		"WS_BASE_TIMEZONE": {2, 3}, "WS_BASE_PACKAGES": {4, 7}, "WS_USER": {9, 10}, "WS_HOME": {11, 11},
+		"WS_BASE_TIMEZONE": {2, 3}, "WS_SIGNOZ_DASHBOARDS": {4, 7}, "WS_USER": {9, 10}, "WS_HOME": {11, 11},
 	} {
 		if start, end := span(lines, name); start != want[0] || end != want[1] {
 			t.Errorf("%s: span = %d, %d, want %v", name, start, end, want)
@@ -19,18 +19,18 @@ func TestSpanFindsTheLinesOfAKey(t *testing.T) {
 }
 
 func TestSetEditsOneLineAndKeepsTheRest(t *testing.T) {
-	const file = "---\n# the machine\nWS_BASE_TIMEZONE: UTC\n\n# the link\nWS_BASE_PACKAGES:\n  - git\n  - jq\n\n# the cable\n" +
+	const file = "---\n# the machine\nWS_BASE_TIMEZONE: UTC\n\n# the link\nWS_SIGNOZ_DASHBOARDS:\n  - git\n  - jq\n\n# the cable\n" +
 		"WS_CABLE_PORT: enp1\n"
 	for _, tc := range []struct {
 		name, data, key, value, want string
 	}{
 		{"replaces", file, "WS_BASE_TIMEZONE", "Asia/Tbilisi",
 			strings.Replace(file, "UTC", "Asia/Tbilisi", 1)},
-		{"replaces a block list", file, "WS_BASE_PACKAGES", "git, tmux",
-			strings.Replace(file, "WS_BASE_PACKAGES:\n  - git\n  - jq\n", "WS_BASE_PACKAGES: [git, tmux]\n", 1)},
+		{"replaces a block list", file, "WS_SIGNOZ_DASHBOARDS", "git, tmux",
+			strings.Replace(file, "WS_SIGNOZ_DASHBOARDS:\n  - git\n  - jq\n", "WS_SIGNOZ_DASHBOARDS: [git, tmux]\n", 1)},
 		{"adds at the end", file, "WS_BASE_SWAPPINESS", "20", file + "WS_BASE_SWAPPINESS: 20\n"},
 		{"takes a line out", file, "WS_BASE_TIMEZONE", "", strings.Replace(file, "WS_BASE_TIMEZONE: UTC\n", "", 1)},
-		{"takes a list out", file, "WS_BASE_PACKAGES", "", strings.Replace(file, "WS_BASE_PACKAGES:\n  - git\n  - jq\n", "", 1)},
+		{"takes a list out", file, "WS_SIGNOZ_DASHBOARDS", "", strings.Replace(file, "WS_SIGNOZ_DASHBOARDS:\n  - git\n  - jq\n", "", 1)},
 		{"leaves a key that no line holds", file, "WS_BASE_SWAPPINESS", "", file},
 		{"starts an empty file", "", "WS_USER", "ada", "---\nWS_USER: ada\n"},
 		{"ends the last line", "WS_USER: ada", "WS_BASE_SWAPPINESS", "20", "WS_USER: ada\nWS_BASE_SWAPPINESS: 20\n"},

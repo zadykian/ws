@@ -57,10 +57,13 @@ func TestRolesFollowNames(t *testing.T) {
 	}
 }
 
+// The list may hold no role once each has moved to mise, so the copy is checked on a list of its
+// own.
 func TestNamesAreACopy(t *testing.T) {
-	n := Names()
+	list := []entry{{name: "a"}}
+	n := namesOf(list)
 	n[0] = "changed"
-	if Names()[0] == "changed" {
-		t.Error("Names returns the list itself")
+	if namesOf(list)[0] != "a" {
+		t.Error("namesOf returns the list itself")
 	}
 }

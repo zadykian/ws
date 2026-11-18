@@ -44,6 +44,8 @@ type fact struct {
 // whenFacts are the facts that a when may name. A new fact is one entry here, its reader below.
 var whenFacts = map[string]fact{
 	"board_vendor": {holds: boardVendor},
+	// A container shares its host's kernel, so a unit that sets the kernel's state wants "!yes".
+	"container": {holds: containerFact, form: regexp.MustCompile(`^yes$`)},
 	// sysfs writes a vendor as 0x and four hex digits in lower case.
 	"gpu_vendor": {holds: gpuVendor, form: regexp.MustCompile(`^0x[0-9a-f]{4}$`)},
 	// The kernel takes an interface's name of 1 to 15 bytes, with no '/', ':' or white space, and
@@ -170,6 +172,11 @@ func netInterface(_ context.Context, m effect.Machine, want string) (bool, error
 		return false, nil
 	}
 	return err == nil, err
+}
+
+// containerFact holds where the machine is a container, by the marks that inContainer reads.
+func containerFact(_ context.Context, m effect.Machine, _ string) (bool, error) {
+	return inContainer(m), nil
 }
 
 // anyWant holds for any want: the fact set's, which only an empty want turns off.

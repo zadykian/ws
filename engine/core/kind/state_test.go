@@ -46,7 +46,7 @@ func TestEveryStateFieldIsAState(t *testing.T) {
 
 func TestStateTakesExactlyOne(t *testing.T) {
 	e, _, _, _ := testEnv(false)
-	const keys = "exactly one of linger, subids, purged, http, ufw, routes, addr, left, run, reboot"
+	const keys = "exactly one of linger, subids, purged, http, ufw, routes, addr, left, run, reboot, locale, timezone, swap"
 	stateRefused(t, e, "after = \"\"\n", keys+", and this one sets 0")
 	stateRefused(t, e, "linger = \"u\"\npurged = \"p\"\n", keys+", and this one sets 2")
 	stateRefused(t, e, "ufw = {}\nlinger = \"u\"\n", "this one sets 2")

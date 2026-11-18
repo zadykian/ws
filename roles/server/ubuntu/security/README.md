@@ -1,37 +1,52 @@
 # security
 
-The `security` role, Go steps in `roles/server/ubuntu/security`, sets up an sshd drop-in that lets
-everyone log in by key only, ufw, and fail2ban for SSH. By default, it keeps what the server and
-its containers start to the internet and ikeward's VPN, but what the network needs, such as DHCP
-and DNS.
+The `security` role sets up an sshd drop-in that lets everyone log in by key only, ufw, and
+fail2ban for SSH. By default, it keeps what the server and its containers start to the internet and
+ikeward's VPN, but what the network needs, such as DHCP and DNS. The role holds mise config and a
+spec of ws's units ([The frame](../frame/README.md)):
+
+| File | What it holds |
+| --- | --- |
+| [`mise.server.toml`](mise.server.toml) | The packages, fail2ban's jail, and the units of every server. |
+| [`mise.booted.toml`](mise.booted.toml) | fail2ban's and ufw's services, the jail's reload, and the firewall. |
+| [`mise.account.toml`](mise.account.toml) | The units of lxd, where `WS_USER` is not root. |
+| [`units.toml`](units.toml) | The units: the lockout guards, sudo's and sshd's drop-ins, lxd, and the outbound table. |
+| [`files/`](files) | The files and the template that mise and the units write. |
+
+mise installs the packages and, on a booted machine, enables ufw with its rules before any unit of
+ws's runs. So docker's, tunnel's and ikeward's ufw rules, which are units, find ufw installed and
+enabled. Without systemd booted, as in CI's container, the units that need it skip and say so.
+They are the services, the table's check and comparison, and the removal of a table loaded by hand.
 
 ## SSH and the firewall
 
-ws turns SSH's passwords off: everyone logs in by key. Where `WS_USER` is another user, root
-cannot log in at all, and `WS_USER` takes root by `sudo` with its password. Where `WS_USER` is
-root, a cloud VM's, root logs in by key. ufw then lets in
-SSH on port 22 and WireGuard on UDP port 51820 ([tunnel](../tunnel/README.md)). It lets in DNS lookups
-from Docker's bridges to the host's resolver too ([docker](../docker/README.md)), and nothing else. fail2ban
-bans an address for an hour after 5 failed logins in 10 minutes. sshd's own penalties slow one
-that keeps failing. Both hold on every network, with no peer or network exempt. SSH takes only the
-keys imported from the GitHub account during Ubuntu's install; a cloud VM has no installer
-([A new machine](../../../../README.md#a-new-machine)). Over SSH, keep the session that ran ws open until a
-new one logs in. The steps stop before they turn passwords off if `WS_USER` has no key to log in
-with, or a file of keys that sshd passes over, outside a container. sshd's drop-in lands only after
-`sshd -G` accepts it, and sshd reloads after a change.
+ws turns SSH's passwords off: everyone logs in by key. Where `WS_USER` is another user, root cannot
+log in at all, and `WS_USER` takes root by `sudo` with its password. Where `WS_USER` is root, a
+cloud VM's, root logs in by key. ufw then lets in SSH on port 22, by mise's rule `mise:ssh`, and
+WireGuard on UDP port 51820 ([tunnel](../tunnel/README.md)). It lets in DNS lookups from Docker's
+bridges to the host's resolver too ([docker](../docker/README.md)), and nothing else. fail2ban bans
+an address for an hour after 5 failed logins in 10 minutes. sshd's own penalties slow one that keeps
+failing. Both hold on every network, with no peer or network exempt. SSH takes only the keys
+imported from the GitHub account during Ubuntu's install; a cloud VM has no installer ([A new
+machine](../../../../README.md#a-new-machine)). Over SSH, keep the session that ran ws open until a
+new one logs in. The guard `guard/security-keys` stops the run before passwords go off if `WS_USER`
+has no key to log in with, or a file of keys that sshd passes over, outside a container. It stops it
+on every machine where `WS_HOME` is not the account's home in `getent passwd`. sshd's drop-in lands
+only after `sshd -G` accepts it, and sshd reloads after a change, once, in its unit. ufw's service
+is active as well as enabled, as mise keeps it.
 
-Where `WS_USER` is another user, the step "sudo" checks, before sshd's, that it may run `sudo`
-and has a password to give. Closing root's login then leaves a way to root. A container skips
-the check. sudo asks for the password at every command (`/etc/sudoers.d/ws-no-cache`,
-`timestamp_timeout=0`). What `WS_USER` runs, such as claude, then cannot take root after the
-maintainer's own `sudo`. That holds where sudo asks. A cloud image's default user has a `NOPASSWD`
-rule, which ws leaves in place, so what that user runs holds root, past the outbound table too. Give
-the user a password and remove the rule by hand.
-The step "lxd" takes `WS_USER` out of the `lxd` group, which is root, and purges `lxd-installer`.
+Where `WS_USER` is another user, the guard `guard/security-sudo` checks, before sudo's drop-in and
+sshd's, that it may run `sudo` and has a password to give. Closing root's login then leaves a way to
+root. A container skips the check. sudo asks for the password at every command
+(`/etc/sudoers.d/ws-no-cache`, `timestamp_timeout=0`). What `WS_USER` runs, such as claude, then
+cannot take root after the maintainer's own `sudo`. That holds where sudo asks. A cloud image's
+default user has a `NOPASSWD` rule, which ws leaves in place, so what that user runs holds root,
+past the outbound table too. Give the user a password and remove the rule by hand. Where `WS_USER`
+is another user, the run takes it out of the `lxd` group, which is root, and purges `lxd-installer`.
 
 Docker's published ports get past ufw, so Docker publishes a port that names no address on
-`127.0.0.1` ([docker](../docker/README.md)): reach it through an SSH tunnel. A port published on another
-address, as in `-p 0.0.0.0:8080:80`, is open to every network the host is on.
+`127.0.0.1` ([docker](../docker/README.md)): reach it through an SSH tunnel. A port published on
+another address, as in `-p 0.0.0.0:8080:80`, is open to every network the host is on.
 
 ## Outbound
 
@@ -139,18 +154,18 @@ The caveats:
   loaded the table without the sets' elements, after which the unit still shows active. A fill says
   which it left out in `journalctl -u security-resolvers`. `systemctl stop security-outbound`
   removes this table alone, until the next boot or run.
-- A dry run, `--check`, writes nothing, so it checks neither the table nor sshd's drop-in
-  ([Dry runs](../../../../README.md#dry-runs)).
+- A plan, `mise bootstrap plan`, writes nothing, so it checks neither the table nor sshd's
+  drop-in: the checks run as a unit writes.
 
 A run checks the file with `nft -c` before it lands. It then loads the file in a network namespace
-of its own, as the unit loads it, and compares that table with the kernel's, as
-`nft -s list table inet ws` lists them. `-s` leaves out counters' values, but keeps the counters,
-and the sets' elements as a load fills them. Where the tables differ, the run reloads the table and
-its sets in one transaction, with no gap. So it does where systemd failed to load a unit of the
-table's, or hasn't read it since it changed. That covers a run cut short before the reload, and a
-table or set flushed or deleted by hand. In a container, where systemd is not running, the run writes
-the files, but skips the check, the comparison, the units and ufw. CI checks the file after its runs
-([The `playbook` job](../../../../.github/workflows/README.md#the-playbook-job)).
+of its own, as the unit loads it, and compares that table with the kernel's, as `nft -s list table
+inet ws` lists them. `-s` leaves out counters' values, but keeps the counters, and the sets'
+elements as a load fills them. Where the tables differ, the run reloads the table and its sets in
+one transaction, with no gap. That covers a run cut short before the reload, and a table or set
+flushed or deleted by hand. The path and the timer restart where their own files change, and the
+fill where its script or its unit changes. In a container, where systemd is not running, the run
+writes the files, but skips the check, the comparison, the units and ufw. CI checks the file after
+its runs ([The `playbook` job](../../../../.github/workflows/README.md#the-playbook-job)).
 
 `WS_SECURITY_OUTBOUND`, true by default, turns the table on. A cloud VM wants it false: the table
 drops the cloud's metadata service at `169.254.169.254`, which cloud-init, the guest agent and
@@ -163,9 +178,10 @@ WS_SECURITY_OUTBOUND: false
 ```
 
 On a cloud VM, `WS_TARGET=cloud`, write the line before the run. A run with `WS_SECURITY_OUTBOUND`
-false stops the table's units by D-Bus, and resets one that failed, even where its file is gone. It
-then removes the units, their links, `/usr/local/lib/ws/security` and the table, even one loaded by
-hand. `--check` shows each removal. Off leaves:
+false takes each of the table's units off, the path unit first. Each stops and is disabled while
+its file still names its `ExecStop`, and its files go after. Then `/usr/local/lib/ws/security` goes,
+and the table, even one loaded by hand. The plan shows each removal. A link made by hand in another
+target's `.wants`, outside what the unit's `[Install]` names, stays. Off leaves:
 
 - ufw's default, which allows every outgoing connection;
 - the `tunnel` role's chain `WS-MAC`, which drops what Docker's containers send through `wg0`
@@ -181,13 +197,12 @@ table's `containers` chain drops what they forward: Docker forwards it ahead of 
 `WS_USER` owns `WS_HOME`, so a link there could send ws, which runs as root, to any file: its reads,
 `chown`, `chmod` and backups would follow it. ws reaches a file there as root through the account
 alone: as a home file (`Account.File`, `Account.Dir`), a removal (`Account.Absent`) or the guarded
-read (`User.ReadHome`). Each refuses a link at the file, or at a directory between the home and it,
-and names the link and its target. The `claude` role acts as `WS_USER` for its reads and writes
-there, so a link reaches only what the user could reach: `settings.json` may link into a clone of
-dotfiles. `ws server ubuntu state` goes past a step that fails, so it reports no step that a refusal
-covers. Replace the link with the file itself. The check looks as the step plans, and a home file or
-a removal looks again as it applies. A link made after that fails at the write: `ws server ubuntu
-apply` makes its writes under `WS_HOME` through an `os.Root`, which refuses a link that leaves the
-home. A read of a home file opens each directory below the home, and the file, following no
-link. It reads a regular file of 1 MiB at most, with its owner and mode from that open. `rm` and
-`git` stay outside the bound.
+read (`User.ReadHome`). The file kind's units take that way for each file whose owner is the
+account. Each refuses a link at the file, or at a directory between the home and it, and names the
+link and its target. A command of ws that acts as `WS_USER`, as claude's do, reaches only what the
+user could reach: `settings.json` may link into a clone of dotfiles. Replace the link with the file
+itself. The check looks as the unit plans, and a home file or a removal looks again as it applies.
+A link made after that fails at the write. ws makes its writes under `WS_HOME` through an
+`os.Root`, which refuses a link that leaves the home. A read of a home file opens each directory
+below the home, and the file, following no link. It reads a regular file of 1 MiB at most, with its
+owner and mode from that open. `rm` and `git` stay outside the bound.

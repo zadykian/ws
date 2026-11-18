@@ -21,8 +21,9 @@ var runs = map[string]systemd.Run{"": systemd.Leave, "running": systemd.Running,
 // stopped or triggered. Its files, File, are written in order before it, and those that go are
 // removed after the rest. A change to any of them
 // gives one restart, or one reload with Reload, owed to the next run where this one fails.
-// InForce and Loads compare what is in force with what the files load (drift). Without booted
-// systemd it plans no unit and says so.
+// InForce and Loads compare what is in force with what the files load (drift). A service whose
+// files all go is gone: it stops and is disabled before they do. Without booted systemd it plans
+// no unit and says so.
 type serviceSpec struct {
 	base
 	Unit string `toml:"unit"`
@@ -53,6 +54,10 @@ func (s serviceSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.
 			return nil, err
 		}
 	}
+	gone := s.gone()
+	if gone && (s.Enabled || run != systemd.Leave && run != systemd.Stopped) {
+		return nil, errors.New(`a service whose files are all absent takes no enabled, and run "stopped" or ""`)
+	}
 	var paths []string
 	for i, f := range s.File {
 		if err := f.check(dir); err != nil {
@@ -66,7 +71,7 @@ func (s serviceSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.
 	return func(ctx context.Context) ([]resource.Resource, error) {
 		// A file goes after those the service writes, so that a run cut short, or a refused check,
 		// never leaves a file that names one already gone.
-		var all, gone, watch []resource.Resource
+		var all, removed, watch []resource.Resource
 		for i, f := range s.File {
 			b, err := f.resources(ctx, e, dir)
 			if err != nil {
@@ -79,13 +84,19 @@ func (s serviceSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.
 				continue
 			}
 			if b.gone {
-				gone = append(gone, b.all...)
+				removed = append(removed, b.all...)
 			} else {
 				all = addParts(all, b.all)
 			}
 			watch = append(watch, b.file)
 		}
-		all = append(all, gone...)
+		all = append(all, removed...)
+		if gone {
+			// The stop and the disable come first, while the unit's file still names its ExecStop
+			// and the links that [Install] made.
+			unit := systemd.Unit{M: e.M, U: e.U, Out: e.Out, Name: s.Unit, Disabled: true, Run: systemd.Stopped}
+			return append([]resource.Resource{unit}, all...), nil
+		}
 		if s.User != "" {
 			owner, err := ownerOf(ctx, e, s.User)
 			if err != nil {
@@ -100,6 +111,11 @@ func (s serviceSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.
 		return append(all, systemd.Unit{M: e.M, U: e.U, Out: e.Out, Name: s.Unit, Enabled: s.Enabled, Run: run,
 			Reload: s.Reload, Watch: watch}), nil
 	}, nil
+}
+
+// gone reports whether every file of the service goes, which takes the service off the machine.
+func (s serviceSpec) gone() bool {
+	return len(s.File) > 0 && !slices.ContainsFunc(s.File, func(f filePart) bool { return !f.Absent })
 }
 
 // addParts appends parts to all, less a directory that all makes already: two files of one new

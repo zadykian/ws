@@ -6,10 +6,8 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/server/ubuntu/base"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
-	"github.com/zadykian/ws/roles/server/ubuntu/security"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -25,8 +23,6 @@ type entry struct {
 
 // all is every role, in the order that they run.
 var all = []entry{
-	{"base", base.Steps},
-	{"security", security.Steps},
 	{"devtools", devtools.Steps},
 }
 
@@ -46,9 +42,12 @@ func closeOver(list []entry, v values.Values, s secrets.Secrets) []role.Role {
 }
 
 // Names returns the names of the roles, in the order that they run, where no values are at hand.
-func Names() []string {
-	names := make([]string, len(all))
-	for i, r := range all {
+func Names() []string { return namesOf(all) }
+
+// namesOf is the seam that Names gives the list: a new slice of its names, in order.
+func namesOf(list []entry) []string {
+	names := make([]string, len(list))
+	for i, r := range list {
 		names[i] = r.name
 	}
 	return names

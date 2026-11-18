@@ -82,15 +82,14 @@ fi
 
 # The image's Docker predates what --net=host means on a rootless daemon, and ws must install its
 # own. The purge leaves docker0, which the route check accepts. The image's source of Docker goes
-# too, as apt refuses one repository signed by two keys, and mise adds its own. Docker's ufw rules
-# need ufw, which security installs only after the bootstrap.
+# too, as apt refuses one repository signed by two keys, and mise adds its own.
 apt-get update
 apt-get purge -y docker-ce docker-ce-cli containerd.io
 rm -rf /etc/docker /var/lib/docker /var/lib/containerd
 for f in /etc/apt/sources.list.d/*; do
     if [ -f "$f" ] && grep -q download.docker.com "$f"; then rm -f "$f"; fi
 done
-apt-get install -y --no-install-recommends netcat-openbsd ufw
+apt-get install -y --no-install-recommends netcat-openbsd
 
 # The account as Ubuntu's installer leaves it, with the groups ws must take away.
 groupadd --force docker
@@ -120,28 +119,23 @@ lab_pid=$!
 trap 'kill "$lab_pid"' EXIT
 
 install -d -m 755 /etc/ws
-printf '%s\n' --- "WS_USER: $user" >/etc/ws/values.yml
+# The swap file is small, as the runner's disk has no room for one the size of its RAM.
+printf '%s\n' --- "WS_USER: $user" 'WS_BASE_SWAP_SIZE_MB: 64' >/etc/ws/values.yml
 chmod 600 /etc/ws/values.yml
 
 # The controls: each of these holds before ws, and the opposite after it.
 must "the private address answers before the table" up "http://$target/"
 must "sudo's password is cached before the drop-in" as bash -c "$sudo_form" bash "$password"
 
-# As on a new machine: install.sh runs the bootstrap, which installs ws, then ws sets up the
-# firewall, a role still in Go. Each runs twice, and the second run of each must change nothing.
-# The tree must be root's alone for install.sh's guard.
+# As on a new machine: install.sh runs the bootstrap, which installs ws and sets up the firewall
+# before Docker's ufw rules. It runs twice, and the second run must change nothing. The tree must
+# be root's alone for install.sh's guard.
 chown -R 0:0 /opt/ws
 chmod -R go-w /opt/ws
-log=$(mktemp)
 "$(dirname "$0")/bootstrap.sh" "$rel"
-ws server ubuntu apply --only security
 must "the first bootstrap leaves nothing to do" \
     mise -C /opt/ws bootstrap plan --detailed-exitcode </dev/null
 mise -C /opt/ws bootstrap </dev/null
-ws server ubuntu apply --only security 2>&1 | tee "$log"
-if [ "$(tail -n 1 "$log")" != 'ws server ubuntu apply: changed: none' ]; then
-    fail "The second run of ws server ubuntu apply changed something."
-fi
 must "the second bootstrap leaves nothing to do" \
     mise -C /opt/ws bootstrap plan --detailed-exitcode </dev/null
 
@@ -234,7 +228,7 @@ must "keys names the entry" grep -qx 'env WS_CI' <<<"$names"
 refused "keys prints the value" grep -q "$value" <<<"$names"
 refused "the user runs ws server ubuntu secrets" as ws server ubuntu secrets keys
 
-apply=(ws server ubuntu apply --secrets /etc/ws/secrets.age --check --only security)
+apply=(ws server ubuntu apply --secrets /etc/ws/secrets.age --check)
 out=$(systemd-run --quiet --wait --pipe -p LoadCredentialEncrypted=ws-secrets "${apply[@]}" \
     </dev/null 2>&1) || fail "a unit with the credential can't read the file"
 echo "ok: a unit with the credential reads the file"

@@ -26,8 +26,8 @@ the plan must exit 0 again. With the frame's line of `state/ws-binary` dropped, 
 names, and a find that the user owns its home. The Zed wrapper's [checks](../zed-terminal-checks.sh)
 run on the files it installed, and Fresh's on the config it loaded. The user's empty commit must
 sign and verify. Root's leg has no table, and the run leaves out its own check
-([Outbound](../../roles/server/ubuntu/security/README.md#outbound)). Its `/etc/ws/values.yml` sets a
-64 MiB swap file for the small disk. With no NVIDIA GPU, `nvidia` checks its names alone, and with
+([Outbound](../../roles/server/ubuntu/security/README.md#outbound)). In the container, base's swap
+file is off, as the swap is the host's. With no NVIDIA GPU, `nvidia` checks its names alone, and with
 no MSI board, `fans` leaves its fans alone. Without a VPN profile, `ikeward` does nothing.
 
 ## The install script

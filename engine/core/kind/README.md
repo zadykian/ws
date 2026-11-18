@@ -44,6 +44,7 @@ Its templates and sources sit beside it, and a path in the spec is relative to t
   | FACT | What the machine gives |
   | --- | --- |
   | `board_vendor` | The board's maker, from `/sys/class/dmi/id/board_vendor` |
+  | `container` | `yes` where Docker, Podman or systemd marks the machine a container, which shares its host's kernel |
   | `gpu_vendor` | The PCI vendor of a device of class `0x03`, from `/sys/bus/pci/devices`: `0x` and four hex digits in lower case, such as `0x1234` |
   | `interface` | A network interface of that name, of any state, from `/sys/class/net`: a name the kernel takes, with no `/` |
   | `set` | Any WANT, so that a value of the side's turns the unit on where set and off where empty; `"!WANT"` fails the load |
@@ -162,6 +163,9 @@ source = "name"
 - With `user`, the unit is USER's own systemd's, kept running, and each part is USER's. A change
   to any part restarts it once. It takes `run = "running"`, and no `enabled`, `reload` or
   `in_force`. Its unit file is left to whatever installs it: until then it plans no start.
+- A service whose parts are all `absent` is gone: disabled and stopped before its files go, while
+  its unit file still names its `ExecStop`, and the links its `[Install]` names. It takes no
+  `enabled`, takes `run = "stopped"` or `""`, and compares nothing. A link made by hand stays.
 - Without booted systemd it plans no unit, compares nothing, and says so.
 
 ### state
@@ -181,9 +185,11 @@ command = ["/abs/cmd"]      # or: the command, as root, exits 0
 
 - `login_key` reads `home/.ssh/authorized_keys` through the home's link guard. It fails where the
   file holds no key, or sshd would pass it over for its owner or mode.
+- `login_key` fails on every machine where `home` is not the one `getent passwd` gives USER: the
+  file kind writes USER's files below that one.
 - `sudo_right` passes for root, which needs no sudo.
-- A container, which has no login to lose, passes `login_key` and `sudo_right`. A unit that would
-  close a login waits on the guard by its `after`.
+- A container, which has no login to lose, passes `sudo_right`, and `login_key` but for its home.
+  A unit that would close a login waits on the guard by its `after`.
 - `command` is a role's own check, a command of ws where Go holds it. It runs as root on every
   machine, containers too. Its exit 0 passes, and says each line of its output once a run. Any
   other fails the plan with the command's error, its standard error and its output.
