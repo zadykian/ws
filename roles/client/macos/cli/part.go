@@ -29,7 +29,7 @@ func newCldCmd(p enginecli.Env) *cobra.Command {
 			if err != nil {
 				return nil, err
 			}
-			return []resource.Resource{(&cld.Cld{Home: home, M: p.Machine, Out: out}).Part()}, nil
+			return []resource.Resource{&cld.Cld{Home: home, M: p.Machine, Out: out}}, nil
 		})
 }
 
