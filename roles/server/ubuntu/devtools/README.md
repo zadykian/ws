@@ -52,8 +52,7 @@ mise checks a sum at the download alone, so it mends no tool changed after its i
   `rm -rf /usr/local/go`.
 - To bump a tool, change its version in `[tools]` and its link in `units.toml`, then write the
   lock again in a container with git and mise:
-  `MISE_ENV=server mise -C roles/server/ubuntu/devtools lock --platform linux-x64,linux-arm64`,
-  then move `roles/server/ubuntu/devtools/mise.server.lock` to
+  `MISE_ENV=server mise -C roles/server lock --platform linux-x64,linux-arm64`, which writes
   `roles/server/mise/mise.server.lock`. `go test` fails where a link, the lock and `[tools]`
   disagree. On the server,
   `sudo env MISE_DATA_DIR=/usr/local/share/mise mise -C /opt/ws/roles/server prune` drops the old versions.
