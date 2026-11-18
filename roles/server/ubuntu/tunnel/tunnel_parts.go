@@ -52,7 +52,7 @@ func tunnel(m effect.Machine, u effect.Units, out effect.Out, random io.Reader, 
 		if err != nil {
 			return nil, err
 		}
-		k := key{m: m, random: random, gid: gid}
+		k := Key{M: m, Out: out, Random: random}
 		netdevRes := file.File{M: m, Path: netdevFile, Content: netdev, Mode: 0o640, GID: gid}
 		networkRes := file.File{M: m, Path: networkFile, Content: network, Mode: 0o644}
 		return []resource.Resource{
