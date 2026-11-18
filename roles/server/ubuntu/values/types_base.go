@@ -43,18 +43,17 @@ type Devtools struct {
 // Docker is roles/docker's keys. A string left empty, and the quota and memory limits, follow
 // the machine: memory, CPUs and the disk of Docker's root.
 type Docker struct {
-	Packages           []string `yaml:"WS_DOCKER_PACKAGES"`
-	LogMaxSize         string   `yaml:"WS_DOCKER_LOG_MAX_SIZE"`
-	LogMaxFile         int      `yaml:"WS_DOCKER_LOG_MAX_FILE"`
-	MemoryMax          string   `yaml:"WS_DOCKER_MEMORY_MAX"`
-	CPUQuota           string   `yaml:"WS_DOCKER_CPU_QUOTA"`
-	MemorySwapMax      string   `yaml:"WS_DOCKER_MEMORY_SWAP_MAX"`
-	BridgeIP           string   `yaml:"WS_DOCKER_BRIDGE_IP"`
-	BridgePrefixLength int      `yaml:"WS_DOCKER_BRIDGE_PREFIX_LENGTH"`
-	AddressPool        string   `yaml:"WS_DOCKER_ADDRESS_POOL"`
-	AddressPoolSize    int      `yaml:"WS_DOCKER_ADDRESS_POOL_SIZE"`
-	PublishIP          string   `yaml:"WS_DOCKER_PUBLISH_IP"`
-	BuildCacheKeepDays int      `yaml:"WS_DOCKER_BUILD_CACHE_KEEP_DAYS"`
+	LogMaxSize         string `yaml:"WS_DOCKER_LOG_MAX_SIZE"`
+	LogMaxFile         int    `yaml:"WS_DOCKER_LOG_MAX_FILE"`
+	MemoryMax          string `yaml:"WS_DOCKER_MEMORY_MAX"`
+	CPUQuota           string `yaml:"WS_DOCKER_CPU_QUOTA"`
+	MemorySwapMax      string `yaml:"WS_DOCKER_MEMORY_SWAP_MAX"`
+	BridgeIP           string `yaml:"WS_DOCKER_BRIDGE_IP"`
+	BridgePrefixLength int    `yaml:"WS_DOCKER_BRIDGE_PREFIX_LENGTH"`
+	AddressPool        string `yaml:"WS_DOCKER_ADDRESS_POOL"`
+	AddressPoolSize    int    `yaml:"WS_DOCKER_ADDRESS_POOL_SIZE"`
+	PublishIP          string `yaml:"WS_DOCKER_PUBLISH_IP"`
+	BuildCacheKeepDays int    `yaml:"WS_DOCKER_BUILD_CACHE_KEEP_DAYS"`
 	// The build cache's limits, each in the form 12GB. Empty, each is a share of the disk.
 	BuildCacheReservedSpace string `yaml:"WS_DOCKER_BUILD_CACHE_RESERVED_SPACE"`
 	BuildCacheMaxUsedSpace  string `yaml:"WS_DOCKER_BUILD_CACHE_MAX_USED_SPACE"`

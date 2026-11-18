@@ -21,12 +21,13 @@ Its templates and sources sit beside it, and a path in the spec is relative to t
 - **The order.** Units run by name, each moved behind the unit that its `after` names, ahead of the
   next by name. An `after` that no spec holds, or a loop, fails the load.
 - **Two renders.** Both are Go templates over the side's values, and a key the values lack is an
-  error. The spec's text fills as it loads, with `add`, `mul`, `div`, `exports` and `fail MSG`,
-  which stops the render with MSG. A unit's template fills as it plans, as an earlier unit may
-  make the account or the file that it reads. It takes `envvar FILE NAME` and the facts `mem_mib`,
-  `cpus`, `fs_bytes PATH...`, `uid NAME`, `installed_version NAME` and `kernel_release` too.
-  `installed_version` gives dpkg's version of an installed package, else "", and
-  `kernel_release` the running kernel's, as `uname -r` prints it.
+  error. The spec's text fills as it loads, with `add`, `mul`, `div`, `exports`, `json VALUE`, which
+  quotes a value as Go's JSON encoder does, and `fail MSG`, which stops the render with MSG. A
+  unit's template fills as it plans, as an earlier unit may make the account or the file that it
+  reads. It takes `envvar FILE NAME` and the facts `mem_mib`, `cpus`, `fs_bytes PATH...`,
+  `uid NAME`, `installed_version NAME` and `kernel_release` too. `installed_version` gives dpkg's
+  version of an installed package, else "", and `kernel_release` the running kernel's, as
+  `uname -r` prints it.
 - **when.** Any unit takes `when = { FACT = "WANT" }`, and runs where every FACT of the machine
   gives its WANT, and `"!WANT"` where it does not. Elsewhere it plans nothing, and says so in a
   line. An empty WANT, negated or not, holds on no machine, so a value left empty turns the unit
@@ -167,6 +168,7 @@ hint = "…"                  # follows the line of a refused load; goes with lo
 ```toml
 [service.NAME]
 unit = "x.service"
+user = "USER"               # a unit of USER's own systemd; the default is the system's
 enabled = true
 run = "running"             # "stopped", "triggered", or "" to leave the unit as found
 reload = false
@@ -181,13 +183,16 @@ source = "name"
   Two files of one service in two file units would restart it twice.
 - `in_force` and `loads` run as root. A load that fails, or nothing in force, counts as a
   difference. Each part must exist first.
+- With `user`, the unit is USER's own systemd's, kept running, and each part is USER's. A change
+  to any part restarts it once. It takes `run = "running"`, and no `enabled`, `reload` or
+  `in_force`. Its unit file is left to whatever installs it: until then it plans no start.
 - Without booted systemd it plans no unit, compares nothing, and says so.
 
 ### state
 
 ```toml
 [state.NAME]                # exactly one of the keys below
-linger = "USER"             # USER's systemd starts at boot
+linger = "USER"             # USER's systemd starts at boot, and runs: user@UID.service
 subids = "USER"             # the range 100000-165535 where a file gives USER none of 65536
 purged = "package"          # removed with its settings
 http = "http://127.0.0.1:PORT/"  # answers 200, waited for 30 times, 2 s apart

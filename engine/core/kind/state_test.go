@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/resource/ufw"
 )
@@ -54,14 +55,25 @@ func TestStateTakesExactlyOne(t *testing.T) {
 }
 
 func TestStateLinger(t *testing.T) {
-	e, m, _, _ := testEnv(true)
+	e, m, u, _ := testEnv(true)
+	withAccount(m)
 	units := loadState(t, e, "linger = \"u\"\n")
-	if got := headlines(t, units[0].Step); !slices.Equal(got, []string{"enable lingering for u"}) {
-		t.Errorf("plan = %q, want lingering enabled", got)
+	if got, want := headlines(t, units[0].Step), []string{"enable lingering for u", "start user@1001.service"}; !slices.Equal(got, want) {
+		t.Errorf("plan = %q, want %q", got, want)
 	}
 	m.Files["/var/lib/systemd/linger/u"] = nil
+	u.States = map[string]effect.UnitState{"user@1001.service": {Active: true}}
 	if got := headlines(t, units[0].Step); got != nil {
-		t.Errorf("plan with u lingering = %q, want none", got)
+		t.Errorf("plan with u lingering and its manager up = %q, want none", got)
+	}
+}
+
+func TestStateLingerSkipsUnbooted(t *testing.T) {
+	e, m, _, out := testEnv(false)
+	if got := headlines(t, loadState(t, e, "linger = \"u\"\n")[0].Step); got != nil ||
+		slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "id ") }) ||
+		!slices.Equal(out.Lines, []string{"say: lingering for u: skipped, systemd is not running"}) {
+		t.Errorf("plan = %q, calls %q, lines %q; want none, no lookup, and the skip said once", got, m.Calls, out.Lines)
 	}
 }
 

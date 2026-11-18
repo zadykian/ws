@@ -3,6 +3,7 @@ package kind
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -32,6 +33,11 @@ func pure() template.FuncMap {
 		"fail": func(msg string) (string, error) { return "", errors.New(msg) },
 		// exports is an env file's lines, `export NAME=VALUE`, sorted, the values quoted for the shell.
 		"exports": exports,
+		// json quotes a value as Go's encoder does, <, > and & escaped, for a file of JSON.
+		"json": func(v any) (string, error) {
+			b, err := json.Marshal(v)
+			return string(b), err
+		},
 	}
 }
 

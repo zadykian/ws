@@ -4,12 +4,19 @@ A container has no booted systemd, so `playbook` can't run the rootless daemon o
 around it. The job `rootless` runs on GitHub's `ubuntu-26.04` runner, which boots. It sets the
 runner up as it would a machine, with a user as Ubuntu's installer leaves it. That user is in the
 groups `sudo`, `docker` and `lxd`, and sudo has cached its password. The runner's own Docker is
-purged first, as it predates what `--net=host` means on a rootless daemon. A namespace holds a
-private address that answers, `10.250.0.2`. The cases are
+purged first, as it predates what `--net=host` means on a rootless daemon. Its apt source goes too,
+as apt refuses a repository that two sources name with different keys, and mise adds its own. A
+namespace holds a private address that answers, `10.250.0.2`. The cases are
 [rootless-checks.sh](../rootless-checks.sh). Each refusal has a control that holds before
 ws runs.
 
-`ws server ubuntu apply --only security,docker` runs twice, and the second run must change nothing.
+The tree goes in `/opt/ws`, root's alone, with its pin on the tree's build, as for
+[`playbook`](README.md#the-playbook-job). GitHub's runner keeps a default ACL on `/opt` that lets
+anyone write what lands there, so the job drops it first. As on a new machine, `install.sh` runs
+the bootstrap on the tree, which installs ws, then `ws server ubuntu apply --only security`.
+`mise bootstrap plan --detailed-exitcode` must then exit 0. Each runs twice: the second apply must
+change nothing, and the plan must exit 0 again.
+
 Then the user must keep `sudo`, leave `docker` and `lxd`, and have no cached password. The system's
 socket must refuse it, and its own Docker must run a container that resolves names through
 slirp4netns's resolver and reaches the internet. The daemon and its containers must run in

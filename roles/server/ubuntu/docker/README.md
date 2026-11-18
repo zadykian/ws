@@ -1,16 +1,33 @@
 # docker
 
 The `docker` role installs Docker Engine with its buildx and compose plugins, from Docker's apt
-repository, and writes `/etc/docker/daemon.json`. Its code is Go, in `roles/server/ubuntu/docker`,
-as steps of `ws server ubuntu apply`. They are the repository, the packages, the check of the
-routes, the user's leaving the `docker` group, the configuration, the check of `docker0` and the
-user's rootless daemon. Docker's apt key is pinned by its SHA-256 in `repository.go`: a changed key
-fails the run. Without systemd booted, as in CI's container, the steps that need it skip and say so.
+repository, and writes `/etc/docker/daemon.json`. The role holds mise config and a spec of ws's
+units ([The frame](../frame/README.md)):
+
+| File | What it holds |
+| --- | --- |
+| [`mise.server.toml`](mise.server.toml) | Docker's apt source, the packages, and the units of every server. |
+| [`mise.account.toml`](mise.account.toml) | The account's four packages and units, where `WS_USER` is not root. |
+| [`units.toml`](units.toml) | The units: the route check, the resolver, ufw's rules, the slice, Docker's service, the check of `docker0`, and the account's daemon. |
+| [`files/`](files) | The templates and files that the units write. |
+
+mise takes Docker's apt key only where its primary fingerprint is the one that the source pins,
+`9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88`: a changed key fails the run. mise writes the
+source as `/etc/apt/sources.list.d/mise-docker.sources`, with the key inline. apt refuses one
+repository with two keys, so a machine that holds Docker's source already, as its install guide
+writes it with `Signed-By: /etc/apt/keyrings/docker.asc`, fails its first bootstrap at apt. On such
+a machine, as a cloud image with Docker, remove each file of `/etc/apt/sources.list.d` but mise's
+that names `download.docker.com` before `install.sh`: `docker.sources` or `docker.list`. Without systemd
+booted, as in CI's container, the units that need it skip and say so. They are Docker's service,
+the check of `docker0`, ufw's rules, lingering, and the account's daemon and its tool.
 
 ## Logs and restarts
 
 `daemon.json` rotates each container's log at 10 MB and keeps 3 files. A container keeps the log
 settings Docker created it with. Containers keep running while Docker restarts (`live-restore`).
+`daemon.json` and docker.service's drop-in are parts of one unit, so a change to both restarts
+Docker once. `dockerd --validate` checks a new `daemon.json`, and a refused one leaves the live file
+and the restart owed. `WS_DOCKER_LOG_MAX_SIZE` and `WS_DOCKER_LOG_MAX_FILE` set other sizes.
 
 ## The slice
 
@@ -25,12 +42,13 @@ Containers resolve names as the host does. The `dns` of `daemon.json` is the def
 address, `172.17.0.1` (`WS_DOCKER_BRIDGE_IP`), where systemd-resolved listens too. ufw lets Docker's
 networks reach port 53 there through their bridges, `docker0` and `br-ID`, whatever their subnets.
 A network given a bridge name of its own gets no answers. A running container takes the new `dns`
-when it next starts. The role deletes the rules it gave ufw for a former `WS_DOCKER_BRIDGE_IP`.
+when it next starts. The unit `state/docker-dns` owns every ufw rule with the comment
+`DNS from containers`, so it deletes the rules it gave for a former `WS_DOCKER_BRIDGE_IP`.
 
 `docker0` takes a new `WS_DOCKER_BRIDGE_IP` or `WS_DOCKER_BRIDGE_PREFIX_LENGTH` only when Docker starts
 with no container running, as after a reboot. Until then lookups to a new address get no answers,
-and the role stops after it restarts Docker. Reboot, or stop every container and restart Docker,
-then apply again. `--check` shows the move.
+and the run stops after it restarts Docker. Reboot, or stop every container and restart Docker,
+then run `mise bootstrap` again. `mise bootstrap plan` shows the move.
 
 ## The address pool
 
@@ -39,7 +57,7 @@ network created before the pool moves keeps its subnet until created again, as b
 `docker compose down` and `up`.
 
 Docker leaves out of the pool only the subnets of the main routing table's on-link routes. So the
-role stops, before it writes `daemon.json`, on any other route into the pool, such as one a VPN
+run stops, before it writes `daemon.json`, on any other route into the pool, such as one a VPN
 keeps in a table of its own. It stops on any route into the default bridge's subnet too. It reads
 the routes as they stand during the run: a VPN that is down shows none.
 
@@ -68,17 +86,22 @@ so while the disk has less than 20% free or the cache takes more than 80% of it.
 `WS_DOCKER_BUILD_CACHE_RESERVED_SPACE`, `WS_DOCKER_BUILD_CACHE_MAX_USED_SPACE` and
 `WS_DOCKER_BUILD_CACHE_MIN_FREE_SPACE` set other sizes, in the format of `daemon.json`: `50G`, `50GB`
 or `50GiB`, but not `50Gi`. Cache that an image shares frees no space until the image is removed.
+`dockerd --validate` skips the cache's section, so ws's check of the values refuses a size of
+another format, and an age past 99999 days.
 
 ## The rootless daemon
 
-Where `WS_USER` isn't root, it runs its own daemon, and the role takes it out of the `docker` group,
-which amounts to root. The user keeps the group until its session ends. `docker` reaches the daemon
-by the `rootless` context, which Docker's tool makes. The system's daemon stays for root, and for
-SigNoz: `sudo docker ps` lists its containers.
+Where `WS_USER` isn't root, it runs its own daemon. The run first takes it out of the `docker`
+group, which amounts to root, so a run that stops at a later unit leaves it out. The user keeps the
+group until its session ends. `docker` reaches the daemon by the `rootless` context, which Docker's
+tool makes. The system's daemon stays for root, and for SigNoz: `sudo docker ps` lists its
+containers. The machine's miserc loads `mise.account.toml` where
+`WS_USER` isn't root, with the account's packages and units.
 
-The role installs `docker-ce-rootless-extras`, `uidmap`, `slirp4netns` and `apparmor`, and fails
-where `/etc/subuid` or `/etc/subgid` gives the user fewer than 65536 ids. It enables lingering, so
-that the user's systemd runs without a login, and delegates the `io` controller to it.
+The role installs `docker-ce-rootless-extras`, `uidmap`, `slirp4netns` and `apparmor`. Where
+`/etc/subuid` or `/etc/subgid` gives the user fewer than 65536 ids, it adds the range
+100000-165535. It enables lingering, so that the user's systemd runs without a login, keeps
+`user@UID.service` running, and delegates the `io` controller to it.
 
 The daemon's `daemon.json` is `~/.config/docker/daemon.json`. It has the log and cache values, the
 published address and `cgroup-parent`, so that the containers stay in the user's `docker.slice` with
@@ -87,3 +110,4 @@ namespace, and a restart stops the user's containers. Its `dns` is slirp4netns's
 queries reach the host's resolver. slirp4netns runs as the user, so the outbound table drops them
 where `/etc/resolv.conf` names a private resolver in place of systemd-resolved's stub. A container
 asks the resolver of the host by `--dns 127.0.0.53`. A rootless container binds no port below 1024.
+The account's three files are parts of one unit, so a change to any restarts its daemon once.

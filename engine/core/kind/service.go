@@ -22,7 +22,10 @@ var runs = map[string]systemd.Run{"": systemd.Leave, "running": systemd.Running,
 // systemd it plans no unit and says so.
 type serviceSpec struct {
 	base
-	Unit    string     `toml:"unit"`
+	Unit string `toml:"unit"`
+	// User makes Unit one of that account's own systemd, kept running, whose files are its own. Its
+	// unit file is left to whatever installs it.
+	User    string     `toml:"user"`
 	Enabled bool       `toml:"enabled"`
 	Run     string     `toml:"run"`
 	Reload  bool       `toml:"reload"`
@@ -41,6 +44,11 @@ func (s serviceSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.
 	}
 	if (len(s.InForce) == 0) != (len(s.Loads) == 0) {
 		return nil, errors.New("in_force goes with loads")
+	}
+	if s.User != "" {
+		if err := s.checkUser(); err != nil {
+			return nil, err
+		}
 	}
 	var paths []string
 	for i, f := range s.File {
@@ -67,6 +75,13 @@ func (s serviceSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.
 			}
 			all, watch = append(all, b.all...), append(watch, b.file)
 		}
+		if s.User != "" {
+			owner, err := ownerOf(ctx, e, s.User)
+			if err != nil {
+				return nil, err
+			}
+			return append(all, systemd.UserUnit{M: e.M, Account: owner, Out: e.Out, Name: s.Unit, Watch: watch}), nil
+		}
 		if len(s.InForce) > 0 {
 			d := drift{m: e.M, out: e.Out, inForce: s.InForce, loads: s.Loads, files: paths}
 			all, watch = append(all, d), append(watch, d)
@@ -74,4 +89,26 @@ func (s serviceSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.
 		return append(all, systemd.Unit{M: e.M, U: e.U, Out: e.Out, Name: s.Unit, Enabled: s.Enabled, Run: run,
 			Reload: s.Reload, Watch: watch}), nil
 	}, nil
+}
+
+// checkUser refuses the fields that a unit of an account's own systemd cannot take: UserUnit keeps
+// it running and restarts it, and no more. Each of its files is the account's.
+func (s serviceSpec) checkUser() error {
+	switch {
+	case s.User == "root":
+		return errors.New("user takes an account other than root, whose units are the system's")
+	case s.Enabled || s.Reload || len(s.InForce) > 0:
+		return errors.New("a unit of a user's own systemd takes no enabled, reload or in_force")
+	case s.Run != "running":
+		return errors.New(`a unit of a user's own systemd takes run = "running"`)
+	}
+	if err := checkUser("user", s.User); err != nil {
+		return err
+	}
+	for i, f := range s.File {
+		if f.Owner != s.User {
+			return fmt.Errorf("file %d: owner %q is not the unit's user %q", i+1, f.Owner, s.User)
+		}
+	}
+	return nil
 }

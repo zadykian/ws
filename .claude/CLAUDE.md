@@ -121,9 +121,8 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   them. The list is the secret `FORBIDDEN_WORDS`, and the job fails on an empty one
   ([Cutting a release](../engine/core/update/README.md#cutting-a-release)).
 - A pinned download is checked against its SHA-256 before use: ikeward's
-  binary ([binary.go](../roles/server/ubuntu/ikeward/binary.go)), otelcol's `.deb`
-  ([download.go](../roles/server/ubuntu/otelcol/download.go)) and Docker's apt key
-  ([repository.go](../roles/server/ubuntu/docker/repository.go)). So is Fresh's `.deb`
+  binary ([binary.go](../roles/server/ubuntu/ikeward/binary.go)) and otelcol's `.deb`
+  ([download.go](../roles/server/ubuntu/otelcol/download.go)). So is Fresh's `.deb`
   ([units.toml](../roles/server/ubuntu/fresh/units.toml)). So is nct6687's source
   ([fans](../roles/server/ubuntu/fans/units.toml)), and so are foundryctl
   ([ci.yml](../.github/workflows/ci.yml)) and the gates' tools ([.tools/run](../.tools/run)). So is ws's
@@ -139,7 +138,9 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([binaries.go](../roles/server/ubuntu/devtools/binaries.go)). gopls and Delve are built through Go's
   checksum database. roslyn-language-server is pinned by version alone
   ([pins.go](../roles/server/ubuntu/devtools/pins.go)). The npm servers are checked against the sha512
-  `integrity` of their lockfile ([devtools](../roles/server/ubuntu/devtools/README.md#the-npm-servers)). Zed's other
+  `integrity` of their lockfile ([devtools](../roles/server/ubuntu/devtools/README.md#the-npm-servers)). Docker's
+  apt key is checked against its fingerprint, which mise's source pins
+  ([mise.server.toml](../roles/server/ubuntu/docker/mise.server.toml)). Zed's other
   downloads on ws are outside the rule
   ([zed](../roles/server/ubuntu/zed/README.md#zeds-downloads-outside-the-sha-256-rule)).
 - foundryctl forges SigNoz's compose files, `roles/server/ubuntu/signoz/deployment/` and

@@ -97,8 +97,8 @@ steps, and each role's README says what it sets up.
 - An apt repository's key goes in only where its entry pins the primary fingerprint of each
   certificate in it, and it holds one at least
   ([devtools' pins](../../roles/server/ubuntu/devtools/pins.go)). Docker's key goes in only with the
-  checksum its code pins, so that a changed key fails the run
-  ([docker's repository](../../roles/server/ubuntu/docker/repository.go)).
+  fingerprint that its mise source pins, so that a changed key fails the run
+  ([docker's source](../../roles/server/ubuntu/docker/mise.server.toml)).
 
 ## signoz
 

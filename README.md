@@ -66,7 +66,8 @@ Install Ubuntu Server 26.04 by hand from its installer. In it, turn OpenSSH on, 
 account's keys, and leave password login off. `ws server ubuntu apply` adds no key later. So put the
 Mac's key on the account first. Name the installer's user `zadykian`, ws's default user. A cloud VM
 has no installer: it gives its default user the provider's keys, which must be the account's. A VM
-with root alone logs in as root, where `WS_TARGET=cloud`.
+with root alone logs in as root, where `WS_TARGET=cloud`. An image with Docker holds Docker's apt
+source, which apt refuses beside mise's: remove it first ([docker](roles/server/ubuntu/docker/README.md)).
 
 Then, logged in as that user, write `/etc/ws/values.yml` where a value differs from its default,
 root's and mode 600 ([the values](#running-it-again)). Run `install.sh` through `sudo`: it installs
@@ -93,7 +94,7 @@ sudo ws server ubuntu apply
 `WS_VERSION=X.Y.Z` before `sh` picks a release ([Install](engine/core/update/README.md#install)).
 
 `ws server ubuntu apply --only NAME,...` runs the roles named, in the order they run in. A name is a
-role, or a step of it by the name a run shows, as in `--only 'docker/Docker group',tmux`. That
+role, or a step of it by the name a run shows, as in `--only 'security/SSH keys',tmux`. That
 role's other steps are planned and left out. A step that waits on one of them with changes is
 skipped, and says so, and `--check` shows what the same run would change. A left-out step whose plan
 fails warns, and the run goes on. `--secrets FILE` gives the roles their secrets, and `ws server

@@ -36,10 +36,6 @@ func Default() Values {
 			"libxfixes3", "libxkbcommon0", "libxrandr2",
 		}},
 		Docker: Docker{
-			Packages: []string{
-				"docker-ce", "docker-ce-cli", "containerd.io", "docker-buildx-plugin",
-				"docker-compose-plugin",
-			},
 			LogMaxSize: "10m", LogMaxFile: 3, MemorySwapMax: "0",
 			BridgeIP: "172.17.0.1", BridgePrefixLength: 16,
 			AddressPool: "172.16.0.0/12", AddressPoolSize: 20,
