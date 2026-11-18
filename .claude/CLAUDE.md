@@ -28,7 +28,9 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   the server's part, and `plugins/ws` the plugin that hands ws's units to `ws unit`. A role moved
   to mise holds its spec, `units.toml`, and its mise files beside its page, and `mise/conf.d`
   links its directory ([The frame](../roles/server/ubuntu/frame/README.md)). The roles' tools
-  lock in `mise/mise.server.lock`.
+  lock in `mise/mise.server.lock`. `mise.mac.toml` is the Mac's part, and
+  `roles/client/macos/frame` and `facts` its frame and its units' values
+  ([The Mac's frame](../roles/client/macos/frame/README.md)).
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
 - `install.sh`: installs mise and runs `mise bootstrap` on a release's tree
@@ -134,7 +136,8 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([mise.lock](../mise.lock)). `ws update` checks it against its release's `ws.sha256`
   ([update.go](../engine/core/update/update.go)), and a Mac's runbook checks it by hand
   ([runbook.md](../roles/client/macos/runbook.md)). So is mise's binary, whose SHA-256 for each
-  target `install.sh` holds ([install.sh](../install.sh)). So is
+  target `install.sh` holds ([install.sh](../install.sh)), and the Mac's runbook its macos-arm64's
+  ([runbook.md](../roles/client/macos/runbook.md)). So is
   yamllint ([lint-requirements.in](../.github/lint-requirements.in)), and Homebrew's `.pkg`, with its signer
   ([runbook.md](../roles/client/macos/runbook.md)). Go is checked against the
   SHA-256 its publisher lists, and the postgres-language-server and docker-language-server against

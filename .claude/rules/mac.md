@@ -34,6 +34,10 @@ The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `rol
 - Effects are passed in: a step holds `effect.Prompt`, `effect.Out` and `effect.Machine` as fields
   and a function takes them as parameters. Tests use the fakes of
   [effecttest](../../engine/core/effect/effecttest/effecttest.go), never the real ones.
+- The Mac's units, of `mise -C /opt/ws bootstrap`, read as the user and never through sudo, so
+  that a run that changes nothing asks no password. A file of root's that a unit writes is readable
+  by all, and the Mac's config holds no root path of mise's own
+  ([The Mac's frame](../../roles/client/macos/frame/README.md#roots-paths)).
 - No cgo: ws builds with `CGO_ENABLED=0`. The race detector's cgo is the tests' alone
   ([Makefile](../../Makefile)).
 - `--server NAME` is `ws client macos`'s persistent flag, bound once in `Command` and read through a

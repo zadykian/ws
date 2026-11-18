@@ -24,6 +24,10 @@ files](values/README.md#the-two-files)). Then:
 ws client macos apply
 ```
 
+The Mac's roles move to mise, one by one. `mise -C /opt/ws bootstrap` sets up those moved, beside
+`ws client macos apply`, on the tree in `/opt/ws` ([The Mac's frame](frame/README.md)). Its units
+read as the user, and ask sudo for a change alone.
+
 `ws client macos apply --only STEP` runs one step, and `--check` shows each change and makes none.
 `ws client macos state` reports what a check reads, and changes nothing
 ([State](../../../README.md#state)). `ws client macos` holds the Mac's commands, darwin alone. `ws
