@@ -10,7 +10,6 @@ Available Commands:
   help        Help about any command
   server      the server's systems
   unit        plan and apply the units of ws's kinds, KIND/NAME, for mise
-  update      update ws to the latest release
   version     print the version of this ws
 
 Flags:
@@ -907,16 +906,6 @@ Usage:
 Flags:
       --dry-run   plan the units and apply none
   -h, --help      help for write
-== ws update
-Downloads the latest release's ws for this system, checks it against the release's ws.sha256 and that it runs, then replaces the file ws runs from, the file a symbolic link leads to.
-
-Where ws is the latest release already, or newer, nothing changes. A ws built from a clone is refused.
-
-Usage:
-  ws update [flags]
-
-Flags:
-  -h, --help   help for update
 == ws version
 print the version of this ws
 

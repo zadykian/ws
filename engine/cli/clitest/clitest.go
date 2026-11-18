@@ -16,17 +16,14 @@ import (
 func Env() cli.Env {
 	return cli.Env{
 		Machine: effecttest.NewMachine(), Getenv: func(string) string { return "" },
-		Lookup: func(string) (string, bool) { return "", false },
-		Setenv: func(string, string) error { return nil }, Euid: 501, Pid: 7, GOOS: "darwin", GOARCH: "arm64", Pwd: "/p", Version: "v1.2.3",
+		Euid: 501, Pwd: "/p", Version: "v1.2.3",
 		Self: func() (string, error) { return "/h/.local/bin/ws", nil },
 	}
 }
 
-// WithEnv returns e with the environment env, for Getenv, Lookup and Setenv.
+// WithEnv returns e with the environment env, for Getenv.
 func WithEnv(e cli.Env, env map[string]string) cli.Env {
 	e.Getenv = func(k string) string { return env[k] }
-	e.Lookup = func(k string) (string, bool) { v, ok := env[k]; return v, ok }
-	e.Setenv = func(k, v string) error { env[k] = v; return nil }
 	return e
 }
 

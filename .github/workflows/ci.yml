@@ -235,11 +235,7 @@ jobs:
 
   # install.sh with the real mise, served on loopback, and a small repository in place of the
   # release's tree: .github/install-checks.sh. The pinned mise installs, a wrong one is refused, and
-  # the bootstrap runs from the latest release's tag, with the envs that the miserc names. Then ws
-  # update against releases laid out in a temporary directory and served on loopback, in the
-  # order of .github/update-checks.sh. It moves an older ws to the latest release, and refuses a
-  # wrong checksum and a binary of another version. The releases are of the tree, built by
-  # .tools/build.
+  # the bootstrap runs from the latest release's tag, with the envs that the miserc names.
   install:
     if: github.event.action != 'ready_for_review'
     runs-on: ubuntu-latest
@@ -252,8 +248,6 @@ jobs:
           persist-credentials: false
       - name: install.sh's cases
         run: .github/install-checks.sh
-      - name: ws update's cases
-        run: .github/update-checks.sh
 
   # SigNoz's compose files in roles/server/ubuntu/signoz are foundryctl's, forged from the casting
   # there. Forged again into an empty directory, as foundryctl never removes a file, they must be

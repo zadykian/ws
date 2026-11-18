@@ -28,8 +28,7 @@ mise -C /opt/ws bootstrap
 It sets up every role of the Mac, on the tree in `/opt/ws` ([The Mac's frame](frame/README.md)).
 Its units read as the user, and ask sudo for a change alone. `ws client macos apply` and `ws
 client macos state` run no step. `ws client macos` holds the Mac's commands, darwin alone. `ws
-version` prints its version, and `ws update` replaces it with the latest release
-([Update](../../../engine/core/update/README.md#update)).
+version` prints its version.
 
 ## What the Mac reports
 

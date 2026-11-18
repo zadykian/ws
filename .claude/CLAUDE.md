@@ -83,7 +83,7 @@ It installs yamllint into `.cache`, and `.tools/run` downloads the rest there.
 The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `playbook` builds ws and runs `install.sh`'s
 bootstrap and `ws server ubuntu apply` twice each in an Ubuntu 26.04 container, with mise's plan.
 It checks the config that Fresh reads too. `signoz` forges SigNoz's compose files again, and
-`install` tries `install.sh` and `ws update`. `rootless` runs the
+`install` tries `install.sh`. `rootless` runs the
 rootless daemon and the firewall on a booted runner ([The rootless job](../.github/workflows/rootless.md)). `mac` sets up a
 Mac on GitHub's macOS runner by `mise bootstrap`, whose last run must call no sudo and whose plan
 must exit 0. `mac-cld` sets up
@@ -135,8 +135,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([fans](../roles/server/ubuntu/fans/units.toml)), and so are foundryctl
   ([ci.yml](../.github/workflows/ci.yml)) and the gates' tools ([.tools/run](../.tools/run)). So is ws's
   binary: `mise.lock` holds its SHA-256 for each target, which mise checks as it installs
-  ([mise.lock](../mise.lock)). `ws update` checks it against its release's `ws.sha256`
-  ([update.go](../engine/core/update/update.go)), and a Mac's runbook checks it by hand
+  ([mise.lock](../mise.lock)). A Mac's runbook checks it by hand too
   ([runbook.md](../roles/client/macos/runbook.md)). So is mise's binary, whose SHA-256 for each
   target `install.sh` holds ([install.sh](../install.sh)), and the Mac's runbook its macos-arm64's
   ([runbook.md](../roles/client/macos/runbook.md)). So is

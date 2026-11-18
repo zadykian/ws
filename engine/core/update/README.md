@@ -43,22 +43,6 @@ machine's miserc and runs `mise bootstrap`:
 | `WS_MISE_URL` | `https://github.com/jdx/mise/releases/download` | where mise's binaries are, for tests |
 | `WS_REPO` | `https://github.com/zadykian/ws` | the repository the tag is cloned from, for tests |
 
-## Update
-
-`ws update` replaces the ws that runs with the latest release, and changes nothing else. It runs no
-role, so `ws server ubuntu apply` follows it by hand. It works as `cld update` does:
-
-- It replaces the file ws runs from, the file a link leads to, so a ws in another directory stays
-  there.
-- It needs no curl or shell, as Go downloads the release.
-- A failure leaves ws unchanged. So does SIGINT, SIGTERM or SIGHUP before the replace, which exits
-  with 128 plus the signal's number.
-- A ws at the latest release, or newer, downloads nothing.
-- A build of a clone is refused, as it has no version to compare.
-
-It takes `WS_RELEASES_URL` as the table above says. To pick a release, run `install.sh` with
-`WS_VERSION`.
-
 ## The install job
 
 CI's `install` job runs [install-checks.sh](../../../.github/install-checks.sh) on each pull request. It
@@ -78,16 +62,6 @@ file, tagged `v0.2.0`, and later `v0.3.0` with one file more. The cases:
 - a `WS_VERSION` that is no version is refused;
 - `WS_IN_PLACE` runs the tree in `/opt/ws` as it stands;
 - a tree with a file that root does not own is refused.
-
-Then the job runs [update-checks.sh](../../../.github/update-checks.sh), the cases of `ws update`. It
-builds ws for Linux on amd64 at tags it makes and removes again, so that `ws version` prints them. It
-lays four releases out in a temporary directory and copies one into a home as the installed ws. It
-serves them on loopback with serve-releases, which answers `/latest` with GitHub's redirect.
-The cases:
-
-- `ws update` moves an older ws to the latest release, and a second run stays;
-- `ws update` replaces the file a link leads to, and keeps the link;
-- `ws update` refuses a wrong `ws.sha256`, and a binary that prints another version, and keeps ws.
 
 ## Cutting a release
 
