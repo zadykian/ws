@@ -1,17 +1,14 @@
 #!/bin/bash
 # A second server, lab, at slot 1. A third wireguard-go stands in for it on 51821. The Mac's key is
-# its peer, as in 35-standin.sh. lab shares ws's WS_REMOTE, so its ports differ from ws's. ws client
-# macos apply --server lab must give lab a daemon and a utun of its own, and mise bootstrap ssh's host
-# at its slot. ws's daemon and host stay as they were. ws client macos servers must list both. A second run for
-# lab must print nothing.
+# its peer, as in 35-standin.sh. lab shares ws's WS_REMOTE, so its ports differ from ws's. mise
+# bootstrap must give lab a daemon and a utun of its own, and ssh's host at its slot. ws's daemon
+# and host stay. ws client macos servers must list both. A second bootstrap must call sudo not once.
 
 set -eo pipefail
 # shellcheck source=.github/mac-conf.sh
 . .github/mac-conf.sh
 # shellcheck source=.github/mac-mise.sh
 . .github/mac-mise.sh
-# shellcheck source=.github/mac-quiet.sh
-. .github/mac-quiet.sh
 
 conf=/etc/ws/values.yml
 lab=${LABEL%.ws}.lab
@@ -37,8 +34,14 @@ conf_server=lab
 } | conf_write "$conf"
 conf_server=ws
 
-ws client macos apply --server lab || {
-    echo '::error::ws client macos apply --server lab failed'
+mac_serve
+trap 'kill "$mac_server"' EXIT
+mac_bootstrap || {
+    echo '::error::mise bootstrap with lab failed'
+    exit 1
+}
+mac_bootstrap plan --detailed-exitcode || {
+    echo "::error::the plan after the bootstrap with lab exited $?, not 0"
     exit 1
 }
 launchctl print "system/$lab" >/dev/null || {
@@ -84,16 +87,6 @@ shakes ws 51820 || {
     exit 1
 }
 
-mac_serve
-trap 'kill "$mac_server"' EXIT
-mac_bootstrap || {
-    echo '::error::mise bootstrap with lab failed'
-    exit 1
-}
-mac_bootstrap plan --detailed-exitcode || {
-    echo "::error::the plan after the bootstrap with lab exited $?, not 0"
-    exit 1
-}
 # tunnel_end NAME prints the HostName that ssh gives NAME.
 tunnel_end() { ssh -G "$1" | awk '$1 == "hostname" { print $2 }'; }
 [ "$(tunnel_end lab)" = 10.99.1.1 ] && [ "$(tunnel_end ws)" = 10.99.0.1 ] || {
@@ -109,8 +102,13 @@ listed() { ws client macos servers | awk -v n="$1" '$1 == n { $1 = $1; print }';
     exit 1
 }
 
-if ! out=$(ws client macos apply --check --server lab 2>&1) || [ -n "$(unlisted "$out")" ]; then
-    echo '::error::ws client macos apply --check --server lab printed what it should not:'
-    printf '%s\n' "$out"
+mac_mark
+mac_bootstrap || {
+    echo '::error::a second mise bootstrap with lab failed'
+    exit 1
+}
+calls=$(mac_calls)
+if [ "$calls" != 0 ]; then
+    echo "::error::a second mise bootstrap with lab called sudo $calls times, not once"
     exit 1
 fi

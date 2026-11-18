@@ -17,13 +17,13 @@ Four cases of the `mac` job work on a second server:
   apply --check` must stop, naming both servers. `--server box`, which has no file, and `--server
   Lab`, a bad name, must stop it too. `--server ws` must go on as with one server. The case's trap
   removes lab's directory.
-- `mac/90-clash.sh` makes the files `lab` and `box`, which clash with ws's. `apply --check
-  --server lab` must refuse each with its reason. `--server ws` must name `ws client macos remove`
-  beside a refused file.
-- `mac/92-second.sh` gives lab a third wireguard-go on UDP 51821. `apply --server lab` must then
-  give lab a daemon and a utun of its own, at 10.99.1.1, and leave ws's daemon with its handshake.
+- `mac/90-clash.sh` makes the files `lab` and `box`, which clash with ws's. The bootstrap's plan
+  must refuse each with its reason, and name `ws client macos remove lab` beside it.
+- `mac/92-second.sh` gives lab a third wireguard-go on UDP 51821. `mise -C /opt/ws bootstrap` must
+  then give lab a daemon and a utun of its own, at 10.99.1.1, and leave ws's daemon with its
+  handshake. A second bootstrap must call no sudo.
 - `mac/94-remove.sh` runs `remove lab`: its files, daemon, host and `known_hosts` line must go, and
-  ws's stay. `remove box` and `remove ws` must refuse.
+  ws's stay. `remove box` and `remove ws` must refuse, and the plan then exit 0.
 
 Cases 90, 92 and 94 of the `mac` job run last, as `checks.sh` and the job stop at the first that
 fails.

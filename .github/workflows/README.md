@@ -69,28 +69,26 @@ tree in `/opt/ws` with ws's build served as the pin ([mac-mise.sh](../mac-mise.s
 ssh, git and cld too. Its plan must exit 0 after the first run, a second run must call no sudo,
 and `/usr/local/bin/ws` must be the build. A spec whose unit no line names must fail the plan.
 The job's `values.yml` names a file key, made in case 20, as ws's
-login key and git's. Without ws's WireGuard key, `ws client macos apply` must make the Mac's key and
-load no daemon, and `ssh -G ws` gives the tunnel's end. The public key it prints must be the Mac's,
-as must the key in the command that gives it to ws. With a stand-in's key it must load and run the
-daemon. A second run and `--check` must print nothing. `ssh -G` must give `ws` the tunnel's end.
-The stand-in for ws is a second wireguard-go on the runner, with the printed key as its peer. It
-answers on loopback both as the LAN and as `WS_REMOTE`, and `ws client macos tunnel status` must
-show a handshake on each in turn. The daemon must take the SIGHUPs for a new `tunnel.conf` and
-its `routes.d` in place, with the same pid. Then a network that `ws client macos tunnel routes
---server ws` adds must be routed into the daemon's utun, and a domain `ws client macos resolver`
-adds must show in `scutil --dns`. `ws client macos tunnel loaded`, `ws client macos tunnel routes`
-and `ws client macos resolver` must do the same, with `--check` showing the diff and writing
-nothing ([mac-ws-checks.sh](../mac-ws-checks.sh)). Next, the server's `WS_TUNNEL_NETWORKS` and
-`WS_RESOLVERS` must give a route and a resolver, each shown by `--check` first. A second run and
-`--check` must print nothing, and a fourth nameserver must be refused. Emptied or removed, the keys
-must take both back, and spare a script's own. Last, `ws client macos apply` must read an empty
-value in `values.yml` as its key's default, and still stop on a value of the wrong form. It must also
-stop on a `WS_LAN_ADDRESS` outside `WS_LAN`, and on the LAN's network or broadcast address
-([mac-conf-checks.sh](../mac-conf-checks.sh)). With `WS_CABLE_SERVICE` empty, `ws client
-macos apply` must print nothing. Set, it must run one `networksetup -setmanual`, a stand-in's,
-through sudo, and then none. It must warn of a disabled service. It must stop on one networksetup
-lacks, or one with a router outside the cable's `/30`. It must stop too on a `-setmanual` that fails
-or changes nothing, and name what differs ([mac-setup-checks.sh](../mac-setup-checks.sh)).
+login key and git's. Without ws's WireGuard key, the bootstrap must make the Mac's key, with
+`/etc/ws/tunnel.pub` its public half, and load no daemon, and `ssh -G ws` gives the tunnel's end.
+With a stand-in's key it must load and run the daemon, which runs `/usr/local/bin/ws`. A second
+run must call no sudo, and its plan exit 0. The stand-in for ws is a second wireguard-go on the
+runner, with the Mac's key as its peer. It answers on loopback both as the LAN and as
+`WS_REMOTE`, and `ws client macos tunnel status` must show a handshake on each in turn. The daemon
+must take the SIGHUPs for a new `tunnel.conf` and its `routes.d` in place, with the same pid. Then
+a network that `ws client macos tunnel routes --server ws` adds must be routed into the daemon's
+utun, and a domain `ws client macos resolver` adds must show in `scutil --dns`. `ws client macos
+tunnel loaded`, `ws client macos tunnel routes` and `ws client macos resolver` must do the same,
+with `--check` showing the diff and writing nothing ([mac-ws-checks.sh](../mac-ws-checks.sh)).
+Next, the server's `WS_TUNNEL_NETWORKS` and `WS_RESOLVERS` must give a route and a resolver
+through the bootstrap, each named by `ws client macos networks --check` first. The plan after it
+must exit 0, and a fourth nameserver must be refused. Emptied or removed, the keys must take both
+back, and spare a script's own ([mac-conf-checks.sh](../mac-conf-checks.sh)). With
+`WS_CABLE_SERVICE` empty, `ws client macos cable` must print nothing. Set, it must run one
+`networksetup -setmanual`, a stand-in's, through sudo, and then none. It must warn of a disabled
+service. It must stop on one networksetup lacks, or one with a router outside the cable's `/30`.
+It must stop too on a `-setmanual` that fails or changes nothing, and name what differs
+([mac-setup-checks.sh](../mac-setup-checks.sh)).
 The cases of the keys run `mise -C /opt/ws bootstrap` with an edited `values.yml`, and read the
 files it writes ([56-keys.sh](../mac/56-keys.sh)). A refusal must fail the bootstrap and its plan
 with its reason, and change no file. `ssh -G` must give `ws` the file key that the job's

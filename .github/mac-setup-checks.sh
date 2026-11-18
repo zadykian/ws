@@ -1,22 +1,18 @@
 #!/bin/sh
-# The mac job's checks of ws client macos apply's own steps, each run with the job's values.yml, in a
-# section per key or step. mac-conf-checks.sh runs it last, from the repository's root, once ws
-# client macos apply has set up the Mac (.github/workflows/mac.yml). As it runs ws client macos
-# apply, sudo included, and edits the job's values.yml, it stops without the job's TUNNEL. It puts the
-# file back as it exits, on a signal too. A case that wants a silent run takes out git's line of a
-# listed key, with mac-quiet.sh's unlisted. Each failure prints an ::error:: line, and any fails
-# the script at its end. The cases of ws's key and git's are mise bootstrap's (56-keys.sh).
+# The mac job's checks of ws client macos cable, which the cable's unit runs. They use the job's
+# values.yml. mac-conf-checks.sh runs it last, from the repository's root. By then mise bootstrap
+# has set up the Mac (.github/workflows/mac.yml). As it runs the cable's command, sudo included,
+# and edits the job's values.yml, it stops without the job's TUNNEL. It puts the file back as it exits,
+# on a signal too. Each failure prints an ::error:: line, and any fails the script at its end.
 
 set -eu
 if [ -z "${TUNNEL-}" ]; then
-    echo "::error::TUNNEL is unset: this runs ws client macos apply, with sudo, in mac.yml's job alone"
+    echo "::error::TUNNEL is unset: this runs ws client macos cable, with sudo, in mac.yml's job alone"
     exit 1
 fi
 conf=/etc/ws/values.yml
 # shellcheck source=.github/mac-conf.sh
 . .github/mac-conf.sh
-# shellcheck source=.github/mac-quiet.sh
-. .github/mac-quiet.sh
 # macOS's TMPDIR ends in a slash, which would put // in $tmp.
 tmpdir=${TMPDIR:-/tmp}
 tmp=$(mktemp -d "${tmpdir%/}/mac-setup-checks.XXXXXXXX")
@@ -40,41 +36,32 @@ with() {
     [ $# = 0 ] || conf_set "$conf" "$@"
 }
 
-# setup [ARG] runs ws client macos apply, on the step that only names where it does, and sets out to
-# what it printed.
-only=
-exact=
+# setup [ARG] runs ws client macos cable, and sets out to what it printed.
 setup() {
-    out=$(ws client macos apply ${only:+--only "$only"} "$@" 2>&1)
+    out=$(ws client macos cable "$@" 2>&1)
 }
 
-# prints TEXT [ARG] runs ws client macos apply, which must print TEXT alone, less the line of a key
-# that GitHub lists already, unless exact is set.
+# prints TEXT [ARG] runs ws client macos cable, which must print TEXT alone.
 prints() {
     text=$1
     shift
-    setup "$@" || error "ws client macos apply${*:+ $*} failed: $out"
-    got=$out
-    [ -n "$exact" ] || got=$(unlisted "$out")
-    [ "$got" = "$text" ] || error "ws client macos apply${*:+ $*} printed '$got', not '$text'"
+    setup "$@" || error "ws client macos cable${*:+ $*} failed: $out"
+    [ "$out" = "$text" ] || error "ws client macos cable${*:+ $*} printed '$out', not '$text'"
 }
 
-# stops TEXT [ARG] runs ws client macos apply, which must stop with one line that starts with TEXT.
+# stops TEXT [ARG] runs ws client macos cable, which must stop with one line that starts with TEXT.
 stops() {
     text=$1
     shift
-    ! setup "$@" || error "ws client macos apply${*:+ $*} went on where it should stop: $out"
+    ! setup "$@" || error "ws client macos cable${*:+ $*} went on where it should stop: $out"
     case $out in
-    *"$nl"*) error "ws client macos apply${*:+ $*} printed more than one line: $out" ;;
+    *"$nl"*) error "ws client macos cable${*:+ $*} printed more than one line: $out" ;;
     "$text"*) ;;
-    *) error "ws client macos apply${*:+ $*} stopped on '$out', not '$text'" ;;
+    *) error "ws client macos cable${*:+ $*} stopped on '$out', not '$text'" ;;
     esac
 }
 
-# The cable's service. Empty, it must leave the network alone, and ws client macos apply print
-# nothing. They run the cable step alone. A service adds WS_CABLE=yes to tunnel.conf. A full apply
-# would write that file, and print it.
-only=cable
+# The cable's service. Empty, it must leave the network alone, and the command print nothing.
 with 'WS_CABLE_SERVICE: ""'
 prints ''
 prints '' --check
@@ -118,7 +105,7 @@ PATH=$tmp/bin:$PATH
 args='10.77.0.2 255.255.255.252'
 
 # logged LINE... checks that the stand-in logged LINE..., a line each, since the last check. Where
-# it logged other calls, ws client macos apply may reach another networksetup, so the script stops
+# it logged other calls, ws client macos cable may reach another networksetup, so the script stops
 # there.
 logged() {
     got=$(cat "$tmp/setmanual.log")
@@ -128,52 +115,53 @@ logged() {
     exit 1
 }
 
-# differs WHAT LINE... gives the no-op service the settings LINE..., on which ws client macos apply
+# differs WHAT LINE... gives the no-op service the settings LINE..., on which ws client macos cable
 # must run one -setmanual and stop, naming WHAT.
 differs() {
     line="networksetup -setmanual \"ws stand-in no-op\" $args"
-    what="ws client macos apply: would run $line: networksetup -getinfo \"ws stand-in no-op\" shows $1 after"
+    what="ws client macos cable: networksetup -getinfo \"ws stand-in no-op\" shows $1 after"
     shift
     printf '%s\n' "$@" >"$tmp/info-ws_stand_in_no_op"
     stops "$what $line: "
     logged "4 -setmanual ws stand-in no-op $args"
 }
 
-# --check must print one networksetup -setmanual and run none; a run must run it through sudo and
-# print it, and a second run and --check print nothing.
+# --check must fail on one networksetup -setmanual and run none; a run must run it through sudo
+# and print it, and a second run and --check print nothing.
 if [ "$(command -v networksetup)" != "$tmp/bin/networksetup" ]; then
     error "networksetup is $(command -v networksetup), not the stand-in, so the cable's cases go"
     exit 1
 fi
 service='ws stand-in 10/100/1G/2.5G LAN'
 with "WS_CABLE_SERVICE: $service"
-prints "ws client macos apply: would run networksetup -setmanual \"$service\" $args" --check
-prints "ws client macos apply: ran networksetup -setmanual \"$service\" $args"
+stops "ws client macos cable: to do: run networksetup -setmanual \"$service\" $args" --check
+logged
+prints "ws client macos cable: run networksetup -setmanual \"$service\" $args"
 logged "4 -setmanual $service $args"
 prints ''
 prints '' --check
 logged
 # A disabled service draws a warning on every run, and still gets the settings.
 with 'WS_CABLE_SERVICE: ws stand-in bridge'
-warning="ws client macos apply: warning: networksetup lists \"ws stand-in bridge\", WS_CABLE_SERVICE in"
+warning="ws client macos cable: warning: networksetup lists \"ws stand-in bridge\", WS_CABLE_SERVICE in"
 warning="$warning the server's values.yml, as disabled, so the cable carries nothing: turn it on in"
 warning="$warning System Settings › Network"
-prints "$warning${nl}ws client macos apply: ran networksetup -setmanual \"ws stand-in bridge\" $args"
+prints "$warning${nl}ws client macos cable: run networksetup -setmanual \"ws stand-in bridge\" $args"
 prints "$warning"
 logged "4 -setmanual ws stand-in bridge $args"
-# A service the list lacks stops ws client macos apply, though its name begins or ends one listed,
+# A service the list lacks stops ws client macos cable, though its name begins or ends one listed,
 # or is a glob that matches one.
 for service in 'ws stand-in absent' 'ws stand-in' 'stand-in 10/100/1G/2.5G LAN' 'ws stand-in*'; do
     with "WS_CABLE_SERVICE: $service"
-    stops "ws client macos apply: networksetup -listallnetworkservices lacks \"$service\", WS_CABLE_SERVICE in the server's values.yml"
+    stops "ws client macos cable: networksetup -listallnetworkservices lacks \"$service\", WS_CABLE_SERVICE in the server's values.yml"
 done
 logged
-# A -setmanual that fails stops ws client macos apply.
+# A -setmanual that fails stops ws client macos cable.
 with 'WS_CABLE_SERVICE: ws stand-in failing'
-stops "ws client macos apply: would run networksetup -setmanual \"ws stand-in failing\" $args: "
+stops "ws client macos cable: networksetup -setmanual \"ws stand-in failing\" $args failed: "
 logged "4 -setmanual ws stand-in failing $args"
 # The no-op's -setmanual exits 0 and changes nothing, which only the check after it catches.
-# So ws client macos apply must stop on each setting that differs, and name it. The cable's address
+# So ws client macos cable must stop on each setting that differs, and name it. The cable's address
 # alone, with no mask or router line, must pass.
 with 'WS_CABLE_SERVICE: ws stand-in no-op'
 differs 'DHCP Configuration' 'DHCP Configuration' 'IP address: 10.77.0.2'
@@ -196,10 +184,9 @@ echo 'networksetup: a diagnostic' >"$tmp/info-ws_stand_in_no_op.err"
 prints 'networksetup: a diagnostic'
 rm "$tmp/info-ws_stand_in_no_op.err"
 logged
-# A router outside the cable's /30, an uplink's, stops ws client macos apply before any -setmanual.
+# A router outside the cable's /30, an uplink's, stops ws client macos cable before any -setmanual.
 printf '%s\n' 'DHCP Configuration' 'IP address: 192.0.2.10' 'Router: 192.0.2.1' \
     >"$tmp/info-ws_stand_in_no_op"
-stops 'ws client macos apply: networksetup -getinfo "ws stand-in no-op" shows Router: 192.0.2.1, so the'
+stops 'ws client macos cable: networksetup -getinfo "ws stand-in no-op" shows Router: 192.0.2.1, so the'
 logged
-only=
 exit "$fail"
