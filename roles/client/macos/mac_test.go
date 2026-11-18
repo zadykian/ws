@@ -17,7 +17,7 @@ import (
 )
 
 func TestNamesComeInSetupShsOrder(t *testing.T) {
-	want := []string{"ssh", "cable", "git", "cld", "zsh", "tunnel", "networks"}
+	want := []string{"ssh", "cable", "git", "cld", "tunnel", "networks"}
 	if got := macos.Names(); !slices.Equal(got, want) {
 		t.Errorf("Names = %q; want %q", got, want)
 	}

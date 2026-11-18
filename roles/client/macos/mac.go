@@ -4,7 +4,6 @@ package macos
 import (
 	"context"
 	"io"
-	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/role"
@@ -15,7 +14,6 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/networks"
 	"github.com/zadykian/ws/roles/client/macos/tunnel"
 	"github.com/zadykian/ws/roles/client/macos/values"
-	"github.com/zadykian/ws/roles/client/macos/zsh"
 )
 
 // Mac is what the Mac's steps read and act through. It holds the order of ws client macos apply's
@@ -43,7 +41,6 @@ func (m Mac) steps(check bool) []step.Step {
 		cable.Cable{Conf: m.Conf, M: m.M, Out: m.Out}.Step(),
 		(&git.Git{Conf: m.Conf, Home: m.Home, XDG: m.XDG, M: m.M, Out: m.Out}).Step(),
 		(&cld.Cld{Home: m.Home, M: m.M, Out: m.Out, Check: check}).Step(),
-		(&zsh.Zsh{Home: m.Home, Hook: zsh.Hook, M: m.M, Out: m.Out, Now: time.Now}).Step(),
 		&tunnel.Tunnel{Conf: m.Conf, Server: m.Server, MacConf: m.MacConf, Home: m.Home, Plist: tunnel.Plist, M: m.M, Out: m.Out, Text: m.Text,
 			Check: check},
 		&networks.Networks{Server: m.Server, MacConf: m.MacConf, Conf: m.Conf, M: m.M, Out: m.Out, Check: check},
