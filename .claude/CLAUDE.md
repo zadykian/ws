@@ -19,7 +19,7 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   the machine's values: `/etc/ws/values.yml`, on the machine alone, such as the cable's port
   ([The cable](../roles/server/ubuntu/cable/README.md#the-cable)).
 - `go.mod` and `go.sum`: the Go module `github.com/zadykian/ws`, at the root.
-  `main.go` runs `cmd`, which composes the root and the exit codes with the two sides'
+  `cmd/ws/main.go` runs `cmd`, which composes the root and the exit codes with the two sides'
   commands. `engine/cli` builds the root and the exit codes. `engine/core` holds `step`,
   `effect`, with `effect/effecttest`, `effect/local` and `effect/units`, and `resource`, with
   `resource/resourcetest`, the resources the kinds share, and `kind`, the kinds that a role's

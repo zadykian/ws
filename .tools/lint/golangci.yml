@@ -103,6 +103,7 @@ linters:
           files:
             - "${base-path}/cmd/**"
           allow:
+            - github.com/zadykian/ws/cmd$
             - github.com/zadykian/ws/engine/cli
             - github.com/zadykian/ws/engine/core/effect/local$
             - github.com/zadykian/ws/roles/client/cli

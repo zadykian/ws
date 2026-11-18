@@ -1,4 +1,4 @@
-// Package cmd holds ws's commands, which main.go runs by Execute.
+// Package cmd holds ws's commands, which cmd/ws runs by Execute.
 package cmd
 
 import (
