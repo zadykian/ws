@@ -184,12 +184,29 @@ install_sh WS_VERSION=0.2.0 WS_MISE_URL="$url/mise/none"
 at v0.2.0
 echo "::endgroup::"
 
+echo "::group::A pre-release runs where WS_VERSION names it alone"
+git -C "$repo" -c user.name=ws -c user.email=ws@localhost -c commit.gpgsign=false commit -q --allow-empty -m rc
+git -C "$repo" tag v0.4.0-rc.1
+install_sh WS_VERSION=0.4.0-rc.1 WS_MISE_URL="$url/mise/none"
+at v0.4.0-rc.1
+# GitHub never redirects releases/latest to a pre-release: install.sh refuses one that it finds there.
+echo v0.4.0-rc.1 >"$tmp/serve/latest"
+if install_sh WS_MISE_URL="$url/mise/none" 2>"$tmp/refusal"; then
+    fail "install.sh took a pre-release as the latest release"
+fi
+grep -q 'GitHub redirects to' "$tmp/refusal" || fail "install.sh refused a pre-release as the latest, but not by its message"
+at v0.4.0-rc.1
+echo v0.3.0 >"$tmp/serve/latest"
+echo "::endgroup::"
+
 echo "::group::A version that is no version is refused"
 reset
-if install_sh WS_VERSION=0.2; then
-    fail "install.sh went through with WS_VERSION=0.2"
-fi
-[ ! -e /usr/local/bin/mise ] || fail "a refused install left mise"
+for version in 0.2 0.4.0-rc.0 0.4.0-rc.01 0.4.0-beta.1; do
+    if install_sh WS_VERSION="$version"; then
+        fail "install.sh went through with WS_VERSION=$version"
+    fi
+    [ ! -e /usr/local/bin/mise ] || fail "a refused install of $version left mise"
+done
 echo "::endgroup::"
 
 echo "::group::WS_IN_PLACE runs the tree in /opt/ws as it stands"

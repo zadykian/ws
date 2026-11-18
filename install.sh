@@ -13,10 +13,10 @@
 # /etc/mise/miserc.toml from WS_USER in /etc/ws/values.yml. The miserc names the envs of mise's
 # files that load on this machine. A change of WS_USER means running this script again. Last it
 # runs mise bootstrap on the tree of the latest release, or of the one WS_VERSION names (X.Y.Z,
-# with or without the v), cloned to /opt/ws. That tree pins ws's binary and checks it. Run again,
-# it checks that release's tag out there, dropping any change and any file git does not track, and
-# brings the machine back to the release. It refuses a /opt/ws that is not root's alone, and a
-# system other than Ubuntu 26.04.
+# with or without the v), cloned to /opt/ws. A pre-release, X.Y.Z-rc.N, runs only where WS_VERSION
+# names it. That tree pins ws's binary and checks it. Run again, it checks that release's tag out
+# there, dropping any change and any file git does not track, and brings the machine back to the
+# release. It refuses a /opt/ws that is not root's alone, and a system other than Ubuntu 26.04.
 # A Mac follows roles/client/macos/runbook.md instead. It runs in any POSIX sh, and needs curl,
 # sha256sum and git.
 #
@@ -83,6 +83,19 @@ is_version() {
     esac
 }
 
+# is_rc succeeds where $1 is a pre-release X.Y.Z-rc.N, as a tag vX.Y.Z-rc.N holds it. X.Y.Z is a
+# version, and N a number from 1 with no leading zero.
+is_rc() {
+    case $1 in
+    *-rc.*) ;;
+    *) return 1 ;;
+    esac
+    case ${1##*-rc.} in
+    '' | *[!0-9]* | 0*) return 1 ;;
+    esac
+    is_version "${1%-rc.*}"
+}
+
 # release sets releases to the address of ws's releases, repo to ws's repository, and tag to the
 # release whose tree runs. That is WS_VERSION's, or none for the latest until latest finds it. where
 # is how messages name it.
@@ -93,7 +106,8 @@ release() {
     tag=
     if [ -n "$version" ]; then
         # A typo stops here, not at a clone that finds no tag.
-        is_version "${version#v}" || die "WS_VERSION is not a version, X.Y.Z: $version"
+        is_version "${version#v}" || is_rc "${version#v}" ||
+            die "WS_VERSION is not a version, X.Y.Z or X.Y.Z-rc.N: $version"
         tag=v${version#v}
     fi
     where="the ${tag:-latest} release of ws"
@@ -109,8 +123,8 @@ fetch() {
 }
 
 # latest sets tag, where none is set, to the latest release's. GitHub redirects releases/latest to
-# the latest release's page, releases/tag/vX.Y.Z, or to releases where there is none. The tag goes
-# into the clone's ref, so anything but vX.Y.Z is refused.
+# the latest release's page, releases/tag/vX.Y.Z, or to releases where there is none. A pre-release
+# is never the latest. The tag goes into the clone's ref, so anything but vX.Y.Z is refused.
 latest() {
     [ -z "$tag" ] || return 0
     page=$(fetch -o /dev/null -w '%{redirect_url}' "$releases/latest") ||

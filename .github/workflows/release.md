@@ -28,10 +28,10 @@ machine's miserc and runs `mise bootstrap`:
   ([The frame](../../roles/server/ubuntu/frame/README.md#the-machines-env)). After a change of
   `WS_USER`, run it again.
 - It finds the latest release once, and clones the release's tag into `/opt/ws`, then runs the
-  bootstrap on that tree. The tree pins ws's binary, and mise checks it against `mise.lock`. Run
-  again, it checks the release's tag out in `/opt/ws`, dropping any change and any file git does
-  not track there, such as a trial's `mise.local.toml`. So it brings the machine back to the
-  release.
+  bootstrap on that tree. A pre-release is never the latest: only `WS_VERSION` picks one. The
+  tree pins ws's binary, and mise checks it against `mise.lock`. Run again, it checks the
+  release's tag out in `/opt/ws`, dropping any change and any file git does not track there, such
+  as a trial's `mise.local.toml`. So it brings the machine back to the release.
 - It refuses a system other than Ubuntu 26.04, by `/etc/os-release`. So does `ws unit`'s read and
   write, which the bootstrap runs.
 - It refuses a `/opt/ws` that is a link, or that holds a file or directory root does not own or
@@ -39,7 +39,7 @@ machine's miserc and runs `mise bootstrap`:
 
 | Variable | Default | Sets |
 | --- | --- | --- |
-| `WS_VERSION` | the latest release | the release whose tree runs, `X.Y.Z` or `vX.Y.Z` |
+| `WS_VERSION` | the latest release | the release whose tree runs, `X.Y.Z` or `X.Y.Z-rc.N`, with or without the `v` |
 | `WS_IN_PLACE` | unset | `1` runs the tree in `/opt/ws` as it stands: no lookup, no clone |
 | `WS_RELEASES_URL` | `https://github.com/zadykian/ws/releases` | where the releases are, for tests |
 | `WS_MISE_URL` | `https://github.com/jdx/mise/releases/download` | where mise's binaries are, for tests |
@@ -64,7 +64,8 @@ file, tagged `v0.2.0`, and later `v0.3.0` with one file more. The cases:
 - with `WS_USER: root`, a second run downloads no mise and leaves the account's part out;
 - a newer latest release checks its tag out in `/opt/ws`, and drops a `mise.local.toml` there;
 - `WS_VERSION` checks its release's tag out;
-- a `WS_VERSION` that is no version is refused;
+- a `WS_VERSION` of a pre-release checks its tag out, and a pre-release as the latest is refused;
+- a `WS_VERSION` that is no version, or a pre-release `rc.0` or `beta.1`, is refused;
 - `WS_IN_PLACE` runs the tree in `/opt/ws` as it stands;
 - a tree with a file that root does not own is refused.
 
