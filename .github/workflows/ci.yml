@@ -115,14 +115,13 @@ jobs:
       - name: Make the user
         if: matrix.user != 'root'
         run: useradd --create-home --shell /bin/bash "$WS_USER"
-      # The values file holds what the job changes of the defaults. The swap file is small, as the
-      # runner's disk has no room for one the size of its RAM. The matrix names the user and the
-      # table.
+      # The values file holds what the job changes of the defaults: the matrix names the user and
+      # the table. The container's swap is the host's, so base's swap file is off.
       - name: Write the values
         run: |
           install -d -m 755 /etc/ws
-          printf '%s\n' --- 'WS_BASE_SWAP_SIZE_MB: 64' \
-              "WS_USER: $WS_USER" "WS_SECURITY_OUTBOUND: $OUTBOUND" >/etc/ws/values.yml
+          printf '%s\n' --- "WS_USER: $WS_USER" "WS_SECURITY_OUTBOUND: $OUTBOUND" \
+              >/etc/ws/values.yml
           chmod 600 /etc/ws/values.yml
       - name: Bootstrap
         run: .github/bootstrap.sh "$RUNNER_TEMP/rel"

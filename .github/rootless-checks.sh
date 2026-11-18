@@ -120,7 +120,8 @@ lab_pid=$!
 trap 'kill "$lab_pid"' EXIT
 
 install -d -m 755 /etc/ws
-printf '%s\n' --- "WS_USER: $user" >/etc/ws/values.yml
+# The swap file is small, as the runner's disk has no room for one the size of its RAM.
+printf '%s\n' --- "WS_USER: $user" 'WS_BASE_SWAP_SIZE_MB: 64' >/etc/ws/values.yml
 chmod 600 /etc/ws/values.yml
 
 # The controls: each of these holds before ws, and the opposite after it.
