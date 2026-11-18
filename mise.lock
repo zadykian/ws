@@ -3,18 +3,18 @@
 lockfile_version = 4
 
 [[tools."http:ws"]]
-version = "0.13.0-rc.1"
+version = "0.13.0-rc.3"
 backend = "http:ws"
-specifiers = ["0.13.0-rc.1"]
+specifiers = ["0.13.0-rc.3"]
 
 [tools."http:ws"."platforms.linux-arm64"]
-checksum = "sha256:72e3c6c7b5bc6c44890379be8c6c286e33f32f5d2b070763f1579ae0af0a3a92"
-url = "https://github.com/zadykian/ws/releases/download/v0.13.0-rc.1/ws-linux-arm64"
+checksum = "sha256:b4b3f2cb7277a29b6ceddde9506195c24c3a1188101cbbab234357c808c025b8"
+url = "https://github.com/zadykian/ws/releases/download/v0.13.0-rc.3/ws-linux-arm64"
 
 [tools."http:ws"."platforms.linux-x64"]
-checksum = "sha256:18b26a66447818ce8214e9a6ada6e9353573a758b9df3236046150e1aa8a2b9f"
-url = "https://github.com/zadykian/ws/releases/download/v0.13.0-rc.1/ws-linux-amd64"
+checksum = "sha256:8e450629fc71592add7cccf84fbc39e5f13a3f44626a2675efadb9da6d8042ef"
+url = "https://github.com/zadykian/ws/releases/download/v0.13.0-rc.3/ws-linux-amd64"
 
 [tools."http:ws"."platforms.macos-arm64"]
-checksum = "sha256:a0746e39221bb0266d055e28b1b16229e48e1e17fe27c80fbee3692f998eacf9"
-url = "https://github.com/zadykian/ws/releases/download/v0.13.0-rc.1/ws-darwin-arm64"
+checksum = "sha256:d8051a216a9f2cb6926f7fc9bd9a10c37c3564734e6fa60afcdd4e4f0da150e6"
+url = "https://github.com/zadykian/ws/releases/download/v0.13.0-rc.3/ws-darwin-arm64"
