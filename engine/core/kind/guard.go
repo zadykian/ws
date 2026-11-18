@@ -45,7 +45,7 @@ func (s guardSpec) parts(e Env, _ fs.FS) (func(context.Context) ([]resource.Reso
 		if !path.IsAbs(s.Home) || path.Clean(s.Home) != s.Home || s.Home == "/" {
 			return nil, fmt.Errorf("home %q is not a clean absolute path below /", s.Home)
 		}
-		r = keyCheck{m: e.M, user: account.User{Name: s.LoginKey, Home: s.Home}}
+		r = keyCheck{m: e.M, sys: e.System, user: account.User{Name: s.LoginKey, Home: s.Home}}
 	case s.SudoRight != "" && s.LoginKey == "" && s.Home == "" && len(s.Command) == 0:
 		if err := checkUser("sudo_right", s.SudoRight); err != nil {
 			return nil, err
@@ -72,13 +72,23 @@ func inContainer(m effect.Machine) bool {
 // takes only the keys in the user's authorized_keys.
 type keyCheck struct {
 	m    effect.Machine
+	sys  System
 	user account.User
 }
 
-// Plan fails where authorized_keys, or a directory above it, is a link: the user owns the home and
-// root reads the file. It also fails where the file is missing, holds no key, or is one sshd won't
-// use, outside a container.
-func (k keyCheck) Plan(context.Context) ([]resource.Change, error) {
+// Plan fails where the home is not the user's in the system's accounts, on every machine. sshd reads
+// the keys there, and the units of the user's files write there. It fails where authorized_keys, or
+// a directory above it, is a link: the user owns the home and root reads the file. It also fails
+// where the file is missing, holds no key, or is one sshd won't use, outside a container.
+func (k keyCheck) Plan(ctx context.Context) ([]resource.Change, error) {
+	home, err := k.sys.home(ctx, k.m, k.user.Name)
+	if err != nil {
+		return nil, err
+	}
+	if home != k.user.Home {
+		return nil, fmt.Errorf("home %s is not %s's home, %s, as the system's accounts give it: "+
+			"name that home, or none", k.user.Home, k.user.Name, home)
+	}
 	if inContainer(k.m) {
 		return nil, nil
 	}

@@ -76,6 +76,21 @@ func TestGuardRefusesNoLoginKey(t *testing.T) {
 	}
 }
 
+func TestGuardRefusesAHomeOtherThanTheAccounts(t *testing.T) {
+	for _, container := range []bool{false, true} {
+		e, m, _, _ := testEnv(true)
+		withAccount(m)
+		withKeys(m, "ssh-ed25519 AAAA u@mac\n", 0o600)
+		if container {
+			m.Files["/.dockerenv"] = nil
+		}
+		err := guardPlan(t, e, "[guard.a]\nlogin_key = \"u\"\nhome = \"/srv/u\"\n")
+		if err == nil || !strings.Contains(err.Error(), "home /srv/u is not u's home, /home/u") {
+			t.Errorf("container %t: plan = %v, want the home refused", container, err)
+		}
+	}
+}
+
 func TestGuardSudoRight(t *testing.T) {
 	const may = "User u may run the following commands on ws:\n    (ALL : ALL) "
 	for name, c := range map[string]struct {
