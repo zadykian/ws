@@ -27,10 +27,11 @@ What each document holds. How to write them is in the `writing` skill and [writi
 - [The frame's README](../../roles/server/ubuntu/frame/README.md) says how a role sits in mise's
   config: its files by env, its link, its lines and their order, the miserc and the pin.
 - [The Mac's README](../../roles/client/macos/README.md) is the Mac's side, `roles/client/macos/`
-  and the ws CLI. [Its git](../../roles/client/macos/git/README.md) is its git, and
-  [its values](../../roles/client/macos/values/README.md)
+  and the ws CLI. [Its git](../../roles/client/macos/git/README.md) is its git and gh.
+  [Its ssh](../../roles/client/macos/ssh/README.md) is its hosts, and [its cld](../../roles/client/macos/cld/README.md)
+  cld's unit. [Its values](../../roles/client/macos/values/README.md) is
   the Mac's values files, [the tunnel's](../../roles/client/macos/tunnel/README.md) the daemons' rules, and [ghostty](../../roles/client/macos/ghostty/README.md) its Ghostty
-  and cld, [zed](../../roles/client/macos/zed/README.md) its Zed. [The secrets](../../roles/server/ubuntu/secrets/README.md)
+  and what cld does there, [zed](../../roles/client/macos/zed/README.md) its Zed. [The secrets](../../roles/server/ubuntu/secrets/README.md)
   is the secrets file. [The router](../../roles/server/ubuntu/cable/router.md)
   is the router's steps, taken once by hand. [The Mac's runbook](../../roles/client/macos/runbook.md)
   and [the server's](../../roles/server/ubuntu/runbook.md) are each side's steps by hand.

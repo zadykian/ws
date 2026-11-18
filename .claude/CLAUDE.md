@@ -30,7 +30,8 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   links its directory ([The frame](../roles/server/ubuntu/frame/README.md)). The roles' tools
   lock in `mise/mise.server.lock`. `mise.mac.toml` is the Mac's part, and
   `roles/client/macos/frame` and `facts` its frame and its units' values
-  ([The Mac's frame](../roles/client/macos/frame/README.md)).
+  ([The Mac's frame](../roles/client/macos/frame/README.md)). `mise/mise.mac.lock` locks the Mac's
+  tools, gh among them, by their SHA-256.
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
 - `install.sh`: installs mise and runs `mise bootstrap` on a release's tree
@@ -138,9 +139,10 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([runbook.md](../roles/client/macos/runbook.md)). So is mise's binary, whose SHA-256 for each
   target `install.sh` holds ([install.sh](../install.sh)), and the Mac's runbook its macos-arm64's
   ([runbook.md](../roles/client/macos/runbook.md)). So is
-  yamllint ([lint-requirements.in](../.github/lint-requirements.in)), and Homebrew's `.pkg`, with its signer
-  ([runbook.md](../roles/client/macos/runbook.md)). The Mac's casks, Ghostty, Zed and their font,
-  take their latest by mise's `brew-cask`, outside the rule
+  yamllint ([lint-requirements.in](../.github/lint-requirements.in)), the Mac's gh, by
+  `mise/mise.mac.lock` ([git](../roles/client/macos/git/README.md#gh)), and Secretive's
+  `Secretive.zip`, with its notarization ([runbook.md](../roles/client/macos/runbook.md)). The
+  Mac's casks, Ghostty, Zed and their font, take their latest by mise's `brew-cask`, outside the rule
   ([ghostty](../roles/client/macos/ghostty/README.md#ghostty)). Go is checked against the
   SHA-256 its publisher lists, and the postgres-language-server and docker-language-server against
   theirs. mise's lock holds each for its platform ([mise.server.lock](../mise/mise.server.lock)).

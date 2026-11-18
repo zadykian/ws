@@ -71,8 +71,8 @@ key.
 _Avoid_: picked key, git key
 
 **User's directory**:
-A directory below the Mac's home that a step writes under, such as `~/.ssh`. A run makes it where
-missing, and stops where the path is no directory. It leaves the mode of one that exists. Core's
+A directory below the Mac's home that a step writes under, such as `~/.local/bin`. A run makes it
+where missing, and stops where the path is no directory. It leaves the mode of one that exists. Core's
 `file.UserDir` holds it.
 _Avoid_: folder
 

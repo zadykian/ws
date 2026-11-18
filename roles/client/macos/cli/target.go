@@ -45,8 +45,8 @@ func macTarget(p enginecli.Env, only *[]string, server *string) engine.Target {
 	}}
 }
 
-// macReport readies what ws client macos state reports. The ssh step that runs again is left out:
-// under a read it would repeat the first. With several servers and no --server it reports each.
+// macReport readies what ws client macos state reports. With several servers and no --server it
+// reports each.
 func macReport(p enginecli.Env, server *string) func(context.Context, engine.Call) (engine.Report, error) {
 	return func(context.Context, engine.Call) (engine.Report, error) {
 		confs, grouped, err := stateConfs(p, server)

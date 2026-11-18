@@ -2,8 +2,9 @@
 
 The Mac reaches the server, ws, over the cable from the 2.5GbE port of the display it docks at. It
 reaches it over the LAN, or elsewhere through the router's port forwards. `ws client macos apply`
-sets up its end of the cable ([The cable](#the-cable)), git ([git on the Mac](git/README.md)) and
-one host for ssh, `ws`, and `mise bootstrap` Zed ([Zed on the Mac](zed/README.md)). It goes
+sets up its end of the cable ([The cable](#the-cable)), and `mise bootstrap` git ([git on the
+Mac](git/README.md)), one host for ssh, `ws` ([ssh on the Mac](ssh/README.md)), and Zed ([Zed on
+the Mac](zed/README.md)). It goes
 through a WireGuard tunnel that ends on ws, at its slot's `10.99.N.1` whichever way the Mac
 connects. The sessions of `ssh ws` and
 Zed stay open as the Mac moves between the cable, the LAN and elsewhere, with a pause of a few seconds
@@ -13,11 +14,10 @@ a direct way: `ssh -o HostName=ADDRESS -o Port=PORT ws`, as ufw lets SSH in on e
 `WS_REMOTE_PORT` and the router's forward stay for that and for setup.
 
 The Mac's side is Go: one binary, `ws`, of isolated steps, which `go test` checks on each pull
-request. It runs as the user, with sudo where it needs root. It sets up cld, and `mise bootstrap`
-sets up Ghostty and a zsh hook ([Ghostty and cld on the Mac](ghostty/README.md)). mise installs
-Ghostty, Zed and a font as casks, with no Homebrew; gh still needs Homebrew, installed first by
-[the runbook](runbook.md). The runbook puts `ws` in `~/.local/bin` (put it on
-`PATH` by hand) from a release, checked against its `ws.sha256`
+request. It runs as the user, with sudo where it needs root. `mise bootstrap` sets up Ghostty, cld
+and a zsh hook ([Ghostty and cld on the Mac](ghostty/README.md)). mise installs Ghostty, Zed and a
+font as casks, and gh by its lock, with no Homebrew ([the runbook](runbook.md)). The runbook puts
+`ws` in `~/.local/bin` (put it on `PATH` by hand) from a release, checked against its `ws.sha256`
 ([Releases](../../../engine/core/update/README.md)). `ws` embeds the files it installs, so it
 needs no clone. Write the values below in `values.yml` first ([The two
 files](values/README.md#the-two-files)). Then:
@@ -38,11 +38,11 @@ version` prints its version, and `ws update` replaces it with the latest release
 
 ## What the Mac reports
 
-`ws client macos state` lists gh, cld, the cable's service, the tunnel's daemon, and the files and
-directories ws writes. A file that differs from ws's, or holds no `Written by` line, is a conflict.
-So is a cable's service that is disabled, which no run turns on. No report reads a private key:
-`private.key` shows by its owner and mode, a signing key by its `.pub`. `~/.ssh/config` and
-`~/.gitconfig` show whether they hold ws's line, and none of their text.
+`ws client macos state` lists the cable's service, the tunnel's daemon, and the files and
+directories its steps write. A file that differs from ws's, or holds no `Written by` line, is a
+conflict. So is a cable's service that is disabled, which no run turns on. No report reads a
+private key: `private.key` shows by its owner and mode. `mise -C /opt/ws bootstrap plan` shows what
+the units would change.
 
 ## The Mac's values.yml
 
@@ -66,14 +66,14 @@ names the network service of the display's adapter, and `WS_CABLE_PORT` ws's por
 cable](#the-cable). `WS_GIT_SIGNING_PUB_KEY` is the `.pub` of the key that signs git's commits on
 the Mac, by its path from `/` or `~/`: [git on the Mac](git/README.md). `WS_IDENTITY_PUB_KEY` is the
 `.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the socket of its agent: [ssh's
-hosts](#sshs-hosts). A run makes `/etc/ws` through sudo, for git's files, ssh's hosts and the
-tunnel's key, at mode 755.
+hosts](#sshs-hosts). A run makes `/etc/ws` through sudo, for the tunnel's key, at mode 755, as the
+bootstrap does for git's files and ssh's hosts.
 
 `WS_USER` is the user ssh logs in as: ws's key too, `zadykian` by default, or `root` for a
 `WS_TARGET` of `cloud`, which may have no other user. The other targets refuse `WS_USER=root`. A key
 with an empty value, as `WS_REMOTE: ""`, takes its default, as a missing line does: that user for
-`WS_USER` and 51820 for `WS_TUNNEL_PORT`. `WS_IDENTITY_PUB_KEY` has none: the script stops without it
-([ssh's hosts](#sshs-hosts)). Nor has `WS_GIT_SIGNING_PUB_KEY`
+`WS_USER` and 51820 for `WS_TUNNEL_PORT`. `WS_IDENTITY_PUB_KEY` has none: the bootstrap stops
+without it ([ssh's hosts](#sshs-hosts)). Nor has `WS_GIT_SIGNING_PUB_KEY`
 ([git on the Mac](git/README.md)).
 
 `WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
@@ -94,70 +94,12 @@ sudo would leave root's files where the user's go.
 
 ## ssh's hosts
 
-The script writes `/etc/ws/ssh_config`, root's and 644. It holds a host for each server of
-`servers/`, named as the server is, at its tunnel's `10.99.N.1` from the first run, whichever
-network the Mac is on. A server's `10.99.N.1` is `10.99.0.1` at slot 0. So `ssh NAME` fails until
-the keys' exchange ends ([The Mac's tunnel](#the-macs-tunnel)), where a direct way serves. It logs
-in as the server's `WS_USER` with the key below, and checks the server's host key under its name
-(`HostKeyAlias`). A server whose `values.yml` fails to load stops the run. A session ends after 120
-s without word from the server, far longer than a switch of the tunnel takes.
-
-ssh offers ws one key alone (`IdentitiesOnly`): the one whose `.pub` `WS_IDENTITY_PUB_KEY` names, as
-ws's copy of a key of Secretive's ([Secretive's keys](git/README.md#secretives-keys)) or a file key.
-The script picks none by itself, not even the agent's sole key, as a key made for another use would
-go to GitHub unasked. Without the key, or with it empty, it stops, and gives the lines to add to
-`values.yml`. They name each P-256 key that Secretive's agent lists, by its comment and SHA256
-fingerprint. The agent is the one whose socket `WS_IDENTITY_AGENT` names, else Secretive's where the
-`.pub` is there. Else ssh reads the file beside the `.pub`, its passphrase kept in the Keychain. The
-script stops where that `.pub` is missing or unreadable. It stops too where the `.pub` holds other
-than one public key's line, as a private key or a certificate does. So does a key that ssh-keygen
-cannot read, or one of a type that ws's OpenSSH lacks, as Secretive's ML-DSA keys on macOS 26.
-
-The script puts `Include /etc/ws/ssh_config` first in `~/.ssh/config`, as ssh keeps the first value
-it reads for each key. So neither the file's own settings nor those of other files override ws's.
-Where the line is missing, the script adds it at the top and keeps the old file as
-`~/.ssh/config.TIME~`. Where the line sits below other settings, the script stops. The line also
-counts in quotes, or as the first of several paths.
-
-Where `~/.ssh/config` is a link, as a dotfiles manager makes it, the script reads the file it points
-to. It stops where the line is missing there, rather than replace the link with a file, and the
-report shows the file as a conflict. The script leaves `~/.ssh/config.d/ws` and its `Include` alone:
-a user's old line stays the user's. It stops where a `Host` or `Match` of `~/.ssh/config`'s own
-names a server, whose settings would come after those of `/etc/ws/ssh_config`: remove it, as its
-`IdentityFile` would add a key to ws's.
-
-ssh keeps the first `IgnoreUnknown` it reads too. `/etc/ws/ssh_config` needs one for the file key's
-`UseKeychain`, which only Apple's ssh knows, and keeps it with an agent's key. So it carries the
-patterns of every `IgnoreUnknown` in `~/.ssh/config`. Run the script again after a change to those.
-A pattern in a file that `~/.ssh/config` includes must be in `~/.ssh/config` too, as the script
-reads no other file.
-
-Before it writes, the script has `ssh -G`, for each server, read the new `/etc/ws/ssh_config` alone.
-Then it reads it first, `~/.ssh/config` next, without its own Include of the old file, and the
-system's file last. Where ssh refuses either, or reads a server at another address or user than
-its block sets, the script stops and changes nothing, under `--check` too. The system's file goes
-through an Include there, so its relative Includes resolve under `~/.ssh`. A run changes only what
-differs, so a second prints nothing but warnings once `WS_PUBLIC_KEY` is set. Until then, each run
-prints the Mac's public key again, with the commands of [The Mac's tunnel](#the-macs-tunnel).
-`--check` prints each change as a diff and makes none.
-
-Through the forward, ws takes logins from the internet: by key alone, as everywhere, with fail2ban
-banning the address of the network the Mac is on after 5 failed ones. Over the tunnel, ws sees
-the Mac as `10.99.N.2`. Failed logins over the tunnel ban it, which shuts `ssh ws` out for an
-hour. `ssh -o HostName=ADDRESS -o Port=PORT ws` comes from another address, and from there
-`fail2ban-client set sshd unbanip 10.99.N.2` lifts the ban.
-
-Unless `WS_SECURITY_OUTBOUND` is false, ws opens no connection to the Mac over the cable, the LAN or
-the tunnel ([The firewall](../../server/ubuntu/tunnel/README.md#the-firewall), [Outbound](../../server/ubuntu/security/README.md#outbound)). That
-holds for its bridged containers and its users, but those who can become root. On a VM on the Mac,
-DHCP and DNS still go to the Mac, which serves them.
-
-The first login asks whether to trust ws's host key: compare its fingerprint with the one
-`ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` prints on ws's console. On the cable and the LAN,
-macOS asks once whether Ghostty, Zed or another app may find devices on the local
-network: allow it. Only a direct way needs it. ssh run from Terminal needs no such grant, and
-neither does `ws` through the tunnel. The tunnel's utun is no local network, and macOS lets daemons
-that run as root reach one anyway (Apple's TN3179).
+`mise -C /opt/ws bootstrap` writes `/etc/ws/ssh_config`, root's and 644, with a host for each
+server through its tunnel, and puts its Include first in `~/.ssh/config`
+([ssh on the Mac](ssh/README.md)). ssh offers ws the key of `WS_IDENTITY_PUB_KEY` alone. Failed
+logins over the tunnel ban the Mac's `10.99.N.2` for an hour: `ssh -o HostName=ADDRESS -o
+Port=PORT ws` comes from another address, and from there `fail2ban-client set sshd unbanip
+10.99.N.2` lifts the ban.
 
 ## The cable
 
