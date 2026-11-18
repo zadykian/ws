@@ -1,7 +1,7 @@
 # A Mac's servers in CI
 
 The Mac's jobs work on one server named `ws`, at slot 0, as the Mac's side says
-([The two files](../../roles/client/macos/values/README.md)). The cases write its files through
+([The two files](../../roles/client/values/README.md)). The cases write its files through
 [mac-conf.sh](../mac-conf.sh): `conf_write` splits the lines of stdin between `values.yml` and
 `servers/NAME/values.yml`, and `conf_print` joins them. Both sit in `/etc/ws`, so `conf_write` writes
 them through sudo. `conf_server` names the server, `ws` by
@@ -19,9 +19,9 @@ Four cases of the `mac` job work on a second server:
   removes lab's directory.
 - `mac/90-clash.sh` makes the files `lab` and `box`, which clash with ws's. The bootstrap's plan
   must refuse each with its reason, and name `ws client macos remove lab` beside it.
-- `mac/92-second.sh` gives lab a third wireguard-go on UDP 51821. `mise -C /opt/ws bootstrap` must
-  then give lab a daemon and a utun of its own, at 10.99.1.1, and leave ws's daemon with its
-  handshake. A second bootstrap must call no sudo.
+- `mac/92-second.sh` gives lab a third wireguard-go on UDP 51821. `mise -C /opt/ws/roles/client
+  bootstrap` must then give lab a daemon and a utun of its own, at 10.99.1.1, and leave ws's daemon
+  with its handshake. A second bootstrap must call no sudo.
 - `mac/94-remove.sh` runs `remove lab`: its files, daemon, host and `known_hosts` line must go, and
   ws's stay. `remove box` and `remove ws` must refuse, and the plan then exit 0.
 

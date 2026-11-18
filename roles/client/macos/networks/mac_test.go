@@ -8,9 +8,9 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/resource/file"
-	"github.com/zadykian/ws/roles/client/macos/facts"
+	"github.com/zadykian/ws/roles/client/facts"
 	"github.com/zadykian/ws/roles/client/macos/networks"
-	"github.com/zadykian/ws/roles/client/macos/values"
+	"github.com/zadykian/ws/roles/client/values"
 )
 
 // resolverHead is the header of a resolver that ws wrote.

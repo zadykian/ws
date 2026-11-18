@@ -121,7 +121,7 @@ type lockEntry map[string]any
 // The lock holds each tool at its version, under MISE_LOCKED=1. A download's entry holds its url
 // and SHA-256 for both platforms; the servers' sums are those ws pinned in Go before mise.
 func TestDevtoolsLockHoldsEachTool(t *testing.T) {
-	text, err := os.ReadFile("../../../../mise/mise.server.lock")
+	text, err := os.ReadFile("../../mise/mise.server.lock")
 	if err != nil {
 		t.Fatal(err)
 	}

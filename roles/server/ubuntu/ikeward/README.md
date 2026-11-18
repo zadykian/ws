@@ -40,8 +40,8 @@ WS_IKEWARD_FORWARD_FROM: [10.99.0.2]       # the WireGuard peers that reach the 
 ```
 
 Put the two files in [the secrets file](../shell/README.md#the-secrets-file), whole. Add the `.p12`'s
-password, left out where it has none ([ws's secrets](../secrets/README.md#editing)). Run the
-bootstrap ([The run](../secrets/README.md#the-run)). Then remove the plain files, which hold the
+password, left out where it has none ([ws's secrets](../../secrets/README.md#editing)). Run the
+bootstrap ([The run](../../secrets/README.md#the-run)). Then remove the plain files, which hold the
 client's key:
 
 ```sh
@@ -110,9 +110,9 @@ the VPN, as ikeward's page on
 [NAT](https://github.com/zadykian/ikeward/blob/v0.3.0/docs/nat.md#networks-the-server-forwards)
 says. A server's values.yml sends the VPN's networks and domains into the tunnel, as
 `WS_TUNNEL_NETWORKS` and `WS_RESOLVERS`
-([the two files](../../../client/macos/values/README.md#the-two-files)). A private repository's script
+([the two files](../../../client/values/README.md#the-two-files)). A private repository's script
 may do it instead
-([Routes and resolvers of another repository](../../../client/macos/README.md#routes-and-resolvers-of-another-repository)).
+([Routes and resolvers of another repository](../../../client/README.md#routes-and-resolvers-of-another-repository)).
 
 ## The plan
 

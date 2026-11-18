@@ -1,14 +1,13 @@
 ---
 paths:
   - "cmd/**"
-  - "main.go"
   - "engine/**"
   - "roles/**"
 ---
 
 # mac
 
-The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `roles/`
+The rules a change to the ws CLI keeps, in `cmd/`, `engine/` and `roles/`
 (its module is at the root), each linking its reason
 ([#273](https://github.com/zadykian/ws/issues/273)). The hard rules of
 [CLAUDE.md](../CLAUDE.md#hard-rules) hold here too.
@@ -31,21 +30,21 @@ The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `rol
 - Effects are passed in: a step holds `effect.Prompt`, `effect.Out` and `effect.Machine` as fields
   and a function takes them as parameters. Tests use the fakes of
   [effecttest](../../engine/core/effect/effecttest/effecttest.go), never the real ones.
-- The Mac's units, of `mise -C /opt/ws bootstrap`, read as the user and never through sudo, so
-  that a run that changes nothing asks no password. A file of root's that a unit writes is readable
-  by all, and the Mac's config holds no root path of mise's own
-  ([The Mac's frame](../../roles/client/macos/frame/README.md#roots-paths)).
+- The Mac's units, of `mise -C /opt/ws/roles/client bootstrap`, read as the user and never through
+  sudo, so that a run that changes nothing asks no password. A file of root's that a unit writes is
+  readable by all, and the Mac's config holds no root path of mise's own ([The Mac's
+  frame](../../roles/client/macos/frame/README.md#roots-paths)).
 - No cgo: ws builds with `CGO_ENABLED=0`. The race detector's cgo is the tests' alone
   ([Makefile](../../Makefile)).
 - `--server NAME` is `ws client macos`'s persistent flag, bound once in `Command` and read through a
   pointer at run time.
 - `ws client macos remove NAME` changes nothing on the server: it takes the Mac's files of that
-  server away, then runs `MISE_LOCKED=1 mise -C /opt/ws bootstrap`, which takes its daemon and hosts
-  away. It takes no `--server`.
+  server away, then runs `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap`, which takes its
+  daemon and hosts away. It takes no `--server`.
 - ws is cobra's: a command parses no flag or argument by hand and holds no usage text.
   `cli.Execute` runs the root, names the command in each error, and returns 2 for a usage error. A
-  group of commands exists on the systems where it runs. `clientCmd`, over macos/cli's `Command`, is
-  built everywhere and tested on Linux, and `groups` lists it in a `//go:build darwin` file
+  group of commands exists on the systems where it runs. `clientCmd`, over client/cli's `Command`,
+  is built everywhere and tested on Linux, and `groups` lists it in a `//go:build darwin` file
   ([groups_macos.go](../../cmd/groups_macos.go)). Commands take what they need from the
   process through `cli.Env`, which tests build from fakes with `clitest`. depguard keeps cobra and
   pflag in `cmd`, the `cli` packages and `.tools/` ([golangci.yml](../../.tools/lint/golangci.yml)).

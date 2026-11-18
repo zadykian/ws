@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/engine/cli"
-	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
+	ubuntucli "github.com/zadykian/ws/roles/server/cli"
 )
 
 // unitCmd returns ws unit, with the server's side, as mise calls it at ws's root. It builds

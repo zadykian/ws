@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -16,7 +17,7 @@ const miseStatus = "mise bootstrap packages status --json"
 
 // verifyEnv runs ws unit verify on specs, with a sample of mise's status in testdata. mise printed
 // that sample for the units file/a and file/b and an apt package.
-func verifyEnv(t *testing.T, specs string) (status int, stdout, stderr string) {
+func verifyEnv(t *testing.T, specs string) (status int, stdout, stderr, runDir string) {
 	sample, err := os.ReadFile("testdata/mise-status.json")
 	if err != nil {
 		t.Fatal(err)
@@ -24,19 +25,21 @@ func verifyEnv(t *testing.T, specs string) (status int, stdout, stderr string) {
 	e, m := unitEnv(t, map[string]string{"r/units.toml": specs, "r/a": "1\n", "r/b": "2\n", "r/c": "3\n"})
 	e.Euid = 1000
 	m.Results[miseStatus] = effecttest.Result{Out: sample}
-	return runUnit(e, "verify")
+	status, stdout, stderr = runUnit(e, "verify")
+	return status, stdout, stderr, filepath.Dir(e.Getenv("WS_UNITS"))
 }
 
 func TestVerifyPassesWithEveryUnit(t *testing.T) {
-	status, stdout, stderr := verifyEnv(t, fileUnit("a", "/etc/a", "")+fileUnit("b", "/etc/b", ""))
+	status, stdout, stderr, _ := verifyEnv(t, fileUnit("a", "/etc/a", "")+fileUnit("b", "/etc/b", ""))
 	if status != 0 || stdout != "ws units: none missing\n" || stderr != "" {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
 }
 
 func TestVerifyNamesAMissingUnit(t *testing.T) {
-	status, stdout, stderr := verifyEnv(t, fileUnit("a", "/etc/a", "")+fileUnit("c", "/etc/c", ""))
-	if status != 1 || stdout != "" || !strings.Contains(stderr, "mise's plan lacks ws:file/c:") {
+	status, stdout, stderr, runDir := verifyEnv(t, fileUnit("a", "/etc/a", "")+fileUnit("c", "/etc/c", ""))
+	if status != 1 || stdout != "" || !strings.Contains(stderr, "mise's plan lacks ws:file/c:") ||
+		!strings.Contains(stderr, "or run mise in "+runDir) {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
 }
@@ -48,7 +51,9 @@ func TestVerifyFailsWithoutTheWsManager(t *testing.T) {
 	} {
 		e, m := unitEnv(t, map[string]string{"r/units.toml": fileUnit("a", "/etc/a", ""), "r/a": "1\n"})
 		m.Results[miseStatus] = effecttest.Result{Out: []byte(out)}
-		if status, _, stderr := runUnit(e, "verify"); status != 1 || !strings.Contains(stderr, "no ws plugin loaded") {
+		runDir := filepath.Dir(e.Getenv("WS_UNITS"))
+		if status, _, stderr := runUnit(e, "verify"); status != 1 || !strings.Contains(stderr, "no ws plugin loaded") ||
+			!strings.Contains(stderr, "or run mise in "+runDir) {
 			t.Errorf("%s: status = %d, stderr = %q", name, status, stderr)
 		}
 	}

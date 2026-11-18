@@ -248,7 +248,7 @@ ws by `mise which ws`, the pinned binary. The write hook runs `ws unit verify` f
   change, file diffs included. The last line names the units that changed. A unit whose `when`
   does not hold changes nothing: alone, it ends `changed: none`.
 - **Where it reads.** The specs sit below `$WS_UNITS`, else below the side's own directory: the
-  server's is `/opt/ws/roles/server/ubuntu`, the checkout of `mise bootstrap --from-dir /opt/ws`.
+  server's is `/opt/ws/roles/server/ubuntu`, in the checkout that `install.sh` makes at `/opt/ws`.
   The values are the side's file, `/etc/ws/values.yml` on the server, and confine the machine's
   writes under `WS_HOME`.
 - **verify.** mise drops the units of a plugin that it refuses, with a warning and exit 0. `verify`
@@ -258,8 +258,12 @@ ws by `mise which ws`, the pinned binary. The write hook runs `ws unit verify` f
 - **--whole.** The read hook gets every line of mise's plan, and passes `--whole`. Where the specs
   hold a unit that the lines lack, and it has a change, each unit reads `fails: mise's plan lacks
   ws:KIND/NAME`, so the hook fails every plan and run. A lacking unit in sync passes: mise reads
-  the lines again before it installs, and leaves out those in sync. It calls no mise, as a check
-  inside mise's own read would call the hook again.
+  the lines again before it installs, and leaves out those in sync. Where ws runs outside the
+  run directory, each unit fails, in sync too. It calls no mise, as a check inside mise's own read
+  would call the hook again.
+- **The run directory.** The failures of `verify` and `--whole` name the specs' parent, as
+  `run mise in /opt/ws/roles/server`
+  ([The check](../../../roles/server/ubuntu/frame/README.md#the-check-against-a-silent-skip)).
 - **Exit codes.** 0 done. 1 a failure: a spec or values that fail to load, a plan, an apply, a
   refused check, a SHA-256 or a skipped unit. `read` and `write` as a user other than root fail
   too. So do the server's on a system other than Ubuntu 26.04. 2 a usage error, such as a unit

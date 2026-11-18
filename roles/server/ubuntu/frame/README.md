@@ -1,9 +1,9 @@
 # The frame
 
-The frame is what each role of mise's config leans on. One `mise bootstrap` in the checkout at
-`/opt/ws` sets up the server: mise's own parts first, then ws's units, which mise hands to
-`ws unit` through the plugin `ws`. A role moved to mise is its config and its spec, and holds no
-Go.
+The frame is what each role of mise's config leans on. One `mise bootstrap` sets up the server, in
+the side's run directory, `roles/server` of the checkout at `/opt/ws`. mise's own parts run first,
+then ws's units, which mise hands to `ws unit` through the plugin `ws`. A role moved to mise is its
+config and its spec, and holds no Go.
 
 ## Its files
 
@@ -11,7 +11,7 @@ Go.
 | --- | --- |
 | [`mise.toml`](../../../../mise.toml) | Both sides': mise's settings and the pin of ws, a release, for three platforms. |
 | [`mise.lock`](../../../../mise.lock) | The release's SHA-256 for each platform, which mise checks as it installs ws. |
-| [`mise/mise.server.lock`](../../../../mise/mise.server.lock) | The roles' tools: each download's url and SHA-256 for each platform ([devtools](../devtools/README.md#the-tools)). |
+| [`roles/server/mise/mise.server.lock`](../../mise/mise.server.lock) | The roles' tools: each download's url and SHA-256 for each platform ([devtools](../devtools/README.md#the-tools)). |
 | [`mise.server.toml`](../../../../mise.server.toml) | The server's: the plugin, dpkg's options, `/etc/ws` and the check against a silent skip. |
 | [`plugins/ws`](../../../../plugins/ws) | The plugin: a hook runs one `ws unit read` or `ws unit write` ([ws unit](../../../../engine/core/kind/README.md#ws-unit)). |
 | `units.toml`, `mise.server.toml` here | The role `frame`: the unit that keeps `/usr/local/bin/ws`. |
@@ -29,11 +29,11 @@ A role keeps its directory, `roles/server/ubuntu/ROLE/`, and its page there:
 - **Its mise files,** one an env. `mise.server.toml` holds what every server gets: apt's sources,
   `[bootstrap.packages]`, files, directories and tools. `mise.booted.toml` holds the services, the
   firewall, and each file entry that names a service in `notify`. `mise.account.toml` holds what
-  an account gets where `WS_USER` is not root. A role holds no plain `mise.toml`, which the Mac
-  would load too.
-- **Its link,** `mise/conf.d/server-ROLE`, to `../../roles/server/ubuntu/ROLE`. mise loads the
+  an account gets where `WS_USER` is not root. A role holds no plain `mise.toml`, which every
+  env would load.
+- **The side's link,** `roles/server/mise/conf.d`, to `../ubuntu`. mise loads each role's
   directory through it as a fragment, and a relative `source` resolves from the role's
-  directory. A role lands with its directory and its link, and edits no shared file.
+  directory. A role lands with its directory alone, and edits no shared file.
 
 mise merges `[bootstrap.packages]` across fragments, but an entry of a path or a service is whole.
 A later env's entry replaces an earlier one, so a file's entry in `mise.booted.toml` repeats the
@@ -54,10 +54,11 @@ The envs follow `WS_USER` alone, so a unit's presence in a spec does too. A unit
 has no env. A unit that another value turns off stays in the spec, off by its `when`. Else its
 line would name a unit that `ws unit read` refuses.
 
-[`TestSpecsMatchMiseLines`](../cli/specs_test.go) loads the specs for root and for an account. It
+[`TestSpecsMatchMiseLines`](../../cli/specs_test.go) loads the specs for root and for an account. It
 fails on a line missing or extra, and prints the line to paste. It fails on a unit for root alone.
 `TestUnitsFollowTheUserAlone` turns each other value over and fails where the units change.
-`TestEachRoleIsLinked` fails on a role without its link, or a mise file that no env loads.
+`TestTheSideLinksItsRoles` fails where the link leads elsewhere or its directory holds a file, and
+on a mise file that no env loads.
 
 ## The order
 
@@ -109,3 +110,9 @@ where mise's plan lacks a unit of the specs. On a first run, and on the run that
 mise renders it before it installs the pin's ws. It prints the line of a pass then, so that the
 next plan finds the file unchanged. Each unit reads as missing on that run, so the plugin's write
 hook runs, and it runs `ws unit verify` before `ws unit write`.
+
+The check runs in the run's directory, where a nested mise loads the roles as the run does. A run
+from `/opt/ws`, or from the Mac's `roles/client`, loads no role of the server's, and a first one
+would set up the frame alone with exit 0. So the check looks for the frame's own
+`mise.server.toml` through the run's link. It fails a run without it before any phase, and names
+`mise -C /opt/ws/roles/server`, as its test proves.

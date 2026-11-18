@@ -6,7 +6,7 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/signoz/internal/api"
 	"github.com/zadykian/ws/roles/server/ubuntu/signoz/internal/dashboards"
 	"github.com/zadykian/ws/roles/server/ubuntu/signoz/internal/retention"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 // Sync returns the steps of ws server ubuntu signoz sync, in the order they run. The wait for

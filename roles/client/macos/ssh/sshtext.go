@@ -7,8 +7,8 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/roles/client/internal/keys"
 	"github.com/zadykian/ws/roles/client/macos/cld"
-	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 

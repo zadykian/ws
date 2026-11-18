@@ -4,20 +4,22 @@ ws sets up the maintainer's development server from code: `mise bootstrap`, whic
 runs on the machine itself, each role as mise's config and ws's units. Its roles set up packages,
 SSH by key and a firewall, the links to the Mac, an IKEv2 VPN where a profile is given, and the
 fans. Then the shell, git,
-tmux, lazygit, Fresh, Docker, claude, SigNoz with its collector, and Zed's server. `roles/client/macos/`
+tmux, lazygit, Fresh, Docker, claude, SigNoz with its collector, and Zed's server. `roles/client/`
 sets up the Mac that works on the server. The rest is the docs, the lint gates' tools and CI.
 
 ## Layout
 
 - `roles/server/ubuntu/NAME`: a role per directory, as its mise config and its spec of units, with
   its page, `README.md`, and a line in the root README. The units run in the order of their
-  `after` ([The order](../roles/server/ubuntu/frame/README.md#the-order)), and
-  `roles/server/ubuntu/values` types the machine's values: `/etc/ws/values.yml`, on the machine
-  alone, such as the cable's port ([The cable](../roles/server/ubuntu/cable/README.md#the-cable)). Each role
+  `after` ([The order](../roles/server/ubuntu/frame/README.md#the-order)). Each role
   holds its pins, and its templates and files beside its spec. ws-fans, the fans' service, is
   `ws server ubuntu fans`, in `roles/server/ubuntu/fans/daemon`.
+- `roles/server/`: the server's side, its roles in `ubuntu/`. Above them sit the packages that
+  serve them all, `cli`, `secrets`, `internal/plan` and `values`, and the runbook. `values` types
+  the machine's values: `/etc/ws/values.yml`, on the machine alone, such as the cable's port
+  ([The cable](../roles/server/ubuntu/cable/README.md#the-cable)).
 - `go.mod` and `go.sum`: the Go module `github.com/zadykian/ws`, at the root.
-  `main.go` runs `cmd`, which composes the root and the exit codes with the two sides'
+  `cmd/ws/main.go` runs `cmd`, which composes the root and the exit codes with the two sides'
   commands. `engine/cli` builds the root and the exit codes. `engine/core` holds `step`,
   `effect`, with `effect/effecttest`, `effect/local` and `effect/units`, and `resource`, with
   `resource/resourcetest`, the resources the kinds share, and `kind`, the kinds that a role's
@@ -26,19 +28,22 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 - `mise.toml` and `mise.lock`: mise's config that both sides share, its settings and the pin of
   ws, a release, with the release's SHA-256 for each target in the lock. `mise.server.toml` is
   the server's part, and `plugins/ws` the plugin that hands ws's units to `ws unit`. A role holds
-  its spec, `units.toml`, and its mise files beside its page, and `mise/conf.d` links its
-  directory ([The frame](../roles/server/ubuntu/frame/README.md)). The roles' tools
-  lock in `mise/mise.server.lock`. `mise.mac.toml` is the Mac's part, and
-  `roles/client/macos/frame` and `facts` its frame and its units' values
-  ([The Mac's frame](../roles/client/macos/frame/README.md)). `mise/mise.mac.lock` locks the Mac's
-  tools, gh among them, by their SHA-256.
+  its spec, `units.toml`, and its mise files beside its page. Each side's `roles/SIDE/mise/`
+  holds its one link, `conf.d`, to its directory of roles, and its lock
+  ([The frame](../roles/server/ubuntu/frame/README.md)). The roles' tools lock in
+  `roles/server/mise/mise.server.lock`. `mise.mac.toml` is the Mac's part, and
+  `roles/client/macos/frame` and `roles/client/facts` its frame and its units' values
+  ([The Mac's frame](../roles/client/macos/frame/README.md)). `roles/client/mise/mise.mac.lock`
+  locks the Mac's tools, gh among them, by their SHA-256.
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
 - `install.sh`: installs mise and runs `mise bootstrap` on a release's tree
   ([Releases](../.github/workflows/release.md)).
-- `roles/client/macos/`: the Mac's side ([The Mac](../roles/client/macos/README.md)). Its roles'
-  units write `ghostty/files/ws.ghostty`, Ghostty's settings, `zed/files/`, Zed's settings and
-  keymap, and `zsh/files/zshrc`, the zsh hook that turns off the modes that a drop leaves on.
+- `roles/client/`: the Mac's side ([The Mac](../roles/client/README.md)), its roles in `macos/`.
+  Above them sit the packages that serve them all, `cli`, `values`, `facts` and `internal`, and
+  the runbook. Its roles' units write `ghostty/files/ws.ghostty`, Ghostty's settings,
+  `zed/files/`, Zed's settings and keymap, and `zsh/files/zshrc`, the zsh hook that turns off the
+  modes that a drop leaves on.
 - The pages sit beside their code, as the `README.md` of a role or a package. A second page stands
   beside one where the cap keeps two apart, as [docs.md](rules/docs.md) lists them.
   `.tools/README.md` holds the gates and `.github/workflows/README.md` CI.
@@ -132,16 +137,16 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([ci.yml](../.github/workflows/ci.yml)) and the gates' tools ([.tools/run](../.tools/run)). So is ws's
   binary: `mise.lock` holds its SHA-256 for each target, which mise checks as it installs
   ([mise.lock](../mise.lock)). A Mac's runbook checks it by hand too
-  ([runbook.md](../roles/client/macos/runbook.md)). So is mise's binary, whose SHA-256 for each
+  ([runbook.md](../roles/client/runbook.md)). So is mise's binary, whose SHA-256 for each
   target `install.sh` holds ([install.sh](../install.sh)), and the Mac's runbook its macos-arm64's
-  ([runbook.md](../roles/client/macos/runbook.md)). So is
+  ([runbook.md](../roles/client/runbook.md)). So is
   yamllint ([lint-requirements.in](../.github/lint-requirements.in)), the Mac's gh, by
-  `mise/mise.mac.lock` ([git](../roles/client/macos/git/README.md#gh)), and Secretive's
-  `Secretive.zip`, with its notarization ([runbook.md](../roles/client/macos/runbook.md)). The
+  `roles/client/mise/mise.mac.lock` ([git](../roles/client/macos/git/README.md#gh)), and Secretive's
+  `Secretive.zip`, with its notarization ([runbook.md](../roles/client/runbook.md)). The
   Mac's casks, Ghostty, Zed and their font, take their latest by mise's `brew-cask`, outside the rule
   ([ghostty](../roles/client/macos/ghostty/README.md#ghostty)). Go is checked against the
   SHA-256 its publisher lists, and the postgres-language-server and docker-language-server against
-  theirs. mise's lock holds each for its platform ([mise.server.lock](../mise/mise.server.lock)).
+  theirs. mise's lock holds each for its platform ([mise.server.lock](../roles/server/mise/mise.server.lock)).
   gopls and Delve are built through Go's checksum database, as mise's `go:` tools
   ([devtools](../roles/server/ubuntu/devtools/README.md#the-tools)). roslyn-language-server is pinned by version alone
   ([units.toml](../roles/server/ubuntu/devtools/units.toml)). The npm servers are checked against the sha512

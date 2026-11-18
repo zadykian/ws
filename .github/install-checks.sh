@@ -75,14 +75,16 @@ printf x >>"$bad/mise-v$version-$asset"
 echo v0.2.0 >"$tmp/serve/latest"
 
 # The release's tree: a config with an entry for each env's file, and a directory for them. The
-# account's file sits in a fragment, as a role's does, and the root holds none. On such a tree
-# mise trust --all never ends, so the case of the latest release proves install.sh's trust.
+# account's file sits in a role, behind the side's link, as a role's does, and the root holds
+# none. On such a tree mise trust --all never ends, so the case of the latest release proves
+# install.sh's trust.
 repo=$tmp/repo
-mkdir -p "$repo/mise/conf.d/part"
+mkdir -p "$repo/roles/server/ubuntu/part" "$repo/roles/server/mise"
+ln -s ../ubuntu "$repo/roles/server/mise/conf.d"
 echo '# the install job'"'"'s tree' >"$repo/mise.toml"
 for env in server booted account; do
     config=$repo/mise.$env.toml
-    [ "$env" != account ] || config=$repo/mise/conf.d/part/mise.$env.toml
+    [ "$env" != account ] || config=$repo/roles/server/ubuntu/part/mise.$env.toml
     cat >"$config" <<TOML
 [bootstrap.directories."/etc/ws-install-check"]
 mode = "0755"
@@ -144,7 +146,7 @@ for env in "${want[@]}"; do
 done
 # install.sh trusts the tree, so that a plan by hand, with no MISE_TRUSTED_CONFIG_PATHS, runs and
 # finds no change. This tree holds no tool, so the plan needs no MISE_DATA_DIR either.
-as_root /usr/local/bin/mise -C /opt/ws bootstrap plan --detailed-exitcode </dev/null >/dev/null ||
+as_root /usr/local/bin/mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null >/dev/null ||
     fail "a plan by hand after install.sh found a change or failed"
 echo "::endgroup::"
 

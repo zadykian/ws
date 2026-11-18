@@ -1,0 +1,130 @@
+package cli
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"io/fs"
+
+	"github.com/spf13/cobra"
+
+	"github.com/zadykian/ws/engine"
+	enginecli "github.com/zadykian/ws/engine/cli"
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/roles/server/secrets"
+	"github.com/zadykian/ws/roles/server/ubuntu/git"
+	"github.com/zadykian/ws/roles/server/values"
+)
+
+// newGitCmd returns ws server ubuntu git: the procedures that the git role's units run.
+func newGitCmd(p enginecli.Env) *cobra.Command {
+	return enginecli.Group("git", "the git role's checks and procedures, which its units run",
+		newGitCheckCmd(p), newGitIncludedCmd(p), newGitTokensCmd(p), newGitClonesCmd(p))
+}
+
+// gitInputs reads what git's commands act on: the values, WS_USER's account and the secrets file,
+// whose absence gives no secrets, as on a machine with none.
+func gitInputs(ctx context.Context, m effect.Machine) (values.Values, account.Account, secrets.Secrets, error) {
+	v, err := values.Load(m, serverVars)
+	if err != nil {
+		return v, account.Account{}, secrets.Secrets{}, err
+	}
+	a, err := account.User{Name: v.User, Home: v.Home}.Lookup(ctx, m)
+	if err != nil {
+		return v, a, secrets.Secrets{}, err
+	}
+	s, err := secrets.Store{M: m}.Load(ctx)
+	if errors.Is(err, fs.ErrNotExist) {
+		return v, a, secrets.Secrets{}, nil
+	}
+	return v, a, s, err
+}
+
+// newGitCheckCmd returns ws server ubuntu git check.
+func newGitCheckCmd(p enginecli.Env) *cobra.Command {
+	return &cobra.Command{
+		Use:   "check",
+		Short: "refuse git's clones and tokens that the role would act on, and note what shadows ws's settings",
+		Long: "It reads the values of " + serverVars + " and the secrets file, where there is one. It fails where an " +
+			"entry of WS_GIT_CLONES holds a user name or a token in its URL, or where an entry of the secrets file's " +
+			"[git] table is refused (roles/server/ubuntu/git/README.md#git-credentials). No message quotes a token " +
+			"or a repository.\n\nIt prints a warning on stdout for each setting of ~/.gitconfig that shadows " +
+			"/etc/ws/gitconfig's, by its name, never its value. The git role's guard runs it, before the tokens " +
+			"and the clones.",
+		Args: cobra.NoArgs,
+		RunE: func(c *cobra.Command, _ []string) error {
+			v, a, s, err := gitInputs(c.Context(), p.Machine)
+			if err != nil {
+				return err
+			}
+			notes, err := git.Check(c.Context(), p.Machine, a, v, s)
+			for _, n := range notes {
+				_, _ = fmt.Fprintln(c.OutOrStdout(), "warning: "+n)
+			}
+			return err
+		},
+	}
+}
+
+// newGitIncludedCmd returns ws server ubuntu git included.
+func newGitIncludedCmd(p enginecli.Env) *cobra.Command {
+	return &cobra.Command{
+		Use:   "included",
+		Short: "say by the exit status whether the git config on stdin includes /etc/ws/gitconfig at its top",
+		Long: "It reads the text of ~/.gitconfig on its standard input, as git does. It exits 0 where the text " +
+			"includes /etc/ws/gitconfig once, at its top, and 1 where it lacks the include. It exits 2 with the " +
+			"reason where the include sits below the file's own settings or comes twice, which it would then " +
+			"override, or where git cannot read the text. The git role's unit of the include runs it, and " +
+			"refuses the file on 2.",
+		Args: cobra.NoArgs,
+		RunE: func(c *cobra.Command, _ []string) error {
+			text, err := io.ReadAll(c.InOrStdin())
+			if err != nil {
+				return engine.ExitStatus{Code: 2, Err: err}
+			}
+			holds, err := git.Included(c.Context(), p.Machine, "~/.gitconfig", text)
+			switch {
+			case err != nil:
+				return engine.ExitStatus{Code: 2, Err: err}
+			case !holds:
+				return engine.ExitStatus{Code: 1}
+			}
+			return nil
+		},
+	}
+}
+
+// gitProcedure returns a command of git's that settles the resources of rs, with --check.
+func gitProcedure(p enginecli.Env, use, short, long string, rs func(values.Values, account.Account, secrets.Secrets) resource.Resource) *cobra.Command {
+	return procedure(use, short, long, func(ctx context.Context, _ effect.Out) ([]resource.Resource, error) {
+		v, a, s, err := gitInputs(ctx, p.Machine)
+		if err != nil {
+			return nil, err
+		}
+		return []resource.Resource{rs(v, a, s)}, nil
+	})
+}
+
+// newGitTokensCmd returns ws server ubuntu git tokens.
+func newGitTokensCmd(p enginecli.Env) *cobra.Command {
+	return gitProcedure(p, "tokens", "write git's tokens from the secrets file's [git] table",
+		"Each token goes in /etc/ws/tokens, root's with the account's group, and its credential program in "+
+			"/etc/ws/tokens.gitconfig (roles/server/ubuntu/git/README.md#git-credentials). A machine without a "+
+			"secrets file keeps its tokens. The git role's run state runs it, after the role's check.",
+		func(_ values.Values, a account.Account, s secrets.Secrets) resource.Resource {
+			return git.Tokens{M: p.Machine, A: a, Creds: git.Credentials(s.Git), Whole: s.Whole}
+		})
+}
+
+// newGitClonesCmd returns ws server ubuntu git clones.
+func newGitClonesCmd(p enginecli.Env) *cobra.Command {
+	return gitProcedure(p, "clones", "clone each repository of WS_GIT_CLONES whose dest is missing, as WS_USER",
+		"A clone is made once and never pulled (roles/server/ubuntu/git/README.md#clones). The git role's run "+
+			"state runs it, after the tokens.",
+		func(v values.Values, a account.Account, _ secrets.Secrets) resource.Resource {
+			return git.Clones{M: p.Machine, A: a, Clones: v.Git.Clones}
+		})
+}

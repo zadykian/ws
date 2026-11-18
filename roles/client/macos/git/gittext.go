@@ -4,7 +4,7 @@ package git
 
 import (
 	"github.com/zadykian/ws/engine/core/resource/file"
-	"github.com/zadykian/ws/roles/client/macos/internal/keys"
+	"github.com/zadykian/ws/roles/client/internal/keys"
 	"github.com/zadykian/ws/roles/internal/etcws"
 	"github.com/zadykian/ws/roles/internal/gitcfg"
 	"github.com/zadykian/ws/roles/internal/sshcfg"

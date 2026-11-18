@@ -7,7 +7,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/account"
 	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/roles/server/ubuntu/claude/internal/cld"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 func TestRestorePartsStartTheAccountsSystemdFirst(t *testing.T) {

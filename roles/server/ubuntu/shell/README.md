@@ -59,11 +59,11 @@ unit says so. With the file and an empty `[env]`, the run removes `/etc/ws/env`,
 ## The secrets file
 
 The secrets of the roles are a TOML file that age encrypts, in armor: `/etc/ws/secrets.age`, which
-`ws server ubuntu secrets` edits. [ws's secrets](../secrets/README.md) says the file's tables, its
+`ws server ubuntu secrets` edits. [ws's secrets](../../secrets/README.md) says the file's tables, its
 references and its values. A machine without the file, as CI's, has no secrets.
 
 The identity stays in ws's credential, made by `ws server ubuntu secrets init`, or by `ssh -t NAME
-sudo ws server ubuntu secrets init` from the Mac ([ws's file](../secrets/README.md#wss-file)). `ws
+sudo ws server ubuntu secrets init` from the Mac ([ws's file](../../secrets/README.md#wss-file)). `ws
 unit`, as root, decrypts it by `systemd-creds decrypt`, once a command, and only where a unit reads
 the secrets. It reads no standard input and no terminal. With the file and without the credential,
 such a unit fails.

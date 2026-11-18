@@ -71,7 +71,7 @@ server to every YAML file, Ansible's too.
 
 ## Other facts
 
-- A server through its tunnel needs no Local Network grant. Only a direct way does ([The Mac](../README.md)),
+- A server through its tunnel needs no Local Network grant. Only a direct way does ([The Mac](../../README.md)),
   so the seed names each server's host alone, which goes through its tunnel.
 - The terminal and the git panel dock right, the git panel 600 pixels wide, as the project and
   outline panels dock left. A dock shows one panel at a time, so F2 and F3 swap the two. A resize

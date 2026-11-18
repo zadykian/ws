@@ -30,13 +30,13 @@ with ours: remove it by hand.
 ## The tools
 
 Go, gopls, Delve, postgres-language-server and docker-language-server are tools of mise's, at the
-versions that `[tools]` pins. [mise.server.lock](../../../../mise/mise.server.lock) holds the url
+versions that `[tools]` pins. [mise.server.lock](../../mise/mise.server.lock) holds the url
 and the SHA-256 of each download for `linux-x64` and `linux-arm64`. Go's comes from the list that
 go.dev publishes, and each server's from GitHub's digest of its release asset. A wrong one fails
 the run before any unit of ws, and `MISE_LOCKED=1` refuses a tool that the lock lacks. gopls and
 Delve are `go:` tools, which `go install` builds with mise's Go through Go's checksum database.
 mise checks a sum at the download alone, so it mends no tool changed after its install:
-`sudo env MISE_DATA_DIR=/usr/local/share/mise mise -C /opt/ws install --force TOOL` does.
+`sudo env MISE_DATA_DIR=/usr/local/share/mise mise -C /opt/ws/roles/server install --force TOOL` does.
 
 - mise puts the tools under `/usr/local/share/mise/installs`, root's and mode 0755, where every
   run as root exports `MISE_DATA_DIR=/usr/local/share/mise`, as `install.sh` does. Under root's
@@ -52,10 +52,10 @@ mise checks a sum at the download alone, so it mends no tool changed after its i
   `rm -rf /usr/local/go`.
 - To bump a tool, change its version in `[tools]` and its link in `units.toml`, then write the
   lock again in a container with git and mise:
-  `MISE_ENV=server mise -C roles/server/ubuntu/devtools lock --platform linux-x64,linux-arm64`,
-  then move `roles/server/ubuntu/devtools/mise.server.lock` to `mise/mise.server.lock`. `go test`
-  fails where a link, the lock and `[tools]` disagree. On the server,
-  `sudo env MISE_DATA_DIR=/usr/local/share/mise mise -C /opt/ws prune` drops the old versions.
+  `MISE_ENV=server mise -C roles/server lock --platform linux-x64,linux-arm64`, which writes
+  `roles/server/mise/mise.server.lock`. `go test` fails where a link, the lock and `[tools]`
+  disagree. On the server,
+  `sudo env MISE_DATA_DIR=/usr/local/share/mise mise -C /opt/ws/roles/server prune` drops the old versions.
 - mise builds a `go:` tool once, and never again where Go changes. Delve 1.27.2 supports Go 1.25
   to 1.27, so a new minor Go goes with a newer Delve.
 - roslyn-language-server, C#'s server, is the server of VS Code's C# extension. It comes from

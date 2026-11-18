@@ -122,7 +122,7 @@ The caveats:
   delete the table, or send by AF_PACKET, which the table never sees. So can any user who can
   become root: the `sudo` group's members, as the installer's user or a cloud image's `ubuntu`,
   and the `docker` group's. `WS_USER` is `zadykian` by default
-  ([values.go](../values/values.go)), and has a rootless daemon, not that group
+  ([values.go](../../values/values.go)), and has a rootless daemon, not that group
   ([The rootless daemon](../docker/README.md#the-rootless-daemon)). The table binds the other users and the
   bridged containers.
 - The router answers at its public address too, which the table takes for the internet: the

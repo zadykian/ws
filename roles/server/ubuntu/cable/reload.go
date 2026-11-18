@@ -12,7 +12,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/roles/server/ubuntu/cable/internal/netplan"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 // inForce is the two commands that put netplan's files in force. netplan writes networkd's files

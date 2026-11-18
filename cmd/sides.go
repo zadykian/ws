@@ -4,8 +4,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/engine/cli"
-	macoscli "github.com/zadykian/ws/roles/client/macos/cli"
-	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
+	macoscli "github.com/zadykian/ws/roles/client/cli"
+	ubuntucli "github.com/zadykian/ws/roles/server/cli"
 )
 
 // clientCmd returns ws client, the group of the client's systems. It builds everywhere, so that the

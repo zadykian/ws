@@ -46,15 +46,15 @@ Each role has a page of its own. A role is its mise config and its spec of ws's 
   terminals' tmux wrapper, and the open-file limit that it needs.
   [A project's settings](roles/server/ubuntu/zed/projects.md) cover SQL Server and Ansible.
 
-`roles/client/macos/` sets up the Mac that works on the server, and Ghostty and Zed on it: [The Mac](roles/client/macos).
+`roles/client/` sets up the Mac that works on the server, and Ghostty and Zed on it: [The Mac](roles/client).
 Its [`frame`](roles/client/macos/frame) is what the Mac's roles of mise's config lean on, and
 `/usr/local/bin/ws`.
 
-A new Mac with Apple silicon follows [the Mac's runbook](roles/client/macos/runbook.md), as
+A new Mac with Apple silicon follows [the Mac's runbook](roles/client/runbook.md), as
 `install.sh` is the server's alone. By hand, it installs ws's binary and mise, each checked against
 its SHA-256, and clones a release's tree into `/opt/ws`. Then it writes the values ([The Mac's
-values](roles/client/macos/values/README.md)) and runs `MISE_LOCKED=1 mise -C /opt/ws bootstrap` ([The
-Mac](roles/client/macos/README.md)). [The server's runbook](roles/server/ubuntu/runbook.md) lists
+values](roles/client/values/README.md)) and runs
+`MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap` ([The Mac](roles/client/README.md)). [The server's runbook](roles/server/runbook.md) lists
 the server's own steps.
 
 ## A new machine
@@ -71,7 +71,7 @@ root's and mode 600 ([the values](#running-it-again)). Run `install.sh` through 
 three lines of [Install](.github/workflows/release.md#install), which fail where curl does. It
 installs mise and runs its bootstrap, which installs ws and sets each role up. Once the secrets
 file holds `token.github`, the bootstrap run again logs gh in ([By hand](#by-hand)), as
-[the server's runbook](roles/server/ubuntu/runbook.md) says.
+[the server's runbook](roles/server/runbook.md) says.
 
 Then do what stays by hand, below.
 
@@ -112,10 +112,10 @@ second run changes nothing, so its plan exits 0 with `--detailed-exitcode`.
 ## Dry runs
 
 The bootstrap's plan shows what a run would change, and nothing changes. A run by hand takes the
-form that [the server's runbook](roles/server/ubuntu/runbook.md) gives:
+form that [the server's runbook](roles/server/runbook.md) gives:
 
 ```sh
-sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws bootstrap plan
+sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server bootstrap plan
 ```
 
 A plan adds no apt source and writes no file. So a unit that waits on another with changes reads

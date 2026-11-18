@@ -14,7 +14,7 @@ import (
 func TestRoutesPutsTheNetworksInTheFileOfTheirSet(t *testing.T) {
 	m := effecttest.NewMachine()
 	r := &networks.Routes{Server: "ws", Set: "lab", Networks: []string{"10.1.0.0/24"}, M: m}
-	if _, err := r.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "/etc/ws/tunnel/ws/routes.d is missing: run mise -C /opt/ws bootstrap first") {
+	if _, err := r.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "/etc/ws/tunnel/ws/routes.d is missing: run mise -C /opt/ws/roles/client bootstrap first") {
 		t.Errorf("Plan error = %v", err)
 	}
 	m.Root["/etc/ws/tunnel/ws/routes.d"] = effect.Attrs{Mode: 0o755}
@@ -36,7 +36,7 @@ func TestRoutesRefusesWhatTheShellRefused(t *testing.T) {
 
 func TestRoutesAloneRefusesAMissingRoutesDirUnderCheck(t *testing.T) {
 	r := &networks.Routes{Server: "ws", Set: "lab", Networks: []string{"10.1.0.0/24"}, M: effecttest.NewMachine(), Check: true, Alone: true}
-	if _, err := r.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "/etc/ws/tunnel/ws/routes.d is missing: run mise -C /opt/ws bootstrap first") {
+	if _, err := r.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "/etc/ws/tunnel/ws/routes.d is missing: run mise -C /opt/ws/roles/client bootstrap first") {
 		t.Errorf("Plan error = %v", err)
 	}
 }

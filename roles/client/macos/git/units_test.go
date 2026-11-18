@@ -9,7 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/kind"
-	"github.com/zadykian/ws/roles/client/macos/facts"
+	"github.com/zadykian/ws/roles/client/facts"
 	"github.com/zadykian/ws/roles/client/macos/git"
 )
 

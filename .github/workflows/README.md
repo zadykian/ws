@@ -21,14 +21,15 @@ bootstrap fails at its guard where install.sh drops it. The bootstrap runs twice
 root's home. The parts and units that need booted systemd skip and say so. `mise bootstrap plan
 --detailed-exitcode` must exit 0 before the second bootstrap, as that run would mend what it
 finds, and again after it. With the frame's line of `state/ws-binary` dropped, it must exit 1
-([playbook-plan.sh](../playbook-plan.sh)): the check against a silent skip holds. Then
-`nft -c`, with the container's NET_ADMIN, checks the outbound table the run wrote and the users it
-names, and a find that the user owns its home. The Zed wrapper's [checks](../zed-terminal-checks.sh)
-run on the files it installed, and Fresh's on the config it loaded. The user's empty commit must
-sign and verify. Root's leg has no table, and the run leaves out its own check
+([playbook-plan.sh](../playbook-plan.sh)): the check against a silent skip holds. A plan from
+`/opt/ws`, which loads no role, must exit 1 too, and name the run directory. Then `nft -c`, with
+the container's NET_ADMIN, checks the outbound table the run wrote and the users it names, and a
+find that the user owns its home. The Zed wrapper's [checks](../zed-terminal-checks.sh) run on the
+files it installed, and Fresh's on the config it loaded. The user's empty commit must sign and
+verify. Root's leg has no table, and the run leaves out its own check
 ([Outbound](../../roles/server/ubuntu/security/README.md#outbound)). In the container, base's swap
-file is off, as the swap is the host's. With no NVIDIA GPU, `nvidia` checks its names alone, and with
-no MSI board, `fans` leaves its fans alone. Without a VPN profile, `ikeward` does nothing.
+file is off, as the swap is the host's. With no NVIDIA GPU, `nvidia` checks its names alone, and
+with no MSI board, `fans` leaves its fans alone. Without a VPN profile, `ikeward` does nothing.
 
 ## The install script
 
@@ -59,12 +60,13 @@ ws's back once it goes. Case 87 checks [the zsh hook](../../roles/client/macos/g
 reset at each prompt, and the alternate screen after a 255 from `ssh` or from `cld --host` alone.
 
 CI also sets up a Mac, by [its cases](../mac), in the order of [The
-Mac](../../roles/client/macos/README.md). A stand-in cld, which cld's unit leaves alone, spares the
-job's runs its download. Then `mise -C /opt/ws bootstrap` with
+Mac](../../roles/client/README.md). A stand-in cld, which cld's unit leaves alone, spares the
+job's runs its download. Then `mise -C /opt/ws/roles/client bootstrap` with
 [the Mac's frame](../../roles/client/macos/frame/README.md) runs as the runbook runs it, on the
 tree in `/opt/ws` with ws's build served as the pin ([mac-mise.sh](../mac-mise.sh)). It sets up
 ssh, git and cld too. Its plan must exit 0 after the first run, a second run must call no sudo,
-and `/usr/local/bin/ws` must be the build. A spec whose unit no line names must fail the plan.
+and `/usr/local/bin/ws` must be the build. A spec whose unit no line names must fail the plan,
+and so must a plan from `/opt/ws` with every unit in sync.
 The job's `values.yml` names a file key, made in case 20, as ws's
 login key and git's. Without ws's WireGuard key, the bootstrap must make the Mac's key, with
 `/etc/ws/tunnel.pub` its public half, and load no daemon, and `ssh -G ws` gives the tunnel's end.
@@ -86,26 +88,27 @@ back, and spare a script's own ([mac-conf-checks.sh](../mac-conf-checks.sh)). Wi
 service. It must stop on one networksetup lacks, or one with a router outside the cable's `/30`.
 It must stop too on a `-setmanual` that fails or changes nothing, and name what differs
 ([mac-setup-checks.sh](../mac-setup-checks.sh)).
-The cases of the keys run `mise -C /opt/ws bootstrap` with an edited `values.yml`, and read the
-files it writes ([56-keys.sh](../mac/56-keys.sh)). A refusal must fail the bootstrap and its plan
-with its reason, and change no file. `ssh -G` must give `ws` the file key that the job's
+The cases of the keys run `mise -C /opt/ws/roles/client bootstrap` with an edited `values.yml`, and
+read the files it writes ([56-keys.sh](../mac/56-keys.sh)). A refusal must fail the bootstrap and
+its plan with its reason, and change no file. `ssh -G` must give `ws` the file key that the job's
 `values.yml` names, by its four lines, and the file or the agent that `WS_IDENTITY_PUB_KEY` and
 `WS_IDENTITY_AGENT` name. An empty `WS_IDENTITY_PUB_KEY` must stop, though an agent at Secretive's
 socket holds a P-256 key. It gives the line that names each P-256 key by ws's copy of its `.pub`.
 `PublicKeys` is closed, as macOS 27 denies ws the files of Secretive's container. With that line,
 `ssh -G` must give `ws` the agent and the copy, which a run writes where none exists. A `.pub` that
-is missing or unreadable must stop too. So must one that holds a private key, a certificate, a
-line that is no key, or a key that ws's OpenSSH lacks ([mac-identity-checks.sh](../mac-identity-checks.sh)).
-`/usr/local/bin/gh` must be mise's gh, root's and 0755, in place of one there, and a bootstrap
-that changes nothing must call no sudo. With a file key, git must sign a commit and verify it,
-with gh as GitHub's credential command. A `~/.gitconfig` must get the include of
-`/etc/ws/gitconfig` at its top, once, and keep its own lines, its mode and a copy. An include below
-them, a second one or a link must stop the bootstrap, as must a signing key that is empty, missing
-or more than a public key. With a key of Secretive's, git must sign through ws's wrapper whatever
-`SSH_AUTH_SOCK` names, and `ws` keep the file key ([mac-git-checks.sh](../mac-git-checks.sh)). Last,
-after a second server's cases, one more bootstrap must call no sudo, and its plan and `mise dot
-status --missing` must exit 0 ([96-converged.sh](../mac/96-converged.sh)). Where wireguard-go makes
-no utun, the job fails, as the daemon's device makes a utun too.
+is missing or unreadable must stop too. So must one that holds a private key, a certificate, a line
+that is no key, or a key that ws's OpenSSH lacks
+([mac-identity-checks.sh](../mac-identity-checks.sh)). `/usr/local/bin/gh` must be mise's gh, root's
+and 0755, in place of one there, and a bootstrap that changes nothing must call no sudo. With a file
+key, git must sign a commit and verify it, with gh as GitHub's credential command. A `~/.gitconfig`
+must get the include of `/etc/ws/gitconfig` at its top, once, and keep its own lines, its mode and a
+copy. An include below them, a second one or a link must stop the bootstrap, as must a signing key
+that is empty, missing or more than a public key. With a key of Secretive's, git must sign through
+ws's wrapper whatever `SSH_AUTH_SOCK` names, and `ws` keep the file key
+([mac-git-checks.sh](../mac-git-checks.sh)). Last, after a second server's cases, one more bootstrap
+must call no sudo, and its plan and `mise dot status --missing` must exit 0
+([96-converged.sh](../mac/96-converged.sh)). Where wireguard-go makes no utun, the job fails, as the
+daemon's device makes a utun too.
 
 ## The rules
 

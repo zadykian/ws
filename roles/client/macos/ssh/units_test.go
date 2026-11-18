@@ -9,7 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/kind"
-	"github.com/zadykian/ws/roles/client/macos/facts"
+	"github.com/zadykian/ws/roles/client/facts"
 )
 
 // userPath is the PATH that a run state's command of the user's runs with.

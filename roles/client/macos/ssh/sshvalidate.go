@@ -74,7 +74,7 @@ func validate(ctx context.Context, m effect.Machine, home string, u userConfig, 
 		switch {
 		case strings.Contains(e, sshcfg.File):
 			return fmt.Errorf("ssh refuses /etc/ws/ssh_config, which ~/.ssh/config also reads, as %s: "+
-				"remove that Include, and run mise -C /opt/ws bootstrap again", e)
+				"remove that Include, and run mise -C /opt/ws/roles/client bootstrap again", e)
 		case strings.Contains(e, "Bad configuration option"):
 			return fmt.Errorf("ssh refuses ~/.ssh/config read after the new /etc/ws/ssh_config, as %s; "+
 				"its IgnoreUnknown, read first, carries only ~/.ssh/config's own "+

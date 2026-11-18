@@ -12,12 +12,13 @@
 # binary as mise --version, and only then moves it into place. Then it writes
 # /etc/mise/miserc.toml from WS_USER in /etc/ws/values.yml. The miserc names the envs of mise's
 # files that load on this machine. A change of WS_USER means running this script again. Last it
-# runs mise bootstrap on the tree of the latest release, or of the one WS_VERSION names (X.Y.Z,
-# with or without the v), cloned to /opt/ws. A pre-release, X.Y.Z-rc.N, runs only where WS_VERSION
-# names it. That tree pins ws's binary and checks it. Run again, it checks that release's tag out
-# there, dropping any change and any file git does not track, and brings the machine back to the
-# release. It refuses a /opt/ws that is not root's alone, and a system other than Ubuntu 26.04.
-# A Mac follows roles/client/macos/runbook.md instead. It runs in any POSIX sh, and needs curl,
+# checks a release's tag out in /opt/ws by git, and runs mise bootstrap in /opt/ws/roles/server.
+# The release is the latest, or the one WS_VERSION names (X.Y.Z, with or without the v). A
+# pre-release, X.Y.Z-rc.N, runs only where WS_VERSION names it. That tree pins ws's binary and
+# checks it. Run again, it checks that release's tag out there, dropping any change and any file
+# git does not track, and brings the machine back to the release. It refuses a /opt/ws that is not
+# root's alone, and a system other than Ubuntu 26.04.
+# A Mac follows roles/client/runbook.md instead. It runs in any POSIX sh, and needs curl,
 # sha256sum and git.
 #
 # WS_IN_PLACE=1 runs the bootstrap on the tree in /opt/ws, with no release lookup and no clone.
@@ -62,7 +63,7 @@ platform() {
         mise_sum=$mise_sum_arm64
         ;;
     Linux-*) die "ws sets up Linux on x86_64 and aarch64, not on $arch" ;;
-    Darwin-*) die "install.sh sets up an Ubuntu server: a Mac follows roles/client/macos/runbook.md" ;;
+    Darwin-*) die "install.sh sets up an Ubuntu server: a Mac follows roles/client/runbook.md" ;;
     *) die "ws sets up Ubuntu, not $os" ;;
     esac
     release_file=/etc/os-release
@@ -205,11 +206,13 @@ guard() {
         "$(stat -c '%n is of %U, with mode %a' "$found")"
 }
 
-# checkout moves the tree in /opt/ws, where an earlier run cloned it, to the tag. mise keeps a
-# checkout it finds at its commit, and would run an earlier release's tree. A change to the tree,
-# and a file git does not track, such as a trial's mise.local.toml that would pin another ws, go.
+# checkout moves the tree in /opt/ws to the tag. A first run makes /opt/ws an empty repository,
+# and fetches as a later run does. A change to the tree, and a file git does not track, such as a
+# trial's mise.local.toml that would pin another ws, go.
 checkout() {
-    [ -e /opt/ws ] || return 0
+    if [ ! -e /opt/ws ]; then
+        git -c init.defaultBranch=ws init -q /opt/ws </dev/null || die "cannot create /opt/ws"
+    fi
     [ -e /opt/ws/.git ] || die "/opt/ws holds no checkout: remove it, or set WS_IN_PLACE=1 to run it"
     git -C /opt/ws fetch -q --depth 1 --force "$repo" "refs/tags/$tag:refs/tags/$tag" </dev/null ||
         die "cannot fetch $where into /opt/ws"
@@ -218,11 +221,12 @@ checkout() {
     git -C /opt/ws clean -q -ffdx || die "cannot clean /opt/ws"
 }
 
-# bootstrap runs mise bootstrap on the tree in /opt/ws: the release's, cloned there, or the one
-# that stands there where WS_IN_PLACE is 1. The tree is trusted for this run, as the units' own
-# mise calls inherit it, and for the runs by hand after, by mise trust. mise reads no stdin, as
-# the piped script is on it. mise puts the tools under the data directory, which is root's own
-# /root/.local/share/mise by default: /usr/local/share/mise lets the account run them.
+# bootstrap runs mise bootstrap in the server's run directory, /opt/ws/roles/server. The tree in
+# /opt/ws is the release's, checked out there, or, with WS_IN_PLACE=1, the one that stands there.
+# The tree is trusted for this run, as the units' own mise calls inherit it, and for the runs by
+# hand after, by mise trust. mise reads no stdin, as the piped script is on it. mise puts the
+# tools under the data directory, which is root's own /root/.local/share/mise by default:
+# /usr/local/share/mise lets the account run them.
 # MISE_LOCKED installs a tool only as the tree's lock holds it, by its URL and checksum, as CI's
 # runs and the runbook's do: bootstrap has no --locked.
 bootstrap() {
@@ -231,17 +235,16 @@ bootstrap() {
     export MISE_TRUSTED_CONFIG_PATHS MISE_DATA_DIR MISE_LOCKED
     if [ "${WS_IN_PLACE:-}" = 1 ]; then
         [ -f /opt/ws/mise.toml ] || die "WS_IN_PLACE is set, and /opt/ws holds no mise.toml"
-        /usr/local/bin/mise -C /opt/ws bootstrap </dev/null
     else
         checkout
-        /usr/local/bin/mise bootstrap --from "$repo?ref=$tag" --from-dir /opt/ws </dev/null
     fi
+    /usr/local/bin/mise -C /opt/ws/roles/server bootstrap </dev/null
     # While the variable is set, mise counts the tree as trusted and writes no trust. Each config
     # is named, as mise trust --all never ends where a role holds an env's file and the root none.
     (
         cd /opt/ws || exit 1
         unset MISE_TRUSTED_CONFIG_PATHS
-        for config in mise.toml mise.*.toml mise/conf.d/*/mise.*.toml; do
+        for config in mise.toml mise.*.toml roles/server/mise/conf.d/*/mise.*.toml; do
             [ ! -e "$config" ] || /usr/local/bin/mise trust "$config" </dev/null || exit 1
         done
     )

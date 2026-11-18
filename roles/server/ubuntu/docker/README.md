@@ -49,7 +49,7 @@ when it next starts. The unit `state/docker-dns` owns every ufw rule with the co
 with no container running, as after a reboot. Until then lookups to a new address get no answers,
 and the run stops after it restarts Docker. Reboot, or stop every container and restart Docker,
 then run the bootstrap again. Its plan shows the move. Both run as
-[the runbook](../runbook.md) writes them.
+[the runbook](../../runbook.md) writes them.
 
 ## The address pool
 

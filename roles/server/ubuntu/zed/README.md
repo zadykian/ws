@@ -221,7 +221,7 @@ clock.
 | An agent's read or grep never ends (zed#65338) | Stop the turn and send it again |
 | New tabs start new sessions while old tmux clients stay attached | `tmux -L zed detach-client -s =NAME`, then a new tab |
 | The Disconnected overlay | Reconnect, at the cost of a new daemon |
-| `ssh ws` fails at once for an hour | fail2ban banned the tunnel address: [lift the ban](../../../client/macos/README.md#sshs-hosts) |
+| `ssh ws` fails at once for an hour | fail2ban banned the tunnel address: [lift the ban](../../../client/README.md#sshs-hosts) |
 
 Neither command has a default key. Release builds register `remote_debug::SimulateDisconnect`,
 `SimulateTimeout` and `SimulateTimeoutExhausted` in a remote project's workspace. They reproduce

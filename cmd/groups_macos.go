@@ -7,7 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/local"
-	macoscli "github.com/zadykian/ws/roles/client/macos/cli"
+	macoscli "github.com/zadykian/ws/roles/client/cli"
 )
 
 // groups returns the command groups that exist on this system: ws client macos and the Mac's ws

@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/secrets"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 // checked runs Check on the fixture's machine with the default values and s.

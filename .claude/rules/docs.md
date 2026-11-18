@@ -26,16 +26,16 @@ What each document holds. How to write them is in the `writing` skill and [writi
   and the values that change it. It gives the role's caveats too, such as what a run replaces or
   what a dry run shows.
 - [The frame's README](../../roles/server/ubuntu/frame/README.md) says how a role sits in mise's
-  config: its files by env, its link, its lines and their order, the miserc and the pin.
-- [The Mac's README](../../roles/client/macos/README.md) is the Mac's side, `roles/client/macos/`
+  config: its files by env, the link, its lines and their order, the miserc and the pin.
+- [The Mac's README](../../roles/client/README.md) is the Mac's side, `roles/client/`
   and the ws CLI. [Its git](../../roles/client/macos/git/README.md) is its git and gh.
   [Its ssh](../../roles/client/macos/ssh/README.md) is its hosts, and [its cld](../../roles/client/macos/cld/README.md)
-  cld's unit. [Its values](../../roles/client/macos/values/README.md) is
+  cld's unit. [Its values](../../roles/client/values/README.md) is
   the Mac's values files, [the tunnel's](../../roles/client/macos/tunnel/README.md) the daemons' rules, and [ghostty](../../roles/client/macos/ghostty/README.md) its Ghostty
-  and what cld does there, [zed](../../roles/client/macos/zed/README.md) its Zed. [The secrets](../../roles/server/ubuntu/secrets/README.md)
+  and what cld does there, [zed](../../roles/client/macos/zed/README.md) its Zed. [The secrets](../../roles/server/secrets/README.md)
   is the secrets file. [The router](../../roles/server/ubuntu/cable/router.md)
-  is the router's steps, taken once by hand. [The Mac's runbook](../../roles/client/macos/runbook.md)
-  and [the server's](../../roles/server/ubuntu/runbook.md) are each side's steps by hand.
+  is the router's steps, taken once by hand. [The Mac's runbook](../../roles/client/runbook.md)
+  and [the server's](../../roles/server/runbook.md) are each side's steps by hand.
 - [The kind package's README](../../engine/core/kind/README.md) says what a unit and a kind are:
   the spec, each kind's fields, and where the specs sit.
 - [release.md](../../.github/workflows/release.md), beside `release.yml`, says how to install ws,
@@ -51,7 +51,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   for SQL Server and Ansible.
 - [The dashboards](../../roles/server/ubuntu/signoz/internal/dashboards/dashboards/README.md) says what each dashboard reads,
   and how to refresh them from SigNoz.
-- ws is public, and names no server ([values.yml](../../roles/client/macos/README.md#the-macs-valuesyml)). So no doc holds a
+- ws is public, and names no server ([values.yml](../../roles/client/README.md#the-macs-valuesyml)). So no doc holds a
   server's address, a secret or a word of the local list (CLAUDE.md).
 - A change goes together across the role, its comments, its page, its line in the README, and
   `.github/workflows/README.md` where CI changes.

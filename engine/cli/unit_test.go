@@ -35,7 +35,8 @@ func unitEnv(t *testing.T, specs map[string]string) (cli.Env, *effecttest.Machin
 	m := effecttest.NewMachine()
 	m.Dirs["/etc"] = 0o755
 	e := clitest.WithEnv(clitest.Env(), map[string]string{"WS_UNITS": dir})
-	e.Machine, e.Euid = m, 0
+	// ws runs in the specs' parent, as the plugin's hooks do in mise's run directory.
+	e.Machine, e.Euid, e.Pwd = m, 0, filepath.Dir(dir)
 	return e, m
 }
 
@@ -255,8 +256,10 @@ func TestUnitReadWholeNamesALackingLine(t *testing.T) {
 		"r/units.toml": fileUnit("a", "/etc/a", "") + fileUnit("b", "/etc/b", "") + fileUnit("c", "/etc/c", ""),
 		"r/a":          "1\n", "r/b": "2\n", "r/c": "3\n",
 	})
+	// The run directory is the specs' parent, which the failure names too.
+	hint := ", or run mise in " + filepath.Dir(e.Getenv("WS_UNITS")) + "\n"
 	status, stdout, stderr := runUnit(e, "read", "--whole", "file/a")
-	want := "file/a\tfails: mise's plan lacks ws:file/b, ws:file/c: add each to [bootstrap.packages]\n"
+	want := "file/a\tfails: mise's plan lacks ws:file/b, ws:file/c: add each to [bootstrap.packages]" + hint
 	if status != 0 || stdout != want {
 		t.Errorf("status = %d, stdout = %q, stderr = %q; want %q", status, stdout, stderr, want)
 	}
@@ -265,7 +268,7 @@ func TestUnitReadWholeNamesALackingLine(t *testing.T) {
 		t.Fatalf("write b: status = %d, stderr = %q", status, stderr)
 	}
 	status, stdout, _ = runUnit(e, "read", "--whole", "file/a")
-	if want := "file/a\tfails: mise's plan lacks ws:file/c: add each to [bootstrap.packages]\n"; status != 0 || stdout != want {
+	if want := "file/a\tfails: mise's plan lacks ws:file/c: add each to [bootstrap.packages]" + hint; status != 0 || stdout != want {
 		t.Errorf("with b in sync: status = %d, stdout = %q; want %q", status, stdout, want)
 	}
 	if status, stdout, _ := runUnit(e, "read", "--whole", "file/c", "file/b", "file/a"); status != 0 ||
@@ -274,5 +277,13 @@ func TestUnitReadWholeNamesALackingLine(t *testing.T) {
 	}
 	if status, stdout, _ := runUnit(e, "read", "file/a"); status != 0 || strings.Contains(stdout, "fails") {
 		t.Errorf("without --whole: status = %d, stdout = %q; want the unit read alone", status, stdout)
+	}
+	// Outside the run directory mise loads none of the specs' lines, so each line fails, in sync too.
+	runDir := e.Pwd
+	e.Pwd = e.Getenv("WS_UNITS")
+	want = "file/c\tfails: mise runs in " + e.Pwd + ", which loads none of the specs' lines: run mise in " + runDir + "\n" +
+		"file/b\tfails: mise runs in " + e.Pwd + ", which loads none of the specs' lines: run mise in " + runDir + "\n"
+	if status, stdout, _ := runUnit(e, "read", "--whole", "file/c", "file/b"); status != 0 || stdout != want {
+		t.Errorf("outside the run directory: status = %d, stdout = %q; want %q", status, stdout, want)
 	}
 }

@@ -1,9 +1,9 @@
 # ssh on the Mac
 
-`mise -C /opt/ws bootstrap` sets up ssh's hosts on the Mac by [ssh's units](units.toml): one host
-for each server, through the tunnel ([The Mac](../README.md)). The facts build the text from
+`mise -C /opt/ws/roles/client bootstrap` sets up ssh's hosts on the Mac by [ssh's units](units.toml): one host
+for each server, through the tunnel ([The Mac](../../README.md)). The facts build the text from
 `values.yml` and the servers' files, and check it, before any unit runs
-([The facts](../facts/README.md)). A refusal there stops the whole bootstrap, and changes nothing.
+([The facts](../../facts/README.md)). A refusal there stops the whole bootstrap, and changes nothing.
 
 ## The units
 
@@ -21,7 +21,7 @@ for each server, through the tunnel ([The Mac](../README.md)). The facts build t
 `/etc/ws/ssh_config` holds a host for each server of `servers/`, named as the server is, at its
 tunnel's `10.99.N.1` from the first run, whichever network the Mac is on. A server's `10.99.N.1`
 is `10.99.0.1` at slot 0. So `ssh NAME` fails until the keys' exchange ends ([The Mac's
-tunnel](../README.md#the-macs-tunnel)), where a direct way serves. It logs in as the server's
+tunnel](../../README.md#the-macs-tunnel)), where a direct way serves. It logs in as the server's
 `WS_USER` with the key below, and checks the server's host key under its name (`HostKeyAlias`). A
 server whose `values.yml` fails to load stops the bootstrap. A session ends after 120 s without
 word from the server, far longer than a switch of the tunnel takes.
