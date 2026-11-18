@@ -47,8 +47,7 @@ func newMacApplyCmd(p enginecli.Env, server *string) *cobra.Command {
 		Use:   "apply",
 		Short: "set the Mac up from values.yml and a server's file",
 		Long: "It runs the steps it names, from values.yml and the server's file, in this order: " + strings.Join(names, ", ") + ". " +
-			"With no --only, it runs every step, and ssh again, whose plan is empty unless cld " +
-			"changed ssh's file. It asks sudo where it needs root.",
+			"With no --only, it runs every step. It asks sudo where it needs root.",
 		Args: cobra.NoArgs,
 		RunE: enginecli.Apply(macTarget(p, &only, server), p),
 	}

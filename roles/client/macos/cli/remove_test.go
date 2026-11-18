@@ -122,20 +122,18 @@ func TestRemoveWithNoKnownHostsHasNoKeyToDrop(t *testing.T) {
 	}
 }
 
-// TestRemoveRunsTheStepsForTheServerThatStays checks that ssh and the tunnel run, in that order, and
-// stop at the tunnel's copy of ws, which the fake machine cannot hold.
+// TestRemoveRunsTheStepsForTheServerThatStays checks that the tunnel runs, and stops at its copy of
+// ws, which the fake machine cannot hold, before the bootstrap.
 func TestRemoveRunsTheStepsForTheServerThatStays(t *testing.T) {
-	p, _ := removeFixture()
+	p, m := removeFixture()
 	_, _, stderr := runWs(p, "client", "macos", "remove", "lab")
-	last := -1
-	for _, want := range []string{"create /etc/ws/ssh_config", "made the Mac's WireGuard key"} {
-		at := strings.Index(stderr, want)
-		if at <= last {
-			t.Errorf("stderr = %q; want %q after the step before it", stderr, want)
-		}
-		last = at
+	if !strings.Contains(stderr, "made the Mac's WireGuard key") || strings.Contains(stderr, "/etc/ws/ssh_config") {
+		t.Errorf("stderr = %q; want the tunnel, and no step of ssh's", stderr)
 	}
-	if want := "then ws client macos apply --server ws takes lab's daemon, hosts and routes off"; !strings.Contains(stderr, want) {
+	if slices.Contains(m.Calls, "run mise -C /opt/ws bootstrap") {
+		t.Error("remove ran the bootstrap past a failed step")
+	}
+	if want := "then ws client macos apply --server ws takes lab's daemon, hosts and routes off, and mise -C /opt/ws bootstrap its host"; !strings.Contains(stderr, want) {
 		t.Errorf("stderr = %q; want it to name apply: %q", stderr, want)
 	}
 }

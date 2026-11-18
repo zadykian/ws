@@ -81,8 +81,10 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 	}
 	rest := slices.DeleteFunc(names, func(n string) bool { return n == name })
 	if err = reapply(c, p, mac, rest[0]); err != nil {
-		err = fmt.Errorf("%w: then ws client macos apply --server %s takes %s's daemon, hosts and routes off",
-			err, rest[0], name)
+		err = fmt.Errorf("%w: then ws client macos apply --server %s takes %s's daemon, hosts and routes off, "+
+			"and mise -C /opt/ws bootstrap its host", err, rest[0], name)
+	} else if err = p.Machine.Pass(c.Context(), false, "mise", "-C", "/opt/ws", "bootstrap"); err != nil {
+		err = fmt.Errorf("mise -C /opt/ws bootstrap: %w: run it again to take %s's host off", err, name)
 	}
 	if cable != "" {
 		_, _ = fmt.Fprintf(c.OutOrStdout(), "By hand: the cable's service %s keeps 10.77.0.2: name it in another server's "+
@@ -91,8 +93,9 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 	return err
 }
 
-// reapply runs the Mac's steps that hold a server's traces, for the server that stays. They are ssh,
-// the tunnel and the networks, and the last two prune the gone server's daemon and routes.
+// reapply runs the Mac's steps that hold a server's traces, for the server that stays. The tunnel
+// and the networks prune the gone server's daemon and routes. The bootstrap after takes its host
+// out of /etc/ws/ssh_config.
 func reapply(c *cobra.Command, p enginecli.Env, mac, name string) error {
 	settings, err := values.Load(p.Machine, mac, values.ServerPath(mac, name))
 	if err != nil {
@@ -102,7 +105,7 @@ func reapply(c *cobra.Command, p enginecli.Env, mac, name string) error {
 	defer term.Flush()
 	out := linesOf(term, c.CommandPath())
 	_, err = macOf(p, name, settings, p.Machine, out, c.OutOrStdout()).Run(c.Context(), macos.Options{
-		Options: step.Options{Observer: out}, Only: []string{"ssh", "tunnel", "networks"}})
+		Options: step.Options{Observer: out}, Only: []string{"tunnel", "networks"}})
 	return engine.Cause(err)
 }
 
