@@ -13,9 +13,9 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
-// guardSpec is a unit of the kind guard: a check that plans nothing, and fails where a unit after
-// it would lock the machine out. It takes LoginKey with Home, or SudoRight. A container, which has
-// no login to lose, passes each.
+// guardSpec is a unit of the kind guard: a check that plans nothing. It fails where a unit after it
+// would lock the machine out, or would act on what a role refuses. It takes LoginKey with Home,
+// SudoRight, or Command. A container, which has no login to lose, passes the first two.
 type guardSpec struct {
 	base
 	// LoginKey is a user who must hold a key that sshd takes, in Home/.ssh/authorized_keys, before
@@ -25,12 +25,20 @@ type guardSpec struct {
 	// SudoRight is a user who must have a way to root by sudo, before root's login closes: the
 	// right, and a password for sudo to ask. root needs none.
 	SudoRight string `toml:"sudo_right"`
+	// Command is a role's own check, run as root on every machine, containers too: an argv whose
+	// program is an absolute path. Its exit 0 passes, and any other fails the plan.
+	Command []string `toml:"command"`
 }
 
 func (s guardSpec) parts(e Env, _ fs.FS) (func(context.Context) ([]resource.Resource, error), error) {
 	var r resource.Resource
 	switch {
-	case s.LoginKey != "" && s.SudoRight == "":
+	case len(s.Command) > 0 && s.LoginKey == "" && s.SudoRight == "" && s.Home == "":
+		if !path.IsAbs(s.Command[0]) {
+			return nil, fmt.Errorf("command %q: its program is no absolute path", s.Command[0])
+		}
+		r = commandCheck{m: e.M, out: e.Out, argv: s.Command, said: new(bool)}
+	case s.LoginKey != "" && s.SudoRight == "" && len(s.Command) == 0:
 		if err := checkUser("login_key", s.LoginKey); err != nil {
 			return nil, err
 		}
@@ -38,13 +46,13 @@ func (s guardSpec) parts(e Env, _ fs.FS) (func(context.Context) ([]resource.Reso
 			return nil, fmt.Errorf("home %q is not a clean absolute path below /", s.Home)
 		}
 		r = keyCheck{m: e.M, user: account.User{Name: s.LoginKey, Home: s.Home}}
-	case s.SudoRight != "" && s.LoginKey == "" && s.Home == "":
+	case s.SudoRight != "" && s.LoginKey == "" && s.Home == "" && len(s.Command) == 0:
 		if err := checkUser("sudo_right", s.SudoRight); err != nil {
 			return nil, err
 		}
 		r = sudoRight{m: e.M, user: s.SudoRight}
 	default:
-		return nil, errors.New("a guard takes login_key with home, or sudo_right")
+		return nil, errors.New("a guard takes one of login_key with home, sudo_right and command")
 	}
 	return func(context.Context) ([]resource.Resource, error) { return []resource.Resource{r}, nil }, nil
 }
@@ -145,6 +153,38 @@ func (s sudoRight) Plan(ctx context.Context) ([]resource.Change, error) {
 	if f := strings.Fields(string(status)); len(f) < 2 || f[1] != "P" {
 		return nil, fmt.Errorf("%s has no password for sudo to ask, so closing root's login would leave no way "+
 			"to root: run passwd %s first", s.user, s.user)
+	}
+	return nil, nil
+}
+
+// commandCheck is a role's own check: a command that fails where a later unit would act on what the
+// role refuses.
+type commandCheck struct {
+	m    effect.Machine
+	out  effect.Out
+	argv []string
+	// said keeps the lines to one telling a process, as a run plans a unit more than once.
+	said *bool
+}
+
+// Plan runs the command as root. A pass says each line of its output. A failure fails the plan with
+// the command's error, which holds its standard error, and its output.
+func (c commandCheck) Plan(ctx context.Context) ([]resource.Change, error) {
+	out, err := c.m.RunRoot(ctx, c.argv[0], c.argv[1:]...)
+	text := strings.TrimSpace(string(out))
+	if err != nil {
+		if text != "" {
+			return nil, fmt.Errorf("%w: %s", err, text)
+		}
+		return nil, err
+	}
+	if !*c.said {
+		for line := range strings.Lines(text) {
+			if line = strings.TrimSpace(line); line != "" {
+				c.out.Say("%s", line)
+			}
+		}
+		*c.said = true
 	}
 	return nil, nil
 }

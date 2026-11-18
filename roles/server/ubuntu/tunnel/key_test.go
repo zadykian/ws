@@ -10,13 +10,15 @@ import (
 	"github.com/zadykian/ws/roles/internal/wgkey"
 )
 
-func newKey(m *effecttest.Machine) key {
-	return key{m: m, random: bytes.NewReader(bytes.Repeat([]byte{7}, 32)), gid: 998}
+func newKey(m *effecttest.Machine) Key {
+	m.Files["/etc/group"] = []byte("systemd-network:x:998:\n")
+	return Key{M: m, Out: &effecttest.Out{}, Random: bytes.NewReader(bytes.Repeat([]byte{7}, 32))}
 }
 
 func TestKeyIsMadeWhereMissing(t *testing.T) {
 	m := effecttest.NewMachine()
-	cs, err := newKey(m).Plan(t.Context())
+	k := newKey(m)
+	cs, err := k.Plan(t.Context())
 	if err != nil || len(cs) != 1 {
 		t.Fatalf("Plan = %v, %v; want one change", cs, err)
 	}
@@ -32,6 +34,11 @@ func TestKeyIsMadeWhereMissing(t *testing.T) {
 	}
 	if got := m.Owners[keyFile]; got != [2]int{0, 998} {
 		t.Errorf("owner = %v, want root:998", got)
+	}
+	public, _ := wgkey.Public(private)
+	said := strings.Join(k.Out.(*effecttest.Out).Lines, "\n")
+	if !strings.Contains(said, "values.yml: "+public) || strings.Contains(said, private) {
+		t.Errorf("said %q, want the public key alone", said)
 	}
 }
 
@@ -68,5 +75,13 @@ func TestKeyRefusesAFileWithNoKey(t *testing.T) {
 	m.Files[keyFile] = []byte("not a key\n")
 	if _, err := newKey(m).Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "holds no WireGuard private key") {
 		t.Errorf("Plan = %v, want a refusal", err)
+	}
+}
+
+func TestKeyRefusesAMachineWithoutTheGroup(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/etc/group"] = []byte("root:x:0:\n")
+	if _, err := (Key{M: m}).Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "systemd-network is missing") {
+		t.Errorf("Plan = %v, want the group missing", err)
 	}
 }

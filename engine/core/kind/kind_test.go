@@ -183,3 +183,21 @@ func TestEveryKindFieldIsAKind(t *testing.T) {
 		}
 	}
 }
+
+func TestSelfIsEnvSelf(t *testing.T) {
+	e, m, _, _ := testEnv(false)
+	m.Dirs["/etc"] = 0o755
+	e.Self = "/opt/ws/bin/ws"
+	units := loadOne(t, e, "[file.a]\npath = \"/etc{{ self }}\"\nsource = \"a\"\n", map[string]string{"a": "x"})
+	if got := headlines(t, units[0].Step); len(got) == 0 || !strings.Contains(got[len(got)-1], "/etc/opt/ws/bin/ws") {
+		t.Errorf("plan = %q, want the file at /etc/opt/ws/bin/ws", got)
+	}
+}
+
+func TestSelfWithoutAPathFailsTheLoad(t *testing.T) {
+	e, _, _, _ := testEnv(false)
+	_, err := Load(e, tree(map[string]string{"r/units.toml": "[file.a]\npath = \"{{ self }}\"\nsource = \"a\"\n", "r/a": "x"}))
+	if err == nil || !strings.Contains(err.Error(), "self: the path of the running ws is unknown") {
+		t.Errorf("load = %v, want self's error", err)
+	}
+}

@@ -69,6 +69,8 @@ func facts(ctx context.Context, e Env) template.FuncMap {
 	}
 	// kernel_release is the running kernel's release, as uname -r prints it.
 	fm["kernel_release"] = func() (string, error) { return kernelRelease(ctx, e.M) }
+	// root_file is a file's text, read as root and trimmed, or "" where the file is missing.
+	fm["root_file"] = func(path string) (string, error) { return rootFile(e.M, path) }
 	return fm
 }
 
@@ -147,6 +149,16 @@ func fsBytes(ctx context.Context, m effect.Machine, paths []string) (int, error)
 		return size * blocks, nil
 	}
 	return 0, fmt.Errorf("none of %q exists", paths)
+}
+
+// rootFile reads path as root, for a file in a directory that root alone may read. Its text,
+// trimmed of white space, goes into a template, and a missing file gives "".
+func rootFile(m effect.Machine, path string) (string, error) {
+	text, err := m.ReadRootFile(path)
+	if errors.Is(err, fs.ErrNotExist) {
+		return "", nil
+	}
+	return strings.TrimSpace(string(text)), err
 }
 
 // envVar returns the value of name in an env file: the last line that sets it, as the shell does,

@@ -10,7 +10,9 @@ import (
 	"github.com/spf13/cobra"
 
 	enginecli "github.com/zadykian/ws/engine/cli"
+	"github.com/zadykian/ws/engine/core/effect/units"
 	"github.com/zadykian/ws/engine/core/role"
+	"github.com/zadykian/ws/roles/server/ubuntu/ikeward"
 )
 
 const (
@@ -48,6 +50,7 @@ func serverRefusal(euid int, osRelease []byte) string {
 // Command returns ws server ubuntu, the commands that set up an Ubuntu server.
 func Command(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("ubuntu", "the commands for an Ubuntu server", newApplyCmd(p), newStateCmd(p), newFansCmd(p),
+		newCableCmd(p, units.OSUnits{}), newTunnelCmd(p, units.OSUnits{}), newIkewardCmd(p, ikeward.StatusTries, ikeward.StatusWait),
 		newValuesCmd(p), newSecretsCmd(p))
 }
 

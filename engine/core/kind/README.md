@@ -14,25 +14,27 @@ A role's spec is `units.toml` in the role's own directory, one level below the r
 Its templates and sources sit beside it, and a path in the spec is relative to that directory.
 
 - **TOML, decoded strictly.** A table is a kind, and a key under it a unit of that kind. A field
-  that no kind has, or a value of the wrong type, fails the load, and the error names its key and
-  line.
+  that no kind has, or a value of the wrong type, fails the load, naming its key and line.
 - **The names.** A unit's name within its kind takes letters, digits, `.`, `_` and `-`. A name in
   two specs fails the load.
 - **The order.** Units run by name, each moved behind the unit that its `after` names, ahead of the
   next by name. An `after` that no spec holds, or a loop, fails the load.
 - **Two renders.** Both are Go templates over the side's values, and a key the values lack is an
   error. The spec's text fills as it loads, with `add`, `mul`, `div`, `exports`, `json VALUE`, which
-  quotes a value as Go's JSON encoder does, and `fail MSG`, which stops the render with MSG. A
-  unit's template fills as it plans, as an earlier unit may make the account or the file that it
-  reads. It takes `envvar FILE NAME` and the facts `mem_mib`, `cpus`, `fs_bytes PATH...`,
-  `uid NAME`, `installed_version NAME` and `kernel_release` too. `installed_version` gives dpkg's
-  version of an installed package, else "", and `kernel_release` the running kernel's, as
-  `uname -r` prints it.
+  quotes a value as Go's JSON encoder does, and `fail MSG`, which stops the render with MSG. It
+  takes `self` too, the path of the ws that runs the units, so that a command of ws runs before the
+  pinned binary is installed, or without booted systemd. A unit's template fills as it plans, as an
+  earlier unit may make the account or the file that it reads. It takes `envvar FILE NAME` and the
+  facts `mem_mib`, `cpus`, `fs_bytes PATH...`, `uid NAME`, `installed_version NAME`,
+  `kernel_release` and `root_file PATH` too. `installed_version` gives dpkg's version of an
+  installed package, else "", and `kernel_release` the running kernel's, as `uname -r` prints it.
+  `root_file` gives a file's text, read as root and trimmed, else "". A spec names no secret's file
+  with it, as a file's diff would show the secret.
 - **when.** Any unit takes `when = { FACT = "WANT" }`, and runs where every FACT of the machine
   gives its WANT, and `"!WANT"` where it does not. Elsewhere it plans nothing, and says so in a
   line. An empty WANT, negated or not, holds on no machine, so a value left empty turns the unit
   off, and its line says that the `when` gives no FACT. The facts are read as the unit plans, so
-  that one can follow an earlier unit. macOS has no sysfs, and gives neither. A FACT that the
+  that one can follow an earlier unit. macOS has no sysfs, and gives none. A FACT that the
   table lacks fails the load. So does a WANT of a form that its FACT never gives, which would turn
   the unit off on every machine. A new fact is one entry of `whenFacts`, in `when.go`.
 
@@ -40,6 +42,8 @@ Its templates and sources sit beside it, and a path in the spec is relative to t
   | --- | --- |
   | `board_vendor` | The board's maker, from `/sys/class/dmi/id/board_vendor` |
   | `gpu_vendor` | The PCI vendor of a device of class `0x03`, from `/sys/bus/pci/devices`: `0x` and four hex digits in lower case, such as `0x1234` |
+  | `interface` | A network interface of that name, of any state, from `/sys/class/net`: a name the kernel takes, with no `/` |
+  | `set` | Any WANT, so that a value of the side's turns the unit on where set and off where empty; `"!WANT"` fails the load |
 
 - **Load and plan.** Each kind checks its fields as the spec loads, so a bad field fails before any
   unit runs. The resources are made as each unit plans.
@@ -55,6 +59,7 @@ The kinds follow, and then [`ws unit`](#ws-unit), which plans and applies the un
 path = "/abs/path"          # each missing parent is made, root's at 0755
 mode = 0o644                # the default
 owner = "root"              # the default; another owner's file lies below its home
+group = "NAME"              # a file of root's takes this group of /etc/group
 template = "name.tmpl"      # or source = "name", copied unchanged
 check = ["cmd", "{}"]       # {} is the new file's path; a refusal leaves the live file
 check_booted = false        # run check with booted systemd alone
@@ -73,12 +78,13 @@ absent_when_empty = false   # remove the file where its template gives white spa
 after = "KIND/NAME"
 ```
 
-- A checked file is written to `PATH.ws-check` and checked there. Only a good file moves over the
-  live one.
+- A checked file is checked as `PATH.ws-check`, and only a good one moves over the live file.
 - A restart that a change calls for is noted in `/var/lib/ws/owed` before the change. A run that
   fails before the restart leaves it owed to the next run. A file that its check refused leaves
   the restart owed too, and the service keeps the live file.
 - A secret file takes no check, as a refusal's error shows what the checker prints.
+- `group` is read from `/etc/group` as the unit plans, so a package that mise installs may bring
+  it, and a missing group fails the plan. It takes a file of root's, and never sits by `group_of`.
 - A file in `/etc/systemd/system` makes systemd read its units again.
 - An owner other than root takes the home that the system gives: `getent passwd` on Linux, and
   `dscl` on macOS, which the side names. A path outside it, or a link on the way, is refused, and
@@ -114,6 +120,21 @@ stop = "name.service"                   # kept stopped and disabled where the pa
 
 The file waits in `/var/cache/ws`, checked against its SHA-256. Its own name and version are
 checked before apt-get installs it. Where the version that dpkg lists is the pin, it plans nothing.
+
+### binary
+
+```toml
+[binary.NAME]
+version = "1.2.3"
+url = "https://host/v{version}/name-linux-{arch}"
+sha256 = { amd64 = "…", arm64 = "…" }   # by dpkg's architecture, or all = "…" for one file
+arch_names = { amd64 = "x86_64" }        # the asset's spelling of an architecture, where it differs
+path = "/usr/local/sbin/name"            # root's, at mode = 0o755 where unset
+```
+
+A release's program, with no package around it. The download is checked against its SHA-256 before
+it makes the file, so a wrong sum leaves none, and a file of another content is made again.
+ikeward's binary is one, and so are devtools' pinned servers where mise's tools miss the account.
 
 ### packages
 
@@ -155,8 +176,7 @@ hint = "…"                  # follows the line of a refused load; goes with lo
   it again for each later kernel by itself. Another version of the module in DKMS goes first, with
   its source. A version that `dkms status` gives in no plain word's form is left alone, with a
   warning. Before `/usr/sbin/dkms` exists, as in a dry run before its package, DKMS holds nothing.
-- The packages of DKMS and of the kernel's headers are the role's own: a `packages` unit that this
-  one waits on by `after`.
+- DKMS's packages and the kernel's headers are the role's own, a `packages` unit named by `after`.
 - `load` is loaded by `modprobe` once built, after each module of `unload` that the kernel holds is
   unloaded. Without booted systemd it loads nothing, and says so.
 - With Secure Boot on, the kernel refuses the module until DKMS's key is enrolled, by hand at the
@@ -197,6 +217,7 @@ subids = "USER"             # the range 100000-165535 where a file gives USER no
 purged = "package"          # removed with its settings
 http = "http://127.0.0.1:PORT/"  # answers 200, waited for 30 times, 2 s apart
 ufw = { comment = "ws: NAME", rules = [{ action = "allow", proto = "udp", to_port = "53", dir = "in" }] }
+ufw = { comment = "ws: NAME", rules = [{ action = "allow", interface = "IN0", out = "OUT0", from = "CIDR" }] }
 routes = { pool = "CIDR", net = "CIDR", dev = "docker0", hint = "…" }  # refuses an overlap
 addr = { iface = "docker0", want = "CIDR", hint = "…" }                # refuses a missing address
 left = { user = "USER", group = "GROUP" }
@@ -205,8 +226,9 @@ reboot = { module = "name", package = "name", hint = "…" }             # notes
 ```
 
 - A new state is one field of `stateSpec`, of a type that makes its resource.
-- `ufw` owns the rules that carry its comment: those in `rules` are added, the others deleted. A
-  rule's address or port left out is any.
+- `ufw` owns the rules of its comment, and with `owns` those whose fields hold its values: those in
+  `rules` are added, the others deleted. A rule's address or port left out is any. A rule with `out`
+  routes what comes in on `interface` from `from` out by `out`, with `action` and no other field.
 - `routes` fails where a route of the moment overlaps `pool`, but for an on-link route of the main
   table, or `net` on a device other than `dev`. `addr` fails where `iface` lacks `want`. Each error
   ends with `hint`, as the run cannot mend either.
@@ -227,13 +249,17 @@ reboot = { module = "name", package = "name", hint = "…" }             # notes
 login_key = "USER"          # with home: USER holds a key that sshd takes
 home = "/home/USER"
 sudo_right = "USER"         # or: USER has the right to sudo, and a password for it to ask
+command = ["/abs/cmd"]      # or: the command, as root, exits 0
 ```
 
 - `login_key` reads `home/.ssh/authorized_keys` through the home's link guard. It fails where the
   file holds no key, or sshd would pass it over for its owner or mode.
 - `sudo_right` passes for root, which needs no sudo.
-- A container, which has no login to lose, passes each. A unit that would close a login waits on the
-  guard by its `after`.
+- A container, which has no login to lose, passes `login_key` and `sudo_right`. A unit that would
+  close a login waits on the guard by its `after`.
+- `command` is a role's own check, a command of ws where Go holds it. It runs as root on every
+  machine, containers too. Its exit 0 passes, and says each line of its output once a run. Any
+  other fails the plan with the command's error, its standard error and its output.
 
 ## ws unit
 

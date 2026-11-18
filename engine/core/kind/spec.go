@@ -41,6 +41,8 @@ type unitKind interface {
 type spec struct {
 	File map[string]fileSpec `toml:"file"`
 	Deb  map[string]debSpec  `toml:"deb"`
+	// Binary is a program of a release, pinned by the SHA-256 of each architecture's file.
+	Binary map[string]binarySpec `toml:"binary"`
 	// Packages is apt's packages, whose names a template gives.
 	Packages map[string]packagesSpec `toml:"packages"`
 	// Dkms is a module's pinned source, which DKMS builds for the running kernel.
@@ -53,10 +55,18 @@ type spec struct {
 	Guard map[string]guardSpec `toml:"guard"`
 }
 
-// parse fills the spec's text, named name in errors, with e.Data and pure's funcs, and decodes it.
-// A field that no kind has is an error.
+// parse fills the spec's text, named name in errors, with e.Data, pure's funcs and self, and
+// decodes it. A field that no kind has is an error.
 func parse(e Env, name string, text []byte) (spec, error) {
-	filled, err := fill(name, text, pure(), e.Data)
+	funcs := pure()
+	// self is the path of the ws that runs the units, for a command of ws in a spec.
+	funcs["self"] = func() (string, error) {
+		if e.Self == "" {
+			return "", errors.New("self: the path of the running ws is unknown")
+		}
+		return e.Self, nil
+	}
+	filled, err := fill(name, text, funcs, e.Data)
 	if err != nil {
 		return spec{}, err
 	}

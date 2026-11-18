@@ -242,9 +242,12 @@ Usage:
 
 Available Commands:
   apply       set the server up, each role as Go steps
+  cable       the cable role's check and reload, which its units run
   fans        drive the board's fans on the curves of CONFIG until SIGTERM
+  ikeward     the ikeward role's check, install and wait, which its units run
   secrets     keep ws's secrets file, with its identity as a systemd credential
   state       report what the server holds of what ws manages, and what apply would change
+  tunnel      the tunnel role's check, wg0's key and wg0, which its units run
   values      edit the machine's values
 
 Flags:
@@ -269,6 +272,42 @@ Flags:
       --json           print each event of the run as a line of JSON on stdout
       --only strings   run the named roles and ROLE/STEPs alone, as a list or by repeating the flag
       --secrets FILE   read the secrets from the age-encrypted FILE
+== ws server ubuntu cable
+the cable role's check and reload, which its units run
+
+Usage:
+  ws server ubuntu cable [flags]
+  ws server ubuntu cable [command]
+
+Available Commands:
+  check       refuse a cable's port that is an uplink, and a netplan FILE that would not set it up alone
+  reload      put netplan's files in force where the cable's file changed since the last reload
+
+Flags:
+  -h, --help   help for cable
+
+Use "ws server ubuntu cable [command] --help" for more information about a command.
+== ws server ubuntu cable check
+It reads the values of /etc/ws/values.yml. With no WS_CABLE_PORT there is no cable, and it passes. It fails where the port is missing, carries a default route or holds a lease from DHCP, or where networkd does not run on a booted machine.
+
+With FILE, the cable's new netplan file, it also merges FILE with netplan's other files in a scratch root, and fails where netplan refuses them or would hand the port to another entry. It reads FILE as root, and no message quotes it. The cable role's guard runs it, and its file's check with the new file.
+
+Usage:
+  ws server ubuntu cable check [FILE] [flags]
+
+Flags:
+  -h, --help   help for check
+== ws server ubuntu cable reload
+/var/lib/ws/cable-in-force holds the SHA-256 of the cable's file that the last reload put in force. Where the file's differs, as where it is new, changed or gone, netplan generate writes networkd's files and networkctl reload sets up each link whose file changed; then the mark takes the file's SHA-256, or goes with the file. A failed reload leaves the mark, so the reload stays due. Another netplan file's change never makes it due. Without booted systemd nothing is due. Before a reload it checks the live cable file as cable check FILE does, so that another netplan file that takes the port never goes in force with it.
+
+--check fails where a reload is due, and changes nothing. The cable role's run state runs it, after the cable's file.
+
+Usage:
+  ws server ubuntu cable reload [flags]
+
+Flags:
+      --check   fail where a reload is due, and change nothing
+  -h, --help    help for reload
 == ws server ubuntu fans
 CONFIG is the file that the fans role writes, /etc/ws/fans.json by default.
 
@@ -277,6 +316,49 @@ Usage:
 
 Flags:
   -h, --help   help for fans
+== ws server ubuntu ikeward
+the ikeward role's check, install and wait, which its units run
+
+Usage:
+  ws server ubuntu ikeward [flags]
+  ws server ubuntu ikeward [command]
+
+Available Commands:
+  check       fail where the secrets hold no profile for WS_IKEWARD_PROFILE
+  install     run ikeward install from the profile of the secrets, where its dry run says it would change anything
+  wait        wait for ikeward status to pass, as the VPN comes up
+
+Flags:
+  -h, --help   help for ikeward
+
+Use "ws server ubuntu ikeward [command] --help" for more information about a command.
+== ws server ubuntu ikeward check
+It reads the values of /etc/ws/values.yml and ws's secrets file, and fails where WS_IKEWARD_PROFILE is empty or the secrets hold no profile for it, as install would. The ikeward role's guard runs it, so that the run stops before ikeward's binary downloads, and a plan shows why.
+
+Usage:
+  ws server ubuntu ikeward check [flags]
+
+Flags:
+  -h, --help   help for check
+== ws server ubuntu ikeward install
+It reads the values of /etc/ws/values.yml and ws's secrets file. It writes the profile's two files into /run/ikeward-profile, which only root may enter, runs ikeward install --dry-run on them with the .p12's password on standard input, and removes them. Where the dry run exits 4, install would change something, and it runs install. It fails where WS_IKEWARD_PROFILE is set and the secrets hold no profile. Without booted systemd nothing is due.
+
+--check fails where install would change anything, and changes nothing. The ikeward role's run state runs it, after ikeward's binary.
+
+Usage:
+  ws server ubuntu ikeward install [flags]
+
+Flags:
+      --check   fail where install would change anything, and change nothing
+  -h, --help    help for install
+== ws server ubuntu ikeward wait
+It runs /usr/local/sbin/ikeward status, and again until it passes, up to 12 times, 10 s apart, then fails. A later unit may need the VPN, as for a clone from the remote network. Without booted systemd nothing is due. The ikeward role's run state runs it where ikeward status fails, after the install.
+
+Usage:
+  ws server ubuntu ikeward wait [flags]
+
+Flags:
+  -h, --help   help for wait
 == ws server ubuntu secrets
 keep ws's secrets file, with its identity as a systemd credential
 
@@ -390,6 +472,52 @@ Flags:
   -h, --help           help for state
       --json           print the report as JSON
       --only strings   report the named roles and ROLE/STEPs alone, as a list or by repeating the flag
+== ws server ubuntu tunnel
+the tunnel role's check, wg0's key and wg0, which its units run
+
+Usage:
+  ws server ubuntu tunnel [flags]
+  ws server ubuntu tunnel [command]
+
+Available Commands:
+  check       refuse a networkd that does not run, and a peer's key file that holds no key
+  key         make wg0's private key where it is missing, and mend its owner, group and mode
+  wg0         make wg0 again where it lacks the key of its file, and wait for it to hold it
+
+Flags:
+  -h, --help   help for tunnel
+
+Use "ws server ubuntu tunnel [command] --help" for more information about a command.
+== ws server ubuntu tunnel check
+It reads the values of /etc/ws/values.yml. It fails where networkd does not run on a booted machine, as nothing would create wg0, or where a peer's /etc/wireguard/NAME.pub holds no WireGuard public key. It names each peer whose file is missing, which wg0 leaves out, and prints the server's public key where the key exists. The tunnel role's guard runs it, before wg0's key and files.
+
+Usage:
+  ws server ubuntu tunnel check [flags]
+
+Flags:
+  -h, --help   help for check
+== ws server ubuntu tunnel key
+The key is /etc/systemd/network/60-wg0.key, root:systemd-network 0640, which networkd reads. It is made once, and never shown: the run that makes it prints its public key. A file that holds no private key fails.
+
+--check fails where the key is to be made or mended, and changes nothing. The tunnel role's run state runs it, after the guard.
+
+Usage:
+  ws server ubuntu tunnel key [flags]
+
+Flags:
+      --check   fail where the key is to be made or mended, and change nothing
+  -h, --help    help for key
+== ws server ubuntu tunnel wg0
+networkd reads wg0's private key only as it creates wg0. Where wg0 holds another key, it is deleted; then networkctl reload creates it, and the command waits up to 10 s for it to hold the key, whose public key it prints. Without booted systemd nothing is due.
+
+--check fails where wg0 is missing or holds another key, and changes nothing. The tunnel role's run state runs it, after wg0's files.
+
+Usage:
+  ws server ubuntu tunnel wg0 [flags]
+
+Flags:
+      --check   fail where wg0 lacks the key of its file, and change nothing
+  -h, --help    help for wg0
 == ws server ubuntu values
 edit the machine's values
 

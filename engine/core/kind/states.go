@@ -14,6 +14,7 @@ import (
 )
 
 // ufwRule is one rule of a ufw state, in ufw.Rule's fields. An address or a port left out is any.
+// With Out, the rule routes (ufw.Route): what comes in on Interface from From may go out by Out.
 type ufwRule struct {
 	Action    string `toml:"action"`
 	Proto     string `toml:"proto"`
@@ -23,13 +24,33 @@ type ufwRule struct {
 	FromPort  string `toml:"from_port"`
 	Dir       string `toml:"dir"`
 	Interface string `toml:"interface"`
+	Out       string `toml:"out"`
+}
+
+// rule returns the rule of ufw's that r gives, with the state's comment.
+func (r ufwRule) rule(comment string) (ufw.Rule, error) {
+	if r.Out == "" {
+		return ufw.Rule{Action: r.Action, Proto: r.Proto, To: cmp.Or(r.To, "any"), ToPort: cmp.Or(r.ToPort, "any"),
+			From: cmp.Or(r.From, "any"), FromPort: cmp.Or(r.FromPort, "any"), Dir: r.Dir, Interface: r.Interface,
+			Comment: comment}, nil
+	}
+	switch {
+	case r.Interface == "":
+		return ufw.Rule{}, errors.New("a route rule takes interface, where its packets come in")
+	case r.Proto != "" || r.To != "" || r.ToPort != "" || r.FromPort != "" || r.Dir != "":
+		// ufw.Route fixes these, and Parse reads its rules back in that form alone.
+		return ufw.Rule{}, errors.New("a route rule takes action, interface, out and from alone")
+	}
+	return ufw.Route(r.Action, r.Interface, r.Out, cmp.Or(r.From, "any"), comment), nil
 }
 
 // ufwState is the ufw rules that carry Comment, which the state owns: those in Rules are added,
-// and the others deleted. Without booted systemd, where ufw cannot load them, it skips.
+// and the others deleted. Owns narrows the rules it owns by their fields (ufwowns.go). Without
+// booted systemd, where ufw cannot load them, it skips.
 type ufwState struct {
-	Comment string    `toml:"comment"`
-	Rules   []ufwRule `toml:"rules"`
+	Comment string            `toml:"comment"`
+	Owns    map[string]string `toml:"owns"`
+	Rules   []ufwRule         `toml:"rules"`
 }
 
 func (s ufwState) resource(e Env) (resource.Resource, error) {
@@ -38,15 +59,20 @@ func (s ufwState) resource(e Env) (resource.Resource, error) {
 	}
 	rules := make([]ufw.Rule, 0, len(s.Rules))
 	for i, r := range s.Rules {
-		rule := ufw.Rule{Action: r.Action, Proto: r.Proto, To: cmp.Or(r.To, "any"), ToPort: cmp.Or(r.ToPort, "any"),
-			From: cmp.Or(r.From, "any"), FromPort: cmp.Or(r.FromPort, "any"), Dir: r.Dir, Interface: r.Interface,
-			Comment: s.Comment}
-		if err := rule.Valid(); err != nil {
+		rule, err := r.rule(s.Comment)
+		if err == nil {
+			err = rule.Valid()
+		}
+		if err != nil {
 			return nil, fmt.Errorf("rule %d: %w", i+1, err)
 		}
 		rules = append(rules, rule)
 	}
-	return ufw.Rules{M: e.M, Out: e.Out, Comment: s.Comment, Want: rules, NeedsSystemd: true}, nil
+	owns, err := s.owns()
+	if err != nil {
+		return nil, err
+	}
+	return ufw.Rules{M: e.M, Out: e.Out, Comment: s.Comment, Want: rules, Owns: owns, NeedsSystemd: true}, nil
 }
 
 // routesState refuses a route that Pool or Net would overlap, before a program takes them

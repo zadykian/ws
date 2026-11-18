@@ -1,3 +1,5 @@
+// Package cable sets up the server's end of the cable to the Mac: an address on the cable's
+// port, from a netplan file of its own. The values' check refuses a bad port or address first.
 package cable
 
 import (

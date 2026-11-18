@@ -25,7 +25,10 @@ type filePart struct {
 	// Owner owns the file, root by default. Another owner's file lies below that account's home,
 	// as root writes it there through the account, which refuses a link on the way. A file that
 	// names root lies anywhere, and below root's home it refuses a link on the way too.
-	Owner    string `toml:"owner"`
+	Owner string `toml:"owner"`
+	// Group gives a file of root's this group of /etc/group, as a service that reads the file runs
+	// in it. The group must exist as the unit plans.
+	Group    string `toml:"group"`
 	Template string `toml:"template"`
 	Source   string `toml:"source"`
 	// Check is a command that refuses a bad file, {} standing for the new file's path. The new file
@@ -69,7 +72,7 @@ func (f filePart) check(dir fs.FS) error {
 	case f.Secret && len(f.Check) > 0:
 		// A refusal's error carries what the checker prints, which may quote the content.
 		return errors.New("a secret file takes no check, as a refusal's error shows the checker's output")
-	case f.Absent && (f.Template != "" || f.Source != "" || len(f.Check) > 0 || f.Secret || f.Mode != 0 || f.GroupOf != ""):
+	case f.Absent && (f.Template != "" || f.Source != "" || len(f.Check) > 0 || f.Secret || f.Mode != 0 || f.GroupOf != "" || f.Group != ""):
 		return errors.New("an absent file takes a path, an owner and ours alone")
 	case f.Absent:
 		return nil
@@ -188,12 +191,12 @@ func (f filePart) written(ctx context.Context, e Env, owner account.Account, rel
 	if owner.Home != "" {
 		w = owner.File(e.M, rel, content, mode)
 	}
-	if f.GroupOf != "" {
-		a, err := account.User{Name: f.GroupOf}.Lookup(ctx, e.M)
-		if err != nil {
-			return nil, err
-		}
-		w.GID = a.GID
+	gid, named, err := f.gid(ctx, e.M)
+	if err != nil {
+		return nil, err
+	}
+	if named {
+		w.GID = gid
 	}
 	w.Secret = f.Secret
 	w.Backup = f.Backup

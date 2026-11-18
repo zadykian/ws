@@ -23,6 +23,8 @@ const (
 	rolesDir = ".."
 	treeRoot = "../../../.."
 	confDir  = treeRoot + "/mise/conf.d"
+	// selfPath stands for the running ws, which a spec's self gives.
+	selfPath = "/usr/local/bin/ws"
 )
 
 // roleFiles are the mise files a role may hold, each loaded by its env. A plain mise.toml would
@@ -31,7 +33,7 @@ var roleFiles = []string{"mise.server.toml", "mise.booted.toml", "mise.account.t
 
 // specNames returns the names of the units that the roles' specs give for v.
 func specNames(v values.Values) ([]string, error) {
-	e := kind.Env{M: effecttest.NewMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v}
+	e := kind.Env{M: effecttest.NewMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v, Self: selfPath}
 	units, err := kind.Load(e, os.DirFS(rolesDir))
 	if err != nil {
 		return nil, err
