@@ -53,6 +53,8 @@ type filePart struct {
 	Backup bool `toml:"backup"`
 	// AbsentWhenEmpty removes the file where its template gives white space alone.
 	AbsentWhenEmpty bool `toml:"absent_when_empty"`
+	// Link makes the path a link to this target, root's, in place of a file (filelink.go).
+	Link string `toml:"link"`
 }
 
 // check refuses a file's fields that no plan could take. dir holds its template or source.
@@ -65,6 +67,8 @@ func (f filePart) check(dir fs.FS) error {
 		return fmt.Errorf("path %q is not a clean absolute path", f.Path)
 	case f.Mode > 0o777:
 		return fmt.Errorf("mode %o is not a file's permission bits", f.Mode)
+	case f.Link != "":
+		return f.checkLink()
 	case f.CheckBooted && len(f.Check) == 0:
 		return errors.New("check_booted goes with check")
 	case f.Line != "" || len(f.Has) > 0:
@@ -117,8 +121,12 @@ func (f filePart) sayLeft(e Env, said *bool) {
 // resources makes the file's resources as its unit plans. A missing directory above a file of
 // root's is made, root's at 0755, and an existing one left alone. An account's file makes its own
 // parents, the account's. systemd reads its units again where a file in /etc/systemd/system
-// changes. A secret file whose template finds no secrets file gives no resource, and is left.
+// changes. A secret file whose template finds no secrets file gives no resource, and is left. A
+// link is root's, as are its parents.
 func (f filePart) resources(ctx context.Context, e Env, dir fs.FS) (built, error) {
+	if f.Link != "" {
+		return f.linked(e), nil
+	}
 	owner, err := ownerOf(ctx, e, f.Owner)
 	if err != nil {
 		return built{}, err
@@ -164,10 +172,9 @@ func (f filePart) resources(ctx context.Context, e Env, dir fs.FS) (built, error
 			return built{}, err
 		}
 	}
-	for d := path.Dir(f.Path); owner.Home == "" && !gone && d != "/"; d = path.Dir(d) {
-		b.all = append(b.all, file.Dir{M: e.M, Path: d, Mode: 0o755, CreateOnly: true})
+	if owner.Home == "" && !gone {
+		b.all = parents(e.M, f.Path)
 	}
-	slices.Reverse(b.all)
 	if f.Ours {
 		b.all = append(b.all, ours{m: e.M, path: f.Path})
 	}
@@ -220,20 +227,6 @@ func (f filePart) checker(e Env) func(p string) (string, []string) {
 	}
 }
 
-// ownerOf is the account of name, root's for an empty one. Another account's Home is its home, as
-// the system's database of accounts gives it.
-func ownerOf(ctx context.Context, e Env, name string) (account.Account, error) {
-	if name == "" || name == "root" {
-		return account.Account{User: account.User{Name: "root"}}, nil
-	}
-	a, err := account.User{Name: name}.Lookup(ctx, e.M)
-	if err != nil {
-		return account.Account{}, err
-	}
-	a.Home, err = e.System.home(ctx, e.M, name)
-	return a, err
-}
-
 // fileSpec is a unit of the kind file: one file, and the services that read it. Where the file
 // changes, Service restarts, or reloads with Reload, and a run that fails first leaves the restart
 // owed to the next. A file's restart sits in its own unit, as a service unit applied after it would
@@ -264,6 +257,9 @@ func (s fileSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.Res
 	}
 	if s.Line != "" && (s.Service != "" || s.UserService != "") {
 		return nil, errors.New("a line takes no service, as the file is its owner's")
+	}
+	if s.Link != "" && (s.Service != "" || s.UserService != "") {
+		return nil, errors.New("a link takes no service, as it has no content to change")
 	}
 	if s.UserService != "" {
 		if s.Owner == "" || s.Owner == "root" {
