@@ -22,7 +22,7 @@ puts `ws` in `~/.local/bin` (put it on `PATH` by hand) from a release, checked a
 two files](values/README.md#the-two-files)). Then:
 
 ```sh
-mise -C /opt/ws bootstrap
+MISE_LOCKED=1 mise -C /opt/ws bootstrap
 ```
 
 It sets up every role of the Mac, on the tree in `/opt/ws` ([The Mac's frame](frame/README.md)).
@@ -32,10 +32,10 @@ version.
 
 ## What the Mac reports
 
-`mise -C /opt/ws bootstrap plan` shows what the units would change, and `ws client macos servers`
-each server's tunnel. A cable's service that is disabled, which no run turns on, draws a warning
-from `ws client macos cable` and its `--check` alone: a bootstrap shows no check's output. No unit
-reads a private key: the key's unit looks for the file alone.
+`MISE_LOCKED=1 mise -C /opt/ws bootstrap plan` shows what the units would change, and `ws client
+macos servers` each server's tunnel. A cable's service that is disabled, which no run turns on,
+draws a warning from `ws client macos cable` and its `--check` alone: a bootstrap shows no check's
+output. No unit reads a private key: the key's unit looks for the file alone.
 
 ## The Mac's values.yml
 

@@ -77,10 +77,12 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 	if _, err := fmt.Fprintf(c.OutOrStdout(), "removed %s\n", name); err != nil {
 		return err
 	}
-	// The bootstrap takes the rest off. The unit of the tunnel's files boots the daemon out and
-	// removes its files. The networks' unit takes its resolvers, launchd's its plist, ssh's its host.
-	if err = p.Machine.Pass(c.Context(), false, "mise", "-C", "/opt/ws", "bootstrap"); err != nil {
-		err = fmt.Errorf("mise -C /opt/ws bootstrap: %w: run it again to take %s's daemon, routes and host off", err, name)
+	// The bootstrap takes the rest off, locked as CI's Mac job and the runbook run it, so that a tool
+	// that the lock lacks fails instead of resolving unchecked. The unit of the tunnel's files boots
+	// the daemon out and removes its files. The networks' unit takes its resolvers, launchd's its
+	// plist, ssh's its host.
+	if err = p.Machine.Pass(c.Context(), false, "env", "MISE_LOCKED=1", "mise", "-C", "/opt/ws", "bootstrap"); err != nil {
+		err = fmt.Errorf("MISE_LOCKED=1 mise -C /opt/ws bootstrap: %w: run it again to take %s's daemon, routes and host off", err, name)
 	}
 	if cable != "" {
 		_, _ = fmt.Fprintf(c.OutOrStdout(), "By hand: the cable's service %s keeps 10.77.0.2: name it in another server's "+
