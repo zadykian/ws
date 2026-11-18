@@ -59,7 +59,7 @@ steps, and each role's README says what it sets up.
   ([The `playbook` job](../../.github/workflows/README.md#the-playbook-job)). A step that only reads plans no change.
 - A dry run, `--check`, applies nothing and shows how the machine differs
   ([Dry runs](../../README.md#dry-runs)). A step reads in its Plan, a GET included
-  ([devtools](../../roles/server/ubuntu/devtools/internal/golang/golang.go)).
+  ([SigNoz's dashboards](../../roles/server/ubuntu/signoz/internal/dashboards/dashboards_plan.go)).
 - A role's test states dpkg's database by effecttest's package table, never by a `dpkg-query` line
   in Results, so apt's read can change under it
   ([machine_dpkg.go](../../engine/core/effect/effecttest/machine_dpkg.go)).
@@ -68,8 +68,8 @@ steps, and each role's README says what it sets up.
 - A report reads as Plan does and holds no secret: a `Secret` file shows no diff and no sum
   ([report.go](../../engine/core/step/report.go)). A `File` that a role builds in `Plan` shows by its change
   alone, so a healthy one has no item.
-- Where a dry run skips a step, a step beside it shows what the run would change, as Go's move into
-  `/usr/local/go` does ([claude's marketplaces](../../roles/server/ubuntu/claude/marketplaces.go)).
+- Where a dry run skips a step, a step beside it shows what the run would change
+  ([claude's marketplaces](../../roles/server/ubuntu/claude/marketplaces.go)).
 - A step that needs a booted machine's systemd checks `systemd.Booted`: without one, as in CI's
   container, it skips and says so.
 - A file ws writes whole, on the server or the Mac, has one line at its top, where its format
