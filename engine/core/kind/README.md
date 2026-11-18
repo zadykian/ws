@@ -57,6 +57,7 @@ The kinds follow, and then [`ws unit`](#ws-unit), which plans and applies the un
 path = "/abs/path"          # each missing parent is made, root's at 0755
 mode = 0o644                # the default
 owner = "root"              # the default; another owner's file lies below its home
+group = "NAME"              # a file of root's takes this group of /etc/group
 template = "name.tmpl"      # or source = "name", copied unchanged
 check = ["cmd", "{}"]       # {} is the new file's path; a refusal leaves the live file
 check_booted = false        # run check with booted systemd alone
@@ -81,6 +82,8 @@ after = "KIND/NAME"
   fails before the restart leaves it owed to the next run. A file that its check refused leaves
   the restart owed too, and the service keeps the live file.
 - A secret file takes no check, as a refusal's error shows what the checker prints.
+- `group` is read from `/etc/group` as the unit plans, so a package that mise installs may bring
+  it, and a missing group fails the plan. It takes a file of root's, and never sits by `group_of`.
 - A file in `/etc/systemd/system` makes systemd read its units again.
 - An owner other than root takes the home that the system gives: `getent passwd` on Linux, and
   `dscl` on macOS, which the side names. A path outside it, or a link on the way, is refused, and
