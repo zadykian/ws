@@ -1,6 +1,6 @@
 // Package kind holds ws's kinds: resource types written once. A role's spec names their units,
 // KIND/NAME. A unit is a step.Step built on the resource packages, so that a run of units plans,
-// applies and plans again as a role's steps do. No role's word sits in a kind.
+// applies and plans again as the step package runs any step. No role's word sits in a kind.
 package kind
 
 import (

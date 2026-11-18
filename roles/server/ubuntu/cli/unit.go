@@ -40,7 +40,7 @@ func unitSide(vars string) enginecli.UnitSide {
 			if err != nil {
 				return nil, nil, err
 			}
-			// WS_HOME is known now: the machine's writes under it stay inside it, as apply's do.
+			// WS_HOME is known now: the machine's writes under it stay inside it.
 			if om, ok := m.(local.OSMachine); ok {
 				om.Confine = v.Home
 				m = om

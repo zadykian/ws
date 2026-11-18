@@ -784,7 +784,7 @@ Use "ws server ubuntu values [command] --help" for more information about a comm
 == ws server ubuntu values set
 An empty VALUE takes the key's line out, which gives its default back. A list's VALUE is split by commas. A table, such as WS_FANS_CURVES, stays the file's to edit by hand.
 
-The next ws server ubuntu apply takes the key.
+The next mise bootstrap takes the key.
 
 Usage:
   ws server ubuntu values set KEY VALUE [flags]

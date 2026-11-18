@@ -66,7 +66,7 @@ func TestMacDuesAMissingRoutesD(t *testing.T) {
 func TestMacStopsAtAResolverOfAnotherScript(t *testing.T) {
 	for _, text := range []string{
 		"nameserver 1.1.1.1\n",
-		"# Written by github.com/zadykian/ws: ws client macos apply, from WS_RESOLVERS in a server's values.yml.\nnameserver 1.1.1.1\n",
+		"# Written by github.com/zadykian/ws: another script, from WS_RESOLVERS in a server's values.yml.\nnameserver 1.1.1.1\n",
 	} {
 		m := effecttest.NewMachine()
 		m.Files["/etc/resolver/a.test"] = []byte(text)

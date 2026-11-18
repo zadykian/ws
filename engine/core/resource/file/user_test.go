@@ -92,8 +92,8 @@ func TestUserFileStopsOrWarnsWhereNotWs(t *testing.T) {
 // found text lacks Mark, and the plain one where it holds it.
 func TestUserFileReportsAFileWithoutTheMark(t *testing.T) {
 	for found, want := range map[string]string{
-		"# Written by ws client macos apply\n": "holds no Written by line: ws did not write it",
-		Header("#") + " old\n":                 "differs from what ws writes: a change by hand, or another version of ws",
+		"# Written by another tool\n": "holds no Written by line: ws did not write it",
+		Header("#") + " old\n":        "differs from what ws writes: a change by hand, or another version of ws",
 	} {
 		m := effecttest.NewMachine()
 		m.Files["/h/f"] = []byte(found)
