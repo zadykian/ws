@@ -14,9 +14,9 @@ ws runs.
 The tree goes in `/opt/ws`, root's alone, with its pin on the tree's build, as for
 [`playbook`](README.md#the-playbook-job). GitHub's runner keeps a default ACL on `/opt` that lets
 anyone write what lands there, so the job drops it first. As on a new machine, `install.sh` runs
-the bootstrap on the tree, which installs ws, then `ws server ubuntu apply --only security`.
-`mise bootstrap plan --detailed-exitcode` must then exit 0. Each runs twice: the second apply must
-change nothing, and the plan must exit 0 again.
+the bootstrap on the tree, which installs ws and sets up the firewall before Docker's ufw rules.
+`mise bootstrap plan --detailed-exitcode` must then exit 0. The bootstrap runs twice, and the plan
+must exit 0 again.
 
 Then the user must keep `sudo`, leave `docker` and `lxd`, and have no cached password. The system's
 socket must refuse it, and its own Docker must run a container that resolves names through
