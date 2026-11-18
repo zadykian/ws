@@ -67,22 +67,11 @@ func Read(ctx context.Context, m effect.Machine, getenv func(string) string, pwd
 	}
 	f.Ghostty.Config = ghostty.ConfigPath(m, f.Home)
 	mac := values.Path(getenv, pwd)
-	names, err := values.Servers(m, mac)
+	servers, err := Servers(m, mac)
 	if err != nil {
 		return Mac{}, err
 	}
-	var all []error
-	for _, name := range names {
-		c, err := values.Load(m, mac, values.ServerPath(mac, name))
-		if err != nil {
-			all = append(all, values.RefuseSibling(name, err))
-			continue
-		}
-		f.Servers = append(f.Servers, Server{Name: name, Conf: c})
-	}
-	if err := errors.Join(all...); err != nil {
-		return Mac{}, err
-	}
+	f.Servers = servers
 	own, err := values.LoadMac(m, mac)
 	if err != nil {
 		return Mac{}, err
@@ -96,6 +85,27 @@ func Read(ctx context.Context, m effect.Machine, getenv func(string) string, pwd
 	}
 	f.Git = Git{Texts: git.TextsOf(f.Home, signing), GhFrom: ghFrom(ctx, m)}
 	return f, nil
+}
+
+// Servers reads each server's file beside values.yml at mac, by name, with the Mac's keys joined
+// in. It runs the whole check of the values: a bad value, a bad name or a clash between two servers
+// fails it, naming each server it refuses. A Mac with no server yet has none.
+func Servers(m effect.Machine, mac string) ([]Server, error) {
+	names, err := values.Servers(m, mac)
+	if err != nil {
+		return nil, err
+	}
+	var servers []Server
+	var all []error
+	for _, name := range names {
+		c, err := values.Load(m, mac, values.ServerPath(mac, name))
+		if err != nil {
+			all = append(all, values.RefuseSibling(name, err))
+			continue
+		}
+		servers = append(servers, Server{Name: name, Conf: c})
+	}
+	return servers, errors.Join(all...)
 }
 
 // readSSH reads the login key and returns ssh's text, a block for each server.

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
 	"github.com/zadykian/ws/roles/client/macos/values"
@@ -83,5 +84,55 @@ func TestKeysOfAFileKeyHaveNoCopy(t *testing.T) {
 	m.Results["ssh-keygen -l -f /h/.ssh/id.pub"] = effecttest.Result{}
 	if status, stdout, stderr := partEnv(m)("keys", "--check"); status != 0 || stdout != "" {
 		t.Errorf("keys --check: status = %d, stdout = %q, stderr = %q; want 0", status, stdout, stderr)
+	}
+}
+
+// wgKey is a WireGuard key's form, as values.yml takes WS_PUBLIC_KEY.
+const wgKey = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+
+func TestCableLeavesAMacWithNoCable(t *testing.T) {
+	m := effecttest.NewMachine()
+	writeConfs(m, "", values.Text("WS_SLOT", "0"))
+	if status, stdout, stderr := partEnv(m)("cable", "--check"); status != 0 || stdout != "" {
+		t.Errorf("cable --check: status = %d, stdout = %q, stderr = %q; want 0", status, stdout, stderr)
+	}
+	for _, c := range m.Calls {
+		if strings.Contains(c, "networksetup") {
+			t.Errorf("cable --check ran %q, want no networksetup", c)
+		}
+	}
+}
+
+func TestCableReadsTheServersService(t *testing.T) {
+	m := effecttest.NewMachine()
+	writeConfs(m, "", values.Text("WS_SLOT", "0", "WS_CABLE_SERVICE", "Dock"))
+	// networksetup is macOS's: where PATH lacks it, the read names it.
+	if status, _, stderr := partEnv(m)("cable", "--check"); status != 1 || !strings.Contains(stderr, "networksetup") {
+		t.Errorf("cable --check: status = %d, stderr = %q; want 1, networksetup asked for", status, stderr)
+	}
+}
+
+func TestNetworksSetUpEachServer(t *testing.T) {
+	m := effecttest.NewMachine()
+	writeConfs(m, "", values.Text("WS_SLOT", "0", "WS_PUBLIC_KEY", wgKey,
+		"WS_TUNNEL_NETWORKS", "198.51.100.0/24", "WS_RESOLVERS", "a.test=198.51.100.53"))
+	m.Root["/etc/ws/tunnel/ws/routes.d"] = effect.Attrs{Mode: 0o755}
+	run := partEnv(m)
+	status, stdout, stderr := run("networks", "--check")
+	if status != 1 || stdout != "" || !strings.Contains(stderr, "/etc/resolver/a.test") ||
+		!strings.Contains(stderr, "/etc/ws/tunnel/ws/routes.d/values") {
+		t.Errorf("networks --check: status = %d, stdout = %q, stderr = %q; want 1, both files due", status, stdout, stderr)
+	}
+	if status, _, stderr := run("networks"); status != 0 || !strings.Contains(string(m.Files["/etc/resolver/a.test"]), "nameserver 198.51.100.53") ||
+		!strings.Contains(string(m.Files["/etc/ws/tunnel/ws/routes.d/values"]), "198.51.100.0/24") {
+		t.Errorf("networks: status = %d, stderr = %q; want both files written", status, stderr)
+	}
+	for _, c := range m.Calls {
+		if strings.Contains(c, "launchctl") {
+			t.Errorf("networks ran %q, want no signal: launchd's unit watches routes.d", c)
+		}
+	}
+	if status, _, stderr := run("networks", "--check"); status != 0 {
+		t.Errorf("second networks --check: status = %d, stderr = %q; want 0", status, stderr)
 	}
 }

@@ -40,9 +40,11 @@ Usage:
 
 Available Commands:
   apply       set the Mac up from values.yml and a server's file
+  cable       give the cable's service its Manual Configuration of the Mac's end
   cld         install cld into ~/.local/bin, and keep it at its latest release
   git         the commands of git's units
   keys        copy the .pub of each key of Secretive's that values.yml names into /etc/ws
+  networks    route each server's WS_TUNNEL_NETWORKS and send its WS_RESOLVERS' domains to it
   remove      remove a server from the Mac
   resolver    send DOMAIN's names to the nameservers, or drop it
   servers     list the Mac's servers with their target, slot and tunnel
@@ -66,6 +68,20 @@ Flags:
       --check          print each change and make none
   -h, --help           help for apply
       --only strings   run the named steps alone, as a list or by repeating the flag
+
+Global Flags:
+      --server string   the server to act on, which may be left out where there is one
+== ws client macos cable
+The service that a server's WS_CABLE_SERVICE names takes 10.77.0.2/30 with no router, through sudo, where networksetup shows other settings. A service networksetup lacks, or one with a router outside the cable's /30, as an uplink has, fails it.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws client macos cable [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for cable
 
 Global Flags:
       --server string   the server to act on, which may be left out where there is one
@@ -122,6 +138,20 @@ Usage:
 Flags:
       --check   fail where a change is due, and change nothing
   -h, --help    help for keys
+
+Global Flags:
+      --server string   the server to act on, which may be left out where there is one
+== ws client macos networks
+Each server with WS_PUBLIC_KEY gets its routes.d/values, and a file in /etc/resolver for each domain of its WS_RESOLVERS, written through sudo. A file of ws's in /etc/resolver that no server names goes. A file of a domain that ws did not write fails it.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws client macos networks [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for networks
 
 Global Flags:
       --server string   the server to act on, which may be left out where there is one

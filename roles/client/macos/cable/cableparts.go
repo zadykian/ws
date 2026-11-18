@@ -12,6 +12,9 @@ func (c Cable) Step() resource.Lazy {
 	return resource.Lazy{Title: "cable", Parts: c.parts}
 }
 
+// Part is the cable as one resource, which ws client macos cable plans and applies.
+func (c Cable) Part() resource.Resource { return cablePart{c} }
+
 // parts is one part, which reads the Mac when it plans or reports, so that a report warns of
 // nothing.
 func (c Cable) parts(context.Context) ([]resource.Resource, error) {

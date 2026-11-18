@@ -88,7 +88,7 @@ func (n *Networks) resolvers(ctx context.Context) ([]step.Change, error) {
 	for i, r := range resolvers(n.Conf.Resolvers) {
 		resolverFile := resolverDir + "/" + r.Domain
 		named[r.Domain] = true
-		if own, err := n.ownsFile(resolverFile); err != nil {
+		if own, err := ownsFile(n.M, resolverFile); err != nil {
 			return nil, err
 		} else if !own {
 			return nil, fmt.Errorf("%s is another script's, or written by hand: have that script call "+
@@ -123,7 +123,7 @@ func (n *Networks) resolvers(ctx context.Context) ([]step.Change, error) {
 		if named[name] {
 			continue
 		}
-		if own, err := n.ownsFile(resolverFile); err != nil {
+		if own, err := ownsFile(n.M, resolverFile); err != nil {
 			return nil, err
 		} else if own {
 			gone, err := resource.Said{Out: n.Out, Part: file.Absent{M: n.M, Path: resolverFile}}.Plan(ctx)
@@ -139,8 +139,8 @@ func (n *Networks) resolvers(ctx context.Context) ([]step.Change, error) {
 }
 
 // ownsFile is whether the file is missing or starts with ws's header.
-func (n *Networks) ownsFile(file string) (bool, error) {
-	have, err := n.M.ReadRootFile(file)
+func ownsFile(m effect.Machine, file string) (bool, error) {
+	have, err := m.ReadRootFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
 		return true, nil
 	}

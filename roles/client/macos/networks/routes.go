@@ -33,6 +33,9 @@ type Routes struct {
 	// Alone is set where no step makes routes.d first: a missing routes.d is an error even under
 	// --check, as the old script's was.
 	Alone bool
+	// Watched is set where launchd's unit of the tunnel watches routes.d, and so signals the
+	// daemons itself. A missing routes.d is then due, as the tunnel's unit makes it first.
+	Watched bool
 }
 
 // Name is tunnel routes.
@@ -65,7 +68,7 @@ func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 		switch {
 		case len(networks) == 0:
 			return nil, nil
-		case r.Check && !r.Alone:
+		case (r.Check || r.Watched) && !r.Alone:
 			return []step.Change{resource.Remark("would put " + strings.Join(networks, " ") + " in " + routesFile + " " + routesAbsent)}, nil
 		}
 		return nil, fmt.Errorf("%s is missing: run ws client macos apply --server %s first", dir, r.Server)
@@ -76,8 +79,12 @@ func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 	if len(networks) > 0 {
 		res = file.File{M: r.M, Path: routesFile, Content: []byte(routesText(r.Server, r.Set, networks)), Mode: 0o644}
 	}
-	cs, err := resource.Append(ctx, nil, resource.Said{Out: r.Out, Part: res})
-	if err != nil || len(cs) == 0 || r.Check {
+	if !r.Watched {
+		// A command of the Mac's says each change as it applies, so a watched file needs no Said.
+		res = resource.Said{Out: r.Out, Part: res}
+	}
+	cs, err := resource.Append(ctx, nil, res)
+	if err != nil || len(cs) == 0 || r.Check || r.Watched {
 		return cs, err
 	}
 	reread, err := launchd.Reread(ctx, r.M, r.Out)

@@ -10,8 +10,11 @@ import (
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/roles/client/macos/cable"
 	"github.com/zadykian/ws/roles/client/macos/cld"
+	"github.com/zadykian/ws/roles/client/macos/facts"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
+	"github.com/zadykian/ws/roles/client/macos/networks"
 	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
@@ -50,6 +53,44 @@ func newKeysCmd(p enginecli.Env) *cobra.Command {
 			}
 			return keys.Copies(ctx, p.Machine, out, c, home)
 		})
+}
+
+// newCableCmd returns ws client macos cable, which the cable's unit runs.
+func newCableCmd(p enginecli.Env) *cobra.Command {
+	return enginecli.Procedure("cable", "give the cable's service its Manual Configuration of the Mac's end",
+		"The service that a server's WS_CABLE_SERVICE names takes 10.77.0.2/30 with no router, through "+
+			"sudo, where networksetup shows other settings. A service networksetup lacks, or one with a "+
+			"router outside the cable's /30, as an uplink has, fails it.",
+		func(_ context.Context, out effect.Out) ([]resource.Resource, error) {
+			servers, err := serversOf(p)
+			var rs []resource.Resource
+			for _, s := range servers {
+				if s.CableService != "" {
+					rs = append(rs, cable.Cable{Conf: s.Conf, M: p.Machine, Out: out}.Part())
+				}
+			}
+			return rs, err
+		})
+}
+
+// newNetworksCmd returns ws client macos networks, which the networks' unit runs.
+func newNetworksCmd(p enginecli.Env) *cobra.Command {
+	return enginecli.Procedure("networks", "route each server's WS_TUNNEL_NETWORKS and send its WS_RESOLVERS' domains to it",
+		"Each server with WS_PUBLIC_KEY gets its routes.d/values, and a file in /etc/resolver for each "+
+			"domain of its WS_RESOLVERS, written through sudo. A file of ws's in /etc/resolver that no "+
+			"server names goes. A file of a domain that ws did not write fails it.",
+		func(_ context.Context, out effect.Out) ([]resource.Resource, error) {
+			servers, err := serversOf(p)
+			if err != nil {
+				return nil, err
+			}
+			return []resource.Resource{networks.Mac{Servers: servers, M: p.Machine, Out: out}}, nil
+		})
+}
+
+// serversOf reads each server's values, checked as the units' facts are.
+func serversOf(p enginecli.Env) ([]facts.Server, error) {
+	return facts.Servers(p.Machine, values.Path(p.Getenv, p.Pwd))
 }
 
 // homeOf returns the user's home from HOME.
