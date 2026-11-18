@@ -17,7 +17,8 @@ its spec of ws's units:
   ws starts to the internet and ikeward, but what the network needs, such as DHCP and DNS. The
   table is off where `WS_SECURITY_OUTBOUND` is false, as a cloud VM wants.
 - [`cable`](roles/server/ubuntu/cable): the server's end of a cable to the Mac, as units.
-- [`tunnel`](roles/server/ubuntu/tunnel): `wg0`, the server's end of a WireGuard tunnel for the Mac.
+- [`tunnel`](roles/server/ubuntu/tunnel): `wg0`, the server's end of a WireGuard tunnel for the Mac, as
+  units.
 - [`ikeward`](roles/server/ubuntu/ikeward): ikeward's IKEv2 VPN, where a profile is given, and the WireGuard
   peers' way into it.
 - [`nvidia`](roles/server/ubuntu/nvidia): NVIDIA's headless driver from Ubuntu's archive, on a machine with an
