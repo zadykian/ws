@@ -55,6 +55,9 @@ Its templates and sources sit beside it, and a path in the spec is relative to t
 ## The kinds
 
 The kinds follow, and then [`ws unit`](#ws-unit), which plans and applies the units for mise.
+macOS takes `file`, `state` with `run` alone, and `launchd`, and Linux every kind but `launchd`:
+the others read apt, systemd, sysfs or `/proc`, and on macOS would read in sync having done
+nothing. Any other kind fails the load, as `kindsOn` in `kind.go` says.
 
 ### file
 
@@ -211,6 +214,12 @@ project = "name"            # lowercase letters, digits, '_' and '-'
 - With the sum kept, it ups without a recreation where a service whose `restart` is `always` or
   `unless-stopped` is not running. A one-shot that has ended counts for nothing.
 - Without booted systemd it plans nothing, reads nothing, and says so.
+
+### launchd
+
+A family of LaunchDaemons on macOS, which launchd runs as root from boot. It loads each daemon, and
+restarts it or sends it SIGHUP where a file it reads changes. Its keys and rules are on
+[its own page](launchd.md).
 
 ## ws unit
 
