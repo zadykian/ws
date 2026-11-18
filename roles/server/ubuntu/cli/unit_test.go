@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
@@ -35,6 +36,33 @@ func TestUnitValuesConfineToHome(t *testing.T) {
 	fake := effecttest.NewMachine()
 	if _, m, err := side.Values(t.Context(), fake); err != nil || m != fake {
 		t.Errorf("a fake machine: %v, %v; want it unchanged", m, err)
+	}
+}
+
+func TestUnitPlatformIsUbuntu2604(t *testing.T) {
+	ok := "NAME=\"Ubuntu\"\nID=ubuntu\nVERSION_ID=\"26.04\"\n"
+	for _, tc := range []struct {
+		name string
+		text string
+		want string
+	}{
+		{"ubuntu 26.04", ok, ""},
+		{"quoted id", "ID=\"ubuntu\"\nVERSION_ID=26.04\n", ""},
+		{"older ubuntu", "ID=ubuntu\nVERSION_ID=\"24.04\"\n", `not "ubuntu" "24.04"`},
+		{"debian", "ID=debian\nVERSION_ID=\"13\"\n", `not "debian" "13"`},
+		{"no file", "", `not "" ""`},
+	} {
+		m := effecttest.NewMachine()
+		if tc.name != "no file" {
+			m.Files[osRelease] = []byte(tc.text)
+		}
+		err := unitSide("/v.yml").Platform(m)
+		switch {
+		case tc.want == "" && err != nil:
+			t.Errorf("%s: %v, want none", tc.name, err)
+		case tc.want != "" && (err == nil || !strings.Contains(err.Error(), tc.want)):
+			t.Errorf("%s: %v, want %s", tc.name, err, tc.want)
+		}
 	}
 }
 

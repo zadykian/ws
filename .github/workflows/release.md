@@ -6,7 +6,7 @@ publishes `install.sh` too.
 
 ## Install
 
-On Linux on x86_64 or aarch64, as root, through `sudo`:
+On Ubuntu 26.04 on x86_64 or aarch64, as root, through `sudo`:
 
 ```sh
 set -o pipefail
@@ -32,6 +32,8 @@ machine's miserc and runs `mise bootstrap`:
   again, it checks the release's tag out in `/opt/ws`, dropping any change and any file git does
   not track there, such as a trial's `mise.local.toml`. So it brings the machine back to the
   release.
+- It refuses a system other than Ubuntu 26.04, by `/etc/os-release`. So does `ws unit`'s read and
+  write, which the bootstrap runs.
 - It refuses a `/opt/ws` that is a link, or that holds a file or directory root does not own or
   others may write. mise runs the tree's config as root.
 
@@ -42,17 +44,20 @@ machine's miserc and runs `mise bootstrap`:
 | `WS_RELEASES_URL` | `https://github.com/zadykian/ws/releases` | where the releases are, for tests |
 | `WS_MISE_URL` | `https://github.com/jdx/mise/releases/download` | where mise's binaries are, for tests |
 | `WS_REPO` | `https://github.com/zadykian/ws` | the repository the tag is cloned from, for tests |
+| `WS_OS_RELEASE` | `/etc/os-release` | the file that names the system, for tests |
 
 ## The install job
 
 CI's `install` job runs [install-checks.sh](../install-checks.sh) on each pull request. It
 runs as a user with sudo on GitHub's runner, as `install.sh` writes `/etc/mise`, `/opt/ws` and
-`/etc/ws`, which each case removes. It downloads mise's real binary once and serves it on loopback
+`/etc/ws`, which each case removes. `WS_OS_RELEASE` names the runner's system Ubuntu 26.04,
+whatever its release. It downloads mise's real binary once and serves it on loopback
 with [serve-releases](../../.tools/serve-releases/main.go), beside a copy with a byte added. A small
 repository stands for the release's tree: a file of mise's config for each env, each writing one
 file, tagged `v0.2.0`, and later `v0.3.0` with one file more. The cases:
 
 - a user is refused, and nothing is installed;
+- Ubuntu 24.04, Debian and a system with no `os-release` are refused, and nothing is installed;
 - a wrong SHA-256 of mise is refused, and no mise or download is left;
 - the latest release installs mise and runs its bootstrap, so that the files of the envs that the
   miserc names exist;

@@ -35,6 +35,9 @@ type UnitSide struct {
 	Units effect.Units
 	// Root refuses read and write to any user but root, as the side's units write root's paths.
 	Root bool
+	// Platform refuses read and write on a machine whose system the side's units are not written
+	// for, or returns nil. Nil is a side that runs on any.
+	Platform func(m effect.Machine) error
 	// System is the side's operating system, which decides how the kinds find a home and run a
 	// command as a user.
 	System kind.System
@@ -155,6 +158,9 @@ func (r unitRun) closure(names []string) ([]kind.Unit, error) {
 func (s UnitSide) refuse(p Env) error {
 	if s.Root && p.Euid != 0 {
 		return errors.New("run it as root")
+	}
+	if s.Platform != nil {
+		return s.Platform(p.Machine)
 	}
 	return nil
 }

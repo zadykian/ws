@@ -15,14 +15,15 @@
 # runs mise bootstrap on the tree of the latest release, or of the one WS_VERSION names (X.Y.Z,
 # with or without the v), cloned to /opt/ws. That tree pins ws's binary and checks it. Run again,
 # it checks that release's tag out there, dropping any change and any file git does not track, and
-# brings the machine back to the release. It refuses a /opt/ws that is not root's alone.
+# brings the machine back to the release. It refuses a /opt/ws that is not root's alone, and a
+# system other than Ubuntu 26.04.
 # A Mac follows roles/client/macos/runbook.md instead. It runs in any POSIX sh, and needs curl,
 # sha256sum and git.
 #
 # WS_IN_PLACE=1 runs the bootstrap on the tree in /opt/ws, with no release lookup and no clone.
 # WS_RELEASES_URL stands in for https://github.com/zadykian/ws/releases, WS_MISE_URL for
-# https://github.com/jdx/mise/releases/download and WS_REPO for https://github.com/zadykian/ws,
-# for the tests.
+# https://github.com/jdx/mise/releases/download, WS_REPO for https://github.com/zadykian/ws and
+# WS_OS_RELEASE for /etc/os-release, for the tests.
 #
 # Everything is in functions that the last line calls, so that a download cut short runs nothing.
 
@@ -46,7 +47,8 @@ die() {
 }
 
 # platform sets mise_asset and mise_sum to the name and the checksum of mise's binary for this
-# machine.
+# machine. It refuses a system other than Ubuntu 26.04, which the units are written for, by
+# /etc/os-release, or by the file WS_OS_RELEASE names, for the tests.
 platform() {
     os=$(uname -s)
     arch=$(uname -m)
@@ -63,6 +65,12 @@ platform() {
     Darwin-*) die "install.sh sets up an Ubuntu server: a Mac follows roles/client/macos/runbook.md" ;;
     *) die "ws sets up Ubuntu, not $os" ;;
     esac
+    release_file=/etc/os-release
+    [ -z "${WS_OS_RELEASE:-}" ] || release_file=$WS_OS_RELEASE
+    id=$(sed -n 's/^ID=//p' "$release_file" 2>/dev/null | tr -d "\"'")
+    version_id=$(sed -n 's/^VERSION_ID=//p' "$release_file" 2>/dev/null | tr -d "\"'")
+    [ "$id $version_id" = "ubuntu 26.04" ] ||
+        die "ws sets up Ubuntu 26.04 alone, not '$id' '$version_id'"
 }
 
 # is_version succeeds where $1 is a version X.Y.Z, as a tag vX.Y.Z holds it: three numbers, none

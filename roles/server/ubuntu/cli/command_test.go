@@ -1,114 +1,11 @@
 package cli
 
 import (
-	"bytes"
-	"slices"
 	"strings"
 	"testing"
 
-	"filippo.io/age"
-	"filippo.io/age/armor"
-	"github.com/spf13/cobra"
-
-	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/effect/units"
 )
-
-func TestServerRefusal(t *testing.T) {
-	ok := []byte("NAME=\"Ubuntu\"\nID=ubuntu\nVERSION_ID=\"26.04\"\n")
-	for _, tc := range []struct {
-		name string
-		euid int
-		text string
-		want string
-	}{
-		{"ubuntu 26.04 as root", 0, string(ok), ""},
-		{"not root", 1000, string(ok), "run it as root"},
-		{"older ubuntu", 0, "ID=ubuntu\nVERSION_ID=\"24.04\"\n", "Ubuntu 26.04 is the one system for this, not ubuntu 24.04"},
-		{"debian", 0, "ID=debian\nVERSION_ID=\"13\"\n", "Ubuntu 26.04 is the one system for this, not debian 13"},
-		{"no file", 0, "", "Ubuntu 26.04 is the one system for this, not  "},
-		{"quoted id", 0, "ID=\"ubuntu\"\nVERSION_ID=26.04\n", ""},
-	} {
-		if got := serverRefusal(tc.euid, []byte(tc.text)); got != tc.want {
-			t.Errorf("%s: serverRefusal = %q, want %q", tc.name, got, tc.want)
-		}
-	}
-}
-
-func TestServerApplyRefusesOtherArgs(t *testing.T) {
-	for _, args := range [][]string{
-		{"apply", "--tags", "devtools"}, {"apply", "--only", "nothing"}, {"apply", "--only", "nothing/step"},
-		{"apply", "--only", "devtools,"}, {"apply", "--only", ""},
-		{"apply", "--only"}, {"apply", "-C"}, {"apply", "extra"}, {"other"},
-	} {
-		status, _, stderr := runWs(fakeProcess(), "", append([]string{"server", "ubuntu"}, args...)...)
-		if status != 2 || !strings.Contains(stderr, "--help' for usage.") {
-			t.Errorf("%q: status = %d, stderr = %q", args, status, stderr)
-		}
-	}
-}
-
-func TestServerApplyRefusesNonRoot(t *testing.T) {
-	p := fakeProcess()
-	m := p.Machine.(*effecttest.Machine)
-	p.Euid = 1000
-	m.Files["/etc/os-release"] = []byte("ID=ubuntu\nVERSION_ID=\"26.04\"\n")
-	status, _, stderr := runWs(p, "", "server", "ubuntu", "apply")
-	if status != 1 || stderr != "ws server ubuntu apply: run it as root\n" {
-		t.Errorf("status = %d, stderr = %q", status, stderr)
-	}
-	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "exec ") }) {
-		t.Errorf("calls = %q, want no exec", m.Calls)
-	}
-}
-
-func TestServerApplyHelp(t *testing.T) {
-	status, stdout, _ := runWs(fakeProcess(), "", "server", "ubuntu", "apply", "-h")
-	for _, want := range []string{"--check", "--only", "ROLE/STEP", "--secrets", "ws-secrets"} {
-		if status != 0 || !strings.Contains(stdout, want) {
-			t.Errorf("status = %d, help = %q, want it to hold %q", status, stdout, want)
-		}
-	}
-}
-
-func TestLoadSecrets(t *testing.T) {
-	id, _ := age.GenerateX25519Identity()
-	m := effecttest.NewMachine()
-	var buf bytes.Buffer
-	a := armor.NewWriter(&buf)
-	w, _ := age.Encrypt(a, id.Recipient())
-	_, _ = w.Write([]byte("[env]\nA = \"hunter2\"\n"))
-	_ = w.Close()
-	_ = a.Close()
-	m.Files["/s.age"] = buf.Bytes()
-	env := func(k string) string {
-		if k == "CREDENTIALS_DIRECTORY" {
-			return "/creds"
-		}
-		return ""
-	}
-	m.Files["/creds/ws-secrets"] = []byte("# created: now\n" + id.String() + "\n")
-	s, err := loadSecrets(m, "/s.age", env)
-	if err != nil || s.Env["A"] != "hunter2" || !s.Whole {
-		t.Errorf("got %+v, %v", s, err)
-	}
-	if s, err = loadSecrets(m, "", noEnv); err != nil || s.Env != nil || s.Whole {
-		t.Errorf("no file: %+v, %v", s, err)
-	}
-	other, _ := age.GenerateX25519Identity()
-	m.Files["/creds/ws-secrets"] = []byte(other.String())
-	if _, err = loadSecrets(m, "/s.age", env); err == nil || strings.Contains(err.Error(), "hunter2") {
-		t.Errorf("wrong identity: %v", err)
-	}
-	if _, err = loadSecrets(m, "/s.age", noEnv); err == nil || !strings.Contains(err.Error(), "LoadCredential") {
-		t.Errorf("no credential: %v", err)
-	}
-	delete(m.Files, "/creds/ws-secrets")
-	if _, err = loadSecrets(m, "/s.age", env); err == nil {
-		t.Error("no credential file: no error")
-	}
-}
 
 func TestServerFansRefusesAConfigThatFailsItsCheck(t *testing.T) {
 	p := fakeProcess()
@@ -122,63 +19,5 @@ func TestServerFansRefusesAConfigThatFailsItsCheck(t *testing.T) {
 	}
 	if status, _, stderr = runWs(p, "", "server", "ubuntu", "fans"); status != 1 || !strings.Contains(stderr, "/etc/ws/fans.json") {
 		t.Errorf("no config: status = %d, stderr = %q", status, stderr)
-	}
-}
-
-func noEnv(string) string { return "" }
-
-func TestServerStateRefusesNonRootAndOtherArgs(t *testing.T) {
-	p := fakeProcess()
-	m := p.Machine.(*effecttest.Machine)
-	p.Euid = 1000
-	m.Files["/etc/os-release"] = []byte("ID=ubuntu\nVERSION_ID=\"26.04\"\n")
-	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "state", "--json")
-	if status != 1 || stdout != "" || stderr != "ws server ubuntu state: run it as root\n" {
-		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
-	}
-	for _, args := range [][]string{{"state", "extra"}, {"state", "--only", "nothing"}, {"state", "--check"},
-		{"state", "--secrets", "f"}} {
-		status, _, stderr := runWs(fakeProcess(), "", append([]string{"server", "ubuntu"}, args...)...)
-		if status != 2 || !strings.Contains(stderr, "--help' for usage.") {
-			t.Errorf("%q: status = %d, stderr = %q", args, status, stderr)
-		}
-	}
-}
-
-func TestServerStateRefusesARoleWithNoneLeft(t *testing.T) {
-	p, _ := serverProcess()
-	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "state", "--only", "devtools/no such")
-	if status != 2 || stdout != "" || !strings.Contains(stderr, `no role "devtools"`) {
-		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
-	}
-}
-
-func TestServerStateHelp(t *testing.T) {
-	status, stdout, _ := runWs(fakeProcess(), "", "server", "ubuntu", "state", "-h")
-	for _, want := range []string{"--json", "--only", "applies nothing", "no secrets"} {
-		if status != 0 || !strings.Contains(stdout, want) {
-			t.Errorf("status = %d, help = %q, want it to hold %q", status, stdout, want)
-		}
-	}
-}
-
-func TestServerStatePrintsJSON(t *testing.T) {
-	p, _ := serverProcess()
-	status, stdout, _ := runWs(p, "", "server", "ubuntu", "state", "--json")
-	if status != 0 || !strings.Contains(stdout, `"role": "prepare"`) {
-		t.Errorf("status = %d, stdout = %q", status, stdout)
-	}
-}
-
-func TestPrepareServerGivesTheRolesTheMachinesUnits(t *testing.T) {
-	p, _ := serverProcess()
-	c := &cobra.Command{Use: "apply"}
-	c.SetContext(t.Context())
-	r, err := prepareServer(enginecli.CallOf(c, p), p, applyOptions{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, ok := r.cfg.U.(units.OSUnits); !ok {
-		t.Errorf("units = %T, want units.OSUnits", r.cfg.U)
 	}
 }

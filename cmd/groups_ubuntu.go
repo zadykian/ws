@@ -10,8 +10,8 @@ import (
 )
 
 // groups returns the command groups that exist on this system: ws server and ws unit, on Linux.
-// It runs as root, which ws server ubuntu apply and ws unit write check, so the machine's root
-// commands go without sudo: a container has none.
+// It runs as root, which ws unit write checks, so the machine's root commands go without sudo: a
+// container has none.
 func groups(p cli.Env) []*cobra.Command {
 	p.Machine = local.OSMachine{Sudo: []string{}}
 	return []*cobra.Command{serverCmd(p), unitCmd(p)}

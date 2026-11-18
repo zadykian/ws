@@ -262,4 +262,5 @@ ws by `mise which ws`, the pinned binary. The write hook runs `ws unit verify` f
   inside mise's own read would call the hook again.
 - **Exit codes.** 0 done. 1 a failure: a spec or values that fail to load, a plan, an apply, a
   refused check, a SHA-256 or a skipped unit. `read` and `write` as a user other than root fail
-  too. 2 a usage error, such as a unit that no spec holds. ws's own lines go to stderr.
+  too. So do the server's on a system other than Ubuntu 26.04. 2 a usage error, such as a unit
+  that no spec holds. ws's own lines go to stderr.

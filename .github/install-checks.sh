@@ -40,10 +40,10 @@ reset() {
 }
 
 # install_sh [ENV=VALUE...] runs install.sh as root with the settings, from a stdin that is a pipe,
-# as curl's is.
+# as curl's is. The runner's system stands as Ubuntu 26.04, whatever its release.
 install_sh() {
     echo | as_root env WS_RELEASES_URL="$url" WS_MISE_URL="$url/mise/good" WS_REPO="file://$tmp/repo" \
-        "$@" sh "$root/install.sh"
+        WS_OS_RELEASE="$tmp/os-release" "$@" sh "$root/install.sh"
 }
 
 # written ENV fails unless the bootstrap wrote the file of ENV, with ENV in it.
@@ -58,6 +58,7 @@ written() {
 # whatever the umask. install.sh refuses such a tree, and a server's /opt has no such ACL.
 ! command -v setfacl >/dev/null || as_root setfacl -k /opt
 
+printf '%s\n' 'NAME="Ubuntu"' 'ID=ubuntu' 'VERSION_ID="26.04"' >"$tmp/os-release"
 version=$(sed -n 's/^mise_version=//p' install.sh)
 case $(uname -m) in
 x86_64) asset=linux-x64 ;;
@@ -103,10 +104,21 @@ url=http://127.0.0.1:$(cat "$tmp/port")
 
 reset
 echo "::group::A user is refused, and nothing is installed"
-if sh "$root/install.sh" </dev/null; then
+if WS_OS_RELEASE="$tmp/os-release" sh "$root/install.sh" </dev/null; then
     fail "install.sh went through as a user"
 fi
 [ ! -e /usr/local/bin/mise ] || fail "a refused install left mise"
+echo "::endgroup::"
+
+echo "::group::A system other than Ubuntu 26.04 is refused, and nothing is installed"
+printf '%s\n' 'ID=ubuntu' 'VERSION_ID="24.04"' >"$tmp/os-release-24.04"
+printf '%s\n' 'ID=debian' 'VERSION_ID="13"' >"$tmp/os-release-debian"
+for system in 24.04 debian none; do
+    if install_sh WS_OS_RELEASE="$tmp/os-release-$system"; then
+        fail "install.sh went through on $system"
+    fi
+    [ ! -e /usr/local/bin/mise ] || fail "a refused install on $system left mise"
+done
 echo "::endgroup::"
 
 echo "::group::A wrong SHA-256 is refused, and nothing is left"
