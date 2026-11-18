@@ -1,54 +1,48 @@
 # Ghostty and cld on the Mac
 
-Before the tunnel ([The Mac](../README.md)), `ws client macos apply` sets up Ghostty, the Mac's terminal:
-Ghostty and the font its settings name, from Homebrew's casks, and the settings, `ws.ghostty`. Then
-it sets up [cld](https://github.com/zadykian/cld) wherever it runs, for `cld restore tabs`. After
-Ghostty quits or a window closes, a restore joins each pane's cld session again, and reopens what
-Ghostty did not bring back ([Ghostty's tabs on a
-Mac](https://github.com/zadykian/cld/blob/main/docs/guide/ghostty-tabs.md)). Where Ghostty or cld
-can't be installed or updated, as when Homebrew or GitHub can't be reached, the script warns and
-goes on to the tunnel. So it does where Ghostty's config is not its to change, as below, but it
-stops where it can't write a file. `--check` notes each install, and shows each file as a diff.
+`mise bootstrap` sets up Ghostty, the Mac's terminal: Ghostty and the font its settings name, as
+mise's casks, and the settings, `ws.ghostty`. Then `ws client macos apply` sets up
+[cld](https://github.com/zadykian/cld) wherever it runs, for `cld restore tabs`. After Ghostty
+quits or a window closes, a restore joins each pane's cld session again, and reopens what Ghostty
+did not bring back ([Ghostty's tabs on a
+Mac](https://github.com/zadykian/cld/blob/main/docs/guide/ghostty-tabs.md)). Where cld can't be
+installed or updated, as when GitHub can't be reached, the step warns and goes on to the tunnel.
+`--check` notes each install, and shows each file as a diff.
 
 ## Ghostty
 
-The script installs Ghostty from Homebrew's cask `ghostty`, into `/Applications`, where
-`Ghostty.app` is in neither `/Applications` nor `~/Applications`. A Ghostty installed another way,
-as from its disk image or the `ghostty@tip` cask, is left alone. Where Homebrew has the cask but the
-app is gone, each run warns rather than install it again: `brew reinstall --cask ghostty` puts it
-back. Without Ghostty's app, as after a failed install, the script writes none of Ghostty's files
-and gives ssh none of cld's lines, but still sets up cld.
+[`mise.mac.toml`](mise.mac.toml) installs Ghostty from the cask `ghostty` by mise's `brew-cask`
+backend, which needs no Homebrew. Where `/opt/homebrew` is missing, mise makes it by sudo once. A
+cask takes the latest version alone, outside the SHA-256 rule of the downloads. Ghostty then
+updates itself, as `ws.ghostty` says: it downloads each stable release and offers to install it.
 
-Ghostty then updates itself, as `ws.ghostty` says: it downloads each stable release and offers to
-install it. The script runs no `brew upgrade`. brew skips a cask that updates itself, and the
-cask's uninstall quits Ghostty, which may be the terminal the script runs in.
-
-The step installs the font that `ws.ghostty` names, and [Zed](../zed/README.md) too, JetBrainsMono Nerd
-Font Mono, from the cask `font-jetbrains-mono-nerd-font`. It does so where
-`JetBrainsMonoNerdFontMono-Regular.ttf` is in neither `~/Library/Fonts`, where the cask puts it,
-nor `/Library/Fonts`, and warns as for the app where Homebrew has the cask without the file.
-`ghostty +list-fonts` lists monospace families alone, so it leaves out the cask's other variants.
+The same file installs the font that `ws.ghostty` names, and [Zed](../zed/README.md) too,
+JetBrainsMono Nerd Font Mono, from the cask `font-jetbrains-mono-nerd-font`. `ghostty
++list-fonts` lists monospace families alone, so it leaves out the cask's other variants.
 `font-family` takes a family, as `+list-fonts` heads it. A face's name, such as `JetBrainsMono NFM
 Regular`, finds no font, and Ghostty falls back to its own JetBrains Mono, which looks the same.
 
 ## Ghostty's settings
 
-The settings are in [`roles/client/macos/ghostty/files/ws.ghostty`](files/ws.ghostty), which `ws`
-embeds and the script writes, under its header, to `/etc/ws/ghostty`, as root. The config file that
-Ghostty's menu opens is `config.ghostty` or `config` in `~/Library/Application
-Support/com.mitchellh.ghostty`, then in `~/.config/ghostty`. That is the first that holds anything,
-else the first that exists. Where none exists, the script makes the first. It adds `config-file =
-?/etc/ws/ghostty` at the end of that file, once, and keeps the old file as `PATH.TIME~`. Ghostty
-reads an included file after the file that names it, so each setting of `/etc/ws/ghostty` wins over
-the config's own. A later `font-family` adds a fallback rather than replace the list, so
-`/etc/ws/ghostty` empties it first. Change the settings in
-`roles/client/macos/ghostty/files/ws.ghostty`, build `ws` again and run it.
+The settings are in [`roles/client/macos/ghostty/files/ws.ghostty`](files/ws.ghostty), which the
+unit `file.ghostty-conf` writes whole to `/etc/ws/ghostty`, as root, at each run. The file starts
+with ws's mark, and a `/etc/ws/ghostty` without it stops the unit, as a file by hand.
 
-The script replaces `/etc/ws/ghostty` at each run. It warns and changes neither file where it
-can't read the config. Where the config is a link, as a
-dotfiles manager makes it, and lacks the line, the script warns: add the line to the file the link
-points to. Where the config's directory is a link, the files go where it points, and the script says
-so.
+The config file that Ghostty's menu opens is `config.ghostty` or `config` in
+`~/Library/Application Support/com.mitchellh.ghostty`, then in `~/.config/ghostty`. That is the
+first that holds anything, else the first that exists, else the first of the four. The facts
+read it as `.Ghostty.Config` ([The facts](../facts/README.md)). The unit `file.ghostty-line` adds
+`config-file = ?/etc/ws/ghostty` at the end of that file, once, and keeps the old file as
+`PATH.TIME~`. A line in the file that equals it, spaces aside, counts: a path quoted, relative
+or with `~` does not. Ghostty reads an included file after the file that names it, so each
+setting of `/etc/ws/ghostty` wins over the config's own. A later `font-family` adds a fallback
+rather than replace the list, so `/etc/ws/ghostty` empties it first. Change the settings in
+`roles/client/macos/ghostty/files/ws.ghostty`, and run `mise bootstrap` again.
+
+Where the config is a link, as a dotfiles manager makes it, the unit reads through it. Where that
+file lacks the line, the unit stops: add the line to it, or make the config a plain file. A link
+on the way, such as a linked `~/.config`, stops the unit too: ws writes no file of the user's
+through one.
 
 Some settings change more than the look:
 
@@ -117,10 +111,10 @@ hosts](../README.md#sshs-hosts) says how to lift the ban.
 
 A dropped ssh leaves Ghostty in the modes that Fresh, tmux and cld's sessions turned on, as their
 resets never reach the Mac. Each mouse move then types `^[[<35;42;17M` at the prompt, and some Ctrl
-keys arrive as escape codes. `ws client macos apply` writes
-[`roles/client/macos/zsh/files/zshrc`](../zsh/files/zshrc) as `/etc/ws/zshrc`, and adds
-`source /etc/ws/zshrc` at the end of `~/.zshrc`. It keeps the old file as `~/.zshrc.TIME~`, and
-warns where `~/.zshrc` is a link that lacks the line.
+keys arrive as escape codes. `mise bootstrap` writes
+[`roles/client/macos/zsh/files/zshrc`](../zsh/files/zshrc) as `/etc/ws/zshrc`, by
+[zsh's units](../zsh/units.toml), and adds `source /etc/ws/zshrc` at the end of `~/.zshrc`. It
+keeps the old file as `~/.zshrc.TIME~`, and stops where `~/.zshrc` is a link that lacks the line.
 
 Before each prompt, the hook turns off the reports of the mouse, focus and the colour scheme, and
 modifyOtherKeys. It resets kitty's keyboard flags, the cursor keys, the keypad, and the cursor's

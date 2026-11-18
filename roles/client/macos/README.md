@@ -2,9 +2,10 @@
 
 The Mac reaches the server, ws, over the cable from the 2.5GbE port of the display it docks at. It
 reaches it over the LAN, or elsewhere through the router's port forwards. `ws client macos apply`
-sets up its end of the cable ([The cable](#the-cable)), git ([git on the Mac](git/README.md)), Zed
-([Zed on the Mac](zed/README.md)) and one host for ssh, `ws`. It goes through a WireGuard tunnel that
-ends on ws, at its slot's `10.99.N.1` whichever way the Mac connects. The sessions of `ssh ws` and
+sets up its end of the cable ([The cable](#the-cable)), git ([git on the Mac](git/README.md)) and
+one host for ssh, `ws`, and `mise bootstrap` Zed ([Zed on the Mac](zed/README.md)). It goes
+through a WireGuard tunnel that ends on ws, at its slot's `10.99.N.1` whichever way the Mac
+connects. The sessions of `ssh ws` and
 Zed stay open as the Mac moves between the cable, the LAN and elsewhere, with a pause of a few seconds
 ([Zed](../../server/ubuntu/zed/README.md#when-the-connection-drops)). What it gives up: `ssh ws` fails where UDP is blocked and
 while the tunnel is down, and bulk copies run at wireguard-go's speed. To reach ws by hand, give ssh
@@ -12,9 +13,10 @@ a direct way: `ssh -o HostName=ADDRESS -o Port=PORT ws`, as ufw lets SSH in on e
 `WS_REMOTE_PORT` and the router's forward stay for that and for setup.
 
 The Mac's side is Go: one binary, `ws`, of isolated steps, which `go test` checks on each pull
-request. It runs as the user, with sudo where it needs root. It sets up Ghostty, cld and a zsh
-hook ([Ghostty and cld on the Mac](ghostty/README.md)). It installs Ghostty, Zed and a font from
-Homebrew, installed first by [the runbook](runbook.md). The runbook puts `ws` in `~/.local/bin` (put it on
+request. It runs as the user, with sudo where it needs root. It sets up cld, and `mise bootstrap`
+sets up Ghostty and a zsh hook ([Ghostty and cld on the Mac](ghostty/README.md)). mise installs
+Ghostty, Zed and a font as casks, with no Homebrew; gh still needs Homebrew, installed first by
+[the runbook](runbook.md). The runbook puts `ws` in `~/.local/bin` (put it on
 `PATH` by hand) from a release, checked against its `ws.sha256`
 ([Releases](../../../engine/core/update/README.md)). `ws` embeds the files it installs, so it
 needs no clone. Write the values below in `values.yml` first ([The two
@@ -36,12 +38,11 @@ version` prints its version, and `ws update` replaces it with the latest release
 
 ## What the Mac reports
 
-`ws client macos state` lists the casks, gh, cld, the cable's service, the tunnel's daemon, and the
-files and directories ws writes. A file that differs from ws's, or holds no `Written by` line, is a
-conflict. So is a cask that Homebrew holds with its files gone, and a cable's service that is
-disabled, which no run turns on. No report reads a private key: `private.key` shows by its owner and
-mode, a signing key by its `.pub`. `~/.ssh/config`, `~/.gitconfig` and Ghostty's config show whether
-they hold ws's line, and none of their text.
+`ws client macos state` lists gh, cld, the cable's service, the tunnel's daemon, and the files and
+directories ws writes. A file that differs from ws's, or holds no `Written by` line, is a conflict.
+So is a cable's service that is disabled, which no run turns on. No report reads a private key:
+`private.key` shows by its owner and mode, a signing key by its `.pub`. `~/.ssh/config` and
+`~/.gitconfig` show whether they hold ws's line, and none of their text.
 
 ## The Mac's values.yml
 

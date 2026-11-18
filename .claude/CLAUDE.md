@@ -35,9 +35,9 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   home file.
 - `install.sh`: installs mise and runs `mise bootstrap` on a release's tree
   ([Releases](../engine/core/update/README.md)).
-- `roles/client/macos/`: the Mac's side ([The Mac](../roles/client/macos/README.md)). Its roles embed
-  `ghostty/files/ws.ghostty`, Ghostty's settings, `zed/files/`, Zed's settings and keymap, and
-  `zsh/files/zshrc`, the zsh hook that turns off the modes that a drop leaves on.
+- `roles/client/macos/`: the Mac's side ([The Mac](../roles/client/macos/README.md)). Its roles'
+  units write `ghostty/files/ws.ghostty`, Ghostty's settings, `zed/files/`, Zed's settings and
+  keymap, and `zsh/files/zshrc`, the zsh hook that turns off the modes that a drop leaves on.
 - The pages sit beside their code, as the `README.md` of a role or a package. A second page stands
   beside one where the cap keeps two apart: `zed/projects.md`, `cable/router.md`,
   `.github/workflows/rootless.md`, `mac-cld.md`,
@@ -139,7 +139,9 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   target `install.sh` holds ([install.sh](../install.sh)), and the Mac's runbook its macos-arm64's
   ([runbook.md](../roles/client/macos/runbook.md)). So is
   yamllint ([lint-requirements.in](../.github/lint-requirements.in)), and Homebrew's `.pkg`, with its signer
-  ([runbook.md](../roles/client/macos/runbook.md)). Go is checked against the
+  ([runbook.md](../roles/client/macos/runbook.md)). The Mac's casks, Ghostty, Zed and their font,
+  take their latest by mise's `brew-cask`, outside the rule
+  ([ghostty](../roles/client/macos/ghostty/README.md#ghostty)). Go is checked against the
   SHA-256 its publisher lists, and the postgres-language-server and docker-language-server against
   theirs. mise's lock holds each for its platform ([mise.server.lock](../mise/mise.server.lock)).
   gopls and Delve are built through Go's checksum database, as mise's `go:` tools

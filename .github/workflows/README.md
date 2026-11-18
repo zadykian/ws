@@ -50,18 +50,22 @@ and fails where they differ from the repository's, in `roles/server/ubuntu/signo
 
 ## The Mac
 
-Case 47 checks [Zed's files](../../roles/client/macos/zed/README.md): `global_settings.json` must be
-`roles/client/macos/zed/files/`'s whole, and a `settings.json` there must stay byte for byte. Case 48
-checks `keymap.json`: `roles/client/macos/zed/files/`'s whole, a foreign one left with a warning, and
-ws's back once it goes. Case 87 checks [the zsh hook](../../roles/client/macos/ghostty/README.md#the-zsh-hook): `zsh -i` must
+Cases 46 to 87 read what the first `mise bootstrap` wrote. Case 46 checks
+[Ghostty's files](../../roles/client/macos/ghostty/README.md#ghosttys-settings): `/etc/ws/ghostty`
+must be `ws.ghostty` whole, and Ghostty's config must end with the line that reads it. Case 47
+checks [Zed's files](../../roles/client/macos/zed/README.md): `global_settings.json` must be
+`roles/client/macos/zed/files/`'s whole, a `settings.json` there must stay byte for byte through
+another bootstrap, and a login shell must find the cask's `zed`. Case 48 checks `keymap.json`:
+`roles/client/macos/zed/files/`'s whole, a foreign one left with the bootstrap's warning, and ws's
+back once it goes. Case 87 checks [the zsh hook](../../roles/client/macos/ghostty/README.md#the-zsh-hook): `zsh -i` must
 reset at each prompt, and the alternate screen after a 255 from `ssh` or from `cld --host` alone.
 
 CI also sets up a Mac, by [its cases](../mac), in the order of [The Mac](../../roles/client/macos/README.md). First, `ws
 client macos apply --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config`
-or `~/.zshrc`, and installs no formula or cask. It must note the install of Zed's cask. Stand-ins
-for Ghostty's and Zed's apps, the font and cld, which `ws client macos apply` leaves alone, spare
-the job's runs their downloads. Then `mise -C /opt/ws bootstrap` with [the Mac's
-frame](../../roles/client/macos/frame/README.md) runs as the runbook runs it, on the tree in
+or `~/.zshrc`, and installs no formula or cask. Stand-ins for Ghostty's app and cld, which `ws
+client macos apply` leaves alone, spare the job's runs their downloads. Then `mise -C /opt/ws
+bootstrap` with [the Mac's frame](../../roles/client/macos/frame/README.md) runs as the runbook
+runs it, on the tree in
 `/opt/ws` with ws's build served as the pin ([mac-mise.sh](../mac-mise.sh)). Its plan must exit 0
 after the first run, a second run must call no sudo, and `/usr/local/bin/ws` must be the build. A
 spec whose unit no line names must fail the plan.

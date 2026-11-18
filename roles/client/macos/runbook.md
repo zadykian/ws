@@ -7,7 +7,7 @@ beside it holds. Run `ws client macos apply` where a step says so: it sets up th
 ## Tools
 
 1. Install the command line tools with `xcode-select --install`, and wait for it to end.
-2. Install Homebrew from its `.pkg`, which `ws client macos apply` needs:
+2. Install Homebrew from its `.pkg`, for gh and Secretive alone, as mise installs the casks:
    - Download `Homebrew.pkg` 7.0.10 from
      `https://github.com/Homebrew/brew/releases/download/7.0.10/Homebrew.pkg`.
    - Check its SHA-256 with `shasum -a 256 Homebrew.pkg`. It must be
