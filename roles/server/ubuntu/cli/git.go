@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -100,19 +99,13 @@ func newGitIncludedCmd(p enginecli.Env) *cobra.Command {
 
 // gitProcedure returns a command of git's that settles the resources of rs, with --check.
 func gitProcedure(p enginecli.Env, use, short, long string, rs func(values.Values, account.Account, secrets.Secrets) resource.Resource) *cobra.Command {
-	c := &cobra.Command{Use: use, Short: short, Long: long + "\n\n--check fails where a change is due, and changes nothing.",
-		Args: cobra.NoArgs}
-	check := c.Flags().Bool("check", false, "fail where a change is due, and change nothing")
-	c.RunE = func(c *cobra.Command, _ []string) error {
-		v, a, s, err := gitInputs(c.Context(), p.Machine)
+	return procedure(use, short, long, func(ctx context.Context, _ effect.Out) ([]resource.Resource, error) {
+		v, a, s, err := gitInputs(ctx, p.Machine)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
-		defer term.Flush()
-		return settle(c.Context(), linesOf(term, c.CommandPath()), []resource.Resource{rs(v, a, s)}, *check)
-	}
-	return c
+		return []resource.Resource{rs(v, a, s)}, nil
+	})
 }
 
 // newGitTokensCmd returns ws server ubuntu git tokens.

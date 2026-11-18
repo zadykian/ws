@@ -243,6 +243,7 @@ Usage:
 Available Commands:
   apply       set the server up, each role as Go steps
   cable       the cable role's check and reload, which its units run
+  claude      the claude role's procedures, which its units run
   fans        drive the board's fans on the curves of CONFIG until SIGTERM
   git         the git role's checks and procedures, which its units run
   ikeward     the ikeward role's check, install and wait, which its units run
@@ -310,6 +311,91 @@ Usage:
 Flags:
       --check   fail where a reload is due, and change nothing
   -h, --help    help for reload
+== ws server ubuntu claude
+the claude role's procedures, which its units run
+
+Usage:
+  ws server ubuntu claude [flags]
+  ws server ubuntu claude [command]
+
+Available Commands:
+  completion   write cld's completion in bash where it differs from what cld prints
+  marketplaces add the plugin marketplaces of WS_CLAUDE_MARKETPLACES that claude lacks
+  restore      start WS_USER's systemd, and have it restore cld's sessions at boot
+  settings     have cld add to claude's user settings what they lack
+  telemetry    set claude's telemetry keys in the env of its user settings
+  update       update cld where a newer release is out
+
+Flags:
+  -h, --help   help for claude
+
+Use "ws server ubuntu claude [command] --help" for more information about a command.
+== ws server ubuntu claude completion
+cld completion bash prints the script, and cld setup completion bash writes it where the one in place differs (roles/server/ubuntu/claude/README.md#installs-and-updates). The claude role's run state runs it as root.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws server ubuntu claude completion [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for completion
+== ws server ubuntu claude marketplaces
+An empty list asks claude nothing (roles/server/ubuntu/claude/README.md#plugin-marketplaces). The claude role's run state runs it as root.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws server ubuntu claude marketplaces [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for marketplaces
+== ws server ubuntu claude restore
+cld setup restore writes the user unit. Without booted systemd it skips, and says so (roles/server/ubuntu/claude/README.md#sessions-after-a-reboot). The claude role's run state runs it as root.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws server ubuntu claude restore [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for restore
+== ws server ubuntu claude settings
+cld setup config user adds the permission set of WS_CLAUDE_PERMISSIONS, cld's choices and the channel of WS_CLAUDE_NOTIFICATIONS, and keeps each value already there. --check runs cld on a copy of the file (roles/server/ubuntu/claude/README.md#user-settings). The claude role's run state runs it as root.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws server ubuntu claude settings [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for settings
+== ws server ubuntu claude telemetry
+It sets the keys of WS_CLAUDE_TELEMETRY_ENV and removes those that would send elsewhere, and names each key, never its value (roles/server/ubuntu/claude/README.md#telemetry). The claude role's run state runs it as root.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws server ubuntu claude telemetry [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for telemetry
+== ws server ubuntu claude update
+It reads cld's version and the release that cld's latest release leads to, over HTTP, and runs cld update where that one is newer (roles/server/ubuntu/claude/README.md#installs-and-updates). The claude role's run state runs it as root.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws server ubuntu claude update [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for update
 == ws server ubuntu fans
 CONFIG is the file that the fans role writes, /etc/ws/fans.json by default.
 
