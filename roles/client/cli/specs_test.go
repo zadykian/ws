@@ -60,6 +60,10 @@ func TestMacSpecsMatchMiseLines(t *testing.T) {
 		t.Errorf("the units of a Mac with no server, %v, differ from those of two, %v", alone, want)
 	}
 	lines := clitest.MiseLines(t, macTreeRoot+"/"+macRoleFile)
+	if !lines["state/ws-binary"] {
+		t.Errorf("the root's %s lacks \"ws:state/ws-binary\": a run from /opt/ws loads no role, and "+
+			"calls the hook that fails it for a line of the root's alone", macRoleFile)
+	}
 	for name := range clitest.MiseLines(t, macRolesDir+"/*/"+macRoleFile) {
 		if lines[name] {
 			t.Errorf("\"ws:%s\" is in the root's %s and a role's", name, macRoleFile)

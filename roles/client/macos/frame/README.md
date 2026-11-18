@@ -10,9 +10,9 @@ server, and loads no file of the server's.
 | File | What it holds |
 | --- | --- |
 | [`mise.toml`](../../../../mise.toml) | Both sides': mise's settings and the pin of ws, with `macos-arm64` among its platforms. |
-| [`mise.mac.toml`](../../../../mise.mac.toml) | The Mac's: the plugin alone. |
+| [`mise.mac.toml`](../../../../mise.mac.toml) | The Mac's: the plugin, and the frame's line, `ws:state/ws-binary`. |
 | [`plugins/ws`](../../../../plugins/ws) | The plugin: a hook runs one `ws unit read` or `ws unit write` ([ws unit](../../../../engine/core/kind/README.md#ws-unit)). |
-| `units.toml`, `mise.mac.toml` here | The role `frame`: the unit that keeps `/usr/local/bin/ws`. |
+| `units.toml` here | The role `frame`: the unit that keeps `/usr/local/bin/ws`. |
 
 ## Where it sits
 
@@ -39,8 +39,9 @@ link with no guard. ws's units hold both.
 
 A role keeps its directory, `roles/client/macos/ROLE/`, and its page there. Its spec,
 `units.toml`, sits beside its templates and sources. Its one mise file is `mise.mac.toml`, which
-holds its lines and mise's own parts, such as casks and tools. The side's one link,
-`roles/client/mise/conf.d`, leads to `../macos`, so a role lands with its directory alone.
+holds its lines and mise's own parts, such as casks and tools. The frame holds none: its line is
+the root's ([The check against a silent skip](#the-check-against-a-silent-skip)). The side's one
+link, `roles/client/mise/conf.d`, leads to `../macos`, so a role lands with its directory alone.
 
 Each unit of a spec is a line `"ws:KIND/NAME" = "in-sync"` under `[bootstrap.packages]` in the
 role's `mise.mac.toml`. The lines follow no server: a spec loops over `.Servers` within one unit,
@@ -62,7 +63,9 @@ A line gone from a role's `mise.mac.toml` is a unit that no run sets up, with no
 hook gets every line of mise's plan, and runs `ws unit read --whole`. Where the specs hold a unit
 that the lines lack, and it has a change, each unit fails and names it, and so does every plan and
 run. mise reads the lines again before it installs, without those in sync, so a lacking unit in
-sync passes. mise calls the
-hook for a line alone, so the frame's own line keeps it called. The server's
-check, a file that runs `ws unit verify`, would be one of mise's root files here. Nor can a unit
-run it: `verify` calls mise, whose read would call that unit again.
+sync passes. mise calls the hook for a line alone, so the frame's own line keeps it called. That
+line sits in the root's `mise.mac.toml`, not in the role. A run from `/opt/ws` loads no role, but
+still calls the hook. Outside the run directory, `/opt/ws/roles/client`, the read fails every
+line, in sync too, and names that directory. The server's check, a file that runs `ws unit verify`,
+would be one of mise's root files here. Nor can a unit run it: `verify` calls mise, whose read
+would call that unit again.

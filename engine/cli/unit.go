@@ -61,7 +61,7 @@ type unitRun struct {
 // runDir is the directory mise runs in for the side: the parent of the specs, whose mise/conf.d
 // links them. A run elsewhere loads none of their lines, so a failure for a line names it.
 func (r unitRun) runDir() string {
-	return filepath.Dir(r.dir)
+	return filepath.Dir(filepath.Clean(r.dir))
 }
 
 // Unit returns ws unit: the units of ws's kinds, KIND/NAME, which a tool such as mise plans and

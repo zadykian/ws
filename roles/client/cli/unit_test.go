@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"slices"
@@ -34,7 +35,8 @@ func macUnitEnv(t *testing.T, spec string) (enginecli.Env, *effecttest.Machine) 
 	m.Files["/Users/v/.ssh/id.pub"] = []byte("ssh-ed25519 AAAA me\n")
 	m.Results["ssh-keygen -l -f /Users/v/.ssh/id.pub"] = effecttest.Result{}
 	p := withEnv(fakeProcess(), map[string]string{"WS_UNITS": dir, "USER": "v", "HOME": "/Users/v"})
-	p.Machine = m
+	// ws runs in the specs' parent, as the plugin's hooks do in mise's run directory.
+	p.Machine, p.Pwd = m, filepath.Dir(dir)
 	return p, m
 }
 
@@ -84,5 +86,33 @@ func TestMacUnitRunsTheUsersCommandBare(t *testing.T) {
 	status, _, stderr := runUnit(p, "write", "state/mine")
 	if !slices.Contains(m.Calls, "run env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin true") {
 		t.Errorf("write: status = %d, stderr = %q, calls %q; want the command run as v with no sudo", status, stderr, m.Calls)
+	}
+}
+
+// TestMacReadWholeNamesTheRunDirectory reads as the hook does with the frame's line alone, the
+// root's. In the run directory a unit of the specs with a change fails the read, which names that
+// directory, and none fails once each is in sync. A run from /opt/ws loads that line alone, so
+// there the read fails with every unit in sync too.
+func TestMacReadWholeNamesTheRunDirectory(t *testing.T) {
+	spec := strings.ReplaceAll(runOfTheUser, "mine", "a") +
+		"[state.b.run]\nuser = \"{{ .User }}\"\ncommand = [\"true\"]\ncheck = [\"test\", \"-e\", \"/b\"]\n"
+	p, m := macUnitEnv(t, spec)
+	asUser := "env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "
+	m.Results[asUser+"test -d /Users/v"] = effecttest.Result{}
+	m.Results[asUser+"test -e /b"] = effecttest.Result{Err: errors.New("exit status 1")}
+	want := "state/a\tfails: mise's plan lacks ws:state/b: add each to [bootstrap.packages], or run mise in " +
+		filepath.Dir(p.Getenv("WS_UNITS")) + "\n"
+	if status, stdout, stderr := runUnit(p, "read", "--whole", "state/a"); status != 0 || stdout != want {
+		t.Errorf("with b's change: status = %d, stdout = %q, stderr = %q; want %q", status, stdout, stderr, want)
+	}
+	m.Results[asUser+"test -e /b"] = effecttest.Result{}
+	if status, stdout, stderr := runUnit(p, "read", "--whole", "state/a"); status != 0 || stdout != "state/a\tin-sync\n" {
+		t.Errorf("with b in sync: status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
+	}
+	runDir := p.Pwd
+	p.Pwd = filepath.Dir(runDir)
+	want = "state/a\tfails: mise runs in " + p.Pwd + ", which loads none of the specs' lines: run mise in " + runDir + "\n"
+	if status, stdout, stderr := runUnit(p, "read", "--whole", "state/a"); status != 0 || stdout != want {
+		t.Errorf("from the root: status = %d, stdout = %q, stderr = %q; want %q", status, stdout, stderr, want)
 	}
 }

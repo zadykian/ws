@@ -65,7 +65,8 @@ job's runs its download. Then `mise -C /opt/ws/roles/client bootstrap` with
 [the Mac's frame](../../roles/client/macos/frame/README.md) runs as the runbook runs it, on the
 tree in `/opt/ws` with ws's build served as the pin ([mac-mise.sh](../mac-mise.sh)). It sets up
 ssh, git and cld too. Its plan must exit 0 after the first run, a second run must call no sudo,
-and `/usr/local/bin/ws` must be the build. A spec whose unit no line names must fail the plan.
+and `/usr/local/bin/ws` must be the build. A spec whose unit no line names must fail the plan,
+and so must a plan from `/opt/ws` with every unit in sync.
 The job's `values.yml` names a file key, made in case 20, as ws's
 login key and git's. Without ws's WireGuard key, the bootstrap must make the Mac's key, with
 `/etc/ws/tunnel.pub` its public half, and load no daemon, and `ssh -G ws` gives the tunnel's end.

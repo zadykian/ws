@@ -5,7 +5,9 @@
 # Mac's WireGuard key too (30-key.sh). Then the plan must exit 0, and a second run must call sudo not once, as a run
 # that changes nothing asks no password.
 # A spec whose unit no line names, and that has a change, must fail the plan, which ws unit read
-# --whole sees. One in sync passes, as mise reads again without the lines in sync.
+# --whole sees. One in sync passes, as mise reads again without the lines in sync. A plan from
+# /opt/ws, which loads no role, must fail too, with every unit in sync, by the frame's line at the
+# root, and name the run directory.
 
 set -eo pipefail
 # shellcheck source=.github/mac-mise.sh
@@ -45,6 +47,14 @@ owner=$(stat -f '%Su:%Sg %Lp' /usr/local/bin/ws)
     echo "::error::/usr/local/bin/ws is $owner, not root:wheel 755"
     fail=1
 }
+# A plan from /opt/ws with every unit in sync: the read fails, as the run would skip each role.
+root=0
+(cd / && MISE_LOCKED=1 MISE_TRUSTED_CONFIG_PATHS=/opt/ws mise -C /opt/ws bootstrap plan </dev/null) 2>&1 |
+    tee "$RUNNER_TEMP/root.out" || root=$?
+if [ "$root" != 1 ] || ! grep -qF "run mise in /opt/ws/roles/client" "$RUNNER_TEMP/root.out"; then
+    echo "::error::the plan from /opt/ws exited $root, not 1 naming /opt/ws/roles/client"
+    fail=1
+fi
 # A spec of a unit that no line names, beside the frame's, with a change: its read fails each line.
 probe=/opt/ws/roles/client/macos/probe
 sudo mkdir -p "$probe"

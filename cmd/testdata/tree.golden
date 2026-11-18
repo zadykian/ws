@@ -818,7 +818,7 @@ Flags:
   -h, --help   help for list
       --toml   print the units as lines of mise's [bootstrap.packages]
 == ws unit read
-It plans each UNIT and the units it waits on, and applies nothing. It prints a line per UNIT on stdout, in the order given: the unit, a tab and its state. The state is in-sync; the headline of its first change, with " (+N more)" for the rest; "after UNIT" where it waits on a unit with changes; or "fails: " and why its plan failed. A failed plan stops no other unit's read. --whole takes the UNITs for every line of mise's plan, as the plugin passes them: where the specs hold a unit they lack that is not in-sync, each UNIT fails and names it. ws's own lines go to stderr.
+It plans each UNIT and the units it waits on, and applies nothing. It prints a line per UNIT on stdout, in the order given: the unit, a tab and its state. The state is in-sync; the headline of its first change, with " (+N more)" for the rest; "after UNIT" where it waits on a unit with changes; or "fails: " and why its plan failed. A failed plan stops no other unit's read. --whole takes the UNITs for every line of mise's plan, as the plugin passes them: where the specs hold a unit they lack that is not in-sync, each UNIT fails and names it, and each fails where ws runs outside the specs' parent, the directory mise must run in. ws's own lines go to stderr.
 
 Usage:
   ws unit read UNIT... [flags]

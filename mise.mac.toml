@@ -7,3 +7,9 @@
 # mise cannot load is an unknown manager, which fails the run. mise takes an absolute path alone.
 [bootstrap.plugins]
 ws = "/opt/ws/plugins/ws"
+
+# The frame's line, at the root rather than in its role: a run from /opt/ws, which loads no role,
+# still calls the plugin's read hook for it. The hook's ws unit read --whole fails a read outside
+# the side's run directory, with its units in sync too, and names that directory.
+[bootstrap.packages]
+"ws:state/ws-binary" = "in-sync"

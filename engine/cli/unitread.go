@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"path/filepath"
 	"slices"
 	"strings"
 
@@ -21,7 +22,8 @@ func unitRead(p Env, s UnitSide) *cobra.Command {
 			"headline of its first change, with \" (+N more)\" for the rest; \"after UNIT\" where it waits " +
 			"on a unit with changes; or \"fails: \" and why its plan failed. A failed plan stops no other " +
 			"unit's read. --whole takes the UNITs for every line of mise's plan, as the plugin passes them: " +
-			"where the specs hold a unit they lack that is not " + InSync + ", each UNIT fails and names it. " +
+			"where the specs hold a unit they lack that is not " + InSync + ", each UNIT fails and names it, " +
+			"and each fails where ws runs outside the specs' parent, the directory mise must run in. " +
 			"ws's own lines go to stderr.",
 		Args: cobra.MinimumNArgs(1),
 	}
@@ -33,6 +35,17 @@ func unitRead(p Env, s UnitSide) *cobra.Command {
 		r, err := loadUnits(c, p, s)
 		defer r.term.Flush()
 		if err != nil {
+			return err
+		}
+		if *whole && !sameDir(p.Pwd, r.runDir()) {
+			// A run outside the run directory loads none of the specs' lines but the root's. Such a
+			// run would skip every role, so the read fails each line, in sync or not.
+			var sb strings.Builder
+			for _, name := range names {
+				sb.WriteString(name + "\tfails: mise runs in " + p.Pwd + ", which loads none of the specs' lines: " +
+					"run mise in " + r.runDir() + "\n")
+			}
+			_, err = fmt.Fprint(c.OutOrStdout(), sb.String())
 			return err
 		}
 		missing := lacking(*whole, r.all, names)
@@ -68,6 +81,18 @@ func unitRead(p Env, s UnitSide) *cobra.Command {
 		return err
 	}
 	return c
+}
+
+// sameDir reports whether a and b name one directory, through any link. A path that does not
+// resolve is compared as written.
+func sameDir(a, b string) bool {
+	resolve := func(p string) string {
+		if r, err := filepath.EvalSymlinks(p); err == nil {
+			return r
+		}
+		return filepath.Clean(p)
+	}
+	return resolve(a) == resolve(b)
 }
 
 // lacking returns each unit of all that names lacks where whole says that names are every line of
