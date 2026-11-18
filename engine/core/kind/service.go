@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"slices"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
@@ -73,7 +75,7 @@ func (s serviceSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.
 			if b.file == nil {
 				continue
 			}
-			all, watch = append(all, b.all...), append(watch, b.file)
+			all, watch = addParts(all, b.all), append(watch, b.file)
 		}
 		if s.User != "" {
 			owner, err := ownerOf(ctx, e, s.User)
@@ -89,6 +91,21 @@ func (s serviceSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.
 		return append(all, systemd.Unit{M: e.M, U: e.U, Out: e.Out, Name: s.Unit, Enabled: s.Enabled, Run: run,
 			Reload: s.Reload, Watch: watch}), nil
 	}, nil
+}
+
+// addParts appends parts to all, less a directory that all makes already: two files of one new
+// directory plan its creation both, and the second would find it made.
+func addParts(all, parts []resource.Resource) []resource.Resource {
+	for _, p := range parts {
+		if d, ok := p.(file.Dir); ok && slices.ContainsFunc(all, func(r resource.Resource) bool {
+			made, ok := r.(file.Dir)
+			return ok && made.Path == d.Path
+		}) {
+			continue
+		}
+		all = append(all, p)
+	}
+	return all
 }
 
 // checkUser refuses the fields that a unit of an account's own systemd cannot take: UserUnit keeps

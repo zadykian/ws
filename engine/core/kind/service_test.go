@@ -234,3 +234,18 @@ func TestServiceOfAUserRefusesFieldsNoPlanTakes(t *testing.T) {
 		}
 	}
 }
+
+func TestServiceFilesInOneNewDirectoryMakeItOnce(t *testing.T) {
+	e, m, u, _ := testEnv(true)
+	m.Dirs["/etc"] = 0o755
+	u.States = map[string]effect.UnitState{"a.service": {Enabled: true, Active: true}}
+	units := loadOne(t, e, "[service.a]\nunit = \"a.service\"\nenabled = true\nrun = \"running\"\n"+
+		"[[service.a.file]]\npath = \"/etc/a.d/a.conf\"\nsource = \"a\"\n"+
+		"[[service.a.file]]\npath = \"/etc/a.d/b.conf\"\nsource = \"b\"\n", map[string]string{"a": "a", "b": "b"})
+	if err := run(t, e, units); err != nil {
+		t.Fatal(err)
+	}
+	if string(m.Files["/etc/a.d/a.conf"]) != "a" || string(m.Files["/etc/a.d/b.conf"]) != "b" || m.Dirs["/etc/a.d"] != 0o755 {
+		t.Errorf("files = %q, %q, dir %o; want both written in the new directory", m.Files["/etc/a.d/a.conf"], m.Files["/etc/a.d/b.conf"], m.Dirs["/etc/a.d"])
+	}
+}
