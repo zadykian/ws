@@ -52,8 +52,8 @@ bad name that holds A server's `values.yml` is refused too. Where another server
 
 ## What two servers may not share
 
-`mise -C /opt/ws bootstrap` reads every server's file, and refuses a server whose file takes what
-another's takes. Each of the two refuses until one changes, in its own file's words:
+`mise -C /opt/ws/roles/client bootstrap` reads every server's file, and refuses a server whose file
+takes what another's takes. Each of the two refuses until one changes, in its own file's words:
 
 - `WS_TUNNEL_NETWORKS`: a network that overlaps one of the other's, as a network goes through one
   server's tunnel.
@@ -88,11 +88,11 @@ code 1. The command takes no `--server`.
 `ws client macos remove NAME` takes a server off the Mac, as the user. It refuses the Mac's last
 server, as the bootstrap takes a Mac with none for a stray `WS_VALUES` and prunes no daemon. It
 takes no `--server`: the argument is the consent. It deletes `servers/NAME` and NAME's entry in
-`known_hosts`, then runs `MISE_LOCKED=1 mise -C /opt/ws bootstrap`, whose units take NAME's daemon,
-hosts and routes away. A server that stays and whose file ws refuses, NAME's clashes aside, stops it
-before it deletes anything, as those units would fail. Where the bootstrap fails, run it again to
-end the removal. Where NAME held the cable, it prints a line to do by hand: the cable's service
-keeps `10.77.0.2`. The server itself is not changed.
+`known_hosts`, then runs `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap`, whose units take
+NAME's daemon, hosts and routes away. A server that stays and whose file ws refuses, NAME's clashes
+aside, stops it before it deletes anything, as those units would fail. Where the bootstrap fails,
+run it again to end the removal. Where NAME held the cable, it prints a line to do by hand: the
+cable's service keeps `10.77.0.2`. The server itself is not changed.
 
 ## A machine on the LAN
 
@@ -150,4 +150,4 @@ key of another target's ways: `WS_LAN` on a cloud VM, `WS_REMOTE` on a VM on the
 ways. A new machine offers another host key, so run `ssh-keygen -R NAME` first, NAME the server's
 name. From a cloud VM, remove `WS_SECURITY_OUTBOUND: false` from ws's `values.yml` too, with
 `sudo ws server ubuntu values set WS_SECURITY_OUTBOUND ''`. Then run the bootstrap on ws, as
-[its runbook](../../server/runbook.md) says, and `MISE_LOCKED=1 mise -C /opt/ws bootstrap` again.
+[its runbook](../../server/runbook.md) says, and `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap` again.

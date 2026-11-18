@@ -81,8 +81,8 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 	// that the lock lacks fails instead of resolving unchecked. The unit of the tunnel's files boots
 	// the daemon out and removes its files. The networks' unit takes its resolvers, launchd's its
 	// plist, ssh's its host.
-	if err = p.Machine.Pass(c.Context(), false, "env", "MISE_LOCKED=1", "mise", "-C", "/opt/ws", "bootstrap"); err != nil {
-		err = fmt.Errorf("MISE_LOCKED=1 mise -C /opt/ws bootstrap: %w: run it again to take %s's daemon, routes and host off", err, name)
+	if err = p.Machine.Pass(c.Context(), false, "env", "MISE_LOCKED=1", "mise", "-C", "/opt/ws/roles/client", "bootstrap"); err != nil {
+		err = fmt.Errorf("MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap: %w: run it again to take %s's daemon, routes and host off", err, name)
 	}
 	if cable != "" {
 		_, _ = fmt.Fprintf(c.OutOrStdout(), "By hand: the cable's service %s keeps 10.77.0.2: name it in another server's "+

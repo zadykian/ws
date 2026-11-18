@@ -13,7 +13,7 @@ import (
 )
 
 // unitsDir is the root of the Mac's specs, a units.toml in each role's directory. It sits in the
-// checkout at /opt/ws, where mise -C /opt/ws bootstrap runs.
+// checkout at /opt/ws, where mise -C /opt/ws/roles/client bootstrap runs.
 const unitsDir = "/opt/ws/roles/client/macos"
 
 // UnitCmd returns ws unit with the Mac's side: its specs and its facts. It runs as the user, as

@@ -1,9 +1,9 @@
 # The frame
 
-The frame is what each role of mise's config leans on. One `mise bootstrap` in the checkout at
-`/opt/ws` sets up the server: mise's own parts first, then ws's units, which mise hands to
-`ws unit` through the plugin `ws`. A role moved to mise is its config and its spec, and holds no
-Go.
+The frame is what each role of mise's config leans on. One `mise bootstrap` sets up the server, in
+the side's run directory, `roles/server` of the checkout at `/opt/ws`. mise's own parts run first,
+then ws's units, which mise hands to `ws unit` through the plugin `ws`. A role moved to mise is its
+config and its spec, and holds no Go.
 
 ## Its files
 

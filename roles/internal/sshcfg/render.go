@@ -43,8 +43,8 @@ func Config(in Inputs) string {
 	fmt.Fprintf(&b, `%s
 
 # Only Apple's ssh knows UseKeychain. ssh keeps the first IgnoreUnknown it reads, this one, so it
-# carries the patterns of ~/.ssh/config's own too: run mise -C /opt/ws bootstrap again after a
-# change to those.
+# carries the patterns of ~/.ssh/config's own too: run mise -C /opt/ws/roles/client bootstrap
+# again after a change to those.
 IgnoreUnknown %s
 
 `, file.Header("#"), in.Patterns)

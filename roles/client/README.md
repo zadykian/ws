@@ -19,23 +19,25 @@ and a font as casks, and gh by its lock, with no Homebrew ([the runbook](runbook
 puts `ws` in `~/.local/bin` (put it on `PATH` by hand) from a release, checked against its
 `ws.sha256` ([Releases](../../.github/workflows/release.md)), and clones the release's tree into
 `/opt/ws`, where the units' specs and files are. Write the values below in `values.yml` first ([The
-two files](values/README.md#the-two-files)). Then:
+two files](values/README.md#the-two-files)), and trust the tree once
+([The bootstrap](runbook.md#the-bootstrap)). Then:
 
 ```sh
-MISE_LOCKED=1 mise -C /opt/ws bootstrap
+MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap
 ```
 
-It sets up every role of the Mac, on the tree in `/opt/ws` ([The Mac's frame](macos/frame/README.md)).
+It sets up every role of the Mac, on the tree in `/opt/ws`, from the side's run directory,
+`roles/client` ([The Mac's frame](macos/frame/README.md)).
 Its units read as the user, and ask sudo for a change alone. `ws client macos` holds the Mac's
 commands, darwin alone, which the units and the tunnel's daemons run. `ws version` prints its
 version.
 
 ## What the Mac reports
 
-`MISE_LOCKED=1 mise -C /opt/ws bootstrap plan` shows what the units would change, and `ws client
-macos servers` each server's tunnel. A cable's service that is disabled, which no run turns on,
-draws a warning from `ws client macos cable` and its `--check` alone: a bootstrap shows no check's
-output. No unit reads a private key: the key's unit looks for the file alone.
+`MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap plan` shows what the units would change, and
+`ws client macos servers` each server's tunnel. A cable's service that is disabled, which no run
+turns on, draws a warning from `ws client macos cable` and its `--check` alone: a bootstrap shows no
+check's output. No unit reads a private key: the key's unit looks for the file alone.
 
 ## The Mac's values.yml
 
@@ -87,12 +89,11 @@ may not change stops the run: sudo would leave root's files where the user's go.
 
 ## ssh's hosts
 
-`mise -C /opt/ws bootstrap` writes `/etc/ws/ssh_config`, root's and 644, with a host for each
-server through its tunnel, and puts its Include first in `~/.ssh/config`
-([ssh on the Mac](macos/ssh/README.md)). ssh offers ws the key of `WS_IDENTITY_PUB_KEY` alone. Failed
-logins over the tunnel ban the Mac's `10.99.N.2` for an hour: `ssh -o HostName=ADDRESS -o
-Port=PORT ws` comes from another address, and from there `fail2ban-client set sshd unbanip
-10.99.N.2` lifts the ban.
+`mise -C /opt/ws/roles/client bootstrap` writes `/etc/ws/ssh_config`, root's and 644, with a host
+for each server through its tunnel, and puts its Include first in `~/.ssh/config` ([ssh on the
+Mac](macos/ssh/README.md)). ssh offers ws the key of `WS_IDENTITY_PUB_KEY` alone. Failed logins over
+the tunnel ban the Mac's `10.99.N.2` for an hour: `ssh -o HostName=ADDRESS -o Port=PORT ws` comes
+from another address, and from there `fail2ban-client set sshd unbanip 10.99.N.2` lifts the ban.
 
 ## The cable
 
@@ -135,7 +136,7 @@ make the Mac the server's peer, with that key as MAC_PUBLIC_KEY. They go over a 
 
 ```sh
 ssh -o HostName=ADDRESS -o Port=PORT NAME "printf '%s\n' 'MAC_PUBLIC_KEY' | tee /etc/wireguard/mac.pub >/dev/null"
-ssh -o HostName=ADDRESS -o Port=PORT NAME env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws bootstrap
+ssh -o HostName=ADDRESS -o Port=PORT NAME env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server bootstrap
 ```
 
 For a `WS_USER` other than root, both go through `sudo` and `ssh -t`, for the password.
@@ -225,7 +226,8 @@ domain's names to nameservers behind it. It calls `ws`, which changes only what 
   198.51.100.0/24`. - `ws client macos resolver [--check] DOMAIN ADDRESS...`, which writes
   `/etc/resolver/DOMAIN`, with up to 3 nameservers, so that macOS asks them for the domain's names
   (resolver(5)), and takes the file at once. - `ws client macos tunnel loaded`, which says whether
-  the daemon is loaded, so that the script can stop with "run mise -C /opt/ws bootstrap first".
+  the daemon is loaded, so that the script can stop with "run mise -C /opt/ws/roles/client bootstrap
+  first".
 
 With no network or address, each removes its file, `ws client macos resolver` only a file it wrote.
 `tunnel routes` signals the daemons itself, but launchd's unit keeps the sum of `routes.d` in its

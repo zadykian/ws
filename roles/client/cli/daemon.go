@@ -22,7 +22,7 @@ func daemonOf(m effect.Machine, server string) (tunnel.Daemon, error) {
 	case err != nil:
 		return tunnel.Daemon{}, err
 	case len(names) == 0:
-		return tunnel.Daemon{}, fmt.Errorf("no tunnel daemon in /Library/LaunchDaemons: run mise -C /opt/ws bootstrap")
+		return tunnel.Daemon{}, fmt.Errorf("no tunnel daemon in /Library/LaunchDaemons: run mise -C /opt/ws/roles/client bootstrap")
 	case len(names) > 1:
 		return tunnel.Daemon{}, fmt.Errorf("several tunnel daemons, %s: name one by --server", values.List(names))
 	}

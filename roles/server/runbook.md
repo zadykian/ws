@@ -18,7 +18,7 @@ A person does these steps at ws, in this order. The Mac's side sets them in its 
 A run of the bootstrap by hand, or of its plan, takes this form:
 
 ```sh
-sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws bootstrap
+sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server bootstrap
 ```
 
 `MISE_DATA_DIR` is the data directory that `install.sh` gives mise, where the account reaches the

@@ -1,6 +1,6 @@
 # cld on the Mac
 
-`mise -C /opt/ws bootstrap` sets up [cld](https://github.com/zadykian/cld) on the Mac, for `cld
+`mise -C /opt/ws/roles/client bootstrap` sets up [cld](https://github.com/zadykian/cld) on the Mac, for `cld
 restore tabs`, by [cld's unit](units.toml). `state.cld` runs `ws client macos cld` as the user. It
 installs cld into `~/.local/bin` where missing, and runs `cld update` where a newer release is out.
 Its check, `--check`, reads the latest release as the command does, so a cld at the latest changes

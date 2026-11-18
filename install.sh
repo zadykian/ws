@@ -231,7 +231,7 @@ bootstrap() {
     export MISE_TRUSTED_CONFIG_PATHS MISE_DATA_DIR MISE_LOCKED
     if [ "${WS_IN_PLACE:-}" = 1 ]; then
         [ -f /opt/ws/mise.toml ] || die "WS_IN_PLACE is set, and /opt/ws holds no mise.toml"
-        /usr/local/bin/mise -C /opt/ws bootstrap </dev/null
+        /usr/local/bin/mise -C /opt/ws/roles/server bootstrap </dev/null
     else
         checkout
         /usr/local/bin/mise bootstrap --from "$repo?ref=$tag" --from-dir /opt/ws </dev/null

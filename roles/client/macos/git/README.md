@@ -1,6 +1,6 @@
 # git on the Mac
 
-`mise -C /opt/ws bootstrap` sets up git on the Mac by [git's units](units.toml), as the `git` role
+`mise -C /opt/ws/roles/client bootstrap` sets up git on the Mac by [git's units](units.toml), as the `git` role
 does on ws ([Signing](../../../server/ubuntu/git/README.md#signing)). The facts give the files'
 text, from the settings that `roles/internal/gitcfg` holds for both sides, the fetch's prune among
 them ([The facts](../../facts/README.md)). The author is `gitcfg.Name` and `gitcfg.Email`,
@@ -27,10 +27,11 @@ password.
 [`mise.mac.toml`](mise.mac.toml) pins gh, which mise installs from GitHub's release by its aqua
 backend. [`mise.mac.lock`](../../mise/mise.mac.lock) holds the release's URL and SHA-256 for macOS
 on arm64, and the bootstrap runs locked, so mise refuses a gh the lock lacks. mise installs it for
-the tree alone, on no shell's `PATH`, so `state.gh` copies it to `/usr/local/bin/gh`, which `/etc/paths` puts on every
-shell's, under a temporary name first. A gh there that differs is replaced. To move gh on, change
-the pin and lock it again. The lock must hold the new release's URL and SHA-256, as gh's release
-lists them. `TestMacLockHoldsEachTool` checks that the lock holds each tool.
+the tree alone, on no shell's `PATH`, so `state.gh` copies it to `/usr/local/bin/gh`, which
+`/etc/paths` puts on every shell's, under a temporary name first. A gh there that differs is
+replaced. To move gh on, change the pin and lock it again. The lock must hold the new release's URL
+and SHA-256, as gh's release lists them. `TestMacLockHoldsEachTool` checks that the lock holds each
+tool.
 
 ## The signing key
 

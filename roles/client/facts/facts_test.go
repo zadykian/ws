@@ -183,7 +183,7 @@ func TestGitFactsGhFromMise(t *testing.T) {
 		t.Errorf("read = %q, %v; want no gh, and no error, where mise has none", f.Git.GhFrom, err)
 	}
 	gh := "/Users/v/.local/share/mise/installs/gh/2.104.0/gh_2.104.0_macOS_arm64/bin/gh"
-	m.Results["mise -C /opt/ws which gh"] = effecttest.Result{Out: []byte(gh + "\n")}
+	m.Results["mise -C /opt/ws/roles/client which gh"] = effecttest.Result{Out: []byte(gh + "\n")}
 	if f, err := Read(t.Context(), m, env, "/p"); err != nil || f.Git.GhFrom != gh {
 		t.Errorf("read = %q, %v; want mise's gh", f.Git.GhFrom, err)
 	}

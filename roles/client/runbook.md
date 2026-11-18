@@ -1,9 +1,9 @@
 # The Mac's runbook
 
 A person does these steps in this order, as no wizard asks them. Each step is done once the check
-beside it holds. Run `MISE_LOCKED=1 mise -C /opt/ws bootstrap` where a step says so: it sets up the
-Mac's end ([The Mac](README.md)). `MISE_LOCKED=1` makes mise take each tool as the tree's lock holds
-it and refuse one that the lock lacks, as CI's `mac` job runs it.
+beside it holds. Run `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap` where a step says so: it
+sets up the Mac's end ([The Mac](README.md)). `MISE_LOCKED=1` makes mise take each tool as the
+tree's lock holds it and refuse one that the lock lacks, as CI's `mac` job runs it.
 
 ## Tools
 
@@ -52,14 +52,14 @@ files](values/README.md#the-two-files)). The files' check refuses a clash.
 
 ## The bootstrap
 
-Trust the tree once, before the first bootstrap, as the user who runs it: `cd /opt/ws && mise trust
---all`. mise asks before it reads the config of a tree that it does not trust, and the clone is
-root's, as on the server ([install.sh](../../install.sh)).
+Trust the tree once, before the first bootstrap, as the user who runs it:
+`cd /opt/ws/roles/client && mise trust --all`. mise asks before it reads the config of a tree that
+it does not trust, and the clone is root's, as on the server ([install.sh](../../install.sh)).
 
-Run `MISE_LOCKED=1 mise -C /opt/ws bootstrap`, which installs gh and sets up ssh, git, cld and the
-Mac's other roles ([The Mac's frame](macos/frame/README.md)). It makes the Mac's WireGuard key, whose
-public half is `/etc/ws/tunnel.pub`. A second run changes nothing, and a run that changes nothing
-asks no password.
+Run `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap`, which installs gh and sets up ssh, git,
+cld and the Mac's other roles ([The Mac's frame](macos/frame/README.md)). It makes the Mac's
+WireGuard key, whose public half is `/etc/ws/tunnel.pub`. A second run changes nothing, and a run
+that changes nothing asks no password.
 
 ## GitHub
 
@@ -126,7 +126,8 @@ permission ([Signing](../server/ubuntu/git/README.md#signing)).
    server's bootstrap there, as [its runbook](../server/runbook.md) says
    ([The tunnel](../server/ubuntu/tunnel/README.md#the-tunnel)).
 2. Put wg0's public key, which that page names, in `WS_PUBLIC_KEY` of the server's `values.yml`.
-3. Run `MISE_LOCKED=1 mise -C /opt/ws bootstrap` again, and allow ws-tunnel in the Background.
+3. Run `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap` again, and allow ws-tunnel in the
+   Background.
 4. Ping the server's tunnel address, `10.99.N.1` for slot N, and run `ssh NAME`. A handshake must
    come within 30 s.
 
@@ -138,7 +139,7 @@ Skip it on a cloud VM and a VM on the Mac.
 2. Set `WS_CABLE_PORT` at ws, and `WS_CABLE_SERVICE` on the Mac. `networksetup
    -listallnetworkservices` lists the services, and the cable's has a `169.254` address.
 3. Run the server's bootstrap at ws, as [its runbook](../server/runbook.md) says, then
-   `MISE_LOCKED=1 mise -C /opt/ws bootstrap`.
+   `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap`.
 4. Ping `10.77.0.1`. The Mac's end is `10.77.0.2` ([The cable](README.md#the-cable)).
 
 ## What stays by hand

@@ -1,9 +1,9 @@
 # The Mac's frame
 
 The frame is what each of the Mac's roles in mise's config leans on. The user runs one
-`mise -C /opt/ws bootstrap`: mise's own parts first, then ws's units, which mise hands to the Mac's
-`ws unit` through the plugin `ws`. The Mac shares `mise.toml` alone with the server, and loads no
-file of the server's.
+`mise -C /opt/ws/roles/client bootstrap`: mise's own parts first, then ws's units, which mise
+hands to the Mac's `ws unit` through the plugin `ws`. The Mac shares `mise.toml` alone with the
+server, and loads no file of the server's.
 
 ## Its files
 

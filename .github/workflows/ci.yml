@@ -133,8 +133,8 @@ jobs:
         working-directory: /root
         run: |
           export MISE_DATA_DIR=/usr/local/share/mise
-          mise -C /opt/ws bootstrap plan --detailed-exitcode </dev/null
-          mise -C /opt/ws bootstrap </dev/null
+          mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null
+          mise -C /opt/ws/roles/server bootstrap </dev/null
       # The plan changes nothing, and fails where mise's config lacks a unit of the specs.
       - name: The plan changes nothing, and finds a missing unit
         working-directory: /root

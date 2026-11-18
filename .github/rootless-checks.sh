@@ -139,10 +139,10 @@ chown -R 0:0 /opt/ws
 chmod -R go-w /opt/ws
 "$(dirname "$0")/bootstrap.sh" "$rel"
 must "the first bootstrap leaves nothing to do" \
-    mise -C /opt/ws bootstrap plan --detailed-exitcode </dev/null
-mise -C /opt/ws bootstrap </dev/null
+    mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null
+mise -C /opt/ws/roles/server bootstrap </dev/null
 must "the second bootstrap leaves nothing to do" \
-    mise -C /opt/ws bootstrap plan --detailed-exitcode </dev/null
+    mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null
 
 groups=$(id -nG "$user")
 must "the user keeps sudo" grep -qw sudo <<<"$groups"

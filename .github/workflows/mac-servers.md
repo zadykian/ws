@@ -19,9 +19,9 @@ Four cases of the `mac` job work on a second server:
   removes lab's directory.
 - `mac/90-clash.sh` makes the files `lab` and `box`, which clash with ws's. The bootstrap's plan
   must refuse each with its reason, and name `ws client macos remove lab` beside it.
-- `mac/92-second.sh` gives lab a third wireguard-go on UDP 51821. `mise -C /opt/ws bootstrap` must
-  then give lab a daemon and a utun of its own, at 10.99.1.1, and leave ws's daemon with its
-  handshake. A second bootstrap must call no sudo.
+- `mac/92-second.sh` gives lab a third wireguard-go on UDP 51821. `mise -C /opt/ws/roles/client
+  bootstrap` must then give lab a daemon and a utun of its own, at 10.99.1.1, and leave ws's daemon
+  with its handshake. A second bootstrap must call no sudo.
 - `mac/94-remove.sh` runs `remove lab`: its files, daemon, host and `known_hosts` line must go, and
   ws's stay. `remove box` and `remove ws` must refuse, and the plan then exit 0.
 

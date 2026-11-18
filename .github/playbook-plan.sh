@@ -7,7 +7,7 @@
 # hand, it names the data directory that install.sh gives mise.
 set -eu
 export MISE_DATA_DIR=/usr/local/share/mise
-mise -C /opt/ws bootstrap plan --detailed-exitcode </dev/null
+mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null
 
 toml=/opt/ws/roles/server/ubuntu/frame/mise.server.toml
 line='"ws:state/ws-binary" = "in-sync"'
@@ -21,7 +21,7 @@ grep -qxF "$line" "$saved" || {
 }
 grep -vxF "$line" "$saved" >"$toml"
 status=0
-mise -C /opt/ws bootstrap plan --detailed-exitcode </dev/null >"$out" 2>&1 || status=$?
+mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null >"$out" 2>&1 || status=$?
 cat "$out"
 if [ "$status" != 1 ] || ! grep -q '^ws unit verify: ' "$out"; then
     echo "::error::The plan exited $status, not 1 by ws unit verify, with a unit's line dropped."

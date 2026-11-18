@@ -63,14 +63,14 @@ mac_build() {
     echo "$mac_rel"/download/v*/ws-darwin-arm64
 }
 
-# mac_bootstrap ARG... runs mise -C /opt/ws bootstrap ARG..., as mac_tree_mise does.
+# mac_bootstrap ARG... runs mise -C /opt/ws/roles/client bootstrap ARG..., as mac_tree_mise does.
 mac_bootstrap() {
     mac_tree_mise bootstrap "$@"
 }
 
-# mac_tree_mise ARG... runs mise -C /opt/ws ARG... as the user, locked, with no terminal, as the
-# runbook runs it. A sudo first on PATH writes a line for each call to $mac_trace/calls, which
-# mac_mark empties and mac_calls counts.
+# mac_tree_mise ARG... runs mise -C /opt/ws/roles/client ARG... as the user, locked, with no
+# terminal, as the runbook runs it. A sudo first on PATH writes a line for each call to
+# $mac_trace/calls, which mac_mark empties and mac_calls counts.
 mac_tree_mise() {
     if [ ! -x "$mac_trace/sudo" ]; then
         mkdir -p "$mac_trace"
@@ -81,7 +81,7 @@ mac_tree_mise() {
     (
         cd / &&
             MISE_LOCKED=1 MISE_TRUSTED_CONFIG_PATHS=/opt/ws PATH="$mac_trace:$PATH" \
-                mise -C /opt/ws "$@" </dev/null
+                mise -C /opt/ws/roles/client "$@" </dev/null
     )
 }
 

@@ -125,7 +125,7 @@ func (f Mac) readSSH(ctx context.Context, m effect.Machine, own values.Conf) (SS
 // ghFrom returns the gh that mise installed for the tree, as the user's mise finds it, which is on
 // no shell's PATH. A mise that has none yet gives none.
 func ghFrom(ctx context.Context, m effect.Machine) string {
-	out, err := m.Run(ctx, "mise", "-C", "/opt/ws", "which", "gh")
+	out, err := m.Run(ctx, "mise", "-C", "/opt/ws/roles/client", "which", "gh")
 	if err != nil {
 		return ""
 	}

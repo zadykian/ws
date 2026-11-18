@@ -18,10 +18,12 @@ Dpkg::Options { "--force-confdef"; "--force-confold"; };
 # The check against a silent skip: ws unit verify fails the plan and the run where mise's plan
 # lacks a unit of the specs. A first run, or the run that brings a new pin, renders it before mise
 # installs the pin's ws. It prints the line of a pass then, so that the next plan finds the file
-# unchanged. The plugin's write hook runs the check on that run, after mise installs ws.
+# unchanged. The plugin's write hook runs the check on that run, after mise installs ws. A
+# template's exec runs beside this file. So the check moves to cwd, the run's directory, where a
+# nested mise loads the side's roles as the run does.
 [bootstrap.files."/etc/ws/units.verified"]
 template = true
-content = '''{{ exec(command="ws=$(mise which ws 2>/dev/null) || { echo 'ws units: none missing'; exit 0; }; \"$ws\" unit verify") }}
+content = '''{{ exec(command="cd '" ~ cwd ~ "' && { ws=$(mise which ws 2>/dev/null) || { echo 'ws units: none missing'; exit 0; }; \"$ws\" unit verify; }") }}
 '''
 
 # ws's own directory, which a first run with no values.yml lacks: mise makes no missing parent.
