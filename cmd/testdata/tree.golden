@@ -246,7 +246,7 @@ Available Commands:
   fans        drive the board's fans on the curves of CONFIG until SIGTERM
   secrets     keep ws's secrets file, with its identity as a systemd credential
   state       report what the server holds of what ws manages, and what apply would change
-  tunnel      the tunnel role's check and wg0's key, which its units run
+  tunnel      the tunnel role's check, wg0's key and wg0, which its units run
   values      edit the machine's values
 
 Flags:
@@ -429,7 +429,7 @@ Flags:
       --json           print the report as JSON
       --only strings   report the named roles and ROLE/STEPs alone, as a list or by repeating the flag
 == ws server ubuntu tunnel
-the tunnel role's check and wg0's key, which its units run
+the tunnel role's check, wg0's key and wg0, which its units run
 
 Usage:
   ws server ubuntu tunnel [flags]
@@ -438,6 +438,7 @@ Usage:
 Available Commands:
   check       refuse a networkd that does not run, and a peer's key file that holds no key
   key         make wg0's private key where it is missing, and mend its owner, group and mode
+  wg0         make wg0 again where it lacks the key of its file, and wait for it to hold it
 
 Flags:
   -h, --help   help for tunnel
@@ -462,6 +463,17 @@ Usage:
 Flags:
       --check   fail where the key is to be made or mended, and change nothing
   -h, --help    help for key
+== ws server ubuntu tunnel wg0
+networkd reads wg0's private key only as it creates wg0. Where wg0 holds another key, it is deleted; then networkctl reload creates it, and the command waits up to 10 s for it to hold the key, whose public key it prints. Without booted systemd nothing is due.
+
+--check fails where wg0 is missing or holds another key, and changes nothing. The tunnel role's run state runs it, after wg0's files.
+
+Usage:
+  ws server ubuntu tunnel wg0 [flags]
+
+Flags:
+      --check   fail where wg0 lacks the key of its file, and change nothing
+  -h, --help    help for wg0
 == ws server ubuntu values
 edit the machine's values
 

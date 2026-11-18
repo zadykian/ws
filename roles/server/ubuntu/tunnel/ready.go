@@ -30,12 +30,14 @@ type waitForKey struct {
 
 func (c waitForKey) String() string { return "wait for wg0 to hold the server's key" }
 
+// Apply waits, and says the public key once wg0 holds it, as a run that made the key showed none.
 func (c waitForKey) Apply(ctx context.Context) error {
 	for i := range c.r.tries {
 		if i > 0 {
 			c.r.sleep(c.r.pause)
 		}
 		if c.r.holds(ctx, c.public) {
+			c.r.out.Say("wg0 holds ws's WireGuard public key, for WS_PUBLIC_KEY in a server's values.yml: %s", c.public)
 			return nil
 		}
 	}

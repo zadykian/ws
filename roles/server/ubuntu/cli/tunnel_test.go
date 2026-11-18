@@ -1,10 +1,13 @@
 package cli
 
 import (
+	"bytes"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/roles/internal/wgkey"
 )
 
 const wg0Key = "/etc/systemd/network/60-wg0.key"
@@ -57,5 +60,35 @@ func TestTunnelKeyMadeOnce(t *testing.T) {
 	}
 	if string(m.Files[wg0Key]) != key {
 		t.Error("the key changed")
+	}
+}
+
+func TestTunnelWG0WithoutSystemdIsDone(t *testing.T) {
+	p, m := valuesProcess("---\n")
+	for _, args := range [][]string{{"--check"}, nil} {
+		status, stdout, stderr := runWs(p, "", append([]string{"server", "ubuntu", "tunnel", "wg0"}, args...)...)
+		if status != 0 || stdout != "" || stderr != "" {
+			t.Errorf("%q: status = %d, stdout %q, stderr %q", args, status, stdout, stderr)
+		}
+	}
+	if len(m.Calls) != 2 {
+		t.Errorf("calls %q, want the values read alone", m.Calls)
+	}
+}
+
+func TestTunnelWG0CheckDueWhereMissing(t *testing.T) {
+	p, m := valuesProcess("---\n")
+	m.Dirs["/run/systemd/system"] = 0o755
+	private, err := wgkey.Generate(bytes.NewReader(bytes.Repeat([]byte{3}, 32)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	m.Files[wg0Key] = []byte(private + "\n")
+	status, _, stderr := runWs(p, "", "server", "ubuntu", "tunnel", "wg0", "--check")
+	if status != 1 || !strings.Contains(stderr, "to do: reload networkd for wg0: wg0 is missing") {
+		t.Errorf("status = %d, stderr %q", status, stderr)
+	}
+	if slices.Contains(m.Calls, "root networkctl reload") {
+		t.Errorf("--check reloaded: %q", m.Calls)
 	}
 }

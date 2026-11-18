@@ -2,6 +2,7 @@ package cli
 
 import (
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -15,8 +16,8 @@ import (
 // newTunnelCmd returns ws server ubuntu tunnel: the commands that the tunnel role's units run, on
 // the service manager's units u.
 func newTunnelCmd(p enginecli.Env, u effect.Units) *cobra.Command {
-	return enginecli.Group("tunnel", "the tunnel role's check and wg0's key, which its units run",
-		newTunnelCheckCmd(p, u), newTunnelKeyCmd(p))
+	return enginecli.Group("tunnel", "the tunnel role's check, wg0's key and wg0, which its units run",
+		newTunnelCheckCmd(p, u), newTunnelKeyCmd(p), newTunnelWG0Cmd(p))
 }
 
 // newTunnelCheckCmd returns ws server ubuntu tunnel check.
@@ -56,6 +57,28 @@ func newTunnelKeyCmd(p enginecli.Env) *cobra.Command {
 		defer term.Flush()
 		out := linesOf(term, c.CommandPath())
 		return settle(c.Context(), out, []resource.Resource{tunnel.Key{M: p.Machine, Out: out}}, *check)
+	}
+	return c
+}
+
+// newTunnelWG0Cmd returns ws server ubuntu tunnel wg0.
+func newTunnelWG0Cmd(p enginecli.Env) *cobra.Command {
+	c := &cobra.Command{
+		Use:   "wg0",
+		Short: "make wg0 again where it lacks the key of its file, and wait for it to hold it",
+		Long: "networkd reads wg0's private key only as it creates wg0. Where wg0 holds another key, it is deleted; " +
+			"then networkctl reload creates it, and the command waits up to 10 s for it to hold the key, whose " +
+			"public key it prints. Without booted systemd nothing is due.\n\n--check fails where wg0 is missing " +
+			"or holds another key, and changes nothing. The tunnel role's run state runs it, after wg0's files.",
+		Args: cobra.NoArgs,
+	}
+	check := c.Flags().Bool("check", false, "fail where wg0 lacks the key of its file, and change nothing")
+	c.RunE = func(c *cobra.Command, _ []string) error {
+		term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+		defer term.Flush()
+		lines := linesOf(term, c.CommandPath())
+		w := tunnel.WG0{M: p.Machine, Out: lines, Tries: 10, Pause: time.Second}
+		return settle(c.Context(), lines, []resource.Resource{w}, *check)
 	}
 	return c
 }
