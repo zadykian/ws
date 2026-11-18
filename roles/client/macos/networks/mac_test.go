@@ -7,10 +7,14 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/roles/client/macos/facts"
 	"github.com/zadykian/ws/roles/client/macos/networks"
 	"github.com/zadykian/ws/roles/client/macos/values"
 )
+
+// resolverHead is the header of a resolver that ws wrote.
+const resolverHead = "# " + file.Mark + ": ws client macos networks, from WS_RESOLVERS.\n"
 
 // macPlan returns the headlines of the networks of servers.
 func macPlan(t *testing.T, m *effecttest.Machine, servers ...facts.Server) []string {
@@ -56,5 +60,21 @@ func TestMacDuesAMissingRoutesD(t *testing.T) {
 	got := macPlan(t, effecttest.NewMachine(), facts.Server{Name: "ws", Conf: values.Conf{PublicKey: "K", TunnelNetworks: "10.1.0.0/24"}})
 	if want := "would put 10.1.0.0/24 in /etc/ws/tunnel/ws/routes.d/values once routes.d is made"; len(got) != 1 || got[0] != want {
 		t.Errorf("Plan = %q; want %q, as the tunnel's unit makes routes.d first", got, want)
+	}
+}
+
+func TestMacStopsAtAResolverOfAnotherScript(t *testing.T) {
+	for _, text := range []string{
+		"nameserver 1.1.1.1\n",
+		"# Written by github.com/zadykian/ws: ws client macos apply, from WS_RESOLVERS in a server's values.yml.\nnameserver 1.1.1.1\n",
+	} {
+		m := effecttest.NewMachine()
+		m.Files["/etc/resolver/a.test"] = []byte(text)
+		m.Root["/etc/resolver/a.test"] = effect.Attrs{Mode: 0o644}
+		_, err := networks.Mac{Servers: []facts.Server{{Name: "ws", Conf: values.Conf{PublicKey: "K", Resolvers: "a.test=10.0.0.1"}}},
+			M: m, Out: &effecttest.Out{}}.Plan(context.Background())
+		if err == nil || !strings.HasPrefix(err.Error(), "/etc/resolver/a.test is another script's, or written by hand") {
+			t.Errorf("Plan error = %v, want the file refused", err)
+		}
 	}
 }

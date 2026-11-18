@@ -89,7 +89,7 @@ func TestMacStateJSONCarriesARefusedFile(t *testing.T) {
 		}
 	}
 	if err := json.Unmarshal([]byte(stdout), &doc); err != nil || status != 0 || len(doc.Servers) != 2 ||
-		!strings.Contains(stdout, "ws client macos remove lab") || len(doc.Servers[1].Steps) < 2 {
+		!strings.Contains(stdout, "ws client macos remove lab") || len(doc.Servers[1].Steps) < 1 {
 		t.Errorf("status = %d, err = %v, stdout = %q; want both servers, lab refused", status, err, stdout)
 	}
 }

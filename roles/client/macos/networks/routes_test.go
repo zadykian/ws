@@ -7,13 +7,14 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 	"github.com/zadykian/ws/roles/client/macos/networks"
 )
 
 func TestRoutesPutsTheNetworksInTheFileOfTheirSet(t *testing.T) {
 	m := effecttest.NewMachine()
 	r := &networks.Routes{Server: "ws", Set: "lab", Networks: []string{"10.1.0.0/24"}, M: m}
-	if _, err := r.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "/etc/ws/tunnel/ws/routes.d is missing: run ws client macos apply --server ws first") {
+	if _, err := r.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "/etc/ws/tunnel/ws/routes.d is missing: run mise -C /opt/ws bootstrap first") {
 		t.Errorf("Plan error = %v", err)
 	}
 	m.Root["/etc/ws/tunnel/ws/routes.d"] = effect.Attrs{Mode: 0o755}
@@ -35,8 +36,16 @@ func TestRoutesRefusesWhatTheShellRefused(t *testing.T) {
 
 func TestRoutesAloneRefusesAMissingRoutesDirUnderCheck(t *testing.T) {
 	r := &networks.Routes{Server: "ws", Set: "lab", Networks: []string{"10.1.0.0/24"}, M: effecttest.NewMachine(), Check: true, Alone: true}
-	if _, err := r.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "/etc/ws/tunnel/ws/routes.d is missing: run ws client macos apply --server ws first") {
+	if _, err := r.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "/etc/ws/tunnel/ws/routes.d is missing: run mise -C /opt/ws bootstrap first") {
 		t.Errorf("Plan error = %v", err)
+	}
+}
+
+// installDaemons gives each server named a daemon's plist.
+func installDaemons(m *effecttest.Machine, names ...string) {
+	m.Dirs["/Library/LaunchDaemons"] = 0o755
+	for _, n := range names {
+		m.Files["/Library/LaunchDaemons/"+launchd.For(n).Label+".plist"] = []byte("x")
 	}
 }
 

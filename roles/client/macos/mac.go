@@ -9,7 +9,6 @@ import (
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/cable"
-	"github.com/zadykian/ws/roles/client/macos/networks"
 	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
@@ -33,7 +32,6 @@ type Mac struct {
 func (m Mac) steps(check bool) []step.Step {
 	return []step.Step{
 		cable.Cable{Conf: m.Conf, M: m.M, Out: m.Out}.Step(),
-		&networks.Networks{Server: m.Server, MacConf: m.MacConf, Conf: m.Conf, M: m.M, Out: m.Out, Check: check},
 	}
 }
 

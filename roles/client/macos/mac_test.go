@@ -10,12 +10,11 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos"
-	"github.com/zadykian/ws/roles/client/macos/networks"
 	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 func TestNamesComeInSetupShsOrder(t *testing.T) {
-	want := []string{"cable", "networks"}
+	want := []string{"cable"}
 	if got := macos.Names(); !slices.Equal(got, want) {
 		t.Errorf("Names = %q; want %q", got, want)
 	}
@@ -39,23 +38,6 @@ func TestRolesFollowNames(t *testing.T) {
 	}
 	if !slices.Equal(names, macos.Names()) {
 		t.Errorf("roles = %q, want %q", names, macos.Names())
-	}
-}
-
-func TestMacStepsTakeTheCheck(t *testing.T) {
-	for _, check := range []bool{false, true} {
-		for _, s := range (macos.Mac{}).Rows(macos.Options{Options: step.Options{Check: check}}) {
-			var got bool
-			switch s := s.(type) {
-			case *networks.Networks:
-				got = s.Check
-			default:
-				continue
-			}
-			if got != check {
-				t.Errorf("%s: Check = %v; want %v", s.Name(), got, check)
-			}
-		}
 	}
 }
 

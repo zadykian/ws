@@ -86,11 +86,8 @@ func TestMacRunRunsEachStepOnce(t *testing.T) {
 }
 
 func TestMacRunTakesOnlyTheStepsNamed(t *testing.T) {
-	if got := reached(t, Options{Only: []string{"networks"}}); !slices.Equal(got, []string{"networks"}) {
-		t.Errorf("ran %q; want networks alone", got)
-	}
-	if got := reached(t, Options{Only: []string{"networks", "cable"}}); !slices.Equal(got, []string{"cable", "networks"}) {
-		t.Errorf("ran %q; want cable and networks, in the order of the steps", got)
+	if got := reached(t, Options{Only: []string{"cable"}}); !slices.Equal(got, []string{"cable"}) {
+		t.Errorf("ran %q; want cable alone", got)
 	}
 }
 

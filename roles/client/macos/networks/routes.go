@@ -71,7 +71,7 @@ func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 		case (r.Check || r.Watched) && !r.Alone:
 			return []step.Change{resource.Remark("would put " + strings.Join(networks, " ") + " in " + routesFile + " " + routesAbsent)}, nil
 		}
-		return nil, fmt.Errorf("%s is missing: run ws client macos apply --server %s first", dir, r.Server)
+		return nil, fmt.Errorf("%s is missing: run mise -C /opt/ws bootstrap first", dir)
 	} else if err != nil {
 		return nil, err
 	}
