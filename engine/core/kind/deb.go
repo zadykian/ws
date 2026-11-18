@@ -31,10 +31,8 @@ func (s debSpec) parts(e Env, _ fs.FS) (func(context.Context) ([]resource.Resour
 	if s.Package == "" || s.Version == "" || s.URL == "" || len(s.SHA256) == 0 {
 		return nil, errors.New("a deb takes a package, a version, a url and a sha256 for each architecture")
 	}
-	for arch, sum := range s.SHA256 {
-		if len(sum) != 64 || strings.Trim(sum, "0123456789abcdef") != "" {
-			return nil, errors.New("sha256 of " + arch + " is not 64 lowercase hex digits")
-		}
+	if err := checkSums(s.SHA256); err != nil {
+		return nil, err
 	}
 	if s.Stop != "" {
 		if err := effect.CheckUnitName("stop", s.Stop); err != nil {
@@ -50,4 +48,14 @@ func (s debSpec) parts(e Env, _ fs.FS) (func(context.Context) ([]resource.Resour
 		r = held{pkg: pkg, m: e.M, u: e.U, out: e.Out, unit: s.Stop}
 	}
 	return func(context.Context) ([]resource.Resource, error) { return []resource.Resource{r}, nil }, nil
+}
+
+// checkSums refuses a pin that is no SHA-256 in lowercase hex, naming its architecture.
+func checkSums(sums map[string]string) error {
+	for arch, sum := range sums {
+		if len(sum) != 64 || strings.Trim(sum, "0123456789abcdef") != "" {
+			return errors.New("sha256 of " + arch + " is not 64 lowercase hex digits")
+		}
+	}
+	return nil
 }

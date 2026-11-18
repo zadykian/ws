@@ -196,6 +196,8 @@ func TestWhenOnEveryKind(t *testing.T) {
 		"file": "[file.a]\npath = \"/etc/a\"\nsource = \"a\"\n" + off,
 		"deb": "[deb.a]\npackage = \"a\"\nversion = \"1\"\nurl = \"https://x/a.deb\"\nsha256 = { amd64 = \"" + sum + "\" }\n" +
 			off,
+		"binary": "[binary.a]\nversion = \"1\"\nurl = \"https://x/a\"\npath = \"/usr/local/bin/a\"\nsha256 = { all = \"" + sum + "\" }\n" +
+			off,
 		"packages": "[packages.a]\ntemplate = \"a\"\n" + off,
 		"dkms": "[dkms.a]\nmodule = \"m\"\nversion = \"1\"\nurl = \"https://x/m.tar.gz\"\nsha256 = \"" + sum + "\"\n" +
 			"load = \"m\"\n" + off,
