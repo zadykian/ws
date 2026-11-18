@@ -1,6 +1,7 @@
 package kind
 
 import (
+	"errors"
 	"slices"
 	"strings"
 	"testing"
@@ -247,5 +248,25 @@ func TestServiceFilesInOneNewDirectoryMakeItOnce(t *testing.T) {
 	}
 	if string(m.Files["/etc/a.d/a.conf"]) != "a" || string(m.Files["/etc/a.d/b.conf"]) != "b" || m.Dirs["/etc/a.d"] != 0o755 {
 		t.Errorf("files = %q, %q, dir %o; want both written in the new directory", m.Files["/etc/a.d/a.conf"], m.Files["/etc/a.d/b.conf"], m.Dirs["/etc/a.d"])
+	}
+}
+
+// A file that goes waits for the files written after it in the spec: a refused check of one of
+// them keeps it.
+func TestServiceRemovesAFileAfterThoseItWrites(t *testing.T) {
+	e, m, u, _ := testEnv(true)
+	m.Dirs["/etc"] = 0o755
+	m.Files["/etc/a.env"], m.Files["/etc/b.conf"] = []byte("A=1\n"), []byte("old")
+	m.Results["refuse /etc/b.conf.ws-check"] = effecttest.Result{Err: errors.New("exit 1")}
+	u.States = map[string]effect.UnitState{"a.service": {Enabled: true, Active: true}}
+	units := loadOne(t, e, "[service.a]\nunit = \"a.service\"\nenabled = true\nrun = \"running\"\n"+
+		"[[service.a.file]]\npath = \"/etc/a.env\"\nabsent = true\n"+
+		"[[service.a.file]]\npath = \"/etc/b.conf\"\nsource = \"b\"\ncheck = [\"refuse\", \"{}\"]\n",
+		map[string]string{"b": "new"})
+	if err := run(t, e, units); err == nil {
+		t.Fatal("a file its check refuses was written")
+	}
+	if _, ok := m.Files["/etc/a.env"]; !ok || string(m.Files["/etc/b.conf"]) != "old" {
+		t.Errorf("a.env there = %v, b.conf = %q; want both as they were", ok, m.Files["/etc/b.conf"])
 	}
 }

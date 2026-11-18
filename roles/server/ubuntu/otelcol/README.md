@@ -1,19 +1,19 @@
 # otelcol
 
 The `otelcol` role runs the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) on
-the host. Its code is Go, in `roles/server/ubuntu/otelcol`, as steps of `ws server ubuntu apply`:
-node_exporter, the `.deb`'s install, the configuration, and the check that the
-collector answers. It takes OTLP on loopback, and reads the journal, the host's metrics and its
+the host, from `mise bootstrap`. Its `mise.server.toml` installs node_exporter and names the units
+of its `units.toml`: the `.deb`, the service with its files, and the check that the collector
+answers. It takes OTLP on loopback, and reads the journal, the host's metrics and its
 temperatures from node_exporter. It sends it all to SigNoz, and claude's metrics to another
 collector where one is set.
 
 ## The collector
 
 The OpenTelemetry Collector runs on the host as the service `otelcol-contrib`, from the `.deb` of
-its release, which `download.go` pins by version and, for each architecture, SHA-256. One step,
-`Collector install`, fetches the file into `/var/cache/ws/` where dpkg lists another version. It
+its release, which the unit `deb/otelcol` in `units.toml` pins by version and, for each architecture,
+SHA-256. The unit fetches the file into `/var/cache/ws/` where dpkg lists another version. It
 checks the file against the SHA-256, then its name and version against the pin, before dpkg reads
-it. The step removes the file after. A dry run on a new machine shows the install. Its config,
+it, and removes the file after. A plan on a new machine shows the install. Its config,
 `roles/server/ubuntu/otelcol/files/config.yaml.tmpl`, starts from SigNoz's for a collector on a
 VM. It:
 
@@ -38,8 +38,9 @@ journal gets while the collector is down stays there alone.
 
 node_exporter is Ubuntu's `prometheus-node-exporter`, without its recommends. It runs with only its
 `hwmon` and `thermal_zone` collectors and without its own Go and process metrics. Its arguments are
-in `/etc/default/prometheus-node-exporter`, which the role writes before it installs the package,
-as the package starts node_exporter at once. dpkg keeps that file and puts the package's beside it,
+in `/etc/default/prometheus-node-exporter`, which mise writes before it installs the package
+(`phase = "pre-packages"`), as the package starts node_exporter at once. A change restarts the
+service where systemd is booted. dpkg keeps that file and puts the package's beside it,
 as `.dpkg-dist`. Its metrics keep their Prometheus names, such as `node_hwmon_temp_celsius`, with
 `service.name` `node` and the host's name. A VM has no temperatures or fans to read, so there they
 are missing.
@@ -47,15 +48,17 @@ are missing.
 The collector refuses new data once it holds 384 MiB, as when SigNoz is down and what it would
 send piles up. That way it doesn't grow until the kernel kills another process.
 
-The role checks a new config with `otelcol-contrib validate` before the collector restarts with it.
-On a first install, the package starts the collector with the package's own config, which listens
-on every address; ufw keeps those ports from outside. The role stops and disables it at once, and
-enables it again once the role's config is in place.
+The service owns the collector's four files, so a change of any of them, or of two together,
+restarts it once. The service checks a new config with `otelcol-contrib validate` before it
+replaces the live file. A config that the check refuses leaves the live file alone. The restart
+owed waits for the next good run. On a first install, the package starts the collector
+with the package's own config, which listens on every address; ufw keeps those ports from outside.
+The `.deb`'s unit stops it at once, and the service enables it again once the config is in place.
 
 ## claude's metrics elsewhere
 
 `/etc/ws/env` is the file of secrets the shell reads, which the `shell` role writes from
-the secrets file's `[env]` table ([Secrets](../shell/README.md#secrets)). The role reads it as it plans. Where it sets
+the secrets file's `[env]` table ([Secrets](../shell/README.md#secrets)). The templates read it as the units plan. Where it sets
 `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT`, the collector sends claude's metrics there as well, over
 OTLP/gRPC. The value is a URL, `http://HOST:PORT` for gRPC without TLS or `https://HOST:PORT`. The
 role refuses any other. It refuses one that leads back to the collector's own receiver on
@@ -66,12 +69,15 @@ network around the server. The `security` role's table drops the collector's con
 `claude-code` go, as claude sends them, without the host's name. claude's traces and logs, with
 the prompts' and responses' text and the tools' details and output, stay in SigNoz.
 
-The role reads that one variable from the last line of the file that sets it, with or without
-`export` and quotes, without running the file. It writes it to `/etc/otelcol-contrib/claude.env`,
+The templates read that one variable from the last line of the file that sets it, with or without
+`export` and quotes, without running the file. The value goes to `/etc/otelcol-contrib/claude.env`,
 which only root reads and a drop-in adds to the service's environment. The config names the
-variable, never its value, and the run's output leaves the value out. Without the variable, the role
-removes that file and the config has no second pipeline. A new value restarts the collector.
+variable, never its value, and the output leaves the value out, also where the check refuses it.
+Without the variable, the config has no second pipeline. `claude.env` is removed after the config,
+so a run cut short never leaves a config that names a missing variable. A new value restarts the
+collector.
 
-The collector answers its health check a few seconds after it starts, at most 60. The last step
-waits for that: a collector that cannot start, such as one whose OTLP port another process holds,
-fails the run there. Without systemd booted, as in CI's container, the units and the wait skip.
+The collector answers its health check a few seconds after it starts, at most 60. The unit
+`state/otelcol-health` waits for that: a collector that cannot start, such as one whose OTLP port
+another process holds, fails the run there. Without systemd booted, as in CI's container, the
+service and the wait skip.

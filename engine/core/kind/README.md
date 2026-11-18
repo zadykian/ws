@@ -201,6 +201,8 @@ source = "name"
 ```
 
 - The parts are written in order before the unit, and a change to any of them gives one restart.
+  A part that goes, by `absent` or `absent_when_empty`, is removed after the parts written, so
+  that a file never names one already gone.
   Two files of one service in two file units would restart it twice.
 - `in_force` and `loads` run as root. A load that fails, or nothing in force, counts as a
   difference. Each part must exist first.

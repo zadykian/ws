@@ -18,7 +18,8 @@ var runs = map[string]systemd.Run{"": systemd.Leave, "running": systemd.Running,
 	"triggered": systemd.Triggered}
 
 // serviceSpec is a unit of the kind service: a systemd unit that ws owns, enabled, and running,
-// stopped or triggered. Its files, File, are written in order before it. A change to any of them
+// stopped or triggered. Its files, File, are written in order before it, and those that go are
+// removed after the rest. A change to any of them
 // gives one restart, or one reload with Reload, owed to the next run where this one fails.
 // InForce and Loads compare what is in force with what the files load (drift). Without booted
 // systemd it plans no unit and says so.
@@ -63,7 +64,9 @@ func (s serviceSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.
 	}
 	said := make([]bool, len(s.File))
 	return func(ctx context.Context) ([]resource.Resource, error) {
-		var all, watch []resource.Resource
+		// A file goes after those the service writes, so that a run cut short, or a refused check,
+		// never leaves a file that names one already gone.
+		var all, gone, watch []resource.Resource
 		for i, f := range s.File {
 			b, err := f.resources(ctx, e, dir)
 			if err != nil {
@@ -75,8 +78,14 @@ func (s serviceSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.
 			if b.file == nil {
 				continue
 			}
-			all, watch = addParts(all, b.all), append(watch, b.file)
+			if b.gone {
+				gone = append(gone, b.all...)
+			} else {
+				all = addParts(all, b.all)
+			}
+			watch = append(watch, b.file)
 		}
+		all = append(all, gone...)
 		if s.User != "" {
 			owner, err := ownerOf(ctx, e, s.User)
 			if err != nil {

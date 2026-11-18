@@ -101,6 +101,8 @@ type built struct {
 	all   []resource.Resource
 	owner account.Account
 	left  bool
+	// gone is a file that the part removes.
+	gone bool
 }
 
 // sayLeft says once a unit that a secret file stays unchanged, as a read makes the unit's parts
@@ -148,7 +150,7 @@ func (f filePart) resources(ctx context.Context, e Env, dir fs.FS) (built, error
 		}
 		gone = f.AbsentWhenEmpty && len(bytes.TrimSpace(content)) == 0
 	}
-	var b built
+	b := built{gone: gone}
 	switch {
 	case f.Line != "":
 		b.file = f.lines(e, owner, rel)
