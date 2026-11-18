@@ -17,7 +17,11 @@ const oursMark = "# " + file.Mark
 
 // checkGuards refuses group, group_of and ours on a file that is not root's. An account's own file
 // has the account's group already, and the account may write it, so its first line proves nothing.
+// It checks the fields of a file edited by hand too (filebyhand.go).
 func (f filePart) checkGuards() error {
+	if err := f.checkByHand(); err != nil {
+		return err
+	}
 	root := f.Owner == "" || f.Owner == "root"
 	switch {
 	case f.Backup && (f.Secret || f.Absent || f.Line != ""):

@@ -41,7 +41,7 @@ type filePart struct {
 	Secret bool `toml:"secret"`
 	// Absent removes the file, and takes no content.
 	Absent bool `toml:"absent"`
-	// Line goes at the top of the owner's file, which keeps its other text (fileline.go).
+	// Line goes at the top or the end of the owner's file, which keeps its other text (fileline.go).
 	Line string `toml:"line"`
 	// Has is a command that says whether the file's text, on its standard input, holds Line.
 	Has []string `toml:"has"`
@@ -55,6 +55,7 @@ type filePart struct {
 	AbsentWhenEmpty bool `toml:"absent_when_empty"`
 	// Link makes the path a link to this target, root's, in place of a file (filelink.go).
 	Link string `toml:"link"`
+	fileByHand
 }
 
 // check refuses a file's fields that no plan could take. dir holds its template or source.

@@ -152,6 +152,35 @@ func TestHomeLinesRefusesALinkAtTheFileThatLacksTheLines(t *testing.T) {
 	}
 }
 
+// With Follow, as on the Mac, the user reads through a link at the file. The fake's file at the
+// path stands for that read.
+func TestHomeLinesFollowsALinkAtTheFile(t *testing.T) {
+	for _, c := range []struct {
+		name, text string
+		want       error
+	}{
+		{"holding", "a\nws\n", nil},
+		{"lacking", "a\n", ErrLinked},
+		{"leading nowhere", "", ErrLinked},
+	} {
+		m := effecttest.NewMachine()
+		m.Links["/home/ws/f"] = "/h/real"
+		if c.text != "" {
+			m.Files["/home/ws/f"] = []byte(c.text)
+		}
+		l := homeLinesIn(m, false)
+		l.Follow = true
+		cs, err := l.Plan(context.Background())
+		if !errors.Is(err, c.want) || len(cs) != 0 {
+			t.Errorf("%s: plan = %v, %v; want no change and %v", c.name, cs, err, c.want)
+		}
+		items, err := l.Report(context.Background())
+		if c.want == nil && (err != nil || items[0].Found != "holds ws" || items[0].Conflict != "") {
+			t.Errorf("%s: report = %+v, %v; want it in sync", c.name, items, err)
+		}
+	}
+}
+
 func TestHomeLinesKeepsAndRewritesAFileThatLacksTheLines(t *testing.T) {
 	for _, c := range []struct {
 		name, old, want string

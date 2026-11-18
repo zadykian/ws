@@ -108,6 +108,30 @@ func TestLineRefusesALinkOnTheWay(t *testing.T) {
 	}
 }
 
+// On the Mac ws reads as the user, so a link at the file that holds the line, as a dotfiles
+// manager makes one, is in sync. A link that lacks the line is refused with the remedy. The fake's
+// file at the path stands for what the read through the link gives.
+func TestLineOnMacOSReadsThroughALinkAtTheFile(t *testing.T) {
+	e, m, _, _ := testEnv(false)
+	e.System = MacOS
+	m.Results["id -u u"] = effecttest.Result{Out: []byte("501\n")}
+	m.Results["id -g u"] = effecttest.Result{Out: []byte("20\n")}
+	m.Results["dscl . -read /Users/u NFSHomeDirectory"] = effecttest.Result{Out: []byte("NFSHomeDirectory: /Users/u\n")}
+	m.Dirs["/Users/u"] = 0o750
+	m.Owners["/Users/u"] = [2]int{501, 20}
+	m.Links["/Users/u/.zshrc"] = "/Users/u/dotfiles/zshrc"
+	m.Files["/Users/u/.zshrc"] = []byte("a\n. /etc/x\n")
+	const spec = "[file.l]\npath = \"/Users/u/.zshrc\"\nowner = \"u\"\nline = \". /etc/x\"\n"
+	s := loadOne(t, e, spec, nil)[0].Step
+	if got := headlines(t, s); got != nil {
+		t.Errorf("plan of a link that holds the line = %q, want none", got)
+	}
+	m.Files["/Users/u/.zshrc"] = []byte("a\n")
+	if _, err := s.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "is a link to /Users/u/dotfiles/zshrc: put '. /etc/x' at the top") {
+		t.Errorf("plan of a link that lacks the line = %v, want it refused with the remedy", err)
+	}
+}
+
 func TestLineHasDecides(t *testing.T) {
 	e, m, _, _ := testEnv(false)
 	withAccount(m)
