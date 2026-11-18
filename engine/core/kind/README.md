@@ -14,8 +14,7 @@ A role's spec is `units.toml` in the role's own directory, one level below the r
 Its templates and sources sit beside it, and a path in the spec is relative to that directory.
 
 - **TOML, decoded strictly.** A table is a kind, and a key under it a unit of that kind. A field
-  that no kind has, or a value of the wrong type, fails the load, and the error names its key and
-  line.
+  that no kind has, or a value of the wrong type, fails the load, naming its key and line.
 - **The names.** A unit's name within its kind takes letters, digits, `.`, `_` and `-`. A name in
   two specs fails the load.
 - **The order.** Units run by name, each moved behind the unit that its `after` names, ahead of the
@@ -44,6 +43,7 @@ Its templates and sources sit beside it, and a path in the spec is relative to t
   | `board_vendor` | The board's maker, from `/sys/class/dmi/id/board_vendor` |
   | `gpu_vendor` | The PCI vendor of a device of class `0x03`, from `/sys/bus/pci/devices`: `0x` and four hex digits in lower case, such as `0x1234` |
   | `interface` | A network interface of that name, of any state, from `/sys/class/net`: a name the kernel takes, with no `/` |
+  | `set` | Any WANT, so that a value of the side's turns the unit on where set and off where empty; `"!WANT"` fails the load |
 
 - **Load and plan.** Each kind checks its fields as the spec loads, so a bad field fails before any
   unit runs. The resources are made as each unit plans.

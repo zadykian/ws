@@ -246,3 +246,27 @@ func TestInterfaceRefusesAPath(t *testing.T) {
 		}
 	}
 }
+
+func TestSetHoldsForAnyText(t *testing.T) {
+	m := effecttest.NewMachine()
+	for _, want := range []string{"/root/vpn/vpnclient", "x", "a b"} {
+		if got, said := planGated(t, m, `{ set = "`+want+`" }`); got == nil || said != nil {
+			t.Errorf("set %q: plan = %q, said %q; want the file, and no line", want, got, said)
+		}
+	}
+	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.Contains(c, " /sys/") }) {
+		t.Errorf("calls %q; want no fact read", m.Calls)
+	}
+}
+
+func TestSetEmptyIsOff(t *testing.T) {
+	got, said := planGated(t, effecttest.NewMachine(), `{ set = "" }`)
+	if want := []string{"say: file/a: off on this machine, as its when gives no set"}; got != nil || !slices.Equal(said, want) {
+		t.Errorf("plan = %q, said %q; want none and %q", got, said, want)
+	}
+	e, _, _, _ := testEnv(false)
+	_, err := Load(e, tree(map[string]string{"r/units.toml": gatedFile(`{ set = "!x" }`), "r/a": "x"}))
+	if err == nil || !strings.Contains(err.Error(), "holds on no machine") {
+		t.Errorf("load with set \"!x\" = %v, want it refused", err)
+	}
+}

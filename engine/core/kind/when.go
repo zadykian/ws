@@ -36,6 +36,9 @@ type fact struct {
 	// form is the form of a want that the machine can give, or nil for any. A want of another
 	// form would turn its unit off on every machine, so the load refuses it.
 	form *regexp.Regexp
+	// always marks a fact that every machine gives for any want. Its "!WANT" would turn the unit
+	// off on every machine, so the load refuses it.
+	always bool
 }
 
 // whenFacts are the facts that a when may name. A new fact is one entry here, its reader below.
@@ -46,6 +49,8 @@ var whenFacts = map[string]fact{
 	// The kernel takes an interface's name of 1 to 15 bytes, with no '/', ':' or white space, and
 	// neither "." nor "..".
 	"interface": {holds: netInterface, form: regexp.MustCompile(`^(?:[^/:\s.][^/:\s]{0,14}|\.[^/:\s.][^/:\s]{0,13}|\.\.[^/:\s]{1,13})$`)},
+	// A value of the side's: the unit runs where the value is set, as an empty want is off.
+	"set": {holds: anyWant, always: true},
 }
 
 // check refuses a key that no fact has, and a want of a form that its fact never gives, as the
@@ -57,8 +62,12 @@ func (w when) check() error {
 			return fmt.Errorf("when: no fact %q; the facts are %s", key,
 				strings.Join(slices.Sorted(maps.Keys(whenFacts)), ", "))
 		}
-		if want, _ := w.want(key); want != "" && f.form != nil && !f.form.MatchString(want) {
+		want, negated := w.want(key)
+		if want != "" && f.form != nil && !f.form.MatchString(want) {
 			return fmt.Errorf("when: %s %q is not of the form %s", key, w[key], f.form)
+		}
+		if negated && f.always {
+			return fmt.Errorf("when: %s %q holds on no machine, as %s holds for any want", key, w[key], key)
 		}
 	}
 	return nil
@@ -162,3 +171,6 @@ func netInterface(_ context.Context, m effect.Machine, want string) (bool, error
 	}
 	return err == nil, err
 }
+
+// anyWant holds for any want: the fact set's, which only an empty want turns off.
+func anyWant(context.Context, effect.Machine, string) (bool, error) { return true, nil }
