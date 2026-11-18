@@ -66,12 +66,12 @@ func newApplyCmd(p enginecli.Env) *cobra.Command {
 	var opts applyOptions
 	c := &cobra.Command{
 		Use:   "apply",
-		Short: "set the server up, each role as Go steps",
-		Long: "--secrets reads an age-encrypted TOML file with the secrets. The X25519 identity comes from the " +
+		Short: "install ca-certificates alone, as mise's bootstrap sets each role up",
+		Long: "Each role is mise's now, so apply holds no role in Go: it installs ca-certificates alone, and " +
+			"--only refuses every name. mise's bootstrap sets the server up, as the server's runbook says.\n\n" +
+			"--secrets reads an age-encrypted TOML file with the secrets. The X25519 identity comes from the " +
 			"unit's credential ws-secrets (systemd's LoadCredential), in $CREDENTIALS_DIRECTORY.\n\n" +
-			"--only names a role, or a step of it as ROLE/STEP, by the name that the run shows. A role's other steps " +
-			"are planned and left out, and a step that waits on one of them with changes is skipped.\n\n" +
-			"The last line names the roles that changed.\n\n" +
+			"The last line says whether anything changed.\n\n" +
 			"--json prints each event of the run as a line of JSON on stdout: planned, started, done, failed " +
 			"or skipped, with the step, the first line of each change and the error. ws's own lines stay on " +
 			"stderr.",
@@ -81,7 +81,7 @@ func newApplyCmd(p enginecli.Env) *cobra.Command {
 	f := c.Flags()
 	f.Bool("json", false, "print each event of the run as a line of JSON on stdout")
 	f.Bool("check", false, "plan the steps and apply none")
-	f.StringSliceVar(&opts.Only, "only", nil, "run the named roles and ROLE/STEPs alone, as a list or by repeating the flag")
+	f.StringSliceVar(&opts.Only, "only", nil, "a role or ROLE/STEP to run alone, which ws holds none of in Go")
 	f.StringVar(&opts.Secrets, "secrets", "", "read the secrets from the age-encrypted `FILE`")
 	return c
 }

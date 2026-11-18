@@ -145,10 +145,10 @@ func TestServerStateRefusesNonRootAndOtherArgs(t *testing.T) {
 	}
 }
 
-func TestServerStateRefusesAStepItsRoleLacks(t *testing.T) {
+func TestServerStateRefusesARoleWithNoneLeft(t *testing.T) {
 	p, _ := serverProcess()
 	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "state", "--only", "devtools/no such")
-	if status != 2 || stdout != "" || !strings.Contains(stderr, `no step "no such" in devtools`) {
+	if status != 2 || stdout != "" || !strings.Contains(stderr, `no role "devtools"`) {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
 }
@@ -164,8 +164,8 @@ func TestServerStateHelp(t *testing.T) {
 
 func TestServerStatePrintsJSON(t *testing.T) {
 	p, _ := serverProcess()
-	status, stdout, _ := runWs(p, "", "server", "ubuntu", "state", "--json", "--only", "devtools")
-	if status != 0 || !strings.Contains(stdout, `"role": "devtools"`) {
+	status, stdout, _ := runWs(p, "", "server", "ubuntu", "state", "--json")
+	if status != 0 || !strings.Contains(stdout, `"role": "prepare"`) {
 		t.Errorf("status = %d, stdout = %q", status, stdout)
 	}
 }

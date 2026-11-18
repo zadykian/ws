@@ -69,8 +69,14 @@ var links = map[string]struct{ tool, below string }{
 // and '.' made '-'. A bump of [tools] alone fails here.
 func TestDevtoolsLinksNameThePinnedVersions(t *testing.T) {
 	c, u := readConfig(t), readUnits(t)
-	if len(u.File) != len(links) {
-		t.Errorf("%d file units, want the %d links", len(u.File), len(links))
+	tools := 0
+	for _, f := range u.File {
+		if strings.HasPrefix(f.Link, installs) {
+			tools++
+		}
+	}
+	if tools != len(links) {
+		t.Errorf("%d links into mise's tools, want %d", tools, len(links))
 	}
 	dir := strings.NewReplacer(":", "-", "/", "-", ".", "-")
 	for name, l := range links {

@@ -6,7 +6,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/server/ubuntu/devtools"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -22,9 +21,7 @@ type entry struct {
 }
 
 // all is every role, in the order that they run.
-var all = []entry{
-	{"devtools", devtools.Steps},
-}
+var all = []entry{}
 
 // Roles returns every role, in the order that they run, closed over the machine's values v and
 // secrets s, as the runner holds neither. Each call makes a new slice.
