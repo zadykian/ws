@@ -1,58 +1,28 @@
-// Package ssh sets up the Mac's /etc/ws/ssh_config and the Include that reads it.
+// Package ssh reads /etc/ws/ssh_config's text, a Host for each server through the tunnel, which
+// ssh's units write, and checks it as ssh reads it.
 package ssh
 
 import (
-	"context"
-	"time"
+	"fmt"
 
-	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/internal/keys"
-	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
-// SSH writes /etc/ws/ssh_config, root's, and puts its Include first in ~/.ssh/config. It stops where
-// the Include could not go first. It also stops where the key that ssh offers ws is wrong, and where ssh refuses the new file, alone or as ssh
-// reads it whole.
-type SSH struct {
-	Conf values.Conf
-	// Server is the name of the server that the run acts for.
-	Server string
-	// MacConf is values.yml's path, whose servers/ holds the other servers' files.
-	MacConf string
-	Home    string
-	M       effect.Machine
-	Out     effect.Out
-	Now     func() time.Time
-	// Again is the second run of the step, which cld may have changed ssh's file for.
-	Again bool
-}
-
-// Step returns the step: ssh's parts, made as it plans from what ~/.ssh and the Mac show then.
-func (s SSH) Step() step.Step {
-	lazy := resource.Lazy{Title: "ssh", Parts: s.parts}
-	if !s.Again {
-		return lazy
+// names is the name of each host.
+func names(hosts []sshcfg.Host) []string {
+	out := make([]string, len(hosts))
+	for i, h := range hosts {
+		out[i] = h.Name
 	}
-	lazy.Title, lazy.After = "ssh again", "ssh"
-	return secondRun{lazy}
+	return out
 }
 
-// secondRun is the step's second run, which manages the same files as the first and so reports
-// nothing. It waits on ssh: where ssh is left out with changes, its plan would hold them too. The
-// run's order puts it past cld.
-type secondRun struct{ resource.Lazy }
-
-// Report says nothing: the first run reports the same files.
-func (secondRun) Report(context.Context) ([]step.Item, error) { return nil, nil }
-
-// config returns the text of /etc/ws/ssh_config, a block for each of hosts.
-func (s SSH) config(ctx context.Context, f sshFacts, key keys.NamedKey, hosts []sshcfg.Host) []byte {
-	return []byte(sshcfg.Config(sshcfg.Inputs{
-		Hosts:       hosts,
-		Patterns:    sshcfg.IgnoreUnknown(string(f.UserConfig.Text), "UseKeychain"),
-		IdentityPub: key.Pub, IdentityAgent: key.Agent, CldTabs: s.cldTabs(ctx),
-	}))
+// ownHost stops where a Host of the user's own config names a server. The line is counted in
+// ~/.ssh/config as it stands.
+func ownHost(text string, hosts []sshcfg.Host) error {
+	if own := sshcfg.OwnHosts(text, names(hosts)...); len(own) > 0 {
+		return fmt.Errorf("line %d of ~/.ssh/config, %s, sets its own values for %s: remove it, as "+
+			"/etc/ws/ssh_config holds each server's host", own[0].Line, own[0].Text, own[0].Names)
+	}
+	return nil
 }

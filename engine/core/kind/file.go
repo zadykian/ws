@@ -41,13 +41,14 @@ type filePart struct {
 	Secret bool `toml:"secret"`
 	// Absent removes the file, and takes no content.
 	Absent bool `toml:"absent"`
-	// Line goes at the top of the owner's file, which keeps its other text (fileline.go).
+	// Line goes at the top or the end of the owner's file, which keeps its other text (fileline.go).
 	Line string `toml:"line"`
 	// Has is a command that says whether the file's text, on its standard input, holds Line.
 	Has []string `toml:"has"`
 	// GroupOf gives a file of root's the primary group of this account, which may then read it.
 	GroupOf string `toml:"group_of"`
 	// Ours refuses to replace or remove a file there that lacks ws's mark at its top (fileguard.go).
+	// The mark follows the comment sign that fileByHand's Mark gives.
 	Ours bool `toml:"ours"`
 	// Backup keeps the old file beside the new one, as PATH.PID.TIME~, where the content changes.
 	Backup bool `toml:"backup"`
@@ -55,6 +56,7 @@ type filePart struct {
 	AbsentWhenEmpty bool `toml:"absent_when_empty"`
 	// Link makes the path a link to this target, root's, in place of a file (filelink.go).
 	Link string `toml:"link"`
+	fileByHand
 }
 
 // check refuses a file's fields that no plan could take. dir holds its template or source.
@@ -175,9 +177,7 @@ func (f filePart) resources(ctx context.Context, e Env, dir fs.FS) (built, error
 	if owner.Home == "" && !gone {
 		b.all = parents(e.M, f.Path)
 	}
-	if f.Ours {
-		b.all = append(b.all, ours{m: e.M, path: f.Path})
-	}
+	b.file = f.guarded(e, owner, b.file)
 	b.all = append(b.all, b.file)
 	if strings.HasPrefix(f.Path, "/etc/systemd/system/") {
 		b.all = append(b.all, systemd.DaemonReload{M: e.M, U: e.U, Watch: []resource.Resource{b.file}})

@@ -3,12 +3,19 @@
 package facts
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"path"
+	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/roles/client/macos/ghostty"
+	"github.com/zadykian/ws/roles/client/macos/git"
+	"github.com/zadykian/ws/roles/client/macos/internal/keys"
+	"github.com/zadykian/ws/roles/client/macos/ssh"
 	"github.com/zadykian/ws/roles/client/macos/values"
+	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
 // Mac is the data of the Mac's specs. A spec names a field as {{ .User }}.
@@ -17,6 +24,29 @@ type Mac struct {
 	User, Home string
 	// Servers holds each server of servers/ beside values.yml, by name.
 	Servers []Server
+	// Ghostty is what Ghostty's units need of the Mac.
+	Ghostty Ghostty
+	// SSH and Git are the texts of their files in /etc/ws, which their units write.
+	SSH SSH
+	Git Git
+}
+
+// SSH is /etc/ws/ssh_config's text, checked as ssh reads it.
+type SSH struct {
+	Config string
+}
+
+// Git is git's files in /etc/ws, and the gh that mise installed for the tree, which its unit copies
+// into /usr/local/bin.
+type Git struct {
+	git.Texts
+	// GhFrom is mise's gh, or empty where mise has none: gh's unit alone fails then.
+	GhFrom string
+}
+
+// Ghostty is the config that the line reading /etc/ws/ghostty goes in, which the Mac's files pick.
+type Ghostty struct {
+	Config string
 }
 
 // Server is one server's values, joined with the Mac's own keys.
@@ -25,20 +55,47 @@ type Server struct {
 	values.Conf
 }
 
-// Read reads the facts from the process's environment and the values' files: values.yml from
-// WS_VALUES or /etc/ws, and each server's file beside it. It runs the whole check of the values.
-// So a bad value, a bad name or a clash between two servers fails every unit's read, and mise
-// stops before a change. A Mac with no server yet reads none.
-func Read(m effect.Machine, getenv func(string) string, pwd string) (Mac, error) {
+// Read reads the facts from the process's environment, Ghostty's configs and the values' files:
+// values.yml from WS_VALUES or /etc/ws, and each server's file beside it. It runs the whole check
+// of the values, reads the keys that values.yml names, and checks ssh's text as ssh reads it. A bad
+// value, a bad name, a clash between two servers, a missing key or a config that ssh refuses fails
+// every unit's read. mise then stops before a change. A Mac with no server yet reads none.
+func Read(ctx context.Context, m effect.Machine, getenv func(string) string, pwd string) (Mac, error) {
 	f := Mac{User: getenv("USER"), Home: getenv("HOME")}
 	if f.User == "" || !path.IsAbs(f.Home) {
 		return Mac{}, fmt.Errorf("USER %q and HOME %q name no user: run it from the user's own shell", f.User, f.Home)
 	}
+	f.Ghostty.Config = ghostty.ConfigPath(m, f.Home)
 	mac := values.Path(getenv, pwd)
-	names, err := values.Servers(m, mac)
+	servers, err := Servers(m, mac)
 	if err != nil {
 		return Mac{}, err
 	}
+	f.Servers = servers
+	own, err := values.LoadMac(m, mac)
+	if err != nil {
+		return Mac{}, err
+	}
+	if f.SSH, err = f.readSSH(ctx, m, own); err != nil {
+		return Mac{}, err
+	}
+	signing, err := keys.ReadKey(ctx, m, own, f.Home, keys.SigningKey)
+	if err != nil {
+		return Mac{}, err
+	}
+	f.Git = Git{Texts: git.TextsOf(f.Home, signing), GhFrom: ghFrom(ctx, m)}
+	return f, nil
+}
+
+// Servers reads each server's file beside values.yml at mac, by name, with the Mac's keys joined
+// in. It runs the whole check of the values: a bad value, a bad name or a clash between two servers
+// fails it, naming each server it refuses. A Mac with no server yet has none.
+func Servers(m effect.Machine, mac string) ([]Server, error) {
+	names, err := values.Servers(m, mac)
+	if err != nil {
+		return nil, err
+	}
+	var servers []Server
 	var all []error
 	for _, name := range names {
 		c, err := values.Load(m, mac, values.ServerPath(mac, name))
@@ -46,10 +103,31 @@ func Read(m effect.Machine, getenv func(string) string, pwd string) (Mac, error)
 			all = append(all, values.RefuseSibling(name, err))
 			continue
 		}
-		f.Servers = append(f.Servers, Server{Name: name, Conf: c})
+		servers = append(servers, Server{Name: name, Conf: c})
 	}
-	if err := errors.Join(all...); err != nil {
-		return Mac{}, err
+	return servers, errors.Join(all...)
+}
+
+// readSSH reads the login key and returns ssh's text, a block for each server.
+func (f Mac) readSSH(ctx context.Context, m effect.Machine, own values.Conf) (SSH, error) {
+	login, err := keys.ReadKey(ctx, m, own, f.Home, keys.LoginKey)
+	if err != nil {
+		return SSH{}, err
 	}
-	return f, nil
+	hosts := make([]sshcfg.Host, 0, len(f.Servers))
+	for _, s := range f.Servers {
+		hosts = append(hosts, sshcfg.Host{Name: s.Name, Addr: s.TunnelSlot().Server(), User: s.User})
+	}
+	text, err := ssh.Text(ctx, m, f.Home, login, hosts)
+	return SSH{Config: text}, err
+}
+
+// ghFrom returns the gh that mise installed for the tree, as the user's mise finds it, which is on
+// no shell's PATH. A mise that has none yet gives none.
+func ghFrom(ctx context.Context, m effect.Machine) string {
+	out, err := m.Run(ctx, "mise", "-C", "/opt/ws", "which", "gh")
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
 }

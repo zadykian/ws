@@ -28,7 +28,7 @@ func Status(ctx context.Context, m effect.Machine, get GetFunc, p Paths, now tim
 	}
 	conf, err := m.ReadFile(p.Conf)
 	if err != nil {
-		return "", fmt.Errorf("cannot read %s: run ws client macos apply", p.Conf)
+		return "", fmt.Errorf("cannot read %s: run mise -C /opt/ws bootstrap", p.Conf)
 	}
 	c, err := tunnel.ParseConf(string(conf))
 	if err != nil {

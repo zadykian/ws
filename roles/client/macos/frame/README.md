@@ -32,7 +32,7 @@ link with no guard. ws's units hold both.
 
 - A read needs no password. The Mac's `ws unit` reads root's paths as the user, and a run state's
   check runs as the user too. A file of root's is readable by all, or its spec fails to load.
-- ws asks sudo for a change alone, as `ws client macos apply` does. A run that changes nothing
+- ws asks sudo for a change alone. A run that changes nothing
   asks no password. A change needs a terminal, or a sudo that asks none, as CI's runner has.
 
 ## A role's layout

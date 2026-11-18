@@ -1,0 +1,11 @@
+# git's lines for the Mac: gh, which git's credential command runs, then the role's units. gh is
+# the tree's tool alone, on no shell's PATH, so state/gh copies it into /usr/local/bin.
+[tools]
+gh = "2.104.0"
+
+[bootstrap.packages]
+"ws:file/git-config" = "in-sync"
+"ws:file/git-include" = "in-sync"
+"ws:file/git-keygen" = "in-sync"
+"ws:file/git-signers" = "in-sync"
+"ws:state/gh" = "in-sync"

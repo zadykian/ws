@@ -1,26 +1,34 @@
 #!/bin/bash
 # With nothing at WS_LAN_ADDRESS, the remote tier.
-# WS_LAN_ADDRESS becomes 127.0.0.2, inside WS_LAN as ws client macos apply requires, where nothing
-# answers. macOS's lo0 has 127.0.0.1 alone, and a handshake on the LAN tier fails the step. The
-# daemon takes the new tunnel.conf on SIGHUP, in place: it keeps its pid and logs a reload. A daemon
-# that died of the SIGHUP, and that launchd started again, would log a start.
+# WS_LAN_ADDRESS becomes 127.0.0.2, inside WS_LAN as values.yml's check requires, where nothing
+# answers. macOS's lo0 has 127.0.0.1 alone, and a handshake on the LAN tier fails the step. mise
+# bootstrap writes the new tunnel.conf, and launchd's unit sends the daemon a SIGHUP, which it takes
+# in place: it keeps its pid and logs a reload. A daemon that died of the SIGHUP, and that launchd
+# started again, would log a start.
 
 set -eo pipefail
 # shellcheck source=.github/mac-conf.sh
 . .github/mac-conf.sh
+# shellcheck source=.github/mac-mise.sh
+. .github/mac-mise.sh
 
 pid() { sudo launchctl print "system/$LABEL" | awk '$1 == "pid" { print $3; exit }'; }
 was=$(pid) || true
 lines=$(sudo awk 'END { print NR }' /var/log/ws-tunnel.ws.log)
 conf_set /etc/ws/values.yml 'WS_LAN_ADDRESS: 127.0.0.2'
-ws client macos apply 2>&1 | tee "$RUNNER_TEMP/hup.out" ||
+mac_serve
+trap 'kill "$mac_server"' EXIT
+mac_bootstrap || {
+    echo '::error::mise bootstrap with a new WS_LAN_ADDRESS failed'
+    exit 1
+}
+mac_bootstrap plan --detailed-exitcode || {
+    echo "::error::the plan after the bootstrap with a new WS_LAN_ADDRESS exited $?, not 0"
+    exit 1
+}
+grep -qx 'WS_LAN_ADDRESS=127.0.0.2' /etc/ws/tunnel/ws/tunnel.conf ||
     {
-        echo '::error::ws client macos apply with a new WS_LAN_ADDRESS failed'
-        exit 1
-    }
-grep -q "ran launchctl kill SIGHUP system/$LABEL" "$RUNNER_TEMP/hup.out" ||
-    {
-        echo '::error::ws client macos apply sent the daemon no SIGHUP for a new tunnel.conf'
+        echo '::error::mise bootstrap wrote no new tunnel.conf'
         exit 1
     }
 remote() {

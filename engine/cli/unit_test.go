@@ -1,6 +1,7 @@
 package cli_test
 
 import (
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -42,10 +43,12 @@ func unitEnv(t *testing.T, specs map[string]string) (cli.Env, *effecttest.Machin
 // stderr.
 func runUnit(e cli.Env, args ...string) (status int, stdout, stderr string) {
 	side := cli.UnitSide{
-		Dir:    "/nowhere",
-		Values: func(m effect.Machine) (any, effect.Machine, error) { return unitValues{User: "u"}, m, nil },
-		Units:  &effecttest.Units{},
-		Root:   true,
+		Dir: "/nowhere",
+		Values: func(_ context.Context, m effect.Machine) (any, effect.Machine, error) {
+			return unitValues{User: "u"}, m, nil
+		},
+		Units: &effecttest.Units{},
+		Root:  true,
 	}
 	return clitest.Run(e, []*cobra.Command{cli.Unit(e, side)}, "", append([]string{"unit"}, args...)...)
 }

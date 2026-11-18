@@ -27,9 +27,11 @@ func (f filePart) checkLine() error {
 	return nil
 }
 
-// lines is the file with the line at its top. A missing file is made with the line alone, at mode.
-// The old file is kept as PATH.TIME~ before the line goes in. The owner may make a link, so a link
-// at the file or on the way is refused.
+// lines is the file with the line at its top, or at its end with line_at. A missing file is made
+// with the line alone, at mode. The old file is kept as PATH.TIME~ before the line goes in. The
+// owner may make a link, so a link at the file or on the way is refused. On the Mac, where ws reads
+// as the user, a link at the file whose target holds the line is in sync, as a dotfiles manager
+// links one.
 func (f filePart) lines(e Env, owner account.Account, rel string) file.HomeLines {
 	text := f.Line
 	if !strings.HasSuffix(text, "\n") {
@@ -39,8 +41,9 @@ func (f filePart) lines(e Env, owner account.Account, rel string) file.HomeLines
 	if mode == 0 {
 		mode = 0o644
 	}
-	l := owner.Lines(e.M, rel, file.UserLines{Lines: text, Shown: shown(text), Top: true, Mode: mode, Has: f.holds()})
+	l := owner.Lines(e.M, rel, file.UserLines{Lines: text, Shown: shown(text), Top: f.LineAt != "end", Mode: mode, Has: f.holds()})
 	l.Check = f.checker(e)
+	l.Follow = e.System == MacOS
 	return l
 }
 

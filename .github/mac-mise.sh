@@ -29,10 +29,22 @@ mac_mise() {
 
 # mac_tree puts this commit's tree in /opt/ws, root's and writable by root alone, as a plugin linked
 # by its path loads as its owner's. ws's build goes beside it, as the pinned version, and
-# serve-releases serves it on port 8765. mac_server is its pid, which the caller stops.
+# mac_serve serves it.
 mac_tree() {
-    rm -f "$mac_rel/port"
     sh .tools/serve-build . "$mac_rel" darwin arm64
+    mac_serve
+    sudo rm -rf /opt/ws
+    sudo mkdir -p /opt/ws
+    git archive HEAD | sudo tar -x -C /opt/ws
+    sudo cp mise.local.toml mise.local.lock /opt/ws/
+    sudo chown -R root:wheel /opt/ws
+    sudo chmod -R go-w /opt/ws
+}
+
+# mac_serve serves mac_tree's build on port 8765, by serve-releases, for a later case's bootstrap
+# too. mac_server is its pid, which the caller stops.
+mac_serve() {
+    rm -f "$mac_rel/port"
     "$mac_rel/serve-releases" "$mac_rel" 8765 "$mac_rel/port" &
     # shellcheck disable=SC2034 # the case that sources this file stops it
     mac_server=$!
@@ -44,12 +56,6 @@ mac_tree() {
         echo '::error::serve-releases did not start'
         return 1
     fi
-    sudo rm -rf /opt/ws
-    sudo mkdir -p /opt/ws
-    git archive HEAD | sudo tar -x -C /opt/ws
-    sudo cp mise.local.toml mise.local.lock /opt/ws/
-    sudo chown -R root:wheel /opt/ws
-    sudo chmod -R go-w /opt/ws
 }
 
 # mac_build prints the path of ws's build that mac_tree serves.
@@ -57,10 +63,15 @@ mac_build() {
     echo "$mac_rel"/download/v*/ws-darwin-arm64
 }
 
-# mac_bootstrap ARG... runs mise -C /opt/ws bootstrap ARG... as the user, locked, with no terminal,
-# as the runbook runs it. A sudo first on PATH writes a line for each call to
-# $mac_trace/calls, which mac_mark empties and mac_calls counts.
+# mac_bootstrap ARG... runs mise -C /opt/ws bootstrap ARG..., as mac_tree_mise does.
 mac_bootstrap() {
+    mac_tree_mise bootstrap "$@"
+}
+
+# mac_tree_mise ARG... runs mise -C /opt/ws ARG... as the user, locked, with no terminal, as the
+# runbook runs it. A sudo first on PATH writes a line for each call to $mac_trace/calls, which
+# mac_mark empties and mac_calls counts.
+mac_tree_mise() {
     if [ ! -x "$mac_trace/sudo" ]; then
         mkdir -p "$mac_trace"
         printf '#!/bin/sh\nprintf "sudo %%s\\n" "$*" | cut -c1-160 >>"%s/calls"\nexec /usr/bin/sudo "$@"\n' \
@@ -70,7 +81,7 @@ mac_bootstrap() {
     (
         cd / &&
             MISE_LOCKED=1 MISE_TRUSTED_CONFIG_PATHS=/opt/ws PATH="$mac_trace:$PATH" \
-                mise -C /opt/ws bootstrap "$@" </dev/null
+                mise -C /opt/ws "$@" </dev/null
     )
 }
 

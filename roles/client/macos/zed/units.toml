@@ -1,0 +1,34 @@
+# ws's settings and keymap for Zed, the user's, replaced whole. A file there without ws's mark, a
+# JSON comment, is the user's own, left with a warning until the user removes it.
+[file.zed-global]
+path = "{{ .Home }}/.config/zed/global_settings.json"
+owner = "{{ .User }}"
+source = "files/global_settings.json"
+ours = true
+mark = "//"
+keep_foreign = true
+
+[file.zed-keymap]
+path = "{{ .Home }}/.config/zed/keymap.json"
+owner = "{{ .User }}"
+source = "files/keymap.json"
+ours = true
+mark = "//"
+keep_foreign = true
+
+# Zed's own settings.json, which its UI writes and merges over global_settings.json. It holds a
+# connection to each server, as Zed records an opened project by its index in that list. ws writes
+# it where nothing is there, and never reads it after.
+[file.zed-settings]
+path = "{{ .Home }}/.config/zed/settings.json"
+owner = "{{ .User }}"
+template = "files/settings.json.tmpl"
+seed = true
+
+# Zed's cask links its CLI into /opt/homebrew/bin, which no shell's PATH holds where Homebrew is
+# not set up. A login shell's /etc/zprofile runs /usr/libexec/path_helper, which adds each line of
+# /etc/paths.d to PATH, so that zed ssh://ws/PATH runs. The file takes no mark, as each line names
+# a directory.
+[file.zed-path]
+path = "/etc/paths.d/ws"
+source = "files/paths"

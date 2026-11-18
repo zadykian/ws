@@ -20,17 +20,19 @@ permissions: {}
 
 jobs:
   # The Mac's side on macOS, in roles/client/macos/README.md's order. mise bootstrap with the Mac's
-  # frame runs beside ws client macos apply, as the runbook runs it (28-bootstrap). Its second run
-  # and its plan must change nothing and call no sudo. ws client macos apply without
-  # ws's key makes the Mac's key and installs no daemon. With a stand-in ws's key it installs the
-  # daemon. Then a second run and --check must print nothing. ssh -G must give ws the tunnel's end.
+  # frame runs as the runbook runs it (28-bootstrap): it sets up ssh, git, cld and the tunnel. Its
+  # second run and its plan must change nothing and call no sudo. The keys of ssh and git follow
+  # values.yml at each bootstrap (56-keys). Without ws's key it makes the Mac's key and installs
+  # no daemon. With a stand-in ws's key it installs the daemon, which runs /usr/local/bin/ws. Then
+  # a second run must call no sudo. ssh -G must give ws the tunnel's end.
   # A stand-in ws is a second wireguard-go on the runner, with the Mac's key as its peer. It answers
   # the tunnel's handshakes on loopback, as the LAN (127.0.0.0/8) and as WS_REMOTE (localhost). The
   # daemon's status must show each in turn.
   # Last, ws client macos tunnel routes --server ws and ws client macos resolver, then the keys'.
-  # Then a second server's cases, 90-clash, 92-second and 94-remove (mac-servers.md). A stand-in
-  # that makes no utun fails the job, as the daemon's device makes one. Gated as ci.yml's playbook
-  # job.
+  # Then a second server's cases, 90-clash, 92-second and 94-remove (mac-servers.md). Last, one
+  # more bootstrap must call no sudo, and its plan and mise dot status --missing exit 0
+  # (96-converged). A stand-in that makes no utun fails the job, as the daemon's device makes one.
+  # Gated as ci.yml's playbook job.
   mac:
     if: >-
       (github.event.action != 'opened' || !github.event.pull_request.draft) &&
@@ -39,8 +41,8 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
-    # bash with pipefail, rather than the default bash -e, so that a failing ws client macos apply
-    # fails its step through a tee too. The cases set the same options.
+    # bash with pipefail, rather than the default bash -e, so that a failing command fails its step
+    # through a tee too. The cases set the same options.
     defaults:
       run:
         shell: bash
@@ -49,22 +51,16 @@ jobs:
       HOMEBREW_NO_INSTALL_CLEANUP: "1"
       HOMEBREW_NO_ENV_HINTS: "1"
       LABEL: com.github.zadykian.ws-tunnel.ws
-      TUNNEL: /usr/local/libexec/ws-tunnel/ws
+      TUNNEL: /usr/local/bin/ws
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # ws, built into ~/.local/bin by .tools/build, which the cases run as ws client macos apply.
+      # ws, built into ~/.local/bin by .tools/build, which the cases run as ws client macos.
       - name: Build ws
         run: |
           sh .tools/build darwin arm64 ~/.local/bin/ws
           echo ~/.local/bin >>"$GITHUB_PATH"
-      # The cases' git step lists and adds signing keys through gh: this one is logged in, and a
-      # second run adds no key.
-      - name: A stand-in gh, logged in
-        run: |
-          sh .github/mac-gh.sh "$RUNNER_TEMP/gh"
-          echo "$RUNNER_TEMP/gh/bin" >>"$GITHUB_PATH"
       # The cases, in .github/mac, run in order from the clone: a new step adds a case there and
       # nothing here.
       - name: The cases

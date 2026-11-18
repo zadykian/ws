@@ -19,10 +19,14 @@ user_service = "z.service"  # a unit of the owner's own systemd, restarted where
 secret = false              # keep the content out of the diff and out of a refusal's error
 absent = false              # remove the file; takes a path, an owner and ours alone
 line = ". /etc/x"           # or a line at the top of the owner's file, which keeps its own text
+line_at = "top"             # or "end", where the line goes
 has = ["cmd"]               # says whether the file, on stdin, holds the line: 0 yes, 1 no
 group_of = "USER"           # a file of root's takes this account's primary group
 backup = false              # keep the old file beside the new one, as PATH.PID.TIME~
 ours = false                # refuse a file there without ws's '# Written by' line at its top
+mark = "#"                  # the comment sign before ws's mark, for ours: "//" for JSON
+keep_foreign = false        # with ours, leave a file without the mark, and warn
+seed = false                # write the file where nothing is there, and never read it after
 absent_when_empty = false   # remove the file where its template gives white space alone
 link = "/abs/target"        # or a link to the target, root's, in place of a file
 after = "KIND/NAME"
@@ -46,18 +50,27 @@ after = "KIND/NAME"
   way is refused there too. An account's file names root where `WS_USER` is root.
 - Without booted systemd the restarts are skipped, and each says so.
 - A `line` goes at the top of its owner's file below the home, root's too, with a blank line
-  after it. A missing file is made with the line alone, at `mode`. The old file is kept as
-  `PATH.TIME~` first, and a link at the file or on the way is refused. A `check` runs on the new
+  after it. With `line_at = "end"` it goes last, after a newline that the file lacks, for a format
+  whose last setting wins or that reads an include where it sits. A missing file is made with the
+  line alone, at `mode`. The old file is kept as `PATH.TIME~` first, and a link at the file or on
+  the way is refused. On macOS ws reads as the user, so a link at the file whose target holds the
+  line is in sync. A link whose target lacks the line is refused. A `check` runs on the new
   text before that copy, so a refusal leaves the file unchanged.
 - Without `has`, a line of the file that equals the line, spaces aside, holds it. A line of more
   than one line needs `has`. Any exit of `has` but 0 and 1 fails the plan with its stderr.
-- A `line` takes `owner`, `mode`, `check`, `has`, `after` and `when` alone.
+- A `line` takes `owner`, `mode`, `line_at`, `check`, `has`, `after` and `when` alone.
 - A `link` takes `after` and `when` alone, beside its path. Root owns it, and its missing parents
   are made as a file's. A link to another target is pointed again, and a file or a link in its
   place is replaced, but a directory there fails the run.
-- `group_of` and `ours` take a file of root's. With `ours`, a file there whose first line lacks
+- `group_of` takes a file of root's. With `ours`, a file there whose first line lacks
   `# Written by github.com/zadykian/ws` fails the plan, a dry run's too, before a write or a
-  removal. A file by hand is never lost, and the error names its path alone.
+  removal. A file by hand is never lost, and the error names its path alone. `mark` sets the sign
+  before those words. An account's file is read below its home through no link.
+- With `keep_foreign`, such a file is left, as the user's own, and the plan warns and changes
+  nothing. Once the user removes it, the next run writes ws's.
+- A `seed` file is written where nothing is at its path, a link included, and left to its owner
+  after, as a tool writes it from its UI. It takes no `line`, `absent`, `absent_when_empty`,
+  `backup`, `ours` or `check`.
 - A `secret` file's template alone may call `secrets`, the side's secrets, as `(secrets).Env`.
   On a machine with no secrets file, as in CI, the unit leaves the file and says so. `exports MAP`
   gives a line `export NAME=VALUE` a name, sorted, each value quoted for the shell. A name that the

@@ -1,61 +1,87 @@
 package cld_test
 
 import (
-	"context"
 	"errors"
 	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/roles/client/macos/cld"
 )
 
 const (
 	cldLatest = "curl -fsSIL --retry 3 -o /dev/null -w %{url_effective} " +
 		"https://github.com/zadykian/cld/releases/latest"
-	cldBin  = "/h/.local/bin/cld"
-	cldLine = "would add the lines that start cld's watcher to /etc/ws/ssh_config, where that cld has restore tabs"
-	cldNo   = "no"
+	cldBin = "/h/.local/bin/cld"
+	cldNo  = "no"
 )
 
-func cldStep(check bool) (resource.Lazy, *effecttest.Machine, *effecttest.Out) {
+// cldOf is cld 0.13.0 in /h's ~/.local/bin, with cld update.
+func cldOf() (*cld.Cld, *effecttest.Machine, *effecttest.Out) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	m.Modes[cldBin] = 0o755
 	m.Files[cldBin] = nil
 	m.Results[cldBin+" --version"] = effecttest.Result{Out: []byte("cld 0.13.0\n")}
 	m.Results[cldBin+" help update"] = effecttest.Result{}
-	m.Results[cldBin+" help restore tabs"] = effecttest.Result{Err: errors.New(cldNo)}
-	m.Results["brew list --cask ghostty"] = effecttest.Result{Err: errors.New(cldNo)}
-	return (&cld.Cld{Home: "/h", M: m, Out: out, Check: check}).Step(), m, out
+	return &cld.Cld{Home: "/h", M: m, Out: out}, m, out
 }
 
-func cldChanges(t *testing.T, s resource.Lazy) []string {
-	p, err := s.Plan(context.Background())
+// cldChanges returns the headlines of c's plan.
+func cldChanges(t *testing.T, c *cld.Cld) []string {
+	cs, err := c.Plan(t.Context())
 	if err != nil {
 		t.Fatal(err)
 	}
 	var got []string
-	for _, c := range p.Changes {
-		got = append(got, c.String())
+	for _, ch := range cs {
+		got = append(got, ch.String())
 	}
 	return got
 }
 
 func TestCldMissingIsInstalled(t *testing.T) {
-	s, m, _ := cldStep(true)
+	c, m, _ := cldOf()
 	delete(m.Files, cldBin)
-	got := strings.Join(cldChanges(t, s), "\n")
-	want := "would install cld into ~/.local/bin with the install.sh of its latest release\n" + cldLine
-	if got != want {
+	want := "would install cld into ~/.local/bin with the install.sh of its latest release"
+	if got := cldChanges(t, c); len(got) != 1 || got[0] != want {
 		t.Errorf("Plan = %q; want %q", got, want)
 	}
 }
 
-func TestCldRunInstallsWithoutTheNote(t *testing.T) {
-	s, m, _ := cldStep(false)
-	delete(m.Files, cldBin)
-	if got := cldChanges(t, s); len(got) != 1 {
-		t.Errorf("Plan = %q; want the install alone", got)
+func TestCldBehindTheLatestIsUpdated(t *testing.T) {
+	c, m, _ := cldOf()
+	m.Results[cldLatest] = effecttest.Result{Out: []byte("https://github.com/zadykian/cld/releases/tag/v0.14.0")}
+	want := "would run cld update: cld 0.13.0, the latest 0.14.0"
+	if got := cldChanges(t, c); len(got) != 1 || got[0] != want {
+		t.Errorf("Plan = %q; want %q", got, want)
+	}
+}
+
+func TestCldAtTheLatestPlansNothing(t *testing.T) {
+	c, m, _ := cldOf()
+	m.Results[cldLatest] = effecttest.Result{Out: []byte("https://github.com/zadykian/cld/releases/tag/v0.13.0")}
+	if got := cldChanges(t, c); len(got) != 0 {
+		t.Errorf("Plan = %q; want none", got)
+	}
+}
+
+func TestCldWarnsWhereItsVersionFailsOrIsNoRelease(t *testing.T) {
+	for out, warns := range map[string]int{"": 1, "cld dev\n": 0} {
+		c, m, o := cldOf()
+		m.Results[cldBin+" --version"] = effecttest.Result{Out: []byte(out)}
+		if out == "" {
+			m.Results[cldBin+" --version"] = effecttest.Result{Err: errors.New(cldNo)}
+		}
+		if got := cldChanges(t, c); len(got) != 0 || len(o.Lines) != warns {
+			t.Errorf("version %q: Plan = %q, out %q; want none and %d warnings", out, got, o.Lines, warns)
+		}
+	}
+}
+
+func TestCldWithoutUpdateIsReplacedByTheInstall(t *testing.T) {
+	c, m, _ := cldOf()
+	m.Results[cldBin+" help update"] = effecttest.Result{Err: errors.New(cldNo)}
+	if got := cldChanges(t, c); len(got) != 1 || !strings.HasPrefix(got[0], "would install cld") {
+		t.Errorf("Plan = %q; want the install", got)
 	}
 }

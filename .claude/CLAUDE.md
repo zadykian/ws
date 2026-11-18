@@ -30,14 +30,15 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   links its directory ([The frame](../roles/server/ubuntu/frame/README.md)). The roles' tools
   lock in `mise/mise.server.lock`. `mise.mac.toml` is the Mac's part, and
   `roles/client/macos/frame` and `facts` its frame and its units' values
-  ([The Mac's frame](../roles/client/macos/frame/README.md)).
+  ([The Mac's frame](../roles/client/macos/frame/README.md)). `mise/mise.mac.lock` locks the Mac's
+  tools, gh among them, by their SHA-256.
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
 - `install.sh`: installs mise and runs `mise bootstrap` on a release's tree
   ([Releases](../engine/core/update/README.md)).
-- `roles/client/macos/`: the Mac's side ([The Mac](../roles/client/macos/README.md)). Its roles embed
-  `ghostty/files/ws.ghostty`, Ghostty's settings, `zed/files/`, Zed's settings and keymap, and
-  `zsh/files/zshrc`, the zsh hook that turns off the modes that a drop leaves on.
+- `roles/client/macos/`: the Mac's side ([The Mac](../roles/client/macos/README.md)). Its roles'
+  units write `ghostty/files/ws.ghostty`, Ghostty's settings, `zed/files/`, Zed's settings and
+  keymap, and `zsh/files/zshrc`, the zsh hook that turns off the modes that a drop leaves on.
 - The pages sit beside their code, as the `README.md` of a role or a package. A second page stands
   beside one where the cap keeps two apart: `zed/projects.md`, `cable/router.md`,
   `.github/workflows/rootless.md`, `mac-cld.md`,
@@ -84,8 +85,9 @@ bootstrap and `ws server ubuntu apply` twice each in an Ubuntu 26.04 container, 
 It checks the config that Fresh reads too. `signoz` forges SigNoz's compose files again, and
 `install` tries `install.sh` and `ws update`. `rootless` runs the
 rootless daemon and the firewall on a booted runner ([The rootless job](../.github/workflows/rootless.md)). `mac` sets up a
-Mac on GitHub's macOS runner. `mac-cld` sets up
-Ghostty and cld on another ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `ws
+Mac on GitHub's macOS runner by `mise bootstrap`, whose last run must call no sudo and whose plan
+must exit 0. `mac-cld` sets up
+Ghostty, Zed and cld by the bootstrap on another ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `ws
 server ubuntu apply` sets up the machine that runs it, as below.
 
 The hooks check a commit for the local list's words. This checks any other text, such as a pull
@@ -138,8 +140,11 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([runbook.md](../roles/client/macos/runbook.md)). So is mise's binary, whose SHA-256 for each
   target `install.sh` holds ([install.sh](../install.sh)), and the Mac's runbook its macos-arm64's
   ([runbook.md](../roles/client/macos/runbook.md)). So is
-  yamllint ([lint-requirements.in](../.github/lint-requirements.in)), and Homebrew's `.pkg`, with its signer
-  ([runbook.md](../roles/client/macos/runbook.md)). Go is checked against the
+  yamllint ([lint-requirements.in](../.github/lint-requirements.in)), the Mac's gh, by
+  `mise/mise.mac.lock` ([git](../roles/client/macos/git/README.md#gh)), and Secretive's
+  `Secretive.zip`, with its notarization ([runbook.md](../roles/client/macos/runbook.md)). The
+  Mac's casks, Ghostty, Zed and their font, take their latest by mise's `brew-cask`, outside the rule
+  ([ghostty](../roles/client/macos/ghostty/README.md#ghostty)). Go is checked against the
   SHA-256 its publisher lists, and the postgres-language-server and docker-language-server against
   theirs. mise's lock holds each for its platform ([mise.server.lock](../mise/mise.server.lock)).
   gopls and Delve are built through Go's checksum database, as mise's `go:` tools

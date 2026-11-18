@@ -1,7 +1,7 @@
 #!/bin/sh
 # The mac job's checks of ws client macos tunnel loaded, of its routes and of ws client macos
 # resolver. They replaced the functions of a script that another repository sourced. The job
-# runs it from the repository's root, with ws's path in TUNNEL, once ws client macos apply has
+# runs it from the repository's root, with ws's path in TUNNEL, once mise bootstrap has
 # loaded the daemon (.github/workflows/mac.yml). A network that ws client macos tunnel
 # routes adds must reach the daemon's utun; a domain that ws client macos resolver adds, scutil
 # --dns.

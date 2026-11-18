@@ -30,7 +30,7 @@ type UnitSide struct {
 	Dir string
 	// Values loads the side's values. It returns them with the machine that the units run on,
 	// which the values may confine.
-	Values func(m effect.Machine) (data any, confined effect.Machine, err error)
+	Values func(ctx context.Context, m effect.Machine) (data any, confined effect.Machine, err error)
 	// Units is the service manager's units.
 	Units effect.Units
 	// Root refuses read and write to any user but root, as the side's units write root's paths.
@@ -96,7 +96,7 @@ func unitList(p Env, s UnitSide) *cobra.Command {
 func loadUnits(c *cobra.Command, p Env, s UnitSide) (unitRun, error) {
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
 	r := unitRun{term: term, out: engine.Lines{Out: term, Prog: c.CommandPath(), Seen: map[string]bool{}}}
-	data, m, err := s.Values(p.Machine)
+	data, m, err := s.Values(c.Context(), p.Machine)
 	if err != nil {
 		return r, err
 	}

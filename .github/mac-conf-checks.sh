@@ -1,12 +1,14 @@
 #!/bin/sh
-# The mac job's checks of the server's WS_TUNNEL_NETWORKS and WS_RESOLVERS, which ws client macos
-# apply writes. The job runs it from the repository's root after mac-ws-checks.sh. The tunnel's
-# daemon is loaded, and WS_PUBLIC_KEY is in the server's file (.github/workflows/mac.yml). It takes
-# ws's path from the job's TUNNEL, and stops without it. The keys' network must go into the daemon's
-# utun, and their domain show in scutil --dns. A second run and --check must print nothing. Emptied
-# or removed, the keys must take both back, and spare a script's own files. Each failure prints an
-# ::error:: line, and any fails the script at its end. Last, it runs mac-setup-checks.sh, whose
-# cases run ws setup's own steps. The conf's rules are go test's (roles/client/macos/values).
+# The mac job's checks of the server's WS_TUNNEL_NETWORKS and WS_RESOLVERS, which mise bootstrap
+# writes through ws client macos networks. The job runs it from the repository's root after
+# mac-ws-checks.sh, with the build served (80-conf-keys.sh). The tunnel's daemon is loaded, and
+# WS_PUBLIC_KEY is in the server's file (.github/workflows/mac.yml). It takes ws's path from the
+# job's TUNNEL, and stops without it. ws client macos networks --check must name both files and
+# write none. The keys' network must go into the daemon's utun, and their domain show in scutil
+# --dns. A second bootstrap's plan must exit 0. Emptied or removed, the keys must take both back,
+# and spare a script's own files. Each failure prints an ::error:: line, and any fails the script
+# at its end. Last, it runs mac-setup-checks.sh, whose cases run the cable's command. The conf's
+# rules are go test's (roles/client/macos/values).
 #
 # shellcheck source-path=SCRIPTDIR/..
 
@@ -21,8 +23,6 @@ conf=/etc/ws/values.yml
 fail=0
 # shellcheck source=.github/mac-conf.sh
 . .github/mac-conf.sh
-# shellcheck source=.github/mac-quiet.sh
-. .github/mac-quiet.sh
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
 error() {
@@ -51,9 +51,16 @@ keys() {
     conf_set "$conf" WS_TUNNEL_NETWORKS WS_RESOLVERS "$@"
 }
 
-# setup [ARG] runs ws client macos apply, and sets out to what it printed.
+# setup runs mise bootstrap, as mac-mise.sh's mac_bootstrap runs it, and sets out to what it
+# printed.
 setup() {
-    out=$(ws client macos apply "$@" 2>&1)
+    out=$(bash -c '. .github/mac-mise.sh && mac_bootstrap' 2>&1)
+}
+
+# check runs ws client macos networks --check, as the networks' unit checks, and sets out to what it
+# printed.
+check() {
+    out=$(ws client macos networks --check 2>&1)
 }
 
 # routed ADDRESS succeeds where macOS routes ADDRESS into the daemon's utun.
@@ -78,47 +85,44 @@ must "$TUNNEL" client macos tunnel routes --server ws own 198.51.100.0/24
 must "$TUNNEL" client macos resolver own.test 198.51.100.53
 
 keys 'WS_TUNNEL_NETWORKS: 203.0.113.0/24' 'WS_RESOLVERS: conf.test=203.0.113.53,203.0.113.54'
-if ! setup --check; then
-    error "ws client macos apply --check with the keys failed: $out"
+if check; then
+    error "ws client macos networks --check with the keys found nothing to do: $out"
 else
-    case $out in *'+203.0.113.0/24'*) ;; *) error "--check showed no network: $out" ;; esac
+    case $out in *"$tunnel_dir/ws/routes.d/values"*) ;; *) error "--check named no routes.d/values: $out" ;; esac
     case $out in
-    *'+nameserver 203.0.113.54'*) ;;
-    *) error "--check showed no resolver: $out" ;;
+    *"$ws_resolvers/conf.test"*) ;;
+    *) error "--check named no resolver: $out" ;;
     esac
 fi
 ! sudo test -e "$tunnel_dir/ws/routes.d/values" || error '--check wrote routes.d/values'
 ! test -e "$ws_resolvers/conf.test" || error "--check wrote $ws_resolvers/conf.test"
 
-setup || error "ws client macos apply with the keys failed: $out"
+setup || error "mise bootstrap with the keys failed: $out"
 printf '%s\n' "$out"
 until_ok 20 routed 203.0.113.1 || error "203.0.113.1 is not routed into the daemon's $utun"
 until_ok 20 shown conf.test 203.0.113.53 || error 'scutil --dns shows no resolver for conf.test'
 case $(head -n 1 "$ws_resolvers/conf.test") in
-"# Written by github.com/zadykian/ws: ws client macos apply"*) ;;
-*) error "$ws_resolvers/conf.test does not start with ws client macos apply's header" ;;
+"# Written by github.com/zadykian/ws: ws client macos networks"*) ;;
+*) error "$ws_resolvers/conf.test does not start with ws client macos networks's header" ;;
 esac
-for args in '' --check; do
-    if ! setup ${args:+"$args"}; then
-        error "a second ws client macos apply${args:+ $args} failed: $out"
-    elif [ -n "$(unlisted "$out")" ]; then
-        error "a second ws client macos apply${args:+ $args} printed what it should not: $out"
-    fi
-done
+check || error "ws client macos networks --check after the bootstrap failed: $out"
+[ -z "$out" ] || error "ws client macos networks --check after the bootstrap printed: $out"
+out=$(bash -c '. .github/mac-mise.sh && mac_bootstrap plan --detailed-exitcode' 2>&1) ||
+    error "the plan after the bootstrap with the keys failed: $out"
 
 keys 'WS_RESOLVERS: conf.test=203.0.113.53,203.0.113.54,203.0.113.55,203.0.113.56'
-if setup --check; then
-    error 'ws client macos apply took 4 nameservers for a domain'
+if check; then
+    error 'ws client macos networks --check took 4 nameservers for a domain'
 else
     case $out in
     *'WS_RESOLVERS=conf.test='*'up to 3 IPv4 addresses'*) ;;
-    *) error "ws client macos apply refused 4 nameservers with another error: $out" ;;
+    *) error "ws client macos networks --check refused 4 nameservers with another error: $out" ;;
     esac
 fi
 
 # WS_TUNNEL_NETWORKS emptied, and WS_RESOLVERS removed.
 keys 'WS_TUNNEL_NETWORKS: ""'
-setup || error "ws client macos apply with the keys emptied failed: $out"
+setup || error "mise bootstrap with the keys emptied failed: $out"
 printf '%s\n' "$out"
 until_ok 20 eval '! routed 203.0.113.1' || error "203.0.113.1 is still routed into $utun"
 until_ok 20 eval '! shown conf.test 203.0.113.53' || error 'scutil --dns still shows conf.test'

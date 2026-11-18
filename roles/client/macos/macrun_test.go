@@ -76,38 +76,12 @@ func reached(t *testing.T, o Options) []string {
 	return got
 }
 
-func TestMacRunEndsAnApplyWithSSHAgain(t *testing.T) {
-	if got, want := reached(t, Options{}), append(Names(), "ssh again"); !slices.Equal(got, want) {
-		t.Errorf("an apply ran %q; want %q", got, want)
+func TestMacRunRunsEachStepOnce(t *testing.T) {
+	if got := reached(t, Options{}); !slices.Equal(got, Names()) {
+		t.Errorf("an apply ran %q; want %q", got, Names())
 	}
 	if got := reached(t, Options{Options: step.Options{Check: true}}); !slices.Equal(got, Names()) {
 		t.Errorf("a check ran %q; want %q", got, Names())
-	}
-}
-
-func TestMacRunTakesOnlyTheStepsNamed(t *testing.T) {
-	if got := reached(t, Options{Only: []string{"zed"}}); !slices.Equal(got, []string{"zed"}) {
-		t.Errorf("ran %q; want zed alone, with no ssh again", got)
-	}
-	if got := reached(t, Options{Only: []string{"zed", "git"}}); !slices.Equal(got, []string{"git", "zed"}) {
-		t.Errorf("ran %q; want git and zed, in the order of the steps", got)
-	}
-}
-
-func TestMacRowsOfACheckHoldNoSSHAgain(t *testing.T) {
-	names := func(steps []step.Step) []string {
-		var got []string
-		for _, s := range steps {
-			got = append(got, s.Name())
-		}
-		return got
-	}
-	if got := names(Mac{}.Rows(Options{Options: step.Options{Check: true}})); !slices.Equal(got, Names()) {
-		t.Errorf("a check's rows = %q; want %q", got, Names())
-	}
-	got := names(Mac{}.Rows(Options{}))
-	if want := append(Names(), "ssh again"); !slices.Equal(got, want) {
-		t.Errorf("an apply's rows = %q; want %q", got, want)
 	}
 }
 
@@ -130,36 +104,6 @@ func (p *pending) Apply(context.Context, step.Plan) error { p.made = true; retur
 type pendingChange string
 
 func (c pendingChange) String() string { return string(c) }
-
-func TestRunAsksLeftOutOnlyOfAStepWithARow(t *testing.T) {
-	keepSSH := func(_, name string) bool { return name != "ssh" }
-	ssh, again := &pending{name: "ssh"}, &pending{name: "ssh again", waits: "ssh"}
-	if _, err := run(t.Context(), []step.Step{ssh, again}, step.Options{LeftOut: keepSSH}); err != nil {
-		t.Fatal(err)
-	}
-	if !ssh.made || !again.made {
-		t.Errorf("ssh made = %v, ssh again made = %v; want both, as the choice keeps ssh", ssh.made, again.made)
-	}
-	var got []step.Event
-	obs := observed(func(e step.Event) { got = append(got, e) })
-	ssh, again = &pending{name: "ssh"}, &pending{name: "ssh again", waits: "ssh"}
-	left := func(_, _ string) bool { return true }
-	if _, err := run(t.Context(), []step.Step{ssh, again}, step.Options{LeftOut: left, Observer: obs}); err != nil {
-		t.Fatal(err)
-	}
-	if again.made || ssh.made {
-		t.Error("a step ran where the choice left ssh out")
-	}
-	last := got[len(got)-1]
-	if last.Step != "ssh again" || last.Kind != step.Skipped || last.After != "ssh" {
-		t.Errorf("last event = %+v; want ssh again skipped behind ssh", last)
-	}
-}
-
-// observed is an observer made of a function.
-type observed func(step.Event)
-
-func (f observed) Observe(e step.Event) { f(e) }
 
 func TestRunReturnsAStepsErrorAsItIs(t *testing.T) {
 	for _, parent := range []string{"", "tools"} {

@@ -42,8 +42,9 @@ The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `rol
   ([Makefile](../../Makefile)).
 - `--server NAME` is `ws client macos`'s persistent flag, bound once in `Command` and read through a
   pointer at run time.
-- `ws client macos remove NAME` changes nothing on the server: it takes the Mac's files, daemon and
-  hosts of that server away, and takes no `--server`.
+- `ws client macos remove NAME` changes nothing on the server: it takes the Mac's files of that
+  server away, then runs `mise -C /opt/ws bootstrap`, which takes its daemon and hosts away. It
+  takes no `--server`.
 - ws is cobra's: a command parses no flag or argument by hand and holds no usage text.
   `cli.Execute` runs the root, names the command in each error, and returns 2 for a usage error. A
   group of commands exists on the systems where it runs. `clientCmd`, over macos/cli's `Command`, is

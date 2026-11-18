@@ -16,10 +16,13 @@ type setManual struct {
 	resource.Command
 }
 
-// Apply runs the command, checks the service, and says the command's line.
+// String says the command, which --check lists as due and a run says once it applied.
+func (s setManual) String() string { return "run " + s.Line() }
+
+// Apply runs the command, then checks the service.
 func (s setManual) Apply(ctx context.Context) error {
 	if err := s.Command.Apply(ctx); err != nil {
-		return err
+		return fmt.Errorf("%s failed: %w", s.Line(), err)
 	}
 	info, err := s.c.M.RunShown(ctx, false, s.Name, "-getinfo", s.c.Conf.CableService)
 	if err != nil {
@@ -30,6 +33,5 @@ func (s setManual) Apply(ctx context.Context) error {
 			"Settings › Network, as roles/client/macos/README.md's The cable says, or empty WS_CABLE_SERVICE in the server's values.yml",
 			s.c.Conf.CableService, other, s.Line())
 	}
-	s.c.Out.Say("ran %s", s.Line())
 	return nil
 }

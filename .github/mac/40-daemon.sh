@@ -1,14 +1,22 @@
 #!/bin/bash
-# With ws's key, ws client macos apply installs the daemon.
+# With ws's key, mise bootstrap installs the daemon, and its plan then exits 0.
 # The daemon must run: launchd gives it a pid, and its state names the utun it set up.
 
 set -eo pipefail
 # shellcheck source=.github/mac-conf.sh
 . .github/mac-conf.sh
+# shellcheck source=.github/mac-mise.sh
+. .github/mac-mise.sh
 
 conf_set /etc/ws/values.yml "WS_PUBLIC_KEY: $(cat "$RUNNER_TEMP/ws.pub")"
-ws client macos apply || {
-    echo "::error::ws client macos apply with ws's key failed"
+mac_serve
+trap 'kill "$mac_server"' EXIT
+mac_bootstrap || {
+    echo "::error::mise bootstrap with ws's key failed"
+    exit 1
+}
+mac_bootstrap plan --detailed-exitcode || {
+    echo "::error::the plan after the bootstrap with ws's key exited $?, not 0"
     exit 1
 }
 launchctl print "system/$LABEL" >/dev/null ||
@@ -22,6 +30,14 @@ launchctl print "system/$LABEL" >/dev/null ||
         exit 1
     }
 plutil -lint "/Library/LaunchDaemons/$LABEL.plist"
+for want in "/etc/ws/tunnel/ws root:wheel 755" "/etc/ws/tunnel/ws/routes.d root:wheel 755" \
+    "/etc/ws/tunnel/ws/tunnel.conf root:wheel 644"; do
+    got=$(stat -f '%N %Su:%Sg %Lp' "${want%% *}")
+    [ "$got" = "$want" ] || {
+        echo "::error::$got, not $want"
+        exit 1
+    }
+done
 pid() { sudo launchctl print "system/$LABEL" | awk '$1 == "pid" { print $3; exit }'; }
 for _ in $(seq 1 30); do
     now=$(pid) || true

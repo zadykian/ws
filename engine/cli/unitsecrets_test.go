@@ -24,8 +24,10 @@ func secretUnit(name string) string {
 // runWithSecrets runs ws unit with args on a side whose secrets come from load.
 func runWithSecrets(e cli.Env, load func(context.Context, effect.Machine) (any, error), args ...string) (int, string) {
 	side := cli.UnitSide{
-		Dir:     "/nowhere",
-		Values:  func(m effect.Machine) (any, effect.Machine, error) { return unitValues{User: "u"}, m, nil },
+		Dir: "/nowhere",
+		Values: func(_ context.Context, m effect.Machine) (any, effect.Machine, error) {
+			return unitValues{User: "u"}, m, nil
+		},
 		Units:   &effecttest.Units{},
 		Root:    true,
 		Secrets: load,

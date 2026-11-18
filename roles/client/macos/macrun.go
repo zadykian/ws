@@ -5,12 +5,10 @@ import (
 	"errors"
 	"io"
 	"slices"
-	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/ssh"
 )
 
 // Options says how Run runs.
@@ -20,9 +18,8 @@ type Options struct {
 	Only []string
 }
 
-// Run runs the steps that o names, or every step. A run that applies and names no step ends with
-// ssh again, as cld's restore tabs may have changed ssh's file. Then each step of a run that passed
-// finishes, but one left out. It reports whether any step changed, and false past an error.
+// Run runs the steps that o names, or every step. Then each step of a run that passed finishes, but
+// one left out. It reports whether any step changed, and false past an error.
 func (m Mac) Run(ctx context.Context, o Options) (bool, error) {
 	return run(ctx, m.ofRun(o), o.Options)
 }
@@ -43,16 +40,7 @@ func (m Mac) ofRun(o Options) []step.Step {
 	for _, r := range roles {
 		steps = append(steps, r.Steps(m.M, nil, m.Out)...)
 	}
-	if len(o.Only) == 0 && !o.Check {
-		// Nothing is applied under a check, so a second plan would only repeat the first.
-		steps = append(steps, m.ssh(true))
-	}
 	return steps
-}
-
-// ssh returns the step for ssh's file, or for its second run.
-func (m Mac) ssh(again bool) step.Step {
-	return ssh.SSH{Server: m.Server, MacConf: m.MacConf, Conf: m.Conf, Home: m.Home, M: m.M, Out: m.Out, Now: time.Now, Again: again}.Step()
 }
 
 // finisher is a step that leaves something for the end of a run that passed.
@@ -60,14 +48,9 @@ type finisher interface{ Finish(context.Context) error }
 
 // run runs steps under o as one role, named by o.Parent, through role.Run, then what each leaves
 // for the end of a run that passed. One role keeps the rows, the waits and the events of the steps
-// as step.RunWith gives them. A step left out leaves nothing, as it applied nothing. o.LeftOut is
-// asked of the steps with a row alone: ssh again has none, as a check has no second plan, so it
-// follows ssh by its wait. It reports whether any step changed, and false past an error.
+// as step.RunWith gives them. A step left out leaves nothing, as it applied nothing. It reports
+// whether any step changed, and false past an error.
 func run(ctx context.Context, steps []step.Step, o step.Options) (bool, error) {
-	if left := o.LeftOut; left != nil {
-		rows := Names()
-		o.LeftOut = func(parent, name string) bool { return slices.Contains(rows, name) && left(parent, name) }
-	}
 	one := role.Role{Name: o.Parent, Steps: func(effect.Machine, effect.Units, effect.Out) []step.Step {
 		return steps
 	}}

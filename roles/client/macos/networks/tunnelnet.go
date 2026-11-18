@@ -15,7 +15,7 @@ func routesText(server, set string, networks []string) string {
 
 // resolverHeader is the first line of the files in /etc/resolver that ws writes, by which a run
 // knows them for its own.
-const resolverHeader = "# " + file.Mark + ": ws client macos apply, from WS_RESOLVERS."
+const resolverHeader = "# " + file.Mark + ": ws client macos networks, from WS_RESOLVERS."
 
 // resolverText is /etc/resolver/DOMAIN: a nameserver line for each address (resolver(5)).
 func resolverText(addresses []string) string {

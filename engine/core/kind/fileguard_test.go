@@ -31,7 +31,6 @@ func TestGroupOfRefusesAnotherOwner(t *testing.T) {
 		"path = \"/home/u/a\"\nowner = \"u\"\nsource = \"f\"\ngroup_of = \"u\"\n": "group_of takes a file of root's",
 		"path = \"/a\"\nsource = \"f\"\ngroup_of = \"u x\"\n":                     "is no user's name",
 		"path = \"/a\"\nabsent = true\ngroup_of = \"u\"\n":                        "an absent file takes a path, an owner and ours alone",
-		"path = \"/home/u/a\"\nowner = \"u\"\nsource = \"f\"\nours = true\n":      "ours takes a file of root's",
 	} {
 		_, err := Load(e, tree(map[string]string{"r/units.toml": "[file.a]\n" + spec, "r/f": ""}))
 		if err == nil || !strings.Contains(err.Error(), want) {

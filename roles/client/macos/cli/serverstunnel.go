@@ -6,7 +6,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
+	"github.com/zadykian/ws/roles/client/macos/tunnel"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
@@ -15,7 +15,7 @@ import (
 // yet, and one that launchd does not have loaded is stopped. A running daemon shows its tier and
 // endpoint, or starting before it has written one.
 func tunnelOf(ctx context.Context, m effect.Machine, name string) string {
-	d := launchd.For(name)
+	d := tunnel.For(name)
 	if _, err := m.Stat(d.Plist); err != nil {
 		return "absent"
 	}
