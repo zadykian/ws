@@ -1,0 +1,4 @@
+# zsh's hook and the line of ~/.zshrc that sources it, as ws's units.
+[bootstrap.packages]
+"ws:file/zsh-line" = "in-sync"
+"ws:file/zsh-rc" = "in-sync"
