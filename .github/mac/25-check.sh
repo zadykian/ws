@@ -1,8 +1,8 @@
 #!/bin/bash
 # --check on a fresh Mac changes nothing.
 # --check must write no file, keep no copy of ~/.ssh/config or ~/.zshrc and install no formula or
-# cask.
-# The brew installs it would run go to stderr, with ws client macos apply's other lines.
+# cask. The files of Ghostty, Zed and zsh are mise bootstrap's (28-bootstrap.sh), which comes
+# after, so none must be there yet.
 
 set -eo pipefail
 
@@ -28,11 +28,6 @@ cmp -s ~/.ssh/config "$RUNNER_TEMP/ssh-config-before" ||
 { brew list --formula && brew list --cask; } | cmp -s - "$RUNNER_TEMP/brew" ||
     {
         echo '::error::ws client macos apply --check installed a formula or a cask'
-        fail=1
-    }
-grep -q ': would run brew install --cask zed$' "$RUNNER_TEMP/check.out" ||
-    {
-        echo "::error::ws client macos apply --check showed no brew install of Zed's cask"
         fail=1
     }
 grep -q '^+Include /etc/ws/ssh_config$' "$RUNNER_TEMP/check.out" ||

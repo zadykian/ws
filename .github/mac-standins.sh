@@ -6,8 +6,8 @@
 #   sh .github/mac-standins.sh
 #
 # - Ghostty.app and Zed.app, empty directories in ~/Applications, and the regular style of their
-#   font, an empty file in ~/Library/Fonts, which spare their casks. ws client macos apply writes
-#   /etc/ws/ghostty, as on a Mac with Ghostty;
+#   font, an empty file in ~/Library/Fonts. mise bootstrap's casks (28-bootstrap.sh) install the
+#   apps; the stand-in of Ghostty's app keeps cld's step, which looks for it, off brew;
 # - wireguard-tools from Homebrew where missing, whose wg and wireguard-go make the stand-in ws.
 #   The daemon needs neither, so this is the one download, a small formula, that the jobs make;
 # - ~/.local/bin/cld, whose version names no release, so that ws client macos apply neither installs

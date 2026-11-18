@@ -29,10 +29,22 @@ mac_mise() {
 
 # mac_tree puts this commit's tree in /opt/ws, root's and writable by root alone, as a plugin linked
 # by its path loads as its owner's. ws's build goes beside it, as the pinned version, and
-# serve-releases serves it on port 8765. mac_server is its pid, which the caller stops.
+# mac_serve serves it.
 mac_tree() {
-    rm -f "$mac_rel/port"
     sh .tools/serve-build . "$mac_rel" darwin arm64
+    mac_serve
+    sudo rm -rf /opt/ws
+    sudo mkdir -p /opt/ws
+    git archive HEAD | sudo tar -x -C /opt/ws
+    sudo cp mise.local.toml mise.local.lock /opt/ws/
+    sudo chown -R root:wheel /opt/ws
+    sudo chmod -R go-w /opt/ws
+}
+
+# mac_serve serves mac_tree's build on port 8765, by serve-releases, for a later case's bootstrap
+# too. mac_server is its pid, which the caller stops.
+mac_serve() {
+    rm -f "$mac_rel/port"
     "$mac_rel/serve-releases" "$mac_rel" 8765 "$mac_rel/port" &
     # shellcheck disable=SC2034 # the case that sources this file stops it
     mac_server=$!
@@ -44,12 +56,6 @@ mac_tree() {
         echo '::error::serve-releases did not start'
         return 1
     fi
-    sudo rm -rf /opt/ws
-    sudo mkdir -p /opt/ws
-    git archive HEAD | sudo tar -x -C /opt/ws
-    sudo cp mise.local.toml mise.local.lock /opt/ws/
-    sudo chown -R root:wheel /opt/ws
-    sudo chmod -R go-w /opt/ws
 }
 
 # mac_build prints the path of ws's build that mac_tree serves.
