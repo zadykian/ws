@@ -13,9 +13,8 @@ A person does these steps at ws, in this order. The Mac's side sets them in its 
 4. Make the secrets: `sudo ws server ubuntu secrets init`, then each secret by `sudo ws server
    ubuntu secrets set KIND NAME`. A value never goes in an argument
    ([The secrets](secrets/README.md)).
-5. Run `sudo systemd-run --pty --wait -p LoadCredentialEncrypted=ws-secrets ws server ubuntu apply
-   --secrets /etc/ws/secrets.age`, as [the secrets file](shell/README.md#the-secrets-file) says.
-   A second run changes nothing.
+5. Run the bootstrap again, by hand as below: it writes what the secrets give, such as
+   `/etc/ws/env` and gh's login ([gh](devtools/README.md#gh)). A second run changes nothing.
 
 A run of the bootstrap by hand, or of its plan, names the data directory that `install.sh` gives
 mise: `sudo env MISE_DATA_DIR=/usr/local/share/mise mise -C /opt/ws bootstrap`. There the account

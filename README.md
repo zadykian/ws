@@ -1,13 +1,13 @@
 # ws
 
-Sets up my development server from code. `ws server ubuntu apply` runs on the machine itself. It
-sets up packages, SSH by key and a firewall, and a cable and a WireGuard tunnel to the Mac. It
-sets up Docker, the shell, git, tmux, lazygit, the Fresh editor and Zed's server. It sets up claude
-and [cld](https://github.com/zadykian/cld), and SigNoz with a collector for the machine's telemetry.
-Running it again is safe, and `--check` shows how a machine differs from the repository.
+Sets up my development server from code. mise's bootstrap runs on the machine itself, with ws's
+units. It sets up packages, SSH by key and a firewall, and a cable and a WireGuard tunnel to the
+Mac. It sets up Docker, the shell, git, tmux, lazygit, the Fresh editor and Zed's server. It sets
+up claude and [cld](https://github.com/zadykian/cld), and SigNoz with a collector for the
+machine's telemetry.
+Running it again is safe, and its plan shows how a machine differs from the repository.
 
-Each role has a page of its own. A role is Go steps of ws, or, once moved to mise, its config and
-its spec of ws's units:
+Each role has a page of its own. A role is its mise config and its spec of ws's units:
 
 - [`frame`](roles/server/ubuntu/frame): what each role of mise's config leans on, and
   `/usr/local/bin/ws`, the pinned binary.
@@ -73,33 +73,28 @@ source, which apt refuses beside mise's: remove it first ([docker](roles/server/
 
 Then, logged in as that user, write `/etc/ws/values.yml` where a value differs from its default,
 root's and mode 600 ([the values](#running-it-again)). Run `install.sh` through `sudo`: it installs
-mise and runs its bootstrap, which installs ws. Then apply the roles that are still Go steps.
-`ws server ubuntu apply` logs nothing in before it: the `devtools` role installs gh, and its login
-comes by hand ([By hand](#by-hand)).
+mise and runs its bootstrap, which installs ws and sets each role up. Once the secrets file holds
+`token.github`, the bootstrap run again logs gh in ([By hand](#by-hand)), as
+[the server's runbook](roles/server/ubuntu/runbook.md) says.
 
 ```sh
 curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sudo sh
-sudo ws server ubuntu apply
 ```
 
-It runs the roles in order. Then do what stays by hand, below.
+Then do what stays by hand, below.
 
 ## Running it again
 
-Each release holds the roles it sets up, so run `install.sh` again first, then apply:
+Each release holds the roles it sets up, so run `install.sh` again: it checks the release out and
+runs the bootstrap.
 
 ```sh
 curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sudo sh
-sudo ws server ubuntu apply
 ```
 
 `WS_VERSION=X.Y.Z` before `sh` picks a release ([Install](engine/core/update/README.md#install)).
 
-`ws server ubuntu apply --only NAME,...` runs the roles named, in the order they run in. A name is a
-role, or a step of it by the name a run shows. That role's other steps are planned and left out. A
-step that waits on one of them with changes is skipped, and says so, and `--check` shows what the
-same run would change. A left-out step whose plan fails warns, and the run goes on. `--secrets FILE`
-gives the roles their secrets, and `ws server ubuntu secrets` edits ws's file ([The secrets
+The units read their secrets from ws's file, which `ws server ubuntu secrets` edits ([The secrets
 file](roles/server/ubuntu/shell/README.md#the-secrets-file)). The values of a machine go in
 `/etc/ws/values.yml`, which only root reads, and every run reads them. `WS_USER: NAME` sets up the
 user NAME instead of `zadykian`, the default, whose account must exist. `WS_USER: root` sets up a
@@ -107,18 +102,16 @@ cloud VM with no other user. `WS_HOME` is the account's home, `/home/NAME` by de
 differs from the home `getent passwd` gives the account fails the run at security's first guard.
 `WS_GIT_SIGNING_PUB_KEY` lies below it, or the run fails. A cloud VM names `WS_SECURITY_OUTBOUND:
 false` there before its first run ([Outbound](roles/server/ubuntu/security/README.md#outbound)). `ws
-server ubuntu values set KEY VALUE` writes one key, and an empty VALUE gives its default back. ws's
-last line names the roles that changed, `changed: none` on a second run.
+server ubuntu values set KEY VALUE` writes one key, and an empty VALUE gives its default back. A
+second run changes nothing, so its plan exits 0 with `--detailed-exitcode`.
 
 ## Dry runs
 
-With `--check`, ws plans its steps and shows what each would change, and nothing changes. For the
-roles that mise sets up, `sudo env MISE_DATA_DIR=/usr/local/share/mise mise -C /opt/ws bootstrap
-plan` does, as a run by hand names the data directory that `install.sh` gives mise
-([The runbook](roles/server/ubuntu/runbook.md)):
+The bootstrap's plan shows what a run would change, and nothing changes. A run by hand names the
+data directory that `install.sh` gives mise ([The runbook](roles/server/ubuntu/runbook.md)):
 
 ```sh
-sudo ws server ubuntu apply --check
+sudo env MISE_DATA_DIR=/usr/local/share/mise mise -C /opt/ws bootstrap plan
 ```
 
 A dry run adds no apt repository. So where a step needs a repository still to come, it says "after"
@@ -164,8 +157,8 @@ ws client macos state --json
 ## By hand
 
 Secrets are never in this repository. The claude login, ws's signing key on GitHub and the Mac's key
-as `wg0`'s peer stay manual. ws's gh takes a fine-grained personal access token, which `ws server
-ubuntu apply` logs gh in with, from the secrets file's `token.github`
+as `wg0`'s peer stay manual. ws's gh takes a fine-grained personal access token, which the bootstrap
+logs gh in with, from the secrets file's `token.github`
 ([gh](roles/server/ubuntu/devtools/README.md#gh)). Its permissions are the account's selected
 repositories; Metadata and Actions read; Contents, Pull requests, Issues and Workflows read and
 write; and no account permission. These stay manual:

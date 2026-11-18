@@ -13,10 +13,11 @@ steps, and each role's README says what it sets up.
 
 ## The roles
 
-- A role is the Go steps of `roles/server/ubuntu/NAME`, with its page, its `README.md`, and a line in
-  the root README ([README](../../README.md)). `ubuntu.Roles` lists the roles in the order they run,
-  each closed over the machine's values and secrets ([roles.go](../../roles/server/ubuntu/roles.go)).
-- A role moved to mise holds its spec, `units.toml`, with its templates, and its mise files by env:
+- A role is `roles/server/ubuntu/NAME`, with its page, its `README.md`, and a line in the root
+  README ([README](../../README.md)). Its units run in the order of their `after`
+  ([The order](../../roles/server/ubuntu/frame/README.md#the-order)). `ubuntu.Roles`, the roles
+  in Go, is empty until #1240 removes `apply` ([roles.go](../../roles/server/ubuntu/roles.go)).
+- A role holds its spec, `units.toml`, with its templates, and its mise files by env:
   `mise.server.toml` for every server, `mise.booted.toml` where systemd is booted, and
   `mise.account.toml` where `WS_USER` is not root. The link `mise/conf.d/server-NAME` loads them.
   A role holds no plain `mise.toml`, which the Mac would load ([specs_test.go](../../roles/server/ubuntu/cli/specs_test.go)).

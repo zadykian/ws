@@ -2,13 +2,14 @@
 
 The `devtools` role installs Node, the .NET SDKs, gh, glow, the libraries headless Chromium needs,
 Go, gopls, Delve, roslyn-language-server, the SQL and Docker servers and rustup. The sources, the
-packages and the tools are mise's, in [mise.server.toml](mise.server.toml), and the tools' links
-are units of [units.toml](units.toml). The rest runs as Go steps in
-[roles/server/ubuntu/devtools](.): gh's telemetry and login, roslyn-language-server, the npm
-servers and rustup.
+packages and the tools are mise's, in [mise.server.toml](mise.server.toml). The tools' links, gh's
+telemetry and login, roslyn-language-server, the npm servers and rustup are units of
+[units.toml](units.toml). Those of the account run as `WS_USER`, root included, and without booted
+systemd too, as in CI's container. [paths.go](paths.go) names the servers' paths for Zed's and
+Fresh's tests.
 
-rustup installs Rust's stable toolchain in the user's home. Once there, rustup updates itself, so
-ws leaves it alone.
+`state/devtools-rustup` installs rustup and Rust's stable toolchain in the user's home, where
+`~/.cargo/bin/rustup` is missing. Once there, rustup updates itself, so ws leaves it alone.
 
 ## The sources and the packages
 
@@ -58,8 +59,9 @@ mise checks a sum at the download alone, so it mends no tool changed after its i
 - mise builds a `go:` tool once, and never again where Go changes. Delve 1.27.2 supports Go 1.25
   to 1.27, so a new minor Go goes with a newer Delve.
 - roslyn-language-server, C#'s server, is the server of VS Code's C# extension. It comes from
-  nuget.org with `dotnet tool` at the version `pins.go` pins, and runs on the .NET 10 of this role.
-  It goes in `~/.dotnet/tools/roslyn-language-server`, `WS_USER`'s, which follows `WS_HOME`.
+  nuget.org with `dotnet tool`, at the version that `state/devtools-roslyn` pins in its command
+  and its check, and runs on the .NET 10 of this role. It goes in
+  `~/.dotnet/tools/roslyn-language-server`, `WS_USER`'s, which follows `WS_HOME`.
 
 ## The SQL and Docker servers
 
@@ -93,7 +95,9 @@ A project's `postgres-language-server.jsonc` holds `db` fields, never a `connect
 ## The npm servers
 
 The role installs four packages into `~/.local/lib/language-servers`, owned by `WS_USER`, from the
-`package.json` and `package-lock.json` in `roles/server/ubuntu/devtools/internal/npm/servers`:
+`package.json` and `package-lock.json` in [files/npm](files/npm). The units
+`file/devtools-npm-lock` and `file/devtools-npm-package` write them there as the account's, with
+the directories a new home lacks:
 
 - `@ansible/ansible-language-server`, for Ansible.
 - `@zed-industries/vscode-langservers-extracted`, whose HTML server Zed installs by default.
@@ -101,10 +105,11 @@ The role installs four packages into `~/.local/lib/language-servers`, owned by `
 - `sql-formatter`, linked as `/usr/local/bin/sql-formatter`, root's, so a project's settings name
   the bare command.
 
-`npm ci --ignore-scripts` runs as `WS_USER`. It fails where the lock and `package.json` disagree or
-a sha512 `integrity` differs, so these downloads are checked, though not against a SHA-256. The
-step keeps `node_modules/.ws-sha256`, the digest of both files, and runs again where it differs. It
-waits for the step of the Node packages, which sets up npm.
+`state/devtools-npm` runs `npm ci --ignore-scripts` as `WS_USER`. It fails where the lock and
+`package.json` disagree or a sha512 `integrity` differs, so these downloads are checked, though not
+against a SHA-256. The unit keeps `node_modules/.ws-sha256`, `sha256sum`'s lines for both files,
+and runs again where its check, `sha256sum -c`, fails. mise installs the Node package, and npm with
+it, before any unit.
 
 The settings name the three servers by path, with `--stdio`, so Zed skips its npm lookup of their
 latest versions. They also set `node.path`, so Zed never downloads a Node. HTML formats through its
@@ -113,8 +118,8 @@ server, so Zed installs no Prettier.
 To bump a package:
 
 1. Edit its version in `package.json`.
-2. In `roles/server/ubuntu/devtools/internal/npm/servers`, run `npm install --package-lock-only --ignore-scripts
-   --no-audit --no-fund`.
+2. In `roles/server/ubuntu/devtools/files/npm`, run `npm install --package-lock-only
+   --ignore-scripts --no-audit --no-fund`.
 3. Commit both files, after checking each `integrity` against
    `npm view PACKAGE@VERSION dist.integrity`.
 
@@ -129,17 +134,22 @@ has left behind. [files/52unattended-upgrades-github-cli](files/52unattended-upg
 goes to `/etc/apt/apt.conf.d/` and allows the repository's origin, so unattended-upgrades
 installs each release of gh within a day.
 
-A step after the packages logs gh in to github.com as the user, by `token.github` in the secrets file
-([The secrets file](../shell/README.md#the-secrets-file)). It compares `gh auth token -h github.com` with the
-token. Where they differ, it runs `gh auth login -h github.com -p https --insecure-storage
---with-token`, the token on stdin. ws has no keyring, so gh writes `~/.config/gh/hosts.yml`, mode
-0600. `--check` says "log gh in by token.github", never which token. gh's refusal fails the run. With
-no `token.github`, or no secrets file, the step leaves gh's login alone.
+gh logs in to github.com as the user, by `token.github` in the secrets file
+([The secrets file](../shell/README.md#the-secrets-file)):
 
-gh 2.91.0 and later send telemetry unless told not to. A step before the login reads `gh config get
-telemetry` as the user, and runs `gh config set telemetry disabled` where it says otherwise. Both
-run with `GH_TELEMETRY=0`, so that they send none themselves. `--check` says "turn gh's telemetry
-off".
+- `file/devtools-gh-token` writes the token to `/etc/ws/gh-token`, root's, mode 0640 and in the
+  account's group, with ws's mark on its first line and the token on its last. The plan shows no
+  diff of it. A run without a secrets file keeps the file unchanged, and one without
+  `token.github` removes it.
+- `state/devtools-gh-login` compares `gh auth token -h github.com` with the file's last line. Where
+  they differ, it runs `gh auth login -h github.com -p https --insecure-storage --with-token`, the
+  token on stdin. The token passes through a pipe and the shell alone, so no command line, plan or
+  log holds it. ws has no keyring, so gh writes `~/.config/gh/hosts.yml`, mode 0600. gh's refusal
+  fails the run. Without the file, the unit leaves gh's login alone.
+
+gh 2.91.0 and later send telemetry unless told not to. `state/devtools-gh-telemetry`, before the
+login, reads `gh config get telemetry` as the user, and runs `gh config set telemetry disabled`
+where it says otherwise. Both run with `GH_TELEMETRY=0`, so that they send none themselves.
 
 ## The signing key
 
