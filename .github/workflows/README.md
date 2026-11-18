@@ -21,14 +21,15 @@ bootstrap fails at its guard where install.sh drops it. The bootstrap runs twice
 root's home. The parts and units that need booted systemd skip and say so. `mise bootstrap plan
 --detailed-exitcode` must exit 0 before the second bootstrap, as that run would mend what it
 finds, and again after it. With the frame's line of `state/ws-binary` dropped, it must exit 1
-([playbook-plan.sh](../playbook-plan.sh)): the check against a silent skip holds. Then
-`nft -c`, with the container's NET_ADMIN, checks the outbound table the run wrote and the users it
-names, and a find that the user owns its home. The Zed wrapper's [checks](../zed-terminal-checks.sh)
-run on the files it installed, and Fresh's on the config it loaded. The user's empty commit must
-sign and verify. Root's leg has no table, and the run leaves out its own check
+([playbook-plan.sh](../playbook-plan.sh)): the check against a silent skip holds. A plan from
+`/opt/ws`, which loads no role, must exit 1 too, and name the run directory. Then `nft -c`, with
+the container's NET_ADMIN, checks the outbound table the run wrote and the users it names, and a
+find that the user owns its home. The Zed wrapper's [checks](../zed-terminal-checks.sh) run on the
+files it installed, and Fresh's on the config it loaded. The user's empty commit must sign and
+verify. Root's leg has no table, and the run leaves out its own check
 ([Outbound](../../roles/server/ubuntu/security/README.md#outbound)). In the container, base's swap
-file is off, as the swap is the host's. With no NVIDIA GPU, `nvidia` checks its names alone, and with
-no MSI board, `fans` leaves its fans alone. Without a VPN profile, `ikeward` does nothing.
+file is off, as the swap is the host's. With no NVIDIA GPU, `nvidia` checks its names alone, and
+with no MSI board, `fans` leaves its fans alone. Without a VPN profile, `ikeward` does nothing.
 
 ## The install script
 

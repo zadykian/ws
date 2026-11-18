@@ -20,10 +20,13 @@ Dpkg::Options { "--force-confdef"; "--force-confold"; };
 # installs the pin's ws. It prints the line of a pass then, so that the next plan finds the file
 # unchanged. The plugin's write hook runs the check on that run, after mise installs ws. A
 # template's exec runs beside this file. So the check moves to cwd, the run's directory, where a
-# nested mise loads the side's roles as the run does.
+# nested mise loads the side's roles as the run does. A run elsewhere, as from /opt/ws or the Mac's
+# roles/client, loads no role of the server. The check looks for the frame's own file through the
+# run's link. It fails a run without it before any phase, with no write, and names the run
+# directory.
 [bootstrap.files."/etc/ws/units.verified"]
 template = true
-content = '''{{ exec(command="cd '" ~ cwd ~ "' && { ws=$(mise which ws 2>/dev/null) || { echo 'ws units: none missing'; exit 0; }; \"$ws\" unit verify; }") }}
+content = '''{{ exec(command="cd '" ~ cwd ~ "' && { [ -f mise/conf.d/frame/mise.server.toml ] || { echo 'mise runs in " ~ cwd ~ ", which loads no role of the server: run it as mise -C /opt/ws/roles/server' >&2; exit 1; }; ws=$(mise which ws 2>/dev/null) || { echo 'ws units: none missing'; exit 0; }; \"$ws\" unit verify; }") }}
 '''
 
 # ws's own directory, which a first run with no values.yml lacks: mise makes no missing parent.

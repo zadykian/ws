@@ -110,3 +110,9 @@ where mise's plan lacks a unit of the specs. On a first run, and on the run that
 mise renders it before it installs the pin's ws. It prints the line of a pass then, so that the
 next plan finds the file unchanged. Each unit reads as missing on that run, so the plugin's write
 hook runs, and it runs `ws unit verify` before `ws unit write`.
+
+The check runs in the run's directory, where a nested mise loads the roles as the run does. A run
+from `/opt/ws`, or from the Mac's `roles/client`, loads no role of the server's, and a first one
+would set up the frame alone with exit 0. So the check looks for the frame's own
+`mise.server.toml` through the run's link. It fails a run without it before any phase, and names
+`mise -C /opt/ws/roles/server`, as its test proves.
