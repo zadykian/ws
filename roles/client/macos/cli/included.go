@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine"
 	enginecli "github.com/zadykian/ws/engine/cli"
+	"github.com/zadykian/ws/roles/client/macos/git"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -30,6 +31,17 @@ func newSSHCmd() *cobra.Command {
 			}
 			return place == sshcfg.First, nil
 		}))
+}
+
+// newGitCmd returns ws client macos git, with git's has command.
+func newGitCmd(p enginecli.Env) *cobra.Command {
+	return enginecli.Group("git", "the commands of git's units", hasCmd("included",
+		"say by the exit status whether the git config on stdin includes /etc/ws/gitconfig at its top",
+		"It reads the text as git does. It exits 0 where the text includes /etc/ws/gitconfig once, at its "+
+			"top, and 1 where it lacks the include. It exits 2 where the include sits below the file's own "+
+			"settings or comes twice, which it would then override, or where git cannot read the text. "+
+			"git's unit of the include runs it.",
+		func(c *cobra.Command, text []byte) (bool, error) { return git.Included(c.Context(), p.Machine, text) }))
 }
 
 // hasCmd returns a has command, which holds reads from the text on stdin.

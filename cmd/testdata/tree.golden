@@ -41,6 +41,7 @@ Usage:
 Available Commands:
   apply       set the Mac up from values.yml and a server's file
   cld         install cld into ~/.local/bin, and keep it at its latest release
+  git         the commands of git's units
   keys        copy the .pub of each key of Secretive's that values.yml names into /etc/ws
   remove      remove a server from the Mac
   resolver    send DOMAIN's names to the nameservers, or drop it
@@ -79,6 +80,34 @@ Usage:
 Flags:
       --check   fail where a change is due, and change nothing
   -h, --help    help for cld
+
+Global Flags:
+      --server string   the server to act on, which may be left out where there is one
+== ws client macos git
+the commands of git's units
+
+Usage:
+  ws client macos git [flags]
+  ws client macos git [command]
+
+Available Commands:
+  included    say by the exit status whether the git config on stdin includes /etc/ws/gitconfig at its top
+
+Flags:
+  -h, --help   help for git
+
+Global Flags:
+      --server string   the server to act on, which may be left out where there is one
+
+Use "ws client macos git [command] --help" for more information about a command.
+== ws client macos git included
+It reads the text as git does. It exits 0 where the text includes /etc/ws/gitconfig once, at its top, and 1 where it lacks the include. It exits 2 where the include sits below the file's own settings or comes twice, which it would then override, or where git cannot read the text. git's unit of the include runs it.
+
+Usage:
+  ws client macos git included [flags]
+
+Flags:
+  -h, --help   help for included
 
 Global Flags:
       --server string   the server to act on, which may be left out where there is one

@@ -154,3 +154,53 @@ func TestMacConfigHoldsNoRootPath(t *testing.T) {
 		}
 	}
 }
+
+// TestMacLockHoldsEachTool keeps mise/mise.mac.lock beside the Mac's tools. The bootstrap runs with
+// MISE_LOCKED=1, which refuses a tool that the lock lacks, and installs one by its url and checksum
+// alone, so that no tool goes in unchecked.
+func TestMacLockHoldsEachTool(t *testing.T) {
+	text, err := os.ReadFile(macTreeRoot + "/mise/mise.mac.lock")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var lock struct {
+		Tools map[string][]map[string]any `toml:"tools"`
+	}
+	if err := toml.Unmarshal(text, &lock); err != nil {
+		t.Fatalf("mise.mac.lock: %v", err)
+	}
+	files, err := filepath.Glob(macRolesDir + "/*/" + macRoleFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tools := 0
+	for _, f := range files {
+		text, err := os.ReadFile(f) //nolint:gosec // a file of the tree, found by the test
+		if err != nil {
+			t.Fatal(err)
+		}
+		var c struct {
+			Tools map[string]string `toml:"tools"`
+		}
+		if err := toml.Unmarshal(text, &c); err != nil {
+			t.Fatalf("%s: %v", f, err)
+		}
+		for name, version := range c.Tools {
+			tools++
+			i := slices.IndexFunc(lock.Tools[name], func(e map[string]any) bool { return e["version"] == version })
+			if i < 0 {
+				t.Errorf("%s: %s %s is not in mise/mise.mac.lock: run mise lock for macos-arm64", f, name, version)
+				continue
+			}
+			mac, _ := lock.Tools[name][i]["platforms.macos-arm64"].(map[string]any)
+			url, _ := mac["url"].(string)
+			sum, _ := mac["checksum"].(string)
+			if !strings.HasPrefix(url, "https://") || !strings.HasPrefix(sum, "sha256:") {
+				t.Errorf("%s: the lock's %s %s lacks a url and a sha256 for macos-arm64: %v", f, name, version, mac)
+			}
+		}
+	}
+	if tools == 0 {
+		t.Error("no role of the Mac's names a tool, want gh at least")
+	}
+}
