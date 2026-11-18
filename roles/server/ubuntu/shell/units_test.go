@@ -17,13 +17,17 @@ import (
 
 const envPath = "/etc/ws/env"
 
-// role is the shell's spec and its env template, as kind.Load finds a role's.
+// role is the shell's spec and its env template, as kind.Load finds a role's. The frame's unit,
+// which the env file waits on, is left out: so is the wait.
 func role(t *testing.T) fstest.MapFS {
 	fsys := fstest.MapFS{}
 	for _, name := range []string{"units.toml", "files/env.tmpl"} {
 		text, err := os.ReadFile(name) //nolint:gosec // a file of the role, named above
 		if err != nil {
 			t.Fatal(err)
+		}
+		if name == "units.toml" {
+			text = []byte(strings.Replace(string(text), "after = \"state/ws-binary\"\n", "", 1))
 		}
 		fsys["shell/"+name] = &fstest.MapFile{Data: text}
 	}

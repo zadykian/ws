@@ -3,14 +3,17 @@
 # of them, or of two together, restarts it once.
 
 # The package starts the collector with its own config, on every address: it stays off until the
-# service below sets it up. /etc/ws/env comes first, as the files read the endpoint from it.
+# service below sets it up. It waits on signoz's sync, so that SigNoz keeps what the collector
+# sends for its retention: a retention applies only to data that comes in after it. That chain
+# hangs on file/shell-env, as the files read the endpoint from /etc/ws/env. A read of the service
+# waits where the env file has changes, and a run writes it first.
 [deb.otelcol]
 package = "otelcol-contrib"
 version = "0.162.0"
 url = "https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v{version}/otelcol-contrib_{version}_linux_{arch}.deb"
 sha256 = { amd64 = "0b2b37eeb83db8e19a5f9dfc60894d058c739384a226ac085e674561befaad44", arm64 = "b6163e6639989ac608ae2ba58b891128f2f31bba1b0af31a937ac5d0de7b0c23" }
 stop = "otelcol-contrib.service"
-after = "file/shell-env"
+after = "state/signoz-sync"
 
 [service.otelcol]
 unit = "otelcol-contrib.service"

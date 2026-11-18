@@ -13,7 +13,9 @@ line = ". /etc/ws/profile"
 
 # The [env] table of the secrets file, which /etc/ws/bashrc sources. Root's, so that the account
 # reads it and cannot change it. A file there by hand is refused, never replaced. A machine without
-# a secrets file leaves it unchanged, and an empty table removes it.
+# a secrets file leaves it unchanged, and an empty table removes it. It waits on the frame's unit.
+# So signoz's units, which need ws, and otelcol's, which read this file, hang on one chain. A unit
+# is read as pending where a unit in its chain has changes.
 [file.shell-env]
 path = "/etc/ws/env"
 template = "files/env.tmpl"
@@ -22,3 +24,4 @@ group_of = "{{ .User }}"
 secret = true
 ours = true
 absent_when_empty = true
+after = "state/ws-binary"

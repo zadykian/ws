@@ -54,6 +54,8 @@ replaces the live file. A config that the check refuses leaves the live file alo
 owed waits for the next good run. On a first install, the package starts the collector
 with the package's own config, which listens on every address; ufw keeps those ports from outside.
 The `.deb`'s unit stops it at once, and the service enables it again once the config is in place.
+The `.deb`'s unit waits on signoz's sync, so that SigNoz's retention is set before the collector
+sends ([signoz](../signoz/README.md#retention)).
 
 ## claude's metrics elsewhere
 

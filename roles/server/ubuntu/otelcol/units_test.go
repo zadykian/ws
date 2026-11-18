@@ -136,11 +136,11 @@ func machine(t *testing.T, env string) (*effecttest.Machine, kind.Env) {
 	return m, kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v}
 }
 
-// collector loads otelcol's units, with a stand-in for the shell's, and returns the collector's
-// service unit.
+// collector loads otelcol's units, with a stand-in for signoz's sync, which the .deb waits on, and
+// returns the collector's service unit.
 func collector(t *testing.T, e kind.Env) []kind.Unit {
 	fsys := fstest.MapFS{
-		"shell/units.toml": {Data: []byte("[file.shell-env]\npath = \"/etc/ws/stand-in\"\nsource = \"units.toml\"\n")},
+		"signoz/units.toml": {Data: []byte("[state.signoz-sync.run]\nuser = \"root\"\ncommand = [\"true\"]\ncreates = [\"/etc\"]\n")},
 	}
 	for _, name := range []string{"files/journal.conf", "files/claude.conf", "files/claude.env.tmpl", "files/config.yaml.tmpl"} {
 		fsys["otelcol/"+name] = &fstest.MapFile{Data: specText(t, name)}
