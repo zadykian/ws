@@ -246,6 +246,7 @@ Available Commands:
   fans        drive the board's fans on the curves of CONFIG until SIGTERM
   ikeward     the ikeward role's check, install and wait, which its units run
   secrets     keep ws's secrets file, with its identity as a systemd credential
+  signoz      SigNoz's steps that the signoz role's units run
   state       report what the server holds of what ws manages, and what apply would change
   tunnel      the tunnel role's check, wg0's key and wg0, which its units run
   values      edit the machine's values
@@ -460,6 +461,39 @@ Usage:
 
 Flags:
   -h, --help   help for unset
+== ws server ubuntu signoz
+SigNoz's steps that the signoz role's units run
+
+Usage:
+  ws server ubuntu signoz [flags]
+  ws server ubuntu signoz [command]
+
+Available Commands:
+  password    write SigNoz's root password to /opt/signoz/root.env, once
+  sync        set SigNoz's retention and dashboards through its API
+
+Flags:
+  -h, --help   help for signoz
+
+Use "ws server ubuntu signoz [command] --help" for more information about a command.
+== ws server ubuntu signoz password
+It draws the password where root.env is missing, and keeps the one there, whatever it holds, with root's owner and mode 600.
+
+Usage:
+  ws server ubuntu signoz password [flags]
+
+Flags:
+      --check   plan the steps, apply none, and fail where one has a change to make
+  -h, --help    help for password
+== ws server ubuntu signoz sync
+It waits for SigNoz's API at WS_SIGNOZ_URL, then sets the retention of WS_SIGNOZ_RETENTION_DAYS, and creates or replaces each dashboard of WS_SIGNOZ_DASHBOARDS. Without booted systemd it skips.
+
+Usage:
+  ws server ubuntu signoz sync [flags]
+
+Flags:
+      --check   plan the steps, apply none, and fail where one has a change to make
+  -h, --help    help for sync
 == ws server ubuntu state
 It reads alone and applies nothing. It needs what --check needs: root, on Ubuntu 26.04. It reports what ws manages and not the rest of the machine: the packages, services and files of the steps, what stands against them, and the changes that apply would make. A step that fails stands in the report as a check, and the exit code stays 0. It takes no secrets, so a report holds none and says nothing of what they write.
 

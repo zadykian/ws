@@ -17,7 +17,10 @@ func TestEachStepWaitsOnTheOneBeforeItBarDashboards(t *testing.T) {
 		if i > 0 {
 			before = names[i-1]
 		}
-		if s.Name() == "signoz dashboards" {
+		switch s.Name() {
+		case "signoz password", "signoz ready":
+			before = "" // a run of its own, called by a unit
+		case "signoz dashboards":
 			before = "signoz ready" // the retention is no precondition of the dashboards
 		}
 		if w, ok := s.(interface{ WaitsOn() string }); ok && i > 0 && w.WaitsOn() != before {

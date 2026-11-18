@@ -12,21 +12,16 @@ import (
 )
 
 // Password is the step that writes root.env once, with the password of SigNoz's root user. No one
-// logs in with it. The step generates it on the machine, and only root reads it. A new password
-// marks the containers for recreation, as they read root.env at start.
-func Password(m effect.Machine, dir string) resource.Group {
-	return resource.Group{
-		Title: "signoz password", After: "signoz files",
-		Parts: []resource.Resource{password{M: m, Dir: dir}},
-	}
+// logs in with it. The step generates it on the machine, and only root reads it. The containers
+// read root.env at start: it sits in Dir, whose files the compose unit sums, so a new password
+// recreates them.
+func Password(m effect.Machine) resource.Group {
+	return resource.Group{Title: "signoz password", Parts: []resource.Resource{password{M: m}}}
 }
 
-type password struct {
-	M   effect.Machine
-	Dir string
-}
+type password struct{ M effect.Machine }
 
-func (p password) path() string { return path.Join(p.Dir, "root.env") }
+func (password) path() string { return path.Join(Dir, "root.env") }
 
 type generate struct{ password }
 
@@ -35,10 +30,6 @@ func (generate) String() string { return "generate the root user's password" }
 func (c generate) Apply(context.Context) error {
 	pw, err := randomPassword()
 	if err != nil {
-		return err
-	}
-	// The mark first, as a run cut short after the file would leave no mark for the new password.
-	if err := writeMark(c.M, markPath(c.Dir)); err != nil {
 		return err
 	}
 	return c.M.WriteRootFile(c.path(), []byte("SIGNOZ_USER_ROOT_PASSWORD="+pw+passwordSuffix+"\n"), 0o600)

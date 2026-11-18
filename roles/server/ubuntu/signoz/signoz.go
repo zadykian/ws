@@ -13,3 +13,6 @@ var deployment embed.FS
 
 // Project is the compose project's name, which compose.yaml sets.
 const Project = "signoz"
+
+// Dir is the compose project's directory, which holds the compose files and root.env.
+const Dir = "/opt/signoz"
