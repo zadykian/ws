@@ -38,6 +38,16 @@ func (f filePart) checkGuards() error {
 	return nil
 }
 
+// readableOn refuses, on the Mac, a file of root's that not all may read. The Mac's units read as
+// the user, so that a run that changes nothing asks no password, and such a file could not be read.
+func (f filePart) readableOn(sys System) error {
+	root := f.Owner == "" || f.Owner == "root"
+	if sys == MacOS && root && !f.Absent && f.Mode != 0 && f.Mode&0o004 == 0 {
+		return fmt.Errorf("mode %o: a file of root's on the Mac is readable by all, so that a read asks no password", f.Mode)
+	}
+	return nil
+}
+
 // ours fails the plan where the file is there and lacks ws's mark at its top: a file written by
 // hand, which a write or a removal would lose. A dry run stops there too. The error names the path
 // alone, as the file may hold a secret.

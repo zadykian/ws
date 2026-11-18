@@ -138,7 +138,8 @@ func (s leftState) resource(e Env) (resource.Resource, error) {
 // where Check, run as User too, exits other than 0. It takes exactly one of the two. A procedure
 // that stays a command of ws runs through it, with that command's own check. On Linux without
 // booted systemd, which a user's session needs, it skips, unless Unbooted says that the command
-// needs no session. macOS has no systemd, and runs it.
+// needs no session. macOS has no systemd, and runs it. There Check runs as ws's own user, whatever
+// User, so that a read asks no password (run.go).
 type runState struct {
 	User    string   `toml:"user"`
 	Command []string `toml:"command"`
@@ -166,7 +167,7 @@ func (s runState) resource(e Env) (resource.Resource, error) {
 			return nil, fmt.Errorf("creates: %q is not a clean absolute path", p)
 		}
 	}
-	return runAs{m: e.M, out: e.Out, sys: e.System, s: s}, nil
+	return runAs{m: e.M, out: e.Out, sys: e.System, self: e.User, s: s}, nil
 }
 
 // runAs is a run state's resource. Its user is looked up as it plans, as an earlier unit may make
@@ -175,5 +176,7 @@ type runAs struct {
 	m   effect.Machine
 	out effect.Out
 	sys System
-	s   runState
+	// self is the account that ws runs as on the Mac.
+	self string
+	s    runState
 }

@@ -46,6 +46,9 @@ type Env struct {
 	// Self is the path of the ws that runs the units. A spec names it by self to run a command of
 	// ws, as the pinned binary may not be installed yet.
 	Self string
+	// User is the account that ws runs as on the Mac, where a run state's command of that user
+	// needs no sudo. Empty on the server, which runs as root.
+	User string
 }
 
 // Unit is one unit of a spec: its name, KIND/NAME, and the step that sets it up.

@@ -29,9 +29,12 @@ swap = { size_mib = 1024, hint = "…" }                                 # /swap
   table, or `net` on a device other than `dev`. `addr` fails where `iface` lacks `want`. Each error
   ends with `hint`, as the run cannot mend either.
 - `run` runs its command as `user`, with the system's `PATH`: on Linux by runuser, in the user's
-  systemd session, and on macOS by sudo. It takes exactly one of `creates`, which runs where a path
-  is missing, and `check`, which runs where the check, as `user` too, exits other than 0. A
-  procedure that stays a command of ws runs this way.
+  systemd session. It takes exactly one of `creates`, which runs where a path is missing, and
+  `check`, which runs where the check, as `user` too, exits other than 0. A procedure that stays a
+  command of ws runs this way.
+- On macOS, ws runs as the user. The `check` runs as that user whatever `user`, so that a read asks
+  no password. The command runs as the user bare, as root by sudo, or as another user by root's
+  sudo.
 - `reboot` plans nothing. Where `package` is installed and `/sys/module/MODULE/version` is not its
   upstream version, without the epoch or the revision, it warns that a reboot is due, with `hint`
   after. It suits a module that loads at boot alone, as a display's driver.

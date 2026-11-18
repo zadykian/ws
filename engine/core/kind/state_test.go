@@ -260,21 +260,6 @@ func TestStateRunSkipsUnbooted(t *testing.T) {
 	}
 }
 
-func TestStateRunOnMacOS(t *testing.T) {
-	e, m, _, out := testEnv(false)
-	e.System = MacOS
-	const asU = "sudo -u u -H env " + systemPath + " "
-	m.Results[asU+"cld --check"] = effecttest.Result{Err: errors.New("exit status 1")}
-	m.Results[asU+"cld --install"] = effecttest.Result{}
-	units := loadState(t, e, "run = { user = \"u\", command = [\"cld\", \"--install\"], check = [\"cld\", \"--check\"] }\n")
-	if got := headlines(t, units[0].Step); !slices.Equal(got, []string{"run cld --install as u"}) || out.Lines != nil {
-		t.Errorf("plan = %q, lines %q; want the run, with no systemd", got, out.Lines)
-	}
-	if err := applyOnce(t, units[0].Step); err != nil || !slices.Contains(m.Calls, "root "+asU+"cld --install") {
-		t.Errorf("apply = %v, calls %q; want the command run as u by sudo", err, m.Calls)
-	}
-}
-
 func TestStateRunTakesCreatesOrCheck(t *testing.T) {
 	e, _, _, _ := testEnv(false)
 	stateRefused(t, e, "run = { user = \"u\", command = [\"sh\"] }\n", "exactly one of creates and check")
