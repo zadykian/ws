@@ -36,10 +36,19 @@ func (cldInstall) String() string {
 	return "would install cld into ~/.local/bin with the install.sh of its latest release"
 }
 
-// cldUpdate has cld replace itself where a newer release is out.
-type cldUpdate struct{ c *Cld }
+// cldUpdate has cld replace itself where a newer release is out. Its text names both releases
+// where the plan read the latest.
+type cldUpdate struct {
+	c    *Cld
+	text string
+}
 
-func (cldUpdate) String() string { return "would run cld update" }
+func (u cldUpdate) String() string {
+	if u.text != "" {
+		return u.text
+	}
+	return "would run cld update"
+}
 
 func (cldInstall) Kind() step.ChangeKind { return step.Install }
 func (cldUpdate) Kind() step.ChangeKind  { return step.Install }
@@ -136,7 +145,7 @@ func (c *Cld) update(ctx context.Context) ([]step.Change, bool) {
 		return []step.Change{cldInstall{c}}, c.Check
 	}
 	if !c.Check {
-		return []step.Change{cldUpdate{c}}, false
+		return []step.Change{cldUpdate{c: c}}, false
 	}
 	out, err = c.M.Run(ctx, "curl", "-fsSIL", "--retry", "3", "-o", "/dev/null", "-w", "%{url_effective}",
 		cldReleases+"/latest")
@@ -151,5 +160,5 @@ func (c *Cld) update(ctx context.Context) ([]step.Change, bool) {
 	if !cldRelease.MatchString(latest) || !cldOlder(have, latest) {
 		return nil, false
 	}
-	return []step.Change{resource.Remark("would run cld update: cld " + have + ", the latest " + latest)}, true
+	return []step.Change{cldUpdate{c, "would run cld update: cld " + have + ", the latest " + latest}}, true
 }

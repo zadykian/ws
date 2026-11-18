@@ -40,6 +40,8 @@ Usage:
 
 Available Commands:
   apply       set the Mac up from values.yml and a server's file
+  cld         install cld into ~/.local/bin, and keep it at its latest release
+  keys        copy the .pub of each key of Secretive's that values.yml names into /etc/ws
   remove      remove a server from the Mac
   resolver    send DOMAIN's names to the nameservers, or drop it
   servers     list the Mac's servers with their target, slot and tunnel
@@ -62,6 +64,34 @@ Flags:
       --check          print each change and make none
   -h, --help           help for apply
       --only strings   run the named steps alone, as a list or by repeating the flag
+
+Global Flags:
+      --server string   the server to act on, which may be left out where there is one
+== ws client macos cld
+It installs cld with the install.sh of its latest release where it is missing, and runs cld update where a newer release is out. A cld built from a clone is left as it is. A failed install or update, or a latest release that it cannot read, is a warning.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws client macos cld [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for cld
+
+Global Flags:
+      --server string   the server to act on, which may be left out where there is one
+== ws client macos keys
+ssh and git name a key that Secretive's agent holds by its .pub, which macOS keeps ws from reading in Secretive's container. So ws keeps a copy, from the agent, in /etc/ws/secretive. A key in a file has none.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws client macos keys [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for keys
 
 Global Flags:
       --server string   the server to act on, which may be left out where there is one
