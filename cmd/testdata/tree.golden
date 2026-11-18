@@ -239,6 +239,7 @@ Usage:
   ws client macos tunnel [command]
 
 Available Commands:
+  conf        write each server's tunnel.conf, and take a gone server's daemon away
   key         make the Mac's key where none is, and print the public key, as root
   loaded      succeed where launchd has the tunnel's daemon loaded
   routes      route the networks into the tunnel, or drop NAME
@@ -252,8 +253,22 @@ Global Flags:
       --server string   the server to act on, which may be left out where there is one
 
 Use "ws client macos tunnel [command] --help" for more information about a command.
+== ws client macos tunnel conf
+Each server with WS_PUBLIC_KEY gets its directory under /etc/ws/tunnel, routes.d and tunnel.conf, written through sudo and readable by all. A daemon whose server has no directory beside values.yml is booted out, its files go, and the daemons left read their files again.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws client macos tunnel conf [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for conf
+
+Global Flags:
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos tunnel key
-The private key stays in root's file, which only root can write, so setup runs this through sudo.
+The private key stays in root's file, which only root can write, so the key's unit runs this as root. /etc/ws/tunnel.pub holds the public key, readable by all.
 
 Usage:
   ws client macos tunnel key [flags]

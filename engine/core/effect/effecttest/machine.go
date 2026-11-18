@@ -34,6 +34,9 @@ type Machine struct {
 
 	// Packages is dpkg's database. A non-nil table answers dpkg-query once Results holds no line.
 	Packages Packages
+	// After holds what a call leaves: once the command line runs, its entries replace those of
+	// Results, as a command changes what the next one reads.
+	After map[string]map[string]Result
 }
 
 // NewMachine returns an empty Machine.

@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io/fs"
+	"maps"
 	"sort"
 	"strconv"
 	"strings"
@@ -107,6 +108,7 @@ func (m *Machine) run(kind, name string, args []string) ([]byte, error) {
 	if !ok {
 		r, ok = m.dpkgQuery(name, args)
 	}
+	maps.Copy(m.Results, m.After[line])
 	if !ok && kind == "root" && m.tree(name, args) {
 		return nil, nil
 	}

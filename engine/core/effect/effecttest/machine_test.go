@@ -32,6 +32,20 @@ func TestMachinePassLines(t *testing.T) {
 	}
 }
 
+func TestMachineAfterChangesTheNextResult(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["launchctl print x"], m.Results["launchctl bootout x"] = effecttest.Result{Out: []byte("x")}, effecttest.Result{}
+	m.After = map[string]map[string]effecttest.Result{"launchctl bootout x": {"launchctl print x": {Out: []byte("gone")}}}
+	ctx := context.Background()
+	before, _ := m.Run(ctx, "launchctl", "print", "x")
+	if _, err := m.RunRoot(ctx, "launchctl", "bootout", "x"); err != nil {
+		t.Fatal(err)
+	}
+	if after, _ := m.Run(ctx, "launchctl", "print", "x"); string(before) != "x" || string(after) != "gone" {
+		t.Errorf("print = %q, then %q; want x, then gone", before, after)
+	}
+}
+
 func TestMachineRootMkdirRecordsTheDirectory(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Dirs["/etc/old"] = 0o700
