@@ -11,6 +11,7 @@ import (
 	"net/netip"
 	"path"
 	"strings"
+	"unicode"
 
 	"go.yaml.in/yaml/v3"
 
@@ -140,10 +141,14 @@ func (v *Values) underHome() error {
 }
 
 // signingPub refuses a signing key that is no .pub's path: ws finds the private key by cutting the
-// suffix, as the Mac's check does.
+// suffix, as the Mac's check does. It refuses a quote, a backslash and a control character too,
+// as git's unit writes the path between quotes in /etc/ws/gitconfig, with no escape.
 func (v *Values) signingPub() error {
 	if !strings.HasSuffix(v.GitSigningPubKey, ".pub") {
 		return fmt.Errorf("WS_GIT_SIGNING_PUB_KEY: %s is not a .pub's path", v.GitSigningPubKey)
+	}
+	if strings.ContainsFunc(v.GitSigningPubKey, func(r rune) bool { return r == '"' || r == '\\' || unicode.IsControl(r) }) {
+		return fmt.Errorf("WS_GIT_SIGNING_PUB_KEY: %q holds a quote, a backslash or a control character", v.GitSigningPubKey)
 	}
 	return nil
 }

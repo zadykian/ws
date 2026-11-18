@@ -40,6 +40,8 @@ func pure() template.FuncMap {
 			b, err := json.Marshal(v)
 			return string(b), err
 		},
+		// trim_suffix is s without suffix, as a private key's path is its .pub's without .pub.
+		"trim_suffix": strings.TrimSuffix,
 	}
 }
 
@@ -73,6 +75,8 @@ func facts(ctx context.Context, e Env) template.FuncMap {
 	fm["kernel_release"] = func() (string, error) { return kernelRelease(ctx, e.M) }
 	// root_file is a file's text, read as root and trimmed, or "" where the file is missing.
 	fm["root_file"] = func(path string) (string, error) { return rootFile(e.M, path) }
+	// ssh_pub is a user's SSH public key at a path below the home, else "" (pubkey.go).
+	fm["ssh_pub"] = func(user, p string) (string, error) { return sshPub(ctx, e, user, p) }
 	return fm
 }
 

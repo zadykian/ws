@@ -33,4 +33,5 @@ reboot = { module = "name", package = "name", hint = "…" }             # notes
   upstream version, without the epoch or the revision, it warns that a reboot is due, with `hint`
   after. It suits a module that loads at boot alone, as a display's driver.
 - Without booted systemd, `linger`, `http`, `ufw`, `addr` and `reboot` skip, and each says so. So
-  does `run` on Linux, where it needs the user's session; macOS has no systemd, and runs it.
+  does `run` on Linux, where it needs the user's session; macOS has no systemd, and runs it. A
+  `run` with `unbooted = true` needs no session, and runs there too, without the session's env.

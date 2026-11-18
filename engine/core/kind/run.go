@@ -28,8 +28,8 @@ func (c runCommand) Apply(ctx context.Context) error { return c.r.exec(ctx, true
 // exec runs a command line as the run's user, with the system's PATH. With pass set, it passes the
 // output to ws's standard error, and otherwise drops it, as a check's exit status alone counts.
 // Linux switches to the user by runuser, through the account, and gives it systemd's session,
-// which systemctl --user needs. macOS has neither: there root's sudo switches, as ws runs as the
-// user.
+// which systemctl --user needs, where systemd runs. macOS has neither: there root's sudo switches,
+// as ws runs as the user.
 func (r runAs) exec(ctx context.Context, pass bool, line []string) error {
 	if r.sys == MacOS {
 		args := slices.Concat([]string{"-u", r.s.User, "-H", "env", systemPath}, line)
@@ -47,7 +47,11 @@ func (r runAs) exec(ctx context.Context, pass bool, line []string) error {
 			return err
 		}
 	}
-	args := slices.Concat(systemd.SessionEnv(a.UID), []string{systemPath}, line)
+	var session []string
+	if systemd.Booted(r.m) {
+		session = systemd.SessionEnv(a.UID)
+	}
+	args := slices.Concat(session, []string{systemPath}, line)
 	if pass {
 		return a.Pass(ctx, r.m, "env", args...)
 	}
@@ -58,7 +62,7 @@ func (r runAs) exec(ctx context.Context, pass bool, line []string) error {
 // Plan plans the command where a path of Creates is missing, or where Check fails. A check that
 // cannot run fails too, and the command runs: the check's command is the run's to make work.
 func (r runAs) Plan(ctx context.Context) ([]resource.Change, error) {
-	if r.sys == Linux && !systemd.Booted(r.m) {
+	if r.sys == Linux && !r.s.Unbooted && !systemd.Booted(r.m) {
 		r.out.Say("%s: skipped, systemd is not running", runCommand{r})
 		return nil, nil
 	}

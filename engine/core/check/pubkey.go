@@ -1,4 +1,4 @@
-package sshcfg
+package check
 
 import (
 	"errors"

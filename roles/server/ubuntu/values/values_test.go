@@ -123,6 +123,18 @@ func TestParseRefuses(t *testing.T) {
 	}
 }
 
+func TestSigningPubRefusesAQuoteABackslashOrAControl(t *testing.T) {
+	for _, key := range []string{`/home/zadykian/a\"b.pub`, `/home/zadykian/a\\b.pub`, `/home/zadykian/a\tb.pub`} {
+		if _, err := Parse([]byte("WS_GIT_SIGNING_PUB_KEY: \"" + key + "\"\n")); err == nil ||
+			!strings.Contains(err.Error(), "a quote, a backslash or a control character") {
+			t.Errorf("%s: %v", key, err)
+		}
+	}
+	if _, err := Parse([]byte("WS_GIT_SIGNING_PUB_KEY: /home/zadykian/.ssh/a b.pub\n")); err != nil {
+		t.Errorf("a space: %v", err)
+	}
+}
+
 func TestParseRefusesASigningKeyThatIsNoPub(t *testing.T) {
 	_, err := Parse([]byte("WS_GIT_SIGNING_PUB_KEY: /home/zadykian/.ssh/k\n"))
 	if err == nil || !strings.Contains(err.Error(), ".pub") {

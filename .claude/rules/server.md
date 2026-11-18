@@ -37,7 +37,7 @@ steps, and each role's README says what it sets up.
   the commands and the root check ([store.go](../../roles/server/ubuntu/secrets/store.go)).
 - The roles set the machine up for `WS_USER`, `zadykian` by default, in `WS_HOME`. A step run as
   `WS_USER` sets `HOME` and starts in it: root needs no sudo, a container has none, and `HOME` would
-  otherwise be the caller's ([claude's install](../../roles/server/ubuntu/claude/install.go)).
+  otherwise be the caller's ([claude's units](../../roles/server/ubuntu/claude/units.toml)).
 - Root reaches a file under `WS_HOME` through the account (`Account.File`, `Account.Dir`,
   `Account.Absent`, `User.ReadHome`), or the step acts as `WS_USER`, as claude's does. The user owns
   the home and could link a file elsewhere ([Links under the home](../../roles/server/ubuntu/security/README.md#links-under-the-home)).
@@ -77,7 +77,7 @@ steps, and each role's README says what it sets up.
   `Written by github.com/zadykian/ws`, are `file.Mark`, and `file.Ours` tests a first line for them.
   Each run replaces a change made to it by hand ([shell](../../roles/server/ubuntu/shell/README.md), [git](../../roles/server/ubuntu/git/README.md)).
 - A tool that updates itself, such as claude or rustup, is installed only where missing
-  ([claude's install](../../roles/server/ubuntu/claude/install.go)).
+  ([claude's units](../../roles/server/ubuntu/claude/units.toml)).
 - A role given the secrets of `ws server ubuntu apply --secrets`, changes nothing where they are
   absent. With them, the file is the whole truth: a run removes what it lacks, such as a git token.
   So a run without them, as CI's, keeps what a run with them made

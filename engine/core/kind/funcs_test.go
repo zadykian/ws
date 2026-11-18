@@ -132,3 +132,10 @@ func TestHasPrefix(t *testing.T) {
 		t.Errorf("fill = %q, %v; want yes", got, err)
 	}
 }
+
+func TestTrimSuffix(t *testing.T) {
+	got, err := fill("t", []byte(`{{ trim_suffix "/h/.ssh/k.pub" ".pub" }} {{ trim_suffix "/h/k" ".pub" }}`), pure(), nil)
+	if want := "/h/.ssh/k /h/k"; err != nil || string(got) != want {
+		t.Errorf("fill = %q, %v; want %q", got, err, want)
+	}
+}

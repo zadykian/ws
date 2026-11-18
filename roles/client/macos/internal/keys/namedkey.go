@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/fs"
 
+	"github.com/zadykian/ws/engine/core/check"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/roles/client/macos/values"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
@@ -41,11 +42,11 @@ func (u KeyUse) named(c values.Conf) (pub, agent string) {
 // names the variable of values.yml that names the file. A nil err passes.
 func (u KeyUse) refused(file string, err error) error {
 	name := keyUses[u].name
-	var typ sshcfg.TypeError
+	var typ check.TypeError
 	switch {
 	case err == nil:
 		return nil
-	case errors.Is(err, sshcfg.ErrCertificate):
+	case errors.Is(err, check.ErrCertificate):
 		return fmt.Errorf("%s %w: name its key's own .pub in values.yml's %s", file, err, name)
 	case errors.As(err, &typ):
 		return fmt.Errorf("%s %w: name the .pub of a P-256 or ed25519 key in values.yml's %s", file, err, name)
@@ -55,11 +56,11 @@ func (u KeyUse) refused(file string, err error) error {
 
 // NamedKey is the key that values.yml names for a use, read and checked.
 type NamedKey struct {
-	Pub   string           // as values.yml names it, ~/ kept, or ws's copy for a key the agent holds
-	File  string           // Pub with ~/ the home
-	Key   sshcfg.PublicKey // its type and base64
-	Text  string           // what the .pub holds, or what ws's copy will
-	Agent string           // the socket ssh asks: WS_IDENTITY_AGENT, else Secretive's for its key
+	Pub   string          // as values.yml names it, ~/ kept, or ws's copy for a key the agent holds
+	File  string          // Pub with ~/ the home
+	Key   check.PublicKey // its type and base64
+	Text  string          // what the .pub holds, or what ws's copy will
+	Agent string          // the socket ssh asks: WS_IDENTITY_AGENT, else Secretive's for its key
 }
 
 // ReadKey reads the key that values.yml names for u. It asks Secretive's agent where values.yml names
@@ -81,7 +82,7 @@ func ReadKey(ctx context.Context, m effect.Machine, c values.Conf, home string, 
 			k.Pub, k.Text = a.Pub(), a.Line+"\n"
 			k.File = sshcfg.Expand(k.Pub, home)
 			var err error
-			k.Key, err = sshcfg.ParsePub(a.Line)
+			k.Key, err = check.ParsePub(a.Line)
 			return k, u.refused(k.File, err)
 		}
 	}
@@ -96,7 +97,7 @@ func ReadKey(ctx context.Context, m effect.Machine, c values.Conf, home string, 
 	case err != nil:
 		return k, fmt.Errorf("cannot read %s: make it readable, or name another in values.yml's %s", file, name)
 	}
-	if k.Key, err = sshcfg.ParsePub(string(text)); err != nil {
+	if k.Key, err = check.ParsePub(string(text)); err != nil {
 		return k, u.refused(file, err)
 	}
 	if _, err := m.Run(ctx, "ssh-keygen", "-l", "-f", file); err != nil {
