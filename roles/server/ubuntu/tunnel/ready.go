@@ -5,26 +5,12 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
-	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
-// ready shows the server's public key, which the Mac's end of the tunnel needs, and checks that
-// wg0 holds it. networkd creates wg0 a moment after the reload, so the check waits for it. It
-// checks nothing without systemd booted, as in CI's container. A dry run that finds no key says
-// that a real run makes it.
-type ready struct {
-	m     effect.Machine
-	out   effect.Out
-	tries int
-	pause time.Duration
-	sleep func(time.Duration)
-}
-
+// waitForKey waits for wg0 to hold the server's key, and says its public key, which the Mac's end
+// of the tunnel needs.
 type waitForKey struct {
-	r      ready
+	w      WG0
 	public string
 }
 
@@ -32,12 +18,16 @@ func (c waitForKey) String() string { return "wait for wg0 to hold the server's 
 
 // Apply waits, and says the public key once wg0 holds it, as a run that made the key showed none.
 func (c waitForKey) Apply(ctx context.Context) error {
-	for i := range c.r.tries {
+	sleep := c.w.Sleep
+	if sleep == nil {
+		sleep = time.Sleep
+	}
+	for i := range c.w.Tries {
 		if i > 0 {
-			c.r.sleep(c.r.pause)
+			sleep(c.w.Pause)
 		}
-		if c.r.holds(ctx, c.public) {
-			c.r.out.Say("wg0 holds ws's WireGuard public key, for WS_PUBLIC_KEY in a server's values.yml: %s", c.public)
+		if c.holds(ctx) {
+			c.w.Out.Say("wg0 holds ws's WireGuard public key, for WS_PUBLIC_KEY in a server's values.yml: %s", c.public)
 			return nil
 		}
 	}
@@ -45,24 +35,7 @@ func (c waitForKey) Apply(ctx context.Context) error {
 }
 
 // holds reports whether wg0 exists and holds the public key.
-func (r ready) holds(ctx context.Context, public string) bool {
-	out, err := r.m.RunRoot(ctx, "wg", "show", "wg0", "public-key")
-	return err == nil && strings.TrimSpace(string(out)) == public
-}
-
-// Plan says the public key, and plans the wait where wg0 doesn't hold it yet.
-func (r ready) Plan(ctx context.Context) ([]resource.Change, error) {
-	public, hasKey, err := serverPublicKey(r.m)
-	if err != nil {
-		return nil, err
-	}
-	if !hasKey {
-		r.out.Say("The server has no WireGuard key yet: a real run makes it and shows its public key.")
-		return nil, nil
-	}
-	r.out.Say("ws's WireGuard public key, for WS_PUBLIC_KEY in a server's values.yml: %s", public)
-	if !systemd.Booted(r.m) || r.holds(ctx, public) {
-		return nil, nil
-	}
-	return []resource.Change{waitForKey{r, public}}, nil
+func (c waitForKey) holds(ctx context.Context) bool {
+	out, err := c.w.M.RunRoot(ctx, "wg", "show", "wg0", "public-key")
+	return err == nil && strings.TrimSpace(string(out)) == c.public
 }

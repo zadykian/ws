@@ -9,12 +9,12 @@ Name=wg0
 Kind=wireguard
 
 [WireGuard]
-PrivateKeyFile={{.KeyFile}}
-ListenPort={{.Port}}
-{{- range .Peers}}
+PrivateKeyFile=/etc/systemd/network/60-wg0.key
+ListenPort={{ .Tunnel.Port }}
+{{- range $peer := .Tunnel.Peers }}{{ with $key := root_file (printf "/etc/wireguard/%s.pub" $peer.Name) }}
 
-# {{.Name}}
+# {{ $peer.Name }}
 [WireGuardPeer]
-PublicKey={{.Key}}
-AllowedIPs={{.Address}}/32
-{{- end}}
+PublicKey={{ $key }}
+AllowedIPs={{ $peer.Address }}/32
+{{- end }}{{ end }}

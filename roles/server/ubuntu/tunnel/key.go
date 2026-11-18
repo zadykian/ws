@@ -14,6 +14,9 @@ import (
 	"github.com/zadykian/ws/roles/internal/wgkey"
 )
 
+// keyFile is the server's private key, which networkd reads for wg0.
+const keyFile = "/etc/systemd/network/60-wg0.key"
+
 // keyMode is the key's mode: networkd reads it as the user systemd-network, so the file is
 // root:systemd-network 0640, as systemd.netdev(5) asks. A credential in /etc/credstore, which
 // could be 0600, would be read only as networkd starts, so the run that made it would restart

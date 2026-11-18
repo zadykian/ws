@@ -1,3 +1,6 @@
+// Package tunnel holds what Go keeps of the tunnel role, as the commands that its units run under
+// ws server ubuntu tunnel: check, key and wg0. The role sets up wg0, the server's end of a
+// WireGuard tunnel for the Mac. See roles/server/ubuntu/tunnel/README.md.
 package tunnel
 
 import (
@@ -6,7 +9,6 @@ import (
 	"fmt"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -18,7 +20,7 @@ func Check(ctx context.Context, m effect.Machine, u effect.Units, out effect.Out
 	if err := networkdRuns(ctx, m, u); err != nil {
 		return err
 	}
-	if _, err := peerKeys(m, out, t); err != nil {
+	if err := checkPeers(m, out, t); err != nil {
 		return err
 	}
 	public, hasKey, err := serverPublicKey(m)
@@ -48,14 +50,4 @@ func networkdRuns(ctx context.Context, m effect.Machine, u effect.Units) error {
 		return errors.New("systemd-networkd is not running, so nothing would create wg0: the role expects networkd, as on Ubuntu Server, not NetworkManager, as on Ubuntu Desktop")
 	}
 	return nil
-}
-
-// networkdCheck is networkdRuns as the role's step.
-type networkdCheck struct {
-	m effect.Machine
-	u effect.Units
-}
-
-func (c networkdCheck) Plan(ctx context.Context) ([]resource.Change, error) {
-	return nil, networkdRuns(ctx, c.m, c.u)
 }
