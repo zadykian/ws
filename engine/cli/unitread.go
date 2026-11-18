@@ -56,7 +56,8 @@ func unitRead(p Env, s UnitSide) *cobra.Command {
 		}
 		if len(due) > 0 {
 			for _, name := range names {
-				state[name] = "fails: mise's plan lacks " + strings.Join(due, ", ") + ": add each to [bootstrap.packages]"
+				state[name] = "fails: mise's plan lacks " + strings.Join(due, ", ") +
+					": add each to [bootstrap.packages], or run mise in " + r.runDir()
 			}
 		}
 		var sb strings.Builder

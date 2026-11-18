@@ -255,8 +255,10 @@ func TestUnitReadWholeNamesALackingLine(t *testing.T) {
 		"r/units.toml": fileUnit("a", "/etc/a", "") + fileUnit("b", "/etc/b", "") + fileUnit("c", "/etc/c", ""),
 		"r/a":          "1\n", "r/b": "2\n", "r/c": "3\n",
 	})
+	// The run directory is the specs' parent, which the failure names too.
+	hint := ", or run mise in " + filepath.Dir(e.Getenv("WS_UNITS")) + "\n"
 	status, stdout, stderr := runUnit(e, "read", "--whole", "file/a")
-	want := "file/a\tfails: mise's plan lacks ws:file/b, ws:file/c: add each to [bootstrap.packages]\n"
+	want := "file/a\tfails: mise's plan lacks ws:file/b, ws:file/c: add each to [bootstrap.packages]" + hint
 	if status != 0 || stdout != want {
 		t.Errorf("status = %d, stdout = %q, stderr = %q; want %q", status, stdout, stderr, want)
 	}
@@ -265,7 +267,7 @@ func TestUnitReadWholeNamesALackingLine(t *testing.T) {
 		t.Fatalf("write b: status = %d, stderr = %q", status, stderr)
 	}
 	status, stdout, _ = runUnit(e, "read", "--whole", "file/a")
-	if want := "file/a\tfails: mise's plan lacks ws:file/c: add each to [bootstrap.packages]\n"; status != 0 || stdout != want {
+	if want := "file/a\tfails: mise's plan lacks ws:file/c: add each to [bootstrap.packages]" + hint; status != 0 || stdout != want {
 		t.Errorf("with b in sync: status = %d, stdout = %q; want %q", status, stdout, want)
 	}
 	if status, stdout, _ := runUnit(e, "read", "--whole", "file/c", "file/b", "file/a"); status != 0 ||

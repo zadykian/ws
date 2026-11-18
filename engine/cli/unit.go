@@ -49,12 +49,19 @@ type UnitSide struct {
 	User func(data any) string
 }
 
-// unitRun is one call of ws unit: the units of the specs, in the order they run, and ws's lines,
-// which go to stderr.
+// unitRun is one call of ws unit: the units of the specs, in the order they run, ws's lines,
+// which go to stderr, and the specs' directory.
 type unitRun struct {
 	all  []kind.Unit
 	term *effect.Terminal
 	out  engine.Lines
+	dir  string
+}
+
+// runDir is the directory mise runs in for the side: the parent of the specs, whose mise/conf.d
+// links them. A run elsewhere loads none of their lines, so a failure for a line names it.
+func (r unitRun) runDir() string {
+	return filepath.Dir(r.dir)
 }
 
 // Unit returns ws unit: the units of ws's kinds, KIND/NAME, which a tool such as mise plans and
@@ -107,6 +114,7 @@ func loadUnits(c *cobra.Command, p Env, s UnitSide) (unitRun, error) {
 	if !filepath.IsAbs(dir) {
 		dir = filepath.Join(p.Pwd, dir)
 	}
+	r.dir = dir
 	specs := os.DirFS(dir)
 	// fs.Glob passes over a directory it cannot read, which would give no unit and no error.
 	if _, err := fs.Stat(specs, "."); err != nil {
