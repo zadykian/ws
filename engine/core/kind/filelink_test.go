@@ -92,6 +92,7 @@ func TestFileLinkTakesNoContent(t *testing.T) {
 		"ours = true\n":                  alone,
 		"backup = true\n":                alone,
 		"absent_when_empty = true\n":     alone,
+		"seed = true\n":                  alone,
 		"owner = \"u\"\n":                "a link is root's",
 		"service = \"x.service\"\n":      "a link takes no service",
 		"user_service = \"x.service\"\n": "a link takes no service",

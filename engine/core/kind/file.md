@@ -26,6 +26,7 @@ backup = false              # keep the old file beside the new one, as PATH.PID.
 ours = false                # refuse a file there without ws's '# Written by' line at its top
 mark = "#"                  # the comment sign before ws's mark, for ours: "//" for JSON
 keep_foreign = false        # with ours, leave a file without the mark, and warn
+seed = false                # write the file where nothing is there, and never read it after
 absent_when_empty = false   # remove the file where its template gives white space alone
 link = "/abs/target"        # or a link to the target, root's, in place of a file
 after = "KIND/NAME"
@@ -67,6 +68,9 @@ after = "KIND/NAME"
   before those words. An account's file is read below its home through no link.
 - With `keep_foreign`, such a file is left, as the user's own, and the plan warns and changes
   nothing. Once the user removes it, the next run writes ws's.
+- A `seed` file is written where nothing is at its path, a link included, and left to its owner
+  after, as a tool writes it from its UI. It takes no `line`, `absent`, `absent_when_empty`,
+  `backup`, `ours` or `check`.
 - A `secret` file's template alone may call `secrets`, the side's secrets, as `(secrets).Env`.
   On a machine with no secrets file, as in CI, the unit leaves the file and says so. `exports MAP`
   gives a line `export NAME=VALUE` a name, sorted, each value quoted for the shell. A name that the

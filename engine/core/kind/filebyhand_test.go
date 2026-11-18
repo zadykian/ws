@@ -143,3 +143,50 @@ func TestForeignFailsWithoutKeep(t *testing.T) {
 		t.Errorf("file = %q, want it left", m.Files[p])
 	}
 }
+
+// seedSpec is Zed's settings.json of u's, which ws writes where missing alone.
+const seedSpec = "[file.s]\npath = \"/home/u/.config/zed/settings.json\"\nowner = \"u\"\nsource = \"s\"\nseed = true\n"
+
+func TestSeedWritesWhereMissing(t *testing.T) {
+	e, m, _, _ := testEnv(false)
+	withAccount(m)
+	units := loadOne(t, e, seedSpec, map[string]string{"s": "{}\n"})
+	if err := run(t, e, units); err != nil {
+		t.Fatal(err)
+	}
+	p := "/home/u/.config/zed/settings.json"
+	if string(m.Files[p]) != "{}\n" || m.Owners[p] != [2]int{1001, 1001} {
+		t.Errorf("file %q, owner %v; want the seed, u's", m.Files[p], m.Owners[p])
+	}
+	// The home's missing directories are made on the way, the account's, at 0755.
+	for _, d := range []string{"/home/u/.config", "/home/u/.config/zed"} {
+		if m.Dirs[d] != 0o755 || m.Owners[d] != [2]int{1001, 1001} {
+			t.Errorf("%s: mode %o, owner %v; want 755, u's", d, m.Dirs[d], m.Owners[d])
+		}
+	}
+	if got := headlines(t, units[0].Step); got != nil {
+		t.Errorf("second plan = %q, want none", got)
+	}
+}
+
+func TestSeedLeavesAnEditedFile(t *testing.T) {
+	e, m, _, _ := testEnv(false)
+	withAccount(m)
+	p := "/home/u/.config/zed/settings.json"
+	m.Files[p], m.Modes[p] = []byte("{ \"theme\": \"mine\" }\n"), 0o600
+	units := loadOne(t, e, seedSpec, map[string]string{"s": "{}\n"})
+	if err := run(t, e, units); err != nil || string(m.Files[p]) != "{ \"theme\": \"mine\" }\n" || m.Modes[p] != 0o600 {
+		t.Errorf("run = %v, file %q, mode %o; want it left as it is", err, m.Files[p], m.Modes[p])
+	}
+	delete(m.Files, p)
+	m.Links[p] = "/home/u/dots/zed.json"
+	if got := headlines(t, units[0].Step); got != nil {
+		t.Errorf("plan over a link = %q, want none", got)
+	}
+	for _, extra := range []string{"backup = true\n", "ours = true\n", "absent_when_empty = true\n", "check = [\"x\"]\n"} {
+		_, err := Load(e, tree(map[string]string{"r/units.toml": seedSpec + extra, "r/s": ""}))
+		if err == nil || !strings.Contains(err.Error(), "seed takes a file that ws writes once") {
+			t.Errorf("load with %q = %v, want seed refused", extra, err)
+		}
+	}
+}
