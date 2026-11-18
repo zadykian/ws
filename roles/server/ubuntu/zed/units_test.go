@@ -107,7 +107,7 @@ func TestZedSettingsNameTheToolPathsUnderTheHome(t *testing.T) {
 			t.Fatal(err)
 		}
 		got := string(m.Files[home+"/.config/zed/settings.json"])
-		for _, want := range []string{devtools.Gopls(home), devtools.Roslyn(home), devtools.Dlv(home)} {
+		for _, want := range []string{devtools.GoplsPath, devtools.Roslyn(home), devtools.DlvPath} {
 			if !strings.Contains(got, `"`+want+`"`) {
 				t.Errorf("%s: settings lack %q", user, want)
 			}

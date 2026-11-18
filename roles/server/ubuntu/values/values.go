@@ -24,7 +24,6 @@ type Values struct {
 	Shared   `yaml:",inline"`
 	Base     Base     `yaml:",inline"`
 	Claude   Claude   `yaml:",inline"`
-	Devtools Devtools `yaml:",inline"`
 	Docker   Docker   `yaml:",inline"`
 	Fans     Fans     `yaml:",inline"`
 	Ikeward  Ikeward  `yaml:",inline"`

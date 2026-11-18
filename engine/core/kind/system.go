@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 // System is the operating system that a side's units run on, as the tools that find a home differ.
@@ -45,4 +46,18 @@ func (s System) home(ctx context.Context, m effect.Machine, name string) (string
 		return "", fmt.Errorf("find the home of %s: %q names no home", name, out)
 	}
 	return path.Clean(dir), nil
+}
+
+// ownerOf is the account of name, root's for an empty one. Another account's Home is its home, as
+// the system's database of accounts gives it.
+func ownerOf(ctx context.Context, e Env, name string) (account.Account, error) {
+	if name == "" || name == "root" {
+		return account.Account{User: account.User{Name: "root"}}, nil
+	}
+	a, err := account.User{Name: name}.Lookup(ctx, e.M)
+	if err != nil {
+		return account.Account{}, err
+	}
+	a.Home, err = e.System.home(ctx, e.M, name)
+	return a, err
 }

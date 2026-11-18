@@ -32,12 +32,6 @@ type Marketplace struct {
 	Source string `yaml:"source,omitempty"`
 }
 
-// Devtools is roles/devtools' keys.
-type Devtools struct {
-	// ChromiumLibraries are the apt packages that a headless Chromium needs.
-	ChromiumLibraries []string `yaml:"WS_DEVTOOLS_CHROMIUM_LIBRARIES"`
-}
-
 // Docker is roles/docker's keys. A string left empty, and the quota and memory limits, follow
 // the machine: memory, CPUs and the disk of Docker's root.
 type Docker struct {

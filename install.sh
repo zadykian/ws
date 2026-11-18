@@ -199,11 +199,12 @@ checkout() {
 # bootstrap runs mise bootstrap on the tree in /opt/ws: the release's, cloned there, or the one
 # that stands there where WS_IN_PLACE is 1. The tree is trusted for this run, as the units' own
 # mise calls inherit it, and for the runs by hand after, by mise trust. mise reads no stdin, as
-# the piped script is on it.
+# the piped script is on it. mise puts the tools under the data directory, which is root's own
+# /root/.local/share/mise by default: /usr/local/share/mise lets the account run them.
 bootstrap() {
     guard
-    MISE_TRUSTED_CONFIG_PATHS=/opt/ws
-    export MISE_TRUSTED_CONFIG_PATHS
+    MISE_TRUSTED_CONFIG_PATHS=/opt/ws MISE_DATA_DIR=/usr/local/share/mise
+    export MISE_TRUSTED_CONFIG_PATHS MISE_DATA_DIR
     if [ "${WS_IN_PLACE:-}" = 1 ]; then
         [ -f /opt/ws/mise.toml ] || die "WS_IN_PLACE is set, and /opt/ws holds no mise.toml"
         /usr/local/bin/mise -C /opt/ws bootstrap </dev/null

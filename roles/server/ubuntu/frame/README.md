@@ -11,6 +11,7 @@ Go.
 | --- | --- |
 | [`mise.toml`](../../../../mise.toml) | Both sides': mise's settings and the pin of ws, a release, for three platforms. |
 | [`mise.lock`](../../../../mise.lock) | The release's SHA-256 for each platform, which mise checks as it installs ws. |
+| [`mise/mise.server.lock`](../../../../mise/mise.server.lock) | The roles' tools: each download's url and SHA-256 for each platform ([devtools](../devtools/README.md#the-tools)). |
 | [`mise.server.toml`](../../../../mise.server.toml) | The server's: the plugin, dpkg's options, `/etc/ws` and the check against a silent skip. |
 | [`plugins/ws`](../../../../plugins/ws) | The plugin: a hook runs one `ws unit read` or `ws unit write` ([ws unit](../../../../engine/core/kind/README.md#ws-unit)). |
 | `units.toml`, `mise.server.toml` here | The role `frame`: the unit that keeps `/usr/local/bin/ws`. |
@@ -92,10 +93,13 @@ holds it.
 
 ## ws at a fixed path
 
-mise installs ws under root's data directory, by version, which neither a unit of systemd nor a
-person can name. The unit `state/ws-binary` copies the pinned binary to `/usr/local/bin/ws` where
-the two differ, under a temporary name first. As a `run` state, it skips without booted systemd,
-as in CI's container. A unit that runs `/usr/local/bin/ws` waits on it by `after`.
+mise installs ws under its data directory, by version, which neither a unit of systemd nor a
+person can name. Every run as root exports `MISE_DATA_DIR=/usr/local/share/mise`, as `install.sh`
+does, so that the account reaches the tools a role pins
+([devtools](../devtools/README.md#the-tools)). The unit `state/ws-binary` copies the pinned binary
+to `/usr/local/bin/ws` where the two differ, under a temporary name first. As a `run` state, it
+skips without booted systemd, as in CI's container. A unit that runs `/usr/local/bin/ws` waits on
+it by `after`.
 
 ## The check against a silent skip
 

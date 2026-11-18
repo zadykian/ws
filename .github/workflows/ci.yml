@@ -53,13 +53,12 @@ jobs:
   # install.sh's bootstrap and ws server ubuntu apply, as on a new machine. A container stands in
   # for a booted system, so the parts that need a booted systemd skip. Each runs twice. The second
   # apply must change nothing, and so must mise's plan after it. In a stack, it runs on the top pull
-  # request alone, which holds every change below it.
-  # So do mac.yml's and mac-cld.yml's jobs. Run on each of a stack of 20, these
-  # jobs kept its pull requests waiting for runners past 50 minutes. A stack's pull requests open as
-  # drafts, before gh stack link joins them, so a draft's opened event has no stack and these
-  # jobs skip it. No event follows the link: ready_for_review, once done, is the first to
-  # name the stack. Outside a stack, and on a push, stack is null, and null == null holds.
-  # GitHub's stack metadata:
+  # request alone, which holds every change below it. So do mac.yml's and mac-cld.yml's jobs. Run on
+  # each of a stack of 20, these jobs kept its pull requests waiting for runners past 50 minutes. A
+  # stack's pull requests open as drafts, before gh stack link joins them, so a draft's opened event
+  # has no stack and these jobs skip it. No event follows the link: ready_for_review, once done, is
+  # the first to name the stack. Outside a stack, and on a push, stack is null, and null == null
+  # holds. GitHub's stack metadata:
   # https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/optimizing-ci-for-stacked-pull-requests
   playbook:
     name: playbook (${{ matrix.user }})
@@ -88,7 +87,7 @@ jobs:
       HOME: /root
       WS_USER: ${{ matrix.user }}
       OUTBOUND: ${{ matrix.outbound }}
-      # A tool installs only as a lock holds it, here mise.local.lock: bootstrap has no --locked.
+      # bootstrap has no --locked: a tool installs only as a lock holds it, where install.sh does.
       MISE_LOCKED: "1"
     steps:
       # curl fetches the Go that .tools/build needs and the mise that install.sh pins, and
@@ -132,11 +131,13 @@ jobs:
         working-directory: /root
         run: ws server ubuntu apply
       # A run by hand, as after install.sh: mise trusts the tree and finds ws installed, so it needs
-      # neither the variable nor the server. Its plan must change nothing: the last plan comes after
-      # this run, which mends a part that changes on each run.
+      # no trust variable and no server. It names the data directory, as the runbook does, and the
+      # job does not, so the first bootstrap proves install.sh's. Its plan must change nothing: the
+      # last plan comes after this run, which mends a part that changes on each run.
       - name: Bootstrap again, changing nothing
         working-directory: /root
         run: |
+          export MISE_DATA_DIR=/usr/local/share/mise
           mise -C /opt/ws bootstrap plan --detailed-exitcode </dev/null
           mise -C /opt/ws bootstrap </dev/null
       # ws's last line names the roles that changed. The second run must name none.

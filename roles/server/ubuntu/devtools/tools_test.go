@@ -1,0 +1,196 @@
+package devtools_test
+
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"regexp"
+	"strings"
+	"testing"
+
+	"github.com/pelletier/go-toml/v2"
+
+	"github.com/zadykian/ws/roles/server/ubuntu/devtools"
+)
+
+// version is the version that [tools] pins for the tool.
+func (c miseConfig) version(t *testing.T, tool string) string {
+	switch v := c.Tools[tool].(type) {
+	case string:
+		return v
+	case map[string]any:
+		if s, ok := v["version"].(string); ok {
+			return s
+		}
+	}
+	t.Fatalf("[tools] pins no version of %s: %v", tool, c.Tools[tool])
+	return ""
+}
+
+// unitsFile is what the tests read of units.toml. Its template's marks sit inside strings, so it
+// reads as TOML before a render.
+type unitsFile struct {
+	File map[string]struct {
+		Path  string `toml:"path"`
+		Link  string `toml:"link"`
+		After string `toml:"after"`
+	} `toml:"file"`
+	Guard map[string]struct {
+		Command []string `toml:"command"`
+	} `toml:"guard"`
+}
+
+func readUnits(t *testing.T) unitsFile {
+	text, err := os.ReadFile("units.toml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var u unitsFile
+	if err := toml.Unmarshal(text, &u); err != nil {
+		t.Fatal(err)
+	}
+	return u
+}
+
+// installs is where mise puts a tool, under the data directory that every root run exports.
+const installs = "/usr/local/share/mise/installs/"
+
+// links names each link unit's tool in [tools], and the path of the program below its version's
+// directory.
+var links = map[string]struct{ tool, below string }{
+	"devtools-go":        {"go", ""},
+	"devtools-gopls":     {"go:golang.org/x/tools/gopls", "/bin/gopls"},
+	"devtools-dlv":       {"go:github.com/go-delve/delve/cmd/dlv", "/bin/dlv"},
+	"devtools-pgls":      {"github:supabase-community/postgres-language-server", "/postgres-language-server"},
+	"devtools-docker-ls": {"github:docker/docker-language-server", "/docker-language-server"},
+}
+
+// A link names its tool's version, as mise names the directory: the tool's name with each ':', '/'
+// and '.' made '-'. A bump of [tools] alone fails here.
+func TestDevtoolsLinksNameThePinnedVersions(t *testing.T) {
+	c, u := readConfig(t), readUnits(t)
+	tools := 0
+	for _, f := range u.File {
+		if strings.HasPrefix(f.Link, installs) {
+			tools++
+		}
+	}
+	if tools != len(links) {
+		t.Errorf("%d links into mise's tools, want %d", tools, len(links))
+	}
+	dir := strings.NewReplacer(":", "-", "/", "-", ".", "-")
+	for name, l := range links {
+		f, ok := u.File[name]
+		if !ok {
+			t.Errorf("no unit file.%s", name)
+			continue
+		}
+		if want := installs + dir.Replace(l.tool) + "/" + c.version(t, l.tool) + l.below; f.Link != want {
+			t.Errorf("%s links to %q, want %q", name, f.Link, want)
+		}
+		if f.After != "guard/devtools-data-dir" {
+			t.Errorf("%s waits on %q, want the guard", name, f.After)
+		}
+		if c.Bootstrap.Packages["ws:file/"+name] != "in-sync" {
+			t.Errorf("mise.server.toml lacks ws:file/%s", name)
+		}
+	}
+}
+
+// The editors name the servers by the links' paths.
+func TestServerPathsAreTheLinks(t *testing.T) {
+	u, paths := readUnits(t), devtools.ServerPaths("/home/u")
+	for server, unit := range map[string]string{
+		"gopls":                    "devtools-gopls",
+		"postgres-language-server": "devtools-pgls",
+		"docker-language-server":   "devtools-docker-ls",
+	} {
+		if got := u.File[unit].Path; got != paths[server] {
+			t.Errorf("%s is at %q, but ServerPaths names %q", unit, got, paths[server])
+		}
+	}
+	if u.File["devtools-dlv"].Path != devtools.DlvPath || u.File["devtools-go"].Path != "/usr/local/go" {
+		t.Errorf("dlv at %q and go at %q, want %s and /usr/local/go", u.File["devtools-dlv"].Path,
+			u.File["devtools-go"].Path, devtools.DlvPath)
+	}
+}
+
+// lockEntry is a tool's entry in mise's lock: its version, and the platforms' tables beside it.
+type lockEntry map[string]any
+
+// The lock holds each tool at its version, under MISE_LOCKED=1. A download's entry holds its url
+// and SHA-256 for both platforms; the servers' sums are those ws pinned in Go before mise.
+func TestDevtoolsLockHoldsEachTool(t *testing.T) {
+	text, err := os.ReadFile("../../../../mise/mise.server.lock")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var lock struct {
+		Tools map[string][]lockEntry `toml:"tools"`
+	}
+	if err := toml.Unmarshal(text, &lock); err != nil {
+		t.Fatal(err)
+	}
+	c := readConfig(t)
+	sums := map[string]map[string]string{
+		"go": {},
+		"github:supabase-community/postgres-language-server": {
+			"linux-x64":   "82ff82e39be65824378afa5d02626a1b42e8d8e48f97cb4938e4d477c8a9be52",
+			"linux-arm64": "7be7de3660df047fd712f8fca4d6c42ecf1515daad952715eb02e29053ce256c",
+		},
+		"github:docker/docker-language-server": {
+			"linux-x64":   "01907aa5b0eae11e44cffea0a993d08aa155542a9af570295dd1dff39e67692a",
+			"linux-arm64": "bd56c7815e0a22cfb708669f3d5e817de91d9b54039ff7e52867142a132ad8d7",
+		},
+	}
+	sha := regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
+	for tool := range c.Tools {
+		entries := lock.Tools[tool]
+		if len(entries) != 1 || entries[0]["version"] != c.version(t, tool) {
+			t.Errorf("%s: the lock holds %v, want one entry at %s", tool, entries, c.version(t, tool))
+			continue
+		}
+		want, download := sums[tool]
+		for _, platform := range []string{"linux-x64", "linux-arm64"} {
+			p, _ := entries[0]["platforms."+platform].(map[string]any)
+			switch {
+			case !download && p != nil:
+				t.Errorf("%s: %s has a download, want the version alone", tool, platform)
+			case !download:
+			case p == nil || !sha.MatchString(fmt.Sprint(p["checksum"])) || p["url"] == nil:
+				t.Errorf("%s: %s has %v, want a url and a sha256", tool, platform, p)
+			case want[platform] != "" && p["checksum"] != "sha256:"+want[platform]:
+				t.Errorf("%s: %s's checksum %v, want %s", tool, platform, p["checksum"], want[platform])
+			}
+		}
+	}
+	if len(lock.Tools) != len(c.Tools) {
+		t.Errorf("the lock holds %d tools, [tools] %d", len(lock.Tools), len(c.Tools))
+	}
+}
+
+// The guard passes the data directory that install.sh exports, and fails without it.
+func TestDevtoolsDataDirGuardRefusesAnotherDir(t *testing.T) {
+	argv := readUnits(t).Guard["devtools-data-dir"].Command
+	if len(argv) == 0 {
+		t.Fatal("no guard devtools-data-dir with a command")
+	}
+	for env, pass := range map[string]bool{
+		"MISE_DATA_DIR=/usr/local/share/mise":   true,
+		"":                                      false,
+		"MISE_DATA_DIR=/root/.local/share/mise": false,
+	} {
+		cmd := exec.Command(argv[0], argv[1:]...) //nolint:gosec // the guard's own argv, from the role's spec
+		cmd.Env = []string{}
+		if env != "" {
+			cmd.Env = []string{env}
+		}
+		out, err := cmd.CombinedOutput()
+		if (err == nil) != pass {
+			t.Errorf("with %q: %v, %s; want a pass %v", env, err, out, pass)
+		}
+		if !pass && !strings.Contains(string(out), "install.sh") {
+			t.Errorf("with %q, the guard says %q, want what to export", env, out)
+		}
+	}
+}

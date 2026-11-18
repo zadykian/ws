@@ -114,7 +114,7 @@ func TestClaudeUnitsChainInTheStepsOrder(t *testing.T) {
 // root's needs no switch of user.
 func installer(user, home, url, env, shell string) string {
 	script := `script=$(curl -fsSL --retry 3 "$1") && printf "%s\n" "$script" | env "$2" "$3"`
-	line := "env " + systemPath + " sh -c " + script + " sh " + url + " " + env + " " + shell
+	line := "env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + systemPath + " sh -c " + script + " sh " + url + " " + env + " " + shell
 	if user == "root" {
 		return "env HOME=/root " + line
 	}
@@ -191,7 +191,7 @@ func TestClaudeCommandsRunAsRootWithoutSystemd(t *testing.T) {
 	m, e := machine(t, "WS_USER: ws\n")
 	names := []string{"update", "completion", "settings", "telemetry", "marketplaces"}
 	for _, name := range names {
-		line := "env HOME=/root env " + systemPath + " " + self + " server ubuntu claude " + name
+		line := "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + systemPath + " " + self + " server ubuntu claude " + name
 		m.Results[line+" --check"] = effecttest.Result{Err: os.ErrInvalid}
 		m.Results[line] = effecttest.Result{}
 		apply(t, unit(t, e, "state/claude-"+name))

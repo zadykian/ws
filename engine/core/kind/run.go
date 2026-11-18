@@ -3,6 +3,7 @@ package kind
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/fs"
 	"slices"
 	"strings"
@@ -47,8 +48,10 @@ func (r runAs) exec(ctx context.Context, pass bool, line []string) error {
 			return err
 		}
 	}
-	var session []string
-	if systemd.Booted(r.m) {
+	// runuser passes the caller's env on. A run with no session drops the caller's session from it:
+	// root's runtime directory is closed to the user, and dotnet fails on it.
+	session := []string{"-u", "XDG_RUNTIME_DIR", "-u", "DBUS_SESSION_BUS_ADDRESS"}
+	if systemd.Booted(r.m) && (!r.s.Unbooted || r.hasRuntimeDir(a.UID)) {
 		session = systemd.SessionEnv(a.UID)
 	}
 	args := slices.Concat(session, []string{systemPath}, line)
@@ -57,6 +60,14 @@ func (r runAs) exec(ctx context.Context, pass bool, line []string) error {
 	}
 	_, err := a.Output(ctx, r.m, "env", args...)
 	return err
+}
+
+// hasRuntimeDir says whether the user's session has made its runtime directory. An unbooted run
+// needs no session, and gets its env only where that directory exists. dotnet fails on a missing
+// XDG_RUNTIME_DIR, as before the account's first login or lingering.
+func (r runAs) hasRuntimeDir(uid int) bool {
+	_, err := r.m.Stat(fmt.Sprintf("/run/user/%d", uid))
+	return err == nil
 }
 
 // Plan plans the command where a path of Creates is missing, or where Check fails. A check that

@@ -53,7 +53,7 @@ check = ["dockerd", "--validate", "--config-file", "{}"]
 
 # docker0 takes a moved address only as dockerd starts with no container running.
 [state.docker-bridge]
-addr = { iface = "docker0", want = "{{ $bridge }}", hint = "Docker moves it only as it starts with no container running, and until then lookups to a moved address get no answers. Reboot, or stop every container and restart Docker, then run mise bootstrap again" }
+addr = { iface = "docker0", want = "{{ $bridge }}", hint = "Docker moves it only as it starts with no container running, and until then lookups to a moved address get no answers. Reboot, or stop every container and restart Docker, then run the bootstrap again, as the server's runbook writes it" }
 after = "service/docker"
 {{- if ne .User "root" }}
 

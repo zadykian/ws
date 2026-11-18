@@ -19,9 +19,14 @@ sudo_form='printf "%s\n" "$1" | sudo -S -p "" -v; sudo -n true; rc=$?; exit "$rc
 # send Docker's tool to the runner's home, and the user's systemd to the runner's runtime directory.
 unset XDG_CONFIG_HOME
 sed -i '/^XDG_/d' /etc/environment
+# The runner's apt takes the amd64v3 variant, which a machine turns on by hand. The dotnet PPA's
+# index of that variant holds no .NET 8, so the cases run with no variant, as a machine has none.
+# apt reads this file after apt.conf.d, so the line wins wherever the runner set the variant.
+echo '#clear APT::Architecture-Variants;' >>/etc/apt/apt.conf
 export HOME=/root DEBIAN_FRONTEND=noninteractive
-# A tool installs only as a lock holds it, here the build's in mise.local.lock, as in playbook.
-export MISE_LOCKED=1
+# A tool installs only as a lock holds it, here the build's in mise.local.lock, as in playbook. The
+# runs by hand put the tools where install.sh does.
+export MISE_LOCKED=1 MISE_DATA_DIR=/usr/local/share/mise
 
 fail() {
     echo "::error::$*"

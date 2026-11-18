@@ -13,10 +13,11 @@ steps, and each role's README says what it sets up.
 
 ## The roles
 
-- A role is the Go steps of `roles/server/ubuntu/NAME`, with its page, its `README.md`, and a line in
-  the root README ([README](../../README.md)). `ubuntu.Roles` lists the roles in the order they run,
-  each closed over the machine's values and secrets ([roles.go](../../roles/server/ubuntu/roles.go)).
-- A role moved to mise holds its spec, `units.toml`, with its templates, and its mise files by env:
+- A role is `roles/server/ubuntu/NAME`, with its page, its `README.md`, and a line in the root
+  README ([README](../../README.md)). Its units run in the order of their `after`
+  ([The order](../../roles/server/ubuntu/frame/README.md#the-order)). `ubuntu.Roles`, the roles
+  in Go, is empty until #1240 removes `apply` ([roles.go](../../roles/server/ubuntu/roles.go)).
+- A role holds its spec, `units.toml`, with its templates, and its mise files by env:
   `mise.server.toml` for every server, `mise.booted.toml` where systemd is booted, and
   `mise.account.toml` where `WS_USER` is not root. The link `mise/conf.d/server-NAME` loads them.
   A role holds no plain `mise.toml`, which the Mac would load ([specs_test.go](../../roles/server/ubuntu/cli/specs_test.go)).
@@ -59,7 +60,7 @@ steps, and each role's README says what it sets up.
   ([The `playbook` job](../../.github/workflows/README.md#the-playbook-job)). A step that only reads plans no change.
 - A dry run, `--check`, applies nothing and shows how the machine differs
   ([Dry runs](../../README.md#dry-runs)). A step reads in its Plan, a GET included
-  ([devtools](../../roles/server/ubuntu/devtools/internal/golang/golang.go)).
+  ([SigNoz's dashboards](../../roles/server/ubuntu/signoz/internal/dashboards/dashboards_plan.go)).
 - A role's test states dpkg's database by effecttest's package table, never by a `dpkg-query` line
   in Results, so apt's read can change under it
   ([machine_dpkg.go](../../engine/core/effect/effecttest/machine_dpkg.go)).
@@ -68,8 +69,8 @@ steps, and each role's README says what it sets up.
 - A report reads as Plan does and holds no secret: a `Secret` file shows no diff and no sum
   ([report.go](../../engine/core/step/report.go)). A `File` that a role builds in `Plan` shows by its change
   alone, so a healthy one has no item.
-- Where a dry run skips a step, a step beside it shows what the run would change, as Go's move into
-  `/usr/local/go` does ([claude's marketplaces](../../roles/server/ubuntu/claude/marketplaces.go)).
+- Where a dry run skips a step, a step beside it shows what the run would change
+  ([claude's marketplaces](../../roles/server/ubuntu/claude/marketplaces.go)).
 - A step that needs a booted machine's systemd checks `systemd.Booted`: without one, as in CI's
   container, it skips and says so.
 - A file ws writes whole, on the server or the Mac, has one line at its top, where its format
@@ -94,10 +95,9 @@ steps, and each role's README says what it sets up.
   ([package.go](../../engine/core/resource/apt/package.go)).
 - A tree is unpacked beside its target and moved in whole, and its marker is its probe
   ([tree.go](../../engine/core/resource/fetch/tree.go)).
-- An apt repository's key goes in only where its entry pins the primary fingerprint of each
-  certificate in it, and it holds one at least
-  ([devtools' pins](../../roles/server/ubuntu/devtools/pins.go)). Docker's key goes in only with the
-  fingerprint that its mise source pins, so that a changed key fails the run
+- An apt repository's key goes in only with the fingerprint that its mise source pins, as
+  devtools' sources do for each certificate of a key file
+  ([devtools' sources](../../roles/server/ubuntu/devtools/mise.server.toml)). Docker's key too, so that a changed key fails the run
   ([docker's source](../../roles/server/ubuntu/docker/mise.server.toml)).
 
 ## signoz

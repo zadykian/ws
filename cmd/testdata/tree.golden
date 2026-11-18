@@ -241,7 +241,7 @@ Usage:
   ws server ubuntu [command]
 
 Available Commands:
-  apply       set the server up, each role as Go steps
+  apply       install ca-certificates alone, as mise's bootstrap sets each role up
   cable       the cable role's check and reload, which its units run
   claude      the claude role's procedures, which its units run
   fans        drive the board's fans on the curves of CONFIG until SIGTERM
@@ -258,11 +258,11 @@ Flags:
 
 Use "ws server ubuntu [command] --help" for more information about a command.
 == ws server ubuntu apply
+Each role is mise's now, so apply holds no role in Go: it installs ca-certificates alone, and --only refuses every name. mise's bootstrap sets the server up, as the server's runbook says.
+
 --secrets reads an age-encrypted TOML file with the secrets. The X25519 identity comes from the unit's credential ws-secrets (systemd's LoadCredential), in $CREDENTIALS_DIRECTORY.
 
---only names a role, or a step of it as ROLE/STEP, by the name that the run shows. A role's other steps are planned and left out, and a step that waits on one of them with changes is skipped.
-
-The last line names the roles that changed.
+The last line says whether anything changed.
 
 --json prints each event of the run as a line of JSON on stdout: planned, started, done, failed or skipped, with the step, the first line of each change and the error. ws's own lines stay on stderr.
 
@@ -273,7 +273,7 @@ Flags:
       --check          plan the steps and apply none
   -h, --help           help for apply
       --json           print each event of the run as a line of JSON on stdout
-      --only strings   run the named roles and ROLE/STEPs alone, as a list or by repeating the flag
+      --only strings   a role or ROLE/STEP to run alone, which ws holds none of in Go
       --secrets FILE   read the secrets from the age-encrypted FILE
 == ws server ubuntu cable
 the cable role's check and reload, which its units run
@@ -641,6 +641,8 @@ Flags:
 == ws server ubuntu state
 It reads alone and applies nothing. It needs what --check needs: root, on Ubuntu 26.04. It reports what ws manages and not the rest of the machine: the packages, services and files of the steps, what stands against them, and the changes that apply would make. A step that fails stands in the report as a check, and the exit code stays 0. It takes no secrets, so a report holds none and says nothing of what they write.
 
+Each role is mise's now, so it reports ca-certificates alone, and --only refuses every name: mise bootstrap plan, run as the server's runbook says, shows what the bootstrap would change.
+
 The text is on stdout and ws's own lines on stderr. --json prints the version of ws, then each role with its steps, items and changes.
 
 Usage:
@@ -649,7 +651,7 @@ Usage:
 Flags:
   -h, --help           help for state
       --json           print the report as JSON
-      --only strings   report the named roles and ROLE/STEPs alone, as a list or by repeating the flag
+      --only strings   a role or ROLE/STEP to report alone, which ws holds none of in Go
 == ws server ubuntu tunnel
 the tunnel role's check, wg0's key and wg0, which its units run
 

@@ -51,7 +51,7 @@ a line as `wg pubkey` prints it, in a directory only root reads:
 
 ```sh
 printf '%s\n' PUBLIC_KEY >/etc/wireguard/mac.pub
-mise -C /opt/ws bootstrap
+MISE_DATA_DIR=/usr/local/share/mise mise -C /opt/ws bootstrap
 ```
 
 The Mac's scripts fix the peer's name, `mac`. A server's slot gives the tunnel's ends: `10.99.N.1`

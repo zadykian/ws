@@ -50,7 +50,8 @@ mokutil --import /var/lib/shim-signed/mok/MOK.der       # asks for a one-time pa
 reboot                                                  # MOK manager: Enroll MOK, the password
 ```
 
-Then run `mise -C /opt/ws bootstrap` again, or `modprobe nct6687 && systemctl restart ws-fans`.
+Then run the bootstrap again, as
+[the runbook](../runbook.md) writes it, or `modprobe nct6687 && systemctl restart ws-fans`.
 
 ## ws-fans
 

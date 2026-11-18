@@ -1,7 +1,7 @@
 # The file kind
 
-A `file` unit writes one file from a template or a source, or keeps one line in a file that is its
-owner's. The kinds' page, [ws's kinds](README.md#the-kinds), holds the rest.
+A `file` unit writes one file from a template or a source, keeps one line in a file that is its
+owner's, or makes a link. The kinds' page, [ws's kinds](README.md#the-kinds), holds the rest.
 
 ```toml
 [file.NAME]
@@ -24,6 +24,7 @@ group_of = "USER"           # a file of root's takes this account's primary grou
 backup = false              # keep the old file beside the new one, as PATH.PID.TIME~
 ours = false                # refuse a file there without ws's '# Written by' line at its top
 absent_when_empty = false   # remove the file where its template gives white space alone
+link = "/abs/target"        # or a link to the target, root's, in place of a file
 after = "KIND/NAME"
 ```
 
@@ -49,6 +50,9 @@ after = "KIND/NAME"
 - Without `has`, a line of the file that equals the line, spaces aside, holds it. A line of more
   than one line needs `has`. Any exit of `has` but 0 and 1 fails the plan with its stderr.
 - A `line` takes `owner`, `mode`, `check`, `has`, `after` and `when` alone.
+- A `link` takes `after` and `when` alone, beside its path. Root owns it, and its missing parents
+  are made as a file's. A link to another target is pointed again, and a file or a link in its
+  place is replaced, but a directory there fails the run.
 - `group_of` and `ours` take a file of root's. With `ours`, a file there whose first line lacks
   `# Written by github.com/zadykian/ws` fails the plan, a dry run's too, before a write or a
   removal. A file by hand is never lost, and the error names its path alone.

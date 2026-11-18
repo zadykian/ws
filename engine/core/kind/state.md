@@ -53,3 +53,6 @@ swap = { size_mib = 1024, hint = "…" }                                 # /swap
 - Without booted systemd, `linger`, `http`, `ufw`, `addr` and `reboot` skip, and each says so. So
   does `run` on Linux, where it needs the user's session; macOS has no systemd, and runs it. A
   `run` with `unbooted = true` needs no session, and runs there too, without the session's env.
+  With booted systemd it gets that env only where `/run/user/UID` exists, as dotnet fails on a
+  missing `XDG_RUNTIME_DIR`. Without that env, the run drops the caller's `XDG_RUNTIME_DIR` and
+  `DBUS_SESSION_BUS_ADDRESS`, which `runuser` would pass on: root's are closed to the user.

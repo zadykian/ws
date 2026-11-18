@@ -17,6 +17,8 @@ func newStateCmd(p enginecli.Env) *cobra.Command {
 			"steps, what stands against them, and the changes that apply would make. A step that fails stands " +
 			"in the report as a check, and the exit code stays 0. It takes no secrets, so a report holds none and " +
 			"says nothing of what they write.\n\n" +
+			"Each role is mise's now, so it reports ca-certificates alone, and --only refuses every name: " +
+			"mise bootstrap plan, run as the server's runbook says, shows what the bootstrap would change.\n\n" +
 			"The text is on stdout and ws's own lines on stderr. --json prints the version of ws, then " +
 			"each role with its steps, items and changes.",
 		Args: cobra.NoArgs,
@@ -24,6 +26,6 @@ func newStateCmd(p enginecli.Env) *cobra.Command {
 	}
 	f := c.Flags()
 	f.Bool("json", false, "print the report as JSON")
-	f.StringSliceVar(&opts.Only, "only", nil, "report the named roles and ROLE/STEPs alone, as a list or by repeating the flag")
+	f.StringSliceVar(&opts.Only, "only", nil, "a role or ROLE/STEP to report alone, which ws holds none of in Go")
 	return c
 }

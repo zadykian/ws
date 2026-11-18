@@ -110,7 +110,7 @@ func exits(t *testing.T, code int, why string) error {
 func keygen(user, home string) string {
 	key := home + "/.ssh/id_ed25519_signing"
 	sh := "sh -c mkdir -p -m 700 \"${1%/*}\" && ssh-keygen -q -t ed25519 -N '' -f \"$1\" sh " + key
-	env := "env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin " + sh
+	env := "env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin " + sh
 	if user == "root" {
 		return "env HOME=/root " + env
 	}
@@ -273,7 +273,7 @@ func TestGitSignersTrustTheKey(t *testing.T) {
 func TestGitTokensAndClonesRunAsRootWithoutSystemd(t *testing.T) {
 	m, e := machine(t, "WS_USER: ws\n")
 	for _, name := range []string{"tokens", "clones"} {
-		line := "env HOME=/root env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin " + self +
+		line := "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin " + self +
 			" server ubuntu git " + name
 		m.Results[line+" --check"] = effecttest.Result{Err: errors.New("exit status 1")}
 		m.Results[line] = effecttest.Result{}

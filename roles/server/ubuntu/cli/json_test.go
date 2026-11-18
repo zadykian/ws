@@ -24,8 +24,8 @@ func TestServerApplyJSONRefusesNonRootOnStdoutAlone(t *testing.T) {
 // The events reach stdout and ws's own lines stderr.
 func TestServerApplyJSONPrintsTheEventsOnStdout(t *testing.T) {
 	p, _ := serverProcess()
-	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "apply", "--json", "--check", "--only", "devtools/Devtools rustup")
-	if status != 0 || !strings.Contains(stdout, `"event":"done","parent":"devtools"`) {
+	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "apply", "--json", "--check")
+	if status != 0 || !strings.Contains(stdout, `"event":"done","parent":"prepare"`) {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
 }
