@@ -17,11 +17,10 @@ in the release's place ([The pin](../../roles/server/ubuntu/frame/README.md#the-
 `zadykian` and as root, a cloud VM's user, `install.sh` installs the pinned mise and runs the
 bootstrap on that tree in place, with `MISE_LOCKED=1` and install.sh's `MISE_DATA_DIR`
 ([bootstrap.sh](../bootstrap.sh)). The runs by hand alone set the variable, so the first
-bootstrap fails at its guard where install.sh drops it. Then `ws server ubuntu apply` sets up the
-roles still in Go, from root's home. Each runs twice. The parts and steps that need booted systemd
-skip and say so. `mise bootstrap plan --detailed-exitcode` must exit 0 before the second bootstrap,
-as that run would mend what it finds. The second apply's last line must be `changed: none`, and
-the plan must exit 0 again. With the frame's line of `state/ws-binary` dropped, it must exit 1
+bootstrap fails at its guard where install.sh drops it. The bootstrap runs twice, the second from
+root's home. The parts and units that need booted systemd skip and say so. `mise bootstrap plan
+--detailed-exitcode` must exit 0 before the second bootstrap, as that run would mend what it
+finds, and again after it. With the frame's line of `state/ws-binary` dropped, it must exit 1
 ([playbook-plan.sh](../playbook-plan.sh)): the check against a silent skip holds. Then
 `nft -c`, with the container's NET_ADMIN, checks the outbound table the run wrote and the users it
 names, and a find that the user owns its home. The Zed wrapper's [checks](../zed-terminal-checks.sh)

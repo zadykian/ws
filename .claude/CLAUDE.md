@@ -81,14 +81,14 @@ on macOS on arm64.
 It installs yamllint into `.cache`, and `.tools/run` downloads the rest there.
 
 The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `playbook` builds ws and runs `install.sh`'s
-bootstrap and `ws server ubuntu apply` twice each in an Ubuntu 26.04 container, with mise's plan.
+bootstrap twice in an Ubuntu 26.04 container, with mise's plan.
 It checks the config that Fresh reads too. `signoz` forges SigNoz's compose files again, and
 `install` tries `install.sh`. `rootless` runs the
 rootless daemon and the firewall on a booted runner ([The rootless job](../.github/workflows/rootless.md)). `mac` sets up a
 Mac on GitHub's macOS runner by `mise bootstrap`, whose last run must call no sudo and whose plan
 must exit 0. `mac-cld` sets up
-Ghostty, Zed and cld by the bootstrap on another ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `ws
-server ubuntu apply` sets up the machine that runs it, as below.
+Ghostty, Zed and cld by the bootstrap on another ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `mise
+bootstrap` sets up the machine that runs it, as below.
 
 The hooks check a commit for the local list's words. This checks any other text, such as a pull
 request's body, as they do, and prints 0 where it holds none:
@@ -117,12 +117,11 @@ LC_ALL=C tr _ ' ' <FILE | grep -ciwF -f <(sed -e 'y/_/ /' -e 's/^[[:space:]]*//'
 
 Each rule links where the repository gives its reason: a doc, a comment or a CI job.
 
-- `ws server ubuntu apply` sets up the machine that runs it. CI's `playbook` job runs it in a
-  container ([The `playbook` job](../.github/workflows/README.md#the-playbook-job)).
-- A second run changes nothing: CI's `playbook` job runs the bootstrap and `ws server ubuntu apply`
-  twice each. It fails where the second apply reports a change, or where
+- `mise bootstrap` sets up the machine that runs it. CI's `playbook` job runs it in a container
+  ([The `playbook` job](../.github/workflows/README.md#the-playbook-job)).
+- A second run changes nothing: CI's `playbook` job runs the bootstrap twice. It fails where
   `mise bootstrap plan --detailed-exitcode` does not exit 0, before the second bootstrap and after
-  both ([ci.yml](../.github/workflows/ci.yml)).
+  it ([ci.yml](../.github/workflows/ci.yml)).
 - A step that needs a booted machine's systemd checks `systemd.Booted`, and skips without it, as in
   CI's container ([The `playbook` job](../.github/workflows/README.md#the-playbook-job)).
 - `release.yml` checks a release's files and notes for the local list's words before it publishes

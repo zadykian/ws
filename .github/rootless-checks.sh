@@ -219,8 +219,8 @@ must "a link at ~/.bashrc is refused" grep -q 'is a link to /etc/hostname' <<<"$
 as rm "$home/.bashrc"
 as mv "$home/.bashrc.orig" "$home/.bashrc"
 
-# ws's secrets: the identity is a credential that the host's key encrypts, and a unit reads it by
-# LoadCredentialEncrypted, which a container's systemd can't run.
+# ws's secrets: the identity is a credential that the host's key encrypts, which ws unit decrypts
+# by systemd-creds as root. A container's systemd can't make one.
 ws server ubuntu secrets init
 must "the credential is root's 600, in root's 700" test "$(stat -c '%U %a' \
     /etc/credstore.encrypted /etc/credstore.encrypted/ws-secrets)" = $'root 700\nroot 600'
@@ -233,13 +233,9 @@ must "keys names the entry" grep -qx 'env WS_CI' <<<"$names"
 refused "keys prints the value" grep -q "$value" <<<"$names"
 refused "the user runs ws server ubuntu secrets" as ws server ubuntu secrets keys
 
-apply=(ws server ubuntu apply --secrets /etc/ws/secrets.age --check)
-out=$(systemd-run --quiet --wait --pipe -p LoadCredentialEncrypted=ws-secrets "${apply[@]}" \
-    </dev/null 2>&1) || fail "a unit with the credential can't read the file"
-echo "ok: a unit with the credential reads the file"
-refused "the unit prints the value" grep -q "$value" <<<"$out"
-refused "a unit without the credential reads the file" \
-    systemd-run --quiet --wait --pipe "${apply[@]}" </dev/null
+# The user's decrypt prints nothing, so that one that got through would show no identity in the log.
+refused "the user decrypts the credential" as sh -c 'systemd-creds decrypt --name=ws-secrets \
+    /etc/credstore.encrypted/ws-secrets - </dev/null >/dev/null 2>&1'
 out=$(WS_UNITS=roles/server/ubuntu ws unit write --dry-run file/shell-env 2>&1) ||
     fail "ws unit can't plan /etc/ws/env from the file"
 must "ws unit plans /etc/ws/env from the file" grep -q 'would change: file/shell-env' <<<"$out"

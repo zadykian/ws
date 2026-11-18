@@ -50,10 +50,10 @@ jobs:
           # zizmor's online audits, which look the actions up on GitHub, need a token.
           GH_TOKEN: ${{ github.token }}
 
-  # install.sh's bootstrap and ws server ubuntu apply, as on a new machine. A container stands in
-  # for a booted system, so the parts that need a booted systemd skip. Each runs twice. The second
-  # apply must change nothing, and so must mise's plan after it. In a stack, it runs on the top pull
-  # request alone, which holds every change below it. So do mac.yml's and mac-cld.yml's jobs. Run on
+  # install.sh's bootstrap, as on a new machine. A container stands in for a booted system, so the
+  # parts that need a booted systemd skip. It runs twice: mise's plan before the second run and
+  # after it must change nothing. In a stack, it runs on the top pull request alone, which holds
+  # every change below it. So do mac.yml's and mac-cld.yml's jobs. Run on
   # each of a stack of 20, these jobs kept its pull requests waiting for runners past 50 minutes. A
   # stack's pull requests open as drafts, before gh stack link joins them, so a draft's opened event
   # has no stack and these jobs skip it. No event follows the link: ready_for_review, once done, is
@@ -103,13 +103,12 @@ jobs:
         with:
           persist-credentials: false
       # CI builds ws from the tree, never from a release. /opt/ws, the plugin's path, must be
-      # root's alone for install.sh, and its pin names the build. apply, of the Go roles, runs it.
+      # root's alone for install.sh, and its pin names the build.
       - name: Build ws
         run: |
           cp -a . /opt/ws
           chown -R 0:0 /opt/ws && chmod -R go-w /opt/ws
           .tools/serve-build /opt/ws "$RUNNER_TEMP/rel"
-          install -m 755 "$RUNNER_TEMP"/rel/download/v*/ws-linux-amd64 /usr/local/bin/ws
       # The account as Ubuntu's installer leaves it. ws makes no user.
       - name: Make the user
         if: matrix.user != 'root'
@@ -124,33 +123,18 @@ jobs:
           chmod 600 /etc/ws/values.yml
       - name: Bootstrap
         run: .github/bootstrap.sh "$RUNNER_TEMP/rel"
-      # From root's home, 0700 on any machine, as after sudo -i: a command run as the user must not
-      # rest on the directory it starts in. It sets up the roles still in Go, after mise's, as a
-      # role in mise's config can be what one in Go needs.
-      - name: Apply
-        working-directory: /root
-        run: ws server ubuntu apply
-      # A run by hand, as after install.sh: mise trusts the tree and finds ws installed, so it needs
-      # no trust variable and no server. It names the data directory, as the runbook does, and the
-      # job does not, so the first bootstrap proves install.sh's. Its plan must change nothing: the
-      # last plan comes after this run, which mends a part that changes on each run.
+      # A run by hand, as after install.sh. It starts from root's home, 0700 on any machine, as
+      # after sudo -i: a command run as the user must not rest on the directory it starts in. mise
+      # trusts the tree and finds ws installed, so it needs no trust variable and no server. It
+      # names the data directory, as the runbook does, and the job does not, so the first bootstrap
+      # proves install.sh's. Its plan must change nothing: the last plan comes after this run,
+      # which mends a part that changes on each run.
       - name: Bootstrap again, changing nothing
         working-directory: /root
         run: |
           export MISE_DATA_DIR=/usr/local/share/mise
           mise -C /opt/ws bootstrap plan --detailed-exitcode </dev/null
           mise -C /opt/ws bootstrap </dev/null
-      # ws's last line names the roles that changed. The second run must name none.
-      - name: Apply again, changing nothing
-        shell: bash
-        working-directory: /root
-        run: |
-          ws server ubuntu apply 2>&1 | tee "$RUNNER_TEMP/again.log"
-          last=$(tail -n 1 "$RUNNER_TEMP/again.log")
-          if [ "$last" != 'ws server ubuntu apply: changed: none' ]; then
-              echo '::error::The second run of ws server ubuntu apply changed something.'
-              exit 1
-          fi
       # The plan changes nothing, and fails where mise's config lacks a unit of the specs.
       - name: The plan changes nothing, and finds a missing unit
         working-directory: /root
