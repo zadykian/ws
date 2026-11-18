@@ -55,7 +55,8 @@ runs as a user with sudo on GitHub's runner, as `install.sh` writes `/etc/mise`,
 whatever its release. It downloads mise's real binary once and serves it on loopback
 with [serve-releases](../../.tools/serve-releases/main.go), beside a copy with a byte added. A small
 repository stands for the release's tree: a file of mise's config for each env, each writing one
-file, tagged `v0.2.0`, and later `v0.3.0` with one file more. The cases:
+file. Its tags are `v0.2.0`, then `v0.3.0` with one file more, and `v0.4.0-rc.1` with an empty
+commit. The cases:
 
 - a user is refused, and nothing is installed;
 - Ubuntu 24.04, Debian and a system with no `os-release` are refused, and nothing is installed;
@@ -80,11 +81,38 @@ git switch main && git pull --ff-only
 git tag -s v0.2.0 && git push origin v0.2.0
 ```
 
+A pre-release is a tag `vX.Y.Z-rc.N`, N from 1, on a commit of `feat/mise`, the branch that moves
+ws to mise. The maintainer tries the branch from it before it lands on `main`:
+
+```sh
+git fetch origin && git switch --detach origin/feat/mise
+git tag -s v0.13.0-rc.1 -m v0.13.0-rc.1 && git push origin v0.13.0-rc.1
+```
+
+A tag holds no checksum of its own binaries, so a pre-release's tree pins an earlier release of
+ws. A pull request then pins the pre-release, and the next pre-release, cut once it lands, is the
+first whose tree installs that ws. Its own `install.sh` runs it by `WS_VERSION`, as the latest
+release's refuses a pre-release:
+
+```sh
+set -o pipefail
+curl -fsSL --proto '=https' --tlsv1.2 \
+    https://github.com/zadykian/ws/releases/download/v0.13.0-rc.2/install.sh |
+    sudo env WS_VERSION=0.13.0-rc.2 sh
+```
+
+The latest release's `install.sh` may install ws's binary alone, with no mise. So while a
+pre-release is tried, this line takes the place of each that runs it. Those are step 3 of
+[the server's runbook](../../roles/server/ubuntu/runbook.md), and step 2 of
+[ws on ws](../../roles/client/macos/runbook.md#ws-on-ws) on the Mac. The Mac's own binary and
+clone take the pre-release's tag in place of the latest release's.
+
 Nothing else is by hand. `release.yml` runs on the tag, in these jobs:
 
-1. `check`: the tag is `vX.Y.Z`, and `origin/main` holds its commit.
+1. `check`: `origin/main` holds the commit of a tag `vX.Y.Z`, and `origin/feat/mise` that of a
+   tag `vX.Y.Z-rc.N`. Any other tag fails.
 1. `ci` and `mac`: [ci.yml](ci.yml) and
-   [mac.yml](mac.yml), called on the tag. Their `playbook` and `mac` jobs run,
+   [mac.yml](mac.yml), called on the tag. Their jobs run,
    as on a push to `main`.
 1. `build`: `ws-darwin-arm64`, `ws-linux-amd64` and `ws-linux-arm64` with the Go that
    [.tools/run](../../.tools/run) pins, without cgo, with `-trimpath` and Go's stamp of the tag, and
@@ -92,10 +120,11 @@ Nothing else is by hand. `release.yml` runs on the tag, in these jobs:
 1. `publish`: GitHub's generated notes, then a check of the notes, the binaries, `ws.sha256` and
    `install.sh` for the local list's words (CLAUDE.md), from the secret `FORBIDDEN_WORDS`. It fails
    where the secret is empty, and names a file that holds a word, never the word. Then
-   `gh release create --verify-tag`. Only this job has `contents: write`.
+   `gh release create --verify-tag`, with `--prerelease --latest=false` for a tag with `-rc.`, so that
+   `releases/latest` keeps the last full release. Only this job has `contents: write`.
 
-A tag that fails a job publishes nothing. The ruleset below keeps the tag: fix main, and tag the
-next patch version.
+A tag that fails a job publishes nothing. The ruleset below keeps the tag: fix the branch, and tag
+the next patch version, or the next `rc.N`.
 
 ## Settings
 
