@@ -228,13 +228,13 @@ a package, `"ws:KIND/NAME" = "in-sync"` under `[bootstrap.packages]`. It sits at
 the server it runs as root.
 
 mise calls it through [`plugins/ws`](../../../plugins/ws), which holds no check of its own. Each
-hook runs one `ws unit read` or `ws unit write`, with every unit the hook gets, and finds ws by
-`mise which ws`, the pinned binary. The write hook runs `ws unit verify` first.
+hook runs one `ws unit read --whole` or `ws unit write`, with every unit the hook gets, and finds
+ws by `mise which ws`, the pinned binary. The write hook runs `ws unit verify` first.
 
 | Command | What it does |
 | --- | --- |
 | `ws unit list [--toml]` | Prints each unit in the order units run, or as a line of `[bootstrap.packages]`. |
-| `ws unit read UNIT...` | Plans the units and those they wait on, and prints `NAME`, a tab, and a state. |
+| `ws unit read [--whole] UNIT...` | Plans the units and those they wait on, and prints `NAME`, a tab, and a state. |
 | `ws unit write UNIT... [--dry-run]` | Plans, applies and plans again, in the units' order. |
 | `ws unit verify` | Fails where mise's plan lacks a unit of the specs. |
 
@@ -255,6 +255,11 @@ hook runs one `ws unit read` or `ws unit write`, with every unit the hook gets, 
   reads `mise bootstrap packages status --json`, and fails where the `ws` manager is missing or not
   available, or lacks a unit of the specs. With every unit there, it prints one line that never
   changes, for a file whose template runs it.
+- **--whole.** The read hook gets every line of mise's plan, and passes `--whole`. Where the specs
+  hold a unit that the lines lack, and it has a change, each unit reads `fails: mise's plan lacks
+  ws:KIND/NAME`, so the hook fails every plan and run. A lacking unit in sync passes: mise reads
+  the lines again before it installs, and leaves out those in sync. It calls no mise, as a check
+  inside mise's own read would call the hook again.
 - **Exit codes.** 0 done. 1 a failure: a spec or values that fail to load, a plan, an apply, a
   refused check, a SHA-256 or a skipped unit. `read` and `write` as a user other than root fail
   too. 2 a usage error, such as a unit that no spec holds. ws's own lines go to stderr.

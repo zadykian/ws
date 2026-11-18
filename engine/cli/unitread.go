@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -12,44 +13,78 @@ import (
 
 // unitRead returns ws unit read.
 func unitRead(p Env, s UnitSide) *cobra.Command {
-	return &cobra.Command{
+	c := &cobra.Command{
 		Use:   "read UNIT...",
 		Short: "print each unit's state: " + InSync + ", or the first change that write would make",
 		Long: "It plans each UNIT and the units it waits on, and applies nothing. It prints a line per UNIT " +
 			"on stdout, in the order given: the unit, a tab and its state. The state is " + InSync + "; the " +
 			"headline of its first change, with \" (+N more)\" for the rest; \"after UNIT\" where it waits " +
 			"on a unit with changes; or \"fails: \" and why its plan failed. A failed plan stops no other " +
-			"unit's read. ws's own lines go to stderr.",
+			"unit's read. --whole takes the UNITs for every line of mise's plan, as the plugin passes them: " +
+			"where the specs hold a unit they lack that is not " + InSync + ", each UNIT fails and names it. " +
+			"ws's own lines go to stderr.",
 		Args: cobra.MinimumNArgs(1),
-		RunE: func(c *cobra.Command, names []string) error {
-			if err := s.refuse(p); err != nil {
-				return err
-			}
-			r, err := loadUnits(c, p, s)
-			defer r.term.Flush()
-			if err != nil {
-				return err
-			}
-			units, err := r.closure(names)
-			if err != nil {
-				return err
-			}
-			reports, err := step.Read(c.Context(), kind.Steps(units))
-			if err != nil {
-				return err
-			}
-			state := map[string]string{}
-			for _, rep := range reports {
-				state[rep.Step] = unitState(rep)
-			}
-			var sb strings.Builder
-			for _, name := range names {
-				sb.WriteString(name + "\t" + state[name] + "\n")
-			}
-			_, err = fmt.Fprint(c.OutOrStdout(), sb.String())
-			return err
-		},
 	}
+	whole := c.Flags().Bool("whole", false, "fail each UNIT where they lack a unit of the specs with a change")
+	c.RunE = func(c *cobra.Command, names []string) error {
+		if err := s.refuse(p); err != nil {
+			return err
+		}
+		r, err := loadUnits(c, p, s)
+		defer r.term.Flush()
+		if err != nil {
+			return err
+		}
+		missing := lacking(*whole, r.all, names)
+		units, err := r.closure(append(slices.Clone(names), missing...))
+		if err != nil {
+			return err
+		}
+		reports, err := step.Read(c.Context(), kind.Steps(units))
+		if err != nil {
+			return err
+		}
+		state := map[string]string{}
+		for _, rep := range reports {
+			state[rep.Step] = unitState(rep)
+		}
+		var due []string
+		for _, u := range missing {
+			if state[u] != InSync {
+				due = append(due, manager+":"+u)
+			}
+		}
+		if len(due) > 0 {
+			for _, name := range names {
+				state[name] = "fails: mise's plan lacks " + strings.Join(due, ", ") + ": add each to [bootstrap.packages]"
+			}
+		}
+		var sb strings.Builder
+		for _, name := range names {
+			sb.WriteString(name + "\t" + state[name] + "\n")
+		}
+		_, err = fmt.Fprint(c.OutOrStdout(), sb.String())
+		return err
+	}
+	return c
+}
+
+// lacking returns each unit of all that names lacks where whole says that names are every line of
+// mise's plan. mise plans the lines alone, so a line gone from a role's file is a unit that no run
+// sets up. The plugin's read hook passes whole, so that every plan and run fails on it, with no
+// call of mise from within mise's own read. mise reads the lines once more before it installs,
+// with those in sync left out, so the read fails on a lacking unit with a change alone.
+func lacking(whole bool, all []kind.Unit, names []string) []string {
+	if !whole {
+		return nil
+	}
+	var missing []string
+	for _, u := range kind.Names(all) {
+		if !slices.Contains(names, u) {
+			missing = append(missing, u)
+		}
+	}
+	return missing
 }
 
 // unitState is a unit's report as one line: what it waits on, why its plan failed, the first
