@@ -2,6 +2,7 @@ package cli
 
 import (
 	"cmp"
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -9,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/spf13/cobra"
 
@@ -36,6 +38,9 @@ type UnitSide struct {
 	// System is the side's operating system, which decides how the kinds find a home and run a
 	// command as a user.
 	System kind.System
+	// Secrets loads the side's secrets for a secret file's template, or returns kind.ErrNoSecrets
+	// where the machine has none. Nil is a side with no secrets.
+	Secrets func(ctx context.Context, m effect.Machine) (any, error)
 }
 
 // unitRun is one call of ws unit: the units of the specs, in the order they run, and ws's lines,
@@ -100,11 +105,27 @@ func loadUnits(c *cobra.Command, p Env, s UnitSide) (unitRun, error) {
 	if _, err := fs.Stat(specs, "."); err != nil {
 		return r, fmt.Errorf("the specs: %w", err)
 	}
-	r.all, err = kind.Load(kind.Env{M: m, U: s.Units, Out: r.out, Data: data, System: s.System}, specs)
+	env := kind.Env{M: m, U: s.Units, Out: r.out, Data: data, System: s.System}
+	if s.Secrets != nil {
+		env.Secrets = loadOnce(s.Secrets, m)
+	}
+	r.all, err = kind.Load(env, specs)
 	if err != nil {
 		return r, fmt.Errorf("%s: %w", dir, err)
 	}
 	return r, nil
+}
+
+// loadOnce returns load as kind.Env takes it, run once a command at most, and only where a unit
+// calls it: a load decrypts the identity through systemd-creds.
+func loadOnce(load func(context.Context, effect.Machine) (any, error), m effect.Machine) func(context.Context) (any, error) {
+	var once sync.Once
+	var secrets any
+	var err error
+	return func(ctx context.Context) (any, error) {
+		once.Do(func() { secrets, err = load(ctx, m) })
+		return secrets, err
+	}
 }
 
 // closure returns the named units and those they wait on. A name that no spec holds is a usage

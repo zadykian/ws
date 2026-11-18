@@ -23,6 +23,10 @@ type HomeLines struct {
 	UID, GID int
 	// Home is the account's home, which Rules.Path lies below.
 	Home string
+	// Check, where set, returns the command that refuses a bad file at path, run as root. It runs
+	// on the new text at PATH.ws-check before the old file is kept or replaced, so that a refusal
+	// leaves the file unchanged.
+	Check func(path string) (name string, args []string)
 }
 
 // read reads the file as root, through one open below the home that fails at a link, as the user
@@ -73,23 +77,32 @@ func (l HomeLines) Plan(ctx context.Context) ([]resource.Change, error) {
 		// The create comes off this read: a second one, by File.Plan, could follow a link that the
 		// user swaps in after the first.
 		f := File{M: r.M, Path: r.Path, Content: []byte(r.Lines), Mode: r.Mode, UID: l.UID, GID: l.GID, Home: l.Home}
+		if l.Check != nil {
+			return []resource.Change{checked{writeFile{f: f, why: "create"}, Validated{File: f, Check: l.Check}}}, nil
+		}
 		return []resource.Change{writeFile{f: f, why: "create"}}, nil
 	case link != "":
 		return nil, linesError{ErrLinked, fmt.Sprintf("%s is a link to %s: %s", r.Path, link, r.remedy())}
 	}
 	after := r.After(found, false)
 	f := File{M: r.M, Path: r.Path, Content: after, Mode: got.Mode, UID: got.UID, GID: got.GID, Home: l.Home}
+	keep := homeKeep{M: r.M, Path: r.Path, Home: l.Home, To: Keep(r.M, nil, r.Path, r.Now).To}
+	if l.Check != nil {
+		keep.check = &Validated{File: f, Check: l.Check}
+	}
 	return []resource.Change{
-		homeKeep{M: r.M, Path: r.Path, Home: l.Home, To: Keep(r.M, nil, r.Path, r.Now).To},
+		keep,
 		homeWrite{writeFile{f: f, before: found.Text, why: "write", got: &got}},
 	}, nil
 }
 
 // homeKeep copies the old file to To, with the owner and mode of the read that copies it, as root.
+// Where a check is set, it runs first: the copy is the first change of a rewrite.
 type homeKeep struct {
 	M        effect.Machine
 	Path, To string
 	Home     string
+	check    *Validated
 }
 
 func (k homeKeep) String() string { return fmt.Sprintf("would keep %s as %s", k.Path, k.To) }
@@ -99,7 +112,12 @@ func (homeKeep) Kind() step.ChangeKind { return step.Write }
 // Apply looks for a link on the way again, as the user may make one after Plan. It reads the file
 // through one open below the home, so that a link fails, and copies the bytes with the owner and
 // mode of that open. A file gone since Plan fails the step.
-func (k homeKeep) Apply(context.Context) error {
+func (k homeKeep) Apply(ctx context.Context) error {
+	if k.check != nil {
+		if err := k.check.try(ctx); err != nil {
+			return err
+		}
+	}
 	if err := paths.GuardHome(k.M, k.Home, k.Path); err != nil {
 		return err
 	}

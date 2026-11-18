@@ -24,12 +24,14 @@ The firewall must hold under the rootless daemon:
   is off.
 - Root reaches a system container's address and the user doesn't, though the user reaches a port
   published on loopback.
-- A link at `~/.bashrc` is refused ([Shell](../../roles/server/ubuntu/shell/README.md)).
+- A link at `~/.bashrc` is refused, by `ws unit write --dry-run` of the shell's line
+  ([Shell](../../roles/server/ubuntu/shell/README.md)).
 
 Then ws's secrets. `ws server ubuntu secrets init` makes the credential, root's 600 in root's 700,
 and the file, root's 600. `set` takes a value on standard input, and `keys` names it but never
 prints it. The user can't run them. A unit with `LoadCredentialEncrypted=ws-secrets` runs `ws server
 ubuntu apply --secrets --check`, and one without it fails: a container's systemd runs neither.
+`ws unit write --dry-run` of `/etc/ws/env` reads the file, and prints no value.
 `unset` drops the entry, and a second `init` keeps both files ([ws's
 file](../../roles/server/ubuntu/secrets/README.md#wss-file)).
 

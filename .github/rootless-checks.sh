@@ -188,12 +188,12 @@ must "the user reaches a published port" as curl --silent --fail --max-time 5 \
     --output /dev/null http://127.0.0.1:18080/
 docker stop -t 0 ws-probe >/dev/null
 
-# The shell role's files refuse a link each. A dry run is enough, as the refusal is in the plan, and
-# it installs none of the role's packages. useradd made ~/.bashrc, from /etc/skel.
+# The shell's line refuses a link at ~/.bashrc. A dry run is enough, as the refusal is in the plan.
+# useradd made ~/.bashrc, from /etc/skel.
 as mv "$home/.bashrc" "$home/.bashrc.orig"
 as ln -s /etc/hostname "$home/.bashrc"
-if out=$(ws server ubuntu apply --check --only shell 2>&1); then
-    fail "ws server ubuntu apply planned through a link at ~/.bashrc"
+if out=$(WS_UNITS=roles/server/ubuntu ws unit write --dry-run file/shell-bashrc-line 2>&1); then
+    fail "ws unit write planned through a link at ~/.bashrc"
 fi
 must "a link at ~/.bashrc is refused" grep -q 'is a link to /etc/hostname' <<<"$out"
 as rm "$home/.bashrc"
@@ -213,13 +213,17 @@ must "keys names the entry" grep -qx 'env WS_CI' <<<"$names"
 refused "keys prints the value" grep -q "$value" <<<"$names"
 refused "the user runs ws server ubuntu secrets" as ws server ubuntu secrets keys
 
-apply=(ws server ubuntu apply --secrets /etc/ws/secrets.age --check --only shell)
+apply=(ws server ubuntu apply --secrets /etc/ws/secrets.age --check --only security)
 out=$(systemd-run --quiet --wait --pipe -p LoadCredentialEncrypted=ws-secrets "${apply[@]}" \
     </dev/null 2>&1) || fail "a unit with the credential can't read the file"
 echo "ok: a unit with the credential reads the file"
 refused "the unit prints the value" grep -q "$value" <<<"$out"
 refused "a unit without the credential reads the file" \
     systemd-run --quiet --wait --pipe "${apply[@]}" </dev/null
+out=$(WS_UNITS=roles/server/ubuntu ws unit write --dry-run file/shell-env 2>&1) ||
+    fail "ws unit can't plan /etc/ws/env from the file"
+must "ws unit plans /etc/ws/env from the file" grep -q 'would change: file/shell-env' <<<"$out"
+refused "ws unit prints the value" grep -q "$value" <<<"$out"
 
 must "unset drops the entry" ws server ubuntu secrets unset env WS_CI
 refused "keys names the entry after unset" grep -q WS_CI <<<"$(ws server ubuntu secrets keys)"

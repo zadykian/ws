@@ -1,0 +1,24 @@
+# The line that sources each of ws's bash files, at the top of the account's file, which stays the
+# account's. Stock's guard of a shell that is not interactive returns first, and ~/.profile runs
+# ~/.bashrc before its end. The line uses `.`, not `source`, as sh reads ~/.profile too.
+[file.shell-bashrc-line]
+path = "{{ .Home }}/.bashrc"
+owner = "{{ .User }}"
+line = ". /etc/ws/bashrc"
+
+[file.shell-profile-line]
+path = "{{ .Home }}/.profile"
+owner = "{{ .User }}"
+line = ". /etc/ws/profile"
+
+# The [env] table of the secrets file, which /etc/ws/bashrc sources. Root's, so that the account
+# reads it and cannot change it. A file there by hand is refused, never replaced. A machine without
+# a secrets file leaves it unchanged, and an empty table removes it.
+[file.shell-env]
+path = "/etc/ws/env"
+template = "files/env.tmpl"
+mode = 0o640
+group_of = "{{ .User }}"
+secret = true
+ours = true
+absent_when_empty = true

@@ -21,10 +21,10 @@ Its templates and sources sit beside it, and a path in the spec is relative to t
 - **The order.** Units run by name, each moved behind the unit that its `after` names, ahead of the
   next by name. An `after` that no spec holds, or a loop, fails the load.
 - **Two renders.** Both are Go templates over the side's values, and a key the values lack is an
-  error. The spec's text fills as it loads, with `add`, `mul`, `div` and `fail MSG`, which stops
-  the render with MSG. A unit's template fills as it plans, as an earlier unit may make the
-  account or the file that it reads. It takes `envvar FILE NAME` and the facts `mem_mib`, `cpus`,
-  `fs_bytes PATH...`, `uid NAME`, `installed_version NAME` and `kernel_release` too.
+  error. The spec's text fills as it loads, with `add`, `mul`, `div`, `exports` and `fail MSG`,
+  which stops the render with MSG. A unit's template fills as it plans, as an earlier unit may
+  make the account or the file that it reads. It takes `envvar FILE NAME` and the facts `mem_mib`,
+  `cpus`, `fs_bytes PATH...`, `uid NAME`, `installed_version NAME` and `kernel_release` too.
   `installed_version` gives dpkg's version of an installed package, else "", and
   `kernel_release` the running kernel's, as `uname -r` prints it.
 - **when.** Any unit takes `when = { FACT = "WANT" }`, and runs where every FACT of the machine
@@ -62,7 +62,13 @@ enabled = false             # service starts at boot
 reload = false              # reload service, not restart it
 user_service = "z.service"  # a unit of the owner's own systemd, restarted where the file changes
 secret = false              # keep the content out of the diff; takes no check
-absent = false              # remove the file; takes a path and an owner alone
+absent = false              # remove the file; takes a path, an owner and ours alone
+line = ". /etc/x"           # or a line at the top of the owner's file, which keeps its own text
+has = ["cmd"]               # says whether the file, on stdin, holds the line: 0 yes, 1 no
+group_of = "USER"           # a file of root's takes this account's primary group
+backup = false              # keep the old file beside the new one, as PATH.PID.TIME~
+ours = false                # refuse a file there without ws's '# Written by' line at its top
+absent_when_empty = false   # remove the file where its template gives white space alone
 after = "KIND/NAME"
 ```
 
@@ -76,7 +82,23 @@ after = "KIND/NAME"
 - An owner other than root takes the home that the system gives: `getent passwd` on Linux, and
   `dscl` on macOS, which the side names. A path outside it, or a link on the way, is refused, and
   the missing parents are the owner's.
+- A file whose `owner` names root takes root's home where its path lies below it, so a link on the
+  way is refused there too. An account's file names root where `WS_USER` is root.
 - Without booted systemd the restarts are skipped, and each says so.
+- A `line` goes at the top of its owner's file below the home, root's too, with a blank line
+  after it. A missing file is made with the line alone, at `mode`. The old file is kept as
+  `PATH.TIME~` first, and a link at the file or on the way is refused. A `check` runs on the new
+  text before that copy, so a refusal leaves the file unchanged.
+- Without `has`, a line of the file that equals the line, spaces aside, holds it. A line of more
+  than one line needs `has`. Any exit of `has` but 0 and 1 fails the plan with its stderr.
+- A `line` takes `owner`, `mode`, `check`, `has`, `after` and `when` alone.
+- `group_of` and `ours` take a file of root's. With `ours`, a file there whose first line lacks
+  `# Written by github.com/zadykian/ws` fails the plan, a dry run's too, before a write or a
+  removal. A file by hand is never lost, and the error names its path alone.
+- A `secret` file's template alone may call `secrets`, the side's secrets, as `(secrets).Env`.
+  On a machine with no secrets file, as in CI, the unit leaves the file and says so. `exports MAP`
+  gives a line `export NAME=VALUE` a name, sorted, each value quoted for the shell. A name that the
+  shell does not take fails the plan, and the error names no value.
 
 ### deb
 

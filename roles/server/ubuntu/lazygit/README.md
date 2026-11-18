@@ -1,23 +1,23 @@
 # lazygit
 
-The `lazygit` role is Go steps in `roles/server/ubuntu/lazygit`. It installs lazygit from Ubuntu's
-archive, a wrapper that puts the repository and its branch in the terminal's title, and a config in
-JetBrains Dark.
+The `lazygit` role sets up lazygit from `mise bootstrap`. Its `mise.server.toml` installs lazygit
+from Ubuntu's archive and a wrapper that puts the repository and its branch in the terminal's
+title. The unit `lazygit-config` of its `units.toml` writes a config in JetBrains Dark.
 
 ## The install
 
-`Lazygit` installs the package `lazygit`, 0.57.0 in the universe of Ubuntu 26.04, as the
+`mise.server.toml` installs the package `lazygit`, 0.57.0 in the universe of Ubuntu 26.04, as the
 [tmux role](../tmux/README.md) installs tmux. apt checks it, and updates it with the archive. It installs
 `git-delta`, delta 0.18.2, from the universe too, for lazygit's diffs.
 
-The role needs no other role and no secret. No step needs a booted systemd, so it runs whole in
-CI's container.
+The role needs no other role and no secret. Nothing in it needs a booted systemd, so it runs whole
+in CI's container.
 
 ## The title
 
 lazygit sets no title of its own, so a tab keeps the shell's, `user@host: dir`, while it runs.
-`Lazygit wrapper` writes `/usr/local/bin/lazygit`, mode 0755, from `files/lazygit`. It comes before
-the package's `/usr/bin/lazygit` on every `PATH` of Ubuntu's.
+mise writes `/usr/local/bin/lazygit`, mode 0755, from `files/lazygit`, after the packages. It comes
+before the package's `/usr/bin/lazygit` on every `PATH` of Ubuntu's.
 
 - The title reads `NAME: BRANCH`, such as `ws: main`. A linked worktree shows its main tree's name,
   and a detached HEAD its short hash.
@@ -44,8 +44,9 @@ cells change.
 
 ## The config
 
-`Lazygit config` writes `~/.config/lazygit/config.yml` for `WS_USER`, from `files/config.yml`. A
-run replaces a change made to it by hand, and keeps the old file beside the new one.
+The unit `lazygit-config` writes `~/.config/lazygit/config.yml` for `WS_USER`, from
+`files/config.yml`. A run replaces a change made to it by hand, and keeps the old file beside the
+new one, as `config.yml.PID.TIME~`.
 
 - Settings of your own go in `~/.lazygit.yml`. lazygit loads it over the config in each repository
   under the home, and a repository's `.git/lazygit.yml` after it.
@@ -66,7 +67,7 @@ run replaces a change made to it by hand, and keeps the old file beside the new 
 - `update.method` is `never`, as apt updates lazygit.
 - No random tip shows in the command log, and no popup at start. So after apt updates lazygit, a
   version's breaking changes are in its release notes alone.
-- The step fails where `~/.config`, the directory or `config.yml` is a link. The user owns
+- The unit fails where `~/.config`, the directory or `config.yml` is a link. The user owns
   `~/.config`, and a link would send ws's root to whatever it names.
 
 lazygit loads a key it lacks, or a value of another kind, with no error. So

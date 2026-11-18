@@ -24,30 +24,6 @@ func TestNamesHaveEachRoleOnce(t *testing.T) {
 	}
 }
 
-func TestGitRunsAfterShell(t *testing.T) {
-	names := Names()
-	i := slices.Index(names, "shell")
-	if i < 0 || i+1 >= len(names) || names[i+1] != "git" {
-		t.Errorf("git is misplaced in %v", names)
-	}
-}
-
-func TestZedRunsAfterFresh(t *testing.T) {
-	names := Names()
-	i := slices.Index(names, "zed")
-	if i < 1 || names[i-1] != "fresh" {
-		t.Errorf("zed is misplaced in %v", names)
-	}
-}
-
-func TestFreshRunsJustBeforeZed(t *testing.T) {
-	names := Names()
-	i := slices.Index(names, "fresh")
-	if i < 1 || names[i-1] != "otelcol" || names[i+1] != "zed" {
-		t.Errorf("fresh is misplaced in %v", names)
-	}
-}
-
 func TestRolesCloseOverTheValuesAndSecrets(t *testing.T) {
 	var gotV []values.Values
 	var gotS []secrets.Secrets

@@ -1,0 +1,15 @@
+# The user's settings for Zed's server, replaced whole where they differ. The old file stays beside
+# the new one, as the user may have changed it by hand. The directories on the way stay the user's,
+# and a link on the way is refused.
+[file.zed-settings]
+path = "{{ .Home }}/.config/zed/settings.json"
+owner = "{{ .User }}"
+template = "files/settings.json.tmpl"
+backup = true
+
+# The open-file limit of the user's logins: sshd's start at 1024, past which Zed's server
+# busy-loops (zed#62995). A unit, not a file of mise's, as its text reads the values, which have
+# defaults where mise's read of values.yml would fail the whole run.
+[file.zed-nofile]
+path = "/etc/security/limits.d/ws-zed.conf"
+template = "files/limits.conf.tmpl"

@@ -11,19 +11,14 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/claude"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools"
 	"github.com/zadykian/ws/roles/server/ubuntu/docker"
-	"github.com/zadykian/ws/roles/server/ubuntu/fresh"
 	"github.com/zadykian/ws/roles/server/ubuntu/git"
 	"github.com/zadykian/ws/roles/server/ubuntu/ikeward"
-	"github.com/zadykian/ws/roles/server/ubuntu/lazygit"
 	"github.com/zadykian/ws/roles/server/ubuntu/otelcol"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/security"
-	"github.com/zadykian/ws/roles/server/ubuntu/shell"
 	"github.com/zadykian/ws/roles/server/ubuntu/signoz"
-	"github.com/zadykian/ws/roles/server/ubuntu/tmux"
 	"github.com/zadykian/ws/roles/server/ubuntu/tunnel"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
-	"github.com/zadykian/ws/roles/server/ubuntu/zed"
 )
 
 // entry is one role of the server, not yet closed over the machine's values and secrets.
@@ -43,18 +38,12 @@ var all = []entry{
 	{"cable", cable.Steps},
 	{"tunnel", tunnel.Steps},
 	{"ikeward", ikeward.Steps},
-	{"shell", shell.Steps},
 	{"git", git.Steps},
-	{"tmux", tmux.Steps},
-	{"lazygit", lazygit.Steps},
 	{"devtools", devtools.Steps},
 	{"docker", docker.Steps},
 	{"claude", claude.Steps},
 	{"signoz", signoz.Steps},
 	{"otelcol", otelcol.Steps},
-	{"fresh", fresh.Steps},
-	// zed is described in `roles/server/ubuntu/zed/README.md`.
-	{"zed", zed.Steps},
 }
 
 // Roles returns every role, in the order that they run, closed over the machine's values v and

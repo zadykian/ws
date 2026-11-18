@@ -1,4 +1,4 @@
-package lazygit
+package lazygit_test
 
 import (
 	"bytes"

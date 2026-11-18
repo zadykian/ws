@@ -1,0 +1,21 @@
+# The units of zed: the user's settings and the open-file limit. They run after mise's own parts.
+[bootstrap.packages]
+"ws:file/zed-nofile" = "in-sync"
+"ws:file/zed-settings" = "in-sync"
+
+# The terminal's wrapper and its tmux.conf are root's, outside any home, as Zed runs the wrapper by
+# the path that the settings name. The wrapper finds its config beside itself.
+[bootstrap.directories."/usr/local/lib/ws/zed"]
+mode = "0755"
+
+[bootstrap.files."/usr/local/lib/ws/zed/terminal"]
+source = "files/terminal"
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.files."/usr/local/lib/ws/zed/tmux.conf"]
+source = "files/tmux.conf"
+owner = "root"
+group = "root"
+mode = "0644"

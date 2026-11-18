@@ -20,7 +20,7 @@ const (
 	MacOS
 )
 
-// home is the home of name, an account other than root.
+// home is the home of name, as the system's database of accounts gives it.
 func (s System) home(ctx context.Context, m effect.Machine, name string) (string, error) {
 	var out []byte
 	var err error

@@ -155,7 +155,7 @@ jobs:
       - name: The plan changes nothing, and finds a missing unit
         working-directory: /root
         run: '"$GITHUB_WORKSPACE/.github/playbook-plan.sh"'
-      # The wrapper and tmux.conf that the zed step installed, run against the container's tmux. The
+      # The wrapper and tmux.conf that the bootstrap wrote, run against the container's tmux. The
       # test takes about a minute, and catches a tmux release that changes how list-sessions or
       # rename-session behave.
       - name: Check the Zed terminal wrapper

@@ -3,6 +3,8 @@ package secrets
 import (
 	"context"
 	"errors"
+	"io/fs"
+	"slices"
 	"strings"
 	"testing"
 
@@ -147,5 +149,32 @@ func TestStoreSetRefusesALabelWithNoSpace(t *testing.T) {
 	m, _ := storeFixture(t, "")
 	if err := (Store{M: m}).Set(context.Background(), "envA", "dummy"); err == nil || len(m.Files) != 1 {
 		t.Errorf("err = %v, files %d; want a refusal and no file", err, len(m.Files))
+	}
+}
+
+func TestStoreLoadIsWhole(t *testing.T) {
+	m, _ := storeFixture(t, "[token]\ngithub = \"dummy\"\n[env]\nA = \"${token.github}\"\n")
+	got, err := Store{M: m}.Load(context.Background())
+	if err != nil || !got.Whole || got.Env["A"] != "dummy" {
+		t.Errorf("Load = %+v, %v; want the whole file, its references expanded", got, err)
+	}
+}
+
+func TestStoreLoadWithoutAFileIsNotExist(t *testing.T) {
+	m, _ := storeFixture(t, "")
+	_, err := Store{M: m}.Load(context.Background())
+	if !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("err = %v, want fs.ErrNotExist", err)
+	}
+	if slices.Contains(m.Calls, "run "+credDecrypt) {
+		t.Errorf("calls = %q, want no decrypt without a file", m.Calls)
+	}
+}
+
+func TestStoreLoadWithoutTheCredential(t *testing.T) {
+	m, _ := storeFixture(t, "[env]\nA = \"dummy\"\n")
+	delete(m.Files, CredstorePath)
+	if _, err := (Store{M: m}).Load(context.Background()); !errors.Is(err, ErrNoCredential) {
+		t.Errorf("err = %v, want ErrNoCredential", err)
 	}
 }

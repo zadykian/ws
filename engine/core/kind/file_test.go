@@ -236,7 +236,7 @@ func TestFileAbsentRemoves(t *testing.T) {
 func TestFileRefusesFieldsNoPlanTakes(t *testing.T) {
 	e, _, _, _ := testEnv(false)
 	for spec, want := range map[string]string{
-		"path = \"/a\"\nabsent = true\ntemplate = \"f\"\n":              "an absent file takes a path and an owner alone",
+		"path = \"/a\"\nabsent = true\ntemplate = \"f\"\n":              "an absent file takes a path, an owner and ours alone",
 		"path = \"a\"\nsource = \"f\"\n":                                "not a clean absolute path",
 		"path = \"/a/../b\"\nsource = \"f\"\n":                          "not a clean absolute path",
 		"path = \"/a\"\n":                                               "a template or a source",
