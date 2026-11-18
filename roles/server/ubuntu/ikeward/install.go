@@ -14,6 +14,10 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
+// binary is where the role's binary unit puts ikeward, and where its services, the routing's and
+// strongSwan run it: install refuses to run as any other program.
+const binary = "/usr/local/sbin/ikeward"
+
 // exitChanged is what ikeward install --exit-code exits with where install would change anything,
 // and 0 where not.
 const exitChanged = 4

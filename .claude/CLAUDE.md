@@ -121,7 +121,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   them. The list is the secret `FORBIDDEN_WORDS`, and the job fails on an empty one
   ([Cutting a release](../engine/core/update/README.md#cutting-a-release)).
 - A pinned download is checked against its SHA-256 before use: ikeward's
-  binary ([binary.go](../roles/server/ubuntu/ikeward/binary.go)) and otelcol's `.deb`
+  binary ([units.toml](../roles/server/ubuntu/ikeward/units.toml)) and otelcol's `.deb`
   ([download.go](../roles/server/ubuntu/otelcol/download.go)). So is Fresh's `.deb`
   ([units.toml](../roles/server/ubuntu/fresh/units.toml)). So is nct6687's source
   ([fans](../roles/server/ubuntu/fans/units.toml)), and so are foundryctl
