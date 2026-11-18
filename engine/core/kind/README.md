@@ -44,6 +44,7 @@ Its templates and sources sit beside it, and a path in the spec is relative to t
   | FACT | What the machine gives |
   | --- | --- |
   | `board_vendor` | The board's maker, from `/sys/class/dmi/id/board_vendor` |
+  | `container` | `yes` where Docker, Podman or systemd marks the machine a container, which shares its host's kernel |
   | `gpu_vendor` | The PCI vendor of a device of class `0x03`, from `/sys/bus/pci/devices`: `0x` and four hex digits in lower case, such as `0x1234` |
   | `interface` | A network interface of that name, of any state, from `/sys/class/net`: a name the kernel takes, with no `/` |
   | `set` | Any WANT, so that a value of the side's turns the unit on where set and off where empty; `"!WANT"` fails the load |
