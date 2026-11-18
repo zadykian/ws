@@ -6,12 +6,10 @@ import (
 	"strings"
 
 	"filippo.io/age"
-
-	"github.com/zadykian/ws/engine/core/effect"
 )
 
-// CredentialName is the name of the identity's systemd credential: the unit loads it by
-// LoadCredential=CredentialName:PATH, and ws reads it from $CREDENTIALS_DIRECTORY.
+// CredentialName is the name of the identity's systemd credential: systemd-creds names it so, and
+// ws unit decrypts it by systemd-creds decrypt.
 const CredentialName = "ws-secrets"
 
 // ParseIdentity parses text as one X25519 identity. Comment lines are skipped. The error names no
@@ -25,19 +23,4 @@ func ParseIdentity(text string) (age.Identity, error) {
 		return nil, fmt.Errorf("want one age identity, got %d", len(ids))
 	}
 	return ids[0], nil
-}
-
-// ReadCredential reads the identity from the credential CredentialName, in the directory that
-// getenv gives as CREDENTIALS_DIRECTORY. Without the directory the error names LoadCredential.
-func ReadCredential(m effect.Machine, getenv func(string) string) (age.Identity, error) {
-	dir := getenv("CREDENTIALS_DIRECTORY")
-	if dir == "" {
-		return nil, errors.New("no credential " + CredentialName + ": run it as a unit with LoadCredential=" +
-			CredentialName + ":PATH to the identity")
-	}
-	data, err := m.ReadFile(dir + "/" + CredentialName)
-	if err != nil {
-		return nil, fmt.Errorf("read the credential %s: %w", CredentialName, err)
-	}
-	return ParseIdentity(string(data))
 }
