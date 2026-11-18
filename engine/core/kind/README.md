@@ -6,7 +6,7 @@ A unit is one resource of a kind, named `KIND/NAME`. A role names its units in i
 no Go. A kind names no role's word: a role's facts come in by its spec and its templates.
 
 A unit is a `step.Step`, built on the packages of `engine/core/resource`. A run of units plans,
-applies and plans again, as a role's steps do.
+applies and plans again, in the units' order.
 
 ## The specs
 
