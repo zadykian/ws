@@ -16,7 +16,7 @@ its spec of ws's units:
 - [`security`](roles/server/ubuntu/security): SSH by key only, ufw and fail2ban, and a table that keeps what
   ws starts to the internet and ikeward, but what the network needs, such as DHCP and DNS. The
   table is off where `WS_SECURITY_OUTBOUND` is false, as a cloud VM wants.
-- [`cable`](roles/server/ubuntu/cable): the server's end of a cable to the Mac, as Go steps.
+- [`cable`](roles/server/ubuntu/cable): the server's end of a cable to the Mac, as units.
 - [`tunnel`](roles/server/ubuntu/tunnel): `wg0`, the server's end of a WireGuard tunnel for the Mac.
 - [`ikeward`](roles/server/ubuntu/ikeward): ikeward's IKEv2 VPN, where a profile is given, and the WireGuard
   peers' way into it.
