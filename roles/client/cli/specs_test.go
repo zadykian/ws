@@ -108,6 +108,12 @@ func TestTheMacLinksItsRoles(t *testing.T) {
 	}
 }
 
+// TestNoMacRoleSetsAFramesKey keeps each of the Mac's roles off the keys of its frame, which loads
+// before the roles through the side's link.
+func TestNoMacRoleSetsAFramesKey(t *testing.T) {
+	clitest.FrameKeys(t, []string{macTreeRoot + "/mise.toml", macTreeRoot + "/" + macRoleFile}, macRolesDir+"/*/"+macRoleFile)
+}
+
 // TestMacConfigHoldsNoRootPath keeps mise's own files and dotfiles out of the Mac's config. mise
 // reads its files of root's through sudo on every run, which would ask a password of a run that
 // changes nothing. Its dotfiles replace the user's own file with no guard. ws's units hold both.

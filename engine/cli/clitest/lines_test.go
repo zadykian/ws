@@ -44,3 +44,27 @@ func TestLinksRolesNamesAFileOrAnotherTarget(t *testing.T) {
 		t.Errorf("a file beside the roles gives %v, want one error", r.errs)
 	}
 }
+
+// TestFrameKeysNamesASharedKey fails a role's entry of a path that the frame declares, and passes
+// two apart and a shared table that merges.
+func TestFrameKeysNamesASharedKey(t *testing.T) {
+	dir := t.TempDir()
+	write := func(name, text string) string {
+		path := filepath.Join(dir, name)
+		if err := os.WriteFile(path, []byte(text), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		return path
+	}
+	packages := "[bootstrap.packages]\n\"ws:state/a\" = \"in-sync\"\n"
+	frame := write("frame.toml", packages+"[bootstrap.files.\"/etc/x\"]\ncontent = \"x\"\n")
+	write("apart.role", packages+"[bootstrap.files.\"/etc/y\"]\ncontent = \"y\"\n")
+	r := &recorder{TB: t}
+	if FrameKeys(r, []string{frame}, filepath.Join(dir, "*.role")); len(r.errs) != 0 {
+		t.Errorf("a role apart from the frame: %v", r.errs)
+	}
+	write("shared.role", "[bootstrap.files.\"/etc/x\"]\ncontent = \"z\"\n")
+	if FrameKeys(r, []string{frame}, filepath.Join(dir, "*.role")); len(r.errs) != 1 {
+		t.Errorf("a role that shares /etc/x gives %v, want one error", r.errs)
+	}
+}
