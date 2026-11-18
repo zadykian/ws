@@ -1,8 +1,8 @@
 # The Mac's runbook
 
 A person does these steps in this order, as no wizard asks them. Each step is done once the check
-beside it holds. Run `ws client macos apply` and `mise -C /opt/ws bootstrap` where a step says so:
-they set up the Mac's end ([The Mac](README.md)).
+beside it holds. Run `mise -C /opt/ws bootstrap` where a step says so: it sets up the Mac's end
+([The Mac](README.md)).
 
 ## Tools
 
@@ -52,8 +52,9 @@ files](values/README.md#the-two-files)). The files' check refuses a clash.
 ## Apply
 
 Run `mise -C /opt/ws bootstrap`, which installs gh and sets up ssh, git, cld and the Mac's other
-roles moved to mise ([The Mac's frame](frame/README.md)). Then run `ws client macos apply` beside
-it. A second run of each changes nothing, and a run that changes nothing asks no password.
+roles ([The Mac's frame](frame/README.md)). It makes the Mac's WireGuard key, whose public half is
+`/etc/ws/tunnel.pub`. A second run changes nothing, and a run that changes nothing asks no
+password.
 
 ## GitHub
 
@@ -99,8 +100,8 @@ a command that needs root. A user outside sudoers cannot go on.
    The bootstrap it runs puts ws in `/usr/local/bin`. Check it with `ws version`.
 3. Make the secrets, as [the server's runbook](../../server/ubuntu/runbook.md) says, with `ssh -t NAME
    sudo ws server ubuntu secrets ...`.
-4. Run it as the server's runbook says, with `ssh -t NAME sudo systemd-run --pty --wait -p
-   LoadCredentialEncrypted=ws-secrets ws server ubuntu apply --secrets /etc/ws/secrets.age`. A
+4. Run the server's bootstrap again over `ssh -t NAME`, in the form that
+   [the server's runbook](../../server/ubuntu/runbook.md) gives. A
    first run takes 20 to 40 minutes. Use `tmux` there: a dropped ssh ends the run.
 
 ## claude
@@ -115,10 +116,11 @@ permission ([Signing](../../server/ubuntu/git/README.md#signing)).
 
 ## The tunnel
 
-1. Copy the Mac's `/etc/ws/tunnel.pub` to ws's `/etc/wireguard/mac.pub`, as root, and run `sudo ws
-   server ubuntu apply --only tunnel` there ([The tunnel](../../server/ubuntu/tunnel/README.md#the-tunnel)).
+1. Copy the Mac's `/etc/ws/tunnel.pub` to ws's `/etc/wireguard/mac.pub`, as root, and run the
+   server's bootstrap there, as [its runbook](../../server/ubuntu/runbook.md) says
+   ([The tunnel](../../server/ubuntu/tunnel/README.md#the-tunnel)).
 2. Put wg0's public key, which that page names, in `WS_PUBLIC_KEY` of the server's `values.yml`.
-3. Run `ws client macos apply` again, and allow ws-tunnel in the Background.
+3. Run `mise -C /opt/ws bootstrap` again, and allow ws-tunnel in the Background.
 4. Ping the server's tunnel address, `10.99.N.1` for slot N, and run `ssh NAME`. A handshake must
    come within 30 s.
 
@@ -129,7 +131,8 @@ Skip it on a cloud VM and a VM on the Mac.
 1. Dock the Mac. At ws, list the wired ports with their carrier: `ip -br link` and `ip -br addr`.
 2. Set `WS_CABLE_PORT` at ws, and `WS_CABLE_SERVICE` on the Mac. `networksetup
    -listallnetworkservices` lists the services, and the cable's has a `169.254` address.
-3. Run `sudo ws server ubuntu apply --only cable,tunnel` at ws, then `ws client macos apply`.
+3. Run the server's bootstrap at ws, as [its runbook](../../server/ubuntu/runbook.md) says, then
+   `mise -C /opt/ws bootstrap`.
 4. Ping `10.77.0.1`. The Mac's end is `10.77.0.2` ([The cable](README.md#the-cable)).
 
 ## What stays by hand

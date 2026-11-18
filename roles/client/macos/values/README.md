@@ -52,7 +52,7 @@ bad name that holds A server's `values.yml` is refused too. Where another server
 
 ## What two servers may not share
 
-`ws client macos apply` reads every server's file, and refuses a server whose file takes what
+`mise -C /opt/ws bootstrap` reads every server's file, and refuses a server whose file takes what
 another's takes. Each of the two refuses until one changes, in its own file's words:
 
 - `WS_TUNNEL_NETWORKS`: a network that overlaps one of the other's, as a network goes through one
@@ -148,10 +148,10 @@ the Mac's display, if any:
 To move the server's file to another target, set `WS_TARGET`, and remove every key of ws's ways: `WS_LAN`,
 `WS_LAN_ADDRESS`, `WS_REMOTE`, `WS_REMOTE_PORT`, `WS_CABLE_SERVICE` and `WS_CABLE_PORT`. An old way
 would lead to the old machine still. From the LAN to a cloud VM, the router's `WS_REMOTE` would, and
-the cloud VM's run would turn that machine's outbound table off. `ws client macos apply` refuses a
+the cloud VM's run would turn that machine's outbound table off. The bootstrap refuses a
 key of another target's ways: `WS_LAN` on a cloud VM, `WS_REMOTE` on a VM on the Mac, and
 `WS_CABLE_SERVICE` or `WS_CABLE_PORT` off the LAN. Then name the new target's
 ways. A new machine offers another host key, so run `ssh-keygen -R NAME` first, NAME the server's
 name. From a cloud VM, remove `WS_SECURITY_OUTBOUND: false` from ws's `values.yml` too, with
 `sudo ws server ubuntu values set WS_SECURITY_OUTBOUND ''`. Then run `sudo ws server ubuntu apply`
-on ws, and `ws client macos apply` again.
+on ws, and `mise -C /opt/ws bootstrap` again.
