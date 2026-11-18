@@ -17,7 +17,7 @@ request. It runs as the user, with sudo where it needs root. `mise bootstrap` se
 and a zsh hook ([Ghostty and cld on the Mac](ghostty/README.md)). mise installs Ghostty, Zed and a
 font as casks, and gh by its lock, with no Homebrew ([the runbook](runbook.md)). The runbook puts
 `ws` in `~/.local/bin` (put it on `PATH` by hand) from a release, checked against its `ws.sha256`
-([Releases](../../../engine/core/update/README.md)). `ws` embeds the files it installs, so it
+([Releases](../../../.github/workflows/release.md)). `ws` embeds the files it installs, so it
 needs no clone. Write the values below in `values.yml` first ([The two
 files](values/README.md#the-two-files)). Then:
 

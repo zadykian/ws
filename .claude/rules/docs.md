@@ -37,8 +37,8 @@ What each document holds. How to write them is in the `writing` skill and [writi
   and [the server's](../../roles/server/ubuntu/runbook.md) are each side's steps by hand.
 - [The kind package's README](../../engine/core/kind/README.md) says what a unit and a kind are:
   the spec, each kind's fields, and where the specs sit.
-- [The update package's README](../../engine/core/update/README.md) says how to install and update
-  ws, and how a release is cut.
+- [release.md](../../.github/workflows/release.md), beside `release.yml`, says how to install ws,
+  and how a release is cut.
 - [The tools' README](../../.tools/README.md) says what each gate of `make lint` runs.
   [CI's README](../../.github/workflows/README.md) says what CI's other jobs check, and what the
   hooks of `.githooks` and Claude's hooks do.

@@ -35,7 +35,7 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
 - `install.sh`: installs mise and runs `mise bootstrap` on a release's tree
-  ([Releases](../engine/core/update/README.md)).
+  ([Releases](../.github/workflows/release.md)).
 - `roles/client/macos/`: the Mac's side ([The Mac](../roles/client/macos/README.md)). Its roles'
   units write `ghostty/files/ws.ghostty`, Ghostty's settings, `zed/files/`, Zed's settings and
   keymap, and `zsh/files/zshrc`, the zsh hook that turns off the modes that a drop leaves on.
@@ -127,7 +127,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   CI's container ([The `playbook` job](../.github/workflows/README.md#the-playbook-job)).
 - `release.yml` checks a release's files and notes for the local list's words before it publishes
   them. The list is the secret `FORBIDDEN_WORDS`, and the job fails on an empty one
-  ([Cutting a release](../engine/core/update/README.md#cutting-a-release)).
+  ([Cutting a release](../.github/workflows/release.md#cutting-a-release)).
 - A pinned download is checked against its SHA-256 before use: ikeward's
   binary ([units.toml](../roles/server/ubuntu/ikeward/units.toml)) and otelcol's `.deb`
   ([units.toml](../roles/server/ubuntu/otelcol/units.toml)). So is Fresh's `.deb`

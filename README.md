@@ -94,7 +94,7 @@ runs the bootstrap.
 curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sudo sh
 ```
 
-`WS_VERSION=X.Y.Z` before `sh` picks a release ([Install](engine/core/update/README.md#install)).
+`WS_VERSION=X.Y.Z` before `sh` picks a release ([Install](.github/workflows/release.md#install)).
 
 The units read their secrets from ws's file, which `ws server ubuntu secrets` edits ([The secrets
 file](roles/server/ubuntu/shell/README.md#the-secrets-file)). The values of a machine go in
@@ -185,7 +185,7 @@ CI runs `make lint`, which lints the code, the docs and the workflows, and scans
 secrets. It runs the bootstrap and `ws server ubuntu apply` twice in a container, and mise's plan
 after them must change nothing. It tries `install.sh`, forges SigNoz's
 compose files again, and sets up a Mac on GitHub's macOS runner. A pushed tag `vX.Y.Z` publishes the
-release whose tree `install.sh` runs: [Releases](engine/core/update). The rules workflow warns where a
+release whose tree `install.sh` runs: [Releases](.github/workflows/release.md). The rules workflow warns where a
 pull request breaks the rules of zadykian/toolkit's skills, and the issues workflow where an issue
 strays from its issue form. The hooks in `.githooks` check each commit before git makes it.
 [Checks](.github/workflows) and [The gates](.tools) have the details.

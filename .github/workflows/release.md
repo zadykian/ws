@@ -16,7 +16,7 @@ curl -fsSL --proto '=https' --tlsv1.2 \
 
 Without `pipefail`, a curl that fails pipes nothing into sh, which exits 0 having done nothing.
 `install.sh` sets up an Ubuntu server, and refuses a Mac, which follows
-[the Mac's runbook](../../../roles/client/macos/runbook.md). It installs mise, writes the
+[the Mac's runbook](../../roles/client/macos/runbook.md). It installs mise, writes the
 machine's miserc and runs `mise bootstrap`:
 
 - It downloads mise's binary at the version it pins. It checks the binary against the SHA-256 it
@@ -25,7 +25,7 @@ machine's miserc and runs `mise bootstrap`:
   at the pinned version is not downloaded again.
 - It writes `/etc/mise/miserc.toml` from `WS_USER` in `/etc/ws/values.yml`: the envs `server`,
   `booted` where systemd runs, and `account` where `WS_USER` is not root
-  ([The frame](../../../roles/server/ubuntu/frame/README.md#the-machines-env)). After a change of
+  ([The frame](../../roles/server/ubuntu/frame/README.md#the-machines-env)). After a change of
   `WS_USER`, run it again.
 - It finds the latest release once, and clones the release's tag into `/opt/ws`, then runs the
   bootstrap on that tree. The tree pins ws's binary, and mise checks it against `mise.lock`. Run
@@ -45,10 +45,10 @@ machine's miserc and runs `mise bootstrap`:
 
 ## The install job
 
-CI's `install` job runs [install-checks.sh](../../../.github/install-checks.sh) on each pull request. It
+CI's `install` job runs [install-checks.sh](../install-checks.sh) on each pull request. It
 runs as a user with sudo on GitHub's runner, as `install.sh` writes `/etc/mise`, `/opt/ws` and
 `/etc/ws`, which each case removes. It downloads mise's real binary once and serves it on loopback
-with [serve-releases](../../../.tools/serve-releases/main.go), beside a copy with a byte added. A small
+with [serve-releases](../../.tools/serve-releases/main.go), beside a copy with a byte added. A small
 repository stands for the release's tree: a file of mise's config for each env, each writing one
 file, tagged `v0.2.0`, and later `v0.3.0` with one file more. The cases:
 
@@ -76,11 +76,11 @@ git tag -s v0.2.0 && git push origin v0.2.0
 Nothing else is by hand. `release.yml` runs on the tag, in these jobs:
 
 1. `check`: the tag is `vX.Y.Z`, and `origin/main` holds its commit.
-1. `ci` and `mac`: [ci.yml](../../../.github/workflows/ci.yml) and
-   [mac.yml](../../../.github/workflows/mac.yml), called on the tag. Their `playbook` and `mac` jobs run,
+1. `ci` and `mac`: [ci.yml](ci.yml) and
+   [mac.yml](mac.yml), called on the tag. Their `playbook` and `mac` jobs run,
    as on a push to `main`.
 1. `build`: `ws-darwin-arm64`, `ws-linux-amd64` and `ws-linux-arm64` with the Go that
-   [.tools/run](../../../.tools/run) pins, without cgo, with `-trimpath` and Go's stamp of the tag, and
+   [.tools/run](../../.tools/run) pins, without cgo, with `-trimpath` and Go's stamp of the tag, and
    `ws.sha256`. The job fails unless `ws version` of the amd64 binary prints the tag.
 1. `publish`: GitHub's generated notes, then a check of the notes, the binaries, `ws.sha256` and
    `install.sh` for the local list's words (CLAUDE.md), from the secret `FORBIDDEN_WORDS`. It fails

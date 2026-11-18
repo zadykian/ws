@@ -35,12 +35,12 @@ no MSI board, `fans` leaves its fans alone. Without a VPN profile, `ikeward` doe
 
 CI runs `install.sh` with mise's real binary, served on loopback, and a small repository for the
 release's tree. It checks that `install.sh` installs mise, refuses a wrong one and runs the
-bootstrap ([The install job](../../engine/core/update/README.md#the-install-job)).
+bootstrap ([The install job](release.md#the-install-job)).
 
 ## The release
 
 `release.yml` runs `ci.yml` and `mac.yml` on a tag before it publishes
-([Cutting a release](../../engine/core/update/README.md#cutting-a-release)).
+([Cutting a release](release.md#cutting-a-release)).
 
 ## SigNoz's compose files
 
