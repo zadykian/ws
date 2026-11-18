@@ -39,15 +39,15 @@ link with no guard. ws's units hold both.
 
 A role keeps its directory, `roles/client/macos/ROLE/`, and its page there. Its spec,
 `units.toml`, sits beside its templates and sources. Its one mise file is `mise.mac.toml`, which
-holds its lines and mise's own parts, such as casks and tools. Its link,
-`mise/conf.d/mac-ROLE`, leads to `../../roles/client/macos/ROLE`.
+holds its lines and mise's own parts, such as casks and tools. The side's one link,
+`roles/client/mise/conf.d`, leads to `../macos`, so a role lands with its directory alone.
 
 Each unit of a spec is a line `"ws:KIND/NAME" = "in-sync"` under `[bootstrap.packages]` in the
 role's `mise.mac.toml`. The lines follow no server: a spec loops over `.Servers` within one unit,
 as a unit a server would come and go with its line ([The facts](../../facts/README.md)).
 [`TestMacSpecsMatchMiseLines`](../../cli/specs_test.go) fails on a line missing or extra.
-`TestEachMacRoleIsLinked` fails on a role without its link, and `TestMacConfigHoldsNoRootPath` on
-mise's own root path or a dotfile.
+`TestTheMacLinksItsRoles` fails where the link leads elsewhere or its directory holds a file, and
+`TestMacConfigHoldsNoRootPath` on mise's own root path or a dotfile.
 
 ## ws at a fixed path
 

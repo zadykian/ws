@@ -1,7 +1,7 @@
-# The Mac's frame. The env mac loads it, with the Mac's roles that mise/conf.d links. The Mac's
-# miserc names that env. It loads no file of the server's. mise reads its own files of root's
-# through sudo on every run, so the Mac holds none. Its root paths are ws's units alone, which
-# read as the user and ask no password.
+# The Mac's frame. The env mac loads it, with the Mac's roles that roles/client/mise/conf.d
+# links. The Mac's miserc names that env. It loads no file of the server's. mise reads its own
+# files of root's through sudo on every run, so the Mac holds none. Its root paths are ws's units
+# alone, which read as the user and ask no password.
 
 # ws's units, `"ws:KIND/NAME" = "in-sync"` under [bootstrap.packages]. Named here, a plugin that
 # mise cannot load is an unknown manager, which fails the run. mise takes an absolute path alone.

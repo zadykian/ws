@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"errors"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -18,12 +16,14 @@ import (
 	"github.com/zadykian/ws/roles/client/values"
 )
 
-// The paths below are from this package's directory: the roles are its sibling macos, unitsDir
-// in the checkout, and the tree's root is three levels up.
+// The paths below are from this package's directory. The roles are its sibling macos, unitsDir in
+// the checkout. The side's conf.d and lock are its sibling mise's, and the tree's root is three
+// levels up.
 const (
 	macRolesDir = "../macos"
 	macTreeRoot = "../../.."
-	macConfDir  = macTreeRoot + "/mise/conf.d"
+	macConfDir  = "../mise/conf.d"
+	macLock     = "../mise/mise.mac.lock"
 	// macRoleFile is a role's one mise file: the env mac loads it, and no env of the server's.
 	macRoleFile = "mise.mac.toml"
 )
@@ -98,29 +98,13 @@ func macRoleDirs(t *testing.T) []string {
 	return dirs
 }
 
-// TestEachMacRoleIsLinked holds mise/conf.d and the Mac's roles together. mise loads a role's files
-// through its link alone: a role without one would drop its lines with no error.
-func TestEachMacRoleIsLinked(t *testing.T) {
-	dirs := macRoleDirs(t)
-	if !slices.Contains(dirs, "frame") {
+// TestTheMacLinksItsRoles holds the Mac's one conf.d link to its roles. mise loads a role's files
+// from a directory of conf.d alone, and a file there in every env. A link elsewhere would drop
+// every role's lines with no error.
+func TestTheMacLinksItsRoles(t *testing.T) {
+	clitest.LinksRoles(t, macConfDir, "../macos")
+	if dirs := macRoleDirs(t); !slices.Contains(dirs, "frame") {
 		t.Errorf("the Mac's roles %v lack the frame", dirs)
-	}
-	for _, dir := range dirs {
-		link := filepath.Join(macConfDir, "mac-"+dir)
-		target, err := os.Readlink(link)
-		if want := "../../roles/client/macos/" + dir; err != nil || target != want {
-			t.Errorf("%s leads to %q (%v), want a link to %s", link, target, err, want)
-		}
-	}
-	entries, err := os.ReadDir(macConfDir)
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		t.Fatal(err)
-	}
-	for _, e := range entries {
-		dir, ok := strings.CutPrefix(e.Name(), "mac-")
-		if ok && !slices.Contains(dirs, dir) {
-			t.Errorf("%s: no role %s of the Mac's holds a spec or a mise file", filepath.Join(macConfDir, e.Name()), dir)
-		}
 	}
 }
 
@@ -155,11 +139,11 @@ func TestMacConfigHoldsNoRootPath(t *testing.T) {
 	}
 }
 
-// TestMacLockHoldsEachTool keeps mise/mise.mac.lock beside the Mac's tools. The bootstrap runs with
-// MISE_LOCKED=1, which refuses a tool that the lock lacks, and installs one by its url and checksum
-// alone, so that no tool goes in unchecked.
+// TestMacLockHoldsEachTool keeps roles/client/mise/mise.mac.lock beside the Mac's tools. The
+// bootstrap runs with MISE_LOCKED=1, which refuses a tool that the lock lacks, and installs one by
+// its url and checksum alone, so that no tool goes in unchecked.
 func TestMacLockHoldsEachTool(t *testing.T) {
-	text, err := os.ReadFile(macTreeRoot + "/mise/mise.mac.lock")
+	text, err := os.ReadFile(macLock)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,7 +173,7 @@ func TestMacLockHoldsEachTool(t *testing.T) {
 			tools++
 			i := slices.IndexFunc(lock.Tools[name], func(e map[string]any) bool { return e["version"] == version })
 			if i < 0 {
-				t.Errorf("%s: %s %s is not in mise/mise.mac.lock: run mise lock for macos-arm64", f, name, version)
+				t.Errorf("%s: %s %s is not in roles/client/mise/mise.mac.lock: run mise lock for macos-arm64", f, name, version)
 				continue
 			}
 			mac, _ := lock.Tools[name][i]["platforms.macos-arm64"].(map[string]any)

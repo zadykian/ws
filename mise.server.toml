@@ -1,5 +1,5 @@
 # The server's frame, what every role of the server leans on: the env server loads it, with the
-# roles that mise/conf.d links. The Mac loads none of it.
+# roles that roles/server/mise/conf.d links. The Mac loads none of it.
 
 # ws's units, `"ws:KIND/NAME" = "in-sync"` under [bootstrap.packages]. Named here, a plugin that
 # mise cannot load is an unknown manager, which fails the run, where mise would drop its units with

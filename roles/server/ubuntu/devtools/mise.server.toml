@@ -80,11 +80,11 @@ owner = "root"
 group = "root"
 mode = "0644"
 
-# The tools, each locked in mise/mise.server.lock with its checksum for each platform, or built
-# through Go's checksum database. A bump changes the version here, the link of units.toml and the
-# lock (README.md). mise builds a go: tool once, with the Go of that run, and never again where Go
-# changes. Delve 1.27.2 supports Go 1.25 to 1.27 (pkg/goversion/compat.go:14-17 at v1.27.2): a
-# Go 1.28 goes with a newer Delve.
+# The tools, each locked in roles/server/mise/mise.server.lock with its checksum for each
+# platform, or built through Go's checksum database. A bump changes the version here, the link of
+# units.toml and the lock (README.md). mise builds a go: tool once, with the Go of that run, and
+# never again where Go changes. Delve 1.27.2 supports Go 1.25 to 1.27
+# (pkg/goversion/compat.go:14-17 at v1.27.2): a Go 1.28 goes with a newer Delve.
 [tools]
 go = "1.27.3"
 "go:golang.org/x/tools/gopls" = "0.23.0"

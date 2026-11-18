@@ -65,3 +65,23 @@ func CompareLines(t testing.TB, where string, want []string, got map[string]bool
 		t.Errorf("%s: extra \"ws:%s\" = %q, which no spec gives there", where, name, "in-sync")
 	}
 }
+
+// LinksRoles fails the test where link, a side's conf.d, does not read want, or where its
+// directory holds a file. mise loads each directory there as a role's, and a file beside them in
+// every env.
+func LinksRoles(t testing.TB, link, want string) {
+	target, err := os.Readlink(link)
+	if err != nil || target != want {
+		t.Errorf("%s leads to %q (%v), want a link to %s", link, target, err, want)
+		return
+	}
+	entries, err := os.ReadDir(link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range entries {
+		if !e.IsDir() {
+			t.Errorf("%s: mise would load it in every env: a role is a directory", filepath.Join(link, e.Name()))
+		}
+	}
+}

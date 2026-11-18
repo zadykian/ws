@@ -28,12 +28,13 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 - `mise.toml` and `mise.lock`: mise's config that both sides share, its settings and the pin of
   ws, a release, with the release's SHA-256 for each target in the lock. `mise.server.toml` is
   the server's part, and `plugins/ws` the plugin that hands ws's units to `ws unit`. A role holds
-  its spec, `units.toml`, and its mise files beside its page, and `mise/conf.d` links its
-  directory ([The frame](../roles/server/ubuntu/frame/README.md)). The roles' tools
-  lock in `mise/mise.server.lock`. `mise.mac.toml` is the Mac's part, and
+  its spec, `units.toml`, and its mise files beside its page. Each side's `roles/SIDE/mise/`
+  holds its one link, `conf.d`, to its directory of roles, and its lock
+  ([The frame](../roles/server/ubuntu/frame/README.md)). The roles' tools lock in
+  `roles/server/mise/mise.server.lock`. `mise.mac.toml` is the Mac's part, and
   `roles/client/macos/frame` and `roles/client/facts` its frame and its units' values
-  ([The Mac's frame](../roles/client/macos/frame/README.md)). `mise/mise.mac.lock` locks the Mac's
-  tools, gh among them, by their SHA-256.
+  ([The Mac's frame](../roles/client/macos/frame/README.md)). `roles/client/mise/mise.mac.lock`
+  locks the Mac's tools, gh among them, by their SHA-256.
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
 - `install.sh`: installs mise and runs `mise bootstrap` on a release's tree
@@ -140,12 +141,12 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   target `install.sh` holds ([install.sh](../install.sh)), and the Mac's runbook its macos-arm64's
   ([runbook.md](../roles/client/runbook.md)). So is
   yamllint ([lint-requirements.in](../.github/lint-requirements.in)), the Mac's gh, by
-  `mise/mise.mac.lock` ([git](../roles/client/macos/git/README.md#gh)), and Secretive's
+  `roles/client/mise/mise.mac.lock` ([git](../roles/client/macos/git/README.md#gh)), and Secretive's
   `Secretive.zip`, with its notarization ([runbook.md](../roles/client/runbook.md)). The
   Mac's casks, Ghostty, Zed and their font, take their latest by mise's `brew-cask`, outside the rule
   ([ghostty](../roles/client/macos/ghostty/README.md#ghostty)). Go is checked against the
   SHA-256 its publisher lists, and the postgres-language-server and docker-language-server against
-  theirs. mise's lock holds each for its platform ([mise.server.lock](../mise/mise.server.lock)).
+  theirs. mise's lock holds each for its platform ([mise.server.lock](../roles/server/mise/mise.server.lock)).
   gopls and Delve are built through Go's checksum database, as mise's `go:` tools
   ([devtools](../roles/server/ubuntu/devtools/README.md#the-tools)). roslyn-language-server is pinned by version alone
   ([units.toml](../roles/server/ubuntu/devtools/units.toml)). The npm servers are checked against the sha512

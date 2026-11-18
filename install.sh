@@ -241,7 +241,7 @@ bootstrap() {
     (
         cd /opt/ws || exit 1
         unset MISE_TRUSTED_CONFIG_PATHS
-        for config in mise.toml mise.*.toml mise/conf.d/*/mise.*.toml; do
+        for config in mise.toml mise.*.toml roles/server/mise/conf.d/*/mise.*.toml; do
             [ ! -e "$config" ] || /usr/local/bin/mise trust "$config" </dev/null || exit 1
         done
     )

@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"errors"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -16,18 +14,18 @@ import (
 	"github.com/zadykian/ws/roles/server/values"
 )
 
-// The paths below are from this package's directory: the roles are its sibling ubuntu, unitsDir
-// in the checkout, and the tree's root is three levels up.
+// The paths below are from this package's directory. The roles are its sibling ubuntu, unitsDir in
+// the checkout. The side's conf.d is its sibling mise's, and the tree's root is three levels up.
 const (
 	rolesDir = "../ubuntu"
 	treeRoot = "../../.."
-	confDir  = treeRoot + "/mise/conf.d"
+	confDir  = "../mise/conf.d"
 	// selfPath stands for the running ws, which a spec's self gives.
 	selfPath = "/usr/local/bin/ws"
 )
 
 // roleFiles are the mise files a role may hold, each loaded by its env. A plain mise.toml would
-// load on the Mac too.
+// load in every env.
 var roleFiles = []string{"mise.server.toml", "mise.booted.toml", "mise.account.toml"}
 
 // specNames returns the names of the units that the roles' specs give for v.
@@ -183,25 +181,12 @@ func roleDirs(t *testing.T) []string {
 	return dirs
 }
 
-// TestEachRoleIsLinked holds mise/conf.d and the roles together. mise loads a role's files through
-// its link alone: a role without one would drop its lines with no error.
-func TestEachRoleIsLinked(t *testing.T) {
-	dirs := roleDirs(t)
-	for _, dir := range dirs {
-		link := filepath.Join(confDir, "server-"+dir)
-		target, err := os.Readlink(link)
-		if want := "../../roles/server/ubuntu/" + dir; err != nil || target != want {
-			t.Errorf("%s leads to %q (%v), want a link to %s", link, target, err, want)
-		}
-	}
-	entries, err := os.ReadDir(confDir)
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		t.Fatal(err)
-	}
-	for _, e := range entries {
-		dir, ok := strings.CutPrefix(e.Name(), "server-")
-		if ok && !slices.Contains(dirs, dir) {
-			t.Errorf("%s: no role %s holds a spec or a mise file", filepath.Join(confDir, e.Name()), dir)
-		}
+// TestTheSideLinksItsRoles holds the server's one conf.d link to its roles. mise loads a role's
+// files from a directory of conf.d alone, and a file there in every env. A link elsewhere
+// would drop every role's lines with no error.
+func TestTheSideLinksItsRoles(t *testing.T) {
+	clitest.LinksRoles(t, confDir, "../ubuntu")
+	if dirs := roleDirs(t); !slices.Contains(dirs, "frame") {
+		t.Errorf("the server's roles %v lack the frame", dirs)
 	}
 }

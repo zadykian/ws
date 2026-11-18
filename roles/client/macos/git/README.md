@@ -25,9 +25,9 @@ password.
 ## gh
 
 [`mise.mac.toml`](mise.mac.toml) pins gh, which mise installs from GitHub's release by its aqua
-backend. `mise/mise.mac.lock` holds the release's URL and SHA-256 for macOS on arm64, and the
-bootstrap runs locked, so mise refuses a gh the lock lacks. mise installs it for the tree alone, on
-no shell's `PATH`, so `state.gh` copies it to `/usr/local/bin/gh`, which `/etc/paths` puts on every
+backend. [`mise.mac.lock`](../../mise/mise.mac.lock) holds the release's URL and SHA-256 for macOS
+on arm64, and the bootstrap runs locked, so mise refuses a gh the lock lacks. mise installs it for
+the tree alone, on no shell's `PATH`, so `state.gh` copies it to `/usr/local/bin/gh`, which `/etc/paths` puts on every
 shell's, under a temporary name first. A gh there that differs is replaced. To move gh on, change
 the pin and lock it again. The lock must hold the new release's URL and SHA-256, as gh's release
 lists them. `TestMacLockHoldsEachTool` checks that the lock holds each tool.
