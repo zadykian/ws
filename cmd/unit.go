@@ -9,5 +9,5 @@ import (
 
 // unitCmd returns ws unit, with the server's side, as mise calls it at ws's root. It builds
 // everywhere, so that the tests run anywhere. Only its entry in the groups is built for Linux
-// alone; the Mac's side comes with its own units.
+// alone. The Mac's ws unit is its own side's, which groups_macos.go builds.
 func unitCmd(p cli.Env) *cobra.Command { return ubuntucli.UnitCmd(p) }

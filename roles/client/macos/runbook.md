@@ -20,6 +20,16 @@ beside it holds. Run `ws client macos apply` where a step says so: it sets up th
    -c --ignore-missing ws.sha256`, install it with `install -m 755 ws-darwin-arm64
    ~/.local/bin/ws`, and put `~/.local/bin` on `PATH`.
 4. Install gh with `brew install gh`, which the GitHub steps need.
+5. Install mise 2026.11.9 for [the Mac's frame](frame/README.md):
+   - Download `mise-v2026.11.9-macos-arm64` from
+     `https://github.com/jdx/mise/releases/download/v2026.11.9/` with `curl -fsSLO`.
+   - Check its SHA-256 with `shasum -a 256`. It must be
+     `f3bb0e8cbe0217a0b52444ecc0042364563ddd1de0490313bb7e702ecab41a14`.
+   - Install it with `sudo install -m 755 mise-v2026.11.9-macos-arm64 /usr/local/bin/mise`.
+6. Clone ws's repository at the latest release's tag into `/opt/ws`, as root: `sudo git clone
+   --depth 1 --branch vX.Y.Z https://github.com/zadykian/ws /opt/ws`. It stays root's, and no one
+   else may write it.
+7. Write `/etc/mise/miserc.toml`, as root, with the line `env = ["mac"]`.
 
 ## Answers
 
@@ -54,7 +64,9 @@ installer, turn OpenSSH on, import the keys from GitHub and leave password login
 
 ## Apply
 
-Run `ws client macos apply`. A second run changes nothing.
+Run `ws client macos apply`. Then run `mise -C /opt/ws bootstrap` beside it, which sets up the
+Mac's roles moved to mise ([The Mac's frame](frame/README.md)). A second run of each changes
+nothing, and a run that changes nothing asks no password.
 
 ## ws's host key
 

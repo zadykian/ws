@@ -205,6 +205,7 @@ func TestWhenOnEveryKind(t *testing.T) {
 		"state":   "[state.a]\npurged = \"p\"\n" + off,
 		"service": "[service.a]\nunit = \"a.service\"\nenabled = true\nrun = \"running\"\n" + off,
 		"compose": "[compose.a]\ndir = \"/srv/a\"\nproject = \"a\"\n" + off,
+		"launchd": "[launchd.a]\nprefix = \"a.\"\nprogram = \"/a\"\n" + off,
 	}
 	for f := range reflect.TypeFor[spec]().Fields() {
 		if _, ok := samples[f.Tag.Get("toml")]; !ok {
@@ -213,6 +214,9 @@ func TestWhenOnEveryKind(t *testing.T) {
 	}
 	for name, spec := range samples {
 		e, m, _, out := testEnv(true)
+		if name == "launchd" {
+			e.System = MacOS
+		}
 		units := loadOne(t, e, spec, map[string]string{"a": "x"})
 		if got := headlines(t, units[0].Step); got != nil || len(out.Lines) != 1 {
 			t.Errorf("%s: plan = %q, said %q; want none and the off line", name, got, out.Lines)

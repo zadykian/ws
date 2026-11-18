@@ -60,7 +60,12 @@ CI also sets up a Mac, by [its cases](../mac), in the order of [The Mac](../../r
 client macos apply --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config`
 or `~/.zshrc`, and installs no formula or cask. It must note the install of Zed's cask. Stand-ins
 for Ghostty's and Zed's apps, the font and cld, which `ws client macos apply` leaves alone, spare
-the job's runs their downloads. The job's `values.yml` names a file key, made in case 20, as ws's
+the job's runs their downloads. Then `mise -C /opt/ws bootstrap` with [the Mac's
+frame](../../roles/client/macos/frame/README.md) runs as the runbook runs it, on the tree in
+`/opt/ws` with ws's build served as the pin ([mac-mise.sh](../mac-mise.sh)). Its plan must exit 0
+after the first run, a second run must call no sudo, and `/usr/local/bin/ws` must be the build. A
+spec whose unit no line names must fail the plan.
+The job's `values.yml` names a file key, made in case 20, as ws's
 login key and git's. Without ws's WireGuard key, `ws client macos apply` must make the Mac's key and
 load no daemon, and `ssh -G ws` gives the tunnel's end. The public key it prints must be the Mac's,
 as must the key in the command that gives it to ws. With a stand-in's key it must load and run the

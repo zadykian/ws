@@ -37,6 +37,8 @@ after = "KIND/NAME"
 - `group` is read from `/etc/group` as the unit plans, so a package that mise installs may bring
   it, and a missing group fails the plan. It takes a file of root's, and never sits by `group_of`.
 - A file in `/etc/systemd/system` makes systemd read its units again.
+- On macOS a file of root's is readable by all, a `mode` with `0o004`, or the load fails. The Mac's
+  units read root's paths as the user, so that a run that changes nothing asks no password.
 - An owner other than root takes the home that the system gives: `getent passwd` on Linux, and
   `dscl` on macOS, which the side names. A path outside it, or a link on the way, is refused, and
   the missing parents are the owner's.

@@ -41,6 +41,9 @@ type UnitSide struct {
 	// Secrets loads the side's secrets for a secret file's template, or returns kind.ErrNoSecrets
 	// where the machine has none. Nil is a side with no secrets.
 	Secrets func(ctx context.Context, m effect.Machine) (any, error)
+	// User returns the account that ws runs as, from the values, where it runs as a user: the
+	// Mac's. A run state of that user's needs no sudo there. Nil is a side that runs as root.
+	User func(data any) string
 }
 
 // unitRun is one call of ws unit: the units of the specs, in the order they run, and ws's lines,
@@ -113,6 +116,9 @@ func loadUnits(c *cobra.Command, p Env, s UnitSide) (unitRun, error) {
 	env := kind.Env{M: m, U: s.Units, Out: r.out, Data: data, System: s.System, Self: self}
 	if s.Secrets != nil {
 		env.Secrets = loadOnce(s.Secrets, m)
+	}
+	if s.User != nil {
+		env.User = s.User(data)
 	}
 	r.all, err = kind.Load(env, specs)
 	if err != nil {

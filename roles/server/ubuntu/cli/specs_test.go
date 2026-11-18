@@ -10,8 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pelletier/go-toml/v2"
-
+	"github.com/zadykian/ws/engine/cli/clitest"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/kind"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -64,62 +63,6 @@ func rootAndAccount(t *testing.T) (root, account values.Values) {
 	return root, account
 }
 
-// miseLines returns the units that the files of glob name under [bootstrap.packages], each
-// "ws:KIND/NAME" without its prefix. A unit in two of the files fails the test.
-func miseLines(t *testing.T, glob string) map[string]bool {
-	files, err := filepath.Glob(glob)
-	if err != nil {
-		t.Fatal(err)
-	}
-	lines := map[string]bool{}
-	where := map[string]string{}
-	for _, f := range files {
-		text, err := os.ReadFile(f) //nolint:gosec // a file of the tree, found by the test
-		if err != nil {
-			t.Fatal(err)
-		}
-		var c struct {
-			Bootstrap struct {
-				Packages map[string]string `toml:"packages"`
-			} `toml:"bootstrap"`
-		}
-		if err := toml.Unmarshal(text, &c); err != nil {
-			t.Fatalf("%s: %v", f, err)
-		}
-		for pkg := range c.Bootstrap.Packages {
-			name, ok := strings.CutPrefix(pkg, "ws:")
-			if !ok {
-				continue
-			}
-			if other, twice := where[name]; twice {
-				t.Errorf("%q is in %s and %s: one role names a unit", pkg, other, f)
-			}
-			lines[name], where[name] = true, f
-		}
-	}
-	return lines
-}
-
-// compareLines reports each unit of want that got lacks, and each of got that want lacks, as the
-// line to add to or drop from the files of where.
-func compareLines(t *testing.T, where string, want []string, got map[string]bool) {
-	for _, name := range want {
-		if !got[name] {
-			t.Errorf("%s: missing \"ws:%s\" = %q", where, name, "in-sync")
-		}
-	}
-	extra := []string{}
-	for name := range got {
-		if !slices.Contains(want, name) {
-			extra = append(extra, name)
-		}
-	}
-	slices.Sort(extra)
-	for _, name := range extra {
-		t.Errorf("%s: extra \"ws:%s\" = %q, which no spec gives there", where, name, "in-sync")
-	}
-}
-
 // TestSpecsMatchMiseLines holds mise's lines and the specs together, so that mise plans each unit
 // ws knows, as ws unit verify checks on a machine. The server's files hold each unit for every
 // server. The account's files hold each unit that the spec gives where WS_USER is not root, as the
@@ -141,19 +84,19 @@ func TestSpecsMatchMiseLines(t *testing.T) {
 		}
 	}
 
-	server := miseLines(t, treeRoot+"/mise.server.toml")
-	for name := range miseLines(t, rolesDir+"/*/mise.server.toml") {
+	server := clitest.MiseLines(t, treeRoot+"/mise.server.toml")
+	for name := range clitest.MiseLines(t, rolesDir+"/*/mise.server.toml") {
 		if server[name] {
 			t.Errorf("\"ws:%s\" is in the root's mise.server.toml and a role's", name)
 		}
 		server[name] = true
 	}
-	compareLines(t, "every server (mise.server.toml)", every, server)
-	compareLines(t, "an account (mise.account.toml)", accountOnly, miseLines(t, rolesDir+"/*/mise.account.toml"))
+	clitest.CompareLines(t, "every server (mise.server.toml)", every, server)
+	clitest.CompareLines(t, "an account (mise.account.toml)", accountOnly, clitest.MiseLines(t, rolesDir+"/*/mise.account.toml"))
 
 	// A unit skips itself without booted systemd, and mise.toml loads on the Mac too.
 	for _, glob := range []string{treeRoot + "/mise.toml", rolesDir + "/*/mise.booted.toml"} {
-		for name := range miseLines(t, glob) {
+		for name := range clitest.MiseLines(t, glob) {
 			t.Errorf("%s: \"ws:%s\" belongs in a mise.server.toml or mise.account.toml", glob, name)
 		}
 	}

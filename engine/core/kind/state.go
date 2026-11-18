@@ -83,6 +83,10 @@ func (s stateSpec) parts(e Env, _ fs.FS) (func(context.Context) ([]resource.Reso
 	if len(set) != 1 {
 		return nil, fmt.Errorf("a state sets exactly one of %s, and this one sets %d", strings.Join(stateKeys(), ", "), len(set))
 	}
+	// The other states read and change what Linux alone has: systemd, apt, ufw and iproute2.
+	if e.System == MacOS && set[0] != "run" {
+		return nil, fmt.Errorf("%s: on macOS a state takes run alone", set[0])
+	}
 	r, err := one.resource(e)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", set[0], err)

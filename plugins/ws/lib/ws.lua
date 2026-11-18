@@ -24,10 +24,14 @@ local function command(bin, verb, pkgs, flags)
     return table.concat(line, " ")
 end
 
--- read returns each unit's state by name, from a line per unit: NAME, a tab, the state.
+-- read returns each unit's state by name, from a line per unit: NAME, a tab, the state. The hook
+-- gets every line of mise's plan, so --whole fails each unit where the specs hold one it lacks
+-- that has a change. mise reads again before it installs, without the lines in sync.
 function M.read(bin, pkgs)
     local states = {}
-    for name, state in cmd.exec(command(bin, "read", pkgs)):gmatch("([^\t\n]+)\t([^\n]*)") do
+    for name, state in
+        cmd.exec(command(bin, "read", pkgs, "--whole")):gmatch("([^\t\n]+)\t([^\n]*)")
+    do
         states[name] = state
     end
     return states

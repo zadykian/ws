@@ -247,6 +247,9 @@ func (s fileSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.Res
 	if err := s.check(dir); err != nil {
 		return nil, err
 	}
+	if err := s.readableOn(e.System); err != nil {
+		return nil, err
+	}
 	switch {
 	case s.Service != "":
 		if err := effect.CheckUnitName("service", s.Service); err != nil {

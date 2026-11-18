@@ -1,0 +1,21 @@
+# The Mac's frame's own unit. mise installs ws under the user's data directory, by version, which a
+# LaunchDaemon run by root cannot trust. So this keeps /usr/local/bin/ws, root:wheel and 0755, the
+# ws that runs the units. The copy goes in under a temporary name, so that a running ws never makes
+# it fail. The check runs as the user, as each read on the Mac does, and reads the owner and mode
+# too.
+[state.ws-binary.run]
+user = "root"
+command = [
+    "sh",
+    "-c",
+    "mkdir -p /usr/local/bin && install -o root -g wheel -m 0755 \"$1\" /usr/local/bin/.ws.new && mv -f /usr/local/bin/.ws.new /usr/local/bin/ws",
+    "sh",
+    "{{ self }}",
+]
+check = [
+    "sh",
+    "-c",
+    "cmp -s \"$1\" /usr/local/bin/ws && [ \"$(stat -f %u:%g:%Lp /usr/local/bin/ws)\" = 0:0:755 ]",
+    "sh",
+    "{{ self }}",
+]

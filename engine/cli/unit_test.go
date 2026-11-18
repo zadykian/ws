@@ -256,3 +256,30 @@ func TestUnitSetsSelf(t *testing.T) {
 		t.Errorf("without the path: status = %d, stderr = %q", status, stderr)
 	}
 }
+
+func TestUnitReadWholeNamesALackingLine(t *testing.T) {
+	e, m := unitEnv(t, map[string]string{
+		"r/units.toml": fileUnit("a", "/etc/a", "") + fileUnit("b", "/etc/b", "") + fileUnit("c", "/etc/c", ""),
+		"r/a":          "1\n", "r/b": "2\n", "r/c": "3\n",
+	})
+	status, stdout, stderr := runUnit(e, "read", "--whole", "file/a")
+	want := "file/a\tfails: mise's plan lacks ws:file/b, ws:file/c: add each to [bootstrap.packages]\n"
+	if status != 0 || stdout != want {
+		t.Errorf("status = %d, stdout = %q, stderr = %q; want %q", status, stdout, stderr, want)
+	}
+	// mise reads again before it installs, without the lines in sync: b, once written, fails no read.
+	if status, _, stderr := runUnit(e, "write", "file/b"); status != 0 || string(m.Files["/etc/b"]) != "2\n" {
+		t.Fatalf("write b: status = %d, stderr = %q", status, stderr)
+	}
+	status, stdout, _ = runUnit(e, "read", "--whole", "file/a")
+	if want := "file/a\tfails: mise's plan lacks ws:file/c: add each to [bootstrap.packages]\n"; status != 0 || stdout != want {
+		t.Errorf("with b in sync: status = %d, stdout = %q; want %q", status, stdout, want)
+	}
+	if status, stdout, _ := runUnit(e, "read", "--whole", "file/c", "file/b", "file/a"); status != 0 ||
+		strings.Contains(stdout, "fails") || strings.Count(stdout, "\n") != 3 {
+		t.Errorf("every line: status = %d, stdout = %q; want three states, none failed", status, stdout)
+	}
+	if status, stdout, _ := runUnit(e, "read", "file/a"); status != 0 || strings.Contains(stdout, "fails") {
+		t.Errorf("without --whole: status = %d, stdout = %q; want the unit read alone", status, stdout)
+	}
+}

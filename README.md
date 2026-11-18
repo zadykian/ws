@@ -47,6 +47,8 @@ Each role has a page of its own. A role is its mise config and its spec of ws's 
   [A project's settings](roles/server/ubuntu/zed/projects.md) cover SQL Server and Ansible.
 
 `roles/client/macos/` sets up the Mac that works on the server, and Ghostty and Zed on it: [The Mac](roles/client/macos).
+Its [`frame`](roles/client/macos/frame) is what the Mac's roles of mise's config lean on, and
+`/usr/local/bin/ws`.
 
 On a new Mac with Apple silicon, install ws's binary by hand, checked against its release's
 checksum. Then write `values.yml`

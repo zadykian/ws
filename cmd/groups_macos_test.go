@@ -16,3 +16,10 @@ func TestMacGroupOnDarwin(t *testing.T) {
 		t.Errorf("help = %q, want a line for client", stdout)
 	}
 }
+
+func TestUnitGroupOnDarwin(t *testing.T) {
+	status, stdout, stderr := runGroups(fakeProcess(), "unit", "list", "--help")
+	if status != 0 || !strings.Contains(stdout, "/opt/ws/roles/client/macos") || stderr != "" {
+		t.Errorf("status = %d, stdout = %q, stderr = %q; want the Mac's specs", status, stdout, stderr)
+	}
+}

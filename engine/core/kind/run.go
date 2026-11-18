@@ -29,16 +29,10 @@ func (c runCommand) Apply(ctx context.Context) error { return c.r.exec(ctx, true
 // exec runs a command line as the run's user, with the system's PATH. With pass set, it passes the
 // output to ws's standard error, and otherwise drops it, as a check's exit status alone counts.
 // Linux switches to the user by runuser, through the account, and gives it systemd's session,
-// which systemctl --user needs, where systemd runs. macOS has neither: there root's sudo switches,
-// as ws runs as the user.
+// which systemctl --user needs, where systemd runs. macOS has neither (macExec).
 func (r runAs) exec(ctx context.Context, pass bool, line []string) error {
 	if r.sys == MacOS {
-		args := slices.Concat([]string{"-u", r.s.User, "-H", "env", systemPath}, line)
-		if pass {
-			return r.m.Pass(ctx, true, "sudo", args...)
-		}
-		_, err := r.m.RunRoot(ctx, "sudo", args...)
-		return err
+		return r.macExec(ctx, pass, line)
 	}
 	// root's home is /root, where ownerOf gives root none.
 	a := account.Account{User: account.User{Name: "root", Home: "/root"}}
@@ -68,6 +62,27 @@ func (r runAs) exec(ctx context.Context, pass bool, line []string) error {
 func (r runAs) hasRuntimeDir(uid int) bool {
 	_, err := r.m.Stat(fmt.Sprintf("/run/user/%d", uid))
 	return err == nil
+}
+
+// macExec runs a command line on the Mac, where ws runs as the user and sudo alone switches. A
+// check, run with pass unset, runs as ws's own user, as a read must ask no password. A check of
+// root's paths reads what the Mac keeps readable by all. A command runs as ws's user with no sudo,
+// as root through sudo, or as another user through root's sudo.
+func (r runAs) macExec(ctx context.Context, pass bool, line []string) error {
+	argv := slices.Concat([]string{"env", systemPath}, line)
+	root := false
+	switch {
+	case !pass || r.s.User == r.self:
+	case r.s.User == "root":
+		root = true
+	default:
+		argv, root = slices.Concat([]string{"sudo", "-u", r.s.User, "-H"}, argv), true
+	}
+	if pass {
+		return r.m.Pass(ctx, root, argv[0], argv[1:]...)
+	}
+	_, err := r.m.Run(ctx, argv[0], argv[1:]...)
+	return err
 }
 
 // Plan plans the command where a path of Creates is missing, or where Check fails. A check that
