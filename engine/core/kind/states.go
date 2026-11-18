@@ -137,12 +137,15 @@ func (s leftState) resource(e Env) (resource.Resource, error) {
 // runState runs Command as User where something is to do: where a path of Creates is missing, or
 // where Check, run as User too, exits other than 0. It takes exactly one of the two. A procedure
 // that stays a command of ws runs through it, with that command's own check. On Linux without
-// booted systemd, which a user's session needs, it skips. macOS has no systemd, and runs it.
+// booted systemd, which a user's session needs, it skips, unless Unbooted says that the command
+// needs no session. macOS has no systemd, and runs it.
 type runState struct {
 	User    string   `toml:"user"`
 	Command []string `toml:"command"`
 	Creates []string `toml:"creates"`
 	Check   []string `toml:"check"`
+	// Unbooted runs the command without booted systemd too, as in CI's container, with no session.
+	Unbooted bool `toml:"unbooted"`
 }
 
 func (s runState) resource(e Env) (resource.Resource, error) {
