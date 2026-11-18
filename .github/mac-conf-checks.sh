@@ -8,7 +8,7 @@
 # --dns. A second bootstrap's plan must exit 0. Emptied or removed, the keys must take both back,
 # and spare a script's own files. Each failure prints an ::error:: line, and any fails the script
 # at its end. Last, it runs mac-setup-checks.sh, whose cases run the cable's command. The conf's
-# rules are go test's (roles/client/macos/values).
+# rules are go test's (roles/client/values).
 #
 # shellcheck source-path=SCRIPTDIR/..
 

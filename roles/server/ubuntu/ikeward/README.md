@@ -110,9 +110,9 @@ the VPN, as ikeward's page on
 [NAT](https://github.com/zadykian/ikeward/blob/v0.3.0/docs/nat.md#networks-the-server-forwards)
 says. A server's values.yml sends the VPN's networks and domains into the tunnel, as
 `WS_TUNNEL_NETWORKS` and `WS_RESOLVERS`
-([the two files](../../../client/macos/values/README.md#the-two-files)). A private repository's script
+([the two files](../../../client/values/README.md#the-two-files)). A private repository's script
 may do it instead
-([Routes and resolvers of another repository](../../../client/macos/README.md#routes-and-resolvers-of-another-repository)).
+([Routes and resolvers of another repository](../../../client/README.md#routes-and-resolvers-of-another-repository)).
 
 ## The plan
 

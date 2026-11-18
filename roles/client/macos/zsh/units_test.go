@@ -9,7 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/kind"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/facts"
+	"github.com/zadykian/ws/roles/client/facts"
 )
 
 // macUnits loads the role's units on a Mac of the user v.

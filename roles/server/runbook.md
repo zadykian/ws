@@ -1,7 +1,7 @@
 # The server's runbook
 
 A person does these steps at ws, in this order. The Mac's side sets them in its own order
-([The Mac's runbook](../client/macos/runbook.md)).
+([The Mac's runbook](../client/runbook.md)).
 
 1. Log in as the installer's user, by key.
 2. Write `/etc/ws/values.yml`, root's and mode 600, with each value that differs from its

@@ -46,15 +46,15 @@ Each role has a page of its own. A role is its mise config and its spec of ws's 
   terminals' tmux wrapper, and the open-file limit that it needs.
   [A project's settings](roles/server/ubuntu/zed/projects.md) cover SQL Server and Ansible.
 
-`roles/client/macos/` sets up the Mac that works on the server, and Ghostty and Zed on it: [The Mac](roles/client/macos).
+`roles/client/` sets up the Mac that works on the server, and Ghostty and Zed on it: [The Mac](roles/client).
 Its [`frame`](roles/client/macos/frame) is what the Mac's roles of mise's config lean on, and
 `/usr/local/bin/ws`.
 
-A new Mac with Apple silicon follows [the Mac's runbook](roles/client/macos/runbook.md), as
+A new Mac with Apple silicon follows [the Mac's runbook](roles/client/runbook.md), as
 `install.sh` is the server's alone. By hand, it installs ws's binary and mise, each checked against
 its SHA-256, and clones a release's tree into `/opt/ws`. Then it writes the values ([The Mac's
-values](roles/client/macos/values/README.md)) and runs `MISE_LOCKED=1 mise -C /opt/ws bootstrap` ([The
-Mac](roles/client/macos/README.md)). [The server's runbook](roles/server/runbook.md) lists
+values](roles/client/values/README.md)) and runs `MISE_LOCKED=1 mise -C /opt/ws bootstrap` ([The
+Mac](roles/client/README.md)). [The server's runbook](roles/server/runbook.md) lists
 the server's own steps.
 
 ## A new machine

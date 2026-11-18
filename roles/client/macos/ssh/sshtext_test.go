@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/client/macos/internal/keys"
+	"github.com/zadykian/ws/roles/client/internal/keys"
 	"github.com/zadykian/ws/roles/client/macos/ssh"
-	"github.com/zadykian/ws/roles/client/macos/values"
+	"github.com/zadykian/ws/roles/client/values"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 

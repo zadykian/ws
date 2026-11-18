@@ -11,7 +11,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/facts"
+	"github.com/zadykian/ws/roles/client/facts"
 )
 
 // Mac is the networks of each of the Mac's servers that has WS_PUBLIC_KEY, which ws client macos

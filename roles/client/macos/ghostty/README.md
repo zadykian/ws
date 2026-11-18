@@ -31,7 +31,7 @@ with ws's mark, and a `/etc/ws/ghostty` without it stops the unit, as a file by 
 The config file that Ghostty's menu opens is `config.ghostty` or `config` in
 `~/Library/Application Support/com.mitchellh.ghostty`, then in `~/.config/ghostty`. That is the
 first that holds anything, else the first that exists, else the first of the four. The facts
-read it as `.Ghostty.Config` ([The facts](../facts/README.md)). The unit `file.ghostty-line` adds
+read it as `.Ghostty.Config` ([The facts](../../facts/README.md)). The unit `file.ghostty-line` adds
 `config-file = ?/etc/ws/ghostty` at the end of that file, once, and keeps the old file as
 `PATH.TIME~`. A line in the file that equals it, spaces aside, counts: a path quoted, relative
 or with `~` does not. Ghostty reads an included file after the file that names it, so each
@@ -106,7 +106,7 @@ watcher too, or finds it running.
 
 A restore opens an ssh connection for each pane it reopens. Where those logins fail, fail2ban bans
 the tunnel's address, `10.99.N.2`, which shuts `ssh ws` out for an hour. [ssh's
-hosts](../README.md#sshs-hosts) says how to lift the ban.
+hosts](../../README.md#sshs-hosts) says how to lift the ban.
 
 ## The zsh hook
 

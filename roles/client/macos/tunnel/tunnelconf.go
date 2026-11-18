@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/resource/file"
-	"github.com/zadykian/ws/roles/client/macos/values"
+	"github.com/zadykian/ws/roles/client/values"
 )
 
 // tunnelConf is tunnel.conf, the values the daemon takes from the server's values file, so that a root

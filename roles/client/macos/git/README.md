@@ -3,7 +3,7 @@
 `mise -C /opt/ws bootstrap` sets up git on the Mac by [git's units](units.toml), as the `git` role
 does on ws ([Signing](../../../server/ubuntu/git/README.md#signing)). The facts give the files'
 text, from the settings that `roles/internal/gitcfg` holds for both sides, the fetch's prune among
-them ([The facts](../facts/README.md)). The author is `gitcfg.Name` and `gitcfg.Email`,
+them ([The facts](../../facts/README.md)). The author is `gitcfg.Name` and `gitcfg.Email`,
 `zadykian` and `me@zadykian.dev`.
 
 ## The units
@@ -54,7 +54,7 @@ offers ws the key of `WS_IDENTITY_PUB_KEY` alone, whichever keys Secretive holds
 hosts](../ssh/README.md#sshs-hosts)).
 
 GitHub verifies a commit by the signing keys of its author's account. ws adds no key there: add it
-once with `gh ssh-key add --type signing`, as [the runbook](../runbook.md#github) says. Until then,
+once with `gh ssh-key add --type signing`, as [the runbook](../../runbook.md#github) says. Until then,
 GitHub shows the Mac's commits as unverified, and the ruleset on `main` refuses them.
 
 ## ~/.gitconfig

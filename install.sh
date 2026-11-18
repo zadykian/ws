@@ -17,7 +17,7 @@
 # names it. That tree pins ws's binary and checks it. Run again, it checks that release's tag out
 # there, dropping any change and any file git does not track, and brings the machine back to the
 # release. It refuses a /opt/ws that is not root's alone, and a system other than Ubuntu 26.04.
-# A Mac follows roles/client/macos/runbook.md instead. It runs in any POSIX sh, and needs curl,
+# A Mac follows roles/client/runbook.md instead. It runs in any POSIX sh, and needs curl,
 # sha256sum and git.
 #
 # WS_IN_PLACE=1 runs the bootstrap on the tree in /opt/ws, with no release lookup and no clone.
@@ -62,7 +62,7 @@ platform() {
         mise_sum=$mise_sum_arm64
         ;;
     Linux-*) die "ws sets up Linux on x86_64 and aarch64, not on $arch" ;;
-    Darwin-*) die "install.sh sets up an Ubuntu server: a Mac follows roles/client/macos/runbook.md" ;;
+    Darwin-*) die "install.sh sets up an Ubuntu server: a Mac follows roles/client/runbook.md" ;;
     *) die "ws sets up Ubuntu, not $os" ;;
     esac
     release_file=/etc/os-release

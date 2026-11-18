@@ -26,7 +26,6 @@ linters:
             - "$all"
             - "!${base-path}/cmd/**"
             - "!${base-path}/engine/cli/**"
-            - "!${base-path}/roles/*/*/cli/**"
             - "!${base-path}/roles/*/cli/**"
             - "!${base-path}/.tools/**"
           deny:
@@ -55,7 +54,6 @@ linters:
         roles:
           files:
             - "${base-path}/roles/**"
-            - "!${base-path}/roles/*/*/cli/**"
             - "!${base-path}/roles/*/cli/**"
           deny:
             - pkg: github.com/zadykian/ws/cmd
@@ -64,7 +62,7 @@ linters:
               desc: a role imports engine/core, as the exit codes and lines are the cli packages'
             - pkg: github.com/zadykian/ws/engine/cli
               desc: a role builds no command, as its side's cli package does
-            - pkg: github.com/zadykian/ws/roles/client/macos/cli
+            - pkg: github.com/zadykian/ws/roles/client/cli
               desc: a role reaches no command, as its side's cli package wires the role
             - pkg: github.com/zadykian/ws/roles/server/cli
               desc: a role reaches no command, as its side's cli package wires the role
@@ -72,7 +70,6 @@ linters:
           list-mode: lax
           files:
             - "${base-path}/roles/**"
-            - "!${base-path}/roles/*/*/cli/**"
             - "!${base-path}/roles/*/cli/**"
           allow:
             - github.com/zadykian/ws/engine/core/
@@ -108,7 +105,7 @@ linters:
           allow:
             - github.com/zadykian/ws/engine/cli
             - github.com/zadykian/ws/engine/core/effect/local$
-            - github.com/zadykian/ws/roles/client/macos/cli
+            - github.com/zadykian/ws/roles/client/cli
             - github.com/zadykian/ws/roles/server/cli
           deny:
             - pkg: github.com/zadykian/ws/

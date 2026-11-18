@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/engine/cli"
-	macoscli "github.com/zadykian/ws/roles/client/macos/cli"
+	macoscli "github.com/zadykian/ws/roles/client/cli"
 	ubuntucli "github.com/zadykian/ws/roles/server/cli"
 )
 

@@ -59,7 +59,7 @@ ws's back once it goes. Case 87 checks [the zsh hook](../../roles/client/macos/g
 reset at each prompt, and the alternate screen after a 255 from `ssh` or from `cld --host` alone.
 
 CI also sets up a Mac, by [its cases](../mac), in the order of [The
-Mac](../../roles/client/macos/README.md). A stand-in cld, which cld's unit leaves alone, spares the
+Mac](../../roles/client/README.md). A stand-in cld, which cld's unit leaves alone, spares the
 job's runs its download. Then `mise -C /opt/ws bootstrap` with
 [the Mac's frame](../../roles/client/macos/frame/README.md) runs as the runbook runs it, on the
 tree in `/opt/ws` with ws's build served as the pin ([mac-mise.sh](../mac-mise.sh)). It sets up

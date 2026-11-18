@@ -16,7 +16,7 @@ curl -fsSL --proto '=https' --tlsv1.2 \
 
 Without `pipefail`, a curl that fails pipes nothing into sh, which exits 0 having done nothing.
 `install.sh` sets up an Ubuntu server, and refuses a Mac, which follows
-[the Mac's runbook](../../roles/client/macos/runbook.md). It installs mise, writes the
+[the Mac's runbook](../../roles/client/runbook.md). It installs mise, writes the
 machine's miserc and runs `mise bootstrap`:
 
 - It downloads mise's binary at the version it pins. It checks the binary against the SHA-256 it
@@ -104,7 +104,7 @@ curl -fsSL --proto '=https' --tlsv1.2 \
 The latest release's `install.sh` may install ws's binary alone, with no mise. So while a
 pre-release is tried, this line takes the place of each that runs it. Those are step 3 of
 [the server's runbook](../../roles/server/runbook.md), and step 2 of
-[ws on ws](../../roles/client/macos/runbook.md#ws-on-ws) on the Mac. The Mac's own binary and
+[ws on ws](../../roles/client/runbook.md#ws-on-ws) on the Mac. The Mac's own binary and
 clone take the pre-release's tag in place of the latest release's.
 
 Nothing else is by hand. `release.yml` runs on the tag, in these jobs:

@@ -12,8 +12,8 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/resource/launchd"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/facts"
-	"github.com/zadykian/ws/roles/client/macos/values"
+	"github.com/zadykian/ws/roles/client/facts"
+	"github.com/zadykian/ws/roles/client/values"
 	"github.com/zadykian/ws/roles/internal/etcws"
 )
 

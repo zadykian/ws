@@ -44,8 +44,8 @@ holds its lines and mise's own parts, such as casks and tools. Its link,
 
 Each unit of a spec is a line `"ws:KIND/NAME" = "in-sync"` under `[bootstrap.packages]` in the
 role's `mise.mac.toml`. The lines follow no server: a spec loops over `.Servers` within one unit,
-as a unit a server would come and go with its line ([The facts](../facts/README.md)).
-[`TestMacSpecsMatchMiseLines`](../cli/specs_test.go) fails on a line missing or extra.
+as a unit a server would come and go with its line ([The facts](../../facts/README.md)).
+[`TestMacSpecsMatchMiseLines`](../../cli/specs_test.go) fails on a line missing or extra.
 `TestEachMacRoleIsLinked` fails on a role without its link, and `TestMacConfigHoldsNoRootPath` on
 mise's own root path or a dotfile.
 
