@@ -39,6 +39,10 @@ type OSMachine struct {
 	// WS_HOME, and can swap a directory in it for a link as root applies, which would hand the
 	// target to WS_USER. Empty means no limit.
 	Confine string
+	// UserReads reads root's files and their owner and mode as ws's own user, never through sudo,
+	// so that a read asks no password. A file the user may not read fails the read. The Mac's
+	// units set it, as they keep root's paths readable by all; writes still go through sudo.
+	UserReads bool
 }
 
 // NoStdin is a Stdin that ends at once, as http.NoBody is a body.

@@ -2,10 +2,13 @@ package local
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
+	"os"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/zadykian/ws/engine/core/effect"
 )
@@ -27,21 +30,55 @@ func (m OSMachine) WriteRootFile(path string, data []byte, perm fs.FileMode) err
 	return m.sudoWrite(path, data, owner, perm)
 }
 
-// ReadRootFile reads the file through sudo's cat.
+// ReadRootFile reads the file through sudo's cat, or as ws's user with UserReads.
 func (m OSMachine) ReadRootFile(path string) ([]byte, error) {
 	if _, err := m.RootAttrs(path); err != nil {
 		return nil, err
 	}
+	if m.UserReads {
+		data, err := os.ReadFile(path) //nolint:gosec // the path is a unit's own, not input
+		return data, unreadable(path, err)
+	}
 	return m.RunRoot(context.Background(), "cat", path)
 }
 
-// RootAttrs reads the owner and mode through sudo's stat.
+// RootAttrs reads the owner and mode through sudo's stat, or as ws's user with UserReads.
 func (m OSMachine) RootAttrs(path string) (effect.Attrs, error) {
+	if m.UserReads {
+		return userAttrs(path)
+	}
 	out, err := m.RunRoot(context.Background(), "sh", "-c", rootStat, "sh", path)
 	if err != nil {
 		return effect.Attrs{}, err
 	}
 	return parseAttrs(path, string(out))
+}
+
+// userAttrs is rootStat's answer, read as ws's user. A path whose link leads nowhere is missing. A
+// link's own owner and mode stand for it, as stat's do without -L.
+func userAttrs(path string) (effect.Attrs, error) {
+	if _, err := os.Stat(path); err != nil {
+		return effect.Attrs{}, unreadable(path, err)
+	}
+	fi, err := os.Lstat(path)
+	if err != nil {
+		return effect.Attrs{}, unreadable(path, err)
+	}
+	a := effect.Attrs{Mode: fi.Mode().Perm()}
+	if st, ok := fi.Sys().(*syscall.Stat_t); ok {
+		a.UID, a.GID = int(st.Uid), int(st.Gid)
+	}
+	return a, nil
+}
+
+// unreadable says why a read as ws's user failed where the user lacks the right, as no sudo
+// follows it.
+func unreadable(path string, err error) error {
+	if errors.Is(err, fs.ErrPermission) {
+		return fmt.Errorf("%s: root's file is not readable by ws's user, and a read asks no sudo: "+
+			"keep root's paths readable by all: %w", path, err)
+	}
+	return err
 }
 
 func parseAttrs(path, out string) (effect.Attrs, error) {
