@@ -11,7 +11,6 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/cable"
 	"github.com/zadykian/ws/roles/client/macos/cld"
-	"github.com/zadykian/ws/roles/client/macos/ghostty"
 	"github.com/zadykian/ws/roles/client/macos/git"
 	"github.com/zadykian/ws/roles/client/macos/networks"
 	"github.com/zadykian/ws/roles/client/macos/tunnel"
@@ -44,7 +43,6 @@ func (m Mac) steps(check bool) []step.Step {
 		m.ssh(false),
 		cable.Cable{Conf: m.Conf, M: m.M, Out: m.Out}.Step(),
 		(&git.Git{Conf: m.Conf, Home: m.Home, XDG: m.XDG, M: m.M, Out: m.Out}).Step(),
-		(&ghostty.Ghostty{Home: m.Home, Settings: ghostty.Settings, M: m.M, Out: m.Out}).Step(),
 		(&zed.Zed{Home: m.Home, Settings: zed.Settings, Keymap: zed.Keymap, Server: m.Server, MacConf: m.MacConf, M: m.M, Out: m.Out}).Step(),
 		(&cld.Cld{Home: m.Home, M: m.M, Out: m.Out, Check: check}).Step(),
 		(&zsh.Zsh{Home: m.Home, Hook: zsh.Hook, M: m.M, Out: m.Out, Now: time.Now}).Step(),

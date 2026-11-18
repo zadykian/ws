@@ -1,3 +1,5 @@
+// Package ghostty picks the config of Ghostty's that the line reading /etc/ws/ghostty goes in, a
+// fact of the Mac's units. Its units.toml sets Ghostty up.
 package ghostty
 
 import "github.com/zadykian/ws/engine/core/effect"
