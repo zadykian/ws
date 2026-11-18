@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"syscall"
 	"testing"
@@ -75,5 +76,33 @@ func TestExecuteFailure(t *testing.T) {
 	if got := cli.Execute(context.Background(), root, []string{"fail"}, strings.NewReader(""), &out, &errs); got != 1 ||
 		errs.String() != "ws fail: one\nws fail: two\n" {
 		t.Errorf("fail: status = %d, stderr = %q", got, errs.String())
+	}
+}
+
+// exitWith runs a command of root that returns err, and gives ws's status and stderr.
+func exitWith(err error) (int, string) {
+	answer := &cobra.Command{Use: "answer", Args: cobra.NoArgs, RunE: func(*cobra.Command, []string) error { return err }}
+	var out, errs bytes.Buffer
+	status := cli.Execute(context.Background(), cli.Root(clitest.Env(), answer), []string{"answer"}, strings.NewReader(""), &out, &errs)
+	return status, errs.String()
+}
+
+func TestExitStatusPrintsNothingWithoutErr(t *testing.T) {
+	if status, stderr := exitWith(engine.ExitStatus{Code: 1}); status != 1 || stderr != "" {
+		t.Errorf("status = %d, stderr = %q; want 1 and nothing printed", status, stderr)
+	}
+}
+
+func TestExitStatusPrintsItsErr(t *testing.T) {
+	status, stderr := exitWith(engine.ExitStatus{Code: 2, Err: errors.New("/h/.gitconfig is wrong")})
+	if status != 2 || stderr != "ws answer: /h/.gitconfig is wrong\n" {
+		t.Errorf("status = %d, stderr = %q; want 2 and the error alone, with no line of help", status, stderr)
+	}
+}
+
+func TestExitStatusThroughAWrap(t *testing.T) {
+	if status, stderr := exitWith(fmt.Errorf("reading: %w", engine.ExitStatus{Code: 3, Err: errors.New("bad")})); status != 3 ||
+		stderr != "ws answer: reading: bad\n" {
+		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
 }
