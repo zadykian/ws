@@ -57,7 +57,7 @@ Flags:
 
 Use "ws client macos [command] --help" for more information about a command.
 == ws client macos apply
-It runs the steps it names, from values.yml and the server's file, in this order: cable, git, cld, tunnel, networks. With no --only, it runs every step. It asks sudo where it needs root.
+It runs the steps it names, from values.yml and the server's file, in this order: cable, cld, tunnel, networks. With no --only, it runs every step. It asks sudo where it needs root.
 
 Usage:
   ws client macos apply [flags]

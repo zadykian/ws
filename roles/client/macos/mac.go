@@ -10,7 +10,6 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/cable"
 	"github.com/zadykian/ws/roles/client/macos/cld"
-	"github.com/zadykian/ws/roles/client/macos/git"
 	"github.com/zadykian/ws/roles/client/macos/networks"
 	"github.com/zadykian/ws/roles/client/macos/tunnel"
 	"github.com/zadykian/ws/roles/client/macos/values"
@@ -25,10 +24,8 @@ type Mac struct {
 	MacConf string
 	Conf    values.Conf
 	Home    string
-	// XDG is XDG_CONFIG_HOME, which may be empty.
-	XDG string
-	M   effect.Machine
-	Out effect.Out
+	M       effect.Machine
+	Out     effect.Out
 	// Text takes what a run prints on stdout.
 	Text io.Writer
 }
@@ -38,7 +35,6 @@ type Mac struct {
 func (m Mac) steps(check bool) []step.Step {
 	return []step.Step{
 		cable.Cable{Conf: m.Conf, M: m.M, Out: m.Out}.Step(),
-		(&git.Git{Conf: m.Conf, Home: m.Home, XDG: m.XDG, M: m.M, Out: m.Out}).Step(),
 		(&cld.Cld{Home: m.Home, M: m.M, Out: m.Out, Check: check}).Step(),
 		&tunnel.Tunnel{Conf: m.Conf, Server: m.Server, MacConf: m.MacConf, Home: m.Home, Plist: tunnel.Plist, M: m.M, Out: m.Out, Text: m.Text,
 			Check: check},

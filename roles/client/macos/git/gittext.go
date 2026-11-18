@@ -1,8 +1,11 @@
+// Package git reads git's files in /etc/ws, which git's units write, and says whether ~/.gitconfig
+// includes ws's settings at its top.
 package git
 
 import (
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
+	"github.com/zadykian/ws/roles/internal/etcws"
 	"github.com/zadykian/ws/roles/internal/gitcfg"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
@@ -25,6 +28,9 @@ func wrapper(secretive string) string {
 		"export SSH_AUTH_SOCK\n" +
 		"exec ssh-keygen \"$@\"\n"
 }
+
+// keygen is the script that gives ssh-keygen Secretive's agent, which git signs through.
+const keygen = etcws.Dir + "/secretive-ssh-keygen"
 
 // Gh is the gh that git's credential command runs: the copy that git's unit keeps of mise's, in
 // /usr/local/bin, which every shell's PATH holds.

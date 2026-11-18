@@ -89,8 +89,8 @@ func TestMacRunTakesOnlyTheStepsNamed(t *testing.T) {
 	if got := reached(t, Options{Only: []string{"cld"}}); !slices.Equal(got, []string{"cld"}) {
 		t.Errorf("ran %q; want cld alone", got)
 	}
-	if got := reached(t, Options{Only: []string{"cld", "git"}}); !slices.Equal(got, []string{"git", "cld"}) {
-		t.Errorf("ran %q; want git and cld, in the order of the steps", got)
+	if got := reached(t, Options{Only: []string{"cld", "cable"}}); !slices.Equal(got, []string{"cable", "cld"}) {
+		t.Errorf("ran %q; want cable and cld, in the order of the steps", got)
 	}
 }
 
