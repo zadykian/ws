@@ -30,7 +30,7 @@ func TestRunWithStopEndsTheRunBetweenSteps(t *testing.T) {
 	if want := []string{"plan a", "apply a", "plan a"}; !slices.Equal(log, want) {
 		t.Errorf("log = %v, want %v", log, want)
 	}
-	want := []string{"planned /a#0 1", "started /a#0 1", "done /a#0 1", "skipped /b#1 0", "skipped /c#2 0"}
+	want := []string{"planned a#0 1", "started a#0 1", "done a#0 1", "skipped b#1 0", "skipped c#2 0"}
 	if !slices.Equal(j.lines, want) {
 		t.Errorf("events = %v, want %v", j.lines, want)
 	}

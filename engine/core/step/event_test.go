@@ -11,12 +11,12 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-// journal keeps each event as a line: kind, parent/step#index, the size of the plan, and the rest.
+// journal keeps each event as a line: kind, step#index, the size of the plan, and the rest.
 type journal struct{ lines []string }
 
 func (j *journal) Observe(e step.Event) {
 	kind := []string{"planned", "started", "done", "failed", "skipped"}[e.Kind]
-	line := fmt.Sprintf("%s %s/%s#%d %d", kind, e.Parent, e.Step, e.Index, len(e.Changes))
+	line := fmt.Sprintf("%s %s#%d %d", kind, e.Step, e.Index, len(e.Changes))
 	if e.After != "" {
 		line += " after " + e.After
 	}
@@ -36,22 +36,22 @@ func TestRunWithReportsEachStep(t *testing.T) {
 	}{
 		{name: "a step with nothing to make", steps: func(l *[]string) []step.Step {
 			return []step.Step{&fake{name: "a", log: l}}
-		}, want: []string{"planned p/a#0 0", "done p/a#0 0"}},
+		}, want: []string{"planned a#0 0", "done a#0 0"}},
 		{name: "a step that applies", steps: func(l *[]string) []step.Step {
 			return []step.Step{&fake{name: "a", todo: x, log: l}}
-		}, want: []string{"planned p/a#0 1", "started p/a#0 1", "done p/a#0 1"}},
+		}, want: []string{"planned a#0 1", "started a#0 1", "done a#0 1"}},
 		{name: "a check", check: true, steps: func(l *[]string) []step.Step {
 			return []step.Step{&fake{name: "a", todo: x, log: l}, &fake{name: "b", waitsOn: "a", log: l}}
-		}, want: []string{"planned p/a#0 1", "done p/a#0 1", "skipped p/b#1 0 after a"}},
+		}, want: []string{"planned a#0 1", "done a#0 1", "skipped b#1 0 after a"}},
 		{name: "a name that comes twice", steps: func(l *[]string) []step.Step {
 			return []step.Step{&fake{name: "a", log: l}, &fake{name: "a", log: l}}
-		}, want: []string{"planned p/a#0 0", "done p/a#0 0", "planned p/a#1 0", "done p/a#1 0"}},
+		}, want: []string{"planned a#0 0", "done a#0 0", "planned a#1 0", "done a#1 0"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var log []string
 			j := &journal{}
-			if _, err := step.RunWith(context.Background(), tt.steps(&log), step.Options{Observer: j, Check: tt.check, Parent: "p"}); err != nil {
+			if _, err := step.RunWith(context.Background(), tt.steps(&log), step.Options{Observer: j, Check: tt.check}); err != nil {
 				t.Fatal(err)
 			}
 			if !slices.Equal(j.lines, tt.want) {
@@ -69,13 +69,13 @@ func TestRunWithEndsEveryStepOfAFailedRun(t *testing.T) {
 		first fake
 		want  []string
 	}{
-		{"a plan fails", fake{planErr: boom}, []string{"failed /a#0 0 a: planning: boom"}},
+		{"a plan fails", fake{planErr: boom}, []string{"failed a#0 0 a: planning: boom"}},
 		{"an apply fails", fake{todo: x, applyErr: boom},
-			[]string{"planned /a#0 1", "started /a#0 1", "failed /a#0 1 a: applying: boom"}},
-		{"a plan not empty after apply", fake{todo: x, sticky: true}, []string{"planned /a#0 1", "started /a#0 1",
-			"failed /a#0 1 a: still has 1 change(s) after applying, the first: x"}},
+			[]string{"planned a#0 1", "started a#0 1", "failed a#0 1 a: applying: boom"}},
+		{"a plan not empty after apply", fake{todo: x, sticky: true}, []string{"planned a#0 1", "started a#0 1",
+			"failed a#0 1 a: still has 1 change(s) after applying, the first: x"}},
 		{"a wait on a later step", fake{waitsOn: "c"},
-			[]string{`failed /a#0 0 a waits on "c", which is not an earlier step`}},
+			[]string{`failed a#0 0 a waits on "c", which is not an earlier step`}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -87,19 +87,11 @@ func TestRunWithEndsEveryStepOfAFailedRun(t *testing.T) {
 			if _, err := step.RunWith(context.Background(), steps, step.Options{Observer: j}); err == nil {
 				t.Fatal("the run succeeded")
 			}
-			want := slices.Concat(tt.want, []string{"skipped /b#1 0", "skipped /c#2 0"})
+			want := slices.Concat(tt.want, []string{"skipped b#1 0", "skipped c#2 0"})
 			if !slices.Equal(j.lines, want) {
 				t.Errorf("events = %q, want %q", j.lines, want)
 			}
 		})
-	}
-}
-
-func TestUnreachedEndsEachStep(t *testing.T) {
-	j := &journal{}
-	step.Unreached([]step.Step{&fake{name: "a"}, &fake{name: "b"}}, step.Options{Observer: j, Parent: "role"})
-	if want := []string{"skipped role/a#0 0", "skipped role/b#1 0"}; !slices.Equal(j.lines, want) {
-		t.Errorf("events = %q, want %q", j.lines, want)
 	}
 }
 

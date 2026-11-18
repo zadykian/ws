@@ -2,7 +2,7 @@
 
 The secrets of the roles are one file, `/etc/ws/secrets.age` on ws ([ws's file](#wss-file)): TOML
 that age encrypts, in armor. The Mac keeps neither it nor its identity. Git never holds it. `ws
-server ubuntu apply --secrets` decrypts it in its process ([The secrets
+unit` decrypts it in its process for a unit that reads it ([The secrets
 file](../shell/README.md#the-secrets-file)). A value is never in an error, a
 plan or a diff: they name kinds, names, keys and paths.
 
@@ -38,8 +38,8 @@ credential fails and names `ws server ubuntu secrets init`.
 
 ## The run
 
-A run takes `--secrets` on ws's file, and sends nothing from the Mac. The file's SHA-256 is in the
-run's stamp, so a changed file runs the stage again.
+A run of the bootstrap reads ws's file where it stands, and sends nothing from the Mac. A changed
+file changes what the units that read it plan, so the next run writes it.
 
 ## ws's file
 
@@ -50,7 +50,7 @@ credential `/etc/credstore.encrypted/ws-secrets`, mode 600 in a directory of 700
 `/var/lib/systemd` encrypts it, not the TPM's, which a change of firmware or of Secure Boot can lock
 out. Each command decrypts the identity by `systemd-creds decrypt` into memory. `init` keeps a
 credential and a file that are there. It refuses a file without the credential, which a new identity
-would not open. A unit reads the credential by `LoadCredentialEncrypted=ws-secrets` ([The secrets
+would not open. `ws unit` decrypts the identity the same way ([The secrets
 file](../shell/README.md#the-secrets-file)).
 
 ```sh
@@ -101,6 +101,6 @@ token.github, which is missing`.
 
 ## The whole truth
 
-The file is the truth of what it names. With `--secrets`, a run removes the git tokens for URLs
-the file lacks, and `/etc/ws/env` where `[env]` is empty. Without it, as in CI, a run keeps
-both. So an entry dropped from the file goes with the next run.
+The file is the truth of what it names. Where the machine has it, a run removes the git tokens
+for URLs the file lacks, and `/etc/ws/env` where `[env]` is empty. Without it, as in CI, a run
+keeps both. So an entry dropped from the file goes with the next run.

@@ -50,51 +50,53 @@ Each role has a page of its own. A role is its mise config and its spec of ws's 
 Its [`frame`](roles/client/macos/frame) is what the Mac's roles of mise's config lean on, and
 `/usr/local/bin/ws`.
 
-On a new Mac with Apple silicon, install ws's binary by hand, checked against its release's
-checksum. Then write `values.yml`
-([The Mac's values](roles/client/macos/values/README.md)) and set up the rest ([The
-Mac](roles/client/macos/README.md)). [The Mac's runbook](roles/client/macos/runbook.md) lists the
-steps by hand, and [the server's](roles/server/ubuntu/runbook.md) its own:
-
-```sh
-curl -fsSLO https://github.com/zadykian/ws/releases/latest/download/ws-darwin-arm64
-curl -fsSLO https://github.com/zadykian/ws/releases/latest/download/ws.sha256
-shasum -a 256 -c --ignore-missing ws.sha256
-install -d ~/.local/bin && install -m 755 ws-darwin-arm64 ~/.local/bin/ws
-~/.local/bin/ws client macos apply
-```
+A new Mac with Apple silicon follows [the Mac's runbook](roles/client/macos/runbook.md), as
+`install.sh` is the server's alone. By hand, it installs ws's binary and mise, each checked against
+its SHA-256, and clones a release's tree into `/opt/ws`. Then it writes the values ([The Mac's
+values](roles/client/macos/values/README.md)) and runs `MISE_LOCKED=1 mise -C /opt/ws bootstrap` ([The
+Mac](roles/client/macos/README.md)). [The server's runbook](roles/server/ubuntu/runbook.md) lists
+the server's own steps.
 
 ## A new machine
 
 Install Ubuntu Server 26.04 by hand from its installer. In it, turn OpenSSH on, import the GitHub
-account's keys, and leave password login off. `ws server ubuntu apply` adds no key later. So put the
-Mac's key on the account first. Name the installer's user `zadykian`, ws's default user. A cloud VM
+account's keys, and leave password login off. The bootstrap adds no key later. So put the Mac's
+key on the account first. Name the installer's user `zadykian`, ws's default user. A cloud VM
 has no installer: it gives its default user the provider's keys, which must be the account's. A VM
 with root alone logs in as root, where `WS_TARGET=cloud`. An image with Docker holds Docker's apt
 source, which apt refuses beside mise's: remove it first ([docker](roles/server/ubuntu/docker/README.md)).
 
 Then, logged in as that user, write `/etc/ws/values.yml` where a value differs from its default,
-root's and mode 600 ([the values](#running-it-again)). Run `install.sh` through `sudo`: it installs
-mise and runs its bootstrap, which installs ws and sets each role up. Once the secrets file holds
-`token.github`, the bootstrap run again logs gh in ([By hand](#by-hand)), as
+root's and mode 600 ([the values](#running-it-again)). Run `install.sh` through `sudo`, by the
+three lines of [Install](.github/workflows/release.md#install), which fail where curl does. It
+installs mise and runs its bootstrap, which installs ws and sets each role up. Once the secrets
+file holds `token.github`, the bootstrap run again logs gh in ([By hand](#by-hand)), as
 [the server's runbook](roles/server/ubuntu/runbook.md) says.
-
-```sh
-curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sudo sh
-```
 
 Then do what stays by hand, below.
 
+### A machine that ws 0.12 set up
+
+ws 0.12 and earlier set a machine up by roles of Go. Before the first bootstrap, remove as root
+what they left that mise's config refuses or no longer keeps:
+
+- the old roles' apt sources in `/etc/apt/sources.list.d`, which apt refuses beside mise's of the
+  same repository: `docker.sources`, `nodesource.sources`, `charm.sources`,
+  `dotnet-backports.sources` and `github-cli.sources`, with their keys in `/etc/apt/keyrings`,
+  `docker.asc` and `NAME.asc` for the others ([docker](roles/server/ubuntu/docker/README.md));
+- `/usr/local/lib/ws-fans`, the copy of ws that `ws-fans` ran, which now runs `/usr/local/bin/ws`;
+- ufw's rule with the comment `ws: SSH`, beside mise's `mise:ssh`: `ufw status numbered` gives its
+  number N, and `ufw delete N` removes it;
+- on the Mac, `/usr/local/libexec/ws-tunnel`, the copy of ws that the tunnel's daemons ran, which
+  now run `/usr/local/bin/ws`;
+- on the Mac, Homebrew's gh, which stays and comes before the locked gh in `/usr/local/bin` on the
+  PATH: `brew uninstall gh` removes it, as the user.
+
 ## Running it again
 
-Each release holds the roles it sets up, so run `install.sh` again: it checks the release out and
-runs the bootstrap.
-
-```sh
-curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sudo sh
-```
-
-`WS_VERSION=X.Y.Z` before `sh` picks a release ([Install](engine/core/update/README.md#install)).
+Each release holds the roles it sets up, so run `install.sh` again, by the same lines of
+[Install](.github/workflows/release.md#install): it checks the release out and runs the bootstrap.
+`WS_VERSION=X.Y.Z` before `sh` picks a release.
 
 The units read their secrets from ws's file, which `ws server ubuntu secrets` edits ([The secrets
 file](roles/server/ubuntu/shell/README.md#the-secrets-file)). The values of a machine go in
@@ -109,52 +111,23 @@ second run changes nothing, so its plan exits 0 with `--detailed-exitcode`.
 
 ## Dry runs
 
-The bootstrap's plan shows what a run would change, and nothing changes. A run by hand names the
-data directory that `install.sh` gives mise ([The runbook](roles/server/ubuntu/runbook.md)):
+The bootstrap's plan shows what a run would change, and nothing changes. A run by hand takes the
+form that [the server's runbook](roles/server/ubuntu/runbook.md) gives:
 
 ```sh
-sudo env MISE_DATA_DIR=/usr/local/share/mise mise -C /opt/ws bootstrap plan
+sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws bootstrap plan
 ```
 
-A dry run adds no apt repository. So where a step needs a repository still to come, it says "after"
-and the repository's step, and plans nothing more.
+A plan adds no apt source and writes no file. So a unit that waits on another with changes reads
+`after` and that unit, and plans nothing more.
 
-A dry run checks no file it would write. ws runs a file's check, such as `nft -c`, `sshd -G` or
+A plan checks no file it would write. A unit runs a file's check, such as `nft -c`, `sshd -G` or
 `dockerd --validate`, only as it writes the file.
 
-## Events
-
-`sudo ws server ubuntu apply --json` prints each event of the run as a line of JSON on stdout:
-`planned`, `started`, `done`, `failed` or `skipped`, with the role, the step, the first line of each
-change and the error. So a line holds no file's text: `ws server ubuntu state --json` has the diffs.
-ws's own lines stay on stderr.
-
-## State
-
-`ws server ubuntu state` reads and applies nothing. It needs what `--check` needs, root on Ubuntu
-26.04, and takes `--only` as `apply` does. It reports what ws manages, not the rest of the machine:
-each step's packages, services and files, what stands against ws, and the changes that `apply` would
-make. A step that fails stands in the report as a check, and the exit code stays 0. It takes no
-secrets, so a report holds none and says nothing of what they write. A package in a state other than
-installed shows its version and dpkg's letters, such as `1.2 (iU)`, and one removed with its
-settings shows `settings left`.
-
-```sh
-sudo ws server ubuntu state
-sudo ws server ubuntu state --json
-```
-
-The report is on stdout and ws's own lines on stderr. `--json` prints the version of ws, then each
-role with its steps, items and changes.
-
-`ws client macos state` does the same for the Mac, as `ws client macos apply --check` reads it: it
-needs `values.yml` and a server's file, and not root. `--json` prints the version of ws, then each
-step ([What the Mac reports](roles/client/macos/README.md#what-the-mac-reports)).
-
-```sh
-ws client macos state
-ws client macos state --json
-```
+ws's units show more, as root on the server and as the user on the Mac
+([ws unit](engine/core/kind/README.md#ws-unit)). `ws unit list` names them in the order they run,
+`ws unit read UNIT` prints a unit's state, and `ws unit write --dry-run UNIT` its changes, a file's
+diff included, but a secret's. A run by hand of `ws unit write UNIT` sets up that unit alone.
 
 ## By hand
 
@@ -182,10 +155,11 @@ The router takes a few steps once, by hand: [The router](roles/server/ubuntu/cab
 ## Checks
 
 CI runs `make lint`, which lints the code, the docs and the workflows, and scans the commits for
-secrets. It runs the bootstrap and `ws server ubuntu apply` twice in a container, and mise's plan
-after them must change nothing. It tries `install.sh`, forges SigNoz's
-compose files again, and sets up a Mac on GitHub's macOS runner. A pushed tag `vX.Y.Z` publishes the
-release whose tree `install.sh` runs: [Releases](engine/core/update). The rules workflow warns where a
+secrets. It runs the bootstrap twice in a container, and mise's plan must exit 0 before the second
+and after it. It tries `install.sh`, forges SigNoz's compose files again, and sets up a Mac on
+GitHub's macOS runner by the bootstrap. A pushed tag `vX.Y.Z` publishes the
+release whose tree `install.sh` runs, and `vX.Y.Z-rc.N` a pre-release of `feat/mise`:
+[Releases](.github/workflows/release.md). The rules workflow warns where a
 pull request breaks the rules of zadykian/toolkit's skills, and the issues workflow where an issue
 strays from its issue form. The hooks in `.githooks` check each commit before git makes it.
 [Checks](.github/workflows) and [The gates](.tools) have the details.

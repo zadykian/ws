@@ -59,7 +59,7 @@ linters:
             - pkg: github.com/zadykian/ws/cmd
               desc: a role reaches no command, as cmd composes the roles
             - pkg: github.com/zadykian/ws/engine$
-              desc: a role imports engine/core, as its side's cli package runs the engine
+              desc: a role imports engine/core, as the exit codes and lines are the cli packages'
             - pkg: github.com/zadykian/ws/engine/cli
               desc: a role builds no command, as its side's cli package does
             - pkg: github.com/zadykian/ws/roles/client/macos/cli

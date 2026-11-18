@@ -1,7 +1,7 @@
 # The Mac's values
 
 ws is one of three machines, which the server's file's `WS_TARGET` names. Each target sets which of
-ws's ways the file names, their defaults, and what a few steps do. `ws server ubuntu apply` is the
+ws's ways the file names, their defaults, and what a few units do. The server's bootstrap is the
 same on each, but for the outbound table on a cloud VM.
 
 ## The two files
@@ -64,9 +64,9 @@ another's takes. Each of the two refuses until one changes, in its own file's wo
 - `WS_TUNNEL_PORT` and `WS_REMOTE_PORT`: the other's, behind the same `WS_REMOTE`, in any case, as
   the router forwards a port to one server.
 
-A file of another server that is refused stops `apply` before any step, with `--only` and with
-`--check` too, and the error names the server and `ws client macos remove NAME`. The steps read
-every server's file, and the networks step would remove the resolver files of one it cannot read.
+A file of another server that is refused fails each unit that reads the servers' files, in a
+plan too, and the error names the server and `ws client macos remove NAME`. The units read every
+server's file, and the networks' unit would remove the resolver files of one it cannot read.
 
 ## The servers
 
@@ -79,24 +79,20 @@ lab   cloud   1     stopped
 ws    lan     0     lan 10.88.0.10:51820
 ```
 
-The tunnel is `absent` before apply sets its daemon up, and `stopped` where launchd has not loaded
-it. Before the daemon writes its state, it reads `starting`, and `unreadable` where ws can't read
-the state. Else the column shows the tier and endpoint that the state holds. A server whose file ws
-refuses shows `-` for its target and slot. Its errors follow the rows, with exit code 1. The command
-takes no `--server`.
+The tunnel is `absent` before the bootstrap sets its daemon up, and `stopped` where launchd has
+not loaded it. Before the daemon writes its state, it reads `starting`, and `unreadable` where ws
+can't read the state. Else the column shows the tier and endpoint that the state holds. A server
+whose file ws refuses shows `-` for its target and slot. Its errors follow the rows, with exit
+code 1. The command takes no `--server`.
 
-`ws client macos remove NAME` takes a server off the Mac, as the user. It
-refuses the Mac's last server, as apply needs one, and takes no `--server`: the argument is the
-consent. It deletes `servers/NAME` and NAME's entry in `known_hosts`, then runs the steps `ssh`,
-`zed`, `tunnel` and `networks` for a server that stays, so that its daemon, hosts and routes go
-too. A server that stays and whose file ws refuses, NAME's clashes aside, stops it before it
-deletes anything, as those steps would skip that server. Where a step fails, `ws client macos
-apply` for a server that stays ends the removal. Where NAME held the cable, it prints a line to do
-by hand: the cable's service keeps `10.77.0.2`. The server itself is not changed.
-
-`ws client macos state` with several servers and no `--server` reports each one, its steps under a
-line with its name. Its `--json` then lists them in `servers`, each with its `steps`, and holds no
-top `steps`. With one server, or `--server`, it prints what it did before.
+`ws client macos remove NAME` takes a server off the Mac, as the user. It refuses the Mac's last
+server, as the bootstrap takes a Mac with none for a stray `WS_VALUES` and prunes no daemon. It
+takes no `--server`: the argument is the consent. It deletes `servers/NAME` and NAME's entry in
+`known_hosts`, then runs `MISE_LOCKED=1 mise -C /opt/ws bootstrap`, whose units take NAME's daemon,
+hosts and routes away. A server that stays and whose file ws refuses, NAME's clashes aside, stops it
+before it deletes anything, as those units would fail. Where the bootstrap fails, run it again to
+end the removal. Where NAME held the cable, it prints a line to do by hand: the cable's service
+keeps `10.77.0.2`. The server itself is not changed.
 
 ## A machine on the LAN
 
@@ -153,5 +149,5 @@ key of another target's ways: `WS_LAN` on a cloud VM, `WS_REMOTE` on a VM on the
 `WS_CABLE_SERVICE` or `WS_CABLE_PORT` off the LAN. Then name the new target's
 ways. A new machine offers another host key, so run `ssh-keygen -R NAME` first, NAME the server's
 name. From a cloud VM, remove `WS_SECURITY_OUTBOUND: false` from ws's `values.yml` too, with
-`sudo ws server ubuntu values set WS_SECURITY_OUTBOUND ''`. Then run `sudo ws server ubuntu apply`
-on ws, and `mise -C /opt/ws bootstrap` again.
+`sudo ws server ubuntu values set WS_SECURITY_OUTBOUND ''`. Then run the bootstrap on ws, as
+[its runbook](../../../server/ubuntu/runbook.md) says, and `MISE_LOCKED=1 mise -C /opt/ws bootstrap` again.

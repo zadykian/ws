@@ -71,7 +71,7 @@ shaken || gone "ws's daemon has no handshake in 60 s; its status gives: $status"
 [ "$(ws client macos servers | awk 'NR > 1 { print $1 }')" = ws ] || gone "ws client macos servers lists more than ws"
 [ "$fail" = 0 ] || exit 1
 
-fails "ws is the Mac's one server: apply needs one, so remove leaves it" ws
+fails "ws is the Mac's one server: with none, the bootstrap prunes no daemon, so remove leaves it" ws
 mac_bootstrap plan --detailed-exitcode || {
     echo "::error::the plan with ws alone exited $?, not 0"
     exit 1

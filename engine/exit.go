@@ -1,5 +1,5 @@
-// Package engine runs a side's work for the commands: the errors that decide ws's exit status,
-// and the run of a Target.
+// Package engine holds what the commands of both sides share: the errors that decide ws's exit
+// status, and the lines a command prints.
 package engine
 
 import (

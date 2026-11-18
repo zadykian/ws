@@ -37,9 +37,9 @@ The firewall must hold under the rootless daemon:
 
 Then ws's secrets. `ws server ubuntu secrets init` makes the credential, root's 600 in root's 700,
 and the file, root's 600. `set` takes a value on standard input, and `keys` names it but never
-prints it. The user can't run them. A unit with `LoadCredentialEncrypted=ws-secrets` runs `ws server
-ubuntu apply --secrets --check`, and one without it fails: a container's systemd runs neither.
-`ws unit write --dry-run` of `/etc/ws/env` reads the file, and prints no value.
+prints it. The user can't run them, and the user's `systemd-creds decrypt` of the credential
+fails: a container's systemd makes none. `ws unit write --dry-run` of `/etc/ws/env`, as root,
+decrypts it, reads the file, and prints no value.
 `unset` drops the entry, and a second `init` keeps both files ([ws's
 file](../../roles/server/ubuntu/secrets/README.md#wss-file)).
 

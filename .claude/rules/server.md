@@ -15,8 +15,7 @@ steps, and each role's README says what it sets up.
 
 - A role is `roles/server/ubuntu/NAME`, with its page, its `README.md`, and a line in the root
   README ([README](../../README.md)). Its units run in the order of their `after`
-  ([The order](../../roles/server/ubuntu/frame/README.md#the-order)). `ubuntu.Roles`, the roles
-  in Go, is empty until #1240 removes `apply` ([roles.go](../../roles/server/ubuntu/roles.go)).
+  ([The order](../../roles/server/ubuntu/frame/README.md#the-order)).
 - A role holds its spec, `units.toml`, with its templates, and its mise files by env:
   `mise.server.toml` for every server, `mise.booted.toml` where systemd is booted, and
   `mise.account.toml` where `WS_USER` is not root. The link `mise/conf.d/server-NAME` loads them.
@@ -28,19 +27,19 @@ steps, and each role's README says what it sets up.
 - A path is one role's: where two roles' mise files declare it, mise keeps the later fragment's by
   name and drops the other with no error.
 - The server's values are one struct, `values.Values`, parsed once from the machine's file with
-  unknown keys refused. A role's steps read it and add no key without a commit of their own
+  unknown keys refused. A role's units read it and add no key without a commit of their own
   ([values.go](../../roles/server/ubuntu/values/values.go)).
 - The secrets are one struct, `secrets.Secrets`, beside the values. ws decrypts it from age's armor
   in its process, as TOML with a table per kind. Unknown keys are refused, references expanded,
-  and no error or output shows a value. Steps take it as their second argument
-  ([secrets.go](../../roles/server/ubuntu/secrets/secrets.go), [ws's secrets](../../roles/server/ubuntu/secrets/README.md)).
+  and no error or output shows a value. A secret file's template alone reads it
+  ([file.md](../../engine/core/kind/file.md), [secrets.go](../../roles/server/ubuntu/secrets/secrets.go), [ws's secrets](../../roles/server/ubuntu/secrets/README.md)).
 - `secrets.Store` alone reads and writes ws's secrets file and makes its credential; cmd keeps
   the commands and the root check ([store.go](../../roles/server/ubuntu/secrets/store.go)).
-- The roles set the machine up for `WS_USER`, `zadykian` by default, in `WS_HOME`. A step run as
+- The roles set the machine up for `WS_USER`, `zadykian` by default, in `WS_HOME`. A unit run as
   `WS_USER` sets `HOME` and starts in it: root needs no sudo, a container has none, and `HOME` would
   otherwise be the caller's ([claude's units](../../roles/server/ubuntu/claude/units.toml)).
 - Root reaches a file under `WS_HOME` through the account (`Account.File`, `Account.Dir`,
-  `Account.Absent`, `User.ReadHome`), or the step acts as `WS_USER`, as claude's does. The user owns
+  `Account.Absent`, `User.ReadHome`), or the unit acts as `WS_USER`, as claude's does. The user owns
   the home and could link a file elsewhere ([Links under the home](../../roles/server/ubuntu/security/README.md#links-under-the-home)).
 - ws's lines in a home file are `Account.Lines`, which refuses any link, at the file or on the way.
 - A version is pinned in the package of the role that installs it. SigNoz's images are pinned in
@@ -57,8 +56,8 @@ steps, and each role's README says what it sets up.
 - A unit that suits some machines alone, by their hardware or a value, says so by `when`. A new
   fact is an entry of `whenFacts` ([kind](../../engine/core/kind/README.md#the-specs)).
 - A second run plans nothing, which CI's `playbook` job checks
-  ([The `playbook` job](../../.github/workflows/README.md#the-playbook-job)). A step that only reads plans no change.
-- A dry run, `--check`, applies nothing and shows how the machine differs
+  ([The `playbook` job](../../.github/workflows/README.md#the-playbook-job)). A unit that only reads plans no change.
+- A plan, mise's or `ws unit write --dry-run`, applies nothing and shows how the machine differs
   ([Dry runs](../../README.md#dry-runs)). A step reads in its Plan, a GET included
   ([SigNoz's dashboards](../../roles/server/ubuntu/signoz/internal/dashboards/dashboards_plan.go)).
 - A role's test states dpkg's database by effecttest's package table, never by a `dpkg-query` line
@@ -71,7 +70,7 @@ steps, and each role's README says what it sets up.
   alone, so a healthy one has no item.
 - Where a dry run skips a step, a step beside it shows what the run would change
   ([claude's marketplaces](../../roles/server/ubuntu/claude/marketplaces.go)).
-- A step that needs a booted machine's systemd checks `systemd.Booted`: without one, as in CI's
+- A unit that needs a booted machine's systemd checks `systemd.Booted`: without one, as in CI's
   container, it skips and says so.
 - A file ws writes whole, on the server or the Mac, has one line at its top, where its format
   takes comments: `file.Header(sign)`. The roles' templates and files spell it out. Its words,
@@ -79,9 +78,9 @@ steps, and each role's README says what it sets up.
   Each run replaces a change made to it by hand ([shell](../../roles/server/ubuntu/shell/README.md), [git](../../roles/server/ubuntu/git/README.md)).
 - A tool that updates itself, such as claude or rustup, is installed only where missing
   ([claude's units](../../roles/server/ubuntu/claude/units.toml)).
-- A role given the secrets of `ws server ubuntu apply --secrets`, changes nothing where they are
-  absent. With them, the file is the whole truth: a run removes what it lacks, such as a git token.
-  So a run without them, as CI's, keeps what a run with them made
+- A unit that reads the secrets changes nothing on a machine without ws's secrets file. With it,
+  the file is the whole truth: a run removes what it lacks, such as a git token. So a run without
+  it, as CI's, keeps what a run with it made
   ([Git credentials](../../roles/server/ubuntu/git/README.md#git-credentials)).
 
 ## Downloads and keys

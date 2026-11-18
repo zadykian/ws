@@ -27,7 +27,7 @@ func Group(use, short string, cmds ...*cobra.Command) *cobra.Command {
 
 // Root returns the ws command with the groups of this system.
 func Root(p Env, groups ...*cobra.Command) *cobra.Command {
-	root := Group("ws", "set up the server and the Mac that works on it", Version(p), Update(p))
+	root := Group("ws", "set up the server and the Mac that works on it", Version(p))
 	root.AddCommand(groups...)
 	root.SilenceErrors = true
 	root.SilenceUsage = true

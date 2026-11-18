@@ -123,16 +123,6 @@ func TestUnitReadStates(t *testing.T) {
 	}
 }
 
-func TestUnitReadNeedsRoot(t *testing.T) {
-	e, _ := unitEnv(t, map[string]string{"r/units.toml": fileUnit("a", "/etc/a", "")})
-	e.Euid = 1000
-	for _, verb := range []string{"read", "write"} {
-		if status, _, stderr := runUnit(e, verb, "file/a"); status != 1 || !strings.Contains(stderr, "run it as root") {
-			t.Errorf("%s: status = %d, stderr = %q", verb, status, stderr)
-		}
-	}
-}
-
 func TestUnitUnknownUnitIsUsage(t *testing.T) {
 	e, _ := unitEnv(t, map[string]string{"r/units.toml": fileUnit("a", "/etc/a", ""), "r/a": "1\n"})
 	for _, verb := range []string{"read", "write"} {

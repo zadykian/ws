@@ -22,7 +22,8 @@ func newRemoveCmd(p enginecli.Env, server *string) *cobra.Command {
 		Short: "remove a server from the Mac",
 		Long: "It deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it " +
 			"is. mise's bootstrap then takes its daemon, routes and host off. It refuses the Mac's last server, as " +
-			"apply needs one, and takes no --server: the argument is the consent.",
+			"the bootstrap takes a Mac with none for a stray WS_VALUES and prunes no daemon, and takes no --server: " +
+			"the argument is the consent.",
 		Args: cobra.ExactArgs(1),
 		RunE: func(c *cobra.Command, args []string) error { return runRemove(c, p, *server, args[0]) },
 	}
@@ -49,9 +50,9 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 			path.Dir(path.Dir(values.ServerPath(mac, name))), values.List(names))
 	}
 	if len(names) == 1 {
-		return fmt.Errorf("%s is the Mac's one server: apply needs one, so remove leaves it", name)
+		return fmt.Errorf("%s is the Mac's one server: with none, the bootstrap prunes no daemon, so remove leaves it", name)
 	}
-	// The steps below skip a server whose file ws refuses, so such a file stops the removal before
+	// The units below skip a server whose file ws refuses, so such a file stops the removal before
 	// it starts. NAME's own file is out of the count: a clash with it ends with the removal.
 	if err := refuseBadSibling(without{p.Machine, values.ServerPath(mac, name)}, mac, name); err != nil {
 		return err
@@ -76,10 +77,12 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 	if _, err := fmt.Fprintf(c.OutOrStdout(), "removed %s\n", name); err != nil {
 		return err
 	}
-	// The bootstrap takes the rest off. The unit of the tunnel's files boots the daemon out and
-	// removes its files. The networks' unit takes its resolvers, launchd's its plist, ssh's its host.
-	if err = p.Machine.Pass(c.Context(), false, "mise", "-C", "/opt/ws", "bootstrap"); err != nil {
-		err = fmt.Errorf("mise -C /opt/ws bootstrap: %w: run it again to take %s's daemon, routes and host off", err, name)
+	// The bootstrap takes the rest off, locked as CI's Mac job and the runbook run it, so that a tool
+	// that the lock lacks fails instead of resolving unchecked. The unit of the tunnel's files boots
+	// the daemon out and removes its files. The networks' unit takes its resolvers, launchd's its
+	// plist, ssh's its host.
+	if err = p.Machine.Pass(c.Context(), false, "env", "MISE_LOCKED=1", "mise", "-C", "/opt/ws", "bootstrap"); err != nil {
+		err = fmt.Errorf("MISE_LOCKED=1 mise -C /opt/ws bootstrap: %w: run it again to take %s's daemon, routes and host off", err, name)
 	}
 	if cable != "" {
 		_, _ = fmt.Fprintf(c.OutOrStdout(), "By hand: the cable's service %s keeps 10.77.0.2: name it in another server's "+
@@ -104,7 +107,7 @@ func (w without) Stat(file string) (effect.Info, error) {
 }
 
 // forgetHost drops name's entry from known_hosts, where ssh keeps the key under the server's name.
-// A file that is missing has none, and a link is left to the maintainer, as apply leaves it.
+// A file that is missing has none, and a link is left to the maintainer, who chose where it points.
 func forgetHost(c *cobra.Command, p enginecli.Env, name string) error {
 	file := p.Getenv("HOME") + "/.ssh/known_hosts"
 	info, err := p.Machine.Stat(file)

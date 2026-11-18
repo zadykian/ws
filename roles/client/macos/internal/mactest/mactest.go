@@ -1,5 +1,5 @@
 // Package mactest holds what the tests of the Mac's roles share. These are the machine with
-// Secretive's agent and the report of a step, read as ws client macos state reads it.
+// Secretive's agent and the report of a step, read as ws unit read reads it.
 package mactest
 
 import (
@@ -35,7 +35,7 @@ func AgentMachine(m *effecttest.Machine, lines ...string) *effecttest.Machine {
 // CopyOf is the path of ws's copy of the line's key.
 func CopyOf(line string) string { return sshcfg.Expand(sshcfg.AgentKeys(line)[0].Pub(), AgentHome) }
 
-// ReportOf reads the step as ws client macos state does, and returns its items by name.
+// ReportOf reads the step as ws unit read does, and returns its items by name.
 func ReportOf(t *testing.T, s step.Step) map[string]step.Item {
 	reports, err := step.Read(context.Background(), []step.Step{s})
 	if err != nil {

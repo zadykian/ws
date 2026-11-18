@@ -22,27 +22,23 @@ func badSiblingFixture() (*effecttest.Machine, string) {
 	return m, resolver
 }
 
-// TestApplyRefusesABadSiblingBeforeAnyStep settles R1071-3. A step could prune what a server it
-// cannot read holds. So a run for ws stops where lab's file is refused, with --check too.
-func TestApplyRefusesABadSiblingBeforeAnyStep(t *testing.T) {
-	for _, args := range [][]string{
-		{"client", "macos", "apply", "--server", "ws"},
-		{"client", "macos", "apply", "--server", "ws", "--check"},
-	} {
-		m, resolver := badSiblingFixture()
-		p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
-		p.Machine = m
-		status, _, stderr := runWs(p, args...)
-		if status != 1 || !strings.Contains(stderr, "server lab: ") || !strings.Contains(stderr, "fix its file, or ws client macos remove lab") {
-			t.Errorf("%q: status = %d, stderr = %q; want lab's file refused, naming remove", args, status, stderr)
+// TestRefuseBadSiblingReadsAlone settles R1071-3 for remove: a step could prune what a server it
+// cannot read holds. So the guard refuses lab's file for ws, names remove, and writes nothing.
+func TestRefuseBadSiblingReadsAlone(t *testing.T) {
+	m, resolver := badSiblingFixture()
+	err := refuseBadSibling(m, "/etc/ws/values.yml", "ws")
+	if err == nil || !strings.Contains(err.Error(), "server lab: ") || !strings.Contains(err.Error(), "fix its file, or ws client macos remove lab") {
+		t.Errorf("err = %v; want lab's file refused, naming remove", err)
+	}
+	for _, call := range m.Calls {
+		if !slices.Contains([]string{"read", "readdir", "stat"}, strings.Fields(call)[0]) {
+			t.Errorf("call %q ran", call)
 		}
-		for _, call := range m.Calls {
-			if !slices.Contains([]string{"read", "readdir", "stat"}, strings.Fields(call)[0]) {
-				t.Errorf("%q: call %q ran before the refusal", args, call)
-			}
-		}
-		if _, ok := m.Files[resolver]; !ok {
-			t.Errorf("%q: %s was removed", args, resolver)
-		}
+	}
+	if _, ok := m.Files[resolver]; !ok {
+		t.Errorf("%s was removed", resolver)
+	}
+	if err := refuseBadSibling(m, "/etc/ws/values.yml", "lab"); err != nil {
+		t.Errorf("lab's own file: %v", err)
 	}
 }

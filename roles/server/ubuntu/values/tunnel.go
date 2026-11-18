@@ -10,8 +10,7 @@ import (
 )
 
 // The Mac's scripts fix wg0 at a slot's .1 and the Mac at its .2 (roles/internal/slot). They fix
-// the peer's name too, as the mac.pub that `ws client macos apply` has the user write on the
-// server.
+// the peer's name too, as the mac.pub that the Mac's runbook has the user copy to the server.
 const (
 	macPeer = "mac"
 	maxPort = 65535

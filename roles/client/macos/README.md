@@ -12,31 +12,30 @@ while the tunnel is down, and bulk copies run at wireguard-go's speed. To reach 
 a direct way: `ssh -o HostName=ADDRESS -o Port=PORT ws`, as ufw lets SSH in on every interface.
 `WS_REMOTE_PORT` and the router's forward stay for that and for setup.
 
-The Mac's side is Go: one binary, `ws`, of isolated steps, which `go test` checks on each pull
-request. It runs as the user, with sudo where it needs root. `mise bootstrap` sets up Ghostty, cld
-and a zsh hook ([Ghostty and cld on the Mac](ghostty/README.md)). mise installs Ghostty, Zed and a
-font as casks, and gh by its lock, with no Homebrew ([the runbook](runbook.md)). The runbook puts
-`ws` in `~/.local/bin` (put it on `PATH` by hand) from a release, checked against its `ws.sha256`
-([Releases](../../../engine/core/update/README.md)). `ws` embeds the files it installs, so it
-needs no clone. Write the values below in `values.yml` first ([The two
-files](values/README.md#the-two-files)). Then:
+The Mac's side is mise's config and ws's units, as the server's is, which `go test` checks on each
+pull request. It runs as the user, with sudo where it needs root. `mise bootstrap` sets up Ghostty,
+cld and a zsh hook ([Ghostty and cld on the Mac](ghostty/README.md)). mise installs Ghostty, Zed
+and a font as casks, and gh by its lock, with no Homebrew ([the runbook](runbook.md)). The runbook
+puts `ws` in `~/.local/bin` (put it on `PATH` by hand) from a release, checked against its
+`ws.sha256` ([Releases](../../../.github/workflows/release.md)), and clones the release's tree into
+`/opt/ws`, where the units' specs and files are. Write the values below in `values.yml` first ([The
+two files](values/README.md#the-two-files)). Then:
 
 ```sh
-mise -C /opt/ws bootstrap
+MISE_LOCKED=1 mise -C /opt/ws bootstrap
 ```
 
 It sets up every role of the Mac, on the tree in `/opt/ws` ([The Mac's frame](frame/README.md)).
-Its units read as the user, and ask sudo for a change alone. `ws client macos apply` and `ws
-client macos state` run no step. `ws client macos` holds the Mac's commands, darwin alone. `ws
-version` prints its version, and `ws update` replaces it with the latest release
-([Update](../../../engine/core/update/README.md#update)).
+Its units read as the user, and ask sudo for a change alone. `ws client macos` holds the Mac's
+commands, darwin alone, which the units and the tunnel's daemons run. `ws version` prints its
+version.
 
 ## What the Mac reports
 
-`mise -C /opt/ws bootstrap plan` shows what the units would change, and `ws client macos servers`
-each server's tunnel. A cable's service that is disabled, which no run turns on, draws a warning
-from `ws client macos cable` and its `--check` alone: a bootstrap shows no check's output. No unit
-reads a private key: the key's unit looks for the file alone.
+`MISE_LOCKED=1 mise -C /opt/ws bootstrap plan` shows what the units would change, and `ws client
+macos servers` each server's tunnel. A cable's service that is disabled, which no run turns on,
+draws a warning from `ws client macos cable` and its `--check` alone: a bootstrap shows no check's
+output. No unit reads a private key: the key's unit looks for the file alone.
 
 ## The Mac's values.yml
 
@@ -82,8 +81,8 @@ networks`, so a domain whose file is another script's, or written by hand, stops
 a domain from such a script, have it remove its file first, with `ws client macos resolver DOMAIN`
 and no address. A key emptied or removed takes back what earlier runs wrote, and only that, but a
 domain another server names stays. Its `--check` names each change, or that the server's
-`routes.d` is missing. Root's files go through sudo, by the code that writes `ws server ubuntu
-apply`'s. Sudo never changes a file in the home, nor one a link names. A file there that the user
+`routes.d` is missing. Root's files go through sudo, by the kinds' code that writes the server's.
+Sudo never changes a file in the home, nor one a link names. A file there that the user
 may not change stops the run: sudo would leave root's files where the user's go.
 
 ## ssh's hosts
@@ -136,7 +135,7 @@ make the Mac the server's peer, with that key as MAC_PUBLIC_KEY. They go over a 
 
 ```sh
 ssh -o HostName=ADDRESS -o Port=PORT NAME "printf '%s\n' 'MAC_PUBLIC_KEY' | tee /etc/wireguard/mac.pub >/dev/null"
-ssh -o HostName=ADDRESS -o Port=PORT NAME env MISE_DATA_DIR=/usr/local/share/mise mise -C /opt/ws bootstrap
+ssh -o HostName=ADDRESS -o Port=PORT NAME env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws bootstrap
 ```
 
 For a `WS_USER` other than root, both go through `sudo` and `ssh -t`, for the password.
@@ -229,6 +228,9 @@ domain's names to nameservers behind it. It calls `ws`, which changes only what 
   the daemon is loaded, so that the script can stop with "run mise -C /opt/ws bootstrap first".
 
 With no network or address, each removes its file, `ws client macos resolver` only a file it wrote.
+`tunnel routes` signals the daemons itself, but launchd's unit keeps the sum of `routes.d` in its
+stamp. So the next bootstrap plans a reload and the stamp's write through sudo, which asks a
+password.
 The files outlive the daemon. While the daemon is stopped, the routes go with its utun, and the
 domain's lookups go out by the Mac's own network and fail. ufw on ws forwards from the tunnel only
 ping, and what the `ikeward` role lets through to its VPN ([Forwarding](../../server/ubuntu/ikeward/README.md#forwarding)). Any

@@ -14,20 +14,20 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   `after` ([The order](../roles/server/ubuntu/frame/README.md#the-order)), and
   `roles/server/ubuntu/values` types the machine's values: `/etc/ws/values.yml`, on the machine
   alone, such as the cable's port ([The cable](../roles/server/ubuntu/cable/README.md#the-cable)). Each role
-  holds its pins, and embeds its templates and files. ws-fans, the fans' service, is
+  holds its pins, and its templates and files beside its spec. ws-fans, the fans' service, is
   `ws server ubuntu fans`, in `roles/server/ubuntu/fans/daemon`.
 - `go.mod` and `go.sum`: the Go module `github.com/zadykian/ws`, at the root.
   `main.go` runs `cmd`, which composes the root and the exit codes with the two sides'
   commands. `engine/cli` builds the root and the exit codes. `engine/core` holds `step`,
   `effect`, with `effect/effecttest`, `effect/local` and `effect/units`, and `resource`, with
-  `resource/resourcetest`, the resources the steps share, and `kind`, the kinds that a role's
+  `resource/resourcetest`, the resources the kinds share, and `kind`, the kinds that a role's
   `units.toml` names as units ([kind](../engine/core/kind/README.md)). They are public, as the roles
   import them from outside `engine/`.
 - `mise.toml` and `mise.lock`: mise's config that both sides share, its settings and the pin of
   ws, a release, with the release's SHA-256 for each target in the lock. `mise.server.toml` is
-  the server's part, and `plugins/ws` the plugin that hands ws's units to `ws unit`. A role moved
-  to mise holds its spec, `units.toml`, and its mise files beside its page, and `mise/conf.d`
-  links its directory ([The frame](../roles/server/ubuntu/frame/README.md)). The roles' tools
+  the server's part, and `plugins/ws` the plugin that hands ws's units to `ws unit`. A role holds
+  its spec, `units.toml`, and its mise files beside its page, and `mise/conf.d` links its
+  directory ([The frame](../roles/server/ubuntu/frame/README.md)). The roles' tools
   lock in `mise/mise.server.lock`. `mise.mac.toml` is the Mac's part, and
   `roles/client/macos/frame` and `facts` its frame and its units' values
   ([The Mac's frame](../roles/client/macos/frame/README.md)). `mise/mise.mac.lock` locks the Mac's
@@ -35,15 +35,12 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
 - `install.sh`: installs mise and runs `mise bootstrap` on a release's tree
-  ([Releases](../engine/core/update/README.md)).
+  ([Releases](../.github/workflows/release.md)).
 - `roles/client/macos/`: the Mac's side ([The Mac](../roles/client/macos/README.md)). Its roles'
   units write `ghostty/files/ws.ghostty`, Ghostty's settings, `zed/files/`, Zed's settings and
   keymap, and `zsh/files/zshrc`, the zsh hook that turns off the modes that a drop leaves on.
 - The pages sit beside their code, as the `README.md` of a role or a package. A second page stands
-  beside one where the cap keeps two apart: `zed/projects.md`, `cable/router.md`,
-  `.github/workflows/rootless.md`, `mac-cld.md`,
-  `mac-servers.md`, `runbook.md` of each side, and `file.md`, `state.md` and
-  `launchd.md` of `engine/core/kind`.
+  beside one where the cap keeps two apart, as [docs.md](rules/docs.md) lists them.
   `.tools/README.md` holds the gates and `.github/workflows/README.md` CI.
 - `.tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
   caps them. `build` builds ws for a target, `serve-build` points a checkout's pin at the tree's build,
@@ -81,14 +78,14 @@ on macOS on arm64.
 It installs yamllint into `.cache`, and `.tools/run` downloads the rest there.
 
 The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `playbook` builds ws and runs `install.sh`'s
-bootstrap and `ws server ubuntu apply` twice each in an Ubuntu 26.04 container, with mise's plan.
+bootstrap twice in an Ubuntu 26.04 container, with mise's plan.
 It checks the config that Fresh reads too. `signoz` forges SigNoz's compose files again, and
-`install` tries `install.sh` and `ws update`. `rootless` runs the
+`install` tries `install.sh`. `rootless` runs the
 rootless daemon and the firewall on a booted runner ([The rootless job](../.github/workflows/rootless.md)). `mac` sets up a
 Mac on GitHub's macOS runner by `mise bootstrap`, whose last run must call no sudo and whose plan
 must exit 0. `mac-cld` sets up
-Ghostty, Zed and cld by the bootstrap on another ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `ws
-server ubuntu apply` sets up the machine that runs it, as below.
+Ghostty, Zed and cld by the bootstrap on another ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `mise
+bootstrap` sets up the machine that runs it, as below.
 
 The hooks check a commit for the local list's words. This checks any other text, such as a pull
 request's body, as they do, and prints 0 where it holds none:
@@ -100,8 +97,8 @@ LC_ALL=C tr _ ' ' <FILE | grep -ciwF -f <(sed -e 'y/_/ /' -e 's/^[[:space:]]*//'
 
 ## How changes land
 
-- Pull requests are stacked, each on the one below it. CI runs `lint` and `signoz` on each,
-  whatever its base, and `playbook`, `mac` and `mac-cld` on the stack's top one alone
+- Pull requests are stacked, each on the one below it. CI runs some jobs on each,
+  whatever its base, and the others on the stack's top one alone
   ([Checks](../.github/workflows/README.md#checks)).
 - They land on `main` by GitHub's merge commits, as
   [`/flow:land`](https://github.com/zadykian/toolkit/blob/main/skills/land/SKILL.md) does. A pull
@@ -117,17 +114,16 @@ LC_ALL=C tr _ ' ' <FILE | grep -ciwF -f <(sed -e 'y/_/ /' -e 's/^[[:space:]]*//'
 
 Each rule links where the repository gives its reason: a doc, a comment or a CI job.
 
-- `ws server ubuntu apply` sets up the machine that runs it. CI's `playbook` job runs it in a
-  container ([The `playbook` job](../.github/workflows/README.md#the-playbook-job)).
-- A second run changes nothing: CI's `playbook` job runs the bootstrap and `ws server ubuntu apply`
-  twice each. It fails where the second apply reports a change, or where
-  `mise bootstrap plan --detailed-exitcode` does not exit 0, before the second bootstrap and after
-  both ([ci.yml](../.github/workflows/ci.yml)).
-- A step that needs a booted machine's systemd checks `systemd.Booted`, and skips without it, as in
+- `mise bootstrap` sets up the machine that runs it. CI's `playbook` job runs it in a container
+  ([The `playbook` job](../.github/workflows/README.md#the-playbook-job)).
+- A second run changes nothing: CI's `playbook` and `rootless` jobs run the bootstrap twice. They
+  fail where `mise bootstrap plan --detailed-exitcode` does not exit 0, before the second bootstrap
+  and after it ([ci.yml](../.github/workflows/ci.yml)).
+- A unit that needs a booted machine's systemd checks `systemd.Booted`, and skips without it, as in
   CI's container ([The `playbook` job](../.github/workflows/README.md#the-playbook-job)).
 - `release.yml` checks a release's files and notes for the local list's words before it publishes
   them. The list is the secret `FORBIDDEN_WORDS`, and the job fails on an empty one
-  ([Cutting a release](../engine/core/update/README.md#cutting-a-release)).
+  ([Cutting a release](../.github/workflows/release.md#cutting-a-release)).
 - A pinned download is checked against its SHA-256 before use: ikeward's
   binary ([units.toml](../roles/server/ubuntu/ikeward/units.toml)) and otelcol's `.deb`
   ([units.toml](../roles/server/ubuntu/otelcol/units.toml)). So is Fresh's `.deb`
@@ -135,8 +131,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([fans](../roles/server/ubuntu/fans/units.toml)), and so are foundryctl
   ([ci.yml](../.github/workflows/ci.yml)) and the gates' tools ([.tools/run](../.tools/run)). So is ws's
   binary: `mise.lock` holds its SHA-256 for each target, which mise checks as it installs
-  ([mise.lock](../mise.lock)). `ws update` checks it against its release's `ws.sha256`
-  ([update.go](../engine/core/update/update.go)), and a Mac's runbook checks it by hand
+  ([mise.lock](../mise.lock)). A Mac's runbook checks it by hand too
   ([runbook.md](../roles/client/macos/runbook.md)). So is mise's binary, whose SHA-256 for each
   target `install.sh` holds ([install.sh](../install.sh)), and the Mac's runbook its macos-arm64's
   ([runbook.md](../roles/client/macos/runbook.md)). So is

@@ -32,3 +32,16 @@ func TestEveryCommandSetsArgs(t *testing.T) {
 		})
 	}
 }
+
+// TestNoApplyStateOrUpdate checks that mise's bootstrap and its plan stand alone: no command of
+// either side sets a machine up, reports it, or replaces ws. claude's update, a unit's command,
+// updates cld.
+func TestNoApplyStateOrUpdate(t *testing.T) {
+	p := fakeProcess()
+	cli.Walk(cli.Root(p, clientCmd(p), serverCmd(p), unitCmd(p)), func(c *cobra.Command) {
+		gone := c.Name() == "apply" || c.Name() == "state" || c.Name() == "update"
+		if gone && c.CommandPath() != "ws server ubuntu claude update" {
+			t.Errorf("%s is a command", c.CommandPath())
+		}
+	})
+}

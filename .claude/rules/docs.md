@@ -17,8 +17,9 @@ What each document holds. How to write them is in the `writing` skill and [writi
   mean by each.
 - A page lives beside the code it describes, as that directory's `README.md`. A second page stands
   beside it, named for its subject, where the cap keeps two apart or no package fits:
-  `zed/projects.md`, `cable/router.md`, `runbook.md` of each side,
-  and `.github/workflows/rootless.md`, `mac-cld.md` and `mac-servers.md`. CI's page is
+  `zed/projects.md`, `cable/router.md`, `runbook.md` of each side, `file.md`, `state.md` and
+  `launchd.md` of `engine/core/kind`, and `.github/workflows/rootless.md`, `mac-cld.md`,
+  `mac-servers.md` and `release.md`. CI's page is
   `.github/workflows/README.md`, never `.github/README.md`, which GitHub would show in place of
   the root's.
 - A role's page is the `README.md` in its directory, `roles/server/ubuntu/NAME/`: what it sets up
@@ -37,8 +38,8 @@ What each document holds. How to write them is in the `writing` skill and [writi
   and [the server's](../../roles/server/ubuntu/runbook.md) are each side's steps by hand.
 - [The kind package's README](../../engine/core/kind/README.md) says what a unit and a kind are:
   the spec, each kind's fields, and where the specs sit.
-- [The update package's README](../../engine/core/update/README.md) says how to install and update
-  ws, and how a release is cut.
+- [release.md](../../.github/workflows/release.md), beside `release.yml`, says how to install ws,
+  and how a release is cut.
 - [The tools' README](../../.tools/README.md) says what each gate of `make lint` runs.
   [CI's README](../../.github/workflows/README.md) says what CI's other jobs check, and what the
   hooks of `.githooks` and Claude's hooks do.

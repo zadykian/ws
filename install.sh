@@ -13,16 +13,17 @@
 # /etc/mise/miserc.toml from WS_USER in /etc/ws/values.yml. The miserc names the envs of mise's
 # files that load on this machine. A change of WS_USER means running this script again. Last it
 # runs mise bootstrap on the tree of the latest release, or of the one WS_VERSION names (X.Y.Z,
-# with or without the v), cloned to /opt/ws. That tree pins ws's binary and checks it. Run again,
-# it checks that release's tag out there, dropping any change and any file git does not track, and
-# brings the machine back to the release. It refuses a /opt/ws that is not root's alone.
+# with or without the v), cloned to /opt/ws. A pre-release, X.Y.Z-rc.N, runs only where WS_VERSION
+# names it. That tree pins ws's binary and checks it. Run again, it checks that release's tag out
+# there, dropping any change and any file git does not track, and brings the machine back to the
+# release. It refuses a /opt/ws that is not root's alone, and a system other than Ubuntu 26.04.
 # A Mac follows roles/client/macos/runbook.md instead. It runs in any POSIX sh, and needs curl,
 # sha256sum and git.
 #
 # WS_IN_PLACE=1 runs the bootstrap on the tree in /opt/ws, with no release lookup and no clone.
 # WS_RELEASES_URL stands in for https://github.com/zadykian/ws/releases, WS_MISE_URL for
-# https://github.com/jdx/mise/releases/download and WS_REPO for https://github.com/zadykian/ws,
-# for the tests.
+# https://github.com/jdx/mise/releases/download, WS_REPO for https://github.com/zadykian/ws and
+# WS_OS_RELEASE for /etc/os-release, for the tests.
 #
 # Everything is in functions that the last line calls, so that a download cut short runs nothing.
 
@@ -46,7 +47,8 @@ die() {
 }
 
 # platform sets mise_asset and mise_sum to the name and the checksum of mise's binary for this
-# machine.
+# machine. It refuses a system other than Ubuntu 26.04, which the units are written for, by
+# /etc/os-release, or by the file WS_OS_RELEASE names, for the tests.
 platform() {
     os=$(uname -s)
     arch=$(uname -m)
@@ -63,6 +65,12 @@ platform() {
     Darwin-*) die "install.sh sets up an Ubuntu server: a Mac follows roles/client/macos/runbook.md" ;;
     *) die "ws sets up Ubuntu, not $os" ;;
     esac
+    release_file=/etc/os-release
+    [ -z "${WS_OS_RELEASE:-}" ] || release_file=$WS_OS_RELEASE
+    id=$(sed -n 's/^ID=//p' "$release_file" 2>/dev/null | tr -d "\"'")
+    version_id=$(sed -n 's/^VERSION_ID=//p' "$release_file" 2>/dev/null | tr -d "\"'")
+    [ "$id $version_id" = "ubuntu 26.04" ] ||
+        die "ws sets up Ubuntu 26.04 alone, not '$id' '$version_id'"
 }
 
 # is_version succeeds where $1 is a version X.Y.Z, as a tag vX.Y.Z holds it: three numbers, none
@@ -75,6 +83,19 @@ is_version() {
     esac
 }
 
+# is_rc succeeds where $1 is a pre-release X.Y.Z-rc.N, as a tag vX.Y.Z-rc.N holds it. X.Y.Z is a
+# version, and N a number from 1 with no leading zero.
+is_rc() {
+    case $1 in
+    *-rc.*) ;;
+    *) return 1 ;;
+    esac
+    case ${1##*-rc.} in
+    '' | *[!0-9]* | 0*) return 1 ;;
+    esac
+    is_version "${1%-rc.*}"
+}
+
 # release sets releases to the address of ws's releases, repo to ws's repository, and tag to the
 # release whose tree runs. That is WS_VERSION's, or none for the latest until latest finds it. where
 # is how messages name it.
@@ -85,7 +106,8 @@ release() {
     tag=
     if [ -n "$version" ]; then
         # A typo stops here, not at a clone that finds no tag.
-        is_version "${version#v}" || die "WS_VERSION is not a version, X.Y.Z: $version"
+        is_version "${version#v}" || is_rc "${version#v}" ||
+            die "WS_VERSION is not a version, X.Y.Z or X.Y.Z-rc.N: $version"
         tag=v${version#v}
     fi
     where="the ${tag:-latest} release of ws"
@@ -101,8 +123,8 @@ fetch() {
 }
 
 # latest sets tag, where none is set, to the latest release's. GitHub redirects releases/latest to
-# the latest release's page, releases/tag/vX.Y.Z, or to releases where there is none. The tag goes
-# into the clone's ref, so anything but vX.Y.Z is refused.
+# the latest release's page, releases/tag/vX.Y.Z, or to releases where there is none. A pre-release
+# is never the latest. The tag goes into the clone's ref, so anything but vX.Y.Z is refused.
 latest() {
     [ -z "$tag" ] || return 0
     page=$(fetch -o /dev/null -w '%{redirect_url}' "$releases/latest") ||
@@ -201,10 +223,12 @@ checkout() {
 # mise calls inherit it, and for the runs by hand after, by mise trust. mise reads no stdin, as
 # the piped script is on it. mise puts the tools under the data directory, which is root's own
 # /root/.local/share/mise by default: /usr/local/share/mise lets the account run them.
+# MISE_LOCKED installs a tool only as the tree's lock holds it, by its URL and checksum, as CI's
+# runs and the runbook's do: bootstrap has no --locked.
 bootstrap() {
     guard
-    MISE_TRUSTED_CONFIG_PATHS=/opt/ws MISE_DATA_DIR=/usr/local/share/mise
-    export MISE_TRUSTED_CONFIG_PATHS MISE_DATA_DIR
+    MISE_TRUSTED_CONFIG_PATHS=/opt/ws MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1
+    export MISE_TRUSTED_CONFIG_PATHS MISE_DATA_DIR MISE_LOCKED
     if [ "${WS_IN_PLACE:-}" = 1 ]; then
         [ -f /opt/ws/mise.toml ] || die "WS_IN_PLACE is set, and /opt/ws holds no mise.toml"
         /usr/local/bin/mise -C /opt/ws bootstrap </dev/null

@@ -17,11 +17,8 @@ The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `rol
   no other step's state. A step that needs another done first names it in `Step.WaitsOn`
   ([step.go](../../engine/core/step/step.go)).
 - A run reports each step to a `step.Observer`, and each step ends with one event of `Done`,
-  `Failed` or `Skipped`. A run inside another passes the observer on, and names its role or stage
-  as `Options.Parent` ([step.go](../../engine/core/step/step.go)).
-- The Mac's steps are `macos.Mac`'s: a caller runs, reads or names them through it, and builds none
-  itself. Each step is a role of one step, and `Run` runs them through `role.Run` as one role under
-  the run's parent ([mac.go](../../roles/client/macos/mac.go)).
+  `Failed` or `Skipped`. `ws unit` runs the units so, as steps
+  ([step.go](../../engine/core/step/step.go)).
 - A step is pure wherever it can be: it reads, a pure function turns what it read into `Change`
   values that apply themselves. Tests compare the plan's headlines (`step.Headline`).
 - A whole file that ws writes in the user's home is a `file.UserFile`, and a directory it writes
@@ -43,8 +40,8 @@ The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `rol
 - `--server NAME` is `ws client macos`'s persistent flag, bound once in `Command` and read through a
   pointer at run time.
 - `ws client macos remove NAME` changes nothing on the server: it takes the Mac's files of that
-  server away, then runs `mise -C /opt/ws bootstrap`, which takes its daemon and hosts away. It
-  takes no `--server`.
+  server away, then runs `MISE_LOCKED=1 mise -C /opt/ws bootstrap`, which takes its daemon and hosts
+  away. It takes no `--server`.
 - ws is cobra's: a command parses no flag or argument by hand and holds no usage text.
   `cli.Execute` runs the root, names the command in each error, and returns 2 for a usage error. A
   group of commands exists on the systems where it runs. `clientCmd`, over macos/cli's `Command`, is

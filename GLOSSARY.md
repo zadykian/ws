@@ -27,8 +27,8 @@ _Avoid_: user file, plain file
 
 **Identity's credential**:
 ws's age identity as the systemd credential `/etc/credstore.encrypted/ws-secrets`, which the
-host's key encrypts. It alone opens the secrets file, and a unit loads it by
-`LoadCredentialEncrypted=ws-secrets`.
+host's key encrypts. It alone opens the secrets file, and `ws unit` decrypts it by `systemd-creds
+decrypt`.
 _Avoid_: age key, key file
 
 **Kind**:
@@ -43,7 +43,7 @@ _Avoid_: field name
 
 **Pinned file**:
 A file of a release that ws fetches at the version a role pins, for the machine's architecture as
-dpkg names it. ws checks it against a SHA-256 that the role pins or the step finds as it plans. A
+dpkg names it. ws checks it against a SHA-256 that the role pins or the unit finds as it plans. A
 binary is the pinned file at its destination; a package and a tree take one as their source.
 _Avoid_: download, release asset, artifact
 
@@ -71,7 +71,7 @@ key.
 _Avoid_: picked key, git key
 
 **User's directory**:
-A directory below the Mac's home that a step writes under, such as `~/.local/bin`. A run makes it
+A directory below the Mac's home that a unit writes under, such as `~/.local/bin`. A run makes it
 where missing, and stops where the path is no directory. It leaves the mode of one that exists. Core's
 `file.UserDir` holds it.
 _Avoid_: folder
@@ -84,7 +84,7 @@ _Avoid_: dotfile
 
 **User's lines**: ws's lines in a user's file that holds other text too, such as `Include
 /etc/ws/ssh_config` at the top of `~/.ssh/config`. A run adds them once, at the top or the end, and
-keeps the old file as `PATH.TIME~`. At a link that lacks them, or lines out of place, the step warns
+keeps the old file as `PATH.TIME~`. At a link that lacks them, or lines out of place, the unit warns
 or stops. Core's `file.UserLines` hold them on the Mac, and `file.HomeLines`, read and written as
 root, on ws. _Avoid_: include line
 

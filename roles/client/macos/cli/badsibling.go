@@ -6,8 +6,7 @@ import (
 )
 
 // refuseBadSibling refuses where the file of a server other than name, beside mac, is refused.
-// Apply's and remove's steps read the other servers, and a file they skip loses its traces. The
-// networks step removes the resolver files of a server it cannot read.
+// remove's steps read the other servers, and a file they skip loses its traces.
 func refuseBadSibling(m effect.Machine, mac, name string) error {
 	names, err := values.Servers(m, mac)
 	if err != nil {

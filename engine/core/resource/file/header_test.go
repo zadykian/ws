@@ -24,7 +24,7 @@ func TestOursReadsTheFirstLine(t *testing.T) {
 	}{
 		{"the header", file.Header("#") + "\nkey = 1\n", true},
 		{"no newline", file.Header("//"), true},
-		{"an old Mac header", "# Written by ws client macos apply: its next run replaces changes made here.\n", false},
+		{"an old Mac header", "# Written by another tool: its next run replaces changes made here.\n", false},
 		{"the mark on line 2 alone", "#!/bin/sh\n" + file.Header("#") + "\n", false},
 		{"empty", "", false},
 	} {

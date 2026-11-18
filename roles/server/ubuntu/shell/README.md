@@ -58,25 +58,15 @@ unit says so. With the file and an empty `[env]`, the run removes `/etc/ws/env`,
 
 ## The secrets file
 
-`ws server ubuntu apply --secrets FILE` takes the secrets of the roles from a TOML file that age
-encrypts, in armor. `ws` decrypts it in its process with an X25519 identity. A run without
-`--secrets`, as CI's, has no secrets. [ws's secrets](../secrets/README.md) says the file's tables, its
-references and its values.
+The secrets of the roles are a TOML file that age encrypts, in armor: `/etc/ws/secrets.age`, which
+`ws server ubuntu secrets` edits. [ws's secrets](../secrets/README.md) says the file's tables, its
+references and its values. A machine without the file, as CI's, has no secrets.
 
 The identity stays in ws's credential, made by `ws server ubuntu secrets init`, or by `ssh -t NAME
 sudo ws server ubuntu secrets init` from the Mac ([ws's file](../secrets/README.md#wss-file)). `ws
-server ubuntu apply` reads it from the systemd credential `ws-secrets`, in `$CREDENTIALS_DIRECTORY`,
-for `--secrets` and `--check` alike. Without the credential it fails and names `LoadCredential`. It
-reads no standard input and no terminal. A unit that runs it has
-`LoadCredentialEncrypted=ws-secrets`. By hand, on a server, as root, with ws's file:
-
-```sh
-systemd-run --pty --wait -p LoadCredentialEncrypted=ws-secrets ws server ubuntu apply --secrets /etc/ws/secrets.age
-```
-
-systemd decrypts the credential for the unit alone, and drops it once the run ends. `ws unit`
-decrypts it through `systemd-creds` itself, once a command, and only where a unit reads the
-secrets.
+unit`, as root, decrypts it by `systemd-creds decrypt`, once a command, and only where a unit reads
+the secrets. It reads no standard input and no terminal. With the file and without the credential,
+such a unit fails.
 
 The roles read these tables, and ws refuses any other key:
 
@@ -85,5 +75,5 @@ The roles read these tables, and ws refuses any other key:
 - `[file]` and `[password]`: the ikeward profile's files and the `.p12`'s password
   ([The profile](../ikeward/README.md#the-profile)).
 
-No message, `--check` included, shows a value. Nothing plain reaches the disk but the
-files that the roles write.
+No message, a plan's or a dry run's included, shows a value. Nothing plain reaches the disk but
+the files that the roles write.

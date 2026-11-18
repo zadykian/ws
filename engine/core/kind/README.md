@@ -6,7 +6,7 @@ A unit is one resource of a kind, named `KIND/NAME`. A role names its units in i
 no Go. A kind names no role's word: a role's facts come in by its spec and its templates.
 
 A unit is a `step.Step`, built on the packages of `engine/core/resource`. A run of units plans,
-applies and plans again, as a role's steps do.
+applies and plans again, in the units' order.
 
 ## The specs
 
@@ -262,4 +262,5 @@ ws by `mise which ws`, the pinned binary. The write hook runs `ws unit verify` f
   inside mise's own read would call the hook again.
 - **Exit codes.** 0 done. 1 a failure: a spec or values that fail to load, a plan, an apply, a
   refused check, a SHA-256 or a skipped unit. `read` and `write` as a user other than root fail
-  too. 2 a usage error, such as a unit that no spec holds. ws's own lines go to stderr.
+  too. So do the server's on a system other than Ubuntu 26.04. 2 a usage error, such as a unit
+  that no spec holds. ws's own lines go to stderr.

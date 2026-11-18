@@ -123,12 +123,12 @@ func TestRemoveWithNoKnownHostsHasNoKeyToDrop(t *testing.T) {
 func TestRemoveRunsTheBootstrap(t *testing.T) {
 	p, _ := removeFixture()
 	status, _, stderr := runWs(p, "client", "macos", "remove", "lab")
-	if want := "run it again to take lab's daemon, routes and host off"; status != 1 || !strings.Contains(stderr, want) {
+	if want := "MISE_LOCKED=1 mise -C /opt/ws bootstrap: "; status != 1 || !strings.Contains(stderr, want) || !strings.Contains(stderr, "run it again to take lab's daemon, routes and host off") {
 		t.Errorf("status = %d, stderr = %q; want 1 and %q", status, stderr, want)
 	}
 	p, m := removeFixture()
-	m.Results["mise -C /opt/ws bootstrap"] = effecttest.Result{}
-	if status, _, stderr := runWs(p, "client", "macos", "remove", "lab"); status != 0 || !slices.Contains(m.Calls, "run mise -C /opt/ws bootstrap") {
+	m.Results["env MISE_LOCKED=1 mise -C /opt/ws bootstrap"] = effecttest.Result{}
+	if status, _, stderr := runWs(p, "client", "macos", "remove", "lab"); status != 0 || !slices.Contains(m.Calls, "run env MISE_LOCKED=1 mise -C /opt/ws bootstrap") {
 		t.Errorf("status = %d, stderr = %q, calls %q; want 0, the bootstrap run", status, stderr, m.Calls)
 	}
 }
@@ -177,7 +177,7 @@ func TestRemoveRefusesTheLastServerAndAWrongName(t *testing.T) {
 		arg, want string
 		last      bool
 	}{
-		"last server":  {"ws", "ws is the Mac's one server: apply needs one, so remove leaves it", true},
+		"last server":  {"ws", "ws is the Mac's one server: with none, the bootstrap prunes no daemon, so remove leaves it", true},
 		"unknown name": {"nope", "no server named nope in /etc/ws/servers, which holds lab and ws", false},
 		"bad name":     {"Bad_Name", "Bad_Name is not a server's name: " + values.NameForm, false},
 		"path":         {"../ws", "../ws is not a server's name: " + values.NameForm, false},
