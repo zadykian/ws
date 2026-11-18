@@ -1,0 +1,3 @@
+// Zed's own settings, which its UI writes. ws wrote this once, where none was; ws's
+// settings are in global_settings.json, and a key set here wins over them.
+{ "ssh_connections": [{{ range $i, $s := .Servers }}{{ if $i }}, {{ end }}{ "host": "{{ $s.Name }}" }{{ end }}] }
