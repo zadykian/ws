@@ -17,8 +17,8 @@ The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `rol
   no other step's state. A step that needs another done first names it in `Step.WaitsOn`
   ([step.go](../../engine/core/step/step.go)).
 - A run reports each step to a `step.Observer`, and each step ends with one event of `Done`,
-  `Failed` or `Skipped`. A run inside another passes the observer on, and names its role or stage
-  as `Options.Parent` ([step.go](../../engine/core/step/step.go)).
+  `Failed` or `Skipped`. `ws unit` runs the units so, as steps
+  ([step.go](../../engine/core/step/step.go)).
 - A step is pure wherever it can be: it reads, a pure function turns what it read into `Change`
   values that apply themselves. Tests compare the plan's headlines (`step.Headline`).
 - A whole file that ws writes in the user's home is a `file.UserFile`, and a directory it writes

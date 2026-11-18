@@ -17,8 +17,9 @@ What each document holds. How to write them is in the `writing` skill and [writi
   mean by each.
 - A page lives beside the code it describes, as that directory's `README.md`. A second page stands
   beside it, named for its subject, where the cap keeps two apart or no package fits:
-  `zed/projects.md`, `cable/router.md`, `runbook.md` of each side,
-  and `.github/workflows/rootless.md`, `mac-cld.md` and `mac-servers.md`. CI's page is
+  `zed/projects.md`, `cable/router.md`, `runbook.md` of each side, `file.md`, `state.md` and
+  `launchd.md` of `engine/core/kind`, and `.github/workflows/rootless.md`, `mac-cld.md`,
+  `mac-servers.md` and `release.md`. CI's page is
   `.github/workflows/README.md`, never `.github/README.md`, which GitHub would show in place of
   the root's.
 - A role's page is the `README.md` in its directory, `roles/server/ubuntu/NAME/`: what it sets up
