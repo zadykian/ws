@@ -1,23 +1,9 @@
 # devtools
 
 The `devtools` role installs Node, the .NET SDKs, gh, glow, the libraries headless Chromium needs,
-Go, gopls, Delve, roslyn-language-server, the SQL and Docker servers and rustup. It runs as Go
-steps in [roles/server/ubuntu/devtools](.): the repositories, the packages,
-Go, the servers and rustup, in this order.
-
-Node comes from NodeSource's apt repository, glow from Charm's and gh from GitHub CLI's. Each .NET
-SDK comes from Ubuntu's archive or, for those it lacks, Launchpad's dotnet/backports PPA. Each run
-fetches their keys again. A key goes in only where it holds a certificate at least, and the package
-pins the fingerprint of each. A subkey added to a certificate passes, and so does a key that drops a
-pinned certificate. A certificate the package does not pin fails the run, in the first armored block
-or in another, as apt reads them all. The package reads the key's packets itself, as `gpg` is not on
-every machine. A packet it cannot parse fails the run, and only keys of version 4 and 6 pass. A
-repository that is no longer needed loses its `.sources` file and its key, and so do the sources
-that the repositories' own instructions add.
-
-The packages wait on the repositories: `ws server ubuntu apply --check` says "after Devtools
-repositories" where a repository is still to come, as apt may not know the packages then. The
-libraries for Chromium go in without recommends.
+Go, gopls, Delve, roslyn-language-server, the SQL and Docker servers and rustup. The sources and
+the packages are mise's, in [mise.server.toml](mise.server.toml). The rest runs as Go steps in
+[roles/server/ubuntu/devtools](.): gh's telemetry and login, Go, the servers and rustup.
 
 Go goes in `/usr/local/go` from go.dev's tarball, checked against the SHA-256 go.dev lists for it.
 ws unpacks the tarball beside the target and moves the tree into place whole. The tree's
@@ -25,6 +11,22 @@ ws unpacks the tarball beside the target and moves the tree into place whole. Th
 version, and a current Go makes no fetch. A new `GoVersion` in `roles/server/ubuntu/devtools/pins.go`
 replaces the Go there, and the Go that builds gopls. rustup installs Rust's stable toolchain in the
 user's home. Once there, rustup updates itself, so ws leaves it alone.
+
+## The sources and the packages
+
+`mise bootstrap` writes each source as `/etc/apt/sources.list.d/mise-NAME.sources`, with its key,
+which it keeps only where its fingerprint is the one `mise.server.toml` pins. A key whose
+fingerprint differs fails the run. mise never removes a source or a package. A source that a
+vendor's own instructions added, such as NodeSource's setup script, leaves a file that conflicts
+with ours: remove it by hand.
+
+- Node comes from NodeSource's `node_24.x`, and the package follows that repository's latest.
+- glow comes from Charm's repository, and gh from GitHub CLI's. Its key file holds two
+  certificates, one that expired in 2026 and the one that signs: both are pinned.
+- Each .NET SDK is a package, and Launchpad's dotnet/backports PPA gives .NET 8.
+  The PPA's index for apt's amd64v3 variant lacks .NET 8. A machine that set
+  `APT::Architecture-Variants` fails at this package until the setting goes.
+- The libraries for Chromium are fixed packages, with apt's own recommends.
 
 ## The language servers
 
@@ -109,9 +111,9 @@ vanish after an edit.
 ## gh
 
 gh comes from GitHub CLI's apt repository, as the gh of Ubuntu's archive is one that GitHub's API
-has left behind. Its key file holds two certificates: one that expired in 2026, and the one that
-signs. The role pins both. `/etc/apt/apt.conf.d/52unattended-upgrades-github-cli` allows the
-repository's origin, so unattended-upgrades installs each release of gh within a day.
+has left behind. [files/52unattended-upgrades-github-cli](files/52unattended-upgrades-github-cli)
+goes to `/etc/apt/apt.conf.d/` and allows the repository's origin, so unattended-upgrades
+installs each release of gh within a day.
 
 A step after the packages logs gh in to github.com as the user, by `token.github` in the secrets file
 ([The secrets file](../shell/README.md#the-secrets-file)). It compares `gh auth token -h github.com` with the

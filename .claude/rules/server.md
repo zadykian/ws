@@ -94,10 +94,9 @@ steps, and each role's README says what it sets up.
   ([package.go](../../engine/core/resource/apt/package.go)).
 - A tree is unpacked beside its target and moved in whole, and its marker is its probe
   ([tree.go](../../engine/core/resource/fetch/tree.go)).
-- An apt repository's key goes in only where its entry pins the primary fingerprint of each
-  certificate in it, and it holds one at least
-  ([devtools' pins](../../roles/server/ubuntu/devtools/pins.go)). Docker's key goes in only with the
-  fingerprint that its mise source pins, so that a changed key fails the run
+- An apt repository's key goes in only with the fingerprint that its mise source pins, as
+  devtools' sources do for each certificate of a key file
+  ([devtools' sources](../../roles/server/ubuntu/devtools/mise.server.toml)). Docker's key too, so that a changed key fails the run
   ([docker's source](../../roles/server/ubuntu/docker/mise.server.toml)).
 
 ## signoz
