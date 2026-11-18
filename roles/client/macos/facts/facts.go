@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/roles/client/macos/ghostty"
 	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
@@ -17,6 +18,13 @@ type Mac struct {
 	User, Home string
 	// Servers holds each server of servers/ beside values.yml, by name.
 	Servers []Server
+	// Ghostty is what Ghostty's units need of the Mac.
+	Ghostty Ghostty
+}
+
+// Ghostty is the config that the line reading /etc/ws/ghostty goes in, which the Mac's files pick.
+type Ghostty struct {
+	Config string
 }
 
 // Server is one server's values, joined with the Mac's own keys.
@@ -25,8 +33,9 @@ type Server struct {
 	values.Conf
 }
 
-// Read reads the facts from the process's environment and the values' files: values.yml from
-// WS_VALUES or /etc/ws, and each server's file beside it. It runs the whole check of the values.
+// Read reads the facts from the process's environment, Ghostty's configs and the values' files:
+// values.yml from WS_VALUES or /etc/ws, and each server's file beside it. It runs the whole check
+// of the values.
 // So a bad value, a bad name or a clash between two servers fails every unit's read, and mise
 // stops before a change. A Mac with no server yet reads none.
 func Read(m effect.Machine, getenv func(string) string, pwd string) (Mac, error) {
@@ -34,6 +43,7 @@ func Read(m effect.Machine, getenv func(string) string, pwd string) (Mac, error)
 	if f.User == "" || !path.IsAbs(f.Home) {
 		return Mac{}, fmt.Errorf("USER %q and HOME %q name no user: run it from the user's own shell", f.User, f.Home)
 	}
+	f.Ghostty.Config = ghostty.ConfigPath(m, f.Home)
 	mac := values.Path(getenv, pwd)
 	names, err := values.Servers(m, mac)
 	if err != nil {

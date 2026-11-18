@@ -1,3 +1,4 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
 # The Mac's Ghostty settings, which ws client macos apply writes to /etc/ws/ghostty, which
 # Ghostty's config includes.
 # Ghostty reads them after the config's own, so each wins over the config's value, and

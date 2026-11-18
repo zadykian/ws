@@ -41,6 +41,9 @@ func TestReadListsEachServer(t *testing.T) {
 	if lab.Name != "lab" || lab.Slot != "1" || lab.Remote != "198.51.100.7" || ws.Name != "ws" {
 		t.Errorf("servers = %+v, want lab at slot 1, then ws", f.Servers)
 	}
+	if want := "/Users/v/Library/Application Support/com.mitchellh.ghostty/config.ghostty"; f.Ghostty.Config != want {
+		t.Errorf("Ghostty's config = %q, want %q, as none is there", f.Ghostty.Config, want)
+	}
 	if lab.IdentityPubKey != "~/.ssh/id.pub" {
 		t.Errorf("lab's IdentityPubKey = %q, want the Mac's key joined in", lab.IdentityPubKey)
 	}

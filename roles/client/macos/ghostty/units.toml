@@ -1,0 +1,15 @@
+# ws's settings for Ghostty, root's and readable by all, replaced whole. The source starts with
+# ws's mark, so that ours refuses a file there that ws did not write.
+[file.ghostty-conf]
+path = "/etc/ws/ghostty"
+source = "files/ws.ghostty"
+ours = true
+
+# The line that reads them, last in the config that Ghostty's menu opens (facts.Ghostty). Ghostty
+# reads a config-file after the file that names it, so ws's settings win over the config's own.
+# The old config stays as PATH.TIME~, and a config that is a link stops the unit.
+[file.ghostty-line]
+path = "{{ .Ghostty.Config }}"
+owner = "{{ .User }}"
+line = "config-file = ?/etc/ws/ghostty"
+line_at = "end"

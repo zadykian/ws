@@ -28,12 +28,16 @@ const (
 	macRoleFile = "mise.mac.toml"
 )
 
+// macFacts are the facts of a Mac with the servers given and Ghostty's default config.
+func macFacts(servers ...facts.Server) facts.Mac {
+	return facts.Mac{User: "v", Home: "/Users/v", Servers: servers, Ghostty: facts.Ghostty{
+		Config: "/Users/v/Library/Application Support/com.mitchellh.ghostty/config.ghostty"}}
+}
+
 // twoServerFacts are the facts of a Mac with two servers, so that a spec's loop over them shows.
 func twoServerFacts() facts.Mac {
-	return facts.Mac{User: "v", Home: "/Users/v", Servers: []facts.Server{
-		{Name: "lab", Conf: values.Conf{Slot: "1", PublicKey: "lab-key"}},
-		{Name: "ws", Conf: values.Conf{Slot: "0", PublicKey: "ws-key"}},
-	}}
+	return macFacts(facts.Server{Name: "lab", Conf: values.Conf{Slot: "1", PublicKey: "lab-key"}},
+		facts.Server{Name: "ws", Conf: values.Conf{Slot: "0", PublicKey: "ws-key"}})
 }
 
 // macSpecNames returns the names of the units that the Mac's specs give for f.
@@ -52,7 +56,7 @@ func macSpecNames(t *testing.T, f facts.Mac) []string {
 // lines do not follow the servers: a unit's spec loops over them within it.
 func TestMacSpecsMatchMiseLines(t *testing.T) {
 	want := macSpecNames(t, twoServerFacts())
-	if alone := macSpecNames(t, facts.Mac{User: "v", Home: "/Users/v"}); !slices.Equal(alone, want) {
+	if alone := macSpecNames(t, macFacts()); !slices.Equal(alone, want) {
 		t.Errorf("the units of a Mac with no server, %v, differ from those of two, %v", alone, want)
 	}
 	lines := clitest.MiseLines(t, macTreeRoot+"/"+macRoleFile)

@@ -51,28 +51,8 @@ func (g *Ghostty) casks() brew.Casks {
 	return brew.Casks{M: g.M, Out: g.Out, LookPath: g.LookPath, Failed: g.failed, App: "ghostty"}
 }
 
-// conf returns the config file that Ghostty's menu opens: the first of ghosttyConfigs that holds
-// anything, else the first that exists, else the first.
-func (g *Ghostty) conf() string {
-	configs := ghosttyConfigs(g.Home)
-	found := ""
-	for _, c := range configs {
-		info, err := g.M.Stat(c)
-		if err != nil || !info.Mode.IsRegular() {
-			continue
-		}
-		if text, err := g.M.ReadFile(c); err != nil || len(text) > 0 {
-			return c
-		}
-		if found == "" {
-			found = c
-		}
-	}
-	if found == "" {
-		return configs[0]
-	}
-	return found
-}
+// conf returns the config file that Ghostty's menu opens, as ConfigPath picks it.
+func (g *Ghostty) conf() string { return ConfigPath(g.M, g.Home) }
 
 // files plans /etc/ws/ghostty, from roles/client/macos/ghostty/files/ws.ghostty under the header, as
 // root's, and replaced whole. It plans the line that reads it at the end of Ghostty's config, once.
@@ -121,8 +101,11 @@ func (g *Ghostty) settings() []resource.Said {
 	return parts
 }
 
-// want is what /etc/ws/ghostty holds.
+// want is what /etc/ws/ghostty holds: Settings, under the header where it lacks one.
 func (g *Ghostty) want() []byte {
+	if file.Ours(g.Settings) {
+		return g.Settings
+	}
 	return append([]byte(file.Header("#")+"\n"), g.Settings...)
 }
 

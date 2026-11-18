@@ -7,6 +7,7 @@ The Mac's specs, each role's `units.toml` under `roles/client/macos`, are filled
 | --- | --- |
 | `.User`, `.Home` | The account that ws runs as and its home, from `USER` and `HOME`. |
 | `.Servers` | Each server of `servers/` beside `values.yml`, by name: its `.Name` and its values. |
+| `.Ghostty.Config` | The config that Ghostty's menu opens: the first of its four that holds anything, else the first there, else its default. |
 
 Each server's values are `values.Conf`'s fields, the Mac's own keys joined in, as
 [the values](../values/README.md) say. The read runs the whole check of the values, so that a bad
