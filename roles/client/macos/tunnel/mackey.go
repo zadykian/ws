@@ -8,7 +8,6 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/settings"
 	"github.com/zadykian/ws/roles/internal/etcws"
 )
@@ -16,7 +15,7 @@ import (
 // tunnelKeyFile is the Mac's WireGuard key, in a file only root reads. pubFile is its public half,
 // root's and readable by all, so that a read takes no sudo.
 const (
-	tunnelKeyFile = launchd.Dir + "/private.key"
+	tunnelKeyFile = Dir + "/private.key"
 	pubFile       = etcws.Dir + "/tunnel.pub"
 )
 
@@ -25,7 +24,7 @@ const (
 // with no root. The key stays root's at 0600, and /etc/ws/tunnel.pub, readable by all, holds the
 // public key for the commands that make the Mac a server's peer.
 func MakeKey(ctx context.Context, m effect.Machine, random io.Reader) (string, error) {
-	if err := settle(ctx, etcws.Top(m), file.Dir{M: m, Path: launchd.Dir, Mode: etcws.DirMode}); err != nil {
+	if err := settle(ctx, etcws.Top(m), file.Dir{M: m, Path: Dir, Mode: etcws.DirMode}); err != nil {
 		return "", err
 	}
 	public, err := settings.Key(ctx, m, random, tunnelKeyFile)

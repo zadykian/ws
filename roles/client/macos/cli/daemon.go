@@ -4,33 +4,33 @@ import (
 	"fmt"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
+	"github.com/zadykian/ws/roles/client/macos/tunnel"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/settings"
 	"github.com/zadykian/ws/roles/client/macos/values"
 )
 
 // daemonOf returns the daemon of --server, or the one installed: status runs under sudo, with no WS_VALUES.
-func daemonOf(m effect.Machine, server string) (launchd.Daemon, error) {
+func daemonOf(m effect.Machine, server string) (tunnel.Daemon, error) {
 	if server != "" {
 		if !values.IsName(server) {
-			return launchd.Daemon{}, fmt.Errorf("--server %s is not a server's name: %s", server, values.NameForm)
+			return tunnel.Daemon{}, fmt.Errorf("--server %s is not a server's name: %s", server, values.NameForm)
 		}
-		return launchd.For(server), nil
+		return tunnel.For(server), nil
 	}
-	names, err := launchd.Installed(m)
+	names, err := tunnel.Installed(m)
 	switch {
 	case err != nil:
-		return launchd.Daemon{}, err
+		return tunnel.Daemon{}, err
 	case len(names) == 0:
-		return launchd.Daemon{}, fmt.Errorf("no tunnel daemon in /Library/LaunchDaemons: run ws client macos apply")
+		return tunnel.Daemon{}, fmt.Errorf("no tunnel daemon in /Library/LaunchDaemons: run mise -C /opt/ws bootstrap")
 	case len(names) > 1:
-		return launchd.Daemon{}, fmt.Errorf("several tunnel daemons, %s: name one by --server", values.List(names))
+		return tunnel.Daemon{}, fmt.Errorf("several tunnel daemons, %s: name one by --server", values.List(names))
 	}
-	return launchd.For(names[0]), nil
+	return tunnel.For(names[0]), nil
 }
 
 // daemonPaths names the files of d. The key is the Mac's, whatever the server.
-func daemonPaths(d launchd.Daemon) settings.Paths {
-	return settings.Paths{Conf: d.Conf, Key: launchd.Dir + "/private.key", Routes: d.Routes, State: d.State, Log: d.Log,
-		Root: launchd.Dir}
+func daemonPaths(d tunnel.Daemon) settings.Paths {
+	return settings.Paths{Conf: d.Conf, Key: tunnel.Dir + "/private.key", Routes: d.Routes, State: d.State, Log: d.Log,
+		Root: tunnel.Dir}
 }

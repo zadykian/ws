@@ -14,12 +14,19 @@ import (
 // labelOf is the label of a server's daemon.
 func labelOf(name string) string { return "com.github.zadykian.ws-tunnel." + name }
 
-// keyedMac is a Mac with a server ws whose file has WS_PUBLIC_KEY, and root's listing of
-// /etc/ws/tunnel, which holds names.
+// keyedMac is a Mac with a server ws whose file has WS_PUBLIC_KEY, and a directory in
+// /etc/ws/tunnel for each of names.
 func keyedMac(names ...string) *effecttest.Machine {
 	m := effecttest.NewMachine()
 	writeConfs(m, "", values.Text("WS_SLOT", "0", "WS_PUBLIC_KEY", wgKey, "WS_REMOTE", "198.51.100.7"))
-	m.Results["ls -1 /etc/ws/tunnel"] = effecttest.Result{Out: []byte(strings.Join(append(names, "private.key"), "\n") + "\n")}
+	if len(names) > 0 {
+		m.Dirs["/etc/ws/tunnel"] = 0o755
+		m.Root["/etc/ws/tunnel"] = effect.Attrs{Mode: 0o755}
+	}
+	for _, name := range names {
+		m.Dirs["/etc/ws/tunnel/"+name] = 0o755
+		m.Root["/etc/ws/tunnel/"+name] = effect.Attrs{Mode: 0o755}
+	}
 	return m
 }
 
@@ -67,7 +74,6 @@ func TestTunnelConfPrunesAGoneServer(t *testing.T) {
 		m.Results["launchctl print system/"+labelOf(name)] = effecttest.Result{}
 	}
 	m.Files["/var/log/ws-tunnel.lab.log"] = []byte("x")
-	m.Root["/etc/ws/tunnel/lab"] = effect.Attrs{Mode: 0o755}
 	m.Results["launchctl bootout system/"+labelOf("lab")] = effecttest.Result{}
 	// The bootout waits until print no longer finds lab, before its files go.
 	gone := effecttest.Result{Err: exec.Command("sh", "-c", "exit 113").Run()}
@@ -102,8 +108,7 @@ func TestTunnelConfPrunesAGoneServer(t *testing.T) {
 func TestTunnelConfPrunesNothingWithNoServer(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/etc/ws/values.yml"] = []byte("")
-	m.Root["/etc/ws/tunnel"] = effect.Attrs{Mode: 0o755}
-	m.Results["ls -1 /etc/ws/tunnel"] = effecttest.Result{Out: []byte("ws\n")}
+	m.Dirs["/etc/ws/tunnel"], m.Dirs["/etc/ws/tunnel/ws"] = 0o755, 0o755
 	m.Results["launchctl print system/"+labelOf("ws")] = effecttest.Result{}
 	if status, _, stderr := partEnv(m)("tunnel", "conf", "--check"); status != 0 {
 		t.Errorf("tunnel conf --check: status = %d, stderr = %q; want 0, a listing with no server is not this Mac's", status, stderr)

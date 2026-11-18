@@ -7,8 +7,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 	"github.com/zadykian/ws/roles/client/macos/networks"
+	"github.com/zadykian/ws/roles/client/macos/tunnel"
 )
 
 func TestRoutesPutsTheNetworksInTheFileOfTheirSet(t *testing.T) {
@@ -45,7 +45,7 @@ func TestRoutesAloneRefusesAMissingRoutesDirUnderCheck(t *testing.T) {
 func installDaemons(m *effecttest.Machine, names ...string) {
 	m.Dirs["/Library/LaunchDaemons"] = 0o755
 	for _, n := range names {
-		m.Files["/Library/LaunchDaemons/"+launchd.For(n).Label+".plist"] = []byte("x")
+		m.Files["/Library/LaunchDaemons/"+tunnel.For(n).Label+".plist"] = []byte("x")
 	}
 }
 
@@ -55,7 +55,7 @@ func TestRoutesSignalsEachLoadedDaemonAlone(t *testing.T) {
 	installDaemons(m, "lab", "ws")
 	m.Results["launchctl print system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{}
 	p, err := (&networks.Routes{Server: "ws", Set: "lab", Networks: []string{"10.1.0.0/24"}, M: m}).Plan(context.Background())
-	if err != nil || len(p.Changes) != 2 || p.Changes[1].String() != "would run launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.ws" {
+	if err != nil || len(p.Changes) != 2 || p.Changes[1].String() != "send SIGHUP to system/com.github.zadykian.ws-tunnel.ws" {
 		t.Errorf("Plan = %v, %v; want the file and a signal to ws alone", p, err)
 	}
 }

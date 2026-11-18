@@ -17,7 +17,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 	"github.com/zadykian/ws/roles/client/macos/tunnel"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/settings"
@@ -97,7 +96,7 @@ func newTunnelKeyCmd(p enginecli.Env) *cobra.Command {
 
 // tunnelRun keeps the tunnel up as root: the device on a utun, and the daemon's loop, which logs to
 // stdout, launchd's log file. SIGHUP reads the settings again, and SIGTERM stops.
-func tunnelRun(ctx context.Context, srv launchd.Daemon, stdout io.Writer) error {
+func tunnelRun(ctx context.Context, srv tunnel.Daemon, stdout io.Writer) error {
 	// Subscribe before anything else: launchd gives each signal its default action, which ends the
 	// daemon on a SIGHUP.
 	sigs := make(chan os.Signal, 4)

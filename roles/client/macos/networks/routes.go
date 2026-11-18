@@ -12,8 +12,8 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
-	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
+	"github.com/zadykian/ws/roles/client/macos/tunnel"
+	tunnelplan "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 	"github.com/zadykian/ws/roles/internal/slot"
 )
 
@@ -62,7 +62,7 @@ func (r *Routes) Apply(ctx context.Context, p step.Plan) error {
 // file's owner or mode alone sends the signal too.
 func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 	networks := r.Networks
-	dir := launchd.For(r.Server).Routes
+	dir := tunnel.For(r.Server).Routes
 	routesFile := dir + "/" + r.Set
 	if _, err := r.M.RootAttrs(dir); errors.Is(err, fs.ErrNotExist) {
 		switch {
@@ -87,7 +87,7 @@ func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 	if err != nil || len(cs) == 0 || r.Check || r.Watched {
 		return cs, err
 	}
-	reread, err := launchd.Reread(ctx, r.M, r.Out)
+	reread, err := tunnel.Reread(ctx, r.M, r.Out)
 	if err != nil {
 		return nil, err
 	}
@@ -109,8 +109,8 @@ func (r *Routes) validate() error {
 		if p.Overlaps(slot.Range) {
 			return fmt.Errorf("%s: %s overlaps the tunnels' %s", r.Set, n, slot.Range)
 		}
-		if p.Overlaps(tunnel.CableNet) {
-			return fmt.Errorf("%s: %s overlaps the cable's %s", r.Set, n, tunnel.CableNet)
+		if p.Overlaps(tunnelplan.CableNet) {
+			return fmt.Errorf("%s: %s overlaps the cable's %s", r.Set, n, tunnelplan.CableNet)
 		}
 	}
 	return nil

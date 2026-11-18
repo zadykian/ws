@@ -47,7 +47,7 @@ func ReadSettings(ctx context.Context, m effect.Machine, p Paths) (Settings, err
 	s.Warnings = append(s.Warnings, apart...)
 	text, err := m.ReadFile(p.Conf)
 	if err != nil {
-		return s, fmt.Errorf("cannot read %s: run ws client macos apply", p.Conf)
+		return s, fmt.Errorf("cannot read %s: run mise -C /opt/ws bootstrap", p.Conf)
 	}
 	s.Conf, err = tunnel.ParseConf(string(text))
 	return s, err
@@ -69,7 +69,7 @@ func readRoutes(ctx context.Context, m effect.Machine, dir string) ([]netip.Pref
 func ReadKey(m effect.Machine, file string) (string, error) {
 	text, err := m.ReadFile(file)
 	if err != nil {
-		return "", fmt.Errorf("cannot read %s: run ws client macos apply", file)
+		return "", fmt.Errorf("cannot read %s: run mise -C /opt/ws bootstrap", file)
 	}
 	key := strings.TrimSpace(string(text))
 	if _, err := wgkey.Decode(key); err != nil {
