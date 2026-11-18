@@ -5,7 +5,7 @@
 #   .tools/serve-build CHECKOUT DIR [OS ARCH]
 #   DIR/serve-releases DIR 8765 [PORT_FILE] &
 #
-# The tree pins the last release, which may lack what the tree's specs need. So this builds ws
+# The tree pins a release, which may lack what the tree's specs need. So this builds ws
 # for OS and ARCH, linux amd64 by default, as the version that CHECKOUT/mise.toml pins. ws goes
 # into DIR/download/vVERSION/, and serve-releases into DIR, both by .tools/build. Then it writes
 # CHECKOUT/mise.local.toml, ws's whole entry with its URL on port 8765. CHECKOUT/mise.local.lock

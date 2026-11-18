@@ -6,10 +6,10 @@
 # Versions come from the pin and its URLs alone, never from mise's versions host.
 use_versions_host = false
 
-# The last release of ws: mise.lock holds the SHA-256 of each platform's file, which mise checks as
+# A release of ws: mise.lock holds the SHA-256 of each platform's file, which mise checks as
 # it installs. A bump moves the version here and the lock together.
 [tools."http:ws"]
-version = "0.12.0"
+version = "0.13.0-rc.1"
 bin = "ws"
 
 [tools."http:ws".platforms]

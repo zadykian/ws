@@ -236,8 +236,15 @@ bootstrap() {
         checkout
         /usr/local/bin/mise bootstrap --from "$repo?ref=$tag" --from-dir /opt/ws </dev/null
     fi
-    # While the variable is set, mise counts the tree as trusted and writes no trust.
-    (cd /opt/ws && unset MISE_TRUSTED_CONFIG_PATHS && /usr/local/bin/mise trust --all </dev/null)
+    # While the variable is set, mise counts the tree as trusted and writes no trust. Each config
+    # is named, as mise trust --all never ends where a role holds an env's file and the root none.
+    (
+        cd /opt/ws || exit 1
+        unset MISE_TRUSTED_CONFIG_PATHS
+        for config in mise.toml mise.*.toml mise/conf.d/*/mise.*.toml; do
+            [ ! -e "$config" ] || /usr/local/bin/mise trust "$config" </dev/null || exit 1
+        done
+    )
 }
 
 main() {

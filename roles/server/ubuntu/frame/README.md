@@ -80,7 +80,7 @@ means running `install.sh` again.
 
 ## The pin
 
-`mise.toml` pins the last release of ws, which `mise.lock` checks by SHA-256 for `linux-x64`,
+`mise.toml` pins a release of ws, which `mise.lock` checks by SHA-256 for `linux-x64`,
 `linux-arm64` and `macos-arm64`. A spec that needs new Go lands after the release that holds it.
 [`TestPinLocksEachTarget`](../../../../cmd/pin_test.go) holds the version, the platforms and their
 URLs together in both files. `mise.local.toml` and `mise.local.lock`, which git ignores, pin a
@@ -88,8 +88,8 @@ build of the tree in their place. [`.tools/serve-build`](../../../../.tools/serv
 them, beside a build of ws and of serve-releases, which serves it on loopback. CI's `playbook` job
 and a trial of a role run so, as a spec may need what the release lacks.
 
-The pin, v0.12.0, holds no `ws unit`: a machine's run fails at the plugin's read until a release
-holds it.
+The pin moves in a pull request of its own, after the release it names
+([Cutting a release](../../../../.github/workflows/release.md#cutting-a-release)).
 
 ## ws at a fixed path
 

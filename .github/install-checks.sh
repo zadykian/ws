@@ -74,12 +74,16 @@ cp "$good/mise-v$version-$asset" "$bad/"
 printf x >>"$bad/mise-v$version-$asset"
 echo v0.2.0 >"$tmp/serve/latest"
 
-# The release's tree: a config with an entry for each env's file, and a directory for them.
+# The release's tree: a config with an entry for each env's file, and a directory for them. The
+# account's file sits in a fragment, as a role's does, and the root holds none. On such a tree
+# mise trust --all never ends, so the case of the latest release proves install.sh's trust.
 repo=$tmp/repo
-mkdir "$repo"
+mkdir -p "$repo/mise/conf.d/part"
 echo '# the install job'"'"'s tree' >"$repo/mise.toml"
 for env in server booted account; do
-    cat >"$repo/mise.$env.toml" <<TOML
+    config=$repo/mise.$env.toml
+    [ "$env" != account ] || config=$repo/mise/conf.d/part/mise.$env.toml
+    cat >"$config" <<TOML
 [bootstrap.directories."/etc/ws-install-check"]
 mode = "0755"
 
