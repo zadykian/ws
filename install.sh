@@ -223,10 +223,12 @@ checkout() {
 # mise calls inherit it, and for the runs by hand after, by mise trust. mise reads no stdin, as
 # the piped script is on it. mise puts the tools under the data directory, which is root's own
 # /root/.local/share/mise by default: /usr/local/share/mise lets the account run them.
+# MISE_LOCKED installs a tool only as the tree's lock holds it, by its URL and checksum, as CI's
+# runs and the runbook's do: bootstrap has no --locked.
 bootstrap() {
     guard
-    MISE_TRUSTED_CONFIG_PATHS=/opt/ws MISE_DATA_DIR=/usr/local/share/mise
-    export MISE_TRUSTED_CONFIG_PATHS MISE_DATA_DIR
+    MISE_TRUSTED_CONFIG_PATHS=/opt/ws MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1
+    export MISE_TRUSTED_CONFIG_PATHS MISE_DATA_DIR MISE_LOCKED
     if [ "${WS_IN_PLACE:-}" = 1 ]; then
         [ -f /opt/ws/mise.toml ] || die "WS_IN_PLACE is set, and /opt/ws holds no mise.toml"
         /usr/local/bin/mise -C /opt/ws bootstrap </dev/null
