@@ -1,6 +1,7 @@
 package kind
 
 import (
+	"slices"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -31,6 +32,27 @@ func TestFactsReadTheMachine(t *testing.T) {
 	got, err := render(t.Context(), Env{M: m}, dir, "t.tmpl")
 	if want := "4096 2 40960 1001 0 two three [] 10"; err != nil || string(got) != want {
 		t.Errorf("render = %q, %v; want %q", got, err, want)
+	}
+}
+
+func TestRootFileReadsAsRoot(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/etc/k/a.pub"] = []byte("  key\n")
+	dir := fstest.MapFS{"t.tmpl": {Data: []byte(`[{{root_file "/etc/k/a.pub"}}]`)}}
+	got, err := render(t.Context(), Env{M: m}, dir, "t.tmpl")
+	if err != nil || string(got) != "[key]" {
+		t.Errorf("render = %q, %v; want [key]", got, err)
+	}
+	if !slices.Contains(m.Calls, "read root /etc/k/a.pub") {
+		t.Errorf("calls %q, want the file read as root", m.Calls)
+	}
+}
+
+func TestRootFileMissingIsEmpty(t *testing.T) {
+	dir := fstest.MapFS{"t.tmpl": {Data: []byte(`[{{with root_file "/etc/k/b.pub"}}x{{end}}]`)}}
+	got, err := render(t.Context(), Env{M: effecttest.NewMachine()}, dir, "t.tmpl")
+	if err != nil || string(got) != "[]" {
+		t.Errorf("render = %q, %v; want []", got, err)
 	}
 }
 
