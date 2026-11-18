@@ -54,7 +54,7 @@ The envs follow `WS_USER` alone, so a unit's presence in a spec does too. A unit
 has no env. A unit that another value turns off stays in the spec, off by its `when`. Else its
 line would name a unit that `ws unit read` refuses.
 
-[`TestSpecsMatchMiseLines`](../cli/specs_test.go) loads the specs for root and for an account. It
+[`TestSpecsMatchMiseLines`](../../cli/specs_test.go) loads the specs for root and for an account. It
 fails on a line missing or extra, and prints the line to paste. It fails on a unit for root alone.
 `TestUnitsFollowTheUserAlone` turns each other value over and fails where the units change.
 `TestEachRoleIsLinked` fails on a role without its link, or a mise file that no env loads.

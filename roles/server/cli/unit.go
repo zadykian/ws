@@ -16,8 +16,8 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/core/effect/units"
 	"github.com/zadykian/ws/engine/core/kind"
-	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/secrets"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 // osRelease names the machine's system, which the server's units are written for.

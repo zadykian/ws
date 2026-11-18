@@ -6,7 +6,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 func TestNetworkdCheck(t *testing.T) {

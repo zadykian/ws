@@ -150,4 +150,4 @@ key of another target's ways: `WS_LAN` on a cloud VM, `WS_REMOTE` on a VM on the
 ways. A new machine offers another host key, so run `ssh-keygen -R NAME` first, NAME the server's
 name. From a cloud VM, remove `WS_SECURITY_OUTBOUND: false` from ws's `values.yml` too, with
 `sudo ws server ubuntu values set WS_SECURITY_OUTBOUND ''`. Then run the bootstrap on ws, as
-[its runbook](../../../server/ubuntu/runbook.md) says, and `MISE_LOCKED=1 mise -C /opt/ws bootstrap` again.
+[its runbook](../../../server/runbook.md) says, and `MISE_LOCKED=1 mise -C /opt/ws bootstrap` again.

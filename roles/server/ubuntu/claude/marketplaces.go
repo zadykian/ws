@@ -12,7 +12,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/account"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 // Marketplaces adds claude's plugin marketplaces for the user. claude plugin marketplace add takes

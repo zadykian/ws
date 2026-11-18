@@ -9,7 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/roles/internal/etcws"
-	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
+	"github.com/zadykian/ws/roles/server/secrets"
 )
 
 // gitFiles is the template of the tokens' include.

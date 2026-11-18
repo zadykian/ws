@@ -40,8 +40,8 @@ WS_IKEWARD_FORWARD_FROM: [10.99.0.2]       # the WireGuard peers that reach the 
 ```
 
 Put the two files in [the secrets file](../shell/README.md#the-secrets-file), whole. Add the `.p12`'s
-password, left out where it has none ([ws's secrets](../secrets/README.md#editing)). Run the
-bootstrap ([The run](../secrets/README.md#the-run)). Then remove the plain files, which hold the
+password, left out where it has none ([ws's secrets](../../secrets/README.md#editing)). Run the
+bootstrap ([The run](../../secrets/README.md#the-run)). Then remove the plain files, which hold the
 client's key:
 
 ```sh

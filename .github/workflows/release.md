@@ -103,7 +103,7 @@ curl -fsSL --proto '=https' --tlsv1.2 \
 
 The latest release's `install.sh` may install ws's binary alone, with no mise. So while a
 pre-release is tried, this line takes the place of each that runs it. Those are step 3 of
-[the server's runbook](../../roles/server/ubuntu/runbook.md), and step 2 of
+[the server's runbook](../../roles/server/runbook.md), and step 2 of
 [ws on ws](../../roles/client/macos/runbook.md#ws-on-ws) on the Mac. The Mac's own binary and
 clone take the pre-release's tag in place of the latest release's.
 

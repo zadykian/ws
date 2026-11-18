@@ -32,10 +32,10 @@ What each document holds. How to write them is in the `writing` skill and [writi
   [Its ssh](../../roles/client/macos/ssh/README.md) is its hosts, and [its cld](../../roles/client/macos/cld/README.md)
   cld's unit. [Its values](../../roles/client/macos/values/README.md) is
   the Mac's values files, [the tunnel's](../../roles/client/macos/tunnel/README.md) the daemons' rules, and [ghostty](../../roles/client/macos/ghostty/README.md) its Ghostty
-  and what cld does there, [zed](../../roles/client/macos/zed/README.md) its Zed. [The secrets](../../roles/server/ubuntu/secrets/README.md)
+  and what cld does there, [zed](../../roles/client/macos/zed/README.md) its Zed. [The secrets](../../roles/server/secrets/README.md)
   is the secrets file. [The router](../../roles/server/ubuntu/cable/router.md)
   is the router's steps, taken once by hand. [The Mac's runbook](../../roles/client/macos/runbook.md)
-  and [the server's](../../roles/server/ubuntu/runbook.md) are each side's steps by hand.
+  and [the server's](../../roles/server/runbook.md) are each side's steps by hand.
 - [The kind package's README](../../engine/core/kind/README.md) says what a unit and a kind are:
   the spec, each kind's fields, and where the specs sit.
 - [release.md](../../.github/workflows/release.md), beside `release.yml`, says how to install ws,

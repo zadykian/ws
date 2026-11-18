@@ -8,7 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/kind"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 // The account of docker's tests, and the files that the units of docker write for root and for it.

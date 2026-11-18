@@ -104,10 +104,10 @@ a command that needs root. A user outside sudoers cannot go on.
 2. Run `install.sh` by the three lines of [Install](../../../.github/workflows/release.md#install),
    `set -o pipefail` among them. The bootstrap it runs puts ws in `/usr/local/bin`. Check it with
    `ws version`.
-3. Make the secrets, as [the server's runbook](../../server/ubuntu/runbook.md) says, with `ssh -t NAME
+3. Make the secrets, as [the server's runbook](../../server/runbook.md) says, with `ssh -t NAME
    sudo ws server ubuntu secrets ...`.
 4. Run the server's bootstrap again over `ssh -t NAME`, in the form that
-   [the server's runbook](../../server/ubuntu/runbook.md) gives. A
+   [the server's runbook](../../server/runbook.md) gives. A
    first run takes 20 to 40 minutes. Use `tmux` there: a dropped ssh ends the run.
 
 ## claude
@@ -123,7 +123,7 @@ permission ([Signing](../../server/ubuntu/git/README.md#signing)).
 ## The tunnel
 
 1. Copy the Mac's `/etc/ws/tunnel.pub` to ws's `/etc/wireguard/mac.pub`, as root, and run the
-   server's bootstrap there, as [its runbook](../../server/ubuntu/runbook.md) says
+   server's bootstrap there, as [its runbook](../../server/runbook.md) says
    ([The tunnel](../../server/ubuntu/tunnel/README.md#the-tunnel)).
 2. Put wg0's public key, which that page names, in `WS_PUBLIC_KEY` of the server's `values.yml`.
 3. Run `MISE_LOCKED=1 mise -C /opt/ws bootstrap` again, and allow ws-tunnel in the Background.
@@ -137,7 +137,7 @@ Skip it on a cloud VM and a VM on the Mac.
 1. Dock the Mac. At ws, list the wired ports with their carrier: `ip -br link` and `ip -br addr`.
 2. Set `WS_CABLE_PORT` at ws, and `WS_CABLE_SERVICE` on the Mac. `networksetup
    -listallnetworkservices` lists the services, and the cable's has a `169.254` address.
-3. Run the server's bootstrap at ws, as [its runbook](../../server/ubuntu/runbook.md) says, then
+3. Run the server's bootstrap at ws, as [its runbook](../../server/runbook.md) says, then
    `MISE_LOCKED=1 mise -C /opt/ws bootstrap`.
 4. Ping `10.77.0.1`. The Mac's end is `10.77.0.2` ([The cable](README.md#the-cable)).
 

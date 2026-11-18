@@ -10,7 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/core/kind"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 // loadUnits builds a machine with the account's home, its ids and the architecture, and loads the role's

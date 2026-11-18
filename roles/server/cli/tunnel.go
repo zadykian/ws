@@ -10,7 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/roles/server/ubuntu/tunnel"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 // newTunnelCmd returns ws server ubuntu tunnel: the commands that the tunnel role's units run, on

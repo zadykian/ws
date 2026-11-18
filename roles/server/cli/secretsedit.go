@@ -10,7 +10,7 @@ import (
 	"golang.org/x/term"
 
 	enginecli "github.com/zadykian/ws/engine/cli"
-	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
+	"github.com/zadykian/ws/roles/server/secrets"
 )
 
 // openStore returns the store that a command edits, or why the command doesn't run.

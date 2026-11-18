@@ -40,7 +40,7 @@ func TestIkewardSpecOffWithoutProfile(t *testing.T) {
 }
 
 func TestIkewardSysctlAbsentWithoutPeers(t *testing.T) {
-	want, err := os.ReadFile("../ikeward/99-ikeward.conf")
+	want, err := os.ReadFile("../ubuntu/ikeward/99-ikeward.conf")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -13,8 +13,8 @@ import (
 	"github.com/zadykian/ws/engine/core/kind"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/secrets"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 const (

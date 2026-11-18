@@ -12,7 +12,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/roles/server/ubuntu/claude/internal/cld"
 	"github.com/zadykian/ws/roles/server/ubuntu/claude/internal/settings"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 // A Procedure is a procedure of the role's that no kind holds. It gives the parts that a command of

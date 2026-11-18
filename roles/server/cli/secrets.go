@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	enginecli "github.com/zadykian/ws/engine/cli"
-	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
+	"github.com/zadykian/ws/roles/server/secrets"
 )
 
 // newSecretsCmd returns ws server ubuntu secrets, which keeps ws's secrets file, with its

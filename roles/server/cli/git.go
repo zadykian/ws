@@ -14,9 +14,9 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/roles/server/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/git"
-	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 // newGitCmd returns ws server ubuntu git: the procedures that the git role's units run.

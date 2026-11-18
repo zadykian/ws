@@ -10,8 +10,8 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/core/kind"
-	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/secrets"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 func TestUnitValuesConfineToHome(t *testing.T) {

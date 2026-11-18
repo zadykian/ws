@@ -9,7 +9,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 // terminalPath is the wrapper, which the settings name as the terminal's program.

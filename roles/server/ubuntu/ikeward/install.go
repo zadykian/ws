@@ -10,8 +10,8 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/systemd"
-	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/secrets"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 // binary is where the role's binary unit puts ikeward, and where its services, the routing's and

@@ -41,7 +41,7 @@ prints it. The user can't run them, and the user's `systemd-creds decrypt` of th
 fails: a container's systemd makes none. `ws unit write --dry-run` of `/etc/ws/env`, as root,
 decrypts it, reads the file, and prints no value.
 `unset` drops the entry, and a second `init` keeps both files ([ws's
-file](../../roles/server/ubuntu/secrets/README.md#wss-file)).
+file](../../roles/server/secrets/README.md#wss-file)).
 
 The runner has Azure's routes, so only CI proves them. `.github/actionlint.yaml` names the label
 `ubuntu-26.04`, as actionlint 1.7.12 doesn't know it yet. It goes once a release lists the label.

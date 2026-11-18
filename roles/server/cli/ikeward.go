@@ -11,9 +11,9 @@ import (
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/roles/server/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/ikeward"
-	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 // newIkewardCmd returns ws server ubuntu ikeward: the commands that the ikeward role's units run.

@@ -11,7 +11,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/kind"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 // The swap and vm.swappiness are the kernel's, which a container shares with its host, so base's
@@ -43,7 +43,7 @@ func bootedMachine() *effecttest.Machine {
 }
 
 func TestBaseUpgradesFileIsTodays(t *testing.T) {
-	want, err := os.ReadFile("../base/files/20auto-upgrades")
+	want, err := os.ReadFile("../ubuntu/base/files/20auto-upgrades")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +89,7 @@ func TestBaseSwapOffInAContainer(t *testing.T) {
 // The swap's plan reads the disk of the machine that runs it, never the fake's. So the test reads
 // the spec as the values fill it, and state.swap's own test shows that size_mib makes the size.
 func TestBaseSwapTakesTheValuesSize(t *testing.T) {
-	text, err := os.ReadFile("../base/units.toml")
+	text, err := os.ReadFile("../ubuntu/base/units.toml")
 	if err != nil {
 		t.Fatal(err)
 	}

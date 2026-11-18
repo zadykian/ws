@@ -10,7 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/roles/server/ubuntu/cable/internal/netplan"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 // Check refuses what the cable's file must not act on: a port that is an uplink, and, on a booted

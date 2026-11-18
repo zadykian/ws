@@ -19,22 +19,22 @@ steps, and each role's README says what it sets up.
 - A role holds its spec, `units.toml`, with its templates, and its mise files by env:
   `mise.server.toml` for every server, `mise.booted.toml` where systemd is booted, and
   `mise.account.toml` where `WS_USER` is not root. The link `mise/conf.d/server-NAME` loads them.
-  A role holds no plain `mise.toml`, which the Mac would load ([specs_test.go](../../roles/server/ubuntu/cli/specs_test.go)).
+  A role holds no plain `mise.toml`, which the Mac would load ([specs_test.go](../../roles/server/cli/specs_test.go)).
 - Each unit of a spec is a line `"ws:KIND/NAME" = "in-sync"` of its role's `mise.server.toml`, or
   of its `mise.account.toml` where the spec gives it for an account alone, never of
   `mise.booted.toml`. `TestSpecsMatchMiseLines` fails on a line missing or extra
-  ([specs_test.go](../../roles/server/ubuntu/cli/specs_test.go)).
+  ([specs_test.go](../../roles/server/cli/specs_test.go)).
 - A path is one role's: where two roles' mise files declare it, mise keeps the later fragment's by
   name and drops the other with no error.
 - The server's values are one struct, `values.Values`, parsed once from the machine's file with
   unknown keys refused. A role's units read it and add no key without a commit of their own
-  ([values.go](../../roles/server/ubuntu/values/values.go)).
+  ([values.go](../../roles/server/values/values.go)).
 - The secrets are one struct, `secrets.Secrets`, beside the values. ws decrypts it from age's armor
   in its process, as TOML with a table per kind. Unknown keys are refused, references expanded,
   and no error or output shows a value. A secret file's template alone reads it
-  ([file.md](../../engine/core/kind/file.md), [secrets.go](../../roles/server/ubuntu/secrets/secrets.go), [ws's secrets](../../roles/server/ubuntu/secrets/README.md)).
+  ([file.md](../../engine/core/kind/file.md), [secrets.go](../../roles/server/secrets/secrets.go), [ws's secrets](../../roles/server/secrets/README.md)).
 - `secrets.Store` alone reads and writes ws's secrets file and makes its credential; cmd keeps
-  the commands and the root check ([store.go](../../roles/server/ubuntu/secrets/store.go)).
+  the commands and the root check ([store.go](../../roles/server/secrets/store.go)).
 - The roles set the machine up for `WS_USER`, `zadykian` by default, in `WS_HOME`. A unit run as
   `WS_USER` sets `HOME` and starts in it: root needs no sudo, a container has none, and `HOME` would
   otherwise be the caller's ([claude's units](../../roles/server/ubuntu/claude/units.toml)).

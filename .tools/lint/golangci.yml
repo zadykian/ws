@@ -27,6 +27,7 @@ linters:
             - "!${base-path}/cmd/**"
             - "!${base-path}/engine/cli/**"
             - "!${base-path}/roles/*/*/cli/**"
+            - "!${base-path}/roles/*/cli/**"
             - "!${base-path}/.tools/**"
           deny:
             - pkg: github.com/spf13/cobra
@@ -55,6 +56,7 @@ linters:
           files:
             - "${base-path}/roles/**"
             - "!${base-path}/roles/*/*/cli/**"
+            - "!${base-path}/roles/*/cli/**"
           deny:
             - pkg: github.com/zadykian/ws/cmd
               desc: a role reaches no command, as cmd composes the roles
@@ -64,13 +66,14 @@ linters:
               desc: a role builds no command, as its side's cli package does
             - pkg: github.com/zadykian/ws/roles/client/macos/cli
               desc: a role reaches no command, as its side's cli package wires the role
-            - pkg: github.com/zadykian/ws/roles/server/ubuntu/cli
+            - pkg: github.com/zadykian/ws/roles/server/cli
               desc: a role reaches no command, as its side's cli package wires the role
         roleimports:
           list-mode: lax
           files:
             - "${base-path}/roles/**"
             - "!${base-path}/roles/*/*/cli/**"
+            - "!${base-path}/roles/*/cli/**"
           allow:
             - github.com/zadykian/ws/engine/core/
             - github.com/zadykian/ws/roles/
@@ -106,7 +109,7 @@ linters:
             - github.com/zadykian/ws/engine/cli
             - github.com/zadykian/ws/engine/core/effect/local$
             - github.com/zadykian/ws/roles/client/macos/cli
-            - github.com/zadykian/ws/roles/server/ubuntu/cli
+            - github.com/zadykian/ws/roles/server/cli
           deny:
             - pkg: github.com/zadykian/ws/
               desc: cmd composes the cli packages, and effect/local's machine at the root

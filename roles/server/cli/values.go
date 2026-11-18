@@ -13,7 +13,7 @@ import (
 	"github.com/zadykian/ws/engine"
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 // newValuesCmd returns ws server ubuntu values, which edits the machine's values.

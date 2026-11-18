@@ -51,7 +51,7 @@ reboot                                                  # MOK manager: Enroll MO
 ```
 
 Then run the bootstrap again, as
-[the runbook](../runbook.md) writes it, or `modprobe nct6687 && systemctl restart ws-fans`.
+[the runbook](../../runbook.md) writes it, or `modprobe nct6687 && systemctl restart ws-fans`.
 
 ## ws-fans
 
@@ -87,7 +87,7 @@ curves.
 
 ## The defaults
 
-`roles/server/ubuntu/values/default_fans.go` sets these sensors:
+`roles/server/values/default_fans.go` sets these sensors:
 
 - `cpu`: coretemp's `Package id 0`, the CPU package's temperature;
 - `gpu`: GPU 0's temperature;

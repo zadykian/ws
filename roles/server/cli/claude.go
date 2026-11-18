@@ -11,7 +11,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/account"
 	"github.com/zadykian/ws/roles/server/ubuntu/claude"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 // claudeReadme is the page that each of claude's commands points to.

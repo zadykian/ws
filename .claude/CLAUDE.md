@@ -11,11 +11,13 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 
 - `roles/server/ubuntu/NAME`: a role per directory, as its mise config and its spec of units, with
   its page, `README.md`, and a line in the root README. The units run in the order of their
-  `after` ([The order](../roles/server/ubuntu/frame/README.md#the-order)), and
-  `roles/server/ubuntu/values` types the machine's values: `/etc/ws/values.yml`, on the machine
-  alone, such as the cable's port ([The cable](../roles/server/ubuntu/cable/README.md#the-cable)). Each role
+  `after` ([The order](../roles/server/ubuntu/frame/README.md#the-order)). Each role
   holds its pins, and its templates and files beside its spec. ws-fans, the fans' service, is
   `ws server ubuntu fans`, in `roles/server/ubuntu/fans/daemon`.
+- `roles/server/`: the server's side, its roles in `ubuntu/`. Above them sit the packages that
+  serve them all, `cli`, `secrets`, `internal/plan` and `values`, and the runbook. `values` types
+  the machine's values: `/etc/ws/values.yml`, on the machine alone, such as the cable's port
+  ([The cable](../roles/server/ubuntu/cable/README.md#the-cable)).
 - `go.mod` and `go.sum`: the Go module `github.com/zadykian/ws`, at the root.
   `main.go` runs `cmd`, which composes the root and the exit codes with the two sides'
   commands. `engine/cli` builds the root and the exit codes. `engine/core` holds `step`,

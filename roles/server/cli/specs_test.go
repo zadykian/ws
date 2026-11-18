@@ -13,14 +13,14 @@ import (
 	"github.com/zadykian/ws/engine/cli/clitest"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/kind"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
-// The paths below are from this package's directory: the roles are its parent, unitsDir in the
-// checkout, and the tree's root is four levels up.
+// The paths below are from this package's directory: the roles are its sibling ubuntu, unitsDir
+// in the checkout, and the tree's root is three levels up.
 const (
-	rolesDir = ".."
-	treeRoot = "../../../.."
+	rolesDir = "../ubuntu"
+	treeRoot = "../../.."
 	confDir  = treeRoot + "/mise/conf.d"
 	// selfPath stands for the running ws, which a spec's self gives.
 	selfPath = "/usr/local/bin/ws"
