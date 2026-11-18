@@ -24,6 +24,8 @@ has = ["cmd"]               # says whether the file, on stdin, holds the line: 0
 group_of = "USER"           # a file of root's takes this account's primary group
 backup = false              # keep the old file beside the new one, as PATH.PID.TIME~
 ours = false                # refuse a file there without ws's '# Written by' line at its top
+mark = "#"                  # the comment sign before ws's mark, for ours: "//" for JSON
+keep_foreign = false        # with ours, leave a file without the mark, and warn
 absent_when_empty = false   # remove the file where its template gives white space alone
 link = "/abs/target"        # or a link to the target, root's, in place of a file
 after = "KIND/NAME"
@@ -59,9 +61,12 @@ after = "KIND/NAME"
 - A `link` takes `after` and `when` alone, beside its path. Root owns it, and its missing parents
   are made as a file's. A link to another target is pointed again, and a file or a link in its
   place is replaced, but a directory there fails the run.
-- `group_of` and `ours` take a file of root's. With `ours`, a file there whose first line lacks
+- `group_of` takes a file of root's. With `ours`, a file there whose first line lacks
   `# Written by github.com/zadykian/ws` fails the plan, a dry run's too, before a write or a
-  removal. A file by hand is never lost, and the error names its path alone.
+  removal. A file by hand is never lost, and the error names its path alone. `mark` sets the sign
+  before those words. An account's file is read below its home through no link.
+- With `keep_foreign`, such a file is left, as the user's own, and the plan warns and changes
+  nothing. Once the user removes it, the next run writes ws's.
 - A `secret` file's template alone may call `secrets`, the side's secrets, as `(secrets).Env`.
   On a machine with no secrets file, as in CI, the unit leaves the file and says so. `exports MAP`
   gives a line `export NAME=VALUE` a name, sorted, each value quoted for the shell. A name that the
