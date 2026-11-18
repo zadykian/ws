@@ -38,8 +38,8 @@ func TestServerRefusal(t *testing.T) {
 
 func TestServerApplyRefusesOtherArgs(t *testing.T) {
 	for _, args := range [][]string{
-		{"apply", "--tags", "base"}, {"apply", "--only", "nothing"}, {"apply", "--only", "nothing/step"},
-		{"apply", "--only", "base,"}, {"apply", "--only", ""},
+		{"apply", "--tags", "security"}, {"apply", "--only", "nothing"}, {"apply", "--only", "nothing/step"},
+		{"apply", "--only", "security,"}, {"apply", "--only", ""},
 		{"apply", "--only"}, {"apply", "-C"}, {"apply", "extra"}, {"other"},
 	} {
 		status, _, stderr := runWs(fakeProcess(), "", append([]string{"server", "ubuntu"}, args...)...)
@@ -147,8 +147,8 @@ func TestServerStateRefusesNonRootAndOtherArgs(t *testing.T) {
 
 func TestServerStateRefusesAStepItsRoleLacks(t *testing.T) {
 	p, _ := serverProcess()
-	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "state", "--only", "base/no such")
-	if status != 2 || stdout != "" || !strings.Contains(stderr, `no step "no such" in base`) {
+	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "state", "--only", "security/no such")
+	if status != 2 || stdout != "" || !strings.Contains(stderr, `no step "no such" in security`) {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
 }
@@ -164,8 +164,8 @@ func TestServerStateHelp(t *testing.T) {
 
 func TestServerStatePrintsJSON(t *testing.T) {
 	p, _ := serverProcess()
-	status, stdout, _ := runWs(p, "", "server", "ubuntu", "state", "--json", "--only", "base")
-	if status != 0 || !strings.Contains(stdout, `"role": "base"`) {
+	status, stdout, _ := runWs(p, "", "server", "ubuntu", "state", "--json", "--only", "security")
+	if status != 0 || !strings.Contains(stdout, `"role": "security"`) {
 		t.Errorf("status = %d, stdout = %q", status, stdout)
 	}
 }
