@@ -15,6 +15,6 @@ Conflicts=shutdown.target
 
 [Service]
 Type=oneshot
-ExecStart={{.Script}}
+ExecStart=/usr/local/lib/ws/security/resolvers.sh
 SyslogLevel=notice
 LogLevelMax=notice

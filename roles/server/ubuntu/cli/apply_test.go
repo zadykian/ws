@@ -10,16 +10,14 @@ import (
 )
 
 // serverProcess returns a process as root on the one system that ws server ubuntu
-// apply takes, with ca-certificates and the security role's packages installed.
+// apply takes, with ca-certificates installed and the account's rustup in place.
 func serverProcess() (enginecli.Env, *effecttest.Machine) {
 	p := fakeProcess()
 	p.Euid = 0
 	m := p.Machine.(*effecttest.Machine)
 	m.Files["/etc/os-release"] = []byte("ID=ubuntu\nVERSION_ID=\"26.04\"\n")
 	m.Packages = effecttest.Packages{"ca-certificates": {Version: "1", Status: "ii"}}
-	for _, name := range []string{"openssh-server", "ufw", "fail2ban", "nftables", "sudo"} {
-		m.Packages[name] = effecttest.Package{Version: "1", Status: "ii"}
-	}
+	m.Files["/home/zadykian/.cargo/bin/rustup"] = nil
 	return p, m
 }
 
@@ -27,8 +25,10 @@ func serverProcess() (enginecli.Env, *effecttest.Machine) {
 // step's name holds a space, and --only keeps it whole.
 func TestServerApplyRefusesAStepItsRoleLacks(t *testing.T) {
 	p, m := serverProcess()
-	status, _, stderr := runWs(p, "", "server", "ubuntu", "apply", "--only", "security/no such")
-	want := `ws server ubuntu apply: no step "no such" in security; its steps here are ["Security packages" "SSH keys" "sudo" "lxd" "sshd" "ufw" "fail2ban" "Outbound table"]` + "\n" +
+	status, _, stderr := runWs(p, "", "server", "ubuntu", "apply", "--only", "devtools/no such")
+	want := `ws server ubuntu apply: no step "no such" in devtools; its steps here are ["Devtools repositories" "Devtools packages" ` +
+		`"Devtools gh telemetry" "Devtools gh login" "Devtools Go" "Devtools gopls" "Devtools Delve" "Devtools roslyn-language-server" ` +
+		`"Devtools postgres-language-server" "Devtools docker-language-server" "Devtools npm servers" "Devtools rustup"]` + "\n" +
 		"Run 'ws server ubuntu apply --help' for usage.\n"
 	if status != 2 || stderr != want {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
@@ -40,7 +40,7 @@ func TestServerApplyRefusesAStepItsRoleLacks(t *testing.T) {
 
 func TestServerApplyTakesAStepByName(t *testing.T) {
 	p, _ := serverProcess()
-	status, _, stderr := runWs(p, "", "server", "ubuntu", "apply", "--check", "--only", "security/Security packages")
+	status, _, stderr := runWs(p, "", "server", "ubuntu", "apply", "--check", "--only", "devtools/Devtools rustup")
 	if status != 0 || !strings.HasSuffix(stderr, "ws server ubuntu apply: would change: none\n") {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}

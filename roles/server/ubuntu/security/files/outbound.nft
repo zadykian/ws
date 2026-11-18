@@ -8,12 +8,12 @@
 # a mark, either of which would let any user past. Ubuntu's mtr-packet, with CAP_NET_RAW, lets any
 # user send from any port and set any mark, and while wg0 is down anyone may bind its port.
 #
-# security-outbound.service loads this file through {{.Script}}, one transaction that replaces this
-# table and no other. nftables.conf would flush ufw's, Docker's, fail2ban's and ikeward's tables
-# too. No rule holds a set of ranges, or of names with *. The kernel fills such a set after its
-# rules take effect, and in a lab, packets to the LAN got past a reload. Each run loads the file in
-# an empty network namespace too (drift.go). So a rule names a link by oifname or iifname, never by
-# the index of oif or iif.
+# security-outbound.service loads this file through resolvers.sh beside it, one transaction that
+# replaces this table and no other. nftables.conf would flush ufw's, Docker's, fail2ban's and
+# ikeward's tables too. No rule holds a set of ranges, or of names with *. The kernel fills such a
+# set after its rules take effect, and in a lab, packets to the LAN got past a reload. Each run
+# loads the file in an empty network namespace too (the unit's loads, in units.toml). So a rule
+# names a link by oifname or iifname, never by the index of oif or iif.
 destroy table inet ws
 
 table inet ws {

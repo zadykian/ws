@@ -15,7 +15,8 @@ its spec of ws's units:
   as mise's packages and units.
 - [`security`](roles/server/ubuntu/security): SSH by key only, ufw and fail2ban, and a table that keeps what
   ws starts to the internet and ikeward, but what the network needs, such as DHCP and DNS. The
-  table is off where `WS_SECURITY_OUTBOUND` is false, as a cloud VM wants.
+  table is off where `WS_SECURITY_OUTBOUND` is false, as a cloud VM wants. As mise's config and
+  units.
 - [`cable`](roles/server/ubuntu/cable): the server's end of a cable to the Mac, as units.
 - [`tunnel`](roles/server/ubuntu/tunnel): `wg0`, the server's end of a WireGuard tunnel for the Mac, as
   units.
@@ -95,19 +96,19 @@ sudo ws server ubuntu apply
 `WS_VERSION=X.Y.Z` before `sh` picks a release ([Install](engine/core/update/README.md#install)).
 
 `ws server ubuntu apply --only NAME,...` runs the roles named, in the order they run in. A name is a
-role, or a step of it by the name a run shows, as in `--only 'security/SSH keys',tmux`. That
-role's other steps are planned and left out. A step that waits on one of them with changes is
-skipped, and says so, and `--check` shows what the same run would change. A left-out step whose plan
-fails warns, and the run goes on. `--secrets FILE` gives the roles their secrets, and `ws server
-ubuntu secrets` edits ws's file ([The secrets file](roles/server/ubuntu/shell/README.md#the-secrets-file)). The values of
-a machine go in `/etc/ws/values.yml`, which only root reads, and every run reads them. `WS_USER:
-NAME` sets up the user NAME instead of `zadykian`, the default, whose account must exist. `WS_USER:
-root` sets up a cloud VM with no other user. `WS_HOME` follows the user as `/home/NAME`; `WS_HOME:
-DIR` sets another home. `WS_GIT_SIGNING_PUB_KEY` lies below it, or the
-run fails. A cloud VM names `WS_SECURITY_OUTBOUND: false` there before its first run
-([Outbound](roles/server/ubuntu/security/README.md#outbound)). `ws server ubuntu values set KEY VALUE` writes one key, and
-an empty VALUE gives its default back. ws's last line names the roles that changed,
-`changed: none` on a second run.
+role, or a step of it by the name a run shows. That role's other steps are planned and left out. A
+step that waits on one of them with changes is skipped, and says so, and `--check` shows what the
+same run would change. A left-out step whose plan fails warns, and the run goes on. `--secrets FILE`
+gives the roles their secrets, and `ws server ubuntu secrets` edits ws's file ([The secrets
+file](roles/server/ubuntu/shell/README.md#the-secrets-file)). The values of a machine go in
+`/etc/ws/values.yml`, which only root reads, and every run reads them. `WS_USER: NAME` sets up the
+user NAME instead of `zadykian`, the default, whose account must exist. `WS_USER: root` sets up a
+cloud VM with no other user. `WS_HOME` is the account's home, `/home/NAME` by default. One that
+differs from the home `getent passwd` gives the account fails the run at security's first guard.
+`WS_GIT_SIGNING_PUB_KEY` lies below it, or the run fails. A cloud VM names `WS_SECURITY_OUTBOUND:
+false` there before its first run ([Outbound](roles/server/ubuntu/security/README.md#outbound)). `ws
+server ubuntu values set KEY VALUE` writes one key, and an empty VALUE gives its default back. ws's
+last line names the roles that changed, `changed: none` on a second run.
 
 ## Dry runs
 

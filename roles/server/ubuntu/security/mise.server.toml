@@ -1,0 +1,24 @@
+# security's lines for every server: the packages, fail2ban's jail, then the role's units. nftables
+# brings nft, which loads the outbound table; its own service stays off, as the package leaves it.
+[bootstrap.packages]
+"apt:openssh-server" = "latest"
+"apt:ufw" = "latest"
+"apt:fail2ban" = "latest"
+"apt:nftables" = "latest"
+"apt:sudo" = "latest"
+"ws:file/security-sudo-no-cache" = "in-sync"
+"ws:guard/security-keys" = "in-sync"
+"ws:guard/security-sudo" = "in-sync"
+"ws:service/security-outbound" = "in-sync"
+"ws:service/security-resolvers-fill" = "in-sync"
+"ws:service/security-resolvers-path" = "in-sync"
+"ws:service/security-resolvers-timer" = "in-sync"
+"ws:service/security-sshd" = "in-sync"
+"ws:state/security-outbound-off" = "in-sync"
+
+# fail2ban bans an address for an hour after 5 failed logins over SSH in 10 minutes.
+[bootstrap.files."/etc/fail2ban/jail.d/sshd.local"]
+source = "files/sshd.local"
+owner = "root"
+group = "root"
+mode = "0644"

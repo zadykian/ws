@@ -16,8 +16,8 @@ Conflicts=shutdown.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart={{.Script}} {{.Table}}
-ExecReload={{.Script}} {{.Table}}
+ExecStart=/usr/local/lib/ws/security/resolvers.sh /usr/local/lib/ws/security/outbound.nft
+ExecReload=/usr/local/lib/ws/security/resolvers.sh /usr/local/lib/ws/security/outbound.nft
 ExecStop=/usr/sbin/nft destroy table inet ws
 
 [Install]
