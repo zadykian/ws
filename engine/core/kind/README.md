@@ -78,8 +78,7 @@ absent_when_empty = false   # remove the file where its template gives white spa
 after = "KIND/NAME"
 ```
 
-- A checked file is written to `PATH.ws-check` and checked there. Only a good file moves over the
-  live one.
+- A checked file is checked as `PATH.ws-check`, and only a good one moves over the live file.
 - A restart that a change calls for is noted in `/var/lib/ws/owed` before the change. A run that
   fails before the restart leaves it owed to the next run. A file that its check refused leaves
   the restart owed too, and the service keeps the live file.
@@ -177,8 +176,7 @@ hint = "…"                  # follows the line of a refused load; goes with lo
   it again for each later kernel by itself. Another version of the module in DKMS goes first, with
   its source. A version that `dkms status` gives in no plain word's form is left alone, with a
   warning. Before `/usr/sbin/dkms` exists, as in a dry run before its package, DKMS holds nothing.
-- The packages of DKMS and of the kernel's headers are the role's own: a `packages` unit that this
-  one waits on by `after`.
+- DKMS's packages and the kernel's headers are the role's own, a `packages` unit named by `after`.
 - `load` is loaded by `modprobe` once built, after each module of `unload` that the kernel holds is
   unloaded. Without booted systemd it loads nothing, and says so.
 - With Secure Boot on, the kernel refuses the module until DKMS's key is enrolled, by hand at the
@@ -219,6 +217,7 @@ subids = "USER"             # the range 100000-165535 where a file gives USER no
 purged = "package"          # removed with its settings
 http = "http://127.0.0.1:PORT/"  # answers 200, waited for 30 times, 2 s apart
 ufw = { comment = "ws: NAME", rules = [{ action = "allow", proto = "udp", to_port = "53", dir = "in" }] }
+ufw = { comment = "ws: NAME", rules = [{ action = "allow", interface = "IN0", out = "OUT0", from = "CIDR" }] }
 routes = { pool = "CIDR", net = "CIDR", dev = "docker0", hint = "…" }  # refuses an overlap
 addr = { iface = "docker0", want = "CIDR", hint = "…" }                # refuses a missing address
 left = { user = "USER", group = "GROUP" }
@@ -227,8 +226,9 @@ reboot = { module = "name", package = "name", hint = "…" }             # notes
 ```
 
 - A new state is one field of `stateSpec`, of a type that makes its resource.
-- `ufw` owns the rules of its comment, and with `owns` those whose fields hold its values: those
-  in `rules` are added, the others deleted. A rule's address or port left out is any.
+- `ufw` owns the rules of its comment, and with `owns` those whose fields hold its values: those in
+  `rules` are added, the others deleted. A rule's address or port left out is any. A rule with `out`
+  routes what comes in on `interface` from `from` out by `out`, with `action` and no other field.
 - `routes` fails where a route of the moment overlaps `pool`, but for an on-link route of the main
   table, or `net` on a device other than `dev`. `addr` fails where `iface` lacks `want`. Each error
   ends with `hint`, as the run cannot mend either.
