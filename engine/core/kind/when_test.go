@@ -204,6 +204,7 @@ func TestWhenOnEveryKind(t *testing.T) {
 		"guard":   "[guard.a]\nsudo_right = \"u\"\n" + off,
 		"state":   "[state.a]\npurged = \"p\"\n" + off,
 		"service": "[service.a]\nunit = \"a.service\"\nenabled = true\nrun = \"running\"\n" + off,
+		"compose": "[compose.a]\ndir = \"/srv/a\"\nproject = \"a\"\n" + off,
 	}
 	for f := range reflect.TypeFor[spec]().Fields() {
 		if _, ok := samples[f.Tag.Get("toml")]; !ok {

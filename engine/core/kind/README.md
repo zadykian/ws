@@ -235,6 +235,24 @@ command = ["/abs/cmd"]      # or: the command, as root, exits 0
   machine, containers too. Its exit 0 passes, and says each line of its output once a run. Any
   other fails the plan with the command's error, its standard error and its output.
 
+### compose
+
+```toml
+[compose.NAME]
+dir = "/abs/dir"            # holds compose.yaml and the files it reads
+project = "name"            # lowercase letters, digits, '_' and '-'
+```
+
+- The project runs on the system's daemon, as root. Compose's up runs the one-shot services
+  again, so it ups only where something is to do.
+- After a good up, it keeps the SHA-256 of the files below `dir` in `/var/lib/ws/compose/PROJECT`,
+  root's 0600. The sum covers each file's path and content, read as root, and each link's target.
+  A file that differs, comes or goes, or a missing sum, recreates every container. A failed up
+  keeps the old sum, so the next run recreates again.
+- With the sum kept, it ups without a recreation where a service whose `restart` is `always` or
+  `unless-stopped` is not running. A one-shot that has ended counts for nothing.
+- Without booted systemd it plans nothing, reads nothing, and says so.
+
 ## ws unit
 
 `ws unit` plans and applies the units for mise's plugin `ws`, a package manager plugin. Each unit is
