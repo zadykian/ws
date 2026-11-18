@@ -1,4 +1,4 @@
-package base
+package locale
 
 import (
 	"strings"
@@ -9,15 +9,18 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
+// hint is the tests' hint, which ends each refusal.
+const hint = "Name another."
+
 const supported = "# comment\nC.UTF-8 UTF-8\nde_DE@euro ISO-8859-15\nen_US.UTF-8 UTF-8\n"
 
 func TestLocaleRefusals(t *testing.T) {
 	for _, name := range []string{"", "en_US.UTF-8 UTF-8", "english", "en_us.utf8", "en_US.UTF-8\n#", "xx_YY.UTF-8", "en_US"} {
 		m := effecttest.NewMachine()
 		m.Files[supportedFile] = []byte(supported)
-		g := resource.Group{Title: "Locale", Parts: localeParts(m, name)}
-		if _, err := g.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "WS_BASE_LOCALE") {
-			t.Errorf("locale %q: error = %v, want a refusal naming WS_BASE_LOCALE", name, err)
+		g := resource.Group{Title: "Locale", Parts: []resource.Resource{Locale{M: m, Name: name, Hint: hint}}}
+		if _, err := g.Plan(t.Context()); err == nil || !strings.HasSuffix(err.Error(), ". "+hint) {
+			t.Errorf("locale %q: error = %v, want a refusal that ends with the hint", name, err)
 		}
 	}
 }
@@ -41,7 +44,7 @@ func TestLocale(t *testing.T) {
 		}
 		m.Results["locale -a"] = effecttest.Result{Out: []byte(tt.avail)}
 		m.Results["locale-gen"] = effecttest.Result{}
-		g := resource.Group{Title: "Locale", Parts: localeParts(m, "en_US.UTF-8")}
+		g := resource.Group{Title: "Locale", Parts: []resource.Resource{Locale{M: m, Name: "en_US.UTF-8"}}}
 		// The fake's `locale -a` stays unchanged after locale-gen, so a run that generates fails its
 		// check that the second plan is empty.
 		_, err := step.Run(t.Context(), []step.Step{g}, &effecttest.Out{}, false)
@@ -69,7 +72,7 @@ func TestLocaleOfOtherForms(t *testing.T) {
 		m := effecttest.NewMachine()
 		m.Files[supportedFile] = []byte(supported)
 		m.Results["locale -a"] = effecttest.Result{Out: []byte("C\n")}
-		g := resource.Group{Title: "Locale", Parts: localeParts(m, name)}
+		g := resource.Group{Title: "Locale", Parts: []resource.Resource{Locale{M: m, Name: name}}}
 		if _, err := g.Plan(t.Context()); err != nil {
 			t.Fatalf("%s: %v", name, err)
 		}

@@ -1,4 +1,4 @@
-package base
+package timezone
 
 import (
 	"strings"
@@ -21,7 +21,7 @@ func TestTimezone(t *testing.T) {
 		if tt.legacy {
 			m.Files["/etc/timezone"] = []byte("Etc/UTC\n")
 		}
-		g := resource.Group{Title: "Timezone", Parts: timezoneParts(m, "Europe/Paris")}
+		g := resource.Group{Title: "Timezone", Parts: []resource.Resource{Zone{M: m, Name: "Europe/Paris"}}}
 		changed, err := step.Run(t.Context(), []step.Step{g}, &effecttest.Out{}, false)
 		if err != nil || !changed {
 			t.Fatalf("%s: changed = %v, err = %v", tt.name, changed, err)
@@ -36,12 +36,12 @@ func TestTimezone(t *testing.T) {
 }
 
 func TestTimezoneRefusals(t *testing.T) {
-	for _, zone := range []string{"", "/Etc/UTC", "../x", "Etc/../../x", "Etc//UTC", "Europe/Pariss", "Europe"} {
+	for _, zone := range []string{"", "/Etc/UTC", "../x", "Etc/../../x", "Etc//UTC", "..", "Europe/Pariss", "Europe"} {
 		m := effecttest.NewMachine()
 		m.Files["/usr/share/zoneinfo/Europe/Paris"] = []byte("tz")
-		g := resource.Group{Title: "Timezone", Parts: timezoneParts(m, zone)}
-		if _, err := g.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "WS_BASE_TIMEZONE") {
-			t.Errorf("zone %q: error = %v, want a refusal naming WS_BASE_TIMEZONE", zone, err)
+		g := resource.Group{Title: "Timezone", Parts: []resource.Resource{Zone{M: m, Name: zone, Hint: "Name another."}}}
+		if _, err := g.Plan(t.Context()); err == nil || !strings.HasSuffix(err.Error(), ". Name another.") {
+			t.Errorf("zone %q: error = %v, want a refusal that ends with the hint", zone, err)
 		}
 	}
 }

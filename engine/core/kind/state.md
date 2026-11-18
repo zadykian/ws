@@ -16,6 +16,8 @@ addr = { iface = "docker0", want = "CIDR", hint = "…" }                # refus
 left = { user = "USER", group = "GROUP" }
 run = { user = "USER", command = ["cmd"], creates = ["/path"] }        # or check = ["cmd"]
 reboot = { module = "name", package = "name", hint = "…" }             # notes a reboot that is due
+locale = { name = "en_US.UTF-8", hint = "…" }                          # generated, and LANG
+timezone = { name = "Etc/UTC", hint = "…" }                            # /etc/localtime's zone
 ```
 
 - A new state is one field of `stateSpec`, of a type that makes its resource.
@@ -32,6 +34,13 @@ reboot = { module = "name", package = "name", hint = "…" }             # notes
 - `reboot` plans nothing. Where `package` is installed and `/sys/module/MODULE/version` is not its
   upstream version, without the epoch or the revision, it warns that a reboot is due, with `hint`
   after. It suits a module that loads at boot alone, as a display's driver.
+- `locale` generates the locale where `locale -a` lacks it, by its line in `/etc/locale.gen` and
+  `locale-gen`, and sets `LANG` in `/etc/locale.conf`. A name that glibc's `SUPPORTED` lacks fails
+  the plan, with `hint` after.
+- `timezone` links `/etc/localtime` to the zone's file below `/usr/share/zoneinfo`, without
+  `timedatectl`, and keeps `/etc/timezone` in step where the machine has it. A name that is no
+  path below that directory fails the load, and one that is no zone file the plan, each with `hint`
+  after.
 - Without booted systemd, `linger`, `http`, `ufw`, `addr` and `reboot` skip, and each says so. So
   does `run` on Linux, where it needs the user's session; macOS has no systemd, and runs it. A
   `run` with `unbooted = true` needs no session, and runs there too, without the session's env.

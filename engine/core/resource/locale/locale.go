@@ -1,4 +1,5 @@
-package base
+// Package locale keeps a locale generated and the system's, as glibc and Ubuntu 26.04 keep them.
+package locale
 
 import (
 	"context"
@@ -8,23 +9,33 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
-// localeParts keeps the locale generated and the system's. /etc/locale.gen names it, and
-// locale-gen makes it. /etc/locale.conf, where Ubuntu 26.04 keeps the system's locale, sets LANG
-// to it. /etc/default/locale links to that file.
-func localeParts(m effect.Machine, name string) []resource.Resource {
-	return []resource.Resource{
-		generated{M: m, Name: name},
-		file.Line{M: m, Path: "/etc/locale.conf", Text: "LANG=" + name, Match: "^LANG=", Mode: 0o644},
+// Locale is the locale Name, generated and the system's. /etc/locale.gen names it, and locale-gen
+// makes it. /etc/locale.conf, where Ubuntu 26.04 keeps the system's locale, sets LANG to it.
+// /etc/default/locale links to that file. Hint ends a refusal of the name: how to give another.
+type Locale struct {
+	M    effect.Machine
+	Name string
+	Hint string
+}
+
+// Plan plans the generated locale, then LANG.
+func (l Locale) Plan(ctx context.Context) ([]resource.Change, error) { return l.parts().Plan(ctx) }
+
+// Report reports the parts.
+func (l Locale) Report(ctx context.Context) ([]step.Item, error) { return l.parts().Report(ctx) }
+
+func (l Locale) parts() resource.Joined {
+	return resource.Joined{
+		generated(l),
+		file.Line{M: l.M, Path: "/etc/locale.conf", Text: "LANG=" + l.Name, Match: "^LANG=", Mode: 0o644},
 	}
 }
 
 // generated is a locale that locale-gen has made, as community.general.locale_gen kept it.
-type generated struct {
-	M    effect.Machine
-	Name string
-}
+type generated Locale
 
 type generate struct{ g generated }
 
@@ -41,11 +52,11 @@ func (c generate) Apply(ctx context.Context) error {
 func (g generated) Plan(ctx context.Context) ([]resource.Change, error) {
 	supported, err := g.M.ReadFile(supportedFile)
 	if err != nil {
-		return nil, fmt.Errorf("WS_BASE_LOCALE %q: reading %s: %w", g.Name, supportedFile, err)
+		return nil, fmt.Errorf("locale %q: reading %s: %w", g.Name, supportedFile, err)
 	}
 	line, ok := entry(string(supported), g.Name)
 	if !ok {
-		return nil, fmt.Errorf("WS_BASE_LOCALE is %q: %s lacks it; it takes a name such as en_US.UTF-8", g.Name, supportedFile)
+		return nil, fmt.Errorf("the locale %q is none that %s lists. %s", g.Name, supportedFile, g.Hint)
 	}
 	have, err := g.M.Run(ctx, "locale", "-a")
 	if err != nil {
