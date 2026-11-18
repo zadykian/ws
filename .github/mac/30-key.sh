@@ -2,12 +2,10 @@
 # Without ws's key, ws client macos apply makes the Mac's key and installs no daemon.
 # The key it prints, and the command that makes it ws's peer, must hold the Mac's public key,
 # which the stand-in ws below takes as its peer. Root's daemon runs the copy of ws, so it must be
-# root's alone. Stand-ins for Ghostty's app and cld spare this run and later ones their downloads
-# (mac-standins.sh).
+# root's alone. ssh -G must give ws the tunnel's end, from mise bootstrap's /etc/ws/ssh_config.
 
 set -eo pipefail
 
-sh .github/mac-standins.sh
 ws client macos apply | tee "$RUNNER_TEMP/first.out" ||
     {
         echo "::error::ws client macos apply without ws's key failed"

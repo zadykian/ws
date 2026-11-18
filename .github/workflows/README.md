@@ -62,13 +62,12 @@ reset at each prompt, and the alternate screen after a 255 from `ssh` or from `c
 
 CI also sets up a Mac, by [its cases](../mac), in the order of [The Mac](../../roles/client/macos/README.md). First, `ws
 client macos apply --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config`
-or `~/.zshrc`, and installs no formula or cask. Stand-ins for Ghostty's app and cld, which `ws
-client macos apply` leaves alone, spare the job's runs their downloads. Then `mise -C /opt/ws
-bootstrap` with [the Mac's frame](../../roles/client/macos/frame/README.md) runs as the runbook
-runs it, on the tree in
-`/opt/ws` with ws's build served as the pin ([mac-mise.sh](../mac-mise.sh)). Its plan must exit 0
-after the first run, a second run must call no sudo, and `/usr/local/bin/ws` must be the build. A
-spec whose unit no line names must fail the plan.
+or `~/.zshrc`, and installs no formula or cask. A stand-in cld, which cld's unit leaves alone,
+spares the job's runs its download. Then `mise -C /opt/ws bootstrap` with
+[the Mac's frame](../../roles/client/macos/frame/README.md) runs as the runbook runs it, on the
+tree in `/opt/ws` with ws's build served as the pin ([mac-mise.sh](../mac-mise.sh)). It sets up
+ssh, git and cld too. Its plan must exit 0 after the first run, a second run must call no sudo,
+and `/usr/local/bin/ws` must be the build. A spec whose unit no line names must fail the plan.
 The job's `values.yml` names a file key, made in case 20, as ws's
 login key and git's. Without ws's WireGuard key, `ws client macos apply` must make the Mac's key and
 load no daemon, and `ssh -G ws` gives the tunnel's end. The public key it prints must be the Mac's,
@@ -92,33 +91,23 @@ macos apply` must print nothing. Set, it must run one `networksetup -setmanual`,
 through sudo, and then none. It must warn of a disabled service. It must stop on one networksetup
 lacks, or one with a router outside the cable's `/30`. It must stop too on a `-setmanual` that fails
 or changes nothing, and name what differs ([mac-setup-checks.sh](../mac-setup-checks.sh)).
-`ssh -G` must give `ws` the file key that the job's `values.yml` names, by its four lines. It must
-give it the file or the agent that `WS_IDENTITY_PUB_KEY` and `WS_IDENTITY_AGENT` name, with
-`--check` showing `/etc/ws/ssh_config`'s diff. An empty `WS_IDENTITY_PUB_KEY` must stop `ws client
-macos apply`, though an agent at Secretive's socket holds a P-256 key. The stop must give the line
-that names the key, by ws's copy of its `.pub`, with its comment and fingerprint. `PublicKeys` is
-closed, as macOS 27 denies ws the files of Secretive's container. With that line, `ssh -G` must give
-`ws` the agent and the copy, which a run writes where none exists. A `.pub` in `PublicKeys` that
-`WS_IDENTITY_PUB_KEY` names must become the copy. With more keys in the agent, the stop must give a
-line for each P-256 key alone. A `.pub` that is missing or unreadable, or holds a private key, a
-certificate or a line that is no key, must stop `ws client macos apply` too. So must a key that
-ssh-keygen cannot read or ws's OpenSSH lacks ([mac-identity-checks.sh](../mac-identity-checks.sh)).
-Git's cases start without the job's git files, with a stand-in `gh` on `PATH`. It must stop on an
-empty `WS_GIT_SIGNING_PUB_KEY`, or one that is missing or
-unreadable, or a `.pub` that holds more than a public key. With a file key there, an ed25519 key
-with no passphrase, git must sign a commit and verify it. A `~/.gitconfig` must get the include of
-`/etc/ws/gitconfig` at its top, once, keep its own lines, and name its own settings. An include
-below them, or a second one, must stop `ws client macos apply` before it writes a file, as must a
-link that lacks the include. One whose file has it must pass. The settings of git's XDG file must be
-named. With a key that an agent holds at Secretive's socket and `PublicKeys` closed, an empty
-`WS_GIT_SIGNING_PUB_KEY` must stop with its line. Named, `--check` must show the wrapper and write
-none. A run must write ws's copy of the key's `.pub`, and git sign whatever `SSH_AUTH_SOCK` names.
-`ws` must keep the file key that `values.yml` names. git's credential command for GitHub must be a
-stand-in gh's, which must add the key to its login once. Logged out, gh must draw a warning at each
-run. Logged in, `ws client macos apply` must warn of a 404 or another error of gh's, and of an add
-that leaves the account without the key. It must add the key where the account lacks it, and
-`--check` name the add. Where `PATH` has no gh, `ws client macos apply` must install Homebrew's
-once, and only with git's keys ([mac-git-checks.sh](../mac-git-checks.sh)). Where
+The cases of the keys run `mise -C /opt/ws bootstrap` with an edited `values.yml`, and read the
+files it writes ([56-keys.sh](../mac/56-keys.sh)). A refusal must fail the bootstrap and its plan
+with its reason, and change no file. `ssh -G` must give `ws` the file key that the job's
+`values.yml` names, by its four lines, and the file or the agent that `WS_IDENTITY_PUB_KEY` and
+`WS_IDENTITY_AGENT` name. An empty `WS_IDENTITY_PUB_KEY` must stop, though an agent at Secretive's
+socket holds a P-256 key. It gives the line that names each P-256 key by ws's copy of its `.pub`.
+`PublicKeys` is closed, as macOS 27 denies ws the files of Secretive's container. With that line,
+`ssh -G` must give `ws` the agent and the copy, which a run writes where none exists. A `.pub` that
+is missing or unreadable must stop too. So must one that holds a private key, a certificate, a
+line that is no key, or a key that ws's OpenSSH lacks ([mac-identity-checks.sh](../mac-identity-checks.sh)).
+`/usr/local/bin/gh` must be mise's gh, root's and 0755, in place of one there, and a bootstrap
+that changes nothing must call no sudo. With a file key, git must sign a commit and verify it,
+with gh as GitHub's credential command. A `~/.gitconfig` must get the include of
+`/etc/ws/gitconfig` at its top, once, and keep its own lines, its mode and a copy. An include below
+them, a second one or a link must stop the bootstrap, as must a signing key that is empty, missing
+or more than a public key. With a key of Secretive's, git must sign through ws's wrapper whatever
+`SSH_AUTH_SOCK` names, and `ws` keep the file key ([mac-git-checks.sh](../mac-git-checks.sh)). Where
 wireguard-go makes no utun, the job fails, as the daemon's device makes a utun too.
 
 ## The rules

@@ -1,7 +1,9 @@
 #!/bin/bash
 # mise bootstrap with the Mac's frame, as the runbook runs it, beside ws client macos apply. The
-# first run installs ws and links the plugin, and copies ws to /usr/local/bin. Then the plan must
-# exit 0, and a second run must call sudo not once, as a run that changes nothing asks no password.
+# first run installs ws and links the plugin, and copies ws to /usr/local/bin. It sets up ssh, git
+# and cld from the job's values.yml, with the stand-ins of cld and the stand-in ws's tools
+# (mac-standins.sh). Then the plan must exit 0, and a second run must call sudo not once, as a run
+# that changes nothing asks no password.
 # A spec whose unit no line names, and that has a change, must fail the plan, which ws unit read
 # --whole sees. One in sync passes, as mise reads again without the lines in sync.
 
@@ -9,6 +11,7 @@ set -eo pipefail
 # shellcheck source=.github/mac-mise.sh
 . .github/mac-mise.sh
 
+sh .github/mac-standins.sh
 mac_mise
 mac_tree
 trap 'kill "$mac_server"' EXIT

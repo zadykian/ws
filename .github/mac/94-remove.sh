@@ -1,9 +1,13 @@
 #!/bin/bash
 # ws client macos remove lab drops the second server from the Mac. Its directory, daemon, plist,
 # state, log, ssh host and known_hosts entry go, and ws's stay, with its daemon still shaking hands.
+# remove runs mise bootstrap, which takes lab's host out of /etc/ws/ssh_config, as mac_bootstrap
+# runs it: locked, with /opt/ws trusted and the build served.
 # remove refuses a name with no file, and the Mac's last server.
 
 set -eo pipefail
+# shellcheck source=.github/mac-mise.sh
+. .github/mac-mise.sh
 # shellcheck source=.github/mac-quiet.sh
 . .github/mac-quiet.sh
 
@@ -27,7 +31,9 @@ fails 'no server named box in' box
 key=$(cut -d ' ' -f 1,2 ~/.ssh/id_ed25519.pub)
 printf '%s %s\n' lab "$key" ws "$key" >>~/.ssh/known_hosts
 
-ws client macos remove lab | tee "$RUNNER_TEMP/remove.out" || {
+mac_serve
+trap 'kill "$mac_server"' EXIT
+MISE_LOCKED=1 MISE_TRUSTED_CONFIG_PATHS=/opt/ws ws client macos remove lab </dev/null | tee "$RUNNER_TEMP/remove.out" || {
     echo '::error::ws client macos remove lab failed'
     exit 1
 }

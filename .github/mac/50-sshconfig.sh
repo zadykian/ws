@@ -1,5 +1,6 @@
 #!/bin/bash
-# ~/.ssh/config has the Include first and keeps its own lines.
+# mise bootstrap (28-bootstrap.sh) put the Include first in ~/.ssh/config, which keeps its own
+# lines, and wrote /etc/ws/ssh_config, root's.
 
 set -eo pipefail
 
@@ -17,7 +18,7 @@ tail -n +3 ~/.ssh/config | cmp -s - "$RUNNER_TEMP/ssh-config-before" ||
     }
 ls ~/.ssh/config.*~ ||
     {
-        echo '::error::ws client macos apply kept no copy of the old ~/.ssh/config'
+        echo '::error::mise bootstrap kept no copy of the old ~/.ssh/config'
         exit 1
     }
 [ "$(stat -f '%Su:%Sg %Lp' /etc/ws/ssh_config)" = 'root:wheel 644' ] ||

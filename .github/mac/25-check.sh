@@ -1,8 +1,8 @@
 #!/bin/bash
 # --check on a fresh Mac changes nothing.
 # --check must write no file, keep no copy of ~/.ssh/config or ~/.zshrc and install no formula or
-# cask. The files of Ghostty, Zed and zsh are mise bootstrap's (28-bootstrap.sh), which comes
-# after, so none must be there yet.
+# cask. The files of ssh, git, Ghostty, Zed and zsh are mise bootstrap's (28-bootstrap.sh), which
+# comes after, so none must be there yet.
 
 set -eo pipefail
 
@@ -13,8 +13,8 @@ ws client macos apply --check 2>&1 | tee "$RUNNER_TEMP/check.out" ||
         exit 1
     }
 fail=0
-for path in ~/.ssh/config.d ~/.ssh/config.*~ ~/.config/zed ~/.zshrc.*~ \
-    /etc/ws/tunnel /etc/ws/zshrc /etc/ws/ghostty /usr/local/libexec/ws-tunnel "/Library/LaunchDaemons/$LABEL.plist"; do
+for path in ~/.ssh/config.d ~/.ssh/config.*~ ~/.config/zed ~/.zshrc.*~ /etc/ws/ssh_config \
+    /etc/ws/gitconfig /etc/ws/tunnel /etc/ws/zshrc /etc/ws/ghostty /usr/local/libexec/ws-tunnel "/Library/LaunchDaemons/$LABEL.plist"; do
     if sudo test -e "$path"; then
         echo "::error::ws client macos apply --check made $path"
         fail=1
@@ -28,11 +28,6 @@ cmp -s ~/.ssh/config "$RUNNER_TEMP/ssh-config-before" ||
 { brew list --formula && brew list --cask; } | cmp -s - "$RUNNER_TEMP/brew" ||
     {
         echo '::error::ws client macos apply --check installed a formula or a cask'
-        fail=1
-    }
-grep -q '^+Include /etc/ws/ssh_config$' "$RUNNER_TEMP/check.out" ||
-    {
-        echo "::error::ws client macos apply --check showed no Include for ~/.ssh/config"
         fail=1
     }
 exit "$fail"

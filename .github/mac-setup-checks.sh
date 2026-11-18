@@ -5,8 +5,7 @@
 # apply, sudo included, and edits the job's values.yml, it stops without the job's TUNNEL. It puts the
 # file back as it exits, on a signal too. A case that wants a silent run takes out git's line of a
 # listed key, with mac-quiet.sh's unlisted. Each failure prints an ::error:: line, and any fails
-# the script at its end. Last, it sources the cases of ws's key and git: mac-identity-checks.sh and
-# mac-git-checks.sh.
+# the script at its end. The cases of ws's key and git's are mise bootstrap's (56-keys.sh).
 
 set -eu
 if [ -z "${TUNNEL-}" ]; then
@@ -18,9 +17,7 @@ conf=/etc/ws/values.yml
 . .github/mac-conf.sh
 # shellcheck source=.github/mac-quiet.sh
 . .github/mac-quiet.sh
-# macOS's TMPDIR ends in a slash, which would put // in $tmp. ws client macos apply --only git finds
-# gh by Go's exec.LookPath, which drops it, so git's credential command would not read
-# "$tmp/bin/gh".
+# macOS's TMPDIR ends in a slash, which would put // in $tmp.
 tmpdir=${TMPDIR:-/tmp}
 tmp=$(mktemp -d "${tmpdir%/}/mac-setup-checks.XXXXXXXX")
 trap '[ ! -f "$tmp/job.conf" ] || conf_write "$conf" <"$tmp/job.conf"; rm -rf "$tmp"' EXIT
@@ -205,8 +202,4 @@ printf '%s\n' 'DHCP Configuration' 'IP address: 192.0.2.10' 'Router: 192.0.2.1' 
 stops 'ws client macos apply: networksetup -getinfo "ws stand-in no-op" shows Router: 192.0.2.1, so the'
 logged
 only=
-# shellcheck source=.github/mac-identity-checks.sh
-. .github/mac-identity-checks.sh
-# shellcheck source=.github/mac-git-checks.sh
-. .github/mac-git-checks.sh
 exit "$fail"
