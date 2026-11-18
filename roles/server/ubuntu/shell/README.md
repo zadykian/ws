@@ -43,7 +43,8 @@ credential. With `[env]` set, it writes `/etc/ws/env` 0640, root's with the acco
 `WS_USER` reads it and cannot change it. The file opens with ws's header line, then
 `export NAME=VALUE` for each name, sorted, the value quoted for the shell. Each run replaces the
 file, so a change goes in `[env]`. The `otelcol` role reads the file:
-[claude's metrics elsewhere](../otelcol/README.md#claudes-metrics-elsewhere).
+[claude's metrics elsewhere](../otelcol/README.md#claudes-metrics-elsewhere). The unit waits on the
+frame's `state/ws-binary`, and signoz's and otelcol's units on it, so that they hang on one chain.
 
 - A name takes letters, digits and underscores, and starts with no digit. The run refuses any
   other, and its message names no value.

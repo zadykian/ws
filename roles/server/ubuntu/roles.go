@@ -10,10 +10,8 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/claude"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools"
 	"github.com/zadykian/ws/roles/server/ubuntu/git"
-	"github.com/zadykian/ws/roles/server/ubuntu/otelcol"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/security"
-	"github.com/zadykian/ws/roles/server/ubuntu/signoz"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -34,8 +32,6 @@ var all = []entry{
 	{"git", git.Steps},
 	{"devtools", devtools.Steps},
 	{"claude", claude.Steps},
-	{"signoz", signoz.Steps},
-	{"otelcol", otelcol.Steps},
 }
 
 // Roles returns every role, in the order that they run, closed over the machine's values v and

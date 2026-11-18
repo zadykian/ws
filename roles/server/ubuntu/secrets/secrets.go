@@ -4,7 +4,7 @@
 package secrets
 
 // EnvPath is the file of Secrets.Env, root's with the account's group, which ~/.bashrc sources and
-// the otelcol role reads.
+// the otelcol unit reads.
 const EnvPath = "/etc/ws/env"
 
 // Secrets is the decrypted file. The names of its fields are those of the tables.

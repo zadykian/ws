@@ -69,9 +69,6 @@ func (f filePart) check(dir fs.FS) error {
 		return errors.New("check_booted goes with check")
 	case f.Line != "" || len(f.Has) > 0:
 		return f.checkLine()
-	case f.Secret && len(f.Check) > 0:
-		// A refusal's error carries what the checker prints, which may quote the content.
-		return errors.New("a secret file takes no check, as a refusal's error shows the checker's output")
 	case f.Absent && (f.Template != "" || f.Source != "" || len(f.Check) > 0 || f.Secret || f.Mode != 0 || f.GroupOf != "" || f.Group != ""):
 		return errors.New("an absent file takes a path, an owner and ours alone")
 	case f.Absent:
@@ -104,6 +101,8 @@ type built struct {
 	all   []resource.Resource
 	owner account.Account
 	left  bool
+	// gone is a file that the part removes.
+	gone bool
 }
 
 // sayLeft says once a unit that a secret file stays unchanged, as a read makes the unit's parts
@@ -151,7 +150,7 @@ func (f filePart) resources(ctx context.Context, e Env, dir fs.FS) (built, error
 		}
 		gone = f.AbsentWhenEmpty && len(bytes.TrimSpace(content)) == 0
 	}
-	var b built
+	b := built{gone: gone}
 	switch {
 	case f.Line != "":
 		b.file = f.lines(e, owner, rel)

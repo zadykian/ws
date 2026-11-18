@@ -53,6 +53,8 @@ type spec struct {
 	State map[string]stateSpec `toml:"state"`
 	// Guard is a check that fails where a later unit would lock the machine out.
 	Guard map[string]guardSpec `toml:"guard"`
+	// Compose is a project of Docker Compose, recreated where its files change.
+	Compose map[string]composeSpec `toml:"compose"`
 }
 
 // parse fills the spec's text, named name in errors, with e.Data, pure's funcs and self, and

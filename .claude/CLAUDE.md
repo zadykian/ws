@@ -36,8 +36,8 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 - The pages sit beside their code, as the `README.md` of a role or a package. A second page stands
   beside one where the cap keeps two apart: `zed/projects.md`, `cable/router.md`,
   `.github/workflows/rootless.md`, `mac-cld.md`,
-  `mac-servers.md` and `runbook.md` of each side. `.tools/README.md` holds the
-  gates and `.github/workflows/README.md` CI.
+  `mac-servers.md`, `runbook.md` of each side and `engine/core/kind/state.md`. `.tools/README.md`
+  holds the gates and `.github/workflows/README.md` CI.
 - `.tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
   caps them. `build` builds ws for a target, `serve-build` points a checkout's pin at the tree's build,
   for CI and a trial, and `vale-comments` runs Vale on files' comments. Go's
@@ -122,7 +122,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([Cutting a release](../engine/core/update/README.md#cutting-a-release)).
 - A pinned download is checked against its SHA-256 before use: ikeward's
   binary ([units.toml](../roles/server/ubuntu/ikeward/units.toml)) and otelcol's `.deb`
-  ([download.go](../roles/server/ubuntu/otelcol/download.go)). So is Fresh's `.deb`
+  ([units.toml](../roles/server/ubuntu/otelcol/units.toml)). So is Fresh's `.deb`
   ([units.toml](../roles/server/ubuntu/fresh/units.toml)). So is nct6687's source
   ([fans](../roles/server/ubuntu/fans/units.toml)), and so are foundryctl
   ([ci.yml](../.github/workflows/ci.yml)) and the gates' tools ([.tools/run](../.tools/run)). So is ws's

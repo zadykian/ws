@@ -20,16 +20,16 @@ Its templates and sources sit beside it, and a path in the spec is relative to t
 - **The order.** Units run by name, each moved behind the unit that its `after` names, ahead of the
   next by name. An `after` that no spec holds, or a loop, fails the load.
 - **Two renders.** Both are Go templates over the side's values, and a key the values lack is an
-  error. The spec's text fills as it loads, with `add`, `mul`, `div`, `exports`, `json VALUE`, which
-  quotes a value as Go's JSON encoder does, and `fail MSG`, which stops the render with MSG. It
-  takes `self` too, the path of the ws that runs the units, so that a command of ws runs before the
-  pinned binary is installed, or without booted systemd. A unit's template fills as it plans, as an
-  earlier unit may make the account or the file that it reads. It takes `envvar FILE NAME` and the
-  facts `mem_mib`, `cpus`, `fs_bytes PATH...`, `uid NAME`, `installed_version NAME`,
-  `kernel_release` and `root_file PATH` too. `installed_version` gives dpkg's version of an
-  installed package, else "", and `kernel_release` the running kernel's, as `uname -r` prints it.
-  `root_file` gives a file's text, read as root and trimmed, else "". A spec names no secret's file
-  with it, as a file's diff would show the secret.
+  error. The spec's text fills as it loads, with `add`, `mul`, `div`, `exports`,
+  `has_prefix TEXT PREFIX`, `json VALUE`, which quotes a value as Go's JSON encoder does, and
+  `fail MSG`, which stops the render with MSG. It takes `self` too, the path of the ws that runs the
+  units, so that a command of ws runs before the pinned binary is installed, or without booted
+  systemd. A unit's template fills as it plans, as an earlier unit may make the account or the file
+  that it reads. It takes `envvar FILE NAME` and the facts `mem_mib`, `cpus`, `fs_bytes PATH...`,
+  `uid NAME`, `installed_version NAME`, `kernel_release` and `root_file PATH` too.
+  `installed_version` gives dpkg's version of an installed package, else "", and `kernel_release`
+  the running kernel's, as `uname -r` prints it. `root_file` gives a file's text, read as root and
+  trimmed, else "". A spec names no secret's file with it, as a file's diff would show the secret.
 - **when.** Any unit takes `when = { FACT = "WANT" }`, and runs where every FACT of the machine
   gives its WANT, and `"!WANT"` where it does not. Elsewhere it plans nothing, and says so in a
   line. An empty WANT, negated or not, holds on no machine, so a value left empty turns the unit
@@ -67,7 +67,7 @@ service = "x.service"       # restarted where the file changes
 enabled = false             # service starts at boot
 reload = false              # reload service, not restart it
 user_service = "z.service"  # a unit of the owner's own systemd, restarted where the file changes
-secret = false              # keep the content out of the diff; takes no check
+secret = false              # keep the content out of the diff and out of a refusal's error
 absent = false              # remove the file; takes a path, an owner and ours alone
 line = ". /etc/x"           # or a line at the top of the owner's file, which keeps its own text
 has = ["cmd"]               # says whether the file, on stdin, holds the line: 0 yes, 1 no
@@ -82,7 +82,8 @@ after = "KIND/NAME"
 - A restart that a change calls for is noted in `/var/lib/ws/owed` before the change. A run that
   fails before the restart leaves it owed to the next run. A file that its check refused leaves
   the restart owed too, and the service keeps the live file.
-- A secret file takes no check, as a refusal's error shows what the checker prints.
+- A refusal of a secret file's check names the checker, the path and the exit status, never its
+  output or its stderr, which may quote the content.
 - `group` is read from `/etc/group` as the unit plans, so a package that mise installs may bring
   it, and a missing group fails the plan. It takes a file of root's, and never sits by `group_of`.
 - A file in `/etc/systemd/system` makes systemd read its units again.
@@ -200,6 +201,8 @@ source = "name"
 ```
 
 - The parts are written in order before the unit, and a change to any of them gives one restart.
+  A part that goes, by `absent` or `absent_when_empty`, is removed after the parts written, so
+  that a file never names one already gone.
   Two files of one service in two file units would restart it twice.
 - `in_force` and `loads` run as root. A load that fails, or nothing in force, counts as a
   difference. Each part must exist first.
@@ -210,37 +213,8 @@ source = "name"
 
 ### state
 
-```toml
-[state.NAME]                # exactly one of the keys below
-linger = "USER"             # USER's systemd starts at boot, and runs: user@UID.service
-subids = "USER"             # the range 100000-165535 where a file gives USER none of 65536
-purged = "package"          # removed with its settings
-http = "http://127.0.0.1:PORT/"  # answers 200, waited for 30 times, 2 s apart
-ufw = { comment = "ws: NAME", rules = [{ action = "allow", proto = "udp", to_port = "53", dir = "in" }] }
-ufw = { comment = "ws: NAME", rules = [{ action = "allow", interface = "IN0", out = "OUT0", from = "CIDR" }] }
-routes = { pool = "CIDR", net = "CIDR", dev = "docker0", hint = "…" }  # refuses an overlap
-addr = { iface = "docker0", want = "CIDR", hint = "…" }                # refuses a missing address
-left = { user = "USER", group = "GROUP" }
-run = { user = "USER", command = ["cmd"], creates = ["/path"] }        # or check = ["cmd"]
-reboot = { module = "name", package = "name", hint = "…" }             # notes a reboot that is due
-```
-
-- A new state is one field of `stateSpec`, of a type that makes its resource.
-- `ufw` owns the rules of its comment, and with `owns` those whose fields hold its values: those in
-  `rules` are added, the others deleted. A rule's address or port left out is any. A rule with `out`
-  routes what comes in on `interface` from `from` out by `out`, with `action` and no other field.
-- `routes` fails where a route of the moment overlaps `pool`, but for an on-link route of the main
-  table, or `net` on a device other than `dev`. `addr` fails where `iface` lacks `want`. Each error
-  ends with `hint`, as the run cannot mend either.
-- `run` runs its command as `user`, with the system's `PATH`: on Linux by runuser, in the user's
-  systemd session, and on macOS by sudo. It takes exactly one of `creates`, which runs where a path
-  is missing, and `check`, which runs where the check, as `user` too, exits other than 0. A
-  procedure that stays a command of ws runs this way.
-- `reboot` plans nothing. Where `package` is installed and `/sys/module/MODULE/version` is not its
-  upstream version, without the epoch or the revision, it warns that a reboot is due, with `hint`
-  after. It suits a module that loads at boot alone, as a display's driver.
-- Without booted systemd, `linger`, `http`, `ufw`, `addr` and `reboot` skip, and each says so. So
-  does `run` on Linux, where it needs the user's session; macOS has no systemd, and runs it.
+A state is a fact about the machine that no file or package holds: lingering, sub-IDs, a firewall's
+rules, a command that runs once. Its keys and rules are on [its own page](state.md).
 
 ### guard
 
@@ -260,6 +234,24 @@ command = ["/abs/cmd"]      # or: the command, as root, exits 0
 - `command` is a role's own check, a command of ws where Go holds it. It runs as root on every
   machine, containers too. Its exit 0 passes, and says each line of its output once a run. Any
   other fails the plan with the command's error, its standard error and its output.
+
+### compose
+
+```toml
+[compose.NAME]
+dir = "/abs/dir"            # holds compose.yaml and the files it reads
+project = "name"            # lowercase letters, digits, '_' and '-'
+```
+
+- The project runs on the system's daemon, as root. Compose's up runs the one-shot services
+  again, so it ups only where something is to do.
+- After a good up, it keeps the SHA-256 of the files below `dir` in `/var/lib/ws/compose/PROJECT`,
+  root's 0600. The sum covers each file's path and content, read as root, and each link's target.
+  A file that differs, comes or goes, or a missing sum, recreates every container. A failed up
+  keeps the old sum, so the next run recreates again.
+- With the sum kept, it ups without a recreation where a service whose `restart` is `always` or
+  `unless-stopped` is not running. A one-shot that has ended counts for nothing.
+- Without booted systemd it plans nothing, reads nothing, and says so.
 
 ## ws unit
 

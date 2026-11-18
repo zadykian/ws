@@ -244,7 +244,6 @@ func TestFileRefusesFieldsNoPlanTakes(t *testing.T) {
 		"path = \"/a\"\nsource = \"none\"\n":                            "none",
 		"path = \"/a\"\nsource = \"f\"\nmode = 0o4755\n":                "permission bits",
 		"path = \"/a\"\nsource = \"f\"\ncheck_booted = true\n":          "check_booted goes with check",
-		"path = \"/a\"\nsecret = true\ncheck = [\"c\"]\n":               "a secret file takes no check",
 		"path = \"/a\"\nsource = \"f\"\nservice = \"a\"\n":              "type's suffix",
 		"path = \"/a\"\nsource = \"f\"\nenabled = true\n":               "go with service",
 		"path = \"/a\"\nsource = \"f\"\nuser_service = \"a.service\"\n": "an owner other than root",
