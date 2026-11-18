@@ -14,6 +14,12 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
+// good are the values of a machine with a VPN, which the values' check takes.
+func good() values.Ikeward {
+	return values.Ikeward{Profile: "/root/vpn/vpnclient", DNS: "10.20.0.53",
+		Domains: []string{"example.internal"}, ForwardFrom: []string{"10.99.0.2"}}
+}
+
 // held holds the profile's files, as the secrets of a machine with a VPN do.
 var held = secrets.Secrets{File: secrets.Files{VPNP12: []byte("p12"), VPNSswan: []byte("sswan")}}
 
@@ -33,19 +39,6 @@ func TestStepsWaitOnTheirPredecessorsInOrder(t *testing.T) {
 	wantAfter := []string{"", "", downloadStep, installStep}
 	if !slices.Equal(names, wantNames) || !slices.Equal(after, wantAfter) {
 		t.Errorf("steps = %q after %q, want %q after %q", names, after, wantNames, wantAfter)
-	}
-}
-
-func TestTheDownloadStepRefusesBadValuesBeforeAnythingChanges(t *testing.T) {
-	v := good()
-	v.DNS = ""
-	m := effecttest.NewMachine()
-	_, err := step.Run(t.Context(), steps(v, held, m, &effecttest.Out{}, 1, time.Millisecond), &effecttest.Out{}, true)
-	if err == nil || !strings.Contains(err.Error(), "WS_IKEWARD_DNS") {
-		t.Errorf("error = %v, want one naming WS_IKEWARD_DNS", err)
-	}
-	if len(m.Calls) != 0 {
-		t.Errorf("calls = %q, want none", m.Calls)
 	}
 }
 

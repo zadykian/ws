@@ -36,12 +36,9 @@ func steps(v values.Ikeward, s secrets.Secrets, m effect.Machine, out effect.Out
 		return nil
 	}
 	file := binaryFile(m)
-	// A profile that the secrets lack fails the run before anything changes, as the values do. A
-	// read holds no secrets, so it says nothing of the profile.
+	// A profile that the secrets lack fails the run before anything changes. A read holds no
+	// secrets, so it says nothing of the profile. The values were checked as they loaded.
 	ready := func() error {
-		if err := check(v); err != nil {
-			return err
-		}
 		if !s.Unread && !(profile{files: s.File}).present() {
 			return fmt.Errorf("WS_IKEWARD_PROFILE is %s, and the secrets hold no profile for it", v.Profile)
 		}
