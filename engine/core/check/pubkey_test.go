@@ -1,10 +1,10 @@
-package sshcfg_test
+package check_test
 
 import (
 	"errors"
 	"testing"
 
-	"github.com/zadykian/ws/roles/internal/sshcfg"
+	"github.com/zadykian/ws/engine/core/check"
 )
 
 func TestParsePub(t *testing.T) {
@@ -13,12 +13,12 @@ func TestParsePub(t *testing.T) {
 		"ecdsa-sha2-nistp256", "ecdsa-sha2-nistp384", "ecdsa-sha2-nistp521",
 	}
 	for _, typ := range good {
-		key, err := sshcfg.ParsePub(typ + " AAAA+/==\n")
+		key, err := check.ParsePub(typ + " AAAA+/==\n")
 		if err != nil || key.Type != typ || key.Base64 != "AAAA+/==" || key.String() != typ+" AAAA+/==" {
 			t.Errorf("%s: ParsePub = %+v, %v", typ, key, err)
 		}
 	}
-	if key, err := sshcfg.ParsePub("\n  ssh-ed25519 AAAAC3Nza\tme@mac\n\n"); err != nil || key.String() != "ssh-ed25519 AAAAC3Nza" {
+	if key, err := check.ParsePub("\n  ssh-ed25519 AAAAC3Nza\tme@mac\n\n"); err != nil || key.String() != "ssh-ed25519 AAAAC3Nza" {
 		t.Errorf("a comment and blank lines: ParsePub = %+v, %v", key, err)
 	}
 	notKey := map[string]string{
@@ -30,15 +30,15 @@ func TestParsePub(t *testing.T) {
 		"empty":       "",
 	}
 	for name, text := range notKey {
-		if _, err := sshcfg.ParsePub(text); !errors.Is(err, sshcfg.ErrNotAKey) {
+		if _, err := check.ParsePub(text); !errors.Is(err, check.ErrNotAKey) {
 			t.Errorf("%s: err = %v, want ErrNotAKey", name, err)
 		}
 	}
-	if _, err := sshcfg.ParsePub("ssh-ed25519-cert-v01@openssh.com AAAA\n"); !errors.Is(err, sshcfg.ErrCertificate) {
+	if _, err := check.ParsePub("ssh-ed25519-cert-v01@openssh.com AAAA\n"); !errors.Is(err, check.ErrCertificate) {
 		t.Errorf("a certificate: err = %v", err)
 	}
-	_, err := sshcfg.ParsePub("ssh-mldsa-65 AAAA\n")
-	var typ sshcfg.TypeError
+	_, err := check.ParsePub("ssh-mldsa-65 AAAA\n")
+	var typ check.TypeError
 	if !errors.As(err, &typ) || typ.Type != "ssh-mldsa-65" {
 		t.Errorf("a type that ws lacks: err = %v", err)
 	}

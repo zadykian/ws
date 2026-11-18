@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"io/fs"
 
+	"github.com/zadykian/ws/engine/core/check"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/account"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/roles/internal/etcws"
 	"github.com/zadykian/ws/roles/internal/gitcfg"
-	"github.com/zadykian/ws/roles/internal/sshcfg"
 	"github.com/zadykian/ws/roles/server/ubuntu/internal/plan"
 )
 
@@ -33,7 +33,7 @@ func (s signers) Plan(ctx context.Context) ([]resource.Change, error) {
 	if err != nil {
 		return nil, err
 	}
-	key, err := sshcfg.ParsePub(string(pub))
+	key, err := check.ParsePub(string(pub))
 	if err != nil {
 		return nil, fmt.Errorf("%s %w", s.Key, err)
 	}
