@@ -16,3 +16,8 @@ A person does these steps at ws, in this order. The Mac's side sets them in its 
 5. Run `sudo systemd-run --pty --wait -p LoadCredentialEncrypted=ws-secrets ws server ubuntu apply
    --secrets /etc/ws/secrets.age`, as [the secrets file](shell/README.md#the-secrets-file) says.
    A second run changes nothing.
+
+A run of the bootstrap by hand, or of its plan, names the data directory that `install.sh` gives
+mise: `sudo env MISE_DATA_DIR=/usr/local/share/mise mise -C /opt/ws bootstrap`. There the account
+reaches the tools. Without it, `guard/devtools-data-dir` fails the run
+([devtools](devtools/README.md#the-tools)).

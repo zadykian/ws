@@ -1,16 +1,14 @@
 # devtools
 
 The `devtools` role installs Node, the .NET SDKs, gh, glow, the libraries headless Chromium needs,
-Go, gopls, Delve, roslyn-language-server, the SQL and Docker servers and rustup. The sources and
-the packages are mise's, in [mise.server.toml](mise.server.toml). The rest runs as Go steps in
-[roles/server/ubuntu/devtools](.): gh's telemetry and login, Go, the servers and rustup.
+Go, gopls, Delve, roslyn-language-server, the SQL and Docker servers and rustup. The sources, the
+packages and the tools are mise's, in [mise.server.toml](mise.server.toml), and the tools' links
+are units of [units.toml](units.toml). The rest runs as Go steps in
+[roles/server/ubuntu/devtools](.): gh's telemetry and login, roslyn-language-server, the npm
+servers and rustup.
 
-Go goes in `/usr/local/go` from go.dev's tarball, checked against the SHA-256 go.dev lists for it.
-ws unpacks the tarball beside the target and moves the tree into place whole. The tree's
-`.ws-source` file holds the tarball's URL and is its probe. A run cut short never passes for the
-version, and a current Go makes no fetch. A new `GoVersion` in `roles/server/ubuntu/devtools/pins.go`
-replaces the Go there, and the Go that builds gopls. rustup installs Rust's stable toolchain in the
-user's home. Once there, rustup updates itself, so ws leaves it alone.
+rustup installs Rust's stable toolchain in the user's home. Once there, rustup updates itself, so
+ws leaves it alone.
 
 ## The sources and the packages
 
@@ -28,27 +26,44 @@ with ours: remove it by hand.
   `APT::Architecture-Variants` fails at this package until the setting goes.
 - The libraries for Chromium are fixed packages, with apt's own recommends.
 
-## The language servers
+## The tools
 
-- gopls, Go's server, comes from `go install` at the version `pins.go` pins, with the Go of this
-  role and Go's checksum database. A change of either version builds it again.
-- Delve, Go's debugger, goes in the same way and a change of either version builds it again.
-  Zed's debugger runs it for Go.
+Go, gopls, Delve, postgres-language-server and docker-language-server are tools of mise's, at the
+versions that `[tools]` pins. [mise.server.lock](../../../../mise/mise.server.lock) holds the url
+and the SHA-256 of each download for `linux-x64` and `linux-arm64`. Go's comes from the list that
+go.dev publishes, and each server's from GitHub's digest of its release asset. A wrong one fails
+the run before any unit of ws, and `MISE_LOCKED=1` refuses a tool that the lock lacks. gopls and
+Delve are `go:` tools, which `go install` builds with mise's Go through Go's checksum database.
+mise checks a sum at the download alone, so it mends no tool changed after its install:
+`sudo env MISE_DATA_DIR=/usr/local/share/mise mise -C /opt/ws install --force TOOL` does.
+
+- mise puts the tools under `/usr/local/share/mise/installs`, root's and mode 0755, where every
+  run as root exports `MISE_DATA_DIR=/usr/local/share/mise`, as `install.sh` does. Under root's
+  own data directory the account could run none. `guard/devtools-data-dir` fails a run without
+  it. It runs after mise's tools, so it names the mistake, and a missing tool is then under
+  `/root`: run the bootstrap again with the variable.
+- Links of the file kind give each tool a path that names no version: `/usr/local/go`,
+  `/usr/local/bin/gopls`, `/usr/local/bin/dlv`, `/usr/local/bin/postgres-language-server` and
+  `/usr/local/bin/docker-language-server`. Each points into its version's directory, never at
+  `latest`, which follows the highest version installed. shell's profile puts `/usr/local/go/bin`
+  on `PATH`, and gopls runs the `go` it finds there.
+- A `/usr/local/go` that is a directory fails its link: remove it by hand, with
+  `rm -rf /usr/local/go`.
+- To bump a tool, change its version in `[tools]` and its link in `units.toml`, then write the
+  lock again in a container with git and mise:
+  `MISE_ENV=server mise -C roles/server/ubuntu/devtools lock --platform linux-x64,linux-arm64`,
+  then move `roles/server/ubuntu/devtools/mise.server.lock` to `mise/mise.server.lock`. `go test`
+  fails where a link, the lock and `[tools]` disagree. On the server,
+  `sudo env MISE_DATA_DIR=/usr/local/share/mise mise -C /opt/ws prune` drops the old versions.
+- mise builds a `go:` tool once, and never again where Go changes. Delve 1.27.2 supports Go 1.25
+  to 1.27, so a new minor Go goes with a newer Delve.
 - roslyn-language-server, C#'s server, is the server of VS Code's C# extension. It comes from
   nuget.org with `dotnet tool` at the version `pins.go` pins, and runs on the .NET 10 of this role.
-- They go in `WS_USER`'s home: `~/go/bin/gopls`, `~/go/bin/dlv` and
-  `~/.dotnet/tools/roslyn-language-server`. Their paths follow `WS_HOME`, so the `zed` and
-  `fresh` roles find them with this role not run.
+  It goes in `~/.dotnet/tools/roslyn-language-server`, `WS_USER`'s, which follows `WS_HOME`.
 
 ## The SQL and Docker servers
 
-postgres-language-server and docker-language-server are release binaries, each pinned in
-`roles/server/ubuntu/devtools/binaries.go` by version and by SHA-256 for `amd64` and `arm64`. The
-role downloads the one for the machine, by the architecture that dpkg names, to `/usr/local/bin`,
-owned by root with mode 0755, so any `WS_USER` can run it. A failed download is tried five times,
-ten seconds apart. A machine of another architecture fails the step. The settings name both by path,
-so Zed downloads neither. Fresh names them too. `mise bootstrap` writes Zed's settings and Fresh's
-config, and `ws server ubuntu apply --only devtools` installs the servers they name.
+Zed's settings and Fresh's config name both servers by path, so Zed downloads neither.
 
 - docker-language-server's telemetry is off, and its experimental `removeOverlappingIssues` drops
   the diagnostics that rcjsuen's server also gives. Check the option on each bump.
@@ -73,8 +88,7 @@ A project's `postgres-language-server.jsonc` holds `db` fields, never a `connect
   schemas.
 - ws drops new connections to private ranges ([outbound](../security/README.md#outbound)): a database on
   the LAN hangs for `db.connTimeoutSecs`, 10 by default. Loopback, Docker and `ikeward0` work.
-- To bump a pin, read the digests with the `gh api` command in `binaries.go` and check a download
-  with `sha256sum`. A bumped postgres-language-server may need its daemon stopped.
+- A bumped postgres-language-server may need its daemon stopped.
 
 ## The npm servers
 

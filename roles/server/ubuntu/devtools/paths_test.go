@@ -8,7 +8,7 @@ func TestServerPathsNameEachServer(t *testing.T) {
 		t.Fatalf("%d paths: %v", len(paths), paths)
 	}
 	for name, want := range map[string]string{
-		"gopls":                      "/srv/x/go/bin/gopls",
+		"gopls":                      "/usr/local/bin/gopls",
 		"postgres-language-server":   "/usr/local/bin/postgres-language-server",
 		"dockerfile-language-server": "/srv/x/.local/lib/language-servers/node_modules/.bin/docker-langserver",
 	} {
@@ -19,14 +19,7 @@ func TestServerPathsNameEachServer(t *testing.T) {
 }
 
 func TestPathsFollowTheHome(t *testing.T) {
-	tests := map[string]string{
-		Gopls("/srv/x"):  "/srv/x/go/bin/gopls",
-		Roslyn("/srv/x"): "/srv/x/.dotnet/tools/roslyn-language-server",
-		Dlv("/srv/x"):    "/srv/x/go/bin/dlv",
-	}
-	for got, want := range tests {
-		if got != want {
-			t.Errorf("got %q, want %q", got, want)
-		}
+	if got, want := Roslyn("/srv/x"), "/srv/x/.dotnet/tools/roslyn-language-server"; got != want {
+		t.Errorf("got %q, want %q", got, want)
 	}
 }

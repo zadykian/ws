@@ -3,8 +3,10 @@
 # must change nothing: it exits 2 where a part or a unit would change, and 1 where it cannot tell.
 # Then the check against a silent skip must fail the plan where mise's config lacks a unit. This
 # drops the frame's line of state/ws-binary, and puts the file back after. ws unit verify names the
-# unit, or the plugin that mise no longer loads where the line was the last of ws's.
+# unit, or the plugin that mise no longer loads where the line was the last of ws's. As a run by
+# hand, it names the data directory that install.sh gives mise.
 set -eu
+export MISE_DATA_DIR=/usr/local/share/mise
 mise -C /opt/ws bootstrap plan --detailed-exitcode </dev/null
 
 toml=/opt/ws/roles/server/ubuntu/frame/mise.server.toml

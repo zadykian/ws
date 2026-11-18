@@ -27,9 +27,8 @@ func TestServerApplyRefusesAStepItsRoleLacks(t *testing.T) {
 	p, m := serverProcess()
 	status, _, stderr := runWs(p, "", "server", "ubuntu", "apply", "--only", "devtools/no such")
 	want := `ws server ubuntu apply: no step "no such" in devtools; its steps here are [` +
-		`"Devtools gh telemetry" "Devtools gh login" "Devtools Go" "Devtools gopls" "Devtools Delve" ` +
-		`"Devtools roslyn-language-server" "Devtools postgres-language-server" ` +
-		`"Devtools docker-language-server" "Devtools npm servers" "Devtools rustup"]` + "\n" +
+		`"Devtools gh telemetry" "Devtools gh login" "Devtools roslyn-language-server" "Devtools npm servers" ` +
+		`"Devtools rustup"]` + "\n" +
 		"Run 'ws server ubuntu apply --help' for usage.\n"
 	if status != 2 || stderr != want {
 		t.Errorf("status = %d, stderr = %q", status, stderr)

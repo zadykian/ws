@@ -8,7 +8,7 @@ import (
 )
 
 // The servers sit under the user's home, which is /home/ws only in the tests: a literal home in
-// the template would point four servers nowhere.
+// the template would point three servers nowhere.
 func TestTheServersFollowTheHome(t *testing.T) {
 	for _, home := range []string{"/home/ws", "/home/zadykian", "/root"} {
 		text := string(renderedAt(t, home))

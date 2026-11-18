@@ -25,7 +25,8 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   ws, a release, with the release's SHA-256 for each target in the lock. `mise.server.toml` is
   the server's part, and `plugins/ws` the plugin that hands ws's units to `ws unit`. A role moved
   to mise holds its spec, `units.toml`, and its mise files beside its page, and `mise/conf.d`
-  links its directory ([The frame](../roles/server/ubuntu/frame/README.md)).
+  links its directory ([The frame](../roles/server/ubuntu/frame/README.md)). The roles' tools
+  lock in `mise/mise.server.lock`.
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
 - `install.sh`: installs mise and runs `mise bootstrap` on a release's tree
@@ -133,10 +134,10 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   target `install.sh` holds ([install.sh](../install.sh)). So is
   yamllint ([lint-requirements.in](../.github/lint-requirements.in)), and Homebrew's `.pkg`, with its signer
   ([runbook.md](../roles/client/macos/runbook.md)). Go is checked against the
-  SHA-256 its publisher lists ([devtools](../roles/server/ubuntu/devtools/README.md)). The postgres-language-server and
-  docker-language-server are checked against their SHA-256
-  ([binaries.go](../roles/server/ubuntu/devtools/binaries.go)). gopls and Delve are built through Go's
-  checksum database. roslyn-language-server is pinned by version alone
+  SHA-256 its publisher lists, and the postgres-language-server and docker-language-server against
+  theirs. mise's lock holds each for its platform ([mise.server.lock](../mise/mise.server.lock)).
+  gopls and Delve are built through Go's checksum database, as mise's `go:` tools
+  ([devtools](../roles/server/ubuntu/devtools/README.md#the-tools)). roslyn-language-server is pinned by version alone
   ([pins.go](../roles/server/ubuntu/devtools/pins.go)). The npm servers are checked against the sha512
   `integrity` of their lockfile ([devtools](../roles/server/ubuntu/devtools/README.md#the-npm-servers)). Docker's
   apt key is checked against its fingerprint, which mise's source pins

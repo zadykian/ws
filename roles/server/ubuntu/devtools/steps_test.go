@@ -16,10 +16,10 @@ func TestStepsOrderAndWaits(t *testing.T) {
 	for _, s := range steps {
 		names, waits = append(names, s.Name()), append(waits, s.WaitsOn())
 	}
-	if want := []string{"Devtools gh telemetry", "Devtools gh login", "Devtools Go", "Devtools gopls", "Devtools Delve", "Devtools roslyn-language-server", "Devtools postgres-language-server", "Devtools docker-language-server", "Devtools npm servers", "Devtools rustup"}; !slices.Equal(names, want) {
+	if want := []string{"Devtools gh telemetry", "Devtools gh login", "Devtools roslyn-language-server", "Devtools npm servers", "Devtools rustup"}; !slices.Equal(names, want) {
 		t.Errorf("steps %q, want %q", names, want)
 	}
-	if want := []string{"", "", "", "Devtools Go", "Devtools Go", "", "", "", "", ""}; !slices.Equal(waits, want) {
+	if want := []string{"", "", "", "", ""}; !slices.Equal(waits, want) {
 		t.Errorf("waits %q, want %q", waits, want)
 	}
 }

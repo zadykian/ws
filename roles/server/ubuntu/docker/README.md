@@ -48,7 +48,8 @@ when it next starts. The unit `state/docker-dns` owns every ufw rule with the co
 `docker0` takes a new `WS_DOCKER_BRIDGE_IP` or `WS_DOCKER_BRIDGE_PREFIX_LENGTH` only when Docker starts
 with no container running, as after a reboot. Until then lookups to a new address get no answers,
 and the run stops after it restarts Docker. Reboot, or stop every container and restart Docker,
-then run `mise bootstrap` again. `mise bootstrap plan` shows the move.
+then run the bootstrap again. Its plan shows the move. Both run as
+[the runbook](../runbook.md) writes them.
 
 ## The address pool
 

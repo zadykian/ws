@@ -43,6 +43,8 @@ type miseConfig struct {
 		} `toml:"apt"`
 		Packages map[string]string `toml:"packages"`
 	} `toml:"bootstrap"`
+	// Tools holds a version, or a table with one.
+	Tools map[string]any `toml:"tools"`
 }
 
 func readConfig(t *testing.T) miseConfig {
@@ -119,8 +121,14 @@ func TestDevtoolsPackagesAreTodays(t *testing.T) {
 		"apt:libcups2t64", "apt:libgbm1", "apt:libnspr4", "apt:libnss3", "apt:libpango-1.0-0",
 		"apt:libxcomposite1", "apt:libxdamage1", "apt:libxfixes3", "apt:libxkbcommon0", "apt:libxrandr2"}
 	got := readConfig(t).Bootstrap.Packages
-	if len(got) != len(want) {
-		t.Errorf("%d packages, want %d", len(got), len(want))
+	apt := 0
+	for name := range got {
+		if strings.HasPrefix(name, "apt:") {
+			apt++
+		}
+	}
+	if apt != len(want) {
+		t.Errorf("%d apt packages, want %d", apt, len(want))
 	}
 	for _, name := range want {
 		if got[name] != "latest" {

@@ -113,7 +113,9 @@ last line names the roles that changed, `changed: none` on a second run.
 ## Dry runs
 
 With `--check`, ws plans its steps and shows what each would change, and nothing changes. For the
-roles that mise sets up, `sudo mise -C /opt/ws bootstrap plan` does:
+roles that mise sets up, `sudo env MISE_DATA_DIR=/usr/local/share/mise mise -C /opt/ws bootstrap
+plan` does, as a run by hand names the data directory that `install.sh` gives mise
+([The runbook](roles/server/ubuntu/runbook.md)):
 
 ```sh
 sudo ws server ubuntu apply --check

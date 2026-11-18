@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/kind"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/server/ubuntu/devtools"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -82,7 +83,7 @@ func TestFreshDebFailsWithNoSum(t *testing.T) {
 	}
 }
 
-// The servers sit under the user's home: a literal home would point four servers nowhere.
+// The servers sit under the user's home: a literal home would point three servers nowhere.
 func TestFreshConfigNamesTheHomesServers(t *testing.T) {
 	for user, home := range map[string]string{"zadykian": "/home/zadykian", "root": "/root"} {
 		m, us := loadUnits(t, user, home, "amd64")
@@ -90,8 +91,8 @@ func TestFreshConfigNamesTheHomesServers(t *testing.T) {
 			t.Fatal(err)
 		}
 		path := home + "/.config/fresh/config.json"
-		if got := string(m.Files[path]); !strings.Contains(got, `"`+home+`/go/bin/gopls"`) {
-			t.Errorf("%s: config.json lacks the home's gopls", user)
+		if got := string(m.Files[path]); !strings.Contains(got, `"`+devtools.Roslyn(home)+`"`) {
+			t.Errorf("%s: config.json lacks the home's roslyn-language-server", user)
 		}
 		if _, ok := m.Files[home+"/.config/fresh/themes/jetbrains-dark.json"]; !ok {
 			t.Errorf("%s: no theme", user)

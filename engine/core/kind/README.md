@@ -89,7 +89,7 @@ path = "/usr/local/sbin/name"            # root's, at mode = 0o755 where unset
 
 A release's program, with no package around it. The download is checked against its SHA-256 before
 it makes the file, so a wrong sum leaves none, and a file of another content is made again.
-ikeward's binary is one, and so are devtools' pinned servers where mise's tools miss the account.
+ikeward's binary is one.
 
 ### packages
 

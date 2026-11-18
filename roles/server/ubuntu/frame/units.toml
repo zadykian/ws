@@ -1,4 +1,4 @@
-# The frame's own unit. mise installs ws under root's data directory, by version, which neither a
+# The frame's own unit. mise installs ws under its data directory, by version, which neither a
 # unit of systemd nor a person can name: this keeps /usr/local/bin/ws the pinned binary. The copy
 # goes in under a temporary name, so that a running ws never makes it fail.
 [state.ws-binary.run]

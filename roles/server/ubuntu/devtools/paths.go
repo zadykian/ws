@@ -1,9 +1,18 @@
+// Package devtools sets up the account's tools that the role's mise config leaves: gh's telemetry
+// and login, roslyn-language-server, the npm servers and rustup. It names the language servers'
+// paths, which Zed's and Fresh's files hold.
 package devtools
 
 import "github.com/zadykian/ws/roles/server/ubuntu/devtools/internal/npm"
 
-// Gopls returns where go install puts gopls for the home. Zed and Fresh name it by this path.
-func Gopls(home string) string { return home + "/go/bin/gopls" }
+// The links that units.toml makes to mise's tools, root's, so any WS_USER runs them. Zed and Fresh
+// name them by these paths.
+const (
+	GoplsPath    = "/usr/local/bin/gopls"
+	DlvPath      = "/usr/local/bin/dlv"
+	pglsPath     = "/usr/local/bin/postgres-language-server"
+	dockerLSPath = "/usr/local/bin/docker-language-server"
+)
 
 // Roslyn returns where dotnet tool install --global puts roslyn-language-server for the home.
 func Roslyn(home string) string { return home + "/.dotnet/tools/roslyn-language-server" }
@@ -12,15 +21,12 @@ func Roslyn(home string) string { return home + "/.dotnet/tools/roslyn-language-
 // path. Its keys are the servers' names.
 func ServerPaths(home string) map[string]string {
 	return map[string]string{
-		"gopls":                       Gopls(home),
+		"gopls":                       GoplsPath,
 		"roslyn-language-server":      Roslyn(home),
-		"postgres-language-server":    "/usr/local/bin/postgres-language-server",
-		"docker-language-server":      "/usr/local/bin/docker-language-server",
+		"postgres-language-server":    pglsPath,
+		"docker-language-server":      dockerLSPath,
 		"ansible-language-server":     npm.Bin(home, "ansible-language-server"),
 		"vscode-html-language-server": npm.Bin(home, "vscode-html-language-server"),
 		"dockerfile-language-server":  npm.Bin(home, "docker-langserver"),
 	}
 }
-
-// Dlv returns where go install puts Delve for the home.
-func Dlv(home string) string { return home + "/go/bin/dlv" }

@@ -126,7 +126,8 @@ want=(server account)
 for env in "${want[@]}"; do
     written "$env"
 done
-# install.sh trusts the tree, so that a plan by hand, with no variable, runs and finds no change.
+# install.sh trusts the tree, so that a plan by hand, with no MISE_TRUSTED_CONFIG_PATHS, runs and
+# finds no change. This tree holds no tool, so the plan needs no MISE_DATA_DIR either.
 as_root /usr/local/bin/mise -C /opt/ws bootstrap plan --detailed-exitcode </dev/null >/dev/null ||
     fail "a plan by hand after install.sh found a change or failed"
 echo "::endgroup::"

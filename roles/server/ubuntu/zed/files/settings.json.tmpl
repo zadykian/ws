@@ -4,7 +4,7 @@
   "node": { "path": "/usr/bin/node", "npm_path": "/usr/bin/npm" },
   "lsp": {
     "gopls": {
-      "binary": { "path": "{{.Home}}/go/bin/gopls", "arguments": ["-mode=stdio"] }
+      "binary": { "path": "/usr/local/bin/gopls", "arguments": ["-mode=stdio"] }
     },
     "roslyn": {
       "binary": { "path": "{{.Home}}/.dotnet/tools/roslyn-language-server", "arguments": ["--stdio", "--autoLoadProjects", "--telemetryLevel", "off"] }
@@ -45,5 +45,5 @@
     ],
     "JSONC": ["*.json"]
   },
-  "dap": { "Delve": { "binary": "{{.Home}}/go/bin/dlv" } }
+  "dap": { "Delve": { "binary": "/usr/local/bin/dlv" } }
 }
