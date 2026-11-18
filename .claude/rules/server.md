@@ -104,6 +104,9 @@ steps, and each role's README says what it sets up.
 
 - foundryctl's compose files, in `roles/server/ubuntu/signoz/deployment/`, are never edited by
   hand: change `casting.yaml` and forge again ([The compose files](../../roles/server/ubuntu/signoz/README.md#the-compose-files)).
+- Each forged file and directory has its entry in the role's `mise.server.toml`, as mise copies
+  no tree: `TestEachForgedFileIsMises` fails on one missing or left over
+  ([units_test.go](../../roles/server/ubuntu/signoz/units_test.go)).
 - The dashboards' files are kept as SigNoz's API returns them, so that the step can compare the
   two. After a change of SigNoz's image, refresh them and commit them with the casting
   ([The dashboards](../../roles/server/ubuntu/signoz/internal/dashboards/dashboards/README.md#refreshing-them)).

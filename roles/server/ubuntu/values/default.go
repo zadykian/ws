@@ -46,7 +46,7 @@ func Default() Values {
 		Cable:    Cable{Address: "10.77.0.1/30"},
 		Security: Security{Outbound: true},
 		Signoz: Signoz{
-			Dir: "/opt/signoz", URL: "http://127.0.0.1:3301", RetentionDays: 90,
+			URL: "http://127.0.0.1:3301", RetentionDays: 90,
 			Dashboards: []string{"host", "claude"},
 		},
 		Tunnel: Tunnel{

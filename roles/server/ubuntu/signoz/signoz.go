@@ -1,18 +1,8 @@
-// Package signoz sets up SigNoz in Docker from foundryctl's compose files, and sets its retention
-// and dashboards through its API. The compose files and the casting they are forged from are
-// embedded from this directory.
+// Package signoz holds SigNoz's steps that no kind holds, which ws server ubuntu signoz runs for
+// the role's units. They are the root user's password, the wait for SigNoz's API, and its
+// retention and dashboards, set through that API. mise copies foundryctl's compose files, and the
+// kind compose ups the project.
 package signoz
-
-import "embed"
-
-// deployment holds foundryctl's forged files. They are never edited by hand: change casting.yaml
-// and forge again.
-//
-//go:embed deployment
-var deployment embed.FS
-
-// Project is the compose project's name, which compose.yaml sets.
-const Project = "signoz"
 
 // Dir is the compose project's directory, which holds the compose files and root.env.
 const Dir = "/opt/signoz"

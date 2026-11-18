@@ -14,7 +14,6 @@ type GitClone struct {
 
 // Signoz is the signoz role's keys.
 type Signoz struct {
-	Dir           string   `yaml:"WS_SIGNOZ_DIR"`
 	URL           string   `yaml:"WS_SIGNOZ_URL"`
 	RetentionDays int      `yaml:"WS_SIGNOZ_RETENTION_DAYS"`
 	Dashboards    []string `yaml:"WS_SIGNOZ_DASHBOARDS"`
