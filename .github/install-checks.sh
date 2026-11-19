@@ -79,16 +79,16 @@ printf x >>"$bad/mise-v$version-$asset"
 echo v0.2.0 >"$tmp/serve/latest"
 
 # The release's tree: a config with an entry for each env's file, and a directory for them. The
-# account's file sits in a role, behind the side's link, as a role's does, and the root holds
-# none. On such a tree mise trust --all never ends, so the case of the latest release proves
-# install.sh's trust.
+# account's and the secrets' files sit in a role, behind the side's link, as a role's do, and the
+# root holds neither. On such a tree mise trust --all never ends, so the case of the latest release
+# proves install.sh's trust.
 repo=$tmp/repo
 mkdir -p "$repo/roles/server/ubuntu/part" "$repo/roles/server/mise"
 ln -s ../ubuntu "$repo/roles/server/mise/conf.d"
 echo '# the install job'"'"'s tree' >"$repo/mise.toml"
-for env in server booted account; do
+for env in server booted account secrets; do
     config=$repo/mise.$env.toml
-    [ "$env" != account ] || config=$repo/roles/server/ubuntu/part/mise.$env.toml
+    case $env in account | secrets) config=$repo/roles/server/ubuntu/part/mise.$env.toml ;; esac
     cat >"$config" <<TOML
 [bootstrap.directories."/etc/ws-install-check"]
 mode = "0755"
@@ -152,6 +152,16 @@ done
 # finds no change. This tree holds no tool, so the plan needs no MISE_DATA_DIR either.
 as_root /usr/local/bin/mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null >/dev/null ||
     fail "a plan by hand after install.sh found a change or failed"
+# The set ws leaves secrets out, which a run adds by -E ws,secrets. A plain plan after it keeps the
+# env's file, as a run without the env changes none of it.
+[ ! -e /etc/ws-install-check/secrets ] || fail "install.sh's run loaded the env secrets"
+as_root /usr/local/bin/mise -C /opt/ws/roles/server -E ws,secrets bootstrap </dev/null >/dev/null ||
+    fail "a run with -E ws,secrets failed"
+for env in "${want[@]}" secrets; do
+    written "$env"
+done
+as_root /usr/local/bin/mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null >/dev/null ||
+    fail "a plan by hand after the env secrets found a change or failed"
 echo "::endgroup::"
 
 echo "::group::Root's values leave the account's part out, and mise stays"
@@ -159,7 +169,7 @@ as_root install -d -m 755 /etc/ws
 printf '%s\n' --- 'WS_USER: root' | as_root tee /etc/ws/values.yml >/dev/null
 as_root rm -f /etc/ws-install-check/account
 install_sh WS_MISE_URL="$url/mise/none"
-! grep -q '^env = .*"account"' /etc/mise/miserc.toml || fail "the miserc names the account for root"
+! grep -q '^ws = .*"account"' /etc/mise/miserc.toml || fail "the miserc names the account for root"
 [ ! -e /etc/ws-install-check/account ] || fail "the account's part ran for root"
 written server
 echo "::endgroup::"

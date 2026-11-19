@@ -179,17 +179,19 @@ account() {
     echo "${name:-zadykian}"
 }
 
-# miserc writes /etc/mise/miserc.toml, through a file of its own and a rename. mise reads its envs
-# from it before it reads any config, as a miserc has no key of a values file to read.
+# miserc writes /etc/mise/miserc.toml by a rename. mise reads it before any config or values file.
 miserc() {
     mkdir -p /etc/mise || die "cannot create /etc/mise"
     part=', "account"'
     [ "$(account)" != root ] || part=
     rc=$(mktemp /etc/mise/.miserc.XXXXXX) || die "cannot write to /etc/mise"
     cat >"$rc" <<TOML
-# ws's side, the server: its booted part where systemd runs, and the account's part where WS_USER
-# is not root. install.sh writes it from /etc/ws/values.yml: run it again after WS_USER changes.
-env = ["server"{% if "/run/systemd/system" is dir %}, "booted"{% endif %}$part]
+# ws's side, the server, as the set ws: booted where systemd runs, account where WS_USER is not
+# root. install.sh writes it from /etc/ws/values.yml: run it again after WS_USER changes. The
+# secrets task adds secrets by -E ws,secrets. env sits above the table, which TOML would put it in.
+env = ["ws"]
+[env_sets]
+ws = ["server"{% if "/run/systemd/system" is dir %}, "booted"{% endif %}$part]
 TOML
     chmod 644 "$rc"
     mv -f "$rc" /etc/mise/miserc.toml || die "cannot write /etc/mise/miserc.toml"
