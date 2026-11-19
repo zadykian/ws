@@ -114,6 +114,10 @@ func Load(m effect.Machine, path string) (Values, error) {
 	return v, nil
 }
 
+// followers are the keys that derive fills from the file, each after a key it follows. Set moves
+// the line of each that holds its derived value.
+var followers = []string{"WS_HOME", "WS_GIT_SIGNING_PUB_KEY"}
+
 // derive fills the values that follow WS_HOME when the file leaves them empty. It lists the Mac
 // at wg0's address plus one where the file has no WS_TUNNEL_PEERS: an empty or null list keeps no peer.
 func (v *Values) derive() {

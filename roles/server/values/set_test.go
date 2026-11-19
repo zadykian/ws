@@ -35,7 +35,7 @@ func TestSetEditsOneLineAndKeepsTheRest(t *testing.T) {
 		{"starts an empty file", "", "WS_USER", "ada", "---\nWS_USER: ada\n"},
 		{"ends the last line", "WS_USER: ada", "WS_BASE_SWAPPINESS", "20", "WS_USER: ada\nWS_BASE_SWAPPINESS: 20\n"},
 	} {
-		got, err := Set([]byte(tc.data), tc.key, tc.value)
+		got, _, err := Set([]byte(tc.data), tc.key, tc.value)
 		if err != nil {
 			t.Errorf("%s: %v", tc.name, err)
 		} else if string(got) != tc.want {
@@ -45,11 +45,11 @@ func TestSetEditsOneLineAndKeepsTheRest(t *testing.T) {
 }
 
 func TestSetTwiceChangesNothing(t *testing.T) {
-	once, err := Set([]byte("---\n"), "WS_IKEWARD_DOMAINS", "a.example,b.example")
+	once, _, err := Set([]byte("---\n"), "WS_IKEWARD_DOMAINS", "a.example,b.example")
 	if err != nil {
 		t.Fatal(err)
 	}
-	twice, err := Set(once, "WS_IKEWARD_DOMAINS", "a.example, b.example")
+	twice, _, err := Set(once, "WS_IKEWARD_DOMAINS", "a.example, b.example")
 	if err != nil || string(twice) != string(once) {
 		t.Errorf("twice = %q, %v, want %q", twice, err, once)
 	}
@@ -61,11 +61,11 @@ func TestSetTakesAKeyBelowTheFilesHome(t *testing.T) {
 		{"WS_USER: root\n", "WS_GIT_SIGNING_PUB_KEY", "/root/.ssh/k.pub"},
 		{"WS_HOME: /srv/x\n", "WS_GIT_SIGNING_PUB_KEY", "/srv/x/k.pub"},
 	} {
-		if _, err := Set([]byte(tc[0]), tc[1], tc[2]); err != nil {
+		if _, _, err := Set([]byte(tc[0]), tc[1], tc[2]); err != nil {
 			t.Errorf("%s at %s in %q: %v", tc[1], tc[2], tc[0], err)
 		}
 	}
-	if _, err := Set([]byte("WS_USER: root\n"), "WS_GIT_SIGNING_PUB_KEY", "/home/zadykian/k.pub"); err == nil ||
+	if _, _, err := Set([]byte("WS_USER: root\n"), "WS_GIT_SIGNING_PUB_KEY", "/home/zadykian/k.pub"); err == nil ||
 		!strings.Contains(err.Error(), "is outside WS_HOME /root") {
 		t.Errorf("a key outside the file's home: %v", err)
 	}
@@ -82,7 +82,7 @@ func TestSetRefuses(t *testing.T) {
 		{"a key of a quoted name", "\"WS_USER\": ada\n", "WS_USER", "bob", "edit it by hand"},
 		{"a document that ended", "WS_HOME: /h\n...\n", "WS_USER", "bob", "edit it by hand"},
 	} {
-		if _, err := Set([]byte(tc.data), tc.key, tc.value); err == nil || !strings.Contains(err.Error(), tc.want) {
+		if _, _, err := Set([]byte(tc.data), tc.key, tc.value); err == nil || !strings.Contains(err.Error(), tc.want) {
 			t.Errorf("%s: err = %v, want %q", tc.name, err, tc.want)
 		}
 	}
