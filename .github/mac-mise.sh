@@ -27,18 +27,25 @@ mac_mise() {
         sudo tee /etc/mise/miserc.toml >/dev/null
 }
 
-# mac_tree puts this commit's tree in /opt/ws, root's and writable by root alone, as a plugin linked
-# by its path loads as its owner's. ws's build goes beside it, as the pinned version, and
-# mac_serve serves it.
+# mac_tree puts this commit's tree in /opt/ws, root's and writable by root alone, and links its
+# plugin into /usr/local/share/mise/plugins, as the runbook does. mise refuses a system plugin that
+# anyone but root or the user may change, through any directory on its way. So /opt and
+# /usr/local/share are root's and 755, as on a Mac with Homebrew in /opt/homebrew, where the
+# runner's image may differ. ws's build goes beside the tree, as the pinned version, and mac_serve
+# serves it.
 mac_tree() {
     sh .tools/serve-build . "$mac_rel" darwin arm64
     mac_serve
+    sudo mkdir -p /opt /usr/local/share/mise/plugins
+    sudo chown root:wheel /opt /usr/local/share
+    sudo chmod 755 /opt /usr/local/share
     sudo rm -rf /opt/ws
     sudo mkdir -p /opt/ws
     git archive HEAD | sudo tar -x -C /opt/ws
     sudo cp mise.local.toml mise.local.lock /opt/ws/
     sudo chown -R root:wheel /opt/ws
     sudo chmod -R go-w /opt/ws
+    sudo ln -sfn /opt/ws/plugins/ws /usr/local/share/mise/plugins/ws
 }
 
 # mac_serve serves mac_tree's build on port 8765, by serve-releases, for a later case's bootstrap

@@ -22,6 +22,9 @@ tree's lock holds it and refuse one that the lock lacks, as CI's `mac` job runs 
    --depth 1 --branch vX.Y.Z https://github.com/zadykian/ws /opt/ws`. It stays root's, and no one
    else may write it.
 5. Write `/etc/mise/miserc.toml`, as root, with the line `env = ["mac"]`.
+6. Link the tree's plugin where mise finds a system plugin, as root: `sudo mkdir -p
+   /usr/local/share/mise/plugins && sudo ln -s /opt/ws/plugins/ws /usr/local/share/mise/plugins/ws`
+   ([Where it sits](macos/frame/README.md#where-it-sits)).
 
 ## Answers
 

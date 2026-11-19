@@ -66,7 +66,9 @@ CI also sets up a Mac, by [its cases](../mac), in the order of [The
 Mac](../../roles/client/README.md). A stand-in cld, which cld's unit leaves alone, spares the
 job's runs its download. Then `mise -C /opt/ws/roles/client bootstrap` with
 [the Mac's frame](../../roles/client/macos/frame/README.md) runs as the runbook runs it, on the
-tree in `/opt/ws` with ws's build served as the pin ([mac-mise.sh](../mac-mise.sh)). It sets up
+tree in `/opt/ws` with ws's build served as the pin ([mac-mise.sh](../mac-mise.sh)). It links the
+tree's plugin as the runbook does, and makes `/opt` and `/usr/local/share` root's and 755, as on
+a Mac, where the runner's image may differ. It sets up
 ssh, git and cld too. Its plan must exit 0 after the first run, a second run must call no sudo,
 and `/usr/local/bin/ws` must be the build. A spec whose unit no line names must fail the plan,
 and so must a plan from `/opt/ws` with every unit in sync.

@@ -3,10 +3,10 @@
 # files of root's through sudo on every run, so the Mac holds none. Its root paths are ws's units
 # alone, which read as the user and ask no password.
 
-# ws's units, `"ws:KIND/NAME" = "in-sync"` under [bootstrap.packages]. Named here, a plugin that
-# mise cannot load is an unknown manager, which fails the run. mise takes an absolute path alone.
-[bootstrap.plugins]
-ws = "/opt/ws/plugins/ws"
+# ws's units, `"ws:KIND/NAME" = "in-sync"` under [bootstrap.packages], go to the plugin ws, which
+# no [bootstrap.plugins] entry names: mise installs an entry again on every run, with a warning.
+# The runbook links the tree's plugins/ws into /usr/local/share/mise/plugins, where mise loads it
+# as a system plugin.
 
 # The frame's line, at the root rather than in its role: a run from /opt/ws, which loads no role,
 # still calls the plugin's read hook for it. The hook's ws unit read --whole fails a read outside
