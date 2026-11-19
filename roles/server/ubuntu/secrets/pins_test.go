@@ -52,6 +52,10 @@ var fnoxSums = map[string]struct{ target, sha string }{
 	"linux-arm64": {"aarch64-unknown-linux-gnu", "605b3f5fdd8cf4806d7be63ca4ef52c6fa26d86ac7c97a04a3263daf990233dd"},
 }
 
+// fnoxTool is fnox's name in [tools] and the lock: mise's github backend, which installs from the
+// lock's url with no call to GitHub's API.
+const fnoxTool = "github:jdx/fnox"
+
 // The lock's fnox entry is at the version that [tools] pins, and downloads each platform's asset of
 // that release against GitHub's digest. A bump moves the pin, the lock and these sums together.
 func TestFnoxLockHoldsGitHubsDigests(t *testing.T) {
@@ -65,9 +69,9 @@ func TestFnoxLockHoldsGitHubsDigests(t *testing.T) {
 	if err := toml.Unmarshal(text, &c); err != nil {
 		t.Fatal(err)
 	}
-	version := c.Tools["fnox"]
-	if version != "1.50.0" {
-		t.Fatalf("[tools] pins fnox %q, want the version of the sums, 1.50.0", version)
+	version := c.Tools[fnoxTool]
+	if len(c.Tools) != 1 || version != "1.50.0" {
+		t.Fatalf("[tools] pins %v, want %s alone at the version of the sums, 1.50.0", c.Tools, fnoxTool)
 	}
 	text, err = os.ReadFile("../../mise/mise.server.lock")
 	if err != nil {
@@ -79,9 +83,12 @@ func TestFnoxLockHoldsGitHubsDigests(t *testing.T) {
 	if err := toml.Unmarshal(text, &lock); err != nil {
 		t.Fatal(err)
 	}
-	entries := lock.Tools["fnox"]
-	if len(entries) != 1 || entries[0]["version"] != version {
-		t.Fatalf("the lock's fnox is %v, want one entry at %s", entries, version)
+	entries := lock.Tools[fnoxTool]
+	if len(entries) != 1 || entries[0]["version"] != version || entries[0]["backend"] != fnoxTool {
+		t.Fatalf("the lock's %s is %v, want one entry at %s", fnoxTool, entries, version)
+	}
+	if stale, ok := lock.Tools["fnox"]; ok {
+		t.Errorf("the lock holds an entry of the registry's fnox, %v, which the pin no longer names", stale)
 	}
 	for platform, want := range fnoxSums {
 		p, _ := entries[0]["platforms."+platform].(map[string]any)
