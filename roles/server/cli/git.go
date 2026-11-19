@@ -22,7 +22,8 @@ import (
 // newGitCmd returns ws server ubuntu git: the procedures that the git role's units run.
 func newGitCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("git", "the git role's checks and procedures, which its units run",
-		newGitCheckCmd(p), newGitIncludedCmd(p), newGitTokensCmd(p), newGitClonesCmd(p))
+		newGitCheckCmd(p), newGitIncludedCmd(p), newGitTokensCmd(p), newGitClonesCmd(p),
+		newGitCredentialCmd(p))
 }
 
 // gitInputs reads what git's commands act on: the values, WS_USER's account and the secrets file,
@@ -93,6 +94,27 @@ func newGitIncludedCmd(p enginecli.Env) *cobra.Command {
 				return engine.ExitStatus{Code: 1}
 			}
 			return nil
+		},
+	}
+}
+
+// newGitCredentialCmd returns ws server ubuntu git credential.
+func newGitCredentialCmd(p enginecli.Env) *cobra.Command {
+	return &cobra.Command{
+		Use:   "credential KEY [ACTION]",
+		Short: "answer git's request for the token of a server besides GitHub, from " + git.TokensFile,
+		Long: "git runs it as the account, as the credential program that /etc/ws/tokens.gitconfig gives " +
+			"each URL, with the URL's key and git's action, and git's request on its standard input. For get, it prints the username and the " +
+			"token of the URL whose key is KEY. For store and erase, or a key that the file lacks, it prints nothing, " +
+			"so that git asks its next program. It reads no values file " +
+			"(roles/server/ubuntu/git/README.md#git-credentials).",
+		Args: cobra.RangeArgs(1, 2),
+		RunE: func(c *cobra.Command, args []string) error {
+			action := ""
+			if len(args) == 2 {
+				action = args[1]
+			}
+			return git.Answer(p.Machine, args[0], action, c.InOrStdin(), c.OutOrStdout())
 		},
 	}
 }

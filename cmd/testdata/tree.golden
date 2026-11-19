@@ -497,6 +497,7 @@ Usage:
 Available Commands:
   check       refuse git's clones and tokens that the role would act on, and note what shadows ws's settings
   clones      clone each repository of WS_GIT_CLONES whose dest is missing, as WS_USER
+  credential  answer git's request for the token of a server besides GitHub, from /etc/ws/git-tokens.toml
   included    say by the exit status whether the git config on stdin includes /etc/ws/gitconfig at its top
   tokens      write git's tokens from the secrets file's [git] table
 
@@ -525,6 +526,14 @@ Usage:
 Flags:
       --check   fail where a change is due, and change nothing
   -h, --help    help for clones
+== ws server ubuntu git credential
+git runs it as the account, as the credential program that /etc/ws/tokens.gitconfig gives each URL, with the URL's key and git's action, and git's request on its standard input. For get, it prints the username and the token of the URL whose key is KEY. For store and erase, or a key that the file lacks, it prints nothing, so that git asks its next program. It reads no values file (roles/server/ubuntu/git/README.md#git-credentials).
+
+Usage:
+  ws server ubuntu git credential KEY [ACTION] [flags]
+
+Flags:
+  -h, --help   help for credential
 == ws server ubuntu git included
 It reads the text of ~/.gitconfig on its standard input, as git does. It exits 0 where the text includes /etc/ws/gitconfig once, at its top, and 1 where it lacks the include. It exits 2 with the reason where the include sits below the file's own settings or comes twice, which it would then override, or where git cannot read the text. The git role's unit of the include runs it, and refuses the file on 2.
 

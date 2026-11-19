@@ -7,12 +7,12 @@ import (
 	"testing"
 )
 
-func TestCredentialFile(t *testing.T) {
+func TestCredentialKey(t *testing.T) {
 	for url, want := range map[string]string{
 		"https://a.example/x": "a.example_x", "https://b.example": "b.example",
 		"https://h:8443/a//b?c": "h_8443_a_b_c", "https://x.y/é": "x.y_",
 	} {
-		if got := credentialFile(url); got != want {
+		if got := credentialKey(url); got != want {
 			t.Errorf("%s: %s, want %s", url, got, want)
 		}
 	}

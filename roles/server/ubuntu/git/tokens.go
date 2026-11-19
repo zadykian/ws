@@ -60,7 +60,7 @@ func (t Tokens) Plan(ctx context.Context) ([]resource.Change, error) {
 	rs := []resource.Resource{file.Dir{M: t.M, Path: tokensDir, Mode: 0o750, GID: t.A.GID}}
 	if t.Whole {
 		for _, u := range dropped {
-			rs = append(rs, file.Absent{M: t.M, Path: tokensDir + "/" + credentialFile(u)})
+			rs = append(rs, file.Absent{M: t.M, Path: tokensDir + "/" + credentialKey(u)})
 		}
 	}
 	for _, c := range t.Creds {
@@ -68,7 +68,7 @@ func (t Tokens) Plan(ctx context.Context) ([]resource.Change, error) {
 		if username == "" {
 			username = "token"
 		}
-		rs = append(rs, file.File{M: t.M, Path: tokensDir + "/" + credentialFile(c.URL),
+		rs = append(rs, file.File{M: t.M, Path: tokensDir + "/" + credentialKey(c.URL),
 			Content: []byte("username=" + username + "\npassword=" + c.Token + "\n"),
 			Mode:    0o640, GID: t.A.GID, Secret: true})
 	}

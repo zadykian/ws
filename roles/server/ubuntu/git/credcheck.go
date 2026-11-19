@@ -19,7 +19,7 @@ func checkCredentials(creds []Credential, keys []string) error {
 	var bad bool
 	files := map[string]bool{}
 	for _, c := range creds {
-		files[credentialFile(c.URL)] = true
+		files[credentialKey(c.URL)] = true
 		switch {
 		case !urlPattern.MatchString(c.URL):
 			bad = true
@@ -31,7 +31,7 @@ func checkCredentials(creds []Credential, keys []string) error {
 	}
 	kept := keptURLs(keys, creds)
 	for _, u := range kept {
-		files[credentialFile(u)] = true
+		files[credentialKey(u)] = true
 	}
 	if bad || len(files) != len(creds)+len(kept) {
 		return errors.New("each [git] entry of the secrets file needs a URL of https:// without spaces, quotes or backslashes, " +

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/server/ubuntu/git"
 )
 
 // gitAnswers sets what git config answers of a text on stdin: its include paths and its names.
@@ -71,5 +72,23 @@ func TestGitClonesCheckFailsWhereACloneIsDue(t *testing.T) {
 	m.Dirs["/root/src/r"] = 0o755
 	if status, _, stderr := runWs(p, "", "server", "ubuntu", "git", "clones", "--check"); status != 0 {
 		t.Errorf("with the clone there: status = %d, stderr %q", status, stderr)
+	}
+}
+
+// git runs the program as the account, which may not read values.yml: it reads the tokens alone.
+func TestGitCredentialAnswersFromTheTokensFile(t *testing.T) {
+	p, m := valuesProcess("")
+	delete(m.Files, serverVars)
+	m.Files[git.TokensFile] = []byte("[\"https://git.example.test\"]\ntoken = \"dummy-marker\"\n")
+	status, stdout, stderr := runWs(p, "protocol=https\nhost=git.example.test\n\n", "server", "ubuntu", "git", "credential",
+		"git.example.test", "get")
+	if status != 0 || stdout != "username=token\npassword=dummy-marker\n" || stderr != "" {
+		t.Errorf("get: status = %d, stdout %d bytes, stderr %q", status, len(stdout), stderr)
+	}
+	if status, stdout, _ := runWs(p, "", "server", "ubuntu", "git", "credential", "git.example.test", "erase"); status != 0 || stdout != "" {
+		t.Errorf("erase: status = %d, stdout %d bytes; want 0 and nothing", status, len(stdout))
+	}
+	if status, _, _ := runWs(p, "", "server", "ubuntu", "git", "credential"); status != 2 {
+		t.Errorf("without a key: status = %d, want a usage error", status)
 	}
 }

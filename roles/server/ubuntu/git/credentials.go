@@ -50,9 +50,9 @@ type section struct {
 // notFile matches each run of characters other than letters, digits, ., _ and -.
 var notFile = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
 
-// credentialFile returns the name of a URL's token in /etc/ws/tokens: the URL without its
-// scheme, each run of other characters as _.
-func credentialFile(url string) string {
+// credentialKey returns the key that names a URL to ws's credential program and in /etc/ws/tokens:
+// the URL without its scheme, each run of other characters as _, so that a shell takes it as is.
+func credentialKey(url string) string {
 	return notFile.ReplaceAllString(strings.TrimPrefix(url, "https://"), "_")
 }
 
@@ -96,7 +96,7 @@ func sections(keys []string, creds []Credential) []section {
 	slices.Sort(urls)
 	var all []section
 	for _, u := range slices.Compact(urls) {
-		all = append(all, section{URL: u, File: credentialFile(u), Proactive: proactive[u]})
+		all = append(all, section{URL: u, File: credentialKey(u), Proactive: proactive[u]})
 	}
 	return all
 }
