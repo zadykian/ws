@@ -1,6 +1,7 @@
 package values
 
 import (
+	"slices"
 	"strings"
 	"testing"
 )
@@ -85,5 +86,56 @@ func TestSetRefuses(t *testing.T) {
 		if _, _, err := Set([]byte(tc.data), tc.key, tc.value); err == nil || !strings.Contains(err.Error(), tc.want) {
 			t.Errorf("%s: err = %v, want %q", tc.name, err, tc.want)
 		}
+	}
+}
+
+func TestSetMovesTheKeysThatFollow(t *testing.T) {
+	v, err := Parse(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	seeded, err := v.YAML()
+	if err != nil {
+		t.Fatal(err)
+	}
+	const (
+		user  = "WS_USER: zadykian\n"
+		home  = "WS_HOME: /home/zadykian\n"
+		key   = "WS_GIT_SIGNING_PUB_KEY: /home/zadykian/.ssh/id_ed25519_signing.pub\n"
+		frame = "---\nWS_USER: ada\n" + home + key
+	)
+	lines := func(home, key string) string {
+		return "WS_HOME: " + home + "\nWS_GIT_SIGNING_PUB_KEY: " + key + "\n"
+	}
+	both := []string{"WS_HOME", "WS_GIT_SIGNING_PUB_KEY"}
+	for _, tc := range []struct {
+		name, data, key, value, want string
+		moved                        []string
+	}{
+		{"root", seeded, "WS_USER", "root", strings.NewReplacer(user, "WS_USER: root\n", home+key,
+			lines("/root", "/root/.ssh/id_ed25519_signing.pub")).Replace(seeded), both},
+		{"another user", seeded, "WS_USER", "ada", strings.NewReplacer(user, "WS_USER: ada\n", home+key,
+			lines("/home/ada", "/home/ada/.ssh/id_ed25519_signing.pub")).Replace(seeded), both},
+		{"the home alone", seeded, "WS_HOME", "/srv/z", strings.Replace(seeded, home+key,
+			lines("/srv/z", "/srv/z/.ssh/id_ed25519_signing.pub"), 1), []string{"WS_GIT_SIGNING_PUB_KEY"}},
+		{"the guard's advice", frame, "WS_HOME", "/home/ada",
+			"---\nWS_USER: ada\n" + lines("/home/ada", "/home/ada/.ssh/id_ed25519_signing.pub"),
+			[]string{"WS_GIT_SIGNING_PUB_KEY"}},
+		{"a home set by hand", "---\n" + lines("/srv/z", "/srv/z/.ssh/id_ed25519_signing.pub"), "WS_USER", "root",
+			"---\n" + lines("/srv/z", "/srv/z/.ssh/id_ed25519_signing.pub") + "WS_USER: root\n", nil},
+		{"no line for either", "---\nWS_BASE_TIMEZONE: UTC\n", "WS_USER", "root",
+			"---\nWS_BASE_TIMEZONE: UTC\nWS_USER: root\n", nil},
+		{"a user taken out", "---\nWS_USER: root\n" + lines("/root", "/root/.ssh/id_ed25519_signing.pub"), "WS_USER", "",
+			"---\n" + home + key, both},
+		{"a key taken out", frame, "WS_GIT_SIGNING_PUB_KEY", "", "---\nWS_USER: ada\n" + home, nil},
+	} {
+		got, moved, err := Set([]byte(tc.data), tc.key, tc.value)
+		if err != nil || string(got) != tc.want || !slices.Equal(moved, tc.moved) {
+			t.Errorf("%s: Set = %q, %v, %v, want %q, %v", tc.name, got, moved, err, tc.want, tc.moved)
+		}
+	}
+	_, _, err = Set([]byte("---\n"+home+"WS_GIT_SIGNING_PUB_KEY: /home/zadykian/keys/sign.pub\n"), "WS_USER", "root")
+	if err == nil || !strings.Contains(err.Error(), "WS_GIT_SIGNING_PUB_KEY: /home/zadykian/keys/sign.pub is outside WS_HOME /root") {
+		t.Errorf("a key set by hand that the new home leaves outside: %v", err)
 	}
 }
