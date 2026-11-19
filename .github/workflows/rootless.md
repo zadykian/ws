@@ -30,7 +30,7 @@ exit 0. The bootstrap runs twice, and the plan must exit 0 again.
 Then the user must keep `sudo`, leave `docker` and `lxd`, and have no cached password. The system's
 socket must refuse it, and its own Docker must run a container that resolves names through
 slirp4netns's resolver and reaches the internet. The daemon and its containers must run in
-`docker.slice`, and the user's systemd must have `io`.
+`docker.slice`, and the user's systemd must have `cpuset` and `io`.
 
 The firewall must hold under the rootless daemon:
 

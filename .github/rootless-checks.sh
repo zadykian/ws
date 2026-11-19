@@ -206,6 +206,7 @@ must "a container reaches the internet" \
 cgroup=/sys/fs/cgroup/user.slice/user-$uid.slice/user@$uid.service
 slice=$(as systemctl --user show --property=Slice --value docker.service)
 must "the daemon runs in docker.slice" test "$slice" = docker.slice
+must "the user's systemd has cpuset" grep -qw cpuset "$cgroup/cgroup.controllers"
 must "the user's systemd has io" grep -qw io "$cgroup/cgroup.controllers"
 id=$(as docker run -d --rm "$image" sleep 60)
 must "a container runs inside docker.slice" test -d "$cgroup/docker.slice/docker-$id.scope"

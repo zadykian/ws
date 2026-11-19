@@ -70,8 +70,9 @@ left = { user = "{{ .User }}", group = "docker" }
 subids = "{{ .User }}"
 after = "state/docker-bridge"
 
-# The io controller for the account's systemd: Ubuntu delegates cpu, memory and pids, and a
-# container's --device-read-bps needs io.
+# The cpuset and io controllers for the account's systemd: Ubuntu delegates cpu, memory and
+# pids. A container's --cpuset-cpus needs cpuset, without which Docker's setup tool warns, and its
+# --device-read-bps needs io.
 [file.docker-delegate]
 path = "/etc/systemd/system/user@.service.d/delegate.conf"
 source = "files/delegate.conf"

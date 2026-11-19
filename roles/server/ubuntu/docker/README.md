@@ -102,7 +102,7 @@ containers. The machine's miserc loads `mise.account.toml` where
 The role installs `docker-ce-rootless-extras`, `uidmap`, `slirp4netns` and `apparmor`. Where
 `/etc/subuid` or `/etc/subgid` gives the user fewer than 65536 ids, it adds the range
 100000-165535. It enables lingering, so that the user's systemd runs without a login, keeps
-`user@UID.service` running, and delegates the `io` controller to it.
+`user@UID.service` running, and delegates the `cpuset` and `io` controllers to it.
 
 The daemon's `daemon.json` is `~/.config/docker/daemon.json`. It has the log and cache values, the
 published address and `cgroup-parent`, so that the containers stay in the user's `docker.slice` with
