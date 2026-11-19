@@ -5,9 +5,13 @@ around it. The job `rootless` runs on GitHub's `ubuntu-26.04` runner, which boot
 runner up as it would a machine, with a user as Ubuntu's installer leaves it. That user is in the
 groups `sudo`, `docker` and `lxd`, and sudo has cached its password. The runner's own Docker is
 purged first, as it predates what `--net=host` means on a rootless daemon. Its apt source goes too,
-as apt refuses a repository that two sources name with different keys, and mise adds its own. Its
-`/etc/ws/values.yml` sets a 64 MiB swap file, which base makes and swaps to, for the small disk. A
-namespace holds a private address that answers, `10.250.0.2`. The cases are
+as apt refuses a repository that two sources name with different keys, and mise adds its own. apt's
+daily timers lose the stamps of their runs at the image's build, as a new machine's have none
+before their first start. With them, systemd takes a run as missed at the boot. Each of the
+bootstrap's reloads draws the run's random delay again, and one soon falls in the past: an upgrade
+then holds dpkg's lock under the bootstrap. The runner's `/etc/ws/values.yml` sets a 64 MiB swap
+file, which base makes and swaps to, for the small disk. A namespace holds a private address that
+answers, `10.250.0.2`. The cases are
 [rootless-checks.sh](../rootless-checks.sh). Each refusal has a control that holds before
 ws runs.
 

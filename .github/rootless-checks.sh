@@ -128,6 +128,14 @@ install -d -m 755 /etc/ws
 printf '%s\n' --- "WS_USER: $user" 'WS_BASE_SWAP_SIZE_MB: 64' >/etc/ws/values.yml
 chmod 600 /etc/ws/values.yml
 
+# apt's daily timers, which the image turns off, keep the stamps of their runs at its build. On a
+# start, systemd takes a stamp from before the boot as a run missed at the boot, and adds the
+# timer's RandomizedDelaySec, which each daemon-reload draws again. The bootstrap starts the timers,
+# then reloads systemd for each unit it enables. So a draw soon falls in the past, and
+# unattended-upgrade holds dpkg's lock under the bootstrap. A new machine's timers have no stamp
+# before their first start, so the stamps go.
+rm -fv /var/lib/systemd/timers/stamp-apt-daily{,-upgrade}.timer
+
 # The controls: each of these holds before ws, and the opposite after it.
 must "the private address answers before the table" up "http://$target/"
 must "sudo's password is cached before the drop-in" as bash -c "$sudo_form" bash "$password"
