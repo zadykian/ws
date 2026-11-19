@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
@@ -94,6 +95,41 @@ func TestDockerAccountLeavesTheGroupFirst(t *testing.T) {
 	}
 	if i := slices.Index(names, "state/docker-subids"); i < 0 || units[i].Step.WaitsOn() != "state/docker-bridge" {
 		t.Errorf("state/docker-subids at %d does not wait on state/docker-bridge", i)
+	}
+}
+
+// The account's unit is Docker's own, and the account's. Its PATH names no caller's directory, such
+// as mise's shims, which the setup tool wrote in.
+func TestDockerAccountUnitIsDockersWithTheSystemsPath(t *testing.T) {
+	const unit = dockerHome + "/.config/systemd/user/docker.service"
+	m := dockerWrites(t, dockerValues(t, ""))
+	got := string(m.Files[unit])
+	for _, line := range []string{"ExecStart=/usr/bin/dockerd-rootless.sh\n", "Requires=dbus.socket\n",
+		"Environment=PATH=/usr/bin:/sbin:/usr/sbin:/usr/local/sbin:/usr/local/bin:/bin\n", "WantedBy=default.target\n"} {
+		if !strings.Contains(got, line) {
+			t.Errorf("%s lacks %q:\n%s", unit, line, got)
+		}
+	}
+	if m.Owners[unit] != [2]int{1001, 1001} {
+		t.Errorf("%s is owned by %v, want the account's 1001", unit, m.Owners[unit])
+	}
+}
+
+// The account's daemon is started by the run that writes its unit, then enabled, and only then is
+// its context made the account's current one.
+func TestDockerAccountDaemonGoesBeforeItsLinkAndContext(t *testing.T) {
+	e := kind.Env{M: dockerMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: dockerValues(t, ""), Self: selfPath}
+	units, err := kind.Load(e, os.DirFS(rolesDir))
+	if err != nil {
+		t.Fatal(err)
+	}
+	names := kind.Names(units)
+	order := []string{"service/docker-rootless", "state/docker-rootless-enable", "state/docker-rootless-context"}
+	for i, name := range order[1:] {
+		at := slices.Index(names, name)
+		if at < 0 || at < slices.Index(names, order[i]) || units[at].Step.WaitsOn() != order[i] {
+			t.Errorf("%s at %d does not wait on %s", name, at, order[i])
+		}
 	}
 }
 
