@@ -67,6 +67,37 @@ func SetHostKey(f Files, hostname, key string) (out Files, changed []string, err
 	return e.out, sharedFirst(e.changed), nil
 }
 
+// DropKey takes key from every table of recipients: fnox.toml's and each profile file's. A file
+// stays, with its values, so that a rebuilt server takes its profile again. changed lists the
+// files whose recipients changed, as SetHostKey's does, and labels the labels that held key.
+// Neither holds a name where key is no recipient.
+func DropKey(f Files, key string) (out Files, changed, labels []string, err error) {
+	if !hostKeyForm.MatchString(key) {
+		return nil, nil, nil, errors.New("the host key is not of the form ssh-ed25519 BASE64")
+	}
+	held := map[string]bool{}
+	drop := func(r map[string]string) {
+		for label, recipient := range r {
+			if recipient == key {
+				held[label] = true
+			}
+		}
+		dropRecipient(r, key)
+	}
+	e := edit{out: maps.Clone(f)}
+	if _, ok := f[SharedFile]; ok {
+		if err := e.apply(SharedFile, SharedProvider, drop); err != nil {
+			return nil, nil, nil, err
+		}
+	}
+	for _, name := range profileFiles(f) {
+		if err := e.apply(name, ProfileProvider, drop); err != nil {
+			return nil, nil, nil, err
+		}
+	}
+	return e.out, sharedFirst(e.changed), slices.Sorted(maps.Keys(held)), nil
+}
+
 // profileStart is a new profile file, whose recipients WithRecipients sets.
 const profileStart = `# The values of the server %[1]s alone, which fnox -P %[1]s set NAME --provider %[2]s adds.
 [providers.%[2]s]

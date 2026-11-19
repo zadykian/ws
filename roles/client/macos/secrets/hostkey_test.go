@@ -146,3 +146,47 @@ func TestSetHostKeyRefusesAHostnameOrKeyOfAnotherForm(t *testing.T) {
 		}
 	}
 }
+
+func TestDropKeyTakesTheKeyFromEveryList(t *testing.T) {
+	in := repository()
+	in["fnox.ws-b.toml"] = []byte(strings.ReplaceAll(profileWrote, "ws-a = ", "ws-b = "))
+	f, changed, labels, err := secrets.DropKey(in, hostKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{secrets.SharedFile, "fnox.ws-a.toml", "fnox.ws-b.toml"}; !slices.Equal(changed, want) {
+		t.Errorf("DropKey changed %q, want %q", changed, want)
+	}
+	if want := []string{"ws-a", "ws-b"}; !slices.Equal(labels, want) {
+		t.Errorf("DropKey's labels are %q, want %q", labels, want)
+	}
+	for name, provider := range map[string]string{
+		secrets.SharedFile: secrets.SharedProvider, "fnox.ws-a.toml": secrets.ProfileProvider, "fnox.ws-b.toml": secrets.ProfileProvider,
+	} {
+		r := recipientsOf(t, f[name], provider)
+		if slices.Contains(slices.Collect(maps.Values(r)), hostKey) || len(r) != 2 {
+			t.Errorf("%s's recipients are %v, want nano and backup alone", name, r)
+		}
+		if want := strings.ReplaceAll(strings.ReplaceAll(string(in[name]), `ws-a = "`+hostKey+`"`+"\n", ""),
+			`ws-b = "`+hostKey+`"`+"\n", ""); string(f[name]) != want {
+			t.Errorf("%s is\n%s\nwant\n%s", name, f[name], want)
+		}
+	}
+}
+
+func TestDropKeyOfNoRecipientChangesNothing(t *testing.T) {
+	for name, in := range map[string]secrets.Files{"a repository": repository(), "no fnox.toml": {}} {
+		f, changed, labels, err := secrets.DropKey(in, otherHost)
+		if err != nil || len(changed) != 0 || len(labels) != 0 {
+			t.Errorf("%s: DropKey gives %q, %q, %v, want nothing", name, changed, labels, err)
+		}
+		for file, text := range in {
+			if string(f[file]) != string(text) {
+				t.Errorf("%s: %s changed", name, file)
+			}
+		}
+	}
+	if _, _, _, err := secrets.DropKey(repository(), "ssh-rsa AAAA"); err == nil {
+		t.Error("DropKey takes a key of another form")
+	}
+}
