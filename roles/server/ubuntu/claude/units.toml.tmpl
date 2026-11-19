@@ -4,16 +4,18 @@
 
 # claude, from its native installer, where missing: it updates itself. The whole script comes before
 # any of it runs, so a failed fetch runs none. The installer refuses root where SUDO_USER is set, so
-# the unit says that root is meant. After git's tokens, which a private marketplace's host may need.
+# the unit says that root is meant. It warns where PATH lacks ~/.local/bin, which the unit puts
+# first. After git's tokens, which a private marketplace's host may need.
 [state.claude-install]
 after = "state/git-tokens"
-run = { user = "{{ .User }}", unbooted = true, creates = ["{{ .Home }}/.local/bin/claude"], command = ["sh", "-c", 'script=$(curl -fsSL --retry 3 "$1") && printf "%s\n" "$script" | env "$2" "$3"', "sh", "https://claude.ai/install.sh", "CLAUDE_INSTALL_ALLOW_SUDO=1", "bash"] }
+run = { user = "{{ .User }}", unbooted = true, path = ["{{ .Home }}/.local/bin"], creates = ["{{ .Home }}/.local/bin/claude"], command = ["sh", "-c", 'script=$(curl -fsSL --retry 3 "$1") && printf "%s\n" "$script" | env "$2" "$3"', "sh", "https://claude.ai/install.sh", "CLAUDE_INSTALL_ALLOW_SUDO=1", "bash"] }
 
 # cld, from its latest release, where missing: the next unit updates it. Its installer would
-# take the caller's CLD_INSTALL_DIR over ~/.local/bin, so the unit sets it.
+# take the caller's CLD_INSTALL_DIR over ~/.local/bin, so the unit sets it, and puts it first on
+# PATH, without which the installer warns.
 [state.claude-cld-install]
 after = "state/claude-install"
-run = { user = "{{ .User }}", unbooted = true, creates = ["{{ .Home }}/.local/bin/cld"], command = ["sh", "-c", 'script=$(curl -fsSL --retry 3 "$1") && printf "%s\n" "$script" | env "$2" "$3"', "sh", "https://github.com/zadykian/cld/releases/latest/download/install.sh", "CLD_INSTALL_DIR={{ .Home }}/.local/bin", "sh"] }
+run = { user = "{{ .User }}", unbooted = true, path = ["{{ .Home }}/.local/bin"], creates = ["{{ .Home }}/.local/bin/cld"], command = ["sh", "-c", 'script=$(curl -fsSL --retry 3 "$1") && printf "%s\n" "$script" | env "$2" "$3"', "sh", "https://github.com/zadykian/cld/releases/latest/download/install.sh", "CLD_INSTALL_DIR={{ .Home }}/.local/bin", "sh"] }
 
 [state.claude-update]
 after = "state/claude-cld-install"
