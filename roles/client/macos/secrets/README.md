@@ -1,9 +1,9 @@
 # The secrets on the Mac
 
 The Mac keeps ws's secrets in fnox, in the private secrets repository, encrypted to the YubiKey 5C
-Nano, to a backup key and to each server's host key. This role installs the tools that do it, and
-`ws client macos secrets init` sets the repository up, and `ws client macos secrets add NAME` adds a
-server to it.
+Nano, to a backup key and to each server's host key. This role installs the tools that do it.
+`ws client macos secrets init` sets the repository up, `ws client macos secrets add NAME` adds a
+server to it, and `ws client macos remove NAME` takes a server's key out.
 
 ## The tools
 
@@ -187,3 +187,22 @@ and `Port`. The command:
 A step that is done changes nothing, so a run that fails runs again whole. gh's login adds the
 deploy keys, and needs admin on the repository. Where that login is revoked, GitHub deletes every
 deploy key it added. Each server's fetch then fails until add runs again for it.
+
+## ws client macos remove
+
+`ws client macos remove NAME` ([The Mac's values](../../values/README.md)) takes the server's key
+out of the secrets first. A removed server then opens no value. The key is NAME's ed25519 line in
+`~/.ssh/known_hosts`. Where it holds none, remove cannot tell which key is NAME's: add may never
+have run, or `ssh-keygen -R` emptied the line while the key stays a recipient. The secrets then
+stay as they are, and remove prints a line to drop the hostname's recipients and deploy key by
+hand. Else, in a temporary clone, remove:
+
+1. Lists the repository's deploy keys by gh, so that gh's login fails before a touch.
+2. Takes the key from every table of recipients, as above, and encrypts again the values of each
+   changed file that holds one, with the Nano's PIN and a touch.
+3. Lands the changed files by a pull request, and opens none where the key was no recipient.
+4. Deletes each deploy key that holds the key, whatever its title.
+
+A failure in any step stops remove with the server whole, so it runs again. A Mac where init never
+ran has no fnox key file to encrypt with. There remove goes on, and prints a line that names the
+key, to drop it from a Mac that has one, as remove then drops it from `~/.ssh/known_hosts`.

@@ -33,8 +33,8 @@ What each document holds. How to write them is in the `writing` skill and [writi
   cld's unit. [Its values](../../roles/client/values/README.md) is
   the Mac's values files, [the tunnel's](../../roles/client/macos/tunnel/README.md) the daemons' rules, and [ghostty](../../roles/client/macos/ghostty/README.md) its Ghostty
   and what cld does there, [zed](../../roles/client/macos/zed/README.md) its Zed. [Its secrets](../../roles/client/macos/secrets/README.md)
-  is the secrets' tools, fnox and age-plugin-yubikey, and `ws client macos secrets`. [The secrets](../../roles/server/secrets/README.md)
-  is the secrets file. [The router](../../roles/server/ubuntu/cable/router.md)
+  is the secrets' tools, fnox and age-plugin-yubikey, `ws client macos secrets`, and remove's part.
+  [The secrets](../../roles/server/secrets/README.md) is the secrets file. [The router](../../roles/server/ubuntu/cable/router.md)
   is the router's steps, taken once by hand. [The Mac's runbook](../../roles/client/runbook.md)
   and [the server's](../../roles/server/runbook.md) are each side's steps by hand.
 - [The kind package's README](../../engine/core/kind/README.md) says what a unit and a kind are:
