@@ -81,11 +81,15 @@ echo v0.2.0 >"$tmp/serve/latest"
 # The release's tree: a config with an entry for each env's file, and a directory for them. The
 # account's and the secrets' files sit in a role, behind the side's link, as a role's do, and the
 # root holds neither. On such a tree mise trust --all never ends, so the case of the latest release
-# proves install.sh's trust.
+# proves install.sh's trust. A task stands for the secrets task: mise asks to trust a task that
+# holds a template's {{, {% or {#, and the secrets task's ${#host} holds {#.
 repo=$tmp/repo
-mkdir -p "$repo/roles/server/ubuntu/part" "$repo/roles/server/mise"
+mkdir -p "$repo/roles/server/ubuntu/part" "$repo/roles/server/mise" "$repo/roles/server/mise-tasks"
 ln -s ../ubuntu "$repo/roles/server/mise/conf.d"
 echo '# the install job'"'"'s tree' >"$repo/mise.toml"
+# shellcheck disable=SC2016 # the task's own shell expands it, not this one.
+printf '%s\n' '#!/bin/sh' 'echo "${#0}"' >"$repo/roles/server/mise-tasks/check"
+chmod 755 "$repo/roles/server/mise-tasks/check"
 for env in server booted account secrets; do
     config=$repo/mise.$env.toml
     case $env in account | secrets) config=$repo/roles/server/ubuntu/part/mise.$env.toml ;; esac
@@ -152,6 +156,10 @@ done
 # finds no change. This tree holds no tool, so the plan needs no MISE_DATA_DIR either.
 as_root /usr/local/bin/mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null >/dev/null ||
     fail "a plan by hand after install.sh found a change or failed"
+# A run by hand loads the tree's tasks, and mise refuses one that install.sh left untrusted. Where
+# CI or MISE_YES is set, mise takes an untrusted config, so neither is passed.
+as_root env -u CI -u MISE_YES /usr/local/bin/mise -C /opt/ws/roles/server bootstrap </dev/null >/dev/null ||
+    fail "a run by hand after install.sh refused the tree's task or failed"
 # The set ws leaves secrets out, which a run adds by -E ws,secrets. A plain plan after it keeps the
 # env's file, as a run without the env changes none of it.
 [ ! -e /etc/ws-install-check/secrets ] || fail "install.sh's run loaded the env secrets"

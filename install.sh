@@ -260,12 +260,12 @@ bootstrap() {
         checkout
     fi
     /usr/local/bin/mise -C /opt/ws/roles/server bootstrap </dev/null
-    # While the variable is set, mise counts the tree as trusted and writes no trust. Each config
+    # While the variable is set, mise trusts the tree and writes no trust. Each config and task
     # is named, as mise trust --all never ends where a role holds an env's file and the root none.
     (
         cd /opt/ws || exit 1
         unset MISE_TRUSTED_CONFIG_PATHS
-        for config in mise.toml mise.*.toml roles/server/mise/conf.d/*/mise.*.toml; do
+        for config in mise.toml mise.*.toml roles/server/mise/conf.d/*/mise.*.toml roles/server/mise-tasks/*; do
             [ ! -e "$config" ] || /usr/local/bin/mise trust "$config" </dev/null || exit 1
         done
     )

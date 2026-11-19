@@ -6,6 +6,11 @@
 # Versions come from the pin and its URLs alone, never from mise's versions host.
 use_versions_host = false
 
+# The repository of ws's secrets, which both sides read. The server's task secrets fetches it by
+# the host key (roles/server/ubuntu/secrets/README.md).
+[env]
+WS_SECRETS_REPO = "git@github.com:zadykian/ws-secrets.git"
+
 # A release of ws: mise.lock holds the SHA-256 of each platform's file, which mise checks as
 # it installs. A bump moves the version here and the lock together.
 [tools."http:ws"]
