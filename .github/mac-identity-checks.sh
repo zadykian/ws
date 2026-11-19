@@ -10,7 +10,7 @@ cp "$ws" "$tmp/ws"
 # keyed LINE... checks that ssh -G gives ws LINE..., a line each, of its settings for the key.
 # Those are identitiesonly, identityagent and identityfile, a path from the home by ~/.
 keyed() {
-    got=$(ssh -G ws | awk '$1 ~ /^identit(iesonly|yagent|yfile)$/' |
+    got=$(ssh -T -G ws | awk '$1 ~ /^identit(iesonly|yagent|yfile)$/' |
         sed "s|^\([a-z]*\) $HOME/|\1 ~/|")
     [ "$got" = "$(printf '%s\n' "$@")" ] || error "ssh -G ws gives '$got', not '$*'"
 }
@@ -70,7 +70,7 @@ if ! cat "$tmp/unread.pub" >/dev/null 2>&1; then
     with "WS_IDENTITY_PUB_KEY: $tmp/unread.pub"
     refuses "cannot read $tmp/unread.pub"
 fi
-ssh-keygen -q -s "$tmp/key" -I ws "$tmp/key.pub"
+ssh-keygen -q -s "$tmp/key" -I ws -n ws "$tmp/key.pub"
 with "WS_IDENTITY_PUB_KEY: $tmp/key-cert.pub"
 refuses "$tmp/key-cert.pub is a certificate"
 rm "$tmp/key-cert.pub"

@@ -110,11 +110,12 @@ func TestClaudeUnitsChainInTheStepsOrder(t *testing.T) {
 	}
 }
 
-// installer is the line by which the account runs an installer from url, with env and shell.
-// root's needs no switch of user.
+// installer is the line by which the account runs an installer from url, with env and shell, and
+// with ~/.local/bin first on its PATH. root's needs no switch of user.
 func installer(user, home, url, env, shell string) string {
 	script := `script=$(curl -fsSL --retry 3 "$1") && printf "%s\n" "$script" | env "$2" "$3"`
-	line := "env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + systemPath + " sh -c " + script + " sh " + url + " " + env + " " + shell
+	path := "PATH=" + home + "/.local/bin:" + strings.TrimPrefix(systemPath, "PATH=")
+	line := "env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + path + " sh -c " + script + " sh " + url + " " + env + " " + shell
 	if user == "root" {
 		return "env HOME=/root " + line
 	}

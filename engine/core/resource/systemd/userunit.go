@@ -7,6 +7,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/account"
 	"io/fs"
+	"path"
 	"slices"
 	"strings"
 
@@ -16,14 +17,22 @@ import (
 
 // UserUnit keeps a unit of the user's own systemd running, and restarts it where any of Watch has a
 // change to make, as Unit does for the system's. effect.Units is the system's bus alone, so this
-// runs systemctl --user, as the user. A unit with no file is left to whatever installs it.
+// runs systemctl --user, as the user. A unit with no file is left to whatever installs it, unless
+// Writes says that one of Watch writes it.
 type UserUnit struct {
 	M       effect.Machine
 	Account account.Account
 	Out     effect.Out
 	Name    string
 	Watch   []resource.Resource
+	// Writes says that one of Watch is the unit's own file. Where the file is missing, the group
+	// writes it before this starts the unit, so the run that writes it starts it too, and plans
+	// nothing after.
+	Writes bool
 }
+
+// UserUnitPath is the file of a unit of the user's own systemd, below the user's home.
+func UserUnitPath(home, name string) string { return path.Join(home, ".config/systemd/user", name) }
 
 func (u UserUnit) mark() mark { return mark{u.M, u.Account.Name + "-" + u.Name} }
 
@@ -78,14 +87,18 @@ func (c userCall) Apply(ctx context.Context) error {
 }
 
 // Plan starts a unit that is down, which serves any watched change too, and otherwise
-// restarts it for a watched change or a mark that an earlier run left.
+// restarts it for a watched change or a mark that an earlier run left. A unit whose file the group
+// writes is down until then.
 func (u UserUnit) Plan(ctx context.Context) ([]resource.Change, error) {
 	if !Booted(u.M) {
 		u.Out.Say("%s's %s: skipped, systemd is not running", u.Account.Name, u.Name)
 		return nil, nil
 	}
-	_, err := u.M.Stat(u.Account.Home + "/.config/systemd/user/" + u.Name)
+	_, err := u.M.Stat(UserUnitPath(u.Account.Home, u.Name))
 	if errors.Is(err, fs.ErrNotExist) {
+		if u.Writes {
+			return []resource.Change{userCall{u: u, verb: "start"}}, nil
+		}
 		return nil, nil
 	}
 	if err != nil {

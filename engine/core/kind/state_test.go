@@ -251,6 +251,24 @@ func TestStateRunAsRoot(t *testing.T) {
 	}
 }
 
+func TestStateRunPutsItsPathFirst(t *testing.T) {
+	e, m, _, _ := testEnv(true)
+	withAccount(m)
+	const first = "runuser -u u -- env -C /home/u HOME=/home/u env XDG_RUNTIME_DIR=/run/user/1001 " +
+		"DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1001/bus " +
+		"PATH=/home/u/.local/bin:/home/u/.t:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "
+	m.Results[first+"ws x check"] = effecttest.Result{Err: errors.New("exit status 1")}
+	m.Results[first+"ws x"] = effecttest.Result{}
+	units := loadState(t, e, "run = { user = \"u\", path = [\"/home/u/.local/bin\", \"/home/u/.t\"], "+
+		"command = [\"ws\", \"x\"], check = [\"ws\", \"x\", \"check\"] }\n")
+	if got := headlines(t, units[0].Step); !slices.Equal(got, []string{"run ws x as u"}) {
+		t.Errorf("plan where the check fails = %q, want the run", got)
+	}
+	if err := applyOnce(t, units[0].Step); err != nil || !slices.Contains(m.Calls, "root "+first+"ws x") {
+		t.Errorf("apply = %v, calls %q; want the command run with its path first", err, m.Calls)
+	}
+}
+
 func TestStateRunSkipsUnbooted(t *testing.T) {
 	e, m, _, out := testEnv(false)
 	units := loadState(t, e, "run = { user = \"u\", command = [\"sh\"], creates = [\"/x\"] }\n")
@@ -268,4 +286,12 @@ func TestStateRunTakesCreatesOrCheck(t *testing.T) {
 	stateRefused(t, e, "run = { user = \"u\", creates = [\"/x\"] }\n", "takes a command")
 	stateRefused(t, e, "run = { user = \"u\", command = [\"sh\"], creates = [\"x\"] }\n", "not a clean absolute path")
 	stateRefused(t, e, "run = { command = [\"sh\"], creates = [\"/x\"] }\n", "is no user's name")
+}
+
+func TestStateRunRefusesABadPath(t *testing.T) {
+	e, _, _, _ := testEnv(false)
+	for _, p := range []string{"bin", "/a/../b", "/a:/b", "/a/"} {
+		stateRefused(t, e, "run = { user = \"u\", path = [\""+p+"\"], command = [\"sh\"], creates = [\"/x\"] }\n",
+			"free of ':'")
+	}
 }

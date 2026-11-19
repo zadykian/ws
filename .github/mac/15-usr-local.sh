@@ -10,7 +10,7 @@ set -eo pipefail
 for dir in /usr/local /usr/local/bin; do
     [ -d "$dir" ] || continue
     if [ "$(stat -f '%u %Lp' "$dir")" != "0 755" ]; then
-        echo "::warning::$dir was $(stat -f '%Su:%Sg %Lp' "$dir"); made root's, 755"
+        echo "$dir was $(stat -f '%Su:%Sg %Lp' "$dir"); made root's, 755"
         sudo chown root:wheel "$dir"
         sudo chmod 755 "$dir"
     fi

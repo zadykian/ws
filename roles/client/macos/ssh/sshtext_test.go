@@ -17,7 +17,7 @@ func textMachine() *effecttest.Machine {
 	m.Results["mktemp -d"] = effecttest.Result{Out: []byte("/tmp/x\n")}
 	m.Results["rm -rf /tmp/x"] = effecttest.Result{}
 	for _, file := range []string{"new", "whole"} {
-		m.Results["ssh -G -F /tmp/x/"+file+" ws"] = effecttest.Result{}
+		m.Results["ssh -T -G -F /tmp/x/"+file+" ws"] = effecttest.Result{}
 	}
 	return m
 }
@@ -40,7 +40,7 @@ func TestTextNamesTheTunnelsAddress(t *testing.T) {
 
 func TestTextRefusesAHostThatSSHReadsElsewhere(t *testing.T) {
 	m := textMachine()
-	m.Results["ssh -G -F /tmp/x/whole ws"] = effecttest.Result{Out: []byte("user me\nhostname 10.99.7.1\n")}
+	m.Results["ssh -T -G -F /tmp/x/whole ws"] = effecttest.Result{Out: []byte("user me\nhostname 10.99.7.1\n")}
 	_, err := ssh.Text(t.Context(), m, "/h", keys.NamedKey{Pub: "~/.ssh/id.pub"}, []sshcfg.Host{host("0")})
 	if err == nil || !strings.Contains(err.Error(), "ssh reads ws as hostname 10.99.7.1") {
 		t.Errorf("Text = %v, want a refusal of ws's address", err)

@@ -53,7 +53,9 @@ jobs:
       LABEL: com.github.zadykian.ws-tunnel.ws
       TUNNEL: /usr/local/bin/ws
     steps:
+      # git's init names its branch, as ci.yml's lint says.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        env: { GIT_CONFIG_COUNT: 1, GIT_CONFIG_KEY_0: init.defaultBranch, GIT_CONFIG_VALUE_0: main }
         with:
           persist-credentials: false
       # ws, built into ~/.local/bin by .tools/build, which the cases run as ws client macos.

@@ -11,7 +11,8 @@
 # binary for this machine and checks it against the SHA-256 that the script holds. It runs the
 # binary as mise --version, and only then moves it into place. Then it writes
 # /etc/mise/miserc.toml from WS_USER in /etc/ws/values.yml. The miserc names the envs of mise's
-# files that load on this machine. A change of WS_USER means running this script again. Last it
+# files that load on this machine. A change of WS_USER means running this script again. It links
+# the tree's plugin, plugins/ws, where mise looks for a system plugin, as below. Last it
 # checks a release's tag out in /opt/ws by git, and runs mise bootstrap in /opt/ws/roles/server.
 # The release is the latest, or the one WS_VERSION names (X.Y.Z, with or without the v). A
 # pre-release, X.Y.Z-rc.N, runs only where WS_VERSION names it. That tree pins ws's binary and
@@ -194,6 +195,24 @@ TOML
     mv -f "$rc" /etc/mise/miserc.toml || die "cannot write /etc/mise/miserc.toml"
 }
 
+# plugin links the tree's plugin ws into /usr/share/mise/plugins. mise loads a system plugin there
+# as it stands, and installs none. It refuses one that anyone but root may change, or any directory
+# on its way, /opt included, and then drops ws's units with a warning alone. So a directory above
+# the link, or /opt, that a group or others may write is refused here. mise's two are made root's
+# and 755, whatever was there. A [bootstrap.plugins] entry would install the plugin again on
+# every run, with a warning. The other such directory, /usr/local/share/mise/plugins, is the data
+# directory's own. A plugin there would be both root's and the system's, which mise warns of too.
+plugin() {
+    for dir in / /usr /usr/share /opt; do
+        [ -z "$(find "$dir" -maxdepth 0 \( ! -user 0 -o -perm /022 \))" ] ||
+            die "$dir is not root's alone, and mise ignores the plugin ws below it"
+    done
+    install -d -m 755 -o 0 -g 0 /usr/share/mise /usr/share/mise/plugins ||
+        die "cannot create /usr/share/mise/plugins"
+    ln -sfn /opt/ws/plugins/ws /usr/share/mise/plugins/ws ||
+        die "cannot link /opt/ws/plugins/ws into /usr/share/mise/plugins"
+}
+
 # guard refuses a tree in /opt/ws that anyone but root may have changed. mise runs its config, its
 # plugin's Lua and its units as root. So a link in its place is refused, and so is a file or
 # directory in it that another user owns, or that a group or others may write.
@@ -267,6 +286,7 @@ main() {
     fi
     install_mise
     miserc
+    plugin
     bootstrap
     if [ "${WS_IN_PLACE:-}" = 1 ]; then
         say "ran the bootstrap on the tree in /opt/ws"

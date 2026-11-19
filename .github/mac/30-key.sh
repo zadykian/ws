@@ -41,7 +41,7 @@ if launchctl print "system/$LABEL" >/dev/null 2>&1 || [ -e "/Library/LaunchDaemo
     echo "::error::mise bootstrap installed the daemon without ws's key"
     fail=1
 fi
-[ "$(ssh -G ws | awk '$1 == "hostname" { print $2 }')" = 10.99.0.1 ] ||
+[ "$(ssh -T -G ws | awk '$1 == "hostname" { print $2 }')" = 10.99.0.1 ] ||
     {
         echo "::error::without ws's key, ssh -G ws does not give the tunnel's end"
         fail=1

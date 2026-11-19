@@ -34,7 +34,10 @@ jobs:
     permissions:
       contents: read
     steps:
+      # Each checkout names the branch of its git init, as a machine's git config does, so git
+      # prints no hint. The step alone sets it, as a job's env would reach the runs it checks.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        env: { GIT_CONFIG_COUNT: 1, GIT_CONFIG_KEY_0: init.defaultBranch, GIT_CONFIG_VALUE_0: main }
         with:
           # A pull request's own head, rather than GitHub's test merge of it. Its commits land as
           # they are, and as the ruleset requires branches up to date, the merge's tree is the
@@ -42,8 +45,8 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: The words check
-        run: sh .github/words-check-test.sh
+      - name: The words and warnings checks
+        run: sh .github/words-check-test.sh && .github/warnings-check-test.sh
       - name: make lint
         run: make lint
         env:
@@ -79,24 +82,31 @@ jobs:
           - user: root
             outbound: false
     # NET_ADMIN lets nft -c, below, check the outbound table in the container's own netns.
+    # container marks one to packages, as systemd's interface does, so procps's skips its sysctl.
     container:
       image: ubuntu:26.04
-      options: --cap-add=NET_ADMIN
+      options: --cap-add=NET_ADMIN -e container=docker
     env:
-      # The home of root, as on a new machine, rather than the /github/home a container job gets.
-      HOME: /root
       WS_USER: ${{ matrix.user }}
       OUTBOUND: ${{ matrix.outbound }}
       # bootstrap has no --locked: a tool installs only as a lock holds it, where install.sh does.
       MISE_LOCKED: "1"
+    # Root's home, as on a new machine, not a container job's /github/home. The job's env would
+    # reach the runner's docker exec, whose client then warns that it can't read /root/.docker.
+    defaults:
+      run:
+        shell: env HOME=/root bash --noprofile --norc -eo pipefail {0}
     steps:
       # curl fetches the Go that .tools/build needs and the mise that install.sh pins, and
       # ca-certificates serves their HTTPS. There is no git, so the checkout has no .git and the
-      # build is devel.
+      # build is devel. The image's dpkg leaves out the man pages, which a server keeps, and
+      # update-alternatives warns of each link to one. A server's chrony made its log directory at
+      # its first start, which a container lacks, and chrony's install warns of its absence.
       - name: Install curl
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
+          rm /etc/dpkg/dpkg.cfg.d/excludes && install -d /var/log/chrony
           apt-get update
           apt-get install -y --no-install-recommends ca-certificates curl
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -124,7 +134,7 @@ jobs:
               tee "$RUNNER_TEMP/values.yml" >/etc/ws/values.yml
           chmod 600 /etc/ws/values.yml
       - name: Bootstrap
-        run: .github/bootstrap.sh "$RUNNER_TEMP/rel"
+        run: .github/warnings-check.sh -- .github/bootstrap.sh "$RUNNER_TEMP/rel"
       # A run by hand, as after install.sh. It starts from root's home, 0700 on any machine, as
       # after sudo -i: a command run as the user must not rest on the directory it starts in. mise
       # trusts the tree and finds ws installed, so it needs no trust variable and no server. It
@@ -135,8 +145,9 @@ jobs:
         working-directory: /root
         run: |
           export MISE_DATA_DIR=/usr/local/share/mise
-          mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null
-          mise -C /opt/ws/roles/server bootstrap </dev/null
+          check=$GITHUB_WORKSPACE/.github/warnings-check.sh
+          "$check" -- mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null
+          "$check" -- mise -C /opt/ws/roles/server bootstrap </dev/null
       # The plan changes nothing, and fails where mise's config lacks a unit of the specs.
       - name: The plan changes nothing, and finds a missing unit
         working-directory: /root
@@ -159,7 +170,6 @@ jobs:
         run: nft -c -f /usr/local/lib/ws/security/outbound.nft
       - name: Check the home's owner
         if: matrix.user != 'root'
-        shell: bash
         run: |
           strays=$(find "/home/$WS_USER" -xdev -not -user "$WS_USER")
           if [ -n "$strays" ]; then
@@ -170,7 +180,6 @@ jobs:
       # Fresh loads a malformed config with its defaults and exits 0, so this reads what it loaded,
       # as the user who owns the config.
       - name: Check the config that Fresh reads
-        shell: bash
         run: |
           home=$(getent passwd "$WS_USER" | cut -d: -f6)
           runuser -u "$WS_USER" -- env -C "$home" HOME="$home" fresh --cmd config show \
@@ -181,7 +190,6 @@ jobs:
       # and /etc/ws/allowed_signers as git reads them. The file's text alone cannot tell that git
       # opens a path.
       - name: Check that the user signs a commit
-        shell: bash
         run: |
           home=$(getent passwd "$WS_USER" | cut -d: -f6)
           repo=$(runuser -u "$WS_USER" -- mktemp -d)
@@ -210,6 +218,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        env: { GIT_CONFIG_COUNT: 1, GIT_CONFIG_KEY_0: init.defaultBranch, GIT_CONFIG_VALUE_0: main }
         with:
           persist-credentials: false
       - name: Build ws
@@ -218,7 +227,7 @@ jobs:
           .tools/serve-build /opt/ws "$RUNNER_TEMP/rel"
       - name: The cases
         run: sudo bash .github/rootless-checks.sh "$RUNNER_TEMP/rel"
-      # Docker's tool only points to the daemon's log.
+      # A failed start only points to the daemon's log.
       - name: The daemon's log
         if: failure()
         run: |
@@ -236,6 +245,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        env: { GIT_CONFIG_COUNT: 1, GIT_CONFIG_KEY_0: init.defaultBranch, GIT_CONFIG_VALUE_0: main }
         with:
           persist-credentials: false
       - name: install.sh's cases
@@ -243,8 +253,7 @@ jobs:
 
   # SigNoz's compose files in roles/server/ubuntu/signoz are foundryctl's, forged from the casting
   # there. Forged again into an empty directory, as foundryctl never removes a file, they must be
-  # the same.
-  # Only what it forges is compared, so the package may keep other files beside them.
+  # the same. Only what it forges is compared, so the package may keep other files beside them.
   signoz:
     if: github.event.action != 'ready_for_review'
     runs-on: ubuntu-latest
@@ -257,6 +266,7 @@ jobs:
       FOUNDRY_SHA256: 7555f91ee87a9d0d517009fc859ef64be76ad8b045446b2fe4360b896dc5838d
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        env: { GIT_CONFIG_COUNT: 1, GIT_CONFIG_KEY_0: init.defaultBranch, GIT_CONFIG_VALUE_0: main }
         with:
           persist-credentials: false
       - name: Install foundryctl

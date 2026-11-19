@@ -19,7 +19,7 @@ writes it with `Signed-By: /etc/apt/keyrings/docker.asc`, fails its first bootst
 a machine, as a cloud image with Docker, remove each file of `/etc/apt/sources.list.d` but mise's
 that names `download.docker.com` before `install.sh`: `docker.sources` or `docker.list`. Without systemd
 booted, as in CI's container, the units that need it skip and say so. They are Docker's service,
-the check of `docker0`, ufw's rules, lingering, and the account's daemon and its tool.
+the check of `docker0`, ufw's rules, lingering, and the account's daemon, its link and its context.
 
 ## Logs and restarts
 
@@ -94,15 +94,21 @@ another format, and an age past 99999 days.
 
 Where `WS_USER` isn't root, it runs its own daemon. The run first takes it out of the `docker`
 group, which amounts to root, so a run that stops at a later unit leaves it out. The user keeps the
-group until its session ends. `docker` reaches the daemon by the `rootless` context, which Docker's
-tool makes. The system's daemon stays for root, and for SigNoz: `sudo docker ps` lists its
-containers. The machine's miserc loads `mise.account.toml` where
-`WS_USER` isn't root, with the account's packages and units.
+group until its session ends. The system's daemon stays for root, and for SigNoz: `sudo docker ps`
+lists its containers. The machine's miserc loads `mise.account.toml` where `WS_USER` isn't root,
+with the account's packages and units.
 
 The role installs `docker-ce-rootless-extras`, `uidmap`, `slirp4netns` and `apparmor`. Where
 `/etc/subuid` or `/etc/subgid` gives the user fewer than 65536 ids, it adds the range
 100000-165535. It enables lingering, so that the user's systemd runs without a login, keeps
-`user@UID.service` running, and delegates the `io` controller to it.
+`user@UID.service` running, and delegates the `cpuset` and `io` controllers to it.
+
+ws does what Docker's `dockerd-rootless-setuptool.sh install` does, by its own units. It writes the
+user's unit, `~/.config/systemd/user/docker.service`, as the tool's text with the system's `PATH`,
+and starts it. The tool would write the caller's `PATH`, mise's shims included. It enables the
+unit, and makes the `rootless` context, to `/run/user/UID/docker.sock`, the current one of the
+user's `~/.docker/config.json`. So `docker` reaches the user's daemon with no `DOCKER_HOST`. A
+second run finds each in place and plans nothing.
 
 The daemon's `daemon.json` is `~/.config/docker/daemon.json`. It has the log and cache values, the
 published address and `cgroup-parent`, so that the containers stay in the user's `docker.slice` with
@@ -111,4 +117,4 @@ namespace, and a restart stops the user's containers. Its `dns` is slirp4netns's
 queries reach the host's resolver. slirp4netns runs as the user, so the outbound table drops them
 where `/etc/resolv.conf` names a private resolver in place of systemd-resolved's stub. A container
 asks the resolver of the host by `--dns 127.0.0.53`. A rootless container binds no port below 1024.
-The account's three files are parts of one unit, so a change to any restarts its daemon once.
+The account's four files are parts of one unit, so a change to any restarts its daemon once.

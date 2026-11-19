@@ -32,6 +32,9 @@ swap = { size_mib = 1024, hint = "…" }                                 # /swap
   systemd session. It takes exactly one of `creates`, which runs where a path is missing, and
   `check`, which runs where the check, as `user` too, exits other than 0. A procedure that stays a
   command of ws runs this way.
+- A `run`'s `path`, such as `["/home/USER/.local/bin"]`, puts its directories before the system's
+  in the command's and the check's `PATH`. An installer that puts its tool there warns where `PATH`
+  lacks it.
 - On macOS, ws runs as the user. The `check` runs as that user whatever `user`, so that a read asks
   no password. The command runs as the user bare, as root by sudo, or as another user by root's
   sudo.

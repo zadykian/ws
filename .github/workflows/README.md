@@ -34,6 +34,26 @@ file](../../roles/server/ubuntu/frame/README.md#the-values-file)). In the contai
 file is off, as the swap is the host's. With no NVIDIA GPU, `nvidia` checks its names alone, and
 with no MSI board, `fans` leaves its fans alone. Without a VPN profile, `ikeward` does nothing.
 
+The container is set up as a machine is, so that no step of CI warns. It carries `container`, as
+systemd's container interface does, so procps leaves the kernel's read-only settings alone. dpkg
+keeps the man pages, and chrony's log directory is there before its install. The steps run with
+root's home, not the job's, which would reach the runner's own Docker client. Each checkout names
+the branch of its `git init`, as a machine's git config does.
+
+## The warnings check
+
+[warnings-check.sh](../warnings-check.sh) fails where a bootstrap or a plan of `playbook` or
+`rootless` prints a warning. It reads a run's log, or runs the command and shows its output as it
+runs. A warning is a line that says warn, hint, notice, deprecated, error, cannot, unable, could
+not or ignoring, as a word alone, or starts as apt's `W:` and `E:` do. mise's colors don't hide
+one. The check names each line it finds and exits 1, and it keeps a plan's own exit code.
+
+It allows a few lines where systemd has not booted, each named and justified in the script. They
+come from what a container lacks: an init that tells a package's script the runlevel, and an
+`/etc/resolv.conf` that Docker doesn't bind-mount. On the rootless job's booted runner, it allows
+none. Its test, [warnings-check-test.sh](../warnings-check-test.sh), runs in `lint`, on a log with
+warnings and on one without.
+
 ## The install script
 
 CI runs `install.sh` with mise's real binary, served on loopback, and a small repository for the
@@ -66,7 +86,9 @@ CI also sets up a Mac, by [its cases](../mac), in the order of [The
 Mac](../../roles/client/README.md). A stand-in cld, which cld's unit leaves alone, spares the
 job's runs its download. Then `mise -C /opt/ws/roles/client bootstrap` with
 [the Mac's frame](../../roles/client/macos/frame/README.md) runs as the runbook runs it, on the
-tree in `/opt/ws` with ws's build served as the pin ([mac-mise.sh](../mac-mise.sh)). It sets up
+tree in `/opt/ws` with ws's build served as the pin ([mac-mise.sh](../mac-mise.sh)). It links the
+tree's plugin as the runbook does, and makes `/opt` and `/usr/local/share` root's and 755, as on
+a Mac, where the runner's image may differ. It sets up
 ssh, git and cld too. Its plan must exit 0 after the first run, a second run must call no sudo,
 and `/usr/local/bin/ws` must be the build. A spec whose unit no line names must fail the plan,
 and so must a plan from `/opt/ws` with every unit in sync.

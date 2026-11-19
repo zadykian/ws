@@ -10,14 +10,18 @@ server, and loads no file of the server's.
 | File | What it holds |
 | --- | --- |
 | [`mise.toml`](../../../../mise.toml) | Both sides': mise's settings and the pin of ws, with `macos-arm64` among its platforms. |
-| [`mise.mac.toml`](../../../../mise.mac.toml) | The Mac's: the plugin, and the frame's line, `ws:state/ws-binary`. |
+| [`mise.mac.toml`](../../../../mise.mac.toml) | The Mac's: the frame's line, `ws:state/ws-binary`. |
 | [`plugins/ws`](../../../../plugins/ws) | The plugin: a hook runs one `ws unit read` or `ws unit write` ([ws unit](../../../../engine/core/kind/README.md#ws-unit)). |
 | `units.toml.tmpl` here | The role `frame`: the unit that keeps `/usr/local/bin/ws`. |
 
 ## Where it sits
 
-- `/opt/ws` is the tree at the release, root's, which no one else may write. A plugin linked by an
-  absolute path loads whatever its owner, so the tree's owner is the plugin's.
+- `/opt/ws` is the tree at the release, root's, which no one else may write.
+- `/usr/local/share/mise/plugins/ws` links to the tree's `plugins/ws`, root's, where mise finds a
+  system plugin and loads it as it stands. mise refuses it where anyone but root or the user may
+  change it, or a directory on its way, `/opt` and `/usr/local/share` included. A
+  `[bootstrap.plugins]` entry would install the plugin again on every run, with a warning. A
+  plugin that mise does not load drops every unit with mise's warning alone, as no hook runs.
 - `/usr/local/bin/mise` is the pinned mise, checked by its SHA-256.
 - `/etc/mise/miserc.toml` says `env = ["mac"]`, which loads `mise.mac.toml` and the fragments.
 - mise runs as the user and installs ws in the user's data directory. The Mac's `ws unit` refuses

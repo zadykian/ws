@@ -67,7 +67,7 @@ unbooted = true
 command = [
     "sh",
     "-c",
-    'cd "$1" && npm ci --ignore-scripts --no-audit --no-fund && sha256sum package.json package-lock.json >node_modules/.ws-sha256',
+    'cd "$1" && npm ci --ignore-scripts --no-audit --no-fund --no-update-notifier && sha256sum package.json package-lock.json >node_modules/.ws-sha256',
     "sh",
     "{{ .Home }}/.local/lib/language-servers",
 ]
@@ -130,13 +130,17 @@ check = [
 # server defaults telemetry to all (roslyn#86066): a bump adds --telemetryLevel off to every command
 # that starts it. update installs it where missing too, and --allow-downgrade lets the pin go back.
 # NuGet asks every feed of the account's NuGet config, and one it cannot reach fails the install,
-# so --source asks nuget.org alone. The store keeps a directory per version, in lower case.
+# so --source asks nuget.org alone. The store keeps a directory per version, in lower case. dotnet
+# warns where PATH lacks its tools' directory, and as root writes a profile.d script that adds it,
+# so the unit puts it first. DOTNET_NOLOGO keeps its first run's welcome and advice off.
 [state.devtools-roslyn.run]
 user = "{{ .User }}"
 unbooted = true
+path = ["{{ .Home }}/.dotnet/tools"]
 command = [
     "env",
     "DOTNET_CLI_TELEMETRY_OPTOUT=1",
+    "DOTNET_NOLOGO=1",
     "dotnet",
     "tool",
     "update",

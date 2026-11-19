@@ -36,7 +36,8 @@ as_root() {
 
 # reset removes what a run of install.sh leaves, so that each case starts as a new machine.
 reset() {
-    as_root rm -rf /usr/local/bin/mise /usr/local/bin/.mise.* /etc/mise /opt/ws /etc/ws-install-check /etc/ws
+    as_root rm -rf /usr/local/bin/mise /usr/local/bin/.mise.* /etc/mise /opt/ws /etc/ws-install-check /etc/ws \
+        /usr/share/mise
 }
 
 # install_sh [ENV=VALUE...] runs install.sh as root with the settings, from a stdin that is a pipe,
@@ -55,8 +56,11 @@ written() {
 [ -n "${GITHUB_ACTIONS:-}${WS_SPARE_MACHINE:-}" ] || fail "it removes /etc/ws: run it on a runner or a spare machine"
 
 # GitHub's runner keeps a default ACL on /opt, which lets anyone write what root makes there,
-# whatever the umask. install.sh refuses such a tree, and a server's /opt has no such ACL.
+# whatever the umask. install.sh refuses such a tree, and a server's /opt has no such ACL. Its
+# image lets others write /opt and /usr/share too, which install.sh refuses as mise would ignore
+# its plugin below them, and a server's are root's alone.
 ! command -v setfacl >/dev/null || as_root setfacl -k /opt
+as_root chmod go-w /opt /usr/share
 
 printf '%s\n' 'NAME="Ubuntu"' 'ID=ubuntu' 'VERSION_ID="26.04"' >"$tmp/os-release"
 version=$(sed -n 's/^mise_version=//p' install.sh)
@@ -228,4 +232,16 @@ if install_sh WS_IN_PLACE=1 WS_REPO="file://$tmp/nothing"; then
     fail "install.sh ran a tree with a file that root does not own"
 fi
 [ ! -e /etc/ws-install-check/server ] || fail "a refused tree ran"
+echo "::endgroup::"
+
+echo "::group::An /opt that others may write is refused, as mise would ignore the plugin ws there"
+reset
+as_root cp -r "$repo" /opt/ws
+as_root chmod o+w /opt
+if install_sh WS_IN_PLACE=1 WS_REPO="file://$tmp/nothing" 2>"$tmp/refusal"; then
+    fail "install.sh ran with an /opt that others may write"
+fi
+as_root chmod o-w /opt
+grep -q 'mise ignores the plugin ws' "$tmp/refusal" || fail "install.sh refused /opt, but not by its message"
+[ ! -e /etc/ws-install-check/server ] || fail "a refused run went on to the bootstrap"
 echo "::endgroup::"

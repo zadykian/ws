@@ -5,7 +5,8 @@ around it. The job `rootless` runs on GitHub's `ubuntu-26.04` runner, which boot
 runner up as it would a machine, with a user as Ubuntu's installer leaves it. That user is in the
 groups `sudo`, `docker` and `lxd`, and sudo has cached its password. The runner's own Docker is
 purged first, as it predates what `--net=host` means on a rootless daemon. Its apt source goes too,
-as apt refuses a repository that two sources name with different keys, and mise adds its own. apt's
+as apt refuses a repository that two sources name with different keys, and mise adds its own. So do
+the plugins that the image put in Docker's directory past dpkg, which would keep it and warn. apt's
 daily timers lose the stamps of their runs at the image's build, as a new machine's have none
 before their first start. With them, systemd takes a run as missed at the boot. Each of the
 bootstrap's reloads draws the run's random delay again, and one soon falls in the past: an upgrade
@@ -17,17 +18,25 @@ ws runs.
 
 The tree goes in `/opt/ws`, root's alone, with its pin on the tree's build, as for
 [`playbook`](README.md#the-playbook-job). GitHub's runner keeps a default ACL on `/opt` that lets
-anyone write what lands there, so the job drops it first. As on a new machine, `install.sh` runs
-the bootstrap on the tree, which installs ws and sets up the firewall before Docker's ufw rules.
+anyone write what lands there, so the job drops it first. Its image lets others write `/opt` and
+`/usr/share` too, where mise would refuse
+[the plugin](../../roles/server/ubuntu/frame/README.md#the-plugin), so the cases make both root's
+alone. As on a new machine, `install.sh` runs the bootstrap on the tree, which installs ws and sets
+up the firewall before Docker's ufw rules.
 No apt command in it may wait for dpkg's lock, and neither of apt's daily services may run. The
 log shows the timers and their stamps before it and after it, and systemd's reloads, so that a
 failure shows what started the upgrade. `mise bootstrap plan --detailed-exitcode` must then
-exit 0. The bootstrap runs twice, and the plan must exit 0 again.
+exit 0. The bootstrap runs twice, and the plan must exit 0 again. Neither run nor plan may print a
+warning ([The warnings check](README.md#the-warnings-check)), and none is allowed here, as the
+runner boots.
 
 Then the user must keep `sudo`, leave `docker` and `lxd`, and have no cached password. The system's
-socket must refuse it, and its own Docker must run a container that resolves names through
+socket must refuse it. Its own Docker must pull the image, as root's does before its runs, so
+that no run warns of an image it lacks. It must run a container that resolves names through
 slirp4netns's resolver and reaches the internet. The daemon and its containers must run in
-`docker.slice`, and the user's systemd must have `io`.
+`docker.slice`, and the user's systemd must have `cpuset` and `io`. The user's systemd must start
+the daemon by its link, and `docker` reach it by the `rootless` context, as ws makes both without
+Docker's setup tool.
 
 The firewall must hold under the rootless daemon:
 

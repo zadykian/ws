@@ -16,7 +16,8 @@ web='while true; do printf "HTTP/1.0 200 OK\r\n\r\nhi\n" | nc -l -p 80; done'
 sudo_form='printf "%s\n" "$1" | sudo -S -p "" -v; sudo -n true; rc=$?; exit "$rc"'
 # The runner's sudo keeps the runner's environment, which a real sudo drops, and its
 # /etc/environment, which PAM gives each session, names the runner's own directories. They would
-# send Docker's tool to the runner's home, and the user's systemd to the runner's runtime directory.
+# send the user's settings to the runner's home, and the user's systemd to the runner's runtime
+# directory.
 unset XDG_CONFIG_HOME
 sed -i '/^XDG_/d' /etc/environment
 # The runner's apt takes the amd64v3 variant, which a machine turns on by hand. The dotnet PPA's
@@ -33,7 +34,7 @@ fail() {
     exit 1
 }
 
-# journal prints the user's daemon's log after a failure, which Docker's tool only points to.
+# journal prints the user's daemon's log after a failure, which a failed start only points to.
 journal() {
     local status=$?
     [ "$status" = 0 ] || journalctl -n 80 --no-pager _SYSTEMD_USER_UNIT=docker.service || true
@@ -52,9 +53,7 @@ must() {
 refused() {
     local name=$1
     shift
-    if "$@"; then
-        fail "$name"
-    fi
+    ! "$@" || fail "$name"
     echo "ok: $name"
 }
 
@@ -81,14 +80,14 @@ up() {
 
 # Judge the deb's path with Ubuntu's restriction on, as on a real machine, whatever the image sets.
 key=/proc/sys/kernel/apparmor_restrict_unprivileged_userns
-if [ -e "$key" ]; then
-    echo 1 >"$key"
-fi
+[ ! -e "$key" ] || echo 1 >"$key"
 
 # The image's Docker predates what --net=host means on a rootless daemon, and ws must install its
 # own. The purge leaves docker0, which the route check accepts. The image's source of Docker goes
-# too, as apt refuses one repository signed by two keys, and mise adds its own.
+# too, as apt refuses one repository signed by two keys, and mise adds its own. So do the plugins
+# that the image put in Docker's directory past dpkg, which would keep it and warn.
 apt-get update
+rm -rf /usr/libexec/docker/cli-plugins
 apt-get purge -y docker-ce docker-ce-cli containerd.io
 rm -rf /etc/docker /var/lib/docker /var/lib/containerd
 for f in /etc/apt/sources.list.d/*; do
@@ -171,9 +170,11 @@ must "sudo's password is cached before the drop-in" as bash -c "$sudo_form" bash
 
 # As on a new machine: install.sh runs the bootstrap, which installs ws and sets up the firewall
 # before Docker's ufw rules. It runs twice, and the second run must change nothing. The tree must
-# be root's alone for install.sh's guard.
+# be root's alone for install.sh's guard. So must /opt and /usr/share, as on a machine, for mise's:
+# the runner's image lets others write both, and mise refuses a system plugin below either.
 chown -R 0:0 /opt/ws
 chmod -R go-w /opt/ws
+chmod go-w /opt /usr/share
 log=$(mktemp)
 since=$(date +%s)
 if ! "$(dirname "$0")/bootstrap.sh" "$rel" > >(tee "$log") 2>&1; then
@@ -181,11 +182,12 @@ if ! "$(dirname "$0")/bootstrap.sh" "$rel" > >(tee "$log") 2>&1; then
     fail "the first bootstrap"
 fi
 must "no upgrade ran, and no apt command waited for dpkg's lock" apt_quiet "$log" "$since"
-must "the first bootstrap leaves nothing to do" \
-    mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null
-mise -C /opt/ws/roles/server bootstrap </dev/null
-must "the second bootstrap leaves nothing to do" \
-    mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null
+check=$(dirname "$0")/warnings-check.sh
+boot() { "$check" -- mise -C /opt/ws/roles/server bootstrap "$@" </dev/null; }
+must "the first bootstrap leaves nothing to do" boot plan --detailed-exitcode
+must "the first bootstrap prints no warning" "$check" "$log"
+must "the second bootstrap runs" boot
+must "the second bootstrap leaves nothing to do" boot plan --detailed-exitcode
 
 groups=$(id -nG "$user")
 must "the user keeps sudo" grep -qw sudo <<<"$groups"
@@ -195,6 +197,9 @@ refused "sudo's password stays cached" as bash -c "$sudo_form" bash "$password"
 refused "the system's socket answers the user" \
     as curl --silent --max-time 5 --unix-socket /var/run/docker.sock http://localhost/_ping
 
+# The pulls ahead of the runs, the user's and root's, as a run of an image not yet pulled warns.
+must "the user's docker pulls the image" as docker pull -q "$image"
+docker pull -q "$image"
 must "the user's docker runs a container" as docker run --rm "$image" true
 resolver=$(as docker run --rm "$image" cat /etc/resolv.conf)
 must "a container asks slirp4netns's resolver" grep -qx 'nameserver 10.0.2.3' <<<"$resolver"
@@ -204,6 +209,9 @@ must "a container reaches the internet" \
 cgroup=/sys/fs/cgroup/user.slice/user-$uid.slice/user@$uid.service
 slice=$(as systemctl --user show --property=Slice --value docker.service)
 must "the daemon runs in docker.slice" test "$slice" = docker.slice
+must "the user's systemd starts the daemon by its link" as systemctl --user is-enabled --quiet docker.service
+must "docker reaches the daemon by the rootless context" test "$(as docker context show)" = rootless
+must "the user's systemd has cpuset" grep -qw cpuset "$cgroup/cgroup.controllers"
 must "the user's systemd has io" grep -qw io "$cgroup/cgroup.controllers"
 id=$(as docker run -d --rm "$image" sleep 60)
 must "a container runs inside docker.slice" test -d "$cgroup/docker.slice/docker-$id.scope"

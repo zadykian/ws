@@ -5,10 +5,11 @@
 # the check against a silent skip must fail the plan where mise's config lacks a unit. This
 # drops the frame's line of state/ws-binary, and puts the file back after. ws unit verify names the
 # unit, or the plugin that mise no longer loads where the line was the last of ws's. As a run by
-# hand, it names the data directory that install.sh gives mise.
+# hand, it names the data directory that install.sh gives mise. The first plan prints no warning.
 set -eu
 export MISE_DATA_DIR=/usr/local/share/mise
-mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null
+"$(dirname "$0")/warnings-check.sh" -- \
+    mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null
 
 out=$(mise -C /opt/ws bootstrap plan </dev/null 2>&1) && status=0 || status=$?
 if [ "$status" != 1 ] || ! printf '%s\n' "$out" | grep -qF 'run it as mise -C /opt/ws/roles/server'; then

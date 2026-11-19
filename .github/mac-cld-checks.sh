@@ -112,7 +112,7 @@ installed() {
 # expanded would pass too.
 lines() {
     expanded=$(printf '%s\n' "$want" | sed "s|%d|$HOME|g")
-    config=$(ssh -G ws) || {
+    config=$(ssh -T -G ws) || {
         error "ssh -G ws failed"
         return
     }
@@ -142,7 +142,7 @@ try() {
 
 # watch LOG runs ssh -G ws's LocalCommand with %d as the home, and as a home without cld.
 watch() {
-    command=$(ssh -G ws | sed -n 's/^localcommand //p')
+    command=$(ssh -T -G ws | sed -n 's/^localcommand //p')
     if [ -z "$command" ]; then
         error "ssh -G ws gives no localcommand"
         return
