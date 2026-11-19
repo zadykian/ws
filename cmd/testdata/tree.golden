@@ -561,8 +561,8 @@ Usage:
   ws server ubuntu ikeward [command]
 
 Available Commands:
-  check       fail where the secrets hold no profile for WS_IKEWARD_PROFILE
-  install     run ikeward install from the profile of the secrets, where its dry run says it would change anything
+  check       fail where the run's secrets hold no profile for WS_IKEWARD_PROFILE
+  install     run ikeward install from the profile of the run's secrets, where its dry run says it would change anything
   wait        wait for ikeward status to pass, as the VPN comes up
 
 Flags:
@@ -570,7 +570,7 @@ Flags:
 
 Use "ws server ubuntu ikeward [command] --help" for more information about a command.
 == ws server ubuntu ikeward check
-It reads the values of /etc/ws/values.yml and ws's secrets file, and fails where WS_IKEWARD_PROFILE is empty or the secrets hold no profile for it, as install would. The ikeward role's guard runs it, so that the run stops before ikeward's binary downloads, and a plan shows why.
+It reads the values of /etc/ws/values.yml and the profile's variables, WS_IKEWARD_P12, WS_IKEWARD_SSWAN and WS_IKEWARD_PASSWORD, which the secrets task sets. It fails where WS_IKEWARD_PROFILE is empty, or where the variables are set and either file's is empty, as install would. A run without them passes. The ikeward role's guard runs it, so that the run stops before ikeward's binary downloads, and a plan shows why.
 
 Usage:
   ws server ubuntu ikeward check [flags]
@@ -578,7 +578,7 @@ Usage:
 Flags:
   -h, --help   help for check
 == ws server ubuntu ikeward install
-It reads the values of /etc/ws/values.yml and ws's secrets file. It writes the profile's two files into /run/ikeward-profile, which only root may enter, runs ikeward install --dry-run on them with the .p12's password on standard input, and removes them. Where the dry run exits 4, install would change something, and it runs install. It fails where WS_IKEWARD_PROFILE is set and the secrets hold no profile. Without booted systemd nothing is due.
+It reads the values of /etc/ws/values.yml and the profile's variables, as check does. It writes the profile's two files into /run/ikeward-profile, which only root may enter, runs ikeward install --dry-run on them with the .p12's password on standard input, and removes them. Where the dry run exits 4, install would change something, and it runs install. It fails where check would. Without booted systemd, or without the variables, as in a run without the secrets, nothing is due.
 
 --check fails where install would change anything, and changes nothing. The ikeward role's run state runs it, after ikeward's binary.
 
@@ -589,13 +589,16 @@ Flags:
       --check   fail where install would change anything, and change nothing
   -h, --help    help for install
 == ws server ubuntu ikeward wait
-It runs /usr/local/sbin/ikeward status, and again until it passes, up to 12 times, 10 s apart, then fails. A later unit may need the VPN, as for a clone from the remote network. Without booted systemd nothing is due. The ikeward role's run state runs it where ikeward status fails, after the install.
+It runs /usr/local/sbin/ikeward status, and again until it passes, up to 12 times, 10 s apart, then fails. A later unit may need the VPN, as for a clone from the remote network. Without booted systemd, or without the profile's variables, as in a run without the secrets, which installs no VPN, nothing is due.
+
+--check fails where it would wait, and changes nothing. The ikeward role's run state runs it, after the install.
 
 Usage:
   ws server ubuntu ikeward wait [flags]
 
 Flags:
-  -h, --help   help for wait
+      --check   fail where the VPN is down and the run would wait, and change nothing
+  -h, --help    help for wait
 == ws server ubuntu secrets
 keep ws's secrets file, with its identity as a systemd credential
 

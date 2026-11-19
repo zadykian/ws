@@ -147,6 +147,9 @@ func keepUser(action []byte) []byte {
 // path and the account.
 func TestEachSecretFileHasItsGroupUnit(t *testing.T) {
 	for role, f := range secretsFiles(t) {
+		if len(f.Bootstrap.Files) == 0 {
+			continue // no file of mise's, as ikeward's inputs reach ws by the run's env
+		}
 		text, err := os.ReadFile(filepath.Join(rolesDir, role, "units.toml.tmpl")) //nolint:gosec // a role's spec
 		if err != nil {
 			t.Fatal(err)
