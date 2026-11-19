@@ -69,5 +69,18 @@ open and a missing profile are refused, and the file keeps its bytes. The last t
 `ws client macos secrets add NAME`. No output of the task's holds a value. Only GitHub proves the
 fetch from github.com by a deploy key, against the key that ws pins.
 
+Then the files that the roles' [secret inputs](../../roles/server/ubuntu/frame/README.md#secret-inputs)
+write. The seed leaves their inputs empty, so none of gh's token, `/etc/ws/gh-token`, git's,
+`/etc/ws/git-tokens.toml`, and the shell's `/etc/ws/env` is there. The repository then gives each
+a value, masked in the log, the shell's an endpoint of a `.invalid` host. The task's run writes
+the three, root's 640 with the user's group, under ws's header. `/etc/ws/env` exports the
+endpoint in single quotes, and the user's sh reads it from there. GitHub refuses a dummy token, so
+the user's gh holds it as a login with it would, and gh's unit compares that with the file's last
+line. The user's git gets git's token through
+[ws's program](../../roles/server/ubuntu/git/README.md#git-credentials). A plan through the task
+exits 0, and a run and a plan without the env `secrets` keep the three files, their bytes, mode
+and group. A file at gh's path that ws didn't write stops the run, which keeps it, and a run
+without the env too. An empty input removes its file.
+
 The runner has Azure's routes, so only CI proves them. `.github/actionlint.yaml` names the label
 `ubuntu-26.04`, as actionlint 1.7.12 doesn't know it yet. It goes once a release lists the label.
