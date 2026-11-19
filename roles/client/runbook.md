@@ -75,6 +75,18 @@ GitHub is the only source of the server's keys: nothing copies a key to the serv
 installer imports the account's keys for ws's user, so run this step before its install. In the
 installer, turn OpenSSH on, import the keys from GitHub and leave password login off.
 
+## The secrets
+
+1. Once, create the secrets repository by `gh repo create zadykian/ws-secrets --private`, with its
+   README, license and `check` workflow, whose jobs `values` and `gitleaks` its ruleset on `main`
+   requires.
+2. With the Nano plugged in, run `ws client macos secrets init`. Where the Nano holds no age
+   identity, it asks for the Nano's PIN and a touch. It prints the backup key's secret line once:
+   keep it on paper or in a password manager, then press Enter. It lands `fnox.toml` by a pull
+   request ([ws client macos secrets init](macos/secrets/README.md#ws-client-macos-secrets-init)).
+3. Run it again once `/opt/ws` moves to a release that declares a new input. Until then, a
+   server's run of that release fails at mise, which finds no value of the input.
+
 ## ws's host key
 
 1. Read ws's key with `ssh-keyscan -t ed25519 ADDRESS`, ADDRESS being ws's LAN address, or the

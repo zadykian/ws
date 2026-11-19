@@ -45,6 +45,7 @@ Available Commands:
   networks    route each server's WS_TUNNEL_NETWORKS and send its WS_RESOLVERS' domains to it
   remove      remove a server from the Mac
   resolver    send DOMAIN's names to the nameservers, or drop it
+  secrets     the commands of the secrets repository, which fnox keeps
   servers     list the Mac's servers with their target, slot and tunnel
   ssh         the commands of ssh's units
   tunnel      the Mac's tunnel to ws
@@ -159,6 +160,34 @@ Usage:
 Flags:
       --check   print each change and make none
   -h, --help    help for resolver
+
+Global Flags:
+      --server string   the server to act on, which may be left out where there is one
+== ws client macos secrets
+the commands of the secrets repository, which fnox keeps
+
+Usage:
+  ws client macos secrets [flags]
+  ws client macos secrets [command]
+
+Available Commands:
+  init        set the secrets repository up with the Nano and a backup key
+
+Flags:
+  -h, --help   help for secrets
+
+Global Flags:
+      --server string   the server to act on, which may be left out where there is one
+
+Use "ws client macos secrets [command] --help" for more information about a command.
+== ws client macos secrets init
+It reads the repository from WS_SECRETS_REPO in /opt/ws/mise.toml, and clones it. It takes the age identity that the YubiKey Nano holds, or makes one, which asks for its PIN and a touch, and keeps its stub in fnox's key file. Where fnox.toml is missing, it makes a backup key, starts fnox.toml with both recipients, and prints the backup's secret line once. It declares each input of /opt/ws's server roles that fnox.toml lacks, empty. It lands the change by a pull request once its checks pass, and opens none where nothing changed. It stops where a pull request of an earlier run is still open. Run it again once /opt/ws holds a release that declares a new input.
+
+Usage:
+  ws client macos secrets init [flags]
+
+Flags:
+  -h, --help   help for init
 
 Global Flags:
       --server string   the server to act on, which may be left out where there is one

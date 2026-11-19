@@ -58,6 +58,12 @@ _Avoid_: download, release asset, artifact
 One server's values in the repository of ws's secrets, `fnox.HOSTNAME.toml`, by its hostname.
 _Avoid_: host file
 
+**Recipient**:
+A public key that fnox's age provider encrypts each value to. The provider's table of recipients
+names each: `nano` the Nano's, `backup` the backup key's, and a server's hostname its host key
+([The inputs and fnox.toml](roles/client/macos/secrets/README.md#the-inputs-and-fnoxtoml)).
+_Avoid_: reader
+
 **Spec**:
 A role's `units.toml.tmpl`: TOML over the machine's values that names the role's units, a table a kind
 and a key a unit.
@@ -67,6 +73,12 @@ _Avoid_: manifest
 `/etc/ws/secrets.age` on ws, root's and 600: TOML that age encrypts to the identity's credential,
 a table per kind. `secrets.Store` alone reads and writes it.
 _Avoid_: vault
+
+**Secrets repository**:
+The private repository that `WS_SECRETS_REPO` names: `fnox.toml`, the values that every server
+shares, and a profile per server, its own. A change lands on its `main` by a pull
+request ([How a change lands](roles/client/macos/secrets/README.md#how-a-change-lands)).
+_Avoid_: vault, store
 
 **Unit**:
 One resource of a kind, named `KIND/NAME`, as `file/sshd`, that a spec names. It plans and applies

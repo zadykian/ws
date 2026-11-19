@@ -41,6 +41,10 @@ The rules a change to the ws CLI keeps, in `cmd/`, `engine/` and `roles/`
 - `ws client macos remove NAME` changes nothing on the server: it takes the Mac's files of that
   server away, then runs `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap`, which takes its
   daemon and hosts away. It takes no `--server`.
+- `ws client macos secrets` changes the secrets repository by a pull request from a temporary
+  clone, never a push to `main`, and opens none where nothing changed. A value, an age identity's
+  secret or the backup's line never enters an argument, a file or an error
+  ([The secrets on the Mac](../../roles/client/macos/secrets/README.md#how-a-change-lands)).
 - ws is cobra's: a command parses no flag or argument by hand and holds no usage text.
   `cli.Execute` runs the root, names the command in each error, and returns 2 for a usage error. A
   group of commands exists on the systems where it runs. `clientCmd`, over client/cli's `Command`,
