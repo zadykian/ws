@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"strings"
+	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
 )
@@ -29,6 +30,9 @@ type Clone struct {
 	M   effect.Machine
 	// FnoxEnv holds the assignments fnox runs with, its PATH and its key file.
 	FnoxEnv []string
+	// Sleep and Now are the clock of Land's wait for the checks: nil takes the real ones.
+	Sleep func(context.Context, time.Duration) error
+	Now   func() time.Time
 
 	// base is the temporary directory that holds the clone, which Close removes.
 	base string

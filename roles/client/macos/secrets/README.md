@@ -38,3 +38,24 @@ mise installs both tools for the tree alone, on no shell's `PATH`. fnox must fin
 `/etc/paths` puts `/usr/local/bin` on every shell's `PATH`. Each copy goes in under a temporary name
 first, and one there that differs is replaced. The check runs as the user, so a bootstrap that
 changes nothing asks no password. Where mise has no such tool, its unit alone fails.
+
+## How a change lands
+
+The secrets repository's ruleset on `main` refuses a push, and requires its checks, `values` and
+`gitleaks`, on a branch up to date with `main`. So ws changes the repository by a pull request, from
+a temporary clone that the Go package here makes:
+
+1. It reads the repository from `WS_SECRETS_REPO` in the `[env]` of `/opt/ws/mise.toml`, and has
+   gh read it as private. A missing one stops, and names `gh repo create OWNER/NAME --private`.
+2. It clones `main` by HTTPS, which gh's credential command serves, into a temporary directory.
+   A clone without `.github/workflows/check.yml` stops, as its checks would never come. fnox runs
+   in the clone, as it reads `fnox.toml` from its working directory alone.
+3. Where the change's files differ from `main`, it commits them, signed, on a branch
+   `ws/TOPIC-YYYYMMDD-HHMMSS`, pushes it, and opens a pull request by gh. Where they don't, it
+   opens none.
+4. It reads the checks every 10 seconds, for 15 minutes at most. A failed or cancelled check stops
+   it with the pull request's link, which stays open. So does a wait that runs out.
+5. Once both checks pass, it merges the pull request by a merge commit, of the commit the checks
+   ran on, and deletes its branch. It then removes the clone, whatever the outcome.
+
+No value enters a step's arguments: a commit's title and body, a branch and the files' names alone.
