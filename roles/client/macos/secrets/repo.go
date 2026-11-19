@@ -1,6 +1,7 @@
 // Package secrets sets up the secrets repository from the Mac. It reads the Nano's age
 // identities, the server's inputs and fnox.toml. It sets and drops a server's host key in the fnox
-// files. It clones the repository, runs fnox in the clone, and lands a change by a pull request.
+// files, and reads it from known_hosts. It clones the repository, runs fnox in the clone, and lands
+// a change by a pull request.
 package secrets
 
 import (
