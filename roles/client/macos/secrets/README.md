@@ -138,3 +138,28 @@ backup.
 
 A release may declare a new input. A server's run of it fails at mise, which finds no value of
 the input, until init runs again on a Mac whose `/opt/ws` holds that release.
+
+## A server's key
+
+A server opens the values by its SSH host key, `/etc/ssh/ssh_host_ed25519_key`. Its public half,
+`ssh-ed25519` and the key, is a recipient twice, under the label of the server's hostname:
+
+- in `fnox.toml`'s table, so that the server opens the shared values;
+- in `fnox.HOSTNAME.toml`, the server's profile file, whose provider is `host`. Its table holds
+  `nano`, `backup` and that server alone, so that the server opens its own values and no other
+  server's. The provider's name differs from `age`, as fnox merges providers by name: under
+  `-P HOSTNAME`, a profile's `age` would replace the shared one.
+
+The Go package here edits a table by its lines, `nano` first, then `backup`, then the servers by
+name, and keeps every other byte of the file. A table with a line of another form, a comment
+included, stops it. A new profile file holds the Nano's and the backup's recipients of `fnox.toml`,
+and no value. A rebuilt server's key replaces the older one under its label. A key under another
+label, of a server whose hostname changed, leaves that label first. A removed server's key leaves
+every table, while its profile file stays with its values for a rebuild. Where the tables already
+hold what they should, nothing changes, and nothing is encrypted again.
+
+The hostname serves unchanged as the profile, the file's name, the label and the deploy key's
+title. So it must be one DNS label: lowercase letters, digits and `-`, 63 at most, neither starting
+nor ending with `-`. `nano` and `backup` are labels, `local` names `fnox.local.toml`, fnox's local
+override, and `default` is fnox's profile without `-P`, so none of them serves. The server's task
+refuses the same names.
