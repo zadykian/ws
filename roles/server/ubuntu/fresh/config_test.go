@@ -248,7 +248,7 @@ func TestTheActionListNamesThePinnedVersion(t *testing.T) {
 		t.Fatal(err)
 	}
 	line, _, _ := strings.Cut(string(data), "\n")
-	pin, err := os.ReadFile("units.toml")
+	pin, err := os.ReadFile("units.toml.tmpl")
 	if err != nil {
 		t.Fatal(err)
 	}

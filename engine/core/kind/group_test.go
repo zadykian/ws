@@ -42,7 +42,7 @@ func TestFileGroupRefusedAtLoad(t *testing.T) {
 		"path = \"/etc/a\"\ngroup = \"net\"\ngroup_of = \"u\"\nsource = \"f\"\n": "group or group_of",
 	} {
 		e, _, _, _ := testEnv(false)
-		_, err := Load(e, tree(map[string]string{"r/units.toml": "[file.a]\n" + spec, "r/f": ""}))
+		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": "[file.a]\n" + spec, "r/f": ""}))
 		if err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("%q: load = %v, want %q", spec, err, want)
 		}

@@ -108,7 +108,7 @@ func TestBinaryRefusesARelativePath(t *testing.T) {
 	e, _, _, _ := testEnv(false)
 	for _, p := range []string{"bin/x", "/usr/../x", "/", "/usr/local/"} {
 		spec := strings.Replace(binarySpecText(""), binaryPath, p, 1)
-		if _, err := Load(e, tree(map[string]string{"r/units.toml": spec})); err == nil || !strings.Contains(err.Error(), "clean absolute path") {
+		if _, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": spec})); err == nil || !strings.Contains(err.Error(), "clean absolute path") {
 			t.Errorf("load with path %q = %v, want a clean absolute path asked", p, err)
 		}
 	}
@@ -121,7 +121,7 @@ func TestBinaryRefusesABadSum(t *testing.T) {
 		"[binary.x]\nversion = \"1\"\nurl = \"u\"\npath = \"/x\"\nsha256 = { amd64 = \"X\" }\n": "64 lowercase hex",
 		binarySpecText("mode = 0o1777\n"):                                                       "permission bits",
 	} {
-		if _, err := Load(e, tree(map[string]string{"r/units.toml": spec})); err == nil || !strings.Contains(err.Error(), want) {
+		if _, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": spec})); err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("load of\n%s= %v, want %q", spec, err, want)
 		}
 	}

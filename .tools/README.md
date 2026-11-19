@@ -24,8 +24,8 @@ check files take `FILES`, as in `make vale FILES=README.md`:
 - `rumdl`: rumdl's rules on the Markdown files, with lines of 100 columns but in code blocks and
   tables (`lint/rumdl.toml`);
 - `tombi`: tombi's format check on the TOML files, as `lint/tombi.toml` sets it: TOML 1.0.0, lines
-  of 100 columns, an indent of 4 and no schema, offline. A role's spec, `units.toml`, is a Go
-  template, which ws's strict load checks once rendered.
+  of 100 columns, an indent of 4 and no schema, offline. A role's spec, `units.toml.tmpl`, ends in
+  `.tmpl`, so tombi reads none of them. ws's strict load checks a spec once rendered.
   `(cd .tools/lint && ../run tombi format --offline ../../PATH)` formats a file;
 - `stylua`: StyLua's check on the Lua files, as `lint/stylua.toml` sets it: Lua 5.1, mise's, an
   indent of 4 spaces and lines of 100 columns.

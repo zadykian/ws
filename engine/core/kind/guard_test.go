@@ -146,7 +146,7 @@ func TestGuardTakesExactlyOne(t *testing.T) {
 		"command = [\"true\"]\n":                                             `command "true": its program is no absolute path`,
 		"command = [\"\"]\n":                                                 `command "": its program is no absolute path`,
 	} {
-		_, err := Load(e, tree(map[string]string{"r/units.toml": "[guard.a]\n" + spec}))
+		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": "[guard.a]\n" + spec}))
 		if err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("load of\n%s= %v, want %q", spec, err, want)
 		}

@@ -18,7 +18,7 @@ const config = "/Users/v/Library/Application Support/com.mitchellh.ghostty/confi
 // macUnits loads the role's units on a Mac of the user v, with what the machine holds.
 func macUnits(t *testing.T, m *effecttest.Machine) []kind.Unit {
 	fsys := fstest.MapFS{}
-	for _, name := range []string{"units.toml", "files/ws.ghostty"} {
+	for _, name := range []string{"units.toml.tmpl", "files/ws.ghostty"} {
 		text, err := os.ReadFile(name) //nolint:gosec // a file of the role, named above
 		if err != nil {
 			t.Fatal(err)

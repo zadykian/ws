@@ -46,7 +46,7 @@ func TestServiceGoneRefusesEnabledOrRunning(t *testing.T) {
 	e, _, _, _ := testEnv(false)
 	const part = "[[service.a.file]]\npath = \"/etc/a.conf\"\nabsent = true\n"
 	for _, fields := range []string{"enabled = true\n", "run = \"running\"\n", "run = \"triggered\"\n"} {
-		_, err := Load(e, tree(map[string]string{"r/units.toml": "[service.a]\nunit = \"a.service\"\n" + fields + part}))
+		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": "[service.a]\nunit = \"a.service\"\n" + fields + part}))
 		if err == nil || !strings.Contains(err.Error(), "whose files are all absent") {
 			t.Errorf("load of\n%s= %v, want a refusal", fields, err)
 		}

@@ -1,7 +1,7 @@
 # claude
 
 The `claude` role sets claude and cld up from `mise bootstrap`. Its `mise.server.toml` installs
-curl, which fetches the installers, and names the nine units of its `units.toml`. They run one
+curl, which fetches the installers, and names the nine units of its `units.toml.tmpl`. They run one
 after another, in this order, after git's tokens:
 
 - `state/claude-install` and `state/claude-cld-install`: claude, from its native installer, and

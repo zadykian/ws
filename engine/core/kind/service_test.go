@@ -119,7 +119,7 @@ func TestServiceRefusesFieldsNoPlanTakes(t *testing.T) {
 		"unit = \"a.service\"\n[[service.a.file]]\npath = \"/a\"\nsource = \"f\"\nservice = \"b.service\"\n": "service.a.file.service",
 		"unit = \"a.service\"\n[[service.a.file]]\npath = \"/a\"\nsource = \"f\"\nafter = \"file/b\"\n":      "service.a.file.after",
 	} {
-		_, err := Load(e, tree(map[string]string{"r/units.toml": "[service.a]\n" + spec, "r/f": ""}))
+		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": "[service.a]\n" + spec, "r/f": ""}))
 		if err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("load of\n%s= %v, want %q", spec, err, want)
 		}
@@ -229,7 +229,7 @@ func TestServiceOfAUserRefusesFieldsNoPlanTakes(t *testing.T) {
 		{"user = \"u\"\nrun = \"running\"\n" + part + "owner = \"v\"\n", `owner "v" is not the unit's user "u"`},
 		{"user = \"u\"\nrun = \"running\"\n" + part, `owner "" is not the unit's user "u"`},
 	} {
-		_, err := Load(e, tree(map[string]string{"r/units.toml": head + c.fields, "r/a": "x"}))
+		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": head + c.fields, "r/a": "x"}))
 		if err == nil || !strings.Contains(err.Error(), c.want) {
 			t.Errorf("load of\n%s= %v, want %q", c.fields, err, c.want)
 		}

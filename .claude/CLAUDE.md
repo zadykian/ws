@@ -23,12 +23,12 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   commands. `engine/cli` builds the root and the exit codes. `engine/core` holds `step`,
   `effect`, with `effect/effecttest`, `effect/local` and `effect/units`, and `resource`, with
   `resource/resourcetest`, the resources the kinds share, and `kind`, the kinds that a role's
-  `units.toml` names as units ([kind](../engine/core/kind/README.md)). They are public, as the roles
+  `units.toml.tmpl` names as units ([kind](../engine/core/kind/README.md)). They are public, as the roles
   import them from outside `engine/`.
 - `mise.toml` and `mise.lock`: mise's config that both sides share, its settings and the pin of
   ws, a release, with the release's SHA-256 for each target in the lock. `mise.server.toml` is
   the server's part, and `plugins/ws` the plugin that hands ws's units to `ws unit`. A role holds
-  its spec, `units.toml`, and its mise files beside its page. Each side's `roles/SIDE/mise/`
+  its spec, `units.toml.tmpl`, and its mise files beside its page. Each side's `roles/SIDE/mise/`
   holds its one link, `conf.d`, to its directory of roles, and its lock
   ([The frame](../roles/server/ubuntu/frame/README.md)). The roles' tools lock in
   `roles/server/mise/mise.server.lock`. `mise.mac.toml` is the Mac's part, and
@@ -130,10 +130,10 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   them. The list is the secret `FORBIDDEN_WORDS`, and the job fails on an empty one
   ([Cutting a release](../.github/workflows/release.md#cutting-a-release)).
 - A pinned download is checked against its SHA-256 before use: ikeward's
-  binary ([units.toml](../roles/server/ubuntu/ikeward/units.toml)) and otelcol's `.deb`
-  ([units.toml](../roles/server/ubuntu/otelcol/units.toml)). So is Fresh's `.deb`
-  ([units.toml](../roles/server/ubuntu/fresh/units.toml)). So is nct6687's source
-  ([fans](../roles/server/ubuntu/fans/units.toml)), and so are foundryctl
+  binary ([units.toml.tmpl](../roles/server/ubuntu/ikeward/units.toml.tmpl)) and otelcol's `.deb`
+  ([units.toml.tmpl](../roles/server/ubuntu/otelcol/units.toml.tmpl)). So is Fresh's `.deb`
+  ([units.toml.tmpl](../roles/server/ubuntu/fresh/units.toml.tmpl)). So is nct6687's source
+  ([fans](../roles/server/ubuntu/fans/units.toml.tmpl)), and so are foundryctl
   ([ci.yml](../.github/workflows/ci.yml)) and the gates' tools ([.tools/run](../.tools/run)). So is ws's
   binary: `mise.lock` holds its SHA-256 for each target, which mise checks as it installs
   ([mise.lock](../mise.lock)). A Mac's runbook checks it by hand too
@@ -149,7 +149,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   theirs. mise's lock holds each for its platform ([mise.server.lock](../roles/server/mise/mise.server.lock)).
   gopls and Delve are built through Go's checksum database, as mise's `go:` tools
   ([devtools](../roles/server/ubuntu/devtools/README.md#the-tools)). roslyn-language-server is pinned by version alone
-  ([units.toml](../roles/server/ubuntu/devtools/units.toml)). The npm servers are checked against the sha512
+  ([units.toml.tmpl](../roles/server/ubuntu/devtools/units.toml.tmpl)). The npm servers are checked against the sha512
   `integrity` of their lockfile ([devtools](../roles/server/ubuntu/devtools/README.md#the-npm-servers)). Docker's
   apt key is checked against its fingerprint, which mise's source pins
   ([mise.server.toml](../roles/server/ubuntu/docker/mise.server.toml)). Zed's other

@@ -10,7 +10,7 @@ spec of ws's units ([The frame](../frame/README.md)):
 | [`mise.server.toml`](mise.server.toml) | The packages, fail2ban's jail, and the units of every server. |
 | [`mise.booted.toml`](mise.booted.toml) | fail2ban's and ufw's services, the jail's reload, and the firewall. |
 | [`mise.account.toml`](mise.account.toml) | The units of lxd, where `WS_USER` is not root. |
-| [`units.toml`](units.toml) | The units: the lockout guards, sudo's and sshd's drop-ins, lxd, and the outbound table. |
+| [`units.toml.tmpl`](units.toml.tmpl) | The units: the lockout guards, sudo's and sshd's drop-ins, lxd, and the outbound table. |
 | [`files/`](files) | The files and the template that mise and the units write. |
 
 mise installs the packages and, on a booted machine, enables ufw with its rules before any unit of

@@ -23,7 +23,7 @@ import (
 // osRelease names the machine's system, which the server's units are written for.
 const osRelease = "/etc/os-release"
 
-// unitsDir is the root of the server's specs, a units.toml in each role's directory, in the
+// unitsDir is the root of the server's specs, a units.toml.tmpl in each role's directory, in the
 // checkout that install.sh makes at /opt/ws.
 const unitsDir = "/opt/ws/roles/server/ubuntu"
 

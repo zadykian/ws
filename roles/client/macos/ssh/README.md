@@ -1,6 +1,6 @@
 # ssh on the Mac
 
-`mise -C /opt/ws/roles/client bootstrap` sets up ssh's hosts on the Mac by [ssh's units](units.toml): one host
+`mise -C /opt/ws/roles/client bootstrap` sets up ssh's hosts on the Mac by [ssh's units](units.toml.tmpl): one host
 for each server, through the tunnel ([The Mac](../../README.md)). The facts build the text from
 `values.yml` and the servers' files, and check it, before any unit runs
 ([The facts](../../facts/README.md)). A refusal there stops the whole bootstrap, and changes nothing.

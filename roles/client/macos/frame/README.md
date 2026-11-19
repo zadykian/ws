@@ -12,7 +12,7 @@ server, and loads no file of the server's.
 | [`mise.toml`](../../../../mise.toml) | Both sides': mise's settings and the pin of ws, with `macos-arm64` among its platforms. |
 | [`mise.mac.toml`](../../../../mise.mac.toml) | The Mac's: the plugin, and the frame's line, `ws:state/ws-binary`. |
 | [`plugins/ws`](../../../../plugins/ws) | The plugin: a hook runs one `ws unit read` or `ws unit write` ([ws unit](../../../../engine/core/kind/README.md#ws-unit)). |
-| `units.toml` here | The role `frame`: the unit that keeps `/usr/local/bin/ws`. |
+| `units.toml.tmpl` here | The role `frame`: the unit that keeps `/usr/local/bin/ws`. |
 
 ## Where it sits
 
@@ -38,7 +38,7 @@ link with no guard. ws's units hold both.
 ## A role's layout
 
 A role keeps its directory, `roles/client/macos/ROLE/`, and its page there. Its spec,
-`units.toml`, sits beside its templates and sources. Its one mise file is `mise.mac.toml`, which
+`units.toml.tmpl`, sits beside its templates and sources. Its one mise file is `mise.mac.toml`, which
 holds its lines and mise's own parts, such as casks and tools. The frame holds none: its line is
 the root's ([The check against a silent skip](#the-check-against-a-silent-skip)). The side's one
 link, `roles/client/mise/conf.d`, leads to `../macos`, so a role lands with its directory alone.

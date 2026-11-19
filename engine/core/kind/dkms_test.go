@@ -87,7 +87,7 @@ func TestDkmsRefusesBadFields(t *testing.T) {
 		{map[string]string{"load": `"a b"`}, `load "a b" is no module's name`},
 		{map[string]string{"load": `"y"`, "unload": `["-r"]`}, `unload "-r" is no module's name`},
 	} {
-		_, err := Load(e, tree(map[string]string{"r/units.toml": dkmsText(body, tc.over), "r/dkms.conf": dkmsConf}))
+		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": dkmsText(body, tc.over), "r/dkms.conf": dkmsConf}))
 		if err == nil || !strings.Contains(err.Error(), "unit dkms/a: ") || !strings.Contains(err.Error(), tc.want) {
 			t.Errorf("load with %v = %v, want %q", tc.over, err, tc.want)
 		}

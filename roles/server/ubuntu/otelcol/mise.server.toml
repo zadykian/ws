@@ -1,5 +1,5 @@
 # otelcol's lines for every server: node_exporter, whose arguments go in before its package, and
-# the units of units.toml. The package starts node_exporter with the arguments it finds, and
+# the units of units.toml.tmpl. The package starts node_exporter with the arguments it finds, and
 # without them it would serve every collector on every address.
 [bootstrap.packages]
 "apt:prometheus-node-exporter" = "latest"

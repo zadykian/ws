@@ -1,5 +1,5 @@
 # signoz's lines for every server: foundryctl's compose files, copied to /opt/signoz, where Compose
-# resolves their relative bind mounts, and the units of units.toml. The containers read the files
+# resolves their relative bind mounts, and the units of units.toml.tmpl. The containers read the files
 # as users other than root, so they stay world-readable, as foundryctl writes them. mise copies no
 # tree and makes no parent: each forged file and directory has its entry here.
 [bootstrap.packages]

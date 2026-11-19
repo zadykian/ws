@@ -55,7 +55,7 @@ fingerprint = [
 "apt:libxfixes3" = "latest"
 "apt:libxkbcommon0" = "latest"
 "apt:libxrandr2" = "latest"
-# The units of units.toml: the tools' links, the check of the data directory, the account's tools
+# The units of units.toml.tmpl: the tools' links, the check of the data directory, the account's tools
 # and gh's setup.
 "ws:file/devtools-dlv" = "in-sync"
 "ws:file/devtools-docker-ls" = "in-sync"
@@ -82,7 +82,7 @@ mode = "0644"
 
 # The tools, each locked in roles/server/mise/mise.server.lock with its checksum for each
 # platform, or built through Go's checksum database. A bump changes the version here, the link of
-# units.toml and the lock (README.md). mise builds a go: tool once, with the Go of that run, and
+# units.toml.tmpl and the lock (README.md). mise builds a go: tool once, with the Go of that run, and
 # never again where Go changes. Delve 1.27.2 supports Go 1.25 to 1.27
 # (pkg/goversion/compat.go:14-17 at v1.27.2): a Go 1.28 goes with a newer Delve.
 [tools]

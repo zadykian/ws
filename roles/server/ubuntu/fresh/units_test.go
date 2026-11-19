@@ -17,7 +17,7 @@ import (
 // units for the user and home.
 func loadUnits(t *testing.T, user, home, arch string) (*effecttest.Machine, map[string]kind.Unit) {
 	fsys := fstest.MapFS{}
-	for _, name := range []string{"units.toml", "files/config.json.tmpl", "files/themes/jetbrains-dark.json"} {
+	for _, name := range []string{"units.toml.tmpl", "files/config.json.tmpl", "files/themes/jetbrains-dark.json"} {
 		text, err := os.ReadFile(name) //nolint:gosec // a file of the role, named above
 		if err != nil {
 			t.Fatal(err)

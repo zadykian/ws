@@ -1,6 +1,6 @@
 # git on the Mac
 
-`mise -C /opt/ws/roles/client bootstrap` sets up git on the Mac by [git's units](units.toml), as the `git` role
+`mise -C /opt/ws/roles/client bootstrap` sets up git on the Mac by [git's units](units.toml.tmpl), as the `git` role
 does on ws ([Signing](../../../server/ubuntu/git/README.md#signing)). The facts give the files'
 text, from the settings that `roles/internal/gitcfg` holds for both sides, the fetch's prune among
 them ([The facts](../../facts/README.md)). The author is `gitcfg.Name` and `gitcfg.Email`,

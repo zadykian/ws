@@ -89,11 +89,11 @@ func TestBaseSwapOffInAContainer(t *testing.T) {
 // The swap's plan reads the disk of the machine that runs it, never the fake's. So the test reads
 // the spec as the values fill it, and state.swap's own test shows that size_mib makes the size.
 func TestBaseSwapTakesTheValuesSize(t *testing.T) {
-	text, err := os.ReadFile("../ubuntu/base/units.toml")
+	text, err := os.ReadFile("../ubuntu/base/units.toml.tmpl")
 	if err != nil {
 		t.Fatal(err)
 	}
-	spec := template.Must(template.New("units.toml").Parse(string(text)))
+	spec := template.Must(template.New("units.toml.tmpl").Parse(string(text)))
 	for yml, want := range map[string]string{
 		"WS_BASE_SWAP_SIZE_MB: 64\n": "swap = { size_mib = 64, hint = ",
 		"WS_BASE_SWAP_SIZE_MB: 0\n":  "swap = { size_mib = 0, hint = ",

@@ -26,7 +26,7 @@ func macUnitEnv(t *testing.T, spec string) (enginecli.Env, *effecttest.Machine) 
 	if err := os.Mkdir(filepath.Join(dir, "r"), 0o750); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "r", "units.toml"), []byte(spec), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "r", "units.toml.tmpl"), []byte(spec), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	m := effecttest.NewMachine()

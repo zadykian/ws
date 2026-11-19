@@ -3,7 +3,7 @@
 The `ikeward` role keeps the server on an IKEv2 VPN with
 [ikeward](https://github.com/zadykian/ikeward), from a client profile that hwdsl2's `ikev2setup.sh`
 makes. It lets the WireGuard peers it names reach the VPN through the server too. The role is seven
-units of [its spec](units.toml), whose lines sit in `mise.server.toml`
+units of [its spec](units.toml.tmpl), whose lines sit in `mise.server.toml`
 ([The frame](../frame/README.md)). The check, the install and the wait stay Go, as
 `ws server ubuntu ikeward check`, `install` and `wait`, which the units run.
 

@@ -1,7 +1,7 @@
 # Zed on the Mac
 
 `mise bootstrap` sets up [Zed](https://zed.dev) on the Mac, the editor that opens projects on ws,
-by [`mise.mac.toml`](mise.mac.toml) and [the units](units.toml). `mise bootstrap plan` shows the
+by [`mise.mac.toml`](mise.mac.toml) and [the units](units.toml.tmpl). `mise bootstrap plan` shows the
 changes and makes none.
 
 ## The install

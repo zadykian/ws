@@ -21,7 +21,7 @@ const unitsConfig = "# Written by github.com/zadykian/ws\nHost ws\n"
 // macUnits loads the role's units on a Mac of the user v, whose ws is /ws.
 func macUnits(t *testing.T, m *effecttest.Machine) []kind.Unit {
 	fsys := fstest.MapFS{}
-	for _, name := range []string{"units.toml", "files/ssh_config.tmpl"} {
+	for _, name := range []string{"units.toml.tmpl", "files/ssh_config.tmpl"} {
 		text, err := os.ReadFile(name) //nolint:gosec // a file of the role, named above
 		if err != nil {
 			t.Fatal(err)

@@ -12,7 +12,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-// run is a run state's fields, as units.toml gives them before a render.
+// run is a run state's fields, as units.toml.tmpl gives them before a render.
 type run struct {
 	User     string   `toml:"user"`
 	Unbooted bool     `toml:"unbooted"`
@@ -21,9 +21,9 @@ type run struct {
 	Creates  []string `toml:"creates"`
 }
 
-// readRuns returns the run states of units.toml by name.
+// readRuns returns the run states of units.toml.tmpl by name.
 func readRuns(t *testing.T) map[string]run {
-	text, err := os.ReadFile("units.toml")
+	text, err := os.ReadFile("units.toml.tmpl")
 	if err != nil {
 		t.Fatal(err)
 	}

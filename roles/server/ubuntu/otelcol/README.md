@@ -2,7 +2,7 @@
 
 The `otelcol` role runs the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) on
 the host, from `mise bootstrap`. Its `mise.server.toml` installs node_exporter and names the units
-of its `units.toml`: the `.deb`, the service with its files, and the check that the collector
+of its `units.toml.tmpl`: the `.deb`, the service with its files, and the check that the collector
 answers. It takes OTLP on loopback, and reads the journal, the host's metrics and its
 temperatures from node_exporter. It sends it all to SigNoz, and claude's metrics to another
 collector where one is set.
@@ -10,7 +10,7 @@ collector where one is set.
 ## The collector
 
 The OpenTelemetry Collector runs on the host as the service `otelcol-contrib`, from the `.deb` of
-its release, which the unit `deb/otelcol` in `units.toml` pins by version and, for each architecture,
+its release, which the unit `deb/otelcol` in `units.toml.tmpl` pins by version and, for each architecture,
 SHA-256. The unit fetches the file into `/var/cache/ws/` where dpkg lists another version. It
 checks the file against the SHA-256, then its name and version against the pin, before dpkg reads
 it, and removes the file after. A plan on a new machine shows the install. Its config,

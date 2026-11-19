@@ -28,7 +28,7 @@ func TestInterfaceRefusesAPath(t *testing.T) {
 		"eth0": true, "enp1s0f0np0": true, ".x": true, "...": true, strings.Repeat("a", 15): true, "": true,
 		"../eth0": false, ".": false, "..": false, "a b": false, "a:1": false, strings.Repeat("a", 16): false,
 	} {
-		_, err := Load(e, tree(map[string]string{"r/units.toml": gatedFile(`{ interface = "` + want + `" }`), "r/a": "x"}))
+		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": gatedFile(`{ interface = "` + want + `" }`), "r/a": "x"}))
 		if ok != (err == nil) || !ok && !strings.Contains(err.Error(), `when: interface "`+want+`" is not of the form`) {
 			t.Errorf("load with interface %q = %v, want loaded %v", want, err, ok)
 		}
@@ -53,7 +53,7 @@ func TestSetEmptyIsOff(t *testing.T) {
 		t.Errorf("plan = %q, said %q; want none and %q", got, said, want)
 	}
 	e, _, _, _ := testEnv(false)
-	_, err := Load(e, tree(map[string]string{"r/units.toml": gatedFile(`{ set = "!x" }`), "r/a": "x"}))
+	_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": gatedFile(`{ set = "!x" }`), "r/a": "x"}))
 	if err == nil || !strings.Contains(err.Error(), "holds on no machine") {
 		t.Errorf("load with set \"!x\" = %v, want it refused", err)
 	}
@@ -82,7 +82,7 @@ func TestWhenContainerHoldsOnEachMark(t *testing.T) {
 func TestWhenContainerRefusesAnotherWant(t *testing.T) {
 	e, _, _, _ := testEnv(false)
 	for _, want := range []string{"no", "true", "!no"} {
-		_, err := Load(e, tree(map[string]string{"r/units.toml": gatedFile(`{ container = "` + want + `" }`), "r/a": "x"}))
+		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": gatedFile(`{ container = "` + want + `" }`), "r/a": "x"}))
 		if err == nil || !strings.Contains(err.Error(), `when: container "`+want+`" is not of the form ^yes$`) {
 			t.Errorf("load with container %q = %v, want it refused", want, err)
 		}

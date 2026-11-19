@@ -47,12 +47,12 @@ func TestLineAtRefusesAnotherPlace(t *testing.T) {
 		lineSpec("line_at = \"middle\"\n"):                             "line_at \"middle\" is top or end",
 		"[file.a]\npath = \"/a\"\nsource = \"f\"\nline_at = \"end\"\n": "line_at goes with line",
 	} {
-		_, err := Load(e, tree(map[string]string{"r/units.toml": spec, "r/f": ""}))
+		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": spec, "r/f": ""}))
 		if err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("load of\n%s= %v, want %q", spec, err, want)
 		}
 	}
-	if _, err := Load(e, tree(map[string]string{"r/units.toml": lineSpec("line_at = \"top\"\n")})); err != nil {
+	if _, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": lineSpec("line_at = \"top\"\n")})); err != nil {
 		t.Errorf("load with line_at top = %v", err)
 	}
 }
@@ -101,7 +101,7 @@ func TestOursMarkTakesItsSign(t *testing.T) {
 		"[file.a]\npath = \"/a\"\nsource = \"k\"\nours = true\nmark = \"// x\"\n":     "is a comment sign, with no white space",
 		"[file.a]\npath = \"/home/u/.x\"\nowner = \"u\"\nline = \"x\"\nours = true\n": "a line takes owner",
 	} {
-		_, err := Load(e, tree(map[string]string{"r/units.toml": spec, "r/k": ""}))
+		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": spec, "r/k": ""}))
 		if err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("load of\n%s= %v, want %q", spec, err, want)
 		}
@@ -184,7 +184,7 @@ func TestSeedLeavesAnEditedFile(t *testing.T) {
 		t.Errorf("plan over a link = %q, want none", got)
 	}
 	for _, extra := range []string{"backup = true\n", "ours = true\n", "absent_when_empty = true\n", "check = [\"x\"]\n"} {
-		_, err := Load(e, tree(map[string]string{"r/units.toml": seedSpec + extra, "r/s": ""}))
+		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": seedSpec + extra, "r/s": ""}))
 		if err == nil || !strings.Contains(err.Error(), "seed takes a file that ws writes once") {
 			t.Errorf("load with %q = %v, want seed refused", extra, err)
 		}

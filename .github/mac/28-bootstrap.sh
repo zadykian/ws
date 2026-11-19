@@ -58,7 +58,7 @@ fi
 # A spec of a unit that no line names, beside the frame's, with a change: its read fails each line.
 probe=/opt/ws/roles/client/macos/probe
 sudo mkdir -p "$probe"
-printf '[state.probe.run]\nuser = "root"\ncommand = ["true"]\ncheck = ["false"]\n' | sudo tee "$probe/units.toml" >/dev/null
+printf '[state.probe.run]\nuser = "root"\ncommand = ["true"]\ncheck = ["false"]\n' | sudo tee "$probe/units.toml.tmpl" >/dev/null
 status=0
 mac_bootstrap plan --detailed-exitcode 2>&1 | tee "$RUNNER_TEMP/plan.out" || status=$?
 sudo rm -rf "$probe"

@@ -1,6 +1,6 @@
 # The Mac's facts
 
-The Mac's specs, each role's `units.toml` under `roles/client/macos`, are filled with these facts.
+The Mac's specs, each role's `units.toml.tmpl` under `roles/client/macos`, are filled with these facts.
 `ws unit` on the Mac reads them before it loads a unit:
 
 | Fact | Its meaning |

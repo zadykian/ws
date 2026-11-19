@@ -24,7 +24,7 @@ func testEnv(booted bool) (Env, *effecttest.Machine, *effecttest.Units, *effectt
 	return Env{M: m, U: u, Out: out, Data: values{User: "u", Dir: "/srv"}}, m, u, out
 }
 
-// tree is a root of specs: each role's spec, ROLE/units.toml, with the files beside it.
+// tree is a root of specs: each role's spec, ROLE/units.toml.tmpl, with the files beside it.
 func tree(files map[string]string) fstest.MapFS {
 	fsys := fstest.MapFS{}
 	for name, text := range files {
@@ -35,7 +35,7 @@ func tree(files map[string]string) fstest.MapFS {
 
 // loadOne loads the spec of one role, r, with its files, and fails the test on an error.
 func loadOne(t *testing.T, e Env, spec string, files map[string]string) []Unit {
-	all := map[string]string{"r/units.toml": spec}
+	all := map[string]string{"r/units.toml.tmpl": spec}
 	for name, text := range files {
 		all["r/"+name] = text
 	}
@@ -62,14 +62,14 @@ func headlines(t *testing.T, s step.Step) []string {
 func TestLoadReadsEachRolesSpec(t *testing.T) {
 	e, _, _, _ := testEnv(false)
 	units, err := Load(e, tree(map[string]string{
-		"a/units.toml":     "[file.one]\npath = \"/x/1\"\nsource = \"f\"\n",
-		"a/f":              "1",
-		"b/units.toml":     "[file.two]\npath = \"/x/2\"\nsource = \"f\"\n",
-		"b/f":              "2",
-		"units.toml":       "[file.root]\npath = \"/x/3\"\nsource = \"f\"\n",
-		"b/c/units.toml":   "[file.deep]\npath = \"/x/4\"\nsource = \"f\"\n",
-		"a/other.toml":     "[file.other]\npath = \"/x/5\"\nsource = \"f\"\n",
-		"b/units.toml.bak": "",
+		"a/units.toml.tmpl":     "[file.one]\npath = \"/x/1\"\nsource = \"f\"\n",
+		"a/f":                   "1",
+		"b/units.toml.tmpl":     "[file.two]\npath = \"/x/2\"\nsource = \"f\"\n",
+		"b/f":                   "2",
+		"units.toml.tmpl":       "[file.root]\npath = \"/x/3\"\nsource = \"f\"\n",
+		"b/c/units.toml.tmpl":   "[file.deep]\npath = \"/x/4\"\nsource = \"f\"\n",
+		"a/other.toml":          "[file.other]\npath = \"/x/5\"\nsource = \"f\"\n",
+		"b/units.toml.tmpl.bak": "",
 	}))
 	if got := Names(units); err != nil || !slices.Equal(got, []string{"file/one", "file/two"}) {
 		t.Errorf("load = %q, %v; want file/one and file/two alone", got, err)
@@ -78,15 +78,15 @@ func TestLoadReadsEachRolesSpec(t *testing.T) {
 
 func TestLoadRefusesAnUnknownField(t *testing.T) {
 	e, _, _, _ := testEnv(false)
-	_, err := Load(e, tree(map[string]string{"r/units.toml": "[file.a]\npth = \"/x\"\n"}))
-	if err == nil || !strings.Contains(err.Error(), "file.a.pth") || !strings.Contains(err.Error(), "r/units.toml") {
-		t.Errorf("load = %v, want an error that names r/units.toml and file.a.pth", err)
+	_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": "[file.a]\npth = \"/x\"\n"}))
+	if err == nil || !strings.Contains(err.Error(), "file.a.pth") || !strings.Contains(err.Error(), "r/units.toml.tmpl") {
+		t.Errorf("load = %v, want an error that names r/units.toml.tmpl and file.a.pth", err)
 	}
-	_, err = Load(e, tree(map[string]string{"r/units.toml": "[nokind.a]\npath = \"/x\"\n"}))
+	_, err = Load(e, tree(map[string]string{"r/units.toml.tmpl": "[nokind.a]\npath = \"/x\"\n"}))
 	if err == nil || !strings.Contains(err.Error(), "nokind") {
 		t.Errorf("load = %v, want an error that names the kind nokind", err)
 	}
-	_, err = Load(e, tree(map[string]string{"r/units.toml": "[file.a]\npath = \"/x\"\nmode = \"rw\"\n"}))
+	_, err = Load(e, tree(map[string]string{"r/units.toml.tmpl": "[file.a]\npath = \"/x\"\nmode = \"rw\"\n"}))
 	if err == nil || !strings.Contains(err.Error(), "file.a.mode (line 3") {
 		t.Errorf("load = %v, want an error that names file.a.mode and its line", err)
 	}
@@ -95,8 +95,8 @@ func TestLoadRefusesAnUnknownField(t *testing.T) {
 func TestLoadRefusesANameInTwoSpecs(t *testing.T) {
 	e, _, _, _ := testEnv(false)
 	spec := "[file.a]\npath = \"/x\"\nsource = \"f\"\n"
-	_, err := Load(e, tree(map[string]string{"r/units.toml": spec, "r/f": "", "s/units.toml": spec, "s/f": ""}))
-	if err == nil || !strings.Contains(err.Error(), "file/a is in r/units.toml too") {
+	_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": spec, "r/f": "", "s/units.toml.tmpl": spec, "s/f": ""}))
+	if err == nil || !strings.Contains(err.Error(), "file/a is in r/units.toml.tmpl too") {
 		t.Errorf("load = %v, want the unit named in both specs", err)
 	}
 }
@@ -104,7 +104,7 @@ func TestLoadRefusesANameInTwoSpecs(t *testing.T) {
 func TestLoadRefusesANameThatIsNoPlainWord(t *testing.T) {
 	e, _, _, _ := testEnv(false)
 	for _, name := range []string{`"a/b"`, `""`, `"a b"`, `"-a"`} {
-		_, err := Load(e, tree(map[string]string{"r/units.toml": "[file." + name + "]\npath = \"/x\"\nsource = \"f\"\n", "r/f": ""}))
+		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": "[file." + name + "]\npath = \"/x\"\nsource = \"f\"\n", "r/f": ""}))
 		if err == nil || !strings.Contains(err.Error(), "a name takes") {
 			t.Errorf("load of %s = %v, want the name refused", name, err)
 		}
@@ -134,7 +134,7 @@ func TestOrderRefusesAnUnknownAfterAndALoop(t *testing.T) {
 			"[file.b]\npath = \"/b\"\nsource = \"f\"\nafter = \"file/a\"\n" +
 			"[file.c]\npath = \"/c\"\nsource = \"f\"\n": "loop: file/a (after file/b), file/b (after file/a)",
 	} {
-		if _, err := Load(e, tree(map[string]string{"r/units.toml": spec, "r/f": ""})); err == nil || !strings.Contains(err.Error(), want) {
+		if _, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": spec, "r/f": ""})); err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("load = %v, want %q", err, want)
 		}
 	}
@@ -146,7 +146,7 @@ func TestSpecTextIsATemplateOverTheValues(t *testing.T) {
 	if got := headlines(t, units[0].Step); !slices.Contains(got, "create /srv/u/3") {
 		t.Errorf("plan = %q, want the file at /srv/u/3", got)
 	}
-	_, err := Load(e, tree(map[string]string{"r/units.toml": "[file.a]\npath = \"{{.Home}}\"\n"}))
+	_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": "[file.a]\npath = \"{{.Home}}\"\n"}))
 	if err == nil || !strings.Contains(err.Error(), "Home") {
 		t.Errorf("load = %v, want an error that names the missing value Home", err)
 	}
@@ -196,7 +196,7 @@ func TestSelfIsEnvSelf(t *testing.T) {
 
 func TestSelfWithoutAPathFailsTheLoad(t *testing.T) {
 	e, _, _, _ := testEnv(false)
-	_, err := Load(e, tree(map[string]string{"r/units.toml": "[file.a]\npath = \"{{ self }}\"\nsource = \"a\"\n", "r/a": "x"}))
+	_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": "[file.a]\npath = \"{{ self }}\"\nsource = \"a\"\n", "r/a": "x"}))
 	if err == nil || !strings.Contains(err.Error(), "self: the path of the running ws is unknown") {
 		t.Errorf("load = %v, want self's error", err)
 	}

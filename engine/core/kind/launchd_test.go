@@ -248,17 +248,17 @@ func TestLaunchdSpecRefusals(t *testing.T) {
 		e, _ := ldEnv(t)
 		text := fmt.Sprintf("[launchd.x]\nprefix = %q\nprogram = \"/usr/local/bin/ws\"\n\n"+
 			"[[launchd.x.daemon]]\nname = %q\narguments = [%s]\n%s\n", c.prefix, c.dname, c.args, c.extra)
-		if _, err := Load(e, tree(map[string]string{"r/units.toml": text})); err == nil || !strings.Contains(err.Error(), c.want) {
+		if _, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": text})); err == nil || !strings.Contains(err.Error(), c.want) {
 			t.Errorf("%s: load = %v, want %q", c.name, err, c.want)
 		}
 	}
 	e, _ := ldEnv(t)
 	twice := ldSpec + "\n[[launchd.x.daemon]]\nname = \"lab\"\narguments = [\"/usr/local/bin/ws\"]\n"
-	if _, err := Load(e, tree(map[string]string{"r/units.toml": twice})); err == nil || !strings.Contains(err.Error(), "a daemon's before it") {
+	if _, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": twice})); err == nil || !strings.Contains(err.Error(), "a daemon's before it") {
 		t.Errorf("a name twice: load = %v, want it refused", err)
 	}
 	e.System = Linux
-	if _, err := Load(e, tree(map[string]string{"r/units.toml": ldSpec})); err == nil || !strings.Contains(err.Error(), "the kind launchd does not run on Linux") {
+	if _, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": ldSpec})); err == nil || !strings.Contains(err.Error(), "the kind launchd does not run on Linux") {
 		t.Errorf("on Linux: load = %v, want it refused", err)
 	}
 }

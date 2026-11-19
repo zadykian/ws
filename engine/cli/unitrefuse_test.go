@@ -15,7 +15,7 @@ import (
 )
 
 func TestUnitReadNeedsRoot(t *testing.T) {
-	e, _ := unitEnv(t, map[string]string{"r/units.toml": fileUnit("a", "/etc/a", "")})
+	e, _ := unitEnv(t, map[string]string{"r/units.toml.tmpl": fileUnit("a", "/etc/a", "")})
 	e.Euid = 1000
 	for _, verb := range []string{"read", "write"} {
 		if status, _, stderr := runUnit(e, verb, "file/a"); status != 1 || !strings.Contains(stderr, "run it as root") {
@@ -25,7 +25,7 @@ func TestUnitReadNeedsRoot(t *testing.T) {
 }
 
 func TestUnitPlatformRefusesReadAndWrite(t *testing.T) {
-	e, m := unitEnv(t, map[string]string{"r/units.toml": fileUnit("a", "/etc/a", ""), "r/a": "1\n"})
+	e, m := unitEnv(t, map[string]string{"r/units.toml.tmpl": fileUnit("a", "/etc/a", ""), "r/a": "1\n"})
 	side := cli.UnitSide{
 		Dir: "/nowhere",
 		Values: func(_ context.Context, m effect.Machine) (any, effect.Machine, error) {

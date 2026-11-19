@@ -26,7 +26,7 @@ const InSync = "in-sync"
 // UnitSide is what a side gives ws unit: where its specs sit, the values that fill them, and the
 // units of its service manager.
 type UnitSide struct {
-	// Dir is the root of the side's specs, DIR/ROLE/units.toml, where WS_UNITS names none.
+	// Dir is the root of the side's specs, DIR/ROLE/units.toml.tmpl, where WS_UNITS names none.
 	Dir string
 	// Values loads the side's values. It returns them with the machine that the units run on,
 	// which the values may confine.
@@ -76,7 +76,7 @@ func unitList(p Env, s UnitSide) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "list",
 		Short: "print each unit, KIND/NAME, in the order the units run",
-		Long: "The specs are each units.toml one level below WS_UNITS, or below " + s.Dir + " where it is " +
+		Long: "The specs are each units.toml.tmpl one level below WS_UNITS, or below " + s.Dir + " where it is " +
 			"unset. --toml prints each unit as a line of mise's [bootstrap.packages].",
 		Args: cobra.NoArgs,
 	}

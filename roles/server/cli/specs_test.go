@@ -174,7 +174,7 @@ func roleDirs(t *testing.T) []string {
 				t.Errorf("%s: a role's mise files are %s", f, strings.Join(roleFiles, ", "))
 			}
 		}
-		if _, err := os.Stat(filepath.Join(dir, "units.toml")); err == nil || len(files) > 0 {
+		if _, err := os.Stat(filepath.Join(dir, "units.toml.tmpl")); err == nil || len(files) > 0 {
 			dirs = append(dirs, e.Name())
 		}
 	}

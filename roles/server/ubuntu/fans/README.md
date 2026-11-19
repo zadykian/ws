@@ -2,7 +2,7 @@
 
 The `fans` role drives the server's fans on curves of its own. It builds the board's fan driver
 with DKMS, and runs `ws-fans`, a service of its own, on the curves of its variables. The role is
-three units of [its spec](units.toml), whose lines sit in `mise.server.toml`
+three units of [its spec](units.toml.tmpl), whose lines sit in `mise.server.toml`
 ([The frame](../frame/README.md)). The daemon is Go, `ws server ubuntu fans`, in `daemon/`.
 
 | Unit | What it does |

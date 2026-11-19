@@ -12,7 +12,7 @@ import (
 	"github.com/zadykian/ws/roles/client/facts"
 )
 
-// unitsDir is the root of the Mac's specs, a units.toml in each role's directory. It sits in the
+// unitsDir is the root of the Mac's specs, a units.toml.tmpl in each role's directory. It sits in the
 // checkout at /opt/ws, where mise -C /opt/ws/roles/client bootstrap runs.
 const unitsDir = "/opt/ws/roles/client/macos"
 

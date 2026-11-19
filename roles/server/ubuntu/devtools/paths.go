@@ -2,7 +2,7 @@
 // itself is mise config and units, which set the servers up at these paths.
 package devtools
 
-// The links that units.toml makes to mise's tools, root's, so any WS_USER runs them. Zed and Fresh
+// The links that units.toml.tmpl makes to mise's tools, root's, so any WS_USER runs them. Zed and Fresh
 // name them by these paths.
 const (
 	GoplsPath    = "/usr/local/bin/gopls"
@@ -14,7 +14,7 @@ const (
 // Roslyn returns where dotnet tool install --global puts roslyn-language-server for the home.
 func Roslyn(home string) string { return home + "/.dotnet/tools/roslyn-language-server" }
 
-// npmBin returns a bin of the npm servers, which units.toml installs below the home.
+// npmBin returns a bin of the npm servers, which units.toml.tmpl installs below the home.
 func npmBin(home, name string) string {
 	return home + "/.local/lib/language-servers/node_modules/.bin/" + name
 }

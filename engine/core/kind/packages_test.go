@@ -78,7 +78,7 @@ func TestPackagesRefusesFieldsNoPlanTakes(t *testing.T) {
 		"[packages.a]\n":                      "packages take a template",
 		"[packages.a]\ntemplate = \"gone\"\n": "gone",
 	} {
-		if _, err := Load(e, tree(map[string]string{"r/units.toml": spec})); err == nil || !strings.Contains(err.Error(), want) {
+		if _, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": spec})); err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("load of\n%s= %v, want %q", spec, err, want)
 		}
 	}

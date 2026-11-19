@@ -8,7 +8,7 @@ units ([The frame](../frame/README.md)):
 | --- | --- |
 | [`mise.server.toml`](mise.server.toml) | Docker's apt source, the packages, and the units of every server. |
 | [`mise.account.toml`](mise.account.toml) | The account's four packages and units, where `WS_USER` is not root. |
-| [`units.toml`](units.toml) | The units: the route check, the resolver, ufw's rules, the slice, Docker's service, the check of `docker0`, and the account's daemon. |
+| [`units.toml.tmpl`](units.toml.tmpl) | The units: the route check, the resolver, ufw's rules, the slice, Docker's service, the check of `docker0`, and the account's daemon. |
 | [`files/`](files) | The templates and files that the units write. |
 
 mise takes Docker's apt key only where its primary fingerprint is the one that the source pins,

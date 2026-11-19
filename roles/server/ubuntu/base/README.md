@@ -8,7 +8,7 @@ mise config and a spec of ws's units ([The frame](../frame/README.md)):
 | File | What it holds |
 | --- | --- |
 | [`mise.server.toml`](mise.server.toml) | The packages, and the units of every server. |
-| [`units.toml`](units.toml) | The units: the locale, the time zone, unattended upgrades and apt's timers, the swap file and the swappiness. |
+| [`units.toml.tmpl`](units.toml.tmpl) | The units: the locale, the time zone, unattended upgrades and apt's timers, the swap file and the swappiness. |
 | [`files/`](files) | The files that the units write. |
 
 The values are `WS_BASE_LOCALE`, `WS_BASE_TIMEZONE`, `WS_BASE_SWAP_SIZE_MB` and `WS_BASE_SWAPPINESS`
