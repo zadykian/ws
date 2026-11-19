@@ -130,6 +130,18 @@ func TestSecretInputsAreTheHiddenList(t *testing.T) {
 	}
 }
 
+// templateAction matches an action of a spec's template, such as git's
+// {{ trim_suffix .GitSigningPubKey ".pub" }}, whose quotes would end a TOML string.
+var templateAction = regexp.MustCompile(`\{\{[^}]*\}\}`)
+
+// keepUser stands an action in for a word that TOML takes, but {{ .User }}, which the test looks for.
+func keepUser(action []byte) []byte {
+	if string(action) == "{{ .User }}" {
+		return action
+	}
+	return []byte("action")
+}
+
 // mise writes a file root:root each time its content changes, so a unit of root's gives it the
 // account's group after. Its name ends in -group, and its command and check are groupLines', of the
 // path and the account.
@@ -148,7 +160,7 @@ func TestEachSecretFileHasItsGroupUnit(t *testing.T) {
 				} `toml:"run"`
 			} `toml:"state"`
 		}
-		if err := toml.Unmarshal(text, &spec); err != nil {
+		if err := toml.Unmarshal(templateAction.ReplaceAllFunc(text, keepUser), &spec); err != nil {
 			t.Fatalf("%s's spec: %v", role, err)
 		}
 		command, check := groupLines()

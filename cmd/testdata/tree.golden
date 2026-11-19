@@ -499,14 +499,14 @@ Available Commands:
   clones      clone each repository of WS_GIT_CLONES whose dest is missing, as WS_USER
   credential  answer git's request for the token of a server besides GitHub, from /etc/ws/git-tokens.toml
   included    say by the exit status whether the git config on stdin includes /etc/ws/gitconfig at its top
-  tokens      write git's tokens from the secrets file's [git] table
+  tokens      write the credential programs of the URLs of /etc/ws/git-tokens.toml
 
 Flags:
   -h, --help   help for git
 
 Use "ws server ubuntu git [command] --help" for more information about a command.
 == ws server ubuntu git check
-It reads the values of /etc/ws/values.yml and the secrets file, where there is one. It fails where an entry of WS_GIT_CLONES holds a user name or a token in its URL, or where an entry of the secrets file's [git] table is refused (roles/server/ubuntu/git/README.md#git-credentials). No message quotes a token or a repository.
+It reads the values of /etc/ws/values.yml and /etc/ws/git-tokens.toml, where there is one. It fails where an entry of WS_GIT_CLONES holds a user name or a token in its URL, or where the tokens' file is refused (roles/server/ubuntu/git/README.md#git-credentials). No message quotes a token or a repository.
 
 It prints a warning on stdout for each setting of ~/.gitconfig that shadows /etc/ws/gitconfig's, by its name, never its value. The git role's guard runs it, before the tokens and the clones.
 
@@ -543,7 +543,7 @@ Usage:
 Flags:
   -h, --help   help for included
 == ws server ubuntu git tokens
-Each token goes in /etc/ws/tokens, root's with the account's group, and its credential program in /etc/ws/tokens.gitconfig (roles/server/ubuntu/git/README.md#git-credentials). A machine without a secrets file keeps its tokens. The git role's run state runs it, after the role's check.
+Each URL of /etc/ws/git-tokens.toml gets ws's credential program in /etc/ws/tokens.gitconfig, root's with the account's group, which names no token (roles/server/ubuntu/git/README.md#git-credentials). Without the file, tokens.gitconfig goes. The git role's run state runs it, after the role's check.
 
 --check fails where a change is due, and changes nothing.
 

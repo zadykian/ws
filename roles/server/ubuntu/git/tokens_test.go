@@ -2,6 +2,7 @@ package git
 
 import (
 	"context"
+	"os"
 	"strings"
 	"testing"
 
@@ -9,13 +10,16 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
-func tokenFixture(creds ...Credential) (*effecttest.Machine, Tokens) {
+// tokenFixture is a machine whose TokensFile holds text, where text is not empty, and the Tokens of
+// the account ws on it.
+func tokenFixture(text string) (*effecttest.Machine, Tokens) {
 	m := effecttest.NewMachine()
+	if text != "" {
+		m = tokensMachine(text)
+	}
 	m.Results["git config --file /etc/ws/tokens.gitconfig.ws-check --name-only --list"] = effecttest.Result{}
-	m.Results["git config --file - --name-only --list"] = effecttest.Result{
-		Out: []byte("credential.https://kept.example.helper\n")}
 	a := account.Account{User: account.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
-	return m, Tokens{M: m, A: a, Creds: creds}
+	return m, Tokens{M: m, A: a}
 }
 
 func applyTokens(t *testing.T, tk Tokens) []string {
@@ -33,111 +37,96 @@ func applyTokens(t *testing.T, tk Tokens) []string {
 	return shown
 }
 
-func TestTokensAreWrittenOnceAndNeverShown(t *testing.T) {
-	m, tk := tokenFixture(
-		Credential{URL: "https://a.example", Token: "hunter2", ProactiveAuth: true},
-		Credential{URL: "https://b.example", Token: "hunter3", Username: "bob"},
-	)
-	m.Files["/etc/ws/tokens/kept.example"] = []byte("old")
-	m.Files["/etc/ws/tokens.gitconfig"] = []byte("[credential \"https://kept.example\"]\n")
+// goldenTokens is the file of testdata/tokens.gitconfig.
+const goldenTokens = `["https://b.example"]
+token = "` + dummy + `-b"
+proactive_auth = true
+
+["https://a.example/x"]
+token = "` + dummy + `-a"
+`
+
+func TestTokensConfigNamesWsAsTheProgram(t *testing.T) {
+	m, tk := tokenFixture(goldenTokens)
 	for _, s := range applyTokens(t, tk) {
-		if strings.Contains(s, "hunter") {
+		if strings.Contains(s, dummy) {
 			t.Errorf("a change shows a token: %q", s)
 		}
 	}
-	if got := string(m.Files["/etc/ws/tokens/b.example"]); got != "username=bob\npassword=hunter3\n" {
-		t.Errorf("b's token file = %q", got)
-	}
-	if got := string(m.Files["/etc/ws/tokens/a.example"]); got != "username=token\npassword=hunter2\n" {
-		t.Errorf("a's token file = %q", got)
-	}
-	if got := string(m.Files["/etc/ws/tokens/kept.example"]); got != "old" {
-		t.Errorf("the token of an omitted URL = %q, want it kept", got)
-	}
-	cfg := string(m.Files["/etc/ws/tokens.gitconfig"])
-	if !strings.Contains(cfg, `[credential "https://kept.example"]`) || !strings.Contains(cfg, `[http "https://a.example"]`) {
-		t.Errorf("tokens.gitconfig = %q", cfg)
+	want, err := os.ReadFile("testdata/tokens.gitconfig")
+	if got := m.Files[tokensPath]; err != nil || string(got) != string(want) {
+		t.Errorf("tokens.gitconfig = %q (%v), want the role's rendering", got, err)
 	}
 	if again := applyTokens(t, tk); again != nil {
 		t.Errorf("second plan = %q, want none", again)
 	}
 }
 
-func TestTokensLeaveEverythingWithoutEntries(t *testing.T) {
-	m, tk := tokenFixture()
-	if got := applyTokens(t, tk); got != nil || len(m.Calls) != 0 {
-		t.Errorf("plan = %q, calls %q", got, m.Calls)
-	}
-}
-
-func TestTokensRefuseBeforeWriting(t *testing.T) {
-	m, tk := tokenFixture(Credential{URL: "https://a.example", Token: "has space"})
-	if _, err := tk.Plan(context.Background()); err == nil || strings.Contains(err.Error(), "has space") {
-		t.Errorf("got %v", err)
-	}
-	if len(m.Files) != 0 {
-		t.Error("a file was written")
-	}
-}
-
-func TestTokensOfADroppedURLGoWithTheWholeTruth(t *testing.T) {
-	m, tk := tokenFixture(Credential{URL: "https://a.example", Token: "hunter2"})
-	tk.Whole = true
-	m.Files["/etc/ws/tokens/kept.example"] = []byte("old")
-	m.Files["/etc/ws/tokens.gitconfig"] = []byte("[credential \"https://kept.example\"]\n")
-	for _, s := range applyTokens(t, tk) {
-		if strings.Contains(s, "hunter") {
-			t.Errorf("a change shows a token: %q", s)
+func TestTokensWritesNoFilePerURL(t *testing.T) {
+	m, tk := tokenFixture(twoTokens)
+	applyTokens(t, tk)
+	for p := range m.Files {
+		if p != TokensFile && p != tokensPath {
+			t.Errorf("wrote %s", p)
 		}
 	}
-	if _, ok := m.Files["/etc/ws/tokens/kept.example"]; ok {
-		t.Error("the token of a dropped URL stays")
+	if len(m.Dirs) != 0 {
+		t.Errorf("made %v", m.Dirs)
 	}
-	if cfg := string(m.Files["/etc/ws/tokens.gitconfig"]); strings.Contains(cfg, "kept.example") ||
-		!strings.Contains(cfg, `[credential "https://a.example"]`) {
-		t.Errorf("tokens.gitconfig = %q", cfg)
+	if strings.Contains(string(m.Files[tokensPath]), dummy) {
+		t.Error("tokens.gitconfig holds a token")
+	}
+}
+
+func TestTokensFollowTheFileWhole(t *testing.T) {
+	m, tk := tokenFixture(twoTokens)
+	applyTokens(t, tk)
+	m.Files[TokensFile] = []byte(twoTokens[:strings.Index(twoTokens, "\n\n")+1])
+	applyTokens(t, tk)
+	if cfg := string(m.Files[tokensPath]); strings.Contains(cfg, "b.example") || !strings.Contains(cfg, `[credential "https://a.example/x"]`) {
+		t.Errorf("tokens.gitconfig = %q, want a.example/x's program alone", cfg)
+	}
+}
+
+func TestTokensRemovesTheConfigWithoutTheFile(t *testing.T) {
+	m, tk := tokenFixture(twoTokens)
+	applyTokens(t, tk)
+	delete(m.Files, TokensFile)
+	if got := applyTokens(t, tk); len(got) != 1 {
+		t.Errorf("plan = %q, want the removal", got)
+	}
+	if _, ok := m.Files[tokensPath]; ok {
+		t.Error("tokens.gitconfig stays without the file")
 	}
 	if again := applyTokens(t, tk); again != nil {
 		t.Errorf("second plan = %q, want none", again)
 	}
 }
 
-func TestTokensWithAnEmptyTableAndNoFileChangeNothing(t *testing.T) {
-	_, tk := tokenFixture()
-	tk.Whole = true
+func TestTokensWithoutTheFileChangeNothing(t *testing.T) {
+	_, tk := tokenFixture("")
 	if got := applyTokens(t, tk); got != nil {
 		t.Errorf("plan = %q", got)
 	}
 }
 
-func TestTokensWithAnEmptyTableRemoveWhatTheFileHeld(t *testing.T) {
-	m, tk := tokenFixture()
-	tk.Whole = true
-	m.Files["/etc/ws/tokens/kept.example"] = []byte("old")
-	m.Files["/etc/ws/tokens.gitconfig"] = []byte("[credential \"https://kept.example\"]\n")
-	applyTokens(t, tk)
-	if _, ok := m.Files["/etc/ws/tokens/kept.example"]; ok {
-		t.Error("the token stays")
+func TestTokensRefuseBeforeWriting(t *testing.T) {
+	m, tk := tokenFixture(`["https://a.example"]` + "\ntoken = \"has space\"\n")
+	if _, err := tk.Plan(context.Background()); err == nil || strings.Contains(err.Error(), "has space") {
+		t.Errorf("got %v", err)
 	}
-	if cfg := string(m.Files["/etc/ws/tokens.gitconfig"]); strings.Contains(cfg, "kept.example") {
-		t.Errorf("tokens.gitconfig = %q", cfg)
+	if _, ok := m.Files[tokensPath]; ok {
+		t.Error("tokens.gitconfig was written")
 	}
 }
 
-func TestTokensAreRootsWithTheAccountsGroup(t *testing.T) {
-	m, tk := tokenFixture(Credential{URL: "https://a.example", Token: "hunter2"})
+func TestTokensConfigIsRootsWithTheAccountsGroup(t *testing.T) {
+	m, tk := tokenFixture(twoTokens)
 	applyTokens(t, tk)
-	for _, p := range []string{"/etc/ws/tokens", "/etc/ws/tokens/a.example", "/etc/ws/tokens.gitconfig"} {
-		if got := m.Owners[p]; got != [2]int{0, 1000} {
-			t.Errorf("owner of %s = %v, want 0:1000", p, got)
-		}
+	if got := m.Owners[tokensPath]; got != [2]int{0, 1000} {
+		t.Errorf("owner = %v, want 0:1000", got)
 	}
-	if got := m.Dirs["/etc/ws/tokens"]; got != 0o750 {
-		t.Errorf("mode of the directory = %o, want 750", got)
-	}
-	for _, p := range []string{"/etc/ws/tokens/a.example", "/etc/ws/tokens.gitconfig"} {
-		if got := m.Modes[p]; got != 0o640 {
-			t.Errorf("mode of %s = %o, want 640", p, got)
-		}
+	if got := m.Modes[tokensPath]; got != 0o640 {
+		t.Errorf("mode = %o, want 640", got)
 	}
 }

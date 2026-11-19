@@ -5,4 +5,4 @@ package cli
 // state drops each from the env of a command that is not ws's (kind.Env.Hidden), so that an
 // installer the run fetches never sees a value. TestSecretInputsAreTheHiddenList holds the list
 // to the files.
-var secretInputs = []string{"OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT", "WS_GITHUB_TOKEN"}
+var secretInputs = []string{"OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT", "WS_GITHUB_TOKEN", "WS_GIT_TOKENS"}

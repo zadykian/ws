@@ -12,14 +12,12 @@ import (
 	"github.com/zadykian/ws/roles/internal/gitcfg"
 )
 
-// shadow finds what in the account's files shadows ws's git settings. Creds are the tokens of the
-// secrets file, and Whole says that the file holds every token: the URLs that tokens.gitconfig
-// still holds are then left out.
+// shadow finds what in the account's files shadows ws's git settings. Creds are the tokens of
+// TokensFile, whose URLs tokens.gitconfig gives a program.
 type shadow struct {
 	M     effect.Machine
 	A     account.Account
 	Creds []Credential
-	Whole bool
 }
 
 // notes returns the notes of ~/.gitconfig's text. Where the include is to be added, they name the

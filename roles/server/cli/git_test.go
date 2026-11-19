@@ -50,7 +50,7 @@ func TestGitCheckRefusesATokenInAClone(t *testing.T) {
 	}
 }
 
-func TestGitTokensWithoutASecretsFileChangeNothing(t *testing.T) {
+func TestGitTokensWithoutTheFileChangeNothing(t *testing.T) {
 	p, m := valuesProcess("---\nWS_USER: root\n")
 	if status, _, stderr := runWs(p, "", "server", "ubuntu", "git", "tokens", "--check"); status != 0 || stderr != "" {
 		t.Errorf("status = %d, stderr %q", status, stderr)
@@ -58,8 +58,17 @@ func TestGitTokensWithoutASecretsFileChangeNothing(t *testing.T) {
 	if status, _, _ := runWs(p, "", "server", "ubuntu", "git", "tokens"); status != 0 {
 		t.Errorf("tokens: status = %d", status)
 	}
-	if _, ok := m.Dirs["/etc/ws/tokens"]; ok {
-		t.Error("tokens made /etc/ws/tokens with no secrets file")
+	if _, ok := m.Files["/etc/ws/tokens.gitconfig"]; ok {
+		t.Error("tokens wrote tokens.gitconfig without " + git.TokensFile)
+	}
+}
+
+func TestGitCheckRefusesABadTokensFile(t *testing.T) {
+	p, m := valuesProcess("---\nWS_USER: root\n")
+	m.Files[git.TokensFile] = []byte("[\"https://git.example.test\"]\ntoken = \"dummy-marker\"\nuser = \"dummy-marker\"\n")
+	status, _, stderr := runWs(p, "", "server", "ubuntu", "git", "check")
+	if status != 1 || !strings.Contains(stderr, "line 3: user is a key that ws does not know") || strings.Contains(stderr, "dummy-marker") {
+		t.Errorf("status = %d, stderr %q", status, stderr)
 	}
 }
 

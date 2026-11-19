@@ -47,7 +47,7 @@ func ReadTokens(m effect.Machine) (tokens map[string]Token, present bool, err er
 	if err := d.Decode(&tokens); err != nil {
 		return nil, false, fmt.Errorf("%s: %w", TokensFile, scrub(err))
 	}
-	if err := checkCredentials(credentialsOf(tokens), nil); err != nil {
+	if err := checkCredentials(credentialsOf(tokens)); err != nil {
 		return nil, false, fmt.Errorf("%s: %w", TokensFile, err)
 	}
 	return tokens, true, nil

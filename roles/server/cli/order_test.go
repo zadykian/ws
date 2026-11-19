@@ -65,6 +65,12 @@ func TestSignozRunsAfterDocker(t *testing.T) {
 	before(t, "service/docker", "compose/signoz")
 }
 
+// git's credential program of each token is /usr/local/bin/ws, which the frame's unit keeps. A
+// first run that clones by a token would otherwise call a missing program and stop there.
+func TestGitTokensRunAfterWs(t *testing.T) {
+	before(t, "state/ws-binary", "state/git-tokens-group", "state/git-tokens", "state/git-clones")
+}
+
 // signoz's commands run the ws that the frame's unit keeps.
 func TestSignozCommandsRunAfterWs(t *testing.T) {
 	before(t, "state/ws-binary", "state/signoz-password", "state/signoz-sync")

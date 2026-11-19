@@ -16,24 +16,6 @@ import (
 // [credential].
 const helperPattern = `^credential\..*helper$`
 
-// tokenURLs returns the URLs whose helpers /etc/ws/tokens.gitconfig holds after this run: the
-// entries', and the file's own unless the secrets file is the whole truth.
-func (s shadow) tokenURLs(ctx context.Context) ([]string, error) {
-	var urls []string
-	for _, c := range s.Creds {
-		urls = append(urls, c.URL)
-	}
-	if !s.Whole {
-		keys, err := tokenKeys(ctx, s.M)
-		if err != nil {
-			return nil, err
-		}
-		urls = append(urls, keptURLs(keys, nil)...)
-	}
-	slices.Sort(urls)
-	return slices.Compact(urls), nil
-}
-
 // covers says whether a credential section for the URL from applies to the URL to. The bare
 // section applies to every URL, and a URL to itself and to the paths below it.
 func covers(from, to string) bool {
@@ -71,9 +53,12 @@ func resetting(text string, urls []string) []string {
 // token's credential helper. They sit below the include, so that they win over tokens.gitconfig's. ws's file
 // sets gh's program already, so that the sections can go.
 func (s shadow) credentials(ctx context.Context, text []byte) ([]string, error) {
-	urls, err := s.tokenURLs(ctx)
-	if err != nil || len(urls) == 0 {
-		return nil, err
+	var urls []string
+	for _, c := range s.Creds {
+		urls = append(urls, c.URL)
+	}
+	if len(urls) == 0 {
+		return nil, nil
 	}
 	out, err := s.M.RunInput(ctx, text, "git", "config", "--file", "-", "--get-regexp", helperPattern)
 	var ee *exec.ExitError
