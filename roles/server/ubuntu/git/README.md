@@ -83,7 +83,7 @@ signers file without a key. The file's write, after the key's, puts the key in.
 
 ## Git credentials
 
-The `[git]` table of [the secrets file](../shell/README.md#the-secrets-file), empty by default, gives git a token for
+The `[git]` table of [ws's secrets file](../../secrets/README.md#the-tables), empty by default, gives git a token for
 each server besides GitHub. Its key is the server's URL, as `[git."https://git.example.com"]`, or a
 path on it, which covers the repositories below it. Each entry takes:
 

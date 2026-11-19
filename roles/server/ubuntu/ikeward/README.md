@@ -39,7 +39,7 @@ WS_IKEWARD_FLOORS: [10.20.0.0/16]          # the ranges kept off the uplink from
 WS_IKEWARD_FORWARD_FROM: [10.99.0.2]       # the WireGuard peers that reach the VPN: the Mac, at .2 of its slot
 ```
 
-Put the two files in [the secrets file](../shell/README.md#the-secrets-file), whole. Add the `.p12`'s
+Put the two files in [ws's secrets file](../../secrets/README.md#the-tables), whole. Add the `.p12`'s
 password, left out where it has none ([ws's secrets](../../secrets/README.md#editing)). Run the
 bootstrap ([The run](../../secrets/README.md#the-run)). Then remove the plain files, which hold the
 client's key:

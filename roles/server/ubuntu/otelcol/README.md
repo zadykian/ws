@@ -59,8 +59,9 @@ sends ([signoz](../signoz/README.md#retention)).
 
 ## claude's metrics elsewhere
 
-`/etc/ws/env` is the file of secrets the shell reads, which the `shell` role writes from
-the secrets file's `[env]` table ([Secrets](../shell/README.md#secrets)). The templates read it as the units plan. Where it sets
+`/etc/ws/env` is the file of secrets the shell reads, which mise writes from the `shell` role's
+secret inputs ([The env file](../shell/README.md#the-env-file)). mise's files step writes it before
+any unit, so the templates read the run's value. Where it sets
 `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT`, the collector sends claude's metrics there as well, over
 OTLP/gRPC. The value is a URL, `http://HOST:PORT` for gRPC without TLS or `https://HOST:PORT`. The
 role refuses any other. It refuses one that leads back to the collector's own receiver on

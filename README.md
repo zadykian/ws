@@ -28,7 +28,7 @@ Each role has a page of its own. A role is its mise config and its spec of ws's 
   NVIDIA GPU.
 - [`fans`](roles/server/ubuntu/fans): fan curves for the board's headers, and the driver that sets them.
 - [`shell`](roles/server/ubuntu/shell): `/etc/ws/bashrc` and `/etc/ws/profile`, one line of each at the top of
-  `~/.bashrc` and `~/.profile`, and `/etc/ws/env` from the secrets file.
+  `~/.bashrc` and `~/.profile`, and `/etc/ws/env` from mise's secret inputs.
 - [`git`](roles/server/ubuntu/git): `/etc/ws/gitconfig` and its include in `~/.gitconfig`, a key that
   signs commits, git's tokens for servers besides GitHub, and clones of repositories.
 - [`tmux`](roles/server/ubuntu/tmux): tmux from Ubuntu's archive.
@@ -83,8 +83,8 @@ Each release holds the roles it sets up, so run `install.sh` again, by the same 
 [Install](.github/workflows/release.md#install): it checks the release out and runs the bootstrap.
 `WS_VERSION=X.Y.Z` before `sh` picks a release.
 
-The units read their secrets from ws's file, which `ws server ubuntu secrets` edits ([The secrets
-file](roles/server/ubuntu/shell/README.md#the-secrets-file)). The values of a machine go in
+The units read their secrets from ws's file, which `ws server ubuntu secrets` edits ([ws's
+secrets](roles/server/secrets/README.md)). The values of a machine go in
 `/etc/ws/values.yml`, which only root reads, and every run reads them. The first run writes it
 where none is, each key at its default, and no run changes it after
 ([The values file](roles/server/ubuntu/frame/README.md#the-values-file)). `WS_USER: NAME` sets up the
