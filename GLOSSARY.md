@@ -32,6 +32,12 @@ host's key encrypts. It alone opens the secrets file, and `ws unit` decrypts it 
 decrypt`.
 _Avoid_: age key, key file
 
+**Input**:
+One of mise's secret inputs, which a role's `mise.secrets.toml` declares. Its name is its
+variable's and fnox's, and mise writes a secret file from it
+([Secret inputs](roles/server/ubuntu/frame/README.md#secret-inputs)).
+_Avoid_: entry
+
 **Kind**:
 A resource type that ws writes once in Go, for what mise's own parts lack, such as `file` or
 `deb`. It names no role's word ([kind](engine/core/kind/README.md)).

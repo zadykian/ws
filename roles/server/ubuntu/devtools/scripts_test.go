@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -61,20 +62,30 @@ func fake(t *testing.T, bin, name, body string) {
 	}
 }
 
-// Each run is WS_USER's, and runs without booted systemd too. No secret reaches a command's text,
-// which a run's headline and mise's log show.
+// templateAction matches an action of the spec's template, the one way a value reaches a command's
+// text. A word of a command's own, as the guard's message, is no value.
+var templateAction = regexp.MustCompile(`\{\{.*?\}\}`)
+
+// Each run is WS_USER's, but the token file's group, which root alone may change, and runs without
+// booted systemd too. No secret reaches a command's text, which a run's headline and mise's log show.
 func TestDevtoolsRunsAreTheAccounts(t *testing.T) {
 	runs := readRuns(t)
-	want := []string{"devtools-gh-login", "devtools-gh-telemetry", "devtools-npm", "devtools-roslyn", "devtools-rustup"}
+	want := []string{"devtools-gh-login", "devtools-gh-telemetry", "devtools-gh-token-group", "devtools-npm",
+		"devtools-roslyn", "devtools-rustup"}
 	var got []string
 	for name, r := range runs {
 		got = append(got, name)
-		if r.User != "{{ .User }}" || !r.Unbooted {
-			t.Errorf("%s: user %q, unbooted %v; want WS_USER, unbooted", name, r.User, r.Unbooted)
+		user := "{{ .User }}"
+		if name == "devtools-gh-token-group" {
+			user = "root"
 		}
-		if line := strings.Join(slices.Concat(r.Command, r.Check), " "); strings.Contains(line, "secrets") ||
-			strings.Contains(line, "Token") {
-			t.Errorf("%s: %q reads the secrets", name, line)
+		if r.User != user || !r.Unbooted {
+			t.Errorf("%s: user %q, unbooted %v; want %s, unbooted", name, r.User, r.Unbooted, user)
+		}
+		for _, action := range templateAction.FindAllString(strings.Join(slices.Concat(r.Command, r.Check), " "), -1) {
+			if strings.Contains(action, "secrets") || strings.Contains(action, "Token") {
+				t.Errorf("%s: %q reads the secrets", name, action)
+			}
 		}
 	}
 	if slices.Sort(got); !slices.Equal(got, want) {

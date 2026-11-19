@@ -72,7 +72,7 @@ Then, logged in as that user, write `/etc/ws/values.yml` where a value differs f
 root's and mode 600 ([the values](#running-it-again)). Run `install.sh` through `sudo`, by the
 three lines of [Install](.github/workflows/release.md#install), which fail where curl does. It
 installs mise and runs its bootstrap, which installs ws and sets each role up. Once the secrets
-file holds `token.github`, the bootstrap run again logs gh in ([By hand](#by-hand)), as
+hold `WS_GITHUB_TOKEN`, the secrets task's run logs gh in ([By hand](#by-hand)), as
 [the server's runbook](roles/server/runbook.md) says.
 
 Then do what stays by hand, below.
@@ -124,8 +124,8 @@ diff included, but a secret's. A run by hand of `ws unit write UNIT` sets up tha
 ## By hand
 
 Secrets are never in this repository. The claude login, ws's signing key on GitHub and the Mac's key
-as `wg0`'s peer stay manual. ws's gh takes a fine-grained personal access token, which the bootstrap
-logs gh in with, from the secrets file's `token.github`
+as `wg0`'s peer stay manual. ws's gh takes a fine-grained personal access token, which the secrets
+task's run logs gh in with, from the secret input `WS_GITHUB_TOKEN`
 ([gh](roles/server/ubuntu/devtools/README.md#gh)). Its permissions are the account's selected
 repositories; Metadata and Actions read; Contents, Pull requests, Issues and Workflows read and
 write; and no account permission. These stay manual:

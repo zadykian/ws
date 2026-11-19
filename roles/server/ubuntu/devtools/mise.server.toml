@@ -59,7 +59,6 @@ fingerprint = [
 # and gh's setup.
 "ws:file/devtools-dlv" = "in-sync"
 "ws:file/devtools-docker-ls" = "in-sync"
-"ws:file/devtools-gh-token" = "in-sync"
 "ws:file/devtools-go" = "in-sync"
 "ws:file/devtools-gopls" = "in-sync"
 "ws:file/devtools-npm-lock" = "in-sync"
@@ -69,6 +68,7 @@ fingerprint = [
 "ws:guard/devtools-data-dir" = "in-sync"
 "ws:state/devtools-gh-login" = "in-sync"
 "ws:state/devtools-gh-telemetry" = "in-sync"
+"ws:state/devtools-gh-token-group" = "in-sync"
 "ws:state/devtools-npm" = "in-sync"
 "ws:state/devtools-roslyn" = "in-sync"
 "ws:state/devtools-rustup" = "in-sync"

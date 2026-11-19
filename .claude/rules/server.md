@@ -34,6 +34,9 @@ steps, and each role's README says what it sets up.
   in its process, as TOML with a table per kind. Unknown keys are refused, references expanded,
   and no error or output shows a value. A secret file's template alone reads it
   ([file.md](../../engine/core/kind/file.md), [secrets.go](../../roles/server/secrets/secrets.go), [ws's secrets](../../roles/server/secrets/README.md)).
+- A role's secret is an input of its `mise.secrets.toml`, in the one form the frame's page gives
+  ([Secret inputs](../../roles/server/ubuntu/frame/README.md#secret-inputs)). Go never reads a
+  value but ikeward's, from the run's env.
 - `secrets.Store` alone reads and writes ws's secrets file and makes its credential; cmd keeps
   the commands and the root check ([store.go](../../roles/server/secrets/store.go)).
 - The roles set the machine up for `WS_USER`, `zadykian` by default, in `WS_HOME`. A unit run as

@@ -30,8 +30,8 @@ A role keeps its directory, `roles/server/ubuntu/ROLE/`, and its page there:
 - **Its mise files,** one an env. `mise.server.toml` holds what every server gets: apt's sources,
   `[bootstrap.packages]`, files, directories and tools. `mise.booted.toml` holds the services, the
   firewall, and each file entry that names a service in `notify`. `mise.account.toml` holds what
-  an account gets where `WS_USER` is not root. A role holds no plain `mise.toml`, which every
-  env would load.
+  an account gets where `WS_USER` is not root. `mise.secrets.toml` holds its
+  [secret inputs](#secret-inputs). A role holds no plain `mise.toml`, which every env would load.
 - **The side's link,** `roles/server/mise/conf.d`, to `../ubuntu`. mise loads each role's
   directory through it as a fragment, and a relative `source` resolves from the role's
   directory. A role lands with its directory alone, and edits no shared file.
@@ -80,6 +80,35 @@ root. `booted` comes after `server`, so that its entries win. A run by `-E ws,se
 task's, adds the env `secrets` to the set, which no other run loads. The miserc is a template of
 the machine's own, which cannot read `/etc/ws/values.yml`. `install.sh` writes it from there, so a
 change of `WS_USER` means running `install.sh` again.
+
+## Secret inputs
+
+A role's secret is an input of mise's, which its `mise.secrets.toml` declares. The env `secrets`
+alone loads the file, so the [secrets task](../secrets/README.md#the-task) alone gives the inputs
+their values, from fnox. The file holds `[bootstrap.secrets]` and `[bootstrap.files."PATH"]`, and
+no unit's line. Each input takes one form, a comment above it:
+
+```toml
+WS_GITHUB_TOKEN = { env = "WS_GITHUB_TOKEN", allow_empty = true }
+```
+
+- The name is the input's, its variable's and fnox's, and one role declares it. A run with the env
+  needs each input set, empty where a server has no value.
+- A file of an input's is a `template`, root's, mode `0640`, with `remove_empty`: an empty input
+  removes it. mise takes a literal group alone, and writes the file `root:root` each time its
+  content changes. So a state of the role's, `ROLE-…-group`, gives it the account's group after.
+- The file's content opens with a guard that mise's `exec` runs, in a plan and a run alike. Where
+  the path holds a file whose first line is not ws's header, both stop and name it, and mise
+  replaces nothing. mise's files step runs before ws's units, so no unit could guard it.
+- A run without the env, as CI's `playbook`, loads none of these files, so it keeps the secret
+  files as they are, and its plan lists none. The group states read a file's first line as the
+  guard does, so a file by hand stops that run too, before the account's group opens it.
+- A unit reads a file that the same run wrote: mise's files step comes first.
+- A run state drops each input from the env of a command whose program is not ws's
+  ([run](../../../../engine/core/kind/state.md)), so that an installer never sees a value.
+
+[`secretfiles_test.go`](../../cli/secretfiles_test.go) holds each file to the form, each file to its
+group's state and its guard, and the inputs to the list that a run drops.
 
 ## The plugin
 
