@@ -87,8 +87,8 @@ It installs yamllint into `.cache`, and `.tools/run` downloads the rest there.
 The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `playbook` builds ws and runs `install.sh`'s
 bootstrap twice in an Ubuntu 26.04 container, with mise's plan.
 It checks the config that Fresh reads too. `signoz` forges SigNoz's compose files again, and
-`install` tries `install.sh`. `rootless` runs the
-rootless daemon and the firewall on a booted runner ([The rootless job](../.github/workflows/rootless.md)). `mac` sets up a
+`install` tries `install.sh`. `rootless` runs the rootless daemon, the firewall and the secrets
+task on a booted runner ([The rootless job](../.github/workflows/rootless.md)). `mac` sets up a
 Mac on GitHub's macOS runner by `mise bootstrap`, whose last run must call no sudo and whose plan
 must exit 0. `mac-cld` sets up
 Ghostty, Zed and cld by the bootstrap on another ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `mise

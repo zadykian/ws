@@ -43,10 +43,11 @@ the branch of its `git init`, as a machine's git config does.
 ## The warnings check
 
 [warnings-check.sh](../warnings-check.sh) fails where a bootstrap or a plan of `playbook` or
-`rootless` prints a warning. It reads a run's log, or runs the command and shows its output as it
-runs. A warning is a line that says warn, hint, notice, deprecated, error, cannot, unable, could
-not or ignoring, as a word alone, or starts as apt's `W:` and `E:` do. mise's colors don't hide
-one. The check names each line it finds and exits 1, and it keeps a plan's own exit code.
+`rootless` prints a warning, the secrets task's runs and plans in `rootless` too. It reads a
+run's log, or runs the command and shows its output as it runs. A warning is a line that says
+warn, hint, notice, deprecated, error, cannot, unable, could not or ignoring, as a word alone, or
+starts as apt's `W:` and `E:` do. mise's colors don't hide one. The check names each line it
+finds and exits 1, and it keeps a plan's own exit code.
 
 It allows a few lines where systemd has not booted, each named and justified in the script. They
 come from what a container lacks: an init that tells a package's script the runlevel, and an
