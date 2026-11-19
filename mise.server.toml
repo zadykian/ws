@@ -1,11 +1,10 @@
 # The server's frame, what every role of the server leans on: the env server loads it, with the
 # roles that roles/server/mise/conf.d links. The Mac loads none of it.
 
-# ws's units, `"ws:KIND/NAME" = "in-sync"` under [bootstrap.packages]. Named here, a plugin that
-# mise cannot load is an unknown manager, which fails the run, where mise would drop its units with
-# a warning. mise takes an absolute path alone, so each side names its own checkout's.
-[bootstrap.plugins]
-ws = "/opt/ws/plugins/ws"
+# ws's units, `"ws:KIND/NAME" = "in-sync"` under [bootstrap.packages], go to the plugin ws, which
+# no [bootstrap.plugins] entry names: mise installs an entry again on every run, with a warning.
+# install.sh links the tree's plugins/ws into /usr/share/mise/plugins, where mise loads it as a
+# system plugin. A plugin that mise refuses drops its units, so /etc/ws/units.verified fails.
 
 # mise's apt passes no dpkg options: these keep a file that a role wrote before its package, where
 # dpkg would stop at its prompt.

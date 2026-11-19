@@ -17,8 +17,11 @@ ws runs.
 
 The tree goes in `/opt/ws`, root's alone, with its pin on the tree's build, as for
 [`playbook`](README.md#the-playbook-job). GitHub's runner keeps a default ACL on `/opt` that lets
-anyone write what lands there, so the job drops it first. As on a new machine, `install.sh` runs
-the bootstrap on the tree, which installs ws and sets up the firewall before Docker's ufw rules.
+anyone write what lands there, so the job drops it first. Its image lets others write `/opt` and
+`/usr/share` too, where mise would refuse
+[the plugin](../../roles/server/ubuntu/frame/README.md#the-plugin), so the cases make both root's
+alone. As on a new machine, `install.sh` runs the bootstrap on the tree, which installs ws and sets
+up the firewall before Docker's ufw rules.
 No apt command in it may wait for dpkg's lock, and neither of apt's daily services may run. The
 log shows the timers and their stamps before it and after it, and systemd's reloads, so that a
 failure shows what started the upgrade. `mise bootstrap plan --detailed-exitcode` must then

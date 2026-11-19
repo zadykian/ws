@@ -171,9 +171,11 @@ must "sudo's password is cached before the drop-in" as bash -c "$sudo_form" bash
 
 # As on a new machine: install.sh runs the bootstrap, which installs ws and sets up the firewall
 # before Docker's ufw rules. It runs twice, and the second run must change nothing. The tree must
-# be root's alone for install.sh's guard.
+# be root's alone for install.sh's guard. So must /opt and /usr/share, as on a machine, for mise's:
+# the runner's image lets others write both, and mise refuses a system plugin below either.
 chown -R 0:0 /opt/ws
 chmod -R go-w /opt/ws
+chmod go-w /opt /usr/share
 log=$(mktemp)
 since=$(date +%s)
 if ! "$(dirname "$0")/bootstrap.sh" "$rel" > >(tee "$log") 2>&1; then

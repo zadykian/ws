@@ -12,8 +12,8 @@ config and its spec, and holds no Go.
 | [`mise.toml`](../../../../mise.toml) | Both sides': mise's settings and the pin of ws, a release, for three platforms. |
 | [`mise.lock`](../../../../mise.lock) | The release's SHA-256 for each platform, which mise checks as it installs ws. |
 | [`roles/server/mise/mise.server.lock`](../../mise/mise.server.lock) | The roles' tools: each download's url and SHA-256 for each platform ([devtools](../devtools/README.md#the-tools)). |
-| [`mise.server.toml`](../../../../mise.server.toml) | The server's: the plugin, dpkg's options, `/etc/ws` and the check against a silent skip. |
-| [`plugins/ws`](../../../../plugins/ws) | The plugin: a hook runs one `ws unit read` or `ws unit write` ([ws unit](../../../../engine/core/kind/README.md#ws-unit)). |
+| [`mise.server.toml`](../../../../mise.server.toml) | The server's: dpkg's options, `/etc/ws` and the check against a silent skip. |
+| [`plugins/ws`](../../../../plugins/ws) | The plugin: a hook runs one `ws unit read` or `ws unit write` ([ws unit](../../../../engine/core/kind/README.md#ws-unit)), linked as [a system plugin](#the-plugin). |
 | `units.toml.tmpl`, `mise.server.toml`, `files/` here | The role `frame`: the units that keep `/usr/local/bin/ws` and write [the values file](#the-values-file). |
 
 The Mac shares `mise.toml` alone, and loads no file of the server's.
@@ -79,6 +79,19 @@ where `/run/systemd/system` is a directory, then `account` where `WS_USER` is no
 comes after `server`, so that its entries win. The miserc is a template of the machine's own,
 which cannot read `/etc/ws/values.yml`. `install.sh` writes it from there, so a change of `WS_USER`
 means running `install.sh` again.
+
+## The plugin
+
+`install.sh` links the tree's `plugins/ws` into `/usr/share/mise/plugins`, before the first run.
+mise finds a system plugin there and loads it as it stands, as no entry names it. A
+`[bootstrap.plugins]` entry would install it again on every run, with a warning. mise refuses a
+system plugin that anyone but root may change, or a directory on its way, `/opt` included. It
+drops the units then, with a warning alone. So `install.sh` refuses `/`, `/usr`, `/usr/share` or
+`/opt` where a group or others may write it, and makes `/usr/share/mise` and its `plugins` root's
+and 755, whatever was there. After that, the [check](#the-check-against-a-silent-skip) fails a run
+that drops them. Its other
+directory, `/usr/local/share/mise/plugins`, is the data directory's own: a plugin there would be
+root's and the system's at once, which mise warns of on every run.
 
 ## The pin
 
