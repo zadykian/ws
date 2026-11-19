@@ -34,6 +34,12 @@ file](../../roles/server/ubuntu/frame/README.md#the-values-file)). In the contai
 file is off, as the swap is the host's. With no NVIDIA GPU, `nvidia` checks its names alone, and
 with no MSI board, `fans` leaves its fans alone. Without a VPN profile, `ikeward` does nothing.
 
+The container is set up as a machine is, so that no step of CI warns. It carries `container`, as
+systemd's container interface does, so procps leaves the kernel's read-only settings alone. dpkg
+keeps the man pages, and chrony's log directory is there before its install. The steps run with
+root's home, not the job's, which would reach the runner's own Docker client. Each checkout names
+the branch of its `git init`, as a machine's git config does.
+
 ## The install script
 
 CI runs `install.sh` with mise's real binary, served on loopback, and a small repository for the

@@ -82,24 +82,31 @@ jobs:
           - user: root
             outbound: false
     # NET_ADMIN lets nft -c, below, check the outbound table in the container's own netns.
+    # container marks one to packages, as systemd's interface does, so procps's skips its sysctl.
     container:
       image: ubuntu:26.04
-      options: --cap-add=NET_ADMIN
+      options: --cap-add=NET_ADMIN -e container=docker
     env:
-      # The home of root, as on a new machine, rather than the /github/home a container job gets.
-      HOME: /root
       WS_USER: ${{ matrix.user }}
       OUTBOUND: ${{ matrix.outbound }}
       # bootstrap has no --locked: a tool installs only as a lock holds it, where install.sh does.
       MISE_LOCKED: "1"
+    # Root's home, as on a new machine, not a container job's /github/home. The job's env would
+    # reach the runner's docker exec, whose client then warns that it can't read /root/.docker.
+    defaults:
+      run:
+        shell: env HOME=/root bash --noprofile --norc -eo pipefail {0}
     steps:
       # curl fetches the Go that .tools/build needs and the mise that install.sh pins, and
       # ca-certificates serves their HTTPS. There is no git, so the checkout has no .git and the
-      # build is devel.
+      # build is devel. The image's dpkg leaves out the man pages, which a server keeps, and
+      # update-alternatives warns of each link to one. A server's chrony made its log directory at
+      # its first start, which a container lacks, and chrony's install warns of its absence.
       - name: Install curl
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
+          rm /etc/dpkg/dpkg.cfg.d/excludes && install -d /var/log/chrony
           apt-get update
           apt-get install -y --no-install-recommends ca-certificates curl
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -162,7 +169,6 @@ jobs:
         run: nft -c -f /usr/local/lib/ws/security/outbound.nft
       - name: Check the home's owner
         if: matrix.user != 'root'
-        shell: bash
         run: |
           strays=$(find "/home/$WS_USER" -xdev -not -user "$WS_USER")
           if [ -n "$strays" ]; then
@@ -173,7 +179,6 @@ jobs:
       # Fresh loads a malformed config with its defaults and exits 0, so this reads what it loaded,
       # as the user who owns the config.
       - name: Check the config that Fresh reads
-        shell: bash
         run: |
           home=$(getent passwd "$WS_USER" | cut -d: -f6)
           runuser -u "$WS_USER" -- env -C "$home" HOME="$home" fresh --cmd config show \
@@ -184,7 +189,6 @@ jobs:
       # and /etc/ws/allowed_signers as git reads them. The file's text alone cannot tell that git
       # opens a path.
       - name: Check that the user signs a commit
-        shell: bash
         run: |
           home=$(getent passwd "$WS_USER" | cut -d: -f6)
           repo=$(runuser -u "$WS_USER" -- mktemp -d)
