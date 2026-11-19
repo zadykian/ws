@@ -82,14 +82,14 @@ up() {
 
 # Judge the deb's path with Ubuntu's restriction on, as on a real machine, whatever the image sets.
 key=/proc/sys/kernel/apparmor_restrict_unprivileged_userns
-if [ -e "$key" ]; then
-    echo 1 >"$key"
-fi
+[ ! -e "$key" ] || echo 1 >"$key"
 
 # The image's Docker predates what --net=host means on a rootless daemon, and ws must install its
 # own. The purge leaves docker0, which the route check accepts. The image's source of Docker goes
-# too, as apt refuses one repository signed by two keys, and mise adds its own.
+# too, as apt refuses one repository signed by two keys, and mise adds its own. So do the plugins
+# that the image put in Docker's directory past dpkg, which would keep it and warn.
 apt-get update
+rm -rf /usr/libexec/docker/cli-plugins
 apt-get purge -y docker-ce docker-ce-cli containerd.io
 rm -rf /etc/docker /var/lib/docker /var/lib/containerd
 for f in /etc/apt/sources.list.d/*; do
@@ -198,6 +198,9 @@ refused "sudo's password stays cached" as bash -c "$sudo_form" bash "$password"
 refused "the system's socket answers the user" \
     as curl --silent --max-time 5 --unix-socket /var/run/docker.sock http://localhost/_ping
 
+# The pulls ahead of the runs, the user's and root's, as a run of an image not yet pulled warns.
+must "the user's docker pulls the image" as docker pull -q "$image"
+docker pull -q "$image"
 must "the user's docker runs a container" as docker run --rm "$image" true
 resolver=$(as docker run --rm "$image" cat /etc/resolv.conf)
 must "a container asks slirp4netns's resolver" grep -qx 'nameserver 10.0.2.3' <<<"$resolver"
