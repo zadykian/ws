@@ -39,6 +39,28 @@ mise installs both tools for the tree alone, on no shell's `PATH`. fnox must fin
 first, and one there that differs is replaced. The check runs as the user, so a bootstrap that
 changes nothing asks no password. Where mise has no such tool, its unit alone fails.
 
+## The Nano's identity
+
+The Nano holds the age identity of the recipient `nano` in `fnox.toml`. The Go package here finds
+it by `age-plugin-yubikey --list`:
+
+- Where `fnox.toml` names the `nano` recipient, it takes the slot that holds it, and no other. A
+  YubiKey without it stops, and asks for the Nano that made it, as the values open to no other.
+- Where `fnox.toml` names none, it takes the lowest slot that holds an age identity. Where none
+  does, age-plugin-yubikey makes one, named `ws-secrets`, on the terminal. Its PIN policy is
+  `once`, a PIN once a session, and its touch policy `always`, a touch each time it decrypts.
+
+The slot's stub, the identity file that `age-plugin-yubikey --identity` prints, goes to fnox's key
+file. So fnox, run by ws or by hand in a clone, asks the Nano to decrypt. The stub names the Nano's
+serial and slot, and holds no secret. The key file is the one fnox reads by default:
+`FNOX_AGE_KEY_FILE`, else `$FNOX_CONFIG_DIR/age.txt`, else `$XDG_CONFIG_HOME/fnox/age.txt`, else
+`~/.config/fnox/age.txt`. Its other lines stay, a missing directory is made 700, and the file is
+600. A key file that holds an SSH key stops it, as fnox would read that key alone.
+
+ws runs fnox with `/usr/local/bin` first on `PATH`, where fnox finds the plugin. It drops
+`FNOX_AGE_KEY`, which would beat the key file, and `FNOX_PROFILE`, which would take a profile's file
+for `fnox.toml`.
+
 ## How a change lands
 
 The secrets repository's ruleset on `main` refuses a push, and requires its checks, `values` and
