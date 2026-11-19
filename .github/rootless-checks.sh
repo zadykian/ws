@@ -53,9 +53,7 @@ must() {
 refused() {
     local name=$1
     shift
-    if "$@"; then
-        fail "$name"
-    fi
+    ! "$@" || fail "$name"
     echo "ok: $name"
 }
 
@@ -184,11 +182,12 @@ if ! "$(dirname "$0")/bootstrap.sh" "$rel" > >(tee "$log") 2>&1; then
     fail "the first bootstrap"
 fi
 must "no upgrade ran, and no apt command waited for dpkg's lock" apt_quiet "$log" "$since"
-must "the first bootstrap leaves nothing to do" \
-    mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null
-mise -C /opt/ws/roles/server bootstrap </dev/null
-must "the second bootstrap leaves nothing to do" \
-    mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null
+check=$(dirname "$0")/warnings-check.sh
+boot() { "$check" -- mise -C /opt/ws/roles/server bootstrap "$@" </dev/null; }
+must "the first bootstrap leaves nothing to do" boot plan --detailed-exitcode
+must "the first bootstrap prints no warning" "$check" "$log"
+must "the second bootstrap runs" boot
+must "the second bootstrap leaves nothing to do" boot plan --detailed-exitcode
 
 groups=$(id -nG "$user")
 must "the user keeps sudo" grep -qw sudo <<<"$groups"

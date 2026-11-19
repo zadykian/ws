@@ -134,7 +134,7 @@ jobs:
               tee "$RUNNER_TEMP/values.yml" >/etc/ws/values.yml
           chmod 600 /etc/ws/values.yml
       - name: Bootstrap
-        run: .github/bootstrap.sh "$RUNNER_TEMP/rel"
+        run: .github/warnings-check.sh -- .github/bootstrap.sh "$RUNNER_TEMP/rel"
       # A run by hand, as after install.sh. It starts from root's home, 0700 on any machine, as
       # after sudo -i: a command run as the user must not rest on the directory it starts in. mise
       # trusts the tree and finds ws installed, so it needs no trust variable and no server. It
@@ -145,8 +145,9 @@ jobs:
         working-directory: /root
         run: |
           export MISE_DATA_DIR=/usr/local/share/mise
-          mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null
-          mise -C /opt/ws/roles/server bootstrap </dev/null
+          check=$GITHUB_WORKSPACE/.github/warnings-check.sh
+          "$check" -- mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null
+          "$check" -- mise -C /opt/ws/roles/server bootstrap </dev/null
       # The plan changes nothing, and fails where mise's config lacks a unit of the specs.
       - name: The plan changes nothing, and finds a missing unit
         working-directory: /root
@@ -252,8 +253,7 @@ jobs:
 
   # SigNoz's compose files in roles/server/ubuntu/signoz are foundryctl's, forged from the casting
   # there. Forged again into an empty directory, as foundryctl never removes a file, they must be
-  # the same.
-  # Only what it forges is compared, so the package may keep other files beside them.
+  # the same. Only what it forges is compared, so the package may keep other files beside them.
   signoz:
     if: github.event.action != 'ready_for_review'
     runs-on: ubuntu-latest

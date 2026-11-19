@@ -26,7 +26,9 @@ up the firewall before Docker's ufw rules.
 No apt command in it may wait for dpkg's lock, and neither of apt's daily services may run. The
 log shows the timers and their stamps before it and after it, and systemd's reloads, so that a
 failure shows what started the upgrade. `mise bootstrap plan --detailed-exitcode` must then
-exit 0. The bootstrap runs twice, and the plan must exit 0 again.
+exit 0. The bootstrap runs twice, and the plan must exit 0 again. Neither run nor plan may print a
+warning ([The warnings check](README.md#the-warnings-check)), and none is allowed here, as the
+runner boots.
 
 Then the user must keep `sudo`, leave `docker` and `lxd`, and have no cached password. The system's
 socket must refuse it. Its own Docker must pull the image, as root's does before its runs, so
