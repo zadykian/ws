@@ -51,6 +51,14 @@ func TestUserUnitWithoutAFileIsLeftAlone(t *testing.T) {
 	}
 }
 
+func TestUserUnitThatWritesItsFileStartsWithoutIt(t *testing.T) {
+	_, u, _ := userUnitFixture(true)
+	u.Writes = true
+	if got := applyAll(t, u); !slices.Equal(got, []string{"start ws's docker.service"}) {
+		t.Errorf("plan = %q, want a start", got)
+	}
+}
+
 func TestUserUnitStartsWhereTheManagerIsDown(t *testing.T) {
 	m, u, _ := userUnitFixture(true)
 	m.Files["/home/ws/.config/systemd/user/docker.service"] = nil

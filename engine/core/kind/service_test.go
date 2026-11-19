@@ -201,6 +201,28 @@ func TestServiceOfAUserWaitsForItsUnitFile(t *testing.T) {
 	}
 }
 
+// A part that is the unit's own file goes before the start, in the run that writes it, which then
+// plans nothing more.
+func TestServiceOfAUserStartsTheUnitFileItWrites(t *testing.T) {
+	const unitFile = "/home/u/.config/systemd/user/x.service"
+	e, m := userServiceEnv("")
+	m.Dirs["/run/user/1001/systemd/private"] = 0o755
+	m.Results[userSystemctl+"show --property=ActiveState --value x.service"] = effecttest.Result{Out: []byte("active\n")}
+	spec := userService + "[[service.a.file]]\npath = \"" + unitFile + "\"\nowner = \"u\"\nsource = \"a\"\n"
+	units := loadOne(t, e, spec, map[string]string{"a": "new"})
+	if got := headlines(t, units[0].Step); len(got) == 0 || got[len(got)-1] != "start u's x.service" ||
+		!slices.Contains(got, "create "+unitFile) {
+		t.Fatalf("plan = %q, want the unit's file, then its start", got)
+	}
+	if err := run(t, e, units); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := userCalls(m), []string{"daemon-reload", "start x.service"}; !slices.Equal(got, want) ||
+		string(m.Files[unitFile]) != "new" {
+		t.Errorf("u's systemctl = %q, the unit's file %q; want %q after the file", got, m.Files[unitFile], want)
+	}
+}
+
 func TestServiceOfAUserSkipsUnbooted(t *testing.T) {
 	e, m, _, out := testEnv(false)
 	withAccount(m)

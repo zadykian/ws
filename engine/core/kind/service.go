@@ -28,7 +28,7 @@ type serviceSpec struct {
 	base
 	Unit string `toml:"unit"`
 	// User makes Unit one of that account's own systemd, kept running, whose files are its own. Its
-	// unit file is left to whatever installs it.
+	// unit file is a part, which the start follows, or is left to whatever installs it.
 	User    string     `toml:"user"`
 	Enabled bool       `toml:"enabled"`
 	Run     string     `toml:"run"`
@@ -102,7 +102,9 @@ func (s serviceSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.
 			if err != nil {
 				return nil, err
 			}
-			return append(all, systemd.UserUnit{M: e.M, Account: owner, Out: e.Out, Name: s.Unit, Watch: watch}), nil
+			writes := slices.Contains(paths, systemd.UserUnitPath(owner.Home, s.Unit))
+			return append(all, systemd.UserUnit{M: e.M, Account: owner, Out: e.Out, Name: s.Unit, Watch: watch,
+				Writes: writes}), nil
 		}
 		if len(s.InForce) > 0 {
 			d := drift{m: e.M, out: e.Out, inForce: s.InForce, loads: s.Loads, files: paths}
