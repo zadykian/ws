@@ -18,7 +18,7 @@ type tableSecrets struct{ Env map[string]string }
 
 // secretUnit is a secret file unit at /etc/NAME, whose template reads the secrets' table.
 func secretUnit(name string) string {
-	return "[file." + name + "]\npath = \"/etc/" + name + "\"\ntemplate = \"t\"\nsecret = true\n"
+	return "[file." + name + "]\npath = \"/etc/" + name + "\"\ntemplate = \"t.tmpl\"\nsecret = true\n"
 }
 
 // runWithSecrets runs ws unit with args on a side whose secrets come from load.
@@ -37,7 +37,7 @@ func runWithSecrets(e cli.Env, load func(context.Context, effect.Machine) (any, 
 }
 
 func TestUnitSideSecretsReachTheSpec(t *testing.T) {
-	e, m := unitEnv(t, map[string]string{"r/units.toml.tmpl": secretUnit("a"), "r/t": "A={{ index (secrets).Env \"A\" }}\n"})
+	e, m := unitEnv(t, map[string]string{"r/units.toml.tmpl": secretUnit("a"), "r/t.tmpl": "A={{ index (secrets).Env \"A\" }}\n"})
 	load := func(context.Context, effect.Machine) (any, error) {
 		return tableSecrets{map[string]string{"A": "dummy"}}, nil
 	}
@@ -49,7 +49,7 @@ func TestUnitSideSecretsReachTheSpec(t *testing.T) {
 func TestUnitSideSecretsDecryptOnce(t *testing.T) {
 	e, m := unitEnv(t, map[string]string{
 		"r/units.toml.tmpl": secretUnit("a") + secretUnit("b") + fileUnit("c", "/etc/c", ""),
-		"r/t":               "{{ (secrets).Env }}\n", "r/c": "3\n",
+		"r/t.tmpl":          "{{ (secrets).Env }}\n", "r/c": "3\n",
 	})
 	calls := 0
 	load := func(_ context.Context, got effect.Machine) (any, error) {
@@ -73,7 +73,7 @@ func TestUnitSideSecretsDecryptOnce(t *testing.T) {
 }
 
 func TestUnitReadSaysNoSecretsOnce(t *testing.T) {
-	e, _ := unitEnv(t, map[string]string{"r/units.toml.tmpl": secretUnit("a"), "r/t": "{{ (secrets).Env }}\n"})
+	e, _ := unitEnv(t, map[string]string{"r/units.toml.tmpl": secretUnit("a"), "r/t.tmpl": "{{ (secrets).Env }}\n"})
 	if status, stderr := runWithSecrets(e, nil, "read", "file/a"); status != 0 ||
 		strings.Count(stderr, "/etc/a: left as it is") != 1 {
 		t.Errorf("read on a side with no secrets: status = %d, stderr = %q; want the line once", status, stderr)

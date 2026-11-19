@@ -12,6 +12,8 @@ applies and plans again, in the units' order.
 
 A role's spec is `units.toml.tmpl` in the role's own directory, one level below the root of the specs.
 Its templates and sources sit beside it, and a path in the spec is relative to that directory.
+Each Go template ends in `.tmpl`, the spec's name and the name of each `template`
+([A role's layout](../../../roles/server/ubuntu/frame/README.md#a-roles-layout)).
 
 - **TOML, decoded strictly.** A table is a kind, and a key under it a unit of that kind. A field
   that no kind has, or a value of the wrong type, fails the load, naming its key and line.

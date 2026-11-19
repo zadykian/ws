@@ -83,6 +83,10 @@ func (f filePart) check(dir fs.FS) error {
 		return errors.New("absent_when_empty goes with template")
 	case (f.Template == "") == (f.Source == ""):
 		return errors.New("a file takes a template or a source")
+	case f.Template != "":
+		if err := checkTemplateName(f.Template); err != nil {
+			return err
+		}
 	}
 	_, err := fs.Stat(dir, f.Template+f.Source)
 	return err

@@ -198,7 +198,7 @@ func TestWhenOnEveryKind(t *testing.T) {
 			off,
 		"binary": "[binary.a]\nversion = \"1\"\nurl = \"https://x/a\"\npath = \"/usr/local/bin/a\"\nsha256 = { all = \"" + sum + "\" }\n" +
 			off,
-		"packages": "[packages.a]\ntemplate = \"a\"\n" + off,
+		"packages": "[packages.a]\ntemplate = \"a.tmpl\"\n" + off,
 		"dkms": "[dkms.a]\nmodule = \"m\"\nversion = \"1\"\nurl = \"https://x/m.tar.gz\"\nsha256 = \"" + sum + "\"\n" +
 			"load = \"m\"\n" + off,
 		"guard":   "[guard.a]\nsudo_right = \"u\"\n" + off,
@@ -217,7 +217,7 @@ func TestWhenOnEveryKind(t *testing.T) {
 		if name == "launchd" {
 			e.System = MacOS
 		}
-		units := loadOne(t, e, spec, map[string]string{"a": "x"})
+		units := loadOne(t, e, spec, map[string]string{"a": "x", "a.tmpl": "x"})
 		if got := headlines(t, units[0].Step); got != nil || len(out.Lines) != 1 {
 			t.Errorf("%s: plan = %q, said %q; want none and the off line", name, got, out.Lines)
 		}

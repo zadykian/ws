@@ -24,8 +24,9 @@ A role keeps its directory, `roles/server/ubuntu/ROLE/`, and its page there:
 
 - **Its spec,** `units.toml.tmpl`, with its templates and sources beside it
   ([The specs](../../../../engine/core/kind/README.md#the-specs)). A path in the spec is relative to
-  the directory. A file that holds a template's marks takes an ending other than `.toml`, as
-  `ws.conf.tmpl`, since tombi checks every other `.toml` as TOML.
+  the directory. Every Go template ends in `.tmpl`: the spec, and each file that a `template`
+  names, as `ws.conf.tmpl`. A kind refuses a `template` that lacks the ending, as the spec loads.
+  A `.toml` file is TOML as written, which tombi checks.
 - **Its mise files,** one an env. `mise.server.toml` holds what every server gets: apt's sources,
   `[bootstrap.packages]`, files, directories and tools. `mise.booted.toml` holds the services, the
   firewall, and each file entry that names a service in `notify`. `mise.account.toml` holds what

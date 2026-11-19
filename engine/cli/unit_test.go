@@ -105,8 +105,8 @@ func TestUnitReadStates(t *testing.T) {
 	e, m := unitEnv(t, map[string]string{
 		"r/units.toml.tmpl": fileUnit("same", "/etc/same", "") + fileUnit("new", "/etc/x/new", "") +
 			fileUnit("behind", "/etc/behind", "file/new") +
-			"[file.bad]\npath = \"/etc/bad\"\ntemplate = \"bad\"\n",
-		"r/same": "1\n", "r/new": "2\n", "r/behind": "3\n", "r/bad": "{{.Missing}}\n",
+			"[file.bad]\npath = \"/etc/bad\"\ntemplate = \"bad.tmpl\"\n",
+		"r/same": "1\n", "r/new": "2\n", "r/behind": "3\n", "r/bad.tmpl": "{{.Missing}}\n",
 	})
 	m.Files["/etc/same"] = []byte("1\n")
 	status, stdout, stderr := runUnit(e, "read", "file/bad", "file/behind", "file/same", "file/new")
