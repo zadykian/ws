@@ -88,7 +88,7 @@ shakes ws 51820 || {
 }
 
 # tunnel_end NAME prints the HostName that ssh gives NAME.
-tunnel_end() { ssh -G "$1" | awk '$1 == "hostname" { print $2 }'; }
+tunnel_end() { ssh -T -G "$1" | awk '$1 == "hostname" { print $2 }'; }
 [ "$(tunnel_end lab)" = 10.99.1.1 ] && [ "$(tunnel_end ws)" = 10.99.0.1 ] || {
     echo "::error::ssh -G gives lab '$(tunnel_end lab)' and ws '$(tunnel_end ws)', not 10.99.1.1 and 10.99.0.1"
     exit 1

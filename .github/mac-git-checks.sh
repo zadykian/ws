@@ -127,7 +127,7 @@ cmp -s "$copy" "$tmp/p256-git.pub" || error "mise bootstrap wrote no $copy"
 grep -qxF "${tab}program = \"$keygen\"" "$gitconfig" || error "$gitconfig names no gpg.ssh.program $keygen"
 (SSH_AUTH_SOCK=$tmp/none && export SSH_AUTH_SOCK && signed && exit "$fail") || fail=1
 # ws keeps the file key that the job's values.yml names as ws's, though Secretive's one key is there.
-[ "$(ssh -G ws | awk '$1 == "identityfile" { print $2 }')" = \~/.ssh/id_ed25519 ] ||
+[ "$(ssh -T -G ws | awk '$1 == "identityfile" { print $2 }')" = \~/.ssh/id_ed25519 ] ||
     error "ssh -G ws gives git's signing key, Secretive's one key, as ws's"
 # With the job's file key again, the wrapper must go.
 git_restore

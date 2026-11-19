@@ -6,7 +6,7 @@ set -eo pipefail
 fail=0
 # expect HOST KEY VALUE: ssh -G HOST must give KEY the value VALUE.
 expect() {
-    got=$(ssh -G "$1" | awk -v k="$2" '$1 == k { print $2; exit }')
+    got=$(ssh -T -G "$1" | awk -v k="$2" '$1 == k { print $2; exit }')
     if [ "$got" != "$3" ]; then
         echo "::error::ssh -G $1 gives $2 '$got', not '$3'"
         fail=1
