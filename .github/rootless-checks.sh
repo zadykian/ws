@@ -287,10 +287,6 @@ refused "the user runs ws server ubuntu secrets" as ws server ubuntu secrets key
 # The user's decrypt prints nothing, so that one that got through would show no identity in the log.
 refused "the user decrypts the credential" as sh -c 'systemd-creds decrypt --name=ws-secrets \
     /etc/credstore.encrypted/ws-secrets - </dev/null >/dev/null 2>&1'
-out=$(WS_UNITS=roles/server/ubuntu ws unit write --dry-run file/shell-env 2>&1) ||
-    fail "ws unit can't plan /etc/ws/env from the file"
-must "ws unit plans /etc/ws/env from the file" grep -q 'would change: file/shell-env' <<<"$out"
-refused "ws unit prints the value" grep -q "$value" <<<"$out"
 
 must "unset drops the entry" ws server ubuntu secrets unset env WS_CI
 refused "keys names the entry after unset" grep -q WS_CI <<<"$(ws server ubuntu secrets keys)"

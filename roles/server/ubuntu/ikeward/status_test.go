@@ -11,7 +11,18 @@ import (
 
 func statusOf(m *effecttest.Machine, tries int) Status {
 	m.Dirs["/run/systemd/system"] = 0o755
-	return Status{M: m, Out: &effecttest.Out{}, Tries: tries, Wait: time.Millisecond}
+	return Status{M: m, Out: &effecttest.Out{}, Tries: tries, Wait: time.Millisecond, InRun: true}
+}
+
+// A run without the secrets installs no VPN, so a wait for one would only fail it later.
+func TestStatusWaitsForNoneWithoutTheSecrets(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results[binary+" status"] = effecttest.Result{Err: errors.New("down")}
+	s := statusOf(m, 1)
+	s.InRun = false
+	if changes, err := s.Plan(t.Context()); err != nil || len(changes) != 0 || len(s.Out.(*effecttest.Out).Lines) != 1 {
+		t.Errorf("plan = %v, %v; want nothing and a line", changes, err)
+	}
 }
 
 func TestStatusPlansNothingWhereTheVPNIsUp(t *testing.T) {

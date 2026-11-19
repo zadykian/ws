@@ -34,6 +34,9 @@ steps, and each role's README says what it sets up.
   in its process, as TOML with a table per kind. Unknown keys are refused, references expanded,
   and no error or output shows a value. A secret file's template alone reads it
   ([file.md](../../engine/core/kind/file.md), [secrets.go](../../roles/server/secrets/secrets.go), [ws's secrets](../../roles/server/secrets/README.md)).
+- A role's secret is an input of its `mise.secrets.toml`, in the one form the frame's page gives
+  ([Secret inputs](../../roles/server/ubuntu/frame/README.md#secret-inputs)). Go reads a value
+  from a file that mise wrote, as git's tokens, or ikeward's from the run's env, and no other.
 - `secrets.Store` alone reads and writes ws's secrets file and makes its credential; cmd keeps
   the commands and the root check ([store.go](../../roles/server/secrets/store.go)).
 - The roles set the machine up for `WS_USER`, `zadykian` by default, in `WS_HOME`. A unit run as
@@ -82,10 +85,9 @@ steps, and each role's README says what it sets up.
 - The task `secrets` fails closed: root alone, a clean clone fetched by the host key against
   GitHub's pinned key, and `--if-missing error`, so no value is left out
   ([The task](../../roles/server/ubuntu/secrets/README.md#the-task)).
-- A unit that reads the secrets changes nothing on a machine without ws's secrets file. With it,
-  the file is the whole truth: a run removes what it lacks, such as a git token. So a run without
-  it, as CI's, keeps what a run with it made
-  ([Git credentials](../../roles/server/ubuntu/git/README.md#git-credentials)).
+- A unit that reads a file of a secret input follows it whole: a run removes what it lacks, such
+  as a git token's program. A run without the `secrets` env keeps the file, so it keeps what a run
+  with it made ([Git credentials](../../roles/server/ubuntu/git/README.md#git-credentials)).
 
 ## Downloads and keys
 

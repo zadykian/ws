@@ -1,17 +1,59 @@
 package ikeward
 
 import (
+	"encoding/base64"
 	"errors"
 	"io/fs"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/server/secrets"
 )
 
 func newProfile(m *effecttest.Machine) profile {
-	return profile{m: m, name: "/root/vpn/vpnclient", files: secrets.Files{VPNP12: []byte("p12"), VPNSswan: []byte("sswan")}}
+	return profile{m: m, name: "/root/vpn/vpnclient", files: Profile{P12: []byte("p12"), Sswan: []byte("sswan")}}
+}
+
+// lookupOf looks a variable up in env, as the run's env would.
+func lookupOf(env map[string]string) func(string) (string, bool) {
+	return func(k string) (string, bool) {
+		v, ok := env[k]
+		return v, ok
+	}
+}
+
+func TestProfileFromUnset(t *testing.T) {
+	p, set, err := ProfileFrom(lookupOf(map[string]string{PasswordVar: "hunter2"}))
+	if set || err != nil || len(p.P12)+len(p.Sswan)+len(p.Password) != 0 {
+		t.Errorf("ProfileFrom = %v, %v, %v; want nothing, unset", p, set, err)
+	}
+}
+
+func TestProfileFromDecodes(t *testing.T) {
+	// base64 without -w0 wraps at 76 columns; the decode takes both forms.
+	p12 := []byte(strings.Repeat("\x00\xffkey", 30))
+	enc := base64.StdEncoding.EncodeToString(p12)
+	for _, in := range []string{enc, enc[:76] + "\n" + enc[76:] + "\n"} {
+		p, set, err := ProfileFrom(lookupOf(map[string]string{P12Var: in, SswanVar: "{\"x\": 1}", PasswordVar: "hunter2"}))
+		if !set || err != nil || string(p.P12) != string(p12) || string(p.Sswan) != `{"x": 1}` || p.Password != "hunter2" {
+			t.Errorf("ProfileFrom = %v, %v; want the decoded profile", set, err)
+		}
+	}
+	p, set, err := ProfileFrom(lookupOf(map[string]string{P12Var: "", SswanVar: ""}))
+	if !set || err != nil || len(p.P12)+len(p.Sswan) != 0 {
+		t.Errorf("ProfileFrom of empty variables = %v, %v; want set and empty", set, err)
+	}
+}
+
+func TestProfileFromBadBase64NamesTheVariable(t *testing.T) {
+	_, set, err := ProfileFrom(lookupOf(map[string]string{P12Var: "not-base64-secret!", SswanVar: "s"}))
+	if !set || err == nil || !strings.Contains(err.Error(), P12Var) {
+		t.Fatalf("ProfileFrom = %v, %v; want an error naming %s", set, err, P12Var)
+	}
+	if strings.Contains(err.Error(), "secret") {
+		t.Errorf("error %q holds the value", err)
+	}
 }
 
 func TestWithWritesTheFilesUnderTheirNamesAndRemovesThem(t *testing.T) {

@@ -1,13 +1,13 @@
 # signoz's units: the password, the Compose project and the sync, in that order, after mise's
 # files. The project runs on the system's daemon, which docker's units set up. Their chain starts
 # with state/docker-routes, which sorts ahead of the frame's state/ws-binary: service/docker runs
-# before this chain. The commands run /usr/local/bin/ws, which the frame's unit keeps. The chain
-# hangs on file/shell-env, which waits on that unit. otelcol's units below the sync read the env
-# file, and a read of them waits where it has changes.
+# before this chain. The commands run /usr/local/bin/ws, so the chain hangs on the frame's unit,
+# which keeps it. otelcol's units below the sync read /etc/ws/env, which mise's files step writes
+# before any unit.
 
 # root.env, drawn once and read by root alone. Its check repairs the owner and mode of one there.
 [state.signoz-password]
-after = "file/shell-env"
+after = "state/ws-binary"
 
 [state.signoz-password.run]
 user = "root"

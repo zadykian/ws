@@ -1,15 +1,16 @@
 package cli
 
 import (
-	"errors"
+	"encoding/base64"
 	"os/exec"
 	"slices"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/zadykian/ws/engine/cli/clitest"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/server/secrets"
+	"github.com/zadykian/ws/roles/server/ubuntu/ikeward"
 )
 
 const (
@@ -31,37 +32,33 @@ func exitCode(t *testing.T, code string) error {
 	return err
 }
 
-// ikewardMachine is a booted machine with ikeward's values and, with profile, a secrets file that
-// holds the profile and its password.
-func ikewardMachine(t *testing.T, profile bool) *effecttest.Machine {
-	m, _ := credFixture()
+// ikewardProfile is the env of a run with the secrets, as the task's fnox sets the profile's inputs.
+var ikewardProfile = map[string]string{ikeward.P12Var: base64.StdEncoding.EncodeToString([]byte("p12")),
+	ikeward.SswanVar: "sswan", ikeward.PasswordVar: ikewardPassword}
+
+// ikewardNoProfile is the env of a run with the secrets on a host whose profile is empty.
+var ikewardNoProfile = map[string]string{ikeward.P12Var: "", ikeward.SswanVar: "", ikeward.PasswordVar: ""}
+
+// ikewardMachine is a booted machine with ikeward's values.
+func ikewardMachine() *effecttest.Machine {
+	m := effecttest.NewMachine()
 	m.Dirs["/etc/ws"], m.Dirs["/run/systemd/system"] = 0o755, 0o755
 	m.Files[serverVars] = []byte(ikewardValues)
-	if profile {
-		err := secrets.Store{M: m}.Edit(t.Context(), func(s *secrets.Secrets) error {
-			s.Password.VPNP12 = ikewardPassword
-			return errors.Join(s.SetFile("vpn_p12", []byte("p12")), s.SetFile("vpn_sswan", []byte("sswan")))
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-	m.Calls = nil
 	return m
 }
 
-// runIkeward runs ws server ubuntu ikeward with args on m.
-func runIkeward(m *effecttest.Machine, args ...string) (int, string, string) {
-	p := fakeProcess()
+// runIkeward runs ws server ubuntu ikeward with args on m, in a run whose env is env.
+func runIkeward(m *effecttest.Machine, env map[string]string, args ...string) (int, string, string) {
+	p := clitest.WithEnv(fakeProcess(), env)
 	p.Machine, p.Euid = m, 0
 	return runWs(p, "", append([]string{"server", "ubuntu", "ikeward"}, args...)...)
 }
 
 func TestIkewardInstallCheckRunsTheDryRun(t *testing.T) {
-	m := ikewardMachine(t, true)
+	m := ikewardMachine()
 	m.Results[strings.TrimPrefix(ikewardInstall, "run ")+" --dry-run --exit-code"] = effecttest.Result{
 		Out: []byte("write /etc/x\n"), Err: exitCode(t, "4")}
-	status, _, stderr := runIkeward(m, "install", "--check")
+	status, _, stderr := runIkeward(m, ikewardProfile, "install", "--check")
 	if status != 1 || !strings.Contains(stderr, "to do: run ikeward install") {
 		t.Errorf("status = %d, stderr %q; want install to do", status, stderr)
 	}
@@ -74,10 +71,10 @@ func TestIkewardInstallCheckRunsTheDryRun(t *testing.T) {
 }
 
 func TestIkewardInstallWritesNoProfileAfter(t *testing.T) {
-	m := ikewardMachine(t, true)
+	m := ikewardMachine()
 	m.Results[strings.TrimPrefix(ikewardInstall, "run ")+" --dry-run --exit-code"] = effecttest.Result{Err: exitCode(t, "4")}
 	m.Results[strings.TrimPrefix(ikewardInstall, "run ")+" --exit-code"] = effecttest.Result{}
-	status, stdout, stderr := runIkeward(m, "install")
+	status, stdout, stderr := runIkeward(m, ikewardProfile, "install")
 	if status != 0 {
 		t.Fatalf("status = %d, stderr %q", status, stderr)
 	}
@@ -93,28 +90,44 @@ func TestIkewardInstallWritesNoProfileAfter(t *testing.T) {
 }
 
 func TestIkewardInstallNeedsTheProfile(t *testing.T) {
-	m := ikewardMachine(t, false)
-	status, _, stderr := runIkeward(m, "install", "--check")
-	if status != 1 || !strings.Contains(stderr, "the secrets hold no profile") {
+	m := ikewardMachine()
+	status, _, stderr := runIkeward(m, ikewardNoProfile, "install", "--check")
+	if status != 1 || !strings.Contains(stderr, "WS_IKEWARD_P12 or WS_IKEWARD_SSWAN is empty") {
 		t.Errorf("status = %d, stderr %q; want the profile missing", status, stderr)
 	}
 	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.Contains(c, ikewardBin) }) {
 		t.Errorf("calls %q; want no run of ikeward", m.Calls)
 	}
 	m.Files[serverVars] = []byte("---\n")
-	if status, _, stderr := runIkeward(m, "install"); status != 1 || !strings.Contains(stderr, "WS_IKEWARD_PROFILE is empty") {
+	if status, _, stderr := runIkeward(m, ikewardProfile, "install"); status != 1 || !strings.Contains(stderr, "WS_IKEWARD_PROFILE is empty") {
 		t.Errorf("no profile: status = %d, stderr %q", status, stderr)
 	}
 }
 
 func TestIkewardCheckNeedsTheProfile(t *testing.T) {
-	m := ikewardMachine(t, false)
-	if status, _, stderr := runIkeward(m, "check"); status != 1 || !strings.Contains(stderr, "the secrets hold no profile") {
+	m := ikewardMachine()
+	status, _, stderr := runIkeward(m, ikewardNoProfile, "check")
+	if status != 1 || !strings.Contains(stderr, "WS_IKEWARD_P12 or WS_IKEWARD_SSWAN is empty") {
 		t.Errorf("no profile: status = %d, stderr %q", status, stderr)
 	}
-	m = ikewardMachine(t, true)
-	if status, stdout, stderr := runIkeward(m, "check"); status != 0 || stdout != "" || stderr != "" {
-		t.Errorf("status = %d, stdout %q, stderr %q", status, stdout, stderr)
+	// A run without the secrets, and one with a profile, pass.
+	for _, env := range []map[string]string{nil, ikewardProfile} {
+		m = ikewardMachine()
+		if status, stdout, stderr := runIkeward(m, env, "check"); status != 0 || stdout != "" || stderr != "" {
+			t.Errorf("status = %d, stdout %q, stderr %q", status, stdout, stderr)
+		}
+		if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.Contains(c, ikewardBin) }) || len(m.Inputs) != 0 {
+			t.Errorf("calls %q, %d inputs; want no run of ikeward", m.Calls, len(m.Inputs))
+		}
+	}
+}
+
+// A run without the secrets env leaves the VPN alone: install plans nothing and runs no ikeward.
+func TestIkewardInstallWithoutTheSecretsKeepsTheVPN(t *testing.T) {
+	m := ikewardMachine()
+	status, _, stderr := runIkeward(m, nil, "install", "--check")
+	if status != 0 || !strings.Contains(stderr, "the VPN stays as it is") {
+		t.Errorf("status = %d, stderr %q; want the VPN kept", status, stderr)
 	}
 	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.Contains(c, ikewardBin) }) || len(m.Inputs) != 0 {
 		t.Errorf("calls %q, %d inputs; want no run of ikeward", m.Calls, len(m.Inputs))
@@ -122,9 +135,9 @@ func TestIkewardCheckNeedsTheProfile(t *testing.T) {
 }
 
 func TestIkewardWaitGivesUp(t *testing.T) {
-	m := ikewardMachine(t, false)
+	m := ikewardMachine()
 	m.Results[ikewardBin+" status"] = effecttest.Result{Err: exitCode(t, "1")}
-	p := fakeProcess()
+	p := clitest.WithEnv(fakeProcess(), ikewardProfile)
 	p.Machine = m
 	c := newIkewardWaitCmd(p, 2, time.Millisecond)
 	var out strings.Builder
@@ -142,9 +155,22 @@ func TestIkewardWaitGivesUp(t *testing.T) {
 }
 
 func TestIkewardWaitDoneWhereUp(t *testing.T) {
-	m := ikewardMachine(t, false)
+	m := ikewardMachine()
 	m.Results[ikewardBin+" status"] = effecttest.Result{}
-	if status, _, stderr := runIkeward(m, "wait"); status != 0 || stderr != "" {
+	if status, _, stderr := runIkeward(m, nil, "wait"); status != 0 || stderr != "" {
 		t.Errorf("status = %d, stderr %q", status, stderr)
+	}
+}
+
+// The run state's check is due where the VPN is down in a run with the secrets. A run without them
+// installs no VPN, so there the check passes, and the run neither waits nor fails.
+func TestIkewardWaitCheckWantsTheSecrets(t *testing.T) {
+	m := ikewardMachine()
+	m.Results[ikewardBin+" status"] = effecttest.Result{Err: exitCode(t, "1")}
+	if status, _, stderr := runIkeward(m, ikewardProfile, "wait", "--check"); status != 1 || !strings.Contains(stderr, "to do: wait for the VPN") {
+		t.Errorf("with the secrets: status = %d, stderr %q; want the wait to do", status, stderr)
+	}
+	if status, _, stderr := runIkeward(m, nil, "wait", "--check"); status != 0 || !strings.Contains(stderr, "waits for none") {
+		t.Errorf("without the secrets: status = %d, stderr %q; want no wait, said", status, stderr)
 	}
 }

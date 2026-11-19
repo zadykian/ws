@@ -47,11 +47,11 @@ func unitSide(vars string) enginecli.UnitSide {
 			}
 			return v, m, nil
 		},
-		Secrets: loadSecretsFile}
+		Secrets: loadSecretsFile, Hidden: secretInputs}
 }
 
-// loadSecretsFile loads ws's secrets file for /etc/ws/env. A machine without one, as in CI, has no
-// secrets, and its secret files stay unchanged.
+// loadSecretsFile loads ws's secrets file, which git's and ikeward's units read. A machine without
+// one, as in CI, has no secrets, and its secret files stay unchanged.
 func loadSecretsFile(ctx context.Context, m effect.Machine) (any, error) {
 	s, err := secrets.Store{M: m}.Load(ctx)
 	if errors.Is(err, fs.ErrNotExist) {

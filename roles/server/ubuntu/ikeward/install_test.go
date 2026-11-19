@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/server/secrets"
 	"github.com/zadykian/ws/roles/server/values"
 )
 
@@ -34,9 +33,8 @@ func installOf(m *effecttest.Machine) Install {
 	m.Dirs["/run/systemd/system"] = 0o755
 	v := good()
 	v.Floors = []string{"10.20.0.0/16"}
-	return Install{M: m, Out: &effecttest.Out{}, Values: v, Secrets: secrets.Secrets{
-		Password: secrets.Passwords{VPNP12: "hunter2"},
-		File:     secrets.Files{VPNP12: []byte("p12"), VPNSswan: []byte("sswan")}}}
+	return Install{M: m, Out: &effecttest.Out{}, Values: v, InRun: true,
+		Profile: Profile{P12: []byte("p12"), Sswan: []byte("sswan"), Password: "hunter2"}}
 }
 
 func TestRunPassesThePasswordOnStdinAndReadsExitFourAsAChange(t *testing.T) {
@@ -101,13 +99,49 @@ func TestInstallShowsIkewardsErrorAndLeavesNoFiles(t *testing.T) {
 	}
 }
 
-func TestInstallSaysThatTheSecretsHoldNoProfile(t *testing.T) {
-	i := installOf(effecttest.NewMachine())
-	i.Secrets.File = secrets.Files{}
+// A run without the secrets env sets none of the profile's variables: the VPN stays untouched.
+func TestPlanWithoutSecretsKeepsTheVPN(t *testing.T) {
+	m := effecttest.NewMachine()
+	i := installOf(m)
+	i.Profile, i.InRun = Profile{}, false
 	out := i.Out.(*effecttest.Out)
 	if changes, err := i.Plan(t.Context()); err != nil || len(changes) != 0 || len(out.Lines) != 1 ||
-		!strings.Contains(out.Lines[0], "no profile") {
+		!strings.Contains(out.Lines[0], "the VPN stays as it is") {
 		t.Errorf("plan = %v, %v, said %q; want nothing and the reason", changes, err, out.Lines)
+	}
+	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.Contains(c, binary) }) || len(m.Inputs) != 0 {
+		t.Errorf("calls = %q, %d inputs; want no run of ikeward", m.Calls, len(m.Inputs))
+	}
+}
+
+func TestReadyWithoutTheRunsSecrets(t *testing.T) {
+	i := installOf(effecttest.NewMachine())
+	i.Profile, i.InRun = Profile{}, false
+	if err := i.Ready(); err != nil {
+		t.Errorf("ready = %v, want nil: the run keeps the VPN", err)
+	}
+}
+
+// A run with the secrets whose host has no profile sets its variables empty: the guard stops it,
+// naming the variables alone.
+func TestReadyFailsOnAnEmptyProfile(t *testing.T) {
+	for _, p := range []Profile{{}, {P12: []byte("p12")}, {Sswan: []byte("sswan"), Password: "hunter2"}} {
+		i := installOf(effecttest.NewMachine())
+		i.Profile = p
+		err := i.Ready()
+		if err == nil || !strings.Contains(err.Error(), P12Var+" or "+SswanVar+" is empty") {
+			t.Errorf("ready = %v, want the variables named", err)
+			continue
+		}
+		if slices.ContainsFunc([]string{"hunter2", "p12", "sswan"}, func(v string) bool { return strings.Contains(err.Error(), v) }) {
+			t.Errorf("ready's error %q holds a value", err)
+		}
+		if _, err := i.Plan(t.Context()); err == nil {
+			t.Error("plan passed on an empty profile")
+		}
+	}
+	if err := installOf(effecttest.NewMachine()).Ready(); err != nil {
+		t.Errorf("ready = %v on a whole profile", err)
 	}
 }
 

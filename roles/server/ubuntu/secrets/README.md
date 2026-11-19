@@ -8,9 +8,15 @@ pins GitHub's key for [the fetch](#the-fetch).
 
 mise installs fnox 1.50.0 from jdx/fnox's release on GitHub, as `[tools]` pins it, before any unit
 of ws. [mise.server.lock](../../mise/mise.server.lock) holds the url of the asset for `linux-x64`
-and `linux-arm64`, with GitHub's digest of each and the release's sigstore signer. A wrong sum
-fails the run, and `MISE_LOCKED=1` refuses a fnox that the lock lacks. `go test` fails where the
-pin, the lock and the digests that `pins_test.go` holds disagree.
+and `linux-arm64`, with GitHub's digest of each, which mise checked against the release's
+attestations as it wrote the lock. A wrong sum fails the run, and `MISE_LOCKED=1` refuses a fnox
+that the lock lacks. `go test` fails where the pin, the lock and the digests that `pins_test.go`
+holds disagree.
+
+The pin names mise's `github` backend, `github:jdx/fnox`, which downloads from the lock's url
+alone. The registry's name, `fnox`, takes the `packslip` backend, which asks GitHub's API for the
+release on each first install, unauthenticated. A runner or a cloud VM behind a shared address
+meets the API's limit there, and the install fails.
 
 - To bump fnox, change its version in `[tools]`, and the sums in `pins_test.go` to GitHub's
   digests of the new assets. Then write the lock again in a container with git and mise:

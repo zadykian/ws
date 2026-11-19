@@ -73,9 +73,9 @@ UI listens on loopback alone. A copy of `WS_CLAUDE_TELEMETRY_ENV` without these 
 setting them, and leaves them in `env` until removed by hand.
 
 The role replaces an endpoint already in `env`. To keep sending claude's metrics to a remote
-collector, set its endpoint first as `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT` in the secrets file's `[env]`
-table ([Secrets](../shell/README.md#secrets)). The `shell` role writes it to `/etc/ws/env`, which the `otelcol`
-role reads: [claude's metrics elsewhere](../otelcol/README.md#claudes-metrics-elsewhere).
+collector, set its endpoint first as the secret input `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT`
+([The env file](../shell/README.md#the-env-file)). mise writes it to `/etc/ws/env`, which the
+`otelcol` role reads: [claude's metrics elsewhere](../otelcol/README.md#claudes-metrics-elsewhere).
 claude reads the keys as it starts, so a session started before keeps sending where it did. A key
 the role removes still applies where the shell exports it, as from `/etc/ws/env`.
 

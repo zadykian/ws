@@ -21,11 +21,12 @@ const (
 	systemPath = "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 )
 
-// specs is claude's spec and git's, whose tokens claude's units follow, as kind.Load finds them.
+// specs is claude's spec, git's, whose tokens claude's units follow, and the frame's, whose unit
+// git's chain waits on, as kind.Load finds them.
 func specs(t *testing.T) fstest.MapFS {
 	fsys := fstest.MapFS{}
 	for _, name := range []string{"claude/units.toml.tmpl", "git/units.toml.tmpl", "git/files/ws.gitconfig.tmpl",
-		"git/files/allowed_signers.tmpl"} {
+		"git/files/allowed_signers.tmpl", "frame/units.toml.tmpl", "frame/files/values.yml.tmpl"} {
 		text, err := os.ReadFile(filepath.Join("..", name)) //nolint:gosec // a file of the roles, named above
 		if err != nil {
 			t.Fatal(err)

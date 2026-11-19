@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/server/ubuntu/git"
 )
 
 // gitAnswers sets what git config answers of a text on stdin: its include paths and its names.
@@ -49,7 +50,7 @@ func TestGitCheckRefusesATokenInAClone(t *testing.T) {
 	}
 }
 
-func TestGitTokensWithoutASecretsFileChangeNothing(t *testing.T) {
+func TestGitTokensWithoutTheFileChangeNothing(t *testing.T) {
 	p, m := valuesProcess("---\nWS_USER: root\n")
 	if status, _, stderr := runWs(p, "", "server", "ubuntu", "git", "tokens", "--check"); status != 0 || stderr != "" {
 		t.Errorf("status = %d, stderr %q", status, stderr)
@@ -57,8 +58,17 @@ func TestGitTokensWithoutASecretsFileChangeNothing(t *testing.T) {
 	if status, _, _ := runWs(p, "", "server", "ubuntu", "git", "tokens"); status != 0 {
 		t.Errorf("tokens: status = %d", status)
 	}
-	if _, ok := m.Dirs["/etc/ws/tokens"]; ok {
-		t.Error("tokens made /etc/ws/tokens with no secrets file")
+	if _, ok := m.Files["/etc/ws/tokens.gitconfig"]; ok {
+		t.Error("tokens wrote tokens.gitconfig without " + git.TokensFile)
+	}
+}
+
+func TestGitCheckRefusesABadTokensFile(t *testing.T) {
+	p, m := valuesProcess("---\nWS_USER: root\n")
+	m.Files[git.TokensFile] = []byte("[\"https://git.example.test\"]\ntoken = \"dummy-marker\"\nuser = \"dummy-marker\"\n")
+	status, _, stderr := runWs(p, "", "server", "ubuntu", "git", "check")
+	if status != 1 || !strings.Contains(stderr, "line 3: user is a key that ws does not know") || strings.Contains(stderr, "dummy-marker") {
+		t.Errorf("status = %d, stderr %q", status, stderr)
 	}
 }
 
@@ -71,5 +81,23 @@ func TestGitClonesCheckFailsWhereACloneIsDue(t *testing.T) {
 	m.Dirs["/root/src/r"] = 0o755
 	if status, _, stderr := runWs(p, "", "server", "ubuntu", "git", "clones", "--check"); status != 0 {
 		t.Errorf("with the clone there: status = %d, stderr %q", status, stderr)
+	}
+}
+
+// git runs the program as the account, which may not read values.yml: it reads the tokens alone.
+func TestGitCredentialAnswersFromTheTokensFile(t *testing.T) {
+	p, m := valuesProcess("")
+	delete(m.Files, serverVars)
+	m.Files[git.TokensFile] = []byte("[\"https://git.example.test\"]\ntoken = \"dummy-marker\"\n")
+	status, stdout, stderr := runWs(p, "protocol=https\nhost=git.example.test\n\n", "server", "ubuntu", "git", "credential",
+		"git.example.test", "get")
+	if status != 0 || stdout != "username=token\npassword=dummy-marker\n" || stderr != "" {
+		t.Errorf("get: status = %d, stdout %d bytes, stderr %q", status, len(stdout), stderr)
+	}
+	if status, stdout, _ := runWs(p, "", "server", "ubuntu", "git", "credential", "git.example.test", "erase"); status != 0 || stdout != "" {
+		t.Errorf("erase: status = %d, stdout %d bytes; want 0 and nothing", status, len(stdout))
+	}
+	if status, _, _ := runWs(p, "", "server", "ubuntu", "git", "credential"); status != 2 {
+		t.Errorf("without a key: status = %d, want a usage error", status)
 	}
 }

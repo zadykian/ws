@@ -28,7 +28,7 @@ Each role has a page of its own. A role is its mise config and its spec of ws's 
   NVIDIA GPU.
 - [`fans`](roles/server/ubuntu/fans): fan curves for the board's headers, and the driver that sets them.
 - [`shell`](roles/server/ubuntu/shell): `/etc/ws/bashrc` and `/etc/ws/profile`, one line of each at the top of
-  `~/.bashrc` and `~/.profile`, and `/etc/ws/env` from the secrets file.
+  `~/.bashrc` and `~/.profile`, and `/etc/ws/env` from mise's secret inputs.
 - [`git`](roles/server/ubuntu/git): `/etc/ws/gitconfig` and its include in `~/.gitconfig`, a key that
   signs commits, git's tokens for servers besides GitHub, and clones of repositories.
 - [`tmux`](roles/server/ubuntu/tmux): tmux from Ubuntu's archive.
@@ -72,7 +72,7 @@ Then, logged in as that user, write `/etc/ws/values.yml` where a value differs f
 root's and mode 600 ([the values](#running-it-again)). Run `install.sh` through `sudo`, by the
 three lines of [Install](.github/workflows/release.md#install), which fail where curl does. It
 installs mise and runs its bootstrap, which installs ws and sets each role up. Once the secrets
-file holds `token.github`, the bootstrap run again logs gh in ([By hand](#by-hand)), as
+hold `WS_GITHUB_TOKEN`, the secrets task's run logs gh in ([By hand](#by-hand)), as
 [the server's runbook](roles/server/runbook.md) says.
 
 Then do what stays by hand, below.
@@ -83,8 +83,8 @@ Each release holds the roles it sets up, so run `install.sh` again, by the same 
 [Install](.github/workflows/release.md#install): it checks the release out and runs the bootstrap.
 `WS_VERSION=X.Y.Z` before `sh` picks a release.
 
-The units read their secrets from ws's file, which `ws server ubuntu secrets` edits ([The secrets
-file](roles/server/ubuntu/shell/README.md#the-secrets-file)). The values of a machine go in
+The units read their secrets from ws's file, which `ws server ubuntu secrets` edits ([ws's
+secrets](roles/server/secrets/README.md)). The values of a machine go in
 `/etc/ws/values.yml`, which only root reads, and every run reads them. The first run writes it
 where none is, each key at its default, and no run changes it after
 ([The values file](roles/server/ubuntu/frame/README.md#the-values-file)). `WS_USER: NAME` sets up the
@@ -124,8 +124,8 @@ diff included, but a secret's. A run by hand of `ws unit write UNIT` sets up tha
 ## By hand
 
 Secrets are never in this repository. The claude login, ws's signing key on GitHub and the Mac's key
-as `wg0`'s peer stay manual. ws's gh takes a fine-grained personal access token, which the bootstrap
-logs gh in with, from the secrets file's `token.github`
+as `wg0`'s peer stay manual. ws's gh takes a fine-grained personal access token, which the secrets
+task's run logs gh in with, from the secret input `WS_GITHUB_TOKEN`
 ([gh](roles/server/ubuntu/devtools/README.md#gh)). Its permissions are the account's selected
 repositories; Metadata and Actions read; Contents, Pull requests, Issues and Workflows read and
 write; and no account permission. These stay manual:
@@ -133,7 +133,7 @@ write; and no account permission. These stay manual:
 - other peers' public keys on the server, as in [The tunnel](roles/server/ubuntu/tunnel/README.md#the-tunnel);
 - another device's SSH key on the server: `ssh-import-id gh:LOGIN`, run as `WS_USER`
   ([SSH and the firewall](roles/server/ubuntu/security/README.md#ssh-and-the-firewall));
-- the VPN's profile, age-encrypted on the server, and the `ikeward` role's variables, as in
+- the VPN's profile, in the server's own secrets, and the `ikeward` role's variables, as in
   [The profile](roles/server/ubuntu/ikeward/README.md#the-profile);
 - with Secure Boot on, DKMS's key, enrolled at the console: [Secure Boot](roles/server/ubuntu/fans/README.md#secure-boot);
 - Fresh's trust, once per repository: press T, then Enter
