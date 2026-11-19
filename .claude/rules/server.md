@@ -30,15 +30,9 @@ steps, and each role's README says what it sets up.
 - The server's values are one struct, `values.Values`, parsed once from the machine's file with
   unknown keys refused. A role's units read it and add no key without a commit of their own
   ([values.go](../../roles/server/values/values.go)).
-- The secrets are one struct, `secrets.Secrets`, beside the values. ws decrypts it from age's armor
-  in its process, as TOML with a table per kind. Unknown keys are refused, references expanded,
-  and no error or output shows a value. A secret file's template alone reads it
-  ([file.md](../../engine/core/kind/file.md), [secrets.go](../../roles/server/secrets/secrets.go), [ws's secrets](../../roles/server/secrets/README.md)).
 - A role's secret is an input of its `mise.secrets.toml`, in the one form the frame's page gives
   ([Secret inputs](../../roles/server/ubuntu/frame/README.md#secret-inputs)). Go reads a value
   from a file that mise wrote, as git's tokens, or ikeward's from the run's env, and no other.
-- `secrets.Store` alone reads and writes ws's secrets file and makes its credential; cmd keeps
-  the commands and the root check ([store.go](../../roles/server/secrets/store.go)).
 - The roles set the machine up for `WS_USER`, `zadykian` by default, in `WS_HOME`. A unit run as
   `WS_USER` sets `HOME` and starts in it: root needs no sudo, a container has none, and `HOME` would
   otherwise be the caller's ([claude's units](../../roles/server/ubuntu/claude/units.toml.tmpl)).
