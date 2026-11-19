@@ -11,10 +11,10 @@ import (
 	"github.com/zadykian/ws/roles/internal/gitcfg"
 )
 
-// helperPattern matches the helpers of the credential sections, whose lines git config --get-regexp
-// prints as the key, a space and the value. A section's name is its URL, empty for the bare
-// [credential].
-const helperPattern = `^credential\..*helper$`
+// programPattern matches the keys of the credential sections that name a program, whose lines
+// git config --get-regexp prints as the key, a space and the value. A section's name is its URL,
+// empty for the bare [credential].
+const programPattern = `^credential\..*helper$`
 
 // covers says whether a credential section for the URL from applies to the URL to. The bare
 // section applies to every URL, and a URL to itself and to the paths below it.
@@ -60,7 +60,10 @@ func (s shadow) credentials(ctx context.Context, text []byte) ([]string, error) 
 	if len(urls) == 0 {
 		return nil, nil
 	}
-	out, err := s.M.RunInput(ctx, text, "git", "config", "--file", "-", "--get-regexp", helperPattern)
+	// git follows the includes of a text it reads on its standard input, as it does not for a file
+	// it names. The include of /etc/ws/gitconfig brings in tokens.gitconfig, whose own resets of
+	// each token's program would read as the account's.
+	out, err := s.M.RunInput(ctx, text, "git", "config", "--no-includes", "--file", "-", "--get-regexp", programPattern)
 	var ee *exec.ExitError
 	if err != nil && (!errors.As(err, &ee) || ee.ExitCode() != 1) {
 		return nil, fmt.Errorf("git config cannot read ~/.gitconfig: %w", err)
