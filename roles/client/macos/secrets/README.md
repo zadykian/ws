@@ -89,3 +89,11 @@ mise's `[bootstrap.secrets]`. The input's variable is its secret's name in fnox 
 exports each secret under its own name. The Go package here reads the inputs of the roles in
 `/opt/ws/roles/server/ubuntu`, each variable once. A variable is of capitals, digits and
 underscores, and a role without the file declares none.
+
+`fnox.toml`, at the root of the secrets repository, holds the values that every server shares. Its
+provider `age` encrypts each one to its recipients, a table of labels: `nano` for the Nano's,
+`backup` for the backup key's, and a server's hostname for its host key. ws reads the labels and
+the secrets' names, and no value. A list of recipients, or a provider of another type, stops it, as
+ws changes a recipient by its label. A new `fnox.toml` holds the two first recipients and no
+secret yet. Its `root = true` keeps fnox from looking for a file above the clone, and
+`if_missing = "error"` makes a secret that no key opens fail the run.
