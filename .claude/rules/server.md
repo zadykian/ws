@@ -16,9 +16,10 @@ steps, and each role's README says what it sets up.
 - A role is `roles/server/ubuntu/NAME`, with its page, its `README.md`, and a line in the root
   README ([README](../../README.md)). Its units run in the order of their `after`
   ([The order](../../roles/server/ubuntu/frame/README.md#the-order)).
-- A role holds its spec, `units.toml.tmpl`, with its templates, and its mise files by env:
-  `mise.server.toml` for every server, `mise.booted.toml` where systemd is booted, and
-  `mise.account.toml` where `WS_USER` is not root. The side's one link,
+- A role holds its spec, `units.toml.tmpl`, where it has units, with its templates. It holds its
+  mise files by env: `mise.server.toml` for every server, `mise.booted.toml` where systemd is
+  booted, `mise.account.toml` where `WS_USER` is not root, and `mise.secrets.toml` under the env
+  `secrets`, which the secrets task adds. The role `secrets` has no spec. The side's one link,
   `roles/server/mise/conf.d`, loads them. A role holds no plain `mise.toml`, which every env would
   load ([specs_test.go](../../roles/server/cli/specs_test.go)).
 - Each unit of a spec is a line `"ws:KIND/NAME" = "in-sync"` of its role's `mise.server.toml`, or

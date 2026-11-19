@@ -1,4 +1,4 @@
-// Package plan joins the changes of resources, as git's tokens plan a directory and its files.
+// Package plan joins the changes of resources, in order, as git's tokens plan their file.
 package plan
 
 import (

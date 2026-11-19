@@ -72,8 +72,8 @@ Then, logged in as that user, write `/etc/ws/values.yml` where a value differs f
 root's and mode 600 ([the values](#running-it-again)). Run `install.sh` through `sudo`, by the
 three lines of [Install](.github/workflows/release.md#install), which fail where curl does. It
 installs mise and runs its bootstrap, which installs ws and sets each role up. Once the secrets
-hold `WS_GITHUB_TOKEN`, the secrets task's run logs gh in ([By hand](#by-hand)), as
-[the server's runbook](roles/server/runbook.md) says.
+hold `WS_GITHUB_TOKEN`, the secrets task logs gh in ([By hand](#by-hand)). The Mac's `ws client
+macos secrets add NAME` runs it first, as [the server's runbook](roles/server/runbook.md) says.
 
 Then do what stays by hand, below.
 
@@ -133,8 +133,8 @@ write; and no account permission. These stay manual:
 - other peers' public keys on the server, as in [The tunnel](roles/server/ubuntu/tunnel/README.md#the-tunnel);
 - another device's SSH key on the server: `ssh-import-id gh:LOGIN`, run as `WS_USER`
   ([SSH and the firewall](roles/server/ubuntu/security/README.md#ssh-and-the-firewall));
-- the VPN's profile, in the server's own secrets, and the `ikeward` role's variables, as in
-  [The profile](roles/server/ubuntu/ikeward/README.md#the-profile);
+- ikeward's VPN profile, in the server's fnox profile, `fnox.HOSTNAME.toml`, and the `ikeward`
+  role's variables, as in [The profile](roles/server/ubuntu/ikeward/README.md#the-profile);
 - with Secure Boot on, DKMS's key, enrolled at the console: [Secure Boot](roles/server/ubuntu/fans/README.md#secure-boot);
 - Fresh's trust, once per repository: press T, then Enter
   ([Trust each project](roles/server/ubuntu/fresh/README.md#trust-each-project));
