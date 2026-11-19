@@ -1,5 +1,5 @@
-// Package secrets sets up the secrets repository from the Mac: it clones it, runs fnox in the
-// clone, and lands a change by a pull request.
+// Package secrets sets up the secrets repository from the Mac. It reads the Nano's age
+// identities, clones the repository, runs fnox in the clone, and lands a change by a pull request.
 package secrets
 
 import (
