@@ -22,7 +22,7 @@ Each Go template ends in `.tmpl`, the spec's name and the name of each `template
 - **The order.** Units run by name, each moved behind the unit that its `after` names, ahead of the
   next by name. An `after` that no spec holds, or a loop, fails the load.
 - **Two renders.** Both are Go templates over the side's values, and a key the values lack is an
-  error. The spec's text fills as it loads, with `add`, `mul`, `div`, `exports`,
+  error. The spec's text fills as it loads, with `add`, `mul`, `div`,
   `has_prefix TEXT PREFIX`, `json VALUE`, which quotes a value as Go's JSON encoder does, and
   `fail MSG`, which stops the render with MSG. It takes `self` too, the path of the ws that runs the
   units, so that a command of ws runs before the pinned binary is installed, or without booted

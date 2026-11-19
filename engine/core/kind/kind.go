@@ -4,7 +4,6 @@
 package kind
 
 import (
-	"context"
 	"fmt"
 	"io/fs"
 	"path"
@@ -40,9 +39,6 @@ type Env struct {
 	Out    effect.Out
 	Data   any
 	System System
-	// Secrets returns the side's secrets, which a secret file's template reads. It returns
-	// ErrNoSecrets where the machine has none, as does a nil Secrets.
-	Secrets func(ctx context.Context) (any, error)
 	// Self is the path of the ws that runs the units. A spec names it by self to run a command of
 	// ws, as the pinned binary may not be installed yet.
 	Self string

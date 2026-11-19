@@ -71,7 +71,3 @@ after = "KIND/NAME"
 - A `seed` file is written where nothing is at its path, a link included, and left to its owner
   after, as a tool writes it from its UI. It takes no `line`, `absent`, `absent_when_empty`,
   `backup`, `ours` or `check`.
-- A `secret` file's template alone may call `secrets`, the side's secrets, as `(secrets).Env`.
-  On a machine with no secrets file, as in CI, the unit leaves the file and says so. `exports MAP`
-  gives a line `export NAME=VALUE` a name, sorted, each value quoted for the shell. A name that the
-  shell does not take fails the plan, and the error names no value.
