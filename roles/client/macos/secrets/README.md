@@ -2,7 +2,8 @@
 
 The Mac keeps ws's secrets in fnox, in the private secrets repository, encrypted to the YubiKey 5C
 Nano, to a backup key and to each server's host key. This role installs the tools that do it, and
-`ws client macos secrets init` sets the repository up.
+`ws client macos secrets init` sets the repository up, and `ws client macos secrets add NAME` adds a
+server to it.
 
 ## The tools
 
@@ -163,3 +164,26 @@ title. So it must be one DNS label: lowercase letters, digits and `-`, 63 at mos
 nor ending with `-`. `nano` and `backup` are labels, `local` names `fnox.local.toml`, fnox's local
 override, and `default` is fnox's profile without `-P`, so none of them serves. The server's task
 refuses the same names.
+
+## ws client macos secrets add
+
+Run `ws client macos secrets add NAME` as yourself, with the Nano plugged in, once init has run
+and ws's `install.sh` has ended ([the runbook](../../runbook.md#ws-on-ws)). NAME is a server of
+the Mac's. Before the tunnel is up, `--address` and `--port` reach the server as ssh's `HostName`
+and `Port`. The command:
+
+1. Takes NAME's ed25519 key from `~/.ssh/known_hosts`. Where it holds none, it scans the server,
+   prints the key's fingerprint, and asks whether the server's console prints the same. A `yes`
+   records the key under NAME, and any other answer stops it with no change.
+2. Reads the server's hostname by `ssh NAME hostname`, which must serve as a profile, as above.
+3. Lists the repository's deploy keys by gh, so that gh's login fails before a touch.
+4. In a temporary clone, sets the key as above. It encrypts again the values of each changed file
+   that holds one, by `fnox reencrypt`, which asks for the Nano's PIN and a touch.
+5. Keeps one read-only deploy key titled with the hostname that holds the key, and deletes an older
+   one first, as GitHub changes none in place.
+6. Lands the changed files by a pull request, and opens none where the key was in place.
+7. Runs the server's task `secrets` over `ssh -t`, as root by sudo, even where nothing landed.
+
+A step that is done changes nothing, so a run that fails runs again whole. gh's login adds the
+deploy keys, and needs admin on the repository. Where that login is revoked, GitHub deletes every
+deploy key it added. Each server's fetch then fails until add runs again for it.
