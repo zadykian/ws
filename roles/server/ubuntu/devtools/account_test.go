@@ -106,12 +106,12 @@ func changes(t *testing.T, u kind.Unit) []string {
 }
 
 // The same units for an account and for root, and each command runs as WS_USER in its home, though
-// systemd is not running, as in CI's container.
+// systemd is not running, as in CI's container. roslyn's finds dotnet's tools first on its PATH.
 func TestDevtoolsUnitsForAnAccountAndRoot(t *testing.T) {
 	var names []string
-	for _, a := range []struct{ values, as string }{
-		{"", "runuser -u zadykian -- env -C /home/zadykian HOME=/home/zadykian env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + systemPath + " "},
-		{"WS_USER: root\n", "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + systemPath + " "},
+	for _, a := range []struct{ values, as, home string }{
+		{"", "runuser -u zadykian -- env -C /home/zadykian HOME=/home/zadykian env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS ", "/home/zadykian"},
+		{"WS_USER: root\n", "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS ", "/root"},
 	} {
 		m, e := machine(t, a.values, nil)
 		us := units(t, e)
@@ -130,14 +130,16 @@ func TestDevtoolsUnitsForAnAccountAndRoot(t *testing.T) {
 				}
 			}
 		}
-		for _, name := range []string{"state/devtools-npm", "state/devtools-gh-telemetry",
-			"state/devtools-gh-login", "state/devtools-roslyn"} {
+		tools := "PATH=" + a.home + "/.dotnet/tools:" + strings.TrimPrefix(systemPath, "PATH=")
+		for name, path := range map[string]string{"state/devtools-npm": systemPath, "state/devtools-gh-telemetry": systemPath,
+			"state/devtools-gh-login": systemPath, "state/devtools-roslyn": tools} {
 			m.Calls = nil
 			if got := changes(t, units(t, e, name)[0]); len(got) != 1 {
 				t.Errorf("%s: plan = %q, want the command, as its check fails", name, got)
 			}
-			if !slices.ContainsFunc(m.Calls, func(c string) bool { return strings.Contains(c, a.as+"sh -c") }) {
-				t.Errorf("%s: calls %q, want the check as %q", name, m.Calls, a.as)
+			want := a.as + path + " sh -c"
+			if !slices.ContainsFunc(m.Calls, func(c string) bool { return strings.Contains(c, want) }) {
+				t.Errorf("%s: calls %q, want the check as %q", name, m.Calls, want)
 			}
 		}
 	}
