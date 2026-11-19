@@ -88,7 +88,8 @@ vpn_p12 = "PASSWORD"                # left out where the .p12 has none
 - `[token]` names `github` and `azure_devops`, the tokens ws knows.
 - `[env]` is read by no role: `/etc/ws/env` comes from mise's secret inputs ([The env
   file](../ubuntu/shell/README.md#the-env-file)).
-- `[git."URL"]` is a server's token in git's store ([Git credentials](../ubuntu/git/README.md#git-credentials)).
+- `[git."URL"]` is read by no role: git's tokens come from mise's secret inputs ([Git
+  credentials](../ubuntu/git/README.md#git-credentials)).
 - `[file]` and `[password]` are the ikeward profile's ([The profile](../ubuntu/ikeward/README.md#the-profile)). A
   TOML string can't hold the `.p12`'s bytes, so a file is base64. ws decodes it once parsed.
 
@@ -100,9 +101,3 @@ and any other `$` fails. A file takes none.
 
 A name that is missing, or a loop, fails the run, naming the names alone, as `env.A refers to
 token.github, which is missing`.
-
-## The whole truth
-
-The file is the truth of what it names. Where the machine has it, a run removes the git tokens
-for URLs the file lacks, and `/etc/ws/env` where `[env]` is empty. Without it, as in CI, a run
-keeps both. So an entry dropped from the file goes with the next run.
