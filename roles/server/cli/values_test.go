@@ -6,6 +6,7 @@ import (
 
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 func TestWriteVarsStartsTheFile(t *testing.T) {
@@ -52,6 +53,28 @@ func TestValuesSetWritesOneKey(t *testing.T) {
 	}
 	if got := string(m.Files[serverVars]); got != "---\n# the machine\nWS_USER: ada\nWS_BASE_SWAPPINESS: 20\n" {
 		t.Errorf("file = %q", got)
+	}
+}
+
+// A seeded file names the home and the signing key, which follow a new user where they hold the
+// old one's.
+func TestValuesSetMovesTheKeysThatFollow(t *testing.T) {
+	v, err := values.Parse(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	seeded, err := v.YAML()
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, m := valuesProcess(seeded)
+	status, _, stderr := runWs(p, "", "server", "ubuntu", "values", "set", "WS_USER", "root")
+	if status != 0 || !strings.Contains(stderr, "moved WS_HOME and WS_GIT_SIGNING_PUB_KEY to follow WS_USER") {
+		t.Fatalf("status = %d, stderr %q", status, stderr)
+	}
+	got, err := values.Parse(m.Files[serverVars])
+	if err != nil || got.Home != "/root" || got.GitSigningPubKey != "/root/.ssh/id_ed25519_signing.pub" {
+		t.Errorf("home %q, key %q, %v", got.Home, got.GitSigningPubKey, err)
 	}
 }
 

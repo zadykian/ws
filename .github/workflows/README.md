@@ -27,7 +27,10 @@ the container's NET_ADMIN, checks the outbound table the run wrote and the users
 find that the user owns its home. The Zed wrapper's [checks](../zed-terminal-checks.sh) run on the
 files it installed, and Fresh's on the config it loaded. The user's empty commit must sign and
 verify. Root's leg has no table, and the run leaves out its own check
-([Outbound](../../roles/server/ubuntu/security/README.md#outbound)). In the container, base's swap
+([Outbound](../../roles/server/ubuntu/security/README.md#outbound)). The default user's leg starts
+with no values file, so its first run writes one, and root's leg writes its own. After both runs,
+the file is root's at 600, and root's keeps its bytes ([The values
+file](../../roles/server/ubuntu/frame/README.md#the-values-file)). In the container, base's swap
 file is off, as the swap is the host's. With no NVIDIA GPU, `nvidia` checks its names alone, and
 with no MSI board, `fans` leaves its fans alone. Without a VPN profile, `ikeward` does nothing.
 

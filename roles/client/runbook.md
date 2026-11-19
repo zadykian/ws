@@ -94,11 +94,11 @@ a command that needs root. A user outside sudoers cannot go on.
 
 ## ws on ws
 
-1. At ws, write the values first, as the server's runbook says: `/etc/ws/values.yml`, root's and
-   mode 600, with each value that differs from its default. `install.sh` reads `WS_USER` from it.
-   On a cloud VM, set `WS_SECURITY_OUTBOUND` to false, as the outbound table drops the metadata
-   service ([Outbound](../server/ubuntu/security/README.md#outbound)). At slot N other than 0,
-   set `WS_TUNNEL_ADDRESS` to `10.99.N.1/24`, `WS_TUNNEL_PORT` to the Mac's, and
+1. At ws, write the values that differ from their defaults first, as
+   [the server's runbook](../server/runbook.md) says. On a cloud VM, set `WS_SECURITY_OUTBOUND`
+   to false, as the outbound table drops the metadata service
+   ([Outbound](../server/ubuntu/security/README.md#outbound)). At slot N other than 0, set
+   `WS_TUNNEL_ADDRESS` to `10.99.N.1/24`, `WS_TUNNEL_PORT` to the Mac's, and
    `WS_TUNNEL_PEERS` to `mac` at `10.99.N.2`
    ([The tunnel](../server/ubuntu/tunnel/README.md#the-tunnel)).
 2. Run `install.sh` by the three lines of [Install](../../.github/workflows/release.md#install),
