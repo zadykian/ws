@@ -14,7 +14,7 @@ config and its spec, and holds no Go.
 | [`roles/server/mise/mise.server.lock`](../../mise/mise.server.lock) | The roles' tools: each download's url and SHA-256 for each platform ([devtools](../devtools/README.md#the-tools)). |
 | [`mise.server.toml`](../../../../mise.server.toml) | The server's: the plugin, dpkg's options, `/etc/ws` and the check against a silent skip. |
 | [`plugins/ws`](../../../../plugins/ws) | The plugin: a hook runs one `ws unit read` or `ws unit write` ([ws unit](../../../../engine/core/kind/README.md#ws-unit)). |
-| `units.toml`, `mise.server.toml` here | The role `frame`: the unit that keeps `/usr/local/bin/ws`. |
+| `units.toml.tmpl`, `mise.server.toml` here | The role `frame`: the unit that keeps `/usr/local/bin/ws`. |
 
 The Mac shares `mise.toml` alone, and loads no file of the server's.
 
@@ -22,10 +22,11 @@ The Mac shares `mise.toml` alone, and loads no file of the server's.
 
 A role keeps its directory, `roles/server/ubuntu/ROLE/`, and its page there:
 
-- **Its spec,** `units.toml`, with its templates and sources beside it
+- **Its spec,** `units.toml.tmpl`, with its templates and sources beside it
   ([The specs](../../../../engine/core/kind/README.md#the-specs)). A path in the spec is relative to
-  the directory. A file that holds a template's marks takes an ending other than `.toml`, as
-  `ws.conf.tmpl`, since tombi checks every other `.toml` as TOML.
+  the directory. Every Go template ends in `.tmpl`: the spec, and each file that a `template`
+  names, as `ws.conf.tmpl`. A kind refuses a `template` that lacks the ending, as the spec loads.
+  A `.toml` file is TOML as written, which tombi checks.
 - **Its mise files,** one an env. `mise.server.toml` holds what every server gets: apt's sources,
   `[bootstrap.packages]`, files, directories and tools. `mise.booted.toml` holds the services, the
   firewall, and each file entry that names a service in `notify`. `mise.account.toml` holds what

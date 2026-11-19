@@ -26,7 +26,7 @@ const (
 func role(t *testing.T) fstest.MapFS {
 	fsys, dir := fstest.MapFS{}, os.DirFS(".")
 	err := fs.WalkDir(dir, ".", func(name string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() || (name != "units.toml" && !strings.HasPrefix(name, "files/")) {
+		if err != nil || d.IsDir() || (name != "units.toml.tmpl" && !strings.HasPrefix(name, "files/")) {
 			return err
 		}
 		text, err := fs.ReadFile(dir, name)

@@ -27,7 +27,7 @@ func (c miseConfig) version(t *testing.T, tool string) string {
 	return ""
 }
 
-// unitsFile is what the tests read of units.toml. Its template's marks sit inside strings, so it
+// unitsFile is what the tests read of units.toml.tmpl. Its template's marks sit inside strings, so it
 // reads as TOML before a render.
 type unitsFile struct {
 	File map[string]struct {
@@ -41,7 +41,7 @@ type unitsFile struct {
 }
 
 func readUnits(t *testing.T) unitsFile {
-	text, err := os.ReadFile("units.toml")
+	text, err := os.ReadFile("units.toml.tmpl")
 	if err != nil {
 		t.Fatal(err)
 	}

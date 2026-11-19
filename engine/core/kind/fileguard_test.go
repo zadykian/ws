@@ -32,7 +32,7 @@ func TestGroupOfRefusesAnotherOwner(t *testing.T) {
 		"path = \"/a\"\nsource = \"f\"\ngroup_of = \"u x\"\n":                     "is no user's name",
 		"path = \"/a\"\nabsent = true\ngroup_of = \"u\"\n":                        "an absent file takes a path, an owner and ours alone",
 	} {
-		_, err := Load(e, tree(map[string]string{"r/units.toml": "[file.a]\n" + spec, "r/f": ""}))
+		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": "[file.a]\n" + spec, "r/f": ""}))
 		if err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("load of\n%s= %v, want %q", spec, err, want)
 		}
@@ -122,7 +122,7 @@ func TestBackupRefusesSecretAbsentOrLine(t *testing.T) {
 		"path = \"/a\"\nabsent = true\nbackup = true\n",
 		"path = \"/a\"\nline = \". /x\"\nbackup = true\n",
 	} {
-		_, err := Load(e, tree(map[string]string{"r/units.toml": "[file.a]\n" + spec, "r/f": ""}))
+		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": "[file.a]\n" + spec, "r/f": ""}))
 		if err == nil || !strings.Contains(err.Error(), "backup takes a file that ws writes whole") {
 			t.Errorf("load of\n%s= %v, want backup refused", spec, err)
 		}

@@ -173,7 +173,7 @@ func TestNvidiaNamesOneBranch(t *testing.T) {
 	if archive := strings.Fields(strings.TrimPrefix(bare.Calls[i], simulation)); !slices.Equal(names, archive) {
 		t.Errorf("the packages' names %q, the archive's %q", names, archive)
 	}
-	spec, err := os.ReadFile(rolesDir + "/nvidia/units.toml")
+	spec, err := os.ReadFile(rolesDir + "/nvidia/units.toml.tmpl")
 	if err != nil {
 		t.Fatal(err)
 	}

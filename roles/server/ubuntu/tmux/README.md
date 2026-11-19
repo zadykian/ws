@@ -2,7 +2,7 @@
 
 The `tmux` role sets up tmux from `mise bootstrap`. Its `mise.server.toml` installs tmux from
 Ubuntu's archive, with no config, as cld runs tmux with `-f /dev/null`, and names the unit
-`tmux-snap` of its `units.toml`, which removes tmux's snap. The package comes first, so that the
+`tmux-snap` of its `units.toml.tmpl`, which removes tmux's snap. The package comes first, so that the
 machine never lacks a tmux. The unit runs `snap remove tmux` where snapd is installed and lists
 the snap. It skips, and says so, without booted systemd: snapd must run to remove a snap, as in
 CI's container.

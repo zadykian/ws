@@ -37,7 +37,7 @@ func specText(t *testing.T, name string) []byte {
 	return text
 }
 
-// endpointCheck returns the check of claude.env's part in units.toml: the command that refuses a
+// endpointCheck returns the check of claude.env's part in units.toml.tmpl: the command that refuses a
 // bad endpoint, {} standing for the file.
 func endpointCheck(t *testing.T) []string { return checkOf(t, envFile) }
 
@@ -51,7 +51,7 @@ func checkOf(t *testing.T, path string) []string {
 			} `toml:"file"`
 		} `toml:"service"`
 	}
-	if err := toml.Unmarshal(specText(t, "units.toml"), &spec); err != nil {
+	if err := toml.Unmarshal(specText(t, "units.toml.tmpl"), &spec); err != nil {
 		t.Fatal(err)
 	}
 	for _, f := range spec.Service["otelcol"].File {
@@ -59,7 +59,7 @@ func checkOf(t *testing.T, path string) []string {
 			return f.Check
 		}
 	}
-	t.Fatalf("units.toml has no part for %s", path)
+	t.Fatalf("units.toml.tmpl has no part for %s", path)
 	return nil
 }
 
@@ -140,14 +140,14 @@ func machine(t *testing.T, env string) (*effecttest.Machine, kind.Env) {
 // returns the collector's service unit.
 func collector(t *testing.T, e kind.Env) []kind.Unit {
 	fsys := fstest.MapFS{
-		"signoz/units.toml": {Data: []byte("[state.signoz-sync.run]\nuser = \"root\"\ncommand = [\"true\"]\ncreates = [\"/etc\"]\n")},
+		"signoz/units.toml.tmpl": {Data: []byte("[state.signoz-sync.run]\nuser = \"root\"\ncommand = [\"true\"]\ncreates = [\"/etc\"]\n")},
 	}
 	for _, name := range []string{"files/journal.conf", "files/claude.conf", "files/claude.env.tmpl", "files/config.yaml.tmpl"} {
 		fsys["otelcol/"+name] = &fstest.MapFile{Data: specText(t, name)}
 	}
 	// The .deb's install is apt's, which the test leaves out: the service waits on nothing here.
-	spec := strings.Replace(string(specText(t, "units.toml")), "after = \"deb/otelcol\"\n", "", 1)
-	fsys["otelcol/units.toml"] = &fstest.MapFile{Data: []byte(spec)}
+	spec := strings.Replace(string(specText(t, "units.toml.tmpl")), "after = \"deb/otelcol\"\n", "", 1)
+	fsys["otelcol/units.toml.tmpl"] = &fstest.MapFile{Data: []byte(spec)}
 	all, err := kind.Load(e, fsys)
 	if err != nil {
 		t.Fatal(err)

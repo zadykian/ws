@@ -26,7 +26,7 @@ func configUnit(t *testing.T) (*effecttest.Machine, kind.Unit, []byte) {
 // configUnitOf loads the role's unit for WS_USER user, whose uid and gid are id, at home dir.
 func configUnitOf(t *testing.T, user, id, dir string) (*effecttest.Machine, kind.Unit, []byte) {
 	fsys := fstest.MapFS{}
-	for _, name := range []string{"units.toml", "files/config.yml"} {
+	for _, name := range []string{"units.toml.tmpl", "files/config.yml"} {
 		text, err := os.ReadFile(name) //nolint:gosec // a file of the role, named above
 		if err != nil {
 			t.Fatal(err)

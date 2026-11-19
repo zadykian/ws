@@ -2,7 +2,7 @@
 
 The `zed` role sets up Zed's server on ws from `mise bootstrap`. Zed itself runs on the Mac, which
 opens ws over ssh. The role's `mise.server.toml` writes the terminal's wrapper and its tmux.conf,
-root's, in `/usr/local/lib/ws/zed`. Its `units.toml` holds the units: `file/zed-settings`, the
+root's, in `/usr/local/lib/ws/zed`. Its `units.toml.tmpl` holds the units: `file/zed-settings`, the
 settings that Zed's server reads, and `file/zed-nofile`, the open-file limit that the server needs.
 The Mac's side is [Zed on the Mac](../../../client/macos/zed/README.md).
 

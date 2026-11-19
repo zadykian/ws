@@ -166,7 +166,7 @@ func TestWhenRefusesAnUnknownFact(t *testing.T) {
 		`{ gpu = "x" }`:        `when: no fact "gpu"; the facts are board_vendor, container, gpu_vendor`,
 		`{ board_vendor = 1 }`: "file.a.when (line 4",
 	} {
-		_, err := Load(e, tree(map[string]string{"r/units.toml": gatedFile(cond), "r/a": "x"}))
+		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": gatedFile(cond), "r/a": "x"}))
 		if err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("load with when = %s: %v, want %q", cond, err, want)
 		}
@@ -181,7 +181,7 @@ func TestWhenRefusesAWantOfAnotherForm(t *testing.T) {
 	}{{"0x12AB", false}, {"12ab", false}, {"0x1234 ", false}, {"0x12345", false}, {"0x1234", true}, {"", true},
 		{"!0x12AB", false}, {"!0x1234", true}, {"!", true}} {
 		want, ok := tc.want, tc.ok
-		_, err := Load(e, tree(map[string]string{"r/units.toml": gatedFile(`{ gpu_vendor = "` + want + `" }`), "r/a": "x"}))
+		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": gatedFile(`{ gpu_vendor = "` + want + `" }`), "r/a": "x"}))
 		refused := err != nil && strings.Contains(err.Error(), `when: gpu_vendor "`+want+`" is not of the form ^0x[0-9a-f]{4}$`)
 		if ok != (err == nil) || !ok && !refused {
 			t.Errorf("load with gpu_vendor %q = %v, want loaded %v", want, err, ok)
@@ -198,7 +198,7 @@ func TestWhenOnEveryKind(t *testing.T) {
 			off,
 		"binary": "[binary.a]\nversion = \"1\"\nurl = \"https://x/a\"\npath = \"/usr/local/bin/a\"\nsha256 = { all = \"" + sum + "\" }\n" +
 			off,
-		"packages": "[packages.a]\ntemplate = \"a\"\n" + off,
+		"packages": "[packages.a]\ntemplate = \"a.tmpl\"\n" + off,
 		"dkms": "[dkms.a]\nmodule = \"m\"\nversion = \"1\"\nurl = \"https://x/m.tar.gz\"\nsha256 = \"" + sum + "\"\n" +
 			"load = \"m\"\n" + off,
 		"guard":   "[guard.a]\nsudo_right = \"u\"\n" + off,
@@ -217,7 +217,7 @@ func TestWhenOnEveryKind(t *testing.T) {
 		if name == "launchd" {
 			e.System = MacOS
 		}
-		units := loadOne(t, e, spec, map[string]string{"a": "x"})
+		units := loadOne(t, e, spec, map[string]string{"a": "x", "a.tmpl": "x"})
 		if got := headlines(t, units[0].Step); got != nil || len(out.Lines) != 1 {
 			t.Errorf("%s: plan = %q, said %q; want none and the off line", name, got, out.Lines)
 		}

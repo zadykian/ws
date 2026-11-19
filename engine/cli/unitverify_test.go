@@ -22,7 +22,7 @@ func verifyEnv(t *testing.T, specs string) (status int, stdout, stderr, runDir s
 	if err != nil {
 		t.Fatal(err)
 	}
-	e, m := unitEnv(t, map[string]string{"r/units.toml": specs, "r/a": "1\n", "r/b": "2\n", "r/c": "3\n"})
+	e, m := unitEnv(t, map[string]string{"r/units.toml.tmpl": specs, "r/a": "1\n", "r/b": "2\n", "r/c": "3\n"})
 	e.Euid = 1000
 	m.Results[miseStatus] = effecttest.Result{Out: sample}
 	status, stdout, stderr = runUnit(e, "verify")
@@ -49,7 +49,7 @@ func TestVerifyFailsWithoutTheWsManager(t *testing.T) {
 		"no plugin":  "{}\n",
 		"not loaded": `{"ws": {"available": false, "packages": [{"package": "file/a"}]}}`,
 	} {
-		e, m := unitEnv(t, map[string]string{"r/units.toml": fileUnit("a", "/etc/a", ""), "r/a": "1\n"})
+		e, m := unitEnv(t, map[string]string{"r/units.toml.tmpl": fileUnit("a", "/etc/a", ""), "r/a": "1\n"})
 		m.Results[miseStatus] = effecttest.Result{Out: []byte(out)}
 		runDir := filepath.Dir(e.Getenv("WS_UNITS"))
 		if status, _, stderr := runUnit(e, "verify"); status != 1 || !strings.Contains(stderr, "no ws plugin loaded") ||

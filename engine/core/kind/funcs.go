@@ -80,6 +80,18 @@ func facts(ctx context.Context, e Env) template.FuncMap {
 	return fm
 }
 
+// templateEnding ends the name of each Go template that a spec names, as a spec's own does.
+const templateEnding = ".tmpl"
+
+// checkTemplateName refuses the name of a template file that lacks templateEnding. Without it, an
+// editor and a linter read the file as the format it renders into.
+func checkTemplateName(name string) error {
+	if !strings.HasSuffix(name, templateEnding) {
+		return fmt.Errorf("template %q: the name of a Go template ends in %s", name, templateEnding)
+	}
+	return nil
+}
+
 // render fills the template file name of dir with e.Data and facts' funcs.
 func render(ctx context.Context, e Env, dir fs.FS, name string) ([]byte, error) {
 	text, err := fs.ReadFile(dir, name)

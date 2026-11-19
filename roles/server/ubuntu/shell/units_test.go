@@ -21,12 +21,12 @@ const envPath = "/etc/ws/env"
 // which the env file waits on, is left out: so is the wait.
 func role(t *testing.T) fstest.MapFS {
 	fsys := fstest.MapFS{}
-	for _, name := range []string{"units.toml", "files/env.tmpl"} {
+	for _, name := range []string{"units.toml.tmpl", "files/env.tmpl"} {
 		text, err := os.ReadFile(name) //nolint:gosec // a file of the role, named above
 		if err != nil {
 			t.Fatal(err)
 		}
-		if name == "units.toml" {
+		if name == "units.toml.tmpl" {
 			text = []byte(strings.Replace(string(text), "after = \"state/ws-binary\"\n", "", 1))
 		}
 		fsys["shell/"+name] = &fstest.MapFile{Data: text}

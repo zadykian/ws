@@ -176,7 +176,7 @@ func TestComposeRefusesABadSpec(t *testing.T) {
 		"dir = \"/srv/p/\"\nproject = \"p\"\n":    `dir "/srv/p/" is no clean absolute path`,
 		"dir = \"/srv/p\"\nproject = \"p_1-a\"\n": "",
 	} {
-		_, err := Load(e, tree(map[string]string{"r/units.toml": "[compose.a]\n" + fields}))
+		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": "[compose.a]\n" + fields}))
 		if want == "" && err != nil || want != "" && (err == nil || !strings.Contains(err.Error(), want)) {
 			t.Errorf("load of\n%s= %v, want %q", fields, err, want)
 		}

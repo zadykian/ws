@@ -25,7 +25,7 @@ const (
 // snapUnit loads the role's unit on a machine with systemd or without. The fake machine runs no
 // shell, so held sets the check's answer.
 func snapUnit(t *testing.T, booted, held bool) (*effecttest.Machine, *effecttest.Out, kind.Unit) {
-	text, err := os.ReadFile("units.toml")
+	text, err := os.ReadFile("units.toml.tmpl")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +42,7 @@ func snapUnit(t *testing.T, booted, held bool) (*effecttest.Machine, *effecttest
 		m.Results[check] = effecttest.Result{Err: errors.New("exit status 1")}
 	}
 	e := kind.Env{M: m, U: &effecttest.Units{}, Out: out, Data: v}
-	us, err := kind.Load(e, fstest.MapFS{"tmux/units.toml": &fstest.MapFile{Data: text}})
+	us, err := kind.Load(e, fstest.MapFS{"tmux/units.toml.tmpl": &fstest.MapFile{Data: text}})
 	if err != nil || len(us) != 1 || us[0].Name != "state/tmux-snap" {
 		t.Fatalf("units = %v, %v; want state/tmux-snap alone", kind.Names(us), err)
 	}

@@ -23,7 +23,7 @@ func loadState(t *testing.T, e Env, fields string) []Unit {
 // stateRefused fails the test unless the state of the fields fails to load with an error that
 // holds want.
 func stateRefused(t *testing.T, e Env, fields, want string) {
-	_, err := Load(e, tree(map[string]string{"r/units.toml": "[state.a]\n" + fields}))
+	_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": "[state.a]\n" + fields}))
 	if err == nil || !strings.Contains(err.Error(), want) {
 		t.Errorf("load of\n%s= %v, want %q", fields, err, want)
 	}

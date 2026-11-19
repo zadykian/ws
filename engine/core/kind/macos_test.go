@@ -60,14 +60,14 @@ func TestMacRefusesAnUnreadableRootFile(t *testing.T) {
 		"path = \"/etc/ws/a\"\nabsent = true\n":                                     false,
 		"path = \"/Users/u/.ssh/a\"\nsource = \"a\"\nmode = 0o600\nowner = \"u\"\n": false,
 	} {
-		files["r/units.toml"] = "[file.a]\n" + spec
+		files["r/units.toml.tmpl"] = "[file.a]\n" + spec
 		_, err := Load(e, tree(files))
 		if got := err != nil && strings.Contains(err.Error(), "readable by all"); got != refused {
 			t.Errorf("%q: load = %v, want refused %v", spec, err, refused)
 		}
 	}
 	e.System = Linux
-	files["r/units.toml"] = "[file.a]\npath = \"/etc/ws/a\"\nsource = \"a\"\nmode = 0o600\n"
+	files["r/units.toml.tmpl"] = "[file.a]\npath = \"/etc/ws/a\"\nsource = \"a\"\nmode = 0o600\n"
 	if _, err := Load(e, tree(files)); err != nil {
 		t.Errorf("load of a 0600 root file on Linux = %v, want none", err)
 	}

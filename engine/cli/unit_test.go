@@ -66,9 +66,9 @@ func fileUnit(name, path, after string) string {
 
 func TestUnitListRunOrder(t *testing.T) {
 	e, _ := unitEnv(t, map[string]string{
-		"r/units.toml": fileUnit("a", "/etc/a", "file/b") + fileUnit("b", "/etc/b", ""),
-		"s/units.toml": fileUnit("c", "/etc/c", ""),
-		"r/a":          "1\n", "r/b": "2\n", "s/c": "3\n",
+		"r/units.toml.tmpl": fileUnit("a", "/etc/a", "file/b") + fileUnit("b", "/etc/b", ""),
+		"s/units.toml.tmpl": fileUnit("c", "/etc/c", ""),
+		"r/a":               "1\n", "r/b": "2\n", "s/c": "3\n",
 	})
 	e.Euid = 1000
 	if status, stdout, stderr := runUnit(e, "list"); status != 0 || stdout != "file/b\nfile/a\nfile/c\n" {
@@ -77,7 +77,7 @@ func TestUnitListRunOrder(t *testing.T) {
 }
 
 func TestUnitListTOML(t *testing.T) {
-	e, _ := unitEnv(t, map[string]string{"r/units.toml": fileUnit("a", "/etc/a", ""), "r/a": "1\n"})
+	e, _ := unitEnv(t, map[string]string{"r/units.toml.tmpl": fileUnit("a", "/etc/a", ""), "r/a": "1\n"})
 	if status, stdout, _ := runUnit(e, "list", "--toml"); status != 0 || stdout != "\"ws:file/a\" = \"in-sync\"\n" {
 		t.Errorf("status = %d, stdout = %q", status, stdout)
 	}
@@ -95,7 +95,7 @@ func TestUnitListWithoutSpecs(t *testing.T) {
 }
 
 func TestUnitListFailsOnABadSpec(t *testing.T) {
-	e, _ := unitEnv(t, map[string]string{"r/units.toml": "[file.a]\npth = \"/etc/a\"\n"})
+	e, _ := unitEnv(t, map[string]string{"r/units.toml.tmpl": "[file.a]\npth = \"/etc/a\"\n"})
 	if status, stdout, stderr := runUnit(e, "list"); status != 1 || stdout != "" || !strings.Contains(stderr, "pth") {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
@@ -103,10 +103,10 @@ func TestUnitListFailsOnABadSpec(t *testing.T) {
 
 func TestUnitReadStates(t *testing.T) {
 	e, m := unitEnv(t, map[string]string{
-		"r/units.toml": fileUnit("same", "/etc/same", "") + fileUnit("new", "/etc/x/new", "") +
+		"r/units.toml.tmpl": fileUnit("same", "/etc/same", "") + fileUnit("new", "/etc/x/new", "") +
 			fileUnit("behind", "/etc/behind", "file/new") +
-			"[file.bad]\npath = \"/etc/bad\"\ntemplate = \"bad\"\n",
-		"r/same": "1\n", "r/new": "2\n", "r/behind": "3\n", "r/bad": "{{.Missing}}\n",
+			"[file.bad]\npath = \"/etc/bad\"\ntemplate = \"bad.tmpl\"\n",
+		"r/same": "1\n", "r/new": "2\n", "r/behind": "3\n", "r/bad.tmpl": "{{.Missing}}\n",
 	})
 	m.Files["/etc/same"] = []byte("1\n")
 	status, stdout, stderr := runUnit(e, "read", "file/bad", "file/behind", "file/same", "file/new")
@@ -125,7 +125,7 @@ func TestUnitReadStates(t *testing.T) {
 }
 
 func TestUnitUnknownUnitIsUsage(t *testing.T) {
-	e, _ := unitEnv(t, map[string]string{"r/units.toml": fileUnit("a", "/etc/a", ""), "r/a": "1\n"})
+	e, _ := unitEnv(t, map[string]string{"r/units.toml.tmpl": fileUnit("a", "/etc/a", ""), "r/a": "1\n"})
 	for _, verb := range []string{"read", "write"} {
 		if status, _, stderr := runUnit(e, verb, "file/z"); status != 2 || !strings.Contains(stderr, `no unit "file/z"`) {
 			t.Errorf("%s: status = %d, stderr = %q", verb, status, stderr)
@@ -134,7 +134,7 @@ func TestUnitUnknownUnitIsUsage(t *testing.T) {
 }
 
 func TestUnitWriteAppliesAndPlansAgain(t *testing.T) {
-	e, m := unitEnv(t, map[string]string{"r/units.toml": fileUnit("a", "/etc/a", ""), "r/a": "1\n"})
+	e, m := unitEnv(t, map[string]string{"r/units.toml.tmpl": fileUnit("a", "/etc/a", ""), "r/a": "1\n"})
 	status, _, stderr := runUnit(e, "write", "file/a")
 	if status != 0 || string(m.Files["/etc/a"]) != "1\n" || !strings.Contains(stderr, "changed: file/a\n") {
 		t.Fatalf("status = %d, file = %q, stderr = %q", status, m.Files["/etc/a"], stderr)
@@ -149,8 +149,8 @@ func TestUnitWriteAppliesAndPlansAgain(t *testing.T) {
 
 func TestUnitWriteLeavesOutTheUnnamed(t *testing.T) {
 	e, m := unitEnv(t, map[string]string{
-		"r/units.toml": fileUnit("a", "/etc/a", "file/b") + fileUnit("b", "/etc/b", "") + fileUnit("c", "/etc/c", ""),
-		"r/a":          "1\n", "r/b": "2\n", "r/c": "3\n",
+		"r/units.toml.tmpl": fileUnit("a", "/etc/a", "file/b") + fileUnit("b", "/etc/b", "") + fileUnit("c", "/etc/c", ""),
+		"r/a":               "1\n", "r/b": "2\n", "r/c": "3\n",
 	})
 	m.Files["/etc/b"] = []byte("2\n")
 	if status, _, stderr := runUnit(e, "write", "file/a"); status != 0 {
@@ -163,8 +163,8 @@ func TestUnitWriteLeavesOutTheUnnamed(t *testing.T) {
 
 func TestUnitWriteSkipsBehindAChange(t *testing.T) {
 	e, m := unitEnv(t, map[string]string{
-		"r/units.toml": fileUnit("a", "/etc/a", "file/b") + fileUnit("b", "/etc/b", ""),
-		"r/a":          "1\n", "r/b": "2\n",
+		"r/units.toml.tmpl": fileUnit("a", "/etc/a", "file/b") + fileUnit("b", "/etc/b", ""),
+		"r/a":               "1\n", "r/b": "2\n",
 	})
 	status, _, stderr := runUnit(e, "write", "file/a")
 	if status != 1 || !strings.Contains(stderr, "skipped file/a (after file/b)") {
@@ -176,7 +176,7 @@ func TestUnitWriteSkipsBehindAChange(t *testing.T) {
 }
 
 func TestUnitWriteDryRunAppliesNothing(t *testing.T) {
-	e, m := unitEnv(t, map[string]string{"r/units.toml": fileUnit("a", "/etc/a", ""), "r/a": "new\n"})
+	e, m := unitEnv(t, map[string]string{"r/units.toml.tmpl": fileUnit("a", "/etc/a", ""), "r/a": "new\n"})
 	m.Files["/etc/a"] = []byte("old\n")
 	status, stdout, stderr := runUnit(e, "write", "--dry-run", "file/a")
 	if status != 0 || stdout != "" || !strings.Contains(stderr, "-old\n+new\n") ||
@@ -190,8 +190,8 @@ func TestUnitWriteDryRunAppliesNothing(t *testing.T) {
 
 func TestUnitWriteRefusedCheckIsOne(t *testing.T) {
 	e, m := unitEnv(t, map[string]string{
-		"r/units.toml": "[file.a]\npath = \"/etc/a\"\nsource = \"a\"\ncheck = [\"checker\", \"{}\"]\n",
-		"r/a":          "new\n",
+		"r/units.toml.tmpl": "[file.a]\npath = \"/etc/a\"\nsource = \"a\"\ncheck = [\"checker\", \"{}\"]\n",
+		"r/a":               "new\n",
 	})
 	m.Files["/etc/a"] = []byte("old\n")
 	m.Results["checker /etc/a.ws-check"] = effecttest.Result{Err: errors.New("exit status 1")}
@@ -206,8 +206,8 @@ func TestUnitWriteRefusedCheckIsOne(t *testing.T) {
 
 func TestUnitReadOffUnitIsInSync(t *testing.T) {
 	e, m := unitEnv(t, map[string]string{
-		"r/units.toml": fileUnit("a", "/etc/a", "") + "when = { board_vendor = \"Acme Ltd.\" }\n",
-		"r/a":          "1\n",
+		"r/units.toml.tmpl": fileUnit("a", "/etc/a", "") + "when = { board_vendor = \"Acme Ltd.\" }\n",
+		"r/a":               "1\n",
 	})
 	status, stdout, stderr := runUnit(e, "read", "file/a")
 	if status != 0 || stdout != "file/a\tin-sync\n" || strings.Count(stderr, "file/a: off on this machine") != 1 {
@@ -223,7 +223,7 @@ func TestUnitReadOffUnitIsInSync(t *testing.T) {
 const offUnit = "[file.a]\npath = \"/etc/a\"\nsource = \"a\"\nwhen = { board_vendor = \"Acme Ltd.\" }\n"
 
 func TestUnitDryRunOffUnitChangesNothing(t *testing.T) {
-	e, m := unitEnv(t, map[string]string{"r/units.toml": offUnit, "r/a": "1\n"})
+	e, m := unitEnv(t, map[string]string{"r/units.toml.tmpl": offUnit, "r/a": "1\n"})
 	status, _, stderr := runUnit(e, "write", "--dry-run", "file/a")
 	if _, wrote := m.Files["/etc/a"]; status != 0 || wrote || strings.Count(stderr, "file/a: off on this machine") != 1 {
 		t.Errorf("dry run: status = %d, wrote %v, stderr = %q; want the off line once, and no file", status, wrote, stderr)
@@ -231,7 +231,7 @@ func TestUnitDryRunOffUnitChangesNothing(t *testing.T) {
 }
 
 func TestUnitWritesAUnitAfterAnOffOne(t *testing.T) {
-	e, m := unitEnv(t, map[string]string{"r/units.toml": offUnit + fileUnit("b", "/etc/b", "file/a"), "r/a": "1\n", "r/b": "2\n"})
+	e, m := unitEnv(t, map[string]string{"r/units.toml.tmpl": offUnit + fileUnit("b", "/etc/b", "file/a"), "r/a": "1\n", "r/b": "2\n"})
 	status, _, stderr := runUnit(e, "write", "file/a", "file/b")
 	if _, wrote := m.Files["/etc/a"]; status != 0 || wrote || string(m.Files["/etc/b"]) != "2\n" ||
 		!strings.HasSuffix(stderr, "changed: file/b\n") {
@@ -240,7 +240,7 @@ func TestUnitWritesAUnitAfterAnOffOne(t *testing.T) {
 }
 
 func TestUnitSetsSelf(t *testing.T) {
-	e, _ := unitEnv(t, map[string]string{"r/units.toml": "[file.a]\npath = \"/etc{{ self }}\"\nsource = \"a\"\n", "r/a": "1\n"})
+	e, _ := unitEnv(t, map[string]string{"r/units.toml.tmpl": "[file.a]\npath = \"/etc{{ self }}\"\nsource = \"a\"\n", "r/a": "1\n"})
 	status, _, stderr := runUnit(e, "write", "--dry-run", "file/a")
 	if status != 0 || !strings.Contains(stderr, "/etc/h/.local/bin/ws") {
 		t.Errorf("status = %d, stderr = %q; want the path of this ws", status, stderr)
@@ -253,8 +253,8 @@ func TestUnitSetsSelf(t *testing.T) {
 
 func TestUnitReadWholeNamesALackingLine(t *testing.T) {
 	e, m := unitEnv(t, map[string]string{
-		"r/units.toml": fileUnit("a", "/etc/a", "") + fileUnit("b", "/etc/b", "") + fileUnit("c", "/etc/c", ""),
-		"r/a":          "1\n", "r/b": "2\n", "r/c": "3\n",
+		"r/units.toml.tmpl": fileUnit("a", "/etc/a", "") + fileUnit("b", "/etc/b", "") + fileUnit("c", "/etc/c", ""),
+		"r/a":               "1\n", "r/b": "2\n", "r/c": "3\n",
 	})
 	// The run directory is the specs' parent, which the failure names too.
 	hint := ", or run mise in " + filepath.Dir(e.Getenv("WS_UNITS")) + "\n"

@@ -19,7 +19,7 @@ const dir = "/Users/v/.config/zed"
 // with the lines they print.
 func macUnits(t *testing.T, m *effecttest.Machine, servers ...string) ([]kind.Unit, *effecttest.Out) {
 	fsys := fstest.MapFS{}
-	for _, name := range []string{"units.toml", "files/global_settings.json", "files/keymap.json", "files/settings.json.tmpl", "files/paths"} {
+	for _, name := range []string{"units.toml.tmpl", "files/global_settings.json", "files/keymap.json", "files/settings.json.tmpl", "files/paths"} {
 		text, err := os.ReadFile(name) //nolint:gosec // a file of the role, named above
 		if err != nil {
 			t.Fatal(err)

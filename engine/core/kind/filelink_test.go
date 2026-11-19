@@ -97,18 +97,18 @@ func TestFileLinkTakesNoContent(t *testing.T) {
 		"service = \"x.service\"\n":      "a link takes no service",
 		"user_service = \"x.service\"\n": "a link takes no service",
 	} {
-		_, err := Load(e, tree(map[string]string{"r/units.toml": linkSpec(extra), "r/f": ""}))
+		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": linkSpec(extra), "r/f": ""}))
 		if err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("load with %q = %v, want %q", extra, err, want)
 		}
 	}
 	for _, target := range []string{"t/x", "/opt/../t/x", "/opt/t/"} {
 		spec := "[file.x]\npath = \"/usr/local/bin/x\"\nlink = \"" + target + "\"\n"
-		if _, err := Load(e, tree(map[string]string{"r/units.toml": spec})); err == nil || !strings.Contains(err.Error(), "not a clean absolute path") {
+		if _, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": spec})); err == nil || !strings.Contains(err.Error(), "not a clean absolute path") {
 			t.Errorf("load of the target %q = %v, want a refusal", target, err)
 		}
 	}
-	if _, err := Load(e, tree(map[string]string{"r/units.toml": linkSpec("owner = \"root\"\n")})); err != nil {
+	if _, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": linkSpec("owner = \"root\"\n")})); err != nil {
 		t.Errorf("load of a link that names root = %v, want none", err)
 	}
 }

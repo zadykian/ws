@@ -248,7 +248,7 @@ func TestFileRefusesFieldsNoPlanTakes(t *testing.T) {
 		"path = \"/a\"\nsource = \"f\"\nenabled = true\n":               "go with service",
 		"path = \"/a\"\nsource = \"f\"\nuser_service = \"a.service\"\n": "an owner other than root",
 	} {
-		_, err := Load(e, tree(map[string]string{"r/units.toml": "[file.a]\n" + spec, "r/f": ""}))
+		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": "[file.a]\n" + spec, "r/f": ""}))
 		if err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("load of\n%s= %v, want %q", spec, err, want)
 		}

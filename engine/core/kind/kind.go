@@ -18,7 +18,7 @@ import (
 )
 
 // specFile is a role's spec, in the role's own directory one level below the root of the specs.
-const specFile = "units.toml"
+const specFile = "units.toml.tmpl"
 
 // unitName is a unit's name within its kind: a plain word, as a tool's package name holds it.
 var unitName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
@@ -62,7 +62,7 @@ type UnknownUnit struct{ Name string }
 
 func (u *UnknownUnit) Error() string { return fmt.Sprintf("no unit %q", u.Name) }
 
-// Load reads each role's spec, DIR/units.toml of specs, fills it with e.Data, and returns its
+// Load reads each role's spec, DIR/units.toml.tmpl of specs, fills it with e.Data, and returns its
 // units in the order they run. The kinds check their fields here, and make their resources as each
 // unit plans, where its when holds. A unit in two specs, an after that no spec holds, or a loop,
 // fails the load.

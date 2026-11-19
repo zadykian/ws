@@ -5,7 +5,7 @@
 # resolv.conf that resolved rewrites as they change. Who runs it, and when, is said here alone.
 # security-outbound.service runs it with the table's FILE. The script loads FILE with the sets'
 # elements in one nft transaction, or alone where nft refuses them. A run loads FILE so too, in a
-# network namespace of its own (units.toml). Without FILE, it fills the sets anew in one transaction.
+# network namespace of its own (units.toml.tmpl). Without FILE, it fills the sets anew in one transaction.
 # security-resolvers.path runs it so on each change of resolv.conf, and security-resolvers.timer a
 # minute after each run. The path unit watches nothing while a fill runs, and a lab lost a change
 # made then. A missing resolv.conf leaves the sets empty. A missing table stays missing, as sets

@@ -809,7 +809,7 @@ Flags:
 
 Use "ws unit [command] --help" for more information about a command.
 == ws unit list
-The specs are each units.toml one level below WS_UNITS, or below /opt/ws/roles/server/ubuntu where it is unset. --toml prints each unit as a line of mise's [bootstrap.packages].
+The specs are each units.toml.tmpl one level below WS_UNITS, or below /opt/ws/roles/server/ubuntu where it is unset. --toml prints each unit as a line of mise's [bootstrap.packages].
 
 Usage:
   ws unit list [flags]

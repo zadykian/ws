@@ -28,7 +28,7 @@ func TestMacRefusesLinuxKinds(t *testing.T) {
 	} {
 		e, _, _, _ := testEnv(false)
 		e.System = MacOS
-		if _, err := Load(e, tree(map[string]string{"r/units.toml": c.spec})); err == nil || !strings.Contains(err.Error(), c.want) {
+		if _, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": c.spec})); err == nil || !strings.Contains(err.Error(), c.want) {
 			t.Errorf("%q on macOS: load = %v, want %q", c.spec, err, c.want)
 		}
 	}
@@ -36,8 +36,8 @@ func TestMacRefusesLinuxKinds(t *testing.T) {
 
 func TestLinuxRefusesLaunchd(t *testing.T) {
 	e, _, _, _ := testEnv(false)
-	_, err := Load(e, tree(map[string]string{"r/units.toml": "[launchd.a]\nprefix = \"a.\"\nprogram = \"/a\"\n"}))
-	if err == nil || !strings.Contains(err.Error(), "r/units.toml: unit launchd/a: the kind launchd does not run on Linux") {
+	_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": "[launchd.a]\nprefix = \"a.\"\nprogram = \"/a\"\n"}))
+	if err == nil || !strings.Contains(err.Error(), "r/units.toml.tmpl: unit launchd/a: the kind launchd does not run on Linux") {
 		t.Errorf("load = %v, want launchd refused on Linux", err)
 	}
 }
@@ -46,7 +46,7 @@ func TestMacTakesFileStateRunLaunchd(t *testing.T) {
 	e, _, _, _ := testEnv(false)
 	e.System = MacOS
 	units, err := Load(e, tree(map[string]string{
-		"r/units.toml": "[file.a]\npath = \"/etc/a\"\nsource = \"a\"\n\n" +
+		"r/units.toml.tmpl": "[file.a]\npath = \"/etc/a\"\nsource = \"a\"\n\n" +
 			"[state.b]\nrun = { user = \"u\", command = [\"/bin/true\"], creates = [\"/b\"] }\n\n" +
 			"[launchd.c]\nprefix = \"c.\"\nprogram = \"/c\"\n",
 		"r/a": "a",

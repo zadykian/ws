@@ -15,7 +15,7 @@ import (
 // macUnits loads the role's units on a Mac of the user v.
 func macUnits(t *testing.T, m *effecttest.Machine) []kind.Unit {
 	fsys := fstest.MapFS{}
-	for _, name := range []string{"units.toml", "files/zshrc"} {
+	for _, name := range []string{"units.toml.tmpl", "files/zshrc"} {
 		text, err := os.ReadFile(name) //nolint:gosec // a file of the role, named above
 		if err != nil {
 			t.Fatal(err)

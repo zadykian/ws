@@ -71,8 +71,8 @@ yamllint: $(PIP_STAMP)
 	@set -ef; if [ -z "$(FILES)" ]; then files=.; else files=$$(.tools/files yaml $(FILES)); fi; \
 		[ -z "$$files" ] || $(VENV)/bin/yamllint --strict -c .tools/lint/yamllint.yml $$files
 
-# tombi's format check (.tools/lint/tombi.toml) on the TOML files, but the roles' specs, which are
-# Go templates (.tools/files). tombi takes no flag for its config. It reads the first one from the
+# tombi's format check (.tools/lint/tombi.toml) on the TOML files, which leave out the roles' specs:
+# they end in .tmpl. tombi takes no flag for its config. It reads the first one from the
 # directory it runs in, upward. So it runs in .tools/lint, on each file by its full path.
 # --offline and the config's lack of a schema keep it off the network.
 tombi:
@@ -157,7 +157,7 @@ lint-file:
 		*.go | go.mod | go.sum) \
 			gates='gofmt govet golangci-lint govulncheck gotest vale sizecheck' ;; \
 		*.j2) gates='vale sizecheck' ;; \
-		units.toml | */units.toml) gates='vale' ;; \
+		units.toml.tmpl | */units.toml.tmpl) gates='vale' ;; \
 		*.toml) gates='tombi vale' ;; \
 		*.lua) gates='stylua vale sizecheck' ;; \
 		*) gates='shell vale sizecheck' ;; \

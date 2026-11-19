@@ -16,7 +16,7 @@ steps, and each role's README says what it sets up.
 - A role is `roles/server/ubuntu/NAME`, with its page, its `README.md`, and a line in the root
   README ([README](../../README.md)). Its units run in the order of their `after`
   ([The order](../../roles/server/ubuntu/frame/README.md#the-order)).
-- A role holds its spec, `units.toml`, with its templates, and its mise files by env:
+- A role holds its spec, `units.toml.tmpl`, with its templates, and its mise files by env:
   `mise.server.toml` for every server, `mise.booted.toml` where systemd is booted, and
   `mise.account.toml` where `WS_USER` is not root. The side's one link,
   `roles/server/mise/conf.d`, loads them. A role holds no plain `mise.toml`, which every env would
@@ -38,7 +38,7 @@ steps, and each role's README says what it sets up.
   the commands and the root check ([store.go](../../roles/server/secrets/store.go)).
 - The roles set the machine up for `WS_USER`, `zadykian` by default, in `WS_HOME`. A unit run as
   `WS_USER` sets `HOME` and starts in it: root needs no sudo, a container has none, and `HOME` would
-  otherwise be the caller's ([claude's units](../../roles/server/ubuntu/claude/units.toml)).
+  otherwise be the caller's ([claude's units](../../roles/server/ubuntu/claude/units.toml.tmpl)).
 - Root reaches a file under `WS_HOME` through the account (`Account.File`, `Account.Dir`,
   `Account.Absent`, `User.ReadHome`), or the unit acts as `WS_USER`, as claude's does. The user owns
   the home and could link a file elsewhere ([Links under the home](../../roles/server/ubuntu/security/README.md#links-under-the-home)).
@@ -78,7 +78,7 @@ steps, and each role's README says what it sets up.
   `Written by github.com/zadykian/ws`, are `file.Mark`, and `file.Ours` tests a first line for them.
   Each run replaces a change made to it by hand ([shell](../../roles/server/ubuntu/shell/README.md), [git](../../roles/server/ubuntu/git/README.md)).
 - A tool that updates itself, such as claude or rustup, is installed only where missing
-  ([claude's units](../../roles/server/ubuntu/claude/units.toml)).
+  ([claude's units](../../roles/server/ubuntu/claude/units.toml.tmpl)).
 - A unit that reads the secrets changes nothing on a machine without ws's secrets file. With it,
   the file is the whole truth: a run removes what it lacks, such as a git token. So a run without
   it, as CI's, keeps what a run with it made

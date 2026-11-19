@@ -92,7 +92,7 @@ func TestAbsentWhenEmptyRemovesTheFile(t *testing.T) {
 	if got := headlines(t, units[0].Step); got != nil {
 		t.Errorf("second plan = %q, want none", got)
 	}
-	if _, err := Load(e, tree(map[string]string{"r/units.toml": "[file.a]\npath = \"/a\"\nsource = \"f\"\nabsent_when_empty = true\n", "r/f": ""})); err == nil ||
+	if _, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": "[file.a]\npath = \"/a\"\nsource = \"f\"\nabsent_when_empty = true\n", "r/f": ""})); err == nil ||
 		!strings.Contains(err.Error(), "absent_when_empty goes with template") {
 		t.Errorf("load of a source = %v, want it refused", err)
 	}

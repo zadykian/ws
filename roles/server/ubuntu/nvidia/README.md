@@ -2,7 +2,7 @@
 
 The `nvidia` role installs NVIDIA's headless driver from Ubuntu's archive, on a machine with an
 NVIDIA GPU. [ws-fans](../fans/README.md) reads the GPU's temperature by its `nvidia-smi`. The role is
-three units of [its spec](units.toml), whose lines sit in `mise.server.toml`
+three units of [its spec](units.toml.tmpl), whose lines sit in `mise.server.toml`
 ([The frame](../frame/README.md)). It takes no values.
 
 | Unit | What it does |

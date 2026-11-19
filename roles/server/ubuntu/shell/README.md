@@ -2,7 +2,7 @@
 
 The `shell` role sets up bash from `mise bootstrap`. Its `mise.server.toml` installs
 bash-completion and ble.sh, and writes ws's lines for bash to two files in `/etc/ws`, root's and
-644. Its `units.toml` puts one line of each at the top of the user's file, and writes `/etc/ws/env`:
+644. Its `units.toml.tmpl` puts one line of each at the top of the user's file, and writes `/etc/ws/env`:
 
 - `/etc/ws/bashrc`, from `files/bashrc.tera`, which `~/.bashrc` sources with `. /etc/ws/bashrc`.
   It sources `/etc/ws/env` ([Secrets](#secrets)), and sets `DOTNET_RUNTIME_ID` from mise's

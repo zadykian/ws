@@ -6,6 +6,7 @@ paths:
   - "**/*.yaml"
   - "**/*.sh"
   - "**/*.toml"
+  - "**/units.toml.tmpl"
   - "**/*.lua"
   - ".githooks/*"
   - ".tools/*"

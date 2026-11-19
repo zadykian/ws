@@ -24,7 +24,7 @@ const (
 // specs is claude's spec and git's, whose tokens claude's units follow, as kind.Load finds them.
 func specs(t *testing.T) fstest.MapFS {
 	fsys := fstest.MapFS{}
-	for _, name := range []string{"claude/units.toml", "git/units.toml", "git/files/ws.gitconfig.tmpl",
+	for _, name := range []string{"claude/units.toml.tmpl", "git/units.toml.tmpl", "git/files/ws.gitconfig.tmpl",
 		"git/files/allowed_signers.tmpl"} {
 		text, err := os.ReadFile(filepath.Join("..", name)) //nolint:gosec // a file of the roles, named above
 		if err != nil {
@@ -147,15 +147,15 @@ func TestClaudeInstallersRunAsTheAccountOnceWithoutSystemd(t *testing.T) {
 	}
 }
 
-// installScript is the script of claude's installer units, as units.toml gives it.
+// installScript is the script of claude's installer units, as units.toml.tmpl gives it.
 func installScript(t *testing.T) string {
-	text, err := os.ReadFile("units.toml")
+	text, err := os.ReadFile("units.toml.tmpl")
 	if err != nil {
 		t.Fatal(err)
 	}
 	m := regexp.MustCompile(`"-c", '([^']*)'`).FindSubmatch(text)
 	if m == nil {
-		t.Fatal("units.toml holds no installer's script")
+		t.Fatal("units.toml.tmpl holds no installer's script")
 	}
 	return string(m[1])
 }

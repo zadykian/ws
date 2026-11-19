@@ -28,9 +28,9 @@ const (
 // macUnits loads the role's units, but state/keys, which ssh's role holds, on a Mac of the user v,
 // whose ws is /ws, with git's texts.
 func macUnits(t *testing.T, m *effecttest.Machine, texts git.Texts) []kind.Unit {
-	fsys := fstest.MapFS{"keys/units.toml": &fstest.MapFile{Data: []byte(
+	fsys := fstest.MapFS{"keys/units.toml.tmpl": &fstest.MapFile{Data: []byte(
 		"[state.keys.run]\nuser = \"v\"\ncreates = [\"/\"]\ncommand = [\"true\"]\n")}}
-	for _, name := range []string{"units.toml", "files/gitconfig.tmpl", "files/allowed_signers.tmpl",
+	for _, name := range []string{"units.toml.tmpl", "files/gitconfig.tmpl", "files/allowed_signers.tmpl",
 		"files/secretive-ssh-keygen.tmpl"} {
 		text, err := os.ReadFile(name) //nolint:gosec // a file of the role, named above
 		if err != nil {

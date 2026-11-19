@@ -12,7 +12,7 @@
 # replaces this table and no other. nftables.conf would flush ufw's, Docker's, fail2ban's and
 # ikeward's tables too. No rule holds a set of ranges, or of names with *. The kernel fills such a
 # set after its rules take effect, and in a lab, packets to the LAN got past a reload. Each run
-# loads the file in an empty network namespace too (the unit's loads, in units.toml). So a rule
+# loads the file in an empty network namespace too (the unit's loads, in units.toml.tmpl). So a rule
 # names a link by oifname or iifname, never by the index of oif or iif.
 destroy table inet ws
 

@@ -1,14 +1,14 @@
 # fresh
 
 The `fresh` role sets up the Fresh editor from `mise bootstrap`. Its `mise.server.toml` writes a
-wrapper that carries Fresh's keys through tmux. Its `units.toml` holds the units: the `.deb` of a
-pinned release, and the config and the theme of `WS_USER`. Fresh runs in a terminal, and its
+wrapper that carries Fresh's keys through tmux. Its `units.toml.tmpl` holds the units: the `.deb` of
+a pinned release, and the config and the theme of `WS_USER`. Fresh runs in a terminal, and its
 config is a plain template.
 
 ## The install
 
-- The unit `deb/fresh` plans from the pin in `units.toml`: a version and, for amd64 and arm64, a
-  SHA-256. Where `dpkg-query` lists another version, it fetches `fresh-editor_VERSION_ARCH.deb`
+- The unit `deb/fresh` plans from the pin in `units.toml.tmpl`: a version and, for amd64 and arm64,
+  a SHA-256. Where `dpkg-query` lists another version, it fetches `fresh-editor_VERSION_ARCH.deb`
   from the project's GitHub release into `/var/cache/ws/` and checks the file against the SHA-256.
   Before dpkg reads it, it checks the file's own name and version against the pin. It removes the
   file once the package installs. A dry run on a new machine shows the install.
@@ -71,7 +71,7 @@ it, so ws cannot. A folder with no marker is trusted at once.
 
 ## A new version
 
-1. Change `version`, the tag in `url` and both sums in `units.toml`. Check the `.deb`'s `Depends`.
+1. Change `version`, the tag in `url` and both sums in `units.toml.tmpl`. Check the `.deb`'s `Depends`.
 2. From the tag's source, take every name of `define_action_str_mapping!` in
    `crates/fresh-editor/src/input/keybindings.rs`, and the handler names of `registerCommand` at
    the top level of `plugins/`, leaving out `plugins/examples`.

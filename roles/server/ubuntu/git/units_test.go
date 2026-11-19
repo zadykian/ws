@@ -29,7 +29,7 @@ const (
 // role is git's spec and its templates, as kind.Load finds a role's.
 func role(t *testing.T) fstest.MapFS {
 	fsys := fstest.MapFS{}
-	for _, name := range []string{"units.toml", "files/ws.gitconfig.tmpl", "files/allowed_signers.tmpl"} {
+	for _, name := range []string{"units.toml.tmpl", "files/ws.gitconfig.tmpl", "files/allowed_signers.tmpl"} {
 		text, err := os.ReadFile(name) //nolint:gosec // a file of the role, named above
 		if err != nil {
 			t.Fatal(err)

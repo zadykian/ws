@@ -4,7 +4,7 @@ The `devtools` role installs Node, the .NET SDKs, gh, glow, the libraries headle
 Go, gopls, Delve, roslyn-language-server, the SQL and Docker servers and rustup. The sources, the
 packages and the tools are mise's, in [mise.server.toml](mise.server.toml). The tools' links, gh's
 telemetry and login, roslyn-language-server, the npm servers and rustup are units of
-[units.toml](units.toml). Those of the account run as `WS_USER`, root included, and without booted
+[units.toml.tmpl](units.toml.tmpl). Those of the account run as `WS_USER`, root included, and without booted
 systemd too, as in CI's container. [paths.go](paths.go) names the servers' paths for Zed's and
 Fresh's tests.
 
@@ -50,7 +50,7 @@ mise checks a sum at the download alone, so it mends no tool changed after its i
   on `PATH`, and gopls runs the `go` it finds there.
 - A `/usr/local/go` that is a directory fails its link: remove it by hand, with
   `rm -rf /usr/local/go`.
-- To bump a tool, change its version in `[tools]` and its link in `units.toml`, then write the
+- To bump a tool, change its version in `[tools]` and its link in `units.toml.tmpl`, then write the
   lock again in a container with git and mise:
   `MISE_ENV=server mise -C roles/server lock --platform linux-x64,linux-arm64`, which writes
   `roles/server/mise/mise.server.lock`. `go test` fails where a link, the lock and `[tools]`

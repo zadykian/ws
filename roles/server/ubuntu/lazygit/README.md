@@ -2,7 +2,7 @@
 
 The `lazygit` role sets up lazygit from `mise bootstrap`. Its `mise.server.toml` installs lazygit
 from Ubuntu's archive and a wrapper that puts the repository and its branch in the terminal's
-title. The unit `lazygit-config` of its `units.toml` writes a config in JetBrains Dark.
+title. The unit `lazygit-config` of its `units.toml.tmpl` writes a config in JetBrains Dark.
 
 ## The install
 

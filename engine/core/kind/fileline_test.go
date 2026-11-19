@@ -187,10 +187,10 @@ func TestLineCheckRefusedLeavesTheFile(t *testing.T) {
 func TestLineOfSeveralLinesNeedsHas(t *testing.T) {
 	e, _, _, _ := testEnv(false)
 	const spec = "[file.l]\npath = \"/home/u/.bashrc\"\nowner = \"u\"\nline = \"a\\nb\\n\"\n"
-	if _, err := Load(e, tree(map[string]string{"r/units.toml": spec})); err == nil || !strings.Contains(err.Error(), "takes has") {
+	if _, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": spec})); err == nil || !strings.Contains(err.Error(), "takes has") {
 		t.Errorf("load = %v, want has asked for", err)
 	}
-	if _, err := Load(e, tree(map[string]string{"r/units.toml": spec + "has = [\"holds\"]\n"})); err != nil {
+	if _, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": spec + "has = [\"holds\"]\n"})); err != nil {
 		t.Errorf("load with has = %v", err)
 	}
 }
@@ -209,12 +209,12 @@ func TestLineRefusesTheFieldsItCannotTake(t *testing.T) {
 		"group_of = \"u\"\n":             "group_of takes a file of root's",
 		"ours = true\n":                  "a line takes owner, mode, check, has, after and when alone",
 	} {
-		_, err := Load(e, tree(map[string]string{"r/units.toml": lineSpec(extra), "r/f": ""}))
+		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": lineSpec(extra), "r/f": ""}))
 		if err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("load with %q = %v, want %q", extra, err, want)
 		}
 	}
-	if _, err := Load(e, tree(map[string]string{"r/units.toml": "[file.l]\npath = \"/a\"\nsource = \"f\"\nhas = [\"x\"]\n", "r/f": ""})); err == nil ||
+	if _, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": "[file.l]\npath = \"/a\"\nsource = \"f\"\nhas = [\"x\"]\n", "r/f": ""})); err == nil ||
 		!strings.Contains(err.Error(), "has goes with line") {
 		t.Errorf("load of has alone = %v", err)
 	}

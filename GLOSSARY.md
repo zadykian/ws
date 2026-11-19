@@ -48,7 +48,7 @@ binary is the pinned file at its destination; a package and a tree take one as t
 _Avoid_: download, release asset, artifact
 
 **Spec**:
-A role's `units.toml`: TOML over the machine's values that names the role's units, a table a kind
+A role's `units.toml.tmpl`: TOML over the machine's values that names the role's units, a table a kind
 and a key a unit.
 _Avoid_: manifest
 

@@ -33,6 +33,9 @@ func (s packagesSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource
 	if s.Template == "" {
 		return nil, errors.New("packages take a template")
 	}
+	if err := checkTemplateName(s.Template); err != nil {
+		return nil, err
+	}
 	if _, err := fs.Stat(dir, s.Template); err != nil {
 		return nil, err
 	}
