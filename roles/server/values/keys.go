@@ -42,23 +42,37 @@ type Key struct {
 // Keys lists the keys that a line holds, in the order of Values. They come from its fields, so that a
 // role's new key needs no second list.
 func Keys() []Key {
-	return fieldKeys(reflect.TypeFor[Values](), nil)
-}
-
-// fieldKeys lists the keys of a struct at place, and of the structs inlined in it.
-func fieldKeys(t reflect.Type, place []int) []Key {
 	var keys []Key
-	for i := range t.NumField() {
-		field := t.Field(i)
-		at := append(slices.Clone(place), i)
-		name, options, _ := strings.Cut(field.Tag.Get("yaml"), ",")
-		if options == "inline" {
-			keys = append(keys, fieldKeys(field.Type, at)...)
-		} else if kind, ok := kindOf(field.Type); ok {
-			keys = append(keys, Key{name, kind, at})
+	for _, f := range fields(reflect.TypeFor[Values](), nil) {
+		if kind, ok := kindOf(f.Type); ok {
+			keys = append(keys, Key{f.name, kind, f.place})
 		}
 	}
 	return keys
+}
+
+// field is a key of the file, a table too, with its field in Values.
+type field struct {
+	reflect.StructField
+	name string
+	// place leads to the field in Values.
+	place []int
+}
+
+// fields lists the keys of a struct at place, and of the structs inlined in it.
+func fields(t reflect.Type, place []int) []field {
+	var all []field
+	for i := range t.NumField() {
+		f := t.Field(i)
+		at := append(slices.Clone(place), i)
+		name, options, _ := strings.Cut(f.Tag.Get("yaml"), ",")
+		if options == "inline" {
+			all = append(all, fields(f.Type, at)...)
+		} else {
+			all = append(all, field{f, name, at})
+		}
+	}
+	return all
 }
 
 // kindOf is the kind of a field, and false for a table. A pointer is a key that may stay unset.
