@@ -3,7 +3,8 @@
 # state, log, ssh host and known_hosts entry go, and ws's stay, with its daemon still shaking hands.
 # remove runs mise bootstrap, as mac_bootstrap runs it: locked, with /opt/ws trusted and the build
 # served. The bootstrap takes lab's daemon and files away, and its host out of /etc/ws/ssh_config.
-# remove refuses a name with no file, and the Mac's last server. Then the plan exits 0.
+# The runner has no fnox key file, so remove leaves lab's key in the secrets to the user. remove
+# refuses a name with no file, and the Mac's last server. Then the plan exits 0.
 
 set -eo pipefail
 # shellcheck source=.github/mac-mise.sh
@@ -37,6 +38,12 @@ MISE_LOCKED=1 MISE_TRUSTED_CONFIG_PATHS=/opt/ws ws client macos remove lab </dev
 }
 grep -qx 'removed lab' "$RUNNER_TEMP/remove.out" || {
     echo '::error::ws client macos remove lab did not say it removed lab'
+    exit 1
+}
+# The runner has no fnox key file, so the secrets' part of remove is left by hand, with lab's key.
+grep -q "^By hand: this Mac has no fnox key, .*: from a Mac that has one, drop lab's host key, $key, from the secrets" \
+    "$RUNNER_TEMP/remove.out" || {
+    echo "::error::ws client macos remove lab did not leave the secrets' key by hand"
     exit 1
 }
 

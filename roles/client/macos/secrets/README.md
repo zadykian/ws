@@ -1,8 +1,9 @@
 # The secrets on the Mac
 
 The Mac keeps ws's secrets in fnox, in the private secrets repository, encrypted to the YubiKey 5C
-Nano, to a backup key and to each server's host key. This role installs the tools that do it, and
-`ws client macos secrets init` sets the repository up.
+Nano, to a backup key and to each server's host key. This role installs the tools that do it.
+`ws client macos secrets init` sets the repository up, `ws client macos secrets add NAME` adds a
+server to it, and `ws client macos remove NAME` takes a server's key out.
 
 ## The tools
 
@@ -138,3 +139,70 @@ backup.
 
 A release may declare a new input. A server's run of it fails at mise, which finds no value of
 the input, until init runs again on a Mac whose `/opt/ws` holds that release.
+
+## A server's key
+
+A server opens the values by its SSH host key, `/etc/ssh/ssh_host_ed25519_key`. Its public half,
+`ssh-ed25519` and the key, is a recipient twice, under the label of the server's hostname:
+
+- in `fnox.toml`'s table, so that the server opens the shared values;
+- in `fnox.HOSTNAME.toml`, the server's profile file, whose provider is `host`. Its table holds
+  `nano`, `backup` and that server alone, so that the server opens its own values and no other
+  server's. The provider's name differs from `age`, as fnox merges providers by name: under
+  `-P HOSTNAME`, a profile's `age` would replace the shared one.
+
+The Go package here edits a table by its lines, `nano` first, then `backup`, then the servers by
+name, and keeps every other byte of the file. A table with a line of another form, a comment
+included, stops it. A new profile file holds the Nano's and the backup's recipients of `fnox.toml`,
+and no value. A rebuilt server's key replaces the older one under its label. A key under another
+label, of a server whose hostname changed, leaves that label first. A removed server's key leaves
+every table, while its profile file stays with its values for a rebuild. Where the tables already
+hold what they should, nothing changes, and nothing is encrypted again.
+
+The hostname serves unchanged as the profile, the file's name, the label and the deploy key's
+title. So it must be one DNS label: lowercase letters, digits and `-`, 63 at most, neither starting
+nor ending with `-`. `nano` and `backup` are labels, `local` names `fnox.local.toml`, fnox's local
+override, and `default` is fnox's profile without `-P`, so none of them serves. The server's task
+refuses the same names.
+
+## ws client macos secrets add
+
+Run `ws client macos secrets add NAME` as yourself, with the Nano plugged in, once init has run
+and ws's `install.sh` has ended ([the runbook](../../runbook.md#ws-on-ws)). NAME is a server of
+the Mac's. Before the tunnel is up, `--address` and `--port` reach the server as ssh's `HostName`
+and `Port`. The command:
+
+1. Takes NAME's ed25519 key from `~/.ssh/known_hosts`. Where it holds none, it scans the server,
+   prints the key's fingerprint, and asks whether the server's console prints the same. A `yes`
+   records the key under NAME, and any other answer stops it with no change.
+2. Reads the server's hostname by `ssh NAME hostname`, which must serve as a profile, as above.
+3. Lists the repository's deploy keys by gh, so that gh's login fails before a touch.
+4. In a temporary clone, sets the key as above. It encrypts again the values of each changed file
+   that holds one, by `fnox reencrypt`, which asks for the Nano's PIN and a touch.
+5. Keeps one read-only deploy key titled with the hostname that holds the key, and deletes an older
+   one first, as GitHub changes none in place.
+6. Lands the changed files by a pull request, and opens none where the key was in place.
+7. Runs the server's task `secrets` over `ssh -t`, as root by sudo, even where nothing landed.
+
+A step that is done changes nothing, so a run that fails runs again whole. gh's login adds the
+deploy keys, and needs admin on the repository. Where that login is revoked, GitHub deletes every
+deploy key it added. Each server's fetch then fails until add runs again for it.
+
+## ws client macos remove
+
+`ws client macos remove NAME` ([The Mac's values](../../values/README.md)) takes the server's key
+out of the secrets first. A removed server then opens no value. The key is NAME's ed25519 line in
+`~/.ssh/known_hosts`. Where it holds none, remove cannot tell which key is NAME's: add may never
+have run, or `ssh-keygen -R` emptied the line while the key stays a recipient. The secrets then
+stay as they are, and remove prints a line to drop the hostname's recipients and deploy key by
+hand. Else, in a temporary clone, remove:
+
+1. Lists the repository's deploy keys by gh, so that gh's login fails before a touch.
+2. Takes the key from every table of recipients, as above, and encrypts again the values of each
+   changed file that holds one, with the Nano's PIN and a touch.
+3. Lands the changed files by a pull request, and opens none where the key was no recipient.
+4. Deletes each deploy key that holds the key, whatever its title.
+
+A failure in any step stops remove with the server whole, so it runs again. A Mac where init never
+ran has no fnox key file to encrypt with. There remove goes on, and prints a line that names the
+key, to drop it from a Mac that has one, as remove then drops it from `~/.ssh/known_hosts`.

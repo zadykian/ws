@@ -97,6 +97,12 @@ func (c *Clone) Fnox(ctx context.Context, stdin []byte, args ...string) ([]byte,
 	return c.M.RunInput(ctx, stdin, "env", c.fnoxArgv(args)...)
 }
 
+// FnoxPass runs fnox with args in the clone as Fnox does, but on the terminal: age-plugin-yubikey
+// asks there for the Nano's PIN and touch. fnox's output goes to stderr.
+func (c *Clone) FnoxPass(ctx context.Context, args ...string) error {
+	return c.M.Pass(ctx, false, "env", c.fnoxArgv(args)...)
+}
+
 // fnoxArgv is env's arguments that run fnox with args in the clone.
 func (c *Clone) fnoxArgv(args []string) []string {
 	argv := append([]string{"-u", "FNOX_AGE_KEY", "-u", "FNOX_PROFILE"}, c.FnoxEnv...)

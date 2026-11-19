@@ -141,7 +141,7 @@ Flags:
 Global Flags:
       --server string   the server to act on, which may be left out where there is one
 == ws client macos remove
-It deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it is. mise's bootstrap then takes its daemon, routes and host off. It refuses the Mac's last server, as the bootstrap takes a Mac with none for a stray WS_VALUES and prunes no daemon, and takes no --server: the argument is the consent.
+It first takes NAME's host key, from known_hosts, out of the secrets repository: from the recipients of fnox.toml and of every profile file, whose values it encrypts again with the Nano, by a pull request, and from the repository's deploy keys. Where that fails, nothing else changes. Where known_hosts holds no key of NAME, or this Mac has no fnox key, it leaves the secrets and prints what to do there by hand. It then deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it is. mise's bootstrap then takes its daemon, routes and host off. It refuses the Mac's last server, as the bootstrap takes a Mac with none for a stray WS_VALUES and prunes no daemon, and takes no --server: the argument is the consent.
 
 Usage:
   ws client macos remove NAME [flags]
@@ -171,6 +171,7 @@ Usage:
   ws client macos secrets [command]
 
 Available Commands:
+  add         add a server's host key to the secrets, and run the bootstrap with them there
   init        set the secrets repository up with the Nano and a backup key
 
 Flags:
@@ -180,6 +181,19 @@ Global Flags:
       --server string   the server to act on, which may be left out where there is one
 
 Use "ws client macos secrets [command] --help" for more information about a command.
+== ws client macos secrets add
+It takes the ed25519 host key of the server NAME from known_hosts. Where known_hosts holds none, it scans the server, prints the key's fingerprint, and records the key once you say that the server's console prints the same. It reads the server's hostname by ssh. In a temporary clone of the secrets repository, it makes the key the hostname's recipient in fnox.toml and in fnox.HOSTNAME.toml, and encrypts their values again, which asks for the Nano's PIN and a touch. It keeps the key as the repository's read-only deploy key, titled with the hostname, and lands the change by a pull request once its checks pass. It then runs the server's task secrets over ssh -t. Each step changes nothing where it is done, so run it again where one fails.
+
+Usage:
+  ws client macos secrets add NAME [flags]
+
+Flags:
+      --address string   the server's address, where ssh reaches it before the tunnel is up
+  -h, --help             help for add
+      --port int         the server's ssh port at --address, where it is not 22
+
+Global Flags:
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos secrets init
 It reads the repository from WS_SECRETS_REPO in /opt/ws/mise.toml, and clones it. It takes the age identity that the YubiKey Nano holds, or makes one, which asks for its PIN and a touch, and keeps its stub in fnox's key file. Where fnox.toml is missing, it makes a backup key, starts fnox.toml with both recipients, and prints the backup's secret line once. It declares each input of /opt/ws's server roles that fnox.toml lacks, empty. It lands the change by a pull request once its checks pass, and opens none where nothing changed. It stops where a pull request of an earlier run is still open. Run it again once /opt/ws holds a release that declares a new input.
 

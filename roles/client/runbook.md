@@ -119,11 +119,12 @@ a command that needs root. A user outside sudoers cannot go on.
 2. Run `install.sh` by the three lines of [Install](../../.github/workflows/release.md#install),
    `set -o pipefail` among them. The bootstrap it runs puts ws in `/usr/local/bin`. Check it with
    `ws version`.
-3. Make the secrets, as [the server's runbook](../server/runbook.md) says, with `ssh -t NAME
-   sudo ws server ubuntu secrets ...`.
-4. Run the server's bootstrap again over `ssh -t NAME`, in the form that
-   [the server's runbook](../server/runbook.md) gives. A
-   first run takes 20 to 40 minutes. Use `tmux` there: a dropped ssh ends the run.
+3. Run `ws client macos secrets add NAME --address ADDRESS`, with `--port PORT` off the LAN. It
+   adds ws's host key to the secrets and as the repository's deploy key, with the Nano's PIN and a
+   touch. It then runs the server's bootstrap with the secrets over `ssh -t`. A first run takes 20
+   to 40 minutes, and a dropped ssh ends it: run the command again. `ws client macos secrets init`
+   runs once before, as [The secrets](#the-secrets) says
+   ([ws client macos secrets add](macos/secrets/README.md#ws-client-macos-secrets-add)).
 
 ## claude
 

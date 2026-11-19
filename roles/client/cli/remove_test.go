@@ -39,7 +39,7 @@ func (m rmMachine) take(name string, args []string, err error) {
 }
 
 // removeFixture is ws and lab on a Mac, whose known_hosts holds both, with the commands that a removal
-// of lab runs.
+// of lab runs. The Mac has no fnox key file, as where init never ran.
 func removeFixture() (enginecli.Env, *effecttest.Machine) {
 	m := effecttest.NewMachine()
 	keyed(m)
@@ -53,6 +53,7 @@ func removeFixture() (enginecli.Env, *effecttest.Machine) {
 	for _, file := range []string{"new", "whole"} {
 		m.Results["ssh -T -G -F /tmp/x/"+file+" ws"] = effecttest.Result{}
 	}
+	m.Results[findLab] = effecttest.Result{Out: []byte("lab ssh-ed25519 BBBB\n")}
 	for _, line := range []string{"rm -rf /etc/ws/servers/lab", "ssh-keygen -R lab"} {
 		m.Results[line] = effecttest.Result{}
 	}

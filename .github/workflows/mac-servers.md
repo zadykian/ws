@@ -23,7 +23,9 @@ Four cases of the `mac` job work on a second server:
   bootstrap` must then give lab a daemon and a utun of its own, at 10.99.1.1, and leave ws's daemon
   with its handshake. A second bootstrap must call no sudo.
 - `mac/94-remove.sh` runs `remove lab`: its files, daemon, host and `known_hosts` line must go, and
-  ws's stay. `remove box` and `remove ws` must refuse, and the plan then exit 0.
+  ws's stay. The runner has no fnox key file, so remove must print its line that names lab's key,
+  to drop it from the secrets by hand. `remove box` and `remove ws` must refuse, and the plan then
+  exit 0.
 
 Cases 90, 92 and 94 of the `mac` job run near the end, before case 96's last bootstrap, as
 `checks.sh` and the job stop at the first that fails.

@@ -107,3 +107,22 @@ func TestFnoxRunsInTheCloneWithItsEnv(t *testing.T) {
 		t.Errorf("fnox's stdin is %q, want the input alone", m.Inputs)
 	}
 }
+
+func TestFnoxPassRunsFnoxAsFnoxDoes(t *testing.T) {
+	m := cloneable()
+	c := open(t, m)
+	c.FnoxEnv = []string{"FNOX_AGE_KEY_FILE=/h/.config/fnox/age.txt"}
+	line := "env -u FNOX_AGE_KEY -u FNOX_PROFILE FNOX_AGE_KEY_FILE=/h/.config/fnox/age.txt " +
+		`sh -c cd "$1" && shift && exec "$@" sh ` + cloneDir + " fnox reencrypt -p age -f"
+	m.Results[line] = effecttest.Result{}
+	if err := c.FnoxPass(context.Background(), "reencrypt", "-p", "age", "-f"); err != nil {
+		t.Fatal(err)
+	}
+	if got := m.Calls[len(m.Calls)-1]; got != "run "+line {
+		t.Errorf("FnoxPass ran %q, want %q", got, line)
+	}
+	m.Results[line] = effecttest.Result{Err: errors.New("exit status 1")}
+	if err := c.FnoxPass(context.Background(), "reencrypt", "-p", "age", "-f"); err == nil {
+		t.Error("a failed fnox gives FnoxPass no error")
+	}
+}

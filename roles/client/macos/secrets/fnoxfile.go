@@ -43,6 +43,15 @@ func ReadConfig(m effect.Machine, file, provider string) (Config, bool, error) {
 	if err != nil {
 		return Config{}, false, fmt.Errorf("cannot read %s: %w", file, err)
 	}
+	conf, err := parseConfig(data, provider)
+	if err != nil {
+		return Config{}, false, fmt.Errorf("%s: %w", file, err)
+	}
+	return conf, true, nil
+}
+
+// parseConfig reads a fnox file's text, whose recipients are provider's.
+func parseConfig(data []byte, provider string) (Config, error) {
 	var conf struct {
 		Providers map[string]struct {
 			Type       string `toml:"type"`
@@ -51,25 +60,25 @@ func ReadConfig(m effect.Machine, file, provider string) (Config, bool, error) {
 		Secrets map[string]any `toml:"secrets"`
 	}
 	if err := toml.Unmarshal(data, &conf); err != nil {
-		return Config{}, false, fmt.Errorf("cannot read %s: %w", file, err)
+		return Config{}, err
 	}
 	p, ok := conf.Providers[provider]
 	if !ok {
-		return Config{}, false, fmt.Errorf("%s has no provider %s, [providers.%s]", file, provider, provider)
+		return Config{}, fmt.Errorf("no provider %s, [providers.%s]", provider, provider)
 	}
 	if p.Type != "age" {
-		return Config{}, false, fmt.Errorf("%s's provider %s is of type %q, not age", file, provider, p.Type)
+		return Config{}, fmt.Errorf("the provider %s is of type %q, not age", provider, p.Type)
 	}
 	recipients, err := labelled(p.Recipients)
 	if err != nil {
-		return Config{}, false, fmt.Errorf("%s's provider %s: %w", file, provider, err)
+		return Config{}, fmt.Errorf("the provider %s: %w", provider, err)
 	}
 	names := make([]string, 0, len(conf.Secrets))
 	for name := range conf.Secrets {
 		names = append(names, name)
 	}
 	slices.Sort(names)
-	return Config{Recipients: recipients, Secrets: names}, true, nil
+	return Config{Recipients: recipients, Secrets: names}, nil
 }
 
 // labelled reads a provider's recipients as a table of labels. A provider with none has an empty
