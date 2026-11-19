@@ -157,6 +157,9 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([mise.server.toml](../roles/server/ubuntu/docker/mise.server.toml)). Zed's other
   downloads on ws are outside the rule
   ([zed](../roles/server/ubuntu/zed/README.md#zeds-downloads-outside-the-sha-256-rule)).
+- The secrets' fetch trusts github.com by the one ed25519 key that ws pins
+  ([github_known_hosts](../roles/server/ubuntu/secrets/github_known_hosts)). A test checks it
+  against the fingerprint that GitHub publishes ([pins_test.go](../roles/server/ubuntu/secrets/pins_test.go)).
 - foundryctl forges SigNoz's compose files, `roles/server/ubuntu/signoz/deployment/` and
   `casting.yaml.lock`, from `casting.yaml`. Change the casting and forge again, never the files by
   hand: CI's `signoz` job fails where they differ

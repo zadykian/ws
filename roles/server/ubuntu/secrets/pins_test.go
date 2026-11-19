@@ -1,11 +1,49 @@
 package secrets_test
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/pelletier/go-toml/v2"
 )
+
+// githubFingerprint is the fingerprint of GitHub's ed25519 host key, as docs.github.com's
+// "GitHub's SSH key fingerprints" gives it.
+const githubFingerprint = "SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU"
+
+// The secrets' fetch trusts github.com by the one key that github_known_hosts pins, so the key
+// must be the one GitHub publishes. ssh's fingerprint is the SHA-256 of the key's blob, in base64
+// with no padding.
+func TestGitHubHostKeyMatchesItsFingerprint(t *testing.T) {
+	text, err := os.ReadFile("github_known_hosts")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var keys [][]string
+	for line := range strings.Lines(string(text)) {
+		if line = strings.TrimSpace(line); line != "" && !strings.HasPrefix(line, "#") {
+			keys = append(keys, strings.Fields(line))
+		}
+	}
+	if len(keys) != 1 {
+		t.Fatalf("github_known_hosts holds %d keys, want GitHub's ed25519 key alone", len(keys))
+	}
+	key := keys[0]
+	if len(key) != 3 || key[0] != "github.com" || key[1] != "ssh-ed25519" {
+		t.Fatalf("the key's line is %q, want github.com ssh-ed25519 and the key", key)
+	}
+	blob, err := base64.StdEncoding.DecodeString(key[2])
+	if err != nil {
+		t.Fatal(err)
+	}
+	sum := sha256.Sum256(blob)
+	if got := "SHA256:" + base64.RawStdEncoding.EncodeToString(sum[:]); got != githubFingerprint {
+		t.Errorf("the pinned key's fingerprint is %s, want GitHub's %s", got, githubFingerprint)
+	}
+}
 
 // fnoxSums are GitHub's digests of fnox 1.50.0's Linux assets, by mise's platform and the asset's
 // target.
