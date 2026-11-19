@@ -12,7 +12,7 @@ import (
 // newSecretsCmd returns ws client macos secrets, the commands of the secrets repository.
 func newSecretsCmd(p enginecli.Env, server *string) *cobra.Command {
 	return enginecli.Group("secrets", "the commands of the secrets repository, which fnox keeps",
-		newSecretsInitCmd(p, server))
+		newSecretsInitCmd(p, server), newSecretsAddCmd(p, server))
 }
 
 // newSecretsInitCmd returns ws client macos secrets init.
