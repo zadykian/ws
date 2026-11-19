@@ -1,0 +1,8 @@
+# Ghostty and the font that its settings name, as mise's casks, which need no Homebrew. A cask
+# takes the latest alone, and Ghostty then updates itself, as /etc/ws/ghostty says. ws's units
+# write the settings and the line that reads them.
+[bootstrap.packages]
+"brew-cask:ghostty" = "latest"
+"brew-cask:font-jetbrains-mono-nerd-font" = "latest"
+"ws:file/ghostty-conf" = "in-sync"
+"ws:file/ghostty-line" = "in-sync"

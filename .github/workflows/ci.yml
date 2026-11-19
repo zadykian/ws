@@ -50,15 +50,15 @@ jobs:
           # zizmor's online audits, which look the actions up on GitHub, need a token.
           GH_TOKEN: ${{ github.token }}
 
-  # ws server ubuntu apply as on a new machine, but in a container rather than a booted system, so
-  # without the steps that need a booted systemd. It runs twice, and the second run must change
-  # nothing. In a stack, it runs on the top pull request alone, which holds every change below it.
-  # So do mac.yml's, mac-cld.yml's and mac-wizard.yml's jobs. Run on each of a stack of 20, these
-  # jobs kept its pull requests waiting for runners past 50 minutes. A stack's pull requests open as
-  # drafts, before gh stack link joins them, so a draft's opened event has no stack and these
-  # jobs skip it. No event follows the link: ready_for_review, once done, is the first to
-  # name the stack. Outside a stack, and on a push, stack is null, and null == null holds.
-  # GitHub's stack metadata:
+  # install.sh's bootstrap, as on a new machine. A container stands in for a booted system, so the
+  # parts that need a booted systemd skip. It runs twice: mise's plan before the second run and
+  # after it must change nothing. In a stack, it runs on the top pull request alone, which holds
+  # every change below it. So do mac.yml's and mac-cld.yml's jobs. Run on
+  # each of a stack of 20, these jobs kept its pull requests waiting for runners past 50 minutes. A
+  # stack's pull requests open as drafts, before gh stack link joins them, so a draft's opened event
+  # has no stack and these jobs skip it. No event follows the link: ready_for_review, once done, is
+  # the first to name the stack. Outside a stack, and on a push, stack is null, and null == null
+  # holds. GitHub's stack metadata:
   # https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/optimizing-ci-for-stacked-pull-requests
   playbook:
     name: playbook (${{ matrix.user }})
@@ -87,9 +87,12 @@ jobs:
       HOME: /root
       WS_USER: ${{ matrix.user }}
       OUTBOUND: ${{ matrix.outbound }}
+      # bootstrap has no --locked: a tool installs only as a lock holds it, where install.sh does.
+      MISE_LOCKED: "1"
     steps:
-      # curl fetches the Go that .tools/build needs, and ca-certificates serves
-      # their HTTPS. There is no git, so the checkout has no .git and the build is devel.
+      # curl fetches the Go that .tools/build needs and the mise that install.sh pins, and
+      # ca-certificates serves their HTTPS. There is no git, so the checkout has no .git and the
+      # build is devel.
       - name: Install curl
         env:
           DEBIAN_FRONTEND: noninteractive
@@ -99,65 +102,52 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # CI builds ws from the tree, never from a release.
+      # CI builds ws from the tree, never from a release. /opt/ws, the plugin's path, must be
+      # root's alone for install.sh, and its pin names the build.
       - name: Build ws
-        run: .tools/build linux amd64 /usr/local/bin/ws
+        run: |
+          cp -a . /opt/ws
+          chown -R 0:0 /opt/ws && chmod -R go-w /opt/ws
+          .tools/serve-build /opt/ws "$RUNNER_TEMP/rel"
       # The account as Ubuntu's installer leaves it. ws makes no user.
       - name: Make the user
         if: matrix.user != 'root'
         run: useradd --create-home --shell /bin/bash "$WS_USER"
-      # The values file holds what the job changes of the defaults. The swap file is small, as the
-      # runner's disk has no room for one the size of its RAM. The matrix names the user and the
-      # table.
+      # Root's leg writes what it changes of the defaults, and keeps a copy: the matrix names the
+      # user and the table. The default user's leg writes none, so its first run writes the file.
+      # The container's swap is the host's, so base's swap file is off.
       - name: Write the values
+        if: matrix.user == 'root'
         run: |
           install -d -m 755 /etc/ws
-          printf '%s\n' --- 'WS_BASE_SWAP_SIZE_MB: 64' \
-              "WS_USER: $WS_USER" "WS_SECURITY_OUTBOUND: $OUTBOUND" >/etc/ws/values.yml
+          printf '%s\n' --- "WS_USER: $WS_USER" "WS_SECURITY_OUTBOUND: $OUTBOUND" |
+              tee "$RUNNER_TEMP/values.yml" >/etc/ws/values.yml
           chmod 600 /etc/ws/values.yml
-      # From root's home, 0700 on any machine, as after sudo -i: a command run as the user must not
-      # rest on the directory it starts in.
-      - name: Apply
-        working-directory: /root
-        run: ws server ubuntu apply
-      # ws's last line names the roles that changed. The second run must name none.
-      - name: Apply again, changing nothing
-        shell: bash
+      - name: Bootstrap
+        run: .github/bootstrap.sh "$RUNNER_TEMP/rel"
+      # A run by hand, as after install.sh. It starts from root's home, 0700 on any machine, as
+      # after sudo -i: a command run as the user must not rest on the directory it starts in. mise
+      # trusts the tree and finds ws installed, so it needs no trust variable and no server. It
+      # names the data directory, as the runbook does, and the job does not, so the first bootstrap
+      # proves install.sh's. Its plan must change nothing: the last plan comes after this run,
+      # which mends a part that changes on each run.
+      - name: Bootstrap again, changing nothing
         working-directory: /root
         run: |
-          ws server ubuntu apply 2>&1 | tee "$RUNNER_TEMP/again.log"
-          last=$(tail -n 1 "$RUNNER_TEMP/again.log")
-          if [ "$last" != 'ws server ubuntu apply: changed: none' ]; then
-              echo '::error::The second run of ws server ubuntu apply changed something.'
-              exit 1
-          fi
-      # The server's wizard over the values that the job wrote: it asks nothing, and its run skips,
-      # as the container's systemd isn't booted.
-      - name: Check the server's wizard
-        shell: bash
-        run: |
-          ws server ubuntu wizard --check --plain 2>&1 | tee "$RUNNER_TEMP/wizard.log"
-          if ! grep -qF "isn't booted" "$RUNNER_TEMP/wizard.log"; then
-              echo '::error::ws server ubuntu wizard --check did not skip its run.'
-              exit 1
-          fi
-      # script gives ws a terminal, so that the run screen draws every role's steps. The screen's
-      # last sequences share the last line, so the words must end it, not fill it.
-      - name: Draw the run screen
-        shell: bash
+          export MISE_DATA_DIR=/usr/local/share/mise
+          mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null
+          mise -C /opt/ws/roles/server bootstrap </dev/null
+      # The plan changes nothing, and fails where mise's config lacks a unit of the specs.
+      - name: The plan changes nothing, and finds a missing unit
         working-directory: /root
-        env:
-          TERM: xterm
+        run: '"$GITHUB_WORKSPACE/.github/playbook-plan.sh"'
+      # The first run wrote the values where none was, and no run changed a file written before it.
+      - name: Check the values file
         run: |
-          script -qec 'stty cols 100 rows 30; ws server ubuntu apply --check' /dev/null \
-              </dev/null >"$RUNNER_TEMP/screen.log"
-          last="$(tail -n 1 "$RUNNER_TEMP/screen.log" | tr -d '\r')"
-          if ! grep -qF $'\e[?1049h' "$RUNNER_TEMP/screen.log" ||
-              [[ "$last" != *'ws server ubuntu apply: would change: none' ]]; then
-              echo '::error::ws server ubuntu apply --check drew no screen, or found a change.'
-              exit 1
-          fi
-      # The wrapper and tmux.conf that the zed step installed, run against the container's tmux. The
+          test "$(stat -c '%u:%g %a' /etc/ws/values.yml)" = '0:0 600'
+          kept=$RUNNER_TEMP/values.yml
+          if [ -f "$kept" ]; then cmp "$kept" /etc/ws/values.yml; fi
+      # The wrapper and tmux.conf that the bootstrap wrote, run against the container's tmux. The
       # test takes about a minute, and catches a tmux release that changes how list-sessions or
       # rename-session behave.
       - name: Check the Zed terminal wrapper
@@ -207,15 +197,15 @@ jobs:
               exit 1
           fi
 
-  # The rootless daemon and the firewall around it, which need a booted systemd. A container has
-  # none, so this job runs on the runner itself, and ws sets the runner up as it would a machine.
-  # The stack's top alone, as for playbook.
+  # The rootless daemon and the firewall around it need a booted systemd, so this job runs on the
+  # runner, which the bootstrap and ws set up as a machine. The stack's top alone, as for playbook.
+  # setfacl drops /opt's default ACL, which lets anyone write the tree that install.sh then refuses.
   rootless:
     if: >-
       (github.event.action != 'opened' || !github.event.pull_request.draft) &&
       github.event.pull_request.stack.position == github.event.pull_request.stack.size
     runs-on: ubuntu-26.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
@@ -223,11 +213,11 @@ jobs:
         with:
           persist-credentials: false
       - name: Build ws
-        run: .tools/build linux amd64 "$RUNNER_TEMP/ws"
-      - name: Install ws
-        run: sudo install -m 755 "$RUNNER_TEMP/ws" /usr/local/bin/ws
+        run: |
+          sudo setfacl -k /opt && sudo install -d -o "$(id -un)" /opt/ws && cp -a . /opt/ws
+          .tools/serve-build /opt/ws "$RUNNER_TEMP/rel"
       - name: The cases
-        run: sudo bash .github/rootless-checks.sh
+        run: sudo bash .github/rootless-checks.sh "$RUNNER_TEMP/rel"
       # Docker's tool only points to the daemon's log.
       - name: The daemon's log
         if: failure()
@@ -235,10 +225,9 @@ jobs:
           sudo journalctl -n 80 --no-pager _SYSTEMD_USER_UNIT=docker.service
           sudo dmesg | grep -i apparmor | tail -n 20
 
-  # install.sh against releases laid out in a temporary directory and served on loopback, in the
-  # order of .github/install-checks.sh. The latest and a named release install, and a second run
-  # updates. A wrong checksum and a binary of another version are refused, and root installs to
-  # /usr/local/bin. The releases are of the tree, built by .tools/build.
+  # install.sh with the real mise, served on loopback, and a small repository in place of the
+  # release's tree: .github/install-checks.sh. The pinned mise installs, a wrong one is refused, and
+  # the bootstrap runs from the latest release's tag, with the envs that the miserc names.
   install:
     if: github.event.action != 'ready_for_review'
     runs-on: ubuntu-latest
@@ -249,7 +238,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: The cases
+      - name: install.sh's cases
         run: .github/install-checks.sh
 
   # SigNoz's compose files in roles/server/ubuntu/signoz are foundryctl's, forged from the casting

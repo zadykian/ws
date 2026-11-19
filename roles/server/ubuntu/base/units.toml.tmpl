@@ -1,0 +1,53 @@
+# The base role's units, a Go template over /etc/ws/values.yml. mise installs the packages first,
+# the locales and unattended-upgrades among them.
+
+# The system's locale, generated where locale -a lacks it, and the time zone.
+[state.base-locale]
+locale = { name = "{{ .Base.Locale }}", hint = "Set WS_BASE_LOCALE to one it lists, such as en_US.UTF-8" }
+
+[state.base-timezone]
+timezone = { name = "{{ .Base.Timezone }}", hint = "Set WS_BASE_TIMEZONE to another" }
+
+# Unattended upgrades, as the package sets them when its question is answered yes, then apt's
+# daily timers and the check that finishes an upgrade at shutdown, each kept running.
+[file.base-upgrades]
+path = "/etc/apt/apt.conf.d/20auto-upgrades"
+source = "files/20auto-upgrades"
+
+[service.base-apt-daily]
+unit = "apt-daily.timer"
+enabled = true
+run = "running"
+after = "file/base-upgrades"
+
+[service.base-apt-daily-upgrade]
+unit = "apt-daily-upgrade.timer"
+enabled = true
+run = "running"
+after = "file/base-upgrades"
+
+[service.base-unattended-upgrades]
+unit = "unattended-upgrades.service"
+enabled = true
+run = "running"
+after = "file/base-upgrades"
+
+# The swap file. A container shares its host's kernel, and so its swap: the unit is off there.
+[state.base-swap]
+swap = { {{ with .Base.SwapSizeMB }}size_mib = {{ . }}, {{ end }}hint = "Set WS_BASE_SWAP_SIZE_MB lower, or 0 for none" }
+when = { container = "!yes" }
+
+# The swappiness at boot, on every machine. systemd-sysctl puts it in force where the kernel's
+# differs from the file's, as after a change: it applies every file of sysctl.d, as boot does. In
+# a container vm.swappiness is the host's, so that unit is off there.
+[file.base-swappiness]
+path = "/etc/sysctl.d/99-swappiness.conf"
+template = "files/99-swappiness.conf.tmpl"
+
+[service.base-sysctl]
+unit = "systemd-sysctl.service"
+run = "running"
+in_force = ["cat", "/proc/sys/vm/swappiness"]
+loads = ["awk", "-F", " *= *", '$1 == "vm.swappiness" { print $2 }', "/etc/sysctl.d/99-swappiness.conf"]
+when = { container = "!yes" }
+after = "file/base-swappiness"

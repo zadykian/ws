@@ -1,68 +1,82 @@
 # git on the Mac
 
-`ws client macos apply` sets up git on the Mac on each run
-([The Mac](../README.md)), as the `git` role does on ws ([Signing](../../../server/ubuntu/git/README.md#signing)). It writes
-`/etc/ws/gitconfig`, from the settings that `roles/internal/gitcfg` holds for both sides, the
-fetch's prune among them. The author is `gitcfg.Name` and `gitcfg.Email`, `zadykian` and
-`me@zadykian.dev`. Each commit is signed with `WS_GIT_SIGNING_PUB_KEY`, which
-`/etc/ws/allowed_signers` trusts for the email in `git verify-commit`. That file, the
-gitconfig and the script below are root's and 644, as on ws, bar the script's 755. A run writes
-them through sudo and reads them as the user, so that a run that changes nothing asks for no
-password. It names gh's credential
-command too, as `gh auth setup-git` does, so that pushes to GitHub take gh's login, and installs
-Homebrew's gh where `PATH` has none.
+`mise -C /opt/ws/roles/client bootstrap` sets up git on the Mac by [git's units](units.toml.tmpl), as the `git` role
+does on ws ([Signing](../../../server/ubuntu/git/README.md#signing)). The facts give the files'
+text, from the settings that `roles/internal/gitcfg` holds for both sides, the fetch's prune among
+them ([The facts](../../facts/README.md)). The author is `gitcfg.Name` and `gitcfg.Email`,
+`zadykian` and `me@zadykian.dev`.
 
-`WS_GIT_SIGNING_PUB_KEY` has no default, and the script makes no key. Where `values.yml` names none,
-or an empty one, the script stops with the line that would name each P-256 key of Secretive's
-agent. A `.pub` that is missing or that the script cannot read stops it too, as does one that holds
-more than a public key's line, as a private key does. So does a certificate, or a key of a type that
-ws's OpenSSH lacks: git takes the seven that ssh takes, as GitHub takes no other signing key. A
-`.pub` of Secretive's that the script cannot read, where its agent lists no key of it, stops it with
-the word to open Secretive. A file key with no passphrase signs unattended, in
-a rebase too: `ssh-keygen -t ed25519 -N '' -f ~/.ssh/NAME` makes one.
+## The units
 
-The wizard asks for git's key where `values.yml` names none ([The Mac's
-key](../stages/README.md#the-macs-key)). A new one, made in Secretive's app at Notify, signs with no
-prompt while the Mac is unlocked. The login key may sign too, but asks for Touch ID at each use by
-default, so a rebase would ask at each commit. The wizard names ws's copy of its `.pub`,
-`/etc/ws/secretive/NAME.pub`, in `WS_GIT_SIGNING_PUB_KEY`. `NAME` is that of Secretive's Public
-Key Path, and the script writes the copy from the agent ([Secretive's keys](#secretives-keys)). git
-then signs through `/etc/ws/secretive-ssh-keygen`, which gives `ssh-keygen` Secretive's agent,
-so that a terminal, an editor and other apps sign alike. The key never leaves the Secure Enclave,
-and signs only while the Mac is unlocked. ssh offers ws the key of `WS_IDENTITY_PUB_KEY` alone,
-whichever keys Secretive holds ([ssh's hosts](../README.md#sshs-hosts)).
+- `file.git-config` writes `/etc/ws/gitconfig`: git's identity, the signing key, and gh as
+  GitHub's credential command, as `gh auth setup-git` writes it, so that pushes to GitHub take gh's
+  login. It comes after the keys' copies (`state.keys`, [ssh on the Mac](../ssh/README.md)).
+- `file.git-include` puts the include of `/etc/ws/gitconfig` at the top of `~/.gitconfig`.
+- `file.git-signers` writes `/etc/ws/allowed_signers`, which trusts `WS_GIT_SIGNING_PUB_KEY` for
+  the email in `git verify-commit`.
+- `file.git-keygen` writes `/etc/ws/secretive-ssh-keygen`, 755, for a key of Secretive's, and
+  removes it for a file key.
+- `state.gh` copies gh into `/usr/local/bin`, root's and 755.
+
+The files in `/etc/ws` are root's and 644, as on ws, bar the script's 755. A unit writes them
+through sudo and reads them as the user, so that a bootstrap that changes nothing asks for no
+password.
+
+## gh
+
+[`mise.mac.toml`](mise.mac.toml) pins gh, which mise installs from GitHub's release by its aqua
+backend. [`mise.mac.lock`](../../mise/mise.mac.lock) holds the release's URL and SHA-256 for macOS
+on arm64, and the bootstrap runs locked, so mise refuses a gh the lock lacks. mise installs it for
+the tree alone, on no shell's `PATH`, so `state.gh` copies it to `/usr/local/bin/gh`, which
+`/etc/paths` puts on every shell's, under a temporary name first. A gh there that differs is
+replaced. To move gh on, change the pin and lock it again. The lock must hold the new release's URL
+and SHA-256, as gh's release lists them. `TestMacLockHoldsEachTool` checks that the lock holds each
+tool.
+
+## The signing key
+
+`WS_GIT_SIGNING_PUB_KEY` has no default, and ws makes no key. Where `values.yml` names none, or an
+empty one, the bootstrap stops with the line that would name each P-256 key of Secretive's agent. A
+`.pub` that is missing or that the user cannot read stops it too, as does one that holds more than
+a public key's line, as a private key does. So does a certificate, or a key of a type that ws's
+OpenSSH lacks: git takes the seven that ssh takes, as GitHub takes no other signing key. A `.pub`
+of Secretive's that ws cannot read, where its agent lists no key of it, stops it with the word to
+open Secretive. A file key with no passphrase signs unattended, in a rebase too: `ssh-keygen -t
+ed25519 -N '' -f ~/.ssh/NAME` makes one.
+
+A new key, made in Secretive's app at Notify, signs with no prompt while the Mac is unlocked. The
+login key may sign too, but asks for Touch ID at each use by default, so a rebase would ask at each
+commit. Name ws's copy of its `.pub`, `/etc/ws/secretive/NAME.pub`, in `WS_GIT_SIGNING_PUB_KEY`.
+`NAME` is that of Secretive's Public Key Path, and the keys' unit writes the copy from the agent
+([Secretive's keys](#secretives-keys)). git then signs through `/etc/ws/secretive-ssh-keygen`,
+which gives `ssh-keygen` Secretive's agent, so that a terminal, an editor and other apps sign
+alike. The key never leaves the Secure Enclave, and signs only while the Mac is unlocked. ssh
+offers ws the key of `WS_IDENTITY_PUB_KEY` alone, whichever keys Secretive holds ([ssh's
+hosts](../ssh/README.md#sshs-hosts)).
+
+GitHub verifies a commit by the signing keys of its author's account. ws adds no key there: add it
+once with `gh ssh-key add --type signing`, as [the runbook](../../runbook.md#github) says. Until then,
+GitHub shows the Mac's commits as unverified, and the ruleset on `main` refuses them.
+
+## ~/.gitconfig
 
 `~/.gitconfig` includes `/etc/ws/gitconfig` at its top, as on ws, so that its own settings win
-where both set one. Where the include is missing, the script adds it at the top, or makes the file,
-and keeps the old file as `~/.gitconfig.TIME~`. It names the file's own settings of identity and signing,
-which then win, such as a `user.email`. Where the include sits below the file's own settings, which
-it then overrides, or comes twice, the script stops: keep one, at the top. Where `~/.gitconfig` is a
-link that lacks the include, the script stops: put it at the top of the file the link points to.
-Each stop comes before the script changes anything for git, and the report shows the file as a
-conflict there. git reads its XDG file,
+where both set one, such as a `user.email`. Where the include is missing, the unit adds it at the
+top, or makes the file, and keeps the old file as `~/.gitconfig.TIME~`. Where the include sits below
+the file's own settings, which it then overrides, or comes twice, the unit stops and leaves the
+file alone: keep one, at the top. Where `~/.gitconfig` is a link that lacks the include, the unit
+stops: put it at the top of the file the link points to. git reads its XDG file,
 `~/.config/git/config`, before `~/.gitconfig`, so `/etc/ws/gitconfig` wins over the settings
-there. The script names those of identity and signing as it adds the include.
-
-GitHub verifies a commit by the signing keys of its author's account. Where those of gh's login lack
-the key, the script adds it with `gh ssh-key add --type signing`, titled with the Mac's name. The
-wizard does the same for ws ([Signing key](../stages/README.md#signing-key)). The login
-needs the `write:ssh_signing_key` scope. Without a login or the scope, or on another error of gh's,
-the script says so at each run, and goes on. Until a run adds the key, GitHub shows the Mac's
-commits as unverified, and the ruleset on `main` refuses them. `--check` reads the account's keys,
-and says what it would add. Before gh is installed, it says what it would add once gh has a login.
-After an add, the script checks that they list the key. Where they list it already, the script
-says so in a line, and `--check` too. GitHub keeps the signing keys apart from the
-authentication keys, so a key that serves both goes on each.
+there. ws names none of the settings that win over its own, or lose to them.
 
 ## Secretive's keys
 
 macOS 27 denies other apps the files of Secretive's container, with no prompt ([Secretive's
-issue](https://github.com/maxgoedjen/secretive/issues/839)). Its socket still answers, so the
-script and the wizard ask the agent, with `ssh-add -L`. ssh and git need a key's `.pub` to pick it
-from the agent, so they keep a copy in `/etc/ws/secretive`, under Secretive's name for it. A run
-makes that directory, root's, with `/etc/ws`, and the plan and the report show them. No app then
-needs Full Disk Access. A `.pub` in `Data/PublicKeys` that `values.yml` names becomes that copy
-where the agent lists the key.
+issue](https://github.com/maxgoedjen/secretive/issues/839)). Its socket still answers, so ws asks
+the agent, with `ssh-add -L`. ssh and git need a key's `.pub` to pick it from the agent, so they
+keep a copy in `/etc/ws/secretive`, under Secretive's name for it, which `ws client macos keys`
+writes. No app then needs Full Disk Access. A `.pub` in `Data/PublicKeys` that `values.yml` names
+becomes that copy where the agent lists the key.
 
-The socket stays after Secretive quits, and nothing answers there. The script then stops, and says
-to open Secretive, unless `WS_IDENTITY_PUB_KEY` names a key.
+The socket stays after Secretive quits, and nothing answers there. The bootstrap then stops, and
+says to open Secretive, unless `WS_IDENTITY_PUB_KEY` names a key.

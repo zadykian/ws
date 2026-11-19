@@ -7,10 +7,13 @@ import (
 
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/local"
+	macoscli "github.com/zadykian/ws/roles/client/cli"
 )
 
-// groups returns the command groups that exist on this system: ws client macos, on a Mac.
+// groups returns the command groups that exist on this system: ws client macos and the Mac's ws
+// unit, on a Mac. Both read root's paths as the user, so that mise's plan, a unit's check and a run
+// that changes nothing ask no password. ws's files in /etc/ws are readable by all.
 func groups(p cli.Env) []*cobra.Command {
-	p.Machine = local.OSMachine{}
-	return []*cobra.Command{clientCmd(p)}
+	p.Machine = local.OSMachine{UserReads: true}
+	return []*cobra.Command{clientCmd(p), macoscli.UnitCmd(p)}
 }

@@ -1,7 +1,6 @@
 package cld_test
 
 import (
-	"context"
 	"errors"
 	"strings"
 	"testing"
@@ -11,8 +10,8 @@ import (
 
 const cldScript = "/tmp/ws-cld.1"
 
-func cldApply(t *testing.T, check bool, fix func(*effecttest.Machine)) ([]string, []string) {
-	s, m, out := cldStep(check)
+func cldApply(t *testing.T, fix func(*effecttest.Machine)) ([]string, []string) {
+	c, m, out := cldOf()
 	delete(m.Files, cldBin)
 	m.Results["mktemp -t ws-cld"] = effecttest.Result{Out: []byte(cldScript + "\n")}
 	m.Results["rm -f "+cldScript] = effecttest.Result{}
@@ -20,22 +19,18 @@ func cldApply(t *testing.T, check bool, fix func(*effecttest.Machine)) ([]string
 		" https://github.com/zadykian/cld/releases/latest/download/install.sh"] = effecttest.Result{}
 	m.Results["env CLD_INSTALL_DIR=/h/.local/bin sh "+cldScript] = effecttest.Result{}
 	fix(m)
-	p, err := s.Plan(context.Background())
-	if err != nil {
-		t.Fatal(err)
+	cs, err := c.Plan(t.Context())
+	if err != nil || len(cs) != 1 {
+		t.Fatalf("Plan = %v, %v; want the install", cs, err)
 	}
-	if err := s.Apply(context.Background(), p); err != nil {
+	if err := cs[0].Apply(t.Context()); err != nil {
 		t.Fatal(err)
-	}
-	again, _ := s.Plan(context.Background())
-	if len(again.Changes) != 0 {
-		t.Errorf("second Plan = %v; want none", again.Changes)
 	}
 	return m.Calls, out.Lines
 }
 
 func TestCldInstallRunsItsScriptAndRemovesIt(t *testing.T) {
-	calls, lines := cldApply(t, false, func(*effecttest.Machine) {})
+	calls, lines := cldApply(t, func(*effecttest.Machine) {})
 	got := strings.Join(calls, "\n")
 	if !strings.Contains(got, "run env CLD_INSTALL_DIR=/h/.local/bin sh "+cldScript) ||
 		!strings.HasSuffix(got, "run rm -f "+cldScript) || len(lines) != 0 {
@@ -44,7 +39,7 @@ func TestCldInstallRunsItsScriptAndRemovesIt(t *testing.T) {
 }
 
 func TestCldInstallWarnsOfAScriptThatFails(t *testing.T) {
-	_, lines := cldApply(t, false, func(m *effecttest.Machine) {
+	_, lines := cldApply(t, func(m *effecttest.Machine) {
 		m.Results["env CLD_INSTALL_DIR=/h/.local/bin sh "+cldScript] = effecttest.Result{Err: errors.New("no")}
 	})
 	if len(lines) != 1 || lines[0] != "warn: cld's install.sh failed" {
@@ -53,10 +48,14 @@ func TestCldInstallWarnsOfAScriptThatFails(t *testing.T) {
 }
 
 func TestCldUpdateSaysWhatCldPrints(t *testing.T) {
-	s, m, out := cldStep(false)
+	c, m, out := cldOf()
+	m.Results[cldLatest] = effecttest.Result{Out: []byte("https://github.com/zadykian/cld/releases/tag/v0.14.0")}
 	m.Results[`sh -c exec "$0" update 2>&1 `+cldBin] = effecttest.Result{Out: []byte("Updated cld 0.13.0 to 0.14.0\n")}
-	p, _ := s.Plan(context.Background())
-	if err := s.Apply(context.Background(), p); err != nil || len(out.Lines) != 1 ||
+	cs, err := c.Plan(t.Context())
+	if err == nil && len(cs) == 1 {
+		err = cs[0].Apply(t.Context())
+	}
+	if err != nil || len(out.Lines) != 1 ||
 		out.Lines[0] != "say: Updated cld 0.13.0 to 0.14.0" {
 		t.Errorf("Apply = %v, out %q; want the line cld printed", err, out.Lines)
 	}

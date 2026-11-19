@@ -9,7 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/account"
 	"github.com/zadykian/ws/engine/core/resource/file"
-	"github.com/zadykian/ws/roles/server/ubuntu/internal/plan"
+	"github.com/zadykian/ws/roles/server/internal/plan"
 )
 
 // Tokens is git's tokens for servers besides GitHub. Each URL's in a file of its own, which the
@@ -75,4 +75,9 @@ func (t Tokens) Plan(ctx context.Context) ([]resource.Change, error) {
 	rs = append(rs, file.Validated{File: file.File{M: t.M, Path: tokensPath, Content: content,
 		Mode: 0o640, GID: t.A.GID}, Check: configCheck})
 	return plan.All(ctx, rs...)
+}
+
+// configCheck is the command that has git read a config file before it replaces the old one.
+func configCheck(path string) (string, []string) {
+	return "git", []string{"config", "--file", path, "--name-only", "--list"}
 }

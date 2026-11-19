@@ -5,7 +5,7 @@
 # which may allow passwords.
 PasswordAuthentication no
 KbdInteractiveAuthentication no
-{{- if .Root }}
+{{- if eq .User "root" }}
 # WS_USER is root, who logs in by key only.
 PermitRootLogin prohibit-password
 {{- else }}

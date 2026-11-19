@@ -1,111 +1,106 @@
 #!/bin/bash
-# The install job's cases: install.sh and ws update against a release laid out in a temporary
-# directory and served on loopback as GitHub serves it. Run it from the repository's root;
-# .tools/build gets the Go.
-# The releases are of HEAD, built at tags that a copy of it makes and removes again.
+# The install job's cases of install.sh, with the real mise and a small repository in place of the
+# release's tree. Run it from the repository's root, as a user with sudo. install.sh runs as root
+# and writes /usr/local/bin/mise, /etc/mise, /opt/ws and /etc/ws, which each case removes. So it
+# runs on GitHub's runner, or on a spare machine where WS_SPARE_MACHINE is 1, and never on a
+# server.
 #
-#     v0.1.0 and v0.2.0  good; v0.2.0 is the latest
-#     v0.3.0             ws.sha256 holds another binary's sum
-#     v0.4.0             a binary that prints v0.1.0, with the sum it should have
+# mise's binary, which install.sh pins, is downloaded once into a directory that serve-releases
+# serves on loopback. A copy of it with a byte added stands for a wrong one.
 #
-# The root case writes /usr/local/bin/ws, so it runs on GitHub's runner alone, with sudo.
+#     /mise/good/v$V/  the real binary          /mise/bad/v$V/  a copy with a byte added
+#     /latest          v0.2.0                   /mise/none/     no binary
+#
+# The repository v0.2.0 holds a file of mise's config for each env, and each writes one file. The
+# files written name the envs that the miserc loaded.
 
 set -euo pipefail
 
 root=$PWD
 tmp=$(mktemp -d)
-trap 'kill "${server:-}" 2>/dev/null || true; rm -rf "$tmp"' EXIT
-
-# src is HEAD in a repository of its own, for the tags: a release's run holds one at HEAD already.
-src=$tmp/src
-mkdir "$src"
-git archive HEAD | tar -x -C "$src"
-git -C "$src" init -q
-git -C "$src" add -A
-git -C "$src" -c user.name=ws -c user.email=ws@localhost -c commit.gpgsign=false commit -q -m tree
-# The build shares this tree's .cache, with the pinned Go in it. The link is excluded, as git's
-# ignore of a directory does not match a link: else the build is +dirty and prints another version.
-mkdir -p "$root/.cache"
-ln -s "$root/.cache" "$src/.cache"
-echo /.cache >>"$src/.git/info/exclude"
-
-# build_release TAG makes release TAG's directory, with the tree's ws as the tag stamps it.
-build_release() {
-    local dir=$tmp/releases/download/$1
-    mkdir -p "$dir"
-    (cd "$src" && git tag "$1" && .tools/build linux amd64 "$dir/ws-linux-amd64" && git tag -d "$1" >/dev/null)
-    [ "$("$dir/ws-linux-amd64" version)" = "$1" ] || fail "the build at $1 prints another version"
-    (cd "$dir" && sha256sum ws-linux-amd64 >ws.sha256)
-}
+trap 'kill "${server:-}" 2>/dev/null || true; reset; rm -rf "$tmp"' EXIT
 
 fail() {
     echo "::error::$*"
     exit 1
 }
 
-# installs HOME_DIR [ENV=VALUE...] runs install.sh with HOME_DIR as the home, and the settings.
-installs() {
-    local home=$1
-    shift
-    env HOME="$home" WS_RELEASES_URL="$url" "$@" sh "$root/install.sh"
-}
-
-# has_version HOME_DIR TAG fails unless the ws installed for HOME_DIR prints TAG.
-has_version() {
-    local got
-    got=$("$1/.local/bin/ws" version)
-    [ "$got" = "$2" ] || fail "ws in $1 is $got, not $2"
-}
-
-# only_ws HOME_DIR fails where its bin directory holds more than ws, such as a download left.
-only_ws() {
-    local left
-    left=$(ls -A "$1/.local/bin")
-    [ "$left" = ws ] || fail "$1/.local/bin holds '$left', not ws alone"
-}
-
-# refused HOME_DIR TAG... fails where install.sh succeeds, or installs anything.
-refused() {
-    local home=$1
-    shift
-    if installs "$home" "$@"; then
-        fail "install.sh went through with $*"
+# as_root runs the command $@ as root, through sudo where the user is not root.
+as_root() {
+    if [ "$(id -u)" = 0 ]; then
+        "$@"
+    else
+        sudo "$@"
     fi
 }
 
-# updates HOME_DIR runs the ws installed for HOME_DIR as ws update.
-updates() {
-    env HOME="$1" WS_RELEASES_URL="$url" "$1/.local/bin/ws" update
+# reset removes what a run of install.sh leaves, so that each case starts as a new machine.
+reset() {
+    as_root rm -rf /usr/local/bin/mise /usr/local/bin/.mise.* /etc/mise /opt/ws /etc/ws-install-check /etc/ws
 }
 
-# update_refused HOME_DIR TAG fails where ws update, with TAG the latest release, goes through or
-# changes the v0.1.0 installed for HOME_DIR.
-update_refused() {
-    echo "$2" >"$tmp/releases/latest"
-    if updates "$1"; then
-        fail "ws update went through at $2"
-    fi
-    echo v0.2.0 >"$tmp/releases/latest"
-    has_version "$1" v0.1.0
-    only_ws "$1"
+# install_sh [ENV=VALUE...] runs install.sh as root with the settings, from a stdin that is a pipe,
+# as curl's is. The runner's system stands as Ubuntu 26.04, whatever its release.
+install_sh() {
+    echo | as_root env WS_RELEASES_URL="$url" WS_MISE_URL="$url/mise/good" WS_REPO="file://$tmp/repo" \
+        WS_OS_RELEASE="$tmp/os-release" "$@" sh "$root/install.sh"
 }
 
-[ "$(id -u)" != 0 ] || fail "run it as a user: as root, install.sh installs to /usr/local/bin"
-[ -z "$(git status --porcelain)" ] || fail "the tree is not clean: the builds would say +dirty"
+# written ENV fails unless the bootstrap wrote the file of ENV, with ENV in it.
+written() {
+    [ "$(cat "/etc/ws-install-check/$1" 2>/dev/null)" = "$1" ] || fail "the bootstrap wrote no file of env $1"
+}
 
-build_release v0.1.0
-build_release v0.2.0
-build_release v0.3.0
-build_release v0.4.0
-cp "$tmp/releases/download/v0.1.0/ws-linux-amd64" "$tmp/releases/download/v0.4.0/ws-linux-amd64"
-(cd "$tmp/releases/download/v0.4.0" && sha256sum ws-linux-amd64 >ws.sha256)
-sed -i 's/^[0-9a-f]\{64\}/0000000000000000000000000000000000000000000000000000000000000000/' \
-    "$tmp/releases/download/v0.3.0/ws.sha256"
+[ "$(id -u)" != 0 ] || [ -n "${WS_SPARE_MACHINE:-}" ] || fail "run it as a user with sudo"
+[ -n "${GITHUB_ACTIONS:-}${WS_SPARE_MACHINE:-}" ] || fail "it removes /etc/ws: run it on a runner or a spare machine"
 
-echo v0.2.0 >"$tmp/releases/latest"
+# GitHub's runner keeps a default ACL on /opt, which lets anyone write what root makes there,
+# whatever the umask. install.sh refuses such a tree, and a server's /opt has no such ACL.
+! command -v setfacl >/dev/null || as_root setfacl -k /opt
+
+printf '%s\n' 'NAME="Ubuntu"' 'ID=ubuntu' 'VERSION_ID="26.04"' >"$tmp/os-release"
+version=$(sed -n 's/^mise_version=//p' install.sh)
+case $(uname -m) in
+x86_64) asset=linux-x64 ;;
+aarch64) asset=linux-arm64 ;;
+*) fail "mise is pinned for x86_64 and aarch64 alone" ;;
+esac
+good=$tmp/serve/mise/good/v$version
+bad=$tmp/serve/mise/bad/v$version
+mkdir -p "$good" "$bad" "$tmp/serve/mise/none"
+curl -fsSL --proto '=https' --tlsv1.2 -o "$good/mise-v$version-$asset" \
+    "https://github.com/jdx/mise/releases/download/v$version/mise-v$version-$asset"
+cp "$good/mise-v$version-$asset" "$bad/"
+printf x >>"$bad/mise-v$version-$asset"
+echo v0.2.0 >"$tmp/serve/latest"
+
+# The release's tree: a config with an entry for each env's file, and a directory for them. The
+# account's file sits in a role, behind the side's link, as a role's does, and the root holds
+# none. On such a tree mise trust --all never ends, so the case of the latest release proves
+# install.sh's trust.
+repo=$tmp/repo
+mkdir -p "$repo/roles/server/ubuntu/part" "$repo/roles/server/mise"
+ln -s ../ubuntu "$repo/roles/server/mise/conf.d"
+echo '# the install job'"'"'s tree' >"$repo/mise.toml"
+for env in server booted account; do
+    config=$repo/mise.$env.toml
+    [ "$env" != account ] || config=$repo/roles/server/ubuntu/part/mise.$env.toml
+    cat >"$config" <<TOML
+[bootstrap.directories."/etc/ws-install-check"]
+mode = "0755"
+
+[bootstrap.files."/etc/ws-install-check/$env"]
+content = "$env\n"
+TOML
+done
+git -C "$repo" init -q
+git -C "$repo" add -A
+git -C "$repo" -c user.name=ws -c user.email=ws@localhost -c commit.gpgsign=false commit -q -m tree
+git -C "$repo" tag v0.2.0
+
 serve=$tmp/serve-releases
-"$(sh "$root/.tools/run" -path go)" build -o "$serve" ./.tools/serve-releases
-"$serve" "$tmp/releases" 0 "$tmp/port" &
+"$("$root/.tools/run" -path go)" build -o "$serve" ./.tools/serve-releases
+"$serve" "$tmp/serve" 0 "$tmp/port" &
 server=$!
 for _ in $(seq 50); do
     [ -s "$tmp/port" ] && break
@@ -113,71 +108,124 @@ for _ in $(seq 50); do
 done
 url=http://127.0.0.1:$(cat "$tmp/port")
 
-echo "::group::WS_VERSION installs that release"
-mkdir -p "$tmp/home1"
-installs "$tmp/home1" WS_VERSION=0.1.0
-has_version "$tmp/home1" v0.1.0
-only_ws "$tmp/home1"
+reset
+echo "::group::A user is refused, and nothing is installed"
+if WS_OS_RELEASE="$tmp/os-release" sh "$root/install.sh" </dev/null; then
+    fail "install.sh went through as a user"
+fi
+[ ! -e /usr/local/bin/mise ] || fail "a refused install left mise"
 echo "::endgroup::"
 
-echo "::group::A second run, for the latest, updates"
-installs "$tmp/home1"
-has_version "$tmp/home1" v0.2.0
-only_ws "$tmp/home1"
+echo "::group::A system other than Ubuntu 26.04 is refused, and nothing is installed"
+printf '%s\n' 'ID=ubuntu' 'VERSION_ID="24.04"' >"$tmp/os-release-24.04"
+printf '%s\n' 'ID=debian' 'VERSION_ID="13"' >"$tmp/os-release-debian"
+for system in 24.04 debian none; do
+    if install_sh WS_OS_RELEASE="$tmp/os-release-$system"; then
+        fail "install.sh went through on $system"
+    fi
+    [ ! -e /usr/local/bin/mise ] || fail "a refused install on $system left mise"
+done
 echo "::endgroup::"
 
-echo "::group::The latest installs into a new home"
-installs "$tmp/home2"
-has_version "$tmp/home2" v0.2.0
+echo "::group::A wrong SHA-256 is refused, and nothing is left"
+if install_sh WS_MISE_URL="$url/mise/bad"; then
+    fail "install.sh went through with a wrong mise"
+fi
+[ ! -e /usr/local/bin/mise ] || fail "a refused install left mise"
+! compgen -G '/usr/local/bin/.mise.*' >/dev/null || fail "a refused install left a download"
 echo "::endgroup::"
 
-echo "::group::A wrong ws.sha256 is refused, and ws is as it was"
-refused "$tmp/home1" WS_VERSION=0.3.0
-has_version "$tmp/home1" v0.2.0
-only_ws "$tmp/home1"
-mkdir -p "$tmp/home3"
-refused "$tmp/home3" WS_VERSION=v0.3.0
-[ -z "$(ls -A "$tmp/home3/.local/bin")" ] || fail "a refused install left files"
+echo "::group::The latest release installs mise and runs its bootstrap"
+install_sh
+[ "$(/usr/local/bin/mise --version | cut -d' ' -f1)" = "$version" ] || fail "mise is not $version"
+# The miserc is a template, which mise renders: the files show what it loaded.
+want=(server account)
+[ ! -d /run/systemd/system ] || want+=(booted)
+for env in "${want[@]}"; do
+    written "$env"
+done
+# install.sh trusts the tree, so that a plan by hand, with no MISE_TRUSTED_CONFIG_PATHS, runs and
+# finds no change. This tree holds no tool, so the plan needs no MISE_DATA_DIR either.
+as_root /usr/local/bin/mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null >/dev/null ||
+    fail "a plan by hand after install.sh found a change or failed"
 echo "::endgroup::"
 
-echo "::group::A binary of another version is refused, and ws is as it was"
-refused "$tmp/home1" WS_VERSION=0.4.0
-has_version "$tmp/home1" v0.2.0
-only_ws "$tmp/home1"
+echo "::group::Root's values leave the account's part out, and mise stays"
+as_root install -d -m 755 /etc/ws
+printf '%s\n' --- 'WS_USER: root' | as_root tee /etc/ws/values.yml >/dev/null
+as_root rm -f /etc/ws-install-check/account
+install_sh WS_MISE_URL="$url/mise/none"
+! grep -q '^env = .*"account"' /etc/mise/miserc.toml || fail "the miserc names the account for root"
+[ ! -e /etc/ws-install-check/account ] || fail "the account's part ran for root"
+written server
+echo "::endgroup::"
+
+# at TAG fails unless /opt/ws stands at the commit of TAG.
+at() {
+    [ "$(as_root git -C /opt/ws rev-parse HEAD)" = "$(git -C "$repo" rev-parse "$1^{commit}")" ] ||
+        fail "/opt/ws is not at $1"
+}
+
+echo "::group::A newer release checks its tag out, and drops the files git does not track"
+cat >>"$repo/mise.server.toml" <<'TOML'
+
+[bootstrap.files."/etc/ws-install-check/release"]
+content = "v0.3.0\n"
+TOML
+git -C "$repo" -c user.name=ws -c user.email=ws@localhost -c commit.gpgsign=false commit -q -am release
+git -C "$repo" tag v0.3.0
+echo v0.3.0 >"$tmp/serve/latest"
+# A trial's file, as .tools/serve-build writes it, would pin another ws.
+printf '[bootstrap.files."/etc/ws-install-check/local"]\ncontent = "local\\n"\n' |
+    as_root tee /opt/ws/mise.local.toml >/dev/null
+install_sh WS_MISE_URL="$url/mise/none"
+at v0.3.0
+[ "$(cat /etc/ws-install-check/release 2>/dev/null)" = v0.3.0 ] || fail "the bootstrap ran no tree of v0.3.0"
+[ ! -e /opt/ws/mise.local.toml ] || fail "a file git does not track stayed in /opt/ws"
+[ ! -e /etc/ws-install-check/local ] || fail "the bootstrap loaded a file git does not track"
+echo "::endgroup::"
+
+echo "::group::WS_VERSION checks its release's tag out"
+install_sh WS_VERSION=0.2.0 WS_MISE_URL="$url/mise/none"
+at v0.2.0
+echo "::endgroup::"
+
+echo "::group::A pre-release runs where WS_VERSION names it alone"
+git -C "$repo" -c user.name=ws -c user.email=ws@localhost -c commit.gpgsign=false commit -q --allow-empty -m rc
+git -C "$repo" tag v0.4.0-rc.1
+install_sh WS_VERSION=0.4.0-rc.1 WS_MISE_URL="$url/mise/none"
+at v0.4.0-rc.1
+# GitHub never redirects releases/latest to a pre-release: install.sh refuses one that it finds there.
+echo v0.4.0-rc.1 >"$tmp/serve/latest"
+if install_sh WS_MISE_URL="$url/mise/none" 2>"$tmp/refusal"; then
+    fail "install.sh took a pre-release as the latest release"
+fi
+grep -q 'GitHub redirects to' "$tmp/refusal" || fail "install.sh refused a pre-release as the latest, but not by its message"
+at v0.4.0-rc.1
+echo v0.3.0 >"$tmp/serve/latest"
 echo "::endgroup::"
 
 echo "::group::A version that is no version is refused"
-refused "$tmp/home1" WS_VERSION=0.2
+reset
+for version in 0.2 0.4.0-rc.0 0.4.0-rc.01 0.4.0-beta.1; do
+    if install_sh WS_VERSION="$version"; then
+        fail "install.sh went through with WS_VERSION=$version"
+    fi
+    [ ! -e /usr/local/bin/mise ] || fail "a refused install of $version left mise"
+done
 echo "::endgroup::"
 
-echo "::group::ws update moves ws to the latest release, and a second run stays"
-installs "$tmp/home4" WS_VERSION=0.1.0
-updates "$tmp/home4"
-has_version "$tmp/home4" v0.2.0
-only_ws "$tmp/home4"
-updates "$tmp/home4"
-has_version "$tmp/home4" v0.2.0
+echo "::group::WS_IN_PLACE runs the tree in /opt/ws as it stands"
+as_root cp -r "$repo" /opt/ws
+install_sh WS_IN_PLACE=1 WS_REPO="file://$tmp/nothing"
+written server
 echo "::endgroup::"
 
-echo "::group::ws update replaces the file a link leads to"
-installs "$tmp/home5" WS_VERSION=0.1.0
-mkdir "$tmp/home5/other"
-mv "$tmp/home5/.local/bin/ws" "$tmp/home5/other/ws"
-ln -s ../../other/ws "$tmp/home5/.local/bin/ws"
-updates "$tmp/home5"
-[ -L "$tmp/home5/.local/bin/ws" ] || fail "ws update replaced the link"
-[ "$("$tmp/home5/other/ws" version)" = v0.2.0 ] || fail "ws update left the link's file as it was"
-echo "::endgroup::"
-
-echo "::group::ws update refuses what install.sh refuses, and ws is as it was"
-installs "$tmp/home6" WS_VERSION=0.1.0
-update_refused "$tmp/home6" v0.3.0
-update_refused "$tmp/home6" v0.4.0
-echo "::endgroup::"
-
-if [ -n "${GITHUB_ACTIONS:-}" ]; then
-    echo "::group::Root installs to /usr/local/bin"
-    sudo env WS_RELEASES_URL="$url" sh "$root/install.sh"
-    [ "$(/usr/local/bin/ws version)" = v0.2.0 ] || fail "root's ws is not v0.2.0"
-    echo "::endgroup::"
+echo "::group::A tree that is not root's alone is refused"
+as_root chown nobody /opt/ws/mise.server.toml
+as_root rm -f /etc/ws-install-check/server
+if install_sh WS_IN_PLACE=1 WS_REPO="file://$tmp/nothing"; then
+    fail "install.sh ran a tree with a file that root does not own"
 fi
+[ ! -e /etc/ws-install-check/server ] || fail "a refused tree ran"
+echo "::endgroup::"

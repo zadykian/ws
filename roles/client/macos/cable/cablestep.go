@@ -1,7 +1,6 @@
 package cable
 
 import (
-	"cmp"
 	"context"
 	"fmt"
 	"os/exec"
@@ -9,7 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/values"
+	"github.com/zadykian/ws/roles/client/values"
 )
 
 // Cable gives the service that the server's WS_CABLE_SERVICE names a Manual Configuration of the
@@ -37,33 +36,6 @@ func (c Cable) program() (string, error) {
 		return "", fmt.Errorf("cannot find networksetup: put /usr/sbin, where macOS keeps it, on PATH")
 	}
 	return program, nil
-}
-
-// report says how the service stands, where the server's file names one. A disabled one is a conflict, as no
-// run turns it on, and it keeps its address.
-func (c Cable) report(ctx context.Context) ([]step.Item, error) {
-	if c.Conf.CableService == "" {
-		return nil, nil
-	}
-	program, err := c.program()
-	if err != nil {
-		return nil, err
-	}
-	list, err := c.M.RunShown(ctx, false, program, "-listallnetworkservices")
-	if err != nil {
-		return nil, fmt.Errorf("networksetup -listallnetworkservices failed: %w", err)
-	}
-	info, err := c.M.RunShown(ctx, false, program, "-getinfo", c.Conf.CableService)
-	if err != nil {
-		return nil, fmt.Errorf("networksetup -getinfo %q failed: %w", c.Conf.CableService, err)
-	}
-	item := step.Item{Kind: step.ServiceItem, Name: c.Conf.CableService, Want: cableClient + " " + cableMask}
-	item.Found = cmp.Or(cableOther(string(info)), item.Want)
-	if _, disabled := serviceListed(string(list), c.Conf.CableService); disabled {
-		item.Found += ", disabled"
-		item.Conflict = "disabled, so the cable carries nothing: turn it on in System Settings › Network"
-	}
-	return []step.Item{item}, nil
 }
 
 // plan reads the service with networksetup.

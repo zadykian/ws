@@ -36,13 +36,11 @@ type Options struct {
 	Observer Observer
 	// Check plans each step and applies none.
 	Check bool
-	// Parent names the role or stage of a nested run. A run of its own leaves it empty.
-	Parent string
-	// LeftOut says which steps the run plans and doesn't apply, by the run's Parent and the step's
-	// name. Nil leaves none out. A step is planned all the same, as later steps read its state.
+	// LeftOut says which steps the run plans and doesn't apply, by the step's name. Nil leaves none
+	// out. A step is planned all the same, as later steps read its state.
 	// Check leaves them out too, as it shows what the same run would make. A plan that fails here
 	// stops nothing, as the step wasn't asked for, and what waits on the step counts it as pending.
-	LeftOut func(parent, step string) bool
+	LeftOut func(step string) bool
 	// Stop is read before each step, and an error ends the run there, with the steps left Skipped.
 	// Nil never stops, as a run in lines ends mid-step or not at all.
 	Stop func() error
@@ -89,7 +87,7 @@ func (o Options) stopped() error {
 // settle takes one step as far as the run goes, and returns its last event for the run to send.
 func (o Options) settle(ctx context.Context, s Step, e Event, pending map[string]bool) Event {
 	name := e.Step
-	e.LeftOut = o.LeftOut != nil && o.LeftOut(o.Parent, name)
+	e.LeftOut = o.LeftOut != nil && o.LeftOut(name)
 	waitsOn := s.WaitsOn()
 	if waitsOn != "" {
 		if _, ok := pending[waitsOn]; !ok {
@@ -132,10 +130,8 @@ func (o Options) settle(ctx context.Context, s Step, e Event, pending map[string
 	return e.as(Done)
 }
 
-// Unreached ends each step as Skipped, for the nested runs that a failed run before them never
-// starts. Each step of a run gets its last event, and a screen has no other word of these.
-func Unreached(steps []Step, o Options) { o.unreached(steps, 0) }
-
+// unreached ends each step from the one at index from as Skipped, as a screen has no other word
+// of the steps past a failure or a stop.
 func (o Options) unreached(steps []Step, from int) {
 	for i := from; i < len(steps); i++ {
 		o.observe(o.event(i, steps[i]).as(Skipped))
@@ -143,7 +139,7 @@ func (o Options) unreached(steps []Step, from int) {
 }
 
 func (o Options) event(i int, s Step) Event {
-	return Event{Parent: o.Parent, Step: s.Name(), Index: i, Check: o.Check}
+	return Event{Step: s.Name(), Index: i, Check: o.Check}
 }
 
 func (o Options) observe(e Event) {

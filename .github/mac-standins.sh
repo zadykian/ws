@@ -1,17 +1,14 @@
 #!/bin/sh
-# The stand-ins of the mac and mac-wizard jobs (.github/workflows/mac.yml, mac-wizard/standin.sh),
-# made before their first run of ws client macos apply. They spare each run the downloads, which
-# mac-cld.yml makes for real, so that the jobs' many runs that must print nothing touch no network:
+# The stand-ins of the mac job (.github/workflows/mac.yml), made before its first mise bootstrap
+# (28-bootstrap.sh). They spare each run the downloads, which mac-cld.yml makes for real, so that
+# the job's many runs that must change nothing touch no network:
 #
 #   sh .github/mac-standins.sh
 #
-# - Ghostty.app and Zed.app, empty directories in ~/Applications, and the regular style of their
-#   font, an empty file in ~/Library/Fonts, which spare their casks. ws client macos apply writes
-#   /etc/ws/ghostty, as on a Mac with Ghostty;
 # - wireguard-tools from Homebrew where missing, whose wg and wireguard-go make the stand-in ws.
 #   The daemon needs neither, so this is the one download, a small formula, that the jobs make;
-# - ~/.local/bin/cld, whose version names no release, so that ws client macos apply neither installs
-#   nor updates it, as a cld built from a clone. It lacks restore tabs, so ssh's hosts get no
+# - ~/.local/bin/cld, whose version names no release, so that cld's unit neither installs nor
+#   updates it, as a cld built from a clone. It lacks restore tabs, so ssh's hosts get no
 #   LocalCommand.
 
 set -eu
@@ -21,8 +18,7 @@ if [ -e ~/.local/bin/cld ]; then
     exit 1
 fi
 brew list --formula wireguard-tools >/dev/null 2>&1 || brew install wireguard-tools
-mkdir -p ~/Applications/Ghostty.app ~/Applications/Zed.app ~/Library/Fonts ~/.local/bin
-: >~/Library/Fonts/JetBrainsMonoNerdFontMono-Regular.ttf
+mkdir -p ~/.local/bin
 cat >~/.local/bin/cld <<'EOS'
 #!/bin/sh
 # A stand-in cld: it answers --version with no release's, and fails at anything else.

@@ -6,8 +6,11 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
+	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/roles/server/values"
 )
+
+var root = account.User{Name: "root", Home: "/root"}
 
 const (
 	claudeBin  = "/root/.local/bin/claude"

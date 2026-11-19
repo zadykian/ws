@@ -2,6 +2,7 @@
 paths:
   - "roles/server/**"
   - "engine/core/resource/**"
+  - "engine/core/kind/**"
 ---
 
 # server
@@ -12,39 +13,54 @@ steps, and each role's README says what it sets up.
 
 ## The roles
 
-- A role is the Go steps of `roles/server/ubuntu/NAME`, with its page, its `README.md`, and a line in
-  the root README ([README](../../README.md)). `ubuntu.Roles` lists the roles in the order they run,
-  each closed over the machine's values and secrets ([roles.go](../../roles/server/ubuntu/roles.go)).
+- A role is `roles/server/ubuntu/NAME`, with its page, its `README.md`, and a line in the root
+  README ([README](../../README.md)). Its units run in the order of their `after`
+  ([The order](../../roles/server/ubuntu/frame/README.md#the-order)).
+- A role holds its spec, `units.toml.tmpl`, with its templates, and its mise files by env:
+  `mise.server.toml` for every server, `mise.booted.toml` where systemd is booted, and
+  `mise.account.toml` where `WS_USER` is not root. The side's one link,
+  `roles/server/mise/conf.d`, loads them. A role holds no plain `mise.toml`, which every env would
+  load ([specs_test.go](../../roles/server/cli/specs_test.go)).
+- Each unit of a spec is a line `"ws:KIND/NAME" = "in-sync"` of its role's `mise.server.toml`, or
+  of its `mise.account.toml` where the spec gives it for an account alone, never of
+  `mise.booted.toml`. `TestSpecsMatchMiseLines` fails on a line missing or extra
+  ([specs_test.go](../../roles/server/cli/specs_test.go)).
+- A path is one role's: where two roles' mise files declare it, mise keeps the later fragment's by
+  name and drops the other with no error.
 - The server's values are one struct, `values.Values`, parsed once from the machine's file with
-  unknown keys refused. A role's steps read it and add no key without a commit of their own
-  ([values.go](../../roles/server/ubuntu/values/values.go)).
+  unknown keys refused. A role's units read it and add no key without a commit of their own
+  ([values.go](../../roles/server/values/values.go)).
 - The secrets are one struct, `secrets.Secrets`, beside the values. ws decrypts it from age's armor
   in its process, as TOML with a table per kind. Unknown keys are refused, references expanded,
-  and no error or output shows a value. Steps take it as their second argument
-  ([secrets.go](../../roles/server/ubuntu/secrets/secrets.go), [ws's secrets](../../roles/server/ubuntu/secrets/README.md)).
+  and no error or output shows a value. A secret file's template alone reads it
+  ([file.md](../../engine/core/kind/file.md), [secrets.go](../../roles/server/secrets/secrets.go), [ws's secrets](../../roles/server/secrets/README.md)).
 - `secrets.Store` alone reads and writes ws's secrets file and makes its credential; cmd keeps
-  the commands and the root check ([store.go](../../roles/server/ubuntu/secrets/store.go)).
-- The roles set the machine up for `WS_USER`, `zadykian` by default, in `WS_HOME`. A step run as
+  the commands and the root check ([store.go](../../roles/server/secrets/store.go)).
+- The roles set the machine up for `WS_USER`, `zadykian` by default, in `WS_HOME`. A unit run as
   `WS_USER` sets `HOME` and starts in it: root needs no sudo, a container has none, and `HOME` would
-  otherwise be the caller's ([claude's install](../../roles/server/ubuntu/claude/install.go)).
+  otherwise be the caller's ([claude's units](../../roles/server/ubuntu/claude/units.toml.tmpl)).
 - Root reaches a file under `WS_HOME` through the account (`Account.File`, `Account.Dir`,
-  `Account.Absent`, `User.ReadHome`), or the step acts as `WS_USER`, as claude's does. The user owns
+  `Account.Absent`, `User.ReadHome`), or the unit acts as `WS_USER`, as claude's does. The user owns
   the home and could link a file elsewhere ([Links under the home](../../roles/server/ubuntu/security/README.md#links-under-the-home)).
 - ws's lines in a home file are `Account.Lines`, which refuses any link, at the file or on the way.
-- A line the maintainer acts on past a run, such as a key to copy, goes through
-  `effect.SayLasting`, as a screen's window goes with it ([The run screen](../../engine/tui/README.md#the-run-screen)).
 - A version is pinned in the package of the role that installs it. SigNoz's images are pinned in
   `roles/server/ubuntu/signoz/casting.yaml`, as its compose files are forged from it.
 - A restart or a reload that a watched change calls for is `resource.Forced`. `Group.Apply` runs it
-  after a failed change too, as the next run finds the file right and plans none.
+  after a failed change too, as the next run finds the file right and plans none. It waits, owed,
+  where a watched change itself did not apply, such as a file that its check refused
+  ([unit.go](../../engine/core/resource/systemd/unit.go)).
 
 ## Runs
 
+- A kind names no role's word: a role's fact comes in by its spec and its templates
+  ([kind](../../engine/core/kind/README.md)).
+- A unit that suits some machines alone, by their hardware or a value, says so by `when`. A new
+  fact is an entry of `whenFacts` ([kind](../../engine/core/kind/README.md#the-specs)).
 - A second run plans nothing, which CI's `playbook` job checks
-  ([The `playbook` job](../../.github/workflows/README.md#the-playbook-job)). A step that only reads plans no change.
-- A dry run, `--check`, applies nothing and shows how the machine differs
+  ([The `playbook` job](../../.github/workflows/README.md#the-playbook-job)). A unit that only reads plans no change.
+- A plan, mise's or `ws unit write --dry-run`, applies nothing and shows how the machine differs
   ([Dry runs](../../README.md#dry-runs)). A step reads in its Plan, a GET included
-  ([devtools](../../roles/server/ubuntu/devtools/internal/golang/golang.go)).
+  ([SigNoz's dashboards](../../roles/server/ubuntu/signoz/internal/dashboards/dashboards_plan.go)).
 - A role's test states dpkg's database by effecttest's package table, never by a `dpkg-query` line
   in Results, so apt's read can change under it
   ([machine_dpkg.go](../../engine/core/effect/effecttest/machine_dpkg.go)).
@@ -53,19 +69,19 @@ steps, and each role's README says what it sets up.
 - A report reads as Plan does and holds no secret: a `Secret` file shows no diff and no sum
   ([report.go](../../engine/core/step/report.go)). A `File` that a role builds in `Plan` shows by its change
   alone, so a healthy one has no item.
-- Where a dry run skips a step, a step beside it shows what the run would change, as Go's move into
-  `/usr/local/go` does ([claude's marketplaces](../../roles/server/ubuntu/claude/marketplaces.go)).
-- A step that needs a booted machine's systemd checks `systemd.Booted`: without one, as in CI's
+- Where a dry run skips a step, a step beside it shows what the run would change
+  ([claude's marketplaces](../../roles/server/ubuntu/claude/marketplaces.go)).
+- A unit that needs a booted machine's systemd checks `systemd.Booted`: without one, as in CI's
   container, it skips and says so.
 - A file ws writes whole, on the server or the Mac, has one line at its top, where its format
   takes comments: `file.Header(sign)`. The roles' templates and files spell it out. Its words,
   `Written by github.com/zadykian/ws`, are `file.Mark`, and `file.Ours` tests a first line for them.
   Each run replaces a change made to it by hand ([shell](../../roles/server/ubuntu/shell/README.md), [git](../../roles/server/ubuntu/git/README.md)).
 - A tool that updates itself, such as claude or rustup, is installed only where missing
-  ([claude's install](../../roles/server/ubuntu/claude/install.go)).
-- A role given the secrets of `ws server ubuntu apply --secrets`, changes nothing where they are
-  absent. With them, the file is the whole truth: a run removes what it lacks, such as a git token.
-  So a run without them, as CI's, keeps what a run with them made
+  ([claude's units](../../roles/server/ubuntu/claude/units.toml.tmpl)).
+- A unit that reads the secrets changes nothing on a machine without ws's secrets file. With it,
+  the file is the whole truth: a run removes what it lacks, such as a git token. So a run without
+  it, as CI's, keeps what a run with it made
   ([Git credentials](../../roles/server/ubuntu/git/README.md#git-credentials)).
 
 ## Downloads and keys
@@ -79,16 +95,18 @@ steps, and each role's README says what it sets up.
   ([package.go](../../engine/core/resource/apt/package.go)).
 - A tree is unpacked beside its target and moved in whole, and its marker is its probe
   ([tree.go](../../engine/core/resource/fetch/tree.go)).
-- An apt repository's key goes in only where its entry pins the primary fingerprint of each
-  certificate in it, and it holds one at least
-  ([devtools' pins](../../roles/server/ubuntu/devtools/pins.go)). Docker's key goes in only with the
-  checksum its code pins, so that a changed key fails the run
-  ([docker's repository](../../roles/server/ubuntu/docker/repository.go)).
+- An apt repository's key goes in only with the fingerprint that its mise source pins, as
+  devtools' sources do for each certificate of a key file
+  ([devtools' sources](../../roles/server/ubuntu/devtools/mise.server.toml)). Docker's key too, so that a changed key fails the run
+  ([docker's source](../../roles/server/ubuntu/docker/mise.server.toml)).
 
 ## signoz
 
 - foundryctl's compose files, in `roles/server/ubuntu/signoz/deployment/`, are never edited by
   hand: change `casting.yaml` and forge again ([The compose files](../../roles/server/ubuntu/signoz/README.md#the-compose-files)).
+- Each forged file and directory has its entry in the role's `mise.server.toml`, as mise copies
+  no tree: `TestEachForgedFileIsMises` fails on one missing or left over
+  ([units_test.go](../../roles/server/ubuntu/signoz/units_test.go)).
 - The dashboards' files are kept as SigNoz's API returns them, so that the step can compare the
   two. After a change of SigNoz's image, refresh them and commit them with the casting
   ([The dashboards](../../roles/server/ubuntu/signoz/internal/dashboards/dashboards/README.md#refreshing-them)).

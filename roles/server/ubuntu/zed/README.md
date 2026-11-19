@@ -1,12 +1,15 @@
 # zed
 
-The `zed` role is Go steps in `roles/server/ubuntu/zed`. Zed itself runs on the Mac, which opens ws
-over ssh. The role writes the settings that Zed's server on ws reads, and raises the open-file limit
-that the server needs. The Mac's side is [Zed on the Mac](../../../client/macos/zed/README.md).
+The `zed` role sets up Zed's server on ws from `mise bootstrap`. Zed itself runs on the Mac, which
+opens ws over ssh. The role's `mise.server.toml` writes the terminal's wrapper and its tmux.conf,
+root's, in `/usr/local/lib/ws/zed`. Its `units.toml.tmpl` holds the units: `file/zed-settings`, the
+settings that Zed's server reads, and `file/zed-nofile`, the open-file limit that the server needs.
+The Mac's side is [Zed on the Mac](../../../client/macos/zed/README.md).
 
 `~/.config/zed/settings.json` is owned by `WS_USER`. A run replaces a change made to it by hand
-and keeps the old file beside the new one. The key
-`WS_ZED_NOFILE` of `/etc/ws/values.yml` sets the limit, 65536 by default.
+and keeps the old file beside the new one, as `PATH.PID.TIME~`. A link on the way is refused. The
+key `WS_ZED_NOFILE` of `/etc/ws/values.yml` sets the limit, 65536 by default. No unit needs a booted
+systemd, so the role runs whole in CI's container.
 
 ## What runs where
 
@@ -131,9 +134,13 @@ worktree.
 
 ## The open-file limit
 
-`/etc/security/limits.d/ws-zed.conf` gives `WS_USER` a soft limit of `WS_ZED_NOFILE` open files. sshd's
-logins start at 1024 on Ubuntu 26.04, and past it Zed's server busy-loops at high CPU while its
-reconnect proxies never exit (zed#62995). Zed raises the limit in its GUI alone.
+The unit `file/zed-nofile` writes `/etc/security/limits.d/ws-zed.conf`, root's, from
+`files/limits.conf.tmpl`. It gives `WS_USER` a soft limit of `WS_ZED_NOFILE` open files. A unit
+writes it, not mise, as its text reads the values: ws's have defaults, and mise's read of
+`values.yml` fails the whole run where the file is missing.
+
+sshd's logins start at 1024 on Ubuntu 26.04, and past it Zed's server busy-loops at high CPU while
+its reconnect proxies never exit (zed#62995). Zed raises the limit in its GUI alone.
 
 - The file names the user, as limits.conf(5) says a `*` line does not apply to root.
 - A new ssh login gets the limit through `pam_limits`. A running server keeps 1024 until it
@@ -214,7 +221,7 @@ clock.
 | An agent's read or grep never ends (zed#65338) | Stop the turn and send it again |
 | New tabs start new sessions while old tmux clients stay attached | `tmux -L zed detach-client -s =NAME`, then a new tab |
 | The Disconnected overlay | Reconnect, at the cost of a new daemon |
-| `ssh ws` fails at once for an hour | fail2ban banned the tunnel address: [lift the ban](../../../client/macos/README.md#sshs-hosts) |
+| `ssh ws` fails at once for an hour | fail2ban banned the tunnel address: [lift the ban](../../../client/README.md#sshs-hosts) |
 
 Neither command has a default key. Release builds register `remote_debug::SimulateDisconnect`,
 `SimulateTimeout` and `SimulateTimeoutExhausted` in a remote project's workspace. They reproduce

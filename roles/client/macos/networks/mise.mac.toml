@@ -1,0 +1,3 @@
+# The networks' line for the Mac.
+[bootstrap.packages]
+"ws:state/networks" = "in-sync"

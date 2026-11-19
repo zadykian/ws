@@ -93,8 +93,8 @@ func (d *Daemon) start(ctx context.Context) error {
 	return nil
 }
 
-// replaced tells whether a new file took the place of the program since start, as ws client macos
-// apply leaves it where it stops before it restarts the daemons.
+// replaced tells whether a new file took the place of the program since start.
+// A bootstrap that stops between the unit of /usr/local/bin/ws and launchd's restart leaves it so.
 func (d *Daemon) replaced() bool {
 	if d.program == nil {
 		return false

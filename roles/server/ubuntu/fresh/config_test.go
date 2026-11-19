@@ -1,16 +1,27 @@
-package fresh
+package fresh_test
 
 import (
 	"bufio"
 	"bytes"
+	_ "embed"
 	"encoding/json"
 	"os"
 	"slices"
 	"strings"
 	"testing"
 
+	"github.com/pelletier/go-toml/v2"
+
 	"github.com/zadykian/ws/engine/core/resource"
 )
+
+// themeFile and wrapper are the role's files, as the mise config reads them.
+//
+//go:embed files/themes/jetbrains-dark.json
+var themeFile []byte
+
+//go:embed files/fresh
+var wrapper []byte
 
 // A malformed config makes Fresh load its defaults and exit 0, so these tests are its only check.
 
@@ -53,7 +64,7 @@ func withoutComments(data []byte) []byte {
 
 // renderedAt renders the template for the home.
 func renderedAt(t *testing.T, home string) []byte {
-	data, err := resource.Render(templates, "files/config.json.tmpl", struct{ Home string }{home})
+	data, err := resource.Render(os.DirFS("."), "files/config.json.tmpl", struct{ Home string }{home})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -227,6 +238,50 @@ func TestEachShellKeyIsNoopInTheTerminal(t *testing.T) {
 	for _, way := range []string{"ctrl+Space", "ctrl+]", "F9", "alt+o"} {
 		if bound["terminal "+way] == "noop" {
 			t.Errorf("%s is Fresh's way out of its terminal", way)
+		}
+	}
+}
+
+func TestTheActionListNamesThePinnedVersion(t *testing.T) {
+	data, err := os.ReadFile("files/actions.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	line, _, _ := strings.Cut(string(data), "\n")
+	pin, err := os.ReadFile("units.toml.tmpl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var units struct {
+		Deb struct{ Fresh struct{ Version string } }
+	}
+	if err := toml.Unmarshal(pin, &units); err != nil {
+		t.Fatal(err)
+	}
+	version, _, _ := strings.Cut(units.Deb.Fresh.Version, "-")
+	if want := "Fresh " + version + ":"; !strings.Contains(line, want) {
+		t.Errorf("the list's first line %q lacks %q: list the actions of the new version", line, want)
+	}
+}
+
+func TestTheThemeIsStrictJSONUnderItsName(t *testing.T) {
+	var theme map[string]any
+	if err := json.Unmarshal(themeFile, &theme); err != nil {
+		t.Fatal(err)
+	}
+	if theme["name"] != "JetBrains Dark" {
+		t.Fatalf("name %v, want JetBrains Dark", theme["name"])
+	}
+	for section, value := range theme {
+		colours, isMap := value.(map[string]any)
+		if !isMap {
+			continue
+		}
+		for name, colour := range colours {
+			triple, isList := colour.([]any)
+			if !isList || len(triple) != 3 {
+				t.Errorf("%s.%s: %v isn't [r, g, b]", section, name, colour)
+			}
 		}
 	}
 }

@@ -2,7 +2,9 @@ package file
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os/exec"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/resource"
@@ -33,7 +35,16 @@ func (c checked) Item() step.Item { return c.Change.(writeFile).Item() }
 // Apply writes the content beside the target and runs the check on it. Only a good file is then
 // written over the target.
 func (c checked) Apply(ctx context.Context) error {
-	f := c.v.File
+	if err := c.v.try(ctx); err != nil {
+		return err
+	}
+	return c.Change.Apply(ctx)
+}
+
+// try writes the content beside the target, runs the check on it, and removes it. A refusal leaves
+// the target unchanged.
+func (v Validated) try(ctx context.Context) error {
+	f := v.File
 	pending := f.Path + ".ws-check"
 	if err := f.guard(); err != nil {
 		return err
@@ -44,15 +55,29 @@ func (c checked) Apply(ctx context.Context) error {
 	if err := f.M.WriteAtomic(pending, f.Content, f.attrs()); err != nil {
 		return err
 	}
-	name, args := c.v.Check(pending)
+	name, args := v.Check(pending)
 	out, err := f.M.RunRoot(ctx, name, args...)
 	if _, rmErr := f.M.RunRoot(ctx, "rm", "-f", pending); rmErr != nil && err == nil {
 		err = rmErr
 	}
-	if err != nil {
+	switch {
+	case err != nil && f.Secret:
+		// The checker's output may quote the content, which the diff and the log never show. The
+		// machine's error holds its stderr, so the exit status alone stands for it.
+		return fmt.Errorf("%s refuses the new %s: %s", name, f.Path, exitStatus(err))
+	case err != nil:
 		return fmt.Errorf("%s refuses the new %s: %w: %s", name, f.Path, err, strings.TrimSpace(string(out)))
 	}
-	return c.Change.Apply(ctx)
+	return nil
+}
+
+// exitStatus says how a check ended, with none of the text that err carries.
+func exitStatus(err error) string {
+	var ee *exec.ExitError
+	if errors.As(err, &ee) {
+		return fmt.Sprintf("exit status %d", ee.ExitCode())
+	}
+	return "it failed"
 }
 
 // Plan plans the file's changes, each checked before it applies.

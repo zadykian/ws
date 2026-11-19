@@ -1,0 +1,115 @@
+# The docker role's units, a Go template over /etc/ws/values.yml. mise adds Docker's repository and
+# packages first. These set up the daemon, its resolver and the account's own daemon, each behind
+# the one before. The account leaves the docker group ahead of them all.
+{{- $bridge := printf "%s/%d" .Docker.BridgeIP .Docker.BridgePrefixLength }}
+
+# Docker avoids no route but the main table's on-link ones, so a VPN's route into its networks is
+# refused before daemon.json takes the pool. The routes are those of the moment: a VPN that is
+# down has none.
+[state.docker-routes]
+routes = { pool = "{{ .Docker.AddressPool }}", net = "{{ $bridge }}", dev = "docker0", hint = "Set WS_DOCKER_ADDRESS_POOL and WS_DOCKER_BRIDGE_IP clear of them. A moved pool serves the networks created afterwards, as by docker compose down and up. docker0 takes a moved bridge as Docker starts with no container running, as after a reboot" }
+
+# Containers resolve names through the host's resolver, on the default bridge's address.
+[file.docker-resolved]
+path = "/etc/systemd/resolved.conf.d/docker.conf"
+template = "files/resolved.conf.tmpl"
+service = "systemd-resolved.service"
+after = "state/docker-routes"
+
+# ufw lets Docker's networks reach that resolver through their bridges, whatever their subnets.
+[state.docker-dns]
+after = "file/docker-resolved"
+
+[state.docker-dns.ufw]
+comment = "DNS from containers"
+rules = [
+  { action = "allow", proto = "any", to = "{{ .Docker.BridgeIP }}", to_port = "53", from = "0.0.0.0/0", from_port = "any", dir = "in", interface = "docker0" },
+  { action = "allow", proto = "any", to = "{{ .Docker.BridgeIP }}", to_port = "53", from = "0.0.0.0/0", from_port = "any", dir = "in", interface = "br-+" },
+]
+
+# The limits are over dockerd and its containers together: the values', or half the RAM and the
+# CPUs. docker.service's drop-in puts dockerd in the slice, so a change here waits for its restart.
+[file.docker-slice]
+path = "/etc/systemd/system/docker.slice"
+template = "files/docker.slice.tmpl"
+after = "state/docker-dns"
+
+# One restart for both files, which live-restore carries the running containers past. dockerd
+# checks daemon.json before it replaces the live one.
+[service.docker]
+unit = "docker.service"
+enabled = true
+run = "running"
+after = "file/docker-slice"
+
+[[service.docker.file]]
+path = "/etc/systemd/system/docker.service.d/override.conf"
+source = "files/override.conf"
+
+[[service.docker.file]]
+path = "/etc/docker/daemon.json"
+template = "files/daemon.json.tmpl"
+check = ["dockerd", "--validate", "--config-file", "{}"]
+
+# docker0 takes a moved address only as dockerd starts with no container running.
+[state.docker-bridge]
+addr = { iface = "docker0", want = "{{ $bridge }}", hint = "Docker moves it only as it starts with no container running, and until then lookups to a moved address get no answers. Reboot, or stop every container and restart Docker, then run the bootstrap again, as the server's runbook writes it" }
+after = "service/docker"
+{{- if ne .User "root" }}
+
+# The account's own daemon, where WS_USER is not root: mise.account.toml names these units. The
+# docker group amounts to root, and Docker's tool refuses a user who can write the system's socket.
+# The group comes with the packages, so the account leaves it first: a run that stops at a later
+# unit leaves no account with root's power.
+[state.docker-left]
+left = { user = "{{ .User }}", group = "docker" }
+
+# rootlesskit maps a container's users to the account's subordinate ids. The account's daemon
+# waits on the system's.
+[state.docker-subids]
+subids = "{{ .User }}"
+after = "state/docker-bridge"
+
+# The io controller for the account's systemd: Ubuntu delegates cpu, memory and pids, and a
+# container's --device-read-bps needs io.
+[file.docker-delegate]
+path = "/etc/systemd/system/user@.service.d/delegate.conf"
+source = "files/delegate.conf"
+after = "state/docker-subids"
+
+# The account's systemd runs without a login, as its daemon needs.
+[state.docker-linger]
+linger = "{{ .User }}"
+after = "file/docker-delegate"
+
+# The account's files, and one restart of its daemon where any of them changes. Until Docker's
+# tool has made the unit, there is none to restart.
+[service.docker-rootless]
+unit = "docker.service"
+user = "{{ .User }}"
+run = "running"
+after = "state/docker-linger"
+
+[[service.docker-rootless.file]]
+path = "{{ .Home }}/.config/docker/daemon.json"
+owner = "{{ .User }}"
+template = "files/rootless.json.tmpl"
+check = ["dockerd", "--validate", "--config-file", "{}"]
+
+[[service.docker-rootless.file]]
+path = "{{ .Home }}/.config/systemd/user/docker.slice"
+owner = "{{ .User }}"
+template = "files/docker.slice.tmpl"
+
+[[service.docker-rootless.file]]
+path = "{{ .Home }}/.config/systemd/user/docker.service.d/ws.conf"
+owner = "{{ .User }}"
+source = "files/rootless.conf"
+
+# Docker's tool makes the account's unit, enables and starts it, and makes the rootless context.
+# The account's systemd reads its units first. One that started before dbus-user-session landed
+# does not know dbus.socket. A run cut between the unit and its link runs the tool again.
+[state.docker-rootless-install]
+run = { user = "{{ .User }}", command = ["sh", "-c", "systemctl --user daemon-reload && dockerd-rootless-setuptool.sh install"], creates = ["{{ .Home }}/.config/systemd/user/docker.service", "{{ .Home }}/.config/systemd/user/default.target.wants/docker.service"] }
+after = "service/docker-rootless"
+{{- end }}

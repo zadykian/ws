@@ -1,22 +1,24 @@
 # signoz
 
-The `signoz` role, Go steps in `roles/server/ubuntu/signoz`, runs [SigNoz](https://signoz.io) in Docker,
-which keeps the machine's telemetry for 90 days. Its UI and its OTLP/HTTP intake listen on loopback,
-with no login. It has a dashboard of the host and one of claude's usage.
+The `signoz` role, mise's config and ws's units in `roles/server/ubuntu/signoz`, runs
+[SigNoz](https://signoz.io) in Docker, which keeps the machine's telemetry for 90 days. Its UI and
+its OTLP/HTTP intake listen on loopback, with no login. It has a dashboard of the host and one of
+claude's usage.
 
 ## The stack
 
-SigNoz runs in Docker from the compose files in `roles/server/ubuntu/signoz/deployment`, which the role
-copies to `/opt/signoz`. Docker's published ports get past ufw, so only two are published, on
-loopback: the UI on `127.0.0.1:3301` and the OTLP/HTTP intake on `127.0.0.1:14318`. 3301 was
-SigNoz's UI port before 8080, which dev servers often take.
+SigNoz runs on the system's Docker daemon from the compose files in
+`roles/server/ubuntu/signoz/deployment`, which mise copies to `/opt/signoz` (`mise.server.toml`).
+Docker's published ports get past ufw, so only two are published, on loopback: the UI on
+`127.0.0.1:3301` and the OTLP/HTTP intake on `127.0.0.1:14318`. 3301 was SigNoz's UI port before
+8080, which dev servers often take.
 
 ClickHouse, SigNoz's database, may use 4 GB of memory. Without a limit of its own, it would size
 itself to the host's RAM, as it cannot see the limit of `docker.slice`.
 
 No one logs in: SigNoz serves every request as its root user, and its UI shows a banner that says
-so. The role generates the root user's password on the machine, in `/opt/signoz/root.env`, which
-only root reads; nothing else needs it. Reach the UI through an SSH tunnel, then open
+so. The role draws the root user's password on the machine, once, in `/opt/signoz/root.env`,
+which only root reads; nothing else needs it. Reach the UI through an SSH tunnel, then open
 `http://localhost:3301`:
 
 ```sh
@@ -25,10 +27,22 @@ ssh -N -L 3301:127.0.0.1:3301 WS_USER@SERVER
 
 A `LocalForward 3301 127.0.0.1:3301` in the client's `~/.ssh/config` does the same.
 
-The steps run in this order: the files, the password, `docker compose up`, the wait for the API, the
-retention and the dashboards. Up runs only where a recreation is due, or a service that keeps
-running is down, as it would run the schema migrator again. Without systemd booted, as in CI's
-container, the steps from up on skip and say so.
+mise copies the files first. Then ws's units (`units.toml.tmpl`) run in this order, after Docker's,
+the frame's `state/ws-binary` and the shell's `file/shell-env`, which waits on it. otelcol's units,
+which read that file, hang below the sync, so a read of them waits where the file has changes:
+
+- `state/signoz-password` runs `ws server ubuntu signoz password` where its `--check` fails: where
+  `root.env` is missing, or has another owner or mode.
+- `compose/signoz`, of the kind `compose`, ups the project. It keeps the SHA-256 of the files in
+  `/opt/signoz`, `root.env` included, in `/var/lib/ws/compose/signoz`. Where they differ from the
+  last good up, as after a new password or a forge, it recreates every container. A container
+  would not see a bind-mounted file's change otherwise. Otherwise it ups only where a service that
+  keeps running is down, as an up runs the schema migrator again.
+- `state/signoz-sync` runs `ws server ubuntu signoz sync` where its `--check` fails: it waits for
+  the API, then sets the retention and the dashboards.
+
+Without systemd booted, as in CI's container, the three skip and say so, and `root.env` is not
+written. otelcol's units wait on the sync.
 
 ## Retention
 
@@ -36,8 +50,8 @@ SigNoz keeps traces, metrics and logs for 90 days, `WS_SIGNOZ_RETENTION_DAYS`; i
 days, and 30 for metrics. The role sets it through SigNoz's API before anything is sent, as a change
 applies only to data that comes in after it. It sets it after SigNoz's schema migrator has finished
 too, as the migrator sets its own. Settings › General in the UI shows it; rules set there to keep
-some logs for another time stay. `ws server ubuntu apply --check` reads it and reports what it would
-change, and skips it where SigNoz isn't running.
+some logs for another time stay. `sudo ws server ubuntu signoz sync --check` reads it and reports
+what it would change, and skips it where SigNoz isn't running.
 
 ## The dashboards
 
@@ -71,7 +85,8 @@ replace each dashboard.
 The compose files are generated. SigNoz's [Foundry](https://github.com/SigNoz/foundry) forges them
 from `roles/server/ubuntu/signoz/casting.yaml`, which pins every image, and the checksum of a ClickHouse
 function the stack downloads from GitHub. To change them, change the casting, then forge again with
-foundryctl 0.3.0 and commit what it writes:
+foundryctl 0.3.0 and commit what it writes. A file or directory that a forge adds or drops takes
+its entry in `mise.server.toml` too, which `TestEachForgedFileIsMises` checks:
 
 ```sh
 cd roles/server/ubuntu/signoz
@@ -84,7 +99,7 @@ for a newer release. It never removes a file, hence the `rm`.
 
 A new SigNoz may return the dashboards with fields added or dropped, and the role would then replace
 them on every run. So after changing SigNoz's image, unlock any dashboard locked in the UI, reported
-or not, as the refresh stops at one. Then run `ws server ubuntu apply --only signoz`, refresh
+or not, as the refresh stops at one. Then run `sudo ws server ubuntu signoz sync`, refresh
 `host.json` and `claude.json` from SigNoz as
 `roles/server/ubuntu/signoz/internal/dashboards/dashboards/README.md` says,
 review their diff, and commit them with the casting. A second run must then leave both dashboards as

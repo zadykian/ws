@@ -12,9 +12,6 @@ import (
 	"github.com/zadykian/ws/engine"
 )
 
-// PlainFlag names the persistent flag that keeps a command to lines.
-const PlainFlag = "plain"
-
 // Group returns a command that only holds others. Alone it prints its help, and an unknown
 // subcommand is a usage error.
 func Group(use, short string, cmds ...*cobra.Command) *cobra.Command {
@@ -30,9 +27,8 @@ func Group(use, short string, cmds ...*cobra.Command) *cobra.Command {
 
 // Root returns the ws command with the groups of this system.
 func Root(p Env, groups ...*cobra.Command) *cobra.Command {
-	root := Group("ws", "set up the server and the Mac that works on it", Version(p), Update(p))
+	root := Group("ws", "set up the server and the Mac that works on it", Version(p))
 	root.AddCommand(groups...)
-	root.PersistentFlags().Bool(PlainFlag, false, "print lines, with no full-screen display")
 	root.SilenceErrors = true
 	root.SilenceUsage = true
 	root.CompletionOptions.DisableDefaultCmd = true
@@ -60,7 +56,8 @@ func Walk(c *cobra.Command, f func(*cobra.Command)) {
 
 // Execute runs root with args and returns the exit status. An error prints on stderr after the
 // path of the command that returned it. A usage error adds a line to the command's help and takes
-// status 2, any other error status 1. A signal's exit prints nothing.
+// status 2, an ExitStatus its own code, and any other error status 1. A signal's exit prints
+// nothing, nor does an ExitStatus without an error of its own.
 func Execute(ctx context.Context, root *cobra.Command, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	root.SetArgs(append([]string{}, args...))
 	root.SetIn(stdin)
@@ -75,13 +72,25 @@ func Execute(ctx context.Context, root *cobra.Command, args []string, stdin io.R
 		return 128 + int(cut.Sig)
 	}
 	path := cmd.CommandPath()
-	for line := range strings.SplitSeq(err.Error(), "\n") {
-		_, _ = fmt.Fprintf(stderr, "%s: %s\n", path, line)
+	var status engine.ExitStatus
+	if errors.As(err, &status) {
+		if status.Err != nil {
+			printLines(stderr, path, err)
+		}
+		return status.Code
 	}
+	printLines(stderr, path, err)
 	var usage engine.UsageError
 	if errors.As(err, &usage) {
 		_, _ = fmt.Fprintf(stderr, "Run '%s --help' for usage.\n", path)
 		return 2
 	}
 	return 1
+}
+
+// printLines prints each line of err on w, after the path of the command that returned it.
+func printLines(w io.Writer, path string, err error) {
+	for line := range strings.SplitSeq(err.Error(), "\n") {
+		_, _ = fmt.Fprintf(w, "%s: %s\n", path, line)
+	}
 }

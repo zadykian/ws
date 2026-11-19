@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/fs"
 	"os/exec"
 	"slices"
 	"strings"
@@ -19,23 +18,17 @@ const helperPattern = `^credential\..*helper$`
 
 // tokenURLs returns the URLs whose helpers /etc/ws/tokens.gitconfig holds after this run: the
 // entries', and the file's own unless the secrets file is the whole truth.
-func (g Config) tokenURLs(ctx context.Context) ([]string, error) {
+func (s shadow) tokenURLs(ctx context.Context) ([]string, error) {
 	var urls []string
-	for _, c := range g.Creds {
+	for _, c := range s.Creds {
 		urls = append(urls, c.URL)
 	}
-	if !g.Whole {
-		old, err := g.M.ReadRootFile(tokensPath)
-		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+	if !s.Whole {
+		keys, err := tokenKeys(ctx, s.M)
+		if err != nil {
 			return nil, err
 		}
-		if err == nil {
-			keys, err := gitNames(ctx, g.M, old)
-			if err != nil {
-				return nil, err
-			}
-			urls = append(urls, keptURLs(keys, nil)...)
-		}
+		urls = append(urls, keptURLs(keys, nil)...)
 	}
 	slices.Sort(urls)
 	return slices.Compact(urls), nil
@@ -74,23 +67,23 @@ func resetting(text string, urls []string) []string {
 	return names
 }
 
-// noteCredentials warns of the credential sections in ~/.gitconfig's text that reset a token's
-// helper. They sit below the include, so that they win over tokens.gitconfig's. ws's file sets gh's
-// program already, so that the sections can go.
-func (g Config) noteCredentials(ctx context.Context, text []byte) error {
-	urls, err := g.tokenURLs(ctx)
+// credentials returns the note of the credential sections in ~/.gitconfig's text that reset a
+// token's credential helper. They sit below the include, so that they win over tokens.gitconfig's. ws's file
+// sets gh's program already, so that the sections can go.
+func (s shadow) credentials(ctx context.Context, text []byte) ([]string, error) {
+	urls, err := s.tokenURLs(ctx)
 	if err != nil || len(urls) == 0 {
-		return err
+		return nil, err
 	}
-	out, err := g.M.RunInput(ctx, text, "git", "config", "--file", "-", "--get-regexp", helperPattern)
+	out, err := s.M.RunInput(ctx, text, "git", "config", "--file", "-", "--get-regexp", helperPattern)
 	var ee *exec.ExitError
 	if err != nil && (!errors.As(err, &ee) || ee.ExitCode() != 1) {
-		return fmt.Errorf("git config cannot read ~/.gitconfig: %w", err)
+		return nil, fmt.Errorf("git config cannot read ~/.gitconfig: %w", err)
 	}
 	if names := resetting(string(out), urls); len(names) > 0 {
-		g.Out.Warn("~/.gitconfig's credential sections %s, below the include, reset the helpers of %s "+
+		return []string{fmt.Sprintf("~/.gitconfig's credential sections %s, below the include, reset the helpers of %s "+
 			"for the URLs under them: remove them, as %s sets gh's program already",
-			strings.Join(names, ", "), tokensPath, gitcfg.Path)
+			strings.Join(names, ", "), tokensPath, gitcfg.Path)}, nil
 	}
-	return nil
+	return nil, nil
 }

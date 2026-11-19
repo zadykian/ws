@@ -22,8 +22,7 @@ func TestRunWithLeavesStepsOut(t *testing.T) {
 	var ev []step.Event
 	o := step.Options{
 		Observer: observerFunc(func(e step.Event) { ev = append(ev, e) }),
-		Parent:   "p",
-		LeftOut:  func(parent, name string) bool { return parent == "p" && (name == "a" || name == "d") },
+		LeftOut:  func(name string) bool { return name == "a" || name == "d" },
 	}
 	changed, err := step.RunWith(context.Background(), steps, o)
 	if err != nil || !changed {
@@ -55,7 +54,7 @@ func TestRunWithLeaveOutPrintsLikeNone(t *testing.T) {
 	var log []string
 	out := &effecttest.Out{}
 	steps := []step.Step{&fake{name: "a", todo: []step.Change{change("x")}, log: &log}}
-	o := step.Options{Observer: step.Printer{Out: out}, LeftOut: func(string, string) bool { return true }}
+	o := step.Options{Observer: step.Printer{Out: out}, LeftOut: func(string) bool { return true }}
 	if _, err := step.RunWith(context.Background(), steps, o); err != nil {
 		t.Fatal(err)
 	}
@@ -76,7 +75,7 @@ func TestRunWithCheckLeavesStepsOut(t *testing.T) {
 	var ev []step.Event
 	out := &effecttest.Out{}
 	printer := step.Printer{Out: out}
-	o := step.Options{Check: true, LeftOut: func(_, name string) bool { return name != "b" && name != "c" },
+	o := step.Options{Check: true, LeftOut: func(name string) bool { return name != "b" && name != "c" },
 		Observer: observerFunc(func(e step.Event) { ev = append(ev, e); printer.Observe(e) })}
 	changed, err := step.RunWith(context.Background(), steps, o)
 	if err != nil || !changed {
@@ -109,7 +108,7 @@ func TestRunWithCountsNoChangeLeftOut(t *testing.T) {
 			&fake{name: "b", waitsOn: "a", todo: x, log: &log},
 			&fake{name: "c", log: &log},
 		}
-		o := step.Options{Check: check, LeftOut: func(_, name string) bool { return name == "a" }}
+		o := step.Options{Check: check, LeftOut: func(name string) bool { return name == "a" }}
 		changed, err := step.RunWith(context.Background(), steps, o)
 		if err != nil || changed {
 			t.Errorf("check %v: changed, err = %v, %v, want no change", check, changed, err)
@@ -130,7 +129,7 @@ func TestALeftOutPlanThatFailsStopsNoRun(t *testing.T) {
 		&fake{name: "chosen", todo: x, log: &log},
 	}
 	out := &effecttest.Out{}
-	o := step.Options{Observer: step.Printer{Out: out}, LeftOut: func(_, name string) bool { return name == "broken" }}
+	o := step.Options{Observer: step.Printer{Out: out}, LeftOut: func(name string) bool { return name == "broken" }}
 	changed, err := step.RunWith(context.Background(), steps, o)
 	if err != nil || !changed {
 		t.Fatalf("changed, err = %v, %v", changed, err)
@@ -149,7 +148,7 @@ func TestACutPlanStopsTheRunThoughItsStepIsLeftOut(t *testing.T) {
 		&fake{name: "a", planErr: context.Canceled, log: &log},
 		&fake{name: "b", log: &log},
 	}
-	_, err := step.RunWith(ctx, steps, step.Options{LeftOut: func(string, string) bool { return true }})
+	_, err := step.RunWith(ctx, steps, step.Options{LeftOut: func(string) bool { return true }})
 	if !errors.Is(err, context.Canceled) || len(log) != 1 {
 		t.Errorf("err = %v, log = %q", err, log)
 	}

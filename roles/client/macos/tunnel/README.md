@@ -1,6 +1,6 @@
 # The tunnel daemons
 
-`ws client macos tunnel run --server NAME` is the daemon of one server ([The Mac](../README.md)).
+`ws client macos tunnel run --server NAME` is the daemon of one server ([The Mac](../../README.md)).
 Each has its own utun and its own directory, `/etc/ws/tunnel/NAME`, with `tunnel.conf` and
 `routes.d`. The Mac's key sits beside the directories. A daemon reads the other servers' directories
 too, so that two of them keep apart. It writes nothing there.
@@ -27,11 +27,13 @@ logs `leaves the route to NETWORK alone: it goes through IFACE, not UTUN`.
 
 ## Reading again
 
-An `apply` that writes a server's `tunnel.conf` has every other loaded daemon read again, by
-SIGHUP, so that each counts that server's endpoints at once.
+Each daemon's job in launchd's unit of the tunnel lists every server's `tunnel.conf` and
+`routes.d`. So a bootstrap that changes one sends every loaded daemon a SIGHUP, and each counts
+that server's endpoints and networks at once.
 
-`ws client macos tunnel routes` and the removal of a server's daemon, at the next `apply`, have
-every loaded daemon read again, by SIGHUP. A daemon routes at once what a gone server held.
+`ws client macos tunnel routes`, and the removal of a server's daemon by `ws client macos tunnel
+conf`, have every loaded daemon read again, by SIGHUP. A daemon routes at once what a gone server
+held.
 
 ## The cable
 
@@ -41,6 +43,6 @@ leave the cable out, as they would try an address that is no server of theirs.
 
 ## A new copy of ws
 
-A daemon looks at root's copy of `ws` at each tick, 10 s after the last. Where a new file took its
-place, as after an `apply` that stopped before it restarted the daemons, it logs `root's copy of ws
-is new; stops, for launchd to start the new one`, and launchd starts the new copy.
+A daemon looks at root's copy of `ws`, `/usr/local/bin/ws`, at each tick, 10 s after the last.
+Where a new file took its place, as the bootstrap's copy of a new pin does, it logs `root's copy of
+ws is new; stops, for launchd to start the new one`, and launchd starts the new copy.

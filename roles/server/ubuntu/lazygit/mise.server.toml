@@ -1,0 +1,15 @@
+# lazygit and git-delta from Ubuntu's archive, and the unit of lazygit's config. apt updates both.
+[bootstrap.packages]
+"apt:git-delta" = "latest"
+"apt:lazygit" = "latest"
+"ws:file/lazygit-config" = "in-sync"
+
+# The wrapper puts the repository and its branch in the terminal's title. It comes after the
+# packages, as it runs the package's binary, and before the package's /usr/bin/lazygit on every
+# PATH of Ubuntu's.
+[bootstrap.files."/usr/local/bin/lazygit"]
+source = "files/lazygit"
+owner = "root"
+group = "root"
+mode = "0755"
+phase = "post-packages"

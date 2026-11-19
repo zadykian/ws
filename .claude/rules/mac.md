@@ -1,14 +1,13 @@
 ---
 paths:
   - "cmd/**"
-  - "main.go"
   - "engine/**"
   - "roles/**"
 ---
 
 # mac
 
-The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `roles/`
+The rules a change to the ws CLI keeps, in `cmd/`, `engine/` and `roles/`
 (its module is at the root), each linking its reason
 ([#273](https://github.com/zadykian/ws/issues/273)). The hard rules of
 [CLAUDE.md](../CLAUDE.md#hard-rules) hold here too.
@@ -17,11 +16,8 @@ The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `rol
   no other step's state. A step that needs another done first names it in `Step.WaitsOn`
   ([step.go](../../engine/core/step/step.go)).
 - A run reports each step to a `step.Observer`, and each step ends with one event of `Done`,
-  `Failed` or `Skipped`. A run inside another passes the observer on, and names its role or stage
-  as `Options.Parent` ([step.go](../../engine/core/step/step.go)).
-- The Mac's steps are `macos.Mac`'s: a caller runs, reads or names them through it, and builds none
-  itself. Each step is a role of one step, and `Run` runs them through `role.Run` as one role under
-  the run's parent ([mac.go](../../roles/client/macos/mac.go)).
+  `Failed` or `Skipped`. `ws unit` runs the units so, as steps
+  ([step.go](../../engine/core/step/step.go)).
 - A step is pure wherever it can be: it reads, a pure function turns what it read into `Change`
   values that apply themselves. Tests compare the plan's headlines (`step.Headline`).
 - A whole file that ws writes in the user's home is a `file.UserFile`, and a directory it writes
@@ -34,20 +30,21 @@ The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `rol
 - Effects are passed in: a step holds `effect.Prompt`, `effect.Out` and `effect.Machine` as fields
   and a function takes them as parameters. Tests use the fakes of
   [effecttest](../../engine/core/effect/effecttest/effecttest.go), never the real ones.
-- A step that wants sudo's password ahead of its lines calls `local.Validate`, never `sudo -v`
-  by `Pass`, which would ask over a screen ([the TUI](../../engine/tui/README.md#commands)).
-- A command that asks the maintainer, for a passphrase or a login, runs by `effect.Foreground`.
-  A step holds it as `F` beside `M`. `Pass` would keep the screen on the terminal ([the TUI](../../engine/tui/README.md#commands)).
+- The Mac's units, of `mise -C /opt/ws/roles/client bootstrap`, read as the user and never through
+  sudo, so that a run that changes nothing asks no password. A file of root's that a unit writes is
+  readable by all, and the Mac's config holds no root path of mise's own ([The Mac's
+  frame](../../roles/client/macos/frame/README.md#roots-paths)).
 - No cgo: ws builds with `CGO_ENABLED=0`. The race detector's cgo is the tests' alone
   ([Makefile](../../Makefile)).
 - `--server NAME` is `ws client macos`'s persistent flag, bound once in `Command` and read through a
   pointer at run time.
-- `ws client macos remove NAME` changes nothing on the server: it takes the Mac's files, daemon and
-  hosts of that server away, and takes no `--server`.
+- `ws client macos remove NAME` changes nothing on the server: it takes the Mac's files of that
+  server away, then runs `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap`, which takes its
+  daemon and hosts away. It takes no `--server`.
 - ws is cobra's: a command parses no flag or argument by hand and holds no usage text.
   `cli.Execute` runs the root, names the command in each error, and returns 2 for a usage error. A
-  group of commands exists on the systems where it runs. `clientCmd`, over macos/cli's `Command`, is
-  built everywhere and tested on Linux, and `groups` lists it in a `//go:build darwin` file
+  group of commands exists on the systems where it runs. `clientCmd`, over client/cli's `Command`,
+  is built everywhere and tested on Linux, and `groups` lists it in a `//go:build darwin` file
   ([groups_macos.go](../../cmd/groups_macos.go)). Commands take what they need from the
   process through `cli.Env`, which tests build from fakes with `clitest`. depguard keeps cobra and
   pflag in `cmd`, the `cli` packages and `.tools/` ([golangci.yml](../../.tools/lint/golangci.yml)).

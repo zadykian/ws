@@ -1,52 +1,71 @@
 # devtools
 
 The `devtools` role installs Node, the .NET SDKs, gh, glow, the libraries headless Chromium needs,
-Go, gopls, Delve, roslyn-language-server, the SQL and Docker servers and rustup. It runs as Go
-steps in [roles/server/ubuntu/devtools](.): the repositories, the packages,
-Go, the servers and rustup, in this order.
+Go, gopls, Delve, roslyn-language-server, the SQL and Docker servers and rustup. The sources, the
+packages and the tools are mise's, in [mise.server.toml](mise.server.toml). The tools' links, gh's
+telemetry and login, roslyn-language-server, the npm servers and rustup are units of
+[units.toml.tmpl](units.toml.tmpl). Those of the account run as `WS_USER`, root included, and without booted
+systemd too, as in CI's container. [paths.go](paths.go) names the servers' paths for Zed's and
+Fresh's tests.
 
-Node comes from NodeSource's apt repository, glow from Charm's and gh from GitHub CLI's. Each .NET
-SDK comes from Ubuntu's archive or, for those it lacks, Launchpad's dotnet/backports PPA. Each run
-fetches their keys again. A key goes in only where it holds a certificate at least, and the package
-pins the fingerprint of each. A subkey added to a certificate passes, and so does a key that drops a
-pinned certificate. A certificate the package does not pin fails the run, in the first armored block
-or in another, as apt reads them all. The package reads the key's packets itself, as `gpg` is not on
-every machine. A packet it cannot parse fails the run, and only keys of version 4 and 6 pass. A
-repository that is no longer needed loses its `.sources` file and its key, and so do the sources
-that the repositories' own instructions add.
+`state/devtools-rustup` installs rustup and Rust's stable toolchain in the user's home, where
+`~/.cargo/bin/rustup` is missing. Once there, rustup updates itself, so ws leaves it alone.
 
-The packages wait on the repositories: `ws server ubuntu apply --check` says "after Devtools
-repositories" where a repository is still to come, as apt may not know the packages then. The
-libraries for Chromium go in without recommends.
+## The sources and the packages
 
-Go goes in `/usr/local/go` from go.dev's tarball, checked against the SHA-256 go.dev lists for it.
-ws unpacks the tarball beside the target and moves the tree into place whole. The tree's
-`.ws-source` file holds the tarball's URL and is its probe. A run cut short never passes for the
-version, and a current Go makes no fetch. A new `GoVersion` in `roles/server/ubuntu/devtools/pins.go`
-replaces the Go there, and the Go that builds gopls. rustup installs Rust's stable toolchain in the
-user's home. Once there, rustup updates itself, so ws leaves it alone.
+`mise bootstrap` writes each source as `/etc/apt/sources.list.d/mise-NAME.sources`, with its key,
+which it keeps only where its fingerprint is the one `mise.server.toml` pins. A key whose
+fingerprint differs fails the run. mise never removes a source or a package. A source that a
+vendor's own instructions added, such as NodeSource's setup script, leaves a file that conflicts
+with ours: remove it by hand.
 
-## The language servers
+- Node comes from NodeSource's `node_24.x`, and the package follows that repository's latest.
+- glow comes from Charm's repository, and gh from GitHub CLI's. Its key file holds two
+  certificates, one that expired in 2026 and the one that signs: both are pinned.
+- Each .NET SDK is a package, and Launchpad's dotnet/backports PPA gives .NET 8.
+  The PPA's index for apt's amd64v3 variant lacks .NET 8. A machine that set
+  `APT::Architecture-Variants` fails at this package until the setting goes.
+- The libraries for Chromium are fixed packages, with apt's own recommends.
 
-- gopls, Go's server, comes from `go install` at the version `pins.go` pins, with the Go of this
-  role and Go's checksum database. A change of either version builds it again.
-- Delve, Go's debugger, goes in the same way and a change of either version builds it again.
-  Zed's debugger runs it for Go.
+## The tools
+
+Go, gopls, Delve, postgres-language-server and docker-language-server are tools of mise's, at the
+versions that `[tools]` pins. [mise.server.lock](../../mise/mise.server.lock) holds the url
+and the SHA-256 of each download for `linux-x64` and `linux-arm64`. Go's comes from the list that
+go.dev publishes, and each server's from GitHub's digest of its release asset. A wrong one fails
+the run before any unit of ws, and `MISE_LOCKED=1` refuses a tool that the lock lacks. gopls and
+Delve are `go:` tools, which `go install` builds with mise's Go through Go's checksum database.
+mise checks a sum at the download alone, so it mends no tool changed after its install:
+`sudo env MISE_DATA_DIR=/usr/local/share/mise mise -C /opt/ws/roles/server install --force TOOL` does.
+
+- mise puts the tools under `/usr/local/share/mise/installs`, root's and mode 0755, where every
+  run as root exports `MISE_DATA_DIR=/usr/local/share/mise`, as `install.sh` does. Under root's
+  own data directory the account could run none. `guard/devtools-data-dir` fails a run without
+  it. It runs after mise's tools, so it names the mistake, and a missing tool is then under
+  `/root`: run the bootstrap again with the variable.
+- Links of the file kind give each tool a path that names no version: `/usr/local/go`,
+  `/usr/local/bin/gopls`, `/usr/local/bin/dlv`, `/usr/local/bin/postgres-language-server` and
+  `/usr/local/bin/docker-language-server`. Each points into its version's directory, never at
+  `latest`, which follows the highest version installed. shell's profile puts `/usr/local/go/bin`
+  on `PATH`, and gopls runs the `go` it finds there.
+- A `/usr/local/go` that is a directory fails its link: remove it by hand, with
+  `rm -rf /usr/local/go`.
+- To bump a tool, change its version in `[tools]` and its link in `units.toml.tmpl`, then write the
+  lock again in a container with git and mise:
+  `MISE_ENV=server mise -C roles/server lock --platform linux-x64,linux-arm64`, which writes
+  `roles/server/mise/mise.server.lock`. `go test` fails where a link, the lock and `[tools]`
+  disagree. On the server,
+  `sudo env MISE_DATA_DIR=/usr/local/share/mise mise -C /opt/ws/roles/server prune` drops the old versions.
+- mise builds a `go:` tool once, and never again where Go changes. Delve 1.27.2 supports Go 1.25
+  to 1.27, so a new minor Go goes with a newer Delve.
 - roslyn-language-server, C#'s server, is the server of VS Code's C# extension. It comes from
-  nuget.org with `dotnet tool` at the version `pins.go` pins, and runs on the .NET 10 of this role.
-- They go in `WS_USER`'s home: `~/go/bin/gopls`, `~/go/bin/dlv` and
-  `~/.dotnet/tools/roslyn-language-server`. Their paths follow `WS_HOME`, so the `zed` and
-  `fresh` roles find them with this role not run.
+  nuget.org with `dotnet tool`, at the version that `state/devtools-roslyn` pins in its command
+  and its check, and runs on the .NET 10 of this role. It goes in
+  `~/.dotnet/tools/roslyn-language-server`, `WS_USER`'s, which follows `WS_HOME`.
 
 ## The SQL and Docker servers
 
-postgres-language-server and docker-language-server are release binaries, each pinned in
-`roles/server/ubuntu/devtools/binaries.go` by version and by SHA-256 for `amd64` and `arm64`. The
-role downloads the one for the machine, by the architecture that dpkg names, to `/usr/local/bin`,
-owned by root with mode 0755, so any `WS_USER` can run it. A failed download is tried five times,
-ten seconds apart. A machine of another architecture fails the step. The settings name both by path,
-so Zed downloads neither. Fresh names them too. `ws server ubuntu apply --only zed` does not install
-them: pass `--only devtools,zed`, or `devtools,fresh`.
+Zed's settings and Fresh's config name both servers by path, so Zed downloads neither.
 
 - docker-language-server's telemetry is off, and its experimental `removeOverlappingIssues` drops
   the diagnostics that rcjsuen's server also gives. Check the option on each bump.
@@ -71,13 +90,14 @@ A project's `postgres-language-server.jsonc` holds `db` fields, never a `connect
   schemas.
 - ws drops new connections to private ranges ([outbound](../security/README.md#outbound)): a database on
   the LAN hangs for `db.connTimeoutSecs`, 10 by default. Loopback, Docker and `ikeward0` work.
-- To bump a pin, read the digests with the `gh api` command in `binaries.go` and check a download
-  with `sha256sum`. A bumped postgres-language-server may need its daemon stopped.
+- A bumped postgres-language-server may need its daemon stopped.
 
 ## The npm servers
 
 The role installs four packages into `~/.local/lib/language-servers`, owned by `WS_USER`, from the
-`package.json` and `package-lock.json` in `roles/server/ubuntu/devtools/internal/npm/servers`:
+`package.json` and `package-lock.json` in [files/npm](files/npm). The units
+`file/devtools-npm-lock` and `file/devtools-npm-package` write them there as the account's, with
+the directories a new home lacks:
 
 - `@ansible/ansible-language-server`, for Ansible.
 - `@zed-industries/vscode-langservers-extracted`, whose HTML server Zed installs by default.
@@ -85,10 +105,11 @@ The role installs four packages into `~/.local/lib/language-servers`, owned by `
 - `sql-formatter`, linked as `/usr/local/bin/sql-formatter`, root's, so a project's settings name
   the bare command.
 
-`npm ci --ignore-scripts` runs as `WS_USER`. It fails where the lock and `package.json` disagree or
-a sha512 `integrity` differs, so these downloads are checked, though not against a SHA-256. The
-step keeps `node_modules/.ws-sha256`, the digest of both files, and runs again where it differs. It
-waits for the step of the Node packages, which sets up npm.
+`state/devtools-npm` runs `npm ci --ignore-scripts` as `WS_USER`. It fails where the lock and
+`package.json` disagree or a sha512 `integrity` differs, so these downloads are checked, though not
+against a SHA-256. The unit keeps `node_modules/.ws-sha256`, `sha256sum`'s lines for both files,
+and runs again where its check, `sha256sum -c`, fails. mise installs the Node package, and npm with
+it, before any unit.
 
 The settings name the three servers by path, with `--stdio`, so Zed skips its npm lookup of their
 latest versions. They also set `node.path`, so Zed never downloads a Node. HTML formats through its
@@ -97,8 +118,8 @@ server, so Zed installs no Prettier.
 To bump a package:
 
 1. Edit its version in `package.json`.
-2. In `roles/server/ubuntu/devtools/internal/npm/servers`, run `npm install --package-lock-only --ignore-scripts
-   --no-audit --no-fund`.
+2. In `roles/server/ubuntu/devtools/files/npm`, run `npm install --package-lock-only
+   --ignore-scripts --no-audit --no-fund`.
 3. Commit both files, after checking each `integrity` against
    `npm view PACKAGE@VERSION dist.integrity`.
 
@@ -109,26 +130,31 @@ vanish after an edit.
 ## gh
 
 gh comes from GitHub CLI's apt repository, as the gh of Ubuntu's archive is one that GitHub's API
-has left behind. Its key file holds two certificates: one that expired in 2026, and the one that
-signs. The role pins both. `/etc/apt/apt.conf.d/52unattended-upgrades-github-cli` allows the
-repository's origin, so unattended-upgrades installs each release of gh within a day.
+has left behind. [files/52unattended-upgrades-github-cli](files/52unattended-upgrades-github-cli)
+goes to `/etc/apt/apt.conf.d/` and allows the repository's origin, so unattended-upgrades
+installs each release of gh within a day.
 
-A step after the packages logs gh in to github.com as the user, by `token.github` in the secrets file
-([The secrets file](../shell/README.md#the-secrets-file)). It compares `gh auth token -h github.com` with the
-token. Where they differ, it runs `gh auth login -h github.com -p https --insecure-storage
---with-token`, the token on stdin. ws has no keyring, so gh writes `~/.config/gh/hosts.yml`, mode
-0600. `--check` says "log gh in by token.github", never which token. gh's refusal fails the run. With
-no `token.github`, or no secrets file, the step leaves gh's login alone.
+gh logs in to github.com as the user, by `token.github` in the secrets file
+([The secrets file](../shell/README.md#the-secrets-file)):
 
-gh 2.91.0 and later send telemetry unless told not to. A step before the login reads `gh config get
-telemetry` as the user, and runs `gh config set telemetry disabled` where it says otherwise. Both
-run with `GH_TELEMETRY=0`, so that they send none themselves. `--check` says "turn gh's telemetry
-off".
+- `file/devtools-gh-token` writes the token to `/etc/ws/gh-token`, root's, mode 0640 and in the
+  account's group, with ws's mark on its first line and the token on its last. The plan shows no
+  diff of it. A run without a secrets file keeps the file unchanged, and one without
+  `token.github` removes it.
+- `state/devtools-gh-login` compares `gh auth token -h github.com` with the file's last line. Where
+  they differ, it runs `gh auth login -h github.com -p https --insecure-storage --with-token`, the
+  token on stdin. The token passes through a pipe and the shell alone, so no command line, plan or
+  log holds it. ws has no keyring, so gh writes `~/.config/gh/hosts.yml`, mode 0600. gh's refusal
+  fails the run. Without the file, the unit leaves gh's login alone.
+
+gh 2.91.0 and later send telemetry unless told not to. `state/devtools-gh-telemetry`, before the
+login, reads `gh config get telemetry` as the user, and runs `gh config set telemetry disabled`
+where it says otherwise. Both run with `GH_TELEMETRY=0`, so that they send none themselves.
 
 ## The signing key
 
-The role does not register the key that signs the machine's commits ([Signing](../git/README.md#signing)).
-ws's gh holds a token with repository permissions alone, which cannot add a signing key. The Mac's
-wizard adds it with the Mac's gh ([Signing key](../../../client/macos/stages/README.md#signing-key)), or add the `.pub` by
-hand in the account's settings on GitHub, as a signing key. Until then, GitHub shows the machine's
-commits as unverified, and the ruleset on `main` refuses them.
+The role does not register the key that signs the machine's commits
+([Signing](../git/README.md#signing)). ws's gh holds a token with repository permissions alone,
+which cannot add a signing key. Add the `.pub` by hand in the account's settings on GitHub, as a
+signing key. Until then, GitHub shows the machine's commits as unverified, and the ruleset on `main`
+refuses them.

@@ -1,11 +1,13 @@
 #!/bin/bash
 # ws client macos remove lab drops the second server from the Mac. Its directory, daemon, plist,
 # state, log, ssh host and known_hosts entry go, and ws's stay, with its daemon still shaking hands.
-# remove refuses a name with no file, and the Mac's last server.
+# remove runs mise bootstrap, as mac_bootstrap runs it: locked, with /opt/ws trusted and the build
+# served. The bootstrap takes lab's daemon and files away, and its host out of /etc/ws/ssh_config.
+# remove refuses a name with no file, and the Mac's last server. Then the plan exits 0.
 
 set -eo pipefail
-# shellcheck source=.github/mac-quiet.sh
-. .github/mac-quiet.sh
+# shellcheck source=.github/mac-mise.sh
+. .github/mac-mise.sh
 
 lab=${LABEL%.ws}.lab
 servers=/etc/ws/servers
@@ -27,7 +29,9 @@ fails 'no server named box in' box
 key=$(cut -d ' ' -f 1,2 ~/.ssh/id_ed25519.pub)
 printf '%s %s\n' lab "$key" ws "$key" >>~/.ssh/known_hosts
 
-ws client macos remove lab | tee "$RUNNER_TEMP/remove.out" || {
+mac_serve
+trap 'kill "$mac_server"' EXIT
+MISE_LOCKED=1 MISE_TRUSTED_CONFIG_PATHS=/opt/ws ws client macos remove lab </dev/null | tee "$RUNNER_TEMP/remove.out" || {
     echo '::error::ws client macos remove lab failed'
     exit 1
 }
@@ -67,14 +71,8 @@ shaken || gone "ws's daemon has no handshake in 60 s; its status gives: $status"
 [ "$(ws client macos servers | awk 'NR > 1 { print $1 }')" = ws ] || gone "ws client macos servers lists more than ws"
 [ "$fail" = 0 ] || exit 1
 
-fails "ws is the Mac's one server: apply needs one, so remove leaves it" ws
-out=$(ws client macos apply --check 2>&1) || {
-    echo "::error::ws client macos apply --check failed with ws alone:"
-    printf '%s\n' "$out"
+fails "ws is the Mac's one server: with none, the bootstrap prunes no daemon, so remove leaves it" ws
+mac_bootstrap plan --detailed-exitcode || {
+    echo "::error::the plan with ws alone exited $?, not 0"
     exit 1
 }
-if [ -n "$(unlisted "$out")" ]; then
-    echo '::error::ws client macos apply --check printed what it should not with ws alone:'
-    printf '%s\n' "$out"
-    exit 1
-fi

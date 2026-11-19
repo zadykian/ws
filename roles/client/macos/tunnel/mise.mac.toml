@@ -1,0 +1,5 @@
+# The tunnel's lines for the Mac.
+[bootstrap.packages]
+"ws:state/tunnel-key" = "in-sync"
+"ws:state/tunnel-conf" = "in-sync"
+"ws:launchd/tunnel" = "in-sync"

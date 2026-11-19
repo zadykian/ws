@@ -1,50 +1,61 @@
 # base
 
-The `base` role sets up the ground every machine stands on. It runs as Go steps of ws, in
-`roles/server/ubuntu/base`, first of the roles:
+The `base` role sets up the ground every machine stands on. It installs the packages every machine
+gets, and sets the locale `en_US.UTF-8` and the time zone UTC. It turns on unattended upgrades,
+and keeps a swap file, `/swapfile`, the size of the RAM rounded up to a whole GiB. The role holds
+mise config and a spec of ws's units ([The frame](../frame/README.md)):
 
-- the packages every machine gets;
-- the locale `en_US.UTF-8` and the timezone UTC;
-- unattended-upgrades as Ubuntu ships it, which installs Ubuntu's security updates daily, and gh's
-  releases, which [devtools](../devtools/README.md#gh) allows;
-- a swap file, `/swapfile`, the size of the RAM rounded up to a whole GiB.
+| File | What it holds |
+| --- | --- |
+| [`mise.server.toml`](mise.server.toml) | The packages, and the units of every server. |
+| [`units.toml.tmpl`](units.toml.tmpl) | The units: the locale, the time zone, unattended upgrades and apt's timers, the swap file and the swappiness. |
+| [`files/`](files) | The files that the units write. |
 
-Its steps are Packages, Locale, Timezone, Upgrades, Swap and Swappiness, in that order. Each plans
-from reads alone, so that `--check` prints what a run would change. The values are `WS_BASE_PACKAGES`,
-`WS_BASE_LOCALE`, `WS_BASE_TIMEZONE`, `WS_BASE_SWAP_SIZE_MB` and `WS_BASE_SWAPPINESS` of the
-values file ([the README](../../../../README.md#running-it-again)).
+The values are `WS_BASE_LOCALE`, `WS_BASE_TIMEZONE`, `WS_BASE_SWAP_SIZE_MB` and `WS_BASE_SWAPPINESS`
+of the values file ([the README](../../../../README.md#running-it-again)). The packages are mise's
+lines, so another list is a change to `mise.server.toml`. Without systemd booted, as in CI's
+container, the units that need it skip and say so: apt's timers, unattended-upgrades' service, and
+`swapon` and `swapoff` of the swap file.
 
-A step that needs a booted systemd skips without one, as in CI's container, and says so: the
-units of Upgrades, `swapon` and `swapoff` of Swap, and `systemd-sysctl` of Swappiness.
-
-## Locale and timezone
+## Locale and time zone
 
 `locale -a` and `/etc/locale.gen` decide whether `locale-gen` runs, and `/etc/locale.conf` holds
-`LANG`, where Ubuntu 26.04 keeps the system's locale. The timezone is the link `/etc/localtime`,
+`LANG`, where Ubuntu 26.04 keeps the system's locale. The time zone is the link `/etc/localtime`,
 made without `timedatectl`, which needs a running systemd. `/etc/timezone`, which tzdata no longer
 uses, is kept in step where the machine has it, for readers such as older JVMs and Python's
-tzlocal.
+tzlocal. A locale that glibc lacks, or a zone with no file, fails the plan
+([The state kind](../../../../engine/core/kind/state.md)).
 
 ## Unattended upgrades
 
-`/etc/apt/apt.conf.d/20auto-upgrades` holds the settings the package writes, under the role's
-header. ucf, which keeps the file for the package, takes the header for a change made by hand. So
-an upgrade of unattended-upgrades that ships other settings asks which file to keep, and keeps the
+The stock `50unattended-upgrades`, left unchanged, installs Ubuntu's security updates daily, and
+[devtools](../devtools/README.md#gh) allows gh's releases. `/etc/apt/apt.conf.d/20auto-upgrades`
+holds the settings the package writes when its question is answered yes, under the role's header.
+ucf, which keeps the file for the package, takes the header for a change made by hand. So an
+upgrade of unattended-upgrades that ships other settings asks which file to keep, and keeps the
 role's where no one answers. Where the package's is taken, the next run writes the role's back.
+apt's daily timers and unattended-upgrades' check at shutdown are enabled and kept running.
 
 ## The swap file
 
 `WS_BASE_SWAP_SIZE_MB` sets another size in MiB, and 0 none. The file replaces the installer's
-`/swap.img`. The swap's plan is a function of `/proc/swaps`, `/proc/meminfo`, the free space of `/`
-from `statfs` and the size, mode and owner of `/swapfile`, with table tests. A run stops before it
-changes the swap where the disk lacks room for the file and 2 GiB more. It stops too where swapping
-an area off would bring back more than half the memory available. A negative size is refused.
+`/swap.img`. A run stops before it changes the swap where the disk lacks room for the file and
+2 GiB more. It stops too where swapping an area off would bring back more than half the memory
+available. The values refuse a negative size.
 
 A file of another size is made again, not resized. `fallocate` allocates it under another name, or
 zeros do where the file system lacks `fallocate`, and on no other error. Then `mkswap` makes it a
 swap area, and a rename gives it its name. So a run cut short leaves no file that `swapon` would
 refuse.
 
+A container shares its host's kernel, and so its swap and `vm.swappiness`: there the swap file's
+unit and the restart of `systemd-sysctl` are off, and say so. The swappiness's file is written
+everywhere.
+
+## The swappiness
+
 The kernel's swappiness is 10, not its default 60, so that under memory pressure it frees the page
 cache in preference to swapping memory out. `WS_BASE_SWAPPINESS` sets another, from 0 to 200, in
-`/etc/sysctl.d/99-swappiness.conf`, and a value outside that range stops the Swap step too.
+`/etc/sysctl.d/99-swappiness.conf`, and the values refuse one outside that range. Where the
+kernel's value differs from the file's, the run restarts `systemd-sysctl.service`. It applies every
+file of `/etc/sysctl.d` as boot does, so a key changed by hand there takes effect too.

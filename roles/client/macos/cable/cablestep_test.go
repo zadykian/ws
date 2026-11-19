@@ -7,9 +7,10 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/cable"
-	"github.com/zadykian/ws/roles/client/macos/values"
+	"github.com/zadykian/ws/roles/client/values"
 )
 
 const cableSet = "Manual Configuration\nIP address: 10.77.0.2\nSubnet mask: 255.255.255.252\nRouter: (null)\n"
@@ -22,6 +23,15 @@ func cableStep(m *effecttest.Machine, out *effecttest.Out, list, info string) ca
 		LookPath: func(string) (string, error) { return "/usr/sbin/networksetup", nil },
 	}
 }
+
+// planOf plans the cable's part.
+func planOf(c cable.Cable) (step.Plan, error) {
+	cs, err := resource.Append(context.Background(), nil, c.Part())
+	return step.Plan{Changes: cs}, err
+}
+
+// applied applies the plan's changes in order.
+func applied(p step.Plan) error { return resource.Group{}.Apply(context.Background(), p) }
 
 func TestCablePlans(t *testing.T) {
 	const list = "header\nWi-Fi\nDock\n"
@@ -36,7 +46,7 @@ func TestCablePlans(t *testing.T) {
 		"disabled": {"header\n*Dock\n", cableSet, "", 0},
 	} {
 		m, out := effecttest.NewMachine(), &effecttest.Out{}
-		p, err := cableStep(m, out, tc.list, tc.info).Step().Plan(context.Background())
+		p, err := planOf(cableStep(m, out, tc.list, tc.info))
 		if tc.err != "" && (err == nil || !strings.Contains(err.Error(), tc.err)) {
 			t.Errorf("%s: err = %v, want %q", name, err, tc.err)
 		}
@@ -48,7 +58,7 @@ func TestCablePlans(t *testing.T) {
 
 func TestCableWithoutServiceLeavesTheNetworkAlone(t *testing.T) {
 	m := effecttest.NewMachine()
-	p, err := cable.Cable{M: m, Out: &effecttest.Out{}}.Step().Plan(context.Background())
+	p, err := planOf(cable.Cable{M: m, Out: &effecttest.Out{}})
 	if err != nil || len(p.Changes) != 0 || len(m.Calls) != 0 {
 		t.Errorf("Plan = %v, %v, calls %v; want none", p.Changes, err, m.Calls)
 	}
@@ -56,32 +66,30 @@ func TestCableWithoutServiceLeavesTheNetworkAlone(t *testing.T) {
 
 func TestCableAppliesSetmanualThroughSudo(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
-	s := cableStep(m, out, "h\nDock\n", "DHCP Configuration\n").Step()
-	p, _ := s.Plan(context.Background())
+	p, _ := planOf(cableStep(m, out, "h\nDock\n", "DHCP Configuration\n"))
 	m.Results["/usr/sbin/networksetup -setmanual Dock 10.77.0.2 255.255.255.252"] = effecttest.Result{}
 	m.Results["/usr/sbin/networksetup -getinfo Dock"] = effecttest.Result{Out: []byte(cableSet)}
-	if err := s.Apply(context.Background(), p); err != nil {
+	if err := applied(p); err != nil {
 		t.Fatal(err)
 	}
-	if got := step.Headline(p.Changes[0]); got != "would run networksetup -setmanual \"Dock\" 10.77.0.2 255.255.255.252" {
+	if got := step.Headline(p.Changes[0]); got != "run networksetup -setmanual \"Dock\" 10.77.0.2 255.255.255.252" {
 		t.Errorf("headline = %q", got)
 	}
 	if got := m.Calls[len(m.Calls)-2]; got != "root /usr/sbin/networksetup -setmanual Dock 10.77.0.2 255.255.255.252" {
 		t.Errorf("last call = %q", got)
 	}
 	m.Results["/usr/sbin/networksetup -setmanual Dock 10.77.0.2 255.255.255.252"] = effecttest.Result{Err: errors.New("no")}
-	err := s.Apply(context.Background(), p)
-	if err == nil || !strings.HasPrefix(err.Error(), "would run networksetup -setmanual") {
+	err := applied(p)
+	if err == nil || !strings.HasPrefix(err.Error(), "run networksetup -setmanual") {
 		t.Errorf("Apply err = %v, want the command's headline first", err)
 	}
 }
 
 func TestCableApplyNamesTheRemedyWhereSetmanualDoesNotTake(t *testing.T) {
 	m := effecttest.NewMachine()
-	s := cableStep(m, &effecttest.Out{}, "h\nDock\n", "DHCP Configuration\n").Step()
-	p, _ := s.Plan(context.Background())
+	p, _ := planOf(cableStep(m, &effecttest.Out{}, "h\nDock\n", "DHCP Configuration\n"))
 	m.Results["/usr/sbin/networksetup -setmanual Dock 10.77.0.2 255.255.255.252"] = effecttest.Result{}
-	err := s.Apply(context.Background(), p)
+	err := applied(p)
 	if err == nil || !strings.Contains(err.Error(), "set it by hand in System Settings") {
 		t.Errorf("Apply err = %v, want the remedy", err)
 	}

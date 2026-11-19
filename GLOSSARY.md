@@ -14,6 +14,12 @@ One value of the secrets file, by its kind and its name: a token, an env variabl
 credential, a profile file or a password.
 _Avoid_: secret, field
 
+**Frame**:
+What each role of mise's config leans on: `mise.toml` with ws's pin, the server's
+`mise.server.toml`, the plugin `plugins/ws`, the machine's miserc, and the role `frame`
+([The frame](roles/server/ubuntu/frame/README.md)).
+_Avoid_: skeleton, scaffold
+
 **Home file**:
 A file below the account's home that ws reads or writes as root, by a path under the home. The
 account owns it, and no link lies on the way to it.
@@ -21,9 +27,14 @@ _Avoid_: user file, plain file
 
 **Identity's credential**:
 ws's age identity as the systemd credential `/etc/credstore.encrypted/ws-secrets`, which the
-host's key encrypts. It alone opens the secrets file, and a unit loads it by
-`LoadCredentialEncrypted=ws-secrets`.
+host's key encrypts. It alone opens the secrets file, and `ws unit` decrypts it by `systemd-creds
+decrypt`.
 _Avoid_: age key, key file
+
+**Kind**:
+A resource type that ws writes once in Go, for what mise's own parts lack, such as `file` or
+`deb`. It names no role's word ([kind](engine/core/kind/README.md)).
+_Avoid_: plugin, module
 
 **Label**:
 An entry's name as the commands and the forms give it, `KIND NAME`, as `token github`. `keys`
@@ -32,14 +43,24 @@ _Avoid_: field name
 
 **Pinned file**:
 A file of a release that ws fetches at the version a role pins, for the machine's architecture as
-dpkg names it. ws checks it against a SHA-256 that the role pins or the step finds as it plans. A
+dpkg names it. ws checks it against a SHA-256 that the role pins or the unit finds as it plans. A
 binary is the pinned file at its destination; a package and a tree take one as their source.
 _Avoid_: download, release asset, artifact
+
+**Spec**:
+A role's `units.toml.tmpl`: TOML over the machine's values that names the role's units, a table a kind
+and a key a unit.
+_Avoid_: manifest
 
 **Secrets file**:
 `/etc/ws/secrets.age` on ws, root's and 600: TOML that age encrypts to the identity's credential,
 a table per kind. `secrets.Store` alone reads and writes it.
 _Avoid_: vault
+
+**Unit**:
+One resource of a kind, named `KIND/NAME`, as `file/sshd`, that a spec names. It plans and applies
+as a step does, which `ws unit` runs for mise ([ws unit](engine/core/kind/README.md#ws-unit)).
+_Avoid_: package, step
 
 ## The Mac's side
 
@@ -49,20 +70,9 @@ signing, by `WS_GIT_SIGNING_PUB_KEY`. Either ws's copy of a key of Secretive's a
 key.
 _Avoid_: picked key, git key
 
-**Operation**:
-One job that the wizard asks of ws, a method of the session. It sends an op of the remote or the
-files script, or two in turn, as naming the cable's port and then running its roles. Its row in
-the session's table says whether it changes ws, so that the next status reads ws again.
-_Avoid_: command, request
-
-**Session**:
-The wizard's one way to ws: from the Mac over ssh, root by sudo, or ws's own on the machine. A
-stage asks it each operation. It holds what ws's status read until an operation changes ws.
-_Avoid_: remote, connection
-
 **User's directory**:
-A directory below the Mac's home that a step writes under, such as `~/.ssh`. A run makes it where
-missing, and stops where the path is no directory. It leaves the mode of one that exists. Core's
+A directory below the Mac's home that a unit writes under, such as `~/.local/bin`. A run makes it
+where missing, and stops where the path is no directory. It leaves the mode of one that exists. Core's
 `file.UserDir` holds it.
 _Avoid_: folder
 
@@ -74,7 +84,7 @@ _Avoid_: dotfile
 
 **User's lines**: ws's lines in a user's file that holds other text too, such as `Include
 /etc/ws/ssh_config` at the top of `~/.ssh/config`. A run adds them once, at the top or the end, and
-keeps the old file as `PATH.TIME~`. At a link that lacks them, or lines out of place, the step warns
+keeps the old file as `PATH.TIME~`. At a link that lacks them, or lines out of place, the unit warns
 or stops. Core's `file.UserLines` hold them on the Mac, and `file.HomeLines`, read and written as
 root, on ws. _Avoid_: include line
 
@@ -83,8 +93,8 @@ What `--server` takes, and the directory `servers/NAME/` of the server's file: a
 then up to 11 lower-case letters, digits and `-`, other than `direct`, `first` and `key`.
 
 **slot**:
-A server's number from 0 to 15, kept as `WS_SLOT` in its file. The wizard writes the smallest that
-no other server holds in a file that lacks it. Slot N's tunnel is `10.99.N.0/24`, inside
+A server's number from 0 to 15, kept as `WS_SLOT` in its file. The maintainer picks the smallest free
+slot; the values' check refuses a clash. Slot N's tunnel is `10.99.N.0/24`, inside
 `10.99.0.0/20`, with the server at `.1` and the Mac at `.2`.
 
 **ws's directory**:

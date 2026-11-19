@@ -10,7 +10,9 @@ paths:
 
 Zed and Fresh each have a plain file for their settings and keys: `roles/client/macos/zed/files/` and
 `roles/server/ubuntu/zed/files/settings.json.tmpl` for Zed, and
-`roles/server/ubuntu/fresh/files/config.json.tmpl` for Fresh. No code renders them.
+`roles/server/ubuntu/fresh/files/config.json.tmpl` for Fresh. No code renders them. The Mac's
+`settings.json.tmpl` beside them is Zed's seed of `settings.json`, its servers alone, and shares
+nothing.
 
 A change to a shared value or an Alt or F key goes to both files. Where one file keeps a key out,
 its block of keys left out, at the file's end, records why.

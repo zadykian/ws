@@ -1,0 +1,8 @@
+# The user's lazygit config, replaced whole where it differs. The old file stays beside the new
+# one, as the user may have changed it by hand. The directories on the way stay the user's, and a
+# link on the way is refused, as it would send root's write to whatever it names.
+[file.lazygit-config]
+path = "{{ .Home }}/.config/lazygit/config.yml"
+owner = "{{ .User }}"
+source = "files/config.yml"
+backup = true

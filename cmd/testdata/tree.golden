@@ -9,12 +9,11 @@ Available Commands:
   client      the client's systems
   help        Help about any command
   server      the server's systems
-  update      update ws to the latest release
+  unit        plan and apply the units of ws's kinds, KIND/NAME, for mise
   version     print the version of this ws
 
 Flags:
-  -h, --help    help for ws
-      --plain   print lines, with no full-screen display
+  -h, --help   help for ws
 
 Use "ws [command] --help" for more information about a command.
 == ws client
@@ -30,9 +29,6 @@ Available Commands:
 Flags:
   -h, --help   help for client
 
-Global Flags:
-      --plain   print lines, with no full-screen display
-
 Use "ws client [command] --help" for more information about a command.
 == ws client macos
 the commands for a Mac
@@ -42,53 +38,109 @@ Usage:
   ws client macos [command]
 
 Available Commands:
-  apply       set the Mac up from values.yml and a server's file
-  configure   edit the Mac's values.yml, the server's file, the secrets and ws's values.yml on forms
+  cable       give the cable's service its Manual Configuration of the Mac's end
+  cld         install cld into ~/.local/bin, and keep it at its latest release
+  git         the commands of git's units
+  keys        copy the .pub of each key of Secretive's that values.yml names into /etc/ws
+  networks    route each server's WS_TUNNEL_NETWORKS and send its WS_RESOLVERS' domains to it
   remove      remove a server from the Mac
   resolver    send DOMAIN's names to the nameservers, or drop it
-  secrets     edit ws's secrets file, over ssh
   servers     list the Mac's servers with their target, slot and tunnel
-  state       report what the Mac's steps would change
+  ssh         the commands of ssh's units
   tunnel      the Mac's tunnel to ws
   values      print the Mac's values
-  wizard      set the Mac up in stages
 
 Flags:
   -h, --help            help for macos
       --server string   the server to act on, which may be left out where there is one
 
-Global Flags:
-      --plain   print lines, with no full-screen display
-
 Use "ws client macos [command] --help" for more information about a command.
-== ws client macos apply
-It runs the steps it names, from values.yml and the server's file, in this order: ssh, cable, git, ghostty, zed, cld, zsh, tunnel, networks. With no --only, it runs every step, and ssh again, whose plan is empty unless cld changed ssh's file. It asks sudo where it needs root.
+== ws client macos cable
+The service that a server's WS_CABLE_SERVICE names takes 10.77.0.2/30 with no router, through sudo, where networksetup shows other settings. A service networksetup lacks, or one with a router outside the cable's /30, as an uplink has, fails it.
+
+--check fails where a change is due, and changes nothing.
 
 Usage:
-  ws client macos apply [flags]
+  ws client macos cable [flags]
 
 Flags:
-      --check          print each change and make none
-  -h, --help           help for apply
-      --only strings   run the named steps alone, as a list or by repeating the flag
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for cable
 
 Global Flags:
-      --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
-== ws client macos configure
-It shows the keys that ws client macos wizard would ask, by WS_TARGET, with what the files hold: the Mac's values.yml, then those of the server's file, servers/NAME/values.yml. It writes them on Ctrl-S. Ctrl-N goes on to ws's secrets, which show as set or not, never their values, then to ws's values.yml, both read over ssh. It needs a terminal: anywhere else, edit the file by hand.
+== ws client macos cld
+It installs cld with the install.sh of its latest release where it is missing, and runs cld update where a newer release is out. A cld built from a clone is left as it is. A failed install or update, or a latest release that it cannot read, is a warning.
+
+--check fails where a change is due, and changes nothing.
 
 Usage:
-  ws client macos configure [flags]
+  ws client macos cld [flags]
 
 Flags:
-  -h, --help   help for configure
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for cld
 
 Global Flags:
-      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
+== ws client macos git
+the commands of git's units
+
+Usage:
+  ws client macos git [flags]
+  ws client macos git [command]
+
+Available Commands:
+  included    say by the exit status whether the git config on stdin includes /etc/ws/gitconfig at its top
+
+Flags:
+  -h, --help   help for git
+
+Global Flags:
+      --server string   the server to act on, which may be left out where there is one
+
+Use "ws client macos git [command] --help" for more information about a command.
+== ws client macos git included
+It reads the text as git does. It exits 0 where the text includes /etc/ws/gitconfig once, at its top, and 1 where it lacks the include. It exits 2 where the include sits below the file's own settings or comes twice, which it would then override, or where git cannot read the text. git's unit of the include runs it.
+
+Usage:
+  ws client macos git included [flags]
+
+Flags:
+  -h, --help   help for included
+
+Global Flags:
+      --server string   the server to act on, which may be left out where there is one
+== ws client macos keys
+ssh and git name a key that Secretive's agent holds by its .pub, which macOS keeps ws from reading in Secretive's container. So ws keeps a copy, from the agent, in /etc/ws/secretive. A key in a file has none.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws client macos keys [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for keys
+
+Global Flags:
+      --server string   the server to act on, which may be left out where there is one
+== ws client macos networks
+Each server with WS_PUBLIC_KEY gets its routes.d/values, and a file in /etc/resolver for each domain of its WS_RESOLVERS, written through sudo. A file of ws's in /etc/resolver that no server names goes. A file of a domain that ws did not write fails it.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws client macos networks [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for networks
+
+Global Flags:
       --server string   the server to act on, which may be left out where there is one
 == ws client macos remove
-It deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it is. It refuses the Mac's last server, as apply needs one, and takes no --server: the argument is the consent.
+It deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it is. mise's bootstrap then takes its daemon, routes and host off. It refuses the Mac's last server, as the bootstrap takes a Mac with none for a stray WS_VALUES and prunes no daemon, and takes no --server: the argument is the consent.
 
 Usage:
   ws client macos remove NAME [flags]
@@ -97,7 +149,6 @@ Flags:
   -h, --help   help for remove
 
 Global Flags:
-      --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos resolver
 It has macOS ask the nameservers for DOMAIN, or drop the file of DOMAIN where it gets none.
@@ -110,148 +161,6 @@ Flags:
   -h, --help    help for resolver
 
 Global Flags:
-      --plain           print lines, with no full-screen display
-      --server string   the server to act on, which may be left out where there is one
-== ws client macos secrets
-edit ws's secrets file, over ssh
-
-Usage:
-  ws client macos secrets [flags]
-  ws client macos secrets [command]
-
-Available Commands:
-  init        make ws's age identity and an empty secrets file on ws
-  keys        print each entry as KIND NAME, never a value
-  set         set an entry, whose value never goes in an argument
-  unset       drop an entry
-
-Flags:
-  -h, --help   help for secrets
-
-Global Flags:
-      --plain           print lines, with no full-screen display
-      --server string   the server to act on, which may be left out where there is one
-
-Use "ws client macos secrets [command] --help" for more information about a command.
-== ws client macos secrets init
-make ws's age identity and an empty secrets file on ws
-
-Usage:
-  ws client macos secrets init [flags]
-
-Flags:
-  -h, --help   help for init
-
-Global Flags:
-      --plain           print lines, with no full-screen display
-      --server string   the server to act on, which may be left out where there is one
-== ws client macos secrets keys
-print each entry as KIND NAME, never a value
-
-Usage:
-  ws client macos secrets keys [flags]
-
-Flags:
-  -h, --help   help for keys
-
-Global Flags:
-      --plain           print lines, with no full-screen display
-      --server string   the server to act on, which may be left out where there is one
-== ws client macos secrets set
-set an entry, whose value never goes in an argument
-
-Usage:
-  ws client macos secrets set [flags]
-  ws client macos secrets set [command]
-
-Available Commands:
-  env         set the env NAME, from a prompt with no echo or from stdin
-  file        set a profile file (vpn_p12, vpn_sswan) from the file at PATH, or from stdin
-  git         set a git server's token, from a prompt with no echo or from stdin
-  password    set the password NAME, from a prompt with no echo or from stdin
-  token       set the token NAME, from a prompt with no echo or from stdin
-
-Flags:
-  -h, --help   help for set
-
-Global Flags:
-      --plain           print lines, with no full-screen display
-      --server string   the server to act on, which may be left out where there is one
-
-Use "ws client macos secrets set [command] --help" for more information about a command.
-== ws client macos secrets set env
-set the env NAME, from a prompt with no echo or from stdin
-
-Usage:
-  ws client macos secrets set env NAME [flags]
-
-Flags:
-  -h, --help   help for env
-
-Global Flags:
-      --plain           print lines, with no full-screen display
-      --server string   the server to act on, which may be left out where there is one
-== ws client macos secrets set file
-set a profile file (vpn_p12, vpn_sswan) from the file at PATH, or from stdin
-
-Usage:
-  ws client macos secrets set file NAME [PATH] [flags]
-
-Flags:
-  -h, --help   help for file
-
-Global Flags:
-      --plain           print lines, with no full-screen display
-      --server string   the server to act on, which may be left out where there is one
-== ws client macos secrets set git
-set a git server's token, from a prompt with no echo or from stdin
-
-Usage:
-  ws client macos secrets set git URL [flags]
-
-Flags:
-  -h, --help              help for git
-      --proactive-auth    send the token before the server asks for it, else as the entry does
-      --username string   the user name that git sends with the token, else the entry's
-
-Global Flags:
-      --plain           print lines, with no full-screen display
-      --server string   the server to act on, which may be left out where there is one
-== ws client macos secrets set password
-set the password NAME, from a prompt with no echo or from stdin
-
-Usage:
-  ws client macos secrets set password NAME [flags]
-
-Flags:
-  -h, --help   help for password
-
-Global Flags:
-      --plain           print lines, with no full-screen display
-      --server string   the server to act on, which may be left out where there is one
-== ws client macos secrets set token
-set the token NAME, from a prompt with no echo or from stdin
-
-Usage:
-  ws client macos secrets set token NAME [flags]
-
-Flags:
-  -h, --help   help for token
-
-Global Flags:
-      --plain           print lines, with no full-screen display
-      --server string   the server to act on, which may be left out where there is one
-== ws client macos secrets unset
-drop an entry
-
-Usage:
-  ws client macos secrets unset KIND NAME [flags]
-
-Flags:
-  -h, --help   help for unset
-
-Global Flags:
-      --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos servers
 It lists each server of servers/ beside values.yml: its target, its slot, and its tunnel, which is absent, stopped, starting, unreadable, or the tier and endpoint it holds. A server whose file ws refuses shows - and its errors follow the list, with exit code 1. It reads alone, as the user, and takes no --server.
@@ -263,22 +172,34 @@ Flags:
   -h, --help   help for servers
 
 Global Flags:
-      --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
-== ws client macos state
-It reads alone and applies nothing, as ws client macos apply --check does, and needs what it needs: values.yml, and not root. The Mac's steps report the packages, services and files ws manages there, and a step that fails stands in the report as a check. The exit code stays 0. With several servers, one whose file ws refuses stands in the report with the refusal. A report holds no secret.
-
-At a terminal it draws the state screen on stderr, where sudo's password comes through a question. --plain prints the report as text, and so does a pipe. The text is on stdout and ws's own lines on stderr. --json prints the version of ws, then each step with its items and changes.
+== ws client macos ssh
+the commands of ssh's units
 
 Usage:
-  ws client macos state [flags]
+  ws client macos ssh [flags]
+  ws client macos ssh [command]
+
+Available Commands:
+  included    say by the exit status whether the ssh config on stdin includes /etc/ws/ssh_config at its top
 
 Flags:
-  -h, --help   help for state
-      --json   print the report as JSON
+  -h, --help   help for ssh
 
 Global Flags:
-      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
+
+Use "ws client macos ssh [command] --help" for more information about a command.
+== ws client macos ssh included
+It exits 0 where the Include of /etc/ws/ssh_config comes before any setting, and 1 where the text lacks it. It exits 2 where the Include sits below a setting, which ssh would take first. ssh's unit of the Include runs it.
+
+Usage:
+  ws client macos ssh included [flags]
+
+Flags:
+  -h, --help   help for included
+
+Global Flags:
       --server string   the server to act on, which may be left out where there is one
 == ws client macos tunnel
 the Mac's tunnel to ws
@@ -288,6 +209,7 @@ Usage:
   ws client macos tunnel [command]
 
 Available Commands:
+  conf        write each server's tunnel.conf, and take a gone server's daemon away
   key         make the Mac's key where none is, and print the public key, as root
   loaded      succeed where launchd has the tunnel's daemon loaded
   routes      route the networks into the tunnel, or drop NAME
@@ -298,12 +220,25 @@ Flags:
   -h, --help   help for tunnel
 
 Global Flags:
-      --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 
 Use "ws client macos tunnel [command] --help" for more information about a command.
+== ws client macos tunnel conf
+Each server with WS_PUBLIC_KEY gets its directory under /etc/ws/tunnel, routes.d and tunnel.conf, written through sudo and readable by all. A daemon whose server has no directory beside values.yml is booted out, its files go, and the daemons left read their files again.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws client macos tunnel conf [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for conf
+
+Global Flags:
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos tunnel key
-The private key stays in root's file, which only root can write, so setup runs this through sudo.
+The private key stays in root's file, which only root can write, so the key's unit runs this as root. /etc/ws/tunnel.pub holds the public key, readable by all.
 
 Usage:
   ws client macos tunnel key [flags]
@@ -312,7 +247,6 @@ Flags:
   -h, --help   help for key
 
 Global Flags:
-      --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos tunnel loaded
 Anyone may read launchd's system domain, so it needs no sudo.
@@ -324,7 +258,6 @@ Flags:
   -h, --help   help for loaded
 
 Global Flags:
-      --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos tunnel routes
 It has the tunnel of --server, which is required, take the networks of NAME, or drop the file of NAME where it gets none.
@@ -337,7 +270,6 @@ Flags:
   -h, --help    help for routes
 
 Global Flags:
-      --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos tunnel run
 The daemon logs to stdout, launchd's log file. SIGHUP reads the settings again, and SIGTERM stops it.
@@ -349,7 +281,6 @@ Flags:
   -h, --help   help for run
 
 Global Flags:
-      --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos tunnel status
 print the way in use and the peer, as root
@@ -361,7 +292,6 @@ Flags:
   -h, --help   help for status
 
 Global Flags:
-      --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos values
 print the Mac's values
@@ -377,7 +307,6 @@ Flags:
   -h, --help   help for values
 
 Global Flags:
-      --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 
 Use "ws client macos values [command] --help" for more information about a command.
@@ -389,24 +318,9 @@ Usage:
 
 Flags:
   -h, --help    help for print
-      --lines   check each line alone, as a wizard checks an answer before the file holds its key
+      --lines   check each line alone
 
 Global Flags:
-      --plain           print lines, with no full-screen display
-      --server string   the server to act on, which may be left out where there is one
-== ws client macos wizard
-At a terminal the stages open as two lists, by the machine each runs on, and the ones chosen run. The stages run under a lock, and what stays by hand is listed after a run in which a stage acted. Under --check each stage prints what it would do and changes nothing.
-
-Usage:
-  ws client macos wizard [flags]
-
-Flags:
-      --check    print what each stage would do and change nothing
-  -h, --help     help for wizard
-      --update   install the latest ws first, and run it in place of this one
-
-Global Flags:
-      --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws server
 the server's systems
@@ -421,9 +335,6 @@ Available Commands:
 Flags:
   -h, --help   help for server
 
-Global Flags:
-      --plain   print lines, with no full-screen display
-
 Use "ws server [command] --help" for more information about a command.
 == ws server ubuntu
 the commands for an Ubuntu server
@@ -433,53 +344,141 @@ Usage:
   ws server ubuntu [command]
 
 Available Commands:
-  apply       set the server up, each role as Go steps
-  configure   edit ws's secrets and values.yml on forms, on ws
+  cable       the cable role's check and reload, which its units run
+  claude      the claude role's procedures, which its units run
   fans        drive the board's fans on the curves of CONFIG until SIGTERM
+  git         the git role's checks and procedures, which its units run
+  ikeward     the ikeward role's check, install and wait, which its units run
   secrets     keep ws's secrets file, with its identity as a systemd credential
-  state       report what the server holds of what ws manages, and what apply would change
+  signoz      SigNoz's steps that the signoz role's units run
+  tunnel      the tunnel role's check, wg0's key and wg0, which its units run
   values      edit the machine's values
-  wizard      set ws up from its own shell, in stages
 
 Flags:
   -h, --help   help for ubuntu
 
-Global Flags:
-      --plain   print lines, with no full-screen display
-
 Use "ws server ubuntu [command] --help" for more information about a command.
-== ws server ubuntu apply
---secrets reads an age-encrypted TOML file with the secrets. The X25519 identity comes from the unit's credential ws-secrets (systemd's LoadCredential), in $CREDENTIALS_DIRECTORY.
-
---only names a role, or a step of it as ROLE/STEP, by the name that the run shows. A role's other steps are planned and left out, and a step that waits on one of them with changes is skipped.
-
-The last line names the roles that changed.
-
---json prints each event of the run as a line of JSON on stdout: planned, started, done, failed or skipped, with the step, the first line of each change and the error. ws's own lines stay on stderr, and no screen is drawn.
+== ws server ubuntu cable
+the cable role's check and reload, which its units run
 
 Usage:
-  ws server ubuntu apply [flags]
+  ws server ubuntu cable [flags]
+  ws server ubuntu cable [command]
+
+Available Commands:
+  check       refuse a cable's port that is an uplink, and a netplan FILE that would not set it up alone
+  reload      put netplan's files in force where the cable's file changed since the last reload
 
 Flags:
-      --check          plan the steps and apply none
-  -h, --help           help for apply
-      --json           print each event of the run as a line of JSON on stdout
-      --only strings   run the named roles and ROLE/STEPs alone, as a list or by repeating the flag
-      --secrets FILE   read the secrets from the age-encrypted FILE
+  -h, --help   help for cable
 
-Global Flags:
-      --plain   print lines, with no full-screen display
-== ws server ubuntu configure
-The forms of ws client macos configure that edit ws, read and written here as root, with no ssh. ws's secrets show as set or not, never their values. Ctrl-N goes to ws's values. Ctrl-S writes a form. It needs a terminal: anywhere else, run ws server ubuntu secrets and ws server ubuntu values set.
+Use "ws server ubuntu cable [command] --help" for more information about a command.
+== ws server ubuntu cable check
+It reads the values of /etc/ws/values.yml. With no WS_CABLE_PORT there is no cable, and it passes. It fails where the port is missing, carries a default route or holds a lease from DHCP, or where networkd does not run on a booted machine.
+
+With FILE, the cable's new netplan file, it also merges FILE with netplan's other files in a scratch root, and fails where netplan refuses them or would hand the port to another entry. It reads FILE as root, and no message quotes it. The cable role's guard runs it, and its file's check with the new file.
 
 Usage:
-  ws server ubuntu configure [flags]
+  ws server ubuntu cable check [FILE] [flags]
 
 Flags:
-  -h, --help   help for configure
+  -h, --help   help for check
+== ws server ubuntu cable reload
+/var/lib/ws/cable-in-force holds the SHA-256 of the cable's file that the last reload put in force. Where the file's differs, as where it is new, changed or gone, netplan generate writes networkd's files and networkctl reload sets up each link whose file changed; then the mark takes the file's SHA-256, or goes with the file. A failed reload leaves the mark, so the reload stays due. Another netplan file's change never makes it due. Without booted systemd nothing is due. Before a reload it checks the live cable file as cable check FILE does, so that another netplan file that takes the port never goes in force with it.
 
-Global Flags:
-      --plain   print lines, with no full-screen display
+--check fails where a reload is due, and changes nothing. The cable role's run state runs it, after the cable's file.
+
+Usage:
+  ws server ubuntu cable reload [flags]
+
+Flags:
+      --check   fail where a reload is due, and change nothing
+  -h, --help    help for reload
+== ws server ubuntu claude
+the claude role's procedures, which its units run
+
+Usage:
+  ws server ubuntu claude [flags]
+  ws server ubuntu claude [command]
+
+Available Commands:
+  completion   write cld's completion in bash where it differs from what cld prints
+  marketplaces add the plugin marketplaces of WS_CLAUDE_MARKETPLACES that claude lacks
+  restore      start WS_USER's systemd, and have it restore cld's sessions at boot
+  settings     have cld add to claude's user settings what they lack
+  telemetry    set claude's telemetry keys in the env of its user settings
+  update       update cld where a newer release is out
+
+Flags:
+  -h, --help   help for claude
+
+Use "ws server ubuntu claude [command] --help" for more information about a command.
+== ws server ubuntu claude completion
+cld completion bash prints the script, and cld setup completion bash writes it where the one in place differs (roles/server/ubuntu/claude/README.md#installs-and-updates). The claude role's run state runs it as root.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws server ubuntu claude completion [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for completion
+== ws server ubuntu claude marketplaces
+An empty list asks claude nothing (roles/server/ubuntu/claude/README.md#plugin-marketplaces). The claude role's run state runs it as root.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws server ubuntu claude marketplaces [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for marketplaces
+== ws server ubuntu claude restore
+cld setup restore writes the user unit. Without booted systemd it skips, and says so (roles/server/ubuntu/claude/README.md#sessions-after-a-reboot). The claude role's run state runs it as root.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws server ubuntu claude restore [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for restore
+== ws server ubuntu claude settings
+cld setup config user adds the permission set of WS_CLAUDE_PERMISSIONS, cld's choices and the channel of WS_CLAUDE_NOTIFICATIONS, and keeps each value already there. --check runs cld on a copy of the file (roles/server/ubuntu/claude/README.md#user-settings). The claude role's run state runs it as root.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws server ubuntu claude settings [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for settings
+== ws server ubuntu claude telemetry
+It sets the keys of WS_CLAUDE_TELEMETRY_ENV and removes those that would send elsewhere, and names each key, never its value (roles/server/ubuntu/claude/README.md#telemetry). The claude role's run state runs it as root.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws server ubuntu claude telemetry [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for telemetry
+== ws server ubuntu claude update
+It reads cld's version and the release that cld's latest release leads to, over HTTP, and runs cld update where that one is newer (roles/server/ubuntu/claude/README.md#installs-and-updates). The claude role's run state runs it as root.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws server ubuntu claude update [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for update
 == ws server ubuntu fans
 CONFIG is the file that the fans role writes, /etc/ws/fans.json by default.
 
@@ -488,9 +487,106 @@ Usage:
 
 Flags:
   -h, --help   help for fans
+== ws server ubuntu git
+the git role's checks and procedures, which its units run
 
-Global Flags:
-      --plain   print lines, with no full-screen display
+Usage:
+  ws server ubuntu git [flags]
+  ws server ubuntu git [command]
+
+Available Commands:
+  check       refuse git's clones and tokens that the role would act on, and note what shadows ws's settings
+  clones      clone each repository of WS_GIT_CLONES whose dest is missing, as WS_USER
+  included    say by the exit status whether the git config on stdin includes /etc/ws/gitconfig at its top
+  tokens      write git's tokens from the secrets file's [git] table
+
+Flags:
+  -h, --help   help for git
+
+Use "ws server ubuntu git [command] --help" for more information about a command.
+== ws server ubuntu git check
+It reads the values of /etc/ws/values.yml and the secrets file, where there is one. It fails where an entry of WS_GIT_CLONES holds a user name or a token in its URL, or where an entry of the secrets file's [git] table is refused (roles/server/ubuntu/git/README.md#git-credentials). No message quotes a token or a repository.
+
+It prints a warning on stdout for each setting of ~/.gitconfig that shadows /etc/ws/gitconfig's, by its name, never its value. The git role's guard runs it, before the tokens and the clones.
+
+Usage:
+  ws server ubuntu git check [flags]
+
+Flags:
+  -h, --help   help for check
+== ws server ubuntu git clones
+A clone is made once and never pulled (roles/server/ubuntu/git/README.md#clones). The git role's run state runs it, after the tokens.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws server ubuntu git clones [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for clones
+== ws server ubuntu git included
+It reads the text of ~/.gitconfig on its standard input, as git does. It exits 0 where the text includes /etc/ws/gitconfig once, at its top, and 1 where it lacks the include. It exits 2 with the reason where the include sits below the file's own settings or comes twice, which it would then override, or where git cannot read the text. The git role's unit of the include runs it, and refuses the file on 2.
+
+Usage:
+  ws server ubuntu git included [flags]
+
+Flags:
+  -h, --help   help for included
+== ws server ubuntu git tokens
+Each token goes in /etc/ws/tokens, root's with the account's group, and its credential program in /etc/ws/tokens.gitconfig (roles/server/ubuntu/git/README.md#git-credentials). A machine without a secrets file keeps its tokens. The git role's run state runs it, after the role's check.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws server ubuntu git tokens [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for tokens
+== ws server ubuntu ikeward
+the ikeward role's check, install and wait, which its units run
+
+Usage:
+  ws server ubuntu ikeward [flags]
+  ws server ubuntu ikeward [command]
+
+Available Commands:
+  check       fail where the secrets hold no profile for WS_IKEWARD_PROFILE
+  install     run ikeward install from the profile of the secrets, where its dry run says it would change anything
+  wait        wait for ikeward status to pass, as the VPN comes up
+
+Flags:
+  -h, --help   help for ikeward
+
+Use "ws server ubuntu ikeward [command] --help" for more information about a command.
+== ws server ubuntu ikeward check
+It reads the values of /etc/ws/values.yml and ws's secrets file, and fails where WS_IKEWARD_PROFILE is empty or the secrets hold no profile for it, as install would. The ikeward role's guard runs it, so that the run stops before ikeward's binary downloads, and a plan shows why.
+
+Usage:
+  ws server ubuntu ikeward check [flags]
+
+Flags:
+  -h, --help   help for check
+== ws server ubuntu ikeward install
+It reads the values of /etc/ws/values.yml and ws's secrets file. It writes the profile's two files into /run/ikeward-profile, which only root may enter, runs ikeward install --dry-run on them with the .p12's password on standard input, and removes them. Where the dry run exits 4, install would change something, and it runs install. It fails where WS_IKEWARD_PROFILE is set and the secrets hold no profile. Without booted systemd nothing is due.
+
+--check fails where install would change anything, and changes nothing. The ikeward role's run state runs it, after ikeward's binary.
+
+Usage:
+  ws server ubuntu ikeward install [flags]
+
+Flags:
+      --check   fail where install would change anything, and change nothing
+  -h, --help    help for install
+== ws server ubuntu ikeward wait
+It runs /usr/local/sbin/ikeward status, and again until it passes, up to 12 times, 10 s apart, then fails. A later unit may need the VPN, as for a clone from the remote network. Without booted systemd nothing is due. The ikeward role's run state runs it where ikeward status fails, after the install.
+
+Usage:
+  ws server ubuntu ikeward wait [flags]
+
+Flags:
+  -h, --help   help for wait
 == ws server ubuntu secrets
 keep ws's secrets file, with its identity as a systemd credential
 
@@ -507,9 +603,6 @@ Available Commands:
 Flags:
   -h, --help   help for secrets
 
-Global Flags:
-      --plain   print lines, with no full-screen display
-
 Use "ws server ubuntu secrets [command] --help" for more information about a command.
 == ws server ubuntu secrets init
 It makes ws's age identity in memory, which systemd-creds encrypts by the host's key as the credential /etc/credstore.encrypted/ws-secrets, for a unit's LoadCredentialEncrypted=ws-secrets. It makes an empty /etc/ws/secrets.age, root's and 600. A credential or a file that is there stays.
@@ -519,9 +612,6 @@ Usage:
 
 Flags:
   -h, --help   help for init
-
-Global Flags:
-      --plain   print lines, with no full-screen display
 == ws server ubuntu secrets keys
 print each entry as KIND NAME, never a value
 
@@ -530,9 +620,6 @@ Usage:
 
 Flags:
   -h, --help   help for keys
-
-Global Flags:
-      --plain   print lines, with no full-screen display
 == ws server ubuntu secrets set
 set an entry, whose value never goes in an argument
 
@@ -550,9 +637,6 @@ Available Commands:
 Flags:
   -h, --help   help for set
 
-Global Flags:
-      --plain   print lines, with no full-screen display
-
 Use "ws server ubuntu secrets set [command] --help" for more information about a command.
 == ws server ubuntu secrets set env
 set the env NAME, from a prompt with no echo or from stdin
@@ -562,9 +646,6 @@ Usage:
 
 Flags:
   -h, --help   help for env
-
-Global Flags:
-      --plain   print lines, with no full-screen display
 == ws server ubuntu secrets set file
 set a profile file (vpn_p12, vpn_sswan) from the file at PATH, or from stdin
 
@@ -573,9 +654,6 @@ Usage:
 
 Flags:
   -h, --help   help for file
-
-Global Flags:
-      --plain   print lines, with no full-screen display
 == ws server ubuntu secrets set git
 set a git server's token, from a prompt with no echo or from stdin
 
@@ -586,9 +664,6 @@ Flags:
   -h, --help              help for git
       --proactive-auth    send the token before the server asks for it, else as the entry does
       --username string   the user name that git sends with the token, else the entry's
-
-Global Flags:
-      --plain   print lines, with no full-screen display
 == ws server ubuntu secrets set password
 set the password NAME, from a prompt with no echo or from stdin
 
@@ -597,9 +672,6 @@ Usage:
 
 Flags:
   -h, --help   help for password
-
-Global Flags:
-      --plain   print lines, with no full-screen display
 == ws server ubuntu secrets set token
 set the token NAME, from a prompt with no echo or from stdin
 
@@ -608,9 +680,6 @@ Usage:
 
 Flags:
   -h, --help   help for token
-
-Global Flags:
-      --plain   print lines, with no full-screen display
 == ws server ubuntu secrets unset
 drop an entry
 
@@ -619,24 +688,85 @@ Usage:
 
 Flags:
   -h, --help   help for unset
-
-Global Flags:
-      --plain   print lines, with no full-screen display
-== ws server ubuntu state
-It reads alone and applies nothing. It needs what --check needs: root, on Ubuntu 26.04. It reports what ws manages and not the rest of the machine: the packages, services and files of the steps, what stands against them, and the changes that apply would make. A step that fails stands in the report as a check, and the exit code stays 0. It takes no secrets, so a report holds none and says nothing of what they write.
-
-At a terminal it draws the state screen on stderr, where the tabs, a filter and r to read again are. --plain prints the report as text, and so does a pipe. The text is on stdout and ws's own lines on stderr. --json prints the version of ws, then each role with its steps, items and changes.
+== ws server ubuntu signoz
+SigNoz's steps that the signoz role's units run
 
 Usage:
-  ws server ubuntu state [flags]
+  ws server ubuntu signoz [flags]
+  ws server ubuntu signoz [command]
+
+Available Commands:
+  password    write SigNoz's root password to /opt/signoz/root.env, once
+  sync        set SigNoz's retention and dashboards through its API
 
 Flags:
-  -h, --help           help for state
-      --json           print the report as JSON
-      --only strings   report the named roles and ROLE/STEPs alone, as a list or by repeating the flag
+  -h, --help   help for signoz
 
-Global Flags:
-      --plain   print lines, with no full-screen display
+Use "ws server ubuntu signoz [command] --help" for more information about a command.
+== ws server ubuntu signoz password
+It draws the password where root.env is missing, and keeps the one there, whatever it holds, with root's owner and mode 600.
+
+Usage:
+  ws server ubuntu signoz password [flags]
+
+Flags:
+      --check   plan the steps, apply none, and fail where one has a change to make
+  -h, --help    help for password
+== ws server ubuntu signoz sync
+It waits for SigNoz's API at WS_SIGNOZ_URL, then sets the retention of WS_SIGNOZ_RETENTION_DAYS, and creates or replaces each dashboard of WS_SIGNOZ_DASHBOARDS. Without booted systemd it skips.
+
+Usage:
+  ws server ubuntu signoz sync [flags]
+
+Flags:
+      --check   plan the steps, apply none, and fail where one has a change to make
+  -h, --help    help for sync
+== ws server ubuntu tunnel
+the tunnel role's check, wg0's key and wg0, which its units run
+
+Usage:
+  ws server ubuntu tunnel [flags]
+  ws server ubuntu tunnel [command]
+
+Available Commands:
+  check       refuse a networkd that does not run, and a peer's key file that holds no key
+  key         make wg0's private key where it is missing, and mend its owner, group and mode
+  wg0         make wg0 again where it lacks the key of its file, and wait for it to hold it
+
+Flags:
+  -h, --help   help for tunnel
+
+Use "ws server ubuntu tunnel [command] --help" for more information about a command.
+== ws server ubuntu tunnel check
+It reads the values of /etc/ws/values.yml. It fails where networkd does not run on a booted machine, as nothing would create wg0, or where a peer's /etc/wireguard/NAME.pub holds no WireGuard public key. It names each peer whose file is missing, which wg0 leaves out, and prints the server's public key where the key exists. The tunnel role's guard runs it, before wg0's key and files.
+
+Usage:
+  ws server ubuntu tunnel check [flags]
+
+Flags:
+  -h, --help   help for check
+== ws server ubuntu tunnel key
+The key is /etc/systemd/network/60-wg0.key, root:systemd-network 0640, which networkd reads. It is made once, and never shown: the run that makes it prints its public key. A file that holds no private key fails.
+
+--check fails where the key is to be made or mended, and changes nothing. The tunnel role's run state runs it, after the guard.
+
+Usage:
+  ws server ubuntu tunnel key [flags]
+
+Flags:
+      --check   fail where the key is to be made or mended, and change nothing
+  -h, --help    help for key
+== ws server ubuntu tunnel wg0
+networkd reads wg0's private key only as it creates wg0. Where wg0 holds another key, it is deleted; then networkctl reload creates it, and the command waits up to 10 s for it to hold the key, whose public key it prints. Without booted systemd nothing is due.
+
+--check fails where wg0 is missing or holds another key, and changes nothing. The tunnel role's run state runs it, after wg0's files.
+
+Usage:
+  ws server ubuntu tunnel wg0 [flags]
+
+Flags:
+      --check   fail where wg0 lacks the key of its file, and change nothing
+  -h, --help    help for wg0
 == ws server ubuntu values
 edit the machine's values
 
@@ -650,48 +780,69 @@ Available Commands:
 Flags:
   -h, --help   help for values
 
-Global Flags:
-      --plain   print lines, with no full-screen display
-
 Use "ws server ubuntu values [command] --help" for more information about a command.
 == ws server ubuntu values set
 An empty VALUE takes the key's line out, which gives its default back. A list's VALUE is split by commas. A table, such as WS_FANS_CURVES, stays the file's to edit by hand.
 
-The next ws server ubuntu apply takes the key.
+The next mise bootstrap takes the key.
 
 Usage:
   ws server ubuntu values set KEY VALUE [flags]
 
 Flags:
   -h, --help   help for set
-
-Global Flags:
-      --plain   print lines, with no full-screen display
-== ws server ubuntu wizard
-The stages of ws client macos wizard that act on ws, run as root on ws: ws's values, which it asks where values.yml lacks them, then ws server ubuntu apply, in a unit of its own that goes on where the login drops, then claude's login, and ws's signing key on GitHub. Either wizard follows the other's unit, and after the other's run, with nothing changed, runs no apply. At a terminal the stages open as ws's list, and the ones chosen run: e opens ws server ubuntu configure's forms. Under --check each stage prints what it would do and changes nothing.
+== ws unit
+plan and apply the units of ws's kinds, KIND/NAME, for mise
 
 Usage:
-  ws server ubuntu wizard [flags]
+  ws unit [flags]
+  ws unit [command]
+
+Available Commands:
+  list        print each unit, KIND/NAME, in the order the units run
+  read        print each unit's state: in-sync, or the first change that write would make
+  verify      fail where mise's plan lacks a unit of the specs
+  write       apply the units, in the order they run
 
 Flags:
-      --check   print what each stage would do and change nothing
-  -h, --help    help for wizard
+  -h, --help   help for unit
 
-Global Flags:
-      --plain   print lines, with no full-screen display
-== ws update
-Downloads the latest release's ws for this system, checks it against the release's ws.sha256 and that it runs, then replaces the file ws runs from, the file a symbolic link leads to.
-
-Where ws is the latest release already, or newer, nothing changes. A ws built from a clone is refused.
+Use "ws unit [command] --help" for more information about a command.
+== ws unit list
+The specs are each units.toml.tmpl one level below WS_UNITS, or below /opt/ws/roles/server/ubuntu where it is unset. --toml prints each unit as a line of mise's [bootstrap.packages].
 
 Usage:
-  ws update [flags]
+  ws unit list [flags]
 
 Flags:
-  -h, --help   help for update
+  -h, --help   help for list
+      --toml   print the units as lines of mise's [bootstrap.packages]
+== ws unit read
+It plans each UNIT and the units it waits on, and applies nothing. It prints a line per UNIT on stdout, in the order given: the unit, a tab and its state. The state is in-sync; the headline of its first change, with " (+N more)" for the rest; "after UNIT" where it waits on a unit with changes; or "fails: " and why its plan failed. A failed plan stops no other unit's read. --whole takes the UNITs for every line of mise's plan, as the plugin passes them: where the specs hold a unit they lack that is not in-sync, each UNIT fails and names it, and each fails where ws runs outside the specs' parent, the directory mise must run in. ws's own lines go to stderr.
 
-Global Flags:
-      --plain   print lines, with no full-screen display
+Usage:
+  ws unit read UNIT... [flags]
+
+Flags:
+  -h, --help    help for read
+      --whole   fail each UNIT where they lack a unit of the specs with a change
+== ws unit verify
+It reads mise's packages, by mise bootstrap packages status --json, and fails where the ws plugin is not loaded or a unit of the specs is not among its packages: mise drops a refused plugin's units with no error. It changes nothing. Where each unit is there, it prints a line that does not change.
+
+Usage:
+  ws unit verify [flags]
+
+Flags:
+  -h, --help   help for verify
+== ws unit write
+It plans, applies and plans again each UNIT, in the order the units run whatever the order given. A unit that a UNIT waits on and that is not named is planned and left out. A UNIT behind one with changes is skipped, and fails the write. --dry-run applies nothing and prints each change, file diffs included. ws's lines go to stderr, and the last one names the units that changed.
+
+Usage:
+  ws unit write UNIT... [flags]
+
+Flags:
+      --dry-run   plan the units and apply none
+  -h, --help      help for write
 == ws version
 print the version of this ws
 
@@ -700,6 +851,3 @@ Usage:
 
 Flags:
   -h, --help   help for version
-
-Global Flags:
-      --plain   print lines, with no full-screen display

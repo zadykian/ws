@@ -1,8 +1,11 @@
 #!/bin/bash
 # The rootless job's cases, as root on a runner that booted (.github/workflows/rootless.md). It
 # proves what a container can't: the rootless daemon, and the firewall around it. Each case that
-# expects a refusal has a control, as a broken setup refuses everything.
+# expects a refusal has a control, as a broken setup refuses everything. Run as
+# `rootless-checks.sh DIR`, DIR being .tools/serve-build's for the tree in /opt/ws.
 set -euo pipefail
+
+rel=$1
 
 user=zadykian
 home=/home/$user
@@ -16,7 +19,14 @@ sudo_form='printf "%s\n" "$1" | sudo -S -p "" -v; sudo -n true; rc=$?; exit "$rc
 # send Docker's tool to the runner's home, and the user's systemd to the runner's runtime directory.
 unset XDG_CONFIG_HOME
 sed -i '/^XDG_/d' /etc/environment
+# The runner's apt takes the amd64v3 variant, which a machine turns on by hand. The dotnet PPA's
+# index of that variant holds no .NET 8, so the cases run with no variant, as a machine has none.
+# apt reads this file after apt.conf.d, so the line wins wherever the runner set the variant.
+echo '#clear APT::Architecture-Variants;' >>/etc/apt/apt.conf
 export HOME=/root DEBIAN_FRONTEND=noninteractive
+# A tool installs only as a lock holds it, here the build's in mise.local.lock, as in playbook. The
+# runs by hand put the tools where install.sh does.
+export MISE_LOCKED=1 MISE_DATA_DIR=/usr/local/share/mise
 
 fail() {
     echo "::error::$*"
@@ -76,10 +86,14 @@ if [ -e "$key" ]; then
 fi
 
 # The image's Docker predates what --net=host means on a rootless daemon, and ws must install its
-# own. The purge leaves docker0, which the route check accepts.
+# own. The purge leaves docker0, which the route check accepts. The image's source of Docker goes
+# too, as apt refuses one repository signed by two keys, and mise adds its own.
 apt-get update
 apt-get purge -y docker-ce docker-ce-cli containerd.io
 rm -rf /etc/docker /var/lib/docker /var/lib/containerd
+for f in /etc/apt/sources.list.d/*; do
+    if [ -f "$f" ] && grep -q download.docker.com "$f"; then rm -f "$f"; fi
+done
 apt-get install -y --no-install-recommends netcat-openbsd
 
 # The account as Ubuntu's installer leaves it, with the groups ws must take away.
@@ -110,19 +124,25 @@ lab_pid=$!
 trap 'kill "$lab_pid"' EXIT
 
 install -d -m 755 /etc/ws
-printf '%s\n' --- "WS_USER: $user" >/etc/ws/values.yml
+# The swap file is small, as the runner's disk has no room for one the size of its RAM.
+printf '%s\n' --- "WS_USER: $user" 'WS_BASE_SWAP_SIZE_MB: 64' >/etc/ws/values.yml
 chmod 600 /etc/ws/values.yml
 
 # The controls: each of these holds before ws, and the opposite after it.
 must "the private address answers before the table" up "http://$target/"
 must "sudo's password is cached before the drop-in" as bash -c "$sudo_form" bash "$password"
 
-log=$(mktemp)
-ws server ubuntu apply --only security,docker
-ws server ubuntu apply --only security,docker 2>&1 | tee "$log"
-if [ "$(tail -n 1 "$log")" != 'ws server ubuntu apply: changed: none' ]; then
-    fail "The second run of ws server ubuntu apply changed something."
-fi
+# As on a new machine: install.sh runs the bootstrap, which installs ws and sets up the firewall
+# before Docker's ufw rules. It runs twice, and the second run must change nothing. The tree must
+# be root's alone for install.sh's guard.
+chown -R 0:0 /opt/ws
+chmod -R go-w /opt/ws
+"$(dirname "$0")/bootstrap.sh" "$rel"
+must "the first bootstrap leaves nothing to do" \
+    mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null
+mise -C /opt/ws/roles/server bootstrap </dev/null
+must "the second bootstrap leaves nothing to do" \
+    mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null
 
 groups=$(id -nG "$user")
 must "the user keeps sudo" grep -qw sudo <<<"$groups"
@@ -188,19 +208,19 @@ must "the user reaches a published port" as curl --silent --fail --max-time 5 \
     --output /dev/null http://127.0.0.1:18080/
 docker stop -t 0 ws-probe >/dev/null
 
-# The shell role's files refuse a link each. A dry run is enough, as the refusal is in the plan, and
-# it installs none of the role's packages. useradd made ~/.bashrc, from /etc/skel.
+# The shell's line refuses a link at ~/.bashrc. A dry run is enough, as the refusal is in the plan.
+# useradd made ~/.bashrc, from /etc/skel.
 as mv "$home/.bashrc" "$home/.bashrc.orig"
 as ln -s /etc/hostname "$home/.bashrc"
-if out=$(ws server ubuntu apply --check --only shell 2>&1); then
-    fail "ws server ubuntu apply planned through a link at ~/.bashrc"
+if out=$(WS_UNITS=roles/server/ubuntu ws unit write --dry-run file/shell-bashrc-line 2>&1); then
+    fail "ws unit write planned through a link at ~/.bashrc"
 fi
 must "a link at ~/.bashrc is refused" grep -q 'is a link to /etc/hostname' <<<"$out"
 as rm "$home/.bashrc"
 as mv "$home/.bashrc.orig" "$home/.bashrc"
 
-# ws's secrets: the identity is a credential that the host's key encrypts, and a unit reads it by
-# LoadCredentialEncrypted, which a container's systemd can't run.
+# ws's secrets: the identity is a credential that the host's key encrypts, which ws unit decrypts
+# by systemd-creds as root. A container's systemd can't make one.
 ws server ubuntu secrets init
 must "the credential is root's 600, in root's 700" test "$(stat -c '%U %a' \
     /etc/credstore.encrypted /etc/credstore.encrypted/ws-secrets)" = $'root 700\nroot 600'
@@ -213,13 +233,13 @@ must "keys names the entry" grep -qx 'env WS_CI' <<<"$names"
 refused "keys prints the value" grep -q "$value" <<<"$names"
 refused "the user runs ws server ubuntu secrets" as ws server ubuntu secrets keys
 
-apply=(ws server ubuntu apply --secrets /etc/ws/secrets.age --check --only shell)
-out=$(systemd-run --quiet --wait --pipe -p LoadCredentialEncrypted=ws-secrets "${apply[@]}" \
-    </dev/null 2>&1) || fail "a unit with the credential can't read the file"
-echo "ok: a unit with the credential reads the file"
-refused "the unit prints the value" grep -q "$value" <<<"$out"
-refused "a unit without the credential reads the file" \
-    systemd-run --quiet --wait --pipe "${apply[@]}" </dev/null
+# The user's decrypt prints nothing, so that one that got through would show no identity in the log.
+refused "the user decrypts the credential" as sh -c 'systemd-creds decrypt --name=ws-secrets \
+    /etc/credstore.encrypted/ws-secrets - </dev/null >/dev/null 2>&1'
+out=$(WS_UNITS=roles/server/ubuntu ws unit write --dry-run file/shell-env 2>&1) ||
+    fail "ws unit can't plan /etc/ws/env from the file"
+must "ws unit plans /etc/ws/env from the file" grep -q 'would change: file/shell-env' <<<"$out"
+refused "ws unit prints the value" grep -q "$value" <<<"$out"
 
 must "unset drops the entry" ws server ubuntu secrets unset env WS_CI
 refused "keys names the entry after unset" grep -q WS_CI <<<"$(ws server ubuntu secrets keys)"
@@ -227,29 +247,3 @@ sums=$(sha256sum /etc/ws/secrets.age /etc/credstore.encrypted/ws-secrets)
 ws server ubuntu secrets init
 must "a second init keeps both" test "$sums" = \
     "$(sha256sum /etc/ws/secrets.age /etc/credstore.encrypted/ws-secrets)"
-
-# ws server ubuntu wizard runs ws server ubuntu apply in a unit, as the Mac's wizard does, and a
-# second run with nothing changed starts none. A value set in values.yml has the next start one. The
-# unit's ws adds --only shell,git to apply, so that a full run, as the stamp has it, fits the job.
-# This comes last: ws is that stand-in from here on.
-refused "the wizard asks with no terminal" ws server ubuntu wizard --plain </dev/null
-ws server ubuntu values set WS_SECURITY_OUTBOUND true
-real=$(mktemp -d)/ws
-mv /usr/local/bin/ws "$real"
-printf '%s\n' '#!/bin/sh' \
-    "[ \"\$1 \$2 \$3\" != 'server ubuntu apply' ] || { shift 3; exec $real server ubuntu apply --only shell,git \"\$@\"; }" \
-    "exec $real \"\$@\"" >/usr/local/bin/ws
-chmod 755 /usr/local/bin/ws
-# The user's claude is a stand-in with a login, as that run installs none.
-# shellcheck disable=SC2016 # the user's sh expands $1, and cat reads the stdin it can't reopen
-runuser -u "$user" -- sh -c 'mkdir -p "$1" && cat >"$1/claude" && chmod 755 "$1/claude"' \
-    sh "$home/.local/bin" <<'EOF'
-#!/bin/sh
-[ "$*" = 'auth status' ]
-EOF
-must "the wizard runs ws server ubuntu apply in a unit" ws server ubuntu wizard --plain </dev/null
-out=$(ws server ubuntu wizard --plain 2>&1 </dev/null)
-refused "a second wizard starts a unit" grep -q ws-wizard- <<<"$out"
-ws server ubuntu values set WS_BASE_SWAPPINESS 10
-out=$(ws server ubuntu wizard --plain 2>&1 </dev/null)
-must "a wizard after a value's change starts a unit" grep -q ws-wizard- <<<"$out"

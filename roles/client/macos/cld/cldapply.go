@@ -7,14 +7,12 @@ import (
 
 // Apply installs cld. A failure is a warning, and the next run tries again.
 func (i cldInstall) Apply(ctx context.Context) error {
-	i.c.tried = true
 	i.c.install(ctx)
 	return nil
 }
 
 // Apply has cld update itself. A failure is a warning, and the next run tries again.
 func (u cldUpdate) Apply(ctx context.Context) error {
-	u.c.tried = true
 	u.c.runUpdate(ctx)
 	return nil
 }

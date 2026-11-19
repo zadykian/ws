@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 // stdinMachine answers RunInput by the start of its standard input, as the fake's table has the
@@ -34,4 +35,16 @@ func (m stdinMachine) RunInput(ctx context.Context, stdin []byte, name string, a
 		}
 	}
 	return nil, nil
+}
+
+// gitFixture is a machine whose git answers by stdinMachine's tables, empty to begin with, and the
+// shadow of the account ws on it.
+func gitFixture() (*effecttest.Machine, stdinMachine, shadow) {
+	m := effecttest.NewMachine()
+	m.Results["git config --file - --name-only --list"] = effecttest.Result{}
+	m.Results["git config --file - --type path --get-all include.path"] = effecttest.Result{}
+	m.Results["git config --file - --get-regexp "+helperPattern] = effecttest.Result{}
+	sm := stdinMachine{Machine: m, answers: map[string]string{}, paths: map[string]string{}, helpers: map[string]string{}}
+	a := account.Account{User: account.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
+	return m, sm, shadow{M: sm, A: a}
 }

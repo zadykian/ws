@@ -16,10 +16,6 @@ type Lines struct {
 	Prog string
 	// Seen holds the warnings said.
 	Seen map[string]bool
-	// Change says a change under --check in its side's way. It returns the lines, each printed
-	// bare, so that an empty one is a blank line. False means a change with no way of its own,
-	// which prints as "PATH: change". Nil has none.
-	Change func(step.Change) ([]string, bool)
 }
 
 // Say prints the line after the prefix.
@@ -46,14 +42,6 @@ func (o Lines) Observe(e step.Event) {
 
 // sayChange prints a change under --check.
 func (o Lines) sayChange(c step.Change) {
-	if o.Change != nil {
-		if lines, ok := o.Change(c); ok {
-			for _, line := range lines {
-				o.Out.Say("%s", line)
-			}
-			return
-		}
-	}
 	o.Out.Say("%s: %v", o.Prog, c)
 }
 

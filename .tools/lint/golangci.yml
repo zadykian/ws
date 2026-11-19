@@ -26,7 +26,7 @@ linters:
             - "$all"
             - "!${base-path}/cmd/**"
             - "!${base-path}/engine/cli/**"
-            - "!${base-path}/roles/*/*/cli/**"
+            - "!${base-path}/roles/*/cli/**"
             - "!${base-path}/.tools/**"
           deny:
             - pkg: github.com/spf13/cobra
@@ -54,25 +54,23 @@ linters:
         roles:
           files:
             - "${base-path}/roles/**"
-            - "!${base-path}/roles/*/*/cli/**"
+            - "!${base-path}/roles/*/cli/**"
           deny:
             - pkg: github.com/zadykian/ws/cmd
               desc: a role reaches no command, as cmd composes the roles
             - pkg: github.com/zadykian/ws/engine$
-              desc: a role imports engine/core, as its side's cli package runs the engine
+              desc: a role imports engine/core, as the exit codes and lines are the cli packages'
             - pkg: github.com/zadykian/ws/engine/cli
               desc: a role builds no command, as its side's cli package does
-            - pkg: github.com/zadykian/ws/engine/tui
-              desc: a role draws no screen, as its steps report events that engine/tui draws
-            - pkg: github.com/zadykian/ws/roles/client/macos/cli
+            - pkg: github.com/zadykian/ws/roles/client/cli
               desc: a role reaches no command, as its side's cli package wires the role
-            - pkg: github.com/zadykian/ws/roles/server/ubuntu/cli
+            - pkg: github.com/zadykian/ws/roles/server/cli
               desc: a role reaches no command, as its side's cli package wires the role
         roleimports:
           list-mode: lax
           files:
             - "${base-path}/roles/**"
-            - "!${base-path}/roles/*/*/cli/**"
+            - "!${base-path}/roles/*/cli/**"
           allow:
             - github.com/zadykian/ws/engine/core/
             - github.com/zadykian/ws/roles/
@@ -83,15 +81,9 @@ linters:
           list-mode: lax
           files:
             - "${base-path}/roles/client/**"
-          allow:
-            - github.com/zadykian/ws/roles/server/ubuntu/cli
-            - github.com/zadykian/ws/roles/server/ubuntu/secrets
-            - github.com/zadykian/ws/roles/server/ubuntu/session
-            - github.com/zadykian/ws/roles/server/ubuntu/stages
-            - github.com/zadykian/ws/roles/server/ubuntu/values
           deny:
             - pkg: github.com/zadykian/ws/roles/server
-              desc: the Mac imports the server's values, secrets, session, stages and cli alone
+              desc: the Mac imports nothing of the server, so that the sides change apart
         server:
           files:
             - "${base-path}/roles/server/**"
@@ -111,10 +103,11 @@ linters:
           files:
             - "${base-path}/cmd/**"
           allow:
+            - github.com/zadykian/ws/cmd$
             - github.com/zadykian/ws/engine/cli
             - github.com/zadykian/ws/engine/core/effect/local$
-            - github.com/zadykian/ws/roles/client/macos/cli
-            - github.com/zadykian/ws/roles/server/ubuntu/cli
+            - github.com/zadykian/ws/roles/client/cli
+            - github.com/zadykian/ws/roles/server/cli
           deny:
             - pkg: github.com/zadykian/ws/
               desc: cmd composes the cli packages, and effect/local's machine at the root

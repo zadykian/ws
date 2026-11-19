@@ -1,8 +1,8 @@
 #!/bin/bash
-# ws client macos apply writes /etc/ws/zshrc, as root, roles/client/macos/zsh/files/zshrc whole, and ends
-# ~/.zshrc with the line that sources it. An interactive zsh prints the resets before each prompt,
-# and the alternate screen's reset after a 255 from ssh, or from cld with --host, alone. Functions
-# stand in for both.
+# mise bootstrap (28-bootstrap.sh) wrote /etc/ws/zshrc, as root, roles/client/macos/zsh/files/zshrc
+# whole, and ended ~/.zshrc with the line that sources it. An interactive zsh prints the resets
+# before each prompt, and the alternate screen's reset after a 255 from ssh, or from cld with
+# --host, alone. Functions stand in for both.
 
 set -eo pipefail
 

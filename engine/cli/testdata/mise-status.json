@@ -1,0 +1,33 @@
+{
+  "apt": {
+    "available": true,
+    "packages": [
+      {
+        "package": "ca-certificates",
+        "requested_version": "latest",
+        "desired_state": "present",
+        "state": "missing",
+        "installed_version": ""
+      }
+    ]
+  },
+  "ws": {
+    "available": true,
+    "packages": [
+      {
+        "package": "file/a",
+        "requested_version": "in-sync",
+        "desired_state": "present",
+        "state": "version_mismatch",
+        "installed_version": "create /etc/wstest-a"
+      },
+      {
+        "package": "file/b",
+        "requested_version": "in-sync",
+        "desired_state": "present",
+        "state": "version_mismatch",
+        "installed_version": "create /etc/wstest-b"
+      }
+    ]
+  }
+}

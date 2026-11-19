@@ -79,8 +79,7 @@ func (t *Terminal) ByHand(format string, a ...any) {
 	t.byHand = append(t.byHand, fmt.Sprintf(format, a...))
 }
 
-// Flush prints the lines that ByHand kept, once, and forgets them, under a blank line and the title
-// that the wizard's closing list has.
+// Flush prints the lines that ByHand kept, once, and forgets them, under a blank line and a title.
 func (t *Terminal) Flush() {
 	if len(t.byHand) == 0 {
 		return

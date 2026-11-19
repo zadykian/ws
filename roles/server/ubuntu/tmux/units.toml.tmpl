@@ -1,0 +1,6 @@
+# Removes tmux's snap, where snapd is installed and lists it. snapd must run to remove a snap, so
+# without booted systemd, as in CI's container, the removal skips and says so.
+[state.tmux-snap.run]
+user = "root"
+command = ["snap", "remove", "tmux"]
+check = ["sh", "-c", "[ ! -x /usr/bin/snap ] || ! snap list tmux >/dev/null 2>&1"]

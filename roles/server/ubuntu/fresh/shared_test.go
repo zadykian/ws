@@ -1,4 +1,4 @@
-package fresh
+package fresh_test
 
 import (
 	"encoding/json"

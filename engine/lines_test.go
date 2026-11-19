@@ -9,14 +9,19 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
+// textChange is a change that says itself alone.
+type textChange string
+
+func (c textChange) String() string { return string(c) }
+
 func TestLinesPrefixLines(t *testing.T) {
-	out := Lines{Out: &effecttest.Out{}, Prog: "ws client macos apply", Seen: map[string]bool{}}
+	out := Lines{Out: &effecttest.Out{}, Prog: "ws client macos resolver", Seen: map[string]bool{}}
 	out.Say("wrote %s", "f")
 	out.Say("%s: %s", "Answers", "bad")
 	out.Warn("w %d", 1)
 	out.Warn("w %d", 1)
 	want := []string{
-		"say: ws client macos apply: wrote f", "say: ws client macos apply: Answers: bad", "say: ws client macos apply: warning: w 1",
+		"say: ws client macos resolver: wrote f", "say: ws client macos resolver: Answers: bad", "say: ws client macos resolver: warning: w 1",
 	}
 	if got := out.Out.(*effecttest.Out).Lines; !reflect.DeepEqual(got, want) {
 		t.Errorf("lines = %q, want %q", got, want)
@@ -24,19 +29,8 @@ func TestLinesPrefixLines(t *testing.T) {
 }
 
 func TestLinesObserveAPlanAndWhatAStepIsBehind(t *testing.T) {
-	out := Lines{Out: &effecttest.Out{}, Prog: "ws client macos apply", Seen: map[string]bool{}}
-	out.Change = func(c step.Change) ([]string, bool) {
-		switch c.String() {
-		case "bare\n":
-			return []string{"bare"}, true
-		case "blank":
-			return []string{""}, true
-		case "silent":
-			return nil, true
-		}
-		return nil, false
-	}
-	plan := []step.Change{textChange("bare\n"), textChange("blank"), textChange("silent"), textChange("would run x")}
+	out := Lines{Out: &effecttest.Out{}, Prog: "ws client macos resolver", Seen: map[string]bool{}}
+	plan := []step.Change{textChange("would run x")}
 	out.Observe(step.Event{Kind: step.Planned, Step: "ssh", Changes: plan})
 	out.Observe(step.Event{Kind: step.Started, Step: "ssh", Changes: plan})
 	out.Observe(step.Event{Kind: step.Planned, Step: "ssh", Check: true, Changes: plan})
@@ -46,8 +40,8 @@ func TestLinesObserveAPlanAndWhatAStepIsBehind(t *testing.T) {
 	out.Observe(step.Event{Kind: step.Skipped, Step: "git", After: "ssh", LeftOut: true})
 	out.Observe(step.Event{Kind: step.Skipped, Step: "cld", Err: errors.New("no file"), LeftOut: true})
 	want := []string{
-		"say: bare", "say: ", "say: ws client macos apply: would run x",
-		"say: ws client macos apply: git: after ssh", "say: ws client macos apply: warning: left out: no file",
+		"say: ws client macos resolver: would run x",
+		"say: ws client macos resolver: git: after ssh", "say: ws client macos resolver: warning: left out: no file",
 	}
 	if got := out.Out.(*effecttest.Out).Lines; !reflect.DeepEqual(got, want) {
 		t.Errorf("lines = %q, want %q", got, want)

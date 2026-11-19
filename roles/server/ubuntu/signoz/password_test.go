@@ -5,14 +5,13 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-func TestPasswordIsGeneratedOnceAndMarksAnUp(t *testing.T) {
+func TestPasswordIsGeneratedOnce(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Dirs["/opt/signoz"] = 0o755
-	g := noWait(Password(m, "/opt/signoz"))
+	g := Password(m)
 	changed, err := step.Run(t.Context(), []step.Step{g}, &effecttest.Out{}, false)
 	if err != nil || !changed {
 		t.Fatalf("first run = %v, %v; want a change", changed, err)
@@ -24,8 +23,8 @@ func TestPasswordIsGeneratedOnceAndMarksAnUp(t *testing.T) {
 	if m.Modes["/opt/signoz/root.env"] != 0o600 {
 		t.Errorf("root.env has mode %o, want 600", m.Modes["/opt/signoz/root.env"])
 	}
-	if _, ok := m.Files["/opt/signoz/recreate"]; !ok {
-		t.Error("a new password did not mark the containers for recreation")
+	if _, ok := m.Files["/opt/signoz/recreate"]; ok {
+		t.Error("the password wrote a mark in the directory that the compose unit sums")
 	}
 	if changed, err = step.Run(t.Context(), []step.Step{g}, &effecttest.Out{}, false); err != nil || changed {
 		t.Errorf("second run = %v, %v; want none", changed, err)
@@ -39,7 +38,7 @@ func TestPasswordKeepsTheFileButFixesItsMode(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/opt/signoz/root.env"] = []byte("SIGNOZ_USER_ROOT_PASSWORD=mine\n")
 	m.Modes["/opt/signoz/root.env"] = 0o644
-	if _, err := step.Run(t.Context(), []step.Step{noWait(Password(m, "/opt/signoz"))}, &effecttest.Out{}, false); err != nil {
+	if _, err := step.Run(t.Context(), []step.Step{Password(m)}, &effecttest.Out{}, false); err != nil {
 		t.Fatal(err)
 	}
 	if got := string(m.Files["/opt/signoz/root.env"]); got != "SIGNOZ_USER_ROOT_PASSWORD=mine\n" {
@@ -48,10 +47,4 @@ func TestPasswordKeepsTheFileButFixesItsMode(t *testing.T) {
 	if got := m.Modes["/opt/signoz/root.env"]; got != 0o600 {
 		t.Errorf("root.env has mode %o, want 600", got)
 	}
-}
-
-// noWait drops the wait on a step the test does not run.
-func noWait(g resource.Group) resource.Group {
-	g.After = ""
-	return g
 }

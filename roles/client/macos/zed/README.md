@@ -1,37 +1,33 @@
 # Zed on the Mac
 
-`ws client macos apply` sets up [Zed](https://zed.dev) on the Mac, the editor that opens projects on
-ws. The step is `zed`, so `ws client macos apply --only zed` runs it alone, and `--check` shows its
+`mise bootstrap` sets up [Zed](https://zed.dev) on the Mac, the editor that opens projects on ws,
+by [`mise.mac.toml`](mise.mac.toml) and [the units](units.toml.tmpl). `mise bootstrap plan` shows the
 changes and makes none.
 
 ## The install
 
-The step installs Zed from Homebrew's cask `zed` where `Zed.app` is in neither `/Applications` nor
-`~/Applications`. It installs the font that the settings name, as [Ghostty's step](../ghostty/README.md)
-does, from the cask `font-jetbrains-mono-nerd-font`.
+mise installs Zed from the cask `zed` by its `brew-cask` backend, which needs no Homebrew. The
+font that the settings name comes from [Ghostty's role](../ghostty/README.md). A cask takes the
+latest version alone, outside the SHA-256 rule of the downloads, and Zed then updates itself.
 
-- A failed install draws a warning, and the next run tries again, with brew's output. The step
-  writes no file for Zed until the app is there.
-- Where Homebrew has the cask but not the app, the step warns and installs nothing:
-  `brew reinstall --cask zed` puts the app back.
-- Without Homebrew, the step stops and says so.
-- The step runs no `brew upgrade`. Zed updates itself, brew skips a cask that does, and the cask's
-  uninstall quits the app.
-
-The cask links `zed`. `zed --version` prints `Zed X.Y.Z – /Applications/Zed.app`, with an en dash,
-and `zed ssh://ws/PATH` opens a project on ws.
+The cask links `zed` into `/opt/homebrew/bin`. The unit `file.zed-path` writes `/etc/paths.d/ws`,
+whose one line is that directory. `/usr/libexec/path_helper` puts it on a login shell's `PATH`
+where Homebrew is not set up. `zed --version` prints `Zed X.Y.Z – /Applications/Zed.app`, with an
+en dash, and `zed ssh://ws/PATH` opens a project on ws.
 
 ## The two files
 
-The step writes both files in `~/.config/zed`, a path that macOS gives no XDG lookup. It makes
-`~/.config` first where missing.
+The units write both files in `~/.config/zed`, a path that macOS gives no XDG lookup, as the
+user's. They make `~/.config` first where missing.
 
 - `global_settings.json` is [the file in `roles/client/macos/zed/files/`](files/global_settings.json), whole, with
   the header as its first line. Each run replaces it, so changes made there are lost. A file whose
-  first line lacks the header's mark is left, with a warning: move it away, and the next run writes
-  ws's. Zed parses it as it parses `settings.json`, so the header comment is valid.
-- `settings.json` is Zed's own, which its UI writes. The step writes a seed there once, where
-  nothing is, and never reads the file after. A file of any content, or a link, counts as there.
+  first line lacks the header's mark is left. Its read warns, as for the keymap below. Move it
+  away, and the next run writes ws's. Zed parses it as it parses `settings.json`, so the header
+  comment is valid.
+- `settings.json` is Zed's own, which its UI writes. The unit `file.zed-settings` writes a seed
+  there once, from [`settings.json.tmpl`](files/settings.json.tmpl), where nothing is, and never
+  reads the file after. A file of any content, or a link, counts as there.
 
 Zed merges `settings.json` over `global_settings.json`, so a key in `settings.json` wins over ws's.
 This is the reverse of Ghostty's order. A key set only in `global_settings.json` shows Zed's
@@ -49,20 +45,20 @@ connects with the system `ssh`, so `host: "ws"` resolves through that file, with
 keepalive. Nothing else is set there: no `username`, `port` or `args`. A server added later is
 not added to a `settings.json` that exists ([below](#a-settingsjson-that-exists-already)).
 
-A linked `~/.config/zed`, as GNU stow's folding makes, draws a warning where the step plans a write:
-Zed's files go through the link.
+A linked `~/.config` or `~/.config/zed`, as GNU stow's folding makes, stops the units: a file of
+the user's goes through no link. Make that directory a plain one.
 
 ## A settings.json that exists already
 
-Where Zed wrote `settings.json` before the step ran, the step leaves it and does not warn: the
-file is there on every later run, and the step never reads it. Zed's first write starts from its
+Where Zed wrote `settings.json` before the first bootstrap, the unit leaves it and does not warn:
+the file is there on every later run, and the unit never reads it. Zed's first write starts from its
 template, whose `theme` (One Light and One Dark, mode `system`) would win over ws's. So:
 
 - delete the `theme` block of `settings.json`, or the theme stays Zed's;
 - add each server in Remote Projects by hand, as the seed would have.
 
 A server added once the file is there is missing from it too, and the run says nothing of it. The
-step keeps no record of the servers that the seed held, so it cannot tell a later one. Add
+unit keeps no record of the servers that the seed held, so it cannot tell a later one. Add
 `{ "host": "NAME" }`, NAME the server's, at the end of `ssh_connections`. An entry put before
 others shifts their indices, by which Zed records the projects opened on them.
 
@@ -75,7 +71,7 @@ server to every YAML file, Ansible's too.
 
 ## Other facts
 
-- A server through its tunnel needs no Local Network grant. Only a direct way does ([The Mac](../README.md)),
+- A server through its tunnel needs no Local Network grant. Only a direct way does ([The Mac](../../README.md)),
   so the seed names each server's host alone, which goes through its tunnel.
 - The terminal and the git panel dock right, the git panel 600 pixels wide, as the project and
   outline panels dock left. A dock shows one panel at a time, so F2 and F3 swap the two. A resize
@@ -95,15 +91,16 @@ server to every YAML file, Ansible's too.
 
 ## The keymap
 
-The step also writes `~/.config/zed/keymap.json`, which is
+The unit `file.zed-keymap` also writes `~/.config/zed/keymap.json`, which is
 [`roles/client/macos/zed/files/keymap.json`](files/keymap.json) whole. That plain file is the source of the keys,
 and a `//` comment beside a binding gives its reason. `base_keymap` stays `Zed`.
-Both files start with the one header, and the step takes the mark in line 1,
-`Written by github.com/zadykian/ws`, as ws's.
+Both files start with the one header, and the units take its first line,
+`// Written by github.com/zadykian/ws`, as ws's mark.
 
-- Where the file is missing, or its first line holds the mark, the step writes it whole.
-- Where the first line does not, as in a file with an older header, the step leaves the file. It
-  warns once: move it away, and the next run writes ws's.
+- Where the file is missing, or its first line holds the mark, the unit writes it whole.
+- Where the first line does not, as in a file with an older header, the unit leaves the file. Its
+  read warns, which `ws unit read file/zed-keymap`, run in `/opt/ws`, shows: mise's run hides it.
+  Move the file away, and the next run writes ws's.
 - Zed's keymap editor writes this file too (zed#8829). A change made there is replaced at the next
   run while line 1 stands. Delete line 1 to keep the file, and ws leaves it.
 

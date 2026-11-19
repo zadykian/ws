@@ -4,7 +4,7 @@
 #
 #   .tools/sizecheck [FILE...]
 #
-# It caps Markdown, YAML, shell scripts, found by extension or shebang, Python, Go and Jinja
+# It caps Markdown, YAML, shell scripts, found by extension or shebang, Python, Go, Lua and Jinja
 # templates. Data files, such as TOML, JSON, conf files and licenses, are of no kind it caps.
 # Generated and vendored files are exempt, as they are not written here. These are foundryctl's
 # compose files in roles/server/ubuntu/signoz/deployment/ and its casting.yaml.lock, which yamllint
@@ -34,7 +34,7 @@ main() {
     trap 'rm -rf "$tmp"' EXIT
     trap 'exit 1' HUP INT TERM
     dir=$(dirname -- "$0")
-    for kind in md yaml sh py j2 go; do
+    for kind in md yaml sh py j2 go lua; do
         "$dir/files" "$kind" "$@" >>"$tmp/listed"
     done
     LC_ALL=C sort -u "$tmp/listed" >"$tmp/files"

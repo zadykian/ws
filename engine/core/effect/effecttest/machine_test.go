@@ -13,27 +13,8 @@ import (
 )
 
 var (
-	_ effect.Foreground = (*effecttest.Machine)(nil)
-	_ effect.Lines      = (*effecttest.Machine)(nil)
+	_ effect.Lines = (*effecttest.Machine)(nil)
 )
-
-func TestMachinePassForeground(t *testing.T) {
-	boom := errors.New("boom")
-	m := effecttest.NewMachine()
-	m.Results["ssh-keygen -q"] = effecttest.Result{Err: boom}
-	m.Results["installer -pkg"] = effecttest.Result{}
-	ctx := context.Background()
-	if err := m.PassForeground(ctx, false, "ssh-keygen", "-q"); !errors.Is(err, boom) {
-		t.Errorf("err = %v, want the result's", err)
-	}
-	if err := m.PassForeground(ctx, true, "installer", "-pkg"); err != nil {
-		t.Errorf("as root: %v", err)
-	}
-	want := []string{"foreground ssh-keygen -q", "foreground root installer -pkg"}
-	if !slices.Equal(m.Calls, want) {
-		t.Errorf("Calls = %q, want %q", m.Calls, want)
-	}
-}
 
 func TestMachinePassLines(t *testing.T) {
 	boom := errors.New("boom")
@@ -48,6 +29,20 @@ func TestMachinePassLines(t *testing.T) {
 	}
 	if !slices.Equal(m.Calls, []string{"run ssh ws"}) || !slices.Equal(m.Inputs, []string{"in"}) {
 		t.Errorf("Calls = %q, Inputs = %q", m.Calls, m.Inputs)
+	}
+}
+
+func TestMachineAfterChangesTheNextResult(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["launchctl print x"], m.Results["launchctl bootout x"] = effecttest.Result{Out: []byte("x")}, effecttest.Result{}
+	m.After = map[string]map[string]effecttest.Result{"launchctl bootout x": {"launchctl print x": {Out: []byte("gone")}}}
+	ctx := context.Background()
+	before, _ := m.Run(ctx, "launchctl", "print", "x")
+	if _, err := m.RunRoot(ctx, "launchctl", "bootout", "x"); err != nil {
+		t.Fatal(err)
+	}
+	if after, _ := m.Run(ctx, "launchctl", "print", "x"); string(before) != "x" || string(after) != "gone" {
+		t.Errorf("print = %q, then %q; want x, then gone", before, after)
 	}
 }
 

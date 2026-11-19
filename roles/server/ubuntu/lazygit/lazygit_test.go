@@ -1,83 +1,24 @@
-package lazygit
+package lazygit_test
 
 import (
 	"bytes"
-	"context"
+	_ "embed"
+	"os"
 	"regexp"
 	"slices"
 	"strings"
 	"testing"
 
 	"go.yaml.in/yaml/v3"
-
-	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/resource/apt"
-	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
-func steps() []step.Step {
-	return Steps(values.Default(), secrets.Secrets{}, effecttest.NewMachine(), &effecttest.Units{}, &effecttest.Out{})
-}
+// config and wrapper are the role's files, as the mise config reads them.
+//
+//go:embed files/config.yml
+var config []byte
 
-func TestStepsAreTheRole(t *testing.T) {
-	var names []string
-	for _, s := range steps() {
-		names = append(names, s.Name())
-	}
-	if want := []string{packageStep, wrapperStep, configStep}; !slices.Equal(names, want) {
-		t.Errorf("steps %v, want %v", names, want)
-	}
-}
-
-func TestTheWrapperWaitsOnThePackage(t *testing.T) {
-	if got := steps()[1].WaitsOn(); got != packageStep {
-		t.Errorf("the wrapper waits on %q", got)
-	}
-}
-
-const configPath = "/home/ws/.config/lazygit/config.yml"
-
-// configOn returns the config's step for the user ws on a machine that has the user's home.
-func configOn() (*effecttest.Machine, step.Step) {
-	m := effecttest.NewMachine()
-	m.Dirs["/home/ws"] = 0o755
-	m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
-	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
-	v := values.Default()
-	v.User, v.Home = "ws", "/home/ws"
-	return m, Steps(v, secrets.Secrets{}, m, &effecttest.Units{}, &effecttest.Out{})[2]
-}
-
-func TestConfigIsWrittenOnceForTheUser(t *testing.T) {
-	m, s := configOn()
-	if _, err := step.Run(context.Background(), []step.Step{s}, &effecttest.Out{}, false); err != nil {
-		t.Fatal(err)
-	}
-	changed, err := step.Run(context.Background(), []step.Step{s}, &effecttest.Out{}, false)
-	if err != nil || changed {
-		t.Errorf("the second run: changed %v, %v", changed, err)
-	}
-	if o := m.Owners[configPath]; o != [2]int{1000, 1000} {
-		t.Errorf("owner %v", o)
-	}
-	if !bytes.Equal(m.Files[configPath], config) {
-		t.Error("config.yml differs from the embedded file")
-	}
-}
-
-func TestConfigRefusesALink(t *testing.T) {
-	m, s := configOn()
-	m.Links["/home/ws/.config"] = "/srv/target"
-	if _, err := step.Run(context.Background(), []step.Step{s}, &effecttest.Out{}, false); err == nil {
-		t.Error("no error")
-	}
-	if len(m.Owners) != 0 || len(m.Files) != 0 {
-		t.Errorf("changed %v %v", m.Owners, m.Files)
-	}
-}
+//go:embed files/lazygit
+var wrapper []byte
 
 func TestTheConfigStartsWithItsHeader(t *testing.T) {
 	if !bytes.HasPrefix(config, []byte("# Written by github.com/zadykian/ws,")) {
@@ -162,9 +103,9 @@ func TestThePagerIsDeltaFromItsPackage(t *testing.T) {
 	if cmd, _ := pager["pager"].(string); !strings.HasPrefix(cmd, "delta ") {
 		t.Errorf("pager %q", cmd)
 	}
-	group, _ := steps()[0].(resource.Group)
-	if packages, _ := group.Parts[0].(apt.Packages); !slices.Contains(packages.Names, "git-delta") {
-		t.Errorf("packages %v", packages.Names)
+	lines, err := os.ReadFile("mise.server.toml")
+	if err != nil || !strings.Contains(string(lines), `"apt:git-delta" = "latest"`) {
+		t.Errorf("mise.server.toml names no package git-delta: %v", err)
 	}
 }
 

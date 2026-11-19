@@ -8,11 +8,18 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
+	"github.com/zadykian/ws/roles/server/secrets"
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 const installArgs = binary + " install --p12 " + runDir + "/vpnclient.p12 --sswan " + runDir +
 	"/vpnclient.sswan --dns 10.20.0.53 --domain=example.internal --floor=10.20.0.0/16"
+
+// good are the values of a machine with a VPN, which the values' check takes.
+func good() values.Ikeward {
+	return values.Ikeward{Profile: "/root/vpn/vpnclient", DNS: "10.20.0.53",
+		Domains: []string{"example.internal"}, ForwardFrom: []string{"10.99.0.2"}}
+}
 
 // exitError is the error of a command that exits with code.
 func exitError(t *testing.T, code string) error {

@@ -1,36 +1,48 @@
 # fans
 
 The `fans` role drives the server's fans on curves of its own. It builds the board's fan driver
-with DKMS, and runs `ws-fans`, a service of its own, on the curves of its variables. Its steps,
-in `roles/server/ubuntu/fans`, are the board's check, the packages, the driver's source, DKMS, the
-modules, and the service with its config.
+with DKMS, and runs `ws-fans`, a service of its own, on the curves of its variables. The role is
+three units of [its spec](units.toml.tmpl), whose lines sit in `mise.server.toml`
+([The frame](../frame/README.md)). The daemon is Go, `ws server ubuntu fans`, in `daemon/`.
+
+| Unit | What it does |
+| --- | --- |
+| `packages/fans` | Installs `dkms`, `linux-headers-generic` and the running kernel's headers. |
+| `dkms/fans` | Builds the driver `nct6687` with DKMS, after the packages, and loads it. |
+| `service/fans` | Writes the four files below, and keeps `ws-fans` enabled and running. |
+
+Each runs where DMI names the board's maker `WS_FANS_BOARD_VENDOR`, MSI: the units'
+`when = { board_vendor = ... }` ([when](../../../../engine/core/kind/README.md#the-specs)). A
+machine with another board is left alone, as a cloud VM, a VM on the Mac or CI's container. There
+each unit says in a line that it's off, and reads `in-sync`. With the value empty, the line says
+that the `when` gives no maker.
 
 ## The driver
 
 The board is MSI's, with a Nuvoton NCT6687D for its fan headers. Linux's own `nct6683` reads that
 chip but sets none of its fans on MSI's boards. So the role builds `nct6687`, from
-[Fred78290/nct6687d](https://github.com/Fred78290/nct6687d), with DKMS. That repository tags no
-releases: `roles/server/ubuntu/fans/pins.go` pins a commit, and the SHA-256 of GitHub's tarball of it.
+[Fred78290/nct6687d](https://github.com/Fred78290/nct6687d), with DKMS: the unit `dkms/fans`
+([the kind dkms](../../../../engine/core/kind/README.md#dkms)). That repository tags no releases:
+the spec pins a commit, and the SHA-256 of GitHub's tarball of it.
 
-The role downloads the tarball against that SHA-256 and unpacks it beside
+The unit downloads the tarball against that SHA-256, and unpacks it beside
 `/usr/src/nct6687d-COMMIT`. It moves the tree in whole, so that a run cut short leaves no half
 tree. The tree's `.ws-source` file holds the tarball's URL. DKMS's version is the commit's first 12
-characters, and the role builds it for the running kernel.
-DKMS builds it again for each new kernel, from the headers `linux-headers-generic` installs beside
-it. A new pin removes the old version from DKMS, and its source. `dkms status` says which versions
-DKMS holds. `/etc/modprobe.d/ws-fans.conf` keeps `nct6683` off the chip, and `/etc/modules-
-load.d/ws-fans.conf` loads `nct6687` at boot. The run unloads a loaded `nct6683`, as
-after `sensors-detect`, and loads `nct6687`.
-
-The role does all this where DMI names the board's maker `WS_FANS_BOARD_VENDOR`, MSI. A machine with
-another board, as a cloud VM or CI's container, is left alone, and the run says so.
+characters, which `files/dkms.conf` gives in place of the driver's fixed `1`, and the unit builds
+it for the running kernel. DKMS builds it again for each new kernel, from the headers
+`linux-headers-generic` installs beside it. A new pin removes the old version from DKMS, and its
+source. `dkms status` says which versions DKMS holds. `/etc/modprobe.d/ws-fans.conf` keeps
+`nct6683` off the chip, and `/etc/modules-load.d/ws-fans.conf` loads `nct6687` at boot. The run
+unloads a loaded `nct6683`, as after `sensors-detect`, and loads `nct6687`. Without systemd
+running, as in CI's container, it loads nothing, and says so.
 
 ### Secure Boot
 
 With Secure Boot on, the kernel loads a module only with a key it trusts. DKMS signs `nct6687`
 with Ubuntu's machine owner key, `/var/lib/shim-signed/mok/MOK.der`, which the firmware trusts once
 enrolled. Until then, the run says the kernel refused the driver and goes on, and the board's own
-curves drive its fans. To enroll the key, once, at the server's console:
+curves drive its fans. `/run/ws-refused-nct6687` marks the refusal until the reboot, so the runs
+between plan no load. To enroll the key, once, at the server's console:
 
 ```sh
 mokutil --sb-state                                      # SecureBoot enabled
@@ -38,16 +50,19 @@ mokutil --import /var/lib/shim-signed/mok/MOK.der       # asks for a one-time pa
 reboot                                                  # MOK manager: Enroll MOK, the password
 ```
 
-Then run `ws server ubuntu apply` again, or `modprobe nct6687 && systemctl restart ws-fans`.
+Then run the bootstrap again, as
+[the runbook](../../runbook.md) writes it, or `modprobe nct6687 && systemctl restart ws-fans`.
 
 ## ws-fans
 
-`ws-fans.service` runs `ws server ubuntu fans`, from a copy of ws in `/usr/local/lib/ws-fans`: an
-update of ws leaves the running service alone until the next run. It reads `/etc/ws/fans.json`,
-which the role writes from its variables, below. The daemon's own loader checks a new config before
-the role writes it. A change to the copy, the config or the unit restarts the service. Without
-systemd running, as in CI's container, the role leaves the unit and the modules alone. The log,
-`journalctl -u ws-fans`, says when a sensor or a fan goes missing or comes back.
+`ws-fans.service` runs `ws server ubuntu fans` from `/usr/local/bin/ws`, which the frame's unit
+`state/ws-binary` keeps the pinned ws; `service/fans` waits on it. It reads `/etc/ws/fans.json`,
+which the unit writes from its variables, below. The daemon's own loader checks a new config as the
+unit plans, so a config it refuses fails the plan and replaces nothing. A change to the config, the
+unit or the modules' files restarts the service. So does a new ws: the running process's binary is
+then the replaced one, which the unit reads as drift. Without systemd running, as in CI's
+container, the unit writes the files alone. The log, `journalctl -u ws-fans`, says when a sensor or
+a fan goes missing or comes back.
 
 Every second it reads each sensor, moves each curve, and steps each fan towards its curve's speed:
 
@@ -72,7 +87,7 @@ curves.
 
 ## The defaults
 
-`roles/server/ubuntu/values/default_fans.go` sets these sensors:
+`roles/server/values/default_fans.go` sets these sensors:
 
 - `cpu`: coretemp's `Package id 0`, the CPU package's temperature;
 - `gpu`: GPU 0's temperature;
@@ -108,4 +123,4 @@ System Fan #3 to #6 are left out, so the board's curves drive them.
 - `WS_FANS_INTERVAL`: the tick, in seconds.
 
 With `nct6687` loaded, node_exporter reads the fans' speeds too, for SigNoz ([otelcol](../otelcol/README.md)).
-`ws server ubuntu apply --check` builds no driver, and says what it would build.
+`mise bootstrap plan` builds no driver, and says whether a unit would change.

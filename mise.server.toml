@@ -1,0 +1,38 @@
+# The server's frame, what every role of the server leans on: the env server loads it, with the
+# roles that roles/server/mise/conf.d links. The Mac loads none of it.
+
+# ws's units, `"ws:KIND/NAME" = "in-sync"` under [bootstrap.packages]. Named here, a plugin that
+# mise cannot load is an unknown manager, which fails the run, where mise would drop its units with
+# a warning. mise takes an absolute path alone, so each side names its own checkout's.
+[bootstrap.plugins]
+ws = "/opt/ws/plugins/ws"
+
+# mise's apt passes no dpkg options: these keep a file that a role wrote before its package, where
+# dpkg would stop at its prompt.
+[bootstrap.files."/etc/apt/apt.conf.d/90ws-apt"]
+phase = "pre-packages"
+content = """
+Dpkg::Options { "--force-confdef"; "--force-confold"; };
+"""
+
+# The check against a silent skip: ws unit verify fails the plan and the run where mise's plan
+# lacks a unit of the specs. A first run, or the run that brings a new pin, renders it before mise
+# installs the pin's ws. It prints the line of a pass then, so that the next plan finds the file
+# unchanged. The plugin's write hook runs the check on that run, after mise installs ws. A
+# template's exec runs beside this file. So the check moves to cwd, the run's directory, where a
+# nested mise loads the side's roles as the run does. A run elsewhere, as from /opt/ws or the Mac's
+# roles/client, loads no role of the server. The check looks for the frame's own file through the
+# run's link. It fails a run without it before any phase, with no write, and names the run
+# directory.
+[bootstrap.files."/etc/ws/units.verified"]
+template = true
+content = '''{{ exec(command="cd '" ~ cwd ~ "' && { [ -f mise/conf.d/frame/mise.server.toml ] || { echo 'mise runs in " ~ cwd ~ ", which loads no role of the server: run it as mise -C /opt/ws/roles/server' >&2; exit 1; }; ws=$(mise which ws 2>/dev/null) || { echo 'ws units: none missing'; exit 0; }; \"$ws\" unit verify; }") }}
+'''
+
+# ws's own directory, which a first run with no values.yml lacks: mise makes no missing parent.
+[bootstrap.directories."/etc/ws"]
+mode = "0755"
+
+# Shared by zed, security and tunnel: mise makes no missing parent.
+[bootstrap.directories."/usr/local/lib/ws"]
+mode = "0755"

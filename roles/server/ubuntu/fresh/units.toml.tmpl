@@ -1,0 +1,22 @@
+# Fresh's .deb, pinned by its version and the SHA-256 of each architecture's file. The tag is
+# written out, as {version} holds the .deb's revision too.
+[deb.fresh]
+package = "fresh-editor"
+version = "0.5.7-1"
+url = "https://github.com/sinelaw/fresh/releases/download/v0.5.7/fresh-editor_{version}_{arch}.deb"
+sha256 = { amd64 = "d98b2cac0d46dbc1c8111eed15fb56c956a338d95740e07fd3ddae72ad397523", arm64 = "fb5472fb8c24369b3b191a6dd9cda9239483df4f5a95e2180b991b38c34d1eb9" }
+
+# The user's config and theme, replaced whole where they differ. The old file stays beside the new
+# one, as Fresh's scan of themes/ takes only .json, so a copy is not a theme. The directories on
+# the way stay the user's, and a link on the way is refused.
+[file.fresh-config]
+path = "{{ .Home }}/.config/fresh/config.json"
+owner = "{{ .User }}"
+template = "files/config.json.tmpl"
+backup = true
+
+[file.fresh-theme]
+path = "{{ .Home }}/.config/fresh/themes/jetbrains-dark.json"
+owner = "{{ .User }}"
+source = "files/themes/jetbrains-dark.json"
+backup = true

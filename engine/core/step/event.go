@@ -23,10 +23,7 @@ const (
 // Skipped, so that a screen can tell a step left hanging from one still at work.
 type Event struct {
 	Kind Kind
-	// Parent is the run's Options.Parent.
-	Parent string
-	// Step is the step's name. Index is its place in the run, as a name can come twice: ws client
-	// macos apply runs ssh again.
+	// Step is the step's name. Index is its place in the run, as a name can come twice.
 	Step  string
 	Index int
 	// Check is set in a run that applies nothing.

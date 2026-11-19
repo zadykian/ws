@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/resource/file"
-	"github.com/zadykian/ws/roles/client/macos/values"
+	"github.com/zadykian/ws/roles/client/values"
 )
 
 func TestTunnelConf(t *testing.T) {
