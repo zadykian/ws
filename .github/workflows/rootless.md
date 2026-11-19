@@ -50,12 +50,6 @@ The firewall must hold under the rootless daemon:
 - A link at `~/.bashrc` is refused, by `ws unit write --dry-run` of the shell's line
   ([Shell](../../roles/server/ubuntu/shell/README.md)).
 
-Then ws's secrets. `ws server ubuntu secrets init` makes the credential, root's 600 in root's 700,
-and the file, root's 600. `set` takes a value on standard input, and `keys` names it but never
-prints it. The user can't run them, and the user's `systemd-creds decrypt` of the credential
-fails: a container's systemd makes none. `unset` drops the entry, and a second `init` keeps both
-files ([ws's file](../../roles/server/secrets/README.md#wss-file)).
-
 Then [the secrets task](../../roles/server/ubuntu/secrets/README.md#the-task), whose cases are
 [secrets-checks.sh](../secrets-checks.sh). A bare repository on disk stands in for GitHub's, as
 `WS_SECRETS_REPO` in `/opt/ws/mise.local.toml` names it. Its seed holds a shared value and one of
