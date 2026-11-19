@@ -116,7 +116,9 @@ value it gave them. A key that a run reads from the machine, such as the swap's 
 or `null`.
 
 The file is then the owner's: no run reads it as ws's, or changes it. Each call of ws reads the
-values as it starts, and the text reads as no file does, so the unit needs no `after`.
+values as it starts, and the text reads as no file does, so the unit needs no `after`. CI's
+`playbook` job starts its default user's leg with no file
+([The `playbook` job](../../../../.github/workflows/README.md#the-playbook-job)).
 
 ## The check against a silent skip
 

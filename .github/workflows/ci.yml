@@ -113,13 +113,15 @@ jobs:
       - name: Make the user
         if: matrix.user != 'root'
         run: useradd --create-home --shell /bin/bash "$WS_USER"
-      # The values file holds what the job changes of the defaults: the matrix names the user and
-      # the table. The container's swap is the host's, so base's swap file is off.
+      # Root's leg writes what it changes of the defaults, and keeps a copy: the matrix names the
+      # user and the table. The default user's leg writes none, so its first run writes the file.
+      # The container's swap is the host's, so base's swap file is off.
       - name: Write the values
+        if: matrix.user == 'root'
         run: |
           install -d -m 755 /etc/ws
-          printf '%s\n' --- "WS_USER: $WS_USER" "WS_SECURITY_OUTBOUND: $OUTBOUND" \
-              >/etc/ws/values.yml
+          printf '%s\n' --- "WS_USER: $WS_USER" "WS_SECURITY_OUTBOUND: $OUTBOUND" |
+              tee "$RUNNER_TEMP/values.yml" >/etc/ws/values.yml
           chmod 600 /etc/ws/values.yml
       - name: Bootstrap
         run: .github/bootstrap.sh "$RUNNER_TEMP/rel"
@@ -139,6 +141,12 @@ jobs:
       - name: The plan changes nothing, and finds a missing unit
         working-directory: /root
         run: '"$GITHUB_WORKSPACE/.github/playbook-plan.sh"'
+      # The first run wrote the values where none was, and no run changed a file written before it.
+      - name: Check the values file
+        run: |
+          test "$(stat -c '%u:%g %a' /etc/ws/values.yml)" = '0:0 600'
+          kept=$RUNNER_TEMP/values.yml
+          if [ -f "$kept" ]; then cmp "$kept" /etc/ws/values.yml; fi
       # The wrapper and tmux.conf that the bootstrap wrote, run against the container's tmux. The
       # test takes about a minute, and catches a tmux release that changes how list-sessions or
       # rename-session behave.
