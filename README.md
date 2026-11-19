@@ -75,23 +75,6 @@ file holds `token.github`, the bootstrap run again logs gh in ([By hand](#by-han
 
 Then do what stays by hand, below.
 
-### A machine that ws 0.12 set up
-
-ws 0.12 and earlier set a machine up by roles of Go. Before the first bootstrap, remove as root
-what they left that mise's config refuses or no longer keeps:
-
-- the old roles' apt sources in `/etc/apt/sources.list.d`, which apt refuses beside mise's of the
-  same repository: `docker.sources`, `nodesource.sources`, `charm.sources`,
-  `dotnet-backports.sources` and `github-cli.sources`, with their keys in `/etc/apt/keyrings`,
-  `docker.asc` and `NAME.asc` for the others ([docker](roles/server/ubuntu/docker/README.md));
-- `/usr/local/lib/ws-fans`, the copy of ws that `ws-fans` ran, which now runs `/usr/local/bin/ws`;
-- ufw's rule with the comment `ws: SSH`, beside mise's `mise:ssh`: `ufw status numbered` gives its
-  number N, and `ufw delete N` removes it;
-- on the Mac, `/usr/local/libexec/ws-tunnel`, the copy of ws that the tunnel's daemons ran, which
-  now run `/usr/local/bin/ws`;
-- on the Mac, Homebrew's gh, which stays and comes before the locked gh in `/usr/local/bin` on the
-  PATH: `brew uninstall gh` removes it, as the user.
-
 ## Running it again
 
 Each release holds the roles it sets up, so run `install.sh` again, by the same lines of
