@@ -81,3 +81,11 @@ a temporary clone that the Go package here makes:
    ran on, and deletes its branch. It then removes the clone, whatever the outcome.
 
 No value enters a step's arguments: a commit's title and body, a branch and the files' names alone.
+
+## The inputs and fnox.toml
+
+Each server role that needs a secret declares it as an input in its `mise.secrets.toml`, under
+mise's `[bootstrap.secrets]`. The input's variable is its secret's name in fnox too, as `fnox exec`
+exports each secret under its own name. The Go package here reads the inputs of the roles in
+`/opt/ws/roles/server/ubuntu`, each variable once. A variable is of capitals, digits and
+underscores, and a role without the file declares none.
