@@ -2,7 +2,8 @@
 
 The `secrets` role installs fnox, which decrypts ws's secrets on the server, for the task
 `secrets`. It has no spec and no unit: its `mise.server.toml` pins fnox, and `github_known_hosts`
-pins GitHub's key for [the fetch](#the-fetch).
+pins GitHub's key for [the fetch](#the-fetch). The secrets sit in a repository of fnox's files
+([The repository](#the-repository)).
 
 ## fnox
 
@@ -71,3 +72,79 @@ repository's read-only deploy key, titled with the hostname.
   again.
 - A Mac mends three refusals by `ws client macos secrets add NAME`: GitHub refuses the host key,
   the repository holds no profile of the hostname, or the host key opens none of its values.
+
+## The repository
+
+ws keeps no secret of its own. The secrets sit in the private repository that `WS_SECRETS_REPO`
+names, in the `[env]` of the root `mise.toml`, as fnox's files, whose values age encrypts. A
+server reads it by [the task](#the-task) and [the fetch](#the-fetch) above. The Mac changes it
+([The secrets on the Mac](../../../client/macos/secrets/README.md)).
+
+### The files
+
+- `fnox.toml` holds the values that every server shares. `root = true` keeps fnox from a file
+  above the clone, and `if_missing = "error"` fails a run at a value that no key opens. Its
+  provider `age`, of type age, encrypts each value to every recipient.
+- `fnox.HOSTNAME.toml` is one server's profile, its own values, which fnox reads beside
+  `fnox.toml` under `-P HOSTNAME` alone. Its provider `host`, of type age, encrypts to the Nano,
+  the backup and that server alone, and each of its values names `provider = "host"`. The name
+  differs from `age`, as fnox merges providers by name. Under the profile, a second `age` would
+  replace the shared one, and a re-encryption would hand the shared values to one server alone.
+
+A shared value never refers to a profile's by fnox's `default = "${NAME}"`: under any other
+profile, fnox would fail as it loads. A profile's value may refer to a shared one. No provider sets
+`key_file`, `identity` or `default_identity`, as each would beat the key that the reader names: the
+host key that the task gives by `FNOX_AGE_KEY_FILE`, or the Nano's stub on the Mac.
+
+### The recipients
+
+- `nano`: the YubiKey 5C Nano, by age-plugin-yubikey, with a PIN once a session and a touch each
+  time it decrypts.
+- `backup`: a plain age key, which opens every value where the Nano is lost. `ws client macos
+  secrets init` prints it once, and writes it nowhere.
+- each server's hostname: its SSH host key, `/etc/ssh/ssh_host_ed25519_key`. The same key is the
+  repository's read-only deploy key, titled with the hostname.
+
+A server's key is a recipient of `fnox.toml` and of its own profile alone, so it opens the shared
+values and its own, and no other server's.
+
+### The inputs
+
+Each input of a server role's `mise.secrets.toml` is a secret of that name
+([Secret inputs](../frame/README.md#secret-inputs)). init declares each one in `fnox.toml`, empty,
+so that mise finds each input set where a server has no value. An empty input writes no file, or
+removes the one there.
+
+| Input | Role | What mise or ws does with it |
+| --- | --- | --- |
+| `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT` | [shell](../shell/README.md#the-env-file) | an export of `/etc/ws/env` |
+| `WS_GITHUB_TOKEN` | [devtools](../devtools/README.md#gh) | `/etc/ws/gh-token`, gh's login |
+| `WS_GIT_TOKENS` | [git](../git/README.md#git-credentials) | `/etc/ws/git-tokens.toml`, TOML of each URL's token |
+| `WS_IKEWARD_P12` | [ikeward](../ikeward/README.md#the-profiles-inputs) | the `.p12` in base64, read from the run's env |
+| `WS_IKEWARD_SSWAN` | [ikeward](../ikeward/README.md#the-profiles-inputs) | the `.sswan`, read from the run's env |
+| `WS_IKEWARD_PASSWORD` | [ikeward](../ikeward/README.md#the-profiles-inputs) | the `.p12`'s password, read from the run's env |
+
+A value of one server goes in its fnox profile, and wins there over the shared empty one, as
+ikeward's inputs do.
+
+### From the Mac
+
+Every change lands on `main` by a pull request, from a temporary clone
+([How a change lands](../../../client/macos/secrets/README.md#how-a-change-lands)):
+
+- `ws client macos secrets init` starts `fnox.toml` with the Nano and the backup, and declares the
+  inputs.
+- `ws client macos secrets add NAME` makes the server's host key a recipient and its deploy key,
+  then runs the task there.
+- `ws client macos remove NAME` takes that key out of both.
+
+A value goes in by hand, in a clone, on a branch: `fnox set NAME --provider age` for a shared one,
+`fnox -P HOSTNAME set NAME --provider host` for one server's, the value on standard input. The
+Mac's runbook gives the steps ([The secrets](../../../client/runbook.md#the-secrets)).
+
+### The checks
+
+The repository's ruleset on `main` takes signed commits and merge commits alone, and refuses a
+force push and a deletion. It requires the checks `values` and `gitleaks` on a branch up to date
+with `main`, so a push to `main` fails. `values` fails where a value is not an age ciphertext, or a
+`default` holds more than `${NAME}` references. `gitleaks` fails where a file holds a credential.

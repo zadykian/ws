@@ -67,21 +67,14 @@ func (s serviceSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.
 			paths = append(paths, f.Path)
 		}
 	}
-	said := make([]bool, len(s.File))
 	return func(ctx context.Context) ([]resource.Resource, error) {
 		// A file goes after those the service writes, so that a run cut short, or a refused check,
 		// never leaves a file that names one already gone.
 		var all, removed, watch []resource.Resource
-		for i, f := range s.File {
+		for _, f := range s.File {
 			b, err := f.resources(ctx, e, dir)
 			if err != nil {
 				return nil, err
-			}
-			if b.left {
-				f.sayLeft(e, &said[i])
-			}
-			if b.file == nil {
-				continue
 			}
 			if b.gone {
 				removed = append(removed, b.all...)

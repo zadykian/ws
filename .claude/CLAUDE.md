@@ -15,7 +15,7 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   holds its pins, and its templates and files beside its spec. ws-fans, the fans' service, is
   `ws server ubuntu fans`, in `roles/server/ubuntu/fans/daemon`.
 - `roles/server/`: the server's side, its roles in `ubuntu/`. Above them sit the packages that
-  serve them all, `cli`, `secrets`, `internal/plan` and `values`, the runbook, and
+  serve them all, `cli`, `internal/plan` and `values`, the runbook, and
   `mise-tasks/secrets`, the task that runs the bootstrap under ws's secrets
   ([The task](../roles/server/ubuntu/secrets/README.md#the-task)). `values` types the machine's
   values: `/etc/ws/values.yml`, on the machine alone, such as the cable's port

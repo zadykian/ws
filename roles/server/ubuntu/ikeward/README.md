@@ -28,9 +28,9 @@ them ([Outbound](../security/README.md#outbound)).
 
 ikeward reads two of the profile's files, `NAME.p12` and `NAME.sswan`, as
 [its page on the profile](https://github.com/zadykian/ikeward/blob/v0.3.0/docs/profile.md) says.
-They hold the client's key, so they stay out of this repository, in the server's own secrets
-([The profile's inputs](#the-profiles-inputs)). The role's variables go in the machine's
-`values.yml` ([Values](../../../../README.md#running-it-again)):
+They hold the client's key, so they stay out of this repository, in the server's fnox profile of
+the secrets, `fnox.HOSTNAME.toml` ([The profile's inputs](#the-profiles-inputs)). The role's
+variables go in the machine's `values.yml` ([Values](../../../../README.md#running-it-again)):
 
 ```yaml
 WS_IKEWARD_PROFILE: /root/vpn/vpnclient    # vpnclient.p12 and vpnclient.sswan
@@ -66,8 +66,8 @@ install.
 The profile is one server's. So its values go in the server's own fnox file, `fnox.HOSTNAME.toml`,
 by `fnox -P HOSTNAME set NAME --provider host`, the value on standard input. That runs in a clone
 of the secrets repository, whose `main` takes the change by a pull request. `ws client macos secrets
-init` declares the three empty in the shared `fnox.toml`, and the host's file wins over it under the
-hostname's profile ([The task](../secrets/README.md#the-task)). Then remove the plain files, which
+init` declares the three empty in the shared `fnox.toml`, and the server's fnox profile wins over it
+under `-P HOSTNAME` ([The task](../secrets/README.md#the-task)). Then remove the plain files, which
 hold the client's key, and run the secrets task.
 
 - A run of the task sets the three, empty where the server has no profile.

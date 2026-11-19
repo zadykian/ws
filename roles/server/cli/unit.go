@@ -15,8 +15,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/core/effect/units"
-	"github.com/zadykian/ws/engine/core/kind"
-	"github.com/zadykian/ws/roles/server/secrets"
 	"github.com/zadykian/ws/roles/server/values"
 )
 
@@ -47,17 +45,7 @@ func unitSide(vars string) enginecli.UnitSide {
 			}
 			return v, m, nil
 		},
-		Secrets: loadSecretsFile, Hidden: secretInputs}
-}
-
-// loadSecretsFile loads ws's secrets file, which git's and ikeward's units read. A machine without
-// one, as in CI, has no secrets, and its secret files stay unchanged.
-func loadSecretsFile(ctx context.Context, m effect.Machine) (any, error) {
-	s, err := secrets.Store{M: m}.Load(ctx)
-	if errors.Is(err, fs.ErrNotExist) {
-		return nil, kind.ErrNoSecrets
-	}
-	return s, err
+		Hidden: secretInputs}
 }
 
 // ubuntu refuses a machine whose /etc/os-release names a system other than Ubuntu 26.04, the one

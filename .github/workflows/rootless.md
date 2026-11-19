@@ -50,24 +50,19 @@ The firewall must hold under the rootless daemon:
 - A link at `~/.bashrc` is refused, by `ws unit write --dry-run` of the shell's line
   ([Shell](../../roles/server/ubuntu/shell/README.md)).
 
-Then ws's secrets. `ws server ubuntu secrets init` makes the credential, root's 600 in root's 700,
-and the file, root's 600. `set` takes a value on standard input, and `keys` names it but never
-prints it. The user can't run them, and the user's `systemd-creds decrypt` of the credential
-fails: a container's systemd makes none. `unset` drops the entry, and a second `init` keeps both
-files ([ws's file](../../roles/server/secrets/README.md#wss-file)).
-
 Then [the secrets task](../../roles/server/ubuntu/secrets/README.md#the-task), whose cases are
 [secrets-checks.sh](../secrets-checks.sh). A bare repository on disk stands in for GitHub's, as
 `WS_SECRETS_REPO` in `/opt/ws/mise.local.toml` names it. Its seed holds a shared value and one of
 the profile, the hostname's, each encrypted to the runner's host key. Every other input that mise
 lists is declared empty. CI's own `/opt/ws/mise.secrets.toml` writes both values to
-`/etc/ws-ci-secrets`, root's 600, under the env `secrets` alone. The task runs twice, and the plan
-through it exits 0 after each run, as does a plain plan, which keeps the file. The second run
-fast-forwards the clone to a new shared value. The clone is root's 700, and the user can't read it
-or the host key, or run the task. A file of the clone's own, a profile that the host key can't
-open and a missing profile are refused, and the file keeps its bytes. The last two name
-`ws client macos secrets add NAME`. No output of the task's holds a value. Only GitHub proves the
-fetch from github.com by a deploy key, against the key that ws pins.
+`/etc/ws-ci-secrets`, root's 600, under the env `secrets` alone. The task runs three times, and the
+plan through it exits 0 after each run. A plain plan after the first run keeps the file. The
+second run fast-forwards the clone to a new shared value. The clone is root's 700, and the user
+can't read it or the host key, or run the task. A file of the clone's own, a profile that the host
+key can't open and a missing profile are refused, and the file keeps its bytes. The last two name
+`ws client macos secrets add NAME`. The third run follows them, and the file still holds both
+values. No output of the task's holds a value. Only GitHub proves the fetch from github.com by a
+deploy key, against the key that ws pins.
 
 Then the files that the roles' [secret inputs](../../roles/server/ubuntu/frame/README.md#secret-inputs)
 write. The seed leaves their inputs empty, so none of gh's token, `/etc/ws/gh-token`, git's,

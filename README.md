@@ -72,8 +72,8 @@ Then, logged in as that user, write `/etc/ws/values.yml` where a value differs f
 root's and mode 600 ([the values](#running-it-again)). Run `install.sh` through `sudo`, by the
 three lines of [Install](.github/workflows/release.md#install), which fail where curl does. It
 installs mise and runs its bootstrap, which installs ws and sets each role up. Once the secrets
-hold `WS_GITHUB_TOKEN`, the secrets task's run logs gh in ([By hand](#by-hand)), as
-[the server's runbook](roles/server/runbook.md) says.
+hold `WS_GITHUB_TOKEN`, the secrets task logs gh in ([By hand](#by-hand)). The Mac's `ws client
+macos secrets add NAME` runs it first, as [the server's runbook](roles/server/runbook.md) says.
 
 Then do what stays by hand, below.
 
@@ -83,10 +83,10 @@ Each release holds the roles it sets up, so run `install.sh` again, by the same 
 [Install](.github/workflows/release.md#install): it checks the release out and runs the bootstrap.
 `WS_VERSION=X.Y.Z` before `sh` picks a release.
 
-The units read their secrets from ws's file, which `ws server ubuntu secrets` edits ([ws's
-secrets](roles/server/secrets/README.md)). The values of a machine go in
-`/etc/ws/values.yml`, which only root reads, and every run reads them. The first run writes it
-where none is, each key at its default, and no run changes it after
+The units read their secrets from mise's secret inputs, which the task `secrets` fetches and
+decrypts on ws ([The repository](roles/server/ubuntu/secrets/README.md#the-repository)). The
+values of a machine go in `/etc/ws/values.yml`, which only root reads, and every run reads them.
+The first run writes it where none is, each key at its default, and no run changes it after
 ([The values file](roles/server/ubuntu/frame/README.md#the-values-file)). `WS_USER: NAME` sets up the
 user NAME instead of `zadykian`, the default, whose account must exist. `WS_USER: root` sets up a
 cloud VM with no other user. `WS_HOME` is the account's home, `/home/NAME` by default. One that
@@ -133,8 +133,8 @@ write; and no account permission. These stay manual:
 - other peers' public keys on the server, as in [The tunnel](roles/server/ubuntu/tunnel/README.md#the-tunnel);
 - another device's SSH key on the server: `ssh-import-id gh:LOGIN`, run as `WS_USER`
   ([SSH and the firewall](roles/server/ubuntu/security/README.md#ssh-and-the-firewall));
-- the VPN's profile, in the server's own secrets, and the `ikeward` role's variables, as in
-  [The profile](roles/server/ubuntu/ikeward/README.md#the-profile);
+- ikeward's VPN profile, in the server's fnox profile, `fnox.HOSTNAME.toml`, and the `ikeward`
+  role's variables, as in [The profile](roles/server/ubuntu/ikeward/README.md#the-profile);
 - with Secure Boot on, DKMS's key, enrolled at the console: [Secure Boot](roles/server/ubuntu/fans/README.md#secure-boot);
 - Fresh's trust, once per repository: press T, then Enter
   ([Trust each project](roles/server/ubuntu/fresh/README.md#trust-each-project));

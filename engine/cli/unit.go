@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/spf13/cobra"
 
@@ -41,9 +40,6 @@ type UnitSide struct {
 	// System is the side's operating system, which decides how the kinds find a home and run a
 	// command as a user.
 	System kind.System
-	// Secrets loads the side's secrets for a secret file's template, or returns kind.ErrNoSecrets
-	// where the machine has none. Nil is a side with no secrets.
-	Secrets func(ctx context.Context, m effect.Machine) (any, error)
 	// User returns the account that ws runs as, from the values, where it runs as a user: the
 	// Mac's. A run state of that user's needs no sudo there. Nil is a side that runs as root.
 	User func(data any) string
@@ -128,9 +124,6 @@ func loadUnits(c *cobra.Command, p Env, s UnitSide) (unitRun, error) {
 		return r, fmt.Errorf("finding the file ws runs from: %w", err)
 	}
 	env := kind.Env{M: m, U: s.Units, Out: r.out, Data: data, System: s.System, Self: self, Hidden: s.Hidden}
-	if s.Secrets != nil {
-		env.Secrets = loadOnce(s.Secrets, m)
-	}
 	if s.User != nil {
 		env.User = s.User(data)
 	}
@@ -139,18 +132,6 @@ func loadUnits(c *cobra.Command, p Env, s UnitSide) (unitRun, error) {
 		return r, fmt.Errorf("%s: %w", dir, err)
 	}
 	return r, nil
-}
-
-// loadOnce returns load as kind.Env takes it, run once a command at most, and only where a unit
-// calls it: a load decrypts the identity through systemd-creds.
-func loadOnce(load func(context.Context, effect.Machine) (any, error), m effect.Machine) func(context.Context) (any, error) {
-	var once sync.Once
-	var secrets any
-	var err error
-	return func(ctx context.Context) (any, error) {
-		once.Do(func() { secrets, err = load(ctx, m) })
-		return secrets, err
-	}
 }
 
 // closure returns the named units and those they wait on. A name that no spec holds is a usage

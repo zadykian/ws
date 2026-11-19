@@ -9,11 +9,6 @@ on it. These are the words its code and its docs use, for the server's side and 
 `WS_USER` as the server knows it: its name, its home, its uid and its primary gid.
 _Avoid_: owner, ids
 
-**Entry**:
-One value of the secrets file, by its kind and its name: a token, an env variable, a git server's
-credential, a profile file or a password.
-_Avoid_: secret, field
-
 **Frame**:
 What each role of mise's config leans on: `mise.toml` with ws's pin, the server's
 `mise.server.toml`, the plugin `plugins/ws`, the machine's miserc, and the role `frame`
@@ -26,15 +21,9 @@ A file below the account's home that ws reads or writes as root, by a path under
 account owns it, and no link lies on the way to it.
 _Avoid_: user file, plain file
 
-**Identity's credential**:
-ws's age identity as the systemd credential `/etc/credstore.encrypted/ws-secrets`, which the
-host's key encrypts. It alone opens the secrets file, and `ws unit` decrypts it by `systemd-creds
-decrypt`.
-_Avoid_: age key, key file
-
 **Input**:
 One of mise's secret inputs, which a role's `mise.secrets.toml` declares. Its name is its
-variable's and fnox's, and mise writes a secret file from it
+variable's and fnox's. mise writes a secret file from it, or ws reads it from the run's env
 ([Secret inputs](roles/server/ubuntu/frame/README.md#secret-inputs)).
 _Avoid_: entry
 
@@ -43,11 +32,6 @@ A resource type that ws writes once in Go, for what mise's own parts lack, such 
 `deb`. It names no role's word ([kind](engine/core/kind/README.md)).
 _Avoid_: plugin, module
 
-**Label**:
-An entry's name as the commands and the forms give it, `KIND NAME`, as `token github`. `keys`
-prints one a line; a label never holds a value.
-_Avoid_: field name
-
 **Pinned file**:
 A file of a release that ws fetches at the version a role pins, for the machine's architecture as
 dpkg names it. ws checks it against a SHA-256 that the role pins or the unit finds as it plans. A
@@ -55,13 +39,15 @@ binary is the pinned file at its destination; a package and a tree take one as t
 _Avoid_: download, release asset, artifact
 
 **Profile**:
-One server's values in the repository of ws's secrets, `fnox.HOSTNAME.toml`, by its hostname.
+One server's values in the repository of ws's secrets, `fnox.HOSTNAME.toml`, by its hostname
+([The files](roles/server/ubuntu/secrets/README.md#the-files)). ikeward's VPN profile differs: its
+files go in a server's profile as values.
 _Avoid_: host file
 
 **Recipient**:
 A public key that fnox's age provider encrypts each value to. The provider's table of recipients
 names each: `nano` the Nano's, `backup` the backup key's, and a server's hostname its host key
-([The inputs and fnox.toml](roles/client/macos/secrets/README.md#the-inputs-and-fnoxtoml)).
+([The recipients](roles/server/ubuntu/secrets/README.md#the-recipients)).
 _Avoid_: reader
 
 **Spec**:
@@ -69,15 +55,11 @@ A role's `units.toml.tmpl`: TOML over the machine's values that names the role's
 and a key a unit.
 _Avoid_: manifest
 
-**Secrets file**:
-`/etc/ws/secrets.age` on ws, root's and 600: TOML that age encrypts to the identity's credential,
-a table per kind. `secrets.Store` alone reads and writes it.
-_Avoid_: vault
-
 **Secrets repository**:
 The private repository that `WS_SECRETS_REPO` names: `fnox.toml`, the values that every server
-shares, and a profile per server, its own. A change lands on its `main` by a pull
-request ([How a change lands](roles/client/macos/secrets/README.md#how-a-change-lands)).
+shares, and a profile per server, its own
+([The repository](roles/server/ubuntu/secrets/README.md#the-repository)). A change lands on its
+`main` by a pull request ([How a change lands](roles/client/macos/secrets/README.md#how-a-change-lands)).
 _Avoid_: vault, store
 
 **Unit**:
@@ -123,5 +105,6 @@ slot; the values' check refuses a clash. Slot N's tunnel is `10.99.N.0/24`, insi
 **ws's directory**:
 `/etc/ws`, root's and 755 on both sides, holds git's `gitconfig` and `allowed_signers`. On the Mac
 it also holds `values.yml` and `servers/`, which only sudo writes, and the script
-`secretive-ssh-keygen`. On ws it holds git's tokens, the env file and the fans' config.
+`secretive-ssh-keygen`. On ws it also holds `values.yml`, the fans' `fans.json`, and the files that
+mise writes from the secret inputs: gh's `gh-token`, git's `git-tokens.toml` and the shell's `env`.
 _Avoid_: config directory

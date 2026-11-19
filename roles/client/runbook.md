@@ -86,6 +86,15 @@ installer, turn OpenSSH on, import the keys from GitHub and leave password login
    request ([ws client macos secrets init](macos/secrets/README.md#ws-client-macos-secrets-init)).
 3. Run it again once `/opt/ws` moves to a release that declares a new input. Until then, a
    server's run of that release fails at mise, which finds no value of the input.
+4. To set a value, such as `WS_GITHUB_TOKEN`, clone the repository by
+   `gh repo clone zadykian/ws-secrets`, and switch to a new branch in the clone. Run
+   `fnox set NAME --provider age` for a value that every server shares, or
+   `fnox -P HOSTNAME set NAME --provider host` for one server's, once add has made its profile.
+   Give the value on standard input, never as an argument. Commit the changed file, signed, push
+   the branch and open a pull request by `gh pr create`. Once `values` and `gitleaks` pass, merge
+   it by `gh pr merge --merge --delete-branch`. Then, for each server NAME that reads the value,
+   run `ws client macos secrets add NAME`, which runs the task there
+   ([The task](../server/ubuntu/secrets/README.md#the-task)).
 
 ## ws's host key
 
