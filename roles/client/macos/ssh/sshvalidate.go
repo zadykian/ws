@@ -22,7 +22,8 @@ type userConfig struct {
 // validate stops where ssh refuses the new /etc/ws/ssh_config, alone or as ssh will read it after the
 // run. It checks the new file first, then ~/.ssh/config, then the system's file. ~/.ssh/config's
 // Include of /etc/ws/ssh_config is left out, as it would read the file that the run replaces. It writes
-// its files in a directory of its own, and removes it.
+// its files in a directory of its own, and removes it. ssh -G asks for no terminal by -T: with no
+// command and no terminal on stdin, ssh prints that it gives none.
 func validate(ctx context.Context, m effect.Machine, home string, u userConfig, hosts []sshcfg.Host, text []byte) error {
 	out, err := m.Run(ctx, "mktemp", "-d")
 	if err != nil {
@@ -35,7 +36,7 @@ func validate(ctx context.Context, m effect.Machine, home string, u userConfig, 
 		return fmt.Errorf("cannot write %s: %w", next, err)
 	}
 	for _, h := range hosts {
-		out, err := m.Run(ctx, "ssh", "-G", "-F", next, h.Name)
+		out, err := m.Run(ctx, "ssh", "-T", "-G", "-F", next, h.Name)
 		if err != nil {
 			return fmt.Errorf("ssh refuses the config it would write, as %s", stderrOf(err))
 		}
@@ -63,7 +64,7 @@ func validate(ctx context.Context, m effect.Machine, home string, u userConfig, 
 		return fmt.Errorf("cannot write %s: %w", all, err)
 	}
 	for _, h := range hosts {
-		out, err := m.Run(ctx, "ssh", "-G", "-F", all, h.Name)
+		out, err := m.Run(ctx, "ssh", "-T", "-G", "-F", all, h.Name)
 		if err == nil {
 			if err := readsAs(h, out); err != nil {
 				return err

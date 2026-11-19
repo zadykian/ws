@@ -32,7 +32,7 @@ func mac(servers map[string]string) *effecttest.Machine {
 		m.Dirs["/etc/ws/servers/"+name] = 0o755
 		m.Files["/etc/ws/servers/"+name+"/values.yml"] = []byte(text)
 		for _, file := range []string{"new", "whole"} {
-			m.Results["ssh -G -F /tmp/x/"+file+" "+name] = effecttest.Result{}
+			m.Results["ssh -T -G -F /tmp/x/"+file+" "+name] = effecttest.Result{}
 		}
 	}
 	return m
@@ -84,7 +84,7 @@ func TestReadWithoutServers(t *testing.T) {
 		t.Errorf("read = %+v, %v; want the user, no server and no host", f, err)
 	}
 	for _, c := range m.Calls {
-		if strings.HasPrefix(c, "run ssh -G") {
+		if strings.HasPrefix(c, "run ssh -T -G") {
 			t.Errorf("read ran %q, want no check of no host", c)
 		}
 	}
@@ -131,7 +131,7 @@ func TestSSHFactsRefuseAnOwnHost(t *testing.T) {
 
 func TestSSHFactsRefuseWhatSSHRefuses(t *testing.T) {
 	m := mac(map[string]string{"ws": values.Text("WS_SLOT", "0")})
-	m.Results["ssh -G -F /tmp/x/new ws"] = effecttest.Result{Err: errors.New("exit status 255: bad line")}
+	m.Results["ssh -T -G -F /tmp/x/new ws"] = effecttest.Result{Err: errors.New("exit status 255: bad line")}
 	if _, err := Read(t.Context(), m, env, "/p"); err == nil || !strings.Contains(err.Error(), "ssh refuses the config") {
 		t.Errorf("read = %v, want ssh's refusal", err)
 	}

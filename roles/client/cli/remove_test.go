@@ -51,7 +51,7 @@ func removeFixture() (enginecli.Env, *effecttest.Machine) {
 	m.Results["mktemp -d"] = effecttest.Result{Out: []byte("/tmp/x\n")}
 	m.Results["rm -rf /tmp/x"] = effecttest.Result{}
 	for _, file := range []string{"new", "whole"} {
-		m.Results["ssh -G -F /tmp/x/"+file+" ws"] = effecttest.Result{}
+		m.Results["ssh -T -G -F /tmp/x/"+file+" ws"] = effecttest.Result{}
 	}
 	for _, line := range []string{"rm -rf /etc/ws/servers/lab", "ssh-keygen -R lab"} {
 		m.Results[line] = effecttest.Result{}
