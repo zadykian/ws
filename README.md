@@ -83,10 +83,10 @@ Each release holds the roles it sets up, so run `install.sh` again, by the same 
 [Install](.github/workflows/release.md#install): it checks the release out and runs the bootstrap.
 `WS_VERSION=X.Y.Z` before `sh` picks a release.
 
-The units read their secrets from ws's file, which `ws server ubuntu secrets` edits ([ws's
-secrets](roles/server/secrets/README.md)). The values of a machine go in
-`/etc/ws/values.yml`, which only root reads, and every run reads them. The first run writes it
-where none is, each key at its default, and no run changes it after
+The units read their secrets from mise's secret inputs, which the task `secrets` fetches and
+decrypts on ws ([The repository](roles/server/ubuntu/secrets/README.md#the-repository)). The
+values of a machine go in `/etc/ws/values.yml`, which only root reads, and every run reads them.
+The first run writes it where none is, each key at its default, and no run changes it after
 ([The values file](roles/server/ubuntu/frame/README.md#the-values-file)). `WS_USER: NAME` sets up the
 user NAME instead of `zadykian`, the default, whose account must exist. `WS_USER: root` sets up a
 cloud VM with no other user. `WS_HOME` is the account's home, `/home/NAME` by default. One that

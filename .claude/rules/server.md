@@ -33,6 +33,9 @@ steps, and each role's README says what it sets up.
 - A role's secret is an input of its `mise.secrets.toml`, in the one form the frame's page gives
   ([Secret inputs](../../roles/server/ubuntu/frame/README.md#secret-inputs)). Go reads a value
   from a file that mise wrote, as git's tokens, or ikeward's from the run's env, and no other.
+  A role's type holds that role's values alone, as `ikeward.Profile`. ws holds no store of the
+  secrets and no struct that gathers them: they reach the server by fnox alone
+  ([The repository](../../roles/server/ubuntu/secrets/README.md#the-repository)).
 - The roles set the machine up for `WS_USER`, `zadykian` by default, in `WS_HOME`. A unit run as
   `WS_USER` sets `HOME` and starts in it: root needs no sudo, a container has none, and `HOME` would
   otherwise be the caller's ([claude's units](../../roles/server/ubuntu/claude/units.toml.tmpl)).

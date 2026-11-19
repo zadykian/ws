@@ -10,11 +10,13 @@ A person does these steps at ws, in this order. The Mac's side sets them in its 
 3. Run `install.sh` as root, by the three lines of
    [Install](../../.github/workflows/release.md#install), `set -o pipefail` among them. It
    installs mise and runs its bootstrap, which puts ws in `/usr/local/bin`, which sudo reaches.
-4. Make the secrets: `sudo ws server ubuntu secrets init`, then each secret by `sudo ws server
-   ubuntu secrets set KIND NAME`. A value never goes in an argument
-   ([The secrets](secrets/README.md)).
-5. Run the bootstrap again, by hand as below: it writes what the secrets give, such as
-   `/etc/ws/env` and gh's login ([gh](ubuntu/devtools/README.md#gh)). A second run changes nothing.
+
+The secrets come once the Mac has run `ws client macos secrets init`, one run for all servers, and
+then `ws client macos secrets add NAME`, which makes ws's host key a recipient of the secrets
+repository ([The secrets](../client/runbook.md#the-secrets)). add then runs the task `secrets` at
+ws, which writes what the secrets give, such as `/etc/ws/env` and gh's login
+([The repository](ubuntu/secrets/README.md#the-repository)). A later run under the secrets takes
+the task's form below.
 
 A run of the bootstrap by hand, or of its plan, takes this form:
 

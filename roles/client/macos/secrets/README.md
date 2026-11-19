@@ -115,13 +115,11 @@ exports each secret under its own name. The Go package here reads the inputs of 
 `/opt/ws/roles/server/ubuntu`, each variable once. A variable is of capitals, digits and
 underscores, and a role without the file declares none.
 
-`fnox.toml`, at the root of the secrets repository, holds the values that every server shares. Its
-provider `age` encrypts each one to its recipients, a table of labels: `nano` for the Nano's,
-`backup` for the backup key's, and a server's hostname for its host key. ws reads the labels and
-the secrets' names, and no value. A list of recipients, or a provider of another type, stops it, as
-ws changes a recipient by its label. A new `fnox.toml` holds the two first recipients and no
-secret yet. Its `root = true` keeps fnox from looking for a file above the clone, and
-`if_missing = "error"` makes a secret that no key opens fail the run.
+`fnox.toml` and its recipients, a table of labels, take the layout that the server's page gives
+([The files](../../../server/ubuntu/secrets/README.md#the-files)). ws reads the labels and the
+secrets' names, and no value. A list of recipients, or a provider of another type, stops it, as ws
+changes a recipient by its label. A new `fnox.toml` holds the two first recipients and no secret
+yet.
 
 ## Again
 
@@ -143,13 +141,9 @@ the input, until init runs again on a Mac whose `/opt/ws` holds that release.
 ## A server's key
 
 A server opens the values by its SSH host key, `/etc/ssh/ssh_host_ed25519_key`. Its public half,
-`ssh-ed25519` and the key, is a recipient twice, under the label of the server's hostname:
-
-- in `fnox.toml`'s table, so that the server opens the shared values;
-- in `fnox.HOSTNAME.toml`, the server's profile file, whose provider is `host`. Its table holds
-  `nano`, `backup` and that server alone, so that the server opens its own values and no other
-  server's. The provider's name differs from `age`, as fnox merges providers by name: under
-  `-P HOSTNAME`, a profile's `age` would replace the shared one.
+`ssh-ed25519` and the key, is a recipient twice, under the label of the server's hostname: in
+`fnox.toml`'s table and in its profile file's, `fnox.HOSTNAME.toml`
+([The recipients](../../../server/ubuntu/secrets/README.md#the-recipients)).
 
 The Go package here edits a table by its lines, `nano` first, then `backup`, then the servers by
 name, and keeps every other byte of the file. A table with a line of another form, a comment
