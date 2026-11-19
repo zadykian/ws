@@ -119,7 +119,7 @@ func installer(user, home, url, env, shell string) string {
 	if user == "root" {
 		return "env HOME=/root " + line
 	}
-	return "runuser -u " + user + " -- env -C " + home + " HOME=" + home + " " + line
+	return "runuser -u " + user + " -- env -i -C " + home + " HOME=" + home + " " + systemPath + " " + line
 }
 
 func TestClaudeInstallersRunAsTheAccountOnceWithoutSystemd(t *testing.T) {

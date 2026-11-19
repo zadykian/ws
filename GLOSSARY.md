@@ -48,6 +48,10 @@ dpkg names it. ws checks it against a SHA-256 that the role pins or the unit fin
 binary is the pinned file at its destination; a package and a tree take one as their source.
 _Avoid_: download, release asset, artifact
 
+**Profile**:
+One server's values in the repository of ws's secrets, `fnox.HOSTNAME.toml`, by its hostname.
+_Avoid_: host file
+
 **Spec**:
 A role's `units.toml.tmpl`: TOML over the machine's values that names the role's units, a table a kind
 and a key a unit.

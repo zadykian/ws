@@ -36,7 +36,7 @@ func TestCheckClones(t *testing.T) {
 func TestClonesRunOnceAsTheUser(t *testing.T) {
 	m := effecttest.NewMachine()
 	a := account.Account{User: account.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
-	m.Results["runuser -u ws -- env -C /home/ws HOME=/home/ws git -C /home/ws clone -- https://h/a work/a"] = effecttest.Result{}
+	m.Results["runuser -u ws -- env -i -C /home/ws HOME=/home/ws PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin git -C /home/ws clone -- https://h/a work/a"] = effecttest.Result{}
 	cl := Clones{M: m, A: a, Clones: []values.GitClone{
 		{Repo: "https://h/a", Dest: "work/a"}, {Repo: "https://h/b", Dest: "/srv/b"},
 	}}

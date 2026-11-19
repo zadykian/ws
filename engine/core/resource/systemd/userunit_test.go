@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	userShow = "root runuser -u ws -- env -C /home/ws HOME=/home/ws env XDG_RUNTIME_DIR=/run/user/1000 " +
+	userShow = "root runuser -u ws -- env -i -C /home/ws HOME=/home/ws PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin env XDG_RUNTIME_DIR=/run/user/1000 " +
 		"DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus systemctl --user "
 	userShowState = "show --property=ActiveState --value docker.service"
 )
@@ -74,7 +74,7 @@ func TestUserUnitStartsAnInactiveUnitAndLeavesAnActiveOne(t *testing.T) {
 	if got := applyAll(t, u); !slices.Equal(got, []string{"start ws's docker.service"}) {
 		t.Fatalf("plan = %q, want a start", got)
 	}
-	if !slices.Contains(m.Calls, "root runuser -u ws -- env -C /home/ws HOME=/home/ws env XDG_RUNTIME_DIR=/run/user/1000 "+
+	if !slices.Contains(m.Calls, "root runuser -u ws -- env -i -C /home/ws HOME=/home/ws PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin env XDG_RUNTIME_DIR=/run/user/1000 "+
 		"DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus systemctl --user start docker.service") {
 		t.Errorf("calls = %q, want systemctl --user start", m.Calls)
 	}

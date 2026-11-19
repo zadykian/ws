@@ -58,5 +58,18 @@ decrypts it, reads the file, and prints no value.
 `unset` drops the entry, and a second `init` keeps both files ([ws's
 file](../../roles/server/secrets/README.md#wss-file)).
 
+Then [the secrets task](../../roles/server/ubuntu/secrets/README.md#the-task), whose cases are
+[secrets-checks.sh](../secrets-checks.sh). A bare repository on disk stands in for GitHub's, as
+`WS_SECRETS_REPO` in `/opt/ws/mise.local.toml` names it. Its seed holds a shared value and one of
+the profile, the hostname's, each encrypted to the runner's host key. Every other input that mise
+lists is declared empty. CI's own `/opt/ws/mise.secrets.toml` writes both values to
+`/etc/ws-ci-secrets`, root's 600, under the env `secrets` alone. The task runs twice, and the plan
+through it exits 0 after each run, as does a plain plan, which keeps the file. The second run
+fast-forwards the clone to a new shared value. The clone is root's 700, and the user can't read it
+or the host key, or run the task. A file of the clone's own, a profile that the host key can't
+open and a missing profile are refused, and the file keeps its bytes. The last two name
+`ws client macos secrets add NAME`. No output of the task's holds a value. Only GitHub proves the
+fetch from github.com by a deploy key, against the key that ws pins.
+
 The runner has Azure's routes, so only CI proves them. `.github/actionlint.yaml` names the label
 `ubuntu-26.04`, as actionlint 1.7.12 doesn't know it yet. It goes once a release lists the label.

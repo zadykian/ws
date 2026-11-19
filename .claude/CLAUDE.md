@@ -15,8 +15,10 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   holds its pins, and its templates and files beside its spec. ws-fans, the fans' service, is
   `ws server ubuntu fans`, in `roles/server/ubuntu/fans/daemon`.
 - `roles/server/`: the server's side, its roles in `ubuntu/`. Above them sit the packages that
-  serve them all, `cli`, `secrets`, `internal/plan` and `values`, and the runbook. `values` types
-  the machine's values: `/etc/ws/values.yml`, on the machine alone, such as the cable's port
+  serve them all, `cli`, `secrets`, `internal/plan` and `values`, the runbook, and
+  `mise-tasks/secrets`, the task that runs the bootstrap under ws's secrets
+  ([The task](../roles/server/ubuntu/secrets/README.md#the-task)). `values` types the machine's
+  values: `/etc/ws/values.yml`, on the machine alone, such as the cable's port
   ([The cable](../roles/server/ubuntu/cable/README.md#the-cable)).
 - `go.mod` and `go.sum`: the Go module `github.com/zadykian/ws`, at the root.
   `cmd/ws/main.go` runs `cmd`, which composes the root and the exit codes with the two sides'
@@ -85,8 +87,8 @@ It installs yamllint into `.cache`, and `.tools/run` downloads the rest there.
 The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `playbook` builds ws and runs `install.sh`'s
 bootstrap twice in an Ubuntu 26.04 container, with mise's plan.
 It checks the config that Fresh reads too. `signoz` forges SigNoz's compose files again, and
-`install` tries `install.sh`. `rootless` runs the
-rootless daemon and the firewall on a booted runner ([The rootless job](../.github/workflows/rootless.md)). `mac` sets up a
+`install` tries `install.sh`. `rootless` runs the rootless daemon, the firewall and the secrets
+task on a booted runner ([The rootless job](../.github/workflows/rootless.md)). `mac` sets up a
 Mac on GitHub's macOS runner by `mise bootstrap`, whose last run must call no sudo and whose plan
 must exit 0. `mac-cld` sets up
 Ghostty, Zed and cld by the bootstrap on another ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `mise
@@ -139,7 +141,9 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([mise.lock](../mise.lock)). A Mac's runbook checks it by hand too
   ([runbook.md](../roles/client/runbook.md)). So is mise's binary, whose SHA-256 for each
   target `install.sh` holds ([install.sh](../install.sh)), and the Mac's runbook its macos-arm64's
-  ([runbook.md](../roles/client/runbook.md)). So is
+  ([runbook.md](../roles/client/runbook.md)). So is the server's fnox: GitHub's digest of its
+  release asset for each platform is in `roles/server/mise/mise.server.lock`
+  ([secrets](../roles/server/ubuntu/secrets/README.md#fnox)). So is
   yamllint ([lint-requirements.in](../.github/lint-requirements.in)), the Mac's gh, by
   `roles/client/mise/mise.mac.lock` ([git](../roles/client/macos/git/README.md#gh)), and Secretive's
   `Secretive.zip`, with its notarization ([runbook.md](../roles/client/runbook.md)). The
@@ -155,6 +159,11 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([mise.server.toml](../roles/server/ubuntu/docker/mise.server.toml)). Zed's other
   downloads on ws are outside the rule
   ([zed](../roles/server/ubuntu/zed/README.md#zeds-downloads-outside-the-sha-256-rule)).
+- The secrets' fetch trusts github.com by the one ed25519 key that ws pins
+  ([github_known_hosts](../roles/server/ubuntu/secrets/github_known_hosts)). A test checks it
+  against the fingerprint that GitHub publishes
+  ([pins_test.go](../roles/server/ubuntu/secrets/pins_test.go),
+  [The fetch](../roles/server/ubuntu/secrets/README.md#the-fetch)).
 - foundryctl forges SigNoz's compose files, `roles/server/ubuntu/signoz/deployment/` and
   `casting.yaml.lock`, from `casting.yaml`. Change the casting and forge again, never the files by
   hand: CI's `signoz` job fails where they differ

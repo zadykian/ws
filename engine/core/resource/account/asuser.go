@@ -12,16 +12,25 @@ type User struct {
 	Home string
 }
 
+// SystemPath is the PATH that a command of a user's gets: the system's. The caller's, such as mise's
+// shims, stays out, as the command may write it down in a file that outlives the run.
+const SystemPath = "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
 // argv returns the command that runs name as the user with the user's HOME, and whether it needs
 // root. The caller's HOME would otherwise reach the command, as the user's login does not run.
 // env -C starts it in the user's home, as root's directory may be closed to the user.
 // root itself needs no switch of user, and a container has no sudo.
+//
+// Another user's command starts from a cleared environment, with HOME and SystemPath alone.
+// runuser would pass root's on, which may hold a secret's value, and the user may read the environ
+// of a process of its own.
 func (u User) argv(name string, args []string) (cmd string, argv []string, root bool) {
 	env := append([]string{"HOME=" + u.Home, name}, args...)
 	if u.Name == "root" {
 		return "env", env, false
 	}
-	return "runuser", append([]string{"-u", u.Name, "--", "env", "-C", u.Home}, env...), true
+	cleared := []string{"-u", u.Name, "--", "env", "-i", "-C", u.Home, "HOME=" + u.Home, SystemPath}
+	return "runuser", append(cleared, env[1:]...), true
 }
 
 // Pass runs the command as the user and passes its output to ws's standard error.

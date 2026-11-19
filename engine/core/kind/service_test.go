@@ -127,7 +127,7 @@ func TestServiceRefusesFieldsNoPlanTakes(t *testing.T) {
 }
 
 // userSystemctl is how a unit of u's own systemd is called, as u in u's session.
-const userSystemctl = "runuser -u u -- env -C /home/u HOME=/home/u env XDG_RUNTIME_DIR=/run/user/1001 " +
+const userSystemctl = "runuser -u u -- env -i -C /home/u HOME=/home/u " + systemPath + " env XDG_RUNTIME_DIR=/run/user/1001 " +
 	"DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1001/bus systemctl --user "
 
 // userService is a service of u's own systemd, x.service, with two files of u's.
