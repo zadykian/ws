@@ -15,8 +15,10 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   holds its pins, and its templates and files beside its spec. ws-fans, the fans' service, is
   `ws server ubuntu fans`, in `roles/server/ubuntu/fans/daemon`.
 - `roles/server/`: the server's side, its roles in `ubuntu/`. Above them sit the packages that
-  serve them all, `cli`, `secrets`, `internal/plan` and `values`, and the runbook. `values` types
-  the machine's values: `/etc/ws/values.yml`, on the machine alone, such as the cable's port
+  serve them all, `cli`, `secrets`, `internal/plan` and `values`, the runbook, and
+  `mise-tasks/secrets`, the task that runs the bootstrap under ws's secrets
+  ([The task](../roles/server/ubuntu/secrets/README.md#the-task)). `values` types the machine's
+  values: `/etc/ws/values.yml`, on the machine alone, such as the cable's port
   ([The cable](../roles/server/ubuntu/cable/README.md#the-cable)).
 - `go.mod` and `go.sum`: the Go module `github.com/zadykian/ws`, at the root.
   `cmd/ws/main.go` runs `cmd`, which composes the root and the exit codes with the two sides'
@@ -159,7 +161,9 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([zed](../roles/server/ubuntu/zed/README.md#zeds-downloads-outside-the-sha-256-rule)).
 - The secrets' fetch trusts github.com by the one ed25519 key that ws pins
   ([github_known_hosts](../roles/server/ubuntu/secrets/github_known_hosts)). A test checks it
-  against the fingerprint that GitHub publishes ([pins_test.go](../roles/server/ubuntu/secrets/pins_test.go)).
+  against the fingerprint that GitHub publishes
+  ([pins_test.go](../roles/server/ubuntu/secrets/pins_test.go),
+  [The fetch](../roles/server/ubuntu/secrets/README.md#the-fetch)).
 - foundryctl forges SigNoz's compose files, `roles/server/ubuntu/signoz/deployment/` and
   `casting.yaml.lock`, from `casting.yaml`. Change the casting and forge again, never the files by
   hand: CI's `signoz` job fails where they differ

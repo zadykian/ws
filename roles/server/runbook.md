@@ -27,3 +27,15 @@ tools. Without it, `guard/devtools-data-dir` fails the run
 ([devtools](ubuntu/devtools/README.md#the-tools)). `MISE_LOCKED=1` installs a tool only as the lock holds
 it, by its URL and checksum, as CI's runs do. With `bootstrap plan --detailed-exitcode` in place
 of `bootstrap`, it changes nothing, and exits 0 where a run would change nothing.
+
+A run under ws's secrets, or its plan, goes through the task `secrets`, which fetches them by the
+host key and passes its arguments to the bootstrap
+([The task](ubuntu/secrets/README.md#the-task)):
+
+```sh
+sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server run secrets
+sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server run secrets -- plan --detailed-exitcode
+```
+
+A run of the bootstrap without the task loads no `secrets` env, and keeps the files that env's
+inputs write as they are.

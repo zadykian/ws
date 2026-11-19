@@ -79,6 +79,9 @@ steps, and each role's README says what it sets up.
   Each run replaces a change made to it by hand ([shell](../../roles/server/ubuntu/shell/README.md), [git](../../roles/server/ubuntu/git/README.md)).
 - A tool that updates itself, such as claude or rustup, is installed only where missing
   ([claude's units](../../roles/server/ubuntu/claude/units.toml.tmpl)).
+- The task `secrets` fails closed: root alone, a clean clone fetched by the host key against
+  GitHub's pinned key, and `--if-missing error`, so no value is left out
+  ([The task](../../roles/server/ubuntu/secrets/README.md#the-task)).
 - A unit that reads the secrets changes nothing on a machine without ws's secrets file. With it,
   the file is the whole truth: a run removes what it lacks, such as a git token. So a run without
   it, as CI's, keeps what a run with it made

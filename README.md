@@ -17,7 +17,8 @@ Each role has a page of its own. A role is its mise config and its spec of ws's 
   ws starts to the internet and ikeward, but what the network needs, such as DHCP and DNS. The
   table is off where `WS_SECURITY_OUTBOUND` is false, as a cloud VM wants. As mise's config and
   units.
-- [`secrets`](roles/server/ubuntu/secrets): fnox, which decrypts ws's secrets, as mise's config.
+- [`secrets`](roles/server/ubuntu/secrets): fnox, which decrypts ws's secrets, as mise's config, and
+  the task `secrets`, which fetches them by the host key and runs the bootstrap under them.
 - [`cable`](roles/server/ubuntu/cable): the server's end of a cable to the Mac, as units.
 - [`tunnel`](roles/server/ubuntu/tunnel): `wg0`, the server's end of a WireGuard tunnel for the Mac, as
   units.
@@ -105,6 +106,9 @@ form that [the server's runbook](roles/server/runbook.md) gives:
 ```sh
 sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server bootstrap plan
 ```
+
+The task `secrets` takes the plan's arguments too, `run secrets -- plan --detailed-exitcode`, and
+fetches the secrets first ([The task](roles/server/ubuntu/secrets/README.md#the-task)).
 
 A plan adds no apt source and writes no file. So a unit that waits on another with changes reads
 `after` and that unit, and plans nothing more.
