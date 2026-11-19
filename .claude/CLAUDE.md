@@ -139,7 +139,9 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([mise.lock](../mise.lock)). A Mac's runbook checks it by hand too
   ([runbook.md](../roles/client/runbook.md)). So is mise's binary, whose SHA-256 for each
   target `install.sh` holds ([install.sh](../install.sh)), and the Mac's runbook its macos-arm64's
-  ([runbook.md](../roles/client/runbook.md)). So is
+  ([runbook.md](../roles/client/runbook.md)). So is the server's fnox: GitHub's digest of its
+  release asset for each platform is in `roles/server/mise/mise.server.lock`
+  ([secrets](../roles/server/ubuntu/secrets/README.md#fnox)). So is
   yamllint ([lint-requirements.in](../.github/lint-requirements.in)), the Mac's gh, by
   `roles/client/mise/mise.mac.lock` ([git](../roles/client/macos/git/README.md#gh)), and Secretive's
   `Secretive.zip`, with its notarization ([runbook.md](../roles/client/runbook.md)). The

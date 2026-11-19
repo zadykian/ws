@@ -2,6 +2,23 @@
 
 lockfile_version = 4
 
+[[tools.fnox]]
+version = "1.50.0"
+backend = "packslip:github.com/jdx/fnox"
+specifiers = ["1.50.0"]
+
+[tools.fnox."platforms.linux-arm64"]
+checksum = "sha256:605b3f5fdd8cf4806d7be63ca4ef52c6fa26d86ac7c97a04a3263daf990233dd"
+url = "https://github.com/jdx/fnox/releases/download/v1.50.0/fnox-aarch64-unknown-linux-gnu.tar.gz"
+signer = "sigstore-oidc:https://github.com/jdx/fnox/.github/workflows/release.yml"
+repository_ids = { repository = "1078762196" }
+
+[tools.fnox."platforms.linux-x64"]
+checksum = "sha256:f08da606e120c676fc3a4f3def970a4ade82e3857841a3961afbdd337a88e30b"
+url = "https://github.com/jdx/fnox/releases/download/v1.50.0/fnox-x86_64-unknown-linux-gnu.tar.gz"
+signer = "sigstore-oidc:https://github.com/jdx/fnox/.github/workflows/release.yml"
+repository_ids = { repository = "1078762196" }
+
 [[tools."github:docker/docker-language-server"]]
 version = "0.20.1"
 backend = "github:docker/docker-language-server"

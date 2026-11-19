@@ -17,6 +17,7 @@ Each role has a page of its own. A role is its mise config and its spec of ws's 
   ws starts to the internet and ikeward, but what the network needs, such as DHCP and DNS. The
   table is off where `WS_SECURITY_OUTBOUND` is false, as a cloud VM wants. As mise's config and
   units.
+- [`secrets`](roles/server/ubuntu/secrets): fnox, which decrypts ws's secrets, as mise's config.
 - [`cable`](roles/server/ubuntu/cable): the server's end of a cable to the Mac, as units.
 - [`tunnel`](roles/server/ubuntu/tunnel): `wg0`, the server's end of a WireGuard tunnel for the Mac, as
   units.
