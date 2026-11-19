@@ -151,7 +151,8 @@ func TestMacConfigHoldsNoRootPath(t *testing.T) {
 
 // TestMacLockHoldsEachTool keeps roles/client/mise/mise.mac.lock beside the Mac's tools. The
 // bootstrap runs with MISE_LOCKED=1, which refuses a tool that the lock lacks, and installs one by
-// its url and checksum alone, so that no tool goes in unchecked.
+// its url and checksum alone, so that no tool goes in unchecked. An entry that no role pins, as
+// after a change of a tool's backend, is stale.
 func TestMacLockHoldsEachTool(t *testing.T) {
 	text, err := os.ReadFile(macLock)
 	if err != nil {
@@ -167,7 +168,7 @@ func TestMacLockHoldsEachTool(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tools := 0
+	pinned := map[string]bool{}
 	for _, f := range files {
 		text, err := os.ReadFile(f) //nolint:gosec // a file of the tree, found by the test
 		if err != nil {
@@ -180,7 +181,7 @@ func TestMacLockHoldsEachTool(t *testing.T) {
 			t.Fatalf("%s: %v", f, err)
 		}
 		for name, version := range c.Tools {
-			tools++
+			pinned[name] = true
 			i := slices.IndexFunc(lock.Tools[name], func(e map[string]any) bool { return e["version"] == version })
 			if i < 0 {
 				t.Errorf("%s: %s %s is not in roles/client/mise/mise.mac.lock: run mise lock for macos-arm64", f, name, version)
@@ -194,7 +195,12 @@ func TestMacLockHoldsEachTool(t *testing.T) {
 			}
 		}
 	}
-	if tools == 0 {
+	if len(pinned) == 0 {
 		t.Error("no role of the Mac's names a tool, want gh at least")
+	}
+	for name := range lock.Tools {
+		if !pinned[name] {
+			t.Errorf("roles/client/mise/mise.mac.lock holds %s, which no role pins: run mise lock for macos-arm64", name)
+		}
 	}
 }

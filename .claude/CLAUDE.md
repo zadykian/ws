@@ -144,8 +144,10 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([runbook.md](../roles/client/runbook.md)). So is the server's fnox: GitHub's digest of its
   release asset for each platform is in `roles/server/mise/mise.server.lock`
   ([secrets](../roles/server/ubuntu/secrets/README.md#fnox)). So is
-  yamllint ([lint-requirements.in](../.github/lint-requirements.in)), the Mac's gh, by
-  `roles/client/mise/mise.mac.lock` ([git](../roles/client/macos/git/README.md#gh)), and Secretive's
+  yamllint ([lint-requirements.in](../.github/lint-requirements.in)), and so are the Mac's gh, fnox
+  and age-plugin-yubikey, by `roles/client/mise/mise.mac.lock` ([git](../roles/client/macos/git/README.md#gh),
+  [secrets](../roles/client/macos/secrets/README.md#the-tools)). The lock's SHA-256 of
+  age-plugin-yubikey is GitHub's digest, as its publisher lists none. So is Secretive's
   `Secretive.zip`, with its notarization ([runbook.md](../roles/client/runbook.md)). The
   Mac's casks, Ghostty, Zed and their font, take their latest by mise's `brew-cask`, outside the rule
   ([ghostty](../roles/client/macos/ghostty/README.md#ghostty)). Go is checked against the
