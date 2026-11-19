@@ -30,8 +30,9 @@ MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap
 It sets up every role of the Mac, on the tree in `/opt/ws`, from the side's run directory,
 `roles/client` ([The Mac's frame](macos/frame/README.md)).
 Its units read as the user, and ask sudo for a change alone. `ws client macos` holds the Mac's
-commands, darwin alone, which the units and the tunnel's daemons run. `ws version` prints its
-version.
+commands, darwin alone, which the units and the tunnel's daemons run. The user runs
+`ws client macos secrets init` too, which sets up the secrets repository ([The secrets on the
+Mac](macos/secrets/README.md#ws-client-macos-secrets-init)). `ws version` prints its version.
 
 ## What the Mac reports
 
@@ -47,8 +48,10 @@ reads without running them. `/etc/ws/values.yml` holds the Mac's keys: `WS_GIT_S
 `WS_IDENTITY_PUB_KEY` and `WS_IDENTITY_AGENT`. `/etc/ws/servers/ws/values.yml` holds every other key,
 and a key in the other file is refused. Both are root's, written through sudo. A `WS_VALUES` file
 outside `/etc/ws` is the user's. [The two files](values/README.md#the-two-files) shows both.
-`--server NAME`, on every `ws client macos` command, picks the server, which may be left out where
-there is one ([The server's name](values/README.md#the-servers-name)).
+`--server NAME` picks the server that a `ws client macos` command acts on, and may be left out
+where there is one ([The server's name](values/README.md#the-servers-name)). `remove` and
+`secrets init` refuse it: remove takes the server's name as its argument, and the secrets
+repository serves every server.
 
 `WS_PUBLIC_KEY` is ws's WireGuard public key, which the `tunnel` role prints: [The Mac's
 tunnel](#the-macs-tunnel), below. `WS_LAN` is the home LAN, and `WS_LAN_ADDRESS` ws's address inside

@@ -1,7 +1,8 @@
 # The secrets on the Mac
 
 The Mac keeps ws's secrets in fnox, in the private secrets repository, encrypted to the YubiKey 5C
-Nano, to a backup key and to each server's host key. This role installs the tools that do it.
+Nano, to a backup key and to each server's host key. This role installs the tools that do it, and
+`ws client macos secrets init` sets the repository up.
 
 ## The tools
 
@@ -39,7 +40,23 @@ mise installs both tools for the tree alone, on no shell's `PATH`. fnox must fin
 first, and one there that differs is replaced. The check runs as the user, so a bootstrap that
 changes nothing asks no password. Where mise has no such tool, its unit alone fails.
 
-## The Nano's identity
+## ws client macos secrets init
+
+Run it as yourself, with the Nano plugged in, once the secrets repository exists
+([the runbook](../../runbook.md#the-secrets)). It takes no `--server`, as the repository serves
+every server. It needs fnox and age-plugin-yubikey in `/usr/local/bin`, which the bootstrap puts
+there. In a temporary clone of the repository, it:
+
+1. Finds the Nano's age identity, or makes one, and keeps its stub in fnox's key file.
+2. Where `fnox.toml` is missing, makes the backup key, and starts `fnox.toml` with the Nano's and the
+   backup's recipients.
+3. Declares each input that the server's roles in `/opt/ws` declare and `fnox.toml` lacks, by
+   `fnox set NAME --provider age` with an empty value. A server's run then finds each input, and
+   fails on a key that opens none.
+4. Prints the backup's secret line, where it made one, and waits for Enter.
+5. Lands `fnox.toml` by a pull request, as below.
+
+## The Nano and the backup
 
 The Nano holds the age identity of the recipient `nano` in `fnox.toml`. The Go package here finds
 it by `age-plugin-yubikey --list`:
@@ -60,6 +77,13 @@ serial and slot, and holds no secret. The key file is the one fnox reads by defa
 ws runs fnox with `/usr/local/bin` first on `PATH`, where fnox finds the plugin. It drops
 `FNOX_AGE_KEY`, which would beat the key file, and `FNOX_PROFILE`, which would take a profile's file
 for `fnox.toml`.
+
+The backup is a plain age key that opens every value where the Nano is lost. The maintainer owns one
+YubiKey alone, so a second one can't serve. ws makes it in Go, as macOS has no `age-keygen`, where
+`fnox.toml` is missing. It prints its secret line once, before the push, to keep on paper or in a
+password manager. It writes the line nowhere, and puts it in no argument, error or log. Enter goes
+on; an end of input stops before the push, so nothing lands, and the next run makes a new backup.
+A merged `fnox.toml` whose backup line was never shown would have no backup.
 
 ## How a change lands
 
@@ -97,3 +121,20 @@ the secrets' names, and no value. A list of recipients, or a provider of another
 ws changes a recipient by its label. A new `fnox.toml` holds the two first recipients and no
 secret yet. Its `root = true` keeps fnox from looking for a file above the clone, and
 `if_missing = "error"` makes a secret that no key opens fail the run.
+
+## Again
+
+A later run keeps the Nano's identity, both recipients and every value. A `fnox.toml` without the
+recipient `nano` or `backup` stops it: a new recipient needs every value encrypted again, with the
+Nano, which init doesn't do. It declares the inputs that a newer release of ws adds, and lands them
+by a pull request titled `chore: declare the inputs of a newer release`. Where none is new, it says
+so and opens no pull request. Where `fnox set` leaves `fnox.toml` unchanged, it fails, as the
+inputs would stay undeclared.
+
+A pull request of init's that is still open stops a run before it reads the Nano, as after a check
+that failed or a wait that ran out. A second one would make another backup, and both would add
+`fnox.toml`. Merge it once its checks pass, or close it and run init again, which makes a new
+backup.
+
+A release may declare a new input. A server's run of it fails at mise, which finds no value of
+the input, until init runs again on a Mac whose `/opt/ws` holds that release.
