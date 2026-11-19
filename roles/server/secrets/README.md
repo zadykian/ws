@@ -90,8 +90,9 @@ vpn_p12 = "PASSWORD"                # left out where the .p12 has none
   file](../ubuntu/shell/README.md#the-env-file)).
 - `[git."URL"]` is read by no role: git's tokens come from mise's secret inputs ([Git
   credentials](../ubuntu/git/README.md#git-credentials)).
-- `[file]` and `[password]` are the ikeward profile's ([The profile](../ubuntu/ikeward/README.md#the-profile)). A
-  TOML string can't hold the `.p12`'s bytes, so a file is base64. ws decodes it once parsed.
+- `[file]` and `[password]` are read by no role: ikeward's profile comes from mise's secret inputs
+  ([The profile](../ubuntu/ikeward/README.md#the-profile)). A TOML string can't hold the `.p12`'s
+  bytes, so a file is base64. ws decodes it once parsed.
 
 ## References
 

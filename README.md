@@ -133,7 +133,7 @@ write; and no account permission. These stay manual:
 - other peers' public keys on the server, as in [The tunnel](roles/server/ubuntu/tunnel/README.md#the-tunnel);
 - another device's SSH key on the server: `ssh-import-id gh:LOGIN`, run as `WS_USER`
   ([SSH and the firewall](roles/server/ubuntu/security/README.md#ssh-and-the-firewall));
-- the VPN's profile, age-encrypted on the server, and the `ikeward` role's variables, as in
+- the VPN's profile, in the server's own secrets, and the `ikeward` role's variables, as in
   [The profile](roles/server/ubuntu/ikeward/README.md#the-profile);
 - with Secure Boot on, DKMS's key, enrolled at the console: [Secure Boot](roles/server/ubuntu/fans/README.md#secure-boot);
 - Fresh's trust, once per repository: press T, then Enter
