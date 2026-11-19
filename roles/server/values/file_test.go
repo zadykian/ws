@@ -1,6 +1,7 @@
 package values
 
 import (
+	"strings"
 	"testing"
 
 	"go.yaml.in/yaml/v3"
@@ -19,6 +20,21 @@ func readAlike(t *testing.T, a, b Values) bool {
 		t.Fatal(err)
 	}
 	return string(textA) == string(textB)
+}
+
+// topKeys lists the keys of a YAML mapping, in the order of its text.
+func topKeys(t *testing.T, text []byte) []string {
+	var doc yaml.Node
+	if err := yaml.Unmarshal(text, &doc); err != nil {
+		t.Fatal(err)
+	}
+	var keys []string
+	for i, node := range doc.Content[0].Content {
+		if i%2 == 0 {
+			keys = append(keys, node.Value)
+		}
+	}
+	return keys
 }
 
 // fileOf returns the values that in gives, and their file's text.
@@ -43,6 +59,51 @@ func TestYAMLReadsBackAsTheValues(t *testing.T) {
 		}
 		if !readAlike(t, got, want) {
 			t.Errorf("the text for %q reads as other values:\n%s", in, text)
+		}
+	}
+}
+
+// TestYAMLNamesEveryKey takes the keys from yaml's own walk of Values, so that a role's new key
+// shows. A pointer is set, as yaml leaves out an unset one that omitempty marks.
+func TestYAMLNamesEveryKey(t *testing.T) {
+	_, text := fileOf(t, "")
+	v := Default()
+	size := 1
+	v.Base.SwapSizeMB = &size
+	whole, err := yaml.Marshal(v)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, want := topKeys(t, []byte(text)), topKeys(t, whole)
+	if strings.Join(got, " ") != strings.Join(want, " ") {
+		t.Errorf("the file names %q, want %q", got, want)
+	}
+	if !strings.HasPrefix(text, "---\n") || !strings.Contains(text, "\nWS_BASE_SWAP_SIZE_MB: null\n") {
+		t.Errorf("the file lacks its start or an unset swap size:\n%s", text)
+	}
+}
+
+// TestSetFindsEachLineOfYAML holds the file in the form that values set edits: each key that a line
+// holds on one line of its own, as Set writes it.
+func TestSetFindsEachLineOfYAML(t *testing.T) {
+	v, text := fileOf(t, "")
+	for _, k := range Keys() {
+		if value := v.Text(k); value != "" {
+			if got, err := Set([]byte(text), k.Name, value); err != nil || string(got) != text {
+				t.Errorf("set %s %q: %v; want the file unchanged:\n%s", k.Name, value, err, got)
+			}
+		}
+		var rest []string
+		for line := range strings.SplitAfterSeq(text, "\n") {
+			if !strings.HasPrefix(line, k.Name+":") {
+				rest = append(rest, line)
+			}
+		}
+		if lines := strings.Count(text, "\n") - strings.Count(strings.Join(rest, ""), "\n"); lines != 1 {
+			t.Errorf("%s takes %d lines, want 1", k.Name, lines)
+		}
+		if got, err := Set([]byte(text), k.Name, ""); err != nil || string(got) != strings.Join(rest, "") {
+			t.Errorf("set %s to its default: %v; want its line out:\n%s", k.Name, err, got)
 		}
 	}
 }
