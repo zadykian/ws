@@ -134,7 +134,36 @@ chmod 600 /etc/ws/values.yml
 # then reloads systemd for each unit it enables. So a draw soon falls in the past, and
 # unattended-upgrade holds dpkg's lock under the bootstrap. A new machine's timers have no stamp
 # before their first start, so the stamps go.
+apt_units=(apt-daily.timer apt-daily-upgrade.timer apt-daily.service apt-daily-upgrade.service)
+# apt_state shows what starts an upgrade: the uptime, the stamps, and apt's timers and services.
+apt_state() {
+    echo "uptime: $(cut -d' ' -f1 /proc/uptime) s"
+    ls -l --time-style=+%FT%T /var/lib/systemd/timers/stamp-apt-daily* /var/lib/apt/periodic || true
+    systemctl show -p Id,LastTriggerUSec,NextElapseUSecRealtime \
+        -p InactiveExitTimestamp,InactiveEnterTimestamp "${apt_units[@]}"
+}
+apt_state
 rm -fv /var/lib/systemd/timers/stamp-apt-daily{,-upgrade}.timer
+
+# apt_quiet holds where no apt command of the log $1 waited for dpkg's lock, and neither of apt's
+# daily services ran. The image keeps them off, so a run is the bootstrap's. systemd's lines since
+# $2, in seconds since the epoch, show its reloads and a service's start among them.
+apt_quiet() {
+    local status=0 unit
+    apt_state
+    journalctl --no-pager -o short-iso-precise --since "@$2" _PID=1 |
+        grep -E 'Reloading finished|apt-daily' || true
+    if grep -m 5 -e 'Waiting for cache lock' -e 'Could not get lock' "$1"; then
+        status=1
+    fi
+    for unit in apt-daily.service apt-daily-upgrade.service; do
+        if [ "$(systemctl show -P InactiveExitTimestampMonotonic "$unit")" != 0 ]; then
+            echo "$unit ran"
+            status=1
+        fi
+    done
+    return "$status"
+}
 
 # The controls: each of these holds before ws, and the opposite after it.
 must "the private address answers before the table" up "http://$target/"
@@ -145,7 +174,13 @@ must "sudo's password is cached before the drop-in" as bash -c "$sudo_form" bash
 # be root's alone for install.sh's guard.
 chown -R 0:0 /opt/ws
 chmod -R go-w /opt/ws
-"$(dirname "$0")/bootstrap.sh" "$rel"
+log=$(mktemp)
+since=$(date +%s)
+if ! "$(dirname "$0")/bootstrap.sh" "$rel" > >(tee "$log") 2>&1; then
+    apt_quiet "$log" "$since" || true
+    fail "the first bootstrap"
+fi
+must "no upgrade ran, and no apt command waited for dpkg's lock" apt_quiet "$log" "$since"
 must "the first bootstrap leaves nothing to do" \
     mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null
 mise -C /opt/ws/roles/server bootstrap </dev/null
