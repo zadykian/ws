@@ -83,13 +83,17 @@ Each release holds the roles it sets up, so run `install.sh` again, by the same 
 
 The units read their secrets from ws's file, which `ws server ubuntu secrets` edits ([The secrets
 file](roles/server/ubuntu/shell/README.md#the-secrets-file)). The values of a machine go in
-`/etc/ws/values.yml`, which only root reads, and every run reads them. `WS_USER: NAME` sets up the
+`/etc/ws/values.yml`, which only root reads, and every run reads them. The first run writes it
+where none is, each key at its default, and no run changes it after
+([The values file](roles/server/ubuntu/frame/README.md#the-values-file)). `WS_USER: NAME` sets up the
 user NAME instead of `zadykian`, the default, whose account must exist. `WS_USER: root` sets up a
 cloud VM with no other user. `WS_HOME` is the account's home, `/home/NAME` by default. One that
-differs from the home `getent passwd` gives the account fails the run at security's first guard.
+differs from the home `getent passwd` gives the account fails the run.
 `WS_GIT_SIGNING_PUB_KEY` lies below it, or the run fails. A cloud VM names `WS_SECURITY_OUTBOUND:
 false` there before its first run ([Outbound](roles/server/ubuntu/security/README.md#outbound)). `ws
-server ubuntu values set KEY VALUE` writes one key, and an empty VALUE gives its default back. A
+server ubuntu values set KEY VALUE` writes one key, and an empty VALUE gives its default back.
+The first run wrote the home and the signing key of the user then: one `set WS_USER NAME` moves
+them where they hold that user's, and says so. An edit by hand changes their lines with it. A
 second run changes nothing, so its plan exits 0 with `--detailed-exitcode`.
 
 ## Dry runs
