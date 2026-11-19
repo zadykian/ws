@@ -67,7 +67,7 @@ unbooted = true
 command = [
     "sh",
     "-c",
-    'cd "$1" && npm ci --ignore-scripts --no-audit --no-fund && sha256sum package.json package-lock.json >node_modules/.ws-sha256',
+    'cd "$1" && npm ci --ignore-scripts --no-audit --no-fund --no-update-notifier && sha256sum package.json package-lock.json >node_modules/.ws-sha256',
     "sh",
     "{{ .Home }}/.local/lib/language-servers",
 ]

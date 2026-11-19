@@ -109,7 +109,8 @@ the directories a new home lacks:
 `package.json` disagree or a sha512 `integrity` differs, so these downloads are checked, though not
 against a SHA-256. The unit keeps `node_modules/.ws-sha256`, `sha256sum`'s lines for both files,
 and runs again where its check, `sha256sum -c`, fails. mise installs the Node package, and npm with
-it, before any unit.
+it, before any unit. As that pin sets npm's version, `--no-update-notifier` keeps npm from asking
+the registry for a newer one and printing its notice.
 
 The settings name the three servers by path, with `--stdio`, so Zed skips its npm lookup of their
 latest versions. They also set `node.path`, so Zed never downloads a Node. HTML formats through its
