@@ -141,7 +141,7 @@ Flags:
 Global Flags:
       --server string   the server to act on, which may be left out where there is one
 == ws client macos remove
-It deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it is. mise's bootstrap then takes its daemon, routes and host off. It refuses the Mac's last server, as the bootstrap takes a Mac with none for a stray WS_VALUES and prunes no daemon, and takes no --server: the argument is the consent.
+It first takes NAME's host key, from known_hosts, out of the secrets repository: from the recipients of fnox.toml and of every profile file, whose values it encrypts again with the Nano, by a pull request, and from the repository's deploy keys. Where that fails, nothing else changes. Where known_hosts holds no key of NAME, or this Mac has no fnox key, it leaves the secrets and prints what to do there by hand. It then deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it is. mise's bootstrap then takes its daemon, routes and host off. It refuses the Mac's last server, as the bootstrap takes a Mac with none for a stray WS_VALUES and prunes no daemon, and takes no --server: the argument is the consent.
 
 Usage:
   ws client macos remove NAME [flags]
