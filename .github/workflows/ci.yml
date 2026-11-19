@@ -218,7 +218,7 @@ jobs:
           .tools/serve-build /opt/ws "$RUNNER_TEMP/rel"
       - name: The cases
         run: sudo bash .github/rootless-checks.sh "$RUNNER_TEMP/rel"
-      # Docker's tool only points to the daemon's log.
+      # A failed start only points to the daemon's log.
       - name: The daemon's log
         if: failure()
         run: |

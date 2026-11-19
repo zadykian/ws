@@ -14,8 +14,7 @@ import (
 )
 
 // systemPath is the PATH that a run state's commands get, after its spec's path. The caller's, such
-// as mise's shims, stays out, as a command may write it down, as Docker's setup tool does in the
-// unit it makes.
+// as mise's shims, stays out, as a command may write it down in a file that outlives the run.
 const systemPath = "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 // pathEnv is the run's PATH: its spec's directories, then the system's.

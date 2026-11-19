@@ -16,7 +16,8 @@ web='while true; do printf "HTTP/1.0 200 OK\r\n\r\nhi\n" | nc -l -p 80; done'
 sudo_form='printf "%s\n" "$1" | sudo -S -p "" -v; sudo -n true; rc=$?; exit "$rc"'
 # The runner's sudo keeps the runner's environment, which a real sudo drops, and its
 # /etc/environment, which PAM gives each session, names the runner's own directories. They would
-# send Docker's tool to the runner's home, and the user's systemd to the runner's runtime directory.
+# send the user's settings to the runner's home, and the user's systemd to the runner's runtime
+# directory.
 unset XDG_CONFIG_HOME
 sed -i '/^XDG_/d' /etc/environment
 # The runner's apt takes the amd64v3 variant, which a machine turns on by hand. The dotnet PPA's
@@ -33,7 +34,7 @@ fail() {
     exit 1
 }
 
-# journal prints the user's daemon's log after a failure, which Docker's tool only points to.
+# journal prints the user's daemon's log after a failure, which a failed start only points to.
 journal() {
     local status=$?
     [ "$status" = 0 ] || journalctl -n 80 --no-pager _SYSTEMD_USER_UNIT=docker.service || true
