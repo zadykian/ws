@@ -23,3 +23,18 @@ no role pins.
 fnox encrypts a value to the Nano's `age1yubikey1` recipient by running age-plugin-yubikey from
 `PATH`, and needs no YubiKey for it. To decrypt one, the plugin asks for the Nano, its PIN once a
 session and a touch each time. Without the plugin on `PATH`, fnox fails either way.
+
+## The units
+
+mise installs both tools for the tree alone, on no shell's `PATH`. fnox must find the plugin on
+`PATH`, and the maintainer runs `fnox` by hand in a clone of the secrets repository. So
+[the role's units](units.toml.tmpl) copy them where every shell finds them, as `state.gh` does
+([gh](../git/README.md#gh)):
+
+- `state.fnox` copies fnox to `/usr/local/bin/fnox`, root:wheel and 755.
+- `state.age-plugin-yubikey` copies age-plugin-yubikey to `/usr/local/bin/age-plugin-yubikey`,
+  alike.
+
+`/etc/paths` puts `/usr/local/bin` on every shell's `PATH`. Each copy goes in under a temporary name
+first, and one there that differs is replaced. The check runs as the user, so a bootstrap that
+changes nothing asks no password. Where mise has no such tool, its unit alone fails.

@@ -29,6 +29,8 @@ type Mac struct {
 	// SSH and Git are the texts of their files in /etc/ws, which their units write.
 	SSH SSH
 	Git Git
+	// Secrets is the secrets' tools that mise installed for the tree.
+	Secrets Secrets
 }
 
 // SSH is /etc/ws/ssh_config's text, checked as ssh reads it.
@@ -42,6 +44,13 @@ type Git struct {
 	git.Texts
 	// GhFrom is mise's gh, or empty where mise has none: gh's unit alone fails then.
 	GhFrom string
+}
+
+// Secrets is fnox and age-plugin-yubikey as mise installed them for the tree, which their units copy
+// into /usr/local/bin. fnox runs the plugin from PATH, and the user runs fnox by hand. A path is
+// empty where mise has none: that tool's unit alone fails then.
+type Secrets struct {
+	FnoxFrom, PluginFrom string
 }
 
 // Ghostty is the config that the line reading /etc/ws/ghostty goes in, which the Mac's files pick.
@@ -83,7 +92,8 @@ func Read(ctx context.Context, m effect.Machine, getenv func(string) string, pwd
 	if err != nil {
 		return Mac{}, err
 	}
-	f.Git = Git{Texts: git.TextsOf(f.Home, signing), GhFrom: ghFrom(ctx, m)}
+	f.Git = Git{Texts: git.TextsOf(f.Home, signing), GhFrom: toolFrom(ctx, m, "gh")}
+	f.Secrets = Secrets{FnoxFrom: toolFrom(ctx, m, "fnox"), PluginFrom: toolFrom(ctx, m, "age-plugin-yubikey")}
 	return f, nil
 }
 
@@ -122,10 +132,10 @@ func (f Mac) readSSH(ctx context.Context, m effect.Machine, own values.Conf) (SS
 	return SSH{Config: text}, err
 }
 
-// ghFrom returns the gh that mise installed for the tree, as the user's mise finds it, which is on
-// no shell's PATH. A mise that has none yet gives none.
-func ghFrom(ctx context.Context, m effect.Machine) string {
-	out, err := m.Run(ctx, "mise", "-C", "/opt/ws/roles/client", "which", "gh")
+// toolFrom returns where mise installed the tool name for the tree, as the user's mise finds it,
+// which is on no shell's PATH. A mise that has none yet gives none.
+func toolFrom(ctx context.Context, m effect.Machine, name string) string {
+	out, err := m.Run(ctx, "mise", "-C", "/opt/ws/roles/client", "which", name)
 	if err != nil {
 		return ""
 	}
