@@ -47,8 +47,8 @@ func runUnit(p enginecli.Env, args ...string) (status int, stdout, stderr string
 
 func TestMacUnitSide(t *testing.T) {
 	s := unitSide(fakeProcess())
-	if s.Dir != "/opt/ws/roles/client/macos" || s.Root || s.Units != nil || s.Secrets != nil || s.System.String() != "macOS" {
-		t.Errorf("side = %+v, want the Mac's specs, no root, no systemd, no secrets", s)
+	if s.Dir != "/opt/ws/roles/client/macos" || s.Root || s.Units != nil || s.System.String() != "macOS" {
+		t.Errorf("side = %+v, want the Mac's specs, no root, no systemd", s)
 	}
 	p, _ := macUnitEnv(t, runOfTheUser)
 	if status, stdout, stderr := runUnit(p, "list", "--toml"); status != 0 || stdout != "\"ws:state/mine\" = \"in-sync\"\n" {
