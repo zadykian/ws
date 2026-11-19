@@ -2,8 +2,11 @@ package secrets
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -61,6 +64,45 @@ func ListNano(ctx context.Context, m effect.Machine) ([]Slot, error) {
 		return nil, fmt.Errorf("cannot list the YubiKey's age identities: %w", err)
 	}
 	return ParseList(out)
+}
+
+// NanoIdentity finds the Nano's age identity. Where fnox.toml names the Nano's recipient, want,
+// it takes that recipient's slot alone: the values open to no other identity. Where fnox.toml
+// names none, it takes the lowest slot listed, or one that age-plugin-yubikey makes on the
+// terminal, with the Nano's PIN and a touch. It says which on out.
+func NanoIdentity(ctx context.Context, m effect.Machine, out io.Writer, want string) (Slot, error) {
+	slots, err := ListNano(ctx, m)
+	if err != nil {
+		return Slot{}, err
+	}
+	if want != "" {
+		for _, s := range slots {
+			if s.Recipient == want {
+				_, _ = fmt.Fprintf(out, "the Nano holds fnox.toml's nano recipient in slot %d\n", s.Slot)
+				return s, nil
+			}
+		}
+		return Slot{}, fmt.Errorf("the YubiKey holds no identity of fnox.toml's nano recipient %s: plug in "+
+			"the Nano that made it", want)
+	}
+	if len(slots) == 0 {
+		_, _ = fmt.Fprintln(out, "the YubiKey holds no age identity: age-plugin-yubikey makes one, "+
+			"which asks for the Nano's PIN and a touch")
+		// Pass sends generate's output to ws's stderr, so a second list reads the new identity.
+		if err := m.Pass(ctx, false, Plugin, "--generate", "--name", "ws-secrets", "--pin-policy", "once",
+			"--touch-policy", "always"); err != nil {
+			return Slot{}, fmt.Errorf("cannot make an age identity on the Nano: %w", err)
+		}
+		if slots, err = ListNano(ctx, m); err != nil {
+			return Slot{}, err
+		}
+		if len(slots) == 0 {
+			return Slot{}, errors.New("age-plugin-yubikey made an identity, yet the YubiKey lists none")
+		}
+	}
+	s := slices.MinFunc(slots, func(a, b Slot) int { return a.Slot - b.Slot })
+	_, _ = fmt.Fprintf(out, "the Nano's age identity is in slot %d: %s\n", s.Slot, s.Recipient)
+	return s, nil
 }
 
 // Stub prints the identity file of the YubiKey's slot: comments, then the stub line, which fnox
