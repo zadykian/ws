@@ -22,7 +22,7 @@ func serveSettings(m *effecttest.Machine, u account.User, file string, body []by
 	}
 	line := "env HOME=" + u.Home + " sh -c " + settingsReadScript + " sh " + file
 	if u.Name != "root" {
-		line = "runuser -u " + u.Name + " -- env -C " + u.Home + " " + strings.TrimPrefix(line, "env ")
+		line = strings.Replace(line, "env HOME="+u.Home, "runuser -u "+u.Name+" -- env -i -C "+u.Home+" HOME="+u.Home+" "+account.SystemPath, 1)
 	}
 	m.Results[line] = effecttest.Result{Out: out}
 }

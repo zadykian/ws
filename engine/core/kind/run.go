@@ -13,9 +13,8 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
-// systemPath is the PATH that a run state's commands get, after its spec's path. The caller's, such
-// as mise's shims, stays out, as a command may write it down in a file that outlives the run.
-const systemPath = "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+// systemPath is the PATH that a run state's commands get, after its spec's path.
+const systemPath = account.SystemPath
 
 // pathEnv is the run's PATH: its spec's directories, then the system's.
 func (r runAs) pathEnv() string {
@@ -50,8 +49,8 @@ func (r runAs) exec(ctx context.Context, pass bool, line []string) error {
 			return err
 		}
 	}
-	// runuser passes the caller's env on. A run with no session drops the caller's session from it:
-	// root's runtime directory is closed to the user, and dotnet fails on it.
+	// A run as root keeps the caller's env, and a user's starts cleared (account.User). A run with no
+	// session drops the caller's session from root's: dotnet fails on a missing runtime directory.
 	session := []string{"-u", "XDG_RUNTIME_DIR", "-u", "DBUS_SESSION_BUS_ADDRESS"}
 	if systemd.Booted(r.m) && (!r.s.Unbooted || r.hasRuntimeDir(a.UID)) {
 		session = systemd.SessionEnv(a.UID)

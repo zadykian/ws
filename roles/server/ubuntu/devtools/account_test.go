@@ -110,7 +110,7 @@ func changes(t *testing.T, u kind.Unit) []string {
 func TestDevtoolsUnitsForAnAccountAndRoot(t *testing.T) {
 	var names []string
 	for _, a := range []struct{ values, as, home string }{
-		{"", "runuser -u zadykian -- env -C /home/zadykian HOME=/home/zadykian env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS ", "/home/zadykian"},
+		{"", "runuser -u zadykian -- env -i -C /home/zadykian HOME=/home/zadykian PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS ", "/home/zadykian"},
 		{"WS_USER: root\n", "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS ", "/root"},
 	} {
 		m, e := machine(t, a.values, nil)

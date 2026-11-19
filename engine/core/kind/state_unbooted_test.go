@@ -10,7 +10,7 @@ import (
 func TestStateRunUnbootedRunsWithoutTheSession(t *testing.T) {
 	e, m, _, out := testEnv(false)
 	withAccount(m)
-	const bare = "runuser -u u -- env -C /home/u HOME=/home/u env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + systemPath + " sh -c x"
+	const bare = "runuser -u u -- env -i -C /home/u HOME=/home/u " + systemPath + " env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + systemPath + " sh -c x"
 	m.Results[bare] = effecttest.Result{}
 	units := loadState(t, e, "run = { user = \"u\", command = [\"sh\", \"-c\", \"x\"], creates = [\"/x\"], unbooted = true }\n")
 	if got := headlines(t, units[0].Step); !slices.Equal(got, []string{"run sh -c x as u"}) || out.Lines != nil {
@@ -37,7 +37,7 @@ func TestStateRunUnbootedKeepsTheSessionWhereSystemdRuns(t *testing.T) {
 func TestStateRunUnbootedLeavesOutASessionNotStarted(t *testing.T) {
 	e, m, _, _ := testEnv(true)
 	withAccount(m)
-	const bare = "runuser -u u -- env -C /home/u HOME=/home/u env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + systemPath + " sh -c x"
+	const bare = "runuser -u u -- env -i -C /home/u HOME=/home/u " + systemPath + " env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + systemPath + " sh -c x"
 	m.Results[bare] = effecttest.Result{}
 	units := loadState(t, e, "run = { user = \"u\", command = [\"sh\", \"-c\", \"x\"], creates = [\"/x\"], unbooted = true }\n")
 	if err := applyOnce(t, units[0].Step); err != nil || !slices.Contains(m.Calls, "root "+bare) {

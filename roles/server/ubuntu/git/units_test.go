@@ -12,6 +12,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/kind"
+	"github.com/zadykian/ws/engine/core/resource/account"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/internal/gitcfg"
@@ -114,7 +115,7 @@ func keygen(user, home string) string {
 	if user == "root" {
 		return "env HOME=/root " + env
 	}
-	return "runuser -u " + user + " -- env -C " + home + " HOME=" + home + " " + env
+	return "runuser -u " + user + " -- env -i -C " + home + " HOME=" + home + " " + account.SystemPath + " " + env
 }
 
 func TestGitUnits(t *testing.T) {
