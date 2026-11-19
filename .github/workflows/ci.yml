@@ -34,7 +34,10 @@ jobs:
     permissions:
       contents: read
     steps:
+      # Each checkout names the branch of its git init, as a machine's git config does, so git
+      # prints no hint. The step alone sets it, as a job's env would reach the runs it checks.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        env: { GIT_CONFIG_COUNT: 1, GIT_CONFIG_KEY_0: init.defaultBranch, GIT_CONFIG_VALUE_0: main }
         with:
           # A pull request's own head, rather than GitHub's test merge of it. Its commits land as
           # they are, and as the ruleset requires branches up to date, the merge's tree is the
@@ -210,6 +213,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        env: { GIT_CONFIG_COUNT: 1, GIT_CONFIG_KEY_0: init.defaultBranch, GIT_CONFIG_VALUE_0: main }
         with:
           persist-credentials: false
       - name: Build ws
@@ -236,6 +240,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        env: { GIT_CONFIG_COUNT: 1, GIT_CONFIG_KEY_0: init.defaultBranch, GIT_CONFIG_VALUE_0: main }
         with:
           persist-credentials: false
       - name: install.sh's cases
@@ -257,6 +262,7 @@ jobs:
       FOUNDRY_SHA256: 7555f91ee87a9d0d517009fc859ef64be76ad8b045446b2fe4360b896dc5838d
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        env: { GIT_CONFIG_COUNT: 1, GIT_CONFIG_KEY_0: init.defaultBranch, GIT_CONFIG_VALUE_0: main }
         with:
           persist-credentials: false
       - name: Install foundryctl
