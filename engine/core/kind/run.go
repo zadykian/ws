@@ -13,9 +13,18 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
-// systemPath is the PATH that a run state's commands get. The caller's, such as mise's shims, stays
-// out, as a command may write it down, as Docker's setup tool does in the unit it makes.
+// systemPath is the PATH that a run state's commands get, after its spec's path. The caller's, such
+// as mise's shims, stays out, as a command may write it down, as Docker's setup tool does in the
+// unit it makes.
 const systemPath = "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+// pathEnv is the run's PATH: its spec's directories, then the system's.
+func (r runAs) pathEnv() string {
+	if len(r.s.Path) == 0 {
+		return systemPath
+	}
+	return "PATH=" + strings.Join(r.s.Path, ":") + ":" + strings.TrimPrefix(systemPath, "PATH=")
+}
 
 // runCommand is the run of a run state's command.
 type runCommand struct{ r runAs }
@@ -26,7 +35,7 @@ func (c runCommand) String() string {
 
 func (c runCommand) Apply(ctx context.Context) error { return c.r.exec(ctx, true, c.r.s.Command) }
 
-// exec runs a command line as the run's user, with the system's PATH. With pass set, it passes the
+// exec runs a command line as the run's user, with its PATH (pathEnv). With pass set, it passes the
 // output to ws's standard error, and otherwise drops it, as a check's exit status alone counts.
 // Linux switches to the user by runuser, through the account, and gives it systemd's session,
 // which systemctl --user needs, where systemd runs. macOS has neither (macExec).
@@ -48,7 +57,7 @@ func (r runAs) exec(ctx context.Context, pass bool, line []string) error {
 	if systemd.Booted(r.m) && (!r.s.Unbooted || r.hasRuntimeDir(a.UID)) {
 		session = systemd.SessionEnv(a.UID)
 	}
-	args := slices.Concat(session, []string{systemPath}, line)
+	args := slices.Concat(session, []string{r.pathEnv()}, line)
 	if pass {
 		return a.Pass(ctx, r.m, "env", args...)
 	}
@@ -69,7 +78,7 @@ func (r runAs) hasRuntimeDir(uid int) bool {
 // root's paths reads what the Mac keeps readable by all. A command runs as ws's user with no sudo,
 // as root through sudo, or as another user through root's sudo.
 func (r runAs) macExec(ctx context.Context, pass bool, line []string) error {
-	argv := slices.Concat([]string{"env", systemPath}, line)
+	argv := slices.Concat([]string{"env", r.pathEnv()}, line)
 	root := false
 	switch {
 	case !pass || r.s.User == r.self:

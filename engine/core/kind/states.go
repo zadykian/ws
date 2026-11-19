@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/netip"
 	"path"
+	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
@@ -147,6 +148,9 @@ type runState struct {
 	Check   []string `toml:"check"`
 	// Unbooted runs the command without booted systemd too, as in CI's container, with no session.
 	Unbooted bool `toml:"unbooted"`
+	// Path holds directories that the command and its check find before the system's PATH. An
+	// installer that puts its tool in one warns where PATH lacks it.
+	Path []string `toml:"path"`
 }
 
 func (s runState) resource(e Env) (resource.Resource, error) {
@@ -165,6 +169,11 @@ func (s runState) resource(e Env) (resource.Resource, error) {
 	for _, p := range s.Creates {
 		if !path.IsAbs(p) || path.Clean(p) != p {
 			return nil, fmt.Errorf("creates: %q is not a clean absolute path", p)
+		}
+	}
+	for _, p := range s.Path {
+		if !path.IsAbs(p) || path.Clean(p) != p || strings.Contains(p, ":") {
+			return nil, fmt.Errorf("path: %q is not a clean absolute path free of ':'", p)
 		}
 	}
 	return runAs{m: e.M, out: e.Out, sys: e.System, self: e.User, s: s}, nil

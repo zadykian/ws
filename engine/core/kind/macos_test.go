@@ -48,6 +48,19 @@ func TestStateRunOnMacOSCommand(t *testing.T) {
 	}
 }
 
+func TestStateRunOnMacOSPutsItsPathFirst(t *testing.T) {
+	e, m, _, _ := testEnv(false)
+	e.System, e.User = MacOS, "v"
+	const env = "env PATH=/Users/v/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "
+	m.Results[env+"cld --check"] = effecttest.Result{Err: errors.New("exit status 1")}
+	m.Results[env+"cld --install"] = effecttest.Result{}
+	units := loadState(t, e, "run = { user = \"v\", path = [\"/Users/v/.local/bin\"], "+
+		"command = [\"cld\", \"--install\"], check = [\"cld\", \"--check\"] }\n")
+	if err := applyOnce(t, units[0].Step); err != nil || !slices.Contains(m.Calls, "run "+env+"cld --install") {
+		t.Errorf("apply = %v, calls %q; want the check and the command with the path first", err, m.Calls)
+	}
+}
+
 func TestMacRefusesAnUnreadableRootFile(t *testing.T) {
 	e, _, _, _ := testEnv(false)
 	e.System = MacOS
