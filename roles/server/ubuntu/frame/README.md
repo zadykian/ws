@@ -14,7 +14,7 @@ config and its spec, and holds no Go.
 | [`roles/server/mise/mise.server.lock`](../../mise/mise.server.lock) | The roles' tools: each download's url and SHA-256 for each platform ([devtools](../devtools/README.md#the-tools)). |
 | [`mise.server.toml`](../../../../mise.server.toml) | The server's: the plugin, dpkg's options, `/etc/ws` and the check against a silent skip. |
 | [`plugins/ws`](../../../../plugins/ws) | The plugin: a hook runs one `ws unit read` or `ws unit write` ([ws unit](../../../../engine/core/kind/README.md#ws-unit)). |
-| `units.toml.tmpl`, `mise.server.toml` here | The role `frame`: the unit that keeps `/usr/local/bin/ws`. |
+| `units.toml.tmpl`, `mise.server.toml`, `files/` here | The role `frame`: the units that keep `/usr/local/bin/ws` and write [the values file](#the-values-file). |
 
 The Mac shares `mise.toml` alone, and loads no file of the server's.
 
@@ -102,6 +102,21 @@ does, so that the account reaches the tools a role pins
 to `/usr/local/bin/ws` where the two differ, under a temporary name first. As a `run` state, it
 skips without booted systemd, as in CI's container. A unit that runs `/usr/local/bin/ws` waits on
 it by `after`.
+
+## The values file
+
+The unit `file/ws-values` writes `/etc/ws/values.yml` where nothing is at the path, a link
+included, as a `seed` file ([file](../../../../engine/core/kind/file.md)). The file, root's at
+600, goes in whole under that mode. `Values.YAML` gives its text from the struct, so that a role's
+new key needs no second list. It names each key of `values.Values`, a table too, at the value a
+missing file gives. A key that follows another holds its value as the file is made: `WS_HOME` and
+`WS_GIT_SIGNING_PUB_KEY` the user's, `WS_TUNNEL_PEERS` the Mac at the tunnel's next address.
+`ws server ubuntu values set` moves the first two with a key they follow, where they hold the
+value it gave them. A key that a run reads from the machine, such as the swap's size, stays empty
+or `null`.
+
+The file is then the owner's: no run reads it as ws's, or changes it. Each call of ws reads the
+values as it starts, and the text reads as no file does, so the unit needs no `after`.
 
 ## The check against a silent skip
 

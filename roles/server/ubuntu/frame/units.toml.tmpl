@@ -9,3 +9,12 @@ command = [
     "install -m 0755 \"$(mise -C /opt/ws which ws)\" /usr/local/bin/.ws.new && mv -f /usr/local/bin/.ws.new /usr/local/bin/ws",
 ]
 check = ["sh", "-c", "cmp -s \"$(mise -C /opt/ws which ws)\" /usr/local/bin/ws"]
+
+# The machine's values, each key at its default, so that the file shows what a run reads. ws writes
+# it where nothing is at the path, and leaves it to its owner after. Each call of ws reads the
+# values as it starts, and this text reads as a missing file does, so the unit needs no after.
+[file.ws-values]
+path = "/etc/ws/values.yml"
+mode = 0o600
+template = "files/values.yml.tmpl"
+seed = true
