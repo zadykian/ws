@@ -85,6 +85,24 @@ func (c *Clone) Land(ctx context.Context, out io.Writer, ch Change) (string, err
 	return url, nil
 }
 
+// OpenPulls returns the URLs of the open pull requests of the topic's branches, ws/TOPIC-*. A run
+// whose checks failed, or whose wait ran out, leaves its pull request open.
+func (c *Clone) OpenPulls(ctx context.Context, topic string) ([]string, error) {
+	out, err := c.M.Run(ctx, GH, "pr", "list", "--repo", c.Repo.Slug(), "--state", "open", "--limit", "100",
+		"--json", "headRefName,url", "--jq", ".[] | [.headRefName, .url] | @tsv")
+	if err != nil {
+		return nil, fmt.Errorf("cannot list the open pull requests of %s: %w", c.Repo.Slug(), err)
+	}
+	var urls []string
+	for line := range strings.Lines(string(out)) {
+		head, url, _ := strings.Cut(strings.TrimSpace(line), "\t")
+		if strings.HasPrefix(head, "ws/"+topic+"-") {
+			urls = append(urls, url)
+		}
+	}
+	return urls, nil
+}
+
 // openPull opens the pull request of the pushed branch, and returns its URL, the last line of
 // gh's output that is one.
 func (c *Clone) openPull(ctx context.Context, ch Change, branch string) (string, error) {
