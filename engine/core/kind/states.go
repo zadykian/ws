@@ -176,7 +176,7 @@ func (s runState) resource(e Env) (resource.Resource, error) {
 			return nil, fmt.Errorf("path: %q is not a clean absolute path free of ':'", p)
 		}
 	}
-	return runAs{m: e.M, out: e.Out, sys: e.System, self: e.User, s: s}, nil
+	return runAs{m: e.M, out: e.Out, sys: e.System, self: e.User, ws: e.Self, hidden: e.Hidden, s: s}, nil
 }
 
 // runAs is a run state's resource. Its user is looked up as it plans, as an earlier unit may make
@@ -187,5 +187,8 @@ type runAs struct {
 	sys System
 	// self is the account that ws runs as on the Mac.
 	self string
-	s    runState
+	// ws is the path of the ws that runs the units, whose commands keep the hidden names.
+	ws     string
+	hidden []string
+	s      runState
 }

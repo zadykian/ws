@@ -49,6 +49,10 @@ type Env struct {
 	// User is the account that ws runs as on the Mac, where a run state's command of that user
 	// needs no sudo. Empty on the server, which runs as root.
 	User string
+	// Hidden names the variables of the run's env that a run state drops from a command whose
+	// program is not Self. They may hold a secret's value, and a command such as an installer runs
+	// code that the run fetched.
+	Hidden []string
 }
 
 // Unit is one unit of a spec: its name, KIND/NAME, and the step that sets it up.

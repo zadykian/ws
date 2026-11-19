@@ -47,7 +47,7 @@ func unitSide(vars string) enginecli.UnitSide {
 			}
 			return v, m, nil
 		},
-		Secrets: loadSecretsFile}
+		Secrets: loadSecretsFile, Hidden: secretInputs}
 }
 
 // loadSecretsFile loads ws's secrets file for /etc/ws/env. A machine without one, as in CI, has no
