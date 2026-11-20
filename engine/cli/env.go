@@ -42,6 +42,17 @@ func NewEnv() Env {
 	}
 }
 
+// TaskEnv returns LookupEnv in the run of the mise task named task, and else a lookup that finds
+// nothing. mise names the task by MISE_TASK_NAME in the env of each process the task starts, its
+// nested bootstrap's ws among them. So a side's inputs count in its task's run alone, never where a
+// shell holds a stale value of one. An empty task names none.
+func (p Env) TaskEnv(task string) func(string) (string, bool) {
+	if task == "" || p.Getenv("MISE_TASK_NAME") != task {
+		return func(string) (string, bool) { return "", false }
+	}
+	return p.LookupEnv
+}
+
 // runningFile returns the file this ws runs from, the file a symbolic link leads to.
 func runningFile() (string, error) {
 	file, err := os.Executable()

@@ -130,6 +130,17 @@ func TestSecretInputsAreTheHiddenList(t *testing.T) {
 	}
 }
 
+// The side reads the inputs in the run of the task that gives them, which is mise's task of the
+// side's run directory.
+func TestTheSideReadsTheInputsInTheSecretsTask(t *testing.T) {
+	if got := unitSide("").Task; got != secretsTask {
+		t.Errorf("the side's task is %q, want %q", got, secretsTask)
+	}
+	if fi, err := os.Stat(filepath.Join("..", "mise-tasks", secretsTask)); err != nil || fi.Mode()&0o111 == 0 {
+		t.Errorf("mise-tasks/%s is no executable task: %v", secretsTask, err)
+	}
+}
+
 // templateAction matches an action of a spec's template, such as git's
 // {{ trim_suffix .GitSigningPubKey ".pub" }}, whose quotes would end a TOML string.
 var templateAction = regexp.MustCompile(`\{\{[^}]*\}\}`)

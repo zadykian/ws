@@ -64,8 +64,8 @@ secret inputs ([The env file](../shell/README.md#the-env-file)). mise's files st
 any unit, so the templates read the run's value. Where it sets
 `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT`, the collector sends claude's metrics there as well, over
 OTLP/gRPC. A plan writes no file, so under the secrets task the templates take the input from the
-run's env, and the plan shows the change that the run makes. A run without the task, whose env
-lacks the input, reads the file as it stands. The value is a URL, `http://HOST:PORT` for gRPC
+run's env, and the plan shows the change that the run makes. A run without the task, whose env may
+hold a stale value, reads the file as it stands. The value is a URL, `http://HOST:PORT` for gRPC
 without TLS or `https://HOST:PORT`. The role refuses any other. It refuses one that leads back to
 the collector's own receiver on `127.0.0.1:4317` too, which would send the metrics around without
 end. Unless `WS_SECURITY_OUTBOUND` is false, the host can't be on the LAN, the cable, `wg0` or

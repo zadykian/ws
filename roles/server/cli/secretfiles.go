@@ -9,3 +9,7 @@ import "github.com/zadykian/ws/roles/server/ubuntu/ikeward"
 // to the files, and so ikeward's names, which ws reads, to its file.
 var secretInputs = []string{"OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT", "WS_GITHUB_TOKEN", "WS_GIT_TOKENS",
 	ikeward.P12Var, ikeward.SswanVar, ikeward.PasswordVar}
+
+// secretsTask is the mise task that gives the inputs their values, mise-tasks/secrets of the side's
+// run directory. ws reads an input from the run's env in its run alone (enginecli.Env.TaskEnv).
+const secretsTask = "secrets"
