@@ -3,6 +3,7 @@ package secrets_test
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 
@@ -38,7 +39,7 @@ func TestInitAgainDeclaresTheNewInputsAlone(t *testing.T) {
 	if n := count(m.Calls, "run "+fnoxSet); n != 1 || count(m.Calls, "run "+fnoxSet+"WS_GIT_TOKENS ") != 1 {
 		t.Errorf("init ran fnox set %d times, want once, of WS_GIT_TOKENS: %q", n, m.Calls)
 	}
-	if string(m.Files[sharedFile]) != fnoxWrote || count(m.Calls, "write ") != 0 {
+	if string(m.Files[sharedFile]) != fnoxWrote || slices.ContainsFunc(m.Calls, written) {
 		t.Errorf("init wrote a file where fnox alone changes fnox.toml: %q", m.Calls)
 	}
 	if strings.Contains(out.String(), "backup key") || count(m.Calls, "run "+mergeLine) != 1 {

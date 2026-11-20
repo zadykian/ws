@@ -46,13 +46,22 @@ func TestKeepStubAddsItOnce(t *testing.T) {
 	if got := string(m.Files[keyFile]); got != want || m.Modes[keyFile] != 0o600 {
 		t.Errorf("the key file is %q, %o, want %q, 600", got, m.Modes[keyFile], want)
 	}
+	// A pending file renamed over the old one, as ws's own user's: a failed write keeps the user's key.
+	if !slices.Contains(m.Calls, "atomic "+keyFile+" 600") || m.Owners[keyFile] != [2]int{-1, -1} {
+		t.Errorf("KeepStub wrote the key file in place, or as another's: %q, owner %v", m.Calls, m.Owners[keyFile])
+	}
 	calls := len(m.Calls)
 	if wrote, err := secrets.KeepStub(m, keyFile, stubText); err != nil || wrote {
 		t.Errorf("KeepStub again gives %v, %v, want nothing written", wrote, err)
 	}
-	if slices.ContainsFunc(m.Calls[calls:], func(c string) bool { return strings.HasPrefix(c, "write") }) {
+	if slices.ContainsFunc(m.Calls[calls:], written) {
 		t.Errorf("KeepStub again wrote: %q", m.Calls[calls:])
 	}
+}
+
+// written is whether the fake Mac's call writes a file, in place or through a pending one.
+func written(call string) bool {
+	return strings.HasPrefix(call, "write ") || strings.HasPrefix(call, "atomic ")
 }
 
 func TestKeepStubMakesTheDirectory700(t *testing.T) {

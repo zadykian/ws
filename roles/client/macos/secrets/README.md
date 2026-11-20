@@ -78,7 +78,9 @@ file. So fnox, run by ws or by hand in a clone, asks the Nano to decrypt. The st
 serial and slot, and holds no secret. The key file is the one fnox reads by default:
 `FNOX_AGE_KEY_FILE`, else `$FNOX_CONFIG_DIR/age.txt`, else `$XDG_CONFIG_HOME/fnox/age.txt`, else
 `~/.config/fnox/age.txt`. Its other lines stay, a missing directory is made 700, and the file is
-600. A key file that holds an SSH key stops it, as fnox would read that key alone.
+600. The stub goes in by a new file renamed over the old one, so a failed write keeps the old file
+whole, with any key of the user's. A key file that holds an SSH key stops it, as fnox would read
+that key alone.
 
 ws runs fnox with `/usr/local/bin` first on `PATH`, where fnox finds the plugin. It drops
 `FNOX_AGE_KEY`, which would beat the key file, and `FNOX_PROFILE`, which would take a profile's file

@@ -36,7 +36,8 @@ func KeyFile(getenv func(string) string) (string, error) {
 
 // KeepStub appends the Nano's identity file, stub, to fnox's key file, where its stub line is not
 // there yet. It keeps the file's other lines, and makes its missing directories 0700 and the file
-// 0600, the user's. It reports whether it wrote.
+// 0600, the user's. It reports whether it wrote. The file may hold the user's own age key. So the
+// new text goes in a pending file renamed over the old one, and a failed write leaves the old file.
 func KeepStub(m effect.Machine, file, stub string) (bool, error) {
 	line := stubOf(stub)
 	if line == "" {
@@ -69,7 +70,8 @@ func KeepStub(m effect.Machine, file, stub string) (bool, error) {
 	if !strings.HasSuffix(stub, "\n") {
 		stub += "\n"
 	}
-	if err := m.WriteFile(file, []byte(text+stub), 0o600); err != nil {
+	// An owner of -1 is ws's own user, the Mac's user, so no sudo writes it.
+	if err := m.WriteAtomic(file, []byte(text+stub), effect.Attrs{UID: -1, GID: -1, Mode: 0o600}); err != nil {
 		return false, fmt.Errorf("cannot write fnox's key file %s: %w", file, err)
 	}
 	return true, nil
