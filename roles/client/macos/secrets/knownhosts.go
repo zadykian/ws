@@ -48,16 +48,44 @@ func HostKey(ctx context.Context, m effect.Machine, home, name string) (string, 
 	return key, nil
 }
 
-// ed25519Key takes the one ed25519 key of a known_hosts text, whose lines are HOST TYPE KEY. It
-// skips comments and the lines that a marker such as @revoked starts.
+// KnownKeys are the ed25519 keys that home's known_hosts gives any host, as "ssh-ed25519 BASE64". A
+// missing file gives none. A line that is not of ssh's form gives none, as ssh trusts no key there.
+func KnownKeys(m effect.Machine, home string) (map[string]bool, error) {
+	file := KnownHosts(home)
+	text, err := m.ReadFile(file)
+	if errors.Is(err, fs.ErrNotExist) {
+		return map[string]bool{}, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("cannot read %s: %w", file, err)
+	}
+	keys := map[string]bool{}
+	for line := range strings.Lines(string(text)) {
+		if k := lineKey(line); hostKeyForm.MatchString(k) {
+			keys[k] = true
+		}
+	}
+	return keys, nil
+}
+
+// lineKey is the ed25519 key of a known_hosts line, HOST TYPE KEY, or "". A comment and a line that
+// a marker such as @revoked starts give "".
+func lineKey(line string) string {
+	f := strings.Fields(line)
+	if len(f) < 3 || strings.HasPrefix(f[0], "#") || strings.HasPrefix(f[0], "@") || f[1] != "ssh-ed25519" {
+		return ""
+	}
+	return f[1] + " " + f[2]
+}
+
+// ed25519Key takes the one ed25519 key of a known_hosts text, as lineKey reads each line.
 func ed25519Key(text []byte) (string, error) {
 	var key string
 	for line := range strings.Lines(string(text)) {
-		f := strings.Fields(line)
-		if len(f) < 3 || strings.HasPrefix(f[0], "#") || strings.HasPrefix(f[0], "@") || f[1] != "ssh-ed25519" {
+		k := lineKey(line)
+		if k == "" {
 			continue
 		}
-		k := f[1] + " " + f[2]
 		if !hostKeyForm.MatchString(k) {
 			return "", errors.New("an ed25519 key that is not of ssh's form")
 		}

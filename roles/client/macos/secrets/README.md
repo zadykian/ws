@@ -57,8 +57,6 @@ there. In a temporary clone of the repository, it:
 4. Prints the backup's secret line, where it made one, and waits for Enter.
 5. Lands `fnox.toml` by a pull request, as below.
 
-A Ctrl-C or a SIGTERM stops it as a failure does, so that it removes the clone before it ends.
-
 ## The Nano and the backup
 
 The Nano holds the age identity of the recipient `nano` in `fnox.toml`. The Go package here finds
@@ -111,6 +109,9 @@ a temporary clone that the Go package here makes:
    it with the pull request's link, which stays open. So does a wait that runs out.
 5. Once both checks pass, it merges the pull request by a merge commit, of the commit the checks
    ran on, and deletes its branch. It then removes the clone, whatever the outcome.
+
+A Ctrl-C or a SIGTERM stops init, add and remove as a failure does, so that each removes its clone
+before it ends.
 
 No value enters a step's arguments: a commit's title and body, a branch and the files' names alone.
 
@@ -175,7 +176,7 @@ and `Port`. The command:
 
 1. Takes NAME's ed25519 key from `~/.ssh/known_hosts`. Where it holds none, it scans the server,
    prints the key's fingerprint, and asks whether the server's console prints the same. A `yes`
-   records the key under NAME, and any other answer stops it with no change.
+   records the key under NAME, and any other answer, or a Ctrl-C, stops it with no change.
 2. Reads the server's hostname by `ssh NAME hostname`, which must serve as a profile, as above.
 3. Lists the repository's deploy keys by gh, so that gh's login fails before a touch.
 4. In a temporary clone, sets the key as above. It encrypts again the values of each changed file
@@ -184,6 +185,12 @@ and `Port`. The command:
    one first, as GitHub changes none in place.
 6. Lands the changed files by a pull request, and opens none where the key was in place.
 7. Runs the server's task `secrets` over `ssh -t`, as root by sudo, even where nothing landed.
+
+Last, add prints a line for each host key that the secrets hold, as a recipient or a deploy key,
+and that `~/.ssh/known_hosts` gives no host. A server that came back with another hostname and
+another key leaves its older ones so. Its values hold no hostname, and `ssh-keygen -R NAME` dropped
+its older key, so add cannot tell them from another server's. Drop such a key by hand where no
+server holds it now.
 
 A step that is done changes nothing, so a run that fails runs again whole. gh's login adds the
 deploy keys, and needs admin on the repository. Where that login is revoked, GitHub deletes every
@@ -204,6 +211,9 @@ hand. Else, in a temporary clone, remove:
 3. Lands the changed files by a pull request, and opens none where the key was no recipient.
 4. Deletes each deploy key that holds the key, whatever its title.
 
-A failure in any step stops remove with the server whole, so it runs again. A Mac where init never
-ran has no fnox key file to encrypt with. There remove goes on, and prints a line that names the
-key, to drop it from a Mac that has one, as remove then drops it from `~/.ssh/known_hosts`.
+A failure in any step stops remove with the server whole, so it runs again. The steps need the
+network, gh's login and the Nano. Where they cannot work, `--skip-secrets` leaves the secrets as
+they are. So does a Mac where init never ran, which has no fnox key file to encrypt with. remove
+then goes on, and prints a line that names the key, to drop it by hand from a Mac that can. That
+line holds the key's last copy on the Mac, as remove drops it from `~/.ssh/known_hosts`. A key that
+remove leaves in the secrets so, add lists at its next run.

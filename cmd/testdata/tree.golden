@@ -141,13 +141,14 @@ Flags:
 Global Flags:
       --server string   the server to act on, which may be left out where there is one
 == ws client macos remove
-It first takes NAME's host key, from known_hosts, out of the secrets repository: from the recipients of fnox.toml and of every profile file, whose values it encrypts again with the Nano, by a pull request, and from the repository's deploy keys. Where that fails, nothing else changes. Where known_hosts holds no key of NAME, or this Mac has no fnox key, it leaves the secrets and prints what to do there by hand. It then deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it is. mise's bootstrap then takes its daemon, routes and host off. It refuses the Mac's last server, as the bootstrap takes a Mac with none for a stray WS_VALUES and prunes no daemon, and takes no --server: the argument is the consent.
+It first takes NAME's host key, from known_hosts, out of the secrets repository by git and gh: from the recipients of fnox.toml and of every profile file, whose values it encrypts again with the Nano, by a pull request, and from the repository's deploy keys. Where that fails, nothing else changes. Where known_hosts holds no key of NAME, where this Mac has no fnox key, or with --skip-secrets, as where the secrets are out of reach, it leaves them and prints what to do there by hand. It then deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it is. mise's bootstrap then takes its daemon, routes and host off. It refuses the Mac's last server, as the bootstrap takes a Mac with none for a stray WS_VALUES and prunes no daemon, and takes no --server: the argument is the consent.
 
 Usage:
   ws client macos remove NAME [flags]
 
 Flags:
-  -h, --help   help for remove
+  -h, --help           help for remove
+      --skip-secrets   leave NAME's host key in the secrets, and print it to drop by hand
 
 Global Flags:
       --server string   the server to act on, which may be left out where there is one
@@ -182,7 +183,7 @@ Global Flags:
 
 Use "ws client macos secrets [command] --help" for more information about a command.
 == ws client macos secrets add
-It takes the ed25519 host key of the server NAME from known_hosts. Where known_hosts holds none, it scans the server, prints the key's fingerprint, and records the key once you say that the server's console prints the same. It reads the server's hostname by ssh. In a temporary clone of the secrets repository, it makes the key the hostname's recipient in fnox.toml and in fnox.HOSTNAME.toml, and encrypts their values again, which asks for the Nano's PIN and a touch. It keeps the key as the repository's read-only deploy key, titled with the hostname, and lands the change by a pull request once its checks pass. It then runs the server's task secrets over ssh -t. Each step changes nothing where it is done, so run it again where one fails.
+It takes the ed25519 host key of the server NAME from known_hosts. Where known_hosts holds none, it scans the server, prints the key's fingerprint, and records the key once you say that the server's console prints the same. It reads the server's hostname by ssh. In a temporary clone of the secrets repository, it makes the key the hostname's recipient in fnox.toml and in fnox.HOSTNAME.toml, and encrypts their values again, which asks for the Nano's PIN and a touch. It keeps the key as the repository's read-only deploy key, titled with the hostname, and lands the change by a pull request once its checks pass. It then runs the server's task secrets over ssh -t. Last, it prints each host key that the secrets hold and known_hosts gives no host, to drop by hand where no server holds it now. Each step changes nothing where it is done, so run it again where one fails.
 
 Usage:
   ws client macos secrets add NAME [flags]

@@ -89,7 +89,8 @@ code 1. The command takes no `--server`.
 server, as the bootstrap takes a Mac with none for a stray `WS_VALUES` and prunes no daemon. It
 takes no `--server`: the argument is the consent. It first takes NAME's host key out of the
 secrets ([The secrets](../macos/secrets/README.md#ws-client-macos-remove)), and stops with the
-server whole where that fails. It then deletes `servers/NAME` and NAME's entry in
+server whole where that fails. `--skip-secrets` leaves the secrets, and prints the key to drop by
+hand. It then deletes `servers/NAME` and NAME's entry in
 `known_hosts`, and runs `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap`, whose units take
 NAME's daemon, hosts and routes away. A server that stays and whose file ws refuses, NAME's clashes
 aside, stops it before it deletes anything, as those units would fail. Where the bootstrap fails,

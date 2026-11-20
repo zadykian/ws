@@ -40,7 +40,8 @@ The rules a change to the ws CLI keeps, in `cmd/`, `engine/` and `roles/`
   pointer at run time.
 - `ws client macos remove NAME` changes nothing on the server itself. Before the Mac's files, it
   takes the server's key from the secrets' recipients and its deploy keys, and a failure there
-  keeps the server whole. It then takes the Mac's files of that server away, and runs
+  keeps the server whole. `--skip-secrets` leaves the secrets, and prints the key. It then takes
+  the Mac's files of that server away, and runs
   `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap`, which takes its daemon and hosts away.
   It takes no `--server`
   ([The secrets](../../roles/client/macos/secrets/README.md#ws-client-macos-remove)).
