@@ -48,7 +48,7 @@ func machine(t *testing.T, text string) (*effecttest.Machine, kind.Env) {
 	m.Results["getent passwd root"] = effecttest.Result{Out: []byte("root:x:0:0:root:/root:/bin/bash\n")}
 	m.Dirs["/home/zadykian"], m.Owners["/home/zadykian"] = 0o750, [2]int{1000, 1000}
 	m.Dirs["/root"], m.Dirs["/etc"], m.Dirs["/etc/ws"] = 0o700, 0o755, 0o755
-	return m, kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v}
+	return m, kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v, Self: "/usr/local/bin/ws"}
 }
 
 // units loads devtools' units on e, and keeps those named, or all where none is.
@@ -107,7 +107,7 @@ func TestDevtoolsUnitsForAnAccountAndRoot(t *testing.T) {
 		}
 		tools := "PATH=" + a.home + "/.dotnet/tools:" + strings.TrimPrefix(systemPath, "PATH=")
 		for name, path := range map[string]string{"state/devtools-npm": systemPath, "state/devtools-gh-telemetry": systemPath,
-			"state/devtools-gh-login": systemPath, "state/devtools-roslyn": tools} {
+			"state/devtools-roslyn": tools} {
 			m.Calls = nil
 			if got := changes(t, units(t, e, name)[0]); len(got) != 1 {
 				t.Errorf("%s: plan = %q, want the command, as its check fails", name, got)
@@ -116,6 +116,14 @@ func TestDevtoolsUnitsForAnAccountAndRoot(t *testing.T) {
 			if !slices.ContainsFunc(m.Calls, func(c string) bool { return strings.Contains(c, want) }) {
 				t.Errorf("%s: calls %q, want the check as %q", name, m.Calls, want)
 			}
+		}
+		// gh's login is ws's, as root, which runs gh as the account.
+		m.Calls = nil
+		changes(t, units(t, e, "state/devtools-gh-login")[0])
+		want := "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + systemPath +
+			" /usr/local/bin/ws server ubuntu devtools gh-login --check"
+		if !slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasSuffix(c, want) }) {
+			t.Errorf("gh-login: calls %q, want the check as %q", m.Calls, want)
 		}
 	}
 }
