@@ -57,13 +57,14 @@ the profile, the hostname's, each encrypted to the runner's host key. Each input
 and the shared `fnox.toml` lacks is declared empty there, the profile's among them, whose own value
 must win. CI's own `/opt/ws/mise.secrets.toml` writes both values to
 `/etc/ws-ci-secrets`, root's 600, under the env `secrets` alone. The task runs three times, and the
-plan through it exits 0 after each run. A plain plan after the first run keeps the file. The
-second run fast-forwards the clone to a new shared value. The clone is root's 700, and the user
-can't read it or the host key, or run the task. A file of the clone's own, a profile that the host
-key can't open and a missing profile are refused, and the file keeps its bytes. The last two name
-`ws client macos secrets add NAME`. The third run follows them, and the file still holds both
-values. No output of the task's holds a value. Only GitHub proves the fetch from github.com by a
-deploy key, against the key that ws pins.
+plan through it exits 0 after each run. A plain plan after the first run keeps the file. A plan
+through the task then fetches a new shared value. It exits 2 and keeps the file, and mise's line of
+a failed task ends it, outside the warnings check. The second run writes the new value. The clone
+is root's 700, and the user can't read it or the host key, or run the task. A file of the clone's
+own, a profile that the host key can't open and a missing profile are refused, and the file keeps
+its bytes. The last two name `ws client macos secrets add NAME`. The third run follows them, and the
+file still holds both values. No output of the task's holds a value. Only GitHub proves the fetch
+from github.com by a deploy key, against the key that ws pins.
 
 Then the files that the roles' [secret inputs](../../roles/server/ubuntu/frame/README.md#secret-inputs)
 write. The seed leaves their inputs empty, so none of gh's token, `/etc/ws/gh-token`, git's,
