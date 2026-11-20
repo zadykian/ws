@@ -42,15 +42,22 @@ func ReadTokens(m effect.Machine) (tokens map[string]Token, present bool, err er
 	if err != nil {
 		return nil, false, err
 	}
+	tokens, err = parseTokens(text, TokensFile)
+	return tokens, err == nil, err
+}
+
+// parseTokens reads the TOML of text, which its error calls where. It refuses a key that ws does
+// not know, and a table that checkCredentials refuses. No error holds a value.
+func parseTokens(text []byte, where string) (tokens map[string]Token, err error) {
 	d := toml.NewDecoder(bytes.NewReader(text))
 	d.DisallowUnknownFields()
 	if err := d.Decode(&tokens); err != nil {
-		return nil, false, fmt.Errorf("%s: %w", TokensFile, scrub(err))
+		return nil, fmt.Errorf("%s: %w", where, scrub(err))
 	}
 	if err := checkCredentials(credentialsOf(tokens)); err != nil {
-		return nil, false, fmt.Errorf("%s: %w", TokensFile, err)
+		return nil, fmt.Errorf("%s: %w", where, err)
 	}
-	return tokens, true, nil
+	return tokens, nil
 }
 
 // credentialsOf returns the file's tables, sorted by URL.
