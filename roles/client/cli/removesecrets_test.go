@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"os/exec"
 	"slices"
 	"strings"
@@ -127,5 +128,35 @@ func TestRemoveWithNoKeyInKnownHostsLeavesTheSecretsByHand(t *testing.T) {
 	}
 	if cloned(mac.Calls) || callAt(mac.Calls, secrets.GH) >= 0 {
 		t.Errorf("remove of a server with no key in known_hosts touched the secrets: %q", mac.Calls)
+	}
+}
+
+func TestRemoveOutOfReachOfTheSecretsSaysHowToGoOn(t *testing.T) {
+	p, mac := removeSecretsFixture(heldBy(t, labKey))
+	mac.Results[secrets.GH+" api repos/o/n --jq .private"] = effecttest.Result{Err: errors.New("exit status 1")}
+	status, stdout, stderr := runWs(p, "client", "macos", "remove", "lab")
+	for _, part := range []string{"by git, gh and the Nano", "--skip-secrets", "lab stays on the Mac: run remove again"} {
+		if status != 1 || !strings.Contains(stderr, part) {
+			t.Errorf("remove offline: status = %d, stderr = %q; want 1 and %q", status, stderr, part)
+		}
+	}
+	if strings.Contains(stdout, "removed") || callAt(mac.Calls, "ssh-keygen -R lab") >= 0 {
+		t.Errorf("remove offline went on: stdout = %q, calls %q", stdout, mac.Calls)
+	}
+}
+
+func TestRemoveBySkipSecretsLeavesTheKeyByHand(t *testing.T) {
+	p, mac := removeSecretsFixture(heldBy(t, labKey))
+	status, stdout, stderr := runWs(p, "client", "macos", "remove", "lab", "--skip-secrets")
+	want := "removed lab\nBy hand: remove skipped the secrets: drop lab's host key, " + labKey +
+		", from the secrets' recipients and deploy keys\n"
+	if status != 0 || stdout != want {
+		t.Errorf("status = %d, stdout = %q, stderr = %q; want 0 and %q", status, stdout, stderr, want)
+	}
+	if cloned(mac.Calls) || callAt(mac.Calls, secrets.GH) >= 0 || len(mac.Fnoxed()) != 0 {
+		t.Errorf("remove --skip-secrets touched the secrets: %q", mac.Calls)
+	}
+	if callAt(mac.Calls, "rm -rf /etc/ws/servers/lab") < 0 || callAt(mac.Calls, "ssh-keygen -R lab") < 0 {
+		t.Errorf("remove --skip-secrets left lab on the Mac: %q", mac.Calls)
 	}
 }

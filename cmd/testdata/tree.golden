@@ -147,7 +147,8 @@ Usage:
   ws client macos remove NAME [flags]
 
 Flags:
-  -h, --help   help for remove
+  -h, --help           help for remove
+      --skip-secrets   leave NAME's host key in the secrets, and print it to drop by hand
 
 Global Flags:
       --server string   the server to act on, which may be left out where there is one

@@ -17,7 +17,8 @@ import (
 
 // newRemoveCmd returns ws client macos remove.
 func newRemoveCmd(p enginecli.Env, server *string) *cobra.Command {
-	return &cobra.Command{
+	var skip bool
+	c := &cobra.Command{
 		Use:   "remove NAME",
 		Short: "remove a server from the Mac",
 		Long: "It first takes NAME's host key, from known_hosts, out of the secrets repository: from the recipients " +
@@ -30,12 +31,15 @@ func newRemoveCmd(p enginecli.Env, server *string) *cobra.Command {
 			"the bootstrap takes a Mac with none for a stray WS_VALUES and prunes no daemon, and takes no --server: " +
 			"the argument is the consent.",
 		Args: cobra.ExactArgs(1),
-		RunE: func(c *cobra.Command, args []string) error { return runRemove(c, p, *server, args[0]) },
+		RunE: func(c *cobra.Command, args []string) error { return runRemove(c, p, *server, args[0], skip) },
 	}
+	c.Flags().BoolVar(&skip, "skip-secrets", false, "leave NAME's host key in the secrets, and print it to drop by hand")
+	return c
 }
 
-// runRemove drops the server called name from the Mac's files.
-func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
+// runRemove drops the server called name from the Mac's files, and its host key from the secrets
+// where skip is false.
+func runRemove(c *cobra.Command, p enginecli.Env, server, name string, skip bool) error {
 	if p.Euid == 0 {
 		return errors.New("run it as yourself, not root: it asks sudo where it needs root")
 	}
@@ -69,7 +73,7 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 	}
 	// The secrets go first, as they read the host's key, then the host: a failure of either leaves
 	// the server whole, and remove runs again.
-	byHand, err := dropSecrets(c, p, name)
+	byHand, err := dropSecrets(c, p, name, skip)
 	if err != nil {
 		return fmt.Errorf("%w: %s stays on the Mac: run remove again", err, name)
 	}
