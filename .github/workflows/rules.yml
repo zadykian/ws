@@ -29,8 +29,8 @@ jobs:
       # Each pin runs past 100 columns, as the comment that names its version stays on its uses:
       # line, where the toolkit's tools/pin reads it.
       # yamllint disable-line rule:line-length
-      - uses: zadykian/toolkit/actions/atomic-commits@d8e73c42f3e580741434a1f7c0eb9b84dff5c22b # v7.2.0
+      - uses: zadykian/toolkit/actions/atomic-commits@04832afcdb304570598f17d3618366c0f4d2785f # v7.3.0
       # yamllint disable-line rule:line-length
-      - uses: zadykian/toolkit/actions/pr-description@d8e73c42f3e580741434a1f7c0eb9b84dff5c22b # v7.2.0
+      - uses: zadykian/toolkit/actions/pr-description@04832afcdb304570598f17d3618366c0f4d2785f # v7.3.0
       # yamllint disable-line rule:line-length
-      - uses: zadykian/toolkit/actions/banned-terms@d8e73c42f3e580741434a1f7c0eb9b84dff5c22b # v7.2.0
+      - uses: zadykian/toolkit/actions/banned-terms@04832afcdb304570598f17d3618366c0f4d2785f # v7.3.0
