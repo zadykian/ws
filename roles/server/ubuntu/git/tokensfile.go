@@ -21,6 +21,10 @@ import (
 // change it.
 const TokensFile = etcws.Dir + "/git-tokens.toml"
 
+// TokensVar is the secret input that mise writes TokensFile from, and the variable that the secrets
+// task's run sets to it.
+const TokensVar = "WS_GIT_TOKENS" //nolint:gosec // G101: a variable's name, no credential
+
 // Token is one table of TokensFile, whose key is a server's URL, or a path on it.
 type Token struct {
 	Token string `toml:"token"`
@@ -43,6 +47,25 @@ func ReadTokens(m effect.Machine) (tokens map[string]Token, present bool, err er
 		return nil, false, err
 	}
 	tokens, err = parseTokens(text, TokensFile)
+	return tokens, err == nil, err
+}
+
+// RunTokens returns the tokens that the role's units act on. mise writes TokensFile from TokensVar
+// in a run before any unit, but in a plan writes nothing. So where lookup gives the input, as in
+// the secrets task's run, the tokens are its own, and a plan sees what the run writes. An empty one
+// is no file. Without it, or with a nil lookup, they are ReadTokens'.
+func RunTokens(m effect.Machine, lookup func(string) (string, bool)) (tokens map[string]Token, present bool, err error) {
+	if lookup == nil {
+		return ReadTokens(m)
+	}
+	text, ok := lookup(TokensVar)
+	switch {
+	case !ok:
+		return ReadTokens(m)
+	case text == "":
+		return nil, false, nil
+	}
+	tokens, err = parseTokens([]byte(text), TokensVar)
 	return tokens, err == nil, err
 }
 
