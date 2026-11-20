@@ -36,8 +36,9 @@ func newSecretsAddCmd(p enginecli.Env, server *string) *cobra.Command {
 			"repository, it makes the key the hostname's recipient in fnox.toml and in fnox.HOSTNAME.toml, and " +
 			"encrypts their values again, which asks for the Nano's PIN and a touch. It keeps the key as the " +
 			"repository's read-only deploy key, titled with the hostname, and lands the change by a pull request " +
-			"once its checks pass. It then runs the server's task secrets over ssh -t. Each step changes nothing " +
-			"where it is done, so run it again where one fails.",
+			"once its checks pass. It then runs the server's task secrets over ssh -t. Last, it prints each host key " +
+			"that the secrets hold and known_hosts gives no host, to drop by hand where no server holds it now. " +
+			"Each step changes nothing where it is done, so run it again where one fails.",
 		Args: cobra.ExactArgs(1),
 		RunE: func(c *cobra.Command, args []string) error {
 			return runSecretsAdd(c, p, *server, args[0], address, port)

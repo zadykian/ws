@@ -185,6 +185,12 @@ and `Port`. The command:
 6. Lands the changed files by a pull request, and opens none where the key was in place.
 7. Runs the server's task `secrets` over `ssh -t`, as root by sudo, even where nothing landed.
 
+Last, add prints a line for each host key that the secrets hold, as a recipient or a deploy key,
+and that `~/.ssh/known_hosts` gives no host. A server that came back with another hostname and
+another key leaves its older ones so. Its values hold no hostname, and `ssh-keygen -R NAME` dropped
+its older key, so add cannot tell them from another server's. Drop such a key by hand where no
+server holds it now.
+
 A step that is done changes nothing, so a run that fails runs again whole. gh's login adds the
 deploy keys, and needs admin on the repository. Where that login is revoked, GitHub deletes every
 deploy key it added. Each server's fetch then fails until add runs again for it.
@@ -208,4 +214,5 @@ A failure in any step stops remove with the server whole, so it runs again. The 
 network, gh's login and the Nano. Where they cannot work, `--skip-secrets` leaves the secrets as
 they are. So does a Mac where init never ran, which has no fnox key file to encrypt with. remove
 then goes on, and prints a line that names the key, to drop it by hand from a Mac that can. That
-line holds the key's last copy on the Mac, as remove drops it from `~/.ssh/known_hosts`.
+line holds the key's last copy on the Mac, as remove drops it from `~/.ssh/known_hosts`. A key that
+remove leaves in the secrets so, add lists at its next run.
