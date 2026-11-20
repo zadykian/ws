@@ -47,7 +47,10 @@ sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles
 - The bootstrap runs with the caller's umask, and with none of the fetch's settings of git and
   ssh, as fnox passes its environment on. A unit run as `WS_USER` starts from a cleared one, so
   the account reads no value from its processes ([run](../../../../engine/core/kind/state.md)).
-- Its exit is the bootstrap's. Each refusal of its own exits 1.
+- Its exit is the bootstrap's, and each refusal of its own exits 1. A plan that finds a change
+  exits 2, and mise then prints `[secrets] ERROR task failed`, as it does for any task that exits
+  other than 0. That line reports the 2, not a failed plan, and no flag of `mise run` or option of
+  a task drops it ([The rootless job](../../../../.github/workflows/rootless.md)).
 - `WS_SECRETS_PREFIX`, for the tests alone, stands for `/` in front of the host key and
   `/var/lib/ws`. sudo drops it from the caller's environment.
 

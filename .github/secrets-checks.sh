@@ -112,11 +112,12 @@ TOML
 profile /etc/ssh/ssh_host_ed25519_key.pub
 value WS_CI_SHARED age >"$work/shared"
 value WS_CI_HOST host -P "$host" >"$work/host"
-# Every other input that mise lists is declared empty, as the Mac's init declares each.
+# Each input that mise lists and fnox.toml lacks is declared there empty, as the Mac's init
+# declares each. WS_CI_HOST is too, so the file's check proves that the profile's value wins
+# under -P, as a server's own value must.
 inputs=$(mise -C /opt/ws/roles/server -E ws,secrets bootstrap secrets status --json | jq -r '.[].env')
 for name in $inputs; do
-    grep -qE "^$name *=" "$seed/fnox.toml" "$seed/fnox.$host.toml" ||
-        fx set "$name" --provider age </dev/null
+    grep -qE "^$name *=" "$seed/fnox.toml" || fx set "$name" --provider age </dev/null
 done
 publish "ci: seed the secrets"
 
@@ -140,7 +141,18 @@ must "the first run through the task leaves nothing to do" task plan --detailed-
 must "a plan without the env keeps the file" boot plan --detailed-exitcode
 value WS_CI_SHARED age >"$work/shared"
 publish "ci: change the shared value"
-must "the second run fast-forwards the clone" task
+# A plan through the task exits 2 where a run would change the file, as the bootstrap's does. mise
+# ends it with its line of a task that exits other than 0, which the warnings check would count, so
+# this plan runs outside the check.
+sum=$(sha256sum "$file")
+status=0
+out=$(NO_COLOR=1 mise -C /opt/ws/roles/server run secrets -- plan --detailed-exitcode </dev/null 2>&1) ||
+    status=$?
+printf '%s\n' "$out" | tee -a "$work/out"
+must "a plan through the task exits 2 on the new value" test "$status" = 2
+must "mise ends the plan by its line of a failed task" grep -qxF '[secrets] ERROR task failed' <<<"$out"
+must "the plan keeps the file" test "$sum" = "$(sha256sum "$file")"
+must "the second run writes the new value" task
 must "the file holds the new value" holds
 must "the second run through the task leaves nothing to do" task plan --detailed-exitcode
 
