@@ -82,10 +82,11 @@ func Open(ctx context.Context, m effect.Machine, r Repo) (*Clone, error) {
 }
 
 // Close removes the clone and its directory. A clone holds fnox's ciphertexts alone, yet it goes
-// on every path, as nothing reads it once the command ends.
+// on every path, as nothing reads it once the command ends. It runs on a ctx that a signal
+// ended too, as a command never starts on an ended one.
 func (c *Clone) Close(ctx context.Context) {
 	if c.base != "" {
-		_, _ = c.M.Run(ctx, "rm", "-rf", c.base)
+		_, _ = c.M.Run(context.WithoutCancel(ctx), "rm", "-rf", c.base)
 	}
 }
 
