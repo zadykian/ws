@@ -112,11 +112,12 @@ TOML
 profile /etc/ssh/ssh_host_ed25519_key.pub
 value WS_CI_SHARED age >"$work/shared"
 value WS_CI_HOST host -P "$host" >"$work/host"
-# Every other input that mise lists is declared empty, as the Mac's init declares each.
+# Each input that mise lists and fnox.toml lacks is declared there empty, as the Mac's init
+# declares each. WS_CI_HOST is too, so the file's check proves that the profile's value wins
+# under -P, as a server's own value must.
 inputs=$(mise -C /opt/ws/roles/server -E ws,secrets bootstrap secrets status --json | jq -r '.[].env')
 for name in $inputs; do
-    grep -qE "^$name *=" "$seed/fnox.toml" "$seed/fnox.$host.toml" ||
-        fx set "$name" --provider age </dev/null
+    grep -qE "^$name *=" "$seed/fnox.toml" || fx set "$name" --provider age </dev/null
 done
 publish "ci: seed the secrets"
 
