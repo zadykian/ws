@@ -10,7 +10,7 @@ import (
 // checked runs Check on the fixture's machine with the values v.
 func checked(t *testing.T, sm stdinMachine, v values.Values) ([]string, error) {
 	_, _, g := gitFixture()
-	return Check(t.Context(), sm, g.A, v)
+	return Check(t.Context(), sm, g.A, v, nil)
 }
 
 func TestCheckWithoutTheTokensFile(t *testing.T) {

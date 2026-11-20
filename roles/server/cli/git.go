@@ -50,7 +50,7 @@ func newGitCheckCmd(p enginecli.Env) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			notes, err := git.Check(c.Context(), p.Machine, a, v)
+			notes, err := git.Check(c.Context(), p.Machine, a, v, nil)
 			for _, n := range notes {
 				_, _ = fmt.Fprintln(c.OutOrStdout(), "warning: "+n)
 			}

@@ -3,6 +3,8 @@ package git
 import (
 	"strings"
 	"testing"
+
+	"github.com/zadykian/ws/roles/server/values"
 )
 
 // lookupOf is the run's env of the secrets task, which holds env alone.
@@ -48,5 +50,44 @@ func TestRunTokensRefuseTheInputByItsName(t *testing.T) {
 	_, _, err := RunTokens(tokensMachine(twoTokens), bad)
 	if err == nil || !strings.Contains(err.Error(), TokensVar) || strings.Contains(err.Error(), dummy) {
 		t.Errorf("got %v, want a refusal that names %s alone", err, TokensVar)
+	}
+	m, tk := tokenFixture(twoTokens)
+	if _, err := Check(t.Context(), m, tk.A, values.Values{}, bad); err == nil || strings.Contains(err.Error(), dummy) {
+		t.Errorf("the check of a refused input = %v", err)
+	}
+	tk.Lookup = bad
+	if _, err := tk.Plan(t.Context()); err == nil {
+		t.Error("the tokens planned a refused input")
+	}
+}
+
+// A plan in the task's run shows the change of tokens.gitconfig that the run makes, and changes
+// nothing. With the file's own tokens, or without the input, it shows none.
+func TestTokensPlanTheInputOfTheRun(t *testing.T) {
+	m, tk := tokenFixture(twoTokens)
+	applyTokens(t, tk)
+	before := string(m.Files[tokensPath])
+	for _, c := range []struct {
+		env  map[string]string
+		want int
+	}{
+		{map[string]string{TokensVar: oneToken}, 1},
+		{map[string]string{TokensVar: ""}, 1},
+		{map[string]string{TokensVar: twoTokens}, 0},
+		{map[string]string{}, 0},
+	} {
+		tk.Lookup = lookupOf(c.env)
+		changes, err := tk.Plan(t.Context())
+		if err != nil || len(changes) != c.want {
+			t.Errorf("env %d: plan = %d changes, %v; want %d", len(c.env), len(changes), err, c.want)
+		}
+		for _, ch := range changes {
+			if strings.Contains(ch.String(), dummy) {
+				t.Errorf("the plan shows a token: %q", ch.String())
+			}
+		}
+	}
+	if string(m.Files[tokensPath]) != before {
+		t.Error("a plan changed tokens.gitconfig")
 	}
 }

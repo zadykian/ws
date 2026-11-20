@@ -13,16 +13,16 @@ import (
 	"github.com/zadykian/ws/roles/server/values"
 )
 
-// Check refuses what the role's units would act on: a clone that checkClones refuses, and a
-// TokensFile that ReadTokens refuses. It returns the notes of what in the account's files shadows
+// Check refuses what the role's units would act on: a clone that checkClones refuses, and tokens
+// that RunTokens refuses, by lookup. It returns the notes of what in the account's files shadows
 // ws's settings, which name settings and sections, never a value. ws server ubuntu git check runs
-// it, through the role's guard, before the tokens and the clones. mise's files step wrote
-// TokensFile before it.
-func Check(ctx context.Context, m effect.Machine, a account.Account, v values.Values) ([]string, error) {
+// it, through the role's guard, before the tokens and the clones.
+func Check(ctx context.Context, m effect.Machine, a account.Account, v values.Values,
+	lookup func(string) (string, bool)) ([]string, error) {
 	if err := checkClones(v.Git.Clones); err != nil {
 		return nil, err
 	}
-	tokens, _, err := ReadTokens(m)
+	tokens, _, err := RunTokens(m, lookup)
 	if err != nil {
 		return nil, err
 	}
