@@ -21,11 +21,11 @@ func newRemoveCmd(p enginecli.Env, server *string) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "remove NAME",
 		Short: "remove a server from the Mac",
-		Long: "It first takes NAME's host key, from known_hosts, out of the secrets repository: from the recipients " +
-			"of fnox.toml and of every profile file, whose values it encrypts again with the Nano, by a pull " +
-			"request, and from the repository's deploy keys. Where that fails, nothing else changes. Where known_hosts " +
-			"holds no key of NAME, or this Mac has no fnox key, it leaves the secrets and prints what to do there by " +
-			"hand. It then deletes " +
+		Long: "It first takes NAME's host key, from known_hosts, out of the secrets repository by git and gh: from " +
+			"the recipients of fnox.toml and of every profile file, whose values it encrypts again with the Nano, by " +
+			"a pull request, and from the repository's deploy keys. Where that fails, nothing else changes. Where " +
+			"known_hosts holds no key of NAME, where this Mac has no fnox key, or with --skip-secrets, as where the " +
+			"secrets are out of reach, it leaves them and prints what to do there by hand. It then deletes " +
 			"servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it is. " +
 			"mise's bootstrap then takes its daemon, routes and host off. It refuses the Mac's last server, as " +
 			"the bootstrap takes a Mac with none for a stray WS_VALUES and prunes no daemon, and takes no --server: " +

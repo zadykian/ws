@@ -204,6 +204,8 @@ hand. Else, in a temporary clone, remove:
 3. Lands the changed files by a pull request, and opens none where the key was no recipient.
 4. Deletes each deploy key that holds the key, whatever its title.
 
-A failure in any step stops remove with the server whole, so it runs again. A Mac where init never
-ran has no fnox key file to encrypt with. There remove goes on, and prints a line that names the
-key, to drop it from a Mac that has one, as remove then drops it from `~/.ssh/known_hosts`.
+A failure in any step stops remove with the server whole, so it runs again. The steps need the
+network, gh's login and the Nano. Where they cannot work, `--skip-secrets` leaves the secrets as
+they are. So does a Mac where init never ran, which has no fnox key file to encrypt with. remove
+then goes on, and prints a line that names the key, to drop it by hand from a Mac that can. That
+line holds the key's last copy on the Mac, as remove drops it from `~/.ssh/known_hosts`.
