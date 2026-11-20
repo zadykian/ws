@@ -94,10 +94,9 @@ server reads it by [the task](#the-task) and [the fetch](#the-fetch) above. The 
   differs from `age`, as fnox merges providers by name. Under the profile, a second `age` would
   replace the shared one, and a re-encryption would hand the shared values to one server alone.
 
-A shared value never refers to a profile's by fnox's `default = "${NAME}"`: under any other
-profile, fnox would fail as it loads. A profile's value may refer to a shared one. No provider sets
-`key_file`, `identity` or `default_identity`, as each would beat the key that the reader names: the
-host key that the task gives by `FNOX_AGE_KEY_FILE`, or the Nano's stub on the Mac.
+No provider sets `key_file`, `identity` or `default_identity`, as each would beat the key that the
+reader names: the host key that the task gives by `FNOX_AGE_KEY_FILE`, or the Nano's stub on the
+Mac.
 
 ### The recipients
 
@@ -129,6 +128,25 @@ removes the one there.
 
 A value of one server goes in its fnox profile, and wins there over the shared empty one, as
 ikeward's inputs do.
+
+### References
+
+One input takes another's value by fnox's `default`, which names it, with no `value` beside it:
+
+```toml
+NAME = { default = "${OTHER}" }
+```
+
+- fnox decrypts OTHER first and gives NAME its value, an empty one too. A `value` beside the
+  `default` wins, even an empty one, so the line holds the `default` in place of the value.
+- In `fnox.HOSTNAME.toml`, the line replaces the empty NAME of `fnox.toml` under that profile
+  alone, and so gives one server another input's value.
+- OTHER is an input as well, never a secret of its own. fnox gives each secret to the run's env,
+  and a run state hides the inputs alone from a command that is not ws's ([run](../../../../engine/core/kind/state.md)).
+- A shared value never refers to a profile's: under any other profile, fnox would fail as it
+  loads. A name that no file holds fails the run, one of the env too, and so does a loop.
+- A reference goes in by hand, in a clone, on a branch, as a value does. The `values` check lets a
+  `default` hold `${NAME}` references alone, as any other text would sit there in the clear.
 
 ### From the Mac
 
