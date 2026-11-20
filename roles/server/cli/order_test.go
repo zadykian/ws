@@ -24,18 +24,18 @@ func before(t *testing.T, first string, then ...string) {
 	}
 }
 
-// The collector's units run after the shell's env file, which holds the endpoint they read. They
-// run after signoz's sync too, so that SigNoz's retention is set before the collector sends.
-func TestOtelcolRunsAfterTheEnvAndSignoz(t *testing.T) {
-	before(t, "file/shell-env", "deb/otelcol")
+// The collector's units run after signoz's units, so that SigNoz's retention is set before the
+// collector sends. The endpoint they read is in /etc/ws/env, which mise writes before any unit.
+func TestOtelcolRunsAfterSignoz(t *testing.T) {
+	before(t, "state/signoz-password", "deb/otelcol")
 	before(t, "state/signoz-sync", "deb/otelcol")
 	before(t, "deb/otelcol", "service/otelcol")
 }
 
 // A read takes a unit as pending where a unit it waits on, by its chain of after, has changes. The
-// collector's service reads /etc/ws/env and starts after SigNoz's sync, so its chain holds both.
-// signoz's commands run ws, so theirs holds the frame's unit.
-func TestOtelcolWaitsOnTheEnvAndSignoz(t *testing.T) {
+// collector's service starts after SigNoz's sync, so its chain holds it. signoz's commands run ws,
+// so theirs holds the frame's unit.
+func TestOtelcolWaitsOnSignoz(t *testing.T) {
 	root, account := rootAndAccount(t)
 	for _, v := range []values.Values{root, account} {
 		e := kind.Env{M: effecttest.NewMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v, Self: selfPath}
@@ -44,7 +44,7 @@ func TestOtelcolWaitsOnTheEnvAndSignoz(t *testing.T) {
 			t.Fatal(err)
 		}
 		for unit, wants := range map[string][]string{
-			"service/otelcol":       {"deb/otelcol", "state/signoz-sync", "file/shell-env", "state/ws-binary"},
+			"service/otelcol":       {"deb/otelcol", "state/signoz-sync", "state/ws-binary"},
 			"state/signoz-password": {"state/ws-binary"},
 		} {
 			chain, err := kind.Closure(units, []string{unit})
@@ -63,6 +63,12 @@ func TestOtelcolWaitsOnTheEnvAndSignoz(t *testing.T) {
 // SigNoz's project runs on the system's daemon, which docker's units set up.
 func TestSignozRunsAfterDocker(t *testing.T) {
 	before(t, "service/docker", "compose/signoz")
+}
+
+// git's credential program of each token is /usr/local/bin/ws, which the frame's unit keeps. A
+// first run that clones by a token would otherwise call a missing program and stop there.
+func TestGitTokensRunAfterWs(t *testing.T) {
+	before(t, "state/ws-binary", "state/git-tokens-group", "state/git-tokens", "state/git-clones")
 }
 
 // signoz's commands run the ws that the frame's unit keeps.

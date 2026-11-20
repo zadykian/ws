@@ -101,14 +101,14 @@ stays JSON. A project that installs its own Prettier ignores the option, and its
 `/etc/ws/bashrc`, which `~/.bashrc` sources at its top, sources `/etc/ws/env` above its own
 interactive guard, so that non-interactive shells get the values too
 ([shell](../shell/README.md)). Zed captures each project's environment with the login shell,
-`bash -l -i -c 'cd DIR; zed --printenv'`. So the capture holds every value of the
-`[env]` table of the secrets file ([Secrets](../shell/README.md#secrets)).
+`bash -l -i -c 'cd DIR; zed --printenv'`. So the capture holds every value of the shell's
+secret inputs ([The env file](../shell/README.md#the-env-file)).
 
 A Zed terminal or task on the Mac then goes out as `ssh -t ws "cd DIR && exec env 'NAME=VALUE' ...
 PROGRAM"`. The values are arguments of the Mac's `ssh`, visible to `ps` there while the terminal
 lives, and a failed command may reach `Zed.log`. Language servers and git stay on ws.
 
-- Keep in `[env]` only what shells need. The page documents this and filters nothing.
+- Keep in the shell's inputs only what shells need. The page documents this and filters nothing.
 - Nothing above the interactive guard of `/etc/ws/bashrc` may print: Zed's proxy speaks over an
   ssh whose bash reads `~/.bashrc` non-interactively. `bash -lic 'echo ok'` must print `ok` alone.
 - Not reported upstream yet. Skipping the file where `BASH_EXECUTION_STRING` holds `--printenv`

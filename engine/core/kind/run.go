@@ -13,9 +13,8 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
-// systemPath is the PATH that a run state's commands get, after its spec's path. The caller's, such
-// as mise's shims, stays out, as a command may write it down in a file that outlives the run.
-const systemPath = "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+// systemPath is the PATH that a run state's commands get, after its spec's path.
+const systemPath = account.SystemPath
 
 // pathEnv is the run's PATH: its spec's directories, then the system's.
 func (r runAs) pathEnv() string {
@@ -23,6 +22,19 @@ func (r runAs) pathEnv() string {
 		return systemPath
 	}
 	return "PATH=" + strings.Join(r.s.Path, ":") + ":" + strings.TrimPrefix(systemPath, "PATH=")
+}
+
+// unset returns env's options that drop the hidden names from the env of line, or none where line
+// runs ws, which reads its values from the run's env. env takes its options before any NAME=VALUE.
+func (r runAs) unset(line []string) []string {
+	if line[0] == r.ws {
+		return nil
+	}
+	var opts []string
+	for _, name := range r.hidden {
+		opts = append(opts, "-u", name)
+	}
+	return opts
 }
 
 // runCommand is the run of a run state's command.
@@ -50,13 +62,14 @@ func (r runAs) exec(ctx context.Context, pass bool, line []string) error {
 			return err
 		}
 	}
-	// runuser passes the caller's env on. A run with no session drops the caller's session from it:
-	// root's runtime directory is closed to the user, and dotnet fails on it.
+	// A run as root keeps the caller's env but the hidden names, and a user's starts cleared
+	// (account.User). A run with no session drops the caller's session from root's: dotnet fails
+	// on a missing runtime directory.
 	session := []string{"-u", "XDG_RUNTIME_DIR", "-u", "DBUS_SESSION_BUS_ADDRESS"}
 	if systemd.Booted(r.m) && (!r.s.Unbooted || r.hasRuntimeDir(a.UID)) {
 		session = systemd.SessionEnv(a.UID)
 	}
-	args := slices.Concat(session, []string{r.pathEnv()}, line)
+	args := slices.Concat(r.unset(line), session, []string{r.pathEnv()}, line)
 	if pass {
 		return a.Pass(ctx, r.m, "env", args...)
 	}
@@ -77,7 +90,7 @@ func (r runAs) hasRuntimeDir(uid int) bool {
 // root's paths reads what the Mac keeps readable by all. A command runs as ws's user with no sudo,
 // as root through sudo, or as another user through root's sudo.
 func (r runAs) macExec(ctx context.Context, pass bool, line []string) error {
-	argv := slices.Concat([]string{"env", r.pathEnv()}, line)
+	argv := slices.Concat([]string{"env"}, r.unset(line), []string{r.pathEnv()}, line)
 	root := false
 	switch {
 	case !pass || r.s.User == r.self:

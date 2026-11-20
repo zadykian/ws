@@ -3,8 +3,8 @@
 The `devtools` role installs Node, the .NET SDKs, gh, glow, the libraries headless Chromium needs,
 Go, gopls, Delve, roslyn-language-server, the SQL and Docker servers and rustup. The sources, the
 packages and the tools are mise's, in [mise.server.toml](mise.server.toml). The tools' links, gh's
-telemetry and login, roslyn-language-server, the npm servers and rustup are units of
-[units.toml.tmpl](units.toml.tmpl). Those of the account run as `WS_USER`, root included, and without booted
+telemetry, login and token file's group, roslyn-language-server, the npm servers and rustup are
+units of [units.toml.tmpl](units.toml.tmpl). Those of the account run as `WS_USER`, root included, and without booted
 systemd too, as in CI's container. [paths.go](paths.go) names the servers' paths for Zed's and
 Fresh's tests.
 
@@ -135,18 +135,21 @@ has left behind. [files/52unattended-upgrades-github-cli](files/52unattended-upg
 goes to `/etc/apt/apt.conf.d/` and allows the repository's origin, so unattended-upgrades
 installs each release of gh within a day.
 
-gh logs in to github.com as the user, by `token.github` in the secrets file
-([The secrets file](../shell/README.md#the-secrets-file)):
+gh logs in to github.com as the user, by the [secret input](../frame/README.md#secret-inputs)
+`WS_GITHUB_TOKEN` of [mise.secrets.toml](mise.secrets.toml):
 
-- `file/devtools-gh-token` writes the token to `/etc/ws/gh-token`, root's, mode 0640 and in the
-  account's group, with ws's mark on its first line and the token on its last. The plan shows no
-  diff of it. A run without a secrets file keeps the file unchanged, and one without
-  `token.github` removes it.
-- `state/devtools-gh-login` compares `gh auth token -h github.com` with the file's last line. Where
-  they differ, it runs `gh auth login -h github.com -p https --insecure-storage --with-token`, the
-  token on stdin. The token passes through a pipe and the shell alone, so no command line, plan or
-  log holds it. ws has no keyring, so gh writes `~/.config/gh/hosts.yml`, mode 0600. gh's refusal
-  fails the run. Without the file, the unit leaves gh's login alone.
+- mise writes the token to `/etc/ws/gh-token`, root's and mode 0640, with ws's header on its
+  first line and the token on its last. `state/devtools-gh-token-group` then gives it the
+  account's group. mise's plan shows no value. A run without the secrets task keeps the file
+  unchanged, and an empty `WS_GITHUB_TOKEN` removes it. A file there by hand stops the run.
+- `state/devtools-gh-login` runs `ws server ubuntu devtools gh-login`, as root, which runs gh as
+  the user. It compares `gh auth token -h github.com` with the file's last line. Where they
+  differ, it runs `gh auth login -h github.com -p https --insecure-storage --with-token`, the token
+  on stdin. So no command line, plan or log holds it, and gh's env holds no secret input. ws has
+  no keyring, so gh writes `~/.config/gh/hosts.yml`, mode 0600. gh's refusal fails the run.
+  Without the file, the unit leaves gh's login alone.
+- mise's plan writes no file. So in the secrets task's run, the login takes the token from
+  `WS_GITHUB_TOKEN`, and the plan shows the login that the run makes.
 
 gh 2.91.0 and later send telemetry unless told not to. `state/devtools-gh-telemetry`, before the
 login, reads `gh config get telemetry` as the user, and runs `gh config set telemetry disabled`

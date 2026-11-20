@@ -269,32 +269,3 @@ fi
 must "a link at ~/.bashrc is refused" grep -q 'is a link to /etc/hostname' <<<"$out"
 as rm "$home/.bashrc"
 as mv "$home/.bashrc.orig" "$home/.bashrc"
-
-# ws's secrets: the identity is a credential that the host's key encrypts, which ws unit decrypts
-# by systemd-creds as root. A container's systemd can't make one.
-ws server ubuntu secrets init
-must "the credential is root's 600, in root's 700" test "$(stat -c '%U %a' \
-    /etc/credstore.encrypted /etc/credstore.encrypted/ws-secrets)" = $'root 700\nroot 600'
-must "the file is root's 600" test "$(stat -c '%U %a' /etc/ws/secrets.age)" = 'root 600'
-value=$(openssl rand -hex 16)
-echo "::add-mask::$value"
-must "set takes a value on stdin" ws server ubuntu secrets set env WS_CI <<<"$value"
-names=$(ws server ubuntu secrets keys)
-must "keys names the entry" grep -qx 'env WS_CI' <<<"$names"
-refused "keys prints the value" grep -q "$value" <<<"$names"
-refused "the user runs ws server ubuntu secrets" as ws server ubuntu secrets keys
-
-# The user's decrypt prints nothing, so that one that got through would show no identity in the log.
-refused "the user decrypts the credential" as sh -c 'systemd-creds decrypt --name=ws-secrets \
-    /etc/credstore.encrypted/ws-secrets - </dev/null >/dev/null 2>&1'
-out=$(WS_UNITS=roles/server/ubuntu ws unit write --dry-run file/shell-env 2>&1) ||
-    fail "ws unit can't plan /etc/ws/env from the file"
-must "ws unit plans /etc/ws/env from the file" grep -q 'would change: file/shell-env' <<<"$out"
-refused "ws unit prints the value" grep -q "$value" <<<"$out"
-
-must "unset drops the entry" ws server ubuntu secrets unset env WS_CI
-refused "keys names the entry after unset" grep -q WS_CI <<<"$(ws server ubuntu secrets keys)"
-sums=$(sha256sum /etc/ws/secrets.age /etc/credstore.encrypted/ws-secrets)
-ws server ubuntu secrets init
-must "a second init keeps both" test "$sums" = \
-    "$(sha256sum /etc/ws/secrets.age /etc/credstore.encrypted/ws-secrets)"

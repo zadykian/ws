@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/fs"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"text/template"
@@ -31,8 +32,6 @@ func pure() template.FuncMap {
 		},
 		// fail stops the render with msg, where a template finds the machine or the values unfit.
 		"fail": func(msg string) (string, error) { return "", errors.New(msg) },
-		// exports is an env file's lines, `export NAME=VALUE`, sorted, the values quoted for the shell.
-		"exports": exports,
 		// has_prefix is whether a text starts with a prefix.
 		"has_prefix": strings.HasPrefix,
 		// json quotes a value as Go's encoder does, <, > and & escaped, for a file of JSON.
@@ -50,8 +49,13 @@ func pure() template.FuncMap {
 // here.
 func facts(ctx context.Context, e Env) template.FuncMap {
 	fm := pure()
-	// envvar reads a variable of an env file that root alone may read.
-	fm["envvar"] = func(file, name string) (string, error) { return envVar(e.M, file, name) }
+	// envvar reads a variable of an env file that root alone may read, or the run's input of it.
+	fm["envvar"] = func(file, name string) (string, error) {
+		if v, ok := e.input(name); ok {
+			return v, nil
+		}
+		return envVar(e.M, file, name)
+	}
 	// mem_mib is the memory, MemTotal, in whole MiB.
 	fm["mem_mib"] = func() (int, error) { return memMiB(e.M) }
 	// cpus counts the processors.
@@ -177,6 +181,17 @@ func rootFile(m effect.Machine, path string) (string, error) {
 		return "", nil
 	}
 	return strings.TrimSpace(string(text)), err
+}
+
+// input returns a variable that e hides, as the run's env sets it, and whether it does. mise writes
+// such an input to its file in the run before any unit, but in a plan writes nothing. So a plan
+// reads the input here, and sees the change that the run makes. A run whose env lacks it, as one
+// without mise's inputs, reads the file as it stands.
+func (e Env) input(name string) (string, bool) {
+	if e.LookupEnv == nil || !slices.Contains(e.Hidden, name) {
+		return "", false
+	}
+	return e.LookupEnv(name)
 }
 
 // envVar returns the value of name in an env file: the last line that sets it, as the shell does,

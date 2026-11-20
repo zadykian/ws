@@ -18,11 +18,14 @@ const (
 )
 
 // Status checks that ikeward status passes. Without systemd booted it says so and plans nothing.
+// So it does where status fails in a run without the secrets, as InRun says. No unit of that run
+// installs the VPN, so a wait would only fail the run 2 minutes later.
 type Status struct {
 	M     effect.Machine
 	Out   effect.Out
 	Tries int
 	Wait  time.Duration
+	InRun bool
 }
 
 type awaitVPN struct{ s Status }
@@ -51,6 +54,10 @@ func (s Status) Plan(ctx context.Context) ([]resource.Change, error) {
 		return nil, nil
 	}
 	if _, err := s.M.Run(ctx, binary, "status"); err == nil {
+		return nil, nil
+	}
+	if !s.InRun {
+		s.Out.Say("ikeward status: fails, and the run holds no secrets to install the VPN, so it waits for none")
 		return nil, nil
 	}
 	return []resource.Change{awaitVPN{s}}, nil

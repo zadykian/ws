@@ -67,18 +67,6 @@ func TestGitconfigWarnsOfNoSectionWhereNoTokenExists(t *testing.T) {
 	}
 }
 
-func TestGitconfigWarnsOfATokenThatTheFileHoldsFromAnEarlierRun(t *testing.T) {
-	m, sm, g := gitFixture()
-	m.Files["/etc/ws/tokens.gitconfig"] = []byte("x")
-	sm.answers["x"] = "credential.https://github.com/org.helper\n"
-	sm.answers[included[:8]] = "include.path\ncredential.helper\n"
-	sm.helpers[included[:8]] = "credential.helper \n"
-	sm.paths[included[:8]] = "/etc/ws/gitconfig\n"
-	if all := noted(t, g, included+"[credential]\n", false); !strings.Contains(all, "[credential]") {
-		t.Errorf("said %q", all)
-	}
-}
-
 func TestGitconfigNamesGitsXDGFileSettingsWhereItAddsTheInclude(t *testing.T) {
 	m, sm, g := gitFixture()
 	m.Files["/home/ws/.config/git/config"] = []byte("[user]\n\temail = other@x\n")

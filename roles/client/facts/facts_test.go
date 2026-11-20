@@ -189,6 +189,21 @@ func TestGitFactsGhFromMise(t *testing.T) {
 	}
 }
 
+func TestSecretsFactsFromMise(t *testing.T) {
+	m := mac(nil)
+	if f, err := Read(t.Context(), m, env, "/p"); err != nil || f.Secrets != (Secrets{}) {
+		t.Errorf("read = %+v, %v; want no tool, and no error, where mise has none", f.Secrets, err)
+	}
+	fnox := "/Users/v/.local/share/mise/installs/github-jdx-fnox/1.50.0/fnox"
+	plugin := "/Users/v/.local/share/mise/installs/age-plugin-yubikey/0.5.1/age-plugin-yubikey"
+	m.Results["mise -C /opt/ws/roles/client which fnox"] = effecttest.Result{Out: []byte(fnox + "\n")}
+	m.Results["mise -C /opt/ws/roles/client which age-plugin-yubikey"] = effecttest.Result{Out: []byte(plugin + "\n")}
+	f, err := Read(t.Context(), m, env, "/p")
+	if want := (Secrets{FnoxFrom: fnox, PluginFrom: plugin}); err != nil || f.Secrets != want {
+		t.Errorf("read = %+v, %v; want mise's %+v", f.Secrets, err, want)
+	}
+}
+
 func TestReadNeedsTheUser(t *testing.T) {
 	if _, err := Read(t.Context(), effecttest.NewMachine(), func(string) string { return "" }, "/p"); err == nil {
 		t.Error("read with no USER and HOME = nil, want a refusal")

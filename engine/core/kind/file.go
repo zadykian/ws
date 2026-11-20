@@ -92,43 +92,28 @@ func (f filePart) check(dir fs.FS) error {
 	return err
 }
 
-// content is the file's text: its template filled as it plans, or its source unchanged. A secret
-// file's template may read the secrets.
+// content is the file's text: its template filled as it plans, or its source unchanged.
 func (f filePart) content(ctx context.Context, e Env, dir fs.FS) ([]byte, error) {
-	switch {
-	case f.Template == "":
+	if f.Template == "" {
 		return fs.ReadFile(dir, f.Source)
-	case f.Secret:
-		return renderSecret(ctx, e, dir, f.Template)
 	}
 	return render(ctx, e, dir, f.Template)
 }
 
 // built is a file's resources: the file itself, which a service watches, the whole list in order,
-// and its owner. left is a secret file with no resource, as the machine holds no secrets file.
+// and its owner.
 type built struct {
 	file  resource.Resource
 	all   []resource.Resource
 	owner account.Account
-	left  bool
 	// gone is a file that the part removes.
 	gone bool
-}
-
-// sayLeft says once a unit that a secret file stays unchanged, as a read makes the unit's parts
-// twice: to plan and to report.
-func (f filePart) sayLeft(e Env, said *bool) {
-	if !*said {
-		e.Out.Say("%s: left as it is: %v", f.Path, ErrNoSecrets)
-		*said = true
-	}
 }
 
 // resources makes the file's resources as its unit plans. A missing directory above a file of
 // root's is made, root's at 0755, and an existing one left alone. An account's file makes its own
 // parents, the account's. systemd reads its units again where a file in /etc/systemd/system
-// changes. A secret file whose template finds no secrets file gives no resource, and is left. A
-// link is root's, as are its parents.
+// changes. A link is root's, as are its parents.
 func (f filePart) resources(ctx context.Context, e Env, dir fs.FS) (built, error) {
 	if f.Link != "" {
 		return f.linked(e), nil
@@ -156,9 +141,6 @@ func (f filePart) resources(ctx context.Context, e Env, dir fs.FS) (built, error
 	content, gone := []byte(nil), f.Absent
 	if f.Line == "" && !f.Absent {
 		content, err = f.content(ctx, e, dir)
-		if errors.Is(err, ErrNoSecrets) {
-			return built{left: true}, nil
-		}
 		if err != nil {
 			return built{}, err
 		}
@@ -276,13 +258,9 @@ func (s fileSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.Res
 			return nil, err
 		}
 	}
-	said := false
 	return func(ctx context.Context) ([]resource.Resource, error) {
 		b, err := s.resources(ctx, e, dir)
-		if b.left {
-			s.sayLeft(e, &said)
-		}
-		if err != nil || b.file == nil {
+		if err != nil {
 			return nil, err
 		}
 		watch := []resource.Resource{b.file}

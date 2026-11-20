@@ -28,8 +28,8 @@
 [credential "https://gist.github.com"]
 	helper = 
 	helper = !/usr/bin/gh auth git-credential
-# The helpers of git's tokens for servers besides GitHub, in a file of the role's that a run
-# without a secrets file leaves alone. After gh's helper, so that an entry for a path on
-# GitHub wins below it. git skips it where the file is missing.
+# The credential programs of git's tokens for servers besides GitHub, in a file of the role's. It
+# follows /etc/ws/git-tokens.toml. After gh's program, so that an entry for a path on GitHub wins
+# below it. git skips it where the file is missing.
 [include]
 	path = /etc/ws/tokens.gitconfig

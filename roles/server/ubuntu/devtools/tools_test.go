@@ -119,7 +119,8 @@ func TestServerPathsAreTheLinks(t *testing.T) {
 type lockEntry map[string]any
 
 // The lock holds each tool at its version, under MISE_LOCKED=1. A download's entry holds its url
-// and SHA-256 for both platforms; the servers' sums are those ws pinned in Go before mise.
+// and SHA-256 for both platforms; the servers' sums are those ws pinned in Go before mise. The lock
+// holds other roles' tools too, so the server's TestServerLockHoldsEachPinnedTool counts them.
 func TestDevtoolsLockHoldsEachTool(t *testing.T) {
 	text, err := os.ReadFile("../../mise/mise.server.lock")
 	if err != nil {
@@ -163,9 +164,6 @@ func TestDevtoolsLockHoldsEachTool(t *testing.T) {
 				t.Errorf("%s: %s's checksum %v, want %s", tool, platform, p["checksum"], want[platform])
 			}
 		}
-	}
-	if len(lock.Tools) != len(c.Tools) {
-		t.Errorf("the lock holds %d tools, [tools] %d", len(lock.Tools), len(c.Tools))
 	}
 }
 

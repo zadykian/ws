@@ -15,7 +15,10 @@ import (
 type Env struct {
 	Machine effect.Machine
 	Getenv  func(string) string
-	Euid    int
+	// LookupEnv tells a variable set but empty from one the run never set, as a run of the
+	// secrets task sets each secret input, empty where it has no value.
+	LookupEnv func(string) (string, bool)
+	Euid      int
 	// Pwd is the directory a relative WS_VALUES is taken from.
 	Pwd string
 	// Version is this ws's version, as ws version prints it.
@@ -29,13 +32,25 @@ func NewEnv() Env {
 	info, ok := debug.ReadBuildInfo()
 	pwd, _ := os.Getwd()
 	return Env{
-		Machine: local.OSMachine{},
-		Getenv:  os.Getenv,
-		Euid:    os.Geteuid(),
-		Pwd:     pwd,
-		Version: versionOf(info, ok),
-		Self:    runningFile,
+		Machine:   local.OSMachine{},
+		Getenv:    os.Getenv,
+		LookupEnv: os.LookupEnv,
+		Euid:      os.Geteuid(),
+		Pwd:       pwd,
+		Version:   versionOf(info, ok),
+		Self:      runningFile,
 	}
+}
+
+// TaskEnv returns LookupEnv in the run of the mise task named task, and else a lookup that finds
+// nothing. mise names the task by MISE_TASK_NAME in the env of each process the task starts, its
+// nested bootstrap's ws among them. So a side's inputs count in its task's run alone, never where a
+// shell holds a stale value of one. An empty task names none.
+func (p Env) TaskEnv(task string) func(string) (string, bool) {
+	if task == "" || p.Getenv("MISE_TASK_NAME") != task {
+		return func(string) (string, bool) { return "", false }
+	}
+	return p.LookupEnv
 }
 
 // runningFile returns the file this ws runs from, the file a symbolic link leads to.

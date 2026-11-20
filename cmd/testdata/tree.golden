@@ -45,6 +45,7 @@ Available Commands:
   networks    route each server's WS_TUNNEL_NETWORKS and send its WS_RESOLVERS' domains to it
   remove      remove a server from the Mac
   resolver    send DOMAIN's names to the nameservers, or drop it
+  secrets     the commands of the secrets repository, which fnox keeps
   servers     list the Mac's servers with their target, slot and tunnel
   ssh         the commands of ssh's units
   tunnel      the Mac's tunnel to ws
@@ -140,13 +141,14 @@ Flags:
 Global Flags:
       --server string   the server to act on, which may be left out where there is one
 == ws client macos remove
-It deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it is. mise's bootstrap then takes its daemon, routes and host off. It refuses the Mac's last server, as the bootstrap takes a Mac with none for a stray WS_VALUES and prunes no daemon, and takes no --server: the argument is the consent.
+It first takes NAME's host key, from known_hosts, out of the secrets repository by git and gh: from the recipients of fnox.toml and of every profile file, whose values it encrypts again with the Nano, by a pull request, and from the repository's deploy keys. Where that fails, nothing else changes. Where known_hosts holds no key of NAME, where this Mac has no fnox key, or with --skip-secrets, as where the secrets are out of reach, it leaves them and prints what to do there by hand. It then deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it is. mise's bootstrap then takes its daemon, routes and host off. It refuses the Mac's last server, as the bootstrap takes a Mac with none for a stray WS_VALUES and prunes no daemon, and takes no --server: the argument is the consent.
 
 Usage:
   ws client macos remove NAME [flags]
 
 Flags:
-  -h, --help   help for remove
+  -h, --help           help for remove
+      --skip-secrets   leave NAME's host key in the secrets, and print it to drop by hand
 
 Global Flags:
       --server string   the server to act on, which may be left out where there is one
@@ -159,6 +161,48 @@ Usage:
 Flags:
       --check   print each change and make none
   -h, --help    help for resolver
+
+Global Flags:
+      --server string   the server to act on, which may be left out where there is one
+== ws client macos secrets
+the commands of the secrets repository, which fnox keeps
+
+Usage:
+  ws client macos secrets [flags]
+  ws client macos secrets [command]
+
+Available Commands:
+  add         add a server's host key to the secrets, and run the bootstrap with them there
+  init        set the secrets repository up with the Nano and a backup key
+
+Flags:
+  -h, --help   help for secrets
+
+Global Flags:
+      --server string   the server to act on, which may be left out where there is one
+
+Use "ws client macos secrets [command] --help" for more information about a command.
+== ws client macos secrets add
+It takes the ed25519 host key of the server NAME from known_hosts. Where known_hosts holds none, it scans the server, prints the key's fingerprint, and records the key once you say that the server's console prints the same. It reads the server's hostname by ssh. In a temporary clone of the secrets repository, it makes the key the hostname's recipient in fnox.toml and in fnox.HOSTNAME.toml, and encrypts their values again, which asks for the Nano's PIN and a touch. It keeps the key as the repository's read-only deploy key, titled with the hostname, and lands the change by a pull request once its checks pass. It then runs the server's task secrets over ssh -t. Last, it prints each host key that the secrets hold and known_hosts gives no host, to drop by hand where no server holds it now. Each step changes nothing where it is done, so run it again where one fails.
+
+Usage:
+  ws client macos secrets add NAME [flags]
+
+Flags:
+      --address string   the server's address, where ssh reaches it before the tunnel is up
+  -h, --help             help for add
+      --port int         the server's ssh port at --address, where it is not 22
+
+Global Flags:
+      --server string   the server to act on, which may be left out where there is one
+== ws client macos secrets init
+It reads the repository from WS_SECRETS_REPO in /opt/ws/mise.toml, and clones it. It takes the age identity that the YubiKey Nano holds, or makes one, which asks for its PIN and a touch, and keeps its stub in fnox's key file. Where fnox.toml is missing, it makes a backup key, starts fnox.toml with both recipients, and prints the backup's secret line once. It declares each input of /opt/ws's server roles that fnox.toml lacks, empty. It lands the change by a pull request once its checks pass, and opens none where nothing changed. It stops where a pull request of an earlier run is still open. Run it again once /opt/ws holds a release that declares a new input.
+
+Usage:
+  ws client macos secrets init [flags]
+
+Flags:
+  -h, --help   help for init
 
 Global Flags:
       --server string   the server to act on, which may be left out where there is one
@@ -346,10 +390,10 @@ Usage:
 Available Commands:
   cable       the cable role's check and reload, which its units run
   claude      the claude role's procedures, which its units run
+  devtools    the devtools role's procedures, which its units run
   fans        drive the board's fans on the curves of CONFIG until SIGTERM
   git         the git role's checks and procedures, which its units run
   ikeward     the ikeward role's check, install and wait, which its units run
-  secrets     keep ws's secrets file, with its identity as a systemd credential
   signoz      SigNoz's steps that the signoz role's units run
   tunnel      the tunnel role's check, wg0's key and wg0, which its units run
   values      edit the machine's values
@@ -479,6 +523,31 @@ Usage:
 Flags:
       --check   fail where a change is due, and change nothing
   -h, --help    help for update
+== ws server ubuntu devtools
+the devtools role's procedures, which its units run
+
+Usage:
+  ws server ubuntu devtools [flags]
+  ws server ubuntu devtools [command]
+
+Available Commands:
+  gh-login    log gh in to github.com as WS_USER, by the token of /etc/ws/gh-token
+
+Flags:
+  -h, --help   help for devtools
+
+Use "ws server ubuntu devtools [command] --help" for more information about a command.
+== ws server ubuntu devtools gh-login
+gh logs in as WS_USER by the last line of /etc/ws/gh-token, which it takes on its input (roles/server/ubuntu/devtools/README.md#gh). In the secrets task's run, it reads WS_GITHUB_TOKEN, which that run writes to the file, and a plan nowhere. Without a token, gh's login stays. The devtools role's run state runs it.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws server ubuntu devtools gh-login [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for gh-login
 == ws server ubuntu fans
 CONFIG is the file that the fans role writes, /etc/ws/fans.json by default.
 
@@ -497,15 +566,16 @@ Usage:
 Available Commands:
   check       refuse git's clones and tokens that the role would act on, and note what shadows ws's settings
   clones      clone each repository of WS_GIT_CLONES whose dest is missing, as WS_USER
+  credential  answer git's request for the token of a server besides GitHub, from /etc/ws/git-tokens.toml
   included    say by the exit status whether the git config on stdin includes /etc/ws/gitconfig at its top
-  tokens      write git's tokens from the secrets file's [git] table
+  tokens      write the credential programs of the URLs of /etc/ws/git-tokens.toml
 
 Flags:
   -h, --help   help for git
 
 Use "ws server ubuntu git [command] --help" for more information about a command.
 == ws server ubuntu git check
-It reads the values of /etc/ws/values.yml and the secrets file, where there is one. It fails where an entry of WS_GIT_CLONES holds a user name or a token in its URL, or where an entry of the secrets file's [git] table is refused (roles/server/ubuntu/git/README.md#git-credentials). No message quotes a token or a repository.
+It reads the values of /etc/ws/values.yml and /etc/ws/git-tokens.toml, where there is one, or WS_GIT_TOKENS in the secrets task's run, which writes the file. It fails where an entry of WS_GIT_CLONES holds a user name or a token in its URL, or where the tokens' file is refused (roles/server/ubuntu/git/README.md#git-credentials). No message quotes a token or a repository.
 
 It prints a warning on stdout for each setting of ~/.gitconfig that shadows /etc/ws/gitconfig's, by its name, never its value. The git role's guard runs it, before the tokens and the clones.
 
@@ -525,6 +595,14 @@ Usage:
 Flags:
       --check   fail where a change is due, and change nothing
   -h, --help    help for clones
+== ws server ubuntu git credential
+git runs it as the account, as the credential program that /etc/ws/tokens.gitconfig gives each URL, with the URL's key and git's action, and git's request on its standard input. For get, it prints the username and the token of the URL whose key is KEY. For store and erase, or a key that the file lacks, it prints nothing, so that git asks its next program. It reads no values file (roles/server/ubuntu/git/README.md#git-credentials).
+
+Usage:
+  ws server ubuntu git credential KEY [ACTION] [flags]
+
+Flags:
+  -h, --help   help for credential
 == ws server ubuntu git included
 It reads the text of ~/.gitconfig on its standard input, as git does. It exits 0 where the text includes /etc/ws/gitconfig once, at its top, and 1 where it lacks the include. It exits 2 with the reason where the include sits below the file's own settings or comes twice, which it would then override, or where git cannot read the text. The git role's unit of the include runs it, and refuses the file on 2.
 
@@ -534,7 +612,7 @@ Usage:
 Flags:
   -h, --help   help for included
 == ws server ubuntu git tokens
-Each token goes in /etc/ws/tokens, root's with the account's group, and its credential program in /etc/ws/tokens.gitconfig (roles/server/ubuntu/git/README.md#git-credentials). A machine without a secrets file keeps its tokens. The git role's run state runs it, after the role's check.
+Each URL of /etc/ws/git-tokens.toml gets ws's credential program in /etc/ws/tokens.gitconfig, root's with the account's group, which names no token (roles/server/ubuntu/git/README.md#git-credentials). Without the file, tokens.gitconfig goes. In the secrets task's run, it reads WS_GIT_TOKENS, which that run writes to the file, and a plan nowhere. The git role's run state runs it, after the role's check.
 
 --check fails where a change is due, and changes nothing.
 
@@ -552,8 +630,8 @@ Usage:
   ws server ubuntu ikeward [command]
 
 Available Commands:
-  check       fail where the secrets hold no profile for WS_IKEWARD_PROFILE
-  install     run ikeward install from the profile of the secrets, where its dry run says it would change anything
+  check       fail where the run's secrets hold no profile for WS_IKEWARD_PROFILE
+  install     run ikeward install from the profile of the run's secrets, where its dry run says it would change anything
   wait        wait for ikeward status to pass, as the VPN comes up
 
 Flags:
@@ -561,7 +639,7 @@ Flags:
 
 Use "ws server ubuntu ikeward [command] --help" for more information about a command.
 == ws server ubuntu ikeward check
-It reads the values of /etc/ws/values.yml and ws's secrets file, and fails where WS_IKEWARD_PROFILE is empty or the secrets hold no profile for it, as install would. The ikeward role's guard runs it, so that the run stops before ikeward's binary downloads, and a plan shows why.
+It reads the values of /etc/ws/values.yml and the profile's variables, WS_IKEWARD_P12, WS_IKEWARD_SSWAN and WS_IKEWARD_PASSWORD, which the secrets task sets. It fails where WS_IKEWARD_PROFILE is empty, or where the variables are set and either file's is empty, as install would. A run without them passes. The ikeward role's guard runs it, so that the run stops before ikeward's binary downloads, and a plan shows why.
 
 Usage:
   ws server ubuntu ikeward check [flags]
@@ -569,7 +647,7 @@ Usage:
 Flags:
   -h, --help   help for check
 == ws server ubuntu ikeward install
-It reads the values of /etc/ws/values.yml and ws's secrets file. It writes the profile's two files into /run/ikeward-profile, which only root may enter, runs ikeward install --dry-run on them with the .p12's password on standard input, and removes them. Where the dry run exits 4, install would change something, and it runs install. It fails where WS_IKEWARD_PROFILE is set and the secrets hold no profile. Without booted systemd nothing is due.
+It reads the values of /etc/ws/values.yml and the profile's variables, as check does. It writes the profile's two files into /run/ikeward-profile, which only root may enter, runs ikeward install --dry-run on them with the .p12's password on standard input, and removes them. Where the dry run exits 4, install would change something, and it runs install. It fails where check would. Without booted systemd, or without the variables, as in a run without the secrets, nothing is due.
 
 --check fails where install would change anything, and changes nothing. The ikeward role's run state runs it, after ikeward's binary.
 
@@ -580,114 +658,16 @@ Flags:
       --check   fail where install would change anything, and change nothing
   -h, --help    help for install
 == ws server ubuntu ikeward wait
-It runs /usr/local/sbin/ikeward status, and again until it passes, up to 12 times, 10 s apart, then fails. A later unit may need the VPN, as for a clone from the remote network. Without booted systemd nothing is due. The ikeward role's run state runs it where ikeward status fails, after the install.
+It runs /usr/local/sbin/ikeward status, and again until it passes, up to 12 times, 10 s apart, then fails. A later unit may need the VPN, as for a clone from the remote network. Without booted systemd, or without the profile's variables, as in a run without the secrets, which installs no VPN, nothing is due.
+
+--check fails where it would wait, and changes nothing. The ikeward role's run state runs it, after the install.
 
 Usage:
   ws server ubuntu ikeward wait [flags]
 
 Flags:
-  -h, --help   help for wait
-== ws server ubuntu secrets
-keep ws's secrets file, with its identity as a systemd credential
-
-Usage:
-  ws server ubuntu secrets [flags]
-  ws server ubuntu secrets [command]
-
-Available Commands:
-  init        make ws's age identity and an empty secrets file
-  keys        print each entry as KIND NAME, never a value
-  set         set an entry, whose value never goes in an argument
-  unset       drop an entry
-
-Flags:
-  -h, --help   help for secrets
-
-Use "ws server ubuntu secrets [command] --help" for more information about a command.
-== ws server ubuntu secrets init
-It makes ws's age identity in memory, which systemd-creds encrypts by the host's key as the credential /etc/credstore.encrypted/ws-secrets, for a unit's LoadCredentialEncrypted=ws-secrets. It makes an empty /etc/ws/secrets.age, root's and 600. A credential or a file that is there stays.
-
-Usage:
-  ws server ubuntu secrets init [flags]
-
-Flags:
-  -h, --help   help for init
-== ws server ubuntu secrets keys
-print each entry as KIND NAME, never a value
-
-Usage:
-  ws server ubuntu secrets keys [flags]
-
-Flags:
-  -h, --help   help for keys
-== ws server ubuntu secrets set
-set an entry, whose value never goes in an argument
-
-Usage:
-  ws server ubuntu secrets set [flags]
-  ws server ubuntu secrets set [command]
-
-Available Commands:
-  env         set the env NAME, from a prompt with no echo or from stdin
-  file        set a profile file (vpn_p12, vpn_sswan) from the file at PATH, or from stdin
-  git         set a git server's token, from a prompt with no echo or from stdin
-  password    set the password NAME, from a prompt with no echo or from stdin
-  token       set the token NAME, from a prompt with no echo or from stdin
-
-Flags:
-  -h, --help   help for set
-
-Use "ws server ubuntu secrets set [command] --help" for more information about a command.
-== ws server ubuntu secrets set env
-set the env NAME, from a prompt with no echo or from stdin
-
-Usage:
-  ws server ubuntu secrets set env NAME [flags]
-
-Flags:
-  -h, --help   help for env
-== ws server ubuntu secrets set file
-set a profile file (vpn_p12, vpn_sswan) from the file at PATH, or from stdin
-
-Usage:
-  ws server ubuntu secrets set file NAME [PATH] [flags]
-
-Flags:
-  -h, --help   help for file
-== ws server ubuntu secrets set git
-set a git server's token, from a prompt with no echo or from stdin
-
-Usage:
-  ws server ubuntu secrets set git URL [flags]
-
-Flags:
-  -h, --help              help for git
-      --proactive-auth    send the token before the server asks for it, else as the entry does
-      --username string   the user name that git sends with the token, else the entry's
-== ws server ubuntu secrets set password
-set the password NAME, from a prompt with no echo or from stdin
-
-Usage:
-  ws server ubuntu secrets set password NAME [flags]
-
-Flags:
-  -h, --help   help for password
-== ws server ubuntu secrets set token
-set the token NAME, from a prompt with no echo or from stdin
-
-Usage:
-  ws server ubuntu secrets set token NAME [flags]
-
-Flags:
-  -h, --help   help for token
-== ws server ubuntu secrets unset
-drop an entry
-
-Usage:
-  ws server ubuntu secrets unset KIND NAME [flags]
-
-Flags:
-  -h, --help   help for unset
+      --check   fail where the VPN is down and the run would wait, and change nothing
+  -h, --help    help for wait
 == ws server ubuntu signoz
 SigNoz's steps that the signoz role's units run
 

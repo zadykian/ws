@@ -4,9 +4,9 @@
 
 # The package starts the collector with its own config, on every address: it stays off until the
 # service below sets it up. It waits on signoz's sync, so that SigNoz keeps what the collector
-# sends for its retention: a retention applies only to data that comes in after it. That chain
-# hangs on file/shell-env, as the files read the endpoint from /etc/ws/env. A read of the service
-# waits where the env file has changes, and a run writes it first.
+# sends for its retention: a retention applies only to data that comes in after it. The files read
+# the endpoint from /etc/ws/env, which mise's files step writes before any unit, in the same run.
+# The secrets task's plan writes no file, so there they take the run's input of it, by envvar.
 [deb.otelcol]
 package = "otelcol-contrib"
 version = "0.162.0"

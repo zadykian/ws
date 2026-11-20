@@ -120,10 +120,10 @@ func TestIkewardBinaryPins(t *testing.T) {
 
 func TestIkewardGuardRunsTheCheck(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Results[selfPath+" server ubuntu ikeward check"] = effecttest.Result{Err: errors.New("the secrets hold no profile")}
+	m.Results[selfPath+" server ubuntu ikeward check"] = effecttest.Result{Err: errors.New("WS_IKEWARD_P12 or WS_IKEWARD_SSWAN is empty")}
 	units, _ := cableUnits(t, m, ikewardValues)
 	i := slices.IndexFunc(units, func(u kind.Unit) bool { return u.Name == "guard/ikeward" })
-	if _, err := units[i].Step.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "the secrets hold no profile") {
+	if _, err := units[i].Step.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "WS_IKEWARD_P12 or WS_IKEWARD_SSWAN is empty") {
 		t.Errorf("plan = %v, want the check's failure", err)
 	}
 }

@@ -3,124 +3,20 @@ package git_test
 import (
 	"errors"
 	"os"
-	"os/exec"
 	"slices"
-	"strconv"
 	"strings"
 	"testing"
-	"testing/fstest"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/kind"
 	"github.com/zadykian/ws/engine/core/resource/file"
-	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/internal/gitcfg"
-	"github.com/zadykian/ws/roles/server/values"
 )
-
-const (
-	self     = "/usr/local/bin/ws"
-	check    = self + " server ubuntu git check"
-	included = self + " server ubuntu git included"
-	include  = "[include]\n\tpath = /etc/ws/gitconfig\n"
-	pub      = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGit ws@box\n"
-)
-
-// role is git's spec and its templates, as kind.Load finds a role's.
-func role(t *testing.T) fstest.MapFS {
-	fsys := fstest.MapFS{}
-	for _, name := range []string{"units.toml.tmpl", "files/ws.gitconfig.tmpl", "files/allowed_signers.tmpl"} {
-		text, err := os.ReadFile(name) //nolint:gosec // a file of the role, named above
-		if err != nil {
-			t.Fatal(err)
-		}
-		fsys["git/"+name] = &fstest.MapFile{Data: text}
-	}
-	return fsys
-}
-
-// machine is a machine with the account ws, 1000:1000, and /etc/ws, and its env for the values of
-// text, whose check passes.
-func machine(t *testing.T, text string) (*effecttest.Machine, kind.Env) {
-	v, err := values.Parse([]byte(text))
-	if err != nil {
-		t.Fatal(err)
-	}
-	m := effecttest.NewMachine()
-	m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
-	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
-	m.Results["getent passwd ws"] = effecttest.Result{Out: []byte("ws:x:1000:1000::/home/ws:/bin/bash\n")}
-	m.Results["getent passwd root"] = effecttest.Result{Out: []byte("root:x:0:0:root:/root:/bin/bash\n")}
-	m.Dirs["/home/ws"], m.Owners["/home/ws"] = 0o750, [2]int{1000, 1000}
-	m.Dirs["/root"], m.Dirs["/etc"], m.Dirs["/etc/ws"] = 0o700, 0o755, 0o755
-	m.Results[check] = effecttest.Result{}
-	return m, kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v, Self: self}
-}
-
-// units loads git's units on e, and keeps those named.
-func units(t *testing.T, e kind.Env, names ...string) []kind.Unit {
-	all, err := kind.Load(e, role(t))
-	if err != nil {
-		t.Fatal(err)
-	}
-	return slices.DeleteFunc(all, func(u kind.Unit) bool { return len(names) > 0 && !slices.Contains(names, u.Name) })
-}
-
-// write runs the units as ws unit write does.
-func write(t *testing.T, e kind.Env, us []kind.Unit) error {
-	_, err := step.Run(t.Context(), kind.Steps(us), e.Out, false)
-	return err
-}
-
-// apply plans the unit and applies its changes, as ws unit write does, without the check that a
-// second plan holds none, which the fake's fixed answers would fail.
-func apply(t *testing.T, u kind.Unit) error {
-	p, err := u.Step.Plan(t.Context())
-	if err != nil {
-		return err
-	}
-	return u.Step.Apply(t.Context(), p)
-}
-
-// changes returns the headlines of the unit's plan.
-func changes(t *testing.T, u kind.Unit) []string {
-	p, err := u.Step.Plan(t.Context())
-	if err != nil {
-		t.Fatalf("plan %s: %v", u.Name, err)
-	}
-	var got []string
-	for _, c := range p.Changes {
-		got = append(got, step.Headline(c))
-	}
-	return got
-}
-
-// exits is the error of a command that exits with code, saying why on its standard error.
-func exits(t *testing.T, code int, why string) error {
-	_, err := exec.Command("sh", "-c", `echo "$1" >&2; exit "$2"`, "sh", why, strconv.Itoa(code)).Output() //nolint:gosec // G204: the test's own sh, its words as arguments
-	var exit *exec.ExitError
-	if !errors.As(err, &exit) {
-		t.Fatalf("sh: %v, want an exit status", err)
-	}
-	return err
-}
-
-// keygen is the command line that makes the key of an account's default path, as the fake
-// records it.
-func keygen(user, home string) string {
-	key := home + "/.ssh/id_ed25519_signing"
-	sh := "sh -c mkdir -p -m 700 \"${1%/*}\" && ssh-keygen -q -t ed25519 -N '' -f \"$1\" sh " + key
-	env := "env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin " + sh
-	if user == "root" {
-		return "env HOME=/root " + env
-	}
-	return "runuser -u " + user + " -- env -C " + home + " HOME=" + home + " " + env
-}
 
 func TestGitUnits(t *testing.T) {
 	_, e := machine(t, "WS_USER: ws\n")
 	want := []string{"file/git-config", "file/git-include", "file/git-signers", "guard/git-check",
-		"state/git-clones", "state/git-key", "state/git-tokens"}
+		"state/git-clones", "state/git-key", "state/git-tokens", "state/git-tokens-group"}
 	got := kind.Names(units(t, e))
 	slices.Sort(got)
 	if !slices.Equal(got, want) {
@@ -205,7 +101,11 @@ func TestGitCheckStopsAllButSigning(t *testing.T) {
 	m.Dirs["/home/ws/.ssh"], m.Owners["/home/ws/.ssh"] = 0o700, [2]int{1000, 1000}
 	m.Files["/home/ws/.ssh/id_ed25519_signing"] = []byte("key")
 	m.Files["/home/ws/.ssh/id_ed25519_signing.pub"] = []byte(pub)
-	us := units(t, e)
+	// The run takes the frame's unit too, which git's chain waits on and which skips without systemd.
+	us, err := kind.Closure(loaded(t, e), kind.Names(units(t, e)))
+	if err != nil {
+		t.Fatal(err)
+	}
 	names := kind.Names(us)
 	if g := slices.Index(names, "guard/git-check"); slices.Index(names, "state/git-key") > g || slices.Index(names, "file/git-signers") > g {
 		t.Errorf("order = %q, want the key and its signers before the check", names)

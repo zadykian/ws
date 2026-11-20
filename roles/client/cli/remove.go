@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"os/signal"
 	"path"
 	"slices"
+	"syscall"
 
 	"github.com/spf13/cobra"
 
@@ -17,20 +19,35 @@ import (
 
 // newRemoveCmd returns ws client macos remove.
 func newRemoveCmd(p enginecli.Env, server *string) *cobra.Command {
-	return &cobra.Command{
+	var skip bool
+	c := &cobra.Command{
 		Use:   "remove NAME",
 		Short: "remove a server from the Mac",
-		Long: "It deletes servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it " +
-			"is. mise's bootstrap then takes its daemon, routes and host off. It refuses the Mac's last server, as " +
+		Long: "It first takes NAME's host key, from known_hosts, out of the secrets repository by git and gh: from " +
+			"the recipients of fnox.toml and of every profile file, whose values it encrypts again with the Nano, by " +
+			"a pull request, and from the repository's deploy keys. Where that fails, nothing else changes. Where " +
+			"known_hosts holds no key of NAME, where this Mac has no fnox key, or with --skip-secrets, as where the " +
+			"secrets are out of reach, it leaves them and prints what to do there by hand. It then deletes " +
+			"servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it is. " +
+			"mise's bootstrap then takes its daemon, routes and host off. It refuses the Mac's last server, as " +
 			"the bootstrap takes a Mac with none for a stray WS_VALUES and prunes no daemon, and takes no --server: " +
 			"the argument is the consent.",
 		Args: cobra.ExactArgs(1),
-		RunE: func(c *cobra.Command, args []string) error { return runRemove(c, p, *server, args[0]) },
+		RunE: func(c *cobra.Command, args []string) error {
+			// A Ctrl-C or a SIGTERM ends the context, not ws, so that remove still removes its clone.
+			ctx, stop := signal.NotifyContext(c.Context(), syscall.SIGINT, syscall.SIGTERM)
+			defer stop()
+			c.SetContext(ctx)
+			return runRemove(c, p, *server, args[0], skip)
+		},
 	}
+	c.Flags().BoolVar(&skip, "skip-secrets", false, "leave NAME's host key in the secrets, and print it to drop by hand")
+	return c
 }
 
-// runRemove drops the server called name from the Mac's files.
-func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
+// runRemove drops the server called name from the Mac's files, and its host key from the secrets
+// where skip is false.
+func runRemove(c *cobra.Command, p enginecli.Env, server, name string, skip bool) error {
 	if p.Euid == 0 {
 		return errors.New("run it as yourself, not root: it asks sudo where it needs root")
 	}
@@ -62,7 +79,12 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 	if gone, err := values.Load(p.Machine, mac, values.ServerPath(mac, name)); err == nil {
 		cable = gone.CableService
 	}
-	// The host goes first: its failure then leaves the server whole, and remove runs again.
+	// The secrets go first, as they read the host's key, then the host: a failure of either leaves
+	// the server whole, and remove runs again.
+	byHand, err := dropSecrets(c, p, name, skip)
+	if err != nil {
+		return fmt.Errorf("%w: %s stays on the Mac: run remove again", err, name)
+	}
 	if err := forgetHost(c, p, name); err != nil {
 		return err
 	}
@@ -83,6 +105,9 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string) error {
 	// plist, ssh's its host.
 	if err = p.Machine.Pass(c.Context(), false, "env", "MISE_LOCKED=1", "mise", "-C", "/opt/ws/roles/client", "bootstrap"); err != nil {
 		err = fmt.Errorf("MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap: %w: run it again to take %s's daemon, routes and host off", err, name)
+	}
+	if byHand != "" {
+		_, _ = fmt.Fprintln(c.OutOrStdout(), byHand)
 	}
 	if cable != "" {
 		_, _ = fmt.Fprintf(c.OutOrStdout(), "By hand: the cable's service %s keeps 10.77.0.2: name it in another server's "+

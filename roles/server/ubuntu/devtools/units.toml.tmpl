@@ -87,43 +87,43 @@ unbooted = true
 command = ["env", "GH_TELEMETRY=0", "gh", "config", "set", "telemetry", "disabled"]
 check = ["sh", "-c", '[ "$(GH_TELEMETRY=0 gh config get telemetry)" = disabled ]']
 
-# token.github of the secrets file, which gh's login reads. Root's, so the account reads it and
-# cannot change it. A machine without a secrets file leaves it unchanged, and no token removes it.
-[file.devtools-gh-token]
+# mise writes /etc/ws/gh-token from the secret input WS_GITHUB_TOKEN (mise.secrets.toml), root's.
+# Its group is root's after each change of its content, as mise takes a literal group alone. This
+# gives it the account's, so the account reads it and cannot change it. Without the file, it does
+# nothing.
+# A file there whose first line is not ws's header stops the run, as mise's guard does under the env
+# secrets. A run without the env loads no guard, and would give a file by hand the account's group.
+[state.devtools-gh-token-group]
 after = "state/devtools-gh-telemetry"
-path = "/etc/ws/gh-token"
-template = "files/gh-token.tmpl"
-mode = 0o640
-group_of = "{{ .User }}"
-secret = true
-ours = true
-absent_when_empty = true
 
-# gh logs in by the token file, after the file, which waits on the telemetry. mise writes only the
-# units whose read is not in sync, and the login reads in sync before a new token's file is
-# written. So it waits on the file by after, and its read names the file. The token passes through
-# a pipe and the shell alone, never through a command's arguments. Without the file, gh's login
-# stays unchanged. ws has no keyring, so gh keeps the token in ~/.config/gh/hosts.yml, mode 0600.
-[state.devtools-gh-login]
-after = "file/devtools-gh-token"
-
-[state.devtools-gh-login.run]
-user = "{{ .User }}"
+[state.devtools-gh-token-group.run]
+user = "root"
 unbooted = true
 command = [
     "sh",
     "-c",
-    '[ ! -e "$1" ] || tail -n 1 "$1" | gh auth login -h github.com -p https --insecure-storage --with-token',
+    '''f="$1"; [ ! -e "$f" ] || head -n 1 -- "$f" | grep -qxF -- '# Written by github.com/zadykian/ws, whose next run replaces any change made here.' || { echo "$f: not written by ws, so the run stops: move its value into the secrets, then remove it" >&2; exit 1; }; [ ! -e "$1" ] || chgrp -- "$(id -g -- "$2")" "$1"''',
     "sh",
     "/etc/ws/gh-token",
+    "{{ .User }}",
 ]
 check = [
     "sh",
     "-c",
-    '[ ! -e "$1" ] || { t=$(gh auth token -h github.com 2>/dev/null) && [ "$t" = "$(tail -n 1 "$1")" ]; }',
+    '''[ ! -e "$1" ] || { head -n 1 -- "$1" | grep -qxF -- '# Written by github.com/zadykian/ws, whose next run replaces any change made here.' && [ "$(stat -c %g -- "$1")" = "$(id -g -- "$2")" ]; }''',
     "sh",
     "/etc/ws/gh-token",
+    "{{ .User }}",
 ]
+
+# gh logs in by the token file, after its group, which waits on the telemetry. ws reads the token
+# and gives it to gh on its input, as the account, so it never reaches a command's arguments. A plan
+# writes no file, so in the secrets task's run ws reads WS_GITHUB_TOKEN, and the plan shows the
+# login that the run makes. Without a token, gh's login stays unchanged. ws has no keyring, so gh
+# keeps the token in ~/.config/gh/hosts.yml, mode 0600.
+[state.devtools-gh-login]
+after = "state/devtools-gh-token-group"
+run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "ubuntu", "devtools", "gh-login"], check = ["{{ self }}", "server", "ubuntu", "devtools", "gh-login", "--check"] }
 
 # roslyn-language-server, C#'s server, from nuget.org, where every version is a prerelease. The
 # version alone pins it, as nuget.org refuses a version's second upload. From 5.13.0-1.26514.10 the

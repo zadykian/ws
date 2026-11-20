@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -43,13 +44,14 @@ func readRuns(t *testing.T) map[string]run {
 }
 
 // script runs argv's shell line, argv[:4], with arg as its $1, and the fake commands of bin first
-// on PATH. It returns the output, and whether the line exited 0.
+// on the PATH that ws gives a unit's commands. It returns the output, and whether the line exited
+// 0. macOS keeps sha256sum in /sbin.
 func script(t *testing.T, argv []string, bin, arg string) (string, bool) {
 	if len(argv) < 4 || argv[0] != "sh" || argv[1] != "-c" {
 		t.Fatalf("%q is not a shell line with arguments", argv)
 	}
 	cmd := exec.Command("sh", "-c", argv[2], argv[3], arg) //nolint:gosec // G204: the role's own line
-	cmd.Env = []string{"PATH=" + bin + ":/usr/bin:/bin"}
+	cmd.Env = []string{"PATH=" + bin + ":" + strings.TrimPrefix(systemPath, "PATH=")}
 	out, err := cmd.CombinedOutput()
 	return string(out), err == nil
 }
@@ -61,20 +63,32 @@ func fake(t *testing.T, bin, name, body string) {
 	}
 }
 
-// Each run is WS_USER's, and runs without booted systemd too. No secret reaches a command's text,
-// which a run's headline and mise's log show.
+// templateAction matches an action of the spec's template, the one way a value reaches a command's
+// text. A word of a command's own, as the guard's message, is no value.
+var templateAction = regexp.MustCompile(`\{\{.*?\}\}`)
+
+// Each run is WS_USER's but two, root's. The token file's group is one, as root alone may change
+// it. gh's login is the other: ws's own, which reads the token and runs gh as WS_USER. Each runs
+// without booted systemd too. No secret reaches a command's text, which a run's headline and mise's
+// log show.
 func TestDevtoolsRunsAreTheAccounts(t *testing.T) {
 	runs := readRuns(t)
-	want := []string{"devtools-gh-login", "devtools-gh-telemetry", "devtools-npm", "devtools-roslyn", "devtools-rustup"}
+	want := []string{"devtools-gh-login", "devtools-gh-telemetry", "devtools-gh-token-group", "devtools-npm",
+		"devtools-roslyn", "devtools-rustup"}
 	var got []string
 	for name, r := range runs {
 		got = append(got, name)
-		if r.User != "{{ .User }}" || !r.Unbooted {
-			t.Errorf("%s: user %q, unbooted %v; want WS_USER, unbooted", name, r.User, r.Unbooted)
+		user := "{{ .User }}"
+		if name == "devtools-gh-token-group" || name == "devtools-gh-login" {
+			user = "root"
 		}
-		if line := strings.Join(slices.Concat(r.Command, r.Check), " "); strings.Contains(line, "secrets") ||
-			strings.Contains(line, "Token") {
-			t.Errorf("%s: %q reads the secrets", name, line)
+		if r.User != user || !r.Unbooted {
+			t.Errorf("%s: user %q, unbooted %v; want %s, unbooted", name, r.User, r.Unbooted, user)
+		}
+		for _, action := range templateAction.FindAllString(strings.Join(slices.Concat(r.Command, r.Check), " "), -1) {
+			if strings.Contains(action, "secrets") || strings.Contains(action, "Token") {
+				t.Errorf("%s: %q reads the secrets", name, action)
+			}
 		}
 	}
 	if slices.Sort(got); !slices.Equal(got, want) {
@@ -154,47 +168,6 @@ func TestNpmStampCoversBothFiles(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(dir, "node_modules/.ws-sha256")); err == nil {
 		t.Error("a failed npm ci left a stamp")
-	}
-}
-
-// gh's login takes the token on its input, never in its arguments; its check compares gh's token
-// with the file's, and passes without the file.
-func TestGHLoginPassesTheTokenOnItsInput(t *testing.T) {
-	r := readRuns(t)["devtools-gh-login"]
-	bin, dir := t.TempDir(), t.TempDir()
-	held, args := filepath.Join(dir, "held"), filepath.Join(dir, "args")
-	fake(t, bin, "gh", `echo "$@" >>`+args+`
-case $1-$2 in
-auth-login) cat >`+held+` ;;
-auth-token) cat `+held+` ;;
-esac`)
-	tokenFile := filepath.Join(dir, "gh-token")
-	if _, ok := script(t, r.Check, bin, tokenFile); !ok {
-		t.Error("the check failed without the token file")
-	}
-	if err := os.WriteFile(tokenFile, []byte("# Written by github.com/zadykian/ws\n# a comment\ndummy-a\n"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if _, ok := script(t, r.Check, bin, tokenFile); ok {
-		t.Error("the check passed before a login")
-	}
-	if out, ok := script(t, r.Command, bin, tokenFile); !ok {
-		t.Fatalf("login: %s", out)
-	}
-	if got, _ := os.ReadFile(held); string(got) != "dummy-a\n" { //nolint:gosec // the test's own file
-		t.Errorf("gh got %q on its input, want the last line", got)
-	}
-	if _, ok := script(t, r.Check, bin, tokenFile); !ok {
-		t.Error("the check failed after the login")
-	}
-	if err := os.WriteFile(held, []byte("dummy-b\n"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if _, ok := script(t, r.Check, bin, tokenFile); ok {
-		t.Error("the check passed with another token held")
-	}
-	if got, _ := os.ReadFile(args); strings.Contains(string(got), "dummy") { //nolint:gosec // the test's own file
-		t.Errorf("gh's arguments %q hold the token", got)
 	}
 }
 

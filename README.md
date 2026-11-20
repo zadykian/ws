@@ -7,7 +7,8 @@ up claude and [cld](https://github.com/zadykian/cld), and SigNoz with a collecto
 machine's telemetry.
 Running it again is safe, and its plan shows how a machine differs from the repository.
 
-Each role has a page of its own. A role is its mise config and its spec of ws's units:
+Each role has a page of its own. A role is its mise files by env, and its spec of ws's units where
+it has any:
 
 - [`frame`](roles/server/ubuntu/frame): what each role of mise's config leans on, and
   `/usr/local/bin/ws`, the pinned binary.
@@ -17,6 +18,8 @@ Each role has a page of its own. A role is its mise config and its spec of ws's 
   ws starts to the internet and ikeward, but what the network needs, such as DHCP and DNS. The
   table is off where `WS_SECURITY_OUTBOUND` is false, as a cloud VM wants. As mise's config and
   units.
+- [`secrets`](roles/server/ubuntu/secrets): fnox, which decrypts ws's secrets, as mise's config, and
+  the task `secrets`, which fetches them by the host key and runs the bootstrap under them.
 - [`cable`](roles/server/ubuntu/cable): the server's end of a cable to the Mac, as units.
 - [`tunnel`](roles/server/ubuntu/tunnel): `wg0`, the server's end of a WireGuard tunnel for the Mac, as
   units.
@@ -26,7 +29,7 @@ Each role has a page of its own. A role is its mise config and its spec of ws's 
   NVIDIA GPU.
 - [`fans`](roles/server/ubuntu/fans): fan curves for the board's headers, and the driver that sets them.
 - [`shell`](roles/server/ubuntu/shell): `/etc/ws/bashrc` and `/etc/ws/profile`, one line of each at the top of
-  `~/.bashrc` and `~/.profile`, and `/etc/ws/env` from the secrets file.
+  `~/.bashrc` and `~/.profile`, and `/etc/ws/env` from mise's secret inputs.
 - [`git`](roles/server/ubuntu/git): `/etc/ws/gitconfig` and its include in `~/.gitconfig`, a key that
   signs commits, git's tokens for servers besides GitHub, and clones of repositories.
 - [`tmux`](roles/server/ubuntu/tmux): tmux from Ubuntu's archive.
@@ -70,8 +73,8 @@ Then, logged in as that user, write `/etc/ws/values.yml` where a value differs f
 root's and mode 600 ([the values](#running-it-again)). Run `install.sh` through `sudo`, by the
 three lines of [Install](.github/workflows/release.md#install), which fail where curl does. It
 installs mise and runs its bootstrap, which installs ws and sets each role up. Once the secrets
-file holds `token.github`, the bootstrap run again logs gh in ([By hand](#by-hand)), as
-[the server's runbook](roles/server/runbook.md) says.
+hold `WS_GITHUB_TOKEN`, the secrets task logs gh in ([By hand](#by-hand)). The Mac's `ws client
+macos secrets add NAME` runs it first, as [the server's runbook](roles/server/runbook.md) says.
 
 Then do what stays by hand, below.
 
@@ -81,10 +84,10 @@ Each release holds the roles it sets up, so run `install.sh` again, by the same 
 [Install](.github/workflows/release.md#install): it checks the release out and runs the bootstrap.
 `WS_VERSION=X.Y.Z` before `sh` picks a release.
 
-The units read their secrets from ws's file, which `ws server ubuntu secrets` edits ([The secrets
-file](roles/server/ubuntu/shell/README.md#the-secrets-file)). The values of a machine go in
-`/etc/ws/values.yml`, which only root reads, and every run reads them. The first run writes it
-where none is, each key at its default, and no run changes it after
+The units read their secrets from mise's secret inputs, which the task `secrets` fetches and
+decrypts on ws ([The repository](roles/server/ubuntu/secrets/README.md#the-repository)). The
+values of a machine go in `/etc/ws/values.yml`, which only root reads, and every run reads them.
+The first run writes it where none is, each key at its default, and no run changes it after
 ([The values file](roles/server/ubuntu/frame/README.md#the-values-file)). `WS_USER: NAME` sets up the
 user NAME instead of `zadykian`, the default, whose account must exist. `WS_USER: root` sets up a
 cloud VM with no other user. `WS_HOME` is the account's home, `/home/NAME` by default. One that
@@ -105,6 +108,9 @@ form that [the server's runbook](roles/server/runbook.md) gives:
 sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server bootstrap plan
 ```
 
+The task `secrets` takes the plan's arguments too, `run secrets -- plan --detailed-exitcode`, and
+fetches the secrets first ([The task](roles/server/ubuntu/secrets/README.md#the-task)).
+
 A plan adds no apt source and writes no file. So a unit that waits on another with changes reads
 `after` and that unit, and plans nothing more.
 
@@ -119,8 +125,8 @@ diff included, but a secret's. A run by hand of `ws unit write UNIT` sets up tha
 ## By hand
 
 Secrets are never in this repository. The claude login, ws's signing key on GitHub and the Mac's key
-as `wg0`'s peer stay manual. ws's gh takes a fine-grained personal access token, which the bootstrap
-logs gh in with, from the secrets file's `token.github`
+as `wg0`'s peer stay manual. ws's gh takes a fine-grained personal access token, which the secrets
+task's run logs gh in with, from the secret input `WS_GITHUB_TOKEN`
 ([gh](roles/server/ubuntu/devtools/README.md#gh)). Its permissions are the account's selected
 repositories; Metadata and Actions read; Contents, Pull requests, Issues and Workflows read and
 write; and no account permission. These stay manual:
@@ -128,8 +134,8 @@ write; and no account permission. These stay manual:
 - other peers' public keys on the server, as in [The tunnel](roles/server/ubuntu/tunnel/README.md#the-tunnel);
 - another device's SSH key on the server: `ssh-import-id gh:LOGIN`, run as `WS_USER`
   ([SSH and the firewall](roles/server/ubuntu/security/README.md#ssh-and-the-firewall));
-- the VPN's profile, age-encrypted on the server, and the `ikeward` role's variables, as in
-  [The profile](roles/server/ubuntu/ikeward/README.md#the-profile);
+- ikeward's VPN profile, in the server's fnox profile, `fnox.HOSTNAME.toml`, and the `ikeward`
+  role's variables, as in [The profile](roles/server/ubuntu/ikeward/README.md#the-profile);
 - with Secure Boot on, DKMS's key, enrolled at the console: [Secure Boot](roles/server/ubuntu/fans/README.md#secure-boot);
 - Fresh's trust, once per repository: press T, then Enter
   ([Trust each project](roles/server/ubuntu/fresh/README.md#trust-each-project));

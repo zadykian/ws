@@ -205,7 +205,7 @@ func TestStateLeft(t *testing.T) {
 
 // asU is how a run state runs a command as u: through runuser, in u's session, with the system's
 // PATH.
-const asU = "runuser -u u -- env -C /home/u HOME=/home/u env XDG_RUNTIME_DIR=/run/user/1001 " +
+const asU = "runuser -u u -- env -i -C /home/u HOME=/home/u " + systemPath + " env XDG_RUNTIME_DIR=/run/user/1001 " +
 	"DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1001/bus " + systemPath + " "
 
 func TestStateRunCreates(t *testing.T) {
@@ -254,7 +254,7 @@ func TestStateRunAsRoot(t *testing.T) {
 func TestStateRunPutsItsPathFirst(t *testing.T) {
 	e, m, _, _ := testEnv(true)
 	withAccount(m)
-	const first = "runuser -u u -- env -C /home/u HOME=/home/u env XDG_RUNTIME_DIR=/run/user/1001 " +
+	const first = "runuser -u u -- env -i -C /home/u HOME=/home/u " + systemPath + " env XDG_RUNTIME_DIR=/run/user/1001 " +
 		"DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1001/bus " +
 		"PATH=/home/u/.local/bin:/home/u/.t:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "
 	m.Results[first+"ws x check"] = effecttest.Result{Err: errors.New("exit status 1")}

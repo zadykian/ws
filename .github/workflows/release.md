@@ -23,8 +23,8 @@ machine's miserc and runs `mise bootstrap`:
   holds for the machine's target, and runs it as `mise --version`. Only then it moves it over
   `/usr/local/bin/mise`. A refused download keeps the mise there and leaves no file behind. A mise
   at the pinned version is not downloaded again.
-- It writes `/etc/mise/miserc.toml` from `WS_USER` in `/etc/ws/values.yml`: the envs `server`,
-  `booted` where systemd runs, and `account` where `WS_USER` is not root
+- It writes `/etc/mise/miserc.toml` from `WS_USER` in `/etc/ws/values.yml`: the set of envs `ws`,
+  which holds `server`, `booted` where systemd runs, and `account` where `WS_USER` is not root
   ([The frame](../../roles/server/ubuntu/frame/README.md#the-machines-env)). After a change of
   `WS_USER`, run it again.
 - It finds the latest release once, and checks the release's tag out in `/opt/ws` by git, then
@@ -64,6 +64,7 @@ commit. The cases:
 - a wrong SHA-256 of mise is refused, and no mise or download is left;
 - the latest release installs mise and runs its bootstrap, so that the files of the envs that the
   miserc names exist;
+- the env `secrets` loads by `-E ws,secrets` alone, and a plan without it after keeps its file;
 - with `WS_USER: root`, a second run downloads no mise and leaves the account's part out;
 - a newer latest release checks its tag out in `/opt/ws`, and drops a `mise.local.toml` there;
 - `WS_VERSION` checks its release's tag out;

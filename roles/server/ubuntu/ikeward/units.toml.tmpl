@@ -1,9 +1,9 @@
-# ikeward's units: the server on an IKEv2 VPN, from the profile of the secrets, and the WireGuard
-# peers' way into it. Each is off without WS_IKEWARD_PROFILE, and leaves the VPN, the file and ufw's
-# rules as they are. README.md says why each stands.
+# ikeward's units: the server on an IKEv2 VPN, from the profile that the run's secrets give, and the
+# WireGuard peers' way into it. Each is off without WS_IKEWARD_PROFILE, and leaves the VPN, the file
+# and ufw's rules as they are. README.md says why each stands.
 
-# Fails where the secrets hold no profile for WS_IKEWARD_PROFILE, as install would: before the
-# binary downloads, and in a plan.
+# Fails where the run's secrets hold no profile for WS_IKEWARD_PROFILE, as install would: before
+# the binary downloads, and in a plan. A run without the secrets passes, and keeps the VPN.
 [guard.ikeward]
 command = ["{{ self }}", "server", "ubuntu", "ikeward", "check"]
 when = { set = "{{ .Ikeward.Profile }}" }
@@ -42,14 +42,17 @@ after = "state/ikeward-sysctl"
 ufw = { comment = "ikeward", rules = [{{ range .Ikeward.ForwardFrom }}{ action = "allow", interface = "wg0", out = "ikeward0", from = "{{ . }}" }, {{ end }}] }
 when = { set = "{{ .Ikeward.Profile }}" }
 
-# ikeward install from the profile of the secrets, where its dry run says it would change anything.
+# ikeward install from the profile of the run's secrets, where its dry run says it would change
+# anything. The profile reaches it by the run's env, which keeps the secret inputs for ws's own
+# commands alone.
 [state.ikeward-install]
 after = "binary/ikeward"
 run = { user = "root", command = ["{{ self }}", "server", "ubuntu", "ikeward", "install"], check = ["{{ self }}", "server", "ubuntu", "ikeward", "install", "--check"] }
 when = { set = "{{ .Ikeward.Profile }}" }
 
-# The wait for the VPN, about 2 minutes, where ikeward status fails: a later unit may need it.
+# The wait for the VPN, about 2 minutes, where ikeward status fails: a later unit may need it. A run
+# without the secrets installs no VPN, so it waits for none, as wait --check says.
 [state.ikeward-status]
 after = "state/ikeward-install"
-run = { user = "root", command = ["{{ self }}", "server", "ubuntu", "ikeward", "wait"], check = ["/usr/local/sbin/ikeward", "status"] }
+run = { user = "root", command = ["{{ self }}", "server", "ubuntu", "ikeward", "wait"], check = ["{{ self }}", "server", "ubuntu", "ikeward", "wait", "--check"] }
 when = { set = "{{ .Ikeward.Profile }}" }

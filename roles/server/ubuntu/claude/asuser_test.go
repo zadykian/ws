@@ -21,7 +21,7 @@ func serveRead(m *effecttest.Machine, u account.User, file string, body []byte) 
 	}
 	line := "env HOME=" + u.Home + " sh -c " + readScript + " sh " + file
 	if u.Name != "root" {
-		line = "runuser -u " + u.Name + " -- env -C " + u.Home + " " + strings.TrimPrefix(line, "env ")
+		line = strings.Replace(line, "env HOME="+u.Home, "runuser -u "+u.Name+" -- env -i -C "+u.Home+" HOME="+u.Home+" "+account.SystemPath, 1)
 	}
 	m.Results[line] = effecttest.Result{Out: out}
 }
@@ -39,7 +39,7 @@ func TestReadsGoAsTheUserThroughLinks(t *testing.T) {
 		m.Files[user.Home+"/.local/bin/cld"] = nil
 		serveRead(m, user, userFile, []byte("{}"))
 		serveRead(m, user, script, []byte("old\n"))
-		m.Results["runuser -u ws -- env -C /home/ws HOME=/home/ws /home/ws/.local/bin/cld completion bash"] =
+		m.Results["runuser -u ws -- env -i -C /home/ws HOME=/home/ws PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin /home/ws/.local/bin/cld completion bash"] =
 			effecttest.Result{Out: []byte("new\n")}
 		if _, err := (settings.Telemetry{M: m, User: user, Env: map[string]string{"A": "1"}}).Plan(t.Context()); err != nil {
 			t.Fatalf("telemetry, link at %s: %v", link, err)

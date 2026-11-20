@@ -29,9 +29,14 @@ swap = { size_mib = 1024, hint = "…" }                                 # /swap
   table, or `net` on a device other than `dev`. `addr` fails where `iface` lacks `want`. Each error
   ends with `hint`, as the run cannot mend either.
 - `run` runs its command as `user`, with the system's `PATH`: on Linux by runuser, in the user's
-  systemd session. It takes exactly one of `creates`, which runs where a path is missing, and
-  `check`, which runs where the check, as `user` too, exits other than 0. A procedure that stays a
-  command of ws runs this way.
+  systemd session. A `user` other than root starts from a cleared environment, with its `HOME`
+  alone, as root's may hold a secret's value that the user could read from its own process. It
+  takes exactly one of `creates`, which runs where a path is missing, and `check`, which runs
+  where the check, as `user` too, exits other than 0. A procedure that stays a command of ws runs
+  this way.
+- A `run` whose program is not ws's own, as `self` names it, gets no variable that the side hides
+  (`kind.Env.Hidden`): the server's secret inputs. An installer runs code the run fetched, which
+  must not see a token. ws reads its values from the run's env, and keeps them.
 - A `run`'s `path`, such as `["/home/USER/.local/bin"]`, puts its directories before the system's
   in the command's and the check's `PATH`. An installer that puts its tool there warns where `PATH`
   lacks it.
@@ -60,5 +65,5 @@ swap = { size_mib = 1024, hint = "…" }                                 # /swap
   does `run` on Linux, where it needs the user's session; macOS has no systemd, and runs it. A
   `run` with `unbooted = true` needs no session, and runs there too, without the session's env.
   With booted systemd it gets that env only where `/run/user/UID` exists, as dotnet fails on a
-  missing `XDG_RUNTIME_DIR`. Without that env, the run drops the caller's `XDG_RUNTIME_DIR` and
-  `DBUS_SESSION_BUS_ADDRESS`, which `runuser` would pass on: root's are closed to the user.
+  missing `XDG_RUNTIME_DIR`. Without that env, a run as root drops the caller's `XDG_RUNTIME_DIR`
+  and `DBUS_SESSION_BUS_ADDRESS`.
