@@ -57,11 +57,16 @@ func ParseList(out []byte) ([]Slot, error) {
 	return slots, nil
 }
 
-// ListNano lists the age identities of the YubiKey plugged in.
+// ListNano lists the age identities of the YubiKey plugged in. age-plugin-yubikey prints a blank
+// line after each YubiKey it reads, one without an identity too. Where none is plugged in, it
+// prints nothing, and exits 0 too. So a list of nothing finds no YubiKey, not an empty one.
 func ListNano(ctx context.Context, m effect.Machine) ([]Slot, error) {
 	out, err := m.Run(ctx, Plugin, "--list")
 	if err != nil {
 		return nil, fmt.Errorf("cannot list the YubiKey's age identities: %w", err)
+	}
+	if len(out) == 0 {
+		return nil, errors.New("no YubiKey found: plug in the Nano, and run it again")
 	}
 	return ParseList(out)
 }

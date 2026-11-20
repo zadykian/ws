@@ -70,6 +70,9 @@ it by `age-plugin-yubikey --list`:
   does, age-plugin-yubikey makes one, named `ws-secrets`, on the terminal. Its PIN policy is
   `once`, a PIN once a session, and its touch policy `always`, a touch each time it decrypts.
 
+The list prints a blank line for each YubiKey it reads, and nothing where none is plugged in. So a
+list of nothing stops init with `no YubiKey found`, before it would read the Nano as empty.
+
 The slot's stub, the identity file that `age-plugin-yubikey --identity` prints, goes to fnox's key
 file. So fnox, run by ws or by hand in a clone, asks the Nano to decrypt. The stub names the Nano's
 serial and slot, and holds no secret. The key file is the one fnox reads by default:
