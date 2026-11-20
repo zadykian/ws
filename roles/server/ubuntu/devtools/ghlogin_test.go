@@ -1,9 +1,12 @@
 package devtools
 
 import (
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 // lookupOf is the run's env of the secrets task, which holds env alone.
@@ -38,5 +41,53 @@ func TestRunTokenTakesTheInputOfTheRun(t *testing.T) {
 	}
 	if got, err := RunToken(effecttest.NewMachine(), nil); err != nil || got != "" {
 		t.Errorf("without the file: got %q, %v", got, err)
+	}
+}
+
+// gh runs as the account from a cleared env, or as root without the hidden names, and takes the
+// token on its input alone. A login that holds the token plans nothing; without one, it stays.
+func TestGHLoginLogsInByTheTokenOnItsInput(t *testing.T) {
+	for _, u := range []account.User{{Name: "ws", Home: "/home/ws"}, {Name: "root", Home: "/root"}} {
+		gh := "runuser -u ws -- env -i -C /home/ws HOME=/home/ws " + account.SystemPath + " env -u A -u B gh"
+		if u.Name == "root" {
+			gh = "env HOME=/root env -u A -u B gh"
+		}
+		m := effecttest.NewMachine()
+		m.Results[gh+" auth token -h github.com"] = effecttest.Result{Out: []byte("dummy-a\n")}
+		m.Results[gh+" auth login -h github.com -p https --insecure-storage --with-token"] = effecttest.Result{}
+		for token, due := range map[string]int{"dummy-a": 0, "dummy-b": 1, "": 0} {
+			m.Calls, m.Inputs = nil, nil
+			g := GHLogin{M: m, U: u, Token: token, Hidden: []string{"A", "B"}}
+			changes, err := g.Plan(t.Context())
+			if err != nil || len(changes) != due {
+				t.Fatalf("%s, token %q: plan = %d changes, %v; want %d", u.Name, token, len(changes), err, due)
+			}
+			if token == "" && len(m.Calls) != 0 {
+				t.Errorf("%s: without a token gh ran: %q", u.Name, m.Calls)
+			}
+			for _, ch := range changes {
+				if err := ch.Apply(t.Context()); err != nil {
+					t.Fatal(err)
+				}
+				if strings.Contains(ch.String(), "dummy") {
+					t.Errorf("%s: the change %q shows the token", u.Name, ch.String())
+				}
+			}
+			if due == 1 && !slices.Equal(m.Inputs, []string{token + "\n"}) {
+				t.Errorf("%s: gh's input %q, want the token", u.Name, m.Inputs)
+			}
+			if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.Contains(c, "dummy") }) {
+				t.Errorf("%s: a command's arguments hold the token: %q", u.Name, m.Calls)
+			}
+		}
+	}
+}
+
+// A gh that holds no login fails gh auth token, which plans the login.
+func TestGHLoginWithoutALoginPlansIt(t *testing.T) {
+	m := effecttest.NewMachine()
+	g := GHLogin{M: m, U: account.User{Name: "root", Home: "/root"}, Token: "dummy-a"}
+	if changes, err := g.Plan(t.Context()); err != nil || len(changes) != 1 {
+		t.Errorf("plan = %d changes, %v; want the login", len(changes), err)
 	}
 }
