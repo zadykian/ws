@@ -44,13 +44,14 @@ func readRuns(t *testing.T) map[string]run {
 }
 
 // script runs argv's shell line, argv[:4], with arg as its $1, and the fake commands of bin first
-// on PATH. It returns the output, and whether the line exited 0.
+// on the PATH that ws gives a unit's commands. It returns the output, and whether the line exited
+// 0. macOS keeps sha256sum in /sbin.
 func script(t *testing.T, argv []string, bin, arg string) (string, bool) {
 	if len(argv) < 4 || argv[0] != "sh" || argv[1] != "-c" {
 		t.Fatalf("%q is not a shell line with arguments", argv)
 	}
 	cmd := exec.Command("sh", "-c", argv[2], argv[3], arg) //nolint:gosec // G204: the role's own line
-	cmd.Env = []string{"PATH=" + bin + ":/usr/bin:/bin"}
+	cmd.Env = []string{"PATH=" + bin + ":" + strings.TrimPrefix(systemPath, "PATH=")}
 	out, err := cmd.CombinedOutput()
 	return string(out), err == nil
 }
