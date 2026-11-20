@@ -7,7 +7,6 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/account"
 	"github.com/zadykian/ws/engine/core/resource/file"
-	"github.com/zadykian/ws/roles/server/internal/plan"
 )
 
 // Tokens is the credential programs of git's tokens for servers besides GitHub, in
@@ -29,14 +28,14 @@ func (t Tokens) Plan(ctx context.Context) ([]resource.Change, error) {
 	}
 	creds := credentialsOf(tokens)
 	if len(creds) == 0 {
-		return plan.All(ctx, file.Absent{M: t.M, Path: tokensPath})
+		return file.Absent{M: t.M, Path: tokensPath}.Plan(ctx)
 	}
 	content, err := tokensConfig(sections(creds))
 	if err != nil {
 		return nil, err
 	}
-	return plan.All(ctx, file.Validated{File: file.File{M: t.M, Path: tokensPath, Content: content,
-		Mode: 0o640, GID: t.A.GID}, Check: configCheck})
+	return file.Validated{File: file.File{M: t.M, Path: tokensPath, Content: content,
+		Mode: 0o640, GID: t.A.GID}, Check: configCheck}.Plan(ctx)
 }
 
 // configCheck is the command that has git read a config file before it replaces the old one.
