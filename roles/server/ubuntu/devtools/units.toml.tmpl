@@ -116,31 +116,14 @@ check = [
     "{{ .User }}",
 ]
 
-# gh logs in by the token file, after its group, which waits on the telemetry. The login's read
-# runs after mise's files step, so it compares gh's token with the file the run wrote. The token
-# passes through a pipe and the shell alone, never through a command's arguments. Without the file,
-# gh's login stays unchanged. ws has no keyring, so gh keeps the token in ~/.config/gh/hosts.yml,
-# mode 0600.
+# gh logs in by the token file, after its group, which waits on the telemetry. ws reads the token
+# and gives it to gh on its input, as the account, so it never reaches a command's arguments. A plan
+# writes no file, so in the secrets task's run ws reads WS_GITHUB_TOKEN, and the plan shows the
+# login that the run makes. Without a token, gh's login stays unchanged. ws has no keyring, so gh
+# keeps the token in ~/.config/gh/hosts.yml, mode 0600.
 [state.devtools-gh-login]
 after = "state/devtools-gh-token-group"
-
-[state.devtools-gh-login.run]
-user = "{{ .User }}"
-unbooted = true
-command = [
-    "sh",
-    "-c",
-    '[ ! -e "$1" ] || tail -n 1 "$1" | gh auth login -h github.com -p https --insecure-storage --with-token',
-    "sh",
-    "/etc/ws/gh-token",
-]
-check = [
-    "sh",
-    "-c",
-    '[ ! -e "$1" ] || { t=$(gh auth token -h github.com 2>/dev/null) && [ "$t" = "$(tail -n 1 "$1")" ]; }',
-    "sh",
-    "/etc/ws/gh-token",
-]
+run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "ubuntu", "devtools", "gh-login"], check = ["{{ self }}", "server", "ubuntu", "devtools", "gh-login", "--check"] }
 
 # roslyn-language-server, C#'s server, from nuget.org, where every version is a prerelease. The
 # version alone pins it, as nuget.org refuses a version's second upload. From 5.13.0-1.26514.10 the

@@ -47,8 +47,11 @@ type Env struct {
 	User string
 	// Hidden names the variables of the run's env that a run state drops from a command whose
 	// program is not Self. They may hold a secret's value, and a command such as an installer runs
-	// code that the run fetched.
+	// code that the run fetched. They are mise's inputs, which envvar reads from the run's env.
 	Hidden []string
+	// LookupEnv reads the run's env, and tells a variable set but empty from one the run never set.
+	// Nil reads none.
+	LookupEnv func(string) (string, bool)
 }
 
 // Unit is one unit of a spec: its name, KIND/NAME, and the step that sets it up.

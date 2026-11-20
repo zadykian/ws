@@ -119,7 +119,9 @@ answers for GitHub, except below an entry's URL there.
 
 `tokens.gitconfig` follows the file whole: a URL the file lacks loses its program, and without the
 file, `tokens.gitconfig` goes. A run without the `secrets` env, as CI's `playbook`, keeps the file,
-and so its programs. No token reaches `tokens.gitconfig`, `~/.gitconfig` or the run's output.
+and so its programs. A plan writes no file. So in the secrets task's run, the guard and the
+tokens take the input from the run's env, and the plan shows the run's change. No token reaches
+`tokens.gitconfig`, `~/.gitconfig` or the run's output.
 
 To revoke a token, revoke it on the server first, then remove its table from the input and run the
 [secrets task](../secrets/README.md#the-task).

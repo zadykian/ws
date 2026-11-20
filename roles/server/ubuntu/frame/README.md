@@ -103,8 +103,13 @@ WS_GITHUB_TOKEN = { env = "WS_GITHUB_TOKEN", allow_empty = true }
 - A run without the env, as CI's `playbook`, loads none of these files, so it keeps the secret
   files as they are, and its plan lists none. The group states read a file's first line as the
   guard does, so a file by hand stops that run too, before the account's group opens it.
-- A unit reads a file that the same run wrote: mise's files step comes first. An input may write
-  no file, as ikeward's profile, which ws's own commands read from the run's env
+- A unit reads a file that the same run wrote: mise's files step comes first. A plan writes none.
+  So a template's `envvar` takes an input from the run's env in the secrets task's run alone, and
+  the plan shows what the run changes
+  ([The specs](../../../../engine/core/kind/README.md#the-specs)). So do the commands of ws that
+  read git's tokens and gh's ([Git credentials](../git/README.md#git-credentials),
+  [gh](../devtools/README.md#gh)). An input may write no file, as
+  ikeward's profile, which ws's own commands read from the run's env
   ([The profile's inputs](../ikeward/README.md#the-profiles-inputs)).
 - A run state drops each input from the env of a command whose program is not ws's
   ([run](../../../../engine/core/kind/state.md)), so that an installer never sees a value.

@@ -45,7 +45,7 @@ func unitSide(vars string) enginecli.UnitSide {
 			}
 			return v, m, nil
 		},
-		Hidden: secretInputs}
+		Hidden: secretInputs, Task: secretsTask}
 }
 
 // ubuntu refuses a machine whose /etc/os-release names a system other than Ubuntu 26.04, the one

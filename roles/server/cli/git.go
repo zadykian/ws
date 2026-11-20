@@ -39,7 +39,8 @@ func newGitCheckCmd(p enginecli.Env) *cobra.Command {
 	return &cobra.Command{
 		Use:   "check",
 		Short: "refuse git's clones and tokens that the role would act on, and note what shadows ws's settings",
-		Long: "It reads the values of " + serverVars + " and " + git.TokensFile + ", where there is one. It fails where an " +
+		Long: "It reads the values of " + serverVars + " and " + git.TokensFile + ", where there is one, or " + git.TokensVar +
+			" in the secrets task's run, which writes the file. It fails where an " +
 			"entry of WS_GIT_CLONES holds a user name or a token in its URL, or where the tokens' file is refused " +
 			"(roles/server/ubuntu/git/README.md#git-credentials). No message quotes a token or a repository.\n\nIt prints a warning on stdout for each setting of ~/.gitconfig that shadows " +
 			"/etc/ws/gitconfig's, by its name, never its value. The git role's guard runs it, before the tokens " +
@@ -50,7 +51,7 @@ func newGitCheckCmd(p enginecli.Env) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			notes, err := git.Check(c.Context(), p.Machine, a, v)
+			notes, err := git.Check(c.Context(), p.Machine, a, v, p.TaskEnv(secretsTask))
 			for _, n := range notes {
 				_, _ = fmt.Fprintln(c.OutOrStdout(), "warning: "+n)
 			}
@@ -124,9 +125,10 @@ func newGitTokensCmd(p enginecli.Env) *cobra.Command {
 	return gitProcedure(p, "tokens", "write the credential programs of the URLs of "+git.TokensFile,
 		"Each URL of "+git.TokensFile+" gets ws's credential program in /etc/ws/tokens.gitconfig, root's with the "+
 			"account's group, which names no token (roles/server/ubuntu/git/README.md#git-credentials). Without the "+
-			"file, tokens.gitconfig goes. The git role's run state runs it, after the role's check.",
+			"file, tokens.gitconfig goes. In the secrets task's run, it reads "+git.TokensVar+", which that run writes "+
+			"to the file, and a plan nowhere. The git role's run state runs it, after the role's check.",
 		func(_ values.Values, a account.Account) resource.Resource {
-			return git.Tokens{M: p.Machine, A: a}
+			return git.Tokens{M: p.Machine, A: a, Lookup: p.TaskEnv(secretsTask)}
 		})
 }
 

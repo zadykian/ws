@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zadykian/ws/engine/cli/clitest"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/roles/server/ubuntu/git"
 )
@@ -99,5 +100,36 @@ func TestGitCredentialAnswersFromTheTokensFile(t *testing.T) {
 	}
 	if status, _, _ := runWs(p, "", "server", "ubuntu", "git", "credential"); status != 2 {
 		t.Errorf("without a key: status = %d, want a usage error", status)
+	}
+}
+
+// In the secrets task's run, git's commands take the tokens from WS_GIT_TOKENS, which mise writes to
+// the file before them, and a plan writes nowhere. Elsewhere a stale variable counts for nothing.
+func TestGitTakesTheTokensInputInTheSecretsTask(t *testing.T) {
+	good := "[\"https://git.example.test\"]\ntoken = \"dummy-marker\"\n"
+	bad := good + "user = \"dummy-marker\"\n"
+	for i, c := range []struct {
+		env           map[string]string
+		check, tokens int
+	}{
+		{map[string]string{"MISE_TASK_NAME": "secrets", "WS_GIT_TOKENS": good}, 0, 1},
+		{map[string]string{"MISE_TASK_NAME": "secrets", "WS_GIT_TOKENS": bad}, 1, 1},
+		{map[string]string{"MISE_TASK_NAME": "secrets", "WS_GIT_TOKENS": ""}, 0, 0},
+		{map[string]string{"WS_GIT_TOKENS": bad}, 0, 0},
+	} {
+		p, m := valuesProcess("---\nWS_USER: root\n")
+		p = clitest.WithEnv(p, c.env)
+		m.Results["git config --file /etc/ws/tokens.gitconfig.ws-check --name-only --list"] = effecttest.Result{}
+		status, _, stderr := runWs(p, "", "server", "ubuntu", "git", "check")
+		if status != c.check || strings.Contains(stderr, "dummy-marker") {
+			t.Errorf("case %d: check status = %d, stderr %q; want %d", i, status, stderr, c.check)
+		}
+		status, _, stderr = runWs(p, "", "server", "ubuntu", "git", "tokens", "--check")
+		if status != c.tokens || strings.Contains(stderr, "dummy-marker") {
+			t.Errorf("case %d: tokens --check status = %d, stderr %q; want %d", i, status, stderr, c.tokens)
+		}
+		if _, ok := m.Files["/etc/ws/tokens.gitconfig"]; ok {
+			t.Errorf("case %d: a check wrote tokens.gitconfig", i)
+		}
 	}
 }

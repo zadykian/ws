@@ -390,6 +390,7 @@ Usage:
 Available Commands:
   cable       the cable role's check and reload, which its units run
   claude      the claude role's procedures, which its units run
+  devtools    the devtools role's procedures, which its units run
   fans        drive the board's fans on the curves of CONFIG until SIGTERM
   git         the git role's checks and procedures, which its units run
   ikeward     the ikeward role's check, install and wait, which its units run
@@ -522,6 +523,31 @@ Usage:
 Flags:
       --check   fail where a change is due, and change nothing
   -h, --help    help for update
+== ws server ubuntu devtools
+the devtools role's procedures, which its units run
+
+Usage:
+  ws server ubuntu devtools [flags]
+  ws server ubuntu devtools [command]
+
+Available Commands:
+  gh-login    log gh in to github.com as WS_USER, by the token of /etc/ws/gh-token
+
+Flags:
+  -h, --help   help for devtools
+
+Use "ws server ubuntu devtools [command] --help" for more information about a command.
+== ws server ubuntu devtools gh-login
+gh logs in as WS_USER by the last line of /etc/ws/gh-token, which it takes on its input (roles/server/ubuntu/devtools/README.md#gh). In the secrets task's run, it reads WS_GITHUB_TOKEN, which that run writes to the file, and a plan nowhere. Without a token, gh's login stays. The devtools role's run state runs it.
+
+--check fails where a change is due, and changes nothing.
+
+Usage:
+  ws server ubuntu devtools gh-login [flags]
+
+Flags:
+      --check   fail where a change is due, and change nothing
+  -h, --help    help for gh-login
 == ws server ubuntu fans
 CONFIG is the file that the fans role writes, /etc/ws/fans.json by default.
 
@@ -549,7 +575,7 @@ Flags:
 
 Use "ws server ubuntu git [command] --help" for more information about a command.
 == ws server ubuntu git check
-It reads the values of /etc/ws/values.yml and /etc/ws/git-tokens.toml, where there is one. It fails where an entry of WS_GIT_CLONES holds a user name or a token in its URL, or where the tokens' file is refused (roles/server/ubuntu/git/README.md#git-credentials). No message quotes a token or a repository.
+It reads the values of /etc/ws/values.yml and /etc/ws/git-tokens.toml, where there is one, or WS_GIT_TOKENS in the secrets task's run, which writes the file. It fails where an entry of WS_GIT_CLONES holds a user name or a token in its URL, or where the tokens' file is refused (roles/server/ubuntu/git/README.md#git-credentials). No message quotes a token or a repository.
 
 It prints a warning on stdout for each setting of ~/.gitconfig that shadows /etc/ws/gitconfig's, by its name, never its value. The git role's guard runs it, before the tokens and the clones.
 
@@ -586,7 +612,7 @@ Usage:
 Flags:
   -h, --help   help for included
 == ws server ubuntu git tokens
-Each URL of /etc/ws/git-tokens.toml gets ws's credential program in /etc/ws/tokens.gitconfig, root's with the account's group, which names no token (roles/server/ubuntu/git/README.md#git-credentials). Without the file, tokens.gitconfig goes. The git role's run state runs it, after the role's check.
+Each URL of /etc/ws/git-tokens.toml gets ws's credential program in /etc/ws/tokens.gitconfig, root's with the account's group, which names no token (roles/server/ubuntu/git/README.md#git-credentials). Without the file, tokens.gitconfig goes. In the secrets task's run, it reads WS_GIT_TOKENS, which that run writes to the file, and a plan nowhere. The git role's run state runs it, after the role's check.
 
 --check fails where a change is due, and changes nothing.
 

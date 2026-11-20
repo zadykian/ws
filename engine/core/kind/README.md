@@ -32,9 +32,13 @@ Each Go template ends in `.tmpl`, the spec's name and the name of each `template
   `installed_version` gives dpkg's version of an installed package, else "", and `kernel_release`
   the running kernel's, as `uname -r` prints it. `root_file` gives a file's text, read as root and
   trimmed, else "". A spec names no secret's file with it, as a file's diff would show the secret.
-  Both renders take `trim_suffix S SUFFIX`, S without SUFFIX. A unit's template takes the fact
-  `ssh_pub USER PATH` too: the SSH public key at PATH, below USER's home, as `TYPE BASE64`, a link
-  on the way refused, and "" for no file.
+  `envvar` gives NAME's value in the env file FILE, which it reads and never runs. A NAME that the
+  side hides is an input of mise's, which a run writes to FILE before any unit and a plan writes
+  nowhere. In the run of the side's task, which mise names by `MISE_TASK_NAME`, `envvar` takes it
+  from the run's env where that sets it, empty or not. So a plan shows what the run changes, and a
+  shell's stale value counts nowhere else. Both renders take `trim_suffix S SUFFIX`, S without
+  SUFFIX. A unit's template takes the fact `ssh_pub USER PATH` too: the SSH public key at PATH,
+  below USER's home, as `TYPE BASE64`, a link on the way refused, and "" for no file.
 - **when.** Any unit takes `when = { FACT = "WANT" }`, and runs where every FACT of the machine
   gives its WANT, and `"!WANT"` where it does not. Elsewhere it plans nothing, and says so in a
   line. An empty WANT, negated or not, holds on no machine, so a value left empty turns the unit

@@ -17,12 +17,14 @@ import (
 type Tokens struct {
 	M effect.Machine
 	A account.Account
+	// Lookup gives the secrets task's input, which RunTokens takes over TokensFile. Nil reads the
+	// file.
+	Lookup func(string) (string, bool)
 }
 
-// Plan reads TokensFile, which mise's files step wrote before any unit, and refuses it before any
-// write.
+// Plan reads the tokens as RunTokens gives them, and refuses them before any write.
 func (t Tokens) Plan(ctx context.Context) ([]resource.Change, error) {
-	tokens, _, err := ReadTokens(t.M)
+	tokens, _, err := RunTokens(t.M, t.Lookup)
 	if err != nil {
 		return nil, err
 	}

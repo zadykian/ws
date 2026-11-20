@@ -21,6 +21,10 @@ import (
 // change it.
 const TokensFile = etcws.Dir + "/git-tokens.toml"
 
+// TokensVar is the secret input that mise writes TokensFile from, and the variable that the secrets
+// task's run sets to it.
+const TokensVar = "WS_GIT_TOKENS" //nolint:gosec // G101: a variable's name, no credential
+
 // Token is one table of TokensFile, whose key is a server's URL, or a path on it.
 type Token struct {
 	Token string `toml:"token"`
@@ -42,15 +46,41 @@ func ReadTokens(m effect.Machine) (tokens map[string]Token, present bool, err er
 	if err != nil {
 		return nil, false, err
 	}
+	tokens, err = parseTokens(text, TokensFile)
+	return tokens, err == nil, err
+}
+
+// RunTokens returns the tokens that the role's units act on. mise writes TokensFile from TokensVar
+// in a run before any unit, but in a plan writes nothing. So where lookup gives the input, as in
+// the secrets task's run, the tokens are its own, and a plan sees what the run writes. An empty one
+// is no file. Without it, or with a nil lookup, they are ReadTokens'.
+func RunTokens(m effect.Machine, lookup func(string) (string, bool)) (tokens map[string]Token, present bool, err error) {
+	if lookup == nil {
+		return ReadTokens(m)
+	}
+	text, ok := lookup(TokensVar)
+	switch {
+	case !ok:
+		return ReadTokens(m)
+	case text == "":
+		return nil, false, nil
+	}
+	tokens, err = parseTokens([]byte(text), TokensVar)
+	return tokens, err == nil, err
+}
+
+// parseTokens reads the TOML of text, which its error calls where. It refuses a key that ws does
+// not know, and a table that checkCredentials refuses. No error holds a value.
+func parseTokens(text []byte, where string) (tokens map[string]Token, err error) {
 	d := toml.NewDecoder(bytes.NewReader(text))
 	d.DisallowUnknownFields()
 	if err := d.Decode(&tokens); err != nil {
-		return nil, false, fmt.Errorf("%s: %w", TokensFile, scrub(err))
+		return nil, fmt.Errorf("%s: %w", where, scrub(err))
 	}
 	if err := checkCredentials(credentialsOf(tokens)); err != nil {
-		return nil, false, fmt.Errorf("%s: %w", TokensFile, err)
+		return nil, fmt.Errorf("%s: %w", where, err)
 	}
-	return tokens, true, nil
+	return tokens, nil
 }
 
 // credentialsOf returns the file's tables, sorted by URL.

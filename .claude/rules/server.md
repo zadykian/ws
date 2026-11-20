@@ -33,7 +33,9 @@ steps, and each role's README says what it sets up.
   ([values.go](../../roles/server/values/values.go)).
 - A role's secret is an input of its `mise.secrets.toml`, in the one form the frame's page gives
   ([Secret inputs](../../roles/server/ubuntu/frame/README.md#secret-inputs)). Go reads a value
-  from a file that mise wrote, as git's tokens, or ikeward's from the run's env, and no other.
+  from a file that mise wrote, as git's tokens, or from the run's env, and no other. ikeward's
+  inputs write no file. One that mise writes counts in the env in the secrets task's run alone,
+  where a plan writes no file ([env.go](../../engine/cli/env.go)).
   A role's type holds that role's values alone, as `ikeward.Profile`. ws holds no store of the
   secrets and no struct that gathers them: they reach the server by fnox alone
   ([The repository](../../roles/server/ubuntu/secrets/README.md#the-repository)).
@@ -84,8 +86,9 @@ steps, and each role's README says what it sets up.
   GitHub's pinned key, and `--if-missing error`, so no value is left out
   ([The task](../../roles/server/ubuntu/secrets/README.md#the-task)).
 - A unit that reads a file of a secret input follows it whole: a run removes what it lacks, such
-  as a git token's program. A run without the `secrets` env keeps the file, so it keeps what a run
-  with it made ([Git credentials](../../roles/server/ubuntu/git/README.md#git-credentials)).
+  as a git token's program. In the secrets task's run, it reads the input itself, so that a plan
+  shows the change. A run without the `secrets` env keeps the file, so it keeps what a run with it
+  made ([Git credentials](../../roles/server/ubuntu/git/README.md#git-credentials)).
 
 ## Downloads and keys
 
