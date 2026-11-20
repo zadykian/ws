@@ -260,16 +260,20 @@ func TestSecretsAddRefuses(t *testing.T) {
 	}
 }
 
+// fnox prints a plain value, as where it passes and where it fails, and ws passes none of it on.
 func TestSecretsAddKeepsTheValuesOutOfItsOutput(t *testing.T) {
-	p, mac := addFixture(heldBy(t, olderKey))
-	status, stdout, stderr := addWs(p, "", "lab")
-	if status != 0 {
-		t.Fatalf("add lab: status = %d, stderr = %q", status, stderr)
-	}
-	for where, text := range map[string]string{"stdout": stdout, "stderr": stderr,
-		"the calls": strings.Join(mac.Calls, "\n")} {
-		if strings.Contains(text, "c2VhbGVk") {
-			t.Errorf("%s hold a value: %q", where, text)
+	for _, fail := range []error{nil, errors.New("exit status 1")} {
+		p, mac := addFixture(heldBy(t, olderKey))
+		mac.FnoxErr = fail
+		status, stdout, stderr := addWs(p, "", "lab")
+		if (status != 0) != (fail != nil) || len(mac.Fnoxed()) == 0 {
+			t.Fatalf("add lab, fnox failing with %v: status = %d, stderr = %q", fail, status, stderr)
+		}
+		for where, text := range map[string]string{"stdout": stdout, "stderr": stderr,
+			"the calls": strings.Join(mac.Calls, "\n"), "the inputs": strings.Join(mac.Inputs, "\n")} {
+			if strings.Contains(text, secretstest.Plain) || strings.Contains(text, "c2VhbGVk") {
+				t.Errorf("fnox failing with %v: %s hold a value: %q", fail, where, text)
+			}
 		}
 	}
 }

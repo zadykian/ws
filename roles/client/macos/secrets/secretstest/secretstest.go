@@ -22,16 +22,23 @@ const (
 	Head = "abc123"
 )
 
+// Plain is what every fnox call in the clone prints: a value in the clear, which a test looks for in
+// what ws prints and runs. ws leaves fnox's output to the terminal, so Plain reaches neither.
+const Plain = "S1=the-plain-value-of-S1"
+
 // Mac is a Mac whose tree names o/n and whose gh reads it as private. Its clone holds the files
 // that New starts it with, and the checks' workflow. gh lists Keys as the deploy keys, and adds
-// and deletes any. Every fnox and git call in the clone passes, both checks pass, and the merge
-// passes. A line that the test sets in Results beforehand answers as the test set it.
+// and deletes any. Every git call in the clone passes, and every fnox call prints Plain, and fails
+// where FnoxErr is set. Both checks pass, and the merge passes. A line that the test sets in Results
+// beforehand answers as the test set it.
 type Mac struct {
 	*effecttest.Machine
 	// Base is the directory that mktemp names, and Dir the clone in it.
 	Base, Dir string
 	// Keys are the deploy keys that gh lists.
 	Keys []secrets.DeployKey
+	// FnoxErr is the error of each fnox call, nil where fnox passes.
+	FnoxErr error
 
 	start  map[string][]byte
 	ours   map[string]bool
@@ -107,10 +114,16 @@ func (f *Mac) Files() map[string]string {
 	return files
 }
 
-// answer sets the result of a line of the clone, gh's deploy keys or fnox, where the test set none.
+// answer sets the result of a line of the clone, fnox, or gh's deploy keys, where the test set none.
 func (f *Mac) answer(name string, args []string) {
 	line := strings.Join(append([]string{name}, args...), " ")
 	if _, set := f.Results[line]; set && !f.ours[line] {
+		return
+	}
+	if i := slices.Index(args, f.Dir); name == "env" && i >= 0 && i+1 < len(args) && args[i+1] == "fnox" {
+		f.fnoxed = append(f.fnoxed, slices.Clone(args[i+2:]))
+		f.Results[line] = effecttest.Result{Out: []byte(Plain + "\n"), Err: f.FnoxErr}
+		f.ours[line] = true
 		return
 	}
 	out, ok := f.reply(name, args)
@@ -120,12 +133,8 @@ func (f *Mac) answer(name string, args []string) {
 	}
 }
 
-// reply is the output of a line that the fake answers, and whether it answers it.
+// reply is the output of a line of git or gh that the fake answers, and whether it answers it.
 func (f *Mac) reply(name string, args []string) (string, bool) {
-	if i := slices.Index(args, f.Dir); name == "env" && i >= 0 && i+1 < len(args) && args[i+1] == "fnox" {
-		f.fnoxed = append(f.fnoxed, slices.Clone(args[i+2:]))
-		return "", true
-	}
 	if name == "env" && len(args) > 1 && args[0] == "GIT_TERMINAL_PROMPT=0" {
 		name, args = args[1], args[2:]
 	}
