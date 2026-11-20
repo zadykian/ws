@@ -9,9 +9,10 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 
 ## Layout
 
-- `roles/server/ubuntu/NAME`: a role per directory, as its mise config and its spec of units, with
-  its page, `README.md`, and a line in the root README. The units run in the order of their
-  `after` ([The order](../roles/server/ubuntu/frame/README.md#the-order)). Each role
+- `roles/server/ubuntu/NAME`: a role per directory, with its page, `README.md`, and a line in the
+  root README. It holds its mise files by env, and its spec of units where it has any. The
+  units run in the order of their `after`
+  ([The order](../roles/server/ubuntu/frame/README.md#the-order)). Each role
   holds its pins, and its templates and files beside its spec. ws-fans, the fans' service, is
   `ws server ubuntu fans`, in `roles/server/ubuntu/fans/daemon`.
 - `roles/server/`: the server's side, its roles in `ubuntu/`. Above them sit the packages that
@@ -30,8 +31,8 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 - `mise.toml` and `mise.lock`: mise's config that both sides share, its settings and the pin of
   ws, a release, with the release's SHA-256 for each target in the lock. `mise.server.toml` is
   the server's part, and `plugins/ws` the plugin that hands ws's units to `ws unit`. A role holds
-  its spec, `units.toml.tmpl`, and its mise files beside its page. Each side's `roles/SIDE/mise/`
-  holds its one link, `conf.d`, to its directory of roles, and its lock
+  its spec, `units.toml.tmpl`, where it has units, and its mise files by env beside its page. Each
+  side's `roles/SIDE/mise/` holds its one link, `conf.d`, to its directory of roles, and its lock
   ([The frame](../roles/server/ubuntu/frame/README.md)). The roles' tools lock in
   `roles/server/mise/mise.server.lock`. `mise.mac.toml` is the Mac's part, and
   `roles/client/macos/frame` and `roles/client/facts` its frame and its units' values

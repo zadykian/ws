@@ -3,7 +3,7 @@
 The frame is what each role of mise's config leans on. One `mise bootstrap` sets up the server, in
 the side's run directory, `roles/server` of the checkout at `/opt/ws`. mise's own parts run first,
 then ws's units, which mise hands to `ws unit` through the plugin `ws`. A role moved to mise is its
-config and its spec, and holds no Go.
+config, with its spec where it has units, and holds no Go.
 
 ## Its files
 
@@ -22,7 +22,7 @@ The Mac shares `mise.toml` alone, and loads no file of the server's.
 
 A role keeps its directory, `roles/server/ubuntu/ROLE/`, and its page there:
 
-- **Its spec,** `units.toml.tmpl`, with its templates and sources beside it
+- **Its spec,** `units.toml.tmpl`, where it has units, with its templates and sources beside it
   ([The specs](../../../../engine/core/kind/README.md#the-specs)). A path in the spec is relative to
   the directory. Every Go template ends in `.tmpl`: the spec, and each file that a `template`
   names, as `ws.conf.tmpl`. A kind refuses a `template` that lacks the ending, as the spec loads.
