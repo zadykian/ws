@@ -35,6 +35,34 @@ func TestFactsReadTheMachine(t *testing.T) {
 	}
 }
 
+// A variable that the side hides is an input, which mise writes to the env file in the same run.
+// Where the run's env sets it, envvar takes it from there, so a plan sees what the run writes.
+func TestEnvvarTakesAnInputOfTheRun(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/etc/ws/env"] = []byte("export A='old'\nB=old\n")
+	dir := fstest.MapFS{"t.tmpl": {Data: []byte(`{{envvar "/etc/ws/env" "A"}}|{{envvar "/etc/ws/env" "B"}}`)}}
+	for _, c := range []struct {
+		env  map[string]string
+		want string
+	}{
+		{map[string]string{"A": "new", "B": "new"}, "new|old"},
+		{map[string]string{"A": ""}, "|old"},
+		{map[string]string{}, "old|old"},
+		{nil, "old|old"},
+	} {
+		e := Env{M: m, Hidden: []string{"A"}}
+		if c.env != nil {
+			e.LookupEnv = func(k string) (string, bool) {
+				v, ok := c.env[k]
+				return v, ok
+			}
+		}
+		if got, err := render(t.Context(), e, dir, "t.tmpl"); err != nil || string(got) != c.want {
+			t.Errorf("env %v: render = %q, %v; want %q", c.env, got, err, c.want)
+		}
+	}
+}
+
 func TestRootFileReadsAsRoot(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/etc/k/a.pub"] = []byte("  key\n")
