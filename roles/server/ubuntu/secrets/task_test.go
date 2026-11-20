@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"testing"
@@ -35,6 +36,7 @@ exit 255`,
 	echo "key=${FNOX_AGE_KEY_FILE-}"
 	echo "age_key=${FNOX_AGE_KEY+set}"
 	echo "age_identity=${FNOX_AGE_IDENTITY+set}"
+	echo "config_dir=${FNOX_CONFIG_DIR-}"
 	echo "config=$(ls -A -- "$FNOX_CONFIG_DIR")"
 	echo "daemon=${FNOX_DAEMON-}"
 } >>"$FAKE_LOG/fnox"
@@ -167,9 +169,16 @@ func (f *fixture) cloned() {
 	}
 }
 
+// The caller's key, identity and config of fnox's take no part: the task's own config directory,
+// under its temporary one, is empty.
 func TestTaskClonesAndRunsTheBootstrapUnderFnox(t *testing.T) {
 	f := newFixture(t)
 	f.env["FNOX_AGE_KEY"] = "AGE-SECRET-KEY-OF-THE-CALLER"
+	f.env["FNOX_AGE_IDENTITY"] = filepath.Join(f.root, "identity")
+	f.env["FNOX_CONFIG_DIR"] = filepath.Join(f.root, "home")
+	if err := os.WriteFile(filepath.Join(f.root, "home/config.toml"), nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
 	if code, out := f.run(); code != 0 {
 		t.Fatalf("the task exits %d, want 0:\n%s", code, out)
 	}
@@ -186,6 +195,10 @@ func TestTaskClonesAndRunsTheBootstrapUnderFnox(t *testing.T) {
 		if !strings.Contains(fnox, want) {
 			t.Errorf("fnox's log lacks %q:\n%s", want, fnox)
 		}
+	}
+	own := regexp.MustCompile(`(?m)^config_dir=` + regexp.QuoteMeta(filepath.Join(f.root, "tmp")) + `/[^/]+/fnox$`)
+	if n := len(own.FindAllString(fnox, -1)); n != 2 {
+		t.Errorf("fnox ran %d times in the task's own config directory, want 2:\n%s", n, fnox)
 	}
 	if got := f.log("mise"); got != bootstrap+"\n" {
 		t.Errorf("mise ran %q, want %q", got, bootstrap)
