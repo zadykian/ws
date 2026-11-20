@@ -81,17 +81,22 @@ func runSecretsAdd(c *cobra.Command, p enginecli.Env, server, name, address stri
 	if err != nil {
 		return err
 	}
-	if err := addHostKey(c, p, name, hostname, key, keyFile); err != nil {
+	byHand, err := addHostKey(c, p, name, hostname, key, keyFile)
+	if err != nil {
 		return err
 	}
 	again := strings.Join(append([]string{"ws client macos secrets add"}, addFlags(name, address, port)...), " ")
 	_, _ = fmt.Fprintf(c.OutOrStdout(), "running the bootstrap with the secrets on %s, which takes 20 to 40 "+
 		"minutes on a new server\n", name)
 	run := append(append([]string{"-t"}, target...), serverSecretsRun...)
-	if err := p.Machine.Pass(c.Context(), false, "ssh", run...); err != nil {
-		return fmt.Errorf("the run of the secrets on %s: %w: run %s again", name, err, again)
+	if err = p.Machine.Pass(c.Context(), false, "ssh", run...); err != nil {
+		err = fmt.Errorf("the run of the secrets on %s: %w: run %s again", name, err, again)
 	}
-	return nil
+	// The lines come after the run's long output, so that they stay in sight.
+	for _, line := range byHand {
+		_, _ = fmt.Fprintln(c.OutOrStdout(), line)
+	}
+	return err
 }
 
 // knownServer refuses a name that is no server of the Mac's.
