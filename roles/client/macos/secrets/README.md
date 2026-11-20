@@ -57,6 +57,8 @@ there. In a temporary clone of the repository, it:
 4. Prints the backup's secret line, where it made one, and waits for Enter.
 5. Lands `fnox.toml` by a pull request, as below.
 
+A Ctrl-C or a SIGTERM stops it as a failure does, so that it removes the clone before it ends.
+
 ## The Nano and the backup
 
 The Nano holds the age identity of the recipient `nano` in `fnox.toml`. The Go package here finds

@@ -2,6 +2,8 @@ package cli
 
 import (
 	"errors"
+	"os/signal"
+	"syscall"
 
 	"github.com/spf13/cobra"
 
@@ -35,8 +37,11 @@ func newSecretsInitCmd(p enginecli.Env, server *string) *cobra.Command {
 			if *server != "" {
 				return errors.New("init takes no --server: the secrets repository serves every server")
 			}
+			// A Ctrl-C or a SIGTERM ends the context, not ws, so that init still removes its clone.
+			ctx, stop := signal.NotifyContext(c.Context(), syscall.SIGINT, syscall.SIGTERM)
+			defer stop()
 			return secrets.Init{M: p.Machine, Getenv: p.Getenv, Out: c.OutOrStdout(), In: c.InOrStdin(),
-				Tree: secrets.Tree}.Run(c.Context())
+				Tree: secrets.Tree}.Run(ctx)
 		},
 	}
 }

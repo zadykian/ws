@@ -1,11 +1,67 @@
 package cli
 
 import (
+	"context"
+	"os"
 	"strings"
+	"syscall"
 	"testing"
 
+	"github.com/spf13/cobra"
+
+	"github.com/zadykian/ws/engine/cli/clitest"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/secrets"
+	"github.com/zadykian/ws/roles/client/macos/secrets/secretstest"
 )
+
+// checksLine reads the checks of the pull request that the fake repository opens.
+const checksLine = secrets.GH + " pr checks " + secretstest.Pull + " --json name,bucket"
+
+// signaled is a Mac that sends ws the signal once init reads the checks, which are still running.
+// Its commands refuse to start once their context ends, as exec's do.
+type signaled struct {
+	*secretstest.Mac
+	sig  syscall.Signal
+	sent bool
+}
+
+func (s *signaled) Run(ctx context.Context, name string, args ...string) ([]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	out, err := s.Mac.Run(ctx, name, args...)
+	if line := strings.Join(append([]string{name}, args...), " "); line == checksLine && !s.sent {
+		s.sent = true
+		if err := syscall.Kill(os.Getpid(), s.sig); err != nil {
+			return nil, err
+		}
+	}
+	return out, err
+}
+
+func TestSecretsInitRemovesTheCloneOnASignal(t *testing.T) {
+	for _, sig := range []syscall.Signal{syscall.SIGINT, syscall.SIGTERM} {
+		m := effecttest.NewMachine()
+		m.Files["/usr/local/bin/fnox"], m.Files[secrets.Plugin] = []byte("fnox"), []byte("plugin")
+		m.Dirs[secrets.Tree+"/roles/server/ubuntu"] = 0o755
+		m.Results[secrets.Plugin+" --list"] = effecttest.Result{Out: []byte("# Serial: 1, Slot: 1\nage1yubikey1qa\n\n")}
+		m.Results[secrets.Plugin+" --identity --slot 1"] = effecttest.Result{Out: []byte("AGE-PLUGIN-YUBIKEY-1QQQ\n")}
+		m.Results[secrets.GH+" pr list --repo o/n --state open --limit 100 --json headRefName,url --jq "+
+			".[] | [.headRefName, .url] | @tsv"] = effecttest.Result{}
+		m.Results[checksLine] = effecttest.Result{Out: []byte(`[{"name":"values","bucket":"pending"}]`)}
+		mac := secretstest.New(m, nil)
+		p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
+		p.Machine = &signaled{Mac: mac, sig: sig}
+		status, _, stderr := clitest.Run(p, []*cobra.Command{clientGroup(p)}, "\n", "client", "macos", "secrets", "init")
+		if status != 1 || !strings.Contains(stderr, "stopped waiting for the checks") {
+			t.Errorf("init on %v: status = %d, stderr = %q", sig, status, stderr)
+		}
+		if calls := mac.Calls; calls[len(calls)-1] != "run rm -rf "+mac.Base {
+			t.Errorf("init on %v leaves the clone: %q", sig, calls)
+		}
+	}
+}
 
 func TestSecretsInitRefusesRoot(t *testing.T) {
 	p := fakeProcess()
