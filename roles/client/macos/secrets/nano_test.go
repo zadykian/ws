@@ -84,6 +84,10 @@ func TestStubRefusesOutputWithoutAStub(t *testing.T) {
 // generateLine makes an identity on the Nano, through Pass.
 const generateLine = secrets.Plugin + " --generate --name ws-secrets --pin-policy once --touch-policy always"
 
+// emptyKey is the list of a YubiKey that holds no age identity: the blank line that
+// age-plugin-yubikey prints after each YubiKey it reads.
+const emptyKey = "\n"
+
 // listing is a Mac whose YubiKey lists out.
 func listing(out string) *effecttest.Machine {
 	m := effecttest.NewMachine()
@@ -100,7 +104,7 @@ func TestNanoTakesTheSlotOfFnoxsRecipient(t *testing.T) {
 }
 
 func TestNanoRefusesAKeyWithoutFnoxsRecipient(t *testing.T) {
-	for _, list := range []string{twoSlots, ""} {
+	for _, list := range []string{twoSlots, emptyKey} {
 		m := listing(list)
 		_, err := secrets.NanoIdentity(context.Background(), m, &strings.Builder{}, "age1yubikey1qc")
 		if err == nil || !strings.Contains(err.Error(), "age1yubikey1qc") {
@@ -125,7 +129,7 @@ func TestNanoTakesTheFirstSlotWhereFnoxNamesNone(t *testing.T) {
 }
 
 func TestNanoGeneratesWhereTheKeyHoldsNone(t *testing.T) {
-	m := listing("")
+	m := listing(emptyKey)
 	m.Results[generateLine] = effecttest.Result{}
 	m.After = map[string]map[string]effecttest.Result{generateLine: {listLine: {Out: []byte(twoSlots)}}}
 	s, err := secrets.NanoIdentity(context.Background(), m, &strings.Builder{}, "")
@@ -139,7 +143,7 @@ func TestNanoGeneratesWhereTheKeyHoldsNone(t *testing.T) {
 }
 
 func TestNanoStopsWhereGenerateLeavesNone(t *testing.T) {
-	m := listing("")
+	m := listing(emptyKey)
 	m.Results[generateLine] = effecttest.Result{}
 	if _, err := secrets.NanoIdentity(context.Background(), m, &strings.Builder{}, ""); err == nil {
 		t.Error("NanoIdentity takes a YubiKey that lists none after generate")
@@ -148,5 +152,19 @@ func TestNanoStopsWhereGenerateLeavesNone(t *testing.T) {
 	if _, err := secrets.NanoIdentity(context.Background(), m, &strings.Builder{}, ""); err == nil ||
 		!strings.Contains(err.Error(), "cannot make") {
 		t.Errorf("a failed generate gives %v, want an error", err)
+	}
+}
+
+func TestNanoFindsNoYubiKeyWhereNoneIsPluggedIn(t *testing.T) {
+	for _, want := range []string{"", recipientA} {
+		m := listing("")
+		m.Results[generateLine] = effecttest.Result{}
+		_, err := secrets.NanoIdentity(context.Background(), m, &strings.Builder{}, want)
+		if err == nil || !strings.Contains(err.Error(), "no YubiKey found") {
+			t.Errorf("a list of nothing, with fnox.toml's recipient %q, gives %v, want no YubiKey found", want, err)
+		}
+		if slices.Contains(m.Calls, "run "+generateLine) {
+			t.Errorf("a list of nothing made an identity: %q", m.Calls)
+		}
 	}
 }

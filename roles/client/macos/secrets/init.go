@@ -111,7 +111,7 @@ func (i Init) Run(ctx context.Context) error {
 		return nil
 	}
 	if backup != nil {
-		if err := i.showBackup(backup); err != nil {
+		if err := i.showBackup(ctx, backup); err != nil {
 			return err
 		}
 	}
@@ -194,12 +194,25 @@ func declare(ctx context.Context, c *Clone, inputs, secrets []string) ([]string,
 }
 
 // showBackup prints the backup's secret line once, and waits for the user to keep it. It comes
-// before the push: a merged fnox.toml whose backup was never shown would have none.
-func (i Init) showBackup(backup *age.X25519Identity) error {
+// before the push: a merged fnox.toml whose backup was never shown would have none. ctx's end stops
+// the wait, as a Ctrl-C reaches ws as ctx's end alone.
+func (i Init) showBackup(ctx context.Context, backup *age.X25519Identity) error {
 	_, _ = fmt.Fprintf(i.Out, "\nThe backup key opens every value where the Nano is lost. ws prints its secret line "+
 		"this once and writes it nowhere: keep it on paper or in a password manager.\n\n%s\n\n"+
 		"Press Enter once it is kept.\n", backup)
-	if _, err := bufio.NewReader(i.In).ReadString('\n'); err != nil {
+	// The read stays blocked past ctx's end, until the process ends.
+	answered := make(chan error, 1)
+	go func() {
+		_, err := bufio.NewReader(i.In).ReadString('\n')
+		answered <- err
+	}()
+	var err error
+	select {
+	case err = <-answered:
+	case <-ctx.Done():
+		err = ctx.Err()
+	}
+	if err != nil {
 		return errors.New("init stopped before the push, with no answer that the backup's line is kept: " +
 			"nothing landed, and the next run makes a new backup")
 	}

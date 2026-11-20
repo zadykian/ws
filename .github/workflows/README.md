@@ -81,9 +81,10 @@ checks [Zed's files](../../roles/client/macos/zed/README.md): `global_settings.j
 another bootstrap, and a login shell must find the cask's `zed`. Case 48 checks `keymap.json`:
 `roles/client/macos/zed/files/`'s whole, a foreign one left with the warning of its unit's read, and
 ws's back once it goes. Case 58 checks [the secrets' tools](../../roles/client/macos/secrets/README.md):
-`/usr/local/bin/fnox` and `age-plugin-yubikey` must be mise's, root's and 0755, at their pins. fnox
-must encrypt a value to the Nano's recipient with no YubiKey, and read it back by an SSH key that
-is a recipient too. Case 87 checks [the zsh hook](../../roles/client/macos/ghostty/README.md#the-zsh-hook): `zsh -i` must
+`/usr/local/bin/fnox` and `age-plugin-yubikey` must be mise's, root's and 0755, at their pins. A
+stand-in in place of each must give way to mise's at the next bootstrap, whose plan then changes
+nothing. fnox must encrypt a value to the Nano's recipient with no YubiKey, and read it back by an
+SSH key that is a recipient too. Case 87 checks [the zsh hook](../../roles/client/macos/ghostty/README.md#the-zsh-hook): `zsh -i` must
 reset at each prompt, and the alternate screen after a 255 from `ssh` or from `cld --host` alone.
 
 CI also sets up a Mac, by [its cases](../mac), in the order of [The

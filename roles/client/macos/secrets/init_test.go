@@ -140,6 +140,23 @@ func TestInitWritesTheBackupsSecretNowhere(t *testing.T) {
 	}
 }
 
+func TestInitRemovesTheCloneWhereTheLandingFails(t *testing.T) {
+	for name, line := range map[string]string{"push": pushLine, "check": checksLine, "merge": mergeLine} {
+		m := initMac(startTitle, startBody, "WS_GITHUB_TOKEN")
+		m.Results[line] = effecttest.Result{Err: errors.New("refused")}
+		if line == checksLine {
+			m.Results[line] = effecttest.Result{Out: []byte(`[{"name":"values","bucket":"fail"}]`)}
+		}
+		i, _ := initOn(m, strings.NewReader("\n"), newBackup(t))
+		if err := i.Run(context.Background()); err == nil {
+			t.Errorf("init with a failed %s passes", name)
+		}
+		if count(m.Calls, "run "+line) != 1 || m.Calls[len(m.Calls)-1] != "run rm -rf "+cloneBase {
+			t.Errorf("init with a failed %s leaves the clone: %q", name, m.Calls)
+		}
+	}
+}
+
 // errString is err's text, or "" for none.
 func errString(err error) string {
 	if err == nil {

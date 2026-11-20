@@ -3,6 +3,7 @@ package local_test
 import (
 	"os"
 	"path/filepath"
+	"syscall"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -27,6 +28,26 @@ func TestWriteAtomic(t *testing.T) {
 	}
 	if left, _ := filepath.Glob(path + "*"); len(left) != 1 {
 		t.Errorf("files beside the target: %v, want the target alone", left)
+	}
+}
+
+func TestWriteAtomicOfNoOwnerKeepsWsOwnOffSudo(t *testing.T) {
+	m, log := loggedSudo(t)
+	local.RunAs(t, os.Getuid()+1, false)
+	t.Setenv("HOME", t.TempDir())
+	path := filepath.Join(t.TempDir(), "f")
+	if err := m.WriteAtomic(path, []byte("new"), effect.Attrs{UID: -1, GID: -1, Mode: 0o600}); err != nil {
+		t.Fatal(err)
+	}
+	if got := sudoRan(t, log); got != "" {
+		t.Errorf("sudo ran %q, want nothing", got)
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if st, ok := info.Sys().(*syscall.Stat_t); !ok || int(st.Uid) != os.Getuid() || info.Mode().Perm() != 0o600 {
+		t.Errorf("the file is %v, want ws's own and 0600", info)
 	}
 }
 

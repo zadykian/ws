@@ -57,6 +57,8 @@ there. In a temporary clone of the repository, it:
 4. Prints the backup's secret line, where it made one, and waits for Enter.
 5. Lands `fnox.toml` by a pull request, as below.
 
+A Ctrl-C or a SIGTERM stops it as a failure does, so that it removes the clone before it ends.
+
 ## The Nano and the backup
 
 The Nano holds the age identity of the recipient `nano` in `fnox.toml`. The Go package here finds
@@ -68,12 +70,17 @@ it by `age-plugin-yubikey --list`:
   does, age-plugin-yubikey makes one, named `ws-secrets`, on the terminal. Its PIN policy is
   `once`, a PIN once a session, and its touch policy `always`, a touch each time it decrypts.
 
+The list prints a blank line for each YubiKey it reads, and nothing where none is plugged in. So a
+list of nothing stops init with `no YubiKey found`, before it would read the Nano as empty.
+
 The slot's stub, the identity file that `age-plugin-yubikey --identity` prints, goes to fnox's key
 file. So fnox, run by ws or by hand in a clone, asks the Nano to decrypt. The stub names the Nano's
 serial and slot, and holds no secret. The key file is the one fnox reads by default:
 `FNOX_AGE_KEY_FILE`, else `$FNOX_CONFIG_DIR/age.txt`, else `$XDG_CONFIG_HOME/fnox/age.txt`, else
 `~/.config/fnox/age.txt`. Its other lines stay, a missing directory is made 700, and the file is
-600. A key file that holds an SSH key stops it, as fnox would read that key alone.
+600. The stub goes in by a new file renamed over the old one, so a failed write keeps the old file
+whole, with any key of the user's. A key file that holds an SSH key stops it, as fnox would read
+that key alone.
 
 ws runs fnox with `/usr/local/bin` first on `PATH`, where fnox finds the plugin. It drops
 `FNOX_AGE_KEY`, which would beat the key file, and `FNOX_PROFILE`, which would take a profile's file
