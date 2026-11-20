@@ -21,19 +21,20 @@ func (f *fixture) fetched() {
 func TestTaskRefusesAChangeOfTheClones(t *testing.T) {
 	for _, c := range []struct {
 		name   string
+		want   string
 		change func(f *fixture)
 	}{
-		{"a tracked change", func(f *fixture) { f.write("fnox.toml", "root = false\n") }},
-		{"an untracked file", func(f *fixture) { f.write("fnox.other.toml", "") }},
-		{"an ignored fnox.local.toml", func(f *fixture) {
+		{"a tracked change", "holds changes of its own", func(f *fixture) { f.write("fnox.toml", "root = false\n") }},
+		{"an untracked file", "holds changes of its own", func(f *fixture) { f.write("fnox.other.toml", "") }},
+		{"an ignored fnox.local.toml", "holds changes of its own", func(f *fixture) {
 			f.write(".git/info/exclude", "fnox.local.toml\n")
 			f.write("fnox.local.toml", "[secrets]\n")
 		}},
-		{"a commit of its own", func(f *fixture) {
+		{"a commit of its own", "holds a commit of its own", func(f *fixture) {
 			f.git(f.clone(), "commit", "-q", "--allow-empty", "-m", "local")
 		}},
-		{"a detached HEAD", func(f *fixture) { f.git(f.clone(), "checkout", "-q", "--detach") }},
-		{"a link", func(f *fixture) {
+		{"a detached HEAD", "is not on main", func(f *fixture) { f.git(f.clone(), "checkout", "-q", "--detach") }},
+		{"a link", "is not a clone", func(f *fixture) {
 			other := filepath.Join(f.root, "other")
 			if err := os.Rename(f.clone(), other); err != nil {
 				f.t.Fatal(err)
@@ -48,8 +49,7 @@ func TestTaskRefusesAChangeOfTheClones(t *testing.T) {
 			f.fetched()
 			c.change(f)
 			code, out := f.run()
-			f.refused(code, out, f.clone()+" ")
-			f.refused(code, out, "remove it")
+			f.refused(code, out, f.clone()+" "+c.want+": remove it")
 			if err := os.RemoveAll(f.clone()); err != nil {
 				t.Fatal(err)
 			}
@@ -69,7 +69,7 @@ func TestTaskRefusesARewrittenOrigin(t *testing.T) {
 	f.git(f.seed, "commit", "-q", "-m", "other")
 	f.git(f.seed, "push", "-q", "-f", "origin", "other:main")
 	code, out := f.run()
-	f.refused(code, out, "remove it")
+	f.refused(code, out, "has a main that origin no longer holds")
 }
 
 func TestTaskRefusesAnotherOrigin(t *testing.T) {
