@@ -67,7 +67,8 @@ check = [
     "{{ .User }}",
 ]
 
-# The credential program of each URL of /etc/ws/git-tokens.toml, which follow the file whole.
+# The credential program of each URL of /etc/ws/git-tokens.toml, which follow the file whole. The
+# secrets task's plan writes no file, so there they follow the input in the run's env.
 [state.git-tokens]
 after = "state/git-tokens-group"
 run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "ubuntu", "git", "tokens"], check = ["{{ self }}", "server", "ubuntu", "git", "tokens", "--check"] }

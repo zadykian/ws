@@ -549,7 +549,7 @@ Flags:
 
 Use "ws server ubuntu git [command] --help" for more information about a command.
 == ws server ubuntu git check
-It reads the values of /etc/ws/values.yml and /etc/ws/git-tokens.toml, where there is one. It fails where an entry of WS_GIT_CLONES holds a user name or a token in its URL, or where the tokens' file is refused (roles/server/ubuntu/git/README.md#git-credentials). No message quotes a token or a repository.
+It reads the values of /etc/ws/values.yml and /etc/ws/git-tokens.toml, where there is one, or WS_GIT_TOKENS in the secrets task's run, which writes the file. It fails where an entry of WS_GIT_CLONES holds a user name or a token in its URL, or where the tokens' file is refused (roles/server/ubuntu/git/README.md#git-credentials). No message quotes a token or a repository.
 
 It prints a warning on stdout for each setting of ~/.gitconfig that shadows /etc/ws/gitconfig's, by its name, never its value. The git role's guard runs it, before the tokens and the clones.
 
@@ -586,7 +586,7 @@ Usage:
 Flags:
   -h, --help   help for included
 == ws server ubuntu git tokens
-Each URL of /etc/ws/git-tokens.toml gets ws's credential program in /etc/ws/tokens.gitconfig, root's with the account's group, which names no token (roles/server/ubuntu/git/README.md#git-credentials). Without the file, tokens.gitconfig goes. The git role's run state runs it, after the role's check.
+Each URL of /etc/ws/git-tokens.toml gets ws's credential program in /etc/ws/tokens.gitconfig, root's with the account's group, which names no token (roles/server/ubuntu/git/README.md#git-credentials). Without the file, tokens.gitconfig goes. In the secrets task's run, it reads WS_GIT_TOKENS, which that run writes to the file, and a plan nowhere. The git role's run state runs it, after the role's check.
 
 --check fails where a change is due, and changes nothing.
 
