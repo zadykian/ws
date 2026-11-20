@@ -142,11 +142,14 @@ gh logs in to github.com as the user, by the [secret input](../frame/README.md#s
   first line and the token on its last. `state/devtools-gh-token-group` then gives it the
   account's group. mise's plan shows no value. A run without the secrets task keeps the file
   unchanged, and an empty `WS_GITHUB_TOKEN` removes it. A file there by hand stops the run.
-- `state/devtools-gh-login` compares `gh auth token -h github.com` with the file's last line. Where
-  they differ, it runs `gh auth login -h github.com -p https --insecure-storage --with-token`, the
-  token on stdin. The token passes through a pipe and the shell alone, so no command line, plan or
-  log holds it. ws has no keyring, so gh writes `~/.config/gh/hosts.yml`, mode 0600. gh's refusal
-  fails the run. Without the file, the unit leaves gh's login alone.
+- `state/devtools-gh-login` runs `ws server ubuntu devtools gh-login`, as root, which runs gh as
+  the user. It compares `gh auth token -h github.com` with the file's last line. Where they
+  differ, it runs `gh auth login -h github.com -p https --insecure-storage --with-token`, the token
+  on stdin. So no command line, plan or log holds it, and gh's env holds no secret input. ws has
+  no keyring, so gh writes `~/.config/gh/hosts.yml`, mode 0600. gh's refusal fails the run.
+  Without the file, the unit leaves gh's login alone.
+- mise's plan writes no file. So in the secrets task's run, the login takes the token from
+  `WS_GITHUB_TOKEN`, and the plan shows the login that the run makes.
 
 gh 2.91.0 and later send telemetry unless told not to. `state/devtools-gh-telemetry`, before the
 login, reads `gh config get telemetry` as the user, and runs `gh config set telemetry disabled`
