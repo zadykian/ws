@@ -3,6 +3,7 @@ package secrets_test
 import (
 	"context"
 	"errors"
+	"maps"
 	"slices"
 	"strings"
 	"testing"
@@ -74,6 +75,20 @@ func TestHostKeyRefusesABadName(t *testing.T) {
 	m := knowing("")
 	if _, err := secrets.HostKey(context.Background(), m, "/h", "-lab"); err == nil || len(m.Calls) > 0 {
 		t.Errorf("HostKey of -lab gives %v after %q, want a refusal before any call", err, m.Calls)
+	}
+}
+
+func TestKnownKeysTakesEveryHostsEd25519Key(t *testing.T) {
+	m := effecttest.NewMachine()
+	if keys, err := secrets.KnownKeys(m, "/h"); err != nil || len(keys) != 0 {
+		t.Errorf("KnownKeys without known_hosts gives %v, %v, want none", keys, err)
+	}
+	m.Files[knownHosts] = []byte("# a comment\nlab " + hostKey + "\n" +
+		"|1|lPIqZ/QGD4Ys4dRxDJWPSzVxDEY=|JwPTCV5s9n6jwY9UJX6AyiOdcRA= " + newerKey + " a comment\n" +
+		"@revoked box " + otherHost + "\nbox ecdsa-sha2-nistp256 AAAAE2VjZHNh\nbad ssh-ed25519 not-base64!\n")
+	keys, err := secrets.KnownKeys(m, "/h")
+	if want := map[string]bool{hostKey: true, newerKey: true}; err != nil || !maps.Equal(keys, want) {
+		t.Errorf("KnownKeys gives %v, %v, want %v", keys, err, want)
 	}
 }
 
