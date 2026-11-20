@@ -111,9 +111,10 @@ actionlint:
 	shellcheck="$$(.tools/run -path shellcheck)" && \
 		.tools/run actionlint -shellcheck="$$shellcheck" -pyflakes=
 
-# The workflows, with the online audits where GH_TOKEN is set, as in CI.
+# The workflows, with the online audits where GH_TOKEN is set, as in CI. Without it, --offline says
+# so, as zizmor warns of the offline mode that it chose alone.
 zizmor:
-	.tools/run zizmor .
+	.tools/run zizmor $(if $(GH_TOKEN),,--offline) .
 
 # The commits of LOG_OPTS. --redact keeps a secret it finds out of the log, which is public.
 gitleaks:
