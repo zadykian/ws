@@ -273,7 +273,7 @@ func TestTaskNamesAddWhereGitHubRefusesTheKey(t *testing.T) {
 		"-F /dev/null", "-i " + f.prefix + hostKey,
 		"-o IdentitiesOnly=yes", "-o IdentityAgent=none", "-o BatchMode=yes",
 		"-o UserKnownHostsFile=" + filepath.Join(f.side, "ubuntu/secrets/github_known_hosts"),
-		"-o GlobalKnownHostsFile=/dev/null", "-o StrictHostKeyChecking=yes",
+		"-o GlobalKnownHostsFile=/dev/null", "-o StrictHostKeyChecking=yes", "-o UpdateHostKeys=no",
 	} {
 		if !strings.Contains(ssh, want) {
 			t.Errorf("ssh's arguments lack %q:\n%s", want, ssh)
