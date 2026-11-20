@@ -63,14 +63,16 @@ sends ([signoz](../signoz/README.md#retention)).
 secret inputs ([The env file](../shell/README.md#the-env-file)). mise's files step writes it before
 any unit, so the templates read the run's value. Where it sets
 `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT`, the collector sends claude's metrics there as well, over
-OTLP/gRPC. The value is a URL, `http://HOST:PORT` for gRPC without TLS or `https://HOST:PORT`. The
-role refuses any other. It refuses one that leads back to the collector's own receiver on
-`127.0.0.1:4317` too, which would send the metrics around without end. Unless
-`WS_SECURITY_OUTBOUND` is false, the host can't be on the LAN, the cable, `wg0` or another private
-network around the server. The `security` role's table drops the collector's connection there
-([Outbound](../security/README.md#outbound)). Only the metrics whose resource has `service.name`
-`claude-code` go, as claude sends them, without the host's name. claude's traces and logs, with
-the prompts' and responses' text and the tools' details and output, stay in SigNoz.
+OTLP/gRPC. A plan writes no file, so under the secrets task the templates take the input from the
+run's env, and the plan shows the change that the run makes. A run without the task, whose env
+lacks the input, reads the file as it stands. The value is a URL, `http://HOST:PORT` for gRPC
+without TLS or `https://HOST:PORT`. The role refuses any other. It refuses one that leads back to
+the collector's own receiver on `127.0.0.1:4317` too, which would send the metrics around without
+end. Unless `WS_SECURITY_OUTBOUND` is false, the host can't be on the LAN, the cable, `wg0` or
+another private network around the server. The `security` role's table drops the collector's
+connection there ([Outbound](../security/README.md#outbound)). Only the metrics whose resource has
+`service.name` `claude-code` go, as claude sends them, without the host's name. claude's traces and
+logs, with the prompts' and responses' text and the tools' details and output, stay in SigNoz.
 
 The templates read that one variable from the last line of the file that sets it, with or without
 `export` and quotes, without running the file. The value goes to `/etc/otelcol-contrib/claude.env`,

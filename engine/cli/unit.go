@@ -43,8 +43,9 @@ type UnitSide struct {
 	// User returns the account that ws runs as, from the values, where it runs as a user: the
 	// Mac's. A run state of that user's needs no sudo there. Nil is a side that runs as root.
 	User func(data any) string
-	// Hidden names the variables of the run's env that hold the side's secrets, which a run state
-	// drops from each command but ws's (kind.Env.Hidden).
+	// Hidden names the variables of the run's env that hold the side's secrets. A run state drops
+	// them from each command but ws's, and a template's envvar reads them where the run sets them
+	// (kind.Env.Hidden).
 	Hidden []string
 }
 
@@ -123,7 +124,8 @@ func loadUnits(c *cobra.Command, p Env, s UnitSide) (unitRun, error) {
 	if err != nil {
 		return r, fmt.Errorf("finding the file ws runs from: %w", err)
 	}
-	env := kind.Env{M: m, U: s.Units, Out: r.out, Data: data, System: s.System, Self: self, Hidden: s.Hidden}
+	env := kind.Env{M: m, U: s.Units, Out: r.out, Data: data, System: s.System, Self: self, Hidden: s.Hidden,
+		LookupEnv: p.LookupEnv}
 	if s.User != nil {
 		env.User = s.User(data)
 	}
