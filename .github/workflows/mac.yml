@@ -23,7 +23,8 @@ jobs:
   # frame runs as the runbook runs it (28-bootstrap): it sets up ssh, git, cld and the tunnel. Its
   # second run and its plan must change nothing and call no sudo. The keys of ssh and git follow
   # values.yml at each bootstrap (56-keys). fnox and age-plugin-yubikey stand in /usr/local/bin,
-  # and fnox encrypts to the Nano's recipient with no YubiKey (58-secrets). Without ws's key it
+  # where a bootstrap replaces a copy that differs. fnox encrypts to the Nano's recipient with no
+  # YubiKey (58-secrets). Without ws's key it
   # makes the Mac's key and installs no daemon. With a stand-in ws's key it installs the daemon,
   # which runs /usr/local/bin/ws. Then a second run must call no sudo. ssh -G must give ws the
   # tunnel's end.
