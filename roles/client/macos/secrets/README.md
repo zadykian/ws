@@ -57,8 +57,6 @@ there. In a temporary clone of the repository, it:
 4. Prints the backup's secret line, where it made one, and waits for Enter.
 5. Lands `fnox.toml` by a pull request, as below.
 
-A Ctrl-C or a SIGTERM stops it as a failure does, so that it removes the clone before it ends.
-
 ## The Nano and the backup
 
 The Nano holds the age identity of the recipient `nano` in `fnox.toml`. The Go package here finds
@@ -111,6 +109,9 @@ a temporary clone that the Go package here makes:
    it with the pull request's link, which stays open. So does a wait that runs out.
 5. Once both checks pass, it merges the pull request by a merge commit, of the commit the checks
    ran on, and deletes its branch. It then removes the clone, whatever the outcome.
+
+A Ctrl-C or a SIGTERM stops init, add and remove as a failure does, so that each removes its clone
+before it ends.
 
 No value enters a step's arguments: a commit's title and body, a branch and the files' names alone.
 
@@ -175,7 +176,7 @@ and `Port`. The command:
 
 1. Takes NAME's ed25519 key from `~/.ssh/known_hosts`. Where it holds none, it scans the server,
    prints the key's fingerprint, and asks whether the server's console prints the same. A `yes`
-   records the key under NAME, and any other answer stops it with no change.
+   records the key under NAME, and any other answer, or a Ctrl-C, stops it with no change.
 2. Reads the server's hostname by `ssh NAME hostname`, which must serve as a profile, as above.
 3. Lists the repository's deploy keys by gh, so that gh's login fails before a touch.
 4. In a temporary clone, sets the key as above. It encrypts again the values of each changed file

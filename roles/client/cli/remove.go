@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"os/signal"
 	"path"
 	"slices"
+	"syscall"
 
 	"github.com/spf13/cobra"
 
@@ -31,7 +33,13 @@ func newRemoveCmd(p enginecli.Env, server *string) *cobra.Command {
 			"the bootstrap takes a Mac with none for a stray WS_VALUES and prunes no daemon, and takes no --server: " +
 			"the argument is the consent.",
 		Args: cobra.ExactArgs(1),
-		RunE: func(c *cobra.Command, args []string) error { return runRemove(c, p, *server, args[0], skip) },
+		RunE: func(c *cobra.Command, args []string) error {
+			// A Ctrl-C or a SIGTERM ends the context, not ws, so that remove still removes its clone.
+			ctx, stop := signal.NotifyContext(c.Context(), syscall.SIGINT, syscall.SIGTERM)
+			defer stop()
+			c.SetContext(ctx)
+			return runRemove(c, p, *server, args[0], skip)
+		},
 	}
 	c.Flags().BoolVar(&skip, "skip-secrets", false, "leave NAME's host key in the secrets, and print it to drop by hand")
 	return c

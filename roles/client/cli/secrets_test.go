@@ -18,11 +18,12 @@ import (
 // checksLine reads the checks of the pull request that the fake repository opens.
 const checksLine = secrets.GH + " pr checks " + secretstest.Pull + " --json name,bucket"
 
-// signaled is a Mac that sends ws the signal once init reads the checks, which are still running.
-// Its commands refuse to start once their context ends, as exec's do.
+// signaled is a Mac that sends ws the signal once it runs the line at, such as the read of checks
+// that are still running. Its commands refuse to start once their context ends, as exec's do.
 type signaled struct {
 	*secretstest.Mac
 	sig  syscall.Signal
+	at   string
 	sent bool
 }
 
@@ -31,7 +32,7 @@ func (s *signaled) Run(ctx context.Context, name string, args ...string) ([]byte
 		return nil, err
 	}
 	out, err := s.Mac.Run(ctx, name, args...)
-	if line := strings.Join(append([]string{name}, args...), " "); line == checksLine && !s.sent {
+	if line := strings.Join(append([]string{name}, args...), " "); line == s.at && !s.sent {
 		s.sent = true
 		if err := syscall.Kill(os.Getpid(), s.sig); err != nil {
 			return nil, err
@@ -52,7 +53,7 @@ func TestSecretsInitRemovesTheCloneOnASignal(t *testing.T) {
 		m.Results[checksLine] = effecttest.Result{Out: []byte(`[{"name":"values","bucket":"pending"}]`)}
 		mac := secretstest.New(m, nil)
 		p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
-		p.Machine = &signaled{Mac: mac, sig: sig}
+		p.Machine = &signaled{Mac: mac, sig: sig, at: checksLine}
 		status, _, stderr := clitest.Run(p, []*cobra.Command{clientGroup(p)}, "\n", "client", "macos", "secrets", "init")
 		if status != 1 || !strings.Contains(stderr, "stopped waiting for the checks") {
 			t.Errorf("init on %v: status = %d, stderr = %q", sig, status, stderr)

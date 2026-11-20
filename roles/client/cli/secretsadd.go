@@ -1,14 +1,18 @@
 package cli
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
+	"os/signal"
 	"path"
 	"slices"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/spf13/cobra"
 
@@ -41,6 +45,10 @@ func newSecretsAddCmd(p enginecli.Env, server *string) *cobra.Command {
 			"Each step changes nothing where it is done, so run it again where one fails.",
 		Args: cobra.ExactArgs(1),
 		RunE: func(c *cobra.Command, args []string) error {
+			// A Ctrl-C or a SIGTERM ends the context, not ws, so that add still removes its clone.
+			ctx, stop := signal.NotifyContext(c.Context(), syscall.SIGINT, syscall.SIGTERM)
+			defer stop()
+			c.SetContext(ctx)
 			return runSecretsAdd(c, p, *server, args[0], address, port)
 		},
 	}
@@ -165,12 +173,11 @@ func hostKey(c *cobra.Command, p enginecli.Env, name string, target []string) (s
 	if err != nil {
 		return "", err
 	}
-	w := c.ErrOrStderr()
-	_, _ = fmt.Fprintf(w, "%s holds no host key of %s. The server at %s:%d offers the key\n\n    %s\n\n"+
-		"At the server's console, ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub prints its own.\n",
-		secrets.KnownHosts(home), name, host, port, fingerprint)
-	answer, err := effect.NewTerminal(c.InOrStdin(), w).Ask(ctx, effect.Question{
-		Text: "Does the console print the same fingerprint? (yes/no)", Default: "no"})
+	_, _ = fmt.Fprintf(c.ErrOrStderr(), "%s holds no host key of %s. The server at %s:%d offers the key\n\n    %s\n\n"+
+		"At the server's console, ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub prints its own.\n"+
+		"Does the console print the same fingerprint? (yes/no) [no]: ", secrets.KnownHosts(home), name, host, port,
+		fingerprint)
+	answer, err := readLine(ctx, c.InOrStdin())
 	if err != nil {
 		return "", fmt.Errorf("no answer on the host key of %s, so nothing changed: %w", name, err)
 	}
@@ -180,8 +187,31 @@ func hostKey(c *cobra.Command, p enginecli.Env, name string, target []string) (s
 	if err := secrets.RecordHostKey(m, home, name, key); err != nil {
 		return "", err
 	}
-	_, _ = fmt.Fprintf(w, "recorded the host key of %s in %s\n", name, secrets.KnownHosts(home))
+	_, _ = fmt.Fprintf(c.ErrOrStderr(), "recorded the host key of %s in %s\n", name, secrets.KnownHosts(home))
 	return key, nil
+}
+
+// readLine reads a line of in, trimmed. ctx's end stops the wait, as a Ctrl-C reaches ws as ctx's
+// end alone, and the read stays blocked past it until the process ends.
+func readLine(ctx context.Context, in io.Reader) (string, error) {
+	type reply struct {
+		line string
+		err  error
+	}
+	read := make(chan reply, 1)
+	go func() {
+		line, err := bufio.NewReader(in).ReadString('\n')
+		if errors.Is(err, io.EOF) && line != "" {
+			err = nil
+		}
+		read <- reply{strings.TrimSpace(line), err}
+	}()
+	select {
+	case r := <-read:
+		return r.line, r.err
+	case <-ctx.Done():
+		return "", ctx.Err()
+	}
 }
 
 // sshAddress is the host and port that ssh reaches target at, from ssh -G's lines, which hold the
