@@ -34,6 +34,12 @@ func TestTaskRefusesAChangeOfTheClones(t *testing.T) {
 			f.git(f.clone(), "commit", "-q", "--allow-empty", "-m", "local")
 		}},
 		{"a detached HEAD", "is not on main", func(f *fixture) { f.git(f.clone(), "checkout", "-q", "--detach") }},
+		{"another branch", "is not on main", func(f *fixture) { f.git(f.clone(), "checkout", "-q", "-b", "other") }},
+		{"no clone", "is not a clone", func(f *fixture) {
+			if err := os.RemoveAll(filepath.Join(f.clone(), ".git")); err != nil {
+				f.t.Fatal(err)
+			}
+		}},
 		{"a link", "is not a clone", func(f *fixture) {
 			other := filepath.Join(f.root, "other")
 			if err := os.Rename(f.clone(), other); err != nil {
