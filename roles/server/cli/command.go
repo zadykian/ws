@@ -16,5 +16,5 @@ const serverVars = "/etc/ws/values.yml"
 func Command(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("ubuntu", "the commands for an Ubuntu server", newFansCmd(p),
 		newCableCmd(p, units.OSUnits{}), newTunnelCmd(p, units.OSUnits{}), newIkewardCmd(p, ikeward.StatusTries, ikeward.StatusWait),
-		newGitCmd(p), newClaudeCmd(p), newValuesCmd(p), newSignozCmd(p))
+		newGitCmd(p), newDevtoolsCmd(p), newClaudeCmd(p), newValuesCmd(p), newSignozCmd(p))
 }
