@@ -78,8 +78,8 @@ address:
 These hold the LAN, the cable, `wg0`, and a VM host's or a cloud's private network, none of them
 named in a rule. By the kind of machine ws runs on, they hold:
 
-- on the LAN, `10.88.0.0/24`, whose router, `10.88.0.1`, is the gateway and the DHCP server, and
-  the cable to the Mac, `10.77.0.0/30`;
+- on the LAN, the server's segment, `10.88.1.0/24`, whose router, `10.88.1.1`, is the gateway and
+  the DHCP server, and the cable to the Mac, `10.77.0.0/30`;
 - on a cloud VM, the cloud's private network, if any, and its metadata service at
   `169.254.169.254`. A gateway at a public address, as some clouds give, is the internet to the
   table, and passes;

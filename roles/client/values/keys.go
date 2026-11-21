@@ -77,7 +77,7 @@ var keys = []key{
 	{"WS_PUBLIC_KEY", func(c *Conf) *string { return &c.PublicKey }, check.Key,
 		"a WireGuard public key, 43 base64 characters and an ="},
 	{"WS_LAN", func(c *Conf) *string { return &c.LAN }, isLAN,
-		"an IPv4 network, as 10.88.0.0/24, clear of " + keptNames},
+		"an IPv4 network, as 10.88.0.0/23, clear of " + keptNames},
 	{"WS_LAN_ADDRESS", func(c *Conf) *string { return &c.LANAddress }, check.IPv4,
 		"a host's IPv4 address inside WS_LAN"},
 	{"WS_REMOTE", func(c *Conf) *string { return &c.Remote }, check.Name,
