@@ -77,7 +77,9 @@ func newSetupCmd(p enginecli.Env, server *string, cfg setupConfig) *cobra.Comman
 			"Ctrl-C stops. It installs mise at the version ws pins, checked against its SHA-256, where mise " +
 			"--version differs, and writes " + setup.MisercPath + " and " + setup.ConfigPath + ". It checks this ws's " +
 			"release tag out in " + setup.TreeDir + ", cleans the tree, links its plugin into mise's, and runs mise's " +
-			"bootstrap in the Mac's roles. It asks sudo for what root's paths need, and for no more where a " +
+			"bootstrap in the Mac's roles. Where values.yml names no WS_IDENTITY_PUB_KEY, it installs Secretive by mise's " +
+			"pin first, checks it by spctl, opens it and waits for a P-256 key made in it, which it names in values.yml " +
+			"for ws's login and git's signing, and takes no key that was there before: --key NAME names one. It asks sudo for what root's paths need, and for no more where a " +
 			"run changes nothing, which a second run does.\n\n" +
 			"A ws that names no release tag, devel included, is refused: pass --in-place to run the tree " +
 			"in " + setup.TreeDir + " as it stands, after the guard.\n\n" +
@@ -87,6 +89,7 @@ func newSetupCmd(p enginecli.Env, server *string, cfg setupConfig) *cobra.Comman
 		Args: cobra.NoArgs,
 	}
 	inPlace := c.Flags().Bool("in-place", false, "run the tree in "+setup.TreeDir+" as it stands, after the guard")
+	pick := c.Flags().String("key", "", "take this key of Secretive's for ws's login and git's signing, by its NAME or fingerprint")
 	plan := c.Flags().Bool("plan", false, "plan setup's steps, and mise's where none is due: exit 2 where a change is due, and change nothing")
 	c.RunE = func(c *cobra.Command, _ []string) error {
 		if p.Euid == 0 {
@@ -110,13 +113,23 @@ func newSetupCmd(p enginecli.Env, server *string, cfg setupConfig) *cobra.Comman
 				return err
 			}
 		}
-		if err := values.Check(p.Machine, values.Path(p.Getenv, p.Pwd)); err != nil {
+		file := values.Path(p.Getenv, p.Pwd)
+		if err := values.Check(p.Machine, file); err != nil {
 			return err
+		}
+		conf, err := values.LoadMac(p.Machine, file)
+		if err != nil {
+			return err
+		}
+		if *pick != "" && conf.IdentityPubKey != "" {
+			return fmt.Errorf("%s names WS_IDENTITY_PUB_KEY already, so setup takes no --key", file)
 		}
 		term := effect.NewTerminal(c.ErrOrStderr())
 		defer term.Flush()
 		out := linesOf(term, c.CommandPath())
 		first, rest := setupSteps(p.Machine, out, cfg, tag)
+		rest = append(rest, secretiveKey{M: p.Machine, Out: out, Home: p.Getenv("HOME"), Values: file, Conf: conf,
+			Pick: *pick, Poll: cfg.Poll})
 		if *plan {
 			return planSetup(c.Context(), p.Machine, out, first, rest)
 		}
