@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -16,6 +17,22 @@ type recorder struct {
 
 func (r *recorder) Errorf(format string, args ...any) {
 	r.errs = append(r.errs, fmt.Sprintf(format, args...))
+}
+
+// TestMiseLinesKeepsTheUnitsBesideAPackageTable holds the units of a role file that also pins an
+// app, whose package is a table where a unit's is a string.
+func TestMiseLinesKeepsTheUnitsBesideAPackageTable(t *testing.T) {
+	dir := t.TempDir()
+	text := "[bootstrap.packages]\n\"ws:state/a\" = \"in-sync\"\n\"brew-cask:x\" = \"latest\"\n" +
+		"[bootstrap.packages.\"macos-app:x\"]\nversion = \"1\"\nurl = \"https://example.com/x.zip\"\n" +
+		"sha256 = \"" + strings.Repeat("0", 64) + "\"\nartifact = \"X.app\"\nadopt = true\n"
+	if err := os.WriteFile(filepath.Join(dir, "mise.mac.toml"), []byte(text), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	lines := MiseLines(t, filepath.Join(dir, "*.toml"))
+	if len(lines) != 1 || !lines["state/a"] {
+		t.Errorf("the units of the file are %v, want state/a alone", lines)
+	}
 }
 
 // TestLinksRolesNamesAFileOrAnotherTarget holds a side's link to its directory of roles, with

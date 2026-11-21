@@ -55,6 +55,10 @@ steps are those of the server's setup, which `roles/internal/setup` holds, with 
 - The tree is root's. Setup reads its tag and status as the user by `git -c
   safe.directory=/opt/ws`, as git refuses a repository that another user owns. It runs git
   through sudo to fetch, check out and clean, and the plugin's link too.
+- Where `values.yml` names no `WS_IDENTITY_PUB_KEY`, setup installs Secretive by mise's pin before
+  the bootstrap, checks it and waits for a key made in it, which it names in `values.yml`
+  ([Secretive](macos/ssh/README.md#secretive)). `--key NAME` takes a key that Secretive held
+  before. A plan with the key due plans no more.
 - A second run reads as the user, writes nothing and asks no password. `--in-place` and `--plan`
   work as on the server ([The server's runbook](../server/runbook.md)).
 

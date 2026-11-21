@@ -11,7 +11,8 @@ import (
 )
 
 // MiseLines returns the units that the files of glob name under [bootstrap.packages], each
-// "ws:KIND/NAME" without its prefix. A unit in two of the files fails the test.
+// "ws:KIND/NAME" without its prefix. A package whose value is a table, as mise's macos-app, is no
+// unit. A unit in two of the files fails the test.
 func MiseLines(t testing.TB, glob string) map[string]bool {
 	files, err := filepath.Glob(glob)
 	if err != nil {
@@ -26,15 +27,15 @@ func MiseLines(t testing.TB, glob string) map[string]bool {
 		}
 		var c struct {
 			Bootstrap struct {
-				Packages map[string]string `toml:"packages"`
+				Packages map[string]any `toml:"packages"`
 			} `toml:"bootstrap"`
 		}
 		if err := toml.Unmarshal(text, &c); err != nil {
 			t.Fatalf("%s: %v", f, err)
 		}
-		for pkg := range c.Bootstrap.Packages {
+		for pkg, value := range c.Bootstrap.Packages {
 			name, ok := strings.CutPrefix(pkg, "ws:")
-			if !ok {
+			if _, line := value.(string); !ok || !line {
 				continue
 			}
 			if other, twice := where[name]; twice {

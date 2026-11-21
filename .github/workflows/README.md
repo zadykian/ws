@@ -91,7 +91,7 @@ back, and spare a script's own ([mac-conf-checks.sh](../mac-conf-checks.sh)). Wi
 service. It must stop on one networksetup lacks, or one with a router outside the cable's `/30`.
 It must stop too on a `-setmanual` that fails or changes nothing, and name what differs
 ([mac-setup-checks.sh](../mac-setup-checks.sh)).
-The cases of the keys run `ws client setup` with an edited `values.yml`, and
+The cases of the keys run mise's bootstrap with an edited `values.yml`, and
 read the files it writes ([56-keys.sh](../mac/56-keys.sh)). A refusal must fail the bootstrap and
 its plan with its reason, and change no file. With the server's `WS_LAN_ADDRESS` dropped, the plan
 must fail and name it and its file, as the frame's check of the values does

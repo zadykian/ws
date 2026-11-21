@@ -27,23 +27,9 @@ files](values/README.md#the-two-files)). The files' check refuses a clash.
    `WS_REMOTE`, `WS_REMOTE_PORT`, `WS_TUNNEL_NETWORKS` and `WS_RESOLVERS`. The
    [router's page](../server/ubuntu/cable/router.md) gives the LAN's defaults.
 
-## The Mac's key
-
-1. Install Secretive from its release's `Secretive.zip`, with no Homebrew. Read the version and
-   the SHA-256 once from `https://formulae.brew.sh/api/cask/secretive.json`, its `version` and
-   `sha256`. Download the zip from `https://github.com/maxgoedjen/secretive/releases/download/vVERSION/Secretive.zip`,
-   check it with `shasum -a 256 Secretive.zip`, unzip it, and move `Secretive.app` to
-   `/Applications`. `spctl -a -vv /Applications/Secretive.app` must say `accepted` and `Notarized
-   Developer ID`.
-2. Open it, and make a P-256 key for the login and one for git's signing. One key may serve both.
-   The key stays in the Mac's Secure Enclave.
-3. Set `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_PUB_KEY` in
-   `/etc/ws/values.yml`, each `.pub` as `/etc/ws/secretive/NAME.pub`. The bootstrap writes those
-   copies from the agent ([Secretive's keys](macos/git/README.md#secretives-keys)).
-
 ## The bootstrap
 
-Run `ws client setup` as the user, after the values and the key above, and not as root: it asks
+Run `ws client setup` as the user, after the values above, and not as root: it asks
 sudo for what root's paths need. It refuses a bad value before any write, naming the key and its
 file. It then does what a person did by hand, in this order:
 
@@ -53,7 +39,16 @@ file. It then does what a person did by hand, in this order:
    `/etc/mise/miserc.toml` and `/etc/mise/config.toml`, which trusts the tree.
 3. It checks this ws's release tag out in `/opt/ws`, root's, which no one else may write, and links
    the tree's plugin into `/usr/local/share/mise/plugins`.
-4. It runs mise's bootstrap in `/opt/ws/roles/client`, which installs gh and sets up ssh, git, cld
+4. Where `values.yml` names no `WS_IDENTITY_PUB_KEY`, it installs Secretive by [ssh's
+   pin](macos/ssh/mise.mac.toml), checks it by `spctl -a -vv`, which must say `accepted` and
+   `Notarized Developer ID`, and opens it. It then waits for a P-256 key. Make one in Secretive at
+   Notify, as it then signs git's commits with no prompt.
+   Setup names the key that comes in `values.yml`, as `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and
+   `WS_GIT_SIGNING_PUB_KEY`, and keeps a value that is there. It takes no key that was there before
+   the wait, as one made for another use would go to GitHub. To take one, stop setup with Ctrl-C and
+   run `ws client setup --key NAME`, NAME being the name that the wait prints
+   ([Secretive](macos/ssh/README.md#secretive)).
+5. It runs mise's bootstrap in `/opt/ws/roles/client`, which installs gh and sets up ssh, git, cld
    and the Mac's other roles ([The Mac's frame](macos/frame/README.md)). It makes the Mac's
    WireGuard key, whose public half is `/etc/ws/tunnel.pub`.
 

@@ -5,6 +5,25 @@ for each server, through the tunnel ([The Mac](../../README.md)). The facts buil
 `values.yml` and the servers' files, and check it, before any unit runs
 ([The facts](../../facts/README.md)). A refusal there stops the whole bootstrap, and changes nothing.
 
+## Secretive
+
+[`mise.mac.toml`](mise.mac.toml) pins Secretive, which holds the Mac's keys, by mise's `macos-app`
+package: a version, the URL and SHA-256 of its `Secretive.zip`, and the bundle in it. Each bootstrap
+installs it into `/Applications`, after mise checks the zip against the SHA-256. `adopt` takes over
+the same build where it stands, as a person may have installed it. It refuses another build
+and leaves it alone, so remove that copy once. `macos-app` finds no release: a new one changes
+`version` and `sha256`, which GitHub's release and Homebrew's cask list.
+
+`ws client setup` installs it before the first bootstrap where `values.yml` names no login key. It
+runs `mise bootstrap packages apply --yes macos-app:secretive`, checks the app by `spctl -a -vv`
+([setupkey.go](../../cli/setupkey.go)), which must say `accepted` and `Notarized Developer ID`, and
+opens it. It then waits for a P-256 key, as ws's OpenSSH reads no ML-DSA one. It writes
+`WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_PUB_KEY` into `values.yml`, each
+one that is not there. The wait takes the sole key that comes after Secretive's agent first
+answers. ws picks no key that was there before, as one made for another use would go to GitHub.
+The wait lists such keys by NAME, and `--key NAME` takes one. A key made at Notify signs git's commits
+with no prompt ([The signing key](../git/README.md#the-signing-key)).
+
 ## The units
 
 - `state.keys` runs `ws client keys`, which copies the `.pub` of each key of Secretive's that

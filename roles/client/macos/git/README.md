@@ -44,9 +44,11 @@ of Secretive's that ws cannot read, where its agent lists no key of it, stops it
 open Secretive. A file key with no passphrase signs unattended, in a rebase too: `ssh-keygen -t
 ed25519 -N '' -f ~/.ssh/NAME` makes one.
 
-A new key, made in Secretive's app at Notify, signs with no prompt while the Mac is unlocked. The
-login key may sign too, but asks for Touch ID at each use by default, so a rebase would ask at each
-commit. Name ws's copy of its `.pub`, `/etc/ws/secretive/NAME.pub`, in `WS_GIT_SIGNING_PUB_KEY`.
+`ws client setup` names the key that comes during its wait as `WS_GIT_SIGNING_PUB_KEY` too, as it
+names it `WS_IDENTITY_PUB_KEY` ([Secretive](../ssh/README.md#secretive)). A key made in Secretive's
+app at Notify signs with no prompt while the Mac is unlocked. A key that asks for Touch ID at each
+use would ask at each commit of a rebase. To sign with another
+key, name ws's copy of its `.pub`, `/etc/ws/secretive/NAME.pub`, in `WS_GIT_SIGNING_PUB_KEY`.
 `NAME` is that of Secretive's Public Key Path, and the keys' unit writes the copy from the agent
 ([Secretive's keys](#secretives-keys)). git then signs through `/etc/ws/secretive-ssh-keygen`,
 which gives `ssh-keygen` Secretive's agent, so that a terminal, an editor and other apps sign

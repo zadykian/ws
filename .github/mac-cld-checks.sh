@@ -59,7 +59,7 @@ bootstrap() {
 
 # installed checks the apps, the casks, the font, cld and the files of Ghostty and Zed.
 installed() {
-    for app in Ghostty Zed; do
+    for app in Ghostty Zed Secretive; do
         [ -d "/Applications/$app.app" ] || error "mise bootstrap installed no /Applications/$app.app"
     done
     status=$(mac_tree_mise bootstrap packages status --json) ||

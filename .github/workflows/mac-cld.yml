@@ -57,11 +57,11 @@ jobs:
         run: bash .github/mac/15-usr-local.sh
       # Any 32 bytes in base64 pass for ws's key: the daemon loads, and no handshake is needed. The
       # facts need a login key that values.yml names: a file key, made here. Git signs with it too.
-      - name: values.yml, with a stand-in for ws's key, on a runner without Ghostty, Zed or cld
+      - name: values.yml, with a stand-in for ws's key, on a runner without the apps or cld
         run: |
           fail=0
           for path in /Applications/Ghostty.app ~/Applications/Ghostty.app /Applications/Zed.app \
-              ~/Applications/Zed.app ~/.config/zed ~/.local/bin/cld \
+              ~/Applications/Zed.app /Applications/Secretive.app ~/.config/zed ~/.local/bin/cld \
               ~/.config/ghostty "$HOME/Library/Application Support/com.mitchellh.ghostty" \
               ~/Library/Fonts/"$FONT" /Library/Fonts/"$FONT" ~/.ssh/id_ed25519; do
               if [ -e "$path" ]; then
