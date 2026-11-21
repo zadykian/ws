@@ -19,17 +19,16 @@ on and has it block all incoming, as the server reaches the Mac past no router
 ([the firewall](macos/firewall/README.md)). mise installs Ghostty, Zed
 and a font as casks, and gh, fnox and age-plugin-yubikey by its lock, with no Homebrew
 ([the runbook](runbook.md)). The runbook puts `ws` in `~/.local/bin` (put it on `PATH` by hand)
-from a release, checked against its `ws.sha256` ([Releases](../../.github/workflows/release.md)),
-and clones the release's tree into `/opt/ws`, where the units' specs and files are. It links the
-tree's plugin where mise finds it. Write the values below in `values.yml` first ([The
-two files](values/README.md#the-two-files)), and trust the tree once
-([The bootstrap](runbook.md#the-bootstrap)). Then:
+from a release, checked against its `ws.sha256` ([Releases](../../.github/workflows/release.md)).
+Write the values below in `values.yml` first ([The two
+files](values/README.md#the-two-files)). Then:
 
 ```sh
-MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap
+ws client setup
 ```
 
-It sets up every role of the Mac, on the tree in `/opt/ws`, from the side's run directory,
+Setup takes the steps before mise ([Setup](#setup)). Then it runs mise's bootstrap, which sets up
+every role of the Mac. It runs on the tree in `/opt/ws`, from the side's run directory,
 `roles/client` ([The Mac's frame](macos/frame/README.md)).
 Its units read as the user, and ask sudo for a change alone. `ws client` holds the Mac's
 commands, darwin alone, which the units and the tunnel's daemons run. The user runs
@@ -38,9 +37,30 @@ commands, darwin alone, which the units and the tunnel's daemons run. The user r
 `ws client secrets add NAME`, which adds a server to it
 ([add](macos/secrets/README.md#ws-client-secrets-add)). `ws version` prints its version.
 
+## Setup
+
+`ws client setup` runs as the user on macOS on arm64, and refuses root and any other system. The
+steps are those of the server's setup, which `roles/internal/setup` holds, with the Mac's paths
+([The bootstrap](runbook.md#the-bootstrap)).
+
+- It checks the values before any write, and the guard. A tree in `/opt/ws`, or a directory above
+  it or above the plugin, that another user owns or that others may write is refused. mise runs the
+  tree's config as the user, and ignores a plugin below such a directory. A directory that a Mac
+  lacks, such as `/opt` or `/usr/local/share`, is made root's at 755.
+- The command line tools come first, as git needs them: its shim opens Apple's dialog where they
+  are missing. Setup runs `xcode-select --install`, not `softwareupdate`, whose marker file and
+  labels Apple does not document. A plan with the tools due plans no more.
+- mise comes from its release at the version ws pins, and its SHA-256 for `macos-arm64` is in Go
+  ([mise.go](../internal/setup/mise.go)). sudo writes the file, once the body matches.
+- The tree is root's. Setup reads its tag and status as the user by `git -c
+  safe.directory=/opt/ws`, as git refuses a repository that another user owns. It runs git
+  through sudo to fetch, check out and clean, and the plugin's link too.
+- A second run reads as the user, writes nothing and asks no password. `--in-place` and `--plan`
+  work as on the server ([The server's runbook](../server/runbook.md)).
+
 ## What the Mac reports
 
-`MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap plan` shows what the units would change, and
+`ws client setup --plan` shows what setup and the units would change, and
 `ws client servers` each server's tunnel. A cable's service that is disabled, which no run
 turns on, draws a warning from `ws client cable` and its `--check` alone: a bootstrap shows no
 check's output. No unit reads a private key: the key's unit looks for the file alone.
