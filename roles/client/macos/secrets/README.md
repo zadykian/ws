@@ -170,7 +170,7 @@ refuses the same names.
 ## ws client secrets add
 
 Run `ws client secrets add NAME` as yourself, with the Nano plugged in, once init has run
-and ws's `install.sh` has ended ([the runbook](../../runbook.md#ws-on-ws)). NAME is a server of
+and ws's `install.sh` and `ws server setup` have ended ([the runbook](../../runbook.md#ws-on-ws)). NAME is a server of
 the Mac's. Before the tunnel is up, `--address` and `--port` reach the server as ssh's `HostName`
 and `Port`. The command:
 

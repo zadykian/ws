@@ -94,8 +94,8 @@ curl -fsSL --proto '=https' --tlsv1.2 \
 
 So while a pre-release is tried, this line takes the place of each that runs `install.sh`. Those are
 step 3 of [the server's runbook](../../roles/server/runbook.md), and step 2 of
-[ws on ws](../../roles/client/runbook.md#ws-on-ws) and the Mac's Tools step on the Mac. Setup then
-checks out the tree of its own ws's tag.
+[ws on ws](../../roles/client/runbook.md#ws-on-ws) and the Mac's Tools step on the Mac. The side's
+setup follows, `ws server setup` or `ws client setup`, which checks out the tree of its own ws's tag.
 
 Nothing else is by hand. `release.yml` runs on the tag, in these jobs:
 

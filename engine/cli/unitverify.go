@@ -73,7 +73,7 @@ func unplanned(status []byte, units []string, runDir string) ([]string, error) {
 	ws, ok := st[manager]
 	if !ok || !ws.Available {
 		return nil, fmt.Errorf("mise has no %s plugin loaded: link /opt/ws/plugins/%s, root's alone, where "+
-			"mise finds a system plugin, as install.sh does, or run mise in %s", manager, manager, runDir)
+			"mise finds a system plugin, as setup does, or run mise in %s", manager, manager, runDir)
 	}
 	planned := map[string]bool{}
 	for _, pkg := range ws.Packages {

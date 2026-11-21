@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-ws sets up the maintainer's development server from code: `mise bootstrap`, which `install.sh`
+ws sets up the maintainer's development server from code: `mise bootstrap`, which `ws server setup`
 runs on the machine itself, each role as mise's config and ws's units. Its roles set up packages,
 SSH by key and a firewall, the links to the Mac, an IKEv2 VPN where a profile is given, and the
 fans. Then the shell, git,
