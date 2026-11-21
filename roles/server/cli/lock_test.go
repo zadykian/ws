@@ -49,7 +49,7 @@ func pinnedTools(t *testing.T) map[string]string {
 }
 
 // The server's lock holds each tool that a role pins, at its version, and no other. So
-// MISE_LOCKED=1 installs every pin, and a tool's removal takes its entry too. Each role's own test
+// The tree's locked = true installs every pin, and a tool's removal takes its entry too. Each role's own test
 // checks its tools' sums.
 func TestServerLockHoldsEachPinnedTool(t *testing.T) {
 	text, err := os.ReadFile(serverLock)

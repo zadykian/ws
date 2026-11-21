@@ -48,7 +48,7 @@ a line as `wg pubkey` prints it, in a directory only root reads:
 
 ```sh
 printf '%s\n' PUBLIC_KEY >/etc/wireguard/mac.pub
-MISE_LOCKED=1 mise -C /opt/ws/roles/server bootstrap
+ws server setup
 ```
 
 The Mac's scripts fix the peer's name, `mac`. A server's slot gives the tunnel's ends: `10.99.N.1`
