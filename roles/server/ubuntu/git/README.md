@@ -11,8 +11,6 @@ openssh-client, and names the eight units of its `units.toml.tmpl`:
 - `file/git-include`: the include at the top of `~/.gitconfig`.
 - `state/git-key` and `file/git-signers`: the key that signs commits and the file that trusts it
   ([Signing](#signing)).
-- `state/git-tokens-group`: the account's group on `/etc/ws/git-tokens.toml`, after the guard
-  ([Git credentials](#git-credentials)).
 - `state/git-tokens` and `state/git-clones`: `ws server git tokens` and `clones`, each with
   `--check` as its check ([Git credentials](#git-credentials), [Clones](#clones)).
 
@@ -98,8 +96,8 @@ proactive_auth = true   # for a server that sends no 401
 
 `proactive_auth` has git send the token with its first request, by `http.<url>.proactiveAuth`.
 mise writes the value whole to `/etc/ws/git-tokens.toml`, below ws's header, and removes the file
-where the input is empty. A file there by hand stops a run, with the secrets task or without,
-before the account's group or a credential program takes it in. The guard refuses the file where
+where the input is empty. A file there by hand stops a run with the secrets task, before a
+credential program takes it in. The guard refuses the file where
 a key is unknown, or a token or a username is not one word. It refuses a URL that holds a space, a
 quote or a backslash, and one of `http://`, as git would send its token in clear. It names a line
 and a key, never a value.
@@ -111,8 +109,7 @@ the same key. The program names `/usr/local/bin/ws`, which the frame keeps, as m
 changes with each version. So git's units run after the frame's `state/ws-binary`, and a first
 run's clone by a token finds the program. git runs it as the account, and it reads the URL's token
 from the file.
-It reads no `values.yml`. Root owns both files, with the account's group, so that the account reads
-a token and cannot change it: `state/git-tokens-group` sets the group after each write of mise's.
+It reads no `values.yml`. Root owns both files, and the tokens' is at 0600.
 The program ignores git's requests to store or erase a credential, so a token the server refuses
 stays until the input changes. Where two URLs match, the longer one wins. gh's program still
 answers for GitHub, except below an entry's URL there.

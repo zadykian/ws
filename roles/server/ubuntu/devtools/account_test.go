@@ -97,7 +97,7 @@ func TestDevtoolsUnitsForAnAccountAndRoot(t *testing.T) {
 		}
 		for _, chain := range [][]string{
 			{"file/devtools-npm-lock", "file/devtools-npm-package", "state/devtools-npm", "file/devtools-sql-formatter"},
-			{"state/devtools-gh-telemetry", "state/devtools-gh-token-group", "state/devtools-gh-login"},
+			{"state/devtools-gh-telemetry", "state/devtools-gh-login"},
 		} {
 			for i := 1; i < len(chain); i++ {
 				if slices.Index(names, chain[i-1]) > slices.Index(names, chain[i]) {

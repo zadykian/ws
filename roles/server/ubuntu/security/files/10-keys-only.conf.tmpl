@@ -5,10 +5,5 @@
 # which may allow passwords.
 PasswordAuthentication no
 KbdInteractiveAuthentication no
-{{- if eq .User "root" }}
-# WS_USER is root, who logs in by key only.
+# Root logs in by key alone.
 PermitRootLogin prohibit-password
-{{- else }}
-# WS_USER logs in, and takes root by sudo with its password.
-PermitRootLogin no
-{{- end }}

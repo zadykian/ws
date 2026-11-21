@@ -16,7 +16,7 @@ import (
 func TestGitUnits(t *testing.T) {
 	_, e := machine(t, "WS_USER: ws\n")
 	want := []string{"file/git-config", "file/git-include", "file/git-signers", "guard/git-check",
-		"state/git-clones", "state/git-key", "state/git-tokens", "state/git-tokens-group"}
+		"state/git-clones", "state/git-key", "state/git-tokens"}
 	got := kind.Names(units(t, e))
 	slices.Sort(got)
 	if !slices.Equal(got, want) {

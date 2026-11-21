@@ -1,4 +1,0 @@
-# security's lines where WS_USER is not root: the account leaves lxd, and lxd-installer goes.
-[bootstrap.packages]
-"ws:state/security-lxd-installer-purged" = "in-sync"
-"ws:state/security-lxd-left" = "in-sync"

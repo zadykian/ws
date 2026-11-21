@@ -3,8 +3,8 @@
 The `devtools` role installs Node, the .NET SDKs, gh, glow, the libraries headless Chromium needs,
 Go, gopls, Delve, roslyn-language-server, the SQL and Docker servers and rustup. The sources, the
 packages and the tools are mise's, in [mise.server.toml](mise.server.toml). The tools' links, gh's
-telemetry, login and token file's group, roslyn-language-server, the npm servers and rustup are
-units of [units.toml.tmpl](units.toml.tmpl). Those of the account run as `WS_USER`, root included, and without booted
+telemetry and login, roslyn-language-server, the npm servers and rustup are units of
+[units.toml.tmpl](units.toml.tmpl). Those of the account run as `WS_USER`, root included, and without booted
 systemd too, as in CI's container. [paths.go](paths.go) names the servers' paths for Zed's and
 Fresh's tests.
 
@@ -138,10 +138,10 @@ installs each release of gh within a day.
 gh logs in to github.com as the user, by the [secret input](../frame/README.md#secret-inputs)
 `WS_GITHUB_TOKEN` of [mise.secrets.toml](mise.secrets.toml):
 
-- mise writes the token to `/etc/ws/gh-token`, root's and mode 0640, with ws's header on its
-  first line and the token on its last. `state/devtools-gh-token-group` then gives it the
-  account's group. mise's plan shows no value. A run without the secrets task keeps the file
-  unchanged, and an empty `WS_GITHUB_TOKEN` removes it. A file there by hand stops the run.
+- mise writes the token to `/etc/ws/gh-token`, root's and mode 0600, with ws's header on its
+  first line and the token on its last. mise's plan shows no value. A run without the secrets task
+  keeps the file unchanged, and an empty `WS_GITHUB_TOKEN` removes it. A file there by hand stops
+  the run under the secrets task.
 - `state/devtools-gh-login` runs `ws server devtools gh-login`, as root, which runs gh as
   the user. It compares `gh auth token -h github.com` with the file's last line. Where they
   differ, it runs `gh auth login -h github.com -p https --insecure-storage --with-token`, the token

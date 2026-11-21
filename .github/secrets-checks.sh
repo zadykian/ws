@@ -180,7 +180,7 @@ must "a run after the refusals runs" task
 must "the file holds both values after the refusals" holds
 must "a plan after the refusals leaves nothing to do" task plan --detailed-exitcode
 
-# The files that the roles' inputs write: root's 640 with root's group, under ws's header
+# The files that the roles' inputs write: root's 600, under ws's header
 # (roles/server/ubuntu/frame/README.md#secret-inputs). The seed leaves their inputs empty, so
 # none is there yet.
 header='# Written by github.com/zadykian/ws, whose next run replaces any change made here.'
@@ -189,7 +189,7 @@ none() {
     local f
     for f in "$@"; do [ ! -e "$f" ] || return 1; done
 }
-kept() { sha256sum "${secret_files[@]}" && stat -c '%n %a %U %g' "${secret_files[@]}"; }
+kept() { sha256sum "${secret_files[@]}" && stat -c '%n %a %U %G' "${secret_files[@]}"; }
 must "no file is there while its input is empty" none "${secret_files[@]}"
 value WS_GITHUB_TOKEN age >"$work/gh"
 wrap=$'["https://git.invalid"]\ntoken = "%s"\nusername = "ci"\n' value WS_GIT_TOKENS age >"$work/git"
@@ -211,7 +211,7 @@ github.com:
 YAML
 must "a run writes gh's, git's and the shell's files" task
 for f in "${secret_files[@]}"; do
-    must "$f is root's 640, root's group's" test "$(stat -c '%a %U %g' "$f")" = '640 root 0'
+    must "$f is root's 600" test "$(stat -c '%a %U %G' "$f")" = '600 root root'
     must "$f opens with ws's header" test "$(head -n 1 "$f")" = "$header"
 done
 # The endpoint's line, and what sh makes of it, are compared, never printed.
@@ -237,16 +237,15 @@ must "a run without the env runs" boot
 must "a run without the env keeps the three files" test "$sums" = "$(kept)"
 must "a plan without the env leaves nothing to do" boot plan --detailed-exitcode
 
-# A file at gh's path that ws didn't write stops the run, which keeps it. A run without the env
-# stops there too, at the group unit, which reads the file's first line as mise's guard does.
+# A file at gh's path that ws didn't write stops the run under the env, which keeps it. A run
+# without the env loads no guard of mise's, so it keeps the file by hand and does not stop at it.
+# gh's login may fail on its last line, which this case leaves out.
 printf 'by hand\n' >/etc/ws/gh-token
-if out=$(mise -C /opt/ws/roles/server bootstrap </dev/null 2>&1); then
-    fail "a run without the env ran past the file by hand"
-fi
+out=$(mise -C /opt/ws/roles/server bootstrap </dev/null 2>&1) || true
 printf '%s\n' "$out" | tee -a "$work/out"
-must "a run without the env names the file by hand" grep -qF '/etc/ws/gh-token: not written by ws' <<<"$out"
+must "a run without the env keeps the file by hand" grep -qx 'by hand' /etc/ws/gh-token
 refusal "a file by hand at gh's path stops the run" '/etc/ws/gh-token: not written by ws'
-must "the run keeps the file by hand" grep -qx 'by hand' /etc/ws/gh-token
+must "the refused run keeps the file by hand" grep -qx 'by hand' /etc/ws/gh-token
 rm /etc/ws/gh-token
 must "a run after the file by hand writes gh's file again" task
 must "gh's file ends with its token again" cmp -s <(tail -n 1 /etc/ws/gh-token) <(cat "$work/gh" && echo)

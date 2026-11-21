@@ -68,7 +68,6 @@ fingerprint = [
 "ws:guard/devtools-data-dir" = "in-sync"
 "ws:state/devtools-gh-login" = "in-sync"
 "ws:state/devtools-gh-telemetry" = "in-sync"
-"ws:state/devtools-gh-token-group" = "in-sync"
 "ws:state/devtools-npm" = "in-sync"
 "ws:state/devtools-roslyn" = "in-sync"
 "ws:state/devtools-rustup" = "in-sync"

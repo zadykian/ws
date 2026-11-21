@@ -64,22 +64,21 @@ func fake(t *testing.T, bin, name, body string) {
 }
 
 // templateAction matches an action of the spec's template, the one way a value reaches a command's
-// text. A word of a command's own, as the guard's message, is no value.
+// text. A word of a command's own is no value.
 var templateAction = regexp.MustCompile(`\{\{.*?\}\}`)
 
-// Each run is WS_USER's but two, root's. The token file's group is one, as root alone may change
-// it. gh's login is the other: ws's own, which reads the token and runs gh as WS_USER. Each runs
-// without booted systemd too. No secret reaches a command's text, which a run's headline and mise's
-// log show.
+// Each run is WS_USER's but one, root's: gh's login is ws's own, which reads the token and runs gh
+// as WS_USER. Each runs without booted systemd too. No secret reaches a command's text, which a
+// run's headline and mise's log show.
 func TestDevtoolsRunsAreTheAccounts(t *testing.T) {
 	runs := readRuns(t)
-	want := []string{"devtools-gh-login", "devtools-gh-telemetry", "devtools-gh-token-group", "devtools-npm",
+	want := []string{"devtools-gh-login", "devtools-gh-telemetry", "devtools-npm",
 		"devtools-roslyn", "devtools-rustup"}
 	var got []string
 	for name, r := range runs {
 		got = append(got, name)
 		user := "{{ .User }}"
-		if name == "devtools-gh-token-group" || name == "devtools-gh-login" {
+		if name == "devtools-gh-login" {
 			user = "root"
 		}
 		if r.User != user || !r.Unbooted {

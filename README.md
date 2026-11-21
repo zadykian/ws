@@ -37,8 +37,7 @@ it has any:
   repository and its branch in the terminal's title.
 - [`devtools`](roles/server/ubuntu/devtools): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go,
   gopls, Delve, roslyn-language-server, the SQL, Docker and npm language servers, and rustup.
-- [`docker`](roles/server/ubuntu/docker): Docker Engine, its `daemon.json`, a slice for its containers and
-  `WS_USER`'s rootless daemon.
+- [`docker`](roles/server/ubuntu/docker): Docker Engine, its `daemon.json` and a slice for its containers.
 - [`claude`](roles/server/ubuntu/claude): claude, its user settings and telemetry, its sessions after a reboot,
   and plugin marketplaces from a list.
 - [`signoz`](roles/server/ubuntu/signoz): SigNoz in Docker, which keeps the machine's telemetry for 90 days.
