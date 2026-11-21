@@ -34,8 +34,6 @@ conf_server=lab
 } | conf_write "$conf"
 conf_server=ws
 
-mac_serve
-trap 'kill "$mac_server"' EXIT
 mac_bootstrap || {
     echo '::error::mise bootstrap with lab failed'
     exit 1

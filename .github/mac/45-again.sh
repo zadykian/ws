@@ -7,8 +7,6 @@ set -eo pipefail
 # shellcheck source=.github/mac-mise.sh
 . .github/mac-mise.sh
 
-mac_serve
-trap 'kill "$mac_server"' EXIT
 fail=0
 mac_mark
 mac_bootstrap || {

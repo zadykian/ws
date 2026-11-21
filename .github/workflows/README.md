@@ -61,12 +61,12 @@ CI also sets up a Mac, by [its cases](../mac), in the order of [The
 Mac](../../roles/client/README.md). A stand-in cld, which cld's unit leaves alone, spares the
 job's runs its download. Then `ws client setup --in-place` with
 [the Mac's frame](../../roles/client/macos/frame/README.md) runs as the runbook runs it, on the
-tree in `/opt/ws` with ws's build served as the pin ([mac-mise.sh](../mac-mise.sh)). Its plan
+tree in `/opt/ws`, with ws's build in `/usr/local/bin` ([mac-mise.sh](../mac-mise.sh)). Its plan
 before the first run must exit 2. Setup installs mise and links the tree's plugin as the runbook
 does. The case makes `/opt` and `/usr/local/share` root's and 755 first, as on
 a Mac, where the runner's image may differ. It sets up
 ssh, git and cld too. The plan must exit 0 after the first run, a second run must call no sudo,
-and `/usr/local/bin/ws` must be the build. A spec whose unit no line names must fail the plan,
+and `/usr/local/bin/ws` must be root:wheel at 755. A spec whose unit no line names must fail the plan,
 and so must a plan from `/opt/ws` with every unit in sync. After the first run the firewall must
 be on and block all incoming ([the Mac's firewall](../../roles/client/macos/firewall/README.md)).
 The cases after it, whose stand-ins listen on loopback, pass unchanged under it.
