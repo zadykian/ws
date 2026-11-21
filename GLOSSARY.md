@@ -1,12 +1,12 @@
 # ws
 
-ws sets up one development server from code, for one user, `WS_USER`, and the Mac that works
+ws sets up one development server from code, for one user, root, and the Mac that works
 on it. These are the words its code and its docs use, for the server's side and for the Mac's.
 
 ## Language
 
 **Account**:
-`WS_USER` as the server knows it: its name, its home, its uid and its primary gid.
+root as the server knows it: its name, its home, its uid and its primary gid.
 _Avoid_: owner, ids
 
 **Frame**:
@@ -17,8 +17,8 @@ system plugin.
 _Avoid_: skeleton, scaffold
 
 **Home file**:
-A file below the account's home that ws reads or writes as root, by a path under the home. The
-account owns it, and no link lies on the way to it.
+A file below the account's home, `/root`, that ws reads or writes by a path under the home. No
+link lies on the way to it.
 _Avoid_: user file, plain file
 
 **Input**:

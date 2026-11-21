@@ -1,16 +1,16 @@
 ---
 paths:
   - "roles/client/macos/zed/files/**"
-  - "roles/server/ubuntu/zed/files/settings.json.tmpl"
-  - "roles/server/ubuntu/fresh/files/config.json.tmpl"
+  - "roles/server/ubuntu/zed/files/settings.json"
+  - "roles/server/ubuntu/fresh/files/config.json"
   - "roles/server/ubuntu/lazygit/files/config.yml"
 ---
 
 # editors
 
 Zed and Fresh each have a plain file for their settings and keys: `roles/client/macos/zed/files/` and
-`roles/server/ubuntu/zed/files/settings.json.tmpl` for Zed, and
-`roles/server/ubuntu/fresh/files/config.json.tmpl` for Fresh. No code renders them. The Mac's
+`roles/server/ubuntu/zed/files/settings.json` for Zed, and
+`roles/server/ubuntu/fresh/files/config.json` for Fresh. No code renders them. The Mac's
 `settings.json.tmpl` beside them is Zed's seed of `settings.json`, its servers alone, and shares
 nothing.
 

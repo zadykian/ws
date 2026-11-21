@@ -2,7 +2,7 @@
 // itself is mise config and units, which set the servers up at these paths.
 package devtools
 
-// The links that units.toml.tmpl makes to mise's tools, root's, so any WS_USER runs them. Zed and Fresh
+// The links that units.toml.tmpl makes to mise's tools, root's, so any user runs them. Zed and Fresh
 // name them by these paths.
 const (
 	GoplsPath    = "/usr/local/bin/gopls"

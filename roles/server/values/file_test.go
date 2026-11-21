@@ -51,7 +51,7 @@ func fileOf(t *testing.T, in string) (Values, string) {
 }
 
 func TestYAMLReadsBackAsTheValues(t *testing.T) {
-	for _, in := range []string{"", "WS_USER: root\n", "WS_TUNNEL_PEERS: []\n", "WS_BASE_SWAP_SIZE_MB: 64\n"} {
+	for _, in := range []string{"", "WS_BASE_TIMEZONE: Asia/Tbilisi\n", "WS_TUNNEL_PEERS: []\n", "WS_BASE_SWAP_SIZE_MB: 64\n"} {
 		want, text := fileOf(t, in)
 		got, err := Parse([]byte(text))
 		if err != nil {
@@ -89,7 +89,7 @@ func TestSetFindsEachLineOfYAML(t *testing.T) {
 	v, text := fileOf(t, "")
 	for _, k := range Keys() {
 		if value := v.Text(k); value != "" {
-			if got, _, err := Set([]byte(text), k.Name, value); err != nil || string(got) != text {
+			if got, err := Set([]byte(text), k.Name, value); err != nil || string(got) != text {
 				t.Errorf("set %s %q: %v; want the file unchanged:\n%s", k.Name, value, err, got)
 			}
 		}
@@ -102,7 +102,7 @@ func TestSetFindsEachLineOfYAML(t *testing.T) {
 		if lines := strings.Count(text, "\n") - strings.Count(strings.Join(rest, ""), "\n"); lines != 1 {
 			t.Errorf("%s takes %d lines, want 1", k.Name, lines)
 		}
-		if got, _, err := Set([]byte(text), k.Name, ""); err != nil || string(got) != strings.Join(rest, "") {
+		if got, err := Set([]byte(text), k.Name, ""); err != nil || string(got) != strings.Join(rest, "") {
 			t.Errorf("set %s to its default: %v; want its line out:\n%s", k.Name, err, got)
 		}
 	}

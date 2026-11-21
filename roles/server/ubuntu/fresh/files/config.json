@@ -95,7 +95,7 @@
   "lsp": {
     "csharp": [
       {
-        "command": "{{.Home}}/.dotnet/tools/roslyn-language-server",
+        "command": "/root/.dotnet/tools/roslyn-language-server",
         "args": ["--stdio", "--autoLoadProjects", "--telemetryLevel", "off"],
         "auto_start": true
       }
@@ -114,7 +114,7 @@
     ],
     "dockerfile": [
       {
-        "command": "{{.Home}}/.local/lib/language-servers/node_modules/.bin/docker-langserver",
+        "command": "/root/.local/lib/language-servers/node_modules/.bin/docker-langserver",
         "args": ["--stdio"],
         "auto_start": true
       },
@@ -133,7 +133,7 @@
     ],
     "html": [
       {
-        "command": "{{.Home}}/.local/lib/language-servers/node_modules/.bin/vscode-html-language-server",
+        "command": "/root/.local/lib/language-servers/node_modules/.bin/vscode-html-language-server",
         "args": ["--stdio"],
         "auto_start": true
       }

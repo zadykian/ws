@@ -29,8 +29,7 @@ A role keeps its directory, `roles/server/ubuntu/ROLE/`, and its page there:
   A `.toml` file is TOML as written, which tombi checks.
 - **Its mise files,** one an env. `mise.server.toml` holds what every server gets: apt's sources,
   `[bootstrap.packages]`, files, directories and tools. `mise.booted.toml` holds the services, the
-  firewall, and each file entry that names a service in `notify`. `mise.account.toml` holds what
-  an account gets where `WS_USER` is not root. `mise.secrets.toml` holds its
+  firewall, and each file entry that names a service in `notify`. `mise.secrets.toml` holds its
   [secret inputs](#secret-inputs). A role holds no plain `mise.toml`, which every env would load.
 - **The side's link,** `roles/server/mise/conf.d`, to `../ubuntu`. mise loads each role's
   directory through it as a fragment, and a relative `source` resolves from the role's
@@ -48,16 +47,14 @@ Each unit of a spec is a line `"ws:KIND/NAME" = "in-sync"` under `[bootstrap.pac
 plans the units its files name alone. `ws unit list --toml` prints them.
 
 - A unit for every server goes in the role's `mise.server.toml`.
-- A unit that the spec gives under `{{ if ne .User "root" }}` goes in its `mise.account.toml`.
 - No unit goes in `mise.booted.toml`: a unit that needs booted systemd skips itself without it.
 
-The envs follow `WS_USER` alone, so a unit's presence in a spec does too. A unit for root alone
-has no env. A unit that another value turns off stays in the spec, off by its `when`. Else its
-line would name a unit that `ws unit read` refuses.
+A value never takes a unit out of a spec. A unit that a value turns off stays in the spec, off by
+its `when`. Else its line would name a unit that `ws unit read` refuses.
 
-[`TestSpecsMatchMiseLines`](../../cli/specs_test.go) loads the specs for root and for an account. It
-fails on a line missing or extra, and prints the line to paste. It fails on a unit for root alone.
-`TestUnitsFollowTheUserAlone` turns each other value over and fails where the units change.
+[`TestSpecsMatchMiseLines`](../../cli/specs_test.go) loads the specs for the defaults. It fails on
+a line missing or extra, and prints the line to paste. `TestUnitsFollowNoValue` fails where a bool
+or a string turned over changes the units.
 `TestTheSideLinksItsRoles` fails where the link leads elsewhere or its directory holds a file, and
 on a mise file that no env loads.
 
@@ -75,11 +72,10 @@ ws runs them by `KIND/NAME`, each moved behind the unit that its `after` names, 
 ## The machine's env
 
 The machine's miserc, `/etc/mise/miserc.toml`, names the envs that load as the set `ws`: `server`,
-then `booted` where `/run/systemd/system` is a directory, then `account` where `WS_USER` is not
-root. `booted` comes after `server`, so that its entries win. A run by `-E ws,secrets`, the secrets
-task's, adds the env `secrets` to the set, which no other run loads. The miserc is a template of
-the machine's own, which cannot read `/etc/ws/values.yml`. `install.sh` writes it from there, so a
-change of `WS_USER` means running `install.sh` again.
+then `booted` where `/run/systemd/system` is a directory. `booted` comes after `server`, so that
+its entries win. A run by `-E ws,secrets`, the secrets task's, adds the env `secrets` to the set,
+which no other run loads. The miserc is a template of the machine's own, which `install.sh`
+writes.
 
 ## Secret inputs
 
@@ -157,10 +153,9 @@ The unit `file/ws-values` writes `/etc/ws/values.yml` where nothing is at the pa
 included, as a `seed` file ([file](../../../../engine/core/kind/file.md)). The file, root's at
 600, goes in whole under that mode. `Values.YAML` gives its text from the struct, so that a role's
 new key needs no second list. It names each key of `values.Values`, a table too, at the value a
-missing file gives. A key that follows another holds its value as the file is made: `WS_HOME` and
-`WS_GIT_SIGNING_PUB_KEY` the user's, `WS_TUNNEL_PEERS` the Mac at the tunnel's next address.
-`ws server values set` moves the first two with a key they follow, where they hold the
-value it gave them. A key that a run reads from the machine, such as the swap's size, stays empty
+missing file gives. A key whose default is derived holds its value as the file is made:
+`WS_GIT_SIGNING_PUB_KEY` is under root's home, `WS_TUNNEL_PEERS` the Mac at the tunnel's next
+address. A key that a run reads from the machine, such as the swap's size, stays empty
 or `null`.
 
 The file is then the owner's: no run reads it as ws's, or changes it. Each call of ws reads the

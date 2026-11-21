@@ -7,28 +7,18 @@ import (
 	"testing"
 
 	"github.com/pelletier/go-toml/v2"
-
-	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/roles/server/values"
 )
 
 // terminalPath is the wrapper, which the settings name as the terminal's program.
 const terminalPath = "/usr/local/lib/ws/zed/terminal"
 
-// render returns the settings file for the home, as the unit fills it from the values.
-func render(t *testing.T, home string) []byte {
-	v := values.Default()
-	v.Home = home
-	got, err := resource.Render(os.DirFS("."), "files/settings.json.tmpl", v)
+// body returns the settings below their comment line, which must be JSON.
+func body(t *testing.T) string {
+	data, err := os.ReadFile("files/settings.json")
 	if err != nil {
 		t.Fatal(err)
 	}
-	return got
-}
-
-// body returns the settings below their comment line, which must be JSON.
-func body(t *testing.T, home string) string {
-	comment, rest, _ := strings.Cut(string(render(t, home)), "\n")
+	comment, rest, _ := strings.Cut(string(data), "\n")
 	if !strings.HasPrefix(comment, "//") {
 		t.Fatalf("no comment line first: %q", comment)
 	}
@@ -39,7 +29,7 @@ func body(t *testing.T, home string) string {
 }
 
 func TestSettingsAreJSONUnderTheirCommentLine(t *testing.T) {
-	body(t, "/home/ws")
+	body(t)
 }
 
 // The settings run the wrapper that mise writes, at the mode that lets Zed run it.
@@ -47,7 +37,7 @@ func TestSettingsRunTheWrapperThatMiseWrites(t *testing.T) {
 	var top struct {
 		Terminal struct{ Shell struct{ Program string } }
 	}
-	if err := json.Unmarshal([]byte(body(t, "/root")), &top); err != nil {
+	if err := json.Unmarshal([]byte(body(t)), &top); err != nil {
 		t.Fatal(err)
 	}
 	if top.Terminal.Shell.Program != terminalPath {
@@ -71,7 +61,7 @@ func TestSettingsRunTheWrapperThatMiseWrites(t *testing.T) {
 }
 
 func TestSettingsNameTheSQLAndDockerServersWithNoDuplicateKey(t *testing.T) {
-	text := body(t, "/home/ws")
+	text := body(t)
 	var top map[string]map[string]json.RawMessage
 	if err := json.Unmarshal([]byte(text), &top); err != nil {
 		t.Fatal(err)
@@ -88,19 +78,17 @@ func TestSettingsNameTheSQLAndDockerServersWithNoDuplicateKey(t *testing.T) {
 	}
 }
 
-func TestSettingsNameTheNpmServersForRootAndAnotherUser(t *testing.T) {
-	for _, home := range []string{"/root", "/home/ws"} {
-		text := body(t, home)
-		for _, name := range []string{"ansible-language-server", "vscode-html-language-server", "docker-langserver"} {
-			want := `"` + home + "/.local/lib/language-servers/node_modules/.bin/" + name + `"`
-			if !strings.Contains(text, want) {
-				t.Errorf("%s: settings lack %s", home, want)
-			}
+func TestSettingsNameTheNpmServersUnderRootsHome(t *testing.T) {
+	text := body(t)
+	for _, name := range []string{"ansible-language-server", "vscode-html-language-server", "docker-langserver"} {
+		want := `"/root/.local/lib/language-servers/node_modules/.bin/` + name + `"`
+		if !strings.Contains(text, want) {
+			t.Errorf("settings lack %s", want)
 		}
-		for _, key := range []string{"lsp", "languages", "node"} {
-			if strings.Count(text, "\n  \""+key+"\":") != 1 {
-				t.Errorf("top-level key %s is not unique", key)
-			}
+	}
+	for _, key := range []string{"lsp", "languages", "node"} {
+		if strings.Count(text, "\n  \""+key+"\":") != 1 {
+			t.Errorf("top-level key %s is not unique", key)
 		}
 	}
 }

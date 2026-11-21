@@ -16,7 +16,7 @@ import (
 )
 
 // A Procedure is a procedure of the role's that no kind holds. It gives the parts that a command of
-// ws settles for a unit, from the values and WS_USER's account.
+// ws settles for a unit, from the values and root's account.
 type Procedure func(v values.Values, a account.Account, m effect.Machine, u effect.Units, out effect.Out) []resource.Resource
 
 // UpdateParts updates cld where a newer release is out.

@@ -24,7 +24,7 @@ func TestDevtoolsGHLoginTakesTheTokenInputInTheSecretsTask(t *testing.T) {
 		{map[string]string{"MISE_TASK_NAME": "secrets", "WS_GITHUB_TOKEN": ""}, 0},
 		{map[string]string{"WS_GITHUB_TOKEN": "dummy-b"}, 0},
 	} {
-		p, m := valuesProcess("---\nWS_USER: root\n")
+		p, m := valuesProcess("---\n")
 		p = clitest.WithEnv(p, c.env)
 		m.Files[devtools.TokenFile] = []byte("# Written by github.com/zadykian/ws\ndummy-a\n")
 		m.Results[gh+" auth token -h github.com"] = effecttest.Result{Out: []byte("dummy-a\n")}
@@ -41,7 +41,7 @@ func TestDevtoolsGHLoginTakesTheTokenInputInTheSecretsTask(t *testing.T) {
 // The login gives gh the input's token on its input, and names no value in a command or a line.
 func TestDevtoolsGHLoginLogsInByTheInput(t *testing.T) {
 	gh := "env HOME=/root env -u " + strings.Join(secretInputs, " -u ") + " gh"
-	p, m := valuesProcess("---\nWS_USER: root\n")
+	p, m := valuesProcess("---\n")
 	p = clitest.WithEnv(p, map[string]string{"MISE_TASK_NAME": "secrets", "WS_GITHUB_TOKEN": "dummy-b"})
 	m.Results[gh+" auth login -h github.com -p https --insecure-storage --with-token"] = effecttest.Result{}
 	status, stdout, stderr := runWs(p, "", "server", "devtools", "gh-login")

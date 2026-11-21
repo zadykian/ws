@@ -63,11 +63,16 @@ the server's own steps.
 ## A new machine
 
 Install Ubuntu Server 26.04 by hand from its installer. In it, turn OpenSSH on, import the GitHub
-account's keys, and leave password login off. The bootstrap adds no key later. So put the Mac's
-key on the account first. Name the installer's user `zadykian`, ws's default user. A cloud VM
-has no installer: it gives its default user the provider's keys, which must be the account's. A VM
-with root alone logs in as root, where `WS_TARGET=cloud`. An image with Docker holds Docker's apt
-source, which apt refuses beside mise's: remove it first ([docker](roles/server/ubuntu/docker/README.md)).
+account's keys, and leave password login off. ws sets the server up for root. Root's keys come from
+the GitHub account alone: the installer imports them into its own user's home, and ws copies no key
+from another account's file. So log in as the installer's user, by key, and run `sudo -H
+ssh-import-id gh:LOGIN` ([the runbook](roles/server/runbook.md)). A cloud VM has no installer: its
+default user holds the provider's keys, which must be the account's. cloud-init has put the same
+keys in root's `authorized_keys` behind a forced command that refuses a login, and ssh-import-id
+skips a key that is there. So delete those lines first, then import the keys into root the same way.
+A VM with root alone logs in as root, where `WS_TARGET=cloud`. An image with Docker holds Docker's
+apt source, which apt refuses beside mise's: remove it first
+([docker](roles/server/ubuntu/docker/README.md)).
 
 Then, logged in as that user, write `/etc/ws/values.yml` where a value differs from its default,
 root's and mode 600 ([the values](#running-it-again)). Run `install.sh` through `sudo`, by the
@@ -88,16 +93,12 @@ The units read their secrets from mise's secret inputs, which the task `secrets`
 decrypts on ws ([The repository](roles/server/ubuntu/secrets/README.md#the-repository)). The
 values of a machine go in `/etc/ws/values.yml`, which only root reads, and every run reads them.
 The first run writes it where none is, each key at its default, and no run changes it after
-([The values file](roles/server/ubuntu/frame/README.md#the-values-file)). `WS_USER: NAME` sets up the
-user NAME instead of `zadykian`, the default, whose account must exist. `WS_USER: root` sets up a
-cloud VM with no other user. `WS_HOME` is the account's home, `/home/NAME` by default. One that
-differs from the home `getent passwd` gives the account fails the run.
-`WS_GIT_SIGNING_PUB_KEY` lies below it, or the run fails. A cloud VM names `WS_SECURITY_OUTBOUND:
+([The values file](roles/server/ubuntu/frame/README.md#the-values-file)). The server's user is
+root, in `/root`: no value names either. `WS_GIT_SIGNING_PUB_KEY` is `/root/.ssh/id_ed25519_signing.pub`
+by default, and lies below `/root`, or the run fails. A cloud VM names `WS_SECURITY_OUTBOUND:
 false` there before its first run ([Outbound](roles/server/ubuntu/security/README.md#outbound)). `ws
-server values set KEY VALUE` writes one key, and an empty VALUE gives its default back.
-The first run wrote the home and the signing key of the user then: one `set WS_USER NAME` moves
-them where they hold that user's, and says so. An edit by hand changes their lines with it. A
-second run changes nothing, so its plan exits 0 with `--detailed-exitcode`.
+server values set KEY VALUE` writes one key, and an empty VALUE gives its default back. A second
+run changes nothing, so its plan exits 0 with `--detailed-exitcode`.
 
 ## Dry runs
 
@@ -132,7 +133,7 @@ repositories; Metadata and Actions read; Contents, Pull requests, Issues and Wor
 write; and no account permission. These stay manual:
 
 - other peers' public keys on the server, as in [The tunnel](roles/server/ubuntu/tunnel/README.md#the-tunnel);
-- another device's SSH key on the server: `ssh-import-id gh:LOGIN`, run as `WS_USER`
+- another device's SSH key on the server: `ssh-import-id gh:LOGIN`, run as root
   ([SSH and the firewall](roles/server/ubuntu/security/README.md#ssh-and-the-firewall));
 - ikeward's VPN profile, in the server's fnox profile, `fnox.HOSTNAME.toml`, and the `ikeward`
   role's variables, as in [The profile](roles/server/ubuntu/ikeward/README.md#the-profile);

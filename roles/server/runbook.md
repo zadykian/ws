@@ -3,10 +3,12 @@
 A person does these steps at ws, in this order. The Mac's side sets them in its own order
 ([The Mac's runbook](../client/runbook.md)).
 
-1. Log in as the installer's user, by key.
+1. Log in as the installer's user, by key. Run `sudo -H ssh-import-id gh:LOGIN`, which imports the
+   GitHub account's keys into `/root/.ssh/authorized_keys`, which root logs in by afterward
+   ([SSH and the firewall](ubuntu/security/README.md#ssh-and-the-firewall)). ws copies no key from
+   the installer's `authorized_keys`.
 2. Where a value differs from its default, write `/etc/ws/values.yml`, root's and mode 600, with
-   each such value. `install.sh` reads `WS_USER` from it. Where none is, the bootstrap writes it
-   ([the values](../../README.md#running-it-again)).
+   each such value. Where none is, the bootstrap writes it ([the values](../../README.md#running-it-again)).
 3. Run `install.sh` as root, by the three lines of
    [Install](../../.github/workflows/release.md#install), `set -o pipefail` among them. It
    installs mise and runs its bootstrap, which puts ws in `/usr/local/bin`, which sudo reaches.

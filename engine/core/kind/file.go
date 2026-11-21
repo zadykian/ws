@@ -124,7 +124,7 @@ func (f filePart) resources(ctx context.Context, e Env, dir fs.FS) (built, error
 	}
 	// A line is the owner's file below a home, root's too, as a line goes in a file of the home. A
 	// file whose spec names root lies in root's home where its path is below it, so a link on the
-	// way is refused there too. An account's file names root where WS_USER is root.
+	// way is refused there too. An account's file names root where the account is root's.
 	if owner.Home == "" && (f.Line != "" || f.Owner == "root") {
 		var home string
 		if home, err = e.System.home(ctx, e.M, "root"); err != nil {

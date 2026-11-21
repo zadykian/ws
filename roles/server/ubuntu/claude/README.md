@@ -5,12 +5,12 @@ curl, which fetches the installers, and names the nine units of its `units.toml.
 after another, in this order, after git's tokens:
 
 - `state/claude-install` and `state/claude-cld-install`: claude, from its native installer, and
-  cld, from its latest release's `install.sh`, both in `~/.local/bin`, as the account
+  cld, from its latest release's `install.sh`, both in `~/.local/bin`, as root
   ([Installs and updates](#installs-and-updates)).
 - `state/claude-update`, `-completion`, `-settings`, `-telemetry` and `-marketplaces`: the commands
   `ws server claude update`, `completion`, `settings`, `telemetry` and `marketplaces`, as
   root, each with `--check` as its check, which fails where the command would change something.
-- `state/claude-linger` and `state/claude-restore`: lingering for the account, then
+- `state/claude-linger` and `state/claude-restore`: lingering for root, then
   `ws server claude restore` ([Sessions after a reboot](#sessions-after-a-reboot)).
 
 All but the last two need no systemd, so a container runs them too.
@@ -19,7 +19,7 @@ All but the last two need no systemd, so a container runs them too.
 
 claude updates itself in the background, so its unit installs it only where `~/.local/bin/claude`
 is missing. So does cld's, and `ws server claude update` updates cld with `cld update` where
-a newer release is out, which it reads over HTTP. Each installer runs as the account, with `HOME`
+a newer release is out, which it reads over HTTP. Each installer runs as root, with `HOME`
 set. It fetches the whole script before it runs it, so a failed fetch runs none of it. Neither is
 pinned. claude's installer refuses root where `SUDO_USER` is set, as under `sudo -i`, so its unit
 tells it that root is meant. cld's would take the caller's `CLD_INSTALL_DIR` over `~/.local/bin`,
@@ -34,6 +34,9 @@ effort, theme, editor mode, auto-compact and update channel. With `WS_CLAUDE_NOT
 the channel claude notifies on. It keeps every value already there. `--check` runs cld on a copy of
 the file and lists the keys it would add. A cld that predates the command gets it from the update
 first.
+
+Bypass mode, which skips every permission prompt, stays off as root: claude refuses it there, and
+ws sets nothing that lifts the refusal.
 
 ## Sessions after a reboot
 
@@ -81,7 +84,7 @@ the role removes still applies where the shell exports it, as from `/etc/ws/env`
 
 ## Plugin marketplaces
 
-`WS_CLAUDE_MARKETPLACES`, empty by default, lists the plugin marketplaces the role adds for `WS_USER`,
+`WS_CLAUDE_MARKETPLACES`, empty by default, lists the plugin marketplaces the role adds for root,
 each a `name` and a `source`. The source is what `claude plugin marketplace add` takes: a GitHub
 `owner/repo`, a git URL or an absolute path. The first two take a branch or tag as `#REF`. A git URL
 off GitHub ends in `.git`, as claude reads one without it as a hosted `marketplace.json`. The name

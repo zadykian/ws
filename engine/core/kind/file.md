@@ -47,7 +47,7 @@ after = "KIND/NAME"
   `dscl` on macOS, which the side names. A path outside it, or a link on the way, is refused, and
   the missing parents are the owner's.
 - A file whose `owner` names root takes root's home where its path lies below it, so a link on the
-  way is refused there too. An account's file names root where `WS_USER` is root.
+  way is refused there too. An account's file names root where the account is root's.
 - Without booted systemd the restarts are skipped, and each says so.
 - A `line` goes at the top of its owner's file below the home, root's too, with a blank line
   after it. With `line_at = "end"` it goes last, after a newline that the file lacks, for a format

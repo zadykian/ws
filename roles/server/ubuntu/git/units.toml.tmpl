@@ -18,8 +18,8 @@ command = ["{{ self }}", "server", "git", "check"]
 # below the file's own settings, or one that comes twice, and leaves the file untouched.
 [file.git-include]
 after = "guard/git-check"
-path = "{{ .Home }}/.gitconfig"
-owner = "{{ .User }}"
+path = "/root/.gitconfig"
+owner = "root"
 line = "[include]\n\tpath = /etc/ws/gitconfig"
 has = ["{{ self }}", "server", "git", "included"]
 
@@ -29,7 +29,7 @@ has = ["{{ self }}", "server", "git", "included"]
 # each token's credential program is /usr/local/bin/ws, which a clone by a token calls.
 [state.git-key]
 after = "state/ws-binary"
-run = { user = "{{ .User }}", unbooted = true, creates = ["{{ trim_suffix .GitSigningPubKey ".pub" }}"], command = ["sh", "-c", "mkdir -p -m 700 \"${1%/*}\" && ssh-keygen -q -t ed25519 -N '' -f \"$1\"", "sh", "{{ trim_suffix .GitSigningPubKey ".pub" }}"] }
+run = { user = "root", unbooted = true, creates = ["{{ trim_suffix .GitSigningPubKey ".pub" }}"], command = ["sh", "-c", "mkdir -p -m 700 \"${1%/*}\" && ssh-keygen -q -t ed25519 -N '' -f \"$1\"", "sh", "{{ trim_suffix .GitSigningPubKey ".pub" }}"] }
 
 # The file that trusts the key for the email of each commit, in git verify-commit, root's and 644.
 [file.git-signers]

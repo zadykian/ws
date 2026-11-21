@@ -35,9 +35,9 @@ type OSMachine struct {
 	// it by SIGTERM before a kill.
 	Stdin io.Reader
 	// Confine is a directory that Mkdir, Chmod, Chown, Symlink, WriteFile and WriteAtomic stay
-	// inside for a path under it: a link there that leaves it fails the write. WS_USER owns the
-	// WS_HOME, and can swap a directory in it for a link as root applies, which would hand the
-	// target to WS_USER. Empty means no limit.
+	// inside for a path under it: a link there that leaves it fails the write. A user owns its
+	// home, and can swap a directory in it for a link as root applies, which would hand the target
+	// to that user. Empty means no limit.
 	Confine string
 	// UserReads reads root's files and their owner and mode as ws's own user, never through sudo,
 	// so that a read asks no password. A file the user may not read fails the read. The Mac's

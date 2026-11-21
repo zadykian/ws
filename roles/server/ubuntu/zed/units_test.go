@@ -15,30 +15,24 @@ import (
 
 const limitsPath = "/etc/security/limits.d/ws-zed.conf"
 
-// loadUnits builds a machine with the account's empty home and its ids, and loads the role's units
-// for the values that yaml gives.
-func loadUnits(t *testing.T, user, home, yaml string) (*effecttest.Machine, map[string]kind.Unit) {
+// loadUnits builds a machine with root's empty home, and loads the role's units for the values that
+// yaml gives.
+func loadUnits(t *testing.T, yaml string) (*effecttest.Machine, map[string]kind.Unit) {
 	fsys := fstest.MapFS{}
-	for _, name := range []string{"units.toml.tmpl", "files/settings.json.tmpl", "files/limits.conf.tmpl"} {
+	for _, name := range []string{"units.toml.tmpl", "files/settings.json", "files/limits.conf.tmpl"} {
 		text, err := os.ReadFile(name) //nolint:gosec // a file of the role, named above
 		if err != nil {
 			t.Fatal(err)
 		}
 		fsys["zed/"+name] = &fstest.MapFile{Data: text}
 	}
-	v, err := values.Parse([]byte("WS_USER: " + user + "\n" + yaml))
+	v, err := values.Parse([]byte(yaml))
 	if err != nil {
 		t.Fatal(err)
 	}
-	uid := "1000"
-	if user == "root" {
-		uid = "0"
-	}
 	m := effecttest.NewMachine()
-	m.Results["id -u "+user] = effecttest.Result{Out: []byte(uid + "\n")}
-	m.Results["id -g "+user] = effecttest.Result{Out: []byte(uid + "\n")}
-	m.Results["getent passwd "+user] = effecttest.Result{Out: []byte(user + ":x:" + uid + ":" + uid + "::" + home + ":/bin/bash\n")}
-	m.Dirs[home] = 0o750
+	m.Results["getent passwd root"] = effecttest.Result{Out: []byte("root:x:0:0::/root:/bin/bash\n")}
+	m.Dirs["/root"] = 0o750
 	e := kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v}
 	us, err := kind.Load(e, fsys)
 	if err != nil {
@@ -59,15 +53,15 @@ func runUnits(t *testing.T, us map[string]kind.Unit) error {
 	return err
 }
 
-// The limit names the user, as limits.conf(5) says a `*` line does not apply to root, and takes
-// the value of values.yml.
-func TestZedNofileNamesTheUserAndTheValue(t *testing.T) {
-	m, us := loadUnits(t, "ws", "/home/ws", "WS_ZED_NOFILE: 4096\n")
+// The limit names root, as limits.conf(5) says a `*` line does not apply to root, and takes the
+// value of values.yml.
+func TestZedNofileNamesRootAndTheValue(t *testing.T) {
+	m, us := loadUnits(t, "WS_ZED_NOFILE: 4096\n")
 	if err := runUnits(t, us); err != nil {
 		t.Fatal(err)
 	}
 	want := "# Written by github.com/zadykian/ws, whose next run replaces any change made here.\n" +
-		"ws soft nofile 4096\n"
+		"root soft nofile 4096\n"
 	if got := string(m.Files[limitsPath]); got != want {
 		t.Errorf("limits file %q, want %q", got, want)
 	}
@@ -77,15 +71,15 @@ func TestZedNofileNamesTheUserAndTheValue(t *testing.T) {
 }
 
 func TestZedSettingsOnAnEmptyHome(t *testing.T) {
-	m, us := loadUnits(t, "ws", "/home/ws", "")
+	m, us := loadUnits(t, "")
 	if err := runUnits(t, us); err != nil {
 		t.Fatal(err)
 	}
-	if p := "/home/ws/.config/zed/settings.json"; m.Owners[p] != [2]int{1000, 1000} {
+	if p := "/root/.config/zed/settings.json"; m.Owners[p] != [2]int{} {
 		t.Errorf("%s owner %v", p, m.Owners[p])
 	}
-	for _, dir := range []string{"/home/ws/.config", "/home/ws/.config/zed"} {
-		if m.Owners[dir] != [2]int{1000, 1000} {
+	for _, dir := range []string{"/root/.config", "/root/.config/zed"} {
+		if m.Owners[dir] != [2]int{} {
 			t.Errorf("%s owner %v", dir, m.Owners[dir])
 		}
 	}
@@ -99,32 +93,28 @@ func TestZedSettingsOnAnEmptyHome(t *testing.T) {
 	}
 }
 
-// The servers sit under the user's home, which may be root's on a cloud VM.
-func TestZedSettingsNameTheToolPathsUnderTheHome(t *testing.T) {
-	for user, home := range map[string]string{"zadykian": "/home/zadykian", "root": "/root"} {
-		m, us := loadUnits(t, user, home, "")
-		if err := runUnits(t, us); err != nil {
-			t.Fatal(err)
-		}
-		got := string(m.Files[home+"/.config/zed/settings.json"])
-		for _, want := range []string{devtools.GoplsPath, devtools.Roslyn(home), devtools.DlvPath} {
-			if !strings.Contains(got, `"`+want+`"`) {
-				t.Errorf("%s: settings lack %q", user, want)
-			}
+// The servers sit under root's home.
+func TestZedSettingsNameTheToolPathsUnderRootsHome(t *testing.T) {
+	m, us := loadUnits(t, "")
+	if err := runUnits(t, us); err != nil {
+		t.Fatal(err)
+	}
+	got := string(m.Files["/root/.config/zed/settings.json"])
+	for _, want := range []string{devtools.GoplsPath, devtools.Roslyn("/root"), devtools.DlvPath} {
+		if !strings.Contains(got, `"`+want+`"`) {
+			t.Errorf("settings lack %q", want)
 		}
 	}
 }
 
-// A link on the way is refused, in root's home too, where WS_USER is root on a cloud VM.
+// A link on the way is refused.
 func TestZedUnitsRefuseALink(t *testing.T) {
-	for user, home := range map[string]string{"ws": "/home/ws", "root": "/root"} {
-		m, us := loadUnits(t, user, home, "")
-		m.Links[home+"/.config/zed"] = "/srv/target"
-		if err := runUnits(t, us); err == nil || !strings.Contains(err.Error(), home+"/.config/zed is a link to /srv/target") {
-			t.Errorf("%s: run = %v, want the link at the settings' directory refused", user, err)
-		}
-		if _, ok := m.Files[home+"/.config/zed/settings.json"]; ok {
-			t.Errorf("%s: settings written through the link", user)
-		}
+	m, us := loadUnits(t, "")
+	m.Links["/root/.config/zed"] = "/srv/target"
+	if err := runUnits(t, us); err == nil || !strings.Contains(err.Error(), "/root/.config/zed is a link to /srv/target") {
+		t.Errorf("run = %v, want the link at the settings' directory refused", err)
+	}
+	if _, ok := m.Files["/root/.config/zed/settings.json"]; ok {
+		t.Error("settings written through the link")
 	}
 }

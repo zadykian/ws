@@ -67,22 +67,17 @@ func fake(t *testing.T, bin, name, body string) {
 // text. A word of a command's own is no value.
 var templateAction = regexp.MustCompile(`\{\{.*?\}\}`)
 
-// Each run is WS_USER's but one, root's: gh's login is ws's own, which reads the token and runs gh
-// as WS_USER. Each runs without booted systemd too. No secret reaches a command's text, which a
-// run's headline and mise's log show.
-func TestDevtoolsRunsAreTheAccounts(t *testing.T) {
+// Each run is root's, and runs without booted systemd too. No secret reaches a command's text,
+// which a run's headline and mise's log show.
+func TestDevtoolsRunsAreRoots(t *testing.T) {
 	runs := readRuns(t)
 	want := []string{"devtools-gh-login", "devtools-gh-telemetry", "devtools-npm",
 		"devtools-roslyn", "devtools-rustup"}
 	var got []string
 	for name, r := range runs {
 		got = append(got, name)
-		user := "{{ .User }}"
-		if name == "devtools-gh-login" {
-			user = "root"
-		}
-		if r.User != user || !r.Unbooted {
-			t.Errorf("%s: user %q, unbooted %v; want %s, unbooted", name, r.User, r.Unbooted, user)
+		if r.User != "root" || !r.Unbooted {
+			t.Errorf("%s: user %q, unbooted %v; want root, unbooted", name, r.User, r.Unbooted)
 		}
 		for _, action := range templateAction.FindAllString(strings.Join(slices.Concat(r.Command, r.Check), " "), -1) {
 			if strings.Contains(action, "secrets") || strings.Contains(action, "Token") {
@@ -191,7 +186,7 @@ func TestRoslynCheckNamesTheCommandsVersion(t *testing.T) {
 	if i < 0 || len(r.Check) != 6 || r.Check[5] != r.Command[i+1] || r.Check[5] != strings.ToLower(r.Check[5]) {
 		t.Fatalf("command %q and check %q name another version", r.Command, r.Check)
 	}
-	if r.Check[4] != "{{ .Home }}/.dotnet/tools/.store/roslyn-language-server" {
+	if r.Check[4] != "/root/.dotnet/tools/.store/roslyn-language-server" {
 		t.Errorf("the check reads %q", r.Check[4])
 	}
 	store := t.TempDir()
@@ -215,7 +210,7 @@ func TestRoslynCheckNamesTheCommandsVersion(t *testing.T) {
 
 func TestRustupCreatesItsBinary(t *testing.T) {
 	r := readRuns(t)["devtools-rustup"]
-	if !slices.Equal(r.Creates, []string{"{{ .Home }}/.cargo/bin/rustup"}) || len(r.Check) != 0 {
+	if !slices.Equal(r.Creates, []string{"/root/.cargo/bin/rustup"}) || len(r.Check) != 0 {
 		t.Errorf("creates %q, check %q", r.Creates, r.Check)
 	}
 }

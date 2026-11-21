@@ -18,13 +18,12 @@ steps, and each role's README says what it sets up.
   ([The order](../../roles/server/ubuntu/frame/README.md#the-order)).
 - A role holds its spec, `units.toml.tmpl`, where it has units, with its templates. It holds its
   mise files by env: `mise.server.toml` for every server, `mise.booted.toml` where systemd is
-  booted, `mise.account.toml` where `WS_USER` is not root, and `mise.secrets.toml` under the env
-  `secrets`, which the secrets task adds. The role `secrets` has no spec. The side's one link,
-  `roles/server/mise/conf.d`, loads them. A role holds no plain `mise.toml`, which every env would
-  load ([specs_test.go](../../roles/server/cli/specs_test.go)).
-- Each unit of a spec is a line `"ws:KIND/NAME" = "in-sync"` of its role's `mise.server.toml`, or
-  of its `mise.account.toml` where the spec gives it for an account alone, never of
-  `mise.booted.toml`. `TestSpecsMatchMiseLines` fails on a line missing or extra
+  booted, and `mise.secrets.toml` under the env `secrets`, which the secrets task adds. The role
+  `secrets` has no spec. The side's one link, `roles/server/mise/conf.d`, loads them. A role holds
+  no plain `mise.toml`, which every env would load
+  ([specs_test.go](../../roles/server/cli/specs_test.go)).
+- Each unit of a spec is a line `"ws:KIND/NAME" = "in-sync"` of its role's `mise.server.toml`,
+  never of `mise.booted.toml`. `TestSpecsMatchMiseLines` fails on a line missing or extra
   ([specs_test.go](../../roles/server/cli/specs_test.go)).
 - A path is one role's: where two roles' mise files declare it, mise keeps the later fragment's by
   name and drops the other with no error.
@@ -39,9 +38,9 @@ steps, and each role's README says what it sets up.
   A role's type holds that role's values alone, as `ikeward.Profile`. ws holds no store of the
   secrets and no struct that gathers them: they reach the server by fnox alone
   ([The repository](../../roles/server/ubuntu/secrets/README.md#the-repository)).
-- The roles set the machine up for `WS_USER`, `zadykian` by default, in `WS_HOME`. A unit run as
-  `WS_USER` sets `HOME` and starts in it: root needs no sudo, a container has none, and `HOME` would
-  otherwise be the caller's ([claude's units](../../roles/server/ubuntu/claude/units.toml.tmpl)).
+- The roles set the machine up for root, in `/root`, which no value names. A unit run as a user
+  sets `HOME` and starts in it, so that `HOME` is not the caller's
+  ([claude's units](../../roles/server/ubuntu/claude/units.toml.tmpl)).
 - Root reaches a file under `WS_HOME` through the account (`Account.File`, `Account.Dir`,
   `Account.Absent`, `User.ReadHome`), or the unit acts as `WS_USER`, as claude's does. The user owns
   the home and could link a file elsewhere ([Links under the home](../../roles/server/ubuntu/security/README.md#links-under-the-home)).

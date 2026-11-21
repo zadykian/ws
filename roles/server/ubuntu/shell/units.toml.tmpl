@@ -2,11 +2,11 @@
 # account's. Stock's guard of a shell that is not interactive returns first, and ~/.profile runs
 # ~/.bashrc before its end. The line uses `.`, not `source`, as sh reads ~/.profile too.
 [file.shell-bashrc-line]
-path = "{{ .Home }}/.bashrc"
-owner = "{{ .User }}"
+path = "/root/.bashrc"
+owner = "root"
 line = ". /etc/ws/bashrc"
 
 [file.shell-profile-line]
-path = "{{ .Home }}/.profile"
-owner = "{{ .User }}"
+path = "/root/.profile"
+owner = "root"
 line = ". /etc/ws/profile"

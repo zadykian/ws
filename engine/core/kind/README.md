@@ -258,7 +258,7 @@ ws by `mise which ws`, the pinned binary. The write hook runs `ws unit verify` f
 - **Where it reads.** The specs sit below `$WS_UNITS`, else below the side's own directory: the
   server's is `/opt/ws/roles/server/ubuntu`, in the checkout that `install.sh` makes at `/opt/ws`.
   The values are the side's file, `/etc/ws/values.yml` on the server, and confine the machine's
-  writes under `WS_HOME`.
+  writes under root's home.
 - **verify.** mise drops the units of a plugin that it refuses, with a warning and exit 0. `verify`
   reads `mise bootstrap packages status --json`, and fails where the `ws` manager is missing or not
   available, or lacks a unit of the specs. With every unit there, it prints one line that never

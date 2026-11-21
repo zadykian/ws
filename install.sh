@@ -10,8 +10,7 @@
 # It installs mise at the version this script pins, over /usr/local/bin/mise. It downloads mise's
 # binary for this machine and checks it against the SHA-256 that the script holds. It runs the
 # binary as mise --version, and only then moves it into place. Then it writes
-# /etc/mise/miserc.toml from WS_USER in /etc/ws/values.yml. The miserc names the envs of mise's
-# files that load on this machine. A change of WS_USER means running this script again. It links
+# /etc/mise/miserc.toml, which names the envs of mise's files that load on this machine. It links
 # the tree's plugin, plugins/ws, where mise looks for a system plugin, as below. Last it
 # checks a release's tag out in /opt/ws by git, and runs mise bootstrap in /opt/ws/roles/server.
 # The release is the latest, or the one WS_VERSION names (X.Y.Z, with or without the v). A
@@ -169,29 +168,16 @@ install_mise() {
     say "installed mise $mise_version as $dir/mise"
 }
 
-# account prints WS_USER of /etc/ws/values.yml, or zadykian, ws's default, where the file or the
-# key is missing. Quotes are dropped.
-account() {
-    name=
-    if [ -f /etc/ws/values.yml ]; then
-        name=$(sed -n 's/^WS_USER:[[:space:]]*//p' /etc/ws/values.yml | tr -d "\"'" | awk 'NR == 1 { print $1 }')
-    fi
-    echo "${name:-zadykian}"
-}
-
 # miserc writes /etc/mise/miserc.toml by a rename. mise reads it before any config or values file.
 miserc() {
     mkdir -p /etc/mise || die "cannot create /etc/mise"
-    part=', "account"'
-    [ "$(account)" != root ] || part=
     rc=$(mktemp /etc/mise/.miserc.XXXXXX) || die "cannot write to /etc/mise"
     cat >"$rc" <<TOML
-# ws's side, the server, as the set ws: booted where systemd runs, account where WS_USER is not
-# root. install.sh writes it from /etc/ws/values.yml: run it again after WS_USER changes. The
-# secrets task adds secrets by -E ws,secrets. env sits above the table, which TOML would put it in.
+# ws's side, the server, as the set ws: booted where systemd runs. The secrets task adds secrets
+# by -E ws,secrets. env sits above the table, which TOML would put it in.
 env = ["ws"]
 [env_sets]
-ws = ["server"{% if "/run/systemd/system" is dir %}, "booted"{% endif %}$part]
+ws = ["server"{% if "/run/systemd/system" is dir %}, "booted"{% endif %}]
 TOML
     chmod 644 "$rc"
     mv -f "$rc" /etc/mise/miserc.toml || die "cannot write /etc/mise/miserc.toml"

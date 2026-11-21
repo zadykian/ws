@@ -37,12 +37,8 @@ type Values struct {
 
 // Shared holds the keys that the roles share.
 type Shared struct {
-	// User is the user the roles set the machine up for.
-	User string `yaml:"WS_USER"`
-	// Home is the user's home. Left empty, it follows User: /root for root, else /home/USER.
-	Home string `yaml:"WS_HOME"`
 	// GitSigningPubKey is the public key's path of the SSH key that signs git's commits. The private
-	// key lies beside it, without .pub. Left empty, it defaults to Home/.ssh/id_ed25519_signing.pub.
+	// key lies beside it, without .pub. Left empty, it defaults to /root/.ssh/id_ed25519_signing.pub.
 	GitSigningPubKey string `yaml:"WS_GIT_SIGNING_PUB_KEY"`
 }
 
@@ -80,8 +76,8 @@ func Parse(data []byte) (Values, error) {
 	return v, nil
 }
 
-// decode is Parse without underHome, for a part of a file, whose path lies under a home that only
-// the whole file gives.
+// decode is Parse without the checks, for a part of a file, whose keys may fail them with the
+// defaults of the rest.
 func decode(data []byte) (Values, error) {
 	v := Default()
 	dec := yaml.NewDecoder(bytes.NewReader(data))
@@ -114,21 +110,14 @@ func Load(m effect.Machine, path string) (Values, error) {
 	return v, nil
 }
 
-// followers are the keys that derive fills from the file, each after a key it follows. Set moves
-// the line of each that holds its derived value.
-var followers = []string{"WS_HOME", "WS_GIT_SIGNING_PUB_KEY"}
+// home is root's, the only user the roles set the machine up for.
+const home = "/root"
 
-// derive fills the values that follow WS_HOME when the file leaves them empty. It lists the Mac
-// at wg0's address plus one where the file has no WS_TUNNEL_PEERS: an empty or null list keeps no peer.
+// derive fills the signing key when the file leaves it empty. It lists the Mac at wg0's address
+// plus one where the file has no WS_TUNNEL_PEERS: an empty or null list keeps no peer.
 func (v *Values) derive() {
-	if v.Home == "" {
-		v.Home = "/root"
-		if v.User != "root" {
-			v.Home = "/home/" + v.User
-		}
-	}
 	if v.GitSigningPubKey == "" {
-		v.GitSigningPubKey = v.Home + "/.ssh/id_ed25519_signing.pub"
+		v.GitSigningPubKey = home + "/.ssh/id_ed25519_signing.pub"
 	}
 	if v.Tunnel.Peers == nil {
 		if p, err := netip.ParsePrefix(v.Tunnel.Address); err == nil && p.Addr().Is4() {
@@ -137,12 +126,11 @@ func (v *Values) derive() {
 	}
 }
 
-// underHome refuses a signing key that is not below WS_HOME. A role reaches it through the account,
+// underHome refuses a signing key that is not below /root. A role reaches it through the account,
 // by a path under the home, so that it can refuse a link there (roles/server/ubuntu/security/README.md).
 func (v *Values) underHome() error {
-	home := path.Clean(v.Home)
-	if !strings.HasPrefix(path.Clean(v.GitSigningPubKey), strings.TrimSuffix(home, "/")+"/") {
-		return fmt.Errorf("WS_GIT_SIGNING_PUB_KEY: %s is outside WS_HOME %s", v.GitSigningPubKey, v.Home)
+	if !strings.HasPrefix(path.Clean(v.GitSigningPubKey), home+"/") {
+		return fmt.Errorf("WS_GIT_SIGNING_PUB_KEY: %s is outside %s", v.GitSigningPubKey, home)
 	}
 	return nil
 }
