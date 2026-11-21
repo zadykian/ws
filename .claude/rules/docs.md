@@ -18,7 +18,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
 - A page lives beside the code it describes, as that directory's `README.md`. A second page stands
   beside it, named for its subject, where the cap keeps two apart or no package fits:
   `zed/projects.md`, `cable/router.md`, `runbook.md` of each side, `file.md`, `state.md` and
-  `launchd.md` of `engine/core/kind`, and `.github/workflows/rootless.md`, `mac-cld.md`,
+  `launchd.md` of `engine/core/kind`, and `.github/workflows/server.md`, `mac-cld.md`,
   `mac-servers.md` and `release.md`. CI's page is
   `.github/workflows/README.md`, never `.github/README.md`, which GitHub would show in place of
   the root's.
@@ -46,7 +46,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   [CI's README](../../.github/workflows/README.md) says what CI's other jobs check, and what the
   hooks of `.githooks` and Claude's hooks do.
   [mac-cld.md](../../.github/workflows/mac-cld.md) says what the job `mac-cld` checks.
-  [rootless.md](../../.github/workflows/rootless.md) says what `rootless` checks.
+  [server.md](../../.github/workflows/server.md) says what `server` checks.
 - [The zed role's README](../../roles/server/ubuntu/zed/README.md) is the page of the `zed` role:
   what runs on ws, Zed's downloads, trust and the limits.
   [projects.md](../../roles/server/ubuntu/zed/projects.md) is a project's `.zed/settings.json`,

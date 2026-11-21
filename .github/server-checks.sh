@@ -1,5 +1,5 @@
 #!/bin/bash
-# The server job's cases, as root on a runner that booted (.github/workflows/rootless.md). It
+# The server job's cases, as root on a runner that booted (.github/workflows/server.md). It
 # proves what a container can't: the bootstrap on a booted machine, and the firewall around Docker.
 # Each case that expects a refusal has a control, as a broken setup refuses everything. Run as
 # `server-checks.sh DIR`, DIR being .tools/serve-build's for the tree in /opt/ws.

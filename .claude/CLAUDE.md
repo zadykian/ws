@@ -59,7 +59,7 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
 - `.claude/`: this file, the rules of `rules/`, Claude Code's `settings.json` and the lint
   plugin's `lint-gates` ([Where else to look](#where-else-to-look)).
-- `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook`, `rootless`, `install` and
+- `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook`, `server`, `install` and
   `signoz`;
   `mac.yml`, with `mac`, whose cases are `.github/mac/NN-*.sh`; `mac-cld.yml`, with `mac-cld`;
   `rules.yml`,
@@ -88,8 +88,8 @@ It installs yamllint into `.cache`, and `.tools/run` downloads the rest there.
 The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `playbook` builds ws and runs `install.sh`'s
 bootstrap twice in an Ubuntu 26.04 container, with mise's plan.
 It checks the config that Fresh reads too. `signoz` forges SigNoz's compose files again, and
-`install` tries `install.sh`. `rootless` runs the rootless daemon, the firewall and the secrets
-task on a booted runner ([The rootless job](../.github/workflows/rootless.md)). `mac` sets up a
+`install` tries `install.sh`. `server` runs the firewall around Docker and the secrets task as
+root on a booted runner ([The server job](../.github/workflows/server.md)). `mac` sets up a
 Mac on GitHub's macOS runner by `mise bootstrap`, whose last run must call no sudo and whose plan
 must exit 0. `mac-cld` sets up
 Ghostty, Zed and cld by the bootstrap on another ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `mise

@@ -1,6 +1,6 @@
 #!/bin/bash
 # The server job's cases of the secrets task, as root on the runner that server-checks.sh set up
-# (.github/workflows/rootless.md). A bare repository on disk stands in for GitHub's, and the
+# (.github/workflows/server.md). A bare repository on disk stands in for GitHub's, and the
 # runner's host key opens its values, as a server's does. Each refusal keeps the secret file, and
 # no output of the task's holds a value. Then the files that the roles' inputs write.
 set -euo pipefail
