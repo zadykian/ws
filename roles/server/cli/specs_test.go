@@ -26,7 +26,7 @@ const (
 
 // roleFiles are the mise files a role may hold, each loaded by its env. A plain mise.toml would
 // load in every env. mise.secrets.toml loads under the env secrets, which the secrets task adds.
-var roleFiles = []string{"mise.server.toml", "mise.booted.toml", "mise.account.toml", "mise.secrets.toml"}
+var roleFiles = []string{"mise.server.toml", "mise.booted.toml", "mise.secrets.toml"}
 
 // specNames returns the names of the units that the roles' specs give for v.
 func specNames(v values.Values) ([]string, error) {
@@ -62,25 +62,10 @@ func rootAndAccount(t *testing.T) (root, account values.Values) {
 }
 
 // TestSpecsMatchMiseLines holds mise's lines and the specs together, so that mise plans each unit
-// ws knows, as ws unit verify checks on a machine. The server's files hold each unit for every
-// server. The account's files hold each unit that the spec gives where WS_USER is not root, as the
-// miserc loads them there alone. A unit for root alone has no env. The server's files load on an
-// account's machine too, where ws unit read refuses a unit that no spec gives.
+// ws knows, as ws unit verify checks on a machine. The server's files hold each unit of the specs.
 func TestSpecsMatchMiseLines(t *testing.T) {
-	root, account := rootAndAccount(t)
+	root, _ := rootAndAccount(t)
 	every := specLines(t, root)
-	accountLines := specLines(t, account)
-	for _, name := range every {
-		if !slices.Contains(accountLines, name) {
-			t.Errorf("%s: the specs give it for root alone, and no env loads a unit for root alone", name)
-		}
-	}
-	accountOnly := []string{}
-	for _, name := range accountLines {
-		if !slices.Contains(every, name) {
-			accountOnly = append(accountOnly, name)
-		}
-	}
 
 	server := clitest.MiseLines(t, treeRoot+"/mise.server.toml")
 	for name := range clitest.MiseLines(t, rolesDir+"/*/mise.server.toml") {
@@ -90,19 +75,18 @@ func TestSpecsMatchMiseLines(t *testing.T) {
 		server[name] = true
 	}
 	clitest.CompareLines(t, "every server (mise.server.toml)", every, server)
-	clitest.CompareLines(t, "an account (mise.account.toml)", accountOnly, clitest.MiseLines(t, rolesDir+"/*/mise.account.toml"))
 
 	// A unit skips itself without booted systemd, mise.toml loads on the Mac too, and
 	// mise.secrets.toml under the secrets task alone.
 	for _, glob := range []string{treeRoot + "/mise.toml", rolesDir + "/*/mise.booted.toml", rolesDir + "/*/mise.secrets.toml"} {
 		for name := range clitest.MiseLines(t, glob) {
-			t.Errorf("%s: \"ws:%s\" belongs in a mise.server.toml or mise.account.toml", glob, name)
+			t.Errorf("%s: \"ws:%s\" belongs in a mise.server.toml", glob, name)
 		}
 	}
 }
 
 // turnable returns the path of each bool and string field below Values, but those of Shared: the
-// keys that one machine sets and another leaves. WS_USER picks the env instead.
+// keys that one machine sets and another leaves. TestUnitsFollowTheUserAlone turns WS_USER itself.
 func turnable(t reflect.Type, at []int) [][]int {
 	var paths [][]int
 	for i := range t.NumField() {
@@ -119,12 +103,19 @@ func turnable(t reflect.Type, at []int) [][]int {
 	return paths
 }
 
-// TestUnitsFollowTheUserAlone holds the units of the specs to WS_USER alone. mise's lines go by
-// env, and the envs follow WS_USER alone. A unit that another value takes out of a spec would have
+// TestUnitsFollowTheUserAlone holds the units of the specs to the same set on every machine.
+// mise's lines name each unit for every server. A unit that a value takes out of a spec would have
 // a line on a machine where ws unit read refuses it. Such a unit stays, and its when turns it off.
-// Each bool is negated, and each string emptied or set, one at a time.
+// WS_USER is turned from root to an account, and each other bool is negated, and each string
+// emptied or set, one at a time.
 func TestUnitsFollowTheUserAlone(t *testing.T) {
 	root, account := rootAndAccount(t)
+	rootUnits, accountUnits := specLines(t, root), specLines(t, account)
+	slices.Sort(rootUnits)
+	slices.Sort(accountUnits)
+	if !slices.Equal(rootUnits, accountUnits) {
+		t.Errorf("for %s the specs give the units %v, not root's %v", account.User, accountUnits, rootUnits)
+	}
 	for _, base := range []values.Values{root, account} {
 		want := specLines(t, base)
 		slices.Sort(want)

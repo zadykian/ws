@@ -18,13 +18,12 @@ steps, and each role's README says what it sets up.
   ([The order](../../roles/server/ubuntu/frame/README.md#the-order)).
 - A role holds its spec, `units.toml.tmpl`, where it has units, with its templates. It holds its
   mise files by env: `mise.server.toml` for every server, `mise.booted.toml` where systemd is
-  booted, `mise.account.toml` where `WS_USER` is not root, and `mise.secrets.toml` under the env
-  `secrets`, which the secrets task adds. The role `secrets` has no spec. The side's one link,
-  `roles/server/mise/conf.d`, loads them. A role holds no plain `mise.toml`, which every env would
-  load ([specs_test.go](../../roles/server/cli/specs_test.go)).
-- Each unit of a spec is a line `"ws:KIND/NAME" = "in-sync"` of its role's `mise.server.toml`, or
-  of its `mise.account.toml` where the spec gives it for an account alone, never of
-  `mise.booted.toml`. `TestSpecsMatchMiseLines` fails on a line missing or extra
+  booted, and `mise.secrets.toml` under the env `secrets`, which the secrets task adds. The role
+  `secrets` has no spec. The side's one link, `roles/server/mise/conf.d`, loads them. A role holds
+  no plain `mise.toml`, which every env would load
+  ([specs_test.go](../../roles/server/cli/specs_test.go)).
+- Each unit of a spec is a line `"ws:KIND/NAME" = "in-sync"` of its role's `mise.server.toml`,
+  never of `mise.booted.toml`. `TestSpecsMatchMiseLines` fails on a line missing or extra
   ([specs_test.go](../../roles/server/cli/specs_test.go)).
 - A path is one role's: where two roles' mise files declare it, mise keeps the later fragment's by
   name and drops the other with no error.
