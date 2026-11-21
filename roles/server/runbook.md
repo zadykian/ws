@@ -29,6 +29,9 @@ in `/opt/ws/roles/server` with umask 022, from `/`. A second run changes nothing
   where none of them is due, and changes nothing. It exits 0 where nothing would change, and 2
   where something would.
 - `--secrets` runs the task `secrets` in place of the bootstrap, as below.
+- `ws update`, as root, brings ws to the latest release, or to `--version`'s, and runs that ws's
+  setup. A new release, or a trial's end, takes it, not `install.sh`
+  ([Update](../../.github/workflows/release.md#update)).
 
 The secrets come once the Mac has run `ws client secrets init`, one run for all servers, and
 then `ws client secrets add NAME`, which makes ws's host key a recipient of the secrets

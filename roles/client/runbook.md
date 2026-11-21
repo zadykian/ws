@@ -57,7 +57,9 @@ A second run changes nothing and asks no password. `ws client setup --plan` plan
 mise's bootstrap where none is due, and exits 0 where nothing would change. A ws that names no
 release tag is refused: `--in-place` runs the tree in `/opt/ws` as it stands, after the guard. A
 tree, or a directory above it, that others may write is refused too
-([Setup](README.md#setup)).
+([Setup](README.md#setup)). `ws update`, as the user, brings ws to the latest release, or to
+`--version`'s, and runs that ws's setup, with sudo for the write
+([Update](../../.github/workflows/release.md#update)).
 
 ## GitHub
 

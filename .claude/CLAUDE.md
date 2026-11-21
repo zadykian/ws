@@ -25,8 +25,9 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   `cmd/ws/main.go` runs `cmd`, which composes the root and the exit codes with the two sides'
   commands. `engine/cli` builds the root and the exit codes. `engine/core` holds `step`,
   `effect`, with `effect/effecttest`, `effect/local` and `effect/units`, and `resource`, with
-  `resource/resourcetest`, the resources the kinds share, and `kind`, the kinds that a role's
-  `units.toml.tmpl` names as units ([kind](../engine/core/kind/README.md)). They are public, as the roles
+  `resource/resourcetest`, the resources the kinds share, `kind`, the kinds that a role's
+  `units.toml.tmpl` names as units ([kind](../engine/core/kind/README.md)), and `update`, the
+  download, checksum and replace of `ws update`. They are public, as the roles
   import them from outside `engine/`.
 - `mise.toml`: mise's config that both sides share, its settings. ws is no tool of mise's: the
   machine's one ws is `/usr/local/bin/ws`. `mise.server.toml` is
@@ -89,8 +90,8 @@ The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `server` bui
 `ws server setup` twice as root on a booted runner, with setup's plan. It checks the config that
 Fresh reads too, the firewall around Docker and the secrets task
 ([The server job](../.github/workflows/server.md)).
-`signoz` forges SigNoz's compose files again, and `install` tries `install.sh`, as the `mac` case
-16-install does on macOS. `mac` sets up a
+`signoz` forges SigNoz's compose files again, and `install` tries `install.sh` and `ws update`, as
+the `mac` case 16-install does for `install.sh` on macOS. `mac` sets up a
 Mac on GitHub's macOS runner by `ws client setup`, whose last run must call no sudo and whose
 `--plan` must exit 0. `mac-cld` sets up
 Ghostty, Zed and cld by setup on another ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `mise
@@ -141,7 +142,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([fans](../roles/server/ubuntu/fans/units.toml.tmpl)), and so are foundryctl
   ([ci.yml](../.github/workflows/ci.yml)) and the gates' tools ([.tools/run](../.tools/run)). So is ws's
   binary: `install.sh` and `ws update` check it against the release's `ws.sha256`
-  ([release.yml](../.github/workflows/release.yml)), on the Mac too. So is mise's binary. `ws server setup`
+  ([release.yml](../.github/workflows/release.yml), [update.go](../engine/core/update/update.go)), on the Mac too. So is mise's binary. `ws server setup`
   and `ws client setup` hold its SHA-256 for each target ([mise.go](../roles/internal/setup/mise.go)).
   So is the server's fnox:
   GitHub's digest of its release asset for each platform is in `roles/server/mise/mise.server.lock`

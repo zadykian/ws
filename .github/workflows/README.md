@@ -29,7 +29,9 @@ It allows no line. Its test, [warnings-check-test.sh](../warnings-check-test.sh)
 
 CI runs `install.sh` with a stub of ws for each target, served on loopback. It checks that
 `install.sh` installs each stub, refuses a wrong sum and a missing file, and makes and checks
-`/usr/local/bin` ([The install job](release.md#the-install-job)). The `mac` job runs it on macOS with
+`/usr/local/bin`. It runs `ws update` too, with a real build of the tree as the ws that runs. The
+update must move a build to a release and run its setup
+([The install job](release.md#the-install-job)). The `mac` job runs it on macOS with
 the tree's build ([16-install.sh](../mac/16-install.sh)).
 
 ## The release
