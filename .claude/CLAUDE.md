@@ -139,10 +139,10 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([ci.yml](../.github/workflows/ci.yml)) and the gates' tools ([.tools/run](../.tools/run)). So is ws's
   binary: `mise.lock` holds its SHA-256 for each target, which mise checks as it installs
   ([mise.lock](../mise.lock)). A Mac's runbook checks it by hand too
-  ([runbook.md](../roles/client/runbook.md)). So is mise's binary. `ws server setup` holds its
-  SHA-256 for each Linux target ([mise.go](../roles/internal/setup/mise.go)), as `install.sh` does
-  ([install.sh](../install.sh)), and a test holds the two together. The Mac's runbook holds its
-  macos-arm64's ([runbook.md](../roles/client/runbook.md)). So is the server's fnox: GitHub's digest of its
+  ([runbook.md](../roles/client/runbook.md)). So is mise's binary. `ws server setup` and `ws client setup` hold
+  its SHA-256 for each target ([mise.go](../roles/internal/setup/mise.go)). So do `install.sh` for
+  Linux ([install.sh](../install.sh)) and CI's Mac cases for macos-arm64
+  ([mac-mise.sh](../.github/mac-mise.sh)). A test holds each pair together. So is the server's fnox: GitHub's digest of its
   release asset for each platform is in `roles/server/mise/mise.server.lock`
   ([secrets](../roles/server/ubuntu/secrets/README.md#fnox)). So is
   yamllint ([lint-requirements.in](../.github/lint-requirements.in)), and so are the Mac's gh, fnox
