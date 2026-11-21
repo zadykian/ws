@@ -15,7 +15,6 @@ check_booted = false        # run check with booted systemd alone
 service = "x.service"       # restarted where the file changes
 enabled = false             # service starts at boot
 reload = false              # reload service, not restart it
-user_service = "z.service"  # a unit of the owner's own systemd, restarted where the file changes
 secret = false              # keep the content out of the diff and out of a refusal's error
 absent = false              # remove the file; takes a path, an owner and ours alone
 line = ". /etc/x"           # or a line at the top of the owner's file, which keeps its own text

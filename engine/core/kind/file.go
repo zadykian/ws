@@ -224,9 +224,6 @@ type fileSpec struct {
 	// Enabled makes Service start at boot.
 	Enabled bool `toml:"enabled"`
 	Reload  bool `toml:"reload"`
-	// UserService is a unit of the owner's own systemd, restarted where the file changes. One with
-	// no unit file yet is left to whatever installs it.
-	UserService string `toml:"user_service"`
 }
 
 func (s fileSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.Resource, error), error) {
@@ -244,19 +241,11 @@ func (s fileSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.Res
 	case s.Enabled || s.Reload:
 		return nil, errors.New("enabled and reload go with service")
 	}
-	if s.Line != "" && (s.Service != "" || s.UserService != "") {
+	if s.Line != "" && s.Service != "" {
 		return nil, errors.New("a line takes no service, as the file is its owner's")
 	}
-	if s.Link != "" && (s.Service != "" || s.UserService != "") {
+	if s.Link != "" && s.Service != "" {
 		return nil, errors.New("a link takes no service, as it has no content to change")
-	}
-	if s.UserService != "" {
-		if s.Owner == "" || s.Owner == "root" {
-			return nil, errors.New("user_service takes an owner other than root")
-		}
-		if err := effect.CheckUnitName("user_service", s.UserService); err != nil {
-			return nil, err
-		}
 	}
 	return func(ctx context.Context) ([]resource.Resource, error) {
 		b, err := s.resources(ctx, e, dir)
@@ -267,9 +256,6 @@ func (s fileSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.Res
 		if s.Service != "" {
 			b.all = append(b.all, systemd.Unit{M: e.M, U: e.U, Out: e.Out, Name: s.Service, Enabled: s.Enabled,
 				Run: systemd.Running, Reload: s.Reload, Watch: watch})
-		}
-		if s.UserService != "" {
-			b.all = append(b.all, systemd.UserUnit{M: e.M, Account: b.owner, Out: e.Out, Name: s.UserService, Watch: watch})
 		}
 		return b.all, nil
 	}, nil

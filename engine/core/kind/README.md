@@ -152,7 +152,6 @@ hint = "…"                  # follows the line of a refused load; goes with lo
 ```toml
 [service.NAME]
 unit = "x.service"
-user = "USER"               # a unit of USER's own systemd; the default is the system's
 enabled = true
 run = "running"             # "stopped", "triggered", or "" to leave the unit as found
 reload = false
@@ -169,11 +168,6 @@ source = "name"
   Two files of one service in two file units would restart it twice.
 - `in_force` and `loads` run as root. A load that fails, or nothing in force, counts as a
   difference. Each part must exist first.
-- With `user`, the unit is USER's own systemd's, kept running, and each part is USER's. A change
-  to any part restarts it once. It takes `run = "running"`, and no `enabled`, `reload` or
-  `in_force`. A part whose path is the unit's file, `~/.config/systemd/user/UNIT`, goes before the
-  start, which the run that writes it plans too. Otherwise the file is left to whatever installs
-  it: until then it plans no start.
 - A service whose parts are all `absent` is gone: disabled and stopped before its files go, while
   its unit file still names its `ExecStop`, and the links its `[Install]` names. It takes no
   `enabled`, takes `run = "stopped"` or `""`, and compares nothing. A link made by hand stays.
