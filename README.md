@@ -151,7 +151,7 @@ CI runs `make lint`, which lints the code, the docs and the workflows, and scans
 secrets. It runs the bootstrap twice in a container, and mise's plan must exit 0 before the second
 and after it. It tries `install.sh`, forges SigNoz's compose files again, and sets up a Mac on
 GitHub's macOS runner by the bootstrap. A pushed tag `vX.Y.Z` publishes the
-release whose tree `install.sh` runs, and `vX.Y.Z-rc.N` a pre-release of `feat/mise`:
+release whose tree `install.sh` runs, and `vX.Y.Z-rc.N` a pre-release of a `feat/` branch:
 [Releases](.github/workflows/release.md). The rules workflow warns where a
 pull request breaks the rules of zadykian/toolkit's skills, and the issues workflow where an issue
 strays from its issue form. The hooks in `.githooks` check each commit before git makes it.

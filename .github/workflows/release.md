@@ -83,11 +83,12 @@ git switch main && git pull --ff-only
 git tag -s v0.2.0 && git push origin v0.2.0
 ```
 
-A pre-release is a tag `vX.Y.Z-rc.N`, N from 1, on a commit of `feat/mise`, the branch that moves
-ws to mise. The maintainer tries the branch from it before it lands on `main`:
+A pre-release is a tag `vX.Y.Z-rc.N`, N from 1, on a commit of a `feat/` branch, the branch that
+holds a change before it lands. The maintainer tries the branch from it before it lands on `main`.
+Name the branch in place of BRANCH:
 
 ```sh
-git fetch origin && git switch --detach origin/feat/mise
+git fetch origin && git switch --detach origin/feat/BRANCH
 git tag -s v0.13.0-rc.1 -m v0.13.0-rc.1 && git push origin v0.13.0-rc.1
 ```
 
@@ -111,8 +112,8 @@ clone take the pre-release's tag in place of the latest release's.
 
 Nothing else is by hand. `release.yml` runs on the tag, in these jobs:
 
-1. `check`: `origin/main` holds the commit of a tag `vX.Y.Z`, and `origin/feat/mise` that of a
-   tag `vX.Y.Z-rc.N`. Any other tag fails.
+1. `check`: `origin/main` holds the commit of a tag `vX.Y.Z`, and a branch `origin/feat/*` that of
+   a tag `vX.Y.Z-rc.N`. Any other tag fails.
 1. `ci` and `mac`: [ci.yml](ci.yml) and
    [mac.yml](mac.yml), called on the tag. Their jobs run,
    as on a push to `main`.
