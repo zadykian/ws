@@ -1,7 +1,9 @@
 # Checks
 
 In a stack, CI runs `server`, `mac` and `mac-cld`, its longest jobs, on
-the top pull request alone, as it holds every change below it. `lint`, `install` and `signoz` run
+the top pull request alone, as it holds every change below it, and only where the stack rests on
+`main`. A pull request onto another branch, such as an integration branch, skips them: that
+branch's pull request to `main` runs them. `lint`, `install` and `signoz` run
 on each. A stack opens as drafts, as a pull request opens before its link, and only a later event
 names the stack. So these three skip a draft's `opened` run and start on `ready_for_review`, which
 the other three skip. A newer push to a pull request cancels the runs of the push before it.
