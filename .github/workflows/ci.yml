@@ -2,7 +2,7 @@ name: ci
 
 # Every pull request, whatever its base, since pull requests are stacked, each on the one below it.
 # On main, each pull request's merge. release.yml calls it on a tag, where the event is the push
-# and stack is null, so that playbook runs in the call as it runs on a push.
+# and stack is null, so that server runs in the call as it runs on a push.
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -53,162 +53,19 @@ jobs:
           # zizmor's online audits, which look the actions up on GitHub, need a token.
           GH_TOKEN: ${{ github.token }}
 
-  # install.sh's bootstrap, as on a new machine. A container stands in for a booted system, so the
-  # parts that need a booted systemd skip. It runs twice: mise's plan before the second run and
-  # after it must change nothing. In a stack, it runs on the top pull request alone, which holds
-  # every change below it. So do mac.yml's and mac-cld.yml's jobs. Run on
-  # each of a stack of 20, these jobs kept its pull requests waiting for runners past 50 minutes. A
-  # stack's pull requests open as drafts, before gh stack link joins them, so a draft's opened event
-  # has no stack and these jobs skip it. No event follows the link: ready_for_review, once done, is
-  # the first to name the stack. Outside a stack, and on a push, stack is null, and null == null
-  # holds. GitHub's stack metadata:
+  # install.sh's bootstrap, as on a new machine, on a runner that booted, as a server that root
+  # alone logs in to. It runs twice: mise's plan before the second run and after it must change
+  # nothing. The firewall around Docker needs the booted systemd. In a stack, it runs on the top
+  # pull request alone, which holds every change below it. So do mac.yml's and mac-cld.yml's jobs.
+  # Run on each of a stack of 20, these jobs kept its pull requests waiting for runners past 50
+  # minutes. A stack's pull requests open as drafts, before gh stack link joins them, so a draft's
+  # opened event has no stack and these jobs skip it. No event follows the link: ready_for_review,
+  # once done, is the first to name the stack. Outside a stack, and on a push, stack is null, and
+  # null == null holds. GitHub's stack metadata:
   # https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/optimizing-ci-for-stacked-pull-requests
-  playbook:
-    name: playbook (${{ matrix.user }})
-    if: >-
-      (github.event.action != 'opened' || !github.event.pull_request.draft) &&
-      github.event.pull_request.stack.position == github.event.pull_request.stack.size
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-    # The default user with the table, and root as a cloud VM has it, without.
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - user: zadykian
-            outbound: true
-          - user: root
-            outbound: false
-    # NET_ADMIN lets nft -c, below, check the outbound table in the container's own netns.
-    # container marks one to packages, as systemd's interface does, so procps's skips its sysctl.
-    container:
-      image: ubuntu:26.04
-      options: --cap-add=NET_ADMIN -e container=docker
-    env:
-      WS_USER: ${{ matrix.user }}
-      OUTBOUND: ${{ matrix.outbound }}
-      # bootstrap has no --locked: a tool installs only as a lock holds it, where install.sh does.
-      MISE_LOCKED: "1"
-    # Root's home, as on a new machine, not a container job's /github/home. The job's env would
-    # reach the runner's docker exec, whose client then warns that it can't read /root/.docker.
-    defaults:
-      run:
-        shell: env HOME=/root bash --noprofile --norc -eo pipefail {0}
-    steps:
-      # curl fetches the Go that .tools/build needs and the mise that install.sh pins, and
-      # ca-certificates serves their HTTPS. There is no git, so the checkout has no .git and the
-      # build is devel. The image's dpkg leaves out the man pages, which a server keeps, and
-      # update-alternatives warns of each link to one. A server's chrony made its log directory at
-      # its first start, which a container lacks, and chrony's install warns of its absence.
-      - name: Install curl
-        env:
-          DEBIAN_FRONTEND: noninteractive
-        run: |
-          rm /etc/dpkg/dpkg.cfg.d/excludes && install -d /var/log/chrony
-          apt-get update
-          apt-get install -y --no-install-recommends ca-certificates curl
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      # CI builds ws from the tree, never from a release. /opt/ws, the plugin's path, must be
-      # root's alone for install.sh, and its pin names the build.
-      - name: Build ws
-        run: |
-          cp -a . /opt/ws
-          chown -R 0:0 /opt/ws && chmod -R go-w /opt/ws
-          .tools/serve-build /opt/ws "$RUNNER_TEMP/rel"
-      # The account as Ubuntu's installer leaves it. ws makes no user.
-      - name: Make the user
-        if: matrix.user != 'root'
-        run: useradd --create-home --shell /bin/bash "$WS_USER"
-      # Root's leg writes what it changes of the defaults, and keeps a copy: the matrix names the
-      # user and the table. The default user's leg writes none, so its first run writes the file.
-      # The container's swap is the host's, so base's swap file is off.
-      - name: Write the values
-        if: matrix.user == 'root'
-        run: |
-          install -d -m 755 /etc/ws
-          printf '%s\n' --- "WS_USER: $WS_USER" "WS_SECURITY_OUTBOUND: $OUTBOUND" |
-              tee "$RUNNER_TEMP/values.yml" >/etc/ws/values.yml
-          chmod 600 /etc/ws/values.yml
-      - name: Bootstrap
-        run: .github/warnings-check.sh -- .github/bootstrap.sh "$RUNNER_TEMP/rel"
-      # A run by hand, as after install.sh. It starts from root's home, 0700 on any machine, as
-      # after sudo -i: a command run as the user must not rest on the directory it starts in. mise
-      # trusts the tree and finds ws installed, so it needs no trust variable and no server. It
-      # names the data directory, as the runbook does, and the job does not, so the first bootstrap
-      # proves install.sh's. Its plan must change nothing: the last plan comes after this run,
-      # which mends a part that changes on each run.
-      - name: Bootstrap again, changing nothing
-        working-directory: /root
-        run: |
-          export MISE_DATA_DIR=/usr/local/share/mise
-          check=$GITHUB_WORKSPACE/.github/warnings-check.sh
-          "$check" -- mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null
-          "$check" -- mise -C /opt/ws/roles/server bootstrap </dev/null
-      # The plan changes nothing, and fails where mise's config lacks a unit of the specs.
-      - name: The plan changes nothing, and finds a missing unit
-        working-directory: /root
-        run: '"$GITHUB_WORKSPACE/.github/playbook-plan.sh"'
-      # The first run wrote the values where none was, and no run changed a file written before it.
-      - name: Check the values file
-        run: |
-          test "$(stat -c '%u:%g %a' /etc/ws/values.yml)" = '0:0 600'
-          kept=$RUNNER_TEMP/values.yml
-          if [ -f "$kept" ]; then cmp "$kept" /etc/ws/values.yml; fi
-      # The wrapper and tmux.conf that the bootstrap wrote, run against the container's tmux. The
-      # test takes about a minute, and catches a tmux release that changes how list-sessions or
-      # rename-session behave.
-      - name: Check the Zed terminal wrapper
-        run: sh .github/zed-terminal-checks.sh /usr/local/lib/ws/zed
-      # The container has no booted systemd, so the run leaves out its own nft -c. This checks the
-      # outbound table it wrote, and the users the table names, which the steps make.
-      - name: Check the outbound table
-        if: matrix.outbound
-        run: nft -c -f /usr/local/lib/ws/security/outbound.nft
-      - name: Check the home's owner
-        if: matrix.user != 'root'
-        run: |
-          strays=$(find "/home/$WS_USER" -xdev -not -user "$WS_USER")
-          if [ -n "$strays" ]; then
-              printf '%s\n' "$strays"
-              echo '::error::ws left files in the home that its user does not own.'
-              exit 1
-          fi
-      # Fresh loads a malformed config with its defaults and exits 0, so this reads what it loaded,
-      # as the user who owns the config.
-      - name: Check the config that Fresh reads
-        run: |
-          home=$(getent passwd "$WS_USER" | cut -d: -f6)
-          runuser -u "$WS_USER" -- env -C "$home" HOME="$home" fresh --cmd config show \
-              >"$RUNNER_TEMP/fresh.json"
-          .github/fresh-config-check.sh "$home/.config/fresh/config.json" "$RUNNER_TEMP/fresh.json"
-      # An empty commit, made as the user in a new repository, has git sign and verify with the
-      # key's own path. It reads the git role's key, ~/.gitconfig's include of /etc/ws/gitconfig,
-      # and /etc/ws/allowed_signers as git reads them. The file's text alone cannot tell that git
-      # opens a path.
-      - name: Check that the user signs a commit
-        run: |
-          home=$(getent passwd "$WS_USER" | cut -d: -f6)
-          repo=$(runuser -u "$WS_USER" -- mktemp -d)
-          git_as_user() {
-              runuser -u "$WS_USER" -- env -C "$repo" HOME="$home" git "$@"
-          }
-          git_as_user init -q
-          git_as_user commit -q --allow-empty -m check
-          status=$(git_as_user log -1 --format=%G?)
-          rm -rf "$repo"
-          if [ "$status" != G ]; then
-              echo "::error::The user's empty commit shows signature status '$status', not G."
-              exit 1
-          fi
-
-  # The rootless daemon and the firewall around it need a booted systemd, so this job runs on the
-  # runner, which the bootstrap and ws set up as a machine. The stack's top alone, as for playbook.
-  # setfacl drops /opt's default ACL, which lets anyone write the tree that install.sh then refuses.
-  rootless:
+  # setfacl drops /opt's default ACL, which lets anyone write the tree that install.sh then
+  # refuses.
+  server:
     if: >-
       (github.event.action != 'opened' || !github.event.pull_request.draft) &&
       github.event.pull_request.stack.position == github.event.pull_request.stack.size
@@ -221,20 +78,19 @@ jobs:
         env: { GIT_CONFIG_COUNT: 1, GIT_CONFIG_KEY_0: init.defaultBranch, GIT_CONFIG_VALUE_0: main }
         with:
           persist-credentials: false
+      # CI builds ws from the tree, never from a release: the pin names the build.
       - name: Build ws
         run: |
           sudo setfacl -k /opt && sudo install -d -o "$(id -un)" /opt/ws && cp -a . /opt/ws
           .tools/serve-build /opt/ws "$RUNNER_TEMP/rel"
       - name: The cases
-        run: sudo bash .github/rootless-checks.sh "$RUNNER_TEMP/rel"
+        run: sudo bash .github/server-checks.sh "$RUNNER_TEMP/rel"
       - name: The secrets task
         run: sudo bash .github/secrets-checks.sh
       # A failed start only points to the daemon's log.
       - name: The daemon's log
         if: failure()
-        run: |
-          sudo journalctl -n 80 --no-pager _SYSTEMD_USER_UNIT=docker.service
-          sudo dmesg | grep -i apparmor | tail -n 20
+        run: sudo journalctl -n 80 --no-pager -u docker.service
 
   # install.sh with the real mise, served on loopback, and a small repository in place of the
   # release's tree: .github/install-checks.sh. The pinned mise installs, a wrong one is refused, and

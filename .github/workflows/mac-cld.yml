@@ -25,7 +25,7 @@ jobs:
   # A third must call no sudo, and its plan exit 0. ssh's LocalCommand must follow Ghostty's
   # app and whether cld has restore tabs. Stubs then stand in for cld. The first is an older
   # release, which its unit updates, and whose line runs here. The second, built from a clone, lacks
-  # restore tabs, and a run drops the lines. Gated as ci.yml's playbook job.
+  # restore tabs, and a run drops the lines. Gated as ci.yml's server job.
   mac-cld:
     if: >-
       (github.event.action != 'opened' || !github.event.pull_request.draft) &&

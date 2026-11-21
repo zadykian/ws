@@ -1,6 +1,6 @@
 #!/bin/sh
 # Points a checkout's pin of ws at this tree's build, served on loopback in the release's place.
-# CI's playbook job and a trial of a role run it so:
+# CI's server job and a trial of a role run it so:
 #
 #   .tools/serve-build CHECKOUT DIR [OS ARCH]
 #   DIR/serve-releases DIR 8765 [PORT_FILE] &

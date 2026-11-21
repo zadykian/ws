@@ -1,49 +1,17 @@
 # Checks
 
-In a stack, CI runs `playbook`, `rootless`, `mac` and `mac-cld`, its longest jobs, on
+In a stack, CI runs `server`, `mac` and `mac-cld`, its longest jobs, on
 the top pull request alone, as it holds every change below it. `lint`, `install` and `signoz` run
 on each. A stack opens as drafts, as a pull request opens before its link, and only a later event
-names the stack. So these four skip a draft's `opened` run and start on `ready_for_review`, which
+names the stack. So these three skip a draft's `opened` run and start on `ready_for_review`, which
 the other three skip. A newer push to a pull request cancels the runs of the push before it.
-The checks of `rootless`, `mac-cld` and a Mac's servers have pages: [rootless](rootless.md),
+The checks of `server`, `mac-cld` and a Mac's servers have pages: [server](server.md),
 [mac-cld](mac-cld.md) and [mac-servers](mac-servers.md). So have [the gates](../../.tools/README.md).
-
-## The `playbook` job
-
-CI also builds ws from the tree, never from a release, in an Ubuntu 26.04 container with no git, so
-the build is `devel`. It copies the checkout to `/opt/ws`, root's alone, and
-[`.tools/serve-build`](../../.tools/serve-build) points its pin at the build, served on loopback
-in the release's place ([The pin](../../roles/server/ubuntu/frame/README.md#the-pin)). As
-`zadykian` and as root, a cloud VM's user, `install.sh` installs the pinned mise and runs the
-bootstrap on that tree in place, with `MISE_LOCKED=1` and install.sh's `MISE_DATA_DIR`
-([bootstrap.sh](../bootstrap.sh)). The runs by hand alone set the variable, so the first
-bootstrap fails at its guard where install.sh drops it. The bootstrap runs twice, the second from
-root's home. The parts and units that need booted systemd skip and say so. `mise bootstrap plan
---detailed-exitcode` must exit 0 before the second bootstrap, as that run would mend what it
-finds, and again after it. With the frame's line of `state/ws-binary` dropped, it must exit 1
-([playbook-plan.sh](../playbook-plan.sh)): the check against a silent skip holds. A plan from
-`/opt/ws`, which loads no role, must exit 1 too, and name the run directory. Then `nft -c`, with
-the container's NET_ADMIN, checks the outbound table the run wrote and the users it names, and a
-find that the user owns its home. The Zed wrapper's [checks](../zed-terminal-checks.sh) run on the
-files it installed, and Fresh's on the config it loaded. The user's empty commit must sign and
-verify. Root's leg has no table, and the run leaves out its own check
-([Outbound](../../roles/server/ubuntu/security/README.md#outbound)). The default user's leg starts
-with no values file, so its first run writes one, and root's leg writes its own. After both runs,
-the file is root's at 600, and root's keeps its bytes ([The values
-file](../../roles/server/ubuntu/frame/README.md#the-values-file)). In the container, base's swap
-file is off, as the swap is the host's. With no NVIDIA GPU, `nvidia` checks its names alone, and
-with no MSI board, `fans` leaves its fans alone. Without a VPN profile, `ikeward` does nothing.
-
-The container is set up as a machine is, so that no step of CI warns. It carries `container`, as
-systemd's container interface does, so procps leaves the kernel's read-only settings alone. dpkg
-keeps the man pages, and chrony's log directory is there before its install. The steps run with
-root's home, not the job's, which would reach the runner's own Docker client. Each checkout names
-the branch of its `git init`, as a machine's git config does.
 
 ## The warnings check
 
-[warnings-check.sh](../warnings-check.sh) fails where a bootstrap or a plan of `playbook` or
-`rootless` prints a warning, the secrets task's runs and plans in `rootless` too. It reads a
+[warnings-check.sh](../warnings-check.sh) fails where a bootstrap or a plan of `server`
+prints a warning, the secrets task's runs and plans too. It reads a
 run's log, or runs the command and shows its output as it runs. A warning is a line that says
 warn, hint, notice, deprecated, error, cannot, unable, could not or ignoring, as a word alone, or
 starts as apt's `W:` and `E:` do. mise's colors don't hide one. The check names each line it
@@ -51,7 +19,7 @@ finds and exits 1, and it keeps a plan's own exit code.
 
 It allows a few lines where systemd has not booted, each named and justified in the script. They
 come from what a container lacks: an init that tells a package's script the runlevel, and an
-`/etc/resolv.conf` that Docker doesn't bind-mount. On the rootless job's booted runner, it allows
+`/etc/resolv.conf` that Docker doesn't bind-mount. On the server job's booted runner, it allows
 none. Its test, [warnings-check-test.sh](../warnings-check-test.sh), runs in `lint`, on a log with
 warnings and on one without.
 

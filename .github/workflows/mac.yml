@@ -35,7 +35,7 @@ jobs:
   # Then a second server's cases, 90-clash, 92-second and 94-remove (mac-servers.md). Last, one
   # more bootstrap must call no sudo, and its plan and mise dot status --missing exit 0
   # (96-converged). A stand-in that makes no utun fails the job, as the daemon's device makes one.
-  # Gated as ci.yml's playbook job.
+  # Gated as ci.yml's server job.
   mac:
     if: >-
       (github.event.action != 'opened' || !github.event.pull_request.draft) &&

@@ -71,8 +71,8 @@ under `-P HOSTNAME` ([The task](../secrets/README.md#the-task)). Then remove the
 hold the client's key, and run the secrets task.
 
 - A run of the task sets the three, empty where the server has no profile.
-- A run without the task, as CI's `playbook`, sets none: the guard passes, the install leaves the
-  VPN alone, and the wait waits for none where `ikeward status` fails. Each says so.
+- A run without the task, as CI's `server` bootstrap, sets none: the guard passes, the install
+  leaves the VPN alone, and the wait waits for none where `ikeward status` fails. Each says so.
 - A `.p12` that is not base64 fails the guard, which names `WS_IKEWARD_P12` alone.
 
 ## A run

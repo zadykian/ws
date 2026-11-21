@@ -59,8 +59,8 @@ steps, and each role's README says what it sets up.
   ([kind](../../engine/core/kind/README.md)).
 - A unit that suits some machines alone, by their hardware or a value, says so by `when`. A new
   fact is an entry of `whenFacts` ([kind](../../engine/core/kind/README.md#the-specs)).
-- A second run plans nothing, which CI's `playbook` job checks
-  ([The `playbook` job](../../.github/workflows/README.md#the-playbook-job)). A unit that only reads plans no change.
+- A second run plans nothing, which CI's `server` job checks
+  ([The server job](../../.github/workflows/server.md)). A unit that only reads plans no change.
 - A plan, mise's or `ws unit write --dry-run`, applies nothing and shows how the machine differs
   ([Dry runs](../../README.md#dry-runs)). A step reads in its Plan, a GET included
   ([SigNoz's dashboards](../../roles/server/ubuntu/signoz/internal/dashboards/dashboards_plan.go)).
