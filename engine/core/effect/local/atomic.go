@@ -61,8 +61,17 @@ func (m OSMachine) Chmod(path string, perm fs.FileMode) error {
 }
 
 // Symlink makes path a link to target, replacing a file or link there through a new link renamed
-// over it.
+// over it. Where ws runs as a user and may not write path's directory, sudo's ln does it, which
+// replaces the link in two steps.
 func (m OSMachine) Symlink(target, path string) error {
+	if m.asRoot(path) && unwritable(filepath.Dir(path)) {
+		// ln -n puts the link inside a real directory, and exits 0 as if it had replaced it.
+		if fi, err := os.Lstat(path); err == nil && fi.IsDir() {
+			return fmt.Errorf("%s is a directory, not a link", path)
+		}
+		_, err := m.RunRoot(context.Background(), "ln", "-sfn", "--", target, path)
+		return err
+	}
 	tmp := filepath.Join(filepath.Dir(path), "."+filepath.Base(path)+".ws-new")
 	_ = os.Remove(tmp)
 	if err := os.Symlink(target, tmp); err != nil {
