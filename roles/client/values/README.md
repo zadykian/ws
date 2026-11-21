@@ -36,6 +36,12 @@ A key in the other file is refused, with the file it goes in. `WS_VALUES` names 
 and the server's file is `servers/ws/values.yml` beside it. Each key's meaning is in
 [values.yml](../README.md#the-macs-valuesyml).
 
+## The check
+
+`ws client values check` reads `values.yml` and each server's file beside it, and names each bad or
+missing key with its file, then exits 1. Where all pass, it prints one line. The frame's bootstrap
+runs it first ([The check of the values](../macos/frame/README.md#the-check-of-the-values)).
+
 ## The server's name
 
 `--server NAME` picks the server, and its file is `servers/NAME/values.yml`. A name is a lower-case
@@ -64,8 +70,9 @@ takes what another's takes. Each of the two refuses until one changes, in its ow
 - `WS_TUNNEL_PORT` and `WS_REMOTE_PORT`: the other's, behind the same `WS_REMOTE`, in any case, as
   the router forwards a port to one server.
 
-A file of another server that is refused fails each unit that reads the servers' files, in a
-plan too, and the error names the server and `ws client remove NAME`. The units read every
+A file of another server that is refused fails the frame's check of the values first, then each
+unit that reads the servers' files, in a plan too. The error names the server and
+`ws client remove NAME`. The units read every
 server's file, and the networks' unit would remove the resolver files of one it cannot read.
 
 ## The servers

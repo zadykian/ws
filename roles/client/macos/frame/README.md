@@ -10,7 +10,7 @@ server, and loads no file of the server's.
 | File | What it holds |
 | --- | --- |
 | [`mise.toml`](../../../../mise.toml) | Both sides': mise's settings and the pin of ws, with `macos-arm64` among its platforms. |
-| [`mise.mac.toml`](../../../../mise.mac.toml) | The Mac's: the frame's line, `ws:state/ws-binary`. |
+| [`mise.mac.toml`](../../../../mise.mac.toml) | The Mac's: the frame's line, `ws:state/ws-binary`, and [the check of the values](#the-check-of-the-values). |
 | [`plugins/ws`](../../../../plugins/ws) | The plugin: a hook runs one `ws unit read` or `ws unit write` ([ws unit](../../../../engine/core/kind/README.md#ws-unit)). |
 | `units.toml.tmpl` here | The role `frame`: the unit that keeps `/usr/local/bin/ws`. |
 
@@ -30,9 +30,11 @@ server, and loads no file of the server's.
 ## Root's paths
 
 mise reads its own files of root's through sudo on every run, and asks before it writes them on a
-terminal. So the Mac's config holds none: no `[bootstrap.files]` and no
-`[bootstrap.directories]`. Nor does it hold `[dotfiles]`, which replace the user's own file or
-link with no guard. ws's units hold both.
+terminal. So the Mac's config holds none of root's: no `[bootstrap.files]` with an owner, a group
+or a target outside `~/`, and no `[bootstrap.directories]`. Nor does it hold `[dotfiles]`, which
+replace the user's own file or link with no guard. ws's units hold these. mise expands a `~/`
+target, reads and writes it as the user, and uses sudo only where that is denied. It makes no
+missing parent.
 
 - A read needs no password. The Mac's `ws unit` reads root's paths as the user, and a run state's
   check runs as the user too. A file of root's is readable by all, or its spec fails to load.
@@ -71,5 +73,22 @@ sync passes. mise calls the hook for a line alone, so the frame's own line keeps
 line sits in the root's `mise.mac.toml`, not in the role. A run from `/opt/ws` loads no role, but
 still calls the hook. Outside the run directory, `/opt/ws/roles/client`, the read fails every
 line, in sync too, and names that directory. The server's check, a file that runs `ws unit verify`,
-would be one of mise's root files here. Nor can a unit run it: `verify` calls mise, whose read
-would call that unit again.
+is one of mise's root files, which mise reads through sudo, so the Mac holds none. Its one file,
+the user's under `~/`, holds [the check of the values](#the-check-of-the-values). Nor can a unit
+run `verify`: it calls mise, whose read would call that unit again.
+
+## The check of the values
+
+`~/Library/Caches/ws-values.checked`, in the root's `mise.mac.toml`, is a template that runs
+`ws client values check`. The plan and the run fail, before any unit reads a value, where
+`/etc/ws/values.yml` or a server's file holds a bad key or lacks one. The message names each key
+with its file. The file is the user's, with no owner or group, so mise reads and writes it as the
+user and asks no password. macOS always has that directory. The file is not under `/etc/ws`, whose
+files are root's and read through sudo. Nor is it a unit of ws's: a unit runs in the packages'
+phase, and a template renders before it.
+
+A pass prints one line, so that the next plan finds the file unchanged. A first run, and the run
+that brings a new pin, render it before mise installs the pin's ws, and print the same line then.
+The first unit's read refuses a bad value on that run, as the facts check the files too.
+`TestValuesCheckRunsTheCommandAndPassesWithNoWs` runs the file's command with a stand-in for mise
+and ws.
