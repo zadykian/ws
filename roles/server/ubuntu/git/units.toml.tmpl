@@ -25,10 +25,8 @@ has = ["{{ self }}", "server", "git", "included"]
 
 # The key that signs commits, made once by the account, with no passphrase: tools and claude commit
 # unattended, and the key only signs. ssh-keygen refuses a missing directory, as a container's
-# ~/.ssh may be, so the directory comes first, 0700. The chain starts after the frame's unit, as
-# each token's credential program is /usr/local/bin/ws, which a clone by a token calls.
+# ~/.ssh may be, so the directory comes first, 0700.
 [state.git-key]
-after = "state/ws-binary"
 run = { user = "root", creates = ["{{ trim_suffix .GitSigningPubKey ".pub" }}"], command = ["sh", "-c", "mkdir -p -m 700 \"${1%/*}\" && ssh-keygen -q -t ed25519 -N '' -f \"$1\"", "sh", "{{ trim_suffix .GitSigningPubKey ".pub" }}"] }
 
 # The file that trusts the key for the email of each commit, in git verify-commit, root's and 644.

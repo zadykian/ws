@@ -13,8 +13,7 @@ set -eo pipefail
 
 conf=/etc/ws/values.yml
 line=$(conf_print "$conf" | grep -x 'WS_LAN_ADDRESS: .*')
-mac_serve
-trap 'kill "$mac_server"; conf_set "$conf" "$line"' EXIT
+trap 'conf_set "$conf" "$line"' EXIT
 
 conf_set "$conf" WS_LAN_ADDRESS
 status=0

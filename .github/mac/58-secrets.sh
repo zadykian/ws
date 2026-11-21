@@ -17,8 +17,7 @@ error() {
 }
 
 dir=$(mktemp -d "${RUNNER_TEMP:-/tmp}/secrets.XXXXXXXX")
-trap '[ -z "${mac_server-}" ] || kill "$mac_server" || true; rm -rf "$dir"' EXIT
-mac_serve
+trap 'rm -rf "$dir"' EXIT
 
 # copies checks that each tool in /usr/local/bin is mise's, root's and 0755.
 copies() {

@@ -22,15 +22,14 @@ hint = "The board's own curves drive its fans: roles/server/ubuntu/fans/README.m
 after = "packages/fans"
 when = { board_vendor = "{{ .Fans.BoardVendor }}" }
 
-# ws-fans, with the files that one restart covers. It runs /usr/local/bin/ws, which the frame's
-# unit keeps, so a new ws reads as drift: the running process's binary is then the deleted one.
+# ws-fans, with the files that one restart covers. It runs /usr/local/bin/ws, so a new ws reads as
+# drift: the running process's binary is then the deleted one.
 [service.fans]
 unit = "ws-fans.service"
 enabled = true
 run = "running"
 in_force = ["sh", "-c", "readlink /proc/$(systemctl show -P MainPID ws-fans.service)/exe"]
 loads = ["readlink", "-f", "/usr/local/bin/ws"]
-after = "state/ws-binary"
 when = { board_vendor = "{{ .Fans.BoardVendor }}" }
 
 [[service.fans.file]]

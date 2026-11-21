@@ -21,8 +21,6 @@ sed '/^[[:space:]]*\/\//d' roles/client/macos/zed/files/keymap.json | python3 -m
         echo '::error::roles/client/macos/zed/files/keymap.json does not parse under its comments'
         fail=1
     }
-mac_serve
-trap 'kill "$mac_server"' EXIT
 printf '[]\n' >"$file"
 mac_bootstrap 2>&1 || {
     echo '::error::mise bootstrap failed'

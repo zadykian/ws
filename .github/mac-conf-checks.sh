@@ -1,7 +1,7 @@
 #!/bin/sh
 # The mac job's checks of the server's WS_TUNNEL_NETWORKS and WS_RESOLVERS, which mise bootstrap
 # writes through ws client networks. The job runs it from the repository's root after
-# mac-ws-checks.sh, with the build served (80-conf-keys.sh). The tunnel's daemon is loaded, and
+# mac-ws-checks.sh (80-conf-keys.sh). The tunnel's daemon is loaded, and
 # WS_PUBLIC_KEY is in the server's file (.github/workflows/mac.yml). It takes ws's path from the
 # job's TUNNEL, and stops without it. ws client networks --check must name both files and
 # write none. The keys' network must go into the daemon's utun, and their domain show in scutil

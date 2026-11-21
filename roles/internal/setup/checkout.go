@@ -32,7 +32,7 @@ func ReleaseTag(version string) (string, error) {
 
 // Checkout is the tree in Dir, at Tag of Repo and clean. A first run makes Dir an empty repository
 // and fetches into it, as a later run does. A change to the tree, and a file git does not track,
-// such as a trial's mise.local.toml that would pin another ws, go. It plans nothing where the
+// such as a trial's mise.local.toml that would load over the tag's tree, go. It plans nothing where the
 // tree is at the tag and clean. With InPlace it plans nothing: the tree runs as it stands.
 type Checkout struct {
 	M       effect.Machine

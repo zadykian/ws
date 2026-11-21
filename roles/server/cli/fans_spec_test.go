@@ -74,14 +74,12 @@ func apply(t *testing.T, steps map[string]step.Step, name string) {
 func TestFansUnitsRunInOrder(t *testing.T) {
 	units := loadSpecs(t, kind.Env{M: fansMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: fansValues(t), Self: selfPath})
 	names := kind.Names(units)
-	for _, pair := range [][2]string{{"packages/fans", "dkms/fans"}, {"state/ws-binary", "service/fans"}} {
-		first, then := slices.Index(names, pair[0]), slices.Index(names, pair[1])
-		if first < 0 || then < first {
-			t.Errorf("%s runs at %d, %s at %d; want the first before", pair[0], first, pair[1], then)
-		}
-		if got := units[then].Step.WaitsOn(); got != pair[0] {
-			t.Errorf("%s waits on %q, want %s", pair[1], got, pair[0])
-		}
+	first, then := slices.Index(names, "packages/fans"), slices.Index(names, "dkms/fans")
+	if first < 0 || then < first {
+		t.Errorf("packages/fans runs at %d, dkms/fans at %d; want the first before", first, then)
+	}
+	if got := units[then].Step.WaitsOn(); got != "packages/fans" {
+		t.Errorf("dkms/fans waits on %q, want packages/fans", got)
 	}
 	// ws-fans drives nct6687's files and reads the GPU by nvidia-smi, so it starts after both,
 	// which its one after cannot name: the names' order keeps them first.

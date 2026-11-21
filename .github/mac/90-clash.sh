@@ -11,8 +11,7 @@ set -eo pipefail
 . .github/mac-mise.sh
 
 conf=/etc/ws/values.yml
-mac_serve
-trap 'kill "$mac_server"; sudo rm -rf "${conf%/*}/servers/lab" "${conf%/*}/servers/box"' EXIT
+trap 'sudo rm -rf "${conf%/*}/servers/lab" "${conf%/*}/servers/box"' EXIT
 
 # ws's own ports, which the slot and port cases clash with.
 for line in 'WS_REMOTE: localhost' 'WS_REMOTE_PORT: 22022' 'WS_TUNNEL_PORT: 51820'; do

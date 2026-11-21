@@ -2,10 +2,8 @@
 # The server job's cases, as root on a runner that booted (.github/workflows/server.md): the
 # setup on a booted machine, what it wrote, and the firewall around Docker.
 # Each case that expects a refusal has a control, as a broken setup refuses everything. Run as
-# `server-checks.sh DIR`, DIR being .tools/serve-build's for the tree in /opt/ws.
+# `server-checks.sh`, with .tools/install-build's ws in /usr/local/bin and the tree in /opt/ws.
 set -euo pipefail
-
-rel=$1
 
 image=alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
 target=10.250.0.2:8000
@@ -146,17 +144,17 @@ apt_quiet() {
 # The controls: each of these holds before ws, and the opposite after it.
 must "the private address answers before the table" up "http://$target/"
 
-# As on a new machine: ws server setup installs mise and runs the bootstrap, which installs ws and
-# sets up the firewall before Docker's ufw rules. It runs twice, and the second run must change
-# nothing. Its plan must exit 2 before the first run, which has mise, the plugin and the bootstrap
-# to do, and 0 after each run. The tree must be root's alone for setup's guard. So must /opt and
-# /usr/share, as on a machine, for mise's: the runner's image lets others write both, and mise
-# refuses a system plugin below either.
+# As on a new machine: ws server setup installs mise and runs the bootstrap. The build is already
+# /usr/local/bin/ws. The bootstrap sets up the firewall before Docker's ufw rules. It runs twice, and
+# the second run must change nothing. Its plan must exit 2 before the first run, which has mise, the
+# plugin and the bootstrap to do, and 0 after each run. The tree must be root's alone for setup's
+# guard. So must /opt and /usr/share, as on a machine, for mise's. The runner's image lets others
+# write both, and mise refuses a system plugin below either.
 chown -R 0:0 /opt/ws
 chmod -R go-w /opt/ws
 chmod go-w /opt /usr/share
 check=$(dirname "$0")/warnings-check.sh
-setup() { "$check" -- "$(dirname "$0")/bootstrap.sh" "$rel" --in-place "$@" </dev/null; }
+setup() { "$check" -- "$(dirname "$0")/bootstrap.sh" --in-place "$@" </dev/null; }
 exits() {
     local want=$1 status=0
     shift
@@ -166,7 +164,7 @@ exits() {
 must "the plan before the first run has changes to make" exits 2 setup --plan
 log=$(mktemp)
 since=$(date +%s)
-if ! "$(dirname "$0")/bootstrap.sh" "$rel" --in-place > >(tee "$log") 2>&1; then
+if ! "$(dirname "$0")/bootstrap.sh" --in-place > >(tee "$log") 2>&1; then
     apt_quiet "$log" "$since" || true
     fail "the first setup"
 fi

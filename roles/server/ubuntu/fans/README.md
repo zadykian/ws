@@ -54,8 +54,7 @@ Then run the bootstrap again, as
 
 ## ws-fans
 
-`ws-fans.service` runs `ws server fans` from `/usr/local/bin/ws`, which the frame's unit
-`state/ws-binary` keeps the pinned ws; `service/fans` waits on it. It reads `/etc/ws/fans.json`,
+`ws-fans.service` runs `ws server fans` from `/usr/local/bin/ws`. It reads `/etc/ws/fans.json`,
 which the unit writes from its variables, below. The daemon's own loader checks a new config as the
 unit plans, so a config it refuses fails the plan and replaces nothing. A change to the config, the
 unit or the modules' files restarts the service. So does a new ws: the running process's binary is

@@ -30,26 +30,20 @@ func TestOtelcolRunsAfterSignoz(t *testing.T) {
 }
 
 // A read takes a unit as pending where a unit it waits on, by its chain of after, has changes. The
-// collector's service starts after SigNoz's sync, so its chain holds it. signoz's commands run ws,
-// so theirs holds the frame's unit.
+// collector's service starts after SigNoz's sync, so its chain holds it.
 func TestOtelcolWaitsOnSignoz(t *testing.T) {
 	e := kind.Env{M: effecttest.NewMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: defaults(t), Self: selfPath}
 	units, err := kind.Load(e, os.DirFS(rolesDir))
 	if err != nil {
 		t.Fatal(err)
 	}
-	for unit, wants := range map[string][]string{
-		"service/otelcol":       {"deb/otelcol", "state/signoz-sync", "state/ws-binary"},
-		"state/signoz-password": {"state/ws-binary"},
-	} {
-		chain, err := kind.Closure(units, []string{unit})
-		if err != nil {
-			t.Fatal(err)
-		}
-		for _, w := range wants {
-			if !slices.Contains(kind.Names(chain), w) {
-				t.Errorf("%s: its chain %q lacks %s", unit, kind.Names(chain), w)
-			}
+	chain, err := kind.Closure(units, []string{"service/otelcol"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, w := range []string{"deb/otelcol", "state/signoz-sync"} {
+		if !slices.Contains(kind.Names(chain), w) {
+			t.Errorf("service/otelcol: its chain %q lacks %s", kind.Names(chain), w)
 		}
 	}
 }
@@ -59,15 +53,8 @@ func TestSignozRunsAfterDocker(t *testing.T) {
 	before(t, "service/docker", "compose/signoz")
 }
 
-// git's credential program of each token is /usr/local/bin/ws, which the frame's unit keeps. A
-// first run that clones by a token would otherwise call a missing program and stop there.
-func TestGitTokensRunAfterWs(t *testing.T) {
-	before(t, "state/ws-binary", "guard/git-check", "state/git-tokens", "state/git-clones")
-}
-
-// signoz's commands run the ws that the frame's unit keeps.
-func TestSignozCommandsRunAfterWs(t *testing.T) {
-	before(t, "state/ws-binary", "state/signoz-password", "state/signoz-sync")
+// signoz's units run in order: the password, the project, then the sync.
+func TestSignozUnitsRunInOrder(t *testing.T) {
 	before(t, "state/signoz-password", "compose/signoz")
 	before(t, "compose/signoz", "state/signoz-sync")
 }

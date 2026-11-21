@@ -11,7 +11,7 @@ Each role has a page of its own. A role is its mise files by env, and its spec o
 it has any:
 
 - [`frame`](roles/server/ubuntu/frame): what each role of mise's config leans on, and
-  `/usr/local/bin/ws`, the pinned binary.
+  `/usr/local/bin/ws`, the machine's one ws.
 - [`base`](roles/server/ubuntu/base): packages, the locale, the timezone, security updates and a swap file,
   as mise's packages and units.
 - [`security`](roles/server/ubuntu/security): SSH by key only, ufw and fail2ban, and a table that keeps what
@@ -77,7 +77,7 @@ apt source, which apt refuses beside mise's: remove it first
 Then, logged in as that user, write `/etc/ws/values.yml` where a value differs from its default,
 root's and mode 600 ([the values](#running-it-again)). Run `install.sh` through `sudo`, by the
 three lines of [Install](.github/workflows/release.md#install), which fail where curl does. It
-installs mise and runs its bootstrap, which installs ws and sets each role up. Once the secrets
+installs mise and runs its bootstrap, which sets each role up. Once the secrets
 hold `WS_GITHUB_TOKEN`, the secrets task logs gh in ([By hand](#by-hand)). The Mac's
 `ws client secrets add NAME` runs it first, as [the server's runbook](roles/server/runbook.md) says.
 

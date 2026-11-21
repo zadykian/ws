@@ -9,12 +9,11 @@ config, with its spec where it has units, and holds no Go.
 
 | File | What it holds |
 | --- | --- |
-| [`mise.toml`](../../../../mise.toml) | Both sides': mise's settings, among them `locked`, and the pin of ws, a release, for three platforms. |
-| [`mise.lock`](../../../../mise.lock) | The release's SHA-256 for each platform, which mise checks as it installs ws. |
+| [`mise.toml`](../../../../mise.toml) | Both sides': mise's settings, among them `locked`, and no pin of ws. |
 | [`roles/server/mise/mise.server.lock`](../../mise/mise.server.lock) | The roles' tools: each download's url and SHA-256 for each platform ([devtools](../devtools/README.md#the-tools)). |
 | [`mise.server.toml`](../../../../mise.server.toml) | The server's: dpkg's options, `/etc/ws`, the check against a silent skip and [the check of the values](#the-check-of-the-values). |
 | [`plugins/ws`](../../../../plugins/ws) | The plugin: a hook runs one `ws unit read` or `ws unit write` ([ws unit](../../../../engine/core/kind/README.md#ws-unit)), linked as [a system plugin](#the-plugin). |
-| `units.toml.tmpl`, `mise.server.toml`, `files/` here | The role `frame`: the units that keep `/usr/local/bin/ws` and write [the values file](#the-values-file). |
+| `units.toml.tmpl`, `mise.server.toml`, `files/` here | The role `frame`: the unit that writes [the values file](#the-values-file). |
 
 The Mac shares `mise.toml` alone, and loads no file of the server's.
 
@@ -76,7 +75,7 @@ other run loads. `ws server setup` writes the miserc, as `install.sh` does.
 The same command writes `/etc/mise/config.toml`, which trusts the tree: its `trusted_config_paths`,
 under `[settings]`, names `/opt/ws`, so that a run by hand needs no `mise trust`. mise reads that
 setting of a system config under `[settings]` alone. `mise.toml` sets `locked`, so that a tool
-installs only as `mise.lock` holds it. The secrets task checks that setting, so that fnox runs
+installs only as its side's lock holds it. The secrets task checks that setting, so that fnox runs
 from the lock alone.
 `mise settings get locked` reads the config of the directory it runs in: it prints `true` in the
 tree and `false` outside it.
@@ -131,25 +130,15 @@ that drops them. Its other
 system directory, `/usr/local/share/mise/plugins`, stays empty here. Root's own,
 `/root/.local/share/mise/plugins`, is where mise installs a plugin, no system one.
 
-## The pin
-
-`mise.toml` pins a release of ws, which `mise.lock` checks by SHA-256 for `linux-x64`,
-`linux-arm64` and `macos-arm64`. A spec that needs new Go lands after the release that holds it.
-[`TestPinLocksEachTarget`](../../../../cmd/pin_test.go) holds the version, the platforms and their
-URLs together in both files. `mise.local.toml` and `mise.local.lock`, which git ignores, pin a
-build of the tree in their place. [`.tools/serve-build`](../../../../.tools/serve-build) writes
-them, beside a build of ws and of serve-releases, which serves it on loopback. CI's `server` job
-and a trial of a role run so, as a spec may need what the release lacks.
-
-The pin moves in a pull request of its own, after the release it names
-([Cutting a release](../../../../.github/workflows/release.md#cutting-a-release)).
-
 ## ws at a fixed path
 
-mise installs ws under its data directory, by version, which neither a unit of systemd nor a
-person can name. The unit `state/ws-binary` copies the pinned binary to `/usr/local/bin/ws` where
-the two differ, under a temporary name first. A unit that runs `/usr/local/bin/ws` waits on it by
-`after`.
+ws is no tool of mise's: mise would install it under its data directory, by version, which neither
+a unit of systemd nor a person can name. `/usr/local/bin/ws` is the machine's one ws, root's at 0755.
+`install.sh` and `ws update` write it. A trial installs the tree's build there by
+[`.tools/install-build`](../../../../.tools/install-build) (`linux arm64` on an arm64 machine), runs
+`ws server setup --in-place`, and ends by `ws update`, which takes a build that is no release as
+older than any release. The plugin, the frame's checks and each unit that runs ws take that path,
+and fail where the file is missing.
 
 ## The values file
 
@@ -171,10 +160,9 @@ values as it starts, and the text reads as no file does, so the unit needs no `a
 
 mise drops the units of a plugin that it refuses, with a warning and exit 0. The server's
 `/etc/ws/units.verified` is a template that runs `ws unit verify`, so the plan and the run fail
-where mise's plan lacks a unit of the specs. On a first run, and on the run that brings a new pin,
-mise renders it before it installs the pin's ws. It prints the line of a pass then, so that the
-next plan finds the file unchanged. Each unit reads as missing on that run, so the plugin's write
-hook runs, and it runs `ws unit verify` before `ws unit write`.
+where mise's plan lacks a unit of the specs. It runs `/usr/local/bin/ws`, and fails a run without
+it, naming `install.sh`. The plugin's write hook runs `ws unit verify` again before `ws unit
+write`.
 
 The check runs in the run's directory, where a nested mise loads the roles as the run does. A run
 from `/opt/ws`, or from the Mac's `roles/client`, loads no role of the server's, and a first one
@@ -190,10 +178,6 @@ each command does. A missing file passes. A bad value fails with its key, its ru
 to edit by hand: `values set` refuses while any value is bad, so the message never names it. A pass
 prints one fixed line, so the next plan finds the file unchanged.
 
-The template runs the ws that `WS_SELF` names, which `ws server setup` sets in the env of its mise,
-and else `/usr/local/bin/ws`. It never looks for mise's ws: a first run has none. It passes with a
-line on stderr that says so where neither file is. It passes so too where the ws lists no `check`
-among the commands of `ws server values`, as a pin from before it does. A first run by `install.sh`
-has no ws. The units' first read of the values then refuses a bad value, as before. CI's `server`
-job plans once with a bad value. It expects exit 1 from `ws server values check` that names the
-key, and puts the file back ([server-plan.sh](../../../../.github/server-plan.sh)).
+The template runs `/usr/local/bin/ws`, and fails a run without it, naming `install.sh`. CI's
+`server` job plans once with a bad value. It expects exit 1 from `ws server values check` that
+names the key, and puts the file back ([server-plan.sh](../../../../.github/server-plan.sh)).

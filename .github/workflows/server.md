@@ -17,15 +17,16 @@ namespace holds a private address that answers, `10.250.0.2`. The cases are
 [server-checks.sh](../server-checks.sh). Each refusal has a control that holds before ws runs.
 
 CI builds ws from the tree, never from a release. The tree goes in `/opt/ws`, root's alone, and
-[`.tools/serve-build`](../../.tools/serve-build) points its pin at the build, served on loopback
-in the release's place ([The pin](../../roles/server/ubuntu/frame/README.md#the-pin)). GitHub's runner keeps a default ACL on `/opt` that lets
+[`.tools/install-build`](../../.tools/install-build) installs the build as `/usr/local/bin/ws`, the
+ws that runs
+([ws at a fixed path](../../roles/server/ubuntu/frame/README.md#ws-at-a-fixed-path)). GitHub's runner keeps a default ACL on `/opt` that lets
 anyone write what lands there, so the job drops it first. Its image lets others write `/opt` and
 `/usr/share` too, where mise would refuse
 [the plugin](../../roles/server/ubuntu/frame/README.md#the-plugin), so the cases make both root's
 alone. As on a new machine, the build's `ws server setup --in-place` installs the pinned mise and
 runs the bootstrap on the tree in place ([bootstrap.sh](../bootstrap.sh)). The tree's
-`locked = true` has mise install each tool as the lock holds it. The bootstrap installs ws and
-sets up the firewall before Docker's ufw rules.
+`locked = true` has mise install each tool as the lock holds it. The bootstrap sets up the
+firewall before Docker's ufw rules.
 No apt command in it may wait for dpkg's lock, and neither of apt's daily services may run. The
 log shows the timers and their stamps before it and after it, and systemd's reloads, so that a
 failure shows what started the upgrade. Setup's `--plan` must exit 2 before the run, which has
@@ -34,7 +35,7 @@ exit 0 again. Neither run nor plan may print a
 warning ([The warnings check](README.md#the-warnings-check)). A failure prints the system
 daemon's log.
 
-The run leaves checks that need no container. With the frame's line of `state/ws-binary` dropped,
+The run leaves checks that need no container. With the frame's line of `file/ws-values` dropped,
 the plan must exit 1 ([server-plan.sh](../server-plan.sh)): the check against a silent skip holds.
 A plan from `/opt/ws`, which loads no role, must exit 1 too, and name the run directory. A plan
 with a bad value in the values file must exit 1 by `ws server values check` and name its key, and

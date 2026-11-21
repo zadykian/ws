@@ -9,8 +9,6 @@ set -eo pipefail
 . .github/mac-mise.sh
 
 conf_set /etc/ws/values.yml "WS_PUBLIC_KEY: $(cat "$RUNNER_TEMP/ws.pub")"
-mac_serve
-trap 'kill "$mac_server"' EXIT
 mac_bootstrap || {
     echo "::error::mise bootstrap with ws's key failed"
     exit 1

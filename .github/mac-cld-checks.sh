@@ -3,7 +3,7 @@
 # bash .github/mac-cld-checks.sh VERB [ARG]. Each failure is an ::error::, and the status 1.
 #
 # - setup puts this commit's tree in /opt/ws, as the runbook's clone does (mac-mise.sh).
-# - bootstrap [N] runs ws client setup N times, once by default, with ws's build served.
+# - bootstrap [N] runs ws client setup N times, once by default.
 # - installed checks what the bootstrap set up: Ghostty, Zed and the font, as mise's casks, cld,
 #   and the files of Ghostty and Zed.
 # - lines yes|no: ssh -G gives ws the two lines that start cld's watcher with yes, and neither
@@ -31,26 +31,15 @@ error() {
     fail=1
 }
 
-# served COMMAND... runs COMMAND with ws's build served, as a bootstrap fetches the pin, and returns
-# its status.
-served() {
-    mac_serve || return 1
-    "$@"
-    code=$?
-    kill "$mac_server"
-    return "$code"
-}
-
 # setup puts this commit's tree in /opt/ws.
 setup() {
     mac_tree || exit 1
-    kill "$mac_server"
 }
 
 # bootstrap N runs ws client setup N times, and stops at the first that fails.
 bootstrap() {
     for run in $(seq "$1"); do
-        served mac_bootstrap || {
+        mac_bootstrap || {
             error "ws client setup failed, at run $run of $1"
             return
         }
@@ -172,13 +161,13 @@ ssh_hosts() {
 # quiet runs setup, which must call sudo not once, then its plan, which must exit 0.
 quiet() {
     mac_mark
-    served mac_bootstrap || {
+    mac_bootstrap || {
         error 'ws client setup failed'
         return
     }
     calls=$(mac_calls)
     [ "$calls" = 0 ] || error "ws client setup called sudo $calls times, not once"
-    served mac_bootstrap plan --detailed-exitcode || error "ws client setup's plan exited $?, not 0"
+    mac_bootstrap plan --detailed-exitcode || error "ws client setup's plan exited $?, not 0"
 }
 
 case ${1-} in

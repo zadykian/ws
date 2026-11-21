@@ -1,7 +1,7 @@
 #!/bin/bash
 # ws client setup with the Mac's frame, as the runbook runs it, on the tree in /opt/ws as it stands.
-# Its plan before the first run must exit 2. The first run installs mise, links the plugin, installs
-# ws and copies ws to /usr/local/bin. It sets up ssh, git and cld from the job's
+# Its plan before the first run must exit 2. The first run installs mise and links the plugin, and
+# runs the build in /usr/local/bin. It sets up ssh, git and cld from the job's
 # values.yml, with the stand-ins of cld and the stand-in ws's tools (mac-standins.sh). It makes the
 # Mac's WireGuard key too (30-key.sh). Then the plan must exit 0, and a second run must call sudo not once, as a run
 # that changes nothing asks no password.
@@ -18,7 +18,6 @@ set -eo pipefail
 
 sh .github/mac-standins.sh
 mac_tree
-trap 'kill "$mac_server"' EXIT
 status=0
 mac_bootstrap plan --detailed-exitcode || status=$?
 if [ "$status" != 2 ]; then
@@ -56,10 +55,6 @@ if [ "$calls" != 0 ]; then
     echo "::error::the second ws client setup called sudo $calls times, not once"
     fail=1
 fi
-cmp -s /usr/local/bin/ws "$(mac_build)" || {
-    echo '::error::/usr/local/bin/ws is not the build'
-    fail=1
-}
 owner=$(stat -f '%Su:%Sg %Lp' /usr/local/bin/ws)
 [ "$owner" = "root:wheel 755" ] || {
     echo "::error::/usr/local/bin/ws is $owner, not root:wheel 755"

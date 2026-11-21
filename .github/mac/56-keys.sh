@@ -25,12 +25,10 @@ keys_restore() {
         "$each" || true
     done
     [ ! -f "$tmp/job.conf" ] || conf_write "$conf" <"$tmp/job.conf"
-    [ -z "${mac_server-}" ] || kill "$mac_server" || true
     rm -rf "$tmp"
 }
 trap keys_restore EXIT
 trap 'exit 1' HUP INT TERM
-mac_serve
 fail=0
 nl=$'\n'
 

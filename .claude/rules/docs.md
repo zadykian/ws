@@ -26,7 +26,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   and the values that change it. It gives the role's caveats too, such as what a run replaces or
   what a dry run shows.
 - [The frame's README](../../roles/server/ubuntu/frame/README.md) says how a role sits in mise's
-  config: its files by env, the link, its lines and their order, the miserc and the pin.
+  config: its files by env, the link, its lines, their order, the miserc and ws's path.
 - [The Mac's README](../../roles/client/README.md) is the Mac's side, `roles/client/`
   and the ws CLI. [Its git](../../roles/client/macos/git/README.md) is its git and gh.
   [Its ssh](../../roles/client/macos/ssh/README.md) is its hosts, and [its cld](../../roles/client/macos/cld/README.md)

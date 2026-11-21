@@ -51,13 +51,14 @@ func frameCommand(t *testing.T, target, dir string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(command, `" ~ cwd ~ "`, dir), `\"`, `"`)
 }
 
-// TestTheCheckNeedsTheSidesDirectory runs the frame's check where mise finds no ws: in the side's
+// TestTheCheckNeedsTheSidesDirectory runs the frame's check with a stand-in for ws. In the side's
 // run directory it passes, and elsewhere it fails and names the directory to run in. A run from
 // the root, or from the Mac's run directory, loads no role of the server's, and would set up the
-// frame alone with exit 0.
+// frame alone with exit 0. A run with no ws fails and names install.sh.
 func TestTheCheckNeedsTheSidesDirectory(t *testing.T) {
 	bin := t.TempDir()
-	if err := os.WriteFile(filepath.Join(bin, "mise"), []byte("#!/bin/sh\nexit 1\n"), 0o700); err != nil { //nolint:gosec // a stand-in for mise, which sh runs
+	ws := filepath.Join(bin, "ws")
+	if err := os.WriteFile(ws, []byte("#!/bin/sh\necho 'ws units: none missing'\n"), 0o700); err != nil { //nolint:gosec // a stand-in for ws, which sh runs
 		t.Fatal(err)
 	}
 	side, mac, root := t.TempDir(), t.TempDir(), t.TempDir()
@@ -74,23 +75,27 @@ func TestTheCheckNeedsTheSidesDirectory(t *testing.T) {
 	}
 	refusal := ", which loads no role of the server: run it as mise -C /opt/ws/roles/server"
 	for _, c := range []struct {
-		dir, stdout, stderr string
-		status              int
+		name, dir, ws, stdout, stderr string
+		status                        int
 	}{
-		{side, "ws units: none missing\n", "", 0},
-		{mac, "", "mise runs in " + mac + refusal, 1},
-		{root, "", "mise runs in " + root + refusal, 1},
+		{"the side's directory", side, ws, "ws units: none missing\n", "", 0},
+		{"the Mac's directory", mac, ws, "", "mise runs in " + mac + refusal, 1},
+		{"the root", root, ws, "", "mise runs in " + root + refusal, 1},
+		{"no ws", side, filepath.Join(bin, "missing"), "", "is missing: install.sh writes it", 1},
 	} {
-		cmd := exec.Command("sh", "-o", "errexit", "-c", checkCommand(t, c.dir)) //nolint:gosec // the frame's own command, read from the tree
-		cmd.Env = []string{"PATH=" + bin}
-		var stdout, stderr bytes.Buffer
-		cmd.Stdout, cmd.Stderr = &stdout, &stderr
-		if err := cmd.Run(); cmd.ProcessState == nil {
-			t.Fatal(err)
-		}
-		status := cmd.ProcessState.ExitCode()
-		if status != c.status || stdout.String() != c.stdout || !strings.Contains(stderr.String(), c.stderr) {
-			t.Errorf("in %s: exit %d, stdout %q, stderr %q, want %d, %q and %q", c.dir, status, stdout.String(), stderr.String(), c.status, c.stdout, c.stderr)
-		}
+		t.Run(c.name, func(t *testing.T) {
+			command := strings.ReplaceAll(checkCommand(t, c.dir), "/usr/local/bin/ws", c.ws)
+			cmd := exec.Command("sh", "-o", "errexit", "-c", command) //nolint:gosec // the frame's own command, read from the tree
+			cmd.Env = []string{"PATH=" + os.Getenv("PATH")}
+			var stdout, stderr bytes.Buffer
+			cmd.Stdout, cmd.Stderr = &stdout, &stderr
+			if err := cmd.Run(); cmd.ProcessState == nil {
+				t.Fatal(err)
+			}
+			status := cmd.ProcessState.ExitCode()
+			if status != c.status || stdout.String() != c.stdout || !strings.Contains(stderr.String(), c.stderr) {
+				t.Errorf("exit %d, stdout %q, stderr %q, want %d, %q and %q", status, stdout.String(), stderr.String(), c.status, c.stdout, c.stderr)
+			}
+		})
 	}
 }

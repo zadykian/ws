@@ -28,8 +28,8 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   `resource/resourcetest`, the resources the kinds share, and `kind`, the kinds that a role's
   `units.toml.tmpl` names as units ([kind](../engine/core/kind/README.md)). They are public, as the roles
   import them from outside `engine/`.
-- `mise.toml` and `mise.lock`: mise's config that both sides share, its settings and the pin of
-  ws, a release, with the release's SHA-256 for each target in the lock. `mise.server.toml` is
+- `mise.toml`: mise's config that both sides share, its settings. ws is no tool of mise's: the
+  machine's one ws is `/usr/local/bin/ws`. `mise.server.toml` is
   the server's part, and `plugins/ws` the plugin that hands ws's units to `ws unit`. A role holds
   its spec, `units.toml.tmpl`, where it has units, and its mise files by env beside its page. Each
   side's `roles/SIDE/mise/` holds its one link, `conf.d`, to its directory of roles, and its lock
@@ -51,7 +51,7 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   beside one where the cap keeps two apart, as [docs.md](rules/docs.md) lists them.
   `.tools/README.md` holds the gates and `.github/workflows/README.md` CI.
 - `.tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
-  caps them. `build` builds ws for a target, `serve-build` points a checkout's pin at the tree's build,
+  caps them. `build` builds ws for a target, `install-build` installs the tree's build as `/usr/local/bin/ws`,
   for CI and a trial, and `vale-comments` runs Vale on files' comments. Go's
   `./...` leaves out a dot directory, so the Go gates name the tools' packages too. `lint/` holds
   the linters' configs, which the Makefile passes by flag, but tombi's, which tombi finds as it runs
@@ -139,8 +139,8 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([units.toml.tmpl](../roles/server/ubuntu/fresh/units.toml.tmpl)). So is nct6687's source
   ([fans](../roles/server/ubuntu/fans/units.toml.tmpl)), and so are foundryctl
   ([ci.yml](../.github/workflows/ci.yml)) and the gates' tools ([.tools/run](../.tools/run)). So is ws's
-  binary: `mise.lock` holds its SHA-256 for each target, which mise checks as it installs
-  ([mise.lock](../mise.lock)). A Mac's runbook checks it by hand too
+  binary: `install.sh` and `ws update` check it against the release's `ws.sha256`
+  ([release.yml](../.github/workflows/release.yml)). A Mac's runbook checks it by hand too
   ([runbook.md](../roles/client/runbook.md)). So is mise's binary. `ws server setup` and `ws client setup` hold
   its SHA-256 for each target ([mise.go](../roles/internal/setup/mise.go)). So does `install.sh` for
   Linux ([install.sh](../install.sh)), and a test holds the pair together. So is the server's fnox:

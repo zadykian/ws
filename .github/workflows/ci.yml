@@ -85,13 +85,13 @@ jobs:
         env: { GIT_CONFIG_COUNT: 1, GIT_CONFIG_KEY_0: init.defaultBranch, GIT_CONFIG_VALUE_0: main }
         with:
           persist-credentials: false
-      # CI builds ws from the tree, never from a release: the pin names the build.
+      # CI runs the tree's build as /usr/local/bin/ws, never a release's: setup runs it in place.
       - name: Build ws
         run: |
           sudo setfacl -k /opt && sudo install -d -o "$(id -un)" /opt/ws && cp -a . /opt/ws
-          .tools/serve-build /opt/ws "$RUNNER_TEMP/rel"
+          .tools/install-build
       - name: The cases
-        run: sudo bash .github/server-checks.sh "$RUNNER_TEMP/rel"
+        run: sudo bash .github/server-checks.sh
       - name: The secrets task
         run: sudo bash .github/secrets-checks.sh
       # A failed start only points to the daemon's log.

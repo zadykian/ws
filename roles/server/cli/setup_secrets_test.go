@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	taskLine     = "env WS_SELF=/h/.local/bin/ws /usr/local/bin/mise -C /opt/ws/roles/server run secrets"
+	taskLine     = "/usr/local/bin/mise -C /opt/ws/roles/server run secrets"
 	taskPlanLine = taskLine + " -- plan --detailed-exitcode"
 )
 

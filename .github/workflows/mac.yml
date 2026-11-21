@@ -65,11 +65,9 @@ jobs:
         env: { GIT_CONFIG_COUNT: 1, GIT_CONFIG_KEY_0: init.defaultBranch, GIT_CONFIG_VALUE_0: main }
         with:
           persist-credentials: false
-      # ws, built into ~/.local/bin by .tools/build, which the cases run as ws client.
+      # ws, built by .tools/install-build into /usr/local/bin, which the cases run as ws client.
       - name: Build ws
-        run: |
-          sh .tools/build darwin arm64 ~/.local/bin/ws
-          echo ~/.local/bin >>"$GITHUB_PATH"
+        run: sh .tools/install-build darwin arm64
       # The cases, in .github/mac, run in order from the clone: a new step adds a case there and
       # nothing here.
       - name: The cases

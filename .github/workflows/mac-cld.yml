@@ -55,6 +55,9 @@ jobs:
       # alone.
       - name: Make /usr/local root's, as on a Mac
         run: bash .github/mac/15-usr-local.sh
+      # ws, built by .tools/install-build into /usr/local/bin, which setup runs.
+      - name: Build ws
+        run: sh .tools/install-build darwin arm64
       # Any 32 bytes in base64 pass for ws's key: the daemon loads, and no handshake is needed. The
       # facts need a login key that values.yml names: a file key, made here. Git signs with it too.
       - name: values.yml, with a stand-in for ws's key, on a runner without the apps or cld

@@ -46,8 +46,6 @@ zsh -lc 'command -v zed' | grep -qxF /opt/homebrew/bin/zed ||
         fail=1
     }
 printf '{ "theme": "mine" }\n' >"$dir/settings.json"
-mac_serve
-trap 'kill "$mac_server"' EXIT
 mac_bootstrap 2>&1 || {
     echo '::error::mise bootstrap failed'
     fail=1

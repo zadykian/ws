@@ -9,10 +9,10 @@ server, and loads no file of the server's.
 
 | File | What it holds |
 | --- | --- |
-| [`mise.toml`](../../../../mise.toml) | Both sides': mise's settings, `locked` among them, and the pin of ws, with `macos-arm64` among its platforms. |
+| [`mise.toml`](../../../../mise.toml) | Both sides': mise's settings, `locked` among them, and no pin of ws. |
 | [`mise.mac.toml`](../../../../mise.mac.toml) | The Mac's: the frame's line, `ws:state/ws-binary`, and [the check of the values](#the-check-of-the-values). |
 | [`plugins/ws`](../../../../plugins/ws) | The plugin: a hook runs one `ws unit read` or `ws unit write` ([ws unit](../../../../engine/core/kind/README.md#ws-unit)). |
-| `units.toml.tmpl` here | The role `frame`: the unit that keeps `/usr/local/bin/ws`. |
+| `units.toml.tmpl` here | The role `frame`: the unit that keeps the owner and mode of `/usr/local/bin/ws`. |
 
 ## Where it sits
 
@@ -27,7 +27,7 @@ server, and loads no file of the server's.
 - `/usr/local/bin/mise` is the pinned mise, checked by its SHA-256.
 - `/etc/mise/miserc.toml` names the env `mac` as the set `ws`, which loads `mise.mac.toml` and the
   fragments. `/etc/mise/config.toml` trusts the tree, so that a run by hand needs no `mise trust`.
-- mise runs as the user and installs ws in the user's data directory. The Mac's `ws unit` refuses
+- mise runs as the user, and the plugin runs `/usr/local/bin/ws`. The Mac's `ws unit` refuses
   root.
 
 ## Root's paths
@@ -61,10 +61,12 @@ as a unit a server would come and go with its line ([The facts](../../facts/READ
 
 ## ws at a fixed path
 
-mise installs ws under the user's data directory, by version. A LaunchDaemon runs as root from a
-path of root's alone. The unit `state/ws-binary` copies the ws that runs the units to
-`/usr/local/bin/ws`, root:wheel and 0755, where the two differ, under a temporary name first, as
-root. Its check, `cmp` and `stat`, runs as the user.
+mise runs `/usr/local/bin/ws`, the file `install.sh` writes ([Setup](../../README.md#setup)). A
+LaunchDaemon runs as root from a path of root's alone. The unit `state/ws-binary` keeps the file
+root:wheel and 0755, with no copy: as root it sets the owner and the mode, and its check, `stat`,
+runs as the user. A missing file fails the run and names `install.sh`. The unit stays for its
+line, [the check against a silent skip](#the-check-against-a-silent-skip), and the tunnel's key
+waits on it.
 
 ## The check against a silent skip
 
@@ -90,8 +92,6 @@ user and asks no password. macOS always has that directory. The file is not unde
 files are root's and read through sudo. Nor is it a unit of ws's: a unit runs in the packages'
 phase, and a template renders before it.
 
-A pass prints one line, so that the next plan finds the file unchanged. A first run, and the run
-that brings a new pin, render it before mise installs the pin's ws, and print the same line then.
-The first unit's read refuses a bad value on that run, as the facts check the files too.
-`TestValuesCheckRunsTheCommandAndPassesWithNoWs` runs the file's command with a stand-in for mise
-and ws.
+The template runs `/usr/local/bin/ws`, and fails a run without it, naming `install.sh`. A pass
+prints one line, so that the next plan finds the file unchanged. `TestValuesCheckRunsTheCommand`
+runs the file's command with a stand-in for ws.
