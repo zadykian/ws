@@ -2,6 +2,8 @@
 # The server job's three plans that must fail, as root, on the tree in /opt/ws. A plan from /opt/ws,
 # which loads no role, must fail and name the server's run directory. Then a bad value in
 # /etc/ws/values.yml must fail the plan before any write, naming its key, and the file goes back.
+# mise's plan asks ws for its units' state before it renders a file, so ws unit read refuses the
+# value there. Its rule is that of ws server values check, which /etc/ws/values.checked runs.
 # Then the check against a silent skip must fail the plan where mise's config lacks a unit. This
 # drops the frame's line of file/ws-values, and puts the file back after. ws unit verify names the
 # unit, or the plugin that mise no longer loads where the line was the last of ws's. mise's plan
@@ -23,9 +25,9 @@ printf 'WS_BASE_SWAPPINESS: 400\n' >>"$vars"
 status=0
 out=$(mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null 2>&1) || status=$?
 cp -p "$vars_saved" "$vars"
-if [ "$status" != 1 ] || ! printf '%s\n' "$out" | grep -q 'ws server values check: .*WS_BASE_SWAPPINESS is 400'; then
+if [ "$status" != 1 ] || ! printf '%s\n' "$out" | grep -Eq 'ws (unit read|server values check): .*WS_BASE_SWAPPINESS is 400'; then
     printf '%s\n' "$out"
-    echo "::error::The plan with a bad value exited $status, not 1 by ws server values check naming WS_BASE_SWAPPINESS."
+    echo "::error::The plan with a bad value exited $status, not 1 by ws naming WS_BASE_SWAPPINESS."
     exit 1
 fi
 

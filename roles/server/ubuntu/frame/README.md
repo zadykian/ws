@@ -179,5 +179,6 @@ to edit by hand: `values set` refuses while any value is bad, so the message nev
 prints one fixed line, so the next plan finds the file unchanged.
 
 The template runs `/usr/local/bin/ws`, and fails a run without it, naming `install.sh`. CI's
-`server` job plans once with a bad value. It expects exit 1 from `ws server values check` that
-names the key, and puts the file back ([server-plan.sh](../../../../.github/server-plan.sh)).
+`server` job plans once with a bad value. It expects exit 1 that names the key, and puts the file
+back ([server-plan.sh](../../../../.github/server-plan.sh)). mise's plan asks ws for its units'
+state before it renders a file, so `ws unit read` refuses the value there, by the same rule.
