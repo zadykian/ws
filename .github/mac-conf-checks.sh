@@ -51,7 +51,7 @@ keys() {
     conf_set "$conf" WS_TUNNEL_NETWORKS WS_RESOLVERS "$@"
 }
 
-# setup runs mise bootstrap, as mac-mise.sh's mac_bootstrap runs it, and sets out to what it
+# setup runs ws client setup, as mac-mise.sh's mac_bootstrap runs it, and sets out to what it
 # printed.
 setup() {
     out=$(bash -c '. .github/mac-mise.sh && mac_bootstrap' 2>&1)
@@ -97,7 +97,7 @@ fi
 ! sudo test -e "$tunnel_dir/ws/routes.d/values" || error '--check wrote routes.d/values'
 ! test -e "$ws_resolvers/conf.test" || error "--check wrote $ws_resolvers/conf.test"
 
-setup || error "mise bootstrap with the keys failed: $out"
+setup || error "ws client setup with the keys failed: $out"
 printf '%s\n' "$out"
 until_ok 20 routed 203.0.113.1 || error "203.0.113.1 is not routed into the daemon's $utun"
 until_ok 20 shown conf.test 203.0.113.53 || error 'scutil --dns shows no resolver for conf.test'
@@ -122,7 +122,7 @@ fi
 
 # WS_TUNNEL_NETWORKS emptied, and WS_RESOLVERS removed.
 keys 'WS_TUNNEL_NETWORKS: ""'
-setup || error "mise bootstrap with the keys emptied failed: $out"
+setup || error "ws client setup with the keys emptied failed: $out"
 printf '%s\n' "$out"
 until_ok 20 eval '! routed 203.0.113.1' || error "203.0.113.1 is still routed into $utun"
 until_ok 20 eval '! shown conf.test 203.0.113.53' || error 'scutil --dns still shows conf.test'

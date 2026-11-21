@@ -2,8 +2,8 @@
 # The mac-cld job's checks (.github/workflows/mac-cld.yml), run from the repository's root as
 # bash .github/mac-cld-checks.sh VERB [ARG]. Each failure is an ::error::, and the status 1.
 #
-# - setup puts mise and the tree in place, as the runbook does (mac-mise.sh).
-# - bootstrap [N] runs mise bootstrap N times, once by default, with ws's build served.
+# - setup puts this commit's tree in /opt/ws, as the runbook's clone does (mac-mise.sh).
+# - bootstrap [N] runs ws client setup N times, once by default, with ws's build served.
 # - installed checks what the bootstrap set up: Ghostty, Zed and the font, as mise's casks, cld,
 #   and the files of Ghostty and Zed.
 # - lines yes|no: ssh -G gives ws the two lines that start cld's watcher with yes, and neither
@@ -12,7 +12,7 @@
 #   watcher in a Ghostty pane alone. The job's stub cld writes a line to LOG at each start.
 #   Elsewhere, and without cld, the line must start none and exit 0.
 # - ssh writes ssh's file of hosts alone, by ws unit write, which installs no cask.
-# - quiet: a bootstrap must call sudo not once, and its plan exit 0.
+# - quiet: a setup must call sudo not once, and its plan exit 0.
 
 set -u
 # shellcheck source=.github/mac-mise.sh
@@ -41,18 +41,17 @@ served() {
     return "$code"
 }
 
-# setup installs the pinned mise and puts this commit's tree in /opt/ws.
+# setup puts this commit's tree in /opt/ws.
 setup() {
-    mac_mise || exit 1
     mac_tree || exit 1
     kill "$mac_server"
 }
 
-# bootstrap N runs mise bootstrap N times, and stops at the first that fails.
+# bootstrap N runs ws client setup N times, and stops at the first that fails.
 bootstrap() {
     for run in $(seq "$1"); do
         served mac_bootstrap || {
-            error "mise bootstrap failed, at run $run of $1"
+            error "ws client setup failed, at run $run of $1"
             return
         }
     done
@@ -166,20 +165,20 @@ watch() {
 
 # ssh writes /etc/ws/ssh_config by ws unit write, as the user, from the tree, as the plugin does.
 ssh_hosts() {
-    (cd /opt/ws && MISE_TRUSTED_CONFIG_PATHS=/opt/ws /usr/local/bin/ws unit write file/ssh-config) ||
+    (cd /opt/ws && /usr/local/bin/ws unit write file/ssh-config) ||
         error 'ws unit write file/ssh-config failed'
 }
 
-# quiet runs a bootstrap, which must call sudo not once, then its plan, which must exit 0.
+# quiet runs setup, which must call sudo not once, then its plan, which must exit 0.
 quiet() {
     mac_mark
     served mac_bootstrap || {
-        error 'mise bootstrap failed'
+        error 'ws client setup failed'
         return
     }
     calls=$(mac_calls)
-    [ "$calls" = 0 ] || error "mise bootstrap called sudo $calls times, not once"
-    served mac_bootstrap plan --detailed-exitcode || error "mise bootstrap's plan exited $?, not 0"
+    [ "$calls" = 0 ] || error "ws client setup called sudo $calls times, not once"
+    served mac_bootstrap plan --detailed-exitcode || error "ws client setup's plan exited $?, not 0"
 }
 
 case ${1-} in

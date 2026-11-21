@@ -1,8 +1,7 @@
 #!/bin/bash
 # ws client remove lab drops the second server from the Mac. Its directory, daemon, plist,
 # state, log, ssh host and known_hosts entry go, and ws's stay, with its daemon still shaking hands.
-# remove runs mise bootstrap, as mac_bootstrap runs it: locked, with /opt/ws trusted and the build
-# served. The bootstrap takes lab's daemon and files away, and its host out of /etc/ws/ssh_config.
+# remove runs mise bootstrap, as setup runs it, with the build served. The bootstrap takes lab's daemon and files away, and its host out of /etc/ws/ssh_config.
 # The runner has no fnox key file, so remove leaves lab's key in the secrets to the user. remove
 # refuses a name with no file, and the Mac's last server. Then the plan exits 0.
 
@@ -32,7 +31,7 @@ printf '%s %s\n' lab "$key" ws "$key" >>~/.ssh/known_hosts
 
 mac_serve
 trap 'kill "$mac_server"' EXIT
-MISE_LOCKED=1 MISE_TRUSTED_CONFIG_PATHS=/opt/ws ws client remove lab </dev/null | tee "$RUNNER_TEMP/remove.out" || {
+ws client remove lab </dev/null | tee "$RUNNER_TEMP/remove.out" || {
     echo '::error::ws client remove lab failed'
     exit 1
 }

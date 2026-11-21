@@ -45,7 +45,7 @@ signed() {
 
 # gh: mise's gh must stand in /usr/local/bin as root's, 0755, and replace a gh that was there.
 # With the files in place, a bootstrap must call sudo not once.
-gh=$(cd / && MISE_LOCKED=1 MISE_TRUSTED_CONFIG_PATHS=/opt/ws mise -C /opt/ws/roles/client which gh) ||
+gh=$(cd / && mise -C /opt/ws/roles/client which gh) ||
     error "mise has no gh for /opt/ws"
 printf '#!/bin/sh\n' | sudo tee /usr/local/bin/gh >/dev/null
 boots
