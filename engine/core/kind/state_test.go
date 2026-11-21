@@ -46,7 +46,7 @@ func TestEveryStateFieldIsAState(t *testing.T) {
 
 func TestStateTakesExactlyOne(t *testing.T) {
 	e, _, _, _ := testEnv(false)
-	const keys = "exactly one of linger, subids, purged, http, ufw, routes, addr, left, run, reboot, locale, timezone, swap"
+	const keys = "exactly one of linger, purged, http, ufw, routes, addr, left, run, reboot, locale, timezone, swap"
 	stateRefused(t, e, "after = \"\"\n", keys+", and this one sets 0")
 	stateRefused(t, e, "linger = \"u\"\npurged = \"p\"\n", keys+", and this one sets 2")
 	stateRefused(t, e, "ufw = {}\nlinger = \"u\"\n", "this one sets 2")
@@ -74,30 +74,6 @@ func TestStateLingerSkipsUnbooted(t *testing.T) {
 		slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "id ") }) ||
 		!slices.Equal(out.Lines, []string{"say: lingering for u: skipped, systemd is not running"}) {
 		t.Errorf("plan = %q, calls %q, lines %q; want none, no lookup, and the skip said once", got, m.Calls, out.Lines)
-	}
-}
-
-func TestStateSubIDs(t *testing.T) {
-	for _, c := range []struct {
-		subuid, subgid string
-		want           string
-	}{
-		{"u:100000:65536\n", "v:1:2\nu:200000:65536\n", ""},
-		{"u:100000:65536\n", "u:100000:1000\n", "root usermod --add-subgids 100000-165535 u"},
-		{"", "", "root usermod --add-subuids 100000-165535 --add-subgids 100000-165535 u"},
-	} {
-		e, m, _, _ := testEnv(false)
-		m.Files["/etc/subuid"], m.Files["/etc/subgid"] = []byte(c.subuid), []byte(c.subgid)
-		m.Results["usermod --add-subgids 100000-165535 u"] = effecttest.Result{}
-		m.Results["usermod --add-subuids 100000-165535 --add-subgids 100000-165535 u"] = effecttest.Result{}
-		units := loadState(t, e, "subids = \"u\"\n")
-		if err := applyOnce(t, units[0].Step); err != nil {
-			t.Fatal(err)
-		}
-		got := slices.DeleteFunc(slices.Clone(m.Calls), func(call string) bool { return !strings.HasPrefix(call, "root usermod") })
-		if want := slices.DeleteFunc([]string{c.want}, func(s string) bool { return s == "" }); !slices.Equal(got, want) {
-			t.Errorf("subuid %q, subgid %q: calls = %q, want %q", c.subuid, c.subgid, got, want)
-		}
 	}
 }
 

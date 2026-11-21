@@ -175,7 +175,7 @@ source = "name"
 
 ### state
 
-A state is a fact about the machine that no file or package holds: lingering, sub-IDs, a firewall's
+A state is a fact about the machine that no file or package holds: lingering, a firewall's
 rules, a command that runs once. Its keys and rules are on [its own page](state.md).
 
 ### guard

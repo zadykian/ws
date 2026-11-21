@@ -6,7 +6,6 @@ kinds' page, [ws's kinds](README.md#the-kinds), holds the rest.
 ```toml
 [state.NAME]                # exactly one of the keys below
 linger = "USER"             # USER's systemd starts at boot, and runs: user@UID.service
-subids = "USER"             # the range 100000-165535 where a file gives USER none of 65536
 purged = "package"          # removed with its settings
 http = "http://127.0.0.1:PORT/"  # answers 200, waited for 30 times, 2 s apart
 ufw = { comment = "ws: NAME", rules = [{ action = "allow", proto = "udp", to_port = "53", dir = "in" }] }
