@@ -9,7 +9,7 @@ server, and loads no file of the server's.
 
 | File | What it holds |
 | --- | --- |
-| [`mise.toml`](../../../../mise.toml) | Both sides': mise's settings and the pin of ws, with `macos-arm64` among its platforms. |
+| [`mise.toml`](../../../../mise.toml) | Both sides': mise's settings, `locked` among them, and the pin of ws, with `macos-arm64` among its platforms. |
 | [`mise.mac.toml`](../../../../mise.mac.toml) | The Mac's: the frame's line, `ws:state/ws-binary`, and [the check of the values](#the-check-of-the-values). |
 | [`plugins/ws`](../../../../plugins/ws) | The plugin: a hook runs one `ws unit read` or `ws unit write` ([ws unit](../../../../engine/core/kind/README.md#ws-unit)). |
 | `units.toml.tmpl` here | The role `frame`: the unit that keeps `/usr/local/bin/ws`. |

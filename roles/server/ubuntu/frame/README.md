@@ -9,7 +9,7 @@ config, with its spec where it has units, and holds no Go.
 
 | File | What it holds |
 | --- | --- |
-| [`mise.toml`](../../../../mise.toml) | Both sides': mise's settings and the pin of ws, a release, for three platforms. |
+| [`mise.toml`](../../../../mise.toml) | Both sides': mise's settings, among them `locked`, and the pin of ws, a release, for three platforms. |
 | [`mise.lock`](../../../../mise.lock) | The release's SHA-256 for each platform, which mise checks as it installs ws. |
 | [`roles/server/mise/mise.server.lock`](../../mise/mise.server.lock) | The roles' tools: each download's url and SHA-256 for each platform ([devtools](../devtools/README.md#the-tools)). |
 | [`mise.server.toml`](../../../../mise.server.toml) | The server's: dpkg's options, `/etc/ws` and the check against a silent skip. |
@@ -75,7 +75,10 @@ other run loads. `ws server setup` writes the miserc, as `install.sh` does.
 
 The same command writes `/etc/mise/config.toml`, which trusts the tree: its `trusted_config_paths`,
 under `[settings]`, names `/opt/ws`, so that a run by hand needs no `mise trust`. mise reads that
-setting of a system config under `[settings]` alone.
+setting of a system config under `[settings]` alone. `mise.toml` sets `locked`, so that a tool
+installs only as `mise.lock` holds it. The secrets task and the runbook still pass `MISE_LOCKED=1`.
+`mise settings get locked` reads the config of the directory it runs in: it prints `true` in the
+tree and `false` outside it.
 
 ## Secret inputs
 
