@@ -30,10 +30,11 @@ in `/opt/ws/roles/server` with umask 022, from `/`. A second run changes nothing
 
 The secrets come once the Mac has run `ws client secrets init`, one run for all servers, and
 then `ws client secrets add NAME`, which makes ws's host key a recipient of the secrets
-repository ([The secrets](../client/runbook.md#the-secrets)). add then runs the task `secrets` at
-ws, which writes what the secrets give, such as `/etc/ws/env` and gh's login
+repository ([The secrets](../client/runbook.md#the-secrets)). add then runs
+`ws server setup --secrets` at ws, whose task `secrets` clones the secrets on its first run and
+writes what they give, such as `/etc/ws/env` and gh's login
 ([The repository](ubuntu/secrets/README.md#the-repository)). A later run under the secrets takes
-the task's form below.
+the form below.
 
 A run by hand, or its plan, takes `ws server setup`:
 
@@ -45,14 +46,18 @@ sudo ws server setup --plan
 The tree's `locked = true` installs a tool only as the lock holds it, by its URL and checksum, as
 CI's runs do. The plan changes nothing, and exits 0 where a run would change nothing.
 
-A run under ws's secrets, or its plan, goes through the task `secrets`, which fetches them by the
-host key and passes its arguments to the bootstrap
+A run under ws's secrets, or its plan, goes through `ws server setup`, whose task `secrets`
+fetches them by the host key and passes its arguments to the bootstrap
 ([The task](ubuntu/secrets/README.md#the-task)):
 
 ```sh
-sudo env MISE_LOCKED=1 mise -C /opt/ws/roles/server run secrets
-sudo env MISE_LOCKED=1 mise -C /opt/ws/roles/server run secrets -- plan --detailed-exitcode
+ws server setup --secrets
+ws server setup --secrets --plan
 ```
+
+Without `--secrets`, setup runs the task where `/var/lib/ws/secrets` stands, and the bootstrap
+where it does not. `--plan` plans through the task there, so the clone fast-forwards first, and
+the plan reads the secrets that origin holds.
 
 A run of the bootstrap without the task loads no `secrets` env, and keeps the files that env's
 inputs write as they are.

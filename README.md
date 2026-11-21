@@ -111,8 +111,8 @@ that [the server's runbook](roles/server/runbook.md) gives:
 sudo ws server setup --plan
 ```
 
-The task `secrets` takes the plan's arguments too, `run secrets -- plan --detailed-exitcode`, and
-fetches the secrets first ([The task](roles/server/ubuntu/secrets/README.md#the-task)).
+`ws server setup --secrets --plan` plans through the task `secrets`, which fetches the secrets
+first ([The task](roles/server/ubuntu/secrets/README.md#the-task)).
 
 A plan adds no apt source and writes no file. So a unit that waits on another with changes reads
 `after` and that unit, and plans nothing more.

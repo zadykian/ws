@@ -76,7 +76,8 @@ other run loads. `ws server setup` writes the miserc, as `install.sh` does.
 The same command writes `/etc/mise/config.toml`, which trusts the tree: its `trusted_config_paths`,
 under `[settings]`, names `/opt/ws`, so that a run by hand needs no `mise trust`. mise reads that
 setting of a system config under `[settings]` alone. `mise.toml` sets `locked`, so that a tool
-installs only as `mise.lock` holds it. The secrets task still passes `MISE_LOCKED=1`.
+installs only as `mise.lock` holds it. The secrets task checks that setting, so that fnox runs
+from the lock alone.
 `mise settings get locked` reads the config of the directory it runs in: it prints `true` in the
 tree and `false` outside it.
 

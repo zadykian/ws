@@ -7,7 +7,7 @@ set -euo pipefail
 
 # The runner's sudo keeps the runner's XDG_CONFIG_HOME, which would send gh to the runner's home.
 unset XDG_CONFIG_HOME
-export HOME=/root MISE_LOCKED=1
+export HOME=/root
 check=$(cd "$(dirname "$0")" && pwd)/warnings-check.sh
 work=$(mktemp -d)
 trap 'rm -rf -- "$work"' EXIT
@@ -161,6 +161,16 @@ refusal() {
     echo "ok: $1"
 }
 hint='ws client secrets add NAME'
+# mise's setting locked comes from the tree's mise.toml. MISE_LOCKED=0 turns it off, and the task
+# then refuses before it touches the clone.
+sum=$(sha256sum "$file")
+if out=$(MISE_LOCKED=0 mise -C /opt/ws/roles/server run secrets </dev/null 2>&1); then
+    fail "a run with locked off: the task ran"
+fi
+printf '%s\n' "$out" | tee -a "$work/out"
+grep -qF -- 'ws server setup --secrets' <<<"$out" || fail "a run with locked off: the task never names setup"
+[ "$sum" = "$(sha256sum "$file")" ] || fail "a run with locked off: the file changed"
+echo "ok: a run with locked off is refused"
 touch /var/lib/ws/secrets/fnox.local.toml
 refusal "a file of the clone's own is refused" 'holds changes of its own'
 rm /var/lib/ws/secrets/fnox.local.toml

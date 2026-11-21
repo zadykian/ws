@@ -27,17 +27,22 @@ meets the API's limit there, and the install fails.
 
 ## The task
 
-The task `secrets`, `roles/server/mise-tasks/secrets`, runs the bootstrap under ws's secrets. Run
-it at ws as the [runbook](../../runbook.md) gives it:
+The task `secrets`, `roles/server/mise-tasks/secrets`, runs the bootstrap under ws's secrets. Its
+caller is `ws server setup`, which runs it after its own steps
+([the runbook](../../runbook.md)):
 
 ```sh
-sudo env MISE_LOCKED=1 mise -C /opt/ws/roles/server run secrets
+ws server setup --secrets
+ws server setup --secrets --plan
 ```
 
-- Its arguments go to `mise bootstrap` whole: none is a run, and `-- plan --detailed-exitcode` a
-  plan. A plan fetches too, as mise needs the values to compare the secret files.
-- It refuses any user but root, and a run without the runbook's `MISE_LOCKED=1`,
-  so fnox runs from the lock alone.
+- `--secrets` runs the task, which clones the secrets on its first run. Without it, setup runs the
+  task where `/var/lib/ws/secrets` stands, and the bootstrap where it does not.
+- The task's arguments go to `mise bootstrap` whole: none is a run, and `--plan` passes
+  `plan --detailed-exitcode`. A plan fetches too, as mise needs the values to compare the secret
+  files.
+- It refuses any user but root, and a run where `mise settings get locked` does not print `true`,
+  as `MISE_LOCKED=0` makes it, so fnox runs from the lock alone. The tree's `mise.toml` sets it.
 - The profile is the hostname, one DNS label that names no recipient. The task decrypts
   `fnox.HOSTNAME.toml` with the shared `fnox.toml` by the host key,
   `/etc/ssh/ssh_host_ed25519_key`, then runs `mise -E ws,secrets bootstrap` under fnox. Each
@@ -157,7 +162,7 @@ Every change lands on `main` by a pull request, from a temporary clone
 - `ws client secrets init` starts `fnox.toml` with the Nano and the backup, and declares the
   inputs.
 - `ws client secrets add NAME` makes the server's host key a recipient and its deploy key,
-  then runs the task there.
+  then runs `ws server setup --secrets` there.
 - `ws client remove NAME` takes that key out of both.
 
 A value goes in by hand, in a clone, on a branch: `fnox set NAME --provider age` for a shared one,
