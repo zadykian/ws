@@ -3,7 +3,6 @@ package kind
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io/fs"
 	"slices"
 	"strings"
@@ -46,42 +45,33 @@ func (c runCommand) String() string {
 
 func (c runCommand) Apply(ctx context.Context) error { return c.r.exec(ctx, true, c.r.s.Command) }
 
-// exec runs a command line as the run's user, with its PATH (pathEnv). With pass set, it passes the
-// output to ws's standard error, and otherwise drops it, as a check's exit status alone counts.
-// Linux switches to the user by runuser, through the account, and gives it systemd's session,
-// which systemctl --user needs, where systemd runs. macOS has neither (macExec).
+// exec runs a command line as root, with its PATH (pathEnv). With pass set, it passes the output
+// to ws's standard error, and otherwise drops it, as a check's exit status alone counts. Linux
+// calls the machine in ws's own env, which unset trims of the hidden names, and gives the command
+// systemd's session where systemd runs. macOS has no systemd and no such session (macExec).
 func (r runAs) exec(ctx context.Context, pass bool, line []string) error {
 	if r.sys == MacOS {
 		return r.macExec(ctx, pass, line)
 	}
-	// root's home is /root, where ownerOf gives root none.
-	a := account.Account{User: account.User{Name: "root", Home: "/root"}}
-	if r.s.User != "root" {
-		var err error
-		if a, err = ownerOf(ctx, Env{M: r.m, System: r.sys}, r.s.User); err != nil {
-			return err
-		}
-	}
-	// A run as root keeps the caller's env but the hidden names, and a user's starts cleared
-	// (account.User). A run with no session drops the caller's session from root's: dotnet fails
-	// on a missing runtime directory.
+	// A run with no session drops the caller's session from root's: dotnet fails on a missing
+	// runtime directory.
 	session := []string{"-u", "XDG_RUNTIME_DIR", "-u", "DBUS_SESSION_BUS_ADDRESS"}
-	if systemd.Booted(r.m) && (!r.s.Unbooted || r.hasRuntimeDir(a.UID)) {
-		session = systemd.SessionEnv(a.UID)
+	if systemd.Booted(r.m) && (!r.s.Unbooted || r.hasRuntimeDir()) {
+		session = systemd.SessionEnv(0)
 	}
-	args := slices.Concat(r.unset(line), session, []string{r.pathEnv()}, line)
+	argv := slices.Concat([]string{"HOME=/root", "env"}, r.unset(line), session, []string{r.pathEnv()}, line)
 	if pass {
-		return a.Pass(ctx, r.m, "env", args...)
+		return r.m.Pass(ctx, false, "env", argv...)
 	}
-	_, err := a.Output(ctx, r.m, "env", args...)
+	_, err := r.m.Run(ctx, "env", argv...)
 	return err
 }
 
-// hasRuntimeDir says whether the user's session has made its runtime directory. An unbooted run
-// needs no session, and gets its env only where that directory exists. dotnet fails on a missing
-// XDG_RUNTIME_DIR, as before the account's first login or lingering.
-func (r runAs) hasRuntimeDir(uid int) bool {
-	_, err := r.m.Stat(fmt.Sprintf("/run/user/%d", uid))
+// hasRuntimeDir says whether root's session has made its runtime directory. An unbooted run needs
+// no session, and gets its env only where that directory exists. dotnet fails on a missing
+// XDG_RUNTIME_DIR, as before root's first login or lingering.
+func (r runAs) hasRuntimeDir() bool {
+	_, err := r.m.Stat("/run/user/0")
 	return err == nil
 }
 

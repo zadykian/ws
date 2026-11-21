@@ -121,10 +121,10 @@ func (s addrState) resource(e Env) (resource.Resource, error) {
 
 // runState runs Command as User where something is to do: where a path of Creates is missing, or
 // where Check, run as User too, exits other than 0. It takes exactly one of the two. A procedure
-// that stays a command of ws runs through it, with that command's own check. On Linux without
-// booted systemd, which a user's session needs, it skips, unless Unbooted says that the command
-// needs no session. macOS has no systemd, and runs it. There Check runs as ws's own user, whatever
-// User, so that a read asks no password (run.go).
+// that stays a command of ws runs through it, with that command's own check. On Linux User is root
+// alone, and without booted systemd, which root's session needs, it skips, unless Unbooted says
+// that the command needs no session. macOS has no systemd, and runs it. There Check runs as ws's
+// own user, whatever User, so that a read asks no password (run.go).
 type runState struct {
 	User    string   `toml:"user"`
 	Command []string `toml:"command"`
@@ -140,6 +140,9 @@ type runState struct {
 func (s runState) resource(e Env) (resource.Resource, error) {
 	if err := checkUser("user", s.User); err != nil {
 		return nil, err
+	}
+	if e.System == Linux && s.User != "root" {
+		return nil, fmt.Errorf("user %q: ws runs a command as root alone on Linux", s.User)
 	}
 	if len(s.Command) == 0 || s.Command[0] == "" {
 		return nil, errors.New("a run state takes a command")
@@ -163,8 +166,7 @@ func (s runState) resource(e Env) (resource.Resource, error) {
 	return runAs{m: e.M, out: e.Out, sys: e.System, self: e.User, ws: e.Self, hidden: e.Hidden, s: s}, nil
 }
 
-// runAs is a run state's resource. Its user is looked up as it plans, as an earlier unit may make
-// the account.
+// runAs is a run state's resource.
 type runAs struct {
 	m   effect.Machine
 	out effect.Out
