@@ -86,6 +86,10 @@ func newSetupCmd(p enginecli.Env, cfg setupConfig) *cobra.Command {
 				return err
 			}
 		}
+		self, err := p.Self()
+		if err != nil {
+			return err
+		}
 		steps, err := setupSteps(c.Context(), p.Machine, cfg, tag)
 		if err != nil {
 			return err
@@ -94,14 +98,21 @@ func newSetupCmd(p enginecli.Env, cfg setupConfig) *cobra.Command {
 		defer term.Flush()
 		out := linesOf(term, c.CommandPath())
 		if *plan {
-			return planSetup(c.Context(), p.Machine, out, steps)
+			return planSetup(c.Context(), p.Machine, out, steps, self)
 		}
 		if err := settle(c.Context(), out, steps, false); err != nil {
 			return err
 		}
-		return p.Machine.PassInput(c.Context(), nil, setup.MisePath, "-C", rootRoles, "bootstrap")
+		return runMise(c.Context(), p.Machine, self, "bootstrap")
 	}
 	return c
+}
+
+// runMise runs mise in the server's roles, with WS_SELF naming this ws. The frame's check of the
+// values runs that ws, which a first run has not installed in mise's path yet.
+func runMise(ctx context.Context, m effect.Machine, self string, args ...string) error {
+	argv := append([]string{"WS_SELF=" + self, setup.MisePath, "-C", rootRoles}, args...)
+	return m.PassInput(ctx, nil, "env", argv...)
 }
 
 // setupSteps returns the resources of setup, in order. Each one plans before it writes. The guard
@@ -128,7 +139,7 @@ func setupSteps(ctx context.Context, m effect.Machine, cfg setupConfig, tag stri
 // planSetup says each change that setup's steps would make, and exits 2 where there is one. Where
 // there is none, it asks mise's bootstrap for its plan, whose exit 2 is setup's. The tree and mise
 // are there to plan by only once the steps have run.
-func planSetup(ctx context.Context, m effect.Machine, out effect.Out, steps []resource.Resource) error {
+func planSetup(ctx context.Context, m effect.Machine, out effect.Out, steps []resource.Resource, self string) error {
 	due := false
 	for _, r := range steps {
 		changes, err := r.Plan(ctx)
@@ -143,7 +154,7 @@ func planSetup(ctx context.Context, m effect.Machine, out effect.Out, steps []re
 	if due {
 		return engine.ExitStatus{Code: 2}
 	}
-	err := m.PassInput(ctx, nil, setup.MisePath, "-C", rootRoles, "bootstrap", "plan", "--detailed-exitcode")
+	err := runMise(ctx, m, self, "bootstrap", "plan", "--detailed-exitcode")
 	var exit interface{ ExitCode() int }
 	if errors.As(err, &exit) && exit.ExitCode() == 2 {
 		return engine.ExitStatus{Code: 2}

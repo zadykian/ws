@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	bootstrapLine = "/usr/local/bin/mise -C /opt/ws/roles/server bootstrap"
+	bootstrapLine = "env WS_SELF=/h/.local/bin/ws /usr/local/bin/mise -C /opt/ws/roles/server bootstrap"
 	planLine      = bootstrapLine + " plan --detailed-exitcode"
 )
 
