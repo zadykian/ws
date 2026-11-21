@@ -29,26 +29,26 @@ func TestValuesPrintCommand(t *testing.T) {
 		wantOut    string
 		wantErr    string
 	}{
-		{"home", nil, "", 0, "WS_USER='ada'\n", ""},
-		{"env", nil, "/e/values.yml", 0, "WS_USER='eve'\n", ""},
-		{"argument", []string{"/a/values.yml"}, "/e/values.yml", 0, "WS_USER='amy'\n", ""},
+		{"home", nil, "", 0, "WS_TARGET='lan'\nWS_SLOT='0'\n", ""},
+		{"env", nil, "/e/values.yml", 0, "WS_TARGET='lan'\nWS_SLOT='3'\n", ""},
+		{"argument", []string{"/a/values.yml"}, "/e/values.yml", 0, "WS_TARGET='lan'\nWS_SLOT='5'\n", ""},
 		{"missing", []string{"/none"}, "", 1, "", "ws client values print: /none is missing: roles/client/README.md"},
 		{"refused", []string{"/bad"}, "", 1, "", "ws client values print: /bad, line 2: unknown key WS_NOPE"},
-		{"lines", []string{"--lines", "/lines/values.yml"}, "", 0, "WS_USER='zadykian'\nWS_TARGET='lan'\nWS_SLOT='0'\nWS_PUBLIC_KEY=''\nWS_LAN='10.88.0.0/24'\n", ""},
-		{"lines of the server's file", []string{"--lines"}, "", 0, "WS_USER='ada'\n", ""},
+		{"lines", []string{"--lines", "/lines/values.yml"}, "", 0, "WS_TARGET='lan'\nWS_SLOT='0'\nWS_PUBLIC_KEY=''\nWS_LAN='10.88.0.0/24'\n", ""},
+		{"lines of the server's file", []string{"--lines"}, "", 0, "WS_TARGET='lan'\nWS_SLOT='0'\n", ""},
 		{"lines refuse a server's key in values.yml", []string{"--lines", "/lines/bad/values.yml"}, "", 1, "", "/lines/bad/values.yml, line 1: WS_LAN is a server's key"},
 		{"pair", []string{"/pairs/values.yml"}, "", 1, "", "WS_LAN and WS_LAN_ADDRESS go together"},
 		{"two files", []string{"a", "b"}, "", 2, "", "ws client values print: accepts at most 1 arg(s), received 2"},
 	}
 	m := effecttest.NewMachine()
 	m.Files["/etc/ws/values.yml"] = []byte("")
-	m.Files["/etc/ws/servers/ws/values.yml"] = []byte(values.Text("WS_USER", "ada"))
+	m.Files["/etc/ws/servers/ws/values.yml"] = []byte(values.Text("WS_SLOT", "0"))
 	m.Files["/e/values.yml"] = []byte("")
-	m.Files["/e/servers/ws/values.yml"] = []byte(values.Text("WS_USER", "eve"))
+	m.Files["/e/servers/ws/values.yml"] = []byte(values.Text("WS_SLOT", "3"))
 	m.Files["/a/values.yml"] = []byte("")
-	m.Files["/a/servers/ws/values.yml"] = []byte(values.Text("WS_USER", "amy"))
+	m.Files["/a/servers/ws/values.yml"] = []byte(values.Text("WS_SLOT", "5"))
 	m.Files["/lines/values.yml"] = []byte(values.Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"))
-	m.Files["/lines/servers/ws/values.yml"] = []byte(values.Text("WS_USER", "zadykian", "WS_LAN", "10.88.0.0/24"))
+	m.Files["/lines/servers/ws/values.yml"] = []byte(values.Text("WS_LAN", "10.88.0.0/24"))
 	m.Files["/lines/bad/values.yml"] = []byte(values.Text("WS_LAN", "10.88.0.0/24"))
 	m.Files["/lines/bad/servers/ws/values.yml"] = []byte("")
 	m.Files["/pairs/values.yml"] = []byte("")

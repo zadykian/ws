@@ -28,24 +28,3 @@ func TestResolvers(t *testing.T) {
 		}
 	}
 }
-
-func TestUser(t *testing.T) {
-	tests := []struct {
-		in   string
-		want bool
-	}{
-		{"root", true},
-		{"a.b_c-d", true},
-		{"u" + "ser0123456789012345678901234567", true},
-		{"u" + "ser01234567890123456789012345678", false},
-		{"", false},
-		{"-root", false},
-		{"ro ot", false},
-		{"ro$ot", false},
-	}
-	for _, tt := range tests {
-		if got := User(tt.in); got != tt.want {
-			t.Errorf("User(%q) = %v, want %v", tt.in, got, tt.want)
-		}
-	}
-}

@@ -14,7 +14,7 @@ func serversFixture() (*effecttest.Machine, func(...string) (int, string, string
 	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e/values.yml"})
 	m := p.Machine.(*effecttest.Machine)
 	m.Files["/e/values.yml"] = []byte("")
-	m.Files["/e/servers/ws/values.yml"] = []byte(values.Text("WS_USER", "ada"))
+	m.Files["/e/servers/ws/values.yml"] = []byte(values.Text("WS_SLOT", "0"))
 	m.Files["/e/servers/lab/values.yml"] = []byte(values.Text(
 		"WS_TARGET", "cloud",
 		"WS_SLOT", "1",

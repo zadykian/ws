@@ -51,7 +51,7 @@ S1 = { provider = "age", value = "` + sealed + `" }
 func addFixture(files map[string]string) (enginecli.Env, *secretstest.Mac) {
 	m := effecttest.NewMachine()
 	keyed(m)
-	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "1"))
+	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_SLOT", "1"))
 	m.Dirs["/etc/ws/servers/lab"] = 0o755
 	m.Files[fnoxKeyFile] = []byte("AGE-PLUGIN-YUBIKEY-1QQQ\n")
 	m.Files[knownHosts] = []byte("ws ssh-ed25519 AAAA\nlab " + labKey + "\n")

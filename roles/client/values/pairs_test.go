@@ -31,26 +31,6 @@ func TestPairs(t *testing.T) {
 			"WS_REMOTE", "a.b",
 		),
 			"has another target's key: WS_REMOTE ("},
-		{"root on the lan", Text("WS_USER", "root"), "WS_USER=root needs WS_TARGET=cloud"},
-		{"root on a VM on the Mac", Text(
-			"WS_USER", "root",
-			"WS_TARGET", "mac-vm",
-			"WS_LAN", "10.88.0.0/24",
-			"WS_LAN_ADDRESS", "10.88.0.2",
-		),
-			"WS_USER=root needs WS_TARGET=cloud"},
-		{"root on a cloud VM", Text(
-			"WS_USER", "root",
-			"WS_TARGET", "cloud",
-			"WS_REMOTE", "a.b",
-			"WS_REMOTE_PORT", "22",
-		), ""},
-		{"ubuntu on a cloud VM", Text(
-			"WS_USER", "ubuntu",
-			"WS_TARGET", "cloud",
-			"WS_REMOTE", "a.b",
-			"WS_REMOTE_PORT", "22",
-		), ""},
 		{"signing alone", Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"), ""},
 		{"agent alone", Text("WS_IDENTITY_AGENT", "~/a.sock"), "WS_IDENTITY_AGENT needs WS_IDENTITY_PUB_KEY"},
 	}
