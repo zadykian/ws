@@ -16,7 +16,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/fetch"
-	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/internal/setup"
 )
 
@@ -173,21 +172,14 @@ func setupSteps(ctx context.Context, m effect.Machine, cfg setupConfig, tag stri
 // plan, whose exit 2 is setup's. The tree and mise are there to plan by only once the steps have
 // run.
 func planSetup(ctx context.Context, m effect.Machine, out effect.Out, steps []resource.Resource, self string, secrets bool) error {
-	due := false
-	for _, r := range steps {
-		changes, err := r.Plan(ctx)
-		if err != nil {
-			return err
-		}
-		for _, c := range changes {
-			out.Say("would %s", step.Headline(c))
-			due = true
-		}
+	due, err := setup.PlanSteps(ctx, out, steps)
+	if err != nil {
+		return err
 	}
 	if due {
 		return engine.ExitStatus{Code: 2}
 	}
-	err := runBootstrap(ctx, m, self, secrets, []string{"plan", "--detailed-exitcode"})
+	err = runBootstrap(ctx, m, self, secrets, []string{"plan", "--detailed-exitcode"})
 	var exit interface{ ExitCode() int }
 	if errors.As(err, &exit) && exit.ExitCode() == 2 {
 		return engine.ExitStatus{Code: 2}
