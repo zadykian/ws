@@ -45,8 +45,11 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: The words and warnings checks
-        run: sh .github/words-check-test.sh && .github/warnings-check-test.sh
+      - name: The words, warnings and update checks
+        run: |
+          sh .github/words-check-test.sh
+          .github/warnings-check-test.sh
+          .github/update-checks-test.sh
       - name: make lint
         run: make lint
         env:
@@ -102,11 +105,13 @@ jobs:
   # install.sh with a stub of ws for each target, served on loopback: .github/install-checks.sh.
   # Each stub installs as /usr/local/bin/ws. A wrong sum and a missing file are refused. So is a
   # /usr/local/bin that others may write, and one that is missing is made. The mac job runs it on
-  # macOS (mac/16-install.sh). It runs on each pull request of a stack on main. One onto another
-  # branch, such as an integration branch, skips it and takes lint alone of this workflow: that
-  # branch's pull request to main runs it. A stack's pull request above the bottom opens as a draft
-  # on the branch below it and names no stack yet, so ready_for_review starts its first run. The
-  # bottom one and a pull request outside a stack took theirs as they opened, and skip that event.
+  # macOS (mac/16-install.sh). Then ws update against stubs as releases: .github/update-checks.sh,
+  # with builds of the tree as the ws that runs. It runs on each pull request of a stack on main.
+  # One onto another branch, such as an integration branch, skips it and takes lint alone of this
+  # workflow: that branch's pull request to main runs it. A stack's pull request above the bottom
+  # opens as a draft on the branch below it and names no stack yet, so ready_for_review starts its
+  # first run. The bottom one and a pull request outside a stack took theirs as they opened, and
+  # skip that event.
   install:
     if: >-
       (github.event.action != 'ready_for_review' || github.event.pull_request.stack.position > 1) &&
@@ -114,7 +119,7 @@ jobs:
       (github.event.pull_request.stack.base.ref || github.event.pull_request.base.ref) ==
       github.event.repository.default_branch)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
@@ -124,6 +129,8 @@ jobs:
           persist-credentials: false
       - name: install.sh's cases
         run: .github/install-checks.sh
+      - name: ws update's cases
+        run: .github/update-checks.sh
 
   # SigNoz's compose files in roles/server/ubuntu/signoz are foundryctl's, forged from the casting
   # there. Forged again into an empty directory, as foundryctl never removes a file, they must be
