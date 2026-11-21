@@ -28,18 +28,17 @@ A role keeps its directory, `roles/server/ubuntu/ROLE/`, and its page there:
   names, as `ws.conf.tmpl`. A kind refuses a `template` that lacks the ending, as the spec loads.
   A `.toml` file is TOML as written, which tombi checks.
 - **Its mise files,** one an env. `mise.server.toml` holds what every server gets: apt's sources,
-  `[bootstrap.packages]`, files, directories and tools. `mise.booted.toml` holds the services, the
-  firewall, and each file entry that names a service in `notify`. `mise.secrets.toml` holds its
+  `[bootstrap.packages]`, files, directories, tools, the services and the firewall, with each file
+  entry that names a service in `notify`. `mise.secrets.toml` holds its
   [secret inputs](#secret-inputs). A role holds no plain `mise.toml`, which every env would load.
 - **The side's link,** `roles/server/mise/conf.d`, to `../ubuntu`. mise loads each role's
   directory through it as a fragment, and a relative `source` resolves from the role's
   directory. A role lands with its directory alone, and edits no shared file.
 
 mise merges `[bootstrap.packages]` across fragments, but an entry of a path or a service is whole.
-A later env's entry replaces an earlier one, so a file's entry in `mise.booted.toml` repeats the
-whole entry with its `notify`. Where two roles declare one path, mise keeps the later fragment's
-by name and drops the other with no error: a path is one role's. mise makes no missing parent, so
-a new directory of mise's files is a `[bootstrap.directories]` entry.
+A later env's entry replaces an earlier one. Where two roles declare one path, mise keeps the later
+fragment's by name and drops the other with no error: a path is one role's. mise makes no missing
+parent, so a new directory of mise's files is a `[bootstrap.directories]` entry.
 
 ## The lines
 
@@ -47,7 +46,6 @@ Each unit of a spec is a line `"ws:KIND/NAME" = "in-sync"` under `[bootstrap.pac
 plans the units its files name alone. `ws unit list --toml` prints them.
 
 - A unit for every server goes in the role's `mise.server.toml`.
-- No unit goes in `mise.booted.toml`: a unit that needs booted systemd skips itself without it.
 
 A value never takes a unit out of a spec. A unit that a value turns off stays in the spec, off by
 its `when`. Else its line would name a unit that `ws unit read` refuses.
@@ -71,11 +69,9 @@ ws runs them by `KIND/NAME`, each moved behind the unit that its `after` names, 
 
 ## The machine's env
 
-The machine's miserc, `/etc/mise/miserc.toml`, names the envs that load as the set `ws`: `server`,
-then `booted` where `/run/systemd/system` is a directory. `booted` comes after `server`, so that
-its entries win. A run by `-E ws,secrets`, the secrets task's, adds the env `secrets` to the set,
-which no other run loads. The miserc is a template of the machine's own, which `install.sh`
-writes.
+The machine's miserc, `/etc/mise/miserc.toml`, names the envs that load as the set `ws`: `server`
+alone. A run by `-E ws,secrets`, the secrets task's, adds the env `secrets` to the set, which no
+other run loads. `install.sh` writes the miserc.
 
 ## Secret inputs
 

@@ -173,11 +173,11 @@ miserc() {
     mkdir -p /etc/mise || die "cannot create /etc/mise"
     rc=$(mktemp /etc/mise/.miserc.XXXXXX) || die "cannot write to /etc/mise"
     cat >"$rc" <<TOML
-# ws's side, the server, as the set ws: booted where systemd runs. The secrets task adds secrets
-# by -E ws,secrets. env sits above the table, which TOML would put it in.
+# ws's side, the server, as the set ws. The secrets task adds secrets by -E ws,secrets. env sits
+# above the table, which TOML would put it in.
 env = ["ws"]
 [env_sets]
-ws = ["server"{% if "/run/systemd/system" is dir %}, "booted"{% endif %}]
+ws = ["server"]
 TOML
     chmod 644 "$rc"
     mv -f "$rc" /etc/mise/miserc.toml || die "cannot write /etc/mise/miserc.toml"

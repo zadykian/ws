@@ -90,7 +90,7 @@ echo '# the install job'"'"'s tree' >"$repo/mise.toml"
 # shellcheck disable=SC2016 # the task's own shell expands it, not this one.
 printf '%s\n' '#!/bin/sh' 'echo "${#0}"' >"$repo/roles/server/mise-tasks/check"
 chmod 755 "$repo/roles/server/mise-tasks/check"
-for env in server booted secrets; do
+for env in server secrets; do
     config=$repo/mise.$env.toml
     [ "$env" != secrets ] || config=$repo/roles/server/ubuntu/part/mise.$env.toml
     cat >"$config" <<TOML
@@ -146,9 +146,8 @@ echo "::endgroup::"
 echo "::group::The latest release installs mise and runs its bootstrap"
 install_sh
 [ "$(/usr/local/bin/mise --version | cut -d' ' -f1)" = "$version" ] || fail "mise is not $version"
-# The miserc is a template, which mise renders: the files show what it loaded.
+# The files written show the envs that the miserc's set ws loaded.
 want=(server)
-[ ! -d /run/systemd/system ] || want+=(booted)
 for env in "${want[@]}"; do
     written "$env"
 done
