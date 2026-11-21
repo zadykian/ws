@@ -10,4 +10,3 @@
 "ws:state/git-clones" = "in-sync"
 "ws:state/git-key" = "in-sync"
 "ws:state/git-tokens" = "in-sync"
-"ws:state/git-tokens-group" = "in-sync"

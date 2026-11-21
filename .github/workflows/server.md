@@ -73,13 +73,13 @@ Then the files that the roles' [secret inputs](../../roles/server/ubuntu/frame/R
 write. The seed leaves their inputs empty, so none of gh's token, `/etc/ws/gh-token`, git's,
 `/etc/ws/git-tokens.toml`, and the shell's `/etc/ws/env` is there. The repository then gives each
 a value, masked in the log, the shell's an endpoint of a `.invalid` host. The task's run writes
-the three, root's 640 and group, under ws's header. `/etc/ws/env` exports the endpoint in single
+the three, root's at 600, under ws's header. `/etc/ws/env` exports the endpoint in single
 quotes, and sh reads it from there. GitHub refuses a dummy token, so root's gh holds it as a login
 with it would, and gh's unit compares that with the file's last line. Root's git gets git's token
 through [ws's program](../../roles/server/ubuntu/git/README.md#git-credentials). A plan through
 the task exits 0, and a run and a plan without the env `secrets` keep the three files, their
-bytes, mode and group. A file at gh's path that ws didn't write stops the run, which keeps it, and
-a run without the env too. An empty input removes its file.
+bytes, mode and group. A file at gh's path that ws didn't write stops the run, which keeps it. A
+run without the env keeps it too, as mise loads no guard there. An empty input removes its file.
 
 The runner has Azure's routes, so only CI proves them. `.github/actionlint.yaml` names the label
 `ubuntu-26.04`, as actionlint 1.7.12 doesn't know it yet. It goes once a release lists the label.

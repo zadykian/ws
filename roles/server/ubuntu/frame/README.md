@@ -94,15 +94,13 @@ WS_GITHUB_TOKEN = { env = "WS_GITHUB_TOKEN", allow_empty = true }
 
 - The name is the input's, its variable's and fnox's, and one role declares it. A run with the env
   needs each input set, empty where a server has no value.
-- A file of an input's is a `template`, root's, mode `0640`, with `remove_empty`: an empty input
-  removes it. mise takes a literal group alone, and writes the file `root:root` each time its
-  content changes. So a state of the role's, `ROLE-…-group`, gives it the account's group after.
+- A file of an input's is a `template`, root's, mode `0600`, with `remove_empty`: an empty input
+  removes it.
 - The file's content opens with a guard that mise's `exec` runs, in a plan and a run alike. Where
   the path holds a file whose first line is not ws's header, both stop and name it, and mise
   replaces nothing. mise's files step runs before ws's units, so no unit could guard it.
-- A run without the env, as CI's `server` bootstrap, loads none of these files, so it keeps the secret
-  files as they are, and its plan lists none. The group states read a file's first line as the
-  guard does, so a file by hand stops that run too, before the account's group opens it.
+- A run without the env, as CI's `server` bootstrap, loads none of these files. It keeps the secret
+  files as they are, a file by hand included, and its plan lists none.
 - A unit reads a file that the same run wrote: mise's files step comes first. A plan writes none.
   So a template's `envvar` takes an input from the run's env in the secrets task's run alone, and
   the plan shows what the run changes
@@ -114,8 +112,8 @@ WS_GITHUB_TOKEN = { env = "WS_GITHUB_TOKEN", allow_empty = true }
 - A run state drops each input from the env of a command whose program is not ws's
   ([run](../../../../engine/core/kind/state.md)), so that an installer never sees a value.
 
-[`secretfiles_test.go`](../../cli/secretfiles_test.go) holds each file to the form, each file to its
-group's state and its guard, and the inputs to the list that a run drops.
+[`secretfiles_test.go`](../../cli/secretfiles_test.go) holds each file to the form and its guard,
+and the inputs to the list that a run drops.
 
 ## The plugin
 
