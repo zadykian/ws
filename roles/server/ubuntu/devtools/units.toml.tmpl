@@ -1,44 +1,30 @@
-# devtools' units. mise installs Go and the servers as tools under /usr/local/share/mise, by the
-# versions of mise.server.toml's [tools]. The first units give each a path that names no version;
-# the rest set up root's tools and gh. README.md says why each stands.
-
-# mise puts a tool under the data directory of the run, and root's own is /root/.local/share/mise,
-# which the account cannot read. Every root run exports MISE_DATA_DIR, as install.sh does. The guard
-# runs after the tools, so it names the mistake, and keeps the links from pointing at nothing.
-[guard.devtools-data-dir]
-command = [
-    "/bin/sh",
-    "-c",
-    '[ "$MISE_DATA_DIR" = /usr/local/share/mise ] || { echo "MISE_DATA_DIR is not /usr/local/share/mise: export it, as install.sh does, else mise puts the tools under /root" >&2; exit 1; }',
-]
+# devtools' units. mise installs Go and the servers as tools under root's data directory,
+# /root/.local/share/mise, by the versions of mise.server.toml's [tools]. The first units give each
+# a path that names no version; the rest set up root's tools and gh. README.md says why each
+# stands.
 
 # Each link names its tool's version, which a bump of [tools] changes with it: a link to `latest`
 # would keep a newer version that a downgrade leaves installed. shell's profile puts
 # /usr/local/go/bin on PATH, and gopls runs the go it finds there.
 [file.devtools-go]
-after = "guard/devtools-data-dir"
 path = "/usr/local/go"
-link = "/usr/local/share/mise/installs/go/1.27.3"
+link = "/root/.local/share/mise/installs/go/1.27.3"
 
 [file.devtools-gopls]
-after = "guard/devtools-data-dir"
 path = "/usr/local/bin/gopls"
-link = "/usr/local/share/mise/installs/go-golang-org-x-tools-gopls/0.23.0/bin/gopls"
+link = "/root/.local/share/mise/installs/go-golang-org-x-tools-gopls/0.23.0/bin/gopls"
 
 [file.devtools-dlv]
-after = "guard/devtools-data-dir"
 path = "/usr/local/bin/dlv"
-link = "/usr/local/share/mise/installs/go-github-com-go-delve-delve-cmd-dlv/1.27.2/bin/dlv"
+link = "/root/.local/share/mise/installs/go-github-com-go-delve-delve-cmd-dlv/1.27.2/bin/dlv"
 
 [file.devtools-pgls]
-after = "guard/devtools-data-dir"
 path = "/usr/local/bin/postgres-language-server"
-link = "/usr/local/share/mise/installs/github-supabase-community-postgres-language-server/0.28.2/postgres-language-server"
+link = "/root/.local/share/mise/installs/github-supabase-community-postgres-language-server/0.28.2/postgres-language-server"
 
 [file.devtools-docker-ls]
-after = "guard/devtools-data-dir"
 path = "/usr/local/bin/docker-language-server"
-link = "/usr/local/share/mise/installs/github-docker-docker-language-server/0.20.1/docker-language-server"
+link = "/root/.local/share/mise/installs/github-docker-docker-language-server/0.20.1/docker-language-server"
 
 # Root's tools. Each runs as root, and without booted systemd too, as in
 # CI's container. Its commands get the system's PATH, where mise's packages put npm, gh and dotnet.

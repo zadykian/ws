@@ -24,8 +24,8 @@ import (
 
 // serverSecretsRun runs the server's task secrets, which fetches the secrets repository and runs
 // the bootstrap with the secrets, as root, by the server's own mise.
-var serverSecretsRun = []string{"sudo", "env", "MISE_DATA_DIR=/usr/local/share/mise", "MISE_LOCKED=1", "mise", "-C",
-	"/opt/ws/roles/server", "run", "secrets"}
+var serverSecretsRun = []string{"sudo", "env", "MISE_LOCKED=1", "mise", "-C", "/opt/ws/roles/server", "run",
+	"secrets"}
 
 // newSecretsAddCmd returns ws client secrets add.
 func newSecretsAddCmd(p enginecli.Env, server *string) *cobra.Command {

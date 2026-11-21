@@ -144,7 +144,7 @@ make the Mac the server's peer, with that key as MAC_PUBLIC_KEY. They go over a 
 
 ```sh
 ssh -o HostName=ADDRESS -o Port=PORT NAME "printf '%s\n' 'MAC_PUBLIC_KEY' | tee /etc/wireguard/mac.pub >/dev/null"
-ssh -o HostName=ADDRESS -o Port=PORT NAME env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server bootstrap
+ssh -o HostName=ADDRESS -o Port=PORT NAME env MISE_LOCKED=1 mise -C /opt/ws/roles/server bootstrap
 ```
 
 For a `WS_USER` other than root, both go through `sudo` and `ssh -t`, for the password.

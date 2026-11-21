@@ -90,7 +90,7 @@ echo '# the install job'"'"'s tree' >"$repo/mise.toml"
 # shellcheck disable=SC2016 # the task's own shell expands it, not this one.
 printf '%s\n' '#!/bin/sh' 'echo "${#0}"' >"$repo/roles/server/mise-tasks/check"
 chmod 755 "$repo/roles/server/mise-tasks/check"
-for env in server booted secrets; do
+for env in server secrets; do
     config=$repo/mise.$env.toml
     [ "$env" != secrets ] || config=$repo/roles/server/ubuntu/part/mise.$env.toml
     cat >"$config" <<TOML
@@ -146,14 +146,13 @@ echo "::endgroup::"
 echo "::group::The latest release installs mise and runs its bootstrap"
 install_sh
 [ "$(/usr/local/bin/mise --version | cut -d' ' -f1)" = "$version" ] || fail "mise is not $version"
-# The miserc is a template, which mise renders: the files show what it loaded.
+# The files written show the envs that the miserc's set ws loaded.
 want=(server)
-[ ! -d /run/systemd/system ] || want+=(booted)
 for env in "${want[@]}"; do
     written "$env"
 done
 # install.sh trusts the tree, so that a plan by hand, with no MISE_TRUSTED_CONFIG_PATHS, runs and
-# finds no change. This tree holds no tool, so the plan needs no MISE_DATA_DIR either.
+# finds no change.
 as_root /usr/local/bin/mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null >/dev/null ||
     fail "a plan by hand after install.sh found a change or failed"
 # A run by hand loads the tree's tasks, and mise refuses one that install.sh left untrusted. Where

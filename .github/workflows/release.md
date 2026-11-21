@@ -23,8 +23,8 @@ machine's miserc and runs `mise bootstrap`:
   holds for the machine's target, and runs it as `mise --version`. Only then it moves it over
   `/usr/local/bin/mise`. A refused download keeps the mise there and leaves no file behind. A mise
   at the pinned version is not downloaded again.
-- It writes `/etc/mise/miserc.toml`: the set of envs `ws`, which holds `server` and `booted` where
-  systemd runs ([The frame](../../roles/server/ubuntu/frame/README.md#the-machines-env)).
+- It writes `/etc/mise/miserc.toml`: the set of envs `ws`, which holds `server` alone
+  ([The frame](../../roles/server/ubuntu/frame/README.md#the-machines-env)).
 - It finds the latest release once, and checks the release's tag out in `/opt/ws` by git, then
   runs the bootstrap on that tree, in the server's run directory, `/opt/ws/roles/server`. A
   pre-release is never the latest: only `WS_VERSION` picks one. The tree pins ws's binary, and mise

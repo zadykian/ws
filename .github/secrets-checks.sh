@@ -7,7 +7,7 @@ set -euo pipefail
 
 # The runner's sudo keeps the runner's XDG_CONFIG_HOME, which would send gh to the runner's home.
 unset XDG_CONFIG_HOME
-export HOME=/root MISE_LOCKED=1 MISE_DATA_DIR=/usr/local/share/mise
+export HOME=/root MISE_LOCKED=1
 check=$(cd "$(dirname "$0")" && pwd)/warnings-check.sh
 work=$(mktemp -d)
 trap 'rm -rf -- "$work"' EXIT

@@ -3,7 +3,6 @@ package devtools_test
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"regexp"
 	"strings"
 	"testing"
@@ -35,9 +34,6 @@ type unitsFile struct {
 		Link  string `toml:"link"`
 		After string `toml:"after"`
 	} `toml:"file"`
-	Guard map[string]struct {
-		Command []string `toml:"command"`
-	} `toml:"guard"`
 }
 
 func readUnits(t *testing.T) unitsFile {
@@ -52,8 +48,8 @@ func readUnits(t *testing.T) unitsFile {
 	return u
 }
 
-// installs is where mise puts a tool, under the data directory that every root run exports.
-const installs = "/usr/local/share/mise/installs/"
+// installs is where mise puts a tool, under root's data directory, which mise takes by default.
+const installs = "/root/.local/share/mise/installs/"
 
 // links names each link unit's tool in [tools], and the path of the program below its version's
 // directory.
@@ -88,8 +84,8 @@ func TestDevtoolsLinksNameThePinnedVersions(t *testing.T) {
 		if want := installs + dir.Replace(l.tool) + "/" + c.version(t, l.tool) + l.below; f.Link != want {
 			t.Errorf("%s links to %q, want %q", name, f.Link, want)
 		}
-		if f.After != "guard/devtools-data-dir" {
-			t.Errorf("%s waits on %q, want the guard", name, f.After)
+		if f.After != "" {
+			t.Errorf("%s waits on %q, want nothing", name, f.After)
 		}
 		if c.Bootstrap.Packages["ws:file/"+name] != "in-sync" {
 			t.Errorf("mise.server.toml lacks ws:file/%s", name)
@@ -163,32 +159,6 @@ func TestDevtoolsLockHoldsEachTool(t *testing.T) {
 			case want[platform] != "" && p["checksum"] != "sha256:"+want[platform]:
 				t.Errorf("%s: %s's checksum %v, want %s", tool, platform, p["checksum"], want[platform])
 			}
-		}
-	}
-}
-
-// The guard passes the data directory that install.sh exports, and fails without it.
-func TestDevtoolsDataDirGuardRefusesAnotherDir(t *testing.T) {
-	argv := readUnits(t).Guard["devtools-data-dir"].Command
-	if len(argv) == 0 {
-		t.Fatal("no guard devtools-data-dir with a command")
-	}
-	for env, pass := range map[string]bool{
-		"MISE_DATA_DIR=/usr/local/share/mise":   true,
-		"":                                      false,
-		"MISE_DATA_DIR=/root/.local/share/mise": false,
-	} {
-		cmd := exec.Command(argv[0], argv[1:]...) //nolint:gosec // the guard's own argv, from the role's spec
-		cmd.Env = []string{}
-		if env != "" {
-			cmd.Env = []string{env}
-		}
-		out, err := cmd.CombinedOutput()
-		if (err == nil) != pass {
-			t.Errorf("with %q: %v, %s; want a pass %v", env, err, out, pass)
-		}
-		if !pass && !strings.Contains(string(out), "install.sh") {
-			t.Errorf("with %q, the guard says %q, want what to export", env, out)
 		}
 	}
 }

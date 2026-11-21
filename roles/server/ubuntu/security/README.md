@@ -7,12 +7,11 @@ spec of ws's units ([The frame](../frame/README.md)):
 
 | File | What it holds |
 | --- | --- |
-| [`mise.server.toml`](mise.server.toml) | The packages, fail2ban's jail, and the units of every server. |
-| [`mise.booted.toml`](mise.booted.toml) | fail2ban's and ufw's services, the jail's reload, and the firewall. |
+| [`mise.server.toml`](mise.server.toml) | The packages, fail2ban's jail and its reload, fail2ban's and ufw's services, the firewall, and the units. |
 | [`units.toml.tmpl`](units.toml.tmpl) | The units: the lockout guard, sshd's drop-in, and the outbound table. |
 | [`files/`](files) | The files and the template that mise and the units write. |
 
-mise installs the packages and, on a booted machine, enables ufw with its rules before any unit of
+mise installs the packages and enables ufw with its rules before any unit of
 ws's runs. So docker's, tunnel's and ikeward's ufw rules, which are units, find ufw installed and
 enabled. Without systemd booted, as in CI's container, the units that need it skip and say so.
 They are the services, the table's check and comparison, and the removal of a table loaded by hand.

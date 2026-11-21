@@ -13,7 +13,7 @@ import (
 
 // runLine and addHint are the words of the task's refusals that a caller acts on.
 const (
-	runLine = "sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server run secrets"
+	runLine = "sudo env MISE_LOCKED=1 mise -C /opt/ws/roles/server run secrets"
 	addHint = "ws client secrets add NAME"
 	hostKey = "/etc/ssh/ssh_host_ed25519_key"
 )
@@ -96,7 +96,7 @@ func newFixture(t *testing.T) *fixture {
 	f.push("fnox.ws-a.toml", "[providers.host]\ntype = \"age\"\n")
 	f.env = map[string]string{
 		"PATH": bin + ":/usr/bin:/bin", "HOME": filepath.Join(root, "home"), "TMPDIR": filepath.Join(root, "tmp"),
-		"MISE_DATA_DIR": "/usr/local/share/mise", "MISE_LOCKED": "1",
+		"MISE_LOCKED":     "1",
 		"WS_SECRETS_REPO": f.origin, "WS_SECRETS_PREFIX": f.prefix, "FAKE_LOG": f.logs,
 	}
 	return f
@@ -251,15 +251,13 @@ func TestTaskRefusesAUserButRoot(t *testing.T) {
 	}
 }
 
-func TestTaskRefusesARunWithoutTheRunbooksVariables(t *testing.T) {
-	for _, name := range []string{"MISE_DATA_DIR", "MISE_LOCKED"} {
-		f := newFixture(t)
-		delete(f.env, name)
-		code, out := f.run()
-		f.refused(code, out, runLine)
-		if _, err := os.Lstat(f.clone()); !errors.Is(err, os.ErrNotExist) {
-			t.Errorf("a run without %s made the clone: %v", name, err)
-		}
+func TestTaskRefusesARunWithoutMiseLocked(t *testing.T) {
+	f := newFixture(t)
+	delete(f.env, "MISE_LOCKED")
+	code, out := f.run()
+	f.refused(code, out, runLine)
+	if _, err := os.Lstat(f.clone()); !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("a run without MISE_LOCKED made the clone: %v", err)
 	}
 }
 

@@ -20,9 +20,8 @@ sed -i '/^XDG_/d' /etc/environment
 # apt reads this file after apt.conf.d, so the line wins wherever the runner set the variant.
 echo '#clear APT::Architecture-Variants;' >>/etc/apt/apt.conf
 export HOME=/root DEBIAN_FRONTEND=noninteractive
-# A tool installs only as a lock holds it, here the build's in mise.local.lock. The runs by hand
-# put the tools where install.sh does.
-export MISE_LOCKED=1 MISE_DATA_DIR=/usr/local/share/mise
+# A tool installs only as a lock holds it, here the build's in mise.local.lock.
+export MISE_LOCKED=1
 
 fail() {
     echo "::error::$*"

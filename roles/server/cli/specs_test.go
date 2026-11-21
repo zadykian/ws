@@ -26,7 +26,7 @@ const (
 
 // roleFiles are the mise files a role may hold, each loaded by its env. A plain mise.toml would
 // load in every env. mise.secrets.toml loads under the env secrets, which the secrets task adds.
-var roleFiles = []string{"mise.server.toml", "mise.booted.toml", "mise.secrets.toml"}
+var roleFiles = []string{"mise.server.toml", "mise.secrets.toml"}
 
 // specNames returns the names of the units that the roles' specs give for v.
 func specNames(v values.Values) ([]string, error) {
@@ -70,9 +70,8 @@ func TestSpecsMatchMiseLines(t *testing.T) {
 	}
 	clitest.CompareLines(t, "every server (mise.server.toml)", every, server)
 
-	// A unit skips itself without booted systemd, mise.toml loads on the Mac too, and
-	// mise.secrets.toml under the secrets task alone.
-	for _, glob := range []string{treeRoot + "/mise.toml", rolesDir + "/*/mise.booted.toml", rolesDir + "/*/mise.secrets.toml"} {
+	// mise.toml loads on the Mac too, and mise.secrets.toml under the secrets task alone.
+	for _, glob := range []string{treeRoot + "/mise.toml", rolesDir + "/*/mise.secrets.toml"} {
 		for name := range clitest.MiseLines(t, glob) {
 			t.Errorf("%s: \"ws:%s\" belongs in a mise.server.toml", glob, name)
 		}
