@@ -29,12 +29,14 @@ files](values/README.md#the-two-files)). The files' check refuses a clash.
 
 ## The Mac's key
 
-1. Install Secretive from its release's `Secretive.zip`, with no Homebrew. Read the version and
-   the SHA-256 once from `https://formulae.brew.sh/api/cask/secretive.json`, its `version` and
-   `sha256`. Download the zip from `https://github.com/maxgoedjen/secretive/releases/download/vVERSION/Secretive.zip`,
-   check it with `shasum -a 256 Secretive.zip`, unzip it, and move `Secretive.app` to
-   `/Applications`. `spctl -a -vv /Applications/Secretive.app` must say `accepted` and `Notarized
-   Developer ID`.
+1. Install Secretive from its release's `Secretive.zip`, with no Homebrew, at the version and
+   SHA-256 that [ssh's `mise.mac.toml`](macos/ssh/mise.mac.toml) pins. Download the zip from
+   `https://github.com/maxgoedjen/secretive/releases/download/vVERSION/Secretive.zip`, check it with
+   `shasum -a 256 Secretive.zip`, unzip it, and move `Secretive.app` to `/Applications`.
+   `spctl -a -vv /Applications/Secretive.app` must say `accepted` and `Notarized Developer ID`. The
+   bootstrap then adopts this copy. A copy of another version, which mise did not install, it refuses
+   and leaves alone: remove it once, and the bootstrap installs the pin
+   ([Secretive](macos/ssh/README.md#secretive)).
 2. Open it, and make a P-256 key for the login and one for git's signing. One key may serve both.
    The key stays in the Mac's Secure Enclave.
 3. Set `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_PUB_KEY` in

@@ -150,7 +150,9 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   and age-plugin-yubikey, by `roles/client/mise/mise.mac.lock` ([git](../roles/client/macos/git/README.md#gh),
   [secrets](../roles/client/macos/secrets/README.md#the-tools)). The lock's SHA-256 of
   age-plugin-yubikey is GitHub's digest, as its publisher lists none. So is Secretive's
-  `Secretive.zip`, with its notarization ([runbook.md](../roles/client/runbook.md)). The
+  `Secretive.zip`, by the SHA-256 that mise's `macos-app` pin holds
+  ([mise.mac.toml](../roles/client/macos/ssh/mise.mac.toml)), and its notarization, by hand
+  ([runbook.md](../roles/client/runbook.md)). The
   Mac's casks, Ghostty, Zed and their font, take their latest by mise's `brew-cask`, outside the rule
   ([ghostty](../roles/client/macos/ghostty/README.md#ghostty)). Go is checked against the
   SHA-256 its publisher lists, and the postgres-language-server and docker-language-server against
