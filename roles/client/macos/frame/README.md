@@ -90,8 +90,6 @@ user and asks no password. macOS always has that directory. The file is not unde
 files are root's and read through sudo. Nor is it a unit of ws's: a unit runs in the packages'
 phase, and a template renders before it.
 
-A pass prints one line, so that the next plan finds the file unchanged. A first run, and the run
-that brings a new pin, render it before mise installs the pin's ws, and print the same line then.
-The first unit's read refuses a bad value on that run, as the facts check the files too.
-`TestValuesCheckRunsTheCommandAndPassesWithNoWs` runs the file's command with a stand-in for mise
-and ws.
+The template runs `/usr/local/bin/ws`, and fails a run without it, naming `install.sh`. A pass
+prints one line, so that the next plan finds the file unchanged. `TestValuesCheckRunsTheCommand`
+runs the file's command with a stand-in for ws.

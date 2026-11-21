@@ -9,10 +9,11 @@ local function quote(s)
     return "'" .. s:gsub("'", "'\\''") .. "'"
 end
 
--- binary is the pinned ws, where mise installed it, or nil before mise's tools step installs it.
--- It asks mise alone: a /usr/local/bin/ws of an older pin would win on PATH.
+local BINARY = "/usr/local/bin/ws"
+
+-- binary is the machine's one ws, or nil where none is at its path. mise installs none.
 function M.binary()
-    local out = cmd.exec("mise which ws 2>/dev/null || true")
+    local out = cmd.exec("[ -x " .. BINARY .. " ] && echo " .. BINARY .. " || true")
     return out:match("(%S+)")
 end
 
@@ -46,13 +47,11 @@ local function run(line, verb)
 end
 
 -- write streams ws's lines, the diffs of a dry run among them, and fails where ws fails. ws unit
--- verify runs first. On a first run, and on the run that brings a new pin, the files' check runs
--- before mise installs that ws, and passes unchecked. Each unit reads as missing then, so mise
--- runs this hook with them, and the check runs here.
+-- verify runs first.
 function M.write(pkgs, dry_run)
     local bin = M.binary()
     if not bin then
-        error("ws is not installed: mise's tools step installs it")
+        error(BINARY .. " is missing: install.sh writes it")
     end
     run(command(bin, "verify", {}), "verify")
     run(command(bin, "write", pkgs, dry_run and "--dry-run" or ""), "write")

@@ -50,10 +50,10 @@ func TestValuesCheckFileIsTheUsersTemplate(t *testing.T) {
 	}
 }
 
-// TestValuesCheckRunsTheCommandAndPassesWithNoWs runs the file's command against stand-ins for mise
-// and ws. A pass prints the command's own line, and so does a run that mise has no ws for yet, so
-// that the next plan finds the file unchanged. A bad value fails the run with the command's words.
-func TestValuesCheckRunsTheCommandAndPassesWithNoWs(t *testing.T) {
+// TestValuesCheckRunsTheCommand runs the file's command against a stand-in for /usr/local/bin/ws.
+// A pass prints the command's own line, so that the next plan finds the file unchanged. A bad value
+// fails the run with the command's words, and a run with no ws fails naming install.sh.
+func TestValuesCheckRunsTheCommand(t *testing.T) {
 	content, _ := valuesCheckPart(t)["content"].(string)
 	command, prefixed := strings.CutPrefix(strings.TrimSpace(content), `{{ exec(command="`)
 	command, suffixed := strings.CutSuffix(command, `") }}`)
@@ -62,27 +62,23 @@ func TestValuesCheckRunsTheCommandAndPassesWithNoWs(t *testing.T) {
 	}
 	command = strings.ReplaceAll(command, `\"`, `"`)
 	for _, c := range []struct {
-		name, mise, ws, stdout, stderr string
-		status                         int
+		name, ws, stdout, stderr string
+		status                   int
 	}{
-		{"no ws yet", "exit 1", "", valuesChecked + "\n", "", 0},
-		{"a pass", "echo $0", "echo " + valuesChecked, valuesChecked + "\n", "", 0},
-		{"a bad key", "echo $0", "echo '/etc/ws/values.yml, line 1: WS_SLOT=9 is bad' >&2; exit 1", "", "WS_SLOT=9 is bad", 1},
+		{"no ws", "", "", "is missing: install.sh writes it", 1},
+		{"a pass", "echo " + valuesChecked, valuesChecked + "\n", "", 0},
+		{"a bad key", "echo '/etc/ws/values.yml, line 1: WS_SLOT=9 is bad' >&2; exit 1", "", "WS_SLOT=9 is bad", 1},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			bin := t.TempDir()
-			ws := filepath.Join(bin, "ws")
-			stands := map[string]string{
-				"mise": "#!/bin/sh\n" + strings.ReplaceAll(c.mise, "$0", ws) + "\n",
-				"ws":   "#!/bin/sh\n[ \"$*\" = 'client values check' ] || exit 2\n" + c.ws + "\n",
-			}
-			for name, script := range stands {
-				if err := os.WriteFile(filepath.Join(bin, name), []byte(script), 0o700); err != nil { //nolint:gosec // stand-ins that sh runs
+			ws := filepath.Join(t.TempDir(), "ws")
+			if c.ws != "" {
+				script := "#!/bin/sh\n[ \"$*\" = 'client values check' ] || exit 2\n" + c.ws + "\n"
+				if err := os.WriteFile(ws, []byte(script), 0o700); err != nil { //nolint:gosec // a stand-in that sh runs
 					t.Fatal(err)
 				}
 			}
-			cmd := exec.Command("sh", "-o", "errexit", "-c", command) //nolint:gosec // the frame's own command, read from the tree
-			cmd.Env = []string{"PATH=" + bin}
+			cmd := exec.Command("sh", "-o", "errexit", "-c", strings.ReplaceAll(command, "/usr/local/bin/ws", ws)) //nolint:gosec // the frame's own command, read from the tree
+			cmd.Env = []string{"PATH=" + os.Getenv("PATH")}
 			var stdout, stderr bytes.Buffer
 			cmd.Stdout, cmd.Stderr = &stdout, &stderr
 			if err := cmd.Run(); cmd.ProcessState == nil {
