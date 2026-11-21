@@ -20,7 +20,6 @@ import (
 
 const (
 	sshdDropIn  = "/etc/ssh/sshd_config.d/10-keys-only.conf"
-	noCache     = "/etc/sudoers.d/ws-no-cache"
 	keysOfUser  = "/home/zadykian/.ssh/authorized_keys"
 	tableDir    = "/usr/local/lib/ws/security"
 	unitDir     = "/etc/systemd/system/"
@@ -36,8 +35,8 @@ const (
 var outboundUnits = []string{"security-resolvers.path", "security-resolvers.timer", "security-resolvers.service",
 	"security-outbound.service"}
 
-// securityMachine is a booted machine, not a container, whose account zadykian holds a key and a
-// way to root by sudo, and whose checkers pass.
+// securityMachine is a booted machine, not a container, whose account zadykian holds a key, and
+// whose checkers pass.
 func securityMachine() *effecttest.Machine {
 	m := bootedMachine()
 	m.Results["id -u zadykian"] = effecttest.Result{Out: []byte("1001\n")}
@@ -47,13 +46,9 @@ func securityMachine() *effecttest.Machine {
 	m.Dirs["/home/zadykian"], m.Dirs["/home/zadykian/.ssh"] = 0o750, 0o700
 	m.Owners["/home/zadykian"], m.Owners["/home/zadykian/.ssh"] = [2]int{1001, 1001}, [2]int{1001, 1001}
 	m.Files[keysOfUser], m.Modes[keysOfUser], m.Owners[keysOfUser] = []byte("ssh-ed25519 AAAA me\n"), 0o600, [2]int{1001, 1001}
-	m.Results["sudo -l -U zadykian"] = effecttest.Result{Out: []byte("User zadykian may run the following commands on h:\n    (ALL : ALL) ALL\n")}
-	m.Results["passwd --status zadykian"] = effecttest.Result{Out: []byte("zadykian P 2026-11-05 0 99999 7 -1\n")}
-	m.Results["visudo -cf "+noCache+".ws-check"] = effecttest.Result{}
 	m.Results["/usr/sbin/sshd -G -f "+sshdDropIn+".ws-check"] = effecttest.Result{}
 	m.Results["/usr/sbin/nft -c -f "+tableDir+"/outbound.nft.ws-check"] = effecttest.Result{}
 	m.Results[tableGone] = effecttest.Result{}
-	m.Files["/etc/group"] = []byte("lxd:x:110:\n")
 	m.Packages = effecttest.Packages{}
 	return m
 }
@@ -80,9 +75,9 @@ func TestSecurityUnitsOrder(t *testing.T) {
 	for _, u := range securityUnits(t, securityMachine(), &effecttest.Units{}, "") {
 		names = append(names, u.Name)
 	}
-	want := []string{"guard/security-keys", "guard/security-sudo", "file/security-sudo-no-cache", "service/security-sshd"}
+	want := []string{"guard/security-keys", "service/security-sshd"}
 	if !slices.Equal(names[:len(want)], want) {
-		t.Errorf("order = %q, want the guards, then sudoers and sshd", names)
+		t.Errorf("order = %q, want the keys' guard, then sshd", names)
 	}
 }
 
@@ -92,23 +87,8 @@ func TestSecurityMissingKeyStopsBeforeSshd(t *testing.T) {
 	if err := runUnits(t, securityUnits(t, m, &effecttest.Units{}, "")); err == nil || !strings.Contains(err.Error(), "holds no key") {
 		t.Fatalf("run = %v, want the guard's refusal", err)
 	}
-	for _, p := range []string{sshdDropIn, noCache} {
-		if _, ok := m.Files[p]; ok {
-			t.Errorf("%s was written past the guard", p)
-		}
-	}
-}
-
-func TestSecurityNoSudoRightStopsBeforeSudoers(t *testing.T) {
-	m := securityMachine()
-	m.Results["sudo -l -U zadykian"] = effecttest.Result{Out: []byte("User zadykian is not allowed to run sudo on h.\n")}
-	if err := runUnits(t, securityUnits(t, m, &effecttest.Units{}, "")); err == nil || !strings.Contains(err.Error(), "no right to sudo") {
-		t.Fatalf("run = %v, want the guard's refusal", err)
-	}
-	for _, p := range []string{sshdDropIn, noCache} {
-		if _, ok := m.Files[p]; ok {
-			t.Errorf("%s was written past the guard", p)
-		}
+	if _, ok := m.Files[sshdDropIn]; ok {
+		t.Errorf("%s was written past the guard", sshdDropIn)
 	}
 }
 
@@ -121,8 +101,9 @@ func TestSecurityHomeOtherThanTheAccountsStops(t *testing.T) {
 	}
 }
 
-func TestSecuritySshdFileForRootAndAccount(t *testing.T) {
-	for yml, want := range map[string]string{"": "PermitRootLogin no\n", "---\nWS_USER: root\n": "PermitRootLogin prohibit-password\n"} {
+func TestSecuritySshdFileLetsRootInByKeyAlone(t *testing.T) {
+	const want = "PermitRootLogin prohibit-password\n"
+	for _, yml := range []string{"", "---\nWS_USER: root\n"} {
 		m := securityMachine()
 		m.Files["/root/.ssh/authorized_keys"] = []byte("ssh-ed25519 AAAA me\n")
 		u := &effecttest.Units{States: map[string]effect.UnitState{"ssh.service": {Active: true}}}

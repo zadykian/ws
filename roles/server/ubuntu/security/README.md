@@ -9,8 +9,7 @@ spec of ws's units ([The frame](../frame/README.md)):
 | --- | --- |
 | [`mise.server.toml`](mise.server.toml) | The packages, fail2ban's jail, and the units of every server. |
 | [`mise.booted.toml`](mise.booted.toml) | fail2ban's and ufw's services, the jail's reload, and the firewall. |
-| [`mise.account.toml`](mise.account.toml) | The units of lxd, where `WS_USER` is not root. |
-| [`units.toml.tmpl`](units.toml.tmpl) | The units: the lockout guards, sudo's and sshd's drop-ins, lxd, and the outbound table. |
+| [`units.toml.tmpl`](units.toml.tmpl) | The units: the lockout guard, sshd's drop-in, and the outbound table. |
 | [`files/`](files) | The files and the template that mise and the units write. |
 
 mise installs the packages and, on a booted machine, enables ufw with its rules before any unit of
@@ -20,9 +19,8 @@ They are the services, the table's check and comparison, and the removal of a ta
 
 ## SSH and the firewall
 
-ws turns SSH's passwords off: everyone logs in by key. Where `WS_USER` is another user, root cannot
-log in at all, and `WS_USER` takes root by `sudo` with its password. Where `WS_USER` is root, a
-cloud VM's, root logs in by key. ufw then lets in SSH on port 22, by mise's rule `mise:ssh`, and
+ws turns SSH's passwords off: everyone logs in by key, and root by key alone, as on a cloud VM.
+ufw then lets in SSH on port 22, by mise's rule `mise:ssh`, and
 WireGuard on UDP port 51820 ([tunnel](../tunnel/README.md)). It lets in DNS lookups from Docker's
 bridges to the host's resolver too ([docker](../docker/README.md)), and nothing else. fail2ban bans
 an address for an hour after 5 failed logins in 10 minutes. sshd's own penalties slow one that keeps
@@ -34,15 +32,6 @@ has no key to log in with, or a file of keys that sshd passes over, outside a co
 on every machine where `WS_HOME` is not the account's home in `getent passwd`. sshd's drop-in lands
 only after `sshd -G` accepts it, and sshd reloads after a change, once, in its unit. ufw's service
 is active as well as enabled, as mise keeps it.
-
-Where `WS_USER` is another user, the guard `guard/security-sudo` checks, before sudo's drop-in and
-sshd's, that it may run `sudo` and has a password to give. Closing root's login then leaves a way to
-root. A container skips the check. sudo asks for the password at every command
-(`/etc/sudoers.d/ws-no-cache`, `timestamp_timeout=0`). What `WS_USER` runs, such as claude, then
-cannot take root after the maintainer's own `sudo`. That holds where sudo asks. A cloud image's
-default user has a `NOPASSWD` rule, which ws leaves in place, so what that user runs holds root,
-past the outbound table too. Give the user a password and remove the rule by hand. Where `WS_USER`
-is another user, the run takes it out of the `lxd` group, which is root, and purges `lxd-installer`.
 
 Docker's published ports get past ufw, so Docker publishes a port that names no address on
 `127.0.0.1` ([docker](../docker/README.md)): reach it through an SSH tunnel. A port published on

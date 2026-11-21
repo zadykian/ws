@@ -1,25 +1,12 @@
 # The security role's units, a Go template over /etc/ws/values.yml. mise installs the packages and
-# sets up fail2ban and ufw first. The lockout guards come before the units that could close a login.
-# sudo's drop-in and sshd's wait on them, and a guard fails before a change, never after.
+# sets up fail2ban and ufw first. The lockout guard comes before the unit that could close a login.
+# sshd's waits on it, and a guard fails before a change, never after.
 {{- $on := .Security.Outbound }}
 
 # WS_USER must hold a key that sshd takes, in the account's own home, before SSH by key alone.
 [guard.security-keys]
 login_key = "{{ .User }}"
 home = "{{ .Home }}"
-
-# And a way to root by sudo, before root's login closes. root needs none.
-[guard.security-sudo]
-sudo_right = "{{ .User }}"
-after = "guard/security-keys"
-
-# sudo asks for the password at every command. visudo checks the drop-in before it goes in place.
-[file.security-sudo-no-cache]
-path = "/etc/sudoers.d/ws-no-cache"
-mode = 0o440
-source = "files/ws-no-cache"
-check = ["visudo", "-cf", "{}"]
-after = "guard/security-sudo"
 
 # SSH by key alone. sshd -G parses the drop-in alone before it goes in place, as sshd -t needs a
 # /run/sshd that exists only once ssh.service has started since boot. A refused drop-in leaves the
@@ -29,23 +16,12 @@ after = "guard/security-sudo"
 unit = "ssh.service"
 run = "running"
 reload = true
-after = "guard/security-sudo"
+after = "guard/security-keys"
 
 [[service.security-sshd.file]]
 path = "/etc/ssh/sshd_config.d/10-keys-only.conf"
 template = "files/10-keys-only.conf.tmpl"
 check = ["/usr/sbin/sshd", "-G", "-f", "{}"]
-{{- if ne .User "root" }}
-
-# Ubuntu's installer puts its user in lxd, whose socket lxd-installer opens to the group: that
-# group is root, as a container of LXD's can mount the host. lxd-installer outlives its group.
-[state.security-lxd-left]
-left = { user = "{{ .User }}", group = "lxd" }
-
-[state.security-lxd-installer-purged]
-purged = "lxd-installer"
-after = "state/security-lxd-left"
-{{- end }}
 
 # The outbound table. On, the fill and its watchers go in first, then the table and its unit. So a
 # run cut short, then a boot, finds the old table or the new one with what fills its sets. Off
