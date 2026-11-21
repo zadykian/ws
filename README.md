@@ -98,15 +98,15 @@ root, in `/root`: no value names either. `WS_GIT_SIGNING_PUB_KEY` is `/root/.ssh
 by default, and lies below `/root`, or the run fails. A cloud VM names `WS_SECURITY_OUTBOUND:
 false` there before its first run ([Outbound](roles/server/ubuntu/security/README.md#outbound)). `ws
 server values set KEY VALUE` writes one key, and an empty VALUE gives its default back. A second
-run changes nothing, so its plan exits 0 with `--detailed-exitcode`.
+run changes nothing, so `ws server setup --plan` exits 0.
 
 ## Dry runs
 
-The bootstrap's plan shows what a run would change, and nothing changes. A run by hand takes the
-form that [the server's runbook](roles/server/runbook.md) gives:
+Setup's plan shows what a run would change, and nothing changes. A run by hand takes the form
+that [the server's runbook](roles/server/runbook.md) gives:
 
 ```sh
-sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server bootstrap plan
+sudo ws server setup --plan
 ```
 
 The task `secrets` takes the plan's arguments too, `run secrets -- plan --detailed-exitcode`, and
@@ -149,8 +149,8 @@ The router takes a few steps once, by hand: [The router](roles/server/ubuntu/cab
 ## Checks
 
 CI runs `make lint`, which lints the code, the docs and the workflows, and scans the commits for
-secrets. It runs the bootstrap twice in a container, and mise's plan must exit 0 before the second
-and after it. It tries `install.sh`, forges SigNoz's compose files again, and sets up a Mac on
+secrets. It runs `ws server setup` twice on a booted runner, and setup's plan must exit 0 after
+each run. It tries `install.sh`, forges SigNoz's compose files again, and sets up a Mac on
 GitHub's macOS runner by the bootstrap. A pushed tag `vX.Y.Z` publishes the
 release whose tree `install.sh` runs, and `vX.Y.Z-rc.N` a pre-release of a `feat/` branch:
 [Releases](.github/workflows/release.md). The rules workflow warns where a

@@ -114,7 +114,7 @@ func TestServerPathsAreTheLinks(t *testing.T) {
 // lockEntry is a tool's entry in mise's lock: its version, and the platforms' tables beside it.
 type lockEntry map[string]any
 
-// The lock holds each tool at its version, under MISE_LOCKED=1. A download's entry holds its url
+// The lock holds each tool at its version, under the tree's locked = true. A download's entry holds its url
 // and SHA-256 for both platforms; the servers' sums are those ws pinned in Go before mise. The lock
 // holds other roles' tools too, so the server's TestServerLockHoldsEachPinnedTool counts them.
 func TestDevtoolsLockHoldsEachTool(t *testing.T) {

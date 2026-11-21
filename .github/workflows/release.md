@@ -28,7 +28,7 @@ machine's miserc and runs `mise bootstrap`:
 - It finds the latest release once, and checks the release's tag out in `/opt/ws` by git, then
   runs the bootstrap on that tree, in the server's run directory, `/opt/ws/roles/server`. A
   pre-release is never the latest: only `WS_VERSION` picks one. The tree pins ws's binary, and mise
-  checks it against `mise.lock`. With `MISE_LOCKED=1`, which `install.sh` sets, mise installs each
+  checks it against `mise.lock`. The tree's `locked = true` has mise install each
   tool only as a lock holds it. Run again, it checks the release's tag out in `/opt/ws`, dropping
   any change and any file git does not track there, such as a trial's `mise.local.toml`. So it
   brings the machine back to the release.

@@ -35,15 +35,15 @@ ws, which writes what the secrets give, such as `/etc/ws/env` and gh's login
 ([The repository](ubuntu/secrets/README.md#the-repository)). A later run under the secrets takes
 the task's form below.
 
-A run of the bootstrap by hand, or of its plan, takes this form:
+A run by hand, or its plan, takes `ws server setup`:
 
 ```sh
-sudo env MISE_LOCKED=1 mise -C /opt/ws/roles/server bootstrap
+sudo ws server setup
+sudo ws server setup --plan
 ```
 
-`MISE_LOCKED=1` installs a tool only as the lock holds it, by its URL and checksum, as CI's runs
-do. With `bootstrap plan --detailed-exitcode` in place
-of `bootstrap`, it changes nothing, and exits 0 where a run would change nothing.
+The tree's `locked = true` installs a tool only as the lock holds it, by its URL and checksum, as
+CI's runs do. The plan changes nothing, and exits 0 where a run would change nothing.
 
 A run under ws's secrets, or its plan, goes through the task `secrets`, which fetches them by the
 host key and passes its arguments to the bootstrap

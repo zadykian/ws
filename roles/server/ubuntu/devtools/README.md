@@ -32,8 +32,8 @@ Go, gopls, Delve, postgres-language-server and docker-language-server are tools 
 versions that `[tools]` pins. [mise.server.lock](../../mise/mise.server.lock) holds the url
 and the SHA-256 of each download for `linux-x64` and `linux-arm64`. Go's comes from the list that
 go.dev publishes, and each server's from GitHub's digest of its release asset. A wrong one fails
-the run before any unit of ws, and `MISE_LOCKED=1` refuses a tool that the lock lacks. gopls and
-Delve are `go:` tools, which `go install` builds with mise's Go through Go's checksum database.
+the run before any unit of ws, and the tree's `locked = true` refuses a tool that the lock lacks.
+gopls and Delve are `go:` tools, which `go install` builds with mise's Go through Go's checksum database.
 mise checks a sum at the download alone, so it mends no tool changed after its install:
 `sudo mise -C /opt/ws/roles/server install --force TOOL` does.
 

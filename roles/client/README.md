@@ -142,7 +142,7 @@ make the Mac the server's peer, with that key as MAC_PUBLIC_KEY. They go over a 
 
 ```sh
 ssh -o HostName=ADDRESS -o Port=PORT NAME "printf '%s\n' 'MAC_PUBLIC_KEY' | tee /etc/wireguard/mac.pub >/dev/null"
-ssh -o HostName=ADDRESS -o Port=PORT NAME env MISE_LOCKED=1 mise -C /opt/ws/roles/server bootstrap
+ssh -o HostName=ADDRESS -o Port=PORT NAME ws server setup
 ```
 
 With ws's key as `WS_PUBLIC_KEY`, the bootstrap installs the tunnel's daemon. A new
