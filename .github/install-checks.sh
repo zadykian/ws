@@ -1,7 +1,7 @@
 #!/bin/bash
 # The install job's cases of install.sh, with the real mise and a small repository in place of the
 # release's tree. Run it from the repository's root, as a user with sudo. install.sh runs as root
-# and writes /usr/local/bin/mise, /etc/mise, /opt/ws and /etc/ws, which each case removes. So it
+# and writes /usr/local/bin/mise, /etc/mise and /opt/ws, which each case removes. So it
 # runs on GitHub's runner, or on a spare machine where WS_SPARE_MACHINE is 1, and never on a
 # server.
 #
@@ -36,7 +36,7 @@ as_root() {
 
 # reset removes what a run of install.sh leaves, so that each case starts as a new machine.
 reset() {
-    as_root rm -rf /usr/local/bin/mise /usr/local/bin/.mise.* /etc/mise /opt/ws /etc/ws-install-check /etc/ws \
+    as_root rm -rf /usr/local/bin/mise /usr/local/bin/.mise.* /etc/mise /opt/ws /etc/ws-install-check \
         /usr/share/mise
 }
 
@@ -53,7 +53,7 @@ written() {
 }
 
 [ "$(id -u)" != 0 ] || [ -n "${WS_SPARE_MACHINE:-}" ] || fail "run it as a user with sudo"
-[ -n "${GITHUB_ACTIONS:-}${WS_SPARE_MACHINE:-}" ] || fail "it removes /etc/ws: run it on a runner or a spare machine"
+[ -n "${GITHUB_ACTIONS:-}${WS_SPARE_MACHINE:-}" ] || fail "it removes /etc/mise and /opt/ws: run it on a runner or a spare machine"
 
 # GitHub's runner keeps a default ACL on /opt, which lets anyone write what root makes there,
 # whatever the umask. install.sh refuses such a tree, and a server's /opt has no such ACL. Its
@@ -79,9 +79,9 @@ printf x >>"$bad/mise-v$version-$asset"
 echo v0.2.0 >"$tmp/serve/latest"
 
 # The release's tree: a config with an entry for each env's file, and a directory for them. The
-# account's and the secrets' files sit in a role, behind the side's link, as a role's do, and the
-# root holds neither. On such a tree mise trust --all never ends, so the case of the latest release
-# proves install.sh's trust. A task stands for the secrets task: mise asks to trust a task that
+# secrets' file sits in a role, behind the side's link, as a role's do, and the root holds none.
+# On such a tree mise trust --all never ends, so the case of the latest release proves install.sh's
+# trust. A task stands for the secrets task: mise asks to trust a task that
 # holds a template's {{, {% or {#, and the secrets task's ${#host} holds {#.
 repo=$tmp/repo
 mkdir -p "$repo/roles/server/ubuntu/part" "$repo/roles/server/mise" "$repo/roles/server/mise-tasks"
@@ -90,9 +90,9 @@ echo '# the install job'"'"'s tree' >"$repo/mise.toml"
 # shellcheck disable=SC2016 # the task's own shell expands it, not this one.
 printf '%s\n' '#!/bin/sh' 'echo "${#0}"' >"$repo/roles/server/mise-tasks/check"
 chmod 755 "$repo/roles/server/mise-tasks/check"
-for env in server booted account secrets; do
+for env in server booted secrets; do
     config=$repo/mise.$env.toml
-    case $env in account | secrets) config=$repo/roles/server/ubuntu/part/mise.$env.toml ;; esac
+    [ "$env" != secrets ] || config=$repo/roles/server/ubuntu/part/mise.$env.toml
     cat >"$config" <<TOML
 [bootstrap.directories."/etc/ws-install-check"]
 mode = "0755"
@@ -147,7 +147,7 @@ echo "::group::The latest release installs mise and runs its bootstrap"
 install_sh
 [ "$(/usr/local/bin/mise --version | cut -d' ' -f1)" = "$version" ] || fail "mise is not $version"
 # The miserc is a template, which mise renders: the files show what it loaded.
-want=(server account)
+want=(server)
 [ ! -d /run/systemd/system ] || want+=(booted)
 for env in "${want[@]}"; do
     written "$env"
@@ -172,13 +172,8 @@ as_root /usr/local/bin/mise -C /opt/ws/roles/server bootstrap plan --detailed-ex
     fail "a plan by hand after the env secrets found a change or failed"
 echo "::endgroup::"
 
-echo "::group::Root's values leave the account's part out, and mise stays"
-as_root install -d -m 755 /etc/ws
-printf '%s\n' --- 'WS_USER: root' | as_root tee /etc/ws/values.yml >/dev/null
-as_root rm -f /etc/ws-install-check/account
+echo "::group::A second run downloads no mise"
 install_sh WS_MISE_URL="$url/mise/none"
-! grep -q '^ws = .*"account"' /etc/mise/miserc.toml || fail "the miserc names the account for root"
-[ ! -e /etc/ws-install-check/account ] || fail "the account's part ran for root"
 written server
 echo "::endgroup::"
 

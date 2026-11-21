@@ -23,10 +23,8 @@ machine's miserc and runs `mise bootstrap`:
   holds for the machine's target, and runs it as `mise --version`. Only then it moves it over
   `/usr/local/bin/mise`. A refused download keeps the mise there and leaves no file behind. A mise
   at the pinned version is not downloaded again.
-- It writes `/etc/mise/miserc.toml` from `WS_USER` in `/etc/ws/values.yml`: the set of envs `ws`,
-  which holds `server`, `booted` where systemd runs, and `account` where `WS_USER` is not root
-  ([The frame](../../roles/server/ubuntu/frame/README.md#the-machines-env)). After a change of
-  `WS_USER`, run it again.
+- It writes `/etc/mise/miserc.toml`: the set of envs `ws`, which holds `server` and `booted` where
+  systemd runs ([The frame](../../roles/server/ubuntu/frame/README.md#the-machines-env)).
 - It finds the latest release once, and checks the release's tag out in `/opt/ws` by git, then
   runs the bootstrap on that tree, in the server's run directory, `/opt/ws/roles/server`. A
   pre-release is never the latest: only `WS_VERSION` picks one. The tree pins ws's binary, and mise
@@ -51,8 +49,8 @@ machine's miserc and runs `mise bootstrap`:
 ## The install job
 
 CI's `install` job runs [install-checks.sh](../install-checks.sh) on each pull request of a stack on `main`. It
-runs as a user with sudo on GitHub's runner, as `install.sh` writes `/etc/mise`, `/opt/ws` and
-`/etc/ws`, which each case removes. `WS_OS_RELEASE` names the runner's system Ubuntu 26.04,
+runs as a user with sudo on GitHub's runner, as `install.sh` writes `/etc/mise` and `/opt/ws`,
+which each case removes. `WS_OS_RELEASE` names the runner's system Ubuntu 26.04,
 whatever its release. It downloads mise's real binary once and serves it on loopback
 with [serve-releases](../../.tools/serve-releases/main.go), beside a copy with a byte added. A small
 repository stands for the release's tree: a file of mise's config for each env, each writing one
@@ -65,7 +63,7 @@ commit. The cases:
 - the latest release installs mise and runs its bootstrap, so that the files of the envs that the
   miserc names exist;
 - the env `secrets` loads by `-E ws,secrets` alone, and a plan without it after keeps its file;
-- with `WS_USER: root`, a second run downloads no mise and leaves the account's part out;
+- a second run downloads no mise;
 - a newer latest release checks its tag out in `/opt/ws`, and drops a `mise.local.toml` there;
 - `WS_VERSION` checks its release's tag out;
 - a `WS_VERSION` of a pre-release checks its tag out, and a pre-release as the latest is refused;
