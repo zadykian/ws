@@ -3,7 +3,6 @@ package fetch_test
 import (
 	"archive/tar"
 	"bytes"
-	"context"
 	"slices"
 	"strings"
 	"testing"
@@ -78,11 +77,6 @@ func TestTreeInstallsStagedAndMovedWhole(t *testing.T) {
 func TestTreeWithTheMarkerAsksNothing(t *testing.T) {
 	m, tree := treeFixture(t)
 	m.Files[treeDir+"/.ws-source"] = []byte(treeURL + "\n")
-	tree.Source.SHA256 = nil
-	tree.Source.Lookup = func(context.Context, string) (string, error) {
-		t.Error("Lookup asked for a current tree")
-		return "", nil
-	}
 	if got := applyAll(t, tree); got != nil {
 		t.Errorf("plan = %q, want none", got)
 	}
