@@ -18,7 +18,7 @@ cld and a zsh hook ([Ghostty and cld on the Mac](macos/ghostty/README.md)). It t
 on and has it block all incoming, as the server reaches the Mac past no router
 ([the firewall](macos/firewall/README.md)). mise installs Ghostty, Zed
 and a font as casks, and gh, fnox and age-plugin-yubikey by its lock, with no Homebrew
-([the runbook](runbook.md)). The runbook puts `ws` in `~/.local/bin` (put it on `PATH` by hand)
+([the runbook](runbook.md)). The runbook runs `install.sh`, which puts `ws` in `/usr/local/bin`
 from a release, checked against its `ws.sha256` ([Releases](../../.github/workflows/release.md)).
 Write the values below in `values.yml` first ([The two
 files](values/README.md#the-two-files)). Then:

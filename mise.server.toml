@@ -3,8 +3,8 @@
 
 # ws's units, `"ws:KIND/NAME" = "in-sync"` under [bootstrap.packages], go to the plugin ws, which
 # no [bootstrap.plugins] entry names: mise installs an entry again on every run, with a warning.
-# install.sh links the tree's plugins/ws into /usr/share/mise/plugins, where mise loads it as a
-# system plugin. A plugin that mise refuses drops its units, so /etc/ws/units.verified fails.
+# ws server setup links the tree's plugins/ws into /usr/share/mise/plugins, where mise loads it
+# as a system plugin. A plugin that mise refuses drops its units, so /etc/ws/units.verified fails.
 
 # mise's apt passes no dpkg options: these keep a file that a role wrote before its package, where
 # dpkg would stop at its prompt.

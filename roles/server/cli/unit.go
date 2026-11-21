@@ -21,7 +21,7 @@ import (
 const osRelease = "/etc/os-release"
 
 // unitsDir is the root of the server's specs, a units.toml.tmpl in each role's directory, in the
-// checkout that install.sh makes at /opt/ws.
+// checkout that ws server setup makes at /opt/ws.
 const unitsDir = "/opt/ws/roles/server/ubuntu"
 
 // UnitCmd returns ws unit with the server's side: its specs, its values and systemd's units. Its

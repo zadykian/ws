@@ -1,5 +1,6 @@
 #!/bin/sh
-# Installs mise and runs ws's bootstrap on an Ubuntu server, as root, through curl:
+# Installs ws's binary, as root, on an Ubuntu server or a Mac, through curl. A server runs it as
+# root, a Mac through sudo:
 #
 #   set -o pipefail
 #   curl -fsSL --proto '=https' --tlsv1.2 \
@@ -7,34 +8,27 @@
 #
 # Without pipefail, a curl that fails pipes nothing into sh, which exits 0 having done nothing.
 #
-# It installs mise at the version this script pins, over /usr/local/bin/mise. It downloads mise's
-# binary for this machine and checks it against the SHA-256 that the script holds. It runs the
-# binary as mise --version, and only then moves it into place. Then it writes
-# /etc/mise/miserc.toml, which names the envs of mise's files that load on this machine. It links
-# the tree's plugin, plugins/ws, where mise looks for a system plugin, as below. Last it
-# checks a release's tag out in /opt/ws by git, and runs mise bootstrap in /opt/ws/roles/server.
-# The release is the latest, or the one WS_VERSION names (X.Y.Z, with or without the v). A
-# pre-release, X.Y.Z-rc.N, runs only where WS_VERSION names it. Run again, it checks that
-# release's tag out there, dropping any change and any file git does not track, and brings the
-# machine back to the release. It refuses a /opt/ws that is not root's alone, and a system other
-# than Ubuntu 26.04.
-# A Mac follows roles/client/runbook.md instead. It runs in any POSIX sh, and needs curl,
-# sha256sum and git.
+# It picks ws's file for linux-amd64, linux-arm64 or darwin-arm64 from a release, and downloads it
+# beside /usr/local/bin/ws. It checks the file against that release's ws.sha256 and runs it as
+# ws version. Only then it renames it to /usr/local/bin/ws, uid 0, gid 0 and 0755: the one ws of
+# a machine.
+# A refusal leaves the old ws and no file behind. The release is the latest, or the one
+# WS_VERSION names (X.Y.Z, with or without the v). A pre-release, X.Y.Z-rc.N, installs only where
+# WS_VERSION names it. It makes /usr/local and /usr/local/bin, root's and 755, where they are
+# missing. It refuses one that anyone but root may write, as launchd would refuse ws below it.
+# It does not chown, as an old Homebrew in /usr/local would lose its writes. Its last line names
+# the next command, ws server setup on Linux and ws client setup on a Mac, which sets the machine
+# up and checks the system. It runs in any POSIX sh, and needs curl and sha256sum, or shasum on a
+# Mac.
 #
-# WS_IN_PLACE=1 runs the bootstrap on the tree in /opt/ws, with no release lookup and no clone.
-# WS_RELEASES_URL stands in for https://github.com/zadykian/ws/releases, WS_MISE_URL for
-# https://github.com/jdx/mise/releases/download, WS_REPO for https://github.com/zadykian/ws and
-# WS_OS_RELEASE for /etc/os-release, for the tests.
+# WS_RELEASES_URL stands in for https://github.com/zadykian/ws/releases, for the tests.
 #
 # Everything is in functions that the last line calls, so that a download cut short runs nothing.
 
 set -eu
 
-# mise's release, and the SHA-256 of its binary for each Linux target. Where mise moves, take the
-# sums from the release's SHASUMS256.txt.
-mise_version=2026.11.9
-mise_sum_x64=f13f3e5ec88807e0161669b3aa07a91d84478cdf1e95b5b92b63f85a25d42395
-mise_sum_arm64=b8dd05af6447cee933928664982a8cb2fa646e6951cfc8539db23ce2554a7b04
+# The directory of the one ws, and its name there.
+bin_dir=/usr/local/bin
 
 # say prints a message of the installer's.
 say() {
@@ -47,31 +41,28 @@ die() {
     exit 1
 }
 
-# platform sets mise_asset and mise_sum to the name and the checksum of mise's binary for this
-# machine. It refuses a system other than Ubuntu 26.04, which the units are written for, by
-# /etc/os-release, or by the file WS_OS_RELEASE names, for the tests.
+# platform sets asset to the name of ws's file for this machine, and next to the command that sets
+# it up. The Mac's side is arm64 alone, as the release holds no other build for it.
 platform() {
     os=$(uname -s)
     arch=$(uname -m)
     case $os-$arch in
     Linux-x86_64 | Linux-amd64)
-        mise_asset=linux-x64
-        mise_sum=$mise_sum_x64
+        asset=linux-amd64
+        next="ws server setup"
         ;;
     Linux-aarch64 | Linux-arm64)
-        mise_asset=linux-arm64
-        mise_sum=$mise_sum_arm64
+        asset=linux-arm64
+        next="ws server setup"
         ;;
     Linux-*) die "ws sets up Linux on x86_64 and aarch64, not on $arch" ;;
-    Darwin-*) die "install.sh sets up an Ubuntu server: a Mac follows roles/client/runbook.md" ;;
-    *) die "ws sets up Ubuntu, not $os" ;;
+    Darwin-arm64)
+        asset=darwin-arm64
+        next="ws client setup"
+        ;;
+    Darwin-*) die "ws sets up a Mac on arm64 alone, not on $arch" ;;
+    *) die "ws sets up Linux and macOS, not $os" ;;
     esac
-    release_file=/etc/os-release
-    [ -z "${WS_OS_RELEASE:-}" ] || release_file=$WS_OS_RELEASE
-    id=$(sed -n 's/^ID=//p' "$release_file" 2>/dev/null | tr -d "\"'")
-    version_id=$(sed -n 's/^VERSION_ID=//p' "$release_file" 2>/dev/null | tr -d "\"'")
-    [ "$id $version_id" = "ubuntu 26.04" ] ||
-        die "ws sets up Ubuntu 26.04 alone, not '$id' '$version_id'"
 }
 
 # is_version succeeds where $1 is a version X.Y.Z, as a tag vX.Y.Z holds it: three numbers, none
@@ -97,16 +88,15 @@ is_rc() {
     is_version "${1%-rc.*}"
 }
 
-# release sets releases to the address of ws's releases, repo to ws's repository, and tag to the
-# release whose tree runs. That is WS_VERSION's, or none for the latest until latest finds it. where
-# is how messages name it.
+# release sets releases to the address of ws's releases, and tag to the release whose file
+# installs. That is WS_VERSION's, or none for the latest until latest finds it. where is how
+# messages name it.
 release() {
     releases=${WS_RELEASES_URL:-https://github.com/zadykian/ws/releases}
-    repo=${WS_REPO:-https://github.com/zadykian/ws}
     version=${WS_VERSION:-}
     tag=
     if [ -n "$version" ]; then
-        # A typo stops here, not at a clone that finds no tag.
+        # A typo stops here, not at a download that finds no file.
         is_version "${version#v}" || is_rc "${version#v}" ||
             die "WS_VERSION is not a version, X.Y.Z or X.Y.Z-rc.N: $version"
         tag=v${version#v}
@@ -115,17 +105,17 @@ release() {
 }
 
 # fetch runs curl over HTTPS alone, TLS 1.2 or later, with the options $@. A reply with an HTTP
-# error fails it, rather than its page taking the place of a file. Where WS_RELEASES_URL or
-# WS_MISE_URL is set, for a test, plain HTTP is allowed too.
+# error fails it, rather than its page taking the place of a file. Where WS_RELEASES_URL is set,
+# for a test, plain HTTP is allowed too.
 fetch() {
     proto='=https'
-    [ -z "${WS_RELEASES_URL:-}${WS_MISE_URL:-}" ] || proto='=http,https'
+    [ -z "${WS_RELEASES_URL:-}" ] || proto='=http,https'
     curl -fsS --proto "$proto" --tlsv1.2 "$@"
 }
 
 # latest sets tag, where none is set, to the latest release's. GitHub redirects releases/latest to
 # the latest release's page, releases/tag/vX.Y.Z, or to releases where there is none. A pre-release
-# is never the latest. The tag goes into the clone's ref, so anything but vX.Y.Z is refused.
+# is never the latest. The tag goes into the download's address, so anything but vX.Y.Z is refused.
 latest() {
     [ -z "$tag" ] || return 0
     page=$(fetch -o /dev/null -w '%{redirect_url}' "$releases/latest") ||
@@ -138,148 +128,75 @@ latest() {
     where="$where, $tag"
 }
 
-# sha256 prints the SHA-256 checksum of the file $1.
+# sha256 prints the SHA-256 checksum of the file $1, by sha256sum, or by shasum where a Mac has no
+# sha256sum.
 sha256() {
-    sha256sum <"$1" | awk '{ print $1 }'
+    if command -v sha256sum >/dev/null; then
+        sha256sum <"$1" | awk '{ print $1 }'
+    else
+        shasum -a 256 <"$1" | awk '{ print $1 }'
+    fi
 }
 
-# install_mise puts mise's binary of the pinned version at /usr/local/bin/mise, where that is not
-# it already. The download goes into a directory in the one mise goes to, so that moving it there
-# is a rename that replaces mise at once. A refusal leaves the old mise and no file behind.
-install_mise() {
-    dir=/usr/local/bin
-    if [ -x "$dir/mise" ] && "$dir/mise" --version 2>/dev/null | grep -q "^$mise_version "; then
-        return 0
-    fi
-    mkdir -p "$dir" || die "cannot create $dir"
+# root_dir succeeds where the directory $1 is a real directory that root alone may write.
+root_dir() {
+    [ ! -L "$1" ] &&
+        [ -z "$(find "$1" -maxdepth 0 \( ! -user 0 -o -perm -020 -o -perm -002 \))" ]
+}
+
+# directories makes /usr/local and /usr/local/bin where they are missing, uid 0, gid 0 and 0755. It
+# refuses one that is not root's alone, and changes no owner: an old Homebrew in /usr/local would
+# lose its writes. launchd refuses to run ws below a directory that another user may change.
+directories() {
+    for dir in /usr/local "$bin_dir"; do
+        if [ -e "$dir" ] || [ -L "$dir" ]; then
+            root_dir "$dir" || die "$dir is not root's alone, and ws below it would not run as root:" \
+                "chown 0:0 $dir, and chmod go-w $dir"
+        else
+            install -d -m 755 -o 0 -g 0 "$dir" || die "cannot create $dir"
+        fi
+    done
+}
+
+# install_ws puts the release's ws at /usr/local/bin/ws. The download goes into a directory in the
+# one ws goes to, so that moving it there is a rename that replaces ws at once. A refusal leaves
+# the old ws and no file behind.
+install_ws() {
     tmp=
     trap '[ -z "$tmp" ] || rm -rf "$tmp"' EXIT
     trap 'exit 1' HUP INT TERM
-    tmp=$(mktemp -d "$dir/.mise.XXXXXX") || die "cannot write to $dir"
-    base=${WS_MISE_URL:-https://github.com/jdx/mise/releases/download}
-    fetch -L -o "$tmp/mise" "$base/v$mise_version/mise-v$mise_version-$mise_asset" ||
-        die "cannot download mise $mise_version"
-    [ "$(sha256 "$tmp/mise")" = "$mise_sum" ] ||
-        die "the mise downloaded does not match the SHA-256 that install.sh holds for $mise_asset"
-    chmod 755 "$tmp/mise"
-    "$tmp/mise" --version </dev/null 2>/dev/null | grep -q "^$mise_version " ||
-        die "the mise downloaded is not version $mise_version"
-    mv -f "$tmp/mise" "$dir/mise" || die "cannot move mise to $dir"
-    say "installed mise $mise_version as $dir/mise"
-}
-
-# miserc writes /etc/mise/miserc.toml by a rename. mise reads it before any config or values file.
-miserc() {
-    mkdir -p /etc/mise || die "cannot create /etc/mise"
-    rc=$(mktemp /etc/mise/.miserc.XXXXXX) || die "cannot write to /etc/mise"
-    cat >"$rc" <<TOML
-# ws's side, the server, as the set ws. The secrets task adds secrets by -E ws,secrets. env sits
-# above the table, which TOML would put it in.
-env = ["ws"]
-[env_sets]
-ws = ["server"]
-TOML
-    chmod 644 "$rc"
-    mv -f "$rc" /etc/mise/miserc.toml || die "cannot write /etc/mise/miserc.toml"
-}
-
-# plugin links the tree's plugin ws into /usr/share/mise/plugins. mise loads a system plugin there
-# as it stands, and installs none. It refuses one that anyone but root may change, or any directory
-# on its way, /opt included, and then drops ws's units with a warning alone. So a directory above
-# the link, or /opt, that a group or others may write is refused here. mise's two are made root's
-# and 755, whatever was there. A [bootstrap.plugins] entry would install the plugin again on
-# every run, with a warning. mise's other system directory, /usr/local/share/mise/plugins, stays
-# empty here. Root's own, /root/.local/share/mise/plugins, is where mise installs a plugin, no
-# system one.
-plugin() {
-    for dir in / /usr /usr/share /opt; do
-        [ -z "$(find "$dir" -maxdepth 0 \( ! -user 0 -o -perm /022 \))" ] ||
-            die "$dir is not root's alone, and mise ignores the plugin ws below it"
-    done
-    install -d -m 755 -o 0 -g 0 /usr/share/mise /usr/share/mise/plugins ||
-        die "cannot create /usr/share/mise/plugins"
-    ln -sfn /opt/ws/plugins/ws /usr/share/mise/plugins/ws ||
-        die "cannot link /opt/ws/plugins/ws into /usr/share/mise/plugins"
-}
-
-# guard refuses a tree in /opt/ws that anyone but root may have changed. mise runs its config, its
-# plugin's Lua and its units as root. So a link in its place is refused, and so is a file or
-# directory in it that another user owns, or that a group or others may write.
-guard() {
-    [ ! -L /opt/ws ] || die "/opt/ws is a link: the tree that runs as root must be root's own"
-    [ -e /opt/ws ] || return 0
-    found=$(find -P /opt/ws \( ! -user 0 -o ! -type l -perm /022 \) -print -quit) ||
-        die "cannot read the whole of /opt/ws"
-    [ -z "$found" ] || die "/opt/ws is not root's alone, and holds the config that runs as root:" \
-        "$(stat -c '%n is of %U, with mode %a' "$found")"
-}
-
-# checkout moves the tree in /opt/ws to the tag. A first run makes /opt/ws an empty repository,
-# and fetches as a later run does. A change to the tree, and a file git does not track, such as a
-# trial's mise.local.toml that would load over the tag's tree, go.
-checkout() {
-    if [ ! -e /opt/ws ]; then
-        git -c init.defaultBranch=ws init -q /opt/ws </dev/null || die "cannot create /opt/ws"
-    fi
-    [ -e /opt/ws/.git ] || die "/opt/ws holds no checkout: remove it, or set WS_IN_PLACE=1 to run it"
-    git -C /opt/ws fetch -q --depth 1 --force "$repo" "refs/tags/$tag:refs/tags/$tag" </dev/null ||
-        die "cannot fetch $where into /opt/ws"
-    git -C /opt/ws -c advice.detachedHead=false checkout -q --force --detach "refs/tags/$tag" ||
-        die "cannot check $where out in /opt/ws"
-    git -C /opt/ws clean -q -ffdx || die "cannot clean /opt/ws"
-}
-
-# bootstrap runs mise bootstrap in the server's run directory, /opt/ws/roles/server. The tree in
-# /opt/ws is the release's, checked out there, or, with WS_IN_PLACE=1, the one that stands there.
-# The tree is trusted for this run, as the units' own mise calls inherit it, and for the runs by
-# hand after, by mise trust. mise reads no stdin, as the piped script is on it.
-# MISE_LOCKED installs a tool only as the tree's lock holds it, by its URL and checksum, as CI's
-# runs and the runbook's do: bootstrap has no --locked.
-bootstrap() {
-    guard
-    MISE_TRUSTED_CONFIG_PATHS=/opt/ws MISE_LOCKED=1
-    export MISE_TRUSTED_CONFIG_PATHS MISE_LOCKED
-    if [ "${WS_IN_PLACE:-}" = 1 ]; then
-        [ -f /opt/ws/mise.toml ] || die "WS_IN_PLACE is set, and /opt/ws holds no mise.toml"
-    else
-        checkout
-    fi
-    /usr/local/bin/mise -C /opt/ws/roles/server bootstrap </dev/null
-    # While the variable is set, mise trusts the tree and writes no trust. Each config and task
-    # is named, as mise trust --all never ends where a role holds an env's file and the root none.
-    (
-        cd /opt/ws || exit 1
-        unset MISE_TRUSTED_CONFIG_PATHS
-        for config in mise.toml mise.*.toml roles/server/mise/conf.d/*/mise.*.toml roles/server/mise-tasks/*; do
-            [ ! -e "$config" ] || /usr/local/bin/mise trust "$config" </dev/null || exit 1
-        done
-    )
+    tmp=$(mktemp -d "$bin_dir/.ws.XXXXXX") || die "cannot write to $bin_dir"
+    base=$releases/download/$tag
+    fetch -L -o "$tmp/ws.sha256" "$base/ws.sha256" || die "cannot download the ws.sha256 of $where"
+    fetch -L -o "$tmp/ws" "$base/ws-$asset" || die "cannot download ws-$asset of $where"
+    # sha256sum lists each file by its name, with a * before it for a binary one.
+    want=$(awk -v file="ws-$asset" '$2 == file || $2 == "*" file { print $1 }' "$tmp/ws.sha256")
+    case $want in
+    '' | *[!0-9a-f]*) die "the ws.sha256 of $where lists no one SHA-256 for ws-$asset" ;;
+    esac
+    [ "$(sha256 "$tmp/ws")" = "$want" ] ||
+        die "ws-$asset does not match the SHA-256 that the ws.sha256 of $where lists"
+    chown 0:0 "$tmp/ws"
+    chmod 755 "$tmp/ws"
+    "$tmp/ws" version </dev/null >/dev/null 2>&1 || die "the ws downloaded does not run as ws version"
+    mv -f "$tmp/ws" "$bin_dir/ws" || die "cannot move ws to $bin_dir"
+    say "installed ws of $tag as $bin_dir/ws"
 }
 
 main() {
     platform
     release
     [ "$(id -u)" = 0 ] || die "run it as root: through sudo"
-    # sudo may keep the caller's umask, and one that lets a group write would leave a tree that
-    # the guard refuses at the next run.
+    # sudo may keep the caller's umask, and one that lets a group write would leave a ws that
+    # others may change.
     umask 022
-    # mise loads the config of the directory it runs in, and a checkout there is not the tree.
-    cd / || die "cannot change to /"
-    command -v curl >/dev/null || die "curl is needed to download mise"
-    command -v sha256sum >/dev/null || die "sha256sum is needed to check mise's checksum"
-    if [ "${WS_IN_PLACE:-}" != 1 ]; then
-        command -v git >/dev/null || die "git is needed to clone the tree of $where"
-        latest
-    fi
-    install_mise
-    miserc
-    plugin
-    bootstrap
-    if [ "${WS_IN_PLACE:-}" = 1 ]; then
-        say "ran the bootstrap on the tree in /opt/ws"
-    else
-        say "ran the bootstrap of $tag"
-    fi
+    command -v curl >/dev/null || die "curl is needed to download ws"
+    command -v sha256sum >/dev/null || command -v shasum >/dev/null ||
+        die "sha256sum, or shasum, is needed to check ws's SHA-256"
+    latest
+    directories
+    install_ws
+    say "next, run: $next"
 }
 
 main

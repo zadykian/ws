@@ -4,8 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"os"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -42,29 +40,5 @@ func TestMiseBinaryDownloadsThePinnedURL(t *testing.T) {
 	}
 	if string(m.Files[MisePath]) != "mise" || m.Modes[MisePath] != 0o755 {
 		t.Errorf("mise = %q at mode %o", m.Files[MisePath], m.Modes[MisePath])
-	}
-}
-
-// TestPinnedMiseIsInstallShs holds the pin of mise here and in install.sh together, which still
-// installs it where it sets a machine up.
-func TestPinnedMiseIsInstallShs(t *testing.T) {
-	text, err := os.ReadFile("../../../install.sh")
-	if err != nil {
-		t.Fatal(err)
-	}
-	pin := func(name string) string {
-		m := regexp.MustCompile(`(?m)^` + name + `=(\S+)$`).FindSubmatch(text)
-		if m == nil {
-			t.Fatalf("install.sh holds no %s", name)
-		}
-		return string(m[1])
-	}
-	if got := pin("mise_version"); got != PinnedMise.Version {
-		t.Errorf("install.sh pins mise %s, setup %s", got, PinnedMise.Version)
-	}
-	for name, target := range map[string]string{"mise_sum_x64": "linux-x64", "mise_sum_arm64": "linux-arm64"} {
-		if got := pin(name); got != PinnedMise.Sums[target] {
-			t.Errorf("install.sh pins %s as %s, setup %s", target, got, PinnedMise.Sums[target])
-		}
 	}
 }

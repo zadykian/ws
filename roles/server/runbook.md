@@ -11,9 +11,10 @@ A person does these steps at ws, in this order. The Mac's side sets them in its 
    each such value. Where none is, the bootstrap writes it ([the values](../../README.md#running-it-again)).
 3. Run `install.sh` as root, by the three lines of
    [Install](../../.github/workflows/release.md#install), `set -o pipefail` among them. It
-   writes ws to `/usr/local/bin`, which sudo reaches, installs mise and runs its bootstrap.
+   installs ws alone, as `/usr/local/bin/ws`, which sudo reaches, and prints the next command.
+4. Run `ws server setup` as root.
 
-`ws server setup`, run as root, takes the steps of `install.sh` in Go. Before any write it refuses
+`ws server setup`, run as root, sets the machine up. Before any write it refuses
 a user but root and a system but Ubuntu 26.04. It refuses a tree in `/opt/ws`, or a directory above
 it, that another user owns or that a group or others may write, as mise runs the tree as root. It
 installs mise at the version ws pins, checked against its SHA-256. It writes `/etc/mise/miserc.toml`
@@ -28,7 +29,6 @@ in `/opt/ws/roles/server` with umask 022, from `/`. A second run changes nothing
   where none of them is due, and changes nothing. It exits 0 where nothing would change, and 2
   where something would.
 - `--secrets` runs the task `secrets` in place of the bootstrap, as below.
-- `install.sh` stays until it installs ws alone.
 
 The secrets come once the Mac has run `ws client secrets init`, one run for all servers, and
 then `ws client secrets add NAME`, which makes ws's host key a recipient of the secrets

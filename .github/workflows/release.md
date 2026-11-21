@@ -6,7 +6,7 @@ publishes `install.sh` too.
 
 ## Install
 
-On Ubuntu 26.04 on x86_64 or aarch64, as root, through `sudo`:
+On Ubuntu Server on x86_64 or aarch64, as root, or on a Mac with Apple silicon, through `sudo`:
 
 ```sh
 set -o pipefail
@@ -15,60 +15,53 @@ curl -fsSL --proto '=https' --tlsv1.2 \
 ```
 
 Without `pipefail`, a curl that fails pipes nothing into sh, which exits 0 having done nothing.
-`install.sh` sets up an Ubuntu server, and refuses a Mac, which follows
-[the Mac's runbook](../../roles/client/runbook.md). It installs mise, writes the
-machine's miserc and runs `mise bootstrap`:
+`install.sh` installs ws alone, on Linux and on the Mac. It runs in any POSIX sh, and needs curl and
+sha256sum, or `shasum -a 256` where a Mac has no `sha256sum`:
 
-- It downloads mise's binary at the version it pins. It checks the binary against the SHA-256 it
-  holds for the machine's target, and runs it as `mise --version`. Only then it moves it over
-  `/usr/local/bin/mise`. A refused download keeps the mise there and leaves no file behind. A mise
-  at the pinned version is not downloaded again.
-- It writes `/etc/mise/miserc.toml`: the set of envs `ws`, which holds `server` alone
-  ([The frame](../../roles/server/ubuntu/frame/README.md#the-machines-env)).
-- It finds the latest release once, and checks the release's tag out in `/opt/ws` by git, then
-  runs the bootstrap on that tree, in the server's run directory, `/opt/ws/roles/server`. A
-  pre-release is never the latest: only `WS_VERSION` picks one. The tree's `locked = true` has
-  mise install each tool only as a lock holds it. Run again, it checks the release's tag out in
-  `/opt/ws`, dropping any change and any file git does not track there, such as a trial's
-  `mise.local.toml`. So it brings the machine back to the release.
-- It refuses a system other than Ubuntu 26.04, by `/etc/os-release`. So does `ws unit`'s read and
-  write, which the bootstrap runs.
-- It refuses a `/opt/ws` that is a link, or that holds a file or directory root does not own or
-  others may write. mise runs the tree's config as root.
+- It picks `ws-linux-amd64`, `ws-linux-arm64` or `ws-darwin-arm64` by `uname`, and refuses another
+  system or architecture. It finds the latest release once. A pre-release is never the latest: only
+  `WS_VERSION` picks one.
+- It downloads the file and the release's `ws.sha256` into a directory in `/usr/local/bin`, checks
+  the file against the sum listed for its name, and runs it as `ws version`. Only then it renames it
+  to `/usr/local/bin/ws`, uid 0, gid 0 and 0755, the one ws of the machine. A refusal keeps the ws
+  there and leaves no file behind.
+- It makes `/usr/local` and `/usr/local/bin` where they are missing, root's and 755. It refuses one
+  that another user owns or that a group or others may write, and names the chown: launchd would
+  refuse ws below it. It changes no owner, as an old Homebrew in `/usr/local` would lose its writes.
+- Its last line names the next command, `ws server setup` on Linux and `ws client setup` on a Mac.
+  Setup checks the system: it refuses a Linux but Ubuntu 26.04 before its first write.
 
 | Variable | Default | Sets |
 | --- | --- | --- |
-| `WS_VERSION` | the latest release | the release whose tree runs, `X.Y.Z` or `X.Y.Z-rc.N`, with or without the `v` |
-| `WS_IN_PLACE` | unset | `1` runs the tree in `/opt/ws` as it stands: no lookup, no clone |
+| `WS_VERSION` | the latest release | the release whose ws installs, `X.Y.Z` or `X.Y.Z-rc.N`, with or without the `v` |
 | `WS_RELEASES_URL` | `https://github.com/zadykian/ws/releases` | where the releases are, for tests |
-| `WS_MISE_URL` | `https://github.com/jdx/mise/releases/download` | where mise's binaries are, for tests |
-| `WS_REPO` | `https://github.com/zadykian/ws` | the repository the tag is cloned from, for tests |
-| `WS_OS_RELEASE` | `/etc/os-release` | the file that names the system, for tests |
 
 ## The install job
 
 CI's `install` job runs [install-checks.sh](../install-checks.sh) on each pull request of a stack on `main`. It
-runs as a user with sudo on GitHub's runner, as `install.sh` writes `/etc/mise` and `/opt/ws`,
-which each case removes. `WS_OS_RELEASE` names the runner's system Ubuntu 26.04,
-whatever its release. It downloads mise's real binary once and serves it on loopback
-with [serve-releases](../../.tools/serve-releases/main.go), beside a copy with a byte added. A small
-repository stands for the release's tree: a file of mise's config for each env, each writing one
-file. Its tags are `v0.2.0`, then `v0.3.0` with one file more, and `v0.4.0-rc.1` with an empty
-commit. The cases:
+runs as a user with sudo on GitHub's runner, as `install.sh` writes `/usr/local/bin/ws`, which each
+case removes, and the cases move `/usr/local/bin` aside and change its owner.
+[serve-releases](../../.tools/serve-releases/main.go) serves a stub of ws for each target on
+loopback, a shell script that prints its release and its target as `ws version`, with the release's
+`ws.sha256`. A fake `uname` on the `PATH` of a case stands for aarch64 and for Darwin. The tags are
+`v0.2.0`, `v0.3.0` and `v0.4.0-rc.1`, and `v0.5.0` and `v0.6.0` for the refusals. The cases:
 
 - a user is refused, and nothing is installed;
-- Ubuntu 24.04, Debian and a system with no `os-release` are refused, and nothing is installed;
-- a wrong SHA-256 of mise is refused, and no mise or download is left;
-- the latest release installs mise and runs its bootstrap, so that the files of the envs that the
-  miserc names exist;
-- the env `secrets` loads by `-E ws,secrets` alone, and a plan without it after keeps its file;
-- a second run downloads no mise;
-- a newer latest release checks its tag out in `/opt/ws`, and drops a `mise.local.toml` there;
-- `WS_VERSION` checks its release's tag out;
-- a `WS_VERSION` of a pre-release checks its tag out, and a pre-release as the latest is refused;
+- the latest release installs the stub of each target, root's and 755, and the last line names the
+  next command;
+- a system with no build is refused: Linux on another architecture, a Mac on x86_64 and another
+  system;
+- a wrong SHA-256 and a missing file are refused, and the ws that stands and no download is left;
+- a newer latest release and a `WS_VERSION` install their own release;
+- a `WS_VERSION` of a pre-release installs it, and a pre-release as the latest is refused;
 - a `WS_VERSION` that is no version, or a pre-release `rc.0` or `beta.1`, is refused;
-- `WS_IN_PLACE` runs the tree in `/opt/ws` as it stands;
-- a tree with a file that root does not own is refused.
+- `/usr/local/bin` is made where missing;
+- a `/usr/local/bin` that another user owns or others may write, and a `/usr/local` that others
+  may write, are refused, and keep their owner.
+
+The `mac` job's case [16-install.sh](../mac/16-install.sh) runs `install.sh` on macOS. It serves the
+tree's own build of ws as the release, with its `ws.sha256`, and checks that the file is
+`root:wheel` and 755 and that no download is left.
 
 ## Cutting a release
 
@@ -89,7 +82,7 @@ git fetch origin && git switch --detach origin/feat/BRANCH
 git tag -s v0.13.0-rc.1 -m v0.13.0-rc.1 && git push origin v0.13.0-rc.1
 ```
 
-A pre-release's own `install.sh` runs it by `WS_VERSION`, as the latest release's refuses a
+A pre-release's own `install.sh` installs it by `WS_VERSION`, as the latest release's refuses a
 pre-release:
 
 ```sh
@@ -99,11 +92,10 @@ curl -fsSL --proto '=https' --tlsv1.2 \
     sudo env WS_VERSION=0.13.0-rc.2 sh
 ```
 
-The latest release's `install.sh` may install ws's binary alone, with no mise. So while a
-pre-release is tried, this line takes the place of each that runs it. Those are step 3 of
-[the server's runbook](../../roles/server/runbook.md), and step 2 of
-[ws on ws](../../roles/client/runbook.md#ws-on-ws) on the Mac. The Mac's own binary and
-clone take the pre-release's tag in place of the latest release's.
+So while a pre-release is tried, this line takes the place of each that runs `install.sh`. Those are
+step 3 of [the server's runbook](../../roles/server/runbook.md), and step 2 of
+[ws on ws](../../roles/client/runbook.md#ws-on-ws) and the Mac's Tools step on the Mac. The side's
+setup follows, `ws server setup` or `ws client setup`, which checks out the tree of its own ws's tag.
 
 Nothing else is by hand. `release.yml` runs on the tag, in these jobs:
 

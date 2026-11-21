@@ -53,9 +53,9 @@ Its [`frame`](roles/client/macos/frame) is what the Mac's roles of mise's config
 `/usr/local/bin/ws`. Its [`firewall`](roles/client/macos/firewall) turns the Application Firewall on
 and has it block all incoming.
 
-A new Mac with Apple silicon follows [the Mac's runbook](roles/client/runbook.md), as
-`install.sh` is the server's alone. By hand, it installs ws's binary, checked against its SHA-256,
-and writes the values ([The Mac's values](roles/client/values/README.md)). Then `ws client setup`
+A new Mac with Apple silicon follows [the Mac's runbook](roles/client/runbook.md). It runs
+`install.sh` through `sudo`, which installs ws's binary, checked against its SHA-256, and writes the
+values ([The Mac's values](roles/client/values/README.md)). Then `ws client setup`
 installs the command line tools and mise, checks a release's tree out into `/opt/ws`, links its
 plugin where mise finds it, and runs mise's bootstrap ([The Mac](roles/client/README.md#setup)).
 [The server's runbook](roles/server/runbook.md) lists the server's own steps.
@@ -77,7 +77,8 @@ apt source, which apt refuses beside mise's: remove it first
 Then, logged in as that user, write `/etc/ws/values.yml` where a value differs from its default,
 root's and mode 600 ([the values](#running-it-again)). Run `install.sh` through `sudo`, by the
 three lines of [Install](.github/workflows/release.md#install), which fail where curl does. It
-installs mise and runs its bootstrap, which sets each role up. Once the secrets
+installs ws alone. Then run `ws server setup` as root, which installs mise and runs its bootstrap,
+which sets each role up. Once the secrets
 hold `WS_GITHUB_TOKEN`, the secrets task logs gh in ([By hand](#by-hand)). The Mac's
 `ws client secrets add NAME` runs it first, as [the server's runbook](roles/server/runbook.md) says.
 
@@ -86,8 +87,8 @@ Then do what stays by hand, below.
 ## Running it again
 
 Each release holds the roles it sets up, so run `install.sh` again, by the same lines of
-[Install](.github/workflows/release.md#install): it checks the release out and runs the bootstrap.
-`WS_VERSION=X.Y.Z` before `sh` picks a release.
+[Install](.github/workflows/release.md#install), and then `ws server setup`: setup checks the
+release's tree out and runs the bootstrap. `WS_VERSION=X.Y.Z` before `sh` picks a release.
 
 The units read their secrets from mise's secret inputs, which the task `secrets` fetches and
 decrypts on ws ([The repository](roles/server/ubuntu/secrets/README.md#the-repository)). The
@@ -152,9 +153,9 @@ The router takes a few steps once, by hand: [The router](roles/server/ubuntu/cab
 
 CI runs `make lint`, which lints the code, the docs and the workflows, and scans the commits for
 secrets. It runs `ws server setup` twice on a booted runner, and setup's plan must exit 0 after
-each run. It tries `install.sh`, forges SigNoz's compose files again, and sets up a Mac on
-GitHub's macOS runner by the bootstrap. A pushed tag `vX.Y.Z` publishes the
-release whose tree `install.sh` runs, and `vX.Y.Z-rc.N` a pre-release of a `feat/` branch:
+each run. It tries `install.sh` on Linux and on macOS, forges SigNoz's compose files again, and sets
+up a Mac on GitHub's macOS runner by the bootstrap. A pushed tag `vX.Y.Z` publishes the
+release whose ws `install.sh` installs, and `vX.Y.Z-rc.N` a pre-release of a `feat/` branch:
 [Releases](.github/workflows/release.md). The rules workflow warns where a
 pull request breaks the rules of zadykian/toolkit's skills, and the issues workflow where an issue
 strays from its issue form. The hooks in `.githooks` check each commit before git makes it.

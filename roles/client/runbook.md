@@ -7,12 +7,13 @@ tree's lock holds it and refuses one that the lock lacks.
 
 ## Tools
 
-Install ws's binary by hand, as `install.sh` sets up a Linux server alone. Download
-`ws-darwin-arm64` and `ws.sha256` from `releases/latest/download` of ws's repository with `curl
--fsSLO`. Check it with `shasum -a 256 -c --ignore-missing ws.sha256`, install it with `install -m
-755 ws-darwin-arm64 ~/.local/bin/ws`, and put `~/.local/bin` on `PATH`. `ws client setup` takes the
-rest: the command line tools, mise by its SHA-256, the tree in `/opt/ws`, the miserc and the
-plugin's link ([The bootstrap](#the-bootstrap)).
+Run `install.sh` through sudo, by the three lines of
+[Install](../../.github/workflows/release.md#install), `set -o pipefail` among them. It downloads
+`ws-darwin-arm64`, checks it against the release's `ws.sha256`, and installs it as
+`/usr/local/bin/ws`, root's and 755. It makes `/usr/local/bin` where a new Mac lacks it, and
+refuses a `/usr/local` or `/usr/local/bin` that another user owns or may write: it names the chown.
+`ws client setup` takes the rest: the command line tools, mise by its SHA-256, the tree in
+`/opt/ws`, the miserc and the plugin's link ([The bootstrap](#the-bootstrap)).
 
 ## Answers
 
@@ -116,8 +117,7 @@ Where ssh names another host key, drop the old one with `ssh-keygen -R NAME`.
    `WS_TUNNEL_PEERS` to `mac` at `10.99.N.2`
    ([The tunnel](../server/ubuntu/tunnel/README.md#the-tunnel)).
 2. Run `install.sh` by the three lines of [Install](../../.github/workflows/release.md#install),
-   `set -o pipefail` among them. It writes ws to `/usr/local/bin`. Check it with
-   `ws version`.
+   `set -o pipefail` among them, and then `ws server setup`. Check ws with `ws version`.
 3. Run `ws client secrets add NAME --address ADDRESS`, with `--port PORT` off the LAN. It
    adds ws's host key to the secrets and as the repository's deploy key, with the Nano's PIN and a
    touch. It then runs the server's bootstrap with the secrets over `ssh -t`. A first run takes 20
