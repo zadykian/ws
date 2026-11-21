@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
-	"regexp"
 	"strings"
 
+	"github.com/zadykian/ws/engine/core/check"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
@@ -17,13 +17,10 @@ import (
 // Repo is where ws's releases are tagged.
 const Repo = "https://github.com/zadykian/ws"
 
-// releaseTag matches a release's tag, vX.Y.Z or vX.Y.Z-rc.N: numbers with no leading zero.
-var releaseTag = regexp.MustCompile(`^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-rc\.[1-9][0-9]*)?$`)
-
 // ReleaseTag returns the tag that version names, which ws's build stamps in as its version. A
 // pseudo-version and devel name no tag, so setup refuses them.
 func ReleaseTag(version string) (string, error) {
-	if !releaseTag.MatchString(version) {
+	if !check.Release(version) {
 		return "", fmt.Errorf("this ws is %s, which names no release tag: run a release's ws, "+
 			"or pass --in-place to run the tree in %s as it stands", version, TreeDir)
 	}
@@ -84,7 +81,7 @@ func (t Checkout) Plan(ctx context.Context) ([]resource.Change, error) {
 	if t.InPlace {
 		return nil, nil
 	}
-	if !releaseTag.MatchString(t.Tag) {
+	if !check.Release(t.Tag) {
 		return nil, fmt.Errorf("%q is no release tag", t.Tag)
 	}
 	if _, err := t.M.Run(ctx, "git", "--version"); err != nil {
