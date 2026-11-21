@@ -45,8 +45,9 @@ sudo env MISE_LOCKED=1 mise -C /opt/ws/roles/server run secrets
 - fnox fails closed: `--if-missing error` stops at a value it cannot decrypt, an empty
   `FNOX_CONFIG_DIR` keeps root's config out, and no key but the host's takes part.
 - The bootstrap runs with the caller's umask, and with none of the fetch's settings of git and
-  ssh, as fnox passes its environment on. A unit run as `WS_USER` starts from a cleared one, so
-  the account reads no value from its processes ([run](../../../../engine/core/kind/state.md)).
+  ssh, as fnox passes its environment on. The commands that ws runs for cld, claude and git start
+  from a cleared one, so they read no value from ws's own
+  ([Secret inputs](../frame/README.md#secret-inputs)).
 - Its exit is the bootstrap's, and each refusal of its own exits 1. A plan that finds a change
   exits 2, and mise then prints `[secrets] ERROR task failed`, as it does for any task that exits
   other than 0. That line reports the 2, not a failed plan, and no flag of `mise run` or option of

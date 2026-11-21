@@ -38,8 +38,9 @@ steps, and each role's README says what it sets up.
   A role's type holds that role's values alone, as `ikeward.Profile`. ws holds no store of the
   secrets and no struct that gathers them: they reach the server by fnox alone
   ([The repository](../../roles/server/ubuntu/secrets/README.md#the-repository)).
-- The roles set the machine up for root, in `/root`, which no value names. A unit run as a user
-  sets `HOME` and starts in it, so that `HOME` is not the caller's
+- The roles set the machine up for root, in `/root`, which no value names. A unit run and a
+  command of `account.User` set `HOME` to it, so that `HOME` is not the caller's, and `User`'s
+  starts in it from a cleared env
   ([claude's units](../../roles/server/ubuntu/claude/units.toml.tmpl)).
 - Root reaches a file under `WS_HOME` through the account (`Account.File`, `Account.Dir`,
   `Account.Absent`, `User.ReadHome`). The user owns the home and could link a file elsewhere

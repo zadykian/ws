@@ -14,7 +14,7 @@ import (
 // the file before it, and a plan writes nowhere. Elsewhere a stale variable counts for nothing, and
 // the file's token stands.
 func TestDevtoolsGHLoginTakesTheTokenInputInTheSecretsTask(t *testing.T) {
-	gh := "env HOME=/root env -u " + strings.Join(secretInputs, " -u ") + " gh"
+	gh := "env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin env -u " + strings.Join(secretInputs, " -u ") + " gh"
 	for i, c := range []struct {
 		env    map[string]string
 		status int
@@ -40,7 +40,7 @@ func TestDevtoolsGHLoginTakesTheTokenInputInTheSecretsTask(t *testing.T) {
 
 // The login gives gh the input's token on its input, and names no value in a command or a line.
 func TestDevtoolsGHLoginLogsInByTheInput(t *testing.T) {
-	gh := "env HOME=/root env -u " + strings.Join(secretInputs, " -u ") + " gh"
+	gh := "env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin env -u " + strings.Join(secretInputs, " -u ") + " gh"
 	p, m := valuesProcess("---\n")
 	p = clitest.WithEnv(p, map[string]string{"MISE_TASK_NAME": "secrets", "WS_GITHUB_TOKEN": "dummy-b"})
 	m.Results[gh+" auth login -h github.com -p https --insecure-storage --with-token"] = effecttest.Result{}

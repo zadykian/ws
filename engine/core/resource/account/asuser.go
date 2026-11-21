@@ -2,55 +2,59 @@ package account
 
 import (
 	"context"
+	"fmt"
+	"slices"
 
 	"github.com/zadykian/ws/engine/core/effect"
 )
 
-// User is a user of the machine and the home that commands run as it get.
+// User is a user of the machine. Its commands run as root, from root's home, whatever Home says.
 type User struct {
 	Name string
 	Home string
 }
 
-// SystemPath is the PATH that a command of a user's gets: the system's. The caller's, such as mise's
-// shims, stays out, as the command may write it down in a file that outlives the run.
+// SystemPath is the PATH that a command of ws's own gets: the system's. The caller's, such as
+// mise's shims, stays out, as the command may write it down in a file that outlives the run.
 const SystemPath = "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-// argv returns the command that runs name as the user with the user's HOME, and whether it needs
-// root. The caller's HOME would otherwise reach the command, as the user's login does not run.
-// env -C starts it in the user's home, as root's directory may be closed to the user.
-// root itself needs no switch of user, and a container has no sudo.
+// argv returns the command that runs name as root with root's HOME. The caller's HOME would
+// otherwise reach the command, as no login runs. env -C starts it in root's home.
 //
-// Another user's command starts from a cleared environment, with HOME and SystemPath alone.
-// runuser would pass root's on, which may hold a secret's value, and the user may read the environ
-// of a process of its own.
-func (u User) argv(name string, args []string) (cmd string, argv []string, root bool) {
-	env := append([]string{"HOME=" + u.Home, name}, args...)
-	if u.Name == "root" {
-		return "env", env, false
+// The command starts from a cleared environment, with HOME and SystemPath alone. ws's own may hold
+// a secret input's value, which a command such as cld, claude or git must not see: the secrets'
+// task keeps it. Another user than root fails, as ws runs commands as root alone.
+func (u User) argv(name string, args []string) ([]string, error) {
+	if u.Name != "root" {
+		return nil, fmt.Errorf("run %s as %s: ws runs commands as root alone", name, u.Name)
 	}
-	cleared := []string{"-u", u.Name, "--", "env", "-i", "-C", u.Home, "HOME=" + u.Home, SystemPath}
-	return "runuser", append(cleared, env[1:]...), true
+	return slices.Concat([]string{"-i", "-C", "/root", "HOME=/root", SystemPath, name}, args), nil
 }
 
-// Pass runs the command as the user and passes its output to ws's standard error.
+// Pass runs the command as root and passes its output to ws's standard error.
 func (u User) Pass(ctx context.Context, m effect.Machine, name string, args ...string) error {
-	cmd, argv, root := u.argv(name, args)
-	return m.Pass(ctx, root, cmd, argv...)
-}
-
-// Output runs the command as the user and returns its standard output.
-func (u User) Output(ctx context.Context, m effect.Machine, name string, args ...string) ([]byte, error) {
-	cmd, argv, root := u.argv(name, args)
-	if root {
-		return m.RunRoot(ctx, cmd, argv...)
+	argv, err := u.argv(name, args)
+	if err != nil {
+		return err
 	}
-	return m.Run(ctx, cmd, argv...)
+	return m.Pass(ctx, false, "env", argv...)
 }
 
-// PassInput runs the command as the user with stdin as its standard input, and passes its output
-// to ws's standard error.
+// Output runs the command as root and returns its standard output.
+func (u User) Output(ctx context.Context, m effect.Machine, name string, args ...string) ([]byte, error) {
+	argv, err := u.argv(name, args)
+	if err != nil {
+		return nil, err
+	}
+	return m.Run(ctx, "env", argv...)
+}
+
+// PassInput runs the command as root with stdin as its standard input, and passes its output to
+// ws's standard error.
 func (u User) PassInput(ctx context.Context, m effect.Machine, stdin []byte, name string, args ...string) error {
-	cmd, argv, _ := u.argv(name, args)
-	return m.PassInput(ctx, stdin, cmd, argv...)
+	argv, err := u.argv(name, args)
+	if err != nil {
+		return err
+	}
+	return m.PassInput(ctx, stdin, "env", argv...)
 }

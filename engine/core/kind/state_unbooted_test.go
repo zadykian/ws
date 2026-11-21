@@ -31,7 +31,7 @@ func TestStateRunUnbootedKeepsTheSessionWhereSystemdRuns(t *testing.T) {
 }
 
 // Booted systemd before root's session starts: no /run/user/UID, so no session's env, and
-// the caller's is dropped, which runuser would pass on.
+// the caller's is dropped, as a run keeps ws's env.
 func TestStateRunUnbootedLeavesOutASessionNotStarted(t *testing.T) {
 	e, m, _, _ := testEnv(true)
 	const bare = "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + systemPath + " sh -c x"

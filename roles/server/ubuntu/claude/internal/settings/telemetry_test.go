@@ -14,7 +14,7 @@ var rootUser = account.User{Name: "root", Home: "/root"}
 func TestTelemetryPlan(t *testing.T) {
 	m := effecttest.NewMachine()
 	tel := Telemetry{M: m, User: rootUser, Env: map[string]string{"A": "1"}}
-	m.Results[`env HOME=/root sh -c umask 022 && mkdir -p "${1%/*}" && cat >"$1" sh `+tel.path()] = effecttest.Result{}
+	m.Results[`env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh -c umask 022 && mkdir -p "${1%/*}" && cat >"$1" sh `+tel.path()] = effecttest.Result{}
 	changes, err := tel.Plan(context.Background())
 	if err != nil || len(changes) != 1 || !strings.Contains(changes[0].String(), "create") {
 		t.Fatalf("new file: %v %v", changes, err)

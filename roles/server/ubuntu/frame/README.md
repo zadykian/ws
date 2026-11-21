@@ -102,7 +102,9 @@ WS_GITHUB_TOKEN = { env = "WS_GITHUB_TOKEN", allow_empty = true }
   ikeward's profile, which ws's own commands read from the run's env
   ([The profile's inputs](../ikeward/README.md#the-profiles-inputs)).
 - A run state drops each input from the env of a command whose program is not ws's
-  ([run](../../../../engine/core/kind/state.md)), so that an installer never sees a value.
+  ([run](../../../../engine/core/kind/state.md)), so that an installer never sees a value. The
+  commands that ws runs for cld, claude and git start from a cleared env, with `HOME` and `PATH`
+  alone.
 
 [`secretfiles_test.go`](../../cli/secretfiles_test.go) holds each file to the form and its guard,
 and the inputs to the list that a run drops.

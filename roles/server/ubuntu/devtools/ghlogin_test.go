@@ -44,14 +44,11 @@ func TestRunTokenTakesTheInputOfTheRun(t *testing.T) {
 	}
 }
 
-// gh runs as the account from a cleared env, or as root without the hidden names, and takes the
-// token on its input alone. A login that holds the token plans nothing; without one, it stays.
+// gh runs as root from a cleared env and takes the token on its input alone. A login that holds
+// the token plans nothing; without one, it stays.
 func TestGHLoginLogsInByTheTokenOnItsInput(t *testing.T) {
-	for _, u := range []account.User{{Name: "ws", Home: "/home/ws"}, {Name: "root", Home: "/root"}} {
-		gh := "runuser -u ws -- env -i -C /home/ws HOME=/home/ws " + account.SystemPath + " env -u A -u B gh"
-		if u.Name == "root" {
-			gh = "env HOME=/root env -u A -u B gh"
-		}
+	for _, u := range []account.User{{Name: "root", Home: "/root"}} {
+		gh := "env -i -C /root HOME=/root " + account.SystemPath + " env -u A -u B gh"
 		m := effecttest.NewMachine()
 		m.Results[gh+" auth token -h github.com"] = effecttest.Result{Out: []byte("dummy-a\n")}
 		m.Results[gh+" auth login -h github.com -p https --insecure-storage --with-token"] = effecttest.Result{}

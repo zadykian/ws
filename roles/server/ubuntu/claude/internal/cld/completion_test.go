@@ -22,7 +22,7 @@ func TestCompletionPlan(t *testing.T) {
 	for _, c := range cases {
 		m := effecttest.NewMachine()
 		m.Files["/root/.local/bin/cld"] = nil
-		m.Results["env HOME=/root /root/.local/bin/cld completion bash"] = effecttest.Result{Out: []byte("complete -F _cld cld\n")}
+		m.Results["env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin /root/.local/bin/cld completion bash"] = effecttest.Result{Out: []byte("complete -F _cld cld\n")}
 		if c.have != nil {
 			m.Files[completionFile] = c.have
 		}
@@ -43,8 +43,8 @@ func TestCompletionWithoutCldPlansNothing(t *testing.T) {
 func TestCompletionRunsCldSetup(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/root/.local/bin/cld"] = nil
-	m.Results["env HOME=/root /root/.local/bin/cld completion bash"] = effecttest.Result{Out: []byte("script\n")}
-	m.Results["env HOME=/root /root/.local/bin/cld setup completion bash"] = effecttest.Result{}
+	m.Results["env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin /root/.local/bin/cld completion bash"] = effecttest.Result{Out: []byte("script\n")}
+	m.Results["env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin /root/.local/bin/cld setup completion bash"] = effecttest.Result{}
 	got, err := Completion{M: m, User: cldUser}.Plan(context.Background())
 	if err != nil || len(got) != 1 {
 		t.Fatalf("%v, %v", got, err)

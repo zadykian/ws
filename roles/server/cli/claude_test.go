@@ -17,9 +17,9 @@ const (
 func claudeProcess(values, have string) (*effecttest.Machine, func(args ...string) (int, string, string)) {
 	p, m := valuesProcess(values)
 	m.Files[rootCld] = nil
-	m.Results["env HOME=/root "+rootCld+" completion bash"] = effecttest.Result{Out: []byte("complete -F _cld cld\n")}
+	m.Results["env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "+rootCld+" completion bash"] = effecttest.Result{Out: []byte("complete -F _cld cld\n")}
 	m.Files[rootCompletion] = []byte(have)
-	m.Results["env HOME=/root "+rootCld+" setup completion bash"] = effecttest.Result{}
+	m.Results["env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "+rootCld+" setup completion bash"] = effecttest.Result{}
 	return m, func(args ...string) (int, string, string) {
 		return runWs(p, "", append([]string{"server", "claude"}, args...)...)
 	}

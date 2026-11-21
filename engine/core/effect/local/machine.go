@@ -17,8 +17,8 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 )
 
-// killGrace bounds a command's end past its context. It stays above the 2
-// seconds that runuser gives its child, which a kill of runuser would cut short.
+// killGrace bounds a command's end past its context. A command with a child, such as sudo, has
+// this long to end it after SIGTERM, which a kill of the parent would cut short.
 const killGrace = 3 * time.Second
 
 // OSMachine is the Machine of the machine that ws runs on.
@@ -163,7 +163,7 @@ func (m OSMachine) command(ctx context.Context, argv []string) *exec.Cmd {
 	if m.Stdin != nil {
 		cmd.Env = withEnv(os.Environ(), offTerminal)
 		// A raw terminal sends the command's group no Ctrl-C, so ctx's end is all that reaches it. A
-		// kill would end runuser and leave its child, whose hold on a pipe holds up Wait.
+		// kill would end sudo and leave its child, whose hold on a pipe holds up Wait.
 		cmd.Cancel = func() error { return cmd.Process.Signal(syscall.SIGTERM) }
 		cmd.WaitDelay = killGrace
 	}
