@@ -3,6 +3,28 @@
 A person does these steps at ws, in this order. The Mac's side sets them in its own order
 ([The Mac's runbook](../client/runbook.md)).
 
+## A new server from the installer
+
+A release publishes `autoinstall.yaml`, the installer's answers for Ubuntu Server 26.04. With it
+the installer sets root's keys from the GitHub account, and the console password. The first boot
+runs ws's setup of that release, so the steps by hand below are not done. The secrets still come
+after it, as [Setup, the secrets and the runs](#setup-the-secrets-and-the-runs) says.
+
+1. Fill the file's host name, root's hash, from `mkpasswd -m sha-512`, and the values, as a `|`
+   block of `/etc/ws/values.yml`'s text, or `""` where no value differs.
+2. Copy it as `user-data` to a volume labelled `CIDATA`, beside an empty `meta-data`.
+3. Boot the installer with `autoinstall` on the kernel's line. It asks for the disk alone.
+4. Read the first boot's run in `/var/log/cloud-init-output.log`, or by
+   `cloud-init status --wait --long`.
+
+[The autoinstall file](../../.github/workflows/release.md#the-autoinstall-file) says what the
+release fills in.
+
+## The steps by hand
+
+A cloud VM has no installer, so it takes these steps. So does any server whose installer ran
+without the file.
+
 1. Log in as the installer's user, by key. Run `sudo -H ssh-import-id gh:LOGIN`, which imports the
    GitHub account's keys into `/root/.ssh/authorized_keys`, which root logs in by afterward
    ([SSH and the firewall](ubuntu/security/README.md#ssh-and-the-firewall)). ws copies no key from
@@ -13,6 +35,8 @@ A person does these steps at ws, in this order. The Mac's side sets them in its 
    [Install](../../.github/workflows/release.md#install), `set -o pipefail` among them. It
    installs ws alone, as `/usr/local/bin/ws`, which sudo reaches, and prints the next command.
 4. Run `ws server setup` as root.
+
+## Setup, the secrets and the runs
 
 `ws server setup`, run as root, sets the machine up. Before any write it refuses
 a user but root and a system but Ubuntu 26.04. It refuses a tree in `/opt/ws`, or a directory above
