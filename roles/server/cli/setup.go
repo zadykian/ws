@@ -93,10 +93,6 @@ func newSetupCmd(p enginecli.Env, cfg setupConfig) *cobra.Command {
 				return err
 			}
 		}
-		self, err := p.Self()
-		if err != nil {
-			return err
-		}
 		if err := checkValues(p.Machine); err != nil {
 			return err
 		}
@@ -108,19 +104,19 @@ func newSetupCmd(p enginecli.Env, cfg setupConfig) *cobra.Command {
 		defer term.Flush()
 		out := linesOf(term, c.CommandPath())
 		if *plan {
-			return planSetup(c.Context(), p.Machine, out, steps, self, *secrets)
+			return planSetup(c.Context(), p.Machine, out, steps, *secrets)
 		}
 		if err := settle(c.Context(), out, steps, false); err != nil {
 			return err
 		}
-		return runBootstrap(c.Context(), p.Machine, self, *secrets, nil)
+		return runBootstrap(c.Context(), p.Machine, *secrets, nil)
 	}
 	return c
 }
 
 // runBootstrap runs mise's bootstrap, or the task secrets where secrets is set or the clone of the
 // secrets stands, so that a later run stays under them. The task passes args to the bootstrap whole.
-func runBootstrap(ctx context.Context, m effect.Machine, self string, secrets bool, args []string) error {
+func runBootstrap(ctx context.Context, m effect.Machine, secrets bool, args []string) error {
 	if !secrets {
 		_, err := m.Stat(cloneDir)
 		switch {
@@ -131,19 +127,18 @@ func runBootstrap(ctx context.Context, m effect.Machine, self string, secrets bo
 		}
 	}
 	if !secrets {
-		return runMise(ctx, m, self, append([]string{"bootstrap"}, args...)...)
+		return runMise(ctx, m, append([]string{"bootstrap"}, args...)...)
 	}
 	if len(args) > 0 {
 		args = append([]string{"--"}, args...)
 	}
-	return runMise(ctx, m, self, append([]string{"run", "secrets"}, args...)...)
+	return runMise(ctx, m, append([]string{"run", "secrets"}, args...)...)
 }
 
-// runMise runs mise in the server's roles, with WS_SELF naming this ws. The frame's check of the
-// values runs that ws, which a first run has not installed in mise's path yet.
-func runMise(ctx context.Context, m effect.Machine, self string, args ...string) error {
-	argv := append([]string{"WS_SELF=" + self, setup.MisePath, "-C", rootRoles}, args...)
-	return m.PassInput(ctx, nil, "env", argv...)
+// runMise runs mise in the server's roles. The frame's checks run /usr/local/bin/ws.
+func runMise(ctx context.Context, m effect.Machine, args ...string) error {
+	argv := append([]string{"-C", rootRoles}, args...)
+	return m.PassInput(ctx, nil, setup.MisePath, argv...)
 }
 
 // setupSteps returns the resources of setup, in order. Each one plans before it writes. The guard
@@ -171,7 +166,7 @@ func setupSteps(ctx context.Context, m effect.Machine, cfg setupConfig, tag stri
 // there is none, it asks mise's bootstrap, or the task secrets where setup would run it, for its
 // plan, whose exit 2 is setup's. The tree and mise are there to plan by only once the steps have
 // run.
-func planSetup(ctx context.Context, m effect.Machine, out effect.Out, steps []resource.Resource, self string, secrets bool) error {
+func planSetup(ctx context.Context, m effect.Machine, out effect.Out, steps []resource.Resource, secrets bool) error {
 	due, err := setup.PlanSteps(ctx, out, steps)
 	if err != nil {
 		return err
@@ -179,7 +174,7 @@ func planSetup(ctx context.Context, m effect.Machine, out effect.Out, steps []re
 	if due {
 		return engine.ExitStatus{Code: 2}
 	}
-	err = runBootstrap(ctx, m, self, secrets, []string{"plan", "--detailed-exitcode"})
+	err = runBootstrap(ctx, m, secrets, []string{"plan", "--detailed-exitcode"})
 	var exit interface{ ExitCode() int }
 	if errors.As(err, &exit) && exit.ExitCode() == 2 {
 		return engine.ExitStatus{Code: 2}

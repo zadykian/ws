@@ -171,10 +171,9 @@ values as it starts, and the text reads as no file does, so the unit needs no `a
 
 mise drops the units of a plugin that it refuses, with a warning and exit 0. The server's
 `/etc/ws/units.verified` is a template that runs `ws unit verify`, so the plan and the run fail
-where mise's plan lacks a unit of the specs. On a first run, and on the run that brings a new pin,
-mise renders it before it installs the pin's ws. It prints the line of a pass then, so that the
-next plan finds the file unchanged. Each unit reads as missing on that run, so the plugin's write
-hook runs, and it runs `ws unit verify` before `ws unit write`.
+where mise's plan lacks a unit of the specs. It runs `/usr/local/bin/ws`, and fails a run without
+it, naming `install.sh`. The plugin's write hook runs `ws unit verify` again before `ws unit
+write`.
 
 The check runs in the run's directory, where a nested mise loads the roles as the run does. A run
 from `/opt/ws`, or from the Mac's `roles/client`, loads no role of the server's, and a first one
@@ -190,10 +189,6 @@ each command does. A missing file passes. A bad value fails with its key, its ru
 to edit by hand: `values set` refuses while any value is bad, so the message never names it. A pass
 prints one fixed line, so the next plan finds the file unchanged.
 
-The template runs the ws that `WS_SELF` names, which `ws server setup` sets in the env of its mise,
-and else `/usr/local/bin/ws`. It never looks for mise's ws: a first run has none. It passes with a
-line on stderr that says so where neither file is. It passes so too where the ws lists no `check`
-among the commands of `ws server values`, as a pin from before it does. A first run by `install.sh`
-has no ws. The units' first read of the values then refuses a bad value, as before. CI's `server`
-job plans once with a bad value. It expects exit 1 from `ws server values check` that names the
-key, and puts the file back ([server-plan.sh](../../../../.github/server-plan.sh)).
+The template runs `/usr/local/bin/ws`, and fails a run without it, naming `install.sh`. CI's
+`server` job plans once with a bad value. It expects exit 1 from `ws server values check` that
+names the key, and puts the file back ([server-plan.sh](../../../../.github/server-plan.sh)).
