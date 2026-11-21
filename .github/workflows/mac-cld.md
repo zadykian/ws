@@ -4,13 +4,14 @@ A second workflow, `mac-cld.yml`, sets up Ghostty, Zed and cld on another macOS 
 and cld on the Mac](../../roles/client/macos/ghostty/README.md) and [Zed on the
 Mac](../../roles/client/macos/zed/README.md) say. It runs `ws client setup`
 as the runbook does, on the tree that
-[mac-mise.sh](../mac-mise.sh) puts in place, on a runner without Ghostty, Zed, its font or cld. It
+[mac-mise.sh](../mac-mise.sh) puts in place, on a runner without Ghostty, Zed, its font, Secretive or cld. It
 has a stand-in for ws's key, and a file key that `values.yml` names for ws's login and for git's
 signing.
 
 - Two runs must install Ghostty, Zed and the font as mise's casks, which `mise bootstrap packages
   status` names as mise's, and cld from its release. The facts read Ghostty's app and cld as a run
-  starts, so the second adds ssh's lines. A login shell must find `zed`.
+  starts, so the second adds ssh's lines. They must install Secretive by `macos-app`, at the pin of
+  [ssh's `mise.mac.toml`](../../roles/client/macos/ssh/mise.mac.toml). A login shell must find `zed`.
 - `/etc/ws/ghostty` must be `roles/client/macos/ghostty/files/ws.ghostty`, and Ghostty's config
   must read it once. Ghostty's `+validate-config` must take the config, and `+list-fonts` find its
   font. Zed's files must be those of `roles/client/macos/zed/files/`, with the seed of
