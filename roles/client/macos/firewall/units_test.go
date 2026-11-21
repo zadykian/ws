@@ -18,8 +18,8 @@ import (
 const (
 	socketfilterfw = "/usr/libexec/ApplicationFirewall/socketfilterfw"
 	inPath         = "env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "
-	script         = socketfilterfw + " --getglobalstate | grep -Eqi 'enabled|block all' && " +
-		socketfilterfw + " --getblockall | grep -qi 'enabled'"
+	script         = socketfilterfw + " --getglobalstate | grep -Eq 'State = [12]' && " +
+		socketfilterfw + " --getblockall | grep -q 'blocking all'"
 	check  = inPath + "sh -c " + script
 	enable = inPath + socketfilterfw + " --setglobalstate on --setblockall on"
 )
@@ -76,17 +76,18 @@ func TestFirewallUnitChangesNothingWhereBothAreOn(t *testing.T) {
 }
 
 // TestFirewallCheckReadsTheText runs the check's script on canned output of socketfilterfw's
-// get options, as the options exit 0 in each state.
+// get options, as macOS 26 prints it in each state. The options exit 0 in each.
 func TestFirewallCheckReadsTheText(t *testing.T) {
 	for _, tc := range []struct {
 		name, global, blockAll string
 		want                   bool
 	}{
-		{"both on", "Firewall is enabled. (State = 1)", "Block all ENABLED!", true},
-		{"block-all's own line", "Firewall is set to block all non-essential incoming connections", "Block all ENABLED!", true},
-		{"firewall off", "Firewall is disabled. (State = 0)", "Block all DISABLED!", false},
-		{"firewall off, block all on", "Firewall is disabled. (State = 0)", "Block all ENABLED!", false},
-		{"block all off", "Firewall is enabled. (State = 1)", "Block all DISABLED!", false},
+		{"both on", "Firewall is blocking all non-essential incoming connections. (State = 2)",
+			"Firewall is blocking all non-essential incoming connections.", true},
+		{"firewall off", "Firewall is disabled. (State = 0)", "Firewall has block all state set to disabled.", false},
+		{"firewall off, block all on", "Firewall is disabled. (State = 0)",
+			"Firewall is blocking all non-essential incoming connections.", false},
+		{"block all off", "Firewall is enabled. (State = 1)", "Firewall has block all state set to disabled.", false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			dir := t.TempDir()

@@ -18,8 +18,9 @@ So the Mac's own firewall is what keeps the server from opening a connection to 
 - The command runs as root, through sudo. The check runs as the user, with no sudo, so a run that
   changes nothing asks no password.
 - socketfilterfw's get options exit 0 whatever the state, so the check reads their text. It exits
-  other than 0 unless `--getglobalstate` and `--getblockall` each print an enabled line, and
-  the command runs then. A state that prints block-all in place of enabled counts for the first.
+  other than 0 unless `--getglobalstate` ends in `State = 1` or `State = 2` and `--getblockall`
+  says `blocking all`, and the command runs then. On macOS 26, block-all prints `State = 2`, and
+  a firewall that only filters `State = 1`.
 - To see both states, run `/usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate`
   and then the same with `--getblockall`.
 
