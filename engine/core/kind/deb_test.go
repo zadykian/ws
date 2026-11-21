@@ -44,7 +44,7 @@ func applyOnce(t *testing.T, s step.Step) error {
 }
 
 func TestDebInstallsThePinnedFile(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	debMachine(m, "deb")
 	units := loadOne(t, e, debSpecText(""), nil)
 	if err := applyOnce(t, units[0].Step); err != nil {
@@ -60,7 +60,7 @@ func TestDebInstallsThePinnedFile(t *testing.T) {
 }
 
 func TestDebRefusesAWrongSHA256(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	debMachine(m, "not the pinned file")
 	err := applyOnce(t, loadOne(t, e, debSpecText(""), nil)[0].Step)
 	if err == nil || !strings.Contains(err.Error(), "SHA-256") {
@@ -72,7 +72,7 @@ func TestDebRefusesAWrongSHA256(t *testing.T) {
 }
 
 func TestDebStopKeepsTheServiceStopped(t *testing.T) {
-	e, m, u, _ := testEnv(true)
+	e, m, u, _ := testEnv()
 	debMachine(m, "deb")
 	units := loadOne(t, e, debSpecText("stop = \"a.service\"\n"), nil)
 	if err := applyOnce(t, units[0].Step); err != nil {
@@ -87,20 +87,8 @@ func TestDebStopKeepsTheServiceStopped(t *testing.T) {
 	}
 }
 
-func TestDebStopSkipsWithoutSystemd(t *testing.T) {
-	e, m, u, out := testEnv(false)
-	debMachine(m, "deb")
-	units := loadOne(t, e, debSpecText("stop = \"a.service\"\n"), nil)
-	if err := applyOnce(t, units[0].Step); err != nil {
-		t.Fatal(err)
-	}
-	if u.Calls != nil || !slices.Contains(out.Lines, "say: a.service: stop skipped, systemd is not running") {
-		t.Errorf("calls = %q, lines %q; want no stop, and the skip said", u.Calls, out.Lines)
-	}
-}
-
 func TestDebRefusesFieldsNoPlanTakes(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	for spec, want := range map[string]string{
 		"[deb.a]\npackage = \"a\"\nversion = \"1\"\nurl = \"u\"\n":                             "a sha256 for each",
 		"[deb.a]\npackage = \"a\"\nversion = \"1\"\nurl = \"u\"\nsha256 = { amd64 = \"x\" }\n": "64 lowercase hex",

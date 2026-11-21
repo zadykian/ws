@@ -24,8 +24,8 @@ const (
 	tableDir    = "/usr/local/lib/ws/security"
 	unitDir     = "/etc/systemd/system/"
 	destroyLine = "nft destroy table inet ws"
-	// asRoot is how a run state's command runs as root, with booted systemd's session.
-	asRoot = "env HOME=/root env XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus " +
+	// asRoot is how a run state's command runs as root, with no session's env.
+	asRoot = "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " +
 		"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "
 	// tableGone is the run state's check that no table is loaded.
 	tableGone = asRoot + "sh -c ! nft list table inet ws >/dev/null 2>&1"
@@ -35,10 +35,10 @@ const (
 var outboundUnits = []string{"security-resolvers.path", "security-resolvers.timer", "security-resolvers.service",
 	"security-outbound.service"}
 
-// securityMachine is a booted machine, not a container, whose root holds a key, and
+// securityMachine is a machine, not a container, whose root holds a key, and
 // whose checkers pass.
 func securityMachine() *effecttest.Machine {
-	m := bootedMachine()
+	m := effecttest.NewMachine()
 	m.Results["getent passwd root"] = effecttest.Result{Out: []byte("root:x:0:0:root:/root:/bin/bash\n")}
 	m.Dirs["/root"], m.Dirs["/root/.ssh"] = 0o700, 0o700
 	m.Files[keysOfRoot], m.Modes[keysOfRoot] = []byte("ssh-ed25519 AAAA me\n"), 0o600

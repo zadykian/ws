@@ -38,9 +38,6 @@ func (s swap) Plan(_ context.Context) ([]resource.Change, error) {
 		return func(ctx context.Context) error { _, err := s.M.RunRoot(ctx, name, args...); return err }
 	}
 	if s.active {
-		if !st.Booted {
-			s.Out.Say("swap: swapon and swapoff skipped, systemd is not running")
-		}
 		add(p.Swapon, swapFile+" would be swapped to", root("swapon", swapFile))
 		add(p.StopInstaller, "stop swapping to "+installerImg, root("swapoff", installerImg))
 		return cs, nil

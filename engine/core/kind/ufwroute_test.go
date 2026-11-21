@@ -9,12 +9,12 @@ import (
 )
 
 func TestUFWOutIsARouteRule(t *testing.T) {
-	e, m, _, _ := testEnv(true)
+	e, m, _, _ := testEnv()
 	// The route rule from 10.99.0.3 carries the comment ikeward, 696b6577617264 in hex.
 	m.Files[ufw.UserRules] = []byte("### tuple ### route:allow any any 0.0.0.0/0 any 10.99.0.3 in_wg0!out_ikeward0 comment=696b6577617264\n")
 	units := loadState(t, e, "ufw = { comment = \"ikeward\", rules = [{ action = \"allow\", interface = \"wg0\", out = \"ikeward0\", from = \"10.99.0.2\" }] }\n")
 	got := headlines(t, units[0].Step)
-	p, err := ufw.Rules{M: m, Out: e.Out, Comment: "ikeward", Want: []ufw.Rule{ufw.Route("allow", "wg0", "ikeward0", "10.99.0.2", "ikeward")}}.Plan(t.Context())
+	p, err := ufw.Rules{M: m, Comment: "ikeward", Want: []ufw.Rule{ufw.Route("allow", "wg0", "ikeward0", "10.99.0.2", "ikeward")}}.Plan(t.Context())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -28,7 +28,7 @@ func TestUFWOutIsARouteRule(t *testing.T) {
 }
 
 func TestUFWOutRefusesPortsAndDir(t *testing.T) {
-	e, _, _, _ := testEnv(true)
+	e, _, _, _ := testEnv()
 	for _, extra := range []string{`proto = "udp"`, `to = "10.0.0.1"`, `to_port = "53"`, `from_port = "53"`, `dir = "in"`} {
 		stateRefused(t, e, "ufw = { comment = \"c\", rules = [{ action = \"allow\", interface = \"wg0\", out = \"x0\", "+extra+" }] }\n",
 			"takes action, interface, out and from alone")

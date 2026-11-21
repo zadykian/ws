@@ -74,7 +74,7 @@ func changes(t *testing.T, u kind.Unit) []string {
 	return got
 }
 
-// Each command runs as root in its home, though systemd is not running, as in CI's container.
+// Each command runs as root in its home.
 // roslyn's finds dotnet's tools first on its PATH.
 func TestDevtoolsUnitsRunAsRoot(t *testing.T) {
 	m, e := machine(t)

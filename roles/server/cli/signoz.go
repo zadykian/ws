@@ -23,7 +23,7 @@ func newSignozCmd(p enginecli.Env) *cobra.Command {
 		})
 	sync := signozSteps(p, "sync", "set SigNoz's retention and dashboards through its API",
 		"It waits for SigNoz's API at WS_SIGNOZ_URL, then sets the retention of WS_SIGNOZ_RETENTION_DAYS, "+
-			"and creates or replaces each dashboard of WS_SIGNOZ_DASHBOARDS. Without booted systemd it skips.",
+			"and creates or replaces each dashboard of WS_SIGNOZ_DASHBOARDS.",
 		func(m effect.Machine, out effect.Out) ([]step.Step, error) {
 			v, err := values.Load(m, serverVars)
 			return signoz.Sync(v.Signoz, m, out), err

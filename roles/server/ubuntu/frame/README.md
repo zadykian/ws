@@ -138,10 +138,9 @@ The pin moves in a pull request of its own, after the release it names
 ## ws at a fixed path
 
 mise installs ws under its data directory, by version, which neither a unit of systemd nor a
-person can name. The unit `state/ws-binary` copies the pinned binary
-to `/usr/local/bin/ws` where the two differ, under a temporary name first. As a `run` state, it
-skips without booted systemd. A unit that runs `/usr/local/bin/ws` waits on
-it by `after`.
+person can name. The unit `state/ws-binary` copies the pinned binary to `/usr/local/bin/ws` where
+the two differ, under a temporary name first. A unit that runs `/usr/local/bin/ws` waits on it by
+`after`.
 
 ## The values file
 

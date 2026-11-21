@@ -21,9 +21,7 @@ var dashboardFiles embed.FS
 // Dashboards is the step that keeps the dashboards of Names in SigNoz. Each is created from
 // dashboards/NAME.json and replaced where it differs from that file. So a change made to it in
 // SigNoz's UI lasts until the next run. A name taken off the list leaves its dashboard in SigNoz.
-// The API answers only where Docker's daemon runs SigNoz, so without systemd booted the step skips.
 type Dashboards struct {
-	M     effect.Machine
 	Out   effect.Out
 	API   api.Client
 	Names []string

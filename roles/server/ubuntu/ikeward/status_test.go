@@ -10,7 +10,6 @@ import (
 )
 
 func statusOf(m *effecttest.Machine, tries int) Status {
-	m.Dirs["/run/systemd/system"] = 0o755
 	return Status{M: m, Out: &effecttest.Out{}, Tries: tries, Wait: time.Millisecond, InRun: true}
 }
 
@@ -42,13 +41,5 @@ func TestStatusWaitsAndFailsAfterItsTries(t *testing.T) {
 	}
 	if err := changes[0].Apply(t.Context()); err == nil || !strings.Contains(err.Error(), "3 tries") {
 		t.Errorf("apply = %v, want a failure after 3 tries", err)
-	}
-}
-
-func TestStatusSaysThatSystemdIsNotRunning(t *testing.T) {
-	s := statusOf(effecttest.NewMachine(), 3)
-	delete(s.M.(*effecttest.Machine).Dirs, "/run/systemd/system")
-	if changes, err := s.Plan(t.Context()); err != nil || len(changes) != 0 || len(s.Out.(*effecttest.Out).Lines) != 1 {
-		t.Errorf("plan = %v, %v; want nothing and a line", changes, err)
 	}
 }

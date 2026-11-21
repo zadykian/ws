@@ -63,22 +63,8 @@ func TestTunnelKeyMadeOnce(t *testing.T) {
 	}
 }
 
-func TestTunnelWG0WithoutSystemdIsDone(t *testing.T) {
-	p, m := valuesProcess("---\n")
-	for _, args := range [][]string{{"--check"}, nil} {
-		status, stdout, stderr := runWs(p, "", append([]string{"server", "tunnel", "wg0"}, args...)...)
-		if status != 0 || stdout != "" || stderr != "" {
-			t.Errorf("%q: status = %d, stdout %q, stderr %q", args, status, stdout, stderr)
-		}
-	}
-	if len(m.Calls) != 2 {
-		t.Errorf("calls %q, want the values read alone", m.Calls)
-	}
-}
-
 func TestTunnelWG0CheckDueWhereMissing(t *testing.T) {
 	p, m := valuesProcess("---\n")
-	m.Dirs["/run/systemd/system"] = 0o755
 	private, err := wgkey.Generate(bytes.NewReader(bytes.Repeat([]byte{3}, 32)))
 	if err != nil {
 		t.Fatal(err)

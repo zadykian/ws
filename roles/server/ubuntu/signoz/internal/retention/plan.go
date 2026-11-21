@@ -5,17 +5,11 @@ import (
 	"fmt"
 
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-// Plan reads the retention of traces, metrics and logs, once the schema migrator is done. Without
-// systemd booted there is no SigNoz to ask, and it skips.
+// Plan reads the retention of traces, metrics and logs, once the schema migrator is done.
 func (r Retention) Plan(ctx context.Context) (step.Plan, error) {
-	if !systemd.Booted(r.M) {
-		r.Out.Say("%s: skipped, systemd is not running", r.Name())
-		return step.Plan{}, nil
-	}
 	if err := awaitMigrator(ctx, r.M, r.Migrator); err != nil {
 		return step.Plan{}, err
 	}

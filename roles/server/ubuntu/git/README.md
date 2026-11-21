@@ -14,8 +14,6 @@ openssh-client, and names the eight units of its `units.toml.tmpl`:
 - `state/git-tokens` and `state/git-clones`: `ws server git tokens` and `clones`, each with
   `--check` as its check ([Git credentials](#git-credentials), [Clones](#clones)).
 
-The key, the tokens and the clones need no systemd, so a container runs them too.
-
 The guard's notes, the warnings below, show in `ws server git check` and in
 `ws unit read guard/git-check`. `mise bootstrap` and its plan do not show them, as mise prints
 no line of a unit that passes: read the guard there after a run.

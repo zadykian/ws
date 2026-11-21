@@ -84,5 +84,4 @@ collector.
 
 The collector answers its health check a few seconds after it starts, at most 60. The unit
 `state/otelcol-health` waits for that: a collector that cannot start, such as one whose OTLP port
-another process holds, fails the run there. Without systemd booted, as in CI's container, the
-service and the wait skip.
+another process holds, fails the run there.

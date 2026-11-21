@@ -35,19 +35,12 @@ func baseUnits(t *testing.T, m *effecttest.Machine, u *effecttest.Units) ([]kind
 	return loadSpecs(t, kind.Env{M: m, U: u, Out: out, Data: v, Self: selfPath}), out
 }
 
-// bootedMachine is a machine whose systemd runs, as a unit of a service needs.
-func bootedMachine() *effecttest.Machine {
-	m := effecttest.NewMachine()
-	m.Dirs["/run/systemd/system"] = 0o755
-	return m
-}
-
 func TestBaseUpgradesFileIsTodays(t *testing.T) {
 	want, err := os.ReadFile("../ubuntu/base/files/20auto-upgrades")
 	if err != nil {
 		t.Fatal(err)
 	}
-	m, u := bootedMachine(), &effecttest.Units{}
+	m, u := effecttest.NewMachine(), &effecttest.Units{}
 	units, _ := baseUnits(t, m, u)
 	applyUnit(t, units, "file/base-upgrades")
 	const path = "/etc/apt/apt.conf.d/20auto-upgrades"
@@ -67,7 +60,7 @@ func TestBaseUpgradesFileIsTodays(t *testing.T) {
 
 func TestBaseSwapOffInAContainer(t *testing.T) {
 	for _, mark := range []string{"/.dockerenv", "/run/.containerenv", "/run/systemd/container"} {
-		m := bootedMachine()
+		m := effecttest.NewMachine()
 		m.Files[mark] = nil
 		units, out := baseUnits(t, m, &effecttest.Units{})
 		for _, name := range []string{"state/base-swap", "service/base-sysctl"} {
@@ -118,7 +111,7 @@ func TestBaseSysctlRestartsOnDrift(t *testing.T) {
 		now     string
 		restart bool
 	}{{"60\n", true}, {"10\n", false}} {
-		m, u := bootedMachine(), &effecttest.Units{States: map[string]effect.UnitState{
+		m, u := effecttest.NewMachine(), &effecttest.Units{States: map[string]effect.UnitState{
 			"systemd-sysctl.service": {Active: true},
 		}}
 		m.Results[inForce] = effecttest.Result{Out: []byte(tc.now)}

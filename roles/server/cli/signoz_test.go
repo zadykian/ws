@@ -63,7 +63,7 @@ func TestSignozPasswordWritesOnce(t *testing.T) {
 	}
 }
 
-// signozProcess returns a booted machine whose values point at a fake SigNoz. It keeps logs for
+// signozProcess returns a machine whose values point at a fake SigNoz. It keeps logs for
 // logsDays, and traces and metrics for 90 days. It holds no dashboard, and its migrator is done.
 func signozProcess(t *testing.T, logsDays int) enginecli.Env {
 	mux := http.NewServeMux()
@@ -81,7 +81,6 @@ func signozProcess(t *testing.T, logsDays int) enginecli.Env {
 	t.Cleanup(srv.Close)
 	p := rootProcess()
 	m := p.Machine.(*effecttest.Machine)
-	m.Dirs["/run/systemd/system"] = 0o755
 	m.Files[serverVars] = []byte("WS_SIGNOZ_URL: " + srv.URL + "\nWS_SIGNOZ_DASHBOARDS: []\n")
 	m.Results["docker container ls --all --filter name=^signoz-telemetrystore-migrator$ --format {{.Status}}"] =
 		effecttest.Result{Out: []byte("Exited (0) 1 hour ago\n")}

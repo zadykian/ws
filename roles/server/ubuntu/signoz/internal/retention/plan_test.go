@@ -27,10 +27,9 @@ func signozAPI(t *testing.T, f *fakeTTL, logsDays *int) Retention {
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
 	m := effecttest.NewMachine()
-	m.Dirs["/run/systemd/system"] = 0o755
 	m.Results[lsLine] = effecttest.Result{Out: []byte("Exited (0) 1 hour ago\n")}
 	w := api.Wait{Tries: 5, Delay: time.Second, Sleep: func(context.Context, time.Duration) error { return nil }}
-	return Retention{M: m, Out: &effecttest.Out{}, API: api.Client{URL: srv.URL}, Days: 90, Migrator: w, Altered: w}
+	return Retention{M: m, API: api.Client{URL: srv.URL}, Days: 90, Migrator: w, Altered: w}
 }
 
 func newTTL(traces, metrics int) *fakeTTL {
@@ -65,7 +64,7 @@ func TestRetentionSetsWhatDiffersAndThenHasNoChange(t *testing.T) {
 func TestRetentionHasNoChangeWhereSigNozKeepsTheDays(t *testing.T) {
 	days := 90
 	r := signozAPI(t, newTTL(2160, 2160), &days)
-	if changed, err := step.Run(t.Context(), []step.Step{noWaitRetention{r}}, r.Out, true); err != nil || changed {
+	if changed, err := step.Run(t.Context(), []step.Step{noWaitRetention{r}}, &effecttest.Out{}, true); err != nil || changed {
 		t.Errorf("check = %v, %v; want no change", changed, err)
 	}
 }
@@ -82,14 +81,5 @@ func TestRetentionNamesTheSignalsItWouldSet(t *testing.T) {
 	got := fmt.Sprint(p.Changes)
 	if want := "[set the retention of metrics (now metrics: 720 h, success) to 2160 h]"; got != want {
 		t.Errorf("changes = %s, want %s", got, want)
-	}
-}
-
-func TestRetentionSkipsWithoutSystemd(t *testing.T) {
-	days := 15
-	r := signozAPI(t, newTTL(360, 360), &days)
-	delete(r.M.(*effecttest.Machine).Dirs, "/run/systemd/system")
-	if p, err := r.Plan(t.Context()); err != nil || len(p.Changes) != 0 {
-		t.Errorf("plan = %v, %v; want a skip", p.Changes, err)
 	}
 }

@@ -24,7 +24,7 @@ func newTunnelCheckCmd(p enginecli.Env, u effect.Units) *cobra.Command {
 	return &cobra.Command{
 		Use:   "check",
 		Short: "refuse a networkd that does not run, and a peer's key file that holds no key",
-		Long: "It reads the values of " + serverVars + ". It fails where networkd does not run on a booted machine, " +
+		Long: "It reads the values of " + serverVars + ". It fails where networkd does not run, " +
 			"as nothing would create wg0, or where a peer's /etc/wireguard/NAME.pub holds no WireGuard public key. " +
 			"It names each peer whose file is missing, which wg0 leaves out, and prints the server's public key " +
 			"where the key exists. The tunnel role's guard runs it, before wg0's key and files.",
@@ -67,7 +67,7 @@ func newTunnelWG0Cmd(p enginecli.Env) *cobra.Command {
 		Short: "make wg0 again where it lacks the key of its file, and wait for it to hold it",
 		Long: "networkd reads wg0's private key only as it creates wg0. Where wg0 holds another key, it is deleted; " +
 			"then networkctl reload creates it, and the command waits up to 10 s for it to hold the key, whose " +
-			"public key it prints. Without booted systemd nothing is due.\n\n--check fails where wg0 is missing " +
+			"public key it prints.\n\n--check fails where wg0 is missing " +
 			"or holds another key, and changes nothing. The tunnel role's run state runs it, after wg0's files.",
 		Args: cobra.NoArgs,
 	}

@@ -17,7 +17,7 @@ const envSpec = "[file.env]\npath = \"/etc/ws/env\"\nmode = 0o640\ntemplate = \"
 const envTemplate = `{{ with envvar "/etc/ws/inputs" "A" }}` + oursMark + "\nexport A={{ . }}{{ end }}\n"
 
 func TestSecretTemplateFillsWithTheFactsAlone(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	m.Dirs["/etc"], m.Dirs["/etc/ws"] = 0o755, 0o755
 	m.Files["/etc/ws/env"] = []byte("export T='hunter2'\n")
 	units := loadOne(t, e, sealedSpec, map[string]string{"a.tmpl": `T={{ envvar "/etc/ws/env" "T" }}` + "\n"})
@@ -41,7 +41,7 @@ func TestSecretTemplateFillsWithTheFactsAlone(t *testing.T) {
 }
 
 func TestAbsentWhenEmptyRemovesTheFile(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	m.Files["/etc/ws/inputs"] = []byte("B=1\n")
 	m.Files["/etc/ws/env"] = []byte(oursMark + "\nexport A=hunter2\n")
 	units := loadOne(t, e, envSpec, map[string]string{"env.tmpl": envTemplate})
@@ -64,7 +64,7 @@ func TestAbsentWhenEmptyRemovesTheFile(t *testing.T) {
 }
 
 func TestSecretFileTakesACheck(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	units := loadOne(t, e, "[file.a]\npath = \"/etc/a.env\"\nsecret = true\ncheck = [\"c\", \"{}\"]\nsource = \"f\"\n", map[string]string{"f": "TOKEN=1\n"})
 	if len(units) != 1 {
 		t.Fatalf("units = %d, want 1", len(units))

@@ -17,12 +17,10 @@ import (
 // Restore has the user's systemd restore cld's sessions as it starts, which brings back the
 // sessions a reboot ended. cld setup restore writes the user unit. The rest is left to Restore and
 // the steps around it. One is lingering, so that the user's systemd starts at boot rather than at
-// the first login. Another is a shell where systemctl --user reaches it. A container has no
-// systemd, so Restore plans nothing there.
+// the first login. Another is a shell where systemctl --user reaches it.
 type Restore struct {
 	M       effect.Machine
 	Account account.Account
-	Out     effect.Out
 }
 
 func (r Restore) cld() string { return r.Account.Home + "/.local/bin/cld" }
@@ -102,10 +100,6 @@ func (s setupRestore) Apply(ctx context.Context) error {
 // systemctl --user enable makes, as cld enables the unit at every run but reports only whether it
 // wrote its file.
 func (r Restore) Plan(ctx context.Context) ([]resource.Change, error) {
-	if !systemd.Booted(r.M) {
-		r.Out.Say("Claude restore: skipped, systemd is not running")
-		return nil, nil
-	}
 	if _, err := r.M.Stat(r.cld()); errors.Is(err, fs.ErrNotExist) {
 		return nil, nil
 	} else if err != nil {

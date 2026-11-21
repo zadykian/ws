@@ -15,11 +15,10 @@ import (
 
 // run is a run state's fields, as units.toml.tmpl gives them before a render.
 type run struct {
-	User     string   `toml:"user"`
-	Unbooted bool     `toml:"unbooted"`
-	Command  []string `toml:"command"`
-	Check    []string `toml:"check"`
-	Creates  []string `toml:"creates"`
+	User    string   `toml:"user"`
+	Command []string `toml:"command"`
+	Check   []string `toml:"check"`
+	Creates []string `toml:"creates"`
 }
 
 // readRuns returns the run states of units.toml.tmpl by name.
@@ -67,7 +66,7 @@ func fake(t *testing.T, bin, name, body string) {
 // text. A word of a command's own is no value.
 var templateAction = regexp.MustCompile(`\{\{.*?\}\}`)
 
-// Each run is root's, and runs without booted systemd too. No secret reaches a command's text,
+// Each run is root's. No secret reaches a command's text,
 // which a run's headline and mise's log show.
 func TestDevtoolsRunsAreRoots(t *testing.T) {
 	runs := readRuns(t)
@@ -76,8 +75,8 @@ func TestDevtoolsRunsAreRoots(t *testing.T) {
 	var got []string
 	for name, r := range runs {
 		got = append(got, name)
-		if r.User != "root" || !r.Unbooted {
-			t.Errorf("%s: user %q, unbooted %v; want root, unbooted", name, r.User, r.Unbooted)
+		if r.User != "root" {
+			t.Errorf("%s: user %q, want root", name, r.User)
 		}
 		for _, action := range templateAction.FindAllString(strings.Join(slices.Concat(r.Command, r.Check), " "), -1) {
 			if strings.Contains(action, "secrets") || strings.Contains(action, "Token") {

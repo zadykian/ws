@@ -46,8 +46,7 @@ func (r ufwRule) rule(comment string) (ufw.Rule, error) {
 }
 
 // ufwState is the ufw rules that carry Comment, which the state owns: those in Rules are added,
-// and the others deleted. Owns narrows the rules it owns by their fields (ufwowns.go). Without
-// booted systemd, where ufw cannot load them, it skips.
+// and the others deleted. Owns narrows the rules it owns by their fields (ufwowns.go).
 type ufwState struct {
 	Comment string            `toml:"comment"`
 	Owns    map[string]string `toml:"owns"`
@@ -73,7 +72,7 @@ func (s ufwState) resource(e Env) (resource.Resource, error) {
 	if err != nil {
 		return nil, err
 	}
-	return ufw.Rules{M: e.M, Out: e.Out, Comment: s.Comment, Want: rules, Owns: owns, NeedsSystemd: true}, nil
+	return ufw.Rules{M: e.M, Comment: s.Comment, Want: rules, Owns: owns}, nil
 }
 
 // routesState refuses a route that Pool or Net would overlap, before a program takes them
@@ -101,14 +100,13 @@ func (s routesState) resource(e Env) (resource.Resource, error) {
 }
 
 // addrState refuses an interface that lacks an address, which the run cannot move (route.Addr).
-// Without booted systemd it skips.
 type addrState struct {
 	Iface string `toml:"iface"`
 	Want  string `toml:"want"`
 	Hint  string `toml:"hint"`
 }
 
-func (s addrState) resource(e Env) (resource.Resource, error) {
+func (s addrState) resource(_ Env) (resource.Resource, error) {
 	want, err := netip.ParsePrefix(s.Want)
 	if err != nil {
 		return nil, fmt.Errorf("want: %w", err)
@@ -116,22 +114,19 @@ func (s addrState) resource(e Env) (resource.Resource, error) {
 	if s.Iface == "" {
 		return nil, errors.New("an addr state takes iface")
 	}
-	return route.Addr{M: e.M, Out: e.Out, Iface: s.Iface, Want: want, Hint: s.Hint}, nil
+	return route.Addr{Iface: s.Iface, Want: want, Hint: s.Hint}, nil
 }
 
 // runState runs Command as User where something is to do: where a path of Creates is missing, or
 // where Check, run as User too, exits other than 0. It takes exactly one of the two. A procedure
 // that stays a command of ws runs through it, with that command's own check. On Linux User is root
-// alone, and without booted systemd, which root's session needs, it skips, unless Unbooted says
-// that the command needs no session. macOS has no systemd, and runs it. There Check runs as ws's
-// own user, whatever User, so that a read asks no password (run.go).
+// alone, and the run gets no session's env. macOS has no systemd. There Check runs as ws's own
+// user, whatever User, so that a read asks no password (run.go).
 type runState struct {
 	User    string   `toml:"user"`
 	Command []string `toml:"command"`
 	Creates []string `toml:"creates"`
 	Check   []string `toml:"check"`
-	// Unbooted runs the command without booted systemd too, as in CI's container, with no session.
-	Unbooted bool `toml:"unbooted"`
 	// Path holds directories that the command and its check find before the system's PATH. An
 	// installer that puts its tool in one warns where PATH lacks it.
 	Path []string `toml:"path"`

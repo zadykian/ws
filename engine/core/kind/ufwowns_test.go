@@ -8,7 +8,7 @@ import (
 )
 
 func TestUFWOwnsLeavesARuleOfAnotherShape(t *testing.T) {
-	e, m, _, _ := testEnv(true)
+	e, m, _, _ := testEnv()
 	// Each rule carries the comment WG, 5747 in hex: the old port's, and two made by hand on wg0.
 	m.Files[ufw.UserRules] = []byte("### tuple ### allow udp 51821 0.0.0.0/0 any 0.0.0.0/0 in comment=5747\n" +
 		"### tuple ### allow tcp 8000 0.0.0.0/0 any 0.0.0.0/0 in_wg0 comment=5747\n" +

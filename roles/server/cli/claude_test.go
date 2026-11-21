@@ -4,6 +4,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/spf13/cobra"
+
+	enginecli "github.com/zadykian/ws/engine/cli"
+	"github.com/zadykian/ws/engine/cli/clitest"
+	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
@@ -13,15 +18,24 @@ const (
 )
 
 // claudeProcess is a process as root with cld installed for root, whose completion script
-// holds have.
+// holds have. Its units are a fake that has root's user manager running.
 func claudeProcess(values, have string) (*effecttest.Machine, func(args ...string) (int, string, string)) {
+	m, _, ws := claudeUnits(values, have)
+	return m, ws
+}
+
+// claudeUnits is claudeProcess with its fake units returned, as the claude commands plan them
+// there and never over D-Bus.
+func claudeUnits(values, have string) (*effecttest.Machine, *effecttest.Units, func(args ...string) (int, string, string)) {
 	p, m := valuesProcess(values)
+	u := &effecttest.Units{States: map[string]effect.UnitState{"user@0.service": {Active: true}}}
 	m.Files[rootCld] = nil
 	m.Results["env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "+rootCld+" completion bash"] = effecttest.Result{Out: []byte("complete -F _cld cld\n")}
 	m.Files[rootCompletion] = []byte(have)
 	m.Results["env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "+rootCld+" setup completion bash"] = effecttest.Result{}
-	return m, func(args ...string) (int, string, string) {
-		return runWs(p, "", append([]string{"server", "claude"}, args...)...)
+	return m, u, func(args ...string) (int, string, string) {
+		root := enginecli.Group("server", "the server's commands", newClaudeCmd(p, u))
+		return clitest.Run(p, []*cobra.Command{root}, "", append([]string{"server", "claude"}, args...)...)
 	}
 }
 
@@ -66,19 +80,6 @@ func TestClaudeMarketplacesCheckNamesEachToAdd(t *testing.T) {
 	status, _, stderr := ws("marketplaces", "--check")
 	if status != 1 || !strings.Contains(stderr, "add the plugin marketplace acme from acme/plugins") {
 		t.Errorf("status = %d, stderr %q", status, stderr)
-	}
-}
-
-func TestClaudeRestoreSkipsWithoutSystemd(t *testing.T) {
-	m, ws := claudeProcess("---\n", "")
-	status, _, stderr := ws("restore", "--check")
-	if status != 0 || !strings.Contains(stderr, "Claude restore: skipped, systemd is not running") {
-		t.Errorf("status = %d, stderr %q", status, stderr)
-	}
-	for _, c := range m.Calls {
-		if strings.Contains(c, "setup restore") || strings.Contains(c, "systemctl") {
-			t.Errorf("restore ran %q without systemd", c)
-		}
 	}
 }
 

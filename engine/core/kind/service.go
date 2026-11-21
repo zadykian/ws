@@ -22,8 +22,7 @@ var runs = map[string]systemd.Run{"": systemd.Leave, "running": systemd.Running,
 // removed after the rest. A change to any of them
 // gives one restart, or one reload with Reload, owed to the next run where this one fails.
 // InForce and Loads compare what is in force with what the files load (drift). A service whose
-// files all go is gone: it stops and is disabled before they do. Without booted systemd it plans
-// no unit and says so.
+// files all go is gone: it stops and is disabled before they do.
 type serviceSpec struct {
 	base
 	Unit    string     `toml:"unit"`
@@ -79,14 +78,14 @@ func (s serviceSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.
 		if gone {
 			// The stop and the disable come first, while the unit's file still names its ExecStop
 			// and the links that [Install] made.
-			unit := systemd.Unit{M: e.M, U: e.U, Out: e.Out, Name: s.Unit, Disabled: true, Run: systemd.Stopped}
+			unit := systemd.Unit{M: e.M, U: e.U, Name: s.Unit, Disabled: true, Run: systemd.Stopped}
 			return append([]resource.Resource{unit}, all...), nil
 		}
 		if len(s.InForce) > 0 {
-			d := drift{m: e.M, out: e.Out, inForce: s.InForce, loads: s.Loads, files: paths}
+			d := drift{m: e.M, inForce: s.InForce, loads: s.Loads, files: paths}
 			all, watch = append(all, d), append(watch, d)
 		}
-		return append(all, systemd.Unit{M: e.M, U: e.U, Out: e.Out, Name: s.Unit, Enabled: s.Enabled, Run: run,
+		return append(all, systemd.Unit{M: e.M, U: e.U, Name: s.Unit, Enabled: s.Enabled, Run: run,
 			Reload: s.Reload, Watch: watch}), nil
 	}, nil
 }

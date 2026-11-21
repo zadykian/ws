@@ -13,10 +13,9 @@ import (
 	"github.com/zadykian/ws/roles/internal/wgkey"
 )
 
-// machine has systemd booted and a key and, where wg0Key is set, a wg0 that holds the key shown.
+// machine has a key and, where wg0Key is set, a wg0 that holds the key shown.
 func machine(wg0Key string) (*effecttest.Machine, string) {
 	m := effecttest.NewMachine()
-	m.Dirs["/run/systemd/system"] = 0o755
 	private, _ := wgkey.Generate(bytes.NewReader(bytes.Repeat([]byte{3}, 32)))
 	public, _ := wgkey.Public(private)
 	m.Files[keyFile] = []byte(private + "\n")
@@ -100,13 +99,6 @@ func TestWG0WithoutAKeyFails(t *testing.T) {
 	delete(m.Files, keyFile)
 	if _, err := newWG0(m, &effecttest.Out{}, new(int)).Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "tunnel key makes it") {
 		t.Errorf("plan = %v, want the key missing", err)
-	}
-}
-
-func TestWG0SkipsWithoutSystemdAndAKey(t *testing.T) {
-	m := effecttest.NewMachine()
-	if got := headlines(t, newWG0(m, &effecttest.Out{}, new(int))); len(got) != 0 {
-		t.Errorf("plan = %q, want nothing", got)
 	}
 }
 

@@ -30,12 +30,11 @@ func kinds(t *testing.T, r resource.Resource) []step.ChangeKind {
 
 func TestKindsOfTheResourcesChanges(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Dirs["/run/systemd/system"], m.Dirs["/d"] = 0o755, 0o700
+	m.Dirs["/d"] = 0o700
 	m.Files["/old"] = []byte("old\n")
 	m.Packages = effecttest.Packages{"git": {Version: "1", Status: "ii"}, "curl": {Status: "un"}, "a": {Version: "0", Status: "ii"}}
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	u := &effecttest.Units{States: map[string]effect.UnitState{"on.service": {Active: true}}}
-	out := &effecttest.Out{}
 	ann := account.User{Name: "ann", Home: "/home/ann"}
 	watch := []resource.Resource{file.Absent{M: m, Path: "/old"}}
 	tests := []struct {
@@ -51,12 +50,12 @@ func TestKindsOfTheResourcesChanges(t *testing.T) {
 		{"absent", file.Absent{M: m, Path: "/old"}, []step.ChangeKind{step.Removal}},
 		{"packages", apt.Packages{M: m, Names: []string{"curl"}}, []step.ChangeKind{step.Install}},
 		{"purged", apt.Purged{M: m, Names: []string{"git"}}, []step.ChangeKind{step.Removal}},
-		{"reload", systemd.DaemonReload{M: m, U: u, Watch: watch}, []step.ChangeKind{step.Restart}},
-		{"start", systemd.Unit{M: m, U: u, Out: out, Name: "a.service", Enabled: true, Run: systemd.Running},
+		{"reload", systemd.DaemonReload{U: u, Watch: watch}, []step.ChangeKind{step.Restart}},
+		{"start", systemd.Unit{M: m, U: u, Name: "a.service", Enabled: true, Run: systemd.Running},
 			[]step.ChangeKind{step.Write, step.Restart}},
-		{"restart", systemd.Unit{M: m, U: u, Out: out, Name: "on.service", Run: systemd.Running, Watch: watch},
+		{"restart", systemd.Unit{M: m, U: u, Name: "on.service", Run: systemd.Running, Watch: watch},
 			[]step.ChangeKind{step.Write, step.Restart}},
-		{"linger", systemd.Linger{M: m, User: ann, Out: out}, []step.ChangeKind{step.Write}},
+		{"linger", systemd.Linger{M: m, User: ann}, []step.ChangeKind{step.Write}},
 		{"package", apt.Package{M: m, Name: "a", Source: fetch.PinnedFile{M: m, Version: "1", SHA256: map[string]string{"amd64": "s"},
 			URL: func(version, arch string) string { return "https://x/a_" + version + arch + ".deb" }}},
 			[]step.ChangeKind{step.Write, step.Write, step.Install}},

@@ -88,11 +88,9 @@ source = "files/security-resolvers.timer"
 absent = true
 {{- end }}
 
-# nft -c needs the kernel's netfilter, so it checks with systemd booted alone. The table in force is
-# compared with the one the files load, in a network namespace of its own, as the unit loads it. A
-# run cut short before the reload, or a table flushed by hand, reloads it. -s leaves out the
-# counters' values. unshare needs CAP_SYS_ADMIN, which CI's container lacks, and the comparison
-# runs with systemd booted alone.
+# The table in force is compared with the one the files load, in a network namespace of its own, as
+# the unit loads it. A run cut short before the reload, or a table flushed by hand, reloads it. -s
+# leaves out the counters' values. The comparison and nft -c run on every machine.
 [service.security-outbound]
 unit = "security-outbound.service"
 enabled = {{ $on }}
@@ -116,7 +114,6 @@ path = "/usr/local/lib/ws/security/outbound.nft"
 {{- if $on }}
 source = "files/outbound.nft"
 check = ["/usr/sbin/nft", "-c", "-f", "{}"]
-check_booted = true
 {{- else }}
 absent = true
 {{- end }}
@@ -134,7 +131,7 @@ absent = true
 {{- end }}
 
 # Off, a table that no stop removed, as one loaded by hand with nft -f, goes too. A failed list is
-# no table. Without booted systemd it skips.
+# no table.
 [state.security-outbound-off]
 run = { user = "root", command = ["nft", "destroy", "table", "inet", "ws"], check = ["sh", "-c", "! nft list table inet ws >/dev/null 2>&1"] }
 when = { set = "{{ if not $on }}yes{{ end }}" }

@@ -25,9 +25,9 @@ Each Go template ends in `.tmpl`, the spec's name and the name of each `template
   error. The spec's text fills as it loads, with `add`, `mul`, `div`,
   `has_prefix TEXT PREFIX`, `json VALUE`, which quotes a value as Go's JSON encoder does, and
   `fail MSG`, which stops the render with MSG. It takes `self` too, the path of the ws that runs the
-  units, so that a command of ws runs before the pinned binary is installed, or without booted
-  systemd. A unit's template fills as it plans, as an earlier unit may make the account or the file
-  that it reads. It takes `envvar FILE NAME` and the facts `mem_mib`, `cpus`, `fs_bytes PATH...`,
+  units, so that a command of ws runs before the pinned binary is installed. A unit's template
+  fills as it plans, as an earlier unit may make the account or the file that it reads. It takes
+  `envvar FILE NAME` and the facts `mem_mib`, `cpus`, `fs_bytes PATH...`,
   `installed_version NAME`, `kernel_release` and `root_file PATH` too.
   `installed_version` gives dpkg's version of an installed package, else "", and `kernel_release`
   the running kernel's, as `uname -r` prints it. `root_file` gives a file's text, read as root and
@@ -142,7 +142,7 @@ hint = "…"                  # follows the line of a refused load; goes with lo
   warning. Before `/usr/sbin/dkms` exists, as in a dry run before its package, DKMS holds nothing.
 - DKMS's packages and the kernel's headers are the role's own, a `packages` unit named by `after`.
 - `load` is loaded by `modprobe` once built, after each module of `unload` that the kernel holds is
-  unloaded. Without booted systemd it loads nothing, and says so.
+  unloaded.
 - With Secure Boot on, the kernel refuses the module until DKMS's key is enrolled, by hand at the
   console. The run says so, with `hint`, and goes on. The mark `/run/ws-refused-LOAD` keeps the
   runs until the next reboot from trying again. Any other failure of the load fails the unit.
@@ -171,7 +171,6 @@ source = "name"
 - A service whose parts are all `absent` is gone: disabled and stopped before its files go, while
   its unit file still names its `ExecStop`, and the links its `[Install]` names. It takes no
   `enabled`, takes `run = "stopped"` or `""`, and compares nothing. A link made by hand stays.
-- Without booted systemd it plans no unit, compares nothing, and says so.
 
 ### state
 
@@ -213,7 +212,6 @@ project = "name"            # lowercase letters, digits, '_' and '-'
   keeps the old sum, so the next run recreates again.
 - With the sum kept, it ups without a recreation where a service whose `restart` is `always` or
   `unless-stopped` is not running. A one-shot that has ended counts for nothing.
-- Without booted systemd it plans nothing, reads nothing, and says so.
 
 ### launchd
 

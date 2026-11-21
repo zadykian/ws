@@ -14,17 +14,13 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-func unitFixture(booted bool) (*effecttest.Machine, *effecttest.Units, *effecttest.Out) {
-	m := effecttest.NewMachine()
-	if booted {
-		m.Dirs["/run/systemd/system"] = 0o755
-	}
-	return m, &effecttest.Units{}, &effecttest.Out{}
+func unitFixture() (*effecttest.Machine, *effecttest.Units) {
+	return effecttest.NewMachine(), &effecttest.Units{}
 }
 
 func TestUnitEnablesAndStarts(t *testing.T) {
-	m, u, out := unitFixture(true)
-	unit := systemd.Unit{M: m, U: u, Out: out, Name: "a.service", Enabled: true, Run: systemd.Running}
+	m, u := unitFixture()
+	unit := systemd.Unit{M: m, U: u, Name: "a.service", Enabled: true, Run: systemd.Running}
 	if got := applyAll(t, unit); !slices.Equal(got, []string{"enable a.service", "start a.service"}) {
 		t.Errorf("first plan = %q, want enable and start", got)
 	}
@@ -33,21 +29,13 @@ func TestUnitEnablesAndStarts(t *testing.T) {
 	}
 }
 
-func TestUnitSkipsWithoutSystemd(t *testing.T) {
-	m, u, out := unitFixture(false)
-	unit := systemd.Unit{M: m, U: u, Out: out, Name: "a.service", Enabled: true, Run: systemd.Running}
-	if got := applyAll(t, unit); got != nil || len(u.Calls) != 0 || len(out.Lines) != 1 {
-		t.Errorf("plan = %q, calls %v, said %q; want a skip said once", got, u.Calls, out.Lines)
-	}
-}
-
 func TestUnitRestartsAfterAWatchedChange(t *testing.T) {
-	m, u, out := unitFixture(true)
+	m, u := unitFixture()
 	u.States = map[string]effect.UnitState{"a.service": {Enabled: true, Active: true}}
 	conf := file.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644}
-	unit := systemd.Unit{M: m, U: u, Out: out, Name: "a.service", Enabled: true, Run: systemd.Running, Watch: []resource.Resource{conf}}
+	unit := systemd.Unit{M: m, U: u, Name: "a.service", Enabled: true, Run: systemd.Running, Watch: []resource.Resource{conf}}
 	g := resource.Group{Title: "A", Parts: []resource.Resource{conf, unit}}
-	if _, err := step.Run(t.Context(), []step.Step{g}, out, false); err != nil {
+	if _, err := step.Run(t.Context(), []step.Step{g}, &effecttest.Out{}, false); err != nil {
 		t.Fatal(err)
 	}
 	if !slices.Equal(u.Calls, []string{"restart a.service"}) || string(m.Files["/srv/a.conf"]) != "x" {
@@ -56,10 +44,10 @@ func TestUnitRestartsAfterAWatchedChange(t *testing.T) {
 }
 
 func TestUnitResetsAFailureThenStarts(t *testing.T) {
-	m, u, out := unitFixture(true)
+	m, u := unitFixture()
 	u.States = map[string]effect.UnitState{"a.service": {Failed: true}, "b.service": {Active: true}}
-	a := systemd.Unit{M: m, U: u, Out: out, Name: "a.service", Run: systemd.Running}
-	b := systemd.Unit{M: m, U: u, Out: out, Name: "b.service", Run: systemd.Stopped}
+	a := systemd.Unit{M: m, U: u, Name: "a.service", Run: systemd.Running}
+	b := systemd.Unit{M: m, U: u, Name: "b.service", Run: systemd.Stopped}
 	applyAll(t, a)
 	applyAll(t, b)
 	if want := []string{"reset-failed a.service", "start a.service", "stop b.service"}; !slices.Equal(u.Calls, want) {
@@ -68,11 +56,11 @@ func TestUnitResetsAFailureThenStarts(t *testing.T) {
 }
 
 func TestDaemonReloadFollowsAUnitFile(t *testing.T) {
-	m, u, out := unitFixture(true)
+	m, u := unitFixture()
 	unitFile := file.File{M: m, Path: "/srv/systemd/system/a.service", Content: []byte("[Unit]\n"), Mode: 0o644}
-	g := resource.Group{Title: "A", Parts: []resource.Resource{unitFile, systemd.DaemonReload{M: m, U: u, Watch: []resource.Resource{unitFile}}}}
+	g := resource.Group{Title: "A", Parts: []resource.Resource{unitFile, systemd.DaemonReload{U: u, Watch: []resource.Resource{unitFile}}}}
 	for range 2 {
-		if _, err := step.Run(t.Context(), []step.Step{g}, out, false); err != nil {
+		if _, err := step.Run(t.Context(), []step.Step{g}, &effecttest.Out{}, false); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -82,9 +70,9 @@ func TestDaemonReloadFollowsAUnitFile(t *testing.T) {
 }
 
 func TestUnitReloadsWhereAFileWasWrittenAfterACutShortRun(t *testing.T) {
-	m, u, out := unitFixture(true)
+	m, u := unitFixture()
 	u.States = map[string]effect.UnitState{"a.service": {Enabled: true, Active: true, NeedsReload: true}}
-	unit := systemd.Unit{M: m, U: u, Out: out, Name: "a.service", Enabled: true, Run: systemd.Running}
+	unit := systemd.Unit{M: m, U: u, Name: "a.service", Enabled: true, Run: systemd.Running}
 	if got := applyAll(t, unit); !slices.Equal(got, []string{"reload systemd's unit files"}) {
 		t.Errorf("first plan = %q, want a reload", got)
 	}
@@ -94,10 +82,10 @@ func TestUnitReloadsWhereAFileWasWrittenAfterACutShortRun(t *testing.T) {
 }
 
 func TestUnitRestartIsForced(t *testing.T) {
-	m, u, out := unitFixture(true)
+	m, u := unitFixture()
 	u.States = map[string]effect.UnitState{"a.service": {Active: true}}
 	conf := file.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644}
-	cs, err := systemd.Unit{M: m, U: u, Out: out, Name: "a.service", Run: systemd.Running, Watch: []resource.Resource{conf}}.Plan(t.Context())
+	cs, err := systemd.Unit{M: m, U: u, Name: "a.service", Run: systemd.Running, Watch: []resource.Resource{conf}}.Plan(t.Context())
 	f, ok := cs[len(cs)-1].(resource.Forced)
 	if err != nil || len(cs) != 2 || !ok || !f.Forced() {
 		t.Errorf("plan = %v, %v; want a forced restart", cs, err)
@@ -105,13 +93,13 @@ func TestUnitRestartIsForced(t *testing.T) {
 }
 
 func TestUnitReloadsAfterAWatchedChange(t *testing.T) {
-	m, u, out := unitFixture(true)
+	m, u := unitFixture()
 	u.States = map[string]effect.UnitState{"a.service": {Enabled: true, Active: true}}
 	conf := file.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644}
-	unit := systemd.Unit{M: m, U: u, Out: out, Name: "a.service", Enabled: true, Run: systemd.Running, Reload: true,
+	unit := systemd.Unit{M: m, U: u, Name: "a.service", Enabled: true, Run: systemd.Running, Reload: true,
 		Watch: []resource.Resource{conf}}
 	g := resource.Group{Title: "A", Parts: []resource.Resource{conf, unit}}
-	if _, err := step.Run(t.Context(), []step.Step{g}, out, false); err != nil {
+	if _, err := step.Run(t.Context(), []step.Step{g}, &effecttest.Out{}, false); err != nil {
 		t.Fatal(err)
 	}
 	if !slices.Equal(u.Calls, []string{"reload a.service"}) {
@@ -120,9 +108,9 @@ func TestUnitReloadsAfterAWatchedChange(t *testing.T) {
 }
 
 func TestUnitDisables(t *testing.T) {
-	m, u, out := unitFixture(true)
+	m, u := unitFixture()
 	u.States = map[string]effect.UnitState{"a.service": {Enabled: true, Active: true}}
-	unit := systemd.Unit{M: m, U: u, Out: out, Name: "a.service", Disabled: true, Run: systemd.Stopped}
+	unit := systemd.Unit{M: m, U: u, Name: "a.service", Disabled: true, Run: systemd.Stopped}
 	if got := applyAll(t, unit); !slices.Equal(got, []string{"disable a.service", "stop a.service"}) {
 		t.Errorf("first plan = %q, want disable and stop", got)
 	}
@@ -132,10 +120,10 @@ func TestUnitDisables(t *testing.T) {
 }
 
 func TestUnitRestartSurvivesACutShortRun(t *testing.T) {
-	m, u, out := unitFixture(true)
+	m, u := unitFixture()
 	u.States = map[string]effect.UnitState{"a.service": {Active: true}}
 	conf := file.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644}
-	unit := systemd.Unit{M: m, U: u, Out: out, Name: "a.service", Run: systemd.Running, Watch: []resource.Resource{conf}}
+	unit := systemd.Unit{M: m, U: u, Name: "a.service", Run: systemd.Running, Watch: []resource.Resource{conf}}
 	g := resource.Group{Title: "A", Parts: []resource.Resource{conf, unit}}
 	p, err := g.Plan(t.Context())
 	if err != nil || len(p.Changes) != 3 {
@@ -147,7 +135,7 @@ func TestUnitRestartSurvivesACutShortRun(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if _, err := step.Run(t.Context(), []step.Step{g}, out, false); err != nil {
+	if _, err := step.Run(t.Context(), []step.Step{g}, &effecttest.Out{}, false); err != nil {
 		t.Fatal(err)
 	}
 	if !slices.Equal(u.Calls, []string{"restart a.service"}) {
@@ -156,12 +144,12 @@ func TestUnitRestartSurvivesACutShortRun(t *testing.T) {
 }
 
 func TestUnitFailedRestartStaysOwed(t *testing.T) {
-	m, u, out := unitFixture(true)
+	m, u := unitFixture()
 	u.States = map[string]effect.UnitState{"a.service": {Active: true}}
 	conf := file.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644}
-	unit := systemd.Unit{M: m, U: failingRestart{u}, Out: out, Name: "a.service", Run: systemd.Running, Watch: []resource.Resource{conf}}
+	unit := systemd.Unit{M: m, U: failingRestart{u}, Name: "a.service", Run: systemd.Running, Watch: []resource.Resource{conf}}
 	g := resource.Group{Title: "A", Parts: []resource.Resource{conf, unit}}
-	if _, err := step.Run(t.Context(), []step.Step{g}, out, false); err == nil {
+	if _, err := step.Run(t.Context(), []step.Step{g}, &effecttest.Out{}, false); err == nil {
 		t.Fatal("run succeeded, want the restart's failure")
 	}
 	if cs, err := unit.Plan(t.Context()); err != nil || len(cs) != 1 {
@@ -170,22 +158,22 @@ func TestUnitFailedRestartStaysOwed(t *testing.T) {
 }
 
 func TestUnitRestartWaitsForARefusedFile(t *testing.T) {
-	m, u, out := unitFixture(true)
+	m, u := unitFixture()
 	u.States = map[string]effect.UnitState{"a.service": {Active: true}}
 	m.Files["/srv/a.conf"] = []byte("old")
 	m.Results["checker /srv/a.conf.ws-check"] = effecttest.Result{Err: errors.New("exit status 1")}
 	conf := file.Validated{File: file.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644},
 		Check: func(p string) (string, []string) { return "checker", []string{p} }}
-	unit := systemd.Unit{M: m, U: u, Out: out, Name: "a.service", Run: systemd.Running, Watch: []resource.Resource{conf}}
+	unit := systemd.Unit{M: m, U: u, Name: "a.service", Run: systemd.Running, Watch: []resource.Resource{conf}}
 	g := resource.Group{Title: "A", Parts: []resource.Resource{conf, unit}}
-	if _, err := step.Run(t.Context(), []step.Step{g}, out, false); err == nil {
+	if _, err := step.Run(t.Context(), []step.Step{g}, &effecttest.Out{}, false); err == nil {
 		t.Fatal("run succeeded, want the check's refusal")
 	}
 	if u.Calls != nil || string(m.Files["/srv/a.conf"]) != "old" {
 		t.Errorf("calls = %q, file %q; want no restart and the old file", u.Calls, m.Files["/srv/a.conf"])
 	}
 	m.Results["checker /srv/a.conf.ws-check"] = effecttest.Result{}
-	if _, err := step.Run(t.Context(), []step.Step{g}, out, false); err != nil {
+	if _, err := step.Run(t.Context(), []step.Step{g}, &effecttest.Out{}, false); err != nil {
 		t.Fatal(err)
 	}
 	if !slices.Equal(u.Calls, []string{"restart a.service"}) {
@@ -198,15 +186,15 @@ type failingRestart struct{ *effecttest.Units }
 func (failingRestart) Restart(context.Context, string) error { return errors.New("boom") }
 
 func TestUnitTriggeredRestartsOnAWatchedChangeAlone(t *testing.T) {
-	m, u, out := unitFixture(true)
+	m, u := unitFixture()
 	conf := file.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644}
-	unit := systemd.Unit{M: m, U: u, Out: out, Name: "a.service", Run: systemd.Triggered}
+	unit := systemd.Unit{M: m, U: u, Name: "a.service", Run: systemd.Triggered}
 	if got := applyAll(t, unit); got != nil {
 		t.Fatalf("plan = %q, want none: nothing is watched", got)
 	}
 	unit.Watch = []resource.Resource{conf}
 	g := resource.Group{Title: "A", Parts: []resource.Resource{conf, unit}}
-	if _, err := step.Run(t.Context(), []step.Step{g}, out, false); err != nil {
+	if _, err := step.Run(t.Context(), []step.Step{g}, &effecttest.Out{}, false); err != nil {
 		t.Fatal(err)
 	}
 	if !slices.Equal(u.Calls, []string{"restart a.service"}) {
@@ -215,22 +203,18 @@ func TestUnitTriggeredRestartsOnAWatchedChangeAlone(t *testing.T) {
 }
 
 func TestUnitStoppedResetsAFailure(t *testing.T) {
-	m, u, out := unitFixture(true)
+	m, u := unitFixture()
 	u.States = map[string]effect.UnitState{"a.service": {Failed: true}}
-	unit := systemd.Unit{M: m, U: u, Out: out, Name: "a.service", Run: systemd.Stopped}
+	unit := systemd.Unit{M: m, U: u, Name: "a.service", Run: systemd.Stopped}
 	if got := applyAll(t, unit); !slices.Equal(got, []string{"reset failed state of a.service"}) {
 		t.Errorf("plan = %q, want a reset", got)
 	}
 }
 
 func TestUnitReport(t *testing.T) {
-	m, u, out := unitFixture(false)
+	m, u := unitFixture()
 	u.States = map[string]effect.UnitState{"a.service": {Enabled: true, Active: true}, "b.service": {Failed: true}}
-	unit := systemd.Unit{M: m, U: u, Out: out, Name: "a.service", Enabled: true, Run: systemd.Running}
-	if got := reportOf(t, unit); got.Found != "systemd is not running" || len(out.Lines) != 0 {
-		t.Errorf("item = %+v, said %q; want the state, left for Plan to say", got, out.Lines)
-	}
-	m.Dirs["/run/systemd/system"] = 0o755
+	unit := systemd.Unit{M: m, U: u, Name: "a.service", Enabled: true, Run: systemd.Running}
 	tests := []struct {
 		unit        systemd.Unit
 		want, found string

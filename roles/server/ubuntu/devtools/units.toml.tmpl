@@ -26,8 +26,8 @@ link = "/root/.local/share/mise/installs/github-supabase-community-postgres-lang
 path = "/usr/local/bin/docker-language-server"
 link = "/root/.local/share/mise/installs/github-docker-docker-language-server/0.20.1/docker-language-server"
 
-# Root's tools. Each runs as root, and without booted systemd too, as in
-# CI's container. Its commands get the system's PATH, where mise's packages put npm, gh and dotnet.
+# Root's tools. Each runs as root. Its commands get the system's PATH, where mise's packages put npm,
+# gh and dotnet.
 
 # The npm servers, from a lock that pins each package by its sha512 integrity. The files go in as
 # root's, with their missing directories. npm ci refuses a lock that disagrees with
@@ -49,7 +49,6 @@ after = "file/devtools-npm-package"
 
 [state.devtools-npm.run]
 user = "root"
-unbooted = true
 command = [
     "sh",
     "-c",
@@ -69,7 +68,6 @@ link = "/root/.local/lib/language-servers/node_modules/.bin/sql-formatter"
 # from sending any themselves.
 [state.devtools-gh-telemetry.run]
 user = "root"
-unbooted = true
 command = ["env", "GH_TELEMETRY=0", "gh", "config", "set", "telemetry", "disabled"]
 check = ["sh", "-c", '[ "$(GH_TELEMETRY=0 gh config get telemetry)" = disabled ]']
 
@@ -80,7 +78,7 @@ check = ["sh", "-c", '[ "$(GH_TELEMETRY=0 gh config get telemetry)" = disabled ]
 # keeps the token in ~/.config/gh/hosts.yml, mode 0600.
 [state.devtools-gh-login]
 after = "state/devtools-gh-telemetry"
-run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "devtools", "gh-login"], check = ["{{ self }}", "server", "devtools", "gh-login", "--check"] }
+run = { user = "root", command = ["{{ self }}", "server", "devtools", "gh-login"], check = ["{{ self }}", "server", "devtools", "gh-login", "--check"] }
 
 # roslyn-language-server, C#'s server, from nuget.org, where every version is a prerelease. The
 # version alone pins it, as nuget.org refuses a version's second upload. From 5.13.0-1.26514.10 the
@@ -92,7 +90,6 @@ run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "devt
 # so the unit puts it first. DOTNET_NOLOGO keeps its first run's welcome and advice off.
 [state.devtools-roslyn.run]
 user = "root"
-unbooted = true
 path = ["/root/.dotnet/tools"]
 command = [
     "env",
@@ -123,7 +120,6 @@ check = [
 # file.
 [state.devtools-rustup.run]
 user = "root"
-unbooted = true
 creates = ["/root/.cargo/bin/rustup"]
 command = [
     "bash",

@@ -39,10 +39,10 @@ var ikewardProfile = map[string]string{ikeward.P12Var: base64.StdEncoding.Encode
 // ikewardNoProfile is the env of a run with the secrets on a host whose profile is empty.
 var ikewardNoProfile = map[string]string{ikeward.P12Var: "", ikeward.SswanVar: "", ikeward.PasswordVar: ""}
 
-// ikewardMachine is a booted machine with ikeward's values.
+// ikewardMachine is a machine with ikeward's values.
 func ikewardMachine() *effecttest.Machine {
 	m := effecttest.NewMachine()
-	m.Dirs["/etc/ws"], m.Dirs["/run/systemd/system"] = 0o755, 0o755
+	m.Dirs["/etc/ws"] = 0o755
 	m.Files[serverVars] = []byte(ikewardValues)
 	return m
 }

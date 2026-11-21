@@ -45,9 +45,8 @@ func (f *fakeDashboards) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func dashboardsFixture(t *testing.T, f *fakeDashboards, names ...string) (Dashboards, *effecttest.Out) {
 	srv := httptest.NewServer(f)
 	t.Cleanup(srv.Close)
-	m, out := effecttest.NewMachine(), &effecttest.Out{}
-	m.Dirs["/run/systemd/system"] = 0o755
-	return Dashboards{M: m, Out: out, API: api.Client{URL: srv.URL}, Names: names}, out
+	out := &effecttest.Out{}
+	return Dashboards{Out: out, API: api.Client{URL: srv.URL}, Names: names}, out
 }
 
 // fromFile is the dashboard that SigNoz holds once the file of name is applied.
@@ -100,13 +99,5 @@ func TestDashboardsHaveNoChangeWhereTheyMatch(t *testing.T) {
 	s, _ := dashboardsFixture(t, f, "host", "claude")
 	if p, err := s.Plan(t.Context()); err != nil || len(p.Changes) != 0 {
 		t.Errorf("plan = %v, %v; want none", p.Changes, err)
-	}
-}
-
-func TestDashboardsSkipWithoutSystemd(t *testing.T) {
-	s, out := dashboardsFixture(t, &fakeDashboards{}, "host")
-	delete(s.M.(*effecttest.Machine).Dirs, "/run/systemd/system")
-	if p, err := s.Plan(t.Context()); err != nil || len(p.Changes) != 0 || !strings.Contains(strings.Join(out.Lines, "\n"), "skipped") {
-		t.Errorf("plan = %v, %v, said %q", p.Changes, err, strings.Join(out.Lines, "\n"))
 	}
 }

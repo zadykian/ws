@@ -45,7 +45,7 @@ func TestEveryStateFieldIsAState(t *testing.T) {
 }
 
 func TestStateTakesExactlyOne(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	const keys = "exactly one of linger, purged, http, ufw, routes, addr, run, reboot, locale, timezone, swap"
 	stateRefused(t, e, "after = \"\"\n", keys+", and this one sets 0")
 	stateRefused(t, e, "linger = \"u\"\npurged = \"p\"\n", keys+", and this one sets 2")
@@ -55,7 +55,7 @@ func TestStateTakesExactlyOne(t *testing.T) {
 }
 
 func TestStateLinger(t *testing.T) {
-	e, m, u, _ := testEnv(true)
+	e, m, u, _ := testEnv()
 	withAccount(m)
 	units := loadState(t, e, "linger = \"u\"\n")
 	if got, want := headlines(t, units[0].Step), []string{"enable lingering for u", "start user@1001.service"}; !slices.Equal(got, want) {
@@ -68,17 +68,8 @@ func TestStateLinger(t *testing.T) {
 	}
 }
 
-func TestStateLingerSkipsUnbooted(t *testing.T) {
-	e, m, _, out := testEnv(false)
-	if got := headlines(t, loadState(t, e, "linger = \"u\"\n")[0].Step); got != nil ||
-		slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "id ") }) ||
-		!slices.Equal(out.Lines, []string{"say: lingering for u: skipped, systemd is not running"}) {
-		t.Errorf("plan = %q, calls %q, lines %q; want none, no lookup, and the skip said once", got, m.Calls, out.Lines)
-	}
-}
-
 func TestStatePurged(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	m.Packages = effecttest.Packages{"p": {Version: "1", Status: "ii"}}
 	units := loadState(t, e, "purged = \"p\"\n")
 	if got := headlines(t, units[0].Step); !slices.Equal(got, []string{"purge p"}) {
@@ -103,7 +94,7 @@ func answering(t *testing.T, busy int32) string {
 }
 
 func TestStateHTTPWaits(t *testing.T) {
-	e, _, _, _ := testEnv(true)
+	e, _, _, _ := testEnv()
 	if got := headlines(t, loadState(t, e, "http = \""+answering(t, 0)+"\"\n")[0].Step); got != nil {
 		t.Errorf("plan of a URL that answers = %q, want none", got)
 	}
@@ -111,7 +102,7 @@ func TestStateHTTPWaits(t *testing.T) {
 	if got := headlines(t, loadState(t, e, "http = \""+url+"\"\n")[0].Step); !slices.Equal(got, []string{"wait for an answer at " + url}) {
 		t.Errorf("plan of a busy URL = %q, want the wait", got)
 	}
-	h := health{m: e.M, out: e.Out, url: url, tries: 3}
+	h := health{url: url, tries: 3}
 	if err := (await{h}).Apply(t.Context()); err != nil {
 		t.Errorf("wait for the third answer = %v, want none", err)
 	}
@@ -122,16 +113,8 @@ func TestStateHTTPWaits(t *testing.T) {
 	stateRefused(t, e, "http = \"127.0.0.1:1\"\n", "no http or https URL")
 }
 
-func TestStateHTTPSkipsUnbooted(t *testing.T) {
-	e, _, _, out := testEnv(false)
-	if got := headlines(t, loadState(t, e, "http = \"http://127.0.0.1:1/\"\n")[0].Step); got != nil ||
-		!slices.Equal(out.Lines, []string{"say: http://127.0.0.1:1/: skipped, systemd is not running"}) {
-		t.Errorf("plan = %q, lines %q; want none, and the skip said", got, out.Lines)
-	}
-}
-
 func TestStateUFWOwnsItsComment(t *testing.T) {
-	e, m, _, _ := testEnv(true)
+	e, m, _, _ := testEnv()
 	// The rule from 10.0.0.0/8 carries the comment DNS, 444e53 in hex, and the one from any too.
 	m.Files[ufw.UserRules] = []byte("### tuple ### allow any 53 172.17.0.1 any 0.0.0.0/0 in_docker0 comment=444e53\n" +
 		"### tuple ### allow any 53 172.17.0.1 any 10.0.0.0/8 in_docker0 comment=444e53\n" +
@@ -152,7 +135,7 @@ func TestStateUFWOwnsItsComment(t *testing.T) {
 }
 
 func TestStateRoutesAndAddrRefuse(t *testing.T) {
-	e, m, _, _ := testEnv(true)
+	e, m, _, _ := testEnv()
 	m.Results["ip -j -4 route show table all"] = effecttest.Result{Out: []byte(`[{"dst":"10.1.5.0/24","dev":"wg0","table":"7"}]`)}
 	units := loadState(t, e, "routes = { pool = \"10.1.0.0/16\", net = \"172.17.0.1/16\", dev = \"docker0\", hint = \"Move it.\" }\n")
 	_, err := units[0].Step.Plan(t.Context())
@@ -169,13 +152,12 @@ func TestStateRoutesAndAddrRefuse(t *testing.T) {
 	stateRefused(t, e, "addr = { iface = \"docker0\", want = \"x\" }\n", "addr: want:")
 }
 
-// rootRun is how a run state runs a command on Linux: in ws's env with root's HOME, in root's
-// session, with the system's PATH.
-const rootRun = "env HOME=/root env XDG_RUNTIME_DIR=/run/user/0 " +
-	"DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus " + systemPath + " "
+// rootRun is how a run state runs a command on Linux: in ws's env with root's HOME, without the
+// caller's session, with the system's PATH.
+const rootRun = "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + systemPath + " "
 
 func TestStateRunCreates(t *testing.T) {
-	e, m, _, _ := testEnv(true)
+	e, m, _, _ := testEnv()
 	m.Results[rootRun+"sh -c x"] = effecttest.Result{}
 	units := loadState(t, e, "run = { user = \"root\", command = [\"sh\", \"-c\", \"x\"], creates = [\"/root/.x\", \"/root/.y\"] }\n")
 	m.Files["/root/.x"] = nil
@@ -192,7 +174,7 @@ func TestStateRunCreates(t *testing.T) {
 }
 
 func TestStateRunCheck(t *testing.T) {
-	e, m, _, _ := testEnv(true)
+	e, m, _, _ := testEnv()
 	m.Results[rootRun+"ws x check"] = effecttest.Result{}
 	units := loadState(t, e, "run = { user = \"root\", command = [\"ws\", \"x\"], check = [\"ws\", \"x\", \"check\"] }\n")
 	if got := headlines(t, units[0].Step); got != nil {
@@ -205,8 +187,8 @@ func TestStateRunCheck(t *testing.T) {
 }
 
 func TestStateRunPutsItsPathFirst(t *testing.T) {
-	e, m, _, _ := testEnv(true)
-	const first = "env HOME=/root env XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus " +
+	e, m, _, _ := testEnv()
+	const first = "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " +
 		"PATH=/root/.local/bin:/root/.t:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "
 	m.Results[first+"ws x check"] = effecttest.Result{Err: errors.New("exit status 1")}
 	m.Results[first+"ws x"] = effecttest.Result{}
@@ -223,21 +205,12 @@ func TestStateRunPutsItsPathFirst(t *testing.T) {
 // A user other than root has no run on Linux, where ws's commands run as root alone. The Mac's
 // specs keep user (macos_test.go).
 func TestStateRunRefusesAnotherUserOnLinux(t *testing.T) {
-	e, _, _, _ := testEnv(true)
+	e, _, _, _ := testEnv()
 	stateRefused(t, e, "run = { user = \"u\", command = [\"sh\"], creates = [\"/x\"] }\n", "ws runs a command as root alone on Linux")
 }
 
-func TestStateRunSkipsUnbooted(t *testing.T) {
-	e, m, _, out := testEnv(false)
-	units := loadState(t, e, "run = { user = \"root\", command = [\"sh\"], creates = [\"/x\"] }\n")
-	if got := headlines(t, units[0].Step); got != nil || slices.Contains(m.Calls, "stat /x") ||
-		!slices.Equal(out.Lines, []string{"say: run sh as root: skipped, systemd is not running"}) {
-		t.Errorf("plan = %q, calls %q, lines %q; want nothing read, and the skip said", got, m.Calls, out.Lines)
-	}
-}
-
 func TestStateRunTakesCreatesOrCheck(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	stateRefused(t, e, "run = { user = \"root\", command = [\"sh\"] }\n", "exactly one of creates and check")
 	stateRefused(t, e, "run = { user = \"root\", command = [\"sh\"], creates = [\"/x\"], check = [\"true\"] }\n",
 		"exactly one of creates and check")
@@ -247,7 +220,7 @@ func TestStateRunTakesCreatesOrCheck(t *testing.T) {
 }
 
 func TestStateRunRefusesABadPath(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	for _, p := range []string{"bin", "/a/../b", "/a:/b", "/a/"} {
 		stateRefused(t, e, "run = { user = \"root\", path = [\""+p+"\"], command = [\"sh\"], creates = [\"/x\"] }\n",
 			"free of ':'")

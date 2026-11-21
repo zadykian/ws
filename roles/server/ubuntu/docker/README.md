@@ -16,9 +16,7 @@ source as `/etc/apt/sources.list.d/mise-docker.sources`, with the key inline. ap
 repository with two keys, so a machine that holds Docker's source already, as its install guide
 writes it with `Signed-By: /etc/apt/keyrings/docker.asc`, fails its first bootstrap at apt. On such
 a machine, as a cloud image with Docker, remove each file of `/etc/apt/sources.list.d` but mise's
-that names `download.docker.com` before `install.sh`: `docker.sources` or `docker.list`. Without systemd
-booted, as in CI's container, the units that need it skip and say so. They are Docker's service,
-the check of `docker0`, and ufw's rules.
+that names `download.docker.com` before `install.sh`: `docker.sources` or `docker.list`.
 
 ## Logs and restarts
 

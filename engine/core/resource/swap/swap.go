@@ -9,7 +9,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -21,7 +20,6 @@ const fstabLine = "/swapfile none swap sw 0 0"
 // refusal of a size that the disk lacks room for: how to give another.
 type File struct {
 	M       effect.Machine
-	Out     effect.Out
 	SizeMiB *int
 	Hint    string
 }
@@ -39,7 +37,6 @@ func (f File) Report(ctx context.Context) ([]step.Item, error) { return f.parts(
 // fields, not the File, whose Report would make it a part of itself.
 type swap struct {
 	M       effect.Machine
-	Out     effect.Out
 	SizeMiB *int
 	Hint    string
 	Disk    disk
@@ -48,7 +45,7 @@ type swap struct {
 
 // parts keeps the file on the disk d.
 func (f File) parts(d disk) resource.Joined {
-	s := swap{M: f.M, Out: f.Out, SizeMiB: f.SizeMiB, Hint: f.Hint, Disk: d}
+	s := swap{M: f.M, SizeMiB: f.SizeMiB, Hint: f.Hint, Disk: d}
 	on := s
 	on.active = true
 	none := f.SizeMiB != nil && *f.SizeMiB == 0
@@ -91,7 +88,7 @@ func (s swap) state() (swapState, error) {
 	if err != nil {
 		return swapState{}, err
 	}
-	return swapState{WantMiB: want, Areas: areas, AvailKiB: avail, DiskMiB: free, File: file, Booted: systemd.Booted(s.M)}, nil
+	return swapState{WantMiB: want, Areas: areas, AvailKiB: avail, DiskMiB: free, File: file}, nil
 }
 
 // wantMiB returns the swap file's size: the setting, or the RAM rounded up to a whole GiB where it

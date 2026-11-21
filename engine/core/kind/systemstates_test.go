@@ -15,7 +15,7 @@ import (
 const supportedLocales = "/usr/share/i18n/SUPPORTED"
 
 func TestLocaleStateGeneratesAMissingLocale(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	m.Files[supportedLocales] = []byte("en_US.UTF-8 UTF-8\nde_DE.UTF-8 UTF-8\n")
 	m.Files["/etc/locale.gen"] = []byte("# en_US.UTF-8 UTF-8\n")
 	m.Results["locale -a"] = effecttest.Result{Out: []byte("C\n")}
@@ -34,7 +34,7 @@ func TestLocaleStateGeneratesAMissingLocale(t *testing.T) {
 }
 
 func TestLocaleStateNamesItsHint(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	m.Files[supportedLocales] = []byte("en_US.UTF-8 UTF-8\n")
 	units := loadState(t, e, "locale = { name = \"xx_YY.UTF-8\", hint = \"Set WS_X to one it lists\" }\n")
 	_, err := units[0].Step.Plan(t.Context())
@@ -45,7 +45,7 @@ func TestLocaleStateNamesItsHint(t *testing.T) {
 }
 
 func TestTimezoneStateRefusesAPathOut(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	for _, name := range []string{"../x", "/x", "", "Etc/../x", ".."} {
 		stateRefused(t, e, "timezone = { name = \""+name+"\", hint = \"Set WS_X\" }\n",
 			"is no name below /usr/share/zoneinfo/, such as Etc/UTC. Set WS_X")
@@ -53,7 +53,7 @@ func TestTimezoneStateRefusesAPathOut(t *testing.T) {
 }
 
 func TestTimezoneStateLinksTheZone(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	m.Files["/usr/share/zoneinfo/Europe/Paris"] = []byte("tz")
 	m.Links["/etc/localtime"] = "/usr/share/zoneinfo/Etc/UTC"
 	units := loadState(t, e, "timezone = { name = \"Europe/Paris\", hint = \"h\" }\n")
@@ -71,7 +71,7 @@ func TestTimezoneStateLinksTheZone(t *testing.T) {
 }
 
 func TestSwapStateTakesTheRAMWithoutASize(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	// The swap's plan reads the disk of the machine that runs it, so the test reads the resource
 	// alone: its size, nil for the RAM's, and its hint.
 	for text, want := range map[string]*int{
@@ -93,6 +93,6 @@ func TestSwapStateTakesTheRAMWithoutASize(t *testing.T) {
 }
 
 func TestSwapStateRefusesANegativeSize(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	stateRefused(t, e, "swap = { size_mib = -1, hint = \"Set WS_X\" }\n", "swap: size_mib -1 is no size: it takes a whole number of MiB, or 0 for none. Set WS_X")
 }

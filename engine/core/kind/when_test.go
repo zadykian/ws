@@ -161,7 +161,7 @@ func TestWhenIsReadAtPlan(t *testing.T) {
 }
 
 func TestWhenRefusesAnUnknownFact(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	for cond, want := range map[string]string{
 		`{ gpu = "x" }`:        `when: no fact "gpu"; the facts are board_vendor, container, gpu_vendor`,
 		`{ board_vendor = 1 }`: "file.a.when (line 4",
@@ -174,7 +174,7 @@ func TestWhenRefusesAnUnknownFact(t *testing.T) {
 }
 
 func TestWhenRefusesAWantOfAnotherForm(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	for _, tc := range []struct {
 		want string
 		ok   bool
@@ -213,7 +213,7 @@ func TestWhenOnEveryKind(t *testing.T) {
 		}
 	}
 	for name, spec := range samples {
-		e, m, _, out := testEnv(true)
+		e, m, _, out := testEnv()
 		if name == "launchd" {
 			e.System = MacOS
 		}

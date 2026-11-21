@@ -7,7 +7,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // Later roles may need the VPN, as for a clone from the remote network, so one that is not up
@@ -17,8 +16,7 @@ const (
 	StatusWait  = 10 * time.Second
 )
 
-// Status checks that ikeward status passes. Without systemd booted it says so and plans nothing.
-// So it does where status fails in a run without the secrets, as InRun says. No unit of that run
+// Status checks that ikeward status passes. It plans nothing where status fails in a run without the secrets, as InRun says. No unit of that run
 // installs the VPN, so a wait would only fail the run 2 minutes later.
 type Status struct {
 	M     effect.Machine
@@ -49,10 +47,6 @@ func (c awaitVPN) Apply(ctx context.Context) error {
 
 // Plan plans the wait where ikeward status fails now.
 func (s Status) Plan(ctx context.Context) ([]resource.Change, error) {
-	if !systemd.Booted(s.M) {
-		s.Out.Say("ikeward status: skipped, systemd is not running")
-		return nil, nil
-	}
 	if _, err := s.M.Run(ctx, binary, "status"); err == nil {
 		return nil, nil
 	}

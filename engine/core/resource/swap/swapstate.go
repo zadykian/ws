@@ -25,7 +25,6 @@ type swapState struct {
 	AvailKiB int64            // MemAvailable, from /proc/meminfo
 	DiskMiB  int64            // the space available on /, from statfs
 	File     swapFileInfo
-	Booted   bool // swapon and swapoff need a booted systemd, as the role's tag said
 }
 
 // swapSteps are the changes that a state calls for, in the order they apply.

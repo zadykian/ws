@@ -41,7 +41,7 @@ AllowedIPs=10.99.0.2/32
 `
 )
 
-// tunnelMachine is a machine without systemd booted, with the group systemd-network and mac's key.
+// tunnelMachine is a machine with the group systemd-network and mac's key.
 func tunnelMachine() *effecttest.Machine {
 	m := effecttest.NewMachine()
 	m.Dirs["/etc"], m.Dirs["/etc/wireguard"] = 0o755, 0o700
@@ -81,7 +81,6 @@ func TestTunnelNetdevIs640OfSystemdNetwork(t *testing.T) {
 
 func TestTunnelPortRuleFollowsThePort(t *testing.T) {
 	m := tunnelMachine()
-	m.Dirs["/run/systemd/system"] = 0o755
 	// The second rule, on wg0, and the third, for TCP, carry the comment too, as rules made by hand.
 	comment := " comment=" + hex.EncodeToString([]byte("WireGuard")) + "\n"
 	m.Files[ufw.UserRules] = []byte("### tuple ### allow udp 51820 0.0.0.0/0 any 0.0.0.0/0 in" + comment +

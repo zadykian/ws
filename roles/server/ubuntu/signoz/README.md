@@ -41,8 +41,7 @@ this order, after Docker's and the frame's `state/ws-binary`. otelcol's units, w
 - `state/signoz-sync` runs `ws server signoz sync` where its `--check` fails: it waits for
   the API, then sets the retention and the dashboards.
 
-Without systemd booted, as in CI's container, the three skip and say so, and `root.env` is not
-written. otelcol's units wait on the sync.
+otelcol's units wait on the sync.
 
 ## Retention
 

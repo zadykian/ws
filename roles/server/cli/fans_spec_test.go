@@ -30,7 +30,7 @@ func withBoard(m *effecttest.Machine, maker string) {
 	m.Files["/sys/class/dmi/id/board_vendor"] = []byte(maker + "\n")
 }
 
-// fansMachine is a booted machine on the board, running the kernel, with the directories of /etc
+// fansMachine is a machine on the board, running the kernel, with the directories of /etc
 // that Ubuntu ships.
 func fansMachine() *effecttest.Machine {
 	m := effecttest.NewMachine()
@@ -38,7 +38,6 @@ func fansMachine() *effecttest.Machine {
 		m.Dirs[d] = 0o755
 	}
 	withBoard(m, fansBoard)
-	m.Dirs["/run/systemd/system"] = 0o755
 	m.Results["uname -r"] = effecttest.Result{Out: []byte(fansKernel + "\n")}
 	return m
 }
@@ -224,14 +223,6 @@ func TestFansServiceRestartsOnANewWs(t *testing.T) {
 	apply(t, fansSpecs(t, m, u, &effecttest.Out{}, fansValues(t)), "service/fans")
 	if !slices.Contains(u.Calls, "restart ws-fans.service") {
 		t.Errorf("calls = %q, want a restart on the new ws", u.Calls)
-	}
-}
-
-func TestFansServiceSkipsItsUnitWithoutSystemd(t *testing.T) {
-	m := fansMachine()
-	delete(m.Dirs, "/run/systemd/system")
-	if u := fansService(t, m); len(u.Calls) != 0 || m.Files["/etc/ws/fans.json"] == nil {
-		t.Errorf("calls = %q, fans.json %q; want the files alone", u.Calls, m.Files["/etc/ws/fans.json"])
 	}
 }
 

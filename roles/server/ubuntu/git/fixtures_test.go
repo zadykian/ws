@@ -109,6 +109,11 @@ func exits(t *testing.T, code int, why string) error {
 	return err
 }
 
+// wsInPlace is the check of the frame's unit that installs ws's binary, as the fake records it.
+const wsInPlace = "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " +
+	"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin " +
+	"sh -c cmp -s \"$(mise -C /opt/ws which ws)\" /usr/local/bin/ws"
+
 // keygen is the command line that makes the key of root's default path, as the fake records it.
 const keygen = "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " +
 	"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin " +

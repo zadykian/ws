@@ -3,7 +3,6 @@ package route_test
 import (
 	"errors"
 	"net/netip"
-	"slices"
 	"strings"
 	"testing"
 
@@ -58,14 +57,9 @@ func TestClearFailsWithoutTheRoutes(t *testing.T) {
 	}
 }
 
-// addr is the check that docker0 holds 172.17.0.1/16, on a booted machine or not, where docker0
-// holds the addresses held.
-func addr(booted bool, held ...string) (route.Addr, *effecttest.Out) {
-	m, out := effecttest.NewMachine(), &effecttest.Out{}
-	if booted {
-		m.Dirs["/run/systemd/system"] = 0o755
-	}
-	a := route.Addr{M: m, Out: out, Iface: "docker0", Want: netip.MustParsePrefix("172.17.0.1/16"), Hint: "Reboot.",
+// addr is the check that docker0 holds 172.17.0.1/16, where docker0 holds the addresses held.
+func addr(held ...string) route.Addr {
+	return route.Addr{Iface: "docker0", Want: netip.MustParsePrefix("172.17.0.1/16"), Hint: "Reboot.",
 		Held: func(iface string) ([]netip.Prefix, error) {
 			if iface != "docker0" {
 				return nil, errors.New("another interface")
@@ -76,7 +70,6 @@ func addr(booted bool, held ...string) (route.Addr, *effecttest.Out) {
 			}
 			return got, nil
 		}}
-	return a, out
 }
 
 func TestAddrRefusesAMissingAddress(t *testing.T) {
@@ -87,7 +80,7 @@ func TestAddrRefusesAMissingAddress(t *testing.T) {
 		{nil, "docker0 holds no address, not 172.17.0.1/16"},
 		{[]string{"172.18.0.1/16", "172.17.0.1/24"}, "docker0 holds 172.18.0.1/16, 172.17.0.1/24, not 172.17.0.1/16"},
 	} {
-		a, _ := addr(true, c.held...)
+		a := addr(c.held...)
 		changes, err := a.Plan(t.Context())
 		if err != nil || len(changes) != 1 || changes[0].String() != c.want {
 			t.Fatalf("held %q: Plan = %v, %v; want %q", c.held, changes, err, c.want)
@@ -99,16 +92,8 @@ func TestAddrRefusesAMissingAddress(t *testing.T) {
 }
 
 func TestAddrPassesTheWantedAddress(t *testing.T) {
-	a, _ := addr(true, "10.0.0.1/8", "172.17.0.1/16")
+	a := addr("10.0.0.1/8", "172.17.0.1/16")
 	if changes, err := a.Plan(t.Context()); err != nil || changes != nil {
 		t.Errorf("Plan = %v, %v; want none", changes, err)
-	}
-}
-
-func TestAddrSkipsUnbooted(t *testing.T) {
-	a, out := addr(false)
-	changes, err := a.Plan(t.Context())
-	if err != nil || changes != nil || !slices.Equal(out.Lines, []string{"say: docker0: skipped, systemd is not running"}) {
-		t.Errorf("Plan = %v, %v, lines %q; want none, and the skip said", changes, err, out.Lines)
 	}
 }
