@@ -1,8 +1,10 @@
 # The server job
 
-A container has no booted systemd, so `playbook` can't run the firewall around Docker. The job
-`server` runs on GitHub's `ubuntu-26.04` runner, which boots. It sets the runner up as it would a
-server that root alone logs in to: root's `authorized_keys` holds a key, no user is made, and
+CI sets up one scenario, the closest to a server installed from Ubuntu Server 26.04.1's image. The
+job `server` runs on GitHub's `ubuntu-26.04` runner, which boots, as root with the defaults and the
+outbound table on. The runner's image may hold a package that ws forgot to install. A server from
+Ubuntu's image lacks it, so the trial on that image finds it. The job sets the runner up as it
+would a server that root alone logs in to: root's `authorized_keys` holds a key, no user is made, and
 `/etc/ws/values.yml` says `WS_USER: root`. The runner's own Docker is purged first, as ws installs
 its own. Its apt source goes too, as apt refuses a repository that two sources name with different
 keys, and mise adds its own. So do the plugins that the image put in Docker's directory past dpkg,
@@ -14,19 +16,32 @@ soon falls in the past: an upgrade then holds dpkg's lock under the bootstrap. T
 namespace holds a private address that answers, `10.250.0.2`. The cases are
 [server-checks.sh](../server-checks.sh). Each refusal has a control that holds before ws runs.
 
-The tree goes in `/opt/ws`, root's alone, with its pin on the tree's build, as for
-[`playbook`](README.md#the-playbook-job). GitHub's runner keeps a default ACL on `/opt` that lets
+CI builds ws from the tree, never from a release. The tree goes in `/opt/ws`, root's alone, and
+[`.tools/serve-build`](../../.tools/serve-build) points its pin at the build, served on loopback
+in the release's place ([The pin](../../roles/server/ubuntu/frame/README.md#the-pin)). GitHub's runner keeps a default ACL on `/opt` that lets
 anyone write what lands there, so the job drops it first. Its image lets others write `/opt` and
 `/usr/share` too, where mise would refuse
 [the plugin](../../roles/server/ubuntu/frame/README.md#the-plugin), so the cases make both root's
-alone. As on a new machine, `install.sh` runs the bootstrap on the tree, which installs ws and sets
-up the firewall before Docker's ufw rules.
+alone. As on a new machine, `install.sh` installs the pinned mise and runs the bootstrap on the
+tree in place, with `MISE_LOCKED=1` and install.sh's `MISE_DATA_DIR`
+([bootstrap.sh](../bootstrap.sh)). The bootstrap installs ws and sets up the firewall before
+Docker's ufw rules.
 No apt command in it may wait for dpkg's lock, and neither of apt's daily services may run. The
 log shows the timers and their stamps before it and after it, and systemd's reloads, so that a
 failure shows what started the upgrade. `mise bootstrap plan --detailed-exitcode` must then
 exit 0. The bootstrap runs twice, and the plan must exit 0 again. Neither run nor plan may print a
 warning ([The warnings check](README.md#the-warnings-check)), and none is allowed here, as the
 runner boots. A failure prints the system daemon's log.
+
+The run leaves checks that need no container. With the frame's line of `state/ws-binary` dropped,
+the plan must exit 1 ([server-plan.sh](../server-plan.sh)): the check against a silent skip holds.
+A plan from `/opt/ws`, which loads no role, must exit 1 too, and name the run directory. The
+values file is root's at 600, and no run changed its bytes ([The values
+file](../../roles/server/ubuntu/frame/README.md#the-values-file)). A run with no file is
+`values_file_test.go`'s. The Zed wrapper's [checks](../zed-terminal-checks.sh) run on the files the
+bootstrap installed, and Fresh's on the config it loaded. Root's empty commit must sign and
+verify. With no NVIDIA GPU, `nvidia` checks its names alone, and with no MSI board, `fans` leaves
+its fans alone. Without a VPN profile, `ikeward` does nothing.
 
 The firewall must hold under the system daemon. Docker must pull the image, as a run of an image
 it lacks warns, and run a container that reaches the internet. Then:

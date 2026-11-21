@@ -100,7 +100,7 @@ WS_GITHUB_TOKEN = { env = "WS_GITHUB_TOKEN", allow_empty = true }
 - The file's content opens with a guard that mise's `exec` runs, in a plan and a run alike. Where
   the path holds a file whose first line is not ws's header, both stop and name it, and mise
   replaces nothing. mise's files step runs before ws's units, so no unit could guard it.
-- A run without the env, as CI's `playbook`, loads none of these files, so it keeps the secret
+- A run without the env, as CI's `server` bootstrap, loads none of these files, so it keeps the secret
   files as they are, and its plan lists none. The group states read a file's first line as the
   guard does, so a file by hand stops that run too, before the account's group opens it.
 - A unit reads a file that the same run wrote: mise's files step comes first. A plan writes none.
@@ -137,7 +137,7 @@ root's and the system's at once, which mise warns of on every run.
 [`TestPinLocksEachTarget`](../../../../cmd/pin_test.go) holds the version, the platforms and their
 URLs together in both files. `mise.local.toml` and `mise.local.lock`, which git ignores, pin a
 build of the tree in their place. [`.tools/serve-build`](../../../../.tools/serve-build) writes
-them, beside a build of ws and of serve-releases, which serves it on loopback. CI's `playbook` job
+them, beside a build of ws and of serve-releases, which serves it on loopback. CI's `server` job
 and a trial of a role run so, as a spec may need what the release lacks.
 
 The pin moves in a pull request of its own, after the release it names
@@ -150,7 +150,7 @@ person can name. Every run as root exports `MISE_DATA_DIR=/usr/local/share/mise`
 does, so that the account reaches the tools a role pins
 ([devtools](../devtools/README.md#the-tools)). The unit `state/ws-binary` copies the pinned binary
 to `/usr/local/bin/ws` where the two differ, under a temporary name first. As a `run` state, it
-skips without booted systemd, as in CI's container. A unit that runs `/usr/local/bin/ws` waits on
+skips without booted systemd. A unit that runs `/usr/local/bin/ws` waits on
 it by `after`.
 
 ## The values file
@@ -167,8 +167,8 @@ or `null`.
 
 The file is then the owner's: no run reads it as ws's, or changes it. Each call of ws reads the
 values as it starts, and the text reads as no file does, so the unit needs no `after`. CI's
-`playbook` job starts its default user's leg with no file
-([The `playbook` job](../../../../.github/workflows/README.md#the-playbook-job)).
+`server` job checks that no run changed the file
+([The server job](../../../../.github/workflows/server.md)).
 
 ## The check against a silent skip
 

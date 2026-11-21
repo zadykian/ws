@@ -59,7 +59,7 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
 - `.claude/`: this file, the rules of `rules/`, Claude Code's `settings.json` and the lint
   plugin's `lint-gates` ([Where else to look](#where-else-to-look)).
-- `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook`, `server`, `install` and
+- `.github/workflows/`: `ci.yml`, with the jobs `lint`, `server`, `install` and
   `signoz`;
   `mac.yml`, with `mac`, whose cases are `.github/mac/NN-*.sh`; `mac-cld.yml`, with `mac-cld`;
   `rules.yml`,
@@ -85,11 +85,10 @@ The gates are `shell`, `yamllint`, `tombi`, `stylua`, `sizecheck`, `vale`, `lych
 on macOS on arm64.
 It installs yamllint into `.cache`, and `.tools/run` downloads the rest there.
 
-The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `playbook` builds ws and runs `install.sh`'s
-bootstrap twice in an Ubuntu 26.04 container, with mise's plan.
-It checks the config that Fresh reads too. `signoz` forges SigNoz's compose files again, and
-`install` tries `install.sh`. `server` runs the firewall around Docker and the secrets task as
-root on a booted runner ([The server job](../.github/workflows/server.md)). `mac` sets up a
+The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `server` builds ws and runs `install.sh`'s bootstrap
+twice as root on a booted runner, with mise's plan. It checks the config that Fresh reads too, the
+firewall around Docker and the secrets task ([The server job](../.github/workflows/server.md)).
+`signoz` forges SigNoz's compose files again, and `install` tries `install.sh`. `mac` sets up a
 Mac on GitHub's macOS runner by `mise bootstrap`, whose last run must call no sudo and whose plan
 must exit 0. `mac-cld` sets up
 Ghostty, Zed and cld by the bootstrap on another ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `mise
@@ -122,13 +121,13 @@ LC_ALL=C tr _ ' ' <FILE | grep -ciwF -f <(sed -e 'y/_/ /' -e 's/^[[:space:]]*//'
 
 Each rule links where the repository gives its reason: a doc, a comment or a CI job.
 
-- `mise bootstrap` sets up the machine that runs it. CI's `playbook` job runs it in a container
-  ([The `playbook` job](../.github/workflows/README.md#the-playbook-job)).
+- `mise bootstrap` sets up the machine that runs it. CI's `server` job runs it on a booted runner
+  ([The server job](../.github/workflows/server.md)).
 - A second run changes nothing: CI's `playbook` and `rootless` jobs run the bootstrap twice. They
   fail where `mise bootstrap plan --detailed-exitcode` does not exit 0, before the second bootstrap
   and after it ([ci.yml](../.github/workflows/ci.yml)).
 - A unit that needs a booted machine's systemd checks `systemd.Booted`, and skips without it, as in
-  CI's container ([The `playbook` job](../.github/workflows/README.md#the-playbook-job)).
+  CI's container ([The server job](../.github/workflows/server.md)).
 - `release.yml` checks a release's files and notes for the local list's words before it publishes
   them. The list is the secret `FORBIDDEN_WORDS`, and the job fails on an empty one
   ([Cutting a release](../.github/workflows/release.md#cutting-a-release)).

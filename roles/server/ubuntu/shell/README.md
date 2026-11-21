@@ -51,7 +51,7 @@ task](../secrets/README.md#the-task) gives each input its value, from fnox, by t
   replaces nothing. Move its values into the secrets, then remove it.
 - Another variable is an input of `mise.secrets.toml` and its name in both lists of the file's
   template.
-- A run without the task, as CI's `playbook`, keeps the file unchanged. `state/shell-env-group`
+- A run without the task, as CI's `server` bootstrap, keeps the file unchanged. `state/shell-env-group`
   stops it at a file by hand, and leaves that file's group unchanged. No plan or log shows a value.
 
 Zed captures the login shell's environment, so a project's capture holds each value too

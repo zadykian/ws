@@ -118,8 +118,8 @@ stays until the input changes. Where two URLs match, the longer one wins. gh's p
 answers for GitHub, except below an entry's URL there.
 
 `tokens.gitconfig` follows the file whole: a URL the file lacks loses its program, and without the
-file, `tokens.gitconfig` goes. A run without the `secrets` env, as CI's `playbook`, keeps the file,
-and so its programs. A plan writes no file. So in the secrets task's run, the guard and the
+file, `tokens.gitconfig` goes. A run without the `secrets` env, as CI's `server` bootstrap, keeps
+the file, and so its programs. A plan writes no file. So in the secrets task's run, the guard and the
 tokens take the input from the run's env, and the plan shows the run's change. No token reaches
 `tokens.gitconfig`, `~/.gitconfig` or the run's output.
 
