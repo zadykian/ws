@@ -32,7 +32,8 @@ What each document holds. How to write them is in the `writing` skill and [writi
   [Its ssh](../../roles/client/macos/ssh/README.md) is its hosts, and [its cld](../../roles/client/macos/cld/README.md)
   cld's unit. [Its values](../../roles/client/values/README.md) is
   the Mac's values files, [the tunnel's](../../roles/client/macos/tunnel/README.md) the daemons' rules, and [ghostty](../../roles/client/macos/ghostty/README.md) its Ghostty
-  and what cld does there, [zed](../../roles/client/macos/zed/README.md) its Zed. [Its secrets](../../roles/client/macos/secrets/README.md)
+  and what cld does there, [zed](../../roles/client/macos/zed/README.md) its Zed,
+  [firewall](../../roles/client/macos/firewall/README.md) its firewall. [Its secrets](../../roles/client/macos/secrets/README.md)
   is the secrets' tools, fnox and age-plugin-yubikey, `ws client secrets`, and remove's part.
   [The server's secrets](../../roles/server/ubuntu/secrets/README.md#the-repository) is the fnox
   repository: its files, its recipients and the inputs of ws's roles. [The router](../../roles/server/ubuntu/cable/router.md)

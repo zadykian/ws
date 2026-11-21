@@ -51,7 +51,8 @@ it has any:
 
 `roles/client/` sets up the Mac that works on the server, and Ghostty and Zed on it: [The Mac](roles/client).
 Its [`frame`](roles/client/macos/frame) is what the Mac's roles of mise's config lean on, and
-`/usr/local/bin/ws`.
+`/usr/local/bin/ws`. Its [`firewall`](roles/client/macos/firewall) turns the Application Firewall on
+and has it block all incoming.
 
 A new Mac with Apple silicon follows [the Mac's runbook](roles/client/runbook.md), as
 `install.sh` is the server's alone. By hand, it installs ws's binary and mise, each checked against

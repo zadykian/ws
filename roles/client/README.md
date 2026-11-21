@@ -14,7 +14,9 @@ a direct way: `ssh -o HostName=ADDRESS -o Port=PORT ws`, as ufw lets SSH in on e
 
 The Mac's side is mise's config and ws's units, as the server's is, which `go test` checks on each
 pull request. It runs as the user, with sudo where it needs root. `mise bootstrap` sets up Ghostty,
-cld and a zsh hook ([Ghostty and cld on the Mac](macos/ghostty/README.md)). mise installs Ghostty, Zed
+cld and a zsh hook ([Ghostty and cld on the Mac](macos/ghostty/README.md)). It turns the firewall
+on and has it block all incoming, as the server reaches the Mac past no router
+([the firewall](macos/firewall/README.md)). mise installs Ghostty, Zed
 and a font as casks, and gh, fnox and age-plugin-yubikey by its lock, with no Homebrew
 ([the runbook](runbook.md)). The runbook puts `ws` in `~/.local/bin` (put it on `PATH` by hand)
 from a release, checked against its `ws.sha256` ([Releases](../../.github/workflows/release.md)),

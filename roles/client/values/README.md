@@ -19,8 +19,8 @@ WS_IDENTITY_AGENT: ~/PATH/socket.ssh
 ```yaml
 WS_SLOT: 0
 WS_PUBLIC_KEY: WS_KEY
-WS_LAN: 10.88.0.0/24
-WS_LAN_ADDRESS: 10.88.0.10
+WS_LAN: 10.88.0.0/23
+WS_LAN_ADDRESS: 10.88.1.10
 WS_CABLE_SERVICE: USB 10/100/1G/2.5G LAN
 WS_REMOTE: ws.example.com
 WS_REMOTE_PORT: 22022
@@ -76,7 +76,7 @@ user:
 ```text
 NAME  TARGET  SLOT  TUNNEL
 lab   cloud   1     stopped
-ws    lan     0     lan 10.88.0.10:51820
+ws    lan     0     lan 10.88.1.10:51820
 ```
 
 The tunnel is `absent` before the bootstrap sets its daemon up, and `stopped` where launchd has
@@ -102,8 +102,8 @@ cable's service keeps `10.77.0.2`. The server itself is not changed.
 `WS_TARGET=lan`, the default, is a machine at home, behind [The router](../../server/ubuntu/cable/router.md), with a cable to
 the Mac's display, if any:
 
-- `WS_LAN` is the home LAN, `10.88.0.0/24` by default, and `WS_LAN_ADDRESS` ws's static lease
-  there, `10.88.0.10`.
+- `WS_LAN` is the home LAN with the server's segment, `10.88.0.0/23` by default, and
+  `WS_LAN_ADDRESS` ws's static lease on the segment, `10.88.1.10`.
 - `WS_REMOTE` is the router's name on the internet, if any, and `WS_REMOTE_PORT` its forward to
   ws's 22, `22022` by default.
 - `WS_CABLE_SERVICE` and `WS_CABLE_PORT` set up the cable ([The cable](../README.md#the-cable)).

@@ -64,7 +64,9 @@ tree's plugin as the runbook does, and makes `/opt` and `/usr/local/share` root'
 a Mac, where the runner's image may differ. It sets up
 ssh, git and cld too. Its plan must exit 0 after the first run, a second run must call no sudo,
 and `/usr/local/bin/ws` must be the build. A spec whose unit no line names must fail the plan,
-and so must a plan from `/opt/ws` with every unit in sync.
+and so must a plan from `/opt/ws` with every unit in sync. After the first run the firewall must
+be on and block all incoming ([the Mac's firewall](../../roles/client/macos/firewall/README.md)).
+The cases after it, whose stand-ins listen on loopback, pass unchanged under it.
 The job's `values.yml` names a file key, made in case 20, as ws's
 login key and git's. Without ws's WireGuard key, the bootstrap must make the Mac's key, with
 `/etc/ws/tunnel.pub` its public half, and load no daemon, and `ssh -G ws` gives the tunnel's end.
