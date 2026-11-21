@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -54,4 +55,55 @@ func TestCommandLineToolsWaitEndsWhereTheContextEnds(t *testing.T) {
 		!strings.Contains(err.Error(), "a request stands") {
 		t.Errorf("err = %v, want the stop with the request's failure", err)
 	}
+}
+
+// withoutTools has a look for the command line tools fail once, and the tools stand after it.
+func withoutTools(m *effecttest.Machine) {
+	missing := effecttest.Result{Err: errors.New("xcode-select: error: unable to get active developer directory")}
+	m.Results[toolsLine] = missing
+	m.After = map[string]map[string]effecttest.Result{}
+	m.After[toolsLine] = map[string]effecttest.Result{toolsLine: {Out: []byte("/Library/Developer/CommandLineTools\n")}}
+}
+
+func TestSetupInstallsTheCommandLineToolsBeforeAnyGit(t *testing.T) {
+	rel := setupRelease(miseBody)
+	p, m := setupProcess(rel)
+	withoutTools(m)
+	m.Results["xcode-select --install"] = effecttest.Result{}
+	status, stderr := runSetup(p, rel)
+	if status != 0 || !strings.Contains(stderr, "waiting for the command line tools") {
+		t.Fatalf("status = %d, stderr = %q", status, stderr)
+	}
+	ask, git := indexOf(m, "run xcode-select --install"), indexOf(m, "run git")
+	if ask < 0 || git < ask {
+		t.Errorf("the install is at %d, git at %d: %q", ask, git, m.Calls)
+	}
+	if slices.Index(m.Calls[ask:], "run "+toolsLine) < 0 {
+		t.Errorf("setup did not look for the tools after it asked: %q", m.Calls)
+	}
+}
+
+func TestSetupLeavesTheCommandLineToolsThatStand(t *testing.T) {
+	rel := setupRelease(miseBody)
+	p, m := setupProcess(rel)
+	if status, stderr := runSetup(p, rel); status != 0 {
+		t.Fatalf("status = %d, stderr = %q", status, stderr)
+	}
+	if indexOf(m, "run xcode-select --install") >= 0 {
+		t.Errorf("the install was asked for: %q", m.Calls)
+	}
+}
+
+func TestSetupPlanSaysTheCommandLineToolsAreDueAndGoesNoFurther(t *testing.T) {
+	rel := setupRelease(miseBody)
+	p, m := setupProcess(rel)
+	withoutTools(m)
+	status, stderr := runSetup(p, rel, "--plan")
+	if status != 2 || !strings.Contains(stderr, "would install the command line tools") {
+		t.Errorf("status = %d, stderr = %q", status, stderr)
+	}
+	if indexOf(m, "run git") >= 0 || indexOf(m, "run xcode-select --install") >= 0 {
+		t.Errorf("the plan ran git or asked for the tools: %q", m.Calls)
+	}
+	leftNothing(t, m)
 }

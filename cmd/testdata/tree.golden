@@ -33,6 +33,7 @@ Available Commands:
   resolver    send DOMAIN's names to the nameservers, or drop it
   secrets     the commands of the secrets repository, which fnox keeps
   servers     list the Mac's servers with their target, slot and tunnel
+  setup       set the Mac up, as its user
   ssh         the commands of ssh's units
   tunnel      the Mac's tunnel to ws
   values      check and print the Mac's values
@@ -200,6 +201,23 @@ Usage:
 
 Flags:
   -h, --help   help for servers
+
+Global Flags:
+      --server string   the server to act on, which may be left out where there is one
+== ws client setup
+It refuses root, a system but macOS on arm64, and bad values, before any write. It refuses a tree or a directory above it that others may write. It installs the command line tools where xcode-select -p finds none: Apple's dialog opens, and setup waits until the tools stand, which Ctrl-C stops. It installs mise at the version ws pins, checked against its SHA-256, where mise --version differs, and writes /etc/mise/miserc.toml and /etc/mise/config.toml. It checks this ws's release tag out in /opt/ws, cleans the tree, links its plugin into mise's, and runs mise's bootstrap in the Mac's roles. It asks sudo for what root's paths need, and for no more where a run changes nothing, which a second run does.
+
+A ws that names no release tag, devel included, is refused: pass --in-place to run the tree in /opt/ws as it stands, after the guard.
+
+--plan plans these steps, and mise's bootstrap where none of them is due. Where the command line tools are due, it plans no more, as git needs them. It exits 0 where nothing would change and 2 where something would.
+
+Usage:
+  ws client setup [flags]
+
+Flags:
+  -h, --help       help for setup
+      --in-place   run the tree in /opt/ws as it stands, after the guard
+      --plan       plan setup's steps, and mise's where none is due: exit 2 where a change is due, and change nothing
 
 Global Flags:
       --server string   the server to act on, which may be left out where there is one
