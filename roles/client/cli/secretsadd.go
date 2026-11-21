@@ -22,10 +22,9 @@ import (
 	"github.com/zadykian/ws/roles/client/values"
 )
 
-// serverSecretsRun runs the server's task secrets, which fetches the secrets repository and runs
-// the bootstrap with the secrets, as root, by the server's own mise.
-var serverSecretsRun = []string{"env", "MISE_LOCKED=1", "mise", "-C", "/opt/ws/roles/server", "run",
-	"secrets"}
+// serverSecretsRun runs the server's own ws, as root, in its setup with the secrets. Its task
+// fetches the secrets repository on a first run, then runs the bootstrap under it.
+var serverSecretsRun = []string{"/usr/local/bin/ws", "server", "setup", "--secrets"}
 
 // newSecretsAddCmd returns ws client secrets add.
 func newSecretsAddCmd(p enginecli.Env, server *string) *cobra.Command {
@@ -40,8 +39,9 @@ func newSecretsAddCmd(p enginecli.Env, server *string) *cobra.Command {
 			"repository, it makes the key the hostname's recipient in fnox.toml and in fnox.HOSTNAME.toml, and " +
 			"encrypts their values again, which asks for the Nano's PIN and a touch. It keeps the key as the " +
 			"repository's read-only deploy key, titled with the hostname, and lands the change by a pull request " +
-			"once its checks pass. It then runs the server's task secrets over ssh -t. Last, it prints each host key " +
-			"that the secrets hold and known_hosts gives no host, to drop by hand where no server holds it now. " +
+			"once its checks pass. It then runs ws server setup --secrets on the server over ssh -t, which fetches " +
+			"the secrets on a first run. Last, it prints each host key that the secrets hold and known_hosts " +
+			"gives no host, to drop by hand where no server holds it now. " +
 			"Each step changes nothing where it is done, so run it again where one fails.",
 		Args: cobra.ExactArgs(1),
 		RunE: func(c *cobra.Command, args []string) error {
