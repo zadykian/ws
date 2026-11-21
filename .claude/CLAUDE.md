@@ -104,8 +104,9 @@ LC_ALL=C tr _ ' ' <FILE | grep -ciwF -f <(sed -e 'y/_/ /' -e 's/^[[:space:]]*//'
 
 ## How changes land
 
-- Pull requests are stacked, each on the one below it. CI runs some jobs on each,
-  whatever its base, and the others on the top one alone of a stack on `main`
+- Pull requests are stacked, each on the one below it. CI runs `lint` on each, whatever its
+  base, `install` and `signoz` on each of a stack on `main`, and the longest jobs on that stack's
+  top one alone
   ([Checks](../.github/workflows/README.md#checks)).
 - They land on `main` by GitHub's merge commits, as
   [`/flow:land`](https://github.com/zadykian/toolkit/blob/main/skills/land/SKILL.md) does. A pull

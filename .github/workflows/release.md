@@ -50,7 +50,7 @@ machine's miserc and runs `mise bootstrap`:
 
 ## The install job
 
-CI's `install` job runs [install-checks.sh](../install-checks.sh) on each pull request. It
+CI's `install` job runs [install-checks.sh](../install-checks.sh) on each pull request of a stack on `main`. It
 runs as a user with sudo on GitHub's runner, as `install.sh` writes `/etc/mise`, `/opt/ws` and
 `/etc/ws`, which each case removes. `WS_OS_RELEASE` names the runner's system Ubuntu 26.04,
 whatever its release. It downloads mise's real binary once and serves it on loopback
