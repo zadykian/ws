@@ -16,8 +16,9 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   holds its pins, and its templates and files beside its spec. ws-fans, the fans' service, is
   `ws server fans`, in `roles/server/ubuntu/fans/daemon`.
 - `roles/server/`: the server's side, its roles in `ubuntu/`. Above them sit the packages that
-  serve them all, `cli` and `values`, the runbook, and
-  `mise-tasks/secrets`, the task that runs the bootstrap under ws's secrets
+  serve them all, `cli` and `values`, the runbook, and `autoinstall.yaml`, the installer's
+  answers ([The install job](../.github/workflows/release.md#the-install-job)). `mise-tasks/secrets`
+  is the task that runs the bootstrap under ws's secrets
   ([The task](../roles/server/ubuntu/secrets/README.md#the-task)). `values` types the machine's
   values: `/etc/ws/values.yml`, on the machine alone, such as the cable's port
   ([The cable](../roles/server/ubuntu/cable/README.md#the-cable)).
@@ -142,7 +143,10 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([fans](../roles/server/ubuntu/fans/units.toml.tmpl)), and so are foundryctl
   ([ci.yml](../.github/workflows/ci.yml)) and the gates' tools ([.tools/run](../.tools/run)). So is ws's
   binary: `install.sh` and `ws update` check it against the release's `ws.sha256`
-  ([release.yml](../.github/workflows/release.yml), [update.go](../engine/core/update/update.go)), on the Mac too. So is mise's binary. `ws server setup`
+  ([release.yml](../.github/workflows/release.yml), [update.go](../engine/core/update/update.go)),
+  on the Mac too. So is the release's `install.sh`, which the autoinstall file checks against the
+  SHA-256 that `.github/autoinstall.sh` fills in
+  ([autoinstall.yaml](../roles/server/autoinstall.yaml)). So is mise's binary. `ws server setup`
   and `ws client setup` hold its SHA-256 for each target ([mise.go](../roles/internal/setup/mise.go)).
   So is the server's fnox:
   GitHub's digest of its release asset for each platform is in `roles/server/mise/mise.server.lock`
