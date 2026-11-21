@@ -1,6 +1,5 @@
 # The docker role's units, a Go template over /etc/ws/values.yml. mise adds Docker's repository and
-# packages first. These set up the daemon, its resolver and the account's own daemon, each behind
-# the one before. The account leaves the docker group ahead of them all.
+# packages first. These set up the daemon and its resolver, each behind the one before.
 {{- $bridge := printf "%s/%d" .Docker.BridgeIP .Docker.BridgePrefixLength }}
 
 # Docker avoids no route but the main table's on-link ones, so a VPN's route into its networks is
@@ -55,75 +54,3 @@ check = ["dockerd", "--validate", "--config-file", "{}"]
 [state.docker-bridge]
 addr = { iface = "docker0", want = "{{ $bridge }}", hint = "Docker moves it only as it starts with no container running, and until then lookups to a moved address get no answers. Reboot, or stop every container and restart Docker, then run the bootstrap again, as the server's runbook writes it" }
 after = "service/docker"
-{{- if ne .User "root" }}
-
-# The account's own daemon, where WS_USER is not root: mise.account.toml names these units. The
-# docker group amounts to root, which a daemon of the account's own keeps it from. The group comes
-# with the packages, so the account leaves it first: a run that stops at a later unit leaves no
-# account with root's power.
-[state.docker-left]
-left = { user = "{{ .User }}", group = "docker" }
-
-# rootlesskit maps a container's users to the account's subordinate ids. The account's daemon
-# waits on the system's.
-[state.docker-subids]
-subids = "{{ .User }}"
-after = "state/docker-bridge"
-
-# The cpuset and io controllers for the account's systemd: Ubuntu delegates cpu, memory and
-# pids. A container's --cpuset-cpus needs cpuset, without which the account's daemon warns, and
-# its --device-read-bps needs io.
-[file.docker-delegate]
-path = "/etc/systemd/system/user@.service.d/delegate.conf"
-source = "files/delegate.conf"
-after = "state/docker-subids"
-
-# The account's systemd runs without a login, as its daemon needs.
-[state.docker-linger]
-linger = "{{ .User }}"
-after = "file/docker-delegate"
-
-# The account's daemon, by Docker's own unit with the system's PATH, and one restart where any of
-# its files changes. Docker's setup tool would write the caller's PATH into the unit, and print the
-# unit's status with the journal's tail. The start reloads the account's systemd first: one that started
-# before dbus-user-session landed does not know dbus.socket.
-[service.docker-rootless]
-unit = "docker.service"
-user = "{{ .User }}"
-run = "running"
-after = "state/docker-linger"
-
-[[service.docker-rootless.file]]
-path = "{{ .Home }}/.config/systemd/user/docker.service"
-owner = "{{ .User }}"
-source = "files/rootless.service"
-
-[[service.docker-rootless.file]]
-path = "{{ .Home }}/.config/docker/daemon.json"
-owner = "{{ .User }}"
-template = "files/rootless.json.tmpl"
-check = ["dockerd", "--validate", "--config-file", "{}"]
-
-[[service.docker-rootless.file]]
-path = "{{ .Home }}/.config/systemd/user/docker.slice"
-owner = "{{ .User }}"
-template = "files/docker.slice.tmpl"
-
-[[service.docker-rootless.file]]
-path = "{{ .Home }}/.config/systemd/user/docker.service.d/ws.conf"
-owner = "{{ .User }}"
-source = "files/rootless.conf"
-
-# The account's systemd starts its daemon. The service unit cannot enable it: a unit of a user's
-# own systemd takes no enabled. A link of ws's would be root's, in the account's home.
-[state.docker-rootless-enable]
-run = { user = "{{ .User }}", command = ["systemctl", "--user", "enable", "docker.service"], check = ["systemctl", "--user", "is-enabled", "--quiet", "docker.service"] }
-after = "service/docker-rootless"
-
-# Docker's setup tool makes a context for the account's daemon, the current one of its
-# ~/.docker/config.json, by which docker reaches the daemon. ws never writes that file whole, as
-# it holds the registries' logins too.
-[state.docker-rootless-context]
-run = { user = "{{ .User }}", command = ["sh", "-c", "{ docker context ls -q | grep -qx rootless || docker --context=default context create rootless --description 'Rootless mode' --docker host=unix:///run/user/$(id -u)/docker.sock; } && docker --context=default context use rootless"], check = ["sh", "-c", "[ \"$(docker context show)\" = rootless ]"] }
-after = "state/docker-rootless-enable"
-{{- end }}
