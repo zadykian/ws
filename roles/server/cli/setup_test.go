@@ -22,25 +22,48 @@ func setupRelease(body string) setup.MiseRelease {
 		Sums: map[string]string{"linux-x64": fmt.Sprintf("%x", sha256.Sum256([]byte(body)))}}
 }
 
-// setupProcess returns a root process on an Ubuntu 26.04 machine on amd64 that serves miseBody.
+// treeRepo is where the tests' setup fetches the tree from.
+const treeRepo = "https://example.org/ws"
+
+// setupProcess returns a root process on an Ubuntu 26.04 machine on amd64 that serves miseBody and
+// has no tree yet. The process is of ws v1.2.3.
 func setupProcess(rel setup.MiseRelease) (enginecli.Env, *effecttest.Machine) {
 	p := fakeProcess()
 	m := effecttest.NewMachine()
 	p.Machine, p.Euid = m, 0
+	for _, dir := range aboveTree {
+		m.Dirs[dir] = 0o755
+	}
+	m.Results["git --version"] = effecttest.Result{Out: []byte("git version 2.50.0\n")}
+	for _, line := range []string{
+		"git -c init.defaultBranch=ws init -q /opt/ws",
+		"git -C /opt/ws fetch -q --depth 1 --force " + treeRepo + " refs/tags/v1.2.3:refs/tags/v1.2.3",
+		"git -C /opt/ws -c advice.detachedHead=false checkout -q --force --detach refs/tags/v1.2.3",
+		"git -C /opt/ws clean -q -ffdx",
+		bootstrapLine,
+	} {
+		m.Results[line] = effecttest.Result{}
+	}
 	m.Files[osRelease] = []byte("ID=ubuntu\nVERSION_ID=\"26.04\"\n")
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	m.Pages[rel.URL("linux-x64")] = []byte(miseBody)
 	return p, m
 }
 
-func runSetup(p enginecli.Env, rel setup.MiseRelease) (status int, stderr string) {
-	group := enginecli.Group("server", "the server", newSetupCmd(p, rel))
-	status, _, stderr = clitest.Run(p, []*cobra.Command{group}, "", "server", "setup")
+// runSetup runs ws server setup with args, as a run that fetches the tree from treeRepo.
+func runSetup(p enginecli.Env, rel setup.MiseRelease, args ...string) (status int, stderr string) {
+	return runSetupWith(p, setupConfig{Mise: rel, Repo: treeRepo}, args...)
+}
+
+func runSetupWith(p enginecli.Env, cfg setupConfig, args ...string) (status int, stderr string) {
+	group := enginecli.Group("server", "the server", newSetupCmd(p, cfg))
+	status, _, stderr = clitest.Run(p, []*cobra.Command{group}, "", append([]string{"server", "setup"}, args...)...)
 	return status, stderr
 }
 
-// leftNothing fails the test where the machine holds mise or a file of /etc/mise, or a call wrote.
-// A refusal before any write fetched nothing either, and tried says that a download was tried.
+// leftNothing fails the test where the machine holds mise or a file of /etc/mise, or a call wrote:
+// a file, a directory, a link or the tree. A refusal before any write fetched nothing either, and
+// tried says that a download was tried.
 func leftNothing(t *testing.T, m *effecttest.Machine, tried bool) {
 	for _, path := range []string{setup.MisePath, setup.MisercPath, setup.ConfigPath} {
 		if _, ok := m.Files[path]; ok {
@@ -48,7 +71,13 @@ func leftNothing(t *testing.T, m *effecttest.Machine, tried bool) {
 		}
 	}
 	for _, call := range m.Calls {
-		if strings.HasPrefix(call, "atomic ") || strings.HasPrefix(call, "download ") && !tried {
+		for _, write := range []string{"atomic ", "mkdir ", "symlink ", "chown ", "run git -c ", "run git -C /opt/ws fetch",
+			"run git -C /opt/ws clean", "run " + bootstrapLine} {
+			if strings.HasPrefix(call, write) {
+				t.Errorf("a write: %s", call)
+			}
+		}
+		if strings.HasPrefix(call, "download ") && !tried {
 			t.Errorf("a write: %s", call)
 		}
 	}

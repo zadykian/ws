@@ -118,12 +118,13 @@ and the inputs to the list that a run drops.
 
 ## The plugin
 
-`install.sh` links the tree's `plugins/ws` into `/usr/share/mise/plugins`, before the first run.
+`install.sh` and `ws server setup` link the tree's `plugins/ws` into `/usr/share/mise/plugins`,
+before the first run.
 mise finds a system plugin there and loads it as it stands, as no entry names it. A
 `[bootstrap.plugins]` entry would install it again on every run, with a warning. mise refuses a
 system plugin that anyone but root may change, or a directory on its way, `/opt` included. It
-drops the units then, with a warning alone. So `install.sh` refuses `/`, `/usr`, `/usr/share` or
-`/opt` where a group or others may write it, and makes `/usr/share/mise` and its `plugins` root's
+drops the units then, with a warning alone. So both refuse `/`, `/usr`, `/usr/share` or
+`/opt` where a group or others may write it, and make `/usr/share/mise` and its `plugins` root's
 and 755, whatever was there. After that, the [check](#the-check-against-a-silent-skip) fails a run
 that drops them. Its other
 system directory, `/usr/local/share/mise/plugins`, stays empty here. Root's own,
