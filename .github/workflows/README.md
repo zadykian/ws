@@ -2,11 +2,14 @@
 
 In a stack, CI runs `server`, `mac` and `mac-cld`, its longest jobs, on
 the top pull request alone, as it holds every change below it, and only where the stack rests on
-`main`. A pull request onto another branch, such as an integration branch, skips them: that
-branch's pull request to `main` runs them. `lint`, `install` and `signoz` run
-on each. A stack opens as drafts, as a pull request opens before its link, and only a later event
-names the stack. So these three skip a draft's `opened` run and start on `ready_for_review`, which
-the other three skip. A newer push to a pull request cancels the runs of the push before it.
+`main`. `install` and `signoz` run on each pull request of such a stack, and `lint` on every pull
+request. So a pull request onto another branch, such as an integration branch, takes `lint` alone
+of the six: that branch's pull request to `main` runs the rest.
+A stack opens as drafts, as a pull request opens before its link, and only a later event
+names the stack. So the longest three skip a draft's `opened` run and start on `ready_for_review`,
+which `lint` skips. `install` and `signoz` start there too above a stack's bottom, and skip it
+where they ran as the pull request opened. A newer push to a pull request cancels the runs of
+the push before it.
 The checks of `server`, `mac-cld` and a Mac's servers have pages: [server](server.md),
 [mac-cld](mac-cld.md) and [mac-servers](mac-servers.md). So have [the gates](../../.tools/README.md).
 

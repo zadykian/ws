@@ -100,9 +100,18 @@ jobs:
 
   # install.sh with the real mise, served on loopback, and a small repository in place of the
   # release's tree: .github/install-checks.sh. The pinned mise installs, a wrong one is refused, and
-  # the bootstrap runs from the latest release's tag, with the envs that the miserc names.
+  # the bootstrap runs from the latest release's tag, with the envs that the miserc names. It runs
+  # on each pull request of a stack on main. One onto another branch, such as an integration
+  # branch, skips it and takes lint alone of this workflow: that branch's pull request to main
+  # runs it. A stack's pull request above the bottom opens as a draft on the branch below it and
+  # names no stack yet, so ready_for_review starts its first run. The bottom one and a pull
+  # request outside a stack took theirs as they opened, and skip that event.
   install:
-    if: github.event.action != 'ready_for_review'
+    if: >-
+      (github.event.action != 'ready_for_review' || github.event.pull_request.stack.position > 1) &&
+      (github.event_name != 'pull_request' ||
+      (github.event.pull_request.stack.base.ref || github.event.pull_request.base.ref) ==
+      github.event.repository.default_branch)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -118,8 +127,13 @@ jobs:
   # SigNoz's compose files in roles/server/ubuntu/signoz are foundryctl's, forged from the casting
   # there. Forged again into an empty directory, as foundryctl never removes a file, they must be
   # the same. Only what it forges is compared, so the package may keep other files beside them.
+  # Gated as install.
   signoz:
-    if: github.event.action != 'ready_for_review'
+    if: >-
+      (github.event.action != 'ready_for_review' || github.event.pull_request.stack.position > 1) &&
+      (github.event_name != 'pull_request' ||
+      (github.event.pull_request.stack.base.ref || github.event.pull_request.base.ref) ==
+      github.event.repository.default_branch)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
