@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"slices"
+	"strings"
 	"testing"
 	"testing/fstest"
 
@@ -71,5 +72,35 @@ func TestFirewallUnitChangesNothingWhereBothAreOn(t *testing.T) {
 	}
 	if slices.Contains(m.Calls, "root "+enable) {
 		t.Errorf("calls = %q, want no sudo where the check holds", m.Calls)
+	}
+}
+
+// TestFirewallCheckReadsTheText runs the check's script on canned output of socketfilterfw's
+// get options, as the options exit 0 in each state.
+func TestFirewallCheckReadsTheText(t *testing.T) {
+	for _, tc := range []struct {
+		name, global, blockAll string
+		want                   bool
+	}{
+		{"both on", "Firewall is enabled. (State = 1)", "Block all ENABLED!", true},
+		{"block-all's own line", "Firewall is set to block all non-essential incoming connections", "Block all ENABLED!", true},
+		{"firewall off", "Firewall is disabled. (State = 0)", "Block all DISABLED!", false},
+		{"firewall off, block all on", "Firewall is disabled. (State = 0)", "Block all ENABLED!", false},
+		{"block all off", "Firewall is enabled. (State = 1)", "Block all DISABLED!", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			fakeText := "#!/bin/sh\ncase \"$1\" in\n--getglobalstate) echo '" + tc.global + "' ;;\n--getblockall) echo '" +
+				tc.blockAll + "' ;;\nesac\n"
+			fake := dir + "/socketfilterfw"
+			if err := os.WriteFile(fake, []byte(fakeText), 0o700); err != nil { //nolint:gosec // a script that the test runs
+				t.Fatal(err)
+			}
+			//nolint:gosec // the check's own script, pointed at the fake in the test's directory
+			err := exec.CommandContext(t.Context(), "sh", "-c", strings.ReplaceAll(script, socketfilterfw, fake)).Run()
+			if got := err == nil; got != tc.want {
+				t.Errorf("check passes = %v, want %v", got, tc.want)
+			}
+		})
 	}
 }
