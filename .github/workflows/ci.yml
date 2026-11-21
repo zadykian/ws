@@ -99,14 +99,14 @@ jobs:
         if: failure()
         run: sudo journalctl -n 80 --no-pager -u docker.service
 
-  # install.sh with the real mise, served on loopback, and a small repository in place of the
-  # release's tree: .github/install-checks.sh. The pinned mise installs, a wrong one is refused, and
-  # the bootstrap runs from the latest release's tag, with the envs that the miserc names. It runs
-  # on each pull request of a stack on main. One onto another branch, such as an integration
-  # branch, skips it and takes lint alone of this workflow: that branch's pull request to main
-  # runs it. A stack's pull request above the bottom opens as a draft on the branch below it and
-  # names no stack yet, so ready_for_review starts its first run. The bottom one and a pull
-  # request outside a stack took theirs as they opened, and skip that event.
+  # install.sh with a stub of ws for each target, served on loopback: .github/install-checks.sh.
+  # Each stub installs as /usr/local/bin/ws. A wrong sum and a missing file are refused. So is a
+  # /usr/local/bin that others may write, and one that is missing is made. The mac job runs it on
+  # macOS (mac/16-install.sh). It runs on each pull request of a stack on main. One onto another
+  # branch, such as an integration branch, skips it and takes lint alone of this workflow: that
+  # branch's pull request to main runs it. A stack's pull request above the bottom opens as a draft
+  # on the branch below it and names no stack yet, so ready_for_review starts its first run. The
+  # bottom one and a pull request outside a stack took theirs as they opened, and skip that event.
   install:
     if: >-
       (github.event.action != 'ready_for_review' || github.event.pull_request.stack.position > 1) &&

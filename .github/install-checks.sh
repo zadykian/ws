@@ -1,23 +1,24 @@
 #!/bin/bash
-# The install job's cases of install.sh, with the real mise and a small repository in place of the
-# release's tree. Run it from the repository's root, as a user with sudo. install.sh runs as root
-# and writes /usr/local/bin/mise, /etc/mise and /opt/ws, which each case removes. So it
+# The install job's cases of install.sh, with stubs in place of ws's releases. Run it from the
+# repository's root, as a user with sudo. install.sh runs as root and writes /usr/local/bin/ws,
+# which each case removes, and the cases move /usr/local/bin aside and change its owner. So it
 # runs on GitHub's runner, or on a spare machine where WS_SPARE_MACHINE is 1, and never on a
 # server.
 #
-# mise's binary, which install.sh pins, is downloaded once into a directory that serve-releases
-# serves on loopback. A copy of it with a byte added stands for a wrong one.
+# serve-releases serves the releases on loopback, as GitHub does. A stub of ws is a shell script
+# that prints its release and its target as ws version. A fake uname on the PATH of a case stands
+# for another target, as the runner is Linux on x86_64.
 #
-#     /mise/good/v$V/  the real binary          /mise/bad/v$V/  a copy with a byte added
-#     /latest          v0.2.0                   /mise/none/     no binary
-#
-# The repository v0.2.0 holds a file of mise's config for each env, and each writes one file. The
-# files written name the envs that the miserc loaded.
+#     /download/v0.2.0/ws-TARGET  a stub, for each target        /latest  v0.2.0
+#     /download/v0.2.0/ws.sha256  its SHA-256s, sha256sum's form
+#     /download/v0.5.0/           a ws-linux-amd64 that its sums do not fit
+#     /download/v0.6.0/           the sums of v0.2.0, and no file
 
 set -euo pipefail
 
 root=$PWD
 tmp=$(mktemp -d)
+aside=/usr/local/bin.aside
 trap 'kill "${server:-}" 2>/dev/null || true; reset; rm -rf "$tmp"' EXIT
 
 fail() {
@@ -34,77 +35,81 @@ as_root() {
     fi
 }
 
-# reset removes what a run of install.sh leaves, so that each case starts as a new machine.
+# reset removes what a run of install.sh leaves, and puts back what a case changed in /usr/local,
+# so that each case starts as a new machine.
 reset() {
-    as_root rm -rf /usr/local/bin/mise /usr/local/bin/.mise.* /etc/mise /opt/ws /etc/ws-install-check \
-        /usr/share/mise
+    if [ -e "$aside" ]; then
+        as_root rm -rf /usr/local/bin
+        as_root mv "$aside" /usr/local/bin
+    fi
+    as_root chown 0:0 /usr/local /usr/local/bin
+    as_root chmod 755 /usr/local /usr/local/bin
+    as_root rm -rf /usr/local/bin/ws /usr/local/bin/.ws.*
 }
 
 # install_sh [ENV=VALUE...] runs install.sh as root with the settings, from a stdin that is a pipe,
-# as curl's is. The runner's system stands as Ubuntu 26.04, whatever its release.
+# as curl's is.
 install_sh() {
-    echo | as_root env WS_RELEASES_URL="$url" WS_MISE_URL="$url/mise/good" WS_REPO="file://$tmp/repo" \
-        WS_OS_RELEASE="$tmp/os-release" "$@" sh "$root/install.sh"
+    echo | as_root env WS_RELEASES_URL="$url" "$@" sh "$root/install.sh"
 }
 
-# written ENV fails unless the bootstrap wrote the file of ENV, with ENV in it.
-written() {
-    [ "$(cat "/etc/ws-install-check/$1" 2>/dev/null)" = "$1" ] || fail "the bootstrap wrote no file of env $1"
+# fake_uname OS ARCH makes a uname that answers OS and ARCH, in $tmp/fake/OS-ARCH, and prints the
+# directory.
+fake_uname() {
+    mkdir -p "$tmp/fake/$1-$2"
+    cat >"$tmp/fake/$1-$2/uname" <<SH
+#!/bin/sh
+case \$1 in
+-s) echo $1 ;;
+-m) echo $2 ;;
+esac
+SH
+    chmod 755 "$tmp/fake/$1-$2/uname"
+    echo "$tmp/fake/$1-$2"
+}
+
+# installed WANT fails unless /usr/local/bin/ws is root's, 0755, and prints WANT as ws version.
+installed() {
+    [ "$(as_root stat -c '%u:%g %a' /usr/local/bin/ws)" = "0:0 755" ] || fail "ws is not 0:0 and 755"
+    [ "$(/usr/local/bin/ws version)" = "$1" ] || fail "ws is not the stub $1: $(/usr/local/bin/ws version)"
+}
+
+# nothing_left fails where a refused run left ws or a download in /usr/local/bin.
+nothing_left() {
+    [ ! -e /usr/local/bin/ws ] || fail "a refused install left ws"
+    ! compgen -G '/usr/local/bin/.ws.*' >/dev/null || fail "a refused install left a download"
+}
+
+# stub RELEASE TARGET writes the stub of ws for TARGET into the release's directory.
+stub() {
+    printf '%s\n' '#!/bin/sh' "echo $1 $2" >"$tmp/serve/download/$1/ws-$2"
+}
+
+# sums RELEASE writes the release's ws.sha256 for the files in its directory.
+sums() {
+    (cd "$tmp/serve/download/$1" && sha256sum ws-* >ws.sha256)
 }
 
 [ "$(id -u)" != 0 ] || [ -n "${WS_SPARE_MACHINE:-}" ] || fail "run it as a user with sudo"
-[ -n "${GITHUB_ACTIONS:-}${WS_SPARE_MACHINE:-}" ] || fail "it removes /etc/mise and /opt/ws: run it on a runner or a spare machine"
+[ -n "${GITHUB_ACTIONS:-}${WS_SPARE_MACHINE:-}" ] || fail "it replaces /usr/local/bin/ws: run it on a runner or a spare machine"
+[ "$(uname -m)" = x86_64 ] || fail "the cases take x86_64 as the machine's own target"
 
-# GitHub's runner keeps a default ACL on /opt, which lets anyone write what root makes there,
-# whatever the umask. install.sh refuses such a tree, and a server's /opt has no such ACL. Its
-# image lets others write /opt and /usr/share too, which install.sh refuses as mise would ignore
-# its plugin below them, and a server's are root's alone.
-! command -v setfacl >/dev/null || as_root setfacl -k /opt
-as_root chmod go-w /opt /usr/share
-
-printf '%s\n' 'NAME="Ubuntu"' 'ID=ubuntu' 'VERSION_ID="26.04"' >"$tmp/os-release"
-version=$(sed -n 's/^mise_version=//p' install.sh)
-case $(uname -m) in
-x86_64) asset=linux-x64 ;;
-aarch64) asset=linux-arm64 ;;
-*) fail "mise is pinned for x86_64 and aarch64 alone" ;;
-esac
-good=$tmp/serve/mise/good/v$version
-bad=$tmp/serve/mise/bad/v$version
-mkdir -p "$good" "$bad" "$tmp/serve/mise/none"
-curl -fsSL --proto '=https' --tlsv1.2 -o "$good/mise-v$version-$asset" \
-    "https://github.com/jdx/mise/releases/download/v$version/mise-v$version-$asset"
-cp "$good/mise-v$version-$asset" "$bad/"
-printf x >>"$bad/mise-v$version-$asset"
-echo v0.2.0 >"$tmp/serve/latest"
-
-# The release's tree: a config with an entry for each env's file, and a directory for them. The
-# secrets' file sits in a role, behind the side's link, as a role's do, and the root holds none.
-# On such a tree mise trust --all never ends, so the case of the latest release proves install.sh's
-# trust. A task stands for the secrets task: mise asks to trust a task that
-# holds a template's {{, {% or {#, and the secrets task's ${#host} holds {#.
-repo=$tmp/repo
-mkdir -p "$repo/roles/server/ubuntu/part" "$repo/roles/server/mise" "$repo/roles/server/mise-tasks"
-ln -s ../ubuntu "$repo/roles/server/mise/conf.d"
-echo '# the install job'"'"'s tree' >"$repo/mise.toml"
-# shellcheck disable=SC2016 # the task's own shell expands it, not this one.
-printf '%s\n' '#!/bin/sh' 'echo "${#0}"' >"$repo/roles/server/mise-tasks/check"
-chmod 755 "$repo/roles/server/mise-tasks/check"
-for env in server secrets; do
-    config=$repo/mise.$env.toml
-    [ "$env" != secrets ] || config=$repo/roles/server/ubuntu/part/mise.$env.toml
-    cat >"$config" <<TOML
-[bootstrap.directories."/etc/ws-install-check"]
-mode = "0755"
-
-[bootstrap.files."/etc/ws-install-check/$env"]
-content = "$env\n"
-TOML
+for release in v0.2.0 v0.3.0 v0.4.0-rc.1 v0.5.0 v0.6.0; do
+    mkdir -p "$tmp/serve/download/$release"
 done
-git -C "$repo" init -q
-git -C "$repo" add -A
-git -C "$repo" -c user.name=ws -c user.email=ws@localhost -c commit.gpgsign=false commit -q -m tree
-git -C "$repo" tag v0.2.0
+for target in linux-amd64 linux-arm64 darwin-arm64; do
+    for release in v0.2.0 v0.3.0 v0.4.0-rc.1; do
+        stub "$release" "$target"
+    done
+done
+sums v0.2.0
+sums v0.3.0
+sums v0.4.0-rc.1
+# A release whose sums are not its file's, and one that lists a file that it lacks.
+stub v0.5.0 linux-amd64
+printf '%064d  ws-linux-amd64\n' 0 >"$tmp/serve/download/v0.5.0/ws.sha256"
+cp "$tmp/serve/download/v0.2.0/ws.sha256" "$tmp/serve/download/v0.6.0/ws.sha256"
+echo v0.2.0 >"$tmp/serve/latest"
 
 serve=$tmp/serve-releases
 "$("$root/.tools/run" -path go)" build -o "$serve" ./.tools/serve-releases
@@ -116,144 +121,118 @@ for _ in $(seq 50); do
 done
 url=http://127.0.0.1:$(cat "$tmp/port")
 
+# The image of a runner lets others write /usr/local and its bin, as GitHub's ubuntu image does, and
+# a server's are root's alone.
+as_root chmod go-w /usr/local /usr/local/bin
 reset
+
 echo "::group::A user is refused, and nothing is installed"
-if WS_OS_RELEASE="$tmp/os-release" sh "$root/install.sh" </dev/null; then
+if WS_RELEASES_URL="$url" sh "$root/install.sh" </dev/null; then
     fail "install.sh went through as a user"
 fi
-[ ! -e /usr/local/bin/mise ] || fail "a refused install left mise"
+nothing_left
 echo "::endgroup::"
 
-echo "::group::A system other than Ubuntu 26.04 is refused, and nothing is installed"
-printf '%s\n' 'ID=ubuntu' 'VERSION_ID="24.04"' >"$tmp/os-release-24.04"
-printf '%s\n' 'ID=debian' 'VERSION_ID="13"' >"$tmp/os-release-debian"
-for system in 24.04 debian none; do
-    if install_sh WS_OS_RELEASE="$tmp/os-release-$system"; then
-        fail "install.sh went through on $system"
-    fi
-    [ ! -e /usr/local/bin/mise ] || fail "a refused install on $system left mise"
-done
-echo "::endgroup::"
-
-echo "::group::A wrong SHA-256 is refused, and nothing is left"
-if install_sh WS_MISE_URL="$url/mise/bad"; then
-    fail "install.sh went through with a wrong mise"
-fi
-[ ! -e /usr/local/bin/mise ] || fail "a refused install left mise"
-! compgen -G '/usr/local/bin/.mise.*' >/dev/null || fail "a refused install left a download"
-echo "::endgroup::"
-
-echo "::group::The latest release installs mise and runs its bootstrap"
+echo "::group::The latest release installs ws for each target"
 install_sh
-[ "$(/usr/local/bin/mise --version | cut -d' ' -f1)" = "$version" ] || fail "mise is not $version"
-# The files written show the envs that the miserc's set ws loaded.
-want=(server)
-for env in "${want[@]}"; do
-    written "$env"
+installed "v0.2.0 linux-amd64"
+for target in linux-arm64:Linux:aarch64 darwin-arm64:Darwin:arm64; do
+    IFS=: read -r want os arch <<<"$target"
+    reset
+    out=$(echo | as_root env PATH="$(fake_uname "$os" "$arch"):$PATH" WS_RELEASES_URL="$url" sh "$root/install.sh" 2>&1)
+    installed "v0.2.0 $want"
+    case $want in
+    darwin-*) next="ws client setup" ;;
+    *) next="ws server setup" ;;
+    esac
+    [ "${out##*$'\n'}" = "install.sh: next, run: $next" ] || fail "the last line for $want is not the next command: ${out##*$'\n'}"
 done
-# install.sh trusts the tree, so that a plan by hand, with no MISE_TRUSTED_CONFIG_PATHS, runs and
-# finds no change.
-as_root /usr/local/bin/mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null >/dev/null ||
-    fail "a plan by hand after install.sh found a change or failed"
-# A run by hand loads the tree's tasks, and mise refuses one that install.sh left untrusted. Where
-# CI or MISE_YES is set, mise takes an untrusted config, so neither is passed.
-as_root env -u CI -u MISE_YES /usr/local/bin/mise -C /opt/ws/roles/server bootstrap </dev/null >/dev/null ||
-    fail "a run by hand after install.sh refused the tree's task or failed"
-# The set ws leaves secrets out, which a run adds by -E ws,secrets. A plain plan after it keeps the
-# env's file, as a run without the env changes none of it.
-[ ! -e /etc/ws-install-check/secrets ] || fail "install.sh's run loaded the env secrets"
-as_root /usr/local/bin/mise -C /opt/ws/roles/server -E ws,secrets bootstrap </dev/null >/dev/null ||
-    fail "a run with -E ws,secrets failed"
-for env in "${want[@]}" secrets; do
-    written "$env"
-done
-as_root /usr/local/bin/mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null >/dev/null ||
-    fail "a plan by hand after the env secrets found a change or failed"
 echo "::endgroup::"
 
-echo "::group::A second run downloads no mise"
-install_sh WS_MISE_URL="$url/mise/none"
-written server
+echo "::group::A system that has no build is refused, and nothing is installed"
+reset
+for target in Linux:armv7l Darwin:x86_64 FreeBSD:amd64; do
+    IFS=: read -r os arch <<<"$target"
+    if echo | as_root env PATH="$(fake_uname "$os" "$arch"):$PATH" WS_RELEASES_URL="$url" sh "$root/install.sh"; then
+        fail "install.sh went through on $os $arch"
+    fi
+    nothing_left
+done
 echo "::endgroup::"
 
-# at TAG fails unless /opt/ws stands at the commit of TAG.
-at() {
-    [ "$(as_root git -C /opt/ws rev-parse HEAD)" = "$(git -C "$repo" rev-parse "$1^{commit}")" ] ||
-        fail "/opt/ws is not at $1"
-}
+echo "::group::A wrong SHA-256 and a missing file are refused, and nothing is left"
+for version in 0.5.0 0.6.0; do
+    if install_sh WS_VERSION="$version"; then
+        fail "install.sh went through with the release $version"
+    fi
+    nothing_left
+done
+# A refusal keeps the ws that stands, and leaves no download.
+install_sh
+for version in 0.5.0 0.6.0; do
+    if install_sh WS_VERSION="$version"; then
+        fail "install.sh went through with the release $version over a ws"
+    fi
+    installed "v0.2.0 linux-amd64"
+    ! compgen -G '/usr/local/bin/.ws.*' >/dev/null || fail "a refused install left a download"
+done
+echo "::endgroup::"
 
-echo "::group::A newer release checks its tag out, and drops the files git does not track"
-cat >>"$repo/mise.server.toml" <<'TOML'
-
-[bootstrap.files."/etc/ws-install-check/release"]
-content = "v0.3.0\n"
-TOML
-git -C "$repo" -c user.name=ws -c user.email=ws@localhost -c commit.gpgsign=false commit -q -am release
-git -C "$repo" tag v0.3.0
+echo "::group::A newer latest, and WS_VERSION, install their own release"
 echo v0.3.0 >"$tmp/serve/latest"
-# A file that git does not track, such as a trial's, would load over the tag's tree.
-printf '[bootstrap.files."/etc/ws-install-check/local"]\ncontent = "local\\n"\n' |
-    as_root tee /opt/ws/mise.local.toml >/dev/null
-install_sh WS_MISE_URL="$url/mise/none"
-at v0.3.0
-[ "$(cat /etc/ws-install-check/release 2>/dev/null)" = v0.3.0 ] || fail "the bootstrap ran no tree of v0.3.0"
-[ ! -e /opt/ws/mise.local.toml ] || fail "a file git does not track stayed in /opt/ws"
-[ ! -e /etc/ws-install-check/local ] || fail "the bootstrap loaded a file git does not track"
+install_sh
+installed "v0.3.0 linux-amd64"
+install_sh WS_VERSION=0.2.0
+installed "v0.2.0 linux-amd64"
 echo "::endgroup::"
 
-echo "::group::WS_VERSION checks its release's tag out"
-install_sh WS_VERSION=0.2.0 WS_MISE_URL="$url/mise/none"
-at v0.2.0
-echo "::endgroup::"
-
-echo "::group::A pre-release runs where WS_VERSION names it alone"
-git -C "$repo" -c user.name=ws -c user.email=ws@localhost -c commit.gpgsign=false commit -q --allow-empty -m rc
-git -C "$repo" tag v0.4.0-rc.1
-install_sh WS_VERSION=0.4.0-rc.1 WS_MISE_URL="$url/mise/none"
-at v0.4.0-rc.1
+echo "::group::A pre-release installs where WS_VERSION names it alone"
+install_sh WS_VERSION=v0.4.0-rc.1
+installed "v0.4.0-rc.1 linux-amd64"
 # GitHub never redirects releases/latest to a pre-release: install.sh refuses one that it finds there.
+reset
 echo v0.4.0-rc.1 >"$tmp/serve/latest"
-if install_sh WS_MISE_URL="$url/mise/none" 2>"$tmp/refusal"; then
+if install_sh 2>"$tmp/refusal"; then
     fail "install.sh took a pre-release as the latest release"
 fi
 grep -q 'GitHub redirects to' "$tmp/refusal" || fail "install.sh refused a pre-release as the latest, but not by its message"
-at v0.4.0-rc.1
+nothing_left
 echo v0.3.0 >"$tmp/serve/latest"
 echo "::endgroup::"
 
 echo "::group::A version that is no version is refused"
-reset
 for version in 0.2 0.4.0-rc.0 0.4.0-rc.01 0.4.0-beta.1; do
     if install_sh WS_VERSION="$version"; then
         fail "install.sh went through with WS_VERSION=$version"
     fi
-    [ ! -e /usr/local/bin/mise ] || fail "a refused install of $version left mise"
+    nothing_left
 done
 echo "::endgroup::"
 
-echo "::group::WS_IN_PLACE runs the tree in /opt/ws as it stands"
-as_root cp -r "$repo" /opt/ws
-install_sh WS_IN_PLACE=1 WS_REPO="file://$tmp/nothing"
-written server
-echo "::endgroup::"
-
-echo "::group::A tree that is not root's alone is refused"
-as_root chown nobody /opt/ws/mise.server.toml
-as_root rm -f /etc/ws-install-check/server
-if install_sh WS_IN_PLACE=1 WS_REPO="file://$tmp/nothing"; then
-    fail "install.sh ran a tree with a file that root does not own"
-fi
-[ ! -e /etc/ws-install-check/server ] || fail "a refused tree ran"
-echo "::endgroup::"
-
-echo "::group::An /opt that others may write is refused, as mise would ignore the plugin ws there"
+echo "::group::/usr/local/bin is made where it is missing, root's and 755"
+as_root mv /usr/local/bin "$aside"
+install_sh
+installed "v0.3.0 linux-amd64"
+[ "$(as_root stat -c '%u:%g %a' /usr/local/bin)" = "0:0 755" ] || fail "/usr/local/bin was not made 0:0 and 755"
 reset
-as_root cp -r "$repo" /opt/ws
-as_root chmod o+w /opt
-if install_sh WS_IN_PLACE=1 WS_REPO="file://$tmp/nothing" 2>"$tmp/refusal"; then
-    fail "install.sh ran with an /opt that others may write"
+echo "::endgroup::"
+
+echo "::group::A /usr/local/bin that another user owns, or others may write, is refused, and keeps its owner"
+for change in "chown nobody" "chmod o+w" "chmod g+w"; do
+    # shellcheck disable=SC2086 # CHANGE is a command and its operand, to split.
+    as_root $change /usr/local/bin
+    before=$(as_root stat -c '%U %a' /usr/local/bin)
+    if install_sh 2>"$tmp/refusal"; then
+        fail "install.sh went through with /usr/local/bin after $change"
+    fi
+    grep -q 'is not root.s alone' "$tmp/refusal" || fail "install.sh refused /usr/local/bin after $change, but not by its message"
+    [ "$(as_root stat -c '%U %a' /usr/local/bin)" = "$before" ] || fail "install.sh changed /usr/local/bin after $change"
+    reset
+done
+as_root chmod o+w /usr/local
+if install_sh 2>"$tmp/refusal"; then
+    fail "install.sh went through with a /usr/local that others may write"
 fi
-as_root chmod o-w /opt
-grep -q 'mise ignores the plugin ws' "$tmp/refusal" || fail "install.sh refused /opt, but not by its message"
-[ ! -e /etc/ws-install-check/server ] || fail "a refused run went on to the bootstrap"
+grep -q 'is not root.s alone' "$tmp/refusal" || fail "install.sh refused /usr/local, but not by its message"
+nothing_left
 echo "::endgroup::"
