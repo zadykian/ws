@@ -43,7 +43,7 @@ func TestAnExcerptKeepsTheDiffOfAFileWsReplaces(t *testing.T) {
 }
 
 func TestAUserChangeSaysItsKind(t *testing.T) {
-	for _, c := range []step.Change{file.UserWrite{Path: "/f"}, file.UserMkdir{Path: "/d"}, file.UserChmod{Path: "/f"}} {
+	for _, c := range []step.Change{file.UserWrite{Path: "/f"}} {
 		if got := step.KindOf(c); got != step.Write {
 			t.Errorf("%T: kind = %s, want %s", c, got, step.Write)
 		}
@@ -54,20 +54,15 @@ func TestAUserChangeAppliesItself(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	m.Results["cp -p /a /a~"] = effecttest.Result{}
 	for _, c := range []interface{ Apply(context.Context) error }{
-		file.UserMkdir{M: m, Path: "/d", Mode: 0o700},
 		file.UserWrite{M: m, Out: out, Path: "/d/f", After: []byte("x\n"), Mode: 0o600},
-		file.UserChmod{M: m, Path: "/d/f", Mode: 0o644},
 		file.UserBackup{M: m, Out: out, Path: "/a", To: "/a~"},
 	} {
 		if err := c.Apply(context.Background()); err != nil {
 			t.Fatalf("Apply(%v): %v", c, err)
 		}
 	}
-	if info, err := m.Stat("/d/f"); err != nil || info.Mode != 0o644 {
-		t.Errorf("Stat(/d/f) = %+v, %v; want mode 644", info, err)
-	}
-	if got := m.Dirs["/d"]; got != 0o700 {
-		t.Errorf("mode of /d = %o, want 700", got)
+	if info, err := m.Stat("/d/f"); err != nil || info.Mode != 0o600 {
+		t.Errorf("Stat(/d/f) = %+v, %v; want mode 600", info, err)
 	}
 	want := []string{"say: wrote /d/f", "say: kept the old /a as /a~"}
 	if len(out.Lines) != 2 || out.Lines[0] != want[0] || out.Lines[1] != want[1] {

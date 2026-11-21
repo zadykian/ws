@@ -20,14 +20,9 @@ The rules a change to the ws CLI keeps, in `cmd/`, `engine/` and `roles/`
   ([step.go](../../engine/core/step/step.go)).
 - A step is pure wherever it can be: it reads, a pure function turns what it read into `Change`
   values that apply themselves. Tests compare the plan's headlines (`step.Headline`).
-- A whole file that ws writes in the user's home is a `file.UserFile`, and a directory it writes
-  under a `file.UserDir`. They are core's file resources: a plan and a report read each alike. A
-  file that is not ws's stops its plan, or leaves it with a warning where its `Warn` is set
-  ([user.go](../../engine/core/resource/file/user.go),
-  [userdir.go](../../engine/core/resource/file/userdir.go)). ws's lines in a user's file are
-  `file.UserLines`, whose step warns or stops at a link or at misplaced lines
-  ([userlines.go](../../engine/core/resource/file/userlines.go)).
-- Effects are passed in: a step holds `effect.Prompt`, `effect.Out` and `effect.Machine` as fields
+- ws's lines in a user's file are `file.UserLines`, whose step warns or stops at a link or at
+  misplaced lines ([userlines.go](../../engine/core/resource/file/userlines.go)).
+- Effects are passed in: a step holds `effect.Out` and `effect.Machine` as fields
   and a function takes them as parameters. Tests use the fakes of
   [effecttest](../../engine/core/effect/effecttest/effecttest.go), never the real ones.
 - The Mac's units, of `mise -C /opt/ws/roles/client bootstrap`, read as the user and never through

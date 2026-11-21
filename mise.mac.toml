@@ -1,7 +1,8 @@
 # The Mac's frame. The env mac loads it, with the Mac's roles that roles/client/mise/conf.d
 # links. The Mac's miserc names that env. It loads no file of the server's. mise reads its own
-# files of root's through sudo on every run, so the Mac holds none. Its root paths are ws's units
-# alone, which read as the user and ask no password.
+# files of root's through sudo on every run, so the Mac holds none. It holds one file of the
+# user's, the check below. Its root paths are ws's units alone. They read as the user and ask no
+# password.
 
 # ws's units, `"ws:KIND/NAME" = "in-sync"` under [bootstrap.packages], go to the plugin ws, which
 # no [bootstrap.plugins] entry names: mise installs an entry again on every run, with a warning.
@@ -13,3 +14,15 @@
 # the side's run directory, with its units in sync too, and names that directory.
 [bootstrap.packages]
 "ws:state/ws-binary" = "in-sync"
+
+# The check of the values. ws client values check fails the plan and the run, before any unit reads
+# a value. It fails where values.yml or a server's file holds a bad key or lacks one. mise reads a
+# file of root's through sudo. So the file is the user's, in Library/Caches, which macOS always has. A
+# template renders before the packages' phase, where a unit would run. A pass prints one line, so
+# that the next plan finds the file unchanged. A first run, or the run that brings a new pin,
+# renders it before mise installs the pin's ws, and prints the line of a pass then. The first
+# unit's read refuses a bad value on that run.
+[bootstrap.files."~/Library/Caches/ws-values.checked"]
+template = true
+content = '''{{ exec(command="ws=$(mise which ws 2>/dev/null) || { echo 'ws values: checked'; exit 0; }; \"$ws\" client values check") }}
+'''

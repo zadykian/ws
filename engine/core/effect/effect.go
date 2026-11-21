@@ -1,4 +1,4 @@
-// Package effect holds the effects ws runs through: what it asks, says and does on a machine. Steps
+// Package effect holds the effects ws runs through: what it says and does on a machine. Steps
 // take these interfaces, so that their tests use the fakes of effecttest.
 package effect
 
@@ -22,27 +22,6 @@ var ErrTooLarge = errors.New("too large")
 // HomeFileMax is the most that ReadHomeFile reads: 1 MiB, far above any home file ws reads, so that
 // a file that the account grows never fills root's memory.
 const HomeFileMax = 1 << 20
-
-// Question is what ws asks, with its default and its check of the answer.
-type Question struct {
-	Text    string
-	Default string
-	// Valid is pure. A nil Valid takes any answer.
-	Valid func(string) error
-}
-
-// Prompt asks the maintainer.
-type Prompt interface {
-	// Ask asks again while q.Valid fails.
-	Ask(ctx context.Context, q Question) (string, error)
-}
-
-// Hidden asks for a secret, with no echo. It stands beside Prompt, whose fakes in other modules go on
-// compiling: effect is public.
-type Hidden interface {
-	// AskHidden returns the line as typed, blanks included.
-	AskHidden(ctx context.Context, text string) (string, error)
-}
 
 // Out tells the maintainer what ws does.
 type Out interface {

@@ -106,7 +106,7 @@ func unitList(p Env, s UnitSide) *cobra.Command {
 // that fails to load fails the command with status 1, as the specs and the values are the
 // machine's, not the command line's.
 func loadUnits(c *cobra.Command, p Env, s UnitSide) (unitRun, error) {
-	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+	term := effect.NewTerminal(c.ErrOrStderr())
 	r := unitRun{term: term, out: engine.Lines{Out: term, Prog: c.CommandPath(), Seen: map[string]bool{}}}
 	data, m, err := s.Values(c.Context(), p.Machine)
 	if err != nil {

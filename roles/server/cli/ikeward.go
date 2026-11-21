@@ -2,7 +2,6 @@ package cli
 
 import (
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -74,7 +73,7 @@ func newIkewardInstallCmd(p enginecli.Env) *cobra.Command {
 	}
 	check := c.Flags().Bool("check", false, "fail where install would change anything, and change nothing")
 	c.RunE = func(c *cobra.Command, _ []string) error {
-		term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+		term := effect.NewTerminal(c.ErrOrStderr())
 		defer term.Flush()
 		lines := linesOf(term, c.CommandPath())
 		i, err := ikewardReady(p, lines)
@@ -100,7 +99,7 @@ func newIkewardWaitCmd(p enginecli.Env, tries int, pause time.Duration) *cobra.C
 	}
 	check := c.Flags().Bool("check", false, "fail where the VPN is down and the run would wait, and change nothing")
 	c.RunE = func(c *cobra.Command, _ []string) error {
-		term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+		term := effect.NewTerminal(c.ErrOrStderr())
 		defer term.Flush()
 		lines := linesOf(term, c.CommandPath())
 		w := ikeward.Status{M: p.Machine, Out: lines, Tries: tries, Wait: pause, InRun: ikeward.InRun(p.LookupEnv)}

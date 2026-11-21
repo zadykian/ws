@@ -118,9 +118,10 @@ func TestNoMacRoleSetsAFramesKey(t *testing.T) {
 	clitest.FrameKeys(t, []string{macTreeRoot + "/mise.toml", macTreeRoot + "/" + macRoleFile}, macRolesDir+"/*/"+macRoleFile)
 }
 
-// TestMacConfigHoldsNoRootPath keeps mise's own files and dotfiles out of the Mac's config. mise
-// reads its files of root's through sudo on every run, which would ask a password of a run that
-// changes nothing. Its dotfiles replace the user's own file with no guard. ws's units hold both.
+// TestMacConfigHoldsNoRootPath keeps mise's own root paths and dotfiles out of the Mac's config.
+// mise reads its files of root's through sudo on every run, which would ask a password of a run
+// that changes nothing. Its dotfiles replace the user's own file with no guard. ws's units hold
+// both. A file under ~/ with no owner or group is the user's: mise reads and writes it as the user.
 func TestMacConfigHoldsNoRootPath(t *testing.T) {
 	files, err := filepath.Glob(macRolesDir + "/*/" + macRoleFile)
 	if err != nil {
@@ -132,16 +133,24 @@ func TestMacConfigHoldsNoRootPath(t *testing.T) {
 			t.Fatal(err)
 		}
 		var c struct {
-			Bootstrap map[string]any `toml:"bootstrap"`
-			Dotfiles  map[string]any `toml:"dotfiles"`
+			Bootstrap struct {
+				Files       map[string]map[string]any `toml:"files"`
+				Directories map[string]any            `toml:"directories"`
+			} `toml:"bootstrap"`
+			Dotfiles map[string]any `toml:"dotfiles"`
 		}
 		if err := toml.Unmarshal(text, &c); err != nil {
 			t.Fatalf("%s: %v", f, err)
 		}
-		for _, part := range []string{"files", "directories"} {
-			if _, ok := c.Bootstrap[part]; ok {
-				t.Errorf("%s: [bootstrap.%s] is mise's, read through sudo: make it a unit of ws's", f, part)
+		for target, part := range c.Bootstrap.Files {
+			_, owner := part["owner"]
+			_, group := part["group"]
+			if !strings.HasPrefix(target, "~/") || owner || group {
+				t.Errorf("%s: [bootstrap.files.%q] is root's, read through sudo: make it a unit of ws's, or a path under ~/ with no owner or group", f, target)
 			}
+		}
+		if len(c.Bootstrap.Directories) > 0 {
+			t.Errorf("%s: [bootstrap.directories] is mise's, and mise makes no missing parent: make it a unit of ws's", f)
 		}
 		if len(c.Dotfiles) > 0 {
 			t.Errorf("%s: [dotfiles] replaces the user's own file with no guard: make it a unit of ws's", f)

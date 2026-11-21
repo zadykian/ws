@@ -9,8 +9,12 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 )
+
+// The user's lines are a resource, which a step plans by resource.Append.
+var _ resource.Resource = UserLines{}
 
 func linesIn(m *effecttest.Machine, top bool) UserLines {
 	return UserLines{

@@ -17,11 +17,8 @@ warn, hint, notice, deprecated, error, cannot, unable, could not or ignoring, as
 starts as apt's `W:` and `E:` do. mise's colors don't hide one. The check names each line it
 finds and exits 1, and it keeps a plan's own exit code.
 
-It allows a few lines where systemd has not booted, each named and justified in the script. They
-come from what a container lacks: an init that tells a package's script the runlevel, and an
-`/etc/resolv.conf` that Docker doesn't bind-mount. On the server job's booted runner, it allows
-none. Its test, [warnings-check-test.sh](../warnings-check-test.sh), runs in `lint`, on a log with
-warnings and on one without.
+It allows no line. Its test, [warnings-check-test.sh](../warnings-check-test.sh), runs in
+`lint`, on a log with warnings and on one without.
 
 ## The install script
 
@@ -90,7 +87,9 @@ It must stop too on a `-setmanual` that fails or changes nothing, and name what 
 ([mac-setup-checks.sh](../mac-setup-checks.sh)).
 The cases of the keys run `mise -C /opt/ws/roles/client bootstrap` with an edited `values.yml`, and
 read the files it writes ([56-keys.sh](../mac/56-keys.sh)). A refusal must fail the bootstrap and
-its plan with its reason, and change no file. `ssh -G` must give `ws` the file key that the job's
+its plan with its reason, and change no file. With the server's `WS_LAN_ADDRESS` dropped, the plan
+must fail and name it and its file, as the frame's check of the values does
+([89-values-check.sh](../mac/89-values-check.sh)). `ssh -G` must give `ws` the file key that the job's
 `values.yml` names, by its four lines, and the file or the agent that `WS_IDENTITY_PUB_KEY` and
 `WS_IDENTITY_AGENT` name. An empty `WS_IDENTITY_PUB_KEY` must stop, though an agent at Secretive's
 socket holds a P-256 key. It gives the line that names each P-256 key by ws's copy of its `.pub`.

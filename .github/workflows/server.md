@@ -30,8 +30,8 @@ No apt command in it may wait for dpkg's lock, and neither of apt's daily servic
 log shows the timers and their stamps before it and after it, and systemd's reloads, so that a
 failure shows what started the upgrade. `mise bootstrap plan --detailed-exitcode` must then
 exit 0. The bootstrap runs twice, and the plan must exit 0 again. Neither run nor plan may print a
-warning ([The warnings check](README.md#the-warnings-check)), and none is allowed here, as the
-runner boots. A failure prints the system daemon's log.
+warning ([The warnings check](README.md#the-warnings-check)). A failure prints the system
+daemon's log.
 
 The run leaves checks that need no container. With the frame's line of `state/ws-binary` dropped,
 the plan must exit 1 ([server-plan.sh](../server-plan.sh)): the check against a silent skip holds.
