@@ -4,12 +4,12 @@
 # Refuses a networkd that does not run, and a peer's key file that holds no key, before wg0's key and
 # files change. It names each peer left out, and says the server's public key.
 [guard.tunnel]
-command = ["{{ self }}", "server", "ubuntu", "tunnel", "check"]
+command = ["{{ self }}", "server", "tunnel", "check"]
 
 # wg0's private key, made once and never shown, root:systemd-network 0640.
 [state.tunnel-key]
 after = "guard/tunnel"
-run = { user = "root", command = ["{{ self }}", "server", "ubuntu", "tunnel", "key"], check = ["{{ self }}", "server", "ubuntu", "tunnel", "key", "--check"] }
+run = { user = "root", command = ["{{ self }}", "server", "tunnel", "key"], check = ["{{ self }}", "server", "tunnel", "key", "--check"] }
 
 # wg0's files, which networkd reads as the group systemd-network. A change reloads networkd, which
 # updates wg0 in place, but for its key.
@@ -32,7 +32,7 @@ template = "60-wg0.network.tmpl"
 # wg0 made again where it holds another key than the file's, and the wait for it to hold the file's.
 [state.tunnel-wg0]
 after = "service/tunnel"
-run = { user = "root", command = ["{{ self }}", "server", "ubuntu", "tunnel", "wg0"], check = ["{{ self }}", "server", "ubuntu", "tunnel", "wg0", "--check"] }
+run = { user = "root", command = ["{{ self }}", "server", "tunnel", "wg0"], check = ["{{ self }}", "server", "tunnel", "wg0", "--check"] }
 
 # UDP on the tunnel's port, on every interface: the Mac reaches it over the cable, the LAN and the
 # router's forward. A rule of the comment in that shape for another port goes. One made by hand in

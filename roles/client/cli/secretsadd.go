@@ -27,7 +27,7 @@ import (
 var serverSecretsRun = []string{"sudo", "env", "MISE_DATA_DIR=/usr/local/share/mise", "MISE_LOCKED=1", "mise", "-C",
 	"/opt/ws/roles/server", "run", "secrets"}
 
-// newSecretsAddCmd returns ws client macos secrets add.
+// newSecretsAddCmd returns ws client secrets add.
 func newSecretsAddCmd(p enginecli.Env, server *string) *cobra.Command {
 	var address string
 	var port int
@@ -76,7 +76,7 @@ func runSecretsAdd(c *cobra.Command, p enginecli.Env, server, name, address stri
 		return err
 	}
 	if _, err := p.Machine.Stat(keyFile); errors.Is(err, fs.ErrNotExist) {
-		return fmt.Errorf("no fnox key file %s: run ws client macos secrets init first, which keeps the Nano's "+
+		return fmt.Errorf("no fnox key file %s: run ws client secrets init first, which keeps the Nano's "+
 			"stub there", keyFile)
 	} else if err != nil {
 		return fmt.Errorf("cannot stat fnox's key file %s: %w", keyFile, err)
@@ -94,7 +94,7 @@ func runSecretsAdd(c *cobra.Command, p enginecli.Env, server, name, address stri
 	if err != nil {
 		return err
 	}
-	again := strings.Join(append([]string{"ws client macos secrets add"}, addFlags(name, address, port)...), " ")
+	again := strings.Join(append([]string{"ws client secrets add"}, addFlags(name, address, port)...), " ")
 	_, _ = fmt.Fprintf(c.OutOrStdout(), "running the bootstrap with the secrets on %s, which takes 20 to 40 "+
 		"minutes on a new server\n", name)
 	run := append(append([]string{"-t"}, target...), serverSecretsRun...)

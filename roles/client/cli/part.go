@@ -21,7 +21,7 @@ import (
 // The Mac's parts that are no file: each a command of ws that a run state's unit runs, as the
 // user, with --check as its check. Each reads as the user, and a write of root's goes through sudo.
 
-// newCldCmd returns ws client macos cld, which cld's unit runs.
+// newCldCmd returns ws client cld, which cld's unit runs.
 func newCldCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Procedure("cld", "install cld into ~/.local/bin, and keep it at its latest release",
 		"It installs cld with the install.sh of its latest release where it is missing, and runs cld "+
@@ -36,7 +36,7 @@ func newCldCmd(p enginecli.Env) *cobra.Command {
 		})
 }
 
-// newKeysCmd returns ws client macos keys, which the keys' unit runs.
+// newKeysCmd returns ws client keys, which the keys' unit runs.
 func newKeysCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Procedure("keys", "copy the .pub of each key of Secretive's that values.yml names into /etc/ws",
 		"ssh and git name a key that Secretive's agent holds by its .pub, which macOS keeps ws from "+
@@ -55,7 +55,7 @@ func newKeysCmd(p enginecli.Env) *cobra.Command {
 		})
 }
 
-// newCableCmd returns ws client macos cable, which the cable's unit runs.
+// newCableCmd returns ws client cable, which the cable's unit runs.
 func newCableCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Procedure("cable", "give the cable's service its Manual Configuration of the Mac's end",
 		"The service that a server's WS_CABLE_SERVICE names takes 10.77.0.2/30 with no router, through "+
@@ -73,7 +73,7 @@ func newCableCmd(p enginecli.Env) *cobra.Command {
 		})
 }
 
-// newNetworksCmd returns ws client macos networks, which the networks' unit runs.
+// newNetworksCmd returns ws client networks, which the networks' unit runs.
 func newNetworksCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Procedure("networks", "route each server's WS_TUNNEL_NETWORKS and send its WS_RESOLVERS' domains to it",
 		"Each server with WS_PUBLIC_KEY gets its routes.d/values, and a file in /etc/resolver for each "+

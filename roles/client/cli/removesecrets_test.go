@@ -33,7 +33,7 @@ func removeSecretsFixture(files map[string]string) (enginecli.Env, *secretstest.
 func TestRemoveDropsTheKeyFromTheSecretsBeforeTheHost(t *testing.T) {
 	p, mac := removeSecretsFixture(heldBy(t, labKey))
 	mac.Keys = []secrets.DeployKey{{ID: 5, Title: "ws-a", Key: labKey, ReadOnly: true}}
-	status, stdout, stderr := runWs(p, "client", "macos", "remove", "lab")
+	status, stdout, stderr := runWs(p, "client", "remove", "lab")
 	if status != 0 {
 		t.Fatalf("remove lab: status = %d, stderr = %q", status, stderr)
 	}
@@ -48,7 +48,7 @@ func TestRemoveDropsTheKeyFromTheSecretsBeforeTheHost(t *testing.T) {
 		at = i
 	}
 	want := secrets.Change{Topic: "remove-ws-a", Title: "chore: remove the host key of ws-a",
-		Body: "Removed by ws client macos remove lab.", Files: []string{"fnox.toml", "fnox.ws-a.toml"}}
+		Body: "Removed by ws client remove lab.", Files: []string{"fnox.toml", "fnox.ws-a.toml"}}
 	if landed := mac.Landed(); len(landed) != 1 || !equalChange(landed[0], want) {
 		t.Errorf("remove landed %+v, want %+v", landed, want)
 	}
@@ -69,7 +69,7 @@ func TestRemoveOfAKeyThatIsNoRecipientLandsNothing(t *testing.T) {
 	p, mac := removeSecretsFixture(nil)
 	mac.Keys = []secrets.DeployKey{{ID: 9, Title: "ws-old", Key: labKey, ReadOnly: true},
 		{ID: 4, Title: "ws-b", Key: olderKey, ReadOnly: true}}
-	status, stdout, stderr := runWs(p, "client", "macos", "remove", "lab")
+	status, stdout, stderr := runWs(p, "client", "remove", "lab")
 	if status != 0 || !strings.Contains(stdout, "the secrets' recipients hold no host key of lab") {
 		t.Fatalf("remove of no recipient: status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
@@ -86,7 +86,7 @@ func TestRemoveKeepsTheServerWhereTheSecretsFail(t *testing.T) {
 	mac.Keys = []secrets.DeployKey{{ID: 5, Title: "ws-a", Key: labKey, ReadOnly: true}}
 	mac.Results[secrets.GH+" pr checks "+secretstest.Pull+" --json name,bucket"] = effecttest.Result{
 		Out: []byte(`[{"name":"values","bucket":"fail"},{"name":"gitleaks","bucket":"pass"}]`)}
-	status, stdout, stderr := runWs(p, "client", "macos", "remove", "lab")
+	status, stdout, stderr := runWs(p, "client", "remove", "lab")
 	if status != 1 || !strings.Contains(stderr, secretstest.Pull) || !strings.Contains(stderr, "lab stays on the Mac") {
 		t.Errorf("a failed landing: status = %d, stderr = %q; want 1, the link and the server kept", status, stderr)
 	}
@@ -106,7 +106,7 @@ func TestRemoveKeepsTheServerWhereTheSecretsFail(t *testing.T) {
 func TestRemoveWithoutTheMacsFnoxKeyLeavesItByHand(t *testing.T) {
 	p, m := removeFixture()
 	m.Results[bootstrapLine] = effecttest.Result{}
-	status, stdout, stderr := runWs(p, "client", "macos", "remove", "lab")
+	status, stdout, stderr := runWs(p, "client", "remove", "lab")
 	want := "removed lab\nBy hand: this Mac has no fnox key, " + fnoxKeyFile + ": from a Mac that has one, drop " +
 		"lab's host key, ssh-ed25519 BBBB, from the secrets' recipients and deploy keys\n"
 	if status != 0 || stdout != want {
@@ -120,7 +120,7 @@ func TestRemoveWithoutTheMacsFnoxKeyLeavesItByHand(t *testing.T) {
 func TestRemoveWithNoKeyInKnownHostsLeavesTheSecretsByHand(t *testing.T) {
 	p, mac := removeSecretsFixture(heldBy(t, labKey))
 	mac.Results[findLab] = effecttest.Result{Err: exec.Command("sh", "-c", "exit 1").Run()}
-	status, stdout, stderr := runWs(p, "client", "macos", "remove", "lab")
+	status, stdout, stderr := runWs(p, "client", "remove", "lab")
 	want := "removed lab\nBy hand: known_hosts holds no host key of lab: where add ran for it, drop its " +
 		"hostname's recipients and deploy key from the secrets\n"
 	if status != 0 || stdout != want {
@@ -134,7 +134,7 @@ func TestRemoveWithNoKeyInKnownHostsLeavesTheSecretsByHand(t *testing.T) {
 func TestRemoveOutOfReachOfTheSecretsSaysHowToGoOn(t *testing.T) {
 	p, mac := removeSecretsFixture(heldBy(t, labKey))
 	mac.Results[secrets.GH+" api repos/o/n --jq .private"] = effecttest.Result{Err: errors.New("exit status 1")}
-	status, stdout, stderr := runWs(p, "client", "macos", "remove", "lab")
+	status, stdout, stderr := runWs(p, "client", "remove", "lab")
 	for _, part := range []string{"by git, gh and the Nano", "--skip-secrets", "lab stays on the Mac: run remove again"} {
 		if status != 1 || !strings.Contains(stderr, part) {
 			t.Errorf("remove offline: status = %d, stderr = %q; want 1 and %q", status, stderr, part)
@@ -147,7 +147,7 @@ func TestRemoveOutOfReachOfTheSecretsSaysHowToGoOn(t *testing.T) {
 
 func TestRemoveBySkipSecretsLeavesTheKeyByHand(t *testing.T) {
 	p, mac := removeSecretsFixture(heldBy(t, labKey))
-	status, stdout, stderr := runWs(p, "client", "macos", "remove", "lab", "--skip-secrets")
+	status, stdout, stderr := runWs(p, "client", "remove", "lab", "--skip-secrets")
 	want := "removed lab\nBy hand: remove skipped the secrets: drop lab's host key, " + labKey +
 		", from the secrets' recipients and deploy keys\n"
 	if status != 0 || stdout != want {

@@ -16,7 +16,7 @@ import (
 	"github.com/zadykian/ws/roles/server/values"
 )
 
-// newGitCmd returns ws server ubuntu git: the procedures that the git role's units run.
+// newGitCmd returns ws server git: the procedures that the git role's units run.
 func newGitCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("git", "the git role's checks and procedures, which its units run",
 		newGitCheckCmd(p), newGitIncludedCmd(p), newGitTokensCmd(p), newGitClonesCmd(p),
@@ -34,7 +34,7 @@ func gitInputs(ctx context.Context, m effect.Machine) (values.Values, account.Ac
 	return v, a, err
 }
 
-// newGitCheckCmd returns ws server ubuntu git check.
+// newGitCheckCmd returns ws server git check.
 func newGitCheckCmd(p enginecli.Env) *cobra.Command {
 	return &cobra.Command{
 		Use:   "check",
@@ -60,7 +60,7 @@ func newGitCheckCmd(p enginecli.Env) *cobra.Command {
 	}
 }
 
-// newGitIncludedCmd returns ws server ubuntu git included.
+// newGitIncludedCmd returns ws server git included.
 func newGitIncludedCmd(p enginecli.Env) *cobra.Command {
 	return &cobra.Command{
 		Use:   "included",
@@ -88,7 +88,7 @@ func newGitIncludedCmd(p enginecli.Env) *cobra.Command {
 	}
 }
 
-// newGitCredentialCmd returns ws server ubuntu git credential.
+// newGitCredentialCmd returns ws server git credential.
 func newGitCredentialCmd(p enginecli.Env) *cobra.Command {
 	return &cobra.Command{
 		Use:   "credential KEY [ACTION]",
@@ -120,7 +120,7 @@ func gitProcedure(p enginecli.Env, use, short, long string, rs func(values.Value
 	})
 }
 
-// newGitTokensCmd returns ws server ubuntu git tokens.
+// newGitTokensCmd returns ws server git tokens.
 func newGitTokensCmd(p enginecli.Env) *cobra.Command {
 	return gitProcedure(p, "tokens", "write the credential programs of the URLs of "+git.TokensFile,
 		"Each URL of "+git.TokensFile+" gets ws's credential program in /etc/ws/tokens.gitconfig, root's with the "+
@@ -132,7 +132,7 @@ func newGitTokensCmd(p enginecli.Env) *cobra.Command {
 		})
 }
 
-// newGitClonesCmd returns ws server ubuntu git clones.
+// newGitClonesCmd returns ws server git clones.
 func newGitClonesCmd(p enginecli.Env) *cobra.Command {
 	return gitProcedure(p, "clones", "clone each repository of WS_GIT_CLONES whose dest is missing, as WS_USER",
 		"A clone is made once and never pulled (roles/server/ubuntu/git/README.md#clones). The git role's run "+

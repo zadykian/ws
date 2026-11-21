@@ -19,24 +19,24 @@ run = { user = "{{ .User }}", unbooted = true, path = ["{{ .Home }}/.local/bin"]
 
 [state.claude-update]
 after = "state/claude-cld-install"
-run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "ubuntu", "claude", "update"], check = ["{{ self }}", "server", "ubuntu", "claude", "update", "--check"] }
+run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "claude", "update"], check = ["{{ self }}", "server", "claude", "update", "--check"] }
 
 [state.claude-completion]
 after = "state/claude-update"
-run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "ubuntu", "claude", "completion"], check = ["{{ self }}", "server", "ubuntu", "claude", "completion", "--check"] }
+run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "claude", "completion"], check = ["{{ self }}", "server", "claude", "completion", "--check"] }
 
 [state.claude-settings]
 after = "state/claude-completion"
-run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "ubuntu", "claude", "settings"], check = ["{{ self }}", "server", "ubuntu", "claude", "settings", "--check"] }
+run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "claude", "settings"], check = ["{{ self }}", "server", "claude", "settings", "--check"] }
 
 [state.claude-telemetry]
 after = "state/claude-settings"
-run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "ubuntu", "claude", "telemetry"], check = ["{{ self }}", "server", "ubuntu", "claude", "telemetry", "--check"] }
+run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "claude", "telemetry"], check = ["{{ self }}", "server", "claude", "telemetry", "--check"] }
 
 # Every machine has the unit: an empty WS_CLAUDE_MARKETPLACES asks claude nothing.
 [state.claude-marketplaces]
 after = "state/claude-telemetry"
-run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "ubuntu", "claude", "marketplaces"], check = ["{{ self }}", "server", "ubuntu", "claude", "marketplaces", "--check"] }
+run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "claude", "marketplaces"], check = ["{{ self }}", "server", "claude", "marketplaces", "--check"] }
 
 # The account's systemd starts at boot, not at the first login, so that it restores cld's sessions.
 [state.claude-linger]
@@ -47,4 +47,4 @@ linger = "{{ .User }}"
 # it skips in a container.
 [state.claude-restore]
 after = "state/claude-linger"
-run = { user = "root", command = ["{{ self }}", "server", "ubuntu", "claude", "restore"], check = ["{{ self }}", "server", "ubuntu", "claude", "restore", "--check"] }
+run = { user = "root", command = ["{{ self }}", "server", "claude", "restore"], check = ["{{ self }}", "server", "claude", "restore", "--check"] }

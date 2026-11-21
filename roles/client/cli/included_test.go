@@ -10,10 +10,10 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
-// runIncluded runs ws client macos ROLE included with text on stdin.
+// runIncluded runs ws client ROLE included with text on stdin.
 func runIncluded(role, text string) (status int, stderr string) {
 	p := fakeProcess()
-	status, _, stderr = clitest.Run(p, []*cobra.Command{clientGroup(p)}, text, "client", "macos", role, "included")
+	status, _, stderr = clitest.Run(p, []*cobra.Command{Command(p)}, text, "client", role, "included")
 	return status, stderr
 }
 
@@ -39,7 +39,7 @@ func TestGitIncludedSaysByItsStatus(t *testing.T) {
 	m.Results["git config --file - --type path --get-all include.path"] = effecttest.Result{Out: []byte("/etc/ws/gitconfig\n")}
 	m.Results["git config --file - --name-only --list"] = effecttest.Result{Out: []byte("include.path\nuser.name\n")}
 	run := func() (int, string) {
-		status, _, stderr := clitest.Run(p, []*cobra.Command{clientGroup(p)}, "[include]\n", "client", "macos", "git", "included")
+		status, _, stderr := clitest.Run(p, []*cobra.Command{Command(p)}, "[include]\n", "client", "git", "included")
 		return status, stderr
 	}
 	if status, stderr := run(); status != 0 || m.Inputs[0] != "[include]\n" {

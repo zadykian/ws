@@ -26,7 +26,7 @@ func serversFixture() (*effecttest.Machine, func(...string) (int, string, string
 	m.Results["launchctl print system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{}
 	m.Files["/var/run/ws-tunnel.ws.state"] = []byte("tier=lan\nendpoint=10.88.0.10:51820\ninterface=utun5\nsince=1\nroutes=\nleft_out=\n")
 	return m, func(args ...string) (int, string, string) {
-		return runWs(p, append([]string{"client", "macos", "servers"}, args...)...)
+		return runWs(p, append([]string{"client", "servers"}, args...)...)
 	}
 }
 
@@ -52,7 +52,7 @@ func TestServersShowsAStoppedTunnel(t *testing.T) {
 func TestServersRefusesAServerFlag(t *testing.T) {
 	_, run := serversFixture()
 	status, stdout, stderr := run("--server", "ws")
-	if want := "ws client macos servers: servers lists every server: leave out --server\n"; status != 1 || stdout != "" || stderr != want {
+	if want := "ws client servers: servers lists every server: leave out --server\n"; status != 1 || stdout != "" || stderr != want {
 		t.Errorf("status = %d, stdout = %q, stderr = %q; want 1, %q", status, stdout, stderr, want)
 	}
 }
@@ -71,7 +71,7 @@ func TestServersNamesTheFileItRefuses(t *testing.T) {
 
 func TestServersWithNoneSaysHowToAddOne(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e/values.yml"})
-	status, _, stderr := runWs(p, "client", "macos", "servers")
+	status, _, stderr := runWs(p, "client", "servers")
 	if status != 1 || !strings.Contains(stderr, "no server beside /e/values.yml: write NAME/values.yml there, as roles/client/README.md says") {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}

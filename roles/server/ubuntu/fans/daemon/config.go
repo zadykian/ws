@@ -1,4 +1,4 @@
-// Package daemon is ws-fans, the daemon of ws server ubuntu fans. It drives the board's fans on the
+// Package daemon is ws-fans, the daemon of ws server fans. It drives the board's fans on the
 // curves of the config in /etc/ws/fans.json. As it stops, it hands them back to the board's own
 // curves.
 package daemon

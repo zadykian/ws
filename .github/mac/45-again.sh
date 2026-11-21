@@ -1,6 +1,6 @@
 #!/bin/bash
 # A second mise bootstrap with the daemon calls sudo not once, and its plan exits 0. The checks of
-# ws client macos tunnel conf, networks and cable, as their units run them, print nothing and
+# ws client tunnel conf, networks and cable, as their units run them, print nothing and
 # exit 0.
 
 set -eo pipefail
@@ -26,8 +26,8 @@ mac_bootstrap plan --detailed-exitcode || {
 }
 for part in 'tunnel conf' networks cable; do
     # shellcheck disable=SC2086 # the part's words are the command's
-    if ! out=$(ws client macos $part --check 2>&1) || [ -n "$out" ]; then
-        echo "::error::ws client macos $part --check is not in sync:"
+    if ! out=$(ws client $part --check 2>&1) || [ -n "$out" ]; then
+        echo "::error::ws client $part --check is not in sync:"
         printf '%s\n' "$out"
         fail=1
     fi

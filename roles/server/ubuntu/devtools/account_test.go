@@ -121,7 +121,7 @@ func TestDevtoolsUnitsForAnAccountAndRoot(t *testing.T) {
 		m.Calls = nil
 		changes(t, units(t, e, "state/devtools-gh-login")[0])
 		want := "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + systemPath +
-			" /usr/local/bin/ws server ubuntu devtools gh-login --check"
+			" /usr/local/bin/ws server devtools gh-login --check"
 		if !slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasSuffix(c, want) }) {
 			t.Errorf("gh-login: calls %q, want the check as %q", m.Calls, want)
 		}

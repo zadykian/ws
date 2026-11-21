@@ -5,7 +5,7 @@ openssh-client, and names the eight units of its `units.toml.tmpl`:
 
 - `file/git-config`: `/etc/ws/gitconfig`, root's and 644, from `files/ws.gitconfig.tmpl`. Each
   run replaces any change made to it.
-- `guard/git-check`: `ws server ubuntu git check`, after the key and its file, so that a refused
+- `guard/git-check`: `ws server git check`, after the key and its file, so that a refused
   token or clone stops no signing, and before the include, the tokens and the clones. It refuses a
   clone or a tokens file the role would act on, and names what shadows ws's settings.
 - `file/git-include`: the include at the top of `~/.gitconfig`.
@@ -13,12 +13,12 @@ openssh-client, and names the eight units of its `units.toml.tmpl`:
   ([Signing](#signing)).
 - `state/git-tokens-group`: the account's group on `/etc/ws/git-tokens.toml`, after the guard
   ([Git credentials](#git-credentials)).
-- `state/git-tokens` and `state/git-clones`: `ws server ubuntu git tokens` and `clones`, each with
+- `state/git-tokens` and `state/git-clones`: `ws server git tokens` and `clones`, each with
   `--check` as its check ([Git credentials](#git-credentials), [Clones](#clones)).
 
 The key, the tokens and the clones need no systemd, so a container runs them too.
 
-The guard's notes, the warnings below, show in `ws server ubuntu git check` and in
+The guard's notes, the warnings below, show in `ws server git check` and in
 `ws unit read guard/git-check`. `mise bootstrap` and its plan do not show them, as mise prints
 no line of a unit that passes: read the guard there after a run.
 
@@ -33,7 +33,7 @@ settings win:
 A run adds the include once, and makes the file where none exists. It keeps a `~/.gitconfig` that
 lacks the include beside the new one, as `~/.gitconfig.*~`: the name ends in the run's time. The
 plan shows ws's lines alone, as the file may hold a credential, an `http.extraHeader` say. A
-link at `~/.gitconfig` or on the way is refused. `ws server ubuntu git included` reads the file on
+link at `~/.gitconfig` or on the way is refused. `ws server git included` reads the file on
 its standard input and answers by its exit status. It exits 0 where the include sits at the top
 once, and 1 where the file lacks it. An include below the file's own settings, which it then
 overrides, or a second one, exits 2. The unit then fails and leaves the file untouched: the include
@@ -105,7 +105,7 @@ quote or a backslash, and one of `http://`, as git would send its token in clear
 and a key, never a value.
 
 `/etc/ws/tokens.gitconfig`, which `/etc/ws/gitconfig` includes, gets a credential program for each
-URL of the file: `ws server ubuntu git credential KEY`, where `KEY` is the URL without its scheme,
+URL of the file: `ws server git credential KEY`, where `KEY` is the URL without its scheme,
 each run of other characters than letters, digits, `.`, `_` and `-` as `_`. No two URLs may give
 the same key. The program names `/usr/local/bin/ws`, which the frame keeps, as mise's own path
 changes with each version. So git's units run after the frame's `state/ws-binary`, and a first
@@ -141,7 +141,7 @@ A private server may sit behind the VPN of the `ikeward` role
 ([A run](../ikeward/README.md#a-run)). A clone that fails, as from a server out of reach, fails its
 unit, and the next run tries again.
 
-`ws server ubuntu git clones --check` names each missing `dest` without reaching the server. A URL
+`ws server git clones --check` names each missing `dest` without reaching the server. A URL
 of `http://` or `https://` that holds a user name or token fails the guard, as the clone's config
 would keep it. So does a
 `dest` with `*`, `?` or `[`, as the check for a missing `dest` could take it as a pattern.

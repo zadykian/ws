@@ -41,7 +41,7 @@ refused() {
         echo "::error::mise bootstrap's plan exited $status, printing '$out', where a failure and server $2's '$1' were due"
         exit 1
     fi
-    printf '%s\n' "$out" | grep -qF "fix its file, or ws client macos remove $2" || {
+    printf '%s\n' "$out" | grep -qF "fix its file, or ws client remove $2" || {
         echo "::error::mise bootstrap's plan named no way out of server $2's file: '$out'"
         exit 1
     }

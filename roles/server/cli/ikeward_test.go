@@ -47,11 +47,11 @@ func ikewardMachine() *effecttest.Machine {
 	return m
 }
 
-// runIkeward runs ws server ubuntu ikeward with args on m, in a run whose env is env.
+// runIkeward runs ws server ikeward with args on m, in a run whose env is env.
 func runIkeward(m *effecttest.Machine, env map[string]string, args ...string) (int, string, string) {
 	p := clitest.WithEnv(fakeProcess(), env)
 	p.Machine, p.Euid = m, 0
-	return runWs(p, "", append([]string{"server", "ubuntu", "ikeward"}, args...)...)
+	return runWs(p, "", append([]string{"server", "ikeward"}, args...)...)
 }
 
 func TestIkewardInstallCheckRunsTheDryRun(t *testing.T) {

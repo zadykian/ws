@@ -1,4 +1,4 @@
-# cld, for cld restore tabs, which reopens Ghostty's tabs of cld's sessions. ws client macos cld
+# cld, for cld restore tabs, which reopens Ghostty's tabs of cld's sessions. ws client cld
 # installs it into ~/.local/bin where missing, by its latest release's install.sh. It runs cld
 # update where a newer release is out. Its check reads the latest release as the command
 # does, so that the two agree. The run is the user's, as is ~/.local/bin, which comes first on its
@@ -6,5 +6,5 @@
 [state.cld.run]
 user = "{{ .User }}"
 path = ["{{ .Home }}/.local/bin"]
-command = ["{{ self }}", "client", "macos", "cld"]
-check = ["{{ self }}", "client", "macos", "cld", "--check"]
+command = ["{{ self }}", "client", "cld"]
+check = ["{{ self }}", "client", "cld", "--check"]

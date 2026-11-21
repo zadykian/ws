@@ -62,7 +62,7 @@ through the task then fetches a new shared value. It exits 2 and keeps the file,
 a failed task ends it, outside the warnings check. The second run writes the new value. The clone
 is root's 700, and the user can't read it or the host key, or run the task. A file of the clone's
 own, a profile that the host key can't open and a missing profile are refused, and the file keeps
-its bytes. The last two name `ws client macos secrets add NAME`. The third run follows them, and the
+its bytes. The last two name `ws client secrets add NAME`. The third run follows them, and the
 file still holds both values. No output of the task's holds a value. Only GitHub proves the fetch
 from github.com by a deploy key, against the key that ws pins.
 

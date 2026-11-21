@@ -37,7 +37,7 @@ func (c await) Apply(ctx context.Context) error {
 // Name returns the step's name.
 func (Ready) Name() string { return "signoz ready" }
 
-// WaitsOn returns none: the step comes first in ws server ubuntu signoz sync, a run of its own,
+// WaitsOn returns none: the step comes first in ws server signoz sync, a run of its own,
 // after the compose unit.
 func (Ready) WaitsOn() string { return "" }
 

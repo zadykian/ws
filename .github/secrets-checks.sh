@@ -174,7 +174,7 @@ refusal() {
     [ "$sum" = "$(sha256sum "$file")" ] || fail "$1: the file changed"
     echo "ok: $1"
 }
-hint='ws client macos secrets add NAME'
+hint='ws client secrets add NAME'
 touch /var/lib/ws/secrets/fnox.local.toml
 refusal "a file of the clone's own is refused" 'holds changes of its own'
 rm /var/lib/ws/secrets/fnox.local.toml

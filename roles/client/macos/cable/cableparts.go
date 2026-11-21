@@ -6,7 +6,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 )
 
-// Part is the cable as one resource, which ws client macos cable plans and applies.
+// Part is the cable as one resource, which ws client cable plans and applies.
 func (c Cable) Part() resource.Resource { return cablePart{c} }
 
 // cablePart plans the service's setting.

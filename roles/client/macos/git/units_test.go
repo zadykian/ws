@@ -71,7 +71,7 @@ func exitOne() error {
 
 func TestGitUnitsWriteTheFilesAndTheInclude(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Results["/ws client macos git included"] = effecttest.Result{Err: exitOne()}
+	m.Results["/ws client git included"] = effecttest.Result{Err: exitOne()}
 	m.Results[ghCheck] = effecttest.Result{}
 	m.Files["/etc/ws/secretive-ssh-keygen"] = []byte("# Written by github.com/zadykian/ws\n")
 	texts := git.Texts{Config: "[user]\n\tname = me\n", Signers: "me@zadykian.dev ssh-ed25519 AAAA\n"}
@@ -86,7 +86,7 @@ func TestGitUnitsWriteTheFilesAndTheInclude(t *testing.T) {
 	if _, ok := m.Files["/etc/ws/secretive-ssh-keygen"]; ok {
 		t.Error("the script stays for a key in a file, want it gone")
 	}
-	m.Results["/ws client macos git included"] = effecttest.Result{}
+	m.Results["/ws client git included"] = effecttest.Result{}
 	for _, u := range units {
 		if p, err := u.Step.Plan(t.Context()); err != nil || len(p.Changes) > 0 {
 			t.Errorf("%s: second plan = %v, %v; want none", u.Name, p.Changes, err)
@@ -96,7 +96,7 @@ func TestGitUnitsWriteTheFilesAndTheInclude(t *testing.T) {
 
 func TestGitKeygenIsExecutable(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Results["/ws client macos git included"] = effecttest.Result{}
+	m.Results["/ws client git included"] = effecttest.Result{}
 	m.Results[ghCheck] = effecttest.Result{}
 	apply(t, macUnits(t, m, git.Texts{Config: "[gpg]\n", Signers: "x\n", Keygen: "#!/bin/sh\nexec ssh-keygen \"$@\"\n"}))
 	if m.Modes["/etc/ws/secretive-ssh-keygen"]&0o777 != 0o755 {
@@ -106,7 +106,7 @@ func TestGitKeygenIsExecutable(t *testing.T) {
 
 func TestGhUnitCopiesMisesGh(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Results["/ws client macos git included"] = effecttest.Result{}
+	m.Results["/ws client git included"] = effecttest.Result{}
 	m.Results[ghCheck] = effecttest.Result{Err: exitOne()}
 	m.Results[ghCopy] = effecttest.Result{}
 	apply(t, macUnits(t, m, git.Texts{Config: "[gpg]\n", Signers: "x\n"}))

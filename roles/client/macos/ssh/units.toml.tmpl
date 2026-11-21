@@ -6,8 +6,8 @@
 # from the agent. A key in a file has none. The command writes through sudo where a copy differs.
 [state.keys.run]
 user = "{{ .User }}"
-command = ["{{ self }}", "client", "macos", "keys"]
-check = ["{{ self }}", "client", "macos", "keys", "--check"]
+command = ["{{ self }}", "client", "keys"]
+check = ["{{ self }}", "client", "keys", "--check"]
 
 # ~/.ssh, the user's and 0700, where missing, as ssh-keygen and ssh make it.
 [state.ssh-dir.run]
@@ -32,4 +32,4 @@ path = "{{ .Home }}/.ssh/config"
 owner = "{{ .User }}"
 mode = 0o600
 line = "Include /etc/ws/ssh_config"
-has = ["{{ self }}", "client", "macos", "ssh", "included"]
+has = ["{{ self }}", "client", "ssh", "included"]

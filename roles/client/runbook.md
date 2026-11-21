@@ -80,10 +80,10 @@ installer, turn OpenSSH on, import the keys from GitHub and leave password login
 1. Once, create the secrets repository by `gh repo create zadykian/ws-secrets --private`, with its
    README, license and `check` workflow, whose jobs `values` and `gitleaks` its ruleset on `main`
    requires.
-2. With the Nano plugged in, run `ws client macos secrets init`. Where the Nano holds no age
+2. With the Nano plugged in, run `ws client secrets init`. Where the Nano holds no age
    identity, it asks for the Nano's PIN and a touch. It prints the backup key's secret line once:
    keep it on paper or in a password manager, then press Enter. It lands `fnox.toml` by a pull
-   request ([ws client macos secrets init](macos/secrets/README.md#ws-client-macos-secrets-init)).
+   request ([ws client secrets init](macos/secrets/README.md#ws-client-secrets-init)).
 3. Run it again once `/opt/ws` moves to a release that declares a new input. Until then, a
    server's run of that release fails at mise, which finds no value of the input.
 4. To set a value, such as `WS_GITHUB_TOKEN`, clone the repository by
@@ -93,7 +93,7 @@ installer, turn OpenSSH on, import the keys from GitHub and leave password login
    Give the value on standard input, never as an argument. Commit the changed file, signed, push
    the branch and open a pull request by `gh pr create`. Once `values` and `gitleaks` pass, merge
    it by `gh pr merge --merge --delete-branch`. Then, for each server NAME that reads the value,
-   run `ws client macos secrets add NAME`, which runs the task there
+   run `ws client secrets add NAME`, which runs the task there
    ([The task](../server/ubuntu/secrets/README.md#the-task)).
 
 ## ws's host key
@@ -128,12 +128,12 @@ a command that needs root. A user outside sudoers cannot go on.
 2. Run `install.sh` by the three lines of [Install](../../.github/workflows/release.md#install),
    `set -o pipefail` among them. The bootstrap it runs puts ws in `/usr/local/bin`. Check it with
    `ws version`.
-3. Run `ws client macos secrets add NAME --address ADDRESS`, with `--port PORT` off the LAN. It
+3. Run `ws client secrets add NAME --address ADDRESS`, with `--port PORT` off the LAN. It
    adds ws's host key to the secrets and as the repository's deploy key, with the Nano's PIN and a
    touch. It then runs the server's bootstrap with the secrets over `ssh -t`. A first run takes 20
-   to 40 minutes, and a dropped ssh ends it: run the command again. `ws client macos secrets init`
+   to 40 minutes, and a dropped ssh ends it: run the command again. `ws client secrets init`
    runs once before, as [The secrets](#the-secrets) says
-   ([ws client macos secrets add](macos/secrets/README.md#ws-client-macos-secrets-add)).
+   ([ws client secrets add](macos/secrets/README.md#ws-client-secrets-add)).
 
 ## claude
 

@@ -73,8 +73,8 @@ Then, logged in as that user, write `/etc/ws/values.yml` where a value differs f
 root's and mode 600 ([the values](#running-it-again)). Run `install.sh` through `sudo`, by the
 three lines of [Install](.github/workflows/release.md#install), which fail where curl does. It
 installs mise and runs its bootstrap, which installs ws and sets each role up. Once the secrets
-hold `WS_GITHUB_TOKEN`, the secrets task logs gh in ([By hand](#by-hand)). The Mac's `ws client
-macos secrets add NAME` runs it first, as [the server's runbook](roles/server/runbook.md) says.
+hold `WS_GITHUB_TOKEN`, the secrets task logs gh in ([By hand](#by-hand)). The Mac's
+`ws client secrets add NAME` runs it first, as [the server's runbook](roles/server/runbook.md) says.
 
 Then do what stays by hand, below.
 
@@ -94,7 +94,7 @@ cloud VM with no other user. `WS_HOME` is the account's home, `/home/NAME` by de
 differs from the home `getent passwd` gives the account fails the run.
 `WS_GIT_SIGNING_PUB_KEY` lies below it, or the run fails. A cloud VM names `WS_SECURITY_OUTBOUND:
 false` there before its first run ([Outbound](roles/server/ubuntu/security/README.md#outbound)). `ws
-server ubuntu values set KEY VALUE` writes one key, and an empty VALUE gives its default back.
+server values set KEY VALUE` writes one key, and an empty VALUE gives its default back.
 The first run wrote the home and the signing key of the user then: one `set WS_USER NAME` moves
 them where they hold that user's, and says so. An edit by hand changes their lines with it. A
 second run changes nothing, so its plan exits 0 with `--detailed-exitcode`.

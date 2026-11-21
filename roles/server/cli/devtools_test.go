@@ -28,7 +28,7 @@ func TestDevtoolsGHLoginTakesTheTokenInputInTheSecretsTask(t *testing.T) {
 		p = clitest.WithEnv(p, c.env)
 		m.Files[devtools.TokenFile] = []byte("# Written by github.com/zadykian/ws\ndummy-a\n")
 		m.Results[gh+" auth token -h github.com"] = effecttest.Result{Out: []byte("dummy-a\n")}
-		status, stdout, stderr := runWs(p, "", "server", "ubuntu", "devtools", "gh-login", "--check")
+		status, stdout, stderr := runWs(p, "", "server", "devtools", "gh-login", "--check")
 		if status != c.status || strings.Contains(stdout+stderr, "dummy") {
 			t.Errorf("case %d: status = %d, stdout %q, stderr %q; want %d", i, status, stdout, stderr, c.status)
 		}
@@ -44,7 +44,7 @@ func TestDevtoolsGHLoginLogsInByTheInput(t *testing.T) {
 	p, m := valuesProcess("---\nWS_USER: root\n")
 	p = clitest.WithEnv(p, map[string]string{"MISE_TASK_NAME": "secrets", "WS_GITHUB_TOKEN": "dummy-b"})
 	m.Results[gh+" auth login -h github.com -p https --insecure-storage --with-token"] = effecttest.Result{}
-	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "devtools", "gh-login")
+	status, stdout, stderr := runWs(p, "", "server", "devtools", "gh-login")
 	if status != 0 || strings.Contains(stdout+stderr, "dummy") || !slices.Equal(m.Inputs, []string{"dummy-b\n"}) {
 		t.Errorf("status = %d, stdout %q, stderr %q, inputs %d", status, stdout, stderr, len(m.Inputs))
 	}

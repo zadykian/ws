@@ -193,7 +193,7 @@ func TestClaudeCommandsRunAsRootWithoutSystemd(t *testing.T) {
 	m, e := machine(t, "WS_USER: ws\n")
 	names := []string{"update", "completion", "settings", "telemetry", "marketplaces"}
 	for _, name := range names {
-		line := "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + systemPath + " " + self + " server ubuntu claude " + name
+		line := "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + systemPath + " " + self + " server claude " + name
 		m.Results[line+" --check"] = effecttest.Result{Err: os.ErrInvalid}
 		m.Results[line] = effecttest.Result{}
 		apply(t, unit(t, e, "state/claude-"+name))
@@ -230,7 +230,7 @@ func TestClaudeLingerIsTheAccountsAndRestoreRunsInItsSession(t *testing.T) {
 		t.Errorf("linger plan = %q", got)
 	}
 	line := "env HOME=/root env XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus " +
-		systemPath + " " + self + " server ubuntu claude restore"
+		systemPath + " " + self + " server claude restore"
 	m.Results[line+" --check"] = effecttest.Result{Err: os.ErrInvalid}
 	m.Results[line] = effecttest.Result{}
 	apply(t, unit(t, e, "state/claude-restore"))

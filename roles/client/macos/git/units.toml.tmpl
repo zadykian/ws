@@ -17,7 +17,7 @@ after = "file/git-config"
 path = "{{ .Home }}/.gitconfig"
 owner = "{{ .User }}"
 line = "[include]\n\tpath = /etc/ws/gitconfig"
-has = ["{{ self }}", "client", "macos", "git", "included"]
+has = ["{{ self }}", "client", "git", "included"]
 
 # git's gpg.ssh.program for a key of Secretive's: ssh-keygen with Secretive's agent. A terminal and
 # an IDE then sign alike, whatever agent the app that runs git has. A key in a file has none, and

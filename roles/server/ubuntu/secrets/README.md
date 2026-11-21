@@ -73,7 +73,7 @@ repository's read-only deploy key, titled with the hostname.
   differs from origin's `main`. That is a link, a change, a file or a commit of its own, another
   branch or origin, or a `main` that origin rewrote. Remove the clone, and the next run clones it
   again.
-- A Mac mends three refusals by `ws client macos secrets add NAME`: GitHub refuses the host key,
+- A Mac mends three refusals by `ws client secrets add NAME`: GitHub refuses the host key,
   the repository holds no profile of the hostname, or the host key opens none of its values.
 
 ## The repository
@@ -102,7 +102,7 @@ Mac.
 
 - `nano`: the YubiKey 5C Nano, by age-plugin-yubikey, with a PIN once a session and a touch each
   time it decrypts.
-- `backup`: a plain age key, which opens every value where the Nano is lost. `ws client macos
+- `backup`: a plain age key, which opens every value where the Nano is lost. `ws client
   secrets init` prints it once, and writes it nowhere.
 - each server's hostname: its SSH host key, `/etc/ssh/ssh_host_ed25519_key`. The same key is the
   repository's read-only deploy key, titled with the hostname.
@@ -153,11 +153,11 @@ NAME = { default = "${OTHER}" }
 Every change lands on `main` by a pull request, from a temporary clone
 ([How a change lands](../../../client/macos/secrets/README.md#how-a-change-lands)):
 
-- `ws client macos secrets init` starts `fnox.toml` with the Nano and the backup, and declares the
+- `ws client secrets init` starts `fnox.toml` with the Nano and the backup, and declares the
   inputs.
-- `ws client macos secrets add NAME` makes the server's host key a recipient and its deploy key,
+- `ws client secrets add NAME` makes the server's host key a recipient and its deploy key,
   then runs the task there.
-- `ws client macos remove NAME` takes that key out of both.
+- `ws client remove NAME` takes that key out of both.
 
 A value goes in by hand, in a clone, on a branch: `fnox set NAME --provider age` for a shared one,
 `fnox -P HOSTNAME set NAME --provider host` for one server's, the value on standard input. The

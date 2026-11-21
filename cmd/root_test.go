@@ -40,7 +40,7 @@ func TestNoApplyStateOrUpdate(t *testing.T) {
 	p := fakeProcess()
 	cli.Walk(cli.Root(p, clientCmd(p), serverCmd(p), unitCmd(p)), func(c *cobra.Command) {
 		gone := c.Name() == "apply" || c.Name() == "state" || c.Name() == "update"
-		if gone && c.CommandPath() != "ws server ubuntu claude update" {
+		if gone && c.CommandPath() != "ws server claude update" {
 			t.Errorf("%s is a command", c.CommandPath())
 		}
 	})

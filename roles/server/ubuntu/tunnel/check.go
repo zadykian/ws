@@ -1,5 +1,5 @@
 // Package tunnel holds what Go keeps of the tunnel role, as the commands that its units run under
-// ws server ubuntu tunnel: check, key and wg0. The role sets up wg0, the server's end of a
+// ws server tunnel: check, key and wg0. The role sets up wg0, the server's end of a
 // WireGuard tunnel for the Mac. See roles/server/ubuntu/tunnel/README.md.
 package tunnel
 

@@ -5,7 +5,7 @@ The `ikeward` role keeps the server on an IKEv2 VPN with
 makes. It lets the WireGuard peers it names reach the VPN through the server too. The role is seven
 units of [its spec](units.toml.tmpl), whose lines sit in `mise.server.toml`
 ([The frame](../frame/README.md)). The check, the install and the wait stay Go, as
-`ws server ubuntu ikeward check`, `install` and `wait`, which the units run.
+`ws server ikeward check`, `install` and `wait`, which the units run.
 
 | Unit | What it does |
 | --- | --- |
@@ -65,7 +65,7 @@ install.
 
 The profile is one server's. So its values go in the server's own fnox file, `fnox.HOSTNAME.toml`,
 by `fnox -P HOSTNAME set NAME --provider host`, the value on standard input. That runs in a clone
-of the secrets repository, whose `main` takes the change by a pull request. `ws client macos secrets
+of the secrets repository, whose `main` takes the change by a pull request. `ws client secrets
 init` declares the three empty in the shared `fnox.toml`, and the server's fnox profile wins over it
 under `-P HOSTNAME` ([The task](../secrets/README.md#the-task)). Then remove the plain files, which
 hold the client's key, and run the secrets task.

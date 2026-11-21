@@ -43,10 +43,10 @@ func macUnits(t *testing.T, m *effecttest.Machine) []kind.Unit {
 
 func TestSSHUnitsWriteTheHostsAndTheInclude(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Results[userPath+"/ws client macos keys --check"] = effecttest.Result{}
+	m.Results[userPath+"/ws client keys --check"] = effecttest.Result{}
 	m.Results[userPath+"mkdir -m 700 /Users/v/.ssh"] = effecttest.Result{}
 	m.Results["ssh -G -F /etc/ws/ssh_config.ws-check localhost"] = effecttest.Result{}
-	m.Results["/ws client macos ssh included"] = effecttest.Result{Err: exited("exit 1")}
+	m.Results["/ws client ssh included"] = effecttest.Result{Err: exited("exit 1")}
 	m.Files["/Users/v/.ssh/config"], m.Owners["/Users/v/.ssh/config"] = []byte("Host *\n    User me\n"), [2]int{501, 20}
 	m.Dirs["/Users/v/.ssh"], m.Owners["/Users/v/.ssh"] = 0o700, [2]int{501, 20}
 	units := macUnits(t, m)
@@ -68,7 +68,7 @@ func TestSSHUnitsWriteTheHostsAndTheInclude(t *testing.T) {
 	if got := string(m.Files["/Users/v/.ssh/config"]); got != want {
 		t.Errorf("~/.ssh/config = %q, want %q", got, want)
 	}
-	m.Results["/ws client macos ssh included"] = effecttest.Result{}
+	m.Results["/ws client ssh included"] = effecttest.Result{}
 	for _, u := range units {
 		if p, err := u.Step.Plan(t.Context()); err != nil || len(p.Changes) > 0 {
 			t.Errorf("%s: second plan = %v, %v; want none", u.Name, p.Changes, err)
@@ -79,7 +79,7 @@ func TestSSHUnitsWriteTheHostsAndTheInclude(t *testing.T) {
 func TestSSHIncludeRefusesAnIncludeBelow(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/Users/v/.ssh/config"] = []byte("Host *\n    User me\nInclude /etc/ws/ssh_config\n")
-	m.Results["/ws client macos ssh included"] = effecttest.Result{Err: exited("echo line 3 below >&2; exit 2")}
+	m.Results["/ws client ssh included"] = effecttest.Result{Err: exited("echo line 3 below >&2; exit 2")}
 	for _, u := range macUnits(t, m) {
 		if u.Name != "file/ssh-include" {
 			continue
@@ -96,7 +96,7 @@ func TestSSHIncludeTakesALinkThatHoldsIt(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Links["/Users/v/.ssh/config"] = "/Users/v/dots/ssh_config"
 	m.Files["/Users/v/.ssh/config"] = []byte("Include /etc/ws/ssh_config\n")
-	m.Results["/ws client macos ssh included"] = effecttest.Result{}
+	m.Results["/ws client ssh included"] = effecttest.Result{}
 	for _, u := range macUnits(t, m) {
 		if u.Name != "file/ssh-include" {
 			continue

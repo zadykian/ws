@@ -161,7 +161,7 @@ included, as a `seed` file ([file](../../../../engine/core/kind/file.md)). The f
 new key needs no second list. It names each key of `values.Values`, a table too, at the value a
 missing file gives. A key that follows another holds its value as the file is made: `WS_HOME` and
 `WS_GIT_SIGNING_PUB_KEY` the user's, `WS_TUNNEL_PEERS` the Mac at the tunnel's next address.
-`ws server ubuntu values set` moves the first two with a key they follow, where they hold the
+`ws server values set` moves the first two with a key they follow, where they hold the
 value it gave them. A key that a run reads from the machine, such as the swap's size, stays empty
 or `null`.
 

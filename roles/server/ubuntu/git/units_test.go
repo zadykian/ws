@@ -174,7 +174,7 @@ func TestGitTokensAndClonesRunAsRootWithoutSystemd(t *testing.T) {
 	m, e := machine(t, "WS_USER: ws\n")
 	for _, name := range []string{"tokens", "clones"} {
 		line := "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin " + self +
-			" server ubuntu git " + name
+			" server git " + name
 		m.Results[line+" --check"] = effecttest.Result{Err: errors.New("exit status 1")}
 		m.Results[line] = effecttest.Result{}
 	}

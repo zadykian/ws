@@ -10,7 +10,7 @@ import (
 
 func TestRoutesAndResolverTexts(t *testing.T) {
 	if got, want := routesText("ws", "values", []string{"10.1.0.0/24", "10.2.0.0/24"}),
-		"# "+file.Mark+": ws client macos tunnel routes --server ws values.\n10.1.0.0/24\n10.2.0.0/24\n"; got != want {
+		"# "+file.Mark+": ws client tunnel routes --server ws values.\n10.1.0.0/24\n10.2.0.0/24\n"; got != want {
 		t.Errorf("routesText = %q; want %q", got, want)
 	}
 	if got, want := resolverText([]string{"10.0.0.1", "10.0.0.2"}),

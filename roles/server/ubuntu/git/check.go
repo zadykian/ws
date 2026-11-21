@@ -1,4 +1,4 @@
-// Package git is the git role's procedures, which ws server ubuntu git runs for the role's units.
+// Package git is the git role's procedures, which ws server git runs for the role's units.
 // They are the check, the test of the include, the tokens and the clones. See
 // roles/server/ubuntu/git/README.md.
 package git
@@ -15,7 +15,7 @@ import (
 
 // Check refuses what the role's units would act on: a clone that checkClones refuses, and tokens
 // that RunTokens refuses, by lookup. It returns the notes of what in the account's files shadows
-// ws's settings, which name settings and sections, never a value. ws server ubuntu git check runs
+// ws's settings, which name settings and sections, never a value. ws server git check runs
 // it, through the role's guard, before the tokens and the clones.
 func Check(ctx context.Context, m effect.Machine, a account.Account, v values.Values,
 	lookup func(string) (string, bool)) ([]string, error) {

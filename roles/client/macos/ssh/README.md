@@ -7,7 +7,7 @@ for each server, through the tunnel ([The Mac](../../README.md)). The facts buil
 
 ## The units
 
-- `state.keys` runs `ws client macos keys`, which copies the `.pub` of each key of Secretive's that
+- `state.keys` runs `ws client keys`, which copies the `.pub` of each key of Secretive's that
   `values.yml` names into `/etc/ws/secretive`, through sudo ([Secretive's
   keys](../git/README.md#secretives-keys)). ssh and git name such a key by that copy. A key in a
   file has none. The unit runs a command, as the copy comes from the agent.

@@ -12,7 +12,7 @@ template = "files/ws.gitconfig.tmpl"
 # signing key and its file, so that a refused token or clone stops no signing.
 [guard.git-check]
 after = "file/git-signers"
-command = ["{{ self }}", "server", "ubuntu", "git", "check"]
+command = ["{{ self }}", "server", "git", "check"]
 
 # The include at the top of the account's file, which stays the account's. has refuses an include
 # below the file's own settings, or one that comes twice, and leaves the file untouched.
@@ -21,7 +21,7 @@ after = "guard/git-check"
 path = "{{ .Home }}/.gitconfig"
 owner = "{{ .User }}"
 line = "[include]\n\tpath = /etc/ws/gitconfig"
-has = ["{{ self }}", "server", "ubuntu", "git", "included"]
+has = ["{{ self }}", "server", "git", "included"]
 
 # The key that signs commits, made once by the account, with no passphrase: tools and claude commit
 # unattended, and the key only signs. ssh-keygen refuses a missing directory, as a container's
@@ -71,9 +71,9 @@ check = [
 # secrets task's plan writes no file, so there they follow the input in the run's env.
 [state.git-tokens]
 after = "state/git-tokens-group"
-run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "ubuntu", "git", "tokens"], check = ["{{ self }}", "server", "ubuntu", "git", "tokens", "--check"] }
+run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "git", "tokens"], check = ["{{ self }}", "server", "git", "tokens", "--check"] }
 
 # The clones of WS_GIT_CLONES, each made once by the account, after the tokens they may need.
 [state.git-clones]
 after = "state/git-tokens"
-run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "ubuntu", "git", "clones"], check = ["{{ self }}", "server", "ubuntu", "git", "clones", "--check"] }
+run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "git", "clones"], check = ["{{ self }}", "server", "git", "clones", "--check"] }

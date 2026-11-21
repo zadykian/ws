@@ -34,14 +34,14 @@ const watchWait = 5 * time.Second
 // statusWait is how long status waits for the device's socket.
 const statusWait = 5 * time.Second
 
-// newTunnelCmd returns ws client macos tunnel.
+// newTunnelCmd returns ws client tunnel.
 func newTunnelCmd(p enginecli.Env, server *string) *cobra.Command {
 	return enginecli.Group("tunnel", "the Mac's tunnel to ws",
 		newTunnelRunCmd(p, server), newTunnelStatusCmd(p, server), newTunnelKeyCmd(p), newTunnelConfCmd(p), newTunnelLoadedCmd(p, server),
 		newTunnelRoutesCmd(p, server))
 }
 
-// newTunnelRunCmd returns ws client macos tunnel run.
+// newTunnelRunCmd returns ws client tunnel run.
 func newTunnelRunCmd(p enginecli.Env, server *string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "run",
@@ -58,7 +58,7 @@ func newTunnelRunCmd(p enginecli.Env, server *string) *cobra.Command {
 	}
 }
 
-// newTunnelStatusCmd returns ws client macos tunnel status.
+// newTunnelStatusCmd returns ws client tunnel status.
 func newTunnelStatusCmd(p enginecli.Env, server *string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
@@ -75,7 +75,7 @@ func newTunnelStatusCmd(p enginecli.Env, server *string) *cobra.Command {
 	}
 }
 
-// newTunnelKeyCmd returns ws client macos tunnel key.
+// newTunnelKeyCmd returns ws client tunnel key.
 func newTunnelKeyCmd(p enginecli.Env) *cobra.Command {
 	return &cobra.Command{
 		Use:   "key",
@@ -139,7 +139,7 @@ func tunnelKey(ctx context.Context, p enginecli.Env) (string, error) {
 	return tunnel.MakeKey(ctx, p.Machine, rand.Reader)
 }
 
-// newTunnelConfCmd returns ws client macos tunnel conf, which the unit of the daemons' files runs.
+// newTunnelConfCmd returns ws client tunnel conf, which the unit of the daemons' files runs.
 func newTunnelConfCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Procedure("conf", "write each server's tunnel.conf, and take a gone server's daemon away",
 		"Each server with WS_PUBLIC_KEY gets its directory under /etc/ws/tunnel, routes.d and tunnel.conf, "+

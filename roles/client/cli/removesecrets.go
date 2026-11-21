@@ -94,7 +94,7 @@ func dropHostKey(c *cobra.Command, p enginecli.Env, name, key, keyFile string) e
 		_, _ = fmt.Fprintf(out, "the secrets' recipients hold no host key of %s\n", name)
 	} else if _, err := clone.Land(ctx, out, secrets.Change{Topic: "remove-" + strings.Join(labels, "-"),
 		Title: "chore: remove the host key of " + values.List(labels),
-		Body:  "Removed by ws client macos remove " + name + ".", Files: changed}); err != nil {
+		Body:  "Removed by ws client remove " + name + ".", Files: changed}); err != nil {
 		return err
 	}
 	// A key goes whatever its title, as a server whose hostname changed may hold it under another.

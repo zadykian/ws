@@ -74,7 +74,7 @@ there. ws names none of the settings that win over its own, or lose to them.
 macOS 27 denies other apps the files of Secretive's container, with no prompt ([Secretive's
 issue](https://github.com/maxgoedjen/secretive/issues/839)). Its socket still answers, so ws asks
 the agent, with `ssh-add -L`. ssh and git need a key's `.pub` to pick it from the agent, so they
-keep a copy in `/etc/ws/secretive`, under Secretive's name for it, which `ws client macos keys`
+keep a copy in `/etc/ws/secretive`, under Secretive's name for it, which `ws client keys`
 writes. No app then needs Full Disk Access. A `.pub` in `Data/PublicKeys` that `values.yml` names
 becomes that copy where the agent lists the key.
 

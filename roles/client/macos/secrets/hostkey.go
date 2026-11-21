@@ -12,7 +12,7 @@ import (
 var hostKeyForm = regexp.MustCompile(`^ssh-ed25519 [A-Za-z0-9+/]+={0,2}$`)
 
 // errNotSetUp stops a change to a repository that init has not set up.
-var errNotSetUp = errors.New("the secrets repository is not set up: run ws client macos secrets init")
+var errNotSetUp = errors.New("the secrets repository is not set up: run ws client secrets init")
 
 // SetHostKey makes key the recipient of hostname's label in fnox.toml and in hostname's profile
 // file. It makes that file where missing, with the Nano's and the backup's recipients of

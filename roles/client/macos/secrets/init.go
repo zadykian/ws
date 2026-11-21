@@ -27,7 +27,7 @@ const (
 	inputsTitle = "chore: declare the inputs of a newer release"
 )
 
-// Init sets the secrets repository up, as ws client macos secrets init does. It writes the Nano's
+// Init sets the secrets repository up, as ws client secrets init does. It writes the Nano's
 // and a backup's recipients, and declares each input of the tree's server roles, empty.
 type Init struct {
 	M      effect.Machine

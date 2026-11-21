@@ -39,7 +39,7 @@ func (w WG0) Plan(ctx context.Context) ([]resource.Change, error) {
 		return nil, err
 	}
 	if !hasKey {
-		return nil, fmt.Errorf("%s is missing: ws server ubuntu tunnel key makes it", keyFile)
+		return nil, fmt.Errorf("%s is missing: ws server tunnel key makes it", keyFile)
 	}
 	_, statErr := w.M.Stat("/sys/class/net/wg0")
 	if statErr != nil && !errors.Is(statErr, fs.ErrNotExist) {

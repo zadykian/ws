@@ -65,12 +65,12 @@ takes what another's takes. Each of the two refuses until one changes, in its ow
   the router forwards a port to one server.
 
 A file of another server that is refused fails each unit that reads the servers' files, in a
-plan too, and the error names the server and `ws client macos remove NAME`. The units read every
+plan too, and the error names the server and `ws client remove NAME`. The units read every
 server's file, and the networks' unit would remove the resolver files of one it cannot read.
 
 ## The servers
 
-`ws client macos servers` lists each server by name, with its target, slot and tunnel, as the
+`ws client servers` lists each server by name, with its target, slot and tunnel, as the
 user:
 
 ```text
@@ -85,10 +85,10 @@ can't read the state. Else the column shows the tier and endpoint that the state
 whose file ws refuses shows `-` for its target and slot. Its errors follow the rows, with exit
 code 1. The command takes no `--server`.
 
-`ws client macos remove NAME` takes a server off the Mac, as the user. It refuses the Mac's last
+`ws client remove NAME` takes a server off the Mac, as the user. It refuses the Mac's last
 server, as the bootstrap takes a Mac with none for a stray `WS_VALUES` and prunes no daemon. It
 takes no `--server`: the argument is the consent. It first takes NAME's host key out of the
-secrets ([The secrets](../macos/secrets/README.md#ws-client-macos-remove)), and stops with the
+secrets ([The secrets](../macos/secrets/README.md#ws-client-remove)), and stops with the
 server whole where that fails. `--skip-secrets` leaves the secrets, and prints the key to drop by
 hand. It then deletes `servers/NAME` and NAME's entry in
 `known_hosts`, and runs `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap`, whose units take
@@ -152,5 +152,5 @@ key of another target's ways: `WS_LAN` on a cloud VM, `WS_REMOTE` on a VM on the
 `WS_CABLE_SERVICE` or `WS_CABLE_PORT` off the LAN. Then name the new target's
 ways. A new machine offers another host key, so run `ssh-keygen -R NAME` first, NAME the server's
 name. From a cloud VM, remove `WS_SECURITY_OUTBOUND: false` from ws's `values.yml` too, with
-`sudo ws server ubuntu values set WS_SECURITY_OUTBOUND ''`. Then run the bootstrap on ws, as
+`sudo ws server values set WS_SECURITY_OUTBOUND ''`. Then run the bootstrap on ws, as
 [its runbook](../../server/runbook.md) says, and `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap` again.

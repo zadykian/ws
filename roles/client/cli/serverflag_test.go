@@ -17,10 +17,10 @@ func TestServerFlagNamesTheServerOfConf(t *testing.T) {
 	m.Files["/etc/ws/values.yml"] = nil
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = withServerDirs(m)
-	if status, stdout, _ := runWs(p, "client", "macos", "values", "print", "--server", "box"); status != 0 || !strings.HasPrefix(stdout, "WS_USER='box'\n") {
+	if status, stdout, _ := runWs(p, "client", "values", "print", "--server", "box"); status != 0 || !strings.HasPrefix(stdout, "WS_USER='box'\n") {
 		t.Errorf("--server box: status = %d, stdout = %q", status, stdout)
 	}
-	if status, _, stderr := runWs(p, "client", "macos", "values", "print"); status != 1 || !strings.Contains(stderr, "several servers") {
+	if status, _, stderr := runWs(p, "client", "values", "print"); status != 1 || !strings.Contains(stderr, "several servers") {
 		t.Errorf("no flag: status = %d, stderr = %q", status, stderr)
 	}
 }

@@ -104,7 +104,7 @@ func PlanCopy(ctx context.Context, m effect.Machine, out effect.Out, pub, text s
 }
 
 // Copies returns ws's copies of the .pubs of the login and the signing key that c names, which ws
-// client macos keys writes. Each key that Secretive's agent holds has one, and a key in a file has
+// client keys writes. Each key that Secretive's agent holds has one, and a key in a file has
 // none. A key that both name has one copy.
 func Copies(ctx context.Context, m effect.Machine, out effect.Out, c values.Conf, home string) ([]resource.Resource, error) {
 	var rs []resource.Resource

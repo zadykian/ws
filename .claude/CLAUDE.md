@@ -14,7 +14,7 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   units run in the order of their `after`
   ([The order](../roles/server/ubuntu/frame/README.md#the-order)). Each role
   holds its pins, and its templates and files beside its spec. ws-fans, the fans' service, is
-  `ws server ubuntu fans`, in `roles/server/ubuntu/fans/daemon`.
+  `ws server fans`, in `roles/server/ubuntu/fans/daemon`.
 - `roles/server/`: the server's side, its roles in `ubuntu/`. Above them sit the packages that
   serve them all, `cli` and `values`, the runbook, and
   `mise-tasks/secrets`, the task that runs the bootstrap under ws's secrets

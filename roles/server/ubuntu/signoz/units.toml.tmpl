@@ -11,8 +11,8 @@ after = "state/ws-binary"
 
 [state.signoz-password.run]
 user = "root"
-command = ["/usr/local/bin/ws", "server", "ubuntu", "signoz", "password"]
-check = ["/usr/local/bin/ws", "server", "ubuntu", "signoz", "password", "--check"]
+command = ["/usr/local/bin/ws", "server", "signoz", "password"]
+check = ["/usr/local/bin/ws", "server", "signoz", "password", "--check"]
 
 # The kind sums every file in the directory, root.env included, so a new password or a changed
 # compose file recreates the containers.
@@ -28,5 +28,5 @@ after = "compose/signoz"
 
 [state.signoz-sync.run]
 user = "root"
-command = ["/usr/local/bin/ws", "server", "ubuntu", "signoz", "sync"]
-check = ["/usr/local/bin/ws", "server", "ubuntu", "signoz", "sync", "--check"]
+command = ["/usr/local/bin/ws", "server", "signoz", "sync"]
+check = ["/usr/local/bin/ws", "server", "signoz", "sync", "--check"]

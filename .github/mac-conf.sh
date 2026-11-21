@@ -35,7 +35,7 @@ conf_split() {
 }
 
 # conf_as FILE CMD... runs CMD through sudo where FILE is in /etc/ws, root's, and as the runner
-# elsewhere, as ws client macos does.
+# elsewhere, as ws client does.
 conf_as() {
     case $1 in
     /etc/ws/*)

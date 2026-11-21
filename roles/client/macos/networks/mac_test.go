@@ -14,7 +14,7 @@ import (
 )
 
 // resolverHead is the header of a resolver that ws wrote.
-const resolverHead = "# " + file.Mark + ": ws client macos networks, from WS_RESOLVERS.\n"
+const resolverHead = "# " + file.Mark + ": ws client networks, from WS_RESOLVERS.\n"
 
 // macPlan returns the headlines of the networks of servers.
 func macPlan(t *testing.T, m *effecttest.Machine, servers ...facts.Server) []string {
