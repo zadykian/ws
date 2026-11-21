@@ -59,38 +59,6 @@ func (w UserWrite) Apply(context.Context) error {
 	return nil
 }
 
-// UserMkdir makes the user's directory.
-type UserMkdir struct {
-	M    effect.Machine
-	Path string
-	Mode fs.FileMode
-}
-
-func (d UserMkdir) String() string { return fmt.Sprintf("would make %s, mode %o", d.Path, d.Mode) }
-
-// Kind is write.
-func (UserMkdir) Kind() step.ChangeKind { return step.Write }
-
-// Apply makes the directory.
-func (d UserMkdir) Apply(context.Context) error { return d.M.Mkdir(d.Path, d.Mode) }
-
-// UserChmod sets the mode of the user's file or directory.
-type UserChmod struct {
-	M    effect.Machine
-	Path string
-	Mode fs.FileMode
-}
-
-func (s UserChmod) String() string {
-	return fmt.Sprintf("would set %s's mode to %o", s.Path, s.Mode)
-}
-
-// Kind is write.
-func (UserChmod) Kind() step.ChangeKind { return step.Write }
-
-// Apply sets the mode.
-func (s UserChmod) Apply(context.Context) error { return s.M.Chmod(s.Path, s.Mode) }
-
 // UserBackup keeps a copy of the file at To.
 type UserBackup struct {
 	M        effect.Machine
@@ -110,7 +78,7 @@ func (b UserBackup) Apply(ctx context.Context) error {
 }
 
 // applying gives back the user's changes as the resource changes that each of them is, for a plan
-// of the user's file, directory or lines.
+// of the user's lines.
 func applying(cs []step.Change) []resource.Change {
 	changes := make([]resource.Change, len(cs))
 	for i, c := range cs {

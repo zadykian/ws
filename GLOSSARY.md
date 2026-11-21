@@ -75,16 +75,10 @@ signing, by `WS_GIT_SIGNING_PUB_KEY`. Either ws's copy of a key of Secretive's a
 key.
 _Avoid_: picked key, git key
 
-**User's directory**:
-A directory below the Mac's home that a unit writes under, such as `~/.local/bin`. A run makes it
-where missing, and stops where the path is no directory. It leaves the mode of one that exists. Core's
-`file.UserDir` holds it.
-_Avoid_: folder
-
 **User's file**:
 A whole file below the Mac's home that ws writes as the user, not root, such as Zed's
-`~/.config/zed/global_settings.json`. A plan and a report read it alike. Core's `file.UserFile`
-holds it. On the server, root writes a home file.
+`~/.config/zed/global_settings.json`. The `file` kind writes it, with the user as its `owner`.
+On the server, root writes a home file.
 _Avoid_: dotfile
 
 **User's lines**: ws's lines in a user's file that holds other text too, such as `Include
