@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -36,7 +35,7 @@ func newTunnelCheckCmd(p enginecli.Env, u effect.Units) *cobra.Command {
 				return err
 			}
 			// The guard says each line of stdout.
-			return tunnel.Check(c.Context(), p.Machine, u, effect.NewTerminal(strings.NewReader(""), c.OutOrStdout()), v.Tunnel)
+			return tunnel.Check(c.Context(), p.Machine, u, effect.NewTerminal(c.OutOrStdout()), v.Tunnel)
 		},
 	}
 }
@@ -53,7 +52,7 @@ func newTunnelKeyCmd(p enginecli.Env) *cobra.Command {
 	}
 	check := c.Flags().Bool("check", false, "fail where the key is to be made or mended, and change nothing")
 	c.RunE = func(c *cobra.Command, _ []string) error {
-		term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+		term := effect.NewTerminal(c.ErrOrStderr())
 		defer term.Flush()
 		out := linesOf(term, c.CommandPath())
 		return settle(c.Context(), out, []resource.Resource{tunnel.Key{M: p.Machine, Out: out}}, *check)
@@ -74,7 +73,7 @@ func newTunnelWG0Cmd(p enginecli.Env) *cobra.Command {
 	}
 	check := c.Flags().Bool("check", false, "fail where wg0 lacks the key of its file, and change nothing")
 	c.RunE = func(c *cobra.Command, _ []string) error {
-		term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+		term := effect.NewTerminal(c.ErrOrStderr())
 		defer term.Flush()
 		lines := linesOf(term, c.CommandPath())
 		w := tunnel.WG0{M: p.Machine, Out: lines, Tries: 10, Pause: time.Second}

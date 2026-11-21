@@ -3,7 +3,6 @@ package cli
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -81,7 +80,7 @@ func newResolverCmd(p enginecli.Env) *cobra.Command {
 // runRoute runs the step that build makes, alone, with the command's lines. Under check it prints
 // each change and makes none.
 func runRoute(c *cobra.Command, check bool, build func(effect.Out) step.Step) error {
-	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+	term := effect.NewTerminal(c.ErrOrStderr())
 	defer term.Flush()
 	out := linesOf(term, c.CommandPath())
 	_, err := step.RunWith(c.Context(), []step.Step{build(out)}, step.Options{Observer: out, Check: check})

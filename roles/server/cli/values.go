@@ -34,7 +34,7 @@ func runValuesSet(c *cobra.Command, p enginecli.Env, key, value string) error {
 	if p.Euid != 0 {
 		return errors.New("run it as root")
 	}
-	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+	term := effect.NewTerminal(c.ErrOrStderr())
 	defer term.Flush()
 	return setServerValue(p.Machine, linesOf(term, c.CommandPath()), key, value)
 }

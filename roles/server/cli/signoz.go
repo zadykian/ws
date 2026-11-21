@@ -2,7 +2,6 @@ package cli
 
 import (
 	"errors"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -44,7 +43,7 @@ func signozSteps(p enginecli.Env, use, short, long string,
 		if p.Euid != 0 {
 			return errors.New("run it as root")
 		}
-		term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+		term := effect.NewTerminal(c.ErrOrStderr())
 		defer term.Flush()
 		out := linesOf(term, c.CommandPath())
 		s, err := steps(p.Machine, out)

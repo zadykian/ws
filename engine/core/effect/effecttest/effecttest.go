@@ -2,49 +2,10 @@
 package effecttest
 
 import (
-	"context"
 	"fmt"
-	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect"
 )
-
-// Prompt answers from a script, and fails the test on a question that the script doesn't hold.
-type Prompt struct {
-	T       testing.TB
-	Answers map[string]string // by the text of the question
-	Hidden  []string          // the answers to AskHidden, in their order
-	Asked   []string
-}
-
-// AskHidden returns the next of Hidden, and fails the test where none is left.
-func (p *Prompt) AskHidden(_ context.Context, text string) (string, error) {
-	p.Asked = append(p.Asked, text)
-	if len(p.Hidden) == 0 {
-		p.T.Fatalf("unexpected hidden question %q", text)
-	}
-	answer := p.Hidden[0]
-	p.Hidden = p.Hidden[1:]
-	return answer, nil
-}
-
-// Ask returns the scripted answer to q.Text, and asks again of nothing: a bad answer fails.
-func (p *Prompt) Ask(_ context.Context, q effect.Question) (string, error) {
-	p.Asked = append(p.Asked, q.Text)
-	answer, ok := p.Answers[q.Text]
-	if !ok {
-		p.T.Fatalf("unexpected question %q", q.Text)
-	}
-	if answer == "" {
-		answer = q.Default
-	}
-	if q.Valid != nil {
-		if err := q.Valid(answer); err != nil {
-			p.T.Fatalf("scripted answer %q to %q is invalid: %v", answer, q.Text, err)
-		}
-	}
-	return answer, nil
-}
 
 // Out records what is said, one entry per call, as "say: ...", "raw: ...", "warn: ...", "diff: NAME" or
 // "by hand: ...".

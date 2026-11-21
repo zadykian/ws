@@ -22,7 +22,7 @@ The rules a change to the ws CLI keeps, in `cmd/`, `engine/` and `roles/`
   values that apply themselves. Tests compare the plan's headlines (`step.Headline`).
 - ws's lines in a user's file are `file.UserLines`, whose step warns or stops at a link or at
   misplaced lines ([userlines.go](../../engine/core/resource/file/userlines.go)).
-- Effects are passed in: a step holds `effect.Prompt`, `effect.Out` and `effect.Machine` as fields
+- Effects are passed in: a step holds `effect.Out` and `effect.Machine` as fields
   and a function takes them as parameters. Tests use the fakes of
   [effecttest](../../engine/core/effect/effecttest/effecttest.go), never the real ones.
 - The Mac's units, of `mise -C /opt/ws/roles/client bootstrap`, read as the user and never through

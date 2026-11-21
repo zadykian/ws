@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"strings"
-
 	"github.com/spf13/cobra"
 
 	enginecli "github.com/zadykian/ws/engine/cli"
@@ -66,7 +64,7 @@ func newCableReloadCmd(p enginecli.Env, u effect.Units) *cobra.Command {
 		if err != nil {
 			return err
 		}
-		term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+		term := effect.NewTerminal(c.ErrOrStderr())
 		defer term.Flush()
 		return settle(c.Context(), linesOf(term, c.CommandPath()),
 			[]resource.Resource{cable.Reload{M: p.Machine, U: u, Cable: v.Cable}}, *check)
