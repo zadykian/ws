@@ -15,9 +15,13 @@ import (
 	"github.com/zadykian/ws/roles/server/values"
 )
 
-// newValuesCmd returns ws server values, which edits the machine's values.
+// valuesChecked is the line of a pass, which the frame's template keeps as the file's text.
+// The line never varies, so that the next plan finds the file unchanged.
+const valuesChecked = "ws values: checked"
+
+// newValuesCmd returns ws server values, which checks and edits the machine's values.
 func newValuesCmd(p enginecli.Env) *cobra.Command {
-	return enginecli.Group("values", "edit the machine's values", &cobra.Command{
+	return enginecli.Group("values", "check and edit the machine's values", newValuesCheckCmd(p), &cobra.Command{
 		Use:   "set KEY VALUE",
 		Short: "write one key of " + serverVars,
 		Long: "An empty VALUE takes the key's line out, which gives its default back. A list's VALUE is split by " +
@@ -26,6 +30,35 @@ func newValuesCmd(p enginecli.Env) *cobra.Command {
 		Args: cobra.ExactArgs(2),
 		RunE: func(c *cobra.Command, args []string) error { return runValuesSet(c, p, args[0], args[1]) },
 	})
+}
+
+// newValuesCheckCmd returns ws server values check.
+func newValuesCheckCmd(p enginecli.Env) *cobra.Command {
+	return &cobra.Command{
+		Use:   "check",
+		Short: "refuse a bad value of " + serverVars,
+		Long: "It loads " + serverVars + " as each command does, and prints " + valuesChecked + ". A missing file " +
+			"passes, with the defaults. A bad value fails, naming its key and its rule. The frame's " +
+			"/etc/ws/values.checked runs it as mise renders the config, so that a bad value stops a plan " +
+			"or a run before any write.",
+		Args: cobra.NoArgs,
+		RunE: func(c *cobra.Command, _ []string) error {
+			if err := checkValues(p.Machine); err != nil {
+				return err
+			}
+			_, err := fmt.Fprintln(c.OutOrStdout(), valuesChecked)
+			return err
+		},
+	}
+}
+
+// checkValues loads the file as each command does. A bad value fails with its key and its rule, and
+// the file to edit by hand: values set refuses while any value is bad.
+func checkValues(m effect.Machine) error {
+	if _, err := values.Load(m, serverVars); err != nil {
+		return fmt.Errorf("%w: edit %s by hand", err, serverVars)
+	}
+	return nil
 }
 
 // runValuesSet writes key in the file, by setServerValue.

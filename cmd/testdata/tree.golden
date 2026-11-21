@@ -381,7 +381,7 @@ Available Commands:
   setup       set the server up, as root
   signoz      SigNoz's steps that the signoz role's units run
   tunnel      the tunnel role's check, wg0's key and wg0, which its units run
-  values      edit the machine's values
+  values      check and edit the machine's values
 
 Flags:
   -h, --help   help for server
@@ -747,19 +747,28 @@ Flags:
       --check   fail where wg0 lacks the key of its file, and change nothing
   -h, --help    help for wg0
 == ws server values
-edit the machine's values
+check and edit the machine's values
 
 Usage:
   ws server values [flags]
   ws server values [command]
 
 Available Commands:
+  check       refuse a bad value of /etc/ws/values.yml
   set         write one key of /etc/ws/values.yml
 
 Flags:
   -h, --help   help for values
 
 Use "ws server values [command] --help" for more information about a command.
+== ws server values check
+It loads /etc/ws/values.yml as each command does, and prints ws values: checked. A missing file passes, with the defaults. A bad value fails, naming its key and its rule. The frame's /etc/ws/values.checked runs it as mise renders the config, so that a bad value stops a plan or a run before any write.
+
+Usage:
+  ws server values check [flags]
+
+Flags:
+  -h, --help   help for check
 == ws server values set
 An empty VALUE takes the key's line out, which gives its default back. A list's VALUE is split by commas. A table, such as WS_FANS_CURVES, stays the file's to edit by hand.
 
