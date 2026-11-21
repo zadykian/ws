@@ -20,16 +20,12 @@ func TestUnitValuesLoadTheFile(t *testing.T) {
 	if !side.Root || side.Dir != "/opt/ws/roles/server/ubuntu" {
 		t.Errorf("side = %+v, want root's, at /opt/ws", side)
 	}
-	data, _, err := side.Values(t.Context(), local.OSMachine{})
+	data, err := side.Values(t.Context(), local.OSMachine{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if v, ok := data.(values.Values); !ok || v.Base.Locale != "C" {
 		t.Errorf("values = %+v, want the file's", data)
-	}
-	fake := effecttest.NewMachine()
-	if _, m, err := side.Values(t.Context(), fake); err != nil || m != fake {
-		t.Errorf("a fake machine: %v, %v; want it unchanged", m, err)
 	}
 }
 
@@ -63,7 +59,7 @@ func TestUnitPlatformIsUbuntu2604(t *testing.T) {
 func TestUnitValuesRefuseAnUnknownKey(t *testing.T) {
 	fake := effecttest.NewMachine()
 	fake.Files["/v.yml"] = []byte("WS_USR: u\n")
-	if _, _, err := unitSide("/v.yml").Values(t.Context(), fake); err == nil {
+	if _, err := unitSide("/v.yml").Values(t.Context(), fake); err == nil {
 		t.Error("an unknown key loaded")
 	}
 }

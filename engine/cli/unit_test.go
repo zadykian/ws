@@ -45,8 +45,8 @@ func unitEnv(t *testing.T, specs map[string]string) (cli.Env, *effecttest.Machin
 func runUnit(e cli.Env, args ...string) (status int, stdout, stderr string) {
 	side := cli.UnitSide{
 		Dir: "/nowhere",
-		Values: func(_ context.Context, m effect.Machine) (any, effect.Machine, error) {
-			return unitValues{User: "u"}, m, nil
+		Values: func(context.Context, effect.Machine) (any, error) {
+			return unitValues{User: "u"}, nil
 		},
 		Units: &effecttest.Units{},
 		Root:  true,

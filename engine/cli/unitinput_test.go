@@ -36,8 +36,8 @@ func TestUnitReadTakesAnInputOfTheRun(t *testing.T) {
 		m.Files["/etc/env"], m.Files["/etc/a"] = []byte("IN=old\n"), []byte("old\n")
 		side := cli.UnitSide{
 			Dir: "/nowhere",
-			Values: func(_ context.Context, m effect.Machine) (any, effect.Machine, error) {
-				return unitValues{User: "u"}, m, nil
+			Values: func(context.Context, effect.Machine) (any, error) {
+				return unitValues{User: "u"}, nil
 			},
 			Units: &effecttest.Units{}, Root: true, Hidden: []string{"IN"}, Task: "inputs",
 		}
