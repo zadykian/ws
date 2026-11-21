@@ -56,7 +56,6 @@ swap = { size_mib = 1024, hint = "…" }                                 # /swap
   made again, under another name until `mkswap` has made it a swap area. The plan reads
   `/proc/swaps`, `/proc/meminfo`, the free space of `/` and `/swapfile`. It fails where the disk
   lacks room for the file and 2 GiB more, with `hint` after. It fails too where swapping an area
-  off would bring back more than half the memory available. At 0 it removes the file. Without booted
-  systemd it makes the file and skips `swapon` and `swapoff`. The kernel's swap is the host's in a
-  container, so a spec turns the unit off there by `when = { container = "!yes" }`.
-- Without booted systemd, `linger`, `http`, `ufw`, `addr` and `reboot` skip, and each says so.
+  off would bring back more than half the memory available. At 0 it removes the file. The kernel's
+  swap is the host's in a container, so a spec turns the unit off there by
+  `when = { container = "!yes" }`.

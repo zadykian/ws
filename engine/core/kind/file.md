@@ -11,7 +11,6 @@ owner = "root"              # the default; another owner's file lies below its h
 group = "NAME"              # a file of root's takes this group of /etc/group
 template = "name.tmpl"      # or source = "name", copied unchanged
 check = ["cmd", "{}"]       # {} is the new file's path; a refusal leaves the live file
-check_booted = false        # run check with booted systemd alone
 service = "x.service"       # restarted where the file changes
 enabled = false             # service starts at boot
 reload = false              # reload service, not restart it
@@ -46,7 +45,6 @@ after = "KIND/NAME"
   the missing parents are the owner's.
 - A file whose `owner` names root takes root's home where its path lies below it, so a link on the
   way is refused there too. An account's file names root where the account is root's.
-- Without booted systemd the restarts are skipped, and each says so.
 - A `line` goes at the top of its owner's file below the home, root's too, with a blank line
   after it. With `line_at = "end"` it goes last, after a newline that the file lacks, for a format
   whose last setting wins or that reads an include where it sits. A missing file is made with the
