@@ -42,6 +42,6 @@ func TestSecretivePinIsOneMiseTakes(t *testing.T) {
 		t.Errorf("artifact is %q, want Secretive.app", pin["artifact"])
 	}
 	if pin["adopt"] != true {
-		t.Errorf("adopt is %v, want true: the runbook installs the same build by hand", pin["adopt"])
+		t.Errorf("adopt is %v, want true: mise takes over the same build that stands", pin["adopt"])
 	}
 }
