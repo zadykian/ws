@@ -27,9 +27,10 @@ It allows no line. Its test, [warnings-check-test.sh](../warnings-check-test.sh)
 
 ## The install script
 
-CI runs `install.sh` with mise's real binary, served on loopback, and a small repository for the
-release's tree. It checks that `install.sh` installs mise, refuses a wrong one and runs the
-bootstrap ([The install job](release.md#the-install-job)).
+CI runs `install.sh` with a stub of ws for each target, served on loopback. It checks that
+`install.sh` installs each stub, refuses a wrong sum and a missing file, and makes and checks
+`/usr/local/bin` ([The install job](release.md#the-install-job)). The `mac` job runs it on macOS with
+the tree's build ([16-install.sh](../mac/16-install.sh)).
 
 ## The release
 

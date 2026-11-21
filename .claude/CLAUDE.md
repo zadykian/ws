@@ -40,7 +40,7 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   locks the Mac's tools, gh among them, by their SHA-256.
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
-- `install.sh`: installs mise and runs `mise bootstrap` on a release's tree
+- `install.sh`: installs ws's binary alone, as `/usr/local/bin/ws`, on Linux and the Mac
   ([Releases](../.github/workflows/release.md)).
 - `roles/client/`: the Mac's side ([The Mac](../roles/client/README.md)), its roles in `macos/`.
   Above them sit the packages that serve them all, `cli`, `values`, `facts` and `internal`, and
@@ -89,7 +89,8 @@ The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `server` bui
 `ws server setup` twice as root on a booted runner, with setup's plan. It checks the config that
 Fresh reads too, the firewall around Docker and the secrets task
 ([The server job](../.github/workflows/server.md)).
-`signoz` forges SigNoz's compose files again, and `install` tries `install.sh`. `mac` sets up a
+`signoz` forges SigNoz's compose files again, and `install` tries `install.sh`, as the `mac` case
+16-install does on macOS. `mac` sets up a
 Mac on GitHub's macOS runner by `ws client setup`, whose last run must call no sudo and whose
 `--plan` must exit 0. `mac-cld` sets up
 Ghostty, Zed and cld by setup on another ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `mise
@@ -140,10 +141,9 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([fans](../roles/server/ubuntu/fans/units.toml.tmpl)), and so are foundryctl
   ([ci.yml](../.github/workflows/ci.yml)) and the gates' tools ([.tools/run](../.tools/run)). So is ws's
   binary: `install.sh` and `ws update` check it against the release's `ws.sha256`
-  ([release.yml](../.github/workflows/release.yml)). A Mac's runbook checks it by hand too
-  ([runbook.md](../roles/client/runbook.md)). So is mise's binary. `ws server setup` and `ws client setup` hold
-  its SHA-256 for each target ([mise.go](../roles/internal/setup/mise.go)). So does `install.sh` for
-  Linux ([install.sh](../install.sh)), and a test holds the pair together. So is the server's fnox:
+  ([release.yml](../.github/workflows/release.yml)), on the Mac too. So is mise's binary. `ws server setup`
+  and `ws client setup` hold its SHA-256 for each target ([mise.go](../roles/internal/setup/mise.go)).
+  So is the server's fnox:
   GitHub's digest of its release asset for each platform is in `roles/server/mise/mise.server.lock`
   ([secrets](../roles/server/ubuntu/secrets/README.md#fnox)). So is
   yamllint ([lint-requirements.in](../.github/lint-requirements.in)), and so are the Mac's gh, fnox

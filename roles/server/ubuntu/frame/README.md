@@ -70,7 +70,7 @@ ws runs them by `KIND/NAME`, each moved behind the unit that its `after` names, 
 
 The machine's miserc, `/etc/mise/miserc.toml`, names the envs that load as the set `ws`: `server`
 alone. A run by `-E ws,secrets`, the secrets task's, adds the env `secrets` to the set, which no
-other run loads. `ws server setup` writes the miserc, as `install.sh` does.
+other run loads. `ws server setup` writes the miserc.
 
 The same command writes `/etc/mise/config.toml`, which trusts the tree: its `trusted_config_paths`,
 under `[settings]`, names `/opt/ws`, so that a run by hand needs no `mise trust`. mise reads that
@@ -118,7 +118,7 @@ and the inputs to the list that a run drops.
 
 ## The plugin
 
-`install.sh` and `ws server setup` link the tree's `plugins/ws` into `/usr/share/mise/plugins`,
+`ws server setup` links the tree's `plugins/ws` into `/usr/share/mise/plugins`,
 before the first run.
 mise finds a system plugin there and loads it as it stands, as no entry names it. A
 `[bootstrap.plugins]` entry would install it again on every run, with a warning. mise refuses a
