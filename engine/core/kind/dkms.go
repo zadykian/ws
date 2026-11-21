@@ -40,7 +40,7 @@ type dkmsSpec struct {
 	// Conf is a source of the spec's own, written as the tree's dkms.conf with {version} standing
 	// for Version, so that the pin is one place. A tree whose own dkms.conf fits needs none.
 	Conf string `toml:"conf"`
-	// Load is the module that loads once DKMS has built it, with booted systemd.
+	// Load is the module that loads once DKMS has built it.
 	Load string `toml:"load"`
 	// Unload are the modules unloaded first, as another driver of the same device.
 	Unload []string `toml:"unload"`

@@ -45,7 +45,7 @@ func (s debSpec) parts(e Env, _ fs.FS) (func(context.Context) ([]resource.Resour
 	pkg := apt.Package{M: e.M, Name: s.Package, Source: fetch.PinnedFile{M: e.M, Version: s.Version, URL: url, SHA256: s.SHA256}}
 	var r resource.Resource = pkg
 	if s.Stop != "" {
-		r = held{pkg: pkg, m: e.M, u: e.U, out: e.Out, unit: s.Stop}
+		r = held{pkg: pkg, u: e.U, unit: s.Stop}
 	}
 	return func(context.Context) ([]resource.Resource, error) { return []resource.Resource{r}, nil }, nil
 }

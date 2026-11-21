@@ -58,7 +58,7 @@ func MarketplacesParts(v values.Values, a account.Account, m effect.Machine, _ e
 // the role's own unit, before.
 func RestoreParts(_ values.Values, a account.Account, m effect.Machine, u effect.Units, out effect.Out) []resource.Resource {
 	return []resource.Resource{
-		systemd.Unit{M: m, U: u, Out: out, Name: fmt.Sprintf("user@%d.service", a.UID), Run: systemd.Running},
+		systemd.Unit{M: m, U: u, Name: fmt.Sprintf("user@%d.service", a.UID), Run: systemd.Running},
 		cld.Restore{M: m, Account: a, Out: out},
 	}
 }

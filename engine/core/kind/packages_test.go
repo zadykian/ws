@@ -73,7 +73,7 @@ func TestPackagesNamingNoneIsInSync(t *testing.T) {
 }
 
 func TestPackagesRefusesFieldsNoPlanTakes(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	for spec, want := range map[string]string{
 		"[packages.a]\n":                      "packages take a template",
 		"[packages.a]\ntemplate = \"gone\"\n": "gone",

@@ -9,7 +9,7 @@ import (
 )
 
 func TestOursRefusesAFileByHandInADryRunToo(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	m.Files["/etc/a.env"] = []byte("TOKEN=by-hand\n")
 	units := loadOne(t, e, "[file.a]\npath = \"/etc/a.env\"\nsource = \"a\"\nsecret = true\nours = true\n", map[string]string{"a": oursMark + "\nTOKEN=new\n"})
 	_, err := units[0].Step.Plan(t.Context())
@@ -25,7 +25,7 @@ func TestOursRefusesAFileByHandInADryRunToo(t *testing.T) {
 }
 
 func TestOursTakesAMissingFile(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	m.Dirs["/etc"] = 0o755
 	units := loadOne(t, e, "[file.a]\npath = \"/etc/a.env\"\nsource = \"a\"\nours = true\n", map[string]string{"a": oursMark + "\nA=1\n"})
 	if err := run(t, e, units); err != nil {
@@ -38,7 +38,7 @@ func TestOursTakesAMissingFile(t *testing.T) {
 }
 
 func TestOursKeepsAFileByHandFromRemoval(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	m.Files["/etc/a.env"] = []byte("A=1\n")
 	units := loadOne(t, e, "[file.a]\npath = \"/etc/a.env\"\nabsent = true\nours = true\n", nil)
 	if err := run(t, e, units); err == nil || string(m.Files["/etc/a.env"]) != "A=1\n" {
@@ -47,7 +47,7 @@ func TestOursKeepsAFileByHandFromRemoval(t *testing.T) {
 }
 
 func TestBackupKeepsTheOldFile(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	withAccount(m)
 	m.Files["/home/u/a.yml"] = []byte("by hand\n")
 	units := loadOne(t, e, "[file.a]\npath = \"/home/u/a.yml\"\nowner = \"u\"\nsource = \"a\"\nbackup = true\n",
@@ -70,7 +70,7 @@ func TestBackupKeepsTheOldFile(t *testing.T) {
 }
 
 func TestBackupOfAMissingFileKeepsNothing(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	withAccount(m)
 	units := loadOne(t, e, "[file.a]\npath = \"/home/u/a.yml\"\nowner = \"u\"\nsource = \"a\"\nbackup = true\n",
 		map[string]string{"a": "new\n"})
@@ -85,7 +85,7 @@ func TestBackupOfAMissingFileKeepsNothing(t *testing.T) {
 }
 
 func TestBackupRefusesSecretAbsentOrLine(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	for _, spec := range []string{
 		"path = \"/a\"\nsource = \"f\"\nsecret = true\nbackup = true\n",
 		"path = \"/a\"\nabsent = true\nbackup = true\n",
@@ -101,7 +101,7 @@ func TestBackupRefusesSecretAbsentOrLine(t *testing.T) {
 // An account's file where the account is root's names root, and below root's home it refuses a link on
 // the way as another account's does. A file of root's that names root lies anywhere.
 func TestFileNamingRootRefusesALinkInRootsHome(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	m.Results["getent passwd root"] = effecttest.Result{Out: []byte("root:x:0:0:root:/root:/bin/bash\n")}
 	m.Dirs["/root"] = 0o700
 	m.Links["/root/.config"] = "/etc"

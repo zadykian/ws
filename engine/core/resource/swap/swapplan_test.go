@@ -12,26 +12,24 @@ func TestPlanSwap(t *testing.T) {
 		want swapSteps
 	}{
 		{"new machine with the installer's file",
-			swapState{WantMiB: 8192, Areas: map[string]int64{installerImg: 100}, AvailKiB: 1 << 22, DiskMiB: 50000, Booted: true},
+			swapState{WantMiB: 8192, Areas: map[string]int64{installerImg: 100}, AvailKiB: 1 << 22, DiskMiB: 50000},
 			swapSteps{Create: true, Swapon: true, StopInstaller: true}},
-		{"settled", swapState{WantMiB: 8192, Areas: map[string]int64{swapFile: 5}, File: file8, DiskMiB: 1, Booted: true}, swapSteps{}},
-		{"file made, not swapped to", swapState{WantMiB: 8192, File: file8, Booted: true}, swapSteps{Swapon: true}},
-		{"a container makes the file and skips swapon and swapoff",
-			swapState{WantMiB: 8192, Areas: map[string]int64{installerImg: 0}, DiskMiB: 50000}, swapSteps{Create: true}},
+		{"settled", swapState{WantMiB: 8192, Areas: map[string]int64{swapFile: 5}, File: file8, DiskMiB: 1}, swapSteps{}},
+		{"file made, not swapped to", swapState{WantMiB: 8192, File: file8}, swapSteps{Swapon: true}},
 		{"another size is made again",
-			swapState{WantMiB: 4096, Areas: map[string]int64{swapFile: 10}, AvailKiB: 1 << 22, DiskMiB: 100, File: file8, Booted: true},
+			swapState{WantMiB: 4096, Areas: map[string]int64{swapFile: 10}, AvailKiB: 1 << 22, DiskMiB: 100, File: file8},
 			swapSteps{StopFile: true, RemoveFile: true, Create: true, Swapon: true}},
-		{"size 0 removes the file", swapState{File: file8, Areas: map[string]int64{swapFile: 0}, Booted: true},
+		{"size 0 removes the file", swapState{File: file8, Areas: map[string]int64{swapFile: 0}},
 			swapSteps{StopFile: true, RemoveFile: true}},
-		{"size 0 with nothing", swapState{Booted: true}, swapSteps{}},
+		{"size 0 with nothing", swapState{}, swapSteps{}},
 		{"mode too open", swapState{WantMiB: 8192, File: swapFileInfo{Exists: true, Size: 8192 * mib, Mode: 0o644},
 			Areas: map[string]int64{swapFile: 0}}, swapSteps{Restrict: true}},
 		{"owner not root", swapState{WantMiB: 8192, File: swapFileInfo{Exists: true, Size: 8192 * mib, Mode: 0o600, UID: 1000},
 			Areas: map[string]int64{swapFile: 0}}, swapSteps{Restrict: true}},
-		{"disk with exactly the room", swapState{WantMiB: 100, DiskMiB: 100 + diskSpareMiB}, swapSteps{Create: true}},
+		{"disk with exactly the room", swapState{WantMiB: 100, DiskMiB: 100 + diskSpareMiB}, swapSteps{Create: true, Swapon: true}},
 		{"the stale file's space counts", swapState{WantMiB: 10000, DiskMiB: 4100, File: file8},
-			swapSteps{RemoveFile: true, Create: true}},
-		{"memory with exactly the room", swapState{WantMiB: 0, Areas: map[string]int64{installerImg: 512}, AvailKiB: 1024}, swapSteps{}},
+			swapSteps{RemoveFile: true, Create: true, Swapon: true}},
+		{"memory with exactly the room", swapState{WantMiB: 0, Areas: map[string]int64{installerImg: 512}, AvailKiB: 1024}, swapSteps{StopInstaller: true}},
 	} {
 		got, err := planSwap(tt.s, "Set a lower size.")
 		if err != nil || got != tt.want {
@@ -62,7 +60,7 @@ func TestPlanSwapRefusals(t *testing.T) {
 
 func TestPlanSwapSettledNeedsNoRoom(t *testing.T) {
 	// A file already of the wanted size needs no room, and swapping to it holds nothing to move.
-	s := swapState{WantMiB: 8192, File: file8, Areas: map[string]int64{swapFile: 1 << 30}, Booted: true}
+	s := swapState{WantMiB: 8192, File: file8, Areas: map[string]int64{swapFile: 1 << 30}}
 	if got, err := planSwap(s, ""); err != nil || got != (swapSteps{}) {
 		t.Errorf("plan = %+v, %v, want none", got, err)
 	}

@@ -1,7 +1,6 @@
 package kind
 
 import (
-	"slices"
 	"strings"
 	"testing"
 
@@ -22,7 +21,7 @@ func TestRebootSaysWhileTheLoadedModuleDiffers(t *testing.T) {
 		{"not installed", "595.91.07-0ubuntu1", "rc", "", ""},
 		{"an epoch and a revision", "1:2.0-1", "ii", "2.0\n", ""},
 	} {
-		e, m, _, out := testEnv(true)
+		e, m, _, out := testEnv()
 		m.Packages = effecttest.Packages{"m-driver": {Version: tc.version, Status: tc.status}}
 		if tc.loaded != "" {
 			m.Files["/sys/module/m/version"] = []byte(tc.loaded)
@@ -35,19 +34,8 @@ func TestRebootSaysWhileTheLoadedModuleDiffers(t *testing.T) {
 	}
 }
 
-func TestRebootSkipsWithoutSystemd(t *testing.T) {
-	e, m, _, out := testEnv(false)
-	got := headlines(t, loadState(t, e, rebootUnit)[0].Step)
-	if got != nil || !slices.Equal(out.Lines, []string{"say: reboot of module m: skipped, systemd is not running"}) {
-		t.Errorf("plan = %q, says %q; want none, and the skip", got, out.Lines)
-	}
-	if slices.ContainsFunc(m.Calls, func(c string) bool { return c != "stat /run/systemd/system" }) {
-		t.Errorf("calls = %q, want no read of dpkg or /sys", m.Calls)
-	}
-}
-
 func TestRebootRefusesBadFields(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	stateRefused(t, e, "reboot = { module = \"../x\", package = \"p\" }\n", `reboot: module "../x" is no kernel module's name`)
 	stateRefused(t, e, "reboot = { module = \"m\", package = \"-o\" }\n", `reboot: package "-o" is no package's name`)
 	stateRefused(t, e, "reboot = { module = \"m\", package = \"p=1\" }\n", `reboot: package "p=1" is no package's name`)

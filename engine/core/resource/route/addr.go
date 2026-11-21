@@ -7,18 +7,13 @@ import (
 	"net/netip"
 	"strings"
 
-	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // Addr stops the run where Iface lacks the address Want, with its prefix length. The run cannot
 // move an interface's address, so it plans a change that fails with Hint. A missing interface
-// holds no address. Without booted systemd, where no daemon has set the interface up, it skips and
-// says so.
+// holds no address.
 type Addr struct {
-	M     effect.Machine
-	Out   effect.Out
 	Iface string
 	Want  netip.Prefix
 	Hint  string
@@ -41,10 +36,6 @@ func (c moves) Apply(context.Context) error { return fmt.Errorf("%s: %s", c, c.a
 
 // Plan reads the interface's IPv4 addresses.
 func (a Addr) Plan(context.Context) ([]resource.Change, error) {
-	if !systemd.Booted(a.M) {
-		a.Out.Say("%s: skipped, systemd is not running", a.Iface)
-		return nil, nil
-	}
 	held := a.Held
 	if held == nil {
 		held = Addrs

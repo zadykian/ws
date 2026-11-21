@@ -17,7 +17,7 @@ func TestServiceEnablesAndRuns(t *testing.T) {
 		"triggered": {"enable a.service"},
 		"":          {"enable a.service"},
 	} {
-		e, _, u, _ := testEnv(true)
+		e, _, u, _ := testEnv()
 		u.States = map[string]effect.UnitState{"a.service": {Active: state == "stopped"}}
 		units := loadOne(t, e, "[service.a]\nunit = \"a.service\"\nenabled = true\nrun = \""+state+"\"\n", nil)
 		if err := run(t, e, units); err != nil {
@@ -29,21 +29,8 @@ func TestServiceEnablesAndRuns(t *testing.T) {
 	}
 }
 
-func TestServiceSkipsWithoutSystemd(t *testing.T) {
-	e, m, u, out := testEnv(false)
-	m.Dirs["/etc"] = 0o755
-	units := loadOne(t, e, "[service.a]\nunit = \"a.service\"\nenabled = true\nrun = \"running\"\n"+
-		"[[service.a.file]]\npath = \"/etc/a.conf\"\nsource = \"a\"\n", map[string]string{"a": "x"})
-	if got := headlines(t, units[0].Step); !slices.Equal(got, []string{"create /etc/a.conf"}) {
-		t.Errorf("plan = %q, want the file alone", got)
-	}
-	if u.Calls != nil || !slices.Equal(out.Lines, []string{"say: a.service: skipped, systemd is not running"}) {
-		t.Errorf("calls = %q, lines %q; want none, and the skip said once", u.Calls, out.Lines)
-	}
-}
-
 func TestServiceFilesGiveOneRestart(t *testing.T) {
-	e, m, u, _ := testEnv(true)
+	e, m, u, _ := testEnv()
 	m.Dirs["/etc"] = 0o755
 	m.Files["/etc/a.conf"], m.Files["/etc/b.conf"] = []byte("old"), []byte("old")
 	u.States = map[string]effect.UnitState{"a.service": {Enabled: true, Active: true}}
@@ -63,7 +50,7 @@ func TestServiceFilesGiveOneRestart(t *testing.T) {
 }
 
 func TestServicePartTakesAnOwner(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	withAccount(m)
 	units := loadOne(t, e, "[service.a]\nunit = \"a.service\"\n"+
 		"[[service.a.file]]\npath = \"/home/u/.a/a.conf\"\nowner = \"u\"\nmode = 0o600\nsource = \"a\"\n", map[string]string{"a": "x"})
@@ -85,7 +72,7 @@ func TestServiceRestartsOnDrift(t *testing.T) {
 		{"same", nil},
 		{"other", []string{"restart: what show prints is not what the files load", "note the owed restart of a.service", "restart a.service"}},
 	} {
-		e, m, u, _ := testEnv(true)
+		e, m, u, _ := testEnv()
 		m.Dirs["/etc"] = 0o755
 		m.Files["/etc/a.conf"] = []byte("x")
 		u.States = map[string]effect.UnitState{"a.service": {Active: true}}
@@ -110,7 +97,7 @@ func TestServiceRestartsOnDrift(t *testing.T) {
 }
 
 func TestServiceRefusesFieldsNoPlanTakes(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	for spec, want := range map[string]string{
 		"unit = \"a\"\n":                                            "type's suffix",
 		"unit = \"a.service\"\nrun = \"up\"\n":                      `run "up" is none of`,
@@ -127,7 +114,7 @@ func TestServiceRefusesFieldsNoPlanTakes(t *testing.T) {
 }
 
 func TestServiceFilesInOneNewDirectoryMakeItOnce(t *testing.T) {
-	e, m, u, _ := testEnv(true)
+	e, m, u, _ := testEnv()
 	m.Dirs["/etc"] = 0o755
 	u.States = map[string]effect.UnitState{"a.service": {Enabled: true, Active: true}}
 	units := loadOne(t, e, "[service.a]\nunit = \"a.service\"\nenabled = true\nrun = \"running\"\n"+
@@ -144,7 +131,7 @@ func TestServiceFilesInOneNewDirectoryMakeItOnce(t *testing.T) {
 // A file that goes waits for the files written after it in the spec: a refused check of one of
 // them keeps it.
 func TestServiceRemovesAFileAfterThoseItWrites(t *testing.T) {
-	e, m, u, _ := testEnv(true)
+	e, m, u, _ := testEnv()
 	m.Dirs["/etc"] = 0o755
 	m.Files["/etc/a.env"], m.Files["/etc/b.conf"] = []byte("A=1\n"), []byte("old")
 	m.Results["refuse /etc/b.conf.ws-check"] = effecttest.Result{Err: errors.New("exit 1")}

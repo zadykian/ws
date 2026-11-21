@@ -34,9 +34,6 @@ type filePart struct {
 	// Check is a command that refuses a bad file, {} standing for the new file's path. The new file
 	// is written beside the live one and moved over it once the check passes.
 	Check []string `toml:"check"`
-	// CheckBooted runs Check with booted systemd alone, for a checker that needs what a plain
-	// container lacks, such as the kernel's netfilter.
-	CheckBooted bool `toml:"check_booted"`
 	// Secret keeps the content out of the diff.
 	Secret bool `toml:"secret"`
 	// Absent removes the file, and takes no content.
@@ -69,8 +66,6 @@ func (f filePart) check(dir fs.FS) error {
 		return fmt.Errorf("mode %o is not a file's permission bits", f.Mode)
 	case f.Link != "":
 		return f.checkLink()
-	case f.CheckBooted && len(f.Check) == 0:
-		return errors.New("check_booted goes with check")
 	case f.Line != "" || len(f.Has) > 0:
 		return f.checkLine()
 	case f.Absent && (f.Template != "" || f.Source != "" || len(f.Check) > 0 || f.Secret || f.Mode != 0 || f.Group != ""):
@@ -164,7 +159,7 @@ func (f filePart) resources(ctx context.Context, e Env, dir fs.FS) (built, error
 	b.file = f.guarded(e, owner, b.file)
 	b.all = append(b.all, b.file)
 	if strings.HasPrefix(f.Path, "/etc/systemd/system/") {
-		b.all = append(b.all, systemd.DaemonReload{M: e.M, U: e.U, Watch: []resource.Resource{b.file}})
+		b.all = append(b.all, systemd.DaemonReload{U: e.U, Watch: []resource.Resource{b.file}})
 	}
 	b.owner = owner
 	return b, nil
@@ -190,16 +185,15 @@ func (f filePart) written(e Env, owner account.Account, rel string, content []by
 	}
 	w.Secret = f.Secret
 	w.Backup = f.Backup
-	if check := f.checker(e); check != nil {
+	if check := f.checker(); check != nil {
 		return file.Validated{File: w, Check: check}, nil
 	}
 	return w, nil
 }
 
-// checker returns the check's command for a new file at a path, or nil where the file has no check
-// that this machine can run.
-func (f filePart) checker(e Env) func(p string) (string, []string) {
-	if len(f.Check) == 0 || f.CheckBooted && !systemd.Booted(e.M) {
+// checker returns the check's command for a new file at a path, or nil where the file has no check.
+func (f filePart) checker() func(p string) (string, []string) {
+	if len(f.Check) == 0 {
 		return nil
 	}
 	return func(p string) (string, []string) {
@@ -252,7 +246,7 @@ func (s fileSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.Res
 		}
 		watch := []resource.Resource{b.file}
 		if s.Service != "" {
-			b.all = append(b.all, systemd.Unit{M: e.M, U: e.U, Out: e.Out, Name: s.Service, Enabled: s.Enabled,
+			b.all = append(b.all, systemd.Unit{M: e.M, U: e.U, Name: s.Service, Enabled: s.Enabled,
 				Run: systemd.Running, Reload: s.Reload, Watch: watch})
 		}
 		return b.all, nil

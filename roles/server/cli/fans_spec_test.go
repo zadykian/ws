@@ -227,14 +227,6 @@ func TestFansServiceRestartsOnANewWs(t *testing.T) {
 	}
 }
 
-func TestFansServiceSkipsItsUnitWithoutSystemd(t *testing.T) {
-	m := fansMachine()
-	delete(m.Dirs, "/run/systemd/system")
-	if u := fansService(t, m); len(u.Calls) != 0 || m.Files["/etc/ws/fans.json"] == nil {
-		t.Errorf("calls = %q, fans.json %q; want the files alone", u.Calls, m.Files["/etc/ws/fans.json"])
-	}
-}
-
 func TestFansConfigRefusedFailsThePlan(t *testing.T) {
 	m := fansMachine()
 	m.Files["/etc/ws/fans.json"] = []byte("old\n")

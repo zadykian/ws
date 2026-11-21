@@ -8,7 +8,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // UserRules is the file where ufw keeps the rules given to it.
@@ -18,22 +17,14 @@ const UserRules = "/etc/ufw/user.rules"
 // where missing, and the others deleted, as ufw keeps a rule until then, a former address's too.
 type Rules struct {
 	M       effect.Machine
-	Out     effect.Out
 	Comment string
 	Want    []Rule
 	// Owns tells which of the rules with Comment the role owns. Nil means them all.
 	Owns func(Rule) bool
-	// NeedsSystemd skips the resource where systemd is not running, as in CI's container, where
-	// ufw cannot load its rules.
-	NeedsSystemd bool
 }
 
 // Plan adds the missing rules, then deletes the stale ones.
 func (r Rules) Plan(context.Context) ([]resource.Change, error) {
-	if r.NeedsSystemd && !systemd.Booted(r.M) {
-		r.Out.Say("ufw rules %q: skipped, systemd is not running", r.Comment)
-		return nil, nil
-	}
 	text, err := r.M.ReadRootFile(UserRules)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err

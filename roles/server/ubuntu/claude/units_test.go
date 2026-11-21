@@ -198,18 +198,6 @@ func TestClaudeCommandsRunAsRootWithoutSystemd(t *testing.T) {
 	}
 }
 
-func TestClaudeLingerSkipsWithoutSystemd(t *testing.T) {
-	m, e := machine(t)
-	if got := changes(t, unit(t, e, "state/claude-linger")); got != nil {
-		t.Errorf("plan = %q, want none without systemd", got)
-	}
-	for _, c := range m.Calls {
-		if strings.HasPrefix(c, "run") {
-			t.Errorf("call %q, want none without systemd", c)
-		}
-	}
-}
-
 func TestClaudeLingerIsRootsAndRestoreRunsAsRoot(t *testing.T) {
 	m, e := machine(t)
 	m.Dirs["/run/systemd/system"] = 0o755

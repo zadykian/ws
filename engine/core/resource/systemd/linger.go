@@ -16,7 +16,6 @@ import (
 type Linger struct {
 	M    effect.Machine
 	User account.User
-	Out  effect.Out
 }
 
 type enableLinger struct{ l Linger }
@@ -32,10 +31,6 @@ func (c enableLinger) Apply(ctx context.Context) error {
 
 // Plan looks for the file that loginctl makes.
 func (l Linger) Plan(context.Context) ([]resource.Change, error) {
-	if !Booted(l.M) {
-		l.Out.Say("lingering for %s: skipped, systemd is not running", l.User.Name)
-		return nil, nil
-	}
 	_, err := l.M.Stat("/var/lib/systemd/linger/" + l.User.Name)
 	if errors.Is(err, fs.ErrNotExist) {
 		return []resource.Change{enableLinger{l}}, nil

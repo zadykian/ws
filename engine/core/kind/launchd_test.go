@@ -36,7 +36,7 @@ reload_on = ["/etc/x/lab"]
 // ldEnv is a Mac with the program and the watched files, root's alone, and launchd's answers to
 // each call; it has loaded no daemon.
 func ldEnv(t *testing.T) (Env, *effecttest.Machine) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	e.System = MacOS
 	for _, d := range []string{"/", "/usr", "/usr/local", "/usr/local/bin", "/Library/LaunchDaemons", "/etc/x/lab"} {
 		m.Dirs[d] = 0o755

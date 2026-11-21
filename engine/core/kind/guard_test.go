@@ -36,7 +36,7 @@ func withKeys(m *effecttest.Machine, keys string, mode fs.FileMode) {
 }
 
 func TestGuardLoginKeyPasses(t *testing.T) {
-	e, m, _, _ := testEnv(true)
+	e, m, _, _ := testEnv()
 	withAccount(m)
 	withKeys(m, "# the Mac\nssh-ed25519 AAAA u@mac\n", 0o600)
 	if err := guardPlan(t, e, loginGuard); err != nil {
@@ -61,7 +61,7 @@ func TestGuardRefusesNoLoginKey(t *testing.T) {
 		"writable": {keys: "ssh-ed25519 AAAA\n", mode: 0o666, want: "sshd would pass over " + keysOfU},
 		"linked":   {keys: "ssh-ed25519 AAAA\n", mode: 0o600, link: true, want: "link"},
 	} {
-		e, m, _, _ := testEnv(true)
+		e, m, _, _ := testEnv()
 		withAccount(m)
 		if c.keys != "" {
 			withKeys(m, c.keys, c.mode)
@@ -77,7 +77,7 @@ func TestGuardRefusesNoLoginKey(t *testing.T) {
 
 func TestGuardRefusesAHomeOtherThanTheAccounts(t *testing.T) {
 	for _, container := range []bool{false, true} {
-		e, m, _, _ := testEnv(true)
+		e, m, _, _ := testEnv()
 		withAccount(m)
 		withKeys(m, "ssh-ed25519 AAAA u@mac\n", 0o600)
 		if container {
@@ -91,7 +91,7 @@ func TestGuardRefusesAHomeOtherThanTheAccounts(t *testing.T) {
 }
 
 func TestGuardPassesInAContainer(t *testing.T) {
-	e, m, _, _ := testEnv(true)
+	e, m, _, _ := testEnv()
 	withAccount(m)
 	m.Files["/.dockerenv"] = nil
 	for _, spec := range []string{loginGuard} {
@@ -102,7 +102,7 @@ func TestGuardPassesInAContainer(t *testing.T) {
 }
 
 func TestGuardTakesExactlyOne(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	for spec, want := range map[string]string{
 		"after = \"\"\n":                         "takes one of login_key with home and command",
 		"login_key = \"u\"\n":                    `home "" is not a clean absolute path`,
@@ -122,7 +122,7 @@ func TestGuardTakesExactlyOne(t *testing.T) {
 const commandGuard = "[guard.a]\ncommand = [\"/usr/bin/check\", \"x\"]\n"
 
 func TestGuardCommandPassesAndSays(t *testing.T) {
-	e, m, _, out := testEnv(true)
+	e, m, _, out := testEnv()
 	m.Results["/usr/bin/check x"] = effecttest.Result{Out: []byte("first\n\nsecond\n")}
 	units := loadOne(t, e, commandGuard, nil)
 	if err := run(t, e, units); err != nil {
@@ -137,7 +137,7 @@ func TestGuardCommandPassesAndSays(t *testing.T) {
 }
 
 func TestGuardCommandFailsWithItsOutput(t *testing.T) {
-	e, m, _, _ := testEnv(true)
+	e, m, _, _ := testEnv()
 	m.Results["/usr/bin/check x"] = effecttest.Result{Out: []byte("the port is an uplink\n"), Err: errors.New("exit status 1")}
 	err := guardPlan(t, e, commandGuard)
 	if err == nil || !strings.Contains(err.Error(), "exit status 1") || !strings.Contains(err.Error(), "the port is an uplink") {
@@ -146,7 +146,7 @@ func TestGuardCommandFailsWithItsOutput(t *testing.T) {
 }
 
 func TestGuardCommandRunsInAContainer(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	m.Files["/.dockerenv"] = nil
 	m.Results["/usr/bin/check x"] = effecttest.Result{Err: errors.New("exit status 1")}
 	if err := guardPlan(t, e, commandGuard); err == nil {

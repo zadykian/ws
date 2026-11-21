@@ -9,18 +9,15 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // drift finds what is in force other than what a service's files load, as after a run cut short
 // before the restart, or a change by hand. Nothing else would restart the service then. inForce
 // and loads are two commands, run as root, whose outputs match where the two agree. A load that
 // fails, or nothing in force, counts as a difference: the restart shows which. A file not yet
-// written has nothing to load, and its write is a change of its own. The commands may need what a
-// plain container lacks, so without booted systemd it compares nothing and says so.
+// written has nothing to load, and its write is a change of its own.
 type drift struct {
 	m       effect.Machine
-	out     effect.Out
 	inForce []string
 	loads   []string
 	files   []string
@@ -40,10 +37,6 @@ func (restartDue) ByRestart() bool { return true }
 
 // Plan plans a restart where the two outputs differ.
 func (d drift) Plan(ctx context.Context) ([]resource.Change, error) {
-	if !systemd.Booted(d.m) {
-		d.out.Say("%s: not compared with what the files load, systemd is not running", strings.Join(d.inForce, " "))
-		return nil, nil
-	}
 	for _, p := range d.files {
 		_, err := d.m.RootAttrs(p)
 		if errors.Is(err, fs.ErrNotExist) {

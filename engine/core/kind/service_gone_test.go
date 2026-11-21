@@ -15,8 +15,8 @@ const goneService = "[service.a]\nunit = \"a.service\"\nrun = \"stopped\"\nin_fo
 	"[[service.a.file]]\npath = \"/etc/systemd/system/a.service\"\nabsent = true\n"
 
 // goneEnv is a machine where an earlier run left the service and its files.
-func goneEnv(booted bool) (Env, *effecttest.Machine, *effecttest.Units, *effecttest.Out) {
-	e, m, u, out := testEnv(booted)
+func goneEnv() (Env, *effecttest.Machine, *effecttest.Units, *effecttest.Out) {
+	e, m, u, out := testEnv()
 	m.Dirs["/usr/local/lib/a"], m.Dirs["/etc/systemd/system"] = 0o755, 0o755
 	m.Files["/usr/local/lib/a/a.sh"], m.Files["/etc/systemd/system/a.service"] = []byte("x"), []byte("[Unit]\n")
 	u.States = map[string]effect.UnitState{"a.service": {Enabled: true, Active: true}}
@@ -24,7 +24,7 @@ func goneEnv(booted bool) (Env, *effecttest.Machine, *effecttest.Units, *effectt
 }
 
 func TestServiceGoneStopsAndDisablesBeforeItsFiles(t *testing.T) {
-	e, m, u, _ := goneEnv(true)
+	e, m, u, _ := goneEnv()
 	units := loadOne(t, e, goneService, nil)
 	want := []string{"disable a.service", "stop a.service", "remove /usr/local/lib/a/a.sh",
 		"remove /etc/systemd/system/a.service", "reload systemd's unit files"}
@@ -43,7 +43,7 @@ func TestServiceGoneStopsAndDisablesBeforeItsFiles(t *testing.T) {
 }
 
 func TestServiceGoneRefusesEnabledOrRunning(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	const part = "[[service.a.file]]\npath = \"/etc/a.conf\"\nabsent = true\n"
 	for _, fields := range []string{"enabled = true\n", "run = \"running\"\n", "run = \"triggered\"\n"} {
 		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": "[service.a]\nunit = \"a.service\"\n" + fields + part}))
@@ -54,23 +54,10 @@ func TestServiceGoneRefusesEnabledOrRunning(t *testing.T) {
 }
 
 func TestServiceGonePlansNoDrift(t *testing.T) {
-	e, m, _, _ := goneEnv(true)
+	e, m, _, _ := goneEnv()
 	units := loadOne(t, e, goneService, nil)
 	headlines(t, units[0].Step)
 	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasSuffix(c, " show") || strings.HasSuffix(c, " load") }) {
 		t.Errorf("calls = %q, want no comparison", m.Calls)
-	}
-}
-
-func TestServiceGoneUnbooted(t *testing.T) {
-	e, _, u, out := goneEnv(false)
-	units := loadOne(t, e, goneService, nil)
-	want := []string{"remove /usr/local/lib/a/a.sh", "remove /etc/systemd/system/a.service"}
-	if got := headlines(t, units[0].Step); !slices.Equal(got, want) ||
-		!slices.Equal(out.Lines, []string{"say: a.service: skipped, systemd is not running"}) {
-		t.Errorf("plan = %q, lines %q; want %q, and the skip said", got, out.Lines, want)
-	}
-	if u.Calls != nil {
-		t.Errorf("calls = %q, want none", u.Calls)
 	}
 }

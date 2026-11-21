@@ -20,10 +20,10 @@ const (
 	startP          = "start the containers of p that are down"
 )
 
-// composeMachine is a booted machine whose project p, in /srv/p, has a service s that keeps running
+// composeMachine is a machine whose project p, in /srv/p, has a service s that keeps running
 // and a one-shot once. Its compose lists running as the services that run.
-func composeMachine(t *testing.T, running ...string) (*effecttest.Machine, *effecttest.Out, []Unit) {
-	e, m, _, out := testEnv(true)
+func composeMachine(t *testing.T, running ...string) (*effecttest.Machine, []Unit) {
+	e, m, _, _ := testEnv()
 	m.Dirs["/srv/p"] = 0o755
 	m.Dirs["/srv/p/conf"] = 0o755
 	m.Dirs["/srv/p/empty"] = 0o755
@@ -33,12 +33,12 @@ func composeMachine(t *testing.T, running ...string) (*effecttest.Machine, *effe
 	m.Results[composePs] = effecttest.Result{Out: []byte(strings.Join(running, "\n") + "\n")}
 	m.Results[composeUpLine] = effecttest.Result{}
 	m.Results[composeRecreate] = effecttest.Result{}
-	return m, out, loadOne(t, e, composeSpecText, nil)
+	return m, loadOne(t, e, composeSpecText, nil)
 }
 
 // upped is composeMachine after a good up, with its sum kept.
 func upped(t *testing.T, running ...string) (*effecttest.Machine, []Unit) {
-	m, _, units := composeMachine(t, running...)
+	m, units := composeMachine(t, running...)
 	if err := applyOnce(t, units[0].Step); err != nil {
 		t.Fatal(err)
 	}
@@ -47,7 +47,7 @@ func upped(t *testing.T, running ...string) (*effecttest.Machine, []Unit) {
 }
 
 func TestComposeUpsWithoutASum(t *testing.T) {
-	m, _, units := composeMachine(t, "s")
+	m, units := composeMachine(t, "s")
 	if got := headlines(t, units[0].Step); !slices.Equal(got, []string{recreateP}) {
 		t.Fatalf("plan = %q, want the recreation", got)
 	}
@@ -146,23 +146,8 @@ func TestComposeKeepsTheOldSumOnAFailedUp(t *testing.T) {
 	}
 }
 
-func TestComposeSkipsWithoutSystemd(t *testing.T) {
-	m, out, units := composeMachine(t, "s")
-	delete(m.Dirs, "/run/systemd/system")
-	m.Calls = nil
-	if got := headlines(t, units[0].Step); got != nil {
-		t.Errorf("plan = %q, want none", got)
-	}
-	if want := []string{"say: the compose project p: skipped, systemd is not running"}; !slices.Equal(out.Lines, want) {
-		t.Errorf("lines = %q, want %q", out.Lines, want)
-	}
-	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.Contains(c, "/srv/p") || strings.Contains(c, "docker") }) {
-		t.Errorf("calls = %q, want neither the files nor compose read", m.Calls)
-	}
-}
-
 func TestComposeRefusesABadSpec(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	for fields, want := range map[string]string{
 		"dir = \"srv/p\"\nproject = \"p\"\n":      `dir "srv/p" is no clean absolute path`,
 		"dir = \"/srv/../p\"\nproject = \"p\"\n":  `dir "/srv/../p" is no clean absolute path`,

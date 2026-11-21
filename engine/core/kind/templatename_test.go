@@ -6,7 +6,7 @@ import (
 )
 
 func TestLoadRefusesATemplateWithoutTheEnding(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	specs := map[string]string{
 		"file":     "[file.a]\npath = \"/x\"\ntemplate = \"%s\"\n",
 		"packages": "[packages.a]\ntemplate = \"%s\"\n",

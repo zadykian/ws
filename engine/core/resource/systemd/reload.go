@@ -9,10 +9,8 @@ import (
 )
 
 // DaemonReload makes systemd read its unit files again where any of the watched resources has a
-// change to make, such as a unit file that changed. It comes after them and before the units. It
-// skips where systemd is not running.
+// change to make, such as a unit file that changed. It comes after them and before the units.
 type DaemonReload struct {
-	M     effect.Machine
 	U     effect.Units
 	Watch []resource.Resource
 }
@@ -30,9 +28,6 @@ func (c reload) Apply(ctx context.Context) error { return c.u.DaemonReload(ctx) 
 
 // Plan plans a reload where a watched resource has a change.
 func (d DaemonReload) Plan(ctx context.Context) ([]resource.Change, error) {
-	if !Booted(d.M) {
-		return nil, nil
-	}
 	if changed, err := anyChange(ctx, d.Watch); err != nil || !changed {
 		return nil, err
 	}

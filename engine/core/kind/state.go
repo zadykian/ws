@@ -89,8 +89,7 @@ func (s stateSpec) parts(e Env, _ fs.FS) (func(context.Context) ([]resource.Reso
 	return func(context.Context) ([]resource.Resource, error) { return []resource.Resource{r}, nil }, nil
 }
 
-// lingerState is a user whose systemd starts at boot, and runs: user@UID.service. Without booted
-// systemd it skips.
+// lingerState is a user whose systemd starts at boot, and runs: user@UID.service.
 type lingerState string
 
 func (s lingerState) resource(e Env) (resource.Resource, error) {
@@ -114,13 +113,13 @@ func (l lingered) manager(ctx context.Context) (systemd.Unit, error) {
 	if err != nil {
 		return systemd.Unit{}, err
 	}
-	return systemd.Unit{M: l.e.M, U: l.e.U, Out: l.e.Out, Name: fmt.Sprintf("user@%d.service", a.UID), Run: systemd.Running}, nil
+	return systemd.Unit{M: l.e.M, U: l.e.U, Name: fmt.Sprintf("user@%d.service", a.UID), Run: systemd.Running}, nil
 }
 
 func (l lingered) Plan(ctx context.Context) ([]resource.Change, error) {
-	linger := systemd.Linger{M: l.e.M, User: account.User{Name: l.user}, Out: l.e.Out}
+	linger := systemd.Linger{M: l.e.M, User: account.User{Name: l.user}}
 	cs, err := linger.Plan(ctx)
-	if err != nil || !systemd.Booted(l.e.M) {
+	if err != nil {
 		return cs, err
 	}
 	u, err := l.manager(ctx)
@@ -131,11 +130,8 @@ func (l lingered) Plan(ctx context.Context) ([]resource.Change, error) {
 	return append(cs, more...), err
 }
 
-// Report reads the manager's state. Plan says that systemd is not running, so this doesn't.
+// Report reads the manager's state.
 func (l lingered) Report(ctx context.Context) ([]step.Item, error) {
-	if !systemd.Booted(l.e.M) {
-		return nil, nil
-	}
 	u, err := l.manager(ctx)
 	if err != nil {
 		return nil, err

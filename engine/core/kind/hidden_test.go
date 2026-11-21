@@ -11,9 +11,9 @@ import (
 // session dropped.
 const rootSession = "-u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + systemPath
 
-// hiddenEnv is a booted machine's env whose run hides two names, and whose ws is at /w/ws.
+// hiddenEnv is a machine's env whose run hides two names, and whose ws is at /w/ws.
 func hiddenEnv() (Env, *effecttest.Machine) {
-	e, m, _, _ := testEnv(true)
+	e, m, _, _ := testEnv()
 	e.Self, e.Hidden = "/w/ws", []string{"A_TOKEN", "B_TOKEN"}
 	return e, m
 }
