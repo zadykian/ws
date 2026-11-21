@@ -113,10 +113,13 @@ for name in $inputs; do
 done
 publish "ci: seed the secrets"
 
-# task runs the secrets task as the runbook gives it, and keeps its output in $work/out. boot runs
-# the bootstrap without the env secrets, and keeps its output there too.
+# The runbook's form of a run under the secrets, on the tree in place, as the job's own run of
+# the bootstrap has it. Its task, the secrets', clones on the first run.
+setup=(/usr/local/bin/ws server setup --in-place --secrets)
+# task runs the secrets task by setup, with its --plan or no argument, and keeps its output in
+# $work/out. boot runs the bootstrap without the env secrets, and keeps its output there too.
 task() {
-    "$check" -- mise -C /opt/ws/roles/server run secrets -- "$@" </dev/null 2>&1 | tee -a "$work/out"
+    "$check" -- "${setup[@]}" "$@" </dev/null 2>&1 | tee -a "$work/out"
     return "${PIPESTATUS[0]}"
 }
 boot() {
@@ -129,7 +132,7 @@ must "the first run clones the repository and runs the bootstrap" task
 must "the file holds both values" holds
 must "the file is root's 600" test "$(stat -c '%U %a' "$file")" = 'root 600'
 must "the clone is root's 700" test "$(stat -c '%U %a' /var/lib/ws/secrets)" = 'root 700'
-must "the first run through the task leaves nothing to do" task plan --detailed-exitcode
+must "the first run through the task leaves nothing to do" task --plan
 must "a plan without the env keeps the file" boot plan --detailed-exitcode
 value WS_CI_SHARED age >"$work/shared"
 publish "ci: change the shared value"
@@ -138,7 +141,7 @@ publish "ci: change the shared value"
 # this plan runs outside the check.
 sum=$(sha256sum "$file")
 status=0
-out=$(NO_COLOR=1 mise -C /opt/ws/roles/server run secrets -- plan --detailed-exitcode </dev/null 2>&1) ||
+out=$(NO_COLOR=1 "${setup[@]}" --plan </dev/null 2>&1) ||
     status=$?
 printf '%s\n' "$out" | tee -a "$work/out"
 must "a plan through the task exits 2 on the new value" test "$status" = 2
@@ -146,13 +149,13 @@ must "mise ends the plan by its line of a failed task" grep -qxF '[secrets] ERRO
 must "the plan keeps the file" test "$sum" = "$(sha256sum "$file")"
 must "the second run writes the new value" task
 must "the file holds the new value" holds
-must "the second run through the task leaves nothing to do" task plan --detailed-exitcode
+must "the second run through the task leaves nothing to do" task --plan
 
 # refusal NAME TEXT: the task fails, says TEXT, and keeps the file's bytes.
 refusal() {
     local sum out
     sum=$(sha256sum "$file")
-    if out=$(mise -C /opt/ws/roles/server run secrets </dev/null 2>&1); then
+    if out=$("${setup[@]}" </dev/null 2>&1); then
         fail "$1: the task ran"
     fi
     printf '%s\n' "$out" | tee -a "$work/out"
@@ -164,7 +167,7 @@ hint='ws client secrets add NAME'
 # mise's setting locked comes from the tree's mise.toml. MISE_LOCKED=0 turns it off, and the task
 # then refuses before it touches the clone.
 sum=$(sha256sum "$file")
-if out=$(MISE_LOCKED=0 mise -C /opt/ws/roles/server run secrets </dev/null 2>&1); then
+if out=$(MISE_LOCKED=0 "${setup[@]}" </dev/null 2>&1); then
     fail "a run with locked off: the task ran"
 fi
 printf '%s\n' "$out" | tee -a "$work/out"
@@ -188,7 +191,7 @@ gs revert --no-edit HEAD >/dev/null
 gs push -q origin main
 must "a run after the refusals runs" task
 must "the file holds both values after the refusals" holds
-must "a plan after the refusals leaves nothing to do" task plan --detailed-exitcode
+must "a plan after the refusals leaves nothing to do" task --plan
 
 # The files that the roles' inputs write: root's 600, under ws's header
 # (roles/server/ubuntu/frame/README.md#secret-inputs). The seed leaves their inputs empty, so
@@ -241,7 +244,7 @@ credential() {
         grep -qxF -f <(printf 'password=%s\n' "$(cat "$work/git")") <<<"$out"
 }
 must "root's git gets the token through ws's program" credential
-must "the run with the three files leaves nothing to do" task plan --detailed-exitcode
+must "the run with the three files leaves nothing to do" task --plan
 sums=$(kept)
 must "a run without the env runs" boot
 must "a run without the env keeps the three files" test "$sums" = "$(kept)"
@@ -266,6 +269,6 @@ fx set OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT --provider age </dev/null
 publish "ci: empty the three inputs"
 must "a run with the three inputs empty runs" task
 must "an empty input removes its file" none "${secret_files[@]}"
-must "the run without the files leaves nothing to do" task plan --detailed-exitcode
+must "the run without the files leaves nothing to do" task --plan
 
 refused "the task's output holds a value" grep -qF -f <(printf '%s\n' "${values[@]}") "$work/out"

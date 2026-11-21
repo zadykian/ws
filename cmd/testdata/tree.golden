@@ -656,9 +656,11 @@ Flags:
 == ws server setup
 It refuses a user but root, a system but Ubuntu 26.04, and a tree or a directory above it that others may write, before any write. It installs mise at the version ws pins, checked against its SHA-256, where mise --version differs, and writes /etc/mise/miserc.toml and /etc/mise/config.toml. It checks this ws's release tag out in /opt/ws, cleans the tree, links its plugin into mise's, and runs mise's bootstrap in the server's roles. A second run changes nothing.
 
+--secrets runs the task secrets in its place, which clones the secrets on its first run and runs the bootstrap under them. Without it, setup runs the task where /var/lib/ws/secrets stands.
+
 A ws that names no release tag, devel included, is refused: pass --in-place to run the tree in /opt/ws as it stands, after the guard.
 
---plan plans these steps, and mise's bootstrap where none of them is due, and changes nothing. It exits 0 where nothing would change and 2 where something would.
+--plan plans these steps, and mise's bootstrap, or the task where setup would run it, where none of them is due. The task fetches the secrets first, and the plan changes nothing else. It exits 0 where nothing would change and 2 where something would.
 
 Usage:
   ws server setup [flags]
@@ -667,6 +669,7 @@ Flags:
   -h, --help       help for setup
       --in-place   run the tree in /opt/ws as it stands, after the guard
       --plan       plan setup's steps, and mise's where none is due: exit 2 where a change is due, and change nothing
+      --secrets    run the task secrets, which clones the secrets on its first run
 == ws server signoz
 SigNoz's steps that the signoz role's units run
 

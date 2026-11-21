@@ -24,8 +24,10 @@ in `/opt/ws/roles/server` with umask 022, from `/`. A second run changes nothing
 
 - A ws that names no release tag, `devel` and a pseudo-version included, is refused. `--in-place`
   runs the tree in `/opt/ws` as it stands, after the guard.
-- `--plan` plans these steps, and mise's bootstrap where none of them is due, and changes nothing.
-  It exits 0 where nothing would change, and 2 where something would.
+- `--plan` plans these steps, and mise's bootstrap, or the task `secrets` where setup would run it,
+  where none of them is due, and changes nothing. It exits 0 where nothing would change, and 2
+  where something would.
+- `--secrets` runs the task `secrets` in place of the bootstrap, as below.
 - `install.sh` stays until it installs ws alone.
 
 The secrets come once the Mac has run `ws client secrets init`, one run for all servers, and

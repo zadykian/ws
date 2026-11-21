@@ -10,8 +10,8 @@ pins GitHub's key for [the fetch](#the-fetch). The secrets sit in a repository o
 mise installs fnox 1.50.0 from jdx/fnox's release on GitHub, as `[tools]` pins it, before any unit
 of ws. [mise.server.lock](../../mise/mise.server.lock) holds the url of the asset for `linux-x64`
 and `linux-arm64`, with GitHub's digest of each, which mise checked against the release's
-attestations as it wrote the lock. A wrong sum fails the run, and `MISE_LOCKED=1` refuses a fnox
-that the lock lacks. `go test` fails where the pin, the lock and the digests that `pins_test.go`
+attestations as it wrote the lock. A wrong sum fails the run, and the tree's `locked = true`
+refuses a fnox that the lock lacks. `go test` fails where the pin, the lock and the digests that `pins_test.go`
 holds disagree.
 
 The pin names mise's `github` backend, `github:jdx/fnox`, which downloads from the lock's url
