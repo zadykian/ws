@@ -22,14 +22,15 @@ in the release's place ([The pin](../../roles/server/ubuntu/frame/README.md#the-
 anyone write what lands there, so the job drops it first. Its image lets others write `/opt` and
 `/usr/share` too, where mise would refuse
 [the plugin](../../roles/server/ubuntu/frame/README.md#the-plugin), so the cases make both root's
-alone. As on a new machine, `install.sh` installs the pinned mise and runs the bootstrap on the
-tree in place, with `MISE_LOCKED=1`
-([bootstrap.sh](../bootstrap.sh)). The bootstrap installs ws and sets up the firewall before
-Docker's ufw rules.
+alone. As on a new machine, the build's `ws server setup --in-place` installs the pinned mise and
+runs the bootstrap on the tree in place ([bootstrap.sh](../bootstrap.sh)). The tree's
+`locked = true` has mise install each tool as the lock holds it. The bootstrap installs ws and
+sets up the firewall before Docker's ufw rules.
 No apt command in it may wait for dpkg's lock, and neither of apt's daily services may run. The
 log shows the timers and their stamps before it and after it, and systemd's reloads, so that a
-failure shows what started the upgrade. `mise bootstrap plan --detailed-exitcode` must then
-exit 0. The bootstrap runs twice, and the plan must exit 0 again. Neither run nor plan may print a
+failure shows what started the upgrade. Setup's `--plan` must exit 2 before the run, which has
+mise, the plugin and the bootstrap to do, and exit 0 after it. Setup runs twice, and the plan must
+exit 0 again. Neither run nor plan may print a
 warning ([The warnings check](README.md#the-warnings-check)). A failure prints the system
 daemon's log.
 

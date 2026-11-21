@@ -53,10 +53,11 @@ jobs:
           # zizmor's online audits, which look the actions up on GitHub, need a token.
           GH_TOKEN: ${{ github.token }}
 
-  # install.sh's bootstrap, as on a new machine, on a runner that booted, as a server that root
-  # alone logs in to. It runs twice: mise's plan before the second run and after it must change
-  # nothing. The firewall around Docker needs the booted systemd. In a stack, it runs on the top
-  # pull request alone, which holds every change below it, and only where the stack rests on main.
+  # ws server setup, as on a new machine, on a runner that booted, as a server that root alone
+  # logs in to. It runs twice: setup's plan before the first run must exit 2, and after each run
+  # it must change nothing. The firewall around Docker needs the booted systemd. In a stack, it
+  # runs on the top pull request alone, which holds every change below it, and only where the
+  # stack rests on main.
   # A pull request onto another branch, such as an integration branch, skips it: that branch's
   # pull request to main runs it. So do mac.yml's and mac-cld.yml's jobs.
   # Run on each of a stack of 20, these jobs kept its pull requests waiting for runners past 50
@@ -66,8 +67,8 @@ jobs:
   # null == null holds. There the pull request's own base stands for the stack's. GitHub's stack
   # metadata:
   # https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/optimizing-ci-for-stacked-pull-requests
-  # setfacl drops /opt's default ACL, which lets anyone write the tree that install.sh then
-  # refuses.
+  # setfacl drops /opt's default ACL, which lets anyone write the tree that setup's guard
+  # then refuses.
   server:
     if: >-
       (github.event.action != 'opened' || !github.event.pull_request.draft) &&

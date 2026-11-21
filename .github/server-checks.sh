@@ -1,6 +1,6 @@
 #!/bin/bash
 # The server job's cases, as root on a runner that booted (.github/workflows/server.md): the
-# bootstrap on a booted machine, what it wrote, and the firewall around Docker.
+# setup on a booted machine, what it wrote, and the firewall around Docker.
 # Each case that expects a refusal has a control, as a broken setup refuses everything. Run as
 # `server-checks.sh DIR`, DIR being .tools/serve-build's for the tree in /opt/ws.
 set -euo pipefail
@@ -20,8 +20,6 @@ sed -i '/^XDG_/d' /etc/environment
 # apt reads this file after apt.conf.d, so the line wins wherever the runner set the variant.
 echo '#clear APT::Architecture-Variants;' >>/etc/apt/apt.conf
 export HOME=/root DEBIAN_FRONTEND=noninteractive
-# A tool installs only as a lock holds it, here the build's in mise.local.lock.
-export MISE_LOCKED=1
 
 fail() {
     echo "::error::$*"
@@ -148,26 +146,35 @@ apt_quiet() {
 # The controls: each of these holds before ws, and the opposite after it.
 must "the private address answers before the table" up "http://$target/"
 
-# As on a new machine: install.sh runs the bootstrap, which installs ws and sets up the firewall
-# before Docker's ufw rules. It runs twice, and the second run must change nothing. The tree must
-# be root's alone for install.sh's guard. So must /opt and /usr/share, as on a machine, for mise's:
-# the runner's image lets others write both, and mise refuses a system plugin below either.
+# As on a new machine: ws server setup installs mise and runs the bootstrap, which installs ws and
+# sets up the firewall before Docker's ufw rules. It runs twice, and the second run must change
+# nothing. Its plan must exit 2 before the first run, which has mise, the plugin and the bootstrap
+# to do, and 0 after each run. The tree must be root's alone for setup's guard. So must /opt and
+# /usr/share, as on a machine, for mise's: the runner's image lets others write both, and mise
+# refuses a system plugin below either.
 chown -R 0:0 /opt/ws
 chmod -R go-w /opt/ws
 chmod go-w /opt /usr/share
+check=$(dirname "$0")/warnings-check.sh
+setup() { "$check" -- "$(dirname "$0")/bootstrap.sh" "$rel" --in-place "$@" </dev/null; }
+exits() {
+    local want=$1 status=0
+    shift
+    "$@" || status=$?
+    [ "$status" = "$want" ]
+}
+must "the plan before the first run has changes to make" exits 2 setup --plan
 log=$(mktemp)
 since=$(date +%s)
-if ! "$(dirname "$0")/bootstrap.sh" "$rel" > >(tee "$log") 2>&1; then
+if ! "$(dirname "$0")/bootstrap.sh" "$rel" --in-place > >(tee "$log") 2>&1; then
     apt_quiet "$log" "$since" || true
-    fail "the first bootstrap"
+    fail "the first setup"
 fi
 must "no upgrade ran, and no apt command waited for dpkg's lock" apt_quiet "$log" "$since"
-check=$(dirname "$0")/warnings-check.sh
-boot() { "$check" -- mise -C /opt/ws/roles/server bootstrap "$@" </dev/null; }
-must "the first bootstrap leaves nothing to do" boot plan --detailed-exitcode
-must "the first bootstrap prints no warning" "$check" "$log"
-must "the second bootstrap runs" boot
-must "the second bootstrap leaves nothing to do" boot plan --detailed-exitcode
+must "the first setup leaves nothing to do" setup --plan
+must "the first setup prints no warning" "$check" "$log"
+must "the second setup runs" setup
+must "the second setup leaves nothing to do" setup --plan
 
 # What the runs wrote, which needs no container. The plans that must fail, from /opt/ws and with a
 # unit's line dropped. The values file, which no run changed. Zed's wrapper and tmux.conf against

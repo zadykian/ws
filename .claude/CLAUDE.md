@@ -85,9 +85,10 @@ The gates are `shell`, `yamllint`, `tombi`, `stylua`, `sizecheck`, `vale`, `lych
 on macOS on arm64.
 It installs yamllint into `.cache`, and `.tools/run` downloads the rest there.
 
-The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `server` builds ws and runs `install.sh`'s bootstrap
-twice as root on a booted runner, with mise's plan. It checks the config that Fresh reads too, the
-firewall around Docker and the secrets task ([The server job](../.github/workflows/server.md)).
+The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `server` builds ws and runs
+`ws server setup` twice as root on a booted runner, with setup's plan. It checks the config that
+Fresh reads too, the firewall around Docker and the secrets task
+([The server job](../.github/workflows/server.md)).
 `signoz` forges SigNoz's compose files again, and `install` tries `install.sh`. `mac` sets up a
 Mac on GitHub's macOS runner by `mise bootstrap`, whose last run must call no sudo and whose plan
 must exit 0. `mac-cld` sets up
@@ -124,9 +125,9 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
 
 - `mise bootstrap` sets up the machine that runs it. CI's `server` job runs it on a booted runner
   ([The server job](../.github/workflows/server.md)).
-- A second run changes nothing: CI's `playbook` and `rootless` jobs run the bootstrap twice. They
-  fail where `mise bootstrap plan --detailed-exitcode` does not exit 0, before the second bootstrap
-  and after it ([ci.yml](../.github/workflows/ci.yml)).
+- A second run changes nothing: CI's `server` job runs `ws server setup` twice. It fails where
+  `ws server setup --plan` does not exit 0, after the first run and after the second
+  ([server-checks.sh](../.github/server-checks.sh)).
 - `release.yml` checks a release's files and notes for the local list's words before it publishes
   them. The list is the secret `FORBIDDEN_WORDS`, and the job fails on an empty one
   ([Cutting a release](../.github/workflows/release.md#cutting-a-release)).
