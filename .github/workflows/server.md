@@ -17,8 +17,8 @@ namespace holds a private address that answers, `10.250.0.2`. The cases are
 [server-checks.sh](../server-checks.sh). Each refusal has a control that holds before ws runs.
 
 CI builds ws from the tree, never from a release. The tree goes in `/opt/ws`, root's alone, and
-[`.tools/serve-build`](../../.tools/serve-build) serves the build on loopback in the release's
-place. The ws that runs is `/usr/local/bin/ws`
+[`.tools/install-build`](../../.tools/install-build) installs the build as `/usr/local/bin/ws`, the
+ws that runs
 ([ws at a fixed path](../../roles/server/ubuntu/frame/README.md#ws-at-a-fixed-path)). GitHub's runner keeps a default ACL on `/opt` that lets
 anyone write what lands there, so the job drops it first. Its image lets others write `/opt` and
 `/usr/share` too, where mise would refuse

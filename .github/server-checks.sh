@@ -2,10 +2,8 @@
 # The server job's cases, as root on a runner that booted (.github/workflows/server.md): the
 # setup on a booted machine, what it wrote, and the firewall around Docker.
 # Each case that expects a refusal has a control, as a broken setup refuses everything. Run as
-# `server-checks.sh DIR`, DIR being .tools/serve-build's for the tree in /opt/ws.
+# `server-checks.sh`, with .tools/install-build's ws in /usr/local/bin and the tree in /opt/ws.
 set -euo pipefail
-
-rel=$1
 
 image=alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
 target=10.250.0.2:8000
@@ -156,7 +154,7 @@ chown -R 0:0 /opt/ws
 chmod -R go-w /opt/ws
 chmod go-w /opt /usr/share
 check=$(dirname "$0")/warnings-check.sh
-setup() { "$check" -- "$(dirname "$0")/bootstrap.sh" "$rel" --in-place "$@" </dev/null; }
+setup() { "$check" -- "$(dirname "$0")/bootstrap.sh" --in-place "$@" </dev/null; }
 exits() {
     local want=$1 status=0
     shift
@@ -166,7 +164,7 @@ exits() {
 must "the plan before the first run has changes to make" exits 2 setup --plan
 log=$(mktemp)
 since=$(date +%s)
-if ! "$(dirname "$0")/bootstrap.sh" "$rel" --in-place > >(tee "$log") 2>&1; then
+if ! "$(dirname "$0")/bootstrap.sh" --in-place > >(tee "$log") 2>&1; then
     apt_quiet "$log" "$since" || true
     fail "the first setup"
 fi
