@@ -24,9 +24,8 @@ func inForce(m effect.Machine) []resource.Change {
 
 // Reload puts netplan's files in force where the cable's file changed since the last reload, as
 // inForceMark tells. So a machine whose cable file stays, as one without the cable, never reloads.
-// A netplan file edited by hand goes in force by netplan apply alone, not by ws. It needs booted
-// systemd, and plans nothing without it. Cable is the cable of the values, and U the service
-// manager's units, for Check.
+// A netplan file edited by hand goes in force by netplan apply alone, not by ws. Cable is the
+// cable of the values, and U the service manager's units, for Check.
 type Reload struct {
 	M     effect.Machine
 	U     effect.Units

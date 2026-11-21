@@ -18,8 +18,8 @@ units of [its spec](units.toml.tmpl), whose lines sit in `mise.server.toml`
 | `state/ikeward-status` | Runs `ikeward wait` where `ikeward wait --check` finds it due. |
 
 Each unit is off without `WS_IKEWARD_PROFILE`, by `when = { set = ... }`
-([when](../../../../engine/core/kind/README.md#the-specs)), and says so in a line. As in CI's container,
-the VPN, the file and ufw's rules then stay as they are.
+([when](../../../../engine/core/kind/README.md#the-specs)), and says so in a line. The VPN, the file
+and ufw's rules then stay as they are.
 Unless `WS_SECURITY_OUTBOUND` is false, the `security` role keeps what the server and its containers
 start off the LAN, but what the network needs, such as DHCP and DNS. It leaves `ikeward0` open to
 them ([Outbound](../security/README.md#outbound)).
@@ -102,10 +102,6 @@ hold the client's key, and run the secrets task.
 The password goes on `install`'s standard input, into no argument and no output. Where `install`
 fails, the run shows ikeward's error, which holds no key and no password. `ikeward status` and
 `journalctl -u strongswan.service` show the rest.
-
-The install, the wait, the forwarding's ufw rules and its value in force need a booted machine.
-Where systemd is not running, as in CI's container, each of those units says so and plans nothing.
-There the role downloads ikeward and writes the forwarding's file, no more.
 
 ## Forwarding
 

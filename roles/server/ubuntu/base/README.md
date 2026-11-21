@@ -13,9 +13,7 @@ mise config and a spec of ws's units ([The frame](../frame/README.md)):
 
 The values are `WS_BASE_LOCALE`, `WS_BASE_TIMEZONE`, `WS_BASE_SWAP_SIZE_MB` and `WS_BASE_SWAPPINESS`
 of the values file ([the README](../../../../README.md#running-it-again)). The packages are mise's
-lines, so another list is a change to `mise.server.toml`. Without systemd booted, as in CI's
-container, the units that need it skip and say so: apt's timers, unattended-upgrades' service, and
-`swapon` and `swapoff` of the swap file.
+lines, so another list is a change to `mise.server.toml`.
 
 ## Locale and time zone
 

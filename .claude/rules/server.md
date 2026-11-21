@@ -74,8 +74,6 @@ steps, and each role's README says what it sets up.
   alone, so a healthy one has no item.
 - Where a dry run skips a step, a step beside it shows what the run would change
   ([claude's marketplaces](../../roles/server/ubuntu/claude/marketplaces.go)).
-- A unit that needs a booted machine's systemd checks `systemd.Booted`: without one, as in CI's
-  container, it skips and says so.
 - A file ws writes whole, on the server or the Mac, has one line at its top, where its format
   takes comments: `file.Header(sign)`. The roles' templates and files spell it out. Its words,
   `Written by github.com/zadykian/ws`, are `file.Mark`, and `file.Ours` tests a first line for them.

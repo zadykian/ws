@@ -18,7 +18,7 @@ GPU: the units' `when = { gpu_vendor = "0x10de" }`
 ([when](../../../../engine/core/kind/README.md#the-specs)). On Linux 7.0, nouveau reads no
 temperature from the RTX 5080's GB203, and NVIDIA drives it by its open modules alone.
 
-A machine without one, as a cloud VM, a VM on the Mac or CI's container, gets no driver. There the
+A machine without one, as a cloud VM or a VM on the Mac, gets no driver. There the
 two units say in a line that they are off, and read `in-sync`. The archive's check runs there
 alone, by `when = { gpu_vendor = "!0x10de" }`: `apt-get install -s` of every name below, each
 flavor's modules included, so that CI's run fails where one leaves the archive. It reads apt's lists
@@ -54,7 +54,7 @@ The packages keep nouveau off and rebuild the initramfs, so their driver loads a
 While `/sys/module/nvidia/version` is not the upstream version of the installed `nvidia-smi`, each
 run warns that a reboot is due. Until then, `nvidia-smi` fails on the mismatch, and ws-fans reads
 no GPU. An upgrade of the driver leaves the same mismatch until the next reboot. The note plans
-nothing, so mise's plan stays in sync. Without a booted systemd, as in CI's container, it skips.
+nothing, so mise's plan stays in sync.
 
 ws-fans waits on none of these units: it starts without the GPU, and reads it once the driver
 loads.

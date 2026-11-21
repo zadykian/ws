@@ -8,8 +8,7 @@ The Mac's side is [Zed on the Mac](../../../client/macos/zed/README.md).
 
 `~/.config/zed/settings.json` is root's. A run replaces a change made to it by hand
 and keeps the old file beside the new one, as `PATH.PID.TIME~`. A link on the way is refused. The
-key `WS_ZED_NOFILE` of `/etc/ws/values.yml` sets the limit, 65536 by default. No unit needs a booted
-systemd, so the role runs whole in CI's container.
+key `WS_ZED_NOFILE` of `/etc/ws/values.yml` sets the limit, 65536 by default.
 
 ## What runs where
 

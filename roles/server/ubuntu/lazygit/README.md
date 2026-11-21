@@ -10,8 +10,7 @@ title. The unit `lazygit-config` of its `units.toml.tmpl` writes a config in Jet
 [tmux role](../tmux/README.md) installs tmux. apt checks it, and updates it with the archive. It installs
 `git-delta`, delta 0.18.2, from the universe too, for lazygit's diffs.
 
-The role needs no other role and no secret. Nothing in it needs a booted systemd, so it runs whole
-in CI's container.
+The role needs no other role and no secret.
 
 ## The title
 

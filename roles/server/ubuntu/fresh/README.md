@@ -22,8 +22,7 @@ The release's `.deb` needs `libc6` 2.30 and `libgcc-s1` 4.2 alone. So it install
 machine on the LAN, on a cloud VM and on a VM on the Mac. The testing `.deb` lacks the grammars
 for JS, TS and Templ, and needs `libc6` 2.39.
 
-The role needs no other role and no secret. No unit needs a booted systemd, so it runs whole in
-CI's container.
+The role needs no other role and no secret.
 
 ## The config
 

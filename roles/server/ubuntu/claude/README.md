@@ -13,8 +13,6 @@ after another, in this order, after git's tokens:
 - `state/claude-linger` and `state/claude-restore`: lingering for root, then
   `ws server claude restore` ([Sessions after a reboot](#sessions-after-a-reboot)).
 
-All but the last two need no systemd, so a container runs them too.
-
 ## Installs and updates
 
 claude updates itself in the background, so its unit installs it only where `~/.local/bin/claude`
@@ -44,7 +42,7 @@ Then `cld setup restore`, which has the user's systemd bring cld's sessions back
 `state/claude-linger` turns lingering on, so that the user's systemd starts at boot rather than at
 the first login, and `restore` starts it now. The unit keeps the `PATH` of the user's login shell,
 where `cld restore sessions` finds tmux. The next run updates it, after a change to that `PATH` or
-to the command cld runs there. Both units need a booted systemd, so in CI's container they skip.
+to the command cld runs there.
 
 ## Telemetry
 

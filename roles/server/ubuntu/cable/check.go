@@ -12,8 +12,8 @@ import (
 	"github.com/zadykian/ws/roles/server/values"
 )
 
-// Check refuses what the cable's file must not act on: a port that is an uplink, and, on a booted
-// machine, a networkd that does not run. file, where given, is the new netplan file. Check merges
+// Check refuses what the cable's file must not act on: a port that is an uplink, and a networkd
+// that does not run. file, where given, is the new netplan file. Check merges
 // it with netplan's other files in a scratch root, and refuses it where netplan would not set up
 // the port with it alone. The file is read as root, and no message quotes it. With no port, there is no
 // cable, and nothing to refuse.

@@ -51,16 +51,16 @@ netplan keeps such an entry apart, and networkd would take the first of the two.
  A `match:` on the port's own entry must hold the port's MAC address, or a name without a glob. One
 that may fit other interfaces stops the run, as the cable's file would turn their DHCP off. The run
 stops too where netplan hands the port to NetworkManager rather than networkd, as on Ubuntu Desktop.
-So does a booted machine where systemd-networkd isn't running. netplan's settings may hold secrets,
+So does a machine where systemd-networkd isn't running. netplan's settings may hold secrets,
 such as Wi-Fi passwords, so the run prints none of them, even with `-v`. A networkd file of another
 source, in `/etc/systemd/network`, goes unchecked.
 
-A machine without the interface, as a cloud VM or CI's container, is left alone. There the guard
+A machine without the interface, as a cloud VM, is left alone. There the guard
 and the file are off by `when = { interface = ... }`
 ([when](../../../../engine/core/kind/README.md#the-specs)), and each says so in a line. With the variable empty, as by default,
 the file goes, and so does the address.
 
-A change takes effect through `netplan generate`, then `networkctl reload`, on a booted machine.
+A change takes effect through `netplan generate`, then `networkctl reload`.
 `/var/lib/ws/cable-in-force` holds the SHA-256 of the cable's file that the last reload put in
 force. `cable reload --check` finds a reload due where the file's differs: a new, changed or removed
 file. A failed reload leaves the mark, and stays due. Another netplan file's change, such as an

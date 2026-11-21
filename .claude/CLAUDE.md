@@ -127,8 +127,6 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
 - A second run changes nothing: CI's `playbook` and `rootless` jobs run the bootstrap twice. They
   fail where `mise bootstrap plan --detailed-exitcode` does not exit 0, before the second bootstrap
   and after it ([ci.yml](../.github/workflows/ci.yml)).
-- A unit that needs a booted machine's systemd checks `systemd.Booted`, and skips without it, as in
-  CI's container ([The server job](../.github/workflows/server.md)).
 - `release.yml` checks a release's files and notes for the local list's words before it publishes
   them. The list is the secret `FORBIDDEN_WORDS`, and the job fails on an empty one
   ([Cutting a release](../.github/workflows/release.md#cutting-a-release)).
