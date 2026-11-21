@@ -30,6 +30,7 @@ var PinnedMise = MiseRelease{
 	Sums: map[string]string{
 		"linux-x64":   "f13f3e5ec88807e0161669b3aa07a91d84478cdf1e95b5b92b63f85a25d42395",
 		"linux-arm64": "b8dd05af6447cee933928664982a8cb2fa646e6951cfc8539db23ce2554a7b04",
+		"macos-arm64": "f3bb0e8cbe0217a0b52444ecc0042364563ddd1de0490313bb7e702ecab41a14",
 	},
 }
 

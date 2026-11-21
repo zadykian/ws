@@ -68,3 +68,21 @@ func TestPinnedMiseIsInstallShs(t *testing.T) {
 		}
 	}
 }
+
+// TestPinnedMiseIsTheMacCasesPin holds the pin of mise for the Mac here and in the shell that CI's
+// Mac cases take it from.
+func TestPinnedMiseIsTheMacCasesPin(t *testing.T) {
+	text, err := os.ReadFile("../../../.github/mac-mise.sh")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, want := range map[string]string{"mac_mise_version": PinnedMise.Version, "mac_mise_sum": PinnedMise.Sums["macos-arm64"]} {
+		got := ""
+		if m := regexp.MustCompile(`(?m)^` + name + `=(\S+)$`).FindSubmatch(text); m != nil {
+			got = string(m[1])
+		}
+		if got != want {
+			t.Errorf("mac-mise.sh pins %s as %q, setup %s", name, got, want)
+		}
+	}
+}
