@@ -402,7 +402,7 @@ Flags:
 
 Use "ws server cable [command] --help" for more information about a command.
 == ws server cable check
-It reads the values of /etc/ws/values.yml. With no WS_CABLE_PORT there is no cable, and it passes. It fails where the port is missing, carries a default route or holds a lease from DHCP, or where networkd does not run on a booted machine.
+It reads the values of /etc/ws/values.yml. With no WS_CABLE_PORT there is no cable, and it passes. It fails where the port is missing, carries a default route or holds a lease from DHCP, or where networkd does not run.
 
 With FILE, the cable's new netplan file, it also merges FILE with netplan's other files in a scratch root, and fails where netplan refuses them or would hand the port to another entry. It reads FILE as root, and no message quotes it. The cable role's guard runs it, and its file's check with the new file.
 
@@ -412,7 +412,7 @@ Usage:
 Flags:
   -h, --help   help for check
 == ws server cable reload
-/var/lib/ws/cable-in-force holds the SHA-256 of the cable's file that the last reload put in force. Where the file's differs, as where it is new, changed or gone, netplan generate writes networkd's files and networkctl reload sets up each link whose file changed; then the mark takes the file's SHA-256, or goes with the file. A failed reload leaves the mark, so the reload stays due. Another netplan file's change never makes it due. Without booted systemd nothing is due. Before a reload it checks the live cable file as cable check FILE does, so that another netplan file that takes the port never goes in force with it.
+/var/lib/ws/cable-in-force holds the SHA-256 of the cable's file that the last reload put in force. Where the file's differs, as where it is new, changed or gone, netplan generate writes networkd's files and networkctl reload sets up each link whose file changed; then the mark takes the file's SHA-256, or goes with the file. A failed reload leaves the mark, so the reload stays due. Another netplan file's change never makes it due. Before a reload it checks the live cable file as cable check FILE does, so that another netplan file that takes the port never goes in force with it.
 
 --check fails where a reload is due, and changes nothing. The cable role's run state runs it, after the cable's file.
 
@@ -464,7 +464,7 @@ Flags:
       --check   fail where a change is due, and change nothing
   -h, --help    help for marketplaces
 == ws server claude restore
-cld setup restore writes the user unit. Without booted systemd it skips, and says so (roles/server/ubuntu/claude/README.md#sessions-after-a-reboot). The claude role's run state runs it as root.
+cld setup restore writes the user unit (roles/server/ubuntu/claude/README.md#sessions-after-a-reboot). The claude role's run state runs it as root.
 
 --check fails where a change is due, and changes nothing.
 
@@ -631,7 +631,7 @@ Usage:
 Flags:
   -h, --help   help for check
 == ws server ikeward install
-It reads the values of /etc/ws/values.yml and the profile's variables, as check does. It writes the profile's two files into /run/ikeward-profile, which only root may enter, runs ikeward install --dry-run on them with the .p12's password on standard input, and removes them. Where the dry run exits 4, install would change something, and it runs install. It fails where check would. Without booted systemd, or without the variables, as in a run without the secrets, nothing is due.
+It reads the values of /etc/ws/values.yml and the profile's variables, as check does. It writes the profile's two files into /run/ikeward-profile, which only root may enter, runs ikeward install --dry-run on them with the .p12's password on standard input, and removes them. Where the dry run exits 4, install would change something, and it runs install. It fails where check would. Without the variables, as in a run without the secrets, nothing is due.
 
 --check fails where install would change anything, and changes nothing. The ikeward role's run state runs it, after ikeward's binary.
 
@@ -642,7 +642,7 @@ Flags:
       --check   fail where install would change anything, and change nothing
   -h, --help    help for install
 == ws server ikeward wait
-It runs /usr/local/sbin/ikeward status, and again until it passes, up to 12 times, 10 s apart, then fails. A later unit may need the VPN, as for a clone from the remote network. Without booted systemd, or without the profile's variables, as in a run without the secrets, which installs no VPN, nothing is due.
+It runs /usr/local/sbin/ikeward status, and again until it passes, up to 12 times, 10 s apart, then fails. A later unit may need the VPN, as for a clone from the remote network. Without the profile's variables, as in a run without the secrets, which installs no VPN, nothing is due.
 
 --check fails where it would wait, and changes nothing. The ikeward role's run state runs it, after the install.
 
@@ -677,7 +677,7 @@ Flags:
       --check   plan the steps, apply none, and fail where one has a change to make
   -h, --help    help for password
 == ws server signoz sync
-It waits for SigNoz's API at WS_SIGNOZ_URL, then sets the retention of WS_SIGNOZ_RETENTION_DAYS, and creates or replaces each dashboard of WS_SIGNOZ_DASHBOARDS. Without booted systemd it skips.
+It waits for SigNoz's API at WS_SIGNOZ_URL, then sets the retention of WS_SIGNOZ_RETENTION_DAYS, and creates or replaces each dashboard of WS_SIGNOZ_DASHBOARDS.
 
 Usage:
   ws server signoz sync [flags]
@@ -702,7 +702,7 @@ Flags:
 
 Use "ws server tunnel [command] --help" for more information about a command.
 == ws server tunnel check
-It reads the values of /etc/ws/values.yml. It fails where networkd does not run on a booted machine, as nothing would create wg0, or where a peer's /etc/wireguard/NAME.pub holds no WireGuard public key. It names each peer whose file is missing, which wg0 leaves out, and prints the server's public key where the key exists. The tunnel role's guard runs it, before wg0's key and files.
+It reads the values of /etc/ws/values.yml. It fails where networkd does not run, as nothing would create wg0, or where a peer's /etc/wireguard/NAME.pub holds no WireGuard public key. It names each peer whose file is missing, which wg0 leaves out, and prints the server's public key where the key exists. The tunnel role's guard runs it, before wg0's key and files.
 
 Usage:
   ws server tunnel check [flags]
@@ -721,7 +721,7 @@ Flags:
       --check   fail where the key is to be made or mended, and change nothing
   -h, --help    help for key
 == ws server tunnel wg0
-networkd reads wg0's private key only as it creates wg0. Where wg0 holds another key, it is deleted; then networkctl reload creates it, and the command waits up to 10 s for it to hold the key, whose public key it prints. Without booted systemd nothing is due.
+networkd reads wg0's private key only as it creates wg0. Where wg0 holds another key, it is deleted; then networkctl reload creates it, and the command waits up to 10 s for it to hold the key, whose public key it prints.
 
 --check fails where wg0 is missing or holds another key, and changes nothing. The tunnel role's run state runs it, after wg0's files.
 

@@ -30,7 +30,7 @@ func withBoard(m *effecttest.Machine, maker string) {
 	m.Files["/sys/class/dmi/id/board_vendor"] = []byte(maker + "\n")
 }
 
-// fansMachine is a booted machine on the board, running the kernel, with the directories of /etc
+// fansMachine is a machine on the board, running the kernel, with the directories of /etc
 // that Ubuntu ships.
 func fansMachine() *effecttest.Machine {
 	m := effecttest.NewMachine()
@@ -38,7 +38,6 @@ func fansMachine() *effecttest.Machine {
 		m.Dirs[d] = 0o755
 	}
 	withBoard(m, fansBoard)
-	m.Dirs["/run/systemd/system"] = 0o755
 	m.Results["uname -r"] = effecttest.Result{Out: []byte(fansKernel + "\n")}
 	return m
 }

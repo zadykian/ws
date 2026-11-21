@@ -15,8 +15,8 @@ import (
 func Sync(v values.Signoz, m effect.Machine, out effect.Out) []step.Step {
 	client := api.Client{URL: v.URL}
 	return []step.Step{
-		Ready{M: m, Out: out, API: client},
-		retention.Retention{M: m, Out: out, API: client, Days: v.RetentionDays},
-		dashboards.Dashboards{M: m, Out: out, API: client, Names: v.Dashboards},
+		Ready{API: client},
+		retention.Retention{M: m, API: client, Days: v.RetentionDays},
+		dashboards.Dashboards{Out: out, API: client, Names: v.Dashboards},
 	}
 }

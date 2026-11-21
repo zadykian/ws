@@ -11,9 +11,8 @@ import (
 
 func restoreMachine(check string) (*effecttest.Machine, Restore) {
 	m := effecttest.NewMachine()
-	m.Dirs["/run/systemd/system"] = 0o755
 	m.Files["/root/.local/bin/cld"] = nil
-	r := Restore{M: m, Account: account.Account{User: cldUser}, Out: &effecttest.Out{}}
+	r := Restore{M: m, Account: account.Account{User: cldUser}}
 	name, args := r.loginShell("-c", compare, r.cld())
 	m.Results["env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "+name+" "+strings.Join(args, " ")] = effecttest.Result{Out: []byte(check)}
 	return m, r
@@ -41,14 +40,6 @@ func TestRestorePlan(t *testing.T) {
 		if err != nil || len(got) != c.want {
 			t.Errorf("%s: %v, %v", c.name, got, err)
 		}
-	}
-}
-
-func TestRestoreNeedsSystemd(t *testing.T) {
-	m, r := restoreMachine("missing\n")
-	delete(m.Dirs, "/run/systemd/system")
-	if got, err := r.Plan(context.Background()); err != nil || len(got) != 0 {
-		t.Fatalf("%v, %v", got, err)
 	}
 }
 

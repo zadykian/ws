@@ -24,7 +24,6 @@ var ikewardUnits = []string{"guard/ikeward", "binary/ikeward", "file/ikeward-sys
 
 func TestIkewardSpecOffWithoutProfile(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Dirs["/run/systemd/system"] = 0o755
 	units, out := cableUnits(t, m, "---\nWS_IKEWARD_FORWARD_FROM: [10.99.0.2]\n")
 	for _, name := range ikewardUnits {
 		if got := applyUnit(t, units, name); got != nil {
@@ -66,7 +65,6 @@ func TestIkewardSysctlAbsentWithoutPeers(t *testing.T) {
 
 func TestIkewardForwardRules(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Dirs["/run/systemd/system"] = 0o755
 	// The peer 10.99.0.9 is no longer listed; ikeward is 696b6577617264 in hex.
 	m.Files[ufw.UserRules] = []byte("### tuple ### route:allow any any 0.0.0.0/0 any 10.99.0.9 in_wg0!out_ikeward0 comment=696b6577617264\n")
 	units, _ := cableUnits(t, m, ikewardPeer)

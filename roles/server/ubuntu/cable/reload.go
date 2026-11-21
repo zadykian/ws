@@ -10,7 +10,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/roles/server/ubuntu/cable/internal/netplan"
 	"github.com/zadykian/ws/roles/server/values"
 )
@@ -46,9 +45,6 @@ const (
 // the mark's. Before a reload it checks the live cable file, as the file unit checks a new one.
 // Without it, a netplan file added since that takes the port would go in force with the reload.
 func (r Reload) Plan(ctx context.Context) ([]resource.Change, error) {
-	if !systemd.Booted(r.M) {
-		return nil, nil
-	}
 	sum, err := sumOf(r.M)
 	if err != nil {
 		return nil, err

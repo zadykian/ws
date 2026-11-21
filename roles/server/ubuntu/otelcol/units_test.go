@@ -116,7 +116,7 @@ func checkLine(t *testing.T, path string) string {
 	return strings.Join(check, " ")
 }
 
-// machine is a booted machine with the collector's directories and /etc/ws/env set to env, and
+// machine is a machine with the collector's directories and /etc/ws/env set to env, and
 // the environment that loads the role's units over it.
 func machine(t *testing.T, env string) (*effecttest.Machine, kind.Env) {
 	v, err := values.Parse(nil)
@@ -124,7 +124,7 @@ func machine(t *testing.T, env string) (*effecttest.Machine, kind.Env) {
 		t.Fatal(err)
 	}
 	m := effecttest.NewMachine()
-	for _, d := range []string{"/etc", "/etc/ws", "/etc/systemd", "/etc/systemd/system", "/etc/otelcol-contrib", "/run/systemd/system"} {
+	for _, d := range []string{"/etc", "/etc/ws", "/etc/systemd", "/etc/systemd/system", "/etc/otelcol-contrib"} {
 		m.Dirs[d] = 0o755
 	}
 	if env != "" {

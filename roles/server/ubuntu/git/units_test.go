@@ -129,14 +129,14 @@ func TestGitCheckStopsAllButSigning(t *testing.T) {
 	}
 }
 
-func TestGitKeyIsMadeOnceWithoutSystemd(t *testing.T) {
+func TestGitKeyIsMadeOnce(t *testing.T) {
 	m, e := machine(t)
 	m.Results[keygen] = effecttest.Result{}
 	if err := apply(t, units(t, e, "state/git-key")[0]); err != nil {
 		t.Fatal(err)
 	}
 	if !slices.ContainsFunc(m.Calls, func(call string) bool { return strings.HasSuffix(call, " "+keygen) }) {
-		t.Errorf("calls %q, want ssh-keygen as root, though systemd is not running", m.Calls)
+		t.Errorf("calls %q, want ssh-keygen as root", m.Calls)
 	}
 	m.Files["/root/.ssh/id_ed25519_signing"] = []byte("key")
 	if got := changes(t, units(t, e, "state/git-key")[0]); got != nil {
@@ -167,7 +167,7 @@ func TestGitSignersTrustTheKey(t *testing.T) {
 	}
 }
 
-func TestGitTokensAndClonesRunAsRootWithoutSystemd(t *testing.T) {
+func TestGitTokensAndClonesRunAsRoot(t *testing.T) {
 	m, e := machine(t)
 	for _, name := range []string{"tokens", "clones"} {
 		line := "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin " + self +

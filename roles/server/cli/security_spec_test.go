@@ -35,10 +35,10 @@ const (
 var outboundUnits = []string{"security-resolvers.path", "security-resolvers.timer", "security-resolvers.service",
 	"security-outbound.service"}
 
-// securityMachine is a booted machine, not a container, whose root holds a key, and
+// securityMachine is a machine, not a container, whose root holds a key, and
 // whose checkers pass.
 func securityMachine() *effecttest.Machine {
-	m := bootedMachine()
+	m := effecttest.NewMachine()
 	m.Results["getent passwd root"] = effecttest.Result{Out: []byte("root:x:0:0:root:/root:/bin/bash\n")}
 	m.Dirs["/root"], m.Dirs["/root/.ssh"] = 0o700, 0o700
 	m.Files[keysOfRoot], m.Modes[keysOfRoot] = []byte("ssh-ed25519 AAAA me\n"), 0o600

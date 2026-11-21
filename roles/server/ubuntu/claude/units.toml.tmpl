@@ -43,8 +43,7 @@ run = { user = "root", command = ["{{ self }}", "server", "claude", "marketplace
 after = "state/claude-marketplaces"
 linger = "root"
 
-# The account's systemd runs, and restores cld's sessions as it starts. It needs booted systemd, so
-# it skips in a container.
+# The account's systemd runs, and restores cld's sessions as it starts.
 [state.claude-restore]
 after = "state/claude-linger"
 run = { user = "root", command = ["{{ self }}", "server", "claude", "restore"], check = ["{{ self }}", "server", "claude", "restore", "--check"] }

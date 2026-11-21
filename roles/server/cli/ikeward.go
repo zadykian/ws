@@ -66,7 +66,7 @@ func newIkewardInstallCmd(p enginecli.Env) *cobra.Command {
 			"profile's two files into /run/ikeward-profile, which only root may enter, runs ikeward install " +
 			"--dry-run on them with the .p12's password on standard input, and removes them. Where the dry run " +
 			"exits 4, install would change something, and it runs install. It fails where check would. Without " +
-			"booted systemd, or without the variables, as in a run without the secrets, nothing is due.\n\n" +
+			"the variables, as in a run without the secrets, nothing is due.\n\n" +
 			"--check fails where install would change anything, and changes nothing. The ikeward role's run state " +
 			"runs it, after ikeward's binary.",
 		Args: cobra.NoArgs,
@@ -91,9 +91,8 @@ func newIkewardWaitCmd(p enginecli.Env, tries int, pause time.Duration) *cobra.C
 		Use:   "wait",
 		Short: "wait for ikeward status to pass, as the VPN comes up",
 		Long: "It runs /usr/local/sbin/ikeward status, and again until it passes, up to 12 times, 10 s apart, then " +
-			"fails. A later unit may need the VPN, as for a clone from the remote network. Without booted systemd, " +
-			"or without the profile's variables, as in a run without the secrets, which installs no VPN, nothing " +
-			"is due.\n\n--check fails where it would wait, and changes nothing. The ikeward role's run state runs " +
+			"fails. A later unit may need the VPN, as for a clone from the remote network. Without the profile's " +
+			"variables, as in a run without the secrets, which installs no VPN, nothing is due.\n\n--check fails where it would wait, and changes nothing. The ikeward role's run state runs " +
 			"it, after the install.",
 		Args: cobra.NoArgs,
 	}

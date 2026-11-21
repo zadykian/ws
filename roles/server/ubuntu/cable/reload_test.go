@@ -102,16 +102,6 @@ func TestReloadAfterTheFileWent(t *testing.T) {
 	}
 }
 
-func TestReloadWithoutSystemdPlansNothing(t *testing.T) {
-	m, _ := portMachine()
-	delete(m.Dirs, "/run/systemd/system")
-	m.Files[cablePath] = []byte(liveFile)
-	changes, err := Reload{M: m}.Plan(t.Context())
-	if err != nil || changes != nil || slices.Contains(m.Calls, "read root "+cablePath) {
-		t.Errorf("plan = %v, %v, calls %q; want none, and no read", changes, err, m.Calls)
-	}
-}
-
 func TestReloadRefusesAnotherEntryOnThePort(t *testing.T) {
 	m, u := portMachine()
 	m.Files[cablePath] = []byte(liveFile)

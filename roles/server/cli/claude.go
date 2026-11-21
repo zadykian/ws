@@ -34,8 +34,7 @@ func newClaudeCmd(p enginecli.Env, u effect.Units) *cobra.Command {
 		claudeProcedure(p, u, "marketplaces", "add the plugin marketplaces of WS_CLAUDE_MARKETPLACES that claude lacks",
 			"An empty list asks claude nothing ("+claudeReadme+"#plugin-marketplaces).", claude.MarketplacesParts),
 		claudeProcedure(p, u, "restore", "start root's systemd, and have it restore cld's sessions at boot",
-			"cld setup restore writes the user unit. Without booted systemd it skips, and says so "+
-				"("+claudeReadme+"#sessions-after-a-reboot).", claude.RestoreParts))
+			"cld setup restore writes the user unit ("+claudeReadme+"#sessions-after-a-reboot).", claude.RestoreParts))
 }
 
 // claudeProcedure returns a command of claude's that settles the parts of proc, for root and the

@@ -9,15 +9,14 @@ import (
 	"fmt"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/roles/server/values"
 )
 
-// Check refuses what wg0's files must not act on, before they change. Such are a booted machine
-// whose networkd does not run, and a peer's key file that holds no public key. It names each peer
+// Check refuses what wg0's files must not act on, before they change. Such are a machine whose
+// networkd does not run, and a peer's key file that holds no public key. It names each peer
 // left out for want of its key file, and says the server's public key where the key exists.
 func Check(ctx context.Context, m effect.Machine, u effect.Units, out effect.Out, t values.Tunnel) error {
-	if err := networkdRuns(ctx, m, u); err != nil {
+	if err := networkdRuns(ctx, u); err != nil {
 		return err
 	}
 	if err := checkPeers(m, out, t); err != nil {
@@ -30,18 +29,14 @@ func Check(ctx context.Context, m effect.Machine, u effect.Units, out effect.Out
 	case hasKey:
 		out.Say("ws's WireGuard public key, for WS_PUBLIC_KEY in a server's values.yml: %s", public)
 	default:
-		out.Say("The server has no WireGuard key yet: a run on booted systemd makes it and shows its public key.")
+		out.Say("The server has no WireGuard key yet: a run makes it and shows its public key.")
 	}
 	return nil
 }
 
 // networkdRuns refuses a machine where systemd-networkd doesn't run, as on Ubuntu Desktop, whose
-// NetworkManager does its work instead: nothing would create wg0. It checks nothing without
-// systemd booted.
-func networkdRuns(ctx context.Context, m effect.Machine, u effect.Units) error {
-	if !systemd.Booted(m) {
-		return nil
-	}
+// NetworkManager does its work instead: nothing would create wg0.
+func networkdRuns(ctx context.Context, u effect.Units) error {
 	s, err := u.State(ctx, "systemd-networkd.service")
 	if err != nil {
 		return err

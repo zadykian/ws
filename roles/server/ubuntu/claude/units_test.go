@@ -117,7 +117,7 @@ func installer(url, env, shell string) string {
 	return "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + path + " sh -c " + script + " sh " + url + " " + env + " " + shell
 }
 
-func TestClaudeInstallersRunAsRootOnceWithoutSystemd(t *testing.T) {
+func TestClaudeInstallersRunAsRootOnce(t *testing.T) {
 	for _, c := range []struct{ unit, url, env, shell, creates string }{
 		{"state/claude-install", "https://claude.ai/install.sh", "CLAUDE_INSTALL_ALLOW_SUDO=1", "bash",
 			"/root/.local/bin/claude"},
@@ -129,7 +129,7 @@ func TestClaudeInstallersRunAsRootOnceWithoutSystemd(t *testing.T) {
 		m.Results[line] = effecttest.Result{}
 		apply(t, unit(t, e, c.unit))
 		if !slices.ContainsFunc(m.Calls, func(call string) bool { return strings.HasSuffix(call, " "+line) }) {
-			t.Errorf("%s: calls %q, want the installer as root, though systemd is not running", c.unit, m.Calls)
+			t.Errorf("%s: calls %q, want the installer as root", c.unit, m.Calls)
 		}
 		m.Files[c.creates] = nil
 		if got := changes(t, unit(t, e, c.unit)); got != nil {
@@ -178,7 +178,7 @@ func TestClaudeInstallerRunsNothingWhereCurlFails(t *testing.T) {
 	}
 }
 
-func TestClaudeCommandsRunAsRootWithoutSystemd(t *testing.T) {
+func TestClaudeCommandsRunAsRoot(t *testing.T) {
 	m, e := machine(t)
 	names := []string{"update", "completion", "settings", "telemetry", "marketplaces"}
 	for _, name := range names {
@@ -200,7 +200,6 @@ func TestClaudeCommandsRunAsRootWithoutSystemd(t *testing.T) {
 
 func TestClaudeLingerIsRootsAndRestoreRunsAsRoot(t *testing.T) {
 	m, e := machine(t)
-	m.Dirs["/run/systemd/system"] = 0o755
 	if got := changes(t, unit(t, e, "state/claude-linger")); !slices.Equal(got, []string{"enable lingering for root", "start user@0.service"}) {
 		t.Errorf("linger plan = %q", got)
 	}

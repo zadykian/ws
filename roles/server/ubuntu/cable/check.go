@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/roles/server/ubuntu/cable/internal/netplan"
 	"github.com/zadykian/ws/roles/server/values"
 )
@@ -44,15 +43,11 @@ func Check(ctx context.Context, m effect.Machine, u effect.Units, c values.Cable
 			return errors.New(strings.Join(problems, " "))
 		}
 	}
-	return networkdRuns(ctx, m, u)
+	return networkdRuns(ctx, u)
 }
 
-// networkdRuns fails where networkd, which netplan's file is for, does not run on a booted
-// machine.
-func networkdRuns(ctx context.Context, m effect.Machine, u effect.Units) error {
-	if !systemd.Booted(m) {
-		return nil
-	}
+// networkdRuns fails where networkd, which netplan's file is for, does not run.
+func networkdRuns(ctx context.Context, u effect.Units) error {
 	state, err := u.State(ctx, "systemd-networkd.service")
 	if err != nil {
 		return err

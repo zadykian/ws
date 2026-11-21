@@ -1,3 +1,4 @@
+// Package systemd runs units, reloads systemd and enables lingering.
 package systemd
 
 import (

@@ -83,22 +83,6 @@ func TestClaudeMarketplacesCheckNamesEachToAdd(t *testing.T) {
 	}
 }
 
-func TestClaudeRestoreSkipsWithoutSystemd(t *testing.T) {
-	m, u, ws := claudeUnits("---\n", "")
-	status, _, stderr := ws("restore", "--check")
-	if status != 0 || !strings.Contains(stderr, "Claude restore: skipped, systemd is not running") {
-		t.Errorf("status = %d, stderr %q", status, stderr)
-	}
-	for _, c := range m.Calls {
-		if strings.Contains(c, "setup restore") || strings.Contains(c, "systemctl") {
-			t.Errorf("restore ran %q without systemd", c)
-		}
-	}
-	if len(u.Calls) != 0 {
-		t.Errorf("restore called the units: %q", u.Calls)
-	}
-}
-
 func TestClaudeCommandsReadTheValues(t *testing.T) {
 	p, _ := valuesProcess("---\nWS_NO_SUCH_KEY: 1\n")
 	for _, name := range []string{"update", "completion", "settings", "telemetry", "marketplaces", "restore"} {

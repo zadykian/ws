@@ -56,9 +56,9 @@ func MarketplacesParts(v values.Values, a account.Account, m effect.Machine, _ e
 // RestoreParts starts the user's systemd, then has it restore cld's sessions as it starts. The
 // unit's name holds the account's uid, which a spec cannot know, so it stays here. Lingering is
 // the role's own unit, before.
-func RestoreParts(_ values.Values, a account.Account, m effect.Machine, u effect.Units, out effect.Out) []resource.Resource {
+func RestoreParts(_ values.Values, a account.Account, m effect.Machine, u effect.Units, _ effect.Out) []resource.Resource {
 	return []resource.Resource{
 		systemd.Unit{M: m, U: u, Name: fmt.Sprintf("user@%d.service", a.UID), Run: systemd.Running},
-		cld.Restore{M: m, Account: a, Out: out},
+		cld.Restore{M: m, Account: a},
 	}
 }

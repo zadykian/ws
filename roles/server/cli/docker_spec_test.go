@@ -17,8 +17,8 @@ const (
 	dockerResolved = "/etc/systemd/resolved.conf.d/docker.conf"
 )
 
-// dockerMachine is an unbooted machine, as CI's container is, with 16 GiB, 8 CPUs and 500 GiB
-// under Docker's root. dockerd passes the daemon.json it checks.
+// dockerMachine is a machine with 16 GiB, 8 CPUs and 500 GiB under Docker's root.
+// dockerd passes the daemon.json it checks.
 func dockerMachine() *effecttest.Machine {
 	m := effecttest.NewMachine()
 	for _, d := range []string{"/etc", "/etc/systemd", "/etc/systemd/system", "/var/lib/docker"} {

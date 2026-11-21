@@ -32,7 +32,7 @@ func TestCableCheckRefusesBadValues(t *testing.T) {
 	}
 }
 
-func TestCableReloadWithoutSystemdIsDone(t *testing.T) {
+func TestCableReloadWithNothingDueRunsNothing(t *testing.T) {
 	p, m := valuesProcess("---\n")
 	for _, args := range [][]string{{"--check"}, nil} {
 		status, stdout, stderr := runWs(p, "", append([]string{"server", "cable", "reload"}, args...)...)
@@ -47,7 +47,6 @@ func TestCableReloadWithoutSystemdIsDone(t *testing.T) {
 
 func TestCableReloadCheckFailsWhereDue(t *testing.T) {
 	p, m := valuesProcess("---\n")
-	m.Dirs["/run/systemd/system"] = 0o755
 	m.Files["/etc/netplan/60-cable.yaml"] = []byte("new\n")
 	status, _, stderr := runWs(p, "", "server", "cable", "reload", "--check")
 	if status != 1 || !strings.Contains(stderr, "to do: write networkd's files from netplan's") {
