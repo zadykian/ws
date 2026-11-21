@@ -31,13 +31,13 @@ The task `secrets`, `roles/server/mise-tasks/secrets`, runs the bootstrap under 
 it at ws as the [runbook](../../runbook.md) gives it:
 
 ```sh
-sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server run secrets
+sudo env MISE_LOCKED=1 mise -C /opt/ws/roles/server run secrets
 ```
 
 - Its arguments go to `mise bootstrap` whole: none is a run, and `-- plan --detailed-exitcode` a
   plan. A plan fetches too, as mise needs the values to compare the secret files.
-- It refuses any user but root, and a run without the runbook's `MISE_DATA_DIR` and
-  `MISE_LOCKED=1`, so fnox runs from the lock alone.
+- It refuses any user but root, and a run without the runbook's `MISE_LOCKED=1`,
+  so fnox runs from the lock alone.
 - The profile is the hostname, one DNS label that names no recipient. The task decrypts
   `fnox.HOSTNAME.toml` with the shared `fnox.toml` by the host key,
   `/etc/ssh/ssh_host_ed25519_key`, then runs `mise -E ws,secrets bootstrap` under fnox. Each

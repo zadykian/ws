@@ -37,8 +37,8 @@ host key and passes its arguments to the bootstrap
 ([The task](ubuntu/secrets/README.md#the-task)):
 
 ```sh
-sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server run secrets
-sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server run secrets -- plan --detailed-exitcode
+sudo env MISE_LOCKED=1 mise -C /opt/ws/roles/server run secrets
+sudo env MISE_LOCKED=1 mise -C /opt/ws/roles/server run secrets -- plan --detailed-exitcode
 ```
 
 A run of the bootstrap without the task loads no `secrets` env, and keeps the files that env's

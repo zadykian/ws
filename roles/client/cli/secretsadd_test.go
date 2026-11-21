@@ -24,12 +24,11 @@ const (
 	knownHosts   = "/h/.ssh/known_hosts"
 	findLab      = "ssh-keygen -F lab -f " + knownHosts
 	hostnameLine = "ssh lab hostname"
-	runLine      = "ssh -t lab sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server " +
-		"run secrets"
-	keysLine    = secrets.GH + " api --paginate repos/o/n/keys"
-	postLine    = secrets.GH + " api -X POST repos/o/n/keys -f title=ws-a -f key=" + labKey + " -F read_only=true"
-	sealed      = "fnox-age-batch-v1:c2VhbGVk"
-	fingerprint = "256 SHA256:Zm9yIHRoZSB0ZXN0 no comment (ED25519)"
+	runLine      = "ssh -t lab sudo env MISE_LOCKED=1 mise -C /opt/ws/roles/server run secrets"
+	keysLine     = secrets.GH + " api --paginate repos/o/n/keys"
+	postLine     = secrets.GH + " api -X POST repos/o/n/keys -f title=ws-a -f key=" + labKey + " -F read_only=true"
+	sealed       = "fnox-age-batch-v1:c2VhbGVk"
+	fingerprint  = "256 SHA256:Zm9yIHRoZSB0ZXN0 no comment (ED25519)"
 )
 
 // sharedText is fnox.toml as init leaves it, with one value.
