@@ -1,0 +1,13 @@
+# The Application Firewall, on and blocking all incoming connections, so that the server, which
+# reaches the Mac over the cable and wg0 past no router, opens none. socketfilterfw's get options
+# exit 0 whatever the state, so the check reads their text as the user, and a run that changes
+# nothing asks no password. The first pattern also takes the line of block-all's own state, which
+# may name it in place of "enabled"; the second is the block-all line's.
+[state.firewall.run]
+user = "root"
+command = ["/usr/libexec/ApplicationFirewall/socketfilterfw", "--setglobalstate", "on", "--setblockall", "on"]
+check = [
+    "sh",
+    "-c",
+    "/usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate | grep -Eqi 'enabled|block all' && /usr/libexec/ApplicationFirewall/socketfilterfw --getblockall | grep -qi 'enabled'",
+]

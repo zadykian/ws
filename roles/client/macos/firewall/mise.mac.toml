@@ -1,0 +1,3 @@
+# The firewall's line for the Mac.
+[bootstrap.packages]
+"ws:state/firewall" = "in-sync"
