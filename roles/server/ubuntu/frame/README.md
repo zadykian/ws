@@ -117,8 +117,8 @@ drops the units then, with a warning alone. So `install.sh` refuses `/`, `/usr`,
 `/opt` where a group or others may write it, and makes `/usr/share/mise` and its `plugins` root's
 and 755, whatever was there. After that, the [check](#the-check-against-a-silent-skip) fails a run
 that drops them. Its other
-directory, `/usr/local/share/mise/plugins`, is the data directory's own: a plugin there would be
-root's and the system's at once, which mise warns of on every run.
+system directory, `/usr/local/share/mise/plugins`, stays empty here. Root's own,
+`/root/.local/share/mise/plugins`, is where mise installs a plugin, no system one.
 
 ## The pin
 
@@ -136,9 +136,7 @@ The pin moves in a pull request of its own, after the release it names
 ## ws at a fixed path
 
 mise installs ws under its data directory, by version, which neither a unit of systemd nor a
-person can name. Every run as root exports `MISE_DATA_DIR=/usr/local/share/mise`, as `install.sh`
-does, so that the account reaches the tools a role pins
-([devtools](../devtools/README.md#the-tools)). The unit `state/ws-binary` copies the pinned binary
+person can name. The unit `state/ws-binary` copies the pinned binary
 to `/usr/local/bin/ws` where the two differ, under a temporary name first. As a `run` state, it
 skips without booted systemd. A unit that runs `/usr/local/bin/ws` waits on
 it by `after`.

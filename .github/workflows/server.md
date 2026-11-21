@@ -23,7 +23,7 @@ anyone write what lands there, so the job drops it first. Its image lets others 
 `/usr/share` too, where mise would refuse
 [the plugin](../../roles/server/ubuntu/frame/README.md#the-plugin), so the cases make both root's
 alone. As on a new machine, `install.sh` installs the pinned mise and runs the bootstrap on the
-tree in place, with `MISE_LOCKED=1` and install.sh's `MISE_DATA_DIR`
+tree in place, with `MISE_LOCKED=1`
 ([bootstrap.sh](../bootstrap.sh)). The bootstrap installs ws and sets up the firewall before
 Docker's ufw rules.
 No apt command in it may wait for dpkg's lock, and neither of apt's daily services may run. The

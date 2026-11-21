@@ -188,8 +188,9 @@ TOML
 # on its way, /opt included, and then drops ws's units with a warning alone. So a directory above
 # the link, or /opt, that a group or others may write is refused here. mise's two are made root's
 # and 755, whatever was there. A [bootstrap.plugins] entry would install the plugin again on
-# every run, with a warning. The other such directory, /usr/local/share/mise/plugins, is the data
-# directory's own. A plugin there would be both root's and the system's, which mise warns of too.
+# every run, with a warning. mise's other system directory, /usr/local/share/mise/plugins, stays
+# empty here. Root's own, /root/.local/share/mise/plugins, is where mise installs a plugin, no
+# system one.
 plugin() {
     for dir in / /usr /usr/share /opt; do
         [ -z "$(find "$dir" -maxdepth 0 \( ! -user 0 -o -perm /022 \))" ] ||
@@ -231,15 +232,13 @@ checkout() {
 # bootstrap runs mise bootstrap in the server's run directory, /opt/ws/roles/server. The tree in
 # /opt/ws is the release's, checked out there, or, with WS_IN_PLACE=1, the one that stands there.
 # The tree is trusted for this run, as the units' own mise calls inherit it, and for the runs by
-# hand after, by mise trust. mise reads no stdin, as the piped script is on it. mise puts the
-# tools under the data directory, which is root's own /root/.local/share/mise by default:
-# /usr/local/share/mise lets the account run them.
+# hand after, by mise trust. mise reads no stdin, as the piped script is on it.
 # MISE_LOCKED installs a tool only as the tree's lock holds it, by its URL and checksum, as CI's
 # runs and the runbook's do: bootstrap has no --locked.
 bootstrap() {
     guard
-    MISE_TRUSTED_CONFIG_PATHS=/opt/ws MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1
-    export MISE_TRUSTED_CONFIG_PATHS MISE_DATA_DIR MISE_LOCKED
+    MISE_TRUSTED_CONFIG_PATHS=/opt/ws MISE_LOCKED=1
+    export MISE_TRUSTED_CONFIG_PATHS MISE_LOCKED
     if [ "${WS_IN_PLACE:-}" = 1 ]; then
         [ -f /opt/ws/mise.toml ] || die "WS_IN_PLACE is set, and /opt/ws holds no mise.toml"
     else

@@ -152,7 +152,7 @@ for env in "${want[@]}"; do
     written "$env"
 done
 # install.sh trusts the tree, so that a plan by hand, with no MISE_TRUSTED_CONFIG_PATHS, runs and
-# finds no change. This tree holds no tool, so the plan needs no MISE_DATA_DIR either.
+# finds no change.
 as_root /usr/local/bin/mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null >/dev/null ||
     fail "a plan by hand after install.sh found a change or failed"
 # A run by hand loads the tree's tasks, and mise refuses one that install.sh left untrusted. Where

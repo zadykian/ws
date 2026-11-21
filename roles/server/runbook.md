@@ -23,13 +23,11 @@ the task's form below.
 A run of the bootstrap by hand, or of its plan, takes this form:
 
 ```sh
-sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server bootstrap
+sudo env MISE_LOCKED=1 mise -C /opt/ws/roles/server bootstrap
 ```
 
-`MISE_DATA_DIR` is the data directory that `install.sh` gives mise, where the account reaches the
-tools. Without it, `guard/devtools-data-dir` fails the run
-([devtools](ubuntu/devtools/README.md#the-tools)). `MISE_LOCKED=1` installs a tool only as the lock holds
-it, by its URL and checksum, as CI's runs do. With `bootstrap plan --detailed-exitcode` in place
+`MISE_LOCKED=1` installs a tool only as the lock holds it, by its URL and checksum, as CI's runs
+do. With `bootstrap plan --detailed-exitcode` in place
 of `bootstrap`, it changes nothing, and exits 0 where a run would change nothing.
 
 A run under ws's secrets, or its plan, goes through the task `secrets`, which fetches them by the
