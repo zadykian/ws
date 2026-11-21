@@ -10,6 +10,7 @@ Available Commands:
   help        Help about any command
   server      the commands for an Ubuntu server
   unit        plan and apply the units of ws's kinds, KIND/NAME, for mise
+  update      update ws to a release, then run the setup of this system
   version     print the version of this ws
 
 Flags:
@@ -853,6 +854,17 @@ Usage:
 Flags:
       --dry-run   plan the units and apply none
   -h, --help      help for write
+== ws update
+Downloads the latest release's ws for this system, or the one that --version names, checks it against the release's ws.sha256 and that it runs and prints the release, then renames it over /usr/local/bin/ws. A signal before the rename leaves the old ws. Then it runs ws server setup of that ws.
+
+A ws that is that release already is not downloaded: only its setup runs. The latest release is refused where this ws is a release after it, and --version names the older one. A ws that is no release, such as a trial's build, is older than any release, so that an update ends the trial.
+
+Usage:
+  ws update [flags]
+
+Flags:
+  -h, --help             help for update
+      --version string   the release to install, X.Y.Z or X.Y.Z-rc.N, in place of the latest
 == ws version
 print the version of this ws
 

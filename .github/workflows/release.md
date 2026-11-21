@@ -36,6 +36,25 @@ sha256sum, or `shasum -a 256` where a Mac has no `sha256sum`:
 | `WS_VERSION` | the latest release | the release whose ws installs, `X.Y.Z` or `X.Y.Z-rc.N`, with or without the `v` |
 | `WS_RELEASES_URL` | `https://github.com/zadykian/ws/releases` | where the releases are, for tests |
 
+## Update
+
+`ws update` brings a machine's ws to a release, and ends in the setup of its side. On a server it
+runs as root, and on a Mac as the user, which asks sudo for the write. Nothing else runs `install.sh`
+again.
+
+- It finds the latest release, or takes the one that `--version X.Y.Z` or `X.Y.Z-rc.N` names, with
+  or without the `v`. It downloads that release's ws and `ws.sha256`, checks the file against the
+  sum listed for its name, and runs it as `ws version`, which must print the tag. Only then it
+  renames it over `/usr/local/bin/ws`, uid 0, gid 0 and 0755. A refusal, or a signal before the
+  rename, keeps the ws there and leaves no file behind.
+- It refuses the latest release where this ws is a release after it, such as a pre-release:
+  `--version` names the older one. A ws that is no release, a trial's build, is older than any, so
+  an update ends the trial.
+- Then it replaces itself with `ws server setup` or `ws client setup` of the ws it wrote. Where this
+  ws is the named release already, it downloads nothing, and runs that setup alone.
+
+`WS_RELEASES_URL` names the releases, as for `install.sh`.
+
 ## The install job
 
 CI's `install` job runs [install-checks.sh](../install-checks.sh) on each pull request of a stack on `main`. It
@@ -58,6 +77,24 @@ loopback, a shell script that prints its release and its target as `ws version`,
 - `/usr/local/bin` is made where missing;
 - a `/usr/local/bin` that another user owns or others may write, and a `/usr/local` that others
   may write, are refused, and keep their owner.
+
+Then [update-checks.sh](../update-checks.sh) runs `ws update` as root against stubs as releases,
+`v0.2.0`, the latest, and `v0.4.0-rc.1`, and `v0.5.0` whose `ws.sha256` fits no file. A stub prints
+its tag as `ws version` and records its call of `server setup`. The ws that runs is a real build of
+the tree, which a tag in a copy of it stamps as a release, or none for a trial's. The cases:
+
+- a release's ws moves to the latest and runs its setup;
+- a trial's build is replaced;
+- `--version` takes a pre-release, and a real pre-release refuses the latest;
+- a release older than this ws is refused, unless `--version` names it;
+- a wrong sum and a missing release are refused, and ws stays the same;
+- a ws of the named release downloads nothing and runs its own setup. The runner's system refuses
+  that setup, and the script fails on Ubuntu 26.04, where the setup would be real;
+- a user is refused before any download.
+
+The script deletes `/usr/local/bin/ws` as it ends, so it sets that up after its guards. Its test,
+[update-checks-test.sh](../update-checks-test.sh), runs in `lint` and checks that a run a guard
+refuses deletes nothing.
 
 The `mac` job's case [16-install.sh](../mac/16-install.sh) runs `install.sh` on macOS. It serves the
 tree's own build of ws as the release, with its `ws.sha256`, and checks that the file is

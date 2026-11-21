@@ -23,3 +23,9 @@ func TestUnitGroupOnDarwin(t *testing.T) {
 		t.Errorf("status = %d, stdout = %q, stderr = %q; want the Mac's specs", status, stdout, stderr)
 	}
 }
+
+func TestUpdateEndsInTheMacsSetupOnDarwin(t *testing.T) {
+	if status, stdout, _ := runGroups(fakeProcess(), "update", "--help"); status != 0 || !strings.Contains(stdout, "runs ws client setup of that ws") {
+		t.Errorf("status = %d, stdout = %q, want an update that ends in ws client setup", status, stdout)
+	}
+}

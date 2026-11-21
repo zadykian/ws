@@ -86,9 +86,10 @@ Then do what stays by hand, below.
 
 ## Running it again
 
-Each release holds the roles it sets up, so run `install.sh` again, by the same lines of
-[Install](.github/workflows/release.md#install), and then `ws server setup`: setup checks the
-release's tree out and runs the bootstrap. `WS_VERSION=X.Y.Z` before `sh` picks a release.
+Each release holds the roles it sets up, so run `ws update` as root. It brings ws to the latest
+release and runs that ws's `ws server setup`, which checks the release's tree out and runs the
+bootstrap. `--version X.Y.Z` picks a release, and `X.Y.Z-rc.N` a pre-release
+([Update](.github/workflows/release.md#update)).
 
 The units read their secrets from mise's secret inputs, which the task `secrets` fetches and
 decrypts on ws ([The repository](roles/server/ubuntu/secrets/README.md#the-repository)). The
