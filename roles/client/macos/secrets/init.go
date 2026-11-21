@@ -58,8 +58,8 @@ func (i Init) Run(ctx context.Context) error {
 	}
 	for _, tool := range []string{fnoxBin, Plugin} {
 		if _, err := i.M.Stat(tool); err != nil {
-			return fmt.Errorf("no %s: run MISE_LOCKED=1 mise -C %s/roles/client bootstrap first, which puts fnox and "+
-				"age-plugin-yubikey in /usr/local/bin", tool, i.Tree)
+			return fmt.Errorf("no %s: run ws client setup first, which puts fnox and "+
+				"age-plugin-yubikey in /usr/local/bin", tool)
 		}
 	}
 	keyFile, err := KeyFile(i.Getenv)

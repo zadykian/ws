@@ -98,7 +98,7 @@ takes no `--server`: the argument is the consent. It first takes NAME's host key
 secrets ([The secrets](../macos/secrets/README.md#ws-client-remove)), and stops with the
 server whole where that fails. `--skip-secrets` leaves the secrets, and prints the key to drop by
 hand. It then deletes `servers/NAME` and NAME's entry in
-`known_hosts`, and runs `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap`, whose units take
+`known_hosts`, and runs `mise -C /opt/ws/roles/client bootstrap`, whose units take
 NAME's daemon, hosts and routes away. A server that stays and whose file ws refuses, NAME's clashes
 aside, stops it before it deletes anything, as those units would fail. Where the bootstrap fails,
 run it again to end the removal. Where NAME held the cable, it prints a line to do by hand: the
@@ -159,4 +159,4 @@ key of another target's ways: `WS_LAN` on a cloud VM, `WS_REMOTE` on a VM on the
 ways. A new machine offers another host key, so run `ssh-keygen -R NAME` first, NAME the server's
 name. From a cloud VM, remove `WS_SECURITY_OUTBOUND: false` from ws's `values.yml` too, with
 `ws server values set WS_SECURITY_OUTBOUND ''`. Then run the bootstrap on ws, as
-[its runbook](../../server/runbook.md) says, and `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap` again.
+[its runbook](../../server/runbook.md) says, and `ws client setup` again.

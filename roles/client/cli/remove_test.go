@@ -124,12 +124,12 @@ func TestRemoveWithNoKnownHostsHasNoKeyToDrop(t *testing.T) {
 func TestRemoveRunsTheBootstrap(t *testing.T) {
 	p, _ := removeFixture()
 	status, _, stderr := runWs(p, "client", "remove", "lab")
-	if want := "MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap: "; status != 1 || !strings.Contains(stderr, want) || !strings.Contains(stderr, "run it again to take lab's daemon, routes and host off") {
+	if want := "mise -C /opt/ws/roles/client bootstrap: "; status != 1 || !strings.Contains(stderr, want) || !strings.Contains(stderr, "run it again to take lab's daemon, routes and host off") {
 		t.Errorf("status = %d, stderr = %q; want 1 and %q", status, stderr, want)
 	}
 	p, m := removeFixture()
-	m.Results["env MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap"] = effecttest.Result{}
-	if status, _, stderr := runWs(p, "client", "remove", "lab"); status != 0 || !slices.Contains(m.Calls, "run env MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap") {
+	m.Results["mise -C /opt/ws/roles/client bootstrap"] = effecttest.Result{}
+	if status, _, stderr := runWs(p, "client", "remove", "lab"); status != 0 || !slices.Contains(m.Calls, "run mise -C /opt/ws/roles/client bootstrap") {
 		t.Errorf("status = %d, stderr = %q, calls %q; want 0, the bootstrap run", status, stderr, m.Calls)
 	}
 }

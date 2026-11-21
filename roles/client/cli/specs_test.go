@@ -159,8 +159,8 @@ func TestMacConfigHoldsNoRootPath(t *testing.T) {
 }
 
 // TestMacLockHoldsEachTool keeps roles/client/mise/mise.mac.lock beside the Mac's tools. The
-// bootstrap runs with MISE_LOCKED=1, which refuses a tool that the lock lacks, and installs one by
-// its url and checksum alone, so that no tool goes in unchecked. An entry that no role pins, as
+// bootstrap runs with the tree's setting locked. That refuses a tool that the lock lacks, and
+// installs one by its url and checksum alone, so that no tool goes in unchecked. An entry that no role pins, as
 // after a change of a tool's backend, is stale.
 func TestMacLockHoldsEachTool(t *testing.T) {
 	text, err := os.ReadFile(macLock)
