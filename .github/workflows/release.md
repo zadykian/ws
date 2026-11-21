@@ -96,7 +96,7 @@ The script deletes `/usr/local/bin/ws` as it ends, so it sets that up after its 
 [update-checks-test.sh](../update-checks-test.sh), runs in `lint` and checks that a run a guard
 refuses deletes nothing.
 
-The `mac` job's case [16-install.sh](../mac/16-install.sh) runs `install.sh` on macOS. It serves the
+The `client` job's case [16-install.sh](../client/16-install.sh) runs `install.sh` on macOS. It serves the
 tree's own build of ws as the release, with its `ws.sha256`, and checks that the file is
 `root:wheel` and 755 and that no download is left.
 
@@ -138,8 +138,8 @@ Nothing else is by hand. `release.yml` runs on the tag, in these jobs:
 
 1. `check`: `origin/main` holds the commit of a tag `vX.Y.Z`, and a branch `origin/feat/*` that of
    a tag `vX.Y.Z-rc.N`. Any other tag fails.
-1. `ci` and `mac`: [ci.yml](ci.yml) and
-   [mac.yml](mac.yml), called on the tag. Their jobs run,
+1. `ci` and `client`: [ci.yml](ci.yml) and
+   [client.yml](client.yml), called on the tag. Their jobs run,
    as on a push to `main`.
 1. `build`: `ws-darwin-arm64`, `ws-linux-amd64` and `ws-linux-arm64` with the Go that
    [.tools/run](../../.tools/run) pins, without cgo, with `-trimpath` and Go's stamp of the tag, and

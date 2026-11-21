@@ -14,7 +14,7 @@ on:
 # to main and a release's call each take a group of their own run, so nothing cancels them. The run
 # of ready_for_review skips lint, which the ruleset requires, so it takes a group apart, as it must
 # not cancel the lint of the run before it. The name is written out, as in release.yml's call
-# github.workflow names the caller, for mac.yml's group too.
+# github.workflow names the caller, for client.yml's group too.
 concurrency:
   group: >-
     ci-${{ github.event.pull_request.number || github.run_id
@@ -62,7 +62,7 @@ jobs:
   # runs on the top pull request alone, which holds every change below it, and only where the
   # stack rests on main.
   # A pull request onto another branch, such as an integration branch, skips it: that branch's
-  # pull request to main runs it. So do mac.yml's and mac-cld.yml's jobs.
+  # pull request to main runs it. So do client.yml's and client-cld.yml's jobs.
   # Run on each of a stack of 20, these jobs kept its pull requests waiting for runners past 50
   # minutes. A stack's pull requests open as drafts, before gh stack link joins them, so a draft's
   # opened event has no stack and these jobs skip it. No event follows the link: ready_for_review,
@@ -104,9 +104,10 @@ jobs:
 
   # install.sh with a stub of ws for each target, served on loopback: .github/install-checks.sh.
   # Each stub installs as /usr/local/bin/ws. A wrong sum and a missing file are refused. So is a
-  # /usr/local/bin that others may write, and one that is missing is made. The mac job runs it on
-  # macOS (mac/16-install.sh). Then ws update against stubs as releases: .github/update-checks.sh,
-  # with builds of the tree as the ws that runs. It runs on each pull request of a stack on main.
+  # /usr/local/bin that others may write, and one that is missing is made. The client job runs it
+  # on macOS (client/16-install.sh). Then ws update against stubs as releases:
+  # .github/update-checks.sh, with builds of the tree as the ws that runs. It runs on each pull
+  # request of a stack on main.
   # One onto another branch, such as an integration branch, skips it and takes lint alone of this
   # workflow: that branch's pull request to main runs it. A stack's pull request above the bottom
   # opens as a draft on the branch below it and names no stack yet, so ready_for_review starts its
