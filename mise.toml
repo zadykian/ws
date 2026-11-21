@@ -5,6 +5,9 @@
 [settings]
 # Versions come from the pin and its URLs alone, never from mise's versions host.
 use_versions_host = false
+# A tool installs only as mise.lock holds it, by its URL and checksum, with or without
+# MISE_LOCKED.
+locked = true
 
 # The repository of ws's secrets, which both sides read. The server's task secrets fetches it by
 # the host key (roles/server/ubuntu/secrets/README.md).

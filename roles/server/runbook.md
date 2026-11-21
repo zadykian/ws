@@ -13,6 +13,21 @@ A person does these steps at ws, in this order. The Mac's side sets them in its 
    [Install](../../.github/workflows/release.md#install), `set -o pipefail` among them. It
    installs mise and runs its bootstrap, which puts ws in `/usr/local/bin`, which sudo reaches.
 
+`ws server setup`, run as root, takes the steps of `install.sh` in Go. Before any write it refuses
+a user but root and a system but Ubuntu 26.04. It refuses a tree in `/opt/ws`, or a directory above
+it, that another user owns or that a group or others may write, as mise runs the tree as root. It
+installs mise at the version ws pins, checked against its SHA-256. It writes `/etc/mise/miserc.toml`
+and `/etc/mise/config.toml`, which trusts the tree ([The machine's
+env](ubuntu/frame/README.md#the-machines-env)). It checks this ws's release tag out in `/opt/ws`
+and cleans the tree. It links the plugin into `/usr/share/mise/plugins`, and runs mise's bootstrap
+in `/opt/ws/roles/server` with umask 022, from `/`. A second run changes nothing.
+
+- A ws that names no release tag, `devel` and a pseudo-version included, is refused. `--in-place`
+  runs the tree in `/opt/ws` as it stands, after the guard.
+- `--plan` plans these steps, and mise's bootstrap where none of them is due, and changes nothing.
+  It exits 0 where nothing would change, and 2 where something would.
+- `install.sh` stays until it installs ws alone.
+
 The secrets come once the Mac has run `ws client secrets init`, one run for all servers, and
 then `ws client secrets add NAME`, which makes ws's host key a recipient of the secrets
 repository ([The secrets](../client/runbook.md#the-secrets)). add then runs the task `secrets` at

@@ -9,7 +9,7 @@ config, with its spec where it has units, and holds no Go.
 
 | File | What it holds |
 | --- | --- |
-| [`mise.toml`](../../../../mise.toml) | Both sides': mise's settings and the pin of ws, a release, for three platforms. |
+| [`mise.toml`](../../../../mise.toml) | Both sides': mise's settings, among them `locked`, and the pin of ws, a release, for three platforms. |
 | [`mise.lock`](../../../../mise.lock) | The release's SHA-256 for each platform, which mise checks as it installs ws. |
 | [`roles/server/mise/mise.server.lock`](../../mise/mise.server.lock) | The roles' tools: each download's url and SHA-256 for each platform ([devtools](../devtools/README.md#the-tools)). |
 | [`mise.server.toml`](../../../../mise.server.toml) | The server's: dpkg's options, `/etc/ws` and the check against a silent skip. |
@@ -71,7 +71,14 @@ ws runs them by `KIND/NAME`, each moved behind the unit that its `after` names, 
 
 The machine's miserc, `/etc/mise/miserc.toml`, names the envs that load as the set `ws`: `server`
 alone. A run by `-E ws,secrets`, the secrets task's, adds the env `secrets` to the set, which no
-other run loads. `install.sh` writes the miserc.
+other run loads. `ws server setup` writes the miserc, as `install.sh` does.
+
+The same command writes `/etc/mise/config.toml`, which trusts the tree: its `trusted_config_paths`,
+under `[settings]`, names `/opt/ws`, so that a run by hand needs no `mise trust`. mise reads that
+setting of a system config under `[settings]` alone. `mise.toml` sets `locked`, so that a tool
+installs only as `mise.lock` holds it. The secrets task and the runbook still pass `MISE_LOCKED=1`.
+`mise settings get locked` reads the config of the directory it runs in: it prints `true` in the
+tree and `false` outside it.
 
 ## Secret inputs
 
@@ -111,12 +118,13 @@ and the inputs to the list that a run drops.
 
 ## The plugin
 
-`install.sh` links the tree's `plugins/ws` into `/usr/share/mise/plugins`, before the first run.
+`install.sh` and `ws server setup` link the tree's `plugins/ws` into `/usr/share/mise/plugins`,
+before the first run.
 mise finds a system plugin there and loads it as it stands, as no entry names it. A
 `[bootstrap.plugins]` entry would install it again on every run, with a warning. mise refuses a
 system plugin that anyone but root may change, or a directory on its way, `/opt` included. It
-drops the units then, with a warning alone. So `install.sh` refuses `/`, `/usr`, `/usr/share` or
-`/opt` where a group or others may write it, and makes `/usr/share/mise` and its `plugins` root's
+drops the units then, with a warning alone. So both refuse `/`, `/usr`, `/usr/share` or
+`/opt` where a group or others may write it, and make `/usr/share/mise` and its `plugins` root's
 and 755, whatever was there. After that, the [check](#the-check-against-a-silent-skip) fails a run
 that drops them. Its other
 system directory, `/usr/local/share/mise/plugins`, stays empty here. Root's own,
