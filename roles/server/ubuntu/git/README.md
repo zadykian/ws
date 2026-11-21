@@ -103,9 +103,9 @@ and a key, never a value.
 `/etc/ws/tokens.gitconfig`, which `/etc/ws/gitconfig` includes, gets a credential program for each
 URL of the file: `ws server git credential KEY`, where `KEY` is the URL without its scheme,
 each run of other characters than letters, digits, `.`, `_` and `-` as `_`. No two URLs may give
-the same key. The program names `/usr/local/bin/ws`, as mise's own path
-changes with each version. git runs it as root, and it reads the URL's token
-from the file.
+the same key. The program names `/usr/local/bin/ws`, the machine's one ws
+([ws at a fixed path](../frame/README.md#ws-at-a-fixed-path)). git runs it as root, and it reads the
+URL's token from the file.
 It reads no `values.yml`. Root owns both files, and the tokens' is at 0600.
 The program ignores git's requests to store or erase a credential, so a token the server refuses
 stays until the input changes. Where two URLs match, the longer one wins. gh's program still

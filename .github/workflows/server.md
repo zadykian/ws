@@ -25,8 +25,8 @@ anyone write what lands there, so the job drops it first. Its image lets others 
 [the plugin](../../roles/server/ubuntu/frame/README.md#the-plugin), so the cases make both root's
 alone. As on a new machine, the build's `ws server setup --in-place` installs the pinned mise and
 runs the bootstrap on the tree in place ([bootstrap.sh](../bootstrap.sh)). The tree's
-`locked = true` has mise install each tool as the lock holds it. The bootstrap installs ws and
-sets up the firewall before Docker's ufw rules.
+`locked = true` has mise install each tool as the lock holds it. The bootstrap sets up the
+firewall before Docker's ufw rules.
 No apt command in it may wait for dpkg's lock, and neither of apt's daily services may run. The
 log shows the timers and their stamps before it and after it, and systemd's reloads, so that a
 failure shows what started the upgrade. Setup's `--plan` must exit 2 before the run, which has

@@ -134,9 +134,11 @@ system directory, `/usr/local/share/mise/plugins`, stays empty here. Root's own,
 
 ws is no tool of mise's: mise would install it under its data directory, by version, which neither
 a unit of systemd nor a person can name. `/usr/local/bin/ws` is the machine's one ws, root's at 0755.
-`install.sh` and `ws update` write it, and a trial of a role installs a build of the tree there. The
-plugin, the frame's checks and each unit that runs ws take that path, and fail where the file is
-missing.
+`install.sh` and `ws update` write it. A trial installs the tree's build there by
+[`.tools/install-build`](../../../../.tools/install-build) (`linux arm64` on an arm64 machine), runs
+`ws server setup --in-place`, and ends by `ws update`, which takes a build that is no release as
+older than any release. The plugin, the frame's checks and each unit that runs ws take that path,
+and fail where the file is missing.
 
 ## The values file
 

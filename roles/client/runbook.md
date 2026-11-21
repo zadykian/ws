@@ -116,7 +116,7 @@ Where ssh names another host key, drop the old one with `ssh-keygen -R NAME`.
    `WS_TUNNEL_PEERS` to `mac` at `10.99.N.2`
    ([The tunnel](../server/ubuntu/tunnel/README.md#the-tunnel)).
 2. Run `install.sh` by the three lines of [Install](../../.github/workflows/release.md#install),
-   `set -o pipefail` among them. The bootstrap it runs puts ws in `/usr/local/bin`. Check it with
+   `set -o pipefail` among them. It writes ws to `/usr/local/bin`. Check it with
    `ws version`.
 3. Run `ws client secrets add NAME --address ADDRESS`, with `--port PORT` off the LAN. It
    adds ws's host key to the secrets and as the repository's deploy key, with the Nano's PIN and a

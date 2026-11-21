@@ -27,7 +27,7 @@ server, and loads no file of the server's.
 - `/usr/local/bin/mise` is the pinned mise, checked by its SHA-256.
 - `/etc/mise/miserc.toml` names the env `mac` as the set `ws`, which loads `mise.mac.toml` and the
   fragments. `/etc/mise/config.toml` trusts the tree, so that a run by hand needs no `mise trust`.
-- mise runs as the user and installs ws in the user's data directory. The Mac's `ws unit` refuses
+- mise runs as the user, and the plugin runs `/usr/local/bin/ws`. The Mac's `ws unit` refuses
   root.
 
 ## Root's paths

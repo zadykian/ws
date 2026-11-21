@@ -77,7 +77,7 @@ apt source, which apt refuses beside mise's: remove it first
 Then, logged in as that user, write `/etc/ws/values.yml` where a value differs from its default,
 root's and mode 600 ([the values](#running-it-again)). Run `install.sh` through `sudo`, by the
 three lines of [Install](.github/workflows/release.md#install), which fail where curl does. It
-installs mise and runs its bootstrap, which installs ws and sets each role up. Once the secrets
+installs mise and runs its bootstrap, which sets each role up. Once the secrets
 hold `WS_GITHUB_TOKEN`, the secrets task logs gh in ([By hand](#by-hand)). The Mac's
 `ws client secrets add NAME` runs it first, as [the server's runbook](roles/server/runbook.md) says.
 

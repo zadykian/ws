@@ -144,12 +144,12 @@ apt_quiet() {
 # The controls: each of these holds before ws, and the opposite after it.
 must "the private address answers before the table" up "http://$target/"
 
-# As on a new machine: ws server setup installs mise and runs the bootstrap, which installs ws and
-# sets up the firewall before Docker's ufw rules. It runs twice, and the second run must change
-# nothing. Its plan must exit 2 before the first run, which has mise, the plugin and the bootstrap
-# to do, and 0 after each run. The tree must be root's alone for setup's guard. So must /opt and
-# /usr/share, as on a machine, for mise's: the runner's image lets others write both, and mise
-# refuses a system plugin below either.
+# As on a new machine: ws server setup installs mise and runs the bootstrap. The build is already
+# /usr/local/bin/ws. The bootstrap sets up the firewall before Docker's ufw rules. It runs twice, and
+# the second run must change nothing. Its plan must exit 2 before the first run, which has mise, the
+# plugin and the bootstrap to do, and 0 after each run. The tree must be root's alone for setup's
+# guard. So must /opt and /usr/share, as on a machine, for mise's. The runner's image lets others
+# write both, and mise refuses a system plugin below either.
 chown -R 0:0 /opt/ws
 chmod -R go-w /opt/ws
 chmod go-w /opt /usr/share

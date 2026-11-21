@@ -14,10 +14,10 @@
 # the tree's plugin, plugins/ws, where mise looks for a system plugin, as below. Last it
 # checks a release's tag out in /opt/ws by git, and runs mise bootstrap in /opt/ws/roles/server.
 # The release is the latest, or the one WS_VERSION names (X.Y.Z, with or without the v). A
-# pre-release, X.Y.Z-rc.N, runs only where WS_VERSION names it. That tree pins ws's binary and
-# checks it. Run again, it checks that release's tag out there, dropping any change and any file
-# git does not track, and brings the machine back to the release. It refuses a /opt/ws that is not
-# root's alone, and a system other than Ubuntu 26.04.
+# pre-release, X.Y.Z-rc.N, runs only where WS_VERSION names it. Run again, it checks that
+# release's tag out there, dropping any change and any file git does not track, and brings the
+# machine back to the release. It refuses a /opt/ws that is not root's alone, and a system other
+# than Ubuntu 26.04.
 # A Mac follows roles/client/runbook.md instead. It runs in any POSIX sh, and needs curl,
 # sha256sum and git.
 #
