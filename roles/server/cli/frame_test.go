@@ -22,6 +22,12 @@ func TestNoRoleSetsAFramesKey(t *testing.T) {
 // checkCommand returns the shell command of the frame's check against a silent skip, as mise's
 // template gives it to sh, run in dir.
 func checkCommand(t *testing.T, dir string) string {
+	return frameCommand(t, "/etc/ws/units.verified", dir)
+}
+
+// frameCommand returns the shell command of the template that the frame renders at target, as
+// mise gives it to sh. It names dir where the template names the run's directory.
+func frameCommand(t *testing.T, target, dir string) string {
 	text, err := os.ReadFile(treeRoot + "/mise.server.toml")
 	if err != nil {
 		t.Fatal(err)
@@ -36,11 +42,11 @@ func checkCommand(t *testing.T, dir string) string {
 	if err := toml.Unmarshal(text, &c); err != nil {
 		t.Fatal(err)
 	}
-	content := c.Bootstrap.Files["/etc/ws/units.verified"].Content
+	content := c.Bootstrap.Files[target].Content
 	command, prefixed := strings.CutPrefix(strings.TrimSpace(content), `{{ exec(command="`)
 	command, suffixed := strings.CutSuffix(command, `") }}`)
 	if !prefixed || !suffixed {
-		t.Fatalf("units.verified's content is no exec of one command: %q", content)
+		t.Fatalf("%s's content is no exec of one command: %q", target, content)
 	}
 	return strings.ReplaceAll(strings.ReplaceAll(command, `" ~ cwd ~ "`, dir), `\"`, `"`)
 }

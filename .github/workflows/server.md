@@ -36,7 +36,9 @@ daemon's log.
 
 The run leaves checks that need no container. With the frame's line of `state/ws-binary` dropped,
 the plan must exit 1 ([server-plan.sh](../server-plan.sh)): the check against a silent skip holds.
-A plan from `/opt/ws`, which loads no role, must exit 1 too, and name the run directory. The
+A plan from `/opt/ws`, which loads no role, must exit 1 too, and name the run directory. A plan
+with a bad value in the values file must exit 1 by `ws server values check` and name its key, and
+the file goes back ([The check of the values](../../roles/server/ubuntu/frame/README.md#the-check-of-the-values)). The
 values file is root's at 600, and no run changed its bytes ([The values
 file](../../roles/server/ubuntu/frame/README.md#the-values-file)). A run with no file is
 `values_file_test.go`'s. The Zed wrapper's [checks](../zed-terminal-checks.sh) run on the files the

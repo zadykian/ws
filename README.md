@@ -97,7 +97,9 @@ The first run writes it where none is, each key at its default, and no run chang
 root, in `/root`: no value names either. `WS_GIT_SIGNING_PUB_KEY` is `/root/.ssh/id_ed25519_signing.pub`
 by default, and lies below `/root`, or the run fails. A cloud VM names `WS_SECURITY_OUTBOUND:
 false` there before its first run ([Outbound](roles/server/ubuntu/security/README.md#outbound)). `ws
-server values set KEY VALUE` writes one key, and an empty VALUE gives its default back. A second
+server values set KEY VALUE` writes one key, and an empty VALUE gives its default back. `ws server
+values check` and each plan refuse a bad value before any write
+([The check of the values](roles/server/ubuntu/frame/README.md#the-check-of-the-values)). A second
 run changes nothing, so `ws server setup --plan` exits 0.
 
 ## Dry runs
