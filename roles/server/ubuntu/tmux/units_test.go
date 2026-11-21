@@ -14,17 +14,15 @@ import (
 )
 
 // asRoot is how a run state runs a command as root: in /root, with the system's PATH.
-const asRoot = "env HOME=/root env XDG_RUNTIME_DIR=/run/user/0 " +
-	"DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus " +
+const asRoot = "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " +
 	"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "
 const (
 	check  = asRoot + "sh -c [ ! -x /usr/bin/snap ] || ! snap list tmux >/dev/null 2>&1"
 	remove = asRoot + "snap remove tmux"
 )
 
-// snapUnit loads the role's unit on a machine with systemd or without. The fake machine runs no
-// shell, so held sets the check's answer.
-func snapUnit(t *testing.T, booted, held bool) (*effecttest.Machine, *effecttest.Out, kind.Unit) {
+// snapUnit loads the role's unit. The fake machine runs no shell, so held sets the check's answer.
+func snapUnit(t *testing.T, held bool) (*effecttest.Machine, kind.Unit) {
 	text, err := os.ReadFile("units.toml.tmpl")
 	if err != nil {
 		t.Fatal(err)
@@ -33,20 +31,17 @@ func snapUnit(t *testing.T, booted, held bool) (*effecttest.Machine, *effecttest
 	if err != nil {
 		t.Fatal(err)
 	}
-	m, out := effecttest.NewMachine(), &effecttest.Out{}
-	if booted {
-		m.Dirs["/run/systemd/system"] = 0o755
-	}
+	m := effecttest.NewMachine()
 	m.Results[check], m.Results[remove] = effecttest.Result{}, effecttest.Result{}
 	if held {
 		m.Results[check] = effecttest.Result{Err: errors.New("exit status 1")}
 	}
-	e := kind.Env{M: m, U: &effecttest.Units{}, Out: out, Data: v}
+	e := kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v}
 	us, err := kind.Load(e, fstest.MapFS{"tmux/units.toml.tmpl": &fstest.MapFile{Data: text}})
 	if err != nil || len(us) != 1 || us[0].Name != "state/tmux-snap" {
 		t.Fatalf("units = %v, %v; want state/tmux-snap alone", kind.Names(us), err)
 	}
-	return m, out, us[0]
+	return m, us[0]
 }
 
 func plan(t *testing.T, u kind.Unit) step.Plan {
@@ -58,7 +53,7 @@ func plan(t *testing.T, u kind.Unit) step.Plan {
 }
 
 func TestTmuxSnapRemovedOnce(t *testing.T) {
-	m, _, u := snapUnit(t, true, true)
+	m, u := snapUnit(t, true)
 	p := plan(t, u)
 	if len(p.Changes) != 1 || step.Headline(p.Changes[0]) != "run snap remove tmux as root" {
 		t.Fatalf("plan with the snap = %v, want its removal", p.Changes)
@@ -72,16 +67,9 @@ func TestTmuxSnapRemovedOnce(t *testing.T) {
 	}
 }
 
-func TestTmuxSnapSkipsWithoutSystemd(t *testing.T) {
-	m, out, u := snapUnit(t, false, true)
-	if p := plan(t, u); len(p.Changes) != 0 || slices.Contains(m.Calls, "run "+check) || len(out.Lines) != 1 {
-		t.Errorf("plan = %v, calls %q, said %q; want nothing, no check, one skip said", p.Changes, m.Calls, out.Lines)
-	}
-}
-
 // The check passes without snapd, as it does without the snap: its first branch is the guard.
 func TestTmuxSnapWithoutSnapdPlansNothing(t *testing.T) {
-	_, _, u := snapUnit(t, true, false)
+	_, u := snapUnit(t, false)
 	if p := plan(t, u); len(p.Changes) != 0 {
 		t.Errorf("plan = %v, want none", p.Changes)
 	}

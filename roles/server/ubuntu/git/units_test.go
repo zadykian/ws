@@ -101,7 +101,9 @@ func TestGitCheckStopsAllButSigning(t *testing.T) {
 	m.Dirs["/root/.ssh"], m.Owners["/root/.ssh"] = 0o700, [2]int{}
 	m.Files["/root/.ssh/id_ed25519_signing"] = []byte("key")
 	m.Files["/root/.ssh/id_ed25519_signing.pub"] = []byte(pub)
-	// The run takes the frame's unit too, which git's chain waits on and which skips without systemd.
+	// The run takes the frame's unit too, which git's chain waits on, and whose check finds ws's
+	// binary in place.
+	m.Results[wsInPlace] = effecttest.Result{}
 	us, err := kind.Closure(loaded(t, e), kind.Names(units(t, e)))
 	if err != nil {
 		t.Fatal(err)

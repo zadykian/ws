@@ -24,8 +24,8 @@ const (
 	tableDir    = "/usr/local/lib/ws/security"
 	unitDir     = "/etc/systemd/system/"
 	destroyLine = "nft destroy table inet ws"
-	// asRoot is how a run state's command runs as root, with booted systemd's session.
-	asRoot = "env HOME=/root env XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus " +
+	// asRoot is how a run state's command runs as root, with no session's env.
+	asRoot = "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " +
 		"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "
 	// tableGone is the run state's check that no table is loaded.
 	tableGone = asRoot + "sh -c ! nft list table inet ws >/dev/null 2>&1"

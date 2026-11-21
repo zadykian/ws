@@ -169,10 +169,9 @@ func TestStateRoutesAndAddrRefuse(t *testing.T) {
 	stateRefused(t, e, "addr = { iface = \"docker0\", want = \"x\" }\n", "addr: want:")
 }
 
-// rootRun is how a run state runs a command on Linux: in ws's env with root's HOME, in root's
-// session, with the system's PATH.
-const rootRun = "env HOME=/root env XDG_RUNTIME_DIR=/run/user/0 " +
-	"DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus " + systemPath + " "
+// rootRun is how a run state runs a command on Linux: in ws's env with root's HOME, without the
+// caller's session, with the system's PATH.
+const rootRun = "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + systemPath + " "
 
 func TestStateRunCreates(t *testing.T) {
 	e, m, _, _ := testEnv(true)
@@ -206,7 +205,7 @@ func TestStateRunCheck(t *testing.T) {
 
 func TestStateRunPutsItsPathFirst(t *testing.T) {
 	e, m, _, _ := testEnv(true)
-	const first = "env HOME=/root env XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus " +
+	const first = "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " +
 		"PATH=/root/.local/bin:/root/.t:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "
 	m.Results[first+"ws x check"] = effecttest.Result{Err: errors.New("exit status 1")}
 	m.Results[first+"ws x"] = effecttest.Result{}
@@ -225,15 +224,6 @@ func TestStateRunPutsItsPathFirst(t *testing.T) {
 func TestStateRunRefusesAnotherUserOnLinux(t *testing.T) {
 	e, _, _, _ := testEnv(true)
 	stateRefused(t, e, "run = { user = \"u\", command = [\"sh\"], creates = [\"/x\"] }\n", "ws runs a command as root alone on Linux")
-}
-
-func TestStateRunSkipsUnbooted(t *testing.T) {
-	e, m, _, out := testEnv(false)
-	units := loadState(t, e, "run = { user = \"root\", command = [\"sh\"], creates = [\"/x\"] }\n")
-	if got := headlines(t, units[0].Step); got != nil || slices.Contains(m.Calls, "stat /x") ||
-		!slices.Equal(out.Lines, []string{"say: run sh as root: skipped, systemd is not running"}) {
-		t.Errorf("plan = %q, calls %q, lines %q; want nothing read, and the skip said", got, m.Calls, out.Lines)
-	}
 }
 
 func TestStateRunTakesCreatesOrCheck(t *testing.T) {

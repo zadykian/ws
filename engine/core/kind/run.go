@@ -9,7 +9,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/account"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // systemPath is the PATH that a run state's commands get, after its spec's path.
@@ -47,32 +46,20 @@ func (c runCommand) Apply(ctx context.Context) error { return c.r.exec(ctx, true
 
 // exec runs a command line as root, with its PATH (pathEnv). With pass set, it passes the output
 // to ws's standard error, and otherwise drops it, as a check's exit status alone counts. Linux
-// calls the machine in ws's own env, which unset trims of the hidden names, and gives the command
-// systemd's session where systemd runs. macOS has no systemd and no such session (macExec).
+// calls the machine in ws's own env, which unset trims of the hidden names. It drops the caller's
+// session too: no run reads root's session, and dotnet fails on a missing runtime directory. macOS
+// has no systemd and no such session (macExec).
 func (r runAs) exec(ctx context.Context, pass bool, line []string) error {
 	if r.sys == MacOS {
 		return r.macExec(ctx, pass, line)
 	}
-	// A run with no session drops the caller's session from root's: dotnet fails on a missing
-	// runtime directory.
 	session := []string{"-u", "XDG_RUNTIME_DIR", "-u", "DBUS_SESSION_BUS_ADDRESS"}
-	if systemd.Booted(r.m) && (!r.s.Unbooted || r.hasRuntimeDir()) {
-		session = systemd.SessionEnv(0)
-	}
 	argv := slices.Concat([]string{"HOME=/root", "env"}, r.unset(line), session, []string{r.pathEnv()}, line)
 	if pass {
 		return r.m.Pass(ctx, false, "env", argv...)
 	}
 	_, err := r.m.Run(ctx, "env", argv...)
 	return err
-}
-
-// hasRuntimeDir says whether root's session has made its runtime directory. An unbooted run needs
-// no session, and gets its env only where that directory exists. dotnet fails on a missing
-// XDG_RUNTIME_DIR, as before root's first login or lingering.
-func (r runAs) hasRuntimeDir() bool {
-	_, err := r.m.Stat("/run/user/0")
-	return err == nil
 }
 
 // macExec runs a command line on the Mac, where ws runs as the user and sudo alone switches. A
@@ -99,10 +86,6 @@ func (r runAs) macExec(ctx context.Context, pass bool, line []string) error {
 // Plan plans the command where a path of Creates is missing, or where Check fails. A check that
 // cannot run fails too, and the command runs: the check's command is the run's to make work.
 func (r runAs) Plan(ctx context.Context) ([]resource.Change, error) {
-	if r.sys == Linux && !r.s.Unbooted && !systemd.Booted(r.m) {
-		r.out.Say("%s: skipped, systemd is not running", runCommand{r})
-		return nil, nil
-	}
 	for _, p := range r.s.Creates {
 		_, err := r.m.Stat(p)
 		if errors.Is(err, fs.ErrNotExist) {

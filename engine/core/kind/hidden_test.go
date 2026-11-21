@@ -7,8 +7,9 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
-// rootSession is how a run state runs a command as root with booted systemd, after env's options.
-const rootSession = "XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus " + systemPath
+// rootSession is how a run state runs a command as root, after the hidden names: with the caller's
+// session dropped.
+const rootSession = "-u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + systemPath
 
 // hiddenEnv is a booted machine's env whose run hides two names, and whose ws is at /w/ws.
 func hiddenEnv() (Env, *effecttest.Machine) {

@@ -29,7 +29,7 @@ has = ["{{ self }}", "server", "git", "included"]
 # each token's credential program is /usr/local/bin/ws, which a clone by a token calls.
 [state.git-key]
 after = "state/ws-binary"
-run = { user = "root", unbooted = true, creates = ["{{ trim_suffix .GitSigningPubKey ".pub" }}"], command = ["sh", "-c", "mkdir -p -m 700 \"${1%/*}\" && ssh-keygen -q -t ed25519 -N '' -f \"$1\"", "sh", "{{ trim_suffix .GitSigningPubKey ".pub" }}"] }
+run = { user = "root", creates = ["{{ trim_suffix .GitSigningPubKey ".pub" }}"], command = ["sh", "-c", "mkdir -p -m 700 \"${1%/*}\" && ssh-keygen -q -t ed25519 -N '' -f \"$1\"", "sh", "{{ trim_suffix .GitSigningPubKey ".pub" }}"] }
 
 # The file that trusts the key for the email of each commit, in git verify-commit, root's and 644.
 [file.git-signers]
@@ -42,9 +42,9 @@ template = "files/allowed_signers.tmpl"
 # the input in the run's env.
 [state.git-tokens]
 after = "guard/git-check"
-run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "git", "tokens"], check = ["{{ self }}", "server", "git", "tokens", "--check"] }
+run = { user = "root", command = ["{{ self }}", "server", "git", "tokens"], check = ["{{ self }}", "server", "git", "tokens", "--check"] }
 
 # The clones of WS_GIT_CLONES, each made once by the account, after the tokens they may need.
 [state.git-clones]
 after = "state/git-tokens"
-run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "git", "clones"], check = ["{{ self }}", "server", "git", "clones", "--check"] }
+run = { user = "root", command = ["{{ self }}", "server", "git", "clones"], check = ["{{ self }}", "server", "git", "clones", "--check"] }

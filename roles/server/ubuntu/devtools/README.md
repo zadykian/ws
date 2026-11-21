@@ -4,9 +4,8 @@ The `devtools` role installs Node, the .NET SDKs, gh, glow, the libraries headle
 Go, gopls, Delve, roslyn-language-server, the SQL and Docker servers and rustup. The sources, the
 packages and the tools are mise's, in [mise.server.toml](mise.server.toml). The tools' links, gh's
 telemetry and login, roslyn-language-server, the npm servers and rustup are units of
-[units.toml.tmpl](units.toml.tmpl). Those of the account run as root, and without booted
-systemd too, as in CI's container. [paths.go](paths.go) names the servers' paths for Zed's and
-Fresh's tests.
+[units.toml.tmpl](units.toml.tmpl). Those of the account run as root. [paths.go](paths.go) names
+the servers' paths for Zed's and Fresh's tests.
 
 `state/devtools-rustup` installs rustup and Rust's stable toolchain in the user's home, where
 `~/.cargo/bin/rustup` is missing. Once there, rustup updates itself, so ws leaves it alone.

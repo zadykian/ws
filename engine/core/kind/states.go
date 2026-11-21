@@ -122,16 +122,13 @@ func (s addrState) resource(e Env) (resource.Resource, error) {
 // runState runs Command as User where something is to do: where a path of Creates is missing, or
 // where Check, run as User too, exits other than 0. It takes exactly one of the two. A procedure
 // that stays a command of ws runs through it, with that command's own check. On Linux User is root
-// alone, and without booted systemd, which root's session needs, it skips, unless Unbooted says
-// that the command needs no session. macOS has no systemd, and runs it. There Check runs as ws's
-// own user, whatever User, so that a read asks no password (run.go).
+// alone, and the run gets no session's env. macOS has no systemd. There Check runs as ws's own
+// user, whatever User, so that a read asks no password (run.go).
 type runState struct {
 	User    string   `toml:"user"`
 	Command []string `toml:"command"`
 	Creates []string `toml:"creates"`
 	Check   []string `toml:"check"`
-	// Unbooted runs the command without booted systemd too, as in CI's container, with no session.
-	Unbooted bool `toml:"unbooted"`
 	// Path holds directories that the command and its check find before the system's PATH. An
 	// installer that puts its tool in one warns where PATH lacks it.
 	Path []string `toml:"path"`

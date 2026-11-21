@@ -134,7 +134,7 @@ absent = true
 {{- end }}
 
 # Off, a table that no stop removed, as one loaded by hand with nft -f, goes too. A failed list is
-# no table. Without booted systemd it skips.
+# no table.
 [state.security-outbound-off]
 run = { user = "root", command = ["nft", "destroy", "table", "inet", "ws"], check = ["sh", "-c", "! nft list table inet ws >/dev/null 2>&1"] }
 when = { set = "{{ if not $on }}yes{{ end }}" }
