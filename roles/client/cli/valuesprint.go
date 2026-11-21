@@ -22,7 +22,7 @@ func newValuesCmd(p enginecli.Env, server *string) *cobra.Command {
 		RunE: func(c *cobra.Command, args []string) error { return runValuesPrint(c, p, server, args, lines) },
 	}
 	c.Flags().BoolVar(&lines, "lines", false, "check each line alone")
-	return enginecli.Group("values", "print the Mac's values", c)
+	return enginecli.Group("values", "check and print the Mac's values", c, newValuesCheckCmd(p, server))
 }
 
 // runValuesPrint prints the settings of FILE, or of the file that the environment names.
