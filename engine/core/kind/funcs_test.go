@@ -10,15 +10,13 @@ import (
 )
 
 // factsMachine is a machine of 2 processors, 4 GiB and a filesystem of 10 blocks of 4096 bytes at
-// /var, with an account u of uid 1001.
+// /var.
 func factsMachine() *effecttest.Machine {
 	m := effecttest.NewMachine()
 	m.Files["/proc/meminfo"] = []byte("MemTotal:        4194304 kB\nMemFree:          100 kB\n")
 	m.Files["/proc/cpuinfo"] = []byte("processor\t: 0\nmodel name\t: x\n\nprocessor\t: 1\nmodel name\t: x\n")
 	m.Dirs["/var"] = 0o755
 	m.Results["stat -f -c %S %b /var"] = effecttest.Result{Out: []byte("4096 10\n")}
-	m.Results["id -u u"] = effecttest.Result{Out: []byte("1001\n")}
-	m.Results["id -g u"] = effecttest.Result{Out: []byte("1001\n")}
 	return m
 }
 
@@ -26,11 +24,11 @@ func TestFactsReadTheMachine(t *testing.T) {
 	m := factsMachine()
 	m.Files["/etc/ws/env"] = []byte("A=1\nexport A=\"two\"\nB='three'\n")
 	dir := fstest.MapFS{"t.tmpl": {Data: []byte(
-		`{{mem_mib}} {{cpus}} {{fs_bytes "/var/swap" "/var"}} {{uid "u"}} {{uid "root"}} ` +
+		`{{mem_mib}} {{cpus}} {{fs_bytes "/var/swap" "/var"}} ` +
 			`{{envvar "/etc/ws/env" "A"}} {{envvar "/etc/ws/env" "B"}} [{{envvar "/etc/ws/none" "A"}}] ` +
 			`{{div (mul (add 1 3) 5) 2}}`)}}
 	got, err := render(t.Context(), Env{M: m}, dir, "t.tmpl")
-	if want := "4096 2 40960 1001 0 two three [] 10"; err != nil || string(got) != want {
+	if want := "4096 2 40960 two three [] 10"; err != nil || string(got) != want {
 		t.Errorf("render = %q, %v; want %q", got, err, want)
 	}
 }
@@ -85,7 +83,7 @@ func TestRootFileMissingIsEmpty(t *testing.T) {
 }
 
 func TestFactsFailWhereTheMachineLacksThem(t *testing.T) {
-	for _, text := range []string{`{{mem_mib}}`, `{{cpus}}`, `{{fs_bytes "/none"}}`, `{{uid "nobody"}}`, `{{div 1 0}}`,
+	for _, text := range []string{`{{mem_mib}}`, `{{cpus}}`, `{{fs_bytes "/none"}}`, `{{div 1 0}}`,
 		`{{installed_version "a"}}`} {
 		dir := fstest.MapFS{"t.tmpl": {Data: []byte(text)}}
 		if got, err := render(t.Context(), Env{M: effecttest.NewMachine()}, dir, "t.tmpl"); err == nil {

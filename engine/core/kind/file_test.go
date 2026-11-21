@@ -259,15 +259,15 @@ func TestTemplateRendersAtPlan(t *testing.T) {
 	e, m, _, _ := testEnv(false)
 	m.Dirs["/etc"] = 0o755
 	m.Files["/etc/a"] = []byte("x")
-	units := loadOne(t, e, "[file.a]\npath = \"/etc/a\"\ntemplate = \"a.tmpl\"\n", map[string]string{"a.tmpl": "uid={{uid \"u\"}}\n"})
+	units := loadOne(t, e, "[file.a]\npath = \"/etc/a\"\ntemplate = \"a.tmpl\"\n", map[string]string{"a.tmpl": "mem={{mem_mib}}\n"})
 	if _, err := units[0].Step.Plan(t.Context()); err == nil {
-		t.Fatal("plan without the account succeeded")
+		t.Fatal("plan without the fact succeeded")
 	}
-	withAccount(m)
+	m.Files["/proc/meminfo"] = []byte("MemTotal:        4194304 kB\n")
 	if got := headlines(t, units[0].Step); !slices.Equal(got, []string{"write /etc/a"}) {
 		t.Errorf("plan = %q, want the write", got)
 	}
-	if err := run(t, e, units); err != nil || string(m.Files["/etc/a"]) != "uid=1001\n" {
-		t.Errorf("run = %v, file %q; want uid=1001", err, m.Files["/etc/a"])
+	if err := run(t, e, units); err != nil || string(m.Files["/etc/a"]) != "mem=4096\n" {
+		t.Errorf("run = %v, file %q; want mem=4096", err, m.Files["/etc/a"])
 	}
 }

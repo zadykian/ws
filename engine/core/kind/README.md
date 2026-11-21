@@ -28,7 +28,7 @@ Each Go template ends in `.tmpl`, the spec's name and the name of each `template
   units, so that a command of ws runs before the pinned binary is installed, or without booted
   systemd. A unit's template fills as it plans, as an earlier unit may make the account or the file
   that it reads. It takes `envvar FILE NAME` and the facts `mem_mib`, `cpus`, `fs_bytes PATH...`,
-  `uid NAME`, `installed_version NAME`, `kernel_release` and `root_file PATH` too.
+  `installed_version NAME`, `kernel_release` and `root_file PATH` too.
   `installed_version` gives dpkg's version of an installed package, else "", and `kernel_release`
   the running kernel's, as `uname -r` prints it. `root_file` gives a file's text, read as root and
   trimmed, else "". A spec names no secret's file with it, as a file's diff would show the secret.

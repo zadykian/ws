@@ -61,8 +61,9 @@ after = "KIND/NAME"
   are made as a file's. A link to another target is pointed again, and a file or a link in its
   place is replaced, but a directory there fails the run.
 - With `ours`, a file whose first line lacks `# Written by github.com/zadykian/ws` fails the
-  plan, a dry run's too, before a write or a removal. A file by hand is never lost, and the error names its path alone. `mark` sets the sign
-  before those words. An account's file is read below its home through no link.
+  plan, a dry run's too, before a write or a removal. A file by hand is never lost, and the error
+  names its path alone. `mark` sets the sign before those words. An account's file is read below
+  its home through no link.
 - With `keep_foreign`, such a file is left, as the user's own, and the plan warns and changes
   nothing. Once the user removes it, the next run writes ws's.
 - A `seed` file is written where nothing is at its path, a link included, and left to its owner
