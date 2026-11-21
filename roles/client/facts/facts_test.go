@@ -109,7 +109,7 @@ func TestSSHFactsMatchSshcfg(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := sshcfg.Config(sshcfg.Inputs{
-		Hosts:       []sshcfg.Host{{Name: "ws", Addr: f.Servers[0].TunnelSlot().Server(), User: f.Servers[0].User}},
+		Hosts:       []sshcfg.Host{{Name: "ws", Addr: f.Servers[0].TunnelSlot().Server()}},
 		Patterns:    "UseKeychain",
 		IdentityPub: "~/.ssh/id.pub",
 	})
