@@ -1,5 +1,5 @@
 #!/bin/sh
-# CI's run of install.sh, as on a new machine, in the playbook and rootless jobs. It runs on the
+# CI's run of install.sh, as on a new machine, in the playbook and server jobs. It runs on the
 # tree in /opt/ws in place, as the playbook's container has no git to clone it with. Run as
 # `bootstrap.sh DIR`, DIR being .tools/serve-build's. Its serve-releases serves the tree's build on
 # loopback in the release's place while install.sh runs. The server stops with the script, by its

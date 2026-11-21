@@ -205,10 +205,11 @@ jobs:
               exit 1
           fi
 
-  # The rootless daemon and the firewall around it need a booted systemd, so this job runs on the
-  # runner, which the bootstrap and ws set up as a machine. The stack's top alone, as for playbook.
-  # setfacl drops /opt's default ACL, which lets anyone write the tree that install.sh then refuses.
-  rootless:
+  # The firewall around Docker needs a booted systemd, so this job runs on the runner. The bootstrap
+  # and ws set it up as a server that root alone logs in to. The stack's top alone, as for playbook.
+  # setfacl drops /opt's default ACL, which lets anyone write the tree that install.sh then
+  # refuses.
+  server:
     if: >-
       (github.event.action != 'opened' || !github.event.pull_request.draft) &&
       github.event.pull_request.stack.position == github.event.pull_request.stack.size
@@ -226,15 +227,13 @@ jobs:
           sudo setfacl -k /opt && sudo install -d -o "$(id -un)" /opt/ws && cp -a . /opt/ws
           .tools/serve-build /opt/ws "$RUNNER_TEMP/rel"
       - name: The cases
-        run: sudo bash .github/rootless-checks.sh "$RUNNER_TEMP/rel"
+        run: sudo bash .github/server-checks.sh "$RUNNER_TEMP/rel"
       - name: The secrets task
         run: sudo bash .github/secrets-checks.sh
       # A failed start only points to the daemon's log.
       - name: The daemon's log
         if: failure()
-        run: |
-          sudo journalctl -n 80 --no-pager _SYSTEMD_USER_UNIT=docker.service
-          sudo dmesg | grep -i apparmor | tail -n 20
+        run: sudo journalctl -n 80 --no-pager -u docker.service
 
   # install.sh with the real mise, served on loopback, and a small repository in place of the
   # release's tree: .github/install-checks.sh. The pinned mise installs, a wrong one is refused, and

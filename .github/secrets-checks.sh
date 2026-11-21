@@ -1,12 +1,12 @@
 #!/bin/bash
-# The rootless job's cases of the secrets task, as root on the runner that rootless-checks.sh set
-# up (.github/workflows/rootless.md). A bare repository on disk stands in for GitHub's, and the
+# The server job's cases of the secrets task, as root on the runner that server-checks.sh set up
+# (.github/workflows/rootless.md). A bare repository on disk stands in for GitHub's, and the
 # runner's host key opens its values, as a server's does. Each refusal keeps the secret file, and
 # no output of the task's holds a value. Then the files that the roles' inputs write.
 set -euo pipefail
 
-user=zadykian
-home=/home/$user
+# The runner's sudo keeps the runner's XDG_CONFIG_HOME, which would send gh to the runner's home.
+unset XDG_CONFIG_HOME
 export HOME=/root MISE_LOCKED=1 MISE_DATA_DIR=/usr/local/share/mise
 check=$(cd "$(dirname "$0")" && pwd)/warnings-check.sh
 work=$(mktemp -d)
@@ -31,14 +31,6 @@ refused() {
     shift
     ! "$@" || fail "$name"
     echo "ok: $name"
-}
-
-as() {
-    runuser -u "$user" -- env -C "$home" HOME="$home" "$@"
-}
-
-quiet() {
-    "$@" >/dev/null 2>&1
 }
 
 # The repository, which the runner's own mise files point the task at. mise.local.toml is
@@ -156,12 +148,6 @@ must "the second run writes the new value" task
 must "the file holds the new value" holds
 must "the second run through the task leaves nothing to do" task plan --detailed-exitcode
 
-refused "the account reads the clone" quiet as ls -- /var/lib/ws/secrets
-refused "the account reads the clone's fnox.toml" quiet as cat -- /var/lib/ws/secrets/fnox.toml
-refused "the account reads the host key" quiet as cat -- /etc/ssh/ssh_host_ed25519_key
-out=$(as mise -C /opt/ws/roles/server run secrets </dev/null 2>&1) && fail "the account ran the task"
-must "the task refuses the account" grep -qF 'run it as root' <<<"$out"
-
 # refusal NAME TEXT: the task fails, says TEXT, and keeps the file's bytes.
 refusal() {
     local sum out
@@ -194,7 +180,7 @@ must "a run after the refusals runs" task
 must "the file holds both values after the refusals" holds
 must "a plan after the refusals leaves nothing to do" task plan --detailed-exitcode
 
-# The files that the roles' inputs write: root's 640 with the account's group, under ws's header
+# The files that the roles' inputs write: root's 640 with root's group, under ws's header
 # (roles/server/ubuntu/frame/README.md#secret-inputs). The seed leaves their inputs empty, so
 # none is there yet.
 header='# Written by github.com/zadykian/ws, whose next run replaces any change made here.'
@@ -212,9 +198,9 @@ wrap='https://ci-%s.invalid:4317' value OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT age >
 # endpoint prints the input's value, for a comparison alone.
 endpoint() { printf 'https://ci-%s.invalid:4317' "$(cat "$work/otel")"; }
 publish "ci: give gh and git a token, and the shell an endpoint"
-# GitHub refuses a dummy token, so the account's gh holds it as a login with it would. gh's unit
+# GitHub refuses a dummy token, so root's gh holds it as a login with it would. gh's unit
 # then compares it with the file's last line, and where they differ, logs in again and fails.
-as sh -c 'umask 077 && mkdir -p ~/.config/gh && cat >~/.config/gh/hosts.yml' <<YAML
+sh -c 'umask 077 && mkdir -p ~/.config/gh && cat >~/.config/gh/hosts.yml' <<YAML
 github.com:
     users:
         ci:
@@ -225,27 +211,26 @@ github.com:
 YAML
 must "a run writes gh's, git's and the shell's files" task
 for f in "${secret_files[@]}"; do
-    must "$f is root's 640, the account's group's" \
-        test "$(stat -c '%a %U %g' "$f")" = "640 root $(id -g "$user")"
+    must "$f is root's 640, root's group's" test "$(stat -c '%a %U %g' "$f")" = '640 root 0'
     must "$f opens with ws's header" test "$(head -n 1 "$f")" = "$header"
 done
-# The endpoint's line, and what the account's sh makes of it, are compared, never printed.
+# The endpoint's line, and what sh makes of it, are compared, never printed.
 must "/etc/ws/env exports the endpoint in single quotes" cmp -s <(tail -n 1 /etc/ws/env) \
     <(printf "export OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT='%s'\n" "$(endpoint)")
-# shellcheck disable=SC2016 # The account's sh expands the name, from the file it sources.
-must "the account's sh reads the endpoint from /etc/ws/env" cmp -s <(endpoint) \
-    <(as sh -c '. /etc/ws/env && printf %s "$OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT"')
+# shellcheck disable=SC2016 # The sh that runs expands the name, from the file it sources.
+must "sh reads the endpoint from /etc/ws/env" cmp -s <(endpoint) \
+    <(sh -c '. /etc/ws/env && printf %s "$OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT"')
 must "gh's file ends with its token" cmp -s <(tail -n 1 /etc/ws/gh-token) <(cat "$work/gh" && echo)
-# credential asks the account's git for git.invalid's credential, as a clone would. Its answer is
+# credential asks root's git for git.invalid's credential, as a clone would. Its answer is
 # compared, never printed.
 credential() {
     local out
     out=$(printf 'protocol=https\nhost=git.invalid\n\n' |
-        as GIT_TERMINAL_PROMPT=0 git credential fill 2>/dev/null) &&
+        GIT_TERMINAL_PROMPT=0 git credential fill 2>/dev/null) &&
         grep -qx 'username=ci' <<<"$out" &&
         grep -qxF -f <(printf 'password=%s\n' "$(cat "$work/git")") <<<"$out"
 }
-must "the account's git gets the token through ws's program" credential
+must "root's git gets the token through ws's program" credential
 must "the run with the three files leaves nothing to do" task plan --detailed-exitcode
 sums=$(kept)
 must "a run without the env runs" boot

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Fails where a bootstrap or a plan prints a warning, as no run of ws's may. The playbook and
-# rootless jobs run it on each of theirs (.github/workflows/README.md#the-warnings-check):
+# server jobs run it on each of theirs (.github/workflows/README.md#the-warnings-check):
 #
 #   warnings-check.sh LOG                checks the output that a run wrote to LOG
 #   warnings-check.sh -- COMMAND [ARG]   runs COMMAND, its output shown as it runs, and checks it
@@ -19,7 +19,7 @@ pattern="(^|[^[:alnum:]_./-])($words)([^[:alnum:]_-]|\$)|^[[:space:]]*[WE]: "
 
 # allowed prints the start of each line that a run may print, a line each. They hold where systemd
 # has not booted, as in the playbook's container, and come from what a container lacks. The
-# rootless job's runner has booted, so none holds there. BOOTED, yes or no, stands in for the
+# server job's runner has booted, so none holds there. BOOTED, yes or no, stands in for the
 # probe in the test.
 allowed() {
     case ${BOOTED:-} in
