@@ -59,12 +59,13 @@ reset at each prompt, and the alternate screen after a 255 from `ssh` or from `c
 
 CI also sets up a Mac, by [its cases](../mac), in the order of [The
 Mac](../../roles/client/README.md). A stand-in cld, which cld's unit leaves alone, spares the
-job's runs its download. Then `mise -C /opt/ws/roles/client bootstrap` with
+job's runs its download. Then `ws client setup --in-place` with
 [the Mac's frame](../../roles/client/macos/frame/README.md) runs as the runbook runs it, on the
-tree in `/opt/ws` with ws's build served as the pin ([mac-mise.sh](../mac-mise.sh)). It links the
-tree's plugin as the runbook does, and makes `/opt` and `/usr/local/share` root's and 755, as on
+tree in `/opt/ws` with ws's build served as the pin ([mac-mise.sh](../mac-mise.sh)). Its plan
+before the first run must exit 2. Setup installs mise and links the tree's plugin as the runbook
+does. The case makes `/opt` and `/usr/local/share` root's and 755 first, as on
 a Mac, where the runner's image may differ. It sets up
-ssh, git and cld too. Its plan must exit 0 after the first run, a second run must call no sudo,
+ssh, git and cld too. The plan must exit 0 after the first run, a second run must call no sudo,
 and `/usr/local/bin/ws` must be the build. A spec whose unit no line names must fail the plan,
 and so must a plan from `/opt/ws` with every unit in sync. After the first run the firewall must
 be on and block all incoming ([the Mac's firewall](../../roles/client/macos/firewall/README.md)).
@@ -90,7 +91,7 @@ back, and spare a script's own ([mac-conf-checks.sh](../mac-conf-checks.sh)). Wi
 service. It must stop on one networksetup lacks, or one with a router outside the cable's `/30`.
 It must stop too on a `-setmanual` that fails or changes nothing, and name what differs
 ([mac-setup-checks.sh](../mac-setup-checks.sh)).
-The cases of the keys run `mise -C /opt/ws/roles/client bootstrap` with an edited `values.yml`, and
+The cases of the keys run `ws client setup` with an edited `values.yml`, and
 read the files it writes ([56-keys.sh](../mac/56-keys.sh)). A refusal must fail the bootstrap and
 its plan with its reason, and change no file. With the server's `WS_LAN_ADDRESS` dropped, the plan
 must fail and name it and its file, as the frame's check of the values does

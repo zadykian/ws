@@ -2,8 +2,8 @@
 
 A second workflow, `mac-cld.yml`, sets up Ghostty, Zed and cld on another macOS runner, as [Ghostty
 and cld on the Mac](../../roles/client/macos/ghostty/README.md) and [Zed on the
-Mac](../../roles/client/macos/zed/README.md) say. It runs `MISE_LOCKED=1 mise -C
-/opt/ws/roles/client bootstrap` as the runbook does, with mise and the tree that
+Mac](../../roles/client/macos/zed/README.md) say. It runs `ws client setup`
+as the runbook does, on the tree that
 [mac-mise.sh](../mac-mise.sh) puts in place, on a runner without Ghostty, Zed, its font or cld. It
 has a stand-in for ws's key, and a file key that `values.yml` names for ws's login and for git's
 signing.
