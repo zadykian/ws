@@ -13,7 +13,6 @@ import (
 
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/core/effect/units"
 	"github.com/zadykian/ws/roles/server/values"
 )
@@ -37,11 +36,6 @@ func unitSide(vars string) enginecli.UnitSide {
 			v, err := values.Load(m, vars)
 			if err != nil {
 				return nil, nil, err
-			}
-			// The machine's writes under root's home stay inside it.
-			if om, ok := m.(local.OSMachine); ok {
-				om.Confine = rootUser.Home
-				m = om
 			}
 			return v, m, nil
 		},

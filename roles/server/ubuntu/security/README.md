@@ -190,7 +190,6 @@ account. Each refuses a link at the file, or at a directory between the home and
 link and its target. A command of ws that acts as `WS_USER`, as claude's do, reaches only what the
 user could reach: `settings.json` may link into a clone of dotfiles. Replace the link with the file
 itself. The check looks as the unit plans, and a home file or a removal looks again as it applies.
-A link made after that fails at the write. ws makes its writes under `WS_HOME` through an
-`os.Root`, which refuses a link that leaves the home. A read of a home file opens each directory
-below the home, and the file, following no link. It reads a regular file of 1 MiB at most, with its
-owner and mode from that open. `rm` and `git` stay outside the bound.
+A read of a home file opens each directory below the home, and the file, following no link. It reads
+a regular file of 1 MiB at most, with its owner and mode from that open. `rm` and `git` stay outside
+the bound.

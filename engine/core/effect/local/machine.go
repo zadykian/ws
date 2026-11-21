@@ -34,11 +34,6 @@ type OSMachine struct {
 	// offTerminal, as they ask at /dev/tty, past their standard input, and a command's context ends
 	// it by SIGTERM before a kill.
 	Stdin io.Reader
-	// Confine is a directory that Mkdir, Chmod, Chown, Symlink, WriteFile and WriteAtomic stay
-	// inside for a path under it: a link there that leaves it fails the write. A user owns its
-	// home, and can swap a directory in it for a link as root applies, which would hand the target
-	// to that user. Empty means no limit.
-	Confine string
 	// UserReads reads root's files and their owner and mode as ws's own user, never through sudo,
 	// so that a read asks no password. A file the user may not read fails the read. The Mac's
 	// units set it, as they keep root's paths readable by all; writes still go through sudo.
@@ -80,21 +75,6 @@ func (OSMachine) ReadFile(path string) ([]byte, error) {
 
 // WriteFile writes the file, and sets its mode where it already existed.
 func (m OSMachine) WriteFile(path string, data []byte, perm fs.FileMode) error {
-	if root, rel, err := m.confined(path); err != nil || root != nil {
-		if err != nil {
-			return err
-		}
-		defer func() { _ = root.Close() }()
-		f, err := root.OpenFile(rel, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
-		if err != nil {
-			return err
-		}
-		_, err = f.Write(data)
-		if err = errors.Join(err, f.Chmod(perm), f.Close()); err != nil {
-			return err
-		}
-		return nil
-	}
 	if err := os.WriteFile(path, data, perm); err != nil {
 		return err
 	}
@@ -251,16 +231,6 @@ func (OSMachine) ReadDir(path string) ([]string, error) {
 func (m OSMachine) Mkdir(path string, perm fs.FileMode) error {
 	if m.asRoot(path) && unwritable(filepath.Dir(path)) {
 		return m.sudoMkdir(path, perm)
-	}
-	if root, rel, err := m.confined(path); err != nil || root != nil {
-		if err != nil {
-			return err
-		}
-		defer func() { _ = root.Close() }()
-		if err := root.Mkdir(rel, perm); err != nil {
-			return err
-		}
-		return m.Chmod(path, perm)
 	}
 	if err := os.Mkdir(path, perm); err != nil {
 		return err

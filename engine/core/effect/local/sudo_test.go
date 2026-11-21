@@ -56,15 +56,9 @@ func TestAnotherOwnersFilesGoThroughSudo(t *testing.T) {
 	}
 }
 
-func TestOwnAndConfinedFilesStayOffSudo(t *testing.T) {
+func TestOwnFilesStayOffSudo(t *testing.T) {
 	m, log := loggedSudo(t)
 	dir, own := t.TempDir(), effect.Attrs{UID: os.Getuid(), GID: os.Getgid(), Mode: 0o640}
-	local.RunAs(t, own.UID+1, false)
-	m.Confine = dir
-	if err := m.WriteAtomic(dir+"/f", []byte("new"), own); err != nil {
-		t.Fatal(err)
-	}
-	m.Confine = ""
 	local.RunAs(t, own.UID, true)
 	if err := m.WriteAtomic(dir+"/g", []byte("new"), own); err != nil {
 		t.Fatal(err)
