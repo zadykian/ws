@@ -7,8 +7,7 @@
 #
 # The second form keeps COMMAND's status other than 0, as a plan's exit code tells its own
 # failure. A warning is a line that says one of the words below, or starts as apt's W: and E: do.
-# The check prints each, past mise's colors, and exits 1. A line that it allows, it names below,
-# each with the reason it must stay.
+# The check prints each, past mise's colors, and exits 1. It allows no line.
 set -uo pipefail
 
 words='warn|warns|warning|warnings|hint|hints|notice|notices|deprecated|deprecation|error|errors'
@@ -17,41 +16,9 @@ words="$words|cannot|unable|could not|ignoring"
 # it nor the one after it can be a name's.
 pattern="(^|[^[:alnum:]_./-])($words)([^[:alnum:]_-]|\$)|^[[:space:]]*[WE]: "
 
-# allowed prints the start of each line that a run may print, a line each. They hold where systemd
-# has not booted, as in a container, and come from what a container lacks. The
-# server job's runner has booted, so none holds there. BOOTED, yes or no, stands in for the
-# probe in the test.
-allowed() {
-    case ${BOOTED:-} in
-    yes) return 0 ;;
-    no) ;;
-    *) [ ! -d /run/systemd/system ] || return 0 ;;
-    esac
-    # A package's postinst asks the init for the runlevel, to start its daemon, and the container
-    # runs no init. A booted machine's systemd answers. Only a running init stands in for it.
-    echo 'invoke-rc.d: could not determine current runlevel'
-    # Docker bind-mounts /etc/resolv.conf, which systemd-resolved's first install moves and links
-    # to its stub. A server has systemd-resolved from its own install, with that link. No step
-    # can replace a mount point in a container without CAP_SYS_ADMIN.
-    echo "mv: cannot move '/etc/resolv.conf' to '/etc/.resolv.conf.systemd-resolved.bak': "
-    echo 'Cannot take a backup of /etc/resolv.conf.'
-    echo 'Cannot install symlink from /etc/resolv.conf to ../run/systemd/resolve/stub-resolv.conf'
-}
-
-# found LOG prints each warning of LOG that no line of allowed covers.
+# found LOG prints each warning of LOG.
 found() {
-    local allow line entry covered
-    allow=$(allowed)
-    tr '\r' '\n' <"$1" | sed -E $'s/\e\\[[0-9;?]*[A-Za-z]//g' | grep -iE -- "$pattern" |
-        while IFS= read -r line; do
-            covered=false
-            while IFS= read -r entry; do
-                if [ -n "$entry" ] && [[ $line == "$entry"* ]]; then
-                    covered=true
-                fi
-            done <<<"$allow"
-            "$covered" || printf '%s\n' "$line"
-        done
+    tr '\r' '\n' <"$1" | sed -E $'s/\e\\[[0-9;?]*[A-Za-z]//g' | grep -iE -- "$pattern"
 }
 
 status=0

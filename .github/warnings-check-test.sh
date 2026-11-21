@@ -1,7 +1,7 @@
 #!/bin/bash
 # Tries warnings-check.sh on logs of lines that CI's runs printed. It must pass the clean ones,
 # with mise's colors and with names that hold a word. It must fail the warnings, and name each.
-# The container's lines pass only where systemd has not booted. CI's lint job runs it.
+# CI's lint job runs it.
 set -euo pipefail
 
 check=$(cd "$(dirname "$0")" && pwd)/warnings-check.sh
@@ -17,17 +17,9 @@ Unpacking libgpg-error-l10n (1.55-2) ...
 Get:1 http://archive.ubuntu.com/ubuntu resolute/main amd64 liberror-perl all 0.17030-1 [25.6 kB]
 ${e}[2mmise${e}[0m bootstrap: package plugins
 unchanged  package:ws:file/docker-resolved   installed (in-sync)  installed (in-sync)
-ws unit write: systemd-resolved.service: skipped, systemd is not running
 ws unit write: service/base-sysctl: off on this machine, as its container is "yes"
 invoke-rc.d: policy-rc.d denied execution of start.
 Plan: 0 create, 0 update, 83 unchanged, 0 remove, 0 run, 0 unknown
-EOF
-
-cat >"$tmp/container" <<'EOF'
-invoke-rc.d: could not determine current runlevel
-mv: cannot move '/etc/resolv.conf' to '/etc/.resolv.conf.systemd-resolved.bak': Device or resource busy
-Cannot take a backup of /etc/resolv.conf.
-Cannot install symlink from /etc/resolv.conf to ../run/systemd/resolve/stub-resolv.conf
 EOF
 
 # One line of each kind that the jobs' logs held, mise's in its colors.
@@ -50,13 +42,12 @@ mv: cannot move '/etc/resolv.conf': Permission denied
 dpkg-statoverride: warning: --update given but /var/log/chrony does not exist
 EOF
 
-# expect NAME STATUS BOOTED LOG... runs the check on the LOGs joined, with BOOTED, and wants
-# STATUS. The lines it names must be $want's, each once and in their order.
+# expect NAME STATUS LOG... runs the check on the LOGs joined, and wants STATUS. The lines it names must be $want's, each once and in their order.
 expect() {
-    local name=$1 status=$2 booted=$3 got=0 out
-    shift 3
+    local name=$1 status=$2 got=0 out
+    shift 2
     cat "$@" >"$tmp/log"
-    out=$(BOOTED=$booted "$check" "$tmp/log") || got=$?
+    out=$("$check" "$tmp/log") || got=$?
     if [ "$got" = "$status" ] && [ "$(sed -n 's/^> //p' <<<"$out")" = "$want" ]; then
         echo "ok: $name"
     else
@@ -66,19 +57,16 @@ expect() {
 }
 
 want=
-expect "a clean log passes" 0 yes "$tmp/clean"
-expect "the container's lines pass where systemd has not booted" 0 no "$tmp/clean" "$tmp/container"
-want=$(cat "$tmp/container")
-expect "the container's lines fail on a booted machine" 1 yes "$tmp/clean" "$tmp/container"
+expect "a clean log passes" 0 "$tmp/clean"
 want=$(sed -E $'s/\e\\[[0-9;]*m//g' "$tmp/warnings")
-expect "each warning fails, and is named" 1 no "$tmp/clean" "$tmp/warnings" "$tmp/container"
+expect "each warning fails, and is named" 1 "$tmp/clean" "$tmp/warnings"
 
 # run NAME STATUS OUT COMMAND... runs the second form on COMMAND, and wants STATUS and OUT: the
 # command's output, its stderr's included, then what the check named.
 run() {
     local name=$1 status=$2 want=$3 got=0 out
     shift 3
-    out=$(BOOTED=yes "$check" -- "$@") || got=$?
+    out=$("$check" -- "$@") || got=$?
     if [ "$got" = "$status" ] && [ "$out" = "$want" ]; then
         echo "ok: $name"
     else
