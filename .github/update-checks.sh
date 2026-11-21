@@ -100,9 +100,9 @@ refused() {
 [ "$(uname -m)" = x86_64 ] || fail "the builds are for linux amd64"
 [ -z "$(git status --porcelain)" ] || fail "the tree is not clean: the builds would say +dirty"
 # Case 6 runs a ws that is its release already, whose setup is a real one where the system is
-# Ubuntu 26.04. The runner's system refuses it.
+# Ubuntu 26.04. The runner's system refuses it: the install job runs on Ubuntu 24.04's runner.
 # shellcheck disable=SC1091 # the system's own file.
-[ "$(. /etc/os-release && echo "$VERSION_ID")" != 26.04 ] || fail "the runner is Ubuntu 26.04, where ws's setup is real: change case 6"
+[ "$(. /etc/os-release && echo "$VERSION_ID")" != 26.04 ] || fail "the system is Ubuntu 26.04, where case 6's setup is real: run it on Ubuntu 24.04"
 
 # The trap comes after the guards: a run they refuse must leave this machine's ws, which it deletes.
 tmp=$(mktemp -d)

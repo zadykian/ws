@@ -114,7 +114,8 @@ the tree, which a tag in a copy of it stamps as a release, or none for a trial's
 - a release older than this ws is refused, unless `--version` names it;
 - a wrong sum and a missing release are refused, and ws stays the same;
 - a ws of the named release downloads nothing and runs its own setup. The runner's system refuses
-  that setup, and the script fails on Ubuntu 26.04, where the setup would be real;
+  that setup, and the script fails on Ubuntu 26.04, where the setup would be real. So the job runs
+  on Ubuntu 24.04's runner;
 - a user is refused before any download.
 
 The script deletes `/usr/local/bin/ws` as it ends, so it sets that up after its guards. Its test,
