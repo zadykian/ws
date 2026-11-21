@@ -12,7 +12,7 @@ server, and loads no file of the server's.
 | [`mise.toml`](../../../../mise.toml) | Both sides': mise's settings, `locked` among them, and no pin of ws. |
 | [`mise.mac.toml`](../../../../mise.mac.toml) | The Mac's: the frame's line, `ws:state/ws-binary`, and [the check of the values](#the-check-of-the-values). |
 | [`plugins/ws`](../../../../plugins/ws) | The plugin: a hook runs one `ws unit read` or `ws unit write` ([ws unit](../../../../engine/core/kind/README.md#ws-unit)). |
-| `units.toml.tmpl` here | The role `frame`: the unit that keeps `/usr/local/bin/ws`. |
+| `units.toml.tmpl` here | The role `frame`: the unit that keeps the owner and mode of `/usr/local/bin/ws`. |
 
 ## Where it sits
 
@@ -61,10 +61,12 @@ as a unit a server would come and go with its line ([The facts](../../facts/READ
 
 ## ws at a fixed path
 
-mise installs ws under the user's data directory, by version. A LaunchDaemon runs as root from a
-path of root's alone. The unit `state/ws-binary` copies the ws that runs the units to
-`/usr/local/bin/ws`, root:wheel and 0755, where the two differ, under a temporary name first, as
-root. Its check, `cmp` and `stat`, runs as the user.
+mise runs `/usr/local/bin/ws`, the file `install.sh` writes ([Setup](../../README.md#setup)). A
+LaunchDaemon runs as root from a path of root's alone. The unit `state/ws-binary` keeps the file
+root:wheel and 0755, with no copy: as root it sets the owner and the mode, and its check, `stat`,
+runs as the user. A missing file fails the run and names `install.sh`. The unit stays for its
+line, [the check against a silent skip](#the-check-against-a-silent-skip), and the tunnel's key
+waits on it.
 
 ## The check against a silent skip
 

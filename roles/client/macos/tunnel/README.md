@@ -44,5 +44,5 @@ leave the cable out, as they would try an address that is no server of theirs.
 ## A new copy of ws
 
 A daemon looks at root's copy of `ws`, `/usr/local/bin/ws`, at each tick, 10 s after the last.
-Where a new file took its place, as the bootstrap's copy of a new pin does, it logs `root's copy of
+Where a new file took its place, as install.sh does, it logs `root's copy of
 ws is new; stops, for launchd to start the new one`, and launchd starts the new copy.

@@ -90,3 +90,71 @@ func TestValuesCheckRunsTheCommand(t *testing.T) {
 		})
 	}
 }
+
+// wsBinaryUnit reads the frame's unit that keeps /usr/local/bin/ws, whose spec holds no template.
+func wsBinaryUnit(t *testing.T) (command, check []string, user string) {
+	text, err := os.ReadFile(macRolesDir + "/frame/units.toml.tmpl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var s struct {
+		State map[string]struct {
+			Run struct {
+				User    string   `toml:"user"`
+				Command []string `toml:"command"`
+				Check   []string `toml:"check"`
+			} `toml:"run"`
+		} `toml:"state"`
+	}
+	if err := toml.Unmarshal(text, &s); err != nil {
+		t.Fatal(err)
+	}
+	u, ok := s.State["ws-binary"]
+	if !ok {
+		t.Fatal("the frame's spec holds no state ws-binary")
+	}
+	return u.Run.Command, u.Run.Check, u.Run.User
+}
+
+// TestWsBinaryUnitKeepsTheFileWithNoCopy holds the unit to the owner and the mode of the file that
+// install.sh writes: root runs it, and nothing in it copies ws.
+func TestWsBinaryUnitKeepsTheFileWithNoCopy(t *testing.T) {
+	command, check, user := wsBinaryUnit(t)
+	if user != "root" {
+		t.Errorf("user = %q, want root: the owner is set by root", user)
+	}
+	cmd, chk := strings.Join(command, " "), strings.Join(check, " ")
+	for _, want := range []string{"chown 0:0 /usr/local/bin/ws", "chmod 0755 /usr/local/bin/ws"} {
+		if !strings.Contains(cmd, want) {
+			t.Errorf("the command lacks %q: %s", want, cmd)
+		}
+	}
+	if !strings.Contains(chk, "stat -f %u:%g:%Lp /usr/local/bin/ws") || !strings.Contains(chk, "0:0:755") {
+		t.Errorf("the check does not read the owner and the mode: %s", chk)
+	}
+	for _, text := range []string{cmd, chk} {
+		for _, copying := range []string{"cmp", "install -", "mv ", "cp ", "{{"} {
+			if strings.Contains(text, copying) {
+				t.Errorf("%q holds %q: the unit keeps the file and copies none", text, copying)
+			}
+		}
+	}
+}
+
+// TestWsBinaryUnitFailsWithNoFile runs the command where /usr/local/bin/ws is missing: it fails
+// before any change and names install.sh.
+func TestWsBinaryUnitFailsWithNoFile(t *testing.T) {
+	command, _, _ := wsBinaryUnit(t)
+	missing := filepath.Join(t.TempDir(), "ws")
+	script := strings.ReplaceAll(command[2], "/usr/local/bin/ws", missing)
+	var stderr bytes.Buffer
+	cmd := exec.Command("sh", "-c", script) //nolint:gosec // the frame's own command, read from the tree
+	cmd.Env = []string{"PATH=" + os.Getenv("PATH")}
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err == nil {
+		t.Fatal("the command passed with no file")
+	}
+	if !strings.Contains(stderr.String(), "install.sh writes it") {
+		t.Errorf("stderr %q does not name install.sh", stderr.String())
+	}
+}

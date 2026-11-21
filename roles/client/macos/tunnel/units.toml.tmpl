@@ -1,6 +1,6 @@
 # The Mac's WireGuard key, root's at 0600 in /etc/ws/tunnel, and its public half in
 # /etc/ws/tunnel.pub, readable by all. Root's ws makes the key where none is and never shows it. It
-# waits on /usr/local/bin/ws, the ws that root runs.
+# waits on the frame's unit, which keeps /usr/local/bin/ws root's alone: the ws that root runs.
 [state.tunnel-key]
 after = "state/ws-binary"
 
