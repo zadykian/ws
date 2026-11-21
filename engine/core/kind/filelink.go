@@ -19,7 +19,7 @@ func (f filePart) checkLink() error {
 	switch {
 	case f.Template != "" || f.Source != "" || f.Absent || f.Line != "" || len(f.Has) > 0 ||
 		f.Secret || len(f.Check) > 0 || f.CheckBooted || f.Mode != 0 || f.Group != "" ||
-		f.GroupOf != "" || f.Ours || f.Backup || f.AbsentWhenEmpty || f.Seed:
+		f.Ours || f.Backup || f.AbsentWhenEmpty || f.Seed:
 		return errors.New("a link takes a path, a target, after and when alone")
 	case f.Owner != "" && f.Owner != "root":
 		return errors.New("a link is root's")

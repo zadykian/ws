@@ -39,7 +39,6 @@ func TestFileGroupRefusedAtLoad(t *testing.T) {
 		"owner = \"u\"\npath = \"/home/u/a\"\ngroup = \"net\"\nsource = \"f\"\n": "group takes a file of root's",
 		"path = \"/etc/a\"\ngroup = \"net\"\nabsent = true\n":                    "an absent file takes",
 		"path = \"/etc/a\"\ngroup = \"a b\"\nsource = \"f\"\n":                   "no user's name",
-		"path = \"/etc/a\"\ngroup = \"net\"\ngroup_of = \"u\"\nsource = \"f\"\n": "group or group_of",
 	} {
 		e, _, _, _ := testEnv(false)
 		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": "[file.a]\n" + spec, "r/f": ""}))

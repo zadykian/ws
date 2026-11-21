@@ -5,39 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
-
-func TestGroupOfTakesThePrimaryGroup(t *testing.T) {
-	e, m, _, _ := testEnv(false)
-	withAccount(m)
-	m.Dirs["/etc"] = 0o755
-	units := loadOne(t, e, "[file.a]\npath = \"/etc/a.env\"\nmode = 0o640\nsource = \"a\"\ngroup_of = \"u\"\n", map[string]string{"a": "x\n"})
-	if err := run(t, e, units); err != nil {
-		t.Fatal(err)
-	}
-	if got, err := m.RootAttrs("/etc/a.env"); err != nil || got != (effect.Attrs{GID: 1001, Mode: 0o640}) {
-		t.Errorf("attrs = %+v, %v; want root's with u's group, 640", got, err)
-	}
-	if got := headlines(t, units[0].Step); got != nil {
-		t.Errorf("second plan = %q, want none", got)
-	}
-}
-
-func TestGroupOfRefusesAnotherOwner(t *testing.T) {
-	e, _, _, _ := testEnv(false)
-	for spec, want := range map[string]string{
-		"path = \"/home/u/a\"\nowner = \"u\"\nsource = \"f\"\ngroup_of = \"u\"\n": "group_of takes a file of root's",
-		"path = \"/a\"\nsource = \"f\"\ngroup_of = \"u x\"\n":                     "is no user's name",
-		"path = \"/a\"\nabsent = true\ngroup_of = \"u\"\n":                        "an absent file takes a path, an owner and ours alone",
-	} {
-		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": "[file.a]\n" + spec, "r/f": ""}))
-		if err == nil || !strings.Contains(err.Error(), want) {
-			t.Errorf("load of\n%s= %v, want %q", spec, err, want)
-		}
-	}
-}
 
 func TestOursRefusesAFileByHandInADryRunToo(t *testing.T) {
 	e, m, _, _ := testEnv(false)

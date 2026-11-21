@@ -45,8 +45,6 @@ type filePart struct {
 	Line string `toml:"line"`
 	// Has is a command that says whether the file's text, on its standard input, holds Line.
 	Has []string `toml:"has"`
-	// GroupOf gives a file of root's the primary group of this account, which may then read it.
-	GroupOf string `toml:"group_of"`
 	// Ours refuses to replace or remove a file there that lacks ws's mark at its top (fileguard.go).
 	// The mark follows the comment sign that fileByHand's Mark gives.
 	Ours bool `toml:"ours"`
@@ -75,7 +73,7 @@ func (f filePart) check(dir fs.FS) error {
 		return errors.New("check_booted goes with check")
 	case f.Line != "" || len(f.Has) > 0:
 		return f.checkLine()
-	case f.Absent && (f.Template != "" || f.Source != "" || len(f.Check) > 0 || f.Secret || f.Mode != 0 || f.GroupOf != "" || f.Group != ""):
+	case f.Absent && (f.Template != "" || f.Source != "" || len(f.Check) > 0 || f.Secret || f.Mode != 0 || f.Group != ""):
 		return errors.New("an absent file takes a path, an owner and ours alone")
 	case f.Absent:
 		return nil
@@ -155,7 +153,7 @@ func (f filePart) resources(ctx context.Context, e Env, dir fs.FS) (built, error
 	case gone:
 		b.file = file.Absent{M: e.M, Path: f.Path}
 	default:
-		b.file, err = f.written(ctx, e, owner, rel, content)
+		b.file, err = f.written(e, owner, rel, content)
 		if err != nil {
 			return built{}, err
 		}
@@ -174,7 +172,7 @@ func (f filePart) resources(ctx context.Context, e Env, dir fs.FS) (built, error
 
 // written is the file with its content, checked before it replaces the live one where it has a
 // check that this machine can run.
-func (f filePart) written(ctx context.Context, e Env, owner account.Account, rel string, content []byte) (resource.Resource, error) {
+func (f filePart) written(e Env, owner account.Account, rel string, content []byte) (resource.Resource, error) {
 	mode := fs.FileMode(f.Mode)
 	if mode == 0 {
 		mode = 0o644
@@ -183,7 +181,7 @@ func (f filePart) written(ctx context.Context, e Env, owner account.Account, rel
 	if owner.Home != "" {
 		w = owner.File(e.M, rel, content, mode)
 	}
-	gid, named, err := f.gid(ctx, e.M)
+	gid, named, err := f.gid(e.M)
 	if err != nil {
 		return nil, err
 	}

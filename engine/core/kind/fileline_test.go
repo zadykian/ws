@@ -205,7 +205,6 @@ func TestLineRefusesTheFieldsItCannotTake(t *testing.T) {
 		"service = \"a.service\"\n": "a line takes no service",
 		"enabled = true\n":          "go with service",
 		"reload = true\n":           "go with service",
-		"group_of = \"u\"\n":        "group_of takes a file of root's",
 		"ours = true\n":             "a line takes owner, mode, check, has, after and when alone",
 	} {
 		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": lineSpec(extra), "r/f": ""}))

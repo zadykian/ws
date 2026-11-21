@@ -87,7 +87,6 @@ func TestFileLinkTakesNoContent(t *testing.T) {
 		"secret = true\n":            alone,
 		"check = [\"/bin/true\"]\n":  alone,
 		"mode = 0o755\n":             alone,
-		"group_of = \"u\"\n":         alone,
 		"group = \"g\"\n":            alone,
 		"ours = true\n":              alone,
 		"backup = true\n":            alone,

@@ -20,7 +20,6 @@ absent = false              # remove the file; takes a path, an owner and ours a
 line = ". /etc/x"           # or a line at the top of the owner's file, which keeps its own text
 line_at = "top"             # or "end", where the line goes
 has = ["cmd"]               # says whether the file, on stdin, holds the line: 0 yes, 1 no
-group_of = "USER"           # a file of root's takes this account's primary group
 backup = false              # keep the old file beside the new one, as PATH.PID.TIME~
 ours = false                # refuse a file there without ws's '# Written by' line at its top
 mark = "#"                  # the comment sign before ws's mark, for ours: "//" for JSON
@@ -38,7 +37,7 @@ after = "KIND/NAME"
 - A refusal of a secret file's check names the checker, the path and the exit status, never its
   output or its stderr, which may quote the content.
 - `group` is read from `/etc/group` as the unit plans, so a package that mise installs may bring
-  it, and a missing group fails the plan. It takes a file of root's, and never sits by `group_of`.
+  it, and a missing group fails the plan. It takes a file of root's.
 - A file in `/etc/systemd/system` makes systemd read its units again.
 - On macOS a file of root's is readable by all, a `mode` with `0o004`, or the load fails. The Mac's
   units read root's paths as the user, so that a run that changes nothing asks no password.
@@ -61,9 +60,8 @@ after = "KIND/NAME"
 - A `link` takes `after` and `when` alone, beside its path. Root owns it, and its missing parents
   are made as a file's. A link to another target is pointed again, and a file or a link in its
   place is replaced, but a directory there fails the run.
-- `group_of` takes a file of root's. With `ours`, a file there whose first line lacks
-  `# Written by github.com/zadykian/ws` fails the plan, a dry run's too, before a write or a
-  removal. A file by hand is never lost, and the error names its path alone. `mark` sets the sign
+- With `ours`, a file whose first line lacks `# Written by github.com/zadykian/ws` fails the
+  plan, a dry run's too, before a write or a removal. A file by hand is never lost, and the error names its path alone. `mark` sets the sign
   before those words. An account's file is read below its home through no link.
 - With `keep_foreign`, such a file is left, as the user's own, and the plan warns and changes
   nothing. Once the user removes it, the next run writes ws's.
