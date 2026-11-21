@@ -23,13 +23,12 @@ func TestLoadJoinsTheTwoFiles(t *testing.T) {
 		"WS_TARGET", "cloud",
 		"WS_REMOTE", "r.example",
 		"WS_REMOTE_PORT", "22",
-		"WS_USER", "ada",
 	))
 	c, err := Load(m, macPath, server)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c.GitSigningPubKey != "~/g.pub" || c.IdentityAgent != "~/a.sock" || c.IdentityPubKey != "~/k.pub" || c.Target != "cloud" || c.User != "ada" {
+	if c.GitSigningPubKey != "~/g.pub" || c.IdentityAgent != "~/a.sock" || c.IdentityPubKey != "~/k.pub" || c.Target != "cloud" {
 		t.Errorf("Load = %+v", c)
 	}
 }
@@ -39,7 +38,7 @@ func TestLoadKeepsADefaultWhereAFileHasNoLine(t *testing.T) {
 	server := ServerPath(macPath, FirstServer)
 	m.Files[macPath], m.Files[server] = nil, nil
 	c, err := Load(m, macPath, server)
-	if err != nil || c.Target != "lan" || c.User != "zadykian" {
+	if err != nil || c.Target != "lan" {
 		t.Errorf("Load = %+v, %v; want the defaults", c, err)
 	}
 }

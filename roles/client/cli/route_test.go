@@ -28,7 +28,7 @@ func TestTunnelRoutesCheckShowsTheFileAndWritesNothing(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e/values.yml"})
 	m := p.Machine.(*effecttest.Machine)
 	m.Root["/etc/ws/tunnel/ws/routes.d"] = effect.Attrs{Mode: 0o755}
-	m.Files["/e/servers/ws/values.yml"] = []byte(values.Text("WS_USER", "ada"))
+	m.Files["/e/servers/ws/values.yml"] = []byte(values.Text("WS_SLOT", "0"))
 	withServerDirs(m)
 	status, _, stderr := runWs(p, "client", "tunnel", "routes", "--server", "ws", "--check", "test", "198.51.100.0/24")
 	if status != 0 || !strings.Contains(stderr, "+198.51.100.0/24") {
@@ -44,7 +44,7 @@ func TestTunnelRoutesCheckShowsTheFileAndWritesNothing(t *testing.T) {
 func TestRouteCommandsPrintTheErrorAndExit1(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e/values.yml"})
 	m := p.Machine.(*effecttest.Machine)
-	m.Files["/e/servers/ws/values.yml"] = []byte(values.Text("WS_USER", "ada"))
+	m.Files["/e/servers/ws/values.yml"] = []byte(values.Text("WS_SLOT", "0"))
 	withServerDirs(m)
 	status, _, stderr := runWs(p, "client", "tunnel", "routes", "--server", "ws", "test", "0.0.0.0/0")
 	if want := "ws client tunnel routes: test: 0.0.0.0/0 overlaps the tunnels' 10.99.0.0/20\n"; status != 1 || stderr != want {

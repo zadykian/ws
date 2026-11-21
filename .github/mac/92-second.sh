@@ -29,7 +29,7 @@ sudo ifconfig "$utun" up
 conf_server=lab
 {
     cat "$conf"
-    printf '%s\n' 'WS_USER: lab' 'WS_SLOT: 1' 'WS_REMOTE: localhost' 'WS_REMOTE_PORT: 22023' 'WS_TUNNEL_PORT: 51821' \
+    printf '%s\n' 'WS_SLOT: 1' 'WS_REMOTE: localhost' 'WS_REMOTE_PORT: 22023' 'WS_TUNNEL_PORT: 51821' \
         "WS_PUBLIC_KEY: $(cat "$RUNNER_TEMP/lab.pub")"
 } | conf_write "$conf"
 conf_server=ws

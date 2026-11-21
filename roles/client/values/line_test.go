@@ -15,16 +15,16 @@ func TestLine(t *testing.T) {
 		{"WS_RESOLVERS", "example.internal=10.20.0.53", "WS_RESOLVERS: example.internal=10.20.0.53"},
 		{"WS_PUBLIC_KEY", "ab+/cd=", "WS_PUBLIC_KEY: ab+/cd="},
 		{"WS_LAN", "", `WS_LAN: ""`},
-		{"WS_USER", "a: b", `WS_USER: "a: b"`},
-		{"WS_USER", "#x", `WS_USER: "#x"`},
-		{"WS_USER", "~", `WS_USER: "~"`},
-		{"WS_USER", "null", `WS_USER: "null"`},
-		{"WS_USER", " x", `WS_USER: " x"`},
-		{"WS_USER", "x ", `WS_USER: "x "`},
-		{"WS_USER", "@x", `WS_USER: "@x"`},
-		{"WS_USER", "%x", `WS_USER: "%x"`},
-		{"WS_USER", "-x", `WS_USER: "-x"`},
-		{"WS_USER", "a\"b", `WS_USER: "a\"b"`},
+		{"WS_TUNNEL_PORT", "a: b", `WS_TUNNEL_PORT: "a: b"`},
+		{"WS_TUNNEL_PORT", "#x", `WS_TUNNEL_PORT: "#x"`},
+		{"WS_TUNNEL_PORT", "~", `WS_TUNNEL_PORT: "~"`},
+		{"WS_TUNNEL_PORT", "null", `WS_TUNNEL_PORT: "null"`},
+		{"WS_TUNNEL_PORT", " x", `WS_TUNNEL_PORT: " x"`},
+		{"WS_TUNNEL_PORT", "x ", `WS_TUNNEL_PORT: "x "`},
+		{"WS_TUNNEL_PORT", "@x", `WS_TUNNEL_PORT: "@x"`},
+		{"WS_TUNNEL_PORT", "%x", `WS_TUNNEL_PORT: "%x"`},
+		{"WS_TUNNEL_PORT", "-x", `WS_TUNNEL_PORT: "-x"`},
+		{"WS_TUNNEL_PORT", "a\"b", `WS_TUNNEL_PORT: "a\"b"`},
 	} {
 		if got := Line(tt.key, tt.value); got != tt.want {
 			t.Errorf("Line(%q, %q) = %q, want %q", tt.key, tt.value, got, tt.want)
@@ -40,7 +40,7 @@ func TestLineReadsBackAsItself(t *testing.T) {
 		"a: b", "#x", "~", "null", "Null", " x", "x ", "@x", "%x", "-x", "a, b", "yes", "1e3", "a\tb",
 		"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+/=", "a'b", `a"b`,
 	} {
-		got, errs := entries(Line("WS_USER", value) + "\n")
+		got, errs := entries(Line("WS_TUNNEL_PORT", value) + "\n")
 		if len(errs) > 0 || len(got) != 1 || got[0].err != "" || got[0].value != value {
 			t.Errorf("%q came back as %+v, %v", value, got, errs)
 		}

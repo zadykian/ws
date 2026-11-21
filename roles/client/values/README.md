@@ -120,14 +120,13 @@ the Mac's display, if any:
 `WS_TARGET=cloud` is a VM at a provider, reached through the internet alone:
 
 - It has no `WS_LAN`.
-- `WS_USER` defaults to `root`, as a VM may have no other user. Set it for an image whose root refuses
-  a login, such as `ubuntu`. The other targets refuse `WS_USER=root`.
+- The VM's root takes the Mac's key. An image whose root refuses a login takes `disable_root: false`
+  and `users: []` in its cloud-config.
 - `WS_REMOTE` is the VM's name or address, and `WS_REMOTE_PORT` its SSH port, `22` by default. The
   target needs both.
 - The VM needs a public IPv4 address, as the tunnel takes IPv4 alone.
 - The provider's firewall must let in TCP `WS_REMOTE_PORT`, and UDP 51820, the tunnel's, or the port
   that `WS_TUNNEL_PORT` sets, which moves wg0's listen port on ws too.
-- The VM's default user takes the provider's keys, which must be the GitHub account's.
 - Set `WS_SECURITY_OUTBOUND: false` in ws's values.yml before ws's run, as the outbound table would
   drop the metadata service ([Outbound](../../server/ubuntu/security/README.md#outbound)).
 - It has no cable: `WS_CABLE_SERVICE` and `WS_CABLE_PORT` are refused.
@@ -159,5 +158,5 @@ key of another target's ways: `WS_LAN` on a cloud VM, `WS_REMOTE` on a VM on the
 `WS_CABLE_SERVICE` or `WS_CABLE_PORT` off the LAN. Then name the new target's
 ways. A new machine offers another host key, so run `ssh-keygen -R NAME` first, NAME the server's
 name. From a cloud VM, remove `WS_SECURITY_OUTBOUND: false` from ws's `values.yml` too, with
-`sudo ws server values set WS_SECURITY_OUTBOUND ''`. Then run the bootstrap on ws, as
+`ws server values set WS_SECURITY_OUTBOUND ''`. Then run the bootstrap on ws, as
 [its runbook](../../server/runbook.md) says, and `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap` again.

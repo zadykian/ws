@@ -184,7 +184,7 @@ and `Port`. The command:
 5. Keeps one read-only deploy key titled with the hostname that holds the key, and deletes an older
    one first, as GitHub changes none in place.
 6. Lands the changed files by a pull request, and opens none where the key was in place.
-7. Runs the server's task `secrets` over `ssh -t`, as root by sudo, even where nothing landed.
+7. Runs the server's task `secrets` over `ssh -t`, as root, even where nothing landed.
 
 Last, add prints a line for each host key that the secrets hold, as a recipient or a deploy key,
 and that `~/.ssh/known_hosts` gives no host. A server that came back with another hostname and

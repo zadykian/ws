@@ -10,7 +10,7 @@ import (
 
 func TestValuesCheckPrintsOneLineForFilesThatPass(t *testing.T) {
 	m := effecttest.NewMachine()
-	writeConfs(m, values.Text("WS_GIT_SIGNING_PUB_KEY", "~/g.pub"), values.Text("WS_USER", "ada"))
+	writeConfs(m, values.Text("WS_GIT_SIGNING_PUB_KEY", "~/g.pub"), values.Text("WS_SLOT", "0"))
 	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": ""})
 	p.Machine = m
 	status, stdout, stderr := runWs(p, "client", "values", "check")
@@ -41,7 +41,7 @@ func TestValuesCheckNamesEachBadKeyWithItsFile(t *testing.T) {
 
 func TestValuesCheckRefusesAServerFlag(t *testing.T) {
 	m := effecttest.NewMachine()
-	writeConfs(m, values.Text("WS_GIT_SIGNING_PUB_KEY", "~/g.pub"), values.Text("WS_USER", "ada"))
+	writeConfs(m, values.Text("WS_GIT_SIGNING_PUB_KEY", "~/g.pub"), values.Text("WS_SLOT", "0"))
 	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": ""})
 	p.Machine = m
 	status, stdout, stderr := runWs(p, "client", "--server", "ws", "values", "check")

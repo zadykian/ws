@@ -72,12 +72,10 @@ the Mac, by its path from `/` or `~/`: [git on the Mac](macos/git/README.md). `W
 hosts](#sshs-hosts). The bootstrap makes `/etc/ws` through sudo, at mode 755, for the tunnel's key,
 git's files and ssh's hosts.
 
-`WS_USER` is the user ssh logs in as: ws's key too, `zadykian` by default, or `root` for a
-`WS_TARGET` of `cloud`, which may have no other user. The other targets refuse `WS_USER=root`. A key
-with an empty value, as `WS_REMOTE: ""`, takes its default, as a missing line does: that user for
-`WS_USER` and 51820 for `WS_TUNNEL_PORT`. `WS_IDENTITY_PUB_KEY` has none: the bootstrap stops
-without it ([ssh's hosts](#sshs-hosts)). Nor has `WS_GIT_SIGNING_PUB_KEY`
-([git on the Mac](macos/git/README.md)).
+ssh logs in to every server as root, so no key names a user. A key with an empty value, as
+`WS_REMOTE: ""`, takes its default, as a missing line does: 51820 for `WS_TUNNEL_PORT`.
+`WS_IDENTITY_PUB_KEY` has none: the bootstrap stops without it
+([ssh's hosts](#sshs-hosts)). Nor has `WS_GIT_SIGNING_PUB_KEY` ([git on the Mac](macos/git/README.md)).
 
 `WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
 sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split by blanks. Each
@@ -146,8 +144,6 @@ make the Mac the server's peer, with that key as MAC_PUBLIC_KEY. They go over a 
 ssh -o HostName=ADDRESS -o Port=PORT NAME "printf '%s\n' 'MAC_PUBLIC_KEY' | tee /etc/wireguard/mac.pub >/dev/null"
 ssh -o HostName=ADDRESS -o Port=PORT NAME env MISE_LOCKED=1 mise -C /opt/ws/roles/server bootstrap
 ```
-
-For a `WS_USER` other than root, both go through `sudo` and `ssh -t`, for the password.
 
 With ws's key as `WS_PUBLIC_KEY`, the bootstrap installs the tunnel's daemon. A new
 Mac or a rebuilt server changes one file on each side, and nothing in the repository. Do it by hand,

@@ -43,7 +43,7 @@ func (m rmMachine) take(name string, args []string, err error) {
 func removeFixture() (enginecli.Env, *effecttest.Machine) {
 	m := effecttest.NewMachine()
 	keyed(m)
-	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "1"))
+	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_SLOT", "1"))
 	m.Dirs["/etc/ws/servers/lab"] = 0o755
 	m.Files["/h/.ssh/known_hosts"] = []byte("ws ssh-ed25519 AAAA\nlab ssh-ed25519 BBBB\n")
 	m.Dirs["/Applications/Zed.app"] = 0o755
@@ -136,7 +136,7 @@ func TestRemoveRunsTheBootstrap(t *testing.T) {
 
 func TestRemoveRefusesWhereAServerThatStaysHasABadFile(t *testing.T) {
 	p, m := removeFixture()
-	m.Files["/etc/ws/servers/abc/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "99"))
+	m.Files["/etc/ws/servers/abc/values.yml"] = []byte(values.Text("WS_SLOT", "99"))
 	m.Dirs["/etc/ws/servers/abc"] = 0o755
 	status, _, stderr := runWs(p, "client", "remove", "lab")
 	if want := ": fix its file, or ws client remove abc"; status != 1 || !strings.Contains(stderr, "server abc: ") ||
@@ -152,7 +152,7 @@ func TestRemoveRefusesWhereAServerThatStaysHasABadFile(t *testing.T) {
 // not stop its removal, which is the way out of the clash.
 func TestRemoveTakesAServerThatClashesWithOneThatStays(t *testing.T) {
 	p, m := removeFixture()
-	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "0"))
+	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_SLOT", "0"))
 	if _, stdout, stderr := runWs(p, "client", "remove", "lab"); !strings.HasPrefix(stdout, "removed lab\n") {
 		t.Errorf("stdout = %q, stderr = %q; want removed lab", stdout, stderr)
 	}
@@ -161,7 +161,6 @@ func TestRemoveTakesAServerThatClashesWithOneThatStays(t *testing.T) {
 func TestRemoveNamesTheCableOfTheGoneServer(t *testing.T) {
 	p, m := removeFixture()
 	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text(
-		"WS_USER", "ada",
 		"WS_SLOT", "1",
 		"WS_TARGET", "lan",
 		"WS_CABLE_PORT", "eth1",

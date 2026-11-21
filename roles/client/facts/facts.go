@@ -126,7 +126,7 @@ func (f Mac) readSSH(ctx context.Context, m effect.Machine, own values.Conf) (SS
 	}
 	hosts := make([]sshcfg.Host, 0, len(f.Servers))
 	for _, s := range f.Servers {
-		hosts = append(hosts, sshcfg.Host{Name: s.Name, Addr: s.TunnelSlot().Server(), User: s.User})
+		hosts = append(hosts, sshcfg.Host{Name: s.Name, Addr: s.TunnelSlot().Server()})
 	}
 	text, err := ssh.Text(ctx, m, f.Home, login, hosts)
 	return SSH{Config: text}, err

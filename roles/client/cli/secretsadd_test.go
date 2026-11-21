@@ -24,7 +24,7 @@ const (
 	knownHosts   = "/h/.ssh/known_hosts"
 	findLab      = "ssh-keygen -F lab -f " + knownHosts
 	hostnameLine = "ssh lab hostname"
-	runLine      = "ssh -t lab sudo env MISE_LOCKED=1 mise -C /opt/ws/roles/server run secrets"
+	runLine      = "ssh -t lab env MISE_LOCKED=1 mise -C /opt/ws/roles/server run secrets"
 	keysLine     = secrets.GH + " api --paginate repos/o/n/keys"
 	postLine     = secrets.GH + " api -X POST repos/o/n/keys -f title=ws-a -f key=" + labKey + " -F read_only=true"
 	sealed       = "fnox-age-batch-v1:c2VhbGVk"
@@ -51,7 +51,7 @@ S1 = { provider = "age", value = "` + sealed + `" }
 func addFixture(files map[string]string) (enginecli.Env, *secretstest.Mac) {
 	m := effecttest.NewMachine()
 	keyed(m)
-	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "1"))
+	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_SLOT", "1"))
 	m.Dirs["/etc/ws/servers/lab"] = 0o755
 	m.Files[fnoxKeyFile] = []byte("AGE-PLUGIN-YUBIKEY-1QQQ\n")
 	m.Files[knownHosts] = []byte("ws ssh-ed25519 AAAA\nlab " + labKey + "\n")

@@ -8,7 +8,7 @@ import (
 func TestCheckPassesFilesThatHoldNoRefusal(t *testing.T) {
 	m := machineWith("ws", "lab")
 	m.Files[macPath] = []byte(Text("WS_GIT_SIGNING_PUB_KEY", "~/g.pub"))
-	m.Files[ServerPath(macPath, "ws")] = []byte(Text("WS_USER", "ada"))
+	m.Files[ServerPath(macPath, "ws")] = []byte(Text("WS_SLOT", "0"))
 	m.Files[ServerPath(macPath, "lab")] = []byte(Text("WS_SLOT", "1"))
 	if err := Check(m, macPath); err != nil {
 		t.Errorf("Check = %v, want none", err)

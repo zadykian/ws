@@ -22,7 +22,7 @@ func runWs(p enginecli.Env, args ...string) (status int, stdout, stderr string) 
 
 // keyed gives the Mac a values.yml that names the file key it has for ws's login, as ssh's step needs.
 func keyed(m *effecttest.Machine) {
-	writeConfs(m, values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id_ed25519.pub"), values.Text("WS_USER", "ada"))
+	writeConfs(m, values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id_ed25519.pub"), values.Text("WS_SLOT", "0"))
 	m.Files["/h/.ssh/id_ed25519.pub"] = []byte("ssh-ed25519 AAAA ada\n")
 	m.Results["ssh-keygen -l -f /h/.ssh/id_ed25519.pub"] = effecttest.Result{}
 }

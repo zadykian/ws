@@ -71,9 +71,9 @@ that changes nothing asks no password.
 3. Add git's signing key with `gh ssh-key add --type signing` and its `.pub`, titled with the
    Mac's name ([The signing key](macos/git/README.md#the-signing-key)).
 
-GitHub is the only source of the server's keys: nothing copies a key to the server. Ubuntu's
-installer imports the account's keys for ws's user, so run this step before its install. In the
-installer, turn OpenSSH on, import the keys from GitHub and leave password login off.
+GitHub is the only source of the server's keys: nothing copies a key to the server. Root takes the
+account's keys from GitHub, as [the server's runbook](../server/runbook.md) says, so run this step
+before it. A cloud VM takes the keys its provider holds, which must be the account's.
 
 ## The secrets
 
@@ -107,14 +107,10 @@ installer, turn OpenSSH on, import the keys from GitHub and leave password login
 
 ## Login
 
-Log in with `ssh -o HostName=ADDRESS NAME`, as the tunnel is not up yet. It must log in as `WS_USER`
-by the Mac's key. A cloud VM gives its default user the provider's keys, which must be the account's.
+Log in with `ssh -o HostName=ADDRESS NAME`, as the tunnel is not up yet. It must log in as root by
+the Mac's key, which root took from GitHub ([The server's runbook](../server/runbook.md)). A cloud
+image whose root refuses a login takes `disable_root: false` and `users: []` in its cloud-config.
 Where ssh names another host key, drop the old one with `ssh-keygen -R NAME`.
-
-## Sudo
-
-At ws, `sudo -n true` must pass for `WS_USER`. Where sudo wants a password, type it at the prompt of
-a command that needs root. A user outside sudoers cannot go on.
 
 ## ws on ws
 

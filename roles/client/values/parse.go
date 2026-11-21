@@ -50,20 +50,7 @@ func (s Scope) Lines(text string) (Conf, []Error) {
 			c.defaults()
 		}
 	}
-	// The user's default follows the target, so it waits for the last line, whatever the order.
-	if c.User == "" {
-		c.User = defaultUser(c.Target)
-	}
 	return c, errs
-}
-
-// defaultUser is WS_USER's default: root on a cloud VM, which may have no other user, else the user
-// that ws sets a machine up for.
-func defaultUser(target string) string {
-	if target == "cloud" {
-		return "root"
-	}
-	return "zadykian"
 }
 
 // lookup finds the key named name.
@@ -86,7 +73,7 @@ func (c Conf) Value(name string) string {
 	return *k.field(&c)
 }
 
-// defaults sets the keys with a default other than empty to it (the target and the slot), but WS_USER, which Lines sets last.
+// defaults sets the keys with a default other than empty to it (the target and the slot).
 func (c *Conf) defaults() {
 	if c.Target == "" {
 		c.Target = "lan"

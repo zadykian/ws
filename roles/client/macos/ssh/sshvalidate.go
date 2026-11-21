@@ -92,9 +92,9 @@ func readsAs(h sshcfg.Host, out []byte) error {
 	for _, l := range strings.Split(string(out), "\n") {
 		key, val, _ := strings.Cut(l, " ")
 		switch {
-		case key == "hostname" && val != h.Addr.String(), key == "user" && val != h.User:
+		case key == "hostname" && val != h.Addr.String(), key == "user" && val != sshcfg.User:
 			return fmt.Errorf("ssh reads %s as %s: /etc/ws/ssh_config sets %s at %s, which another file "+
-				"of ssh's changes", h.Name, strings.TrimSpace(l), h.User, h.Addr)
+				"of ssh's changes", h.Name, strings.TrimSpace(l), sshcfg.User, h.Addr)
 		}
 	}
 	return nil
