@@ -1,6 +1,6 @@
 #!/bin/bash
-# The server job's cases, as root on a runner that booted (.github/workflows/server.md). It
-# proves what a container can't: the bootstrap on a booted machine, and the firewall around Docker.
+# The server job's cases, as root on a runner that booted (.github/workflows/server.md): the
+# bootstrap on a booted machine, what it wrote, and the firewall around Docker.
 # Each case that expects a refusal has a control, as a broken setup refuses everything. Run as
 # `server-checks.sh DIR`, DIR being .tools/serve-build's for the tree in /opt/ws.
 set -euo pipefail
@@ -20,8 +20,8 @@ sed -i '/^XDG_/d' /etc/environment
 # apt reads this file after apt.conf.d, so the line wins wherever the runner set the variant.
 echo '#clear APT::Architecture-Variants;' >>/etc/apt/apt.conf
 export HOME=/root DEBIAN_FRONTEND=noninteractive
-# A tool installs only as a lock holds it, here the build's in mise.local.lock, as in playbook. The
-# runs by hand put the tools where install.sh does.
+# A tool installs only as a lock holds it, here the build's in mise.local.lock. The runs by hand
+# put the tools where install.sh does.
 export MISE_LOCKED=1 MISE_DATA_DIR=/usr/local/share/mise
 
 fail() {
@@ -106,6 +106,8 @@ install -d -m 755 /etc/ws
 # The swap file is small, as the runner's disk has no room for one the size of its RAM.
 printf '%s\n' --- 'WS_USER: root' 'WS_BASE_SWAP_SIZE_MB: 64' >/etc/ws/values.yml
 chmod 600 /etc/ws/values.yml
+values_kept=$(mktemp)
+cp /etc/ws/values.yml "$values_kept"
 
 # apt's daily timers, which the image turns off, keep the stamps of their runs at its build. On a
 # start, systemd takes a stamp from before the boot as a run missed at the boot, and adds the
@@ -167,6 +169,39 @@ must "the first bootstrap leaves nothing to do" boot plan --detailed-exitcode
 must "the first bootstrap prints no warning" "$check" "$log"
 must "the second bootstrap runs" boot
 must "the second bootstrap leaves nothing to do" boot plan --detailed-exitcode
+
+# What the runs wrote, which needs no container. The plans that must fail, from /opt/ws and with a
+# unit's line dropped. The values file, which no run changed. Zed's wrapper and tmux.conf against
+# tmux, which takes about a minute and catches a tmux release that changes how list-sessions or
+# rename-session behave.
+must "the plans that must fail do" "$(dirname "$0")/server-plan.sh"
+must "the values file is root's at 600" test "$(stat -c '%u:%g %a' /etc/ws/values.yml)" = '0:0 600'
+must "no run changed the values file" cmp "$values_kept" /etc/ws/values.yml
+must "the Zed terminal wrapper holds against tmux" \
+    sh "$(dirname "$0")/zed-terminal-checks.sh" /usr/local/lib/ws/zed
+
+# Fresh loads a malformed config with its defaults and exits 0, so this reads what it loaded.
+fresh_config() {
+    local shown
+    shown=$(mktemp)
+    fresh --cmd config show >"$shown" &&
+        "$(dirname "$0")/fresh-config-check.sh" /root/.config/fresh/config.json "$shown"
+}
+must "Fresh loads the config that ws wrote" fresh_config
+
+# An empty commit, made in a new repository, has git sign and verify with the key's own path. It
+# reads the git role's key, ~/.gitconfig's include of /etc/ws/gitconfig, and /etc/ws/allowed_signers
+# as git reads them. The file's text alone cannot tell that git opens a path.
+signed_commit() {
+    local repo status
+    repo=$(mktemp -d)
+    git -C "$repo" -c init.defaultBranch=main init -q
+    git -C "$repo" commit -q --allow-empty -m check
+    status=$(git -C "$repo" log -1 --format=%G?)
+    rm -rf "$repo"
+    [ "$status" = G ]
+}
+must "root signs a commit, and git verifies it" signed_commit
 
 # The pulls ahead of the runs, as a run of an image not yet pulled warns.
 must "docker pulls the image" docker pull -q "$image"

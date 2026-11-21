@@ -1,15 +1,13 @@
 #!/bin/sh
-# The playbook job's last plans, as root, on the tree in /opt/ws. After the two runs, mise's plan
-# must change nothing: it exits 2 where a part or a unit would change, and 1 where it cannot tell.
-# A plan from /opt/ws, which loads no role, must fail and name the server's run directory. Then
-# the check against a silent skip must fail the plan where mise's config lacks a unit. This
-# drops the frame's line of state/ws-binary, and puts the file back after. ws unit verify names the
-# unit, or the plugin that mise no longer loads where the line was the last of ws's. As a run by
-# hand, it names the data directory that install.sh gives mise. The first plan prints no warning.
+# The server job's two plans that must fail, as root, on the tree in /opt/ws. A plan from /opt/ws,
+# which loads no role, must fail and name the server's run directory. Then the check against a
+# silent skip must fail the plan where mise's config lacks a unit. This drops the frame's line of
+# state/ws-binary, and puts the file back after. ws unit verify names the unit, or the plugin that
+# mise no longer loads where the line was the last of ws's. As a run by hand, it names the data
+# directory that install.sh gives mise. mise's plan exits 2 where a part or a unit would change,
+# and 1 where it cannot tell.
 set -eu
 export MISE_DATA_DIR=/usr/local/share/mise
-"$(dirname "$0")/warnings-check.sh" -- \
-    mise -C /opt/ws/roles/server bootstrap plan --detailed-exitcode </dev/null
 
 out=$(mise -C /opt/ws bootstrap plan </dev/null 2>&1) && status=0 || status=$?
 if [ "$status" != 1 ] || ! printf '%s\n' "$out" | grep -qF 'run it as mise -C /opt/ws/roles/server'; then

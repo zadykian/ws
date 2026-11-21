@@ -1,5 +1,5 @@
 #!/bin/bash
-# The playbook job's check of the config Fresh loaded, run as
+# The server job's check of the config Fresh loaded, run as
 # `fresh-config-check.sh CONFIG.JSON SHOW.JSON`. Fresh reads a malformed file with its defaults and
 # exits 0, so a green run alone proves nothing.
 set -e
