@@ -22,7 +22,8 @@ type Guard struct {
 	M effect.Machine
 	// Dir is the tree, which need not exist yet.
 	Dir string
-	// Above holds the directories above the tree and the plugin, which must exist.
+	// Above holds the directories above the tree and the plugin. One that is missing passes, as a
+	// Mac may lack it: setup makes it root's, at 755, before it writes below.
 	Above []string
 	// Owner is the uid that owns the tree and the directories above it: root's.
 	Owner int
@@ -34,6 +35,9 @@ type Guard struct {
 func (g Guard) Plan(context.Context) ([]resource.Change, error) {
 	for _, dir := range g.Above {
 		info, err := g.M.Stat(dir)
+		if errors.Is(err, fs.ErrNotExist) {
+			continue
+		}
 		if err != nil {
 			return nil, err
 		}
