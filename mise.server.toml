@@ -28,6 +28,18 @@ template = true
 content = '''{{ exec(command="cd '" ~ cwd ~ "' && { [ -f mise/conf.d/frame/mise.server.toml ] || { echo 'mise runs in " ~ cwd ~ ", which loads no role of the server: run it as mise -C /opt/ws/roles/server' >&2; exit 1; }; ws=$(mise which ws 2>/dev/null) || { echo 'ws units: none missing'; exit 0; }; \"$ws\" unit verify; }") }}
 '''
 
+# The check of the values: ws server values check fails the plan and the run on a bad value of
+# /etc/ws/values.yml, before any phase writes. mise renders a template's exec with the env of its
+# own process. WS_SELF there is the ws that `ws server setup` runs. mise's ws is no choice: a first
+# run has none. Without WS_SELF the template takes /usr/local/bin/ws, which is the pin's copy until
+# the pin goes. It passes where neither file is, as on a first run by install.sh. It passes where
+# the ws lists no check among the commands of values, as a pin from before the check does. A pass
+# prints one line, so that the next plan finds the file unchanged, and says why on stderr.
+[bootstrap.files."/etc/ws/values.checked"]
+template = true
+content = '''{{ exec(command="ws=\"${WS_SELF:-/usr/local/bin/ws}\"; { [ -x \"$ws\" ] && \"$ws\" server values --help 2>&1 | grep -q '^  check '; } || { echo 'ws values: no ws that checks them yet' >&2; echo 'ws values: checked'; exit 0; }; \"$ws\" server values check") }}
+'''
+
 # ws's own directory, which a first run with no values.yml lacks: mise makes no missing parent.
 [bootstrap.directories."/etc/ws"]
 mode = "0755"

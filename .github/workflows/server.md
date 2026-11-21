@@ -36,7 +36,9 @@ daemon's log.
 
 The run leaves checks that need no container. With the frame's line of `state/ws-binary` dropped,
 the plan must exit 1 ([server-plan.sh](../server-plan.sh)): the check against a silent skip holds.
-A plan from `/opt/ws`, which loads no role, must exit 1 too, and name the run directory. The
+A plan from `/opt/ws`, which loads no role, must exit 1 too, and name the run directory. A plan
+with a bad value in the values file must exit 1 by `ws server values check` and name its key, and
+the file goes back ([The check of the values](../../roles/server/ubuntu/frame/README.md#the-check-of-the-values)). The
 values file is root's at 600, and no run changed its bytes ([The values
 file](../../roles/server/ubuntu/frame/README.md#the-values-file)). A run with no file is
 `values_file_test.go`'s. The Zed wrapper's [checks](../zed-terminal-checks.sh) run on the files the
@@ -61,13 +63,16 @@ Then [the secrets task](../../roles/server/ubuntu/secrets/README.md#the-task), w
 the profile, the hostname's, each encrypted to the runner's host key. Each input that mise lists
 and the shared `fnox.toml` lacks is declared empty there, the profile's among them, whose own value
 must win. CI's own `/opt/ws/mise.secrets.toml` writes both values to
-`/etc/ws-ci-secrets`, root's 600, under the env `secrets` alone. The task runs three times, and the
-plan through it exits 0 after each run. A plain plan after the first run keeps the file. A plan
-through the task then fetches a new shared value. It exits 2 and keeps the file, and mise's line of
-a failed task ends it, outside the warnings check. The second run writes the new value. A file of
-the clone's own, a profile that the host key can't open and a missing profile are refused, and the
-file keeps its bytes. The last two name `ws client secrets add NAME`. The third run follows them,
-and the file still holds both values. No output of the task's holds a value. Only GitHub proves
+`/etc/ws-ci-secrets`, root's 600, under the env `secrets` alone. The task runs three times, by
+`ws server setup --in-place --secrets`, and its `--plan` exits 0 after each run. A plain plan
+after the first run keeps the file. A plan through the task then fetches a new shared value. It
+exits 2 and keeps the file, and mise's line of a failed task ends it, outside the warnings check.
+The second run writes the new value. A run with
+`MISE_LOCKED=0`, where mise's setting locked prints `false`, is refused and names
+`ws server setup --secrets`. A file of the clone's own, a profile that the host key can't open and
+a missing profile are refused too, and the file keeps its bytes. The last two name
+`ws client secrets add NAME`. The third run follows them, and the file still holds both values. No
+output of the task's holds a value. Only GitHub proves
 the fetch from github.com by a deploy key, against the key that ws pins.
 
 Then the files that the roles' [secret inputs](../../roles/server/ubuntu/frame/README.md#secret-inputs)

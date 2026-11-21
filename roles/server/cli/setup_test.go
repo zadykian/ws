@@ -94,6 +94,21 @@ func TestSetupRefusesAUser(t *testing.T) {
 	leftNothing(t, m, false)
 }
 
+func TestSetupRefusesABadValueBeforeAnyWrite(t *testing.T) {
+	for _, args := range [][]string{nil, {"--plan"}} {
+		t.Run(strings.Join(args, " "), func(t *testing.T) {
+			rel := setupRelease(miseBody)
+			p, m := setupProcess(rel)
+			m.Files[serverVars] = []byte("---\nWS_BASE_SWAPPINESS: 400\n")
+			status, stderr := runSetup(p, rel, args...)
+			if status != 1 || !strings.Contains(stderr, "WS_BASE_SWAPPINESS is 400") || !strings.Contains(stderr, "edit "+serverVars+" by hand") {
+				t.Errorf("status = %d, stderr = %q", status, stderr)
+			}
+			leftNothing(t, m, false)
+		})
+	}
+}
+
 func TestSetupRefusesASystemButUbuntu2604(t *testing.T) {
 	for name, text := range map[string]string{
 		"24.04":  "ID=ubuntu\nVERSION_ID=\"24.04\"\n",

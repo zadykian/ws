@@ -12,7 +12,7 @@ config, with its spec where it has units, and holds no Go.
 | [`mise.toml`](../../../../mise.toml) | Both sides': mise's settings, among them `locked`, and the pin of ws, a release, for three platforms. |
 | [`mise.lock`](../../../../mise.lock) | The release's SHA-256 for each platform, which mise checks as it installs ws. |
 | [`roles/server/mise/mise.server.lock`](../../mise/mise.server.lock) | The roles' tools: each download's url and SHA-256 for each platform ([devtools](../devtools/README.md#the-tools)). |
-| [`mise.server.toml`](../../../../mise.server.toml) | The server's: dpkg's options, `/etc/ws` and the check against a silent skip. |
+| [`mise.server.toml`](../../../../mise.server.toml) | The server's: dpkg's options, `/etc/ws`, the check against a silent skip and [the check of the values](#the-check-of-the-values). |
 | [`plugins/ws`](../../../../plugins/ws) | The plugin: a hook runs one `ws unit read` or `ws unit write` ([ws unit](../../../../engine/core/kind/README.md#ws-unit)), linked as [a system plugin](#the-plugin). |
 | `units.toml.tmpl`, `mise.server.toml`, `files/` here | The role `frame`: the units that keep `/usr/local/bin/ws` and write [the values file](#the-values-file). |
 
@@ -76,7 +76,8 @@ other run loads. `ws server setup` writes the miserc, as `install.sh` does.
 The same command writes `/etc/mise/config.toml`, which trusts the tree: its `trusted_config_paths`,
 under `[settings]`, names `/opt/ws`, so that a run by hand needs no `mise trust`. mise reads that
 setting of a system config under `[settings]` alone. `mise.toml` sets `locked`, so that a tool
-installs only as `mise.lock` holds it. The secrets task still passes `MISE_LOCKED=1`.
+installs only as `mise.lock` holds it. The secrets task checks that setting, so that fnox runs
+from the lock alone.
 `mise settings get locked` reads the config of the directory it runs in: it prints `true` in the
 tree and `false` outside it.
 
@@ -180,3 +181,19 @@ from `/opt/ws`, or from the Mac's `roles/client`, loads no role of the server's,
 would set up the frame alone with exit 0. So the check looks for the frame's own
 `mise.server.toml` through the run's link. It fails a run without it before any phase, and names
 `mise -C /opt/ws/roles/server`, as its test proves.
+
+## The check of the values
+
+A bad value in `/etc/ws/values.yml` stops a plan or a run before any write. The server's
+`/etc/ws/values.checked` is a template that runs `ws server values check`, which loads the file as
+each command does. A missing file passes. A bad value fails with its key, its rule and the file
+to edit by hand: `values set` refuses while any value is bad, so the message never names it. A pass
+prints one fixed line, so the next plan finds the file unchanged.
+
+The template runs the ws that `WS_SELF` names, which `ws server setup` sets in the env of its mise,
+and else `/usr/local/bin/ws`. It never looks for mise's ws: a first run has none. It passes with a
+line on stderr that says so where neither file is. It passes so too where the ws lists no `check`
+among the commands of `ws server values`, as a pin from before it does. A first run by `install.sh`
+has no ws. The units' first read of the values then refuses a bad value, as before. CI's `server`
+job plans once with a bad value. It expects exit 1 from `ws server values check` that names the
+key, and puts the file back ([server-plan.sh](../../../../.github/server-plan.sh)).

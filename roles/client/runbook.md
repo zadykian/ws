@@ -93,7 +93,7 @@ before it. A cloud VM takes the keys its provider holds, which must be the accou
    Give the value on standard input, never as an argument. Commit the changed file, signed, push
    the branch and open a pull request by `gh pr create`. Once `values` and `gitleaks` pass, merge
    it by `gh pr merge --merge --delete-branch`. Then, for each server NAME that reads the value,
-   run `ws client secrets add NAME`, which runs the task there
+   run `ws client secrets add NAME`, which runs `ws server setup --secrets` there
    ([The task](../server/ubuntu/secrets/README.md#the-task)).
 
 ## ws's host key
