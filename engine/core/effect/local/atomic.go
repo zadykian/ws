@@ -22,13 +22,6 @@ func (m OSMachine) WriteAtomic(path string, data []byte, a effect.Attrs) error {
 	if a.UID >= 0 && m.asRoot(path) && another(path, a.UID) {
 		return m.sudoWrite(path, data, fmt.Sprintf("%d:%d", a.UID, a.GID), a.Mode)
 	}
-	if root, rel, err := m.confined(path); err != nil || root != nil {
-		if err != nil {
-			return err
-		}
-		defer func() { _ = root.Close() }()
-		return writeAtomicIn(root, rel, data, a)
-	}
 	f, err := renameio.NewPendingFile(path,
 		renameio.WithTempDir(filepath.Dir(path)), renameio.WithPermissions(a.Mode.Perm()))
 	if err != nil {
@@ -54,15 +47,7 @@ func (m OSMachine) Chown(path string, uid, gid int) error {
 		_, err := m.RunRoot(context.Background(), "chown", "--", fmt.Sprintf("%d:%d", uid, gid), path)
 		return err
 	}
-	root, rel, err := m.confined(path)
-	if err != nil {
-		return err
-	}
-	if root == nil {
-		return os.Chown(path, uid, gid)
-	}
-	defer func() { _ = root.Close() }()
-	return root.Chown(rel, uid, gid)
+	return os.Chown(path, uid, gid)
 }
 
 // Chmod sets the mode of the file a link points to, through sudo where ws runs as a user and the
@@ -72,36 +57,12 @@ func (m OSMachine) Chmod(path string, perm fs.FileMode) error {
 		_, err := m.RunRoot(context.Background(), "chmod", "--", strconv.FormatUint(uint64(perm.Perm()), 8), path)
 		return err
 	}
-	root, rel, err := m.confined(path)
-	if err != nil {
-		return err
-	}
-	if root == nil {
-		return os.Chmod(path, perm)
-	}
-	defer func() { _ = root.Close() }()
-	return root.Chmod(rel, perm)
+	return os.Chmod(path, perm)
 }
 
 // Symlink makes path a link to target, replacing a file or link there through a new link renamed
 // over it.
 func (m OSMachine) Symlink(target, path string) error {
-	if root, rel, err := m.confined(path); err != nil || root != nil {
-		if err != nil {
-			return err
-		}
-		defer func() { _ = root.Close() }()
-		tmp := filepath.Join(filepath.Dir(rel), "."+filepath.Base(rel)+".ws-new")
-		_ = root.Remove(tmp)
-		if err := root.Symlink(target, tmp); err != nil {
-			return err
-		}
-		if err := root.Rename(tmp, rel); err != nil {
-			_ = root.Remove(tmp)
-			return err
-		}
-		return nil
-	}
 	tmp := filepath.Join(filepath.Dir(path), "."+filepath.Base(path)+".ws-new")
 	_ = os.Remove(tmp)
 	if err := os.Symlink(target, tmp); err != nil {

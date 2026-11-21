@@ -28,8 +28,8 @@ func TestUnitPlatformRefusesReadAndWrite(t *testing.T) {
 	e, m := unitEnv(t, map[string]string{"r/units.toml.tmpl": fileUnit("a", "/etc/a", ""), "r/a": "1\n"})
 	side := cli.UnitSide{
 		Dir: "/nowhere",
-		Values: func(_ context.Context, m effect.Machine) (any, effect.Machine, error) {
-			return unitValues{User: "u"}, m, nil
+		Values: func(context.Context, effect.Machine) (any, error) {
+			return unitValues{User: "u"}, nil
 		},
 		Units:    &effecttest.Units{},
 		Root:     true,

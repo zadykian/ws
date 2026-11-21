@@ -17,8 +17,9 @@ import (
 // oursMark starts a file that ws wrote, in a format whose comments start with #, the default.
 const oursMark = "# " + file.Mark
 
-// checkGuards refuses group and group_of on a file that is not root's. An account's own file has
-// the account's group already, and the account may write it. It checks the fields of a file edited by hand too (filebyhand.go).
+// checkGuards refuses group on a file that is not root's. An account's own file has the account's
+// group already, and the account may write it. It checks the fields of a file edited by hand too
+// (filebyhand.go).
 func (f filePart) checkGuards() error {
 	if err := f.checkByHand(); err != nil {
 		return err
@@ -29,14 +30,8 @@ func (f filePart) checkGuards() error {
 		return errors.New("backup takes a file that ws writes whole, never a secret, an absent file or a line")
 	case f.Group != "" && !root:
 		return errors.New("group takes a file of root's")
-	case f.Group != "" && f.GroupOf != "":
-		return errors.New("a file takes group or group_of, not both")
 	case f.Group != "":
 		return checkUser("group", f.Group)
-	case f.GroupOf != "" && !root:
-		return errors.New("group_of takes a file of root's")
-	case f.GroupOf != "":
-		return checkUser("group_of", f.GroupOf)
 	}
 	return nil
 }

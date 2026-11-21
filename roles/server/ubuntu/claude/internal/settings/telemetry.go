@@ -10,7 +10,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/account"
-	"github.com/zadykian/ws/roles/server/ubuntu/claude/internal/asuser"
 )
 
 // telemetryRemoved are the env keys that Telemetry removes. A signal's own endpoint or protocol
@@ -62,16 +61,15 @@ func (c writeSettings) String() string {
 	return text
 }
 
-// Apply writes as the user, through a link as into a clone of dotfiles. A link, or a file that the
-// user plants, then reaches only what the user could write. A new file gets claude's mode, and an
-// existing one keeps its own. A missing ~/.claude is made at 0755, the user's.
+// Apply writes through a link, as into a clone of dotfiles. A new file gets claude's mode, and an
+// existing one keeps its own. A missing ~/.claude is made at 0755.
 func (c writeSettings) Apply(ctx context.Context) error {
 	return c.t.User.PassInput(ctx, c.t.M, c.data, "sh", "-c", `umask 022 && mkdir -p "${1%/*}" && cat >"$1"`, "sh", c.t.path())
 }
 
 // Plan edits the settings in memory, and plans a write where env differs.
-func (t Telemetry) Plan(ctx context.Context) ([]resource.Change, error) {
-	data, err := asuser.Read(ctx, t.M, t.User, t.path())
+func (t Telemetry) Plan(_ context.Context) ([]resource.Change, error) {
+	data, err := t.M.ReadFile(t.path())
 	created := errors.Is(err, fs.ErrNotExist)
 	if err != nil && !created {
 		return nil, err

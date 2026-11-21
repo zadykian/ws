@@ -23,7 +23,7 @@ func TestUpdatePlan(t *testing.T) {
 	for _, c := range cases {
 		m := effecttest.NewMachine()
 		m.Files["/root/.local/bin/cld"] = nil
-		m.Results["env HOME=/root /root/.local/bin/cld --version"] = effecttest.Result{Out: []byte(c.have + "\n")}
+		m.Results["env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin /root/.local/bin/cld --version"] = effecttest.Result{Out: []byte(c.have + "\n")}
 		got, err := Update{M: m, User: cldUser, URL: releases(t, c.tag)}.Plan(context.Background())
 		switch {
 		case err != nil:
@@ -37,7 +37,7 @@ func TestUpdatePlan(t *testing.T) {
 func TestUpdateRefusesABuildFromSource(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/root/.local/bin/cld"] = nil
-	m.Results["env HOME=/root /root/.local/bin/cld --version"] = effecttest.Result{Out: []byte("cld dev\n")}
+	m.Results["env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin /root/.local/bin/cld --version"] = effecttest.Result{Out: []byte("cld dev\n")}
 	if _, err := (Update{M: m, User: cldUser, URL: releases(t, "v1.0.0")}).Plan(context.Background()); err == nil {
 		t.Error("a build from source is compared with a release")
 	}
@@ -53,8 +53,8 @@ func TestUpdateWithoutCldPlansNothing(t *testing.T) {
 func TestUpdateRunsCldUpdate(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/root/.local/bin/cld"] = nil
-	m.Results["env HOME=/root /root/.local/bin/cld --version"] = effecttest.Result{Out: []byte("cld 0.1.0\n")}
-	m.Results["env HOME=/root /root/.local/bin/cld update"] = effecttest.Result{}
+	m.Results["env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin /root/.local/bin/cld --version"] = effecttest.Result{Out: []byte("cld 0.1.0\n")}
+	m.Results["env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin /root/.local/bin/cld update"] = effecttest.Result{}
 	got, err := Update{M: m, User: cldUser, URL: releases(t, "v0.2.0")}.Plan(context.Background())
 	if err != nil || len(got) != 1 {
 		t.Fatalf("%v, %v", got, err)

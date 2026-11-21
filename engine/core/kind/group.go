@@ -1,26 +1,20 @@
 package kind
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
-// gid returns the group that the file's group or group_of names, and whether it names one.
-func (f filePart) gid(ctx context.Context, m effect.Machine) (int, bool, error) {
-	switch {
-	case f.Group != "":
-		id, err := groupID(m, f.Group)
-		return id, true, err
-	case f.GroupOf != "":
-		a, err := account.User{Name: f.GroupOf}.Lookup(ctx, m)
-		return a.GID, true, err
+// gid returns the group that the file's group names, and whether it names one.
+func (f filePart) gid(m effect.Machine) (int, bool, error) {
+	if f.Group == "" {
+		return 0, false, nil
 	}
-	return 0, false, nil
+	id, err := groupID(m, f.Group)
+	return id, true, err
 }
 
 // groupID returns the id of the group name from /etc/group. A file's unit reads it as it plans, as

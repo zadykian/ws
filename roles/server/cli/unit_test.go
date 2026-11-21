@@ -11,7 +11,7 @@ import (
 	"github.com/zadykian/ws/roles/server/values"
 )
 
-func TestUnitValuesConfineToRootsHome(t *testing.T) {
+func TestUnitValuesLoadTheFile(t *testing.T) {
 	vars := filepath.Join(t.TempDir(), "values.yml")
 	if err := os.WriteFile(vars, []byte("WS_BASE_LOCALE: C\n"), 0o600); err != nil {
 		t.Fatal(err)
@@ -20,19 +20,12 @@ func TestUnitValuesConfineToRootsHome(t *testing.T) {
 	if !side.Root || side.Dir != "/opt/ws/roles/server/ubuntu" {
 		t.Errorf("side = %+v, want root's, at /opt/ws", side)
 	}
-	data, m, err := side.Values(t.Context(), local.OSMachine{})
+	data, err := side.Values(t.Context(), local.OSMachine{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if v, ok := data.(values.Values); !ok || v.Base.Locale != "C" {
 		t.Errorf("values = %+v, want the file's", data)
-	}
-	if om, ok := m.(local.OSMachine); !ok || om.Confine != "/root" {
-		t.Errorf("machine = %+v, want one confined to /root", m)
-	}
-	fake := effecttest.NewMachine()
-	if _, m, err := side.Values(t.Context(), fake); err != nil || m != fake {
-		t.Errorf("a fake machine: %v, %v; want it unchanged", m, err)
 	}
 }
 
@@ -66,7 +59,7 @@ func TestUnitPlatformIsUbuntu2604(t *testing.T) {
 func TestUnitValuesRefuseAnUnknownKey(t *testing.T) {
 	fake := effecttest.NewMachine()
 	fake.Files["/v.yml"] = []byte("WS_USR: u\n")
-	if _, _, err := unitSide("/v.yml").Values(t.Context(), fake); err == nil {
+	if _, err := unitSide("/v.yml").Values(t.Context(), fake); err == nil {
 		t.Error("an unknown key loaded")
 	}
 }

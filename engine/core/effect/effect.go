@@ -78,7 +78,7 @@ type Machine interface {
 	RootAttrs(path string) (Attrs, error)
 	// WriteAtomic replaces a file through a pending file, so that a reader sees the old file or the
 	// new one whole, and sets the owner and mode of a. Another owner than ws's own needs root:
-	// where ws runs as a user, sudo gives it outside the home and Confine, never through a link. A
+	// where ws runs as a user, sudo gives it outside the home, never through a link. A
 	// UID and GID of -1 keep ws's own, as chown(2) leaves them, and need no root.
 	WriteAtomic(path string, data []byte, a Attrs) error
 	// Download fetches the URL into path through a pending file, which replaces path only where the

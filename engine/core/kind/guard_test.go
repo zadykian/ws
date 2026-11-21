@@ -14,7 +14,6 @@ import (
 const (
 	keysOfU    = "/home/u/.ssh/authorized_keys"
 	loginGuard = "[guard.a]\nlogin_key = \"u\"\nhome = \"/home/u\"\n"
-	sudoGuard  = "[guard.a]\nsudo_right = \"u\"\n"
 )
 
 // guardPlan loads the guard of spec and plans it, which returns no change or the lockout's error.
@@ -91,40 +90,11 @@ func TestGuardRefusesAHomeOtherThanTheAccounts(t *testing.T) {
 	}
 }
 
-func TestGuardSudoRight(t *testing.T) {
-	const may = "User u may run the following commands on ws:\n    (ALL : ALL) "
-	for name, c := range map[string]struct {
-		list, status string
-		want         string
-	}{
-		"password":    {may + "ALL\n", "u P 2026-11-17 0 99999 7 -1\n", ""},
-		"no password": {may + "NOPASSWD: ALL\n", "", ""},
-		"no right":    {"User u is not allowed to run sudo on ws.\n", "", "u has no right to sudo"},
-		"locked":      {may + "ALL\n", "u L 2026-11-17 0 99999 7 -1\n", "u has no password for sudo to ask"},
-	} {
-		e, m, _, _ := testEnv(true)
-		m.Results["sudo -l -U u"] = effecttest.Result{Out: []byte(c.list)}
-		m.Results["passwd --status u"] = effecttest.Result{Out: []byte(c.status)}
-		err := guardPlan(t, e, sudoGuard)
-		if (c.want == "" && err != nil) || (c.want != "" && (err == nil || !strings.Contains(err.Error(), c.want))) {
-			t.Errorf("%s: plan = %v, want %q", name, err, c.want)
-		}
-	}
-}
-
-func TestGuardSudoRightPassesRoot(t *testing.T) {
-	e, m, _, _ := testEnv(true)
-	if err := guardPlan(t, e, "[guard.a]\nsudo_right = \"root\"\n"); err != nil || slices.ContainsFunc(m.Calls,
-		func(c string) bool { return strings.HasPrefix(c, "root sudo") }) {
-		t.Errorf("plan = %v, calls %q; want none, and no question to sudo", err, m.Calls)
-	}
-}
-
 func TestGuardPassesInAContainer(t *testing.T) {
 	e, m, _, _ := testEnv(true)
 	withAccount(m)
 	m.Files["/.dockerenv"] = nil
-	for _, spec := range []string{loginGuard, sudoGuard} {
+	for _, spec := range []string{loginGuard} {
 		if err := guardPlan(t, e, spec); err != nil {
 			t.Errorf("plan of\n%s= %v, want none in a container", spec, err)
 		}
@@ -134,15 +104,11 @@ func TestGuardPassesInAContainer(t *testing.T) {
 func TestGuardTakesExactlyOne(t *testing.T) {
 	e, _, _, _ := testEnv(false)
 	for spec, want := range map[string]string{
-		"after = \"\"\n": "takes one of login_key with home, sudo_right and command",
-		"login_key = \"u\"\nhome = \"/home/u\"\nsudo_right = \"u\"\n":        "takes one of login_key with home, sudo_right and command",
-		"sudo_right = \"u\"\nhome = \"/home/u\"\n":                           "takes one of login_key with home, sudo_right and command",
-		"login_key = \"u\"\n":                                                `home "" is not a clean absolute path`,
-		"login_key = \"u\"\nhome = \"home/u\"\n":                             `home "home/u" is not a clean absolute path`,
-		"sudo_right = \"-u\"\n":                                              `sudo_right "-u" is no user's name`,
-		"command = [\"/bin/true\"]\nlogin_key = \"u\"\nhome = \"/home/u\"\n": "takes one of login_key with home, sudo_right and command",
-		"command = [\"/bin/true\"]\nsudo_right = \"u\"\n":                    "takes one of login_key with home, sudo_right and command",
-		"command = [\"/bin/true\"]\nhome = \"/home/u\"\n":                    "takes one of login_key with home, sudo_right and command",
+		"after = \"\"\n":                         "takes one of login_key with home and command",
+		"login_key = \"u\"\n":                    `home "" is not a clean absolute path`,
+		"login_key = \"u\"\nhome = \"home/u\"\n": `home "home/u" is not a clean absolute path`,
+		"command = [\"/bin/true\"]\nlogin_key = \"u\"\nhome = \"/home/u\"\n": "takes one of login_key with home and command",
+		"command = [\"/bin/true\"]\nhome = \"/home/u\"\n":                    "takes one of login_key with home and command",
 		"command = [\"true\"]\n":                                             `command "true": its program is no absolute path`,
 		"command = [\"\"]\n":                                                 `command "": its program is no absolute path`,
 	} {

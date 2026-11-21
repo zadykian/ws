@@ -21,14 +21,20 @@ var (
 )
 
 // asRoot is whether a change to path may go through sudo: ws runs as another user than root, and
-// path lies outside Confine and the user's home. os.Root keeps a write under Confine inside it,
-// which sudo would not. In the home, or with no home known, a change ws may not make fails: sudo
-// would leave root's files where the user's go.
-func (m OSMachine) asRoot(path string) bool {
+// path lies outside the user's home. In the home, or with no home known, a change ws may not make
+// fails: sudo would leave root's files where the user's go.
+func (OSMachine) asRoot(path string) bool {
 	home, err := os.UserHomeDir()
-	_, in := m.inside(path)
-	_, mine := OSMachine{Confine: home}.inside(path)
-	return euid() != 0 && err == nil && !in && !mine
+	return euid() != 0 && err == nil && !under(home, path)
+}
+
+// under is whether path lies below dir, or is dir, by their text. An empty dir holds nothing.
+func under(dir, path string) bool {
+	if dir == "" {
+		return false
+	}
+	rel, err := filepath.Rel(dir, path)
+	return err == nil && filepath.IsLocal(rel)
 }
 
 // another is whether uid, where 0 or more, or the owner of path, is another user than ws's: a

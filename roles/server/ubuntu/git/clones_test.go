@@ -33,10 +33,10 @@ func TestCheckClones(t *testing.T) {
 	}
 }
 
-func TestClonesRunOnceAsTheUser(t *testing.T) {
+func TestClonesRunOnceAsRoot(t *testing.T) {
 	m := effecttest.NewMachine()
-	a := account.Account{User: account.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
-	m.Results["runuser -u ws -- env -i -C /home/ws HOME=/home/ws PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin git -C /home/ws clone -- https://h/a work/a"] = effecttest.Result{}
+	a := account.Account{User: account.User{Name: "root", Home: "/root"}}
+	m.Results["env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin git -C /root clone -- https://h/a work/a"] = effecttest.Result{}
 	cl := Clones{M: m, A: a, Clones: []values.GitClone{
 		{Repo: "https://h/a", Dest: "work/a"}, {Repo: "https://h/b", Dest: "/srv/b"},
 	}}
@@ -48,7 +48,7 @@ func TestClonesRunOnceAsTheUser(t *testing.T) {
 	if err := changes[0].Apply(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	m.Dirs["/home/ws/work/a"] = 0o755
+	m.Dirs["/root/work/a"] = 0o755
 	if changes, err := cl.Plan(context.Background()); err != nil || len(changes) != 0 {
 		t.Errorf("second plan = %v, %v", changes, err)
 	}

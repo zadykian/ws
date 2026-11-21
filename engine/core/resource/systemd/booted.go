@@ -1,4 +1,4 @@
-// Package systemd runs units and user units, reloads systemd and enables lingering.
+// Package systemd runs units, reloads systemd and enables lingering.
 package systemd
 
 import "github.com/zadykian/ws/engine/core/effect"

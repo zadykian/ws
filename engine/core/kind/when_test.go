@@ -201,7 +201,7 @@ func TestWhenOnEveryKind(t *testing.T) {
 		"packages": "[packages.a]\ntemplate = \"a.tmpl\"\n" + off,
 		"dkms": "[dkms.a]\nmodule = \"m\"\nversion = \"1\"\nurl = \"https://x/m.tar.gz\"\nsha256 = \"" + sum + "\"\n" +
 			"load = \"m\"\n" + off,
-		"guard":   "[guard.a]\nsudo_right = \"u\"\n" + off,
+		"guard":   "[guard.a]\ncommand = [\"/bin/true\"]\n" + off,
 		"state":   "[state.a]\npurged = \"p\"\n" + off,
 		"service": "[service.a]\nunit = \"a.service\"\nenabled = true\nrun = \"running\"\n" + off,
 		"compose": "[compose.a]\ndir = \"/srv/a\"\nproject = \"a\"\n" + off,

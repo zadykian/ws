@@ -10,9 +10,6 @@ import (
 const (
 	rootCld        = "/root/.local/bin/cld"
 	rootCompletion = "/root/.local/share/bash-completion/completions/cld"
-	// readAsUser is the line by which root's file is read as root's own account, as asuser.Read
-	// reads it.
-	readAsUser = `env HOME=/root sh -c if [ -e "$1" ]; then printf y; cat "$1"; else printf n; fi sh `
 )
 
 // claudeProcess is a process as root with cld installed for root, whose completion script
@@ -20,9 +17,9 @@ const (
 func claudeProcess(values, have string) (*effecttest.Machine, func(args ...string) (int, string, string)) {
 	p, m := valuesProcess(values)
 	m.Files[rootCld] = nil
-	m.Results["env HOME=/root "+rootCld+" completion bash"] = effecttest.Result{Out: []byte("complete -F _cld cld\n")}
-	m.Results[readAsUser+rootCompletion] = effecttest.Result{Out: []byte("y" + have)}
-	m.Results["env HOME=/root "+rootCld+" setup completion bash"] = effecttest.Result{}
+	m.Results["env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "+rootCld+" completion bash"] = effecttest.Result{Out: []byte("complete -F _cld cld\n")}
+	m.Files[rootCompletion] = []byte(have)
+	m.Results["env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "+rootCld+" setup completion bash"] = effecttest.Result{}
 	return m, func(args ...string) (int, string, string) {
 		return runWs(p, "", append([]string{"server", "claude"}, args...)...)
 	}

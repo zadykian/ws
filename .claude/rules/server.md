@@ -38,12 +38,13 @@ steps, and each role's README says what it sets up.
   A role's type holds that role's values alone, as `ikeward.Profile`. ws holds no store of the
   secrets and no struct that gathers them: they reach the server by fnox alone
   ([The repository](../../roles/server/ubuntu/secrets/README.md#the-repository)).
-- The roles set the machine up for root, in `/root`, which no value names. A unit run as a user
-  sets `HOME` and starts in it, so that `HOME` is not the caller's
+- The roles set the machine up for root, in `/root`, which no value names. A unit run and a
+  command of `account.User` set `HOME` to it, so that `HOME` is not the caller's, and `User`'s
+  starts in it from a cleared env
   ([claude's units](../../roles/server/ubuntu/claude/units.toml.tmpl)).
 - Root reaches a file under `WS_HOME` through the account (`Account.File`, `Account.Dir`,
-  `Account.Absent`, `User.ReadHome`), or the unit acts as `WS_USER`, as claude's does. The user owns
-  the home and could link a file elsewhere ([Links under the home](../../roles/server/ubuntu/security/README.md#links-under-the-home)).
+  `Account.Absent`, `User.ReadHome`). The user owns the home and could link a file elsewhere
+  ([Links under the home](../../roles/server/ubuntu/security/README.md#links-under-the-home)).
 - ws's lines in a home file are `Account.Lines`, which refuses any link, at the file or on the way.
 - A version is pinned in the package of the role that installs it. SigNoz's images are pinned in
   `roles/server/ubuntu/signoz/casting.yaml`, as its compose files are forged from it.

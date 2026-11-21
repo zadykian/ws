@@ -28,7 +28,7 @@ Each Go template ends in `.tmpl`, the spec's name and the name of each `template
   units, so that a command of ws runs before the pinned binary is installed, or without booted
   systemd. A unit's template fills as it plans, as an earlier unit may make the account or the file
   that it reads. It takes `envvar FILE NAME` and the facts `mem_mib`, `cpus`, `fs_bytes PATH...`,
-  `uid NAME`, `installed_version NAME`, `kernel_release` and `root_file PATH` too.
+  `installed_version NAME`, `kernel_release` and `root_file PATH` too.
   `installed_version` gives dpkg's version of an installed package, else "", and `kernel_release`
   the running kernel's, as `uname -r` prints it. `root_file` gives a file's text, read as root and
   trimmed, else "". A spec names no secret's file with it, as a file's diff would show the secret.
@@ -152,7 +152,6 @@ hint = "…"                  # follows the line of a refused load; goes with lo
 ```toml
 [service.NAME]
 unit = "x.service"
-user = "USER"               # a unit of USER's own systemd; the default is the system's
 enabled = true
 run = "running"             # "stopped", "triggered", or "" to leave the unit as found
 reload = false
@@ -169,11 +168,6 @@ source = "name"
   Two files of one service in two file units would restart it twice.
 - `in_force` and `loads` run as root. A load that fails, or nothing in force, counts as a
   difference. Each part must exist first.
-- With `user`, the unit is USER's own systemd's, kept running, and each part is USER's. A change
-  to any part restarts it once. It takes `run = "running"`, and no `enabled`, `reload` or
-  `in_force`. A part whose path is the unit's file, `~/.config/systemd/user/UNIT`, goes before the
-  start, which the run that writes it plans too. Otherwise the file is left to whatever installs
-  it: until then it plans no start.
 - A service whose parts are all `absent` is gone: disabled and stopped before its files go, while
   its unit file still names its `ExecStop`, and the links its `[Install]` names. It takes no
   `enabled`, takes `run = "stopped"` or `""`, and compares nothing. A link made by hand stays.
@@ -181,7 +175,7 @@ source = "name"
 
 ### state
 
-A state is a fact about the machine that no file or package holds: lingering, sub-IDs, a firewall's
+A state is a fact about the machine that no file or package holds: lingering, a firewall's
 rules, a command that runs once. Its keys and rules are on [its own page](state.md).
 
 ### guard
@@ -190,7 +184,6 @@ rules, a command that runs once. Its keys and rules are on [its own page](state.
 [guard.NAME]                # plans nothing; fails where a later unit would lock the machine out
 login_key = "USER"          # with home: USER holds a key that sshd takes
 home = "/home/USER"
-sudo_right = "USER"         # or: USER has the right to sudo, and a password for it to ask
 command = ["/abs/cmd"]      # or: the command, as root, exits 0
 ```
 
@@ -198,8 +191,7 @@ command = ["/abs/cmd"]      # or: the command, as root, exits 0
   file holds no key, or sshd would pass it over for its owner or mode.
 - `login_key` fails on every machine where `home` is not the one `getent passwd` gives USER: the
   file kind writes USER's files below that one.
-- `sudo_right` passes for root, which needs no sudo.
-- A container, which has no login to lose, passes `sudo_right`, and `login_key` but for its home.
+- A container, which has no login to lose, passes `login_key` but for its home.
   A unit that would close a login waits on the guard by its `after`.
 - `command` is a role's own check, a command of ws where Go holds it. It runs as root on every
   machine, containers too. Its exit 0 passes, and says each line of its output once a run. Any
@@ -257,8 +249,7 @@ ws by `mise which ws`, the pinned binary. The write hook runs `ws unit verify` f
   does not hold changes nothing: alone, it ends `changed: none`.
 - **Where it reads.** The specs sit below `$WS_UNITS`, else below the side's own directory: the
   server's is `/opt/ws/roles/server/ubuntu`, in the checkout that `install.sh` makes at `/opt/ws`.
-  The values are the side's file, `/etc/ws/values.yml` on the server, and confine the machine's
-  writes under root's home.
+  The values are the side's file, `/etc/ws/values.yml` on the server.
 - **verify.** mise drops the units of a plugin that it refuses, with a warning and exit 0. `verify`
   reads `mise bootstrap packages status --json`, and fails where the `ws` manager is missing or not
   available, or lacks a unit of the specs. With every unit there, it prints one line that never
