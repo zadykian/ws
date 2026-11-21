@@ -2,7 +2,8 @@
 
 A release of ws is one binary per platform, `ws-darwin-arm64`, `ws-linux-amd64` and
 `ws-linux-arm64`, and `ws.sha256`, their checksums as `sha256sum` writes them. Each release
-publishes `install.sh` too.
+publishes `install.sh` too, and `autoinstall.yaml`, the installer's answers for a new server
+([The autoinstall file](#the-autoinstall-file)).
 
 ## Install
 
@@ -35,6 +36,30 @@ sha256sum, or `shasum -a 256` where a Mac has no `sha256sum`:
 | --- | --- | --- |
 | `WS_VERSION` | the latest release | the release whose ws installs, `X.Y.Z` or `X.Y.Z-rc.N`, with or without the `v` |
 | `WS_RELEASES_URL` | `https://github.com/zadykian/ws/releases` | where the releases are, for tests |
+
+## The autoinstall file
+
+`autoinstall.yaml` is [roles/server/autoinstall.yaml](../../roles/server/autoinstall.yaml) with the
+release's blanks filled by [autoinstall.sh](../autoinstall.sh): `VERSION`, the tag, and `SHA256`,
+that of the release's own `install.sh`. The `build` job writes it into `dist` beside `install.sh`,
+and fails unless the file names the tag and the sum and keeps no such blank. The words check and
+the release take it as they take each file of `dist`. Its first boot runs that release:
+`ws update --version TAG`, which runs setup alone where ws is that release already.
+
+Three blanks stay the maintainer's. A new server takes these steps, which
+[the server's runbook](../../roles/server/runbook.md#a-new-server-from-the-installer) and
+[the README](../../README.md#a-new-machine) name:
+
+1. Fill `HOSTNAME`, the machine's name, `HASH`, root's password hash for the console, from
+   `mkpasswd -m sha-512`, and `VALUES`, the text of `/etc/ws/values.yml` as a `|` block, or `""`
+   where no value differs.
+1. Copy the file as `user-data` to a volume labelled `CIDATA`, beside an empty `meta-data`.
+1. Boot the installer with the volume attached and `autoinstall` on the kernel's line.
+1. Read the first boot's run in `/var/log/cloud-init-output.log`, or by
+   `cloud-init status --wait --long`.
+
+**Not the file as published, on the volume:** NoCloud reads `user-data` and `meta-data` alone, and
+the installer finds `autoinstall.yaml` by that name only on its own medium.
 
 ## Update
 
@@ -142,7 +167,7 @@ curl -fsSL --proto '=https' --tlsv1.2 \
 ```
 
 So while a pre-release is tried, this line takes the place of each that runs `install.sh`. Those are
-step 3 of [the server's runbook](../../roles/server/runbook.md), and step 2 of
+step 3 of [the steps by hand](../../roles/server/runbook.md#the-steps-by-hand), and step 2 of
 [ws on ws](../../roles/client/runbook.md#ws-on-ws) and the Mac's Tools step on the Mac. The side's
 setup follows, `ws server setup` or `ws client setup`, which checks out the tree of its own ws's tag.
 
@@ -155,12 +180,14 @@ Nothing else is by hand. `release.yml` runs on the tag, in these jobs:
    as on a push to `main`.
 1. `build`: `ws-darwin-arm64`, `ws-linux-amd64` and `ws-linux-arm64` with the Go that
    [.tools/run](../../.tools/run) pins, without cgo, with `-trimpath` and Go's stamp of the tag, and
-   `ws.sha256`. The job fails unless `ws version` of the amd64 binary prints the tag.
-1. `publish`: GitHub's generated notes, then a check of the notes, the binaries, `ws.sha256` and
-   `install.sh` for the local list's words (CLAUDE.md), from the secret `FORBIDDEN_WORDS`. It fails
-   where the secret is empty, and names a file that holds a word, never the word. Then
-   `gh release create --verify-tag`, with `--prerelease --latest=false` for a tag with `-rc.`, so that
-   `releases/latest` keeps the last full release. Only this job has `contents: write`.
+   `ws.sha256`, with `install.sh` and the `autoinstall.yaml` filled for the tag. The job fails
+   unless `ws version` of the amd64 binary prints the tag, and unless the file names the tag.
+1. `publish`: GitHub's generated notes, then a check of the notes, the binaries, `ws.sha256`,
+   `install.sh` and `autoinstall.yaml` for the local list's words (CLAUDE.md), from the secret
+   `FORBIDDEN_WORDS`. It fails where the secret is empty, and names a file that holds a word,
+   never the word. Then `gh release create --verify-tag`, with `--prerelease --latest=false` for a
+   tag with `-rc.`, so that `releases/latest` keeps the last full release. Only this job has
+   `contents: write`.
 
 A tag that fails a job publishes nothing. The ruleset below keeps the tag: fix the branch, and tag
 the next patch version, or the next `rc.N`.

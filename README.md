@@ -62,6 +62,13 @@ plugin where mise finds it, and runs mise's bootstrap ([The Mac](roles/client/RE
 
 ## A new machine
 
+A release's `autoinstall.yaml` answers the installer of a new server, and the first boot runs
+ws's setup. Fill its host name, root's hash and the values. Copy it as `user-data` to a volume
+labelled `CIDATA`, beside an empty `meta-data`, and boot the installer with the volume:
+[The server's runbook](roles/server/runbook.md#a-new-server-from-the-installer) has the steps.
+The secrets come after it, as below. A cloud VM has no installer, and any other server takes the
+steps by hand.
+
 Install Ubuntu Server 26.04 by hand from its installer. In it, turn OpenSSH on, import the GitHub
 account's keys, and leave password login off. ws sets the server up for root. Root's keys come from
 the GitHub account alone: the installer imports them into its own user's home, and ws copies no key
