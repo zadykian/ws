@@ -1,8 +1,9 @@
 name: mac
 
-# The Mac runs on macOS, in a workflow of its own beside ci.yml. It runs on every pull request,
-# whatever its base, and on main at each pull request's merge. release.yml calls it on a tag, where
-# the event is the push and stack is null, so that mac runs in the call as it runs on a push.
+# The Mac runs on macOS, in a workflow of its own beside ci.yml. It starts on every pull request,
+# where its job runs for a stack on main alone, and on main at each pull request's merge.
+# release.yml calls it on a tag, where the event is the push and stack is null, so that mac runs
+# in the call as it runs on a push.
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -39,7 +40,10 @@ jobs:
   mac:
     if: >-
       (github.event.action != 'opened' || !github.event.pull_request.draft) &&
-      github.event.pull_request.stack.position == github.event.pull_request.stack.size
+      github.event.pull_request.stack.position == github.event.pull_request.stack.size &&
+      (github.event_name != 'pull_request' ||
+      (github.event.pull_request.stack.base.ref || github.event.pull_request.base.ref) ==
+      github.event.repository.default_branch)
     runs-on: macos-latest
     timeout-minutes: 20
     permissions:

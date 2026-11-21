@@ -56,19 +56,25 @@ jobs:
   # install.sh's bootstrap, as on a new machine, on a runner that booted, as a server that root
   # alone logs in to. It runs twice: mise's plan before the second run and after it must change
   # nothing. The firewall around Docker needs the booted systemd. In a stack, it runs on the top
-  # pull request alone, which holds every change below it. So do mac.yml's and mac-cld.yml's jobs.
+  # pull request alone, which holds every change below it, and only where the stack rests on main.
+  # A pull request onto another branch, such as an integration branch, skips it: that branch's
+  # pull request to main runs it. So do mac.yml's and mac-cld.yml's jobs.
   # Run on each of a stack of 20, these jobs kept its pull requests waiting for runners past 50
   # minutes. A stack's pull requests open as drafts, before gh stack link joins them, so a draft's
   # opened event has no stack and these jobs skip it. No event follows the link: ready_for_review,
   # once done, is the first to name the stack. Outside a stack, and on a push, stack is null, and
-  # null == null holds. GitHub's stack metadata:
+  # null == null holds. There the pull request's own base stands for the stack's. GitHub's stack
+  # metadata:
   # https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/optimizing-ci-for-stacked-pull-requests
   # setfacl drops /opt's default ACL, which lets anyone write the tree that install.sh then
   # refuses.
   server:
     if: >-
       (github.event.action != 'opened' || !github.event.pull_request.draft) &&
-      github.event.pull_request.stack.position == github.event.pull_request.stack.size
+      github.event.pull_request.stack.position == github.event.pull_request.stack.size &&
+      (github.event_name != 'pull_request' ||
+      (github.event.pull_request.stack.base.ref || github.event.pull_request.base.ref) ==
+      github.event.repository.default_branch)
     runs-on: ubuntu-26.04
     timeout-minutes: 30
     permissions:
