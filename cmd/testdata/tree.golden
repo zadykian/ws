@@ -378,6 +378,7 @@ Available Commands:
   fans        drive the board's fans on the curves of CONFIG until SIGTERM
   git         the git role's checks and procedures, which its units run
   ikeward     the ikeward role's check, install and wait, which its units run
+  setup       set the server up, as root
   signoz      SigNoz's steps that the signoz role's units run
   tunnel      the tunnel role's check, wg0's key and wg0, which its units run
   values      edit the machine's values
@@ -652,6 +653,14 @@ Usage:
 Flags:
       --check   fail where the VPN is down and the run would wait, and change nothing
   -h, --help    help for wait
+== ws server setup
+It refuses a user but root, and a system but Ubuntu 26.04, before any write. It installs mise at the version ws pins, checked against its SHA-256, where mise --version differs, and writes /etc/mise/miserc.toml and /etc/mise/config.toml. A second run writes nothing.
+
+Usage:
+  ws server setup [flags]
+
+Flags:
+  -h, --help   help for setup
 == ws server signoz
 SigNoz's steps that the signoz role's units run
 

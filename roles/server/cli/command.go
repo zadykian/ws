@@ -8,6 +8,7 @@ import (
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/units"
 	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/roles/internal/setup"
 	"github.com/zadykian/ws/roles/server/ubuntu/ikeward"
 )
 
@@ -20,5 +21,6 @@ var rootUser = account.User{Name: "root", Home: "/root"}
 func Command(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("server", "the commands for an Ubuntu server", newFansCmd(p),
 		newCableCmd(p, units.OSUnits{}), newTunnelCmd(p, units.OSUnits{}), newIkewardCmd(p, ikeward.StatusTries, ikeward.StatusWait),
-		newGitCmd(p), newDevtoolsCmd(p), newClaudeCmd(p, units.OSUnits{}), newValuesCmd(p), newSignozCmd(p))
+		newGitCmd(p), newDevtoolsCmd(p), newClaudeCmd(p, units.OSUnits{}), newValuesCmd(p), newSignozCmd(p),
+		newSetupCmd(p, setup.PinnedMise))
 }

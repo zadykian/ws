@@ -71,7 +71,11 @@ ws runs them by `KIND/NAME`, each moved behind the unit that its `after` names, 
 
 The machine's miserc, `/etc/mise/miserc.toml`, names the envs that load as the set `ws`: `server`
 alone. A run by `-E ws,secrets`, the secrets task's, adds the env `secrets` to the set, which no
-other run loads. `install.sh` writes the miserc.
+other run loads. `ws server setup` writes the miserc, as `install.sh` does.
+
+The same command writes `/etc/mise/config.toml`, which trusts the tree: its `trusted_config_paths`,
+under `[settings]`, names `/opt/ws`, so that a run by hand needs no `mise trust`. mise reads that
+setting of a system config under `[settings]` alone.
 
 ## Secret inputs
 
