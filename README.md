@@ -54,11 +54,11 @@ Its [`frame`](roles/client/macos/frame) is what the Mac's roles of mise's config
 and has it block all incoming.
 
 A new Mac with Apple silicon follows [the Mac's runbook](roles/client/runbook.md), as
-`install.sh` is the server's alone. By hand, it installs ws's binary and mise, each checked against
-its SHA-256, clones a release's tree into `/opt/ws`, and links its plugin where mise finds it.
-Then it writes the values ([The Mac's values](roles/client/values/README.md)) and runs
-`MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap` ([The Mac](roles/client/README.md)). [The server's runbook](roles/server/runbook.md) lists
-the server's own steps.
+`install.sh` is the server's alone. By hand, it installs ws's binary, checked against its SHA-256,
+and writes the values ([The Mac's values](roles/client/values/README.md)). Then `ws client setup`
+installs the command line tools and mise, checks a release's tree out into `/opt/ws`, links its
+plugin where mise finds it, and runs mise's bootstrap ([The Mac](roles/client/README.md#setup)).
+[The server's runbook](roles/server/runbook.md) lists the server's own steps.
 
 ## A new machine
 

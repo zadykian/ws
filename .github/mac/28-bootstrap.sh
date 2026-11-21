@@ -1,6 +1,7 @@
 #!/bin/bash
-# mise bootstrap with the Mac's frame, as the runbook runs it. The first run installs ws and links
-# the plugin, and copies ws to /usr/local/bin. It sets up ssh, git and cld from the job's
+# ws client setup with the Mac's frame, as the runbook runs it, on the tree in /opt/ws as it stands.
+# Its plan before the first run must exit 2. The first run installs mise, links the plugin, installs
+# ws and copies ws to /usr/local/bin. It sets up ssh, git and cld from the job's
 # values.yml, with the stand-ins of cld and the stand-in ws's tools (mac-standins.sh). It makes the
 # Mac's WireGuard key too (30-key.sh). Then the plan must exit 0, and a second run must call sudo not once, as a run
 # that changes nothing asks no password.
@@ -16,15 +17,20 @@ set -eo pipefail
 . .github/mac-mise.sh
 
 sh .github/mac-standins.sh
-mac_mise
 mac_tree
 trap 'kill "$mac_server"' EXIT
+status=0
+mac_bootstrap plan --detailed-exitcode || status=$?
+if [ "$status" != 2 ]; then
+    echo "::error::the plan before the first run exited $status, not 2: setup has mise and the plugin to do"
+    exit 1
+fi
 mac_mark
 mac_bootstrap || {
-    echo '::error::the first mise bootstrap failed'
+    echo '::error::the first ws client setup failed'
     exit 1
 }
-echo "the first run called sudo $(mac_calls) times"
+echo "setup's first run called sudo $(mac_calls) times"
 fail=0
 mac_bootstrap plan --detailed-exitcode || {
     echo "::error::the plan after the first run exited $?, not 0"
@@ -42,12 +48,12 @@ socketfilterfw=/usr/libexec/ApplicationFirewall/socketfilterfw
 }
 mac_mark
 mac_bootstrap || {
-    echo '::error::the second mise bootstrap failed'
+    echo '::error::the second ws client setup failed'
     exit 1
 }
 calls=$(mac_calls)
 if [ "$calls" != 0 ]; then
-    echo "::error::the second mise bootstrap called sudo $calls times, not once"
+    echo "::error::the second ws client setup called sudo $calls times, not once"
     fail=1
 fi
 cmp -s /usr/local/bin/ws "$(mac_build)" || {
@@ -61,7 +67,7 @@ owner=$(stat -f '%Su:%Sg %Lp' /usr/local/bin/ws)
 }
 # A plan from /opt/ws with every unit in sync: the read fails, as the run would skip each role.
 root=0
-(cd / && MISE_LOCKED=1 MISE_TRUSTED_CONFIG_PATHS=/opt/ws mise -C /opt/ws bootstrap plan </dev/null) 2>&1 |
+(cd / && mise -C /opt/ws bootstrap plan </dev/null) 2>&1 |
     tee "$RUNNER_TEMP/root.out" || root=$?
 if [ "$root" != 1 ] || ! grep -qF "run mise in /opt/ws/roles/client" "$RUNNER_TEMP/root.out"; then
     echo "::error::the plan from /opt/ws exited $root, not 1 naming /opt/ws/roles/client"

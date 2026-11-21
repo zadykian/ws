@@ -15,7 +15,7 @@ func Command(p enginecli.Env) *cobra.Command {
 		newValuesCmd(p, &server),
 		newResolverCmd(p), newTunnelCmd(p, &server),
 		newServersCmd(p, &server), newRemoveCmd(p, &server), newCldCmd(p), newKeysCmd(p), newCableCmd(p), newNetworksCmd(p), newSSHCmd(), newGitCmd(p),
-		newSecretsCmd(p, &server))
+		newSecretsCmd(p, &server), newSetupCmd(p, &server, liveSetup()))
 	g.PersistentFlags().StringVar(&server, "server", "", "the server to act on, which may be left out where there is one")
 	return g
 }

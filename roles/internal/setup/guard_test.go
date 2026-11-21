@@ -36,6 +36,16 @@ func TestGuardPassesATreeThatDoesNotExist(t *testing.T) {
 	}
 }
 
+func TestGuardPassesADirectoryAboveThatIsMissing(t *testing.T) {
+	m, g := guarded()
+	delete(m.Dirs, "/opt/ws")
+	delete(m.Dirs, "/opt/ws/roles")
+	delete(m.Dirs, "/opt")
+	if _, err := g.Plan(t.Context()); err != nil {
+		t.Errorf("err = %v", err)
+	}
+}
+
 func TestGuardRefuses(t *testing.T) {
 	for name, tc := range map[string]struct {
 		change func(m *effecttest.Machine)

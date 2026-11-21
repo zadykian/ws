@@ -6,7 +6,7 @@
 
 # ws's units, `"ws:KIND/NAME" = "in-sync"` under [bootstrap.packages], go to the plugin ws, which
 # no [bootstrap.plugins] entry names: mise installs an entry again on every run, with a warning.
-# The runbook links the tree's plugins/ws into /usr/local/share/mise/plugins, where mise loads it
+# ws client setup links the tree's plugins/ws into /usr/local/share/mise/plugins, where mise loads it
 # as a system plugin.
 
 # The frame's line, at the root rather than in its role: a run from /opt/ws, which loads no role,

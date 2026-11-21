@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -65,11 +66,16 @@ func unwritable(dir string) bool {
 // sudoWrite fills a new file beside path through sudo, gives it owner, as uid:gid, and perm, and
 // renames it over path.
 func (m OSMachine) sudoWrite(path string, data []byte, owner string, perm fs.FileMode) error {
+	return m.sudoWriteFrom(path, bytes.NewReader(data), owner, perm)
+}
+
+// sudoWriteFrom is sudoWrite for content that a reader holds, which a download's file is.
+func (m OSMachine) sudoWriteFrom(path string, data io.Reader, owner string, perm fs.FileMode) error {
 	tmp := filepath.Join(filepath.Dir(path), "."+filepath.Base(path)+".ws-new")
 	mode := strconv.FormatUint(uint64(perm.Perm()), 8)
 	cmd := m.command(context.Background(),
 		append(m.sudo(), "sh", "-c", rootWrite, "sh", tmp, owner, mode, path))
-	cmd.Stdin = bytes.NewReader(data)
+	cmd.Stdin = data
 	if _, err := cmd.Output(); err != nil {
 		_, _ = m.RunRoot(context.Background(), "rm", "-f", tmp)
 		return commandError(cmd, err)

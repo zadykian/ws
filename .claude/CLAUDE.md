@@ -90,9 +90,9 @@ The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `server` bui
 Fresh reads too, the firewall around Docker and the secrets task
 ([The server job](../.github/workflows/server.md)).
 `signoz` forges SigNoz's compose files again, and `install` tries `install.sh`. `mac` sets up a
-Mac on GitHub's macOS runner by `mise bootstrap`, whose last run must call no sudo and whose plan
-must exit 0. `mac-cld` sets up
-Ghostty, Zed and cld by the bootstrap on another ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `mise
+Mac on GitHub's macOS runner by `ws client setup`, whose last run must call no sudo and whose
+`--plan` must exit 0. `mac-cld` sets up
+Ghostty, Zed and cld by setup on another ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `mise
 bootstrap` sets up the machine that runs it, as below.
 
 The hooks check a commit for the local list's words. This checks any other text, such as a pull
@@ -127,7 +127,9 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([The server job](../.github/workflows/server.md)).
 - A second run changes nothing: CI's `server` job runs `ws server setup` twice. It fails where
   `ws server setup --plan` does not exit 0, after the first run and after the second
-  ([server-checks.sh](../.github/server-checks.sh)).
+  ([server-checks.sh](../.github/server-checks.sh)). CI's `mac` job asks the same of
+  `ws client setup --plan` after its first run, and no sudo of its second
+  ([28-bootstrap.sh](../.github/mac/28-bootstrap.sh)).
 - `release.yml` checks a release's files and notes for the local list's words before it publishes
   them. The list is the secret `FORBIDDEN_WORDS`, and the job fails on an empty one
   ([Cutting a release](../.github/workflows/release.md#cutting-a-release)).
@@ -139,11 +141,10 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([ci.yml](../.github/workflows/ci.yml)) and the gates' tools ([.tools/run](../.tools/run)). So is ws's
   binary: `mise.lock` holds its SHA-256 for each target, which mise checks as it installs
   ([mise.lock](../mise.lock)). A Mac's runbook checks it by hand too
-  ([runbook.md](../roles/client/runbook.md)). So is mise's binary. `ws server setup` holds its
-  SHA-256 for each Linux target ([mise.go](../roles/internal/setup/mise.go)), as `install.sh` does
-  ([install.sh](../install.sh)), and a test holds the two together. The Mac's runbook holds its
-  macos-arm64's ([runbook.md](../roles/client/runbook.md)). So is the server's fnox: GitHub's digest of its
-  release asset for each platform is in `roles/server/mise/mise.server.lock`
+  ([runbook.md](../roles/client/runbook.md)). So is mise's binary. `ws server setup` and `ws client setup` hold
+  its SHA-256 for each target ([mise.go](../roles/internal/setup/mise.go)). So does `install.sh` for
+  Linux ([install.sh](../install.sh)), and a test holds the pair together. So is the server's fnox:
+  GitHub's digest of its release asset for each platform is in `roles/server/mise/mise.server.lock`
   ([secrets](../roles/server/ubuntu/secrets/README.md#fnox)). So is
   yamllint ([lint-requirements.in](../.github/lint-requirements.in)), and so are the Mac's gh, fnox
   and age-plugin-yubikey, by `roles/client/mise/mise.mac.lock` ([git](../roles/client/macos/git/README.md#gh),

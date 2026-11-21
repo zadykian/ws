@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/roles/internal/setup"
 )
@@ -216,5 +217,46 @@ func TestCheckoutLeavesTheRepositoryThatGitDirNamesAlone(t *testing.T) {
 	out, err := tags.CombinedOutput()
 	if err != nil || strings.TrimSpace(string(out)) != "v0.0.1" {
 		t.Errorf("the tags of the other repository = %q, err = %v", out, err)
+	}
+}
+
+func TestCheckoutAsUserChangesTheTreeBySudoAndReadsItAsTheUser(t *testing.T) {
+	c, _ := upstream(t, "v1.2.3")
+	log := filepath.Join(t.TempDir(), "sudo.log")
+	c.M = local.OSMachine{Sudo: []string{"sh", "-c", `printf '%s\n' "$*" >>"$0"; exec "$@"`, log}}
+	c.AsUser = true
+	if n := run(t, c); n != 1 {
+		t.Fatalf("first run planned %d changes", n)
+	}
+	before := strings.Count(content(t, log), "\n")
+	if n := run(t, c); n != 0 || strings.Count(content(t, log), "\n") != before {
+		t.Errorf("a run after it planned %d changes, and sudo ran again", n)
+	}
+	for i, verb := range []string{"init", "fetch", "checkout", "clean"} {
+		if line := strings.Split(content(t, log), "\n")[i]; !strings.HasPrefix(line, "git ") || !strings.Contains(line, " "+verb+" ") {
+			t.Errorf("sudo's call %d = %q, want a git %s", i, line, verb)
+		}
+	}
+	if before != 4 {
+		t.Errorf("sudo ran %d times, want 4", before)
+	}
+}
+
+func TestCheckoutAsUserNamesTheTreeSafeInEachRead(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Dirs["/opt/ws"], m.Dirs["/opt/ws/.git"] = 0o755, 0o755
+	m.Results["git --version"] = effecttest.Result{}
+	c := setup.Checkout{M: m, Dir: "/opt/ws", Repo: "https://example.org/ws", Tag: "v1.2.3", AsUser: true}
+	// The machine has no result for a read, which Plan takes for a tree to mend.
+	if changes, err := c.Plan(t.Context()); err != nil || len(changes) != 1 {
+		t.Fatalf("changes = %v, err = %v", changes, err)
+	}
+	for _, call := range m.Calls {
+		if call == "run git --version" || !strings.HasPrefix(call, "run git ") {
+			continue
+		}
+		if want := "run git -c safe.directory=/opt/ws -C /opt/ws "; !strings.HasPrefix(call, want) {
+			t.Errorf("call %q lacks the prefix %q", call, want)
+		}
 	}
 }

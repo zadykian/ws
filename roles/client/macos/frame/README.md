@@ -16,6 +16,8 @@ server, and loads no file of the server's.
 
 ## Where it sits
 
+`ws client setup` puts these in place ([Setup](../../README.md#setup)).
+
 - `/opt/ws` is the tree at the release, root's, which no one else may write.
 - `/usr/local/share/mise/plugins/ws` links to the tree's `plugins/ws`, root's, where mise finds a
   system plugin and loads it as it stands. mise refuses it where anyone but root or the user may
@@ -23,7 +25,8 @@ server, and loads no file of the server's.
   `[bootstrap.plugins]` entry would install the plugin again on every run, with a warning. A
   plugin that mise does not load drops every unit with mise's warning alone, as no hook runs.
 - `/usr/local/bin/mise` is the pinned mise, checked by its SHA-256.
-- `/etc/mise/miserc.toml` says `env = ["mac"]`, which loads `mise.mac.toml` and the fragments.
+- `/etc/mise/miserc.toml` names the env `mac` as the set `ws`, which loads `mise.mac.toml` and the
+  fragments. `/etc/mise/config.toml` trusts the tree, so that a run by hand needs no `mise trust`.
 - mise runs as the user and installs ws in the user's data directory. The Mac's `ws unit` refuses
   root.
 

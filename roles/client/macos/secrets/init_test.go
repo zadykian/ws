@@ -181,8 +181,8 @@ func TestInitNeedsTheTools(t *testing.T) {
 	delete(m.Files, "/usr/local/bin/fnox")
 	i, _ := initOn(m, strings.NewReader("\n"), newBackup(t))
 	err := i.Run(context.Background())
-	if err == nil || !strings.Contains(err.Error(), "mise -C /opt/ws/roles/client bootstrap") {
-		t.Errorf("init without fnox gives %v, want an error naming the bootstrap", err)
+	if err == nil || !strings.Contains(err.Error(), "run ws client setup first") {
+		t.Errorf("init without fnox gives %v, want an error naming ws client setup", err)
 	}
 	if count(m.Calls, "run "+secrets.GH) != 0 {
 		t.Errorf("init without fnox ran gh: %q", m.Calls)

@@ -40,6 +40,9 @@ type Checkout struct {
 	Repo    string
 	Tag     string
 	InPlace bool
+	// AsUser is set where ws runs as a user, and root owns the tree, as on a Mac. A read of the tree
+	// names it safe to git, which refuses another user's repository, and each write runs through sudo.
+	AsUser bool
 }
 
 type checkOut struct {
@@ -58,7 +61,7 @@ func (checkOut) Kind() step.ChangeKind { return step.Install }
 func (c checkOut) Apply(ctx context.Context) error {
 	t := c.c
 	if c.fresh {
-		if _, err := t.M.Run(ctx, "git", "-c", "init.defaultBranch=ws", "init", "-q", t.Dir); err != nil {
+		if _, err := t.write(ctx, "-c", "init.defaultBranch=ws", "init", "-q", t.Dir); err != nil {
 			return fmt.Errorf("cannot create %s: %w", t.Dir, err)
 		}
 	}
@@ -68,7 +71,7 @@ func (c checkOut) Apply(ctx context.Context) error {
 		{"-c", "advice.detachedHead=false", "checkout", "-q", "--force", "--detach", ref},
 		{"clean", "-q", "-ffdx"},
 	} {
-		if _, err := t.M.Run(ctx, "git", append([]string{"-C", t.Dir}, args...)...); err != nil {
+		if _, err := t.write(ctx, append([]string{"-C", t.Dir}, args...)...); err != nil {
 			return fmt.Errorf("cannot check %s out in %s: %w", t.Tag, t.Dir, err)
 		}
 	}
@@ -116,7 +119,20 @@ func (t Checkout) current(ctx context.Context) bool {
 	return err == nil && left == ""
 }
 
+// git reads the tree, as the user where AsUser is set.
 func (t Checkout) git(ctx context.Context, args ...string) (string, error) {
-	out, err := t.M.Run(ctx, "git", append([]string{"-C", t.Dir}, args...)...)
+	argv := append([]string{"-C", t.Dir}, args...)
+	if t.AsUser {
+		argv = append([]string{"-c", "safe.directory=" + t.Dir}, argv...)
+	}
+	out, err := t.M.Run(ctx, "git", argv...)
 	return strings.TrimSpace(string(out)), err
+}
+
+// write runs git to change the tree, through sudo where AsUser is set.
+func (t Checkout) write(ctx context.Context, args ...string) ([]byte, error) {
+	if t.AsUser {
+		return t.M.RunRoot(ctx, "git", args...)
+	}
+	return t.M.Run(ctx, "git", args...)
 }
