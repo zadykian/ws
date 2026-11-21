@@ -56,15 +56,15 @@ the remote deleted, a landed pull request's say. A `false` in `~/.gitconfig` kee
 
 `/etc/ws/gitconfig` signs each commit with an SSH key of the machine's own: the `.pub`
 that `WS_GIT_SIGNING_PUB_KEY` names in the values file, `~/.ssh/id_ed25519_signing.pub` by default.
-The private key lies beside it, without `.pub`. The `.pub` lies below `WS_HOME`, or the run fails,
+The private key lies beside it, without `.pub`. The `.pub` lies below `/root`, or the run fails,
 and its path holds no `"`, `\` or control character, as the values refuse them. `state/git-key`
-makes the pair once, as the account, an ed25519 key with no passphrase, as tools and claude commit
+makes the pair once, as root, an ed25519 key with no passphrase, as tools and claude commit
 unattended. It makes the key's missing directory first, 0700. The key only signs. The
 role does not register it with GitHub: [The signing key](../devtools/README.md#the-signing-key).
 
-To revoke the key, delete it in the account's settings on GitHub, then delete
+To revoke the key, delete it in the GitHub account's settings, then delete
 `~/.ssh/id_ed25519_signing` and its `.pub`. The next run makes a new key, and its `.pub` goes to
-the account by hand. A key deleted on GitHub alone needs that too.
+the GitHub account by hand. A key deleted on GitHub alone needs that too.
 
 `git verify-commit` trusts the key for `me@zadykian.dev` through `/etc/ws/allowed_signers`,
 root's and 644, the Mac's path too. Its unit reads the `.pub` through the account, which refuses a
@@ -107,7 +107,7 @@ URL of the file: `ws server git credential KEY`, where `KEY` is the URL without 
 each run of other characters than letters, digits, `.`, `_` and `-` as `_`. No two URLs may give
 the same key. The program names `/usr/local/bin/ws`, which the frame keeps, as mise's own path
 changes with each version. So git's units run after the frame's `state/ws-binary`, and a first
-run's clone by a token finds the program. git runs it as the account, and it reads the URL's token
+run's clone by a token finds the program. git runs it as root, and it reads the URL's token
 from the file.
 It reads no `values.yml`. Root owns both files, and the tokens' is at 0600.
 The program ignores git's requests to store or erase a credential, so a token the server refuses
@@ -130,9 +130,9 @@ and is empty by default. Each entry takes:
 
 - `repo`: the repository's URL or path, with no token, which [Git credentials](#git-credentials)
   give;
-- `dest`: the clone's path, absolute or relative to `WS_HOME`.
+- `dest`: the clone's path, absolute or relative to `/root`.
 
-Each repository is cloned as `WS_USER`, after the tokens are written, where its `dest` is missing.
+Each repository is cloned as root, after the tokens are written, where its `dest` is missing.
 A run never pulls, resets or removes a clone, and leaves alone a `dest` that exists, clone or not.
 A private server may sit behind the VPN of the `ikeward` role
 ([A run](../ikeward/README.md#a-run)). A clone that fails, as from a server out of reach, fails its

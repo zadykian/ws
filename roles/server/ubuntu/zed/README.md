@@ -6,7 +6,7 @@ root's, in `/usr/local/lib/ws/zed`. Its `units.toml.tmpl` holds the units: `file
 settings that Zed's server reads, and `file/zed-nofile`, the open-file limit that the server needs.
 The Mac's side is [Zed on the Mac](../../../client/macos/zed/README.md).
 
-`~/.config/zed/settings.json` is owned by `WS_USER`. A run replaces a change made to it by hand
+`~/.config/zed/settings.json` is root's. A run replaces a change made to it by hand
 and keeps the old file beside the new one, as `PATH.PID.TIME~`. A link on the way is refused. The
 key `WS_ZED_NOFILE` of `/etc/ws/values.yml` sets the limit, 65536 by default. No unit needs a booted
 systemd, so the role runs whole in CI's container.
@@ -14,7 +14,7 @@ systemd, so the role runs whole in CI's container.
 ## What runs where
 
 - The Mac has the UI, highlighting and unsaved changes.
-- ws has the files, git, language servers, debug adapters, terminals and tasks, all as `WS_USER`.
+- ws has the files, git, language servers, debug adapters, terminals and tasks, all as root.
 - `~/.zed_server` on ws holds the server, one binary per Mac version, which Zed cleans.
 - `~/.local/share/zed/` holds `languages`, `remote_extensions`, `server_state` and `logs`.
   `remote_extensions` holds the Mac's extensions that declare a server, with their downloads in
@@ -75,8 +75,8 @@ tasks for projects and solutions. `.sln` opens as plain text.
 
 For Go, the shim and `dlv` run on ws, and the Mac forwards the debug port over ssh. The sshd
 drop-in restricts no forwarding, and the outbound table accepts loopback
-([security](../security/README.md#outbound)). `WS_USER` is `zadykian` by default, so Yama's `ptrace_scope` stops an
-attach to a process that is not its child. Launching under `dlv` works.
+([security](../security/README.md#outbound)). Root's debugger attaches to any process, past Yama's
+`ptrace_scope`, which stops a user's attach to a process that is not its child.
 
 Zed has no C# debugger (csharp#12), no Razor (csharp#41) and no C# test runnables.
 
@@ -135,7 +135,7 @@ worktree.
 ## The open-file limit
 
 The unit `file/zed-nofile` writes `/etc/security/limits.d/ws-zed.conf`, root's, from
-`files/limits.conf.tmpl`. It gives `WS_USER` a soft limit of `WS_ZED_NOFILE` open files. A unit
+`files/limits.conf.tmpl`. It gives root a soft limit of `WS_ZED_NOFILE` open files. A unit
 writes it, not mise, as its text reads the values: ws's have defaults, and mise's read of
 `values.yml` fails the whole run where the file is missing.
 

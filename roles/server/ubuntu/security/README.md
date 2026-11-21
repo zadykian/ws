@@ -24,12 +24,14 @@ ufw then lets in SSH on port 22, by mise's rule `mise:ssh`, and
 WireGuard on UDP port 51820 ([tunnel](../tunnel/README.md)). It lets in DNS lookups from Docker's
 bridges to the host's resolver too ([docker](../docker/README.md)), and nothing else. fail2ban bans
 an address for an hour after 5 failed logins in 10 minutes. sshd's own penalties slow one that keeps
-failing. Both hold on every network, with no peer or network exempt. SSH takes only the keys
-imported from the GitHub account during Ubuntu's install; a cloud VM has no installer ([A new
-machine](../../../../README.md#a-new-machine)). Over SSH, keep the session that ran ws open until a
-new one logs in. The guard `guard/security-keys` stops the run before passwords go off if `WS_USER`
+failing. Both hold on every network, with no peer or network exempt. Root logs in by the keys that
+[the runbook](../../runbook.md) imports from the GitHub account into `/root/.ssh/authorized_keys`;
+ws writes none and copies none from another account's file ([A new
+machine](../../../../README.md#a-new-machine)). The drop-in limits no user, so the installer's
+user keeps its keys. Over SSH, keep the session that ran ws open until a
+new one logs in. The guard `guard/security-keys` stops the run before passwords go off if root
 has no key to log in with, or a file of keys that sshd passes over, outside a container. It stops it
-on every machine where `WS_HOME` is not the account's home in `getent passwd`. sshd's drop-in lands
+on every machine where `/root` is not root's home in `getent passwd`. sshd's drop-in lands
 only after `sshd -G` accepts it, and sshd reloads after a change, once, in its unit. ufw's service
 is active as well as enabled, as mise keeps it.
 

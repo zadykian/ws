@@ -153,10 +153,9 @@ The unit `file/ws-values` writes `/etc/ws/values.yml` where nothing is at the pa
 included, as a `seed` file ([file](../../../../engine/core/kind/file.md)). The file, root's at
 600, goes in whole under that mode. `Values.YAML` gives its text from the struct, so that a role's
 new key needs no second list. It names each key of `values.Values`, a table too, at the value a
-missing file gives. A key that follows another holds its value as the file is made: `WS_HOME` and
-`WS_GIT_SIGNING_PUB_KEY` the user's, `WS_TUNNEL_PEERS` the Mac at the tunnel's next address.
-`ws server values set` moves the first two with a key they follow, where they hold the
-value it gave them. A key that a run reads from the machine, such as the swap's size, stays empty
+missing file gives. A key whose default is derived holds its value as the file is made:
+`WS_GIT_SIGNING_PUB_KEY` is under root's home, `WS_TUNNEL_PEERS` the Mac at the tunnel's next
+address. A key that a run reads from the machine, such as the swap's size, stays empty
 or `null`.
 
 The file is then the owner's: no run reads it as ws's, or changes it. Each call of ws reads the

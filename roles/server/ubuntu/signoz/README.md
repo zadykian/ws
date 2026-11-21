@@ -22,7 +22,7 @@ which only root reads; nothing else needs it. Reach the UI through an SSH tunnel
 `http://localhost:3301`:
 
 ```sh
-ssh -N -L 3301:127.0.0.1:3301 WS_USER@SERVER
+ssh -N -L 3301:127.0.0.1:3301 root@SERVER
 ```
 
 A `LocalForward 3301 127.0.0.1:3301` in the client's `~/.ssh/config` does the same.
@@ -50,7 +50,7 @@ SigNoz keeps traces, metrics and logs for 90 days, `WS_SIGNOZ_RETENTION_DAYS`; i
 days, and 30 for metrics. The role sets it through SigNoz's API before anything is sent, as a change
 applies only to data that comes in after it. It sets it after SigNoz's schema migrator has finished
 too, as the migrator sets its own. Settings › General in the UI shows it; rules set there to keep
-some logs for another time stay. `sudo ws server signoz sync --check` reads it and reports
+some logs for another time stay. `ws server signoz sync --check` reads it and reports
 what it would change, and skips it where SigNoz isn't running.
 
 ## The dashboards
@@ -99,7 +99,7 @@ for a newer release. It never removes a file, hence the `rm`.
 
 A new SigNoz may return the dashboards with fields added or dropped, and the role would then replace
 them on every run. So after changing SigNoz's image, unlock any dashboard locked in the UI, reported
-or not, as the refresh stops at one. Then run `sudo ws server signoz sync`, refresh
+or not, as the refresh stops at one. Then run `ws server signoz sync`, refresh
 `host.json` and `claude.json` from SigNoz as
 `roles/server/ubuntu/signoz/internal/dashboards/dashboards/README.md` says,
 review their diff, and commit them with the casting. A second run must then leave both dashboards as

@@ -4,7 +4,7 @@ The `devtools` role installs Node, the .NET SDKs, gh, glow, the libraries headle
 Go, gopls, Delve, roslyn-language-server, the SQL and Docker servers and rustup. The sources, the
 packages and the tools are mise's, in [mise.server.toml](mise.server.toml). The tools' links, gh's
 telemetry and login, roslyn-language-server, the npm servers and rustup are units of
-[units.toml.tmpl](units.toml.tmpl). Those of the account run as `WS_USER`, root included, and without booted
+[units.toml.tmpl](units.toml.tmpl). Those of the account run as root, and without booted
 systemd too, as in CI's container. [paths.go](paths.go) names the servers' paths for Zed's and
 Fresh's tests.
 
@@ -61,7 +61,7 @@ mise checks a sum at the download alone, so it mends no tool changed after its i
 - roslyn-language-server, C#'s server, is the server of VS Code's C# extension. It comes from
   nuget.org with `dotnet tool`, at the version that `state/devtools-roslyn` pins in its command
   and its check, and runs on the .NET 10 of this role. It goes in
-  `~/.dotnet/tools/roslyn-language-server`, `WS_USER`'s, which follows `WS_HOME`.
+  `/root/.dotnet/tools/roslyn-language-server`.
 
 ## The SQL and Docker servers
 
@@ -94,9 +94,9 @@ A project's `postgres-language-server.jsonc` holds `db` fields, never a `connect
 
 ## The npm servers
 
-The role installs four packages into `~/.local/lib/language-servers`, owned by `WS_USER`, from the
+The role installs four packages into `~/.local/lib/language-servers`, owned by root, from the
 `package.json` and `package-lock.json` in [files/npm](files/npm). The units
-`file/devtools-npm-lock` and `file/devtools-npm-package` write them there as the account's, with
+`file/devtools-npm-lock` and `file/devtools-npm-package` write them there, with
 the directories a new home lacks:
 
 - `@ansible/ansible-language-server`, for Ansible.
@@ -105,7 +105,7 @@ the directories a new home lacks:
 - `sql-formatter`, linked as `/usr/local/bin/sql-formatter`, root's, so a project's settings name
   the bare command.
 
-`state/devtools-npm` runs `npm ci --ignore-scripts` as `WS_USER`. It fails where the lock and
+`state/devtools-npm` runs `npm ci --ignore-scripts` as root. It fails where the lock and
 `package.json` disagree or a sha512 `integrity` differs, so these downloads are checked, though not
 against a SHA-256. The unit keeps `node_modules/.ws-sha256`, `sha256sum`'s lines for both files,
 and runs again where its check, `sha256sum -c`, fails. mise installs the Node package, and npm with

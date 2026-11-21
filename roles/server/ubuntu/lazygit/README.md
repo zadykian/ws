@@ -44,7 +44,7 @@ cells change.
 
 ## The config
 
-The unit `lazygit-config` writes `~/.config/lazygit/config.yml` for `WS_USER`, from
+The unit `lazygit-config` writes `~/.config/lazygit/config.yml` for root, from
 `files/config.yml`. A run replaces a change made to it by hand, and keeps the old file beside the
 new one, as `config.yml.PID.TIME~`.
 
