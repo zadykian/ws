@@ -187,9 +187,7 @@ table's `containers` chain drops what they forward: Docker forwards it ahead of 
 alone: as a home file (`Account.File`, `Account.Dir`), a removal (`Account.Absent`) or the guarded
 read (`User.ReadHome`). The file kind's units take that way for each file whose owner is the
 account. Each refuses a link at the file, or at a directory between the home and it, and names the
-link and its target. A command of ws that acts as `WS_USER`, as claude's do, reaches only what the
-user could reach: `settings.json` may link into a clone of dotfiles. Replace the link with the file
-itself. The check looks as the unit plans, and a home file or a removal looks again as it applies.
-A read of a home file opens each directory below the home, and the file, following no link. It reads
-a regular file of 1 MiB at most, with its owner and mode from that open. `rm` and `git` stay outside
-the bound.
+link and its target. The check looks as the unit plans, and a home file or a removal looks again as
+it applies. A read of a home file opens each directory below the home, and the file, following no
+link. It reads a regular file of 1 MiB at most, with its owner and mode from that open. `rm` and
+`git` stay outside the bound.
