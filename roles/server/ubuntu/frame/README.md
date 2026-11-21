@@ -14,7 +14,7 @@ config, with its spec where it has units, and holds no Go.
 | [`roles/server/mise/mise.server.lock`](../../mise/mise.server.lock) | The roles' tools: each download's url and SHA-256 for each platform ([devtools](../devtools/README.md#the-tools)). |
 | [`mise.server.toml`](../../../../mise.server.toml) | The server's: dpkg's options, `/etc/ws`, the check against a silent skip and [the check of the values](#the-check-of-the-values). |
 | [`plugins/ws`](../../../../plugins/ws) | The plugin: a hook runs one `ws unit read` or `ws unit write` ([ws unit](../../../../engine/core/kind/README.md#ws-unit)), linked as [a system plugin](#the-plugin). |
-| `units.toml.tmpl`, `mise.server.toml`, `files/` here | The role `frame`: the units that keep `/usr/local/bin/ws` and write [the values file](#the-values-file). |
+| `units.toml.tmpl`, `mise.server.toml`, `files/` here | The role `frame`: the unit that writes [the values file](#the-values-file). |
 
 The Mac shares `mise.toml` alone, and loads no file of the server's.
 

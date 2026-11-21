@@ -2,10 +2,10 @@
 # The server job's three plans that must fail, as root, on the tree in /opt/ws. A plan from /opt/ws,
 # which loads no role, must fail and name the server's run directory. Then a bad value in
 # /etc/ws/values.yml must fail the plan before any write, naming its key, and the file goes back.
-# Then the check against a silent skip must fail the plan where mise's config lacks a unit. This drops the frame's line of
-# state/ws-binary, and puts the file back after. ws unit verify names the unit, or the plugin that
-# mise no longer loads where the line was the last of ws's. mise's plan exits 2 where a part or a unit would change,
-# and 1 where it cannot tell.
+# Then the check against a silent skip must fail the plan where mise's config lacks a unit. This
+# drops the frame's line of file/ws-values, and puts the file back after. ws unit verify names the
+# unit, or the plugin that mise no longer loads where the line was the last of ws's. mise's plan
+# exits 2 where a part or a unit would change, and 1 where it cannot tell.
 set -eu
 
 out=$(mise -C /opt/ws bootstrap plan </dev/null 2>&1) && status=0 || status=$?
@@ -30,7 +30,7 @@ if [ "$status" != 1 ] || ! printf '%s\n' "$out" | grep -q 'ws server values chec
 fi
 
 toml=/opt/ws/roles/server/ubuntu/frame/mise.server.toml
-line='"ws:state/ws-binary" = "in-sync"'
+line='"ws:file/ws-values" = "in-sync"'
 saved=$(mktemp)
 out=$(mktemp)
 cp -p "$toml" "$saved"

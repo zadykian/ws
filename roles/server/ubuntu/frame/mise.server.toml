@@ -1,4 +1,3 @@
 # The frame's lines for every server.
 [bootstrap.packages]
-"ws:state/ws-binary" = "in-sync"
 "ws:file/ws-values" = "in-sync"

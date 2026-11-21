@@ -1,6 +1,6 @@
 # Written by github.com/zadykian/ws, whose next run replaces any change made here. It drives the
 # board's fans on the curves of /etc/ws/fans.json, and hands them back to the board's curves as it
-# stops. It runs the pinned ws, which a run restarts it on where that changes. Its log goes to the
+# stops. It runs /usr/local/bin/ws, which a run restarts it on where that changes. Its log goes to the
 # journal.
 [Unit]
 Description=Fan curves for the board's headers

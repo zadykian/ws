@@ -28,7 +28,7 @@ ssh -N -L 3301:127.0.0.1:3301 root@SERVER
 A `LocalForward 3301 127.0.0.1:3301` in the client's `~/.ssh/config` does the same.
 
 mise copies the files first, `/etc/ws/env` among them. Then ws's units (`units.toml.tmpl`) run in
-this order, after Docker's and the frame's `state/ws-binary`. otelcol's units, which read
+this order, after Docker's. otelcol's units, which read
 `/etc/ws/env`, hang below the sync:
 
 - `state/signoz-password` runs `ws server signoz password` where its `--check` fails: where
