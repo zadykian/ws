@@ -25,7 +25,7 @@ Each Go template ends in `.tmpl`, the spec's name and the name of each `template
   error. The spec's text fills as it loads, with `add`, `mul`, `div`,
   `has_prefix TEXT PREFIX`, `json VALUE`, which quotes a value as Go's JSON encoder does, and
   `fail MSG`, which stops the render with MSG. It takes `self` too, the path of the ws that runs the
-  units, so that a command of ws runs before the pinned binary is installed. A unit's template
+  units, so that a command of ws runs that ws, wherever its file is. A unit's template
   fills as it plans, as an earlier unit may make the account or the file that it reads. It takes
   `envvar FILE NAME` and the facts `mem_mib`, `cpus`, `fs_bytes PATH...`,
   `installed_version NAME`, `kernel_release` and `root_file PATH` too.
@@ -227,7 +227,7 @@ the server it runs as root.
 
 mise calls it through [`plugins/ws`](../../../plugins/ws), which holds no check of its own. Each
 hook runs one `ws unit read --whole` or `ws unit write`, with every unit the hook gets, and finds
-ws by `mise which ws`, the pinned binary. The write hook runs `ws unit verify` first.
+ws at `/usr/local/bin/ws`, which is there before any run. The write hook runs `ws unit verify` first.
 
 | Command | What it does |
 | --- | --- |

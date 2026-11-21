@@ -11,7 +11,7 @@ Each role has a page of its own. A role is its mise files by env, and its spec o
 it has any:
 
 - [`frame`](roles/server/ubuntu/frame): what each role of mise's config leans on, and
-  `/usr/local/bin/ws`, the pinned binary.
+  `/usr/local/bin/ws`, the machine's one ws.
 - [`base`](roles/server/ubuntu/base): packages, the locale, the timezone, security updates and a swap file,
   as mise's packages and units.
 - [`security`](roles/server/ubuntu/security): SSH by key only, ufw and fail2ban, and a table that keeps what

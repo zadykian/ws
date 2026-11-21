@@ -10,7 +10,7 @@ root as the server knows it: its name, its home, its uid and its primary gid.
 _Avoid_: owner, ids
 
 **Frame**:
-What each role of mise's config leans on: `mise.toml` with ws's pin, the server's
+What each role of mise's config leans on: `mise.toml`, the server's
 `mise.server.toml`, the plugin `plugins/ws`, the machine's miserc, and the role `frame`
 ([The frame](roles/server/ubuntu/frame/README.md)). The plugin's link puts it where mise finds a
 system plugin.

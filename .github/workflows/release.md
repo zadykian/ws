@@ -27,11 +27,10 @@ machine's miserc and runs `mise bootstrap`:
   ([The frame](../../roles/server/ubuntu/frame/README.md#the-machines-env)).
 - It finds the latest release once, and checks the release's tag out in `/opt/ws` by git, then
   runs the bootstrap on that tree, in the server's run directory, `/opt/ws/roles/server`. A
-  pre-release is never the latest: only `WS_VERSION` picks one. The tree pins ws's binary, and mise
-  checks it against `mise.lock`. The tree's `locked = true` has mise install each
-  tool only as a lock holds it. Run again, it checks the release's tag out in `/opt/ws`, dropping
-  any change and any file git does not track there, such as a trial's `mise.local.toml`. So it
-  brings the machine back to the release.
+  pre-release is never the latest: only `WS_VERSION` picks one. The tree's `locked = true` has
+  mise install each tool only as a lock holds it. Run again, it checks the release's tag out in
+  `/opt/ws`, dropping any change and any file git does not track there, such as a trial's
+  `mise.local.toml`. So it brings the machine back to the release.
 - It refuses a system other than Ubuntu 26.04, by `/etc/os-release`. So does `ws unit`'s read and
   write, which the bootstrap runs.
 - It refuses a `/opt/ws` that is a link, or that holds a file or directory root does not own or
@@ -90,10 +89,8 @@ git fetch origin && git switch --detach origin/feat/BRANCH
 git tag -s v0.13.0-rc.1 -m v0.13.0-rc.1 && git push origin v0.13.0-rc.1
 ```
 
-A tag holds no checksum of its own binaries, so a pre-release's tree pins an earlier release of
-ws. A pull request then pins the pre-release, and the next pre-release, cut once it lands, is the
-first whose tree installs that ws. Its own `install.sh` runs it by `WS_VERSION`, as the latest
-release's refuses a pre-release:
+A pre-release's own `install.sh` runs it by `WS_VERSION`, as the latest release's refuses a
+pre-release:
 
 ```sh
 set -o pipefail

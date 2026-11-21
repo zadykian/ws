@@ -175,8 +175,8 @@ as above.
 
 A daemon per server, `ws client tunnel run --server NAME`, runs as root from launchd, from
 boot and before any login, by `/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.NAME.plist`,
-which launchd's unit of the tunnel writes. It runs `/usr/local/bin/ws`, the bootstrap's copy of the
-pinned ws, which is root's. A root daemon that ran a file of the user's would let anything that
+which launchd's unit of the tunnel writes. It runs `/usr/local/bin/ws`, the bootstrap's copy of
+ws, which is root's. A root daemon that ran a file of the user's would let anything that
 runs as the user become root. The daemon holds WireGuard's device itself, so it needs no `wg` or
 `wireguard-go`. launchd's unit restarts each where `/etc/ws/tunnel.pub` changed, and sends each a
 SIGHUP where a server's `tunnel.conf` or `routes.d` changed.
