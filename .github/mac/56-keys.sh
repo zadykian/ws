@@ -67,7 +67,8 @@ files() {
 }
 
 # refuses TEXT: mise bootstrap's plan, then the bootstrap, must fail with TEXT in what they print,
-# and leave the files as they were.
+# and leave the files as they were. The bootstrap runs by mise, as ws client setup would wait for a
+# key where values.yml names no login key.
 refuses() {
     before=$(files)
     for run in plan apply; do
@@ -75,7 +76,7 @@ refuses() {
         if [ "$run" = plan ]; then
             out=$(mac_bootstrap plan 2>&1) || status=$?
         else
-            out=$(mac_bootstrap 2>&1) || status=$?
+            out=$(mac_tree_mise bootstrap 2>&1) || status=$?
         fi
         if [ "$status" = 0 ] || ! grep -qF -e "$1" <<<"$out"; then
             error "mise bootstrap's $run exited $status, printing '$out', where a failure and '$1' were due"
