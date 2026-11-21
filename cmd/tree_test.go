@@ -33,7 +33,7 @@ func listing(t *testing.T, root *cobra.Command) string {
 // group on every system. A move of the commands then shows any change of a name or a text.
 func TestTreeHoldsTheCommandsAndTheirHelp(t *testing.T) {
 	p := fakeProcess()
-	got := listing(t, cli.Root(p, clientCmd(p), serverCmd(p), unitCmd(p)))
+	got := listing(t, cli.Root(p, clientCmd(p), serverCmd(p), unitCmd(p), updateCmd(p)))
 	const golden = "testdata/tree.golden"
 	if *rewriteGolden {
 		if err := os.WriteFile(golden, []byte(got), 0o644); err != nil { //nolint:gosec // a test's data file
