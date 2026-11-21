@@ -4,8 +4,8 @@ CI sets up one scenario, the closest to a server installed from Ubuntu Server 26
 job `server` runs on GitHub's `ubuntu-26.04` runner, which boots, as root with the defaults and the
 outbound table on. The runner's image may hold a package that ws forgot to install. A server from
 Ubuntu's image lacks it, so the trial on that image finds it. The job sets the runner up as it
-would a server that root alone logs in to: root's `authorized_keys` holds a key, no user is made, and
-`/etc/ws/values.yml` says `WS_USER: root`. The runner's own Docker is purged first, as ws installs
+would a server that root alone logs in to: root's `authorized_keys` holds a key, and no user is
+made. The runner's own Docker is purged first, as ws installs
 its own. Its apt source goes too, as apt refuses a repository that two sources name with different
 keys, and mise adds its own. So do the plugins that the image put in Docker's directory past dpkg,
 which would keep it and warn. apt's daily timers lose the stamps of their runs at the image's

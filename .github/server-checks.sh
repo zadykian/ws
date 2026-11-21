@@ -104,7 +104,7 @@ lab_pid=$!
 
 install -d -m 755 /etc/ws
 # The swap file is small, as the runner's disk has no room for one the size of its RAM.
-printf '%s\n' --- 'WS_USER: root' 'WS_BASE_SWAP_SIZE_MB: 64' >/etc/ws/values.yml
+printf '%s\n' --- 'WS_BASE_SWAP_SIZE_MB: 64' >/etc/ws/values.yml
 chmod 600 /etc/ws/values.yml
 values_kept=$(mktemp)
 cp /etc/ws/values.yml "$values_kept"
