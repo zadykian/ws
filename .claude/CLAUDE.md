@@ -51,7 +51,7 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   beside one where the cap keeps two apart, as [docs.md](rules/docs.md) lists them.
   `.tools/README.md` holds the gates and `.github/workflows/README.md` CI.
 - `.tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
-  caps them. `build` builds ws for a target, `serve-build` points a checkout's pin at the tree's build,
+  caps them. `build` builds ws for a target, `install-build` installs the tree's build as `/usr/local/bin/ws`,
   for CI and a trial, and `vale-comments` runs Vale on files' comments. Go's
   `./...` leaves out a dot directory, so the Go gates name the tools' packages too. `lint/` holds
   the linters' configs, which the Makefile passes by flag, but tombi's, which tombi finds as it runs

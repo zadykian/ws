@@ -216,7 +216,7 @@ guard() {
 
 # checkout moves the tree in /opt/ws to the tag. A first run makes /opt/ws an empty repository,
 # and fetches as a later run does. A change to the tree, and a file git does not track, such as a
-# trial's mise.local.toml that would pin another ws, go.
+# trial's mise.local.toml that would load over the tag's tree, go.
 checkout() {
     if [ ! -e /opt/ws ]; then
         git -c init.defaultBranch=ws init -q /opt/ws </dev/null || die "cannot create /opt/ws"

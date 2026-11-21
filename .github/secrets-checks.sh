@@ -34,7 +34,7 @@ refused() {
 }
 
 # The repository, which the runner's own mise files point the task at. mise.local.toml is
-# .tools/serve-build's, which git ignores. mise.secrets.toml loads under the env secrets alone, as
+# a file that git ignores. mise.secrets.toml loads under the env secrets alone, as
 # a role's does: two inputs, one shared and one of the profile, make one file of root's.
 printf '\n[env]\nWS_SECRETS_REPO = "%s"\n' "$work/secrets.git" >>/opt/ws/mise.local.toml
 cat >/opt/ws/mise.secrets.toml <<'TOML'

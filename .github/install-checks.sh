@@ -191,7 +191,7 @@ TOML
 git -C "$repo" -c user.name=ws -c user.email=ws@localhost -c commit.gpgsign=false commit -q -am release
 git -C "$repo" tag v0.3.0
 echo v0.3.0 >"$tmp/serve/latest"
-# A trial's file, as .tools/serve-build writes it, would pin another ws.
+# A file that git does not track, such as a trial's, would load over the tag's tree.
 printf '[bootstrap.files."/etc/ws-install-check/local"]\ncontent = "local\\n"\n' |
     as_root tee /opt/ws/mise.local.toml >/dev/null
 install_sh WS_MISE_URL="$url/mise/none"
