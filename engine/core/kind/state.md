@@ -12,7 +12,6 @@ ufw = { comment = "ws: NAME", rules = [{ action = "allow", proto = "udp", to_por
 ufw = { comment = "ws: NAME", rules = [{ action = "allow", interface = "IN0", out = "OUT0", from = "CIDR" }] }
 routes = { pool = "CIDR", net = "CIDR", dev = "docker0", hint = "…" }  # refuses an overlap
 addr = { iface = "docker0", want = "CIDR", hint = "…" }                # refuses a missing address
-left = { user = "USER", group = "GROUP" }
 run = { user = "USER", command = ["cmd"], creates = ["/path"] }        # or check = ["cmd"]
 reboot = { module = "name", package = "name", hint = "…" }             # notes a reboot that is due
 locale = { name = "en_US.UTF-8", hint = "…" }                          # generated, and LANG

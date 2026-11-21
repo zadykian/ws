@@ -46,7 +46,7 @@ func TestEveryStateFieldIsAState(t *testing.T) {
 
 func TestStateTakesExactlyOne(t *testing.T) {
 	e, _, _, _ := testEnv(false)
-	const keys = "exactly one of linger, purged, http, ufw, routes, addr, left, run, reboot, locale, timezone, swap"
+	const keys = "exactly one of linger, purged, http, ufw, routes, addr, run, reboot, locale, timezone, swap"
 	stateRefused(t, e, "after = \"\"\n", keys+", and this one sets 0")
 	stateRefused(t, e, "linger = \"u\"\npurged = \"p\"\n", keys+", and this one sets 2")
 	stateRefused(t, e, "ufw = {}\nlinger = \"u\"\n", "this one sets 2")
@@ -167,16 +167,6 @@ func TestStateRoutesAndAddrRefuse(t *testing.T) {
 	stateRefused(t, e, "routes = { pool = \"10.1.0.0\", net = \"172.17.0.1/16\", dev = \"docker0\" }\n", "routes: pool:")
 	stateRefused(t, e, "routes = { pool = \"10.1.0.0/16\", net = \"172.17.0.1/16\" }\n", "takes dev")
 	stateRefused(t, e, "addr = { iface = \"docker0\", want = \"x\" }\n", "addr: want:")
-}
-
-func TestStateLeft(t *testing.T) {
-	e, m, _, _ := testEnv(false)
-	m.Files["/etc/group"] = []byte("lxd:x:100:v,u\n")
-	units := loadState(t, e, "left = { user = \"u\", group = \"lxd\" }\n")
-	if got := headlines(t, units[0].Step); !slices.Equal(got, []string{"remove u from the lxd group"}) {
-		t.Errorf("plan = %q, want u out of lxd", got)
-	}
-	stateRefused(t, e, "left = { user = \"u\" }\n", `group "" is no user's name`)
 }
 
 // asU is how a run state runs a command as u: through runuser, in u's session, with the system's

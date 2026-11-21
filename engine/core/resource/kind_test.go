@@ -32,7 +32,6 @@ func TestKindsOfTheResourcesChanges(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Dirs["/run/systemd/system"], m.Dirs["/d"] = 0o755, 0o700
 	m.Files["/old"] = []byte("old\n")
-	m.Files["/etc/group"] = []byte("docker:x:9:ann\n")
 	m.Packages = effecttest.Packages{"git": {Version: "1", Status: "ii"}, "curl": {Status: "un"}, "a": {Version: "0", Status: "ii"}}
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	u := &effecttest.Units{States: map[string]effect.UnitState{"on.service": {Active: true}}}
@@ -50,7 +49,6 @@ func TestKindsOfTheResourcesChanges(t *testing.T) {
 		{"link", file.Link{M: m, Path: "/l", Target: "/t"}, []step.ChangeKind{step.Write}},
 		{"download", fetch.Download{M: m, Path: "/new", SHA256: "0"}, []step.ChangeKind{step.Write}},
 		{"absent", file.Absent{M: m, Path: "/old"}, []step.ChangeKind{step.Removal}},
-		{"left", resource.Left{M: m, User: "ann", Group: "docker"}, []step.ChangeKind{step.Removal}},
 		{"packages", apt.Packages{M: m, Names: []string{"curl"}}, []step.ChangeKind{step.Install}},
 		{"purged", apt.Purged{M: m, Names: []string{"git"}}, []step.ChangeKind{step.Removal}},
 		{"reload", systemd.DaemonReload{M: m, U: u, Watch: watch}, []step.ChangeKind{step.Restart}},

@@ -44,7 +44,6 @@ type stateSpec struct {
 	UFW    *ufwState    `toml:"ufw"`
 	Routes *routesState `toml:"routes"`
 	Addr   *addrState   `toml:"addr"`
-	Left   *leftState   `toml:"left"`
 	Run    *runState    `toml:"run"`
 	Reboot *rebootState `toml:"reboot"`
 	// Locale, Timezone and Swap are the system's, in systemstates.go.

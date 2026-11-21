@@ -119,22 +119,6 @@ func (s addrState) resource(e Env) (resource.Resource, error) {
 	return route.Addr{M: e.M, Out: e.Out, Iface: s.Iface, Want: want, Hint: s.Hint}, nil
 }
 
-// leftState is a user out of a group (resource.Left).
-type leftState struct {
-	User  string `toml:"user"`
-	Group string `toml:"group"`
-}
-
-func (s leftState) resource(e Env) (resource.Resource, error) {
-	if err := checkUser("user", s.User); err != nil {
-		return nil, err
-	}
-	if err := checkUser("group", s.Group); err != nil {
-		return nil, err
-	}
-	return resource.Left{M: e.M, User: s.User, Group: s.Group}, nil
-}
-
 // runState runs Command as User where something is to do: where a path of Creates is missing, or
 // where Check, run as User too, exits other than 0. It takes exactly one of the two. A procedure
 // that stays a command of ws runs through it, with that command's own check. On Linux without
