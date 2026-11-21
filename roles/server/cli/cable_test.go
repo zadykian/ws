@@ -7,7 +7,7 @@ import (
 )
 
 func TestCableCheckPassesWithoutAPort(t *testing.T) {
-	p, m := valuesProcess("---\nWS_USER: root\n")
+	p, m := valuesProcess("---\n")
 	if status, stdout, stderr := runWs(p, "", "server", "cable", "check"); status != 0 || stdout != "" || stderr != "" {
 		t.Errorf("status = %d, stdout %q, stderr %q", status, stdout, stderr)
 	}
@@ -17,7 +17,7 @@ func TestCableCheckPassesWithoutAPort(t *testing.T) {
 }
 
 func TestCableCheckNamesAMissingPort(t *testing.T) {
-	p, _ := valuesProcess("---\nWS_USER: root\nWS_CABLE_PORT: enp9s0\n")
+	p, _ := valuesProcess("---\nWS_CABLE_PORT: enp9s0\n")
 	status, _, stderr := runWs(p, "", "server", "cable", "check", "/etc/netplan/60-cable.yaml.ws-check")
 	if status != 1 || !strings.Contains(stderr, "this machine has no interface enp9s0") {
 		t.Errorf("status = %d, stderr %q", status, stderr)

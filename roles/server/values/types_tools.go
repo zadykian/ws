@@ -2,7 +2,7 @@ package values
 
 // Zed is roles/zed's keys.
 type Zed struct {
-	// Nofile is the soft limit of open files for WS_USER's logins. Zed's server busy-loops past
+	// Nofile is the soft limit of open files for root's logins. Zed's server busy-loops past
 	// 1024 (roles/server/ubuntu/zed/README.md).
 	Nofile int `yaml:"WS_ZED_NOFILE"`
 }

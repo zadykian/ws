@@ -43,8 +43,7 @@ func fansMachine() *effecttest.Machine {
 	return m
 }
 
-// fansValues is the values of an empty file, with those that follow WS_HOME, which git's units
-// name.
+// fansValues is the values of an empty file.
 func fansValues(t *testing.T) values.Values {
 	v, err := values.Parse(nil)
 	if err != nil {

@@ -42,30 +42,24 @@ func specNames(v values.Values) ([]string, error) {
 func specLines(t *testing.T, v values.Values) []string {
 	names, err := specNames(v)
 	if err != nil {
-		t.Fatalf("the specs for %s: %v", v.User, err)
+		t.Fatalf("the specs: %v", err)
 	}
 	return names
 }
 
-// rootAndAccount returns the values of a machine whose WS_USER is root, and the defaults, whose
-// WS_USER is an account.
-func rootAndAccount(t *testing.T) (root, account values.Values) {
-	root, err := values.Parse([]byte("WS_USER: root\n"))
+// defaults returns the values of an empty file, which fills the keys that derive gives.
+func defaults(t *testing.T) values.Values {
+	v, err := values.Parse(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	account, err = values.Parse(nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return root, account
+	return v
 }
 
 // TestSpecsMatchMiseLines holds mise's lines and the specs together, so that mise plans each unit
 // ws knows, as ws unit verify checks on a machine. The server's files hold each unit of the specs.
 func TestSpecsMatchMiseLines(t *testing.T) {
-	root, _ := rootAndAccount(t)
-	every := specLines(t, root)
+	every := specLines(t, defaults(t))
 
 	server := clitest.MiseLines(t, treeRoot+"/mise.server.toml")
 	for name := range clitest.MiseLines(t, rolesDir+"/*/mise.server.toml") {
@@ -85,15 +79,14 @@ func TestSpecsMatchMiseLines(t *testing.T) {
 	}
 }
 
-// turnable returns the path of each bool and string field below Values, but those of Shared: the
-// keys that one machine sets and another leaves. TestUnitsFollowTheUserAlone turns WS_USER itself.
+// turnable returns the path of each bool and string field below Values.
 func turnable(t reflect.Type, at []int) [][]int {
 	var paths [][]int
 	for i := range t.NumField() {
 		f := t.Field(i)
 		path := append(slices.Clone(at), i)
 		switch {
-		case !f.IsExported() || f.Type == reflect.TypeFor[values.Shared]():
+		case !f.IsExported():
 		case f.Type.Kind() == reflect.Struct:
 			paths = append(paths, turnable(f.Type, path)...)
 		case f.Type.Kind() == reflect.Bool, f.Type.Kind() == reflect.String:
@@ -103,43 +96,34 @@ func turnable(t reflect.Type, at []int) [][]int {
 	return paths
 }
 
-// TestUnitsFollowTheUserAlone holds the units of the specs to the same set on every machine.
+// TestUnitsFollowNoValue holds the units of the specs to the same set on every machine.
 // mise's lines name each unit for every server. A unit that a value takes out of a spec would have
 // a line on a machine where ws unit read refuses it. Such a unit stays, and its when turns it off.
-// WS_USER is turned from root to an account, and each other bool is negated, and each string
-// emptied or set, one at a time.
-func TestUnitsFollowTheUserAlone(t *testing.T) {
-	root, account := rootAndAccount(t)
-	rootUnits, accountUnits := specLines(t, root), specLines(t, account)
-	slices.Sort(rootUnits)
-	slices.Sort(accountUnits)
-	if !slices.Equal(rootUnits, accountUnits) {
-		t.Errorf("for %s the specs give the units %v, not root's %v", account.User, accountUnits, rootUnits)
-	}
-	for _, base := range []values.Values{root, account} {
-		want := specLines(t, base)
-		slices.Sort(want)
-		for _, path := range turnable(reflect.TypeFor[values.Values](), nil) {
-			v := base
-			f := reflect.ValueOf(&v).Elem().FieldByIndex(path)
-			switch {
-			case f.Kind() == reflect.Bool:
-				f.SetBool(!f.Bool())
-			case f.String() == "":
-				f.SetString("/ws")
-			default:
-				f.SetString("")
-			}
-			got, err := specNames(v)
-			if err != nil {
-				// A value the specs refuse in this shape says nothing of which units they give.
-				continue
-			}
-			slices.Sort(got)
-			if !slices.Equal(got, want) {
-				key := reflect.TypeFor[values.Values]().FieldByIndex(path).Tag.Get("yaml")
-				t.Errorf("for %s, %s turned over gives the units %v, not %v", base.User, key, got, want)
-			}
+// Each bool is negated, and each string emptied or set, one at a time.
+func TestUnitsFollowNoValue(t *testing.T) {
+	base := defaults(t)
+	want := specLines(t, base)
+	slices.Sort(want)
+	for _, path := range turnable(reflect.TypeFor[values.Values](), nil) {
+		v := base
+		f := reflect.ValueOf(&v).Elem().FieldByIndex(path)
+		switch {
+		case f.Kind() == reflect.Bool:
+			f.SetBool(!f.Bool())
+		case f.String() == "":
+			f.SetString("/ws")
+		default:
+			f.SetString("")
+		}
+		got, err := specNames(v)
+		if err != nil {
+			// A value the specs refuse in this shape says nothing of which units they give.
+			continue
+		}
+		slices.Sort(got)
+		if !slices.Equal(got, want) {
+			key := reflect.TypeFor[values.Values]().FieldByIndex(path).Tag.Get("yaml")
+			t.Errorf("%s turned over gives the units %v, not %v", key, got, want)
 		}
 	}
 }

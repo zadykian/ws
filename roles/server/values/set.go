@@ -7,23 +7,20 @@ import (
 )
 
 // Set returns the file data with key name at value: its line in place, or a new line at the end,
-// and every other line unchanged but a follower's. An empty value takes the key's line out, which
-// gives its default back. A follower's line that holds the value derive gives it from the rest of
-// the file moves to the value derive gives from the new file. One set by hand stays. Set returns
-// the names of the followers it moved. It refuses a key that a line does not hold, and a result
-// that does not read as value.
-func Set(data []byte, name, value string) ([]byte, []string, error) {
+// and every other line unchanged. An empty value takes the key's line out, which gives its default
+// back. It refuses a key that a line does not hold, and a result that does not read as value.
+func Set(data []byte, name, value string) ([]byte, error) {
 	keys := Keys()
 	at := slices.IndexFunc(keys, func(k Key) bool { return k.Name == name })
 	if at < 0 {
-		return nil, nil, fmt.Errorf("no line holds %s: edit the file by hand", name)
+		return nil, fmt.Errorf("no line holds %s: edit the file by hand", name)
 	}
 	key := keys[at]
 	if err := key.Check(value); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if _, err := Parse(data); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	text := string(data)
 	if strings.TrimSpace(text) == "" {
@@ -31,54 +28,21 @@ func Set(data []byte, name, value string) ([]byte, []string, error) {
 	}
 	lines := strings.SplitAfter(strings.TrimSuffix(text, "\n")+"\n", "\n")
 	lines = lines[:len(lines)-1]
-	var moving []Key
-	for _, f := range followers {
-		k := keys[slices.IndexFunc(keys, func(k Key) bool { return k.Name == f })]
-		if had, want, ok := derived(lines, k); ok && f != name && had == want {
-			moving = append(moving, k)
-		}
-	}
 	start, end := span(lines, name)
 	line := ""
 	if value == "" {
 		if start == len(lines) {
-			return data, nil, nil
+			return data, nil
 		}
 		lines = slices.Delete(lines, start, end)
 	} else {
 		var err error
 		if line, err = key.line(value); err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		lines = slices.Replace(lines, start, end, line)
 	}
-	var moved []string
-	for _, k := range moving {
-		if had, want, ok := derived(lines, k); ok && had != want {
-			follower, err := k.line(want)
-			if err != nil {
-				return nil, nil, err
-			}
-			start, end := span(lines, k.Name)
-			lines = slices.Replace(lines, start, end, follower)
-			moved = append(moved, k.Name)
-		}
-	}
-	next, err := checked([]byte(strings.Join(lines, "")), key, line)
-	return next, moved, err
-}
-
-// derived returns the value of k that lines give, and the one that derive gives it without k's
-// line. ok is false where no line holds k, or where lines read no more without it, as where it
-// ends a document. Such a line stays, and checked judges the result.
-func derived(lines []string, k Key) (had, want string, ok bool) {
-	start, end := span(lines, k.Name)
-	v, err := decode([]byte(strings.Join(lines, "")))
-	w, errw := decode([]byte(strings.Join(slices.Delete(slices.Clone(lines), start, end), "")))
-	if start == len(lines) || err != nil || errw != nil {
-		return "", "", false
-	}
-	return v.Text(k), w.Text(k), true
+	return checked([]byte(strings.Join(lines, "")), key, line)
 }
 
 // checked returns data where the file reads and gives key the value of line, which is empty for a

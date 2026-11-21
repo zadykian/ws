@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools"
 )
 
@@ -23,7 +22,7 @@ func at(v any, path ...string) any {
 }
 
 func sharedFiles(t *testing.T) (fresh, zed, macZed map[string]any) {
-	zedText, err := resource.Render(os.DirFS("../zed"), "files/settings.json.tmpl", struct{ Home string }{"/home/ws"})
+	zedText, err := os.ReadFile("../zed/files/settings.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,7 +87,7 @@ func TestTheEditorsShareTheirChoices(t *testing.T) {
 
 func TestEachServerIsNamedInBothFiles(t *testing.T) {
 	fresh, zed, _ := sharedFiles(t)
-	for name, path := range devtools.ServerPaths("/home/ws") {
+	for name, path := range devtools.ServerPaths("/root") {
 		for editor, file := range map[string]map[string]any{"Zed": zed, "Fresh": fresh} {
 			text, _ := json.Marshal(file)
 			if editor == "Fresh" && name == "ansible-language-server" {

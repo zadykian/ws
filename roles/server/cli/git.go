@@ -23,14 +23,14 @@ func newGitCmd(p enginecli.Env) *cobra.Command {
 		newGitCredentialCmd(p))
 }
 
-// gitInputs reads what git's commands act on: the values and WS_USER's account. The tokens' file
+// gitInputs reads what git's commands act on: the values and root's account. The tokens' file
 // is the role's own to read.
 func gitInputs(ctx context.Context, m effect.Machine) (values.Values, account.Account, error) {
 	v, err := values.Load(m, serverVars)
 	if err != nil {
 		return v, account.Account{}, err
 	}
-	a, err := account.User{Name: v.User, Home: v.Home}.Lookup(ctx, m)
+	a, err := rootUser.Lookup(ctx, m)
 	return v, a, err
 }
 
@@ -134,7 +134,7 @@ func newGitTokensCmd(p enginecli.Env) *cobra.Command {
 
 // newGitClonesCmd returns ws server git clones.
 func newGitClonesCmd(p enginecli.Env) *cobra.Command {
-	return gitProcedure(p, "clones", "clone each repository of WS_GIT_CLONES whose dest is missing, as WS_USER",
+	return gitProcedure(p, "clones", "clone each repository of WS_GIT_CLONES whose dest is missing, as root",
 		"A clone is made once and never pulled (roles/server/ubuntu/git/README.md#clones). The git role's run "+
 			"state runs it, after the tokens.",
 		func(v values.Values, a account.Account) resource.Resource {

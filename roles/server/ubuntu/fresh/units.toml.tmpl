@@ -10,13 +10,13 @@ sha256 = { amd64 = "d98b2cac0d46dbc1c8111eed15fb56c956a338d95740e07fd3ddae72ad39
 # one, as Fresh's scan of themes/ takes only .json, so a copy is not a theme. The directories on
 # the way stay the user's, and a link on the way is refused.
 [file.fresh-config]
-path = "{{ .Home }}/.config/fresh/config.json"
-owner = "{{ .User }}"
-template = "files/config.json.tmpl"
+path = "/root/.config/fresh/config.json"
+owner = "root"
+source = "files/config.json"
 backup = true
 
 [file.fresh-theme]
-path = "{{ .Home }}/.config/fresh/themes/jetbrains-dark.json"
-owner = "{{ .User }}"
+path = "/root/.config/fresh/themes/jetbrains-dark.json"
+owner = "root"
 source = "files/themes/jetbrains-dark.json"
 backup = true

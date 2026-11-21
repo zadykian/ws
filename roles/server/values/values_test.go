@@ -42,28 +42,20 @@ func TestParseKeepsDefaultsBesideAGivenKey(t *testing.T) {
 	}
 }
 
-func TestParseDerivesFromTheUser(t *testing.T) {
-	tests := []struct{ in, home, key string }{
-		{"", "/home/zadykian", "/home/zadykian/.ssh/id_ed25519_signing.pub"},
-		{"WS_USER: root\n", "/root", "/root/.ssh/id_ed25519_signing.pub"},
-		{"WS_USER: dev\n", "/home/dev", "/home/dev/.ssh/id_ed25519_signing.pub"},
-		{"WS_HOME: /srv/x\n", "/srv/x", "/srv/x/.ssh/id_ed25519_signing.pub"},
+func TestParseDerivesTheSigningKeyBelowRoot(t *testing.T) {
+	got, err := Parse(nil)
+	if err != nil {
+		t.Fatal(err)
 	}
-	for _, tt := range tests {
-		got, err := Parse([]byte(tt.in))
-		if err != nil {
-			t.Fatal(err)
-		}
-		if got.Home != tt.home || got.GitSigningPubKey != tt.key {
-			t.Errorf("Parse(%q) = %q %q", tt.in, got.Home, got.GitSigningPubKey)
-		}
+	if want := "/root/.ssh/id_ed25519_signing.pub"; got.GitSigningPubKey != want {
+		t.Errorf("Parse(nil) = %q, want %q", got.GitSigningPubKey, want)
 	}
 }
 
-func TestParseKeepsAKeyBelowTheHome(t *testing.T) {
+func TestParseKeepsAKeyBelowRoot(t *testing.T) {
 	for _, in := range []string{
-		"WS_USER: root\nWS_GIT_SIGNING_PUB_KEY: /root/k.pub\n",
-		"WS_HOME: /srv/x\nWS_GIT_SIGNING_PUB_KEY: /srv/x/a/../b/k.pub\n",
+		"WS_GIT_SIGNING_PUB_KEY: /root/k.pub\n",
+		"WS_GIT_SIGNING_PUB_KEY: /root/a/../b/k.pub\n",
 	} {
 		if _, err := Parse([]byte(in)); err != nil {
 			t.Errorf("Parse(%q): %v", in, err)
@@ -71,19 +63,18 @@ func TestParseKeepsAKeyBelowTheHome(t *testing.T) {
 	}
 }
 
-func TestParseRefusesAKeyOutsideTheHome(t *testing.T) {
+func TestParseRefusesAKeyOutsideRoot(t *testing.T) {
 	tests := map[string]string{
-		"outside":          "WS_GIT_SIGNING_PUB_KEY: /etc/key\n",
-		"dot dot":          "WS_GIT_SIGNING_PUB_KEY: /home/zadykian/../root/key\n",
-		"the home":         "WS_GIT_SIGNING_PUB_KEY: /home/zadykian\n",
-		"a sibling":        "WS_GIT_SIGNING_PUB_KEY: /home/zadykian2/key\n",
-		"relative":         "WS_GIT_SIGNING_PUB_KEY: key\n",
-		"outside, root":    "WS_USER: root\nWS_GIT_SIGNING_PUB_KEY: /tmp/key\n",
-		"outside, WS_HOME": "WS_HOME: /srv/x\nWS_GIT_SIGNING_PUB_KEY: /home/zadykian/key\n",
+		"outside":   "WS_GIT_SIGNING_PUB_KEY: /etc/key\n",
+		"dot dot":   "WS_GIT_SIGNING_PUB_KEY: /root/../home/key\n",
+		"the home":  "WS_GIT_SIGNING_PUB_KEY: /root\n",
+		"a sibling": "WS_GIT_SIGNING_PUB_KEY: /root2/key\n",
+		"relative":  "WS_GIT_SIGNING_PUB_KEY: key\n",
+		"a user's":  "WS_GIT_SIGNING_PUB_KEY: /home/ada/key\n",
 	}
 	for name, in := range tests {
 		_, err := Parse([]byte(in))
-		if err == nil || !strings.Contains(err.Error(), "is outside WS_HOME") {
+		if err == nil || !strings.Contains(err.Error(), "is outside /root") {
 			t.Errorf("%s: Parse(%q) = %v", name, in, err)
 		}
 	}
@@ -91,7 +82,7 @@ func TestParseRefusesAKeyOutsideTheHome(t *testing.T) {
 
 func TestParseRefusesAnOldKey(t *testing.T) {
 	for _, old := range []string{
-		"docker_log_max_size: 1m", "ws_user: ada", "wireguard_peers: []",
+		"docker_log_max_size: 1m", "ws_user: ada", "WS_USER: root", "WS_HOME: /root", "wireguard_peers: []",
 		"network_direct_link_interface: enp5s0", "WS_SHELL_GIT_CLONES: []",
 	} {
 		key, _, _ := strings.Cut(old, ":")
@@ -124,23 +115,23 @@ func TestParseRefuses(t *testing.T) {
 }
 
 func TestSigningPubRefusesAQuoteABackslashOrAControl(t *testing.T) {
-	for _, key := range []string{`/home/zadykian/a\"b.pub`, `/home/zadykian/a\\b.pub`, `/home/zadykian/a\tb.pub`} {
+	for _, key := range []string{`/root/a\"b.pub`, `/root/a\\b.pub`, `/root/a\tb.pub`} {
 		if _, err := Parse([]byte("WS_GIT_SIGNING_PUB_KEY: \"" + key + "\"\n")); err == nil ||
 			!strings.Contains(err.Error(), "a quote, a backslash or a control character") {
 			t.Errorf("%s: %v", key, err)
 		}
 	}
-	if _, err := Parse([]byte("WS_GIT_SIGNING_PUB_KEY: /home/zadykian/.ssh/a b.pub\n")); err != nil {
+	if _, err := Parse([]byte("WS_GIT_SIGNING_PUB_KEY: /root/.ssh/a b.pub\n")); err != nil {
 		t.Errorf("a space: %v", err)
 	}
 }
 
 func TestParseRefusesASigningKeyThatIsNoPub(t *testing.T) {
-	_, err := Parse([]byte("WS_GIT_SIGNING_PUB_KEY: /home/zadykian/.ssh/k\n"))
+	_, err := Parse([]byte("WS_GIT_SIGNING_PUB_KEY: /root/.ssh/k\n"))
 	if err == nil || !strings.Contains(err.Error(), ".pub") {
 		t.Errorf("a key with no .pub: %v", err)
 	}
-	_, err = Parse([]byte("WS_GIT_SIGNING_KEY: /home/zadykian/.ssh/k\n"))
+	_, err = Parse([]byte("WS_GIT_SIGNING_KEY: /root/.ssh/k\n"))
 	if err == nil || !strings.Contains(err.Error(), "WS_GIT_SIGNING_KEY") {
 		t.Errorf("the old key: %v", err)
 	}

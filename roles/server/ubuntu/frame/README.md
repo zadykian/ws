@@ -52,9 +52,9 @@ plans the units its files name alone. `ws unit list --toml` prints them.
 A value never takes a unit out of a spec. A unit that a value turns off stays in the spec, off by
 its `when`. Else its line would name a unit that `ws unit read` refuses.
 
-[`TestSpecsMatchMiseLines`](../../cli/specs_test.go) loads the specs for root. It fails on a line
-missing or extra, and prints the line to paste. `TestUnitsFollowTheUserAlone` fails where an
-account's units differ from root's, and where a bool or a string turned over changes the units.
+[`TestSpecsMatchMiseLines`](../../cli/specs_test.go) loads the specs for the defaults. It fails on
+a line missing or extra, and prints the line to paste. `TestUnitsFollowNoValue` fails where a bool
+or a string turned over changes the units.
 `TestTheSideLinksItsRoles` fails where the link leads elsewhere or its directory holds a file, and
 on a mise file that no env loads.
 

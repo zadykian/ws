@@ -22,19 +22,14 @@ func role(t *testing.T) fstest.MapFS {
 	return fstest.MapFS{"shell/units.toml.tmpl": &fstest.MapFile{Data: text}}
 }
 
-// machine is a machine with the account zadykian, 1000:1000, and /etc/ws, and its env for the
-// default values.
+// machine is a machine with root's home and /etc/ws, and its env for the default values.
 func machine(t *testing.T) (*effecttest.Machine, kind.Env) {
 	v, err := values.Parse(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	m := effecttest.NewMachine()
-	m.Results["id -u zadykian"] = effecttest.Result{Out: []byte("1000\n")}
-	m.Results["id -g zadykian"] = effecttest.Result{Out: []byte("1000\n")}
-	m.Results["getent passwd zadykian"] = effecttest.Result{Out: []byte("zadykian:x:1000:1000::/home/zadykian:/bin/bash\n")}
 	m.Results["getent passwd root"] = effecttest.Result{Out: []byte("root:x:0:0:root:/root:/bin/bash\n")}
-	m.Dirs["/home/zadykian"], m.Owners["/home/zadykian"] = 0o750, [2]int{1000, 1000}
 	m.Dirs["/root"], m.Dirs["/etc"], m.Dirs["/etc/ws"] = 0o700, 0o755, 0o755
 	return m, kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v}
 }
@@ -67,10 +62,10 @@ func changes(t *testing.T, u kind.Unit) []string {
 	return got
 }
 
-// The lines go at the top of the account's files, or root's.
-func TestShellUnitsForAnAccountAndRoot(t *testing.T) {
+// The lines go at the top of root's files.
+func TestShellUnitsPutTheLinesAtTheTopOfRootsFiles(t *testing.T) {
 	m, e := machine(t)
-	m.Files["/home/zadykian/.bashrc"] = []byte("# stock\n")
+	m.Files["/root/.bashrc"] = []byte("# stock\n")
 	want := []string{"file/shell-bashrc-line", "file/shell-profile-line"}
 	if got := kind.Names(units(t, e)); !slices.Equal(got, want) {
 		t.Fatalf("units = %q, want %q", got, want)
@@ -79,27 +74,16 @@ func TestShellUnitsForAnAccountAndRoot(t *testing.T) {
 	if err := write(t, e, us); err != nil {
 		t.Fatal(err)
 	}
-	if got := string(m.Files["/home/zadykian/.bashrc"]); got != ". /etc/ws/bashrc\n\n# stock\n" {
+	if got := string(m.Files["/root/.bashrc"]); got != ". /etc/ws/bashrc\n\n# stock\n" {
 		t.Errorf(".bashrc = %q, want the line at the top", got)
 	}
-	if got := string(m.Files["/home/zadykian/.profile"]); got != ". /etc/ws/profile\n" || m.Owners["/home/zadykian/.profile"] != [2]int{1000, 1000} {
-		t.Errorf(".profile = %q, owner %v; want the line, the account's", got, m.Owners["/home/zadykian/.profile"])
+	if got := string(m.Files["/root/.profile"]); got != ". /etc/ws/profile\n" {
+		t.Errorf(".profile = %q, want the line", got)
 	}
 	for _, u := range us {
 		if got := changes(t, u); got != nil {
 			t.Errorf("second plan of %s = %q, want none", u.Name, got)
 		}
-	}
-	root, err := values.Parse([]byte("WS_USER: root\n"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	e.Data = root
-	if err := write(t, e, units(t, e)); err != nil {
-		t.Fatal(err)
-	}
-	if string(m.Files["/root/.bashrc"]) != ". /etc/ws/bashrc\n" || string(m.Files["/root/.profile"]) != ". /etc/ws/profile\n" {
-		t.Errorf("root's files = %q, %q; want the lines", m.Files["/root/.bashrc"], m.Files["/root/.profile"])
 	}
 }
 

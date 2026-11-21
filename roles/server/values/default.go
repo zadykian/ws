@@ -1,11 +1,10 @@
 package values
 
-// Default returns each key's default value, with the keys that follow WS_HOME or the machine's
-// size left empty (see derive and each key).
+// Default returns each key's default value, with the keys that derive fills or the machine's size
+// left empty (see derive and each key).
 func Default() Values {
 	return Values{
-		Shared: Shared{User: "zadykian"},
-		Base:   Base{Locale: "en_US.UTF-8", Timezone: "Etc/UTC", Swappiness: 10},
+		Base: Base{Locale: "en_US.UTF-8", Timezone: "Etc/UTC", Swappiness: 10},
 		Claude: Claude{
 			Permissions: "read-only",
 			TelemetryEnv: map[string]string{

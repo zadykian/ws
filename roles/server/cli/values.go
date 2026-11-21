@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -54,7 +53,7 @@ func setServerValue(m effect.Machine, out effect.Out, key, value string) error {
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
-	next, moved, err := values.Set(data, key, value)
+	next, err := values.Set(data, key, value)
 	if err != nil {
 		return fmt.Errorf("%s: %w", serverVars, err)
 	}
@@ -65,9 +64,6 @@ func setServerValue(m effect.Machine, out effect.Out, key, value string) error {
 		return err
 	}
 	out.Say("wrote %s", serverVars)
-	if len(moved) > 0 {
-		out.Say("moved %s to follow %s", strings.Join(moved, " and "), key)
-	}
 	return nil
 }
 

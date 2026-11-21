@@ -2,7 +2,7 @@
 # one, as the user may have changed it by hand. The directories on the way stay the user's, and a
 # link on the way is refused, as it would send root's write to whatever it names.
 [file.lazygit-config]
-path = "{{ .Home }}/.config/lazygit/config.yml"
-owner = "{{ .User }}"
+path = "/root/.config/lazygit/config.yml"
+owner = "root"
 source = "files/config.yml"
 backup = true

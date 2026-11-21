@@ -37,14 +37,14 @@ func TestGitIncludedExits(t *testing.T) {
 }
 
 func TestGitCheckPassesWithNothingToRefuse(t *testing.T) {
-	p, _ := valuesProcess("---\nWS_USER: root\n")
+	p, _ := valuesProcess("---\n")
 	if status, stdout, stderr := runWs(p, "", "server", "git", "check"); status != 0 || stdout != "" || stderr != "" {
 		t.Errorf("status = %d, stdout %q, stderr %q", status, stdout, stderr)
 	}
 }
 
 func TestGitCheckRefusesATokenInAClone(t *testing.T) {
-	p, _ := valuesProcess("---\nWS_USER: root\nWS_GIT_CLONES:\n  - repo: https://me:hunter2@example.test/r.git\n    dest: r\n")
+	p, _ := valuesProcess("---\nWS_GIT_CLONES:\n  - repo: https://me:hunter2@example.test/r.git\n    dest: r\n")
 	status, _, stderr := runWs(p, "", "server", "git", "check")
 	if status != 1 || !strings.Contains(stderr, "each entry of WS_GIT_CLONES") || strings.Contains(stderr, "hunter2") {
 		t.Errorf("status = %d, stderr %q", status, stderr)
@@ -52,7 +52,7 @@ func TestGitCheckRefusesATokenInAClone(t *testing.T) {
 }
 
 func TestGitTokensWithoutTheFileChangeNothing(t *testing.T) {
-	p, m := valuesProcess("---\nWS_USER: root\n")
+	p, m := valuesProcess("---\n")
 	if status, _, stderr := runWs(p, "", "server", "git", "tokens", "--check"); status != 0 || stderr != "" {
 		t.Errorf("status = %d, stderr %q", status, stderr)
 	}
@@ -65,7 +65,7 @@ func TestGitTokensWithoutTheFileChangeNothing(t *testing.T) {
 }
 
 func TestGitCheckRefusesABadTokensFile(t *testing.T) {
-	p, m := valuesProcess("---\nWS_USER: root\n")
+	p, m := valuesProcess("---\n")
 	m.Files[git.TokensFile] = []byte("[\"https://git.example.test\"]\ntoken = \"dummy-marker\"\nuser = \"dummy-marker\"\n")
 	status, _, stderr := runWs(p, "", "server", "git", "check")
 	if status != 1 || !strings.Contains(stderr, "line 3: user is a key that ws does not know") || strings.Contains(stderr, "dummy-marker") {
@@ -74,7 +74,7 @@ func TestGitCheckRefusesABadTokensFile(t *testing.T) {
 }
 
 func TestGitClonesCheckFailsWhereACloneIsDue(t *testing.T) {
-	p, m := valuesProcess("---\nWS_USER: root\nWS_GIT_CLONES:\n  - repo: /srv/r.git\n    dest: src/r\n")
+	p, m := valuesProcess("---\nWS_GIT_CLONES:\n  - repo: /srv/r.git\n    dest: src/r\n")
 	status, _, stderr := runWs(p, "", "server", "git", "clones", "--check")
 	if status != 1 || !strings.Contains(stderr, "to do: clone /srv/r.git into src/r") {
 		t.Errorf("status = %d, stderr %q", status, stderr)
@@ -117,7 +117,7 @@ func TestGitTakesTheTokensInputInTheSecretsTask(t *testing.T) {
 		{map[string]string{"MISE_TASK_NAME": "secrets", "WS_GIT_TOKENS": ""}, 0, 0},
 		{map[string]string{"WS_GIT_TOKENS": bad}, 0, 0},
 	} {
-		p, m := valuesProcess("---\nWS_USER: root\n")
+		p, m := valuesProcess("---\n")
 		p = clitest.WithEnv(p, c.env)
 		m.Results["git config --file /etc/ws/tokens.gitconfig.ws-check --name-only --list"] = effecttest.Result{}
 		status, _, stderr := runWs(p, "", "server", "git", "check")

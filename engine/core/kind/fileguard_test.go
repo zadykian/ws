@@ -129,7 +129,7 @@ func TestBackupRefusesSecretAbsentOrLine(t *testing.T) {
 	}
 }
 
-// An account's file where WS_USER is root names root, and below root's home it refuses a link on
+// An account's file where the account is root's names root, and below root's home it refuses a link on
 // the way as another account's does. A file of root's that names root lies anywhere.
 func TestFileNamingRootRefusesALinkInRootsHome(t *testing.T) {
 	e, m, _, _ := testEnv(false)

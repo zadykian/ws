@@ -77,7 +77,7 @@ func TestParseRefusesABadCable(t *testing.T) {
 }
 
 func TestSetRefusesABadCablePort(t *testing.T) {
-	if _, _, err := Set([]byte("---\n"), "WS_CABLE_PORT", "a&b"); err == nil || !strings.Contains(err.Error(), "is not an interface's name") {
+	if _, err := Set([]byte("---\n"), "WS_CABLE_PORT", "a&b"); err == nil || !strings.Contains(err.Error(), "is not an interface's name") {
 		t.Errorf("Set = %v, want the port refused", err)
 	}
 }

@@ -38,9 +38,9 @@ func unitSide(vars string) enginecli.UnitSide {
 			if err != nil {
 				return nil, nil, err
 			}
-			// WS_HOME is known now: the machine's writes under it stay inside it.
+			// The machine's writes under root's home stay inside it.
 			if om, ok := m.(local.OSMachine); ok {
-				om.Confine = v.Home
+				om.Confine = rootUser.Home
 				m = om
 			}
 			return v, m, nil

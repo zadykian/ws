@@ -1,6 +1,6 @@
 # devtools' units. mise installs Go and the servers as tools under /usr/local/share/mise, by the
 # versions of mise.server.toml's [tools]. The first units give each a path that names no version;
-# the rest set up the account's tools and gh. README.md says why each stands.
+# the rest set up root's tools and gh. README.md says why each stands.
 
 # mise puts a tool under the data directory of the run, and root's own is /root/.local/share/mise,
 # which the account cannot read. Every root run exports MISE_DATA_DIR, as install.sh does. The guard
@@ -40,49 +40,49 @@ after = "guard/devtools-data-dir"
 path = "/usr/local/bin/docker-language-server"
 link = "/usr/local/share/mise/installs/github-docker-docker-language-server/0.20.1/docker-language-server"
 
-# The account's tools. Each runs as WS_USER, root's included, and without booted systemd too, as in
+# Root's tools. Each runs as root, and without booted systemd too, as in
 # CI's container. Its commands get the system's PATH, where mise's packages put npm, gh and dotnet.
 
 # The npm servers, from a lock that pins each package by its sha512 integrity. The files go in as
-# the account's, with their missing directories. npm ci refuses a lock that disagrees with
+# root's, with their missing directories. npm ci refuses a lock that disagrees with
 # package.json, or a download whose integrity differs. Its stamp holds the sums of both files: a
 # bump of either, or a node_modules removed, runs it again.
 [file.devtools-npm-lock]
-owner = "{{ .User }}"
-path = "{{ .Home }}/.local/lib/language-servers/package-lock.json"
+owner = "root"
+path = "/root/.local/lib/language-servers/package-lock.json"
 source = "files/npm/package-lock.json"
 
 [file.devtools-npm-package]
 after = "file/devtools-npm-lock"
-owner = "{{ .User }}"
-path = "{{ .Home }}/.local/lib/language-servers/package.json"
+owner = "root"
+path = "/root/.local/lib/language-servers/package.json"
 source = "files/npm/package.json"
 
 [state.devtools-npm]
 after = "file/devtools-npm-package"
 
 [state.devtools-npm.run]
-user = "{{ .User }}"
+user = "root"
 unbooted = true
 command = [
     "sh",
     "-c",
     'cd "$1" && npm ci --ignore-scripts --no-audit --no-fund --no-update-notifier && sha256sum package.json package-lock.json >node_modules/.ws-sha256',
     "sh",
-    "{{ .Home }}/.local/lib/language-servers",
+    "/root/.local/lib/language-servers",
 ]
-check = ["sh", "-c", 'cd "$1" && sha256sum -c --status node_modules/.ws-sha256', "sh", "{{ .Home }}/.local/lib/language-servers"]
+check = ["sh", "-c", 'cd "$1" && sha256sum -c --status node_modules/.ws-sha256', "sh", "/root/.local/lib/language-servers"]
 
 # sql-formatter on every PATH, root's, so a project's settings name the bare command.
 [file.devtools-sql-formatter]
 after = "state/devtools-npm"
 path = "/usr/local/bin/sql-formatter"
-link = "{{ .Home }}/.local/lib/language-servers/node_modules/.bin/sql-formatter"
+link = "/root/.local/lib/language-servers/node_modules/.bin/sql-formatter"
 
 # gh 2.91.0 and later send telemetry unless told not to. GH_TELEMETRY=0 keeps the read and the set
 # from sending any themselves.
 [state.devtools-gh-telemetry.run]
-user = "{{ .User }}"
+user = "root"
 unbooted = true
 command = ["env", "GH_TELEMETRY=0", "gh", "config", "set", "telemetry", "disabled"]
 check = ["sh", "-c", '[ "$(GH_TELEMETRY=0 gh config get telemetry)" = disabled ]']
@@ -100,14 +100,14 @@ run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "devt
 # version alone pins it, as nuget.org refuses a version's second upload. From 5.13.0-1.26514.10 the
 # server defaults telemetry to all (roslyn#86066): a bump adds --telemetryLevel off to every command
 # that starts it. update installs it where missing too, and --allow-downgrade lets the pin go back.
-# NuGet asks every feed of the account's NuGet config, and one it cannot reach fails the install,
+# NuGet asks every feed of root's NuGet config, and one it cannot reach fails the install,
 # so --source asks nuget.org alone. The store keeps a directory per version, in lower case. dotnet
 # warns where PATH lacks its tools' directory, and as root writes a profile.d script that adds it,
 # so the unit puts it first. DOTNET_NOLOGO keeps its first run's welcome and advice off.
 [state.devtools-roslyn.run]
-user = "{{ .User }}"
+user = "root"
 unbooted = true
-path = ["{{ .Home }}/.dotnet/tools"]
+path = ["/root/.dotnet/tools"]
 command = [
     "env",
     "DOTNET_CLI_TELEMETRY_OPTOUT=1",
@@ -128,7 +128,7 @@ check = [
     "-c",
     '[ "$(ls "$1")" = "$2" ]',
     "sh",
-    "{{ .Home }}/.dotnet/tools/.store/roslyn-language-server",
+    "/root/.dotnet/tools/.store/roslyn-language-server",
     "5.12.0-1.26475.2",
 ]
 
@@ -136,9 +136,9 @@ check = [
 # itself and its toolchains. Its flag leaves PATH to /etc/ws/profile, which sources rustup's env
 # file.
 [state.devtools-rustup.run]
-user = "{{ .User }}"
+user = "root"
 unbooted = true
-creates = ["{{ .Home }}/.cargo/bin/rustup"]
+creates = ["/root/.cargo/bin/rustup"]
 command = [
     "bash",
     "-c",

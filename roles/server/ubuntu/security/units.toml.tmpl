@@ -3,10 +3,10 @@
 # sshd's waits on it, and a guard fails before a change, never after.
 {{- $on := .Security.Outbound }}
 
-# WS_USER must hold a key that sshd takes, in the account's own home, before SSH by key alone.
+# root must hold a key that sshd takes, in /root, before SSH by key alone.
 [guard.security-keys]
-login_key = "{{ .User }}"
-home = "{{ .Home }}"
+login_key = "root"
+home = "/root"
 
 # SSH by key alone. sshd -G parses the drop-in alone before it goes in place, as sshd -t needs a
 # /run/sshd that exists only once ssh.service has started since boot. A refused drop-in leaves the

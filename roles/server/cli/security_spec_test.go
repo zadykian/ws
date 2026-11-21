@@ -20,7 +20,7 @@ import (
 
 const (
 	sshdDropIn  = "/etc/ssh/sshd_config.d/10-keys-only.conf"
-	keysOfUser  = "/home/zadykian/.ssh/authorized_keys"
+	keysOfRoot  = "/root/.ssh/authorized_keys"
 	tableDir    = "/usr/local/lib/ws/security"
 	unitDir     = "/etc/systemd/system/"
 	destroyLine = "nft destroy table inet ws"
@@ -35,17 +35,13 @@ const (
 var outboundUnits = []string{"security-resolvers.path", "security-resolvers.timer", "security-resolvers.service",
 	"security-outbound.service"}
 
-// securityMachine is a booted machine, not a container, whose account zadykian holds a key, and
+// securityMachine is a booted machine, not a container, whose root holds a key, and
 // whose checkers pass.
 func securityMachine() *effecttest.Machine {
 	m := bootedMachine()
-	m.Results["id -u zadykian"] = effecttest.Result{Out: []byte("1001\n")}
-	m.Results["id -g zadykian"] = effecttest.Result{Out: []byte("1001\n")}
-	m.Results["getent passwd zadykian"] = effecttest.Result{Out: []byte("zadykian:x:1001:1001::/home/zadykian:/bin/bash\n")}
 	m.Results["getent passwd root"] = effecttest.Result{Out: []byte("root:x:0:0:root:/root:/bin/bash\n")}
-	m.Dirs["/home/zadykian"], m.Dirs["/home/zadykian/.ssh"] = 0o750, 0o700
-	m.Owners["/home/zadykian"], m.Owners["/home/zadykian/.ssh"] = [2]int{1001, 1001}, [2]int{1001, 1001}
-	m.Files[keysOfUser], m.Modes[keysOfUser], m.Owners[keysOfUser] = []byte("ssh-ed25519 AAAA me\n"), 0o600, [2]int{1001, 1001}
+	m.Dirs["/root"], m.Dirs["/root/.ssh"] = 0o700, 0o700
+	m.Files[keysOfRoot], m.Modes[keysOfRoot] = []byte("ssh-ed25519 AAAA me\n"), 0o600
 	m.Results["/usr/sbin/sshd -G -f "+sshdDropIn+".ws-check"] = effecttest.Result{}
 	m.Results["/usr/sbin/nft -c -f "+tableDir+"/outbound.nft.ws-check"] = effecttest.Result{}
 	m.Results[tableGone] = effecttest.Result{}
@@ -83,7 +79,7 @@ func TestSecurityUnitsOrder(t *testing.T) {
 
 func TestSecurityMissingKeyStopsBeforeSshd(t *testing.T) {
 	m := securityMachine()
-	delete(m.Files, keysOfUser)
+	delete(m.Files, keysOfRoot)
 	if err := runUnits(t, securityUnits(t, m, &effecttest.Units{}, "")); err == nil || !strings.Contains(err.Error(), "holds no key") {
 		t.Fatalf("run = %v, want the guard's refusal", err)
 	}
@@ -92,28 +88,16 @@ func TestSecurityMissingKeyStopsBeforeSshd(t *testing.T) {
 	}
 }
 
-func TestSecurityHomeOtherThanTheAccountsStops(t *testing.T) {
-	m := securityMachine()
-	m.Files["/.dockerenv"] = nil
-	err := runUnits(t, securityUnits(t, m, &effecttest.Units{}, "---\nWS_HOME: /srv/zadykian\n"))
-	if err == nil || !strings.Contains(err.Error(), "home /srv/zadykian is not zadykian's home, /home/zadykian") {
-		t.Errorf("run = %v, want the home refused, in a container too", err)
-	}
-}
-
 func TestSecuritySshdFileLetsRootInByKeyAlone(t *testing.T) {
 	const want = "PermitRootLogin prohibit-password\n"
-	for _, yml := range []string{"", "---\nWS_USER: root\n"} {
-		m := securityMachine()
-		m.Files["/root/.ssh/authorized_keys"] = []byte("ssh-ed25519 AAAA me\n")
-		u := &effecttest.Units{States: map[string]effect.UnitState{"ssh.service": {Active: true}}}
-		units := securityUnits(t, m, u, yml)
-		applyUnit(t, units, "service/security-sshd")
-		got := string(m.Files[sshdDropIn])
-		if !strings.Contains(got, "PasswordAuthentication no\nKbdInteractiveAuthentication no\n") ||
-			!strings.HasSuffix(got, want) || m.Modes[sshdDropIn] != 0o644 {
-			t.Errorf("%q: the drop-in at %o:\n%s\nwant it to end %q", yml, m.Modes[sshdDropIn], got, want)
-		}
+	m := securityMachine()
+	u := &effecttest.Units{States: map[string]effect.UnitState{"ssh.service": {Active: true}}}
+	units := securityUnits(t, m, u, "")
+	applyUnit(t, units, "service/security-sshd")
+	got := string(m.Files[sshdDropIn])
+	if !strings.Contains(got, "PasswordAuthentication no\nKbdInteractiveAuthentication no\n") ||
+		!strings.HasSuffix(got, want) || m.Modes[sshdDropIn] != 0o644 {
+		t.Errorf("the drop-in at %o:\n%s\nwant it to end %q", m.Modes[sshdDropIn], got, want)
 	}
 }
 

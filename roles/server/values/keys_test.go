@@ -22,7 +22,7 @@ func TestKeysHoldEachKindAndNoTable(t *testing.T) {
 		kinds[k.Name] = k.Kind
 	}
 	for name, want := range map[string]Kind{
-		"WS_USER": Text, "WS_BASE_SWAPPINESS": Number, "WS_BASE_SWAP_SIZE_MB": Number, "WS_FANS_INTERVAL": Decimal,
+		"WS_BASE_TIMEZONE": Text, "WS_BASE_SWAPPINESS": Number, "WS_BASE_SWAP_SIZE_MB": Number, "WS_FANS_INTERVAL": Decimal,
 		"WS_SECURITY_OUTBOUND": Switch, "WS_IKEWARD_DOMAINS": List, "WS_ZED_NOFILE": Number,
 	} {
 		if got, ok := kinds[name]; !ok || got != want {
@@ -46,13 +46,13 @@ func TestCheckRefusesWhatTheKindCantTake(t *testing.T) {
 		{"WS_FANS_INTERVAL", "NaN", "a number"},
 		{"WS_FANS_INTERVAL", "Inf", "a number"},
 		{"WS_SECURITY_OUTBOUND", "yes", "true or false"},
-		{"WS_USER", "a\nb", "one line"},
+		{"WS_BASE_TIMEZONE", "a\nb", "one line"},
 		{"WS_IKEWARD_DOMAINS", "a\rb", "one line"},
 		{"WS_BASE_SWAPPINESS", "20", ""},
 		{"WS_BASE_SWAPPINESS", "", ""},
 		{"WS_FANS_INTERVAL", "2.5", ""},
 		{"WS_SECURITY_OUTBOUND", "false", ""},
-		{"WS_USER", "ada", ""},
+		{"WS_BASE_TIMEZONE", "Asia/Tbilisi", ""},
 	} {
 		err := keyOf(t, tc.key).Check(tc.value)
 		if tc.want == "" && err != nil {
@@ -71,7 +71,7 @@ func TestTextGivesTheValueAsALine(t *testing.T) {
 	}
 	for name, want := range map[string]string{
 		"WS_IKEWARD_DOMAINS": "a.example, b.example", "WS_FANS_INTERVAL": "1.5", "WS_SECURITY_OUTBOUND": "true",
-		"WS_BASE_SWAPPINESS": "10", "WS_BASE_SWAP_SIZE_MB": "", "WS_HOME": "/home/zadykian", "WS_IKEWARD_DNS": "",
+		"WS_BASE_SWAPPINESS": "10", "WS_BASE_SWAP_SIZE_MB": "", "WS_GIT_SIGNING_PUB_KEY": "/root/.ssh/id_ed25519_signing.pub", "WS_IKEWARD_DNS": "",
 	} {
 		if got := v.Text(keyOf(t, name)); got != want {
 			t.Errorf("%s = %q, want %q", name, got, want)
@@ -89,7 +89,7 @@ func TestLineQuotesWhatReadsAsAnotherType(t *testing.T) {
 		key, value, want string
 	}{
 		{"WS_DOCKER_MEMORY_SWAP_MAX", "0", "WS_DOCKER_MEMORY_SWAP_MAX: \"0\"\n"},
-		{"WS_USER", "a #b", "WS_USER: 'a #b'\n"},
+		{"WS_BASE_TIMEZONE", "a #b", "WS_BASE_TIMEZONE: 'a #b'\n"},
 		{"WS_IKEWARD_DOMAINS", ",", "WS_IKEWARD_DOMAINS: []\n"},
 		{"WS_IKEWARD_DOMAINS", "a.example , b.example", "WS_IKEWARD_DOMAINS: [a.example, b.example]\n"},
 		{"WS_FANS_INTERVAL", "1.50", "WS_FANS_INTERVAL: 1.5\n"},
@@ -103,7 +103,7 @@ func TestLineQuotesWhatReadsAsAnotherType(t *testing.T) {
 }
 
 func TestLineKeepsALongValueOnOneLine(t *testing.T) {
-	long := "/home/zadykian/" + strings.Repeat("word ", 60) + "end.pub"
+	long := "/root/" + strings.Repeat("word ", 60) + "end.pub"
 	line, err := keyOf(t, "WS_GIT_SIGNING_PUB_KEY").line(long)
 	if err != nil {
 		t.Fatal(err)

@@ -9,7 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/local"
 )
 
-// TestConfine swaps a link in at the last component and at a parent, as WS_USER could while root
+// TestConfine swaps a link in at the last component and at a parent, as a user could while root
 // applies. It checks that each confined write fails and leaves the file outside unchanged.
 func TestConfine(t *testing.T) {
 	attrs := effect.Attrs{UID: os.Getuid(), GID: os.Getgid(), Mode: 0o600}
