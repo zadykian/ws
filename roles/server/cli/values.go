@@ -16,7 +16,7 @@ import (
 	"github.com/zadykian/ws/roles/server/values"
 )
 
-// newValuesCmd returns ws server ubuntu values, which edits the machine's values.
+// newValuesCmd returns ws server values, which edits the machine's values.
 func newValuesCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("values", "edit the machine's values", &cobra.Command{
 		Use:   "set KEY VALUE",

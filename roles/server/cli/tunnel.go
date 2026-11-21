@@ -13,14 +13,14 @@ import (
 	"github.com/zadykian/ws/roles/server/values"
 )
 
-// newTunnelCmd returns ws server ubuntu tunnel: the commands that the tunnel role's units run, on
+// newTunnelCmd returns ws server tunnel: the commands that the tunnel role's units run, on
 // the service manager's units u.
 func newTunnelCmd(p enginecli.Env, u effect.Units) *cobra.Command {
 	return enginecli.Group("tunnel", "the tunnel role's check, wg0's key and wg0, which its units run",
 		newTunnelCheckCmd(p, u), newTunnelKeyCmd(p), newTunnelWG0Cmd(p))
 }
 
-// newTunnelCheckCmd returns ws server ubuntu tunnel check.
+// newTunnelCheckCmd returns ws server tunnel check.
 func newTunnelCheckCmd(p enginecli.Env, u effect.Units) *cobra.Command {
 	return &cobra.Command{
 		Use:   "check",
@@ -41,7 +41,7 @@ func newTunnelCheckCmd(p enginecli.Env, u effect.Units) *cobra.Command {
 	}
 }
 
-// newTunnelKeyCmd returns ws server ubuntu tunnel key.
+// newTunnelKeyCmd returns ws server tunnel key.
 func newTunnelKeyCmd(p enginecli.Env) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "key",
@@ -61,7 +61,7 @@ func newTunnelKeyCmd(p enginecli.Env) *cobra.Command {
 	return c
 }
 
-// newTunnelWG0Cmd returns ws server ubuntu tunnel wg0.
+// newTunnelWG0Cmd returns ws server tunnel wg0.
 func newTunnelWG0Cmd(p enginecli.Env) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "wg0",

@@ -11,8 +11,8 @@ A person does these steps at ws, in this order. The Mac's side sets them in its 
    [Install](../../.github/workflows/release.md#install), `set -o pipefail` among them. It
    installs mise and runs its bootstrap, which puts ws in `/usr/local/bin`, which sudo reaches.
 
-The secrets come once the Mac has run `ws client macos secrets init`, one run for all servers, and
-then `ws client macos secrets add NAME`, which makes ws's host key a recipient of the secrets
+The secrets come once the Mac has run `ws client secrets init`, one run for all servers, and
+then `ws client secrets add NAME`, which makes ws's host key a recipient of the secrets
 repository ([The secrets](../client/runbook.md#the-secrets)). add then runs the task `secrets` at
 ws, which writes what the secrets give, such as `/etc/ws/env` and gh's login
 ([The repository](ubuntu/secrets/README.md#the-repository)). A later run under the secrets takes

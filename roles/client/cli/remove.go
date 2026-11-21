@@ -17,7 +17,7 @@ import (
 	"github.com/zadykian/ws/roles/internal/etcws"
 )
 
-// newRemoveCmd returns ws client macos remove.
+// newRemoveCmd returns ws client remove.
 func newRemoveCmd(p enginecli.Env, server *string) *cobra.Command {
 	var skip bool
 	c := &cobra.Command{

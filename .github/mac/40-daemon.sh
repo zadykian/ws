@@ -41,13 +41,13 @@ done
 pid() { sudo launchctl print "system/$LABEL" | awk '$1 == "pid" { print $3; exit }'; }
 for _ in $(seq 1 30); do
     now=$(pid) || true
-    status=$(sudo "$TUNNEL" client macos tunnel status 2>&1) || true
+    status=$(sudo "$TUNNEL" client tunnel status 2>&1) || true
     if [ -n "$now" ] && printf '%s\n' "$status" | grep -Eqx 'interface: utun[0-9]+'; then
         printf 'pid %s\n%s\n' "$now" "$status"
         exit 0
     fi
     sleep 1
 done
-echo "::error::no daemon runs in 30 s: launchd's pid is '$now'; ws client macos tunnel status gives:"
+echo "::error::no daemon runs in 30 s: launchd's pid is '$now'; ws client tunnel status gives:"
 printf '%s\n' "$status"
 exit 1

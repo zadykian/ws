@@ -1,6 +1,6 @@
 # The tunnel daemons
 
-`ws client macos tunnel run --server NAME` is the daemon of one server ([The Mac](../../README.md)).
+`ws client tunnel run --server NAME` is the daemon of one server ([The Mac](../../README.md)).
 Each has its own utun and its own directory, `/etc/ws/tunnel/NAME`, with `tunnel.conf` and
 `routes.d`. The Mac's key sits beside the directories. A daemon reads the other servers' directories
 too, so that two of them keep apart. It writes nothing there.
@@ -31,7 +31,7 @@ Each daemon's job in launchd's unit of the tunnel lists every server's `tunnel.c
 `routes.d`. So a bootstrap that changes one sends every loaded daemon a SIGHUP, and each counts
 that server's endpoints and networks at once.
 
-`ws client macos tunnel routes`, and the removal of a server's daemon by `ws client macos tunnel
+`ws client tunnel routes`, and the removal of a server's daemon by `ws client tunnel
 conf`, have every loaded daemon read again, by SIGHUP. A daemon routes at once what a gone server
 held.
 

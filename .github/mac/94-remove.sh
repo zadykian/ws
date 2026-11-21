@@ -1,5 +1,5 @@
 #!/bin/bash
-# ws client macos remove lab drops the second server from the Mac. Its directory, daemon, plist,
+# ws client remove lab drops the second server from the Mac. Its directory, daemon, plist,
 # state, log, ssh host and known_hosts entry go, and ws's stay, with its daemon still shaking hands.
 # remove runs mise bootstrap, as mac_bootstrap runs it: locked, with /opt/ws trusted and the build
 # served. The bootstrap takes lab's daemon and files away, and its host out of /etc/ws/ssh_config.
@@ -13,14 +13,14 @@ set -eo pipefail
 lab=${LABEL%.ws}.lab
 servers=/etc/ws/servers
 
-# fails WHY ARG...: ws client macos remove ARG... must exit 1, with WHY in what it prints.
+# fails WHY ARG...: ws client remove ARG... must exit 1, with WHY in what it prints.
 fails() {
     why=$1
     shift
     status=0
-    out=$(ws client macos remove "$@" 2>&1) || status=$?
+    out=$(ws client remove "$@" 2>&1) || status=$?
     if [ "$status" != 1 ] || ! printf '%s\n' "$out" | grep -qF -e "$why"; then
-        echo "::error::ws client macos remove $* exited $status, printing '$out', where 1 and '$why' were due"
+        echo "::error::ws client remove $* exited $status, printing '$out', where 1 and '$why' were due"
         exit 1
     fi
 }
@@ -32,18 +32,18 @@ printf '%s %s\n' lab "$key" ws "$key" >>~/.ssh/known_hosts
 
 mac_serve
 trap 'kill "$mac_server"' EXIT
-MISE_LOCKED=1 MISE_TRUSTED_CONFIG_PATHS=/opt/ws ws client macos remove lab </dev/null | tee "$RUNNER_TEMP/remove.out" || {
-    echo '::error::ws client macos remove lab failed'
+MISE_LOCKED=1 MISE_TRUSTED_CONFIG_PATHS=/opt/ws ws client remove lab </dev/null | tee "$RUNNER_TEMP/remove.out" || {
+    echo '::error::ws client remove lab failed'
     exit 1
 }
 grep -qx 'removed lab' "$RUNNER_TEMP/remove.out" || {
-    echo '::error::ws client macos remove lab did not say it removed lab'
+    echo '::error::ws client remove lab did not say it removed lab'
     exit 1
 }
 # The runner has no fnox key file, so the secrets' part of remove is left by hand, with lab's key.
 grep -q "^By hand: this Mac has no fnox key, .*: from a Mac that has one, drop lab's host key, $key, from the secrets" \
     "$RUNNER_TEMP/remove.out" || {
-    echo "::error::ws client macos remove lab did not leave the secrets' key by hand"
+    echo "::error::ws client remove lab did not leave the secrets' key by hand"
     exit 1
 }
 
@@ -67,7 +67,7 @@ launchctl print "system/$LABEL" >/dev/null || gone "ws's daemon is not loaded"
 # shaken: ws's daemon has a handshake. It has 60 s for one, as the daemon may be trying its paths
 # again, with a new peer (92-second.sh).
 shaken() {
-    status=$(sudo "$TUNNEL" client macos tunnel status --server ws 2>&1) || true
+    status=$(sudo "$TUNNEL" client tunnel status --server ws 2>&1) || true
     printf '%s\n' "$status" | grep -Eq '^latest handshake: [0-9]+ s ago$'
 }
 for _ in $(seq 1 60); do
@@ -75,7 +75,7 @@ for _ in $(seq 1 60); do
     sleep 1
 done
 shaken || gone "ws's daemon has no handshake in 60 s; its status gives: $status"
-[ "$(ws client macos servers | awk 'NR > 1 { print $1 }')" = ws ] || gone "ws client macos servers lists more than ws"
+[ "$(ws client servers | awk 'NR > 1 { print $1 }')" = ws ] || gone "ws client servers lists more than ws"
 [ "$fail" = 0 ] || exit 1
 
 fails "ws is the Mac's one server: with none, the bootstrap prunes no daemon, so remove leaves it" ws

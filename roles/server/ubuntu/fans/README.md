@@ -3,7 +3,7 @@
 The `fans` role drives the server's fans on curves of its own. It builds the board's fan driver
 with DKMS, and runs `ws-fans`, a service of its own, on the curves of its variables. The role is
 three units of [its spec](units.toml.tmpl), whose lines sit in `mise.server.toml`
-([The frame](../frame/README.md)). The daemon is Go, `ws server ubuntu fans`, in `daemon/`.
+([The frame](../frame/README.md)). The daemon is Go, `ws server fans`, in `daemon/`.
 
 | Unit | What it does |
 | --- | --- |
@@ -55,7 +55,7 @@ Then run the bootstrap again, as
 
 ## ws-fans
 
-`ws-fans.service` runs `ws server ubuntu fans` from `/usr/local/bin/ws`, which the frame's unit
+`ws-fans.service` runs `ws server fans` from `/usr/local/bin/ws`, which the frame's unit
 `state/ws-binary` keeps the pinned ws; `service/fans` waits on it. It reads `/etc/ws/fans.json`,
 which the unit writes from its variables, below. The daemon's own loader checks a new config as the
 unit plans, so a config it refuses fails the plan and replaces nothing. A change to the config, the

@@ -47,7 +47,7 @@ func valuesProcess(file string) (enginecli.Env, *effecttest.Machine) {
 
 func TestValuesSetWritesOneKey(t *testing.T) {
 	p, m := valuesProcess("---\n# the machine\nWS_USER: ada\n")
-	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "values", "set", "WS_BASE_SWAPPINESS", "20")
+	status, stdout, stderr := runWs(p, "", "server", "values", "set", "WS_BASE_SWAPPINESS", "20")
 	if status != 0 || stdout != "" || !strings.Contains(stderr, "wrote "+serverVars) {
 		t.Fatalf("status = %d, stdout %q, stderr %q", status, stdout, stderr)
 	}
@@ -68,7 +68,7 @@ func TestValuesSetMovesTheKeysThatFollow(t *testing.T) {
 		t.Fatal(err)
 	}
 	p, m := valuesProcess(seeded)
-	status, _, stderr := runWs(p, "", "server", "ubuntu", "values", "set", "WS_USER", "root")
+	status, _, stderr := runWs(p, "", "server", "values", "set", "WS_USER", "root")
 	if status != 0 || !strings.Contains(stderr, "moved WS_HOME and WS_GIT_SIGNING_PUB_KEY to follow WS_USER") {
 		t.Fatalf("status = %d, stderr %q", status, stderr)
 	}
@@ -80,7 +80,7 @@ func TestValuesSetMovesTheKeysThatFollow(t *testing.T) {
 
 func TestValuesSetAgainWritesNothing(t *testing.T) {
 	p, m := valuesProcess("---\nWS_USER: ada\n")
-	status, _, stderr := runWs(p, "", "server", "ubuntu", "values", "set", "WS_USER", "ada")
+	status, _, stderr := runWs(p, "", "server", "values", "set", "WS_USER", "ada")
 	if status != 0 || strings.Contains(stderr, "wrote") {
 		t.Fatalf("status = %d, stderr %q", status, stderr)
 	}
@@ -93,7 +93,7 @@ func TestValuesSetAgainWritesNothing(t *testing.T) {
 
 func TestValuesSetTakesAKeyOut(t *testing.T) {
 	p, m := valuesProcess("---\nWS_USER: ada\nWS_HOME: /h\n")
-	if status, _, stderr := runWs(p, "", "server", "ubuntu", "values", "set", "WS_HOME", ""); status != 0 {
+	if status, _, stderr := runWs(p, "", "server", "values", "set", "WS_HOME", ""); status != 0 {
 		t.Fatalf("status = %d: %s", status, stderr)
 	}
 	if got := string(m.Files[serverVars]); got != "---\nWS_USER: ada\n" {
@@ -103,7 +103,7 @@ func TestValuesSetTakesAKeyOut(t *testing.T) {
 
 func TestValuesSetTakesAValueWithADash(t *testing.T) {
 	p, m := valuesProcess("---\n")
-	if status, _, stderr := runWs(p, "", "server", "ubuntu", "values", "set", "--", "WS_USER", "-x"); status != 0 {
+	if status, _, stderr := runWs(p, "", "server", "values", "set", "--", "WS_USER", "-x"); status != 0 {
 		t.Fatalf("status = %d: %s", status, stderr)
 	}
 	if got := string(m.Files[serverVars]); got != "---\nWS_USER: -x\n" {
@@ -129,7 +129,7 @@ func TestValuesSetRefuses(t *testing.T) {
 		{"a wrong kind", plain, []string{"WS_BASE_SWAPPINESS", "ten"}, "a whole number"},
 		{"no value", plain, []string{"WS_USER"}, "accepts 2 arg"},
 	} {
-		args := append([]string{"server", "ubuntu", "values", "set"}, tc.args...)
+		args := append([]string{"server", "values", "set"}, tc.args...)
 		if status, _, stderr := runWs(tc.p, "", args...); status == 0 || !strings.Contains(stderr, tc.want) {
 			t.Errorf("%s: status = %d, stderr %q, want %q", tc.name, status, stderr, tc.want)
 		}

@@ -1,4 +1,4 @@
-// Package daemon runs ws client macos tunnel's loop. It reads the Mac and the peer, asks the pure
+// Package daemon runs ws client tunnel's loop. It reads the Mac and the peer, asks the pure
 // functions of package tunnel what to do, and does it through effect.Machine and a Device.
 package daemon
 

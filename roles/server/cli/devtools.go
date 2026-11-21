@@ -13,13 +13,13 @@ import (
 	"github.com/zadykian/ws/roles/server/values"
 )
 
-// newDevtoolsCmd returns ws server ubuntu devtools: the procedures that the devtools role's units
+// newDevtoolsCmd returns ws server devtools: the procedures that the devtools role's units
 // run.
 func newDevtoolsCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("devtools", "the devtools role's procedures, which its units run", newGHLoginCmd(p))
 }
 
-// newGHLoginCmd returns ws server ubuntu devtools gh-login.
+// newGHLoginCmd returns ws server devtools gh-login.
 func newGHLoginCmd(p enginecli.Env) *cobra.Command {
 	return procedure("gh-login", "log gh in to github.com as WS_USER, by the token of "+devtools.TokenFile,
 		"gh logs in as WS_USER by the last line of "+devtools.TokenFile+", which it takes on its input "+

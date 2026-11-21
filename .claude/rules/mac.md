@@ -36,16 +36,16 @@ The rules a change to the ws CLI keeps, in `cmd/`, `engine/` and `roles/`
   frame](../../roles/client/macos/frame/README.md#roots-paths)).
 - No cgo: ws builds with `CGO_ENABLED=0`. The race detector's cgo is the tests' alone
   ([Makefile](../../Makefile)).
-- `--server NAME` is `ws client macos`'s persistent flag, bound once in `Command` and read through a
+- `--server NAME` is `ws client`'s persistent flag, bound once in `Command` and read through a
   pointer at run time.
-- `ws client macos remove NAME` changes nothing on the server itself. Before the Mac's files, it
+- `ws client remove NAME` changes nothing on the server itself. Before the Mac's files, it
   takes the server's key from the secrets' recipients and its deploy keys, and a failure there
   keeps the server whole. `--skip-secrets` leaves the secrets, and prints the key. It then takes
   the Mac's files of that server away, and runs
   `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap`, which takes its daemon and hosts away.
   It takes no `--server`
-  ([The secrets](../../roles/client/macos/secrets/README.md#ws-client-macos-remove)).
-- `ws client macos secrets` changes the secrets repository by a pull request from a temporary
+  ([The secrets](../../roles/client/macos/secrets/README.md#ws-client-remove)).
+- `ws client secrets` changes the secrets repository by a pull request from a temporary
   clone, never a push to `main`, and opens none where nothing changed. A value, an age identity's
   secret or the backup's line never enters an argument, a file or an error
   ([The secrets on the Mac](../../roles/client/macos/secrets/README.md#how-a-change-lands)).

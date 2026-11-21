@@ -12,14 +12,14 @@ import (
 	"github.com/zadykian/ws/roles/server/values"
 )
 
-// newCableCmd returns ws server ubuntu cable: the commands that the cable role's units run, on the
+// newCableCmd returns ws server cable: the commands that the cable role's units run, on the
 // service manager's units u.
 func newCableCmd(p enginecli.Env, u effect.Units) *cobra.Command {
 	return enginecli.Group("cable", "the cable role's check and reload, which its units run", newCableCheckCmd(p, u),
 		newCableReloadCmd(p, u))
 }
 
-// newCableCheckCmd returns ws server ubuntu cable check.
+// newCableCheckCmd returns ws server cable check.
 func newCableCheckCmd(p enginecli.Env, u effect.Units) *cobra.Command {
 	return &cobra.Command{
 		Use:   "check [FILE]",
@@ -45,7 +45,7 @@ func newCableCheckCmd(p enginecli.Env, u effect.Units) *cobra.Command {
 	}
 }
 
-// newCableReloadCmd returns ws server ubuntu cable reload.
+// newCableReloadCmd returns ws server cable reload.
 func newCableReloadCmd(p enginecli.Env, u effect.Units) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "reload",

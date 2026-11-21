@@ -123,7 +123,7 @@ check = [
 # keeps the token in ~/.config/gh/hosts.yml, mode 0600.
 [state.devtools-gh-login]
 after = "state/devtools-gh-token-group"
-run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "ubuntu", "devtools", "gh-login"], check = ["{{ self }}", "server", "ubuntu", "devtools", "gh-login", "--check"] }
+run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "devtools", "gh-login"], check = ["{{ self }}", "server", "devtools", "gh-login", "--check"] }
 
 # roslyn-language-server, C#'s server, from nuget.org, where every version is a prerelease. The
 # version alone pins it, as nuget.org refuses a version's second upload. From 5.13.0-1.26514.10 the

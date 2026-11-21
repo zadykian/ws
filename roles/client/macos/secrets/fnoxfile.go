@@ -116,7 +116,7 @@ func Start(nano, backup string) ([]byte, error) {
 			return nil, fmt.Errorf("%q is no age recipient, age1 and lowercase bech32", r)
 		}
 	}
-	return fmt.Appendf(nil, `# The values that every server shares, which ws client macos secrets init started. A server's
+	return fmt.Appendf(nil, `# The values that every server shares, which ws client secrets init started. A server's
 # own values are in fnox.HOSTNAME.toml, under its provider host.
 root = true
 if_missing = "error"

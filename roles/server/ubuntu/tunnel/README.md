@@ -7,7 +7,7 @@ containers from reaching the Mac through the tunnel or the cable.
 
 The role is mise's packages, `wireguard-tools`, `systemd` and `iptables`, and six units of
 [its spec](units.toml.tmpl), whose lines sit in `mise.server.toml` ([The frame](../frame/README.md)). What
-Go holds stays Go, as `ws server ubuntu tunnel check`, `tunnel key` and `tunnel wg0`, which the
+Go holds stays Go, as `ws server tunnel check`, `tunnel key` and `tunnel wg0`, which the
 units run. The values' check refuses the settings the role cannot use, as the values load.
 
 | Unit | What it does |

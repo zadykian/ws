@@ -128,10 +128,10 @@ func TestTunnelOrder(t *testing.T) {
 
 func TestTunnelGuardRunsTheCheck(t *testing.T) {
 	m := tunnelMachine()
-	m.Results[selfPath+" server ubuntu tunnel check"] = effecttest.Result{Out: []byte("a line\n")}
+	m.Results[selfPath+" server tunnel check"] = effecttest.Result{Out: []byte("a line\n")}
 	units, out := cableUnits(t, m, "---\n")
 	applyUnit(t, units, "guard/tunnel")
-	if !slices.Contains(m.Calls, "root "+selfPath+" server ubuntu tunnel check") || !slices.Contains(out.Lines, "say: a line") {
+	if !slices.Contains(m.Calls, "root "+selfPath+" server tunnel check") || !slices.Contains(out.Lines, "say: a line") {
 		t.Errorf("calls %q, said %q; want ws's check as root, and its line", m.Calls, out.Lines)
 	}
 }

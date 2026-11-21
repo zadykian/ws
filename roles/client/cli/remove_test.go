@@ -64,7 +64,7 @@ func removeFixture() (enginecli.Env, *effecttest.Machine) {
 
 func TestRemoveDeletesTheServersFilesAndItsHostKey(t *testing.T) {
 	p, m := removeFixture()
-	status, stdout, stderr := runWs(p, "client", "macos", "remove", "lab")
+	status, stdout, stderr := runWs(p, "client", "remove", "lab")
 	if !strings.HasPrefix(stdout, "removed lab\n") {
 		t.Errorf("status = %d, stdout = %q, stderr = %q; want removed lab first", status, stdout, stderr)
 	}
@@ -83,7 +83,7 @@ func TestRemoveDeletesTheServersFilesAndItsHostKey(t *testing.T) {
 func TestRemoveKeepsTheServerWhereTheHostCannotBeForgotten(t *testing.T) {
 	p, m := removeFixture()
 	m.Results["ssh-keygen -R lab"] = effecttest.Result{Err: errors.New("exit 1")}
-	status, stdout, stderr := runWs(p, "client", "macos", "remove", "lab")
+	status, stdout, stderr := runWs(p, "client", "remove", "lab")
 	if status == 0 || !strings.Contains(stderr, "cannot drop lab from /h/.ssh/known_hosts") {
 		t.Errorf("status = %d, stderr = %q; want the host's failure", status, stderr)
 	}
@@ -102,7 +102,7 @@ func TestRemoveLeavesAKnownHostsThatIsALink(t *testing.T) {
 	p, m := removeFixture()
 	m.Links["/h/.ssh/known_hosts"] = "/d/known_hosts"
 	m.Files["/d/known_hosts"] = []byte("lab ssh-ed25519 BBBB\n")
-	_, stdout, _ := runWs(p, "client", "macos", "remove", "lab")
+	_, stdout, _ := runWs(p, "client", "remove", "lab")
 	if want := "By hand: /h/.ssh/known_hosts is a link to /d/known_hosts: delete the lines of lab there\nremoved lab\n"; !strings.HasPrefix(stdout, want) {
 		t.Errorf("stdout = %q, want it to start with %q", stdout, want)
 	}
@@ -114,7 +114,7 @@ func TestRemoveLeavesAKnownHostsThatIsALink(t *testing.T) {
 func TestRemoveWithNoKnownHostsHasNoKeyToDrop(t *testing.T) {
 	p, m := removeFixture()
 	delete(m.Files, "/h/.ssh/known_hosts")
-	if _, stdout, _ := runWs(p, "client", "macos", "remove", "lab"); !strings.HasPrefix(stdout, "removed lab\n") {
+	if _, stdout, _ := runWs(p, "client", "remove", "lab"); !strings.HasPrefix(stdout, "removed lab\n") {
 		t.Errorf("stdout = %q; want removed lab", stdout)
 	}
 }
@@ -123,13 +123,13 @@ func TestRemoveWithNoKnownHostsHasNoKeyToDrop(t *testing.T) {
 // its failure says to run it again.
 func TestRemoveRunsTheBootstrap(t *testing.T) {
 	p, _ := removeFixture()
-	status, _, stderr := runWs(p, "client", "macos", "remove", "lab")
+	status, _, stderr := runWs(p, "client", "remove", "lab")
 	if want := "MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap: "; status != 1 || !strings.Contains(stderr, want) || !strings.Contains(stderr, "run it again to take lab's daemon, routes and host off") {
 		t.Errorf("status = %d, stderr = %q; want 1 and %q", status, stderr, want)
 	}
 	p, m := removeFixture()
 	m.Results["env MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap"] = effecttest.Result{}
-	if status, _, stderr := runWs(p, "client", "macos", "remove", "lab"); status != 0 || !slices.Contains(m.Calls, "run env MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap") {
+	if status, _, stderr := runWs(p, "client", "remove", "lab"); status != 0 || !slices.Contains(m.Calls, "run env MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap") {
 		t.Errorf("status = %d, stderr = %q, calls %q; want 0, the bootstrap run", status, stderr, m.Calls)
 	}
 }
@@ -138,8 +138,8 @@ func TestRemoveRefusesWhereAServerThatStaysHasABadFile(t *testing.T) {
 	p, m := removeFixture()
 	m.Files["/etc/ws/servers/abc/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "99"))
 	m.Dirs["/etc/ws/servers/abc"] = 0o755
-	status, _, stderr := runWs(p, "client", "macos", "remove", "lab")
-	if want := ": fix its file, or ws client macos remove abc"; status != 1 || !strings.Contains(stderr, "server abc: ") ||
+	status, _, stderr := runWs(p, "client", "remove", "lab")
+	if want := ": fix its file, or ws client remove abc"; status != 1 || !strings.Contains(stderr, "server abc: ") ||
 		!strings.Contains(stderr, want) {
 		t.Errorf("status = %d, stderr = %q; want 1 and %q", status, stderr, want)
 	}
@@ -153,7 +153,7 @@ func TestRemoveRefusesWhereAServerThatStaysHasABadFile(t *testing.T) {
 func TestRemoveTakesAServerThatClashesWithOneThatStays(t *testing.T) {
 	p, m := removeFixture()
 	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "0"))
-	if _, stdout, stderr := runWs(p, "client", "macos", "remove", "lab"); !strings.HasPrefix(stdout, "removed lab\n") {
+	if _, stdout, stderr := runWs(p, "client", "remove", "lab"); !strings.HasPrefix(stdout, "removed lab\n") {
 		t.Errorf("stdout = %q, stderr = %q; want removed lab", stdout, stderr)
 	}
 }
@@ -167,7 +167,7 @@ func TestRemoveNamesTheCableOfTheGoneServer(t *testing.T) {
 		"WS_CABLE_PORT", "eth1",
 		"WS_CABLE_SERVICE", "USB 10/100/1000 LAN",
 	))
-	_, stdout, _ := runWs(p, "client", "macos", "remove", "lab")
+	_, stdout, _ := runWs(p, "client", "remove", "lab")
 	if want := "By hand: the cable's service USB 10/100/1000 LAN keeps 10.77.0.2"; !strings.Contains(stdout, want) {
 		t.Errorf("stdout = %q; want it to hold %q", stdout, want)
 	}
@@ -189,7 +189,7 @@ func TestRemoveRefusesTheLastServerAndAWrongName(t *testing.T) {
 				delete(m.Files, "/etc/ws/servers/lab/values.yml")
 				delete(m.Dirs, "/etc/ws/servers/lab")
 			}
-			status, _, stderr := runWs(p, "client", "macos", "remove", tc.arg)
+			status, _, stderr := runWs(p, "client", "remove", tc.arg)
 			if status != 1 || !strings.Contains(stderr, tc.want) || strings.Contains(stderr, "--server") {
 				t.Errorf("status = %d, stderr = %q; want 1 and %q", status, stderr, tc.want)
 			}
@@ -204,7 +204,7 @@ func TestRemoveRefusesTheLastServerAndAWrongName(t *testing.T) {
 
 func TestRemoveRefusesAServerFlag(t *testing.T) {
 	p, _ := removeFixture()
-	status, _, stderr := runWs(p, "client", "macos", "--server", "ws", "remove", "lab")
+	status, _, stderr := runWs(p, "client", "--server", "ws", "remove", "lab")
 	if status != 1 || !strings.Contains(stderr, "remove takes the server's name alone") {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}

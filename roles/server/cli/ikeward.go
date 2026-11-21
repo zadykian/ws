@@ -14,14 +14,14 @@ import (
 	"github.com/zadykian/ws/roles/server/values"
 )
 
-// newIkewardCmd returns ws server ubuntu ikeward: the commands that the ikeward role's units run.
+// newIkewardCmd returns ws server ikeward: the commands that the ikeward role's units run.
 // The wait is tries tries, pause apart.
 func newIkewardCmd(p enginecli.Env, tries int, pause time.Duration) *cobra.Command {
 	return enginecli.Group("ikeward", "the ikeward role's check, install and wait, which its units run",
 		newIkewardCheckCmd(p), newIkewardInstallCmd(p), newIkewardWaitCmd(p, tries, pause))
 }
 
-// newIkewardCheckCmd returns ws server ubuntu ikeward check.
+// newIkewardCheckCmd returns ws server ikeward check.
 func newIkewardCheckCmd(p enginecli.Env) *cobra.Command {
 	return &cobra.Command{
 		Use:   "check",
@@ -58,7 +58,7 @@ func ikewardReady(p enginecli.Env, out effect.Out) (ikeward.Install, error) {
 	return i, i.Ready()
 }
 
-// newIkewardInstallCmd returns ws server ubuntu ikeward install.
+// newIkewardInstallCmd returns ws server ikeward install.
 func newIkewardInstallCmd(p enginecli.Env) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "install",
@@ -86,7 +86,7 @@ func newIkewardInstallCmd(p enginecli.Env) *cobra.Command {
 	return c
 }
 
-// newIkewardWaitCmd returns ws server ubuntu ikeward wait.
+// newIkewardWaitCmd returns ws server ikeward wait.
 func newIkewardWaitCmd(p enginecli.Env, tries int, pause time.Duration) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "wait",

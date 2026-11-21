@@ -54,7 +54,7 @@ func TestSecretsInitRemovesTheCloneOnASignal(t *testing.T) {
 		mac := secretstest.New(m, nil)
 		p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 		p.Machine = &signaled{Mac: mac, sig: sig, at: checksLine}
-		status, _, stderr := clitest.Run(p, []*cobra.Command{clientGroup(p)}, "\n", "client", "macos", "secrets", "init")
+		status, _, stderr := clitest.Run(p, []*cobra.Command{Command(p)}, "\n", "client", "secrets", "init")
 		if status != 1 || !strings.Contains(stderr, "stopped waiting for the checks") {
 			t.Errorf("init on %v: status = %d, stderr = %q", sig, status, stderr)
 		}
@@ -67,7 +67,7 @@ func TestSecretsInitRemovesTheCloneOnASignal(t *testing.T) {
 func TestSecretsInitRefusesRoot(t *testing.T) {
 	p := fakeProcess()
 	p.Euid = 0
-	status, _, stderr := runWs(p, "client", "macos", "secrets", "init")
+	status, _, stderr := runWs(p, "client", "secrets", "init")
 	if status != 1 || !strings.Contains(stderr, "run it as yourself, not root") {
 		t.Errorf("init as root: status = %d, stderr = %q", status, stderr)
 	}
@@ -77,21 +77,21 @@ func TestSecretsInitRefusesRoot(t *testing.T) {
 }
 
 func TestSecretsInitTakesNoServer(t *testing.T) {
-	status, _, stderr := runWs(fakeProcess(), "client", "macos", "secrets", "init", "--server", "ws")
+	status, _, stderr := runWs(fakeProcess(), "client", "secrets", "init", "--server", "ws")
 	if status != 1 || !strings.Contains(stderr, "init takes no --server") {
 		t.Errorf("init --server ws: status = %d, stderr = %q", status, stderr)
 	}
 }
 
 func TestSecretsInitTakesNoArgument(t *testing.T) {
-	status, _, stderr := runWs(fakeProcess(), "client", "macos", "secrets", "init", "ws")
+	status, _, stderr := runWs(fakeProcess(), "client", "secrets", "init", "ws")
 	if status != 2 || !strings.Contains(stderr, `unknown command "ws"`) {
 		t.Errorf("init ws: status = %d, stderr = %q", status, stderr)
 	}
 }
 
 func TestSecretsInitReadsTheTree(t *testing.T) {
-	status, _, stderr := runWs(fakeProcess(), "client", "macos", "secrets", "init")
+	status, _, stderr := runWs(fakeProcess(), "client", "secrets", "init")
 	if status != 1 || !strings.Contains(stderr, "/opt/ws/mise.toml") {
 		t.Errorf("init without a tree: status = %d, stderr = %q", status, stderr)
 	}

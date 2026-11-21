@@ -192,7 +192,7 @@ func TestFansServiceInstallsEnablesAndStartsThenChangesNothing(t *testing.T) {
 		t.Errorf("fans.json = %q, want the values' config and a newline", got)
 	}
 	if !strings.Contains(string(m.Files["/etc/systemd/system/ws-fans.service"]),
-		"\nExecStart=/usr/local/bin/ws server ubuntu fans /etc/ws/fans.json\n") {
+		"\nExecStart=/usr/local/bin/ws server fans /etc/ws/fans.json\n") {
 		t.Errorf("ws-fans.service runs no /usr/local/bin/ws: %q", m.Files["/etc/systemd/system/ws-fans.service"])
 	}
 	for _, p := range []string{"/etc/modprobe.d/ws-fans.conf", "/etc/modules-load.d/ws-fans.conf"} {

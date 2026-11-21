@@ -15,7 +15,7 @@ import (
 const (
 	cableFile = "/etc/netplan/60-cable.yaml"
 	// cableCheck is the file unit's check of the new file.
-	cableCheck = selfPath + " server ubuntu cable check " + cableFile + ".ws-check"
+	cableCheck = selfPath + " server cable check " + cableFile + ".ws-check"
 	// cableBytes is the file that the step rendered for enp5s0 at 10.77.0.1/30.
 	cableBytes = `# Written by github.com/zadykian/ws, whose next run replaces any change made here.
 #
@@ -140,10 +140,10 @@ func TestCableFileWaitsOnTheGuard(t *testing.T) {
 
 func TestCableGuardRunsTheCheck(t *testing.T) {
 	m := cableMachine()
-	m.Results[selfPath+" server ubuntu cable check"] = effecttest.Result{}
+	m.Results[selfPath+" server cable check"] = effecttest.Result{}
 	units, _ := cableUnits(t, m, cableValues)
 	applyUnit(t, units, "guard/cable")
-	if !slices.Contains(m.Calls, "root "+selfPath+" server ubuntu cable check") {
+	if !slices.Contains(m.Calls, "root "+selfPath+" server cable check") {
 		t.Errorf("calls %q, want ws's check as root", m.Calls)
 	}
 }

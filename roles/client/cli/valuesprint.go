@@ -9,7 +9,7 @@ import (
 	"github.com/zadykian/ws/roles/client/values"
 )
 
-// newValuesCmd returns ws client macos values.
+// newValuesCmd returns ws client values.
 func newValuesCmd(p enginecli.Env, server *string) *cobra.Command {
 	var lines bool
 	c := &cobra.Command{

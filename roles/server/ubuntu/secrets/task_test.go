@@ -14,7 +14,7 @@ import (
 // runLine and addHint are the words of the task's refusals that a caller acts on.
 const (
 	runLine = "sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server run secrets"
-	addHint = "ws client macos secrets add NAME"
+	addHint = "ws client secrets add NAME"
 	hostKey = "/etc/ssh/ssh_host_ed25519_key"
 )
 

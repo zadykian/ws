@@ -9,13 +9,13 @@ import (
 // routesText is a file of a server's routes.d: the networks of a set, a network a line. The
 // server's daemon adds them to the peer's AllowedIPs and routes them into its utun.
 func routesText(server, set string, networks []string) string {
-	return "# " + file.Mark + ": ws client macos tunnel routes --server " + server + " " + set + ".\n" +
+	return "# " + file.Mark + ": ws client tunnel routes --server " + server + " " + set + ".\n" +
 		strings.Join(networks, "\n") + "\n"
 }
 
 // resolverHeader is the first line of the files in /etc/resolver that ws writes, by which a run
 // knows them for its own.
-const resolverHeader = "# " + file.Mark + ": ws client macos networks, from WS_RESOLVERS."
+const resolverHeader = "# " + file.Mark + ": ws client networks, from WS_RESOLVERS."
 
 // resolverText is /etc/resolver/DOMAIN: a nameserver line for each address (resolver(5)).
 func resolverText(addresses []string) string {

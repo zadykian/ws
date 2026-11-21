@@ -13,7 +13,7 @@ type Stats struct {
 	Known          bool // the device has the peer
 }
 
-// Format is what ws client macos tunnel status prints, line for line as ws-tunnel status did.
+// Format is what ws client tunnel status prints, line for line as ws-tunnel status did.
 func (s State) Format(now time.Time, peer Stats) string {
 	var b strings.Builder
 	if s.Tier == TierNone {

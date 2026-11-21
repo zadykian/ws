@@ -17,7 +17,7 @@ import (
 	"github.com/zadykian/ws/roles/internal/etcws"
 )
 
-// Conf is what each server's daemon reads, which ws client macos tunnel conf sets up. Each server
+// Conf is what each server's daemon reads, which ws client tunnel conf sets up. Each server
 // with WS_PUBLIC_KEY gets its directory under /etc/ws/tunnel, routes.d and tunnel.conf. All are
 // root's and readable by all. So a run that changes nothing asks for no password, and a root
 // daemon reads no file the user can write. A server whose directory beside values.yml is gone has

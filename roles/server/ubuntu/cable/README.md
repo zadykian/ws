@@ -3,7 +3,7 @@
 The `cable` role sets up the server's end of a cable to the Mac, `10.77.0.1/30` on the port
 `WS_CABLE_PORT` names, from a netplan file. The role is three units of [its spec](units.toml.tmpl), whose
 lines sit in `mise.server.toml` ([The frame](../frame/README.md)). Its checks stay Go, as
-`ws server ubuntu cable check` and `ws server ubuntu cable reload`, which the units run.
+`ws server cable check` and `ws server cable reload`, which the units run.
 
 | Unit | What it does |
 | --- | --- |

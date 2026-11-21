@@ -31,7 +31,7 @@ jobs:
   # A stand-in ws is a second wireguard-go on the runner, with the Mac's key as its peer. It answers
   # the tunnel's handshakes on loopback, as the LAN (127.0.0.0/8) and as WS_REMOTE (localhost). The
   # daemon's status must show each in turn.
-  # Last, ws client macos tunnel routes --server ws and ws client macos resolver, then the keys'.
+  # Last, ws client tunnel routes --server ws and ws client resolver, then the keys'.
   # Then a second server's cases, 90-clash, 92-second and 94-remove (mac-servers.md). Last, one
   # more bootstrap must call no sudo, and its plan and mise dot status --missing exit 0
   # (96-converged). A stand-in that makes no utun fails the job, as the daemon's device makes one.
@@ -61,7 +61,7 @@ jobs:
         env: { GIT_CONFIG_COUNT: 1, GIT_CONFIG_KEY_0: init.defaultBranch, GIT_CONFIG_VALUE_0: main }
         with:
           persist-credentials: false
-      # ws, built into ~/.local/bin by .tools/build, which the cases run as ws client macos.
+      # ws, built into ~/.local/bin by .tools/build, which the cases run as ws client.
       - name: Build ws
         run: |
           sh .tools/build darwin arm64 ~/.local/bin/ws
@@ -73,7 +73,7 @@ jobs:
       - name: The daemon's status and log
         if: always()
         run: |
-          sudo "$TUNNEL" client macos tunnel status --server ws || true
+          sudo "$TUNNEL" client tunnel status --server ws || true
           sudo cat /var/log/ws-tunnel.ws.log || true
-          sudo "$TUNNEL" client macos tunnel status --server lab || true
+          sudo "$TUNNEL" client tunnel status --server lab || true
           sudo cat /var/log/ws-tunnel.lab.log || true

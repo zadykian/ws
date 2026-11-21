@@ -1,7 +1,7 @@
 #!/bin/bash
 # Without ws's key, mise bootstrap (28-bootstrap.sh) made the Mac's key and installed no daemon.
 # /etc/ws/tunnel.pub, readable by all, must hold the Mac's public key, which the stand-in ws below
-# takes as its peer. ws client macos tunnel key must print it again and keep the key. The key
+# takes as its peer. ws client tunnel key must print it again and keep the key. The key
 # must be root's alone. ssh -G must give ws the tunnel's end, from mise bootstrap's
 # /etc/ws/ssh_config.
 
@@ -19,12 +19,12 @@ if [[ ! $key =~ ^[A-Za-z0-9+/]{43}=$ ]] || [ "$key" != "$mac" ]; then
     echo "::error::/etc/ws/tunnel.pub holds '$key' as the Mac's public key, not '$mac'"
     fail=1
 fi
-again=$(sudo /usr/local/bin/ws client macos tunnel key) || {
-    echo '::error::ws client macos tunnel key failed with the key there'
+again=$(sudo /usr/local/bin/ws client tunnel key) || {
+    echo '::error::ws client tunnel key failed with the key there'
     fail=1
 }
 [ "$again" = "$mac" ] || {
-    echo "::error::ws client macos tunnel key printed '$again', not '$mac'"
+    echo "::error::ws client tunnel key printed '$again', not '$mac'"
     fail=1
 }
 printf '%s\n' "$mac" >"$RUNNER_TEMP/mac.pub"

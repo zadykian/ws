@@ -17,7 +17,7 @@ import (
 // claudeReadme is the page that each of claude's commands points to.
 const claudeReadme = "roles/server/ubuntu/claude/README.md"
 
-// newClaudeCmd returns ws server ubuntu claude: the procedures that the claude role's units run.
+// newClaudeCmd returns ws server claude: the procedures that the claude role's units run.
 func newClaudeCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("claude", "the claude role's procedures, which its units run",
 		claudeProcedure(p, "update", "update cld where a newer release is out",

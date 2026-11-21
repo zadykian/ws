@@ -24,7 +24,7 @@ func claudeProcess(values, have string) (*effecttest.Machine, func(args ...strin
 	m.Results[readAsUser+rootCompletion] = effecttest.Result{Out: []byte("y" + have)}
 	m.Results["env HOME=/root "+rootCld+" setup completion bash"] = effecttest.Result{}
 	return m, func(args ...string) (int, string, string) {
-		return runWs(p, "", append([]string{"server", "ubuntu", "claude"}, args...)...)
+		return runWs(p, "", append([]string{"server", "claude"}, args...)...)
 	}
 }
 
@@ -88,7 +88,7 @@ func TestClaudeRestoreSkipsWithoutSystemd(t *testing.T) {
 func TestClaudeCommandsReadTheValues(t *testing.T) {
 	p, _ := valuesProcess("---\nWS_NO_SUCH_KEY: 1\n")
 	for _, name := range []string{"update", "completion", "settings", "telemetry", "marketplaces", "restore"} {
-		if status, _, stderr := runWs(p, "", "server", "ubuntu", "claude", name, "--check"); status != 1 ||
+		if status, _, stderr := runWs(p, "", "server", "claude", name, "--check"); status != 1 ||
 			!strings.Contains(stderr, "WS_NO_SUCH_KEY") {
 			t.Errorf("%s: status = %d, stderr %q", name, status, stderr)
 		}

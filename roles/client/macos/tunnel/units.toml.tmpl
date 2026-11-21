@@ -7,7 +7,7 @@ after = "state/ws-binary"
 [state.tunnel-key.run]
 user = "root"
 creates = ["/etc/ws/tunnel/private.key", "/etc/ws/tunnel.pub"]
-command = ["/usr/local/bin/ws", "client", "macos", "tunnel", "key"]
+command = ["/usr/local/bin/ws", "client", "tunnel", "key"]
 
 # What each keyed server's daemon reads: its directory, routes.d and tunnel.conf, root's and
 # readable by all. A server gone from beside values.yml has its daemon booted out and its files
@@ -17,8 +17,8 @@ after = "state/tunnel-key"
 
 [state.tunnel-conf.run]
 user = "{{ .User }}"
-command = ["{{ self }}", "client", "macos", "tunnel", "conf"]
-check = ["{{ self }}", "client", "macos", "tunnel", "conf", "--check"]
+command = ["{{ self }}", "client", "tunnel", "conf"]
+check = ["{{ self }}", "client", "tunnel", "conf", "--check"]
 
 # A daemon for each server with WS_PUBLIC_KEY, which launchd runs as root from boot. A new key
 # restarts each. A daemon skips a network that another server's routes.d holds, and counts the
@@ -32,7 +32,7 @@ program = "/usr/local/bin/ws"
 
 [[launchd.tunnel.daemon]]
 name = "{{ .Name }}"
-arguments = ["/usr/local/bin/ws", "client", "macos", "tunnel", "run", "--server", "{{ .Name }}"]
+arguments = ["/usr/local/bin/ws", "client", "tunnel", "run", "--server", "{{ .Name }}"]
 log = "/var/log/ws-tunnel.{{ .Name }}.log"
 restart_on = ["/etc/ws/tunnel.pub"]
 reload_on = [

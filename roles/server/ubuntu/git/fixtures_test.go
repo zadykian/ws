@@ -20,8 +20,8 @@ import (
 
 const (
 	self     = "/usr/local/bin/ws"
-	check    = self + " server ubuntu git check"
-	included = self + " server ubuntu git included"
+	check    = self + " server git check"
+	included = self + " server git included"
 	include  = "[include]\n\tpath = /etc/ws/gitconfig\n"
 	pub      = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGit ws@box\n"
 )

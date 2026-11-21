@@ -1,9 +1,9 @@
 #!/bin/sh
 # The mac job's checks of the server's WS_TUNNEL_NETWORKS and WS_RESOLVERS, which mise bootstrap
-# writes through ws client macos networks. The job runs it from the repository's root after
+# writes through ws client networks. The job runs it from the repository's root after
 # mac-ws-checks.sh, with the build served (80-conf-keys.sh). The tunnel's daemon is loaded, and
 # WS_PUBLIC_KEY is in the server's file (.github/workflows/mac.yml). It takes ws's path from the
-# job's TUNNEL, and stops without it. ws client macos networks --check must name both files and
+# job's TUNNEL, and stops without it. ws client networks --check must name both files and
 # write none. The keys' network must go into the daemon's utun, and their domain show in scutil
 # --dns. A second bootstrap's plan must exit 0. Emptied or removed, the keys must take both back,
 # and spare a script's own files. Each failure prints an ::error:: line, and any fails the script
@@ -57,10 +57,10 @@ setup() {
     out=$(bash -c '. .github/mac-mise.sh && mac_bootstrap' 2>&1)
 }
 
-# check runs ws client macos networks --check, as the networks' unit checks, and sets out to what it
+# check runs ws client networks --check, as the networks' unit checks, and sets out to what it
 # printed.
 check() {
-    out=$(ws client macos networks --check 2>&1)
+    out=$(ws client networks --check 2>&1)
 }
 
 # routed ADDRESS succeeds where macOS routes ADDRESS into the daemon's utun.
@@ -79,14 +79,14 @@ shown() {
         END { exit !found }'
 }
 
-utun=$(sudo "$TUNNEL" client macos tunnel status | awk -F': ' '$1 == "interface" { print $2 }')
+utun=$(sudo "$TUNNEL" client tunnel status | awk -F': ' '$1 == "interface" { print $2 }')
 # A script's own route and resolver, which the keys must spare.
-must "$TUNNEL" client macos tunnel routes --server ws own 198.51.100.0/24
-must "$TUNNEL" client macos resolver own.test 198.51.100.53
+must "$TUNNEL" client tunnel routes --server ws own 198.51.100.0/24
+must "$TUNNEL" client resolver own.test 198.51.100.53
 
 keys 'WS_TUNNEL_NETWORKS: 203.0.113.0/24' 'WS_RESOLVERS: conf.test=203.0.113.53,203.0.113.54'
 if check; then
-    error "ws client macos networks --check with the keys found nothing to do: $out"
+    error "ws client networks --check with the keys found nothing to do: $out"
 else
     case $out in *"$tunnel_dir/ws/routes.d/values"*) ;; *) error "--check named no routes.d/values: $out" ;; esac
     case $out in
@@ -102,21 +102,21 @@ printf '%s\n' "$out"
 until_ok 20 routed 203.0.113.1 || error "203.0.113.1 is not routed into the daemon's $utun"
 until_ok 20 shown conf.test 203.0.113.53 || error 'scutil --dns shows no resolver for conf.test'
 case $(head -n 1 "$ws_resolvers/conf.test") in
-"# Written by github.com/zadykian/ws: ws client macos networks"*) ;;
-*) error "$ws_resolvers/conf.test does not start with ws client macos networks's header" ;;
+"# Written by github.com/zadykian/ws: ws client networks"*) ;;
+*) error "$ws_resolvers/conf.test does not start with ws client networks's header" ;;
 esac
-check || error "ws client macos networks --check after the bootstrap failed: $out"
-[ -z "$out" ] || error "ws client macos networks --check after the bootstrap printed: $out"
+check || error "ws client networks --check after the bootstrap failed: $out"
+[ -z "$out" ] || error "ws client networks --check after the bootstrap printed: $out"
 out=$(bash -c '. .github/mac-mise.sh && mac_bootstrap plan --detailed-exitcode' 2>&1) ||
     error "the plan after the bootstrap with the keys failed: $out"
 
 keys 'WS_RESOLVERS: conf.test=203.0.113.53,203.0.113.54,203.0.113.55,203.0.113.56'
 if check; then
-    error 'ws client macos networks --check took 4 nameservers for a domain'
+    error 'ws client networks --check took 4 nameservers for a domain'
 else
     case $out in
     *'WS_RESOLVERS=conf.test='*'up to 3 IPv4 addresses'*) ;;
-    *) error "ws client macos networks --check refused 4 nameservers with another error: $out" ;;
+    *) error "ws client networks --check refused 4 nameservers with another error: $out" ;;
     esac
 fi
 
@@ -133,8 +133,8 @@ routed 198.51.100.1 || error "198.51.100.1, routes.d/own's, left $utun"
 shown own.test 198.51.100.53 || error 'the removed key took own.test too'
 
 keys
-must "$TUNNEL" client macos tunnel routes --server ws own
-must "$TUNNEL" client macos resolver own.test
+must "$TUNNEL" client tunnel routes --server ws own
+must "$TUNNEL" client resolver own.test
 
 sh .github/mac-setup-checks.sh || fail=1
 exit "$fail"

@@ -13,12 +13,12 @@ lines it wrote lists no slot and no port.
 
 Four cases of the `mac` job work on a second server:
 
-- `mac/22-server.sh` makes a second server's file, `lab`, at slot 1, beside ws's. Then `ws client macos
+- `mac/22-server.sh` makes a second server's file, `lab`, at slot 1, beside ws's. Then `ws client
   values print` must stop, naming both servers. `--server box`, which has no file, and `--server
   Lab`, a bad name, must stop it too. `--server ws` must go on as with one server. The case's trap
   removes lab's directory.
 - `mac/90-clash.sh` makes the files `lab` and `box`, which clash with ws's. The bootstrap's plan
-  must refuse each with its reason, and name `ws client macos remove lab` beside it.
+  must refuse each with its reason, and name `ws client remove lab` beside it.
 - `mac/92-second.sh` gives lab a third wireguard-go on UDP 51821. `mise -C /opt/ws/roles/client
   bootstrap` must then give lab a daemon and a utun of its own, at 10.99.1.1, and leave ws's daemon
   with its handshake. A second bootstrap must call no sudo.

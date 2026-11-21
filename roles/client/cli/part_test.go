@@ -16,12 +16,12 @@ import (
 // cldLatest is the read of cld's latest release.
 const cldLatest = "curl -fsSIL --retry 3 -o /dev/null -w %{url_effective} https://github.com/zadykian/cld/releases/latest"
 
-// partEnv returns a run of ws client macos as the user of /h, on the machine m.
+// partEnv returns a run of ws client as the user of /h, on the machine m.
 func partEnv(m *effecttest.Machine) func(args ...string) (int, string, string) {
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
 	return func(args ...string) (int, string, string) {
-		return runWs(p, append([]string{"client", "macos"}, args...)...)
+		return runWs(p, append([]string{"client"}, args...)...)
 	}
 }
 

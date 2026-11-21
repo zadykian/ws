@@ -103,17 +103,17 @@ login key and git's. Without ws's WireGuard key, the bootstrap must make the Mac
 With a stand-in's key it must load and run the daemon, which runs `/usr/local/bin/ws`. A second
 run must call no sudo, and its plan exit 0. The stand-in for ws is a second wireguard-go on the
 runner, with the Mac's key as its peer. It answers on loopback both as the LAN and as
-`WS_REMOTE`, and `ws client macos tunnel status` must show a handshake on each in turn. The daemon
+`WS_REMOTE`, and `ws client tunnel status` must show a handshake on each in turn. The daemon
 must take the SIGHUPs for a new `tunnel.conf` and its `routes.d` in place, with the same pid. Then
-a network that `ws client macos tunnel routes --server ws` adds must be routed into the daemon's
-utun, and a domain `ws client macos resolver` adds must show in `scutil --dns`. `ws client macos
-tunnel loaded`, `ws client macos tunnel routes` and `ws client macos resolver` must do the same,
+a network that `ws client tunnel routes --server ws` adds must be routed into the daemon's
+utun, and a domain `ws client resolver` adds must show in `scutil --dns`. `ws client
+tunnel loaded`, `ws client tunnel routes` and `ws client resolver` must do the same,
 with `--check` showing the diff and writing nothing ([mac-ws-checks.sh](../mac-ws-checks.sh)).
 Next, the server's `WS_TUNNEL_NETWORKS` and `WS_RESOLVERS` must give a route and a resolver
-through the bootstrap, each named by `ws client macos networks --check` first. The plan after it
+through the bootstrap, each named by `ws client networks --check` first. The plan after it
 must exit 0, and a fourth nameserver must be refused. Emptied or removed, the keys must take both
 back, and spare a script's own ([mac-conf-checks.sh](../mac-conf-checks.sh)). With
-`WS_CABLE_SERVICE` empty, `ws client macos cable` must print nothing. Set, it must run one
+`WS_CABLE_SERVICE` empty, `ws client cable` must print nothing. Set, it must run one
 `networksetup -setmanual`, a stand-in's, through sudo, and then none. It must warn of a disabled
 service. It must stop on one networksetup lacks, or one with a router outside the cable's `/30`.
 It must stop too on a `-setmanual` that fails or changes nothing, and name what differs
