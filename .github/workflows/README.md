@@ -1,6 +1,6 @@
 # Checks
 
-In a stack, CI runs `server`, `mac` and `mac-cld`, its longest jobs, on
+In a stack, CI runs `server`, `client` and `client-cld`, its longest jobs, on
 the top pull request alone, as it holds every change below it, and only where the stack rests on
 `main`. `install` and `signoz` run on each pull request of such a stack, and `lint` on every pull
 request. So a pull request onto another branch, such as an integration branch, takes `lint` alone
@@ -10,8 +10,8 @@ names the stack. So the longest three skip a draft's `opened` run and start on `
 which `lint` skips. `install` and `signoz` start there too above a stack's bottom, and skip it
 where they ran as the pull request opened. A newer push to a pull request cancels the runs of
 the push before it.
-The checks of `server`, `mac-cld` and a Mac's servers have pages: [server](server.md),
-[mac-cld](mac-cld.md) and [mac-servers](mac-servers.md). So have [the gates](../../.tools/README.md).
+The checks of `server`, `client-cld` and a Mac's servers have pages: [server](server.md),
+[client-cld](client-cld.md) and [client-servers](client-servers.md). So have [the gates](../../.tools/README.md).
 
 ## The warnings check
 
@@ -31,12 +31,12 @@ CI runs `install.sh` with a stub of ws for each target, served on loopback. It c
 `install.sh` installs each stub, refuses a wrong sum and a missing file, and makes and checks
 `/usr/local/bin`. It runs `ws update` too, with a real build of the tree as the ws that runs. The
 update must move a build to a release and run its setup
-([The install job](release.md#the-install-job)). The `mac` job runs it on macOS with
-the tree's build ([16-install.sh](../mac/16-install.sh)).
+([The install job](release.md#the-install-job)). The `client` job runs it on macOS with
+the tree's build ([16-install.sh](../client/16-install.sh)).
 
 ## The release
 
-`release.yml` runs `ci.yml` and `mac.yml` on a tag before it publishes
+`release.yml` runs `ci.yml` and `client.yml` on a tag before it publishes
 ([Cutting a release](release.md#cutting-a-release)).
 
 ## SigNoz's compose files
@@ -60,11 +60,11 @@ nothing. fnox must encrypt a value to the Nano's recipient with no YubiKey, and 
 SSH key that is a recipient too. Case 87 checks [the zsh hook](../../roles/client/macos/ghostty/README.md#the-zsh-hook): `zsh -i` must
 reset at each prompt, and the alternate screen after a 255 from `ssh` or from `cld --host` alone.
 
-CI also sets up a Mac, by [its cases](../mac), in the order of [The
+CI also sets up a Mac, by [its cases](../client), in the order of [The
 Mac](../../roles/client/README.md). A stand-in cld, which cld's unit leaves alone, spares the
 job's runs its download. Then `ws client setup --in-place` with
 [the Mac's frame](../../roles/client/macos/frame/README.md) runs as the runbook runs it, on the
-tree in `/opt/ws`, with ws's build in `/usr/local/bin` ([mac-mise.sh](../mac-mise.sh)). Its plan
+tree in `/opt/ws`, with ws's build in `/usr/local/bin` ([client-mise.sh](../client-mise.sh)). Its plan
 before the first run must exit 2. Setup installs mise and links the tree's plugin as the runbook
 does. The case makes `/opt` and `/usr/local/share` root's and 755 first, as on
 a Mac, where the runner's image may differ. It sets up
@@ -84,21 +84,21 @@ must take the SIGHUPs for a new `tunnel.conf` and its `routes.d` in place, with 
 a network that `ws client tunnel routes --server ws` adds must be routed into the daemon's
 utun, and a domain `ws client resolver` adds must show in `scutil --dns`. `ws client
 tunnel loaded`, `ws client tunnel routes` and `ws client resolver` must do the same,
-with `--check` showing the diff and writing nothing ([mac-ws-checks.sh](../mac-ws-checks.sh)).
+with `--check` showing the diff and writing nothing ([client-ws-checks.sh](../client-ws-checks.sh)).
 Next, the server's `WS_TUNNEL_NETWORKS` and `WS_RESOLVERS` must give a route and a resolver
 through the bootstrap, each named by `ws client networks --check` first. The plan after it
 must exit 0, and a fourth nameserver must be refused. Emptied or removed, the keys must take both
-back, and spare a script's own ([mac-conf-checks.sh](../mac-conf-checks.sh)). With
+back, and spare a script's own ([client-conf-checks.sh](../client-conf-checks.sh)). With
 `WS_CABLE_SERVICE` empty, `ws client cable` must print nothing. Set, it must run one
 `networksetup -setmanual`, a stand-in's, through sudo, and then none. It must warn of a disabled
 service. It must stop on one networksetup lacks, or one with a router outside the cable's `/30`.
 It must stop too on a `-setmanual` that fails or changes nothing, and name what differs
-([mac-setup-checks.sh](../mac-setup-checks.sh)).
+([client-setup-checks.sh](../client-setup-checks.sh)).
 The cases of the keys run mise's bootstrap with an edited `values.yml`, and
-read the files it writes ([56-keys.sh](../mac/56-keys.sh)). A refusal must fail the bootstrap and
+read the files it writes ([56-keys.sh](../client/56-keys.sh)). A refusal must fail the bootstrap and
 its plan with its reason, and change no file. With the server's `WS_LAN_ADDRESS` dropped, the plan
 must fail and name it and its file, as the frame's check of the values does
-([89-values-check.sh](../mac/89-values-check.sh)). `ssh -G` must give `ws` the file key that the job's
+([89-values-check.sh](../client/89-values-check.sh)). `ssh -G` must give `ws` the file key that the job's
 `values.yml` names, by its four lines, and the file or the agent that `WS_IDENTITY_PUB_KEY` and
 `WS_IDENTITY_AGENT` name. An empty `WS_IDENTITY_PUB_KEY` must stop, though an agent at Secretive's
 socket holds a P-256 key. It gives the line that names each P-256 key by ws's copy of its `.pub`.
@@ -106,16 +106,16 @@ socket holds a P-256 key. It gives the line that names each P-256 key by ws's co
 `ssh -G` must give `ws` the agent and the copy, which a run writes where none exists. A `.pub` that
 is missing or unreadable must stop too. So must one that holds a private key, a certificate, a line
 that is no key, or a key that ws's OpenSSH lacks
-([mac-identity-checks.sh](../mac-identity-checks.sh)). `/usr/local/bin/gh` must be mise's gh, root's
+([client-identity-checks.sh](../client-identity-checks.sh)). `/usr/local/bin/gh` must be mise's gh, root's
 and 0755, in place of one there, and a bootstrap that changes nothing must call no sudo. With a file
 key, git must sign a commit and verify it, with gh as GitHub's credential command. A `~/.gitconfig`
 must get the include of `/etc/ws/gitconfig` at its top, once, and keep its own lines, its mode and a
 copy. An include below them, a second one or a link must stop the bootstrap, as must a signing key
 that is empty, missing or more than a public key. With a key of Secretive's, git must sign through
 ws's wrapper whatever `SSH_AUTH_SOCK` names, and `ws` keep the file key
-([mac-git-checks.sh](../mac-git-checks.sh)). Last, after a second server's cases, one more bootstrap
+([client-git-checks.sh](../client-git-checks.sh)). Last, after a second server's cases, one more bootstrap
 must call no sudo, and its plan and `mise dot status --missing` must exit 0
-([96-converged.sh](../mac/96-converged.sh)). Where wireguard-go makes no utun, the job fails, as the
+([96-converged.sh](../client/96-converged.sh)). Where wireguard-go makes no utun, the job fails, as the
 daemon's device makes a utun too.
 
 ## The rules

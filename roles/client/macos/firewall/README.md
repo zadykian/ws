@@ -28,7 +28,7 @@ So the Mac's own firewall is what keeps the server from opening a connection to 
 
 The Mac speaks first on the tunnel and the cable, so block-all does not stop them: a reply to an
 outgoing packet passes. The firewall spares loopback too, which CI's cases lean on after
-[`28-bootstrap.sh`](../../../../.github/mac/28-bootstrap.sh) turns it on.
+[`28-bootstrap.sh`](../../../../.github/client/28-bootstrap.sh) turns it on.
 
 A VM on the Mac that takes its DHCP lease and its DNS from the Mac is at risk. Apple says block-all
 keeps the basic services, DHCP among them. Multipass's docs say it stops `bootpd`, the Mac's DHCP

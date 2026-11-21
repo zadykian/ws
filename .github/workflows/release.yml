@@ -1,7 +1,7 @@
 name: release
 
 # A pushed tag vX.Y.Z on a commit of main publishes ws's release. A tag vX.Y.Z-rc.N on a commit of
-# a feat/ branch publishes a pre-release. ci.yml and mac.yml run on the tag first, then three
+# a feat/ branch publishes a pre-release. ci.yml and client.yml run on the tag first, then three
 # binaries, ws.sha256 and install.sh are published, all checked for the local list's words.
 # release.md, beside it, says how a release is cut.
 on:
@@ -47,7 +47,7 @@ jobs:
               exit 1
           fi
 
-  # The workflows of a pull request, on the tag's commit. Their server and mac jobs run, as the
+  # The workflows of a pull request, on the tag's commit. Their server and client jobs run, as the
   # tag's push event has no stack.
   ci:
     needs: check
@@ -55,9 +55,9 @@ jobs:
     permissions:
       contents: read
 
-  mac:
+  client:
     needs: check
-    uses: ./.github/workflows/mac.yml # zizmor: ignore[self-repository] actionlint rejects $/
+    uses: ./.github/workflows/client.yml # zizmor: ignore[self-repository] actionlint rejects $/
     permissions:
       contents: read
 
@@ -103,7 +103,7 @@ jobs:
   # FORBIDDEN_WORDS, which must not be empty. A pre-release is never the latest, so
   # releases/latest and install.sh keep the last full release.
   publish:
-    needs: [check, ci, mac, build]
+    needs: [check, ci, client, build]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

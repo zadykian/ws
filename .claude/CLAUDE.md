@@ -62,12 +62,12 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   plugin's `lint-gates` ([Where else to look](#where-else-to-look)).
 - `.github/workflows/`: `ci.yml`, with the jobs `lint`, `server`, `install` and
   `signoz`;
-  `mac.yml`, with `mac`, whose cases are `.github/mac/NN-*.sh`; `mac-cld.yml`, with `mac-cld`;
-  `rules.yml`,
+  `client.yml`, with `client`, whose cases are `.github/client/NN-*.sh`; `client-cld.yml`, with
+  `client-cld`; `rules.yml`,
   the checks of zadykian/toolkit on a pull request; and `issues.yml`, its check of an issue. The
   toolkit's checks warn alone. `words.yml`, with `words`, checks a pull request and an issue for the
   list's words ([The `words` job](../.github/workflows/README.md#the-words-job)).
-  `release.yml`, on a tag `v*`, has `check`, `ci`, `mac`, `build` and `publish`.
+  `release.yml`, on a tag `v*`, has `check`, `ci`, `client`, `build` and `publish`.
 - `.github/pull_request_template.md` and `.github/ISSUE_TEMPLATE/`: the toolkit's templates, which
   its `tools/pin` writes, never edited here ([The rules](../.github/workflows/README.md#the-rules)).
 
@@ -91,10 +91,10 @@ The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `server` bui
 Fresh reads too, the firewall around Docker and the secrets task
 ([The server job](../.github/workflows/server.md)).
 `signoz` forges SigNoz's compose files again, and `install` tries `install.sh` and `ws update`, as
-the `mac` case 16-install does for `install.sh` on macOS. `mac` sets up a
+the `client` case 16-install does for `install.sh` on macOS. `client` sets up a
 Mac on GitHub's macOS runner by `ws client setup`, whose last run must call no sudo and whose
-`--plan` must exit 0. `mac-cld` sets up
-Ghostty, Zed and cld by setup on another ([Ghostty and cld on the Mac](../.github/workflows/mac-cld.md)). A run of `mise
+`--plan` must exit 0. `client-cld` sets up
+Ghostty, Zed and cld by setup on another ([Ghostty and cld on the Mac](../.github/workflows/client-cld.md)). A run of `mise
 bootstrap` sets up the machine that runs it, as below.
 
 The hooks check a commit for the local list's words. This checks any other text, such as a pull
@@ -129,9 +129,9 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([The server job](../.github/workflows/server.md)).
 - A second run changes nothing: CI's `server` job runs `ws server setup` twice. It fails where
   `ws server setup --plan` does not exit 0, after the first run and after the second
-  ([server-checks.sh](../.github/server-checks.sh)). CI's `mac` job asks the same of
+  ([server-checks.sh](../.github/server-checks.sh)). CI's `client` job asks the same of
   `ws client setup --plan` after its first run, and no sudo of its second
-  ([28-bootstrap.sh](../.github/mac/28-bootstrap.sh)).
+  ([28-bootstrap.sh](../.github/client/28-bootstrap.sh)).
 - `release.yml` checks a release's files and notes for the local list's words before it publishes
   them. The list is the secret `FORBIDDEN_WORDS`, and the job fails on an empty one
   ([Cutting a release](../.github/workflows/release.md#cutting-a-release)).
