@@ -30,8 +30,8 @@ It allows no line. Its test, [warnings-check-test.sh](../warnings-check-test.sh)
 CI runs `install.sh` with a stub of ws for each target, served on loopback. It checks that
 `install.sh` installs each stub, refuses a wrong sum and a missing file, and makes and checks
 `/usr/local/bin`. It runs `ws update` too, with a real build of the tree as the ws that runs. The
-update must move a build to a release and run its setup
-([The install job](release.md#the-install-job)). The `client` job runs it on macOS with
+update must move a build to a release and run its setup, and the autoinstall file must fill and
+pass cloud-init's schema ([The install job](release.md#the-install-job)). The `client` job runs it on macOS with
 the tree's build ([16-install.sh](../client/16-install.sh)).
 
 ## The release

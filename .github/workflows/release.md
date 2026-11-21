@@ -96,6 +96,18 @@ The script deletes `/usr/local/bin/ws` as it ends, so it sets that up after its 
 [update-checks-test.sh](../update-checks-test.sh), runs in `lint` and checks that a run a guard
 refuses deletes nothing.
 
+A step of the job runs [autoinstall-checks.sh](../autoinstall-checks.sh) on the file
+[autoinstall.yaml](../../roles/server/autoinstall.yaml), in an Ubuntu 26.04 container with
+cloud-init, the installer's version. [autoinstall.sh](../autoinstall.sh) fills a tag and a SHA-256
+into the file's blanks. It puts `#cloud-config` first, as the tree's file cannot hold that line.
+The cases:
+
+- the filled file keeps the maintainer's blanks, `HOSTNAME`, `HASH` and `VALUES`, and none of the
+  release's;
+- a tag that is no release's and a SHA-256 that is none are refused;
+- `cloud-init schema` passes the whole file and its `user-data`;
+- each command of `late-commands` parses as shell.
+
 The `client` job's case [16-install.sh](../client/16-install.sh) runs `install.sh` on macOS. It serves the
 tree's own build of ws as the release, with its `ws.sha256`, and checks that the file is
 `root:wheel` and 755 and that no download is left.

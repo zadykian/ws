@@ -91,9 +91,9 @@ The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `server` bui
 `ws server setup` twice as root on a booted runner, with setup's plan. It checks the config that
 Fresh reads too, the firewall around Docker and the secrets task
 ([The server job](../.github/workflows/server.md)).
-`signoz` forges SigNoz's compose files again, and `install` tries `install.sh` and `ws update`, as
-the `client` case 16-install does for `install.sh` on macOS. `client` sets up a
-Mac on GitHub's macOS runner by `ws client setup`, whose last run must call no sudo and whose
+`signoz` forges SigNoz's compose files again, and `install` tries `install.sh`, `ws update` and
+the autoinstall file, as the `client` case 16-install does for `install.sh` on macOS. `client`
+sets up a Mac on GitHub's macOS runner by `ws client setup`, whose last run must call no sudo and whose
 `--plan` must exit 0. `client-cld` sets up
 Ghostty, Zed and cld by setup on another ([Ghostty and cld on the Mac](../.github/workflows/client-cld.md)). A run of `mise
 bootstrap` sets up the machine that runs it, as below.
