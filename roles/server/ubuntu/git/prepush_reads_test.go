@@ -89,3 +89,16 @@ func TestPrePushComparesTheTrailerWithoutCase(t *testing.T) {
 		t.Errorf("a trailer that differs in case: %v", err)
 	}
 }
+
+func TestPrePushNamesTheWayToMendAMissingTrailer(t *testing.T) {
+	r := newRepo(t)
+	r.good("base")
+	amend := "git commit --amend --no-edit"
+	revert := r.commit(r.wsKey, wsMail, wsMail, "Revert x")
+	r.refused(r.check(line("refs/heads/main", revert)), revert, "trailer", amend)
+	r.git("reset", "-q", "--hard", "HEAD~1")
+	unsigned := r.commit("", wsMail, wsMail, "x"+coAuthor)
+	if err := r.check(line("refs/heads/main", unsigned)); err == nil || strings.Contains(err.Error(), amend) {
+		t.Errorf("a refusal for the signature alone names the trailer's way out: %v", err)
+	}
+}
