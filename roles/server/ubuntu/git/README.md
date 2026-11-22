@@ -87,8 +87,10 @@ Each commit made on ws, by claude, lazygit, Zed or the shell, carries one traile
 `Co-authored-by: zadykian <me@zadykian.dev>`: the maintainer, whom the machine account commits for.
 The name and the email are the Mac's identity, `gitcfg.Mac()`, and a test holds the file's text
 equal to it. A hook of git's config adds it, `[hook "ws-co-author"]` on `commit-msg`, which runs
-`git interpret-trailers --in-place --if-exists addIfDifferent` on the message's file. `addIfDifferent`
-adds the line once, so that `--amend`, a message that holds it already and a second run add none.
+`git interpret-trailers --in-place --no-divider --if-exists addIfDifferent` on the message's file.
+`addIfDifferent` adds the line once, so that `--amend`, a message that holds it already and a
+second run add none. `--no-divider` keeps a line of three dashes in the body from moving the trailer
+above it, out of the last paragraph that the push check reads.
 A message that is empty once its comments and its scissors section are cut gets none. Git runs
 `commit-msg` before its check of an empty message, so a trailer alone would commit it. Git passes
 the file to the command as its last argument, which the command's function takes.
