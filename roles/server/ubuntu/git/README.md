@@ -107,9 +107,11 @@ older git, and `server`'s check of a signed commit holds the one trailer on the 
 A push from ws sends no commit that breaks a rule of ws. `[hook "ws-push"]` in `/etc/ws/gitconfig`,
 on `pre-push`, runs `/usr/local/bin/ws server git pre-push`, which gets the remote and its URL as
 arguments, and the pushed refs on its standard input, as git gives them. For each ref it lists
-the commits that no remote-tracking ref holds, `git log LOCAL --not --remotes`, and refuses a commit
-by each rule it breaks. A tracking ref of any remote holds a commit, whichever remote the push goes
-to:
+the commits that no remote-tracking ref holds and the remote's commit at the ref does not, as
+`git log LOCAL --not --remotes REMOTE-SHA` does. It refuses a commit by each rule it breaks. A tracking
+ref of any remote holds a commit, whichever remote the push goes to. REMOTE-SHA is the fourth field
+of git's line. It stands in for the tracking refs that a bare clone lacks. All zeros, or a commit
+that the repository lacks, leave out nothing:
 
 - `signature`: `%G?` is not `G`. A good one is one that `/etc/ws/allowed_signers` trusts.
 - `signer`: the signer, `%GS`, is not the committer's email, `%ce`.
@@ -136,8 +138,9 @@ hook's exit status is 1. These cases are decided:
 - A commit whose email or a Co-authored-by trailer holds a control character, US, which the check
   reads its fields by, is refused by its name. Replaced objects (`git replace`) stay unread, as the
   push sends the originals.
-- A remote with no remote-tracking ref yet has none to hold a commit, so the whole history of the
-  pushed ref is checked. A fetch first gives the remote's commits their refs.
+- A repository with no remote-tracking ref, as a bare clone, checks what the push adds to the
+  remote's commit at the ref. A ref that is new to the remote there, or a remote commit that the
+  repository lacks, leaves out nothing, so the whole history of the pushed ref is checked.
 - An empty range, where every commit is held already, passes. A branch made at a pushed commit
   does.
 - A line of the refs that is not four fields, or a hook that fails, such as a `ws` missing at
