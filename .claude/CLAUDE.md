@@ -116,7 +116,10 @@ LC_ALL=C tr _ ' ' <FILE | grep -ciwF -f <(sed -e 'y/_/ /' -e 's/^[[:space:]]*//'
   [`/flow:land`](https://github.com/zadykian/toolkit/blob/main/skills/land/SKILL.md) does. A pull
   request's signed commits land as they are, under a merge commit that GitHub signs.
 - The ruleset on `main` allows the merge method alone. It requires signed commits, the `lint`
-  check, and branches up to date, so that a merge's tree is the tree CI checked.
+  check, and branches up to date, so that a merge's tree is the tree CI checked. A second ruleset,
+  on every branch (`~ALL`) of ws, cld and ikeward, requires signed commits alone, so that GitHub
+  refuses an unsigned push from ws. The maintainer sets it by hand, after the machine account's
+  stack lands, and no agent does ([The push check](../roles/server/ubuntu/git/README.md#the-push-check)).
 - A pull request that changes `.github/workflows` lands like any other.
 - `.claude/settings.json` denies the usual forms of a push to `main`, but not `gh pr merge`, which
   `/flow:land` runs. A rule matches the command as written, so the ruleset on `main` stays the
