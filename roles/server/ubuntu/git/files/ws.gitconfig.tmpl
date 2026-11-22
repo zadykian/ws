@@ -37,8 +37,10 @@
 # editor the scissors section, a line of git's comment string, a space, 24 dashes, >8 and 24 dashes,
 # and then the comments are cut. The hook cannot see an explicit --cleanup or commit.cleanup.
 # git runs the command as sh -c 'COMMAND "$@"' with the message's file, which the function f takes
-# as $1. git rebase and git cherry-pick run no commit-msg hook, so a commit they rewrite keeps its
-# message, and a reword of git rebase -i runs it. Git 2.54 or above reads the hook.
+# as $1. The commit-msg hook runs on git commit, on a merge and on a reword of git rebase -i, and
+# after a conflict on git commit and on --continue. git rebase, git cherry-pick, git revert and
+# git am run none, so their commit keeps its message. A squash keeps the trailer of each message it
+# joins. Git 2.54 or above reads the hook.
 [hook "ws-co-author"]
 	event = commit-msg
 	command = "f() { if [ \"$GIT_EDITOR\" = : ]; then t=$(git stripspace <\"$1\"); else t=$(sed '/^[^[:space:]]* -\\{24\\} >8 -\\{24\\}$/,$d' \"$1\" | git stripspace --strip-comments); fi; if [ -n \"$t\" ]; then git interpret-trailers --in-place --no-divider --if-exists addIfDifferent --trailer 'Co-authored-by: zadykian <me@zadykian.dev>' \"$1\"; fi; }; f"
