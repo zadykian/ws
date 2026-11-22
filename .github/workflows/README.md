@@ -20,7 +20,8 @@ prints a warning, the secrets task's runs and plans too. It reads a
 run's log, or runs the command and shows its output as it runs. A warning is a line that says
 warn, hint, notice, deprecated, error, cannot, unable, could not or ignoring, as a word alone, or
 starts as apt's `W:` and `E:` do. mise's colors don't hide one. The check names each line it
-finds and exits 1, and it keeps a plan's own exit code.
+finds and exits 1. A plan's exit 2, its answer, turns to 1 as well, but a command that fails
+keeps its own exit code.
 
 It allows no line. Its test, [warnings-check-test.sh](../warnings-check-test.sh), runs in
 `lint`, on a log with warnings and on one without.

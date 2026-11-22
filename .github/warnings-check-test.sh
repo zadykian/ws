@@ -78,4 +78,9 @@ run "a command's status and output stay" 3 shown sh -c 'echo shown; exit 3'
 named='::error::The run printed 1 warning lines, which no run may print:'
 run "a command's warning on its stderr fails it" 1 $'W: a warning\n'"$named"$'\n> W: a warning' \
     sh -c 'echo "W: a warning" >&2'
+# A plan's exit 2 is its answer, not a failure, so a warning fails it too. A failure keeps its own.
+run "a plan's warning fails its exit 2" 1 $'W: a warning\n'"$named"$'\n> W: a warning' \
+    sh -c 'echo "W: a warning"; exit 2'
+run "a failure's warning keeps its status" 3 $'W: a warning\n'"$named"$'\n> W: a warning' \
+    sh -c 'echo "W: a warning"; exit 3'
 exit "$failed"
