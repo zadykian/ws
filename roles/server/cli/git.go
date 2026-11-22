@@ -19,7 +19,7 @@ import (
 // newGitCmd returns ws server git: the procedures that the git role's units run.
 func newGitCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("git", "the git role's checks and procedures, which its units run",
-		newGitCheckCmd(p), newGitIncludedCmd(p), newGitTokensCmd(p), newGitClonesCmd(p),
+		newGitCheckCmd(p), newGitIncludedCmd(p), newGitPrePushCmd(p), newGitTokensCmd(p), newGitClonesCmd(p),
 		newGitCredentialCmd(p))
 }
 
@@ -118,6 +118,24 @@ func gitProcedure(p enginecli.Env, use, short, long string, rs func(values.Value
 		}
 		return []resource.Resource{rs(v, a)}, nil
 	})
+}
+
+// newGitPrePushCmd returns ws server git pre-push.
+func newGitPrePushCmd(p enginecli.Env) *cobra.Command {
+	return &cobra.Command{
+		Use:   "pre-push REMOTE URL",
+		Short: "refuse a push whose new commits lack a good signature or the maintainer's trailer",
+		Long: "It is git's pre-push hook, which /etc/ws/gitconfig names: git gives it the remote and its URL, " +
+			"which it ignores, and the pushed refs on its standard input. For each ref it checks the commits " +
+			"that no remote-tracking ref holds. It exits 1, and names each refused commit by its short hash " +
+			"and the rule it breaks, never a key, where a signature is not good, its signer is not the " +
+			"committer's email, or the trailer is missing from a commit of another author than the " +
+			"maintainer (roles/server/ubuntu/git/README.md#the-push-check).",
+		Args: cobra.ExactArgs(2),
+		RunE: func(c *cobra.Command, _ []string) error {
+			return git.PrePush(c.Context(), p.Machine, c.InOrStdin())
+		},
+	}
 }
 
 // newGitTokensCmd returns ws server git tokens.

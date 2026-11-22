@@ -30,8 +30,9 @@ it has any:
 - [`fans`](roles/server/ubuntu/fans): fan curves for the board's headers, and the driver that sets them.
 - [`shell`](roles/server/ubuntu/shell): `/etc/ws/bashrc` and `/etc/ws/profile`, one line of each at the top of
   `~/.bashrc` and `~/.profile`, and `/etc/ws/env` from mise's secret inputs.
-- [`git`](roles/server/ubuntu/git): `/etc/ws/gitconfig` and its include in `~/.gitconfig`, a key that
-  signs commits, git's tokens for servers besides GitHub, and clones of repositories.
+- [`git`](roles/server/ubuntu/git): `/etc/ws/gitconfig` and its include in `~/.gitconfig`, and a key that
+  signs commits. A hook adds a co-author trailer to each, and one checks each push. It sets git's
+  tokens for servers besides GitHub, and clones of repositories.
 - [`tmux`](roles/server/ubuntu/tmux): tmux from Ubuntu's archive.
 - [`lazygit`](roles/server/ubuntu/lazygit): lazygit from Ubuntu's archive, in JetBrains Dark, with the
   repository and its branch in the terminal's title.
@@ -155,6 +156,9 @@ signing key goes to `@zadykiand`'s settings, not the maintainer's. These stay ma
 - with Secure Boot on, DKMS's key, enrolled at the console: [Secure Boot](roles/server/ubuntu/fans/README.md#secure-boot);
 - Fresh's trust, once per repository: press T, then Enter
   ([Trust each project](roles/server/ubuntu/fresh/README.md#trust-each-project));
+- the ruleset on every branch of ws, cld and ikeward, after the machine account's stack lands. It
+  requires signed commits, so that GitHub refuses an unsigned push from ws
+  ([The push check](roles/server/ubuntu/git/README.md#the-push-check));
 - the local list of words: set the secret `FORBIDDEN_WORDS` on GitHub, and place
   `~/.config/ws/forbidden-words`, mode 600, on each machine that commits
   ([The hooks](.github/workflows/README.md#the-hooks)).
