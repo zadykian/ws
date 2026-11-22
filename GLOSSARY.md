@@ -32,6 +32,12 @@ A resource type that ws writes once in Go, for what mise's own parts lack, such 
 `deb`. It names no role's word ([kind](engine/core/kind/README.md)).
 _Avoid_: plugin, module
 
+**Machine account**:
+The GitHub account `@zadykiand`, `su@zadykian.dev`, that ws's git and gh act as. Its classic token,
+scopes `repo`, `workflow` and `read:org`, is the secret input `WS_GITHUB_TOKEN`, and its settings
+hold ws's signing key, added by hand ([gh](roles/server/ubuntu/devtools/README.md#gh)).
+_Avoid_: bot, service account
+
 **Pinned file**:
 A file of a release that ws fetches at the version a role pins, for the machine's architecture as
 dpkg names it. ws checks it against a SHA-256 that the role pins or the unit finds as it plans. A
