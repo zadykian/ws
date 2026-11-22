@@ -1,7 +1,7 @@
 # git
 
-The `git` role sets git up from `mise bootstrap`. Its `mise.server.toml` installs git and
-openssh-client, and names the eight units of its `units.toml.tmpl`:
+The `git` role sets git up from `mise bootstrap`. Its `mise.server.toml` installs git, from
+[the PPA that base sets up](../base/README.md#git), and openssh-client, and names the eight units of its `units.toml.tmpl`:
 
 - `file/git-config`: `/etc/ws/gitconfig`, root's and 644, from `files/ws.gitconfig.tmpl`. Each
   run replaces any change made to it.
