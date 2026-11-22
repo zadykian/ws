@@ -70,13 +70,22 @@ up() {
 # by two keys, and mise adds its own. So do the plugins that the image put in Docker's directory
 # past dpkg, which would keep it and warn. The same holds for the image's source of the git-core PPA,
 # which ws adds with its own key.
-apt-get update
 rm -rf /usr/libexec/docker/cli-plugins
 apt-get purge -y docker-ce docker-ce-cli containerd.io
 rm -rf /etc/docker /var/lib/docker /var/lib/containerd
 for f in /etc/apt/sources.list.d/*; do
     if [ -f "$f" ] && grep -q -e download.docker.com -e git-core/ppa "$f"; then rm -f "$f"; fi
 done
+apt-get update
+# The image's git comes from that PPA already, so it would pass the git check below whatever the
+# setup does. Git and git-man go down to the archive's version, as on a server from Ubuntu's image,
+# which the setup must move up to the PPA's.
+archive_git=$(apt-cache madison git | awk '$3 !~ /ppa/ { print $3; exit }')
+[ -n "$archive_git" ] || fail "no archive version of git"
+apt-get install -y --allow-downgrades --no-install-recommends "git=$archive_git" "git-man=$archive_git"
+git_version=$(git version | cut -d' ' -f3)
+[ "$(printf '%s\n' "$git_version" 2.54 | sort -V | head -n 1)" != 2.54 ] ||
+    fail "git is $git_version after the downgrade, so the git check proves nothing"
 apt-get install -y --no-install-recommends netcat-openbsd
 
 # Root logs in by key, as a cloud VM's does.
@@ -175,8 +184,8 @@ must "the first setup prints no warning" "$check" "$log"
 must "the second setup runs" setup
 must "the second setup leaves nothing to do" setup --plan
 
-# Hooks in git's config came in git 2.54, which Ubuntu 26.04 lacks. ws's git comes from the
-# git-core PPA, whose source mise wrote, and its version has the PPA's suffix.
+# Hooks in git's config came in git 2.54, which Ubuntu 26.04 lacks. The git above was Ubuntu's, so
+# ws's git comes from the git-core PPA, whose source mise wrote, and its version has the PPA's suffix.
 git_from_ppa() {
     local version
     version=$(git version | sed -n 's/^git version \([0-9][0-9]*\.[0-9][0-9]*\).*/\1/p')

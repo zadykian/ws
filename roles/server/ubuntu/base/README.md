@@ -29,7 +29,8 @@ repository fail apt: the same holds for [Docker's source](../docker/README.md).
 [files/52unattended-upgrades-git-core](files/52unattended-upgrades-git-core) goes to
 `/etc/apt/apt.conf.d/` and allows the PPA's origin, so unattended-upgrades installs each release of
 its git within a day.
-[The `server` job](../../../../.github/workflows/server.md) fails on a git below 2.54.
+[The `server` job](../../../../.github/workflows/server.md) holds this: it starts from Ubuntu's git, as
+the runner's image has the PPA's, and fails where the setup leaves a git below 2.54.
 
 Setting a global `core.hooksPath` would not serve: a repository that sets its own, as ws does with
 `.githooks`, skips it. Hooks in git's config run beside the repository's own.
