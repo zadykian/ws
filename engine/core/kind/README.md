@@ -190,8 +190,7 @@ command = ["/abs/cmd"]      # or: the command, as root, exits 0
   file holds no key, or sshd would pass it over for its owner or mode.
 - `login_key` fails on every machine where `home` is not the one `getent passwd` gives USER: the
   file kind writes USER's files below that one.
-- A container, which has no login to lose, passes `login_key` but for its home.
-  A unit that would close a login waits on the guard by its `after`.
+- A unit that would close a login waits on the guard by its `after`.
 - `command` is a role's own check, a command of ws where Go holds it. It runs as root on every
   machine, containers too. Its exit 0 passes, and says each line of its output once a run. Any
   other fails the plan with the command's error, its standard error and its output.

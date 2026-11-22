@@ -28,7 +28,8 @@ ws writes none and copies none from another account's file ([A new
 machine](../../../../README.md#a-new-machine)). The drop-in limits no user, so the installer's
 user keeps its keys. Over SSH, keep the session that ran ws open until a
 new one logs in. The guard `guard/security-keys` stops the run before passwords go off if root
-has no key to log in with, or a file of keys that sshd passes over, outside a container. It stops it
+has no key to log in with, or a file of keys that sshd passes over. A container too, as it may run
+sshd. It stops it
 on every machine where `/root` is not root's home in `getent passwd`. sshd's drop-in lands
 only after `sshd -G` accepts it, and sshd reloads after a change, once, in its unit. ufw's service
 is active as well as enabled, as mise keeps it.

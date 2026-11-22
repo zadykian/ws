@@ -90,14 +90,12 @@ func TestGuardRefusesAHomeOtherThanTheAccounts(t *testing.T) {
 	}
 }
 
-func TestGuardPassesInAContainer(t *testing.T) {
+func TestGuardRefusesNoLoginKeyInAContainer(t *testing.T) {
 	e, m, _, _ := testEnv()
 	withAccount(m)
 	m.Files["/.dockerenv"] = nil
-	for _, spec := range []string{loginGuard} {
-		if err := guardPlan(t, e, spec); err != nil {
-			t.Errorf("plan of\n%s= %v, want none in a container", spec, err)
-		}
+	if err := guardPlan(t, e, loginGuard); err == nil || !strings.Contains(err.Error(), "holds no key") {
+		t.Errorf("plan = %v, want the missing key refused in a container too", err)
 	}
 }
 

@@ -15,7 +15,7 @@ import (
 
 // guardSpec is a unit of the kind guard: a check that plans nothing. It fails where a unit after it
 // would lock the machine out, or would act on what a role refuses. It takes LoginKey with Home, or
-// Command. A container, which has no login to lose, passes the first.
+// Command.
 type guardSpec struct {
 	base
 	// LoginKey is a user who must hold a key that sshd takes, in Home/.ssh/authorized_keys, before
@@ -49,8 +49,8 @@ func (s guardSpec) parts(e Env, _ fs.FS) (func(context.Context) ([]resource.Reso
 	return func(context.Context) ([]resource.Resource, error) { return []resource.Resource{r}, nil }, nil
 }
 
-// inContainer reports whether the machine is a container, which has no SSH to lose: Docker, Podman
-// and systemd leave these marks.
+// inContainer reports whether the machine is a container: Docker, Podman and systemd leave these
+// marks. A container may boot systemd and run sshd, so the key guard does not skip one.
 func inContainer(m effect.Machine) bool {
 	for _, p := range []string{"/.dockerenv", "/run/.containerenv", "/run/systemd/container"} {
 		if _, err := m.Stat(p); err == nil {
@@ -71,7 +71,7 @@ type keyCheck struct {
 // Plan fails where the home is not the user's in the system's accounts, on every machine. sshd reads
 // the keys there, and the units of the user's files write there. It fails where authorized_keys, or
 // a directory above it, is a link: the user owns the home and root reads the file. It also fails
-// where the file is missing, holds no key, or is one sshd won't use, outside a container.
+// where the file is missing, holds no key, or is one sshd won't use, on every machine.
 func (k keyCheck) Plan(ctx context.Context) ([]resource.Change, error) {
 	home, err := k.sys.home(ctx, k.m, k.user.Name)
 	if err != nil {
@@ -80,9 +80,6 @@ func (k keyCheck) Plan(ctx context.Context) ([]resource.Change, error) {
 	if home != k.user.Home {
 		return nil, fmt.Errorf("home %s is not %s's home, %s, as the system's accounts give it: "+
 			"name that home, or none", k.user.Home, k.user.Name, home)
-	}
-	if inContainer(k.m) {
-		return nil, nil
 	}
 	file := path.Join(k.user.Home, ".ssh/authorized_keys")
 	keys, err := k.user.ReadHome(k.m, ".ssh/authorized_keys")
