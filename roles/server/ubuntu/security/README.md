@@ -151,7 +151,8 @@ elements as a load fills them. Where the tables differ, the run reloads the tabl
 one transaction, with no gap. That covers a run cut short before the reload, and a table or set
 flushed or deleted by hand. The path and the timer restart where their own files change, and the
 fill where its script or its unit changes. CI loads the table on a booted runner, and its
-refusals hold ([The server job](../../../../.github/workflows/server.md)).
+refusals hold. Last, it turns the table off there
+([The server job](../../../../.github/workflows/server.md)).
 
 `WS_SECURITY_OUTBOUND`, true by default, turns the table on. A cloud VM wants it false: the table
 drops the cloud's metadata service at `169.254.169.254`, which cloud-init, the guest agent and

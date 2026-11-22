@@ -1,8 +1,9 @@
 # The server job
 
-CI sets up one scenario, the closest to a server installed from Ubuntu Server 26.04.1's image. The
-job `server` runs on GitHub's `ubuntu-26.04` runner, which boots, as root with the defaults and the
-outbound table on. The runner's image may hold a package that ws forgot to install. A server from
+CI sets up the scenario closest to a server installed from Ubuntu Server 26.04.1's image, then
+turns the outbound table off, as a cloud VM has it. The job `server` runs on GitHub's
+`ubuntu-26.04` runner, which boots, as root with the defaults and the table on, until its last
+cases. The runner's image may hold a package that ws forgot to install. A server from
 Ubuntu's image lacks it, so the trial on that image finds it. The job sets the runner up as it
 would a server that root alone logs in to: root's `authorized_keys` holds a key, and no user is
 made. The runner's own Docker is purged first, as ws installs
@@ -87,6 +88,14 @@ the task exits 0, and a run and a plan without the env `secrets` keep the three 
 bytes, mode and group. A file at gh's path that ws didn't write stops the run, which keeps it. A
 run without the env keeps it too, as mise loads no guard there. That run fails at gh's unit, as
 gh's login by the file's last line fails. An empty input removes its file.
+
+Last, `WS_SECURITY_OUTBOUND: false` goes in the values file, as on a cloud VM
+([outbound-off-checks.sh](../outbound-off-checks.sh)). Setup's plan must exit 2. Setup runs twice,
+and its plan must exit 0 after each run. Then the table must be gone and none of its units active.
+No file of its may be left: no unit file or link that enables one, no `/usr/local/lib/ws/security`
+and no `/run/security-resolvers.conf`. The cases before need the table, so these come last. A cloud
+VM starts with the table off, where the runner turns it off. The second run meets what a cloud
+VM's run meets: none of the table's units or files.
 
 The runner has Azure's routes, so only CI proves them. `.github/actionlint.yaml` names the label
 `ubuntu-26.04`, as actionlint 1.7.12 doesn't know it yet. It goes once a release lists the label.
