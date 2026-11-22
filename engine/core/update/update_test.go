@@ -54,12 +54,18 @@ func good() map[string][]byte {
 	return map[string][]byte{binary: newBinary, "ws.sha256": []byte(sum(newBinary) + "  " + binary + "\n")}
 }
 
-// newUpdater returns an Updater of a ws at version, whose download prints printed.
+// newUpdater returns an Updater of a file that prints version, whose download prints printed.
 func newUpdater(version, url, printed string) (Updater, *effecttest.Machine) {
 	m := effecttest.NewMachine()
 	m.Files[file] = oldBinary
+	m.Results[file+" version"] = effecttest.Result{Out: []byte(version + "\n")}
 	m.Results[copied+" version"] = effecttest.Result{Out: []byte(printed + "\n")}
-	return Updater{M: m, Version: version, URL: url, File: file, Binary: binary, PID: 7}, m
+	return Updater{M: m, URL: url, File: file, Binary: binary, PID: 7}, m
+}
+
+// onlyItsVersion reports whether calls hold no call but the run of the file's version.
+func onlyItsVersion(calls []string) bool {
+	return len(calls) == 1 && calls[0] == "run "+file+" version"
 }
 
 func TestDownload(t *testing.T) {
@@ -246,25 +252,29 @@ func TestRunStays(t *testing.T) {
 			u, m := newUpdater(tc.version, release(t, tc.latest, nil), tc.latest)
 			u.Tag = tc.tag
 			r, err := u.Run(t.Context())
-			if err != nil || r.File != "" || r.Report() != "ws "+tc.version+" is that release already\n" || len(m.Calls) != 0 {
-				t.Errorf("Run = %+v, %v, calls %v; want the release already, and no call", r, err, m.Calls)
+			if err != nil || r.Report() != file+" is ws "+tc.version+" already\n" || !onlyItsVersion(m.Calls) {
+				t.Errorf("Run = %+v, %v, calls %v; want the release already, and no call but its version", r, err, m.Calls)
 			}
 		})
 	}
 }
 
 func TestRunRefuses(t *testing.T) {
-	for name, tc := range map[string]struct{ version, tag, latest, fails string }{
-		"newer than the latest": {"v0.10.0", "", "v0.9.0", "--version"},
-		"an rc after it":        {"v0.10.0-rc.1", "", "v0.9.0", "--version"},
-		"no tag":                {"v1.2.3", "1.2.4", "v1.2.4", "no release's tag"},
-		"a beta":                {"v1.2.3", "v1.2.4-beta.1", "v1.2.4", "no release's tag"},
+	for name, tc := range map[string]struct {
+		version, tag, latest, fails string
+		calls                       int
+	}{
+		"newer than the latest": {"v0.10.0", "", "v0.9.0", file + " is v0.10.0, later", 1},
+		"an rc after it":        {"v0.10.0-rc.1", "", "v0.9.0", "--version", 1},
+		"no tag":                {"v1.2.3", "1.2.4", "v1.2.4", "no release's tag", 0},
+		"a beta":                {"v1.2.3", "v1.2.4-beta.1", "v1.2.4", "no release's tag", 0},
 	} {
 		t.Run(name, func(t *testing.T) {
 			u, m := newUpdater(tc.version, release(t, tc.latest, good()), tc.latest)
 			u.Tag = tc.tag
-			if _, err := u.Run(t.Context()); err == nil || !strings.Contains(err.Error(), tc.fails) || len(m.Calls) != 0 {
-				t.Errorf("Run = %v, calls %v; want a refusal naming %q, and no call", err, m.Calls, tc.fails)
+			_, err := u.Run(t.Context())
+			if err == nil || !strings.Contains(err.Error(), tc.fails) || len(m.Calls) != tc.calls || tc.calls > 0 && !onlyItsVersion(m.Calls) {
+				t.Errorf("Run = %v, calls %v; want a refusal naming %q, and no call but its version", err, m.Calls, tc.fails)
 			}
 			if string(m.Files[file]) != string(oldBinary) {
 				t.Errorf("the file holds %q, want the old one", m.Files[file])

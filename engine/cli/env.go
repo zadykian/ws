@@ -32,8 +32,7 @@ type Env struct {
 	Version string
 	// Releases is the address of ws's releases, WS_RELEASES_URL or GitHub's.
 	Releases string
-	// Self returns the file this ws runs from, which the kinds name as {{ self }}, and which ws update
-	// runs setup from where this ws is the release.
+	// Self returns the file this ws runs from, which the kinds name as {{ self }}.
 	Self func() (string, error)
 }
 

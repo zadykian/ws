@@ -857,7 +857,7 @@ Flags:
 == ws update
 Downloads the latest release's ws for this system, or the one that --version names, checks it against the release's ws.sha256 and that it runs and prints the release, then renames it over /usr/local/bin/ws. A signal before the rename leaves the old ws. Then it runs ws server setup of that ws.
 
-A ws that is that release already is not downloaded: only its setup runs. The latest release is refused where this ws is a release after it, and --version names the older one. A ws that is no release, such as a trial's build, is older than any release, so that an update ends the trial.
+The release of /usr/local/bin/ws counts, as the units run that file, whichever ws runs the update. Where that file is the release already, nothing is downloaded: only its setup runs. The latest release is refused where that file is a later release, and --version names the older one. A ws that is no release, such as a trial's build, or one that is missing or does not run, is older than any release, so that an update ends the trial.
 
 Usage:
   ws update [flags]

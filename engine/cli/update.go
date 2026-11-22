@@ -28,10 +28,11 @@ func Update(p Env, side string, root bool) *cobra.Command {
 			"checks it against the release's ws.sha256 and that it runs and prints the release, then " +
 			"renames it over " + update.File + ". A signal before the rename leaves the old ws. Then it " +
 			"runs ws " + side + " setup of that ws.\n\n" +
-			"A ws that is that release already is not downloaded: only its setup runs. The latest release " +
-			"is refused where this ws is a release after it, and --version names the older one. A ws that " +
-			"is no release, such as a trial's build, is older than any release, so that an update ends " +
-			"the trial.",
+			"The release of " + update.File + " counts, as the units run that file, whichever ws runs " +
+			"the update. Where that file is the release already, nothing is downloaded: only its setup " +
+			"runs. The latest release is refused where that file is a later release, and --version " +
+			"names the older one. A ws that is no release, such as a trial's build, or one that is " +
+			"missing or does not run, is older than any release, so that an update ends the trial.",
 		Args: cobra.NoArgs,
 	}
 	version := c.Flags().String("version", "", "the release to install, X.Y.Z or X.Y.Z-rc.N, in place of the latest")
@@ -86,7 +87,7 @@ func runUpdate(c *cobra.Command, p Env, tag string) (update.Result, error) {
 		case <-ctx.Done():
 		}
 	}()
-	u := update.Updater{M: p.Machine, Version: p.Version, URL: p.Releases, File: update.File, Tag: tag,
+	u := update.Updater{M: p.Machine, URL: p.Releases, File: update.File, Tag: tag,
 		Binary: "ws-" + p.GOOS + "-" + p.GOARCH, PID: p.Pid}
 	r, err := u.Run(ctx)
 	if err != nil {
@@ -99,15 +100,8 @@ func runUpdate(c *cobra.Command, p Env, tag string) (update.Result, error) {
 	return r, nil
 }
 
-// setupAfter replaces this process with ws SIDE setup of the ws that the update leaves: the file it
-// wrote, or this ws where that was the release.
+// setupAfter replaces this process with ws SIDE setup of the ws that the update leaves, the file
+// that the units run.
 func setupAfter(p Env, r update.Result, side string) error {
-	file := r.File
-	if file == "" {
-		var err error
-		if file, err = p.Self(); err != nil {
-			return fmt.Errorf("finding the file ws runs from: %w", err)
-		}
-	}
-	return p.Machine.Exec(file, []string{side, "setup"}, nil)
+	return p.Machine.Exec(r.File, []string{side, "setup"}, nil)
 }

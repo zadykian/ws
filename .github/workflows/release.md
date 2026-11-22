@@ -72,11 +72,12 @@ again.
   sum listed for its name, and runs it as `ws version`, which must print the tag. Only then it
   renames it over `/usr/local/bin/ws`, uid 0, gid 0 and 0755. A refusal, or a signal before the
   rename, keeps the ws there and leaves no file behind.
-- It refuses the latest release where this ws is a release after it, such as a pre-release:
-  `--version` names the older one. A ws that is no release, a trial's build, is older than any, so
-  an update ends the trial.
-- Then it replaces itself with `ws server setup` or `ws client setup` of the ws it wrote. Where this
-  ws is the named release already, it downloads nothing, and runs that setup alone.
+- The release of `/usr/local/bin/ws` counts, as the units run that file, whichever ws runs the
+  update. It refuses the latest release where that file is a later release, such as a pre-release:
+  `--version` names the older one. A ws that is no release, a trial's build, or one that is missing
+  or does not run, is older than any, so an update ends the trial.
+- Then it replaces itself with `ws server setup` or `ws client setup` of `/usr/local/bin/ws`. Where
+  that file is the named release already, it downloads nothing, and runs that setup alone.
 
 `WS_RELEASES_URL` names the releases, as for `install.sh`.
 
