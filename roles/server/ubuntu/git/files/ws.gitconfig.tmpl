@@ -38,6 +38,12 @@
 [hook "ws-co-author"]
 	event = commit-msg
 	command = "f() { if [ -n \"$(sed '/^# -* >8 -*$/,$d' \"$1\" | git stripspace --strip-comments)\" ]; then git interpret-trailers --in-place --if-exists addIfDifferent --trailer 'Co-authored-by: zadykian <me@zadykian.dev>' \"$1\"; fi; }; f"
+# A push from here sends no commit that lacks a good signature or the trailer above. ws's check
+# reads the pushed refs on its standard input. A failing hook refuses the push, which --no-verify,
+# a config that disables or replaces the hook and a push through GitHub's API skip.
+[hook "ws-push"]
+	event = pre-push
+	command = /usr/local/bin/ws server git pre-push
 # The credential programs of git's tokens for servers besides GitHub, in a file of the role's. It
 # follows /etc/ws/git-tokens.toml. After gh's program, so that an entry for a path on GitHub wins
 # below it. git skips it where the file is missing.
