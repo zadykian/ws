@@ -16,6 +16,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/fetch"
+	"github.com/zadykian/ws/engine/core/update"
 	"github.com/zadykian/ws/roles/internal/setup"
 )
 
@@ -65,7 +66,9 @@ func newSetupCmd(p enginecli.Env, cfg setupConfig) *cobra.Command {
 			"--secrets runs the task secrets in its place, which clones the secrets on its first run and runs " +
 			"the bootstrap under them. Without it, setup runs the task where " + cloneDir + " stands.\n\n" +
 			"A ws that names no release tag, devel included, is refused: pass --in-place to run the tree " +
-			"in " + setup.TreeDir + " as it stands, after the guard.\n\n" +
+			"in " + setup.TreeDir + " as it stands, after the guard. So is a ws of another version than " +
+			update.File + ", which the units run, or one where that file is missing, --in-place included: " +
+			"ws update --version installs a release there.\n\n" +
 			"--plan plans these steps, and mise's bootstrap, or the task where setup would run it, where none " +
 			"of them is due. The task fetches the secrets first, and the plan changes nothing else. " +
 			"It exits 0 where nothing would change and 2 where something would.",
@@ -92,6 +95,9 @@ func newSetupCmd(p enginecli.Env, cfg setupConfig) *cobra.Command {
 			if err := cfg.Enter(); err != nil {
 				return err
 			}
+		}
+		if err := setup.CheckInstalled(c.Context(), p.Machine, p.Version); err != nil {
+			return err
 		}
 		if err := checkValues(p.Machine); err != nil {
 			return err

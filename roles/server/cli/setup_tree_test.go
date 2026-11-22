@@ -103,6 +103,7 @@ func TestSetupInPlaceRunsTheTreeThatStandsOfAnyVersion(t *testing.T) {
 	p, m := setupProcess(rel)
 	standing(m, rel)
 	p.Version = "devel"
+	m.Results[installedWs+" version"] = effecttest.Result{Out: []byte("devel\n")}
 	if status, stderr := runSetup(p, rel, "--in-place"); status != 0 {
 		t.Fatalf("status = %d, stderr = %q", status, stderr)
 	}

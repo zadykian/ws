@@ -49,6 +49,9 @@ in `/opt/ws/roles/server` with umask 022, from `/`. A second run changes nothing
 
 - A ws that names no release tag, `devel` and a pseudo-version included, is refused. `--in-place`
   runs the tree in `/opt/ws` as it stands, after the guard.
+- A ws of another version than `/usr/local/bin/ws`, which the units run, is refused before any
+  write, `--in-place` included, and so is a missing file there. `ws update --version X.Y.Z`
+  installs that release there.
 - `--plan` plans these steps, and mise's bootstrap, or the task `secrets` where setup would run it,
   where none of them is due, and changes nothing. It exits 0 where nothing would change, and 2
   where something would.

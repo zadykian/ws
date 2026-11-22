@@ -26,7 +26,7 @@ func setupRelease(body string) setup.MiseRelease {
 const treeRepo = "https://example.org/ws"
 
 // setupProcess returns a root process on an Ubuntu 26.04 machine on amd64 that serves miseBody and
-// has no tree yet. The process is of ws v1.2.3.
+// has no tree yet. The process is of ws v1.2.3, as is the installed ws.
 func setupProcess(rel setup.MiseRelease) (enginecli.Env, *effecttest.Machine) {
 	p := fakeProcess()
 	m := effecttest.NewMachine()
@@ -46,6 +46,7 @@ func setupProcess(rel setup.MiseRelease) (enginecli.Env, *effecttest.Machine) {
 	}
 	m.Files[osRelease] = []byte("ID=ubuntu\nVERSION_ID=\"26.04\"\n")
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
+	m.Results[installedWs+" version"] = effecttest.Result{Out: []byte(p.Version + "\n")}
 	m.Pages[rel.URL("linux-x64")] = []byte(miseBody)
 	return p, m
 }

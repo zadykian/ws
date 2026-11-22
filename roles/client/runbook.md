@@ -55,10 +55,11 @@ file. It then does what a person did by hand, in this order:
 
 A second run changes nothing and asks no password. `ws client setup --plan` plans these steps, and
 mise's bootstrap where none is due, and exits 0 where nothing would change. A ws that names no
-release tag is refused: `--in-place` runs the tree in `/opt/ws` as it stands, after the guard. A
-tree, or a directory above it, that others may write is refused too
-([Setup](README.md#setup)). `ws update`, as the user, brings ws to the latest release, or to
-`--version`'s, and runs that ws's setup, with sudo for the write
+release tag is refused: `--in-place` runs the tree in `/opt/ws` as it stands, after the guard. So
+is a ws of another version than `/usr/local/bin/ws`, which the units run, or a missing file there:
+`ws update --version X.Y.Z` installs that release there. A tree, or a directory above it, that
+others may write is refused too ([Setup](README.md#setup)). `ws update`, as the user, brings ws
+to the latest release, or to `--version`'s, and runs that ws's setup, with sudo for the write
 ([Update](../../.github/workflows/release.md#update)).
 
 ## GitHub
