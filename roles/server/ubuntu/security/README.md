@@ -27,12 +27,12 @@ failing. Both hold on every network, with no peer or network exempt. Root logs i
 ws writes none and copies none from another account's file ([A new
 machine](../../../../README.md#a-new-machine)). The drop-in limits no user, so the installer's
 user keeps its keys. Over SSH, keep the session that ran ws open until a
-new one logs in. The guard `guard/security-keys` stops the run before passwords go off if root
-has no key to log in with, or a file of keys that sshd passes over. A container too, as it may run
-sshd. It stops it
-on every machine where `/root` is not root's home in `getent passwd`. sshd's drop-in lands
-only after `sshd -G` accepts it, and sshd reloads after a change, once, in its unit. ufw's service
-is active as well as enabled, as mise keeps it.
+new one logs in. The guard `guard/security-keys` stops the run before passwords go off in two
+cases. One is that root has no key to log in with. A key behind a forced command is none, as
+cloud-init writes for root. The other is a file of keys that sshd passes over. A container too, as
+it may run sshd. It stops it on every machine where `/root` is not root's home in
+`getent passwd`. sshd's drop-in lands only after `sshd -G` accepts it, and sshd reloads after a
+change, once, in its unit. ufw's service is active as well as enabled, as mise keeps it.
 
 Docker's published ports get past ufw, so Docker publishes a port that names no address on
 `127.0.0.1` ([docker](../docker/README.md)): reach it through an SSH tunnel. A port published on

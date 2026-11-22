@@ -187,7 +187,8 @@ command = ["/abs/cmd"]      # or: the command, as root, exits 0
 ```
 
 - `login_key` reads `home/.ssh/authorized_keys` through the home's link guard. It fails where the
-  file holds no key, or sshd would pass it over for its owner or mode.
+  file holds no key that lets a login in, or sshd would pass it over for its owner or mode. A key
+  behind a `command=` option does not count, as cloud-init's lines for root.
 - `login_key` fails on every machine where `home` is not the one `getent passwd` gives USER: the
   file kind writes USER's files below that one.
 - A unit that would close a login waits on the guard by its `after`.

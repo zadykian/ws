@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
+	"slices"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -71,7 +72,8 @@ type keyCheck struct {
 // Plan fails where the home is not the user's in the system's accounts, on every machine. sshd reads
 // the keys there, and the units of the user's files write there. It fails where authorized_keys, or
 // a directory above it, is a link: the user owns the home and root reads the file. It also fails
-// where the file is missing, holds no key, or is one sshd won't use, on every machine.
+// where the file is missing, holds no key that lets a login in, or is one sshd won't use, on every
+// machine. A key behind a forced command does not count.
 func (k keyCheck) Plan(ctx context.Context) ([]resource.Change, error) {
 	home, err := k.sys.home(ctx, k.m, k.user.Name)
 	if err != nil {
@@ -86,21 +88,80 @@ func (k keyCheck) Plan(ctx context.Context) ([]resource.Change, error) {
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
-	if !holdsKey(keys) {
+	ok, forced := holdsKey(keys)
+	if !ok && forced > 0 {
+		return nil, fmt.Errorf("%s holds only keys behind a forced command, which refuses the login, so SSH by key "+
+			"alone would let no one in: delete those lines, then import the account's keys", file)
+	}
+	if !ok {
 		return nil, fmt.Errorf("%s holds no key, so SSH by key alone would let no one in: put the account's keys there first", file)
 	}
 	return nil, k.usable(file)
 }
 
-// holdsKey reports whether a line of the file is neither blank nor a comment.
-func holdsKey(keys []byte) bool {
+// holdsKey reports whether the file holds a key that lets a login in, and how many keys it holds
+// that a forced command takes over.
+func holdsKey(keys []byte) (ok bool, forced int) {
 	for line := range strings.Lines(string(keys)) {
-		if line = strings.TrimSpace(line); line != "" && !strings.HasPrefix(line, "#") {
-			return true
+		if line = strings.TrimSpace(line); line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		switch opts, valid := keyOptions(line); {
+		case !valid:
+		case slices.ContainsFunc(opts, isCommand):
+			forced++
+		default:
+			ok = true
 		}
 	}
-	return false
+	return ok, forced
 }
+
+// isCommand reports whether the option is command="...": the name is not case sensitive.
+func isCommand(opt string) bool {
+	name, _, _ := strings.Cut(opt, "=")
+	return strings.EqualFold(name, "command")
+}
+
+// keyOptions reads a line of authorized_keys as sshd does. The options come before the key type and
+// are split by commas. A value may be quoted, with a quote escaped by a backslash inside it. A line
+// that starts with a key type has none. It reports false for a line that holds no key after its
+// options, or whose quote is not closed.
+func keyOptions(line string) (opts []string, valid bool) {
+	if isKeyType(line) {
+		return nil, hasBlob(line)
+	}
+	var cur strings.Builder
+	quoted := false
+	for i := 0; i < len(line); i++ {
+		c := line[i]
+		switch {
+		case quoted && c == '\\' && i+1 < len(line) && line[i+1] == '"':
+			cur.WriteString(`\"`)
+			i++
+		case c == '"':
+			quoted = !quoted
+			cur.WriteByte(c)
+		case !quoted && (c == ' ' || c == '\t'):
+			rest := strings.TrimSpace(line[i:])
+			return append(opts, cur.String()), isKeyType(rest) && hasBlob(rest)
+		case !quoted && c == ',':
+			opts, cur = append(opts, cur.String()), strings.Builder{}
+		default:
+			cur.WriteByte(c)
+		}
+	}
+	return nil, false
+}
+
+// isKeyType reports whether the text starts with a key type, such as ssh-ed25519, ecdsa-sha2-nistp256
+// or sk-ssh-ed25519@openssh.com.
+func isKeyType(text string) bool {
+	return strings.HasPrefix(text, "ssh-") || strings.HasPrefix(text, "ecdsa-") || strings.HasPrefix(text, "sk-")
+}
+
+// hasBlob reports whether a key type is followed by the key itself.
+func hasBlob(line string) bool { return len(strings.Fields(line)) >= 2 }
 
 // usable fails where sshd would pass the file over, which root's cp leaves behind. sshd reads it as
 // the user, and takes it only from that user or root, with no other able to write it. The home's

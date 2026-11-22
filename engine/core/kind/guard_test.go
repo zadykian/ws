@@ -75,6 +75,31 @@ func TestGuardRefusesNoLoginKey(t *testing.T) {
 	}
 }
 
+func TestGuardLoginKeyCounts(t *testing.T) {
+	cloudInit := `no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command="echo 'Please login as the user \"ubuntu\" rather than the user \"root\".';echo;sleep 10;exit 142" ssh-ed25519 AAAA`
+	for name, c := range map[string]struct{ keys, want string }{
+		"cloud-init alone":   {keys: cloudInit + "\n", want: "behind a forced command"},
+		"a plain key":        {keys: "ssh-ed25519 AAAA u@mac\n"},
+		"another option":     {keys: `from="10.0.0.0/8" ssh-ed25519 AAAA` + "\n"},
+		"a mix":              {keys: cloudInit + "\nssh-ed25519 AAAA u@mac\n"},
+		"a comma in a quote": {keys: `from="a,b",command="x" ssh-ed25519 AAAA` + "\n", want: "behind a forced command"},
+		"command in a value": {keys: `from="command=x" ssh-ed25519 AAAA` + "\n"},
+		"upper case":         {keys: `COMMAND="x" ssh-rsa AAAA` + "\n", want: "behind a forced command"},
+		"no key after":       {keys: "no-pty\n", want: "holds no key"},
+		"a quote not closed": {keys: `from="a ssh-ed25519 AAAA` + "\n", want: "holds no key"},
+		"a certificate":      {keys: "ssh-ed25519-cert-v01@openssh.com AAAA\n"},
+		"a hardware key":     {keys: "sk-ssh-ed25519@openssh.com AAAA\n"},
+	} {
+		e, m, _, _ := testEnv()
+		withAccount(m)
+		withKeys(m, c.keys, 0o600)
+		err := guardPlan(t, e, loginGuard)
+		if c.want == "" && err != nil || c.want != "" && (err == nil || !strings.Contains(err.Error(), c.want)) {
+			t.Errorf("%s: plan = %v, want %q", name, err, c.want)
+		}
+	}
+}
+
 func TestGuardRefusesAHomeOtherThanTheAccounts(t *testing.T) {
 	for _, container := range []bool{false, true} {
 		e, m, _, _ := testEnv()
