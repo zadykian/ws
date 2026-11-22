@@ -119,6 +119,9 @@ that the repository lacks, leave out nothing:
   `me@zadykian.dev`. The comparison ignores case, as the hook's `interpret-trailers` does. Such a
   commit is the Mac's, which ws rebased: the rebase signs it as ws and runs no `commit-msg` hook
   ([The co-author trailer](#the-co-author-trailer)).
+  `git revert` and `git am` run no `commit-msg` hook either, so their commits lack it. A refusal
+  that lists a missing trailer says so: `git commit --amend --no-edit` runs the hook on the last
+  commit.
 
 A refusal names each commit by its first 12 characters and lists ten rules at most, one line for
 each rule that a commit breaks, and counts the rest. It prints no key. The push stops, and the

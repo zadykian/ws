@@ -18,6 +18,9 @@ import (
 // the Co-authored-by trailers, RS between them. It names no key.
 const logFormat = "%H%x1f%G?%x1f%GS%x1f%ce%x1f%ae%x1f%(trailers:key=Co-authored-by,valueonly,separator=%x1e)"
 
+// trailerRule starts the refusal of a commit that lacks the co-author trailer.
+const trailerRule = "trailer Co-authored-by: "
+
 // shown caps the lines that a refusal lists, one for each rule a commit breaks. The rest are
 // counted.
 const shown = 10
@@ -47,6 +50,7 @@ func isHex(s string) bool { return strings.Trim(s, "0123456789abcdef") == "" }
 // ws's settings.
 func PrePush(ctx context.Context, m effect.Machine, refs io.Reader) error {
 	var refused []string
+	lacksTrailer := false
 	seen := map[string]bool{}
 	in := bufio.NewScanner(refs)
 	for in.Scan() {
@@ -70,7 +74,10 @@ func PrePush(ctx context.Context, m effect.Machine, refs io.Reader) error {
 		for _, c := range commits {
 			if !seen[c.hash] {
 				seen[c.hash] = true
-				refused = append(refused, c.refusals()...)
+				for _, r := range c.refusals() {
+					lacksTrailer = lacksTrailer || strings.Contains(r, trailerRule)
+					refused = append(refused, r)
+				}
 			}
 		}
 	}
@@ -84,8 +91,13 @@ func PrePush(ctx context.Context, m effect.Machine, refs io.Reader) error {
 	if more := len(refused) - len(list); more > 0 {
 		list = append(list, fmt.Sprintf("and %d more", more))
 	}
-	return errors.New("the push holds commits that break a rule of ws:\n  " + strings.Join(list, "\n  ") +
-		"\nSign and credit a commit on ws, or rebase one of the Mac's there (roles/server/ubuntu/git/README.md#the-push-check)")
+	msg := "the push holds commits that break a rule of ws:\n  " + strings.Join(list, "\n  ") +
+		"\nSign and credit a commit on ws, or rebase one of the Mac's there (roles/server/ubuntu/git/README.md#the-push-check)"
+	if lacksTrailer {
+		// git revert and git am make a commit with no commit-msg hook.
+		msg += "\nA commit that lacks the trailer: git commit --amend --no-edit runs the hook on the last commit"
+	}
+	return errors.New(msg)
 }
 
 // pushed is a commit that a push would send.
@@ -164,7 +176,7 @@ func (c pushed) refusals() []string {
 	if c.author != mac.Email && !slices.ContainsFunc(c.trailers, func(t string) bool {
 		return strings.EqualFold(t, mac.Name+" <"+mac.Email+">")
 	}) {
-		out = append(out, name+": trailer Co-authored-by: "+mac.Name+" <"+mac.Email+"> is missing")
+		out = append(out, name+": "+trailerRule+mac.Name+" <"+mac.Email+"> is missing")
 	}
 	return out
 }
