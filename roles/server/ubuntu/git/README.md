@@ -83,8 +83,10 @@ signers file without a key. The file's write, after the key's, puts the key in.
 
 ## The co-author trailer
 
-Each commit made on ws, by claude, lazygit, Zed or the shell, carries one trailer,
-`Co-authored-by: zadykian <me@zadykian.dev>`: the maintainer, whom the machine account commits for.
+A commit that `git commit` or a merge makes on ws, by claude, lazygit, Zed or the shell, carries
+one trailer, `Co-authored-by: zadykian <me@zadykian.dev>`: the maintainer, whom the machine account
+commits for. A squash is the one exception: it joins the messages of its commits, and each keeps
+its trailer, so the result can hold two. The push check passes it.
 The name and the email are the Mac's identity, `gitcfg.Mac()`, and a test holds the file's text
 equal to it. A hook of git's config adds it, `[hook "ws-co-author"]` on `commit-msg`, which runs
 `git interpret-trailers --in-place --no-divider --if-exists addIfDifferent` on the message's file.
@@ -101,13 +103,16 @@ cannot see an explicit `--cleanup` or `commit.cleanup`. Git passes the file to t
 last argument, which the command's function takes.
 claude's own trailers are off ([Attribution](../claude/README.md#attribution)).
 
-The hook runs before a repository's own `commit-msg`, `.githooks` of ws included, and a
-failing one refuses the commit. A commit that skips hooks, with `--no-verify`, has none. `git
-rebase` and `git cherry-pick` run no `commit-msg`, so a commit that either writes keeps its
-message, but a `reword` of `git rebase -i` runs it, as it edits the message. Hooks in git's config
-came in git 2.54, which [the PPA](../base/README.md#git) gives. The test of the hook skips on an
-older git, and `server`'s check of a signed commit holds the one trailer on the set-up machine
-([The `server` job](../../../../.github/workflows/server.md)).
+The hook runs before a repository's own `commit-msg`, `.githooks` of ws included, and a failing one
+refuses the commit. A commit that skips hooks, with `--no-verify`, has none. `git rebase`, `git
+cherry-pick`, `git revert` and `git am` run no `commit-msg`, so a commit that any of them writes
+keeps its message. A rebase's or a cherry-pick's commit keeps its author too. A revert's and an am's
+is the machine's own, with no trailer, so the push check refuses it until `git commit --amend
+--no-edit` runs the hook on it. A `reword` of `git rebase -i`, and a `git commit` or a `--continue`
+after a conflict, run it. Hooks in git's config came in git 2.54, which [the
+PPA](../base/README.md#git) gives. The test of the hook skips on an older git, and `server`'s check
+of a signed commit holds the one trailer on the set-up machine ([The `server`
+job](../../../../.github/workflows/server.md)).
 
 ## The push check
 
