@@ -133,3 +133,20 @@ func TestGitTakesTheTokensInputInTheSecretsTask(t *testing.T) {
 		}
 	}
 }
+
+func TestGitPrePushLeavesADeletionAlone(t *testing.T) {
+	p, _ := valuesProcess("")
+	const zeros = "0000000000000000000000000000000000000000"
+	in := "refs/heads/gone " + zeros + " refs/heads/gone 1111111111111111111111111111111111111111\n"
+	if status, stdout, stderr := runWs(p, in, "server", "git", "pre-push", "origin", "git@example.test:r.git"); status != 0 || stdout != "" || stderr != "" {
+		t.Errorf("status = %d, stdout %q, stderr %q", status, stdout, stderr)
+	}
+}
+
+func TestGitPrePushRefusesAnUnreadableLine(t *testing.T) {
+	p, _ := valuesProcess("")
+	status, _, stderr := runWs(p, "refs/heads/x\n", "server", "git", "pre-push", "origin", "url")
+	if status != 1 || !strings.Contains(stderr, "LOCAL-REF LOCAL-SHA") {
+		t.Errorf("status = %d, stderr %q", status, stderr)
+	}
+}
