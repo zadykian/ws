@@ -178,14 +178,20 @@ func TestSetupAgainWritesNothing(t *testing.T) {
 	if status, stderr := runSetup(p, rel); status != 0 {
 		t.Fatalf("first run: status = %d, stderr = %q", status, stderr)
 	}
-	m.Results[setup.MisePath+" --version"] = effecttest.Result{Out: []byte(rel.Version + " linux-x64 (2026-01-01)\n")}
+	// The fake's git writes leave no checkout, so the tree stands as a first run leaves it.
+	standing(m, rel)
 	m.Calls = nil
 	if status, stderr := runSetup(p, rel); status != 0 || strings.Contains(stderr, "write") {
 		t.Fatalf("second run: status = %d, stderr = %q", status, stderr)
 	}
+	// The bootstrap runs on each run by design, and no check counts it.
 	for _, call := range m.Calls {
-		if strings.HasPrefix(call, "download ") || strings.HasPrefix(call, "atomic ") {
-			t.Errorf("the second run wrote: %s", call)
+		for _, write := range []string{"download ", "atomic ", "run git -c ", "run git -C /opt/ws fetch",
+			"run git -C /opt/ws checkout", "run git -C /opt/ws -c advice.detachedHead=false checkout",
+			"run git -C /opt/ws clean", "run git -C /opt/ws remote"} {
+			if strings.HasPrefix(call, write) {
+				t.Errorf("the second run wrote: %s", call)
+			}
 		}
 	}
 }
