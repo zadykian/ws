@@ -8,7 +8,7 @@ import (
 )
 
 func TestSettingsIsTheSharedText(t *testing.T) {
-	got := gitcfg.Settings(gitcfg.Inputs{Key: "/h/k.pub",
+	got := gitcfg.Settings(gitcfg.Mac(), gitcfg.Inputs{Key: "/h/k.pub",
 		Gh: "/opt/gh", Program: "/h/sign"})
 	want := "[user]\n\tname = \"zadykian\"\n\temail = me@zadykian.dev\n" +
 		"# Each commit and tag signed with the machine's SSH key, which the allowed signers file trusts for the\n" +
@@ -31,8 +31,21 @@ func TestSettingsIsTheSharedText(t *testing.T) {
 	}
 }
 
+func TestEachSideHasItsOwnIdentity(t *testing.T) {
+	if got, want := gitcfg.Mac(), (gitcfg.Identity{Name: "zadykian", Email: "me@zadykian.dev"}); got != want {
+		t.Errorf("Mac = %v, want %v", got, want)
+	}
+	if got, want := gitcfg.WS(), (gitcfg.Identity{Name: "zadykiand", Email: "su@zadykian.dev"}); got != want {
+		t.Errorf("WS = %v, want %v", got, want)
+	}
+	got := gitcfg.Settings(gitcfg.WS(), gitcfg.Inputs{Key: "/h/k.pub"})
+	if want := "[user]\n\tname = \"zadykiand\"\n\temail = su@zadykian.dev\n"; !strings.HasPrefix(got, want) {
+		t.Errorf("Settings of ws = %q, want it to open with %q", got, want)
+	}
+}
+
 func TestSettingsQuotesTheKeyAndNamesNoProgramWithoutOne(t *testing.T) {
-	got := gitcfg.Settings(gitcfg.Inputs{Key: `/h/"k".pub`})
+	got := gitcfg.Settings(gitcfg.Mac(), gitcfg.Inputs{Key: `/h/"k".pub`})
 	for _, want := range []string{`signingkey = "/h/\"k\".pub"`} {
 		if !strings.Contains(got, want) {
 			t.Errorf("Settings lacks %s:\n%s", want, got)
@@ -44,7 +57,12 @@ func TestSettingsQuotesTheKeyAndNamesNoProgramWithoutOne(t *testing.T) {
 }
 
 func TestAllowedSignersTrustsTheKeyForTheEmail(t *testing.T) {
-	if got, want := gitcfg.AllowedSigners("# h", "ssh-ed25519 AAAA"), "# h\nme@zadykian.dev ssh-ed25519 AAAA\n"; got != want {
-		t.Errorf("AllowedSigners = %q, want %q", got, want)
+	for id, want := range map[gitcfg.Identity]string{
+		gitcfg.Mac(): "# h\nme@zadykian.dev ssh-ed25519 AAAA\n",
+		gitcfg.WS():  "# h\nsu@zadykian.dev ssh-ed25519 AAAA\n",
+	} {
+		if got := gitcfg.AllowedSigners(id, "# h", "ssh-ed25519 AAAA"); got != want {
+			t.Errorf("AllowedSigners(%v) = %q, want %q", id, got, want)
+		}
 	}
 }
