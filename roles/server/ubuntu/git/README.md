@@ -91,9 +91,14 @@ equal to it. A hook of git's config adds it, `[hook "ws-co-author"]` on `commit-
 `addIfDifferent` adds the line once, so that `--amend`, a message that holds it already and a
 second run add none. `--no-divider` keeps a line of three dashes in the body from moving the trailer
 above it, out of the last paragraph that the push check reads.
-A message that is empty once its comments and its scissors section are cut gets none. Git runs
-`commit-msg` before its check of an empty message, so a trailer alone would commit it. Git passes
-the file to the command as its last argument, which the command's function takes.
+An empty message gets none. Git runs `commit-msg` before its check of an empty message, so a
+trailer alone would commit it. Where no editor opens, as with `-m`, `-F`, `--amend --no-edit` and a
+merge, git gives the hook `GIT_EDITOR=:`. Its cleanup is then `whitespace`, which keeps comment
+lines, so `-m "#42 fix the fan curve"` is a message. The hook tells an empty one by
+`git stripspace` alone. With an editor, the hook cuts the scissors section, git's comment string,
+a space, 24 dashes, `>8` and 24 dashes, whatever `core.commentChar` is, and then the comments. It
+cannot see an explicit `--cleanup` or `commit.cleanup`. Git passes the file to the command as its
+last argument, which the command's function takes.
 claude's own trailers are off ([Attribution](../claude/README.md#attribution)).
 
 The hook runs before a repository's own `commit-msg`, `.githooks` of ws included, and a

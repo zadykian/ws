@@ -31,14 +31,17 @@
 # Each commit made here, by any tool, credits the maintainer by one trailer. A hook of git's config runs
 # beside the repository's own hooks, ws's .githooks included. addIfDifferent adds the trailer once,
 # so that --amend and a second run add none. --no-divider keeps a line of three dashes in the body
-# from moving it above that line. A message that is empty once its comments and its
-# scissors section are cut gets none, so that git aborts the commit as it does without the hook.
+# from moving it above that line. A message that is empty gets none, so that git aborts the
+# commit as it does without the hook. Where no editor opens, git gives the hook GIT_EDITOR=:, its
+# cleanup is whitespace, which keeps comments, and emptiness is git stripspace alone. With an
+# editor the scissors section, a line of git's comment string, a space, 24 dashes, >8 and 24 dashes,
+# and then the comments are cut. The hook cannot see an explicit --cleanup or commit.cleanup.
 # git runs the command as sh -c 'COMMAND "$@"' with the message's file, which the function f takes
 # as $1. git rebase and git cherry-pick run no commit-msg hook, so a commit they rewrite keeps its
 # message, and a reword of git rebase -i runs it. Git 2.54 or above reads the hook.
 [hook "ws-co-author"]
 	event = commit-msg
-	command = "f() { if [ -n \"$(sed '/^# -* >8 -*$/,$d' \"$1\" | git stripspace --strip-comments)\" ]; then git interpret-trailers --in-place --no-divider --if-exists addIfDifferent --trailer 'Co-authored-by: zadykian <me@zadykian.dev>' \"$1\"; fi; }; f"
+	command = "f() { if [ \"$GIT_EDITOR\" = : ]; then t=$(git stripspace <\"$1\"); else t=$(sed '/^[^[:space:]]* -\\{24\\} >8 -\\{24\\}$/,$d' \"$1\" | git stripspace --strip-comments); fi; if [ -n \"$t\" ]; then git interpret-trailers --in-place --no-divider --if-exists addIfDifferent --trailer 'Co-authored-by: zadykian <me@zadykian.dev>' \"$1\"; fi; }; f"
 # A push from here sends no commit that lacks a good signature or the trailer above. ws's check
 # reads the pushed refs on its standard input. A failing hook refuses the push, which --no-verify,
 # a config that disables or replaces the hook and a push through GitHub's API skip.
