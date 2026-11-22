@@ -7,11 +7,14 @@ import (
 	"github.com/zadykian/ws/roles/internal/etcws"
 )
 
-// Name and Email are the identity of every commit, on ws and on the Mac alike.
-const (
-	Name  = "zadykian"
-	Email = "me@zadykian.dev"
-)
+// Identity is the name and the email of every commit that a side makes.
+type Identity struct{ Name, Email string }
+
+// Mac is the identity of the Mac's commits: the maintainer's own account.
+func Mac() Identity { return Identity{Name: "zadykian", Email: "me@zadykian.dev"} }
+
+// WS is the identity of ws's commits: the machine account, whose email GitHub verifies.
+func WS() Identity { return Identity{Name: "zadykiand", Email: "su@zadykian.dev"} }
 
 // Signers is the allowed signers file, root's, the same path on both sides.
 const Signers = etcws.Dir + "/allowed_signers"
@@ -23,11 +26,11 @@ type Inputs struct {
 	Key, Gh, Program string
 }
 
-// Settings returns the sections of identity, signing, fetch and credentials, with tabs. The name
+// Settings returns the sections of id, signing, fetch and credentials, with tabs. The name
 // and the paths go in quotes. The email and gh's command stay bare, as gh auth setup-git writes them.
-func Settings(in Inputs) string {
+func Settings(id Identity, in Inputs) string {
 	var b strings.Builder
-	b.WriteString("[user]\n\tname = " + quote(Name) + "\n\temail = " + Email + "\n")
+	b.WriteString("[user]\n\tname = " + quote(id.Name) + "\n\temail = " + id.Email + "\n")
 	b.WriteString("# Each commit and tag signed with the machine's SSH key, which the allowed signers file " +
 		"trusts for the\n# email above. The public key's path, so that an agent holding the key signs " +
 		"too; otherwise\n# ssh-keygen reads the private key beside it.\n")
@@ -51,9 +54,9 @@ func Settings(in Inputs) string {
 	return b.String()
 }
 
-// AllowedSigners returns the file that trusts the key for Email, under its header.
-func AllowedSigners(header, key string) string {
-	return header + "\n" + Email + " " + key + "\n"
+// AllowedSigners returns the file that trusts the key for id's email, under its header.
+func AllowedSigners(id Identity, header, key string) string {
+	return header + "\n" + id.Email + " " + key + "\n"
 }
 
 // quote puts s in quotes for a git config file, with \ and " escaped.
