@@ -4,7 +4,7 @@ The `git` role sets git up from `mise bootstrap`. Its `mise.server.toml` install
 [the PPA that base sets up](../base/README.md#git), and openssh-client, and names the eight units of its `units.toml.tmpl`:
 
 - `file/git-config`: `/etc/ws/gitconfig`, root's and 644, from `files/ws.gitconfig.tmpl`. Each
-  run replaces any change made to it.
+  run replaces any change made to it. It holds the hook of [The co-author trailer](#the-co-author-trailer).
 - `guard/git-check`: `ws server git check`, after the key and its file, so that a refused
   token or clone stops no signing, and before the include, the tokens and the clones. It refuses a
   clone or a tokens file the role would act on, and names what shadows ws's settings.
@@ -79,6 +79,27 @@ To sign with another key, set it there.
 
 A plan makes no key, so on a machine without one it shows the key's creation, and the allowed
 signers file without a key. The file's write, after the key's, puts the key in.
+
+## The co-author trailer
+
+Each commit made on ws, by claude, lazygit, Zed or the shell, carries one trailer,
+`Co-authored-by: zadykian <me@zadykian.dev>`: the maintainer, whom the machine account commits for.
+The name and the email are the Mac's identity, `gitcfg.Mac()`, and a test holds the file's text
+equal to it. A hook of git's config adds it, `[hook "ws-co-author"]` on `commit-msg`, which runs
+`git interpret-trailers --in-place --if-exists addIfDifferent` on the message's file. `addIfDifferent`
+adds the line once, so that `--amend`, a message that holds it already and a second run add none.
+A message that is empty once its comments and its scissors section are cut gets none. Git runs
+`commit-msg` before its check of an empty message, so a trailer alone would commit it. Git passes
+the file to the command as its last argument, which the command's function takes.
+claude's own trailers are off ([Attribution](../claude/README.md#attribution)).
+
+The hook runs before a repository's own `commit-msg`, `.githooks` of ws included, and a
+failing one refuses the commit. A commit that skips hooks, with `--no-verify`, has none. `git
+rebase` and `git cherry-pick` run no `commit-msg`, so a commit that either writes keeps its
+message, but a `reword` of `git rebase -i` runs it, as it edits the message. Hooks in git's config
+came in git 2.54, which [the PPA](../base/README.md#git) gives. The test of the hook skips on an
+older git, and `server`'s check of a signed commit holds the one trailer on the set-up machine
+([The `server` job](../../../../.github/workflows/server.md)).
 
 ## Git credentials
 

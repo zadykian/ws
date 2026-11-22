@@ -31,7 +31,8 @@ it has any:
 - [`shell`](roles/server/ubuntu/shell): `/etc/ws/bashrc` and `/etc/ws/profile`, one line of each at the top of
   `~/.bashrc` and `~/.profile`, and `/etc/ws/env` from mise's secret inputs.
 - [`git`](roles/server/ubuntu/git): `/etc/ws/gitconfig` and its include in `~/.gitconfig`, a key that
-  signs commits, git's tokens for servers besides GitHub, and clones of repositories.
+  signs commits, a hook that adds a co-author trailer to each, git's tokens for servers besides
+  GitHub, and clones of repositories.
 - [`tmux`](roles/server/ubuntu/tmux): tmux from Ubuntu's archive.
 - [`lazygit`](roles/server/ubuntu/lazygit): lazygit from Ubuntu's archive, in JetBrains Dark, with the
   repository and its branch in the terminal's title.
