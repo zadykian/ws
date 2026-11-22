@@ -74,7 +74,7 @@ func (u Updater) Run(ctx context.Context) (Result, error) {
 	return r, nil
 }
 
-// replace writes release tag's binary over File, once it matches its checksum and prints tag. The
+// replace renames release tag's binary over File, once it matches its checksum and prints tag. The
 // download is whole before it reaches the disk, and each write is a rename, so that a failure, or
 // a cancelled ctx, leaves File unchanged. A ws that runs keeps its old file.
 func (u Updater) replace(ctx context.Context, tag string) error {
@@ -89,8 +89,13 @@ func (u Updater) replace(ctx context.Context, tag string) error {
 	if err := u.M.WriteAtomic(copied, binary, attrs); err != nil {
 		return fmt.Errorf("writing beside %s: %w", u.File, err)
 	}
+	moved := false
 	// Not ctx, which a signal may have cancelled.
-	defer func() { _, _ = u.M.RunRoot(context.WithoutCancel(ctx), "rm", "-f", copied) }()
+	defer func() {
+		if !moved {
+			_, _ = u.M.RunRoot(context.WithoutCancel(ctx), "rm", "-f", copied)
+		}
+	}()
 	out, err := u.M.Run(ctx, copied, "version")
 	if err != nil {
 		return fmt.Errorf("the %s downloaded does not run: %w", u.Binary, err)
@@ -101,9 +106,16 @@ func (u Updater) replace(ctx context.Context, tag string) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if err := u.M.WriteAtomic(u.File, binary, attrs); err != nil {
+	// mv would move the copy into a directory, where rename(2) fails.
+	if info, err := u.M.Stat(u.File); err == nil && info.Mode.IsDir() {
+		return fmt.Errorf("%s is a directory, not ws", u.File)
+	}
+	// The copy that printed tag is the file installed, with its owner and mode: no second write
+	// shares a pending file with another run. Not ctx, so that a signal leaves the rename whole.
+	if _, err := u.M.RunRoot(context.WithoutCancel(ctx), "mv", "-f", "--", copied, u.File); err != nil {
 		return fmt.Errorf("replacing %s: %w", u.File, err)
 	}
+	moved = true
 	return nil
 }
 
