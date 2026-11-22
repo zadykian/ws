@@ -26,7 +26,7 @@ Each Go template ends in `.tmpl`, the spec's name and the name of each `template
   `has_prefix TEXT PREFIX`, `json VALUE`, which quotes a value as Go's JSON encoder does, and
   `fail MSG`, which stops the render with MSG. It takes `self` too, the path of the ws that runs the
   units, so that a command of ws runs that ws, wherever its file is. A unit's template
-  fills as it plans, as an earlier unit may make the account or the file that it reads. It takes
+  fills as it plans, as an earlier unit may make the file that it reads. It takes
   `envvar FILE NAME` and the facts `mem_mib`, `cpus`, `fs_bytes PATH...`,
   `installed_version NAME`, `kernel_release` and `root_file PATH` too.
   `installed_version` gives dpkg's version of an installed package, else "", and `kernel_release`

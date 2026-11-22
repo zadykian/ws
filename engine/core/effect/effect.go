@@ -20,7 +20,8 @@ var ErrNotRegular = errors.New("not a regular file")
 var ErrTooLarge = errors.New("too large")
 
 // HomeFileMax is the most that ReadHomeFile reads: 1 MiB, far above any home file ws reads, so that
-// a file that the account grows never fills root's memory.
+// a file that grows never fills ws's memory. On the server root owns the home, /root, and on the Mac
+// the user does.
 const HomeFileMax = 1 << 20
 
 // Out tells the maintainer what ws does.
