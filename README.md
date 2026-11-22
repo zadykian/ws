@@ -117,7 +117,7 @@ Setup's plan shows what a run would change, and nothing changes. A run by hand t
 that [the server's runbook](roles/server/runbook.md) gives:
 
 ```sh
-sudo ws server setup --plan
+ws server setup --plan
 ```
 
 `ws server setup --secrets --plan` plans through the task `secrets`, which fetches the secrets

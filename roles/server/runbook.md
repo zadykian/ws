@@ -33,7 +33,7 @@ without the file.
    each such value. Where none is, the bootstrap writes it ([the values](../../README.md#running-it-again)).
 3. Run `install.sh` as root, by the three lines of
    [Install](../../.github/workflows/release.md#install), `set -o pipefail` among them. It
-   installs ws alone, as `/usr/local/bin/ws`, which sudo reaches, and prints the next command.
+   installs ws alone, as `/usr/local/bin/ws`, which root's `PATH` holds, and prints the next command.
 4. Run `ws server setup` as root.
 
 ## Setup, the secrets and the runs
@@ -71,8 +71,8 @@ the form below.
 A run by hand, or its plan, takes `ws server setup`:
 
 ```sh
-sudo ws server setup
-sudo ws server setup --plan
+ws server setup
+ws server setup --plan
 ```
 
 The tree's `locked = true` installs a tool only as the lock holds it, by its URL and checksum, as
