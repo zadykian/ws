@@ -14,7 +14,8 @@ web='while true; do printf "HTTP/1.0 200 OK\r\n\r\nhi\n" | nc -l -p 80; done'
 unset XDG_CONFIG_HOME
 sed -i '/^XDG_/d' /etc/environment
 # The runner's apt takes the amd64v3 variant, which a machine turns on by hand. The dotnet PPA's
-# index of that variant holds no .NET 8, so the cases run with no variant, as a machine has none.
+# index of that variant holds no .NET 8, and the git-core PPA's holds no git. So the cases run with
+# no variant, as a machine has none.
 # apt reads this file after apt.conf.d, so the line wins wherever the runner set the variant.
 echo '#clear APT::Architecture-Variants;' >>/etc/apt/apt.conf
 export HOME=/root DEBIAN_FRONTEND=noninteractive
