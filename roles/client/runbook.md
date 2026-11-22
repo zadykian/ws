@@ -137,6 +137,8 @@ Run `ssh -t NAME claude auth login`, and open the address it shows in the Mac's 
 Add the server's signing key by hand in `@zadykiand`'s settings on GitHub, as a signing key. Its
 `.pub` is the file that `~/.gitconfig` there names. The Mac's gh is the maintainer's login and adds
 none for the machine account ([Signing](../server/ubuntu/git/README.md#signing)).
+Where the same key stands in `@zadykian`'s settings as a signing key, take it off there. GitHub
+would show a commit that ws signs under the maintainer's email as verified.
 
 ## The tunnel
 
