@@ -201,4 +201,5 @@ Three settings are not files, so set them by hand once:
 
 - the secret `FORBIDDEN_WORDS`, the lines of `~/.config/ws/forbidden-words`;
 - a ruleset on the tags `v*` that blocks their update and deletion;
-- immutable releases, so that a published release's files and tag never change.
+- immutable releases, so that a published release's files and tag never change. The `publish` job
+  reads the setting after it creates a release, and fails where the setting is off.
