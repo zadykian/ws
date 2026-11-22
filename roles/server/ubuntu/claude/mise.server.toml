@@ -1,6 +1,7 @@
 # claude's lines for every server: curl, which fetches the installers; then the role's units.
 [bootstrap.packages]
 "apt:curl" = "latest"
+"ws:file/claude-managed-settings" = "in-sync"
 "ws:state/claude-cld-install" = "in-sync"
 "ws:state/claude-completion" = "in-sync"
 "ws:state/claude-install" = "in-sync"

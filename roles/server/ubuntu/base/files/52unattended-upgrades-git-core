@@ -1,0 +1,5 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+# git follows each release of the git-core PPA, whose suite is the release's codename.
+Unattended-Upgrade::Origins-Pattern {
+	"origin=LP-PPA-git-core,codename=${distro_codename}";
+};
