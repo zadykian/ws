@@ -181,11 +181,13 @@ table's `containers` chain drops what they forward: Docker forwards it ahead of 
 
 ## Links under the home
 
-`WS_USER` owns `WS_HOME`, so a link there could send ws, which runs as root, to any file: its reads,
-`chown`, `chmod` and backups would follow it. ws reaches a file there as root through the account
-alone: as a home file (`Account.File`, `Account.Dir`), a removal (`Account.Absent`) or the guarded
-read (`User.ReadHome`). The file kind's units take that way for each file whose owner is the
-account. Each refuses a link at the file, or at a directory between the home and it, and names the
+ws runs as root, and a link in a home could send its reads, `chown`, `chmod` and backups to any
+file. The code states that reason for a home that another user owns, as the installer's user
+does. root owns `/root`, and the roles' files there take the same guard: the code gives no other
+reason. ws reaches a file under a home through the account alone: as a home file
+(`Account.File`, `Account.Dir`), a removal (`Account.Absent`) or the guarded read
+(`User.ReadHome`). The file kind's units take that way for each file whose owner is the account.
+Each refuses a link at the file, or at a directory between the home and it, and names the
 link and its target. The check looks as the unit plans, and a home file or a removal looks again as
 it applies. A read of a home file opens each directory below the home, and the file, following no
 link. It reads a regular file of 1 MiB at most, with its owner and mode from that open. `rm` and
