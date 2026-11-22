@@ -69,3 +69,14 @@ func TestPrePushIgnoresAnObjectIdTheRepositoryLacks(t *testing.T) {
 	tip := r.good("new")
 	r.refused(r.check("refs/heads/main "+tip+" refs/heads/main "+strings.Repeat("ab", 20)), old, "signature is missing")
 }
+
+func TestPrePushReadsALocalRefThatHoldsSpaces(t *testing.T) {
+	r := newRepo(t)
+	bad := r.commit("", wsMail, wsMail, "unsigned")
+	in := "HEAD@{2 hours ago} " + bad + " refs/heads/x " + zeros
+	r.refused(r.check(in), bad, "signature is missing")
+	good := r.good("good")
+	if err := r.check("HEAD@{2 hours ago} " + good + " refs/heads/x " + bad); err != nil {
+		t.Errorf("a source with spaces onto the remote's commit: %v", err)
+	}
+}

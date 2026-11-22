@@ -143,8 +143,9 @@ hook's exit status is 1. These cases are decided:
   repository lacks, leaves out nothing, so the whole history of the pushed ref is checked.
 - An empty range, where every commit is held already, passes. A branch made at a pushed commit
   does.
-- A line of the refs that is not four fields, or a hook that fails, such as a `ws` missing at
-  its path, refuses the push.
+- A line of the refs of fewer than four fields, or a hook that fails, such as a `ws` missing at
+  its path, refuses the push. The line is read from its right, as a local ref may hold spaces:
+  the source of `HEAD@{2 hours ago}:refs/heads/x` is one.
 
 The check stops a mistake and not a person. These skip it:
 

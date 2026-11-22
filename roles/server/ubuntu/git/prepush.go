@@ -54,13 +54,16 @@ func PrePush(ctx context.Context, m effect.Machine, refs io.Reader) error {
 		if len(f) == 0 {
 			continue
 		}
-		if len(f) != 4 || !isHex(f[1]) || !isHex(f[3]) {
+		// A local ref may hold spaces, as the source "HEAD@{2 hours ago}" does. So the line is read
+		// from its right: its last three fields are the ids and the remote ref.
+		if len(f) < 4 || !isHex(f[len(f)-3]) || !isHex(f[len(f)-1]) {
 			return errors.New("a line of the pushed refs is not LOCAL-REF LOCAL-SHA REMOTE-REF REMOTE-SHA")
 		}
-		if strings.Trim(f[1], "0") == "" {
+		local, remote := f[len(f)-3], f[len(f)-1]
+		if strings.Trim(local, "0") == "" {
 			continue
 		}
-		commits, err := unpushed(ctx, m, f[1], f[3])
+		commits, err := unpushed(ctx, m, local, remote)
 		if err != nil {
 			return err
 		}
