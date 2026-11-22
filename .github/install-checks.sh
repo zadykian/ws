@@ -6,13 +6,14 @@
 # server.
 #
 # serve-releases serves the releases on loopback, as GitHub does. A stub of ws is a shell script
-# that prints its release and its target as ws version. A fake uname on the PATH of a case stands
+# that prints its release as ws version, as the real ws does, and its target as ws target. A fake uname on the PATH of a case stands
 # for another target, as the runner is Linux on x86_64.
 #
 #     /download/v0.2.0/ws-TARGET  a stub, for each target        /latest  v0.2.0
 #     /download/v0.2.0/ws.sha256  its SHA-256s, sha256sum's form
 #     /download/v0.5.0/           a ws-linux-amd64 that its sums do not fit
 #     /download/v0.6.0/           the sums of v0.2.0, and no file
+#     /download/v0.7.0/           a ws-linux-amd64 that prints v0.0.1, its sum right
 
 set -euo pipefail
 
@@ -71,7 +72,8 @@ SH
 # installed WANT fails unless /usr/local/bin/ws is root's, 0755, and prints WANT as ws version.
 installed() {
     [ "$(as_root stat -c '%u:%g %a' /usr/local/bin/ws)" = "0:0 755" ] || fail "ws is not 0:0 and 755"
-    [ "$(/usr/local/bin/ws version)" = "$1" ] || fail "ws is not the stub $1: $(/usr/local/bin/ws version)"
+    [ "$(/usr/local/bin/ws version) $(/usr/local/bin/ws target)" = "$1" ] ||
+        fail "ws is not the stub $1: $(/usr/local/bin/ws version) $(/usr/local/bin/ws target)"
 }
 
 # nothing_left fails where a refused run left ws or a download in /usr/local/bin.
@@ -80,9 +82,12 @@ nothing_left() {
     ! compgen -G '/usr/local/bin/.ws.*' >/dev/null || fail "a refused install left a download"
 }
 
-# stub RELEASE TARGET writes the stub of ws for TARGET into the release's directory.
+# stub RELEASE TARGET [VERSION] writes the stub of ws for TARGET into the release's directory. It
+# prints VERSION, which is the release by default, as ws version.
 stub() {
-    printf '%s\n' '#!/bin/sh' "echo $1 $2" >"$tmp/serve/download/$1/ws-$2"
+    # shellcheck disable=SC2016 # The case's $1 is the stub's own, to expand when it runs.
+    printf '%s\n' '#!/bin/sh' 'case $1 in' "version) echo ${3:-$1} ;;" "target) echo $2 ;;" 'esac' \
+        >"$tmp/serve/download/$1/ws-$2"
 }
 
 # sums RELEASE writes the release's ws.sha256 for the files in its directory.
@@ -94,7 +99,7 @@ sums() {
 [ -n "${GITHUB_ACTIONS:-}${WS_SPARE_MACHINE:-}" ] || fail "it replaces /usr/local/bin/ws: run it on a runner or a spare machine"
 [ "$(uname -m)" = x86_64 ] || fail "the cases take x86_64 as the machine's own target"
 
-for release in v0.2.0 v0.3.0 v0.4.0-rc.1 v0.5.0 v0.6.0; do
+for release in v0.2.0 v0.3.0 v0.4.0-rc.1 v0.5.0 v0.6.0 v0.7.0; do
     mkdir -p "$tmp/serve/download/$release"
 done
 for target in linux-amd64 linux-arm64 darwin-arm64; do
@@ -109,6 +114,9 @@ sums v0.4.0-rc.1
 stub v0.5.0 linux-amd64
 printf '%064d  ws-linux-amd64\n' 0 >"$tmp/serve/download/v0.5.0/ws.sha256"
 cp "$tmp/serve/download/v0.2.0/ws.sha256" "$tmp/serve/download/v0.6.0/ws.sha256"
+# A release whose ws prints another version, with sums that fit it.
+stub v0.7.0 linux-amd64 v0.0.1
+sums v0.7.0
 echo v0.2.0 >"$tmp/serve/latest"
 
 serve=$tmp/serve-releases
@@ -176,6 +184,14 @@ for version in 0.5.0 0.6.0; do
     installed "v0.2.0 linux-amd64"
     ! compgen -G '/usr/local/bin/.ws.*' >/dev/null || fail "a refused install left a download"
 done
+echo "::endgroup::"
+
+echo "::group::A ws that prints another version than the release is refused, and nothing is left"
+if install_sh WS_VERSION=0.7.0 2>"$tmp/refusal"; then
+    fail "install.sh went through with a ws that prints another version"
+fi
+grep -q 'is version "v0.0.1", not v0.7.0' "$tmp/refusal" || fail "install.sh refused the version, but not by its message"
+nothing_left
 echo "::endgroup::"
 
 echo "::group::A newer latest, and WS_VERSION, install their own release"

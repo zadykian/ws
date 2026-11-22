@@ -23,7 +23,8 @@ sha256sum, or `shasum -a 256` where a Mac has no `sha256sum`:
   system or architecture. It finds the latest release once. A pre-release is never the latest: only
   `WS_VERSION` picks one.
 - It downloads the file and the release's `ws.sha256` into a directory in `/usr/local/bin`, checks
-  the file against the sum listed for its name, and runs it as `ws version`. Only then it renames it
+  the file against the sum listed for its name, and runs it as `ws version`. That must print the
+  release's tag, as `ws update` checks it. Only then it renames it
   to `/usr/local/bin/ws`, uid 0, gid 0 and 0755, the one ws of the machine. A refusal keeps the ws
   there and leaves no file behind.
 - It makes `/usr/local` and `/usr/local/bin` where they are missing, root's and 755. It refuses one
