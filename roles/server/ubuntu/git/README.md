@@ -116,8 +116,9 @@ that the repository lacks, leave out nothing:
 - `signature`: `%G?` is not `G`. A good one is one that `/etc/ws/allowed_signers` trusts.
 - `signer`: the signer, `%GS`, is not the committer's email, `%ce`.
 - `trailer`: it holds no `Co-authored-by: zadykian <me@zadykian.dev>`, unless its author is
-  `me@zadykian.dev`. Such a commit is the Mac's, which ws rebased: the rebase signs it as ws and
-  runs no `commit-msg` hook ([The co-author trailer](#the-co-author-trailer)).
+  `me@zadykian.dev`. The comparison ignores case, as the hook's `interpret-trailers` does. Such a
+  commit is the Mac's, which ws rebased: the rebase signs it as ws and runs no `commit-msg` hook
+  ([The co-author trailer](#the-co-author-trailer)).
 
 A refusal names each commit by its first 12 characters and lists ten rules at most, one line for
 each rule that a commit breaks, and counts the rest. It prints no key. The push stops, and the

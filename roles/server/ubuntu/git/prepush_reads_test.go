@@ -80,3 +80,12 @@ func TestPrePushReadsALocalRefThatHoldsSpaces(t *testing.T) {
 		t.Errorf("a source with spaces onto the remote's commit: %v", err)
 	}
 }
+
+func TestPrePushComparesTheTrailerWithoutCase(t *testing.T) {
+	r := newRepo(t)
+	r.good("base")
+	sha := r.commit(r.wsKey, wsMail, wsMail, "x\n\nCo-authored-by: Zadykian <ME@zadykian.dev>")
+	if err := r.check(line("refs/heads/main", sha)); err != nil {
+		t.Errorf("a trailer that differs in case: %v", err)
+	}
+}
