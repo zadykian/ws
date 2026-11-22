@@ -23,6 +23,9 @@ const (
 	spctlScript = `spctl -a -vv "$1" 2>&1`
 	// secretiveAgent is Secretive's agent socket as values.yml names it.
 	secretiveAgent = "~/" + sshcfg.SecretiveData + "/socket.ssh"
+	// pinnedTeam is the team that signs the Secretive.zip of ssh's pin: the OU of the leaf
+	// certificate in its code signature. A notarized app of another team is not Secretive.
+	pinnedTeam = "Z72PRUAWF6"
 )
 
 // secretiveKey is the step that gives the Mac its first key where values.yml names no login key.
@@ -77,13 +80,20 @@ func (c nameKey) Apply(ctx context.Context) error {
 	return s.name(k)
 }
 
-// notarized refuses an app that macOS does not accept as a notarized Developer ID one.
+// notarized refuses an app that macOS does not accept as a notarized Developer ID one of
+// Secretive's team.
 func (s secretiveKey) notarized(ctx context.Context) error {
 	out, err := s.M.Run(ctx, "sh", "-c", spctlScript, "sh", secretiveApp)
 	verdict := strings.TrimSpace(string(out))
-	if err != nil || !strings.Contains(verdict, ": accepted") || !strings.Contains(verdict, "source=Notarized Developer ID") {
-		return fmt.Errorf("macOS does not accept %s as a notarized Developer ID app, so ws will not run it "+
-			"(spctl says %q): remove it, and run setup again to install the pin", secretiveApp, verdict)
+	lines := strings.Split(verdict, "\n")
+	ours := slices.ContainsFunc(lines, func(line string) bool {
+		return strings.HasPrefix(line, "origin=Developer ID Application: ") && strings.HasSuffix(line, " ("+pinnedTeam+")")
+	})
+	if err != nil || !slices.Contains(lines, secretiveApp+": accepted") ||
+		!slices.Contains(lines, "source=Notarized Developer ID") || !ours {
+		return fmt.Errorf("macOS does not accept %s as a notarized Developer ID app of Secretive's team, %s, so ws "+
+			"will not run it (spctl says %q): remove it, and run setup again to install the pin",
+			secretiveApp, pinnedTeam, verdict)
 	}
 	return nil
 }

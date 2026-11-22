@@ -17,7 +17,9 @@ and leaves it alone, so remove that copy once. `macos-app` finds no release: a n
 `ws client setup` installs it before the first bootstrap where `values.yml` names no login key. It
 runs `mise bootstrap packages apply --yes macos-app:secretive`, checks the app by `spctl -a -vv`
 ([setupkey.go](../../cli/setupkey.go)), which must say `accepted` and `Notarized Developer ID`, and
-opens it. It then waits for a P-256 key, as ws's OpenSSH reads no ML-DSA one. It writes
+opens it. The `origin` must name Secretive's team, `Z72PRUAWF6`, which signs the pinned zip, as
+any developer may notarize an app. A release that another team signs changes `pinnedTeam` there
+too. It then waits for a P-256 key, as ws's OpenSSH reads no ML-DSA one. It writes
 `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_PUB_KEY` into `values.yml`, each
 one that is not there. The wait takes the sole key that comes after Secretive's agent first
 answers. ws picks no key that was there before, as one made for another use would go to GitHub.

@@ -41,9 +41,9 @@ file. It then does what a person did by hand, in this order:
 3. It checks this ws's release tag out in `/opt/ws`, root's, which no one else may write, and links
    the tree's plugin into `/usr/local/share/mise/plugins`.
 4. Where `values.yml` names no `WS_IDENTITY_PUB_KEY`, it installs Secretive by [ssh's
-   pin](macos/ssh/mise.mac.toml), checks it by `spctl -a -vv`, which must say `accepted` and
-   `Notarized Developer ID`, and opens it. It then waits for a P-256 key. Make one in Secretive at
-   Notify, as it then signs git's commits with no prompt.
+   pin](macos/ssh/mise.mac.toml), checks it by `spctl -a -vv`, which must say `accepted`,
+   `Notarized Developer ID` and Secretive's team, and opens it. It then waits for a P-256 key.
+   Make one in Secretive at Notify, as it then signs git's commits with no prompt.
    Setup names the key that comes in `values.yml`, as `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and
    `WS_GIT_SIGNING_PUB_KEY`, and keeps a value that is there. It takes no key that was there before
    the wait, as one made for another use would go to GitHub. To take one, stop setup with Ctrl-C and
