@@ -62,7 +62,7 @@ func TestSetupTakesTheKeyThatComesDuringTheWaitAndNamesIt(t *testing.T) {
 		t.Errorf("values.yml = %q, want %q", got, want)
 	}
 	last := -1
-	for _, call := range []string{"run " + installLine, "run " + spctlLine, "run " + openLine, "run " + mactest.AgentList,
+	for _, call := range []string{"run " + installLine, "run " + spctlLine, "run " + mactest.AgentList, "run " + openLine,
 		"atomic /etc/ws/values.yml 644", "run " + miseLine} {
 		at := exactly(m, call)
 		if at <= last {
@@ -105,8 +105,8 @@ func TestSetupTakesNoKeyThatWasThereBeforeTheWait(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "stopped before Secretive held a key") {
 		t.Errorf("err = %v, want the stop of the wait", err)
 	}
-	if !strings.Contains(strings.Join(out.Lines, "\n"), "--key "+"NAME") ||
-		!strings.Contains(strings.Join(out.Lines, "\n"), strings.TrimSuffix(sshName(mactest.AgentKey), ".pub")) {
+	if said := strings.Join(out.Lines, "\n"); !strings.Contains(said, "--key "+"NAME") || !strings.Contains(said, "Ctrl-C and") ||
+		!strings.Contains(said, strings.TrimSuffix(sshName(mactest.AgentKey), ".pub")) {
 		t.Errorf("the wait did not offer the key by --key: %q", out.Lines)
 	}
 	if indexOf(m, "atomic /etc/ws/values.yml") >= 0 {

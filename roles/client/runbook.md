@@ -46,8 +46,8 @@ file. It then does what a person did by hand, in this order:
    Make one in Secretive at Notify, as it then signs git's commits with no prompt.
    Setup names the key that comes in `values.yml`, as `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and
    `WS_GIT_SIGNING_PUB_KEY`, and keeps a value that is there. It takes no key that was there before
-   the wait, as one made for another use would go to GitHub. To take one, stop setup with Ctrl-C and
-   run `ws client setup --key NAME`, NAME being the name that the wait prints
+   it opened Secretive, as one made for another use would go to GitHub. To take one, stop setup
+   with Ctrl-C and run `ws client setup --key NAME`, NAME being the name that the wait prints
    ([Secretive](macos/ssh/README.md#secretive)).
 5. It runs mise's bootstrap in `/opt/ws/roles/client`, which installs gh and sets up ssh, git, cld
    and the Mac's other roles ([The Mac's frame](macos/frame/README.md)). It makes the Mac's
