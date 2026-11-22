@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path"
 	"slices"
 	"strings"
 	"time"
@@ -168,6 +169,27 @@ func (s secretiveKey) take(all []sshcfg.AgentKey, before *map[string]bool) (key 
 	}
 	return key, false, fmt.Errorf("%d keys came at once, and ws picks none by itself: run setup again with --key NAME "+
 		"for one of them: %s", len(fresh), describe(fresh))
+}
+
+// keptKey refuses --key where values.yml at file names another login key already. The key it
+// names passes, as a run with no --key does, so that the run that named it may run again after a
+// failed bootstrap. A pick that is not the key's name is compared with its fingerprint, where
+// setup reads the key.
+func keptKey(ctx context.Context, m effect.Machine, conf values.Conf, home, file, pick string) error {
+	pub := conf.IdentityPubKey
+	if strings.TrimSuffix(path.Base(pub), ".pub") == strings.TrimSuffix(pick, ".pub") {
+		return nil
+	}
+	why := "names another key"
+	k, err := keys.ReadKey(ctx, m, conf, home, keys.LoginKey)
+	switch {
+	case err != nil:
+		why = "is not its name, and setup cannot read the key to compare fingerprints"
+	case sshcfg.AgentKey{Line: strings.TrimSpace(k.Text)}.Fingerprint() == pick:
+		return nil
+	}
+	return fmt.Errorf("%s names WS_IDENTITY_PUB_KEY already, %s, and --key %s %s: run setup with no --key, "+
+		"which keeps it", file, pub, pick, why)
 }
 
 // named reports whether pick names the key: its name with or without .pub, or its fingerprint.

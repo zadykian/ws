@@ -24,7 +24,9 @@ too. It then waits for a P-256 key, as ws's OpenSSH reads no ML-DSA one. It writ
 one that is not there. The wait takes the sole key that comes after Secretive's agent first
 answers. ws picks no key that was there before, as one made for another use would go to GitHub.
 The wait lists such keys by NAME, and `--key NAME` takes one. A key made at Notify signs git's commits
-with no prompt ([The signing key](../git/README.md#the-signing-key)).
+with no prompt ([The signing key](../git/README.md#the-signing-key)). Once `values.yml` names the
+login key, `--key` that names it runs as no `--key` does, so a failed run may run again as it
+stood. `--key` that names another key is refused.
 
 ## The units
 

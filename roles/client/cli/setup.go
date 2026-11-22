@@ -128,7 +128,9 @@ func newSetupCmd(p enginecli.Env, server *string, cfg setupConfig) *cobra.Comman
 			return err
 		}
 		if *pick != "" && conf.IdentityPubKey != "" {
-			return fmt.Errorf("%s names WS_IDENTITY_PUB_KEY already, so setup takes no --key", file)
+			if err := keptKey(c.Context(), p.Machine, conf, p.Getenv("HOME"), file, *pick); err != nil {
+				return err
+			}
 		}
 		term := effect.NewTerminal(c.ErrOrStderr())
 		defer term.Flush()
