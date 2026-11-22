@@ -85,7 +85,8 @@ with it would, and gh's unit compares that with the file's last line. Root's git
 through [ws's program](../../roles/server/ubuntu/git/README.md#git-credentials). A plan through
 the task exits 0, and a run and a plan without the env `secrets` keep the three files, their
 bytes, mode and group. A file at gh's path that ws didn't write stops the run, which keeps it. A
-run without the env keeps it too, as mise loads no guard there. An empty input removes its file.
+run without the env keeps it too, as mise loads no guard there. That run fails at gh's unit, as
+gh's login by the file's last line fails. An empty input removes its file.
 
 The runner has Azure's routes, so only CI proves them. `.github/actionlint.yaml` names the label
 `ubuntu-26.04`, as actionlint 1.7.12 doesn't know it yet. It goes once a release lists the label.

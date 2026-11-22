@@ -251,11 +251,19 @@ must "a run without the env keeps the three files" test "$sums" = "$(kept)"
 must "a plan without the env leaves nothing to do" boot plan --detailed-exitcode
 
 # A file at gh's path that ws didn't write stops the run under the env, which keeps it. A run
-# without the env loads no guard of mise's, so it keeps the file by hand and does not stop at it.
-# gh's login may fail on its last line, which this case leaves out.
+# without the env loads no guard of mise's, so it keeps the file, and gh's unit logs in by its last
+# line. GitHub refuses that token, and a network that fails fails the login too, so the run fails
+# at gh's unit either way. Only gh's own message hangs on the network, and the case leaves it out.
 printf 'by hand\n' >/etc/ws/gh-token
-out=$(mise -C /opt/ws/roles/server bootstrap </dev/null 2>&1) || true
+status=0
+out=$(mise -C /opt/ws/roles/server bootstrap </dev/null 2>&1) || status=$?
 printf '%s\n' "$out" | tee -a "$work/out"
+must "a run without the env fails on the file by hand" test "$status" != 0
+must "the run fails at gh's unit" \
+    grep -qF 'ws unit write: state/devtools-gh-login: applying: ' <<<"$out"
+must "gh's login by the file's last line fails" \
+    grep -qE 'ws server devtools gh-login: .*gh auth login .*: exit status' <<<"$out"
+refused "a run without the env stops at the guard" grep -qF 'not written by ws' <<<"$out"
 must "a run without the env keeps the file by hand" grep -qx 'by hand' /etc/ws/gh-token
 refusal "a file by hand at gh's path stops the run" '/etc/ws/gh-token: not written by ws'
 must "the refused run keeps the file by hand" grep -qx 'by hand' /etc/ws/gh-token
