@@ -38,3 +38,34 @@ func TestPrePushReadsTheObjectsAPushSends(t *testing.T) {
 	r.git("replace", bad, good)
 	r.refused(r.check(line("refs/heads/main", bad)), bad, "signature is missing")
 }
+
+// pushByURL sends main to the bare repository by its path, so that no remote-tracking ref holds
+// its commits, as in a bare clone.
+func (r repo) pushByURL() { r.git("push", "-q", r.remote, "main") }
+
+func TestPrePushLeavesOutWhatTheRemoteHoldsAtTheRef(t *testing.T) {
+	r := newRepo(t)
+	old := r.commit("", wsMail, wsMail, "old, unsigned")
+	r.pushByURL()
+	tip := r.good("new")
+	if err := r.check("refs/heads/main " + tip + " refs/heads/main " + old); err != nil {
+		t.Errorf("a push of one credited commit onto the remote's branch: %v", err)
+	}
+	// Without the remote's id the whole history is walked.
+	r.refused(r.check(line("refs/heads/main", tip)), old, "signature is missing")
+}
+
+func TestPrePushChecksAllOfARefNewToTheRemote(t *testing.T) {
+	r := newRepo(t)
+	old := r.commit("", wsMail, wsMail, "old, unsigned")
+	r.pushByURL()
+	tip := r.good("new")
+	r.refused(r.check(line("refs/heads/other", tip)), old, "signature is missing")
+}
+
+func TestPrePushIgnoresAnObjectIdTheRepositoryLacks(t *testing.T) {
+	r := newRepo(t)
+	old := r.commit("", wsMail, wsMail, "old, unsigned")
+	tip := r.good("new")
+	r.refused(r.check("refs/heads/main "+tip+" refs/heads/main "+strings.Repeat("ab", 20)), old, "signature is missing")
+}
