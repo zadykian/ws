@@ -63,7 +63,7 @@ func TestLoadSaysWhichFileIsMissing(t *testing.T) {
 	server := ServerPath(macPath, FirstServer)
 	m.Files[macPath] = nil
 	_, err := Load(m, macPath, server)
-	if want := server + " is missing: roles/client/README.md says what goes in it"; err == nil || err.Error() != want {
+	if want := server + " is missing: roles/client/values/README.md says what goes in it"; err == nil || err.Error() != want {
 		t.Errorf("err = %v, want %q", err, want)
 	}
 	delete(m.Files, macPath)

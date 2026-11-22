@@ -17,8 +17,8 @@ refuses a `/usr/local` or `/usr/local/bin` that another user owns or may write: 
 
 ## Answers
 
-Write the Mac's values in `/etc/ws/values.yml` and each server's in
-`/etc/ws/servers/NAME/values.yml`, as root, through sudo ([The two
+Make the Mac's `/etc/ws/values.yml`, as root, through sudo: empty on a new Mac, as setup writes
+its keys. Write each server's values in `/etc/ws/servers/NAME/values.yml`, as root too ([The two
 files](values/README.md#the-two-files)). The files' check refuses a clash.
 
 1. Pick a slot, 0 to 15, that no server has: `WS_SLOT`.
