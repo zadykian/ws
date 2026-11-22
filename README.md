@@ -38,8 +38,8 @@ it has any:
 - [`devtools`](roles/server/ubuntu/devtools): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go,
   gopls, Delve, roslyn-language-server, the SQL, Docker and npm language servers, and rustup.
 - [`docker`](roles/server/ubuntu/docker): Docker Engine, its `daemon.json` and a slice for its containers.
-- [`claude`](roles/server/ubuntu/claude): claude, its user settings and telemetry, its sessions after a reboot,
-  and plugin marketplaces from a list.
+- [`claude`](roles/server/ubuntu/claude): claude, its user settings and telemetry, its attribution off, its sessions after a
+  reboot, and plugin marketplaces from a list.
 - [`signoz`](roles/server/ubuntu/signoz): SigNoz in Docker, which keeps the machine's telemetry for 90 days.
 - [`otelcol`](roles/server/ubuntu/otelcol): the OpenTelemetry Collector on the host, which feeds SigNoz.
 - [`fresh`](roles/server/ubuntu/fresh): the Fresh editor, from the .deb of a pinned release, with the plain keys,

@@ -68,13 +68,14 @@ up() {
 # The image's Docker is not ws's, and ws must install its own. The purge leaves docker0, which the
 # route check accepts. The image's source of Docker goes too, as apt refuses one repository signed
 # by two keys, and mise adds its own. So do the plugins that the image put in Docker's directory
-# past dpkg, which would keep it and warn.
+# past dpkg, which would keep it and warn. The same holds for the image's source of the git-core PPA,
+# which ws adds with its own key.
 apt-get update
 rm -rf /usr/libexec/docker/cli-plugins
 apt-get purge -y docker-ce docker-ce-cli containerd.io
 rm -rf /etc/docker /var/lib/docker /var/lib/containerd
 for f in /etc/apt/sources.list.d/*; do
-    if [ -f "$f" ] && grep -q download.docker.com "$f"; then rm -f "$f"; fi
+    if [ -f "$f" ] && grep -q -e download.docker.com -e git-core/ppa "$f"; then rm -f "$f"; fi
 done
 apt-get install -y --no-install-recommends netcat-openbsd
 
@@ -173,6 +174,18 @@ must "the first setup leaves nothing to do" setup --plan
 must "the first setup prints no warning" "$check" "$log"
 must "the second setup runs" setup
 must "the second setup leaves nothing to do" setup --plan
+
+# Hooks in git's config came in git 2.54, which Ubuntu 26.04 lacks. ws's git comes from the
+# git-core PPA, whose source mise wrote, and its version has the PPA's suffix.
+git_from_ppa() {
+    local version
+    version=$(git version | sed -n 's/^git version \([0-9][0-9]*\.[0-9][0-9]*\).*/\1/p')
+    echo "git $version"
+    [ "$(printf '%s\n' "$version" 2.54 | sort -V | head -n 1)" = 2.54 ] &&
+        test -f /etc/apt/sources.list.d/mise-git-core.sources &&
+        dpkg-query -W git | grep -q ppa
+}
+must "git is 2.54 or above, from the git-core PPA" git_from_ppa
 
 # What the runs wrote, which needs no container. The plans that must fail, from /opt/ws and with a
 # unit's line dropped. The values file, which no run changed. Zed's wrapper and tmux.conf against
