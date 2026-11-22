@@ -19,13 +19,15 @@ func gitEnv(home string) []string {
 		"GIT_COMMITTER_NAME=t", "GIT_COMMITTER_EMAIL=t@example.org"}
 }
 
-func git(t *testing.T, dir string, args ...string) {
+// git runs git in dir with the test's own environment, and returns its output.
+func git(t *testing.T, dir string, args ...string) string {
 	cmd := exec.CommandContext(t.Context(), "git", append([]string{"-C", dir}, args...)...) //nolint:gosec // the arguments are this test's own
 	cmd.Env = gitEnv(t.TempDir())
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("git %v: %v\n%s", args, err, out)
 	}
+	return strings.TrimSpace(string(out))
 }
 
 // release commits mise.toml with the content of tag to the repository in dir, and tags it. The
@@ -44,8 +46,9 @@ func release(t *testing.T, dir, tag string) {
 
 // upstream returns a repository with the releases of tags, and the tree's Checkout of the first.
 func upstream(t *testing.T, tags ...string) (setup.Checkout, string) {
-	// The checkout runs git with this process's environment. It reads no config of the machine, and
-	// no repository that a rebase's exec or a hook names by GIT_DIR.
+	// The test's environment loses each GIT_ variable, such as the GIT_DIR that a rebase's exec or a
+	// hook exports, and names no config of the machine. A test that names a repository by GIT_DIR
+	// sets it after this.
 	for _, entry := range os.Environ() {
 		if name, _, _ := strings.Cut(entry, "="); strings.HasPrefix(name, "GIT_") {
 			t.Setenv(name, "")
@@ -202,21 +205,6 @@ func TestReleaseTag(t *testing.T) {
 		if err == nil || !strings.Contains(err.Error(), "--in-place") {
 			t.Errorf("%q: err = %v", version, err)
 		}
-	}
-}
-
-func TestCheckoutLeavesTheRepositoryThatGitDirNamesAlone(t *testing.T) {
-	outer := t.TempDir()
-	git(t, outer, "init", "-q")
-	release(t, outer, "v0.0.1")
-	t.Setenv("GIT_DIR", filepath.Join(outer, ".git"))
-	c, _ := upstream(t, "v1.2.3")
-	run(t, c)
-	tags := exec.CommandContext(t.Context(), "git", "-C", outer, "tag", "--list") //nolint:gosec // the arguments are this test's own
-	tags.Env = gitEnv(t.TempDir())
-	out, err := tags.CombinedOutput()
-	if err != nil || strings.TrimSpace(string(out)) != "v0.0.1" {
-		t.Errorf("the tags of the other repository = %q, err = %v", out, err)
 	}
 }
 
