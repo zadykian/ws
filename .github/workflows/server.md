@@ -47,7 +47,8 @@ values file is root's at 600, and no run changed its bytes ([The values
 file](../../roles/server/ubuntu/frame/README.md#the-values-file)). A run with no file is
 `values_file_test.go`'s. The Zed wrapper's [checks](../zed-terminal-checks.sh) run on the files the
 bootstrap installed, and Fresh's on the config it loaded. Root's empty commit must sign and
-verify. With no NVIDIA GPU, `nvidia` checks its names alone, and with no MSI board, `fans` leaves
+verify, and hold one `Co-authored-by` trailer, which [git's hook](../../roles/server/ubuntu/git/README.md#the-co-author-trailer)
+adds. With no NVIDIA GPU, `nvidia` checks its names alone, and with no MSI board, `fans` leaves
 its fans alone. Without a VPN profile, `ikeward` does nothing.
 
 The firewall must hold under the system daemon. Docker must pull the image, as a run of an image

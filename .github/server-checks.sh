@@ -206,19 +206,22 @@ fresh_config() {
 }
 must "Fresh loads the config that ws wrote" fresh_config
 
-# An empty commit, made in a new repository, has git sign and verify with the key's own path. It
-# reads the git role's key, ~/.gitconfig's include of /etc/ws/gitconfig, and /etc/ws/allowed_signers
-# as git reads them. The file's text alone cannot tell that git opens a path.
+# An empty commit, made in a new repository, has git sign and verify with the key's own path, and
+# carries the one trailer that ws's hook adds. It reads the git role's key, ~/.gitconfig's include
+# of /etc/ws/gitconfig, and /etc/ws/allowed_signers as git reads them. The file's text alone cannot
+# tell that git opens a path, or runs the hook.
 signed_commit() {
-    local repo status
+    local repo status trailers
     repo=$(mktemp -d)
     git -C "$repo" -c init.defaultBranch=main init -q
     git -C "$repo" commit -q --allow-empty -m check
     status=$(git -C "$repo" log -1 --format=%G?)
+    trailers=$(git -C "$repo" log -1 --format=%B | grep -c '^Co-authored-by: zadykian <me@zadykian.dev>$' || true)
     rm -rf "$repo"
-    [ "$status" = G ]
+    echo "signature $status, $trailers trailer(s)"
+    [ "$status" = G ] && [ "$trailers" = 1 ]
 }
-must "root signs a commit, and git verifies it" signed_commit
+must "root signs a commit, git verifies it, and it holds one co-author trailer" signed_commit
 
 # The pulls ahead of the runs, as a run of an image not yet pulled warns.
 must "docker pulls the image" docker pull -q "$image"

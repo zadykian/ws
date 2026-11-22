@@ -573,6 +573,7 @@ Available Commands:
   clones      clone each repository of WS_GIT_CLONES whose dest is missing, as root
   credential  answer git's request for the token of a server besides GitHub, from /etc/ws/git-tokens.toml
   included    say by the exit status whether the git config on stdin includes /etc/ws/gitconfig at its top
+  pre-push    refuse a push whose new commits lack a good signature or the maintainer's trailer
   tokens      write the credential programs of the URLs of /etc/ws/git-tokens.toml
 
 Flags:
@@ -616,6 +617,14 @@ Usage:
 
 Flags:
   -h, --help   help for included
+== ws server git pre-push
+It is git's pre-push hook, which /etc/ws/gitconfig names: git gives it the remote and its URL, which it ignores, and the pushed refs on its standard input. For each ref it checks the commits that no remote-tracking ref holds. It exits 1, and names each refused commit by its short hash and the rule it breaks, never a key, where a signature is not good, its signer is not the committer's email, or the trailer is missing from a commit of another author than the maintainer (roles/server/ubuntu/git/README.md#the-push-check).
+
+Usage:
+  ws server git pre-push REMOTE URL [flags]
+
+Flags:
+  -h, --help   help for pre-push
 == ws server git tokens
 Each URL of /etc/ws/git-tokens.toml gets ws's credential program in /etc/ws/tokens.gitconfig, root's with the account's group, which names no token (roles/server/ubuntu/git/README.md#git-credentials). Without the file, tokens.gitconfig goes. In the secrets task's run, it reads WS_GIT_TOKENS, which that run writes to the file, and a plan nowhere. The git role's run state runs it, after the role's check.
 
