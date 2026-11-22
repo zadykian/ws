@@ -150,8 +150,8 @@ func TestALinkInAnotherOwnersDirectoryGoesThroughSudo(t *testing.T) {
 			t.Errorf("link = %q, %v; want %s", got, err, target)
 		}
 	}
-	if got := sudoRan(t, log); got != "ln ln" {
-		t.Errorf("sudo ran %q, want ln ln", got)
+	if got := sudoRan(t, log); got != "sh sh" {
+		t.Errorf("sudo ran %q, want sh sh: one call for each link", got)
 	}
 }
 
@@ -163,11 +163,11 @@ func TestALinkOverADirectoryInAnotherOwnersDirectoryIsRefused(t *testing.T) {
 	if err := os.Mkdir(dir+"/link", 0o750); err != nil {
 		t.Fatal(err)
 	}
-	if err := m.Symlink(dir+"/a", dir+"/link"); err == nil {
-		t.Error("a link over a directory was made")
+	if err := m.Symlink(dir+"/a", dir+"/link"); err == nil || !strings.Contains(err.Error(), "is a directory") {
+		t.Errorf("a link over a directory: err = %v, want it refused", err)
 	}
-	if got := sudoRan(t, log); got != "" {
-		t.Errorf("sudo ran %q, want nothing", got)
+	if got := sudoRan(t, log); got != "sh" {
+		t.Errorf("sudo ran %q, want one sh, which checks as root", got)
 	}
 	if left, _ := os.ReadDir(dir + "/link"); len(left) != 0 {
 		t.Errorf("the directory holds %d entries", len(left))
