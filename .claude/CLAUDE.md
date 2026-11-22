@@ -167,7 +167,9 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([units.toml.tmpl](../roles/server/ubuntu/devtools/units.toml.tmpl)). The npm servers are checked against the sha512
   `integrity` of their lockfile ([devtools](../roles/server/ubuntu/devtools/README.md#the-npm-servers)). Docker's
   apt key is checked against its fingerprint, which mise's source pins
-  ([mise.server.toml](../roles/server/ubuntu/docker/mise.server.toml)). Zed's other
+  ([mise.server.toml](../roles/server/ubuntu/docker/mise.server.toml)). So is the git-core PPA's key,
+  against Launchpad's fingerprint of it ([mise.server.toml](../roles/server/ubuntu/base/mise.server.toml),
+  [base](../roles/server/ubuntu/base/README.md#git)). Zed's other
   downloads on ws are outside the rule
   ([zed](../roles/server/ubuntu/zed/README.md#zeds-downloads-outside-the-sha-256-rule)).
 - The secrets' fetch trusts github.com by the one ed25519 key that ws pins
