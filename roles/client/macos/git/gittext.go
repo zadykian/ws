@@ -15,7 +15,7 @@ import (
 func config(in gitcfg.Inputs) string {
 	return file.Header("#") + "\n" +
 		"# ~/.gitconfig includes it at its top, so that its own settings win where both set one.\n" +
-		gitcfg.Settings(in)
+		gitcfg.Settings(gitcfg.Mac(), in)
 }
 
 // wrapper returns the script that gives ssh-keygen Secretive's agent, for a key that Secretive
@@ -43,7 +43,7 @@ type Texts struct{ Config, Signers, Keygen string }
 // TextsOf returns git's files in /etc/ws for the signing key.
 func TextsOf(home string, key keys.NamedKey) Texts {
 	in := gitcfg.Inputs{Key: key.File, Gh: Gh}
-	t := Texts{Signers: gitcfg.AllowedSigners(file.Header("#"), key.Key.String())}
+	t := Texts{Signers: gitcfg.AllowedSigners(gitcfg.Mac(), file.Header("#"), key.Key.String())}
 	if sshcfg.SecretiveKey(key.File, home) {
 		in.Program = keygen
 		t.Keygen = wrapper(home + "/" + sshcfg.SecretiveData)
