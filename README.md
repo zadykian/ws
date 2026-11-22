@@ -137,12 +137,16 @@ diff included, but a secret's. A run by hand of `ws unit write UNIT` sets up tha
 ## By hand
 
 Secrets are never in this repository. The claude login, ws's signing key on GitHub and the Mac's key
-as `wg0`'s peer stay manual. ws's gh takes a fine-grained personal access token, which the secrets
-task's run logs gh in with, from the secret input `WS_GITHUB_TOKEN`
-([gh](roles/server/ubuntu/devtools/README.md#gh)). Its permissions are the account's selected
-repositories; Metadata and Actions read; Contents, Pull requests, Issues and Workflows read and
-write; and no account permission. These stay manual:
+as `wg0`'s peer stay manual. ws's gh logs in as the machine account `@zadykiand`, by its classic
+personal access token, scopes `repo`, `workflow` and `read:org`, which the secrets task's run takes
+from the secret input `WS_GITHUB_TOKEN` ([gh](roles/server/ubuntu/devtools/README.md#gh)). The
+signing key goes to `@zadykiand`'s settings, not the maintainer's. These stay manual:
 
+- the machine account `@zadykiand`. Verify `su@zadykian.dev` on it, so that GitHub verifies its
+  commits, and turn on its 2FA. Accept its invites to ws, cld and ikeward. Give it no access to the
+  secrets repository, which the server reads by its deploy key alone. A `repo` token reaches every
+  repository the account can, so its invites are its only limit. Root's login keys stay
+  `@zadykian`'s: `ssh-import-id` imports those, not the machine account's;
 - other peers' public keys on the server, as in [The tunnel](roles/server/ubuntu/tunnel/README.md#the-tunnel);
 - another device's SSH key on the server: `ssh-import-id gh:LOGIN`, run as root
   ([SSH and the firewall](roles/server/ubuntu/security/README.md#ssh-and-the-firewall));
