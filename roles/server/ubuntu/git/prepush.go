@@ -161,7 +161,9 @@ func (c pushed) refusals() []string {
 		out = append(out, fmt.Sprintf("%s: signer %s is not the committer %s", name, c.signer, c.committer))
 	}
 	mac := gitcfg.Mac()
-	if c.author != mac.Email && !slices.Contains(c.trailers, mac.Name+" <"+mac.Email+">") {
+	if c.author != mac.Email && !slices.ContainsFunc(c.trailers, func(t string) bool {
+		return strings.EqualFold(t, mac.Name+" <"+mac.Email+">")
+	}) {
 		out = append(out, name+": trailer Co-authored-by: "+mac.Name+" <"+mac.Email+"> is missing")
 	}
 	return out
