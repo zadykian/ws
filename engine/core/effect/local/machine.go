@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"syscall"
 	"time"
@@ -158,10 +159,29 @@ func (m OSMachine) argv(root bool, name string, args []string) []string {
 // but would replace a core.sshCommand.
 var offTerminal = []string{"GIT_TERMINAL_PROMPT=0", "SSH_ASKPASS=false", "SSH_ASKPASS_REQUIRE=force"}
 
+// repoVars name a repository to git, as git rev-parse --local-env-vars lists them. A git before
+// 2.40 lists GIT_INTERNAL_SUPER_PREFIX too. A hook or a rebase's exec exports GIT_DIR, which sends
+// a command's git to the caller's repository. There, an init makes it again, and a checkout moves
+// its HEAD and replaces its index. ws's commands act on the paths that they name, so none gets
+// these.
+var repoVars = []string{"GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_CONFIG", "GIT_CONFIG_PARAMETERS",
+	"GIT_CONFIG_COUNT", "GIT_OBJECT_DIRECTORY", "GIT_DIR", "GIT_WORK_TREE", "GIT_IMPLICIT_WORK_TREE",
+	"GIT_GRAFT_FILE", "GIT_INDEX_FILE", "GIT_NO_REPLACE_OBJECTS", "GIT_REPLACE_REF_BASE", "GIT_PREFIX",
+	"GIT_INTERNAL_SUPER_PREFIX", "GIT_SHALLOW_FILE", "GIT_COMMON_DIR"}
+
+// environ is ws's environment less repoVars.
+func environ() []string {
+	return slices.DeleteFunc(os.Environ(), func(e string) bool {
+		name, _, _ := strings.Cut(e, "=")
+		return slices.Contains(repoVars, name)
+	})
+}
+
 func (m OSMachine) command(ctx context.Context, argv []string) *exec.Cmd {
 	cmd := exec.CommandContext(ctx, argv[0], argv[1:]...) //nolint:gosec // the steps name the command
+	cmd.Env = environ()
 	if m.Stdin != nil {
-		cmd.Env = withEnv(os.Environ(), offTerminal)
+		cmd.Env = withEnv(cmd.Env, offTerminal)
 		// A raw terminal sends the command's group no Ctrl-C, so ctx's end is all that reaches it. A
 		// kill would end sudo and leave its child, whose hold on a pipe holds up Wait.
 		cmd.Cancel = func() error { return cmd.Process.Signal(syscall.SIGTERM) }

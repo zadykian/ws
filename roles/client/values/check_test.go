@@ -23,9 +23,11 @@ func TestCheckPassesAMacWithNoServerYet(t *testing.T) {
 	}
 }
 
+// TestCheckNamesAMissingValuesFile points at the page that says what a new Mac's file holds.
 func TestCheckNamesAMissingValuesFile(t *testing.T) {
 	err := Check(machineWith(), macPath)
-	if want := macPath + " is missing:"; err == nil || !strings.HasPrefix(err.Error(), want) {
+	if want := macPath + " is missing: roles/client/values/README.md says what goes in it"; err == nil ||
+		!strings.HasPrefix(err.Error(), want) {
 		t.Errorf("Check = %v, want %q first", err, want)
 	}
 }

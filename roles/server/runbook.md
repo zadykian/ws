@@ -33,7 +33,7 @@ without the file.
    each such value. Where none is, the bootstrap writes it ([the values](../../README.md#running-it-again)).
 3. Run `install.sh` as root, by the three lines of
    [Install](../../.github/workflows/release.md#install), `set -o pipefail` among them. It
-   installs ws alone, as `/usr/local/bin/ws`, which sudo reaches, and prints the next command.
+   installs ws alone, as `/usr/local/bin/ws`, which root's `PATH` holds, and prints the next command.
 4. Run `ws server setup` as root.
 
 ## Setup, the secrets and the runs
@@ -49,6 +49,9 @@ in `/opt/ws/roles/server` with umask 022, from `/`. A second run changes nothing
 
 - A ws that names no release tag, `devel` and a pseudo-version included, is refused. `--in-place`
   runs the tree in `/opt/ws` as it stands, after the guard.
+- A ws of another version than `/usr/local/bin/ws`, which the units run, is refused before any
+  write, `--in-place` included, and so is a missing file there. `ws update --version X.Y.Z`
+  installs that release there.
 - `--plan` plans these steps, and mise's bootstrap, or the task `secrets` where setup would run it,
   where none of them is due, and changes nothing. It exits 0 where nothing would change, and 2
   where something would.
@@ -68,8 +71,8 @@ the form below.
 A run by hand, or its plan, takes `ws server setup`:
 
 ```sh
-sudo ws server setup
-sudo ws server setup --plan
+ws server setup
+ws server setup --plan
 ```
 
 The tree's `locked = true` installs a tool only as the lock holds it, by its URL and checksum, as

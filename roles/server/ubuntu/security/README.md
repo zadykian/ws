@@ -27,11 +27,12 @@ failing. Both hold on every network, with no peer or network exempt. Root logs i
 ws writes none and copies none from another account's file ([A new
 machine](../../../../README.md#a-new-machine)). The drop-in limits no user, so the installer's
 user keeps its keys. Over SSH, keep the session that ran ws open until a
-new one logs in. The guard `guard/security-keys` stops the run before passwords go off if root
-has no key to log in with, or a file of keys that sshd passes over, outside a container. It stops it
-on every machine where `/root` is not root's home in `getent passwd`. sshd's drop-in lands
-only after `sshd -G` accepts it, and sshd reloads after a change, once, in its unit. ufw's service
-is active as well as enabled, as mise keeps it.
+new one logs in. The guard `guard/security-keys` stops the run before passwords go off in two
+cases. One is that root has no key to log in with. A key behind a forced command is none, as
+cloud-init writes for root. The other is a file of keys that sshd passes over. A container too, as
+it may run sshd. It stops it on every machine where `/root` is not root's home in
+`getent passwd`. sshd's drop-in lands only after `sshd -G` accepts it, and sshd reloads after a
+change, once, in its unit. ufw's service is active as well as enabled, as mise keeps it.
 
 Docker's published ports get past ufw, so Docker publishes a port that names no address on
 `127.0.0.1` ([docker](../docker/README.md)): reach it through an SSH tunnel. A port published on
@@ -150,7 +151,8 @@ elements as a load fills them. Where the tables differ, the run reloads the tabl
 one transaction, with no gap. That covers a run cut short before the reload, and a table or set
 flushed or deleted by hand. The path and the timer restart where their own files change, and the
 fill where its script or its unit changes. CI loads the table on a booted runner, and its
-refusals hold ([The server job](../../../../.github/workflows/server.md)).
+refusals hold. Last, it turns the table off there
+([The server job](../../../../.github/workflows/server.md)).
 
 `WS_SECURITY_OUTBOUND`, true by default, turns the table on. A cloud VM wants it false: the table
 drops the cloud's metadata service at `169.254.169.254`, which cloud-init, the guest agent and
@@ -179,11 +181,13 @@ table's `containers` chain drops what they forward: Docker forwards it ahead of 
 
 ## Links under the home
 
-`WS_USER` owns `WS_HOME`, so a link there could send ws, which runs as root, to any file: its reads,
-`chown`, `chmod` and backups would follow it. ws reaches a file there as root through the account
-alone: as a home file (`Account.File`, `Account.Dir`), a removal (`Account.Absent`) or the guarded
-read (`User.ReadHome`). The file kind's units take that way for each file whose owner is the
-account. Each refuses a link at the file, or at a directory between the home and it, and names the
+ws runs as root, and a link in a home could send its reads, `chown`, `chmod` and backups to any
+file. The code states that reason for a home that another user owns, as the installer's user
+does. root owns `/root`, and the roles' files there take the same guard: the code gives no other
+reason. ws reaches a file under a home through the account alone: as a home file
+(`Account.File`, `Account.Dir`), a removal (`Account.Absent`) or the guarded read
+(`User.ReadHome`). The file kind's units take that way for each file whose owner is the account.
+Each refuses a link at the file, or at a directory between the home and it, and names the
 link and its target. The check looks as the unit plans, and a home file or a removal looks again as
 it applies. A read of a home file opens each directory below the home, and the file, following no
 link. It reads a regular file of 1 MiB at most, with its owner and mode from that open. `rm` and

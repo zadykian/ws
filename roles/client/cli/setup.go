@@ -18,6 +18,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
+	"github.com/zadykian/ws/engine/core/update"
 	"github.com/zadykian/ws/roles/client/values"
 	"github.com/zadykian/ws/roles/internal/setup"
 )
@@ -82,7 +83,9 @@ func newSetupCmd(p enginecli.Env, server *string, cfg setupConfig) *cobra.Comman
 			"for ws's login and git's signing, and takes no key that was there before: --key NAME names one. It asks sudo for what root's paths need, and for no more where a " +
 			"run changes nothing, which a second run does.\n\n" +
 			"A ws that names no release tag, devel included, is refused: pass --in-place to run the tree " +
-			"in " + setup.TreeDir + " as it stands, after the guard.\n\n" +
+			"in " + setup.TreeDir + " as it stands, after the guard. So is a ws of another version than " +
+			update.File + ", which the units run, or one where that file is missing, --in-place included: " +
+			"ws update --version installs a release there.\n\n" +
 			"--plan plans these steps, and mise's bootstrap where none of them is due. Where the command " +
 			"line tools are due, it plans no more, as git needs them. It exits 0 where nothing would " +
 			"change and 2 where something would.",
@@ -113,6 +116,9 @@ func newSetupCmd(p enginecli.Env, server *string, cfg setupConfig) *cobra.Comman
 				return err
 			}
 		}
+		if err := setup.CheckInstalled(c.Context(), p.Machine, p.Version); err != nil {
+			return err
+		}
 		file := values.Path(p.Getenv, p.Pwd)
 		if err := values.Check(p.Machine, file); err != nil {
 			return err
@@ -122,7 +128,9 @@ func newSetupCmd(p enginecli.Env, server *string, cfg setupConfig) *cobra.Comman
 			return err
 		}
 		if *pick != "" && conf.IdentityPubKey != "" {
-			return fmt.Errorf("%s names WS_IDENTITY_PUB_KEY already, so setup takes no --key", file)
+			if err := keptKey(c.Context(), p.Machine, conf, p.Getenv("HOME"), file, *pick); err != nil {
+				return err
+			}
 		}
 		term := effect.NewTerminal(c.ErrOrStderr())
 		defer term.Flush()

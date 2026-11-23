@@ -126,8 +126,9 @@ func (v *Values) derive() {
 	}
 }
 
-// underHome refuses a signing key that is not below /root. A role reaches it through the account,
-// by a path under the home, so that it can refuse a link there (roles/server/ubuntu/security/README.md).
+// underHome refuses a signing key that is not below /root, root's home, the one home on the server.
+// A role reads the key at that path and must refuse a link there, which a path outside the home
+// would leave open (roles/server/ubuntu/security/README.md).
 func (v *Values) underHome() error {
 	if !strings.HasPrefix(path.Clean(v.GitSigningPubKey), home+"/") {
 		return fmt.Errorf("WS_GIT_SIGNING_PUB_KEY: %s is outside %s", v.GitSigningPubKey, home)

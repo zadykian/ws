@@ -70,7 +70,7 @@ func join(mac, server Conf) Conf {
 func load(m effect.Machine, file string, parse func(string) (Conf, []Error)) (Conf, error) {
 	text, err := m.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
-		return Conf{}, fmt.Errorf("%s is missing: roles/client/README.md says what goes in it", file)
+		return Conf{}, fmt.Errorf("%s is missing: roles/client/values/README.md says what goes in it", file)
 	}
 	if err != nil {
 		return Conf{}, err

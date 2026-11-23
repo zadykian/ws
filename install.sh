@@ -178,7 +178,8 @@ install_ws() {
         die "ws-$asset does not match the SHA-256 that the ws.sha256 of $where lists"
     chown 0:0 "$tmp/ws"
     chmod 755 "$tmp/ws"
-    "$tmp/ws" version </dev/null >/dev/null 2>&1 || die "the ws downloaded does not run as ws version"
+    got=$("$tmp/ws" version </dev/null 2>/dev/null) || die "the ws downloaded does not run as ws version"
+    [ "$got" = "$tag" ] || die "the ws downloaded is version \"$got\", not $tag"
     mv -f "$tmp/ws" "$bin_dir/ws" || die "cannot move ws to $bin_dir"
     say "installed ws of $tag as $bin_dir/ws"
 }

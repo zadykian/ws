@@ -17,14 +17,17 @@ import (
 // File is the one ws of a machine, which install.sh and ws update write.
 const File = "/usr/local/bin/ws"
 
-// Result is what an update did: ws went From its version To a release, replacing File. Where File
-// is empty, ws was that release already, and nothing changed.
+// Result is what an update did: File went From its version To a release. From is empty where File
+// was missing or did not run, and is To where File was that release already, and nothing changed.
 type Result struct{ From, To, File string }
 
 // Report is what ws update says of r.
 func (r Result) Report() string {
-	if r.File == "" {
-		return fmt.Sprintf("ws %s is that release already\n", r.To)
+	switch r.From {
+	case r.To:
+		return fmt.Sprintf("%s is ws %s already\n", r.File, r.To)
+	case "":
+		return fmt.Sprintf("Installed ws %s: %s\n", r.To, r.File)
 	}
 	return fmt.Sprintf("Updated ws %s to %s: %s\n", r.From, r.To, r.File)
 }
@@ -32,18 +35,20 @@ func (r Result) Report() string {
 // Updater is one run of ws update.
 type Updater struct {
 	M effect.Machine
-	// Version is this ws's version, URL the address of the releases, File the file to replace, and
-	// Binary the name that the releases give ws for this machine.
-	Version, URL, File, Binary string
+	// URL is the address of the releases, File the ws to bring to a release, and Binary the name
+	// that the releases give ws for this machine.
+	URL, File, Binary string
 	// Tag is the release to install, vX.Y.Z or vX.Y.Z-rc.N. Empty takes the latest release.
 	Tag string
 	// PID names the copy that is checked beside File, so that two runs keep apart.
 	PID int
 }
 
-// Run replaces File with the release that Tag names, or the latest one. A ws of that release stays.
-// A build of no release, a trial's, counts as older than any, and gets replaced. Without a Tag, a ws
-// of a release after the latest is refused, and a Tag names the older release to install.
+// Run brings File to the release that Tag names, or the latest one. File's own version counts, as
+// the units run File, whichever ws runs the update. A File of that release stays. A File of no
+// release, a trial's build, or one that is missing or does not run, counts as older than any, and
+// gets replaced. Without a Tag, a File of a release after the latest is refused, and a Tag names
+// the older release to install.
 func (u Updater) Run(ctx context.Context) (Result, error) {
 	if !check.ReleasesURL(u.URL) {
 		return Result{}, fmt.Errorf("WS_RELEASES_URL is %q: it must start with https://, or with "+
@@ -53,28 +58,37 @@ func (u Updater) Run(ctx context.Context) (Result, error) {
 	if tag != "" && !check.Release(tag) {
 		return Result{}, fmt.Errorf("%q is no release's tag", tag)
 	}
+	from := u.version(ctx)
 	if tag == "" {
 		var err error
 		if tag, err = latest(ctx, u.URL); err != nil {
 			return Result{}, err
 		}
-		if check.Release(u.Version) && semver.Compare(u.Version, tag) > 0 {
-			return Result{}, fmt.Errorf("this ws is %s, later than the latest release, %s: "+
-				"name the release to install by --version", u.Version, tag)
+		if check.Release(from) && semver.Compare(from, tag) > 0 {
+			return Result{}, fmt.Errorf("%s is %s, later than the latest release, %s: "+
+				"name the release to install by --version", u.File, from, tag)
 		}
 	}
-	r := Result{From: u.Version, To: tag}
-	if u.Version == tag {
+	r := Result{From: from, To: tag, File: u.File}
+	if from == tag {
 		return r, nil
 	}
 	if err := u.replace(ctx, tag); err != nil {
 		return Result{}, err
 	}
-	r.File = u.File
 	return r, nil
 }
 
-// replace writes release tag's binary over File, once it matches its checksum and prints tag. The
+// version returns the version that File prints, or "" where File is missing or does not run.
+func (u Updater) version(ctx context.Context) string {
+	out, err := u.M.Run(ctx, u.File, "version")
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
+}
+
+// replace renames release tag's binary over File, once it matches its checksum and prints tag. The
 // download is whole before it reaches the disk, and each write is a rename, so that a failure, or
 // a cancelled ctx, leaves File unchanged. A ws that runs keeps its old file.
 func (u Updater) replace(ctx context.Context, tag string) error {
@@ -89,8 +103,13 @@ func (u Updater) replace(ctx context.Context, tag string) error {
 	if err := u.M.WriteAtomic(copied, binary, attrs); err != nil {
 		return fmt.Errorf("writing beside %s: %w", u.File, err)
 	}
+	moved := false
 	// Not ctx, which a signal may have cancelled.
-	defer func() { _, _ = u.M.RunRoot(context.WithoutCancel(ctx), "rm", "-f", copied) }()
+	defer func() {
+		if !moved {
+			_, _ = u.M.RunRoot(context.WithoutCancel(ctx), "rm", "-f", copied)
+		}
+	}()
 	out, err := u.M.Run(ctx, copied, "version")
 	if err != nil {
 		return fmt.Errorf("the %s downloaded does not run: %w", u.Binary, err)
@@ -101,9 +120,16 @@ func (u Updater) replace(ctx context.Context, tag string) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if err := u.M.WriteAtomic(u.File, binary, attrs); err != nil {
+	// mv would move the copy into a directory, where rename(2) fails.
+	if info, err := u.M.Stat(u.File); err == nil && info.Mode.IsDir() {
+		return fmt.Errorf("%s is a directory, not ws", u.File)
+	}
+	// The copy that printed tag is the file installed, with its owner and mode: no second write
+	// shares a pending file with another run. Not ctx, so that a signal leaves the rename whole.
+	if _, err := u.M.RunRoot(context.WithoutCancel(ctx), "mv", "-f", "--", copied, u.File); err != nil {
 		return fmt.Errorf("replacing %s: %w", u.File, err)
 	}
+	moved = true
 	return nil
 }
 

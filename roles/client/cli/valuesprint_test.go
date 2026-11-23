@@ -32,7 +32,7 @@ func TestValuesPrintCommand(t *testing.T) {
 		{"home", nil, "", 0, "WS_TARGET='lan'\nWS_SLOT='0'\n", ""},
 		{"env", nil, "/e/values.yml", 0, "WS_TARGET='lan'\nWS_SLOT='3'\n", ""},
 		{"argument", []string{"/a/values.yml"}, "/e/values.yml", 0, "WS_TARGET='lan'\nWS_SLOT='5'\n", ""},
-		{"missing", []string{"/none"}, "", 1, "", "ws client values print: /none is missing: roles/client/README.md"},
+		{"missing", []string{"/none"}, "", 1, "", "ws client values print: /none is missing: roles/client/values/README.md"},
 		{"refused", []string{"/bad"}, "", 1, "", "ws client values print: /bad, line 2: unknown key WS_NOPE"},
 		{"lines", []string{"--lines", "/lines/values.yml"}, "", 0, "WS_TARGET='lan'\nWS_SLOT='0'\nWS_PUBLIC_KEY=''\nWS_LAN='10.88.0.0/24'\n", ""},
 		{"lines of the server's file", []string{"--lines"}, "", 0, "WS_TARGET='lan'\nWS_SLOT='0'\n", ""},

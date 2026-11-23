@@ -8,9 +8,10 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 )
 
-// tree handles two commands that the table holds no result for, and reports whether it did. Root's
-// "rm -rf -- PATH" drops PATH and everything under it. "mv -T -- FROM TO" moves FROM and everything
-// under it to TO. The caller holds the lock.
+// tree handles three commands that the table holds no result for, and reports whether it did.
+// Root's "rm -rf -- PATH" drops PATH and everything under it. "mv -T -- FROM TO" moves FROM and
+// everything under it to TO. "mv -f -- FROM TO" renames the file FROM over TO, whose own entries go.
+// The caller holds the lock.
 func (m *Machine) tree(name string, args []string) bool {
 	paths := slices.DeleteFunc(slices.Clone(args), func(a string) bool { return strings.HasPrefix(a, "-") })
 	switch {
@@ -19,8 +20,11 @@ func (m *Machine) tree(name string, args []string) bool {
 			m.each(p, func(string) string { return "" })
 		}
 		return true
-	case name == "mv" && slices.Contains(args, "-T") && len(paths) == 2:
+	case name == "mv" && len(paths) == 2 && (slices.Contains(args, "-T") || slices.Contains(args, "-f")):
 		from, to := paths[0], paths[1]
+		if !slices.Contains(args, "-T") {
+			m.each(to, func(string) string { return "" })
+		}
 		m.each(from, func(key string) string { return to + strings.TrimPrefix(key, from) })
 		return true
 	}

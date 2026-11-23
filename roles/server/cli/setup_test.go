@@ -26,7 +26,7 @@ func setupRelease(body string) setup.MiseRelease {
 const treeRepo = "https://example.org/ws"
 
 // setupProcess returns a root process on an Ubuntu 26.04 machine on amd64 that serves miseBody and
-// has no tree yet. The process is of ws v1.2.3.
+// has no tree yet. The process is of ws v1.2.3, as is the installed ws.
 func setupProcess(rel setup.MiseRelease) (enginecli.Env, *effecttest.Machine) {
 	p := fakeProcess()
 	m := effecttest.NewMachine()
@@ -46,6 +46,7 @@ func setupProcess(rel setup.MiseRelease) (enginecli.Env, *effecttest.Machine) {
 	}
 	m.Files[osRelease] = []byte("ID=ubuntu\nVERSION_ID=\"26.04\"\n")
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
+	m.Results[installedWs+" version"] = effecttest.Result{Out: []byte(p.Version + "\n")}
 	m.Pages[rel.URL("linux-x64")] = []byte(miseBody)
 	return p, m
 }
@@ -177,14 +178,20 @@ func TestSetupAgainWritesNothing(t *testing.T) {
 	if status, stderr := runSetup(p, rel); status != 0 {
 		t.Fatalf("first run: status = %d, stderr = %q", status, stderr)
 	}
-	m.Results[setup.MisePath+" --version"] = effecttest.Result{Out: []byte(rel.Version + " linux-x64 (2026-01-01)\n")}
+	// The fake's git writes leave no checkout, so the tree stands as a first run leaves it.
+	standing(m, rel)
 	m.Calls = nil
 	if status, stderr := runSetup(p, rel); status != 0 || strings.Contains(stderr, "write") {
 		t.Fatalf("second run: status = %d, stderr = %q", status, stderr)
 	}
+	// The bootstrap runs on each run by design, and no check counts it.
 	for _, call := range m.Calls {
-		if strings.HasPrefix(call, "download ") || strings.HasPrefix(call, "atomic ") {
-			t.Errorf("the second run wrote: %s", call)
+		for _, write := range []string{"download ", "atomic ", "run git -c ", "run git -C /opt/ws fetch",
+			"run git -C /opt/ws checkout", "run git -C /opt/ws -c advice.detachedHead=false checkout",
+			"run git -C /opt/ws clean", "run git -C /opt/ws remote"} {
+			if strings.HasPrefix(call, write) {
+				t.Errorf("the second run wrote: %s", call)
+			}
 		}
 	}
 }

@@ -17,12 +17,19 @@ and leaves it alone, so remove that copy once. `macos-app` finds no release: a n
 `ws client setup` installs it before the first bootstrap where `values.yml` names no login key. It
 runs `mise bootstrap packages apply --yes macos-app:secretive`, checks the app by `spctl -a -vv`
 ([setupkey.go](../../cli/setupkey.go)), which must say `accepted` and `Notarized Developer ID`, and
-opens it. It then waits for a P-256 key, as ws's OpenSSH reads no ML-DSA one. It writes
+opens it. The `origin` must name Secretive's team, `Z72PRUAWF6`, which signs the pinned zip, as
+any developer may notarize an app. A release that another team signs changes `pinnedTeam` there
+too. It then waits for a P-256 key, as ws's OpenSSH reads no ML-DSA one. It writes
 `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_PUB_KEY` into `values.yml`, each
-one that is not there. The wait takes the sole key that comes after Secretive's agent first
-answers. ws picks no key that was there before, as one made for another use would go to GitHub.
-The wait lists such keys by NAME, and `--key NAME` takes one. A key made at Notify signs git's commits
-with no prompt ([The signing key](../git/README.md#the-signing-key)).
+one that is not there. Setup lists the keys of Secretive's agent before it opens Secretive, and
+the wait takes the sole P-256 key that comes after. ws picks no key that was there before, as one
+made for another use would go to GitHub. Where no agent answers until Secretive runs, the agent's
+first answer stands for the list before, as setup cannot tell whether a key in it came in this
+run. The wait lists such keys by NAME, and says to press Ctrl-C and run setup again with
+`--key NAME` to take one. A key made at Notify signs git's commits with no prompt ([The signing
+key](../git/README.md#the-signing-key)). Once `values.yml` names the login key, `--key` that names
+it runs as no `--key` does, so a failed run may run again as it stood. `--key` that names another
+key is refused.
 
 ## The units
 

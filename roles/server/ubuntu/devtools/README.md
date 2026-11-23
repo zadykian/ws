@@ -35,7 +35,7 @@ go.dev publishes, and each server's from GitHub's digest of its release asset. A
 the run before any unit of ws, and the tree's `locked = true` refuses a tool that the lock lacks.
 gopls and Delve are `go:` tools, which `go install` builds with mise's Go through Go's checksum database.
 mise checks a sum at the download alone, so it mends no tool changed after its install:
-`sudo mise -C /opt/ws/roles/server install --force TOOL` does.
+`mise -C /opt/ws/roles/server install --force TOOL` does.
 
 - mise puts the tools under `/root/.local/share/mise/installs`, root's data directory, which it
   takes by default.
@@ -51,7 +51,7 @@ mise checks a sum at the download alone, so it mends no tool changed after its i
   `MISE_ENV=server mise -C roles/server lock --platform linux-x64,linux-arm64`, which writes
   `roles/server/mise/mise.server.lock`. `go test` fails where a link, the lock and `[tools]`
   disagree. On the server,
-  `sudo mise -C /opt/ws/roles/server prune` drops the old versions.
+  `mise -C /opt/ws/roles/server prune` drops the old versions.
 - mise builds a `go:` tool once, and never again where Go changes. Delve 1.27.2 supports Go 1.25
   to 1.27, so a new minor Go goes with a newer Delve.
 - roslyn-language-server, C#'s server, is the server of VS Code's C# extension. It comes from

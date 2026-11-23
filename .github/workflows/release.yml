@@ -171,3 +171,9 @@ jobs:
           case $TAG in *-rc.*) set -- --prerelease --latest=false ;; esac
           gh release create "$TAG" "$RUNNER_TEMP"/dist/* --title "$TAG" \
               --notes-file "$RUNNER_TEMP/notes.md" --verify-tag "$@"
+          # The sum and the binary come from one release: only immutable releases keep them fixed.
+          immutable=$(gh api "repos/$GH_REPO/releases/tags/$TAG" --jq .immutable)
+          [ "$immutable" = true ] || {
+              echo "release $TAG is not immutable: turn on immutable releases in settings" >&2
+              exit 1
+          }

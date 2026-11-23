@@ -17,8 +17,8 @@ refuses a `/usr/local` or `/usr/local/bin` that another user owns or may write: 
 
 ## Answers
 
-Write the Mac's values in `/etc/ws/values.yml` and each server's in
-`/etc/ws/servers/NAME/values.yml`, as root, through sudo ([The two
+Make the Mac's `/etc/ws/values.yml`, as root, through sudo: empty on a new Mac, as setup writes
+its keys. Write each server's values in `/etc/ws/servers/NAME/values.yml`, as root too ([The two
 files](values/README.md#the-two-files)). The files' check refuses a clash.
 
 1. Pick a slot, 0 to 15, that no server has: `WS_SLOT`.
@@ -41,13 +41,13 @@ file. It then does what a person did by hand, in this order:
 3. It checks this ws's release tag out in `/opt/ws`, root's, which no one else may write, and links
    the tree's plugin into `/usr/local/share/mise/plugins`.
 4. Where `values.yml` names no `WS_IDENTITY_PUB_KEY`, it installs Secretive by [ssh's
-   pin](macos/ssh/mise.mac.toml), checks it by `spctl -a -vv`, which must say `accepted` and
-   `Notarized Developer ID`, and opens it. It then waits for a P-256 key. Make one in Secretive at
-   Notify, as it then signs git's commits with no prompt.
+   pin](macos/ssh/mise.mac.toml), checks it by `spctl -a -vv`, which must say `accepted`,
+   `Notarized Developer ID` and Secretive's team, and opens it. It then waits for a P-256 key.
+   Make one in Secretive at Notify, as it then signs git's commits with no prompt.
    Setup names the key that comes in `values.yml`, as `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and
    `WS_GIT_SIGNING_PUB_KEY`, and keeps a value that is there. It takes no key that was there before
-   the wait, as one made for another use would go to GitHub. To take one, stop setup with Ctrl-C and
-   run `ws client setup --key NAME`, NAME being the name that the wait prints
+   it opened Secretive, as one made for another use would go to GitHub. To take one, stop setup
+   with Ctrl-C and run `ws client setup --key NAME`, NAME being the name that the wait prints
    ([Secretive](macos/ssh/README.md#secretive)).
 5. It runs mise's bootstrap in `/opt/ws/roles/client`, which installs gh and sets up ssh, git, cld
    and the Mac's other roles ([The Mac's frame](macos/frame/README.md)). It makes the Mac's
@@ -55,10 +55,11 @@ file. It then does what a person did by hand, in this order:
 
 A second run changes nothing and asks no password. `ws client setup --plan` plans these steps, and
 mise's bootstrap where none is due, and exits 0 where nothing would change. A ws that names no
-release tag is refused: `--in-place` runs the tree in `/opt/ws` as it stands, after the guard. A
-tree, or a directory above it, that others may write is refused too
-([Setup](README.md#setup)). `ws update`, as the user, brings ws to the latest release, or to
-`--version`'s, and runs that ws's setup, with sudo for the write
+release tag is refused: `--in-place` runs the tree in `/opt/ws` as it stands, after the guard. So
+is a ws of another version than `/usr/local/bin/ws`, which the units run, or a missing file there:
+`ws update --version X.Y.Z` installs that release there. A tree, or a directory above it, that
+others may write is refused too ([Setup](README.md#setup)). `ws update`, as the user, brings ws
+to the latest release, or to `--version`'s, and runs that ws's setup, with sudo for the write
 ([Update](../../.github/workflows/release.md#update)).
 
 ## GitHub

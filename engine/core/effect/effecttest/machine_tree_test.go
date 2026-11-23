@@ -41,6 +41,19 @@ func TestMachineMovesATree(t *testing.T) {
 	}
 }
 
+func TestMachineRenamesAFileOverAnother(t *testing.T) {
+	m := treeMachine()
+	m.Owners["/a/g"] = [2]int{0, 0}
+	m.Owners["/ab"] = [2]int{1000, 1000}
+	if _, err := m.RunRoot(context.Background(), "mv", "-f", "--", "/a/g", "/ab"); err != nil {
+		t.Fatal(err)
+	}
+	_, left := m.Files["/a/g"]
+	if string(m.Files["/ab"]) != "g" || m.Modes["/ab"] != 0o755 || m.Owners["/ab"] != [2]int{0, 0} || left || len(m.Files) != 2 {
+		t.Errorf("renamed Files %v, Modes %v, Owners %v", m.Files, m.Modes, m.Owners)
+	}
+}
+
 func TestMachineTreeCommandsYieldToTheTable(t *testing.T) {
 	boom := errors.New("boom")
 	m := treeMachine()

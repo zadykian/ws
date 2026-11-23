@@ -58,7 +58,7 @@ ws server setup --secrets --plan
   other than 0. That line reports the 2, not a failed plan, and no flag of `mise run` or option of
   a task drops it ([The server job](../../../../.github/workflows/server.md)).
 - `WS_SECRETS_PREFIX`, for the tests alone, stands for `/` in front of the host key and
-  `/var/lib/ws`. sudo drops it from the caller's environment.
+  `/var/lib/ws`. The task runs as root with no sudo, and takes the variable as it stands.
 
 A run of the bootstrap without the task loads no `secrets` env, and keeps the files that env's
 inputs write as they are.

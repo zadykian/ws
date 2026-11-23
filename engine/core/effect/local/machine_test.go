@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -25,6 +26,38 @@ func TestOSMachineRun(t *testing.T) {
 	_, err := m.Run(ctx, "sh", "-c", "echo boom >&2; exit 3")
 	if err == nil || !strings.Contains(err.Error(), "boom") {
 		t.Errorf("Run of a failing command: err = %v, want its stderr", err)
+	}
+}
+
+// A hook or a rebase's exec exports GIT_DIR and its kin. A command gets none of them, through sudo
+// or not, and keeps the rest of ws's environment.
+func TestOSMachineDropsTheVariablesThatNameARepository(t *testing.T) {
+	for name, value := range map[string]string{"GIT_DIR": "/elsewhere/.git", "GIT_WORK_TREE": "/elsewhere",
+		"GIT_INDEX_FILE": "/elsewhere/.git/index", "GIT_COMMON_DIR": "/elsewhere/.git", "GIT_CONFIG_COUNT": "1",
+		"GIT_CONFIG_GLOBAL": "/dev/null", "WS_KEPT": "1"} {
+		t.Setenv(name, value)
+	}
+	ctx := t.Context()
+	for how, run := range map[string]func() ([]byte, error){
+		"Run":            func() ([]byte, error) { return local.OSMachine{}.Run(ctx, "env") },
+		"RunRoot":        func() ([]byte, error) { return local.OSMachine{Sudo: []string{}}.RunRoot(ctx, "env") },
+		"Run with Stdin": func() ([]byte, error) { return local.OSMachine{Stdin: local.NoStdin}.Run(ctx, "env") },
+	} {
+		out, err := run()
+		if err != nil {
+			t.Fatalf("%s: %v", how, err)
+		}
+		env := strings.Split(string(out), "\n")
+		for _, name := range []string{"GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR", "GIT_CONFIG_COUNT"} {
+			if slices.ContainsFunc(env, func(e string) bool { return strings.HasPrefix(e, name+"=") }) {
+				t.Errorf("%s passed %s on", how, name)
+			}
+		}
+		for _, kept := range []string{"GIT_CONFIG_GLOBAL=/dev/null", "WS_KEPT=1"} {
+			if !slices.Contains(env, kept) {
+				t.Errorf("%s dropped %s", how, kept)
+			}
+		}
 	}
 }
 

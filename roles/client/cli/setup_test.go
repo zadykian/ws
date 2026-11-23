@@ -40,7 +40,7 @@ func setupRelease(body string) setup.MiseRelease {
 }
 
 // setupProcess returns the process of a user on a Mac on arm64 with the command line tools, good
-// values and no tree yet, which serves miseBody. The process is of ws v1.2.3.
+// values and no tree yet, which serves miseBody. The process is of ws v1.2.3, as is the installed ws.
 func setupProcess(rel setup.MiseRelease) (enginecli.Env, *effecttest.Machine) {
 	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "", "HOME": mactest.AgentHome})
 	m := effecttest.NewMachine()
@@ -61,6 +61,7 @@ func setupProcess(rel setup.MiseRelease) (enginecli.Env, *effecttest.Machine) {
 	} {
 		m.Results[line] = effecttest.Result{}
 	}
+	m.Results[installedWs+" version"] = effecttest.Result{Out: []byte(p.Version + "\n")}
 	m.Pages[rel.URL("macos-arm64")] = []byte(miseBody)
 	return p, m
 }
@@ -184,6 +185,7 @@ func TestSetupInPlaceRunsTheTreeThatStandsOfAnyVersion(t *testing.T) {
 	p, m := setupProcess(rel)
 	standing(m, rel)
 	p.Version = "devel"
+	m.Results[installedWs+" version"] = effecttest.Result{Out: []byte("devel\n")}
 	if status, stderr := runSetup(p, rel, "--in-place"); status != 0 {
 		t.Fatalf("status = %d, stderr = %q", status, stderr)
 	}

@@ -20,8 +20,9 @@ const (
 	installLine = "/usr/local/bin/mise -C /opt/ws/roles/client bootstrap packages apply --yes macos-app:secretive"
 	spctlLine   = "sh -c " + spctlScript + " sh " + secretiveApp
 	openLine    = "open " + secretiveApp
-	accepted    = secretiveApp + ": accepted\nsource=Notarized Developer ID\norigin=Developer ID Application: Max\n"
-	noKeys      = "The agent has no identities.\n"
+	accepted    = secretiveApp + ": accepted\nsource=Notarized Developer ID\n" +
+		"origin=Developer ID Application: Max Goedjen (Z72PRUAWF6)\n"
+	noKeys = "The agent has no identities.\n"
 	// mldsaKey is a key of a type that ws's OpenSSH lacks.
 	mldsaKey = "ssh-mldsa-65 CCCC me\n"
 )
@@ -61,7 +62,7 @@ func TestSetupTakesTheKeyThatComesDuringTheWaitAndNamesIt(t *testing.T) {
 		t.Errorf("values.yml = %q, want %q", got, want)
 	}
 	last := -1
-	for _, call := range []string{"run " + installLine, "run " + spctlLine, "run " + openLine, "run " + mactest.AgentList,
+	for _, call := range []string{"run " + installLine, "run " + spctlLine, "run " + mactest.AgentList, "run " + openLine,
 		"atomic /etc/ws/values.yml 644", "run " + miseLine} {
 		at := exactly(m, call)
 		if at <= last {
@@ -104,8 +105,8 @@ func TestSetupTakesNoKeyThatWasThereBeforeTheWait(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "stopped before Secretive held a key") {
 		t.Errorf("err = %v, want the stop of the wait", err)
 	}
-	if !strings.Contains(strings.Join(out.Lines, "\n"), "--key "+"NAME") ||
-		!strings.Contains(strings.Join(out.Lines, "\n"), strings.TrimSuffix(sshName(mactest.AgentKey), ".pub")) {
+	if said := strings.Join(out.Lines, "\n"); !strings.Contains(said, "--key "+"NAME") || !strings.Contains(said, "Ctrl-C and") ||
+		!strings.Contains(said, strings.TrimSuffix(sshName(mactest.AgentKey), ".pub")) {
 		t.Errorf("the wait did not offer the key by --key: %q", out.Lines)
 	}
 	if indexOf(m, "atomic /etc/ws/values.yml") >= 0 {
@@ -190,6 +191,11 @@ func TestSetupStopsWhereMacOSDoesNotAcceptSecretive(t *testing.T) {
 	for name, res := range map[string]effecttest.Result{
 		"rejected":      {Out: []byte(secretiveApp + ": rejected\n"), Err: errors.New("exit status 3")},
 		"not notarized": {Out: []byte(secretiveApp + ": accepted\nsource=Developer ID\n")},
+		"another team": {Out: []byte(secretiveApp + ": accepted\nsource=Notarized Developer ID\n" +
+			"origin=Developer ID Application: Someone Else (AB12CD34EF)\n")},
+		"no team": {Out: []byte(secretiveApp + ": accepted\nsource=Notarized Developer ID\n")},
+		"the team in the name alone": {Out: []byte(secretiveApp + ": accepted\nsource=Notarized Developer ID\n" +
+			"origin=Developer ID Application: Max Goedjen (Z72PRUAWF6) (AB12CD34EF)\n")},
 	} {
 		t.Run(name, func(t *testing.T) {
 			p, m := unkeyed(rel, mactest.AgentKey)

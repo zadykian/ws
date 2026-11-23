@@ -208,7 +208,7 @@ Global Flags:
 == ws client setup
 It refuses root, a system but macOS on arm64, and bad values, before any write. It refuses a tree or a directory above it that others may write. It installs the command line tools where xcode-select -p finds none: Apple's dialog opens, and setup waits until the tools stand, which Ctrl-C stops. It installs mise at the version ws pins, checked against its SHA-256, where mise --version differs, and writes /etc/mise/miserc.toml and /etc/mise/config.toml. It checks this ws's release tag out in /opt/ws, cleans the tree, links its plugin into mise's, and runs mise's bootstrap in the Mac's roles. Where values.yml names no WS_IDENTITY_PUB_KEY, it installs Secretive by mise's pin first, checks it by spctl, opens it and waits for a P-256 key made in it, which it names in values.yml for ws's login and git's signing, and takes no key that was there before: --key NAME names one. It asks sudo for what root's paths need, and for no more where a run changes nothing, which a second run does.
 
-A ws that names no release tag, devel included, is refused: pass --in-place to run the tree in /opt/ws as it stands, after the guard.
+A ws that names no release tag, devel included, is refused: pass --in-place to run the tree in /opt/ws as it stands, after the guard. So is a ws of another version than /usr/local/bin/ws, which the units run, or one where that file is missing, --in-place included: ws update --version installs a release there.
 
 --plan plans these steps, and mise's bootstrap where none of them is due. Where the command line tools are due, it plans no more, as git needs them. It exits 0 where nothing would change and 2 where something would.
 
@@ -678,7 +678,7 @@ It refuses a user but root, a system but Ubuntu 26.04, and a tree or a directory
 
 --secrets runs the task secrets in its place, which clones the secrets on its first run and runs the bootstrap under them. Without it, setup runs the task where /var/lib/ws/secrets stands.
 
-A ws that names no release tag, devel included, is refused: pass --in-place to run the tree in /opt/ws as it stands, after the guard.
+A ws that names no release tag, devel included, is refused: pass --in-place to run the tree in /opt/ws as it stands, after the guard. So is a ws of another version than /usr/local/bin/ws, which the units run, or one where that file is missing, --in-place included: ws update --version installs a release there.
 
 --plan plans these steps, and mise's bootstrap, or the task where setup would run it, where none of them is due. The task fetches the secrets first, and the plan changes nothing else. It exits 0 where nothing would change and 2 where something would.
 
@@ -857,7 +857,7 @@ Flags:
 == ws update
 Downloads the latest release's ws for this system, or the one that --version names, checks it against the release's ws.sha256 and that it runs and prints the release, then renames it over /usr/local/bin/ws. A signal before the rename leaves the old ws. Then it runs ws server setup of that ws.
 
-A ws that is that release already is not downloaded: only its setup runs. The latest release is refused where this ws is a release after it, and --version names the older one. A ws that is no release, such as a trial's build, is older than any release, so that an update ends the trial.
+The release of /usr/local/bin/ws counts, as the units run that file, whichever ws runs the update. Where that file is the release already, nothing is downloaded: only its setup runs. The latest release is refused where that file is a later release, and --version names the older one. A ws that is no release, such as a trial's build, or one that is missing or does not run, is older than any release, so that an update ends the trial.
 
 Usage:
   ws update [flags]
