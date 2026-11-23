@@ -121,6 +121,85 @@ func TestTreeUnpacksAfreshOverAStagingAFailedRunLeft(t *testing.T) {
 	}
 }
 
+// archiveOf is a tar archive of files, each name's content.
+func archiveOf(t *testing.T, files map[string]string) []byte {
+	var buf bytes.Buffer
+	tw := tar.NewWriter(&buf)
+	for name, body := range files {
+		hdr := &tar.Header{Name: name, Typeflag: tar.TypeReg, Mode: 0o644, Size: int64(len(body))}
+		if err := tw.WriteHeader(hdr); err != nil {
+			t.Fatal(err)
+		}
+		_, _ = tw.Write([]byte(body))
+	}
+	if err := tw.Close(); err != nil {
+		t.Fatal(err)
+	}
+	return buf.Bytes()
+}
+
+// twoArchives is a tree of two archives, 1.0's and 2.0's, on a machine whose uname gives arm64.
+// Both hold f, and each a file of its own.
+func twoArchives(t *testing.T) (*effecttest.Machine, fetch.Tree) {
+	m := effecttest.NewMachine()
+	m.Results["uname -m"] = effecttest.Result{Out: []byte("arm64\n")}
+	var sources []fetch.PinnedFile
+	for _, v := range []string{"1.0", "2.0"} {
+		body := archiveOf(t, map[string]string{"t/f": v, "t/only-" + v: v})
+		m.Pages["https://x/t-"+v+"-arm64.tar"] = body
+		sources = append(sources, fetch.PinnedFile{M: m, Version: v, Arch: fetch.Uname,
+			SHA256: map[string]string{"arm64": sumOf(string(body))},
+			URL:    func(version, arch string) string { return "https://x/t-" + version + "-" + arch + ".tar" }})
+	}
+	return m, fetch.Tree{M: m, Path: treeDir, Strip: 1, Sources: sources, Cache: "/c"}
+}
+
+func TestTreeUnpacksEachArchiveInOrder(t *testing.T) {
+	m, tree := twoArchives(t)
+	got := applyAll(t, tree)
+	want := []string{"create directory /c, owner 0:0, mode 755",
+		"download https://x/t-1.0-arm64.tar to /c/t-1.0-arm64.tar", "download https://x/t-2.0-arm64.tar to /c/t-2.0-arm64.tar",
+		"install https://x/t-1.0-arm64.tar, https://x/t-2.0-arm64.tar in " + treeDir}
+	if !slices.Equal(got, want) {
+		t.Fatalf("plan = %q, want %q", got, want)
+	}
+	for name, body := range map[string]string{"f": "2.0", "only-1.0": "1.0", "only-2.0": "2.0",
+		".ws-source": "https://x/t-1.0-arm64.tar\nhttps://x/t-2.0-arm64.tar\n"} {
+		if got := string(m.Files[treeDir+"/"+name]); got != body {
+			t.Errorf("%s = %q, want %q", name, got, body)
+		}
+	}
+	for _, left := range []string{"/c/t-1.0-arm64.tar", "/c/t-2.0-arm64.tar"} {
+		if _, ok := m.Files[left]; ok {
+			t.Errorf("%s was left", left)
+		}
+	}
+	if got := applyAll(t, tree); got != nil {
+		t.Errorf("second plan = %q, want none", got)
+	}
+}
+
+func TestTreeWithOneArchiveChangedInstallsAgain(t *testing.T) {
+	m, tree := twoArchives(t)
+	m.Files[treeDir+"/.ws-source"] = []byte("https://x/t-1.0-arm64.tar\nhttps://x/t-1.9-arm64.tar\n")
+	if got := applyAll(t, tree); len(got) != 4 || !strings.HasPrefix(got[3], "install ") {
+		t.Errorf("plan = %q, want both fetched and the install", got)
+	}
+}
+
+func TestTreeRefusesTwoArchivesOfOneName(t *testing.T) {
+	m, tree := twoArchives(t)
+	tree.Sources[1].URL = tree.Sources[0].URL
+	tree.Sources[1].Version = "1.0"
+	_, err := tree.Plan(t.Context())
+	if err == nil || !strings.Contains(err.Error(), "two archives named t-1.0-arm64.tar") {
+		t.Errorf("plan = %v, want a refusal of the second archive", err)
+	}
+	if len(m.Calls) != 2 {
+		t.Errorf("calls = %q, want uname's alone", m.Calls)
+	}
+}
+
 func TestTreeWithoutArchivesFails(t *testing.T) {
 	m := effecttest.NewMachine()
 	if _, err := (fetch.Tree{M: m, Path: treeDir}).Plan(t.Context()); err == nil {

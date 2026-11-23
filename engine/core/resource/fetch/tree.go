@@ -112,12 +112,16 @@ func (t Tree) Plan(ctx context.Context) ([]resource.Change, error) {
 		return nil, fmt.Errorf("tree %s: no archive", t.Path)
 	}
 	urls := make([]string, 0, len(t.Sources))
+	names := map[string]bool{}
 	for _, s := range t.Sources {
 		url, _, err := s.resolve(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("tree %s: %w", t.Path, err)
 		}
-		urls = append(urls, url)
+		if names[path.Base(url)] {
+			return nil, fmt.Errorf("tree %s: two archives named %s would wait in one file", t.Path, path.Base(url))
+		}
+		urls, names[path.Base(url)] = append(urls, url), true
 	}
 	marker, err := t.M.ReadRootFile(path.Join(t.Path, treeMarker))
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
