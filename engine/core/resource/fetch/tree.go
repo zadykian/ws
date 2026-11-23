@@ -18,16 +18,16 @@ import (
 // probe. A tree with other URLs, a new version or architecture, or none, is unpacked again.
 const treeMarker = ".ws-source"
 
-// Tree is a directory unpacked from a pinned archive, less Strip leading parts of each name. The
-// unpack goes to a hidden directory beside Path, which replaces Path whole, so that a run cut
-// short leaves no half tree at Path. The archive waits in Cache, CacheDir where empty, and goes with
-// the install.
+// Tree is a directory unpacked from pinned archives, in their order, each less Strip leading parts
+// of each name. A later archive's file replaces an earlier one's. The unpack goes to a hidden
+// directory beside Path, which replaces Path whole, so that a run cut short leaves no half tree at
+// Path. The archives wait in Cache, CacheDir where empty, and go with the install.
 type Tree struct {
-	M      effect.Machine
-	Source PinnedFile // its Path and Mode are not used
-	Path   string
-	Strip  int
-	Cache  string
+	M       effect.Machine
+	Sources []PinnedFile // their Path and Mode are not used
+	Path    string
+	Strip   int
+	Cache   string
 }
 
 // staging is where the tree is unpacked, beside Path so that the move is a rename.
@@ -104,15 +104,21 @@ func (t Tree) cleaned(ctx context.Context, urls []string) ([]resource.Change, er
 	return changes, nil
 }
 
-// Plan plans the removal of leftovers where the marker holds the pinned URL. Otherwise it plans the
-// directory, the fetch of the archive and the install. It asks the source for its sum only for the
-// fetch.
+// Plan plans the removal of leftovers where the marker holds the pinned URLs. Otherwise it plans
+// the directory, the fetch of each archive and the install. It asks the sources for their sums only
+// for the fetch.
 func (t Tree) Plan(ctx context.Context) ([]resource.Change, error) {
-	url, _, err := t.Source.resolve(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("tree %s: %w", t.Path, err)
+	if len(t.Sources) == 0 {
+		return nil, fmt.Errorf("tree %s: no archive", t.Path)
 	}
-	urls := []string{url}
+	urls := make([]string, 0, len(t.Sources))
+	for _, s := range t.Sources {
+		url, _, err := s.resolve(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("tree %s: %w", t.Path, err)
+		}
+		urls = append(urls, url)
+	}
 	marker, err := t.M.ReadRootFile(path.Join(t.Path, treeMarker))
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
@@ -120,17 +126,22 @@ func (t Tree) Plan(ctx context.Context) ([]resource.Change, error) {
 	if err == nil && string(marker) == markerText(urls) {
 		return t.cleaned(ctx, urls)
 	}
-	archive, err := t.Source.cachedIn(ctx, t.cache())
-	if err != nil {
-		return nil, fmt.Errorf("tree %s: %w", t.Path, err)
+	parts := []resource.Resource{file.Dir{M: t.M, Path: t.cache(), Mode: 0o755}}
+	files := make([]string, 0, len(t.Sources))
+	for _, s := range t.Sources {
+		archive, err := s.cachedIn(ctx, t.cache())
+		if err != nil {
+			return nil, fmt.Errorf("tree %s: %w", t.Path, err)
+		}
+		parts, files = append(parts, archive), append(files, archive.Path)
 	}
 	var changes []resource.Change
-	for _, r := range []resource.Resource{file.Dir{M: t.M, Path: t.cache(), Mode: 0o755}, archive} {
+	for _, r := range parts {
 		more, err := r.Plan(ctx)
 		if err != nil {
 			return nil, err
 		}
 		changes = append(changes, more...)
 	}
-	return append(changes, installTree{t, []string{archive.Path}, urls}), nil
+	return append(changes, installTree{t, files, urls}), nil
 }

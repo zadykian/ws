@@ -43,9 +43,9 @@ func treeFixture(t *testing.T) (*effecttest.Machine, fetch.Tree) {
 	body := treeArchive(t)
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	m.Pages[treeURL] = body
-	return m, fetch.Tree{M: m, Path: treeDir, Strip: 1, Source: fetch.PinnedFile{M: m, Version: "1.2",
+	return m, fetch.Tree{M: m, Path: treeDir, Strip: 1, Sources: []fetch.PinnedFile{{M: m, Version: "1.2",
 		SHA256: map[string]string{"amd64": sumOf(string(body))},
-		URL:    func(version, arch string) string { return "https://x/" + version + "/t-" + arch + ".tar" }}}
+		URL:    func(version, arch string) string { return "https://x/" + version + "/t-" + arch + ".tar" }}}}
 }
 
 func TestTreeInstallsStagedAndMovedWhole(t *testing.T) {
@@ -118,5 +118,12 @@ func TestTreeUnpacksAfreshOverAStagingAFailedRunLeft(t *testing.T) {
 	applyAll(t, tree)
 	if _, ok := m.Files[treeDir+"/stray"]; ok {
 		t.Error("the stray file of the old staging reached the tree")
+	}
+}
+
+func TestTreeWithoutArchivesFails(t *testing.T) {
+	m := effecttest.NewMachine()
+	if _, err := (fetch.Tree{M: m, Path: treeDir}).Plan(t.Context()); err == nil {
+		t.Error("plan of a tree with no archive passed")
 	}
 }

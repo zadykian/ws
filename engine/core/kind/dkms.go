@@ -84,10 +84,10 @@ func (s dkmsSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.Res
 	}
 	tree := "/usr/src/" + s.Module + "-" + s.Version
 	// The tarball is the same for every architecture, so its pin is under "all".
-	source := fetch.Tree{M: e.M, Path: tree, Strip: s.Strip, Source: fetch.PinnedFile{
+	source := fetch.Tree{M: e.M, Path: tree, Strip: s.Strip, Sources: []fetch.PinnedFile{{
 		M: e.M, Version: s.Version, SHA256: map[string]string{"all": s.SHA256},
 		URL: func(string, string) string { return s.URL },
-	}}
+	}}}
 	return func(context.Context) ([]resource.Resource, error) {
 		parts := []resource.Resource{source}
 		if s.Conf != "" {
