@@ -19,8 +19,8 @@ import (
 // newGitCmd returns ws server git: the procedures that the git role's units run.
 func newGitCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("git", "the git role's checks and procedures, which its units run",
-		newGitCheckCmd(p), newGitIncludedCmd(p), newGitPrePushCmd(p), newGitTokensCmd(p), newGitClonesCmd(p),
-		newGitCredentialCmd(p))
+		newGitCheckCmd(p), newGitIncludedCmd(p), newGitCommitMsgCmd(p), newGitPrePushCmd(p), newGitTokensCmd(p),
+		newGitClonesCmd(p), newGitCredentialCmd(p))
 }
 
 // gitInputs reads what git's commands act on: the values and root's account. The tokens' file
@@ -118,6 +118,22 @@ func gitProcedure(p enginecli.Env, use, short, long string, rs func(values.Value
 		}
 		return []resource.Resource{rs(v, a)}, nil
 	})
+}
+
+// newGitCommitMsgCmd returns ws server git commit-msg.
+func newGitCommitMsgCmd(p enginecli.Env) *cobra.Command {
+	return &cobra.Command{
+		Use:   "commit-msg FILE",
+		Short: "add the maintainer's co-author trailer to the commit message in FILE, once",
+		Long: "It is git's commit-msg hook, which /etc/ws/gitconfig names: git gives it the file of the " +
+			"message. It adds the trailer to a message that lacks it, and none to an empty one, so that git " +
+			"aborts the commit. Under GIT_EDITOR=:, which git sets where it opens no editor, a comment line " +
+			"is text (roles/server/ubuntu/git/README.md#the-co-author-trailer).",
+		Args: cobra.ExactArgs(1),
+		RunE: func(c *cobra.Command, args []string) error {
+			return git.CommitMsg(c.Context(), p.Machine, args[0], p.Getenv("GIT_EDITOR") == ":")
+		},
+	}
 }
 
 // newGitPrePushCmd returns ws server git pre-push.
