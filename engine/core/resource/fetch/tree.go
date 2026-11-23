@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
+	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
@@ -13,8 +14,8 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-// treeMarker is the file in a tree that holds the URL the tree came from, and so its probe. A
-// tree with another URL, a new version or architecture, or none, is unpacked again.
+// treeMarker is the file in a tree that holds the URLs the tree came from, a line each, and so its
+// probe. A tree with other URLs, a new version or architecture, or none, is unpacked again.
 const treeMarker = ".ws-source"
 
 // Tree is a directory unpacked from a pinned archive, less Strip leading parts of each name. The
@@ -42,12 +43,14 @@ func (t Tree) cache() string {
 }
 
 type installTree struct {
-	t    Tree
-	file string
-	url  string
+	t     Tree
+	files []string
+	urls  []string
 }
 
-func (c installTree) String() string { return fmt.Sprintf("install %s in %s", c.url, c.t.Path) }
+func (c installTree) String() string {
+	return fmt.Sprintf("install %s in %s", strings.Join(c.urls, ", "), c.t.Path)
+}
 
 func (installTree) Kind() step.ChangeKind { return step.Install }
 
@@ -56,15 +59,20 @@ func (c installTree) Apply(ctx context.Context) error {
 	if _, err := c.t.M.RunRoot(ctx, "rm", "-rf", "--", staging); err != nil {
 		return err
 	}
-	if err := c.t.M.Unpack(ctx, c.file, staging, c.t.Strip); err != nil {
-		return fmt.Errorf("tree %s: %w", c.t.Path, err)
+	for _, f := range c.files {
+		if err := c.t.M.Unpack(ctx, f, staging, c.t.Strip); err != nil {
+			return fmt.Errorf("tree %s: %w", c.t.Path, err)
+		}
 	}
 	marker := effect.Attrs{Mode: 0o644}
-	if err := c.t.M.WriteAtomic(path.Join(staging, treeMarker), []byte(c.url+"\n"), marker); err != nil {
+	if err := c.t.M.WriteAtomic(path.Join(staging, treeMarker), []byte(markerText(c.urls)), marker); err != nil {
 		return err
 	}
-	for _, args := range [][]string{{"rm", "-rf", "--", c.t.Path}, {"mv", "-T", "--", staging, c.t.Path},
-		{"rm", "-f", "--", c.file}} {
+	steps := [][]string{{"rm", "-rf", "--", c.t.Path}, {"mv", "-T", "--", staging, c.t.Path}}
+	for _, f := range c.files {
+		steps = append(steps, []string{"rm", "-f", "--", f})
+	}
+	for _, args := range steps {
 		if _, err := c.t.M.RunRoot(ctx, args[0], args[1:]...); err != nil {
 			return err
 		}
@@ -72,12 +80,21 @@ func (c installTree) Apply(ctx context.Context) error {
 	return nil
 }
 
-// cleaned plans the removal of what a run cut short left beside a current tree: its archive, and
-// its staging directory. The archive's name needs the URL alone, so the source is not asked for a
-// sum.
-func (t Tree) cleaned(ctx context.Context, url string) ([]resource.Change, error) {
+// markerText is the marker's content for the URLs: a line each.
+func markerText(urls []string) string {
+	return strings.Join(urls, "\n") + "\n"
+}
+
+// cleaned plans the removal of what a run cut short left beside a current tree: its archives, and
+// its staging directory. An archive's name needs the URL alone, so no source is asked for a sum.
+func (t Tree) cleaned(ctx context.Context, urls []string) ([]resource.Change, error) {
 	var changes []resource.Change
-	for _, p := range []string{path.Join(t.cache(), path.Base(url)), t.staging()} {
+	leftovers := make([]string, 0, len(urls)+1)
+	for _, url := range urls {
+		leftovers = append(leftovers, path.Join(t.cache(), path.Base(url)))
+	}
+	leftovers = append(leftovers, t.staging())
+	for _, p := range leftovers {
 		more, err := file.Absent{M: t.M, Path: p}.Plan(ctx)
 		if err != nil {
 			return nil, err
@@ -95,12 +112,13 @@ func (t Tree) Plan(ctx context.Context) ([]resource.Change, error) {
 	if err != nil {
 		return nil, fmt.Errorf("tree %s: %w", t.Path, err)
 	}
+	urls := []string{url}
 	marker, err := t.M.ReadRootFile(path.Join(t.Path, treeMarker))
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
-	if err == nil && string(marker) == url+"\n" {
-		return t.cleaned(ctx, url)
+	if err == nil && string(marker) == markerText(urls) {
+		return t.cleaned(ctx, urls)
 	}
 	archive, err := t.Source.cachedIn(ctx, t.cache())
 	if err != nil {
@@ -114,5 +132,5 @@ func (t Tree) Plan(ctx context.Context) ([]resource.Change, error) {
 		}
 		changes = append(changes, more...)
 	}
-	return append(changes, installTree{t, archive.Path, url}), nil
+	return append(changes, installTree{t, []string{archive.Path}, urls}), nil
 }
