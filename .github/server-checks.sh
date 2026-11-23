@@ -81,7 +81,7 @@ apt-get update
 # The image's git comes from that PPA already, so it would pass the git check below whatever the
 # setup does. Git and git-man go down to the archive's version, as on a server from Ubuntu's image,
 # which the setup must move up to the PPA's.
-archive_git=$(apt-cache madison git | awk '$3 !~ /ppa/ { print $3; exit }')
+archive_git=$(apt-cache madison git | awk '$3 !~ /ppa/ && !seen++ { print $3 }')
 [ -n "$archive_git" ] || fail "no archive version of git"
 apt-get install -y --allow-downgrades --no-install-recommends "git=$archive_git" "git-man=$archive_git"
 git_version=$(git version | cut -d' ' -f3)
