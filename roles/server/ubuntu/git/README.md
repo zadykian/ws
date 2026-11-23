@@ -87,32 +87,34 @@ A commit that `git commit` or a merge makes on ws, by claude, lazygit, Zed or th
 one trailer, `Co-authored-by: zadykian <me@zadykian.dev>`: the maintainer, whom the machine account
 commits for. A squash is the one exception: it joins the messages of its commits, and each keeps
 its trailer, so the result can hold two. The push check passes it.
-The name and the email are the Mac's identity, `gitcfg.Mac()`, and a test holds the file's text
-equal to it. A hook of git's config adds it, `[hook "ws-co-author"]` on `commit-msg`, which runs
-`git interpret-trailers --in-place --no-divider --if-exists addIfDifferent` on the message's file.
+The name and the email are the Mac's identity, `gitcfg.Mac()`. A hook of git's config adds it,
+`[hook "ws-co-author"]` on `commit-msg`, which runs `/usr/local/bin/ws server git commit-msg` with
+the message's file as its argument. ws runs
+`git interpret-trailers --in-place --no-divider --if-exists addIfDifferent` on the file.
 `addIfDifferent` adds the line once, so that `--amend`, a message that holds it already and a
 second run add none. `--no-divider` keeps a line of three dashes in the body from moving the trailer
 above it, out of the last paragraph that the push check reads.
 An empty message gets none. Git runs `commit-msg` before its check of an empty message, so a
 trailer alone would commit it. Where no editor opens, as with `-m`, `-F`, `--amend --no-edit` and a
 merge, git gives the hook `GIT_EDITOR=:`. Its cleanup is then `whitespace`, which keeps comment
-lines, so `-m "#42 fix the fan curve"` is a message. The hook tells an empty one by
-`git stripspace` alone. With an editor, the hook cuts the scissors section, git's comment string,
-a space, 24 dashes, `>8` and 24 dashes, whatever `core.commentChar` is, and then the comments. It
-cannot see an explicit `--cleanup` or `commit.cleanup`. Git passes the file to the command as its
-last argument, which the command's function takes.
+lines, so `-m "#42 fix the fan curve"` is a message. ws tells an empty one by its whitespace
+alone. With an editor, ws cuts the scissors section, git's comment string, a space, 24 dashes, `>8`
+and 24 dashes, whatever `core.commentChar` is, and then the comments, by
+`git stripspace --strip-comments`. It cannot see an explicit `--cleanup` or `commit.cleanup`, nor a
+`core.commentChar` that `git -c` sets: ws passes none of git's own variables to its commands.
 claude's own trailers are off ([Attribution](../claude/README.md#attribution)).
 
-The hook runs before a repository's own `commit-msg`, `.githooks` of ws included, and a failing one
-refuses the commit. A commit that skips hooks, with `--no-verify`, has none. `git rebase`, `git
-cherry-pick`, `git revert` and `git am` run no `commit-msg`, so a commit that any of them writes
-keeps its message. A rebase's or a cherry-pick's commit keeps its author too. A revert's and an am's
-is the machine's own, with no trailer, so the push check refuses it until `git commit --amend
---no-edit` runs the hook on it. A `reword` of `git rebase -i`, and a `git commit` or a `--continue`
-after a conflict, run it. Hooks in git's config came in git 2.54, which [the
-PPA](../base/README.md#git) gives. The test of the hook skips on an older git, and `server`'s check
-of a signed commit holds the one trailer on the set-up machine ([The `server`
-job](../../../../.github/workflows/server.md)).
+The hook runs before a repository's own `commit-msg`, `.githooks` of ws included, and a failing
+one, such as a `ws` missing at its path, refuses the commit. A commit that skips hooks, with
+`--no-verify`, has none. `git rebase`, `git cherry-pick`, `git revert` and `git am` run no
+`commit-msg`, so a commit that any of them writes keeps its message. A rebase's or a cherry-pick's
+commit keeps its author too. A revert's and an am's is the machine's own, with no trailer, so the
+push check refuses it until `git commit --amend --no-edit` runs the hook on it. A `reword` of
+`git rebase -i`, and a `git commit` or a `--continue` after a conflict, run it. Hooks in git's
+config came in git 2.54, which [the PPA](../base/README.md#git) gives. The test of the hook, where
+the test's binary stands for ws, skips on an older git. `server`'s check of a signed commit holds
+the one trailer on the set-up machine
+([The `server` job](../../../../.github/workflows/server.md)).
 
 ## The push check
 
@@ -171,7 +173,7 @@ The check stops a mistake and not a person. These skip it:
 - a repository's `gpg.ssh.allowedSignersFile`, which changes who `G` trusts.
 
 GitHub's own ruleset on every branch, which the maintainer sets by hand
-([How changes land](../../../../.claude/CLAUDE.md#how-changes-land)), refuses an unsigned push
+([By hand](../../../../README.md#by-hand)), refuses an unsigned push
 whatever the machine runs. GitHub enforces the signature alone, and not the trailer.
 
 The hook runs beside a repository's own `pre-push`, and before it.

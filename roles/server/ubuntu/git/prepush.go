@@ -39,15 +39,9 @@ var signatureStatus = map[string]string{
 // isHex reports whether s is an object id's digits.
 func isHex(s string) bool { return strings.Trim(s, "0123456789abcdef") == "" }
 
-// PrePush checks the commits that a push would send. For each pushed ref, they are those that no
-// remote-tracking ref holds and the remote's commit at the ref does not. refs are git's pre-push
-// lines, "LOCAL-REF LOCAL-SHA REMOTE-REF REMOTE-SHA". A commit passes where its signature is good,
-// its signer is its committer's email, and it holds the trailer of the maintainer's identity. The
-// maintainer's own commits need no trailer: a commit of the Mac's that ws rebased, which the hook
-// that adds it never saw. A deleted ref sends no commit. A tag is checked by the commit it points
-// to, which an annotated tag peels to. A tag of a tree or a blob sends none. The error names each
-// refused commit and its rule, never a key. ws server git pre-push runs it, from git's hook of
-// ws's settings.
+// PrePush refuses a push whose new commits break a rule of ws: a good signature by the committer,
+// and the maintainer's trailer on another author's commit. refs are git's pre-push lines. The error
+// names each refused commit and its rule, never a key (README.md#the-push-check).
 func PrePush(ctx context.Context, m effect.Machine, refs io.Reader) error {
 	var refused []string
 	lacksTrailer := false

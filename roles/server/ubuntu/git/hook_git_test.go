@@ -18,19 +18,6 @@ func trailer() string {
 	return "Co-authored-by: " + id.Name + " <" + id.Email + ">"
 }
 
-func TestGitConfigHookNamesTheMacsIdentity(t *testing.T) {
-	m, e := machine(t)
-	if err := write(t, e, units(t, e, "file/git-config")); err != nil {
-		t.Fatal(err)
-	}
-	got := string(m.Files["/etc/ws/gitconfig"])
-	for _, want := range []string{"[hook \"ws-co-author\"]\n\tevent = commit-msg\n", "--if-exists addIfDifferent", "--trailer '" + trailer() + "'"} {
-		if !strings.Contains(got, want) {
-			t.Errorf("gitconfig lacks %q:\n%s", want, got)
-		}
-	}
-}
-
 // gitRepo is a repository of the test's own, read by a git whose config is the rendered file alone.
 type gitRepo struct {
 	t   *testing.T
@@ -60,17 +47,22 @@ func (r gitRepo) count() int {
 }
 
 // newGitRepo renders ws's settings into a file, and has a global config that includes it, with
-// signing off, which needs a key. Neither the host's config nor its environment reaches git.
+// signing off, which needs a key. Neither the host's config nor its environment reaches git. The
+// test's binary stands for ws in the hooks (TestMain).
 func newGitRepo(t *testing.T) gitRepo {
 	m, e := machine(t)
 	if err := write(t, e, units(t, e, "file/git-config")); err != nil {
+		t.Fatal(err)
+	}
+	ownBinary, err := os.Executable()
+	if err != nil {
 		t.Fatal(err)
 	}
 	home := t.TempDir()
 	ws := filepath.Join(home, "ws.gitconfig")
 	global := filepath.Join(home, "gitconfig")
 	for path, text := range map[string]string{
-		ws:     string(m.Files["/etc/ws/gitconfig"]),
+		ws:     strings.ReplaceAll(string(m.Files["/etc/ws/gitconfig"]), self, ownBinary),
 		global: "[include]\n\tpath = " + ws + "\n[commit]\n\tgpgsign = false\n[tag]\n\tgpgsign = false\n[init]\n\tdefaultBranch = main\n",
 	} {
 		if err := os.WriteFile(path, []byte(text), 0o600); err != nil {
@@ -79,7 +71,7 @@ func newGitRepo(t *testing.T) gitRepo {
 	}
 	r := gitRepo{t: t, dir: filepath.Join(home, "repo"), env: []string{
 		"HOME=" + home, "PATH=" + os.Getenv("PATH"), "GIT_CONFIG_GLOBAL=" + global,
-		"GIT_CONFIG_SYSTEM=/dev/null", "GIT_CONFIG_NOSYSTEM=1",
+		"GIT_CONFIG_SYSTEM=/dev/null", "GIT_CONFIG_NOSYSTEM=1", asWs + "=1",
 	}}
 	if err := os.Mkdir(r.dir, 0o700); err != nil {
 		t.Fatal(err)

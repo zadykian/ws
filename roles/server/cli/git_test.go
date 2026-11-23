@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -130,6 +131,25 @@ func TestGitTakesTheTokensInputInTheSecretsTask(t *testing.T) {
 		}
 		if _, ok := m.Files["/etc/ws/tokens.gitconfig"]; ok {
 			t.Errorf("case %d: a check wrote tokens.gitconfig", i)
+		}
+	}
+}
+
+// git sets GIT_EDITOR=: where it opens no editor. Only then is a line that starts as a comment the
+// message's text, which the command takes without git's strip of comments.
+func TestGitCommitMsgTakesACommentLineAsTextWhereNoEditorOpens(t *testing.T) {
+	const add = "git interpret-trailers --in-place --no-divider --if-exists addIfDifferent --trailer " +
+		"Co-authored-by: zadykian <me@zadykian.dev> msg"
+	for editor, want := range map[string][]string{
+		":":   {"read msg", "run " + add},
+		"vim": {"read msg", "run git stripspace --strip-comments"},
+	} {
+		p, m := valuesProcess("")
+		p = clitest.WithEnv(p, map[string]string{"GIT_EDITOR": editor})
+		m.Files["msg"] = []byte("#42 fix the fan curve\n")
+		m.Results[add], m.Results["git stripspace --strip-comments"] = effecttest.Result{}, effecttest.Result{}
+		if status, _, stderr := runWs(p, "", "server", "git", "commit-msg", "msg"); status != 0 || !slices.Equal(m.Calls, want) {
+			t.Errorf("GIT_EDITOR=%s: status = %d, stderr %q, calls %q; want %q", editor, status, stderr, m.Calls, want)
 		}
 	}
 }
