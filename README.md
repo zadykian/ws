@@ -52,7 +52,8 @@ it has any:
 `roles/client/` sets up the Mac that works on the server, and Ghostty and Zed on it: [The Mac](roles/client).
 Its [`frame`](roles/client/macos/frame) is what the Mac's roles of mise's config lean on, and
 `/usr/local/bin/ws`. Its [`firewall`](roles/client/macos/firewall) turns the Application Firewall on
-and has it block all incoming.
+and has it block all incoming. Its [`dotnet`](roles/client/macos/dotnet) installs .NET's SDKs, as `devtools` does on
+the server.
 
 A new Mac with Apple silicon follows [the Mac's runbook](roles/client/runbook.md). It runs
 `install.sh` through `sudo`, which installs ws's binary, checked against its SHA-256, and writes the

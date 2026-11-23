@@ -139,8 +139,9 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
 - A pinned download is checked against its SHA-256 before use: ikeward's
   binary ([units.toml.tmpl](../roles/server/ubuntu/ikeward/units.toml.tmpl)) and otelcol's `.deb`
   ([units.toml.tmpl](../roles/server/ubuntu/otelcol/units.toml.tmpl)). So is Fresh's `.deb`
-  ([units.toml.tmpl](../roles/server/ubuntu/fresh/units.toml.tmpl)), and so are .NET's SDKs
-  ([devtools](../roles/server/ubuntu/devtools/units.toml.tmpl)). So is nct6687's source
+  ([units.toml.tmpl](../roles/server/ubuntu/fresh/units.toml.tmpl)), and so are .NET's SDKs, on
+  the server and the Mac ([devtools](../roles/server/ubuntu/devtools/units.toml.tmpl),
+  [dotnet](../roles/client/macos/dotnet/units.toml.tmpl)). So is nct6687's source
   ([fans](../roles/server/ubuntu/fans/units.toml.tmpl)), and so are foundryctl
   ([ci.yml](../.github/workflows/ci.yml)) and the gates' tools ([.tools/run](../.tools/run)). So is ws's
   binary: `install.sh` and `ws update` check it against the release's `ws.sha256`

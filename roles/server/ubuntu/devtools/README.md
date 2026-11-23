@@ -37,7 +37,7 @@ replaces the directory whole ([tree](../../../../engine/core/kind/README.md#tree
 - To bump an SDK, take its files' SHA-512 from its channel's `releases.json`, such as
   `https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json`. Check each
   architecture's tarball against it with `sha512sum -c`, then pin the tarball's `sha256sum` and
-  the version in the unit.
+  the version in the unit. The Mac's [dotnet](../../../client/macos/dotnet/README.md) pins its own.
 
 ## The tools
 
