@@ -187,6 +187,7 @@ done
 echo "::endgroup::"
 
 echo "::group::A ws that prints another version than the release is refused, and nothing is left"
+reset
 if install_sh WS_VERSION=0.7.0 2>"$tmp/refusal"; then
     fail "install.sh went through with a ws that prints another version"
 fi
