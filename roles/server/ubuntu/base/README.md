@@ -7,13 +7,35 @@ mise config and a spec of ws's units ([The frame](../frame/README.md)):
 
 | File | What it holds |
 | --- | --- |
-| [`mise.server.toml`](mise.server.toml) | The packages, and the units of every server. |
+| [`mise.server.toml`](mise.server.toml) | The git-core PPA, the packages, and the units of every server. |
 | [`units.toml.tmpl`](units.toml.tmpl) | The units: the locale, the time zone, unattended upgrades and apt's timers, the swap file and the swappiness. |
-| [`files/`](files) | The files that the units write. |
+| [`files/`](files) | The files that the units write, and the allowance of the PPA's origin. |
 
 The values are `WS_BASE_LOCALE`, `WS_BASE_TIMEZONE`, `WS_BASE_SWAP_SIZE_MB` and `WS_BASE_SWAPPINESS`
 of the values file ([the README](../../../../README.md#running-it-again)). The packages are mise's
 lines, so another list is a change to `mise.server.toml`.
+
+## Git
+
+Ubuntu 26.04 ships git 2.53. The hooks that git's config holds came in 2.54. So git comes from
+Launchpad's git-core PPA, which held 2.56 for 26.04 on 2026-11-22.
+
+mise writes the PPA as `/etc/apt/sources.list.d/mise-git-core.sources`, with its key. It keeps the
+key only where its primary fingerprint is `F911 AB18 4317 630C 5997 0973 E363 C90F 8F1B 6217`,
+Launchpad's for the PPA. A key with another fingerprint fails the run. apt takes the PPA's git over
+Ubuntu's, as its version is higher. An installed git of Ubuntu's moves to the PPA's once. A machine
+that holds the PPA's source from `add-apt-repository` must drop it first, as two keys for one
+repository fail apt: the same holds for [Docker's source](../docker/README.md).
+The PPA's index for apt's amd64v3 variant holds no `git`. A machine that set
+`APT::Architecture-Variants` fails or mixes versions at git until the setting goes.
+[files/52unattended-upgrades-git-core](files/52unattended-upgrades-git-core) goes to
+`/etc/apt/apt.conf.d/` and allows the PPA's origin, so unattended-upgrades installs each release of
+its git within a day.
+[The `server` job](../../../../.github/workflows/server.md) proves the move to the PPA's git. It starts
+from Ubuntu's, as the runner's image has the PPA's. It fails where the setup leaves a git below 2.54.
+
+Setting a global `core.hooksPath` would not serve: a repository that sets its own, as ws does with
+`.githooks`, skips it. Hooks in git's config run beside the repository's own.
 
 ## Locale and time zone
 
@@ -27,7 +49,7 @@ tzlocal. A locale that glibc lacks, or a zone with no file, fails the plan
 ## Unattended upgrades
 
 The stock `50unattended-upgrades`, left unchanged, installs Ubuntu's security updates daily, and
-[devtools](../devtools/README.md#gh) allows gh's releases. `/etc/apt/apt.conf.d/20auto-upgrades`
+[devtools](../devtools/README.md#gh) allows gh's releases, and [the PPA's origin](#git) git's. `/etc/apt/apt.conf.d/20auto-upgrades`
 holds the settings the package writes when its question is answered yes, under the role's header.
 ucf, which keeps the file for the package, takes the header for a change made by hand. So an
 upgrade of unattended-upgrades that ships other settings asks which file to keep, and keeps the

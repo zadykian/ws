@@ -14,7 +14,8 @@ web='while true; do printf "HTTP/1.0 200 OK\r\n\r\nhi\n" | nc -l -p 80; done'
 unset XDG_CONFIG_HOME
 sed -i '/^XDG_/d' /etc/environment
 # The runner's apt takes the amd64v3 variant, which a machine turns on by hand. The dotnet PPA's
-# index of that variant holds no .NET 8, so the cases run with no variant, as a machine has none.
+# index of that variant holds no .NET 8, and the git-core PPA's holds no git. So the cases run with
+# no variant, as a machine has none.
 # apt reads this file after apt.conf.d, so the line wins wherever the runner set the variant.
 echo '#clear APT::Architecture-Variants;' >>/etc/apt/apt.conf
 export HOME=/root DEBIAN_FRONTEND=noninteractive
@@ -68,14 +69,24 @@ up() {
 # The image's Docker is not ws's, and ws must install its own. The purge leaves docker0, which the
 # route check accepts. The image's source of Docker goes too, as apt refuses one repository signed
 # by two keys, and mise adds its own. So do the plugins that the image put in Docker's directory
-# past dpkg, which would keep it and warn.
-apt-get update
+# past dpkg, which would keep it and warn. The same holds for the image's source of the git-core PPA,
+# which ws adds with its own key.
 rm -rf /usr/libexec/docker/cli-plugins
 apt-get purge -y docker-ce docker-ce-cli containerd.io
 rm -rf /etc/docker /var/lib/docker /var/lib/containerd
 for f in /etc/apt/sources.list.d/*; do
-    if [ -f "$f" ] && grep -q download.docker.com "$f"; then rm -f "$f"; fi
+    if [ -f "$f" ] && grep -q -e download.docker.com -e git-core/ppa "$f"; then rm -f "$f"; fi
 done
+apt-get update
+# The image's git comes from that PPA already, so it would pass the git check below whatever the
+# setup does. Git and git-man go down to the archive's version, as on a server from Ubuntu's image,
+# which the setup must move up to the PPA's.
+archive_git=$(apt-cache madison git | awk '$3 !~ /ppa/ && !seen++ { print $3 }')
+[ -n "$archive_git" ] || fail "no archive version of git"
+apt-get install -y --allow-downgrades --no-install-recommends "git=$archive_git" "git-man=$archive_git"
+git_version=$(git version | cut -d' ' -f3)
+[ "$(printf '%s\n' "$git_version" 2.54 | sort -V | head -n 1)" != 2.54 ] ||
+    fail "git is $git_version after the downgrade, so the git check proves nothing"
 apt-get install -y --no-install-recommends netcat-openbsd
 
 # Root logs in by key, as a cloud VM's does.
@@ -174,6 +185,18 @@ must "the first setup prints no warning" "$check" "$log"
 must "the second setup runs" setup
 must "the second setup leaves nothing to do" setup --plan
 
+# Hooks in git's config came in git 2.54, which Ubuntu 26.04 lacks. The git above was Ubuntu's, so
+# ws's git comes from the git-core PPA, whose source mise wrote, and its version has the PPA's suffix.
+git_from_ppa() {
+    local version
+    version=$(git version | sed -n 's/^git version \([0-9][0-9]*\.[0-9][0-9]*\).*/\1/p')
+    echo "git $version"
+    [ "$(printf '%s\n' "$version" 2.54 | sort -V | head -n 1)" = 2.54 ] &&
+        test -f /etc/apt/sources.list.d/mise-git-core.sources &&
+        dpkg-query -W git | grep -q ppa
+}
+must "git is 2.54 or above, from the git-core PPA" git_from_ppa
+
 # What the runs wrote, which needs no container. The plans that must fail, from /opt/ws and with a
 # unit's line dropped. The values file, which no run changed. Zed's wrapper and tmux.conf against
 # tmux, which takes about a minute and catches a tmux release that changes how list-sessions or
@@ -193,19 +216,22 @@ fresh_config() {
 }
 must "Fresh loads the config that ws wrote" fresh_config
 
-# An empty commit, made in a new repository, has git sign and verify with the key's own path. It
-# reads the git role's key, ~/.gitconfig's include of /etc/ws/gitconfig, and /etc/ws/allowed_signers
-# as git reads them. The file's text alone cannot tell that git opens a path.
+# An empty commit, made in a new repository, has git sign and verify with the key's own path, and
+# carries the one trailer that ws's hook adds. It reads the git role's key, ~/.gitconfig's include
+# of /etc/ws/gitconfig, and /etc/ws/allowed_signers as git reads them. The file's text alone cannot
+# tell that git opens a path, or runs the hook.
 signed_commit() {
-    local repo status
+    local repo status trailers
     repo=$(mktemp -d)
     git -C "$repo" -c init.defaultBranch=main init -q
     git -C "$repo" commit -q --allow-empty -m check
     status=$(git -C "$repo" log -1 --format=%G?)
+    trailers=$(git -C "$repo" log -1 --format=%B | grep -c '^Co-authored-by: zadykian <me@zadykian.dev>$' || true)
     rm -rf "$repo"
-    [ "$status" = G ]
+    echo "signature $status, $trailers trailer(s)"
+    [ "$status" = G ] && [ "$trailers" = 1 ]
 }
-must "root signs a commit, and git verifies it" signed_commit
+must "root signs a commit, git verifies it, and it holds one co-author trailer" signed_commit
 
 # The pulls ahead of the runs, as a run of an image not yet pulled warns.
 must "docker pulls the image" docker pull -q "$image"

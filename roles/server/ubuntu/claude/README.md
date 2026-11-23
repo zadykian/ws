@@ -1,7 +1,7 @@
 # claude
 
 The `claude` role sets claude and cld up from `mise bootstrap`. Its `mise.server.toml` installs
-curl, which fetches the installers, and names the nine units of its `units.toml.tmpl`. They run one
+curl, which fetches the installers, and names the ten units of its `units.toml.tmpl`. They run one
 after another, in this order, after git's tokens:
 
 - `state/claude-install` and `state/claude-cld-install`: claude, from its native installer, and
@@ -10,6 +10,8 @@ after another, in this order, after git's tokens:
 - `state/claude-update`, `-completion`, `-settings`, `-telemetry` and `-marketplaces`: the commands
   `ws server claude update`, `completion`, `settings`, `telemetry` and `marketplaces`, as
   root, each with `--check` as its check, which fails where the command would change something.
+- `file/claude-managed-settings`: claude's managed settings, which turn off its own attribution
+  ([Attribution](#attribution)). It runs after `-settings`, before `-telemetry`.
 - `state/claude-linger` and `state/claude-restore`: lingering for root, then
   `ws server claude restore` ([Sessions after a reboot](#sessions-after-a-reboot)).
 
@@ -33,8 +35,36 @@ the channel claude notifies on. It keeps every value already there. `--check` ru
 the file and lists the keys it would add. A cld that predates the command gets it from the update
 first.
 
+It sets no attribution there: cld keeps a value already in that file, and the user could change
+it. The managed file of [Attribution](#attribution) turns claude's own off.
+
 Bypass mode, which skips every permission prompt, stays off as root: claude refuses it there, and
 ws sets nothing that lifts the refusal.
+
+## Attribution
+
+claude adds to each commit a `Co-Authored-By` trailer that names its model, and a `Claude-Session`
+trailer with the session's link where the session is a cloud or Remote Control one. It adds a line
+to each pull request's body, and the link there too. On ws a commit carries the one `Co-authored-by`
+trailer that git adds, so `file/claude-managed-settings` writes
+`/etc/claude-code/managed-settings.json`, root's at 644, from `files/managed-settings.json`:
+
+| Key | Value | Turns off |
+| --- | --- | --- |
+| `attribution.commit` | `""` | the `Co-Authored-By` trailer |
+| `attribution.pr` | `""` | the line in a pull request's body |
+| `attribution.sessionUrl` | `false` | the session link, in both |
+
+Claude's [settings reference](https://code.claude.com/docs/en/settings-reference#attribution) names
+the three keys, and the schema in the binary of claude 2.1.330 holds them. An empty `commit` drops
+the `Co-Authored-By` trailer, but claude then adds the `Claude-Session` trailer alone. So the third
+key is needed, as a cloud or Remote Control session gets the link. The one key
+`attribution: false` sets all three, but from claude 2.1.281 only, and an older claude skips a file
+that holds it, so the file names the three. Each has a setting, so none stays on.
+
+The file is claude's managed settings, which win over the user's, and not
+`~/.claude/settings.json`: cld keeps a value already there, and the user's file could change it. A
+session reads the file as it starts. The next run writes it again where it differs.
 
 ## Sessions after a reboot
 

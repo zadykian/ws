@@ -1,10 +1,11 @@
 # git
 
-The `git` role sets git up from `mise bootstrap`. Its `mise.server.toml` installs git and
-openssh-client, and names the eight units of its `units.toml.tmpl`:
+The `git` role sets git up from `mise bootstrap`. Its `mise.server.toml` installs git, from
+[the PPA that base sets up](../base/README.md#git), and openssh-client, and names the eight units of its `units.toml.tmpl`:
 
 - `file/git-config`: `/etc/ws/gitconfig`, root's and 644, from `files/ws.gitconfig.tmpl`. Each
-  run replaces any change made to it.
+  run replaces any change made to it. It holds the hooks of [The co-author trailer](#the-co-author-trailer) and
+  [The push check](#the-push-check).
 - `guard/git-check`: `ws server git check`, after the key and its file, so that a refused
   token or clone stops no signing, and before the include, the tokens and the clones. It refuses a
   clone or a tokens file the role would act on, and names what shadows ws's settings.
@@ -60,11 +61,12 @@ makes the pair once, as root, an ed25519 key with no passphrase, as tools and cl
 unattended. It makes the key's missing directory first, 0700. The key only signs. The
 role does not register it with GitHub: [The signing key](../devtools/README.md#the-signing-key).
 
-To revoke the key, delete it in the GitHub account's settings, then delete
+To revoke the key, delete it in `@zadykiand`'s settings on GitHub, then delete
 `~/.ssh/id_ed25519_signing` and its `.pub`. The next run makes a new key, and its `.pub` goes to
-the GitHub account by hand. A key deleted on GitHub alone needs that too.
+`@zadykiand` by hand. A key deleted on GitHub alone needs that too.
 
-`git verify-commit` trusts the key for `me@zadykian.dev` through `/etc/ws/allowed_signers`,
+Each commit there is by the machine account, `zadykiand <su@zadykian.dev>`, from
+`gitcfg.WS()`. `git verify-commit` trusts the key for `su@zadykian.dev` through `/etc/ws/allowed_signers`,
 root's and 644, the Mac's path too. Its unit reads the `.pub` through the account, which refuses a
 link on the way, and runs after the key's. Each run replaces a change made to it. A `values.yml`
 that names `shell_git_allowed_signers` is refused. So `git verify-commit` fails here
@@ -78,6 +80,106 @@ To sign with another key, set it there.
 
 A plan makes no key, so on a machine without one it shows the key's creation, and the allowed
 signers file without a key. The file's write, after the key's, puts the key in.
+
+## The co-author trailer
+
+A commit that `git commit` or a merge makes on ws, by claude, lazygit, Zed or the shell, carries
+one trailer, `Co-authored-by: zadykian <me@zadykian.dev>`: the maintainer, whom the machine account
+commits for. A squash is the one exception: it joins the messages of its commits, and each keeps
+its trailer, so the result can hold two. The push check passes it.
+The name and the email are the Mac's identity, `gitcfg.Mac()`. A hook of git's config adds it,
+`[hook "ws-co-author"]` on `commit-msg`, which runs `/usr/local/bin/ws server git commit-msg` with
+the message's file as its argument. ws runs
+`git interpret-trailers --in-place --no-divider --if-exists addIfDifferent` on the file.
+`addIfDifferent` adds the line once, so that `--amend`, a message that holds it already and a
+second run add none. `--no-divider` keeps a line of three dashes in the body from moving the trailer
+above it, out of the last paragraph that the push check reads.
+An empty message gets none. Git runs `commit-msg` before its check of an empty message, so a
+trailer alone would commit it. Where no editor opens, as with `-m`, `-F`, `--amend --no-edit` and a
+merge, git gives the hook `GIT_EDITOR=:`. Its cleanup is then `whitespace`, which keeps comment
+lines, so `-m "#42 fix the fan curve"` is a message. ws tells an empty one by its whitespace
+alone. With an editor, ws cuts the scissors section, git's comment string, a space, 24 dashes, `>8`
+and 24 dashes, whatever `core.commentChar` is, and then the comments, by
+`git stripspace --strip-comments`. It cannot see an explicit `--cleanup` or `commit.cleanup`, nor a
+`core.commentChar` that `git -c` sets: ws passes none of git's own variables to its commands.
+claude's own trailers are off ([Attribution](../claude/README.md#attribution)).
+
+The hook runs before a repository's own `commit-msg`, `.githooks` of ws included, and a failing
+one, such as a `ws` missing at its path, refuses the commit. A commit that skips hooks, with
+`--no-verify`, has none. `git rebase`, `git cherry-pick`, `git revert` and `git am` run no
+`commit-msg`, so a commit that any of them writes keeps its message. A rebase's or a cherry-pick's
+commit keeps its author too. A revert's and an am's is the machine's own, with no trailer, so the
+push check refuses it until `git commit --amend --no-edit` runs the hook on it. A `reword` of
+`git rebase -i`, and a `git commit` or a `--continue` after a conflict, run it. Hooks in git's
+config came in git 2.54, which [the PPA](../base/README.md#git) gives. The test of the hook, where
+the test's binary stands for ws, skips on an older git. `server`'s check of a signed commit holds
+the one trailer on the set-up machine
+([The `server` job](../../../../.github/workflows/server.md)).
+
+## The push check
+
+A push from ws sends no commit that breaks a rule of ws. `[hook "ws-push"]` in `/etc/ws/gitconfig`,
+on `pre-push`, runs `/usr/local/bin/ws server git pre-push`, which gets the remote and its URL as
+arguments, and the pushed refs on its standard input, as git gives them. For each ref it lists
+the commits that no remote-tracking ref holds and the remote's commit at the ref does not, as
+`git log LOCAL --not --remotes REMOTE-SHA` does. It refuses a commit by each rule it breaks. A tracking
+ref of any remote holds a commit, whichever remote the push goes to. REMOTE-SHA is the fourth field
+of git's line. It stands in for the tracking refs that a bare clone lacks. All zeros, or a commit
+that the repository lacks, leave out nothing:
+
+- `signature`: `%G?` is not `G`. A good one is one that `/etc/ws/allowed_signers` trusts.
+- `signer`: the signer, `%GS`, is not the committer's email, `%ce`.
+- `trailer`: it holds no `Co-authored-by: zadykian <me@zadykian.dev>`, unless its author is
+  `me@zadykian.dev`. The comparison ignores case, as the hook's `interpret-trailers` does. Such a
+  commit is the Mac's, which ws rebased: the rebase signs it as ws and runs no `commit-msg` hook
+  ([The co-author trailer](#the-co-author-trailer)).
+  `git revert` and `git am` run no `commit-msg` hook either, so their commits lack it. A refusal
+  that lists a missing trailer says so: `git commit --amend --no-edit` runs the hook on the last
+  commit.
+
+A refusal names each commit by its first 12 characters and lists ten rules at most, one line for
+each rule that a commit breaks, and counts the rest. It prints no key. The push stops, and the
+hook's exit status is 1. These cases are decided:
+
+- A deleted ref sends no commit, so it passes.
+- A new branch is checked by the commits that no remote-tracking ref holds.
+- A tag is checked by its commit, which an annotated tag peels to. The tag object's own signature
+  is not checked. A tag of a tree or a blob sends no commit.
+- A merge commit is checked as any commit. The commits it merges in that no remote-tracking ref
+  holds are checked too.
+- A commit that the Mac made and ws carries unchanged keeps the Mac's signature. ws cannot check
+  it, so the check refuses it where no remote-tracking ref holds it, as after a fetch by URL. A
+  fetch from a named remote gives it a tracking ref, and the check lets it pass.
+  `git rebase --force-rebase` on ws signs it again.
+- A commit that another remote's tracking refs hold passes in a push to this one. A commit of a
+  fork, fetched and merged, goes out unchecked under a merge that is signed and credited.
+- A commit whose email or a Co-authored-by trailer holds a control character, US, which the check
+  reads its fields by, is refused by its name. Replaced objects (`git replace`) stay unread, as the
+  push sends the originals.
+- A repository with no remote-tracking ref, as a bare clone, checks what the push adds to the
+  remote's commit at the ref. A ref that is new to the remote there, or a remote commit that the
+  repository lacks, leaves out nothing, so the whole history of the pushed ref is checked.
+- An empty range, where every commit is held already, passes. A branch made at a pushed commit
+  does.
+- A line of the refs of fewer than four fields, or a hook that fails, such as a `ws` missing at
+  its path, refuses the push. The line is read from its right, as a local ref may hold spaces:
+  the source of `HEAD@{2 hours ago}:refs/heads/x` is one.
+
+The check stops a mistake and not a person. These skip it:
+
+- `git push --no-verify`, and a push through GitHub's API;
+- a repository's `hook.ws-push.enabled = false`, and any config that disables or replaces the hook:
+  `git -c`, `GIT_CONFIG_COUNT`, or a `hook.ws-push` line in `~/.gitconfig` below the include;
+- a repository's `gpg.ssh.allowedSignersFile`, which changes who `G` trusts.
+
+GitHub's own ruleset on every branch, which the maintainer sets by hand
+([By hand](../../../../README.md#by-hand)), refuses an unsigned push
+whatever the machine runs. GitHub enforces the signature alone, and not the trailer.
+
+The hook runs beside a repository's own `pre-push`, and before it.
+Hooks in git's config came in git 2.54, which [the PPA](../base/README.md#git) gives. The test of
+the check runs on any git with SSH signing, with keys, a config and a bare repository of its own
+in a temporary directory. The test of the hook's wiring skips on an older git.
 
 ## Git credentials
 

@@ -134,9 +134,11 @@ Run `ssh -t NAME claude auth login`, and open the address it shows in the Mac's 
 
 ## Signing key
 
-Copy the server's signing key, which `~/.gitconfig` there names, and add it with `gh ssh-key add
---type signing --title HOSTNAME`. The Mac's gh login holds the scope: ws's token has no account
-permission ([Signing](../server/ubuntu/git/README.md#signing)).
+Add the server's signing key by hand in `@zadykiand`'s settings on GitHub, as a signing key. Its
+`.pub` is the file that `~/.gitconfig` there names. The Mac's gh is the maintainer's login and adds
+none for the machine account ([Signing](../server/ubuntu/git/README.md#signing)).
+Where the same key stands in `@zadykian`'s settings as a signing key, take it off there. GitHub
+would show a commit that ws signs under the maintainer's email as verified.
 
 ## The tunnel
 
@@ -166,4 +168,4 @@ Skip it on a cloud VM and a VM on the Mac.
 - macOS's grant of the local network to an app.
 - The server's lease, made static, and the router's forwards where `WS_REMOTE` is set
   ([The router](../server/ubuntu/cable/router.md)).
-- git's signing key on GitHub, which no run adds.
+- git's signing key on GitHub, and ws's in `@zadykiand`'s settings, which no run adds.

@@ -131,8 +131,12 @@ has left behind. [files/52unattended-upgrades-github-cli](files/52unattended-upg
 goes to `/etc/apt/apt.conf.d/` and allows the repository's origin, so unattended-upgrades
 installs each release of gh within a day.
 
-gh logs in to github.com as the user, by the [secret input](../frame/README.md#secret-inputs)
-`WS_GITHUB_TOKEN` of [mise.secrets.toml](mise.secrets.toml):
+gh acts as the machine account, `@zadykiand`. Its token is the account's classic one, with the
+scopes `repo`, `workflow` and `read:org`, and no expiry. gh's login refuses a classic token with no
+`read:org`. A fine-grained token cannot reach a repository of another personal account where the
+account is a collaborator, as `@zadykiand` is on ws's. gh logs in to github.com by the
+[secret input](../frame/README.md#secret-inputs) `WS_GITHUB_TOKEN` of
+[mise.secrets.toml](mise.secrets.toml):
 
 - mise writes the token to `/etc/ws/gh-token`, root's and mode 0600, with ws's header on its
   first line and the token on its last. mise's plan shows no value. A run without the secrets task
@@ -154,7 +158,8 @@ where it says otherwise. Both run with `GH_TELEMETRY=0`, so that they send none 
 ## The signing key
 
 The role does not register the key that signs the machine's commits
-([Signing](../git/README.md#signing)). ws's gh holds a token with repository permissions alone,
-which cannot add a signing key. Add the `.pub` by hand in the account's settings on GitHub, as a
-signing key. Until then, GitHub shows the machine's commits as unverified, and the ruleset on `main`
-refuses them.
+([Signing](../git/README.md#signing)). Its token would need the scope `write:ssh_signing_key` to
+add one. Add the `.pub` by hand in `@zadykiand`'s settings on GitHub, as a signing key, and not in
+the maintainer's. Until the key is there, GitHub shows the machine's commits as unverified, and the
+ruleset on `main` refuses them. Where the key stands in `@zadykian`'s settings as a signing key, take
+it off there. GitHub would show a commit that ws signs under the maintainer's email as verified.

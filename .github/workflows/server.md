@@ -9,7 +9,10 @@ would a server that root alone logs in to: root's `authorized_keys` holds a key,
 made. The runner's own Docker is purged first, as ws installs
 its own. Its apt source goes too, as apt refuses a repository that two sources name with different
 keys, and mise adds its own. So do the plugins that the image put in Docker's directory past dpkg,
-which would keep it and warn. apt's daily timers lose the stamps of their runs at the image's
+which would keep it and warn. The image's source of the git-core PPA goes
+too, as ws adds the PPA with its own key. Then apt's lists are fetched anew. The image's git comes
+from that PPA, so git and git-man go down to the archive's version. The job fails where git is not
+below 2.54 then. apt's daily timers lose the stamps of their runs at the image's
 build, as a new machine's have none before their first start. With them, systemd takes a run as
 missed at the boot. Each of the bootstrap's reloads draws the run's random delay again, and one
 soon falls in the past: an upgrade then holds dpkg's lock under the bootstrap. The runner's
@@ -33,7 +36,10 @@ log shows the timers and their stamps before it and after it, and systemd's relo
 failure shows what started the upgrade. Setup's `--plan` must exit 2 before the run, which has
 mise, the plugin and the bootstrap to do, and exit 0 after it. Setup runs twice, and the plan must
 exit 0 again. Neither run nor plan may print a warning, whatever its exit code
-([The warnings check](README.md#the-warnings-check)). A failure prints the system daemon's log.
+([The warnings check](README.md#the-warnings-check)). Git must then be 2.54 or above, with the
+PPA's version, so the setup moved it up
+([base](../../roles/server/ubuntu/base/README.md#git)). A failure prints the system
+daemon's log.
 
 The run leaves checks that need no container. With the frame's line of `file/ws-values` dropped,
 the plan must exit 1 ([server-plan.sh](../server-plan.sh)): the check against a silent skip holds.
@@ -44,7 +50,8 @@ values file is root's at 600, and no run changed its bytes ([The values
 file](../../roles/server/ubuntu/frame/README.md#the-values-file)). A run with no file is
 `values_file_test.go`'s. The Zed wrapper's [checks](../zed-terminal-checks.sh) run on the files the
 bootstrap installed, and Fresh's on the config it loaded. Root's empty commit must sign and
-verify. With no NVIDIA GPU, `nvidia` checks its names alone, and with no MSI board, `fans` leaves
+verify, and hold one `Co-authored-by` trailer, which [git's hook](../../roles/server/ubuntu/git/README.md#the-co-author-trailer)
+adds. With no NVIDIA GPU, `nvidia` checks its names alone, and with no MSI board, `fans` leaves
 its fans alone. Without a VPN profile, `ikeward` does nothing.
 
 The firewall must hold under the system daemon. Docker must pull the image, as a run of an image

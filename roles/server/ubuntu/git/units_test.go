@@ -44,7 +44,7 @@ func TestGitConfigOfRootIsGitcfgsSettings(t *testing.T) {
 	if err := write(t, e, units(t, e, "file/git-config")); err != nil {
 		t.Fatal(err)
 	}
-	settings := gitcfg.Settings(gitcfg.Inputs{Key: "/root/.ssh/id_ed25519_signing.pub", Gh: "/usr/bin/gh"})
+	settings := gitcfg.Settings(gitcfg.WS(), gitcfg.Inputs{Key: "/root/.ssh/id_ed25519_signing.pub", Gh: "/usr/bin/gh"})
 	got := string(m.Files["/etc/ws/gitconfig"])
 	if _, rest, ok := strings.Cut(got, "at its top.\n"); !ok || !strings.HasPrefix(rest, settings) {
 		t.Errorf("gitconfig = %q, want gitcfg's settings below the header", got)
@@ -120,7 +120,7 @@ func TestGitCheckStopsAllButSigning(t *testing.T) {
 	if _, ok := m.Files["/root/.gitconfig"]; ok {
 		t.Error("the include went in after a failed check")
 	}
-	want := gitcfg.AllowedSigners(file.Header("#"), "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGit")
+	want := gitcfg.AllowedSigners(gitcfg.WS(), file.Header("#"), "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGit")
 	if got := string(m.Files["/etc/ws/allowed_signers"]); got != want {
 		t.Errorf("allowed_signers after a failed check = %q, want %q", got, want)
 	}
@@ -155,7 +155,7 @@ func TestGitSignersTrustTheKey(t *testing.T) {
 	if err := apply(t, units(t, e, "file/git-signers")[0]); err != nil {
 		t.Fatal(err)
 	}
-	want := gitcfg.AllowedSigners(file.Header("#"), "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGit")
+	want := gitcfg.AllowedSigners(gitcfg.WS(), file.Header("#"), "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGit")
 	if got := string(m.Files[p]); got != want || m.Modes[p] != 0o644 {
 		t.Errorf("%s = %q, mode %o; want %q, 644", p, got, m.Modes[p], want)
 	}

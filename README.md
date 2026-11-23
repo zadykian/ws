@@ -30,16 +30,17 @@ it has any:
 - [`fans`](roles/server/ubuntu/fans): fan curves for the board's headers, and the driver that sets them.
 - [`shell`](roles/server/ubuntu/shell): `/etc/ws/bashrc` and `/etc/ws/profile`, one line of each at the top of
   `~/.bashrc` and `~/.profile`, and `/etc/ws/env` from mise's secret inputs.
-- [`git`](roles/server/ubuntu/git): `/etc/ws/gitconfig` and its include in `~/.gitconfig`, a key that
-  signs commits, git's tokens for servers besides GitHub, and clones of repositories.
+- [`git`](roles/server/ubuntu/git): `/etc/ws/gitconfig` and its include in `~/.gitconfig`, and a key that
+  signs commits. A hook adds a co-author trailer to each, and one checks each push. It sets git's
+  tokens for servers besides GitHub, and clones of repositories.
 - [`tmux`](roles/server/ubuntu/tmux): tmux from Ubuntu's archive.
 - [`lazygit`](roles/server/ubuntu/lazygit): lazygit from Ubuntu's archive, in JetBrains Dark, with the
   repository and its branch in the terminal's title.
 - [`devtools`](roles/server/ubuntu/devtools): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go,
   gopls, Delve, roslyn-language-server, the SQL, Docker and npm language servers, and rustup.
 - [`docker`](roles/server/ubuntu/docker): Docker Engine, its `daemon.json` and a slice for its containers.
-- [`claude`](roles/server/ubuntu/claude): claude, its user settings and telemetry, its sessions after a reboot,
-  and plugin marketplaces from a list.
+- [`claude`](roles/server/ubuntu/claude): claude, its user settings and telemetry, its attribution off, its sessions after a
+  reboot, and plugin marketplaces from a list.
 - [`signoz`](roles/server/ubuntu/signoz): SigNoz in Docker, which keeps the machine's telemetry for 90 days.
 - [`otelcol`](roles/server/ubuntu/otelcol): the OpenTelemetry Collector on the host, which feeds SigNoz.
 - [`fresh`](roles/server/ubuntu/fresh): the Fresh editor, from the .deb of a pinned release, with the plain keys,
@@ -137,12 +138,19 @@ diff included, but a secret's. A run by hand of `ws unit write UNIT` sets up tha
 ## By hand
 
 Secrets are never in this repository. The claude login, ws's signing key on GitHub and the Mac's key
-as `wg0`'s peer stay manual. ws's gh takes a fine-grained personal access token, which the secrets
-task's run logs gh in with, from the secret input `WS_GITHUB_TOKEN`
-([gh](roles/server/ubuntu/devtools/README.md#gh)). Its permissions are the account's selected
-repositories; Metadata and Actions read; Contents, Pull requests, Issues and Workflows read and
-write; and no account permission. These stay manual:
+as `wg0`'s peer stay manual. ws's gh logs in as the machine account `@zadykiand`, by its classic
+personal access token, scopes `repo`, `workflow` and `read:org`, which the secrets task's run takes
+from the secret input `WS_GITHUB_TOKEN` ([gh](roles/server/ubuntu/devtools/README.md#gh)). The
+signing key goes to `@zadykiand`'s settings, not the maintainer's. These stay manual:
 
+- the machine account `@zadykiand`. Verify `su@zadykian.dev` on it, so that GitHub verifies its
+  commits, and turn on its 2FA. Accept its invites to ws, cld and ikeward. Give it no access to the
+  secrets repository, which the server reads by its deploy key alone. A `repo` token reaches every
+  repository the account can, so its invites are its only limit. Root's login keys stay
+  `@zadykian`'s: `ssh-import-id` imports those, not the machine account's;
+- ws's signing key off `@zadykian`'s settings, where it stands as a signing key. GitHub would show a
+  commit that ws signs under the maintainer's email as verified
+  ([The signing key](roles/server/ubuntu/devtools/README.md#the-signing-key));
 - other peers' public keys on the server, as in [The tunnel](roles/server/ubuntu/tunnel/README.md#the-tunnel);
 - another device's SSH key on the server: `ssh-import-id gh:LOGIN`, run as root
   ([SSH and the firewall](roles/server/ubuntu/security/README.md#ssh-and-the-firewall));
@@ -151,6 +159,9 @@ write; and no account permission. These stay manual:
 - with Secure Boot on, DKMS's key, enrolled at the console: [Secure Boot](roles/server/ubuntu/fans/README.md#secure-boot);
 - Fresh's trust, once per repository: press T, then Enter
   ([Trust each project](roles/server/ubuntu/fresh/README.md#trust-each-project));
+- the ruleset on every branch of ws, cld and ikeward, after the machine account's stack lands. It
+  requires signed commits, so that GitHub refuses an unsigned push from ws
+  ([The push check](roles/server/ubuntu/git/README.md#the-push-check));
 - the local list of words: set the secret `FORBIDDEN_WORDS` on GitHub, and place
   `~/.config/ws/forbidden-words`, mode 600, on each machine that commits
   ([The hooks](.github/workflows/README.md#the-hooks)).

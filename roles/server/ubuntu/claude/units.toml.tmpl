@@ -29,8 +29,16 @@ run = { user = "root", command = ["{{ self }}", "server", "claude", "completion"
 after = "state/claude-completion"
 run = { user = "root", command = ["{{ self }}", "server", "claude", "settings"], check = ["{{ self }}", "server", "claude", "settings", "--check"] }
 
-[state.claude-telemetry]
+# claude's own attribution off, for the machine account's one trailer of git ([User settings]). A
+# managed file, as cld keeps a value already in the user's, and the user's file could change it.
+# Root's at 644, as claude reads it as any user.
+[file.claude-managed-settings]
 after = "state/claude-settings"
+path = "/etc/claude-code/managed-settings.json"
+source = "files/managed-settings.json"
+
+[state.claude-telemetry]
+after = "file/claude-managed-settings"
 run = { user = "root", command = ["{{ self }}", "server", "claude", "telemetry"], check = ["{{ self }}", "server", "claude", "telemetry", "--check"] }
 
 # Every machine has the unit: an empty WS_CLAUDE_MARKETPLACES asks claude nothing.
