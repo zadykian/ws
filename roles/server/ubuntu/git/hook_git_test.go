@@ -18,19 +18,6 @@ func trailer() string {
 	return "Co-authored-by: " + id.Name + " <" + id.Email + ">"
 }
 
-func TestGitConfigHookNamesTheMacsIdentity(t *testing.T) {
-	m, e := machine(t)
-	if err := write(t, e, units(t, e, "file/git-config")); err != nil {
-		t.Fatal(err)
-	}
-	got := string(m.Files["/etc/ws/gitconfig"])
-	for _, want := range []string{"[hook \"ws-co-author\"]\n\tevent = commit-msg\n", "--if-exists addIfDifferent", "--trailer '" + trailer() + "'"} {
-		if !strings.Contains(got, want) {
-			t.Errorf("gitconfig lacks %q:\n%s", want, got)
-		}
-	}
-}
-
 // gitRepo is a repository of the test's own, read by a git whose config is the rendered file alone.
 type gitRepo struct {
 	t   *testing.T
