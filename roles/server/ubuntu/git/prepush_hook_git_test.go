@@ -8,8 +8,8 @@ import (
 	"testing"
 )
 
-// The hook's script stands for ws in a push: it logs its arguments and its standard input, and
-// exits as the test says.
+// The hook's script stands for ws: it logs its arguments and its standard input, and exits as the
+// test says, with 0 for the commit's hook.
 func TestGitHookRunsWsPrePushOnAPush(t *testing.T) {
 	skipBelowHooks(t)
 	r := newRepo(t)
@@ -20,7 +20,7 @@ func TestGitHookRunsWsPrePushOnAPush(t *testing.T) {
 	home := filepath.Dir(r.dir)
 	log := filepath.Join(home, "log")
 	script := filepath.Join(home, "ws-stub")
-	body := "#!/bin/sh\necho \"$@\" >" + log + "\ncat >>" + log + "\nexit \"$STATUS\"\n"
+	body := "#!/bin/sh\necho \"$@\" >" + log + "\ncat >>" + log + "\nexit \"${STATUS-0}\"\n"
 	if err := os.WriteFile(script, []byte(body), 0o700); err != nil { //nolint:gosec // the test's own script
 		t.Fatal(err)
 	}
