@@ -6,7 +6,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/spf13/cobra"
+
+	enginecli "github.com/zadykian/ws/engine/cli"
+	"github.com/zadykian/ws/engine/cli/clitest"
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/roles/internal/wgkey"
 )
 
@@ -14,7 +19,10 @@ const wg0Key = "/etc/systemd/network/60-wg0.key"
 
 func TestTunnelCheckSaysOnStdout(t *testing.T) {
 	p, _ := valuesProcess("---\n")
-	status, stdout, stderr := runWs(p, "", "server", "tunnel", "check")
+	// The check asks the units whether networkd runs: a fake answers, never the host's systemd.
+	u := &effecttest.Units{States: map[string]effect.UnitState{"systemd-networkd.service": {Active: true}}}
+	root := enginecli.Group("server", "the server's commands", newTunnelCmd(p, u))
+	status, stdout, stderr := clitest.Run(p, []*cobra.Command{root}, "", "server", "tunnel", "check")
 	if status != 0 || stderr != "" || !strings.Contains(stdout, "wg0 leaves out the peer mac, as /etc/wireguard/mac.pub is missing") {
 		t.Errorf("status = %d, stdout %q, stderr %q", status, stdout, stderr)
 	}
