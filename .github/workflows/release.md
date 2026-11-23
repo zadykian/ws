@@ -138,7 +138,8 @@ The cases:
 
 The `client` job's case [16-install.sh](../client/16-install.sh) runs `install.sh` on macOS. It serves the
 tree's own build of ws as the release, with its `ws.sha256`, and checks that the file is
-`root:wheel` and 755 and that no download is left.
+`root:wheel` and 755 and that no download is left. On a pull request it tags the clone's HEAD
+`v0.2.0` for that build, as `install.sh` refuses a ws that prints another version.
 
 ## Cutting a release
 
