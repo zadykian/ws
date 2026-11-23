@@ -61,6 +61,23 @@ func TestTreeUnpacksItsArchivesByDpkgsArch(t *testing.T) {
 	}
 }
 
+func TestTreeOnMacOSReadsUnameAndCachesInLibrary(t *testing.T) {
+	e, m, _, _ := testEnv()
+	e.System, e.User = MacOS, "v"
+	m.Results["uname -m"] = effecttest.Result{Out: []byte("arm64\n")}
+	units := loadOne(t, e, treeText(t, m, "arm64", "arm64"), nil)
+	got := headlines(t, units[0].Step)
+	if len(got) == 0 || got[0] != "create directory "+macCache+", owner 0:0, mode 755" {
+		t.Errorf("plan = %q, want the cache in %s first", got, macCache)
+	}
+	if err := applyOnce(t, units[0].Step); err != nil {
+		t.Fatal(err)
+	}
+	if string(m.Files["/opt/t/f"]) != "2.0" || slices.Contains(m.Calls, "dpkg --print-architecture") {
+		t.Errorf("calls = %q, f = %q; want uname's arm64 alone", m.Calls, m.Files["/opt/t/f"])
+	}
+}
+
 func TestTreeRefusesABadSpec(t *testing.T) {
 	sum := strings.Repeat("a", 64)
 	archive := "[[tree.t.archive]]\nversion = \"1\"\nurl = \"https://x/t.tar\"\nsha256 = { all = \"" + sum + "\" }\n"

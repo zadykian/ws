@@ -11,6 +11,9 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/fetch"
 )
 
+// macCache is where a tree's archives wait on macOS, which has no /var/cache.
+const macCache = "/Library/Caches/ws"
+
 // treeSpec is a unit of the kind tree: a directory, root's at Path, unpacked from pinned archives
 // in their order. A later archive's file replaces an earlier one's, and a new pin replaces the
 // directory whole.
@@ -26,7 +29,8 @@ type treeSpec struct {
 }
 
 // treeArchive is one archive of a tree: its version and the SHA-256 of each architecture's file,
-// the architecture as dpkg names it. {version} and {arch} in URL stand for those.
+// the architecture as dpkg names it, or uname -m on macOS. {version} and {arch} in URL stand for
+// those.
 type treeArchive struct {
 	Version string            `toml:"version"`
 	URL     string            `toml:"url"`
@@ -43,6 +47,10 @@ func (s treeSpec) parts(e Env, _ fs.FS) (func(context.Context) ([]resource.Resou
 		return nil, errors.New("a tree takes an archive at least")
 	}
 	tree := fetch.Tree{M: e.M, Path: s.Path, Strip: s.Strip}
+	arch := fetch.Architecture
+	if e.System == MacOS {
+		tree.Cache, arch = macCache, fetch.Uname
+	}
 	for _, a := range s.Archives {
 		if a.Version == "" || a.URL == "" || len(a.SHA256) == 0 {
 			return nil, errors.New("an archive takes a version, a url and a sha256 for each architecture")
@@ -56,7 +64,7 @@ func (s treeSpec) parts(e Env, _ fs.FS) (func(context.Context) ([]resource.Resou
 			}
 			return strings.NewReplacer("{version}", version, "{arch}", arch).Replace(a.URL)
 		}
-		tree.Sources = append(tree.Sources, fetch.PinnedFile{M: e.M, Version: a.Version, URL: url, SHA256: a.SHA256})
+		tree.Sources = append(tree.Sources, fetch.PinnedFile{M: e.M, Version: a.Version, URL: url, SHA256: a.SHA256, Arch: arch})
 	}
 	return func(context.Context) ([]resource.Resource, error) { return []resource.Resource{tree}, nil }, nil
 }
