@@ -27,3 +27,12 @@ func TestArchitectureNamesTheFailedRead(t *testing.T) {
 		t.Errorf("err = %v, want the failed read named", err)
 	}
 }
+
+func TestUnameIsTheMachinesAndTrimmed(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["uname -m"] = effecttest.Result{Out: []byte("arm64\n")}
+	got, err := fetch.Uname(context.Background(), m)
+	if err != nil || got != "arm64" {
+		t.Errorf("Uname = %q, %v, want arm64", got, err)
+	}
+}

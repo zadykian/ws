@@ -17,3 +17,13 @@ func Architecture(ctx context.Context, m effect.Machine) (string, error) {
 	}
 	return strings.TrimSpace(string(out)), nil
 }
+
+// Uname returns the machine's architecture as uname -m names it, such as arm64, for a system with
+// no dpkg: macOS, whose releases' assets take that name.
+func Uname(ctx context.Context, m effect.Machine) (string, error) {
+	out, err := m.Run(ctx, "uname", "-m")
+	if err != nil {
+		return "", fmt.Errorf("reading the architecture: %w", err)
+	}
+	return strings.TrimSpace(string(out)), nil
+}
