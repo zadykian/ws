@@ -29,6 +29,17 @@ func TestPinnedFilePicksTheArchitecturesURLAndSum(t *testing.T) {
 	}
 }
 
+func TestPinnedFileReadsTheArchitectureByItsArch(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["uname -m"] = effecttest.Result{Out: []byte("arm64\n")}
+	m.Pages["https://x/1.2/x-arm64"] = []byte("arm")
+	p := pinned(m, map[string]string{"arm64": sumOf("arm")})
+	p.Arch = fetch.Uname
+	if got := applyAll(t, p); len(got) != 1 || got[0] != "download https://x/1.2/x-arm64 to /usr/local/bin/x" {
+		t.Errorf("plan = %q, want the arm64 download, with no dpkg", got)
+	}
+}
+
 func TestPinnedFileAllReadsNoArchitecture(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Pages["https://x/1.2/x-all"] = []byte("any")

@@ -1,0 +1,24 @@
+# .NET's SDKs side by side in one root, from Microsoft's tarballs for Apple silicon, as the server's
+# devtools pins them for Linux. /usr/local/share/dotnet is where a tool's own program looks for
+# .NET on macOS. The later archive's dotnet and host are the newer. A bump pins the SHA-256 of a file
+# whose SHA-512 matches its channel's releases.json (README.md).
+[tree.dotnet]
+path = "/usr/local/share/dotnet"
+
+[[tree.dotnet.archive]]
+version = "10.0.404"
+url = "https://builds.dotnet.microsoft.com/dotnet/Sdk/{version}/dotnet-sdk-{version}-osx-{arch}.tar.gz"
+sha256 = { arm64 = "acf7ebe726a030fa3d2bd03b06196971bd9ef123c579b9345d380bc0ef0d4e44" }
+
+[[tree.dotnet.archive]]
+version = "11.0.100"
+url = "https://builds.dotnet.microsoft.com/dotnet/Sdk/{version}/dotnet-sdk-{version}-osx-{arch}.tar.gz"
+sha256 = { arm64 = "a2e6635ffec544e9a7a98bde44d75bfbc71b2c19b33c3c088774ef2498edf380" }
+
+# A login shell's /etc/zprofile runs /usr/libexec/path_helper, which adds each line of
+# /etc/paths.d to PATH, as Microsoft's installer has it. The file takes no mark, as each line names a
+# directory.
+[file.dotnet-path]
+after = "tree/dotnet"
+path = "/etc/paths.d/dotnet"
+source = "files/paths"

@@ -7,10 +7,9 @@
 "ws:file/shell-bashrc-line" = "in-sync"
 "ws:file/shell-profile-line" = "in-sync"
 
-# ws's lines for bash. Tera fills .NET's runtime ID from mise's arch(), x64 or arm64.
+# ws's lines for bash.
 [bootstrap.files."/etc/ws/bashrc"]
-source = "files/bashrc.tera"
-template = true
+source = "files/bashrc"
 owner = "root"
 group = "root"
 mode = "0644"

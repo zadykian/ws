@@ -7,11 +7,6 @@ if [ -f /etc/ws/env ]; then
     source /etc/ws/env
 fi
 
-# Ubuntu's .NET SDK runs as ubuntu.26.04-x64, which NuGet's runtime graph, frozen after .NET 8,
-# lacks. `dotnet tool install` then finds no tool assets and fails with "DotnetToolSettings.xml was
-# not found in the package". The portable ID works. Above the guard too.
-export DOTNET_RUNTIME_ID=linux-{{ arch() }}
-
 # A shell that is not interactive stops here, in this file alone.
 [[ $- == *i* ]] || return
 

@@ -13,9 +13,8 @@ web='while true; do printf "HTTP/1.0 200 OK\r\n\r\nhi\n" | nc -l -p 80; done'
 # send root's settings to the runner's home.
 unset XDG_CONFIG_HOME
 sed -i '/^XDG_/d' /etc/environment
-# The runner's apt takes the amd64v3 variant, which a machine turns on by hand. The dotnet PPA's
-# index of that variant holds no .NET 8, and the git-core PPA's holds no git. So the cases run with
-# no variant, as a machine has none.
+# The runner's apt takes the amd64v3 variant, which a machine turns on by hand. The git-core PPA's
+# index of that variant holds no git. So the cases run with no variant, as a machine has none.
 # apt reads this file after apt.conf.d, so the line wins wherever the runner set the variant.
 echo '#clear APT::Architecture-Variants;' >>/etc/apt/apt.conf
 export HOME=/root DEBIAN_FRONTEND=noninteractive
@@ -196,6 +195,9 @@ git_from_ppa() {
         dpkg-query -W git | grep -q ppa
 }
 must "git is 2.54 or above, from the git-core PPA" git_from_ppa
+
+must "dotnet lists devtools' SDKs alone, which roslyn-language-server finds" \
+    "$(dirname "$0")/dotnet-checks.sh"
 
 # What the runs wrote, which needs no container. The plans that must fail, from /opt/ws and with a
 # unit's line dropped. The values file, which no run changed. Zed's wrapper and tmux.conf against

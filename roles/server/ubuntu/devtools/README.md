@@ -2,9 +2,9 @@
 
 The `devtools` role installs Node, the .NET SDKs, gh, glow, the libraries headless Chromium needs,
 Go, gopls, Delve, roslyn-language-server, the SQL and Docker servers and rustup. The sources, the
-packages and the tools are mise's, in [mise.server.toml](mise.server.toml). The tools' links, gh's
-telemetry and login, roslyn-language-server, the npm servers and rustup are units of
-[units.toml.tmpl](units.toml.tmpl). Those of the account run as root. [paths.go](paths.go) names
+packages and the tools are mise's, in [mise.server.toml](mise.server.toml). The tools' links, the
+.NET SDKs, gh's telemetry and login, roslyn-language-server, the npm servers and rustup are units
+of [units.toml.tmpl](units.toml.tmpl). Those of the account run as root. [paths.go](paths.go) names
 the servers' paths for Zed's and Fresh's tests.
 
 `state/devtools-rustup` installs rustup and Rust's stable toolchain in the user's home, where
@@ -21,10 +21,23 @@ with ours: remove it by hand.
 - Node comes from NodeSource's `node_24.x`, and the package follows that repository's latest.
 - glow comes from Charm's repository, and gh from GitHub CLI's. Its key file holds two
   certificates, one that expired in 2026 and the one that signs: both are pinned.
-- Each .NET SDK is a package, and Launchpad's dotnet/backports PPA gives .NET 8.
-  The PPA's index for apt's amd64v3 variant lacks .NET 8. A machine that set
-  `APT::Architecture-Variants` fails at this package until the setting goes.
+- libicu78 is the ICU that the .NET SDKs need, and leave to the system.
 - The libraries for Chromium are fixed packages, with apt's own recommends.
+
+## The .NET SDKs
+
+`tree/devtools-dotnet` unpacks Microsoft's tarballs of the SDKs 10.0.404 and 11.0.100 into
+`/usr/local/share/dotnet`, side by side. Ubuntu's archive holds 10.0.1xx alone, and no .NET 11.
+Each tarball is checked against the SHA-256 that the unit pins for its architecture, and a new pin
+replaces the directory whole ([tree](../../../../engine/core/kind/README.md#tree)).
+
+- `/usr/local/bin/dotnet` links the root's `dotnet`. `/etc/dotnet/install_location` names the
+  root for a tool's own program, such as roslyn-language-server's, which else looks in
+  `/usr/share/dotnet` alone.
+- To bump an SDK, take its files' SHA-512 from its channel's `releases.json`, such as
+  `https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json`. Check each
+  architecture's tarball against it with `sha512sum -c`, then pin the tarball's `sha256sum` and
+  the version in the unit. The Mac's [dotnet](../../../client/macos/dotnet/README.md) pins its own.
 
 ## The tools
 

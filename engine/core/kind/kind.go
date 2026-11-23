@@ -26,7 +26,7 @@ var unitName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
 // Linux's alone reads apt, dpkg, systemd, sysfs or /proc, which macOS lacks, so that there it would
 // read in sync having done nothing. launchd is macOS's own. A new kind is an entry here.
 var kindsOn = map[string][]System{
-	"file": {Linux, MacOS}, "state": {Linux, MacOS}, "launchd": {MacOS},
+	"file": {Linux, MacOS}, "state": {Linux, MacOS}, "tree": {Linux, MacOS}, "launchd": {MacOS},
 	"deb": {Linux}, "binary": {Linux}, "packages": {Linux}, "dkms": {Linux}, "service": {Linux},
 	"guard": {Linux}, "compose": {Linux},
 }

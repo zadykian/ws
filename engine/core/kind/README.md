@@ -61,9 +61,9 @@ Each Go template ends in `.tmpl`, the spec's name and the name of each `template
 ## The kinds
 
 The kinds follow, and then [`ws unit`](#ws-unit), which plans and applies the units for mise.
-macOS takes `file`, `state` with `run` alone, and `launchd`, and Linux every kind but `launchd`:
-the others read apt, systemd, sysfs or `/proc`, and on macOS would read in sync having done
-nothing. Any other kind fails the load, as `kindsOn` in `kind.go` says.
+macOS takes `file`, `state` with `run` alone, `tree` and `launchd`, and Linux every kind but
+`launchd`: the others read apt, systemd, sysfs or `/proc`, and on macOS would read in sync having
+done nothing. Any other kind fails the load, as `kindsOn` in `kind.go` says.
 
 ### file
 
@@ -99,6 +99,30 @@ path = "/usr/local/sbin/name"            # root's, at mode = 0o755 where unset
 A release's program, with no package around it. The download is checked against its SHA-256 before
 it makes the file, so a wrong sum leaves none, and a file of another content is made again.
 ikeward's binary is one.
+
+### tree
+
+```toml
+[tree.NAME]
+path = "/usr/local/share/name"          # root's, replaced whole by a new pin
+strip = 0                               # leading parts of each name dropped as an archive unpacks
+arch_names = { amd64 = "x64" }          # the archives' spelling of an architecture, where it differs
+
+[[tree.NAME.archive]]                   # one table an archive, unpacked in this order
+version = "1.2.3"
+url = "https://host/{version}/name-{version}-linux-{arch}.tar.gz"
+sha256 = { amd64 = "…", arm64 = "…" }   # by dpkg's architecture, uname -m's on macOS
+```
+
+A directory of release archives, with no package around them, such as .NET's SDKs side by side.
+
+- Each archive waits in `/var/cache/ws`, `/Library/Caches/ws` on macOS, checked against its
+  SHA-256. They unpack in order into a directory beside `path`, which then replaces `path` whole.
+  So a later archive's file replaces an earlier one's, and a run cut short leaves no half tree.
+- The file `.ws-source` in the tree holds the archives' URLs, a line each. A tree whose file holds
+  the pins' URLs plans nothing, and any other is unpacked again.
+- Two archives of one file name would wait in one file, and fail the plan.
+- On macOS, ws unpacks into a directory of its own, and sudo copies the tree in as root's.
 
 ### packages
 

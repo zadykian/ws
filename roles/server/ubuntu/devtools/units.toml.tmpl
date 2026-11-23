@@ -26,8 +26,38 @@ link = "/root/.local/share/mise/installs/github-supabase-community-postgres-lang
 path = "/usr/local/bin/docker-language-server"
 link = "/root/.local/share/mise/installs/github-docker-docker-language-server/0.20.1/docker-language-server"
 
-# Root's tools. Each runs as root. Its commands get the system's PATH, where mise's packages put npm,
-# gh and dotnet.
+# .NET's SDKs side by side in one root, from Microsoft's tarballs: Ubuntu's archive holds 10.0.1xx
+# alone, and no .NET 11. The later archive's dotnet and host are the newer. A bump pins the SHA-256
+# of a file whose SHA-512 matches its channel's releases.json (README.md).
+[tree.devtools-dotnet]
+path = "/usr/local/share/dotnet"
+arch_names = { amd64 = "x64" }
+
+[[tree.devtools-dotnet.archive]]
+version = "10.0.404"
+url = "https://builds.dotnet.microsoft.com/dotnet/Sdk/{version}/dotnet-sdk-{version}-linux-{arch}.tar.gz"
+sha256 = { amd64 = "c0610757a818fde4b960d27a0ac421f273068a05dc5ec7abafc01dbf84e9cb4d", arm64 = "dcc820a4277ab6bb3f648c609d86f2a7912ba9a3d166545e7b95dff419c12f0f" }
+
+[[tree.devtools-dotnet.archive]]
+version = "11.0.100"
+url = "https://builds.dotnet.microsoft.com/dotnet/Sdk/{version}/dotnet-sdk-{version}-linux-{arch}.tar.gz"
+sha256 = { amd64 = "6fdb8822f47ccdba28f507dcd5d92e632d5b99cd27908d6838f0cc575be33baf", arm64 = "699951697c76af6ba714fbbe9b45372d1f189d00f303a67ba2e90d53acf630b2" }
+
+# dotnet on every PATH, root's. Through the link, it finds the SDKs beside its own file.
+[file.devtools-dotnet]
+after = "tree/devtools-dotnet"
+path = "/usr/local/bin/dotnet"
+link = "/usr/local/share/dotnet/dotnet"
+
+# A tool's own program, such as roslyn-language-server, finds .NET by this file, and else looks in
+# /usr/share/dotnet alone. The file takes no mark, as its first line is the path.
+[file.devtools-dotnet-location]
+after = "tree/devtools-dotnet"
+path = "/etc/dotnet/install_location"
+source = "files/install_location"
+
+# Root's tools. Each runs as root. Its commands get the system's PATH, where mise's packages put npm
+# and gh, and file/devtools-dotnet puts dotnet.
 
 # The npm servers, from a lock that pins each package by its sha512 integrity. The files go in as
 # root's, with their missing directories. npm ci refuses a lock that disagrees with
@@ -88,6 +118,9 @@ run = { user = "root", command = ["{{ self }}", "server", "devtools", "gh-login"
 # so --source asks nuget.org alone. The store keeps a directory per version, in lower case. dotnet
 # warns where PATH lacks its tools' directory, and as root writes a profile.d script that adds it,
 # so the unit puts it first. DOTNET_NOLOGO keeps its first run's welcome and advice off.
+[state.devtools-roslyn]
+after = "file/devtools-dotnet"
+
 [state.devtools-roslyn.run]
 user = "root"
 path = ["/root/.dotnet/tools"]

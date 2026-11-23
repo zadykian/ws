@@ -3,7 +3,6 @@ package shell_test
 import (
 	"os"
 	"slices"
-	"strings"
 	"testing"
 	"testing/fstest"
 
@@ -84,19 +83,5 @@ func TestShellUnitsPutTheLinesAtTheTopOfRootsFiles(t *testing.T) {
 		if got := changes(t, u); got != nil {
 			t.Errorf("second plan of %s = %q, want none", u.Name, got)
 		}
-	}
-}
-
-func TestBashrcHoldsOneTeraMark(t *testing.T) {
-	text, err := os.ReadFile("files/bashrc.tera")
-	if err != nil {
-		t.Fatal(err)
-	}
-	s := string(text)
-	if strings.Count(s, "{{") != 1 || !strings.Contains(s, "export DOTNET_RUNTIME_ID=linux-{{ arch() }}\n") {
-		t.Errorf("bashrc.tera's marks: want {{ arch() }} alone")
-	}
-	if strings.Contains(s, "{%") || strings.Contains(s, "{#") {
-		t.Errorf("bashrc.tera holds a mark of Tera's that bash meant")
 	}
 }

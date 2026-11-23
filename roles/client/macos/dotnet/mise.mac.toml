@@ -1,0 +1,4 @@
+# .NET's SDKs and the line of /etc/paths.d that puts them on PATH, as ws's units.
+[bootstrap.packages]
+"ws:file/dotnet-path" = "in-sync"
+"ws:tree/dotnet" = "in-sync"

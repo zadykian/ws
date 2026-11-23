@@ -17,11 +17,6 @@ components = "*"
 key = "https://repo.charm.sh/apt/gpg.key"
 fingerprint = "ED927B38BE981E53CA09153D03BBF595D4DFD35C"
 
-# Ubuntu's archive lacks .NET 8. Launchpad gives the PPA's address, suite and key.
-[bootstrap.apt.sources.dotnet-backports]
-ppa = "dotnet/backports"
-fingerprint = "45A3F127159BE9E5017811C62125B164E8E5D3FA"
-
 # Ubuntu's archive has a gh that GitHub's API has left behind. The key file holds a certificate
 # that expired in 2026 beside the one that signs: both are pinned.
 [bootstrap.apt.sources.github-cli]
@@ -38,8 +33,8 @@ fingerprint = [
 "apt:nodejs" = "latest"
 "apt:gh" = "latest"
 "apt:glow" = "latest"
-"apt:dotnet-sdk-8.0" = "latest"
-"apt:dotnet-sdk-10.0" = "latest"
+# .NET's ICU, which Microsoft's SDKs leave to the system: without it the SDK aborts.
+"apt:libicu78" = "latest"
 # The libraries a headless Chromium needs.
 "apt:libasound2t64" = "latest"
 "apt:libatk-bridge2.0-0t64" = "latest"
@@ -55,9 +50,11 @@ fingerprint = [
 "apt:libxfixes3" = "latest"
 "apt:libxkbcommon0" = "latest"
 "apt:libxrandr2" = "latest"
-# The units of units.toml.tmpl: the tools' links, root's tools and gh's setup.
+# The units of units.toml.tmpl: the tools' links, .NET's SDKs, root's tools and gh's setup.
 "ws:file/devtools-dlv" = "in-sync"
 "ws:file/devtools-docker-ls" = "in-sync"
+"ws:file/devtools-dotnet" = "in-sync"
+"ws:file/devtools-dotnet-location" = "in-sync"
 "ws:file/devtools-go" = "in-sync"
 "ws:file/devtools-gopls" = "in-sync"
 "ws:file/devtools-npm-lock" = "in-sync"
@@ -69,6 +66,7 @@ fingerprint = [
 "ws:state/devtools-npm" = "in-sync"
 "ws:state/devtools-roslyn" = "in-sync"
 "ws:state/devtools-rustup" = "in-sync"
+"ws:tree/devtools-dotnet" = "in-sync"
 
 # unattended-upgrades installs each release of gh within a day.
 [bootstrap.files."/etc/apt/apt.conf.d/52unattended-upgrades-github-cli"]

@@ -25,6 +25,8 @@ type PinnedFile struct {
 	SHA256  map[string]string
 	Path    string
 	Mode    fs.FileMode
+	// Arch reads the machine's architecture, by dpkg's name where nil: Uname on macOS.
+	Arch func(context.Context, effect.Machine) (string, error)
 }
 
 // resolve reads the architecture and returns the URL of the file, and the sum that SHA256 pins
@@ -32,7 +34,11 @@ type PinnedFile struct {
 func (p PinnedFile) resolve(ctx context.Context) (url, sum string, err error) {
 	arch := "all"
 	if _, shared := p.SHA256[arch]; !shared {
-		if arch, err = Architecture(ctx, p.M); err != nil {
+		read := p.Arch
+		if read == nil {
+			read = Architecture
+		}
+		if arch, err = read(ctx, p.M); err != nil {
 			return "", "", err
 		}
 	}
@@ -72,11 +78,16 @@ func (p PinnedFile) Report(ctx context.Context) ([]step.Item, error) {
 
 // Cached is download for a package's source: its file waits in CacheDir, named by its URL.
 func (p PinnedFile) Cached(ctx context.Context) (Download, error) {
-	p.Path = CacheDir
+	return p.cachedIn(ctx, CacheDir)
+}
+
+// cachedIn is Cached with the file waiting in dir.
+func (p PinnedFile) cachedIn(ctx context.Context, dir string) (Download, error) {
+	p.Path = dir
 	d, err := p.download(ctx)
 	if err != nil {
 		return Download{}, err
 	}
-	d.Path, d.Mode = path.Join(CacheDir, path.Base(d.URL)), 0o644
+	d.Path, d.Mode = path.Join(dir, path.Base(d.URL)), 0o644
 	return d, nil
 }
