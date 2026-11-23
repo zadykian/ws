@@ -171,7 +171,7 @@ The check stops a mistake and not a person. These skip it:
 - a repository's `gpg.ssh.allowedSignersFile`, which changes who `G` trusts.
 
 GitHub's own ruleset on every branch, which the maintainer sets by hand
-([How changes land](../../../../.claude/CLAUDE.md#how-changes-land)), refuses an unsigned push
+([By hand](../../../../README.md#by-hand)), refuses an unsigned push
 whatever the machine runs. GitHub enforces the signature alone, and not the trailer.
 
 The hook runs beside a repository's own `pre-push`, and before it.
