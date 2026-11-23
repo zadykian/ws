@@ -28,7 +28,7 @@ var unitName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
 var kindsOn = map[string][]System{
 	"file": {Linux, MacOS}, "state": {Linux, MacOS}, "launchd": {MacOS},
 	"deb": {Linux}, "binary": {Linux}, "packages": {Linux}, "dkms": {Linux}, "service": {Linux},
-	"guard": {Linux}, "compose": {Linux},
+	"guard": {Linux}, "compose": {Linux}, "tree": {Linux},
 }
 
 // Env is what a kind builds its units on: the machine, systemd's units, the lines, the side's

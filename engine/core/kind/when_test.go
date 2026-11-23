@@ -198,6 +198,8 @@ func TestWhenOnEveryKind(t *testing.T) {
 			off,
 		"binary": "[binary.a]\nversion = \"1\"\nurl = \"https://x/a\"\npath = \"/usr/local/bin/a\"\nsha256 = { all = \"" + sum + "\" }\n" +
 			off,
+		"tree": "[tree.a]\npath = \"/opt/a\"\n" + off +
+			"[[tree.a.archive]]\nversion = \"1\"\nurl = \"https://x/a.tar\"\nsha256 = { all = \"" + sum + "\" }\n",
 		"packages": "[packages.a]\ntemplate = \"a.tmpl\"\n" + off,
 		"dkms": "[dkms.a]\nmodule = \"m\"\nversion = \"1\"\nurl = \"https://x/m.tar.gz\"\nsha256 = \"" + sum + "\"\n" +
 			"load = \"m\"\n" + off,

@@ -45,6 +45,9 @@ type spec struct {
 	Binary map[string]binarySpec `toml:"binary"`
 	// Packages is apt's packages, whose names a template gives.
 	Packages map[string]packagesSpec `toml:"packages"`
+	// Tree is a directory unpacked from archives, each pinned by the SHA-256 of each architecture's
+	// file.
+	Tree map[string]treeSpec `toml:"tree"`
 	// Dkms is a module's pinned source, which DKMS builds for the running kernel.
 	Dkms map[string]dkmsSpec `toml:"dkms"`
 	// Service is a systemd unit, with the files that one restart covers.
