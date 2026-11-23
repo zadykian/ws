@@ -97,3 +97,34 @@ func TestOSMachineUnpackRefusesALinkThatLeavesTheDirectory(t *testing.T) {
 		}
 	}
 }
+
+func TestOSMachineUnpackIntoRootsDirectoryGoesThroughSudo(t *testing.T) {
+	m, log := loggedSudo(t)
+	local.RunAs(t, os.Getuid()+1, false)
+	t.Setenv("HOME", t.TempDir())
+	dir := filepath.Join(t.TempDir(), "share", "t")
+	for _, file := range []string{tarGz(t, "top/a/f", "top/g"), tarGz(t, "top/a/h")} {
+		if err := m.Unpack(context.Background(), file, dir, 1); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if got, want := sudoRan(t, log), "mkdir cp mkdir cp"; got != want {
+		t.Errorf("sudo ran %q, want %q", got, want)
+	}
+	for _, name := range []string{"a/f", "g", "a/h"} {
+		if b, err := os.ReadFile(filepath.Join(dir, name)); err != nil || string(b) != "x" { //nolint:gosec // a path in the test's own temp tree
+			t.Errorf("%s is %q, %v", name, b, err)
+		}
+	}
+}
+
+func TestOSMachineUnpackIntoItsOwnDirectoryStaysOffSudo(t *testing.T) {
+	m, log := loggedSudo(t)
+	local.RunAs(t, os.Getuid(), true)
+	if err := m.Unpack(context.Background(), tarGz(t, "top/f"), filepath.Join(t.TempDir(), "d"), 1); err != nil {
+		t.Fatal(err)
+	}
+	if got := sudoRan(t, log); got != "" {
+		t.Errorf("sudo ran %q, want nothing", got)
+	}
+}
