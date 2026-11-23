@@ -36,17 +36,15 @@ func specs(t *testing.T) fstest.MapFS {
 	return fsys
 }
 
-// machine is a machine with the account ws, 1000:1000, and its env for the values of text.
-func machine(t *testing.T, text string) (*effecttest.Machine, kind.Env) {
-	v, err := values.Parse([]byte(text))
+// machine is a machine with root's home, and its env for the values of an empty file.
+func machine(t *testing.T) (*effecttest.Machine, kind.Env) {
+	v, err := values.Parse(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	m := effecttest.NewMachine()
-	m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
-	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
-	m.Results["getent passwd ws"] = effecttest.Result{Out: []byte("ws:x:1000:1000::/home/ws:/bin/bash\n")}
-	m.Dirs["/home/ws"], m.Owners["/home/ws"] = 0o750, [2]int{1000, 1000}
+	m.Results["getent passwd root"] = effecttest.Result{Out: []byte("root:x:0:0:root:/root:/bin/bash\n")}
+	m.Dirs["/root"] = 0o750
 	return m, kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v, Self: self}
 }
 
@@ -94,7 +92,7 @@ func apply(t *testing.T, u kind.Unit) {
 }
 
 func TestClaudeUnitsChainInTheStepsOrder(t *testing.T) {
-	_, e := machine(t, "WS_USER: ws\n")
+	_, e := machine(t)
 	want := []string{"state/claude-install", "state/claude-cld-install", "state/claude-update",
 		"state/claude-completion", "state/claude-settings", "state/claude-telemetry", "state/claude-marketplaces",
 		"state/claude-linger", "state/claude-restore"}
@@ -111,40 +109,31 @@ func TestClaudeUnitsChainInTheStepsOrder(t *testing.T) {
 	}
 }
 
-// installer is the line by which the account runs an installer from url, with env and shell, and
-// with ~/.local/bin first on its PATH. root's needs no switch of user.
-func installer(user, home, url, env, shell string) string {
+// installer is the line by which root runs an installer from url, with env and shell, and with
+// ~/.local/bin first on its PATH. root's needs no switch of user.
+func installer(url, env, shell string) string {
 	script := `script=$(curl -fsSL --retry 3 "$1") && printf "%s\n" "$script" | env "$2" "$3"`
-	path := "PATH=" + home + "/.local/bin:" + strings.TrimPrefix(systemPath, "PATH=")
-	line := "env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + path + " sh -c " + script + " sh " + url + " " + env + " " + shell
-	if user == "root" {
-		return "env HOME=/root " + line
-	}
-	return "runuser -u " + user + " -- env -i -C " + home + " HOME=" + home + " " + systemPath + " " + line
+	path := "PATH=/root/.local/bin:" + strings.TrimPrefix(systemPath, "PATH=")
+	return "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + path + " sh -c " + script + " sh " + url + " " + env + " " + shell
 }
 
-func TestClaudeInstallersRunAsTheAccountOnceWithoutSystemd(t *testing.T) {
-	for _, a := range []struct{ values, user, home string }{
-		{"WS_USER: ws\n", "ws", "/home/ws"}, {"WS_USER: root\n", "root", "/root"},
+func TestClaudeInstallersRunAsRootOnce(t *testing.T) {
+	for _, c := range []struct{ unit, url, env, shell, creates string }{
+		{"state/claude-install", "https://claude.ai/install.sh", "CLAUDE_INSTALL_ALLOW_SUDO=1", "bash",
+			"/root/.local/bin/claude"},
+		{"state/claude-cld-install", "https://github.com/zadykian/cld/releases/latest/download/install.sh",
+			"CLD_INSTALL_DIR=/root/.local/bin", "sh", "/root/.local/bin/cld"},
 	} {
-		for _, c := range []struct{ unit, url, env, shell, creates string }{
-			{"state/claude-install", "https://claude.ai/install.sh", "CLAUDE_INSTALL_ALLOW_SUDO=1", "bash",
-				a.home + "/.local/bin/claude"},
-			{"state/claude-cld-install", "https://github.com/zadykian/cld/releases/latest/download/install.sh",
-				"CLD_INSTALL_DIR=" + a.home + "/.local/bin", "sh", a.home + "/.local/bin/cld"},
-		} {
-			m, e := machine(t, a.values)
-			line := installer(a.user, a.home, c.url, c.env, c.shell)
-			m.Results[line] = effecttest.Result{}
-			apply(t, unit(t, e, c.unit))
-			if !slices.ContainsFunc(m.Calls, func(call string) bool { return strings.HasSuffix(call, " "+line) }) {
-				t.Errorf("%s of %s: calls %q, want the installer as the account, though systemd is not running",
-					c.unit, a.user, m.Calls)
-			}
-			m.Files[c.creates] = nil
-			if got := changes(t, unit(t, e, c.unit)); got != nil {
-				t.Errorf("%s of %s: second plan = %q, want none", c.unit, a.user, got)
-			}
+		m, e := machine(t)
+		line := installer(c.url, c.env, c.shell)
+		m.Results[line] = effecttest.Result{}
+		apply(t, unit(t, e, c.unit))
+		if !slices.ContainsFunc(m.Calls, func(call string) bool { return strings.HasSuffix(call, " "+line) }) {
+			t.Errorf("%s: calls %q, want the installer as root", c.unit, m.Calls)
+		}
+		m.Files[c.creates] = nil
+		if got := changes(t, unit(t, e, c.unit)); got != nil {
+			t.Errorf("%s: second plan = %q, want none", c.unit, got)
 		}
 	}
 }
@@ -189,11 +178,11 @@ func TestClaudeInstallerRunsNothingWhereCurlFails(t *testing.T) {
 	}
 }
 
-func TestClaudeCommandsRunAsRootWithoutSystemd(t *testing.T) {
-	m, e := machine(t, "WS_USER: ws\n")
+func TestClaudeCommandsRunAsRoot(t *testing.T) {
+	m, e := machine(t)
 	names := []string{"update", "completion", "settings", "telemetry", "marketplaces"}
 	for _, name := range names {
-		line := "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + systemPath + " " + self + " server ubuntu claude " + name
+		line := "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " + systemPath + " " + self + " server claude " + name
 		m.Results[line+" --check"] = effecttest.Result{Err: os.ErrInvalid}
 		m.Results[line] = effecttest.Result{}
 		apply(t, unit(t, e, "state/claude-"+name))
@@ -209,28 +198,13 @@ func TestClaudeCommandsRunAsRootWithoutSystemd(t *testing.T) {
 	}
 }
 
-func TestClaudeLingerAndRestoreSkipWithoutSystemd(t *testing.T) {
-	m, e := machine(t, "WS_USER: ws\n")
-	for _, name := range []string{"state/claude-linger", "state/claude-restore"} {
-		if got := changes(t, unit(t, e, name)); got != nil {
-			t.Errorf("%s: plan = %q, want none without systemd", name, got)
-		}
-	}
-	for _, c := range m.Calls {
-		if strings.HasPrefix(c, "run") {
-			t.Errorf("call %q, want none without systemd", c)
-		}
-	}
-}
-
-func TestClaudeLingerIsTheAccountsAndRestoreRunsInItsSession(t *testing.T) {
-	m, e := machine(t, "WS_USER: ws\n")
-	m.Dirs["/run/systemd/system"] = 0o755
-	if got := changes(t, unit(t, e, "state/claude-linger")); !slices.Equal(got, []string{"enable lingering for ws", "start user@1000.service"}) {
+func TestClaudeLingerIsRootsAndRestoreRunsAsRoot(t *testing.T) {
+	m, e := machine(t)
+	if got := changes(t, unit(t, e, "state/claude-linger")); !slices.Equal(got, []string{"enable lingering for root", "start user@0.service"}) {
 		t.Errorf("linger plan = %q", got)
 	}
-	line := "env HOME=/root env XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus " +
-		systemPath + " " + self + " server ubuntu claude restore"
+	line := "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " +
+		systemPath + " " + self + " server claude restore"
 	m.Results[line+" --check"] = effecttest.Result{Err: os.ErrInvalid}
 	m.Results[line] = effecttest.Result{}
 	apply(t, unit(t, e, "state/claude-restore"))

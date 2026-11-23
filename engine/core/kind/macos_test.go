@@ -14,7 +14,7 @@ import (
 
 // macRun loads a run state on the Mac, where ws runs as the user v, whose command fails its check.
 func macRun(t *testing.T, user string) (*effecttest.Machine, []Unit, *effecttest.Out) {
-	e, m, _, out := testEnv(false)
+	e, m, _, out := testEnv()
 	e.System, e.User = MacOS, "v"
 	m.Results["env "+systemPath+" cld --check"] = effecttest.Result{Err: errors.New("exit status 1")}
 	return m, loadState(t, e, "run = { user = \""+user+"\", command = [\"cld\", \"--install\"], check = [\"cld\", \"--check\"] }\n"), out
@@ -49,7 +49,7 @@ func TestStateRunOnMacOSCommand(t *testing.T) {
 }
 
 func TestStateRunOnMacOSPutsItsPathFirst(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	e.System, e.User = MacOS, "v"
 	const env = "env PATH=/Users/v/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "
 	m.Results[env+"cld --check"] = effecttest.Result{Err: errors.New("exit status 1")}
@@ -62,7 +62,7 @@ func TestStateRunOnMacOSPutsItsPathFirst(t *testing.T) {
 }
 
 func TestMacRefusesAnUnreadableRootFile(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	e.System = MacOS
 	files := map[string]string{"r/a": "x"}
 	for spec, refused := range map[string]bool{

@@ -1,4 +1,4 @@
-// Package effect holds the effects ws runs through: what it asks, says and does on a machine. Steps
+// Package effect holds the effects ws runs through: what it says and does on a machine. Steps
 // take these interfaces, so that their tests use the fakes of effecttest.
 package effect
 
@@ -20,29 +20,9 @@ var ErrNotRegular = errors.New("not a regular file")
 var ErrTooLarge = errors.New("too large")
 
 // HomeFileMax is the most that ReadHomeFile reads: 1 MiB, far above any home file ws reads, so that
-// a file that the account grows never fills root's memory.
+// a file that grows never fills ws's memory. On the server root owns the home, /root, and on the Mac
+// the user does.
 const HomeFileMax = 1 << 20
-
-// Question is what ws asks, with its default and its check of the answer.
-type Question struct {
-	Text    string
-	Default string
-	// Valid is pure. A nil Valid takes any answer.
-	Valid func(string) error
-}
-
-// Prompt asks the maintainer.
-type Prompt interface {
-	// Ask asks again while q.Valid fails.
-	Ask(ctx context.Context, q Question) (string, error)
-}
-
-// Hidden asks for a secret, with no echo. It stands beside Prompt, whose fakes in other modules go on
-// compiling: effect is public.
-type Hidden interface {
-	// AskHidden returns the line as typed, blanks included.
-	AskHidden(ctx context.Context, text string) (string, error)
-}
 
 // Out tells the maintainer what ws does.
 type Out interface {
@@ -99,7 +79,7 @@ type Machine interface {
 	RootAttrs(path string) (Attrs, error)
 	// WriteAtomic replaces a file through a pending file, so that a reader sees the old file or the
 	// new one whole, and sets the owner and mode of a. Another owner than ws's own needs root:
-	// where ws runs as a user, sudo gives it outside the home and Confine, never through a link. A
+	// where ws runs as a user, sudo gives it outside the home, never through a link. A
 	// UID and GID of -1 keep ws's own, as chown(2) leaves them, and need no root.
 	WriteAtomic(path string, data []byte, a Attrs) error
 	// Download fetches the URL into path through a pending file, which replaces path only where the

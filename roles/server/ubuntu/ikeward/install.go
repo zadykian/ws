@@ -9,7 +9,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/roles/server/values"
 )
 
@@ -24,8 +23,8 @@ const exitChanged = 4
 // Install runs ikeward install from the profile of the run's env, where its dry run says it would
 // change anything. A change is to install a package, write or remove a file, or take a step. So a
 // new version, a new value or a file of ikeward's edited by hand has it run again. So has an
-// install cut short, or a unit of ikeward's found stopped. Without systemd booted, or in a run
-// without the secrets, it says so and plans nothing. InRun is ProfileFrom's set.
+// install cut short, or a unit of ikeward's found stopped. In a run without the secrets, it says
+// so and plans nothing. InRun is ProfileFrom's set.
 type Install struct {
 	M       effect.Machine
 	Out     effect.Out
@@ -95,10 +94,6 @@ func (c installNow) Apply(ctx context.Context) error {
 
 // Plan asks install what it would change, on the files of the run.
 func (i Install) Plan(ctx context.Context) ([]resource.Change, error) {
-	if !systemd.Booted(i.M) {
-		i.Out.Say("ikeward install: skipped, systemd is not running")
-		return nil, nil
-	}
 	if !i.InRun {
 		i.Out.Say("ikeward install: the run holds no secrets, so the VPN stays as it is")
 		return nil, nil

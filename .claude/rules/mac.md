@@ -20,14 +20,9 @@ The rules a change to the ws CLI keeps, in `cmd/`, `engine/` and `roles/`
   ([step.go](../../engine/core/step/step.go)).
 - A step is pure wherever it can be: it reads, a pure function turns what it read into `Change`
   values that apply themselves. Tests compare the plan's headlines (`step.Headline`).
-- A whole file that ws writes in the user's home is a `file.UserFile`, and a directory it writes
-  under a `file.UserDir`. They are core's file resources: a plan and a report read each alike. A
-  file that is not ws's stops its plan, or leaves it with a warning where its `Warn` is set
-  ([user.go](../../engine/core/resource/file/user.go),
-  [userdir.go](../../engine/core/resource/file/userdir.go)). ws's lines in a user's file are
-  `file.UserLines`, whose step warns or stops at a link or at misplaced lines
-  ([userlines.go](../../engine/core/resource/file/userlines.go)).
-- Effects are passed in: a step holds `effect.Prompt`, `effect.Out` and `effect.Machine` as fields
+- ws's lines in a user's file are `file.UserLines`, whose step warns or stops at a link or at
+  misplaced lines ([userlines.go](../../engine/core/resource/file/userlines.go)).
+- Effects are passed in: a step holds `effect.Out` and `effect.Machine` as fields
   and a function takes them as parameters. Tests use the fakes of
   [effecttest](../../engine/core/effect/effecttest/effecttest.go), never the real ones.
 - The Mac's units, of `mise -C /opt/ws/roles/client bootstrap`, read as the user and never through
@@ -36,16 +31,16 @@ The rules a change to the ws CLI keeps, in `cmd/`, `engine/` and `roles/`
   frame](../../roles/client/macos/frame/README.md#roots-paths)).
 - No cgo: ws builds with `CGO_ENABLED=0`. The race detector's cgo is the tests' alone
   ([Makefile](../../Makefile)).
-- `--server NAME` is `ws client macos`'s persistent flag, bound once in `Command` and read through a
+- `--server NAME` is `ws client`'s persistent flag, bound once in `Command` and read through a
   pointer at run time.
-- `ws client macos remove NAME` changes nothing on the server itself. Before the Mac's files, it
+- `ws client remove NAME` changes nothing on the server itself. Before the Mac's files, it
   takes the server's key from the secrets' recipients and its deploy keys, and a failure there
   keeps the server whole. `--skip-secrets` leaves the secrets, and prints the key. It then takes
   the Mac's files of that server away, and runs
-  `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap`, which takes its daemon and hosts away.
+  `mise -C /opt/ws/roles/client bootstrap`, which takes its daemon and hosts away.
   It takes no `--server`
-  ([The secrets](../../roles/client/macos/secrets/README.md#ws-client-macos-remove)).
-- `ws client macos secrets` changes the secrets repository by a pull request from a temporary
+  ([The secrets](../../roles/client/macos/secrets/README.md#ws-client-remove)).
+- `ws client secrets` changes the secrets repository by a pull request from a temporary
   clone, never a push to `main`, and opens none where nothing changed. A value, an age identity's
   secret or the backup's line never enters an argument, a file or an error
   ([The secrets on the Mac](../../roles/client/macos/secrets/README.md#how-a-change-lands)).

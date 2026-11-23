@@ -38,7 +38,7 @@ func copies(m *effecttest.Machine) []string {
 }
 
 func TestLineGoesAtTheTopAndKeepsACopy(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	withAccount(m)
 	m.Files["/home/u/.bashrc"], m.Owners["/home/u/.bashrc"] = []byte("mine\n"), [2]int{1001, 1001}
 	units := loadOne(t, e, lineSpec(""), nil)
@@ -57,7 +57,7 @@ func TestLineGoesAtTheTopAndKeepsACopy(t *testing.T) {
 }
 
 func TestLineMakesAMissingFileWithTheLineAlone(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	withAccount(m)
 	if err := run(t, e, loadOne(t, e, lineSpec("mode = 0o600\n"), nil)); err != nil {
 		t.Fatal(err)
@@ -69,7 +69,7 @@ func TestLineMakesAMissingFileWithTheLineAlone(t *testing.T) {
 }
 
 func TestLineHeldWithSpacesPlansNothing(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	withAccount(m)
 	m.Files["/home/u/.bashrc"] = []byte("mine\n  . /etc/x \t\n")
 	if got := headlines(t, loadOne(t, e, lineSpec(""), nil)[0].Step); got != nil {
@@ -78,7 +78,7 @@ func TestLineHeldWithSpacesPlansNothing(t *testing.T) {
 }
 
 func TestLineForRootTakesRootsHome(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	m.Results["getent passwd root"] = effecttest.Result{Out: []byte("root:x:0:0:root:/root:/bin/bash\n")}
 	m.Dirs["/root"] = 0o700
 	units := loadOne(t, e, "[file.l]\npath = \"/root/.profile\"\nowner = \"root\"\nline = \". /etc/x\"\n", nil)
@@ -95,7 +95,7 @@ func TestLineForRootTakesRootsHome(t *testing.T) {
 }
 
 func TestLineRefusesALinkOnTheWay(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	withAccount(m)
 	m.Links["/home/u/.config"] = "/etc"
 	units := loadOne(t, e, "[file.l]\npath = \"/home/u/.config/rc\"\nowner = \"u\"\nline = \"x\"\n", nil)
@@ -112,7 +112,7 @@ func TestLineRefusesALinkOnTheWay(t *testing.T) {
 // manager makes one, is in sync. A link that lacks the line is refused with the remedy. The fake's
 // file at the path stands for what the read through the link gives.
 func TestLineOnMacOSReadsThroughALinkAtTheFile(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	e.System = MacOS
 	m.Results["id -u u"] = effecttest.Result{Out: []byte("501\n")}
 	m.Results["id -g u"] = effecttest.Result{Out: []byte("20\n")}
@@ -133,7 +133,7 @@ func TestLineOnMacOSReadsThroughALinkAtTheFile(t *testing.T) {
 }
 
 func TestLineHasDecides(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	withAccount(m)
 	m.Files["/home/u/.bashrc"] = []byte("mine\n")
 	units := loadOne(t, e, lineSpec("has = [\"holds\", \"-q\"]\n"), nil)
@@ -151,7 +151,7 @@ func TestLineHasDecides(t *testing.T) {
 }
 
 func TestLineHasFailingFailsThePlanAndLeavesTheFile(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	withAccount(m)
 	m.Files["/home/u/.bashrc"] = []byte("mine\n")
 	m.Results["holds"] = effecttest.Result{Err: exited(t, exec.Command("sh", "-c", "echo out of place >&2; echo more >&2; exit 2"))}
@@ -166,7 +166,7 @@ func TestLineHasFailingFailsThePlanAndLeavesTheFile(t *testing.T) {
 }
 
 func TestLineCheckRefusedLeavesTheFile(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	withAccount(m)
 	m.Files["/home/u/.bashrc"], m.Modes["/home/u/.bashrc"] = []byte("mine\n"), 0o640
 	m.Owners["/home/u/.bashrc"] = [2]int{1001, 1001}
@@ -185,7 +185,7 @@ func TestLineCheckRefusedLeavesTheFile(t *testing.T) {
 }
 
 func TestLineOfSeveralLinesNeedsHas(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	const spec = "[file.l]\npath = \"/home/u/.bashrc\"\nowner = \"u\"\nline = \"a\\nb\\n\"\n"
 	if _, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": spec})); err == nil || !strings.Contains(err.Error(), "takes has") {
 		t.Errorf("load = %v, want has asked for", err)
@@ -196,18 +196,16 @@ func TestLineOfSeveralLinesNeedsHas(t *testing.T) {
 }
 
 func TestLineRefusesTheFieldsItCannotTake(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	for extra, want := range map[string]string{
-		"template = \"f\"\n":             "a line takes owner, mode, check, has, after and when alone",
-		"source = \"f\"\n":               "a line takes owner, mode, check, has, after and when alone",
-		"absent = true\n":                "a line takes owner, mode, check, has, after and when alone",
-		"secret = true\n":                "a line takes owner, mode, check, has, after and when alone",
-		"service = \"a.service\"\n":      "a line takes no service",
-		"enabled = true\n":               "go with service",
-		"reload = true\n":                "go with service",
-		"user_service = \"a.service\"\n": "a line takes no service",
-		"group_of = \"u\"\n":             "group_of takes a file of root's",
-		"ours = true\n":                  "a line takes owner, mode, check, has, after and when alone",
+		"template = \"f\"\n":        "a line takes owner, mode, check, has, after and when alone",
+		"source = \"f\"\n":          "a line takes owner, mode, check, has, after and when alone",
+		"absent = true\n":           "a line takes owner, mode, check, has, after and when alone",
+		"secret = true\n":           "a line takes owner, mode, check, has, after and when alone",
+		"service = \"a.service\"\n": "a line takes no service",
+		"enabled = true\n":          "go with service",
+		"reload = true\n":           "go with service",
+		"ours = true\n":             "a line takes owner, mode, check, has, after and when alone",
 	} {
 		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": lineSpec(extra), "r/f": ""}))
 		if err == nil || !strings.Contains(err.Error(), want) {

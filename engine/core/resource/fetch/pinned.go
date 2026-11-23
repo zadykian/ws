@@ -25,13 +25,10 @@ type PinnedFile struct {
 	SHA256  map[string]string
 	Path    string
 	Mode    fs.FileMode
-	// Lookup gives the sum of the file at url where SHA256 pins none for the architecture, as a
-	// release's list of sums does. A plan of a file that is current asks nothing.
-	Lookup func(ctx context.Context, url string) (string, error)
 }
 
-// resolve reads the architecture and returns the URL of the file, and the sum where SHA256 pins
-// it. Without a pin or a Lookup it fails before a URL exists.
+// resolve reads the architecture and returns the URL of the file, and the sum that SHA256 pins
+// for it. Without a pin it fails before a URL exists.
 func (p PinnedFile) resolve(ctx context.Context) (url, sum string, err error) {
 	arch := "all"
 	if _, shared := p.SHA256[arch]; !shared {
@@ -40,23 +37,17 @@ func (p PinnedFile) resolve(ctx context.Context) (url, sum string, err error) {
 		}
 	}
 	sum, pinned := p.SHA256[arch]
-	if !pinned && p.Lookup == nil {
+	if !pinned {
 		return "", "", fmt.Errorf("no SHA-256 pinned for the architecture %s", arch)
 	}
 	return p.URL(p.Version, arch), sum, nil
 }
 
-// download returns the Download that holds the pin. It asks Lookup for the sum where SHA256 has
-// none.
+// download returns the Download that holds the pin.
 func (p PinnedFile) download(ctx context.Context) (Download, error) {
 	url, sum, err := p.resolve(ctx)
 	if err != nil {
 		return Download{}, err
-	}
-	if sum == "" {
-		if sum, err = p.Lookup(ctx, url); err != nil {
-			return Download{}, err
-		}
 	}
 	return Download{M: p.M, URL: url, Path: p.Path, SHA256: sum, Mode: p.Mode}, nil
 }

@@ -15,6 +15,8 @@ func TestCandidates(t *testing.T) {
 	home := Iface{"en0", netip.MustParseAddr("192.168.1.50")}
 	away := Iface{"en0", netip.MustParseAddr("172.20.0.5")}
 	ws := netip.MustParseAddr("203.0.113.9")
+	segment := Conf{LAN: netip.MustParsePrefix("10.88.0.0/23"), LANServer: netip.MustParseAddr("10.88.1.10")}
+	onLAN := Iface{"en0", netip.MustParseAddr("10.88.0.50")}
 	tests := []struct {
 		name   string
 		ifaces []Iface
@@ -28,6 +30,8 @@ func TestCandidates(t *testing.T) {
 		{"the cable of another server", []Iface{cable, home}, Conf{LAN: lan.LAN, LANServer: lan.LANServer}, netip.Addr{},
 			[]Candidate{{TierLAN, lan.LANServer}}, 0},
 		{"LAN and remote", []Iface{home}, remote, ws, []Candidate{{TierLAN, lan.LANServer}, {TierRemote, ws}}, 0},
+		{"the server on a segment of its own", []Iface{onLAN}, segment, netip.Addr{},
+			[]Candidate{{TierLAN, segment.LANServer}}, 0},
 		{"away: remote alone", []Iface{away}, remote, ws, []Candidate{{TierRemote, ws}}, 0},
 		{"the name has no IPv4 address", []Iface{away}, remote, netip.Addr{}, nil, 1},
 		{"WS_LAN without WS_LAN_ADDRESS", []Iface{home}, Conf{LAN: lan.LAN}, netip.Addr{}, nil, 0},

@@ -127,7 +127,6 @@ func TestNvidiaRefusesAnotherKernel(t *testing.T) {
 func TestNvidiaRebootNote(t *testing.T) {
 	for loaded, want := range map[string]string{"": "nvidia at none", "595.91.07\n": ""} {
 		m, out := withNvidia(), &effecttest.Out{}
-		m.Dirs["/run/systemd/system"] = 0o755
 		m.Packages = effecttest.Packages{nvidiaSMI: {Version: "595.91.07-0ubuntu0.26.04.2", Status: "ii"}}
 		if loaded != "" {
 			m.Files["/sys/module/nvidia/version"] = []byte(loaded)

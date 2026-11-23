@@ -6,14 +6,12 @@ kinds' page, [ws's kinds](README.md#the-kinds), holds the rest.
 ```toml
 [state.NAME]                # exactly one of the keys below
 linger = "USER"             # USER's systemd starts at boot, and runs: user@UID.service
-subids = "USER"             # the range 100000-165535 where a file gives USER none of 65536
 purged = "package"          # removed with its settings
 http = "http://127.0.0.1:PORT/"  # answers 200, waited for 30 times, 2 s apart
 ufw = { comment = "ws: NAME", rules = [{ action = "allow", proto = "udp", to_port = "53", dir = "in" }] }
 ufw = { comment = "ws: NAME", rules = [{ action = "allow", interface = "IN0", out = "OUT0", from = "CIDR" }] }
 routes = { pool = "CIDR", net = "CIDR", dev = "docker0", hint = "…" }  # refuses an overlap
 addr = { iface = "docker0", want = "CIDR", hint = "…" }                # refuses a missing address
-left = { user = "USER", group = "GROUP" }
 run = { user = "USER", command = ["cmd"], creates = ["/path"] }        # or check = ["cmd"]
 reboot = { module = "name", package = "name", hint = "…" }             # notes a reboot that is due
 locale = { name = "en_US.UTF-8", hint = "…" }                          # generated, and LANG
@@ -28,12 +26,12 @@ swap = { size_mib = 1024, hint = "…" }                                 # /swap
 - `routes` fails where a route of the moment overlaps `pool`, but for an on-link route of the main
   table, or `net` on a device other than `dev`. `addr` fails where `iface` lacks `want`. Each error
   ends with `hint`, as the run cannot mend either.
-- `run` runs its command as `user`, with the system's `PATH`: on Linux by runuser, in the user's
-  systemd session. A `user` other than root starts from a cleared environment, with its `HOME`
-  alone, as root's may hold a secret's value that the user could read from its own process. It
-  takes exactly one of `creates`, which runs where a path is missing, and `check`, which runs
-  where the check, as `user` too, exits other than 0. A procedure that stays a command of ws runs
-  this way.
+- `run` runs its command as `user`, with the system's `PATH`. On Linux `user` is root alone, which
+  a spec of the server's names, and the command gets root's `HOME` in ws's env, without the
+  caller's `XDG_RUNTIME_DIR` and `DBUS_SESSION_BUS_ADDRESS`. No run reads root's session, and
+  dotnet fails on a missing runtime directory. It takes exactly one of `creates`, which runs where
+  a path is missing, and `check`, which runs where the check, as `user` too, exits other than 0. A
+  procedure that stays a command of ws runs this way.
 - A `run` whose program is not ws's own, as `self` names it, gets no variable that the side hides
   (`kind.Env.Hidden`): the server's secret inputs. An installer runs code the run fetched, which
   must not see a token. ws reads its values from the run's env, and keeps them.
@@ -58,12 +56,6 @@ swap = { size_mib = 1024, hint = "…" }                                 # /swap
   made again, under another name until `mkswap` has made it a swap area. The plan reads
   `/proc/swaps`, `/proc/meminfo`, the free space of `/` and `/swapfile`. It fails where the disk
   lacks room for the file and 2 GiB more, with `hint` after. It fails too where swapping an area
-  off would bring back more than half the memory available. At 0 it removes the file. Without booted
-  systemd it makes the file and skips `swapon` and `swapoff`. The kernel's swap is the host's in a
-  container, so a spec turns the unit off there by `when = { container = "!yes" }`.
-- Without booted systemd, `linger`, `http`, `ufw`, `addr` and `reboot` skip, and each says so. So
-  does `run` on Linux, where it needs the user's session; macOS has no systemd, and runs it. A
-  `run` with `unbooted = true` needs no session, and runs there too, without the session's env.
-  With booted systemd it gets that env only where `/run/user/UID` exists, as dotnet fails on a
-  missing `XDG_RUNTIME_DIR`. Without that env, a run as root drops the caller's `XDG_RUNTIME_DIR`
-  and `DBUS_SESSION_BUS_ADDRESS`.
+  off would bring back more than half the memory available. At 0 it removes the file. The kernel's
+  swap is the host's in a container, so a spec turns the unit off there by
+  `when = { container = "!yes" }`.

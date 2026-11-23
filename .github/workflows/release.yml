@@ -1,9 +1,10 @@
 name: release
 
 # A pushed tag vX.Y.Z on a commit of main publishes ws's release. A tag vX.Y.Z-rc.N on a commit of
-# feat/mise publishes a pre-release. ci.yml and mac.yml run on the tag first, then three binaries,
-# ws.sha256 and install.sh are published, all checked for the local list's words. release.md,
-# beside it, says how a release is cut.
+# a feat/ branch publishes a pre-release. ci.yml and client.yml run on the tag first, then three
+# binaries, ws.sha256, install.sh and autoinstall.yaml are published, all checked for the local
+# list's words.
+# release.md, beside it, says how a release is cut.
 on:
   push:
     tags: ["v*"]
@@ -12,7 +13,7 @@ permissions: {}
 
 jobs:
   # The tag must be vX.Y.Z, on a commit that main holds, as only a landed stack is released. A
-  # pre-release, vX.Y.Z-rc.N with N from 1, needs feat/mise to hold its commit instead. The
+  # pre-release, vX.Y.Z-rc.N with N from 1, needs a feat/ branch to hold its commit instead. The
   # maintainer tries that branch from it before the branch lands.
   check:
     runs-on: ubuntu-latest
@@ -33,19 +34,21 @@ jobs:
           final='^v(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*)){2}$'
           rc='^v(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*)){2}-rc\.[1-9][0-9]*$'
           if printf '%s\n' "$TAG" | grep -Eq "$final"; then
-              branch=origin/main
+              git merge-base --is-ancestor HEAD origin/main || {
+                  echo "origin/main does not hold the tag's commit" >&2
+                  exit 1
+              }
           elif printf '%s\n' "$TAG" | grep -Eq "$rc"; then
-              branch=origin/feat/mise
+              [ -n "$(git branch -r --contains HEAD --list 'origin/feat/*')" ] || {
+                  echo "no branch origin/feat/* holds the tag's commit" >&2
+                  exit 1
+              }
           else
               echo "the tag is not vX.Y.Z or vX.Y.Z-rc.N" >&2
               exit 1
           fi
-          git merge-base --is-ancestor HEAD "$branch" || {
-              echo "$branch does not hold the tag's commit" >&2
-              exit 1
-          }
 
-  # The workflows of a pull request, on the tag's commit. Their playbook and mac jobs run, as the
+  # The workflows of a pull request, on the tag's commit. Their server and client jobs run, as the
   # tag's push event has no stack.
   ci:
     needs: check
@@ -53,9 +56,9 @@ jobs:
     permissions:
       contents: read
 
-  mac:
+  client:
     needs: check
-    uses: ./.github/workflows/mac.yml # zizmor: ignore[self-repository] actionlint rejects $/
+    uses: ./.github/workflows/client.yml # zizmor: ignore[self-repository] actionlint rejects $/
     permissions:
       contents: read
 
@@ -83,6 +86,8 @@ jobs:
           done
           (cd "$RUNNER_TEMP/dist" && sha256sum ws-* >ws.sha256)
           cp install.sh "$RUNNER_TEMP/dist/install.sh"
+          sum=$(sha256sum install.sh)
+          .github/autoinstall.sh "$TAG" "${sum%% *}" >"$RUNNER_TEMP/dist/autoinstall.yaml"
       - name: ws version prints the tag
         run: |
           got=$("$RUNNER_TEMP/dist/ws-linux-amd64" version)
@@ -90,6 +95,22 @@ jobs:
               echo "ws version printed $got, not $TAG" >&2
               exit 1
           }
+      - name: autoinstall.yaml names the release
+        run: |
+          f=$RUNNER_TEMP/dist/autoinstall.yaml
+          sum=$(sha256sum "$RUNNER_TEMP/dist/install.sh")
+          grep -qF "releases/download/$TAG/install.sh" "$f" || {
+              echo "autoinstall.yaml does not download $TAG's install.sh" >&2
+              exit 1
+          }
+          grep -qF "${sum%% *}" "$f" || {
+              echo "autoinstall.yaml holds no SHA-256 of install.sh" >&2
+              exit 1
+          }
+          if grep -qwE 'VERSION|SHA256' "$f"; then
+              echo "autoinstall.yaml keeps a blank of the release" >&2
+              exit 1
+          fi
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release
@@ -101,7 +122,7 @@ jobs:
   # FORBIDDEN_WORDS, which must not be empty. A pre-release is never the latest, so
   # releases/latest and install.sh keep the last full release.
   publish:
-    needs: [check, ci, mac, build]
+    needs: [check, ci, client, build]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -150,3 +171,9 @@ jobs:
           case $TAG in *-rc.*) set -- --prerelease --latest=false ;; esac
           gh release create "$TAG" "$RUNNER_TEMP"/dist/* --title "$TAG" \
               --notes-file "$RUNNER_TEMP/notes.md" --verify-tag "$@"
+          # The sum and the binary come from one release: only immutable releases keep them fixed.
+          immutable=$(gh api "repos/$GH_REPO/releases/tags/$TAG" --jq .immutable)
+          [ "$immutable" = true ] || {
+              echo "release $TAG is not immutable: turn on immutable releases in settings" >&2
+              exit 1
+          }

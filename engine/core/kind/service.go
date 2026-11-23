@@ -22,14 +22,10 @@ var runs = map[string]systemd.Run{"": systemd.Leave, "running": systemd.Running,
 // removed after the rest. A change to any of them
 // gives one restart, or one reload with Reload, owed to the next run where this one fails.
 // InForce and Loads compare what is in force with what the files load (drift). A service whose
-// files all go is gone: it stops and is disabled before they do. Without booted systemd it plans
-// no unit and says so.
+// files all go is gone: it stops and is disabled before they do.
 type serviceSpec struct {
 	base
-	Unit string `toml:"unit"`
-	// User makes Unit one of that account's own systemd, kept running, whose files are its own. Its
-	// unit file is a part, which the start follows, or is left to whatever installs it.
-	User    string     `toml:"user"`
+	Unit    string     `toml:"unit"`
 	Enabled bool       `toml:"enabled"`
 	Run     string     `toml:"run"`
 	Reload  bool       `toml:"reload"`
@@ -48,11 +44,6 @@ func (s serviceSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.
 	}
 	if (len(s.InForce) == 0) != (len(s.Loads) == 0) {
 		return nil, errors.New("in_force goes with loads")
-	}
-	if s.User != "" {
-		if err := s.checkUser(); err != nil {
-			return nil, err
-		}
 	}
 	gone := s.gone()
 	if gone && (s.Enabled || run != systemd.Leave && run != systemd.Stopped) {
@@ -87,23 +78,14 @@ func (s serviceSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.
 		if gone {
 			// The stop and the disable come first, while the unit's file still names its ExecStop
 			// and the links that [Install] made.
-			unit := systemd.Unit{M: e.M, U: e.U, Out: e.Out, Name: s.Unit, Disabled: true, Run: systemd.Stopped}
+			unit := systemd.Unit{M: e.M, U: e.U, Name: s.Unit, Disabled: true, Run: systemd.Stopped}
 			return append([]resource.Resource{unit}, all...), nil
 		}
-		if s.User != "" {
-			owner, err := ownerOf(ctx, e, s.User)
-			if err != nil {
-				return nil, err
-			}
-			writes := slices.Contains(paths, systemd.UserUnitPath(owner.Home, s.Unit))
-			return append(all, systemd.UserUnit{M: e.M, Account: owner, Out: e.Out, Name: s.Unit, Watch: watch,
-				Writes: writes}), nil
-		}
 		if len(s.InForce) > 0 {
-			d := drift{m: e.M, out: e.Out, inForce: s.InForce, loads: s.Loads, files: paths}
+			d := drift{m: e.M, inForce: s.InForce, loads: s.Loads, files: paths}
 			all, watch = append(all, d), append(watch, d)
 		}
-		return append(all, systemd.Unit{M: e.M, U: e.U, Out: e.Out, Name: s.Unit, Enabled: s.Enabled, Run: run,
+		return append(all, systemd.Unit{M: e.M, U: e.U, Name: s.Unit, Enabled: s.Enabled, Run: run,
 			Reload: s.Reload, Watch: watch}), nil
 	}, nil
 }
@@ -126,26 +108,4 @@ func addParts(all, parts []resource.Resource) []resource.Resource {
 		all = append(all, p)
 	}
 	return all
-}
-
-// checkUser refuses the fields that a unit of an account's own systemd cannot take: UserUnit keeps
-// it running and restarts it, and no more. Each of its files is the account's.
-func (s serviceSpec) checkUser() error {
-	switch {
-	case s.User == "root":
-		return errors.New("user takes an account other than root, whose units are the system's")
-	case s.Enabled || s.Reload || len(s.InForce) > 0:
-		return errors.New("a unit of a user's own systemd takes no enabled, reload or in_force")
-	case s.Run != "running":
-		return errors.New(`a unit of a user's own systemd takes run = "running"`)
-	}
-	if err := checkUser("user", s.User); err != nil {
-		return err
-	}
-	for i, f := range s.File {
-		if f.Owner != s.User {
-			return fmt.Errorf("file %d: owner %q is not the unit's user %q", i+1, f.Owner, s.User)
-		}
-	}
-	return nil
 }

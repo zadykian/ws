@@ -68,16 +68,6 @@ func oursGuard(path string) string {
 		`' || { echo "$f: not written by ws, so the run stops: move its value into the secrets, then remove it" >&2; exit 1; }`
 }
 
-// groupLines returns the sh lines of a secret file's group state, the command and the check, of the
-// file "$1" and the account "$2". Both read the file's first line as the guard does. A run without
-// the env secrets loads no guard of mise's, and stops at a file by hand here, before the account's
-// group opens it.
-func groupLines() (command, check string) {
-	return oursGuard(`"$1"`) + `; [ ! -e "$1" ] || chgrp -- "$(id -g -- "$2")" "$1"`,
-		`[ ! -e "$1" ] || { head -n 1 -- "$1" | grep -qxF -- '` + file.Header("#") +
-			`' && [ "$(stat -c %g -- "$1")" = "$(id -g -- "$2")" ]; }`
-}
-
 // Each input is a table whose env is its own name, empty allowed. fnox exports a secret by the name
 // it holds, and an input that a server's secrets leave empty must not stop the run.
 func TestSecretInputsTakeOneForm(t *testing.T) {
@@ -96,13 +86,13 @@ func TestSecretInputsTakeOneForm(t *testing.T) {
 	}
 }
 
-// Each file is root's at 640, a template that an empty render removes, and its content opens with
-// the guard. mise takes a literal group alone, so the account's comes from a unit (below).
+// Each file is root's at 600, a template that an empty render removes, and its content opens with
+// the guard.
 func TestSecretFilesTakeOneForm(t *testing.T) {
 	for role, f := range secretsFiles(t) {
 		for path, sf := range f.Bootstrap.Files {
-			if !sf.Template || !sf.RemoveEmpty || sf.Owner != "root" || sf.Mode != "0640" {
-				t.Errorf("%s: %s is template %v, remove_empty %v, owner %q, mode %q; want true, true, root, 0640",
+			if !sf.Template || !sf.RemoveEmpty || sf.Owner != "root" || sf.Mode != "0600" {
+				t.Errorf("%s: %s is template %v, remove_empty %v, owner %q, mode %q; want true, true, root, 0600",
 					role, path, sf.Template, sf.RemoveEmpty, sf.Owner, sf.Mode)
 			}
 			first, _, _ := strings.Cut(sf.Content, "\n")
@@ -138,58 +128,6 @@ func TestTheSideReadsTheInputsInTheSecretsTask(t *testing.T) {
 	}
 	if fi, err := os.Stat(filepath.Join("..", "mise-tasks", secretsTask)); err != nil || fi.Mode()&0o111 == 0 {
 		t.Errorf("mise-tasks/%s is no executable task: %v", secretsTask, err)
-	}
-}
-
-// templateAction matches an action of a spec's template, such as git's
-// {{ trim_suffix .GitSigningPubKey ".pub" }}, whose quotes would end a TOML string.
-var templateAction = regexp.MustCompile(`\{\{[^}]*\}\}`)
-
-// keepUser stands an action in for a word that TOML takes, but {{ .User }}, which the test looks for.
-func keepUser(action []byte) []byte {
-	if string(action) == "{{ .User }}" {
-		return action
-	}
-	return []byte("action")
-}
-
-// mise writes a file root:root each time its content changes, so a unit of root's gives it the
-// account's group after. Its name ends in -group, and its command and check are groupLines', of the
-// path and the account.
-func TestEachSecretFileHasItsGroupUnit(t *testing.T) {
-	for role, f := range secretsFiles(t) {
-		if len(f.Bootstrap.Files) == 0 {
-			continue // no file of mise's, as ikeward's inputs reach ws by the run's env
-		}
-		text, err := os.ReadFile(filepath.Join(rolesDir, role, "units.toml.tmpl")) //nolint:gosec // a role's spec
-		if err != nil {
-			t.Fatal(err)
-		}
-		var spec struct {
-			State map[string]struct {
-				Run struct {
-					User    string   `toml:"user"`
-					Command []string `toml:"command"`
-					Check   []string `toml:"check"`
-				} `toml:"run"`
-			} `toml:"state"`
-		}
-		if err := toml.Unmarshal(templateAction.ReplaceAllFunc(text, keepUser), &spec); err != nil {
-			t.Fatalf("%s's spec: %v", role, err)
-		}
-		command, check := groupLines()
-		for path := range f.Bootstrap.Files {
-			found := false
-			for name, s := range spec.State {
-				r := s.Run
-				found = found || strings.HasSuffix(name, "-group") && r.User == "root" &&
-					slices.Equal(r.Command, []string{"sh", "-c", command, "sh", path, "{{ .User }}"}) &&
-					slices.Equal(r.Check, []string{"sh", "-c", check, "sh", path, "{{ .User }}"})
-			}
-			if !found {
-				t.Errorf("%s: no state ending in -group of root's runs groupLines on %s and the account", role, path)
-			}
-		}
 	}
 }
 

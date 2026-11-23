@@ -7,9 +7,9 @@
 # the last wins, so the URLs go in order, each after those it extends.
 [credential "https://a.example/x"]
 	helper =
-	helper = "!/usr/local/bin/ws server ubuntu git credential a.example_x"
+	helper = "!/usr/local/bin/ws server git credential a.example_x"
 [credential "https://b.example"]
 	helper =
-	helper = "!/usr/local/bin/ws server ubuntu git credential b.example"
+	helper = "!/usr/local/bin/ws server git credential b.example"
 [http "https://b.example"]
 	proactiveAuth = basic

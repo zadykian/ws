@@ -20,13 +20,12 @@ import (
 
 const (
 	sshdDropIn  = "/etc/ssh/sshd_config.d/10-keys-only.conf"
-	noCache     = "/etc/sudoers.d/ws-no-cache"
-	keysOfUser  = "/home/zadykian/.ssh/authorized_keys"
+	keysOfRoot  = "/root/.ssh/authorized_keys"
 	tableDir    = "/usr/local/lib/ws/security"
 	unitDir     = "/etc/systemd/system/"
 	destroyLine = "nft destroy table inet ws"
-	// asRoot is how a run state's command runs as root, with booted systemd's session.
-	asRoot = "env HOME=/root env XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus " +
+	// asRoot is how a run state's command runs as root, with no session's env.
+	asRoot = "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " +
 		"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "
 	// tableGone is the run state's check that no table is loaded.
 	tableGone = asRoot + "sh -c ! nft list table inet ws >/dev/null 2>&1"
@@ -36,24 +35,16 @@ const (
 var outboundUnits = []string{"security-resolvers.path", "security-resolvers.timer", "security-resolvers.service",
 	"security-outbound.service"}
 
-// securityMachine is a booted machine, not a container, whose account zadykian holds a key and a
-// way to root by sudo, and whose checkers pass.
+// securityMachine is a machine, not a container, whose root holds a key, and
+// whose checkers pass.
 func securityMachine() *effecttest.Machine {
-	m := bootedMachine()
-	m.Results["id -u zadykian"] = effecttest.Result{Out: []byte("1001\n")}
-	m.Results["id -g zadykian"] = effecttest.Result{Out: []byte("1001\n")}
-	m.Results["getent passwd zadykian"] = effecttest.Result{Out: []byte("zadykian:x:1001:1001::/home/zadykian:/bin/bash\n")}
+	m := effecttest.NewMachine()
 	m.Results["getent passwd root"] = effecttest.Result{Out: []byte("root:x:0:0:root:/root:/bin/bash\n")}
-	m.Dirs["/home/zadykian"], m.Dirs["/home/zadykian/.ssh"] = 0o750, 0o700
-	m.Owners["/home/zadykian"], m.Owners["/home/zadykian/.ssh"] = [2]int{1001, 1001}, [2]int{1001, 1001}
-	m.Files[keysOfUser], m.Modes[keysOfUser], m.Owners[keysOfUser] = []byte("ssh-ed25519 AAAA me\n"), 0o600, [2]int{1001, 1001}
-	m.Results["sudo -l -U zadykian"] = effecttest.Result{Out: []byte("User zadykian may run the following commands on h:\n    (ALL : ALL) ALL\n")}
-	m.Results["passwd --status zadykian"] = effecttest.Result{Out: []byte("zadykian P 2026-11-05 0 99999 7 -1\n")}
-	m.Results["visudo -cf "+noCache+".ws-check"] = effecttest.Result{}
+	m.Dirs["/root"], m.Dirs["/root/.ssh"] = 0o700, 0o700
+	m.Files[keysOfRoot], m.Modes[keysOfRoot] = []byte("ssh-ed25519 AAAA me\n"), 0o600
 	m.Results["/usr/sbin/sshd -G -f "+sshdDropIn+".ws-check"] = effecttest.Result{}
 	m.Results["/usr/sbin/nft -c -f "+tableDir+"/outbound.nft.ws-check"] = effecttest.Result{}
 	m.Results[tableGone] = effecttest.Result{}
-	m.Files["/etc/group"] = []byte("lxd:x:110:\n")
 	m.Packages = effecttest.Packages{}
 	return m
 }
@@ -80,59 +71,33 @@ func TestSecurityUnitsOrder(t *testing.T) {
 	for _, u := range securityUnits(t, securityMachine(), &effecttest.Units{}, "") {
 		names = append(names, u.Name)
 	}
-	want := []string{"guard/security-keys", "guard/security-sudo", "file/security-sudo-no-cache", "service/security-sshd"}
+	want := []string{"guard/security-keys", "service/security-sshd"}
 	if !slices.Equal(names[:len(want)], want) {
-		t.Errorf("order = %q, want the guards, then sudoers and sshd", names)
+		t.Errorf("order = %q, want the keys' guard, then sshd", names)
 	}
 }
 
 func TestSecurityMissingKeyStopsBeforeSshd(t *testing.T) {
 	m := securityMachine()
-	delete(m.Files, keysOfUser)
+	delete(m.Files, keysOfRoot)
 	if err := runUnits(t, securityUnits(t, m, &effecttest.Units{}, "")); err == nil || !strings.Contains(err.Error(), "holds no key") {
 		t.Fatalf("run = %v, want the guard's refusal", err)
 	}
-	for _, p := range []string{sshdDropIn, noCache} {
-		if _, ok := m.Files[p]; ok {
-			t.Errorf("%s was written past the guard", p)
-		}
+	if _, ok := m.Files[sshdDropIn]; ok {
+		t.Errorf("%s was written past the guard", sshdDropIn)
 	}
 }
 
-func TestSecurityNoSudoRightStopsBeforeSudoers(t *testing.T) {
+func TestSecuritySshdFileLetsRootInByKeyAlone(t *testing.T) {
+	const want = "PermitRootLogin prohibit-password\n"
 	m := securityMachine()
-	m.Results["sudo -l -U zadykian"] = effecttest.Result{Out: []byte("User zadykian is not allowed to run sudo on h.\n")}
-	if err := runUnits(t, securityUnits(t, m, &effecttest.Units{}, "")); err == nil || !strings.Contains(err.Error(), "no right to sudo") {
-		t.Fatalf("run = %v, want the guard's refusal", err)
-	}
-	for _, p := range []string{sshdDropIn, noCache} {
-		if _, ok := m.Files[p]; ok {
-			t.Errorf("%s was written past the guard", p)
-		}
-	}
-}
-
-func TestSecurityHomeOtherThanTheAccountsStops(t *testing.T) {
-	m := securityMachine()
-	m.Files["/.dockerenv"] = nil
-	err := runUnits(t, securityUnits(t, m, &effecttest.Units{}, "---\nWS_HOME: /srv/zadykian\n"))
-	if err == nil || !strings.Contains(err.Error(), "home /srv/zadykian is not zadykian's home, /home/zadykian") {
-		t.Errorf("run = %v, want the home refused, in a container too", err)
-	}
-}
-
-func TestSecuritySshdFileForRootAndAccount(t *testing.T) {
-	for yml, want := range map[string]string{"": "PermitRootLogin no\n", "---\nWS_USER: root\n": "PermitRootLogin prohibit-password\n"} {
-		m := securityMachine()
-		m.Files["/root/.ssh/authorized_keys"] = []byte("ssh-ed25519 AAAA me\n")
-		u := &effecttest.Units{States: map[string]effect.UnitState{"ssh.service": {Active: true}}}
-		units := securityUnits(t, m, u, yml)
-		applyUnit(t, units, "service/security-sshd")
-		got := string(m.Files[sshdDropIn])
-		if !strings.Contains(got, "PasswordAuthentication no\nKbdInteractiveAuthentication no\n") ||
-			!strings.HasSuffix(got, want) || m.Modes[sshdDropIn] != 0o644 {
-			t.Errorf("%q: the drop-in at %o:\n%s\nwant it to end %q", yml, m.Modes[sshdDropIn], got, want)
-		}
+	u := &effecttest.Units{States: map[string]effect.UnitState{"ssh.service": {Active: true}}}
+	units := securityUnits(t, m, u, "")
+	applyUnit(t, units, "service/security-sshd")
+	got := string(m.Files[sshdDropIn])
+	if !strings.Contains(got, "PasswordAuthentication no\nKbdInteractiveAuthentication no\n") ||
+		!strings.HasSuffix(got, want) || m.Modes[sshdDropIn] != 0o644 {
+		t.Errorf("the drop-in at %o:\n%s\nwant it to end %q", m.Modes[sshdDropIn], got, want)
 	}
 }
 

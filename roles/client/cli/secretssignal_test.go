@@ -39,7 +39,7 @@ func TestRemoveRemovesTheCloneOnASignal(t *testing.T) {
 		p, mac := removeSecretsFixture(heldBy(t, labKey))
 		mac.Results[checksLine] = effecttest.Result{Out: []byte(pending)}
 		p.Machine = &signaled{Mac: mac, sig: sig, at: checksLine}
-		status, _, stderr := runWs(p, "client", "macos", "remove", "lab")
+		status, _, stderr := runWs(p, "client", "remove", "lab")
 		if status != 1 || !strings.Contains(stderr, "stopped waiting for the checks") ||
 			!strings.Contains(stderr, "lab stays on the Mac") {
 			t.Errorf("remove on %v: status = %d, stderr = %q", sig, status, stderr)
@@ -63,8 +63,8 @@ func TestSecretsAddStopsAtTheFingerprintOnASignal(t *testing.T) {
 		var out, errs bytes.Buffer
 		done := make(chan int, 1)
 		go func() {
-			done <- enginecli.Execute(context.Background(), enginecli.Root(p, clientGroup(p)),
-				[]string{"client", "macos", "secrets", "add", "lab"}, in, &out, &errs)
+			done <- enginecli.Execute(context.Background(), enginecli.Root(p, Command(p)),
+				[]string{"client", "secrets", "add", "lab"}, in, &out, &errs)
 		}()
 		select {
 		case status := <-done:

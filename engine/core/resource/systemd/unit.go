@@ -1,3 +1,4 @@
+// Package systemd runs units, reloads systemd and enables lingering.
 package systemd
 
 import (
@@ -10,9 +11,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 )
-
-// noSystemd is what a unit reports where systemd is not running.
-const noSystemd = "systemd is not running"
 
 // Run is what a Unit wants of a unit's activity.
 type Run int
@@ -29,12 +27,10 @@ const (
 
 var runWords = map[Run]string{Running: "running", Stopped: "stopped", Triggered: "started by its trigger"}
 
-// Unit is a systemd unit that is enabled or not, and running or not. Without systemd booted, as in
-// CI's container, it plans nothing and says so.
+// Unit is a systemd unit that is enabled or not, and running or not.
 type Unit struct {
 	M    effect.Machine
 	U    effect.Units
-	Out  effect.Out
 	Name string
 	// Enabled makes the unit start at boot.
 	Enabled bool
@@ -73,10 +69,6 @@ func (c unitCall) Apply(ctx context.Context) error { return c.do(ctx) }
 
 // Plan reads the unit's state over D-Bus.
 func (u Unit) Plan(ctx context.Context) ([]resource.Change, error) {
-	if !Booted(u.M) {
-		u.Out.Say("%s: skipped, systemd is not running", u.Name)
-		return nil, nil
-	}
 	s, err := u.U.State(ctx, u.Name)
 	if err != nil {
 		return nil, fmt.Errorf("unit %s: %w", u.Name, err)
@@ -157,12 +149,9 @@ func (u Unit) Plan(ctx context.Context) ([]resource.Change, error) {
 	return cs, nil
 }
 
-// Report reads the unit's state. Plan says that systemd is not running, so this doesn't.
+// Report reads the unit's state.
 func (u Unit) Report(ctx context.Context) ([]step.Item, error) {
-	item := step.Item{Kind: step.ServiceItem, Name: u.Name, Want: u.wanted(), Found: noSystemd}
-	if !Booted(u.M) {
-		return []step.Item{item}, nil
-	}
+	item := step.Item{Kind: step.ServiceItem, Name: u.Name, Want: u.wanted()}
 	s, err := u.U.State(ctx, u.Name)
 	if err != nil {
 		return nil, fmt.Errorf("unit %s: %w", u.Name, err)

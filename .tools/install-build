@@ -1,0 +1,36 @@
+#!/bin/sh
+# Installs this tree's build of ws as /usr/local/bin/ws, the one ws of a machine, in place of a
+# release's. CI's jobs and a trial of the tree run it so:
+#
+#   .tools/install-build [OS ARCH]
+#
+# The release's ws may lack what the tree's specs need, so setup runs the tree's own build, with
+# --in-place. This builds ws for OS and ARCH, linux amd64 by default, as the caller, by .tools/build.
+# The Mac's job passes darwin arm64. It installs the file as 0:0 and 0755, under a temporary name
+# beside /usr/local/bin/ws, and renames it over ws, so that a running ws never fails. It runs sudo
+# for that where the caller is not root. Run it from anywhere.
+
+set -eu
+
+# die prints a message of the script's and exits with status 1.
+die() {
+    printf '.tools/install-build: %s\n' "$*" >&2
+    exit 1
+}
+
+main() {
+    [ $# -eq 0 ] || [ $# -eq 2 ] || die "usage: .tools/install-build [OS ARCH]"
+    os=${1:-linux}
+    arch=${2:-amd64}
+    tools=$(cd "$(dirname "$0")" && pwd)
+    root=sudo
+    [ "$(id -u)" -ne 0 ] || root=
+    tmp=$(mktemp -d)
+    trap 'rm -rf "$tmp"' EXIT
+    sh "$tools/build" "$os" "$arch" "$tmp/ws"
+    [ -d /usr/local/bin ] || $root mkdir -p /usr/local/bin
+    $root install -o 0 -g 0 -m 0755 "$tmp/ws" /usr/local/bin/.ws.new
+    $root mv -f /usr/local/bin/.ws.new /usr/local/bin/ws
+}
+
+main "$@"

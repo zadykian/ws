@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"syscall"
 	"time"
@@ -17,8 +18,8 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 )
 
-// killGrace bounds a command's end past its context. It stays above the 2
-// seconds that runuser gives its child, which a kill of runuser would cut short.
+// killGrace bounds a command's end past its context. A command with a child, such as sudo, has
+// this long to end it after SIGTERM, which a kill of the parent would cut short.
 const killGrace = 3 * time.Second
 
 // OSMachine is the Machine of the machine that ws runs on.
@@ -34,11 +35,6 @@ type OSMachine struct {
 	// offTerminal, as they ask at /dev/tty, past their standard input, and a command's context ends
 	// it by SIGTERM before a kill.
 	Stdin io.Reader
-	// Confine is a directory that Mkdir, Chmod, Chown, Symlink, WriteFile and WriteAtomic stay
-	// inside for a path under it: a link there that leaves it fails the write. WS_USER owns the
-	// WS_HOME, and can swap a directory in it for a link as root applies, which would hand the
-	// target to WS_USER. Empty means no limit.
-	Confine string
 	// UserReads reads root's files and their owner and mode as ws's own user, never through sudo,
 	// so that a read asks no password. A file the user may not read fails the read. The Mac's
 	// units set it, as they keep root's paths readable by all; writes still go through sudo.
@@ -80,21 +76,6 @@ func (OSMachine) ReadFile(path string) ([]byte, error) {
 
 // WriteFile writes the file, and sets its mode where it already existed.
 func (m OSMachine) WriteFile(path string, data []byte, perm fs.FileMode) error {
-	if root, rel, err := m.confined(path); err != nil || root != nil {
-		if err != nil {
-			return err
-		}
-		defer func() { _ = root.Close() }()
-		f, err := root.OpenFile(rel, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
-		if err != nil {
-			return err
-		}
-		_, err = f.Write(data)
-		if err = errors.Join(err, f.Chmod(perm), f.Close()); err != nil {
-			return err
-		}
-		return nil
-	}
 	if err := os.WriteFile(path, data, perm); err != nil {
 		return err
 	}
@@ -178,12 +159,31 @@ func (m OSMachine) argv(root bool, name string, args []string) []string {
 // but would replace a core.sshCommand.
 var offTerminal = []string{"GIT_TERMINAL_PROMPT=0", "SSH_ASKPASS=false", "SSH_ASKPASS_REQUIRE=force"}
 
+// repoVars name a repository to git, as git rev-parse --local-env-vars lists them. A git before
+// 2.40 lists GIT_INTERNAL_SUPER_PREFIX too. A hook or a rebase's exec exports GIT_DIR, which sends
+// a command's git to the caller's repository. There, an init makes it again, and a checkout moves
+// its HEAD and replaces its index. ws's commands act on the paths that they name, so none gets
+// these.
+var repoVars = []string{"GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_CONFIG", "GIT_CONFIG_PARAMETERS",
+	"GIT_CONFIG_COUNT", "GIT_OBJECT_DIRECTORY", "GIT_DIR", "GIT_WORK_TREE", "GIT_IMPLICIT_WORK_TREE",
+	"GIT_GRAFT_FILE", "GIT_INDEX_FILE", "GIT_NO_REPLACE_OBJECTS", "GIT_REPLACE_REF_BASE", "GIT_PREFIX",
+	"GIT_INTERNAL_SUPER_PREFIX", "GIT_SHALLOW_FILE", "GIT_COMMON_DIR"}
+
+// environ is ws's environment less repoVars.
+func environ() []string {
+	return slices.DeleteFunc(os.Environ(), func(e string) bool {
+		name, _, _ := strings.Cut(e, "=")
+		return slices.Contains(repoVars, name)
+	})
+}
+
 func (m OSMachine) command(ctx context.Context, argv []string) *exec.Cmd {
 	cmd := exec.CommandContext(ctx, argv[0], argv[1:]...) //nolint:gosec // the steps name the command
+	cmd.Env = environ()
 	if m.Stdin != nil {
-		cmd.Env = withEnv(os.Environ(), offTerminal)
+		cmd.Env = withEnv(cmd.Env, offTerminal)
 		// A raw terminal sends the command's group no Ctrl-C, so ctx's end is all that reaches it. A
-		// kill would end runuser and leave its child, whose hold on a pipe holds up Wait.
+		// kill would end sudo and leave its child, whose hold on a pipe holds up Wait.
 		cmd.Cancel = func() error { return cmd.Process.Signal(syscall.SIGTERM) }
 		cmd.WaitDelay = killGrace
 	}
@@ -251,16 +251,6 @@ func (OSMachine) ReadDir(path string) ([]string, error) {
 func (m OSMachine) Mkdir(path string, perm fs.FileMode) error {
 	if m.asRoot(path) && unwritable(filepath.Dir(path)) {
 		return m.sudoMkdir(path, perm)
-	}
-	if root, rel, err := m.confined(path); err != nil || root != nil {
-		if err != nil {
-			return err
-		}
-		defer func() { _ = root.Close() }()
-		if err := root.Mkdir(rel, perm); err != nil {
-			return err
-		}
-		return m.Chmod(path, perm)
 	}
 	if err := os.Mkdir(path, perm); err != nil {
 		return err

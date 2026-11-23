@@ -27,7 +27,7 @@ func binaryMachine(m *effecttest.Machine, arch, body string) {
 }
 
 func TestBinaryDownloadsByTheArchsSum(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	binaryMachine(m, "arm64", "bin")
 	units := loadOne(t, e, binarySpecText(""), nil)
 	if err := applyOnce(t, units[0].Step); err != nil {
@@ -39,7 +39,7 @@ func TestBinaryDownloadsByTheArchsSum(t *testing.T) {
 }
 
 func TestBinaryWrongSumLeavesNoFile(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	binaryMachine(m, "amd64", "not the pinned file")
 	err := applyOnce(t, loadOne(t, e, binarySpecText(""), nil)[0].Step)
 	if err == nil || !strings.Contains(err.Error(), "SHA-256") {
@@ -51,7 +51,7 @@ func TestBinaryWrongSumLeavesNoFile(t *testing.T) {
 }
 
 func TestBinaryCurrentPlansNothing(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	binaryMachine(m, "amd64", "bin")
 	units := loadOne(t, e, binarySpecText(""), nil)
 	if got := headlines(t, units[0].Step); len(got) == 0 {
@@ -66,7 +66,7 @@ func TestBinaryCurrentPlansNothing(t *testing.T) {
 }
 
 func TestBinaryArchNamesSpellTheURL(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	binaryMachine(m, "amd64", "bin")
 	units := loadOne(t, e, binarySpecText("arch_names = { amd64 = \"x86_64\" }\n"), nil)
 	if err := applyOnce(t, units[0].Step); err != nil {
@@ -78,7 +78,7 @@ func TestBinaryArchNamesSpellTheURL(t *testing.T) {
 }
 
 func TestBinaryAllForEveryArch(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	m.Pages["https://x/v1.2/x-all"] = []byte("bin")
 	spec := fmt.Sprintf("[binary.x]\nversion = \"1.2\"\nurl = \"https://x/v{version}/x-{arch}\"\npath = %q\nsha256 = { all = \"%x\" }\n",
 		binaryPath, sha256.Sum256([]byte("bin")))
@@ -92,7 +92,7 @@ func TestBinaryAllForEveryArch(t *testing.T) {
 
 func TestBinaryModeDefaults755(t *testing.T) {
 	for extra, want := range map[string]uint32{"": 0o755, "mode = 0o700\n": 0o700} {
-		e, m, _, _ := testEnv(false)
+		e, m, _, _ := testEnv()
 		binaryMachine(m, "amd64", "bin")
 		if err := applyOnce(t, loadOne(t, e, binarySpecText(extra), nil)[0].Step); err != nil {
 			t.Fatal(err)
@@ -105,7 +105,7 @@ func TestBinaryModeDefaults755(t *testing.T) {
 }
 
 func TestBinaryRefusesARelativePath(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	for _, p := range []string{"bin/x", "/usr/../x", "/", "/usr/local/"} {
 		spec := strings.Replace(binarySpecText(""), binaryPath, p, 1)
 		if _, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": spec})); err == nil || !strings.Contains(err.Error(), "clean absolute path") {
@@ -115,7 +115,7 @@ func TestBinaryRefusesARelativePath(t *testing.T) {
 }
 
 func TestBinaryRefusesABadSum(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	for spec, want := range map[string]string{
 		"[binary.x]\nversion = \"1\"\nurl = \"u\"\npath = \"/x\"\n":                             "a sha256 for each",
 		"[binary.x]\nversion = \"1\"\nurl = \"u\"\npath = \"/x\"\nsha256 = { amd64 = \"X\" }\n": "64 lowercase hex",

@@ -9,7 +9,7 @@ import (
 )
 
 func TestLineAtEndGoesLastAndKeepsACopy(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	withAccount(m)
 	m.Files["/home/u/.bashrc"], m.Owners["/home/u/.bashrc"] = []byte("mine"), [2]int{1001, 1001}
 	units := loadOne(t, e, lineSpec("line_at = \"end\"\n"), nil)
@@ -28,7 +28,7 @@ func TestLineAtEndGoesLastAndKeepsACopy(t *testing.T) {
 }
 
 func TestLineAtEndRefusesALink(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	withAccount(m)
 	m.Links["/home/u/.bashrc"] = "/home/u/dots/bashrc"
 	m.Files["/home/u/dots/bashrc"] = []byte("mine\n")
@@ -42,7 +42,7 @@ func TestLineAtEndRefusesALink(t *testing.T) {
 }
 
 func TestLineAtRefusesAnotherPlace(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	for spec, want := range map[string]string{
 		lineSpec("line_at = \"middle\"\n"):                             "line_at \"middle\" is top or end",
 		"[file.a]\npath = \"/a\"\nsource = \"f\"\nline_at = \"end\"\n": "line_at goes with line",
@@ -67,7 +67,7 @@ func zedSpec(extra string) string {
 const zedKeymap = "// " + file.Mark + ", whose next run replaces any change made here.\n[]\n"
 
 func TestOursOnAnAccountFile(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	withAccount(m)
 	units := loadOne(t, e, zedSpec(""), map[string]string{"k": zedKeymap})
 	if err := run(t, e, units); err != nil {
@@ -88,7 +88,7 @@ func TestOursOnAnAccountFile(t *testing.T) {
 }
 
 func TestOursMarkTakesItsSign(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	withAccount(m)
 	m.Files["/home/u/.config/zed/keymap.json"] = []byte("# " + file.Mark + "\n[]\n")
 	_, err := loadOne(t, e, zedSpec(""), map[string]string{"k": zedKeymap})[0].Step.Plan(t.Context())
@@ -109,7 +109,7 @@ func TestOursMarkTakesItsSign(t *testing.T) {
 }
 
 func TestKeepForeignSkipsWithAWarning(t *testing.T) {
-	e, m, _, out := testEnv(false)
+	e, m, _, out := testEnv()
 	withAccount(m)
 	p := "/home/u/.config/zed/keymap.json"
 	m.Files[p] = []byte("[]\n")
@@ -131,7 +131,7 @@ func TestKeepForeignSkipsWithAWarning(t *testing.T) {
 }
 
 func TestForeignFailsWithoutKeep(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	withAccount(m)
 	p := "/home/u/.config/zed/keymap.json"
 	m.Files[p] = []byte("[\"mine\"]\n")
@@ -148,7 +148,7 @@ func TestForeignFailsWithoutKeep(t *testing.T) {
 const seedSpec = "[file.s]\npath = \"/home/u/.config/zed/settings.json\"\nowner = \"u\"\nsource = \"s\"\nseed = true\n"
 
 func TestSeedWritesWhereMissing(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	withAccount(m)
 	units := loadOne(t, e, seedSpec, map[string]string{"s": "{}\n"})
 	if err := run(t, e, units); err != nil {
@@ -170,7 +170,7 @@ func TestSeedWritesWhereMissing(t *testing.T) {
 }
 
 func TestSeedLeavesAnEditedFile(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	withAccount(m)
 	p := "/home/u/.config/zed/settings.json"
 	m.Files[p], m.Modes[p] = []byte("{ \"theme\": \"mine\" }\n"), 0o600

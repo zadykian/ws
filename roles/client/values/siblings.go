@@ -57,7 +57,7 @@ func RefuseBadSibling(m effect.Machine, mac, server string) error {
 
 // BadFileHint is the way out of a server's file that ws refuses.
 func BadFileHint(name string) string {
-	return "fix its file, or ws client macos remove " + name
+	return "fix its file, or ws client remove " + name
 }
 
 // RefuseSibling words the refusal of the server called name, whose file is unreadable or refused

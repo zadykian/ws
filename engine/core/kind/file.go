@@ -34,9 +34,6 @@ type filePart struct {
 	// Check is a command that refuses a bad file, {} standing for the new file's path. The new file
 	// is written beside the live one and moved over it once the check passes.
 	Check []string `toml:"check"`
-	// CheckBooted runs Check with booted systemd alone, for a checker that needs what a plain
-	// container lacks, such as the kernel's netfilter.
-	CheckBooted bool `toml:"check_booted"`
 	// Secret keeps the content out of the diff.
 	Secret bool `toml:"secret"`
 	// Absent removes the file, and takes no content.
@@ -45,8 +42,6 @@ type filePart struct {
 	Line string `toml:"line"`
 	// Has is a command that says whether the file's text, on its standard input, holds Line.
 	Has []string `toml:"has"`
-	// GroupOf gives a file of root's the primary group of this account, which may then read it.
-	GroupOf string `toml:"group_of"`
 	// Ours refuses to replace or remove a file there that lacks ws's mark at its top (fileguard.go).
 	// The mark follows the comment sign that fileByHand's Mark gives.
 	Ours bool `toml:"ours"`
@@ -71,11 +66,9 @@ func (f filePart) check(dir fs.FS) error {
 		return fmt.Errorf("mode %o is not a file's permission bits", f.Mode)
 	case f.Link != "":
 		return f.checkLink()
-	case f.CheckBooted && len(f.Check) == 0:
-		return errors.New("check_booted goes with check")
 	case f.Line != "" || len(f.Has) > 0:
 		return f.checkLine()
-	case f.Absent && (f.Template != "" || f.Source != "" || len(f.Check) > 0 || f.Secret || f.Mode != 0 || f.GroupOf != "" || f.Group != ""):
+	case f.Absent && (f.Template != "" || f.Source != "" || len(f.Check) > 0 || f.Secret || f.Mode != 0 || f.Group != ""):
 		return errors.New("an absent file takes a path, an owner and ours alone")
 	case f.Absent:
 		return nil
@@ -124,7 +117,7 @@ func (f filePart) resources(ctx context.Context, e Env, dir fs.FS) (built, error
 	}
 	// A line is the owner's file below a home, root's too, as a line goes in a file of the home. A
 	// file whose spec names root lies in root's home where its path is below it, so a link on the
-	// way is refused there too. An account's file names root where WS_USER is root.
+	// way is refused there too. An account's file names root where the account is root's.
 	if owner.Home == "" && (f.Line != "" || f.Owner == "root") {
 		var home string
 		if home, err = e.System.home(ctx, e.M, "root"); err != nil {
@@ -155,7 +148,7 @@ func (f filePart) resources(ctx context.Context, e Env, dir fs.FS) (built, error
 	case gone:
 		b.file = file.Absent{M: e.M, Path: f.Path}
 	default:
-		b.file, err = f.written(ctx, e, owner, rel, content)
+		b.file, err = f.written(e, owner, rel, content)
 		if err != nil {
 			return built{}, err
 		}
@@ -166,7 +159,7 @@ func (f filePart) resources(ctx context.Context, e Env, dir fs.FS) (built, error
 	b.file = f.guarded(e, owner, b.file)
 	b.all = append(b.all, b.file)
 	if strings.HasPrefix(f.Path, "/etc/systemd/system/") {
-		b.all = append(b.all, systemd.DaemonReload{M: e.M, U: e.U, Watch: []resource.Resource{b.file}})
+		b.all = append(b.all, systemd.DaemonReload{U: e.U, Watch: []resource.Resource{b.file}})
 	}
 	b.owner = owner
 	return b, nil
@@ -174,7 +167,7 @@ func (f filePart) resources(ctx context.Context, e Env, dir fs.FS) (built, error
 
 // written is the file with its content, checked before it replaces the live one where it has a
 // check that this machine can run.
-func (f filePart) written(ctx context.Context, e Env, owner account.Account, rel string, content []byte) (resource.Resource, error) {
+func (f filePart) written(e Env, owner account.Account, rel string, content []byte) (resource.Resource, error) {
 	mode := fs.FileMode(f.Mode)
 	if mode == 0 {
 		mode = 0o644
@@ -183,7 +176,7 @@ func (f filePart) written(ctx context.Context, e Env, owner account.Account, rel
 	if owner.Home != "" {
 		w = owner.File(e.M, rel, content, mode)
 	}
-	gid, named, err := f.gid(ctx, e.M)
+	gid, named, err := f.gid(e.M)
 	if err != nil {
 		return nil, err
 	}
@@ -192,16 +185,15 @@ func (f filePart) written(ctx context.Context, e Env, owner account.Account, rel
 	}
 	w.Secret = f.Secret
 	w.Backup = f.Backup
-	if check := f.checker(e); check != nil {
+	if check := f.checker(); check != nil {
 		return file.Validated{File: w, Check: check}, nil
 	}
 	return w, nil
 }
 
-// checker returns the check's command for a new file at a path, or nil where the file has no check
-// that this machine can run.
-func (f filePart) checker(e Env) func(p string) (string, []string) {
-	if len(f.Check) == 0 || f.CheckBooted && !systemd.Booted(e.M) {
+// checker returns the check's command for a new file at a path, or nil where the file has no check.
+func (f filePart) checker() func(p string) (string, []string) {
+	if len(f.Check) == 0 {
 		return nil
 	}
 	return func(p string) (string, []string) {
@@ -224,9 +216,6 @@ type fileSpec struct {
 	// Enabled makes Service start at boot.
 	Enabled bool `toml:"enabled"`
 	Reload  bool `toml:"reload"`
-	// UserService is a unit of the owner's own systemd, restarted where the file changes. One with
-	// no unit file yet is left to whatever installs it.
-	UserService string `toml:"user_service"`
 }
 
 func (s fileSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.Resource, error), error) {
@@ -244,19 +233,11 @@ func (s fileSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.Res
 	case s.Enabled || s.Reload:
 		return nil, errors.New("enabled and reload go with service")
 	}
-	if s.Line != "" && (s.Service != "" || s.UserService != "") {
+	if s.Line != "" && s.Service != "" {
 		return nil, errors.New("a line takes no service, as the file is its owner's")
 	}
-	if s.Link != "" && (s.Service != "" || s.UserService != "") {
+	if s.Link != "" && s.Service != "" {
 		return nil, errors.New("a link takes no service, as it has no content to change")
-	}
-	if s.UserService != "" {
-		if s.Owner == "" || s.Owner == "root" {
-			return nil, errors.New("user_service takes an owner other than root")
-		}
-		if err := effect.CheckUnitName("user_service", s.UserService); err != nil {
-			return nil, err
-		}
 	}
 	return func(ctx context.Context) ([]resource.Resource, error) {
 		b, err := s.resources(ctx, e, dir)
@@ -265,11 +246,8 @@ func (s fileSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.Res
 		}
 		watch := []resource.Resource{b.file}
 		if s.Service != "" {
-			b.all = append(b.all, systemd.Unit{M: e.M, U: e.U, Out: e.Out, Name: s.Service, Enabled: s.Enabled,
+			b.all = append(b.all, systemd.Unit{M: e.M, U: e.U, Name: s.Service, Enabled: s.Enabled,
 				Run: systemd.Running, Reload: s.Reload, Watch: watch})
-		}
-		if s.UserService != "" {
-			b.all = append(b.all, systemd.UserUnit{M: e.M, Account: b.owner, Out: e.Out, Name: s.UserService, Watch: watch})
 		}
 		return b.all, nil
 	}, nil

@@ -81,7 +81,7 @@ func addHostKey(c *cobra.Command, p enginecli.Env, name, hostname, key, keyFile 
 		return byHand, nil
 	}
 	_, err = clone.Land(ctx, out, secrets.Change{Topic: "add-" + hostname, Title: "chore: add the host key of " + hostname,
-		Body: "Added by ws client macos secrets add " + name + ".", Files: changed})
+		Body: "Added by ws client secrets add " + name + ".", Files: changed})
 	if err != nil {
 		return nil, err
 	}

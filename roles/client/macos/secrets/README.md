@@ -2,8 +2,8 @@
 
 The Mac keeps ws's secrets in fnox, in the private secrets repository, encrypted to the YubiKey 5C
 Nano, to a backup key and to each server's host key. This role installs the tools that do it.
-`ws client macos secrets init` sets the repository up, `ws client macos secrets add NAME` adds a
-server to it, and `ws client macos remove NAME` takes a server's key out.
+`ws client secrets init` sets the repository up, `ws client secrets add NAME` adds a
+server to it, and `ws client remove NAME` takes a server's key out.
 
 ## The tools
 
@@ -41,7 +41,7 @@ mise installs both tools for the tree alone, on no shell's `PATH`. fnox must fin
 first, and one there that differs is replaced. The check runs as the user, so a bootstrap that
 changes nothing asks no password. Where mise has no such tool, its unit alone fails.
 
-## ws client macos secrets init
+## ws client secrets init
 
 Run it as yourself, with the Nano plugged in, once the secrets repository exists
 ([the runbook](../../runbook.md#the-secrets)). It takes no `--server`, as the repository serves
@@ -167,10 +167,10 @@ nor ending with `-`. `nano` and `backup` are labels, `local` names `fnox.local.t
 override, and `default` is fnox's profile without `-P`, so none of them serves. The server's task
 refuses the same names.
 
-## ws client macos secrets add
+## ws client secrets add
 
-Run `ws client macos secrets add NAME` as yourself, with the Nano plugged in, once init has run
-and ws's `install.sh` has ended ([the runbook](../../runbook.md#ws-on-ws)). NAME is a server of
+Run `ws client secrets add NAME` as yourself, with the Nano plugged in, once init has run
+and ws's `install.sh` and `ws server setup` have ended ([the runbook](../../runbook.md#ws-on-ws)). NAME is a server of
 the Mac's. Before the tunnel is up, `--address` and `--port` reach the server as ssh's `HostName`
 and `Port`. The command:
 
@@ -184,7 +184,8 @@ and `Port`. The command:
 5. Keeps one read-only deploy key titled with the hostname that holds the key, and deletes an older
    one first, as GitHub changes none in place.
 6. Lands the changed files by a pull request, and opens none where the key was in place.
-7. Runs the server's task `secrets` over `ssh -t`, as root by sudo, even where nothing landed.
+7. Runs `/usr/local/bin/ws server setup --secrets` over `ssh -t`, as root, even where nothing
+   landed. A first add finds no clone there, so that run fetches the secrets.
 
 Last, add prints a line for each host key that the secrets hold, as a recipient or a deploy key,
 and that `~/.ssh/known_hosts` gives no host. A server that came back with another hostname and
@@ -196,9 +197,9 @@ A step that is done changes nothing, so a run that fails runs again whole. gh's 
 deploy keys, and needs admin on the repository. Where that login is revoked, GitHub deletes every
 deploy key it added. Each server's fetch then fails until add runs again for it.
 
-## ws client macos remove
+## ws client remove
 
-`ws client macos remove NAME` ([The Mac's values](../../values/README.md)) takes the server's key
+`ws client remove NAME` ([The Mac's values](../../values/README.md)) takes the server's key
 out of the secrets first. A removed server then opens no value. The key is NAME's ed25519 line in
 `~/.ssh/known_hosts`. Where it holds none, remove cannot tell which key is NAME's: add may never
 have run, or `ssh-keygen -R` emptied the line while the key stays a recipient. The secrets then

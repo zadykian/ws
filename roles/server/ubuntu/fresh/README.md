@@ -2,8 +2,8 @@
 
 The `fresh` role sets up the Fresh editor from `mise bootstrap`. Its `mise.server.toml` writes a
 wrapper that carries Fresh's keys through tmux. Its `units.toml.tmpl` holds the units: the `.deb` of
-a pinned release, and the config and the theme of `WS_USER`. Fresh runs in a terminal, and its
-config is a plain template.
+a pinned release, and the config and the theme of root. Fresh runs in a terminal, and its
+config is a plain file.
 
 ## The install
 
@@ -22,23 +22,22 @@ The release's `.deb` needs `libc6` 2.30 and `libgcc-s1` 4.2 alone. So it install
 machine on the LAN, on a cloud VM and on a VM on the Mac. The testing `.deb` lacks the grammars
 for JS, TS and Templ, and needs `libc6` 2.39.
 
-The role needs no other role and no secret. No unit needs a booted systemd, so it runs whole in
-CI's container.
+The role needs no other role and no secret.
 
 ## The config
 
-The unit `file/fresh-config` writes `~/.config/fresh/config.json` for `WS_USER`, from the template
-`files/config.json.tmpl`, which fills in the user's home for the language servers' paths. A
+The unit `file/fresh-config` writes `~/.config/fresh/config.json` for root, from the plain file
+`files/config.json`, which names the language servers by their paths under `/root`. A
 run replaces a change made to it by hand and keeps the old file beside the new one, as
 [zed](../zed/README.md) does for its settings.
-`gotest` holds the render to checks in `roles/server/ubuntu/fresh`: a config that does not parse makes
+`gotest` holds the file to checks in `roles/server/ubuntu/fresh`: a config that does not parse makes
 Fresh load its defaults and exit 0.
 
 - Updates, telemetry and the session daemon are off: `check_for_updates`, `self_update` and
-  `auto_attach` are false. Fresh reads a missing key as its default, so the render writes each.
+  `auto_attach` are false. Fresh reads a missing key as its default, so the file writes each.
 - The ruler, visible whitespace and auto-save match Zed's
   `roles/client/macos/zed/files/global_settings.json`, and a test holds them equal.
-- A `//` comment in the template gives the reason for a quirk, and a block at its end lists the
+- A `//` comment in the file gives the reason for a quirk, and a block at its end lists the
   keys left out. Fresh skips the comments.
 - The file starts with a comment that says ws wrote it. Fresh reads JSONC.
 - `~/.config/fresh` stays the user's, as Fresh writes `tsconfig.json` and `types/` there.
@@ -51,9 +50,9 @@ Fresh load its defaults and exit 0.
 path that `devtools.ServerPaths` gives it for the user's home.
 
 - Fresh takes a list of servers for a language, so dockerfile has two.
-- Each entry starts at once (`auto_start`), with its arguments and options, set in the template.
+- Each entry starts at once (`auto_start`), with its arguments and options, set in the file.
 - Fresh has no docker-compose language. ws adds one on the yaml grammar for `compose.yaml`,
-  `compose.yml`, `docker-compose.yaml`, `docker-compose.yml` and the globs of the template. The server
+  `compose.yml`, `docker-compose.yaml`, `docker-compose.yml` and the globs of the file. The server
   sees a compose file by Fresh's key, the extension, mapped to `dockercompose`.
 - Ansible has no entry: no pattern tells a playbook from YAML, and `.yml` playbooks stay YAML.
 - Fresh's csharp plugin answers Roslyn's restore request for csharp-ls alone. Roslyn starts and
@@ -133,10 +132,10 @@ Rules a change keeps:
 
 ## The keys
 
-The template `config.json.tmpl` is the source of the keys, in the map `ws`, which inherits
+The file `config.json` is the source of the keys, in the map `ws`, which inherits
 `default` ([the config](#the-config)). A `//` comment gives the reason for a quirk beside its
 binding. The block at the file's end gives the reason for each key left out, such as an action
-that Fresh lacks. Tests hold the template to its rules.
+that Fresh lacks. Tests hold the file to its rules.
 
 - The map holds the Alt and F keys that Zed has too, and four guards in the terminal
   ([The shell keys](#the-shell-keys)).

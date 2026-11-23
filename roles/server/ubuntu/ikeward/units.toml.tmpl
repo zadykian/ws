@@ -5,7 +5,7 @@
 # Fails where the run's secrets hold no profile for WS_IKEWARD_PROFILE, as install would: before
 # the binary downloads, and in a plan. A run without the secrets passes, and keeps the VPN.
 [guard.ikeward]
-command = ["{{ self }}", "server", "ubuntu", "ikeward", "check"]
+command = ["{{ self }}", "server", "ikeward", "check"]
 when = { set = "{{ .Ikeward.Profile }}" }
 
 # ikeward's release binary, where its install.sh would put it: install refuses any other program.
@@ -47,12 +47,12 @@ when = { set = "{{ .Ikeward.Profile }}" }
 # commands alone.
 [state.ikeward-install]
 after = "binary/ikeward"
-run = { user = "root", command = ["{{ self }}", "server", "ubuntu", "ikeward", "install"], check = ["{{ self }}", "server", "ubuntu", "ikeward", "install", "--check"] }
+run = { user = "root", command = ["{{ self }}", "server", "ikeward", "install"], check = ["{{ self }}", "server", "ikeward", "install", "--check"] }
 when = { set = "{{ .Ikeward.Profile }}" }
 
 # The wait for the VPN, about 2 minutes, where ikeward status fails: a later unit may need it. A run
 # without the secrets installs no VPN, so it waits for none, as wait --check says.
 [state.ikeward-status]
 after = "state/ikeward-install"
-run = { user = "root", command = ["{{ self }}", "server", "ubuntu", "ikeward", "wait"], check = ["{{ self }}", "server", "ubuntu", "ikeward", "wait", "--check"] }
+run = { user = "root", command = ["{{ self }}", "server", "ikeward", "wait"], check = ["{{ self }}", "server", "ikeward", "wait", "--check"] }
 when = { set = "{{ .Ikeward.Profile }}" }

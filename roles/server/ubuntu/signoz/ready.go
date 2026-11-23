@@ -4,17 +4,13 @@ import (
 	"context"
 	"time"
 
-	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/signoz/internal/api"
 )
 
 // Ready is the step that waits for SigNoz's API to answer. The API answers only where Docker's
-// daemon runs SigNoz, so without systemd booted the step skips.
+// daemon runs SigNoz.
 type Ready struct {
-	M   effect.Machine
-	Out effect.Out
 	API api.Client
 	// Wait is 60 tries, 5 seconds apart, if zero.
 	Wait api.Wait
@@ -37,16 +33,12 @@ func (c await) Apply(ctx context.Context) error {
 // Name returns the step's name.
 func (Ready) Name() string { return "signoz ready" }
 
-// WaitsOn returns none: the step comes first in ws server ubuntu signoz sync, a run of its own,
+// WaitsOn returns none: the step comes first in ws server signoz sync, a run of its own,
 // after the compose unit.
 func (Ready) WaitsOn() string { return "" }
 
 // Plan asks once.
 func (r Ready) Plan(ctx context.Context) (step.Plan, error) {
-	if !systemd.Booted(r.M) {
-		r.Out.Say("%s: skipped, systemd is not running", r.Name())
-		return step.Plan{}, nil
-	}
 	if r.API.Get(ctx, "/api/v2/readyz", nil) == nil {
 		return step.Plan{}, nil
 	}

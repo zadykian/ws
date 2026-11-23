@@ -1,35 +1,24 @@
 # The Mac's runbook
 
 A person does these steps in this order, as no wizard asks them. Each step is done once the check
-beside it holds. Run `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap` where a step says so: it
-sets up the Mac's end ([The Mac](README.md)). `MISE_LOCKED=1` makes mise take each tool as the
-tree's lock holds it and refuse one that the lock lacks, as CI's `mac` job runs it.
+beside it holds. Run `ws client setup` where a step says so: it sets up the Mac's end ([The
+Mac](README.md#setup)). The tree's `mise.toml` sets `locked = true`, so mise takes each tool as the
+tree's lock holds it and refuses one that the lock lacks.
 
 ## Tools
 
-1. Install the command line tools with `xcode-select --install`, and wait for it to end.
-2. Install ws's binary by hand. Download `ws-darwin-arm64` and `ws.sha256` from
-   `releases/latest/download` of ws's repository with `curl -fsSLO`. Check it with `shasum -a 256
-   -c --ignore-missing ws.sha256`, install it with `install -m 755 ws-darwin-arm64
-   ~/.local/bin/ws`, and put `~/.local/bin` on `PATH`.
-3. Install mise 2026.11.9 for [the Mac's frame](macos/frame/README.md):
-   - Download `mise-v2026.11.9-macos-arm64` from
-     `https://github.com/jdx/mise/releases/download/v2026.11.9/` with `curl -fsSLO`.
-   - Check its SHA-256 with `shasum -a 256`. It must be
-     `f3bb0e8cbe0217a0b52444ecc0042364563ddd1de0490313bb7e702ecab41a14`.
-   - Install it with `sudo install -m 755 mise-v2026.11.9-macos-arm64 /usr/local/bin/mise`.
-4. Clone ws's repository at the latest release's tag into `/opt/ws`, as root: `sudo git clone
-   --depth 1 --branch vX.Y.Z https://github.com/zadykian/ws /opt/ws`. It stays root's, and no one
-   else may write it.
-5. Write `/etc/mise/miserc.toml`, as root, with the line `env = ["mac"]`.
-6. Link the tree's plugin where mise finds a system plugin, as root: `sudo mkdir -p
-   /usr/local/share/mise/plugins && sudo ln -s /opt/ws/plugins/ws /usr/local/share/mise/plugins/ws`
-   ([Where it sits](macos/frame/README.md#where-it-sits)).
+Run `install.sh` through sudo, by the three lines of
+[Install](../../.github/workflows/release.md#install), `set -o pipefail` among them. It downloads
+`ws-darwin-arm64`, checks it against the release's `ws.sha256`, and installs it as
+`/usr/local/bin/ws`, root's and 755. It makes `/usr/local/bin` where a new Mac lacks it, and
+refuses a `/usr/local` or `/usr/local/bin` that another user owns or may write: it names the chown.
+`ws client setup` takes the rest: the command line tools, mise by its SHA-256, the tree in
+`/opt/ws`, the miserc and the plugin's link ([The bootstrap](#the-bootstrap)).
 
 ## Answers
 
-Write the Mac's values in `/etc/ws/values.yml` and each server's in
-`/etc/ws/servers/NAME/values.yml`, as root, through sudo ([The two
+Make the Mac's `/etc/ws/values.yml`, as root, through sudo: empty on a new Mac, as setup writes
+its keys. Write each server's values in `/etc/ws/servers/NAME/values.yml`, as root too ([The two
 files](values/README.md#the-two-files)). The files' check refuses a clash.
 
 1. Pick a slot, 0 to 15, that no server has: `WS_SLOT`.
@@ -39,30 +28,39 @@ files](values/README.md#the-two-files)). The files' check refuses a clash.
    `WS_REMOTE`, `WS_REMOTE_PORT`, `WS_TUNNEL_NETWORKS` and `WS_RESOLVERS`. The
    [router's page](../server/ubuntu/cable/router.md) gives the LAN's defaults.
 
-## The Mac's key
-
-1. Install Secretive from its release's `Secretive.zip`, with no Homebrew. Read the version and
-   the SHA-256 once from `https://formulae.brew.sh/api/cask/secretive.json`, its `version` and
-   `sha256`. Download the zip from `https://github.com/maxgoedjen/secretive/releases/download/vVERSION/Secretive.zip`,
-   check it with `shasum -a 256 Secretive.zip`, unzip it, and move `Secretive.app` to
-   `/Applications`. `spctl -a -vv /Applications/Secretive.app` must say `accepted` and `Notarized
-   Developer ID`.
-2. Open it, and make a P-256 key for the login and one for git's signing. One key may serve both.
-   The key stays in the Mac's Secure Enclave.
-3. Set `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_PUB_KEY` in
-   `/etc/ws/values.yml`, each `.pub` as `/etc/ws/secretive/NAME.pub`. The bootstrap writes those
-   copies from the agent ([Secretive's keys](macos/git/README.md#secretives-keys)).
-
 ## The bootstrap
 
-Trust the tree once, before the first bootstrap, as the user who runs it:
-`cd /opt/ws/roles/client && mise trust --all`. mise asks before it reads the config of a tree that
-it does not trust, and the clone is root's, as on the server ([install.sh](../../install.sh)).
+Run `ws client setup` as the user, after the values above, and not as root: it asks
+sudo for what root's paths need. It refuses a bad value before any write, naming the key and its
+file. It then does what a person did by hand, in this order:
 
-Run `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap`, which installs gh and sets up ssh, git,
-cld and the Mac's other roles ([The Mac's frame](macos/frame/README.md)). It makes the Mac's
-WireGuard key, whose public half is `/etc/ws/tunnel.pub`. A second run changes nothing, and a run
-that changes nothing asks no password.
+1. Where `xcode-select -p` finds no command line tools, it runs `xcode-select --install`, which
+   opens Apple's dialog, and waits until the tools stand. Ctrl-C stops the wait.
+2. It installs mise 2026.11.9 in `/usr/local/bin`, checked against its SHA-256, and writes
+   `/etc/mise/miserc.toml` and `/etc/mise/config.toml`, which trusts the tree.
+3. It checks this ws's release tag out in `/opt/ws`, root's, which no one else may write, and links
+   the tree's plugin into `/usr/local/share/mise/plugins`.
+4. Where `values.yml` names no `WS_IDENTITY_PUB_KEY`, it installs Secretive by [ssh's
+   pin](macos/ssh/mise.mac.toml), checks it by `spctl -a -vv`, which must say `accepted`,
+   `Notarized Developer ID` and Secretive's team, and opens it. It then waits for a P-256 key.
+   Make one in Secretive at Notify, as it then signs git's commits with no prompt.
+   Setup names the key that comes in `values.yml`, as `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and
+   `WS_GIT_SIGNING_PUB_KEY`, and keeps a value that is there. It takes no key that was there before
+   it opened Secretive, as one made for another use would go to GitHub. To take one, stop setup
+   with Ctrl-C and run `ws client setup --key NAME`, NAME being the name that the wait prints
+   ([Secretive](macos/ssh/README.md#secretive)).
+5. It runs mise's bootstrap in `/opt/ws/roles/client`, which installs gh and sets up ssh, git, cld
+   and the Mac's other roles ([The Mac's frame](macos/frame/README.md)). It makes the Mac's
+   WireGuard key, whose public half is `/etc/ws/tunnel.pub`.
+
+A second run changes nothing and asks no password. `ws client setup --plan` plans these steps, and
+mise's bootstrap where none is due, and exits 0 where nothing would change. A ws that names no
+release tag is refused: `--in-place` runs the tree in `/opt/ws` as it stands, after the guard. So
+is a ws of another version than `/usr/local/bin/ws`, which the units run, or a missing file there:
+`ws update --version X.Y.Z` installs that release there. A tree, or a directory above it, that
+others may write is refused too ([Setup](README.md#setup)). `ws update`, as the user, brings ws
+to the latest release, or to `--version`'s, and runs that ws's setup, with sudo for the write
+([Update](../../.github/workflows/release.md#update)).
 
 ## GitHub
 
@@ -71,19 +69,19 @@ that changes nothing asks no password.
 3. Add git's signing key with `gh ssh-key add --type signing` and its `.pub`, titled with the
    Mac's name ([The signing key](macos/git/README.md#the-signing-key)).
 
-GitHub is the only source of the server's keys: nothing copies a key to the server. Ubuntu's
-installer imports the account's keys for ws's user, so run this step before its install. In the
-installer, turn OpenSSH on, import the keys from GitHub and leave password login off.
+GitHub is the only source of the server's keys: nothing copies a key to the server. Root takes the
+account's keys from GitHub, as [the server's runbook](../server/runbook.md) says, so run this step
+before it. A cloud VM takes the keys its provider holds, which must be the account's.
 
 ## The secrets
 
 1. Once, create the secrets repository by `gh repo create zadykian/ws-secrets --private`, with its
    README, license and `check` workflow, whose jobs `values` and `gitleaks` its ruleset on `main`
    requires.
-2. With the Nano plugged in, run `ws client macos secrets init`. Where the Nano holds no age
+2. With the Nano plugged in, run `ws client secrets init`. Where the Nano holds no age
    identity, it asks for the Nano's PIN and a touch. It prints the backup key's secret line once:
    keep it on paper or in a password manager, then press Enter. It lands `fnox.toml` by a pull
-   request ([ws client macos secrets init](macos/secrets/README.md#ws-client-macos-secrets-init)).
+   request ([ws client secrets init](macos/secrets/README.md#ws-client-secrets-init)).
 3. Run it again once `/opt/ws` moves to a release that declares a new input. Until then, a
    server's run of that release fails at mise, which finds no value of the input.
 4. To set a value, such as `WS_GITHUB_TOKEN`, clone the repository by
@@ -93,7 +91,7 @@ installer, turn OpenSSH on, import the keys from GitHub and leave password login
    Give the value on standard input, never as an argument. Commit the changed file, signed, push
    the branch and open a pull request by `gh pr create`. Once `values` and `gitleaks` pass, merge
    it by `gh pr merge --merge --delete-branch`. Then, for each server NAME that reads the value,
-   run `ws client macos secrets add NAME`, which runs the task there
+   run `ws client secrets add NAME`, which runs `ws server setup --secrets` there
    ([The task](../server/ubuntu/secrets/README.md#the-task)).
 
 ## ws's host key
@@ -107,14 +105,10 @@ installer, turn OpenSSH on, import the keys from GitHub and leave password login
 
 ## Login
 
-Log in with `ssh -o HostName=ADDRESS NAME`, as the tunnel is not up yet. It must log in as `WS_USER`
-by the Mac's key. A cloud VM gives its default user the provider's keys, which must be the account's.
+Log in with `ssh -o HostName=ADDRESS NAME`, as the tunnel is not up yet. It must log in as root by
+the Mac's key, which root took from GitHub ([The server's runbook](../server/runbook.md)). A cloud
+image whose root refuses a login takes `disable_root: false` and `users: []` in its cloud-config.
 Where ssh names another host key, drop the old one with `ssh-keygen -R NAME`.
-
-## Sudo
-
-At ws, `sudo -n true` must pass for `WS_USER`. Where sudo wants a password, type it at the prompt of
-a command that needs root. A user outside sudoers cannot go on.
 
 ## ws on ws
 
@@ -126,14 +120,13 @@ a command that needs root. A user outside sudoers cannot go on.
    `WS_TUNNEL_PEERS` to `mac` at `10.99.N.2`
    ([The tunnel](../server/ubuntu/tunnel/README.md#the-tunnel)).
 2. Run `install.sh` by the three lines of [Install](../../.github/workflows/release.md#install),
-   `set -o pipefail` among them. The bootstrap it runs puts ws in `/usr/local/bin`. Check it with
-   `ws version`.
-3. Run `ws client macos secrets add NAME --address ADDRESS`, with `--port PORT` off the LAN. It
+   `set -o pipefail` among them, and then `ws server setup`. Check ws with `ws version`.
+3. Run `ws client secrets add NAME --address ADDRESS`, with `--port PORT` off the LAN. It
    adds ws's host key to the secrets and as the repository's deploy key, with the Nano's PIN and a
    touch. It then runs the server's bootstrap with the secrets over `ssh -t`. A first run takes 20
-   to 40 minutes, and a dropped ssh ends it: run the command again. `ws client macos secrets init`
+   to 40 minutes, and a dropped ssh ends it: run the command again. `ws client secrets init`
    runs once before, as [The secrets](#the-secrets) says
-   ([ws client macos secrets add](macos/secrets/README.md#ws-client-macos-secrets-add)).
+   ([ws client secrets add](macos/secrets/README.md#ws-client-secrets-add)).
 
 ## claude
 
@@ -151,8 +144,7 @@ permission ([Signing](../server/ubuntu/git/README.md#signing)).
    server's bootstrap there, as [its runbook](../server/runbook.md) says
    ([The tunnel](../server/ubuntu/tunnel/README.md#the-tunnel)).
 2. Put wg0's public key, which that page names, in `WS_PUBLIC_KEY` of the server's `values.yml`.
-3. Run `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap` again, and allow ws-tunnel in the
-   Background.
+3. Run `ws client setup` again, and allow ws-tunnel in the Background.
 4. Ping the server's tunnel address, `10.99.N.1` for slot N, and run `ssh NAME`. A handshake must
    come within 30 s.
 
@@ -164,7 +156,7 @@ Skip it on a cloud VM and a VM on the Mac.
 2. Set `WS_CABLE_PORT` at ws, and `WS_CABLE_SERVICE` on the Mac. `networksetup
    -listallnetworkservices` lists the services, and the cable's has a `169.254` address.
 3. Run the server's bootstrap at ws, as [its runbook](../server/runbook.md) says, then
-   `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap`.
+   `ws client setup`.
 4. Ping `10.77.0.1`. The Mac's end is `10.77.0.2` ([The cable](README.md#the-cable)).
 
 ## What stays by hand

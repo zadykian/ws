@@ -17,14 +17,13 @@ steps, and each role's README says what it sets up.
   README ([README](../../README.md)). Its units run in the order of their `after`
   ([The order](../../roles/server/ubuntu/frame/README.md#the-order)).
 - A role holds its spec, `units.toml.tmpl`, where it has units, with its templates. It holds its
-  mise files by env: `mise.server.toml` for every server, `mise.booted.toml` where systemd is
-  booted, `mise.account.toml` where `WS_USER` is not root, and `mise.secrets.toml` under the env
+  mise files by env: `mise.server.toml` for every server, and `mise.secrets.toml` under the env
   `secrets`, which the secrets task adds. The role `secrets` has no spec. The side's one link,
   `roles/server/mise/conf.d`, loads them. A role holds no plain `mise.toml`, which every env would
-  load ([specs_test.go](../../roles/server/cli/specs_test.go)).
-- Each unit of a spec is a line `"ws:KIND/NAME" = "in-sync"` of its role's `mise.server.toml`, or
-  of its `mise.account.toml` where the spec gives it for an account alone, never of
-  `mise.booted.toml`. `TestSpecsMatchMiseLines` fails on a line missing or extra
+  load
+  ([specs_test.go](../../roles/server/cli/specs_test.go)).
+- Each unit of a spec is a line `"ws:KIND/NAME" = "in-sync"` of its role's `mise.server.toml`,
+  never of `mise.secrets.toml`. `TestSpecsMatchMiseLines` fails on a line missing or extra
   ([specs_test.go](../../roles/server/cli/specs_test.go)).
 - A path is one role's: where two roles' mise files declare it, mise keeps the later fragment's by
   name and drops the other with no error.
@@ -39,12 +38,13 @@ steps, and each role's README says what it sets up.
   A role's type holds that role's values alone, as `ikeward.Profile`. ws holds no store of the
   secrets and no struct that gathers them: they reach the server by fnox alone
   ([The repository](../../roles/server/ubuntu/secrets/README.md#the-repository)).
-- The roles set the machine up for `WS_USER`, `zadykian` by default, in `WS_HOME`. A unit run as
-  `WS_USER` sets `HOME` and starts in it: root needs no sudo, a container has none, and `HOME` would
-  otherwise be the caller's ([claude's units](../../roles/server/ubuntu/claude/units.toml.tmpl)).
-- Root reaches a file under `WS_HOME` through the account (`Account.File`, `Account.Dir`,
-  `Account.Absent`, `User.ReadHome`), or the unit acts as `WS_USER`, as claude's does. The user owns
-  the home and could link a file elsewhere ([Links under the home](../../roles/server/ubuntu/security/README.md#links-under-the-home)).
+- The roles set the machine up for root, in `/root`, which no value names. A unit run and a
+  command of `account.User` set `HOME` to it, so that `HOME` is not the caller's, and `User`'s
+  starts in it from a cleared env
+  ([claude's units](../../roles/server/ubuntu/claude/units.toml.tmpl)).
+- Root reaches a file under a home through the account (`Account.File`, `Account.Dir`,
+  `Account.Absent`, `User.ReadHome`), `/root` included, and each refuses a link on the way
+  ([Links under the home](../../roles/server/ubuntu/security/README.md#links-under-the-home)).
 - ws's lines in a home file are `Account.Lines`, which refuses any link, at the file or on the way.
 - A version is pinned in the package of the role that installs it. SigNoz's images are pinned in
   `roles/server/ubuntu/signoz/casting.yaml`, as its compose files are forged from it.
@@ -59,8 +59,8 @@ steps, and each role's README says what it sets up.
   ([kind](../../engine/core/kind/README.md)).
 - A unit that suits some machines alone, by their hardware or a value, says so by `when`. A new
   fact is an entry of `whenFacts` ([kind](../../engine/core/kind/README.md#the-specs)).
-- A second run plans nothing, which CI's `playbook` job checks
-  ([The `playbook` job](../../.github/workflows/README.md#the-playbook-job)). A unit that only reads plans no change.
+- A second run plans nothing, which CI's `server` job checks
+  ([The server job](../../.github/workflows/server.md)). A unit that only reads plans no change.
 - A plan, mise's or `ws unit write --dry-run`, applies nothing and shows how the machine differs
   ([Dry runs](../../README.md#dry-runs)). A step reads in its Plan, a GET included
   ([SigNoz's dashboards](../../roles/server/ubuntu/signoz/internal/dashboards/dashboards_plan.go)).
@@ -74,8 +74,6 @@ steps, and each role's README says what it sets up.
   alone, so a healthy one has no item.
 - Where a dry run skips a step, a step beside it shows what the run would change
   ([claude's marketplaces](../../roles/server/ubuntu/claude/marketplaces.go)).
-- A unit that needs a booted machine's systemd checks `systemd.Booted`: without one, as in CI's
-  container, it skips and says so.
 - A file ws writes whole, on the server or the Mac, has one line at its top, where its format
   takes comments: `file.Header(sign)`. The roles' templates and files spell it out. Its words,
   `Written by github.com/zadykian/ws`, are `file.Mark`, and `file.Ours` tests a first line for them.

@@ -4,4 +4,4 @@
 /.cache/
 __pycache__/
 /mise.local.toml
-/mise.local.lock
+vendor/

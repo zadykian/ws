@@ -11,7 +11,6 @@ import (
 // after it, so the step sets it before the collector sends anything.
 type Retention struct {
 	M    effect.Machine
-	Out  effect.Out
 	API  api.Client
 	Days int
 	// Migrator is how long Plan waits for the schema migrator: 120 tries, 5 seconds apart, if zero.

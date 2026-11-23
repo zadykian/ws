@@ -11,8 +11,6 @@ import (
 	"testing"
 
 	"github.com/pelletier/go-toml/v2"
-
-	"github.com/zadykian/ws/engine/core/resource"
 )
 
 // themeFile and wrapper are the role's files, as the mise config reads them.
@@ -62,9 +60,9 @@ func withoutComments(data []byte) []byte {
 	return out.Bytes()
 }
 
-// renderedAt renders the template for the home.
-func renderedAt(t *testing.T, home string) []byte {
-	data, err := resource.Render(os.DirFS("."), "files/config.json.tmpl", struct{ Home string }{home})
+// configFile reads the config.
+func configFile(t *testing.T) []byte {
+	data, err := os.ReadFile("files/config.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +72,7 @@ func renderedAt(t *testing.T, home string) []byte {
 // load parses the render into a map, as a struct's zero value hides a missing key, and into the
 // struct, to read the bindings.
 func load(t *testing.T) (map[string]any, config) {
-	body := withoutComments(renderedAt(t, "/home/ws"))
+	body := withoutComments(configFile(t))
 	var loose map[string]any
 	if err := json.Unmarshal(body, &loose); err != nil {
 		t.Fatal(err)

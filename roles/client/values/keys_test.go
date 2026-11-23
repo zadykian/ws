@@ -26,7 +26,6 @@ func TestKeys(t *testing.T) {
 		key, value string
 		want       bool
 	}{
-		{"WS_USER", "ada", true},
 		{"WS_TARGET", "mac-vm", true},
 		{"WS_TARGET", "vm", false},
 		{"WS_SLOT", "0", true},
@@ -37,11 +36,13 @@ func TestKeys(t *testing.T) {
 		{"WS_SLOT", "+1", false},
 		{"WS_PUBLIC_KEY", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=", true},
 		{"WS_LAN", "10.88.0.0/24", true},
+		{"WS_LAN", "10.88.0.0/23", true},
 		{"WS_LAN", "10.99.0.0/16", false},
 		{"WS_LAN", "10.99.8.0/24", false},
 		{"WS_LAN", "10.77.0.0/30", false},
 		{"WS_LAN", "10.88.0.1/24", false},
 		{"WS_LAN_ADDRESS", "10.88.0.2", true},
+		{"WS_LAN_ADDRESS", "10.88.1.10", true},
 		{"WS_REMOTE", "vm.example.com", true},
 		{"WS_REMOTE_PORT", "22", true},
 		{"WS_TUNNEL_PORT", "51820", true},

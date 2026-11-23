@@ -39,19 +39,19 @@ var ikewardProfile = map[string]string{ikeward.P12Var: base64.StdEncoding.Encode
 // ikewardNoProfile is the env of a run with the secrets on a host whose profile is empty.
 var ikewardNoProfile = map[string]string{ikeward.P12Var: "", ikeward.SswanVar: "", ikeward.PasswordVar: ""}
 
-// ikewardMachine is a booted machine with ikeward's values.
+// ikewardMachine is a machine with ikeward's values.
 func ikewardMachine() *effecttest.Machine {
 	m := effecttest.NewMachine()
-	m.Dirs["/etc/ws"], m.Dirs["/run/systemd/system"] = 0o755, 0o755
+	m.Dirs["/etc/ws"] = 0o755
 	m.Files[serverVars] = []byte(ikewardValues)
 	return m
 }
 
-// runIkeward runs ws server ubuntu ikeward with args on m, in a run whose env is env.
+// runIkeward runs ws server ikeward with args on m, in a run whose env is env.
 func runIkeward(m *effecttest.Machine, env map[string]string, args ...string) (int, string, string) {
 	p := clitest.WithEnv(fakeProcess(), env)
 	p.Machine, p.Euid = m, 0
-	return runWs(p, "", append([]string{"server", "ubuntu", "ikeward"}, args...)...)
+	return runWs(p, "", append([]string{"server", "ikeward"}, args...)...)
 }
 
 func TestIkewardInstallCheckRunsTheDryRun(t *testing.T) {

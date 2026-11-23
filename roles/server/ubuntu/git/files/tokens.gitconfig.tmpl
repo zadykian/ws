@@ -8,7 +8,7 @@
 {{ range .Sections -}}
 [credential "{{ .URL }}"]
 	helper =
-	helper = "!/usr/local/bin/ws server ubuntu git credential {{ .Key }}"
+	helper = "!/usr/local/bin/ws server git credential {{ .Key }}"
 {{ if .Proactive -}}
 [http "{{ .URL }}"]
 	proactiveAuth = basic

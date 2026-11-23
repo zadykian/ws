@@ -14,8 +14,8 @@ var root = account.User{Name: "root", Home: "/root"}
 
 const (
 	claudeBin  = "/root/.local/bin/claude"
-	listCmd    = "env HOME=/root env -u CLAUDE_CONFIG_DIR " + claudeBin + " plugin marketplace list --json"
-	addCmd     = "env HOME=/root env -u CLAUDE_CONFIG_DIR " + claudeBin + " plugin marketplace add --json "
+	listCmd    = "env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin env -u CLAUDE_CONFIG_DIR " + claudeBin + " plugin marketplace list --json"
+	addCmd     = "env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin env -u CLAUDE_CONFIG_DIR " + claudeBin + " plugin marketplace add --json "
 	acmeSource = "https://git.example.internal/team/plugins.git"
 )
 

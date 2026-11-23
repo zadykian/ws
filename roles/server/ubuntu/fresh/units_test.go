@@ -13,31 +13,24 @@ import (
 	"github.com/zadykian/ws/roles/server/values"
 )
 
-// loadUnits builds a machine with the account's home, its ids and the architecture, and loads the role's
-// units for the user and home.
-func loadUnits(t *testing.T, user, home, arch string) (*effecttest.Machine, map[string]kind.Unit) {
+// loadUnits builds a machine with root's home and the architecture, and loads the role's units.
+func loadUnits(t *testing.T, arch string) (*effecttest.Machine, map[string]kind.Unit) {
 	fsys := fstest.MapFS{}
-	for _, name := range []string{"units.toml.tmpl", "files/config.json.tmpl", "files/themes/jetbrains-dark.json"} {
+	for _, name := range []string{"units.toml.tmpl", "files/config.json", "files/themes/jetbrains-dark.json"} {
 		text, err := os.ReadFile(name) //nolint:gosec // a file of the role, named above
 		if err != nil {
 			t.Fatal(err)
 		}
 		fsys["fresh/"+name] = &fstest.MapFile{Data: text}
 	}
-	v, err := values.Parse([]byte("WS_USER: " + user + "\n"))
+	v, err := values.Parse(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	uid := "1000"
-	if user == "root" {
-		uid = "0"
-	}
 	m := effecttest.NewMachine()
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte(arch + "\n")}
-	m.Results["id -u "+user] = effecttest.Result{Out: []byte(uid + "\n")}
-	m.Results["id -g "+user] = effecttest.Result{Out: []byte(uid + "\n")}
-	m.Results["getent passwd "+user] = effecttest.Result{Out: []byte(user + ":x:" + uid + ":" + uid + "::" + home + ":/bin/bash\n")}
-	m.Dirs[home] = 0o750
+	m.Results["getent passwd root"] = effecttest.Result{Out: []byte("root:x:0:0::/root:/bin/bash\n")}
+	m.Dirs["/root"] = 0o750
 	m.Packages = effecttest.Packages{}
 	e := kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v}
 	us, err := kind.Load(e, fsys)
@@ -65,7 +58,7 @@ func runUnits(t *testing.T, us map[string]kind.Unit, names ...string) error {
 
 // The .deb is the pin: the release's file for the architecture, checked by its sum.
 func TestFreshDebIsThePin(t *testing.T) {
-	_, us := loadUnits(t, "zadykian", "/home/zadykian", "arm64")
+	_, us := loadUnits(t, "arm64")
 	p, err := us["deb/fresh"].Step.Plan(t.Context())
 	if err != nil || len(p.Changes) != 3 || p.Changes[2].String() != "install fresh-editor 0.5.7-1" {
 		t.Fatalf("plan = %v, %v; want the directory, the fetch and the install", p.Changes, err)
@@ -77,47 +70,42 @@ func TestFreshDebIsThePin(t *testing.T) {
 }
 
 func TestFreshDebFailsWithNoSum(t *testing.T) {
-	_, us := loadUnits(t, "zadykian", "/home/zadykian", "riscv64")
+	_, us := loadUnits(t, "riscv64")
 	if _, err := us["deb/fresh"].Step.Plan(t.Context()); err == nil {
 		t.Error("no error")
 	}
 }
 
-// The servers sit under the user's home: a literal home would point three servers nowhere.
-func TestFreshConfigNamesTheHomesServers(t *testing.T) {
-	for user, home := range map[string]string{"zadykian": "/home/zadykian", "root": "/root"} {
-		m, us := loadUnits(t, user, home, "amd64")
-		if err := runUnits(t, us, "file/fresh-config", "file/fresh-theme"); err != nil {
-			t.Fatal(err)
-		}
-		path := home + "/.config/fresh/config.json"
-		if got := string(m.Files[path]); !strings.Contains(got, `"`+devtools.Roslyn(home)+`"`) {
-			t.Errorf("%s: config.json lacks the home's roslyn-language-server", user)
-		}
-		if _, ok := m.Files[home+"/.config/fresh/themes/jetbrains-dark.json"]; !ok {
-			t.Errorf("%s: no theme", user)
-		}
-		if err := runUnits(t, us, "file/fresh-config", "file/fresh-theme"); err != nil {
-			t.Fatal(err)
-		}
-		if p, err := us["file/fresh-config"].Step.Plan(t.Context()); err != nil || len(p.Changes) != 0 {
-			t.Errorf("%s: second plan = %v, %v; want none", user, p.Changes, err)
-		}
+// The servers sit under root's home.
+func TestFreshConfigNamesRootsServers(t *testing.T) {
+	m, us := loadUnits(t, "amd64")
+	if err := runUnits(t, us, "file/fresh-config", "file/fresh-theme"); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(m.Files["/root/.config/fresh/config.json"]); !strings.Contains(got, `"`+devtools.Roslyn("/root")+`"`) {
+		t.Error("config.json lacks root's roslyn-language-server")
+	}
+	if _, ok := m.Files["/root/.config/fresh/themes/jetbrains-dark.json"]; !ok {
+		t.Error("no theme")
+	}
+	if err := runUnits(t, us, "file/fresh-config", "file/fresh-theme"); err != nil {
+		t.Fatal(err)
+	}
+	if p, err := us["file/fresh-config"].Step.Plan(t.Context()); err != nil || len(p.Changes) != 0 {
+		t.Errorf("second plan = %v, %v; want none", p.Changes, err)
 	}
 }
 
-// A link on the way is refused, in root's home too, where WS_USER is root on a cloud VM.
+// A link on the way is refused.
 func TestFreshConfigRefusesALink(t *testing.T) {
-	for user, home := range map[string]string{"zadykian": "/home/zadykian", "root": "/root"} {
-		m, us := loadUnits(t, user, home, "amd64")
-		m.Links[home+"/.config"] = "/srv/target"
-		for _, name := range []string{"file/fresh-config", "file/fresh-theme"} {
-			if err := runUnits(t, us, name); err == nil || !strings.Contains(err.Error(), home+"/.config is a link to /srv/target") {
-				t.Errorf("%s: %s = %v, want the link refused", user, name, err)
-			}
+	m, us := loadUnits(t, "amd64")
+	m.Links["/root/.config"] = "/srv/target"
+	for _, name := range []string{"file/fresh-config", "file/fresh-theme"} {
+		if err := runUnits(t, us, name); err == nil || !strings.Contains(err.Error(), "/root/.config is a link to /srv/target") {
+			t.Errorf("%s = %v, want the link refused", name, err)
 		}
-		if len(m.Files) != 0 {
-			t.Errorf("%s: %d files, want none", user, len(m.Files))
-		}
+	}
+	if len(m.Files) != 0 {
+		t.Errorf("%d files, want none", len(m.Files))
 	}
 }

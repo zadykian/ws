@@ -13,8 +13,8 @@ import (
 
 // runLine and addHint are the words of the task's refusals that a caller acts on.
 const (
-	runLine = "sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server run secrets"
-	addHint = "ws client macos secrets add NAME"
+	runLine = "ws server setup --secrets"
+	addHint = "ws client secrets add NAME"
 	hostKey = "/etc/ssh/ssh_host_ed25519_key"
 )
 
@@ -24,7 +24,11 @@ const (
 var fakes = map[string]string{
 	"id":       `echo "${FAKE_UID:-0}"`,
 	"hostname": `echo "${FAKE_HOST-ws-a}"`,
-	"mise": `echo "$*" >>"$FAKE_LOG/mise"
+	"mise": `if [ "$*" = "-C $FAKE_SIDE -E ws,secrets settings get locked" ]; then
+	echo "${FAKE_LOCKED-true}"
+	exit 0
+fi
+echo "$*" >>"$FAKE_LOG/mise"
 echo "umask=$(umask) git=${GIT_SSH_COMMAND+s}${GIT_CONFIG_GLOBAL+g}${GIT_CONFIG_NOSYSTEM+n}${GIT_TERMINAL_PROMPT+p}" >>"$FAKE_LOG/mise-env"
 exit "${FAKE_STATUS:-0}"`,
 	"ssh": `echo "$*" >>"$FAKE_LOG/ssh"
@@ -96,8 +100,7 @@ func newFixture(t *testing.T) *fixture {
 	f.push("fnox.ws-a.toml", "[providers.host]\ntype = \"age\"\n")
 	f.env = map[string]string{
 		"PATH": bin + ":/usr/bin:/bin", "HOME": filepath.Join(root, "home"), "TMPDIR": filepath.Join(root, "tmp"),
-		"MISE_DATA_DIR": "/usr/local/share/mise", "MISE_LOCKED": "1",
-		"WS_SECRETS_REPO": f.origin, "WS_SECRETS_PREFIX": f.prefix, "FAKE_LOG": f.logs,
+		"WS_SECRETS_REPO": f.origin, "WS_SECRETS_PREFIX": f.prefix, "FAKE_LOG": f.logs, "FAKE_SIDE": side,
 	}
 	return f
 }
@@ -251,14 +254,15 @@ func TestTaskRefusesAUserButRoot(t *testing.T) {
 	}
 }
 
-func TestTaskRefusesARunWithoutTheRunbooksVariables(t *testing.T) {
-	for _, name := range []string{"MISE_DATA_DIR", "MISE_LOCKED"} {
+// mise settings get locked prints false where MISE_LOCKED=0 or a tree without the setting says so.
+func TestTaskRefusesARunWhereMisesLockedSettingIsNotTrue(t *testing.T) {
+	for _, answer := range []string{"false", ""} {
 		f := newFixture(t)
-		delete(f.env, name)
+		f.env["FAKE_LOCKED"] = answer
 		code, out := f.run()
 		f.refused(code, out, runLine)
 		if _, err := os.Lstat(f.clone()); !errors.Is(err, os.ErrNotExist) {
-			t.Errorf("a run without %s made the clone: %v", name, err)
+			t.Errorf("a run with locked %q made the clone: %v", answer, err)
 		}
 	}
 }

@@ -16,9 +16,7 @@ import (
 )
 
 // TokensFile is git's tokens for servers besides GitHub, a table per URL. mise writes it whole from
-// the secret input WS_GIT_TOKENS of the role's mise.secrets.toml. Root owns it, with the
-// account's group. So the account's git reads a token through ws's credential program, and cannot
-// change it.
+// the secret input WS_GIT_TOKENS of the role's mise.secrets.toml. Root owns it, at 0600.
 const TokensFile = etcws.Dir + "/git-tokens.toml"
 
 // TokensVar is the secret input that mise writes TokensFile from, and the variable that the secrets

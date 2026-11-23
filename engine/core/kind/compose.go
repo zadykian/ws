@@ -15,7 +15,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -42,17 +41,15 @@ func (s composeSpec) parts(e Env, _ fs.FS) (func(context.Context) ([]resource.Re
 	if !projectName.MatchString(s.Project) {
 		return nil, fmt.Errorf("project %q is no compose project's name: lowercase letters, digits, '_' and '-'", s.Project)
 	}
-	r := composeProject{m: e.M, out: e.Out, dir: s.Dir, project: s.Project}
+	r := composeProject{m: e.M, dir: s.Dir, project: s.Project}
 	return func(context.Context) ([]resource.Resource, error) { return []resource.Resource{r}, nil }, nil
 }
 
 // composeProject is a compose unit's resource. Compose's up runs the one-shot services again, a
 // schema's migration among them. So it ups only where the files differ from those of the last good
-// up, or where a service that keeps running is down. Without booted systemd there is no daemon to
-// ask, and it skips.
+// up, or where a service that keeps running is down.
 type composeProject struct {
 	m       effect.Machine
-	out     effect.Out
 	dir     string
 	project string
 }
@@ -104,10 +101,6 @@ func (c composeUp) Apply(ctx context.Context) error {
 // Plan recreates where the files' sum is not the kept one, and ups where a service that keeps
 // running is down.
 func (p composeProject) Plan(ctx context.Context) ([]resource.Change, error) {
-	if !systemd.Booted(p.m) {
-		p.out.Say("the compose project %s: skipped, systemd is not running", p.project)
-		return nil, nil
-	}
 	sum, err := projectSum(p.m, p.dir)
 	if err != nil {
 		return nil, err

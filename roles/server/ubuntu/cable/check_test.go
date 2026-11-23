@@ -59,15 +59,11 @@ func TestCableCheckReadsTheFileAsRoot(t *testing.T) {
 	}
 }
 
-func TestCableCheckWantsNetworkdBooted(t *testing.T) {
+func TestCableCheckWantsNetworkd(t *testing.T) {
 	m, u := portMachine()
 	u.States = nil
 	if err := Check(t.Context(), m, u, cableOf, ""); err == nil || !strings.Contains(err.Error(), "systemd-networkd is not running") {
-		t.Errorf("booted: check = %v, want networkd's refusal", err)
-	}
-	delete(m.Dirs, "/run/systemd/system")
-	if err := Check(t.Context(), m, u, cableOf, ""); err != nil {
-		t.Errorf("not booted: check = %v, want none", err)
+		t.Errorf("check = %v, want networkd's refusal", err)
 	}
 }
 

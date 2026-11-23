@@ -2,9 +2,9 @@
 # the new one, as the user may have changed it by hand. The directories on the way stay the user's,
 # and a link on the way is refused.
 [file.zed-settings]
-path = "{{ .Home }}/.config/zed/settings.json"
-owner = "{{ .User }}"
-template = "files/settings.json.tmpl"
+path = "/root/.config/zed/settings.json"
+owner = "root"
+source = "files/settings.json"
 backup = true
 
 # The open-file limit of the user's logins: sshd's start at 1024, past which Zed's server

@@ -17,17 +17,12 @@ func withEnv(p enginecli.Env, env map[string]string) enginecli.Env { return clit
 
 // runWs runs args on the root of ws client, and returns the status, stdout and stderr.
 func runWs(p enginecli.Env, args ...string) (status int, stdout, stderr string) {
-	return clitest.Run(p, []*cobra.Command{clientGroup(p)}, "", args...)
-}
-
-// clientGroup is ws client, over this package's commands.
-func clientGroup(p enginecli.Env) *cobra.Command {
-	return enginecli.Group("client", "the client's systems", Command(p))
+	return clitest.Run(p, []*cobra.Command{Command(p)}, "", args...)
 }
 
 // keyed gives the Mac a values.yml that names the file key it has for ws's login, as ssh's step needs.
 func keyed(m *effecttest.Machine) {
-	writeConfs(m, values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id_ed25519.pub"), values.Text("WS_USER", "ada"))
+	writeConfs(m, values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id_ed25519.pub"), values.Text("WS_SLOT", "0"))
 	m.Files["/h/.ssh/id_ed25519.pub"] = []byte("ssh-ed25519 AAAA ada\n")
 	m.Results["ssh-keygen -l -f /h/.ssh/id_ed25519.pub"] = effecttest.Result{}
 }

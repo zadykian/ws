@@ -7,7 +7,7 @@ containers from reaching the Mac through the tunnel or the cable.
 
 The role is mise's packages, `wireguard-tools`, `systemd` and `iptables`, and six units of
 [its spec](units.toml.tmpl), whose lines sit in `mise.server.toml` ([The frame](../frame/README.md)). What
-Go holds stays Go, as `ws server ubuntu tunnel check`, `tunnel key` and `tunnel wg0`, which the
+Go holds stays Go, as `ws server tunnel check`, `tunnel key` and `tunnel wg0`, which the
 units run. The values' check refuses the settings the role cannot use, as the values load.
 
 | Unit | What it does |
@@ -18,9 +18,6 @@ units run. The values' check refuses the settings the role cannot use, as the va
 | `state/tunnel-wg0` | Runs `tunnel wg0`, which makes wg0 again on a new key and waits for it, where `--check` finds wg0 without the file's key. |
 | `state/tunnel-port` | Keeps ufw's rule of the port, by its comment `WireGuard`. |
 | `service/tunnel-drops` | Writes the drops' script and unit, and keeps `wireguard-docker-user.service` enabled and running. |
-
-Without systemd booted, as in CI's container, the files are written, and the key, the reloads,
-`wg0`, ufw and the wait skip and say so.
 
 ## The tunnel
 
@@ -42,7 +39,7 @@ the commands that derive the public key read it, on the server. networkd reads i
 run that makes the key shows its public key, which the Mac's end of the tunnel needs. mise shows a
 unit's lines only where the unit changes, so later `ws unit read guard/tunnel` shows it, as the
 guard says it where the key exists, and so does `wg show wg0 public-key`. `tunnel wg0` shows it as
-a new key goes in force. A machine without systemd booted makes no key, and the guard says so.
+a new key goes in force. Where the key is not made yet, the guard says so.
 
 `WS_TUNNEL_PEERS` names the peers, each with its address in the tunnel: by default the Mac, `mac`,
 at wg0's address plus one, `10.99.0.2` at slot 0. An empty `WS_TUNNEL_PEERS: []`, or a key left
@@ -51,7 +48,7 @@ a line as `wg pubkey` prints it, in a directory only root reads:
 
 ```sh
 printf '%s\n' PUBLIC_KEY >/etc/wireguard/mac.pub
-MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server bootstrap
+ws server setup
 ```
 
 The Mac's scripts fix the peer's name, `mac`. A server's slot gives the tunnel's ends: `10.99.N.1`

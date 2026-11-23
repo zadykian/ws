@@ -7,18 +7,15 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/apt"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
 // held is a package whose install starts and enables a service that stays off until a later unit
 // sets it up. Where the package installs, the service is stopped and disabled, so that a run cut
-// short leaves it off at boot too. Without booted systemd it says so and plans no stop.
+// short leaves it off at boot too.
 type held struct {
 	pkg  apt.Package
-	m    effect.Machine
 	u    effect.Units
-	out  effect.Out
 	unit string
 }
 
@@ -43,10 +40,6 @@ func (h held) Plan(ctx context.Context) ([]resource.Change, error) {
 	installs := slices.ContainsFunc(changes, func(c resource.Change) bool { return step.KindOf(c) == step.Install })
 	if err != nil || !installs {
 		return changes, err
-	}
-	if !systemd.Booted(h.m) {
-		h.out.Say("%s: stop skipped, systemd is not running", h.unit)
-		return changes, nil
 	}
 	return append(changes, stopHeld{h}), nil
 }

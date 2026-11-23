@@ -12,24 +12,22 @@ template = "files/ws.gitconfig.tmpl"
 # signing key and its file, so that a refused token or clone stops no signing.
 [guard.git-check]
 after = "file/git-signers"
-command = ["{{ self }}", "server", "ubuntu", "git", "check"]
+command = ["{{ self }}", "server", "git", "check"]
 
 # The include at the top of the account's file, which stays the account's. has refuses an include
 # below the file's own settings, or one that comes twice, and leaves the file untouched.
 [file.git-include]
 after = "guard/git-check"
-path = "{{ .Home }}/.gitconfig"
-owner = "{{ .User }}"
+path = "/root/.gitconfig"
+owner = "root"
 line = "[include]\n\tpath = /etc/ws/gitconfig"
-has = ["{{ self }}", "server", "ubuntu", "git", "included"]
+has = ["{{ self }}", "server", "git", "included"]
 
 # The key that signs commits, made once by the account, with no passphrase: tools and claude commit
 # unattended, and the key only signs. ssh-keygen refuses a missing directory, as a container's
-# ~/.ssh may be, so the directory comes first, 0700. The chain starts after the frame's unit, as
-# each token's credential program is /usr/local/bin/ws, which a clone by a token calls.
+# ~/.ssh may be, so the directory comes first, 0700.
 [state.git-key]
-after = "state/ws-binary"
-run = { user = "{{ .User }}", unbooted = true, creates = ["{{ trim_suffix .GitSigningPubKey ".pub" }}"], command = ["sh", "-c", "mkdir -p -m 700 \"${1%/*}\" && ssh-keygen -q -t ed25519 -N '' -f \"$1\"", "sh", "{{ trim_suffix .GitSigningPubKey ".pub" }}"] }
+run = { user = "root", creates = ["{{ trim_suffix .GitSigningPubKey ".pub" }}"], command = ["sh", "-c", "mkdir -p -m 700 \"${1%/*}\" && ssh-keygen -q -t ed25519 -N '' -f \"$1\"", "sh", "{{ trim_suffix .GitSigningPubKey ".pub" }}"] }
 
 # The file that trusts the key for the email of each commit, in git verify-commit, root's and 644.
 [file.git-signers]
@@ -37,43 +35,14 @@ after = "state/git-key"
 path = "/etc/ws/allowed_signers"
 template = "files/allowed_signers.tmpl"
 
-# mise writes /etc/ws/git-tokens.toml from the secret input WS_GIT_TOKENS (mise.secrets.toml),
-# root's. Its group is root's after each change of its content, as mise takes a literal group alone.
-# This gives it the account's, so that the account's git reads a token through ws's program and
-# cannot change it. Without the file, it does nothing. It waits on the guard, which refuses a bad
-# file, so that the account never reads one.
-# A file there whose first line is not ws's header stops the run, as mise's guard does under the env
-# secrets. A run without the env loads no guard, and would give a file by hand the account's group.
-[state.git-tokens-group]
-after = "guard/git-check"
-
-[state.git-tokens-group.run]
-user = "root"
-unbooted = true
-command = [
-    "sh",
-    "-c",
-    '''f="$1"; [ ! -e "$f" ] || head -n 1 -- "$f" | grep -qxF -- '# Written by github.com/zadykian/ws, whose next run replaces any change made here.' || { echo "$f: not written by ws, so the run stops: move its value into the secrets, then remove it" >&2; exit 1; }; [ ! -e "$1" ] || chgrp -- "$(id -g -- "$2")" "$1"''',
-    "sh",
-    "/etc/ws/git-tokens.toml",
-    "{{ .User }}",
-]
-check = [
-    "sh",
-    "-c",
-    '''[ ! -e "$1" ] || { head -n 1 -- "$1" | grep -qxF -- '# Written by github.com/zadykian/ws, whose next run replaces any change made here.' && [ "$(stat -c %g -- "$1")" = "$(id -g -- "$2")" ]; }''',
-    "sh",
-    "/etc/ws/git-tokens.toml",
-    "{{ .User }}",
-]
-
-# The credential program of each URL of /etc/ws/git-tokens.toml, which follow the file whole. The
-# secrets task's plan writes no file, so there they follow the input in the run's env.
+# The credential program of each URL of /etc/ws/git-tokens.toml, which follow the file whole, after
+# the guard that refuses a bad file. The secrets task's plan writes no file, so there they follow
+# the input in the run's env.
 [state.git-tokens]
-after = "state/git-tokens-group"
-run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "ubuntu", "git", "tokens"], check = ["{{ self }}", "server", "ubuntu", "git", "tokens", "--check"] }
+after = "guard/git-check"
+run = { user = "root", command = ["{{ self }}", "server", "git", "tokens"], check = ["{{ self }}", "server", "git", "tokens", "--check"] }
 
 # The clones of WS_GIT_CLONES, each made once by the account, after the tokens they may need.
 [state.git-clones]
 after = "state/git-tokens"
-run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "ubuntu", "git", "clones"], check = ["{{ self }}", "server", "ubuntu", "git", "clones", "--check"] }
+run = { user = "root", command = ["{{ self }}", "server", "git", "clones"], check = ["{{ self }}", "server", "git", "clones", "--check"] }

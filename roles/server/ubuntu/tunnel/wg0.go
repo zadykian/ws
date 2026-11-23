@@ -10,7 +10,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // WG0 puts the key in force. networkd reads the private key as it creates wg0, and again as a
@@ -19,7 +18,6 @@ import (
 // missing wg0, as a key that networkd couldn't read or a deletion by hand leaves it, is created by
 // the reload alone. networkd creates wg0 a moment after the reload, so WG0 waits for it: Tries
 // times, Pause apart, by Sleep, time.Sleep where nil. The files' own reload is their service's.
-// Without systemd booted, as in CI's container, it plans nothing.
 type WG0 struct {
 	M     effect.Machine
 	Out   effect.Out
@@ -31,15 +29,12 @@ type WG0 struct {
 // Plan plans the deletion of a wg0 of another key than the file's, then the reload and the wait
 // where wg0 lacks the file's key. A missing key file is an error, as tunnel key makes it first.
 func (w WG0) Plan(ctx context.Context) ([]resource.Change, error) {
-	if !systemd.Booted(w.M) {
-		return nil, nil
-	}
 	public, hasKey, err := serverPublicKey(w.M)
 	if err != nil {
 		return nil, err
 	}
 	if !hasKey {
-		return nil, fmt.Errorf("%s is missing: ws server ubuntu tunnel key makes it", keyFile)
+		return nil, fmt.Errorf("%s is missing: ws server tunnel key makes it", keyFile)
 	}
 	_, statErr := w.M.Stat("/sys/class/net/wg0")
 	if statErr != nil && !errors.Is(statErr, fs.ErrNotExist) {

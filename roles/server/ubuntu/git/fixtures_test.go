@@ -13,15 +13,14 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/kind"
-	"github.com/zadykian/ws/engine/core/resource/account"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/values"
 )
 
 const (
 	self     = "/usr/local/bin/ws"
-	check    = self + " server ubuntu git check"
-	included = self + " server ubuntu git included"
+	check    = self + " server git check"
+	included = self + " server git included"
 	include  = "[include]\n\tpath = /etc/ws/gitconfig\n"
 	pub      = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGit ws@box\n"
 )
@@ -41,19 +40,15 @@ func role(t *testing.T) fstest.MapFS {
 	return fsys
 }
 
-// machine is a machine with the account ws, 1000:1000, and /etc/ws, and its env for the values of
-// text, whose check passes.
-func machine(t *testing.T, text string) (*effecttest.Machine, kind.Env) {
-	v, err := values.Parse([]byte(text))
+// machine is a machine with root's home and /etc/ws, and its env for the values of an empty
+// file, whose check passes.
+func machine(t *testing.T) (*effecttest.Machine, kind.Env) {
+	v, err := values.Parse(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	m := effecttest.NewMachine()
-	m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
-	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
-	m.Results["getent passwd ws"] = effecttest.Result{Out: []byte("ws:x:1000:1000::/home/ws:/bin/bash\n")}
 	m.Results["getent passwd root"] = effecttest.Result{Out: []byte("root:x:0:0:root:/root:/bin/bash\n")}
-	m.Dirs["/home/ws"], m.Owners["/home/ws"] = 0o750, [2]int{1000, 1000}
 	m.Dirs["/root"], m.Dirs["/etc"], m.Dirs["/etc/ws"] = 0o700, 0o755, 0o755
 	m.Results[check] = effecttest.Result{}
 	return m, kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v, Self: self}
@@ -114,14 +109,7 @@ func exits(t *testing.T, code int, why string) error {
 	return err
 }
 
-// keygen is the command line that makes the key of an account's default path, as the fake
-// records it.
-func keygen(user, home string) string {
-	key := home + "/.ssh/id_ed25519_signing"
-	sh := "sh -c mkdir -p -m 700 \"${1%/*}\" && ssh-keygen -q -t ed25519 -N '' -f \"$1\" sh " + key
-	env := "env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin " + sh
-	if user == "root" {
-		return "env HOME=/root " + env
-	}
-	return "runuser -u " + user + " -- env -i -C " + home + " HOME=" + home + " " + account.SystemPath + " " + env
-}
+// keygen is the command line that makes the key of root's default path, as the fake records it.
+const keygen = "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " +
+	"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin " +
+	"sh -c mkdir -p -m 700 \"${1%/*}\" && ssh-keygen -q -t ed25519 -N '' -f \"$1\" sh /root/.ssh/id_ed25519_signing"

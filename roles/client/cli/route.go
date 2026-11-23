@@ -3,7 +3,6 @@ package cli
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -14,7 +13,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/networks"
 )
 
-// newTunnelLoadedCmd returns ws client macos tunnel loaded.
+// newTunnelLoadedCmd returns ws client tunnel loaded.
 func newTunnelLoadedCmd(p enginecli.Env, server *string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "loaded",
@@ -34,7 +33,7 @@ func newTunnelLoadedCmd(p enginecli.Env, server *string) *cobra.Command {
 	}
 }
 
-// newTunnelRoutesCmd returns ws client macos tunnel routes.
+// newTunnelRoutesCmd returns ws client tunnel routes.
 func newTunnelRoutesCmd(p enginecli.Env, server *string) *cobra.Command {
 	var check bool
 	c := &cobra.Command{
@@ -60,7 +59,7 @@ func newTunnelRoutesCmd(p enginecli.Env, server *string) *cobra.Command {
 	return c
 }
 
-// newResolverCmd returns ws client macos resolver.
+// newResolverCmd returns ws client resolver.
 func newResolverCmd(p enginecli.Env) *cobra.Command {
 	var check bool
 	c := &cobra.Command{
@@ -81,7 +80,7 @@ func newResolverCmd(p enginecli.Env) *cobra.Command {
 // runRoute runs the step that build makes, alone, with the command's lines. Under check it prints
 // each change and makes none.
 func runRoute(c *cobra.Command, check bool, build func(effect.Out) step.Step) error {
-	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+	term := effect.NewTerminal(c.ErrOrStderr())
 	defer term.Flush()
 	out := linesOf(term, c.CommandPath())
 	_, err := step.RunWith(c.Context(), []step.Step{build(out)}, step.Options{Observer: out, Check: check})

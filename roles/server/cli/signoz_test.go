@@ -14,8 +14,8 @@ func TestSignozRefusesANonRoot(t *testing.T) {
 	for _, cmd := range []string{"password", "sync"} {
 		p := fakeProcess()
 		p.Euid = 1000
-		status, _, stderr := runWs(p, "", "server", "ubuntu", "signoz", cmd, "--check")
-		if want := "ws server ubuntu signoz " + cmd + ": run it as root\n"; status != 1 || stderr != want {
+		status, _, stderr := runWs(p, "", "server", "signoz", cmd, "--check")
+		if want := "ws server signoz " + cmd + ": run it as root\n"; status != 1 || stderr != want {
 			t.Errorf("%s: status = %d, stderr = %q", cmd, status, stderr)
 		}
 	}
@@ -32,9 +32,9 @@ func TestSignozPasswordCheckFailsWhereItWouldWrite(t *testing.T) {
 	p := rootProcess()
 	m := p.Machine.(*effecttest.Machine)
 	m.Dirs["/opt/signoz"] = 0o755
-	status, _, stderr := runWs(p, "", "server", "ubuntu", "signoz", "password", "--check")
-	if status != 1 || stderr != "ws server ubuntu signoz password: signoz password: generate the root user's password\n"+
-		"ws server ubuntu signoz password: changes are due\n" {
+	status, _, stderr := runWs(p, "", "server", "signoz", "password", "--check")
+	if status != 1 || stderr != "ws server signoz password: signoz password: generate the root user's password\n"+
+		"ws server signoz password: changes are due\n" {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
 	if _, ok := m.Files["/opt/signoz/root.env"]; ok {
@@ -46,7 +46,7 @@ func TestSignozPasswordWritesOnce(t *testing.T) {
 	p := rootProcess()
 	m := p.Machine.(*effecttest.Machine)
 	m.Dirs["/opt/signoz"] = 0o755
-	if status, _, stderr := runWs(p, "", "server", "ubuntu", "signoz", "password"); status != 0 {
+	if status, _, stderr := runWs(p, "", "server", "signoz", "password"); status != 0 {
 		t.Fatalf("status = %d, stderr = %q", status, stderr)
 	}
 	first := string(m.Files["/opt/signoz/root.env"])
@@ -54,7 +54,7 @@ func TestSignozPasswordWritesOnce(t *testing.T) {
 		t.Fatalf("root.env = %q, mode %o; want a password, 600", first, m.Modes["/opt/signoz/root.env"])
 	}
 	for _, args := range [][]string{{"password", "--check"}, {"password"}} {
-		if status, _, stderr := runWs(p, "", append([]string{"server", "ubuntu", "signoz"}, args...)...); status != 0 || stderr != "" {
+		if status, _, stderr := runWs(p, "", append([]string{"server", "signoz"}, args...)...); status != 0 || stderr != "" {
 			t.Errorf("%q: status = %d, stderr = %q; want nothing to do", args, status, stderr)
 		}
 	}
@@ -63,7 +63,7 @@ func TestSignozPasswordWritesOnce(t *testing.T) {
 	}
 }
 
-// signozProcess returns a booted machine whose values point at a fake SigNoz. It keeps logs for
+// signozProcess returns a machine whose values point at a fake SigNoz. It keeps logs for
 // logsDays, and traces and metrics for 90 days. It holds no dashboard, and its migrator is done.
 func signozProcess(t *testing.T, logsDays int) enginecli.Env {
 	mux := http.NewServeMux()
@@ -81,7 +81,6 @@ func signozProcess(t *testing.T, logsDays int) enginecli.Env {
 	t.Cleanup(srv.Close)
 	p := rootProcess()
 	m := p.Machine.(*effecttest.Machine)
-	m.Dirs["/run/systemd/system"] = 0o755
 	m.Files[serverVars] = []byte("WS_SIGNOZ_URL: " + srv.URL + "\nWS_SIGNOZ_DASHBOARDS: []\n")
 	m.Results["docker container ls --all --filter name=^signoz-telemetrystore-migrator$ --format {{.Status}}"] =
 		effecttest.Result{Out: []byte("Exited (0) 1 hour ago\n")}
@@ -89,16 +88,16 @@ func signozProcess(t *testing.T, logsDays int) enginecli.Env {
 }
 
 func TestSignozSyncCheckPassesWhenInSync(t *testing.T) {
-	status, _, stderr := runWs(signozProcess(t, 90), "", "server", "ubuntu", "signoz", "sync", "--check")
+	status, _, stderr := runWs(signozProcess(t, 90), "", "server", "signoz", "sync", "--check")
 	if status != 0 || stderr != "" {
 		t.Errorf("status = %d, stderr = %q; want nothing to do", status, stderr)
 	}
 }
 
 func TestSignozSyncCheckFailsWhereTheRetentionDiffers(t *testing.T) {
-	status, _, stderr := runWs(signozProcess(t, 15), "", "server", "ubuntu", "signoz", "sync", "--check")
-	want := "ws server ubuntu signoz sync: signoz retention: set the retention of logs to 90 days (now logs: 15 days, success)\n" +
-		"ws server ubuntu signoz sync: changes are due\n"
+	status, _, stderr := runWs(signozProcess(t, 15), "", "server", "signoz", "sync", "--check")
+	want := "ws server signoz sync: signoz retention: set the retention of logs to 90 days (now logs: 15 days, success)\n" +
+		"ws server signoz sync: changes are due\n"
 	if status != 1 || stderr != want {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}

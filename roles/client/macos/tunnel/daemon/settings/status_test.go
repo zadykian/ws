@@ -67,7 +67,7 @@ func TestStatusFails(t *testing.T) {
 		m    *effecttest.Machine
 		want string
 	}{
-		{"not running", statusMachine(""), "ws client macos tunnel isn't running; its log is /var/log/ws-tunnel.log"},
+		{"not running", statusMachine(""), "ws client tunnel isn't running; its log is /var/log/ws-tunnel.log"},
 		{"bad state", statusMachine("since=x\n"), "state: since is 'x'"},
 		{"no conf", noConf, "run mise -C /opt/ws/roles/client bootstrap"},
 	}

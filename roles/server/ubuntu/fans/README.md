@@ -3,7 +3,7 @@
 The `fans` role drives the server's fans on curves of its own. It builds the board's fan driver
 with DKMS, and runs `ws-fans`, a service of its own, on the curves of its variables. The role is
 three units of [its spec](units.toml.tmpl), whose lines sit in `mise.server.toml`
-([The frame](../frame/README.md)). The daemon is Go, `ws server ubuntu fans`, in `daemon/`.
+([The frame](../frame/README.md)). The daemon is Go, `ws server fans`, in `daemon/`.
 
 | Unit | What it does |
 | --- | --- |
@@ -13,7 +13,7 @@ three units of [its spec](units.toml.tmpl), whose lines sit in `mise.server.toml
 
 Each runs where DMI names the board's maker `WS_FANS_BOARD_VENDOR`, MSI: the units'
 `when = { board_vendor = ... }` ([when](../../../../engine/core/kind/README.md#the-specs)). A
-machine with another board is left alone, as a cloud VM, a VM on the Mac or CI's container. There
+machine with another board is left alone, as a cloud VM or a VM on the Mac. There
 each unit says in a line that it's off, and reads `in-sync`. With the value empty, the line says
 that the `when` gives no maker.
 
@@ -33,8 +33,7 @@ it for the running kernel. DKMS builds it again for each new kernel, from the he
 `linux-headers-generic` installs beside it. A new pin removes the old version from DKMS, and its
 source. `dkms status` says which versions DKMS holds. `/etc/modprobe.d/ws-fans.conf` keeps
 `nct6683` off the chip, and `/etc/modules-load.d/ws-fans.conf` loads `nct6687` at boot. The run
-unloads a loaded `nct6683`, as after `sensors-detect`, and loads `nct6687`. Without systemd
-running, as in CI's container, it loads nothing, and says so.
+unloads a loaded `nct6683`, as after `sensors-detect`, and loads `nct6687`.
 
 ### Secure Boot
 
@@ -55,14 +54,12 @@ Then run the bootstrap again, as
 
 ## ws-fans
 
-`ws-fans.service` runs `ws server ubuntu fans` from `/usr/local/bin/ws`, which the frame's unit
-`state/ws-binary` keeps the pinned ws; `service/fans` waits on it. It reads `/etc/ws/fans.json`,
+`ws-fans.service` runs `ws server fans` from `/usr/local/bin/ws`. It reads `/etc/ws/fans.json`,
 which the unit writes from its variables, below. The daemon's own loader checks a new config as the
 unit plans, so a config it refuses fails the plan and replaces nothing. A change to the config, the
 unit or the modules' files restarts the service. So does a new ws: the running process's binary is
-then the replaced one, which the unit reads as drift. Without systemd running, as in CI's
-container, the unit writes the files alone. The log, `journalctl -u ws-fans`, says when a sensor or
-a fan goes missing or comes back.
+then the replaced one, which the unit reads as drift. The log, `journalctl -u ws-fans`, says when a
+sensor or a fan goes missing or comes back.
 
 Every second it reads each sensor, moves each curve, and steps each fan towards its curve's speed:
 

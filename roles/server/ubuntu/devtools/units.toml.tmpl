@@ -1,142 +1,96 @@
-# devtools' units. mise installs Go and the servers as tools under /usr/local/share/mise, by the
-# versions of mise.server.toml's [tools]. The first units give each a path that names no version;
-# the rest set up the account's tools and gh. README.md says why each stands.
-
-# mise puts a tool under the data directory of the run, and root's own is /root/.local/share/mise,
-# which the account cannot read. Every root run exports MISE_DATA_DIR, as install.sh does. The guard
-# runs after the tools, so it names the mistake, and keeps the links from pointing at nothing.
-[guard.devtools-data-dir]
-command = [
-    "/bin/sh",
-    "-c",
-    '[ "$MISE_DATA_DIR" = /usr/local/share/mise ] || { echo "MISE_DATA_DIR is not /usr/local/share/mise: export it, as install.sh does, else mise puts the tools under /root" >&2; exit 1; }',
-]
+# devtools' units. mise installs Go and the servers as tools under root's data directory,
+# /root/.local/share/mise, by the versions of mise.server.toml's [tools]. The first units give each
+# a path that names no version; the rest set up root's tools and gh. README.md says why each
+# stands.
 
 # Each link names its tool's version, which a bump of [tools] changes with it: a link to `latest`
 # would keep a newer version that a downgrade leaves installed. shell's profile puts
 # /usr/local/go/bin on PATH, and gopls runs the go it finds there.
 [file.devtools-go]
-after = "guard/devtools-data-dir"
 path = "/usr/local/go"
-link = "/usr/local/share/mise/installs/go/1.27.3"
+link = "/root/.local/share/mise/installs/go/1.27.3"
 
 [file.devtools-gopls]
-after = "guard/devtools-data-dir"
 path = "/usr/local/bin/gopls"
-link = "/usr/local/share/mise/installs/go-golang-org-x-tools-gopls/0.23.0/bin/gopls"
+link = "/root/.local/share/mise/installs/go-golang-org-x-tools-gopls/0.23.0/bin/gopls"
 
 [file.devtools-dlv]
-after = "guard/devtools-data-dir"
 path = "/usr/local/bin/dlv"
-link = "/usr/local/share/mise/installs/go-github-com-go-delve-delve-cmd-dlv/1.27.2/bin/dlv"
+link = "/root/.local/share/mise/installs/go-github-com-go-delve-delve-cmd-dlv/1.27.2/bin/dlv"
 
 [file.devtools-pgls]
-after = "guard/devtools-data-dir"
 path = "/usr/local/bin/postgres-language-server"
-link = "/usr/local/share/mise/installs/github-supabase-community-postgres-language-server/0.28.2/postgres-language-server"
+link = "/root/.local/share/mise/installs/github-supabase-community-postgres-language-server/0.28.2/postgres-language-server"
 
 [file.devtools-docker-ls]
-after = "guard/devtools-data-dir"
 path = "/usr/local/bin/docker-language-server"
-link = "/usr/local/share/mise/installs/github-docker-docker-language-server/0.20.1/docker-language-server"
+link = "/root/.local/share/mise/installs/github-docker-docker-language-server/0.20.1/docker-language-server"
 
-# The account's tools. Each runs as WS_USER, root's included, and without booted systemd too, as in
-# CI's container. Its commands get the system's PATH, where mise's packages put npm, gh and dotnet.
+# Root's tools. Each runs as root. Its commands get the system's PATH, where mise's packages put npm,
+# gh and dotnet.
 
 # The npm servers, from a lock that pins each package by its sha512 integrity. The files go in as
-# the account's, with their missing directories. npm ci refuses a lock that disagrees with
+# root's, with their missing directories. npm ci refuses a lock that disagrees with
 # package.json, or a download whose integrity differs. Its stamp holds the sums of both files: a
 # bump of either, or a node_modules removed, runs it again.
 [file.devtools-npm-lock]
-owner = "{{ .User }}"
-path = "{{ .Home }}/.local/lib/language-servers/package-lock.json"
+owner = "root"
+path = "/root/.local/lib/language-servers/package-lock.json"
 source = "files/npm/package-lock.json"
 
 [file.devtools-npm-package]
 after = "file/devtools-npm-lock"
-owner = "{{ .User }}"
-path = "{{ .Home }}/.local/lib/language-servers/package.json"
+owner = "root"
+path = "/root/.local/lib/language-servers/package.json"
 source = "files/npm/package.json"
 
 [state.devtools-npm]
 after = "file/devtools-npm-package"
 
 [state.devtools-npm.run]
-user = "{{ .User }}"
-unbooted = true
+user = "root"
 command = [
     "sh",
     "-c",
     'cd "$1" && npm ci --ignore-scripts --no-audit --no-fund --no-update-notifier && sha256sum package.json package-lock.json >node_modules/.ws-sha256',
     "sh",
-    "{{ .Home }}/.local/lib/language-servers",
+    "/root/.local/lib/language-servers",
 ]
-check = ["sh", "-c", 'cd "$1" && sha256sum -c --status node_modules/.ws-sha256', "sh", "{{ .Home }}/.local/lib/language-servers"]
+check = ["sh", "-c", 'cd "$1" && sha256sum -c --status node_modules/.ws-sha256', "sh", "/root/.local/lib/language-servers"]
 
 # sql-formatter on every PATH, root's, so a project's settings name the bare command.
 [file.devtools-sql-formatter]
 after = "state/devtools-npm"
 path = "/usr/local/bin/sql-formatter"
-link = "{{ .Home }}/.local/lib/language-servers/node_modules/.bin/sql-formatter"
+link = "/root/.local/lib/language-servers/node_modules/.bin/sql-formatter"
 
 # gh 2.91.0 and later send telemetry unless told not to. GH_TELEMETRY=0 keeps the read and the set
 # from sending any themselves.
 [state.devtools-gh-telemetry.run]
-user = "{{ .User }}"
-unbooted = true
+user = "root"
 command = ["env", "GH_TELEMETRY=0", "gh", "config", "set", "telemetry", "disabled"]
 check = ["sh", "-c", '[ "$(GH_TELEMETRY=0 gh config get telemetry)" = disabled ]']
 
-# mise writes /etc/ws/gh-token from the secret input WS_GITHUB_TOKEN (mise.secrets.toml), root's.
-# Its group is root's after each change of its content, as mise takes a literal group alone. This
-# gives it the account's, so the account reads it and cannot change it. Without the file, it does
-# nothing.
-# A file there whose first line is not ws's header stops the run, as mise's guard does under the env
-# secrets. A run without the env loads no guard, and would give a file by hand the account's group.
-[state.devtools-gh-token-group]
-after = "state/devtools-gh-telemetry"
-
-[state.devtools-gh-token-group.run]
-user = "root"
-unbooted = true
-command = [
-    "sh",
-    "-c",
-    '''f="$1"; [ ! -e "$f" ] || head -n 1 -- "$f" | grep -qxF -- '# Written by github.com/zadykian/ws, whose next run replaces any change made here.' || { echo "$f: not written by ws, so the run stops: move its value into the secrets, then remove it" >&2; exit 1; }; [ ! -e "$1" ] || chgrp -- "$(id -g -- "$2")" "$1"''',
-    "sh",
-    "/etc/ws/gh-token",
-    "{{ .User }}",
-]
-check = [
-    "sh",
-    "-c",
-    '''[ ! -e "$1" ] || { head -n 1 -- "$1" | grep -qxF -- '# Written by github.com/zadykian/ws, whose next run replaces any change made here.' && [ "$(stat -c %g -- "$1")" = "$(id -g -- "$2")" ]; }''',
-    "sh",
-    "/etc/ws/gh-token",
-    "{{ .User }}",
-]
-
-# gh logs in by the token file, after its group, which waits on the telemetry. ws reads the token
+# gh logs in by the token file, after the telemetry. ws reads the token
 # and gives it to gh on its input, as the account, so it never reaches a command's arguments. A plan
 # writes no file, so in the secrets task's run ws reads WS_GITHUB_TOKEN, and the plan shows the
 # login that the run makes. Without a token, gh's login stays unchanged. ws has no keyring, so gh
 # keeps the token in ~/.config/gh/hosts.yml, mode 0600.
 [state.devtools-gh-login]
-after = "state/devtools-gh-token-group"
-run = { user = "root", unbooted = true, command = ["{{ self }}", "server", "ubuntu", "devtools", "gh-login"], check = ["{{ self }}", "server", "ubuntu", "devtools", "gh-login", "--check"] }
+after = "state/devtools-gh-telemetry"
+run = { user = "root", command = ["{{ self }}", "server", "devtools", "gh-login"], check = ["{{ self }}", "server", "devtools", "gh-login", "--check"] }
 
 # roslyn-language-server, C#'s server, from nuget.org, where every version is a prerelease. The
 # version alone pins it, as nuget.org refuses a version's second upload. From 5.13.0-1.26514.10 the
 # server defaults telemetry to all (roslyn#86066): a bump adds --telemetryLevel off to every command
 # that starts it. update installs it where missing too, and --allow-downgrade lets the pin go back.
-# NuGet asks every feed of the account's NuGet config, and one it cannot reach fails the install,
+# NuGet asks every feed of root's NuGet config, and one it cannot reach fails the install,
 # so --source asks nuget.org alone. The store keeps a directory per version, in lower case. dotnet
 # warns where PATH lacks its tools' directory, and as root writes a profile.d script that adds it,
 # so the unit puts it first. DOTNET_NOLOGO keeps its first run's welcome and advice off.
 [state.devtools-roslyn.run]
-user = "{{ .User }}"
-unbooted = true
-path = ["{{ .Home }}/.dotnet/tools"]
+user = "root"
+path = ["/root/.dotnet/tools"]
 command = [
     "env",
     "DOTNET_CLI_TELEMETRY_OPTOUT=1",
@@ -157,7 +111,7 @@ check = [
     "-c",
     '[ "$(ls "$1")" = "$2" ]',
     "sh",
-    "{{ .Home }}/.dotnet/tools/.store/roslyn-language-server",
+    "/root/.dotnet/tools/.store/roslyn-language-server",
     "5.12.0-1.26475.2",
 ]
 
@@ -165,9 +119,8 @@ check = [
 # itself and its toolchains. Its flag leaves PATH to /etc/ws/profile, which sources rustup's env
 # file.
 [state.devtools-rustup.run]
-user = "{{ .User }}"
-unbooted = true
-creates = ["{{ .Home }}/.cargo/bin/rustup"]
+user = "root"
+creates = ["/root/.cargo/bin/rustup"]
 command = [
     "bash",
     "-c",

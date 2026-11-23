@@ -36,7 +36,7 @@ reload_on = ["/etc/x/lab"]
 // ldEnv is a Mac with the program and the watched files, root's alone, and launchd's answers to
 // each call; it has loaded no daemon.
 func ldEnv(t *testing.T) (Env, *effecttest.Machine) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	e.System = MacOS
 	for _, d := range []string{"/", "/usr", "/usr/local", "/usr/local/bin", "/Library/LaunchDaemons", "/etc/x/lab"} {
 		m.Dirs[d] = 0o755
@@ -225,7 +225,7 @@ func TestLaunchdPlistText(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	args := []string{"/usr/local/bin/ws", "client", "macos", "tunnel", "run", "--server", "lab"}
+	args := []string{"/usr/local/bin/ws", "client", "tunnel", "run", "--server", "lab"}
 	got := plistText("com.github.zadykian.ws-tunnel.lab", launchdDaemon{Name: "lab", Arguments: args, Log: "/var/log/ws-tunnel.lab.log"})
 	if string(got) != string(want) {
 		t.Errorf("plist =\n%s\nwant\n%s", got, want)

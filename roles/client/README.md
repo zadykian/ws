@@ -14,33 +14,59 @@ a direct way: `ssh -o HostName=ADDRESS -o Port=PORT ws`, as ufw lets SSH in on e
 
 The Mac's side is mise's config and ws's units, as the server's is, which `go test` checks on each
 pull request. It runs as the user, with sudo where it needs root. `mise bootstrap` sets up Ghostty,
-cld and a zsh hook ([Ghostty and cld on the Mac](macos/ghostty/README.md)). mise installs Ghostty, Zed
+cld and a zsh hook ([Ghostty and cld on the Mac](macos/ghostty/README.md)). It turns the firewall
+on and has it block all incoming, as the server reaches the Mac past no router
+([the firewall](macos/firewall/README.md)). mise installs Ghostty, Zed
 and a font as casks, and gh, fnox and age-plugin-yubikey by its lock, with no Homebrew
-([the runbook](runbook.md)). The runbook puts `ws` in `~/.local/bin` (put it on `PATH` by hand)
-from a release, checked against its `ws.sha256` ([Releases](../../.github/workflows/release.md)),
-and clones the release's tree into `/opt/ws`, where the units' specs and files are. It links the
-tree's plugin where mise finds it. Write the values below in `values.yml` first ([The
-two files](values/README.md#the-two-files)), and trust the tree once
-([The bootstrap](runbook.md#the-bootstrap)). Then:
+([the runbook](runbook.md)). The runbook runs `install.sh`, which puts `ws` in `/usr/local/bin`
+from a release, checked against its `ws.sha256` ([Releases](../../.github/workflows/release.md)).
+Write each server's values below first, and the Mac's `values.yml`, which stands empty on a new
+Mac ([The two files](values/README.md#the-two-files)). Then:
 
 ```sh
-MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap
+ws client setup
 ```
 
-It sets up every role of the Mac, on the tree in `/opt/ws`, from the side's run directory,
+Setup takes the steps before mise ([Setup](#setup)). Then it runs mise's bootstrap, which sets up
+every role of the Mac. It runs on the tree in `/opt/ws`, from the side's run directory,
 `roles/client` ([The Mac's frame](macos/frame/README.md)).
-Its units read as the user, and ask sudo for a change alone. `ws client macos` holds the Mac's
+Its units read as the user, and ask sudo for a change alone. `ws client` holds the Mac's
 commands, darwin alone, which the units and the tunnel's daemons run. The user runs
-`ws client macos secrets init` too, which sets up the secrets repository
-([init](macos/secrets/README.md#ws-client-macos-secrets-init)), and
-`ws client macos secrets add NAME`, which adds a server to it
-([add](macos/secrets/README.md#ws-client-macos-secrets-add)). `ws version` prints its version.
+`ws client secrets init` too, which sets up the secrets repository
+([init](macos/secrets/README.md#ws-client-secrets-init)), and
+`ws client secrets add NAME`, which adds a server to it
+([add](macos/secrets/README.md#ws-client-secrets-add)). `ws version` prints its version.
+
+## Setup
+
+`ws client setup` runs as the user on macOS on arm64, and refuses root and any other system. The
+steps are those of the server's setup, which `roles/internal/setup` holds, with the Mac's paths
+([The bootstrap](runbook.md#the-bootstrap)).
+
+- It checks the values before any write, and the guard. A tree in `/opt/ws`, or a directory above
+  it or above the plugin, that another user owns or that others may write is refused. mise runs the
+  tree's config as the user, and ignores a plugin below such a directory. A directory that a Mac
+  lacks, such as `/opt` or `/usr/local/share`, is made root's at 755.
+- The command line tools come first, as git needs them: its shim opens Apple's dialog where they
+  are missing. Setup runs `xcode-select --install`, not `softwareupdate`, whose marker file and
+  labels Apple does not document. A plan with the tools due plans no more.
+- mise comes from its release at the version ws pins, and its SHA-256 for `macos-arm64` is in Go
+  ([mise.go](../internal/setup/mise.go)). sudo writes the file, once the body matches.
+- The tree is root's. Setup reads its tag and status as the user by `git -c
+  safe.directory=/opt/ws`, as git refuses a repository that another user owns. It runs git
+  through sudo to fetch, check out and clean, and the plugin's link too.
+- Where `values.yml` names no `WS_IDENTITY_PUB_KEY`, setup installs Secretive by mise's pin before
+  the bootstrap, checks it and waits for a key made in it, which it names in `values.yml`
+  ([Secretive](macos/ssh/README.md#secretive)). `--key NAME` takes a key that Secretive held
+  before. A plan with the key due plans no more.
+- A second run reads as the user, writes nothing and asks no password. `--in-place` and `--plan`
+  work as on the server ([The server's runbook](../server/runbook.md)).
 
 ## What the Mac reports
 
-`MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap plan` shows what the units would change, and
-`ws client macos servers` each server's tunnel. A cable's service that is disabled, which no run
-turns on, draws a warning from `ws client macos cable` and its `--check` alone: a bootstrap shows no
+`ws client setup --plan` shows what setup and the units would change, and
+`ws client servers` each server's tunnel. A cable's service that is disabled, which no run
+turns on, draws a warning from `ws client cable` and its `--check` alone: a bootstrap shows no
 check's output. No unit reads a private key: the key's unit looks for the file alone.
 
 ## The Mac's values.yml
@@ -50,7 +76,7 @@ reads without running them. `/etc/ws/values.yml` holds the Mac's keys: `WS_GIT_S
 `WS_IDENTITY_PUB_KEY` and `WS_IDENTITY_AGENT`. `/etc/ws/servers/ws/values.yml` holds every other key,
 and a key in the other file is refused. Both are root's, written through sudo. A `WS_VALUES` file
 outside `/etc/ws` is the user's. [The two files](values/README.md#the-two-files) shows both.
-`--server NAME` picks the server that a `ws client macos` command acts on, and may be left out
+`--server NAME` picks the server that a `ws client` command acts on, and may be left out
 where there is one ([The server's name](values/README.md#the-servers-name)). `remove`,
 `secrets add` and `secrets init` refuse it: remove and add take the server's name as their
 argument, and the secrets repository serves every server.
@@ -70,23 +96,21 @@ the Mac, by its path from `/` or `~/`: [git on the Mac](macos/git/README.md). `W
 hosts](#sshs-hosts). The bootstrap makes `/etc/ws` through sudo, at mode 755, for the tunnel's key,
 git's files and ssh's hosts.
 
-`WS_USER` is the user ssh logs in as: ws's key too, `zadykian` by default, or `root` for a
-`WS_TARGET` of `cloud`, which may have no other user. The other targets refuse `WS_USER=root`. A key
-with an empty value, as `WS_REMOTE: ""`, takes its default, as a missing line does: that user for
-`WS_USER` and 51820 for `WS_TUNNEL_PORT`. `WS_IDENTITY_PUB_KEY` has none: the bootstrap stops
-without it ([ssh's hosts](#sshs-hosts)). Nor has `WS_GIT_SIGNING_PUB_KEY`
-([git on the Mac](macos/git/README.md)).
+ssh logs in to every server as root, so no key names a user. A key with an empty value, as
+`WS_REMOTE: ""`, takes its default, as a missing line does: 51820 for `WS_TUNNEL_PORT`.
+`WS_IDENTITY_PUB_KEY` has none: the bootstrap stops without it
+([ssh's hosts](#sshs-hosts)). Nor has `WS_GIT_SIGNING_PUB_KEY` ([git on the Mac](macos/git/README.md)).
 
 `WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
 sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split by blanks. Each
 domain comes once and in lower case, with up to 3 addresses split by commas. For each server with
-`WS_PUBLIC_KEY`, the networks' unit runs `ws client macos networks`, which hands both to the code
-of `ws client macos tunnel routes` and `ws client macos resolver`, whose caveats hold ([their
+`WS_PUBLIC_KEY`, the networks' unit runs `ws client networks`, which hands both to the code
+of `ws client tunnel routes` and `ws client resolver`, whose caveats hold ([their
 section](#routes-and-resolvers-of-another-repository)). The networks go in the server's
 `/etc/ws/tunnel/NAME/routes.d/values`, a name no other script may take, and launchd's unit has the
-daemons read them. Each resolver starts with ws's `Written by` line, which names `ws client macos
+daemons read them. Each resolver starts with ws's `Written by` line, which names `ws client
 networks`, so a domain whose file is another script's, or written by hand, stops the run. To move
-a domain from such a script, have it remove its file first, with `ws client macos resolver DOMAIN`
+a domain from such a script, have it remove its file first, with `ws client resolver DOMAIN`
 and no address. A key emptied or removed takes back what earlier runs wrote, and only that, but a
 domain another server names stays. Its `--check` names each change, or that the server's
 `routes.d` is missing. Root's files go through sudo, by the kinds' code that writes the server's.
@@ -105,11 +129,11 @@ from another address, and from there `fail2ban-client set sshd unbanip 10.99.N.2
 
 The Mac's end of the cable is the display's adapter, whose network service `WS_CABLE_SERVICE` names,
 as `networksetup -listallnetworkservices` prints it. Where `networksetup -getinfo` shows other
-settings, the cable's unit runs `ws client macos cable`, which runs `sudo networksetup -setmanual
+settings, the cable's unit runs `ws client cable`, which runs `sudo networksetup -setmanual
 SERVICE 10.77.0.2 255.255.255.252`: with no router argument, the service gets none. Its `--check`
 fails, naming that command. The command stops on a service the list lacks, or one with a router
 outside `10.77.0.0/30`, as an uplink has. A disabled service, which the list prints with a `*` first
-and the key names without it, plans no change. So no bootstrap shows it: `ws client macos cable
+and the key names without it, plans no change. So no bootstrap shows it: `ws client cable
 --check` warns of it while it stays off. Without the key, it does nothing, and the server's tunnel
 does not try the cable: the cable reaches the one server that names it. `-setmanual` replaces the
 service's settings, whatever they were, and emptying the key leaves them. To give the service DHCP
@@ -135,38 +159,36 @@ in order.
 ## The Mac's tunnel
 
 The keys come first, in this order. A run of the `tunnel` role makes ws's key and prints its
-public key. `mise bootstrap` makes the Mac's key, which only root reads, through `ws client macos
+public key. `mise bootstrap` makes the Mac's key, which only root reads, through `ws client
 tunnel key`, and puts its public key in `/etc/ws/tunnel.pub`, readable by all. These two commands
 make the Mac the server's peer, with that key as MAC_PUBLIC_KEY. They go over a direct way, as
 `ssh NAME`, the server's host, needs this done first. ADDRESS and PORT are that way:
 
 ```sh
 ssh -o HostName=ADDRESS -o Port=PORT NAME "printf '%s\n' 'MAC_PUBLIC_KEY' | tee /etc/wireguard/mac.pub >/dev/null"
-ssh -o HostName=ADDRESS -o Port=PORT NAME env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server bootstrap
+ssh -o HostName=ADDRESS -o Port=PORT NAME ws server setup
 ```
-
-For a `WS_USER` other than root, both go through `sudo` and `ssh -t`, for the password.
 
 With ws's key as `WS_PUBLIC_KEY`, the bootstrap installs the tunnel's daemon. A new
 Mac or a rebuilt server changes one file on each side, and nothing in the repository. Do it by hand,
 as above.
 
-A daemon per server, `ws client macos tunnel run --server NAME`, runs as root from launchd, from
+A daemon per server, `ws client tunnel run --server NAME`, runs as root from launchd, from
 boot and before any login, by `/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.NAME.plist`,
-which launchd's unit of the tunnel writes. It runs `/usr/local/bin/ws`, the bootstrap's copy of the
-pinned ws, which is root's. A root daemon that ran a file of the user's would let anything that
+which launchd's unit of the tunnel writes. It runs `/usr/local/bin/ws`, the one ws of the Mac,
+which is root's. A root daemon that ran a file of the user's would let anything that
 runs as the user become root. The daemon holds WireGuard's device itself, so it needs no `wg` or
 `wireguard-go`. launchd's unit restarts each where `/etc/ws/tunnel.pub` changed, and sends each a
 SIGHUP where a server's `tunnel.conf` or `routes.d` changed.
 
 The settings are in `/etc/ws/tunnel`, root's and readable by all but the Mac's key, which only root
-reads. `ws client macos tunnel conf` writes a directory `NAME` per server with `WS_PUBLIC_KEY`, with
+reads. `ws client tunnel conf` writes a directory `NAME` per server with `WS_PUBLIC_KEY`, with
 its `tunnel.conf`, from the server's file, and its `routes.d` ([the daemons](macos/tunnel/README.md)), so
 the daemon reads no file the user can write. In System Settings › General › Login Items &
 Extensions, its "Allow in the Background" must stay on.
 
 A server with no directory beside `values.yml` has its daemon removed at the next bootstrap, by
-`ws client macos tunnel conf`: booted out where loaded, then `/etc/ws/tunnel/NAME`, its state file
+`ws client tunnel conf`: booted out where loaded, then `/etc/ws/tunnel/NAME`, its state file
 and log. launchd's unit removes its plist. Nothing goes where `values.yml`'s directory lists no
 server.
 
@@ -192,7 +214,7 @@ to 5 s a way. A way that comes back while the Mac's addresses stay as they were 
 next change or failure.
 
 ```sh
-sudo /usr/local/bin/ws client macos tunnel status [--server NAME]
+sudo /usr/local/bin/ws client tunnel status [--server NAME]
 ```
 
 prints the way in use, its endpoint, the latest handshake and the bytes moved, of the one daemon
@@ -212,8 +234,8 @@ iperf3 -s
 
 then, on the Mac, compare `iperf3 -c 10.99.N.1` with `iperf3 -c 10.77.0.1`, each with `-R` too, and
 delete the two rules after. Bulk copies run at that speed: for faster ones, give rsync a direct way,
-such as `rsync -e 'ssh -o HostName=ADDRESS -o Port=PORT' -a DIR ws:`. Besides, check `ws client
-macos tunnel status` docked, on the home Wi-Fi and on a phone's hotspot, and `ethtool
+such as `rsync -e 'ssh -o HostName=ADDRESS -o Port=PORT' -a DIR ws:`. Besides, check
+`ws client tunnel status` docked, on the home Wi-Fi and on a phone's hotspot, and `ethtool
 CABLE_INTERFACE` on ws, for 2500Mb/s.
 
 ## Routes and resolvers of another repository
@@ -222,20 +244,20 @@ A private repository's own script for the Mac can send more networks through the
 domain's names to nameservers behind it. It calls `ws`, which changes only what you give it.
 `--check` makes each print its diffs and change nothing:
 
-- `ws client macos tunnel routes [--check] --server SERVER NAME CIDR...`, which writes the IPv4
+- `ws client tunnel routes [--check] --server SERVER NAME CIDR...`, which writes the IPv4
   networks to `/etc/ws/tunnel/SERVER/routes.d/NAME` and has the daemons read them again. SERVER's
   daemon adds them to the peer's AllowedIPs and routes them into its utun, without closing a
   connection. It leaves out for the time being one that holds the endpoint in use, or one that
   holds a way's endpoint while none answers. `NAME` is of `a-z`, `0-9` and `-`, `values`
   aside. A network that overlaps the tunnels' `10.99.0.0/20` or the cable's `10.77.0.0/30`, as
-  `0.0.0.0/0` does, is refused. As in `ws client macos tunnel routes --server ws example
-  198.51.100.0/24`. - `ws client macos resolver [--check] DOMAIN ADDRESS...`, which writes
+  `0.0.0.0/0` does, is refused. As in `ws client tunnel routes --server ws example
+  198.51.100.0/24`. - `ws client resolver [--check] DOMAIN ADDRESS...`, which writes
   `/etc/resolver/DOMAIN`, with up to 3 nameservers, so that macOS asks them for the domain's names
-  (resolver(5)), and takes the file at once. - `ws client macos tunnel loaded`, which says whether
+  (resolver(5)), and takes the file at once. - `ws client tunnel loaded`, which says whether
   the daemon is loaded, so that the script can stop with "run mise -C /opt/ws/roles/client bootstrap
   first".
 
-With no network or address, each removes its file, `ws client macos resolver` only a file it wrote.
+With no network or address, each removes its file, `ws client resolver` only a file it wrote.
 `tunnel routes` signals the daemons itself, but launchd's unit keeps the sum of `routes.d` in its
 stamp. So the next bootstrap plans a reload and the stamp's write through sudo, which asks a
 password.

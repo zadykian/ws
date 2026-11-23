@@ -28,7 +28,7 @@ func run(t *testing.T, e Env, units []Unit) error {
 }
 
 func TestFileWritesItsTemplate(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	m.Dirs["/etc"] = 0o755
 	units := loadOne(t, e, "[file.a]\npath = \"/etc/x/y/a.conf\"\nmode = 0o640\ntemplate = \"a.tmpl\"\n",
 		map[string]string{"a.tmpl": "user={{.User}}\n"})
@@ -50,7 +50,7 @@ func TestFileWritesItsTemplate(t *testing.T) {
 }
 
 func TestFileRefusalLeavesTheLiveFile(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	m.Files["/etc/a.conf"] = []byte("old\n")
 	m.Results["checker -t /etc/a.conf.ws-check"] = effecttest.Result{Err: errors.New("exit status 1")}
 	units := loadOne(t, e, "[file.a]\npath = \"/etc/a.conf\"\nsource = \"a\"\ncheck = [\"checker\", \"-t\", \"{}\"]\n",
@@ -68,7 +68,7 @@ func TestFileRefusalLeavesTheLiveFile(t *testing.T) {
 }
 
 func TestFileRefusalOwesTheRestart(t *testing.T) {
-	e, m, u, _ := testEnv(true)
+	e, m, u, _ := testEnv()
 	u.States = map[string]effect.UnitState{"a.service": {Active: true}}
 	m.Files["/etc/a.conf"] = []byte("old\n")
 	m.Results["checker /etc/a.conf.ws-check"] = effecttest.Result{Err: errors.New("exit status 1")}
@@ -88,27 +88,13 @@ func TestFileRefusalOwesTheRestart(t *testing.T) {
 	}
 }
 
-func TestFileCheckBootedSkipsTheCheckUnbooted(t *testing.T) {
-	spec := "[file.a]\npath = \"/etc/a.conf\"\nsource = \"a\"\ncheck = [\"checker\", \"{}\"]\ncheck_booted = true\n"
-	for _, booted := range []bool{false, true} {
-		e, m, _, _ := testEnv(booted)
-		m.Results["checker /etc/a.conf.ws-check"] = effecttest.Result{}
-		if err := run(t, e, loadOne(t, e, spec, map[string]string{"a": "x"})); err != nil {
-			t.Fatal(err)
-		}
-		if ran := slices.Contains(m.Calls, "root checker /etc/a.conf.ws-check"); ran != booted {
-			t.Errorf("booted %t: the check ran %t", booted, ran)
-		}
-	}
-}
-
 // failingRestart is systemd whose restarts fail.
 type failingRestart struct{ *effecttest.Units }
 
 func (failingRestart) Restart(context.Context, string) error { return errors.New("boom") }
 
 func TestFileRestartIsOwedAfterAFailedRun(t *testing.T) {
-	e, m, u, _ := testEnv(true)
+	e, m, u, _ := testEnv()
 	u.States = map[string]effect.UnitState{"a.service": {Enabled: true, Active: true}}
 	e.U = failingRestart{u}
 	units := loadOne(t, e, "[file.a]\npath = \"/etc/a.conf\"\nsource = \"a\"\nservice = \"a.service\"\nenabled = true\n",
@@ -130,22 +116,8 @@ func TestFileRestartIsOwedAfterAFailedRun(t *testing.T) {
 	}
 }
 
-func TestFileServiceSkipsWithoutSystemd(t *testing.T) {
-	e, _, u, out := testEnv(false)
-	units := loadOne(t, e, "[file.a]\npath = \"/etc/a.conf\"\nsource = \"a\"\nservice = \"a.service\"\n", map[string]string{"a": "x"})
-	if got := headlines(t, units[0].Step); !slices.Equal(got, []string{"create directory /etc, owner 0:0, mode 755", "create /etc/a.conf"}) {
-		t.Errorf("plan = %q, want the file alone", got)
-	}
-	if want := []string{"say: a.service: skipped, systemd is not running"}; !slices.Equal(out.Lines, want) {
-		t.Errorf("lines = %q, want %q", out.Lines, want)
-	}
-	if u.Calls != nil {
-		t.Errorf("calls = %q, want none", u.Calls)
-	}
-}
-
 func TestFileUnderSystemdSystemReloadsTheDaemon(t *testing.T) {
-	e, m, u, _ := testEnv(true)
+	e, m, u, _ := testEnv()
 	m.Dirs["/etc/systemd/system"] = 0o755
 	units := loadOne(t, e, "[file.a]\npath = \"/etc/systemd/system/a.service\"\nsource = \"a\"\n", map[string]string{"a": "[Unit]\n"})
 	if err := run(t, e, units); err != nil {
@@ -157,7 +129,7 @@ func TestFileUnderSystemdSystemReloadsTheDaemon(t *testing.T) {
 }
 
 func TestFileOfAnotherOwnerStaysInItsHome(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	withAccount(m)
 	units := loadOne(t, e, "[file.a]\npath = \"/home/u/.config/a/a.conf\"\nowner = \"u\"\nsource = \"a\"\n", map[string]string{"a": "x"})
 	if err := run(t, e, units); err != nil {
@@ -181,7 +153,7 @@ func TestFileOfAnotherOwnerStaysInItsHome(t *testing.T) {
 }
 
 func TestFileOfAnotherOwnerOnMacOS(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	e.System = MacOS
 	m.Results["id -u u"] = effecttest.Result{Out: []byte("501\n")}
 	m.Results["id -g u"] = effecttest.Result{Out: []byte("20\n")}
@@ -205,21 +177,8 @@ func TestFileOfAnotherOwnerOnMacOS(t *testing.T) {
 	}
 }
 
-func TestFileUserServiceRestartsTheOwnersUnit(t *testing.T) {
-	e, m, _, _ := testEnv(true)
-	withAccount(m)
-	units := loadOne(t, e, "[file.a]\npath = \"/home/u/a.conf\"\nowner = \"u\"\nsource = \"a\"\nuser_service = \"a.service\"\n",
-		map[string]string{"a": "x"})
-	if got := headlines(t, units[0].Step); !slices.Contains(got, "create /home/u/a.conf") {
-		t.Errorf("plan = %q, want the file", got)
-	}
-	if !slices.Contains(m.Calls, "stat /home/u/.config/systemd/user/a.service") {
-		t.Errorf("calls = %q, want the owner's unit looked for", m.Calls)
-	}
-}
-
 func TestFileAbsentRemoves(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	m.Files["/etc/a.conf"] = []byte("x")
 	units := loadOne(t, e, "[file.a]\npath = \"/etc/a.conf\"\nabsent = true\n", nil)
 	if got := headlines(t, units[0].Step); !slices.Equal(got, []string{"remove /etc/a.conf"}) {
@@ -234,19 +193,17 @@ func TestFileAbsentRemoves(t *testing.T) {
 }
 
 func TestFileRefusesFieldsNoPlanTakes(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	for spec, want := range map[string]string{
-		"path = \"/a\"\nabsent = true\ntemplate = \"f\"\n":              "an absent file takes a path, an owner and ours alone",
-		"path = \"a\"\nsource = \"f\"\n":                                "not a clean absolute path",
-		"path = \"/a/../b\"\nsource = \"f\"\n":                          "not a clean absolute path",
-		"path = \"/a\"\n":                                               "a template or a source",
-		"path = \"/a\"\nsource = \"f\"\ntemplate = \"f\"\n":             "a template or a source",
-		"path = \"/a\"\nsource = \"none\"\n":                            "none",
-		"path = \"/a\"\nsource = \"f\"\nmode = 0o4755\n":                "permission bits",
-		"path = \"/a\"\nsource = \"f\"\ncheck_booted = true\n":          "check_booted goes with check",
-		"path = \"/a\"\nsource = \"f\"\nservice = \"a\"\n":              "type's suffix",
-		"path = \"/a\"\nsource = \"f\"\nenabled = true\n":               "go with service",
-		"path = \"/a\"\nsource = \"f\"\nuser_service = \"a.service\"\n": "an owner other than root",
+		"path = \"/a\"\nabsent = true\ntemplate = \"f\"\n":  "an absent file takes a path, an owner and ours alone",
+		"path = \"a\"\nsource = \"f\"\n":                    "not a clean absolute path",
+		"path = \"/a/../b\"\nsource = \"f\"\n":              "not a clean absolute path",
+		"path = \"/a\"\n":                                   "a template or a source",
+		"path = \"/a\"\nsource = \"f\"\ntemplate = \"f\"\n": "a template or a source",
+		"path = \"/a\"\nsource = \"none\"\n":                "none",
+		"path = \"/a\"\nsource = \"f\"\nmode = 0o4755\n":    "permission bits",
+		"path = \"/a\"\nsource = \"f\"\nservice = \"a\"\n":  "type's suffix",
+		"path = \"/a\"\nsource = \"f\"\nenabled = true\n":   "go with service",
 	} {
 		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": "[file.a]\n" + spec, "r/f": ""}))
 		if err == nil || !strings.Contains(err.Error(), want) {
@@ -256,7 +213,7 @@ func TestFileRefusesFieldsNoPlanTakes(t *testing.T) {
 }
 
 func TestFileSecretKeepsTheDiffOut(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	m.Dirs["/etc"] = 0o755
 	m.Files["/etc/a.env"] = []byte("TOKEN=old\n")
 	units := loadOne(t, e, "[file.a]\npath = \"/etc/a.env\"\nsource = \"a\"\nsecret = true\n", map[string]string{"a": "TOKEN=new\n"})
@@ -270,18 +227,18 @@ func TestFileSecretKeepsTheDiffOut(t *testing.T) {
 }
 
 func TestTemplateRendersAtPlan(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	m.Dirs["/etc"] = 0o755
 	m.Files["/etc/a"] = []byte("x")
-	units := loadOne(t, e, "[file.a]\npath = \"/etc/a\"\ntemplate = \"a.tmpl\"\n", map[string]string{"a.tmpl": "uid={{uid \"u\"}}\n"})
+	units := loadOne(t, e, "[file.a]\npath = \"/etc/a\"\ntemplate = \"a.tmpl\"\n", map[string]string{"a.tmpl": "mem={{mem_mib}}\n"})
 	if _, err := units[0].Step.Plan(t.Context()); err == nil {
-		t.Fatal("plan without the account succeeded")
+		t.Fatal("plan without the fact succeeded")
 	}
-	withAccount(m)
+	m.Files["/proc/meminfo"] = []byte("MemTotal:        4194304 kB\n")
 	if got := headlines(t, units[0].Step); !slices.Equal(got, []string{"write /etc/a"}) {
 		t.Errorf("plan = %q, want the write", got)
 	}
-	if err := run(t, e, units); err != nil || string(m.Files["/etc/a"]) != "uid=1001\n" {
-		t.Errorf("run = %v, file %q; want uid=1001", err, m.Files["/etc/a"])
+	if err := run(t, e, units); err != nil || string(m.Files["/etc/a"]) != "mem=4096\n" {
+		t.Errorf("run = %v, file %q; want mem=4096", err, m.Files["/etc/a"])
 	}
 }

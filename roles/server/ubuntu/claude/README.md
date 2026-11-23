@@ -5,25 +5,23 @@ curl, which fetches the installers, and names the nine units of its `units.toml.
 after another, in this order, after git's tokens:
 
 - `state/claude-install` and `state/claude-cld-install`: claude, from its native installer, and
-  cld, from its latest release's `install.sh`, both in `~/.local/bin`, as the account
+  cld, from its latest release's `install.sh`, both in `~/.local/bin`, as root
   ([Installs and updates](#installs-and-updates)).
 - `state/claude-update`, `-completion`, `-settings`, `-telemetry` and `-marketplaces`: the commands
-  `ws server ubuntu claude update`, `completion`, `settings`, `telemetry` and `marketplaces`, as
+  `ws server claude update`, `completion`, `settings`, `telemetry` and `marketplaces`, as
   root, each with `--check` as its check, which fails where the command would change something.
-- `state/claude-linger` and `state/claude-restore`: lingering for the account, then
-  `ws server ubuntu claude restore` ([Sessions after a reboot](#sessions-after-a-reboot)).
-
-All but the last two need no systemd, so a container runs them too.
+- `state/claude-linger` and `state/claude-restore`: lingering for root, then
+  `ws server claude restore` ([Sessions after a reboot](#sessions-after-a-reboot)).
 
 ## Installs and updates
 
 claude updates itself in the background, so its unit installs it only where `~/.local/bin/claude`
-is missing. So does cld's, and `ws server ubuntu claude update` updates cld with `cld update` where
-a newer release is out, which it reads over HTTP. Each installer runs as the account, with `HOME`
+is missing. So does cld's, and `ws server claude update` updates cld with `cld update` where
+a newer release is out, which it reads over HTTP. Each installer runs as root, with `HOME`
 set. It fetches the whole script before it runs it, so a failed fetch runs none of it. Neither is
 pinned. claude's installer refuses root where `SUDO_USER` is set, as under `sudo -i`, so its unit
 tells it that root is meant. cld's would take the caller's `CLD_INSTALL_DIR` over `~/.local/bin`,
-so its unit sets it. `ws server ubuntu claude completion` writes cld's completion in bash where it
+so its unit sets it. `ws server claude completion` writes cld's completion in bash where it
 differs from what `cld completion bash` prints.
 
 ## User settings
@@ -35,13 +33,16 @@ the channel claude notifies on. It keeps every value already there. `--check` ru
 the file and lists the keys it would add. A cld that predates the command gets it from the update
 first.
 
+Bypass mode, which skips every permission prompt, stays off as root: claude refuses it there, and
+ws sets nothing that lifts the refusal.
+
 ## Sessions after a reboot
 
 Then `cld setup restore`, which has the user's systemd bring cld's sessions back after a reboot.
 `state/claude-linger` turns lingering on, so that the user's systemd starts at boot rather than at
 the first login, and `restore` starts it now. The unit keeps the `PATH` of the user's login shell,
 where `cld restore sessions` finds tmux. The next run updates it, after a change to that `PATH` or
-to the command cld runs there. Both units need a booted systemd, so in CI's container they skip.
+to the command cld runs there.
 
 ## Telemetry
 
@@ -81,7 +82,7 @@ the role removes still applies where the shell exports it, as from `/etc/ws/env`
 
 ## Plugin marketplaces
 
-`WS_CLAUDE_MARKETPLACES`, empty by default, lists the plugin marketplaces the role adds for `WS_USER`,
+`WS_CLAUDE_MARKETPLACES`, empty by default, lists the plugin marketplaces the role adds for root,
 each a `name` and a `source`. The source is what `claude plugin marketplace add` takes: a GitHub
 `owner/repo`, a git URL or an absolute path. The first two take a branch or tag as `#REF`. A git URL
 off GitHub ends in `.git`, as claude reads one without it as a hosted `marketplace.json`. The name
@@ -98,7 +99,7 @@ A source that names a private server stays out of this repository: its list goes
 ([A run](../ikeward/README.md#a-run)), and a token for its host from the `git` role
 ([Git credentials](../git/README.md#git-credentials)). claude's units run after git's tokens.
 
-`ws server ubuntu claude marketplaces` adds each name that `claude plugin marketplace list`
+`ws server claude marketplaces` adds each name that `claude plugin marketplace list`
 lacks, so the next run finds it and changes nothing. `add` clones a git source and declares the
 marketplace in `~/.claude/settings.json`; it needs no claude login. A name claude lists from
 another source fails the run: give that source, or remove the marketplace first, with

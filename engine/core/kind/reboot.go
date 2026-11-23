@@ -12,7 +12,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/apt"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // moduleName is a kernel module's name, as /sys/module lists it: no path.
@@ -44,14 +43,9 @@ type reboot struct {
 	s   rebootState
 }
 
-// Plan reads the module's version in force and dpkg's of the package. Without booted systemd, as
-// in a container, no module of the machine's is the run's to note, and it skips. A package not
+// Plan reads the module's version in force and dpkg's of the package. A package not
 // installed, as in a dry run before its install, says nothing.
 func (r reboot) Plan(ctx context.Context) ([]resource.Change, error) {
-	if !systemd.Booted(r.m) {
-		r.out.Say("reboot of module %s: skipped, systemd is not running", r.s.Module)
-		return nil, nil
-	}
 	states, err := apt.PackageStates(ctx, r.m, r.s.Package)
 	if err != nil || !states[r.s.Package].Installed() {
 		return nil, err

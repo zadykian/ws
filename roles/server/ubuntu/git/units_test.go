@@ -14,9 +14,9 @@ import (
 )
 
 func TestGitUnits(t *testing.T) {
-	_, e := machine(t, "WS_USER: ws\n")
+	_, e := machine(t)
 	want := []string{"file/git-config", "file/git-include", "file/git-signers", "guard/git-check",
-		"state/git-clones", "state/git-key", "state/git-tokens", "state/git-tokens-group"}
+		"state/git-clones", "state/git-key", "state/git-tokens"}
 	got := kind.Names(units(t, e))
 	slices.Sort(got)
 	if !slices.Equal(got, want) {
@@ -25,7 +25,7 @@ func TestGitUnits(t *testing.T) {
 }
 
 func TestGitConfigIsTheStepsFile(t *testing.T) {
-	m, e := machine(t, "WS_USER: ws\n")
+	m, e := machine(t)
 	if err := write(t, e, units(t, e, "file/git-config")); err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +40,7 @@ func TestGitConfigIsTheStepsFile(t *testing.T) {
 }
 
 func TestGitConfigOfRootIsGitcfgsSettings(t *testing.T) {
-	m, e := machine(t, "WS_USER: root\n")
+	m, e := machine(t)
 	if err := write(t, e, units(t, e, "file/git-config")); err != nil {
 		t.Fatal(err)
 	}
@@ -55,9 +55,9 @@ func TestGitConfigOfRootIsGitcfgsSettings(t *testing.T) {
 }
 
 func TestGitIncludeGoesOnTopOnce(t *testing.T) {
-	m, e := machine(t, "WS_USER: ws\n")
-	const rc = "/home/ws/.gitconfig"
-	m.Files[rc], m.Owners[rc] = []byte("[core]\n\teditor = vi\n"), [2]int{1000, 1000}
+	m, e := machine(t)
+	const rc = "/root/.gitconfig"
+	m.Files[rc], m.Owners[rc] = []byte("[core]\n\teditor = vi\n"), [2]int{}
 	m.Results[included] = effecttest.Result{Err: exits(t, 1, "")}
 	if err := apply(t, units(t, e, "file/git-include")[0]); err != nil {
 		t.Fatal(err)
@@ -65,7 +65,7 @@ func TestGitIncludeGoesOnTopOnce(t *testing.T) {
 	if got := string(m.Files[rc]); !strings.HasPrefix(got, include) || !strings.HasSuffix(got, "[core]\n\teditor = vi\n") {
 		t.Errorf(".gitconfig = %q, want the include on top of the account's settings", got)
 	}
-	if m.Owners[rc] != [2]int{1000, 1000} {
+	if m.Owners[rc] != [2]int{} {
 		t.Errorf("owner %v, want the account's", m.Owners[rc])
 	}
 	m.Results[included] = effecttest.Result{}
@@ -78,10 +78,10 @@ func TestGitIncludeGoesOnTopOnce(t *testing.T) {
 }
 
 func TestGitIncludeRefusedLeavesTheFile(t *testing.T) {
-	m, e := machine(t, "WS_USER: ws\n")
-	const rc = "/home/ws/.gitconfig"
+	m, e := machine(t)
+	const rc = "/root/.gitconfig"
 	text := "[user]\n\tname = me\n" + include
-	m.Files[rc], m.Owners[rc] = []byte(text), [2]int{1000, 1000}
+	m.Files[rc], m.Owners[rc] = []byte(text), [2]int{}
 	m.Results[included] = effecttest.Result{Err: exits(t, 2, "the include sits below")}
 	err := apply(t, units(t, e, "file/git-include")[0])
 	if err == nil || !strings.Contains(err.Error(), "the include sits below") {
@@ -95,13 +95,12 @@ func TestGitIncludeRefusedLeavesTheFile(t *testing.T) {
 // A failed check stops the include, the tokens and the clones, but not the signing key's units,
 // which run before it.
 func TestGitCheckStopsAllButSigning(t *testing.T) {
-	m, e := machine(t, "WS_USER: ws\n")
+	m, e := machine(t)
 	m.Results[check] = effecttest.Result{Out: []byte("a clone holds a token\n"), Err: errors.New("exit status 1")}
 	m.Results[included] = effecttest.Result{Err: exits(t, 1, "")}
-	m.Dirs["/home/ws/.ssh"], m.Owners["/home/ws/.ssh"] = 0o700, [2]int{1000, 1000}
-	m.Files["/home/ws/.ssh/id_ed25519_signing"] = []byte("key")
-	m.Files["/home/ws/.ssh/id_ed25519_signing.pub"] = []byte(pub)
-	// The run takes the frame's unit too, which git's chain waits on and which skips without systemd.
+	m.Dirs["/root/.ssh"], m.Owners["/root/.ssh"] = 0o700, [2]int{}
+	m.Files["/root/.ssh/id_ed25519_signing"] = []byte("key")
+	m.Files["/root/.ssh/id_ed25519_signing.pub"] = []byte(pub)
 	us, err := kind.Closure(loaded(t, e), kind.Names(units(t, e)))
 	if err != nil {
 		t.Fatal(err)
@@ -118,7 +117,7 @@ func TestGitCheckStopsAllButSigning(t *testing.T) {
 			t.Errorf("call %q after a failed check", c)
 		}
 	}
-	if _, ok := m.Files["/home/ws/.gitconfig"]; ok {
+	if _, ok := m.Files["/root/.gitconfig"]; ok {
 		t.Error("the include went in after a failed check")
 	}
 	want := gitcfg.AllowedSigners(file.Header("#"), "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGit")
@@ -127,28 +126,23 @@ func TestGitCheckStopsAllButSigning(t *testing.T) {
 	}
 }
 
-func TestGitKeyIsMadeOnceWithoutSystemd(t *testing.T) {
-	for _, c := range []struct{ values, user, home string }{
-		{"WS_USER: ws\n", "ws", "/home/ws"}, {"WS_USER: root\n", "root", "/root"},
-	} {
-		m, e := machine(t, c.values)
-		line := keygen(c.user, c.home)
-		m.Results[line] = effecttest.Result{}
-		if err := apply(t, units(t, e, "state/git-key")[0]); err != nil {
-			t.Fatal(err)
-		}
-		if !slices.ContainsFunc(m.Calls, func(call string) bool { return strings.HasSuffix(call, " "+line) }) {
-			t.Errorf("%s: calls %q, want ssh-keygen as the account, though systemd is not running", c.user, m.Calls)
-		}
-		m.Files[c.home+"/.ssh/id_ed25519_signing"] = []byte("key")
-		if got := changes(t, units(t, e, "state/git-key")[0]); got != nil {
-			t.Errorf("%s: second plan = %q, want none", c.user, got)
-		}
+func TestGitKeyIsMadeOnce(t *testing.T) {
+	m, e := machine(t)
+	m.Results[keygen] = effecttest.Result{}
+	if err := apply(t, units(t, e, "state/git-key")[0]); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.ContainsFunc(m.Calls, func(call string) bool { return strings.HasSuffix(call, " "+keygen) }) {
+		t.Errorf("calls %q, want ssh-keygen as root", m.Calls)
+	}
+	m.Files["/root/.ssh/id_ed25519_signing"] = []byte("key")
+	if got := changes(t, units(t, e, "state/git-key")[0]); got != nil {
+		t.Errorf("second plan = %q, want none", got)
 	}
 }
 
 func TestGitSignersTrustTheKey(t *testing.T) {
-	m, e := machine(t, "WS_USER: ws\n")
+	m, e := machine(t)
 	const p = "/etc/ws/allowed_signers"
 	if err := apply(t, units(t, e, "file/git-signers")[0]); err != nil {
 		t.Fatal(err)
@@ -156,8 +150,8 @@ func TestGitSignersTrustTheKey(t *testing.T) {
 	if got := string(m.Files[p]); got != file.Header("#")+"\n" {
 		t.Errorf("without the key: %s = %q, want the header alone", p, got)
 	}
-	m.Dirs["/home/ws/.ssh"], m.Owners["/home/ws/.ssh"] = 0o700, [2]int{1000, 1000}
-	m.Files["/home/ws/.ssh/id_ed25519_signing.pub"] = []byte(pub)
+	m.Dirs["/root/.ssh"], m.Owners["/root/.ssh"] = 0o700, [2]int{}
+	m.Files["/root/.ssh/id_ed25519_signing.pub"] = []byte(pub)
 	if err := apply(t, units(t, e, "file/git-signers")[0]); err != nil {
 		t.Fatal(err)
 	}
@@ -170,11 +164,11 @@ func TestGitSignersTrustTheKey(t *testing.T) {
 	}
 }
 
-func TestGitTokensAndClonesRunAsRootWithoutSystemd(t *testing.T) {
-	m, e := machine(t, "WS_USER: ws\n")
+func TestGitTokensAndClonesRunAsRoot(t *testing.T) {
+	m, e := machine(t)
 	for _, name := range []string{"tokens", "clones"} {
 		line := "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin " + self +
-			" server ubuntu git " + name
+			" server git " + name
 		m.Results[line+" --check"] = effecttest.Result{Err: errors.New("exit status 1")}
 		m.Results[line] = effecttest.Result{}
 	}

@@ -1,5 +1,5 @@
 # Each keyed server's routes.d/values and its resolvers in /etc/resolver, root's and readable by
-# all. ws client macos networks writes them through sudo, and removes a resolver of ws's that no
+# all. ws client networks writes them through sudo, and removes a resolver of ws's that no
 # server names. It waits on the tunnel's files, which make routes.d. launchd's unit of the tunnel
 # watches routes.d, so a change reaches the daemons by SIGHUP.
 [state.networks]
@@ -7,5 +7,5 @@ after = "state/tunnel-conf"
 
 [state.networks.run]
 user = "{{ .User }}"
-command = ["{{ self }}", "client", "macos", "networks"]
-check = ["{{ self }}", "client", "macos", "networks", "--check"]
+command = ["{{ self }}", "client", "networks"]
+check = ["{{ self }}", "client", "networks", "--check"]

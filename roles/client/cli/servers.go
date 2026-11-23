@@ -11,7 +11,7 @@ import (
 	"github.com/zadykian/ws/roles/client/values"
 )
 
-// newServersCmd returns ws client macos servers.
+// newServersCmd returns ws client servers.
 func newServersCmd(p enginecli.Env, server *string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "servers",

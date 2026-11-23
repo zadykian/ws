@@ -1,24 +1,24 @@
 # ws
 
-ws sets up one development server from code, for one user, `WS_USER`, and the Mac that works
+ws sets up one development server from code, for one user, root, and the Mac that works
 on it. These are the words its code and its docs use, for the server's side and for the Mac's.
 
 ## Language
 
 **Account**:
-`WS_USER` as the server knows it: its name, its home, its uid and its primary gid.
+root as the server knows it: its name, its home, its uid and its primary gid.
 _Avoid_: owner, ids
 
 **Frame**:
-What each role of mise's config leans on: `mise.toml` with ws's pin, the server's
+What each role of mise's config leans on: `mise.toml`, the server's
 `mise.server.toml`, the plugin `plugins/ws`, the machine's miserc, and the role `frame`
 ([The frame](roles/server/ubuntu/frame/README.md)). The plugin's link puts it where mise finds a
 system plugin.
 _Avoid_: skeleton, scaffold
 
 **Home file**:
-A file below the account's home that ws reads or writes as root, by a path under the home. The
-account owns it, and no link lies on the way to it.
+A file below the account's home, `/root`, that ws reads or writes by a path under the home. No
+link lies on the way to it.
 _Avoid_: user file, plain file
 
 **Input**:
@@ -75,16 +75,10 @@ signing, by `WS_GIT_SIGNING_PUB_KEY`. Either ws's copy of a key of Secretive's a
 key.
 _Avoid_: picked key, git key
 
-**User's directory**:
-A directory below the Mac's home that a unit writes under, such as `~/.local/bin`. A run makes it
-where missing, and stops where the path is no directory. It leaves the mode of one that exists. Core's
-`file.UserDir` holds it.
-_Avoid_: folder
-
 **User's file**:
 A whole file below the Mac's home that ws writes as the user, not root, such as Zed's
-`~/.config/zed/global_settings.json`. A plan and a report read it alike. Core's `file.UserFile`
-holds it. On the server, root writes a home file.
+`~/.config/zed/global_settings.json`. The `file` kind writes it, with the user as its `owner`.
+On the server, root writes a home file.
 _Avoid_: dotfile
 
 **User's lines**: ws's lines in a user's file that holds other text too, such as `Include

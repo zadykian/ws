@@ -5,9 +5,35 @@ for each server, through the tunnel ([The Mac](../../README.md)). The facts buil
 `values.yml` and the servers' files, and check it, before any unit runs
 ([The facts](../../facts/README.md)). A refusal there stops the whole bootstrap, and changes nothing.
 
+## Secretive
+
+[`mise.mac.toml`](mise.mac.toml) pins Secretive, which holds the Mac's keys, by mise's `macos-app`
+package: a version, the URL and SHA-256 of its `Secretive.zip`, and the bundle in it. Each bootstrap
+installs it into `/Applications`, after mise checks the zip against the SHA-256. `adopt` takes over
+the same build where it stands, as a person may have installed it. It refuses another build
+and leaves it alone, so remove that copy once. `macos-app` finds no release: a new one changes
+`version` and `sha256`, which GitHub's release and Homebrew's cask list.
+
+`ws client setup` installs it before the first bootstrap where `values.yml` names no login key. It
+runs `mise bootstrap packages apply --yes macos-app:secretive`, checks the app by `spctl -a -vv`
+([setupkey.go](../../cli/setupkey.go)), which must say `accepted` and `Notarized Developer ID`, and
+opens it. The `origin` must name Secretive's team, `Z72PRUAWF6`, which signs the pinned zip, as
+any developer may notarize an app. A release that another team signs changes `pinnedTeam` there
+too. It then waits for a P-256 key, as ws's OpenSSH reads no ML-DSA one. It writes
+`WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_PUB_KEY` into `values.yml`, each
+one that is not there. Setup lists the keys of Secretive's agent before it opens Secretive, and
+the wait takes the sole P-256 key that comes after. ws picks no key that was there before, as one
+made for another use would go to GitHub. Where no agent answers until Secretive runs, the agent's
+first answer stands for the list before, as setup cannot tell whether a key in it came in this
+run. The wait lists such keys by NAME, and says to press Ctrl-C and run setup again with
+`--key NAME` to take one. A key made at Notify signs git's commits with no prompt ([The signing
+key](../git/README.md#the-signing-key)). Once `values.yml` names the login key, `--key` that names
+it runs as no `--key` does, so a failed run may run again as it stood. `--key` that names another
+key is refused.
+
 ## The units
 
-- `state.keys` runs `ws client macos keys`, which copies the `.pub` of each key of Secretive's that
+- `state.keys` runs `ws client keys`, which copies the `.pub` of each key of Secretive's that
   `values.yml` names into `/etc/ws/secretive`, through sudo ([Secretive's
   keys](../git/README.md#secretives-keys)). ssh and git name such a key by that copy. A key in a
   file has none. The unit runs a command, as the copy comes from the agent.
@@ -21,8 +47,8 @@ for each server, through the tunnel ([The Mac](../../README.md)). The facts buil
 `/etc/ws/ssh_config` holds a host for each server of `servers/`, named as the server is, at its
 tunnel's `10.99.N.1` from the first run, whichever network the Mac is on. A server's `10.99.N.1`
 is `10.99.0.1` at slot 0. So `ssh NAME` fails until the keys' exchange ends ([The Mac's
-tunnel](../../README.md#the-macs-tunnel)), where a direct way serves. It logs in as the server's
-`WS_USER` with the key below, and checks the server's host key under its name (`HostKeyAlias`). A
+tunnel](../../README.md#the-macs-tunnel)), where a direct way serves. It logs in as root with
+the key below, and checks the server's host key under its name (`HostKeyAlias`). A
 server whose `values.yml` fails to load stops the bootstrap. A session ends after 120 s without
 word from the server, far longer than a switch of the tunnel takes.
 

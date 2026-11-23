@@ -45,7 +45,7 @@ func TestValuesFileWrittenWhereNone(t *testing.T) {
 // TestValuesFileLeavesAFileOrALink holds the file as the owner's: the unit reads nothing of it.
 func TestValuesFileLeavesAFileOrALink(t *testing.T) {
 	for name, place := range map[string]func(*effecttest.Machine){
-		"a file": func(m *effecttest.Machine) { m.Files[valuesFile] = []byte("WS_USER: root\n") },
+		"a file": func(m *effecttest.Machine) { m.Files[valuesFile] = []byte("") },
 		"a link": func(m *effecttest.Machine) { m.Links[valuesFile] = "/nowhere" },
 	} {
 		m := effecttest.NewMachine()

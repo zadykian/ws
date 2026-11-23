@@ -16,7 +16,7 @@ import (
 // the file holds ws's line in its place, and 1 where it lacks it. It exits 2 with the reason where
 // the line sits out of place, which the unit refuses.
 
-// newSSHCmd returns ws client macos ssh, with ssh's has command.
+// newSSHCmd returns ws client ssh, with ssh's has command.
 func newSSHCmd() *cobra.Command {
 	return enginecli.Group("ssh", "the commands of ssh's units", hasCmd("included",
 		"say by the exit status whether the ssh config on stdin includes /etc/ws/ssh_config at its top",
@@ -33,7 +33,7 @@ func newSSHCmd() *cobra.Command {
 		}))
 }
 
-// newGitCmd returns ws client macos git, with git's has command.
+// newGitCmd returns ws client git, with git's has command.
 func newGitCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("git", "the commands of git's units", hasCmd("included",
 		"say by the exit status whether the git config on stdin includes /etc/ws/gitconfig at its top",

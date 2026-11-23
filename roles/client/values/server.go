@@ -27,18 +27,25 @@ func Load(m effect.Machine, mac, server string) (Conf, error) {
 	if err := errors.Join(macErr, serverErr); err != nil {
 		return Conf{}, err
 	}
+	if err := refuseClashes(m, mac, server, c); err != nil {
+		return Conf{}, err
+	}
+	return join(macConf, c), nil
+}
+
+// refuseClashes returns a refusal for what c, the file of the server at server, shares with another
+// server's file beside values.yml at mac. That is a network, a domain, a slot, a port or the cable.
+// The refusals use c's file's words.
+func refuseClashes(m effect.Machine, mac, server string, c Conf) error {
 	others, err := Siblings(m, mac, server)
 	if err != nil {
-		return Conf{}, err
+		return err
 	}
 	var all []error
 	for _, e := range clashes(c, others) {
 		all = append(all, errors.New(e.In(server)))
 	}
-	if err := errors.Join(all...); err != nil {
-		return Conf{}, err
-	}
-	return join(macConf, c), nil
+	return errors.Join(all...)
 }
 
 // LoadLines reads values.yml at mac and a server's file at server as Load does, but checks each line
@@ -63,7 +70,7 @@ func join(mac, server Conf) Conf {
 func load(m effect.Machine, file string, parse func(string) (Conf, []Error)) (Conf, error) {
 	text, err := m.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
-		return Conf{}, fmt.Errorf("%s is missing: roles/client/README.md says what goes in it", file)
+		return Conf{}, fmt.Errorf("%s is missing: roles/client/values/README.md says what goes in it", file)
 	}
 	if err != nil {
 		return Conf{}, err

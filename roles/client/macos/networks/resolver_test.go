@@ -12,7 +12,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/networks"
 )
 
-const resolverCmdHeader = "# " + file.Mark + ": ws client macos resolver, which removes this file when given no address."
+const resolverCmdHeader = "# " + file.Mark + ": ws client resolver, which removes this file when given no address."
 
 func resolverPlan(m *effecttest.Machine, domain string, addresses ...string) (string, error) {
 	p, err := (&networks.Resolver{Domain: domain, Addresses: addresses, M: m, Out: &effecttest.Out{}}).Plan(context.Background())
@@ -32,7 +32,7 @@ func TestResolverRefusesWhatTheShellRefused(t *testing.T) {
 		_, err := resolverPlan(effecttest.NewMachine(), domain, addresses...)
 		if err == nil {
 			t.Errorf("Plan of %q %q succeeded", domain, addresses)
-		} else if strings.Contains(err.Error(), "ws client macos resolver") {
+		} else if strings.Contains(err.Error(), "ws client resolver") {
 			t.Errorf("Plan of %q %q: %v names the command, which execute does", domain, addresses, err)
 		}
 	}

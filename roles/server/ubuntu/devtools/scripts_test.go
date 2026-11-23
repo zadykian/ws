@@ -15,11 +15,10 @@ import (
 
 // run is a run state's fields, as units.toml.tmpl gives them before a render.
 type run struct {
-	User     string   `toml:"user"`
-	Unbooted bool     `toml:"unbooted"`
-	Command  []string `toml:"command"`
-	Check    []string `toml:"check"`
-	Creates  []string `toml:"creates"`
+	User    string   `toml:"user"`
+	Command []string `toml:"command"`
+	Check   []string `toml:"check"`
+	Creates []string `toml:"creates"`
 }
 
 // readRuns returns the run states of units.toml.tmpl by name.
@@ -64,26 +63,20 @@ func fake(t *testing.T, bin, name, body string) {
 }
 
 // templateAction matches an action of the spec's template, the one way a value reaches a command's
-// text. A word of a command's own, as the guard's message, is no value.
+// text. A word of a command's own is no value.
 var templateAction = regexp.MustCompile(`\{\{.*?\}\}`)
 
-// Each run is WS_USER's but two, root's. The token file's group is one, as root alone may change
-// it. gh's login is the other: ws's own, which reads the token and runs gh as WS_USER. Each runs
-// without booted systemd too. No secret reaches a command's text, which a run's headline and mise's
-// log show.
-func TestDevtoolsRunsAreTheAccounts(t *testing.T) {
+// Each run is root's. No secret reaches a command's text,
+// which a run's headline and mise's log show.
+func TestDevtoolsRunsAreRoots(t *testing.T) {
 	runs := readRuns(t)
-	want := []string{"devtools-gh-login", "devtools-gh-telemetry", "devtools-gh-token-group", "devtools-npm",
+	want := []string{"devtools-gh-login", "devtools-gh-telemetry", "devtools-npm",
 		"devtools-roslyn", "devtools-rustup"}
 	var got []string
 	for name, r := range runs {
 		got = append(got, name)
-		user := "{{ .User }}"
-		if name == "devtools-gh-token-group" || name == "devtools-gh-login" {
-			user = "root"
-		}
-		if r.User != user || !r.Unbooted {
-			t.Errorf("%s: user %q, unbooted %v; want %s, unbooted", name, r.User, r.Unbooted, user)
+		if r.User != "root" {
+			t.Errorf("%s: user %q, want root", name, r.User)
 		}
 		for _, action := range templateAction.FindAllString(strings.Join(slices.Concat(r.Command, r.Check), " "), -1) {
 			if strings.Contains(action, "secrets") || strings.Contains(action, "Token") {
@@ -192,7 +185,7 @@ func TestRoslynCheckNamesTheCommandsVersion(t *testing.T) {
 	if i < 0 || len(r.Check) != 6 || r.Check[5] != r.Command[i+1] || r.Check[5] != strings.ToLower(r.Check[5]) {
 		t.Fatalf("command %q and check %q name another version", r.Command, r.Check)
 	}
-	if r.Check[4] != "{{ .Home }}/.dotnet/tools/.store/roslyn-language-server" {
+	if r.Check[4] != "/root/.dotnet/tools/.store/roslyn-language-server" {
 		t.Errorf("the check reads %q", r.Check[4])
 	}
 	store := t.TempDir()
@@ -216,7 +209,7 @@ func TestRoslynCheckNamesTheCommandsVersion(t *testing.T) {
 
 func TestRustupCreatesItsBinary(t *testing.T) {
 	r := readRuns(t)["devtools-rustup"]
-	if !slices.Equal(r.Creates, []string{"{{ .Home }}/.cargo/bin/rustup"}) || len(r.Check) != 0 {
+	if !slices.Equal(r.Creates, []string{"/root/.cargo/bin/rustup"}) || len(r.Check) != 0 {
 		t.Errorf("creates %q, check %q", r.Creates, r.Check)
 	}
 }

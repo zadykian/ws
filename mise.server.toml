@@ -3,8 +3,8 @@
 
 # ws's units, `"ws:KIND/NAME" = "in-sync"` under [bootstrap.packages], go to the plugin ws, which
 # no [bootstrap.plugins] entry names: mise installs an entry again on every run, with a warning.
-# install.sh links the tree's plugins/ws into /usr/share/mise/plugins, where mise loads it as a
-# system plugin. A plugin that mise refuses drops its units, so /etc/ws/units.verified fails.
+# ws server setup links the tree's plugins/ws into /usr/share/mise/plugins, where mise loads it
+# as a system plugin. A plugin that mise refuses drops its units, so /etc/ws/units.verified fails.
 
 # mise's apt passes no dpkg options: these keep a file that a role wrote before its package, where
 # dpkg would stop at its prompt.
@@ -15,17 +15,24 @@ Dpkg::Options { "--force-confdef"; "--force-confold"; };
 """
 
 # The check against a silent skip: ws unit verify fails the plan and the run where mise's plan
-# lacks a unit of the specs. A first run, or the run that brings a new pin, renders it before mise
-# installs the pin's ws. It prints the line of a pass then, so that the next plan finds the file
-# unchanged. The plugin's write hook runs the check on that run, after mise installs ws. A
-# template's exec runs beside this file. So the check moves to cwd, the run's directory, where a
-# nested mise loads the side's roles as the run does. A run elsewhere, as from /opt/ws or the Mac's
-# roles/client, loads no role of the server. The check looks for the frame's own file through the
-# run's link. It fails a run without it before any phase, with no write, and names the run
-# directory.
+# lacks a unit of the specs. It runs /usr/local/bin/ws, which install.sh and ws update write before
+# any run, and fails a run without it, naming install.sh. The plugin's write hook runs the check
+# again, after the plan. A template's exec runs beside this file. So the check moves to cwd, the
+# run's directory, where a nested mise loads the side's roles as the run does. A run elsewhere, as
+# from /opt/ws or the Mac's roles/client, loads no role of the server. The check looks for the
+# frame's own file through the run's link. It fails a run without it before any phase, with no
+# write, and names the run directory.
 [bootstrap.files."/etc/ws/units.verified"]
 template = true
-content = '''{{ exec(command="cd '" ~ cwd ~ "' && { [ -f mise/conf.d/frame/mise.server.toml ] || { echo 'mise runs in " ~ cwd ~ ", which loads no role of the server: run it as mise -C /opt/ws/roles/server' >&2; exit 1; }; ws=$(mise which ws 2>/dev/null) || { echo 'ws units: none missing'; exit 0; }; \"$ws\" unit verify; }") }}
+content = '''{{ exec(command="cd '" ~ cwd ~ "' && { [ -f mise/conf.d/frame/mise.server.toml ] || { echo 'mise runs in " ~ cwd ~ ", which loads no role of the server: run it as mise -C /opt/ws/roles/server' >&2; exit 1; }; [ -x /usr/local/bin/ws ] || { echo '/usr/local/bin/ws is missing: install.sh writes it' >&2; exit 1; }; /usr/local/bin/ws unit verify; }") }}
+'''
+
+# The check of the values: ws server values check fails the plan and the run on a bad value of
+# /etc/ws/values.yml, before any phase writes. It runs /usr/local/bin/ws, and fails a run without
+# it, naming install.sh. A pass prints one line, so that the next plan finds the file unchanged.
+[bootstrap.files."/etc/ws/values.checked"]
+template = true
+content = '''{{ exec(command="[ -x /usr/local/bin/ws ] || { echo '/usr/local/bin/ws is missing: install.sh writes it' >&2; exit 1; }; /usr/local/bin/ws server values check") }}
 '''
 
 # ws's own directory, which a first run with no values.yml lacks: mise makes no missing parent.

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -21,14 +22,20 @@ var (
 )
 
 // asRoot is whether a change to path may go through sudo: ws runs as another user than root, and
-// path lies outside Confine and the user's home. os.Root keeps a write under Confine inside it,
-// which sudo would not. In the home, or with no home known, a change ws may not make fails: sudo
-// would leave root's files where the user's go.
-func (m OSMachine) asRoot(path string) bool {
+// path lies outside the user's home. In the home, or with no home known, a change ws may not make
+// fails: sudo would leave root's files where the user's go.
+func (OSMachine) asRoot(path string) bool {
 	home, err := os.UserHomeDir()
-	_, in := m.inside(path)
-	_, mine := OSMachine{Confine: home}.inside(path)
-	return euid() != 0 && err == nil && !in && !mine
+	return euid() != 0 && err == nil && !under(home, path)
+}
+
+// under is whether path lies below dir, or is dir, by their text. An empty dir holds nothing.
+func under(dir, path string) bool {
+	if dir == "" {
+		return false
+	}
+	rel, err := filepath.Rel(dir, path)
+	return err == nil && filepath.IsLocal(rel)
 }
 
 // another is whether uid, where 0 or more, or the owner of path, is another user than ws's: a
@@ -59,11 +66,16 @@ func unwritable(dir string) bool {
 // sudoWrite fills a new file beside path through sudo, gives it owner, as uid:gid, and perm, and
 // renames it over path.
 func (m OSMachine) sudoWrite(path string, data []byte, owner string, perm fs.FileMode) error {
+	return m.sudoWriteFrom(path, bytes.NewReader(data), owner, perm)
+}
+
+// sudoWriteFrom is sudoWrite for content that a reader holds, which a download's file is.
+func (m OSMachine) sudoWriteFrom(path string, data io.Reader, owner string, perm fs.FileMode) error {
 	tmp := filepath.Join(filepath.Dir(path), "."+filepath.Base(path)+".ws-new")
 	mode := strconv.FormatUint(uint64(perm.Perm()), 8)
 	cmd := m.command(context.Background(),
 		append(m.sudo(), "sh", "-c", rootWrite, "sh", tmp, owner, mode, path))
-	cmd.Stdin = bytes.NewReader(data)
+	cmd.Stdin = data
 	if _, err := cmd.Output(); err != nil {
 		_, _ = m.RunRoot(context.Background(), "rm", "-f", tmp)
 		return commandError(cmd, err)

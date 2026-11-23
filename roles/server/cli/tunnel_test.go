@@ -6,7 +6,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/spf13/cobra"
+
+	enginecli "github.com/zadykian/ws/engine/cli"
+	"github.com/zadykian/ws/engine/cli/clitest"
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/roles/internal/wgkey"
 )
 
@@ -14,7 +19,10 @@ const wg0Key = "/etc/systemd/network/60-wg0.key"
 
 func TestTunnelCheckSaysOnStdout(t *testing.T) {
 	p, _ := valuesProcess("---\n")
-	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "tunnel", "check")
+	// The check asks the units whether networkd runs: a fake answers, never the host's systemd.
+	u := &effecttest.Units{States: map[string]effect.UnitState{"systemd-networkd.service": {Active: true}}}
+	root := enginecli.Group("server", "the server's commands", newTunnelCmd(p, u))
+	status, stdout, stderr := clitest.Run(p, []*cobra.Command{root}, "", "server", "tunnel", "check")
 	if status != 0 || stderr != "" || !strings.Contains(stdout, "wg0 leaves out the peer mac, as /etc/wireguard/mac.pub is missing") {
 		t.Errorf("status = %d, stdout %q, stderr %q", status, stdout, stderr)
 	}
@@ -22,7 +30,7 @@ func TestTunnelCheckSaysOnStdout(t *testing.T) {
 
 func TestTunnelCheckRefusesBadValues(t *testing.T) {
 	p, _ := valuesProcess("---\nWS_TUNNEL_PORT: 0\n")
-	if status, _, stderr := runWs(p, "", "server", "ubuntu", "tunnel", "check"); status != 1 || !strings.Contains(stderr, "WS_TUNNEL_PORT is 0") {
+	if status, _, stderr := runWs(p, "", "server", "tunnel", "check"); status != 1 || !strings.Contains(stderr, "WS_TUNNEL_PORT is 0") {
 		t.Errorf("status = %d, stderr %q", status, stderr)
 	}
 }
@@ -30,7 +38,7 @@ func TestTunnelCheckRefusesBadValues(t *testing.T) {
 func TestTunnelKeyCheckDueWithoutKey(t *testing.T) {
 	p, m := valuesProcess("---\n")
 	m.Files["/etc/group"] = []byte("systemd-network:x:998:\n")
-	status, _, stderr := runWs(p, "", "server", "ubuntu", "tunnel", "key", "--check")
+	status, _, stderr := runWs(p, "", "server", "tunnel", "key", "--check")
 	if status != 1 || !strings.Contains(stderr, "to do: make the server's private key") {
 		t.Errorf("status = %d, stderr %q", status, stderr)
 	}
@@ -42,7 +50,7 @@ func TestTunnelKeyCheckDueWithoutKey(t *testing.T) {
 func TestTunnelKeyMadeOnce(t *testing.T) {
 	p, m := valuesProcess("---\n")
 	m.Files["/etc/group"] = []byte("systemd-network:x:998:\n")
-	if status, _, stderr := runWs(p, "", "server", "ubuntu", "tunnel", "key"); status != 0 {
+	if status, _, stderr := runWs(p, "", "server", "tunnel", "key"); status != 0 {
 		t.Fatalf("status = %d, stderr %q", status, stderr)
 	}
 	key := string(m.Files[wg0Key])
@@ -53,7 +61,7 @@ func TestTunnelKeyMadeOnce(t *testing.T) {
 		t.Error("a call shows the key")
 	}
 	for _, args := range [][]string{{"--check"}, nil} {
-		status, _, stderr := runWs(p, "", append([]string{"server", "ubuntu", "tunnel", "key"}, args...)...)
+		status, _, stderr := runWs(p, "", append([]string{"server", "tunnel", "key"}, args...)...)
 		if status != 0 || stderr != "" {
 			t.Errorf("%q again: status = %d, stderr %q", args, status, stderr)
 		}
@@ -63,28 +71,14 @@ func TestTunnelKeyMadeOnce(t *testing.T) {
 	}
 }
 
-func TestTunnelWG0WithoutSystemdIsDone(t *testing.T) {
-	p, m := valuesProcess("---\n")
-	for _, args := range [][]string{{"--check"}, nil} {
-		status, stdout, stderr := runWs(p, "", append([]string{"server", "ubuntu", "tunnel", "wg0"}, args...)...)
-		if status != 0 || stdout != "" || stderr != "" {
-			t.Errorf("%q: status = %d, stdout %q, stderr %q", args, status, stdout, stderr)
-		}
-	}
-	if len(m.Calls) != 2 {
-		t.Errorf("calls %q, want the values read alone", m.Calls)
-	}
-}
-
 func TestTunnelWG0CheckDueWhereMissing(t *testing.T) {
 	p, m := valuesProcess("---\n")
-	m.Dirs["/run/systemd/system"] = 0o755
 	private, err := wgkey.Generate(bytes.NewReader(bytes.Repeat([]byte{3}, 32)))
 	if err != nil {
 		t.Fatal(err)
 	}
 	m.Files[wg0Key] = []byte(private + "\n")
-	status, _, stderr := runWs(p, "", "server", "ubuntu", "tunnel", "wg0", "--check")
+	status, _, stderr := runWs(p, "", "server", "tunnel", "wg0", "--check")
 	if status != 1 || !strings.Contains(stderr, "to do: reload networkd for wg0: wg0 is missing") {
 		t.Errorf("status = %d, stderr %q", status, stderr)
 	}

@@ -27,7 +27,7 @@ func Procedure(use, short, long string, rs func(context.Context, effect.Out) ([]
 		Args: cobra.NoArgs}
 	check := c.Flags().Bool("check", false, "fail where a change is due, and change nothing")
 	c.RunE = func(c *cobra.Command, _ []string) error {
-		term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+		term := effect.NewTerminal(c.ErrOrStderr())
 		defer term.Flush()
 		out := engine.Lines{Out: term, Prog: c.CommandPath(), Seen: map[string]bool{}}
 		list, err := rs(c.Context(), out)

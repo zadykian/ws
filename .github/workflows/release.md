@@ -2,11 +2,12 @@
 
 A release of ws is one binary per platform, `ws-darwin-arm64`, `ws-linux-amd64` and
 `ws-linux-arm64`, and `ws.sha256`, their checksums as `sha256sum` writes them. Each release
-publishes `install.sh` too.
+publishes `install.sh` too, and `autoinstall.yaml`, the installer's answers for a new server
+([The autoinstall file](#the-autoinstall-file)).
 
 ## Install
 
-On Ubuntu 26.04 on x86_64 or aarch64, as root, through `sudo`:
+On Ubuntu Server on x86_64 or aarch64, as root, or on a Mac with Apple silicon, through `sudo`:
 
 ```sh
 set -o pipefail
@@ -15,63 +16,130 @@ curl -fsSL --proto '=https' --tlsv1.2 \
 ```
 
 Without `pipefail`, a curl that fails pipes nothing into sh, which exits 0 having done nothing.
-`install.sh` sets up an Ubuntu server, and refuses a Mac, which follows
-[the Mac's runbook](../../roles/client/runbook.md). It installs mise, writes the
-machine's miserc and runs `mise bootstrap`:
+`install.sh` installs ws alone, on Linux and on the Mac. It runs in any POSIX sh, and needs curl and
+sha256sum, or `shasum -a 256` where a Mac has no `sha256sum`:
 
-- It downloads mise's binary at the version it pins. It checks the binary against the SHA-256 it
-  holds for the machine's target, and runs it as `mise --version`. Only then it moves it over
-  `/usr/local/bin/mise`. A refused download keeps the mise there and leaves no file behind. A mise
-  at the pinned version is not downloaded again.
-- It writes `/etc/mise/miserc.toml` from `WS_USER` in `/etc/ws/values.yml`: the set of envs `ws`,
-  which holds `server`, `booted` where systemd runs, and `account` where `WS_USER` is not root
-  ([The frame](../../roles/server/ubuntu/frame/README.md#the-machines-env)). After a change of
-  `WS_USER`, run it again.
-- It finds the latest release once, and checks the release's tag out in `/opt/ws` by git, then
-  runs the bootstrap on that tree, in the server's run directory, `/opt/ws/roles/server`. A
-  pre-release is never the latest: only `WS_VERSION` picks one. The tree pins ws's binary, and mise
-  checks it against `mise.lock`. With `MISE_LOCKED=1`, which `install.sh` sets, mise installs each
-  tool only as a lock holds it. Run again, it checks the release's tag out in `/opt/ws`, dropping
-  any change and any file git does not track there, such as a trial's `mise.local.toml`. So it
-  brings the machine back to the release.
-- It refuses a system other than Ubuntu 26.04, by `/etc/os-release`. So does `ws unit`'s read and
-  write, which the bootstrap runs.
-- It refuses a `/opt/ws` that is a link, or that holds a file or directory root does not own or
-  others may write. mise runs the tree's config as root.
+- It picks `ws-linux-amd64`, `ws-linux-arm64` or `ws-darwin-arm64` by `uname`, and refuses another
+  system or architecture. It finds the latest release once. A pre-release is never the latest: only
+  `WS_VERSION` picks one.
+- It downloads the file and the release's `ws.sha256` into a directory in `/usr/local/bin`, checks
+  the file against the sum listed for its name, and runs it as `ws version`. That must print the
+  release's tag, as `ws update` checks it. Only then it renames it
+  to `/usr/local/bin/ws`, uid 0, gid 0 and 0755, the one ws of the machine. A refusal keeps the ws
+  there and leaves no file behind.
+- It makes `/usr/local` and `/usr/local/bin` where they are missing, root's and 755. It refuses one
+  that another user owns or that a group or others may write, and names the chown: launchd would
+  refuse ws below it. It changes no owner, as an old Homebrew in `/usr/local` would lose its writes.
+- Its last line names the next command, `ws server setup` on Linux and `ws client setup` on a Mac.
+  Setup checks the system: it refuses a Linux but Ubuntu 26.04 before its first write.
 
 | Variable | Default | Sets |
 | --- | --- | --- |
-| `WS_VERSION` | the latest release | the release whose tree runs, `X.Y.Z` or `X.Y.Z-rc.N`, with or without the `v` |
-| `WS_IN_PLACE` | unset | `1` runs the tree in `/opt/ws` as it stands: no lookup, no clone |
+| `WS_VERSION` | the latest release | the release whose ws installs, `X.Y.Z` or `X.Y.Z-rc.N`, with or without the `v` |
 | `WS_RELEASES_URL` | `https://github.com/zadykian/ws/releases` | where the releases are, for tests |
-| `WS_MISE_URL` | `https://github.com/jdx/mise/releases/download` | where mise's binaries are, for tests |
-| `WS_REPO` | `https://github.com/zadykian/ws` | the repository the tag is cloned from, for tests |
-| `WS_OS_RELEASE` | `/etc/os-release` | the file that names the system, for tests |
+
+## The autoinstall file
+
+`autoinstall.yaml` is [roles/server/autoinstall.yaml](../../roles/server/autoinstall.yaml) with the
+release's blanks filled by [autoinstall.sh](../autoinstall.sh): `VERSION`, the tag, and `SHA256`,
+that of the release's own `install.sh`. The `build` job writes it into `dist` beside `install.sh`,
+and fails unless the file names the tag and the sum and keeps no such blank. The words check and
+the release take it as they take each file of `dist`. Its first boot runs that release:
+`ws update --version TAG`, which runs setup alone where ws is that release already.
+
+Three blanks stay the maintainer's. A new server takes these steps, which
+[the server's runbook](../../roles/server/runbook.md#a-new-server-from-the-installer) and
+[the README](../../README.md#a-new-machine) name:
+
+1. Fill `HOSTNAME`, the machine's name, `HASH`, root's password hash for the console, from
+   `mkpasswd -m sha-512`, and `VALUES`, the text of `/etc/ws/values.yml` as a `|` block, or `""`
+   where no value differs.
+1. Copy the file as `user-data` to a volume labelled `CIDATA`, beside an empty `meta-data`.
+1. Boot the installer with the volume attached and `autoinstall` on the kernel's line.
+1. Read the first boot's run in `/var/log/cloud-init-output.log`, or by
+   `cloud-init status --wait --long`.
+
+**Not the file as published, on the volume:** NoCloud reads `user-data` and `meta-data` alone, and
+the installer finds `autoinstall.yaml` by that name only on its own medium.
+
+## Update
+
+`ws update` brings a machine's ws to a release, and ends in the setup of its side. On a server it
+runs as root, and on a Mac as the user, which asks sudo for the write. Nothing else runs `install.sh`
+again.
+
+- It finds the latest release, or takes the one that `--version X.Y.Z` or `X.Y.Z-rc.N` names, with
+  or without the `v`. It downloads that release's ws and `ws.sha256`, checks the file against the
+  sum listed for its name, and runs it as `ws version`, which must print the tag. Only then it
+  renames it over `/usr/local/bin/ws`, uid 0, gid 0 and 0755. A refusal, or a signal before the
+  rename, keeps the ws there and leaves no file behind.
+- The release of `/usr/local/bin/ws` counts, as the units run that file, whichever ws runs the
+  update. It refuses the latest release where that file is a later release, such as a pre-release:
+  `--version` names the older one. A ws that is no release, a trial's build, or one that is missing
+  or does not run, is older than any, so an update ends the trial.
+- Then it replaces itself with `ws server setup` or `ws client setup` of `/usr/local/bin/ws`. Where
+  that file is the named release already, it downloads nothing, and runs that setup alone.
+
+`WS_RELEASES_URL` names the releases, as for `install.sh`.
 
 ## The install job
 
-CI's `install` job runs [install-checks.sh](../install-checks.sh) on each pull request. It
-runs as a user with sudo on GitHub's runner, as `install.sh` writes `/etc/mise`, `/opt/ws` and
-`/etc/ws`, which each case removes. `WS_OS_RELEASE` names the runner's system Ubuntu 26.04,
-whatever its release. It downloads mise's real binary once and serves it on loopback
-with [serve-releases](../../.tools/serve-releases/main.go), beside a copy with a byte added. A small
-repository stands for the release's tree: a file of mise's config for each env, each writing one
-file. Its tags are `v0.2.0`, then `v0.3.0` with one file more, and `v0.4.0-rc.1` with an empty
-commit. The cases:
+CI's `install` job runs [install-checks.sh](../install-checks.sh) on each pull request of a stack on `main`. It
+runs as a user with sudo on GitHub's runner, as `install.sh` writes `/usr/local/bin/ws`, which each
+case removes, and the cases move `/usr/local/bin` aside and change its owner.
+[serve-releases](../../.tools/serve-releases/main.go) serves a stub of ws for each target on
+loopback, a shell script that prints its release and its target as `ws version`, with the release's
+`ws.sha256`. A fake `uname` on the `PATH` of a case stands for aarch64 and for Darwin. The tags are
+`v0.2.0`, `v0.3.0` and `v0.4.0-rc.1`, and `v0.5.0` and `v0.6.0` for the refusals. The cases:
 
 - a user is refused, and nothing is installed;
-- Ubuntu 24.04, Debian and a system with no `os-release` are refused, and nothing is installed;
-- a wrong SHA-256 of mise is refused, and no mise or download is left;
-- the latest release installs mise and runs its bootstrap, so that the files of the envs that the
-  miserc names exist;
-- the env `secrets` loads by `-E ws,secrets` alone, and a plan without it after keeps its file;
-- with `WS_USER: root`, a second run downloads no mise and leaves the account's part out;
-- a newer latest release checks its tag out in `/opt/ws`, and drops a `mise.local.toml` there;
-- `WS_VERSION` checks its release's tag out;
-- a `WS_VERSION` of a pre-release checks its tag out, and a pre-release as the latest is refused;
+- the latest release installs the stub of each target, root's and 755, and the last line names the
+  next command;
+- a system with no build is refused: Linux on another architecture, a Mac on x86_64 and another
+  system;
+- a wrong SHA-256 and a missing file are refused, and the ws that stands and no download is left;
+- a newer latest release and a `WS_VERSION` install their own release;
+- a `WS_VERSION` of a pre-release installs it, and a pre-release as the latest is refused;
 - a `WS_VERSION` that is no version, or a pre-release `rc.0` or `beta.1`, is refused;
-- `WS_IN_PLACE` runs the tree in `/opt/ws` as it stands;
-- a tree with a file that root does not own is refused.
+- `/usr/local/bin` is made where missing;
+- a `/usr/local/bin` that another user owns or others may write, and a `/usr/local` that others
+  may write, are refused, and keep their owner.
+
+Then [update-checks.sh](../update-checks.sh) runs `ws update` as root against stubs as releases,
+`v0.2.0`, the latest, and `v0.4.0-rc.1`, and `v0.5.0` whose `ws.sha256` fits no file. A stub prints
+its tag as `ws version` and records its call of `server setup`. The ws that runs is a real build of
+the tree, which a tag in a copy of it stamps as a release, or none for a trial's. The cases:
+
+- a release's ws moves to the latest and runs its setup;
+- a trial's build is replaced;
+- `--version` takes a pre-release, and a real pre-release refuses the latest;
+- a release older than this ws is refused, unless `--version` names it;
+- a wrong sum and a missing release are refused, and ws stays the same;
+- a ws of the named release downloads nothing and runs its own setup. The runner's system refuses
+  that setup, and the script fails on Ubuntu 26.04, where the setup would be real. So the job runs
+  on Ubuntu 24.04's runner;
+- a user is refused before any download.
+
+The script deletes `/usr/local/bin/ws` as it ends, so it sets that up after its guards. Its test,
+[update-checks-test.sh](../update-checks-test.sh), runs in `lint` and checks that a run a guard
+refuses deletes nothing.
+
+A step of the job runs [autoinstall-checks.sh](../autoinstall-checks.sh) on the file
+[autoinstall.yaml](../../roles/server/autoinstall.yaml), in an Ubuntu 26.04 container with
+cloud-init, the installer's version. [autoinstall.sh](../autoinstall.sh) fills a tag and a SHA-256
+into the file's blanks. It puts `#cloud-config` first, as the tree's file cannot hold that line.
+The cases:
+
+- the filled file keeps the maintainer's blanks, `HOSTNAME`, `HASH` and `VALUES`, and none of the
+  release's;
+- a tag that is no release's and a SHA-256 that is none are refused;
+- `cloud-init schema` passes the whole file and its `user-data`;
+- each command of `late-commands` parses as shell.
+
+The `client` job's case [16-install.sh](../client/16-install.sh) runs `install.sh` on macOS. It serves the
+tree's own build of ws as the release, with its `ws.sha256`, and checks that the file is
+`root:wheel` and 755 and that no download is left. On a pull request it tags the clone's HEAD
+`v0.2.0` for that build, as `install.sh` refuses a ws that prints another version.
 
 ## Cutting a release
 
@@ -83,18 +151,17 @@ git switch main && git pull --ff-only
 git tag -s v0.2.0 && git push origin v0.2.0
 ```
 
-A pre-release is a tag `vX.Y.Z-rc.N`, N from 1, on a commit of `feat/mise`, the branch that moves
-ws to mise. The maintainer tries the branch from it before it lands on `main`:
+A pre-release is a tag `vX.Y.Z-rc.N`, N from 1, on a commit of a `feat/` branch, the branch that
+holds a change before it lands. The maintainer tries the branch from it before it lands on `main`.
+Name the branch in place of BRANCH:
 
 ```sh
-git fetch origin && git switch --detach origin/feat/mise
+git fetch origin && git switch --detach origin/feat/BRANCH
 git tag -s v0.13.0-rc.1 -m v0.13.0-rc.1 && git push origin v0.13.0-rc.1
 ```
 
-A tag holds no checksum of its own binaries, so a pre-release's tree pins an earlier release of
-ws. A pull request then pins the pre-release, and the next pre-release, cut once it lands, is the
-first whose tree installs that ws. Its own `install.sh` runs it by `WS_VERSION`, as the latest
-release's refuses a pre-release:
+A pre-release's own `install.sh` installs it by `WS_VERSION`, as the latest release's refuses a
+pre-release:
 
 ```sh
 set -o pipefail
@@ -103,27 +170,28 @@ curl -fsSL --proto '=https' --tlsv1.2 \
     sudo env WS_VERSION=0.13.0-rc.2 sh
 ```
 
-The latest release's `install.sh` may install ws's binary alone, with no mise. So while a
-pre-release is tried, this line takes the place of each that runs it. Those are step 3 of
-[the server's runbook](../../roles/server/runbook.md), and step 2 of
-[ws on ws](../../roles/client/runbook.md#ws-on-ws) on the Mac. The Mac's own binary and
-clone take the pre-release's tag in place of the latest release's.
+So while a pre-release is tried, this line takes the place of each that runs `install.sh`. Those are
+step 3 of [the steps by hand](../../roles/server/runbook.md#the-steps-by-hand), and step 2 of
+[ws on ws](../../roles/client/runbook.md#ws-on-ws) and the Mac's Tools step on the Mac. The side's
+setup follows, `ws server setup` or `ws client setup`, which checks out the tree of its own ws's tag.
 
 Nothing else is by hand. `release.yml` runs on the tag, in these jobs:
 
-1. `check`: `origin/main` holds the commit of a tag `vX.Y.Z`, and `origin/feat/mise` that of a
-   tag `vX.Y.Z-rc.N`. Any other tag fails.
-1. `ci` and `mac`: [ci.yml](ci.yml) and
-   [mac.yml](mac.yml), called on the tag. Their jobs run,
+1. `check`: `origin/main` holds the commit of a tag `vX.Y.Z`, and a branch `origin/feat/*` that of
+   a tag `vX.Y.Z-rc.N`. Any other tag fails.
+1. `ci` and `client`: [ci.yml](ci.yml) and
+   [client.yml](client.yml), called on the tag. Their jobs run,
    as on a push to `main`.
 1. `build`: `ws-darwin-arm64`, `ws-linux-amd64` and `ws-linux-arm64` with the Go that
    [.tools/run](../../.tools/run) pins, without cgo, with `-trimpath` and Go's stamp of the tag, and
-   `ws.sha256`. The job fails unless `ws version` of the amd64 binary prints the tag.
-1. `publish`: GitHub's generated notes, then a check of the notes, the binaries, `ws.sha256` and
-   `install.sh` for the local list's words (CLAUDE.md), from the secret `FORBIDDEN_WORDS`. It fails
-   where the secret is empty, and names a file that holds a word, never the word. Then
-   `gh release create --verify-tag`, with `--prerelease --latest=false` for a tag with `-rc.`, so that
-   `releases/latest` keeps the last full release. Only this job has `contents: write`.
+   `ws.sha256`, with `install.sh` and the `autoinstall.yaml` filled for the tag. The job fails
+   unless `ws version` of the amd64 binary prints the tag, and unless the file names the tag.
+1. `publish`: GitHub's generated notes, then a check of the notes, the binaries, `ws.sha256`,
+   `install.sh` and `autoinstall.yaml` for the local list's words (CLAUDE.md), from the secret
+   `FORBIDDEN_WORDS`. It fails where the secret is empty, and names a file that holds a word,
+   never the word. Then `gh release create --verify-tag`, with `--prerelease --latest=false` for a
+   tag with `-rc.`, so that `releases/latest` keeps the last full release. Only this job has
+   `contents: write`.
 
 A tag that fails a job publishes nothing. The ruleset below keeps the tag: fix the branch, and tag
 the next patch version, or the next `rc.N`.
@@ -134,4 +202,5 @@ Three settings are not files, so set them by hand once:
 
 - the secret `FORBIDDEN_WORDS`, the lines of `~/.config/ws/forbidden-words`;
 - a ruleset on the tags `v*` that blocks their update and deletion;
-- immutable releases, so that a published release's files and tag never change.
+- immutable releases, so that a published release's files and tag never change. The `publish` job
+  reads the setting after it creates a release, and fails where the setting is off.

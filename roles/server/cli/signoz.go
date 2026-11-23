@@ -2,7 +2,6 @@ package cli
 
 import (
 	"errors"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -13,7 +12,7 @@ import (
 	"github.com/zadykian/ws/roles/server/values"
 )
 
-// newSignozCmd returns ws server ubuntu signoz: SigNoz's steps that no kind holds, which the
+// newSignozCmd returns ws server signoz: SigNoz's steps that no kind holds, which the
 // signoz role's run units call.
 func newSignozCmd(p enginecli.Env) *cobra.Command {
 	password := signozSteps(p, "password", "write SigNoz's root password to "+signoz.Dir+"/root.env, once",
@@ -24,7 +23,7 @@ func newSignozCmd(p enginecli.Env) *cobra.Command {
 		})
 	sync := signozSteps(p, "sync", "set SigNoz's retention and dashboards through its API",
 		"It waits for SigNoz's API at WS_SIGNOZ_URL, then sets the retention of WS_SIGNOZ_RETENTION_DAYS, "+
-			"and creates or replaces each dashboard of WS_SIGNOZ_DASHBOARDS. Without booted systemd it skips.",
+			"and creates or replaces each dashboard of WS_SIGNOZ_DASHBOARDS.",
 		func(m effect.Machine, out effect.Out) ([]step.Step, error) {
 			v, err := values.Load(m, serverVars)
 			return signoz.Sync(v.Signoz, m, out), err
@@ -32,7 +31,7 @@ func newSignozCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("signoz", "SigNoz's steps that the signoz role's units run", password, sync)
 }
 
-// signozSteps returns a command of ws server ubuntu signoz that runs the steps that steps returns.
+// signozSteps returns a command of ws server signoz that runs the steps that steps returns.
 // --check plans them and applies none, and fails where one has a change to make: a run unit's
 // check reads its exit status.
 func signozSteps(p enginecli.Env, use, short, long string,
@@ -44,7 +43,7 @@ func signozSteps(p enginecli.Env, use, short, long string,
 		if p.Euid != 0 {
 			return errors.New("run it as root")
 		}
-		term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+		term := effect.NewTerminal(c.ErrOrStderr())
 		defer term.Flush()
 		out := linesOf(term, c.CommandPath())
 		s, err := steps(p.Machine, out)

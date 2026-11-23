@@ -11,7 +11,7 @@ Each role has a page of its own. A role is its mise files by env, and its spec o
 it has any:
 
 - [`frame`](roles/server/ubuntu/frame): what each role of mise's config leans on, and
-  `/usr/local/bin/ws`, the pinned binary.
+  `/usr/local/bin/ws`, the machine's one ws.
 - [`base`](roles/server/ubuntu/base): packages, the locale, the timezone, security updates and a swap file,
   as mise's packages and units.
 - [`security`](roles/server/ubuntu/security): SSH by key only, ufw and fail2ban, and a table that keeps what
@@ -37,8 +37,7 @@ it has any:
   repository and its branch in the terminal's title.
 - [`devtools`](roles/server/ubuntu/devtools): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go,
   gopls, Delve, roslyn-language-server, the SQL, Docker and npm language servers, and rustup.
-- [`docker`](roles/server/ubuntu/docker): Docker Engine, its `daemon.json`, a slice for its containers and
-  `WS_USER`'s rootless daemon.
+- [`docker`](roles/server/ubuntu/docker): Docker Engine, its `daemon.json` and a slice for its containers.
 - [`claude`](roles/server/ubuntu/claude): claude, its user settings and telemetry, its sessions after a reboot,
   and plugin marketplaces from a list.
 - [`signoz`](roles/server/ubuntu/signoz): SigNoz in Docker, which keeps the machine's telemetry for 90 days.
@@ -51,65 +50,78 @@ it has any:
 
 `roles/client/` sets up the Mac that works on the server, and Ghostty and Zed on it: [The Mac](roles/client).
 Its [`frame`](roles/client/macos/frame) is what the Mac's roles of mise's config lean on, and
-`/usr/local/bin/ws`.
+`/usr/local/bin/ws`. Its [`firewall`](roles/client/macos/firewall) turns the Application Firewall on
+and has it block all incoming.
 
-A new Mac with Apple silicon follows [the Mac's runbook](roles/client/runbook.md), as
-`install.sh` is the server's alone. By hand, it installs ws's binary and mise, each checked against
-its SHA-256, clones a release's tree into `/opt/ws`, and links its plugin where mise finds it.
-Then it writes the values ([The Mac's values](roles/client/values/README.md)) and runs
-`MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap` ([The Mac](roles/client/README.md)). [The server's runbook](roles/server/runbook.md) lists
-the server's own steps.
+A new Mac with Apple silicon follows [the Mac's runbook](roles/client/runbook.md). It runs
+`install.sh` through `sudo`, which installs ws's binary, checked against its SHA-256, and writes the
+values ([The Mac's values](roles/client/values/README.md)). Then `ws client setup`
+installs the command line tools and mise, checks a release's tree out into `/opt/ws`, links its
+plugin where mise finds it, and runs mise's bootstrap ([The Mac](roles/client/README.md#setup)).
+[The server's runbook](roles/server/runbook.md) lists the server's own steps.
 
 ## A new machine
 
+A release's `autoinstall.yaml` answers the installer of a new server, and the first boot runs
+ws's setup. Fill its host name, root's hash and the values. Copy it as `user-data` to a volume
+labelled `CIDATA`, beside an empty `meta-data`, and boot the installer with the volume:
+[The server's runbook](roles/server/runbook.md#a-new-server-from-the-installer) has the steps.
+The secrets come after it, as below. A cloud VM has no installer, and any other server takes the
+steps by hand.
+
 Install Ubuntu Server 26.04 by hand from its installer. In it, turn OpenSSH on, import the GitHub
-account's keys, and leave password login off. The bootstrap adds no key later. So put the Mac's
-key on the account first. Name the installer's user `zadykian`, ws's default user. A cloud VM
-has no installer: it gives its default user the provider's keys, which must be the account's. A VM
-with root alone logs in as root, where `WS_TARGET=cloud`. An image with Docker holds Docker's apt
-source, which apt refuses beside mise's: remove it first ([docker](roles/server/ubuntu/docker/README.md)).
+account's keys, and leave password login off. ws sets the server up for root. Root's keys come from
+the GitHub account alone: the installer imports them into its own user's home, and ws copies no key
+from another account's file. So log in as the installer's user, by key, and run `sudo -H
+ssh-import-id gh:LOGIN` ([the runbook](roles/server/runbook.md)). A cloud VM has no installer: its
+default user holds the provider's keys, which must be the account's. cloud-init has put the same
+keys in root's `authorized_keys` behind a forced command that refuses a login, and ssh-import-id
+skips a key that is there. So delete those lines first, then import the keys into root the same way.
+A VM with root alone logs in as root, where `WS_TARGET=cloud`. An image with Docker holds Docker's
+apt source, which apt refuses beside mise's: remove it first
+([docker](roles/server/ubuntu/docker/README.md)).
 
 Then, logged in as that user, write `/etc/ws/values.yml` where a value differs from its default,
 root's and mode 600 ([the values](#running-it-again)). Run `install.sh` through `sudo`, by the
 three lines of [Install](.github/workflows/release.md#install), which fail where curl does. It
-installs mise and runs its bootstrap, which installs ws and sets each role up. Once the secrets
-hold `WS_GITHUB_TOKEN`, the secrets task logs gh in ([By hand](#by-hand)). The Mac's `ws client
-macos secrets add NAME` runs it first, as [the server's runbook](roles/server/runbook.md) says.
+installs ws alone. Then run `ws server setup` as root, which installs mise and runs its bootstrap,
+which sets each role up. Once the secrets
+hold `WS_GITHUB_TOKEN`, the secrets task logs gh in ([By hand](#by-hand)). The Mac's
+`ws client secrets add NAME` runs it first, as [the server's runbook](roles/server/runbook.md) says.
 
 Then do what stays by hand, below.
 
 ## Running it again
 
-Each release holds the roles it sets up, so run `install.sh` again, by the same lines of
-[Install](.github/workflows/release.md#install): it checks the release out and runs the bootstrap.
-`WS_VERSION=X.Y.Z` before `sh` picks a release.
+Each release holds the roles it sets up, so run `ws update` as root. It brings ws to the latest
+release and runs that ws's `ws server setup`, which checks the release's tree out and runs the
+bootstrap. `--version X.Y.Z` picks a release, and `X.Y.Z-rc.N` a pre-release
+([Update](.github/workflows/release.md#update)).
 
 The units read their secrets from mise's secret inputs, which the task `secrets` fetches and
 decrypts on ws ([The repository](roles/server/ubuntu/secrets/README.md#the-repository)). The
 values of a machine go in `/etc/ws/values.yml`, which only root reads, and every run reads them.
 The first run writes it where none is, each key at its default, and no run changes it after
-([The values file](roles/server/ubuntu/frame/README.md#the-values-file)). `WS_USER: NAME` sets up the
-user NAME instead of `zadykian`, the default, whose account must exist. `WS_USER: root` sets up a
-cloud VM with no other user. `WS_HOME` is the account's home, `/home/NAME` by default. One that
-differs from the home `getent passwd` gives the account fails the run.
-`WS_GIT_SIGNING_PUB_KEY` lies below it, or the run fails. A cloud VM names `WS_SECURITY_OUTBOUND:
+([The values file](roles/server/ubuntu/frame/README.md#the-values-file)). The server's user is
+root, in `/root`: no value names either. `WS_GIT_SIGNING_PUB_KEY` is `/root/.ssh/id_ed25519_signing.pub`
+by default, and lies below `/root`, or the run fails. A cloud VM names `WS_SECURITY_OUTBOUND:
 false` there before its first run ([Outbound](roles/server/ubuntu/security/README.md#outbound)). `ws
-server ubuntu values set KEY VALUE` writes one key, and an empty VALUE gives its default back.
-The first run wrote the home and the signing key of the user then: one `set WS_USER NAME` moves
-them where they hold that user's, and says so. An edit by hand changes their lines with it. A
-second run changes nothing, so its plan exits 0 with `--detailed-exitcode`.
+server values set KEY VALUE` writes one key, and an empty VALUE gives its default back. `ws server
+values check` and each plan refuse a bad value before any write
+([The check of the values](roles/server/ubuntu/frame/README.md#the-check-of-the-values)). A second
+run changes nothing, so `ws server setup --plan` exits 0.
 
 ## Dry runs
 
-The bootstrap's plan shows what a run would change, and nothing changes. A run by hand takes the
-form that [the server's runbook](roles/server/runbook.md) gives:
+Setup's plan shows what a run would change, and nothing changes. A run by hand takes the form
+that [the server's runbook](roles/server/runbook.md) gives:
 
 ```sh
-sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server bootstrap plan
+ws server setup --plan
 ```
 
-The task `secrets` takes the plan's arguments too, `run secrets -- plan --detailed-exitcode`, and
-fetches the secrets first ([The task](roles/server/ubuntu/secrets/README.md#the-task)).
+`ws server setup --secrets --plan` plans through the task `secrets`, which fetches the secrets
+first ([The task](roles/server/ubuntu/secrets/README.md#the-task)).
 
 A plan adds no apt source and writes no file. So a unit that waits on another with changes reads
 `after` and that unit, and plans nothing more.
@@ -132,7 +144,7 @@ repositories; Metadata and Actions read; Contents, Pull requests, Issues and Wor
 write; and no account permission. These stay manual:
 
 - other peers' public keys on the server, as in [The tunnel](roles/server/ubuntu/tunnel/README.md#the-tunnel);
-- another device's SSH key on the server: `ssh-import-id gh:LOGIN`, run as `WS_USER`
+- another device's SSH key on the server: `ssh-import-id gh:LOGIN`, run as root
   ([SSH and the firewall](roles/server/ubuntu/security/README.md#ssh-and-the-firewall));
 - ikeward's VPN profile, in the server's fnox profile, `fnox.HOSTNAME.toml`, and the `ikeward`
   role's variables, as in [The profile](roles/server/ubuntu/ikeward/README.md#the-profile);
@@ -148,10 +160,10 @@ The router takes a few steps once, by hand: [The router](roles/server/ubuntu/cab
 ## Checks
 
 CI runs `make lint`, which lints the code, the docs and the workflows, and scans the commits for
-secrets. It runs the bootstrap twice in a container, and mise's plan must exit 0 before the second
-and after it. It tries `install.sh`, forges SigNoz's compose files again, and sets up a Mac on
-GitHub's macOS runner by the bootstrap. A pushed tag `vX.Y.Z` publishes the
-release whose tree `install.sh` runs, and `vX.Y.Z-rc.N` a pre-release of `feat/mise`:
+secrets. It runs `ws server setup` twice on a booted runner, and setup's plan must exit 0 after
+each run. It tries `install.sh` on Linux and on macOS, forges SigNoz's compose files again, and sets
+up a Mac on GitHub's macOS runner by the bootstrap. A pushed tag `vX.Y.Z` publishes the
+release whose ws `install.sh` installs, and `vX.Y.Z-rc.N` a pre-release of a `feat/` branch:
 [Releases](.github/workflows/release.md). The rules workflow warns where a
 pull request breaks the rules of zadykian/toolkit's skills, and the issues workflow where an issue
 strays from its issue form. The hooks in `.githooks` check each commit before git makes it.

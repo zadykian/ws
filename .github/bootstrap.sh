@@ -1,21 +1,11 @@
 #!/bin/sh
-# CI's run of install.sh, as on a new machine, in the playbook and rootless jobs. It runs on the
-# tree in /opt/ws in place, as the playbook's container has no git to clone it with. Run as
-# `bootstrap.sh DIR`, DIR being .tools/serve-build's. Its serve-releases serves the tree's build on
-# loopback in the release's place while install.sh runs. The server stops with the script, by its
-# own pid.
+# CI's run of ws server setup, as on a new machine, in the server job. It runs on the tree in
+# /opt/ws in place, as the checkout is not a tag for setup to fetch. Run as `bootstrap.sh [ARG]...`,
+# ARG setup's flags, --in-place and --plan. The ws that runs is /usr/local/bin/ws, which
+# .tools/install-build put there.
 set -eu
-dir=$1
-port=$(mktemp)
-"$dir/serve-releases" "$dir" 8765 "$port" &
-server=$!
-trap 'kill "$server"; rm -f "$port"' EXIT
-for _ in $(seq 50); do
-    [ -s "$port" ] && break
-    sleep 0.1
-done
-if [ ! -s "$port" ]; then
-    echo '::error::serve-releases did not start.'
+if [ ! -x /usr/local/bin/ws ]; then
+    echo '::error::/usr/local/bin/ws is missing: .tools/install-build installs it.'
     exit 1
 fi
-WS_IN_PLACE=1 sh /opt/ws/install.sh
+exec /usr/local/bin/ws server setup "$@"

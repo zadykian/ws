@@ -19,7 +19,7 @@ func (f filePart) checkLine() error {
 	switch {
 	case f.Line == "":
 		return errors.New("has goes with line")
-	case f.Template != "" || f.Source != "" || f.Secret || f.Absent || f.GroupOf != "" || f.Ours:
+	case f.Template != "" || f.Source != "" || f.Secret || f.Absent || f.Ours:
 		return errors.New("a line takes owner, mode, check, has, after and when alone")
 	case strings.Contains(strings.TrimSuffix(f.Line, "\n"), "\n") && len(f.Has) == 0:
 		return errors.New("a line of more than one line takes has, as no line of the file equals it")
@@ -42,7 +42,7 @@ func (f filePart) lines(e Env, owner account.Account, rel string) file.HomeLines
 		mode = 0o644
 	}
 	l := owner.Lines(e.M, rel, file.UserLines{Lines: text, Shown: shown(text), Top: f.LineAt != "end", Mode: mode, Has: f.holds()})
-	l.Check = f.checker(e)
+	l.Check = f.checker()
 	l.Follow = e.System == MacOS
 	return l
 }

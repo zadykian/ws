@@ -17,9 +17,9 @@ const (
 func newSettings(report string) (*effecttest.Machine, UserSettings) {
 	m := effecttest.NewMachine()
 	m.Files[cldBin] = nil
-	m.Results["env HOME=/root mktemp -d"] = effecttest.Result{Out: []byte("/tmp/x\n")}
-	m.Results["env HOME=/root rm -rf -- /tmp/x"] = effecttest.Result{}
-	m.Results["env HOME=/root env CLAUDE_CONFIG_DIR=/tmp/x "+cldBin+" "+userArgs] = effecttest.Result{Out: []byte(report)}
+	m.Results["env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin mktemp -d"] = effecttest.Result{Out: []byte("/tmp/x\n")}
+	m.Results["env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin rm -rf -- /tmp/x"] = effecttest.Result{}
+	m.Results["env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin env CLAUDE_CONFIG_DIR=/tmp/x "+cldBin+" "+userArgs] = effecttest.Result{Out: []byte(report)}
 	return m, UserSettings{M: m, User: rootUser, Permissions: "read-only"}
 }
 
@@ -50,7 +50,7 @@ func TestUserSettingsPlan(t *testing.T) {
 func TestUserSettingsPlanCopiesTheFile(t *testing.T) {
 	m, s := newSettings("Left it\n")
 	m.Files["/root/.claude/settings.json"] = []byte("{}")
-	m.Results["env HOME=/root cp -- /root/.claude/settings.json /tmp/x/settings.json"] = effecttest.Result{}
+	m.Results["env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin cp -- /root/.claude/settings.json /tmp/x/settings.json"] = effecttest.Result{}
 	if _, err := s.Plan(context.Background()); err != nil {
 		t.Fatal(err)
 	}
@@ -67,11 +67,11 @@ func TestUserSettingsRefusesADanglingLink(t *testing.T) {
 func TestUserSettingsCleansUpAfterAFailedCopy(t *testing.T) {
 	m, s := newSettings("")
 	m.Files["/root/.claude/settings.json"] = []byte("{}")
-	m.Results["env HOME=/root cp -- /root/.claude/settings.json /tmp/x/settings.json"] = effecttest.Result{Err: errors.New("denied")}
+	m.Results["env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin cp -- /root/.claude/settings.json /tmp/x/settings.json"] = effecttest.Result{Err: errors.New("denied")}
 	if _, err := s.Plan(context.Background()); err == nil {
 		t.Fatal("a failed copy is planned")
 	}
-	if last := m.Calls[len(m.Calls)-1]; last != "run env HOME=/root rm -rf -- /tmp/x" {
+	if last := m.Calls[len(m.Calls)-1]; last != "run env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin rm -rf -- /tmp/x" {
 		t.Errorf("last call %q", last)
 	}
 }
@@ -79,8 +79,8 @@ func TestUserSettingsCleansUpAfterAFailedCopy(t *testing.T) {
 func TestUserSettingsApplyAddsNotifications(t *testing.T) {
 	m, s := newSettings("Created x\n")
 	s.Notifications = "terminal_bell"
-	run := "env HOME=/root env CLAUDE_CONFIG_DIR=/root/.claude " + cldBin + " " + userArgs + " --notifications=terminal_bell"
-	m.Results["env HOME=/root env CLAUDE_CONFIG_DIR=/tmp/x "+cldBin+" "+userArgs+" --notifications=terminal_bell"] =
+	run := "env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin env CLAUDE_CONFIG_DIR=/root/.claude " + cldBin + " " + userArgs + " --notifications=terminal_bell"
+	m.Results["env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin env CLAUDE_CONFIG_DIR=/tmp/x "+cldBin+" "+userArgs+" --notifications=terminal_bell"] =
 		effecttest.Result{Out: []byte("Created x\n")}
 	m.Results[run] = effecttest.Result{}
 	got, err := s.Plan(context.Background())

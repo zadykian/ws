@@ -61,7 +61,7 @@ func dkmsText(body []byte, over map[string]string) string {
 
 // dkmsMachine serves the tarball and runs the kernel, with no dkms installed yet.
 func dkmsMachine(t *testing.T) (Env, *effecttest.Machine, *effecttest.Out, []byte) {
-	e, m, _, out := testEnv(false)
+	e, m, _, out := testEnv()
 	body := dkmsTarball(t)
 	m.Pages[dkmsURL] = body
 	m.Results["uname -r"] = effecttest.Result{Out: []byte(dkmsKernel + "\n")}

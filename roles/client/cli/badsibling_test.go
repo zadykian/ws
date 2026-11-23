@@ -14,7 +14,7 @@ import (
 func badSiblingFixture() (*effecttest.Machine, string) {
 	m := effecttest.NewMachine()
 	keyed(m)
-	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "99"))
+	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_SLOT", "99"))
 	m.Dirs["/etc/ws/servers/lab"] = 0o755
 	m.Dirs["/etc/resolver"] = 0o755
 	resolver := "/etc/resolver/lab.test"
@@ -27,7 +27,7 @@ func badSiblingFixture() (*effecttest.Machine, string) {
 func TestRefuseBadSiblingReadsAlone(t *testing.T) {
 	m, resolver := badSiblingFixture()
 	err := refuseBadSibling(m, "/etc/ws/values.yml", "ws")
-	if err == nil || !strings.Contains(err.Error(), "server lab: ") || !strings.Contains(err.Error(), "fix its file, or ws client macos remove lab") {
+	if err == nil || !strings.Contains(err.Error(), "server lab: ") || !strings.Contains(err.Error(), "fix its file, or ws client remove lab") {
 		t.Errorf("err = %v; want lab's file refused, naming remove", err)
 	}
 	for _, call := range m.Calls {

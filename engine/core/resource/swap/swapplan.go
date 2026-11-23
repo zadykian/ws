@@ -33,11 +33,11 @@ func planSwap(s swapState, hint string) (swapSteps, error) {
 	_, onFile := s.Areas[swapFile]
 	_, onImg := s.Areas[installerImg]
 	return swapSteps{
-		StopFile:      s.Booted && stale && onFile,
+		StopFile:      stale && onFile,
 		RemoveFile:    stale,
 		Create:        create,
 		Restrict:      s.WantMiB > 0 && !create && s.File.Exists && (s.File.Mode.Perm() != 0o600 || s.File.UID != 0 || s.File.GID != 0),
-		Swapon:        s.Booted && s.WantMiB > 0 && (create || !onFile),
-		StopInstaller: s.Booted && onImg,
+		Swapon:        s.WantMiB > 0 && (create || !onFile),
+		StopInstaller: onImg,
 	}, nil
 }

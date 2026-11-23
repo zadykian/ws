@@ -14,7 +14,6 @@ import (
 	"text/template"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/resource/account"
 	"github.com/zadykian/ws/engine/core/resource/apt"
 )
 
@@ -62,11 +61,6 @@ func facts(ctx context.Context, e Env) template.FuncMap {
 	fm["cpus"] = func() (int, error) { return cpus(e.M) }
 	// fs_bytes is the size of the filesystem that holds the first of the paths that exists.
 	fm["fs_bytes"] = func(paths ...string) (int, error) { return fsBytes(ctx, e.M, paths) }
-	// uid is a user's uid.
-	fm["uid"] = func(name string) (int, error) {
-		a, err := account.User{Name: name}.Lookup(ctx, e.M)
-		return a.UID, err
-	}
 	// installed_version is dpkg's version of a package that is installed, else "".
 	fm["installed_version"] = func(name string) (string, error) {
 		states, err := apt.PackageStates(ctx, e.M, name)

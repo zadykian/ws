@@ -17,8 +17,9 @@ func Env() cli.Env {
 	return cli.Env{
 		Machine: effecttest.NewMachine(), Getenv: func(string) string { return "" },
 		LookupEnv: func(string) (string, bool) { return "", false },
-		Euid:      501, Pwd: "/p", Version: "v1.2.3",
-		Self: func() (string, error) { return "/h/.local/bin/ws", nil },
+		Euid:      501, Pid: 7, GOOS: "linux", GOARCH: "amd64", Pwd: "/p", Version: "v1.2.3",
+		Releases: "http://127.0.0.1:1",
+		Self:     func() (string, error) { return "/h/.local/bin/ws", nil },
 	}
 }
 

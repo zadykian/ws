@@ -55,8 +55,7 @@ fingerprint = [
 "apt:libxfixes3" = "latest"
 "apt:libxkbcommon0" = "latest"
 "apt:libxrandr2" = "latest"
-# The units of units.toml.tmpl: the tools' links, the check of the data directory, the account's tools
-# and gh's setup.
+# The units of units.toml.tmpl: the tools' links, root's tools and gh's setup.
 "ws:file/devtools-dlv" = "in-sync"
 "ws:file/devtools-docker-ls" = "in-sync"
 "ws:file/devtools-go" = "in-sync"
@@ -65,10 +64,8 @@ fingerprint = [
 "ws:file/devtools-npm-package" = "in-sync"
 "ws:file/devtools-pgls" = "in-sync"
 "ws:file/devtools-sql-formatter" = "in-sync"
-"ws:guard/devtools-data-dir" = "in-sync"
 "ws:state/devtools-gh-login" = "in-sync"
 "ws:state/devtools-gh-telemetry" = "in-sync"
-"ws:state/devtools-gh-token-group" = "in-sync"
 "ws:state/devtools-npm" = "in-sync"
 "ws:state/devtools-roslyn" = "in-sync"
 "ws:state/devtools-rustup" = "in-sync"

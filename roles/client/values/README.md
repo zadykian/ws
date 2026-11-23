@@ -6,21 +6,33 @@ same on each, but for the outbound table on a cloud VM.
 
 ## The two files
 
-`/etc/ws/values.yml`, root's, holds the Mac's keys, which no server changes:
+`/etc/ws/values.yml`, root's, holds the Mac's keys, which no server changes. On a new Mac it stands
+empty before the first `ws client setup`, which installs Secretive, waits for a key made in it and
+writes the three keys ([Secretive](../macos/ssh/README.md#secretive)):
+
+```sh
+sudo mkdir -p /etc/ws/servers/ws
+sudo touch /etc/ws/values.yml
+```
+
+Setup then writes these, NAME being the name of the key that its wait prints:
 
 ```yaml
-WS_GIT_SIGNING_PUB_KEY: ~/.ssh/KEY.pub
-WS_IDENTITY_PUB_KEY: ~/.ssh/KEY.pub
-WS_IDENTITY_AGENT: ~/PATH/socket.ssh
+WS_IDENTITY_PUB_KEY: /etc/ws/secretive/NAME.pub
+WS_IDENTITY_AGENT: ~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh
+WS_GIT_SIGNING_PUB_KEY: /etc/ws/secretive/NAME.pub
 ```
+
+Where the file names `WS_IDENTITY_PUB_KEY` already, as `~/.ssh/KEY.pub` for a key in a file,
+setup installs no Secretive and writes none of them.
 
 `/etc/ws/servers/ws/values.yml`, beside it, holds every other key:
 
 ```yaml
 WS_SLOT: 0
 WS_PUBLIC_KEY: WS_KEY
-WS_LAN: 10.88.0.0/24
-WS_LAN_ADDRESS: 10.88.0.10
+WS_LAN: 10.88.0.0/23
+WS_LAN_ADDRESS: 10.88.1.10
 WS_CABLE_SERVICE: USB 10/100/1G/2.5G LAN
 WS_REMOTE: ws.example.com
 WS_REMOTE_PORT: 22022
@@ -35,6 +47,12 @@ the colon, a flow map, a value wrapped over lines and a `---` marker are refused
 A key in the other file is refused, with the file it goes in. `WS_VALUES` names `values.yml`,
 and the server's file is `servers/ws/values.yml` beside it. Each key's meaning is in
 [values.yml](../README.md#the-macs-valuesyml).
+
+## The check
+
+`ws client values check` reads `values.yml` and each server's file beside it, and names each bad or
+missing key with its file, then exits 1. Where all pass, it prints one line. The frame's bootstrap
+runs it first ([The check of the values](../macos/frame/README.md#the-check-of-the-values)).
 
 ## The server's name
 
@@ -64,19 +82,20 @@ takes what another's takes. Each of the two refuses until one changes, in its ow
 - `WS_TUNNEL_PORT` and `WS_REMOTE_PORT`: the other's, behind the same `WS_REMOTE`, in any case, as
   the router forwards a port to one server.
 
-A file of another server that is refused fails each unit that reads the servers' files, in a
-plan too, and the error names the server and `ws client macos remove NAME`. The units read every
+A file of another server that is refused fails the frame's check of the values first, then each
+unit that reads the servers' files, in a plan too. The error names the server and
+`ws client remove NAME`. The units read every
 server's file, and the networks' unit would remove the resolver files of one it cannot read.
 
 ## The servers
 
-`ws client macos servers` lists each server by name, with its target, slot and tunnel, as the
+`ws client servers` lists each server by name, with its target, slot and tunnel, as the
 user:
 
 ```text
 NAME  TARGET  SLOT  TUNNEL
 lab   cloud   1     stopped
-ws    lan     0     lan 10.88.0.10:51820
+ws    lan     0     lan 10.88.1.10:51820
 ```
 
 The tunnel is `absent` before the bootstrap sets its daemon up, and `stopped` where launchd has
@@ -85,13 +104,13 @@ can't read the state. Else the column shows the tier and endpoint that the state
 whose file ws refuses shows `-` for its target and slot. Its errors follow the rows, with exit
 code 1. The command takes no `--server`.
 
-`ws client macos remove NAME` takes a server off the Mac, as the user. It refuses the Mac's last
+`ws client remove NAME` takes a server off the Mac, as the user. It refuses the Mac's last
 server, as the bootstrap takes a Mac with none for a stray `WS_VALUES` and prunes no daemon. It
 takes no `--server`: the argument is the consent. It first takes NAME's host key out of the
-secrets ([The secrets](../macos/secrets/README.md#ws-client-macos-remove)), and stops with the
+secrets ([The secrets](../macos/secrets/README.md#ws-client-remove)), and stops with the
 server whole where that fails. `--skip-secrets` leaves the secrets, and prints the key to drop by
 hand. It then deletes `servers/NAME` and NAME's entry in
-`known_hosts`, and runs `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap`, whose units take
+`known_hosts`, and runs `mise -C /opt/ws/roles/client bootstrap`, whose units take
 NAME's daemon, hosts and routes away. A server that stays and whose file ws refuses, NAME's clashes
 aside, stops it before it deletes anything, as those units would fail. Where the bootstrap fails,
 run it again to end the removal. Where NAME held the cable, it prints a line to do by hand: the
@@ -102,8 +121,8 @@ cable's service keeps `10.77.0.2`. The server itself is not changed.
 `WS_TARGET=lan`, the default, is a machine at home, behind [The router](../../server/ubuntu/cable/router.md), with a cable to
 the Mac's display, if any:
 
-- `WS_LAN` is the home LAN, `10.88.0.0/24` by default, and `WS_LAN_ADDRESS` ws's static lease
-  there, `10.88.0.10`.
+- `WS_LAN` is the home LAN with the server's segment, `10.88.0.0/23` by default, and
+  `WS_LAN_ADDRESS` ws's static lease on the segment, `10.88.1.10`.
 - `WS_REMOTE` is the router's name on the internet, if any, and `WS_REMOTE_PORT` its forward to
   ws's 22, `22022` by default.
 - `WS_CABLE_SERVICE` and `WS_CABLE_PORT` set up the cable ([The cable](../README.md#the-cable)).
@@ -113,14 +132,13 @@ the Mac's display, if any:
 `WS_TARGET=cloud` is a VM at a provider, reached through the internet alone:
 
 - It has no `WS_LAN`.
-- `WS_USER` defaults to `root`, as a VM may have no other user. Set it for an image whose root refuses
-  a login, such as `ubuntu`. The other targets refuse `WS_USER=root`.
+- The VM's root takes the Mac's key. An image whose root refuses a login takes `disable_root: false`
+  and `users: []` in its cloud-config.
 - `WS_REMOTE` is the VM's name or address, and `WS_REMOTE_PORT` its SSH port, `22` by default. The
   target needs both.
 - The VM needs a public IPv4 address, as the tunnel takes IPv4 alone.
 - The provider's firewall must let in TCP `WS_REMOTE_PORT`, and UDP 51820, the tunnel's, or the port
   that `WS_TUNNEL_PORT` sets, which moves wg0's listen port on ws too.
-- The VM's default user takes the provider's keys, which must be the GitHub account's.
 - Set `WS_SECURITY_OUTBOUND: false` in ws's values.yml before ws's run, as the outbound table would
   drop the metadata service ([Outbound](../../server/ubuntu/security/README.md#outbound)).
 - It has no cable: `WS_CABLE_SERVICE` and `WS_CABLE_PORT` are refused.
@@ -152,5 +170,5 @@ key of another target's ways: `WS_LAN` on a cloud VM, `WS_REMOTE` on a VM on the
 `WS_CABLE_SERVICE` or `WS_CABLE_PORT` off the LAN. Then name the new target's
 ways. A new machine offers another host key, so run `ssh-keygen -R NAME` first, NAME the server's
 name. From a cloud VM, remove `WS_SECURITY_OUTBOUND: false` from ws's `values.yml` too, with
-`sudo ws server ubuntu values set WS_SECURITY_OUTBOUND ''`. Then run the bootstrap on ws, as
-[its runbook](../../server/runbook.md) says, and `MISE_LOCKED=1 mise -C /opt/ws/roles/client bootstrap` again.
+`ws server values set WS_SECURITY_OUTBOUND ''`. Then run the bootstrap on ws, as
+[its runbook](../../server/runbook.md) says, and `ws client setup` again.

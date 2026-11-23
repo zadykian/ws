@@ -21,7 +21,7 @@ func withBin(m *effecttest.Machine) {
 }
 
 func TestFileLinkPlansTheLink(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	withBin(m)
 	units := loadOne(t, e, linkSpec(""), nil)
 	if got := headlines(t, units[0].Step); !slices.Equal(got, []string{"link /usr/local/bin/x to /opt/t/x"}) {
@@ -36,7 +36,7 @@ func TestFileLinkPlansTheLink(t *testing.T) {
 }
 
 func TestFileLinkAgainChangesNothing(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	withBin(m)
 	m.Links["/usr/local/bin/x"] = "/opt/t/x"
 	if got := headlines(t, loadOne(t, e, linkSpec(""), nil)[0].Step); got != nil {
@@ -45,7 +45,7 @@ func TestFileLinkAgainChangesNothing(t *testing.T) {
 }
 
 func TestFileLinkRepointsAWrongLink(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	withBin(m)
 	m.Links["/usr/local/bin/x"] = "/opt/old/x"
 	units := loadOne(t, e, linkSpec(""), nil)
@@ -61,7 +61,7 @@ func TestFileLinkRepointsAWrongLink(t *testing.T) {
 }
 
 func TestFileLinkMakesItsParents(t *testing.T) {
-	e, m, _, _ := testEnv(false)
+	e, m, _, _ := testEnv()
 	if err := run(t, e, loadOne(t, e, linkSpec(""), nil)); err != nil {
 		t.Fatal(err)
 	}
@@ -76,26 +76,24 @@ func TestFileLinkMakesItsParents(t *testing.T) {
 }
 
 func TestFileLinkTakesNoContent(t *testing.T) {
-	e, _, _, _ := testEnv(false)
+	e, _, _, _ := testEnv()
 	alone := "a link takes a path, a target, after and when alone"
 	for extra, want := range map[string]string{
-		"template = \"f\"\n":             alone,
-		"source = \"f\"\n":               alone,
-		"absent = true\n":                alone,
-		"line = \"x\"\n":                 alone,
-		"has = [\"/bin/true\"]\n":        alone,
-		"secret = true\n":                alone,
-		"check = [\"/bin/true\"]\n":      alone,
-		"mode = 0o755\n":                 alone,
-		"group_of = \"u\"\n":             alone,
-		"group = \"g\"\n":                alone,
-		"ours = true\n":                  alone,
-		"backup = true\n":                alone,
-		"absent_when_empty = true\n":     alone,
-		"seed = true\n":                  alone,
-		"owner = \"u\"\n":                "a link is root's",
-		"service = \"x.service\"\n":      "a link takes no service",
-		"user_service = \"x.service\"\n": "a link takes no service",
+		"template = \"f\"\n":         alone,
+		"source = \"f\"\n":           alone,
+		"absent = true\n":            alone,
+		"line = \"x\"\n":             alone,
+		"has = [\"/bin/true\"]\n":    alone,
+		"secret = true\n":            alone,
+		"check = [\"/bin/true\"]\n":  alone,
+		"mode = 0o755\n":             alone,
+		"group = \"g\"\n":            alone,
+		"ours = true\n":              alone,
+		"backup = true\n":            alone,
+		"absent_when_empty = true\n": alone,
+		"seed = true\n":              alone,
+		"owner = \"u\"\n":            "a link is root's",
+		"service = \"x.service\"\n":  "a link takes no service",
 	} {
 		_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": linkSpec(extra), "r/f": ""}))
 		if err == nil || !strings.Contains(err.Error(), want) {

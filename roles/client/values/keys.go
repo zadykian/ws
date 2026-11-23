@@ -18,9 +18,9 @@ const (
 // Conf is values.yml's settings, each key's value as the file gives it, with the default of a key
 // that has no line or an empty value.
 type Conf struct {
-	User, Target, Slot, PublicKey, LAN, LANAddress, Remote, RemotePort, Port string
-	TunnelNetworks, Resolvers, CableService, CablePort                       string
-	GitSigningPubKey, IdentityPubKey, IdentityAgent                          string
+	Target, Slot, PublicKey, LAN, LANAddress, Remote, RemotePort, Port string
+	TunnelNetworks, Resolvers, CableService, CablePort                 string
+	GitSigningPubKey, IdentityPubKey, IdentityAgent                    string
 }
 
 // TunnelSlot gives the slot that c.Slot names. Load has checked it, and an empty one is slot 0.
@@ -67,8 +67,6 @@ const keyFile = "a public key's file, as ~/.ssh/NAME.pub: a path from / or ~/ to
 
 // keys is values.yml's keys in the order of the file's docs, with their checks.
 var keys = []key{
-	{"WS_USER", func(c *Conf) *string { return &c.User }, check.User,
-		"a user name of 32 characters at most: letters, digits, ., _ and -, no - first"},
 	{"WS_TARGET", func(c *Conf) *string { return &c.Target },
 		func(v string) bool { return v == "lan" || v == "cloud" || v == "mac-vm" },
 		"lan, cloud or mac-vm: a machine on the LAN, a cloud VM or a VM on the Mac"},
@@ -77,7 +75,7 @@ var keys = []key{
 	{"WS_PUBLIC_KEY", func(c *Conf) *string { return &c.PublicKey }, check.Key,
 		"a WireGuard public key, 43 base64 characters and an ="},
 	{"WS_LAN", func(c *Conf) *string { return &c.LAN }, isLAN,
-		"an IPv4 network, as 10.88.0.0/24, clear of " + keptNames},
+		"an IPv4 network, as 10.88.0.0/23, clear of " + keptNames},
 	{"WS_LAN_ADDRESS", func(c *Conf) *string { return &c.LANAddress }, check.IPv4,
 		"a host's IPv4 address inside WS_LAN"},
 	{"WS_REMOTE", func(c *Conf) *string { return &c.Remote }, check.Name,

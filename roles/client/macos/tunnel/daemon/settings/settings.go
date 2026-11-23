@@ -1,4 +1,4 @@
-// Package settings reads the tunnel daemon's settings and key, and its status for ws client macos
+// Package settings reads the tunnel daemon's settings and key, and its status for ws client
 // tunnel status.
 package settings
 

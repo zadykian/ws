@@ -1,21 +1,17 @@
-# The Mac's frame's own unit. mise installs ws under the user's data directory, by version, which a
-# LaunchDaemon run by root cannot trust. So this keeps /usr/local/bin/ws, root:wheel and 0755, the
-# ws that runs the units. The copy goes in under a temporary name, so that a running ws never makes
-# it fail. The check runs as the user, as each read on the Mac does, and reads the owner and mode
-# too.
+# The Mac's frame's own unit. A LaunchDaemon run by root must trust the ws it runs. mise runs
+# /usr/local/bin/ws itself, the file install.sh writes. This unit keeps its owner and mode,
+# root:wheel and 0755, with no copy. Its line sits at the root, so that a run from /opt/ws calls the
+# read hook too. The check runs as the user, as each read on the Mac does. A missing file fails the
+# run and names install.sh.
 [state.ws-binary.run]
 user = "root"
 command = [
     "sh",
     "-c",
-    "mkdir -p /usr/local/bin && install -o root -g wheel -m 0755 \"$1\" /usr/local/bin/.ws.new && mv -f /usr/local/bin/.ws.new /usr/local/bin/ws",
-    "sh",
-    "{{ self }}",
+    "[ -e /usr/local/bin/ws ] || { echo '/usr/local/bin/ws is missing: install.sh writes it' >&2; exit 1; }; chown 0:0 /usr/local/bin/ws && chmod 0755 /usr/local/bin/ws",
 ]
 check = [
     "sh",
     "-c",
-    "cmp -s \"$1\" /usr/local/bin/ws && [ \"$(stat -f %u:%g:%Lp /usr/local/bin/ws)\" = 0:0:755 ]",
-    "sh",
-    "{{ self }}",
+    "[ \"$(stat -f %u:%g:%Lp /usr/local/bin/ws)\" = 0:0:755 ]",
 ]

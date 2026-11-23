@@ -8,13 +8,12 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/roles/server/ubuntu/cable/internal/netplan"
 	"github.com/zadykian/ws/roles/server/values"
 )
 
-// Check refuses what the cable's file must not act on: a port that is an uplink, and, on a booted
-// machine, a networkd that does not run. file, where given, is the new netplan file. Check merges
+// Check refuses what the cable's file must not act on: a port that is an uplink, and a networkd
+// that does not run. file, where given, is the new netplan file. Check merges
 // it with netplan's other files in a scratch root, and refuses it where netplan would not set up
 // the port with it alone. The file is read as root, and no message quotes it. With no port, there is no
 // cable, and nothing to refuse.
@@ -44,15 +43,11 @@ func Check(ctx context.Context, m effect.Machine, u effect.Units, c values.Cable
 			return errors.New(strings.Join(problems, " "))
 		}
 	}
-	return networkdRuns(ctx, m, u)
+	return networkdRuns(ctx, u)
 }
 
-// networkdRuns fails where networkd, which netplan's file is for, does not run on a booted
-// machine.
-func networkdRuns(ctx context.Context, m effect.Machine, u effect.Units) error {
-	if !systemd.Booted(m) {
-		return nil
-	}
+// networkdRuns fails where networkd, which netplan's file is for, does not run.
+func networkdRuns(ctx context.Context, u effect.Units) error {
 	state, err := u.State(ctx, "systemd-networkd.service")
 	if err != nil {
 		return err

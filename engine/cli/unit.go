@@ -27,9 +27,8 @@ const InSync = "in-sync"
 type UnitSide struct {
 	// Dir is the root of the side's specs, DIR/ROLE/units.toml.tmpl, where WS_UNITS names none.
 	Dir string
-	// Values loads the side's values. It returns them with the machine that the units run on,
-	// which the values may confine.
-	Values func(ctx context.Context, m effect.Machine) (data any, confined effect.Machine, err error)
+	// Values loads the side's values.
+	Values func(ctx context.Context, m effect.Machine) (any, error)
 	// Units is the service manager's units.
 	Units effect.Units
 	// Root refuses read and write to any user but root, as the side's units write root's paths.
@@ -106,9 +105,9 @@ func unitList(p Env, s UnitSide) *cobra.Command {
 // that fails to load fails the command with status 1, as the specs and the values are the
 // machine's, not the command line's.
 func loadUnits(c *cobra.Command, p Env, s UnitSide) (unitRun, error) {
-	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+	term := effect.NewTerminal(c.ErrOrStderr())
 	r := unitRun{term: term, out: engine.Lines{Out: term, Prog: c.CommandPath(), Seen: map[string]bool{}}}
-	data, m, err := s.Values(c.Context(), p.Machine)
+	data, err := s.Values(c.Context(), p.Machine)
 	if err != nil {
 		return r, err
 	}
@@ -126,7 +125,7 @@ func loadUnits(c *cobra.Command, p Env, s UnitSide) (unitRun, error) {
 	if err != nil {
 		return r, fmt.Errorf("finding the file ws runs from: %w", err)
 	}
-	env := kind.Env{M: m, U: s.Units, Out: r.out, Data: data, System: s.System, Self: self, Hidden: s.Hidden,
+	env := kind.Env{M: p.Machine, U: s.Units, Out: r.out, Data: data, System: s.System, Self: self, Hidden: s.Hidden,
 		LookupEnv: p.TaskEnv(s.Task)}
 	if s.User != nil {
 		env.User = s.User(data)

@@ -29,7 +29,7 @@ func applyOnce(t *testing.T, m *effecttest.Machine, d *fakeDisk, size *int) []st
 }
 
 func TestSwapOnANewMachine(t *testing.T) {
-	m, d := booted(swapsImg), &fakeDisk{avail: 100000}
+	m, d := swapMachine(swapsImg), &fakeDisk{avail: 100000}
 	calls := applyOnce(t, m, d, nil)
 	// The RAM, 15932 MiB, rounded up to a whole GiB.
 	want := []string{"root mkswap /swapfile.new", "root swapon /swapfile", "root swapoff /swap.img",
@@ -45,7 +45,7 @@ func TestSwapOnANewMachine(t *testing.T) {
 }
 
 func TestSwapSizeZeroRemovesTheFile(t *testing.T) {
-	m := booted("/swapfile file 4194300 0 -2\n")
+	m := swapMachine("/swapfile file 4194300 0 -2\n")
 	m.Files["/etc/fstab"] = []byte("/swapfile none swap sw 0 0\n")
 	d := &fakeDisk{files: map[string]swapFileInfo{swapFile: {Exists: true, Size: 16384 * mib, Mode: 0o600}}}
 	calls := applyOnce(t, m, d, ptr(0))
@@ -54,19 +54,5 @@ func TestSwapSizeZeroRemovesTheFile(t *testing.T) {
 	}
 	if got := string(m.Files["/etc/fstab"]); got != "" {
 		t.Errorf("fstab = %q, want no /swapfile line", got)
-	}
-}
-
-func TestSwapWithoutSystemdSkipsSwapon(t *testing.T) {
-	m, d := booted(""), &fakeDisk{avail: 100000}
-	delete(m.Dirs, "/run/systemd/system")
-	calls := applyOnce(t, m, d, ptr(1024))
-	for _, c := range calls {
-		if strings.HasPrefix(c, "root swap") {
-			t.Errorf("ran %q without systemd", c)
-		}
-	}
-	if !slices.Contains(calls, "rename /swapfile.new /swapfile") {
-		t.Errorf("calls = %q, want the file made", calls)
 	}
 }

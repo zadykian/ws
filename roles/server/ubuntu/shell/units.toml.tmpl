@@ -2,36 +2,11 @@
 # account's. Stock's guard of a shell that is not interactive returns first, and ~/.profile runs
 # ~/.bashrc before its end. The line uses `.`, not `source`, as sh reads ~/.profile too.
 [file.shell-bashrc-line]
-path = "{{ .Home }}/.bashrc"
-owner = "{{ .User }}"
+path = "/root/.bashrc"
+owner = "root"
 line = ". /etc/ws/bashrc"
 
 [file.shell-profile-line]
-path = "{{ .Home }}/.profile"
-owner = "{{ .User }}"
+path = "/root/.profile"
+owner = "root"
 line = ". /etc/ws/profile"
-
-# mise writes /etc/ws/env from the shell's secret inputs (mise.secrets.toml), root's. Its group is
-# root's after each change of its content, as mise takes a literal group alone. This gives it the
-# account's, so the account reads it and cannot change it. Without the file, it does nothing.
-# A file there whose first line is not ws's header stops the run, as mise's guard does under the env
-# secrets. A run without the env loads no guard, and would give a file by hand the account's group.
-[state.shell-env-group.run]
-user = "root"
-unbooted = true
-command = [
-    "sh",
-    "-c",
-    '''f="$1"; [ ! -e "$f" ] || head -n 1 -- "$f" | grep -qxF -- '# Written by github.com/zadykian/ws, whose next run replaces any change made here.' || { echo "$f: not written by ws, so the run stops: move its value into the secrets, then remove it" >&2; exit 1; }; [ ! -e "$1" ] || chgrp -- "$(id -g -- "$2")" "$1"''',
-    "sh",
-    "/etc/ws/env",
-    "{{ .User }}",
-]
-check = [
-    "sh",
-    "-c",
-    '''[ ! -e "$1" ] || { head -n 1 -- "$1" | grep -qxF -- '# Written by github.com/zadykian/ws, whose next run replaces any change made here.' && [ "$(stat -c %g -- "$1")" = "$(id -g -- "$2")" ]; }''',
-    "sh",
-    "/etc/ws/env",
-    "{{ .User }}",
-]

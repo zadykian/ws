@@ -2,7 +2,6 @@ package cli
 
 import (
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -14,14 +13,14 @@ import (
 	"github.com/zadykian/ws/roles/server/values"
 )
 
-// newIkewardCmd returns ws server ubuntu ikeward: the commands that the ikeward role's units run.
+// newIkewardCmd returns ws server ikeward: the commands that the ikeward role's units run.
 // The wait is tries tries, pause apart.
 func newIkewardCmd(p enginecli.Env, tries int, pause time.Duration) *cobra.Command {
 	return enginecli.Group("ikeward", "the ikeward role's check, install and wait, which its units run",
 		newIkewardCheckCmd(p), newIkewardInstallCmd(p), newIkewardWaitCmd(p, tries, pause))
 }
 
-// newIkewardCheckCmd returns ws server ubuntu ikeward check.
+// newIkewardCheckCmd returns ws server ikeward check.
 func newIkewardCheckCmd(p enginecli.Env) *cobra.Command {
 	return &cobra.Command{
 		Use:   "check",
@@ -58,7 +57,7 @@ func ikewardReady(p enginecli.Env, out effect.Out) (ikeward.Install, error) {
 	return i, i.Ready()
 }
 
-// newIkewardInstallCmd returns ws server ubuntu ikeward install.
+// newIkewardInstallCmd returns ws server ikeward install.
 func newIkewardInstallCmd(p enginecli.Env) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "install",
@@ -67,14 +66,14 @@ func newIkewardInstallCmd(p enginecli.Env) *cobra.Command {
 			"profile's two files into /run/ikeward-profile, which only root may enter, runs ikeward install " +
 			"--dry-run on them with the .p12's password on standard input, and removes them. Where the dry run " +
 			"exits 4, install would change something, and it runs install. It fails where check would. Without " +
-			"booted systemd, or without the variables, as in a run without the secrets, nothing is due.\n\n" +
+			"the variables, as in a run without the secrets, nothing is due.\n\n" +
 			"--check fails where install would change anything, and changes nothing. The ikeward role's run state " +
 			"runs it, after ikeward's binary.",
 		Args: cobra.NoArgs,
 	}
 	check := c.Flags().Bool("check", false, "fail where install would change anything, and change nothing")
 	c.RunE = func(c *cobra.Command, _ []string) error {
-		term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+		term := effect.NewTerminal(c.ErrOrStderr())
 		defer term.Flush()
 		lines := linesOf(term, c.CommandPath())
 		i, err := ikewardReady(p, lines)
@@ -86,21 +85,20 @@ func newIkewardInstallCmd(p enginecli.Env) *cobra.Command {
 	return c
 }
 
-// newIkewardWaitCmd returns ws server ubuntu ikeward wait.
+// newIkewardWaitCmd returns ws server ikeward wait.
 func newIkewardWaitCmd(p enginecli.Env, tries int, pause time.Duration) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "wait",
 		Short: "wait for ikeward status to pass, as the VPN comes up",
 		Long: "It runs /usr/local/sbin/ikeward status, and again until it passes, up to 12 times, 10 s apart, then " +
-			"fails. A later unit may need the VPN, as for a clone from the remote network. Without booted systemd, " +
-			"or without the profile's variables, as in a run without the secrets, which installs no VPN, nothing " +
-			"is due.\n\n--check fails where it would wait, and changes nothing. The ikeward role's run state runs " +
+			"fails. A later unit may need the VPN, as for a clone from the remote network. Without the profile's " +
+			"variables, as in a run without the secrets, which installs no VPN, nothing is due.\n\n--check fails where it would wait, and changes nothing. The ikeward role's run state runs " +
 			"it, after the install.",
 		Args: cobra.NoArgs,
 	}
 	check := c.Flags().Bool("check", false, "fail where the VPN is down and the run would wait, and change nothing")
 	c.RunE = func(c *cobra.Command, _ []string) error {
-		term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+		term := effect.NewTerminal(c.ErrOrStderr())
 		defer term.Flush()
 		lines := linesOf(term, c.CommandPath())
 		w := ikeward.Status{M: p.Machine, Out: lines, Tries: tries, Wait: pause, InRun: ikeward.InRun(p.LookupEnv)}

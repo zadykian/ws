@@ -1,11 +1,12 @@
 # The Mac's frame. The env mac loads it, with the Mac's roles that roles/client/mise/conf.d
 # links. The Mac's miserc names that env. It loads no file of the server's. mise reads its own
-# files of root's through sudo on every run, so the Mac holds none. Its root paths are ws's units
-# alone, which read as the user and ask no password.
+# files of root's through sudo on every run, so the Mac holds none. It holds one file of the
+# user's, the check below. Its root paths are ws's units alone. They read as the user and ask no
+# password.
 
 # ws's units, `"ws:KIND/NAME" = "in-sync"` under [bootstrap.packages], go to the plugin ws, which
 # no [bootstrap.plugins] entry names: mise installs an entry again on every run, with a warning.
-# The runbook links the tree's plugins/ws into /usr/local/share/mise/plugins, where mise loads it
+# ws client setup links the tree's plugins/ws into /usr/local/share/mise/plugins, where mise loads it
 # as a system plugin.
 
 # The frame's line, at the root rather than in its role: a run from /opt/ws, which loads no role,
@@ -13,3 +14,14 @@
 # the side's run directory, with its units in sync too, and names that directory.
 [bootstrap.packages]
 "ws:state/ws-binary" = "in-sync"
+
+# The check of the values. ws client values check fails the plan and the run, before any unit reads
+# a value. It fails where values.yml or a server's file holds a bad key or lacks one. mise reads a
+# file of root's through sudo. So the file is the user's, in Library/Caches, which macOS always has. A
+# template renders before the packages' phase, where a unit would run. It runs /usr/local/bin/ws,
+# and fails a run without it, naming install.sh. A pass prints one line, so that the next plan finds
+# the file unchanged.
+[bootstrap.files."~/Library/Caches/ws-values.checked"]
+template = true
+content = '''{{ exec(command="[ -x /usr/local/bin/ws ] || { echo '/usr/local/bin/ws is missing: install.sh writes it' >&2; exit 1; }; /usr/local/bin/ws client values check") }}
+'''

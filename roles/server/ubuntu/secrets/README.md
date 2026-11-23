@@ -10,8 +10,8 @@ pins GitHub's key for [the fetch](#the-fetch). The secrets sit in a repository o
 mise installs fnox 1.50.0 from jdx/fnox's release on GitHub, as `[tools]` pins it, before any unit
 of ws. [mise.server.lock](../../mise/mise.server.lock) holds the url of the asset for `linux-x64`
 and `linux-arm64`, with GitHub's digest of each, which mise checked against the release's
-attestations as it wrote the lock. A wrong sum fails the run, and `MISE_LOCKED=1` refuses a fnox
-that the lock lacks. `go test` fails where the pin, the lock and the digests that `pins_test.go`
+attestations as it wrote the lock. A wrong sum fails the run, and the tree's `locked = true`
+refuses a fnox that the lock lacks. `go test` fails where the pin, the lock and the digests that `pins_test.go`
 holds disagree.
 
 The pin names mise's `github` backend, `github:jdx/fnox`, which downloads from the lock's url
@@ -27,17 +27,22 @@ meets the API's limit there, and the install fails.
 
 ## The task
 
-The task `secrets`, `roles/server/mise-tasks/secrets`, runs the bootstrap under ws's secrets. Run
-it at ws as the [runbook](../../runbook.md) gives it:
+The task `secrets`, `roles/server/mise-tasks/secrets`, runs the bootstrap under ws's secrets. Its
+caller is `ws server setup`, which runs it after its own steps
+([the runbook](../../runbook.md)):
 
 ```sh
-sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server run secrets
+ws server setup --secrets
+ws server setup --secrets --plan
 ```
 
-- Its arguments go to `mise bootstrap` whole: none is a run, and `-- plan --detailed-exitcode` a
-  plan. A plan fetches too, as mise needs the values to compare the secret files.
-- It refuses any user but root, and a run without the runbook's `MISE_DATA_DIR` and
-  `MISE_LOCKED=1`, so fnox runs from the lock alone.
+- `--secrets` runs the task, which clones the secrets on its first run. Without it, setup runs the
+  task where `/var/lib/ws/secrets` stands, and the bootstrap where it does not.
+- The task's arguments go to `mise bootstrap` whole: none is a run, and `--plan` passes
+  `plan --detailed-exitcode`. A plan fetches too, as mise needs the values to compare the secret
+  files.
+- It refuses any user but root, and a run where `mise settings get locked` does not print `true`,
+  as `MISE_LOCKED=0` makes it, so fnox runs from the lock alone. The tree's `mise.toml` sets it.
 - The profile is the hostname, one DNS label that names no recipient. The task decrypts
   `fnox.HOSTNAME.toml` with the shared `fnox.toml` by the host key,
   `/etc/ssh/ssh_host_ed25519_key`, then runs `mise -E ws,secrets bootstrap` under fnox. Each
@@ -45,14 +50,15 @@ sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles
 - fnox fails closed: `--if-missing error` stops at a value it cannot decrypt, an empty
   `FNOX_CONFIG_DIR` keeps root's config out, and no key but the host's takes part.
 - The bootstrap runs with the caller's umask, and with none of the fetch's settings of git and
-  ssh, as fnox passes its environment on. A unit run as `WS_USER` starts from a cleared one, so
-  the account reads no value from its processes ([run](../../../../engine/core/kind/state.md)).
+  ssh, as fnox passes its environment on. The commands that ws runs for cld, claude and git start
+  from a cleared one, so they read no value from ws's own
+  ([Secret inputs](../frame/README.md#secret-inputs)).
 - Its exit is the bootstrap's, and each refusal of its own exits 1. A plan that finds a change
   exits 2, and mise then prints `[secrets] ERROR task failed`, as it does for any task that exits
   other than 0. That line reports the 2, not a failed plan, and no flag of `mise run` or option of
-  a task drops it ([The rootless job](../../../../.github/workflows/rootless.md)).
+  a task drops it ([The server job](../../../../.github/workflows/server.md)).
 - `WS_SECRETS_PREFIX`, for the tests alone, stands for `/` in front of the host key and
-  `/var/lib/ws`. sudo drops it from the caller's environment.
+  `/var/lib/ws`. The task runs as root with no sudo, and takes the variable as it stands.
 
 A run of the bootstrap without the task loads no `secrets` env, and keeps the files that env's
 inputs write as they are.
@@ -73,7 +79,7 @@ repository's read-only deploy key, titled with the hostname.
   differs from origin's `main`. That is a link, a change, a file or a commit of its own, another
   branch or origin, or a `main` that origin rewrote. Remove the clone, and the next run clones it
   again.
-- A Mac mends three refusals by `ws client macos secrets add NAME`: GitHub refuses the host key,
+- A Mac mends three refusals by `ws client secrets add NAME`: GitHub refuses the host key,
   the repository holds no profile of the hostname, or the host key opens none of its values.
 
 ## The repository
@@ -102,7 +108,7 @@ Mac.
 
 - `nano`: the YubiKey 5C Nano, by age-plugin-yubikey, with a PIN once a session and a touch each
   time it decrypts.
-- `backup`: a plain age key, which opens every value where the Nano is lost. `ws client macos
+- `backup`: a plain age key, which opens every value where the Nano is lost. `ws client
   secrets init` prints it once, and writes it nowhere.
 - each server's hostname: its SSH host key, `/etc/ssh/ssh_host_ed25519_key`. The same key is the
   repository's read-only deploy key, titled with the hostname.
@@ -153,11 +159,11 @@ NAME = { default = "${OTHER}" }
 Every change lands on `main` by a pull request, from a temporary clone
 ([How a change lands](../../../client/macos/secrets/README.md#how-a-change-lands)):
 
-- `ws client macos secrets init` starts `fnox.toml` with the Nano and the backup, and declares the
+- `ws client secrets init` starts `fnox.toml` with the Nano and the backup, and declares the
   inputs.
-- `ws client macos secrets add NAME` makes the server's host key a recipient and its deploy key,
-  then runs the task there.
-- `ws client macos remove NAME` takes that key out of both.
+- `ws client secrets add NAME` makes the server's host key a recipient and its deploy key,
+  then runs `ws server setup --secrets` there.
+- `ws client remove NAME` takes that key out of both.
 
 A value goes in by hand, in a clone, on a branch: `fnox set NAME --provider age` for a shared one,
 `fnox -P HOSTNAME set NAME --provider host` for one server's, the value on standard input. The

@@ -22,12 +22,11 @@ import (
 	"github.com/zadykian/ws/roles/client/values"
 )
 
-// serverSecretsRun runs the server's task secrets, which fetches the secrets repository and runs
-// the bootstrap with the secrets, as root, by the server's own mise.
-var serverSecretsRun = []string{"sudo", "env", "MISE_DATA_DIR=/usr/local/share/mise", "MISE_LOCKED=1", "mise", "-C",
-	"/opt/ws/roles/server", "run", "secrets"}
+// serverSecretsRun runs the server's own ws, as root, in its setup with the secrets. Its task
+// fetches the secrets repository on a first run, then runs the bootstrap under it.
+var serverSecretsRun = []string{"/usr/local/bin/ws", "server", "setup", "--secrets"}
 
-// newSecretsAddCmd returns ws client macos secrets add.
+// newSecretsAddCmd returns ws client secrets add.
 func newSecretsAddCmd(p enginecli.Env, server *string) *cobra.Command {
 	var address string
 	var port int
@@ -40,8 +39,9 @@ func newSecretsAddCmd(p enginecli.Env, server *string) *cobra.Command {
 			"repository, it makes the key the hostname's recipient in fnox.toml and in fnox.HOSTNAME.toml, and " +
 			"encrypts their values again, which asks for the Nano's PIN and a touch. It keeps the key as the " +
 			"repository's read-only deploy key, titled with the hostname, and lands the change by a pull request " +
-			"once its checks pass. It then runs the server's task secrets over ssh -t. Last, it prints each host key " +
-			"that the secrets hold and known_hosts gives no host, to drop by hand where no server holds it now. " +
+			"once its checks pass. It then runs ws server setup --secrets on the server over ssh -t, which fetches " +
+			"the secrets on a first run. Last, it prints each host key that the secrets hold and known_hosts " +
+			"gives no host, to drop by hand where no server holds it now. " +
 			"Each step changes nothing where it is done, so run it again where one fails.",
 		Args: cobra.ExactArgs(1),
 		RunE: func(c *cobra.Command, args []string) error {
@@ -76,7 +76,7 @@ func runSecretsAdd(c *cobra.Command, p enginecli.Env, server, name, address stri
 		return err
 	}
 	if _, err := p.Machine.Stat(keyFile); errors.Is(err, fs.ErrNotExist) {
-		return fmt.Errorf("no fnox key file %s: run ws client macos secrets init first, which keeps the Nano's "+
+		return fmt.Errorf("no fnox key file %s: run ws client secrets init first, which keeps the Nano's "+
 			"stub there", keyFile)
 	} else if err != nil {
 		return fmt.Errorf("cannot stat fnox's key file %s: %w", keyFile, err)
@@ -94,7 +94,7 @@ func runSecretsAdd(c *cobra.Command, p enginecli.Env, server, name, address stri
 	if err != nil {
 		return err
 	}
-	again := strings.Join(append([]string{"ws client macos secrets add"}, addFlags(name, address, port)...), " ")
+	again := strings.Join(append([]string{"ws client secrets add"}, addFlags(name, address, port)...), " ")
 	_, _ = fmt.Fprintf(c.OutOrStdout(), "running the bootstrap with the secrets on %s, which takes 20 to 40 "+
 		"minutes on a new server\n", name)
 	run := append(append([]string{"-t"}, target...), serverSecretsRun...)

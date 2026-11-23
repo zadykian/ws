@@ -2,8 +2,10 @@
 package cli
 
 import (
+	"cmp"
 	"os"
 	"path/filepath"
+	"runtime"
 	"runtime/debug"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -19,10 +21,17 @@ type Env struct {
 	// secrets task sets each secret input, empty where it has no value.
 	LookupEnv func(string) (string, bool)
 	Euid      int
+	// Pid names the copy that ws update checks beside the file it replaces.
+	Pid  int
+	GOOS string
+	// GOARCH names a release's binary for this machine, with GOOS.
+	GOARCH string
 	// Pwd is the directory a relative WS_VALUES is taken from.
 	Pwd string
 	// Version is this ws's version, as ws version prints it.
 	Version string
+	// Releases is the address of ws's releases, WS_RELEASES_URL or GitHub's.
+	Releases string
 	// Self returns the file this ws runs from, which the kinds name as {{ self }}.
 	Self func() (string, error)
 }
@@ -36,10 +45,19 @@ func NewEnv() Env {
 		Getenv:    os.Getenv,
 		LookupEnv: os.LookupEnv,
 		Euid:      os.Geteuid(),
+		Pid:       os.Getpid(),
+		GOOS:      runtime.GOOS,
+		GOARCH:    runtime.GOARCH,
 		Pwd:       pwd,
 		Version:   versionOf(info, ok),
+		Releases:  releasesURL(os.Getenv),
 		Self:      runningFile,
 	}
+}
+
+// releasesURL returns WS_RELEASES_URL, or GitHub's page of ws's releases, as install.sh does.
+func releasesURL(getenv func(string) string) string {
+	return cmp.Or(getenv("WS_RELEASES_URL"), "https://github.com/zadykian/ws/releases")
 }
 
 // TaskEnv returns LookupEnv in the run of the mise task named task, and else a lookup that finds

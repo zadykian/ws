@@ -24,16 +24,16 @@ func UnitCmd(p enginecli.Env) *cobra.Command { return enginecli.Unit(p, unitSide
 // unitSide returns the Mac's side of ws unit, with its facts read from p's environment.
 func unitSide(p enginecli.Env) enginecli.UnitSide {
 	return enginecli.UnitSide{Dir: unitsDir, System: kind.MacOS,
-		Values: func(ctx context.Context, m effect.Machine) (any, effect.Machine, error) {
+		Values: func(ctx context.Context, m effect.Machine) (any, error) {
 			if p.Euid == 0 {
 				// As root, a unit's file of the home would be root's, and its read would ask nothing.
-				return nil, nil, errors.New("run it as yourself, not root: it asks sudo where it needs root")
+				return nil, errors.New("run it as yourself, not root: it asks sudo where it needs root")
 			}
 			f, err := facts.Read(ctx, m, p.Getenv, p.Pwd)
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
-			return f, m, nil
+			return f, nil
 		},
 		User: func(data any) string { return data.(facts.Mac).User }}
 }

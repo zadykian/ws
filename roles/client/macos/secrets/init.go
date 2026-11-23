@@ -27,7 +27,7 @@ const (
 	inputsTitle = "chore: declare the inputs of a newer release"
 )
 
-// Init sets the secrets repository up, as ws client macos secrets init does. It writes the Nano's
+// Init sets the secrets repository up, as ws client secrets init does. It writes the Nano's
 // and a backup's recipients, and declares each input of the tree's server roles, empty.
 type Init struct {
 	M      effect.Machine
@@ -58,8 +58,8 @@ func (i Init) Run(ctx context.Context) error {
 	}
 	for _, tool := range []string{fnoxBin, Plugin} {
 		if _, err := i.M.Stat(tool); err != nil {
-			return fmt.Errorf("no %s: run MISE_LOCKED=1 mise -C %s/roles/client bootstrap first, which puts fnox and "+
-				"age-plugin-yubikey in /usr/local/bin", tool, i.Tree)
+			return fmt.Errorf("no %s: run ws client setup first, which puts fnox and "+
+				"age-plugin-yubikey in /usr/local/bin", tool)
 		}
 	}
 	keyFile, err := KeyFile(i.Getenv)

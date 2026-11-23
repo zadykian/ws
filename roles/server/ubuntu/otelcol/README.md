@@ -40,7 +40,7 @@ node_exporter is Ubuntu's `prometheus-node-exporter`, without its recommends. It
 `hwmon` and `thermal_zone` collectors and without its own Go and process metrics. Its arguments are
 in `/etc/default/prometheus-node-exporter`, which mise writes before it installs the package
 (`phase = "pre-packages"`), as the package starts node_exporter at once. A change restarts the
-service where systemd is booted. dpkg keeps that file and puts the package's beside it,
+service. dpkg keeps that file and puts the package's beside it,
 as `.dpkg-dist`. Its metrics keep their Prometheus names, such as `node_hwmon_temp_celsius`, with
 `service.name` `node` and the host's name. A VM has no temperatures or fans to read, so there they
 are missing.
@@ -84,5 +84,4 @@ collector.
 
 The collector answers its health check a few seconds after it starts, at most 60. The unit
 `state/otelcol-health` waits for that: a collector that cannot start, such as one whose OTLP port
-another process holds, fails the run there. Without systemd booted, as in CI's container, the
-service and the wait skip.
+another process holds, fails the run there.

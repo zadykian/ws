@@ -30,7 +30,6 @@ func exitError(t *testing.T, code string) error {
 }
 
 func installOf(m *effecttest.Machine) Install {
-	m.Dirs["/run/systemd/system"] = 0o755
 	v := good()
 	v.Floors = []string{"10.20.0.0/16"}
 	return Install{M: m, Out: &effecttest.Out{}, Values: v, InRun: true,
@@ -142,16 +141,5 @@ func TestReadyFailsOnAnEmptyProfile(t *testing.T) {
 	}
 	if err := installOf(effecttest.NewMachine()).Ready(); err != nil {
 		t.Errorf("ready = %v on a whole profile", err)
-	}
-}
-
-func TestInstallSaysThatSystemdIsNotRunning(t *testing.T) {
-	m := effecttest.NewMachine()
-	i := installOf(m)
-	delete(m.Dirs, "/run/systemd/system")
-	out := i.Out.(*effecttest.Out)
-	if changes, err := i.Plan(t.Context()); err != nil || len(changes) != 0 || len(out.Lines) != 1 ||
-		!strings.Contains(out.Lines[0], "systemd") {
-		t.Errorf("plan = %v, %v, said %q; want nothing and the reason", changes, err, out.Lines)
 	}
 }

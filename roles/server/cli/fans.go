@@ -13,10 +13,10 @@ import (
 	fans "github.com/zadykian/ws/roles/server/ubuntu/fans/daemon"
 )
 
-// fansConfig is the config of ws server ubuntu fans, which the fans role writes.
+// fansConfig is the config of ws server fans, which the fans role writes.
 const fansConfig = "/etc/ws/fans.json"
 
-// newFansCmd returns ws server ubuntu fans: the board's fans on the curves of the config, until
+// newFansCmd returns ws server fans: the board's fans on the curves of the config, until
 // SIGTERM or SIGINT, then back on the board's own curves. Its log goes to stderr, the journal's.
 func newFansCmd(p enginecli.Env) *cobra.Command {
 	return &cobra.Command{

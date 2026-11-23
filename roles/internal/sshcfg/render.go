@@ -18,8 +18,10 @@ type Host struct {
 	Name string
 	// Addr is the tunnel's end, the server's address on it.
 	Addr netip.Addr
-	User string
 }
+
+// User is the login of every server: root alone.
+const User = "root"
 
 // Inputs are what /etc/ws/ssh_config's text depends on.
 type Inputs struct {
@@ -61,7 +63,7 @@ Host %[1]s
     User %[3]s
     HostKeyAlias %[1]s
 %[4]s    ServerAliveInterval 30
-`, h.Name, h.Addr, h.User, identityLines(in))
+`, h.Name, h.Addr, User, identityLines(in))
 		if in.CldTabs {
 			b.WriteString(cldLines)
 		}

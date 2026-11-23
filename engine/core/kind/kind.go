@@ -40,7 +40,7 @@ type Env struct {
 	Data   any
 	System System
 	// Self is the path of the ws that runs the units. A spec names it by self to run a command of
-	// ws, as the pinned binary may not be installed yet.
+	// ws by that ws, wherever its file is.
 	Self string
 	// User is the account that ws runs as on the Mac, where a run state's command of that user
 	// needs no sudo. Empty on the server, which runs as root.

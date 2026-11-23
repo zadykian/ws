@@ -22,27 +22,26 @@ which only root reads; nothing else needs it. Reach the UI through an SSH tunnel
 `http://localhost:3301`:
 
 ```sh
-ssh -N -L 3301:127.0.0.1:3301 WS_USER@SERVER
+ssh -N -L 3301:127.0.0.1:3301 root@SERVER
 ```
 
 A `LocalForward 3301 127.0.0.1:3301` in the client's `~/.ssh/config` does the same.
 
 mise copies the files first, `/etc/ws/env` among them. Then ws's units (`units.toml.tmpl`) run in
-this order, after Docker's and the frame's `state/ws-binary`. otelcol's units, which read
+this order, after Docker's. otelcol's units, which read
 `/etc/ws/env`, hang below the sync:
 
-- `state/signoz-password` runs `ws server ubuntu signoz password` where its `--check` fails: where
+- `state/signoz-password` runs `ws server signoz password` where its `--check` fails: where
   `root.env` is missing, or has another owner or mode.
 - `compose/signoz`, of the kind `compose`, ups the project. It keeps the SHA-256 of the files in
   `/opt/signoz`, `root.env` included, in `/var/lib/ws/compose/signoz`. Where they differ from the
   last good up, as after a new password or a forge, it recreates every container. A container
   would not see a bind-mounted file's change otherwise. Otherwise it ups only where a service that
   keeps running is down, as an up runs the schema migrator again.
-- `state/signoz-sync` runs `ws server ubuntu signoz sync` where its `--check` fails: it waits for
+- `state/signoz-sync` runs `ws server signoz sync` where its `--check` fails: it waits for
   the API, then sets the retention and the dashboards.
 
-Without systemd booted, as in CI's container, the three skip and say so, and `root.env` is not
-written. otelcol's units wait on the sync.
+otelcol's units wait on the sync.
 
 ## Retention
 
@@ -50,7 +49,7 @@ SigNoz keeps traces, metrics and logs for 90 days, `WS_SIGNOZ_RETENTION_DAYS`; i
 days, and 30 for metrics. The role sets it through SigNoz's API before anything is sent, as a change
 applies only to data that comes in after it. It sets it after SigNoz's schema migrator has finished
 too, as the migrator sets its own. Settings › General in the UI shows it; rules set there to keep
-some logs for another time stay. `sudo ws server ubuntu signoz sync --check` reads it and reports
+some logs for another time stay. `ws server signoz sync --check` reads it and reports
 what it would change, and skips it where SigNoz isn't running.
 
 ## The dashboards
@@ -99,7 +98,7 @@ for a newer release. It never removes a file, hence the `rm`.
 
 A new SigNoz may return the dashboards with fields added or dropped, and the role would then replace
 them on every run. So after changing SigNoz's image, unlock any dashboard locked in the UI, reported
-or not, as the refresh stops at one. Then run `sudo ws server ubuntu signoz sync`, refresh
+or not, as the refresh stops at one. Then run `ws server signoz sync`, refresh
 `host.json` and `claude.json` from SigNoz as
 `roles/server/ubuntu/signoz/internal/dashboards/dashboards/README.md` says,
 review their diff, and commit them with the casting. A second run must then leave both dashboards as

@@ -9,7 +9,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // modprobeName is a module's name as modprobe takes it: no path, and no leading dash that would
@@ -19,8 +18,7 @@ var modprobeName = regexp.MustCompile(`^[a-z0-9_][a-z0-9_-]*$`)
 // dkmsModules unloads the modules that hold a dkms unit's device, and loads its own. With Secure
 // Boot on, the kernel refuses a module that DKMS built until DKMS's key is enrolled, by hand at the
 // console. The run says so and goes on. A refusal is marked in /run, which the reboot that enrolls
-// the key clears, so that the runs between plan no load. Without booted systemd, as in CI's
-// container, it loads nothing.
+// the key clears, so that the runs between plan no load.
 type dkmsModules struct {
 	m      effect.Machine
 	out    effect.Out
@@ -42,10 +40,6 @@ func (d dkmsModules) loaded(name string) (bool, error) {
 }
 
 func (d dkmsModules) Plan(context.Context) ([]resource.Change, error) {
-	if !systemd.Booted(d.m) {
-		d.out.Say("load of %s: skipped, systemd is not running", d.load)
-		return nil, nil
-	}
 	var changes []resource.Change
 	for _, name := range d.unload {
 		if held, err := d.loaded(name); err != nil {

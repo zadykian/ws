@@ -10,7 +10,7 @@ import (
 
 func inputs() sshcfg.Inputs {
 	return sshcfg.Inputs{
-		Hosts:    []sshcfg.Host{{Name: "ws", Addr: netip.MustParseAddr("10.99.0.1"), User: "me"}},
+		Hosts:    []sshcfg.Host{{Name: "ws", Addr: netip.MustParseAddr("10.99.0.1")}},
 		Patterns: "UseKeychain", IdentityPub: "~/.ssh/id_ed25519.pub",
 	}
 }
@@ -19,7 +19,7 @@ func TestConfigHoldsOneHostAtTheTunnelsEnd(t *testing.T) {
 	got := sshcfg.Config(inputs())
 	for _, want := range []string{
 		"IgnoreUnknown UseKeychain\n",
-		"Host ws\n    HostName 10.99.0.1\n    Port 22\n    User me\n    HostKeyAlias ws\n",
+		"Host ws\n    HostName 10.99.0.1\n    Port 22\n    User root\n    HostKeyAlias ws\n",
 		"    IdentityFile ~/.ssh/id_ed25519\n    IdentitiesOnly yes\n    UseKeychain yes\n",
 		"    ServerAliveInterval 30\n",
 	} {
@@ -53,7 +53,7 @@ func TestConfigCldTabs(t *testing.T) {
 
 func TestConfigOneHostRendersItsWholeBlock(t *testing.T) {
 	want := "# ws through the tunnel. One known_hosts entry, ws's. 30 s between checks, 3 of them unanswered\n" +
-		"# before ssh gives up.\nHost ws\n    HostName 10.99.0.1\n    Port 22\n    User me\n    HostKeyAlias ws\n" +
+		"# before ssh gives up.\nHost ws\n    HostName 10.99.0.1\n    Port 22\n    User root\n    HostKeyAlias ws\n" +
 		"    IdentityFile ~/.ssh/id_ed25519\n    IdentitiesOnly yes\n    UseKeychain yes\n    AddKeysToAgent yes\n" +
 		"    ServerAliveInterval 30\n"
 	if got := sshcfg.Config(inputs()); !strings.HasSuffix(got, "\n\n"+want) {
@@ -65,8 +65,8 @@ func TestConfigTwoHostsInNameOrder(t *testing.T) {
 	in := inputs()
 	in.CldTabs = true
 	in.Hosts = []sshcfg.Host{
-		{Name: "ws", Addr: netip.MustParseAddr("10.99.0.1"), User: "me"},
-		{Name: "lab", Addr: netip.MustParseAddr("10.99.1.1"), User: "root"},
+		{Name: "ws", Addr: netip.MustParseAddr("10.99.0.1")},
+		{Name: "lab", Addr: netip.MustParseAddr("10.99.1.1")},
 	}
 	got := sshcfg.Config(in)
 	lab, ws := strings.Index(got, "\nHost lab\n"), strings.Index(got, "\nHost ws\n")

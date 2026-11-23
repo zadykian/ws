@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -45,10 +44,6 @@ func (s Dashboards) Plan(ctx context.Context) (step.Plan, error) {
 			return step.Plan{}, err
 		}
 		files[n], bodies[n] = d, body
-	}
-	if !systemd.Booted(s.M) {
-		s.Out.Say("%s: skipped, systemd is not running", s.Name())
-		return step.Plan{}, nil
 	}
 	have, err := s.list(ctx)
 	if err != nil {

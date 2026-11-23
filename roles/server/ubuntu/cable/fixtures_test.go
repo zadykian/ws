@@ -25,10 +25,9 @@ func rigMachine() *effecttest.Machine {
 	return m
 }
 
-// portMachine is rigMachine, booted, with the port enp5s0, no default route and networkd running.
+// portMachine is rigMachine with the port enp5s0, no default route and networkd running.
 func portMachine() (*effecttest.Machine, *effecttest.Units) {
 	m := rigMachine()
-	m.Dirs["/run/systemd/system"] = 0o755
 	m.Dirs["/sys/class/net/enp5s0"] = 0o755
 	m.Results[ipPrefix+"-4 route show default table all"] = effecttest.Result{Out: []byte("[]")}
 	m.Results[ipPrefix+"-6 route show default table all"] = effecttest.Result{Out: []byte("[ ]")}

@@ -9,7 +9,6 @@
 	<array>
 		<string>/usr/local/bin/ws</string>
 		<string>client</string>
-		<string>macos</string>
 		<string>tunnel</string>
 		<string>run</string>
 		<string>--server</string>

@@ -1,69 +1,43 @@
 # Checks
 
-In a stack, CI runs `playbook`, `rootless`, `mac` and `mac-cld`, its longest jobs, on
-the top pull request alone, as it holds every change below it. `lint`, `install` and `signoz` run
-on each. A stack opens as drafts, as a pull request opens before its link, and only a later event
-names the stack. So these four skip a draft's `opened` run and start on `ready_for_review`, which
-the other three skip. A newer push to a pull request cancels the runs of the push before it.
-The checks of `rootless`, `mac-cld` and a Mac's servers have pages: [rootless](rootless.md),
-[mac-cld](mac-cld.md) and [mac-servers](mac-servers.md). So have [the gates](../../.tools/README.md).
-
-## The `playbook` job
-
-CI also builds ws from the tree, never from a release, in an Ubuntu 26.04 container with no git, so
-the build is `devel`. It copies the checkout to `/opt/ws`, root's alone, and
-[`.tools/serve-build`](../../.tools/serve-build) points its pin at the build, served on loopback
-in the release's place ([The pin](../../roles/server/ubuntu/frame/README.md#the-pin)). As
-`zadykian` and as root, a cloud VM's user, `install.sh` installs the pinned mise and runs the
-bootstrap on that tree in place, with `MISE_LOCKED=1` and install.sh's `MISE_DATA_DIR`
-([bootstrap.sh](../bootstrap.sh)). The runs by hand alone set the variable, so the first
-bootstrap fails at its guard where install.sh drops it. The bootstrap runs twice, the second from
-root's home. The parts and units that need booted systemd skip and say so. `mise bootstrap plan
---detailed-exitcode` must exit 0 before the second bootstrap, as that run would mend what it
-finds, and again after it. With the frame's line of `state/ws-binary` dropped, it must exit 1
-([playbook-plan.sh](../playbook-plan.sh)): the check against a silent skip holds. A plan from
-`/opt/ws`, which loads no role, must exit 1 too, and name the run directory. Then `nft -c`, with
-the container's NET_ADMIN, checks the outbound table the run wrote and the users it names, and a
-find that the user owns its home. The Zed wrapper's [checks](../zed-terminal-checks.sh) run on the
-files it installed, and Fresh's on the config it loaded. The user's empty commit must sign and
-verify. Root's leg has no table, and the run leaves out its own check
-([Outbound](../../roles/server/ubuntu/security/README.md#outbound)). The default user's leg starts
-with no values file, so its first run writes one, and root's leg writes its own. After both runs,
-the file is root's at 600, and root's keeps its bytes ([The values
-file](../../roles/server/ubuntu/frame/README.md#the-values-file)). In the container, base's swap
-file is off, as the swap is the host's. With no NVIDIA GPU, `nvidia` checks its names alone, and
-with no MSI board, `fans` leaves its fans alone. Without a VPN profile, `ikeward` does nothing.
-
-The container is set up as a machine is, so that no step of CI warns. It carries `container`, as
-systemd's container interface does, so procps leaves the kernel's read-only settings alone. dpkg
-keeps the man pages, and chrony's log directory is there before its install. The steps run with
-root's home, not the job's, which would reach the runner's own Docker client. Each checkout names
-the branch of its `git init`, as a machine's git config does.
+In a stack, CI runs `server`, `client` and `client-cld`, its longest jobs, on
+the top pull request alone, as it holds every change below it, and only where the stack rests on
+`main`. `install` and `signoz` run on each pull request of such a stack, and `lint` on every pull
+request. So a pull request onto another branch, such as an integration branch, takes `lint` alone
+of the six: that branch's pull request to `main` runs the rest.
+A stack opens as drafts, as a pull request opens before its link, and only a later event
+names the stack. So the longest three skip a draft's `opened` run and start on `ready_for_review`,
+which `lint` skips. `install` and `signoz` start there too above a stack's bottom, and skip it
+where they ran as the pull request opened. A newer push to a pull request cancels the runs of
+the push before it.
+The checks of `server`, `client-cld` and a Mac's servers have pages: [server](server.md),
+[client-cld](client-cld.md) and [client-servers](client-servers.md). So have [the gates](../../.tools/README.md).
 
 ## The warnings check
 
-[warnings-check.sh](../warnings-check.sh) fails where a bootstrap or a plan of `playbook` or
-`rootless` prints a warning, the secrets task's runs and plans in `rootless` too. It reads a
+[warnings-check.sh](../warnings-check.sh) fails where a bootstrap or a plan of `server`
+prints a warning, the secrets task's runs and plans too. It reads a
 run's log, or runs the command and shows its output as it runs. A warning is a line that says
 warn, hint, notice, deprecated, error, cannot, unable, could not or ignoring, as a word alone, or
 starts as apt's `W:` and `E:` do. mise's colors don't hide one. The check names each line it
-finds and exits 1, and it keeps a plan's own exit code.
+finds and exits 1. A plan's exit 2, its answer, turns to 1 as well, but a command that fails
+keeps its own exit code.
 
-It allows a few lines where systemd has not booted, each named and justified in the script. They
-come from what a container lacks: an init that tells a package's script the runlevel, and an
-`/etc/resolv.conf` that Docker doesn't bind-mount. On the rootless job's booted runner, it allows
-none. Its test, [warnings-check-test.sh](../warnings-check-test.sh), runs in `lint`, on a log with
-warnings and on one without.
+It allows no line. Its test, [warnings-check-test.sh](../warnings-check-test.sh), runs in
+`lint`, on a log with warnings and on one without.
 
 ## The install script
 
-CI runs `install.sh` with mise's real binary, served on loopback, and a small repository for the
-release's tree. It checks that `install.sh` installs mise, refuses a wrong one and runs the
-bootstrap ([The install job](release.md#the-install-job)).
+CI runs `install.sh` with a stub of ws for each target, served on loopback. It checks that
+`install.sh` installs each stub, refuses a wrong sum and a missing file, and makes and checks
+`/usr/local/bin`. It runs `ws update` too, with a real build of the tree as the ws that runs. The
+update must move a build to a release and run its setup, and the autoinstall file must fill and
+pass cloud-init's schema ([The install job](release.md#the-install-job)). The `client` job runs it on macOS with
+the tree's build ([16-install.sh](../client/16-install.sh)).
 
 ## The release
 
-`release.yml` runs `ci.yml` and `mac.yml` on a tag before it publishes
+`release.yml` runs `ci.yml` and `client.yml` on a tag before it publishes
 ([Cutting a release](release.md#cutting-a-release)).
 
 ## SigNoz's compose files
@@ -87,40 +61,45 @@ nothing. fnox must encrypt a value to the Nano's recipient with no YubiKey, and 
 SSH key that is a recipient too. Case 87 checks [the zsh hook](../../roles/client/macos/ghostty/README.md#the-zsh-hook): `zsh -i` must
 reset at each prompt, and the alternate screen after a 255 from `ssh` or from `cld --host` alone.
 
-CI also sets up a Mac, by [its cases](../mac), in the order of [The
+CI also sets up a Mac, by [its cases](../client), in the order of [The
 Mac](../../roles/client/README.md). A stand-in cld, which cld's unit leaves alone, spares the
-job's runs its download. Then `mise -C /opt/ws/roles/client bootstrap` with
+job's runs its download. Then `ws client setup --in-place` with
 [the Mac's frame](../../roles/client/macos/frame/README.md) runs as the runbook runs it, on the
-tree in `/opt/ws` with ws's build served as the pin ([mac-mise.sh](../mac-mise.sh)). It links the
-tree's plugin as the runbook does, and makes `/opt` and `/usr/local/share` root's and 755, as on
+tree in `/opt/ws`, with ws's build in `/usr/local/bin` ([client-mise.sh](../client-mise.sh)). Its plan
+before the first run must exit 2. Setup installs mise and links the tree's plugin as the runbook
+does. The case makes `/opt` and `/usr/local/share` root's and 755 first, as on
 a Mac, where the runner's image may differ. It sets up
-ssh, git and cld too. Its plan must exit 0 after the first run, a second run must call no sudo,
-and `/usr/local/bin/ws` must be the build. A spec whose unit no line names must fail the plan,
-and so must a plan from `/opt/ws` with every unit in sync.
+ssh, git and cld too. The plan must exit 0 after the first run, a second run must call no sudo,
+and `/usr/local/bin/ws` must be root:wheel at 755. A spec whose unit no line names must fail the plan,
+and so must a plan from `/opt/ws` with every unit in sync. After the first run the firewall must
+be on and block all incoming ([the Mac's firewall](../../roles/client/macos/firewall/README.md)).
+The cases after it, whose stand-ins listen on loopback, pass unchanged under it.
 The job's `values.yml` names a file key, made in case 20, as ws's
 login key and git's. Without ws's WireGuard key, the bootstrap must make the Mac's key, with
 `/etc/ws/tunnel.pub` its public half, and load no daemon, and `ssh -G ws` gives the tunnel's end.
 With a stand-in's key it must load and run the daemon, which runs `/usr/local/bin/ws`. A second
 run must call no sudo, and its plan exit 0. The stand-in for ws is a second wireguard-go on the
 runner, with the Mac's key as its peer. It answers on loopback both as the LAN and as
-`WS_REMOTE`, and `ws client macos tunnel status` must show a handshake on each in turn. The daemon
+`WS_REMOTE`, and `ws client tunnel status` must show a handshake on each in turn. The daemon
 must take the SIGHUPs for a new `tunnel.conf` and its `routes.d` in place, with the same pid. Then
-a network that `ws client macos tunnel routes --server ws` adds must be routed into the daemon's
-utun, and a domain `ws client macos resolver` adds must show in `scutil --dns`. `ws client macos
-tunnel loaded`, `ws client macos tunnel routes` and `ws client macos resolver` must do the same,
-with `--check` showing the diff and writing nothing ([mac-ws-checks.sh](../mac-ws-checks.sh)).
+a network that `ws client tunnel routes --server ws` adds must be routed into the daemon's
+utun, and a domain `ws client resolver` adds must show in `scutil --dns`. `ws client
+tunnel loaded`, `ws client tunnel routes` and `ws client resolver` must do the same,
+with `--check` showing the diff and writing nothing ([client-ws-checks.sh](../client-ws-checks.sh)).
 Next, the server's `WS_TUNNEL_NETWORKS` and `WS_RESOLVERS` must give a route and a resolver
-through the bootstrap, each named by `ws client macos networks --check` first. The plan after it
+through the bootstrap, each named by `ws client networks --check` first. The plan after it
 must exit 0, and a fourth nameserver must be refused. Emptied or removed, the keys must take both
-back, and spare a script's own ([mac-conf-checks.sh](../mac-conf-checks.sh)). With
-`WS_CABLE_SERVICE` empty, `ws client macos cable` must print nothing. Set, it must run one
+back, and spare a script's own ([client-conf-checks.sh](../client-conf-checks.sh)). With
+`WS_CABLE_SERVICE` empty, `ws client cable` must print nothing. Set, it must run one
 `networksetup -setmanual`, a stand-in's, through sudo, and then none. It must warn of a disabled
 service. It must stop on one networksetup lacks, or one with a router outside the cable's `/30`.
 It must stop too on a `-setmanual` that fails or changes nothing, and name what differs
-([mac-setup-checks.sh](../mac-setup-checks.sh)).
-The cases of the keys run `mise -C /opt/ws/roles/client bootstrap` with an edited `values.yml`, and
-read the files it writes ([56-keys.sh](../mac/56-keys.sh)). A refusal must fail the bootstrap and
-its plan with its reason, and change no file. `ssh -G` must give `ws` the file key that the job's
+([client-setup-checks.sh](../client-setup-checks.sh)).
+The cases of the keys run mise's bootstrap with an edited `values.yml`, and
+read the files it writes ([56-keys.sh](../client/56-keys.sh)). A refusal must fail the bootstrap and
+its plan with its reason, and change no file. With the server's `WS_LAN_ADDRESS` dropped, the plan
+must fail and name it and its file, as the frame's check of the values does
+([89-values-check.sh](../client/89-values-check.sh)). `ssh -G` must give `ws` the file key that the job's
 `values.yml` names, by its four lines, and the file or the agent that `WS_IDENTITY_PUB_KEY` and
 `WS_IDENTITY_AGENT` name. An empty `WS_IDENTITY_PUB_KEY` must stop, though an agent at Secretive's
 socket holds a P-256 key. It gives the line that names each P-256 key by ws's copy of its `.pub`.
@@ -128,16 +107,16 @@ socket holds a P-256 key. It gives the line that names each P-256 key by ws's co
 `ssh -G` must give `ws` the agent and the copy, which a run writes where none exists. A `.pub` that
 is missing or unreadable must stop too. So must one that holds a private key, a certificate, a line
 that is no key, or a key that ws's OpenSSH lacks
-([mac-identity-checks.sh](../mac-identity-checks.sh)). `/usr/local/bin/gh` must be mise's gh, root's
+([client-identity-checks.sh](../client-identity-checks.sh)). `/usr/local/bin/gh` must be mise's gh, root's
 and 0755, in place of one there, and a bootstrap that changes nothing must call no sudo. With a file
 key, git must sign a commit and verify it, with gh as GitHub's credential command. A `~/.gitconfig`
 must get the include of `/etc/ws/gitconfig` at its top, once, and keep its own lines, its mode and a
 copy. An include below them, a second one or a link must stop the bootstrap, as must a signing key
 that is empty, missing or more than a public key. With a key of Secretive's, git must sign through
 ws's wrapper whatever `SSH_AUTH_SOCK` names, and `ws` keep the file key
-([mac-git-checks.sh](../mac-git-checks.sh)). Last, after a second server's cases, one more bootstrap
+([client-git-checks.sh](../client-git-checks.sh)). Last, after a second server's cases, one more bootstrap
 must call no sudo, and its plan and `mise dot status --missing` must exit 0
-([96-converged.sh](../mac/96-converged.sh)). Where wireguard-go makes no utun, the job fails, as the
+([96-converged.sh](../client/96-converged.sh)). Where wireguard-go makes no utun, the job fails, as the
 daemon's device makes a utun too.
 
 ## The rules

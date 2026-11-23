@@ -24,7 +24,7 @@ func textMachine() *effecttest.Machine {
 
 // host is ws's block at slot.
 func host(slot string) sshcfg.Host {
-	return sshcfg.Host{Name: "ws", Addr: values.Conf{Slot: slot}.TunnelSlot().Server(), User: "me"}
+	return sshcfg.Host{Name: "ws", Addr: values.Conf{Slot: slot}.TunnelSlot().Server()}
 }
 
 // TestTextNamesTheTunnelsAddress pins the literals at slots 0 and 1. The tunnel's address is part of
@@ -38,9 +38,18 @@ func TestTextNamesTheTunnelsAddress(t *testing.T) {
 	}
 }
 
+func TestTextRefusesAHostThatSSHLogsInAsAnotherUser(t *testing.T) {
+	m := textMachine()
+	m.Results["ssh -T -G -F /tmp/x/whole ws"] = effecttest.Result{Out: []byte("user me\nhostname 10.99.0.1\n")}
+	_, err := ssh.Text(t.Context(), m, "/h", keys.NamedKey{Pub: "~/.ssh/id.pub"}, []sshcfg.Host{host("0")})
+	if err == nil || !strings.Contains(err.Error(), "ssh reads ws as user me") {
+		t.Errorf("Text = %v, want a refusal of the user", err)
+	}
+}
+
 func TestTextRefusesAHostThatSSHReadsElsewhere(t *testing.T) {
 	m := textMachine()
-	m.Results["ssh -T -G -F /tmp/x/whole ws"] = effecttest.Result{Out: []byte("user me\nhostname 10.99.7.1\n")}
+	m.Results["ssh -T -G -F /tmp/x/whole ws"] = effecttest.Result{Out: []byte("user root\nhostname 10.99.7.1\n")}
 	_, err := ssh.Text(t.Context(), m, "/h", keys.NamedKey{Pub: "~/.ssh/id.pub"}, []sshcfg.Host{host("0")})
 	if err == nil || !strings.Contains(err.Error(), "ssh reads ws as hostname 10.99.7.1") {
 		t.Errorf("Text = %v, want a refusal of ws's address", err)

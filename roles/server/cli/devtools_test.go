@@ -14,7 +14,7 @@ import (
 // the file before it, and a plan writes nowhere. Elsewhere a stale variable counts for nothing, and
 // the file's token stands.
 func TestDevtoolsGHLoginTakesTheTokenInputInTheSecretsTask(t *testing.T) {
-	gh := "env HOME=/root env -u " + strings.Join(secretInputs, " -u ") + " gh"
+	gh := "env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin env -u " + strings.Join(secretInputs, " -u ") + " gh"
 	for i, c := range []struct {
 		env    map[string]string
 		status int
@@ -24,11 +24,11 @@ func TestDevtoolsGHLoginTakesTheTokenInputInTheSecretsTask(t *testing.T) {
 		{map[string]string{"MISE_TASK_NAME": "secrets", "WS_GITHUB_TOKEN": ""}, 0},
 		{map[string]string{"WS_GITHUB_TOKEN": "dummy-b"}, 0},
 	} {
-		p, m := valuesProcess("---\nWS_USER: root\n")
+		p, m := valuesProcess("---\n")
 		p = clitest.WithEnv(p, c.env)
 		m.Files[devtools.TokenFile] = []byte("# Written by github.com/zadykian/ws\ndummy-a\n")
 		m.Results[gh+" auth token -h github.com"] = effecttest.Result{Out: []byte("dummy-a\n")}
-		status, stdout, stderr := runWs(p, "", "server", "ubuntu", "devtools", "gh-login", "--check")
+		status, stdout, stderr := runWs(p, "", "server", "devtools", "gh-login", "--check")
 		if status != c.status || strings.Contains(stdout+stderr, "dummy") {
 			t.Errorf("case %d: status = %d, stdout %q, stderr %q; want %d", i, status, stdout, stderr, c.status)
 		}
@@ -40,11 +40,11 @@ func TestDevtoolsGHLoginTakesTheTokenInputInTheSecretsTask(t *testing.T) {
 
 // The login gives gh the input's token on its input, and names no value in a command or a line.
 func TestDevtoolsGHLoginLogsInByTheInput(t *testing.T) {
-	gh := "env HOME=/root env -u " + strings.Join(secretInputs, " -u ") + " gh"
-	p, m := valuesProcess("---\nWS_USER: root\n")
+	gh := "env -i -C /root HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin env -u " + strings.Join(secretInputs, " -u ") + " gh"
+	p, m := valuesProcess("---\n")
 	p = clitest.WithEnv(p, map[string]string{"MISE_TASK_NAME": "secrets", "WS_GITHUB_TOKEN": "dummy-b"})
 	m.Results[gh+" auth login -h github.com -p https --insecure-storage --with-token"] = effecttest.Result{}
-	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "devtools", "gh-login")
+	status, stdout, stderr := runWs(p, "", "server", "devtools", "gh-login")
 	if status != 0 || strings.Contains(stdout+stderr, "dummy") || !slices.Equal(m.Inputs, []string{"dummy-b\n"}) {
 		t.Errorf("status = %d, stdout %q, stderr %q, inputs %d", status, stdout, stderr, len(m.Inputs))
 	}

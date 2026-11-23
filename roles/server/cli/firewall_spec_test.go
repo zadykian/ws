@@ -9,8 +9,8 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-// firewallFile holds mise's firewall, which loads on a booted machine alone.
-const firewallFile = rolesDir + "/security/mise.booted.toml"
+// firewallFile holds mise's firewall.
+const firewallFile = rolesDir + "/security/mise.server.toml"
 
 // sshRule is mise's rule that lets SSH in, whole. Once ufw denies what comes in, the maintainer's
 // login hangs on it: a source, another port, protocol or action would lock them out.

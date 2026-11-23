@@ -1,13 +1,13 @@
 #!/bin/bash
-# The rootless job's cases of the secrets task, as root on the runner that rootless-checks.sh set
-# up (.github/workflows/rootless.md). A bare repository on disk stands in for GitHub's, and the
+# The server job's cases of the secrets task, as root on the runner that server-checks.sh set up
+# (.github/workflows/server.md). A bare repository on disk stands in for GitHub's, and the
 # runner's host key opens its values, as a server's does. Each refusal keeps the secret file, and
 # no output of the task's holds a value. Then the files that the roles' inputs write.
 set -euo pipefail
 
-user=zadykian
-home=/home/$user
-export HOME=/root MISE_LOCKED=1 MISE_DATA_DIR=/usr/local/share/mise
+# The runner's sudo keeps the runner's XDG_CONFIG_HOME, which would send gh to the runner's home.
+unset XDG_CONFIG_HOME
+export HOME=/root
 check=$(cd "$(dirname "$0")" && pwd)/warnings-check.sh
 work=$(mktemp -d)
 trap 'rm -rf -- "$work"' EXIT
@@ -33,16 +33,8 @@ refused() {
     echo "ok: $name"
 }
 
-as() {
-    runuser -u "$user" -- env -C "$home" HOME="$home" "$@"
-}
-
-quiet() {
-    "$@" >/dev/null 2>&1
-}
-
 # The repository, which the runner's own mise files point the task at. mise.local.toml is
-# .tools/serve-build's, which git ignores. mise.secrets.toml loads under the env secrets alone, as
+# a file that git ignores. mise.secrets.toml loads under the env secrets alone, as
 # a role's does: two inputs, one shared and one of the profile, make one file of root's.
 printf '\n[env]\nWS_SECRETS_REPO = "%s"\n' "$work/secrets.git" >>/opt/ws/mise.local.toml
 cat >/opt/ws/mise.secrets.toml <<'TOML'
@@ -121,10 +113,13 @@ for name in $inputs; do
 done
 publish "ci: seed the secrets"
 
-# task runs the secrets task as the runbook gives it, and keeps its output in $work/out. boot runs
-# the bootstrap without the env secrets, and keeps its output there too.
+# The runbook's form of a run under the secrets, on the tree in place, as the job's own run of
+# the bootstrap has it. Its task, the secrets', clones on the first run.
+setup=(/usr/local/bin/ws server setup --in-place --secrets)
+# task runs the secrets task by setup, with its --plan or no argument, and keeps its output in
+# $work/out. boot runs the bootstrap without the env secrets, and keeps its output there too.
 task() {
-    "$check" -- mise -C /opt/ws/roles/server run secrets -- "$@" </dev/null 2>&1 | tee -a "$work/out"
+    "$check" -- "${setup[@]}" "$@" </dev/null 2>&1 | tee -a "$work/out"
     return "${PIPESTATUS[0]}"
 }
 boot() {
@@ -137,7 +132,7 @@ must "the first run clones the repository and runs the bootstrap" task
 must "the file holds both values" holds
 must "the file is root's 600" test "$(stat -c '%U %a' "$file")" = 'root 600'
 must "the clone is root's 700" test "$(stat -c '%U %a' /var/lib/ws/secrets)" = 'root 700'
-must "the first run through the task leaves nothing to do" task plan --detailed-exitcode
+must "the first run through the task leaves nothing to do" task --plan
 must "a plan without the env keeps the file" boot plan --detailed-exitcode
 value WS_CI_SHARED age >"$work/shared"
 publish "ci: change the shared value"
@@ -146,7 +141,7 @@ publish "ci: change the shared value"
 # this plan runs outside the check.
 sum=$(sha256sum "$file")
 status=0
-out=$(NO_COLOR=1 mise -C /opt/ws/roles/server run secrets -- plan --detailed-exitcode </dev/null 2>&1) ||
+out=$(NO_COLOR=1 "${setup[@]}" --plan </dev/null 2>&1) ||
     status=$?
 printf '%s\n' "$out" | tee -a "$work/out"
 must "a plan through the task exits 2 on the new value" test "$status" = 2
@@ -154,19 +149,13 @@ must "mise ends the plan by its line of a failed task" grep -qxF '[secrets] ERRO
 must "the plan keeps the file" test "$sum" = "$(sha256sum "$file")"
 must "the second run writes the new value" task
 must "the file holds the new value" holds
-must "the second run through the task leaves nothing to do" task plan --detailed-exitcode
-
-refused "the account reads the clone" quiet as ls -- /var/lib/ws/secrets
-refused "the account reads the clone's fnox.toml" quiet as cat -- /var/lib/ws/secrets/fnox.toml
-refused "the account reads the host key" quiet as cat -- /etc/ssh/ssh_host_ed25519_key
-out=$(as mise -C /opt/ws/roles/server run secrets </dev/null 2>&1) && fail "the account ran the task"
-must "the task refuses the account" grep -qF 'run it as root' <<<"$out"
+must "the second run through the task leaves nothing to do" task --plan
 
 # refusal NAME TEXT: the task fails, says TEXT, and keeps the file's bytes.
 refusal() {
     local sum out
     sum=$(sha256sum "$file")
-    if out=$(mise -C /opt/ws/roles/server run secrets </dev/null 2>&1); then
+    if out=$("${setup[@]}" </dev/null 2>&1); then
         fail "$1: the task ran"
     fi
     printf '%s\n' "$out" | tee -a "$work/out"
@@ -174,7 +163,17 @@ refusal() {
     [ "$sum" = "$(sha256sum "$file")" ] || fail "$1: the file changed"
     echo "ok: $1"
 }
-hint='ws client macos secrets add NAME'
+hint='ws client secrets add NAME'
+# mise's setting locked comes from the tree's mise.toml. MISE_LOCKED=0 turns it off, and the task
+# then refuses before it touches the clone.
+sum=$(sha256sum "$file")
+if out=$(MISE_LOCKED=0 "${setup[@]}" </dev/null 2>&1); then
+    fail "a run with locked off: the task ran"
+fi
+printf '%s\n' "$out" | tee -a "$work/out"
+grep -qF -- 'ws server setup --secrets' <<<"$out" || fail "a run with locked off: the task never names setup"
+[ "$sum" = "$(sha256sum "$file")" ] || fail "a run with locked off: the file changed"
+echo "ok: a run with locked off is refused"
 touch /var/lib/ws/secrets/fnox.local.toml
 refusal "a file of the clone's own is refused" 'holds changes of its own'
 rm /var/lib/ws/secrets/fnox.local.toml
@@ -192,9 +191,9 @@ gs revert --no-edit HEAD >/dev/null
 gs push -q origin main
 must "a run after the refusals runs" task
 must "the file holds both values after the refusals" holds
-must "a plan after the refusals leaves nothing to do" task plan --detailed-exitcode
+must "a plan after the refusals leaves nothing to do" task --plan
 
-# The files that the roles' inputs write: root's 640 with the account's group, under ws's header
+# The files that the roles' inputs write: root's 600, under ws's header
 # (roles/server/ubuntu/frame/README.md#secret-inputs). The seed leaves their inputs empty, so
 # none is there yet.
 header='# Written by github.com/zadykian/ws, whose next run replaces any change made here.'
@@ -203,7 +202,7 @@ none() {
     local f
     for f in "$@"; do [ ! -e "$f" ] || return 1; done
 }
-kept() { sha256sum "${secret_files[@]}" && stat -c '%n %a %U %g' "${secret_files[@]}"; }
+kept() { sha256sum "${secret_files[@]}" && stat -c '%n %a %U %G' "${secret_files[@]}"; }
 must "no file is there while its input is empty" none "${secret_files[@]}"
 value WS_GITHUB_TOKEN age >"$work/gh"
 wrap=$'["https://git.invalid"]\ntoken = "%s"\nusername = "ci"\n' value WS_GIT_TOKENS age >"$work/git"
@@ -212,9 +211,9 @@ wrap='https://ci-%s.invalid:4317' value OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT age >
 # endpoint prints the input's value, for a comparison alone.
 endpoint() { printf 'https://ci-%s.invalid:4317' "$(cat "$work/otel")"; }
 publish "ci: give gh and git a token, and the shell an endpoint"
-# GitHub refuses a dummy token, so the account's gh holds it as a login with it would. gh's unit
+# GitHub refuses a dummy token, so root's gh holds it as a login with it would. gh's unit
 # then compares it with the file's last line, and where they differ, logs in again and fails.
-as sh -c 'umask 077 && mkdir -p ~/.config/gh && cat >~/.config/gh/hosts.yml' <<YAML
+sh -c 'umask 077 && mkdir -p ~/.config/gh && cat >~/.config/gh/hosts.yml' <<YAML
 github.com:
     users:
         ci:
@@ -225,43 +224,49 @@ github.com:
 YAML
 must "a run writes gh's, git's and the shell's files" task
 for f in "${secret_files[@]}"; do
-    must "$f is root's 640, the account's group's" \
-        test "$(stat -c '%a %U %g' "$f")" = "640 root $(id -g "$user")"
+    must "$f is root's 600" test "$(stat -c '%a %U %G' "$f")" = '600 root root'
     must "$f opens with ws's header" test "$(head -n 1 "$f")" = "$header"
 done
-# The endpoint's line, and what the account's sh makes of it, are compared, never printed.
+# The endpoint's line, and what sh makes of it, are compared, never printed.
 must "/etc/ws/env exports the endpoint in single quotes" cmp -s <(tail -n 1 /etc/ws/env) \
     <(printf "export OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT='%s'\n" "$(endpoint)")
-# shellcheck disable=SC2016 # The account's sh expands the name, from the file it sources.
-must "the account's sh reads the endpoint from /etc/ws/env" cmp -s <(endpoint) \
-    <(as sh -c '. /etc/ws/env && printf %s "$OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT"')
+# shellcheck disable=SC2016 # The sh that runs expands the name, from the file it sources.
+must "sh reads the endpoint from /etc/ws/env" cmp -s <(endpoint) \
+    <(sh -c '. /etc/ws/env && printf %s "$OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT"')
 must "gh's file ends with its token" cmp -s <(tail -n 1 /etc/ws/gh-token) <(cat "$work/gh" && echo)
-# credential asks the account's git for git.invalid's credential, as a clone would. Its answer is
+# credential asks root's git for git.invalid's credential, as a clone would. Its answer is
 # compared, never printed.
 credential() {
     local out
     out=$(printf 'protocol=https\nhost=git.invalid\n\n' |
-        as GIT_TERMINAL_PROMPT=0 git credential fill 2>/dev/null) &&
+        GIT_TERMINAL_PROMPT=0 git credential fill 2>/dev/null) &&
         grep -qx 'username=ci' <<<"$out" &&
         grep -qxF -f <(printf 'password=%s\n' "$(cat "$work/git")") <<<"$out"
 }
-must "the account's git gets the token through ws's program" credential
-must "the run with the three files leaves nothing to do" task plan --detailed-exitcode
+must "root's git gets the token through ws's program" credential
+must "the run with the three files leaves nothing to do" task --plan
 sums=$(kept)
 must "a run without the env runs" boot
 must "a run without the env keeps the three files" test "$sums" = "$(kept)"
 must "a plan without the env leaves nothing to do" boot plan --detailed-exitcode
 
-# A file at gh's path that ws didn't write stops the run, which keeps it. A run without the env
-# stops there too, at the group unit, which reads the file's first line as mise's guard does.
+# A file at gh's path that ws didn't write stops the run under the env, which keeps it. A run
+# without the env loads no guard of mise's, so it keeps the file, and gh's unit logs in by its last
+# line. GitHub refuses that token, and a network that fails fails the login too, so the run fails
+# at gh's unit either way. Only gh's own message hangs on the network, and the case leaves it out.
 printf 'by hand\n' >/etc/ws/gh-token
-if out=$(mise -C /opt/ws/roles/server bootstrap </dev/null 2>&1); then
-    fail "a run without the env ran past the file by hand"
-fi
+status=0
+out=$(mise -C /opt/ws/roles/server bootstrap </dev/null 2>&1) || status=$?
 printf '%s\n' "$out" | tee -a "$work/out"
-must "a run without the env names the file by hand" grep -qF '/etc/ws/gh-token: not written by ws' <<<"$out"
+must "a run without the env fails on the file by hand" test "$status" != 0
+must "the run fails at gh's unit" \
+    grep -qF 'ws unit write: state/devtools-gh-login: applying: ' <<<"$out"
+must "gh's login by the file's last line fails" \
+    grep -qE 'ws server devtools gh-login: .*gh auth login .*: exit status' <<<"$out"
+refused "a run without the env stops at the guard" grep -qF 'not written by ws' <<<"$out"
+must "a run without the env keeps the file by hand" grep -qx 'by hand' /etc/ws/gh-token
 refusal "a file by hand at gh's path stops the run" '/etc/ws/gh-token: not written by ws'
-must "the run keeps the file by hand" grep -qx 'by hand' /etc/ws/gh-token
+must "the refused run keeps the file by hand" grep -qx 'by hand' /etc/ws/gh-token
 rm /etc/ws/gh-token
 must "a run after the file by hand writes gh's file again" task
 must "gh's file ends with its token again" cmp -s <(tail -n 1 /etc/ws/gh-token) <(cat "$work/gh" && echo)
@@ -272,6 +277,6 @@ fx set OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT --provider age </dev/null
 publish "ci: empty the three inputs"
 must "a run with the three inputs empty runs" task
 must "an empty input removes its file" none "${secret_files[@]}"
-must "the run without the files leaves nothing to do" task plan --detailed-exitcode
+must "the run without the files leaves nothing to do" task --plan
 
 refused "the task's output holds a value" grep -qF -f <(printf '%s\n' "${values[@]}") "$work/out"

@@ -3,10 +3,9 @@
 The `devtools` role installs Node, the .NET SDKs, gh, glow, the libraries headless Chromium needs,
 Go, gopls, Delve, roslyn-language-server, the SQL and Docker servers and rustup. The sources, the
 packages and the tools are mise's, in [mise.server.toml](mise.server.toml). The tools' links, gh's
-telemetry, login and token file's group, roslyn-language-server, the npm servers and rustup are
-units of [units.toml.tmpl](units.toml.tmpl). Those of the account run as `WS_USER`, root included, and without booted
-systemd too, as in CI's container. [paths.go](paths.go) names the servers' paths for Zed's and
-Fresh's tests.
+telemetry and login, roslyn-language-server, the npm servers and rustup are units of
+[units.toml.tmpl](units.toml.tmpl). Those of the account run as root. [paths.go](paths.go) names
+the servers' paths for Zed's and Fresh's tests.
 
 `state/devtools-rustup` installs rustup and Rust's stable toolchain in the user's home, where
 `~/.cargo/bin/rustup` is missing. Once there, rustup updates itself, so ws leaves it alone.
@@ -33,16 +32,13 @@ Go, gopls, Delve, postgres-language-server and docker-language-server are tools 
 versions that `[tools]` pins. [mise.server.lock](../../mise/mise.server.lock) holds the url
 and the SHA-256 of each download for `linux-x64` and `linux-arm64`. Go's comes from the list that
 go.dev publishes, and each server's from GitHub's digest of its release asset. A wrong one fails
-the run before any unit of ws, and `MISE_LOCKED=1` refuses a tool that the lock lacks. gopls and
-Delve are `go:` tools, which `go install` builds with mise's Go through Go's checksum database.
+the run before any unit of ws, and the tree's `locked = true` refuses a tool that the lock lacks.
+gopls and Delve are `go:` tools, which `go install` builds with mise's Go through Go's checksum database.
 mise checks a sum at the download alone, so it mends no tool changed after its install:
-`sudo env MISE_DATA_DIR=/usr/local/share/mise mise -C /opt/ws/roles/server install --force TOOL` does.
+`mise -C /opt/ws/roles/server install --force TOOL` does.
 
-- mise puts the tools under `/usr/local/share/mise/installs`, root's and mode 0755, where every
-  run as root exports `MISE_DATA_DIR=/usr/local/share/mise`, as `install.sh` does. Under root's
-  own data directory the account could run none. `guard/devtools-data-dir` fails a run without
-  it. It runs after mise's tools, so it names the mistake, and a missing tool is then under
-  `/root`: run the bootstrap again with the variable.
+- mise puts the tools under `/root/.local/share/mise/installs`, root's data directory, which it
+  takes by default.
 - Links of the file kind give each tool a path that names no version: `/usr/local/go`,
   `/usr/local/bin/gopls`, `/usr/local/bin/dlv`, `/usr/local/bin/postgres-language-server` and
   `/usr/local/bin/docker-language-server`. Each points into its version's directory, never at
@@ -55,13 +51,13 @@ mise checks a sum at the download alone, so it mends no tool changed after its i
   `MISE_ENV=server mise -C roles/server lock --platform linux-x64,linux-arm64`, which writes
   `roles/server/mise/mise.server.lock`. `go test` fails where a link, the lock and `[tools]`
   disagree. On the server,
-  `sudo env MISE_DATA_DIR=/usr/local/share/mise mise -C /opt/ws/roles/server prune` drops the old versions.
+  `mise -C /opt/ws/roles/server prune` drops the old versions.
 - mise builds a `go:` tool once, and never again where Go changes. Delve 1.27.2 supports Go 1.25
   to 1.27, so a new minor Go goes with a newer Delve.
 - roslyn-language-server, C#'s server, is the server of VS Code's C# extension. It comes from
   nuget.org with `dotnet tool`, at the version that `state/devtools-roslyn` pins in its command
   and its check, and runs on the .NET 10 of this role. It goes in
-  `~/.dotnet/tools/roslyn-language-server`, `WS_USER`'s, which follows `WS_HOME`.
+  `/root/.dotnet/tools/roslyn-language-server`.
 
 ## The SQL and Docker servers
 
@@ -94,9 +90,9 @@ A project's `postgres-language-server.jsonc` holds `db` fields, never a `connect
 
 ## The npm servers
 
-The role installs four packages into `~/.local/lib/language-servers`, owned by `WS_USER`, from the
+The role installs four packages into `~/.local/lib/language-servers`, owned by root, from the
 `package.json` and `package-lock.json` in [files/npm](files/npm). The units
-`file/devtools-npm-lock` and `file/devtools-npm-package` write them there as the account's, with
+`file/devtools-npm-lock` and `file/devtools-npm-package` write them there, with
 the directories a new home lacks:
 
 - `@ansible/ansible-language-server`, for Ansible.
@@ -105,7 +101,7 @@ the directories a new home lacks:
 - `sql-formatter`, linked as `/usr/local/bin/sql-formatter`, root's, so a project's settings name
   the bare command.
 
-`state/devtools-npm` runs `npm ci --ignore-scripts` as `WS_USER`. It fails where the lock and
+`state/devtools-npm` runs `npm ci --ignore-scripts` as root. It fails where the lock and
 `package.json` disagree or a sha512 `integrity` differs, so these downloads are checked, though not
 against a SHA-256. The unit keeps `node_modules/.ws-sha256`, `sha256sum`'s lines for both files,
 and runs again where its check, `sha256sum -c`, fails. mise installs the Node package, and npm with
@@ -138,11 +134,11 @@ installs each release of gh within a day.
 gh logs in to github.com as the user, by the [secret input](../frame/README.md#secret-inputs)
 `WS_GITHUB_TOKEN` of [mise.secrets.toml](mise.secrets.toml):
 
-- mise writes the token to `/etc/ws/gh-token`, root's and mode 0640, with ws's header on its
-  first line and the token on its last. `state/devtools-gh-token-group` then gives it the
-  account's group. mise's plan shows no value. A run without the secrets task keeps the file
-  unchanged, and an empty `WS_GITHUB_TOKEN` removes it. A file there by hand stops the run.
-- `state/devtools-gh-login` runs `ws server ubuntu devtools gh-login`, as root, which runs gh as
+- mise writes the token to `/etc/ws/gh-token`, root's and mode 0600, with ws's header on its
+  first line and the token on its last. mise's plan shows no value. A run without the secrets task
+  keeps the file unchanged, and an empty `WS_GITHUB_TOKEN` removes it. A file there by hand stops
+  the run under the secrets task.
+- `state/devtools-gh-login` runs `ws server devtools gh-login`, as root, which runs gh as
   the user. It compares `gh auth token -h github.com` with the file's last line. Where they
   differ, it runs `gh auth login -h github.com -p https --insecure-storage --with-token`, the token
   on stdin. So no command line, plan or log holds it, and gh's env holds no secret input. ws has

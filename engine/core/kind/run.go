@@ -3,14 +3,12 @@ package kind
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io/fs"
 	"slices"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/account"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // systemPath is the PATH that a run state's commands get, after its spec's path.
@@ -46,43 +44,22 @@ func (c runCommand) String() string {
 
 func (c runCommand) Apply(ctx context.Context) error { return c.r.exec(ctx, true, c.r.s.Command) }
 
-// exec runs a command line as the run's user, with its PATH (pathEnv). With pass set, it passes the
-// output to ws's standard error, and otherwise drops it, as a check's exit status alone counts.
-// Linux switches to the user by runuser, through the account, and gives it systemd's session,
-// which systemctl --user needs, where systemd runs. macOS has neither (macExec).
+// exec runs a command line as root, with its PATH (pathEnv). With pass set, it passes the output
+// to ws's standard error, and otherwise drops it, as a check's exit status alone counts. Linux
+// calls the machine in ws's own env, which unset trims of the hidden names. It drops the caller's
+// session too: no run reads root's session, and dotnet fails on a missing runtime directory. macOS
+// has no systemd and no such session (macExec).
 func (r runAs) exec(ctx context.Context, pass bool, line []string) error {
 	if r.sys == MacOS {
 		return r.macExec(ctx, pass, line)
 	}
-	// root's home is /root, where ownerOf gives root none.
-	a := account.Account{User: account.User{Name: "root", Home: "/root"}}
-	if r.s.User != "root" {
-		var err error
-		if a, err = ownerOf(ctx, Env{M: r.m, System: r.sys}, r.s.User); err != nil {
-			return err
-		}
-	}
-	// A run as root keeps the caller's env but the hidden names, and a user's starts cleared
-	// (account.User). A run with no session drops the caller's session from root's: dotnet fails
-	// on a missing runtime directory.
 	session := []string{"-u", "XDG_RUNTIME_DIR", "-u", "DBUS_SESSION_BUS_ADDRESS"}
-	if systemd.Booted(r.m) && (!r.s.Unbooted || r.hasRuntimeDir(a.UID)) {
-		session = systemd.SessionEnv(a.UID)
-	}
-	args := slices.Concat(r.unset(line), session, []string{r.pathEnv()}, line)
+	argv := slices.Concat([]string{"HOME=/root", "env"}, r.unset(line), session, []string{r.pathEnv()}, line)
 	if pass {
-		return a.Pass(ctx, r.m, "env", args...)
+		return r.m.Pass(ctx, false, "env", argv...)
 	}
-	_, err := a.Output(ctx, r.m, "env", args...)
+	_, err := r.m.Run(ctx, "env", argv...)
 	return err
-}
-
-// hasRuntimeDir says whether the user's session has made its runtime directory. An unbooted run
-// needs no session, and gets its env only where that directory exists. dotnet fails on a missing
-// XDG_RUNTIME_DIR, as before the account's first login or lingering.
-func (r runAs) hasRuntimeDir(uid int) bool {
-	_, err := r.m.Stat(fmt.Sprintf("/run/user/%d", uid))
-	return err == nil
 }
 
 // macExec runs a command line on the Mac, where ws runs as the user and sudo alone switches. A
@@ -109,10 +86,6 @@ func (r runAs) macExec(ctx context.Context, pass bool, line []string) error {
 // Plan plans the command where a path of Creates is missing, or where Check fails. A check that
 // cannot run fails too, and the command runs: the check's command is the run's to make work.
 func (r runAs) Plan(ctx context.Context) ([]resource.Change, error) {
-	if r.sys == Linux && !r.s.Unbooted && !systemd.Booted(r.m) {
-		r.out.Say("%s: skipped, systemd is not running", runCommand{r})
-		return nil, nil
-	}
 	for _, p := range r.s.Creates {
 		_, err := r.m.Stat(p)
 		if errors.Is(err, fs.ErrNotExist) {

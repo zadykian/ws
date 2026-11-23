@@ -51,7 +51,7 @@ func (s swapState) resource(e Env) (resource.Resource, error) {
 	if s.SizeMiB != nil && *s.SizeMiB < 0 {
 		return nil, joinHint(fmt.Errorf("size_mib %d is no size: it takes a whole number of MiB, or 0 for none", *s.SizeMiB), s.Hint)
 	}
-	return swap.File{M: e.M, Out: e.Out, SizeMiB: s.SizeMiB, Hint: s.Hint}, nil
+	return swap.File{M: e.M, SizeMiB: s.SizeMiB, Hint: s.Hint}, nil
 }
 
 // joinHint ends err with the hint, where the state gives one.

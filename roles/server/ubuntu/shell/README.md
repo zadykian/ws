@@ -41,8 +41,7 @@ variable. `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT` is the one today, which the `otel
 [claude's metrics elsewhere](../otelcol/README.md#claudes-metrics-elsewhere). The [secrets
 task](../secrets/README.md#the-task) gives each input its value, from fnox, by the input's name.
 
-- mise writes the file 0640, root's, and `state/shell-env-group` gives it the account's group after:
-  `WS_USER` reads it and cannot change it.
+- mise writes the file root's, at 0600.
 - It opens with ws's header line, then `export NAME='VALUE'` for each input that is set, the value
   quoted for the shell. An empty input is left out, and where every input is empty the run removes
   the file.
@@ -51,8 +50,8 @@ task](../secrets/README.md#the-task) gives each input its value, from fnox, by t
   replaces nothing. Move its values into the secrets, then remove it.
 - Another variable is an input of `mise.secrets.toml` and its name in both lists of the file's
   template.
-- A run without the task, as CI's `playbook`, keeps the file unchanged. `state/shell-env-group`
-  stops it at a file by hand, and leaves that file's group unchanged. No plan or log shows a value.
+- A run without the task, as CI's `server` bootstrap, keeps the file unchanged, one by hand included.
+  No plan or log shows a value.
 
 Zed captures the login shell's environment, so a project's capture holds each value too
 ([Secrets in ssh's arguments](../zed/README.md#secrets-in-sshs-arguments)).

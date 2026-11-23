@@ -7,9 +7,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // healthTries and healthWait bound an http state's wait: 30 tries, 2 seconds apart.
@@ -26,19 +24,16 @@ var healthClient = &http.Client{Timeout: 5 * time.Second}
 // returns once a service runs, which can be before it listens, or before it fails.
 type httpState string
 
-func (s httpState) resource(e Env) (resource.Resource, error) {
+func (s httpState) resource(_ Env) (resource.Resource, error) {
 	u, err := url.Parse(string(s))
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
 		return nil, fmt.Errorf("%q is no http or https URL", string(s))
 	}
-	return health{m: e.M, out: e.Out, url: string(s), tries: healthTries, wait: healthWait}, nil
+	return health{url: string(s), tries: healthTries, wait: healthWait}, nil
 }
 
-// health waits for the URL to answer 200, tries times, wait apart. Without booted systemd, where
-// no service started, it skips and says so.
+// health waits for the URL to answer 200, tries times, wait apart.
 type health struct {
-	m     effect.Machine
-	out   effect.Out
 	url   string
 	tries int
 	wait  time.Duration
@@ -87,10 +82,6 @@ func (h health) get(ctx context.Context) error {
 
 // Plan plans the wait where the URL does not answer 200 now.
 func (h health) Plan(ctx context.Context) ([]resource.Change, error) {
-	if !systemd.Booted(h.m) {
-		h.out.Say("%s: skipped, systemd is not running", h.url)
-		return nil, nil
-	}
 	if h.get(ctx) == nil {
 		return nil, nil
 	}

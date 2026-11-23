@@ -14,7 +14,7 @@ import (
 	"github.com/zadykian/ws/roles/client/facts"
 )
 
-// Mac is the networks of each of the Mac's servers that has WS_PUBLIC_KEY, which ws client macos
+// Mac is the networks of each of the Mac's servers that has WS_PUBLIC_KEY, which ws client
 // networks sets up. Each server's daemon routes its WS_TUNNEL_NETWORKS, from its routes.d/values,
 // and macOS asks the nameservers of its WS_RESOLVERS for their domains. A domain whose file lacks
 // ws's header stops the run, as does a file that another script wrote. A resolver with the header
@@ -63,7 +63,7 @@ func (n Mac) resolvers(ctx context.Context) ([]step.Change, error) {
 				return nil, err
 			} else if !own {
 				return nil, fmt.Errorf("%s is another script's, or written by hand: have that script call "+
-					"ws client macos resolver %s with no address, or move the file away", resolverFile, r.Domain)
+					"ws client resolver %s with no address, or move the file away", resolverFile, r.Domain)
 			}
 			var err error
 			// The directory is planned once: a second mkdir would fail where the directory is new.

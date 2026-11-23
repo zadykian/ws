@@ -16,7 +16,7 @@ import (
 	"github.com/zadykian/ws/roles/client/values"
 )
 
-// The server lab, whose hostname is ws-a, and the lines that ws client macos secrets add lab runs.
+// The server lab, whose hostname is ws-a, and the lines that ws client secrets add lab runs.
 const (
 	labKey       = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILab"
 	olderKey     = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOld"
@@ -24,12 +24,11 @@ const (
 	knownHosts   = "/h/.ssh/known_hosts"
 	findLab      = "ssh-keygen -F lab -f " + knownHosts
 	hostnameLine = "ssh lab hostname"
-	runLine      = "ssh -t lab sudo env MISE_DATA_DIR=/usr/local/share/mise MISE_LOCKED=1 mise -C /opt/ws/roles/server " +
-		"run secrets"
-	keysLine    = secrets.GH + " api --paginate repos/o/n/keys"
-	postLine    = secrets.GH + " api -X POST repos/o/n/keys -f title=ws-a -f key=" + labKey + " -F read_only=true"
-	sealed      = "fnox-age-batch-v1:c2VhbGVk"
-	fingerprint = "256 SHA256:Zm9yIHRoZSB0ZXN0 no comment (ED25519)"
+	runLine      = "ssh -t lab /usr/local/bin/ws server setup --secrets"
+	keysLine     = secrets.GH + " api --paginate repos/o/n/keys"
+	postLine     = secrets.GH + " api -X POST repos/o/n/keys -f title=ws-a -f key=" + labKey + " -F read_only=true"
+	sealed       = "fnox-age-batch-v1:c2VhbGVk"
+	fingerprint  = "256 SHA256:Zm9yIHRoZSB0ZXN0 no comment (ED25519)"
 )
 
 // sharedText is fnox.toml as init leaves it, with one value.
@@ -52,7 +51,7 @@ S1 = { provider = "age", value = "` + sealed + `" }
 func addFixture(files map[string]string) (enginecli.Env, *secretstest.Mac) {
 	m := effecttest.NewMachine()
 	keyed(m)
-	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_USER", "ada", "WS_SLOT", "1"))
+	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_SLOT", "1"))
 	m.Dirs["/etc/ws/servers/lab"] = 0o755
 	m.Files[fnoxKeyFile] = []byte("AGE-PLUGIN-YUBIKEY-1QQQ\n")
 	m.Files[knownHosts] = []byte("ws ssh-ed25519 AAAA\nlab " + labKey + "\n")
@@ -79,10 +78,10 @@ func heldBy(t *testing.T, key string) map[string]string {
 		profile: string(f[profile]) + `A1 = { provider = "host", value = "` + sealed + `" }` + "\n"}
 }
 
-// addWs runs ws client macos secrets add with stdin.
+// addWs runs ws client secrets add with stdin.
 func addWs(p enginecli.Env, stdin string, args ...string) (status int, stdout, stderr string) {
-	return clitest.Run(p, []*cobra.Command{clientGroup(p)}, stdin,
-		append([]string{"client", "macos", "secrets", "add"}, args...)...)
+	return clitest.Run(p, []*cobra.Command{Command(p)}, stdin,
+		append([]string{"client", "secrets", "add"}, args...)...)
 }
 
 // callAt is the index of the first call that holds part, or -1.
@@ -109,7 +108,7 @@ func TestSecretsAddRunsItsStepsInOrder(t *testing.T) {
 		at = i
 	}
 	want := secrets.Change{Topic: "add-ws-a", Title: "chore: add the host key of ws-a",
-		Body: "Added by ws client macos secrets add lab.", Files: []string{"fnox.toml", "fnox.ws-a.toml"}}
+		Body: "Added by ws client secrets add lab.", Files: []string{"fnox.toml", "fnox.ws-a.toml"}}
 	if landed := mac.Landed(); len(landed) != 1 || !equalChange(landed[0], want) {
 		t.Errorf("add landed %+v, want %+v", landed, want)
 	}
@@ -282,7 +281,7 @@ func TestSecretsAddSaysToRunAgainWhereTheRunFails(t *testing.T) {
 	p, mac := addFixture(nil)
 	mac.Results[runLine] = effecttest.Result{Err: errors.New("exit status 255")}
 	status, _, stderr := addWs(p, "", "lab")
-	if status != 1 || !strings.Contains(stderr, "run ws client macos secrets add lab again") {
+	if status != 1 || !strings.Contains(stderr, "run ws client secrets add lab again") {
 		t.Errorf("a failed run: status = %d, stderr = %q", status, stderr)
 	}
 }

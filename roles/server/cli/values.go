@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -16,9 +15,13 @@ import (
 	"github.com/zadykian/ws/roles/server/values"
 )
 
-// newValuesCmd returns ws server ubuntu values, which edits the machine's values.
+// valuesChecked is the line of a pass, which the frame's template keeps as the file's text.
+// The line never varies, so that the next plan finds the file unchanged.
+const valuesChecked = "ws values: checked"
+
+// newValuesCmd returns ws server values, which checks and edits the machine's values.
 func newValuesCmd(p enginecli.Env) *cobra.Command {
-	return enginecli.Group("values", "edit the machine's values", &cobra.Command{
+	return enginecli.Group("values", "check and edit the machine's values", newValuesCheckCmd(p), &cobra.Command{
 		Use:   "set KEY VALUE",
 		Short: "write one key of " + serverVars,
 		Long: "An empty VALUE takes the key's line out, which gives its default back. A list's VALUE is split by " +
@@ -29,12 +32,41 @@ func newValuesCmd(p enginecli.Env) *cobra.Command {
 	})
 }
 
+// newValuesCheckCmd returns ws server values check.
+func newValuesCheckCmd(p enginecli.Env) *cobra.Command {
+	return &cobra.Command{
+		Use:   "check",
+		Short: "refuse a bad value of " + serverVars,
+		Long: "It loads " + serverVars + " as each command does, and prints " + valuesChecked + ". A missing file " +
+			"passes, with the defaults. A bad value fails, naming its key and its rule. The frame's " +
+			"/etc/ws/values.checked runs it as mise renders the config, so that a bad value stops a plan " +
+			"or a run before any write.",
+		Args: cobra.NoArgs,
+		RunE: func(c *cobra.Command, _ []string) error {
+			if err := checkValues(p.Machine); err != nil {
+				return err
+			}
+			_, err := fmt.Fprintln(c.OutOrStdout(), valuesChecked)
+			return err
+		},
+	}
+}
+
+// checkValues loads the file as each command does. A bad value fails with its key and its rule, and
+// the file to edit by hand: values set refuses while any value is bad.
+func checkValues(m effect.Machine) error {
+	if _, err := values.Load(m, serverVars); err != nil {
+		return fmt.Errorf("%w: edit %s by hand", err, serverVars)
+	}
+	return nil
+}
+
 // runValuesSet writes key in the file, by setServerValue.
 func runValuesSet(c *cobra.Command, p enginecli.Env, key, value string) error {
 	if p.Euid != 0 {
 		return errors.New("run it as root")
 	}
-	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+	term := effect.NewTerminal(c.ErrOrStderr())
 	defer term.Flush()
 	return setServerValue(p.Machine, linesOf(term, c.CommandPath()), key, value)
 }
@@ -54,7 +86,7 @@ func setServerValue(m effect.Machine, out effect.Out, key, value string) error {
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
-	next, moved, err := values.Set(data, key, value)
+	next, err := values.Set(data, key, value)
 	if err != nil {
 		return fmt.Errorf("%s: %w", serverVars, err)
 	}
@@ -65,9 +97,6 @@ func setServerValue(m effect.Machine, out effect.Out, key, value string) error {
 		return err
 	}
 	out.Say("wrote %s", serverVars)
-	if len(moved) > 0 {
-		out.Say("moved %s to follow %s", strings.Join(moved, " and "), key)
-	}
 	return nil
 }
 

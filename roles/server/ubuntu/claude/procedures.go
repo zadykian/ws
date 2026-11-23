@@ -16,7 +16,7 @@ import (
 )
 
 // A Procedure is a procedure of the role's that no kind holds. It gives the parts that a command of
-// ws settles for a unit, from the values and WS_USER's account.
+// ws settles for a unit, from the values and root's account.
 type Procedure func(v values.Values, a account.Account, m effect.Machine, u effect.Units, out effect.Out) []resource.Resource
 
 // UpdateParts updates cld where a newer release is out.
@@ -56,9 +56,9 @@ func MarketplacesParts(v values.Values, a account.Account, m effect.Machine, _ e
 // RestoreParts starts the user's systemd, then has it restore cld's sessions as it starts. The
 // unit's name holds the account's uid, which a spec cannot know, so it stays here. Lingering is
 // the role's own unit, before.
-func RestoreParts(_ values.Values, a account.Account, m effect.Machine, u effect.Units, out effect.Out) []resource.Resource {
+func RestoreParts(_ values.Values, a account.Account, m effect.Machine, u effect.Units, _ effect.Out) []resource.Resource {
 	return []resource.Resource{
-		systemd.Unit{M: m, U: u, Out: out, Name: fmt.Sprintf("user@%d.service", a.UID), Run: systemd.Running},
-		cld.Restore{M: m, Account: a, Out: out},
+		systemd.Unit{M: m, U: u, Name: fmt.Sprintf("user@%d.service", a.UID), Run: systemd.Running},
+		cld.Restore{M: m, Account: a},
 	}
 }
