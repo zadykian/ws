@@ -83,39 +83,57 @@ signers file without a key. The file's write, after the key's, puts the key in.
 
 ## The co-author trailer
 
-Each commit made on ws, by claude, lazygit, Zed or the shell, carries one trailer,
-`Co-authored-by: zadykian <me@zadykian.dev>`: the maintainer, whom the machine account commits for.
+A commit that `git commit` or a merge makes on ws, by claude, lazygit, Zed or the shell, carries
+one trailer, `Co-authored-by: zadykian <me@zadykian.dev>`: the maintainer, whom the machine account
+commits for. A squash is the one exception: it joins the messages of its commits, and each keeps
+its trailer, so the result can hold two. The push check passes it.
 The name and the email are the Mac's identity, `gitcfg.Mac()`, and a test holds the file's text
 equal to it. A hook of git's config adds it, `[hook "ws-co-author"]` on `commit-msg`, which runs
-`git interpret-trailers --in-place --if-exists addIfDifferent` on the message's file. `addIfDifferent`
-adds the line once, so that `--amend`, a message that holds it already and a second run add none.
-A message that is empty once its comments and its scissors section are cut gets none. Git runs
-`commit-msg` before its check of an empty message, so a trailer alone would commit it. Git passes
-the file to the command as its last argument, which the command's function takes.
+`git interpret-trailers --in-place --no-divider --if-exists addIfDifferent` on the message's file.
+`addIfDifferent` adds the line once, so that `--amend`, a message that holds it already and a
+second run add none. `--no-divider` keeps a line of three dashes in the body from moving the trailer
+above it, out of the last paragraph that the push check reads.
+An empty message gets none. Git runs `commit-msg` before its check of an empty message, so a
+trailer alone would commit it. Where no editor opens, as with `-m`, `-F`, `--amend --no-edit` and a
+merge, git gives the hook `GIT_EDITOR=:`. Its cleanup is then `whitespace`, which keeps comment
+lines, so `-m "#42 fix the fan curve"` is a message. The hook tells an empty one by
+`git stripspace` alone. With an editor, the hook cuts the scissors section, git's comment string,
+a space, 24 dashes, `>8` and 24 dashes, whatever `core.commentChar` is, and then the comments. It
+cannot see an explicit `--cleanup` or `commit.cleanup`. Git passes the file to the command as its
+last argument, which the command's function takes.
 claude's own trailers are off ([Attribution](../claude/README.md#attribution)).
 
-The hook runs before a repository's own `commit-msg`, `.githooks` of ws included, and a
-failing one refuses the commit. A commit that skips hooks, with `--no-verify`, has none. `git
-rebase` and `git cherry-pick` run no `commit-msg`, so a commit that either writes keeps its
-message, but a `reword` of `git rebase -i` runs it, as it edits the message. Hooks in git's config
-came in git 2.54, which [the PPA](../base/README.md#git) gives. The test of the hook skips on an
-older git, and `server`'s check of a signed commit holds the one trailer on the set-up machine
-([The `server` job](../../../../.github/workflows/server.md)).
+The hook runs before a repository's own `commit-msg`, `.githooks` of ws included, and a failing one
+refuses the commit. A commit that skips hooks, with `--no-verify`, has none. `git rebase`, `git
+cherry-pick`, `git revert` and `git am` run no `commit-msg`, so a commit that any of them writes
+keeps its message. A rebase's or a cherry-pick's commit keeps its author too. A revert's and an am's
+is the machine's own, with no trailer, so the push check refuses it until `git commit --amend
+--no-edit` runs the hook on it. A `reword` of `git rebase -i`, and a `git commit` or a `--continue`
+after a conflict, run it. Hooks in git's config came in git 2.54, which [the
+PPA](../base/README.md#git) gives. The test of the hook skips on an older git, and `server`'s check
+of a signed commit holds the one trailer on the set-up machine ([The `server`
+job](../../../../.github/workflows/server.md)).
 
 ## The push check
 
 A push from ws sends no commit that breaks a rule of ws. `[hook "ws-push"]` in `/etc/ws/gitconfig`,
 on `pre-push`, runs `/usr/local/bin/ws server git pre-push`, which gets the remote and its URL as
 arguments, and the pushed refs on its standard input, as git gives them. For each ref it lists
-the commits that no remote-tracking ref holds, `git log LOCAL --not --remotes`, and refuses a commit
-by each rule it breaks. A tracking ref of any remote holds a commit, whichever remote the push goes
-to:
+the commits that no remote-tracking ref holds and the remote's commit at the ref does not, as
+`git log LOCAL --not --remotes REMOTE-SHA` does. It refuses a commit by each rule it breaks. A tracking
+ref of any remote holds a commit, whichever remote the push goes to. REMOTE-SHA is the fourth field
+of git's line. It stands in for the tracking refs that a bare clone lacks. All zeros, or a commit
+that the repository lacks, leave out nothing:
 
 - `signature`: `%G?` is not `G`. A good one is one that `/etc/ws/allowed_signers` trusts.
 - `signer`: the signer, `%GS`, is not the committer's email, `%ce`.
 - `trailer`: it holds no `Co-authored-by: zadykian <me@zadykian.dev>`, unless its author is
-  `me@zadykian.dev`. Such a commit is the Mac's, which ws rebased: the rebase signs it as ws and
-  runs no `commit-msg` hook ([The co-author trailer](#the-co-author-trailer)).
+  `me@zadykian.dev`. The comparison ignores case, as the hook's `interpret-trailers` does. Such a
+  commit is the Mac's, which ws rebased: the rebase signs it as ws and runs no `commit-msg` hook
+  ([The co-author trailer](#the-co-author-trailer)).
+  `git revert` and `git am` run no `commit-msg` hook either, so their commits lack it. A refusal
+  that lists a missing trailer says so: `git commit --amend --no-edit` runs the hook on the last
+  commit.
 
 A refusal names each commit by its first 12 characters and lists ten rules at most, one line for
 each rule that a commit breaks, and counts the rest. It prints no key. The push stops, and the
@@ -136,12 +154,14 @@ hook's exit status is 1. These cases are decided:
 - A commit whose email or a Co-authored-by trailer holds a control character, US, which the check
   reads its fields by, is refused by its name. Replaced objects (`git replace`) stay unread, as the
   push sends the originals.
-- A remote with no remote-tracking ref yet has none to hold a commit, so the whole history of the
-  pushed ref is checked. A fetch first gives the remote's commits their refs.
+- A repository with no remote-tracking ref, as a bare clone, checks what the push adds to the
+  remote's commit at the ref. A ref that is new to the remote there, or a remote commit that the
+  repository lacks, leaves out nothing, so the whole history of the pushed ref is checked.
 - An empty range, where every commit is held already, passes. A branch made at a pushed commit
   does.
-- A line of the refs that is not four fields, or a hook that fails, such as a `ws` missing at
-  its path, refuses the push.
+- A line of the refs of fewer than four fields, or a hook that fails, such as a `ws` missing at
+  its path, refuses the push. The line is read from its right, as a local ref may hold spaces:
+  the source of `HEAD@{2 hours ago}:refs/heads/x` is one.
 
 The check stops a mistake and not a person. These skip it:
 

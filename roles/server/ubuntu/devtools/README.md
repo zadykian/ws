@@ -160,5 +160,6 @@ where it says otherwise. Both run with `GH_TELEMETRY=0`, so that they send none 
 The role does not register the key that signs the machine's commits
 ([Signing](../git/README.md#signing)). Its token would need the scope `write:ssh_signing_key` to
 add one. Add the `.pub` by hand in `@zadykiand`'s settings on GitHub, as a signing key, and not in
-the maintainer's. Until then, GitHub shows the machine's commits as unverified, and the ruleset on
-`main` refuses them.
+the maintainer's. Until the key is there, GitHub shows the machine's commits as unverified, and the
+ruleset on `main` refuses them. Where the key stands in `@zadykian`'s settings as a signing key, take
+it off there. GitHub would show a commit that ws signs under the maintainer's email as verified.

@@ -26,10 +26,13 @@ Launchpad's for the PPA. A key with another fingerprint fails the run. apt takes
 Ubuntu's, as its version is higher. An installed git of Ubuntu's moves to the PPA's once. A machine
 that holds the PPA's source from `add-apt-repository` must drop it first, as two keys for one
 repository fail apt: the same holds for [Docker's source](../docker/README.md).
+The PPA's index for apt's amd64v3 variant holds no `git`. A machine that set
+`APT::Architecture-Variants` fails or mixes versions at git until the setting goes.
 [files/52unattended-upgrades-git-core](files/52unattended-upgrades-git-core) goes to
 `/etc/apt/apt.conf.d/` and allows the PPA's origin, so unattended-upgrades installs each release of
 its git within a day.
-[The `server` job](../../../../.github/workflows/server.md) fails on a git below 2.54.
+[The `server` job](../../../../.github/workflows/server.md) proves the move to the PPA's git. It starts
+from Ubuntu's, as the runner's image has the PPA's. It fails where the setup leaves a git below 2.54.
 
 Setting a global `core.hooksPath` would not serve: a repository that sets its own, as ws does with
 `.githooks`, skips it. Hooks in git's config run beside the repository's own.

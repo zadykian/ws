@@ -10,7 +10,9 @@ made. The runner's own Docker is purged first, as ws installs
 its own. Its apt source goes too, as apt refuses a repository that two sources name with different
 keys, and mise adds its own. So do the plugins that the image put in Docker's directory past dpkg,
 which would keep it and warn. The image's source of the git-core PPA goes
-too, as ws adds the PPA with its own key. apt's daily timers lose the stamps of their runs at the image's
+too, as ws adds the PPA with its own key. Then apt's lists are fetched anew. The image's git comes
+from that PPA, so git and git-man go down to the archive's version. The job fails where git is not
+below 2.54 then. apt's daily timers lose the stamps of their runs at the image's
 build, as a new machine's have none before their first start. With them, systemd takes a run as
 missed at the boot. Each of the bootstrap's reloads draws the run's random delay again, and one
 soon falls in the past: an upgrade then holds dpkg's lock under the bootstrap. The runner's
@@ -34,8 +36,9 @@ log shows the timers and their stamps before it and after it, and systemd's relo
 failure shows what started the upgrade. Setup's `--plan` must exit 2 before the run, which has
 mise, the plugin and the bootstrap to do, and exit 0 after it. Setup runs twice, and the plan must
 exit 0 again. Neither run nor plan may print a warning, whatever its exit code
-([The warnings check](README.md#the-warnings-check)). Git must be 2.54 or above, with the PPA's
-version ([base](../../roles/server/ubuntu/base/README.md#git)). A failure prints the system
+([The warnings check](README.md#the-warnings-check)). Git must then be 2.54 or above, with the
+PPA's version, so the setup moved it up
+([base](../../roles/server/ubuntu/base/README.md#git)). A failure prints the system
 daemon's log.
 
 The run leaves checks that need no container. With the frame's line of `file/ws-values` dropped,
