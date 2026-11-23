@@ -19,17 +19,26 @@ const treeMarker = ".ws-source"
 
 // Tree is a directory unpacked from a pinned archive, less Strip leading parts of each name. The
 // unpack goes to a hidden directory beside Path, which replaces Path whole, so that a run cut
-// short leaves no half tree at Path. The archive waits in CacheDir and goes with the install.
+// short leaves no half tree at Path. The archive waits in Cache, CacheDir where empty, and goes with
+// the install.
 type Tree struct {
 	M      effect.Machine
 	Source PinnedFile // its Path and Mode are not used
 	Path   string
 	Strip  int
+	Cache  string
 }
 
 // staging is where the tree is unpacked, beside Path so that the move is a rename.
 func (t Tree) staging() string {
 	return path.Join(path.Dir(t.Path), "."+path.Base(t.Path)+".staging")
+}
+
+func (t Tree) cache() string {
+	if t.Cache == "" {
+		return CacheDir
+	}
+	return t.Cache
 }
 
 type installTree struct {
@@ -68,7 +77,7 @@ func (c installTree) Apply(ctx context.Context) error {
 // sum.
 func (t Tree) cleaned(ctx context.Context, url string) ([]resource.Change, error) {
 	var changes []resource.Change
-	for _, p := range []string{path.Join(CacheDir, path.Base(url)), t.staging()} {
+	for _, p := range []string{path.Join(t.cache(), path.Base(url)), t.staging()} {
 		more, err := file.Absent{M: t.M, Path: p}.Plan(ctx)
 		if err != nil {
 			return nil, err
@@ -93,12 +102,12 @@ func (t Tree) Plan(ctx context.Context) ([]resource.Change, error) {
 	if err == nil && string(marker) == url+"\n" {
 		return t.cleaned(ctx, url)
 	}
-	archive, err := t.Source.Cached(ctx)
+	archive, err := t.Source.cachedIn(ctx, t.cache())
 	if err != nil {
 		return nil, fmt.Errorf("tree %s: %w", t.Path, err)
 	}
 	var changes []resource.Change
-	for _, r := range []resource.Resource{file.Dir{M: t.M, Path: CacheDir, Mode: 0o755}, archive} {
+	for _, r := range []resource.Resource{file.Dir{M: t.M, Path: t.cache(), Mode: 0o755}, archive} {
 		more, err := r.Plan(ctx)
 		if err != nil {
 			return nil, err
