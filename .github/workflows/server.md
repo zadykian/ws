@@ -38,8 +38,10 @@ mise, the plugin and the bootstrap to do, and exit 0 after it. Setup runs twice,
 exit 0 again. Neither run nor plan may print a warning, whatever its exit code
 ([The warnings check](README.md#the-warnings-check)). Git must then be 2.54 or above, with the
 PPA's version, so the setup moved it up
-([base](../../roles/server/ubuntu/base/README.md#git)). A failure prints the system
-daemon's log.
+([base](../../roles/server/ubuntu/base/README.md#git)). `dotnet` must list the SDKs 10.0.404 and
+11.0.100 alone, and roslyn-language-server must find .NET with no `DOTNET_ROOT`
+([dotnet-checks.sh](../dotnet-checks.sh), [The .NET SDKs](../../roles/server/ubuntu/devtools/README.md#the-net-sdks)).
+A failure prints the system daemon's log.
 
 The run leaves checks that need no container. With the frame's line of `file/ws-values` dropped,
 the plan must exit 1 ([server-plan.sh](../server-plan.sh)): the check against a silent skip holds.
