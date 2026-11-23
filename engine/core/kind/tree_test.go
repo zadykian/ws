@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
@@ -57,5 +58,23 @@ func TestTreeUnpacksItsArchivesByDpkgsArch(t *testing.T) {
 	}
 	if got := headlines(t, units[0].Step); got != nil {
 		t.Errorf("plan of the current tree = %q, want none", got)
+	}
+}
+
+func TestTreeRefusesABadSpec(t *testing.T) {
+	sum := strings.Repeat("a", 64)
+	archive := "[[tree.t.archive]]\nversion = \"1\"\nurl = \"https://x/t.tar\"\nsha256 = { all = \"" + sum + "\" }\n"
+	for spec, want := range map[string]string{
+		"[tree.t]\npath = \"/usr\"\n" + archive:               "not a clean absolute path below a directory of /",
+		"[tree.t]\npath = \"opt/t\"\n" + archive:              "not a clean absolute path",
+		"[tree.t]\npath = \"/opt/t\"\nstrip = -1\n" + archive: "strip is below 0",
+		"[tree.t]\npath = \"/opt/t\"\n":                       "an archive at least",
+		"[tree.t]\npath = \"/opt/t\"\n[[tree.t.archive]]\nurl = \"https://x/t.tar\"\nsha256 = { all = \"" + sum + "\" }\n":        "takes a version",
+		"[tree.t]\npath = \"/opt/t\"\n[[tree.t.archive]]\nversion = \"1\"\nurl = \"https://x/t.tar\"\nsha256 = { all = \"A\" }\n": "64 lowercase hex",
+	} {
+		e, _, _, _ := testEnv()
+		if _, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": spec})); err == nil || !strings.Contains(err.Error(), want) {
+			t.Errorf("load of %q = %v, want %q", spec, err, want)
+		}
 	}
 }

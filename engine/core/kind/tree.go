@@ -2,7 +2,9 @@ package kind
 
 import (
 	"context"
+	"errors"
 	"io/fs"
+	"path"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/resource"
@@ -32,8 +34,22 @@ type treeArchive struct {
 }
 
 func (s treeSpec) parts(e Env, _ fs.FS) (func(context.Context) ([]resource.Resource, error), error) {
+	switch {
+	case !path.IsAbs(s.Path) || path.Clean(s.Path) != s.Path || path.Dir(s.Path) == "/":
+		return nil, errors.New("path " + s.Path + " is not a clean absolute path below a directory of /")
+	case s.Strip < 0:
+		return nil, errors.New("strip is below 0")
+	case len(s.Archives) == 0:
+		return nil, errors.New("a tree takes an archive at least")
+	}
 	tree := fetch.Tree{M: e.M, Path: s.Path, Strip: s.Strip}
 	for _, a := range s.Archives {
+		if a.Version == "" || a.URL == "" || len(a.SHA256) == 0 {
+			return nil, errors.New("an archive takes a version, a url and a sha256 for each architecture")
+		}
+		if err := checkSums(a.SHA256); err != nil {
+			return nil, err
+		}
 		url := func(version, arch string) string {
 			if name, ok := s.ArchNames[arch]; ok {
 				arch = name
