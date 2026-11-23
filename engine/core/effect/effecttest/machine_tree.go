@@ -9,8 +9,9 @@ import (
 )
 
 // tree handles three commands that the table holds no result for, and reports whether it did.
-// Root's "rm -rf -- PATH" drops PATH and everything under it. "mv -T -- FROM TO" moves FROM and
-// everything under it to TO. "mv -f -- FROM TO" renames the file FROM over TO, whose own entries go.
+// Root's "rm -rf -- PATH" drops PATH and everything under it. "mv -T -- FROM TO", or "mv -- FROM
+// TO" where TO is gone, moves FROM and everything under it to TO. "mv -f -- FROM TO" renames the
+// file FROM over TO, whose own entries go.
 // The caller holds the lock.
 func (m *Machine) tree(name string, args []string) bool {
 	paths := slices.DeleteFunc(slices.Clone(args), func(a string) bool { return strings.HasPrefix(a, "-") })
@@ -20,9 +21,9 @@ func (m *Machine) tree(name string, args []string) bool {
 			m.each(p, func(string) string { return "" })
 		}
 		return true
-	case name == "mv" && len(paths) == 2 && (slices.Contains(args, "-T") || slices.Contains(args, "-f")):
+	case name == "mv" && len(paths) == 2:
 		from, to := paths[0], paths[1]
-		if !slices.Contains(args, "-T") {
+		if slices.Contains(args, "-f") {
 			m.each(to, func(string) string { return "" })
 		}
 		m.each(from, func(key string) string { return to + strings.TrimPrefix(key, from) })

@@ -54,6 +54,8 @@ func (c installTree) String() string {
 
 func (installTree) Kind() step.ChangeKind { return step.Install }
 
+// Apply unpacks the archives into a fresh staging directory, marks it, and moves it over Path. mv
+// takes no -T, which macOS's lacks: Path is gone by then, so the staging directory takes its name.
 func (c installTree) Apply(ctx context.Context) error {
 	staging := c.t.staging()
 	if _, err := c.t.M.RunRoot(ctx, "rm", "-rf", "--", staging); err != nil {
@@ -68,7 +70,7 @@ func (c installTree) Apply(ctx context.Context) error {
 	if err := c.t.M.WriteAtomic(path.Join(staging, treeMarker), []byte(markerText(c.urls)), marker); err != nil {
 		return err
 	}
-	steps := [][]string{{"rm", "-rf", "--", c.t.Path}, {"mv", "-T", "--", staging, c.t.Path}}
+	steps := [][]string{{"rm", "-rf", "--", c.t.Path}, {"mv", "--", staging, c.t.Path}}
 	for _, f := range c.files {
 		steps = append(steps, []string{"rm", "-f", "--", f})
 	}

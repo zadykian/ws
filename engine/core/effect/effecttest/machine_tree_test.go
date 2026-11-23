@@ -32,7 +32,7 @@ func TestMachineRemovesATree(t *testing.T) {
 
 func TestMachineMovesATree(t *testing.T) {
 	m := treeMachine()
-	if _, err := m.RunRoot(context.Background(), "mv", "-T", "--", "/a", "/b"); err != nil {
+	if _, err := m.RunRoot(context.Background(), "mv", "--", "/a", "/b"); err != nil {
 		t.Fatal(err)
 	}
 	if string(m.Files["/b/d/f"]) != "f" || m.Dirs["/b/d"] != 0o700 || m.Links["/b/l"] != "g" || m.Modes["/b/g"] != 0o755 ||
