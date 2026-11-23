@@ -65,15 +65,13 @@ func TestDevtoolsSourcesPinTheirKeys(t *testing.T) {
 			Key: "https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key"},
 		"charm": {URIs: "https://repo.charm.sh/apt/", Suites: "*", Components: "*",
 			Key: "https://repo.charm.sh/apt/gpg.key"},
-		"dotnet-backports": {PPA: "dotnet/backports"},
 		"github-cli": {URIs: "https://cli.github.com/packages", Suites: "stable", Components: "main",
 			Key: "https://cli.github.com/packages/githubcli-archive-keyring.asc"},
 	}
 	prints := map[string][]string{
-		"nodesource":       {"6F71F525282841EEDAF851B42F59B5F99B1BE0B4"},
-		"charm":            {"ED927B38BE981E53CA09153D03BBF595D4DFD35C"},
-		"dotnet-backports": {"45A3F127159BE9E5017811C62125B164E8E5D3FA"},
-		"github-cli":       {"2C6106201985B60E6C7AC87323F3D4EA75716059", "7F38BBB59D064DBCB3D84D725612B36462313325"},
+		"nodesource": {"6F71F525282841EEDAF851B42F59B5F99B1BE0B4"},
+		"charm":      {"ED927B38BE981E53CA09153D03BBF595D4DFD35C"},
+		"github-cli": {"2C6106201985B60E6C7AC87323F3D4EA75716059", "7F38BBB59D064DBCB3D84D725612B36462313325"},
 	}
 	got := readConfig(t).Bootstrap.Apt.Sources
 	if len(got) != len(want) {
@@ -116,7 +114,7 @@ func TestGHUpgradesAllowTheRepository(t *testing.T) {
 }
 
 func TestDevtoolsPackagesAreTodays(t *testing.T) {
-	want := []string{"apt:nodejs", "apt:gh", "apt:glow", "apt:dotnet-sdk-8.0", "apt:dotnet-sdk-10.0",
+	want := []string{"apt:nodejs", "apt:gh", "apt:glow", "apt:libicu78",
 		"apt:libasound2t64", "apt:libatk-bridge2.0-0t64", "apt:libatk1.0-0t64", "apt:libcairo2",
 		"apt:libcups2t64", "apt:libgbm1", "apt:libnspr4", "apt:libnss3", "apt:libpango-1.0-0",
 		"apt:libxcomposite1", "apt:libxdamage1", "apt:libxfixes3", "apt:libxkbcommon0", "apt:libxrandr2"}
