@@ -93,7 +93,43 @@ names what Docker in a guest needs, and what ikeward needs: the xfrm modules `xf
 masquerade. A guest cannot load them. `br_netfilter` is not
 one, so a Docker network in a guest with `enable_icc` off, or with the userland proxy off, fails: ws
 does not support it. Its NIC joins the bridge with `security.mac_filtering` and `security.port_isolation`,
-and its disk is on the pool.
+and its disk is on the pool. Its proxy device `otlp` is [the link to SigNoz](#the-link-to-signoz).
+
+## The link to SigNoz
+
+A guest under a host runs no SigNoz, and the host's gives it no address on the LAN to reach. The
+profile's device `otlp` carries the guest's collector to the host's SigNoz:
+
+| Key | Value |
+| --- | --- |
+| `type`, `bind` | `proxy`, `instance`: the device listens in the guest and connects from the host. |
+| `listen` | `unix:/var/lib/ws/otlp/signoz.sock`, a socket in the guest. |
+| `connect` | `tcp:127.0.0.1:14317`, SigNoz's intake on the host's loopback. |
+| `uid`, `gid`, `mode` | `800`, `800` and `0600`: the socket is `otelcol-contrib`'s alone. |
+| `security.uid`, `security.gid` | `65534` for both: the proxy never runs as the host's root. |
+
+The device needs no ACL rule and no ufw rule. The guest's connection ends in its own namespace.
+The host's side is a new connection on `lo`, which the bridge's ACL and ufw's input chain never
+filter. The ACL does not deny the host whole, though: Incus's own table accepts DNS, DHCP and some
+ICMP to the host ahead of it, and [ufw](#ufw) decides those.
+
+**Why a socket.** SigNoz on a guest's loopback port would let any process there send to `14317` and
+pass the guest's collector. No sender's default names a socket file, so none sends to it by mistake.
+Root can open the file, on purpose alone. The host keeps `127.0.0.1:14317` open to any local
+process, as it does `14318`: Docker publishes a port and no socket. Closing it would take a filter
+by user, which a guest does not hold.
+
+**The socket's owner.** The device's own defaults, 0, 0 and 0644, would let any process open it, so
+the profile sets them by number. They are the IDs of `values.OtelcolID`, and the profile is shared,
+so they are fixed: the guest's role [otelcol](../otelcol/README.md) makes
+the account with them before the `.deb`.
+
+**The socket's directory.** The device makes none, and a guest whose directory is missing at its
+first start fails the device, so Incus stops the guest. The directory is not in `/run` or `/tmp`,
+which a guest mounts after its devices start. The image holds it, as the template of a file
+`README` in it: Incus makes the directory of a template's path as it creates the instance.
+
+A self-contained guest, which runs its own SigNoz, exports to its loopback and uses no socket.
 
 ## The table of sources
 
