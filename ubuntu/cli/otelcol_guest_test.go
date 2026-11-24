@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/pelletier/go-toml/v2"
+
+	"github.com/zadykian/ws/ubuntu/values"
 )
 
 // miseFile is the part of a role's mise file that these tests read.
@@ -29,6 +31,17 @@ func readMise(t *testing.T, name string) miseFile {
 		t.Fatalf("%s: %v", name, err)
 	}
 	return f
+}
+
+// The profile names the collector's account by number, for the socket's owner. So ws makes the
+// account with those ids before the .deb, which keeps an account that it finds.
+func TestTheGuestMakesTheCollectorsAccountAtTheProfilesIds(t *testing.T) {
+	f := readMise(t, "otelcol/mise.guest.toml")
+	user, group := f.Bootstrap.Users["otelcol-contrib"], f.Bootstrap.Groups["otelcol-contrib"]
+	if user.UID != values.OtelcolID || group.GID != values.OtelcolID {
+		t.Errorf("otelcol-contrib is made with uid %d and gid %d, want %d for both, as the profile's device names them",
+			user.UID, group.GID, values.OtelcolID)
+	}
 }
 
 // A guest's sysfs shows the host's hwmon, so node_exporter, its service and its arguments are the

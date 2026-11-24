@@ -1,13 +1,13 @@
 # otelcol
 
 The `otelcol` role runs the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) on
-the machine, from `mise bootstrap`. Its `mise.host.toml` installs node_exporter. Its files name the
-units of its `units.toml.tmpl`: the `.deb`, the service with its files, and the check that the
-collector answers. Two more serve Docker's containers: a socket on the bridge address with its
-proxy, and a host's ufw rules for it. The collector takes OTLP on loopback, and from those
-containers through that socket. It reads the journal and the machine's metrics, and on a host its
-temperatures from node_exporter. It sends it all to SigNoz, and claude's metrics to another
-collector where one is set.
+the machine, from `mise bootstrap`. Its `mise.host.toml` installs node_exporter, and its
+`mise.guest.toml` makes the collector's account. Both name the units of its `units.toml.tmpl`: the
+`.deb`, the service with its files, and the check that the collector answers. Two more serve Docker's
+containers: a socket on the bridge address with its proxy, and a host's ufw rules for it. The
+collector takes OTLP on loopback, and from those containers through that socket. It reads the
+journal and the machine's metrics, and on a host its temperatures from node_exporter. It sends it
+all to SigNoz, and claude's metrics to another collector where one is set.
 
 ## The collector
 
