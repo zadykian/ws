@@ -20,6 +20,7 @@ on and has it block all incoming, as the server reaches the Mac past no router
 ([the firewall](roles/firewall/README.md)). mise installs Ghostty, Zed
 and a font as casks, and gh, fnox and age-plugin-yubikey by its lock, with no Homebrew
 ([the runbook](runbook.md)). ws's units install .NET's SDKs ([dotnet](roles/dotnet/README.md)).
+mise installs Go by its lock ([devtools](roles/devtools/README.md)).
 The runbook runs `install.sh`, which puts `ws` in `/usr/local/bin` from a release, checked against
 its `ws.sha256` ([Releases](../.github/workflows/release.md)).
 Write each server's values below first, and the Mac's `values.yml`, which stands empty on a new

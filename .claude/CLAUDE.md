@@ -172,8 +172,9 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([setupkey.go](../macos/cli/setupkey.go)). The
   Mac's casks, Ghostty, Zed and their font, take their latest by mise's `brew-cask`, outside the rule
   ([ghostty](../macos/roles/ghostty/README.md#ghostty)). Go is checked against the
-  SHA-256 its publisher lists, and the postgres-language-server and docker-language-server against
-  theirs. mise's lock holds each for its platform ([mise.guest.lock](../ubuntu/guest/mise/mise.guest.lock)).
+  SHA-256 its publisher lists, on the Mac too
+  ([mise.macos.lock](../macos/mise/mise.macos.lock)), and the postgres-language-server and
+  docker-language-server against theirs. mise's lock holds each for its platform ([mise.guest.lock](../ubuntu/guest/mise/mise.guest.lock)).
   gopls and Delve are built through Go's checksum database, as mise's `go:` tools
   ([devtools](../ubuntu/roles/devtools/README.md#the-tools)). roslyn-language-server is pinned by version alone
   ([units.toml.tmpl](../ubuntu/roles/devtools/units.toml.tmpl)). The npm servers are checked against the sha512

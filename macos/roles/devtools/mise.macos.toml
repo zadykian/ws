@@ -1,0 +1,7 @@
+# Go, as a tool that the lock pins, for the compiler and the language server's own go. mise
+# installs it under the user's data directory, and a unit of ws's links /usr/local/go to it.
+[tools]
+go = "1.27.3"
+
+[bootstrap.packages]
+"ws:file/devtools-go" = "in-sync"
