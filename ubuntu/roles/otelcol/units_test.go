@@ -51,7 +51,7 @@ func checkOf(t *testing.T, path string) []string {
 			} `toml:"file"`
 		} `toml:"service"`
 	}
-	if err := toml.Unmarshal(specText(t, "units.toml.tmpl"), &spec); err != nil {
+	if err := toml.Unmarshal(renderedSpec(t), &spec); err != nil {
 		t.Fatal(err)
 	}
 	for _, f := range spec.Service["otelcol"].File {
@@ -93,6 +93,10 @@ func TestEndpointCheck(t *testing.T) {
 		{"https://LocalHost.:4317", false},
 		{"http://a.localhost:4317", false},
 		{"http://notlocalhost:4317", true},
+		{"http://172.17.0.1:4317", false},
+		{"https://172.17.0.1:4317", false},
+		{"http://172.17.0.1:4318", true},
+		{"http://172x17y0z1:4317", true},
 	} {
 		path := filepath.Join(dir, "claude.env")
 		if err := os.WriteFile(path, []byte("# header\n"+variable+"="+c.url+"\n"), 0o600); err != nil {
@@ -136,13 +140,21 @@ func machine(t *testing.T, env string) (*effecttest.Machine, kind.Env) {
 	return m, kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v}
 }
 
-// collector loads otelcol's units, with a stand-in for signoz's sync, which the .deb waits on, and
-// returns the collector's service unit.
-func collector(t *testing.T, e kind.Env) []kind.Unit {
+// collector loads otelcol's units and returns the collector's service unit.
+func collector(t *testing.T, e kind.Env) []kind.Unit { return only(loaded(t, e), "service/otelcol") }
+
+// only returns the units of those names.
+func only(all []kind.Unit, names ...string) []kind.Unit {
+	return slices.DeleteFunc(all, func(u kind.Unit) bool { return !slices.Contains(names, u.Name) })
+}
+
+// loaded loads every one of otelcol's units, with a stand-in for signoz's sync, which the .deb waits on.
+func loaded(t *testing.T, e kind.Env) []kind.Unit {
 	fsys := fstest.MapFS{
 		"signoz/units.toml.tmpl": {Data: []byte("[state.signoz-sync.run]\nuser = \"root\"\ncommand = [\"true\"]\ncreates = [\"/etc\"]\n")},
 	}
-	for _, name := range []string{"files/journal.conf", "files/claude.conf", "files/claude.env.tmpl", "files/config.yaml.tmpl"} {
+	for _, name := range []string{"files/journal.conf", "files/claude.conf", "files/claude.env.tmpl", "files/config.yaml.tmpl",
+		"files/otelcol-docker.service", "files/otelcol-docker.socket.tmpl"} {
 		fsys["otelcol/"+name] = &fstest.MapFile{Data: specText(t, name)}
 	}
 	// The .deb's install is apt's, which the test leaves out: the service waits on nothing here.
@@ -152,7 +164,7 @@ func collector(t *testing.T, e kind.Env) []kind.Unit {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return slices.DeleteFunc(all, func(u kind.Unit) bool { return u.Name != "service/otelcol" })
+	return all
 }
 
 func TestCollectorFilesFollowTheEndpoint(t *testing.T) {
