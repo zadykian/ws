@@ -172,7 +172,7 @@ refuses the same names.
 Run `ws macos secrets add NAME` as yourself, with the Nano plugged in, once init has run
 and ws's `install.sh` and `ws ubuntu guest setup` have ended ([the runbook](../../runbook.md#ws-on-ws)). NAME is a server of
 the Mac's. Before the tunnel is up, `--address` and `--port` reach the server as ssh's `HostName`
-and `Port`. A guest, whose file names its `WS_HOST`, has no address, so they reach its host, which
+and `Port`. A guest, whose file names its `WS_HOST`, has no address, so they reach its host. The host
 answers for it: it reads the guest's key and hostname by `incus exec`, and runs the setup
 ([The guests of a host](../../../ubuntu/runbook.md#the-guests-of-a-host)). The command:
 

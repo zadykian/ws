@@ -30,7 +30,7 @@ files](values/README.md#the-two-files)). The files' check refuses a clash.
    [router's page](../ubuntu/roles/cable/router.md) gives the LAN's defaults.
 4. For a guest of a host, write the host's file first, the host being a server too, at slot 0.
    The guest's file holds `WS_HOST` with the host's name, its slot from 1, its `WS_TUNNEL_PORT` and
-   what it routes, and none of the keys above that name a way
+   what it routes. It holds none of the keys above that name a way
    ([A guest](values/README.md#a-guest)).
 
 ## The bootstrap

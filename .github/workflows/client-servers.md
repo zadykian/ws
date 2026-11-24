@@ -18,7 +18,9 @@ Four cases of the `client` job work on a second server:
   Lab`, a bad name, must stop it too. `--server ws` must go on as with one server. The case's trap
   removes lab's directory.
 - `client/90-clash.sh` makes the files `lab` and `box`, which clash with ws's. The bootstrap's plan
-  must refuse each with its reason, and name `ws macos remove lab` beside it.
+  must refuse each with its reason, and name `ws macos remove lab` beside it. It makes lab a
+  guest of ws too. The plan must refuse a guest that holds a way of its own. It must refuse one
+  that names no host, and one whose tunnel port is its host's.
 - `client/92-second.sh` gives lab a third wireguard-go on UDP 51821. `mise -C /opt/ws/macos
   bootstrap` must then give lab a daemon and a utun of its own, at 10.99.1.1, and leave ws's daemon
   with its handshake. A second bootstrap must call no sudo.
