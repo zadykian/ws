@@ -35,6 +35,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   and what cld does there, [zed](../../macos/roles/zed/README.md) its Zed,
   [firewall](../../macos/roles/firewall/README.md) its firewall.
   [Its zsh](../../macos/roles/zsh/README.md) is its shell: oh-my-zsh, its plugins and ws's settings.
+  [Its power](../../macos/roles/power/README.md) is its display's sleep.
   [Its devtools](../../macos/roles/devtools/README.md) is its command-line tools, and
   [its docker](../../macos/roles/docker/README.md) its Docker, and
   [its desktop](../../macos/roles/desktop/README.md) its Dock, Finder and sounds. [Its secrets](../../macos/roles/secrets/README.md)

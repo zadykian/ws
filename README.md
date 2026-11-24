@@ -59,7 +59,8 @@ and has it block all incoming. Its [`dotnet`](macos/roles/dotnet) installs .NET'
 the server. Its [`devtools`](macos/roles/devtools) installs Go and the command-line tools, and its
 [`docker`](macos/roles/docker) the command line of Docker and colima. Its [`desktop`](macos/roles/desktop)
 sets the Dock, Finder, windows, sounds and screenshots. Its [`zsh`](macos/roles/zsh) sets up
-oh-my-zsh and its plugins, with the settings that load them.
+oh-my-zsh and its plugins, with the settings that load them. Its [`power`](macos/roles/power) keeps the
+display on while on power.
 
 A new Mac with Apple silicon follows [the Mac's runbook](macos/runbook.md). It runs
 `install.sh` through `sudo`, which installs ws's binary, checked against its SHA-256, and writes the
