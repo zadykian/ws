@@ -45,11 +45,12 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: The words, warnings and update checks
+      - name: The words, warnings, update and real-machine checks
         run: |
           sh .github/words-check-test.sh
           .github/warnings-check-test.sh
           .github/update-checks-test.sh
+          ubuntu/checks/checks-test.sh
       - name: make lint
         run: make lint
         env:
