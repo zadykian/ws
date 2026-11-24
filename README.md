@@ -26,7 +26,7 @@ it has any:
 - [`ikeward`](ubuntu/roles/ikeward): ikeward's IKEv2 VPN, where a profile is given, and the WireGuard
   peers' way into it, as units.
 - [`nvidia`](ubuntu/roles/nvidia): NVIDIA's headless driver from Ubuntu's archive, on a machine with an
-  NVIDIA GPU.
+  NVIDIA GPU. A container takes the userspace alone, by its switch, and the host gives it the card.
 - [`fans`](ubuntu/roles/fans): fan curves for the host's board's headers, and the driver that sets them.
 - [`shell`](ubuntu/roles/shell): `/etc/ws/bashrc` and `/etc/ws/profile`, one line of each at the top of
   `~/.bashrc` and `~/.profile`, and `/etc/ws/env` from mise's secret inputs.
