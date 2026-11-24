@@ -32,15 +32,17 @@ A command's `--check` fails where a change is due, and its plan shows the change
 | Unit | Object | Keys |
 | --- | --- | --- |
 | `state/incus-acl` | The ACL `ws-egress` | Egress: the private ranges dropped, the rest allowed. |
-| `state/incus-pool` | The ZFS pool `ws` | `source`, on a create alone: `WS_INCUS_POOL_SOURCE`. |
+| `state/incus-pool` | The ZFS pool `ws` | `source`, on a create alone: `WS_INCUS_POOL_SOURCE`. Always `volume.zfs.use_refquota` and `volume.zfs.remove_snapshots`. |
 | `state/incus-bridge` | The bridge `incusbr0` | The subnet, DHCP's resolvers, NAT, no IPv6 and the ACL. |
-| `state/incus-profile` | The profile `ws` | Unprivileged, nesting, isolated IDs, an isolated NIC and the disk. |
+| `state/incus-profile` | The profile `ws` | Unprivileged, nesting, isolated IDs, autostart, daily snapshots, an isolated NIC and the disk. |
 | `state/incus-image` | The image of the guests | Ubuntu's root tarball, with ws's metadata. |
 | `state/incus-ufw` | ufw's rules | DHCP in on the bridge, and the bridge's routes. |
 | `service/incus-sources` | The table `ws_sources` | What a guest may not claim as its source. |
+| `state/incus-owned` | The set `owned4` | Each guest's address, with the port of its NIC. |
+| `state/incus-guests` | Each guest of `WS_INCUS_GUESTS` | Its instance, launched or edited, and started. |
 
 The first four run in that order: the bridge names the ACL, and the profile names the bridge and
-the pool.
+the pool. The image follows, then the table of sources, the set that it holds, and the guests.
 
 The pool's source is compared against `volatile.initial_source`, as ZFS's create sets `source` to
 the pool's name. A pool made on another partition fails the run, as Incus never moves one and a
@@ -90,11 +92,12 @@ subnet or in the tunnel's slots, `10.99.0.0/20`, must be an address that the por
 lists what a guest may not claim, and passes the rest, so that a guest asks for a lease from
 `0.0.0.0` and reaches the internet from its own address.
 
-The set `owned4` holds each guest's address with its port, and starts empty. A guest's unit fills
-it. `incus-sources.service` loads the table before Incus starts a guest, and Incus requires it, so
-a load that fails keeps Incus down. A reload empties the set, so the unit that fills it runs after
-each load. A change to the table reloads it, where the table in force, hooks included, differs from
-what the file loads, which `nft -c` checks first.
+The set `owned4` holds each guest's address with its port. The file lists them from
+`WS_INCUS_GUESTS`, so each load fills the set: a boot gives a guest its address before Incus
+starts it, and a reload leaves no moment without it. `incus-sources.service` loads the table before
+Incus starts a guest, and Incus requires it, so a load that fails keeps Incus down. A change to the
+file or to the table in force, hooks included, reloads it, which `nft -c` checks first. The set's
+elements are no part of that comparison, so `state/incus-owned` mends one that a hand edit changed.
 
 ## ufw
 
@@ -155,3 +158,36 @@ template is another image, and a guest keeps the one that made it. Where Incus h
 alias, the unit does nothing. Otherwise it downloads the tarball into `/var/cache/ws`, writes the
 metadata beside it, imports both and drops them. The metadata is a gzip tarball that is the same
 for the same input.
+
+## A guest's instance
+
+`state/incus-guests` makes each guest of the list from the image, with `incus launch` and the
+instance's YAML on its standard input. An edit reads the instance from `incus list`, compares the
+keys and devices that ws declares, and patches those into the writable keys that Incus holds, so the
+`volatile.*` and `image.*` keys survive. A whole replace would drop them. An instance that Incus
+holds with no profile `ws` fails the run: ws never turns another instance into a guest.
+
+| Key | Value |
+| --- | --- |
+| `profiles` | `ws` alone. |
+| `config` | `limits.cpu` and `limits.memory`, from the list. |
+| `devices.eth0` | The profile's NIC, whole, with `host_name` `ws-NAME` and `ipv4.address`, from the list. |
+| `devices.root` | The profile's disk, whole, with `size`, the quota, from the list. |
+
+A device of an instance replaces the profile's device of its name, so each is whole. The NIC's
+address is the lease that the bridge's DHCP gives, and the port's name is the one that the set
+`owned4` holds with it. A guest that is stopped is started, and `boot.autostart` starts it with the
+host. A guest of ws's that the list lacks gets a warning, and no deletion: remove it with
+`ws ubuntu host guests remove NAME`.
+
+The create alone sets `cloud-init.network-config`, which the image's template writes into the seed.
+It holds DHCP on `eth0`. It adds the slot's address as a host route where the guest's own values
+name a slot but slot 0, which is the host's. A later change of the slot reaches no existing guest.
+
+## Storage
+
+The pool counts each volume's quota by `refquota`, and a restore of an older snapshot drops the newer
+ones, as ZFS restores the latest alone: `volume.zfs.use_refquota` and `volume.zfs.remove_snapshots`.
+So a guest's snapshots stay out of its disk quota. The profile takes a daily snapshot of each guest,
+which expires after two weeks, as a schedule with no expiry keeps every snapshot. Docker's data
+stays on the guest's root dataset.
