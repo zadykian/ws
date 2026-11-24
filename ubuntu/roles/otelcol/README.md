@@ -1,11 +1,11 @@
 # otelcol
 
 The `otelcol` role runs the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) on
-the host, from `mise bootstrap`. Its `mise.guest.toml` installs node_exporter and names the units
-of its `units.toml.tmpl`: the `.deb`, the service with its files, and the check that the collector
-answers. It takes OTLP on loopback, and reads the journal, the host's metrics and its
-temperatures from node_exporter. It sends it all to SigNoz, and claude's metrics to another
-collector where one is set.
+the machine, from `mise bootstrap`. Its `mise.guest.toml` and `mise.host.toml` install
+node_exporter and name the units of its `units.toml.tmpl`: the `.deb`, the service with its files,
+and the check that the collector answers. It takes OTLP on loopback, and reads the journal, the
+host's metrics and its temperatures from node_exporter. It sends it all to SigNoz, and claude's
+metrics to another collector where one is set.
 
 ## The collector
 
@@ -53,7 +53,7 @@ restarts it once. The service checks a new config with `otelcol-contrib validate
 replaces the live file. A config that the check refuses leaves the live file alone. The restart
 owed waits for the next good run. On a first install, the package starts the collector
 with the package's own config, which listens on every address. A guest holds no filter, so it does
-so until the service replaces it.
+so until the service replaces it. A host's ufw denies what comes in meanwhile.
 The `.deb`'s unit stops it at once, and the service enables it again once the config is in place.
 The `.deb`'s unit waits on signoz's sync, so that SigNoz's retention is set before the collector
 sends ([signoz](../signoz/README.md#retention)).

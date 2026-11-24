@@ -7,13 +7,14 @@ mise config and a spec of ws's units ([The frame](../frame/README.md)):
 
 | File | What it holds |
 | --- | --- |
-| [`mise.guest.toml`](mise.guest.toml) | The git-core PPA, the packages, and the units of every server. |
+| [`mise.guest.toml`](mise.guest.toml) | The git-core PPA, the packages, and the units of every guest. |
+| [`mise.host.toml`](mise.host.toml) | The same lines, for a host. |
 | [`units.toml.tmpl`](units.toml.tmpl) | The units: the locale, the time zone, unattended upgrades and apt's timers, the swap file and the swappiness. |
 | [`files/`](files) | The files that the units write, and the allowance of the PPA's origin. |
 
 The values are `WS_BASE_LOCALE`, `WS_BASE_TIMEZONE`, `WS_BASE_SWAP_SIZE_MB` and `WS_BASE_SWAPPINESS`
 of the values file ([the README](../../../README.md#running-it-again)). The packages are mise's
-lines, so another list is a change to `mise.guest.toml`.
+lines, so another list is a change to `mise.guest.toml` and `mise.host.toml`.
 
 ## Git
 

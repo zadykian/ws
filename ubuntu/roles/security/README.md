@@ -1,12 +1,13 @@
 # security
 
 The `security` role sets up an sshd drop-in that lets everyone log in by key only, and fail2ban for
-SSH. A guest holds no filter: it sets up no ufw and no table of its own, as below. The role holds
+SSH. A host sets up ufw too, and a guest holds no filter, as below. The role holds
 mise config and a spec of ws's units ([The frame](../frame/README.md)):
 
 | File | What it holds |
 | --- | --- |
 | [`mise.guest.toml`](mise.guest.toml) | The packages, fail2ban's jail and its reload, and its service. |
+| [`mise.host.toml`](mise.host.toml) | The same, with ufw's package and service, and its firewall. |
 | [`units.toml.tmpl`](units.toml.tmpl) | The units: the lockout guard and sshd's drop-in. |
 | [`files/`](files) | The files and the template that mise and the units write. |
 
@@ -41,8 +42,15 @@ past them. So a guest holds none, and no other role sets one up:
 - The Mac's firewall stays, the one guard where a server ends its own tunnel
   ([The Mac's firewall](../../../macos/roles/firewall/README.md)).
 
-`TestGuestHoldsNoFilter` fails where a role's spec or mise file names ufw, a firewall or the old
-table.
+`TestGuestHoldsNoFilter` fails where a role's spec or guest file names ufw, a firewall or the old
+table, but in a unit that the host alone runs.
+
+## The host's firewall
+
+A host sets up ufw in `mise.host.toml`: incoming denied, outgoing allowed, and the rule `ssh` for
+TCP 22. mise merges rules by name. So `TestFirewallLetsSSHIn` holds that rule whole, and
+`TestFirewallSSHRuleIsSecuritysAlone` holds that no other file names it or port 22. A role that
+needs a port opens it by a unit of its own, as docker's `state/docker-dns` does.
 
 ## Links under the home
 

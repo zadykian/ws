@@ -8,8 +8,8 @@ claude's usage.
 ## The stack
 
 SigNoz runs on the system's Docker daemon from the compose files in
-`ubuntu/roles/signoz/deployment`, which mise copies to `/opt/signoz` (`mise.guest.toml`).
-A guest holds no filter, so only two ports are published, on loopback: the UI on
+`ubuntu/roles/signoz/deployment`, which mise copies to `/opt/signoz` (`mise.guest.toml` and
+`mise.host.toml`). A guest holds no filter, so only two ports are published, on loopback: the UI on
 `127.0.0.1:3301` and the OTLP/HTTP intake on `127.0.0.1:14318`. 3301 was SigNoz's UI port before
 8080, which dev servers often take.
 
@@ -28,17 +28,17 @@ ssh -N -L 3301:127.0.0.1:3301 root@SERVER
 A `LocalForward 3301 127.0.0.1:3301` in the client's `~/.ssh/config` does the same.
 
 mise copies the files first, `/etc/ws/env` among them. Then ws's units (`units.toml.tmpl`) run in
-this order, after Docker's. otelcol's units, which read
-`/etc/ws/env`, hang below the sync:
+this order, after Docker's. They call `ws ubuntu SIDE signoz` of the side that loads them.
+otelcol's units, which read `/etc/ws/env`, hang below the sync:
 
-- `state/signoz-password` runs `ws ubuntu guest signoz password` where its `--check` fails: where
+- `state/signoz-password` runs `ws ubuntu SIDE signoz password` where its `--check` fails: where
   `root.env` is missing, or has another owner or mode.
 - `compose/signoz`, of the kind `compose`, ups the project. It keeps the SHA-256 of the files in
   `/opt/signoz`, `root.env` included, in `/var/lib/ws/compose/signoz`. Where they differ from the
   last good up, as after a new password or a forge, it recreates every container. A container
   would not see a bind-mounted file's change otherwise. Otherwise it ups only where a service that
   keeps running is down, as an up runs the schema migrator again.
-- `state/signoz-sync` runs `ws ubuntu guest signoz sync` where its `--check` fails: it waits for
+- `state/signoz-sync` runs `ws ubuntu SIDE signoz sync` where its `--check` fails: it waits for
   the API, then sets the retention and the dashboards.
 
 otelcol's units wait on the sync.
@@ -49,7 +49,7 @@ SigNoz keeps traces, metrics and logs for 90 days, `WS_SIGNOZ_RETENTION_DAYS`; i
 days, and 30 for metrics. The role sets it through SigNoz's API before anything is sent, as a change
 applies only to data that comes in after it. It sets it after SigNoz's schema migrator has finished
 too, as the migrator sets its own. Settings › General in the UI shows it; rules set there to keep
-some logs for another time stay. `ws ubuntu guest signoz sync --check` reads it and reports
+some logs for another time stay. `ws ubuntu SIDE signoz sync --check` reads it and reports
 what it would change, and skips it where SigNoz isn't running.
 
 ## The dashboards
@@ -85,7 +85,7 @@ The compose files are generated. SigNoz's [Foundry](https://github.com/SigNoz/fo
 from `ubuntu/roles/signoz/casting.yaml`, which pins every image, and the checksum of a ClickHouse
 function the stack downloads from GitHub. To change them, change the casting, then forge again with
 foundryctl 0.3.0 and commit what it writes. A file or directory that a forge adds or drops takes
-its entry in `mise.guest.toml` too, which `TestEachForgedFileIsMises` checks:
+its entry in each mise file too, which `TestEachForgedFileIsMises` checks:
 
 ```sh
 cd ubuntu/roles/signoz
@@ -98,7 +98,7 @@ for a newer release. It never removes a file, hence the `rm`.
 
 A new SigNoz may return the dashboards with fields added or dropped, and the role would then replace
 them on every run. So after changing SigNoz's image, unlock any dashboard locked in the UI, reported
-or not, as the refresh stops at one. Then run `ws ubuntu guest signoz sync`, refresh
+or not, as the refresh stops at one. Then run `ws ubuntu guest signoz sync` (`host` on a host), refresh
 `host.json` and `claude.json` from SigNoz as
 `ubuntu/roles/signoz/internal/dashboards/dashboards/README.md` says,
 review their diff, and commit them with the casting. A second run must then leave both dashboards as
