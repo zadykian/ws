@@ -2,7 +2,7 @@
 # mise bootstrap (28-bootstrap.sh) wrote Zed's global_settings.json, which is
 # macos/roles/zed/files's file whole, and settings.json, the seed, where none existed. A
 # settings.json that is there is left byte for byte by the next bootstrap, whose plan then shows no
-# change. /etc/paths.d/ws puts the cask's zed on a login shell's PATH.
+# change. /etc/paths.d/ws, which devtools writes, puts the cask's zed on a login shell's PATH.
 
 set -eo pipefail
 # shellcheck source=.github/client-mise.sh
@@ -35,7 +35,7 @@ grep -qxF '{ "ssh_connections": [{ "host": "ws" }] }' "$dir/settings.json" ||
         echo '::error::settings.json has no seed for the host ws'
         fail=1
     }
-[ "$(cat /etc/paths.d/ws)" = /opt/homebrew/bin ] ||
+grep -qxF /opt/homebrew/bin /etc/paths.d/ws ||
     {
         echo '::error::/etc/paths.d/ws does not name /opt/homebrew/bin'
         fail=1

@@ -5,3 +5,11 @@
 [file.devtools-go]
 path = "/usr/local/go"
 link = "{{ .Home }}/.local/share/mise/installs/go/1.27.3"
+
+# The formulae link their commands into /opt/homebrew/bin, and Go's are in /usr/local/go/bin, which
+# no shell's PATH holds where Homebrew is not set up. A login shell's /etc/zprofile runs
+# /usr/libexec/path_helper, which adds each line of /etc/paths.d to PATH. The file takes no mark, as
+# each line names a directory.
+[file.devtools-path]
+path = "/etc/paths.d/ws"
+source = "files/paths"

@@ -16,7 +16,7 @@ import (
 // macUnits loads the role's units on a Mac of the user v.
 func macUnits(t *testing.T, m *effecttest.Machine) []kind.Unit {
 	fsys := fstest.MapFS{}
-	for _, name := range []string{"units.toml.tmpl"} {
+	for _, name := range []string{"units.toml.tmpl", "files/paths"} {
 		text, err := os.ReadFile(name) //nolint:gosec // a file of the role, named above
 		if err != nil {
 			t.Fatal(err)
@@ -26,7 +26,7 @@ func macUnits(t *testing.T, m *effecttest.Machine) []kind.Unit {
 	m.Results["id -u v"] = effecttest.Result{Out: []byte("501\n")}
 	m.Results["id -g v"] = effecttest.Result{Out: []byte("20\n")}
 	m.Results["dscl . -read /Users/v NFSHomeDirectory"] = effecttest.Result{Out: []byte("NFSHomeDirectory: /Users/v\n")}
-	m.Dirs["/Users/v"], m.Dirs["/usr/local"] = 0o750, 0o755
+	m.Dirs["/Users/v"], m.Dirs["/usr/local"], m.Dirs["/etc/paths.d"] = 0o750, 0o755, 0o755
 	m.Owners["/Users/v"] = [2]int{501, 20}
 	units, err := kind.Load(kind.Env{M: m, Out: &effecttest.Out{}, Data: facts.Mac{User: "v", Home: "/Users/v"},
 		System: kind.MacOS, User: "v"}, fsys)
@@ -34,6 +34,17 @@ func macUnits(t *testing.T, m *effecttest.Machine) []kind.Unit {
 		t.Fatal(err)
 	}
 	return units
+}
+
+func TestPathNamesHomebrewsAndGosBin(t *testing.T) {
+	m := effecttest.NewMachine()
+	units := macUnits(t, m)
+	if _, err := step.Run(t.Context(), kind.Steps(units), &effecttest.Out{}, false); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(m.Files["/etc/paths.d/ws"]); got != "/opt/homebrew/bin\n/usr/local/go/bin\n" || m.Owners["/etc/paths.d/ws"] != [2]int{} {
+		t.Errorf("/etc/paths.d/ws = %q, owner %v; want both bins, root's", got, m.Owners["/etc/paths.d/ws"])
+	}
 }
 
 func TestGoIsLinkedToMisesInstall(t *testing.T) {
