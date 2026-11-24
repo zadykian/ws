@@ -57,6 +57,9 @@ type Object struct {
 	// Check refuses an object that already exists, by what it reads: a key that an edit could not
 	// change. Nil refuses none.
 	Check func(have map[string]any) error
+	// OnCreate refuses a create that lacks what it needs, as a value that ws has none for. Nil
+	// refuses none. An object that exists never asks it.
+	OnCreate func() error
 }
 
 // Plan creates the object where Incus lacks it, and edits it where a declared key differs.
@@ -69,6 +72,11 @@ func (o Object) Plan(ctx context.Context) ([]resource.Change, error) {
 		return nil, err
 	}
 	if !found {
+		if o.OnCreate != nil {
+			if err := o.OnCreate(); err != nil {
+				return nil, fmt.Errorf("the %s %s is missing: %w", o.Kind.Noun, o.Name, err)
+			}
+		}
 		body, err := yaml.Marshal(merge(o.First, o.Want))
 		if err != nil {
 			return nil, err

@@ -215,3 +215,17 @@ func TestAMissingKeyIsPatchedIn(t *testing.T) {
 		t.Errorf("first line = %q, want %q", head, want)
 	}
 }
+
+func TestAMissingObjectCanBeRefusedBeforeItsCreate(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results[listLine] = effecttest.Result{Out: []byte("[]")}
+	o := acl(m, declared())
+	o.OnCreate = func() error { return errors.New("name its partition") }
+	if _, err := o.Plan(t.Context()); err == nil || err.Error() != "the network ACL ws-egress is missing: name its partition" {
+		t.Errorf("err = %v", err)
+	}
+	m.Results[listLine] = effecttest.Result{Out: []byte(oneACL)}
+	if _, err := o.Plan(t.Context()); err != nil {
+		t.Errorf("an object that exists asked OnCreate: %v", err)
+	}
+}
