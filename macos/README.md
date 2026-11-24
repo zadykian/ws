@@ -137,9 +137,9 @@ fails, naming that command. The command stops on a service the list lacks, or on
 outside `10.77.0.0/30`, as an uplink has. A disabled service, which the list prints with a `*` first
 and the key names without it, plans no change. So no bootstrap shows it: `ws macos cable
 --check` warns of it while it stays off. Without the key, it does nothing, and the server's tunnel
-does not try the cable: the cable reaches the one server that names it. `-setmanual` replaces the
-service's settings, whatever they were, and emptying the key leaves them. To give the service DHCP
-again: `sudo networksetup -setdhcp SERVICE`.
+does not try the cable: the cable reaches the one server that names it, and that server's guests.
+`-setmanual` replaces the service's settings, whatever they were, and emptying the key leaves them.
+To give the service DHCP again: `sudo networksetup -setdhcp SERVICE`.
 
 An address, mask or router that `getinfo` omits, as it may undocked, counts as set. Where
 `-setmanual` leaves other settings, the command names them and stops. Then set it by hand: in System
