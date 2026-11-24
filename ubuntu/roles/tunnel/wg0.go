@@ -24,36 +24,52 @@ type WG0 struct {
 	Tries int
 	Pause time.Duration
 	Sleep func(time.Duration)
+	// Name and File are the interface and its key's path, wg0 and keyFile where empty.
+	Name, File string
+}
+
+func (w WG0) name() string {
+	if w.Name == "" {
+		return "wg0"
+	}
+	return w.Name
+}
+
+func (w WG0) file() string {
+	if w.File == "" {
+		return keyFile
+	}
+	return w.File
 }
 
 // Plan plans the deletion of a wg0 of another key than the file's, then the reload and the wait
 // where wg0 lacks the file's key. A missing key file is an error, as tunnel key makes it first.
 func (w WG0) Plan(ctx context.Context) ([]resource.Change, error) {
-	public, hasKey, err := serverPublicKey(w.M)
+	public, hasKey, err := publicKeyOf(w.M, w.file())
 	if err != nil {
 		return nil, err
 	}
 	if !hasKey {
-		return nil, fmt.Errorf("%s is missing: ws ubuntu guest tunnel key makes it", keyFile)
+		return nil, fmt.Errorf("%s is missing: tunnel key makes it", w.file())
 	}
-	_, statErr := w.M.Stat("/sys/class/net/wg0")
+	_, statErr := w.M.Stat("/sys/class/net/" + w.name())
 	if statErr != nil && !errors.Is(statErr, fs.ErrNotExist) {
 		return nil, statErr
 	}
-	why, remove := "wg0 is missing", false
+	why, remove := w.name()+" is missing", false
 	if statErr == nil {
-		out, err := w.M.RunRoot(ctx, "wg", "show", "wg0", "public-key")
+		out, err := w.M.RunRoot(ctx, "wg", "show", w.name(), "public-key")
 		if err != nil {
 			return nil, err
 		}
 		if strings.TrimSpace(string(out)) == public {
 			return nil, nil
 		}
-		why, remove = "wg0 holds another key than the file's", true
+		why, remove = w.name()+" holds another key than the file's", true
 	}
 	var cs []resource.Change
 	if remove {
-		cs = append(cs, deleteLink{w.M})
+		cs = append(cs, deleteLink{w.M, w.name()})
 	}
-	return append(cs, reloadNetworkd{w.M, why}, waitForKey{w, public}), nil
+	return append(cs, reloadNetworkd{w.M, w.name(), why}, waitForKey{w, public}), nil
 }

@@ -14,6 +14,9 @@ import (
 	"github.com/zadykian/ws/internal/wgkey"
 )
 
+// peersDir holds the public key of each peer of wg0, as NAME.pub.
+const peersDir = "/etc/wireguard"
+
 // keyFile is the server's private key, which networkd reads for wg0.
 const keyFile = "/etc/systemd/network/60-wg0.key"
 
@@ -33,6 +36,16 @@ type Key struct {
 	Out effect.Out
 	// Random is the source of a new key's bytes, crypto/rand's where nil.
 	Random io.Reader
+	// File is the key's path, keyFile where empty: a guest's tunnel on the host has a key of its own.
+	File string
+}
+
+// path is the key's file.
+func (k Key) path() string {
+	if k.File == "" {
+		return keyFile
+	}
+	return k.File
 }
 
 // key is Key with the id of the group systemd-network, read as it plans.
@@ -58,7 +71,7 @@ func (c makeKey) Apply(context.Context) error {
 	if err != nil {
 		return err
 	}
-	if err := c.M.WriteAtomic(keyFile, []byte(private+"\n"), effect.Attrs{GID: c.gid, Mode: keyMode}); err != nil {
+	if err := c.M.WriteAtomic(c.path(), []byte(private+"\n"), effect.Attrs{GID: c.gid, Mode: keyMode}); err != nil {
 		return err
 	}
 	c.Out.Say("ws's WireGuard public key, for WS_PUBLIC_KEY in a server's values.yml: %s", public)
@@ -67,15 +80,15 @@ func (c makeKey) Apply(context.Context) error {
 
 type setKeyMode struct{ key }
 
-func (setKeyMode) String() string {
-	return fmt.Sprintf("set the owner root:%s and the mode %o of the server's private key", networkGroup, keyMode)
+func (c setKeyMode) String() string {
+	return fmt.Sprintf("set the owner root:%s and the mode %o of %s", networkGroup, keyMode, c.path())
 }
 
 func (c setKeyMode) Apply(context.Context) error {
-	if err := c.M.Chown(keyFile, 0, c.gid); err != nil {
+	if err := c.M.Chown(c.path(), 0, c.gid); err != nil {
 		return err
 	}
-	return c.M.Chmod(keyFile, keyMode)
+	return c.M.Chmod(c.path(), keyMode)
 }
 
 // Plan plans the key where none exists, or its owner, group and mode where they differ. A file that
@@ -86,7 +99,7 @@ func (k Key) Plan(context.Context) ([]resource.Change, error) {
 		return nil, err
 	}
 	kg := key{k, gid}
-	text, err := k.M.ReadRootFile(keyFile)
+	text, err := k.M.ReadRootFile(k.path())
 	if errors.Is(err, fs.ErrNotExist) {
 		return []resource.Change{makeKey{kg}}, nil
 	}
@@ -94,9 +107,9 @@ func (k Key) Plan(context.Context) ([]resource.Change, error) {
 		return nil, err
 	}
 	if _, err := wgkey.Public(strings.TrimSpace(string(text))); err != nil {
-		return nil, fmt.Errorf("%s holds no WireGuard private key: %w", keyFile, err)
+		return nil, fmt.Errorf("%s holds no WireGuard private key: %w", k.path(), err)
 	}
-	got, err := k.M.RootAttrs(keyFile)
+	got, err := k.M.RootAttrs(k.path())
 	if err != nil {
 		return nil, err
 	}
@@ -106,10 +119,9 @@ func (k Key) Plan(context.Context) ([]resource.Change, error) {
 	return nil, nil
 }
 
-// serverPublicKey returns the public key of the private key in the file, and whether the file
-// exists.
-func serverPublicKey(m effect.Machine) (string, bool, error) {
-	text, err := m.ReadRootFile(keyFile)
+// publicKeyOf returns the public key of the private key in file, and whether the file exists.
+func publicKeyOf(m effect.Machine, file string) (string, bool, error) {
+	text, err := m.ReadRootFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
 		return "", false, nil
 	}
