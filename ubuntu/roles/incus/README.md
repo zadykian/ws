@@ -33,15 +33,16 @@ A command's `--check` fails where a change is due, and its plan shows the change
 | --- | --- | --- |
 | `state/incus-acl` | The ACL `ws-egress` | Egress: the private ranges dropped, the rest allowed. |
 | `state/incus-pool` | The ZFS pool `ws` | `source`, on a create alone: `WS_INCUS_POOL_SOURCE`. Always `volume.zfs.use_refquota` and `volume.zfs.remove_snapshots`. |
-| `state/incus-bridge` | The bridge `incusbr0` | The subnet, DHCP's resolvers, NAT, no IPv6 and the ACL. |
+| `state/incus-ingress` | The ACL `ws-ingress` | Ingress: each guest's tunnel peers allowed in. |
+| `state/incus-bridge` | The bridge `incusbr0` | The subnet, DHCP's resolvers, NAT, no IPv6 and the ACLs. |
 | `state/incus-profile` | The profile `ws` | Unprivileged, nesting, isolated IDs, autostart, daily snapshots, an isolated NIC and the disk. |
 | `state/incus-image` | The image of the guests | Ubuntu's root tarball, with ws's metadata. |
 | `state/incus-ufw` | ufw's rules | DHCP in on the bridge, and the bridge's routes. |
-| `service/incus-sources` | The table `ws_sources` | What a guest may not claim as its source. |
-| `state/incus-owned` | The set `owned4` | Each guest's address, with the port of its NIC. |
+| `service/incus-sources` | The tables `ws_sources` and `ws_guest_out` | What a guest may not claim as its source, and what may leave by a guest's tunnel. |
+| `state/incus-owned` | The set `owned4` | Each guest's addresses, with the port of its NIC. |
 | `state/incus-guests` | Each guest of `WS_INCUS_GUESTS` | Its instance, launched or edited, and started. |
 
-The first four run in that order: the bridge names the ACL, and the profile names the bridge and
+The first five run in that order: the bridge names the ACLs, and the profile names the bridge and
 the pool. The image follows, then the table of sources, the set that it holds, and the guests.
 
 The pool's source is compared against `volatile.initial_source`, as ZFS's create sets `source` to
@@ -63,13 +64,25 @@ shows that Incus takes the YAML as written: CI's `host` job runs the units.
 by default, in the private ranges below and off the tunnel's slots `10.99.0.0/20`. Its DHCP hands out
 `WS_INCUS_BRIDGE_DNS`, as `9.9.9.9` and `1.1.1.1`, so that no guest asks the host's resolver. A
 resolver in the private ranges is refused: the ACL drops it, so no guest could resolve by it. The ACL
-is on the bridge, and egress is dropped by default. Ingress is the tunnel's.
+is on the bridge, and egress is dropped by default. Ingress is the ingress ACL's.
 
-The ACL drops `10.0.0.0/8`, `100.64.0.0/10`, `169.254.0.0/16`, `172.16.0.0/12`, `192.168.0.0/16`,
+The egress ACL drops `10.0.0.0/8`, `100.64.0.0/10`, `169.254.0.0/16`, `172.16.0.0/12`, `192.168.0.0/16`,
 `224.0.0.0/4` and `255.255.255.255`, then allows the rest. The host's own addresses must sit among
 them, or a guest would reach the host's services: the values refuse a bridge address or a cable
 address outside them. Incus applies each drop before any allow. A network named `incusbr0` that is no
 managed bridge fails the run.
+
+## The ingress ACL
+
+`ws-ingress` holds the allows of what reaches the guests. The bridge's default for ingress is
+drop, so the ACL has allows alone. It holds one for each peer of each guest's tunnel, and none for
+a guest with no peers. A peer of `WS_IKEWARD_FORWARD_FROM` in that guest's values passes to any
+destination, as ikeward keeps no rule of its own. Any other peer passes to the guest's own
+addresses: its address on the bridge and the slot's `10.99.N.1`. The rules name each peer by its
+address, which its slot keeps apart from the other tunnels' peers. The unit reads the guests' own
+values. It fails where two tunnels share a slot or a port, or a guest sets no slot
+([tunnel](../tunnel/README.md#the-guests-tunnels)). Only a booted host shows that Incus applies
+the ACL to the packets that the host forwards: CI's `host` job runs it.
 
 ## The profile
 
@@ -92,14 +105,22 @@ It drops a frame of any ether type but ARP, IPv4 and IPv6 first: a VLAN tag woul
 from the rules, and the host strips the tag. An ARP sender or a source address in the bridge's
 subnet or in the tunnel's slots, `10.99.0.0/20`, must be an address that the port owns. The table
 lists what a guest may not claim, and passes the rest, so that a guest asks for a lease from
-`0.0.0.0` and reaches the internet from its own address.
+`0.0.0.0` and reaches the internet from its own address. A guest's own addresses are its address on
+the bridge and its slot's `10.99.N.1`, which it holds on `eth0`, so that a peer's replies leave from
+it.
 
-The set `owned4` holds each guest's address with its port. The file lists them from
-`WS_INCUS_GUESTS`, so each load fills the set: a boot gives a guest its address before Incus
-starts it, and a reload leaves no moment without it. `incus-sources.service` loads the table before
-Incus starts a guest, and Incus requires it, so a load that fails keeps Incus down. A change to the
-file or to the table in force, hooks included, reloads it, which `nft -c` checks first. The set's
-elements are no part of that comparison, so `state/incus-owned` mends one that a hand edit changed.
+What comes in by a guest's port takes the guest's mark, 4096 + N, before any accept. The table
+`ws_guest_out`, in the `ip` family at the same priority, drops what leaves by `wgN` with another mark
+([tunnel](../tunnel/README.md#the-forward)). So a guest cannot send into another guest's tunnel
+under a source that the first table passes, as a forged reply of the VPN.
+
+The set `owned4` holds each guest's addresses with its port. The file lists them from
+`WS_INCUS_GUESTS` and the guests' own values, so each load fills the set. A boot gives a guest its
+address before Incus starts it, and a reload leaves no moment without it. `incus-sources.service`
+loads the table before Incus starts a guest, and Incus requires it, so a load that fails keeps Incus
+down. A change to the file or to the table in force, hooks included, reloads it, which `nft -c`
+checks first. The set's elements are no part of that comparison, so `state/incus-owned` mends one
+that a hand edit changed.
 
 ## ufw
 
@@ -173,7 +194,7 @@ holds with no profile `ws` fails the run: ws never turns another instance into a
 | --- | --- |
 | `profiles` | `ws` alone. |
 | `config` | `limits.cpu` and `limits.memory`, from the list. |
-| `devices.eth0` | The profile's NIC, whole, with `host_name` `ws-NAME` and `ipv4.address`, from the list. |
+| `devices.eth0` | The profile's NIC, whole, with `host_name` `ws-NAME`, `ipv4.address` from the list, and `ipv4.routes`, the slot's `10.99.N.1/32`, where the guest's values name a slot but slot 0. |
 | `devices.root` | The profile's disk, whole, with `size`, the quota, from the list. |
 | `devices.gpu` | `type: gpu` and `vendorid: 10de`, where the guest's own values set `WS_NVIDIA_GPU`. Removed where they do not. |
 

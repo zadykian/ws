@@ -21,8 +21,8 @@ it has any:
 - [`secrets`](ubuntu/roles/secrets): fnox, which decrypts ws's secrets, as mise's config, and
   the task `secrets`, which fetches them by the host key and runs the bootstrap under them.
 - [`cable`](ubuntu/roles/cable): the host's end of a cable to the Mac, as units.
-- [`tunnel`](ubuntu/roles/tunnel): `wg0`, the server's end of a WireGuard tunnel for the Mac, as
-  units.
+- [`tunnel`](ubuntu/roles/tunnel): `wg0`, the server's end of a WireGuard tunnel for the Mac, and on
+  a host each guest's, as units.
 - [`ikeward`](ubuntu/roles/ikeward): ikeward's IKEv2 VPN, where a profile is given, and the WireGuard
   peers' way into it, as units.
 - [`nvidia`](ubuntu/roles/nvidia): NVIDIA's headless driver from Ubuntu's archive, on a machine with an

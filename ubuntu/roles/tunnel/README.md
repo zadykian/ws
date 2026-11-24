@@ -4,10 +4,12 @@ The `tunnel` role sets up `wg0`, the server's end of a WireGuard tunnel for the 
 `10.99.N.1/24` at its slot, N, on UDP port 51820, from networkd's own files. Its key is made on
 the server, and each peer's public key is read from `/etc/wireguard`.
 
-The role is mise's packages, `wireguard-tools` and `systemd`, and four units of
-[its spec](units.toml.tmpl), whose lines sit in `mise.guest.toml` ([The frame](../frame/README.md)). What
-Go holds stays Go, as `ws ubuntu guest tunnel check`, `tunnel key` and `tunnel wg0`, which the
-units run. The values' check refuses the settings the role cannot use, as the values load.
+The role is mise's packages, `wireguard-tools` and `systemd`, and the units of
+[its spec](units.toml.tmpl), four on a guest and twelve on a host, whose lines sit in
+`mise.guest.toml` and `mise.host.toml`
+([The frame](../frame/README.md)). What Go holds stays Go, as `ws ubuntu SIDE tunnel check`,
+`tunnel key` and `tunnel wg0`, which the units run, SIDE being `guest` or `host`. The values'
+check refuses the settings the role cannot use, as the values load.
 
 | Unit | What it does |
 | --- | --- |
@@ -15,6 +17,8 @@ units run. The values' check refuses the settings the role cannot use, as the va
 | `state/tunnel-key` | Runs `tunnel key`, which makes the key, where `tunnel key --check` finds it missing or its mode wrong. |
 | `service/tunnel` | Writes wg0's `.netdev` and `.network`, and reloads systemd-networkd where either changes. |
 | `state/tunnel-wg0` | Runs `tunnel wg0`, which makes wg0 again on a new key and waits for it, where `--check` finds wg0 without the file's key. |
+
+A host holds more units, which end each guest's tunnel ([The guests' tunnels](#the-guests-tunnels)).
 
 ## The tunnel
 
@@ -73,6 +77,57 @@ after a key put back or made anew by hand, `tunnel wg0` deletes `wg0` before a r
 networkd then creates it with the file's key, and the command waits up to 10 s for `wg0` to hold
 it. The guard stops the run where systemd-networkd isn't running, as on Ubuntu Desktop, whose
 NetworkManager does its work instead.
+
+## The guests' tunnels
+
+A host ends the tunnel of each guest in `WS_INCUS_GUESTS`, not the guest. The guest's own values,
+`/etc/ws/guests/NAME/values.yml`, give its slot, `WS_TUNNEL_ADDRESS`, its port and its peers. The
+address is the slot's `10.99.N.1/24`, N from 1: slot 0 is the host's own `wg0`. The values' check
+refuses a slot or a port that two tunnels share, the host's own among them, and a guest that sets
+no slot. These units run `ws ubuntu host tunnel guests`:
+
+| Unit | What it does |
+| --- | --- |
+| `state/tunnel-ufw` | Opens the UDP port of the host's own `wg0`. |
+| `guard/tunnel-guests` | Runs `check`: the clash, networkd, and each peer's file. |
+| `state/tunnel-guest-keys` | Makes each interface's key, `60-wgN.key`, on the host. |
+| `state/tunnel-guest-links` | Writes `60-wgN.netdev` and `.network`, and has networkd create `wgN`. |
+| `service/tunnel-networkd` | Writes a drop-in of networkd's, so that it keeps the rules and routes that `ip` adds, and restarts it where the drop-in changes. |
+| `service/tunnel-forward` | Runs `forward` at boot, as the kernel keeps its rules and routes in memory alone. |
+| `state/tunnel-guest-forward` | Runs `forward` again where a rule or a route is lost. |
+| `state/tunnel-guest-ufw` | Sets each tunnel's ufw rules. |
+
+Each guest gets one interface, `wgN`, N its slot, as an interface's name holds 15 bytes. It holds
+no address: the guest holds `10.99.N.1`, and the host routes it there, the NIC's `ipv4.routes`
+([incus](../incus/README.md#the-guests)) sending it to the guest alone. The rest of `10.99.N.0/24`,
+the peers', goes out `wgN`. The peers' keys sit in `/etc/wireguard/wgN/NAME.pub`, as the
+Mac fixes the peer's name, `mac`, for every tunnel. Each key is made on the host, and only its
+public half is shown.
+
+### The forward
+
+A rule on `wgN` selects the table 1000 + N, whose one route leads to the guest's address on the
+bridge. So the packets of a peer go to that guest whatever their destination, with no NAT: the
+guest sees the peer's tunnel address. Without the rule, the main table would route them to any
+guest. The command deletes a rule of a slot's priority that no tunnel wants, one of another
+interface or table among them. networkd removes a rule or a route that no `.network` file names,
+as it starts or reconfigures a link, so `service/tunnel-networkd` sets `ManageForeignRoutingPolicyRules=no`
+and `ManageForeignRoutes=no`.
+
+What leaves by `wgN` must have come in by that guest's NIC. The table of sources marks what comes
+in by a guest's port with the guest's mark, 4096 + N. A table of the way out drops what leaves by
+`wgN` with another mark
+([incus](../incus/README.md#the-table-of-sources)). So no guest sends into another's tunnel, under
+a forged source of the VPN's replies.
+
+### The firewall of a host
+
+ufw opens each tunnel's UDP port, the host's own included, and routes each interface to the bridge.
+It denies any input on `wgN`, inserted first, so no service of the host's answers a peer, SSH
+included. ufw's own rules for ICMP echo and DHCP come ahead of the deny. Each tunnel's rules carry a
+comment of their own, `tunnel wgN: ...`. A tunnel that no guest holds loses its port and route
+rules, but not its deny: the interface and its peers stay. What a peer reaches in the guest is the
+ingress ACL's ([incus](../incus/README.md#the-ingress-acl)).
 
 ## The firewall
 
