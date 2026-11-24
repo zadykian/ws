@@ -89,6 +89,8 @@ that mise wrote, the current host's screen saver delay among them. Case 86 check
 `dotnet` in `/usr/local/share/dotnet` must be root's and list 10.0.404 and 11.0.100 alone, and
 `/etc/paths.d/dotnet` must name that directory. Case 87 checks [the zsh hook](../../macos/roles/ghostty/README.md#the-zsh-hook): `zsh -i` must
 reset at each prompt, and the alternate screen after a 255 from `ssh` or from `cld --host` alone.
+It checks [oh-my-zsh and its plugins](../../macos/roles/zsh/README.md) too: each clone at its pinned
+commit, and a shell that loads the plugins and puts `~/.local/bin` first.
 
 CI also sets up a Mac, by [its cases](../client), in the order of [The
 Mac](../../macos/README.md). A stand-in cld, which cld's unit leaves alone, spares the
