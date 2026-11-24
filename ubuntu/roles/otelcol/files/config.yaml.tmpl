@@ -81,9 +81,11 @@ processors:
 {{- end }}
 
 exporters:
-  # SigNoz's intake, which the signoz role publishes on loopback.
-  otlp_http/signoz:
-    endpoint: http://127.0.0.1:14318
+  # SigNoz's intake by gRPC, which the signoz role publishes on loopback, with no TLS.
+  otlp_grpc/signoz:
+    endpoint: 127.0.0.1:14317
+    tls:
+      insecure: true
 {{- if $endpoint }}
   # The remote collector, whose URL is only in the service's environment, from a file root alone
   # reads.
@@ -106,19 +108,19 @@ service:
     traces:
       receivers: [otlp]
       processors: [memory_limiter, resource_detection, batch]
-      exporters: [otlp_http/signoz]
+      exporters: [otlp_grpc/signoz]
     metrics:
       receivers: [otlp, host_metrics, prometheus]
       processors: [memory_limiter, resource_detection, batch]
-      exporters: [otlp_http/signoz]
+      exporters: [otlp_grpc/signoz]
     logs:
       receivers: [otlp]
       processors: [memory_limiter, resource_detection, batch]
-      exporters: [otlp_http/signoz]
+      exporters: [otlp_grpc/signoz]
     logs/journald:
       receivers: [journald]
       processors: [memory_limiter, resource/journald, resource_detection, batch]
-      exporters: [otlp_http/signoz]
+      exporters: [otlp_grpc/signoz]
 {{- if $endpoint }}
     # claude's metrics as claude sends them: resource_detection adds host.name to a copy of its own,
     # in the metrics pipeline above.

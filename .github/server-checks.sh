@@ -245,6 +245,9 @@ must "docker pulls the image" docker pull -q "$image"
 must "docker runs a container" docker run --rm "$image" true
 must "a container reaches the internet" \
     docker run --rm "$image" wget -qO /dev/null --timeout=10 http://example.com
+# Docker's containers send OTLP/gRPC to the bridge address, and the collector takes it
+# (ubuntu/roles/otelcol/README.md#dockers-containers).
+must "a container's OTLP reaches the collector on the bridge address" "$(dirname "$0")/otlp-checks.sh" "$image"
 
 # A port published with no address goes on loopback, as a guest holds no filter
 # (ubuntu/roles/docker/README.md#published-ports). It answers on the host, not on the

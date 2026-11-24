@@ -48,7 +48,7 @@ spec:
       image: >-
         postgres:16.15@sha256:1a6ab3f5345eb6dbe04a1349529caabdb0ab09293a09590fad07b2246bfa4b54
   # A guest holds no filter, and Foundry publishes the UI's 8080 and the ingester's
-  # 4317 and 4318 on every address. Only the UI and OTLP/HTTP are published, on loopback; each
+  # 4317 and 4318 on every address. Only the UI and OTLP/gRPC are published, on loopback; each
   # test fails the forge once Foundry publishes other ports there. The root user's password comes
   # from root.env.
   patches:
@@ -65,7 +65,7 @@ spec:
           value: ["4317:4317", "4318:4318"]
         - op: replace
           path: /services/ingester/ports
-          value: ["127.0.0.1:14318:4318"]
+          value: ["127.0.0.1:14317:4317"]
         - op: add
           path: /services/signoz-signoz-0/env_file
           value: [root.env]

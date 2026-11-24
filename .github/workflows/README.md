@@ -32,8 +32,9 @@ It allows no line. Its test, [warnings-check-test.sh](../warnings-check-test.sh)
 `ubuntu-26.04` runner, and then the cases of [host-checks.sh](../host-checks.sh). The plan must exit 2
 before the first run and 0 after each, and no run or plan may print a warning. The runner's board
 is no fans' board, so no `ws-fans` service, config or driver may be there. ufw must be on, with
-incoming denied, outgoing allowed, SSH in and Docker's rule for its resolver. sshd must take keys
-alone, and a container must resolve a name through the bridge. The job is a try, so its failure
+incoming denied, outgoing allowed, SSH in and Docker's rules for its resolver and the collector.
+sshd must take keys alone, and a container must resolve a name through the bridge and send OTLP
+to the collector ([otlp-checks.sh](../otlp-checks.sh)). The job is a try, so its failure
 fails no pull request: `continue-on-error` keeps it from `release.yml`'s call as well. It sets the
 runner up as `server` does, in [server](server.md), and runs it as
 [bootstrap.sh](../bootstrap.sh) does with `WS_SIDE=host`.

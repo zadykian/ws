@@ -85,6 +85,12 @@ on the bridge address, `WS_DOCKER_BRIDGE_IP`, port 53. It lets in `docker0` and 
 networks' subnets. A guest holds no filter, so it has no such unit, and `docker-slice` follows the
 rule on a host.
 
+## Telemetry
+
+A container sends OTLP to the machine's collector on the bridge address, port 4317, by gRPC alone.
+[otelcol](../otelcol/README.md#dockers-containers) holds the socket, the host's rule and the
+variables a container sets.
+
 ## Build cache
 
 BuildKit drops build cache that no build has used for 90 days (`WS_DOCKER_BUILD_CACHE_KEEP_DAYS`). It

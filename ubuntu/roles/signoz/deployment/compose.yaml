@@ -22,7 +22,7 @@ services:
         aliases:
         - signoz-ingester
     ports:
-    - 127.0.0.1:14318:4318
+    - 127.0.0.1:14317:4317
     restart: unless-stopped
     volumes:
     - ./ingester/ingester.yaml:/etc/otel-collector-config.yaml:ro

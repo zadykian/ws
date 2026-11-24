@@ -2,8 +2,10 @@
 
 The `otelcol` role runs the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) on
 the machine, from `mise bootstrap`. Its `mise.guest.toml` and `mise.host.toml` install
-node_exporter and name the units of its `units.toml.tmpl`: the `.deb`, the service with its files,
-and the check that the collector answers. It takes OTLP on loopback, and reads the journal, the
+node_exporter. They name the units of its `units.toml.tmpl`: the `.deb`, the service with its
+files, and the check that the collector answers. Two more serve Docker's containers: a socket on
+the bridge address with its proxy, and a host's ufw rules for it. The collector takes OTLP on
+loopback, and from those containers through that socket. It reads the journal, the
 host's metrics and its temperatures from node_exporter. It sends it all to SigNoz, and claude's
 metrics to another collector where one is set.
 
@@ -26,7 +28,8 @@ VM. It:
   network, and the count of processes;
 - scrapes temperatures and fans from node_exporter on `127.0.0.1:9100` every 60 seconds, as the
   host's metrics have none;
-- sends it all to SigNoz's intake on `127.0.0.1:14318`, with the host's name added as `host.name`;
+- sends it all to SigNoz's intake by gRPC on `127.0.0.1:14317`, with the host's name added as
+  `host.name`;
 - sends claude's metrics to a remote collector too, where `/etc/ws/env` sets
   `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT`: [below](#claudes-metrics-elsewhere).
 
@@ -58,6 +61,27 @@ The `.deb`'s unit stops it at once, and the service enables it again once the co
 The `.deb`'s unit waits on signoz's sync, so that SigNoz's retention is set before the collector
 sends ([signoz](../signoz/README.md#retention)).
 
+## Docker's containers
+
+Port 4317 is the machine's own collector, the one destination for every sender, and 14317 is
+SigNoz's intake by gRPC, which that collector alone uses. A container sends to `4317` on the bridge
+address, `WS_DOCKER_BRIDGE_IP`, never straight to SigNoz, so that a machine's telemetry
+all passes its collector, under its `host.name`.
+
+The receiver stays on loopback. A second one on the bridge address could not bind at boot, before
+`docker0` has the address, and the collector would stop. So the socket unit `otelcol-docker.socket`
+listens there, with `FreeBind=yes`, and `systemd-socket-proxyd`, in `otelcol-docker.service`,
+passes each connection to `127.0.0.1:4317`. The service requires the socket, so that a new address
+restarts both. A host's ufw denies what comes in, so `state/otelcol-docker-ufw` lets `docker0` and
+`br-+` reach the port, as docker's `state/docker-dns` does for the resolver. A guest holds no
+filter.
+
+Only gRPC goes through. A container whose SDK keeps its defaults sends OTLP/HTTP to port 4318, where
+nothing listens, so it sets `OTEL_EXPORTER_OTLP_PROTOCOL=grpc` and
+`OTEL_EXPORTER_OTLP_ENDPOINT=http://172.17.0.1:4317`, with the bridge address in place of
+`172.17.0.1` where `WS_DOCKER_BRIDGE_IP` moves it. CI's cases send an empty export from a container
+and expect the collector's answer ([otlp-checks.sh](../../../.github/otlp-checks.sh)).
+
 ## claude's metrics elsewhere
 
 `/etc/ws/env` is the file of secrets the shell reads, which mise writes from the `shell` role's
@@ -68,8 +92,8 @@ OTLP/gRPC. A plan writes no file, so under the secrets task the templates take t
 run's env, and the plan shows the change that the run makes. A run without the task, whose env may
 hold a stale value, reads the file as it stands. The value is a URL, `http://HOST:PORT` for gRPC
 without TLS or `https://HOST:PORT`. The role refuses any other. It refuses one that leads back to
-the collector's own receiver on `127.0.0.1:4317` too, which would send the metrics around without
-end. Only the metrics whose resource has
+the collector's own receiver on `127.0.0.1:4317` or on the bridge address too, which would send
+the metrics around without end. Only the metrics whose resource has
 `service.name` `claude-code` go, as claude sends them, without the host's name. claude's traces and
 logs, with the prompts' and responses' text and the tools' details and output, stay in SigNoz.
 

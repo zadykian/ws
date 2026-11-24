@@ -386,7 +386,7 @@ spec:
     - op: replace
       path: /services/ingester/ports
       value:
-      - 127.0.0.1:14318:4318
+      - 127.0.0.1:14317:4317
     - op: add
       path: /services/signoz-signoz-0/env_file
       value:

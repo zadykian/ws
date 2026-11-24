@@ -1,0 +1,12 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here. Docker's
+# containers send OTLP/gRPC to the bridge address, where the collector does not listen. FreeBind
+# lets the socket bind before docker0 has the address, as at boot.
+[Unit]
+Description=OTLP from Docker's containers, to the collector
+
+[Socket]
+ListenStream={{ .Docker.BridgeIP }}:4317
+FreeBind=yes
+
+[Install]
+WantedBy=sockets.target

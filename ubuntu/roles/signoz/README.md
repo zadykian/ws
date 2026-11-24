@@ -2,7 +2,7 @@
 
 The `signoz` role, mise's config and ws's units in `ubuntu/roles/signoz`, runs
 [SigNoz](https://signoz.io) in Docker, which keeps the machine's telemetry for 90 days. Its UI and
-its OTLP/HTTP intake listen on loopback, with no login. It has a dashboard of the host and one of
+its OTLP/gRPC intake listen on loopback, with no login. It has a dashboard of the host and one of
 claude's usage.
 
 ## The stack
@@ -10,8 +10,8 @@ claude's usage.
 SigNoz runs on the system's Docker daemon from the compose files in
 `ubuntu/roles/signoz/deployment`, which mise copies to `/opt/signoz` (`mise.guest.toml` and
 `mise.host.toml`). A guest holds no filter, so only two ports are published, on loopback: the UI on
-`127.0.0.1:3301` and the OTLP/HTTP intake on `127.0.0.1:14318`. 3301 was SigNoz's UI port before
-8080, which dev servers often take.
+`127.0.0.1:3301` and the OTLP/gRPC intake on `127.0.0.1:14317`, which the machine's collector alone
+uses. 3301 was SigNoz's UI port before 8080, which dev servers often take.
 
 ClickHouse, SigNoz's database, may use 4 GB of memory. Without a limit of its own, it would size
 itself to the host's RAM, as it cannot see the limit of `docker.slice`.
