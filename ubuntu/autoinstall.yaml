@@ -1,6 +1,6 @@
 ---
-# The installer's answers for Ubuntu Server 26.04, from which root alone logs in
-# (ubuntu/runbook.md). The installer reads it as NoCloud user-data, whose first line must be
+# The installer's answers for Ubuntu Server 26.04, which it makes a host, and from which root alone
+# logs in (ubuntu/runbook.md). The installer reads it as NoCloud user-data, whose first line must be
 # `#cloud-config`. Here yamllint's comments rule would refuse that line. So a release publishes
 # the file with it, by .github/autoinstall.sh, which fills the two blanks that name the release:
 # its tag, and its install.sh's SHA-256.
@@ -8,7 +8,8 @@
 # hash for the console (mkpasswd --method=sha-512), and the text of /etc/ws/values.yml.
 autoinstall:
   version: 1
-  # Storage alone asks, as a disk is the one answer that no file can know.
+  # Storage alone asks, as a disk is the one answer that no file can know. The pool's partition
+  # stays unformatted there (ubuntu/runbook.md).
   interactive-sections: [storage]
   updates: all
   drivers:
@@ -64,7 +65,8 @@ autoinstall:
         content: VALUES
     # runcmd runs in a service that sets no HOME, and Go refuses to build devtools' tools
     # without one. ws update installs the release that this file names, never the latest, which is
-    # no pre-release. It runs no setup where the machine has none yet, so the next command runs it.
+    # no pre-release. It runs no setup where the machine has none yet, so the next command runs the
+    # host's.
     runcmd:
       - [env, HOME=/root, ws, update, --version, VERSION]
-      - [env, HOME=/root, ws, ubuntu, guest, setup]
+      - [env, HOME=/root, ws, ubuntu, host, setup]

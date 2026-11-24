@@ -47,7 +47,7 @@ that of the release's own `install.sh`. The `build` job writes it into `dist` be
 and fails unless the file names the tag and the sum and keeps no such blank. The words check and
 the release take it as they take each file of `dist`. Its first boot runs that release:
 `ws update --version TAG`, which installs it and runs no setup where the machine has none yet, and
-then `ws ubuntu guest setup`.
+then `ws ubuntu host setup`, as the installer makes a host.
 
 Three blanks stay the maintainer's. A new server takes these steps, which
 [the server's runbook](../../ubuntu/runbook.md#a-new-server-from-the-installer) and
