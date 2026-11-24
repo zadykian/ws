@@ -1,4 +1,12 @@
-# zsh's hook and the line of ~/.zshrc that sources it, as ws's units.
+# zsh's hook and the line of ~/.zshrc that sources it, as ws's units. oh-my-zsh and two plugins are
+# mise's clones, each at a full commit and with no depth.
 [bootstrap.packages]
 "ws:file/zsh-line" = "in-sync"
 "ws:file/zsh-rc" = "in-sync"
+
+# mise clones in this order, and refuses a directory with files in it, so oh-my-zsh comes first.
+# Its plugins go in its custom directory, which its .gitignore leaves out of its status.
+[bootstrap.repos]
+"~/.oh-my-zsh" = { url = "https://github.com/ohmyzsh/ohmyzsh.git", ref = "93b87c9c9aaae2f56b41a1f7fdf64fc1d603a9b7" }
+"~/.oh-my-zsh/custom/plugins/zsh-autosuggestions" = { url = "https://github.com/zsh-users/zsh-autosuggestions.git", ref = "85919cd1ffa7d2d5412f6d3fe437ebdbeeec4fc5" }
+"~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" = { url = "https://github.com/zsh-users/zsh-syntax-highlighting.git", ref = "e6683f20e5c38d3e5447f45845d04ddda75d0f23" }
