@@ -13,9 +13,9 @@ import (
 	"github.com/zadykian/ws/ubuntu/values"
 )
 
-// Owned fills the set owned4 of the table of sources with each guest's address and port, and takes
-// out an element that no guest holds. The set starts empty whenever the table loads, so each run
-// reads it. A table that is not loaded fails the run, as the unit of the table comes first.
+// Owned mends the set owned4 of the table of sources to hold each guest's address and port, and
+// takes out an element that no guest holds. The table's file fills the set as it loads, so this
+// finds a hand edit. A table that is not loaded fails the run, as the unit of the table comes first.
 type Owned struct {
 	M      effect.Machine
 	Guests []values.Guest

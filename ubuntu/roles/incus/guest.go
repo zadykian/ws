@@ -1,12 +1,14 @@
 package incus
 
 import (
+	"context"
 	"fmt"
 	"net/netip"
 	"slices"
 	"strconv"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/internal/slot"
 	"github.com/zadykian/ws/ubuntu/roles/incus/object"
 	"github.com/zadykian/ws/ubuntu/values"
@@ -62,4 +64,29 @@ func seedNetwork(v values.Values) string {
 		}
 	}
 	return text
+}
+
+// Guests returns the resources that settle each guest of the list, in order: its instance, then
+// its start. A guest of ws's that the list lacks gets a warning on out, and no deletion.
+func Guests(ctx context.Context, m effect.Machine, guests []values.Guest, out effect.Out) ([]resource.Resource, error) {
+	alias, err := Image{M: m}.Alias(ctx)
+	if err != nil {
+		return nil, err
+	}
+	held, err := Instances(ctx, m)
+	if err != nil {
+		return nil, err
+	}
+	for _, name := range Strays(held, guests) {
+		out.Warn("the guest %s is not in WS_INCUS_GUESTS: ws deletes none, so remove it by hand with ws ubuntu host guests remove %s", name, name)
+	}
+	var steps []resource.Resource
+	for _, g := range guests {
+		_, own, err := g.Read(m)
+		if err != nil {
+			return nil, err
+		}
+		steps = append(steps, Guest(m, g, own, alias), Running{M: m, Name: g.Name})
+	}
+	return steps, nil
 }

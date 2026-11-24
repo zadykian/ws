@@ -1,7 +1,9 @@
 # The incus role's units. mise adds Zabbly's repository, the packages and the ID range first. Each
 # unit makes one object in Incus by a command of ws's, whose --check fails where a change is due.
-# README.md says what each holds. The order is the ACL, the pool, the bridge, then the profile: the
-# bridge names the ACL, and the profile names the bridge and the pool.
+# README.md says what each holds. The order is the ACL, the pool, the bridge, the profile and the
+# image, then the table of sources, the set that it holds, and the guests. The bridge names the ACL,
+# and the profile names the bridge and the pool. A guest launches from the image, and its address
+# goes in the set before it runs.
 
 # The egress ACL: the private ranges dropped, the rest allowed.
 [state.incus-acl]
@@ -44,9 +46,9 @@ rules = [
 
 # The table of guest sources, in nftables' bridge family. The table in force, with its hook chains,
 # is compared with the table that the file loads in a network namespace of its own. So a table
-# flushed by hand, or a hook that is lost, reloads. The set's elements are no part of that: the
-# guests fill them, and a reload empties them. -s leaves out the counters' values, and -t the set's
-# elements. A host's alone, as it filters.
+# flushed by hand, or a hook that is lost, reloads. The set's elements are no part of that, as the
+# next unit mends them. The file holds them, so a load fills them, and a guest's change reloads.
+# -s leaves out the counters' values, and -t the set's elements. A host's alone, as it filters.
 [service.incus-sources]
 unit = "incus-sources.service"
 enabled = true
@@ -62,7 +64,7 @@ loads = [
     "sh",
     "/usr/local/lib/ws/incus/sources.nft",
 ]
-after = "state/incus-profile"
+after = "state/incus-image"
 when = { side = "host" }
 
 [[service.incus-sources.file]]
@@ -73,3 +75,15 @@ check = ["/usr/sbin/nft", "-c", "-f", "{}"]
 [[service.incus-sources.file]]
 path = "/etc/systemd/system/incus-sources.service"
 source = "files/incus-sources.service"
+
+# Each guest's address and port in the table's set, which the table's file fills as it loads. This
+# mends an element that a hand edit changed. After the table's unit, so that the set is there.
+[state.incus-owned]
+after = "service/incus-sources"
+run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "incus", "owned"], check = ["{{ self }}", "ubuntu", "host", "incus", "owned", "--check"] }
+
+# The guests of WS_INCUS_GUESTS: each launched from the image, edited where its keys differ, and
+# started.
+[state.incus-guests]
+after = "state/incus-owned"
+run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "incus", "guests"], check = ["{{ self }}", "ubuntu", "host", "incus", "guests", "--check"] }

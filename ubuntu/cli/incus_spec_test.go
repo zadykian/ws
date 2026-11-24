@@ -46,7 +46,7 @@ func TestIncusPoolIsInSyncWhereItsCheckPasses(t *testing.T) {
 	}
 }
 
-func TestIncusUnitsRunTheAclThePoolTheBridgeTheProfileThenTheImage(t *testing.T) {
+func TestIncusUnitsRunTheObjectsThenTheSetThenTheGuests(t *testing.T) {
 	units := incusUnits(t, effecttest.NewMachine())
 	var order []string
 	for _, u := range units {
@@ -54,14 +54,14 @@ func TestIncusUnitsRunTheAclThePoolTheBridgeTheProfileThenTheImage(t *testing.T)
 			order = append(order, u.Name)
 		}
 	}
-	want := []string{"state/incus-acl", "state/incus-pool", "state/incus-bridge", "state/incus-profile", "state/incus-image"}
+	want := []string{"state/incus-acl", "state/incus-pool", "state/incus-bridge", "state/incus-profile", "state/incus-image", "state/incus-owned", "state/incus-guests"}
 	if !slices.Equal(order, want) {
 		t.Errorf("units %q, want %q", order, want)
 	}
 }
 
 func TestEachIncusUnitRunsItsOwnCommand(t *testing.T) {
-	for _, object := range []string{"acl", "bridge", "profile", "image"} {
+	for _, object := range []string{"acl", "bridge", "profile", "image", "owned", "guests"} {
 		command := asRoot + selfPath + " ubuntu host incus " + object
 		m := effecttest.NewMachine()
 		m.Results[command+" --check"] = effecttest.Result{Err: errors.New("to do")}
