@@ -90,8 +90,13 @@ func (g Guest) File() string { return path.Join(GuestsDir, g.Name, "values.yml")
 // Port is the name of the guest's NIC on the host, which the table of sources names.
 func (g Guest) Port() string { return portPrefix + g.Name }
 
+// errSelfContained refuses a guest whose values turn the mode on. Its tunnel would end at a LAN
+// address, which a guest under a host lacks, and the host gives it SigNoz.
+var errSelfContained = errors.New("WS_SELF_CONTAINED is on, which a guest under a host cannot run: the host ends its tunnel and runs SigNoz")
+
 // Read returns the guest's own values, as its file holds them on the host, and the file's bytes.
-// A missing file gives no bytes and the defaults. A file that does not parse fails, naming it.
+// A missing file gives no bytes and the defaults. A file that does not parse fails, naming it, and
+// so does one that turns the self-contained mode on.
 func (g Guest) Read(m effect.Machine) ([]byte, Values, error) {
 	data, err := m.ReadFile(g.File())
 	if errors.Is(err, fs.ErrNotExist) {
@@ -103,6 +108,9 @@ func (g Guest) Read(m effect.Machine) ([]byte, Values, error) {
 	v, err := Parse(data)
 	if err != nil {
 		return nil, Values{}, fmt.Errorf("%s: %w", g.File(), err)
+	}
+	if v.SelfContained {
+		return nil, Values{}, fmt.Errorf("%s: %w", g.File(), errSelfContained)
 	}
 	return data, v, nil
 }

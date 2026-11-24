@@ -129,7 +129,8 @@ first start fails the device, so Incus stops the guest. The directory is not in 
 which a guest mounts after its devices start. The image holds it, as the template of a file
 `README` in it: Incus makes the directory of a template's path as it creates the instance.
 
-A self-contained guest, which runs its own SigNoz, exports to its loopback and uses no socket.
+A self-contained guest, which runs its own SigNoz, exports to its loopback and uses no socket. The
+host refuses a guest whose values turn that mode on, as its tunnel would need a LAN address.
 
 ## The table of sources
 
@@ -186,8 +187,8 @@ The values refuse a name or an address that two guests share. They refuse a fiel
 not take. So a name reaches a command, a path or YAML once checked.
 
 A guest's own values sit on the host, in `/etc/ws/guests/NAME/values.yml`, root's and 600. The host
-reads each file as the guest's values, and refuses one that does not parse. A missing file gives
-the guest its defaults.
+reads each file as the guest's values, and refuses one that does not parse, or one that sets
+`WS_SELF_CONTAINED`. A missing file gives the guest its defaults.
 
 ## The image
 
