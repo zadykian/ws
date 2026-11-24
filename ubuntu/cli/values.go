@@ -34,6 +34,13 @@ var guestValues = valuesSide{
 	set:  values.Set,
 }
 
+// hostValues is the host's values, with its own keys.
+var hostValues = valuesSide{
+	file: hostVars,
+	load: func(m effect.Machine) error { _, err := values.LoadHost(m, hostVars); return err },
+	set:  values.SetHost,
+}
+
 // newValuesCmd returns ws ubuntu SIDE values, which checks and edits the machine's values.
 func newValuesCmd(p enginecli.Env, side valuesSide) *cobra.Command {
 	return enginecli.Group("values", "check and edit the machine's values", newValuesCheckCmd(p, side), &cobra.Command{
