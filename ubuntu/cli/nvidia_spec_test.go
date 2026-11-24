@@ -3,11 +3,10 @@ package cli
 import (
 	"errors"
 	"os"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
-
-	"github.com/pelletier/go-toml/v2"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
@@ -172,21 +171,16 @@ func TestNvidiaNamesOneBranch(t *testing.T) {
 	if archive := strings.Fields(strings.TrimPrefix(bare.Calls[i], simulation)); !slices.Equal(names, archive) {
 		t.Errorf("the packages' names %q, the archive's %q", names, archive)
 	}
+	// The spec is a template, so a regexp reads the reboot's package from its text.
 	spec, err := os.ReadFile(rolesDir + "/nvidia/units.toml.tmpl")
 	if err != nil {
 		t.Fatal(err)
 	}
-	var s struct {
-		State map[string]struct {
-			Reboot struct {
-				Package string `toml:"package"`
-			} `toml:"reboot"`
-		} `toml:"state"`
+	found := regexp.MustCompile(`(?m)^package = "([^"]+)"`).FindAllSubmatch(spec, -1)
+	if len(found) != 1 {
+		t.Fatalf("the spec names %d packages for the reboot, want one", len(found))
 	}
-	if err := toml.Unmarshal(spec, &s); err != nil {
-		t.Fatal(err)
-	}
-	if p := s.State["nvidia-reboot"].Reboot.Package; !slices.Contains(names, p) {
+	if p := string(found[0][1]); !slices.Contains(names, p) {
 		t.Errorf("the reboot's package %q is none of %q", p, names)
 	}
 }
