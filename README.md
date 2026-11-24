@@ -49,17 +49,17 @@ it has any:
   terminals' tmux wrapper, and the open-file limit that it needs.
   [A project's settings](roles/server/ubuntu/zed/projects.md) cover SQL Server and Ansible.
 
-`roles/client/` sets up the Mac that works on the server, and Ghostty and Zed on it: [The Mac](roles/client).
-Its [`frame`](roles/client/macos/frame) is what the Mac's roles of mise's config lean on, and
-`/usr/local/bin/ws`. Its [`firewall`](roles/client/macos/firewall) turns the Application Firewall on
-and has it block all incoming. Its [`dotnet`](roles/client/macos/dotnet) installs .NET's SDKs, as `devtools` does on
+`macos/` sets up the Mac that works on the server, and Ghostty and Zed on it: [The Mac](macos).
+Its [`frame`](macos/roles/frame) is what the Mac's roles of mise's config lean on, and
+`/usr/local/bin/ws`. Its [`firewall`](macos/roles/firewall) turns the Application Firewall on
+and has it block all incoming. Its [`dotnet`](macos/roles/dotnet) installs .NET's SDKs, as `devtools` does on
 the server.
 
-A new Mac with Apple silicon follows [the Mac's runbook](roles/client/runbook.md). It runs
+A new Mac with Apple silicon follows [the Mac's runbook](macos/runbook.md). It runs
 `install.sh` through `sudo`, which installs ws's binary, checked against its SHA-256, and writes the
-values ([The Mac's values](roles/client/values/README.md)). Then `ws client setup`
+values ([The Mac's values](macos/values/README.md)). Then `ws macos setup`
 installs the command line tools and mise, checks a release's tree out into `/opt/ws`, links its
-plugin where mise finds it, and runs mise's bootstrap ([The Mac](roles/client/README.md#setup)).
+plugin where mise finds it, and runs mise's bootstrap ([The Mac](macos/README.md#setup)).
 [The server's runbook](roles/server/runbook.md) lists the server's own steps.
 
 ## A new machine
@@ -89,7 +89,7 @@ three lines of [Install](.github/workflows/release.md#install), which fail where
 installs ws alone. Then run `ws server setup` as root, which installs mise and runs its bootstrap,
 which sets each role up. Once the secrets
 hold `WS_GITHUB_TOKEN`, the secrets task logs gh in ([By hand](#by-hand)). The Mac's
-`ws client secrets add NAME` runs it first, as [the server's runbook](roles/server/runbook.md) says.
+`ws macos secrets add NAME` runs it first, as [the server's runbook](roles/server/runbook.md) says.
 
 Then do what stays by hand, below.
 

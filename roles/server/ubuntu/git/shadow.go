@@ -9,7 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource/account"
-	"github.com/zadykian/ws/roles/internal/gitcfg"
+	"github.com/zadykian/ws/internal/gitcfg"
 )
 
 // shadow finds what in the account's files shadows ws's git settings. Creds are the tokens of

@@ -4,7 +4,7 @@ ws sets up the maintainer's development server from code: `mise bootstrap`, whic
 runs on the machine itself, each role as mise's config and ws's units. Its roles set up packages,
 SSH by key and a firewall, the links to the Mac, an IKEv2 VPN where a profile is given, and the
 fans. Then the shell, git,
-tmux, lazygit, Fresh, Docker, claude, SigNoz with its collector, and Zed's server. `roles/client/`
+tmux, lazygit, Fresh, Docker, claude, SigNoz with its collector, and Zed's server. `macos/`
 sets up the Mac that works on the server. The rest is the docs, the lint gates' tools and CI.
 
 ## Layout
@@ -34,21 +34,23 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   machine's one ws is `/usr/local/bin/ws`. `mise.server.toml` is
   the server's part, and `plugins/ws` the plugin that hands ws's units to `ws unit`. A role holds
   its spec, `units.toml.tmpl`, where it has units, and its mise files by env beside its page. Each
-  side's `roles/SIDE/mise/` holds its one link, `conf.d`, to its directory of roles, and its lock
+  side's `mise/`, `roles/server/mise/` and `macos/mise/`, holds one link, `conf.d`, to its
+  directory of roles, and its lock
   ([The frame](../roles/server/ubuntu/frame/README.md)). The roles' tools lock in
-  `roles/server/mise/mise.server.lock`. `mise.mac.toml` is the Mac's part, and
-  `roles/client/macos/frame` and `roles/client/facts` its frame and its units' values
-  ([The Mac's frame](../roles/client/macos/frame/README.md)). `roles/client/mise/mise.mac.lock`
+  `roles/server/mise/mise.server.lock`. `mise.macos.toml` is the Mac's part, and
+  `macos/roles/frame` and `macos/facts` its frame and its units' values
+  ([The Mac's frame](../macos/roles/frame/README.md)). `macos/mise/mise.macos.lock`
   locks the Mac's tools, gh among them, by their SHA-256.
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
 - `install.sh`: installs ws's binary alone, as `/usr/local/bin/ws`, on Linux and the Mac
   ([Releases](../.github/workflows/release.md)).
-- `roles/client/`: the Mac's side ([The Mac](../roles/client/README.md)), its roles in `macos/`.
+- `macos/`: the Mac's side ([The Mac](../macos/README.md)), its roles in `macos/roles/`.
   Above them sit the packages that serve them all, `cli`, `values`, `facts` and `internal`, and
   the runbook. Its roles' units write `ghostty/files/ws.ghostty`, Ghostty's settings,
   `zed/files/`, Zed's settings and keymap, and `zsh/files/zshrc`, the zsh hook that turns off the
   modes that a drop leaves on.
+- `internal/`: what both sides share, as `setup` and `gitcfg`. It names neither side.
 - The pages sit beside their code, as the `README.md` of a role or a package. A second page stands
   beside one where the cap keeps two apart, as [docs.md](rules/docs.md) lists them.
   `.tools/README.md` holds the gates and `.github/workflows/README.md` CI.
@@ -93,7 +95,7 @@ Fresh reads too, the firewall around Docker and the secrets task
 ([The server job](../.github/workflows/server.md)).
 `signoz` forges SigNoz's compose files again, and `install` tries `install.sh`, `ws update` and
 the autoinstall file, as the `client` case 16-install does for `install.sh` on macOS. `client`
-sets up a Mac on GitHub's macOS runner by `ws client setup`, whose last run must call no sudo and whose
+sets up a Mac on GitHub's macOS runner by `ws macos setup`, whose last run must call no sudo and whose
 `--plan` must exit 0. `client-cld` sets up
 Ghostty, Zed and cld by setup on another ([Ghostty and cld on the Mac](../.github/workflows/client-cld.md)). A run of `mise
 bootstrap` sets up the machine that runs it, as below.
@@ -131,7 +133,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
 - A second run changes nothing: CI's `server` job runs `ws server setup` twice. It fails where
   `ws server setup --plan` does not exit 0, after the first run and after the second
   ([server-checks.sh](../.github/server-checks.sh)). CI's `client` job asks the same of
-  `ws client setup --plan` after its first run, and no sudo of its second
+  `ws macos setup --plan` after its first run, and no sudo of its second
   ([28-bootstrap.sh](../.github/client/28-bootstrap.sh)).
 - `release.yml` checks a release's files and notes for the local list's words before it publishes
   them. The list is the secret `FORBIDDEN_WORDS`, and the job fails on an empty one
@@ -141,7 +143,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([units.toml.tmpl](../roles/server/ubuntu/otelcol/units.toml.tmpl)). So is Fresh's `.deb`
   ([units.toml.tmpl](../roles/server/ubuntu/fresh/units.toml.tmpl)), and so are .NET's SDKs, on
   the server and the Mac ([devtools](../roles/server/ubuntu/devtools/units.toml.tmpl),
-  [dotnet](../roles/client/macos/dotnet/units.toml.tmpl)). So is nct6687's source
+  [dotnet](../macos/roles/dotnet/units.toml.tmpl)). So is nct6687's source
   ([fans](../roles/server/ubuntu/fans/units.toml.tmpl)), and so are foundryctl
   ([ci.yml](../.github/workflows/ci.yml)) and the gates' tools ([.tools/run](../.tools/run)). So is ws's
   binary: `install.sh` and `ws update` check it against the release's `ws.sha256`
@@ -149,19 +151,19 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   on the Mac too. So is the release's `install.sh`, which the autoinstall file checks against the
   SHA-256 that `.github/autoinstall.sh` fills in
   ([autoinstall.yaml](../roles/server/autoinstall.yaml)). So is mise's binary. `ws server setup`
-  and `ws client setup` hold its SHA-256 for each target ([mise.go](../roles/internal/setup/mise.go)).
+  and `ws macos setup` hold its SHA-256 for each target ([mise.go](../internal/setup/mise.go)).
   So is the server's fnox:
   GitHub's digest of its release asset for each platform is in `roles/server/mise/mise.server.lock`
   ([secrets](../roles/server/ubuntu/secrets/README.md#fnox)). So is
   yamllint ([lint-requirements.in](../.github/lint-requirements.in)), and so are the Mac's gh, fnox
-  and age-plugin-yubikey, by `roles/client/mise/mise.mac.lock` ([git](../roles/client/macos/git/README.md#gh),
-  [secrets](../roles/client/macos/secrets/README.md#the-tools)). The lock's SHA-256 of
+  and age-plugin-yubikey, by `macos/mise/mise.macos.lock` ([git](../macos/roles/git/README.md#gh),
+  [secrets](../macos/roles/secrets/README.md#the-tools)). The lock's SHA-256 of
   age-plugin-yubikey is GitHub's digest, as its publisher lists none. So is Secretive's
   `Secretive.zip`, by the SHA-256 that mise's `macos-app` pin holds
-  ([mise.mac.toml](../roles/client/macos/ssh/mise.mac.toml)), and its notarization, by `spctl` where `ws client setup` installs it
-  ([setupkey.go](../roles/client/cli/setupkey.go)). The
+  ([mise.macos.toml](../macos/roles/ssh/mise.macos.toml)), and its notarization, by `spctl` where `ws macos setup` installs it
+  ([setupkey.go](../macos/cli/setupkey.go)). The
   Mac's casks, Ghostty, Zed and their font, take their latest by mise's `brew-cask`, outside the rule
-  ([ghostty](../roles/client/macos/ghostty/README.md#ghostty)). Go is checked against the
+  ([ghostty](../macos/roles/ghostty/README.md#ghostty)). Go is checked against the
   SHA-256 its publisher lists, and the postgres-language-server and docker-language-server against
   theirs. mise's lock holds each for its platform ([mise.server.lock](../roles/server/mise/mise.server.lock)).
   gopls and Delve are built through Go's checksum database, as mise's `go:` tools
@@ -198,7 +200,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   exclusion or keep a baseline: every file passes every gate outright. The linters' configs in
   `.tools/lint/`, yamllint's, golangci-lint's, Vale's, rumdl's, tombi's and StyLua's, are never weakened.
 - ws's layers import downward: cobra lives in `cmd`, the `cli` packages and `.tools/`;
-  `engine/core` imports itself alone; a role imports `engine/core`, `roles/internal` and its own
+  `engine/core` imports itself alone; a role imports `engine/core`, `internal` and its own
   side, but not that side's `cli`. The Mac imports nothing of the server's side.
   depguard's lists in [golangci.yml](../.tools/lint/golangci.yml) fail an import across them.
 - The caps are those of the

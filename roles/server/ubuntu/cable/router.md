@@ -58,7 +58,7 @@ button or Ctrl+X in its terminal, which undoes the changes if the session drops:
   ```
 
   The Mac's `WS_LAN` is then `10.88.0.0/23`, which holds both networks, and its `WS_LAN_ADDRESS`
-  `10.88.1.10` ([values](../../../client/values/README.md#a-machine-on-the-lan)).
+  `10.88.1.10` ([values](../../../../macos/values/README.md#a-machine-on-the-lan)).
 - Input from `SERVER`: DNS and DHCP, ahead of the default firewall's drop of what comes from
   outside `LAN`. That drop then guards the router's other addresses and its services, its public
   address too, which ws's table takes for the internet

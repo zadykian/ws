@@ -11,7 +11,7 @@ import (
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/cli/clitest"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/internal/setup"
+	"github.com/zadykian/ws/internal/setup"
 )
 
 const miseBody = "a mise that a test serves"

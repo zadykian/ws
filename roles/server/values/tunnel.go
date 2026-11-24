@@ -6,10 +6,10 @@ import (
 	"net/netip"
 	"strings"
 
-	"github.com/zadykian/ws/roles/internal/slot"
+	"github.com/zadykian/ws/internal/slot"
 )
 
-// The Mac's scripts fix wg0 at a slot's .1 and the Mac at its .2 (roles/internal/slot). They fix
+// The Mac's scripts fix wg0 at a slot's .1 and the Mac at its .2 (internal/slot). They fix
 // the peer's name too, as the mac.pub that the Mac's runbook has the user copy to the server.
 const (
 	macPeer = "mac"

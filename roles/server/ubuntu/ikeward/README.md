@@ -65,7 +65,7 @@ install.
 
 The profile is one server's. So its values go in the server's own fnox file, `fnox.HOSTNAME.toml`,
 by `fnox -P HOSTNAME set NAME --provider host`, the value on standard input. That runs in a clone
-of the secrets repository, whose `main` takes the change by a pull request. `ws client secrets
+of the secrets repository, whose `main` takes the change by a pull request. `ws macos secrets
 init` declares the three empty in the shared `fnox.toml`, and the server's fnox profile wins over it
 under `-P HOSTNAME` ([The task](../secrets/README.md#the-task)). Then remove the plain files, which
 hold the client's key, and run the secrets task.
@@ -124,9 +124,9 @@ the VPN, as ikeward's page on
 [NAT](https://github.com/zadykian/ikeward/blob/v0.3.0/docs/nat.md#networks-the-server-forwards)
 says. A server's values.yml sends the VPN's networks and domains into the tunnel, as
 `WS_TUNNEL_NETWORKS` and `WS_RESOLVERS`
-([the two files](../../../client/values/README.md#the-two-files)). A private repository's script
+([the two files](../../../../macos/values/README.md#the-two-files)). A private repository's script
 may do it instead
-([Routes and resolvers of another repository](../../../client/README.md#routes-and-resolvers-of-another-repository)).
+([Routes and resolvers of another repository](../../../../macos/README.md#routes-and-resolvers-of-another-repository)).
 
 ## The plan
 

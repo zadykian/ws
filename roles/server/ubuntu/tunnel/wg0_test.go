@@ -10,7 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/roles/internal/wgkey"
+	"github.com/zadykian/ws/internal/wgkey"
 )
 
 // machine has a key and, where wg0Key is set, a wg0 that holds the key shown.

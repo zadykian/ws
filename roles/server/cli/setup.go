@@ -17,7 +17,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/fetch"
 	"github.com/zadykian/ws/engine/core/update"
-	"github.com/zadykian/ws/roles/internal/setup"
+	"github.com/zadykian/ws/internal/setup"
 )
 
 // rootRoles is where mise's bootstrap runs: the server's roles, in the tree.

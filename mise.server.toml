@@ -19,7 +19,7 @@ Dpkg::Options { "--force-confdef"; "--force-confold"; };
 # any run, and fails a run without it, naming install.sh. The plugin's write hook runs the check
 # again, after the plan. A template's exec runs beside this file. So the check moves to cwd, the
 # run's directory, where a nested mise loads the side's roles as the run does. A run elsewhere, as
-# from /opt/ws or the Mac's roles/client, loads no role of the server. The check looks for the
+# from /opt/ws or the Mac's macos, loads no role of the server. The check looks for the
 # frame's own file through the run's link. It fails a run without it before any phase, with no
 # write, and names the run directory.
 [bootstrap.files."/etc/ws/units.verified"]

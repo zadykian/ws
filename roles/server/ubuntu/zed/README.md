@@ -4,7 +4,7 @@ The `zed` role sets up Zed's server on ws from `mise bootstrap`. Zed itself runs
 opens ws over ssh. The role's `mise.server.toml` writes the terminal's wrapper and its tmux.conf,
 root's, in `/usr/local/lib/ws/zed`. Its `units.toml.tmpl` holds the units: `file/zed-settings`, the
 settings that Zed's server reads, and `file/zed-nofile`, the open-file limit that the server needs.
-The Mac's side is [Zed on the Mac](../../../client/macos/zed/README.md).
+The Mac's side is [Zed on the Mac](../../../../macos/roles/zed/README.md).
 
 `~/.config/zed/settings.json` is root's. A run replaces a change made to it by hand
 and keeps the old file beside the new one, as `PATH.PID.TIME~`. A link on the way is refused. The
@@ -159,11 +159,11 @@ tab leaves its session for the next tab, and `exit` ends it. `tmux -L zed ls` li
   scrollback.
 - tmux has no prefix, so Fresh gets Ctrl+B, and no status line. `/usr/local/lib/ws/zed/tmux.conf`
   has the rest.
-- tmux passes on a title that a program sets, for the toolbar of [the Mac's settings](../../../client/macos/zed/README.md).
+- tmux passes on a title that a program sets, for the toolbar of [the Mac's settings](../../../../macos/roles/zed/README.md).
   Where none is set, the title is empty, not tmux's default, the host's name.
 - Without tmux on the `PATH` the tab runs a login shell.
 - A task ignores the wrapper.
-- Keep `terminal.detect_venv` `off`, as [the Mac's settings](../../../client/macos/zed/README.md) do.
+- Keep `terminal.detect_venv` `off`, as [the Mac's settings](../../../../macos/roles/zed/README.md) do.
 
 ## When the connection drops
 
@@ -220,7 +220,7 @@ clock.
 | An agent's read or grep never ends (zed#65338) | Stop the turn and send it again |
 | New tabs start new sessions while old tmux clients stay attached | `tmux -L zed detach-client -s =NAME`, then a new tab |
 | The Disconnected overlay | Reconnect, at the cost of a new daemon |
-| `ssh ws` fails at once for an hour | fail2ban banned the tunnel address: [lift the ban](../../../client/README.md#sshs-hosts) |
+| `ssh ws` fails at once for an hour | fail2ban banned the tunnel address: [lift the ban](../../../../macos/README.md#sshs-hosts) |
 
 Neither command has a default key. Release builds register `remote_debug::SimulateDisconnect`,
 `SimulateTimeout` and `SimulateTimeoutExhausted` in a remote project's workspace. They reproduce

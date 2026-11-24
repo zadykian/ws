@@ -12,7 +12,7 @@ import (
 	"github.com/zadykian/ws/engine/cli/clitest"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/internal/wgkey"
+	"github.com/zadykian/ws/internal/wgkey"
 )
 
 const wg0Key = "/etc/systemd/network/60-wg0.key"

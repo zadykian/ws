@@ -5,7 +5,7 @@ import (
 	"net/netip"
 	"regexp"
 
-	"github.com/zadykian/ws/roles/internal/slot"
+	"github.com/zadykian/ws/internal/slot"
 )
 
 var peerName = regexp.MustCompile(`^[a-z0-9-]+$`)

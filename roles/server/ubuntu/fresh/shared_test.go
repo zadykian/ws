@@ -26,7 +26,7 @@ func sharedFiles(t *testing.T) (fresh, zed, macZed map[string]any) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	macText, err := os.ReadFile("../../../client/macos/zed/files/global_settings.json")
+	macText, err := os.ReadFile("../../../../macos/roles/zed/files/global_settings.json")
 	if err != nil {
 		t.Fatal(err)
 	}

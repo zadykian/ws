@@ -1,5 +1,5 @@
 #!/bin/bash
-# ws client tunnel loaded, ws client tunnel routes --server and ws client resolver.
+# ws macos tunnel loaded, ws macos tunnel routes --server and ws macos resolver.
 
 set -eo pipefail
 

@@ -64,7 +64,7 @@ func TestTheCheckNeedsTheSidesDirectory(t *testing.T) {
 	side, mac, root := t.TempDir(), t.TempDir(), t.TempDir()
 	for _, file := range []string{
 		filepath.Join(side, "mise", "conf.d", "frame", "mise.server.toml"),
-		filepath.Join(mac, "mise", "conf.d", "zed", "mise.mac.toml"),
+		filepath.Join(mac, "mise", "conf.d", "zed", "mise.macos.toml"),
 	} {
 		if err := os.MkdirAll(filepath.Dir(file), 0o750); err != nil {
 			t.Fatal(err)

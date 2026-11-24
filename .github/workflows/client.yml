@@ -20,7 +20,7 @@ concurrency:
 permissions: {}
 
 jobs:
-  # The Mac's side on macOS, in roles/client/README.md's order. ws client setup with the Mac's
+  # The Mac's side on macOS, in macos/README.md's order. ws macos setup with the Mac's
   # frame runs as the runbook runs it (28-bootstrap): it sets up ssh, git, cld and the tunnel. Its
   # second run and its plan must change nothing and call no sudo. The keys of ssh and git follow
   # values.yml at each bootstrap (56-keys). fnox and age-plugin-yubikey stand in /usr/local/bin,
@@ -32,7 +32,7 @@ jobs:
   # A stand-in ws is a second wireguard-go on the runner, with the Mac's key as its peer. It answers
   # the tunnel's handshakes on loopback, as the LAN (127.0.0.0/8) and as WS_REMOTE (localhost). The
   # daemon's status must show each in turn.
-  # Last, ws client tunnel routes --server ws and ws client resolver, then the keys'.
+  # Last, ws macos tunnel routes --server ws and ws macos resolver, then the keys'.
   # Then a second server's cases, 90-clash, 92-second and 94-remove (client-servers.md). Last, one
   # more bootstrap must call no sudo, and its plan and mise dot status --missing exit 0
   # (96-converged). A stand-in that makes no utun fails the job, as the daemon's device makes one.
@@ -65,7 +65,7 @@ jobs:
         env: { GIT_CONFIG_COUNT: 1, GIT_CONFIG_KEY_0: init.defaultBranch, GIT_CONFIG_VALUE_0: main }
         with:
           persist-credentials: false
-      # ws, built by .tools/install-build into /usr/local/bin, which the cases run as ws client.
+      # ws, built by .tools/install-build into /usr/local/bin, which the cases run as ws macos.
       - name: Build ws
         run: sh .tools/install-build darwin arm64
       # The cases, in .github/client, run in order from the clone: a new step adds a case there and
@@ -75,7 +75,7 @@ jobs:
       - name: The daemon's status and log
         if: always()
         run: |
-          sudo "$TUNNEL" client tunnel status --server ws || true
+          sudo "$TUNNEL" macos tunnel status --server ws || true
           sudo cat /var/log/ws-tunnel.ws.log || true
-          sudo "$TUNNEL" client tunnel status --server lab || true
+          sudo "$TUNNEL" macos tunnel status --server lab || true
           sudo cat /var/log/ws-tunnel.lab.log || true

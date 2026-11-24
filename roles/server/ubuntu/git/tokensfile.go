@@ -12,7 +12,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/roles/internal/etcws"
+	"github.com/zadykian/ws/internal/etcws"
 )
 
 // TokensFile is git's tokens for servers besides GitHub, a table per URL. mise writes it whole from

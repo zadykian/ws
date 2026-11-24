@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/internal/setup"
+	"github.com/zadykian/ws/internal/setup"
 )
 
 const (

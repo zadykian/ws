@@ -225,7 +225,7 @@ func TestLaunchdPlistText(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	args := []string{"/usr/local/bin/ws", "client", "tunnel", "run", "--server", "lab"}
+	args := []string{"/usr/local/bin/ws", "macos", "tunnel", "run", "--server", "lab"}
 	got := plistText("com.github.zadykian.ws-tunnel.lab", launchdDaemon{Name: "lab", Arguments: args, Log: "/var/log/ws-tunnel.lab.log"})
 	if string(got) != string(want) {
 		t.Errorf("plist =\n%s\nwant\n%s", got, want)

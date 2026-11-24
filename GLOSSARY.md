@@ -65,7 +65,7 @@ _Avoid_: manifest
 The private repository that `WS_SECRETS_REPO` names: `fnox.toml`, the values that every server
 shares, and a profile per server, its own
 ([The repository](roles/server/ubuntu/secrets/README.md#the-repository)). A change lands on its
-`main` by a pull request ([How a change lands](roles/client/macos/secrets/README.md#how-a-change-lands)).
+`main` by a pull request ([How a change lands](macos/roles/secrets/README.md#how-a-change-lands)).
 _Avoid_: vault, store
 
 **Unit**:

@@ -47,7 +47,7 @@ with `--global`, below the include. Their empty `helper =` line resets the helpe
 Remove those sections where they stand. The guard warns of a section of `~/.gitconfig` that
 resets a token's credential helper, by the section's name alone.
 
-`/etc/ws/gitconfig` takes its settings from `roles/internal/gitcfg`, which the Mac writes too, so
+`/etc/ws/gitconfig` takes its settings from `internal/gitcfg`, which the Mac writes too, so
 that both sides prune. It sets `fetch.prune`, so a fetch drops the remote-tracking branches that
 the remote deleted, a landed pull request's say. A `false` in `~/.gitconfig` keeps them.
 

@@ -30,7 +30,7 @@ sha256sum, or `shasum -a 256` where a Mac has no `sha256sum`:
 - It makes `/usr/local` and `/usr/local/bin` where they are missing, root's and 755. It refuses one
   that another user owns or that a group or others may write, and names the chown: launchd would
   refuse ws below it. It changes no owner, as an old Homebrew in `/usr/local` would lose its writes.
-- Its last line names the next command, `ws server setup` on Linux and `ws client setup` on a Mac.
+- Its last line names the next command, `ws server setup` on Linux and `ws macos setup` on a Mac.
   Setup checks the system: it refuses a Linux but Ubuntu 26.04 before its first write.
 
 | Variable | Default | Sets |
@@ -77,7 +77,7 @@ again.
   update. It refuses the latest release where that file is a later release, such as a pre-release:
   `--version` names the older one. A ws that is no release, a trial's build, or one that is missing
   or does not run, is older than any, so an update ends the trial.
-- Then it replaces itself with `ws server setup` or `ws client setup` of `/usr/local/bin/ws`. Where
+- Then it replaces itself with `ws server setup` or `ws macos setup` of `/usr/local/bin/ws`. Where
   that file is the named release already, it downloads nothing, and runs that setup alone.
 
 `WS_RELEASES_URL` names the releases, as for `install.sh`.
@@ -172,8 +172,8 @@ curl -fsSL --proto '=https' --tlsv1.2 \
 
 So while a pre-release is tried, this line takes the place of each that runs `install.sh`. Those are
 step 3 of [the steps by hand](../../roles/server/runbook.md#the-steps-by-hand), and step 2 of
-[ws on ws](../../roles/client/runbook.md#ws-on-ws) and the Mac's Tools step on the Mac. The side's
-setup follows, `ws server setup` or `ws client setup`, which checks out the tree of its own ws's tag.
+[ws on ws](../../macos/runbook.md#ws-on-ws) and the Mac's Tools step on the Mac. The side's
+setup follows, `ws server setup` or `ws macos setup`, which checks out the tree of its own ws's tag.
 
 Nothing else is by hand. `release.yml` runs on the tag, in these jobs:
 

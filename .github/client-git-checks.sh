@@ -33,7 +33,7 @@ restores="$restores git_restore"
 rm -f ~/.gitconfig ~/.gitconfig.*~
 
 # signed makes a commit in a new repository. Git must sign it with the key as ws's name and
-# email, in roles/internal/gitcfg. It must verify it with the allowed signers, which name the email.
+# email, in internal/gitcfg. It must verify it with the allowed signers, which name the email.
 signed() {
     rm -rf "$tmp/repo"
     git init -q "$tmp/repo"
@@ -45,7 +45,7 @@ signed() {
 
 # gh: mise's gh must stand in /usr/local/bin as root's, 0755, and replace a gh that was there.
 # With the files in place, a bootstrap must call sudo not once.
-gh=$(cd / && mise -C /opt/ws/roles/client which gh) ||
+gh=$(cd / && mise -C /opt/ws/macos which gh) ||
     error "mise has no gh for /opt/ws"
 printf '#!/bin/sh\n' | sudo tee /usr/local/bin/gh >/dev/null
 boots

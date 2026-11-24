@@ -1,0 +1,33 @@
+package tunnel
+
+import (
+	"strings"
+
+	"github.com/zadykian/ws/engine/core/resource/file"
+	"github.com/zadykian/ws/macos/values"
+)
+
+// tunnelConf is tunnel.conf, the values the daemon takes from the server's values file, so that a root
+// daemon reads no file the user can write. WS_CABLE=yes is for the one server that names the cable.
+func tunnelConf(c values.Conf) string {
+	var b strings.Builder
+	b.WriteString(file.Header("#") + "\n")
+	b.WriteString("WS_PUBLIC_KEY=" + c.PublicKey + "\n")
+	if c.LAN != "" {
+		b.WriteString("WS_LAN=" + c.LAN + "\n")
+		b.WriteString("WS_LAN_ADDRESS=" + c.LANAddress + "\n")
+	}
+	if c.Remote != "" {
+		b.WriteString("WS_REMOTE=" + c.Remote + "\n")
+	}
+	if c.CableService != "" {
+		b.WriteString("WS_CABLE=yes\n")
+	}
+	b.WriteString("WS_TUNNEL_PORT=" + c.TunnelPort() + "\n")
+	slot := c.Slot
+	if slot == "" {
+		slot = "0"
+	}
+	b.WriteString("WS_SLOT=" + slot + "\n")
+	return b.String()
+}
