@@ -98,13 +98,5 @@ bytes, mode and group. A file at gh's path that ws didn't write stops the run, w
 run without the env keeps it too, as mise loads no guard there. That run fails at gh's unit, as
 gh's login by the file's last line fails. An empty input removes its file.
 
-Last, `WS_SECURITY_OUTBOUND: false` goes in the values file, as on a cloud VM
-([outbound-off-checks.sh](../outbound-off-checks.sh)). Setup's plan must exit 2. Setup runs twice,
-and its plan must exit 0 after each run. Then the table must be gone and none of its units active.
-No file of its may be left: no unit file or link that enables one, no `/usr/local/lib/ws/security`
-and no `/run/security-resolvers.conf`. The cases before need the table, so these come last. A cloud
-VM starts with the table off, where the runner turns it off. The second run meets what a cloud
-VM's run meets: none of the table's units or files.
-
 The runner has Azure's routes, so only CI proves them. `.github/actionlint.yaml` names the label
 `ubuntu-26.04`, as actionlint 1.7.12 doesn't know it yet. It goes once a release lists the label.
