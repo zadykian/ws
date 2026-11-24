@@ -25,8 +25,8 @@ and a font as casks, and gh, fnox and age-plugin-yubikey by its lock, with no Ho
 mise installs Go by its lock, and gnupg, ripgrep and other tools as formulae
 ([devtools](roles/devtools/README.md)). It installs Docker's command line and colima the same way
 ([docker](roles/docker/README.md)). It sets the Dock, Finder, windows and sounds as preferences
-([desktop](roles/desktop/README.md)). The second run installs the Mac's apps as casks
-([apps](roles/apps/README.md)).
+([desktop](roles/desktop/README.md)). The second run installs the Mac's apps as casks and pins some
+in the Dock ([apps](roles/apps/README.md)).
 The runbook runs `install.sh`, which puts `ws` in `/usr/local/bin` from a release, checked against
 its `ws.sha256` ([Releases](../.github/workflows/release.md)).
 Write each server's values below first, and the Mac's `values.yml`, which stands empty on a new

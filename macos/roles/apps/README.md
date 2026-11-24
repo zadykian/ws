@@ -1,7 +1,8 @@
 # apps on the Mac
 
-The `apps` role installs the Mac's apps, as mise's casks by `brew-cask`, which needs no Homebrew.
-Its one file, [`mise.apps.toml`](mise.apps.toml), holds no unit of ws's.
+The `apps` role installs the Mac's apps, as mise's casks by `brew-cask`, which needs no Homebrew,
+and pins some of them in the Dock. Its one file, [`mise.apps.toml`](mise.apps.toml), holds no unit
+of ws's.
 
 ## The env
 
@@ -34,3 +35,15 @@ and `mise bootstrap packages upgrade` upgrades them.
 - Not qBittorrent: Homebrew disabled its cask on 2026-09-01, as it fails Gatekeeper.
 - No firewall exception: replies pass block-all
   ([the firewall](../firewall/README.md#what-keeps-working)).
+
+## The Dock
+
+`[bootstrap.settings.macos.dock] apps` pins Safari, Telegram Desktop, Discord, Claude, Zed,
+Ghostty, Mail, Calendar and Yandex Telemost, in that order. mise needs each to exist before it
+writes a changed layout. Zed and Ghostty come from [their roles](../zed/README.md) in the first
+run, the rest from these casks or from the system. A cask's app takes its target's name:
+`Telegram Desktop.app` and `Yandex Telemost.app`.
+[`TestEachDockAppIsInstalledBeforeTheDockIsWritten`](apps_test.go) fails on a pinned app that no
+cask installs.
+
+mise does not restart the Dock: the layout shows after it starts again.
