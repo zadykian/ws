@@ -22,16 +22,30 @@ const osRelease = "/etc/os-release"
 
 // unitsDir is the root of the specs, a units.toml.tmpl in each role's directory, in the checkout
 // that ws ubuntu guest setup makes at /opt/ws. runDir is where mise runs for the guest, which holds
-// the link to the roles, its lock and its tasks.
+// the link to the roles, its lock and its tasks. hostRunDir is the host's, which holds the link
+// alone: the host pins no tool and has no secret.
 const (
-	unitsDir = "/opt/ws/ubuntu/roles"
-	runDir   = "/opt/ws/ubuntu/guest"
+	unitsDir   = "/opt/ws/ubuntu/roles"
+	runDir     = "/opt/ws/ubuntu/guest"
+	hostRunDir = "/opt/ws/ubuntu/host"
 )
 
-// UnitCmd returns ws unit with the server's side: its specs, its values and systemd's units. Its
-// units write root's paths for Ubuntu 26.04's packages and services, so read and write run as root,
-// and on Ubuntu 26.04 alone.
-func UnitCmd(p enginecli.Env) *cobra.Command { return enginecli.Unit(p, unitSide(guestVars)) }
+// UnitCmd returns ws unit with the server's two sides, the guest's and the host's: their specs,
+// their values and systemd's units. Each runs in its run directory, and serves the roles that hold
+// its mise file. The units write root's paths for Ubuntu 26.04's packages and services, so read and
+// write run as root, and on Ubuntu 26.04 alone.
+func UnitCmd(p enginecli.Env) *cobra.Command {
+	return enginecli.Unit(p, unitSide(guestVars), hostSide(hostVars))
+}
+
+// hostSide returns the host's side of ws unit, with its values read from vars.
+func hostSide(vars string) enginecli.UnitSide {
+	return enginecli.UnitSide{Name: "host", RoleFile: "mise.host.toml", Dir: unitsDir, RunDir: hostRunDir,
+		Units: units.OSUnits{}, Root: true, Platform: ubuntu,
+		Values: func(_ context.Context, m effect.Machine) (any, error) {
+			return values.LoadHost(m, vars)
+		}}
+}
 
 // unitSide returns the server's side of ws unit, with its values read from vars.
 func unitSide(vars string) enginecli.UnitSide {

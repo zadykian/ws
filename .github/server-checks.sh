@@ -269,7 +269,8 @@ docker stop -t 0 ws-probe >/dev/null
 # The shell's line refuses a link at ~/.bashrc. A dry run is enough, as the refusal is in the plan.
 mv /root/.bashrc /root/.bashrc.orig
 ln -s /etc/hostname /root/.bashrc
-if out=$(WS_UNITS=ubuntu/roles ws unit write --dry-run file/shell-bashrc-line 2>&1); then
+# ws unit picks its side by the directory mise runs in, so the call runs in the guest's.
+if out=$(cd /opt/ws/ubuntu/guest && ws unit write --dry-run file/shell-bashrc-line 2>&1); then
     fail "ws unit write planned through a link at ~/.bashrc"
 fi
 must "a link at ~/.bashrc is refused" grep -q 'is a link to /etc/hostname' <<<"$out"
