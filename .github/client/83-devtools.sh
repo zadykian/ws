@@ -16,7 +16,9 @@ grep -qxF /usr/local/go/bin /etc/paths.d/ws ||
         echo '::error::/etc/paths.d/ws does not name /usr/local/go/bin'
         fail=1
     }
-goversion=$(env -i HOME="$HOME" zsh -lc 'go version') || goversion=
+# Asked from the home directory: in a module whose go.mod names a newer Go, go would fetch that
+# toolchain and print its version, as it does in this clone.
+goversion=$(cd "$HOME" && env -i HOME="$HOME" zsh -lc 'go version') || goversion=
 case "$goversion" in
 'go version go1.27.3 darwin/arm64') ;;
 *)
