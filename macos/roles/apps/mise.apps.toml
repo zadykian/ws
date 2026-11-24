@@ -30,3 +30,17 @@ apps = [
     "/System/Applications/Calendar.app",
     "/Applications/Yandex Telemost.app",
 ]
+
+# The apps that open at login. exclusive makes the list ws's alone, so an item added by hand goes at
+# the next run. mise reads LSSharedFileList alone: an app that registers by SMAppService is outside
+# it. Each app is a cask of this file or a system app, as the Dock's are.
+[bootstrap.settings.macos.login_items]
+exclusive = true
+apps = [
+    "/Applications/Claude.app",
+    "/Applications/Discord.app",
+    "/System/Applications/Mail.app",
+    "/Applications/Rectangle Pro.app",
+    "/Applications/Telegram Desktop.app",
+    "/Applications/Yandex Telemost.app",
+]

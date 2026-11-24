@@ -55,11 +55,11 @@ file. It then does what a person did by hand, in this order:
    with Ctrl-C and run `ws macos setup --key NAME`, NAME being the name that the wait prints
    ([Secretive](roles/ssh/README.md#secretive)).
 5. It runs mise's bootstrap in `/opt/ws/macos` with `--yes`, so that it asks nothing before it
-   writes the preferences and the login items. The bootstrap installs gh and sets up ssh, git, cld
-   and the Mac's other roles ([The Mac's frame](roles/frame/README.md)). It makes the Mac's
-   WireGuard key, whose public half is `/etc/ws/tunnel.pub`.
-6. It runs the bootstrap again with `-E ws,apps`, which installs the apps. A failure there leaves
-   ws's units set up, and fails setup.
+   writes the preferences. The bootstrap installs gh and sets up ssh, git, cld and the Mac's other
+   roles ([The Mac's frame](roles/frame/README.md)). It makes the Mac's WireGuard key, whose public
+   half is `/etc/ws/tunnel.pub`.
+6. It runs the bootstrap again with `-E ws,apps`, which installs the apps and sets the login items.
+   A failure there leaves ws's units set up, and fails setup.
 
 A second run changes nothing and asks no password. `ws macos setup --plan` plans these steps, and
 mise's bootstrap where none is due, in both envs, by its plan and then its status. The plan covers no

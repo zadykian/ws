@@ -1,8 +1,8 @@
 # apps on the Mac
 
 The `apps` role installs the Mac's apps, as mise's casks by `brew-cask`, which needs no Homebrew,
-and pins some of them in the Dock. Its one file, [`mise.apps.toml`](mise.apps.toml), holds no unit
-of ws's.
+pins some of them in the Dock and opens six at login. Its one file,
+[`mise.apps.toml`](mise.apps.toml), holds no unit of ws's.
 
 ## The env
 
@@ -47,3 +47,14 @@ run, the rest from these casks or from the system. A cask's app takes its target
 cask installs.
 
 mise does not restart the Dock: the layout shows after it starts again.
+
+## The login items
+
+`[bootstrap.settings.macos.login_items] apps` opens Claude, Discord, Mail, Rectangle Pro, Telegram
+Desktop and Yandex Telemost at login. Each is an app of a cask above or the system's Mail, and
+[`TestEachLoginItemIsAnInstalledApp`](apps_test.go) fails on one that neither installs.
+
+- `exclusive = true` makes the list ws's alone. ws sets up the Mac, so an item that someone added
+  by hand goes at the next run.
+- mise reads the list by `LSSharedFileList` alone. An app that registers itself by `SMAppService`
+  is outside the list, and `exclusive` leaves it.

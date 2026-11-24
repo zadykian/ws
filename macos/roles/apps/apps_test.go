@@ -10,8 +10,8 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-// appOf names the cask that installs each app the Dock pins from /Applications. Safari is the
-// system's and has none.
+// appOf names the cask that installs each app that the Dock pins or that opens at login, from
+// /Applications. Safari is the system's and has none.
 var appOf = map[string]string{
 	"Safari.app":           "",
 	"Telegram Desktop.app": "telegram-desktop",
@@ -20,6 +20,7 @@ var appOf = map[string]string{
 	"Zed.app":              "zed",
 	"Ghostty.app":          "ghostty",
 	"Yandex Telemost.app":  "yandextelemost",
+	"Rectangle Pro.app":    "rectangle-pro",
 }
 
 type appsFile struct {
@@ -30,6 +31,10 @@ type appsFile struct {
 				Dock struct {
 					Apps []string `toml:"apps"`
 				} `toml:"dock"`
+				LoginItems struct {
+					Exclusive bool     `toml:"exclusive"`
+					Apps      []string `toml:"apps"`
+				} `toml:"login_items"`
 			} `toml:"macos"`
 		} `toml:"settings"`
 	} `toml:"bootstrap"`
@@ -66,11 +71,12 @@ func casksOfRoles(t *testing.T) []string {
 	return casks
 }
 
-// TestEachDockAppIsInstalledBeforeTheDockIsWritten holds the Dock's apps to ones that exist: mise
-// fails a changed layout where an app is missing, which only a Mac would show.
-func TestEachDockAppIsInstalledBeforeTheDockIsWritten(t *testing.T) {
+// missingApps lists the apps that the setting names but neither the system nor a cask of the roles
+// installs, each with what is wrong.
+func missingApps(t *testing.T, setting string, apps []string) []string {
 	casks := casksOfRoles(t)
-	for _, app := range read(t, "mise.apps.toml").Bootstrap.Settings.MacOS.Dock.Apps {
+	var problems []string
+	for _, app := range apps {
 		if strings.HasPrefix(app, "/System/Applications/") {
 			continue
 		}
@@ -78,10 +84,39 @@ func TestEachDockAppIsInstalledBeforeTheDockIsWritten(t *testing.T) {
 		cask, known := appOf[name]
 		switch {
 		case !ok || !known:
-			t.Errorf("the Dock pins %s, which this test does not know: add its cask to appOf", app)
+			problems = append(problems, setting+" names "+app+", which this test does not know: add its cask to appOf")
 		case cask != "" && !slices.Contains(casks, cask):
-			t.Errorf("the Dock pins %s, but no role installs the cask %s", app, cask)
+			problems = append(problems, setting+" names "+app+", but no role installs the cask "+cask)
 		}
+	}
+	return problems
+}
+
+// TestEachDockAppIsInstalledBeforeTheDockIsWritten holds the Dock's apps to ones that exist: mise
+// fails a changed layout where an app is missing, which only a Mac would show.
+func TestEachDockAppIsInstalledBeforeTheDockIsWritten(t *testing.T) {
+	for _, p := range missingApps(t, "the Dock", read(t, "mise.apps.toml").Bootstrap.Settings.MacOS.Dock.Apps) {
+		t.Error(p)
+	}
+}
+
+// TestEachLoginItemIsAnInstalledApp holds the login items to apps that the system or a cask
+// installs, as the list is the maintainer's six and no other.
+func TestEachLoginItemIsAnInstalledApp(t *testing.T) {
+	items := read(t, "mise.apps.toml").Bootstrap.Settings.MacOS.LoginItems
+	if len(items.Apps) != 6 {
+		t.Errorf("login items = %q, want six apps", items.Apps)
+	}
+	for _, p := range missingApps(t, "the login items", items.Apps) {
+		t.Error(p)
+	}
+}
+
+// TestTheLoginItemsAreExclusive keeps the list ws's alone: an item added by hand goes at the next
+// run, and a missing key would leave it.
+func TestTheLoginItemsAreExclusive(t *testing.T) {
+	if !read(t, "mise.apps.toml").Bootstrap.Settings.MacOS.LoginItems.Exclusive {
+		t.Error("login_items.exclusive is not true: an item added by hand would stay")
 	}
 }
 
