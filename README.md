@@ -40,7 +40,8 @@ it has any:
   gopls, Delve, roslyn-language-server, the SQL, Docker and npm language servers, and rustup.
 - [`docker`](ubuntu/roles/docker): Docker Engine, its `daemon.json` and a slice for its containers.
 - [`incus`](ubuntu/roles/incus): Incus from Zabbly's repository on the host, with its ID range, ZFS
-  pool, bridge, egress ACL and profile. A table of the guests' sources and ufw's rules, as units.
+  pool, bridge, egress ACL and profile. A table of the guests' sources and ufw's rules, as units. The
+  guests of the host's list, from an image with a pinned SHA-256, and `ws ubuntu host guests`.
 - [`claude`](ubuntu/roles/claude): claude, its user settings and telemetry, its attribution off, its sessions after a
   reboot, and plugin marketplaces from a list.
 - [`signoz`](ubuntu/roles/signoz): SigNoz in Docker, which keeps the machine's telemetry for 90 days.

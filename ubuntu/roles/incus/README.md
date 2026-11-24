@@ -191,3 +191,29 @@ ones, as ZFS restores the latest alone: `volume.zfs.use_refquota` and `volume.zf
 So a guest's snapshots stay out of its disk quota. The profile takes a daily snapshot of each guest,
 which expires after two weeks, as a schedule with no expiry keeps every snapshot. Docker's data
 stays on the guest's root dataset.
+
+## A guest's setup
+
+After its start, `state/incus-guests` sets each guest up. It pushes `/usr/local/bin/ws`, and the
+guest's own values to `/etc/ws/values.yml` where the host holds a file, root's and mode 600. Each
+goes where the SHA-256 of the guest's copy differs. It then waits for the boot and for cloud-init,
+and asks the guest's own `ws ubuntu guest setup --plan`. Its exit 2, or no ws in the guest, makes
+the setup due, and `incus exec` runs it. A second run finds nothing due. A guest that cloud-init
+failed in is not set up, and the run fails naming it.
+
+A guest's root controls what the host reads from it. So each exec stops after a limit: a minute for
+a checksum, 15 for the boot and the plan, and an hour for the setup. What the guest prints, and
+what its errors quote, loses its control characters, so that an escape sequence cannot write the
+operator's clipboard. The guest checks out the tag of the pushed ws, so it needs a release's ws: a
+build that names no tag fails in the guest's setup.
+
+The unit passes no `--secrets`, as a host holds no secret. The secrets come by hand
+([The guests of a host](../../runbook.md#the-guests-of-a-host)).
+
+## By hand
+
+| Command | What it does |
+| --- | --- |
+| `ws ubuntu host guests list` | Each guest of the list with its address and its state, then each guest of ws's that the list lacks. |
+| `ws ubuntu host guests setup NAME [--secrets]` | The push and the setup above, whatever the guest's plan says. `--secrets` runs the task `secrets`. |
+| `ws ubuntu host guests remove NAME` | Asks, then deletes the guest with its disk and snapshots. It refuses a guest that the list names, and prints `ws macos remove NAME`. |
