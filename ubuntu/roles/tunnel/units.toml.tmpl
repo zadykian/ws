@@ -96,3 +96,9 @@ source = "tunnel-forward.service"
 after = "service/tunnel-forward"
 run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "forward"], check = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "forward", "--check"] }
 when = { side = "host" }
+
+# Each guest's UDP port in, its route to the bridge, and no input on its interface.
+[state.tunnel-guest-ufw]
+after = "state/tunnel-guest-forward"
+run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "ufw"], check = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "ufw", "--check"] }
+when = { side = "host" }

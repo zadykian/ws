@@ -46,6 +46,13 @@ func newTunnelGuestsCmd(p enginecli.Env, u effect.Units) *cobra.Command {
 				"The unit tunnel-forward.service runs it at boot, as the rule and the route do not outlive a reboot.",
 			func(_ effect.Out, t []values.GuestTunnel) []resource.Resource {
 				return []resource.Resource{tunnel.Forward{M: p.Machine, Tunnels: t, Bridge: incus.BridgeName}}
+			}),
+		guestsProcedure(p, "ufw", "set the host's ufw rules of each guest's tunnel",
+			"For each guest: its UDP port in, a route from wgN to the bridge, and a deny of any input on wgN, inserted first, "+
+				"so that no service of the host's answers a peer, SSH included. ufw's own rules for ICMP and DHCP come "+
+				"ahead of it. The port and route of a tunnel that no guest holds go, and its deny stays.",
+			func(_ effect.Out, t []values.GuestTunnel) []resource.Resource {
+				return []resource.Resource{tunnel.Firewall{M: p.Machine, Tunnels: t, Bridge: incus.BridgeName}}
 			}))
 }
 

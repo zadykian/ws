@@ -26,7 +26,7 @@ func TestTheHostRunsItsOwnTunnelAndEachGuestsInOrder(t *testing.T) {
 	names := kind.Names(hostTunnelUnits(t, tunnelMachine()))
 	at := func(name string) int { return slices.Index(names, name) }
 	order := append(slices.Clone(tunnelOwn), "state/tunnel-ufw", "guard/tunnel-guests", "state/tunnel-guest-keys", "state/tunnel-guest-links",
-		"service/tunnel-networkd", "service/tunnel-forward", "state/tunnel-guest-forward")
+		"service/tunnel-networkd", "service/tunnel-forward", "state/tunnel-guest-forward", "state/tunnel-guest-ufw")
 	for i := 1; i < len(order); i++ {
 		if at(order[i-1]) < 0 || at(order[i]) < at(order[i-1]) {
 			t.Fatalf("units %q, want %s before %s", names, order[i-1], order[i])
@@ -40,7 +40,7 @@ func TestTheHostRunsItsOwnTunnelAndEachGuestsInOrder(t *testing.T) {
 func TestAGuestHoldsNoHostTunnelUnit(t *testing.T) {
 	lines := specLines(t, "guest", defaults(t))
 	for _, unit := range []string{"state/tunnel-ufw", "guard/tunnel-guests", "state/tunnel-guest-keys", "state/tunnel-guest-links", "service/tunnel-networkd",
-		"service/tunnel-forward", "state/tunnel-guest-forward"} {
+		"service/tunnel-forward", "state/tunnel-guest-forward", "state/tunnel-guest-ufw"} {
 		if slices.Contains(lines, unit) {
 			t.Errorf("the guest's lines hold %s", unit)
 		}

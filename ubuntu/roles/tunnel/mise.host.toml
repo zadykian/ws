@@ -15,3 +15,4 @@
 "ws:service/tunnel-networkd" = "in-sync"
 "ws:service/tunnel-forward" = "in-sync"
 "ws:state/tunnel-guest-forward" = "in-sync"
+"ws:state/tunnel-guest-ufw" = "in-sync"
