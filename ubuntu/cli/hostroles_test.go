@@ -2,6 +2,8 @@ package cli
 
 import (
 	"os"
+	"path/filepath"
+	"slices"
 	"testing"
 
 	enginecli "github.com/zadykian/ws/engine/cli"
@@ -28,4 +30,21 @@ func hostSpecs(t *testing.T, m *effecttest.Machine) map[string]step.Step {
 		steps[u.Name] = u.Step
 	}
 	return steps
+}
+
+// hostRoles are the roles that hold a mise.host.toml: the host runs these.
+var hostRoles = []string{"base", "docker", "frame", "otelcol", "security", "signoz"}
+
+func TestTheHostRunsItsRoles(t *testing.T) {
+	files, err := filepath.Glob(rolesDir + "/*/mise.host.toml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, f := range files {
+		got = append(got, filepath.Base(filepath.Dir(f)))
+	}
+	if !slices.Equal(got, hostRoles) {
+		t.Errorf("the roles with a mise.host.toml are %v, want %v", got, hostRoles)
+	}
 }
