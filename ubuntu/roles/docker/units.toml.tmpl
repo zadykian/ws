@@ -54,3 +54,11 @@ check = ["dockerd", "--validate", "--config-file", "{}"]
 [state.docker-bridge]
 addr = { iface = "docker0", want = "{{ $bridge }}", hint = "Docker moves it only as it starts with no container running, and until then lookups to a moved address get no answers. Reboot, or stop every container and restart Docker, then run the bootstrap again, as the server's runbook writes it" }
 after = "service/docker"
+
+# A first run starts Docker with forwarding off, so Docker turns it on and sets the FORWARD policy
+# to drop, which ip-forward-no-drop leaves alone from then on. With no ufw to route what wg0 sends
+# to ikeward0, the policy goes back to accept, with no reboot. A guest's alone: a host's ufw drops
+# what it routes unless a rule allows it.
+[state.docker-forward-policy]
+after = "service/docker"
+run = { user = "root", command = ["iptables", "-w", "-P", "FORWARD", "ACCEPT"], check = ["sh", "-c", "iptables -w -S FORWARD | grep -qx -- '-P FORWARD ACCEPT'"] }

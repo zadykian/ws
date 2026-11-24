@@ -7,7 +7,7 @@ units ([The frame](../frame/README.md)):
 | File | What it holds |
 | --- | --- |
 | [`mise.guest.toml`](mise.guest.toml) | Docker's apt source, the packages, and the units of every server. |
-| [`units.toml.tmpl`](units.toml.tmpl) | The units: the route check, the resolver, ufw's rules, the slice, Docker's service, and the check of `docker0`. |
+| [`units.toml.tmpl`](units.toml.tmpl) | The units: the route check, the resolver, ufw's rules, the slice, Docker's service, the forward policy, and the check of `docker0`. |
 | [`files/`](files) | The templates and files that the units write. |
 
 mise takes Docker's apt key only where its primary fingerprint is the one that the source pins,
@@ -74,6 +74,17 @@ running, as after a reboot. Docker's published ports get past ufw:
 Unless `WS_SECURITY_OUTBOUND` is false, a container reaches no host of the LAN, the cable or `wg0`,
 nor of another private network around the server. The `security` role's table drops what it
 starts there, so a TCP connect hangs ([Outbound](../security/README.md#outbound)).
+
+## The forward policy
+
+Docker sets the FORWARD policy to drop where it turns forwarding on itself. It does so on a first
+run, as mise installs Docker's package before any unit runs, so it starts with forwarding off. That
+cuts `wg0` off `ikeward0` until a reboot, when `99-ikeward.conf` turns forwarding on before Docker
+starts ([ikeward](../ikeward/README.md#forwarding)). `daemon.json` sets `ip-forward-no-drop`, so that
+no start sets the policy again. That does not undo a policy that the first start set, so the unit
+`state/docker-forward-policy` sets it back to accept, once Docker runs, where it finds drop. The
+unit is a guest's alone: a host's ufw drops what it routes unless a rule allows it, and the host's
+route rules count on that.
 
 ## Build cache
 
