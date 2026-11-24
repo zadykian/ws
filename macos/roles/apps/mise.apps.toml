@@ -1,0 +1,17 @@
+# The Mac's apps, as mise's casks, which need no Homebrew. Only the env apps loads this file, in a
+# run after the one with ws's units. A cask takes the latest alone.
+[bootstrap.packages]
+"brew-cask:claude" = "latest"
+"brew-cask:claude-code" = "latest"
+"brew-cask:discord" = "latest"
+"brew-cask:google-chrome" = "latest"
+"brew-cask:logi-options+" = "latest"
+"brew-cask:rectangle-pro" = "latest"
+"brew-cask:spotify" = "latest"
+"brew-cask:steam" = "latest"
+"brew-cask:telegram-desktop" = "latest"
+"brew-cask:transmission" = "latest"
+"brew-cask:vlc" = "latest"
+"brew-cask:whatsapp" = "latest"
+"brew-cask:winbox" = "latest"
+"brew-cask:yandextelemost" = "latest"
