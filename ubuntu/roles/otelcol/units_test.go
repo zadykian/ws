@@ -178,8 +178,9 @@ func TestCollectorFilesFollowTheEndpoint(t *testing.T) {
 		if got := strings.Contains(string(config), "metrics/claude:"); got != c.remote {
 			t.Errorf("env %q: claude's pipeline = %v, want %v", c.env, got, c.remote)
 		}
-		if got := strings.Contains(string(config), "insecure: true"); got != c.tlsFree {
-			t.Errorf("env %q: insecure = %v, want %v", c.env, got, c.tlsFree)
+		claude := exporter(parsed, "otlp_grpc/claude")
+		if got := claude["tls"] != nil; got != c.tlsFree {
+			t.Errorf("env %q: claude's exporter has tls %v, want %v", c.env, claude["tls"], c.tlsFree)
 		}
 		if c.endpoint != "" && strings.Contains(string(config), c.endpoint) {
 			t.Errorf("env %q: the config holds the endpoint", c.env)

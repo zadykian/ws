@@ -26,7 +26,8 @@ VM. It:
   network, and the count of processes;
 - scrapes temperatures and fans from node_exporter on `127.0.0.1:9100` every 60 seconds, as the
   host's metrics have none;
-- sends it all to SigNoz's intake on `127.0.0.1:14318`, with the host's name added as `host.name`;
+- sends it all to SigNoz's intake by gRPC on `127.0.0.1:14317`, with the host's name added as
+  `host.name`;
 - sends claude's metrics to a remote collector too, where `/etc/ws/env` sets
   `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT`: [below](#claudes-metrics-elsewhere).
 
