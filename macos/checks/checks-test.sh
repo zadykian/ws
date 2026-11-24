@@ -211,5 +211,39 @@ WP=$tmp/wp-ok expect "two screens of Stone" ok inside prefs.sh stone
 WP=$tmp/wp-bad expect "a second screen of another picture" fail inside prefs.sh stone
 WP=$tmp/wp-none expect "no screen" fail inside prefs.sh stone
 
+# claude resolves into the cask's directory, and its sum is the one before.
+printf 'binary' >"$tmp/Caskroom/claude-code/claude"
+chmod +x "$tmp/Caskroom/claude-code/claude"
+ln -sf "$tmp/Caskroom/claude-code/claude" "$tmp/bin/claude"
+stub shasum 'sha256sum "$3"'
+sum=$(sha256sum "$tmp/Caskroom/claude-code/claude" | cut -d' ' -f1)
+expect "claude in a Caskroom" ok inside tools.sh in_cask
+expect "claude's sum is the one before" ok inside tools.sh sum_is "$sum"
+expect "claude's sum changed" fail inside tools.sh sum_is 0000
+printf 'binary' >"$tmp/other/claude"
+chmod +x "$tmp/other/claude"
+ln -sf "$tmp/other/claude" "$tmp/bin/claude"
+expect "claude outside a Caskroom" fail inside tools.sh in_cask
+ln -sf "$tmp/Caskroom/claude-code/claude" "$tmp/bin/claude"
+mkdir -p "$HOME/.local/bin"
+ln -sf "$tmp/other/claude" "$HOME/.local/bin/claude"
+expect "claude of the updater, before the cask's" fail inside tools.sh in_cask
+
+printf 'pinentry-program %s/pinentry-mac\n' "$tmp/bin" >"$HOME/.gnupg/gpg-agent.conf"
+expect "a pinentry-mac that is not there" fail inside tools.sh pinentry_named
+stub pinentry-mac 'exit 0'
+expect "a pinentry-mac that runs" ok inside tools.sh pinentry_named
+echo 'pinentry-program /usr/bin/pinentry-curses' >"$HOME/.gnupg/gpg-agent.conf"
+expect "another pinentry" fail inside tools.sh pinentry_named
+
+stub socketfilterfw 'echo "Firewall is set to block all non-essential incoming connections: blocking all"'
+SOCKETFILTERFW=$tmp/bin/socketfilterfw expect "a firewall that blocks all" ok inside tools.sh blocks_all
+stub socketfilterfw 'echo "Block all DISABLED!"'
+SOCKETFILTERFW=$tmp/bin/socketfilterfw expect "a firewall that lets connections in" fail inside tools.sh blocks_all
+printf 'x' >"$tmp/torrent"
+: >"$tmp/torrent-empty"
+expect "a downloaded file" ok inside tools.sh downloaded "$tmp/torrent"
+expect "an empty file" fail inside tools.sh downloaded "$tmp/torrent-empty"
+
 [ "$failed" -eq 0 ] || exit 1
 echo "checks-test: ok"
