@@ -94,3 +94,26 @@ func TestReadGuestValuesParsesAGuestsFile(t *testing.T) {
 		t.Errorf("a bad file: err = %v, want it to name the file", err)
 	}
 }
+
+// The mode bundles SigNoz and a tunnel of the guest's own. The host ends the tunnel of each guest at
+// a slot's address, so it refuses a guest that turns the mode on, where the host's values load.
+func TestTheHostRefusesAGuestThatTurnsTheSelfContainedModeOn(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/etc/ws/values.yml"] = []byte(twoGuests)
+	if _, err := LoadHost(m, "/etc/ws/values.yml"); err != nil {
+		t.Fatalf("guests with no values of their own: %v", err)
+	}
+	g := Guest{Name: "lab"}
+	m.Files[g.File()] = []byte("WS_SELF_CONTAINED: true\n")
+	_, err := LoadHost(m, "/etc/ws/values.yml")
+	if err == nil || !strings.Contains(err.Error(), g.File()) || !strings.Contains(err.Error(), "WS_SELF_CONTAINED") {
+		t.Errorf("LoadHost = %v, want the refusal to name the guest's file and the key", err)
+	}
+	if _, _, err := g.Read(m); err == nil {
+		t.Error("Read took a guest in the self-contained mode")
+	}
+	m.Files[g.File()] = []byte("WS_SELF_CONTAINED: false\n")
+	if _, err := LoadHost(m, "/etc/ws/values.yml"); err != nil {
+		t.Errorf("the mode off: %v", err)
+	}
+}

@@ -1,13 +1,13 @@
 # otelcol
 
 The `otelcol` role runs the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) on
-the machine, from `mise bootstrap`. Its `mise.guest.toml` and `mise.host.toml` install
-node_exporter. They name the units of its `units.toml.tmpl`: the `.deb`, the service with its
-files, and the check that the collector answers. Two more serve Docker's containers: a socket on
-the bridge address with its proxy, and a host's ufw rules for it. The collector takes OTLP on
-loopback, and from those containers through that socket. It reads the journal, the
-host's metrics and its temperatures from node_exporter. It sends it all to SigNoz, and claude's
-metrics to another collector where one is set.
+the machine, from `mise bootstrap`. Its `mise.host.toml` installs node_exporter, and its
+`mise.guest.toml` makes the collector's account. Both name the units of its `units.toml.tmpl`: the
+`.deb`, the service with its files, and the check that the collector answers. Two more serve Docker's
+containers: a socket on the bridge address with its proxy, and a host's ufw rules for it. The
+collector takes OTLP on loopback, and from those containers through that socket. It reads the
+journal and the machine's metrics, and on a host its temperatures from node_exporter. It sends it
+all to SigNoz, and claude's metrics to another collector where one is set.
 
 ## The collector
 
@@ -26,10 +26,10 @@ VM. It:
   journal, so it leaves them out;
 - reads the host's metrics every 60 seconds: CPU, load, memory, paging, disks, filesystems,
   network, and the count of processes;
-- scrapes temperatures and fans from node_exporter on `127.0.0.1:9100` every 60 seconds, as the
-  host's metrics have none;
-- sends it all to SigNoz's intake by gRPC on `127.0.0.1:14317`, with the host's name added as
-  `host.name`;
+- on a host, scrapes temperatures and fans from node_exporter on `127.0.0.1:9100` every 60
+  seconds, as the host's metrics have none;
+- sends it all to SigNoz's intake by gRPC, with the machine's name added as `host.name`
+  ([below](#the-exporters-endpoint));
 - sends claude's metrics to a remote collector too, where `/etc/ws/env` sets
   `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT`: [below](#claudes-metrics-elsewhere).
 
@@ -39,14 +39,15 @@ line are dropped: as attributes of the resource, they would make each process a 
 own in SigNoz. The collector reads the journal from its end each time it starts. So what the
 journal gets while the collector is down stays there alone.
 
-node_exporter is Ubuntu's `prometheus-node-exporter`, without its recommends. It runs with only its
-`hwmon` and `thermal_zone` collectors and without its own Go and process metrics. Its arguments are
-in `/etc/default/prometheus-node-exporter`, which mise writes before it installs the package
-(`phase = "pre-packages"`), as the package starts node_exporter at once. A change restarts the
-service. dpkg keeps that file and puts the package's beside it,
-as `.dpkg-dist`. Its metrics keep their Prometheus names, such as `node_hwmon_temp_celsius`, with
-`service.name` `node` and the host's name. A VM has no temperatures or fans to read, so there they
-are missing.
+node_exporter is Ubuntu's `prometheus-node-exporter`, without its recommends. Only the host runs
+it: a container's sysfs shows the host's hwmon, so a guest would send the host's temperatures under
+its own `host.name`. It runs with only its `hwmon` and `thermal_zone` collectors and without its
+own Go and process metrics. Its arguments are in `/etc/default/prometheus-node-exporter`, which
+mise writes before it installs the package (`phase = "pre-packages"`), as the package starts
+node_exporter at once. A change restarts the service. dpkg keeps that file and puts the package's
+beside it, as `.dpkg-dist`. Its metrics keep their Prometheus names, such as
+`node_hwmon_temp_celsius`, with `service.name` `node` and the host's name. A guest has no such
+receiver and no such service.
 
 The collector refuses new data once it holds 384 MiB, as when SigNoz is down and what it would
 send piles up. That way it doesn't grow until the kernel kills another process.
@@ -60,6 +61,21 @@ so until the service replaces it. A host's ufw denies what comes in meanwhile.
 The `.deb`'s unit stops it at once, and the service enables it again once the config is in place.
 The `.deb`'s unit waits on signoz's sync, so that SigNoz's retention is set before the collector
 sends ([signoz](../signoz/README.md#retention)).
+
+## The exporter's endpoint
+
+The values of each side give one endpoint for the exporter to SigNoz, with `tls.insecure` in both
+forms ([values.OTLPEndpoint](../../values/otlp.go)). The host's is its own SigNoz, `127.0.0.1:14317`.
+A guest's follows the mode `WS_SELF_CONTAINED`, as its miserc holds it: the same address where the
+guest runs SigNoz, else the Unix socket `/var/lib/ws/otlp/signoz.sock`, which the guests' profile makes
+([incus](../incus/README.md#the-link-to-signoz)). The collector's gRPC exporter takes the
+`unix:///` form: a run of the 0.162.0 collector sent metrics through it to a second collector that
+listened on the socket.
+
+The guest's collector runs as `otelcol-contrib`, and the socket is that account's alone, at 0600. The
+profile names the account by number, which the `.deb`, with its own `useradd --system`, would not
+fix. `mise.guest.toml` makes the group and the user with the IDs of `values.OtelcolID`, before the
+package, whose preinst keeps an account that it finds.
 
 ## Docker's containers
 

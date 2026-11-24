@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/effect/local"
+	"github.com/zadykian/ws/internal/setup"
 	"github.com/zadykian/ws/ubuntu/values"
 )
 
@@ -26,6 +27,36 @@ func TestUnitValuesLoadTheFile(t *testing.T) {
 	}
 	if v, ok := data.(values.Values); !ok || v.Base.Locale != "C" {
 		t.Errorf("values = %+v, want the file's", data)
+	}
+}
+
+// The mode of the units is the miserc's env, which the files follow, whatever the values say
+// before the next setup.
+func TestUnitValuesTakeTheModeFromTheMiserc(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		yml   string
+		envs  []string
+		want  bool
+		isSet bool
+	}{
+		{"values on, env off", selfContained, []string{"guest"}, false, true},
+		{"values off, env on", "---\n", []string{"guest", setup.SelfContained}, true, true},
+		{"both on", selfContained, []string{"guest", setup.SelfContained}, true, true},
+		{"no miserc", selfContained, nil, false, false},
+	} {
+		m := effecttest.NewMachine()
+		m.Files["/v.yml"] = []byte(tc.yml)
+		if tc.isSet {
+			m.Files[setup.MisercPath] = setup.Miserc(tc.envs...)
+		}
+		data, err := unitSide("/v.yml").Values(t.Context(), m)
+		if err != nil {
+			t.Fatalf("%s: %v", tc.name, err)
+		}
+		if got := data.(values.Values).SelfContained; got != tc.want {
+			t.Errorf("%s: the units take the mode %v, want %v", tc.name, got, tc.want)
+		}
 	}
 }
 

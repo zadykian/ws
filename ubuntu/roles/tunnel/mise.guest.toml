@@ -1,8 +1,7 @@
-# tunnel's lines for every server. systemd brings networkd, its directory /etc/systemd/network and
-# its group systemd-network, which a container may lack.
+# tunnel's units for a guest in the self-contained mode: a guest under a host has the host's tunnel.
+# mise.self-contained.toml holds the packages. A guest under a host loads the spec with no line for
+# these units, which fails ws unit verify, so their lines stay here under the units' when.
 [bootstrap.packages]
-"apt:wireguard-tools" = "latest"
-"apt:systemd" = "latest"
 "ws:guard/tunnel" = "in-sync"
 "ws:service/tunnel" = "in-sync"
 "ws:state/tunnel-key" = "in-sync"

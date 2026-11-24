@@ -2,14 +2,21 @@ package incus
 
 import (
 	"context"
+	"maps"
 	"slices"
 	"strings"
 	"testing"
+
+	"go.yaml.in/yaml/v3"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 const profileList = "incus profile list --format json"
+
+// otlpJSON is the profile's proxy device as Incus lists it, whose values are all text.
+const otlpJSON = `"otlp":{"type":"proxy","bind":"instance","listen":"unix:/var/lib/ws/otlp/signoz.sock","connect":"tcp:127.0.0.1:14317",` +
+	`"uid":"800","gid":"800","mode":"0600","security.uid":"65534","security.gid":"65534"}`
 
 func TestAMissingProfileIsCreatedUnprivilegedAndIsolated(t *testing.T) {
 	m := effecttest.NewMachine()
@@ -35,6 +42,34 @@ func TestAMissingProfileIsCreatedUnprivilegedAndIsolated(t *testing.T) {
 	}
 }
 
+// The guest's collector reaches the host's SigNoz by a socket that only otelcol-contrib opens, made by
+// a proxy that never runs as the host's root.
+func TestTheProfileLinksTheCollectorToTheHostsSigNozBySocket(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results[profileList] = effecttest.Result{Out: []byte("[]")}
+	m.Results["incus profile create ws"] = effecttest.Result{}
+	changes, err := Profile(m).Plan(context.Background())
+	if err != nil || len(changes) != 1 {
+		t.Fatalf("changes = %v, err = %v", changes, err)
+	}
+	if err := changes[0].Apply(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	var profile struct {
+		Devices map[string]map[string]string `yaml:"devices"`
+	}
+	if err := yaml.Unmarshal([]byte(m.Inputs[0]), &profile); err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]string{
+		"type": "proxy", "bind": "instance", "listen": "unix:/var/lib/ws/otlp/signoz.sock", "connect": "tcp:127.0.0.1:14317",
+		"uid": "800", "gid": "800", "mode": "0600", "security.uid": "65534", "security.gid": "65534",
+	}
+	if got := profile.Devices["otlp"]; !maps.Equal(got, want) {
+		t.Errorf("devices.otlp = %v, want %v", got, want)
+	}
+}
+
 func TestTheProfileLoadsTheModulesOfAGuestsVPN(t *testing.T) {
 	for _, mod := range []string{"xfrm_user", "xfrm_algo", "esp4", "xfrm_interface", "nft_masq"} {
 		if !slices.Contains(KernelModules, mod) {
@@ -50,7 +85,7 @@ func TestAProfileThatHoldsItsKeysIsLeftAlone(t *testing.T) {
 "config":{"security.privileged":"false","security.nesting":"true","security.idmap.isolated":"true","linux.kernel_modules":"` + strings.Join(KernelModules, ",") + `","user.note":"x",
 "boot.autostart":"true","snapshots.schedule":"@daily","snapshots.expiry":"2w"},
 "devices":{"eth0":{"type":"nic","network":"incusbr0","name":"eth0","security.mac_filtering":"true","security.port_isolation":"true"},
-"root":{"type":"disk","path":"/","pool":"ws"},"extra":{"type":"none"}}}]`)}
+"root":{"type":"disk","path":"/","pool":"ws"},` + otlpJSON + `,"extra":{"type":"none"}}}]`)}
 	if changes, err := Profile(m).Plan(context.Background()); err != nil || len(changes) != 0 {
 		t.Errorf("changes = %v, err = %v, want none: a key and a device of the host's own stay", changes, err)
 	}
@@ -61,13 +96,32 @@ func TestAProfileThatLostItsIsolationIsEdited(t *testing.T) {
 	m.Results[profileList] = effecttest.Result{Out: []byte(`[{"name":"ws","description":"` + profileDescription + `",
 "config":{"security.privileged":"false","security.nesting":"true","security.idmap.isolated":"false","linux.kernel_modules":"` + strings.Join(KernelModules, ",") + `",
 "boot.autostart":"true","snapshots.schedule":"@daily","snapshots.expiry":"2w"},
-"devices":{"eth0":{"type":"nic","network":"incusbr0","name":"eth0","security.mac_filtering":"true"},"root":{"type":"disk","path":"/","pool":"ws"}}}]`)}
+"devices":{"eth0":{"type":"nic","network":"incusbr0","name":"eth0","security.mac_filtering":"true"},"root":{"type":"disk","path":"/","pool":"ws"},` + otlpJSON + `}}]`)}
 	changes, err := Profile(m).Plan(context.Background())
 	if err != nil || len(changes) != 1 {
 		t.Fatalf("changes = %v, err = %v", changes, err)
 	}
 	head, _, _ := strings.Cut(changes[0].String(), "\n")
 	if want := "edit the profile ws: config.security.idmap.isolated, devices.eth0.security.port_isolation"; head != want {
+		t.Errorf("first line = %q, want %q", head, want)
+	}
+}
+
+// A proxy that lost its drop of privilege would run as the host's root. One that lost its mode
+// would open the socket to every process of the guest. Either is edited back.
+func TestAProxyThatLostItsPrivilegeDropOrItsModeIsEdited(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results[profileList] = effecttest.Result{Out: []byte(`[{"name":"ws","description":"` + profileDescription + `",
+"config":{"security.privileged":"false","security.nesting":"true","security.idmap.isolated":"true","linux.kernel_modules":"` + strings.Join(KernelModules, ",") + `",
+"boot.autostart":"true","snapshots.schedule":"@daily","snapshots.expiry":"2w"},
+"devices":{"eth0":{"type":"nic","network":"incusbr0","name":"eth0","security.mac_filtering":"true","security.port_isolation":"true"},
+"root":{"type":"disk","path":"/","pool":"ws"},"otlp":{"type":"proxy","bind":"instance","listen":"unix:/var/lib/ws/otlp/signoz.sock","connect":"tcp:127.0.0.1:14317","uid":"800","gid":"800","mode":"0644"}}}]`)}
+	changes, err := Profile(m).Plan(context.Background())
+	if err != nil || len(changes) != 1 {
+		t.Fatalf("changes = %v, err = %v", changes, err)
+	}
+	head, _, _ := strings.Cut(changes[0].String(), "\n")
+	if want := "edit the profile ws: devices.otlp.mode, devices.otlp.security.gid, devices.otlp.security.uid"; head != want {
 		t.Errorf("first line = %q, want %q", head, want)
 	}
 }

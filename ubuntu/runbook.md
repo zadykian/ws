@@ -40,6 +40,9 @@ without the file, which is a host: bare metal.
    there.
 3. Where a value differs from its default, write `/etc/ws/values.yml`, root's and mode 600, with
    each such value. Where none is, the bootstrap writes it ([the values](../README.md#running-it-again)).
+   A cloud VM has no host to take SigNoz and a tunnel from, so set `WS_SELF_CONTAINED: true` there,
+   which makes it run both ([signoz](roles/signoz/README.md#the-self-contained-mode)). Setup
+   refuses a guest outside a container with the mode off.
 4. Run `install.sh` as root, by the three lines of
    [Install](../.github/workflows/release.md#install), `set -o pipefail` among them. It
    installs ws alone, as `/usr/local/bin/ws`, which root's `PATH` holds, and prints the next command.

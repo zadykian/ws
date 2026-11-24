@@ -22,9 +22,20 @@ func TestUpdateSetupsFollowTheMiserc(t *testing.T) {
 	if args, err := UpdateSetups().Pick(m); err != nil || !reflect.DeepEqual(args, []string{"ubuntu", "host", "setup"}) {
 		t.Errorf("args = %v, err = %v; want the host's setup", args, err)
 	}
-	m.Files[setup.MisercPath] = setup.Miserc("macos")
-	if _, err := UpdateSetups().Pick(m); err == nil || !strings.Contains(err.Error(), "guest or host alone") {
-		t.Errorf("err = %v; want the env refused", err)
+	for side, envs := range map[string][]string{
+		"guest": {"guest", setup.SelfContained},
+		"host":  {"host", setup.SelfContained},
+	} {
+		m.Files[setup.MisercPath] = setup.Miserc(envs...)
+		if args, err := UpdateSetups().Pick(m); err != nil || !reflect.DeepEqual(args, []string{"ubuntu", side, "setup"}) {
+			t.Errorf("with the mode: args = %v, err = %v; want the %s's setup", args, err, side)
+		}
+	}
+	for _, envs := range [][]string{{"macos"}, {setup.SelfContained}, {"guest", "host"}, {"guest", "macos"}} {
+		m.Files[setup.MisercPath] = setup.Miserc(envs...)
+		if _, err := UpdateSetups().Pick(m); err == nil || !strings.Contains(err.Error(), "guest or host") {
+			t.Errorf("envs %v: err = %v; want the envs refused", envs, err)
+		}
 	}
 }
 

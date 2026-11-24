@@ -17,15 +17,17 @@ steps, and each role's README says what it sets up.
   README ([README](../../README.md)). Its units run in the order of their `after`
   ([The order](../../ubuntu/roles/frame/README.md#the-order)).
 - A role holds its spec, `units.toml.tmpl`, where it has units, with its templates. It holds its
-  mise files by env: `mise.guest.toml` for every guest, `mise.host.toml` for the host, and
-  `mise.secrets.toml` under the env `secrets`, which the secrets task adds. The role `secrets` has
-  no spec. Each side's one link, `ubuntu/guest/mise/conf.d` and `ubuntu/host/mise/conf.d`, loads
-  them, and `ws unit` serves a side the specs of the roles that hold its file. A spec runs a
-  command of its side's group as `ws ubuntu {{ side }} NAME`, and a unit of one side holds
-  `when = { side = "host" }`. A role holds no plain `mise.toml`, which every env would load
-  ([specs_test.go](../../ubuntu/cli/specs_test.go)).
+  mise files by env: `mise.guest.toml` for every guest and `mise.host.toml` for the host.
+  `mise.self-contained.toml` is under the env `self-contained`, which a host and a guest in the mode
+  load. `mise.secrets.toml` is under the env `secrets`, which the secrets task adds. The role
+  `secrets` has no spec. Each side's one link, `ubuntu/guest/mise/conf.d` and
+  `ubuntu/host/mise/conf.d`, loads them, and `ws unit` serves a side the specs of the roles that
+  hold its file. A spec runs a command of its side's group as `ws ubuntu {{ side }} NAME`, and a
+  unit of one side holds `when = { side = "host" }`. A role holds no plain `mise.toml`, which every
+  env would load ([specs_test.go](../../ubuntu/cli/specs_test.go)).
 - Each unit of a spec is a line `"ws:KIND/NAME" = "in-sync"` of its role's `mise.guest.toml`
-  and `mise.host.toml`, whichever side runs it, never of `mise.secrets.toml`.
+  and `mise.host.toml`, whichever side runs it, never of `mise.secrets.toml` or
+  `mise.self-contained.toml`.
   `TestSpecsMatchMiseLines` fails on a line missing or extra ([specs_test.go](../../ubuntu/cli/specs_test.go)).
 - A path is one role's: where two roles' mise files declare it, mise keeps the later fragment's by
   name and drops the other with no error.
@@ -111,8 +113,7 @@ steps, and each role's README says what it sets up.
 
 - foundryctl's compose files, in `ubuntu/roles/signoz/deployment/`, are never edited by
   hand: change `casting.yaml` and forge again ([The compose files](../../ubuntu/roles/signoz/README.md#the-compose-files)).
-- Each forged file and directory has its entry in the role's `mise.guest.toml` and
-  `mise.host.toml`, as mise copies
+- Each forged file and directory has its entry in the role's `mise.self-contained.toml`, as mise copies
   no tree: `TestEachForgedFileIsMises` fails on one missing or left over
   ([units_test.go](../../ubuntu/roles/signoz/units_test.go)).
 - The dashboards' files are kept as SigNoz's API returns them, so that the step can compare the

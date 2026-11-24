@@ -14,24 +14,52 @@ import (
 	"github.com/zadykian/ws/engine"
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/kind"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/fetch"
 	"github.com/zadykian/ws/engine/core/update"
 	"github.com/zadykian/ws/internal/setup"
+	"github.com/zadykian/ws/ubuntu/values"
 )
 
-// setupSide is what a side's setup differs in: its name, its values and whether it runs the task
-// secrets. A host holds no secret, so its setup runs no task.
+// setupSide is what a side's setup differs in: its name, its values, whether it runs the task
+// secrets and whether it runs in the self-contained mode. A host holds no secret, so its setup runs
+// no task, and a host always runs in the mode.
 type setupSide struct {
 	name    string
 	values  valuesSide
 	secrets bool
+	mode    func(m effect.Machine) (bool, error)
 }
 
 var (
-	guestSetup = setupSide{name: "guest", values: guestValues, secrets: true}
-	hostSetup  = setupSide{name: "host", values: hostValues}
+	guestSetup = setupSide{name: "guest", values: guestValues, secrets: true, mode: guestMode}
+	hostSetup  = setupSide{name: "host", values: hostValues, mode: func(effect.Machine) (bool, error) { return true, nil }}
 )
+
+// guestMode reports whether the guest's values turn the self-contained mode on.
+func guestMode(m effect.Machine) (bool, error) {
+	v, err := values.Load(m, guestVars)
+	return v.SelfContained, err
+}
+
+// envs returns the envs of the side's miserc: its own, and the mode's where the mode is on. A guest
+// outside a container has no host to take SigNoz and a tunnel from, so setup refuses one with the
+// mode off.
+func (s setupSide) envs(m effect.Machine) ([]string, error) {
+	on, err := s.mode(m)
+	if err != nil {
+		return nil, err
+	}
+	if on {
+		return []string{s.name, setup.SelfContained}, nil
+	}
+	if !kind.InContainer(m) {
+		return nil, fmt.Errorf("this machine is no container, and a guest outside one runs SigNoz and its own tunnel: "+
+			"set WS_SELF_CONTAINED: true in %s", guestVars)
+	}
+	return []string{s.name}, nil
+}
 
 // dir is where mise's bootstrap runs: the side's roles, in the tree.
 func (s setupSide) dir() string { return path.Join(setup.TreeDir, "ubuntu", s.name) }
@@ -114,7 +142,11 @@ func newSetupCmd(p enginecli.Env, cfg setupConfig, side setupSide) *cobra.Comman
 		if err := checkValues(p.Machine, side.values); err != nil {
 			return err
 		}
-		steps, err := setupSteps(c.Context(), p.Machine, cfg, side, tag)
+		envs, err := side.envs(p.Machine)
+		if err != nil {
+			return err
+		}
+		steps, err := setupSteps(c.Context(), p.Machine, cfg, envs, tag)
 		if err != nil {
 			return err
 		}
@@ -184,7 +216,7 @@ func runMise(ctx context.Context, m effect.Machine, side setupSide, args ...stri
 // setupSteps returns the resources of setup, in order. Each one plans before it writes. The guard
 // comes first, as mise's config trusts the tree, and nothing is written before the tree passes. An
 // empty tag takes the tree as it stands.
-func setupSteps(ctx context.Context, m effect.Machine, cfg setupConfig, side setupSide, tag string) ([]resource.Resource, error) {
+func setupSteps(ctx context.Context, m effect.Machine, cfg setupConfig, envs []string, tag string) ([]resource.Resource, error) {
 	target, err := miseTarget(ctx, m)
 	if err != nil {
 		return nil, err
@@ -197,7 +229,7 @@ func setupSteps(ctx context.Context, m effect.Machine, cfg setupConfig, side set
 		setup.Guard{M: m, Dir: setup.TreeDir, Above: aboveTree, Holds: holds},
 		setup.MiseBinary{M: m, Release: cfg.Mise, Target: target},
 	}
-	steps = append(steps, setup.SystemMise(m, side.name)...)
+	steps = append(steps, setup.SystemMise(m, envs...)...)
 	steps = append(steps, setup.Checkout{M: m, Dir: setup.TreeDir, Repo: cfg.Repo, Tag: tag, InPlace: tag == ""})
 	return append(steps, setup.Plugin(m, setup.TreeDir, setup.PluginDir, 0)...), nil
 }

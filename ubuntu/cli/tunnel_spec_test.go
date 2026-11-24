@@ -9,12 +9,15 @@ import (
 	"github.com/zadykian/ws/engine/core/kind"
 )
 
+// selfContained is the values of a guest in the mode that runs SigNoz and ends a tunnel itself.
+const selfContained = "---\nWS_SELF_CONTAINED: true\n"
+
 const (
 	netdevFile  = "/etc/systemd/network/60-wg0.netdev"
 	networkFile = "/etc/systemd/network/60-wg0.network"
 	macPub      = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
-	// tunnelPeers are the peers mac, whose key file is there, and tv, whose file is missing.
-	tunnelPeers = "---\nWS_TUNNEL_PEERS:\n  - {name: mac, address: 10.99.0.2}\n  - {name: tv, address: 10.99.0.3}\n"
+	// tunnelPeers are a self-contained guest's, which ends a tunnel, with the peers mac, whose key file is there, and tv, whose file is missing.
+	tunnelPeers = "---\nWS_SELF_CONTAINED: true\nWS_TUNNEL_PEERS:\n  - {name: mac, address: 10.99.0.2}\n  - {name: tv, address: 10.99.0.3}\n"
 	// netdevBytes is the .netdev that the step rendered for the port 51820 and the peer mac alone.
 	netdevBytes = `# Written by github.com/zadykian/ws, whose next run replaces any change made here.
 #
@@ -76,7 +79,7 @@ func TestTunnelNetdevIs640OfSystemdNetwork(t *testing.T) {
 }
 
 func TestTunnelOrder(t *testing.T) {
-	units, _ := guestUnits(t, tunnelMachine(), "---\n")
+	units, _ := guestUnits(t, tunnelMachine(), selfContained)
 	names := kind.Names(units)
 	at := func(name string) int { return slices.Index(names, name) }
 	guard, key, service, wg0 := at("guard/tunnel"), at("state/tunnel-key"), at("service/tunnel"), at("state/tunnel-wg0")
@@ -88,7 +91,7 @@ func TestTunnelOrder(t *testing.T) {
 func TestTunnelGuardRunsTheCheck(t *testing.T) {
 	m := tunnelMachine()
 	m.Results[selfPath+" ubuntu guest tunnel check"] = effecttest.Result{Out: []byte("a line\n")}
-	units, out := guestUnits(t, m, "---\n")
+	units, out := guestUnits(t, m, selfContained)
 	applyUnit(t, units, "guard/tunnel")
 	if !slices.Contains(m.Calls, "root "+selfPath+" ubuntu guest tunnel check") || !slices.Contains(out.Lines, "say: a line") {
 		t.Errorf("calls %q, said %q; want ws's check as root, and its line", m.Calls, out.Lines)

@@ -75,6 +75,9 @@ func LoadHost(m effect.Machine, path string) (Host, error) {
 		return Host{}, fmt.Errorf("%s: %w", path, err)
 	}
 	for i, g := range h.Incus.Guests {
+		if _, _, err := g.Read(m); errors.Is(err, errSelfContained) {
+			return Host{}, fmt.Errorf("%s: %w", path, err)
+		}
 		h.Incus.Guests[i] = g.withTunnel(m)
 	}
 	return h, nil

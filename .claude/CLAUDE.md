@@ -11,8 +11,9 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 ## Layout
 
 - `ubuntu/roles/NAME`: a role per directory, with its page, `README.md`, and a line in the
-  root README. It holds its mise files by env, `mise.guest.toml` for the guest and
-  `mise.host.toml` for the host, and its spec of units where it has any. The
+  root README. It holds its mise files by env, `mise.guest.toml` for the guest,
+  `mise.host.toml` for the host and `mise.self-contained.toml` for both where they run SigNoz, and
+  its spec of units where it has any. The
   units run in the order of their `after`
   ([The order](../ubuntu/roles/frame/README.md#the-order)). Each role
   holds its pins, and its templates and files beside its spec. ws-fans, the fans' service, is

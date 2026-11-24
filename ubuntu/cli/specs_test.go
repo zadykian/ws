@@ -28,7 +28,9 @@ const (
 
 // roleFiles are the mise files a role may hold, each loaded by its env. A plain mise.toml would
 // load in every env. mise.secrets.toml loads under the env secrets, which the secrets task adds.
-var roleFiles = []string{"mise.guest.toml", "mise.host.toml", "mise.secrets.toml"}
+// mise.self-contained.toml loads under the env self-contained, which a guest in the mode and every
+// host load.
+var roleFiles = []string{"mise.guest.toml", "mise.host.toml", "mise.secrets.toml", "mise.self-contained.toml"}
 
 // specNames returns the names of the units that the roles' specs give the side for v, the side's
 // values.

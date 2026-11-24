@@ -36,7 +36,7 @@ func TestHostSetupWritesTheHostsMiseAndRunsItsBootstrap(t *testing.T) {
 	if status, stderr := runHostSetup(p, rel); status != 0 {
 		t.Fatalf("status = %d, stderr = %q", status, stderr)
 	}
-	if got := string(m.Files[setup.MisercPath]); got != string(setup.Miserc("host")) {
+	if got := string(m.Files[setup.MisercPath]); got != string(setup.Miserc("host", setup.SelfContained)) {
 		t.Errorf("miserc = %q", got)
 	}
 	if !ran(m, hostBootstrapLine) || ran(m, bootstrapLine) {
@@ -76,7 +76,7 @@ func TestHostSetupPlansTheHostsBootstrap(t *testing.T) {
 	rel := setupRelease(miseBody)
 	p, m := hostProcess(rel)
 	standing(m, rel)
-	m.Files[setup.MisercPath] = setup.Miserc("host")
+	m.Files[setup.MisercPath] = setup.Miserc("host", setup.SelfContained)
 	m.Results[hostPlanLine] = effecttest.Result{}
 	if status, stderr := runHostSetup(p, rel, "--plan"); status != 0 {
 		t.Fatalf("status = %d, stderr = %q", status, stderr)

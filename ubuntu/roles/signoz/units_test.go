@@ -11,8 +11,8 @@ import (
 	"github.com/zadykian/ws/ubuntu/roles/signoz"
 )
 
-// miseFiles are the mise files that every side of the role holds.
-var miseFiles = []string{"mise.guest.toml", "mise.host.toml"}
+// miseFiles are the mise files that hold the forged files: the mode's, which a host loads too.
+var miseFiles = []string{"mise.self-contained.toml"}
 
 // miseFile is what the test reads of an entry of a mise file.
 type miseFile struct {

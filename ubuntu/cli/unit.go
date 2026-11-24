@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -14,6 +15,7 @@ import (
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/units"
+	"github.com/zadykian/ws/internal/setup"
 	"github.com/zadykian/ws/ubuntu/values"
 )
 
@@ -52,9 +54,22 @@ func unitSide(vars string) enginecli.UnitSide {
 	return enginecli.UnitSide{Name: "guest", RoleFile: "mise.guest.toml", Dir: unitsDir, RunDir: runDir,
 		Units: units.OSUnits{}, Root: true, Platform: ubuntu,
 		Values: func(_ context.Context, m effect.Machine) (any, error) {
-			return values.Load(m, vars)
+			return unitValues(m, vars)
 		},
 		Hidden: secretInputs, Task: secretsTask}
+}
+
+// unitValues reads the guest's values, with the mode that its miserc names. Mise's files follow the
+// miserc, which setup writes from the values, so the units follow it too. A values edit takes
+// effect at the next setup, and a bootstrap between runs the files and the units of one mode.
+func unitValues(m effect.Machine, vars string) (values.Values, error) {
+	v, err := values.Load(m, vars)
+	if err != nil {
+		return v, err
+	}
+	envs, err := setup.SideEnvs(m)
+	v.SelfContained = slices.Contains(envs, setup.SelfContained)
+	return v, err
 }
 
 // ubuntu refuses a machine whose /etc/os-release names a system other than Ubuntu 26.04, the one

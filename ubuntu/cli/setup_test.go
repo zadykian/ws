@@ -25,7 +25,7 @@ func setupRelease(body string) setup.MiseRelease {
 // treeRepo is where the tests' setup fetches the tree from.
 const treeRepo = "https://example.org/ws"
 
-// setupProcess returns a root process on an Ubuntu 26.04 machine on amd64 that serves miseBody and
+// setupProcess returns a root process on an Ubuntu 26.04 container on amd64 that serves miseBody and
 // has no tree yet. The process is of ws v1.2.3, as is the installed ws.
 func setupProcess(rel setup.MiseRelease) (enginecli.Env, *effecttest.Machine) {
 	p := fakeProcess()
@@ -45,6 +45,7 @@ func setupProcess(rel setup.MiseRelease) (enginecli.Env, *effecttest.Machine) {
 		m.Results[line] = effecttest.Result{}
 	}
 	m.Files[osRelease] = []byte("ID=ubuntu\nVERSION_ID=\"26.04\"\n")
+	m.Files["/run/systemd/container"] = []byte("lxc\n")
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	m.Results[installedWs+" version"] = effecttest.Result{Out: []byte(p.Version + "\n")}
 	m.Pages[rel.URL("linux-x64")] = []byte(miseBody)
@@ -107,6 +108,36 @@ func TestSetupRefusesABadValueBeforeAnyWrite(t *testing.T) {
 			}
 			leftNothing(t, m, false)
 		})
+	}
+}
+
+// A guest outside a container runs SigNoz and its own tunnel, which the mode says: setup refuses
+// one that leaves the mode off, before any write.
+func TestSetupRefusesAMachineOutsideAContainerWithTheModeOff(t *testing.T) {
+	for _, args := range [][]string{nil, {"--plan"}} {
+		t.Run(strings.Join(args, " "), func(t *testing.T) {
+			rel := setupRelease(miseBody)
+			p, m := setupProcess(rel)
+			delete(m.Files, "/run/systemd/container")
+			status, stderr := runSetup(p, rel, args...)
+			if status != 1 || !strings.Contains(stderr, "no container") || !strings.Contains(stderr, "WS_SELF_CONTAINED: true in "+guestVars) {
+				t.Errorf("status = %d, stderr = %q", status, stderr)
+			}
+			leftNothing(t, m, false)
+		})
+	}
+}
+
+func TestSetupTakesTheModesEnvWhereTheValuesTurnItOn(t *testing.T) {
+	rel := setupRelease(miseBody)
+	p, m := setupProcess(rel)
+	delete(m.Files, "/run/systemd/container")
+	m.Files[guestVars] = []byte("---\nWS_SELF_CONTAINED: true\n")
+	if status, stderr := runSetup(p, rel); status != 0 {
+		t.Fatalf("status = %d, stderr = %q", status, stderr)
+	}
+	if got := string(m.Files[setup.MisercPath]); got != string(setup.Miserc("guest", setup.SelfContained)) {
+		t.Errorf("miserc = %q", got)
 	}
 }
 

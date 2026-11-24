@@ -1,24 +1,21 @@
-# otelcol's lines for every server: node_exporter and its service, whose arguments go in before its
-# package, and the units of units.toml.tmpl. The package starts node_exporter with the arguments it
-# finds, and without them it would serve every collector on every address.
+# otelcol's lines for every guest: the collector's account, which goes in before the .deb, and the
+# units of units.toml.tmpl. The .deb keeps an otelcol-contrib that it finds, and makes one by
+# useradd --system otherwise. The profile of a guest under a host names the account's ids for the
+# socket's owner, so they are fixed: ubuntu/values/otlp.go holds them. Temperatures and fans are the
+# host's alone (mise.host.toml): a guest's sysfs shows the host's hwmon.
+[bootstrap.groups.otelcol-contrib]
+gid = 800
+system = true
+
+[bootstrap.users.otelcol-contrib]
+uid = 800
+group = "otelcol-contrib"
+system = true
+create_home = false
+shell = "/sbin/nologin"
+
 [bootstrap.packages]
-"apt:prometheus-node-exporter" = "latest"
 "ws:deb/otelcol" = "in-sync"
 "ws:service/otelcol" = "in-sync"
 "ws:service/otelcol-docker" = "in-sync"
 "ws:state/otelcol-health" = "in-sync"
-
-[bootstrap.services.prometheus-node-exporter]
-state = "running"
-enabled = true
-on_change = "restart"
-
-# The file is one of the package's conffiles, and dpkg keeps the one it finds. A change of the
-# arguments restarts the service.
-[bootstrap.files."/etc/default/prometheus-node-exporter"]
-source = "files/prometheus-node-exporter"
-phase = "pre-packages"
-owner = "root"
-group = "root"
-mode = "0644"
-notify = ["prometheus-node-exporter"]

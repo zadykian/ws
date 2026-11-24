@@ -4,10 +4,12 @@ The `tunnel` role sets up `wg0`, the server's end of a WireGuard tunnel for the 
 `10.99.N.1/24` at its slot, N, on UDP port 51820, from networkd's own files. Its key is made on
 the server, and each peer's public key is read from `/etc/wireguard`.
 
-The role is mise's packages, `wireguard-tools` and `systemd`, and the units of
-[its spec](units.toml.tmpl), four on a guest and twelve on a host, whose lines sit in
+The role is mise's packages, `wireguard-tools` and `systemd`, in `mise.self-contained.toml`, and the
+units of [its spec](units.toml.tmpl), four on a guest and twelve on a host, whose lines sit in
 `mise.guest.toml` and `mise.host.toml`
-([The frame](../frame/README.md)). What Go holds stays Go, as `ws ubuntu SIDE tunnel check`,
+([The frame](../frame/README.md)). A guest runs its four in the self-contained mode alone, as
+[SigNoz's page](../signoz/README.md#the-self-contained-mode) says: a guest under a host has the
+host's tunnel. What Go holds stays Go, as `ws ubuntu SIDE tunnel check`,
 `tunnel key` and `tunnel wg0`, which the units run, SIDE being `guest` or `host`. The values'
 check refuses the settings the role cannot use, as the values load.
 
