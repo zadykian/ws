@@ -43,7 +43,7 @@ after = "state/incus-profile"
 when = { side = "host" }
 
 [state.incus-ufw.ufw]
-comment = "incus: the guests' DHCP and routes"
+comment = "incus: DHCP and routes from the guests"
 rules = [
   { action = "allow", proto = "udp", to_port = "67", dir = "in", interface = "incusbr0" },
   { action = "allow", interface = "incusbr0", out = "any" },

@@ -21,9 +21,10 @@ func TestValidRefusesAnIncompleteRule(t *testing.T) {
 		t.Errorf("complete rule: %v", err)
 	}
 	for name, bad := range map[string]ufw.Rule{
-		"direction": func() ufw.Rule { r := ok; r.Dir = "up"; return r }(),
-		"comment":   func() ufw.Rule { r := ok; r.Comment = ""; return r }(),
-		"field":     func() ufw.Rule { r := ok; r.To = ""; return r }(),
+		"direction":  func() ufw.Rule { r := ok; r.Dir = "up"; return r }(),
+		"comment":    func() ufw.Rule { r := ok; r.Comment = ""; return r }(),
+		"apostrophe": func() ufw.Rule { r := ok; r.Comment = "the guests' DHCP"; return r }(),
+		"field":      func() ufw.Rule { r := ok; r.To = ""; return r }(),
 	} {
 		if bad.Valid() == nil {
 			t.Errorf("%s: rule %+v passed", name, bad)

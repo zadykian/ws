@@ -136,7 +136,7 @@ func TestIncusUFWLetsDHCPInAndRoutesTheBridge(t *testing.T) {
 		"ufw route allow in on incusbr0 from any to any",
 	}
 	for _, w := range want {
-		m.Results[w+" comment incus: the guests' DHCP and routes"] = effecttest.Result{}
+		m.Results[w+" comment incus: DHCP and routes from the guests"] = effecttest.Result{}
 	}
 	got := applyUnit(t, incusUnits(t, m), "state/incus-ufw")
 	if len(got) != len(want) {

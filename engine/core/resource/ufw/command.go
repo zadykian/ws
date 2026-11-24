@@ -79,6 +79,9 @@ func (r Rule) Valid() error {
 		return fmt.Errorf("ufw rule %q: the direction is %q, not in or out", r, r.Dir)
 	case r.Comment == "":
 		return fmt.Errorf("ufw rule %q: no comment, so no owner", r)
+	case strings.Contains(r.Comment, "'"):
+		// ufw's parser refuses one, as "Invalid syntax".
+		return fmt.Errorf("ufw rule %q: the comment %q holds an apostrophe, which ufw refuses", r, r.Comment)
 	}
 	return nil
 }
