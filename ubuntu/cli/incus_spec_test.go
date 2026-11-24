@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"github.com/zadykian/ws/engine/core/resource/ufw"
 	"io"
 
 	"errors"
@@ -46,7 +47,7 @@ func TestIncusUnitsRunTheAclThePoolTheBridgeThenTheProfile(t *testing.T) {
 	units := incusUnits(t, effecttest.NewMachine())
 	var order []string
 	for _, u := range units {
-		if strings.HasPrefix(u.Name, "state/incus-") {
+		if strings.HasPrefix(u.Name, "state/incus-") && u.Name != "state/incus-ufw" {
 			order = append(order, u.Name)
 		}
 	}
@@ -103,5 +104,31 @@ func TestIncusPoolWithNoPartitionFailsNamingTheKey(t *testing.T) {
 	m.Results["incus storage list --format json"] = effecttest.Result{Out: []byte("[]")}
 	if err := runIncus(m, "pool"); err == nil || !strings.Contains(err.Error(), "WS_INCUS_POOL_SOURCE") {
 		t.Errorf("pool = %v, want the key named", err)
+	}
+}
+
+func TestIncusUFWLetsDHCPInAndRoutesTheBridge(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files[ufw.UserRules] = nil
+	want := []string{
+		"ufw allow in on incusbr0 from any to any port 67 proto udp",
+		"ufw route allow in on incusbr0 from any to any",
+	}
+	for _, w := range want {
+		m.Results[w+" comment incus: the guests' DHCP and routes"] = effecttest.Result{}
+	}
+	got := applyUnit(t, incusUnits(t, m), "state/incus-ufw")
+	if len(got) != len(want) {
+		t.Fatalf("plan %q, want the two rules", got)
+	}
+	for _, w := range want {
+		if !slices.ContainsFunc(m.Calls, func(c string) bool { return strings.Contains(c, w) }) {
+			t.Errorf("calls %q, want %q", m.Calls, w)
+		}
+	}
+	for _, c := range m.Calls {
+		if strings.Contains(c, "53") || strings.Contains(c, "out on") {
+			t.Errorf("call %q: DNS stays shut, and no rule names an out interface", c)
+		}
 	}
 }
