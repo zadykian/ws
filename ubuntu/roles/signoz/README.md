@@ -5,13 +5,24 @@ The `signoz` role, mise's config and ws's units in `ubuntu/roles/signoz`, runs
 its OTLP/gRPC intake listen on loopback, with no login. It has a dashboard of the host and one of
 claude's usage.
 
+## The self-contained mode
+
+A guest under a host has no SigNoz: its collector sends to the host's by a socket
+([the link](../incus/README.md#the-link-to-signoz)). A guest that has no host, as a cloud VM,
+runs SigNoz itself. Its values say so, `WS_SELF_CONTAINED: true`, off by default, and its setup adds
+the env `self-contained` to the miserc ([The machine's env](../frame/README.md#the-machines-env)).
+The env's `mise.self-contained.toml` holds the directories and files of `/opt/signoz`. The units
+stay in the spec of every guest, and their `when` turns them off where the miserc lacks the env: a
+value never takes a unit out. The host loads the env always.
+
 ## The stack
 
 SigNoz runs on the system's Docker daemon from the compose files in
-`ubuntu/roles/signoz/deployment`, which mise copies to `/opt/signoz` (`mise.guest.toml` and
-`mise.host.toml`). A guest holds no filter, so only two ports are published, on loopback: the UI on
-`127.0.0.1:3301` and the OTLP/gRPC intake on `127.0.0.1:14317`, which the machine's collector alone
-uses. 3301 was SigNoz's UI port before 8080, which dev servers often take.
+`ubuntu/roles/signoz/deployment`, which mise copies to `/opt/signoz` (`mise.self-contained.toml`).
+A host runs it, and so does a guest in [the self-contained mode](#the-self-contained-mode). A guest
+holds no filter, so only two ports are published, on loopback: the UI on `127.0.0.1:3301` and the
+OTLP/gRPC intake on `127.0.0.1:14317`, which the machine's collector alone uses. 3301 was SigNoz's
+UI port before 8080, which dev servers often take.
 
 ClickHouse, SigNoz's database, may use 4 GB of memory. Without a limit of its own, it would size
 itself to the host's RAM, as it cannot see the limit of `docker.slice`.

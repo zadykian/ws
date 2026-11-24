@@ -32,7 +32,9 @@ A role keeps its directory, `ubuntu/roles/ROLE/`, and its page there:
   entry that names a service in `notify`. `mise.host.toml` holds what every host gets, in the same
   form. A role that both run holds both. A role's file names its side: `ws unit` of a side serves
   the roles that hold its file. `mise.secrets.toml` holds its
-  [secret inputs](#secret-inputs). A role holds no plain `mise.toml`, which every env would load.
+  [secret inputs](#secret-inputs). `mise.self-contained.toml` holds what a machine that runs SigNoz
+  and ends its own tunnel gets, in the same form: [the mode's env](#the-machines-env). A role holds
+  no plain `mise.toml`, which every env would load.
 - **The side's link,** `ubuntu/guest/mise/conf.d` or `ubuntu/host/mise/conf.d`, to `../../roles`.
   mise loads each role's directory through it as a fragment, and a relative `source` resolves from
   the role's directory. A role lands with its directory alone, and edits no shared file.
@@ -48,7 +50,8 @@ Each unit of a spec is a line `"ws:KIND/NAME" = "in-sync"` under `[bootstrap.pac
 plans the units its files name alone. `ws unit list --toml` prints them.
 
 - A unit for every guest goes in the role's `mise.guest.toml`, and a unit for every host in its
-  `mise.host.toml`. A unit of both sides goes in both.
+  `mise.host.toml`. A unit of both sides goes in both. The lines of a unit that a guest runs in the
+  mode alone stay in `mise.guest.toml`, under the unit's `when`.
 - A unit of one side alone, in a spec that both load, names its side in its `when`, as
   `when = { side = "host" }` ([the facts](../../../engine/core/kind/README.md#the-specs)). The other side
   drops the unit as it loads, so that its mise file needs no line for it.
@@ -82,7 +85,8 @@ ends its own tunnel, as a guest under a host takes both from the host. A guest o
 must have it on, and setup refuses one that has not. A run by `-E ws,secrets`, the secrets task's,
 adds the env `secrets` to the set, which no other run loads. `ws ubuntu guest setup` and
 `ws ubuntu host setup` each write the miserc. A guest takes the mode at its next setup, not at its
-next bootstrap.
+next bootstrap. Its units and the collector's endpoint read the mode from the miserc's env, as mise's
+files do. So a bootstrap after an edit of the values runs one mode.
 
 The same commands write `/etc/mise/config.toml`, which trusts the tree: its `trusted_config_paths`,
 under `[settings]`, names `/opt/ws`, so that a run by hand needs no `mise trust`. mise reads that

@@ -66,8 +66,8 @@ sends ([signoz](../signoz/README.md#retention)).
 
 The values of each side give one endpoint for the exporter to SigNoz, with `tls.insecure` in both
 forms ([values.OTLPEndpoint](../../values/otlp.go)). The host's is its own SigNoz, `127.0.0.1:14317`.
-A guest's follows the mode `WS_SELF_CONTAINED`: the same address where the guest runs SigNoz, else
-the Unix socket `/var/lib/ws/otlp/signoz.sock`, which the guests' profile makes
+A guest's follows the mode `WS_SELF_CONTAINED`, as its miserc holds it: the same address where the
+guest runs SigNoz, else the Unix socket `/var/lib/ws/otlp/signoz.sock`, which the guests' profile makes
 ([incus](../incus/README.md#the-link-to-signoz)). The collector's gRPC exporter takes the
 `unix:///` form: a run of the 0.162.0 collector sent metrics through it to a second collector that
 listened on the socket.

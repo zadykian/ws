@@ -1,15 +1,20 @@
+{{- /* The mode is a guest's own value. The host's file has none, and a host always ends a tunnel. */ -}}
+{{- $own := true }}{{ if eq side "guest" }}{{ $own = .SelfContained }}{{ end -}}
 # tunnel's units: wg0, the machine's own end of a WireGuard tunnel for the Mac, from networkd's own
-# files. On a host each guest's tunnel ends there too. README.md says why each stands.
+# files. On a host each guest's tunnel ends there too. A guest runs wg0 in the self-contained mode
+# alone. README.md says why each stands.
 
 # Refuses a networkd that does not run, and a peer's key file that holds no key, before wg0's key and
 # files change. It names each peer left out, and says the server's public key.
 [guard.tunnel]
 command = ["{{ self }}", "ubuntu", "{{ side }}", "tunnel", "check"]
+when = { set = "{{ if $own }}yes{{ end }}" }
 
 # wg0's private key, made once and never shown, root:systemd-network 0640.
 [state.tunnel-key]
 after = "guard/tunnel"
 run = { user = "root", command = ["{{ self }}", "ubuntu", "{{ side }}", "tunnel", "key"], check = ["{{ self }}", "ubuntu", "{{ side }}", "tunnel", "key", "--check"] }
+when = { set = "{{ if $own }}yes{{ end }}" }
 
 # wg0's files, which networkd reads as the group systemd-network. A change reloads networkd, which
 # updates wg0 in place, but for its key.
@@ -18,6 +23,7 @@ after = "state/tunnel-key"
 unit = "systemd-networkd.service"
 run = "running"
 reload = true
+when = { set = "{{ if $own }}yes{{ end }}" }
 
 [[service.tunnel.file]]
 path = "/etc/systemd/network/60-wg0.netdev"
@@ -33,8 +39,9 @@ template = "60-wg0.network.tmpl"
 [state.tunnel-wg0]
 after = "service/tunnel"
 run = { user = "root", command = ["{{ self }}", "ubuntu", "{{ side }}", "tunnel", "wg0"], check = ["{{ self }}", "ubuntu", "{{ side }}", "tunnel", "wg0", "--check"] }
+when = { set = "{{ if $own }}yes{{ end }}" }
 
-# A host's alone from here: a guest has the provider's firewall, and no tunnel of a guest's to end.
+# A host's alone from here: a guest has no tunnel of a guest's to end.
 
 # The host's own tunnel's UDP port. SSH is the host's rule, and so are wg0's input rules.
 [state.tunnel-ufw]

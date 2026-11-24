@@ -1,9 +1,6 @@
-# tunnel's lines for every host: the packages, and the units of its spec, those of the host's own wg0
-# and of each guest's tunnel. systemd brings networkd, its directory /etc/systemd/network and its
-# group systemd-network.
+# tunnel's units for every host, those of the host's own wg0 and of each guest's tunnel. The packages
+# are in mise.self-contained.toml, which the host loads.
 [bootstrap.packages]
-"apt:wireguard-tools" = "latest"
-"apt:systemd" = "latest"
 "ws:guard/tunnel" = "in-sync"
 "ws:service/tunnel" = "in-sync"
 "ws:state/tunnel-key" = "in-sync"

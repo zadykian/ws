@@ -1,0 +1,6 @@
+# tunnel's packages for a machine that ends a tunnel: a host, and a guest in the self-contained mode.
+# systemd brings networkd, its directory /etc/systemd/network and its group systemd-network, which a
+# container may lack. The units' lines are in mise.guest.toml and mise.host.toml.
+[bootstrap.packages]
+"apt:wireguard-tools" = "latest"
+"apt:systemd" = "latest"

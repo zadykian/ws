@@ -18,7 +18,8 @@ _Avoid_: skeleton, scaffold
 
 **Guest**:
 A machine that `ws ubuntu guest setup` sets up: a cloud VM or a system container, whose roles hold
-a `mise.guest.toml`. It holds no filter, and its run directory is `ubuntu/guest`.
+a `mise.guest.toml`. It holds no filter, and its run directory is `ubuntu/guest`. It takes
+SigNoz and a tunnel from its host, unless its values turn the self-contained mode on.
 _Avoid_: server, node
 
 **Home file**:
@@ -78,6 +79,12 @@ shares, and a profile per server, its own
 ([The repository](ubuntu/roles/secrets/README.md#the-repository)). A change lands on its
 `main` by a pull request ([How a change lands](macos/roles/secrets/README.md#how-a-change-lands)).
 _Avoid_: vault, store
+
+**Self-contained mode**:
+A guest's value, `WS_SELF_CONTAINED`, off by default: the guest runs SigNoz and ends its own
+tunnel, as a guest outside a container must. The env `self-contained` carries its lines, and a host
+loads that env always.
+_Avoid_: standalone, solo
 
 **Unit**:
 One resource of a kind, named `KIND/NAME`, as `file/sshd`, that a spec names. It plans and applies
