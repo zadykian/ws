@@ -182,3 +182,12 @@ func TestDockerForwardPolicyComesAfterTheService(t *testing.T) {
 		t.Errorf("%s runs at %d, want it after service/docker at %d", forwardUnitName, at, svc)
 	}
 }
+
+// A guest holds no filter, so its Docker has no ufw rule for the resolver, and the forward policy
+// that no ufw drops stays.
+func TestGuestHoldsTheForwardPolicyAndNoDNSRule(t *testing.T) {
+	names := specLines(t, "guest", defaults(t))
+	if slices.Contains(names, "state/docker-dns") || !slices.Contains(names, "state/docker-forward-policy") {
+		t.Errorf("the guest's units are %v: want the forward policy and no DNS rule", names)
+	}
+}

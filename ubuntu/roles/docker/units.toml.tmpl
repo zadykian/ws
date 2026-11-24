@@ -15,12 +15,25 @@ template = "files/resolved.conf.tmpl"
 service = "systemd-resolved.service"
 after = "state/docker-routes"
 
+# ufw lets Docker's networks reach that resolver through their bridges, whatever their subnets. A
+# host's alone: a guest holds no filter.
+[state.docker-dns]
+after = "file/docker-resolved"
+when = { side = "host" }
+
+[state.docker-dns.ufw]
+comment = "DNS from containers"
+rules = [
+  { action = "allow", proto = "any", to = "{{ .Docker.BridgeIP }}", to_port = "53", from = "0.0.0.0/0", from_port = "any", dir = "in", interface = "docker0" },
+  { action = "allow", proto = "any", to = "{{ .Docker.BridgeIP }}", to_port = "53", from = "0.0.0.0/0", from_port = "any", dir = "in", interface = "br-+" },
+]
+
 # The limits are over dockerd and its containers together: the values', or half the RAM and the
 # CPUs. docker.service's drop-in puts dockerd in the slice, so a change here waits for its restart.
 [file.docker-slice]
 path = "/etc/systemd/system/docker.slice"
 template = "files/docker.slice.tmpl"
-after = "file/docker-resolved"
+after = "{{ if eq side "host" }}state/docker-dns{{ else }}file/docker-resolved{{ end }}"
 
 # One restart for both files, which live-restore carries the running containers past. dockerd
 # checks daemon.json before it replaces the live one.
@@ -50,4 +63,5 @@ after = "service/docker"
 # what it routes unless a rule allows it.
 [state.docker-forward-policy]
 after = "service/docker"
+when = { side = "guest" }
 run = { user = "root", command = ["iptables", "-w", "-P", "FORWARD", "ACCEPT"], check = ["sh", "-c", "iptables -w -S FORWARD | grep -qx -- '-P FORWARD ACCEPT'"] }
