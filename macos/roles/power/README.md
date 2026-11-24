@@ -1,7 +1,7 @@
-# The Mac's power
+# The Mac's power and updates
 
-`mise bootstrap` keeps the display on while the Mac is on power, by a unit of the role `power`. It
-sets one fact, as a `state` unit that runs a command
+`mise bootstrap` keeps the display on while the Mac is on power, and stops the App Store's updates,
+by two units of the role `power`. Each sets one fact, as a `state` unit that runs a command
 ([The state kind](../../../engine/core/kind/state.md)). The check runs as the user, and the
 command as root through sudo, so a run that changes nothing asks no password.
 
@@ -15,3 +15,19 @@ pmset -c displaysleep 0
 `pmset -g custom`, which lists each source's settings under its heading, and wants `displaysleep 0`
 under `AC Power:`. The command runs where that line is missing or reads another number. A Mac on
 power then never turns its display off, as a session that the server's work keeps open needs.
+
+## state/power-store
+
+```sh
+defaults write /Library/Preferences/com.apple.commerce AutoUpdate -bool false
+```
+
+The key stops the App Store's automatic updates of apps. `defaults read` prints a false boolean
+as `0`, and fails where the key is missing, which the check reads as on. The tools that mise
+installs are not the App Store's: `mise bootstrap packages upgrade` updates them.
+
+## macOS 27
+
+Apple's documents mark `AutomaticallyInstallAppUpdates` as removed from macOS 27, which may read
+another key than `AutoUpdate`. The unit writes `AutoUpdate`, and the real Mac shows whether that
+key works.
