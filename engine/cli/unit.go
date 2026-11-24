@@ -72,13 +72,27 @@ func (r unitRun) runDir() string {
 // sides are the sides that one ws unit serves.
 type sides []UnitSide
 
-// pick returns the side that serves a run in pwd.
-func (ss sides) pick(string) (UnitSide, error) { return ss[0], nil }
+// pick returns the side whose run directory is pwd. One side serves a run anywhere. With several,
+// a pwd in none of their run directories is an error that names them.
+func (ss sides) pick(pwd string) (UnitSide, error) {
+	if len(ss) == 1 {
+		return ss[0], nil
+	}
+	dirs := make([]string, 0, len(ss))
+	for _, s := range ss {
+		if sameDir(pwd, s.RunDir) {
+			return s, nil
+		}
+		dirs = append(dirs, s.RunDir)
+	}
+	return UnitSide{}, fmt.Errorf("mise runs in %s, which is no side's run directory: run mise in %s", pwd,
+		strings.Join(dirs, " or "))
+}
 
 // Unit returns ws unit: the units of ws's kinds, KIND/NAME, which a tool such as mise plans and
-// applies through it.
-func Unit(p Env, s UnitSide) *cobra.Command {
-	ss := sides{s}
+// applies through it. With several sides it serves the one whose run directory mise runs in.
+func Unit(p Env, first UnitSide, more ...UnitSide) *cobra.Command {
+	ss := append(sides{first}, more...)
 	return Group("unit", "plan and apply the units of ws's kinds, KIND/NAME, for mise",
 		unitList(p, ss), unitRead(p, ss), unitWrite(p, ss), unitVerify(p, ss))
 }
