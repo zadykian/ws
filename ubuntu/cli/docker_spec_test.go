@@ -132,6 +132,9 @@ func TestDockerResolvedListensOnTheBridge(t *testing.T) {
 
 // The policy of FORWARD, as the unit reads it and sets it, as root.
 const (
+	// asRoot is how a run state's command runs as root, with no session's env.
+	asRoot = "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " +
+		"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "
 	forwardIsAccept  = asRoot + "sh -c iptables -w -S FORWARD | grep -qx -- '-P FORWARD ACCEPT'"
 	forwardToAccept  = asRoot + "iptables -w -P FORWARD ACCEPT"
 	forwardUnitName  = "state/docker-forward-policy"

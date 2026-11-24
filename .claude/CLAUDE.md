@@ -2,7 +2,7 @@
 
 ws sets up the maintainer's development server from code: `mise bootstrap`, which `ws ubuntu guest setup`
 runs on the machine itself, each role as mise's config and ws's units. Its roles set up packages,
-SSH by key and a firewall, the links to the Mac, an IKEv2 VPN where a profile is given, and the
+SSH by key, the links to the Mac, an IKEv2 VPN where a profile is given, and the
 fans. Then the shell, git,
 tmux, lazygit, Fresh, Docker, claude, SigNoz with its collector, and Zed's server. `macos/`
 sets up the Mac that works on the server. The rest is the docs, the lint gates' tools and CI.

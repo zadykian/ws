@@ -30,12 +30,12 @@ func TestParseReadsZedNofile(t *testing.T) {
 }
 
 func TestParseKeepsDefaultsBesideAGivenKey(t *testing.T) {
-	got, err := Parse([]byte("WS_BASE_SWAP_SIZE_MB: 64\nWS_SECURITY_OUTBOUND: false\n"))
+	got, err := Parse([]byte("WS_BASE_SWAP_SIZE_MB: 64\nWS_BASE_SWAPPINESS: 20\n"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.Base.SwapSizeMB == nil || *got.Base.SwapSizeMB != 64 || got.Security.Outbound {
-		t.Errorf("given keys not read: %v %v", got.Base.SwapSizeMB, got.Security.Outbound)
+	if got.Base.SwapSizeMB == nil || *got.Base.SwapSizeMB != 64 || got.Base.Swappiness != 20 {
+		t.Errorf("given keys not read: %v %v", got.Base.SwapSizeMB, got.Base.Swappiness)
 	}
 	if got.Base.Locale != "en_US.UTF-8" {
 		t.Error("a key left out lost its default")

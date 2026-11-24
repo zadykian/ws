@@ -9,7 +9,7 @@ connects. The sessions of `ssh ws` and
 Zed stay open as the Mac moves between the cable, the LAN and elsewhere, with a pause of a few seconds
 ([Zed](../ubuntu/roles/zed/README.md#when-the-connection-drops)). What it gives up: `ssh ws` fails where UDP is blocked and
 while the tunnel is down, and bulk copies run at wireguard-go's speed. To reach ws by hand, give ssh
-a direct way: `ssh -o HostName=ADDRESS -o Port=PORT ws`, as ufw lets SSH in on every interface.
+a direct way: `ssh -o HostName=ADDRESS -o Port=PORT ws`, as sshd takes a login on every interface.
 `WS_REMOTE_PORT` and the router's forward stay for that and for setup.
 
 The Mac's side is mise's config and ws's units, as the server's is, which `go test` checks on each
@@ -225,19 +225,19 @@ A connection to `ws` outlives a switch. Zed has [its page](roles/zed/README.md).
 
 The tunnel's end on the Mac runs in userspace, and wireguard-go on macOS moves one packet a read and
 a write. So the tunnel may fall short of the cable's 2.5 Gbit/s. To measure it, on ws, install
-iperf3 from apt, let its port in on the tunnel and the cable for the test alone, and run the server:
+iperf3 from apt, and run the server on the tunnel's address alone, so that no other network reaches
+it:
 
 ```sh
-ufw allow in on wg0 to any port 5201 proto tcp
-ufw allow in on CABLE_INTERFACE to any port 5201 proto tcp
-iperf3 -s
+iperf3 -s -B 10.99.N.1
 ```
 
-then, on the Mac, compare `iperf3 -c 10.99.N.1` with `iperf3 -c 10.77.0.1`, each with `-R` too, and
-delete the two rules after. Bulk copies run at that speed: for faster ones, give rsync a direct way,
-such as `rsync -e 'ssh -o HostName=ADDRESS -o Port=PORT' -a DIR ws:`. Besides, check
-`ws macos tunnel status` docked, on the home Wi-Fi and on a phone's hotspot, and `ethtool
-CABLE_INTERFACE` on ws, for 2500Mb/s.
+then, on the Mac, run `iperf3 -c 10.99.N.1`, and with `-R` too. Stop the server and start it again
+with `-B 10.77.0.1`, for the same two runs against `10.77.0.1`. Bulk copies run at that speed: for
+faster ones, give rsync a direct way, such as
+`rsync -e 'ssh -o HostName=ADDRESS -o Port=PORT' -a DIR ws:`. Besides, check `ws macos tunnel status`
+docked, on the home Wi-Fi and on a phone's hotspot, and `ethtool CABLE_INTERFACE` on ws, for
+2500Mb/s.
 
 ## Routes and resolvers of another repository
 
@@ -263,8 +263,8 @@ With no network or address, each removes its file, `ws macos resolver` only a fi
 stamp. So the next bootstrap plans a reload and the stamp's write through sudo, which asks a
 password.
 The files outlive the daemon. While the daemon is stopped, the routes go with its utun, and the
-domain's lookups go out by the Mac's own network and fail. ufw on ws forwards from the tunnel only
-ping, and what the `ikeward` role lets through to its VPN ([Forwarding](../ubuntu/roles/ikeward/README.md#forwarding)). Any
+domain's lookups go out by the Mac's own network and fail. ws forwards what the tunnel sends to its
+VPN, where the `ikeward` role sets that up ([Forwarding](../ubuntu/roles/ikeward/README.md#forwarding)). Any
 other network behind ws needs its side set up on ws too. A network the Mac is on, inside one sent
 into the tunnel, keeps its part off the tunnel: macOS routes the narrower network to the Mac's own
 interface.

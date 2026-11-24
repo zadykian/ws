@@ -113,9 +113,7 @@ Where ssh names another host key, drop the old one with `ssh-keygen -R NAME`.
 ## ws on ws
 
 1. At ws, write the values that differ from their defaults first, as
-   [the server's runbook](../ubuntu/runbook.md) says. On a cloud VM, set `WS_SECURITY_OUTBOUND`
-   to false, as the outbound table drops the metadata service
-   ([Outbound](../ubuntu/roles/security/README.md#outbound)). At slot N other than 0, set
+   [the server's runbook](../ubuntu/runbook.md) says. At slot N other than 0, set
    `WS_TUNNEL_ADDRESS` to `10.99.N.1/24`, `WS_TUNNEL_PORT` to the Mac's, and
    `WS_TUNNEL_PEERS` to `mac` at `10.99.N.2`
    ([The tunnel](../ubuntu/roles/tunnel/README.md#the-tunnel)).

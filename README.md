@@ -1,7 +1,7 @@
 # ws
 
 Sets up my development server from code. mise's bootstrap runs on the machine itself, with ws's
-units. It sets up packages, SSH by key and a firewall, and a cable and a WireGuard tunnel to the
+units. It sets up packages, SSH by key, and a cable and a WireGuard tunnel to the
 Mac. It sets up Docker, the shell, git, tmux, lazygit, the Fresh editor and Zed's server. It sets
 up claude and [cld](https://github.com/zadykian/cld), and SigNoz with a collector for the
 machine's telemetry.
@@ -14,10 +14,8 @@ it has any:
   `/usr/local/bin/ws`, the machine's one ws.
 - [`base`](ubuntu/roles/base): packages, the locale, the timezone, security updates and a swap file,
   as mise's packages and units.
-- [`security`](ubuntu/roles/security): SSH by key only, ufw and fail2ban, and a table that keeps what
-  ws starts to the internet and ikeward, but what the network needs, such as DHCP and DNS. The
-  table is off where `WS_SECURITY_OUTBOUND` is false, as a cloud VM wants. As mise's config and
-  units.
+- [`security`](ubuntu/roles/security): SSH by key only and fail2ban, as mise's config and units. A
+  guest sets up no ufw and no table of its own.
 - [`secrets`](ubuntu/roles/secrets): fnox, which decrypts ws's secrets, as mise's config, and
   the task `secrets`, which fetches them by the host key and runs the bootstrap under them.
 - [`cable`](ubuntu/roles/cable): the server's end of a cable to the Mac, as units.
@@ -106,8 +104,7 @@ values of a machine go in `/etc/ws/values.yml`, which only root reads, and every
 The first run writes it where none is, each key at its default, and no run changes it after
 ([The values file](ubuntu/roles/frame/README.md#the-values-file)). The server's user is
 root, in `/root`: no value names either. `WS_GIT_SIGNING_PUB_KEY` is `/root/.ssh/id_ed25519_signing.pub`
-by default, and lies below `/root`, or the run fails. A cloud VM names `WS_SECURITY_OUTBOUND:
-false` there before its first run ([Outbound](ubuntu/roles/security/README.md#outbound)). `ws ubuntu guest
+by default, and lies below `/root`, or the run fails. `ws ubuntu guest
 values set KEY VALUE` writes one key, and an empty VALUE gives its default back. `ws ubuntu guest
 values check` and each plan refuse a bad value before any write
 ([The check of the values](ubuntu/roles/frame/README.md#the-check-of-the-values)). A second
@@ -154,7 +151,7 @@ signing key goes to `@zadykiand`'s settings, not the maintainer's. These stay ma
   ([The signing key](ubuntu/roles/devtools/README.md#the-signing-key));
 - other peers' public keys on the server, as in [The tunnel](ubuntu/roles/tunnel/README.md#the-tunnel);
 - another device's SSH key on the server: `ssh-import-id gh:LOGIN`, run as root
-  ([SSH and the firewall](ubuntu/roles/security/README.md#ssh-and-the-firewall));
+  ([SSH](ubuntu/roles/security/README.md#ssh));
 - ikeward's VPN profile, in the server's fnox profile, `fnox.HOSTNAME.toml`, and the `ikeward`
   role's variables, as in [The profile](ubuntu/roles/ikeward/README.md#the-profile);
 - with Secure Boot on, DKMS's key, enrolled at the console: [Secure Boot](ubuntu/roles/fans/README.md#secure-boot);

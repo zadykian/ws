@@ -13,8 +13,7 @@ import (
 // names the files that install writes. The role's units quote it in TOML's double quotes, so check
 // refuses a quote, a backslash and a control character, which would end the string or break it.
 // ikeward install refuses to run without the resolver and a domain, and its error names its flags,
-// not these keys. ufw prints a rule's address as given, and the removal of a peer's rule compares
-// the two. Without a profile, nothing is checked, as the role is off.
+// not these keys. A peer is an IPv4 address, as WS_TUNNEL_PEERS gives it. Without a profile, nothing is checked, as the role is off.
 func (v Ikeward) check() error {
 	if v.Profile == "" {
 		return nil

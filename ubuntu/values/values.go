@@ -21,18 +21,17 @@ import (
 // Values is every key of the file. A key left out of the file keeps the default that Default gives.
 // Each role's keys sit in a struct of its name, inlined, so that a role's steps read v.Role.Key.
 type Values struct {
-	Shared   `yaml:",inline"`
-	Base     Base     `yaml:",inline"`
-	Claude   Claude   `yaml:",inline"`
-	Docker   Docker   `yaml:",inline"`
-	Fans     Fans     `yaml:",inline"`
-	Ikeward  Ikeward  `yaml:",inline"`
-	Cable    Cable    `yaml:",inline"`
-	Security Security `yaml:",inline"`
-	Git      Git      `yaml:",inline"`
-	Signoz   Signoz   `yaml:",inline"`
-	Tunnel   Tunnel   `yaml:",inline"`
-	Zed      Zed      `yaml:",inline"`
+	Shared  `yaml:",inline"`
+	Base    Base    `yaml:",inline"`
+	Claude  Claude  `yaml:",inline"`
+	Docker  Docker  `yaml:",inline"`
+	Fans    Fans    `yaml:",inline"`
+	Ikeward Ikeward `yaml:",inline"`
+	Cable   Cable   `yaml:",inline"`
+	Git     Git     `yaml:",inline"`
+	Signoz  Signoz  `yaml:",inline"`
+	Tunnel  Tunnel  `yaml:",inline"`
+	Zed     Zed     `yaml:",inline"`
 }
 
 // Shared holds the keys that the roles share.

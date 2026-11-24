@@ -49,7 +49,7 @@ to ws's terminal wrapper. A program set in the Mac's
 A pin of Zed's server gains nothing, so `upload_binary_over_ssh` stays off. Zed replaces and cleans
 the server, and the Mac's Zed updates itself about twice a week. A pin would need the Mac's Zed
 pinned too, with auto-update off and a checked download in the Mac's steps, and a commit as often.
-ws has the internet ([outbound](../security/README.md#outbound)), so the download works.
+ws has the internet, so the download works.
 
 The gopls, Delve and Roslyn that ws pins are not on the list ([devtools](../devtools/README.md)). Nor are
 postgres-language-server and docker-language-server, which `devtools` checks against a SHA-256.
@@ -73,8 +73,7 @@ The C# extension types `.csproj`, `.props`, `.targets` and `.slnx`, and offers R
 tasks for projects and solutions. `.sln` opens as plain text.
 
 For Go, the shim and `dlv` run on ws, and the Mac forwards the debug port over ssh. The sshd
-drop-in restricts no forwarding, and the outbound table accepts loopback
-([security](../security/README.md#outbound)). Root's debugger attaches to any process, past Yama's
+drop-in restricts no forwarding. Root's debugger attaches to any process, past Yama's
 `ptrace_scope`, which stops a user's attach to a process that is not its child.
 
 Zed has no C# debugger (csharp#12), no Razor (csharp#41) and no C# test runnables.
