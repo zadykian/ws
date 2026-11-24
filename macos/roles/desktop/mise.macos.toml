@@ -1,6 +1,13 @@
 # The Mac's Dock, Finder, windows, sounds and screenshots, as mise's preferences. mise writes a
 # value that is missing or differs, by its type too. It restarts nothing: the Dock and Finder read
 # the values again at the next log out. README.md says why each value stands.
+
+# The wallpaper's command line, as mise's formula, which needs no Homebrew, and the unit that sets
+# Stone. The packages come before the units in a run, so the unit finds wallpaper.
+[bootstrap.packages]
+"brew:wallpaper" = "latest"
+"ws:state/wallpaper" = "in-sync"
+
 [bootstrap.settings.macos.dock]
 tilesize = 74
 show_recents = false
