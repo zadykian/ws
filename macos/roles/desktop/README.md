@@ -51,6 +51,9 @@ on every screen, and a run with Stone there changes nothing and asks no password
 
 Both cover each screen's current Space alone, the one of a clean Mac.
 
+CI's `client_tree` drops the unit and the formula from the tree it unpacks: a runner has no screen,
+so `wallpaper get` prints no line and the check fails each run.
+
 ## The restart
 
 mise restarts neither the Dock nor Finder. They read their preferences again at the next log out, so
