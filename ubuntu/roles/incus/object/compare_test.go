@@ -36,6 +36,8 @@ func TestDiffersNamesTheDeclaredKeysThatDiffer(t *testing.T) {
 		{"an empty map that is missing", map[string]any{"limits": map[string]any{}}, nil},
 		{"a key that is no map", map[string]any{"extra": map[string]any{"a": "1"}}, []string{"extra"}},
 		{"a number as text", map[string]any{"extra": "1"}, nil},
+		{"a device declared absent that is there", map[string]any{"devices": map[string]any{"eth0": nil}}, []string{"devices.eth0"}},
+		{"a device declared absent that is missing", map[string]any{"devices": map[string]any{"gpu": nil}}, nil},
 	} {
 		if got := differs(tc.want, have, ""); !slices.Equal(got, tc.keys) {
 			t.Errorf("%s: differs = %q, want %q", tc.name, got, tc.keys)
@@ -70,6 +72,21 @@ func TestMergeLaysTheDeclaredKeysOnTheBase(t *testing.T) {
 		t.Errorf("merge = %v, want %v", got, want)
 	}
 	if base["config"].(map[string]any)["a"] != "1" {
+		t.Errorf("merge changed its base: %v", base)
+	}
+}
+
+func TestMergeRemovesAKeyDeclaredAbsent(t *testing.T) {
+	base := map[string]any{"devices": map[string]any{"eth0": map[string]any{"type": "nic"}, "gpu": map[string]any{"type": "gpu"}}}
+	over := map[string]any{"devices": map[string]any{"gpu": nil, "other": nil}}
+	want := map[string]any{"devices": map[string]any{"eth0": map[string]any{"type": "nic"}}}
+	if got := merge(base, over); !reflect.DeepEqual(got, want) {
+		t.Errorf("merge = %v, want %v", got, want)
+	}
+	if got := merge(nil, over); !reflect.DeepEqual(got, map[string]any{"devices": map[string]any{}}) {
+		t.Errorf("merge into nothing = %v, want no key of nil", got)
+	}
+	if _, kept := base["devices"].(map[string]any)["gpu"]; !kept {
 		t.Errorf("merge changed its base: %v", base)
 	}
 }

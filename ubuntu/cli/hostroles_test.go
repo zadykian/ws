@@ -33,7 +33,7 @@ func hostSpecs(t *testing.T, m *effecttest.Machine) map[string]step.Step {
 }
 
 // hostRoles are the roles that hold a mise.host.toml: the host runs these.
-var hostRoles = []string{"base", "cable", "docker", "fans", "frame", "incus", "otelcol", "security", "signoz"}
+var hostRoles = []string{"base", "cable", "docker", "fans", "frame", "incus", "nvidia", "otelcol", "security", "signoz"}
 
 func TestTheHostRunsItsRoles(t *testing.T) {
 	files, err := filepath.Glob(rolesDir + "/*/mise.host.toml")

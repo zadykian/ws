@@ -1,0 +1,8 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+{{ with root_file "/sys/module/nvidia/version" -}}
+Package: nvidia-utils-595-server
+Pin: version {{ . }}-*
+Pin-Priority: 1001
+{{- else -}}
+{{ fail "WS_NVIDIA_GPU is on, but the kernel loads no nvidia module: the host's GPU must be set up and its reboot done first" }}
+{{- end }}

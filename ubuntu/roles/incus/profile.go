@@ -15,10 +15,11 @@ const profileDescription = "ws: an unprivileged guest on the bridge, with its di
 
 // KernelModules are what a guest's Docker needs and a guest cannot load: Incus loads them on the
 // host as the guest starts. br_netfilter stays out, as the bridge's table of sources replaces
-// it. The tunnel's xfrm modules join them in #1530.
+// it. The xfrm modules and nft_masq are what ikeward needs: strongSwan's ESP tunnel, its xfrm link
+// and its masquerade.
 var KernelModules = []string{
 	"overlay", "veth", "bridge", "ip_tables", "nf_nat", "nft_compat", "nft_chain_nat", "xt_conntrack", "xt_MASQUERADE",
-	"xt_addrtype",
+	"xt_addrtype", "xfrm_user", "xfrm_algo", "esp4", "xfrm_interface", "nft_masq",
 }
 
 // profileKind is incus profile, whose edit takes the description, the config and the devices.

@@ -29,6 +29,15 @@ func TestParseReadsZedNofile(t *testing.T) {
 	}
 }
 
+func TestParseReadsTheGPUSwitch(t *testing.T) {
+	for in, want := range map[string]bool{"": false, "WS_NVIDIA_GPU: true\n": true, "WS_NVIDIA_GPU: false\n": false} {
+		got, err := Parse([]byte(in))
+		if err != nil || got.Nvidia.GPU != want {
+			t.Errorf("Parse(%q) = %t, %v; want %t", in, got.Nvidia.GPU, err, want)
+		}
+	}
+}
+
 func TestParseKeepsDefaultsBesideAGivenKey(t *testing.T) {
 	got, err := Parse([]byte("WS_BASE_SWAP_SIZE_MB: 64\nWS_BASE_SWAPPINESS: 20\n"))
 	if err != nil {

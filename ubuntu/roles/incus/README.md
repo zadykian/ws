@@ -75,9 +75,11 @@ managed bridge fails the run.
 
 Each guest takes the profile `ws`: `security.privileged` off, `security.nesting`, and
 `security.idmap.isolated`, which gives it a range of root's IDs of its own. `linux.kernel_modules`
-names what Docker in a guest needs, which a guest cannot load. `br_netfilter` is not one, so a
-Docker network in a guest with `enable_icc` off, or with the userland proxy off, fails: ws does not
-support it. Its NIC joins the bridge with `security.mac_filtering` and `security.port_isolation`,
+names what Docker in a guest needs, and what ikeward needs: the xfrm modules `xfrm_user`, `xfrm_algo`,
+`esp4` and `xfrm_interface` for strongSwan's ESP tunnel and its link, and `nft_masq` for its
+masquerade. A guest cannot load them. `br_netfilter` is not
+one, so a Docker network in a guest with `enable_icc` off, or with the userland proxy off, fails: ws
+does not support it. Its NIC joins the bridge with `security.mac_filtering` and `security.port_isolation`,
 and its disk is on the pool.
 
 ## The table of sources
@@ -173,6 +175,11 @@ holds with no profile `ws` fails the run: ws never turns another instance into a
 | `config` | `limits.cpu` and `limits.memory`, from the list. |
 | `devices.eth0` | The profile's NIC, whole, with `host_name` `ws-NAME` and `ipv4.address`, from the list. |
 | `devices.root` | The profile's disk, whole, with `size`, the quota, from the list. |
+| `devices.gpu` | `type: gpu` and `vendorid: 10de`, where the guest's own values set `WS_NVIDIA_GPU`. Removed where they do not. |
+
+The card is NVIDIA's, which several guests may hold at once, time-sliced and with no memory
+isolation between them ([nvidia](../nvidia/README.md#a-guests-card)). A device that ws declares
+absent is removed by the edit, and the others stay.
 
 A device of an instance replaces the profile's device of its name, so each is whole. The NIC's
 address is the lease that the bridge's DHCP gives, and the port's name is the one that the set
