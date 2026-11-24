@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -20,7 +21,7 @@ import (
 const (
 	rolesDir = "../roles"
 	treeRoot = "../.."
-	confDir  = "../guest/mise/conf.d"
+	confDir  = "../%s/mise/conf.d"
 	// selfPath stands for the running ws, which a spec's self gives.
 	selfPath = "/usr/local/bin/ws"
 )
@@ -175,11 +176,13 @@ func roleDirs(t *testing.T) []string {
 	return dirs
 }
 
-// TestTheSideLinksItsRoles holds the server's one conf.d link to its roles. mise loads a role's
+// TestTheSideLinksItsRoles holds each side's one conf.d link to the roles. mise loads a role's
 // files from a directory of conf.d alone, and a file there in every env. A link elsewhere
 // would drop every role's lines with no error.
 func TestTheSideLinksItsRoles(t *testing.T) {
-	clitest.LinksRoles(t, confDir, "../../roles")
+	for _, side := range []string{"guest", "host"} {
+		clitest.LinksRoles(t, fmt.Sprintf(confDir, side), "../../roles")
+	}
 	if dirs := roleDirs(t); !slices.Contains(dirs, "frame") {
 		t.Errorf("the server's roles %v lack the frame", dirs)
 	}

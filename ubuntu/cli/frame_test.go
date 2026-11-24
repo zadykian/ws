@@ -16,19 +16,19 @@ import (
 // TestNoRoleSetsAFramesKey keeps each role off the keys of the server's frame, which loads before
 // the roles through the side's link.
 func TestNoRoleSetsAFramesKey(t *testing.T) {
-	clitest.FrameKeys(t, []string{treeRoot + "/mise.toml", treeRoot + "/mise.guest.toml"}, rolesDir+"/*/mise.*.toml")
+	clitest.FrameKeys(t, []string{treeRoot + "/mise.toml", treeRoot + "/mise.guest.toml", treeRoot + "/mise.host.toml"}, rolesDir+"/*/mise.*.toml")
 }
 
 // checkCommand returns the shell command of the frame's check against a silent skip, as mise's
 // template gives it to sh, run in dir.
-func checkCommand(t *testing.T, dir string) string {
-	return frameCommand(t, "/etc/ws/units.verified", dir)
+func checkCommand(t *testing.T, side, dir string) string {
+	return frameCommand(t, side, "/etc/ws/units.verified", dir)
 }
 
-// frameCommand returns the shell command of the template that the frame renders at target, as
-// mise gives it to sh. It names dir where the template names the run's directory.
-func frameCommand(t *testing.T, target, dir string) string {
-	text, err := os.ReadFile(treeRoot + "/mise.guest.toml")
+// frameCommand returns the shell command of the template that the side's frame renders at target,
+// as mise gives it to sh. It names dir where the template names the run's directory.
+func frameCommand(t *testing.T, side, target, dir string) string {
+	text, err := os.ReadFile(treeRoot + "/mise." + side + ".toml") //nolint:gosec // a root file of the tree, named by the test
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,14 +56,21 @@ func frameCommand(t *testing.T, target, dir string) string {
 // the root, or from the Mac's run directory, loads no role of the server's, and would set up the
 // frame alone with exit 0. A run with no ws fails and names install.sh.
 func TestTheCheckNeedsTheSidesDirectory(t *testing.T) {
+	for _, side := range []string{"guest", "host"} {
+		t.Run(side, func(t *testing.T) { theCheckNeedsTheSidesDirectory(t, side) })
+	}
+}
+
+// theCheckNeedsTheSidesDirectory is TestTheCheckNeedsTheSidesDirectory for one side.
+func theCheckNeedsTheSidesDirectory(t *testing.T, side string) {
 	bin := t.TempDir()
 	ws := filepath.Join(bin, "ws")
 	if err := os.WriteFile(ws, []byte("#!/bin/sh\necho 'ws units: none missing'\n"), 0o700); err != nil { //nolint:gosec // a stand-in for ws, which sh runs
 		t.Fatal(err)
 	}
-	side, mac, root := t.TempDir(), t.TempDir(), t.TempDir()
+	dir, mac, root := t.TempDir(), t.TempDir(), t.TempDir()
 	for _, file := range []string{
-		filepath.Join(side, "mise", "conf.d", "frame", "mise.guest.toml"),
+		filepath.Join(dir, "mise", "conf.d", "frame", "mise."+side+".toml"),
 		filepath.Join(mac, "mise", "conf.d", "zed", "mise.macos.toml"),
 	} {
 		if err := os.MkdirAll(filepath.Dir(file), 0o750); err != nil {
@@ -73,18 +80,18 @@ func TestTheCheckNeedsTheSidesDirectory(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	refusal := ", which loads no role of the guest: run it as mise -C /opt/ws/ubuntu/guest"
+	refusal := ", which loads no role of the " + side + ": run it as mise -C /opt/ws/ubuntu/" + side
 	for _, c := range []struct {
 		name, dir, ws, stdout, stderr string
 		status                        int
 	}{
-		{"the side's directory", side, ws, "ws units: none missing\n", "", 0},
+		{"the side's directory", dir, ws, "ws units: none missing\n", "", 0},
 		{"the Mac's directory", mac, ws, "", "mise runs in " + mac + refusal, 1},
 		{"the root", root, ws, "", "mise runs in " + root + refusal, 1},
-		{"no ws", side, filepath.Join(bin, "missing"), "", "is missing: install.sh writes it", 1},
+		{"no ws", dir, filepath.Join(bin, "missing"), "", "is missing: install.sh writes it", 1},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			command := strings.ReplaceAll(checkCommand(t, c.dir), "/usr/local/bin/ws", c.ws)
+			command := strings.ReplaceAll(checkCommand(t, side, c.dir), "/usr/local/bin/ws", c.ws)
 			cmd := exec.Command("sh", "-o", "errexit", "-c", command) //nolint:gosec // the frame's own command, read from the tree
 			cmd.Env = []string{"PATH=" + os.Getenv("PATH")}
 			var stdout, stderr bytes.Buffer
