@@ -10,7 +10,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 )
 
@@ -32,7 +31,7 @@ func (w when) want(key string) (string, bool) {
 type fact struct {
 	// holds reports whether the machine gives want. A machine that lacks the fact's source, as
 	// macOS lacks sysfs, gives none.
-	holds func(ctx context.Context, m effect.Machine, want string) (bool, error)
+	holds func(ctx context.Context, e Env, want string) (bool, error)
 	// form is the form of a want that the machine can give, or nil for any. A want of another
 	// form would turn its unit off on every machine, so the load refuses it.
 	form *regexp.Regexp
@@ -101,7 +100,7 @@ func (w when) gate(e Env, unit string, parts func(context.Context) ([]resource.R
 		}
 		for _, key := range keys {
 			want, negated := w.want(key)
-			gives, err := whenFacts[key].holds(ctx, e.M, want)
+			gives, err := whenFacts[key].holds(ctx, e, want)
 			if err != nil {
 				return nil, fmt.Errorf("when %s: %w", key, err)
 			}
@@ -122,8 +121,8 @@ func (w when) gate(e Env, unit string, parts func(context.Context) ([]resource.R
 const boardVendorFile = "/sys/class/dmi/id/board_vendor"
 
 // boardVendor holds where DMI names the board's maker want.
-func boardVendor(_ context.Context, m effect.Machine, want string) (bool, error) {
-	text, err := m.ReadFile(boardVendorFile)
+func boardVendor(_ context.Context, e Env, want string) (bool, error) {
+	text, err := e.M.ReadFile(boardVendorFile)
 	if errors.Is(err, fs.ErrNotExist) {
 		return false, nil
 	}
@@ -138,8 +137,8 @@ const pciDevices = "/sys/bus/pci/devices"
 
 // gpuVendor holds where a PCI display device, of class 0x03, has the vendor id want, as sysfs
 // writes it, such as 0x1234.
-func gpuVendor(_ context.Context, m effect.Machine, want string) (bool, error) {
-	names, err := m.ReadDir(pciDevices)
+func gpuVendor(_ context.Context, e Env, want string) (bool, error) {
+	names, err := e.M.ReadDir(pciDevices)
 	if errors.Is(err, fs.ErrNotExist) {
 		return false, nil
 	}
@@ -147,11 +146,11 @@ func gpuVendor(_ context.Context, m effect.Machine, want string) (bool, error) {
 		return false, err
 	}
 	for _, name := range names {
-		class, err := m.ReadFile(pciDevices + "/" + name + "/class")
+		class, err := e.M.ReadFile(pciDevices + "/" + name + "/class")
 		if err != nil {
 			return false, err
 		}
-		vendor, err := m.ReadFile(pciDevices + "/" + name + "/vendor")
+		vendor, err := e.M.ReadFile(pciDevices + "/" + name + "/vendor")
 		if err != nil {
 			return false, err
 		}
@@ -166,8 +165,8 @@ func gpuVendor(_ context.Context, m effect.Machine, want string) (bool, error) {
 const netDevices = "/sys/class/net"
 
 // netInterface holds where the machine has the network interface want, of any state.
-func netInterface(_ context.Context, m effect.Machine, want string) (bool, error) {
-	_, err := m.Stat(netDevices + "/" + want)
+func netInterface(_ context.Context, e Env, want string) (bool, error) {
+	_, err := e.M.Stat(netDevices + "/" + want)
 	if errors.Is(err, fs.ErrNotExist) {
 		return false, nil
 	}
@@ -175,9 +174,9 @@ func netInterface(_ context.Context, m effect.Machine, want string) (bool, error
 }
 
 // containerFact holds where the machine is a container, by the marks that inContainer reads.
-func containerFact(_ context.Context, m effect.Machine, _ string) (bool, error) {
-	return inContainer(m), nil
+func containerFact(_ context.Context, e Env, _ string) (bool, error) {
+	return inContainer(e.M), nil
 }
 
 // anyWant holds for any want: the fact set's, which only an empty want turns off.
-func anyWant(context.Context, effect.Machine, string) (bool, error) { return true, nil }
+func anyWant(context.Context, Env, string) (bool, error) { return true, nil }
