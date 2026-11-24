@@ -63,7 +63,8 @@ autoinstall:
         permissions: "0600"
         content: VALUES
     # runcmd runs in a service that sets no HOME, and Go refuses to build devtools' tools
-    # without one. ws update runs the setup of the release that this file names, never the
-    # latest, which is no pre-release.
+    # without one. ws update installs the release that this file names, never the latest, which is
+    # no pre-release. It runs no setup where the machine has none yet, so the next command runs it.
     runcmd:
       - [env, HOME=/root, ws, update, --version, VERSION]
+      - [env, HOME=/root, ws, server, setup]

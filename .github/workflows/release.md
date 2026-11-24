@@ -45,7 +45,8 @@ release's blanks filled by [autoinstall.sh](../autoinstall.sh): `VERSION`, the t
 that of the release's own `install.sh`. The `build` job writes it into `dist` beside `install.sh`,
 and fails unless the file names the tag and the sum and keeps no such blank. The words check and
 the release take it as they take each file of `dist`. Its first boot runs that release:
-`ws update --version TAG`, which runs setup alone where ws is that release already.
+`ws update --version TAG`, which installs it and runs no setup where the machine has none yet, and
+then `ws server setup`.
 
 Three blanks stay the maintainer's. A new server takes these steps, which
 [the server's runbook](../../roles/server/runbook.md#a-new-server-from-the-installer) and
@@ -77,8 +78,10 @@ again.
   update. It refuses the latest release where that file is a later release, such as a pre-release:
   `--version` names the older one. A ws that is no release, a trial's build, or one that is missing
   or does not run, is older than any, so an update ends the trial.
-- Then it replaces itself with `ws server setup` or `ws macos setup` of `/usr/local/bin/ws`. Where
-  that file is the named release already, it downloads nothing, and runs that setup alone.
+- Then it replaces itself with the setup of the side that `/etc/mise/miserc.toml` names, of
+  `/usr/local/bin/ws`: `ws server setup`. A Mac has no such choice, and runs `ws macos setup`. A
+  machine with no miserc has run no setup, so it runs none, and names `ws server setup`. Where
+  `/usr/local/bin/ws` is the named release already, it downloads nothing, and runs that setup alone.
 
 `WS_RELEASES_URL` names the releases, as for `install.sh`.
 
@@ -107,8 +110,9 @@ loopback, a shell script that prints its release and its target as `ws version`,
 
 Then [update-checks.sh](../update-checks.sh) runs `ws update` as root against stubs as releases,
 `v0.2.0`, the latest, and `v0.4.0-rc.1`, and `v0.5.0` whose `ws.sha256` fits no file. A stub prints
-its tag as `ws version` and records its call of `server setup`. The ws that runs is a real build of
-the tree, which a tag in a copy of it stamps as a release, or none for a trial's. The cases:
+its tag as `ws version` and records its call of `server setup`. The ws that runs is a real build of the tree, which a tag in a
+copy of it stamps as a release, or none for a trial's. The script writes the miserc that a setup
+writes, and fails where the runner has one. The cases:
 
 - a release's ws moves to the latest and runs its setup;
 - a trial's build is replaced;
@@ -118,6 +122,7 @@ the tree, which a tag in a copy of it stamps as a release, or none for a trial's
 - a ws of the named release downloads nothing and runs its own setup. The runner's system refuses
   that setup, and the script fails on Ubuntu 26.04, where the setup would be real. So the job runs
   on Ubuntu 24.04's runner;
+- a machine with no miserc runs no setup, and the update names `ws server setup`;
 - a user is refused before any download.
 
 The script deletes `/usr/local/bin/ws` as it ends, so it sets that up after its guards. Its test,

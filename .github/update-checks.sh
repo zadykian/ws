@@ -6,7 +6,9 @@
 # Only the ws under test is real. Each is a build of this tree. A tag in a copy of the tree stamps
 # it as a release, and none makes it a trial's. serve-releases serves stubs as the releases. A stub
 # is a shell script that prints its tag as ws version, and records a call of server setup. That
-# is all that ws update runs of the new ws. A real setup is the trial's to run (#1385).
+# is all that ws update runs of the new ws. A real setup is the trial's to run (#1385). A setup
+# writes /etc/mise/miserc.toml, which names the side that ws update runs the setup of. So the
+# script writes it as a setup would, except in case 7, which runs on a machine with none.
 #
 #     v0.2.0, v0.4.0-rc.1  stubs, served; v0.2.0 is the latest
 #     v0.5.0               a stub that its ws.sha256 does not fit
@@ -95,8 +97,18 @@ refused() {
     grep -q -- "$error" "$tmp/refusal" || fail "ws update $* was refused, but not by '$error': $(cat "$tmp/refusal")"
 }
 
+# miserc is the file that setup writes for mise, which ws update reads for its side.
+miserc=/etc/mise/miserc.toml
+
+# write_miserc makes this machine one that has run the server's setup, as setup writes the file.
+write_miserc() {
+    as_root mkdir -p /etc/mise
+    printf 'env = ["ws"]\n[env_sets]\nws = ["server"]\n' | as_root tee "$miserc" >/dev/null
+}
+
 [ "$(id -u)" != 0 ] || [ -n "${WS_SPARE_MACHINE:-}" ] || fail "run it as a user with sudo"
 [ -n "${GITHUB_ACTIONS:-}${WS_SPARE_MACHINE:-}" ] || fail "it replaces /usr/local/bin/ws: run it on a runner or a spare machine"
+[ ! -e /etc/mise/miserc.toml ] || fail "/etc/mise/miserc.toml exists: this machine has run a setup"
 [ "$(uname -m)" = x86_64 ] || fail "the builds are for linux amd64"
 [ -z "$(git status --porcelain)" ] || fail "the tree is not clean: the builds would say +dirty"
 # Case 6 runs a ws that is its release already, whose setup is a real one where the system is
@@ -107,7 +119,7 @@ refused() {
 # The trap comes after the guards: a run they refuse must leave this machine's ws, which it deletes.
 tmp=$(mktemp -d)
 log=$tmp/setup.log
-trap 'kill "${server:-}" 2>/dev/null || true; as_root rm -f /usr/local/bin/ws /usr/local/bin/.ws.*; rm -rf "$tmp"' EXIT
+trap 'kill "${server:-}" 2>/dev/null || true; as_root rm -f /usr/local/bin/ws /usr/local/bin/.ws.* "$miserc"; as_root rmdir /etc/mise 2>/dev/null || true; rm -rf "$tmp"' EXIT
 
 # src is HEAD in a repository of its own, for the tags: a release's run holds one at HEAD already.
 mkdir -p "$tmp/src" "$tmp/builds"
@@ -141,6 +153,8 @@ for _ in $(seq 50); do
     sleep 0.1
 done
 url=http://127.0.0.1:$(cat "$tmp/port")
+
+write_miserc
 
 echo "::group::1. A release's ws moves to the latest and runs its setup"
 install_ws v0.1.0
@@ -200,8 +214,20 @@ is_ws v0.3.0
 nothing_left
 echo "::endgroup::"
 
+echo "::group::7. A machine with no miserc has run no setup, so the update runs none"
+as_root rm -f "$miserc"
+install_ws v0.1.0
+update >"$tmp/none"
+is_ws v0.2.0
+setups ""
+grep -qxF 'No side is set up here: run ws server setup' "$tmp/none" || fail "ws update did not name the setup to run: $(cat "$tmp/none")"
+nothing_left
+write_miserc
+echo "::endgroup::"
+
 if [ "$(id -u)" != 0 ]; then
-    echo "::group::7. A user is refused before any download"
+    echo "::group::8. A user is refused before any download"
+    install_ws v0.3.0
     if WS_RELEASES_URL="$url" /usr/local/bin/ws update 2>"$tmp/refusal"; then
         fail "ws update went through as a user"
     fi
