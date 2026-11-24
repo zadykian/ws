@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io/fs"
 	"slices"
+	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
@@ -21,6 +22,9 @@ type Rules struct {
 	Want    []Rule
 	// Owns tells which of the rules with Comment the role owns. Nil means them all.
 	Owns func(Rule) bool
+	// Front adds each missing rule first, ahead of the rules that ufw holds, as a deny must come
+	// before an allow that names no interface. A route rule has no front.
+	Front bool
 }
 
 // Plan adds the missing rules, then deletes the stale ones.
@@ -46,7 +50,12 @@ func (r Rules) Plan(context.Context) ([]resource.Change, error) {
 	var changes []resource.Change
 	for _, w := range want {
 		if !slices.Contains(have, w) {
-			changes = append(changes, ufwCall{r.M, false, w})
+			call := ufwCall{r.M, false, w}
+			if r.Front && !strings.HasPrefix(w.Action, "route:") {
+				changes = append(changes, ufwFront{call})
+				continue
+			}
+			changes = append(changes, call)
 		}
 	}
 	for _, h := range have {
