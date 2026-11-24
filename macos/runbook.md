@@ -58,9 +58,11 @@ file. It then does what a person did by hand, in this order:
    writes the preferences and the login items. The bootstrap installs gh and sets up ssh, git, cld
    and the Mac's other roles ([The Mac's frame](roles/frame/README.md)). It makes the Mac's
    WireGuard key, whose public half is `/etc/ws/tunnel.pub`.
+6. It runs the bootstrap again with `-E ws,apps`, which installs the apps. A failure there leaves
+   ws's units set up, and fails setup.
 
 A second run changes nothing and asks no password. `ws macos setup --plan` plans these steps, and
-mise's bootstrap where none is due, by its plan and then its status. The plan covers no
+mise's bootstrap where none is due, in both envs, by its plan and then its status. The plan covers no
 preference, Dock app or login item, and the status does, with the tools, repositories and
 packages. It exits 0 where nothing would change and 2 where something would. A ws that names no
 release tag is refused: `--in-place` runs the tree in `/opt/ws` as it stands, after the guard. So
