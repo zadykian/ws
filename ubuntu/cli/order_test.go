@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"os"
 	"slices"
 	"testing"
 
@@ -33,10 +32,7 @@ func TestOtelcolRunsAfterSignoz(t *testing.T) {
 // collector's service starts after SigNoz's sync, so its chain holds it.
 func TestOtelcolWaitsOnSignoz(t *testing.T) {
 	e := kind.Env{M: effecttest.NewMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: defaults(t), Side: "guest", Self: selfPath}
-	units, err := kind.Load(e, os.DirFS(rolesDir))
-	if err != nil {
-		t.Fatal(err)
-	}
+	units := loadSpecs(t, e)
 	chain, err := kind.Closure(units, []string{"service/otelcol"})
 	if err != nil {
 		t.Fatal(err)

@@ -50,7 +50,7 @@ func tunnelMachine() *effecttest.Machine {
 
 func TestTunnelSpecNetdevBytes(t *testing.T) {
 	m := tunnelMachine()
-	units, _ := cableUnits(t, m, tunnelPeers)
+	units, _ := guestUnits(t, m, tunnelPeers)
 	applyUnit(t, units, "service/tunnel")
 	if got := string(m.Files[netdevFile]); got != netdevBytes {
 		t.Errorf("the .netdev:\n%s\nwant:\n%s", got, netdevBytes)
@@ -65,7 +65,7 @@ func TestTunnelSpecNetdevBytes(t *testing.T) {
 
 func TestTunnelNetdevIs640OfSystemdNetwork(t *testing.T) {
 	m := tunnelMachine()
-	units, _ := cableUnits(t, m, tunnelPeers)
+	units, _ := guestUnits(t, m, tunnelPeers)
 	applyUnit(t, units, "service/tunnel")
 	if mode, owner := m.Modes[netdevFile], m.Owners[netdevFile]; mode != 0o640 || owner != [2]int{0, 998} {
 		t.Errorf(".netdev: mode %o, owner %v; want root:998 at 640", mode, owner)
@@ -76,7 +76,7 @@ func TestTunnelNetdevIs640OfSystemdNetwork(t *testing.T) {
 }
 
 func TestTunnelOrder(t *testing.T) {
-	units, _ := cableUnits(t, tunnelMachine(), "---\n")
+	units, _ := guestUnits(t, tunnelMachine(), "---\n")
 	names := kind.Names(units)
 	at := func(name string) int { return slices.Index(names, name) }
 	guard, key, service, wg0 := at("guard/tunnel"), at("state/tunnel-key"), at("service/tunnel"), at("state/tunnel-wg0")
@@ -88,7 +88,7 @@ func TestTunnelOrder(t *testing.T) {
 func TestTunnelGuardRunsTheCheck(t *testing.T) {
 	m := tunnelMachine()
 	m.Results[selfPath+" ubuntu guest tunnel check"] = effecttest.Result{Out: []byte("a line\n")}
-	units, out := cableUnits(t, m, "---\n")
+	units, out := guestUnits(t, m, "---\n")
 	applyUnit(t, units, "guard/tunnel")
 	if !slices.Contains(m.Calls, "root "+selfPath+" ubuntu guest tunnel check") || !slices.Contains(out.Lines, "say: a line") {
 		t.Errorf("calls %q, said %q; want ws's check as root, and its line", m.Calls, out.Lines)

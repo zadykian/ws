@@ -23,7 +23,7 @@ var ikewardUnits = []string{"guard/ikeward", "binary/ikeward", "file/ikeward-sys
 
 func TestIkewardSpecOffWithoutProfile(t *testing.T) {
 	m := effecttest.NewMachine()
-	units, out := cableUnits(t, m, "---\nWS_IKEWARD_FORWARD_FROM: [10.99.0.2]\n")
+	units, out := guestUnits(t, m, "---\nWS_IKEWARD_FORWARD_FROM: [10.99.0.2]\n")
 	for _, name := range ikewardUnits {
 		if got := applyUnit(t, units, name); got != nil {
 			t.Errorf("%s planned %q, want nothing", name, got)
@@ -44,12 +44,12 @@ func TestIkewardSysctlAbsentWithoutPeers(t *testing.T) {
 	}
 	m := effecttest.NewMachine()
 	m.Dirs["/etc"], m.Dirs["/etc/sysctl.d"] = 0o755, 0o755
-	units, _ := cableUnits(t, m, ikewardPeer)
+	units, _ := guestUnits(t, m, ikewardPeer)
 	applyUnit(t, units, "file/ikeward-sysctl")
 	if got := m.Files[ikewardSysctl]; string(got) != string(want) || m.Modes[ikewardSysctl] != 0o644 {
 		t.Errorf("the file %q at %o, want 99-ikeward.conf at 644", got, m.Modes[ikewardSysctl])
 	}
-	units, out := cableUnits(t, m, ikewardValues)
+	units, out := guestUnits(t, m, ikewardValues)
 	if got := applyUnit(t, units, "file/ikeward-sysctl"); len(got) != 1 {
 		t.Errorf("plan %q, want the file removed", got)
 	}
@@ -71,7 +71,7 @@ func TestIkewardBinaryPins(t *testing.T) {
 		m := effecttest.NewMachine()
 		m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte(arch + "\n")}
 		m.Pages[url] = []byte("not ikeward")
-		units, _ := cableUnits(t, m, ikewardValues)
+		units, _ := guestUnits(t, m, ikewardValues)
 		i := slices.IndexFunc(units, func(u kind.Unit) bool { return u.Name == "binary/ikeward" })
 		p, err := units[i].Step.Plan(t.Context())
 		if err == nil {
@@ -89,7 +89,7 @@ func TestIkewardBinaryPins(t *testing.T) {
 func TestIkewardGuardRunsTheCheck(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results[selfPath+" ubuntu guest ikeward check"] = effecttest.Result{Err: errors.New("WS_IKEWARD_P12 or WS_IKEWARD_SSWAN is empty")}
-	units, _ := cableUnits(t, m, ikewardValues)
+	units, _ := guestUnits(t, m, ikewardValues)
 	i := slices.IndexFunc(units, func(u kind.Unit) bool { return u.Name == "guard/ikeward" })
 	if _, err := units[i].Step.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "WS_IKEWARD_P12 or WS_IKEWARD_SSWAN is empty") {
 		t.Errorf("plan = %v, want the check's failure", err)
@@ -97,7 +97,7 @@ func TestIkewardGuardRunsTheCheck(t *testing.T) {
 }
 
 func TestIkewardOrder(t *testing.T) {
-	units, _ := cableUnits(t, effecttest.NewMachine(), ikewardPeer)
+	units, _ := guestUnits(t, effecttest.NewMachine(), ikewardPeer)
 	names := kind.Names(units)
 	at := func(name string) int { return slices.Index(names, name) }
 	for _, pair := range [][2]string{
