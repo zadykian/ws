@@ -15,7 +15,7 @@ import (
 const (
 	cableFile = "/etc/netplan/60-cable.yaml"
 	// cableCheck is the file unit's check of the new file.
-	cableCheck = selfPath + " ubuntu guest cable check " + cableFile + ".ws-check"
+	cableCheck = selfPath + " ubuntu host cable check " + cableFile + ".ws-check"
 	// cableBytes is the file that the step rendered for enp5s0 at 10.77.0.1/30.
 	cableBytes = `# Written by github.com/zadykian/ws, whose next run replaces any change made here.
 #
@@ -35,15 +35,15 @@ network:
 `
 )
 
-// cableUnits loads the specs for the values in yml on m, and returns their units in the order they
+// cableUnits loads the host's specs for the values in yml on m, and returns their units in the order they
 // run, with what they say on out.
 func cableUnits(t *testing.T, m *effecttest.Machine, yml string) ([]kind.Unit, *effecttest.Out) {
-	v, err := values.Parse([]byte(yml))
+	v, err := values.ParseHost([]byte(yml))
 	if err != nil {
 		t.Fatal(err)
 	}
 	out := &effecttest.Out{}
-	return loadSpecs(t, kind.Env{M: m, U: &effecttest.Units{}, Out: out, Data: v, Side: "guest", Self: selfPath}), out
+	return loadSpecs(t, kind.Env{M: m, U: &effecttest.Units{}, Out: out, Data: v, Side: "host", Self: selfPath}), out
 }
 
 // cableMachine is a machine with the cable's port.
@@ -140,10 +140,10 @@ func TestCableFileWaitsOnTheGuard(t *testing.T) {
 
 func TestCableGuardRunsTheCheck(t *testing.T) {
 	m := cableMachine()
-	m.Results[selfPath+" ubuntu guest cable check"] = effecttest.Result{}
+	m.Results[selfPath+" ubuntu host cable check"] = effecttest.Result{}
 	units, _ := cableUnits(t, m, cableValues)
 	applyUnit(t, units, "guard/cable")
-	if !slices.Contains(m.Calls, "root "+selfPath+" ubuntu guest cable check") {
+	if !slices.Contains(m.Calls, "root "+selfPath+" ubuntu host cable check") {
 		t.Errorf("calls %q, want ws's check as root", m.Calls)
 	}
 }

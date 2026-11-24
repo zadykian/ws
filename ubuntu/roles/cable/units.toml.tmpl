@@ -4,7 +4,7 @@
 
 # Refuses a port that is an uplink, and a networkd that does not run, before the file changes.
 [guard.cable]
-command = ["{{ self }}", "ubuntu", "guest", "cable", "check"]
+command = ["{{ self }}", "ubuntu", "host", "cable", "check"]
 when = { interface = "{{ .Cable.Port }}" }
 
 # The cable's netplan file. Its check merges it with netplan's other files in a scratch root, so a
@@ -15,7 +15,7 @@ path = "/etc/netplan/60-cable.yaml"
 {{ if .Cable.Port -}}
 mode = 0o600
 template = "60-cable.yaml.tmpl"
-check = ["{{ self }}", "ubuntu", "guest", "cable", "check", "{}"]
+check = ["{{ self }}", "ubuntu", "host", "cable", "check", "{}"]
 when = { interface = "{{ .Cable.Port }}" }
 {{- else -}}
 absent = true
@@ -25,4 +25,4 @@ absent = true
 # failed reload stays due, and another netplan file's change never makes it due.
 [state.cable-reload]
 after = "file/cable"
-run = { user = "root", command = ["{{ self }}", "ubuntu", "guest", "cable", "reload"], check = ["{{ self }}", "ubuntu", "guest", "cable", "reload", "--check"] }
+run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "cable", "reload"], check = ["{{ self }}", "ubuntu", "host", "cable", "reload", "--check"] }

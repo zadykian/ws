@@ -9,10 +9,10 @@ import (
 
 func TestUbuntuGroupOnLinux(t *testing.T) {
 	p := fakeProcess()
-	if status, stdout, _ := runGroups(p, "ubuntu", "guest"); status != 0 || !strings.Contains(stdout, "Available Commands:") || !strings.Contains(stdout, "\n  fans ") {
+	if status, stdout, _ := runGroups(p, "ubuntu", "guest"); status != 0 || !strings.Contains(stdout, "Available Commands:") || !strings.Contains(stdout, "\n  tunnel ") {
 		t.Errorf("status = %d, stdout = %q, want the commands of ubuntu guest", status, stdout)
 	}
-	if status, stdout, _ := runGroups(p, "ubuntu", "host"); status != 0 || !strings.Contains(stdout, "\n  setup ") || !strings.Contains(stdout, "\n  values ") {
+	if status, stdout, _ := runGroups(p, "ubuntu", "host"); status != 0 || !strings.Contains(stdout, "\n  setup ") || !strings.Contains(stdout, "\n  fans ") || !strings.Contains(stdout, "\n  cable ") {
 		t.Errorf("status = %d, stdout = %q, want the commands of ubuntu host", status, stdout)
 	}
 	if status, stdout, _ := runGroups(p, "unit"); status != 0 || !strings.Contains(stdout, "\n  list ") {

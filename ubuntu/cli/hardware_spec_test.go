@@ -31,6 +31,19 @@ func specUnits(t *testing.T, m *effecttest.Machine, out *effecttest.Out) map[str
 	return steps
 }
 
+// hostSteps is specUnits for the host: its specs over the host's default values.
+func hostSteps(t *testing.T, m *effecttest.Machine, out *effecttest.Out) map[string]step.Step {
+	v, err := values.ParseHost(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	steps := map[string]step.Step{}
+	for _, u := range loadSpecs(t, kind.Env{M: m, U: &effecttest.Units{}, Out: out, Data: v, Side: "host", Self: selfPath}) {
+		steps[u.Name] = u.Step
+	}
+	return steps
+}
+
 // guestUnits loads the guest's specs for the values in yml on m, and returns their units in the
 // order they run, with what they say on out.
 func guestUnits(t *testing.T, m *effecttest.Machine, yml string) ([]kind.Unit, *effecttest.Out) {

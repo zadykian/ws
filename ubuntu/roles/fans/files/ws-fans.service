@@ -8,7 +8,7 @@ Documentation=https://github.com/zadykian/ws/blob/main/ubuntu/roles/fans/README.
 After=systemd-modules-load.service
 
 [Service]
-ExecStart=/usr/local/bin/ws ubuntu guest fans /etc/ws/fans.json
+ExecStart=/usr/local/bin/ws ubuntu host fans /etc/ws/fans.json
 Restart=on-failure
 RestartSec=5
 # /sys and /dev stay writable, for hwmon's files and NVIDIA's devices, which nvidia-smi reads.
