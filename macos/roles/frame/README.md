@@ -2,8 +2,9 @@
 
 The frame is what each of the Mac's roles in mise's config leans on. The user runs one
 `mise -C /opt/ws/macos bootstrap`: mise's own parts first, then ws's units, which mise
-hands to the Mac's `ws unit` through the plugin `ws`. The Mac shares `mise.toml` alone with the
-server, and loads no file of the server's.
+hands to the Mac's `ws unit` through the plugin `ws`. Setup then runs it again with `-E ws,apps`,
+which loads the apps' files too ([The apps' env](#the-apps-env)). The Mac shares `mise.toml` alone
+with the server, and loads no file of the server's.
 
 ## Its files
 
@@ -47,8 +48,9 @@ missing parent.
 ## A role's layout
 
 A role keeps its directory, `macos/roles/ROLE/`, and its page there. Its spec,
-`units.toml.tmpl`, sits beside its templates and sources. Its one mise file is `mise.macos.toml`, which
-holds its lines and mise's own parts, such as casks and tools. The frame holds none: its line is
+`units.toml.tmpl`, sits beside its templates and sources. Its mise file is `mise.macos.toml`, which
+holds its lines and mise's own parts, such as casks and tools, and `mise.apps.toml` where it
+installs apps ([The apps' env](#the-apps-env)). The frame holds none: its line is
 the root's ([The check against a silent skip](#the-check-against-a-silent-skip)). The side's one
 link, `macos/mise/conf.d`, leads to `../roles`, so a role lands with its directory alone.
 
@@ -58,6 +60,14 @@ as a unit a server would come and go with its line ([The facts](../../facts/READ
 [`TestMacSpecsMatchMiseLines`](../../cli/specs_test.go) fails on a line missing or extra.
 `TestTheMacLinksItsRoles` fails where the link leads elsewhere or its directory holds a file, and
 `TestMacConfigHoldsNoRootPath` on mise's own root path or a dotfile.
+
+## The apps' env
+
+The env `apps` loads a role's `mise.apps.toml` and no other run does. Setup runs the bootstrap
+with the env `macos`, then `mise -E ws,apps bootstrap`, so that a failed cask stops no unit of
+ws's: mise ends a run at its first failed step. The apps' files hold mise's own parts, casks and
+the Dock's apps, and no `ws:` line. `TestTheAppsEnvHoldsNoUnit` fails on one, as a run without the
+env would fail it. The plan and the status read both envs.
 
 ## ws at a fixed path
 

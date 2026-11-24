@@ -24,9 +24,24 @@ const (
 	macTreeRoot = "../.."
 	macConfDir  = "../mise/conf.d"
 	macLock     = "../mise/mise.macos.lock"
-	// macRoleFile is a role's one mise file: the env macos loads it, and no env of the server's.
+	// macRoleFile is a role's mise file: the env macos loads it, and no env of the server's.
 	macRoleFile = "mise.macos.toml"
+	// appsFile is the one other file a role holds: the env apps loads it, after the bootstrap's own run.
+	appsFile = "mise.apps.toml"
 )
+
+// macMiseFiles returns the mise files of the Mac's roles, of the env macos and of the env apps.
+func macMiseFiles(t *testing.T) []string {
+	var files []string
+	for _, name := range []string{macRoleFile, appsFile} {
+		found, err := filepath.Glob(macRolesDir + "/*/" + name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		files = append(files, found...)
+	}
+	return files
+}
 
 // macFacts are the facts of a Mac with the servers given and Ghostty's default config.
 func macFacts(servers ...facts.Server) facts.Mac {
@@ -73,8 +88,16 @@ func TestMacSpecsMatchMiseLines(t *testing.T) {
 	clitest.CompareLines(t, "the Mac (mise.macos.toml)", want, lines)
 }
 
+// TestTheAppsEnvHoldsNoUnit keeps ws's units out of the env apps' files. The units run in the first
+// bootstrap, and a unit's line that only the second loads would fail the run that lacks it.
+func TestTheAppsEnvHoldsNoUnit(t *testing.T) {
+	if lines := clitest.MiseLines(t, macRolesDir+"/*/"+appsFile); len(lines) > 0 {
+		t.Errorf("a file %s holds the units' lines %v: they belong in %s", appsFile, lines, macRoleFile)
+	}
+}
+
 // macRoleDirs returns the directories of the Mac's roles that hold a spec or a mise file, and
-// fails the test on a mise file other than mise.macos.toml.
+// fails the test on any mise file but those two.
 func macRoleDirs(t *testing.T) []string {
 	entries, err := os.ReadDir(macRolesDir)
 	if err != nil {
@@ -91,8 +114,8 @@ func macRoleDirs(t *testing.T) []string {
 			t.Fatal(err)
 		}
 		for _, f := range files {
-			if filepath.Base(f) != macRoleFile {
-				t.Errorf("%s: a role of the Mac's holds %s alone", f, macRoleFile)
+			if base := filepath.Base(f); base != macRoleFile && base != appsFile {
+				t.Errorf("%s: a role of the Mac's holds %s and %s alone", f, macRoleFile, appsFile)
 			}
 		}
 		if _, err := os.Stat(filepath.Join(dir, "units.toml.tmpl")); err == nil || len(files) > 0 {
@@ -115,7 +138,9 @@ func TestTheMacLinksItsRoles(t *testing.T) {
 // TestNoMacRoleSetsAFramesKey keeps each of the Mac's roles off the keys of its frame, which loads
 // before the roles through the side's link.
 func TestNoMacRoleSetsAFramesKey(t *testing.T) {
-	clitest.FrameKeys(t, []string{macTreeRoot + "/mise.toml", macTreeRoot + "/" + macRoleFile}, macRolesDir+"/*/"+macRoleFile)
+	for _, name := range []string{macRoleFile, appsFile} {
+		clitest.FrameKeys(t, []string{macTreeRoot + "/mise.toml", macTreeRoot + "/" + macRoleFile}, macRolesDir+"/*/"+name)
+	}
 }
 
 // TestMacConfigHoldsNoRootPath keeps mise's own root paths and dotfiles out of the Mac's config.
@@ -123,11 +148,7 @@ func TestNoMacRoleSetsAFramesKey(t *testing.T) {
 // that changes nothing. Its dotfiles replace the user's own file with no guard. ws's units hold
 // both. A file under ~/ with no owner or group is the user's: mise reads and writes it as the user.
 func TestMacConfigHoldsNoRootPath(t *testing.T) {
-	files, err := filepath.Glob(macRolesDir + "/*/" + macRoleFile)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, f := range append(files, macTreeRoot+"/"+macRoleFile) {
+	for _, f := range append(macMiseFiles(t), macTreeRoot+"/"+macRoleFile) {
 		text, err := os.ReadFile(f) //nolint:gosec // a file of the tree, found by the test
 		if err != nil {
 			t.Fatal(err)
@@ -173,12 +194,8 @@ func TestMacLockHoldsEachTool(t *testing.T) {
 	if err := toml.Unmarshal(text, &lock); err != nil {
 		t.Fatalf("mise.macos.lock: %v", err)
 	}
-	files, err := filepath.Glob(macRolesDir + "/*/" + macRoleFile)
-	if err != nil {
-		t.Fatal(err)
-	}
 	pinned := map[string]bool{}
-	for _, f := range files {
+	for _, f := range macMiseFiles(t) {
 		text, err := os.ReadFile(f) //nolint:gosec // a file of the tree, found by the test
 		if err != nil {
 			t.Fatal(err)

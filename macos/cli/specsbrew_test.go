@@ -2,7 +2,6 @@ package cli
 
 import (
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -13,11 +12,7 @@ import (
 // publishes a bottle of the current version alone, so a version in the value makes mise skip the
 // entry with a warning.
 func TestMacFormulaeTakeTheLatest(t *testing.T) {
-	files, err := filepath.Glob(macRolesDir + "/*/" + macRoleFile)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, f := range files {
+	for _, f := range macMiseFiles(t) {
 		text, err := os.ReadFile(f) //nolint:gosec // a file of the tree, found by the test
 		if err != nil {
 			t.Fatal(err)
