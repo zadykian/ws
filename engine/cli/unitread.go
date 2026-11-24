@@ -23,7 +23,7 @@ func unitRead(p Env, s UnitSide) *cobra.Command {
 			"on a unit with changes; or \"fails: \" and why its plan failed. A failed plan stops no other " +
 			"unit's read. --whole takes the UNITs for every line of mise's plan, as the plugin passes them: " +
 			"where the specs hold a unit they lack that is not " + InSync + ", each UNIT fails and names it, " +
-			"and each fails where ws runs outside the specs' parent, the directory mise must run in. " +
+			"and each fails where ws runs outside the side's run directory, which mise must run in. " +
 			"ws's own lines go to stderr.",
 		Args: cobra.MinimumNArgs(1),
 	}

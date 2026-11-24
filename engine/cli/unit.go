@@ -27,6 +27,9 @@ const InSync = "in-sync"
 type UnitSide struct {
 	// Dir is the root of the side's specs, DIR/ROLE/units.toml.tmpl, where WS_UNITS names none.
 	Dir string
+	// RunDir is the directory mise runs in, which holds the side's conf.d link, lock and tasks.
+	// Empty is the parent of Dir.
+	RunDir string
 	// Values loads the side's values.
 	Values func(ctx context.Context, m effect.Machine) (any, error)
 	// Units is the service manager's units.
@@ -50,19 +53,20 @@ type UnitSide struct {
 	Task string
 }
 
-// unitRun is one call of ws unit: the units of the specs, in the order they run, ws's lines,
-// which go to stderr, and the specs' directory.
+// unitRun is one call of ws unit. It holds the units of the specs in run order, ws's lines, which go
+// to stderr, the specs' directory and the directory mise runs in.
 type unitRun struct {
 	all  []kind.Unit
 	term *effect.Terminal
 	out  engine.Lines
 	dir  string
+	run  string
 }
 
-// runDir is the directory mise runs in for the side: the parent of the specs, whose mise/conf.d
-// links them. A run elsewhere loads none of their lines, so a failure for a line names it.
+// runDir is the directory mise runs in for the side, whose mise/conf.d links the specs. A run
+// elsewhere loads none of their lines, so a failure for a line names it.
 func (r unitRun) runDir() string {
-	return filepath.Dir(filepath.Clean(r.dir))
+	return r.run
 }
 
 // Unit returns ws unit: the units of ws's kinds, KIND/NAME, which a tool such as mise plans and
@@ -116,6 +120,7 @@ func loadUnits(c *cobra.Command, p Env, s UnitSide) (unitRun, error) {
 		dir = filepath.Join(p.Pwd, dir)
 	}
 	r.dir = dir
+	r.run = cmp.Or(s.RunDir, filepath.Dir(filepath.Clean(dir)))
 	specs := os.DirFS(dir)
 	// fs.Glob passes over a directory it cannot read, which would give no unit and no error.
 	if _, err := fs.Stat(specs, "."); err != nil {

@@ -282,7 +282,7 @@ ws at `/usr/local/bin/ws`, which is there before any run. The write hook runs `w
   the lines again before it installs, and leaves out those in sync. Where ws runs outside the
   run directory, each unit fails, in sync too. It calls no mise, as a check inside mise's own read
   would call the hook again.
-- **The run directory.** The failures of `verify` and `--whole` name the specs' parent, as
+- **The run directory.** The failures of `verify` and `--whole` name the side's run directory, the specs' parent where it names none, as
   `run mise in /opt/ws/roles/server`
   ([The check](../../../roles/server/ubuntu/frame/README.md#the-check-against-a-silent-skip)).
 - **Exit codes.** 0 done. 1 a failure: a spec or values that fail to load, a plan, an apply, a

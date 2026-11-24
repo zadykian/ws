@@ -1,18 +1,14 @@
 package cli_test
 
 import (
-	"context"
 	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/spf13/cobra"
-
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/cli/clitest"
-	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
@@ -43,15 +39,7 @@ func unitEnv(t *testing.T, specs map[string]string) (cli.Env, *effecttest.Machin
 // runUnit runs ws unit with args on a side of fixed values, and returns the status, stdout and
 // stderr.
 func runUnit(e cli.Env, args ...string) (status int, stdout, stderr string) {
-	side := cli.UnitSide{
-		Dir: "/nowhere",
-		Values: func(context.Context, effect.Machine) (any, error) {
-			return unitValues{User: "u"}, nil
-		},
-		Units: &effecttest.Units{},
-		Root:  true,
-	}
-	return clitest.Run(e, []*cobra.Command{cli.Unit(e, side)}, "", append([]string{"unit"}, args...)...)
+	return runUnitAt(e, "", args...)
 }
 
 // fileUnit is the spec of a file unit at path with the source name, after the unit after where
