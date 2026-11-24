@@ -23,6 +23,19 @@ func TestMiserc(t *testing.T) {
 	}
 }
 
+// A machine that takes the mode has its env after the side's, in the one set.
+func TestMisercNamesEachEnvOfTheSet(t *testing.T) {
+	var rc struct {
+		Sets map[string][]string `toml:"env_sets"`
+	}
+	if err := toml.Unmarshal(Miserc("host", SelfContained), &rc); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Join(rc.Sets["ws"], ",") != "host,self-contained" {
+		t.Errorf("the set ws = %v, want host and self-contained", rc.Sets["ws"])
+	}
+}
+
 func TestConfigTrustsTheTree(t *testing.T) {
 	var c struct {
 		Settings struct {

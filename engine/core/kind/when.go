@@ -185,9 +185,9 @@ func netInterface(_ context.Context, e Env, want string) (bool, error) {
 	return err == nil, err
 }
 
-// containerFact holds where the machine is a container, by the marks that inContainer reads.
+// containerFact holds where the machine is a container, by the marks that InContainer reads.
 func containerFact(_ context.Context, e Env, _ string) (bool, error) {
-	return inContainer(e.M), nil
+	return InContainer(e.M), nil
 }
 
 // anyWant holds for any want: the fact set's, which only an empty want turns off.

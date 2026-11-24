@@ -76,9 +76,13 @@ ws runs them by `KIND/NAME`, each moved behind the unit that its `after` names, 
 ## The machine's env
 
 The machine's miserc, `/etc/mise/miserc.toml`, names the envs that load as the set `ws`: `guest`
-on a guest, and `host` on a host. A run by `-E ws,secrets`, the secrets task's, adds the env
-`secrets` to the set, which no other run loads. `ws ubuntu guest setup` and `ws ubuntu host
-setup` each write the miserc.
+on a guest, and `host` on a host. The env `self-contained` joins it on a host, always. It joins it
+on a guest whose values set `WS_SELF_CONTAINED`. That is the mode where the machine runs SigNoz and
+ends its own tunnel, as a guest under a host takes both from the host. A guest outside a container
+must have it on, and setup refuses one that has not. A run by `-E ws,secrets`, the secrets task's,
+adds the env `secrets` to the set, which no other run loads. `ws ubuntu guest setup` and
+`ws ubuntu host setup` each write the miserc. A guest takes the mode at its next setup, not at its
+next bootstrap.
 
 The same commands write `/etc/mise/config.toml`, which trusts the tree: its `trusted_config_paths`,
 under `[settings]`, names `/opt/ws`, so that a run by hand needs no `mise trust`. mise reads that
