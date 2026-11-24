@@ -103,8 +103,9 @@ ip netns exec lab ip link set veth1 up
 ip netns exec lab ip link set lo up
 
 install -d -m 755 /etc/ws
-# The swap file is small, as the runner's disk has no room for one the size of its RAM.
-printf '%s\n' --- 'WS_BASE_SWAP_SIZE_MB: 64' >/etc/ws/values.yml
+# The swap file is small, as the runner's disk has no room for one the size of its RAM. The runner is
+# no container and has no host, so the guest runs SigNoz and its tunnel itself, as a cloud VM does.
+printf '%s\n' --- 'WS_BASE_SWAP_SIZE_MB: 64' 'WS_SELF_CONTAINED: true' >/etc/ws/values.yml
 chmod 600 /etc/ws/values.yml
 values_kept=$(mktemp)
 cp /etc/ws/values.yml "$values_kept"

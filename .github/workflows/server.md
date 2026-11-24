@@ -15,7 +15,9 @@ below 2.54 then. apt's daily timers lose the stamps of their runs at the image's
 build, as a new machine's have none before their first start. With them, systemd takes a run as
 missed at the boot. Each of the bootstrap's reloads draws the run's random delay again, and one
 soon falls in the past: an upgrade then holds dpkg's lock under the bootstrap. The runner's
-`/etc/ws/values.yml` sets a 64 MiB swap file, which base makes and swaps to, for the small disk. A
+`/etc/ws/values.yml` sets a 64 MiB swap file, which base makes and swaps to, for the small disk. It
+sets `WS_SELF_CONTAINED: true` too: the runner is no container and has no host, so the guest runs
+SigNoz and its tunnel itself, as setup demands of one ([signoz](../../ubuntu/roles/signoz/README.md#the-self-contained-mode)). A
 namespace holds a second network, `10.250.0.2`, which the cases reach published ports from. The
 cases are [server-checks.sh](../server-checks.sh). The refusal has a control, which
 runs after setup.
