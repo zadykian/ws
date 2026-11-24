@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/cli/clitest"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/kind"
@@ -30,8 +31,8 @@ var roleFiles = []string{"mise.guest.toml", "mise.secrets.toml"}
 
 // specNames returns the names of the units that the roles' specs give for v.
 func specNames(v values.Values) ([]string, error) {
-	e := kind.Env{M: effecttest.NewMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v, Self: selfPath}
-	units, err := kind.Load(e, os.DirFS(rolesDir))
+	e := kind.Env{M: effecttest.NewMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v, Side: "guest", Self: selfPath}
+	units, err := kind.Load(e, enginecli.SideRoles(os.DirFS(rolesDir), "mise.guest.toml"))
 	if err != nil {
 		return nil, err
 	}

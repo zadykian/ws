@@ -35,7 +35,8 @@ func UnitCmd(p enginecli.Env) *cobra.Command { return enginecli.Unit(p, unitSide
 
 // unitSide returns the server's side of ws unit, with its values read from vars.
 func unitSide(vars string) enginecli.UnitSide {
-	return enginecli.UnitSide{Dir: unitsDir, RunDir: runDir, Units: units.OSUnits{}, Root: true, Platform: ubuntu,
+	return enginecli.UnitSide{Name: "guest", RoleFile: "mise.guest.toml", Dir: unitsDir, RunDir: runDir,
+		Units: units.OSUnits{}, Root: true, Platform: ubuntu,
 		Values: func(_ context.Context, m effect.Machine) (any, error) {
 			return values.Load(m, vars)
 		},

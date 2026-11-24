@@ -286,6 +286,12 @@ ws at `/usr/local/bin/ws`, which is there before any run. The write hook runs `w
 - **The run directory.** The failures of `verify` and `--whole` name the side's run directory,
   the specs' parent where it names none, as `run mise in /opt/ws/ubuntu/guest`
   ([The check](../../../ubuntu/roles/frame/README.md#the-check-against-a-silent-skip)).
+- **The sides.** Ubuntu's `ws unit` serves two, the guest and the host, which share the specs'
+  directory. It picks the side whose run directory mise runs in. In any other it fails and names
+  both, as a side has its own values and a pick by anything else would read the wrong file. A
+  side's specs are those of the roles that hold its mise file, `mise.guest.toml` or
+  `mise.host.toml`. A unit with `when = { side = "host" }` is no unit of the guest's, so the
+  guest's file needs no line for it. The fact `side` is the side's name.
 - **Exit codes.** 0 done. 1 a failure: a spec or values that fail to load, a plan, an apply, a
   refused check, a SHA-256 or a skipped unit. `read` and `write` as a user other than root fail
   too. So do the server's on a system other than Ubuntu 26.04. 2 a usage error, such as a unit
