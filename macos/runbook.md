@@ -188,3 +188,15 @@ of its guests tries it at its own port.
 - The server's lease, made static, and the router's forwards where `WS_REMOTE` is set
   ([The router](../ubuntu/roles/cable/router.md)).
 - git's signing key on GitHub, and ws's in `@zadykiand`'s settings, which no run adds.
+- A reboot and a log out after the first run: the Dock, Finder and sounds read their preferences
+  at the next log out, and Logi's installer asks a reboot.
+- Apple's sign-in, the language and region, FileVault, the apps' licences and the privacy
+  permissions that an app asks for.
+- The menu bar, Translate for Safari, and Logi's and Safari's settings.
+- GPG's and the YubiKey's keys ([devtools](roles/devtools/README.md)).
+- The screen saver, Macintosh, in System Settings › Screen Saver. macOS keeps the choice in a
+  file that Apple documents nowhere, so no unit sets it.
+- `colima start`, as the machine's size and its start at login are the user's
+  ([docker](roles/docker/README.md)).
+- The upgrades. Setup installs each cask and formula at its latest and never upgrades it:
+  `mise -C /opt/ws/macos -E ws,apps bootstrap packages upgrade` does, as the user.
