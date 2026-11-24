@@ -73,3 +73,15 @@ func (c start) Apply(ctx context.Context) error {
 	_, err := c.r.M.Run(ctx, "incus", "start", c.r.Name)
 	return err
 }
+
+// Remove deletes the instance of a guest, with its disk and snapshots. The caller has checked that
+// the instance is a guest of ws's, which takes the profile ws.
+func Remove(ctx context.Context, m effect.Machine, name string) error {
+	_, err := m.Run(ctx, "incus", "delete", "--force", name)
+	return err
+}
+
+// IsGuest reports whether the instances hold a guest of ws's called name: one with the profile ws.
+func IsGuest(all []Instance, name string) bool {
+	return slices.ContainsFunc(all, func(i Instance) bool { return i.Name == name && slices.Contains(i.Profiles, ProfileName) })
+}

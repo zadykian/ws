@@ -87,7 +87,7 @@ func Guests(ctx context.Context, m effect.Machine, guests []values.Guest, out ef
 			return nil, err
 		}
 		steps = append(steps, Guest(m, g, own, alias), Running{M: m, Name: g.Name})
-		steps = append(steps, SetUp(m, g, false, out)...)
+		steps = append(steps, SetUp(m, g, false, false, out)...)
 	}
 	return steps, nil
 }
@@ -97,12 +97,12 @@ const guestValuesPath = "/etc/ws/values.yml"
 
 // SetUp returns the resources that set a running guest up: ws's binary and the guest's own values
 // pushed, then the guest's setup. The values file is the guest's own on the host, and is pushed
-// where the host holds one. The setup is due where the guest's own plan is, and secrets adds the
-// task that clones the secrets. What the setup prints goes to out.
-func SetUp(m effect.Machine, g values.Guest, secrets bool, out effect.Out) []resource.Resource {
+// where the host holds one. The setup is due where the guest's own plan is, or always with force,
+// and secrets adds the task that clones the secrets. What the setup prints goes to out.
+func SetUp(m effect.Machine, g values.Guest, secrets, force bool, out effect.Out) []resource.Resource {
 	return []resource.Resource{
 		Pushed{M: m, Guest: g.Name, From: wsInGuest, To: wsInGuest, Mode: "0755"},
 		Pushed{M: m, Guest: g.Name, From: g.File(), To: guestValuesPath, Mode: "0600", Optional: true},
-		Setup{M: m, Name: g.Name, Secrets: secrets, Out: out},
+		Setup{M: m, Name: g.Name, Secrets: secrets, Force: force, Out: out},
 	}
 }
