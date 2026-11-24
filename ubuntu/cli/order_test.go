@@ -12,7 +12,7 @@ import (
 // before fails the test where a unit of first does not run ahead of every unit of then, in the
 // units' order.
 func before(t *testing.T, first string, then ...string) {
-	names := specLines(t, defaults(t))
+	names := specLines(t, "guest", defaults(t))
 	i := slices.Index(names, first)
 	for _, n := range then {
 		if j := slices.Index(names, n); i < 0 || j < 0 || i > j {
