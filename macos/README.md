@@ -10,7 +10,8 @@ Zed stay open as the Mac moves between the cable, the LAN and elsewhere, with a 
 ([Zed](../ubuntu/roles/zed/README.md#when-the-connection-drops)). What it gives up: `ssh ws` fails where UDP is blocked and
 while the tunnel is down, and bulk copies run at wireguard-go's speed. To reach ws by hand, give ssh
 a direct way: `ssh -o HostName=ADDRESS -o Port=PORT ws`, as sshd takes a login on every interface.
-`WS_REMOTE_PORT` and the router's forward stay for that and for setup.
+`WS_REMOTE_PORT` and the router's forward stay for that and for setup. A guest has no direct way,
+as nothing forwards TCP to it: the Mac reaches its host first, which runs the guest's commands.
 
 The Mac's side is mise's config and ws's units, as the server's is, which `go test` checks on each
 pull request. It runs as the user, with sudo where it needs root. `mise bootstrap` sets up Ghostty,
@@ -169,6 +170,17 @@ make the Mac the server's peer, with that key as MAC_PUBLIC_KEY. They go over a 
 ```sh
 ssh -o HostName=ADDRESS -o Port=PORT NAME "printf '%s\n' 'MAC_PUBLIC_KEY' | tee /etc/wireguard/mac.pub >/dev/null"
 ssh -o HostName=ADDRESS -o Port=PORT NAME ws ubuntu guest setup
+```
+
+A guest's tunnel ends on its host, which holds the interface's key and its peers. So the same two
+commands go to the host, with the guest's slot N: the Mac's key goes in `/etc/wireguard/wgN/mac.pub`
+there, and the host's setup makes the interface. Its check prints the interface's public key, which
+is the guest's `WS_PUBLIC_KEY`. ADDRESS and PORT reach the host, as the guest has no address:
+
+```sh
+ssh -o HostName=ADDRESS -o Port=PORT HOST "install -d -m 700 /etc/wireguard/wgN && printf '%s\n' 'MAC_PUBLIC_KEY' | tee /etc/wireguard/wgN/mac.pub >/dev/null"
+ssh -o HostName=ADDRESS -o Port=PORT HOST ws ubuntu host setup
+ssh -o HostName=ADDRESS -o Port=PORT HOST ws ubuntu host tunnel guests check
 ```
 
 With ws's key as `WS_PUBLIC_KEY`, the bootstrap installs the tunnel's daemon. A new

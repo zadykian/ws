@@ -23,10 +23,15 @@ files](values/README.md#the-two-files)). The files' check refuses a clash.
 
 1. Pick a slot, 0 to 15, that no server has: `WS_SLOT`.
 2. Pick the ports: 51820 for the tunnel and 22022 for the router's forward to ws's 22. Where
-   `WS_REMOTE` repeats on another server, add the slot to each.
+   `WS_REMOTE` repeats on another server, add the slot to each. A guest's `WS_REMOTE` is its host's:
+   it takes a `WS_TUNNEL_PORT` of its own and no `WS_REMOTE_PORT`.
 3. Set the rest that differs from its default: `WS_TARGET`, `WS_LAN`, `WS_LAN_ADDRESS`,
    `WS_REMOTE`, `WS_REMOTE_PORT`, `WS_TUNNEL_NETWORKS` and `WS_RESOLVERS`. The
    [router's page](../ubuntu/roles/cable/router.md) gives the LAN's defaults.
+4. For a guest of a host, write the host's file first, the host being a server too, at slot 0.
+   The guest's file holds `WS_HOST` with the host's name, its slot from 1, its `WS_TUNNEL_PORT` and
+   what it routes, and none of the keys above that name a way
+   ([A guest](values/README.md#a-guest)).
 
 ## The bootstrap
 
@@ -96,6 +101,9 @@ before it. A cloud VM takes the keys its provider holds, which must be the accou
 
 ## ws's host key
 
+A guest has none to read: the host answers for it, and `ws macos secrets add NAME` records the
+guest's key. Read the host's, as below.
+
 1. Read ws's key with `ssh-keyscan -t ed25519 ADDRESS`, ADDRESS being ws's LAN address, or the
    router's name and port off the LAN. A new ws has a lease from the router's pool.
 2. At ws's console, `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` prints ws's own
@@ -108,7 +116,8 @@ before it. A cloud VM takes the keys its provider holds, which must be the accou
 Log in with `ssh -o HostName=ADDRESS NAME`, as the tunnel is not up yet. It must log in as root by
 the Mac's key, which root took from GitHub ([The server's runbook](../ubuntu/runbook.md)). A cloud
 image whose root refuses a login takes `disable_root: false` and `users: []` in its cloud-config.
-Where ssh names another host key, drop the old one with `ssh-keygen -R NAME`.
+Where ssh names another host key, drop the old one with `ssh-keygen -R NAME`. A guest has no
+login before its tunnel: log in to its host, which runs `incus exec NAME -- bash` for it.
 
 ## ws on ws
 
@@ -116,14 +125,17 @@ Where ssh names another host key, drop the old one with `ssh-keygen -R NAME`.
    [the server's runbook](../ubuntu/runbook.md) says. At slot N other than 0, set
    `WS_TUNNEL_ADDRESS` to `10.99.N.1/24`, `WS_TUNNEL_PORT` to the Mac's, and
    `WS_TUNNEL_PEERS` to `mac` at `10.99.N.2`
-   ([The tunnel](../ubuntu/roles/tunnel/README.md#the-tunnel)).
+   ([The tunnel](../ubuntu/roles/tunnel/README.md#the-tunnel)). A guest's go in its own values on
+   its host, `/etc/ws/guests/NAME/values.yml`.
 2. Run `install.sh` by the three lines of [Install](../.github/workflows/release.md#install),
    `set -o pipefail` among them, and then `ws ubuntu guest setup`. Check ws with `ws version`.
-3. Run `ws macos secrets add NAME --address ADDRESS`, with `--port PORT` off the LAN. It
-   adds ws's host key to the secrets and as the repository's deploy key, with the Nano's PIN and a
-   touch. It then runs the server's bootstrap with the secrets over `ssh -t`. A first run takes 20
-   to 40 minutes, and a dropped ssh ends it: run the command again. `ws macos secrets init`
-   runs once before, as [The secrets](#the-secrets) says
+3. For a guest, run the host's setup first and the guest's through it
+   ([The guests of a host](../ubuntu/runbook.md#the-guests-of-a-host)). Run
+   `ws macos secrets add NAME --address ADDRESS`, with `--port PORT` off the LAN, ADDRESS being
+   the host's for a guest. It adds ws's host key to the secrets and as the repository's deploy
+   key, with the Nano's PIN and a touch. It then runs the server's bootstrap with the secrets
+   over `ssh -t`. A first run takes 20 to 40 minutes, and a dropped ssh ends it: run the command
+   again. `ws macos secrets init` runs once before, as [The secrets](#the-secrets) says
    ([ws macos secrets add](roles/secrets/README.md#ws-macos-secrets-add)).
 
 ## claude
@@ -142,7 +154,9 @@ would show a commit that ws signs under the maintainer's email as verified.
 
 1. Copy the Mac's `/etc/ws/tunnel.pub` to ws's `/etc/wireguard/mac.pub`, as root, and run the
    server's bootstrap there, as [its runbook](../ubuntu/runbook.md) says
-   ([The tunnel](../ubuntu/roles/tunnel/README.md#the-tunnel)).
+   ([The tunnel](../ubuntu/roles/tunnel/README.md#the-tunnel)). For a guest, copy it to its host's
+   `/etc/wireguard/wgN/mac.pub`, N the guest's slot, and run the host's setup
+   ([The Mac's tunnel](README.md#the-macs-tunnel)).
 2. Put wg0's public key, which that page names, in `WS_PUBLIC_KEY` of the server's `values.yml`.
 3. Run `ws macos setup` again, and allow ws-tunnel in the Background.
 4. Ping the server's tunnel address, `10.99.N.1` for slot N, and run `ssh NAME`. A handshake must
@@ -150,7 +164,8 @@ would show a commit that ws signs under the maintainer's email as verified.
 
 ## The cable
 
-Skip it on a cloud VM.
+Skip it on a cloud VM. A guest follows its host's: the host's file alone names the cable, and each
+of its guests tries it at its own port.
 
 1. Dock the Mac. At ws, list the wired ports with their carrier: `ip -br link` and `ip -br addr`.
 2. Set `WS_CABLE_PORT` at ws, and `WS_CABLE_SERVICE` on the Mac. `networksetup
