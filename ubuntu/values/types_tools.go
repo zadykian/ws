@@ -7,6 +7,14 @@ type Zed struct {
 	Nofile int `yaml:"WS_ZED_NOFILE"`
 }
 
+// Nvidia is roles/nvidia's keys.
+type Nvidia struct {
+	// GPU is a guest's switch for the host's NVIDIA card. The host reads it from the guest's own
+	// file and gives the guest the card. In a container, the role then installs the userspace
+	// alone. A host's own file takes no such key.
+	GPU bool `yaml:"WS_NVIDIA_GPU"`
+}
+
 // Ikeward is roles/ikeward's keys.
 type Ikeward struct {
 	// Profile is the IKEv2 profile's .p12 file. Empty, the role does nothing.

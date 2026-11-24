@@ -27,6 +27,7 @@ type Values struct {
 	Docker  Docker  `yaml:",inline"`
 	Ikeward Ikeward `yaml:",inline"`
 	Git     Git     `yaml:",inline"`
+	Nvidia  Nvidia  `yaml:",inline"`
 	Signoz  Signoz  `yaml:",inline"`
 	Tunnel  Tunnel  `yaml:",inline"`
 	Zed     Zed     `yaml:",inline"`

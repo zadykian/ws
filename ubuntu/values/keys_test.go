@@ -23,7 +23,7 @@ func TestKeysHoldEachKindAndNoTable(t *testing.T) {
 	}
 	for name, want := range map[string]Kind{
 		"WS_BASE_TIMEZONE": Text, "WS_BASE_SWAPPINESS": Number, "WS_BASE_SWAP_SIZE_MB": Number,
-		"WS_IKEWARD_DOMAINS": List, "WS_ZED_NOFILE": Number,
+		"WS_IKEWARD_DOMAINS": List, "WS_ZED_NOFILE": Number, "WS_NVIDIA_GPU": Switch,
 	} {
 		if got, ok := kinds[name]; !ok || got != want {
 			t.Errorf("%s: kind = %v, %t, want %v", name, got, ok, want)
