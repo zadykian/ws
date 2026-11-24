@@ -45,11 +45,12 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: The words, warnings and update checks
+      - name: The words, warnings, update and real-machine checks
         run: |
           sh .github/words-check-test.sh
           .github/warnings-check-test.sh
           .github/update-checks-test.sh
+          ubuntu/checks/checks-test.sh
       - name: make lint
         run: make lint
         env:
@@ -106,7 +107,8 @@ jobs:
   # The host's setup, as server is the guest's. It runs ws ubuntu host setup on the tree twice, on a
   # booted runner. Then it runs the cases of host-checks.sh. As a try, continue-on-error keeps its
   # failure from failing release.yml's call or a pull request's checks. That holds until a run
-  # shows that the job passes. Gated as server.
+  # shows that the job passes. Gated as server. Its pool is a loop device, and its one guest stops
+  # the second part of the run, as host-checks.sh says.
   host:
     if: >-
       (github.event.action != 'opened' || !github.event.pull_request.draft) &&
@@ -116,7 +118,7 @@ jobs:
       github.event.repository.default_branch)
     continue-on-error: true
     runs-on: ubuntu-26.04
-    timeout-minutes: 30
+    timeout-minutes: 40
     permissions:
       contents: read
     steps:

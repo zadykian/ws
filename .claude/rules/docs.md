@@ -39,6 +39,9 @@ What each document holds. How to write them is in the `writing` skill and [writi
   repository: its files, its recipients and the inputs of ws's roles. [The router](../../ubuntu/roles/cable/router.md)
   is the router's steps, taken once by hand. [The Mac's runbook](../../macos/runbook.md)
   and [the server's](../../ubuntu/runbook.md) are each side's steps by hand.
+- [The real machine's checks](../../ubuntu/checks/README.md) list what a person runs on a host, its
+  guests, the Mac and the LAN, with the scripts beside the page. [builders.md](../../ubuntu/checks/builders.md)
+  holds the open points that the builds left.
 - [The kind package's README](../../engine/core/kind/README.md) says what a unit and a kind are:
   the spec, each kind's fields, and where the specs sit.
 - [release.md](../../.github/workflows/release.md), beside `release.yml`, says how to install ws,

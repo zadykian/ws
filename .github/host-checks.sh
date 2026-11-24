@@ -2,7 +2,8 @@
 # The host job's cases, as root on a runner that booted (.github/workflows/README.md#the-host-job).
 # They check the host's setup on a booted machine. It runs twice, and the second changes nothing.
 # Fans stay off where the board is not theirs. ufw holds SSH and Docker's rules for its resolver
-# and the collector, sshd takes keys alone, and a container resolves a name and sends OTLP. Run as
+# and the collector, sshd takes keys alone, and a container resolves a name and sends OTLP. Incus
+# holds its objects, on a pool on a loop device, and one declared guest runs. Run as
 # `host-checks.sh`, with .tools/install-build's ws in /usr/local/bin and the tree in /opt/ws, as
 # server-checks.sh has them.
 set -euo pipefail
@@ -42,9 +43,14 @@ ssh-keygen -q -t ed25519 -N '' -f "$keys/key"
 install -d -m 700 /root/.ssh
 install -m 600 "$keys/key.pub" /root/.ssh/authorized_keys
 
+# Incus's pool is a sparse file on a loop device, as the runner has no spare partition. ZFS makes the
+# pool on the device itself, which ws's values name as a host's installer leaves a partition.
+pool_file=/mnt/ws-pool.img
+truncate -s 4G "$pool_file"
+loop=$(losetup --find --show "$pool_file")
 # The swap file is small, as the runner's disk has no room for one the size of its RAM.
 install -d -m 755 /etc/ws
-printf '%s\n' --- 'WS_BASE_SWAP_SIZE_MB: 64' >/etc/ws/values.yml
+printf '%s\n' --- 'WS_BASE_SWAP_SIZE_MB: 64' "WS_INCUS_POOL_SOURCE: $loop" >/etc/ws/values.yml
 chmod 600 /etc/ws/values.yml
 # apt's daily timers keep the stamps of the image's build, which would start an upgrade under the
 # bootstrap, as server-checks.sh explains. A new machine has none.
@@ -87,3 +93,37 @@ must "ufw lets Docker's networks send OTLP to the collector's socket" \
 must "docker pulls the image" docker pull -q "$image"
 must "a container resolves a name through the bridge" docker run --rm "$image" nslookup example.com
 must "a container's OTLP reaches the collector on the bridge address" "$(dirname "$0")/otlp-checks.sh" "$image"
+
+# Incus holds the objects that the units made, each by the keys ws declares.
+must "Incus's pool is ZFS, on the loop device" \
+    bash -c "incus storage show ws | grep -q 'driver: zfs' && incus storage show ws | grep -qF 'volatile.initial_source: $loop'"
+must "the bridge is managed, at its default address" \
+    bash -c "incus network show incusbr0 | grep -qE 'managed: true' && incus network get incusbr0 ipv4.address | grep -qx 10.100.0.1/24"
+must "the bridge takes both ACLs" bash -c "incus network show incusbr0 | grep -q ws-egress && incus network show incusbr0 | grep -q ws-ingress"
+must "the profile ws holds the guests' proxy to SigNoz" bash -c "incus profile show ws | grep -q 'otlp:'"
+must "the image of the guests is imported" bash -c "incus image list --format csv | grep -q ws-ubuntu-26.04"
+must "the table of sources and its set are loaded" \
+    bash -c "nft list table bridge ws_sources | grep -q owned4 && nft list table ip ws_guest_out >/dev/null"
+must "ufw lets the guests' DHCP in on the bridge" \
+    bash -c "ufw show added | grep -qE 'allow in on incusbr0 .*port 67'"
+must "nothing loads br_netfilter" bash -c "! lsmod | grep -q '^br_netfilter'"
+
+# One declared guest. Its setup runs the pushed ws, which this job builds from the tree. That ws
+# names no release, so the guest refuses it, and the run fails there, after the guest exists. So
+# the plan stays due. Check 10 of ubuntu/checks/README.md shows a second run with a release.
+install -d -m 700 /etc/ws/guests/ci
+printf '%s\n' --- 'WS_TUNNEL_ADDRESS: 10.99.1.1/24' 'WS_TUNNEL_PORT: 51821' >/etc/ws/guests/ci/values.yml
+chmod 600 /etc/ws/guests/ci/values.yml
+printf '%s\n' 'WS_INCUS_GUESTS:' '  - {name: ci, address: 10.100.0.10, cpu: 1, memory: 1GiB, disk: 8GiB}' >>/etc/ws/values.yml
+log=$(mktemp)
+status=0
+/usr/local/bin/ws ubuntu host setup --in-place </dev/null >"$log" 2>&1 || status=$?
+tail -n 5 "$log"
+must "a run with a guest stops at the guest's own setup, which refuses this build" \
+    bash -c "[ $status -ne 0 ] && grep -q 'names no release tag' '$log'"
+must "the guest is launched and runs" bash -c "incus list ci --format csv -c s | grep -qx RUNNING"
+must "the guest takes the profile ws and its NIC's port" \
+    bash -c "incus config show ci | grep -q -- '- ws' && [ \"\$(incus config device get ci eth0 host_name)\" = ws-ci ]"
+must "the guest's address is in the table of sources" bash -c "nft list set bridge ws_sources owned4 | grep -qF 10.100.0.10"
+must "the ingress ACL lets the guest's tunnel peer in" bash -c "incus network acl show ws-ingress | grep -qF 10.99.1.2"
+must "ws lists the guest as running" bash -c "/usr/local/bin/ws ubuntu host guests list | grep -qE '^ci[[:space:]]+10.100.0.10[[:space:]]+Running'"
