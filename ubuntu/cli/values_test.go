@@ -10,7 +10,7 @@ import (
 
 func TestWriteVarsStartsTheFile(t *testing.T) {
 	m := effecttest.NewMachine()
-	if err := writeVars(m, []byte("---\n")); err != nil {
+	if err := writeVars(m, guestVars, []byte("---\n")); err != nil {
 		t.Fatal(err)
 	}
 	if got := string(m.Files[guestVars]); got != "---\n" {
@@ -26,7 +26,7 @@ func TestWriteVarsKeepsTheModeOfAFile(t *testing.T) {
 	m.Dirs["/etc/ws"] = 0o700
 	m.Files[guestVars] = []byte("---\n")
 	m.Modes[guestVars] = 0o640
-	if err := writeVars(m, []byte("---\nWS_BASE_LOCALE: C\n")); err != nil {
+	if err := writeVars(m, guestVars, []byte("---\nWS_BASE_LOCALE: C\n")); err != nil {
 		t.Fatal(err)
 	}
 	if m.Dirs["/etc/ws"] != 0o700 || m.Modes[guestVars] != 0o640 {

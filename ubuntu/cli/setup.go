@@ -99,7 +99,7 @@ func newSetupCmd(p enginecli.Env, cfg setupConfig) *cobra.Command {
 		if err := setup.CheckInstalled(c.Context(), p.Machine, p.Version); err != nil {
 			return err
 		}
-		if err := checkValues(p.Machine); err != nil {
+		if err := checkValues(p.Machine, guestValues); err != nil {
 			return err
 		}
 		steps, err := setupSteps(c.Context(), p.Machine, cfg, tag)
