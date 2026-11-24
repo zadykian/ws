@@ -54,7 +54,8 @@ file. It then does what a person did by hand, in this order:
    it opened Secretive, as one made for another use would go to GitHub. To take one, stop setup
    with Ctrl-C and run `ws macos setup --key NAME`, NAME being the name that the wait prints
    ([Secretive](roles/ssh/README.md#secretive)).
-5. It runs mise's bootstrap in `/opt/ws/macos`, which installs gh and sets up ssh, git, cld
+5. It runs mise's bootstrap in `/opt/ws/macos` with `--yes`, so that it asks nothing before it
+   writes the preferences and the login items. The bootstrap installs gh and sets up ssh, git, cld
    and the Mac's other roles ([The Mac's frame](roles/frame/README.md)). It makes the Mac's
    WireGuard key, whose public half is `/etc/ws/tunnel.pub`.
 
