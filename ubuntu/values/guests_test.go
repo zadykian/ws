@@ -3,6 +3,8 @@ package values
 import (
 	"strings"
 	"testing"
+
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 const twoGuests = `WS_INCUS_GUESTS:
@@ -62,5 +64,33 @@ func TestParseHostRefusesTwoGuestsThatShareANameOrAnAddress(t *testing.T) {
 		if _, err := ParseHost([]byte(data)); err == nil || !strings.Contains(err.Error(), "twice") {
 			t.Errorf("two guests with the same %s: ParseHost = %v, want it said twice", name, err)
 		}
+	}
+}
+
+func TestAGuestsOwnValuesLieOnTheHostByItsName(t *testing.T) {
+	g := Guest{Name: "lab"}
+	if got := g.File(); got != "/etc/ws/guests/lab/values.yml" {
+		t.Errorf("File = %s", got)
+	}
+	if got := g.Port(); got != "ws-lab" {
+		t.Errorf("Port = %s: the NIC's host name", got)
+	}
+}
+
+func TestReadGuestValuesParsesAGuestsFile(t *testing.T) {
+	m := effecttest.NewMachine()
+	g := Guest{Name: "lab"}
+	data, v, err := g.Read(m)
+	if err != nil || data != nil || v.Tunnel.Port != 51820 {
+		t.Errorf("a missing file: data = %q, port = %d, err = %v, want no data and the defaults", data, v.Tunnel.Port, err)
+	}
+	m.Files[g.File()] = []byte("WS_TUNNEL_PORT: 51822\n")
+	data, v, err = g.Read(m)
+	if err != nil || string(data) != "WS_TUNNEL_PORT: 51822\n" || v.Tunnel.Port != 51822 {
+		t.Errorf("a file: data = %q, port = %d, err = %v", data, v.Tunnel.Port, err)
+	}
+	m.Files[g.File()] = []byte("WS_NOPE: 1\n")
+	if _, _, err = g.Read(m); err == nil || !strings.Contains(err.Error(), g.File()) {
+		t.Errorf("a bad file: err = %v, want it to name the file", err)
 	}
 }

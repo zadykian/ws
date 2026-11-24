@@ -3,10 +3,21 @@ package values
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"net/netip"
+	"path"
 	"regexp"
 	"strings"
+
+	"github.com/zadykian/ws/engine/core/effect"
 )
+
+// GuestsDir holds a guest's own values on the host, in a folder of its name.
+const GuestsDir = "/etc/ws/guests"
+
+// portPrefix starts the host's name for a guest's NIC. The name is 15 bytes at most, so a guest's
+// name takes 12.
+const portPrefix = "ws-"
 
 var (
 	guestName = regexp.MustCompile(`^[a-z]([a-z0-9-]{0,10}[a-z0-9])?$`)
@@ -27,6 +38,29 @@ type Guest struct {
 	// Memory is the guest's memory limit, as 8GiB, and Disk its root disk's quota, as 200GiB.
 	Memory string `yaml:"memory"`
 	Disk   string `yaml:"disk"`
+}
+
+// File is the guest's own values on the host, which the host pushes into the guest.
+func (g Guest) File() string { return path.Join(GuestsDir, g.Name, "values.yml") }
+
+// Port is the name of the guest's NIC on the host, which the table of sources names.
+func (g Guest) Port() string { return portPrefix + g.Name }
+
+// Read returns the guest's own values, as its file holds them on the host, and the file's bytes.
+// A missing file gives no bytes and the defaults. A file that does not parse fails, naming it.
+func (g Guest) Read(m effect.Machine) ([]byte, Values, error) {
+	data, err := m.ReadFile(g.File())
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil, Default(), nil
+	}
+	if err != nil {
+		return nil, Values{}, err
+	}
+	v, err := Parse(data)
+	if err != nil {
+		return nil, Values{}, fmt.Errorf("%s: %w", g.File(), err)
+	}
+	return data, v, nil
 }
 
 // guestsCheck refuses a list that no guest could run by: each guest's fields, and no name or
