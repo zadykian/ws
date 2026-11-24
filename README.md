@@ -39,8 +39,8 @@ it has any:
 - [`devtools`](ubuntu/roles/devtools): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go,
   gopls, Delve, roslyn-language-server, the SQL, Docker and npm language servers, and rustup.
 - [`docker`](ubuntu/roles/docker): Docker Engine, its `daemon.json` and a slice for its containers.
-- [`incus`](ubuntu/roles/incus): Incus from Zabbly's repository on the host, with its ID range and
-  ZFS pool, as units.
+- [`incus`](ubuntu/roles/incus): Incus from Zabbly's repository on the host, with its ID range, ZFS
+  pool, bridge, egress ACL and the guests' profile, as units.
 - [`claude`](ubuntu/roles/claude): claude, its user settings and telemetry, its attribution off, its sessions after a
   reboot, and plugin marketplaces from a list.
 - [`signoz`](ubuntu/roles/signoz): SigNoz in Docker, which keeps the machine's telemetry for 90 days.
