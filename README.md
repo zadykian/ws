@@ -56,7 +56,8 @@ it has any:
 Its [`frame`](macos/roles/frame) is what the Mac's roles of mise's config lean on, and
 `/usr/local/bin/ws`. Its [`firewall`](macos/roles/firewall) turns the Application Firewall on
 and has it block all incoming. Its [`dotnet`](macos/roles/dotnet) installs .NET's SDKs, as `devtools` does on
-the server.
+the server. Its [`devtools`](macos/roles/devtools) installs Go and the command-line tools, and its
+[`docker`](macos/roles/docker) the command line of Docker and colima.
 
 A new Mac with Apple silicon follows [the Mac's runbook](macos/runbook.md). It runs
 `install.sh` through `sudo`, which installs ws's binary, checked against its SHA-256, and writes the

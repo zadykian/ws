@@ -1,0 +1,20 @@
+# Go, as a tool that the lock pins, for the compiler and the language server's own go. mise
+# installs it under the user's data directory, and a unit of ws's links /usr/local/go to it.
+[tools]
+go = "1.27.3"
+
+# The command-line tools, as mise's formulae, which need no Homebrew. A formula takes the latest
+# alone: Homebrew keeps the current bottle. gnupg and ykman bring their dependencies, which mise
+# pours with them. /etc/paths.d/ws puts /opt/homebrew/bin on a login shell's PATH.
+[bootstrap.packages]
+"brew:gnupg" = "latest"
+"brew:pinentry-mac" = "latest"
+"brew:pwgen" = "latest"
+"brew:ripgrep" = "latest"
+"brew:tokei" = "latest"
+"brew:tree" = "latest"
+"brew:ykman" = "latest"
+"ws:file/devtools-go" = "in-sync"
+"ws:file/devtools-path" = "in-sync"
+"ws:file/gpg-agent-conf" = "in-sync"
+"ws:state/gnupg-dir" = "in-sync"

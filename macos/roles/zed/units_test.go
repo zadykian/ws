@@ -19,7 +19,7 @@ const dir = "/Users/v/.config/zed"
 // with the lines they print.
 func macUnits(t *testing.T, m *effecttest.Machine, servers ...string) ([]kind.Unit, *effecttest.Out) {
 	fsys := fstest.MapFS{}
-	for _, name := range []string{"units.toml.tmpl", "files/global_settings.json", "files/keymap.json", "files/settings.json.tmpl", "files/paths"} {
+	for _, name := range []string{"units.toml.tmpl", "files/global_settings.json", "files/keymap.json", "files/settings.json.tmpl"} {
 		text, err := os.ReadFile(name) //nolint:gosec // a file of the role, named above
 		if err != nil {
 			t.Fatal(err)
@@ -29,7 +29,7 @@ func macUnits(t *testing.T, m *effecttest.Machine, servers ...string) ([]kind.Un
 	m.Results["id -u v"] = effecttest.Result{Out: []byte("501\n")}
 	m.Results["id -g v"] = effecttest.Result{Out: []byte("20\n")}
 	m.Results["dscl . -read /Users/v NFSHomeDirectory"] = effecttest.Result{Out: []byte("NFSHomeDirectory: /Users/v\n")}
-	m.Dirs["/Users/v"], m.Dirs["/etc/paths.d"] = 0o750, 0o755
+	m.Dirs["/Users/v"] = 0o750
 	m.Owners["/Users/v"] = [2]int{501, 20}
 	f := facts.Mac{User: "v", Home: "/Users/v"}
 	for _, s := range servers {
@@ -68,9 +68,6 @@ func TestZedSeedRenders(t *testing.T) {
 		if got := m.Files[dir+"/"+name]; string(got) != string(text) || m.Owners[dir+"/"+name] != [2]int{501, 20} {
 			t.Errorf("%s = %q, owner %v; want files/%s, v's", name, got, m.Owners[dir+"/"+name], name)
 		}
-	}
-	if got := string(m.Files["/etc/paths.d/ws"]); got != "/opt/homebrew/bin\n" || m.Owners["/etc/paths.d/ws"] != [2]int{} {
-		t.Errorf("/etc/paths.d/ws = %q, owner %v; want Homebrew's bin, root's", got, m.Owners["/etc/paths.d/ws"])
 	}
 	m.Files[dir+"/settings.json"] = []byte("{ \"theme\": \"mine\" }\n")
 	for _, u := range units {

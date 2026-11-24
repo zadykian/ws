@@ -10,10 +10,9 @@ mise installs Zed from the cask `zed` by its `brew-cask` backend, which needs no
 font that the settings name comes from [Ghostty's role](../ghostty/README.md). A cask takes the
 latest version alone, outside the SHA-256 rule of the downloads, and Zed then updates itself.
 
-The cask links `zed` into `/opt/homebrew/bin`. The unit `file.zed-path` writes `/etc/paths.d/ws`,
-whose one line is that directory. `/usr/libexec/path_helper` puts it on a login shell's `PATH`
-where Homebrew is not set up. `zed --version` prints `Zed X.Y.Z – /Applications/Zed.app`, with an
-en dash, and `zed ssh://ws/PATH` opens a project on ws.
+The cask links `zed` into `/opt/homebrew/bin`, which [devtools](../devtools/README.md#the-path)
+puts on a login shell's `PATH` where Homebrew is not set up. `zed --version` prints
+`Zed X.Y.Z – /Applications/Zed.app`, with an en dash, and `zed ssh://ws/PATH` opens a project on ws.
 
 ## The two files
 
