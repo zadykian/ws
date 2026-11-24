@@ -3,6 +3,7 @@ package keyboard_test
 import (
 	"os"
 	"reflect"
+	"strconv"
 	"testing"
 
 	"github.com/pelletier/go-toml/v2"
@@ -120,6 +121,54 @@ func TestTheHotkeysThatStayOn(t *testing.T) {
 		w.Path = []string{id}
 		if !reflect.DeepEqual(got[id], w) {
 			t.Errorf("hotkey %s = %+v, want %+v", id, got[id], w)
+		}
+	}
+}
+
+// TestTheHotkeysThatGoOff holds each ID to a path of its `enabled` key alone. That keeps the
+// hotkey's value, so that it comes back on with the key it had, and an ID that macOS lacks gets a
+// dictionary with `enabled` alone. 34 and 98 stay as macOS has them, and no ID is on and off.
+func TestTheHotkeysThatGoOff(t *testing.T) {
+	var want []string
+	for _, r := range [][2]int{
+		{7, 13}, {21, 21}, {25, 27}, {32, 33}, {36, 36}, {52, 54}, {57, 57}, {59, 60}, {65, 65},
+		{159, 159}, {162, 162}, {164, 164}, {175, 175}, {190, 190}, {215, 219}, {222, 233},
+		{235, 235}, {237, 251}, {256, 258}, {260, 260},
+	} {
+		for id := r[0]; id <= r[1]; id++ {
+			want = append(want, strconv.Itoa(id))
+		}
+	}
+	got := map[string]entry{}
+	for id, e := range hotkeys(t) {
+		if len(e.Path) == 2 {
+			got[id] = e
+		}
+	}
+	if len(got) != len(want) {
+		t.Errorf("%d hotkeys go off, want %d", len(got), len(want))
+	}
+	for _, id := range want {
+		e, ok := got[id]
+		if !ok {
+			t.Errorf("hotkey %s has no entry that turns it off", id)
+		} else if !reflect.DeepEqual(e.Path, []string{id, "enabled"}) || e.Value != false {
+			t.Errorf("hotkey %s = %+v, want path [%s enabled] and false", id, e, id)
+		}
+	}
+	// The three that stay on have a path of the ID alone: no other entry, and none deeper.
+	all := hotkeys(t)
+	if len(all) != len(want)+3 {
+		t.Errorf("%d hotkeys have an entry, want %d", len(all), len(want)+3)
+	}
+	for id, e := range all {
+		if len(e.Path) > 2 {
+			t.Errorf("hotkey %s has the path %v, deeper than its enabled key", id, e.Path)
+		}
+	}
+	for _, id := range []string{"34", "98"} {
+		if _, ok := all[id]; ok {
+			t.Errorf("hotkey %s has an entry, and none is wanted", id)
 		}
 	}
 }
