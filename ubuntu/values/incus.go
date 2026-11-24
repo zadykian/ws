@@ -39,6 +39,15 @@ func inPrivateRanges(subnet netip.Prefix) bool {
 // sources drops a guest's claim on it.
 const tunnelSlots = "10.99.0.0/20"
 
+// BridgeSubnet is the bridge's subnet, as 10.100.0.0/24, which its address gives. A template reads
+// it, so a file names the range that the values set.
+func (i Incus) BridgeSubnet() string {
+	return netip.MustParsePrefix(i.BridgeAddress).Masked().String()
+}
+
+// TunnelSlots is the range of the tunnel's slots, which a guest may not claim as its source.
+func (Incus) TunnelSlots() string { return tunnelSlots }
+
 // defaultIncus is what a host runs with where its file names none: a bridge at 10.100.0.1/24, and
 // public resolvers.
 func defaultIncus() Incus {

@@ -72,3 +72,13 @@ func TestIncusKeysAreTheHostsAlone(t *testing.T) {
 		}
 	}
 }
+
+func TestIncusRangesAreWhatATemplateNames(t *testing.T) {
+	i := Incus{BridgeAddress: "10.100.4.9/22"}
+	if got := i.BridgeSubnet(); got != "10.100.4.0/22" {
+		t.Errorf("BridgeSubnet = %s, want the subnet of the address", got)
+	}
+	if got := i.TunnelSlots(); got != "10.99.0.0/20" {
+		t.Errorf("TunnelSlots = %s", got)
+	}
+}
