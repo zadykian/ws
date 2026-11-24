@@ -28,7 +28,7 @@ type UnitSide struct {
 	// Dir is the root of the side's specs, DIR/ROLE/units.toml.tmpl, where WS_UNITS names none.
 	Dir string
 	// RunDir is the directory mise runs in, which holds the side's conf.d link, lock and tasks.
-	// Empty is the parent of Dir.
+	// Empty is the parent of Dir. It tells the sides of one ws unit apart, so each names its own.
 	RunDir string
 	// Values loads the side's values.
 	Values func(ctx context.Context, m effect.Machine) (any, error)
@@ -69,24 +69,35 @@ func (r unitRun) runDir() string {
 	return r.run
 }
 
+// sides are the sides that one ws unit serves.
+type sides []UnitSide
+
+// pick returns the side that serves a run in pwd.
+func (ss sides) pick(string) (UnitSide, error) { return ss[0], nil }
+
 // Unit returns ws unit: the units of ws's kinds, KIND/NAME, which a tool such as mise plans and
 // applies through it.
 func Unit(p Env, s UnitSide) *cobra.Command {
+	ss := sides{s}
 	return Group("unit", "plan and apply the units of ws's kinds, KIND/NAME, for mise",
-		unitList(p, s), unitRead(p, s), unitWrite(p, s), unitVerify(p, s))
+		unitList(p, ss), unitRead(p, ss), unitWrite(p, ss), unitVerify(p, ss))
 }
 
 // unitList returns ws unit list.
-func unitList(p Env, s UnitSide) *cobra.Command {
+func unitList(p Env, ss sides) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "list",
 		Short: "print each unit, KIND/NAME, in the order the units run",
-		Long: "The specs are each units.toml.tmpl one level below WS_UNITS, or below " + s.Dir + " where it is " +
+		Long: "The specs are each units.toml.tmpl one level below WS_UNITS, or below " + ss[0].Dir + " where it is " +
 			"unset. --toml prints each unit as a line of mise's [bootstrap.packages].",
 		Args: cobra.NoArgs,
 	}
 	asTOML := c.Flags().Bool("toml", false, "print the units as lines of mise's [bootstrap.packages]")
 	c.RunE = func(c *cobra.Command, _ []string) error {
+		s, err := ss.pick(p.Pwd)
+		if err != nil {
+			return err
+		}
 		r, err := loadUnits(c, p, s)
 		defer r.term.Flush()
 		if err != nil {
