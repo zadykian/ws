@@ -1,5 +1,5 @@
 # tunnel's units: wg0, the server's end of a WireGuard tunnel for the Mac, from networkd's own
-# files. Then the drops that keep Docker's containers off the Mac. README.md says why each stands.
+# files. README.md says why each stands.
 
 # Refuses a networkd that does not run, and a peer's key file that holds no key, before wg0's key and
 # files change. It names each peer left out, and says the server's public key.
@@ -33,30 +33,3 @@ template = "60-wg0.network.tmpl"
 [state.tunnel-wg0]
 after = "service/tunnel"
 run = { user = "root", command = ["{{ self }}", "ubuntu", "guest", "tunnel", "wg0"], check = ["{{ self }}", "ubuntu", "guest", "tunnel", "wg0", "--check"] }
-
-# UDP on the tunnel's port, on every interface: the Mac reaches it over the cable, the LAN and the
-# router's forward. A rule of the comment in that shape for another port goes. One made by hand in
-# another shape, as on wg0 or for TCP, stays.
-[state.tunnel-port]
-after = "guard/tunnel"
-
-[state.tunnel-port.ufw]
-comment = "WireGuard"
-owns = { action = "allow", proto = "udp", to = "any", from_port = "any", dir = "in", interface = "" }
-rules = [{ action = "allow", proto = "udp", to_port = "{{ .Tunnel.Port }}", dir = "in" }]
-
-# The drops that keep Docker's containers off the Mac, through wg0 and the cable. Docker wants the
-# unit, which runs the script before Docker starts.
-[service.tunnel-drops]
-unit = "wireguard-docker-user.service"
-enabled = true
-run = "running"
-
-[[service.tunnel-drops.file]]
-path = "/usr/local/lib/ws/wireguard/docker-user.sh"
-mode = 0o755
-source = "docker-user.sh"
-
-[[service.tunnel-drops.file]]
-path = "/etc/systemd/system/wireguard-docker-user.service"
-template = "wireguard-docker-user.service.tmpl"

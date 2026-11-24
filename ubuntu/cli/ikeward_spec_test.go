@@ -9,7 +9,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/kind"
-	"github.com/zadykian/ws/engine/core/resource/ufw"
 )
 
 const (
@@ -18,8 +17,8 @@ const (
 	ikewardPeer = ikewardValues + "WS_IKEWARD_FORWARD_FROM: [10.99.0.2]\n"
 )
 
-// ikewardUnits are ikeward's seven units.
-var ikewardUnits = []string{"guard/ikeward", "binary/ikeward", "file/ikeward-sysctl", "state/ikeward-forward",
+// ikewardUnits are ikeward's six units.
+var ikewardUnits = []string{"guard/ikeward", "binary/ikeward", "file/ikeward-sysctl",
 	"state/ikeward-install", "state/ikeward-status", "state/ikeward-sysctl"}
 
 func TestIkewardSpecOffWithoutProfile(t *testing.T) {
@@ -60,35 +59,6 @@ func TestIkewardSysctlAbsentWithoutPeers(t *testing.T) {
 	if want := "say: state/ikeward-sysctl: off on this machine, as its when gives no set"; applyUnit(t, units, "state/ikeward-sysctl") != nil ||
 		!slices.Contains(out.Lines, want) {
 		t.Errorf("said %q, want %q", out.Lines, want)
-	}
-}
-
-func TestIkewardForwardRules(t *testing.T) {
-	m := effecttest.NewMachine()
-	// The peer 10.99.0.9 is no longer listed; ikeward is 696b6577617264 in hex.
-	m.Files[ufw.UserRules] = []byte("### tuple ### route:allow any any 0.0.0.0/0 any 10.99.0.9 in_wg0!out_ikeward0 comment=696b6577617264\n")
-	units, _ := cableUnits(t, m, ikewardPeer)
-	steps := map[string]kind.Unit{}
-	for _, u := range units {
-		steps[u.Name] = u
-	}
-	p, err := steps["state/ikeward-forward"].Step.Plan(t.Context())
-	if err != nil {
-		t.Fatal(err)
-	}
-	var got []string
-	for _, c := range p.Changes {
-		got = append(got, c.(interface{ String() string }).String())
-	}
-	want := []string{"ufw route allow in on wg0 out on ikeward0 from 10.99.0.2 to any",
-		"ufw route delete allow in on wg0 out on ikeward0 from 10.99.0.9 to any"}
-	if !slices.Equal(got, want) {
-		t.Errorf("plan %q, want %q", got, want)
-	}
-	m.Results["ufw --force route delete allow in on wg0 out on ikeward0 from 10.99.0.9 to any comment ikeward"] = effecttest.Result{}
-	units, _ = cableUnits(t, m, ikewardValues)
-	if got := applyUnit(t, units, "state/ikeward-forward"); len(got) != 1 || !strings.Contains(got[0], "delete") {
-		t.Errorf("no peer: plan %q, want the rule deleted", got)
 	}
 }
 
@@ -136,7 +106,6 @@ func TestIkewardOrder(t *testing.T) {
 		{"binary/ikeward", "state/ikeward-install"},
 		{"state/ikeward-install", "state/ikeward-status"},
 		{"file/ikeward-sysctl", "state/ikeward-sysctl"},
-		{"state/ikeward-sysctl", "state/ikeward-forward"},
 	} {
 		if at(pair[0]) < 0 || at(pair[0]) > at(pair[1]) {
 			t.Errorf("%s runs at %d, after %s at %d", pair[0], at(pair[0]), pair[1], at(pair[1]))

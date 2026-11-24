@@ -15,23 +15,12 @@ template = "files/resolved.conf.tmpl"
 service = "systemd-resolved.service"
 after = "state/docker-routes"
 
-# ufw lets Docker's networks reach that resolver through their bridges, whatever their subnets.
-[state.docker-dns]
-after = "file/docker-resolved"
-
-[state.docker-dns.ufw]
-comment = "DNS from containers"
-rules = [
-  { action = "allow", proto = "any", to = "{{ .Docker.BridgeIP }}", to_port = "53", from = "0.0.0.0/0", from_port = "any", dir = "in", interface = "docker0" },
-  { action = "allow", proto = "any", to = "{{ .Docker.BridgeIP }}", to_port = "53", from = "0.0.0.0/0", from_port = "any", dir = "in", interface = "br-+" },
-]
-
 # The limits are over dockerd and its containers together: the values', or half the RAM and the
 # CPUs. docker.service's drop-in puts dockerd in the slice, so a change here waits for its restart.
 [file.docker-slice]
 path = "/etc/systemd/system/docker.slice"
 template = "files/docker.slice.tmpl"
-after = "state/docker-dns"
+after = "file/docker-resolved"
 
 # One restart for both files, which live-restore carries the running containers past. dockerd
 # checks daemon.json before it replaces the live one.

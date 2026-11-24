@@ -7,7 +7,7 @@ units ([The frame](../frame/README.md)):
 | File | What it holds |
 | --- | --- |
 | [`mise.guest.toml`](mise.guest.toml) | Docker's apt source, the packages, and the units of every server. |
-| [`units.toml.tmpl`](units.toml.tmpl) | The units: the route check, the resolver, ufw's rules, the slice, Docker's service, the forward policy, and the check of `docker0`. |
+| [`units.toml.tmpl`](units.toml.tmpl) | The units: the route check, the resolver, the slice, Docker's service, the forward policy, and the check of `docker0`. |
 | [`files/`](files) | The templates and files that the units write. |
 
 mise takes Docker's apt key only where its primary fingerprint is the one that the source pins,
@@ -36,11 +36,8 @@ in systemd's syntax (`16G`, `400%`). A running container moves into the slice wh
 ## Names
 
 Containers resolve names as the host does. The `dns` of `daemon.json` is the default bridge's
-address, `172.17.0.1` (`WS_DOCKER_BRIDGE_IP`), where systemd-resolved listens too. ufw lets Docker's
-networks reach port 53 there through their bridges, `docker0` and `br-ID`, whatever their subnets.
-A network given a bridge name of its own gets no answers. A running container takes the new `dns`
-when it next starts. The unit `state/docker-dns` owns every ufw rule with the comment
-`DNS from containers`, so it deletes the rules it gave for a former `WS_DOCKER_BRIDGE_IP`.
+address, `172.17.0.1` (`WS_DOCKER_BRIDGE_IP`), where systemd-resolved listens too. A running
+container takes the new `dns` when it next starts.
 
 `docker0` takes a new `WS_DOCKER_BRIDGE_IP` or `WS_DOCKER_BRIDGE_PREFIX_LENGTH` only when Docker starts
 with no container running, as after a reboot. Until then lookups to a new address get no answers,
@@ -66,14 +63,8 @@ A port published without an address, as in `-p 8080:80` or compose's `"8080:80"`
 for the default bridge, and `default-network-opts` for each network created afterwards. A network
 created before keeps publishing on every address until created again, as by
 `docker compose down` and `up`. The default bridge takes `ip` when Docker starts with no container
-running, as after a reboot. Docker's published ports get past ufw:
-[SSH and the firewall](../security/README.md#ssh-and-the-firewall).
-
-## Outbound
-
-Unless `WS_SECURITY_OUTBOUND` is false, a container reaches no host of the LAN, the cable or `wg0`,
-nor of another private network around the server. The `security` role's table drops what it
-starts there, so a TCP connect hangs ([Outbound](../security/README.md#outbound)).
+running, as after a reboot. A port published on another address, as in `-p 0.0.0.0:8080:80`, is
+open to every network the machine is on.
 
 ## The forward policy
 
