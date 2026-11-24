@@ -56,3 +56,12 @@ func TestUnitInNoRunDirectoryNamesThem(t *testing.T) {
 		t.Errorf("list: status = %d, stderr = %q; want the run directories named", status, stderr)
 	}
 }
+
+func TestUnitReadWholeInNoRunDirectoryFailsEachUnit(t *testing.T) {
+	e, sides := twoSides(t, "", map[string]string{"r/units.toml.tmpl": fileUnit("a", "/etc/a", ""), "r/a": "1\n"})
+	dirs := sides[0].RunDir + " or " + sides[1].RunDir
+	want := "file/a\tfails: mise runs in " + e.Pwd + ", which is no side's run directory: run mise in " + dirs + "\n"
+	if status, stdout, _ := runSides(e, sides, "read", "--whole", "file/a"); status != 0 || stdout != want {
+		t.Errorf("status = %d, stdout = %q; want %q", status, stdout, want)
+	}
+}

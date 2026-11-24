@@ -30,6 +30,10 @@ func unitRead(p Env, ss sides) *cobra.Command {
 	whole := c.Flags().Bool("whole", false, "fail each UNIT where they lack a unit of the specs with a change")
 	c.RunE = func(c *cobra.Command, names []string) error {
 		s, err := ss.pick(p.Pwd)
+		if err != nil && *whole {
+			// mise runs in no side's run directory, which loads none of the specs' lines.
+			return failEach(c, names, err)
+		}
 		if err != nil {
 			return err
 		}
@@ -85,6 +89,16 @@ func unitRead(p Env, ss sides) *cobra.Command {
 		return err
 	}
 	return c
+}
+
+// failEach prints each unit as failing with why, which is a read that cannot load any unit.
+func failEach(c *cobra.Command, names []string, why error) error {
+	var sb strings.Builder
+	for _, name := range names {
+		sb.WriteString(name + "\tfails: " + why.Error() + "\n")
+	}
+	_, err := fmt.Fprint(c.OutOrStdout(), sb.String())
+	return err
 }
 
 // sameDir reports whether a and b name one directory, through any link. A path that does not
