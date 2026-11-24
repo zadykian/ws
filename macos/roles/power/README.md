@@ -31,3 +31,9 @@ installs are not the App Store's: `mise bootstrap packages upgrade` updates them
 Apple's documents mark `AutomaticallyInstallAppUpdates` as removed from macOS 27, which may read
 another key than `AutoUpdate`. The unit writes `AutoUpdate`, and the real Mac shows whether that
 key works.
+
+## CI
+
+The runner's VM shows `displaysleep 0` under `AC Power:` before the first run, and holds
+`AutoUpdate = 1`, so the first run writes the second alone
+([the case](../../../.github/client/88-power.sh)).
