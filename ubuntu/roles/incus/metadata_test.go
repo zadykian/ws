@@ -6,10 +6,13 @@ import (
 	"compress/gzip"
 	"errors"
 	"io"
+	"path"
 	"strings"
 	"testing"
 
 	"go.yaml.in/yaml/v3"
+
+	"github.com/zadykian/ws/ubuntu/values"
 )
 
 // unpack returns the files of a metadata tarball, by name.
@@ -51,8 +54,8 @@ func TestMetadataDescribesAContainerImageWithTheSeedsTemplates(t *testing.T) {
 	if err := yaml.Unmarshal([]byte(files["metadata.yaml"]), &meta); err != nil {
 		t.Fatal(err)
 	}
-	if meta.Architecture != "x86_64" || len(meta.Templates) != 4 {
-		t.Fatalf("metadata = %+v, want x86_64 and the four seed files", meta)
+	if meta.Architecture != "x86_64" || len(meta.Templates) != 5 {
+		t.Fatalf("metadata = %+v, want x86_64, the four seed files and the socket's directory", meta)
 	}
 	for _, name := range []string{"meta-data", "user-data", "vendor-data", "network-config"} {
 		entry, ok := meta.Templates["/var/lib/cloud/seed/nocloud-net/"+name]
@@ -68,6 +71,35 @@ func TestMetadataDescribesAContainerImageWithTheSeedsTemplates(t *testing.T) {
 	}
 	if got := files["templates/network-config.tpl"]; !strings.Contains(got, `config_get("cloud-init.network-config"`) {
 		t.Errorf("network-config template = %q, want the instance's key", got)
+	}
+}
+
+// The proxy device makes the guest's socket and no directory, and a missing one fails the guest's
+// start. So the image holds the directory, by a file that a template of Incus's makes.
+func TestMetadataHoldsTheDirectoryOfTheOTLPSocket(t *testing.T) {
+	tarball, _, err := Metadata("amd64")
+	if err != nil {
+		t.Fatal(err)
+	}
+	files := unpack(t, tarball)
+	var meta struct {
+		Templates map[string]struct {
+			When     []string `yaml:"when"`
+			Template string   `yaml:"template"`
+		} `yaml:"templates"`
+	}
+	if err := yaml.Unmarshal([]byte(files["metadata.yaml"]), &meta); err != nil {
+		t.Fatal(err)
+	}
+	entry, ok := meta.Templates[path.Dir(values.OTLPSocket)+"/README"]
+	if !ok || strings.Join(entry.When, ",") != "create,copy" {
+		t.Fatalf("templates = %+v, want a file in %s, written as the instance is created", meta.Templates, path.Dir(values.OTLPSocket))
+	}
+	if _, ok := files["templates/"+entry.Template]; !ok {
+		t.Errorf("the tarball lacks templates/%s", entry.Template)
+	}
+	if strings.HasPrefix(values.OTLPSocket, "/run/") || strings.HasPrefix(values.OTLPSocket, "/tmp/") {
+		t.Errorf("the socket %s is in /run or /tmp, which a guest mounts after its devices start", values.OTLPSocket)
 	}
 }
 

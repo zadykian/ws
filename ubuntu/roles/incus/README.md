@@ -208,6 +208,9 @@ the image's metadata, whose templates write cloud-init's NoCloud seed in
 | `user-data`, `vendor-data` | The instance's `cloud-init.user-data` and `cloud-init.vendor-data`, or `#cloud-config` and `{}`. |
 | `network-config` | The instance's `cloud-init.network-config`, or DHCP on `eth0`. |
 
+The image holds one more file, `/var/lib/ws/otlp/README`, so that the directory of
+[the SigNoz link's socket](#the-link-to-signoz) exists at a guest's first start.
+
 cloud-init then makes the host keys, the name and the netplan on the first boot. The seed is
 written as an instance is created or copied, so a changed key of it reaches a guest that is made
 after, not one that exists.

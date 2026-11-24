@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"go.yaml.in/yaml/v3"
+
+	"github.com/zadykian/ws/ubuntu/values"
 )
 
 // The release of Ubuntu's cloud images that ws pins, by its version and its date. A newer release
@@ -44,6 +46,12 @@ var seeds = []struct{ file, key, fallback string }{
 	{file: "network-config", key: "cloud-init.network-config", fallback: "version: 2\nethernets:\n  eth0:\n    dhcp4: true"},
 }
 
+// socketMark is the one file of the directory of the OTLP socket. The profile's proxy device makes
+// the socket, never its directory, and a missing one fails the guest's start. Incus makes a
+// template's directory, so the image holds it by this file. The directory stays outside /run and
+// /tmp, which a guest mounts after its devices start.
+const socketMark = "otlp.tpl"
+
 // incusArch names the architectures of an image as Incus does, by dpkg's name.
 var incusArch = map[string]string{"amd64": "x86_64", "arm64": "aarch64"}
 
@@ -70,6 +78,12 @@ func Metadata(arch string) (tarball []byte, id string, err error) {
 		}
 		templates[path.Join(seedDir, s.file)] = entry
 	}
+	mark, err := fs.ReadFile(imageFiles, path.Join("files/image", socketMark))
+	if err != nil {
+		return nil, "", err
+	}
+	files[path.Join("templates", socketMark)] = mark
+	templates[path.Join(path.Dir(values.OTLPSocket), "README")] = map[string]any{"when": []string{"create", "copy"}, "template": socketMark}
 	created := imageCreated()
 	meta, err := yaml.Marshal(map[string]any{
 		"architecture":  incus,
