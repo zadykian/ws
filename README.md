@@ -61,7 +61,7 @@ the server. Its [`devtools`](macos/roles/devtools) installs Go and the command-l
 sets the Dock, Finder, windows, sounds and screenshots. Its [`zsh`](macos/roles/zsh) sets up
 oh-my-zsh and its plugins, with the settings that load them. Its [`power`](macos/roles/power) keeps the
 display on while on power and stops the App Store's updates. Its [`apps`](macos/roles/apps) installs
-the Mac's apps, as mise's casks.
+the Mac's apps, as mise's casks, and pins some in the Dock.
 
 A new Mac with Apple silicon follows [the Mac's runbook](macos/runbook.md). It runs
 `install.sh` through `sudo`, which installs ws's binary, checked against its SHA-256, and writes the

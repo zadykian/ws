@@ -15,3 +15,18 @@
 "brew-cask:whatsapp" = "latest"
 "brew-cask:winbox" = "latest"
 "brew-cask:yandextelemost" = "latest"
+
+# The Dock's apps, in order. mise needs each to exist before it writes the layout, so each is a
+# system app or one that a cask of the roles installs.
+[bootstrap.settings.macos.dock]
+apps = [
+    "/Applications/Safari.app",
+    "/Applications/Telegram Desktop.app",
+    "/Applications/Discord.app",
+    "/Applications/Claude.app",
+    "/Applications/Zed.app",
+    "/Applications/Ghostty.app",
+    "/System/Applications/Mail.app",
+    "/System/Applications/Calendar.app",
+    "/Applications/Yandex Telemost.app",
+]
