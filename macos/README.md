@@ -25,7 +25,8 @@ and a font as casks, and gh, fnox and age-plugin-yubikey by its lock, with no Ho
 mise installs Go by its lock, and gnupg, ripgrep and other tools as formulae
 ([devtools](roles/devtools/README.md)). It installs Docker's command line and colima the same way
 ([docker](roles/docker/README.md)). It sets the Dock, Finder, windows and sounds as preferences
-([desktop](roles/desktop/README.md)).
+([desktop](roles/desktop/README.md)). The second run installs the Mac's apps as casks and pins some
+in the Dock ([apps](roles/apps/README.md)).
 The runbook runs `install.sh`, which puts `ws` in `/usr/local/bin` from a release, checked against
 its `ws.sha256` ([Releases](../.github/workflows/release.md)).
 Write each server's values below first, and the Mac's `values.yml`, which stands empty on a new
@@ -36,8 +37,8 @@ ws macos setup
 ```
 
 Setup takes the steps before mise ([Setup](#setup)). Then it runs mise's bootstrap, which sets up
-every role of the Mac. It runs on the tree in `/opt/ws`, from the side's run directory,
-`macos` ([The Mac's frame](roles/frame/README.md)).
+every role of the Mac, and once more with the env `apps`, which installs the apps. It runs on the
+tree in `/opt/ws`, from the side's run directory, `macos` ([The Mac's frame](roles/frame/README.md)).
 Its units read as the user, and ask sudo for a change alone. `ws macos` holds the Mac's
 commands, darwin alone, which the units and the tunnel's daemons run. The user runs
 `ws macos secrets init` too, which sets up the secrets repository
@@ -67,15 +68,19 @@ steps are those of the server's setup, which `internal/setup` holds, with the Ma
   the bootstrap, checks it and waits for a key made in it, which it names in `values.yml`
   ([Secretive](roles/ssh/README.md#secretive)). `--key NAME` takes a key that Secretive held
   before. A plan with the key due plans no more.
+- The bootstrap runs twice, with the env `macos` and then with `-E ws,apps`. mise ends a run at
+  its first failed step, and packages come before ws's units, so a failed cask would stop the
+  tunnel's units. Here ws's units are set up by then, and setup fails, naming the apps.
 - A second run reads as the user, writes nothing and asks no password. `--in-place` and `--plan`
   work as on the server ([The server's runbook](../ubuntu/runbook.md)).
 
 ## What the Mac reports
 
-`ws macos setup --plan` shows what setup and the units would change. After mise's plan it runs
-`mise bootstrap status --missing --json`, which covers the preferences, the Dock and the login
-items that the plan leaves out. Its exit 1 is a difference, which has a report in JSON, or an
-error, which has none, so setup tells them apart and exits 2 for the difference.
+`ws macos setup --plan` shows what setup and the units would change. It plans mise's bootstrap in
+both envs, then runs `mise -E ws,apps bootstrap status --missing --json`, which covers the
+preferences, the Dock and the login items that the plan leaves out. Its exit 1 is a difference,
+which has a report in JSON, or an error, which has none, so setup tells them apart and exits 2 for
+the difference.
 `ws macos servers` shows each server's tunnel. A cable's service that is disabled, which no run
 turns on, draws a warning from `ws macos cable` and its `--check` alone: a bootstrap shows no
 check's output. No unit reads a private key: the key's unit looks for the file alone.

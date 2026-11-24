@@ -10,7 +10,7 @@ import (
 )
 
 // statusTableLine is the table that names what differs, shown after a difference.
-const statusTableLine = miseBase + " status --missing"
+const statusTableLine = appsBase + " status --missing"
 
 func TestSetupPlanAsksMisesStatusAfterAPlanWithNothingToDo(t *testing.T) {
 	report := `{"defaults": [{"state": "differs"}]}`
@@ -56,7 +56,7 @@ func TestSetupPlanAsksNoStatusWhereThePlanHasAChange(t *testing.T) {
 	if status, _ := runSetup(p, rel, "--plan"); status != 2 {
 		t.Errorf("status = %d, want 2", status)
 	}
-	if indexOf(m, "run "+miseBase+" status") >= 0 {
+	if indexOf(m, "run "+appsBase+" status") >= 0 {
 		t.Errorf("the status ran: %q", m.Calls)
 	}
 }
