@@ -150,7 +150,7 @@ would show a commit that ws signs under the maintainer's email as verified.
 
 ## The cable
 
-Skip it on a cloud VM and a VM on the Mac.
+Skip it on a cloud VM.
 
 1. Dock the Mac. At ws, list the wired ports with their carrier: `ip -br link` and `ip -br addr`.
 2. Set `WS_CABLE_PORT` at ws, and `WS_CABLE_SERVICE` on the Mac. `networksetup

@@ -68,8 +68,8 @@ const keyFile = "a public key's file, as ~/.ssh/NAME.pub: a path from / or ~/ to
 // keys is values.yml's keys in the order of the file's docs, with their checks.
 var keys = []key{
 	{"WS_TARGET", func(c *Conf) *string { return &c.Target },
-		func(v string) bool { return v == "lan" || v == "cloud" || v == "mac-vm" },
-		"lan, cloud or mac-vm: a machine on the LAN, a cloud VM or a VM on the Mac"},
+		func(v string) bool { return v == "lan" || v == "cloud" },
+		"lan or cloud: a machine on the LAN or a cloud VM"},
 	{"WS_SLOT", func(c *Conf) *string { return &c.Slot }, func(v string) bool { _, ok := slot.Parse(v); return ok },
 		"a number from 0 to " + strconv.Itoa(slot.Last)},
 	{"WS_PUBLIC_KEY", func(c *Conf) *string { return &c.PublicKey }, check.Key,

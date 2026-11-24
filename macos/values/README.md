@@ -1,6 +1,6 @@
 # The Mac's values
 
-ws is one of three machines, which the server's file's `WS_TARGET` names. Each target sets which of
+ws is one of two machines, which the server's file's `WS_TARGET` names. Each target sets which of
 ws's ways the file names, their defaults, and what a few units do. The server's bootstrap is the
 same on each.
 
@@ -141,28 +141,13 @@ the Mac's display, if any:
   that `WS_TUNNEL_PORT` sets, which moves wg0's listen port on ws too.
 - It has no cable: `WS_CABLE_SERVICE` and `WS_CABLE_PORT` are refused.
 
-## A VM on the Mac
-
-`WS_TARGET=mac-vm` is a VM that the Mac runs. The Mac is its gateway, DHCP server and DNS:
-
-- `WS_LAN` is the Mac's network for its VMs, `192.168.64.0/24` by default, the shared network of
-  macOS's Virtualization framework. Parallels uses `10.211.55.0/24`, and VMware Fusion a
-  `172.16.N.0/24` of its own. At the VM's console, `ip -4 route` shows the Mac as its gateway there.
-- `WS_LAN_ADDRESS` is the VM's address there, which the target needs, as `ip -4 address` prints it.
-  Keep it stable, by a static address in the VM or a reservation in its app's DHCP: else ssh goes
-  to another host once the lease moves.
-- ssh reaches the VM there while the Mac has an address on that network, as while a VM runs
-  ([ssh's hosts](../README.md#sshs-hosts)).
-- It needs no `WS_REMOTE`, as only the Mac reaches the VM.
-- It has no cable: `WS_CABLE_SERVICE` and `WS_CABLE_PORT` are refused.
-
 ## A move to another target
 
 To move the server's file to another target, set `WS_TARGET`, and remove every key of ws's ways:
 `WS_LAN`, `WS_LAN_ADDRESS`, `WS_REMOTE`, `WS_REMOTE_PORT`, `WS_CABLE_SERVICE` and `WS_CABLE_PORT`.
 An old way would lead to the old machine still. From the LAN to a cloud VM, the router's `WS_REMOTE`
-would. The bootstrap refuses a key of another target's ways: `WS_LAN` on a cloud VM, `WS_REMOTE` on
-a VM on the Mac, and `WS_CABLE_SERVICE` or `WS_CABLE_PORT` off the LAN. Then name the new target's
+would. The bootstrap refuses a key of another target's ways: `WS_LAN` on a cloud VM, and
+`WS_CABLE_SERVICE` or `WS_CABLE_PORT` off the LAN. Then name the new target's
 ways. A new machine offers another host key, so run `ssh-keygen -R NAME` first, NAME the server's
 name. Then run the bootstrap on ws, as [its runbook](../../ubuntu/runbook.md) says, and
 `ws macos setup` again.

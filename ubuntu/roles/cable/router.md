@@ -129,6 +129,5 @@ button or Ctrl+X in its terminal, which undoes the changes if the session drops:
   `SERIAL.sn.mynetname.net`, for a CNAME at your domain's DNS; its records live 60 seconds. Its
   `public-address` must be the WAN's own: behind the ISP's NAT, neither forward reaches the router.
 - What the steps miss. A cloud VM has no router of yours, so its provider's network isolates it.
-  A VM on the Mac reaches the router from the Mac's address, through the Mac's NAT, so it shares
-  the LAN's segment with the Mac. The steps are IPv4's. Give `SERVER` no IPv6 prefix, so that
+  The steps are IPv4's. Give `SERVER` no IPv6 prefix, so that
   ws has no IPv6 route to the router's addresses, which its table would pass as routed.

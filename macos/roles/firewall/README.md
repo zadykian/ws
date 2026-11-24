@@ -9,9 +9,9 @@ by the unit `state/firewall` of the role `firewall`:
 
 ## Why
 
-The server reaches the Mac over the cable and `wg0`, which pass no router, and a guest holds no
-filter of its own ([No filter](../../../ubuntu/roles/security/README.md#no-filter)). So the Mac's
-own firewall is what keeps the server from opening a connection to it.
+A cloud VM ends its own tunnel and holds no filter of its own
+([No filter](../../../ubuntu/roles/security/README.md#no-filter)), so root there can open a
+connection to the Mac through the tunnel. The Mac's own firewall keeps it from.
 
 ## The unit
 
@@ -29,17 +29,6 @@ own firewall is what keeps the server from opening a connection to it.
 The Mac speaks first on the tunnel and the cable, so block-all does not stop them: a reply to an
 outgoing packet passes. The firewall spares loopback too, which CI's cases lean on after
 [`28-bootstrap.sh`](../../../.github/client/28-bootstrap.sh) turns it on.
-
-A VM on the Mac that takes its DHCP lease and its DNS from the Mac is at risk. Apple says block-all
-keeps the basic services, DHCP among them. Multipass's docs say it stops `bootpd`, the Mac's DHCP
-server for its VMs, so the VM gets no lease. Block-all ignores the allow list, so no exception
-mends it. The trial of the release checks this first. A VM that loses its lease means the unit
-cannot block all on a Mac that serves VMs.
-
-## What it does not stop
-
-The firewall filters sockets of the Mac. What a VM on the Mac sends to the LAN, through the Mac's
-NAT, is forwarded and not a socket of the Mac, so it still passes.
 
 ## Turning it off
 

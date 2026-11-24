@@ -26,8 +26,8 @@ func TestKeys(t *testing.T) {
 		key, value string
 		want       bool
 	}{
-		{"WS_TARGET", "mac-vm", true},
-		{"WS_TARGET", "vm", false},
+		{"WS_TARGET", "cloud", true},
+		{"WS_TARGET", "mac-vm", false},
 		{"WS_SLOT", "0", true},
 		{"WS_SLOT", "15", true},
 		{"WS_SLOT", "16", false},

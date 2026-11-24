@@ -19,11 +19,9 @@ func pairs(c Conf) []Error {
 		return refuse("WS_LAN_ADDRESS=" + c.LANAddress + " is not " + form.form + ", " + c.LAN)
 	case c.RemotePort != "" && c.Remote == "":
 		return refuse("WS_REMOTE_PORT needs WS_REMOTE")
-	// A cloud VM is reached at its name or address alone, and a VM on the Mac on its network alone.
+	// A cloud VM is reached at its name or address alone.
 	case c.Target == "cloud" && c.RemotePort == "":
 		return refuse("WS_TARGET=cloud needs WS_REMOTE and WS_REMOTE_PORT")
-	case c.Target == "mac-vm" && c.LAN == "":
-		return refuse("WS_TARGET=mac-vm needs WS_LAN")
 	}
 	if away := foreign(c); len(away) > 0 {
 		return refuse("WS_TARGET=" + c.Target + " has another target's key: " +
@@ -41,9 +39,6 @@ func foreign(c Conf) []string {
 	var away []string
 	if c.Target == "cloud" && c.LAN != "" {
 		away = append(away, "WS_LAN")
-	}
-	if c.Target == "mac-vm" && c.Remote != "" {
-		away = append(away, "WS_REMOTE")
 	}
 	if c.Target != "lan" && c.CableService != "" {
 		away = append(away, "WS_CABLE_SERVICE")

@@ -19,7 +19,7 @@ config is a plain file.
   first run before the `.deb`. It runs nothing before a call, which does no harm.
 
 The release's `.deb` needs `libc6` 2.30 and `libgcc-s1` 4.2 alone. So it installs on a physical
-machine on the LAN, on a cloud VM and on a VM on the Mac. The testing `.deb` lacks the grammars
+machine on the LAN and on a cloud VM. The testing `.deb` lacks the grammars
 for JS, TS and Templ, and needs `libc6` 2.39.
 
 The role needs no other role and no secret.
