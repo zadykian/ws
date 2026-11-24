@@ -117,3 +117,79 @@ func TestAnInstanceOfAnotherProfileIsNoGuestOfWs(t *testing.T) {
 		t.Errorf("plan = %v, want the instance refused as no guest of ws's", err)
 	}
 }
+
+// withCard is a guest's own values with the switch for the host's GPU on.
+func withCard(t *testing.T) values.Values {
+	own, err := values.Parse([]byte("WS_NVIDIA_GPU: true\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return own
+}
+
+func TestAGuestWithTheSwitchOnLaunchesWithNVIDIAsCardAndWithoutItNone(t *testing.T) {
+	for own, want := range map[bool]bool{true: true, false: false} {
+		m := effecttest.NewMachine()
+		m.Results[guestList] = effecttest.Result{Out: []byte("[]")}
+		m.Results["incus launch local:"+guestAlias+" lab"] = effecttest.Result{}
+		v := values.Default()
+		v.Nvidia.GPU = own
+		changes, err := Guest(m, lab, v, guestAlias).Plan(t.Context())
+		if err != nil || len(changes) != 1 {
+			t.Fatalf("switch %t: changes = %v, err = %v", own, changes, err)
+		}
+		if err := changes[0].Apply(t.Context()); err != nil {
+			t.Fatal(err)
+		}
+		if got := strings.Contains(m.Inputs[0], "type: gpu") && strings.Contains(m.Inputs[0], "vendorid: 10de"); got != want {
+			t.Errorf("switch %t: the guest's YAML holds the card = %t, want %t:\n%s", own, got, want, m.Inputs[0])
+		}
+		if strings.Contains(m.Inputs[0], "null") {
+			t.Errorf("switch %t: the YAML names a key as null:\n%s", own, m.Inputs[0])
+		}
+	}
+}
+
+func TestAGuestWhoseSwitchTurnsOnGetsTheCardAndKeepsItsOtherDevices(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results[guestList] = effecttest.Result{Out: []byte(heldGuest)}
+	m.Results["incus config edit lab"] = effecttest.Result{}
+	changes, err := Guest(m, lab, withCard(t), guestAlias).Plan(t.Context())
+	if err != nil || len(changes) != 1 {
+		t.Fatalf("changes = %v, err = %v", changes, err)
+	}
+	if head, _, _ := strings.Cut(changes[0].String(), "\n"); head != "edit the guest lab: devices.gpu" {
+		t.Errorf("first line = %q", head)
+	}
+	if err := changes[0].Apply(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"gpu:", "vendorid: 10de", "host_name: ws-lab", "volatile.idmap.base"} {
+		if !strings.Contains(m.Inputs[0], want) {
+			t.Errorf("the edit's YAML lacks %q:\n%s", want, m.Inputs[0])
+		}
+	}
+}
+
+func TestAGuestWhoseSwitchTurnsOffLosesTheCard(t *testing.T) {
+	held := strings.Replace(heldGuest, `"root":{"type":"disk"`, `"gpu":{"type":"gpu","vendorid":"10de"},"root":{"type":"disk"`, 1)
+	m := effecttest.NewMachine()
+	m.Results[guestList] = effecttest.Result{Out: []byte(held)}
+	m.Results["incus config edit lab"] = effecttest.Result{}
+	if changes, err := Guest(m, lab, withCard(t), guestAlias).Plan(t.Context()); err != nil || len(changes) != 0 {
+		t.Fatalf("with the switch on: changes = %v, err = %v, want none", changes, err)
+	}
+	changes, err := Guest(m, lab, values.Default(), guestAlias).Plan(t.Context())
+	if err != nil || len(changes) != 1 {
+		t.Fatalf("changes = %v, err = %v", changes, err)
+	}
+	if head, _, _ := strings.Cut(changes[0].String(), "\n"); head != "edit the guest lab: devices.gpu" {
+		t.Errorf("first line = %q", head)
+	}
+	if err := changes[0].Apply(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(m.Inputs[0], "gpu") || !strings.Contains(m.Inputs[0], "host_name: ws-lab") {
+		t.Errorf("the edit's YAML keeps the card or loses the NIC:\n%s", m.Inputs[0])
+	}
+}

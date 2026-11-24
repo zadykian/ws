@@ -27,8 +27,9 @@ func guestKind(alias string) object.Kind {
 }
 
 // Guest is the instance of a guest of the host's list. It takes the profile ws, its limits, its NIC
-// at its address on the port that the table of sources names, and its disk with its quota. Each
-// device is whole, as a device of an instance replaces the profile's of its name. The seed's
+// at its address on the port that the table of sources names, and its disk with its quota. It
+// takes the host's NVIDIA card as well where its WS_NVIDIA_GPU is on, and none otherwise.
+// Each device is whole, as a device of an instance replaces the profile's of its name. The seed's
 // network is a key of the create alone, as cloud-init reads the seed once. An instance that holds
 // no profile ws is refused, as that instance is no guest of ws's.
 func Guest(m effect.Machine, g values.Guest, own values.Values, alias string) object.Object {
@@ -41,6 +42,7 @@ func Guest(m effect.Machine, g values.Guest, own values.Values, alias string) ob
 			"devices": map[string]any{
 				"eth0": nicDevice(map[string]any{"host_name": g.Port(), "ipv4.address": g.Address}),
 				"root": rootDevice(g.Disk),
+				"gpu":  gpuDevice(own.Nvidia.GPU),
 			},
 		},
 		First: map[string]any{"config": map[string]any{"cloud-init.network-config": seedNetwork(own)}},
@@ -51,6 +53,19 @@ func Guest(m effect.Machine, g values.Guest, own values.Values, alias string) ob
 			return nil
 		},
 	}
+}
+
+// nvidiaVendor is NVIDIA's PCI vendor ID, as Incus's gpu device names it.
+const nvidiaVendor = "10de"
+
+// gpuDevice gives a guest NVIDIA's card, which several guests may hold at once, time-sliced and
+// with no memory isolation between them. Incus passes /dev/nvidia* as they exist when the guest
+// starts, and the role nvidia waits for them. With the switch off the device is nil, which removes it.
+func gpuDevice(on bool) any {
+	if !on {
+		return nil
+	}
+	return map[string]any{"type": "gpu", "vendorid": nvidiaVendor}
 }
 
 // seedNetwork is the guest's network-config. It holds DHCP on eth0, which gives the NIC's address,
