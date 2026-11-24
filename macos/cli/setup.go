@@ -86,9 +86,10 @@ func newSetupCmd(p enginecli.Env, server *string, cfg setupConfig) *cobra.Comman
 			"in " + setup.TreeDir + " as it stands, after the guard. So is a ws of another version than " +
 			update.File + ", which the units run, or one where that file is missing, --in-place included: " +
 			"ws update --version installs a release there.\n\n" +
-			"--plan plans these steps, and mise's bootstrap where none of them is due. Where the command " +
-			"line tools are due, it plans no more, as git needs them. It exits 0 where nothing would " +
-			"change and 2 where something would.",
+			"--plan plans these steps, and mise's bootstrap where none of them is due, by its plan and then " +
+			"its status, which covers the preferences, the Dock and the login items that the plan leaves " +
+			"out. Where the command line tools are due, it plans no more, as git needs them. It exits 0 " +
+			"where nothing would change and 2 where something would.",
 		Args: cobra.NoArgs,
 	}
 	inPlace := c.Flags().Bool("in-place", false, "run the tree in "+setup.TreeDir+" as it stands, after the guard")
@@ -186,7 +187,8 @@ func setupSteps(m effect.Machine, out effect.Out, cfg setupConfig, tag string) (
 
 // planSetup says each change that setup's steps would make, and exits 2 where there is one. The
 // steps after the command line tools plan once the tools stand. Where there is none, it asks mise's
-// bootstrap for its plan, whose exit 2 is setup's.
+// bootstrap for its plan, whose exit 2 is setup's, and then its status, which covers what the plan
+// does not.
 func planSetup(ctx context.Context, m effect.Machine, out effect.Out, first, rest []resource.Resource) error {
 	for _, steps := range [][]resource.Resource{first, rest} {
 		due, err := setup.PlanSteps(ctx, out, steps)
@@ -200,6 +202,13 @@ func planSetup(ctx context.Context, m effect.Machine, out effect.Out, first, res
 	err := runMise(ctx, m, "bootstrap", "plan", "--detailed-exitcode")
 	var exit interface{ ExitCode() int }
 	if errors.As(err, &exit) && exit.ExitCode() == 2 {
+		return engine.ExitStatus{Code: 2}
+	}
+	if err != nil {
+		return err
+	}
+	differs, err := bootstrapDiffers(ctx, m, out)
+	if differs {
 		return engine.ExitStatus{Code: 2}
 	}
 	return err
