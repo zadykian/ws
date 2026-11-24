@@ -37,5 +37,5 @@ func guestCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("guest", "the commands for an Ubuntu guest", newFansCmd(p),
 		newCableCmd(p, units.OSUnits{}), newTunnelCmd(p, units.OSUnits{}), newIkewardCmd(p, ikeward.StatusTries, ikeward.StatusWait),
 		newGitCmd(p), newDevtoolsCmd(p), newClaudeCmd(p, units.OSUnits{}), newValuesCmd(p, guestValues), newSignozCmd(p),
-		newSetupCmd(p, liveSetup()))
+		newSetupCmd(p, liveSetup(), guestSetup))
 }

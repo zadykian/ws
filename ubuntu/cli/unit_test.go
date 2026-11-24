@@ -65,8 +65,8 @@ func TestUnitValuesRefuseAnUnknownKey(t *testing.T) {
 }
 
 func TestUnitRunDirIsWhereSetupBootstraps(t *testing.T) {
-	if runDir != rootRoles || runDir != "/opt/ws/ubuntu/guest" {
-		t.Errorf("runDir = %q, rootRoles = %q, want both /opt/ws/ubuntu/guest", runDir, rootRoles)
+	if runDir != guestSetup.dir() || runDir != "/opt/ws/ubuntu/guest" {
+		t.Errorf("runDir = %q, the guest's setup runs in %q, want both /opt/ws/ubuntu/guest", runDir, guestSetup.dir())
 	}
 }
 
