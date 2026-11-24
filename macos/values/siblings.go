@@ -26,7 +26,7 @@ func Siblings(m effect.Machine, mac, server string) ([]Sibling, error) {
 		if file == server {
 			continue
 		}
-		c, err := load(m, file, ServerFile.Parse)
+		c, err := loadServer(m, mac, file)
 		if err != nil {
 			continue
 		}
@@ -48,7 +48,7 @@ func RefuseBadSibling(m effect.Machine, mac, server string) error {
 		if file == server {
 			continue
 		}
-		if _, err := load(m, file, ServerFile.Parse); err != nil {
+		if _, err := loadServer(m, mac, file); err != nil {
 			return RefuseSibling(n, err)
 		}
 	}

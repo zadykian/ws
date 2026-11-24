@@ -78,9 +78,13 @@ func slotClashes(c Conf, o Sibling) []Error {
 }
 
 // portClashes returns a refusal for each of c's router ports that o takes too, behind the same
-// WS_REMOTE, whatever its case: a name on the internet has none.
+// WS_REMOTE, whatever its case: a name on the internet has none. A guest and its host, and two
+// guests of one host, answer at the host's address, so their WS_TUNNEL_PORT clashes with no
+// WS_REMOTE too, in the guest's file.
 func portClashes(c Conf, o Sibling) []Error {
-	if c.Remote == "" || !strings.EqualFold(c.Remote, o.Conf.Remote) {
+	behindOne := c.Remote != "" && strings.EqualFold(c.Remote, o.Conf.Remote)
+	oneHost := c.Host != "" && (c.Host == o.Name || c.Host == o.Conf.Host)
+	if !behindOne && !oneHost {
 		return nil
 	}
 	var errs []Error
@@ -88,11 +92,19 @@ func portClashes(c Conf, o Sibling) []Error {
 		{"WS_TUNNEL_PORT", c.TunnelPort(), o.Conf.TunnelPort()},
 		{"WS_REMOTE_PORT", c.ForwardPort(), o.Conf.ForwardPort()},
 	} {
-		if p.own == p.theirs {
-			errs = append(errs, Error{Msg: fmt.Sprintf(
-				"%s=%s is server %s's too, behind WS_REMOTE %s: the router forwards a port to one server",
-				p.key, p.own, o.Name, c.Remote)})
+		// Nothing forwards TCP to a guest, which holds no WS_REMOTE_PORT, so it takes none.
+		if p.key == "WS_REMOTE_PORT" && (c.Host != "" || o.Conf.Host != "") {
+			continue
 		}
+		if p.own != p.theirs {
+			continue
+		}
+		where := "behind WS_REMOTE " + c.Remote
+		if !behindOne {
+			where = "on host " + c.Host
+		}
+		errs = append(errs, Error{Msg: fmt.Sprintf(
+			"%s=%s is server %s's too, %s: the router forwards a port to one server", p.key, p.own, o.Name, where)})
 	}
 	return errs
 }

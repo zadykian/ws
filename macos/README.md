@@ -94,8 +94,9 @@ names the network service of the display's adapter, and `WS_CABLE_PORT` ws's por
 cable](#the-cable). `WS_GIT_SIGNING_PUB_KEY` is the `.pub` of the key that signs git's commits on
 the Mac, by its path from `/` or `~/`: [git on the Mac](roles/git/README.md). `WS_IDENTITY_PUB_KEY` is the
 `.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the socket of its agent: [ssh's
-hosts](#sshs-hosts). The bootstrap makes `/etc/ws` through sudo, at mode 755, for the tunnel's key,
-git's files and ssh's hosts.
+hosts](#sshs-hosts). `WS_HOST` makes a server a guest of another, its host, and takes the host's
+LAN, address and router for the guest's ([A guest](values/README.md#a-guest)). The bootstrap makes
+`/etc/ws` through sudo, at mode 755, for the tunnel's key, git's files and ssh's hosts.
 
 ssh logs in to every server as root, so no key names a user. A key with an empty value, as
 `WS_REMOTE: ""`, takes its default, as a missing line does: 51820 for `WS_TUNNEL_PORT`.

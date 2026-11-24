@@ -1,8 +1,9 @@
 # The Mac's values
 
-ws is one of two machines, which the server's file's `WS_TARGET` names. Each target sets which of
-ws's ways the file names, their defaults, and what a few units do. The server's bootstrap is the
-same on each.
+A server of the Mac's is a host or a cloud VM, one of two targets that the server's file's
+`WS_TARGET` names, or a guest of a host. Each target sets which of ws's ways the file names, their
+defaults, and what a few units do. A guest, a container under a host, names its host and takes the
+host's way ([A guest](#a-guest)).
 
 ## The two files
 
@@ -60,7 +61,8 @@ runs it first ([The check of the values](../roles/frame/README.md#the-check-of-t
 letter, then up to 11 lower-case letters, digits and `-`, other than `direct`, `first` and `key`.
 With one server, the flag may be left out. With none, it stops and says to write
 `servers/NAME/values.yml`. A name that no file holds sets up a new server, beside the others. With
-several and no flag, it refuses and lists them. `WS_SLOT`, from 0 to 15, is the slot. A file with no
+several and no flag, it refuses and lists them. `WS_SLOT`, from 0 to 15, is the slot, and a host's
+own tunnel is slot 0, as each guest's tunnel takes a slot from 1. A file with no
 `WS_SLOT` holds slot 0. Give each server the smallest slot that no other holds, as the check refuses
 a clash. `WS_TUNNEL_PORT` is 51820, or 51820 plus the slot behind a router that another server
 shares, or the next port up that none of those takes. The default of `WS_REMOTE_PORT` follows 22022
@@ -80,7 +82,10 @@ takes what another's takes. Each of the two refuses until one changes, in its ow
   cable reaches that server alone ([the tunnel](../roles/tunnel/README.md#the-cable)).
 - `WS_SLOT`: the other's slot, as each server's tunnel is the subnet of its slot.
 - `WS_TUNNEL_PORT` and `WS_REMOTE_PORT`: the other's, behind the same `WS_REMOTE`, in any case, as
-  the router forwards a port to one server.
+  the router forwards a port to one server. A guest's `WS_REMOTE` is its host's, so the host and
+  each of its guests take a `WS_TUNNEL_PORT` of their own. They clash with no `WS_REMOTE` too, as
+  they answer at the host's address. A guest holds no `WS_REMOTE_PORT`, as nothing forwards TCP to
+  it, so none of its clashes. A guest's file refuses the clash, and the host's check fails on it.
 
 A file of another server that is refused fails the frame's check of the values first, then each
 unit that reads the servers' files, in a plan too. The error names the server and
@@ -140,6 +145,32 @@ the Mac's display, if any:
 - The provider's firewall must let in TCP `WS_REMOTE_PORT`, and UDP 51820, the tunnel's, or the port
   that `WS_TUNNEL_PORT` sets, which moves wg0's listen port on ws too.
 - It has no cable: `WS_CABLE_SERVICE` and `WS_CABLE_PORT` are refused.
+
+## A guest
+
+`WS_HOST=NAME` makes the server a guest of the host NAME, a server of the Mac's with a file of its
+own, which holds the way to it. A guest has no LAN address: the host ends its tunnel, on an
+interface and a port of their own, and sends what arrives to it
+([The guests' tunnels](../../ubuntu/roles/tunnel/README.md#the-guests-tunnels)).
+
+- The guest takes its host's `WS_LAN`, `WS_LAN_ADDRESS` and `WS_REMOTE`, so its tunnel tries the
+  host's addresses with the guest's own `WS_TUNNEL_PORT`. The router forwards one outside UDP port
+  a guest and one for the host, all to the host ([The router](../../ubuntu/roles/cable/router.md)).
+- Where the host's file holds `WS_CABLE_SERVICE`, the guest tries the cable's address too, on its
+  own port. The host's file alone holds the cable's keys.
+- The guest holds none of `WS_LAN`, `WS_LAN_ADDRESS`, `WS_REMOTE`, `WS_REMOTE_PORT`,
+  `WS_CABLE_SERVICE`, `WS_CABLE_PORT` and `WS_TARGET`, and the check refuses each but a
+  `WS_TARGET` of `lan`, which a missing line gives too. It holds no
+  `WS_REMOTE_PORT`, its default included, as nothing forwards TCP to it.
+- The host is a server of the Mac's too, with a tunnel of its own at slot 0. It serves its SSH,
+  and SigNoz's UI on `127.0.0.1:3301` behind that SSH
+  ([SigNoz](../../ubuntu/roles/signoz/README.md)). A host is no guest: the check refuses a
+  `WS_HOST` that names a guest or a server with no file.
+- `ws macos servers` shows a guest's target as `guest`, and `ws macos remove` refuses a host that
+  a guest names, until the guest goes.
+
+The guest's first contact goes through its host, which holds the tunnel's key and its peers
+([The Mac's tunnel](../README.md#the-macs-tunnel)).
 
 ## A move to another target
 

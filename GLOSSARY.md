@@ -114,6 +114,11 @@ slot; the values' check refuses a clash. Slot N's tunnel is `10.99.N.0/24`, insi
 `10.99.0.0/20`, with the server at `.1` and the Mac at `.2`. A host keeps slot 0 for its own tunnel,
 and each guest takes a slot from 1, which the host's tunnel for that guest ends.
 
+**host's way**:
+The way to a server whose file has `WS_HOST`, which the host's file holds. It names the LAN, the
+address on it, the router's name and the cable. `WS_HOST` has the check copy them into the guest's
+values. The guest holds none of its own ([A guest](macos/values/README.md#a-guest)).
+
 **ws's directory**:
 `/etc/ws`, root's and 755 on both sides, holds git's `gitconfig` and `allowed_signers`. On the Mac
 it also holds `values.yml` and `servers/`, which only sudo writes, and the script
