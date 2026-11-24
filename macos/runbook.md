@@ -60,7 +60,9 @@ file. It then does what a person did by hand, in this order:
    WireGuard key, whose public half is `/etc/ws/tunnel.pub`.
 
 A second run changes nothing and asks no password. `ws macos setup --plan` plans these steps, and
-mise's bootstrap where none is due, and exits 0 where nothing would change. A ws that names no
+mise's bootstrap where none is due, by its plan and then its status. The plan covers no
+preference, Dock app or login item, and the status does, with the tools, repositories and
+packages. It exits 0 where nothing would change and 2 where something would. A ws that names no
 release tag is refused: `--in-place` runs the tree in `/opt/ws` as it stands, after the guard. So
 is a ws of another version than `/usr/local/bin/ws`, which the units run, or a missing file there:
 `ws update --version X.Y.Z` installs that release there. A tree, or a directory above it, that
