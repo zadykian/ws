@@ -68,6 +68,12 @@ A host runs guests, Incus's system containers ([incus](roles/incus/README.md#the
    `ws ubuntu host guests remove NAME`, which asks first. Run `ws macos remove NAME` on the Mac
    where it knows the guest as a server.
 
+## The checks on the real machine
+
+No doc settles some of what a host and its guests do, and CI has no runner of the host's kind.
+Once the host and two guests run, [the checks](checks/README.md) say what to run, where and what
+passes. They are scripts for the host, a guest, the Mac and the LAN, and steps that stay by hand.
+
 ## Setup, the secrets and the runs
 
 `ws ubuntu guest setup`, run as root, sets the machine up. Before any write it refuses

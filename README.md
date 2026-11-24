@@ -189,7 +189,8 @@ release whose ws `install.sh` installs, and `vX.Y.Z-rc.N` a pre-release of a `fe
 [Releases](.github/workflows/release.md). The rules workflow warns where a
 pull request breaks the rules of zadykian/toolkit's skills, and the issues workflow where an issue
 strays from its issue form. The hooks in `.githooks` check each commit before git makes it.
-[Checks](.github/workflows) and [The gates](.tools) have the details.
+[Checks](.github/workflows) and [The gates](.tools) have the details. What only a real host and its
+guests show is [checked by hand](ubuntu/checks/README.md), with scripts.
 
 ## Pull requests
 
