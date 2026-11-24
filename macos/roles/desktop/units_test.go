@@ -3,6 +3,7 @@ package desktop_test
 import (
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -68,5 +69,36 @@ func TestWallpaperAsksNoSudoWhereTheCheckHolds(t *testing.T) {
 		if strings.HasPrefix(c, "root ") || c == "run "+set {
 			t.Errorf("calls = %q, want the check alone, and no sudo", m.Calls)
 		}
+	}
+}
+
+// TestCheckReadsEachScreen runs the check on canned output of wallpaper get, a line per screen,
+// and on its failure.
+func TestCheckReadsEachScreen(t *testing.T) {
+	other := "/System/Library/Desktop Pictures/Solid Colors/Black.png"
+	for _, tc := range []struct {
+		name, out string
+		status    int
+		want      bool
+	}{
+		{"one screen on Stone", stone + "\n", 0, true},
+		{"two screens on Stone", stone + "\n" + stone + "\n", 0, true},
+		{"one of two on another", stone + "\n" + other + "\n", 0, false},
+		{"another picture", other + "\n", 0, false},
+		{"no screen", "", 0, false},
+		{"wallpaper fails", "", 1, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			text := "#!/bin/sh\ncat <<'END'\n" + tc.out + "END\nexit " + strconv.Itoa(tc.status) + "\n"
+			if err := os.WriteFile(dir+"/wallpaper", []byte(text), 0o700); err != nil { //nolint:gosec // a script that the test runs
+				t.Fatal(err)
+			}
+			cmd := exec.CommandContext(t.Context(), "sh", "-c", script)
+			cmd.Env = []string{"PATH=" + dir + ":/usr/bin:/bin"}
+			if got := cmd.Run() == nil; got != tc.want {
+				t.Errorf("check passes = %v, want %v", got, tc.want)
+			}
+		})
 	}
 }
