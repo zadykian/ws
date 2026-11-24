@@ -39,6 +39,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   [Its devtools](../../macos/roles/devtools/README.md) is its command-line tools, and
   [its docker](../../macos/roles/docker/README.md) its Docker, and
   [its desktop](../../macos/roles/desktop/README.md) its Dock, Finder, sounds and wallpaper.
+  [Its keyboard](../../macos/roles/keyboard/README.md) is its Caps Lock and its hotkeys.
   [Its apps](../../macos/roles/apps/README.md) are its apps, the Dock's apps and its login items. [Its secrets](../../macos/roles/secrets/README.md)
   is the secrets' tools, fnox and age-plugin-yubikey, `ws macos secrets`, and remove's part.
   [The server's secrets](../../ubuntu/roles/secrets/README.md#the-repository) is the fnox
