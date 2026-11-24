@@ -82,6 +82,19 @@ source = "files/otelcol-docker.service"
 path = "/etc/systemd/system/otelcol-docker.socket"
 template = "files/otelcol-docker.socket.tmpl"
 
+# A host's ufw denies what comes in, so it lets Docker's networks reach that socket, whatever their
+# subnets, as docker's state/docker-dns does for the resolver. A guest holds no filter.
+[state.otelcol-docker-ufw]
+after = "service/otelcol-docker"
+when = { side = "host" }
+
+[state.otelcol-docker-ufw.ufw]
+comment = "OTLP from containers"
+rules = [
+  { action = "allow", proto = "tcp", to = "{{ .Docker.BridgeIP }}", to_port = "4317", from = "0.0.0.0/0", from_port = "any", dir = "in", interface = "docker0" },
+  { action = "allow", proto = "tcp", to = "{{ .Docker.BridgeIP }}", to_port = "4317", from = "0.0.0.0/0", from_port = "any", dir = "in", interface = "br-+" },
+]
+
 # systemctl returns before the receivers start. One that cannot start stops the collector, which
 # then never answers.
 [state.otelcol-health]

@@ -6,6 +6,7 @@
 "ws:deb/otelcol" = "in-sync"
 "ws:service/otelcol" = "in-sync"
 "ws:service/otelcol-docker" = "in-sync"
+"ws:state/otelcol-docker-ufw" = "in-sync"
 "ws:state/otelcol-health" = "in-sync"
 
 [bootstrap.services.prometheus-node-exporter]

@@ -72,7 +72,9 @@ The receiver stays on loopback. A second one on the bridge address could not bin
 `docker0` has the address, and the collector would stop. So the socket unit `otelcol-docker.socket`
 listens there, with `FreeBind=yes`, and `systemd-socket-proxyd`, in `otelcol-docker.service`,
 passes each connection to `127.0.0.1:4317`. The service requires the socket, so that a new address
-restarts both.
+restarts both. A host's ufw denies what comes in, so `state/otelcol-docker-ufw` lets `docker0` and
+`br-+` reach the port, as docker's `state/docker-dns` does for the resolver. A guest holds no
+filter.
 
 Only gRPC goes through. A container whose SDK keeps its defaults sends OTLP/HTTP to port 4318, where
 nothing listens, so it sets `OTEL_EXPORTER_OTLP_PROTOCOL=grpc` and
