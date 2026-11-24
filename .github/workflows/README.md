@@ -66,7 +66,7 @@ and fails where they differ from the repository's, in `ubuntu/roles/signoz`.
 
 ## The Mac
 
-Cases 46 to 87 read what the first `mise bootstrap` wrote. Case 46 checks
+Cases 46 to 88 read what the first `mise bootstrap` wrote. Case 46 checks
 [Ghostty's files](../../macos/roles/ghostty/README.md#ghosttys-settings): `/etc/ws/ghostty`
 must be `ws.ghostty` whole, and Ghostty's config must end with the line that reads it. Case 47
 checks [Zed's files](../../macos/roles/zed/README.md): `global_settings.json` must be
@@ -90,7 +90,9 @@ that mise wrote, the current host's screen saver delay among them. Case 86 check
 `/etc/paths.d/dotnet` must name that directory. Case 87 checks [the zsh hook](../../macos/roles/ghostty/README.md#the-zsh-hook): `zsh -i` must
 reset at each prompt, and the alternate screen after a 255 from `ssh` or from `cld --host` alone.
 It checks [oh-my-zsh and its plugins](../../macos/roles/zsh/README.md) too: each clone at its pinned
-commit, and a shell that loads the plugins and puts `~/.local/bin` first.
+commit, and a shell that loads the plugins and puts `~/.local/bin` first. Case 88 checks
+[the power settings](../../macos/roles/power/README.md): `pmset -g custom` must show `displaysleep 0`
+under `AC Power`, and the App Store's `AutoUpdate` must read 0.
 
 CI also sets up a Mac, by [its cases](../client), in the order of [The
 Mac](../../macos/README.md). A stand-in cld, which cld's unit leaves alone, spares the
