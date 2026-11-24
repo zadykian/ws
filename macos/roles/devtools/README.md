@@ -28,3 +28,11 @@ A formula takes the latest alone, as Homebrew keeps the current bottle only, and
 upgrades it by itself: `mise bootstrap packages upgrade` does. So the formulae are outside the
 SHA-256 rule of the pinned downloads ([CLAUDE.md](../../../.claude/CLAUDE.md)). A first run pours
 about 30 bottles, as `gnupg` has 10 dependencies.
+
+## The PATH
+
+`file/devtools-path` writes `/etc/paths.d/ws`, root's, with the two directories that the tools
+need: `/opt/homebrew/bin`, where mise links the formulae and the casks' commands, such as Zed's,
+and `/usr/local/go/bin`. `/usr/libexec/path_helper` puts each on a login shell's `PATH`, where
+Homebrew is not set up. A shell open before the first run finds none of them until it logs in
+again.
