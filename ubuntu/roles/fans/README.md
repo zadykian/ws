@@ -1,9 +1,9 @@
 # fans
 
-The `fans` role drives the server's fans on curves of its own. It builds the board's fan driver
+The `fans` role drives the host's fans on curves of its own. It builds the board's fan driver
 with DKMS, and runs `ws-fans`, a service of its own, on the curves of its variables. The role is
-three units of [its spec](units.toml.tmpl), whose lines sit in `mise.guest.toml`
-([The frame](../frame/README.md)). The daemon is Go, `ws ubuntu guest fans`, in `daemon/`.
+three units of [its spec](units.toml.tmpl), whose lines sit in `mise.host.toml`
+([The frame](../frame/README.md)). The daemon is Go, `ws ubuntu host fans`, in `daemon/`.
 
 | Unit | What it does |
 | --- | --- |
@@ -13,7 +13,7 @@ three units of [its spec](units.toml.tmpl), whose lines sit in `mise.guest.toml`
 
 Each runs where DMI names the board's maker `WS_FANS_BOARD_VENDOR`, MSI: the units'
 `when = { board_vendor = ... }` ([when](../../../engine/core/kind/README.md#the-specs)). A
-machine with another board is left alone, as a cloud VM or a VM on the Mac. There
+machine with another board is left alone, as a CI runner's. There
 each unit says in a line that it's off, and reads `in-sync`. With the value empty, the line says
 that the `when` gives no maker.
 
@@ -54,7 +54,7 @@ Then run the bootstrap again, as
 
 ## ws-fans
 
-`ws-fans.service` runs `ws ubuntu guest fans` from `/usr/local/bin/ws`. It reads `/etc/ws/fans.json`,
+`ws-fans.service` runs `ws ubuntu host fans` from `/usr/local/bin/ws`. It reads `/etc/ws/fans.json`,
 which the unit writes from its variables, below. The daemon's own loader checks a new config as the
 unit plans, so a config it refuses fails the plan and replaces nothing. A change to the config, the
 unit or the modules' files restarts the service. So does a new ws: the running process's binary is

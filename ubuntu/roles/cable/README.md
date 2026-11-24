@@ -1,9 +1,9 @@
 # cable
 
-The `cable` role sets up the server's end of a cable to the Mac, `10.77.0.1/30` on the port
+The `cable` role sets up the host's end of a cable to the Mac, `10.77.0.1/30` on the port
 `WS_CABLE_PORT` names, from a netplan file. The role is three units of [its spec](units.toml.tmpl), whose
-lines sit in `mise.guest.toml` ([The frame](../frame/README.md)). Its checks stay Go, as
-`ws ubuntu guest cable check` and `ws ubuntu guest cable reload`, which the units run.
+lines sit in `mise.host.toml` ([The frame](../frame/README.md)). Its checks stay Go, as
+`ws ubuntu host cable check` and `ws ubuntu host cable reload`, which the units run.
 
 | Unit | What it does |
 | --- | --- |
@@ -29,9 +29,9 @@ The file `/etc/netplan/60-cable.yaml` gives that interface `10.77.0.1/30`
 (`WS_CABLE_ADDRESS`), and no DHCP, gateway or DNS. netplan merges the file with the other
 files' entries of the port's name, as the installer's: its settings win, and its address joins
 theirs. Boot doesn't wait for the link, which is up only while the Mac is docked. The Mac takes
-`10.77.0.2/30`, with no router, from `mise -C /opt/ws/macos bootstrap` ([The cable](../../../macos/README.md#the-cable)). A guest
-holds no filter, so over the cable, as over any interface, sshd takes every login that a key opens
-([No filter](../security/README.md#no-filter)).
+`10.77.0.2/30`, with no router, from `mise -C /opt/ws/macos bootstrap` ([The cable](../../../macos/README.md#the-cable)). A host's
+ufw lets SSH in on any interface, so over the cable sshd takes every login that a key opens
+([The host's firewall](../security/README.md#the-hosts-firewall)).
  The guard stops the run where the port looks like an uplink. Such a port carries a default route,
 in any routing table, or holds an IPv4 lease outside the cable's subnet. A static address outside
 it, as an
