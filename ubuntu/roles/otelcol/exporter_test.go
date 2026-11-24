@@ -64,6 +64,25 @@ func TestCollectorSendsToSigNozAtItsSidesEndpoint(t *testing.T) {
 	}
 }
 
+// Temperatures and fans are the host's: a guest's sysfs shows the host's hwmon, so a guest would send
+// them under its own name.
+func TestOnlyTheHostScrapesNodeExporter(t *testing.T) {
+	guest, _ := values.Parse(nil)
+	host, _ := values.ParseHost(nil)
+	for name, c := range map[string]struct {
+		data any
+		want bool
+	}{"a guest": {guest, false}, "the host": {host, true}} {
+		parsed := rendered(t, c.data, "")
+		receivers, _ := parsed["receivers"].(map[string]any)
+		_, has := receivers["prometheus"]
+		metrics := parsed["service"].(map[string]any)["pipelines"].(map[string]any)["metrics"].(map[string]any)["receivers"].([]any)
+		if has != c.want || slices.Contains(metrics, any("prometheus")) != c.want {
+			t.Errorf("%s: the prometheus receiver is defined %v, in the pipeline %v; want %v", name, has, metrics, c.want)
+		}
+	}
+}
+
 // SigNoz takes the collector's data from every pipeline but the one that sends claude's metrics
 // elsewhere.
 func TestCollectorSendsEachPipelineToSigNozButClaudes(t *testing.T) {

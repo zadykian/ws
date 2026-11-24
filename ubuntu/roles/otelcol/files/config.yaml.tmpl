@@ -2,7 +2,7 @@
 # Written by github.com/zadykian/ws, whose next run replaces any change made here.
 #
 # It starts from SigNoz's config for a collector on a VM, with every port on loopback. It adds the
-# journal and node_exporter's temperatures, and leaves the per-process metrics out. Where
+# journal, and on a host node_exporter's temperatures, and leaves the per-process metrics out. Where
 # /etc/ws/env sets OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT, claude's metrics go there too.
 
 extensions:
@@ -35,8 +35,10 @@ receivers:
       filesystem: {}
       network: {}
       processes: {}
+{{- if .Sensors }}
   # Temperatures and fans, which host_metrics doesn't read, from node_exporter on loopback, which
-  # serves only its hwmon and thermal_zone collectors. A VM has none of either.
+  # serves only its hwmon and thermal_zone collectors. A guest's sysfs shows the host's, so a
+  # guest sends none.
   prometheus:
     config:
       scrape_configs:
@@ -44,6 +46,7 @@ receivers:
           scrape_interval: 60s
           static_configs:
             - targets: [127.0.0.1:9100]
+{{- end }}
 
 processors:
   # Past 384 MiB (512 less the spike), the collector refuses new data rather than grow until the
@@ -111,7 +114,7 @@ service:
       processors: [memory_limiter, resource_detection, batch]
       exporters: [otlp_grpc/signoz]
     metrics:
-      receivers: [otlp, host_metrics, prometheus]
+      receivers: [otlp, host_metrics{{ if .Sensors }}, prometheus{{ end }}]
       processors: [memory_limiter, resource_detection, batch]
       exporters: [otlp_grpc/signoz]
     logs:

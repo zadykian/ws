@@ -1,24 +1,8 @@
-# otelcol's lines for every server: node_exporter and its service, whose arguments go in before its
-# package, and the units of units.toml.tmpl. The package starts node_exporter with the arguments it
-# finds, and without them it would serve every collector on every address.
+# otelcol's lines for every guest: the units of units.toml.tmpl. Temperatures and fans are the host's
+# alone (mise.host.toml): a guest's sysfs shows the host's hwmon, so a guest would send the host's
+# temperatures under its own name.
 [bootstrap.packages]
-"apt:prometheus-node-exporter" = "latest"
 "ws:deb/otelcol" = "in-sync"
 "ws:service/otelcol" = "in-sync"
 "ws:service/otelcol-docker" = "in-sync"
 "ws:state/otelcol-health" = "in-sync"
-
-[bootstrap.services.prometheus-node-exporter]
-state = "running"
-enabled = true
-on_change = "restart"
-
-# The file is one of the package's conffiles, and dpkg keeps the one it finds. A change of the
-# arguments restarts the service.
-[bootstrap.files."/etc/default/prometheus-node-exporter"]
-source = "files/prometheus-node-exporter"
-phase = "pre-packages"
-owner = "root"
-group = "root"
-mode = "0644"
-notify = ["prometheus-node-exporter"]

@@ -1,6 +1,6 @@
-# The collector's units, for a service that needs the .deb that a unit brings: node_exporter is
-# mise's (mise.guest.toml). The service owns the collector's four files, so that a change of any
-# of them, or of two together, restarts it once.
+# The collector's units, for a service that needs the .deb that a unit brings: node_exporter is the
+# host's alone, and mise's (mise.host.toml). The service owns the collector's four files, so that a
+# change of any of them, or of two together, restarts it once.
 
 # The package starts the collector with its own config, on every address: it stays off until the
 # service below sets it up. It waits on signoz's sync, so that SigNoz keeps what the collector
