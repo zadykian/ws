@@ -1,7 +1,9 @@
 package cli
 
 import (
+	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource/ufw"
+	"github.com/zadykian/ws/ubuntu/values"
 	"io"
 
 	"errors"
@@ -129,6 +131,115 @@ func TestIncusUFWLetsDHCPInAndRoutesTheBridge(t *testing.T) {
 	for _, c := range m.Calls {
 		if strings.Contains(c, "53") || strings.Contains(c, "out on") {
 			t.Errorf("call %q: DNS stays shut, and no rule names an out interface", c)
+		}
+	}
+}
+
+const (
+	sourcesFile = "/usr/local/lib/ws/incus/sources.nft"
+	// sourcesInForce and sourcesLoads are the commands of service/incus-sources's drift, as the
+	// fake keys them.
+	sourcesInForce = "nft -s -t list table bridge ws_sources"
+	sourcesLoads   = `unshare --net sh -c nft -f "$1" && nft -s -t list table bridge ws_sources sh ` + sourcesFile
+)
+
+// sourcesMachine is a machine whose table checks, with the table in force as in.
+func sourcesMachine(in string) (*effecttest.Machine, *effecttest.Units) {
+	m := effecttest.NewMachine()
+	m.Results["/usr/sbin/nft -c -f "+sourcesFile+".ws-check"] = effecttest.Result{}
+	m.Results[sourcesInForce] = effecttest.Result{Out: []byte(in)}
+	m.Results[sourcesLoads] = effecttest.Result{Out: []byte("chain\n")}
+	return m, &effecttest.Units{States: map[string]effect.UnitState{"incus-sources.service": {Active: true}}}
+}
+
+func TestSourcesTableDropsWhatAGuestMayNotClaim(t *testing.T) {
+	m, _ := sourcesMachine("chain\n")
+	applyUnit(t, incusUnits(t, m), "service/incus-sources")
+	table := string(m.Files[sourcesFile])
+	ranges := "{ 10.100.0.0/24, 10.99.0.0/20 }"
+	for _, rule := range []string{
+		"ether type arp arp saddr ip . iifname @owned4 accept",
+		"ether type arp arp saddr ip " + ranges + " drop",
+		"ether type ip ip saddr . iifname @owned4 accept",
+		"ether type ip ip saddr " + ranges + " drop",
+		"type filter hook input priority -300; policy accept;",
+		"type filter hook forward priority -300; policy accept;",
+	} {
+		if !strings.Contains(table, rule) {
+			t.Errorf("the table lacks %q:\n%s", rule, table)
+		}
+	}
+	// A guest's own address passes before the drop, and the rest of the traffic is no rule's.
+	for _, family := range []string{"arp saddr ip", "ip saddr"} {
+		own, drop := strings.Index(table, family+" . iifname @owned4 accept"), strings.Index(table, family+" { ")
+		if own < 0 || drop < own {
+			t.Errorf("the %s drop comes before its owner's accept:\n%s", family, table)
+		}
+	}
+	for _, line := range strings.Split(table, "\n") {
+		if code, _, _ := strings.Cut(line, "#"); strings.Contains(code, "br_netfilter") || strings.Contains(code, "ipv4_filtering") {
+			t.Errorf("the table leans on br_netfilter or Incus's IPv4 filter: %s", line)
+		}
+	}
+}
+
+// A VLAN tag, or any ether type that no rule reads, would hide a source from the rules, which the
+// host would strip and take.
+func TestSourcesTableDropsOtherEtherTypesBeforeAnyAccept(t *testing.T) {
+	m, _ := sourcesMachine("chain\n")
+	applyUnit(t, incusUnits(t, m), "service/incus-sources")
+	table := string(m.Files[sourcesFile])
+	drop, first := strings.Index(table, "ether type != { arp, ip, ip6 } drop"), strings.Index(table, "@owned4 accept")
+	if drop < 0 || first < 0 || drop > first {
+		t.Errorf("the drop of other ether types is not the chain's first rule:\n%s", table)
+	}
+}
+
+func TestSourcesServiceIsRequiredByIncus(t *testing.T) {
+	m, _ := sourcesMachine("chain\n")
+	applyUnit(t, incusUnits(t, m), "service/incus-sources")
+	unit := string(m.Files["/etc/systemd/system/incus-sources.service"])
+	if !strings.Contains(unit, "\nRequiredBy=incus.service\n") || !strings.Contains(unit, "\nBefore=") {
+		t.Errorf("the unit:\n%s\nwant Incus to require it, so a failed load keeps the guests down", unit)
+	}
+}
+
+func TestSourcesTableNamesTheRangesOfTheValues(t *testing.T) {
+	m, _ := sourcesMachine("chain\n")
+	units, _ := cableUnits(t, m, "---\nWS_INCUS_BRIDGE_ADDRESS: 10.100.8.1/22\n")
+	applyUnit(t, units, "service/incus-sources")
+	if table := string(m.Files[sourcesFile]); !strings.Contains(table, "{ 10.100.8.0/22, 10.99.0.0/20 } drop") {
+		t.Errorf("the table lacks the bridge's subnet:\n%s", table)
+	}
+}
+
+func TestSourcesTableIsCheckedByNftBeforeItGoesLive(t *testing.T) {
+	m, _ := sourcesMachine("chain\n")
+	applyUnit(t, incusUnits(t, m), "service/incus-sources")
+	if !slices.Contains(m.Calls, "root /usr/sbin/nft -c -f "+sourcesFile+".ws-check") {
+		t.Errorf("calls %q, want the new file checked by nft", m.Calls)
+	}
+}
+
+func TestSourcesServiceReloadsWhereTheTableInForceDiffers(t *testing.T) {
+	for _, tc := range []struct {
+		in      string
+		reloads bool
+	}{{"chain\n", false}, {"chain flushed by hand\n", true}} {
+		m, u := sourcesMachine(tc.in)
+		// The file and the unit are in place, so that only the drift is left to plan.
+		applyUnit(t, incusUnits(t, m), "service/incus-sources")
+		v, err := values.ParseHost(nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		units := loadSpecs(t, kind.Env{M: m, U: u, Out: &effecttest.Out{}, Data: v, Side: "host", Self: selfPath})
+		applyUnit(t, units, "service/incus-sources")
+		got := slices.ContainsFunc(u.Calls, func(c string) bool {
+			return strings.Contains(c, "incus-sources.service") && c != "enable incus-sources.service"
+		})
+		if got != tc.reloads {
+			t.Errorf("in force %q: unit calls %q, want a reload or restart %t", tc.in, u.Calls, tc.reloads)
 		}
 	}
 }

@@ -35,3 +35,35 @@ rules = [
   { action = "allow", proto = "udp", to_port = "67", dir = "in", interface = "incusbr0" },
   { action = "allow", interface = "incusbr0", out = "any" },
 ]
+
+# The table of guest sources, in nftables' bridge family. The table in force, with its hook chains,
+# is compared with the table that the file loads in a network namespace of its own. So a table
+# flushed by hand, or a hook that is lost, reloads. The set's elements are no part of that: the
+# guests fill them, and a reload empties them. -s leaves out the counters' values, and -t the set's
+# elements. A host's alone, as it filters.
+[service.incus-sources]
+unit = "incus-sources.service"
+enabled = true
+run = "running"
+reload = true
+in_force = ["nft", "-s", "-t", "list", "table", "bridge", "ws_sources"]
+loads = [
+    "unshare",
+    "--net",
+    "sh",
+    "-c",
+    'nft -f "$1" && nft -s -t list table bridge ws_sources',
+    "sh",
+    "/usr/local/lib/ws/incus/sources.nft",
+]
+after = "state/incus-profile"
+when = { side = "host" }
+
+[[service.incus-sources.file]]
+path = "/usr/local/lib/ws/incus/sources.nft"
+template = "files/sources.nft.tmpl"
+check = ["/usr/sbin/nft", "-c", "-f", "{}"]
+
+[[service.incus-sources.file]]
+path = "/etc/systemd/system/incus-sources.service"
+source = "files/incus-sources.service"
