@@ -31,6 +31,13 @@ func (t GuestTunnel) Link() string { return "wg" + strconv.Itoa(int(t.Slot)) }
 // SlotAddress is the slot's server end, 10.99.N.1, which the guest holds and the host routes to it.
 func (t GuestTunnel) SlotAddress() netip.Addr { return t.Slot.Server() }
 
+// markBase is the firewall mark of slot 0. A guest's mark is the base and its slot.
+const markBase = 0x1000
+
+// Mark is the firewall mark of what comes in by the guest's NIC. Nothing else carries it, so the
+// way out by this tunnel's interface asks for it, and no other guest sends into the tunnel.
+func (t GuestTunnel) Mark() int { return markBase + int(t.Slot) }
+
 // KeyFile is the interface's private key, which networkd reads.
 func (t GuestTunnel) KeyFile() string { return "/etc/systemd/network/60-" + t.Link() + ".key" }
 

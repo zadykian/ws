@@ -158,8 +158,8 @@ const (
 	sourcesFile = "/usr/local/lib/ws/incus/sources.nft"
 	// sourcesInForce and sourcesLoads are the commands of service/incus-sources's drift, as the
 	// fake keys them.
-	sourcesInForce = "nft -s -t list table bridge ws_sources"
-	sourcesLoads   = `unshare --net sh -c nft -f "$1" && nft -s -t list table bridge ws_sources sh ` + sourcesFile
+	sourcesInForce = "sh -c nft -s -t list table bridge ws_sources && nft -s -t list table ip ws_guest_out"
+	sourcesLoads   = `unshare --net sh -c nft -f "$1" && nft -s -t list table bridge ws_sources && nft -s -t list table ip ws_guest_out sh ` + sourcesFile
 )
 
 // sourcesMachine is a machine whose table checks, with the table in force as in.

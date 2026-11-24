@@ -193,3 +193,21 @@ func TestAGuestWhoseSwitchTurnsOffLosesTheCard(t *testing.T) {
 		t.Errorf("the edit's YAML keeps the card or loses the NIC:\n%s", m.Inputs[0])
 	}
 }
+
+func TestAGuestOfASlotGetsTheSlotsAddressAsARouteOnItsNIC(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results[guestList] = effecttest.Result{Out: []byte("[]")}
+	m.Results["incus launch local:"+guestAlias+" lab"] = effecttest.Result{}
+	own := values.Default()
+	own.Tunnel.Address = "10.99.1.1/24"
+	changes, err := Guest(m, lab, own, guestAlias).Plan(t.Context())
+	if err != nil || len(changes) != 1 {
+		t.Fatalf("changes = %v, err = %v", changes, err)
+	}
+	if err := changes[0].Apply(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(m.Inputs[0], "ipv4.routes: 10.99.1.1/32") {
+		t.Errorf("the NIC lacks the slot's route:\n%s", m.Inputs[0])
+	}
+}

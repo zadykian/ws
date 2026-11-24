@@ -5,7 +5,12 @@
 # leave a guest under a source that is not its own. So the table lists what a guest may not claim,
 # and passes the rest. It filters at the bridge, from a guest's port, before any ACL. An ARP sender
 # or a source address in the bridge's subnet or the tunnel's slots must be one that the port owns.
-# So a guest takes a lease from 0.0.0.0, and reaches the internet from its own address.
+# The slot's address of a guest is its own. So a guest takes a lease from 0.0.0.0, and reaches the
+# internet from its own address.
+#
+# What comes in by a guest's port takes the guest's mark. The way out by a guest's tunnel interface
+# asks for that mark, in a table of its own. So no guest sends into another guest's tunnel under a
+# source that the first table passes, such as a forged reply of the VPN.
 #
 # A frame of another ether type drops first. A VLAN tag would hide a source from the rules below,
 # and the host strips the tag and takes the frame.
@@ -15,18 +20,22 @@
 # in the rules, not in a set: the kernel fills a set of ranges after its rules take effect, and a
 # packet may pass a reload.
 destroy table bridge ws_sources
+destroy table ip ws_guest_out
 
 table bridge ws_sources {
-    # An address of a guest, with the port that carries it.
+    # An address of a guest, its slot's too, with the port that carries it.
     set owned4 {
         type ipv4_addr . ifname
 {{- if .Incus.Guests }}
-        elements = { {{ range $i, $g := .Incus.Guests }}{{ if $i }}, {{ end }}{{ $g.Address }} . "{{ $g.Port }}"{{ end }} }
+        elements = { {{ range $i, $s := .Incus.Sources }}{{ if $i }}, {{ end }}{{ $s.Address }} . "{{ $s.Port }}"{{ end }} }
 {{- end }}
     }
 
     chain from_guest {
         ether type != { arp, ip, ip6 } drop
+{{- range .Incus.Guests }}
+        iifname "{{ .Port }}" meta mark set {{ .Mark }}
+{{- end }}
         ether type arp arp saddr ip . iifname @owned4 accept
         ether type arp arp saddr ip { {{ .Incus.BridgeSubnet }}, {{ .Incus.TunnelSlots }} } drop
         ether type ip ip saddr . iifname @owned4 accept
@@ -43,5 +52,15 @@ table bridge ws_sources {
     chain forward {
         type filter hook forward priority -300; policy accept;
         jump from_guest
+    }
+}
+
+# The way out by a guest's tunnel interface: only what came in by that guest's port.
+table ip ws_guest_out {
+    chain forward {
+        type filter hook forward priority -300; policy accept;
+{{- range .Incus.Guests }}{{ if .Link }}
+        oifname "{{ .Link }}" meta mark != {{ .Mark }} drop
+{{- end }}{{ end }}
     }
 }
