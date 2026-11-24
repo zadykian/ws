@@ -24,7 +24,7 @@ const (
 	knownHosts   = "/h/.ssh/known_hosts"
 	findLab      = "ssh-keygen -F lab -f " + knownHosts
 	hostnameLine = "ssh lab hostname"
-	runLine      = "ssh -t lab /usr/local/bin/ws server setup --secrets"
+	runLine      = "ssh -t lab /usr/local/bin/ws ubuntu guest setup --secrets"
 	keysLine     = secrets.GH + " api --paginate repos/o/n/keys"
 	postLine     = secrets.GH + " api -X POST repos/o/n/keys -f title=ws-a -f key=" + labKey + " -F read_only=true"
 	sealed       = "fnox-age-batch-v1:c2VhbGVk"

@@ -1,7 +1,7 @@
 # dotnet
 
 The `dotnet` role installs .NET's SDKs 10.0.404 and 11.0.100 on the Mac, as the server's
-[devtools](../../../roles/server/ubuntu/devtools/README.md#the-net-sdks) does on Linux.
+[devtools](../../../ubuntu/roles/devtools/README.md#the-net-sdks) does on Linux.
 
 `tree/dotnet` unpacks Microsoft's tarballs for Apple silicon into `/usr/local/share/dotnet`, root's,
 side by side. Each is checked against the SHA-256 that the unit pins, and a new pin replaces the

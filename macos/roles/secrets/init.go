@@ -52,7 +52,7 @@ func (i Init) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	inputs, err := Inputs(i.M, path.Join(i.Tree, "roles/server/ubuntu"))
+	inputs, err := Inputs(i.M, path.Join(i.Tree, "ubuntu/roles"))
 	if err != nil {
 		return err
 	}

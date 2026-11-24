@@ -26,7 +26,7 @@ files](values/README.md#the-two-files)). The files' check refuses a clash.
    `WS_REMOTE` repeats on another server, add the slot to each.
 3. Set the rest that differs from its default: `WS_TARGET`, `WS_LAN`, `WS_LAN_ADDRESS`,
    `WS_REMOTE`, `WS_REMOTE_PORT`, `WS_TUNNEL_NETWORKS` and `WS_RESOLVERS`. The
-   [router's page](../roles/server/ubuntu/cable/router.md) gives the LAN's defaults.
+   [router's page](../ubuntu/roles/cable/router.md) gives the LAN's defaults.
 
 ## The bootstrap
 
@@ -70,7 +70,7 @@ to the latest release, or to `--version`'s, and runs that ws's setup, with sudo 
    Mac's name ([The signing key](roles/git/README.md#the-signing-key)).
 
 GitHub is the only source of the server's keys: nothing copies a key to the server. Root takes the
-account's keys from GitHub, as [the server's runbook](../roles/server/runbook.md) says, so run this step
+account's keys from GitHub, as [the server's runbook](../ubuntu/runbook.md) says, so run this step
 before it. A cloud VM takes the keys its provider holds, which must be the account's.
 
 ## The secrets
@@ -91,8 +91,8 @@ before it. A cloud VM takes the keys its provider holds, which must be the accou
    Give the value on standard input, never as an argument. Commit the changed file, signed, push
    the branch and open a pull request by `gh pr create`. Once `values` and `gitleaks` pass, merge
    it by `gh pr merge --merge --delete-branch`. Then, for each server NAME that reads the value,
-   run `ws macos secrets add NAME`, which runs `ws server setup --secrets` there
-   ([The task](../roles/server/ubuntu/secrets/README.md#the-task)).
+   run `ws macos secrets add NAME`, which runs `ws ubuntu guest setup --secrets` there
+   ([The task](../ubuntu/roles/secrets/README.md#the-task)).
 
 ## ws's host key
 
@@ -106,21 +106,21 @@ before it. A cloud VM takes the keys its provider holds, which must be the accou
 ## Login
 
 Log in with `ssh -o HostName=ADDRESS NAME`, as the tunnel is not up yet. It must log in as root by
-the Mac's key, which root took from GitHub ([The server's runbook](../roles/server/runbook.md)). A cloud
+the Mac's key, which root took from GitHub ([The server's runbook](../ubuntu/runbook.md)). A cloud
 image whose root refuses a login takes `disable_root: false` and `users: []` in its cloud-config.
 Where ssh names another host key, drop the old one with `ssh-keygen -R NAME`.
 
 ## ws on ws
 
 1. At ws, write the values that differ from their defaults first, as
-   [the server's runbook](../roles/server/runbook.md) says. On a cloud VM, set `WS_SECURITY_OUTBOUND`
+   [the server's runbook](../ubuntu/runbook.md) says. On a cloud VM, set `WS_SECURITY_OUTBOUND`
    to false, as the outbound table drops the metadata service
-   ([Outbound](../roles/server/ubuntu/security/README.md#outbound)). At slot N other than 0, set
+   ([Outbound](../ubuntu/roles/security/README.md#outbound)). At slot N other than 0, set
    `WS_TUNNEL_ADDRESS` to `10.99.N.1/24`, `WS_TUNNEL_PORT` to the Mac's, and
    `WS_TUNNEL_PEERS` to `mac` at `10.99.N.2`
-   ([The tunnel](../roles/server/ubuntu/tunnel/README.md#the-tunnel)).
+   ([The tunnel](../ubuntu/roles/tunnel/README.md#the-tunnel)).
 2. Run `install.sh` by the three lines of [Install](../.github/workflows/release.md#install),
-   `set -o pipefail` among them, and then `ws server setup`. Check ws with `ws version`.
+   `set -o pipefail` among them, and then `ws ubuntu guest setup`. Check ws with `ws version`.
 3. Run `ws macos secrets add NAME --address ADDRESS`, with `--port PORT` off the LAN. It
    adds ws's host key to the secrets and as the repository's deploy key, with the Nano's PIN and a
    touch. It then runs the server's bootstrap with the secrets over `ssh -t`. A first run takes 20
@@ -136,15 +136,15 @@ Run `ssh -t NAME claude auth login`, and open the address it shows in the Mac's 
 
 Add the server's signing key by hand in `@zadykiand`'s settings on GitHub, as a signing key. Its
 `.pub` is the file that `~/.gitconfig` there names. The Mac's gh is the maintainer's login and adds
-none for the machine account ([Signing](../roles/server/ubuntu/git/README.md#signing)).
+none for the machine account ([Signing](../ubuntu/roles/git/README.md#signing)).
 Where the same key stands in `@zadykian`'s settings as a signing key, take it off there. GitHub
 would show a commit that ws signs under the maintainer's email as verified.
 
 ## The tunnel
 
 1. Copy the Mac's `/etc/ws/tunnel.pub` to ws's `/etc/wireguard/mac.pub`, as root, and run the
-   server's bootstrap there, as [its runbook](../roles/server/runbook.md) says
-   ([The tunnel](../roles/server/ubuntu/tunnel/README.md#the-tunnel)).
+   server's bootstrap there, as [its runbook](../ubuntu/runbook.md) says
+   ([The tunnel](../ubuntu/roles/tunnel/README.md#the-tunnel)).
 2. Put wg0's public key, which that page names, in `WS_PUBLIC_KEY` of the server's `values.yml`.
 3. Run `ws macos setup` again, and allow ws-tunnel in the Background.
 4. Ping the server's tunnel address, `10.99.N.1` for slot N, and run `ssh NAME`. A handshake must
@@ -157,15 +157,15 @@ Skip it on a cloud VM and a VM on the Mac.
 1. Dock the Mac. At ws, list the wired ports with their carrier: `ip -br link` and `ip -br addr`.
 2. Set `WS_CABLE_PORT` at ws, and `WS_CABLE_SERVICE` on the Mac. `networksetup
    -listallnetworkservices` lists the services, and the cable's has a `169.254` address.
-3. Run the server's bootstrap at ws, as [its runbook](../roles/server/runbook.md) says, then
+3. Run the server's bootstrap at ws, as [its runbook](../ubuntu/runbook.md) says, then
    `ws macos setup`.
 4. Ping `10.77.0.1`. The Mac's end is `10.77.0.2` ([The cable](README.md#the-cable)).
 
 ## What stays by hand
 
 - With Secure Boot on, where the kernel refuses the fans' driver, DKMS's key, enrolled at ws's
-  console ([Secure Boot](../roles/server/ubuntu/fans/README.md#secure-boot)).
+  console ([Secure Boot](../ubuntu/roles/fans/README.md#secure-boot)).
 - macOS's grant of the local network to an app.
 - The server's lease, made static, and the router's forwards where `WS_REMOTE` is set
-  ([The router](../roles/server/ubuntu/cable/router.md)).
+  ([The router](../ubuntu/roles/cable/router.md)).
 - git's signing key on GitHub, and ws's in `@zadykiand`'s settings, which no run adds.

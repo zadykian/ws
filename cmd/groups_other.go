@@ -9,5 +9,5 @@ import (
 )
 
 // groups returns the command groups that exist on this system: none here, as ws macos is built for
-// darwin alone and ws server for Linux alone.
+// darwin alone and ws ubuntu for Linux alone.
 func groups(cli.Env) []*cobra.Command { return nil }

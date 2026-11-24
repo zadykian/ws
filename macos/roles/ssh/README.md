@@ -93,8 +93,8 @@ hour. `ssh -o HostName=ADDRESS -o Port=PORT ws` comes from another address, and 
 `fail2ban-client set sshd unbanip 10.99.N.2` lifts the ban.
 
 Unless `WS_SECURITY_OUTBOUND` is false, ws opens no connection to the Mac over the cable, the LAN or
-the tunnel ([The firewall](../../../roles/server/ubuntu/tunnel/README.md#the-firewall),
-[Outbound](../../../roles/server/ubuntu/security/README.md#outbound)). That holds for its bridged
+the tunnel ([The firewall](../../../ubuntu/roles/tunnel/README.md#the-firewall),
+[Outbound](../../../ubuntu/roles/security/README.md#outbound)). That holds for its bridged
 containers and its users, but those who can become root. On a VM on the Mac, DHCP and DNS still go
 to the Mac, which serves them.
 

@@ -33,7 +33,7 @@ grep -qF "releases/download/$tag/install.sh" "$tmp/user-data" || fail "the file 
 grep -qF "$sum  " "$tmp/user-data" || fail "the file checks no SHA-256 of install.sh"
 [ "$(grep -cF "WS_VERSION=$tag " "$tmp/user-data")" = 1 ] || fail "install.sh does not run once with WS_VERSION=$tag"
 grep -qF -e "--version, $tag]" "$tmp/user-data" || fail "the first boot runs no ws update --version $tag"
-grep -qF -e "ws, server, setup]" "$tmp/user-data" || fail "the first boot runs no ws server setup after the update"
+grep -qF -e "ws, ubuntu, guest, setup]" "$tmp/user-data" || fail "the first boot runs no ws ubuntu guest setup after the update"
 # Each blank at the key it fills: the header comment names them too, so a bare word would pass.
 for blank in 'hostname: HOSTNAME' 'password: HASH' 'content: VALUES'; do
     grep -qE "^ +$blank\$" "$tmp/user-data" || fail "the maintainer's blank '$blank' is gone"

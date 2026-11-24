@@ -1,7 +1,7 @@
 #!/bin/bash
 # The server job's last cases, as root on the runner that server-checks.sh and secrets-checks.sh
 # set up (.github/workflows/server.md). They turn the outbound table off, as a cloud VM has it
-# (roles/server/ubuntu/security/README.md#outbound). They come last, as no later case may need the
+# (ubuntu/roles/security/README.md#outbound). They come last, as no later case may need the
 # table they take off. Each refusal has a control that holds while the table is on.
 set -euo pipefail
 

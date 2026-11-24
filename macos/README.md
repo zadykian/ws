@@ -7,7 +7,7 @@ for ssh, `ws` ([ssh on the Mac](roles/ssh/README.md)), and Zed ([Zed on the Mac]
 through a WireGuard tunnel that ends on ws, at its slot's `10.99.N.1` whichever way the Mac
 connects. The sessions of `ssh ws` and
 Zed stay open as the Mac moves between the cable, the LAN and elsewhere, with a pause of a few seconds
-([Zed](../roles/server/ubuntu/zed/README.md#when-the-connection-drops)). What it gives up: `ssh ws` fails where UDP is blocked and
+([Zed](../ubuntu/roles/zed/README.md#when-the-connection-drops)). What it gives up: `ssh ws` fails where UDP is blocked and
 while the tunnel is down, and bulk copies run at wireguard-go's speed. To reach ws by hand, give ssh
 a direct way: `ssh -o HostName=ADDRESS -o Port=PORT ws`, as ufw lets SSH in on every interface.
 `WS_REMOTE_PORT` and the router's forward stay for that and for setup.
@@ -61,7 +61,7 @@ steps are those of the server's setup, which `internal/setup` holds, with the Ma
   ([Secretive](roles/ssh/README.md#secretive)). `--key NAME` takes a key that Secretive held
   before. A plan with the key due plans no more.
 - A second run reads as the user, writes nothing and asks no password. `--in-place` and `--plan`
-  work as on the server ([The server's runbook](../roles/server/runbook.md)).
+  work as on the server ([The server's runbook](../ubuntu/runbook.md)).
 
 ## What the Mac reports
 
@@ -88,7 +88,7 @@ it, the router's static lease for it. The script stops on one outside, and on th
 broadcast address. `WS_REMOTE` is the router's name on the internet, and `WS_REMOTE_PORT` the port
 it forwards to ws's 22. The tunnel takes UDP 51820 every way, which the router forwards too;
 `WS_TUNNEL_PORT` sets another, which wg0 listens on. A way without its values is left out. The
-router's side is in [The router](../roles/server/ubuntu/cable/router.md). `WS_PUBLIC_KEY` goes in last,
+router's side is in [The router](../ubuntu/roles/cable/router.md). `WS_PUBLIC_KEY` goes in last,
 once ws has the Mac's key, in the order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE`
 names the network service of the display's adapter, and `WS_CABLE_PORT` ws's port of the cable: [The
 cable](#the-cable). `WS_GIT_SIGNING_PUB_KEY` is the `.pub` of the key that signs git's commits on
@@ -145,7 +145,7 @@ An address, mask or router that `getinfo` omits, as it may undocked, counts as s
 Settings › Network, the service › Details › TCP/IP, Configure IPv4 Manually: IP address `10.77.0.2`,
 mask `255.255.255.252`, no router. Or empty the key: the tunnel and ssh then skip the cable.
 
-Set the key once ws's end is up ([cable](../roles/server/ubuntu/cable/README.md)). Then, docked, check once that the uplink
+Set the key once ws's end is up ([cable](../ubuntu/roles/cable/README.md)). Then, docked, check once that the uplink
 keeps the default route:
 
 ```sh
@@ -167,7 +167,7 @@ make the Mac the server's peer, with that key as MAC_PUBLIC_KEY. They go over a 
 
 ```sh
 ssh -o HostName=ADDRESS -o Port=PORT NAME "printf '%s\n' 'MAC_PUBLIC_KEY' | tee /etc/wireguard/mac.pub >/dev/null"
-ssh -o HostName=ADDRESS -o Port=PORT NAME ws server setup
+ssh -o HostName=ADDRESS -o Port=PORT NAME ws ubuntu guest setup
 ```
 
 With ws's key as `WS_PUBLIC_KEY`, the bootstrap installs the tunnel's daemon. A new
@@ -195,7 +195,7 @@ server.
 
 The tunnel's ends are `10.99.N.2` on the Mac, on a utun of wireguard-go's, and `10.99.N.1` on ws, N
 being `WS_SLOT`. A moved slot restarts the daemon. Name the pair in ws's values.yml ([The
-tunnel](../roles/server/ubuntu/tunnel/README.md#the-tunnel)). The daemon points the Mac's end at the
+tunnel](../ubuntu/roles/tunnel/README.md#the-tunnel)). The daemon points the Mac's end at the
 first of these that answers, each on UDP 51820:
 
 - the cable, `10.77.0.1`, where one of the Mac's addresses lies in `10.77.0.0/30`;
@@ -264,7 +264,7 @@ stamp. So the next bootstrap plans a reload and the stamp's write through sudo, 
 password.
 The files outlive the daemon. While the daemon is stopped, the routes go with its utun, and the
 domain's lookups go out by the Mac's own network and fail. ufw on ws forwards from the tunnel only
-ping, and what the `ikeward` role lets through to its VPN ([Forwarding](../roles/server/ubuntu/ikeward/README.md#forwarding)). Any
+ping, and what the `ikeward` role lets through to its VPN ([Forwarding](../ubuntu/roles/ikeward/README.md#forwarding)). Any
 other network behind ws needs its side set up on ws too. A network the Mac is on, inside one sent
 into the tunnel, keeps its part off the tunnel: macOS routes the narrower network to the Mac's own
 interface.

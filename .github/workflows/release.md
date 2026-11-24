@@ -30,7 +30,7 @@ sha256sum, or `shasum -a 256` where a Mac has no `sha256sum`:
 - It makes `/usr/local` and `/usr/local/bin` where they are missing, root's and 755. It refuses one
   that another user owns or that a group or others may write, and names the chown: launchd would
   refuse ws below it. It changes no owner, as an old Homebrew in `/usr/local` would lose its writes.
-- Its last line names the next command, `ws server setup` on Linux and `ws macos setup` on a Mac.
+- Its last line names the next command, `ws ubuntu guest setup` on Linux and `ws macos setup` on a Mac.
   Setup checks the system: it refuses a Linux but Ubuntu 26.04 before its first write.
 
 | Variable | Default | Sets |
@@ -40,16 +40,16 @@ sha256sum, or `shasum -a 256` where a Mac has no `sha256sum`:
 
 ## The autoinstall file
 
-`autoinstall.yaml` is [roles/server/autoinstall.yaml](../../roles/server/autoinstall.yaml) with the
+`autoinstall.yaml` is [ubuntu/autoinstall.yaml](../../ubuntu/autoinstall.yaml) with the
 release's blanks filled by [autoinstall.sh](../autoinstall.sh): `VERSION`, the tag, and `SHA256`,
 that of the release's own `install.sh`. The `build` job writes it into `dist` beside `install.sh`,
 and fails unless the file names the tag and the sum and keeps no such blank. The words check and
 the release take it as they take each file of `dist`. Its first boot runs that release:
 `ws update --version TAG`, which installs it and runs no setup where the machine has none yet, and
-then `ws server setup`.
+then `ws ubuntu guest setup`.
 
 Three blanks stay the maintainer's. A new server takes these steps, which
-[the server's runbook](../../roles/server/runbook.md#a-new-server-from-the-installer) and
+[the server's runbook](../../ubuntu/runbook.md#a-new-server-from-the-installer) and
 [the README](../../README.md#a-new-machine) name:
 
 1. Fill `HOSTNAME`, the machine's name, `HASH`, root's password hash for the console, from
@@ -79,9 +79,10 @@ again.
   `--version` names the older one. A ws that is no release, a trial's build, or one that is missing
   or does not run, is older than any, so an update ends the trial.
 - Then it replaces itself with the setup of the side that `/etc/mise/miserc.toml` names, of
-  `/usr/local/bin/ws`: `ws server setup`. A Mac has no such choice, and runs `ws macos setup`. A
-  machine with no miserc has run no setup, so it runs none, and names `ws server setup`. Where
-  `/usr/local/bin/ws` is the named release already, it downloads nothing, and runs that setup alone.
+  `/usr/local/bin/ws`: `ws ubuntu guest setup`. A Mac has no such choice, and runs
+  `ws macos setup`. A machine with no miserc has run no setup, so it runs none, and names
+  `ws ubuntu guest setup`. Where `/usr/local/bin/ws` is the named release already, it downloads
+  nothing, and runs that setup alone.
 
 `WS_RELEASES_URL` names the releases, as for `install.sh`.
 
@@ -110,9 +111,9 @@ loopback, a shell script that prints its release and its target as `ws version`,
 
 Then [update-checks.sh](../update-checks.sh) runs `ws update` as root against stubs as releases,
 `v0.2.0`, the latest, and `v0.4.0-rc.1`, and `v0.5.0` whose `ws.sha256` fits no file. A stub prints
-its tag as `ws version` and records its call of `server setup`. The ws that runs is a real build of the tree, which a tag in a
-copy of it stamps as a release, or none for a trial's. The script writes the miserc that a setup
-writes, and fails where the runner has one. The cases:
+its tag as `ws version` and records its call of `ubuntu guest setup`. The ws that runs is a real
+build of the tree, which a tag in a copy of it stamps as a release, or none for a trial's. The
+script writes the miserc that a setup writes, and fails where the runner has one. The cases:
 
 - a release's ws moves to the latest and runs its setup;
 - a trial's build is replaced;
@@ -122,7 +123,7 @@ writes, and fails where the runner has one. The cases:
 - a ws of the named release downloads nothing and runs its own setup. The runner's system refuses
   that setup, and the script fails on Ubuntu 26.04, where the setup would be real. So the job runs
   on Ubuntu 24.04's runner;
-- a machine with no miserc runs no setup, and the update names `ws server setup`;
+- a machine with no miserc runs no setup, and the update names `ws ubuntu guest setup`;
 - a user is refused before any download.
 
 The script deletes `/usr/local/bin/ws` as it ends, so it sets that up after its guards. Its test,
@@ -130,7 +131,7 @@ The script deletes `/usr/local/bin/ws` as it ends, so it sets that up after its 
 refuses deletes nothing.
 
 A step of the job runs [autoinstall-checks.sh](../autoinstall-checks.sh) on the file
-[autoinstall.yaml](../../roles/server/autoinstall.yaml), in an Ubuntu 26.04 container with
+[autoinstall.yaml](../../ubuntu/autoinstall.yaml), in an Ubuntu 26.04 container with
 cloud-init, the installer's version. [autoinstall.sh](../autoinstall.sh) fills a tag and a SHA-256
 into the file's blanks. It puts `#cloud-config` first, as the tree's file cannot hold that line.
 The cases:
@@ -176,9 +177,10 @@ curl -fsSL --proto '=https' --tlsv1.2 \
 ```
 
 So while a pre-release is tried, this line takes the place of each that runs `install.sh`. Those are
-step 3 of [the steps by hand](../../roles/server/runbook.md#the-steps-by-hand), and step 2 of
+step 3 of [the steps by hand](../../ubuntu/runbook.md#the-steps-by-hand), and step 2 of
 [ws on ws](../../macos/runbook.md#ws-on-ws) and the Mac's Tools step on the Mac. The side's
-setup follows, `ws server setup` or `ws macos setup`, which checks out the tree of its own ws's tag.
+setup follows, `ws ubuntu guest setup` or `ws macos setup`, which checks out the tree of its own
+ws's tag.
 
 Nothing else is by hand. `release.yml` runs on the tag, in these jobs:
 

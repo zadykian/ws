@@ -154,7 +154,7 @@ apt_quiet() {
 # The controls: each of these holds before ws, and the opposite after it.
 must "the private address answers before the table" up "http://$target/"
 
-# As on a new machine: ws server setup installs mise and runs the bootstrap. The build is already
+# As on a new machine: ws ubuntu guest setup installs mise and runs the bootstrap. The build is already
 # /usr/local/bin/ws. The bootstrap sets up the firewall before Docker's ufw rules. It runs twice, and
 # the second run must change nothing. Its plan must exit 2 before the first run, which has mise, the
 # plugin and the bootstrap to do, and 0 after each run. The tree must be root's alone for setup's
@@ -263,7 +263,7 @@ ufw --force enable
 kill "$host_pid"
 
 # A port published with no address goes on loopback, as Docker's ports get past ufw
-# (roles/server/ubuntu/docker/README.md#published-ports). It answers on the host, not on the
+# (ubuntu/roles/docker/README.md#published-ports). It answers on the host, not on the
 # address of another network. The control publishes on every address, which the lab reaches.
 docker run -d --rm --name ws-web -p 0.0.0.0:8083:80 "$image" sh -c "$web" >/dev/null
 must "a port published on every address answers on loopback" up http://127.0.0.1:8083/
@@ -285,7 +285,7 @@ docker stop -t 0 ws-probe >/dev/null
 # The shell's line refuses a link at ~/.bashrc. A dry run is enough, as the refusal is in the plan.
 mv /root/.bashrc /root/.bashrc.orig
 ln -s /etc/hostname /root/.bashrc
-if out=$(WS_UNITS=roles/server/ubuntu ws unit write --dry-run file/shell-bashrc-line 2>&1); then
+if out=$(WS_UNITS=ubuntu/roles ws unit write --dry-run file/shell-bashrc-line 2>&1); then
     fail "ws unit write planned through a link at ~/.bashrc"
 fi
 must "a link at ~/.bashrc is refused" grep -q 'is a link to /etc/hostname' <<<"$out"

@@ -13,7 +13,7 @@ import (
 )
 
 // roles is where the Mac's tree holds the server's roles.
-const roles = secrets.Tree + "/roles/server/ubuntu"
+const roles = secrets.Tree + "/ubuntu/roles"
 
 // withRoles is a machine whose tree holds the roles named, each with its mise.secrets.toml where
 // files has one.
@@ -94,7 +94,7 @@ func TestInputsSkipARoleWithoutTheFile(t *testing.T) {
 // TestTheTreesInputsParse reads the inputs that this checkout's server roles declare, as the Mac
 // reads them from /opt/ws. A tree that declares none passes.
 func TestTheTreesInputsParse(t *testing.T) {
-	tree := os.DirFS("../../../roles/server/ubuntu")
+	tree := os.DirFS("../../../ubuntu/roles")
 	files, err := fs.Glob(tree, "*/"+secrets.InputsFile)
 	if err != nil {
 		t.Fatal(err)

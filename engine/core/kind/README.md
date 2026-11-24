@@ -13,7 +13,7 @@ applies and plans again, in the units' order.
 A role's spec is `units.toml.tmpl` in the role's own directory, one level below the root of the specs.
 Its templates and sources sit beside it, and a path in the spec is relative to that directory.
 Each Go template ends in `.tmpl`, the spec's name and the name of each `template`
-([A role's layout](../../../roles/server/ubuntu/frame/README.md#a-roles-layout)).
+([A role's layout](../../../ubuntu/roles/frame/README.md#a-roles-layout)).
 
 - **TOML, decoded strictly.** A table is a kind, and a key under it a unit of that kind. A field
   that no kind has, or a value of the wrong type, fails the load, naming its key and line.
@@ -270,7 +270,7 @@ ws at `/usr/local/bin/ws`, which is there before any run. The write hook runs `w
   change, file diffs included. The last line names the units that changed. A unit whose `when`
   does not hold changes nothing: alone, it ends `changed: none`.
 - **Where it reads.** The specs sit below `$WS_UNITS`, else below the side's own directory: the
-  server's is `/opt/ws/roles/server/ubuntu`, in the checkout that `ws server setup` makes at `/opt/ws`.
+  server's is `/opt/ws/ubuntu/roles`, in the checkout that `ws ubuntu guest setup` makes at `/opt/ws`.
   The values are the side's file, `/etc/ws/values.yml` on the server.
 - **verify.** mise drops the units of a plugin that it refuses, with a warning and exit 0. `verify`
   reads `mise bootstrap packages status --json`, and fails where the `ws` manager is missing or not
@@ -282,9 +282,9 @@ ws at `/usr/local/bin/ws`, which is there before any run. The write hook runs `w
   the lines again before it installs, and leaves out those in sync. Where ws runs outside the
   run directory, each unit fails, in sync too. It calls no mise, as a check inside mise's own read
   would call the hook again.
-- **The run directory.** The failures of `verify` and `--whole` name the side's run directory, the specs' parent where it names none, as
-  `run mise in /opt/ws/roles/server`
-  ([The check](../../../roles/server/ubuntu/frame/README.md#the-check-against-a-silent-skip)).
+- **The run directory.** The failures of `verify` and `--whole` name the side's run directory,
+  the specs' parent where it names none, as `run mise in /opt/ws/ubuntu/guest`
+  ([The check](../../../ubuntu/roles/frame/README.md#the-check-against-a-silent-skip)).
 - **Exit codes.** 0 done. 1 a failure: a spec or values that fail to load, a plan, an apply, a
   refused check, a SHA-256 or a skipped unit. `read` and `write` as a user other than root fail
   too. So do the server's on a system other than Ubuntu 26.04. 2 a usage error, such as a unit

@@ -10,7 +10,7 @@ server to it, and `ws macos remove NAME` takes a server's key out.
 [`mise.macos.toml`](mise.macos.toml) pins fnox 1.50.0 and age-plugin-yubikey 0.5.1, each from its GitHub
 release, built for macOS on arm64. Both sides pin one fnox, as they read one secrets repository.
 fnox's pin names mise's `github` backend, `github:jdx/fnox`, as the server's
-[fnox](../../../roles/server/ubuntu/secrets/README.md#fnox) does. The registry's `packslip` backend asks
+[fnox](../../../ubuntu/roles/secrets/README.md#fnox) does. The registry's `packslip` backend asks
 GitHub's API for the release on a first install, unauthenticated. A CI runner meets the API's limit
 there. age-plugin-yubikey takes the registry's name.
 
@@ -120,11 +120,11 @@ No value enters a step's arguments: a commit's title and body, a branch and the 
 Each server role that needs a secret declares it as an input in its `mise.secrets.toml`, under
 mise's `[bootstrap.secrets]`. The input's variable is its secret's name in fnox too, as `fnox exec`
 exports each secret under its own name. The Go package here reads the inputs of the roles in
-`/opt/ws/roles/server/ubuntu`, each variable once. A variable is of capitals, digits and
+`/opt/ws/ubuntu/roles`, each variable once. A variable is of capitals, digits and
 underscores, and a role without the file declares none.
 
 `fnox.toml` and its recipients, a table of labels, take the layout that the server's page gives
-([The files](../../../roles/server/ubuntu/secrets/README.md#the-files)). ws reads the labels and the
+([The files](../../../ubuntu/roles/secrets/README.md#the-files)). ws reads the labels and the
 secrets' names, and no value. A list of recipients, or a provider of another type, stops it, as ws
 changes a recipient by its label. A new `fnox.toml` holds the two first recipients and no secret
 yet.
@@ -151,7 +151,7 @@ the input, until init runs again on a Mac whose `/opt/ws` holds that release.
 A server opens the values by its SSH host key, `/etc/ssh/ssh_host_ed25519_key`. Its public half,
 `ssh-ed25519` and the key, is a recipient twice, under the label of the server's hostname: in
 `fnox.toml`'s table and in its profile file's, `fnox.HOSTNAME.toml`
-([The recipients](../../../roles/server/ubuntu/secrets/README.md#the-recipients)).
+([The recipients](../../../ubuntu/roles/secrets/README.md#the-recipients)).
 
 The Go package here edits a table by its lines, `nano` first, then `backup`, then the servers by
 name, and keeps every other byte of the file. A table with a line of another form, a comment
@@ -170,7 +170,7 @@ refuses the same names.
 ## ws macos secrets add
 
 Run `ws macos secrets add NAME` as yourself, with the Nano plugged in, once init has run
-and ws's `install.sh` and `ws server setup` have ended ([the runbook](../../runbook.md#ws-on-ws)). NAME is a server of
+and ws's `install.sh` and `ws ubuntu guest setup` have ended ([the runbook](../../runbook.md#ws-on-ws)). NAME is a server of
 the Mac's. Before the tunnel is up, `--address` and `--port` reach the server as ssh's `HostName`
 and `Port`. The command:
 
@@ -184,7 +184,7 @@ and `Port`. The command:
 5. Keeps one read-only deploy key titled with the hostname that holds the key, and deletes an older
    one first, as GitHub changes none in place.
 6. Lands the changed files by a pull request, and opens none where the key was in place.
-7. Runs `/usr/local/bin/ws server setup --secrets` over `ssh -t`, as root, even where nothing
+7. Runs `/usr/local/bin/ws ubuntu guest setup --secrets` over `ssh -t`, as root, even where nothing
    landed. A first add finds no clone there, so that run fetches the secrets.
 
 Last, add prints a line for each host key that the secrets hold, as a recipient or a deploy key,

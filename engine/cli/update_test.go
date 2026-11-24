@@ -81,15 +81,15 @@ func TestUpdateRunsTheSetupOfTheWsItWrote(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			p, m := updateEnv(tc.version, serveRelease(t, tc.tag, "new ws"), 0)
 			m.Results[copied+" version"] = effecttest.Result{Out: []byte(tc.tag + "\n")}
-			status, stdout, stderr := runUpdate(p, "server", true, tc.args...)
+			status, stdout, stderr := runUpdate(p, "ubuntu", true, tc.args...)
 			if status != 0 || stdout != "Updated ws "+tc.version+" to "+tc.tag+": "+installed+"\n" {
 				t.Fatalf("status = %d, stdout = %q, stderr = %q; want the report", status, stdout, stderr)
 			}
 			if got := string(m.Files[installed]); got != "new ws" {
 				t.Errorf("%s holds %q, want the release's", installed, got)
 			}
-			if last := m.Calls[len(m.Calls)-1]; last != "exec "+installed+" server setup" {
-				t.Errorf("the last call is %q, want the server's setup of the new ws", last)
+			if last := m.Calls[len(m.Calls)-1]; last != "exec "+installed+" ubuntu setup" {
+				t.Errorf("the last call is %q, want the setup of the new ws", last)
 			}
 		})
 	}
@@ -109,11 +109,11 @@ func TestUpdateOfTheMacRunsItsSetup(t *testing.T) {
 func TestUpdateOfTheReleaseAloneRunsSetup(t *testing.T) {
 	// The release holds no file: a download would fail.
 	p, m := updateEnv("v0.10.0-rc.1", serveRelease(t, "v0.10.0-rc.1", ""), 0)
-	status, stdout, stderr := runUpdate(p, "server", true, "--version", "0.10.0-rc.1")
+	status, stdout, stderr := runUpdate(p, "ubuntu", true, "--version", "0.10.0-rc.1")
 	if status != 0 || stdout != installed+" is ws v0.10.0-rc.1 already\n" {
 		t.Fatalf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
-	if got := strings.Join(m.Calls, "\n"); got != "run "+installed+" version\nexec "+installed+" server setup" {
+	if got := strings.Join(m.Calls, "\n"); got != "run "+installed+" version\nexec "+installed+" ubuntu setup" {
 		t.Errorf("calls = %q, want setup of the installed ws alone", got)
 	}
 }
@@ -139,7 +139,7 @@ func TestUpdateBringsTheInstalledWs(t *testing.T) {
 				m.Results[installed+" version"] = effecttest.Result{Err: errors.New("no such file or directory")}
 			}
 			m.Results[copied+" version"] = effecttest.Result{Out: []byte(tc.latest + "\n")}
-			status, stdout, stderr := runUpdate(p, "server", true)
+			status, stdout, stderr := runUpdate(p, "ubuntu", true)
 			if status != tc.status || !strings.Contains(stdout+stderr, tc.report) {
 				t.Fatalf("status = %d, stdout = %q, stderr = %q; want %d and %q", status, stdout, stderr, tc.status, tc.report)
 			}
@@ -149,7 +149,7 @@ func TestUpdateBringsTheInstalledWs(t *testing.T) {
 				}
 				return
 			}
-			if string(m.Files[installed]) != "new ws" || m.Calls[len(m.Calls)-1] != "exec "+installed+" server setup" {
+			if string(m.Files[installed]) != "new ws" || m.Calls[len(m.Calls)-1] != "exec "+installed+" ubuntu setup" {
 				t.Errorf("file %q, calls %v; want the release, then setup of the installed ws", m.Files[installed], m.Calls)
 			}
 		})
@@ -175,7 +175,7 @@ func TestUpdateRefusesBeforeItRunsSetup(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			p, m := updateEnv(tc.version, serveRelease(t, tc.latest, "new ws"), tc.euid)
-			status, _, stderr := runUpdate(p, "server", true, tc.args...)
+			status, _, stderr := runUpdate(p, "ubuntu", true, tc.args...)
 			if status != tc.status || !strings.Contains(stderr, tc.fails) {
 				t.Errorf("status = %d, stderr = %q; want %d and %q", status, stderr, tc.status, tc.fails)
 			}
@@ -195,7 +195,7 @@ func TestUpdateOfTheMacRefusesRoot(t *testing.T) {
 
 func TestUpdateOfAWrongSumRunsNoSetup(t *testing.T) {
 	p, m := updateEnv("v0.9.0", serveRelease(t, "v0.10.0", "another ws", "new ws"), 0)
-	status, _, stderr := runUpdate(p, "server", true, "--version", "0.10.0")
+	status, _, stderr := runUpdate(p, "ubuntu", true, "--version", "0.10.0")
 	if status != 1 || !strings.Contains(stderr, "does not match") {
 		t.Errorf("status = %d, stderr = %q; want the checksum's refusal", status, stderr)
 	}
