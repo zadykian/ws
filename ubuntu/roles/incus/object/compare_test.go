@@ -64,6 +64,16 @@ func TestDiffersComparesAListWhole(t *testing.T) {
 	}
 }
 
+func TestDiffersTakesAnEmptyListForANullOne(t *testing.T) {
+	have := decode(t, `{"ingress":null}`)
+	if got := differs(map[string]any{"ingress": []any{}}, have, ""); got != nil {
+		t.Errorf("differs = %q, want none: incus says null for no rules", got)
+	}
+	if got := differs(map[string]any{"ingress": []any{map[string]any{"action": "allow"}}}, have, ""); !slices.Equal(got, []string{"ingress"}) {
+		t.Errorf("differs = %q, want ingress", got)
+	}
+}
+
 func TestMergeLaysTheDeclaredKeysOnTheBase(t *testing.T) {
 	base := map[string]any{"config": map[string]any{"a": "1", "volatile.x": "9"}, "ingress": []any{"old"}}
 	over := map[string]any{"config": map[string]any{"a": "2", "b": "3"}, "ingress": []any{"new"}}

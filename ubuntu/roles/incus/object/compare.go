@@ -11,8 +11,8 @@ import (
 // differs returns the paths of the declared keys that have lacks or holds another value of. A map
 // in want is compared by its keys alone, so that what Incus adds to an object differs from nothing.
 // A list is compared whole, element by element. A declared empty list or map matches a key that
-// have lacks, as Incus leaves an empty one out. A nil declares a key absent: it differs where have
-// holds the key. path is the key's place, empty at the top.
+// have lacks or holds as null, as Incus leaves an empty one out or says null. A nil declares a key
+// absent: it differs where have holds the key. path is the key's place, empty at the top.
 func differs(want, have any, path string) []string {
 	switch w := want.(type) {
 	case map[string]any:
@@ -33,6 +33,9 @@ func differs(want, have any, path string) []string {
 		return keys
 	case []any:
 		h, ok := have.([]any)
+		if have == nil && len(w) == 0 {
+			return nil
+		}
 		if !ok || len(h) != len(w) {
 			return []string{cmpPath(path, "")}
 		}
