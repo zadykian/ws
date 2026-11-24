@@ -34,7 +34,13 @@ before the first run and 0 after each, and no run or plan may print a warning. T
 is no fans' board, so no `ws-fans` service, config or driver may be there. ufw must be on, with
 incoming denied, outgoing allowed, SSH in and Docker's rules for its resolver and the collector.
 sshd must take keys alone, and a container must resolve a name through the bridge and send OTLP
-to the collector ([otlp-checks.sh](../otlp-checks.sh)). The job is a try, so its failure
+to the collector ([otlp-checks.sh](../otlp-checks.sh)). Incus's pool is a sparse file on a loop
+device, which `WS_INCUS_POOL_SOURCE` names. After the two runs the job checks the pool, the
+bridge, its ACLs, the profile, the image and the table of sources. Then it declares one guest,
+`ci`, and runs setup a third time. The guest's own setup runs the build of the tree, which names
+no release. So the run must fail there. By then the guest runs, with its NIC's port and its
+address in the table of sources. So the plan with a guest stays due on a runner:
+[the real machine's checks](../../ubuntu/checks/README.md) run it with a release. The job is a try, so its failure
 fails no pull request: `continue-on-error` keeps it from `release.yml`'s call as well. It sets the
 runner up as `server` does, in [server](server.md), and runs it as
 [bootstrap.sh](../bootstrap.sh) does with `WS_SIDE=host`.
