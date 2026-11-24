@@ -1,15 +1,15 @@
-# tunnel's units: wg0, the server's end of a WireGuard tunnel for the Mac, from networkd's own
-# files. README.md says why each stands.
+# tunnel's units: wg0, the machine's own end of a WireGuard tunnel for the Mac, from networkd's own
+# files. On a host each guest's tunnel ends there too. README.md says why each stands.
 
 # Refuses a networkd that does not run, and a peer's key file that holds no key, before wg0's key and
 # files change. It names each peer left out, and says the server's public key.
 [guard.tunnel]
-command = ["{{ self }}", "ubuntu", "guest", "tunnel", "check"]
+command = ["{{ self }}", "ubuntu", "{{ side }}", "tunnel", "check"]
 
 # wg0's private key, made once and never shown, root:systemd-network 0640.
 [state.tunnel-key]
 after = "guard/tunnel"
-run = { user = "root", command = ["{{ self }}", "ubuntu", "guest", "tunnel", "key"], check = ["{{ self }}", "ubuntu", "guest", "tunnel", "key", "--check"] }
+run = { user = "root", command = ["{{ self }}", "ubuntu", "{{ side }}", "tunnel", "key"], check = ["{{ self }}", "ubuntu", "{{ side }}", "tunnel", "key", "--check"] }
 
 # wg0's files, which networkd reads as the group systemd-network. A change reloads networkd, which
 # updates wg0 in place, but for its key.
@@ -32,4 +32,15 @@ template = "60-wg0.network.tmpl"
 # wg0 made again where it holds another key than the file's, and the wait for it to hold the file's.
 [state.tunnel-wg0]
 after = "service/tunnel"
-run = { user = "root", command = ["{{ self }}", "ubuntu", "guest", "tunnel", "wg0"], check = ["{{ self }}", "ubuntu", "guest", "tunnel", "wg0", "--check"] }
+run = { user = "root", command = ["{{ self }}", "ubuntu", "{{ side }}", "tunnel", "wg0"], check = ["{{ self }}", "ubuntu", "{{ side }}", "tunnel", "wg0", "--check"] }
+
+# A host's alone from here: a guest has the provider's firewall, and no tunnel of a guest's to end.
+
+# The host's own tunnel's UDP port. SSH is the host's rule, and so are wg0's input rules.
+[state.tunnel-ufw]
+after = "state/tunnel-wg0"
+when = { side = "host" }
+
+[state.tunnel-ufw.ufw]
+comment = "tunnel wg0: its port"
+rules = [{ action = "allow", proto = "udp", to_port = "{{ .Tunnel.Port }}", dir = "in" }]

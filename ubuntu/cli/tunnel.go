@@ -12,30 +12,44 @@ import (
 	"github.com/zadykian/ws/ubuntu/values"
 )
 
-// newTunnelCmd returns ws ubuntu guest tunnel: the commands that the tunnel role's units run, on
-// the service manager's units u.
-func newTunnelCmd(p enginecli.Env, u effect.Units) *cobra.Command {
+// tunnelOf loads the values of a side's own tunnel: the guest's or the host's.
+type tunnelOf func(effect.Machine) (values.Tunnel, error)
+
+func guestTunnel(m effect.Machine) (values.Tunnel, error) {
+	v, err := values.Load(m, guestVars)
+	return v.Tunnel, err
+}
+
+func hostTunnel(m effect.Machine) (values.Tunnel, error) {
+	v, err := values.LoadHost(m, hostVars)
+	return v.Tunnel, err
+}
+
+// newTunnelCmd returns ws ubuntu guest tunnel, or ws ubuntu host tunnel. Its commands run for the
+// side's own wg0, as the tunnel role's units call them, on the service manager's units u. The
+// host's has the guests' tunnels beside them.
+func newTunnelCmd(p enginecli.Env, u effect.Units, load tunnelOf, more ...*cobra.Command) *cobra.Command {
 	return enginecli.Group("tunnel", "the tunnel role's check, wg0's key and wg0, which its units run",
-		newTunnelCheckCmd(p, u), newTunnelKeyCmd(p), newTunnelWG0Cmd(p))
+		append([]*cobra.Command{newTunnelCheckCmd(p, u, load), newTunnelKeyCmd(p), newTunnelWG0Cmd(p)}, more...)...)
 }
 
 // newTunnelCheckCmd returns ws ubuntu guest tunnel check.
-func newTunnelCheckCmd(p enginecli.Env, u effect.Units) *cobra.Command {
+func newTunnelCheckCmd(p enginecli.Env, u effect.Units, load tunnelOf) *cobra.Command {
 	return &cobra.Command{
 		Use:   "check",
 		Short: "refuse a networkd that does not run, and a peer's key file that holds no key",
-		Long: "It reads the values of " + guestVars + ". It fails where networkd does not run, " +
+		Long: "It reads the values of " + guestVars + ", the side's own. It fails where networkd does not run, " +
 			"as nothing would create wg0, or where a peer's /etc/wireguard/NAME.pub holds no WireGuard public key. " +
 			"It names each peer whose file is missing, which wg0 leaves out, and prints the server's public key " +
 			"where the key exists. The tunnel role's guard runs it, before wg0's key and files.",
 		Args: cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error {
-			v, err := values.Load(p.Machine, guestVars)
+			t, err := load(p.Machine)
 			if err != nil {
 				return err
 			}
 			// The guard says each line of stdout.
-			return tunnel.Check(c.Context(), p.Machine, u, effect.NewTerminal(c.OutOrStdout()), v.Tunnel)
+			return tunnel.Check(c.Context(), p.Machine, u, effect.NewTerminal(c.OutOrStdout()), t)
 		},
 	}
 }

@@ -21,7 +21,7 @@ func TestTunnelCheckSaysOnStdout(t *testing.T) {
 	p, _ := valuesProcess("---\n")
 	// The check asks the units whether networkd runs: a fake answers, never the host's systemd.
 	u := &effecttest.Units{States: map[string]effect.UnitState{"systemd-networkd.service": {Active: true}}}
-	root := enginecli.Group("ubuntu", "Ubuntu", enginecli.Group("guest", "the guest", newTunnelCmd(p, u)))
+	root := enginecli.Group("ubuntu", "Ubuntu", enginecli.Group("guest", "the guest", newTunnelCmd(p, u, guestTunnel)))
 	status, stdout, stderr := clitest.Run(p, []*cobra.Command{root}, "", "ubuntu", "guest", "tunnel", "check")
 	if status != 0 || stderr != "" || !strings.Contains(stdout, "wg0 leaves out the peer mac, as /etc/wireguard/mac.pub is missing") {
 		t.Errorf("status = %d, stdout %q, stderr %q", status, stdout, stderr)
