@@ -5,17 +5,56 @@ import (
 	"testing"
 )
 
-// The host's roles that the guest runs too read the sections by the guest's names, so the host's
-// keys are the guest's by name and kind.
+// The host's roles that the guest runs too read the sections by the guest's names, so a key that
+// both hold has the same kind.
 func TestHostKeysAreTheGuestsByName(t *testing.T) {
 	guest := map[string]Kind{}
 	for _, k := range Keys() {
 		guest[k.Name] = k.Kind
 	}
 	for _, k := range HostKeys() {
-		if kind, ok := guest[k.Name]; !ok || kind != k.Kind {
-			t.Errorf("host key %s of kind %v: the guest's is %v, %v", k.Name, k.Kind, kind, ok)
+		if kind, ok := guest[k.Name]; ok && kind != k.Kind {
+			t.Errorf("host key %s of kind %v: the guest's is %v", k.Name, k.Kind, kind)
 		}
+	}
+}
+
+// The host's own keys are those of the roles that run on the host alone, fans and cable.
+func TestHostKeysHoldFansAndTheCablesPort(t *testing.T) {
+	kinds := map[string]Kind{}
+	for _, k := range HostKeys() {
+		kinds[k.Name] = k.Kind
+	}
+	if kinds["WS_FANS_INTERVAL"] != Decimal || kinds["WS_CABLE_PORT"] != Text {
+		t.Errorf("the host's fans interval is %v, its cable's port %v; want a number and text", kinds["WS_FANS_INTERVAL"], kinds["WS_CABLE_PORT"])
+	}
+	for _, table := range []string{"WS_FANS_CURVES", "WS_FANS_STEP"} {
+		if _, ok := kinds[table]; ok {
+			t.Errorf("key %q is a table", table)
+		}
+	}
+}
+
+// A fraction is one key's value alone: the fans' interval.
+func TestAnIntervalTakesAFractionAndNoTextOrInfinity(t *testing.T) {
+	var interval Key
+	for _, k := range HostKeys() {
+		if k.Name == "WS_FANS_INTERVAL" {
+			interval = k
+		}
+	}
+	for value, want := range map[string]string{"soon": "a number", "NaN": "a number", "Inf": "a number", "2.5": ""} {
+		err := interval.Check(value)
+		if want == "" && err != nil || want != "" && (err == nil || !strings.Contains(err.Error(), want)) {
+			t.Errorf("%q: err = %v, want %q", value, err, want)
+		}
+	}
+	if got, err := interval.line("1.50"); err != nil || got != "WS_FANS_INTERVAL: 1.5\n" {
+		t.Errorf("line = %q, %v, want WS_FANS_INTERVAL: 1.5", got, err)
+	}
+	h, err := ParseHost([]byte("WS_FANS_INTERVAL: 1.5\n"))
+	if err != nil || h.Text(interval) != "1.5" {
+		t.Errorf("the interval reads %q, %v; want 1.5", h.Text(interval), err)
 	}
 }
 

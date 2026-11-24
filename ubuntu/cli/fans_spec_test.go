@@ -177,7 +177,7 @@ func fansService(t *testing.T, m *effecttest.Machine) *effecttest.Units {
 func TestFansServiceInstallsEnablesAndStartsThenChangesNothing(t *testing.T) {
 	m := fansMachine()
 	u := fansService(t, m)
-	config, err := values.Default().Fans.JSON()
+	config, err := values.DefaultHost().Fans.JSON()
 	if err != nil {
 		t.Fatal(err)
 	}

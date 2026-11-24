@@ -102,7 +102,7 @@ func TestValuesSetRefuses(t *testing.T) {
 	}{
 		{"not root", notRoot, []string{"WS_BASE_LOCALE", "C"}, "run it as root"},
 		{"a link", linked, []string{"WS_BASE_LOCALE", "C"}, "is a link to /srv/vars.yml"},
-		{"a table", plain, []string{"WS_FANS_CURVES", "1"}, "no line holds WS_FANS_CURVES"},
+		{"a table", plain, []string{"WS_TUNNEL_PEERS", "1"}, "no line holds WS_TUNNEL_PEERS"},
 		{"a wrong kind", plain, []string{"WS_BASE_SWAPPINESS", "ten"}, "a whole number"},
 		{"no value", plain, []string{"WS_BASE_LOCALE"}, "accepts 2 arg"},
 	} {

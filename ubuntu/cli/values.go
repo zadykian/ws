@@ -47,7 +47,7 @@ func newValuesCmd(p enginecli.Env, side valuesSide) *cobra.Command {
 		Use:   "set KEY VALUE",
 		Short: "write one key of " + side.file,
 		Long: "An empty VALUE takes the key's line out, which gives its default back. A list's VALUE is split by " +
-			"commas. A table, such as WS_FANS_CURVES, stays the file's to edit by hand.\n\n" +
+			"commas. A table stays the file's to edit by hand.\n\n" +
 			"The next mise bootstrap takes the key.",
 		Args: cobra.ExactArgs(2),
 		RunE: func(c *cobra.Command, args []string) error { return runValuesSet(c, p, side, args[0], args[1]) },
