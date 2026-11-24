@@ -27,9 +27,7 @@ func Default() Values {
 			AddressPool: "172.16.0.0/12", AddressPoolSize: 20,
 			PublishIP: "127.0.0.1", BuildCacheKeepDays: 90,
 		},
-		Fans:    defaultFans(),
 		Ikeward: Ikeward{},
-		Cable:   Cable{Address: "10.77.0.1/30"},
 		Signoz: Signoz{
 			URL: "http://127.0.0.1:3301", RetentionDays: 90,
 			Dashboards: []string{"host", "claude"},

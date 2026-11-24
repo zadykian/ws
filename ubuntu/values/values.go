@@ -25,9 +25,7 @@ type Values struct {
 	Base    Base    `yaml:",inline"`
 	Claude  Claude  `yaml:",inline"`
 	Docker  Docker  `yaml:",inline"`
-	Fans    Fans    `yaml:",inline"`
 	Ikeward Ikeward `yaml:",inline"`
-	Cable   Cable   `yaml:",inline"`
 	Git     Git     `yaml:",inline"`
 	Signoz  Signoz  `yaml:",inline"`
 	Tunnel  Tunnel  `yaml:",inline"`
@@ -44,7 +42,7 @@ type Shared struct {
 // Parse returns the values that data gives over Default. It refuses a key that no role knows, a key
 // twice, and a path that underHome refuses. It refuses a signing key that is no .pub's path and a
 // build cache value that dockerd cannot read. It refuses a swap size or a swappiness that the
-// kernel cannot take, and a cable, a tunnel or an ikeward that its role cannot set up. Empty data
+// kernel cannot take, and a tunnel or an ikeward that its role cannot set up. Empty data
 // gives Default.
 func Parse(data []byte) (Values, error) {
 	v, err := decode(data)
@@ -61,9 +59,6 @@ func Parse(data []byte) (Values, error) {
 		return Values{}, err
 	}
 	if err := v.Docker.check(); err != nil {
-		return Values{}, err
-	}
-	if err := v.Cable.check(); err != nil {
 		return Values{}, err
 	}
 	if err := v.Tunnel.check(); err != nil {

@@ -13,8 +13,8 @@ import (
 )
 
 // Host is every key of a host's file. A role that runs on the guest and the host reads the same
-// section by the same name, so a section is the guest's. The host's own come with the roles that
-// read them.
+// section by the same name, so a section is the guest's. Fans and Cable are the host's own: the
+// roles that read them run on the host alone.
 type Host struct {
 	Base   Base   `yaml:",inline"`
 	Docker Docker `yaml:",inline"`
@@ -26,7 +26,9 @@ type Host struct {
 // DefaultHost returns each key's default value, the guest's for a section it shares.
 func DefaultHost() Host {
 	d := Default()
-	return Host{Base: d.Base, Docker: d.Docker, Fans: d.Fans, Cable: d.Cable, Signoz: d.Signoz}
+	return Host{
+		Base: d.Base, Docker: d.Docker, Fans: defaultFans(), Cable: Cable{Address: "10.77.0.1/30"}, Signoz: d.Signoz,
+	}
 }
 
 // ParseHost returns the values that data gives over DefaultHost. It refuses a key that no role of
