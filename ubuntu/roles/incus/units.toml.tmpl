@@ -1,7 +1,7 @@
 # The incus role's units. mise adds Zabbly's repository, the packages and the ID range first. Each
 # unit makes one object in Incus by a command of ws's, whose --check fails where a change is due.
-# README.md says what each holds. The order is the ACL, the pool, the bridge, the profile and the
-# image, then the table of sources, the set that it holds, and the guests. The bridge names the ACL,
+# README.md says what each holds. The order is the ACLs, the pool, the bridge, the profile and the
+# image, then the table of sources, the set that it holds, and the guests. The bridge names the ACLs,
 # and the profile names the bridge and the pool. A guest launches from the image, and its address
 # goes in the set before it runs.
 
@@ -9,12 +9,17 @@
 [state.incus-acl]
 run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "incus", "acl"], check = ["{{ self }}", "ubuntu", "host", "incus", "acl", "--check"] }
 
+# The ingress ACL: each guest's tunnel peers allowed to reach it, and what its ikeward forwards for.
+[state.incus-ingress]
+after = "state/incus-acl"
+run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "incus", "ingress"], check = ["{{ self }}", "ubuntu", "host", "incus", "ingress", "--check"] }
+
 # The ZFS pool, on the partition that WS_INCUS_POOL_SOURCE names.
 [state.incus-pool]
-after = "state/incus-acl"
+after = "state/incus-ingress"
 run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "incus", "pool"], check = ["{{ self }}", "ubuntu", "host", "incus", "pool", "--check"] }
 
-# The bridge incusbr0, at WS_INCUS_BRIDGE_ADDRESS, with the ACL on it.
+# The bridge incusbr0, at WS_INCUS_BRIDGE_ADDRESS, with the ACLs on it.
 [state.incus-bridge]
 after = "state/incus-pool"
 run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "incus", "bridge"], check = ["{{ self }}", "ubuntu", "host", "incus", "bridge", "--check"] }
@@ -44,8 +49,9 @@ rules = [
   { action = "allow", interface = "incusbr0", out = "any" },
 ]
 
-# The table of guest sources, in nftables' bridge family. The table in force, with its hook chains,
-# is compared with the table that the file loads in a network namespace of its own. So a table
+# The table of guest sources, in nftables' bridge family, and the table of the way out by a guest's
+# tunnel interface. The tables in force, with their hook chains, are compared with the tables that
+# the file loads in a network namespace of its own. So a table
 # flushed by hand, or a hook that is lost, reloads. The set's elements are no part of that, as the
 # next unit mends them. The file holds them, so a load fills them, and a guest's change reloads.
 # -s leaves out the counters' values, and -t the set's elements. A host's alone, as it filters.
@@ -54,13 +60,13 @@ unit = "incus-sources.service"
 enabled = true
 run = "running"
 reload = true
-in_force = ["nft", "-s", "-t", "list", "table", "bridge", "ws_sources"]
+in_force = ["sh", "-c", "nft -s -t list table bridge ws_sources && nft -s -t list table ip ws_guest_out"]
 loads = [
     "unshare",
     "--net",
     "sh",
     "-c",
-    'nft -f "$1" && nft -s -t list table bridge ws_sources',
+    'nft -f "$1" && nft -s -t list table bridge ws_sources && nft -s -t list table ip ws_guest_out',
     "sh",
     "/usr/local/lib/ws/incus/sources.nft",
 ]

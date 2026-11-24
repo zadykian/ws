@@ -13,7 +13,7 @@ import (
 	"github.com/zadykian/ws/ubuntu/values"
 )
 
-// Owned mends the set owned4 of the table of sources to hold each guest's address and port, and
+// Owned mends the set owned4 of the table of sources to hold each guest's addresses and port, and
 // takes out an element that no guest holds. The table's file fills the set as it loads, so this
 // finds a hand edit. A table that is not loaded fails the run, as the unit of the table comes first.
 type Owned struct {
@@ -65,10 +65,12 @@ func (o Owned) Plan(ctx context.Context) ([]resource.Change, error) {
 	}
 	var want, add []string
 	for _, g := range o.Guests {
-		e := element(g.Address, g.Port())
-		want = append(want, e)
-		if !slices.Contains(held, e) {
-			add = append(add, e)
+		for _, src := range g.Sources() {
+			e := element(src.Address, src.Port)
+			want = append(want, e)
+			if !slices.Contains(held, e) {
+				add = append(add, e)
+			}
 		}
 	}
 	drop := slices.DeleteFunc(slices.Clone(held), func(e string) bool { return slices.Contains(want, e) })

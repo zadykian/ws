@@ -111,7 +111,8 @@ then up to 11 lower-case letters, digits and `-`, other than `direct`, `first` a
 **slot**:
 A server's number from 0 to 15, kept as `WS_SLOT` in its file. The maintainer picks the smallest free
 slot; the values' check refuses a clash. Slot N's tunnel is `10.99.N.0/24`, inside
-`10.99.0.0/20`, with the server at `.1` and the Mac at `.2`.
+`10.99.0.0/20`, with the server at `.1` and the Mac at `.2`. A host keeps slot 0 for its own tunnel,
+and each guest takes a slot from 1, which the host's tunnel for that guest ends.
 
 **ws's directory**:
 `/etc/ws`, root's and 755 on both sides, holds git's `gitconfig` and `allowed_signers`. On the Mac

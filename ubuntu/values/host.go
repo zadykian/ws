@@ -14,7 +14,7 @@ import (
 
 // Host is every key of a host's file. A role that runs on the guest and the host reads the same
 // section by the same name, so a section is the guest's. Fans, Cable and Incus are the host's own:
-// the roles that read them run on the host alone.
+// the roles that read them run on the host alone. Tunnel is the host's own tunnel, wg0.
 type Host struct {
 	Base   Base   `yaml:",inline"`
 	Docker Docker `yaml:",inline"`
@@ -22,13 +22,14 @@ type Host struct {
 	Cable  Cable  `yaml:",inline"`
 	Signoz Signoz `yaml:",inline"`
 	Incus  Incus  `yaml:",inline"`
+	Tunnel Tunnel `yaml:",inline"`
 }
 
 // DefaultHost returns each key's default value, the guest's for a section it shares.
 func DefaultHost() Host {
 	d := Default()
 	return Host{
-		Base: d.Base, Docker: d.Docker, Fans: defaultFans(), Cable: Cable{Address: "10.77.0.1/30"}, Signoz: d.Signoz, Incus: defaultIncus(),
+		Base: d.Base, Docker: d.Docker, Fans: defaultFans(), Cable: Cable{Address: "10.77.0.1/30"}, Signoz: d.Signoz, Incus: defaultIncus(), Tunnel: d.Tunnel,
 	}
 }
 
@@ -40,7 +41,7 @@ func ParseHost(data []byte) (Host, error) {
 	if err != nil {
 		return Host{}, err
 	}
-	for _, check := range []func() error{h.Base.check, h.Docker.check, h.Cable.check, h.Incus.check} {
+	for _, check := range []func() error{h.Base.check, h.Docker.check, h.Cable.check, h.Incus.check, h.Tunnel.check} {
 		if err := check(); err != nil {
 			return Host{}, err
 		}
@@ -56,6 +57,10 @@ func decodeHost(data []byte) (Host, error) {
 	if err := dec.Decode(&h); err != nil && !errors.Is(err, io.EOF) {
 		return Host{}, err
 	}
+	if err := h.Tunnel.keepNull(data); err != nil {
+		return Host{}, err
+	}
+	h.Tunnel.derive()
 	return h, nil
 }
 
@@ -68,6 +73,9 @@ func LoadHost(m effect.Machine, path string) (Host, error) {
 	h, err := ParseHost(data)
 	if err != nil {
 		return Host{}, fmt.Errorf("%s: %w", path, err)
+	}
+	for i, g := range h.Incus.Guests {
+		h.Incus.Guests[i] = g.withTunnel(m)
 	}
 	return h, nil
 }

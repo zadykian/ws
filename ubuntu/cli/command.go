@@ -29,14 +29,15 @@ func Command(p enginecli.Env) *cobra.Command {
 // hostCmd returns ws ubuntu host, the commands of a host: the machine that runs the guests.
 func hostCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("host", "the commands for an Ubuntu host", newFansCmd(p),
-		newCableCmd(p, units.OSUnits{}), newIncusCmd(p), newGuestsCmd(p), newValuesCmd(p, hostValues), newSignozCmd(p, hostSignoz),
+		newCableCmd(p, units.OSUnits{}), newIncusCmd(p), newGuestsCmd(p),
+		newTunnelCmd(p, units.OSUnits{}, hostTunnel, newTunnelGuestsCmd(p, units.OSUnits{})), newValuesCmd(p, hostValues), newSignozCmd(p, hostSignoz),
 		newSetupCmd(p, liveSetup(), hostSetup))
 }
 
 // guestCmd returns ws ubuntu guest, the commands of a guest: a container or a cloud VM that runs
 // the roles.
 func guestCmd(p enginecli.Env) *cobra.Command {
-	return enginecli.Group("guest", "the commands for an Ubuntu guest", newTunnelCmd(p, units.OSUnits{}),
+	return enginecli.Group("guest", "the commands for an Ubuntu guest", newTunnelCmd(p, units.OSUnits{}, guestTunnel),
 		newIkewardCmd(p, ikeward.StatusTries, ikeward.StatusWait),
 		newGitCmd(p), newDevtoolsCmd(p), newClaudeCmd(p, units.OSUnits{}), newValuesCmd(p, guestValues), newSignozCmd(p, guestSignoz),
 		newSetupCmd(p, liveSetup(), guestSetup))

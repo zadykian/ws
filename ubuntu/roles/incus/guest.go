@@ -40,7 +40,7 @@ func Guest(m effect.Machine, g values.Guest, own values.Values, alias string) ob
 			"profiles":    []any{ProfileName},
 			"config":      map[string]any{"limits.cpu": strconv.Itoa(g.CPU), "limits.memory": g.Memory},
 			"devices": map[string]any{
-				"eth0": nicDevice(map[string]any{"host_name": g.Port(), "ipv4.address": g.Address}),
+				"eth0": nicDevice(nicKeys(g, own)),
 				"root": rootDevice(g.Disk),
 				"gpu":  gpuDevice(own.Nvidia.GPU),
 			},
@@ -66,6 +66,17 @@ func gpuDevice(on bool) any {
 		return nil
 	}
 	return map[string]any{"type": "gpu", "vendorid": nvidiaVendor}
+}
+
+// nicKeys are the NIC's own keys: its port's name and its address, and the slot's address as a
+// route, where the guest's values name a slot. Incus then sends that address to this NIC, which is
+// where the host's tunnel for the guest delivers.
+func nicKeys(g values.Guest, own values.Values) map[string]any {
+	keys := map[string]any{"host_name": g.Port(), "ipv4.address": g.Address}
+	if t, err := g.Tunnel(own); err == nil {
+		keys["ipv4.routes"] = t.SlotAddress().String() + "/32"
+	}
+	return keys
 }
 
 // seedNetwork is the guest's network-config. It holds DHCP on eth0, which gives the NIC's address,

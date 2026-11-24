@@ -80,13 +80,8 @@ func decode(data []byte) (Values, error) {
 	if err := dec.Decode(&v); err != nil && !errors.Is(err, io.EOF) {
 		return Values{}, err
 	}
-	// A key set to null decodes to a nil list, like a key left out: the file's own text tells them apart.
-	var keys map[string]yaml.Node
-	if err := yaml.Unmarshal(data, &keys); err != nil {
+	if err := v.Tunnel.keepNull(data); err != nil {
 		return Values{}, err
-	}
-	if _, given := keys["WS_TUNNEL_PEERS"]; given && v.Tunnel.Peers == nil {
-		v.Tunnel.Peers = []TunnelPeer{}
 	}
 	v.derive()
 	return v, nil
@@ -108,15 +103,33 @@ func Load(m effect.Machine, path string) (Values, error) {
 // home is root's, the only user the roles set the machine up for.
 const home = "/root"
 
-// derive fills the signing key when the file leaves it empty. It lists the Mac at wg0's address
-// plus one where the file has no WS_TUNNEL_PEERS: an empty or null list keeps no peer.
+// derive fills the signing key when the file leaves it empty, and the tunnel's peers.
 func (v *Values) derive() {
 	if v.GitSigningPubKey == "" {
 		v.GitSigningPubKey = home + "/.ssh/id_ed25519_signing.pub"
 	}
-	if v.Tunnel.Peers == nil {
-		if p, err := netip.ParsePrefix(v.Tunnel.Address); err == nil && p.Addr().Is4() {
-			v.Tunnel.Peers = []TunnelPeer{{Name: "mac", Address: p.Addr().Next().String()}}
+	v.Tunnel.derive()
+}
+
+// keepNull makes the peers an empty list where the file sets WS_TUNNEL_PEERS to null. That decodes
+// to a nil list, like a key left out, so the file's own text tells them apart.
+func (t *Tunnel) keepNull(data []byte) error {
+	var keys map[string]yaml.Node
+	if err := yaml.Unmarshal(data, &keys); err != nil {
+		return err
+	}
+	if _, given := keys["WS_TUNNEL_PEERS"]; given && t.Peers == nil {
+		t.Peers = []TunnelPeer{}
+	}
+	return nil
+}
+
+// derive lists the Mac at wg0's address plus one where the file has no WS_TUNNEL_PEERS: an empty or
+// null list keeps no peer.
+func (t *Tunnel) derive() {
+	if t.Peers == nil {
+		if p, err := netip.ParsePrefix(t.Address); err == nil && p.Addr().Is4() {
+			t.Peers = []TunnelPeer{{Name: macPeer, Address: p.Addr().Next().String()}}
 		}
 	}
 }

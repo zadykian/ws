@@ -1,15 +1,15 @@
-# tunnel's units: wg0, the server's end of a WireGuard tunnel for the Mac, from networkd's own
-# files. README.md says why each stands.
+# tunnel's units: wg0, the machine's own end of a WireGuard tunnel for the Mac, from networkd's own
+# files. On a host each guest's tunnel ends there too. README.md says why each stands.
 
 # Refuses a networkd that does not run, and a peer's key file that holds no key, before wg0's key and
 # files change. It names each peer left out, and says the server's public key.
 [guard.tunnel]
-command = ["{{ self }}", "ubuntu", "guest", "tunnel", "check"]
+command = ["{{ self }}", "ubuntu", "{{ side }}", "tunnel", "check"]
 
 # wg0's private key, made once and never shown, root:systemd-network 0640.
 [state.tunnel-key]
 after = "guard/tunnel"
-run = { user = "root", command = ["{{ self }}", "ubuntu", "guest", "tunnel", "key"], check = ["{{ self }}", "ubuntu", "guest", "tunnel", "key", "--check"] }
+run = { user = "root", command = ["{{ self }}", "ubuntu", "{{ side }}", "tunnel", "key"], check = ["{{ self }}", "ubuntu", "{{ side }}", "tunnel", "key", "--check"] }
 
 # wg0's files, which networkd reads as the group systemd-network. A change reloads networkd, which
 # updates wg0 in place, but for its key.
@@ -32,4 +32,73 @@ template = "60-wg0.network.tmpl"
 # wg0 made again where it holds another key than the file's, and the wait for it to hold the file's.
 [state.tunnel-wg0]
 after = "service/tunnel"
-run = { user = "root", command = ["{{ self }}", "ubuntu", "guest", "tunnel", "wg0"], check = ["{{ self }}", "ubuntu", "guest", "tunnel", "wg0", "--check"] }
+run = { user = "root", command = ["{{ self }}", "ubuntu", "{{ side }}", "tunnel", "wg0"], check = ["{{ self }}", "ubuntu", "{{ side }}", "tunnel", "wg0", "--check"] }
+
+# A host's alone from here: a guest has the provider's firewall, and no tunnel of a guest's to end.
+
+# The host's own tunnel's UDP port. SSH is the host's rule, and so are wg0's input rules.
+[state.tunnel-ufw]
+after = "state/tunnel-wg0"
+when = { side = "host" }
+
+[state.tunnel-ufw.ufw]
+comment = "tunnel wg0: its port"
+rules = [{ action = "allow", proto = "udp", to_port = "{{ .Tunnel.Port }}", dir = "in" }]
+
+# Refuses two tunnels of one slot or port, a networkd that does not run, and a peer's key file that
+# holds no key, before the guests' interfaces change. It says each interface's public key. After the
+# guests: the routes below lead to them.
+[guard.tunnel-guests]
+command = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "check"]
+after = "state/incus-guests"
+when = { side = "host" }
+
+# Each guest's interface key, made once and never shown, root:systemd-network 0640.
+[state.tunnel-guest-keys]
+after = "guard/tunnel-guests"
+run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "key"], check = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "key", "--check"] }
+when = { side = "host" }
+
+# Each guest's interface: its two files, networkd's reload, and the wait for the key.
+[state.tunnel-guest-links]
+after = "state/tunnel-guest-keys"
+run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "links"], check = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "links", "--check"] }
+when = { side = "host" }
+
+# networkd keeps the rule and the route of each guest's tunnel, which ip adds and no .network file
+# names. It removes any such rule or route as it starts or reconfigures a link, so it must keep them.
+# networkd.conf is read as it starts, so a change restarts it.
+[service.tunnel-networkd]
+unit = "systemd-networkd.service"
+run = "running"
+after = "state/tunnel-guest-links"
+when = { side = "host" }
+
+[[service.tunnel-networkd.file]]
+path = "/etc/systemd/networkd.conf.d/60-ws-tunnel.conf"
+source = "networkd-foreign.conf"
+
+# The rule and the route of each guest's tunnel at boot: they live in the kernel alone, and the guests
+# start with Incus.
+[service.tunnel-forward]
+unit = "tunnel-forward.service"
+enabled = true
+run = "running"
+after = "service/tunnel-networkd"
+when = { side = "host" }
+
+[[service.tunnel-forward.file]]
+path = "/etc/systemd/system/tunnel-forward.service"
+source = "tunnel-forward.service"
+
+# The rule and the route again where a flush or a hand edit lost them, and a stale rule's deletion.
+[state.tunnel-guest-forward]
+after = "service/tunnel-forward"
+run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "forward"], check = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "forward", "--check"] }
+when = { side = "host" }
+
+# Each guest's UDP port in, its route to the bridge, and no input on its interface.
+[state.tunnel-guest-ufw]
+after = "state/tunnel-guest-forward"
+run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "ufw"], check = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "ufw", "--check"] }
+when = { side = "host" }

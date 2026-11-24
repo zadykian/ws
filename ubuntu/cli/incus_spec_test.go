@@ -54,14 +54,14 @@ func TestIncusUnitsRunTheObjectsThenTheSetThenTheGuests(t *testing.T) {
 			order = append(order, u.Name)
 		}
 	}
-	want := []string{"state/incus-acl", "state/incus-pool", "state/incus-bridge", "state/incus-profile", "state/incus-image", "state/incus-owned", "state/incus-guests"}
+	want := []string{"state/incus-acl", "state/incus-ingress", "state/incus-pool", "state/incus-bridge", "state/incus-profile", "state/incus-image", "state/incus-owned", "state/incus-guests"}
 	if !slices.Equal(order, want) {
 		t.Errorf("units %q, want %q", order, want)
 	}
 }
 
 func TestEachIncusUnitRunsItsOwnCommand(t *testing.T) {
-	for _, object := range []string{"acl", "bridge", "profile", "image", "owned", "guests"} {
+	for _, object := range []string{"acl", "ingress", "bridge", "profile", "image", "owned", "guests"} {
 		command := asRoot + selfPath + " ubuntu host incus " + object
 		m := effecttest.NewMachine()
 		m.Results[command+" --check"] = effecttest.Result{Err: errors.New("to do")}
@@ -84,6 +84,7 @@ func runIncus(m *effecttest.Machine, args ...string) error {
 func TestIncusCommandsCheckAndMakeTheirObject(t *testing.T) {
 	for _, tc := range []struct{ object, list, create string }{
 		{"acl", "network acl list", "network acl create ws-egress"},
+		{"ingress", "network acl list", "network acl create ws-ingress"},
 		{"bridge", "network list", "network create incusbr0 --type bridge"},
 		{"profile", "profile list", "profile create ws"},
 	} {
@@ -157,8 +158,8 @@ const (
 	sourcesFile = "/usr/local/lib/ws/incus/sources.nft"
 	// sourcesInForce and sourcesLoads are the commands of service/incus-sources's drift, as the
 	// fake keys them.
-	sourcesInForce = "nft -s -t list table bridge ws_sources"
-	sourcesLoads   = `unshare --net sh -c nft -f "$1" && nft -s -t list table bridge ws_sources sh ` + sourcesFile
+	sourcesInForce = "sh -c nft -s -t list table bridge ws_sources && nft -s -t list table ip ws_guest_out"
+	sourcesLoads   = `unshare --net sh -c nft -f "$1" && nft -s -t list table bridge ws_sources && nft -s -t list table ip ws_guest_out sh ` + sourcesFile
 )
 
 // sourcesMachine is a machine whose table checks, with the table in force as in.
@@ -259,5 +260,28 @@ func TestSourcesServiceReloadsWhereTheTableInForceDiffers(t *testing.T) {
 		if got != tc.reloads {
 			t.Errorf("in force %q: unit calls %q, want a reload or restart %t", tc.in, u.Calls, tc.reloads)
 		}
+	}
+}
+
+func TestIncusIngressAllowsEachGuestsPeers(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files[hostVars] = []byte("WS_INCUS_GUESTS:\n  - {name: lab, address: 10.100.0.10, cpu: 2, memory: 4GiB, disk: 20GiB}\n")
+	m.Files["/etc/ws/guests/lab/values.yml"] = []byte("WS_TUNNEL_ADDRESS: 10.99.1.1/24\nWS_TUNNEL_PORT: 51821\n")
+	m.Results["incus network acl list --format json"] = effecttest.Result{Out: []byte("[]")}
+	m.Results["incus network acl create ws-ingress"] = effecttest.Result{}
+	if err := runIncus(m, "ingress"); err != nil || len(m.Inputs) != 1 {
+		t.Fatalf("ingress = %v, with %d writes", err, len(m.Inputs))
+	}
+	if !strings.Contains(m.Inputs[0], "source: 10.99.1.2") || !strings.Contains(m.Inputs[0], "destination: 10.100.0.10,10.99.1.1") {
+		t.Errorf("the ACL:\n%s", m.Inputs[0])
+	}
+}
+
+func TestIncusIngressRefusesAGuestOfTheHostsOwnSlot(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files[hostVars] = []byte("WS_INCUS_GUESTS:\n  - {name: lab, address: 10.100.0.10, cpu: 2, memory: 4GiB, disk: 20GiB}\n")
+	m.Results["incus network acl list --format json"] = effecttest.Result{Out: []byte("[]")}
+	if err := runIncus(m, "ingress"); err == nil || !strings.Contains(err.Error(), "slot 0") {
+		t.Errorf("ingress = %v, want a refusal that names slot 0", err)
 	}
 }

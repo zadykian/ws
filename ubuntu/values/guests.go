@@ -38,6 +38,50 @@ type Guest struct {
 	// Memory is the guest's memory limit, as 8GiB, and Disk its root disk's quota, as 200GiB.
 	Memory string `yaml:"memory"`
 	Disk   string `yaml:"disk"`
+
+	// tunnel is the guest's tunnel, as LoadHost reads the slot from the guest's own values. Unset
+	// where that file names no slot of a guest's.
+	tunnel *GuestTunnel
+}
+
+// Source is an address that a guest may send from, with the name of the port that carries it.
+type Source struct{ Address, Port string }
+
+// Sources are the addresses that the guest may send from: its own on the bridge, and its slot's
+// address where it has a slot. It holds that one on eth0, and its peers' replies leave from it.
+func (g Guest) Sources() []Source {
+	sources := []Source{{g.Address, g.Port()}}
+	if g.tunnel != nil {
+		sources = append(sources, Source{g.tunnel.SlotAddress().String(), g.Port()})
+	}
+	return sources
+}
+
+// Link is the name of the guest's tunnel interface on the host, or empty where it has no slot.
+func (g Guest) Link() string {
+	if g.tunnel == nil {
+		return ""
+	}
+	return g.tunnel.Link()
+}
+
+// Mark is the firewall mark that what comes in by the guest's NIC takes, and that the way out by
+// its tunnel interface asks for. Zero where the guest has no slot.
+func (g Guest) Mark() int {
+	if g.tunnel == nil {
+		return 0
+	}
+	return g.tunnel.Mark()
+}
+
+// withTunnel returns the guest with its tunnel, where its own values file names a slot.
+func (g Guest) withTunnel(m effect.Machine) Guest {
+	if _, v, err := g.Read(m); err == nil {
+		if t, err := g.Tunnel(v); err == nil {
+			g.tunnel = &t
+		}
+	}
+	return g
 }
 
 // File is the guest's own values on the host, which the host pushes into the guest.

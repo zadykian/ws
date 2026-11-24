@@ -1,0 +1,20 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+#
+# Sends what arrives on each guest's interface to that guest, by a rule and a route. They live in
+# the kernel alone, so a reboot loses them, and the main table would route a peer's packets to any
+# guest. The bridge comes with Incus, so this retries where that is not up yet.
+[Unit]
+Description=Send each guest's tunnel to its guest
+Documentation=https://github.com/zadykian/ws/blob/main/ubuntu/roles/tunnel/README.md#the-forward
+After=incus.service systemd-networkd.service
+Wants=incus.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/ws ubuntu host tunnel guests forward
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

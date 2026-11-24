@@ -51,8 +51,10 @@ without the file, which is a host: bare metal.
 A host runs guests, Incus's system containers ([incus](roles/incus/README.md#the-guests)).
 
 1. List each guest in `WS_INCUS_GUESTS` of the host's `/etc/ws/values.yml`, and write its own
-   values, where any differ from the defaults, to `/etc/ws/guests/NAME/values.yml`, root's and
-   mode 600.
+   values to `/etc/ws/guests/NAME/values.yml`, root's and mode 600. Each takes a slot and a UDP
+   port of its own, `WS_TUNNEL_ADDRESS` as `10.99.N.1/24`, N from 1, and `WS_TUNNEL_PORT`: the host
+   ends the guest's tunnel ([tunnel](roles/tunnel/README.md#the-guests-tunnels)). Let in each
+   port, as the host's own, in the network's firewall.
 2. Run `ws ubuntu host setup`. The unit `state/incus-guests` launches each guest from the image
    and sets it up, without the secrets.
 3. Where the guest needs the secrets, make its host key a recipient as for any server

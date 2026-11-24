@@ -114,8 +114,10 @@ accept ([The forward policy](../docker/README.md#the-forward-policy)). So with f
 peer of `wg0` reaches the VPN, listed or not,
 as ikeward's page on
 [NAT](https://github.com/zadykian/ikeward/blob/v0.3.0/docs/nat.md#networks-the-server-forwards)
-says. A server's values.yml sends the VPN's networks and domains into the tunnel, as
-`WS_TUNNEL_NETWORKS` and `WS_RESOLVERS`
+says. Under a host, the tunnel ends on the host. Its ingress ACL admits the listed peers to any
+destination, and any other peer to the guest's own addresses alone
+([The ingress ACL](../incus/README.md#the-ingress-acl)). A server's values.yml sends the VPN's
+networks and domains into the tunnel, as `WS_TUNNEL_NETWORKS` and `WS_RESOLVERS`
 ([the two files](../../../macos/values/README.md#the-two-files)). A private repository's script
 may do it instead
 ([Routes and resolvers of another repository](../../../macos/README.md#routes-and-resolvers-of-another-repository)).

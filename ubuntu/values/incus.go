@@ -47,6 +47,15 @@ func (i Incus) BridgeSubnet() string {
 	return netip.MustParsePrefix(i.BridgeAddress).Masked().String()
 }
 
+// Sources are the addresses that the guests may send from, each with its port, in the guests' order.
+func (i Incus) Sources() []Source {
+	var sources []Source
+	for _, g := range i.Guests {
+		sources = append(sources, g.Sources()...)
+	}
+	return sources
+}
+
 // TunnelSlots is the range of the tunnel's slots, which a guest may not claim as its source.
 func (Incus) TunnelSlots() string { return tunnelSlots }
 

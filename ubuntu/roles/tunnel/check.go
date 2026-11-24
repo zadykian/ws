@@ -19,10 +19,10 @@ func Check(ctx context.Context, m effect.Machine, u effect.Units, out effect.Out
 	if err := networkdRuns(ctx, u); err != nil {
 		return err
 	}
-	if err := checkPeers(m, out, t); err != nil {
+	if err := checkPeers(m, out, "wg0", peersDir, t.Peers); err != nil {
 		return err
 	}
-	public, hasKey, err := serverPublicKey(m)
+	public, hasKey, err := publicKeyOf(m, keyFile)
 	switch {
 	case err != nil:
 		return fmt.Errorf("%s holds no WireGuard private key: %w", keyFile, err)

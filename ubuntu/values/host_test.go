@@ -12,7 +12,9 @@ func TestParseHostEmptyGivesDefault(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := DefaultHost(); !hostAlike(t, got, want) {
+	want := DefaultHost()
+	want.Tunnel.derive()
+	if !hostAlike(t, got, want) {
 		t.Errorf("ParseHost(nil) = %+v, want %+v", got, want)
 	}
 }
@@ -30,7 +32,7 @@ func hostAlike(t *testing.T, a, b Host) bool {
 // A host's file holds the keys of its own roles, and no guest's: a key that no role of the host
 // reads is a typo there.
 func TestParseHostRefusesAGuestsKey(t *testing.T) {
-	for _, key := range []string{"WS_GIT_SIGNING_PUB_KEY", "WS_TUNNEL_PORT", "WS_ZED_NOFILE", "WS_NVIDIA_GPU"} {
+	for _, key := range []string{"WS_GIT_SIGNING_PUB_KEY", "WS_ZED_NOFILE", "WS_NVIDIA_GPU"} {
 		if _, err := ParseHost([]byte(key + ": x\n")); err == nil || !strings.Contains(err.Error(), "field "+key) {
 			t.Errorf("ParseHost with %s = %v, want it refused as no key of the host's", key, err)
 		}

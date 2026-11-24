@@ -26,7 +26,8 @@ func TestAMissingBridgeIsCreatedManagedNATedAndWithNoIPv6(t *testing.T) {
 	}
 	for _, want := range []string{
 		"ipv4.address: 10.100.0.1/24", `ipv4.nat: "true"`, "ipv6.address: none", "dns.nameservers: 9.9.9.9,1.1.1.1",
-		"security.acls: ws-egress", "security.acls.default.egress.action: drop",
+		"security.acls: ws-egress,ws-ingress", "security.acls.default.egress.action: drop",
+		"security.acls.default.ingress.action: drop",
 	} {
 		if !strings.Contains(m.Inputs[0], want) {
 			t.Errorf("the bridge's YAML lacks %q:\n%s", want, m.Inputs[0])
@@ -38,7 +39,7 @@ func TestAMissingBridgeIsCreatedManagedNATedAndWithNoIPv6(t *testing.T) {
 const oneBridge = `[{"name":"eth0","type":"physical","managed":false,"config":{}},
 {"name":"incusbr0","description":"ws's bridge for the guests","type":"bridge","managed":true,"status":"Created","used_by":["/1.0/profiles/ws"],
 "config":{"ipv4.address":"10.100.0.1/24","ipv4.nat":"true","ipv6.address":"none","dns.nameservers":"9.9.9.9,1.1.1.1",
-"security.acls":"ws-egress","security.acls.default.egress.action":"drop","volatile.network.ipv4.address":"10.100.0.1"}}]`
+"security.acls":"ws-egress,ws-ingress","security.acls.default.egress.action":"drop","security.acls.default.ingress.action":"drop","volatile.network.ipv4.address":"10.100.0.1"}}]`
 
 func TestABridgeThatHoldsItsKeysIsLeftAlone(t *testing.T) {
 	m := effecttest.NewMachine()

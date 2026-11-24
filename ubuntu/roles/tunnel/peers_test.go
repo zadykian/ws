@@ -14,7 +14,7 @@ func TestCheckPeersNamesTheMissing(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	m.Files["/etc/wireguard/mac.pub"] = []byte(keyA + "\n")
 	w := values.Tunnel{Peers: []values.TunnelPeer{{Name: "mac", Address: "10.99.0.2"}, {Name: "tv", Address: "10.99.0.3"}}}
-	if err := checkPeers(m, out, w); err != nil {
+	if err := checkPeers(m, out, "wg0", peersDir, w.Peers); err != nil {
 		t.Fatalf("checkPeers = %v", err)
 	}
 	if !strings.Contains(strings.Join(out.Lines, "\n"), "wg0 leaves out the peer tv, as /etc/wireguard/tv.pub is missing") {
@@ -30,7 +30,7 @@ func TestCheckPeersRefusesAFileWithNoKey(t *testing.T) {
 			m := effecttest.NewMachine()
 			m.Files["/etc/wireguard/mac.pub"] = []byte(content)
 			w := values.Tunnel{Peers: []values.TunnelPeer{{Name: "mac", Address: "10.99.0.2"}}}
-			err := checkPeers(m, &effecttest.Out{}, w)
+			err := checkPeers(m, &effecttest.Out{}, "wg0", peersDir, w.Peers)
 			if err == nil || !strings.Contains(err.Error(), "/etc/wireguard/mac.pub holds no WireGuard public key") {
 				t.Errorf("checkPeers = %v, want a refusal", err)
 			}

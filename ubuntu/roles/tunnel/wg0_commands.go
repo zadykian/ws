@@ -6,12 +6,17 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 )
 
-type deleteLink struct{ m effect.Machine }
+type deleteLink struct {
+	m    effect.Machine
+	name string
+}
 
-func (deleteLink) String() string { return "delete wg0, so that networkd creates it with the key" }
+func (c deleteLink) String() string {
+	return "delete " + c.name + ", so that networkd creates it with the key"
+}
 
 func (c deleteLink) Apply(ctx context.Context) error {
-	_, err := c.m.RunRoot(ctx, "ip", "link", "delete", "wg0")
+	_, err := c.m.RunRoot(ctx, "ip", "link", "delete", c.name)
 	return err
 }
 
@@ -19,11 +24,11 @@ func (c deleteLink) Apply(ctx context.Context) error {
 func (deleteLink) Forced() bool { return true }
 
 type reloadNetworkd struct {
-	m   effect.Machine
-	why string
+	m         effect.Machine
+	name, why string
 }
 
-func (c reloadNetworkd) String() string { return "reload networkd for wg0: " + c.why }
+func (c reloadNetworkd) String() string { return "reload networkd for " + c.name + ": " + c.why }
 
 func (c reloadNetworkd) Apply(ctx context.Context) error {
 	_, err := c.m.RunRoot(ctx, "networkctl", "reload")

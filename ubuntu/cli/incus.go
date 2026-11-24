@@ -20,13 +20,14 @@ func newIncusCmd(p enginecli.Env) *cobra.Command {
 			"It reads the ACL from incus, and creates it where it is missing, or edits its description and its egress "+
 				"rules where they differ. It drops the private ranges and allows the rest.",
 			func(values.Incus) resource.Resource { return incus.EgressACL(p.Machine) }),
+		incusIngress(p),
 		incusObject(p, "pool", "make Incus's ZFS pool on the partition of WS_INCUS_POOL_SOURCE",
 			"It reads the pool from incus, and creates it where it is missing, from the keys that ws declares. "+
 				"It fails where the pool was made on another partition, as Incus never moves a pool.",
 			func(v values.Incus) resource.Resource { return incus.Pool(p.Machine, v) }),
-		incusObject(p, "bridge", "make the guests' bridge, with the egress ACL on it",
+		incusObject(p, "bridge", "make the guests' bridge, with the ACLs on it",
 			"It creates incusbr0 where it is missing, and edits the keys that ws declares where they differ: its "+
-				"subnet, its DHCP's resolvers, NAT, no IPv6 and the ACL with egress dropped by default.",
+				"subnet, its DHCP's resolvers, NAT, no IPv6 and the ACLs with egress and ingress dropped by default.",
 			func(v values.Incus) resource.Resource { return incus.Bridge(p.Machine, v) }),
 		incusObject(p, "profile", "make the profile that each guest takes",
 			"It creates the profile ws where it is missing, and edits the keys and devices that ws declares where "+
@@ -43,6 +44,22 @@ func newIncusCmd(p enginecli.Env) *cobra.Command {
 				"empties the set, so each run fills it again.",
 			func(v values.Incus) resource.Resource { return incus.Owned{M: p.Machine, Guests: v.Guests} }),
 		incusGuests(p))
+}
+
+// incusIngress returns ws ubuntu host incus ingress: the ACL of what reaches the guests. It reads each
+// guest's own values for its tunnel, so it fails where two tunnels clash.
+func incusIngress(p enginecli.Env) *cobra.Command {
+	return procedure("ingress", "make the ingress ACL of the guests",
+		"It reads the ACL from incus, and creates it where it is missing, or edits its ingress rules where they "+
+			"differ. It allows each peer of each guest's tunnel to reach the guest's own addresses, and a peer of "+
+			"WS_IKEWARD_FORWARD_FROM to reach any destination. The bridge drops the rest.",
+		func(context.Context, effect.Out) ([]resource.Resource, error) {
+			t, err := guestTunnels(p)
+			if err != nil {
+				return nil, err
+			}
+			return []resource.Resource{incus.IngressACL(p.Machine, t)}, nil
+		})
 }
 
 // incusGuests returns ws ubuntu host incus guests. It launches or edits each guest of the host's

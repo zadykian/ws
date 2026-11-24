@@ -14,17 +14,17 @@ import (
 // publicKey is a WireGuard public key as wg pubkey prints it: 44 characters of base64.
 var publicKey = regexp.MustCompile(`^[A-Za-z0-9+/]{43}=$`)
 
-// checkPeers checks each peer's public key in /etc/wireguard/NAME.pub, a line as wg pubkey prints
-// it, in the directory only root reads. wg0's .netdev reads the same files. Access to the machine
+// checkPeers checks each peer's public key in dir/NAME.pub, a line as wg pubkey prints it, in a
+// directory only root reads. The interface link's .netdev reads the same files. Access to the machine
 // is granted on the machine, as SSH's authorized_keys is: a key in the repository would let its
 // peer into every machine it sets up. A peer without the file is left out, and the run names it. A
 // file that holds no key is an error.
-func checkPeers(m effect.Machine, out effect.Out, w values.Tunnel) error {
-	for _, p := range w.Peers {
-		path := "/etc/wireguard/" + p.Name + ".pub"
+func checkPeers(m effect.Machine, out effect.Out, link, dir string, peers []values.TunnelPeer) error {
+	for _, p := range peers {
+		path := dir + "/" + p.Name + ".pub"
 		text, err := m.ReadRootFile(path)
 		if errors.Is(err, fs.ErrNotExist) {
-			out.Say("wg0 leaves out the peer %s, as %s is missing. Put its public key there, then run the bootstrap again.", p.Name, path)
+			out.Say("%s leaves out the peer %s, as %s is missing. Put its public key there, then run the bootstrap again.", link, p.Name, path)
 			continue
 		}
 		if err != nil {
