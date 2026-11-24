@@ -12,3 +12,6 @@
 "ws:guard/tunnel-guests" = "in-sync"
 "ws:state/tunnel-guest-keys" = "in-sync"
 "ws:state/tunnel-guest-links" = "in-sync"
+"ws:service/tunnel-networkd" = "in-sync"
+"ws:service/tunnel-forward" = "in-sync"
+"ws:state/tunnel-guest-forward" = "in-sync"

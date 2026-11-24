@@ -64,3 +64,35 @@ when = { side = "host" }
 after = "state/tunnel-guest-keys"
 run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "links"], check = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "links", "--check"] }
 when = { side = "host" }
+
+# networkd keeps the rule and the route of each guest's tunnel, which ip adds and no .network file
+# names. It removes any such rule or route as it starts or reconfigures a link, so it must keep them.
+# networkd.conf is read as it starts, so a change restarts it.
+[service.tunnel-networkd]
+unit = "systemd-networkd.service"
+run = "running"
+after = "state/tunnel-guest-links"
+when = { side = "host" }
+
+[[service.tunnel-networkd.file]]
+path = "/etc/systemd/networkd.conf.d/60-ws-tunnel.conf"
+source = "networkd-foreign.conf"
+
+# The rule and the route of each guest's tunnel at boot: they live in the kernel alone, and the guests
+# start with Incus.
+[service.tunnel-forward]
+unit = "tunnel-forward.service"
+enabled = true
+run = "running"
+after = "service/tunnel-networkd"
+when = { side = "host" }
+
+[[service.tunnel-forward.file]]
+path = "/etc/systemd/system/tunnel-forward.service"
+source = "tunnel-forward.service"
+
+# The rule and the route again where a flush or a hand edit lost them, and a stale rule's deletion.
+[state.tunnel-guest-forward]
+after = "service/tunnel-forward"
+run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "forward"], check = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "forward", "--check"] }
+when = { side = "host" }

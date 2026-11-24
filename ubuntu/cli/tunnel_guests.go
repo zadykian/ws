@@ -9,6 +9,7 @@ import (
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/ubuntu/roles/incus"
 	"github.com/zadykian/ws/ubuntu/roles/tunnel"
 	"github.com/zadykian/ws/ubuntu/values"
 )
@@ -39,6 +40,12 @@ func newTunnelGuestsCmd(p enginecli.Env, u effect.Units) *cobra.Command {
 				"interface is due, deleting an interface of another key first, and waits up to 10 s for each new one.",
 			func(out effect.Out, t []values.GuestTunnel) []resource.Resource {
 				return []resource.Resource{tunnel.Links{M: p.Machine, Out: out, Tunnels: t, Tries: 10, Pause: time.Second}}
+			}),
+		guestsProcedure(p, "forward", "send what arrives on each guest's interface to that guest",
+			"A rule on wgN selects the table of slot N, whose one route leads to the guest's address on the bridge. "+
+				"The unit tunnel-forward.service runs it at boot, as the rule and the route do not outlive a reboot.",
+			func(_ effect.Out, t []values.GuestTunnel) []resource.Resource {
+				return []resource.Resource{tunnel.Forward{M: p.Machine, Tunnels: t, Bridge: incus.BridgeName}}
 			}))
 }
 
