@@ -22,6 +22,12 @@ run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "incus", "brid
 after = "state/incus-bridge"
 run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "incus", "profile"], check = ["{{ self }}", "ubuntu", "host", "incus", "profile", "--check"] }
 
+# The image that the guests launch from: Ubuntu's root tarball, by its pinned SHA-256, with ws's
+# metadata.
+[state.incus-image]
+after = "state/incus-profile"
+run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "incus", "image"], check = ["{{ self }}", "ubuntu", "host", "incus", "image", "--check"] }
+
 # ufw lets the guests' DHCP in and routes what the guests send, which the egress ACL narrows. DNS
 # to the host stays shut: the bridge hands out other resolvers. UDP 67 comes in from any address,
 # as a guest asks before it holds one. A host's alone: a guest holds no filter.

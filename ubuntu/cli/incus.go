@@ -31,7 +31,12 @@ func newIncusCmd(p enginecli.Env) *cobra.Command {
 		incusObject(p, "profile", "make the profile that each guest takes",
 			"It creates the profile ws where it is missing, and edits the keys and devices that ws declares where "+
 				"they differ: unprivileged, nesting, an isolated NIC on the bridge and the disk on the pool.",
-			func(values.Incus) resource.Resource { return incus.Profile(p.Machine) }))
+			func(values.Incus) resource.Resource { return incus.Profile(p.Machine) }),
+		incusObject(p, "image", "import the image that the guests launch from",
+			"It downloads Ubuntu's root tarball of the pinned release, checked against its SHA-256, writes the "+
+				"metadata with the cloud-init seed's templates, and imports both under an alias that names the release "+
+				"and the metadata. Where Incus holds the alias, it does nothing.",
+			func(values.Incus) resource.Resource { return incus.Image{M: p.Machine} }))
 }
 
 // incusObject returns a command of incus's that settles the object that obj gives for the host's
