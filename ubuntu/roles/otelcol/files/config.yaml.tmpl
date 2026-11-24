@@ -81,9 +81,10 @@ processors:
 {{- end }}
 
 exporters:
-  # SigNoz's intake by gRPC, which the signoz role publishes on loopback, with no TLS.
+  # SigNoz's intake by gRPC, with no TLS: on loopback, where this machine runs SigNoz, else the
+  # socket that the guest's profile makes to the host's.
   otlp_grpc/signoz:
-    endpoint: 127.0.0.1:14317
+    endpoint: {{ .OTLPEndpoint }}
     tls:
       insecure: true
 {{- if $endpoint }}

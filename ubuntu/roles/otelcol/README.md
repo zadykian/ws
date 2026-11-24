@@ -28,8 +28,8 @@ VM. It:
   network, and the count of processes;
 - scrapes temperatures and fans from node_exporter on `127.0.0.1:9100` every 60 seconds, as the
   host's metrics have none;
-- sends it all to SigNoz's intake by gRPC on `127.0.0.1:14317`, with the host's name added as
-  `host.name`;
+- sends it all to SigNoz's intake by gRPC, with the machine's name added as `host.name`
+  ([below](#the-exporters-endpoint));
 - sends claude's metrics to a remote collector too, where `/etc/ws/env` sets
   `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT`: [below](#claudes-metrics-elsewhere).
 
@@ -60,6 +60,21 @@ so until the service replaces it. A host's ufw denies what comes in meanwhile.
 The `.deb`'s unit stops it at once, and the service enables it again once the config is in place.
 The `.deb`'s unit waits on signoz's sync, so that SigNoz's retention is set before the collector
 sends ([signoz](../signoz/README.md#retention)).
+
+## The exporter's endpoint
+
+The values of each side give one endpoint for the exporter to SigNoz, with `tls.insecure` in both
+forms ([values.OTLPEndpoint](../../values/otlp.go)). The host's is its own SigNoz, `127.0.0.1:14317`.
+A guest's follows the mode `WS_SELF_CONTAINED`: the same address where the guest runs SigNoz, else
+the Unix socket `/var/lib/ws/otlp/signoz.sock`, which the guests' profile makes
+([incus](../incus/README.md#the-link-to-signoz)). The collector's gRPC exporter takes the
+`unix:///` form: a run of the 0.162.0 collector sent metrics through it to a second collector that
+listened on the socket.
+
+The guest's collector runs as `otelcol-contrib`, and the socket is that account's alone, at 0600. The
+profile names the account by number, which the `.deb`, with its own `useradd --system`, would not
+fix. `mise.guest.toml` makes the group and the user with the IDs of `values.OtelcolID`, before the
+package, whose preinst keeps an account that it finds.
 
 ## Docker's containers
 

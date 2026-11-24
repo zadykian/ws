@@ -17,7 +17,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/kind"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/ubuntu/values"
 )
 
 const (
@@ -118,26 +117,6 @@ func checkLine(t *testing.T, path string) string {
 		check[i] = strings.ReplaceAll(a, "{}", path+".ws-check")
 	}
 	return strings.Join(check, " ")
-}
-
-// machine is a machine with the collector's directories and /etc/ws/env set to env, and
-// the environment that loads the role's units over it.
-func machine(t *testing.T, env string) (*effecttest.Machine, kind.Env) {
-	v, err := values.Parse(nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	m := effecttest.NewMachine()
-	for _, d := range []string{"/etc", "/etc/ws", "/etc/systemd", "/etc/systemd/system", "/etc/otelcol-contrib"} {
-		m.Dirs[d] = 0o755
-	}
-	if env != "" {
-		m.Files[envPath] = []byte(env)
-	}
-	for _, p := range []string{envFile, config} {
-		m.Results[checkLine(t, p)] = effecttest.Result{}
-	}
-	return m, kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v}
 }
 
 // collector loads otelcol's units and returns the collector's service unit.
