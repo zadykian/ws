@@ -54,8 +54,8 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 - `macos/`: the Mac's side ([The Mac](../macos/README.md)), its roles in `macos/roles/`.
   Above them sit the packages that serve them all, `cli`, `values`, `facts` and `internal`, and
   the runbook. Its roles' units write `ghostty/files/ws.ghostty`, Ghostty's settings,
-  `zed/files/`, Zed's settings and keymap, and `zsh/files/zshrc`, the zsh hook that turns off the
-  modes that a drop leaves on.
+  `zed/files/`, Zed's settings and keymap, and `zsh/files/zshrc`, the zsh settings and the hook
+  that turns off the modes that a drop leaves on.
 - `internal/`: what both sides share, as `setup` and `gitcfg`. It names neither side.
 - The pages sit beside their code, as the `README.md` of a role or a package. A second page stands
   beside one where the cap keeps two apart, as [docs.md](rules/docs.md) lists them.
