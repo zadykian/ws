@@ -45,7 +45,7 @@ func TestSecretsInitRemovesTheCloneOnASignal(t *testing.T) {
 	for _, sig := range []syscall.Signal{syscall.SIGINT, syscall.SIGTERM} {
 		m := effecttest.NewMachine()
 		m.Files["/usr/local/bin/fnox"], m.Files[secrets.Plugin] = []byte("fnox"), []byte("plugin")
-		m.Dirs[secrets.Tree+"/roles/server/ubuntu"] = 0o755
+		m.Dirs[secrets.Tree+"/ubuntu/roles"] = 0o755
 		m.Results[secrets.Plugin+" --list"] = effecttest.Result{Out: []byte("# Serial: 1, Slot: 1\nage1yubikey1qa\n\n")}
 		m.Results[secrets.Plugin+" --identity --slot 1"] = effecttest.Result{Out: []byte("AGE-PLUGIN-YUBIKEY-1QQQ\n")}
 		m.Results[secrets.GH+" pr list --repo o/n --state open --limit 100 --json headRefName,url --jq "+

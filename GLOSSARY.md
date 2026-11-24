@@ -11,8 +11,8 @@ _Avoid_: owner, ids
 
 **Frame**:
 What each role of mise's config leans on: `mise.toml`, the server's
-`mise.server.toml`, the plugin `plugins/ws`, the machine's miserc, and the role `frame`
-([The frame](roles/server/ubuntu/frame/README.md)). The plugin's link puts it where mise finds a
+`mise.guest.toml`, the plugin `plugins/ws`, the machine's miserc, and the role `frame`
+([The frame](ubuntu/roles/frame/README.md)). The plugin's link puts it where mise finds a
 system plugin.
 _Avoid_: skeleton, scaffold
 
@@ -24,7 +24,7 @@ _Avoid_: user file, plain file
 **Input**:
 One of mise's secret inputs, which a role's `mise.secrets.toml` declares. Its name is its
 variable's and fnox's. mise writes a secret file from it, or ws reads it from the run's env
-([Secret inputs](roles/server/ubuntu/frame/README.md#secret-inputs)).
+([Secret inputs](ubuntu/roles/frame/README.md#secret-inputs)).
 _Avoid_: entry
 
 **Kind**:
@@ -35,7 +35,7 @@ _Avoid_: plugin, module
 **Machine account**:
 The GitHub account `@zadykiand`, `su@zadykian.dev`, that ws's git and gh act as. Its classic token,
 scopes `repo`, `workflow` and `read:org`, is the secret input `WS_GITHUB_TOKEN`, and its settings
-hold ws's signing key, added by hand ([gh](roles/server/ubuntu/devtools/README.md#gh)).
+hold ws's signing key, added by hand ([gh](ubuntu/roles/devtools/README.md#gh)).
 _Avoid_: bot, service account
 
 **Pinned file**:
@@ -46,14 +46,14 @@ _Avoid_: download, release asset, artifact
 
 **Profile**:
 One server's values in the repository of ws's secrets, `fnox.HOSTNAME.toml`, by its hostname
-([The files](roles/server/ubuntu/secrets/README.md#the-files)). ikeward's VPN profile differs: its
+([The files](ubuntu/roles/secrets/README.md#the-files)). ikeward's VPN profile differs: its
 files go in a server's profile as values.
 _Avoid_: host file
 
 **Recipient**:
 A public key that fnox's age provider encrypts each value to. The provider's table of recipients
 names each: `nano` the Nano's, `backup` the backup key's, and a server's hostname its host key
-([The recipients](roles/server/ubuntu/secrets/README.md#the-recipients)).
+([The recipients](ubuntu/roles/secrets/README.md#the-recipients)).
 _Avoid_: reader
 
 **Spec**:
@@ -64,7 +64,7 @@ _Avoid_: manifest
 **Secrets repository**:
 The private repository that `WS_SECRETS_REPO` names: `fnox.toml`, the values that every server
 shares, and a profile per server, its own
-([The repository](roles/server/ubuntu/secrets/README.md#the-repository)). A change lands on its
+([The repository](ubuntu/roles/secrets/README.md#the-repository)). A change lands on its
 `main` by a pull request ([How a change lands](macos/roles/secrets/README.md#how-a-change-lands)).
 _Avoid_: vault, store
 

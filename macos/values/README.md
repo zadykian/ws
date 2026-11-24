@@ -118,7 +118,7 @@ cable's service keeps `10.77.0.2`. The server itself is not changed.
 
 ## A machine on the LAN
 
-`WS_TARGET=lan`, the default, is a machine at home, behind [The router](../../roles/server/ubuntu/cable/router.md), with a cable to
+`WS_TARGET=lan`, the default, is a machine at home, behind [The router](../../ubuntu/roles/cable/router.md), with a cable to
 the Mac's display, if any:
 
 - `WS_LAN` is the home LAN with the server's segment, `10.88.0.0/23` by default, and
@@ -140,7 +140,7 @@ the Mac's display, if any:
 - The provider's firewall must let in TCP `WS_REMOTE_PORT`, and UDP 51820, the tunnel's, or the port
   that `WS_TUNNEL_PORT` sets, which moves wg0's listen port on ws too.
 - Set `WS_SECURITY_OUTBOUND: false` in ws's values.yml before ws's run, as the outbound table would
-  drop the metadata service ([Outbound](../../roles/server/ubuntu/security/README.md#outbound)).
+  drop the metadata service ([Outbound](../../ubuntu/roles/security/README.md#outbound)).
 - It has no cable: `WS_CABLE_SERVICE` and `WS_CABLE_PORT` are refused.
 
 ## A VM on the Mac
@@ -157,7 +157,7 @@ the Mac's display, if any:
   ([ssh's hosts](../README.md#sshs-hosts)).
 - It needs no `WS_REMOTE`, as only the Mac reaches the VM.
 - The outbound table stays on: ws's DHCP and DNS go to the Mac, which the table lets through
-  ([Outbound](../../roles/server/ubuntu/security/README.md#outbound)).
+  ([Outbound](../../ubuntu/roles/security/README.md#outbound)).
 - It has no cable: `WS_CABLE_SERVICE` and `WS_CABLE_PORT` are refused.
 
 ## A move to another target
@@ -170,5 +170,5 @@ key of another target's ways: `WS_LAN` on a cloud VM, `WS_REMOTE` on a VM on the
 `WS_CABLE_SERVICE` or `WS_CABLE_PORT` off the LAN. Then name the new target's
 ways. A new machine offers another host key, so run `ssh-keygen -R NAME` first, NAME the server's
 name. From a cloud VM, remove `WS_SECURITY_OUTBOUND: false` from ws's `values.yml` too, with
-`ws server values set WS_SECURITY_OUTBOUND ''`. Then run the bootstrap on ws, as
-[its runbook](../../roles/server/runbook.md) says, and `ws macos setup` again.
+`ws ubuntu guest values set WS_SECURITY_OUTBOUND ''`. Then run the bootstrap on ws, as
+[its runbook](../../ubuntu/runbook.md) says, and `ws macos setup` again.

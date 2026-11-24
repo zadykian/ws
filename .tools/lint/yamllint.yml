@@ -7,7 +7,7 @@ ignore: |
   .cache/
   .claude/
   .git/
-  roles/server/ubuntu/signoz/deployment/
+  ubuntu/roles/signoz/deployment/
 
 rules:
   comments:

@@ -1,0 +1,32 @@
+// Package cli is Ubuntu's side of ws: its commands under ws ubuntu, of which the guest's are ws
+// ubuntu guest. Its roles' units and the maintainer run them.
+package cli
+
+import (
+	"github.com/spf13/cobra"
+
+	enginecli "github.com/zadykian/ws/engine/cli"
+	"github.com/zadykian/ws/engine/core/effect/units"
+	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/ubuntu/roles/ikeward"
+)
+
+const guestVars = "/etc/ws/values.yml"
+
+// rootUser is the one user the commands act for.
+var rootUser = account.User{Name: "root", Home: "/root"}
+
+// Command returns ws ubuntu, the commands of Ubuntu's side: ws ubuntu guest, which a guest's units
+// and its maintainer run.
+func Command(p enginecli.Env) *cobra.Command {
+	return enginecli.Group("ubuntu", "the commands for an Ubuntu machine", guestCmd(p))
+}
+
+// guestCmd returns ws ubuntu guest, the commands of a guest: a container or a cloud VM that runs
+// the roles.
+func guestCmd(p enginecli.Env) *cobra.Command {
+	return enginecli.Group("guest", "the commands for an Ubuntu guest", newFansCmd(p),
+		newCableCmd(p, units.OSUnits{}), newTunnelCmd(p, units.OSUnits{}), newIkewardCmd(p, ikeward.StatusTries, ikeward.StatusWait),
+		newGitCmd(p), newDevtoolsCmd(p), newClaudeCmd(p, units.OSUnits{}), newValuesCmd(p), newSignozCmd(p),
+		newSetupCmd(p, liveSetup()))
+}

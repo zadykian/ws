@@ -56,7 +56,7 @@ mise trust /opt/ws/mise.secrets.toml
 # The seed, as the Mac's init writes it. The host key is a recipient of the shared values, and of
 # its profile's, which a provider of its own encrypts. No config of root's takes part.
 host=$(hostname)
-fnox=$(mise -C /opt/ws/roles/server which fnox)
+fnox=$(mise -C /opt/ws/ubuntu/guest which fnox)
 mkdir "$work/fnox"
 fx() {
     env -C "$seed" FNOX_CONFIG_DIR="$work/fnox" FNOX_DAEMON=off "$fnox" "$@" >/dev/null
@@ -107,7 +107,7 @@ value WS_CI_HOST host -P "$host" >"$work/host"
 # Each input that mise lists and fnox.toml lacks is declared there empty, as the Mac's init
 # declares each. WS_CI_HOST is too, so the file's check proves that the profile's value wins
 # under -P, as a server's own value must.
-inputs=$(mise -C /opt/ws/roles/server -E ws,secrets bootstrap secrets status --json | jq -r '.[].env')
+inputs=$(mise -C /opt/ws/ubuntu/guest -E ws,secrets bootstrap secrets status --json | jq -r '.[].env')
 for name in $inputs; do
     grep -qE "^$name *=" "$seed/fnox.toml" || fx set "$name" --provider age </dev/null
 done
@@ -115,7 +115,7 @@ publish "ci: seed the secrets"
 
 # The runbook's form of a run under the secrets, on the tree in place, as the job's own run of
 # the bootstrap has it. Its task, the secrets', clones on the first run.
-setup=(/usr/local/bin/ws server setup --in-place --secrets)
+setup=(/usr/local/bin/ws ubuntu guest setup --in-place --secrets)
 # task runs the secrets task by setup, with its --plan or no argument, and keeps its output in
 # $work/out. boot runs the bootstrap without the env secrets, and keeps its output there too.
 task() {
@@ -123,7 +123,7 @@ task() {
     return "${PIPESTATUS[0]}"
 }
 boot() {
-    "$check" -- mise -C /opt/ws/roles/server bootstrap "$@" </dev/null 2>&1 | tee -a "$work/out"
+    "$check" -- mise -C /opt/ws/ubuntu/guest bootstrap "$@" </dev/null 2>&1 | tee -a "$work/out"
     return "${PIPESTATUS[0]}"
 }
 holds() { [ "$(cat "$file")" = "$(cat "$work/shared") $(cat "$work/host")" ]; }
@@ -171,7 +171,7 @@ if out=$(MISE_LOCKED=0 "${setup[@]}" </dev/null 2>&1); then
     fail "a run with locked off: the task ran"
 fi
 printf '%s\n' "$out" | tee -a "$work/out"
-grep -qF -- 'ws server setup --secrets' <<<"$out" || fail "a run with locked off: the task never names setup"
+grep -qF -- 'ws ubuntu guest setup --secrets' <<<"$out" || fail "a run with locked off: the task never names setup"
 [ "$sum" = "$(sha256sum "$file")" ] || fail "a run with locked off: the file changed"
 echo "ok: a run with locked off is refused"
 touch /var/lib/ws/secrets/fnox.local.toml
@@ -194,7 +194,7 @@ must "the file holds both values after the refusals" holds
 must "a plan after the refusals leaves nothing to do" task --plan
 
 # The files that the roles' inputs write: root's 600, under ws's header
-# (roles/server/ubuntu/frame/README.md#secret-inputs). The seed leaves their inputs empty, so
+# (ubuntu/roles/frame/README.md#secret-inputs). The seed leaves their inputs empty, so
 # none is there yet.
 header='# Written by github.com/zadykian/ws, whose next run replaces any change made here.'
 secret_files=(/etc/ws/gh-token /etc/ws/git-tokens.toml /etc/ws/env)
@@ -256,13 +256,13 @@ must "a plan without the env leaves nothing to do" boot plan --detailed-exitcode
 # at gh's unit either way. Only gh's own message hangs on the network, and the case leaves it out.
 printf 'by hand\n' >/etc/ws/gh-token
 status=0
-out=$(mise -C /opt/ws/roles/server bootstrap </dev/null 2>&1) || status=$?
+out=$(mise -C /opt/ws/ubuntu/guest bootstrap </dev/null 2>&1) || status=$?
 printf '%s\n' "$out" | tee -a "$work/out"
 must "a run without the env fails on the file by hand" test "$status" != 0
 must "the run fails at gh's unit" \
     grep -qF 'ws unit write: state/devtools-gh-login: applying: ' <<<"$out"
 must "gh's login by the file's last line fails" \
-    grep -qE 'ws server devtools gh-login: .*gh auth login .*: exit status' <<<"$out"
+    grep -qE 'ws ubuntu guest devtools gh-login: .*gh auth login .*: exit status' <<<"$out"
 refused "a run without the env stops at the guard" grep -qF 'not written by ws' <<<"$out"
 must "a run without the env keeps the file by hand" grep -qx 'by hand' /etc/ws/gh-token
 refusal "a file by hand at gh's path stops the run" '/etc/ws/gh-token: not written by ws'

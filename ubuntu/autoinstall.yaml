@@ -1,0 +1,70 @@
+---
+# The installer's answers for Ubuntu Server 26.04, from which root alone logs in
+# (ubuntu/runbook.md). The installer reads it as NoCloud user-data, whose first line must be
+# `#cloud-config`. Here yamllint's comments rule would refuse that line. So a release publishes
+# the file with it, by .github/autoinstall.sh, which fills the two blanks that name the release:
+# its tag, and its install.sh's SHA-256.
+# HOSTNAME, HASH and VALUES stay the maintainer's. They are the machine's name, root's password
+# hash for the console (mkpasswd --method=sha-512), and the text of /etc/ws/values.yml.
+autoinstall:
+  version: 1
+  # Storage alone asks, as a disk is the one answer that no file can know.
+  interactive-sections: [storage]
+  updates: all
+  drivers:
+    install: false
+  # No identity and no network. The installer's default is DHCP on each wired port, which fits
+  # the cable's port: its check refuses a glob that fits other ports (ubuntu/cable/README.md).
+  ssh:
+    install-server: true
+    allow-pw: false
+  late-commands:
+    # Root's keys are the GitHub account's alone, and an install that got none fails here, as
+    # root could not log in.
+    - - curtin
+      - in-target
+      - --target=/target
+      - --
+      - sh
+      - -ec
+      - ssh-import-id gh:zadykian && test -s /root/.ssh/authorized_keys
+    # The release's install.sh, checked against the SHA-256 that the release's file holds, which
+    # puts ws's binary in place. The first boot runs it below. -L follows the redirect that
+    # GitHub answers a release's address with.
+    - - curtin
+      - in-target
+      - --target=/target
+      - --
+      - sh
+      - -ec
+      - |
+        dir=$(mktemp -d)
+        curl -fsSL --proto =https --tlsv1.2 -o "$dir/install.sh" \
+            https://github.com/zadykian/ws/releases/download/VERSION/install.sh
+        echo "SHA256  $dir/install.sh" | sha256sum -c -
+        WS_VERSION=VERSION sh "$dir/install.sh"
+        rm -rf "$dir"
+  user-data:
+    # No user but root: the installer makes none, and sshd keeps root's login by key.
+    users: []
+    disable_root: false
+    hostname: HOSTNAME
+    # cloud-init expires a password by default, a hash too, which would ask for a new one at the
+    # console's first login.
+    chpasswd:
+      expire: false
+      users:
+        - name: root
+          type: hash
+          password: HASH
+    write_files:
+      - path: /etc/ws/values.yml
+        owner: root:root
+        permissions: "0600"
+        content: VALUES
+    # runcmd runs in a service that sets no HOME, and Go refuses to build devtools' tools
+    # without one. ws update installs the release that this file names, never the latest, which is
+    # no pre-release. It runs no setup where the machine has none yet, so the next command runs it.
+    runcmd:
+      - [env, HOME=/root, ws, update, --version, VERSION]
+      - [env, HOME=/root, ws, ubuntu, guest, setup]

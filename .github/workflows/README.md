@@ -43,7 +43,7 @@ the tree's build ([16-install.sh](../client/16-install.sh)).
 ## SigNoz's compose files
 
 CI forges SigNoz's compose files again from their casting, with foundryctl pinned by its checksum,
-and fails where they differ from the repository's, in `roles/server/ubuntu/signoz`.
+and fails where they differ from the repository's, in `ubuntu/roles/signoz`.
 
 ## The Mac
 

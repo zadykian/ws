@@ -1,7 +1,7 @@
 # git on the Mac
 
 `mise -C /opt/ws/macos bootstrap` sets up git on the Mac by [git's units](units.toml.tmpl), as the `git` role
-does on ws ([Signing](../../../roles/server/ubuntu/git/README.md#signing)). The facts give the files'
+does on ws ([Signing](../../../ubuntu/roles/git/README.md#signing)). The facts give the files'
 text, from the settings that `internal/gitcfg` holds for both sides, the fetch's prune among
 them ([The facts](../../facts/README.md)). The author is `gitcfg.Mac()`, `zadykian` and
 `me@zadykian.dev`, as ws's is `gitcfg.WS()`, the machine account.

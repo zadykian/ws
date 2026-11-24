@@ -81,12 +81,12 @@ server to every YAML file, Ansible's too.
   with it on, a venv in the directory has Zed type its activation line into every new tab, which
   reaches a reattached tmux session and whatever runs there.
 - `terminal.toolbar.breadcrumbs` shows a title that a program in the terminal sets, such as
-  [lazygit's](../../../roles/server/ubuntu/lazygit/README.md#the-title), above it. Zed's tab takes none.
+  [lazygit's](../../../ubuntu/roles/lazygit/README.md#the-title), above it. Zed's tab takes none.
 - `file_types` reads every `.json` file as JSONC, as ws's file does, so a comment in one is no
-  error ([JSON with comments](../../../roles/server/ubuntu/zed/README.md#json-with-comments)).
+  error ([JSON with comments](../../../ubuntu/roles/zed/README.md#json-with-comments)).
 - `terminal.line_height` is Zed's default. Nerd glyphs may look misaligned all the same (zed#4746,
   open), and no setting helps.
-- [Zed's page for the server](../../../roles/server/ubuntu/zed/README.md#when-the-connection-drops) says what to do when the
+- [Zed's page for the server](../../../ubuntu/roles/zed/README.md#when-the-connection-drops) says what to do when the
   connection drops.
 
 ## The keymap

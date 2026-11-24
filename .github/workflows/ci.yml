@@ -56,7 +56,7 @@ jobs:
           # zizmor's online audits, which look the actions up on GitHub, need a token.
           GH_TOKEN: ${{ github.token }}
 
-  # ws server setup, as on a new machine, on a runner that booted, as a server that root alone
+  # ws ubuntu guest setup, as on a new machine, on a runner that booted, as a server that root alone
   # logs in to. It runs twice: setup's plan before the first run must exit 2, and after each run
   # it must change nothing. Last, it runs twice more with the outbound table off, as a cloud VM
   # has it. The firewall around Docker needs the booted systemd. In a stack, it
@@ -149,7 +149,7 @@ jobs:
               apt-get install -qq -y --no-install-recommends cloud-init >/dev/null
               .github/autoinstall-checks.sh'
 
-  # SigNoz's compose files in roles/server/ubuntu/signoz are foundryctl's, forged from the casting
+  # SigNoz's compose files in ubuntu/roles/signoz are foundryctl's, forged from the casting
   # there. Forged again into an empty directory, as foundryctl never removes a file, they must be
   # the same. Only what it forges is compared, so the package may keep other files beside them.
   # Gated as install.
@@ -187,11 +187,11 @@ jobs:
         run: |
           forged="$RUNNER_TEMP/forged"
           mkdir "$forged"
-          cp roles/server/ubuntu/signoz/casting.yaml "$forged"
+          cp ubuntu/roles/signoz/casting.yaml "$forged"
           foundryctl forge --no-ledger --no-updater -f "$forged/casting.yaml" -p "$forged"
           status=0
           for file in "$forged"/*; do
-              diff -r "roles/server/ubuntu/signoz/${file##*/}" "$file" || status=1
+              diff -r "ubuntu/roles/signoz/${file##*/}" "$file" || status=1
           done
           if [ "$status" -ne 0 ]; then
               echo '::error::foundryctl forges other files from casting.yaml: forge them again.'

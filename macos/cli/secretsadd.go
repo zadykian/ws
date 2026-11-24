@@ -24,7 +24,7 @@ import (
 
 // serverSecretsRun runs the server's own ws, as root, in its setup with the secrets. Its task
 // fetches the secrets repository on a first run, then runs the bootstrap under it.
-var serverSecretsRun = []string{"/usr/local/bin/ws", "server", "setup", "--secrets"}
+var serverSecretsRun = []string{"/usr/local/bin/ws", "ubuntu", "guest", "setup", "--secrets"}
 
 // newSecretsAddCmd returns ws macos secrets add.
 func newSecretsAddCmd(p enginecli.Env, server *string) *cobra.Command {
@@ -39,7 +39,7 @@ func newSecretsAddCmd(p enginecli.Env, server *string) *cobra.Command {
 			"repository, it makes the key the hostname's recipient in fnox.toml and in fnox.HOSTNAME.toml, and " +
 			"encrypts their values again, which asks for the Nano's PIN and a touch. It keeps the key as the " +
 			"repository's read-only deploy key, titled with the hostname, and lands the change by a pull request " +
-			"once its checks pass. It then runs ws server setup --secrets on the server over ssh -t, which fetches " +
+			"once its checks pass. It then runs ws ubuntu guest setup --secrets on the server over ssh -t, which fetches " +
 			"the secrets on a first run. Last, it prints each host key that the secrets hold and known_hosts " +
 			"gives no host, to drop by hand where no server holds it now. " +
 			"Each step changes nothing where it is done, so run it again where one fails.",

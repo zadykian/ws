@@ -17,7 +17,7 @@
 # WS_VERSION names it. It makes /usr/local and /usr/local/bin, root's and 755, where they are
 # missing. It refuses one that anyone but root may write, as launchd would refuse ws below it.
 # It does not chown, as an old Homebrew in /usr/local would lose its writes. Its last line names
-# the next command, ws server setup on Linux and ws macos setup on a Mac, which sets the machine
+# the next command, ws ubuntu guest setup on Linux and ws macos setup on a Mac, which sets the machine
 # up and checks the system. It runs in any POSIX sh, and needs curl and sha256sum, or shasum on a
 # Mac.
 #
@@ -49,11 +49,11 @@ platform() {
     case $os-$arch in
     Linux-x86_64 | Linux-amd64)
         asset=linux-amd64
-        next="ws server setup"
+        next="ws ubuntu guest setup"
         ;;
     Linux-aarch64 | Linux-arm64)
         asset=linux-arm64
-        next="ws server setup"
+        next="ws ubuntu guest setup"
         ;;
     Linux-*) die "ws sets up Linux on x86_64 and aarch64, not on $arch" ;;
     Darwin-arm64)

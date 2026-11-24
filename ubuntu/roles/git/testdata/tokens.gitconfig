@@ -1,0 +1,15 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+# A run writes it from /etc/ws/git-tokens.toml, which mise writes from the secret input
+# WS_GIT_TOKENS. /etc/ws/gitconfig includes it after gh's credential program
+# (ubuntu/roles/git/README.md#git-credentials).
+# Each URL's program is ws's, which reads the URL's token from that file. It hands it to git for
+# get alone, so that store and erase leave the file as written. Of two sections whose URLs match,
+# the last wins, so the URLs go in order, each after those it extends.
+[credential "https://a.example/x"]
+	helper =
+	helper = "!/usr/local/bin/ws ubuntu guest git credential a.example_x"
+[credential "https://b.example"]
+	helper =
+	helper = "!/usr/local/bin/ws ubuntu guest git credential b.example"
+[http "https://b.example"]
+	proactiveAuth = basic
