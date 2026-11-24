@@ -34,7 +34,8 @@ What each document holds. How to write them is in the `writing` skill and [writi
   the Mac's values files, [the tunnel's](../../macos/roles/tunnel/README.md) the daemons' rules, and [ghostty](../../macos/roles/ghostty/README.md) its Ghostty
   and what cld does there, [zed](../../macos/roles/zed/README.md) its Zed,
   [firewall](../../macos/roles/firewall/README.md) its firewall.
-  [Its devtools](../../macos/roles/devtools/README.md) is its command-line tools. [Its secrets](../../macos/roles/secrets/README.md)
+  [Its devtools](../../macos/roles/devtools/README.md) is its command-line tools, and
+  [its docker](../../macos/roles/docker/README.md) its Docker. [Its secrets](../../macos/roles/secrets/README.md)
   is the secrets' tools, fnox and age-plugin-yubikey, `ws macos secrets`, and remove's part.
   [The server's secrets](../../ubuntu/roles/secrets/README.md#the-repository) is the fnox
   repository: its files, its recipients and the inputs of ws's roles. [The router](../../ubuntu/roles/cable/router.md)

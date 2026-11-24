@@ -1,0 +1,9 @@
+# Docker's command line and colima, as mise's formulae, which need no Homebrew. A formula takes
+# the latest alone. docker-buildx and docker-compose are Docker's plugins, which config.json finds,
+# and docker-credential-helper holds osxkeychain's program. mise's registry lacks both.
+[bootstrap.packages]
+"brew:colima" = "latest"
+"brew:docker" = "latest"
+"brew:docker-buildx" = "latest"
+"brew:docker-compose" = "latest"
+"brew:docker-credential-helper" = "latest"
