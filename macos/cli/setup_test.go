@@ -22,8 +22,9 @@ import (
 const (
 	miseBody  = "a mise that a test serves"
 	treeRepo  = "https://example.org/ws"
-	miseLine  = "/usr/local/bin/mise -C /opt/ws/macos bootstrap"
-	planLine  = miseLine + " plan --detailed-exitcode"
+	miseBase  = "/usr/local/bin/mise -C /opt/ws/macos bootstrap"
+	miseLine  = miseBase + " --yes"
+	planLine  = miseBase + " plan --detailed-exitcode"
 	toolsLine = "xcode-select -p"
 )
 

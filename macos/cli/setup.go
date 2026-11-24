@@ -205,9 +205,10 @@ func planSetup(ctx context.Context, m effect.Machine, out effect.Out, first, res
 	return err
 }
 
-// runBootstrap runs mise's bootstrap in the Mac's roles.
+// runBootstrap runs mise's bootstrap in the Mac's roles. With --yes, mise asks nothing on a terminal
+// before it writes the preferences and the login items: a "no" would skip them, and the run pass.
 func runBootstrap(ctx context.Context, m effect.Machine) error {
-	return runMise(ctx, m, "bootstrap")
+	return runMise(ctx, m, "bootstrap", "--yes")
 }
 
 // runMise runs the mise that setup installs, in the Mac's roles, as the user.
