@@ -2,6 +2,7 @@ package incus
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 
@@ -31,6 +32,14 @@ func TestAMissingProfileIsCreatedUnprivilegedAndIsolated(t *testing.T) {
 	}
 	if strings.Contains(m.Inputs[0], "br_netfilter") {
 		t.Errorf("the profile loads br_netfilter, which a table of the bridge family replaces:\n%s", m.Inputs[0])
+	}
+}
+
+func TestTheProfileLoadsTheModulesOfAGuestsVPN(t *testing.T) {
+	for _, mod := range []string{"xfrm_user", "xfrm_algo", "esp4", "xfrm_interface", "nft_masq"} {
+		if !slices.Contains(KernelModules, mod) {
+			t.Errorf("KernelModules lacks %s, which ikeward's tunnel, link and masquerade need: %q", mod, KernelModules)
+		}
 	}
 }
 
