@@ -57,3 +57,19 @@ func TestSystemMiseWritesRootsFilesOnce(t *testing.T) {
 		}
 	}
 }
+
+func TestSideEnvsReadsTheMiserc(t *testing.T) {
+	m := effecttest.NewMachine()
+	envs, err := SideEnvs(m)
+	if err != nil || len(envs) != 0 {
+		t.Errorf("with no miserc: envs = %v, err = %v; want none", envs, err)
+	}
+	m.Files[MisercPath] = Miserc("server")
+	if envs, err = SideEnvs(m); err != nil || strings.Join(envs, ",") != "server" {
+		t.Errorf("envs = %v, err = %v; want server", envs, err)
+	}
+	m.Files[MisercPath] = []byte("env = [")
+	if _, err = SideEnvs(m); err == nil || !strings.Contains(err.Error(), MisercPath) {
+		t.Errorf("err = %v; want the miserc named", err)
+	}
+}

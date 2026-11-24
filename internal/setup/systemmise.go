@@ -1,8 +1,12 @@
 package setup
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"path"
+
+	"github.com/pelletier/go-toml/v2"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
@@ -28,6 +32,25 @@ env = ["ws"]
 [env_sets]
 ws = [%q]
 `, side, side)
+}
+
+// SideEnvs returns the envs that MisercPath names for the set ws, which setup wrote, or none where
+// the machine has no miserc yet.
+func SideEnvs(m effect.Machine) ([]string, error) {
+	text, err := m.ReadFile(MisercPath)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var rc struct {
+		Sets map[string][]string `toml:"env_sets"`
+	}
+	if err := toml.Unmarshal(text, &rc); err != nil {
+		return nil, fmt.Errorf("%s: %w", MisercPath, err)
+	}
+	return rc.Sets["ws"], nil
 }
 
 // Config returns the content of ConfigPath: ws's tree is trusted, so that a run of mise by hand
