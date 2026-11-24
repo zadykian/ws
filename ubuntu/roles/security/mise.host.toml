@@ -1,0 +1,46 @@
+# security's lines for every host: the packages, the services of fail2ban and ufw, fail2ban's jail,
+# the firewall, then the role's units. nftables brings nft, which fail2ban's ban action, nftables,
+# runs; its own service stays off, as the package leaves it.
+[bootstrap.packages]
+"apt:openssh-server" = "latest"
+"apt:ufw" = "latest"
+"apt:fail2ban" = "latest"
+"apt:nftables" = "latest"
+"apt:sudo" = "latest"
+"ws:guard/security-keys" = "in-sync"
+"ws:service/security-sshd" = "in-sync"
+
+[bootstrap.services.fail2ban]
+state = "running"
+enabled = true
+on_change = "reload"
+
+# ufw.service loads the rules at boot: without it, the machine would boot with no firewall.
+[bootstrap.services.ufw]
+state = "running"
+enabled = true
+
+# fail2ban bans an address for an hour after 5 failed logins over SSH in 10 minutes. A change
+# reloads fail2ban.
+[bootstrap.files."/etc/fail2ban/jail.d/sshd.local"]
+source = "files/sshd.local"
+owner = "root"
+group = "root"
+mode = "0644"
+notify = ["fail2ban"]
+
+# SSH in on port 22, then incoming denied and outgoing allowed by default, and ufw enabled. mise's
+# rules carry the comment mise:NAME, so the rules of the units, docker's among them, stay theirs.
+# No CI job logs in over SSH, so cli's TestFirewallLetsSSHIn guards this table and the rule ssh;
+# the order they apply in is mise's.
+[bootstrap.linux.firewall]
+backend = "ufw"
+default_incoming = "deny"
+default_outgoing = "allow"
+
+[[bootstrap.linux.firewall.rules]]
+name = "ssh"
+direction = "incoming"
+action = "allow"
+protocol = "tcp"
+port = 22
