@@ -103,6 +103,38 @@ jobs:
         if: failure()
         run: sudo journalctl -n 80 --no-pager -u docker.service
 
+  # The host's setup, as server is the guest's. It runs ws ubuntu host setup on the tree twice, on a
+  # booted runner. Then it runs the cases of host-checks.sh. As a try, continue-on-error keeps its
+  # failure from failing release.yml's call or a pull request's checks. That holds until a run
+  # shows that the job passes. Gated as server.
+  host:
+    if: >-
+      (github.event.action != 'opened' || !github.event.pull_request.draft) &&
+      github.event.pull_request.stack.position == github.event.pull_request.stack.size &&
+      (github.event_name != 'pull_request' ||
+      (github.event.pull_request.stack.base.ref || github.event.pull_request.base.ref) ==
+      github.event.repository.default_branch)
+    continue-on-error: true
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        env: { GIT_CONFIG_COUNT: 1, GIT_CONFIG_KEY_0: init.defaultBranch, GIT_CONFIG_VALUE_0: main }
+        with:
+          persist-credentials: false
+      # As in server: CI runs the tree's build as /usr/local/bin/ws, never a release's.
+      - name: Build ws
+        run: |
+          sudo setfacl -k /opt && sudo install -d -o "$(id -un)" /opt/ws && cp -a . /opt/ws
+          .tools/install-build
+      - name: The cases
+        run: sudo bash .github/host-checks.sh
+      - name: The daemon's log
+        if: failure()
+        run: sudo journalctl -n 80 --no-pager -u docker.service
+
   # install.sh with a stub of ws for each target, served on loopback: .github/install-checks.sh.
   # Each stub installs as /usr/local/bin/ws. A wrong sum and a missing file are refused. So is a
   # /usr/local/bin that others may write, and one that is missing is made. The client job runs it

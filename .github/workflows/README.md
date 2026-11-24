@@ -1,12 +1,12 @@
 # Checks
 
-In a stack, CI runs `server`, `client` and `client-cld`, its longest jobs, on
+In a stack, CI runs `server`, `host`, `client` and `client-cld`, its longest jobs, on
 the top pull request alone, as it holds every change below it, and only where the stack rests on
 `main`. `install` and `signoz` run on each pull request of such a stack, and `lint` on every pull
 request. So a pull request onto another branch, such as an integration branch, takes `lint` alone
-of the six: that branch's pull request to `main` runs the rest.
+of the seven: that branch's pull request to `main` runs the rest.
 A stack opens as drafts, as a pull request opens before its link, and only a later event
-names the stack. So the longest three skip a draft's `opened` run and start on `ready_for_review`,
+names the stack. So the longest four skip a draft's `opened` run and start on `ready_for_review`,
 which `lint` skips. `install` and `signoz` start there too above a stack's bottom, and skip it
 where they ran as the pull request opened. A newer push to a pull request cancels the runs of
 the push before it.
@@ -25,6 +25,18 @@ keeps its own exit code.
 
 It allows no line. Its test, [warnings-check-test.sh](../warnings-check-test.sh), runs in
 `lint`, on a log with warnings and on one without.
+
+## The host job
+
+`host` is `server` for the host: it runs `ws ubuntu host setup` on the tree twice, on a booted
+`ubuntu-26.04` runner, and then the cases of [host-checks.sh](../host-checks.sh). The plan must exit 2
+before the first run and 0 after each, and no run or plan may print a warning. The runner's board
+is no fans' board, so no `ws-fans` service, config or driver may be there. ufw must be on, with
+incoming denied, outgoing allowed, SSH in and Docker's rule for its resolver. sshd must take keys
+alone, and a container must resolve a name through the bridge. The job is a try, so its failure
+fails no pull request: `continue-on-error` keeps it from `release.yml`'s call as well. It sets the
+runner up as `server` does, in [server](server.md), and runs it as
+[bootstrap.sh](../bootstrap.sh) does with `WS_SIDE=host`.
 
 ## The install script
 
