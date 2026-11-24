@@ -16,10 +16,21 @@ What each role of mise's config leans on: `mise.toml`, the server's
 system plugin.
 _Avoid_: skeleton, scaffold
 
+**Guest**:
+A machine that `ws ubuntu guest setup` sets up: a cloud VM or a system container, whose roles hold
+a `mise.guest.toml`. It holds no filter, and its run directory is `ubuntu/guest`.
+_Avoid_: server, node
+
 **Home file**:
 A file below the account's home, `/root`, that ws reads or writes by a path under the home. No
 link lies on the way to it.
 _Avoid_: user file, plain file
+
+**Host**:
+The machine that runs the guests, which `ws ubuntu host setup` sets up. Its roles hold a
+`mise.host.toml`, it has the hardware's roles, `fans` and `cable`, and it filters by ufw. Its run
+directory is `ubuntu/host`. A unit that one side alone runs holds `when = { side = "host" }`.
+_Avoid_: hypervisor, server
 
 **Input**:
 One of mise's secret inputs, which a role's `mise.secrets.toml` declares. Its name is its

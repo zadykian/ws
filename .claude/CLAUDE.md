@@ -1,7 +1,8 @@
 # CLAUDE.md
 
 ws sets up the maintainer's development server from code: `mise bootstrap`, which `ws ubuntu guest setup`
-runs on the machine itself, each role as mise's config and ws's units. Its roles set up packages,
+runs on the machine itself, each role as mise's config and ws's units. A host, which runs the guests,
+has `ws ubuntu host setup` and its own roles. Its roles set up packages,
 SSH by key, the links to the Mac, an IKEv2 VPN where a profile is given, and the
 fans. Then the shell, git,
 tmux, lazygit, Fresh, Docker, claude, SigNoz with its collector, and Zed's server. `macos/`
@@ -10,18 +11,20 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 ## Layout
 
 - `ubuntu/roles/NAME`: a role per directory, with its page, `README.md`, and a line in the
-  root README. It holds its mise files by env, and its spec of units where it has any. The
+  root README. It holds its mise files by env, `mise.guest.toml` for the guest and
+  `mise.host.toml` for the host, and its spec of units where it has any. The
   units run in the order of their `after`
   ([The order](../ubuntu/roles/frame/README.md#the-order)). Each role
   holds its pins, and its templates and files beside its spec. ws-fans, the fans' service, is
-  `ws ubuntu guest fans`, in `ubuntu/roles/fans/daemon`.
+  `ws ubuntu host fans`, in `ubuntu/roles/fans/daemon`.
 - `ubuntu/`: Ubuntu's side, its roles in `ubuntu/roles/`. Beside them sit the packages that
   serve them all, `cli` and `values`, the runbook, and `autoinstall.yaml`, the installer's
   answers ([The install job](../.github/workflows/release.md#the-install-job)). `guest/` is the
   guest's run directory, `mise -C /opt/ws/ubuntu/guest`, with its `conf.d` link, its lock and
   `mise-tasks/secrets`, the task that runs the bootstrap under ws's secrets
-  ([The task](../ubuntu/roles/secrets/README.md#the-task)). `values` types the machine's
-  values: `/etc/ws/values.yml`, on the machine alone, such as the cable's port
+  ([The task](../ubuntu/roles/secrets/README.md#the-task)). `host/` is the host's, `mise -C
+  /opt/ws/ubuntu/host`, with its `conf.d` link. A role's mise file names its side. `values` types
+  each side's values: `/etc/ws/values.yml`, on the machine alone, such as the cable's port on a host
   ([The cable](../ubuntu/roles/cable/README.md#the-cable)).
 - `go.mod` and `go.sum`: the Go module `github.com/zadykian/ws`, at the root.
   `cmd/ws/main.go` runs `cmd`, which composes the root and the exit codes with the two sides'
@@ -33,7 +36,8 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   import them from outside `engine/`.
 - `mise.toml`: mise's config that both sides share, its settings. ws is no tool of mise's: the
   machine's one ws is `/usr/local/bin/ws`. `mise.guest.toml` is
-  the guest's part, and `plugins/ws` the plugin that hands ws's units to `ws unit`. A role holds
+  the guest's part and `mise.host.toml` the host's, and `plugins/ws` the plugin that hands ws's
+  units to `ws unit`. A role holds
   its spec, `units.toml.tmpl`, where it has units, and its mise files by env beside its page. Each
   side's `mise/`, `ubuntu/guest/mise/` and `macos/mise/`, holds one link, `conf.d`, to its
   directory of roles, and its lock
@@ -64,7 +68,7 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
 - `.claude/`: this file, the rules of `rules/`, Claude Code's `settings.json` and the lint
   plugin's `lint-gates` ([Where else to look](#where-else-to-look)).
-- `.github/workflows/`: `ci.yml`, with the jobs `lint`, `server`, `install` and
+- `.github/workflows/`: `ci.yml`, with the jobs `lint`, `server`, `host`, `install` and
   `signoz`;
   `client.yml`, with `client`, whose cases are `.github/client/NN-*.sh`; `client-cld.yml`, with
   `client-cld`; `rules.yml`,
@@ -93,7 +97,9 @@ It installs yamllint into `.cache`, and `.tools/run` downloads the rest there.
 The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `server` builds ws and runs
 `ws ubuntu guest setup` twice as root on a booted runner, with setup's plan. It checks the config that
 Fresh reads too, Docker's forward policy and published ports, and the secrets task
-([The server job](../.github/workflows/server.md)).
+([The server job](../.github/workflows/server.md)). `host`, a try that fails no pull request, runs
+`ws ubuntu host setup` twice the same way, with fans off by their fact
+([The host job](../.github/workflows/README.md#the-host-job)).
 `signoz` forges SigNoz's compose files again, and `install` tries `install.sh`, `ws update` and
 the autoinstall file, as the `client` case 16-install does for `install.sh` on macOS. `client`
 sets up a Mac on GitHub's macOS runner by `ws macos setup`, whose last run must call no sudo and whose
