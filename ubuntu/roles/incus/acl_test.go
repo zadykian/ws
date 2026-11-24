@@ -31,7 +31,7 @@ func TestAMissingEgressACLDropsThePrivateRangesAndAllowsTheRest(t *testing.T) {
 	}
 	drop, allow := strings.Index(body, "action: drop"), strings.Index(body, "action: allow")
 	if drop < 0 || allow < 0 || strings.Contains(body, "ingress") {
-		t.Errorf("the ACL has a drop and an allow, and no ingress, as #1527 holds that:\n%s", body)
+		t.Errorf("the ACL has a drop and an allow, and no ingress, which ws-ingress holds:\n%s", body)
 	}
 }
 

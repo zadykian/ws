@@ -1,7 +1,7 @@
 # The incus role's units. mise adds Zabbly's repository, the packages and the ID range first. Each
 # unit makes one object in Incus by a command of ws's, whose --check fails where a change is due.
-# README.md says what each holds. The order is the ACL, the pool, the bridge, the profile and the
-# image, then the table of sources, the set that it holds, and the guests. The bridge names the ACL,
+# README.md says what each holds. The order is the ACLs, the pool, the bridge, the profile and the
+# image, then the table of sources, the set that it holds, and the guests. The bridge names the ACLs,
 # and the profile names the bridge and the pool. A guest launches from the image, and its address
 # goes in the set before it runs.
 
@@ -9,12 +9,17 @@
 [state.incus-acl]
 run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "incus", "acl"], check = ["{{ self }}", "ubuntu", "host", "incus", "acl", "--check"] }
 
+# The ingress ACL: each guest's tunnel peers allowed to reach it, and what its ikeward forwards for.
+[state.incus-ingress]
+after = "state/incus-acl"
+run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "incus", "ingress"], check = ["{{ self }}", "ubuntu", "host", "incus", "ingress", "--check"] }
+
 # The ZFS pool, on the partition that WS_INCUS_POOL_SOURCE names.
 [state.incus-pool]
-after = "state/incus-acl"
+after = "state/incus-ingress"
 run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "incus", "pool"], check = ["{{ self }}", "ubuntu", "host", "incus", "pool", "--check"] }
 
-# The bridge incusbr0, at WS_INCUS_BRIDGE_ADDRESS, with the ACL on it.
+# The bridge incusbr0, at WS_INCUS_BRIDGE_ADDRESS, with the ACLs on it.
 [state.incus-bridge]
 after = "state/incus-pool"
 run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "incus", "bridge"], check = ["{{ self }}", "ubuntu", "host", "incus", "bridge", "--check"] }

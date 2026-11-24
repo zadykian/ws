@@ -28,7 +28,7 @@ var aclKind = object.Kind{
 
 // EgressACL drops what a guest sends to values.PrivateRanges and allows the rest. Incus applies each
 // drop before any allow, so the order of the rules means nothing. The bridge's default for egress
-// is drop, so a guest reaches what an allow names alone. Ingress is the tunnel's, not this one's.
+// is drop, so a guest reaches what an allow names alone. Ingress is ws-ingress's, not this one's.
 func EgressACL(m effect.Machine) object.Object {
 	return object.Object{
 		M: m, Kind: aclKind, Name: ACLName,

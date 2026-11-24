@@ -34,6 +34,7 @@ root:1000000:1000000000
 "apt:incus" = "latest"
 "apt:zfsutils-linux" = "latest"
 "ws:state/incus-acl" = "in-sync"
+"ws:state/incus-ingress" = "in-sync"
 "ws:state/incus-pool" = "in-sync"
 "ws:state/incus-bridge" = "in-sync"
 "ws:state/incus-profile" = "in-sync"

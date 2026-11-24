@@ -22,8 +22,8 @@ var bridgeKind = object.Kind{
 }
 
 // Bridge is the managed bridge incusbr0: NATed, with no IPv6, and its DHCP handing out the
-// resolvers of WS_INCUS_BRIDGE_DNS, not the host's. The egress ACL is on it, and egress is
-// dropped but for what that ACL allows. A name that another network holds is refused, as an edit
+// resolvers of WS_INCUS_BRIDGE_DNS, not the host's. The egress and ingress ACLs are on it, and egress and
+// ingress are dropped but for what those ACLs allow. A name that another network holds is refused, as an edit
 // would turn that network into the guests'.
 func Bridge(m effect.Machine, v values.Incus) object.Object {
 	return object.Object{
@@ -35,8 +35,10 @@ func Bridge(m effect.Machine, v values.Incus) object.Object {
 				"ipv4.nat":                            "true",
 				"ipv6.address":                        "none",
 				"dns.nameservers":                     strings.Join(v.BridgeDNS, ","),
-				"security.acls":                       ACLName,
+				"security.acls":                       ACLName + "," + IngressACLName,
 				"security.acls.default.egress.action": "drop",
+				// Only what the ingress ACL allows reaches a guest, a tunnel's peer.
+				"security.acls.default.ingress.action": "drop",
 			},
 		},
 		Check: func(have map[string]any) error {
