@@ -54,6 +54,7 @@ Each Go template ends in `.tmpl`, the spec's name and the name of each `template
   | `gpu_vendor` | The PCI vendor of a device of class `0x03`, from `/sys/bus/pci/devices`: `0x` and four hex digits in lower case, such as `0x1234` |
   | `interface` | A network interface of that name, of any state, from `/sys/class/net`: a name the kernel takes, with no `/` |
   | `set` | Any WANT, so that a value of the side's turns the unit on where set and off where empty; `"!WANT"` fails the load |
+  | `side` | The side that `ws unit` serves, a lower-case word. A unit of another side is no unit of this one: the load leaves it out, so that mise's file for the side needs no line for it |
 
 - **Load and plan.** Each kind checks its fields as the spec loads, so a bad field fails before any
   unit runs. The resources are made as each unit plans.

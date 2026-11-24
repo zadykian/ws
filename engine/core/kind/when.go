@@ -52,6 +52,18 @@ var whenFacts = map[string]fact{
 	"interface": {holds: netInterface, form: regexp.MustCompile(`^(?:[^/:\s.][^/:\s]{0,14}|\.[^/:\s.][^/:\s]{0,13}|\.\.[^/:\s]{1,13})$`)},
 	// A value of the side's: the unit runs where the value is set, as an empty want is off.
 	"set": {holds: anyWant, always: true},
+	// The side that ws unit serves, which Env.Side names. Load leaves a unit of another side out.
+	"side": {holds: sideFact, form: regexp.MustCompile(`^[a-z]+$`)},
+}
+
+// onSide reports whether a unit with this when is one of side: it names no side, or its side fact
+// holds for side. An empty want holds on no side.
+func (w when) onSide(side string) bool {
+	if _, named := w["side"]; !named {
+		return true
+	}
+	want, negated := w.want("side")
+	return want != "" && (want == side) != negated
 }
 
 // check refuses a key that no fact has, and a want of a form that its fact never gives, as the
@@ -180,3 +192,6 @@ func containerFact(_ context.Context, e Env, _ string) (bool, error) {
 
 // anyWant holds for any want: the fact set's, which only an empty want turns off.
 func anyWant(context.Context, Env, string) (bool, error) { return true, nil }
+
+// sideFact holds where the side that ws unit serves is want.
+func sideFact(_ context.Context, e Env, want string) (bool, error) { return e.Side == want, nil }
