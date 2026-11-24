@@ -79,7 +79,8 @@ filter.
 Only gRPC goes through. A container whose SDK keeps its defaults sends OTLP/HTTP to port 4318, where
 nothing listens, so it sets `OTEL_EXPORTER_OTLP_PROTOCOL=grpc` and
 `OTEL_EXPORTER_OTLP_ENDPOINT=http://172.17.0.1:4317`, with the bridge address in place of
-`172.17.0.1` where `WS_DOCKER_BRIDGE_IP` moves it.
+`172.17.0.1` where `WS_DOCKER_BRIDGE_IP` moves it. CI's cases send an empty export from a container
+and expect the collector's answer ([otlp-checks.sh](../../../.github/otlp-checks.sh)).
 
 ## claude's metrics elsewhere
 

@@ -61,6 +61,9 @@ its fans alone. Without a VPN profile, `ikeward` does nothing.
 Docker must pull the image, as a run of an image it lacks warns, and run a container that reaches
 the internet. A guest holds no filter, so the cases hold no table. Then:
 
+- A container's empty OTLP/gRPC export to the bridge address, port 4317, gets the collector's
+  answer. One to port 4318 is refused ([otlp-checks.sh](../otlp-checks.sh),
+  [Docker's containers](../../ubuntu/roles/otelcol/README.md#dockers-containers)).
 - A port published with no address answers on loopback, and not on the address of another network.
   A guest holds no filter, so they go on loopback
   ([Published ports](../../ubuntu/roles/docker/README.md#published-ports)).

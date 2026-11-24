@@ -1,9 +1,10 @@
 #!/bin/bash
 # The host job's cases, as root on a runner that booted (.github/workflows/README.md#the-host-job).
 # They check the host's setup on a booted machine. It runs twice, and the second changes nothing.
-# Fans stay off where the board is not theirs. ufw holds SSH and Docker's resolver rule, sshd takes
-# keys alone, and a container resolves a name. Run as `host-checks.sh`, with .tools/install-build's
-# ws in /usr/local/bin and the tree in /opt/ws, as server-checks.sh has them.
+# Fans stay off where the board is not theirs. ufw holds SSH and Docker's rules for its resolver
+# and the collector, sshd takes keys alone, and a container resolves a name and sends OTLP. Run as
+# `host-checks.sh`, with .tools/install-build's ws in /usr/local/bin and the tree in /opt/ws, as
+# server-checks.sh has them.
 set -euo pipefail
 
 image=alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
@@ -80,6 +81,9 @@ must "ufw lets SSH in" bash -c "ufw status | grep -qE '^22/tcp +ALLOW'"
 # ufw's added rules leave out a source of any, so a rule reads `allow in on docker0 to ADDRESS`.
 must "ufw lets Docker's networks ask the resolver" \
     bash -c "ufw show added | grep -qF 'ufw allow in on docker0 to 172.17.0.1 port 53'"
+must "ufw lets Docker's networks send OTLP to the collector's socket" \
+    bash -c "ufw show added | grep -qE 'docker0.*172\.17\.0\.1.*4317'"
 
 must "docker pulls the image" docker pull -q "$image"
 must "a container resolves a name through the bridge" docker run --rm "$image" nslookup example.com
+must "a container's OTLP reaches the collector on the bridge address" "$(dirname "$0")/otlp-checks.sh" "$image"
