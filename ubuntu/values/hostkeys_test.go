@@ -19,7 +19,7 @@ func TestHostKeysAreTheGuestsByName(t *testing.T) {
 	}
 }
 
-// The host's own keys are those of the roles that run on the host alone, fans and cable.
+// The host's own keys are those of the roles that run on the host alone, fans, cable and Incus.
 func TestHostKeysHoldFansAndTheCablesPort(t *testing.T) {
 	kinds := map[string]Kind{}
 	for _, k := range HostKeys() {

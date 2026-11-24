@@ -23,6 +23,7 @@ swap = { size_mib = 1024, hint = "…" }                                 # /swap
 - `ufw` owns the rules of its comment, and with `owns` those whose fields hold its values: those in
   `rules` are added, the others deleted. A rule's address or port left out is any. A rule with `out`
   routes what comes in on `interface` from `from` out by `out`, with `action` and no other field.
+  `out = "any"` lets it out by any interface.
 - `routes` fails where a route of the moment overlaps `pool`, but for an on-link route of the main
   table, or `net` on a device other than `dev`. `addr` fails where `iface` lacks `want`. Each error
   ends with `hint`, as the run cannot mend either.

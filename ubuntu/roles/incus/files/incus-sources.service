@@ -1,0 +1,24 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+#
+# Loads the table of guest sources before Incus starts a guest. Incus requires this unit, so a load
+# that fails keeps Incus, and its guests, down. A reload swaps the table, where a restart would
+# leave none between its stop and its start. A stop removes this table alone.
+[Unit]
+Description=Keep a guest to its own source addresses
+Documentation=https://github.com/zadykian/ws/blob/main/ubuntu/roles/incus/README.md#the-table-of-sources
+DefaultDependencies=no
+Wants=network-pre.target
+Before=network-pre.target incus.service incus.socket shutdown.target
+After=local-fs.target nftables.service
+Conflicts=shutdown.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/nft -f /usr/local/lib/ws/incus/sources.nft
+ExecReload=/usr/sbin/nft -f /usr/local/lib/ws/incus/sources.nft
+ExecStop=/usr/sbin/nft destroy table bridge ws_sources
+
+[Install]
+WantedBy=sysinit.target
+RequiredBy=incus.service

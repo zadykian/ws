@@ -47,3 +47,13 @@ func TestRouteFromSlotOneIsTheRouteCommand(t *testing.T) {
 		t.Errorf("String = %q, want %q", got, want)
 	}
 }
+
+func TestRouteInNamesNoOutInterface(t *testing.T) {
+	r := ufw.RouteIn("allow", "incusbr0", "any", "guests")
+	if got, want := r.String(), "route allow in on incusbr0 from any to any"; got != want {
+		t.Errorf("String = %q, want %q", got, want)
+	}
+	if err := r.Valid(); err != nil {
+		t.Error(err)
+	}
+}

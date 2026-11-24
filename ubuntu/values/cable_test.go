@@ -81,3 +81,14 @@ func TestSetRefusesABadCablePort(t *testing.T) {
 		t.Errorf("SetHost = %v, want the port refused", err)
 	}
 }
+
+// A guest reaches the host's addresses that the egress ACL does not drop, so the cable's must be
+// among the private ranges.
+func TestCableAddressRefusedOutsideThePrivateRanges(t *testing.T) {
+	for _, address := range []string{"198.18.0.1/30", "10.77.0.1/030"} {
+		err := Cable{Port: "enp5s0", Address: address}.check()
+		if err == nil || !strings.Contains(err.Error(), "WS_CABLE_ADDRESS") {
+			t.Errorf("address %q: check = %v, want a refusal", address, err)
+		}
+	}
+}

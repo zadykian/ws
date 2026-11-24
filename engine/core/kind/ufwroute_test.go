@@ -35,3 +35,17 @@ func TestUFWOutRefusesPortsAndDir(t *testing.T) {
 	}
 	stateRefused(t, e, "ufw = { comment = \"c\", rules = [{ action = \"allow\", out = \"x0\" }] }\n", "takes interface")
 }
+
+func TestUFWOutAnyRoutesToEveryInterface(t *testing.T) {
+	e, m, _, _ := testEnv()
+	// The route rule from every address carries the comment guests, 677565737473 in hex.
+	m.Files[ufw.UserRules] = []byte("### tuple ### route:allow any any 0.0.0.0/0 any 0.0.0.0/0 in_br0 comment=677565737473\n")
+	units := loadState(t, e, "ufw = { comment = \"guests\", rules = [{ action = \"allow\", interface = \"br0\", out = \"any\" }] }\n")
+	if got := headlines(t, units[0].Step); len(got) != 0 {
+		t.Errorf("plan = %q, want none: the rule is in force", got)
+	}
+	m.Files[ufw.UserRules] = nil
+	if got := headlines(t, units[0].Step); len(got) != 1 {
+		t.Errorf("plan = %q, want the rule added", got)
+	}
+}

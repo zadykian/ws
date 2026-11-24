@@ -39,6 +39,8 @@ it has any:
 - [`devtools`](ubuntu/roles/devtools): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go,
   gopls, Delve, roslyn-language-server, the SQL, Docker and npm language servers, and rustup.
 - [`docker`](ubuntu/roles/docker): Docker Engine, its `daemon.json` and a slice for its containers.
+- [`incus`](ubuntu/roles/incus): Incus from Zabbly's repository on the host, with its ID range, ZFS
+  pool, bridge, egress ACL and profile. A table of the guests' sources and ufw's rules, as units.
 - [`claude`](ubuntu/roles/claude): claude, its user settings and telemetry, its attribution off, its sessions after a
   reboot, and plugin marketplaces from a list.
 - [`signoz`](ubuntu/roles/signoz): SigNoz in Docker, which keeps the machine's telemetry for 90 days.
@@ -96,7 +98,7 @@ Then do what stays by hand, below.
 
 A host is the machine that runs the guests. `ws ubuntu host setup` sets it up as `ws ubuntu guest
 setup` sets up a guest, on its own run directory, `ubuntu/host`. It runs the roles that hold a
-`mise.host.toml`: `frame`, `base`, `security`, `docker`, `signoz`, `otelcol`, `fans` and `cable`.
+`mise.host.toml`: `frame`, `base`, `security`, `docker`, `signoz`, `otelcol`, `fans`, `cable` and `incus`.
 Its values are `/etc/ws/values.yml` too, with its own type: `ws ubuntu host values check` and
 `set`. The installer's first boot runs `ws update`, then `ws ubuntu host setup`
 ([the runbook](ubuntu/runbook.md)).

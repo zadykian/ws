@@ -25,6 +25,14 @@ func (c Cable) check() error {
 	if problems := AddressProblems(c.Address); len(problems) > 0 {
 		return errors.New("WS_CABLE_ADDRESS: " + strings.Join(problems, " "))
 	}
+	// AddressProblems has parsed it, but netip refuses a prefix length with a leading zero.
+	subnet, err := netip.ParsePrefix(c.Address)
+	if err != nil {
+		return fmt.Errorf("WS_CABLE_ADDRESS %q is not an address with its prefix length, as 10.77.0.1/30: %w", c.Address, err)
+	}
+	if !inPrivateRanges(subnet.Masked()) {
+		return fmt.Errorf("WS_CABLE_ADDRESS %s is outside the private ranges, which the guests' ACL drops: a guest would reach the host", c.Address)
+	}
 	return nil
 }
 

@@ -29,7 +29,7 @@ func Command(p enginecli.Env) *cobra.Command {
 // hostCmd returns ws ubuntu host, the commands of a host: the machine that runs the guests.
 func hostCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("host", "the commands for an Ubuntu host", newFansCmd(p),
-		newCableCmd(p, units.OSUnits{}), newValuesCmd(p, hostValues), newSignozCmd(p, hostSignoz),
+		newCableCmd(p, units.OSUnits{}), newIncusCmd(p), newValuesCmd(p, hostValues), newSignozCmd(p, hostSignoz),
 		newSetupCmd(p, liveSetup(), hostSetup))
 }
 
