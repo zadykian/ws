@@ -58,7 +58,8 @@ jobs:
 
   # ws ubuntu guest setup, as on a new machine, on a runner that booted, as a server that root alone
   # logs in to. It runs twice: setup's plan before the first run must exit 2, and after each run
-  # it must change nothing. The firewall around Docker needs the booted systemd. In a stack, it
+  # it must change nothing. Docker's forward policy and its published ports need the booted
+  # systemd. In a stack, it
   # runs on the top pull request alone, which holds every change below it, and only where the
   # stack rests on main.
   # A pull request onto another branch, such as an integration branch, skips it: that branch's

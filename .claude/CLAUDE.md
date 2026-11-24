@@ -92,7 +92,7 @@ It installs yamllint into `.cache`, and `.tools/run` downloads the rest there.
 
 The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `server` builds ws and runs
 `ws ubuntu guest setup` twice as root on a booted runner, with setup's plan. It checks the config that
-Fresh reads too, the firewall around Docker and the secrets task
+Fresh reads too, Docker's forward policy and published ports, and the secrets task
 ([The server job](../.github/workflows/server.md)).
 `signoz` forges SigNoz's compose files again, and `install` tries `install.sh`, `ws update` and
 the autoinstall file, as the `client` case 16-install does for `install.sh` on macOS. `client`
