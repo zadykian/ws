@@ -1,0 +1,65 @@
+package incus
+
+import (
+	"fmt"
+	"net/netip"
+	"slices"
+	"strconv"
+
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/internal/slot"
+	"github.com/zadykian/ws/ubuntu/roles/incus/object"
+	"github.com/zadykian/ws/ubuntu/values"
+)
+
+// guestKind is incus's instance. launch makes one from the image and starts it, and config edit
+// replaces the writable keys, which are the instance's own, less what Incus fills.
+func guestKind(alias string) object.Kind {
+	return object.Kind{
+		Noun:   "guest",
+		List:   []string{"list"},
+		Create: []string{"launch", "local:" + alias, object.NameArg},
+		Edit:   []string{"config", "edit", object.NameArg},
+		Keys:   []string{"description", "architecture", "config", "devices", "ephemeral", "profiles", "stateful"},
+	}
+}
+
+// Guest is the instance of a guest of the host's list. It takes the profile ws, its limits, its NIC
+// at its address on the port that the table of sources names, and its disk with its quota. Each
+// device is whole, as a device of an instance replaces the profile's of its name. The seed's
+// network is a key of the create alone, as cloud-init reads the seed once. An instance that holds
+// no profile ws is refused, as that instance is no guest of ws's.
+func Guest(m effect.Machine, g values.Guest, own values.Values, alias string) object.Object {
+	return object.Object{
+		M: m, Kind: guestKind(alias), Name: g.Name,
+		Want: map[string]any{
+			"description": "ws's guest " + g.Name,
+			"profiles":    []any{ProfileName},
+			"config":      map[string]any{"limits.cpu": strconv.Itoa(g.CPU), "limits.memory": g.Memory},
+			"devices": map[string]any{
+				"eth0": nicDevice(map[string]any{"host_name": g.Port(), "ipv4.address": g.Address}),
+				"root": rootDevice(g.Disk),
+			},
+		},
+		First: map[string]any{"config": map[string]any{"cloud-init.network-config": seedNetwork(own)}},
+		Check: func(have map[string]any) error {
+			if profiles, _ := have["profiles"].([]any); !slices.Contains(profiles, any(ProfileName)) {
+				return fmt.Errorf("it takes no profile %s: it is no guest of ws's, and ws never turns an instance into one", ProfileName)
+			}
+			return nil
+		},
+	}
+}
+
+// seedNetwork is the guest's network-config. It holds DHCP on eth0, which gives the NIC's address,
+// and the slot's address where the guest's own values name a slot. The tunnel ends on the host,
+// which routes that address to the guest. So the guest holds it as a host route.
+func seedNetwork(v values.Values) string {
+	text := "version: 2\nethernets:\n  eth0:\n    dhcp4: true\n"
+	if p, err := netip.ParsePrefix(v.Tunnel.Address); err == nil {
+		if s, ok := slot.Find(p.Addr()); ok && s != 0 {
+			text += fmt.Sprintf("    addresses: [%s/32]\n", p.Addr())
+		}
+	}
+	return text
+}
