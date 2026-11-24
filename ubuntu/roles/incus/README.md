@@ -101,3 +101,27 @@ A host's ufw lets UDP 67 in on `incusbr0` from any address, as a guest asks for 
 holds one. It routes what comes in on the bridge out by any interface, and the ACL narrows that. No
 rule routes what goes out on the bridge, as the tunnel's rules name the way in. DNS to the host
 stays shut, as the bridge hands out other resolvers.
+
+## The guests
+
+The host's `/etc/ws/values.yml` lists its guests in `WS_INCUS_GUESTS`, a table that stays the file's
+to edit by hand:
+
+```yaml
+---
+WS_INCUS_GUESTS:
+  - {name: lab, address: 10.100.0.10, cpu: 4, memory: 8GiB, disk: 200GiB}
+```
+
+| Field | What it holds |
+| --- | --- |
+| `name` | The guest's name and hostname, 1 to 12 lowercase letters, digits and dashes, starting with a letter. The host's name for its NIC is `ws-NAME`, which an interface's 15 bytes bound. |
+| `address` | The guest's address in the bridge's subnet: a host's address, not the bridge's own. |
+| `cpu`, `memory`, `disk` | The core count, the memory limit and the root disk's quota, as `8GiB`. |
+
+The values refuse a name or an address that two guests share. They refuse a field that Incus could
+not take. So a name reaches a command, a path or YAML once checked.
+
+A guest's own values sit on the host, in `/etc/ws/guests/NAME/values.yml`, root's and 600. The host
+reads each file as the guest's values, and refuses one that does not parse. A missing file gives
+the guest its defaults.
