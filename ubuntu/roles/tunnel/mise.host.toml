@@ -1,4 +1,5 @@
-# tunnel's lines for every host: the packages, and the units of the host's own wg0. systemd brings networkd, its directory /etc/systemd/network and its
+# tunnel's lines for every host: the packages, and the units of its spec, those of the host's own wg0
+# and of each guest's tunnel. systemd brings networkd, its directory /etc/systemd/network and its
 # group systemd-network.
 [bootstrap.packages]
 "apt:wireguard-tools" = "latest"
@@ -8,3 +9,6 @@
 "ws:state/tunnel-key" = "in-sync"
 "ws:state/tunnel-wg0" = "in-sync"
 "ws:state/tunnel-ufw" = "in-sync"
+"ws:guard/tunnel-guests" = "in-sync"
+"ws:state/tunnel-guest-keys" = "in-sync"
+"ws:state/tunnel-guest-links" = "in-sync"

@@ -30,7 +30,7 @@ func Command(p enginecli.Env) *cobra.Command {
 func hostCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("host", "the commands for an Ubuntu host", newFansCmd(p),
 		newCableCmd(p, units.OSUnits{}), newIncusCmd(p), newGuestsCmd(p),
-		newTunnelCmd(p, units.OSUnits{}, hostTunnel), newValuesCmd(p, hostValues), newSignozCmd(p, hostSignoz),
+		newTunnelCmd(p, units.OSUnits{}, hostTunnel, newTunnelGuestsCmd(p, units.OSUnits{})), newValuesCmd(p, hostValues), newSignozCmd(p, hostSignoz),
 		newSetupCmd(p, liveSetup(), hostSetup))
 }
 

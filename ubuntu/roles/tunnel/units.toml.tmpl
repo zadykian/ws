@@ -44,3 +44,23 @@ when = { side = "host" }
 [state.tunnel-ufw.ufw]
 comment = "tunnel wg0: its port"
 rules = [{ action = "allow", proto = "udp", to_port = "{{ .Tunnel.Port }}", dir = "in" }]
+
+# Refuses two tunnels of one slot or port, a networkd that does not run, and a peer's key file that
+# holds no key, before the guests' interfaces change. It says each interface's public key. After the
+# guests: the routes below lead to them.
+[guard.tunnel-guests]
+command = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "check"]
+after = "state/incus-guests"
+when = { side = "host" }
+
+# Each guest's interface key, made once and never shown, root:systemd-network 0640.
+[state.tunnel-guest-keys]
+after = "guard/tunnel-guests"
+run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "key"], check = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "key", "--check"] }
+when = { side = "host" }
+
+# Each guest's interface: its two files, networkd's reload, and the wait for the key.
+[state.tunnel-guest-links]
+after = "state/tunnel-guest-keys"
+run = { user = "root", command = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "links"], check = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "links", "--check"] }
+when = { side = "host" }

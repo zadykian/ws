@@ -21,21 +21,26 @@ func hostTunnelUnits(t *testing.T, m *effecttest.Machine) []kind.Unit {
 	return loadSpecs(t, kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: h, Side: "host", Self: selfPath})
 }
 
-func TestTheHostRunsItsOwnTunnelInOrder(t *testing.T) {
+func TestTheHostRunsItsOwnTunnelAndEachGuestsInOrder(t *testing.T) {
 	names := kind.Names(hostTunnelUnits(t, tunnelMachine()))
 	at := func(name string) int { return slices.Index(names, name) }
-	order := append(slices.Clone(tunnelOwn), "state/tunnel-ufw")
+	order := append(slices.Clone(tunnelOwn), "state/tunnel-ufw", "guard/tunnel-guests", "state/tunnel-guest-keys", "state/tunnel-guest-links")
 	for i := 1; i < len(order); i++ {
 		if at(order[i-1]) < 0 || at(order[i]) < at(order[i-1]) {
 			t.Fatalf("units %q, want %s before %s", names, order[i-1], order[i])
 		}
 	}
+	if at("guard/tunnel-guests") < at("state/incus-guests") {
+		t.Errorf("units %q, want the guests' tunnels after the guests", names)
+	}
 }
 
 func TestAGuestHoldsNoHostTunnelUnit(t *testing.T) {
 	lines := specLines(t, "guest", defaults(t))
-	if slices.Contains(lines, "state/tunnel-ufw") {
-		t.Error("the guest's lines hold the host's ufw rule")
+	for _, unit := range []string{"state/tunnel-ufw", "guard/tunnel-guests", "state/tunnel-guest-keys", "state/tunnel-guest-links"} {
+		if slices.Contains(lines, unit) {
+			t.Errorf("the guest's lines hold %s", unit)
+		}
 	}
 	if !slices.Contains(lines, "state/tunnel-wg0") {
 		t.Error("the guest's lines lack its own wg0")
