@@ -11,7 +11,8 @@ client_trace=$RUNNER_TEMP/ws-trace
 # asks. setup refuses a directory above the tree or the plugin that anyone but root or the user may
 # change, as mise ignores a system plugin below one. So /opt and /usr/local/share are root's and
 # 755, as on a Mac with Homebrew in /opt/homebrew, where the runner's image may differ. It drops the
-# role apps, whose 14 casks setup's second run would download in each job.
+# role apps, whose 14 casks setup's second run would download in each job. It drops desktop's
+# wallpaper too: a runner has no screen, so wallpaper get prints nothing and the check fails.
 client_tree() {
     sudo mkdir -p /opt /usr/local/share
     sudo chown root:wheel /opt /usr/local/share
@@ -20,6 +21,8 @@ client_tree() {
     sudo mkdir -p /opt/ws
     git archive HEAD | sudo tar -x -C /opt/ws
     sudo rm -rf /opt/ws/macos/roles/apps
+    sudo rm -f /opt/ws/macos/roles/desktop/units.toml.tmpl
+    sudo sed -i '' -E '/^"(brew:wallpaper|ws:state\/wallpaper)" =/d' /opt/ws/macos/roles/desktop/mise.macos.toml
     sudo chown -R root:wheel /opt/ws
     sudo chmod -R go-w /opt/ws
 }

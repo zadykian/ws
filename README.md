@@ -58,10 +58,10 @@ Its [`frame`](macos/roles/frame) is what the Mac's roles of mise's config lean o
 and has it block all incoming. Its [`dotnet`](macos/roles/dotnet) installs .NET's SDKs, as `devtools` does on
 the server. Its [`devtools`](macos/roles/devtools) installs Go and the command-line tools, and its
 [`docker`](macos/roles/docker) the command line of Docker and colima. Its [`desktop`](macos/roles/desktop)
-sets the Dock, Finder, windows, sounds and screenshots. Its [`zsh`](macos/roles/zsh) sets up
+sets the Dock, Finder, windows, sounds, screenshots and the wallpaper. Its [`zsh`](macos/roles/zsh) sets up
 oh-my-zsh and its plugins, with the settings that load them. Its [`power`](macos/roles/power) keeps the
 display on while on power and stops the App Store's updates. Its [`apps`](macos/roles/apps) installs
-the Mac's apps, as mise's casks, and pins some in the Dock.
+the Mac's apps, as mise's casks, pins some in the Dock and opens six at login.
 
 A new Mac with Apple silicon follows [the Mac's runbook](macos/runbook.md). It runs
 `install.sh` through `sudo`, which installs ws's binary, checked against its SHA-256, and writes the

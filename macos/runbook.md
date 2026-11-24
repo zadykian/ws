@@ -55,11 +55,11 @@ file. It then does what a person did by hand, in this order:
    with Ctrl-C and run `ws macos setup --key NAME`, NAME being the name that the wait prints
    ([Secretive](roles/ssh/README.md#secretive)).
 5. It runs mise's bootstrap in `/opt/ws/macos` with `--yes`, so that it asks nothing before it
-   writes the preferences and the login items. The bootstrap installs gh and sets up ssh, git, cld
-   and the Mac's other roles ([The Mac's frame](roles/frame/README.md)). It makes the Mac's
-   WireGuard key, whose public half is `/etc/ws/tunnel.pub`.
-6. It runs the bootstrap again with `-E ws,apps`, which installs the apps. A failure there leaves
-   ws's units set up, and fails setup.
+   writes the preferences. The bootstrap installs gh and sets up ssh, git, cld and the Mac's other
+   roles ([The Mac's frame](roles/frame/README.md)). It makes the Mac's WireGuard key, whose public
+   half is `/etc/ws/tunnel.pub`.
+6. It runs the bootstrap again with `-E ws,apps`, which installs the apps and sets the login items.
+   A failure there leaves ws's units set up, and fails setup.
 
 A second run changes nothing and asks no password. `ws macos setup --plan` plans these steps, and
 mise's bootstrap where none is due, in both envs, by its plan and then its status. The plan covers no
@@ -187,3 +187,15 @@ of its guests tries it at its own port.
 - The server's lease, made static, and the router's forwards where `WS_REMOTE` is set
   ([The router](../ubuntu/roles/cable/router.md)).
 - git's signing key on GitHub, and ws's in `@zadykiand`'s settings, which no run adds.
+- A reboot and a log out after the first run: the Dock, Finder and sounds read their preferences
+  at the next log out, and Logi's installer asks a reboot.
+- Apple's sign-in, the language and region, FileVault, the apps' licences and the privacy
+  permissions that an app asks for.
+- The menu bar, Translate for Safari, and Logi's and Safari's settings.
+- GPG's and the YubiKey's keys ([devtools](roles/devtools/README.md)).
+- The screen saver, Macintosh, in System Settings › Screen Saver. macOS keeps the choice in a
+  file that Apple documents nowhere, so no unit sets it.
+- `colima start`, as the machine's size and its start at login are the user's
+  ([docker](roles/docker/README.md)).
+- The upgrades. Setup installs each cask and formula at its latest and never upgrades it:
+  `mise -C /opt/ws/macos -E ws,apps bootstrap packages upgrade` does, as the user.
