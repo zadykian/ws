@@ -16,13 +16,17 @@ import (
 	"github.com/zadykian/ws/macos/facts"
 )
 
-// The run state's lines: the check runs as the user, the command as root through sudo.
+// The run states' lines: each check runs as the user, each command as root through sudo.
 const (
 	inPath        = "env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "
+	commerce      = "/Library/Preferences/com.apple.commerce"
 	displayScript = "pmset -g custom | awk '/^AC Power:/ {ac = 1; next} /^[^ ]/ {ac = 0} " +
 		"ac && $1 == \"displaysleep\" && $2 == 0 {found = 1} END {exit !found}'"
+	storeScript  = "[ \"$(defaults read " + commerce + " AutoUpdate 2>/dev/null)\" = 0 ]"
 	displayCheck = inPath + "sh -c " + displayScript
 	displayRun   = inPath + "pmset -c displaysleep 0"
+	storeCheck   = inPath + "sh -c " + storeScript
+	storeRun     = inPath + "defaults write " + commerce + " AutoUpdate -bool false"
 )
 
 // macUnits loads the role's units on a Mac of the user v.
@@ -47,11 +51,15 @@ func exitOne() error {
 	return exec.Command("sh", "-c", "exit 1").Run()
 }
 
-func TestDisplayUnitChangesThroughSudoWhereTheCheckFails(t *testing.T) {
+func TestPowerUnitsChangeBothThroughSudoWhereTheChecksFail(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Results[displayCheck] = effecttest.Result{Err: exitOne()}
-	m.Results[displayRun] = effecttest.Result{}
-	// The check keeps failing, as the fake machine changes nothing, so the unit plans and applies once.
+	for _, c := range []string{displayCheck, storeCheck} {
+		m.Results[c] = effecttest.Result{Err: exitOne()}
+	}
+	for _, r := range []string{displayRun, storeRun} {
+		m.Results[r] = effecttest.Result{}
+	}
+	// The checks keep failing, as the fake machine changes nothing, so each unit plans and applies once.
 	for _, u := range macUnits(t, m) {
 		p, err := u.Step.Plan(t.Context())
 		if err == nil {
@@ -61,22 +69,22 @@ func TestDisplayUnitChangesThroughSudoWhereTheCheckFails(t *testing.T) {
 			t.Fatalf("%s: %v", u.Name, err)
 		}
 	}
-	for _, want := range []string{"run " + displayCheck, "root " + displayRun} {
+	for _, want := range []string{"run " + displayCheck, "root " + displayRun, "run " + storeCheck, "root " + storeRun} {
 		if !slices.Contains(m.Calls, want) {
 			t.Errorf("calls = %q, want %q", m.Calls, want)
 		}
 	}
 }
 
-func TestDisplayUnitAsksNoSudoWhereTheCheckHolds(t *testing.T) {
+func TestPowerUnitsAskNoSudoWhereBothHold(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Results[displayCheck] = effecttest.Result{}
+	m.Results[displayCheck], m.Results[storeCheck] = effecttest.Result{}, effecttest.Result{}
 	if _, err := step.Run(t.Context(), kind.Steps(macUnits(t, m)), &effecttest.Out{}, false); err != nil {
 		t.Fatal(err)
 	}
 	for _, c := range m.Calls {
 		if strings.HasPrefix(c, "root ") {
-			t.Errorf("calls = %q, want no sudo where the check holds", m.Calls)
+			t.Errorf("calls = %q, want no sudo where the checks hold", m.Calls)
 		}
 	}
 }
@@ -116,6 +124,28 @@ func TestDisplayCheckReadsTheACSection(t *testing.T) {
 			dir := t.TempDir()
 			fake(t, dir, "pmset", tc.out, 0)
 			if got := runCheck(t, dir, displayScript); got != tc.want {
+				t.Errorf("check passes = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+// TestStoreCheckReadsTheKey runs the check where defaults prints 0 for a false boolean, 1 for a
+// true one, and fails for a missing key.
+func TestStoreCheckReadsTheKey(t *testing.T) {
+	for _, tc := range []struct {
+		name, out string
+		status    int
+		want      bool
+	}{
+		{"off", "0\n", 0, true},
+		{"on", "1\n", 0, false},
+		{"missing", "", 1, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			fake(t, dir, "defaults", tc.out, tc.status)
+			if got := runCheck(t, dir, storeScript); got != tc.want {
 				t.Errorf("check passes = %v, want %v", got, tc.want)
 			}
 		})
