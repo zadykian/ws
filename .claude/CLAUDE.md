@@ -173,10 +173,11 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   Mac's casks, Ghostty, Zed and their font, take their latest by mise's `brew-cask`, outside the rule
   ([ghostty](../macos/roles/ghostty/README.md#ghostty)). So do the apps' fourteen, whose cask holds a
   SHA-256 but for four that Homebrew lists with none: mise checks no signature there
-  ([apps](../macos/roles/apps/README.md#the-casks)). The Mac's formulae, devtools' and docker's,
-  take their latest by mise's `brew`, each checked by the SHA-256 of Homebrew's own bottle
+  ([apps](../macos/roles/apps/README.md#the-casks)). The Mac's formulae, devtools', docker's and
+  desktop's, take their latest by mise's `brew`, each checked by the SHA-256 of Homebrew's own bottle
   ([devtools](../macos/roles/devtools/README.md#the-formulae),
-  [docker](../macos/roles/docker/README.md#the-formulae)). So is each of the Mac's clones, oh-my-zsh
+  [docker](../macos/roles/docker/README.md#the-formulae),
+  [desktop](../macos/roles/desktop/README.md#the-wallpaper)). So is each of the Mac's clones, oh-my-zsh
   and its two plugins, by the full commit SHA that mise checks it out at
   ([zsh](../macos/roles/zsh/README.md#the-clones)). Go is checked against the
   SHA-256 its publisher lists, on the Mac too
