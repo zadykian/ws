@@ -1,14 +1,15 @@
 # incus
 
 The `incus` role runs the guests as Incus's system containers, on a host. It installs `incus` and
-`zfsutils-linux` from Zabbly's `lts-7.0` repository, not Ubuntu's archive, and makes the objects that
-the guests need, from code and with no preseed. The role holds mise config and a spec of ws's
+`zfsutils-linux` from Zabbly's `lts-7.0` repository, not Ubuntu's archive, and makes the objects
+that the guests need, from code and with no preseed. The role holds mise config and a spec of ws's
 units ([The frame](../frame/README.md)):
 
 | File | What it holds |
 | --- | --- |
 | [`mise.host.toml`](mise.host.toml) | Zabbly's apt source, the packages, root's ID range and the units' lines. |
 | [`units.toml.tmpl`](units.toml.tmpl) | The units, which run `ws ubuntu host incus OBJECT`. |
+| [`files/`](files) | The table of sources and its service's unit file. |
 | [`object/`](object) | The package that reads, compares and writes one of Incus's objects. |
 
 mise takes Zabbly's key only where its primary fingerprint is the one that the source pins,
@@ -34,13 +35,16 @@ A command's `--check` fails where a change is due, and its plan shows the change
 | `state/incus-pool` | The ZFS pool `ws` | `source`, on a create alone: `WS_INCUS_POOL_SOURCE`. |
 | `state/incus-bridge` | The bridge `incusbr0` | The subnet, DHCP's resolvers, NAT, no IPv6 and the ACL. |
 | `state/incus-profile` | The profile `ws` | Unprivileged, nesting, isolated IDs, an isolated NIC and the disk. |
+| `state/incus-ufw` | ufw's rules | DHCP in on the bridge, and the bridge's routes. |
+| `service/incus-sources` | The table `ws_sources` | What a guest may not claim as its source. |
 
-The units run in that order: the bridge names the ACL, and the profile names the bridge and the pool.
+The first four run in that order: the bridge names the ACL, and the profile names the bridge and
+the pool.
 
-The pool's source is compared against `volatile.initial_source`, as ZFS's create sets `source` to the
-pool's name. A pool made on another partition fails the run, as Incus never moves one and a create
-wipes the partition. A host that holds its pool needs no value. Where the pool is missing and the value
-empty, the run fails and names the key:
+The pool's source is compared against `volatile.initial_source`, as ZFS's create sets `source` to
+the pool's name. A pool made on another partition fails the run, as Incus never moves one and a
+create wipes the partition. A host that holds its pool needs no value. Where the pool is missing and
+the value empty, the run fails and names the key:
 
 ```yaml
 ---
@@ -68,6 +72,32 @@ managed bridge fails the run.
 
 Each guest takes the profile `ws`: `security.privileged` off, `security.nesting`, and
 `security.idmap.isolated`, which gives it a range of root's IDs of its own. `linux.kernel_modules`
-names what Docker in a guest needs, which a guest cannot load. `br_netfilter` is not one. Its NIC
-joins the bridge with `security.mac_filtering` and `security.port_isolation`, and its disk is on
-the pool.
+names what Docker in a guest needs, which a guest cannot load. `br_netfilter` is not one, so a
+Docker network in a guest with `enable_icc` off, or with the userland proxy off, fails: ws does not
+support it. Its NIC joins the bridge with `security.mac_filtering` and `security.port_isolation`,
+and its disk is on the pool.
+
+## The table of sources
+
+Incus's MAC filter holds a guest's MAC, and `security.port_isolation` keeps it from the other
+guests' ports. Neither holds its IP address. Incus's IPv4 filter would, but it drops the replies of
+the VPN, which leave a guest under a source that is not its own. So `ws_sources`, a table in
+nftables' bridge family, filters at the bridge, with no `br_netfilter`. It acts on a guest's port.
+It drops a frame of any ether type but ARP, IPv4 and IPv6 first: a VLAN tag would hide a source
+from the rules, and the host strips the tag. An ARP sender or a source address in the bridge's
+subnet or in the tunnel's slots, `10.99.0.0/20`, must be an address that the port owns. The table
+lists what a guest may not claim, and passes the rest, so that a guest asks for a lease from
+`0.0.0.0` and reaches the internet from its own address.
+
+The set `owned4` holds each guest's address with its port, and starts empty. A guest's unit fills
+it. `incus-sources.service` loads the table before Incus starts a guest, and Incus requires it, so
+a load that fails keeps Incus down. A reload empties the set, so the unit that fills it runs after
+each load. A change to the table reloads it, where the table in force, hooks included, differs from
+what the file loads, which `nft -c` checks first.
+
+## ufw
+
+A host's ufw lets UDP 67 in on `incusbr0` from any address, as a guest asks for a lease before it
+holds one. It routes what comes in on the bridge out by any interface, and the ACL narrows that. No
+rule routes what goes out on the bridge, as the tunnel's rules name the way in. DNS to the host
+stays shut, as the bridge hands out other resolvers.
