@@ -36,3 +36,11 @@ need: `/opt/homebrew/bin`, where mise links the formulae and the casks' commands
 and `/usr/local/go/bin`. `/usr/libexec/path_helper` puts each on a login shell's `PATH`, where
 Homebrew is not set up. A shell open before the first run finds none of them until it logs in
 again.
+
+## gpg's agent
+
+`state/gnupg-dir` makes `~/.gnupg`, the user's and 0700, where missing, as gpg makes it.
+`file/gpg-agent-conf` seeds `gpg-agent.conf` there, at 0600, with `pinentry-program /opt/homebrew/bin/pinentry-mac`:
+gnupg's own pinentry is a curses program, which finds no terminal where an agent asks. The unit
+writes where no file is, and never reads it after, so the user's changes stay. The keys, gpg's and
+the YubiKey's, are made by hand.
