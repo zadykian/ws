@@ -102,10 +102,11 @@ tree in `/opt/ws`, with ws's build in `/usr/local/bin` ([client-mise.sh](../clie
 before the first run must exit 2. Setup installs mise and links the tree's plugin as the runbook
 does. The case makes `/opt` and `/usr/local/share` root's and 755 first, as on
 a Mac, where the runner's image may differ. It sets up
-ssh, git and cld too. The plan must exit 0 after the first run, a second run must call no sudo,
-and `/usr/local/bin/ws` must be root:wheel at 755. A spec whose unit no line names must fail the plan,
-and so must a plan from `/opt/ws` with every unit in sync. After the first run the firewall must
-be on and block all incoming ([the Mac's firewall](../../macos/roles/firewall/README.md)).
+ssh, git and cld too, but not [the apps](../../macos/roles/apps/README.md): the case drops that
+role from the tree, as no run of CI needs its 14 casks. The plan must exit 0 after the first run,
+a second run must call no sudo, and `/usr/local/bin/ws` must be root:wheel at 755. A spec whose
+unit no line names must fail the plan, and so must a plan from `/opt/ws` with every unit in sync.
+After the first run the firewall must be on and block all incoming ([the Mac's firewall](../../macos/roles/firewall/README.md)).
 The cases after it, whose stand-ins listen on loopback, pass unchanged under it.
 The job's `values.yml` names a file key, made in case 20, as ws's
 login key and git's. Without ws's WireGuard key, the bootstrap must make the Mac's key, with
