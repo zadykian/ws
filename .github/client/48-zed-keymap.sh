@@ -1,5 +1,5 @@
 #!/bin/bash
-# mise bootstrap (28-bootstrap.sh) wrote Zed's keymap.json as roles/client/macos/zed/files/keymap.json,
+# mise bootstrap (28-bootstrap.sh) wrote Zed's keymap.json as macos/roles/zed/files/keymap.json,
 # whole. A file without ws's mark at its top is left, and its unit's read warns. mise runs that read
 # for its plan and shows none of its warnings, so ws unit read shows it here. The file then goes,
 # and the next bootstrap must write ws's back: a foreign keymap.json left behind would make every
@@ -11,14 +11,14 @@ set -eo pipefail
 
 file=~/.config/zed/keymap.json
 fail=0
-cmp -s "$file" roles/client/macos/zed/files/keymap.json ||
+cmp -s "$file" macos/roles/zed/files/keymap.json ||
     {
-        echo '::error::keymap.json is not roles/client/macos/zed/files/keymap.json'
+        echo '::error::keymap.json is not macos/roles/zed/files/keymap.json'
         fail=1
     }
-sed '/^[[:space:]]*\/\//d' roles/client/macos/zed/files/keymap.json | python3 -m json.tool >/dev/null ||
+sed '/^[[:space:]]*\/\//d' macos/roles/zed/files/keymap.json | python3 -m json.tool >/dev/null ||
     {
-        echo '::error::roles/client/macos/zed/files/keymap.json does not parse under its comments'
+        echo '::error::macos/roles/zed/files/keymap.json does not parse under its comments'
         fail=1
     }
 printf '[]\n' >"$file"
@@ -43,7 +43,7 @@ client_bootstrap 2>&1 || {
     echo '::error::mise bootstrap failed after the file went'
     fail=1
 }
-cmp -s "$file" roles/client/macos/zed/files/keymap.json ||
+cmp -s "$file" macos/roles/zed/files/keymap.json ||
     {
         echo '::error::mise bootstrap did not write ws'\''s keymap.json back'
         fail=1

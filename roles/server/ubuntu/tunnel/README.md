@@ -54,7 +54,7 @@ ws server setup
 The Mac's scripts fix the peer's name, `mac`. A server's slot gives the tunnel's ends: `10.99.N.1`
 for the server and `10.99.N.2` for the Mac, slot 0's being `10.99.0.1` and `10.99.0.2`. The pair
 goes in the server's values.yml, by hand
-([The Mac's tunnel](../../../client/README.md#the-macs-tunnel)). So where `WS_TUNNEL_PEERS`
+([The Mac's tunnel](../../../../macos/README.md#the-macs-tunnel)). So where `WS_TUNNEL_PEERS`
 holds `mac`, ws refuses the values unless `WS_TUNNEL_ADDRESS` is a slot's `10.99.N.1/24`, N from 0
 to 15, and `mac`'s address that slot's `10.99.N.2`.
 

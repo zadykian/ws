@@ -65,7 +65,7 @@ files() {
 }
 
 # refuses TEXT: mise bootstrap's plan, then the bootstrap, must fail with TEXT in what they print,
-# and leave the files as they were. The bootstrap runs by mise, as ws client setup would wait for a
+# and leave the files as they were. The bootstrap runs by mise, as ws macos setup would wait for a
 # key where values.yml names no login key.
 refuses() {
     before=$(files)

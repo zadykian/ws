@@ -29,7 +29,7 @@ The file `/etc/netplan/60-cable.yaml` gives that interface `10.77.0.1/30`
 (`WS_CABLE_ADDRESS`), and no DHCP, gateway or DNS. netplan merges the file with the other
 files' entries of the port's name, as the installer's: its settings win, and its address joins
 theirs. Boot doesn't wait for the link, which is up only while the Mac is docked. The Mac takes
-`10.77.0.2/30`, with no router, from `mise -C /opt/ws/roles/client bootstrap` ([The cable](../../../client/README.md#the-cable)). ufw
+`10.77.0.2/30`, with no router, from `mise -C /opt/ws/macos bootstrap` ([The cable](../../../../macos/README.md#the-cable)). ufw
 lets in SSH over the cable, as over any interface. Unless `WS_SECURITY_OUTBOUND` is false, the
 `security` role's table drops what the server and its containers start over the cable, whatever the
 port ([Outbound](../security/README.md#outbound)). The `tunnel` role's drops keep the containers off it by

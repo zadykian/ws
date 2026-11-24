@@ -11,7 +11,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/roles/internal/wgkey"
+	"github.com/zadykian/ws/internal/wgkey"
 )
 
 // keyFile is the server's private key, which networkd reads for wg0.

@@ -165,7 +165,7 @@ it, naming `install.sh`. The plugin's write hook runs `ws unit verify` again bef
 write`.
 
 The check runs in the run's directory, where a nested mise loads the roles as the run does. A run
-from `/opt/ws`, or from the Mac's `roles/client`, loads no role of the server's, and a first one
+from `/opt/ws`, or from the Mac's `macos`, loads no role of the server's, and a first one
 would set up the frame alone with exit 0. So the check looks for the frame's own
 `mise.server.toml` through the run's link. It fails a run without it before any phase, and names
 `mise -C /opt/ws/roles/server`, as its test proves.

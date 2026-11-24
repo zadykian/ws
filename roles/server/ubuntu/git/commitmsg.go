@@ -6,7 +6,7 @@ import (
 	"regexp"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/roles/internal/gitcfg"
+	"github.com/zadykian/ws/internal/gitcfg"
 )
 
 // scissors starts the section that git cuts from an edited message: its comment string, a space,

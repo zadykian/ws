@@ -163,7 +163,7 @@ refusal() {
     [ "$sum" = "$(sha256sum "$file")" ] || fail "$1: the file changed"
     echo "ok: $1"
 }
-hint='ws client secrets add NAME'
+hint='ws macos secrets add NAME'
 # mise's setting locked comes from the tree's mise.toml. MISE_LOCKED=0 turns it off, and the task
 # then refuses before it touches the clone.
 sum=$(sha256sum "$file")

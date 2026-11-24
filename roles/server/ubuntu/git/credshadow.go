@@ -8,7 +8,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/zadykian/ws/roles/internal/gitcfg"
+	"github.com/zadykian/ws/internal/gitcfg"
 )
 
 // programPattern matches the keys of the credential sections that name a program, whose lines

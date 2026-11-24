@@ -1,9 +1,9 @@
 #!/bin/sh
-# The client job's checks of ws client tunnel loaded, of its routes and of ws client
+# The client job's checks of ws macos tunnel loaded, of its routes and of ws macos
 # resolver. They replaced the functions of a script that another repository sourced. The job
 # runs it from the repository's root, with ws's path in TUNNEL, once mise bootstrap has
-# loaded the daemon (.github/workflows/client.yml). A network that ws client tunnel
-# routes adds must reach the daemon's utun; a domain that ws client resolver adds, scutil
+# loaded the daemon (.github/workflows/client.yml). A network that ws macos tunnel
+# routes adds must reach the daemon's utun; a domain that ws macos resolver adds, scutil
 # --dns.
 
 set -eu
@@ -42,36 +42,36 @@ pid() {
         awk '$1 == "pid" && p == "" { p = $3 } END { print (p == "" ? "none" : p) }'
 }
 
-"$TUNNEL" client tunnel loaded || error 'ws client tunnel loaded fails with the daemon loaded'
+"$TUNNEL" macos tunnel loaded || error 'ws macos tunnel loaded fails with the daemon loaded'
 for cidr in 0.0.0.0/0 10.99.0.0/16 10.77.0.0/29 198.51.100.5/24; do
-    if ("$TUNNEL" client tunnel routes --server ws test "$cidr") 2>/dev/null; then
-        error "ws client tunnel routes took $cidr"
+    if ("$TUNNEL" macos tunnel routes --server ws test "$cidr") 2>/dev/null; then
+        error "ws macos tunnel routes took $cidr"
     fi
 done
-if ! out=$("$TUNNEL" client tunnel routes --server ws --check test 198.51.100.0/24 2>&1); then
-    error "ws client tunnel routes --server ws --check test 198.51.100.0/24 failed: $out"
+if ! out=$("$TUNNEL" macos tunnel routes --server ws --check test 198.51.100.0/24 2>&1); then
+    error "ws macos tunnel routes --server ws --check test 198.51.100.0/24 failed: $out"
 else
     case $out in *'+198.51.100.0/24'*) ;; *) error "--check showed no diff: $out" ;; esac
 fi
 ! sudo test -e /etc/ws/tunnel/ws/routes.d/test || error '--check wrote ws/routes.d/test'
 
-# The daemon takes each SIGHUP of ws client tunnel routes in place. It keeps its pid and logs
+# The daemon takes each SIGHUP of ws macos tunnel routes in place. It keeps its pid and logs
 # a reload of its routes.d. A daemon that died of a SIGHUP, and that launchd started again, would log a
 # start.
 was=$(pid)
 lines=$(sudo awk 'END { print NR }' "$log")
-must "$TUNNEL" client tunnel routes --server ws test 198.51.100.0/24
-utun=$(sudo "$TUNNEL" client tunnel status | awk -F': ' '$1 == "interface" { print $2 }')
+must "$TUNNEL" macos tunnel routes --server ws test 198.51.100.0/24
+utun=$(sudo "$TUNNEL" macos tunnel status | awk -F': ' '$1 == "interface" { print $2 }')
 # shellcheck disable=SC2329 # called through until_ok
 routed() { route -n get 198.51.100.1 | grep -q "interface: $utun\$"; }
 until_ok 20 routed || error "198.51.100.1 is not routed into the daemon's $utun"
 route -n get 198.51.100.1 || true
-must "$TUNNEL" client tunnel routes --server ws test
+must "$TUNNEL" macos tunnel routes --server ws test
 until_ok 20 eval '! routed' || error "198.51.100.1 is still routed into $utun"
 ! sudo test -e /etc/ws/tunnel/ws/routes.d/test || error 'ws/routes.d/test outlived its removal'
 now=$(pid)
 if [ "$was" = none ] || [ "$now" != "$was" ]; then
-    error "the daemon was pid $was before ws client tunnel routes's SIGHUPs, and is pid $now"
+    error "the daemon was pid $was before ws macos tunnel routes's SIGHUPs, and is pid $now"
 fi
 new=$(sudo tail -n "+$((lines + 1))" "$log")
 case $new in
@@ -82,12 +82,12 @@ case $new in *' started on '*) error 'the daemon started again on a SIGHUP' ;; e
 
 # A /32's answer of route -n get may hold no mask line, as a host route's. The daemon must take it
 # for the network's own route all the same, and delete it once routes.d drops it.
-must "$TUNNEL" client tunnel routes --server ws host 192.0.2.77/32
+must "$TUNNEL" macos tunnel routes --server ws host 192.0.2.77/32
 # shellcheck disable=SC2329 # called through until_ok
 hosted() { route -n get 192.0.2.77 | grep -q "interface: $utun\$"; }
 until_ok 20 hosted || error "192.0.2.77 is not routed into the daemon's $utun"
 route -n get -inet 192.0.2.77/32 || true
-must "$TUNNEL" client tunnel routes --server ws host
+must "$TUNNEL" macos tunnel routes --server ws host
 until_ok 20 eval '! hosted' || error "192.0.2.77/32 is still routed into $utun"
 
 # shellcheck disable=SC2329 # called through until_ok
@@ -95,9 +95,9 @@ shown() {
     scutil --dns | awk '/^resolver #/ { d = 0 } /domain *: example\.test$/ { d = 1 }
         d && /nameserver\[0\] *: 198\.51\.100\.53$/ { found = 1 } END { exit !found }'
 }
-must "$TUNNEL" client resolver example.test 198.51.100.53
+must "$TUNNEL" macos resolver example.test 198.51.100.53
 until_ok 20 shown || error 'scutil --dns shows no resolver for example.test'
 scutil --dns | grep -B 1 -A 3 'example.test' || true
-must "$TUNNEL" client resolver example.test
+must "$TUNNEL" macos resolver example.test
 until_ok 20 eval '! shown' || error 'scutil --dns still shows example.test'
 exit "$fail"

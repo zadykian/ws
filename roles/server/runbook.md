@@ -1,7 +1,7 @@
 # The server's runbook
 
 A person does these steps at ws, in this order. The Mac's side sets them in its own order
-([The Mac's runbook](../client/runbook.md)).
+([The Mac's runbook](../../macos/runbook.md)).
 
 ## A new server from the installer
 
@@ -60,9 +60,9 @@ in `/opt/ws/roles/server` with umask 022, from `/`. A second run changes nothing
   setup. A new release, or a trial's end, takes it, not `install.sh`
   ([Update](../../.github/workflows/release.md#update)).
 
-The secrets come once the Mac has run `ws client secrets init`, one run for all servers, and
-then `ws client secrets add NAME`, which makes ws's host key a recipient of the secrets
-repository ([The secrets](../client/runbook.md#the-secrets)). add then runs
+The secrets come once the Mac has run `ws macos secrets init`, one run for all servers, and
+then `ws macos secrets add NAME`, which makes ws's host key a recipient of the secrets
+repository ([The secrets](../../macos/runbook.md#the-secrets)). add then runs
 `ws server setup --secrets` at ws, whose task `secrets` clones the secrets on its first run and
 writes what they give, such as `/etc/ws/env` and gh's login
 ([The repository](ubuntu/secrets/README.md#the-repository)). A later run under the secrets takes

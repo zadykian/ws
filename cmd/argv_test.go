@@ -15,10 +15,10 @@ import (
 
 // specArgv is a ws command in a spec's argv form: a list that opens with the running ws, by self
 // or by its path, then the side.
-var specArgv = regexp.MustCompile(`\[\s*"(?:\{\{ self \}\}|/usr/local/bin/ws)",\s*"((?:client|server)"(?:,\s*"[^"]*")*)\s*\]`)
+var specArgv = regexp.MustCompile(`\[\s*"(?:\{\{ self \}\}|/usr/local/bin/ws)",\s*"((?:macos|server)"(?:,\s*"[^"]*")*)\s*\]`)
 
 // wordArgv is a ws command in a file's text: the side, then the words that name its commands.
-var wordArgv = regexp.MustCompile(`\bws ((?:client|server)(?: [a-z][a-z-]*)*)`)
+var wordArgv = regexp.MustCompile(`\bws ((?:macos|server)(?: [a-z][a-z-]*)*)`)
 
 // quoted is one string of an argv.
 var quoted = regexp.MustCompile(`"([^"]*)"`)
@@ -35,7 +35,7 @@ var commandFiles = []string{
 // machine and the jobs that set one up.
 func TestSpecsRunCommandsThatExist(t *testing.T) {
 	p := fakeProcess()
-	root := cli.Root(p, clientCmd(p), serverCmd(p), unitCmd(p))
+	root := cli.Root(p, macosCmd(p), serverCmd(p), unitCmd(p))
 	specs, err := filepath.Glob("../roles/*/*/*/units.toml.tmpl")
 	if err != nil || len(specs) == 0 {
 		t.Fatalf("specs = %q, err = %v; want the roles' specs", specs, err)
@@ -63,7 +63,7 @@ func TestSpecsRunCommandsThatExist(t *testing.T) {
 			}
 		}
 	}
-	for _, side := range []string{"client", "server"} {
+	for _, side := range []string{"macos", "server"} {
 		if seen[side] == 0 {
 			t.Errorf("no ws %s command found in the specs: the pattern reads none", side)
 		}

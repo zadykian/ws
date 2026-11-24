@@ -81,7 +81,7 @@ The second run writes the new value. A run with
 `MISE_LOCKED=0`, where mise's setting locked prints `false`, is refused and names
 `ws server setup --secrets`. A file of the clone's own, a profile that the host key can't open and
 a missing profile are refused too, and the file keeps its bytes. The last two name
-`ws client secrets add NAME`. The third run follows them, and the file still holds both values. No
+`ws macos secrets add NAME`. The third run follows them, and the file still holds both values. No
 output of the task's holds a value. Only GitHub proves
 the fetch from github.com by a deploy key, against the key that ws pins.
 

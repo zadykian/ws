@@ -1,5 +1,5 @@
 #!/bin/bash
-# mise bootstrap (28-bootstrap.sh) unpacked the SDKs of roles/client/macos/dotnet's tree into
+# mise bootstrap (28-bootstrap.sh) unpacked the SDKs of macos/roles/dotnet's tree into
 # /usr/local/share/dotnet, as root's. It wrote /etc/paths.d/dotnet, which puts that directory on a
 # login shell's PATH. client-mise.sh made /usr/local/share root's, so sudo copied the tree in.
 

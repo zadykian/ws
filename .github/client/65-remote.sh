@@ -30,7 +30,7 @@ grep -qx 'WS_LAN_ADDRESS=127.0.0.2' /etc/ws/tunnel/ws/tunnel.conf ||
         exit 1
     }
 remote() {
-    status=$(sudo "$TUNNEL" client tunnel status 2>&1) || true
+    status=$(sudo "$TUNNEL" macos tunnel status 2>&1) || true
     printf '%s\n' "$status" | grep -qx 'tier: remote' &&
         printf '%s\n' "$status" | grep -qx 'endpoint: 127.0.0.1:51820' &&
         printf '%s\n' "$status" | grep -Eq '^latest handshake: [0-9]+ s ago$'

@@ -23,7 +23,7 @@ func runGroups(p cli.Env, args ...string) (status int, stdout, stderr string) {
 
 func TestEveryCommandSetsArgs(t *testing.T) {
 	p := fakeProcess()
-	for _, group := range []*cobra.Command{cli.Root(p), clientCmd(p), serverCmd(p), unitCmd(p)} {
+	for _, group := range []*cobra.Command{cli.Root(p), macosCmd(p), serverCmd(p), unitCmd(p)} {
 		cli.Walk(group, func(c *cobra.Command) {
 			if c.Args == nil {
 				t.Errorf("%s: Args is nil", c.CommandPath())
@@ -37,7 +37,7 @@ func TestEveryCommandSetsArgs(t *testing.T) {
 // claude's update, a unit's command, updates cld.
 func TestNoApplyOrState(t *testing.T) {
 	p := fakeProcess()
-	cli.Walk(cli.Root(p, clientCmd(p), serverCmd(p), unitCmd(p), updateCmd(p)), func(c *cobra.Command) {
+	cli.Walk(cli.Root(p, macosCmd(p), serverCmd(p), unitCmd(p), updateCmd(p)), func(c *cobra.Command) {
 		gone := c.Name() == "apply" || c.Name() == "state" || c.Name() == "update"
 		if gone && c.CommandPath() != "ws server claude update" && c.CommandPath() != "ws update" {
 			t.Errorf("%s is a command", c.CommandPath())

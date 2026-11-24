@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # The cases of the client job that run mise bootstrap source this file, and never run it. It sets up
-# the Mac as the runbook does, by ws client setup on the tree in /opt/ws as it stands. Setup installs
+# the Mac as the runbook does, by ws macos setup on the tree in /opt/ws as it stands. Setup installs
 # mise by its SHA-256, writes the miserc and the trust, links the plugin and runs the bootstrap.
 # ws is the build that .tools/install-build put in /usr/local/bin, which the job's step runs.
 
@@ -32,12 +32,12 @@ client_trace_sudo() {
     fi
 }
 
-# client_setup ARG... runs /usr/local/bin/ws client setup --in-place ARG... as the user, with no
+# client_setup ARG... runs /usr/local/bin/ws macos setup --in-place ARG... as the user, with no
 # terminal. A sudo first on PATH writes a line for each call to $client_trace/calls, which client_mark
 # empties and client_calls counts.
 client_setup() {
     client_trace_sudo
-    (cd / && PATH="$client_trace:$PATH" /usr/local/bin/ws client setup --in-place "$@" </dev/null)
+    (cd / && PATH="$client_trace:$PATH" /usr/local/bin/ws macos setup --in-place "$@" </dev/null)
 }
 
 # client_bootstrap [plan ARG...] runs setup, which installs mise and runs mise bootstrap. The plan with
@@ -51,11 +51,11 @@ client_bootstrap() {
     esac
 }
 
-# client_tree_mise ARG... runs mise -C /opt/ws/roles/client ARG... as the user, with no terminal, as the
+# client_tree_mise ARG... runs mise -C /opt/ws/macos ARG... as the user, with no terminal, as the
 # runbook runs it, with client_setup's sudo.
 client_tree_mise() {
     client_trace_sudo
-    (cd / && PATH="$client_trace:$PATH" mise -C /opt/ws/roles/client "$@" </dev/null)
+    (cd / && PATH="$client_trace:$PATH" mise -C /opt/ws/macos "$@" </dev/null)
 }
 
 # client_mark empties the list of sudo's calls.

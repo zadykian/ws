@@ -7,7 +7,7 @@ import (
 	"os/exec"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/roles/internal/gitcfg"
+	"github.com/zadykian/ws/internal/gitcfg"
 )
 
 // Included reports whether text, that of the file name, includes /etc/ws/gitconfig once, at its

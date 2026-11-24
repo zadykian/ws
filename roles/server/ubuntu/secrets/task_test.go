@@ -14,7 +14,7 @@ import (
 // runLine and addHint are the words of the task's refusals that a caller acts on.
 const (
 	runLine = "ws server setup --secrets"
-	addHint = "ws client secrets add NAME"
+	addHint = "ws macos secrets add NAME"
 	hostKey = "/etc/ssh/ssh_host_ed25519_key"
 )
 

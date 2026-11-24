@@ -1,7 +1,7 @@
 # ws as mise config, shared by the server and the Mac: mise's settings. Each side's
 # own parts load by its env, which the machine's miserc names. The env server loads
-# mise.server.toml and the server's roles, which roles/server/mise/conf.d links. The env mac loads
-# mise.mac.toml and the Mac's, which roles/client/mise/conf.d links. ws is no tool of mise's: the
+# mise.server.toml and the server's roles, which roles/server/mise/conf.d links. The env macos loads
+# mise.macos.toml and the Mac's, which macos/mise/conf.d links. ws is no tool of mise's: the
 # machine's one ws is /usr/local/bin/ws.
 [settings]
 # Versions come from the tools' pins and URLs alone, never from mise's versions host.

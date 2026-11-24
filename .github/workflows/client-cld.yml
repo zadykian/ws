@@ -18,7 +18,7 @@ concurrency:
 permissions: {}
 
 jobs:
-  # Ghostty, Zed and cld on a Mac, in roles/client/macos/ghostty/README.md's order. ws client setup
+  # Ghostty, Zed and cld on a Mac, in macos/roles/ghostty/README.md's order. ws macos setup
   # runs as the runbook runs it, on a runner without Ghostty, Zed, their font or cld. A stand-in for
   # ws's key has the tunnel's daemon load. Two runs must install Ghostty, Zed and the font as
   # mise's casks, cld from its release, and the files of Ghostty and Zed, which Ghostty must take.

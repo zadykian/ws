@@ -92,10 +92,10 @@ func TestUpdateRunsTheSetupOfTheWsItWrote(t *testing.T) {
 func TestUpdateOfTheMacRunsItsSetup(t *testing.T) {
 	p, m := updateEnv("v0.9.0", serveRelease(t, "v0.10.0", "new ws"), 501)
 	m.Results[copied+" version"] = effecttest.Result{Out: []byte("v0.10.0\n")}
-	if status, _, stderr := runUpdate(p, "client", false); status != 0 {
+	if status, _, stderr := runUpdate(p, "macos", false); status != 0 {
 		t.Fatalf("status = %d, stderr = %q", status, stderr)
 	}
-	if last := m.Calls[len(m.Calls)-1]; last != "exec "+installed+" client setup" {
+	if last := m.Calls[len(m.Calls)-1]; last != "exec "+installed+" macos setup" {
 		t.Errorf("the last call is %q, want the Mac's setup", last)
 	}
 }
@@ -182,7 +182,7 @@ func TestUpdateRefusesBeforeItRunsSetup(t *testing.T) {
 
 func TestUpdateOfTheMacRefusesRoot(t *testing.T) {
 	p, m := updateEnv("v0.9.0", serveRelease(t, "v0.10.0", "new ws"), 0)
-	if status, _, stderr := runUpdate(p, "client", false); status != 1 || !strings.Contains(stderr, "not root") || len(m.Calls) != 0 {
+	if status, _, stderr := runUpdate(p, "macos", false); status != 1 || !strings.Contains(stderr, "not root") || len(m.Calls) != 0 {
 		t.Errorf("status = %d, stderr = %q, calls %v; want the refusal and no call", status, stderr, m.Calls)
 	}
 }

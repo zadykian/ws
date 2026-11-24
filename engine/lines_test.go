@@ -15,13 +15,13 @@ type textChange string
 func (c textChange) String() string { return string(c) }
 
 func TestLinesPrefixLines(t *testing.T) {
-	out := Lines{Out: &effecttest.Out{}, Prog: "ws client resolver", Seen: map[string]bool{}}
+	out := Lines{Out: &effecttest.Out{}, Prog: "ws macos resolver", Seen: map[string]bool{}}
 	out.Say("wrote %s", "f")
 	out.Say("%s: %s", "Answers", "bad")
 	out.Warn("w %d", 1)
 	out.Warn("w %d", 1)
 	want := []string{
-		"say: ws client resolver: wrote f", "say: ws client resolver: Answers: bad", "say: ws client resolver: warning: w 1",
+		"say: ws macos resolver: wrote f", "say: ws macos resolver: Answers: bad", "say: ws macos resolver: warning: w 1",
 	}
 	if got := out.Out.(*effecttest.Out).Lines; !reflect.DeepEqual(got, want) {
 		t.Errorf("lines = %q, want %q", got, want)
@@ -29,7 +29,7 @@ func TestLinesPrefixLines(t *testing.T) {
 }
 
 func TestLinesObserveAPlanAndWhatAStepIsBehind(t *testing.T) {
-	out := Lines{Out: &effecttest.Out{}, Prog: "ws client resolver", Seen: map[string]bool{}}
+	out := Lines{Out: &effecttest.Out{}, Prog: "ws macos resolver", Seen: map[string]bool{}}
 	plan := []step.Change{textChange("would run x")}
 	out.Observe(step.Event{Kind: step.Planned, Step: "ssh", Changes: plan})
 	out.Observe(step.Event{Kind: step.Started, Step: "ssh", Changes: plan})
@@ -40,8 +40,8 @@ func TestLinesObserveAPlanAndWhatAStepIsBehind(t *testing.T) {
 	out.Observe(step.Event{Kind: step.Skipped, Step: "git", After: "ssh", LeftOut: true})
 	out.Observe(step.Event{Kind: step.Skipped, Step: "cld", Err: errors.New("no file"), LeftOut: true})
 	want := []string{
-		"say: ws client resolver: would run x",
-		"say: ws client resolver: git: after ssh", "say: ws client resolver: warning: left out: no file",
+		"say: ws macos resolver: would run x",
+		"say: ws macos resolver: git: after ssh", "say: ws macos resolver: warning: left out: no file",
 	}
 	if got := out.Out.(*effecttest.Out).Lines; !reflect.DeepEqual(got, want) {
 		t.Errorf("lines = %q, want %q", got, want)

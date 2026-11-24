@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/roles/internal/etcws"
+	"github.com/zadykian/ws/internal/etcws"
 )
 
 // gitFiles is the template of the tokens' include.

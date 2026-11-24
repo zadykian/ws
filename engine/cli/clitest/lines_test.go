@@ -26,7 +26,7 @@ func TestMiseLinesKeepsTheUnitsBesideAPackageTable(t *testing.T) {
 	text := "[bootstrap.packages]\n\"ws:state/a\" = \"in-sync\"\n\"brew-cask:x\" = \"latest\"\n" +
 		"[bootstrap.packages.\"macos-app:x\"]\nversion = \"1\"\nurl = \"https://example.com/x.zip\"\n" +
 		"sha256 = \"" + strings.Repeat("0", 64) + "\"\nartifact = \"X.app\"\nadopt = true\n"
-	if err := os.WriteFile(filepath.Join(dir, "mise.mac.toml"), []byte(text), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "mise.macos.toml"), []byte(text), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	lines := MiseLines(t, filepath.Join(dir, "*.toml"))

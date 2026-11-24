@@ -1,8 +1,0 @@
-# The cable's service, the Mac's end of the direct link to a server that names WS_CABLE_SERVICE.
-# ws client cable gives it its Manual Configuration, with no router, through sudo where
-# networksetup shows other settings. networksetup reads as the user, so a run that changes nothing
-# asks no password.
-[state.cable.run]
-user = "{{ .User }}"
-command = ["{{ self }}", "client", "cable"]
-check = ["{{ self }}", "client", "cable", "--check"]

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/roles/internal/gitcfg"
+	"github.com/zadykian/ws/internal/gitcfg"
 )
 
 // trailer is the line that each commit on ws holds once: the Mac's identity, which the maintainer

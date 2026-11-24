@@ -22,7 +22,7 @@ trap 'rm -rf "$dir"' EXIT
 # copies checks that each tool in /usr/local/bin is mise's, root's and 0755.
 copies() {
     for tool in fnox age-plugin-yubikey; do
-        from=$(cd / && mise -C /opt/ws/roles/client which "$tool") ||
+        from=$(cd / && mise -C /opt/ws/macos which "$tool") ||
             error "mise has no $tool for /opt/ws"
         cmp -s "/usr/local/bin/$tool" "$from" || error "/usr/local/bin/$tool is not mise's $from"
         owner=$(stat -f '%Su:%Sg %Lp' "/usr/local/bin/$tool")

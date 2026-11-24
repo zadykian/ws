@@ -2,7 +2,7 @@
 # A second server, lab, at slot 1. A third wireguard-go stands in for it on 51821. The Mac's key is
 # its peer, as in 35-standin.sh. lab shares ws's WS_REMOTE, so its ports differ from ws's. mise
 # bootstrap must give lab a daemon and a utun of its own, and ssh's host at its slot. ws's daemon
-# and host stay. ws client servers must list both. A second bootstrap must call sudo not once.
+# and host stay. ws macos servers must list both. A second bootstrap must call sudo not once.
 
 set -eo pipefail
 # shellcheck source=.github/client-conf.sh
@@ -52,7 +52,7 @@ launchctl print "system/$lab" >/dev/null || {
 }
 
 # status NAME prints the daemon's status of the server NAME.
-status() { sudo "$TUNNEL" client tunnel status --server "$1" 2>&1 || true; }
+status() { sudo "$TUNNEL" macos tunnel status --server "$1" 2>&1 || true; }
 # shaken NAME PORT: the daemon of NAME has a handshake on the remote tier at 127.0.0.1:PORT.
 shaken() {
     out=$(status "$1")
@@ -92,11 +92,11 @@ tunnel_end() { ssh -T -G "$1" | awk '$1 == "hostname" { print $2 }'; }
     exit 1
 }
 
-# listed NAME prints the row of the server NAME in ws client servers, its blanks as one.
-listed() { ws client servers | awk -v n="$1" '$1 == n { $1 = $1; print }'; }
+# listed NAME prints the row of the server NAME in ws macos servers, its blanks as one.
+listed() { ws macos servers | awk -v n="$1" '$1 == n { $1 = $1; print }'; }
 [ "$(listed ws)" = 'ws lan 0 remote 127.0.0.1:51820' ] && [ "$(listed lab)" = 'lab lan 1 remote 127.0.0.1:51821' ] || {
-    echo "::error::ws client servers lists '$(listed ws)' and '$(listed lab)'; it gives:"
-    ws client servers
+    echo "::error::ws macos servers lists '$(listed ws)' and '$(listed lab)'; it gives:"
+    ws macos servers
     exit 1
 }
 
