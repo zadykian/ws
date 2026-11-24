@@ -1,0 +1,17 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+#
+# Incus gives a guest the NVIDIA device nodes that exist as the guest starts. This waits for
+# /dev/nvidia0 and /dev/nvidia-uvm, up to a minute. It ends well either way, as incus.service is
+# ordered after it and a missing card must not keep Incus down. A host that loads no module waits
+# for none, as before its reboot.
+[Unit]
+Description=Wait for NVIDIA's device nodes before Incus starts a guest
+Documentation=https://github.com/zadykian/ws/blob/main/ubuntu/roles/nvidia/README.md#the-device-nodes
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c 'test -d /sys/module/nvidia || exit 0; timeout 60 sh -c "until test -e /dev/nvidia0 && test -e /dev/nvidia-uvm; do sleep 1; done" || echo "/dev/nvidia0 or /dev/nvidia-uvm is missing: a guest starts without it"'
+
+[Install]
+WantedBy=multi-user.target
