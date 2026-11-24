@@ -26,6 +26,10 @@ keeps its own exit code.
 It allows no line. Its test, [warnings-check-test.sh](../warnings-check-test.sh), runs in
 `lint`, on a log with warnings and on one without.
 
+`lint` tries the scripts of [the Mac's checks](../../macos/checks/README.md) too, by
+[checks-test.sh](../../macos/checks/checks-test.sh), against stand-ins for the Mac's tools. The
+scripts themselves run on a clean macOS 27 alone, which no runner is.
+
 ## The host job
 
 `host` is `server` for the host: it runs `ws ubuntu host setup` on the tree twice, on a booted

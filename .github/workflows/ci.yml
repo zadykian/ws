@@ -51,6 +51,7 @@ jobs:
           .github/warnings-check-test.sh
           .github/update-checks-test.sh
           ubuntu/checks/checks-test.sh
+          macos/checks/checks-test.sh
       - name: make lint
         run: make lint
         env:
