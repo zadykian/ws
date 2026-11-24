@@ -54,12 +54,15 @@ file. It then does what a person did by hand, in this order:
    it opened Secretive, as one made for another use would go to GitHub. To take one, stop setup
    with Ctrl-C and run `ws macos setup --key NAME`, NAME being the name that the wait prints
    ([Secretive](roles/ssh/README.md#secretive)).
-5. It runs mise's bootstrap in `/opt/ws/macos`, which installs gh and sets up ssh, git, cld
+5. It runs mise's bootstrap in `/opt/ws/macos` with `--yes`, so that it asks nothing before it
+   writes the preferences and the login items. The bootstrap installs gh and sets up ssh, git, cld
    and the Mac's other roles ([The Mac's frame](roles/frame/README.md)). It makes the Mac's
    WireGuard key, whose public half is `/etc/ws/tunnel.pub`.
 
 A second run changes nothing and asks no password. `ws macos setup --plan` plans these steps, and
-mise's bootstrap where none is due, and exits 0 where nothing would change. A ws that names no
+mise's bootstrap where none is due, by its plan and then its status. The plan covers no
+preference, Dock app or login item, and the status does, with the tools, repositories and
+packages. It exits 0 where nothing would change and 2 where something would. A ws that names no
 release tag is refused: `--in-place` runs the tree in `/opt/ws` as it stands, after the guard. So
 is a ws of another version than `/usr/local/bin/ws`, which the units run, or a missing file there:
 `ws update --version X.Y.Z` installs that release there. A tree, or a directory above it, that

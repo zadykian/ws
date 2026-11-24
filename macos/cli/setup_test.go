@@ -20,11 +20,14 @@ import (
 )
 
 const (
-	miseBody  = "a mise that a test serves"
-	treeRepo  = "https://example.org/ws"
-	miseLine  = "/usr/local/bin/mise -C /opt/ws/macos bootstrap"
-	planLine  = miseLine + " plan --detailed-exitcode"
-	toolsLine = "xcode-select -p"
+	miseBody = "a mise that a test serves"
+	treeRepo = "https://example.org/ws"
+	miseBase = "/usr/local/bin/mise -C /opt/ws/macos bootstrap"
+	miseLine = miseBase + " --yes"
+	planLine = miseBase + " plan --detailed-exitcode"
+	// statusLine is the status that follows a plan with nothing to do.
+	statusLine = miseBase + " status --missing --json"
+	toolsLine  = "xcode-select -p"
 )
 
 // miseExit is an error that carries a command's exit code, as an exec.ExitError does.
@@ -241,6 +244,7 @@ func TestSetupPlanAsksMisesPlanWhereTheStepsHaveNothingToDo(t *testing.T) {
 			p, m := setupProcess(rel)
 			standing(m, rel)
 			m.Results[planLine] = tc.result
+			m.Results[statusLine] = effecttest.Result{Out: []byte("{}")}
 			status, _ := runSetup(p, rel, "--plan")
 			if status != tc.status {
 				t.Errorf("status = %d, want %d", status, tc.status)

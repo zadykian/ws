@@ -66,8 +66,11 @@ steps are those of the server's setup, which `internal/setup` holds, with the Ma
 
 ## What the Mac reports
 
-`ws macos setup --plan` shows what setup and the units would change, and
-`ws macos servers` each server's tunnel. A cable's service that is disabled, which no run
+`ws macos setup --plan` shows what setup and the units would change. After mise's plan it runs
+`mise bootstrap status --missing --json`, which covers the preferences, the Dock and the login
+items that the plan leaves out. Its exit 1 is a difference, which has a report in JSON, or an
+error, which has none, so setup tells them apart and exits 2 for the difference.
+`ws macos servers` shows each server's tunnel. A cable's service that is disabled, which no run
 turns on, draws a warning from `ws macos cable` and its `--check` alone: a bootstrap shows no
 check's output. No unit reads a private key: the key's unit looks for the file alone.
 
