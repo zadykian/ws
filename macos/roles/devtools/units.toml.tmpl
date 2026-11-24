@@ -13,3 +13,20 @@ link = "{{ .Home }}/.local/share/mise/installs/go/1.27.3"
 [file.devtools-path]
 path = "/etc/paths.d/ws"
 source = "files/paths"
+
+# ~/.gnupg, the user's and 0700, where missing, as gpg makes it.
+[state.gnupg-dir.run]
+user = "{{ .User }}"
+creates = ["{{ .Home }}/.gnupg"]
+command = ["mkdir", "-m", "700", "{{ .Home }}/.gnupg"]
+
+# gpg-agent's settings, written where none is. gnupg's own pinentry runs in the terminal and finds
+# none on a ssh login, so the agent takes pinentry-mac, which asks in a window and offers the Keychain.
+# The user's changes stay: the unit never reads the file after.
+[file.gpg-agent-conf]
+after = "state/gnupg-dir"
+path = "{{ .Home }}/.gnupg/gpg-agent.conf"
+owner = "{{ .User }}"
+mode = 0o600
+source = "files/gpg-agent.conf"
+seed = true
