@@ -12,6 +12,9 @@ func TestUbuntuGroupOnLinux(t *testing.T) {
 	if status, stdout, _ := runGroups(p, "ubuntu", "guest"); status != 0 || !strings.Contains(stdout, "Available Commands:") || !strings.Contains(stdout, "\n  fans ") {
 		t.Errorf("status = %d, stdout = %q, want the commands of ubuntu guest", status, stdout)
 	}
+	if status, stdout, _ := runGroups(p, "ubuntu", "host"); status != 0 || !strings.Contains(stdout, "\n  setup ") || !strings.Contains(stdout, "\n  values ") {
+		t.Errorf("status = %d, stdout = %q, want the commands of ubuntu host", status, stdout)
+	}
 	if status, stdout, _ := runGroups(p, "unit"); status != 0 || !strings.Contains(stdout, "\n  list ") {
 		t.Errorf("status = %d, stdout = %q, want the commands of unit", status, stdout)
 	}
@@ -20,8 +23,8 @@ func TestUbuntuGroupOnLinux(t *testing.T) {
 	}
 }
 
-func TestUpdateEndsInTheGuestsSetupOnLinux(t *testing.T) {
-	if status, stdout, _ := runGroups(fakeProcess(), "update", "--help"); status != 0 || !strings.Contains(stdout, "ws ubuntu guest setup, and none where it has no side yet") {
-		t.Errorf("status = %d, stdout = %q, want an update that ends in ws ubuntu guest setup", status, stdout)
+func TestUpdateEndsInASidesSetupOnLinux(t *testing.T) {
+	if status, stdout, _ := runGroups(fakeProcess(), "update", "--help"); status != 0 || !strings.Contains(stdout, "ws ubuntu guest setup or ws ubuntu host setup, and none where it has no side yet") {
+		t.Errorf("status = %d, stdout = %q, want an update that ends in ws ubuntu guest or host setup", status, stdout)
 	}
 }

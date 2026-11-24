@@ -18,8 +18,19 @@ func TestUpdateSetupsFollowTheMiserc(t *testing.T) {
 	if args, err := UpdateSetups().Pick(m); err != nil || !reflect.DeepEqual(args, []string{"ubuntu", "guest", "setup"}) {
 		t.Errorf("args = %v, err = %v; want the guest's setup", args, err)
 	}
+	m.Files[setup.MisercPath] = setup.Miserc("host")
+	if args, err := UpdateSetups().Pick(m); err != nil || !reflect.DeepEqual(args, []string{"ubuntu", "host", "setup"}) {
+		t.Errorf("args = %v, err = %v; want the host's setup", args, err)
+	}
 	m.Files[setup.MisercPath] = setup.Miserc("macos")
-	if _, err := UpdateSetups().Pick(m); err == nil || !strings.Contains(err.Error(), "guest alone") {
+	if _, err := UpdateSetups().Pick(m); err == nil || !strings.Contains(err.Error(), "guest or host alone") {
 		t.Errorf("err = %v; want the env refused", err)
+	}
+}
+
+func TestUpdateSetupsNameBothSides(t *testing.T) {
+	want := []string{"ws ubuntu guest setup", "ws ubuntu host setup"}
+	if got := UpdateSetups().Names; !reflect.DeepEqual(got, want) {
+		t.Errorf("names = %v, want %v", got, want)
 	}
 }
