@@ -178,7 +178,8 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([units.toml.tmpl](../ubuntu/roles/devtools/units.toml.tmpl)). The npm servers are checked against the sha512
   `integrity` of their lockfile ([devtools](../ubuntu/roles/devtools/README.md#the-npm-servers)). Docker's
   apt key is checked against its fingerprint, which mise's source pins
-  ([mise.guest.toml](../ubuntu/roles/docker/mise.guest.toml)). So is the git-core PPA's key,
+  ([mise.guest.toml](../ubuntu/roles/docker/mise.guest.toml)). So is Zabbly's key for Incus,
+  by the fingerprint that [mise.host.toml](../ubuntu/roles/incus/mise.host.toml) pins. So is the git-core PPA's key,
   against Launchpad's fingerprint of it ([mise.guest.toml](../ubuntu/roles/base/mise.guest.toml),
   [base](../ubuntu/roles/base/README.md#git)). Zed's other
   downloads on ws are outside the rule

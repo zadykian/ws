@@ -14,9 +14,12 @@ done. A host holds no secret, so none comes after it.
    block of `/etc/ws/values.yml`'s text, or `""` where no value differs.
 2. Copy it as `user-data` to a volume labelled `CIDATA`, beside an empty `meta-data`.
 3. Boot the installer with `autoinstall` on the kernel's line. It asks for the storage alone.
-   Leave the pool's partition unformatted, with no filesystem: a later step gives it to the pool.
+   Leave the pool's partition unformatted, with no filesystem, and note its
+   `/dev/disk/by-partuuid/ID`: the pool takes the partition whole ([incus](roles/incus/README.md)).
 4. Read the first boot's run in `/var/log/cloud-init-output.log`, or by
-   `cloud-init status --wait --long`.
+   `cloud-init status --wait --long`. The values on the volume cannot name the partition, which
+   exists after the storage step, so the run fails at the pool. Put the partition in
+   `/etc/ws/values.yml` as `WS_INCUS_POOL_SOURCE`, and run `ws ubuntu host setup` again.
 
 [The autoinstall file](../.github/workflows/release.md#the-autoinstall-file) says what the
 release fills in.
