@@ -1,0 +1,420 @@
+# The Mac's keyboard, as mise's preferences. mise writes a value that is missing or differs, by its
+# type too, and restarts nothing: the keys read them at the next log in. README.md says why each
+# value stands.
+
+# The language indicator that macOS shows on each input source's switch. Its value is the string
+# "0", as the Mac holds it.
+[bootstrap.settings.macos.defaults.NSGlobalDomain]
+TSMLanguageIndicatorEnabled = "0"
+
+# Caps Lock acts as Control on the built-in keyboard, 0-0-0. macOS keeps that mapping per host.
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "NSGlobalDomain"
+key = "com.apple.keyboard.modifiermapping.0-0-0"
+host = "current"
+value = [
+    { HIDKeyboardModifierMappingSrc = 30064771129, HIDKeyboardModifierMappingDst = 30064771300 },
+]
+
+# The hotkeys that stay on, each as its whole value of the type standard: [code, key, modifiers].
+# 64 is Spotlight on Option+Space and 61 the next input source on Command+Space. 160 takes
+# Command+L. A path into AppleSymbolicHotKeys keeps the IDs that macOS adds, which the whole
+# dictionary would drop.
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["61"]
+value = { enabled = true, value = { parameters = [32, 49, 1048576], type = "standard" } }
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["64"]
+value = { enabled = true, value = { parameters = [32, 49, 524288], type = "standard" } }
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["160"]
+value = { enabled = true, value = { parameters = [108, 37, 1048576], type = "standard" } }
+
+# The hotkeys that go off, by their `enabled` alone: each keeps its `value`, and an ID that macOS
+# lacks gets a dictionary with `enabled` alone. 34 and 98 get no entry.
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["7", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["8", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["9", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["10", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["11", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["12", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["13", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["21", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["25", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["26", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["27", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["32", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["33", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["36", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["52", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["53", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["54", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["57", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["59", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["60", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["65", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["159", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["162", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["164", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["175", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["190", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["215", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["216", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["217", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["218", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["219", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["222", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["223", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["224", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["225", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["226", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["227", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["228", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["229", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["230", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["231", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["232", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["233", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["235", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["237", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["238", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["239", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["240", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["241", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["242", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["243", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["244", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["245", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["246", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["247", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["248", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["249", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["250", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["251", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["256", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["257", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["258", "enabled"]
+value = false
+
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["260", "enabled"]
+value = false

@@ -25,8 +25,9 @@ and a font as casks, and gh, fnox and age-plugin-yubikey by its lock, with no Ho
 mise installs Go by its lock, and gnupg, ripgrep and other tools as formulae
 ([devtools](roles/devtools/README.md)). It installs Docker's command line and colima the same way
 ([docker](roles/docker/README.md)). It sets the Dock, Finder, windows and sounds as preferences,
-and the wallpaper to Stone ([desktop](roles/desktop/README.md)). The second run installs the Mac's apps as casks, pins some
-in the Dock and opens six at login ([apps](roles/apps/README.md)).
+and the wallpaper to Stone ([desktop](roles/desktop/README.md)). It makes Caps Lock a Control key
+and sets the symbolic hotkeys ([keyboard](roles/keyboard/README.md)). The second run installs the
+Mac's apps as casks, pins some in the Dock and opens six at login ([apps](roles/apps/README.md)).
 The runbook runs `install.sh`, which puts `ws` in `/usr/local/bin` from a release, checked against
 its `ws.sha256` ([Releases](../.github/workflows/release.md)).
 Write each server's values below first, and the Mac's `values.yml`, which stands empty on a new
