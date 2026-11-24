@@ -38,6 +38,10 @@ type Shared struct {
 	// GitSigningPubKey is the public key's path of the SSH key that signs git's commits. The private
 	// key lies beside it, without .pub. Left empty, it defaults to /root/.ssh/id_ed25519_signing.pub.
 	GitSigningPubKey string `yaml:"WS_GIT_SIGNING_PUB_KEY"`
+	// SelfContained is a guest's mode, off by default: the guest runs SigNoz and its own tunnel,
+	// where a guest under a host takes both from the host. A cloud VM has no host, so it runs so.
+	// The host's own file takes no such key.
+	SelfContained bool `yaml:"WS_SELF_CONTAINED"`
 }
 
 // Parse returns the values that data gives over Default. It refuses a key that no role knows, a key
