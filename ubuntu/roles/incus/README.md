@@ -35,6 +35,7 @@ A command's `--check` fails where a change is due, and its plan shows the change
 | `state/incus-pool` | The ZFS pool `ws` | `source`, on a create alone: `WS_INCUS_POOL_SOURCE`. |
 | `state/incus-bridge` | The bridge `incusbr0` | The subnet, DHCP's resolvers, NAT, no IPv6 and the ACL. |
 | `state/incus-profile` | The profile `ws` | Unprivileged, nesting, isolated IDs, an isolated NIC and the disk. |
+| `state/incus-image` | The image of the guests | Ubuntu's root tarball, with ws's metadata. |
 | `state/incus-ufw` | ufw's rules | DHCP in on the bridge, and the bridge's routes. |
 | `service/incus-sources` | The table `ws_sources` | What a guest may not claim as its source. |
 
@@ -125,3 +126,32 @@ not take. So a name reaches a command, a path or YAML once checked.
 A guest's own values sit on the host, in `/etc/ws/guests/NAME/values.yml`, root's and 600. The host
 reads each file as the guest's values, and refuses one that does not parse. A missing file gives
 the guest its defaults.
+
+## The image
+
+A guest launches from Ubuntu 26.04's cloud root tarball, `ubuntu-26.04-server-cloudimg-ARCH-root.tar.xz`
+of the dated release `release-20261108`. ws pins the SHA-256 that the release's `SHA256SUMS` lists for
+`amd64` and `arm64`, and checks the download against it before the import, as a moving release
+would break the pin. A new release is a new date and two new sums in [image.go](image.go) and
+[metadata.go](metadata.go).
+
+The tarball holds no SSH host key, an empty `/etc/netplan`, the name `ubuntu` and an empty machine-id,
+and a container under Incus has `/dev/incus` alone, so cloud-init finds no datasource. So ws writes
+the image's metadata, whose templates write cloud-init's NoCloud seed in
+`/var/lib/cloud/seed/nocloud-net` as an instance is created:
+
+| File | What it holds |
+| --- | --- |
+| `meta-data` | The instance's name, as its id and its `local-hostname`. |
+| `user-data`, `vendor-data` | The instance's `cloud-init.user-data` and `cloud-init.vendor-data`, or `#cloud-config` and `{}`. |
+| `network-config` | The instance's `cloud-init.network-config`, or DHCP on `eth0`. |
+
+cloud-init then makes the host keys, the name and the netplan on the first boot. The seed is
+written as an instance is created or copied, so a changed key of it reaches a guest that is made
+after, not one that exists.
+
+The image's alias is `ws-ubuntu-26.04-RELEASE-ID`, where ID is the digest of the metadata. A changed
+template is another image, and a guest keeps the one that made it. Where Incus holds the
+alias, the unit does nothing. Otherwise it downloads the tarball into `/var/cache/ws`, writes the
+metadata beside it, imports both and drops them. The metadata is a gzip tarball that is the same
+for the same input.
