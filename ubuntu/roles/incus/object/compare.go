@@ -11,7 +11,8 @@ import (
 // differs returns the paths of the declared keys that have lacks or holds another value of. A map
 // in want is compared by its keys alone, so that what Incus adds to an object differs from nothing.
 // A list is compared whole, element by element. A declared empty list or map matches a key that
-// have lacks, as Incus leaves an empty one out. path is the key's place, empty at the top.
+// have lacks, as Incus leaves an empty one out. A nil declares a key absent: it differs where have
+// holds the key. path is the key's place, empty at the top.
 func differs(want, have any, path string) []string {
 	switch w := want.(type) {
 	case map[string]any:
@@ -60,9 +61,11 @@ func cmpPath(path, key string) string {
 	return path + "." + key
 }
 
-// empty reports whether a declared value is an empty list or map.
+// empty reports whether a declared value is nil, an empty list or an empty map.
 func empty(v any) bool {
 	switch v := v.(type) {
+	case nil:
+		return true
 	case map[string]any:
 		return len(v) == 0
 	case []any:
@@ -80,18 +83,20 @@ func text(v any) string {
 }
 
 // merge returns a copy of base with over laid on it: maps merge key by key, and any other value of
-// over replaces base's.
+// over replaces base's. A nil of over removes the key.
 func merge(base, over map[string]any) map[string]any {
 	out := make(map[string]any, len(base)+len(over))
 	maps.Copy(out, base)
 	for k, v := range over {
-		if m, ok := v.(map[string]any); ok {
-			if b, ok := out[k].(map[string]any); ok {
-				out[k] = merge(b, m)
-				continue
-			}
+		switch v := v.(type) {
+		case nil:
+			delete(out, k)
+		case map[string]any:
+			b, _ := out[k].(map[string]any)
+			out[k] = merge(b, v)
+		default:
+			out[k] = v
 		}
-		out[k] = v
 	}
 	return out
 }

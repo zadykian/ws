@@ -47,7 +47,8 @@ type Object struct {
 	Name string
 	// Want is the keys that ws declares, as YAML decodes them. Each run compares them with the
 	// object's, sends them whole on a create, and patches them into the object on an edit. A list
-	// in Want replaces the object's whole, and an empty one matches a key Incus leaves out.
+	// in Want replaces the object's whole, and an empty one matches a key Incus leaves out. A nil
+	// declares a key absent, and an edit removes it.
 	Want map[string]any
 	// First is the keys that a create alone takes, such as a pool's source, which Incus never
 	// edits. They are never compared.
