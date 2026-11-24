@@ -10,7 +10,15 @@ import (
 // and every other line unchanged. An empty value takes the key's line out, which gives its default
 // back. It refuses a key that a line does not hold, and a result that does not read as value.
 func Set(data []byte, name, value string) ([]byte, error) {
-	keys := Keys()
+	return setIn(data, name, value, Keys(), Parse, decode)
+}
+
+// reader is a values type that reads a key as a line gives it.
+type reader interface{ Text(k Key) string }
+
+// setIn is Set for a values type: its keys, the parse that checks a file, and the decode that
+// reads a line alone.
+func setIn[T reader](data []byte, name, value string, keys []Key, parse, decode func([]byte) (T, error)) ([]byte, error) {
 	at := slices.IndexFunc(keys, func(k Key) bool { return k.Name == name })
 	if at < 0 {
 		return nil, fmt.Errorf("no line holds %s: edit the file by hand", name)
@@ -19,7 +27,7 @@ func Set(data []byte, name, value string) ([]byte, error) {
 	if err := key.Check(value); err != nil {
 		return nil, err
 	}
-	if _, err := Parse(data); err != nil {
+	if _, err := parse(data); err != nil {
 		return nil, err
 	}
 	text := string(data)
@@ -42,14 +50,14 @@ func Set(data []byte, name, value string) ([]byte, error) {
 		}
 		lines = slices.Replace(lines, start, end, line)
 	}
-	return checked([]byte(strings.Join(lines, "")), key, line)
+	return checked([]byte(strings.Join(lines, "")), key, line, parse, decode)
 }
 
 // checked returns data where the file reads and gives key the value of line, which is empty for a
 // key taken out. The line-by-line edit knows no YAML: this catches a file that it misread, such as
 // one whose document ends before the new line.
-func checked(data []byte, key Key, line string) ([]byte, error) {
-	got, err := Parse(data)
+func checked[T reader](data []byte, key Key, line string, parse, decode func([]byte) (T, error)) ([]byte, error) {
+	got, err := parse(data)
 	if err != nil {
 		return nil, fmt.Errorf("the file reads no more with %s changed: edit it by hand: %w", key.Name, err)
 	}

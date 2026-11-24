@@ -13,10 +13,13 @@ import (
 // order of Values. The bootstrap writes it where a machine has none, so that each default is there
 // to read and to edit. A list of plain values takes one line, the form that Set writes, and an
 // unset pointer is null, as yaml would leave out a key that omitempty marks.
-func (v Values) YAML() (string, error) {
+func (v Values) YAML() (string, error) { return yamlOf(v) }
+
+// yamlOf is the whole file for v, a values type, as YAML gives it.
+func yamlOf(v any) (string, error) {
 	doc := &yaml.Node{Kind: yaml.MappingNode}
 	all := reflect.ValueOf(v)
-	for _, f := range fields(reflect.TypeFor[Values](), nil) {
+	for _, f := range fields(all.Type(), nil) {
 		value := &yaml.Node{}
 		if err := value.Encode(all.FieldByIndex(f.place).Interface()); err != nil {
 			return "", fmt.Errorf("%s: %w", f.name, err)

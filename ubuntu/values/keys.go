@@ -41,9 +41,12 @@ type Key struct {
 
 // Keys lists the keys that a line holds, in the order of Values. They come from its fields, so that a
 // role's new key needs no second list.
-func Keys() []Key {
+func Keys() []Key { return keysOf(reflect.TypeFor[Values]()) }
+
+// keysOf lists the keys of a values type that a line holds.
+func keysOf(t reflect.Type) []Key {
 	var keys []Key
-	for _, f := range fields(reflect.TypeFor[Values](), nil) {
+	for _, f := range fields(t, nil) {
 		if kind, ok := kindOf(f.Type); ok {
 			keys = append(keys, Key{f.name, kind, f.place})
 		}
@@ -127,7 +130,10 @@ func (k Key) Check(value string) error {
 }
 
 // Text is the key's value in v as a line gives it, which is empty for an unset pointer.
-func (v Values) Text(k Key) string {
+func (v Values) Text(k Key) string { return textOf(v, k) }
+
+// textOf is the key's value in v, a values type, as a line gives it.
+func textOf(v any, k Key) string {
 	field := reflect.ValueOf(v).FieldByIndex(k.place)
 	if field.Kind() == reflect.Pointer {
 		if field.IsNil() {
