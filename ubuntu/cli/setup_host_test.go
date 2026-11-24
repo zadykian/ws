@@ -69,3 +69,42 @@ func TestHostSetupTakesNoSecretsFlag(t *testing.T) {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
 }
+
+const hostPlanLine = hostBootstrapLine + " plan --detailed-exitcode"
+
+func TestHostSetupPlansTheHostsBootstrap(t *testing.T) {
+	rel := setupRelease(miseBody)
+	p, m := hostProcess(rel)
+	standing(m, rel)
+	m.Files[setup.MisercPath] = setup.Miserc("host")
+	m.Results[hostPlanLine] = effecttest.Result{}
+	if status, stderr := runHostSetup(p, rel, "--plan"); status != 0 {
+		t.Fatalf("status = %d, stderr = %q", status, stderr)
+	}
+	if !ran(m, hostPlanLine) {
+		t.Errorf("calls = %q", m.Calls)
+	}
+}
+
+func TestHostSetupChecksTheHostsValuesBeforeAnyWrite(t *testing.T) {
+	for _, file := range []string{"---\nWS_BASE_SWAPPINESS: 400\n", "---\nWS_ZED_NOFILE: 1\n"} {
+		rel := setupRelease(miseBody)
+		p, m := hostProcess(rel)
+		m.Files[hostVars] = []byte(file)
+		status, stderr := runHostSetup(p, rel)
+		if status != 1 || !strings.Contains(stderr, "edit "+hostVars+" by hand") {
+			t.Errorf("%q: status = %d, stderr = %q", file, status, stderr)
+		}
+		leftNothing(t, m, false)
+	}
+}
+
+func TestHostSetupRefusesAUser(t *testing.T) {
+	rel := setupRelease(miseBody)
+	p, m := hostProcess(rel)
+	p.Euid = 1000
+	if status, stderr := runHostSetup(p, rel); status != 1 || !strings.Contains(stderr, "ws ubuntu host setup: run it as root") {
+		t.Errorf("status = %d, stderr = %q", status, stderr)
+	}
+	leftNothing(t, m, false)
+}
