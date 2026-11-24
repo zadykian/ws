@@ -29,13 +29,13 @@ func TestValuesPrintCommand(t *testing.T) {
 		wantOut    string
 		wantErr    string
 	}{
-		{"home", nil, "", 0, "WS_TARGET='lan'\nWS_SLOT='0'\n", ""},
-		{"env", nil, "/e/values.yml", 0, "WS_TARGET='lan'\nWS_SLOT='3'\n", ""},
-		{"argument", []string{"/a/values.yml"}, "/e/values.yml", 0, "WS_TARGET='lan'\nWS_SLOT='5'\n", ""},
+		{"home", nil, "", 0, "WS_TARGET='lan'\nWS_HOST=''\nWS_SLOT='0'\n", ""},
+		{"env", nil, "/e/values.yml", 0, "WS_TARGET='lan'\nWS_HOST=''\nWS_SLOT='3'\n", ""},
+		{"argument", []string{"/a/values.yml"}, "/e/values.yml", 0, "WS_TARGET='lan'\nWS_HOST=''\nWS_SLOT='5'\n", ""},
 		{"missing", []string{"/none"}, "", 1, "", "ws macos values print: /none is missing: macos/values/README.md"},
 		{"refused", []string{"/bad"}, "", 1, "", "ws macos values print: /bad, line 2: unknown key WS_NOPE"},
-		{"lines", []string{"--lines", "/lines/values.yml"}, "", 0, "WS_TARGET='lan'\nWS_SLOT='0'\nWS_PUBLIC_KEY=''\nWS_LAN='10.88.0.0/24'\n", ""},
-		{"lines of the server's file", []string{"--lines"}, "", 0, "WS_TARGET='lan'\nWS_SLOT='0'\n", ""},
+		{"lines", []string{"--lines", "/lines/values.yml"}, "", 0, "WS_TARGET='lan'\nWS_HOST=''\nWS_SLOT='0'\nWS_PUBLIC_KEY=''\nWS_LAN='10.88.0.0/24'\n", ""},
+		{"lines of the server's file", []string{"--lines"}, "", 0, "WS_TARGET='lan'\nWS_HOST=''\nWS_SLOT='0'\n", ""},
 		{"lines refuse a server's key in values.yml", []string{"--lines", "/lines/bad/values.yml"}, "", 1, "", "/lines/bad/values.yml, line 1: WS_LAN is a server's key"},
 		{"pair", []string{"/pairs/values.yml"}, "", 1, "", "WS_LAN and WS_LAN_ADDRESS go together"},
 		{"two files", []string{"a", "b"}, "", 2, "", "ws macos values print: accepts at most 1 arg(s), received 2"},

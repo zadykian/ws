@@ -26,6 +26,12 @@ import (
 // fetches the secrets repository on a first run, then runs the bootstrap under it.
 var serverSecretsRun = []string{"/usr/local/bin/ws", "ubuntu", "guest", "setup", "--secrets"}
 
+// guestSecretsRun is the host's ws, as root, setting a guest up with the secrets, as the guest has no
+// address of its own to run it at.
+func guestSecretsRun(name string) []string {
+	return []string{"/usr/local/bin/ws", "ubuntu", "host", "guests", "setup", name, "--secrets"}
+}
+
 // newSecretsAddCmd returns ws macos secrets add.
 func newSecretsAddCmd(p enginecli.Env, server *string) *cobra.Command {
 	var address string
@@ -40,7 +46,8 @@ func newSecretsAddCmd(p enginecli.Env, server *string) *cobra.Command {
 			"encrypts their values again, which asks for the Nano's PIN and a touch. It keeps the key as the " +
 			"repository's read-only deploy key, titled with the hostname, and lands the change by a pull request " +
 			"once its checks pass. It then runs ws ubuntu guest setup --secrets on the server over ssh -t, which fetches " +
-			"the secrets on a first run. Last, it prints each host key that the secrets hold and known_hosts " +
+			"the secrets on a first run. A guest has no address: its host reads its key and hostname, by incus exec, " +
+			"and runs ws ubuntu host guests setup NAME --secrets, and --address and --port reach the host. Last, it prints each host key that the secrets hold and known_hosts " +
 			"gives no host, to drop by hand where no server holds it now. " +
 			"Each step changes nothing where it is done, so run it again where one fails.",
 		Args: cobra.ExactArgs(1),
@@ -81,12 +88,15 @@ func runSecretsAdd(c *cobra.Command, p enginecli.Env, server, name, address stri
 	} else if err != nil {
 		return fmt.Errorf("cannot stat fnox's key file %s: %w", keyFile, err)
 	}
-	target := sshTarget(name, address, port)
-	key, err := hostKey(c, p, name, target)
+	r, err := reachOf(p, name, address, port)
 	if err != nil {
 		return err
 	}
-	hostname, err := hostnameOf(c.Context(), p.Machine, name, target)
+	key, err := hostKey(c, p, r)
+	if err != nil {
+		return err
+	}
+	hostname, err := hostnameOf(c.Context(), p.Machine, r)
 	if err != nil {
 		return err
 	}
@@ -97,7 +107,7 @@ func runSecretsAdd(c *cobra.Command, p enginecli.Env, server, name, address stri
 	again := strings.Join(append([]string{"ws macos secrets add"}, addFlags(name, address, port)...), " ")
 	_, _ = fmt.Fprintf(c.OutOrStdout(), "running the bootstrap with the secrets on %s, which takes 20 to 40 "+
 		"minutes on a new server\n", name)
-	run := append(append([]string{"-t"}, target...), serverSecretsRun...)
+	run := append(append([]string{"-t"}, r.target...), r.setup()...)
 	if err = p.Machine.Pass(c.Context(), false, "ssh", run...); err != nil {
 		err = fmt.Errorf("the run of the secrets on %s: %w: run %s again", name, err, again)
 	}
@@ -152,16 +162,25 @@ func addFlags(name, address string, port int) []string {
 
 // hostKey is the server's ed25519 host key that known_hosts holds under name. Where it holds none,
 // it scans the server at ssh's address. It records the scanned key once the user says that the
-// server's console prints the same fingerprint, as nothing else proves the key the server's.
-func hostKey(c *cobra.Command, p enginecli.Env, name string, target []string) (string, error) {
-	ctx, m, home := c.Context(), p.Machine, p.Getenv("HOME")
+// server's console prints the same fingerprint, as nothing else proves the key the server's. A
+// guest's host reads the guest's key, which known_hosts trusts as it trusts the host.
+func hostKey(c *cobra.Command, p enginecli.Env, r reach) (string, error) {
+	ctx, m, home, name := c.Context(), p.Machine, p.Getenv("HOME"), r.name
 	if home == "" {
 		return "", errors.New("HOME is not set: known_hosts has no place")
+	}
+	if r.host != "" {
+		if err := hostTrusted(c, p, r); err != nil {
+			return "", err
+		}
 	}
 	if key, err := secrets.HostKey(ctx, m, home, name); err != nil || key != "" {
 		return key, err
 	}
-	host, port, err := sshAddress(ctx, m, target)
+	if r.host != "" {
+		return guestHostKey(c, p, r)
+	}
+	host, port, err := sshAddress(ctx, m, r.target)
 	if err != nil {
 		return "", err
 	}
@@ -241,11 +260,12 @@ func sshAddress(ctx context.Context, m effect.Machine, target []string) (string,
 }
 
 // hostnameOf is the server's hostname, which names its profile, label and deploy key.
-func hostnameOf(ctx context.Context, m effect.Machine, name string, target []string) (string, error) {
-	out, err := m.Run(ctx, "ssh", append(slices.Clone(target), "hostname")...)
+func hostnameOf(ctx context.Context, m effect.Machine, r reach) (string, error) {
+	name := r.name
+	out, err := m.Run(ctx, "ssh", r.command("hostname")...)
 	if err != nil {
 		return "", fmt.Errorf("cannot read the hostname of %s by ssh: %w: where ssh names another host key, as "+
-			"after a rebuild, drop the old one by ssh-keygen -R %s, then run add again", name, err, name)
+			"after a rebuild, drop the old one by ssh-keygen -R %s, then run add again", name, err, r.ssh)
 	}
 	hostname := strings.TrimSpace(string(out))
 	if err := secrets.CheckHostname(hostname); err != nil {

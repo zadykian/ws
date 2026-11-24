@@ -97,6 +97,16 @@ func ed25519Key(text []byte) (string, error) {
 	return key, nil
 }
 
+// PubKey takes the ed25519 key of a host key's .pub text, as "ssh-ed25519 BASE64", or "" where the
+// text holds none.
+func PubKey(text []byte) (string, error) {
+	var b strings.Builder
+	for line := range strings.Lines(string(text)) {
+		b.WriteString("host " + line)
+	}
+	return ed25519Key([]byte(b.String()))
+}
+
 // RecordHostKey appends name's line with key to home's known_hosts, made 0600 where missing, in an
 // .ssh made 0700. The file's lines stay as they are, and it ends 0600. A link is left to the
 // maintainer, who chose where it points.

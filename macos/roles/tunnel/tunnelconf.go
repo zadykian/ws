@@ -8,7 +8,7 @@ import (
 )
 
 // tunnelConf is tunnel.conf, the values the daemon takes from the server's values file, so that a root
-// daemon reads no file the user can write. WS_CABLE=yes is for the one server that names the cable.
+// daemon reads no file the user can write. WS_CABLE=yes is for the one server that names the cable, and for its guests.
 func tunnelConf(c values.Conf) string {
 	var b strings.Builder
 	b.WriteString(file.Header("#") + "\n")
@@ -20,7 +20,7 @@ func tunnelConf(c values.Conf) string {
 	if c.Remote != "" {
 		b.WriteString("WS_REMOTE=" + c.Remote + "\n")
 	}
-	if c.CableService != "" {
+	if c.CableService != "" || c.HostCable {
 		b.WriteString("WS_CABLE=yes\n")
 	}
 	b.WriteString("WS_TUNNEL_PORT=" + c.TunnelPort() + "\n")

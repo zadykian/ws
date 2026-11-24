@@ -18,9 +18,13 @@ const (
 // Conf is values.yml's settings, each key's value as the file gives it, with the default of a key
 // that has no line or an empty value.
 type Conf struct {
-	Target, Slot, PublicKey, LAN, LANAddress, Remote, RemotePort, Port string
-	TunnelNetworks, Resolvers, CableService, CablePort                 string
-	GitSigningPubKey, IdentityPubKey, IdentityAgent                    string
+	Target, Host, Slot, PublicKey, LAN, LANAddress, Remote, RemotePort, Port string
+	TunnelNetworks, Resolvers, CableService, CablePort                       string
+	GitSigningPubKey, IdentityPubKey, IdentityAgent                          string
+
+	// HostCable is set by Load alone, for a guest whose host has a cable: the guest tries the cable's
+	// address too. A guest holds no WS_CABLE_SERVICE, as one cable serves one service.
+	HostCable bool
 }
 
 // TunnelSlot gives the slot that c.Slot names. Load has checked it, and an empty one is slot 0.
@@ -68,8 +72,10 @@ const keyFile = "a public key's file, as ~/.ssh/NAME.pub: a path from / or ~/ to
 // keys is values.yml's keys in the order of the file's docs, with their checks.
 var keys = []key{
 	{"WS_TARGET", func(c *Conf) *string { return &c.Target },
-		func(v string) bool { return v == "lan" || v == "cloud" || v == "mac-vm" },
-		"lan, cloud or mac-vm: a machine on the LAN, a cloud VM or a VM on the Mac"},
+		func(v string) bool { return v == "lan" || v == "cloud" },
+		"lan or cloud: a machine on the LAN or a cloud VM"},
+	{"WS_HOST", func(c *Conf) *string { return &c.Host }, IsName,
+		"a server's name, the host of this guest: " + NameForm},
 	{"WS_SLOT", func(c *Conf) *string { return &c.Slot }, func(v string) bool { _, ok := slot.Parse(v); return ok },
 		"a number from 0 to " + strconv.Itoa(slot.Last)},
 	{"WS_PUBLIC_KEY", func(c *Conf) *string { return &c.PublicKey }, check.Key,

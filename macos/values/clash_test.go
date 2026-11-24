@@ -52,15 +52,8 @@ func TestClashesAllowTheServersOfEachTargetAndOfTwoServersOfOne(t *testing.T) {
 		"WS_TUNNEL_NETWORKS", "10.30.0.0/16",
 		"WS_RESOLVERS", "b.test=10.30.0.53",
 	)
-	vm := Text(
-		"WS_SLOT", "2",
-		"WS_TARGET", "mac-vm",
-		"WS_LAN", "192.168.64.0/24",
-		"WS_LAN_ADDRESS", "192.168.64.5",
-		"WS_TUNNEL_NETWORKS", "10.40.0.0/16",
-	)
-	// Each second server holds its placed slot and ports: two machines behind one router, two cloud
-	// VMs, and two VMs on the Mac's one network.
+	// Each second server holds its placed slot and ports: two machines behind one router and two cloud
+	// VMs.
 	lan2 := Text(
 		"WS_SLOT", "3",
 		"WS_TARGET", "lan",
@@ -80,14 +73,7 @@ func TestClashesAllowTheServersOfEachTargetAndOfTwoServersOfOne(t *testing.T) {
 		"WS_TUNNEL_NETWORKS", "10.31.0.0/16",
 		"WS_RESOLVERS", "d.test=10.31.0.53",
 	)
-	vm2 := Text(
-		"WS_SLOT", "5",
-		"WS_TARGET", "mac-vm",
-		"WS_LAN", "192.168.64.0/24",
-		"WS_LAN_ADDRESS", "192.168.64.6",
-		"WS_TUNNEL_NETWORKS", "10.41.0.0/16",
-	)
-	for _, pair := range [][2]string{{lan, cloud}, {lan, vm}, {cloud, vm}, {lan, lan2}, {cloud, cloud2}, {vm, vm2}} {
+	for _, pair := range [][2]string{{lan, cloud}, {lan, lan2}, {cloud, cloud2}} {
 		for _, order := range [][2]string{pair, {pair[1], pair[0]}} {
 			if got := clashes(parse(t, order[0]), sibling(order[1])); len(got) != 0 {
 				t.Errorf("%q beside %q: clashes = %+v, want none", order[0], order[1], got)

@@ -16,7 +16,7 @@ func Check(m effect.Machine, mac string) error {
 	all := []error{err, serversErr}
 	for _, name := range names {
 		server := ServerPath(mac, name)
-		c, err := load(m, server, ServerFile.Parse)
+		c, err := loadServer(m, mac, server)
 		if err == nil {
 			err = refuseClashes(m, mac, server, c)
 		}

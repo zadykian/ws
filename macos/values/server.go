@@ -23,7 +23,7 @@ func ServerPath(mac, name string) string {
 // takes that another server's file takes too ([clashes]).
 func Load(m effect.Machine, mac, server string) (Conf, error) {
 	macConf, macErr := load(m, mac, MacFile.Parse)
-	c, serverErr := load(m, server, ServerFile.Parse)
+	c, serverErr := loadServer(m, mac, server)
 	if err := errors.Join(macErr, serverErr); err != nil {
 		return Conf{}, err
 	}

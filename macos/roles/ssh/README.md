@@ -93,8 +93,7 @@ hour. `ssh -o HostName=ADDRESS -o Port=PORT ws` comes from another address, and 
 `fail2ban-client set sshd unbanip 10.99.N.2` lifts the ban.
 
 A guest holds no filter, so the Mac's firewall alone keeps ws from opening a connection to the Mac
-over the cable, the LAN or the tunnel ([The firewall](../firewall/README.md)). On a VM on the Mac,
-DHCP and DNS go to the Mac, which serves them.
+over the cable, the LAN or the tunnel ([The firewall](../firewall/README.md)).
 
 The first login asks whether to trust ws's host key: compare its fingerprint with the one
 `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` prints on ws's console. On the cable and the LAN,

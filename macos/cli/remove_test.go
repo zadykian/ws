@@ -172,6 +172,20 @@ func TestRemoveNamesTheCableOfTheGoneServer(t *testing.T) {
 	}
 }
 
+func TestRemoveRefusesAHostThatHasGuests(t *testing.T) {
+	p, m := removeFixture()
+	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_HOST", "ws", "WS_SLOT", "1"))
+	status, _, stderr := runWs(p, "macos", "remove", "ws")
+	if want := "ws is the host of lab: remove them first"; status != 1 || !strings.Contains(stderr, want) {
+		t.Errorf("status = %d, stderr = %q; want 1 and %q", status, stderr, want)
+	}
+	for _, call := range m.Calls {
+		if strings.HasPrefix(call, "run rm") {
+			t.Errorf("a refused remove ran %q", call)
+		}
+	}
+}
+
 func TestRemoveRefusesTheLastServerAndAWrongName(t *testing.T) {
 	for name, tc := range map[string]struct {
 		arg, want string

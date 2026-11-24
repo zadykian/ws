@@ -10,7 +10,8 @@ Zed stay open as the Mac moves between the cable, the LAN and elsewhere, with a 
 ([Zed](../ubuntu/roles/zed/README.md#when-the-connection-drops)). What it gives up: `ssh ws` fails where UDP is blocked and
 while the tunnel is down, and bulk copies run at wireguard-go's speed. To reach ws by hand, give ssh
 a direct way: `ssh -o HostName=ADDRESS -o Port=PORT ws`, as sshd takes a login on every interface.
-`WS_REMOTE_PORT` and the router's forward stay for that and for setup.
+`WS_REMOTE_PORT` and the router's forward stay for that and for setup. A guest has no direct way,
+as nothing forwards TCP to it: the Mac reaches its host first, which runs the guest's commands.
 
 The Mac's side is mise's config and ws's units, as the server's is, which `go test` checks on each
 pull request. It runs as the user, with sudo where it needs root. `mise bootstrap` sets up Ghostty,
@@ -94,8 +95,9 @@ names the network service of the display's adapter, and `WS_CABLE_PORT` ws's por
 cable](#the-cable). `WS_GIT_SIGNING_PUB_KEY` is the `.pub` of the key that signs git's commits on
 the Mac, by its path from `/` or `~/`: [git on the Mac](roles/git/README.md). `WS_IDENTITY_PUB_KEY` is the
 `.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the socket of its agent: [ssh's
-hosts](#sshs-hosts). The bootstrap makes `/etc/ws` through sudo, at mode 755, for the tunnel's key,
-git's files and ssh's hosts.
+hosts](#sshs-hosts). `WS_HOST` makes a server a guest of another, its host, and takes the host's
+LAN, address and router for the guest's ([A guest](values/README.md#a-guest)). The bootstrap makes
+`/etc/ws` through sudo, at mode 755, for the tunnel's key, git's files and ssh's hosts.
 
 ssh logs in to every server as root, so no key names a user. A key with an empty value, as
 `WS_REMOTE: ""`, takes its default, as a missing line does: 51820 for `WS_TUNNEL_PORT`.
@@ -136,9 +138,9 @@ fails, naming that command. The command stops on a service the list lacks, or on
 outside `10.77.0.0/30`, as an uplink has. A disabled service, which the list prints with a `*` first
 and the key names without it, plans no change. So no bootstrap shows it: `ws macos cable
 --check` warns of it while it stays off. Without the key, it does nothing, and the server's tunnel
-does not try the cable: the cable reaches the one server that names it. `-setmanual` replaces the
-service's settings, whatever they were, and emptying the key leaves them. To give the service DHCP
-again: `sudo networksetup -setdhcp SERVICE`.
+does not try the cable: the cable reaches the one server that names it, and that server's guests.
+`-setmanual` replaces the service's settings, whatever they were, and emptying the key leaves them.
+To give the service DHCP again: `sudo networksetup -setdhcp SERVICE`.
 
 An address, mask or router that `getinfo` omits, as it may undocked, counts as set. Where
 `-setmanual` leaves other settings, the command names them and stops. Then set it by hand: in System
@@ -168,6 +170,17 @@ make the Mac the server's peer, with that key as MAC_PUBLIC_KEY. They go over a 
 ```sh
 ssh -o HostName=ADDRESS -o Port=PORT NAME "printf '%s\n' 'MAC_PUBLIC_KEY' | tee /etc/wireguard/mac.pub >/dev/null"
 ssh -o HostName=ADDRESS -o Port=PORT NAME ws ubuntu guest setup
+```
+
+A guest's tunnel ends on its host, which holds the interface's key and its peers. So the same two
+commands go to the host, with the guest's slot N: the Mac's key goes in `/etc/wireguard/wgN/mac.pub`
+there, and the host's setup makes the interface. Its check prints the interface's public key, which
+is the guest's `WS_PUBLIC_KEY`. ADDRESS and PORT reach the host, as the guest has no address:
+
+```sh
+ssh -o HostName=ADDRESS -o Port=PORT HOST "install -d -m 700 /etc/wireguard/wgN && printf '%s\n' 'MAC_PUBLIC_KEY' | tee /etc/wireguard/wgN/mac.pub >/dev/null"
+ssh -o HostName=ADDRESS -o Port=PORT HOST ws ubuntu host setup
+ssh -o HostName=ADDRESS -o Port=PORT HOST ws ubuntu host tunnel guests check
 ```
 
 With ws's key as `WS_PUBLIC_KEY`, the bootstrap installs the tunnel's daemon. A new

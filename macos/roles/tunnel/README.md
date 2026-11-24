@@ -37,9 +37,10 @@ held.
 
 ## The cable
 
-The cable reaches one server, the one whose file has `WS_CABLE_SERVICE`. Its `tunnel.conf` says
-`WS_CABLE=yes`, and only its daemon and its direct way try `10.77.0.1`, first. The other servers
-leave the cable out, as they would try an address that is no server of theirs.
+The cable reaches one server, the one whose file has `WS_CABLE_SERVICE`, and its guests. Their
+`tunnel.conf` says `WS_CABLE=yes`, and only their daemons and the server's direct way try
+`10.77.0.1`, first, each at its own port. The other servers leave the cable out, as they would try
+an address that is no server of theirs.
 
 ## A new copy of ws
 

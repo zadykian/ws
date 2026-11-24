@@ -187,3 +187,16 @@ func TestFingerprintGivesTheKeyOnStdin(t *testing.T) {
 		t.Errorf("Fingerprint's input is %q and its calls %q, want the key on stdin alone", m.Inputs, m.Calls)
 	}
 }
+
+func TestPubKeyTakesTheEd25519KeyOfAPubFile(t *testing.T) {
+	for text, want := range map[string]string{
+		"ssh-ed25519 AAAAC3Nza root@lab\n": "ssh-ed25519 AAAAC3Nza",
+		"ssh-ed25519 AAAAC3Nza\n":          "ssh-ed25519 AAAAC3Nza",
+		"ssh-rsa AAAAB3Nza root@lab\n":     "",
+		"":                                 "",
+	} {
+		if got, err := secrets.PubKey([]byte(text)); err != nil || got != want {
+			t.Errorf("secrets.PubKey(%q) = %q, %v; want %q", text, got, err, want)
+		}
+	}
+}

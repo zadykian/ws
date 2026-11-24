@@ -113,22 +113,26 @@ button or Ctrl+X in its terminal, which undoes the changes if the session drops:
   ```
 
   ws takes the address as it next renews, or at once with `networkctl reconfigure UPLINK` again.
-- Two forwards from the internet to the server: UDP 51820, the tunnel's, and TCP 22022 to its SSH,
-  for networks that block UDP. The default firewall's rule that drops what comes in from the WAN
-  without a dst-nat lets both through:
+- The forwards from the internet to the host: UDP 51820, the tunnel's, and TCP 22022 to its SSH,
+  for networks that block UDP. Each guest takes one more UDP port, its `WS_TUNNEL_PORT`, forwarded
+  to the host too, as the host ends the guest's tunnel and nothing forwards TCP to a guest. The
+  default firewall's rule that drops what comes in from the WAN without a dst-nat lets them
+  through:
 
   ```routeros
   /ip firewall nat add chain=dstnat in-interface-list=WAN protocol=udp dst-port=51820 \
       action=dst-nat to-addresses=10.88.1.10 to-ports=51820
   /ip firewall nat add chain=dstnat in-interface-list=WAN protocol=tcp dst-port=22022 \
       action=dst-nat to-addresses=10.88.1.10 to-ports=22
+  /ip firewall nat add chain=dstnat in-interface-list=WAN protocol=udp dst-port=51821 \
+      action=dst-nat to-addresses=10.88.1.10 to-ports=51821
   ```
 
+  The last rule is a guest's, at port 51821: add one for each guest.
 - A name for the router's public address: `/ip cloud set ddns-enabled=yes`, as `auto`, the default
   since RouterOS 7.17, enables it only with Back To Home. `/ip cloud print` shows its `dns-name`,
   `SERIAL.sn.mynetname.net`, for a CNAME at your domain's DNS; its records live 60 seconds. Its
   `public-address` must be the WAN's own: behind the ISP's NAT, neither forward reaches the router.
 - What the steps miss. A cloud VM has no router of yours, so its provider's network isolates it.
-  A VM on the Mac reaches the router from the Mac's address, through the Mac's NAT, so it shares
-  the LAN's segment with the Mac. The steps are IPv4's. Give `SERVER` no IPv6 prefix, so that
+  The steps are IPv4's. Give `SERVER` no IPv6 prefix, so that
   ws has no IPv6 route to the router's addresses, which its table would pass as routed.

@@ -172,11 +172,16 @@ refuses the same names.
 Run `ws macos secrets add NAME` as yourself, with the Nano plugged in, once init has run
 and ws's `install.sh` and `ws ubuntu guest setup` have ended ([the runbook](../../runbook.md#ws-on-ws)). NAME is a server of
 the Mac's. Before the tunnel is up, `--address` and `--port` reach the server as ssh's `HostName`
-and `Port`. The command:
+and `Port`. A guest, whose file names its `WS_HOST`, has no address, so they reach its host. The host
+answers for it: it reads the guest's key and hostname by `incus exec`, and runs the setup
+([The guests of a host](../../../ubuntu/runbook.md#the-guests-of-a-host)). The command:
 
 1. Takes NAME's ed25519 key from `~/.ssh/known_hosts`. Where it holds none, it scans the server,
    prints the key's fingerprint, and asks whether the server's console prints the same. A `yes`
-   records the key under NAME, and any other answer, or a Ctrl-C, stops it with no change.
+   records the key under NAME, and any other answer, or a Ctrl-C, stops it with no change. A
+   guest's host reads the guest's key instead, and the Mac records it with no question, as it
+   trusts the host. It stops where `known_hosts` holds no key of the host: run add for the host
+   first.
 2. Reads the server's hostname by `ssh NAME hostname`, which must serve as a profile, as above.
 3. Lists the repository's deploy keys by gh, so that gh's login fails before a touch.
 4. In a temporary clone, sets the key as above. It encrypts again the values of each changed file
@@ -185,7 +190,8 @@ and `Port`. The command:
    one first, as GitHub changes none in place.
 6. Lands the changed files by a pull request, and opens none where the key was in place.
 7. Runs `/usr/local/bin/ws ubuntu guest setup --secrets` over `ssh -t`, as root, even where nothing
-   landed. A first add finds no clone there, so that run fetches the secrets.
+   landed. A first add finds no clone there, so that run fetches the secrets. A guest's host runs
+   `/usr/local/bin/ws ubuntu host guests setup NAME --secrets` instead, which runs the guest's.
 
 Last, add prints a line for each host key that the secrets hold, as a recipient or a deploy key,
 and that `~/.ssh/known_hosts` gives no host. A server that came back with another hostname and
