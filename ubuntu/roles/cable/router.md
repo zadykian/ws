@@ -61,8 +61,7 @@ button or Ctrl+X in its terminal, which undoes the changes if the session drops:
   `10.88.1.10` ([values](../../../macos/values/README.md#a-machine-on-the-lan)).
 - Input from `SERVER`: DNS and DHCP, ahead of the default firewall's drop of what comes from
   outside `LAN`. That drop then guards the router's other addresses and its services, its public
-  address too, which ws's table takes for the internet
-  ([Outbound](../security/README.md#outbound)):
+  address too:
 
   ```routeros
   /ip firewall filter add chain=input in-interface-list=SERVER protocol=udp dst-port=67 \

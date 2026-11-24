@@ -48,6 +48,7 @@ values', or 10%, 80% and 20% of Docker's disk in whole GiB plus one, as BuildKit
     {{ json .Docker.BridgeIP }}
   ],
   "ip": {{ json .Docker.PublishIP }},
+  "ip-forward-no-drop": true,
   "live-restore": true,
   "log-driver": "json-file",
   "log-opts": {

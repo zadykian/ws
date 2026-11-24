@@ -1,6 +1,6 @@
 # ikeward's units: the server on an IKEv2 VPN, from the profile that the run's secrets give, and the
-# WireGuard peers' way into it. Each is off without WS_IKEWARD_PROFILE, and leaves the VPN, the file
-# and ufw's rules as they are. README.md says why each stands.
+# WireGuard peers' way into it. Each is off without WS_IKEWARD_PROFILE, and leaves the VPN and the
+# file as they are. README.md says why each stands.
 
 # Fails where the run's secrets hold no profile for WS_IKEWARD_PROFILE, as install would: before
 # the binary downloads, and in a plan. A run without the secrets passes, and keeps the VPN.
@@ -34,13 +34,6 @@ when = { set = "{{ .Ikeward.Profile }}" }
 after = "file/ikeward-sysctl"
 run = { user = "root", command = ["/usr/lib/systemd/systemd-sysctl", "--strict", "--prefix=net.ipv4.ip_forward"], check = ["grep", "-qx", "1", "/proc/sys/net/ipv4/ip_forward"] }
 when = { set = "{{ if .Ikeward.ForwardFrom }}{{ .Ikeward.Profile }}{{ end }}" }
-
-# A route rule for each peer, from wg0 out by ikeward0. Each names wg0, as ikeward's NAT rule takes
-# whatever leaves by ikeward0, whatever its source. A rule of the comment that no peer wants goes.
-[state.ikeward-forward]
-after = "state/ikeward-sysctl"
-ufw = { comment = "ikeward", rules = [{{ range .Ikeward.ForwardFrom }}{ action = "allow", interface = "wg0", out = "ikeward0", from = "{{ . }}" }, {{ end }}] }
-when = { set = "{{ .Ikeward.Profile }}" }
 
 # ikeward install from the profile of the run's secrets, where its dry run says it would change
 # anything. The profile reaches it by the run's env, which keeps the secret inputs for ws's own

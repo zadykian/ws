@@ -52,7 +52,8 @@ The service owns the collector's four files, so a change of any of them, or of t
 restarts it once. The service checks a new config with `otelcol-contrib validate` before it
 replaces the live file. A config that the check refuses leaves the live file alone. The restart
 owed waits for the next good run. On a first install, the package starts the collector
-with the package's own config, which listens on every address; ufw keeps those ports from outside.
+with the package's own config, which listens on every address. A guest holds no filter, so it does
+so until the service replaces it.
 The `.deb`'s unit stops it at once, and the service enables it again once the config is in place.
 The `.deb`'s unit waits on signoz's sync, so that SigNoz's retention is set before the collector
 sends ([signoz](../signoz/README.md#retention)).
@@ -68,9 +69,7 @@ run's env, and the plan shows the change that the run makes. A run without the t
 hold a stale value, reads the file as it stands. The value is a URL, `http://HOST:PORT` for gRPC
 without TLS or `https://HOST:PORT`. The role refuses any other. It refuses one that leads back to
 the collector's own receiver on `127.0.0.1:4317` too, which would send the metrics around without
-end. Unless `WS_SECURITY_OUTBOUND` is false, the host can't be on the LAN, the cable, `wg0` or
-another private network around the server. The `security` role's table drops the collector's
-connection there ([Outbound](../security/README.md#outbound)). Only the metrics whose resource has
+end. Only the metrics whose resource has
 `service.name` `claude-code` go, as claude sends them, without the host's name. claude's traces and
 logs, with the prompts' and responses' text and the tools' details and output, stay in SigNoz.
 

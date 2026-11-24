@@ -2,7 +2,10 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
@@ -124,5 +127,58 @@ func TestDockerResolvedListensOnTheBridge(t *testing.T) {
 	if err := json.Unmarshal(m.Files[dockerDaemon], &j); err != nil || len(j.DNS) != 1 || j.DNS[0] != "172.18.0.1" ||
 		j.Bip != "172.18.0.1/16" {
 		t.Errorf("daemon.json's dns %q and bip %q (%v), want the bridge's address", j.DNS, j.Bip, err)
+	}
+}
+
+// The policy of FORWARD, as the unit reads it and sets it, as root.
+const (
+	// asRoot is how a run state's command runs as root, with no session's env.
+	asRoot = "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " +
+		"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "
+	forwardIsAccept  = asRoot + "sh -c iptables -w -S FORWARD | grep -qx -- '-P FORWARD ACCEPT'"
+	forwardToAccept  = asRoot + "iptables -w -P FORWARD ACCEPT"
+	forwardUnitName  = "state/docker-forward-policy"
+	dockerForwardKey = "ip-forward-no-drop"
+)
+
+// A first run of Docker on a machine with forwarding off sets the policy to drop, and the option
+// keeps a later start from doing it again.
+func TestDockerDaemonJSONKeepsTheForwardPolicy(t *testing.T) {
+	m := dockerWrites(t, dockerValues(t, ""))
+	var j map[string]any
+	if err := json.Unmarshal(m.Files[dockerDaemon], &j); err != nil || j[dockerForwardKey] != true {
+		t.Errorf("%s: %s is %v (%v), want true", dockerDaemon, dockerForwardKey, j[dockerForwardKey], err)
+	}
+}
+
+// Where Docker's first start set the policy to drop, the unit sets it back to accept, and leaves a
+// policy that is accept alone.
+func TestDockerForwardPolicyUndoesDrop(t *testing.T) {
+	m := dockerMachine()
+	m.Results[forwardIsAccept] = effecttest.Result{Err: errors.New("exit status 1")}
+	m.Results[forwardToAccept] = effecttest.Result{}
+	units, err := kind.Load(kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: dockerValues(t, ""), Self: selfPath}, os.DirFS(rolesDir))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := applyUnit(t, units, forwardUnitName)
+	if len(got) != 1 || !strings.Contains(got[0], "FORWARD ACCEPT") || !slices.Contains(m.Calls, "run "+forwardToAccept) {
+		t.Errorf("plan %q, calls %q; want the policy set to accept", got, m.Calls)
+	}
+	m.Results[forwardIsAccept] = effecttest.Result{}
+	if got := applyUnit(t, units, forwardUnitName); got != nil {
+		t.Errorf("a policy that is accept plans %q, want none", got)
+	}
+}
+
+// The policy is set after Docker's first start, which is what sets it to drop.
+func TestDockerForwardPolicyComesAfterTheService(t *testing.T) {
+	units, err := kind.Load(kind.Env{M: dockerMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: dockerValues(t, ""), Self: selfPath}, os.DirFS(rolesDir))
+	if err != nil {
+		t.Fatal(err)
+	}
+	names := kind.Names(units)
+	if at, svc := slices.Index(names, forwardUnitName), slices.Index(names, "service/docker"); at < 0 || at < svc {
+		t.Errorf("%s runs at %d, want it after service/docker at %d", forwardUnitName, at, svc)
 	}
 }

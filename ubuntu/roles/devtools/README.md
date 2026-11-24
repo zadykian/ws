@@ -97,8 +97,6 @@ A project's `postgres-language-server.jsonc` holds `db` fields, never a `connect
   `PGPASSWORD`, which reaches every libpq client.
 - Code actions that run statements stay off until `db.allowStatementExecutionsAgainst` names
   schemas.
-- ws drops new connections to private ranges ([outbound](../security/README.md#outbound)): a database on
-  the LAN hangs for `db.connTimeoutSecs`, 10 by default. Loopback, Docker and `ikeward0` work.
 - A bumped postgres-language-server may need its daemon stopped.
 
 ## The npm servers

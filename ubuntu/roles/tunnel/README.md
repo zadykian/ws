@@ -2,10 +2,9 @@
 
 The `tunnel` role sets up `wg0`, the server's end of a WireGuard tunnel for the Mac:
 `10.99.N.1/24` at its slot, N, on UDP port 51820, from networkd's own files. Its key is made on
-the server, and each peer's public key is read from `/etc/wireguard`. It keeps Docker's
-containers from reaching the Mac through the tunnel or the cable.
+the server, and each peer's public key is read from `/etc/wireguard`.
 
-The role is mise's packages, `wireguard-tools`, `systemd` and `iptables`, and six units of
+The role is mise's packages, `wireguard-tools` and `systemd`, and four units of
 [its spec](units.toml.tmpl), whose lines sit in `mise.guest.toml` ([The frame](../frame/README.md)). What
 Go holds stays Go, as `ws ubuntu guest tunnel check`, `tunnel key` and `tunnel wg0`, which the
 units run. The values' check refuses the settings the role cannot use, as the values load.
@@ -16,8 +15,6 @@ units run. The values' check refuses the settings the role cannot use, as the va
 | `state/tunnel-key` | Runs `tunnel key`, which makes the key, where `tunnel key --check` finds it missing or its mode wrong. |
 | `service/tunnel` | Writes wg0's `.netdev` and `.network`, and reloads systemd-networkd where either changes. |
 | `state/tunnel-wg0` | Runs `tunnel wg0`, which makes wg0 again on a new key and waits for it, where `--check` finds wg0 without the file's key. |
-| `state/tunnel-port` | Keeps ufw's rule of the port, by its comment `WireGuard`. |
-| `service/tunnel-drops` | Writes the drops' script and unit, and keeps `wireguard-docker-user.service` enabled and running. |
 
 ## The tunnel
 
@@ -79,24 +76,9 @@ NetworkManager does its work instead.
 
 ## The firewall
 
-ufw lets in UDP port 51820 on every interface. A run removes any other rule of the comment
-`WireGuard` in that shape, as that of a port it let in before. A rule of the comment made by hand
-in another shape, as on `wg0` or for TCP, stays. Inside the tunnel ufw takes `wg0` as any other
-interface: it lets in SSH and ping. It forwards from `wg0` only ping, as from any interface, and
-what the `ikeward` role lets through to its VPN ([Forwarding](../ikeward/README.md#forwarding)).
-
-Docker forwards its containers' packets ahead of ufw, and gives them the server's address on the
-way out. Through `wg0` or the cable, the Mac would take them for the server's own, and any container
-would reach the Mac's services. So the role drops what Docker's bridges, `docker0` and the `br-` of
-each network, send through `wg0` or the cable, `WS_CABLE_PORT`. Replies to a
-connection the Mac opened pass, such as one to a port published on wg0's address.
-
-`wireguard-docker-user.service` puts the drops, for IPv4 and IPv6, in the chain `WS-MAC`, which
-Docker's chain `DOCKER-USER` jumps to first. It runs before Docker starts, at boot, and at once where
-a run changes the drops, which last through Docker's restarts. Where the unit fails, Docker starts
-without them, and `systemctl status wireguard-docker-user` shows why.
-
-The drops take a change of `WS_CABLE_PORT` as the next bootstrap runs, which sets up the cable
-too. Unless `WS_SECURITY_OUTBOUND` is false,
-they are a second layer: the `security` role's table drops what the containers start through `wg0`
-or the cable too ([Outbound](../security/README.md#outbound)).
+A guest holds no filter: no ufw and no table of ws's. A system container's host isolates it. A cloud
+VM has its provider's firewall, which must let in SSH and the tunnel's UDP port, `WS_TUNNEL_PORT`
+([the runbook](../../runbook.md)). Every tunnel peer reaches the VPN there, as no rule names the
+peers of `WS_IKEWARD_FORWARD_FROM` ([Forwarding](../ikeward/README.md#forwarding)). On a cloud VM,
+a container that sends through `wg0` meets no guard but the Mac's firewall
+([The Mac's firewall](../../../macos/roles/firewall/README.md)).

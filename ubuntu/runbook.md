@@ -27,14 +27,19 @@ without the file.
 
 1. Log in as the installer's user, by key. Run `sudo -H ssh-import-id gh:LOGIN`, which imports the
    GitHub account's keys into `/root/.ssh/authorized_keys`, which root logs in by afterward
-   ([SSH and the firewall](roles/security/README.md#ssh-and-the-firewall)). ws copies no key from
+   ([SSH](roles/security/README.md#ssh)). ws copies no key from
    the installer's `authorized_keys`.
-2. Where a value differs from its default, write `/etc/ws/values.yml`, root's and mode 600, with
+2. Let in SSH, TCP port 22, and the tunnel's UDP port, `WS_TUNNEL_PORT`, 51820 by default, where
+   the machine ends the tunnel. Do so in the provider's firewall, or the network's where the
+   machine has no provider. A guest holds no filter of its
+   own ([No filter](roles/security/README.md#no-filter)), and every tunnel peer reaches the VPN
+   there.
+3. Where a value differs from its default, write `/etc/ws/values.yml`, root's and mode 600, with
    each such value. Where none is, the bootstrap writes it ([the values](../README.md#running-it-again)).
-3. Run `install.sh` as root, by the three lines of
+4. Run `install.sh` as root, by the three lines of
    [Install](../.github/workflows/release.md#install), `set -o pipefail` among them. It
    installs ws alone, as `/usr/local/bin/ws`, which root's `PATH` holds, and prints the next command.
-4. Run `ws ubuntu guest setup` as root.
+5. Run `ws ubuntu guest setup` as root.
 
 ## Setup, the secrets and the runs
 

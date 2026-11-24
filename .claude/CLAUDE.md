@@ -2,7 +2,7 @@
 
 ws sets up the maintainer's development server from code: `mise bootstrap`, which `ws ubuntu guest setup`
 runs on the machine itself, each role as mise's config and ws's units. Its roles set up packages,
-SSH by key and a firewall, the links to the Mac, an IKEv2 VPN where a profile is given, and the
+SSH by key, the links to the Mac, an IKEv2 VPN where a profile is given, and the
 fans. Then the shell, git,
 tmux, lazygit, Fresh, Docker, claude, SigNoz with its collector, and Zed's server. `macos/`
 sets up the Mac that works on the server. The rest is the docs, the lint gates' tools and CI.
@@ -92,7 +92,7 @@ It installs yamllint into `.cache`, and `.tools/run` downloads the rest there.
 
 The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `server` builds ws and runs
 `ws ubuntu guest setup` twice as root on a booted runner, with setup's plan. It checks the config that
-Fresh reads too, the firewall around Docker and the secrets task
+Fresh reads too, Docker's forward policy and published ports, and the secrets task
 ([The server job](../.github/workflows/server.md)).
 `signoz` forges SigNoz's compose files again, and `install` tries `install.sh`, `ws update` and
 the autoinstall file, as the `client` case 16-install does for `install.sh` on macOS. `client`

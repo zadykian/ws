@@ -27,7 +27,7 @@ A role keeps its directory, `ubuntu/roles/ROLE/`, and its page there:
   names, as `ws.conf.tmpl`. A kind refuses a `template` that lacks the ending, as the spec loads.
   A `.toml` file is TOML as written, which tombi checks.
 - **Its mise files,** one an env. `mise.guest.toml` holds what every guest gets: apt's sources,
-  `[bootstrap.packages]`, files, directories, tools, the services and the firewall, with each file
+  `[bootstrap.packages]`, files, directories, tools, and the services, with each file
   entry that names a service in `notify`. `mise.secrets.toml` holds its
   [secret inputs](#secret-inputs). A role holds no plain `mise.toml`, which every env would load.
 - **The side's link,** `ubuntu/guest/mise/conf.d`, to `../../roles`. mise loads each role's

@@ -16,8 +16,8 @@ type Ikeward struct {
 	Domains []string `yaml:"WS_IKEWARD_DOMAINS"`
 	// Floors are the ranges kept off the uplink from boot on.
 	Floors []string `yaml:"WS_IKEWARD_FLOORS"`
-	// ForwardFrom are the tunnel addresses of the WireGuard peers that reach the VPN through
-	// this machine.
+	// ForwardFrom are the tunnel addresses of the WireGuard peers. Any one turns forwarding on,
+	// and every peer of wg0 then reaches the VPN.
 	ForwardFrom []string `yaml:"WS_IKEWARD_FORWARD_FROM"`
 }
 
@@ -27,10 +27,4 @@ type Cable struct {
 	Port string `yaml:"WS_CABLE_PORT"`
 	// Address is the server's address on the cable, with its prefix length.
 	Address string `yaml:"WS_CABLE_ADDRESS"`
-}
-
-// Security is roles/security's keys.
-type Security struct {
-	// Outbound turns on the outbound table: internet and ikeward0 alone.
-	Outbound bool `yaml:"WS_SECURITY_OUTBOUND"`
 }

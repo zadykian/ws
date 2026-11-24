@@ -1,5 +1,6 @@
 # docker's part for every server: Docker's repository and packages, then the units of its spec.
-# iproute2 gives the route check its ip, which a container lacks.
+# iproute2 gives the route check its ip, which a container lacks, and iptables the forward policy's
+# unit its program.
 
 # Docker's repository, as its install guide for Ubuntu gives it. mise takes the key only where its
 # primary fingerprint is this one, so that a changed key fails the run rather than being trusted
@@ -17,9 +18,10 @@ fingerprint = "9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88"
 "apt:docker-buildx-plugin" = "latest"
 "apt:docker-compose-plugin" = "latest"
 "apt:iproute2" = "latest"
+"apt:iptables" = "latest"
 "ws:state/docker-routes" = "in-sync"
 "ws:file/docker-resolved" = "in-sync"
-"ws:state/docker-dns" = "in-sync"
 "ws:file/docker-slice" = "in-sync"
 "ws:service/docker" = "in-sync"
 "ws:state/docker-bridge" = "in-sync"
+"ws:state/docker-forward-policy" = "in-sync"

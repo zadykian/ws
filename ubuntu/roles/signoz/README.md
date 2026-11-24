@@ -9,7 +9,7 @@ claude's usage.
 
 SigNoz runs on the system's Docker daemon from the compose files in
 `ubuntu/roles/signoz/deployment`, which mise copies to `/opt/signoz` (`mise.guest.toml`).
-Docker's published ports get past ufw, so only two are published, on loopback: the UI on
+A guest holds no filter, so only two ports are published, on loopback: the UI on
 `127.0.0.1:3301` and the OTLP/HTTP intake on `127.0.0.1:14318`. 3301 was SigNoz's UI port before
 8080, which dev servers often take.
 

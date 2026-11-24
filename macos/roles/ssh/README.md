@@ -92,11 +92,9 @@ the Mac as `10.99.N.2`. Failed logins over the tunnel ban it, which shuts `ssh w
 hour. `ssh -o HostName=ADDRESS -o Port=PORT ws` comes from another address, and from there
 `fail2ban-client set sshd unbanip 10.99.N.2` lifts the ban.
 
-Unless `WS_SECURITY_OUTBOUND` is false, ws opens no connection to the Mac over the cable, the LAN or
-the tunnel ([The firewall](../../../ubuntu/roles/tunnel/README.md#the-firewall),
-[Outbound](../../../ubuntu/roles/security/README.md#outbound)). That holds for its bridged
-containers and its users, but those who can become root. On a VM on the Mac, DHCP and DNS still go
-to the Mac, which serves them.
+A guest holds no filter, so the Mac's firewall alone keeps ws from opening a connection to the Mac
+over the cable, the LAN or the tunnel ([The firewall](../firewall/README.md)). On a VM on the Mac,
+DHCP and DNS go to the Mac, which serves them.
 
 The first login asks whether to trust ws's host key: compare its fingerprint with the one
 `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` prints on ws's console. On the cable and the LAN,

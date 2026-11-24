@@ -9,9 +9,9 @@ by the unit `state/firewall` of the role `firewall`:
 
 ## Why
 
-The server reaches the Mac over the cable and `wg0`, which pass no router, and root on the server
-gets past the server's outbound table ([Outbound](../../../ubuntu/roles/security/README.md#outbound)).
-So the Mac's own firewall is what keeps the server from opening a connection to it.
+The server reaches the Mac over the cable and `wg0`, which pass no router, and a guest holds no
+filter of its own ([No filter](../../../ubuntu/roles/security/README.md#no-filter)). So the Mac's
+own firewall is what keeps the server from opening a connection to it.
 
 ## The unit
 

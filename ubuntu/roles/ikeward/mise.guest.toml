@@ -3,7 +3,6 @@
 "ws:binary/ikeward" = "in-sync"
 "ws:file/ikeward-sysctl" = "in-sync"
 "ws:guard/ikeward" = "in-sync"
-"ws:state/ikeward-forward" = "in-sync"
 "ws:state/ikeward-install" = "in-sync"
 "ws:state/ikeward-status" = "in-sync"
 "ws:state/ikeward-sysctl" = "in-sync"

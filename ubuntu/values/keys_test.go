@@ -23,7 +23,7 @@ func TestKeysHoldEachKindAndNoTable(t *testing.T) {
 	}
 	for name, want := range map[string]Kind{
 		"WS_BASE_TIMEZONE": Text, "WS_BASE_SWAPPINESS": Number, "WS_BASE_SWAP_SIZE_MB": Number, "WS_FANS_INTERVAL": Decimal,
-		"WS_SECURITY_OUTBOUND": Switch, "WS_IKEWARD_DOMAINS": List, "WS_ZED_NOFILE": Number,
+		"WS_IKEWARD_DOMAINS": List, "WS_ZED_NOFILE": Number,
 	} {
 		if got, ok := kinds[name]; !ok || got != want {
 			t.Errorf("%s: kind = %v, %t, want %v", name, got, ok, want)
@@ -45,13 +45,11 @@ func TestCheckRefusesWhatTheKindCantTake(t *testing.T) {
 		{"WS_FANS_INTERVAL", "soon", "a number"},
 		{"WS_FANS_INTERVAL", "NaN", "a number"},
 		{"WS_FANS_INTERVAL", "Inf", "a number"},
-		{"WS_SECURITY_OUTBOUND", "yes", "true or false"},
 		{"WS_BASE_TIMEZONE", "a\nb", "one line"},
 		{"WS_IKEWARD_DOMAINS", "a\rb", "one line"},
 		{"WS_BASE_SWAPPINESS", "20", ""},
 		{"WS_BASE_SWAPPINESS", "", ""},
 		{"WS_FANS_INTERVAL", "2.5", ""},
-		{"WS_SECURITY_OUTBOUND", "false", ""},
 		{"WS_BASE_TIMEZONE", "Asia/Tbilisi", ""},
 	} {
 		err := keyOf(t, tc.key).Check(tc.value)
@@ -70,7 +68,7 @@ func TestTextGivesTheValueAsALine(t *testing.T) {
 		t.Fatal(err)
 	}
 	for name, want := range map[string]string{
-		"WS_IKEWARD_DOMAINS": "a.example, b.example", "WS_FANS_INTERVAL": "1.5", "WS_SECURITY_OUTBOUND": "true",
+		"WS_IKEWARD_DOMAINS": "a.example, b.example", "WS_FANS_INTERVAL": "1.5",
 		"WS_BASE_SWAPPINESS": "10", "WS_BASE_SWAP_SIZE_MB": "", "WS_GIT_SIGNING_PUB_KEY": "/root/.ssh/id_ed25519_signing.pub", "WS_IKEWARD_DNS": "",
 	} {
 		if got := v.Text(keyOf(t, name)); got != want {
@@ -93,7 +91,6 @@ func TestLineQuotesWhatReadsAsAnotherType(t *testing.T) {
 		{"WS_IKEWARD_DOMAINS", ",", "WS_IKEWARD_DOMAINS: []\n"},
 		{"WS_IKEWARD_DOMAINS", "a.example , b.example", "WS_IKEWARD_DOMAINS: [a.example, b.example]\n"},
 		{"WS_FANS_INTERVAL", "1.50", "WS_FANS_INTERVAL: 1.5\n"},
-		{"WS_SECURITY_OUTBOUND", "false", "WS_SECURITY_OUTBOUND: false\n"},
 		{"WS_BASE_SWAPPINESS", "20", "WS_BASE_SWAPPINESS: 20\n"},
 	} {
 		if got, err := keyOf(t, tc.key).line(tc.value); err != nil || got != tc.want {
@@ -110,5 +107,18 @@ func TestLineKeepsALongValueOnOneLine(t *testing.T) {
 	}
 	if v, err := Parse([]byte(line)); err != nil || v.GitSigningPubKey != long {
 		t.Errorf("reads %q, %v", v.GitSigningPubKey, err)
+	}
+}
+
+// No key is a switch yet: a role's next one is a bool, which the kind takes whatever its name.
+func TestSwitchTakesTrueOrFalse(t *testing.T) {
+	k := Key{Name: "WS_SWITCH", Kind: Switch}
+	for value, want := range map[string]string{"true": "WS_SWITCH: true\n", "false": "WS_SWITCH: false\n"} {
+		if line, err := k.line(value); err != nil || line != want || k.Check(value) != nil {
+			t.Errorf("%q: line %q, %v; want %q", value, line, err, want)
+		}
+	}
+	if err := k.Check("yes"); err == nil || !strings.Contains(err.Error(), "true or false") {
+		t.Errorf("yes: err = %v, want the refusal", err)
 	}
 }
