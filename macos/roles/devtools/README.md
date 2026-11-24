@@ -1,6 +1,6 @@
 # devtools on the Mac
 
-The `devtools` role puts Go on the Mac, by [`mise.macos.toml`](mise.macos.toml) and
+The `devtools` role puts Go and the command-line tools on the Mac, by [`mise.macos.toml`](mise.macos.toml) and
 [the units](units.toml.tmpl), as the server's
 [devtools](../../../ubuntu/roles/devtools/README.md) does on Linux.
 
@@ -14,3 +14,17 @@ Apple silicon, which Go's publisher lists, and mise checks the download against 
 mise installs Go under `~/.local/share/mise/installs/go/1.27.3`, on no shell's `PATH`. The unit
 `file/devtools-go` links `/usr/local/go` to it, root's, so that a program that looks there, as
 the server's tools do, finds `go`.
+
+## The formulae
+
+mise installs these formulae by its `brew` manager, which needs no Homebrew: it pours Homebrew's
+bottle into `/opt/homebrew`, each dependency first, and checks its SHA-256 against Homebrew's API.
+
+- `gnupg` and `pinentry-mac`, for signing and the YubiKey's keys;
+- `ykman`, the YubiKey's command line;
+- `ripgrep`, `tokei`, `tree` and `pwgen`.
+
+A formula takes the latest alone, as Homebrew keeps the current bottle only, and mise never
+upgrades it by itself: `mise bootstrap packages upgrade` does. So the formulae are outside the
+SHA-256 rule of the pinned downloads ([CLAUDE.md](../../../.claude/CLAUDE.md)). A first run pours
+about 30 bottles, as `gnupg` has 10 dependencies.
