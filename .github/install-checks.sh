@@ -151,7 +151,7 @@ for target in linux-arm64:Linux:aarch64 darwin-arm64:Darwin:arm64; do
     installed "v0.2.0 $want"
     case $want in
     darwin-*) next="ws macos setup" ;;
-    *) next="ws ubuntu guest setup" ;;
+    *) next="ws ubuntu guest setup on a guest, or ws ubuntu host setup on a host" ;;
     esac
     [ "${out##*$'\n'}" = "install.sh: next, run: $next" ] || fail "the last line for $want is not the next command: ${out##*$'\n'}"
 done

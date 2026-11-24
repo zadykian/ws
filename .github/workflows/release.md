@@ -30,7 +30,8 @@ sha256sum, or `shasum -a 256` where a Mac has no `sha256sum`:
 - It makes `/usr/local` and `/usr/local/bin` where they are missing, root's and 755. It refuses one
   that another user owns or that a group or others may write, and names the chown: launchd would
   refuse ws below it. It changes no owner, as an old Homebrew in `/usr/local` would lose its writes.
-- Its last line names the next command, `ws ubuntu guest setup` on Linux and `ws macos setup` on a Mac.
+- Its last line names the next command: `ws ubuntu guest setup` on a Linux guest, `ws ubuntu host
+  setup` on a Linux host and `ws macos setup` on a Mac.
   Setup checks the system: it refuses a Linux but Ubuntu 26.04 before its first write.
 
 | Variable | Default | Sets |
@@ -79,9 +80,9 @@ again.
   `--version` names the older one. A ws that is no release, a trial's build, or one that is missing
   or does not run, is older than any, so an update ends the trial.
 - Then it replaces itself with the setup of the side that `/etc/mise/miserc.toml` names, of
-  `/usr/local/bin/ws`: `ws ubuntu guest setup`. A Mac has no such choice, and runs
-  `ws macos setup`. A machine with no miserc has run no setup, so it runs none, and names
-  `ws ubuntu guest setup`. Where `/usr/local/bin/ws` is the named release already, it downloads
+  `/usr/local/bin/ws`: `ws ubuntu guest setup`, or `ws ubuntu host setup`. A Mac has no such
+  choice, and runs `ws macos setup`. A machine with no miserc has run no setup, so it runs none, and
+  names both. Where `/usr/local/bin/ws` is the named release already, it downloads
   nothing, and runs that setup alone.
 
 `WS_RELEASES_URL` names the releases, as for `install.sh`.
@@ -123,7 +124,8 @@ script writes the miserc that a setup writes, and fails where the runner has one
 - a ws of the named release downloads nothing and runs its own setup. The runner's system refuses
   that setup, and the script fails on Ubuntu 26.04, where the setup would be real. So the job runs
   on Ubuntu 24.04's runner;
-- a machine with no miserc runs no setup, and the update names `ws ubuntu guest setup`;
+- a machine with no miserc runs no setup, and the update names `ws ubuntu guest setup` and `ws
+  ubuntu host setup`;
 - a user is refused before any download.
 
 The script deletes `/usr/local/bin/ws` as it ends, so it sets that up after its guards. Its test,
@@ -179,8 +181,8 @@ curl -fsSL --proto '=https' --tlsv1.2 \
 So while a pre-release is tried, this line takes the place of each that runs `install.sh`. Those are
 step 3 of [the steps by hand](../../ubuntu/runbook.md#the-steps-by-hand), and step 2 of
 [ws on ws](../../macos/runbook.md#ws-on-ws) and the Mac's Tools step on the Mac. The side's
-setup follows, `ws ubuntu guest setup` or `ws macos setup`, which checks out the tree of its own
-ws's tag.
+setup follows, `ws ubuntu guest setup`, `ws ubuntu host setup` or `ws macos setup`, which checks
+out the tree of its own ws's tag.
 
 Nothing else is by hand. `release.yml` runs on the tag, in these jobs:
 

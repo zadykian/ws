@@ -17,9 +17,9 @@
 # WS_VERSION names it. It makes /usr/local and /usr/local/bin, root's and 755, where they are
 # missing. It refuses one that anyone but root may write, as launchd would refuse ws below it.
 # It does not chown, as an old Homebrew in /usr/local would lose its writes. Its last line names
-# the next command, ws ubuntu guest setup on Linux and ws macos setup on a Mac, which sets the machine
-# up and checks the system. It runs in any POSIX sh, and needs curl and sha256sum, or shasum on a
-# Mac.
+# the next command, which sets the machine up and checks the system. That is ws ubuntu guest setup on
+# a Linux guest, ws ubuntu host setup on a Linux host, or ws macos setup on a Mac.
+# It runs in any POSIX sh, and needs curl and sha256sum, or shasum on a Mac.
 #
 # WS_RELEASES_URL stands in for https://github.com/zadykian/ws/releases, for the tests.
 #
@@ -44,16 +44,17 @@ die() {
 # platform sets asset to the name of ws's file for this machine, and next to the command that sets
 # it up. The Mac's side is arm64 alone, as the release holds no other build for it.
 platform() {
+    linux_next="ws ubuntu guest setup on a guest, or ws ubuntu host setup on a host"
     os=$(uname -s)
     arch=$(uname -m)
     case $os-$arch in
     Linux-x86_64 | Linux-amd64)
         asset=linux-amd64
-        next="ws ubuntu guest setup"
+        next=$linux_next
         ;;
     Linux-aarch64 | Linux-arm64)
         asset=linux-arm64
-        next="ws ubuntu guest setup"
+        next=$linux_next
         ;;
     Linux-*) die "ws sets up Linux on x86_64 and aarch64, not on $arch" ;;
     Darwin-arm64)
