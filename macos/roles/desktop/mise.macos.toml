@@ -1,0 +1,37 @@
+# The Mac's Dock, Finder, windows, sounds and screenshots, as mise's preferences. mise writes a
+# value that is missing or differs, by its type too. It restarts nothing: the Dock and Finder read
+# the values again at the next log out. README.md says why each value stands.
+[bootstrap.settings.macos.dock]
+tilesize = 74
+show_recents = false
+
+[bootstrap.settings.macos.finder]
+preferred_view_style = "column"
+
+[bootstrap.settings.macos.defaults]
+"com.apple.dock" = { minimize-to-application = true, wvous-br-corner = 1 }
+"com.apple.finder" = { NewWindowTarget = "PfHm", ShowRecentTags = false }
+"com.apple.assistant.support" = { "Assistant Enabled" = false }
+"com.apple.screencapture" = { target = "clipboard", target-screenshot = "clipboard", target-screenrecording = "file", style = "selection" }
+"com.apple.WindowManager" = { EnableStandardClickToShowDesktop = false, EnableTiledWindowMargins = false, EnableTilingByEdgeDrag = false, EnableTopTilingByEdgeDrag = false, EnableTilingOptionAccelerator = false, StandardHideWidgets = true, StageManagerHideWidgets = true }
+
+# Where Appearance is Auto, macOS drops AppleInterfaceStyle by day. mise deletes no key, so the
+# Auto key is set to false.
+[bootstrap.settings.macos.defaults.NSGlobalDomain]
+AppleInterfaceStyle = "Dark"
+AppleInterfaceStyleSwitchesAutomatically = false
+AppleShowAllExtensions = true
+AppleShowScrollBars = "Always"
+AppleEnableSwipeNavigateWithScrolls = false
+NSGlassTintAmount = 1.0
+"com.apple.trackpad.scaling" = 0.5
+"com.apple.sound.beep.volume" = 0.0
+"com.apple.sound.beep.sound" = "/System/Library/Sounds/Tink.aiff"
+"com.apple.sound.uiaudio.enabled" = 0
+
+# The screen saver's delay is a current-host preference, which only an entry with a host writes.
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.screensaver"
+key = "idleTime"
+host = "current"
+value = 7200
