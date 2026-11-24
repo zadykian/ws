@@ -68,6 +68,9 @@ func TestUnitRunDirIsWhereSetupBootstraps(t *testing.T) {
 	if runDir != guestSetup.dir() || runDir != "/opt/ws/ubuntu/guest" {
 		t.Errorf("runDir = %q, the guest's setup runs in %q, want both /opt/ws/ubuntu/guest", runDir, guestSetup.dir())
 	}
+	if hostRunDir != hostSetup.dir() || hostRunDir != "/opt/ws/ubuntu/host" {
+		t.Errorf("hostRunDir = %q, the host's setup runs in %q, want both /opt/ws/ubuntu/host", hostRunDir, hostSetup.dir())
+	}
 }
 
 func TestHostSideLoadsTheHostsValues(t *testing.T) {

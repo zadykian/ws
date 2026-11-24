@@ -28,7 +28,10 @@ type setupSide struct {
 	secrets bool
 }
 
-var guestSetup = setupSide{name: "guest", values: guestValues, secrets: true}
+var (
+	guestSetup = setupSide{name: "guest", values: guestValues, secrets: true}
+	hostSetup  = setupSide{name: "host", values: hostValues}
+)
 
 // dir is where mise's bootstrap runs: the side's roles, in the tree.
 func (s setupSide) dir() string { return path.Join(setup.TreeDir, "ubuntu", s.name) }

@@ -77,9 +77,10 @@ ws runs them by `KIND/NAME`, each moved behind the unit that its `after` names, 
 
 The machine's miserc, `/etc/mise/miserc.toml`, names the envs that load as the set `ws`: `guest`
 on a guest, and `host` on a host. A run by `-E ws,secrets`, the secrets task's, adds the env
-`secrets` to the set, which no other run loads. `ws ubuntu guest setup` writes the miserc.
+`secrets` to the set, which no other run loads. `ws ubuntu guest setup` and `ws ubuntu host
+setup` each write the miserc.
 
-The same command writes `/etc/mise/config.toml`, which trusts the tree: its `trusted_config_paths`,
+The same commands write `/etc/mise/config.toml`, which trusts the tree: its `trusted_config_paths`,
 under `[settings]`, names `/opt/ws`, so that a run by hand needs no `mise trust`. mise reads that
 setting of a system config under `[settings]` alone. `mise.toml` sets `locked`, so that a tool
 installs only as its side's lock holds it. The secrets task checks that setting, so that fnox runs
