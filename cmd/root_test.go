@@ -7,13 +7,14 @@ import (
 
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/cli/clitest"
+	ubuntucli "github.com/zadykian/ws/roles/server/cli"
 )
 
 // fakeProcess returns an Env that touches nothing of the test's own.
 func fakeProcess() cli.Env { return clitest.Env() }
 
 // updateCmd returns ws update as the server has it.
-func updateCmd(p cli.Env) *cobra.Command { return cli.Update(p, "server", true) }
+func updateCmd(p cli.Env) *cobra.Command { return cli.Update(p, true, ubuntucli.UpdateSetups()) }
 
 // runGroups runs args on the root of this system's groups. It returns the status, stdout and
 // stderr.

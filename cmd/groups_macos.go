@@ -16,5 +16,5 @@ import (
 // that changes nothing ask no password. ws's files in /etc/ws are readable by all.
 func groups(p cli.Env) []*cobra.Command {
 	p.Machine = local.OSMachine{UserReads: true}
-	return []*cobra.Command{macosCmd(p), macoscli.UnitCmd(p), cli.Update(p, "macos", false)}
+	return []*cobra.Command{macosCmd(p), macoscli.UnitCmd(p), cli.Update(p, false, cli.FixedSetup("macos", "setup"))}
 }

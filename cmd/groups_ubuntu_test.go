@@ -21,7 +21,7 @@ func TestServerGroupOnLinux(t *testing.T) {
 }
 
 func TestUpdateEndsInTheServersSetupOnLinux(t *testing.T) {
-	if status, stdout, _ := runGroups(fakeProcess(), "update", "--help"); status != 0 || !strings.Contains(stdout, "runs ws server setup of that ws") {
+	if status, stdout, _ := runGroups(fakeProcess(), "update", "--help"); status != 0 || !strings.Contains(stdout, "ws server setup, and none where it has no side yet") {
 		t.Errorf("status = %d, stdout = %q, want an update that ends in ws server setup", status, stdout)
 	}
 }

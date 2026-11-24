@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"slices"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/cli/clitest"
+	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
@@ -57,7 +59,11 @@ func updateEnv(version, url string, euid int) (cli.Env, *effecttest.Machine) {
 }
 
 func runUpdate(p cli.Env, side string, root bool, args ...string) (status int, stdout, stderr string) {
-	return clitest.Run(p, []*cobra.Command{cli.Update(p, side, root)}, "", append([]string{"update"}, args...)...)
+	return runUpdateOf(p, cli.FixedSetup(side, "setup"), root, args...)
+}
+
+func runUpdateOf(p cli.Env, s cli.Setups, root bool, args ...string) (status int, stdout, stderr string) {
+	return clitest.Run(p, []*cobra.Command{cli.Update(p, root, s)}, "", append([]string{"update"}, args...)...)
 }
 
 func TestUpdateRunsTheSetupOfTheWsItWrote(t *testing.T) {
@@ -195,5 +201,54 @@ func TestUpdateOfAWrongSumRunsNoSetup(t *testing.T) {
 	}
 	if string(m.Files[installed]) != "old ws" || strings.Join(m.Calls, "\n") != "run "+installed+" version" {
 		t.Errorf("file %q, calls %v; want the old ws, and no call but its version", m.Files[installed], m.Calls)
+	}
+}
+
+// sideOf picks the setup that its miserc names, as a side does.
+func sideOf(envs map[string][]string, names ...string) cli.Setups {
+	return cli.Setups{Names: names, Pick: func(m effect.Machine) ([]string, error) {
+		text, err := m.ReadFile("/etc/mise/miserc.toml")
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, nil
+		}
+		return envs[string(text)], err
+	}}
+}
+
+func TestUpdateWithNoSideRunsNoSetupAndNamesTheOnesToRun(t *testing.T) {
+	p, m := updateEnv("v0.9.0", serveRelease(t, "v0.10.0", "new ws"), 0)
+	m.Results[copied+" version"] = effecttest.Result{Out: []byte("v0.10.0\n")}
+	s := sideOf(map[string][]string{"a": {"a", "setup"}}, "ws a setup", "ws b setup")
+	status, stdout, stderr := runUpdateOf(p, s, true)
+	want := "Updated ws v0.9.0 to v0.10.0: " + installed + "\nNo side is set up here: run ws a setup or ws b setup\n"
+	if status != 0 || stdout != want {
+		t.Errorf("status = %d, stdout = %q, stderr = %q; want %q", status, stdout, stderr, want)
+	}
+	if string(m.Files[installed]) != "new ws" || indexOf(m.Calls, "exec ") >= 0 {
+		t.Errorf("file %q, calls %v; want the release and no setup", m.Files[installed], m.Calls)
+	}
+}
+
+func TestUpdateRunsTheSetupOfTheSideThatTheMachineHolds(t *testing.T) {
+	p, m := updateEnv("v0.9.0", serveRelease(t, "v0.10.0", "new ws"), 0)
+	m.Results[copied+" version"] = effecttest.Result{Out: []byte("v0.10.0\n")}
+	m.Files["/etc/mise/miserc.toml"] = []byte("a")
+	s := sideOf(map[string][]string{"a": {"a", "setup"}}, "ws a setup")
+	if status, _, stderr := runUpdateOf(p, s, true); status != 0 {
+		t.Fatalf("status = %d, stderr = %q", status, stderr)
+	}
+	if last := m.Calls[len(m.Calls)-1]; last != "exec "+installed+" a setup" {
+		t.Errorf("the last call is %q, want the setup of the side", last)
+	}
+}
+
+func TestUpdateHelpSaysNoSetupOnlyWhereASideMayBeMissing(t *testing.T) {
+	p, _ := updateEnv("v0.9.0", serveRelease(t, "v0.10.0", "new ws"), 0)
+	const none = "and none where it has no side yet"
+	if _, stdout, _ := runUpdateOf(p, cli.FixedSetup("a", "setup"), true, "--help"); strings.Contains(stdout, none) {
+		t.Errorf("help = %q, want no clause for a missing side where the setup is fixed", stdout)
+	}
+	if _, stdout, _ := runUpdateOf(p, sideOf(nil, "ws a setup"), true, "--help"); !strings.Contains(stdout, none) {
+		t.Errorf("help = %q, want the clause for a missing side", stdout)
 	}
 }
