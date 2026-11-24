@@ -34,11 +34,15 @@ func TestIncusGuestsLaunchesWhatTheListDeclaresAndWarnsOfTheRest(t *testing.T) {
 		t.Fatal(err)
 	}
 	m.Results["incus launch local:"+alias+" lab"] = effecttest.Result{}
+	m.Files["/usr/local/bin/ws"] = []byte("binary")
+	m.Results["incus file push --create-dirs --uid 0 --gid 0 --mode 0755 /usr/local/bin/ws lab/usr/local/bin/ws"] = effecttest.Result{}
+	m.Results["incus exec lab -- sh -c systemctl is-system-running --wait >/dev/null 2>&1; cloud-init status --wait >/dev/null sh"] = effecttest.Result{}
+	m.Results["incus exec lab -- /usr/local/bin/ws ubuntu guest setup"] = effecttest.Result{}
 	if err := runIncus(m, "guests", "--check"); !errors.Is(err, enginecli.ErrDue) || !strings.Contains(err.Error(), "create the guest lab") {
 		t.Errorf("guests --check = %v, want the launch of lab due", err)
 	}
 	shown, err := runIncusShown(m, "guests")
-	if err != nil || len(m.Inputs) != 1 || !strings.Contains(m.Inputs[0], "host_name: ws-lab") {
+	if err != nil || len(m.Inputs) == 0 || !strings.Contains(m.Inputs[0], "host_name: ws-lab") {
 		t.Errorf("guests = %v, inputs %q, want lab launched", err, m.Inputs)
 	}
 	if !strings.Contains(shown, "the guest old is not in WS_INCUS_GUESTS: ws deletes none") {
@@ -46,6 +50,9 @@ func TestIncusGuestsLaunchesWhatTheListDeclaresAndWarnsOfTheRest(t *testing.T) {
 	}
 	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.Contains(c, "delete") }) {
 		t.Errorf("calls %q delete a guest", m.Calls)
+	}
+	if !slices.Contains(m.Calls, "run incus exec lab -- /usr/local/bin/ws ubuntu guest setup") {
+		t.Errorf("calls %q lack the setup of lab", m.Calls)
 	}
 }
 
