@@ -1,0 +1,3 @@
+# The frame's lines for every host.
+[bootstrap.packages]
+"ws:file/ws-values" = "in-sync"

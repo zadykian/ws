@@ -43,8 +43,8 @@ func fansMachine() *effecttest.Machine {
 }
 
 // fansValues is the values of an empty file.
-func fansValues(t *testing.T) values.Values {
-	v, err := values.Parse(nil)
+func fansValues(t *testing.T) values.Host {
+	v, err := values.ParseHost(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,9 +52,9 @@ func fansValues(t *testing.T) values.Values {
 }
 
 // fansSpecs loads the specs with the values v on m, and returns each unit's step by its name.
-func fansSpecs(t *testing.T, m *effecttest.Machine, u *effecttest.Units, out *effecttest.Out, v values.Values) map[string]step.Step {
+func fansSpecs(t *testing.T, m *effecttest.Machine, u *effecttest.Units, out *effecttest.Out, v values.Host) map[string]step.Step {
 	steps := map[string]step.Step{}
-	for _, unit := range loadSpecs(t, kind.Env{M: m, U: u, Out: out, Data: v, Self: selfPath}) {
+	for _, unit := range loadSpecs(t, kind.Env{M: m, U: u, Out: out, Data: v, Side: "host", Self: selfPath}) {
 		steps[unit.Name] = unit.Step
 	}
 	return steps
@@ -72,7 +72,7 @@ func apply(t *testing.T, steps map[string]step.Step, name string) {
 }
 
 func TestFansUnitsRunInOrder(t *testing.T) {
-	units := loadSpecs(t, kind.Env{M: fansMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: fansValues(t), Self: selfPath})
+	units := loadSpecs(t, kind.Env{M: fansMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: fansValues(t), Side: "host", Self: selfPath})
 	names := kind.Names(units)
 	first, then := slices.Index(names, "packages/fans"), slices.Index(names, "dkms/fans")
 	if first < 0 || then < first {
@@ -81,13 +81,10 @@ func TestFansUnitsRunInOrder(t *testing.T) {
 	if got := units[then].Step.WaitsOn(); got != "packages/fans" {
 		t.Errorf("dkms/fans waits on %q, want packages/fans", got)
 	}
-	// ws-fans drives nct6687's files and reads the GPU by nvidia-smi, so it starts after both,
-	// which its one after cannot name: the names' order keeps them first.
-	service := slices.Index(names, "service/fans")
-	for _, first := range []string{"dkms/fans", "packages/nvidia"} {
-		if i := slices.Index(names, first); i < 0 || i > service {
-			t.Errorf("%s runs at %d, service/fans at %d; want it first", first, i, service)
-		}
+	// ws-fans drives nct6687's files, so it starts after them, which its one after cannot name: the
+	// names' order keeps them first.
+	if service := slices.Index(names, "service/fans"); then > service {
+		t.Errorf("dkms/fans runs at %d, service/fans at %d; want it first", then, service)
 	}
 }
 
@@ -129,14 +126,14 @@ func TestFansOffOnAnotherBoard(t *testing.T) {
 func TestFansPackagesNameTheRunningKernelsHeaders(t *testing.T) {
 	m := fansMachine()
 	m.Packages = effecttest.Packages{}
-	got, err := planned(t, specUnits(t, m, &effecttest.Out{}), "packages/fans")
+	got, err := planned(t, hostSteps(t, m, &effecttest.Out{}), "packages/fans")
 	if want := []string{"install dkms linux-headers-generic linux-headers-" + fansKernel}; err != nil || !slices.Equal(got, want) {
 		t.Errorf("plan = %q, %v; want %q", got, err, want)
 	}
 }
 
 func TestFansDriverIsThePinnedSource(t *testing.T) {
-	got, err := planned(t, specUnits(t, fansMachine(), &effecttest.Out{}), "dkms/fans")
+	got, err := planned(t, hostSteps(t, fansMachine(), &effecttest.Out{}), "dkms/fans")
 	if err != nil || len(got) < 6 {
 		t.Fatalf("plan = %q, %v; want the source, its conf, the build and the load", got, err)
 	}
@@ -154,7 +151,7 @@ func TestFansDriverIsThePinnedSource(t *testing.T) {
 		"modprobe -r nct6683", "modprobe nct6687"} {
 		m.Results[c] = effecttest.Result{}
 	}
-	apply(t, specUnits(t, m, &effecttest.Out{}), "dkms/fans")
+	apply(t, hostSteps(t, m, &effecttest.Out{}), "dkms/fans")
 	if conf := string(m.Files[fansTree+"/dkms.conf"]); !strings.Contains(conf, "PACKAGE_VERSION=\"7e3d7b36c55f\"\n") {
 		t.Errorf("dkms.conf = %q, want the pin's version", conf)
 	}
@@ -180,7 +177,7 @@ func fansService(t *testing.T, m *effecttest.Machine) *effecttest.Units {
 func TestFansServiceInstallsEnablesAndStartsThenChangesNothing(t *testing.T) {
 	m := fansMachine()
 	u := fansService(t, m)
-	config, err := values.Default().Fans.JSON()
+	config, err := values.DefaultHost().Fans.JSON()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -188,7 +185,7 @@ func TestFansServiceInstallsEnablesAndStartsThenChangesNothing(t *testing.T) {
 		t.Errorf("fans.json = %q, want the values' config and a newline", got)
 	}
 	if !strings.Contains(string(m.Files["/etc/systemd/system/ws-fans.service"]),
-		"\nExecStart=/usr/local/bin/ws ubuntu guest fans /etc/ws/fans.json\n") {
+		"\nExecStart=/usr/local/bin/ws ubuntu host fans /etc/ws/fans.json\n") {
 		t.Errorf("ws-fans.service runs no /usr/local/bin/ws: %q", m.Files["/etc/systemd/system/ws-fans.service"])
 	}
 	for _, p := range []string{"/etc/modprobe.d/ws-fans.conf", "/etc/modules-load.d/ws-fans.conf"} {

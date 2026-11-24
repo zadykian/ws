@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"os"
 	"slices"
 	"testing"
 
@@ -12,7 +11,7 @@ import (
 // before fails the test where a unit of first does not run ahead of every unit of then, in the
 // units' order.
 func before(t *testing.T, first string, then ...string) {
-	names := specLines(t, defaults(t))
+	names := specLines(t, "guest", defaults(t))
 	i := slices.Index(names, first)
 	for _, n := range then {
 		if j := slices.Index(names, n); i < 0 || j < 0 || i > j {
@@ -32,11 +31,8 @@ func TestOtelcolRunsAfterSignoz(t *testing.T) {
 // A read takes a unit as pending where a unit it waits on, by its chain of after, has changes. The
 // collector's service starts after SigNoz's sync, so its chain holds it.
 func TestOtelcolWaitsOnSignoz(t *testing.T) {
-	e := kind.Env{M: effecttest.NewMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: defaults(t), Self: selfPath}
-	units, err := kind.Load(e, os.DirFS(rolesDir))
-	if err != nil {
-		t.Fatal(err)
-	}
+	e := kind.Env{M: effecttest.NewMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: defaults(t), Side: "guest", Self: selfPath}
+	units := loadSpecs(t, e)
 	chain, err := kind.Closure(units, []string{"service/otelcol"})
 	if err != nil {
 		t.Fatal(err)

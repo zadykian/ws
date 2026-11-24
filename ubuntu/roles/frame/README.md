@@ -1,9 +1,9 @@
 # The frame
 
 The frame is what each role of mise's config leans on. One `mise bootstrap` sets up the server, in
-the side's run directory, `ubuntu/guest` of the checkout at `/opt/ws`. mise's own parts run first,
-then ws's units, which mise hands to `ws unit` through the plugin `ws`. A role moved to mise is its
-config, with its spec where it has units, and holds no Go.
+the side's run directory, `ubuntu/guest` or `ubuntu/host` of the checkout at `/opt/ws`. mise's own
+parts run first, then ws's units, which mise hands to `ws unit` through the plugin `ws`. A role
+moved to mise is its config, with its spec where it has units, and holds no Go.
 
 ## Its files
 
@@ -12,8 +12,9 @@ config, with its spec where it has units, and holds no Go.
 | [`mise.toml`](../../../mise.toml) | Both sides': mise's settings, among them `locked`, and no pin of ws. |
 | [`ubuntu/guest/mise/mise.guest.lock`](../../guest/mise/mise.guest.lock) | The roles' tools: each download's url and SHA-256 for each platform ([devtools](../devtools/README.md#the-tools)). |
 | [`mise.guest.toml`](../../../mise.guest.toml) | The guest's: dpkg's options, `/etc/ws`, the check against a silent skip and [the check of the values](#the-check-of-the-values). |
+| [`mise.host.toml`](../../../mise.host.toml) | The host's, the same in its form. The host pins no tool, so `ubuntu/host/mise/` holds the link alone and no lock. |
 | [`plugins/ws`](../../../plugins/ws) | The plugin: a hook runs one `ws unit read` or `ws unit write` ([ws unit](../../../engine/core/kind/README.md#ws-unit)), linked as [a system plugin](#the-plugin). |
-| `units.toml.tmpl`, `mise.guest.toml`, `files/` here | The role `frame`: the unit that writes [the values file](#the-values-file). |
+| `units.toml.tmpl`, `mise.guest.toml`, `mise.host.toml`, `files/` here | The role `frame`: the unit that writes [the values file](#the-values-file). |
 
 The Mac shares `mise.toml` alone, and loads no file of the guest's.
 
@@ -28,11 +29,13 @@ A role keeps its directory, `ubuntu/roles/ROLE/`, and its page there:
   A `.toml` file is TOML as written, which tombi checks.
 - **Its mise files,** one an env. `mise.guest.toml` holds what every guest gets: apt's sources,
   `[bootstrap.packages]`, files, directories, tools, and the services, with each file
-  entry that names a service in `notify`. `mise.secrets.toml` holds its
+  entry that names a service in `notify`. `mise.host.toml` holds what every host gets, in the same
+  form. A role that both run holds both. A role's file names its side: `ws unit` of a side serves
+  the roles that hold its file. `mise.secrets.toml` holds its
   [secret inputs](#secret-inputs). A role holds no plain `mise.toml`, which every env would load.
-- **The side's link,** `ubuntu/guest/mise/conf.d`, to `../../roles`. mise loads each role's
-  directory through it as a fragment, and a relative `source` resolves from the role's
-  directory. A role lands with its directory alone, and edits no shared file.
+- **The side's link,** `ubuntu/guest/mise/conf.d` or `ubuntu/host/mise/conf.d`, to `../../roles`.
+  mise loads each role's directory through it as a fragment, and a relative `source` resolves from
+  the role's directory. A role lands with its directory alone, and edits no shared file.
 
 mise merges `[bootstrap.packages]` across fragments, but an entry of a path or a service is whole.
 A later env's entry replaces an earlier one. Where two roles declare one path, mise keeps the later
@@ -44,15 +47,19 @@ parent, so a new directory of mise's files is a `[bootstrap.directories]` entry.
 Each unit of a spec is a line `"ws:KIND/NAME" = "in-sync"` under `[bootstrap.packages]`, as mise
 plans the units its files name alone. `ws unit list --toml` prints them.
 
-- A unit for every guest goes in the role's `mise.guest.toml`.
+- A unit for every guest goes in the role's `mise.guest.toml`, and a unit for every host in its
+  `mise.host.toml`. A unit of both sides goes in both.
+- A unit of one side alone, in a spec that both load, names its side in its `when`, as
+  `when = { side = "host" }` ([the facts](../../../engine/core/kind/README.md#the-specs)). The other side
+  drops the unit as it loads, so that its mise file needs no line for it.
 
 A value never takes a unit out of a spec. A unit that a value turns off stays in the spec, off by
 its `when`. Else its line would name a unit that `ws unit read` refuses.
 
-[`TestSpecsMatchMiseLines`](../../cli/specs_test.go) loads the specs for the defaults. It fails on
-a line missing or extra, and prints the line to paste. `TestUnitsFollowNoValue` fails where a bool
-or a string turned over changes the units.
-`TestTheSideLinksItsRoles` fails where the link leads elsewhere or its directory holds a file, and
+[`TestSpecsMatchMiseLines`](../../cli/specs_test.go) loads the specs of each side for its defaults.
+It fails on a line missing or extra, and prints the line to paste. `TestUnitsFollowNoValue` fails
+where a bool or a string turned over changes the units of a side.
+`TestTheSideLinksItsRoles` fails where a link leads elsewhere or its directory holds a file, and
 on a mise file that no env loads.
 
 ## The order
@@ -69,10 +76,11 @@ ws runs them by `KIND/NAME`, each moved behind the unit that its `after` names, 
 ## The machine's env
 
 The machine's miserc, `/etc/mise/miserc.toml`, names the envs that load as the set `ws`: `guest`
-alone. A run by `-E ws,secrets`, the secrets task's, adds the env `secrets` to the set, which no
-other run loads. `ws ubuntu guest setup` writes the miserc.
+on a guest, and `host` on a host. A run by `-E ws,secrets`, the secrets task's, adds the env
+`secrets` to the set, which no other run loads. `ws ubuntu guest setup` and `ws ubuntu host
+setup` each write the miserc.
 
-The same command writes `/etc/mise/config.toml`, which trusts the tree: its `trusted_config_paths`,
+The same commands write `/etc/mise/config.toml`, which trusts the tree: its `trusted_config_paths`,
 under `[settings]`, names `/opt/ws`, so that a run by hand needs no `mise trust`. mise reads that
 setting of a system config under `[settings]` alone. `mise.toml` sets `locked`, so that a tool
 installs only as its side's lock holds it. The secrets task checks that setting, so that fnox runs
@@ -145,11 +153,11 @@ that path, and fail where the file is missing.
 The unit `file/ws-values` writes `/etc/ws/values.yml` where nothing is at the path, a link
 included, as a `seed` file ([file](../../../engine/core/kind/file.md)). The file, root's at
 600, goes in whole under that mode. `Values.YAML` gives its text from the struct, so that a role's
-new key needs no second list. It names each key of `values.Values`, a table too, at the value a
-missing file gives. A key whose default is derived holds its value as the file is made:
-`WS_GIT_SIGNING_PUB_KEY` is under root's home, `WS_TUNNEL_PEERS` the Mac at the tunnel's next
-address. A key that a run reads from the machine, such as the swap's size, stays empty
-or `null`.
+new key needs no second list. It names each key of `values.Values` on a guest, and of `values.Host`
+on a host, a table too, at the value a missing file gives. A key whose default is derived holds its
+value as the file is made: `WS_GIT_SIGNING_PUB_KEY` is under root's home, `WS_TUNNEL_PEERS` the Mac
+at the tunnel's next address. A key that a run reads from the machine, such as the swap's size,
+stays empty or `null`.
 
 The file is then the owner's: no run reads it as ws's, or changes it. Each call of ws reads the
 values as it starts, and the text reads as no file does, so the unit needs no `after`. CI's
@@ -165,18 +173,18 @@ it, naming `install.sh`. The plugin's write hook runs `ws unit verify` again bef
 write`.
 
 The check runs in the run's directory, where a nested mise loads the roles as the run does. A run
-from `/opt/ws`, or from the Mac's `macos`, loads no role of the guest's, and a first one
+from `/opt/ws`, or from the Mac's `macos`, loads no role of the side, and a first one
 would set up the frame alone with exit 0. So the check looks for the frame's own
-`mise.guest.toml` through the run's link. It fails a run without it before any phase, and names
-`mise -C /opt/ws/ubuntu/guest`, as its test proves.
+`mise.guest.toml`, or `mise.host.toml`, through the run's link. It fails a run without it before
+any phase, and names `mise -C /opt/ws/ubuntu/guest`, or `host`, as its test proves.
 
 ## The check of the values
 
 A bad value in `/etc/ws/values.yml` stops a plan or a run before any write. The server's
-`/etc/ws/values.checked` is a template that runs `ws ubuntu guest values check`, which loads the
-file as each command does. A missing file passes. A bad value fails with its key, its rule and the file
-to edit by hand: `values set` refuses while any value is bad, so the message never names it. A pass
-prints one fixed line, so the next plan finds the file unchanged.
+`/etc/ws/values.checked` is a template that runs `ws ubuntu guest values check`, or `host`, which
+loads the file as each command does. A missing file passes. A bad value fails with its key, its rule
+and the file to edit by hand: `values set` refuses while any value is bad, so the message never
+names it. A pass prints one fixed line, so the next plan finds the file unchanged.
 
 The template runs `/usr/local/bin/ws`, and fails a run without it, naming `install.sh`. CI's
 `server` job plans once with a bad value. It expects exit 1 that names the key, and puts the file

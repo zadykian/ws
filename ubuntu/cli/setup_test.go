@@ -57,7 +57,7 @@ func runSetup(p enginecli.Env, rel setup.MiseRelease, args ...string) (status in
 }
 
 func runSetupWith(p enginecli.Env, cfg setupConfig, args ...string) (status int, stderr string) {
-	group := enginecli.Group("ubuntu", "Ubuntu", enginecli.Group("guest", "the guest", newSetupCmd(p, cfg)))
+	group := enginecli.Group("ubuntu", "Ubuntu", enginecli.Group("guest", "the guest", newSetupCmd(p, cfg, guestSetup)))
 	status, _, stderr = clitest.Run(p, []*cobra.Command{group}, "", append([]string{"ubuntu", "guest", "setup"}, args...)...)
 	return status, stderr
 }

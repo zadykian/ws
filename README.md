@@ -4,7 +4,8 @@ Sets up my development server from code. mise's bootstrap runs on the machine it
 units. It sets up packages, SSH by key, and a cable and a WireGuard tunnel to the
 Mac. It sets up Docker, the shell, git, tmux, lazygit, the Fresh editor and Zed's server. It sets
 up claude and [cld](https://github.com/zadykian/cld), and SigNoz with a collector for the
-machine's telemetry.
+machine's telemetry. A host, the machine that runs the guests, has its own setup and its own
+roles: `ws ubuntu host setup` ([A host](#a-host)).
 Running it again is safe, and its plan shows how a machine differs from the repository.
 
 Each role has a page of its own. A role is its mise files by env, and its spec of ws's units where
@@ -15,17 +16,18 @@ it has any:
 - [`base`](ubuntu/roles/base): packages, the locale, the timezone, security updates and a swap file,
   as mise's packages and units.
 - [`security`](ubuntu/roles/security): SSH by key only and fail2ban, as mise's config and units. A
-  guest sets up no ufw and no table of its own.
+  host sets up ufw too, with SSH in and the rest of what comes in denied. A guest sets up no ufw and
+  no table of its own.
 - [`secrets`](ubuntu/roles/secrets): fnox, which decrypts ws's secrets, as mise's config, and
   the task `secrets`, which fetches them by the host key and runs the bootstrap under them.
-- [`cable`](ubuntu/roles/cable): the server's end of a cable to the Mac, as units.
+- [`cable`](ubuntu/roles/cable): the host's end of a cable to the Mac, as units.
 - [`tunnel`](ubuntu/roles/tunnel): `wg0`, the server's end of a WireGuard tunnel for the Mac, as
   units.
 - [`ikeward`](ubuntu/roles/ikeward): ikeward's IKEv2 VPN, where a profile is given, and the WireGuard
   peers' way into it, as units.
 - [`nvidia`](ubuntu/roles/nvidia): NVIDIA's headless driver from Ubuntu's archive, on a machine with an
   NVIDIA GPU.
-- [`fans`](ubuntu/roles/fans): fan curves for the board's headers, and the driver that sets them.
+- [`fans`](ubuntu/roles/fans): fan curves for the host's board's headers, and the driver that sets them.
 - [`shell`](ubuntu/roles/shell): `/etc/ws/bashrc` and `/etc/ws/profile`, one line of each at the top of
   `~/.bashrc` and `~/.profile`, and `/etc/ws/env` from mise's secret inputs.
 - [`git`](ubuntu/roles/git): `/etc/ws/gitconfig` and its include in `~/.gitconfig`, and a key that
@@ -62,12 +64,11 @@ plugin where mise finds it, and runs mise's bootstrap ([The Mac](macos/README.md
 
 ## A new machine
 
-A release's `autoinstall.yaml` answers the installer of a new server, and the first boot runs
-ws's setup. Fill its host name, root's hash and the values. Copy it as `user-data` to a volume
+A release's `autoinstall.yaml` answers the installer of a new host, and the first boot runs the
+host's setup. Fill its host name, root's hash and the values. Copy it as `user-data` to a volume
 labelled `CIDATA`, beside an empty `meta-data`, and boot the installer with the volume:
-[The server's runbook](ubuntu/runbook.md#a-new-server-from-the-installer) has the steps.
-The secrets come after it, as below. A cloud VM has no installer, and any other server takes the
-steps by hand.
+[The server's runbook](ubuntu/runbook.md#a-new-server-from-the-installer) has the steps. A host
+holds no secret. A cloud VM has no installer, and any other server takes the steps by hand.
 
 Install Ubuntu Server 26.04 by hand from its installer. In it, turn OpenSSH on, import the GitHub
 account's keys, and leave password login off. ws sets the server up for root. Root's keys come from
@@ -90,6 +91,15 @@ hold `WS_GITHUB_TOKEN`, the secrets task logs gh in ([By hand](#by-hand)). The M
 `ws macos secrets add NAME` runs it first, as [the server's runbook](ubuntu/runbook.md) says.
 
 Then do what stays by hand, below.
+
+## A host
+
+A host is the machine that runs the guests. `ws ubuntu host setup` sets it up as `ws ubuntu guest
+setup` sets up a guest, on its own run directory, `ubuntu/host`. It runs the roles that hold a
+`mise.host.toml`: `frame`, `base`, `security`, `docker`, `signoz`, `otelcol`, `fans` and `cable`.
+Its values are `/etc/ws/values.yml` too, with its own type: `ws ubuntu host values check` and
+`set`. The installer's first boot runs `ws update`, then `ws ubuntu host setup`
+([the runbook](ubuntu/runbook.md)).
 
 ## Running it again
 

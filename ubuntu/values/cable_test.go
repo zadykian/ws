@@ -65,19 +65,19 @@ func TestEmptyCablePortChecksNothing(t *testing.T) {
 	}
 }
 
-func TestParseRefusesABadCable(t *testing.T) {
+func TestParseHostRefusesABadCable(t *testing.T) {
 	for data, want := range map[string]string{
 		"WS_CABLE_PORT: a b\n": `WS_CABLE_PORT "a b" is not an interface's name`,
 		"WS_CABLE_PORT: enp5s0\nWS_CABLE_ADDRESS: 10.77.0.0/30\n": "WS_CABLE_ADDRESS: 10.77.0.0 is the address of the subnet",
 	} {
-		if _, err := Parse([]byte(data)); err == nil || !strings.Contains(err.Error(), want) {
-			t.Errorf("Parse(%q) = %v, want %q", data, err, want)
+		if _, err := ParseHost([]byte(data)); err == nil || !strings.Contains(err.Error(), want) {
+			t.Errorf("ParseHost(%q) = %v, want %q", data, err, want)
 		}
 	}
 }
 
 func TestSetRefusesABadCablePort(t *testing.T) {
-	if _, err := Set([]byte("---\n"), "WS_CABLE_PORT", "a&b"); err == nil || !strings.Contains(err.Error(), "is not an interface's name") {
-		t.Errorf("Set = %v, want the port refused", err)
+	if _, err := SetHost([]byte("---\n"), "WS_CABLE_PORT", "a&b"); err == nil || !strings.Contains(err.Error(), "is not an interface's name") {
+		t.Errorf("SetHost = %v, want the port refused", err)
 	}
 }

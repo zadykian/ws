@@ -1,5 +1,5 @@
 // Package cli is Ubuntu's side of ws: its commands under ws ubuntu, of which the guest's are ws
-// ubuntu guest. Its roles' units and the maintainer run them.
+// ubuntu guest and the host's ws ubuntu host. Its roles' units and the maintainer run them.
 package cli
 
 import (
@@ -11,22 +11,33 @@ import (
 	"github.com/zadykian/ws/ubuntu/roles/ikeward"
 )
 
-const guestVars = "/etc/ws/values.yml"
+// guestVars and hostVars are each side's values file, on the machine of that side alone.
+const (
+	guestVars = "/etc/ws/values.yml"
+	hostVars  = "/etc/ws/values.yml"
+)
 
 // rootUser is the one user the commands act for.
 var rootUser = account.User{Name: "root", Home: "/root"}
 
-// Command returns ws ubuntu, the commands of Ubuntu's side: ws ubuntu guest, which a guest's units
-// and its maintainer run.
+// Command returns ws ubuntu, the commands of Ubuntu's side. ws ubuntu guest is for a guest's units
+// and its maintainer, and ws ubuntu host for a host's.
 func Command(p enginecli.Env) *cobra.Command {
-	return enginecli.Group("ubuntu", "the commands for an Ubuntu machine", guestCmd(p))
+	return enginecli.Group("ubuntu", "the commands for an Ubuntu machine", guestCmd(p), hostCmd(p))
+}
+
+// hostCmd returns ws ubuntu host, the commands of a host: the machine that runs the guests.
+func hostCmd(p enginecli.Env) *cobra.Command {
+	return enginecli.Group("host", "the commands for an Ubuntu host", newFansCmd(p),
+		newCableCmd(p, units.OSUnits{}), newValuesCmd(p, hostValues), newSignozCmd(p, hostSignoz),
+		newSetupCmd(p, liveSetup(), hostSetup))
 }
 
 // guestCmd returns ws ubuntu guest, the commands of a guest: a container or a cloud VM that runs
 // the roles.
 func guestCmd(p enginecli.Env) *cobra.Command {
-	return enginecli.Group("guest", "the commands for an Ubuntu guest", newFansCmd(p),
-		newCableCmd(p, units.OSUnits{}), newTunnelCmd(p, units.OSUnits{}), newIkewardCmd(p, ikeward.StatusTries, ikeward.StatusWait),
-		newGitCmd(p), newDevtoolsCmd(p), newClaudeCmd(p, units.OSUnits{}), newValuesCmd(p), newSignozCmd(p),
-		newSetupCmd(p, liveSetup()))
+	return enginecli.Group("guest", "the commands for an Ubuntu guest", newTunnelCmd(p, units.OSUnits{}),
+		newIkewardCmd(p, ikeward.StatusTries, ikeward.StatusWait),
+		newGitCmd(p), newDevtoolsCmd(p), newClaudeCmd(p, units.OSUnits{}), newValuesCmd(p, guestValues), newSignozCmd(p, guestSignoz),
+		newSetupCmd(p, liveSetup(), guestSetup))
 }

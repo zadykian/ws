@@ -8,7 +8,7 @@ import (
 )
 
 func TestFansJSONOfTheDefaultsPassesTheDaemonsLoader(t *testing.T) {
-	text, err := Default().Fans.JSON()
+	text, err := DefaultHost().Fans.JSON()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -24,7 +24,7 @@ func TestFansJSONOfTheDefaultsPassesTheDaemonsLoader(t *testing.T) {
 // TestFansJSONIsTodaysText holds the file byte for byte: the config indented by two spaces, as the
 // role wrote it before, with the last newline left to the template.
 func TestFansJSONIsTodaysText(t *testing.T) {
-	f := Default().Fans
+	f := DefaultHost().Fans
 	text, err := f.JSON()
 	if err != nil {
 		t.Fatal(err)
@@ -43,7 +43,7 @@ func TestFansJSONIsTodaysText(t *testing.T) {
 }
 
 func TestFansJSONKeepsFractionsOfAPercent(t *testing.T) {
-	f := Default().Fans
+	f := DefaultHost().Fans
 	f.Curves[0].Hysteresis.Up = 1.5
 	f.Step.Down = 0.5
 	text, err := f.JSON()
@@ -63,7 +63,7 @@ func TestFansJSONRefusesWhatTheLoaderRefuses(t *testing.T) {
 		"no interval":              func(f *Fans) { f.Interval = 0 },
 		"a sensor above itself":    func(f *Fans) { f.Sensors[4].Max = []string{"nothing"} },
 	} {
-		f := Default().Fans
+		f := DefaultHost().Fans
 		edit(&f)
 		if _, err := f.JSON(); err == nil {
 			t.Errorf("%s: JSON = nil error, want the loader's refusal", name)

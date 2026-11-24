@@ -7,13 +7,14 @@ A person does these steps at ws, in this order. The Mac's side sets them in its 
 
 A release publishes `autoinstall.yaml`, the installer's answers for Ubuntu Server 26.04. With it
 the installer sets root's keys from the GitHub account, and the console password. The first boot
-runs ws's setup of that release, so the steps by hand below are not done. The secrets still come
-after it, as [Setup, the secrets and the runs](#setup-the-secrets-and-the-runs) says.
+runs the host's setup of that release, `ws ubuntu host setup`, so the steps by hand below are not
+done. A host holds no secret, so none comes after it.
 
 1. Fill the file's host name, root's hash, from `mkpasswd -m sha-512`, and the values, as a `|`
    block of `/etc/ws/values.yml`'s text, or `""` where no value differs.
 2. Copy it as `user-data` to a volume labelled `CIDATA`, beside an empty `meta-data`.
-3. Boot the installer with `autoinstall` on the kernel's line. It asks for the disk alone.
+3. Boot the installer with `autoinstall` on the kernel's line. It asks for the storage alone.
+   Leave the pool's partition unformatted, with no filesystem: a later step gives it to the pool.
 4. Read the first boot's run in `/var/log/cloud-init-output.log`, or by
    `cloud-init status --wait --long`.
 
@@ -23,7 +24,7 @@ release fills in.
 ## The steps by hand
 
 A cloud VM has no installer, so it takes these steps. So does any server whose installer ran
-without the file.
+without the file, which is a host: bare metal.
 
 1. Log in as the installer's user, by key. Run `sudo -H ssh-import-id gh:LOGIN`, which imports the
    GitHub account's keys into `/root/.ssh/authorized_keys`, which root logs in by afterward
@@ -39,7 +40,8 @@ without the file.
 4. Run `install.sh` as root, by the three lines of
    [Install](../.github/workflows/release.md#install), `set -o pipefail` among them. It
    installs ws alone, as `/usr/local/bin/ws`, which root's `PATH` holds, and prints the next command.
-5. Run `ws ubuntu guest setup` as root.
+5. Run `ws ubuntu guest setup` as root on a guest, a cloud VM, and `ws ubuntu host setup` on a
+   host. A host holds no secret, so the secrets below are a guest's alone.
 
 ## Setup, the secrets and the runs
 

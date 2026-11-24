@@ -19,8 +19,8 @@ func TestSpanFindsTheLinesOfAKey(t *testing.T) {
 }
 
 func TestSetEditsOneLineAndKeepsTheRest(t *testing.T) {
-	const file = "---\n# the machine\nWS_BASE_TIMEZONE: UTC\n\n# the link\nWS_SIGNOZ_DASHBOARDS:\n  - git\n  - jq\n\n# the cable\n" +
-		"WS_CABLE_PORT: enp1\n"
+	const file = "---\n# the machine\nWS_BASE_TIMEZONE: UTC\n\n# the link\nWS_SIGNOZ_DASHBOARDS:\n  - git\n  - jq\n\n# the files\n" +
+		"WS_ZED_NOFILE: 4096\n"
 	for _, tc := range []struct {
 		name, data, key, value, want string
 	}{
@@ -71,7 +71,7 @@ func TestSetRefuses(t *testing.T) {
 		name, data, key, value, want string
 	}{
 		{"an unknown key", "", "no_such_key", "1", "no line holds no_such_key"},
-		{"a table", "", "WS_FANS_CURVES", "1", "no line holds WS_FANS_CURVES"},
+		{"a table", "", "WS_TUNNEL_PEERS", "1", "no line holds WS_TUNNEL_PEERS"},
 		{"a wrong kind", "", "WS_BASE_SWAPPINESS", "ten", "a whole number"},
 		{"a broken file", "WS_BASE_LOCALE: [\n", "WS_BASE_TIMEZONE", "UTC", "yaml"},
 		{"a key of a quoted name", "\"WS_BASE_LOCALE\": C\n", "WS_BASE_LOCALE", "D", "edit it by hand"},

@@ -56,7 +56,7 @@ func TestSpecsRunCommandsThatExist(t *testing.T) {
 				argvs = append(argvs, strings.Fields(m[1]))
 			}
 		}
-		for _, argv := range argvs {
+		for _, argv := range sidesOf(argvs) {
 			seen[argv[0]]++
 			if err := resolves(root, argv); err != "" {
 				t.Errorf("%s: ws %s: %s", file, strings.Join(argv, " "), err)
@@ -68,6 +68,26 @@ func TestSpecsRunCommandsThatExist(t *testing.T) {
 			t.Errorf("no ws %s command found in the specs: the pattern reads none", side)
 		}
 	}
+}
+
+// sideFunc is the template func that gives a command its side's name, as ws unit serves the side.
+const sideFunc = "{{ side }}"
+
+// sidesOf returns argvs with each that names {{ side }} once for each side of ubuntu: the command
+// must exist on both.
+func sidesOf(argvs [][]string) [][]string {
+	var all [][]string
+	for _, argv := range argvs {
+		at := slices.Index(argv, sideFunc)
+		if at < 0 {
+			all = append(all, argv)
+			continue
+		}
+		for _, side := range []string{"guest", "host"} {
+			all = append(all, slices.Replace(slices.Clone(argv), at, at+1, side))
+		}
+	}
+	return all
 }
 
 // quotedWords returns the strings of an argv's text.

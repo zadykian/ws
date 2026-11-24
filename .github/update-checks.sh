@@ -220,7 +220,7 @@ install_ws v0.1.0
 update >"$tmp/none"
 is_ws v0.2.0
 setups ""
-grep -qxF 'No side is set up here: run ws ubuntu guest setup' "$tmp/none" || fail "ws update did not name the setup to run: $(cat "$tmp/none")"
+grep -qxF 'No side is set up here: run ws ubuntu guest setup or ws ubuntu host setup' "$tmp/none" || fail "ws update did not name the setup to run: $(cat "$tmp/none")"
 nothing_left
 write_miserc
 echo "::endgroup::"

@@ -48,10 +48,7 @@ func dockerValues(t *testing.T, yaml string) values.Values {
 // the machine.
 func dockerWrites(t *testing.T, v values.Values) *effecttest.Machine {
 	m := dockerMachine()
-	units, err := kind.Load(kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v, Self: selfPath}, os.DirFS(rolesDir))
-	if err != nil {
-		t.Fatal(err)
-	}
+	units := loadSpecs(t, kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v, Side: "guest", Self: selfPath})
 	writes := map[string]bool{"file/docker-resolved": true, "file/docker-slice": true, "service/docker": true}
 	for _, u := range units {
 		if !writes[u.Name] {
@@ -157,10 +154,7 @@ func TestDockerForwardPolicyUndoesDrop(t *testing.T) {
 	m := dockerMachine()
 	m.Results[forwardIsAccept] = effecttest.Result{Err: errors.New("exit status 1")}
 	m.Results[forwardToAccept] = effecttest.Result{}
-	units, err := kind.Load(kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: dockerValues(t, ""), Self: selfPath}, os.DirFS(rolesDir))
-	if err != nil {
-		t.Fatal(err)
-	}
+	units := loadSpecs(t, kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: dockerValues(t, ""), Side: "guest", Self: selfPath})
 	got := applyUnit(t, units, forwardUnitName)
 	if len(got) != 1 || !strings.Contains(got[0], "FORWARD ACCEPT") || !slices.Contains(m.Calls, "run "+forwardToAccept) {
 		t.Errorf("plan %q, calls %q; want the policy set to accept", got, m.Calls)
@@ -173,12 +167,18 @@ func TestDockerForwardPolicyUndoesDrop(t *testing.T) {
 
 // The policy is set after Docker's first start, which is what sets it to drop.
 func TestDockerForwardPolicyComesAfterTheService(t *testing.T) {
-	units, err := kind.Load(kind.Env{M: dockerMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: dockerValues(t, ""), Self: selfPath}, os.DirFS(rolesDir))
-	if err != nil {
-		t.Fatal(err)
-	}
+	units := loadSpecs(t, kind.Env{M: dockerMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: dockerValues(t, ""), Side: "guest", Self: selfPath})
 	names := kind.Names(units)
 	if at, svc := slices.Index(names, forwardUnitName), slices.Index(names, "service/docker"); at < 0 || at < svc {
 		t.Errorf("%s runs at %d, want it after service/docker at %d", forwardUnitName, at, svc)
+	}
+}
+
+// A guest holds no filter, so its Docker has no ufw rule for the resolver, and the forward policy
+// that no ufw drops stays.
+func TestGuestHoldsTheForwardPolicyAndNoDNSRule(t *testing.T) {
+	names := specLines(t, "guest", defaults(t))
+	if slices.Contains(names, "state/docker-dns") || !slices.Contains(names, "state/docker-forward-policy") {
+		t.Errorf("the guest's units are %v: want the forward policy and no DNS rule", names)
 	}
 }

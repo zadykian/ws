@@ -6,7 +6,8 @@ units ([The frame](../frame/README.md)):
 
 | File | What it holds |
 | --- | --- |
-| [`mise.guest.toml`](mise.guest.toml) | Docker's apt source, the packages, and the units of every server. |
+| [`mise.guest.toml`](mise.guest.toml) | Docker's apt source, the packages, and the units of every guest. |
+| [`mise.host.toml`](mise.host.toml) | The same for a host, less iptables and the forward policy, with the DNS rule. |
 | [`units.toml.tmpl`](units.toml.tmpl) | The units: the route check, the resolver, the slice, Docker's service, the forward policy, and the check of `docker0`. |
 | [`files/`](files) | The templates and files that the units write. |
 
@@ -76,6 +77,13 @@ no start sets the policy again. That does not undo a policy that the first start
 `state/docker-forward-policy` sets it back to accept, once Docker runs, where it finds drop. The
 unit is a guest's alone: a host's ufw drops what it routes unless a rule allows it, and the host's
 route rules count on that.
+
+## The DNS rule
+
+A host's ufw denies what comes in, so `state/docker-dns` lets Docker's networks reach the resolver
+on the bridge address, `WS_DOCKER_BRIDGE_IP`, port 53. It lets in `docker0` and `br-+`, whatever the
+networks' subnets. A guest holds no filter, so it has no such unit, and `docker-slice` follows the
+rule on a host.
 
 ## Build cache
 

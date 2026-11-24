@@ -10,14 +10,14 @@ import (
 func TestServerFansRefusesAConfigThatFailsItsCheck(t *testing.T) {
 	p := fakeProcess()
 	p.Machine.(*effecttest.Machine).Files["/ws-fans.json"] = []byte(`{"interval": 0}`)
-	status, _, stderr := runWs(p, "", "ubuntu", "guest", "fans", "/ws-fans.json")
-	if status != 1 || !strings.HasPrefix(stderr, "ws ubuntu guest fans: /ws-fans.json: ") || !strings.Contains(stderr, "interval") {
+	status, _, stderr := runWs(p, "", "ubuntu", "host", "fans", "/ws-fans.json")
+	if status != 1 || !strings.HasPrefix(stderr, "ws ubuntu host fans: /ws-fans.json: ") || !strings.Contains(stderr, "interval") {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
-	if status, _, _ = runWs(p, "", "ubuntu", "guest", "fans", "a", "b"); status != 2 {
+	if status, _, _ = runWs(p, "", "ubuntu", "host", "fans", "a", "b"); status != 2 {
 		t.Errorf("two configs: status = %d, want 2", status)
 	}
-	if status, _, stderr = runWs(p, "", "ubuntu", "guest", "fans"); status != 1 || !strings.Contains(stderr, "/etc/ws/fans.json") {
+	if status, _, stderr = runWs(p, "", "ubuntu", "host", "fans"); status != 1 || !strings.Contains(stderr, "/etc/ws/fans.json") {
 		t.Errorf("no config: status = %d, stderr = %q", status, stderr)
 	}
 }

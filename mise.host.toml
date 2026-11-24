@@ -1,0 +1,40 @@
+# The host's frame, what every role of the host leans on: the env host loads it, with the roles
+# that ubuntu/host/mise/conf.d links. The Mac and the guest load none of it.
+
+# ws's units, `"ws:KIND/NAME" = "in-sync"` under [bootstrap.packages], go to the plugin ws, which
+# no [bootstrap.plugins] entry names: mise installs an entry again on every run, with a warning.
+# ws ubuntu host setup links the tree's plugins/ws into /usr/share/mise/plugins, where mise loads it
+# as a system plugin. A plugin that mise refuses drops its units, so /etc/ws/units.verified fails.
+
+# mise's apt passes no dpkg options: these keep a file that a role wrote before its package, where
+# dpkg would stop at its prompt.
+[bootstrap.files."/etc/apt/apt.conf.d/90ws-apt"]
+phase = "pre-packages"
+content = """
+Dpkg::Options { "--force-confdef"; "--force-confold"; };
+"""
+
+# The check against a silent skip: ws unit verify fails the plan and the run where mise's plan
+# lacks a unit of the specs. It runs /usr/local/bin/ws, which install.sh and ws update write before
+# any run, and fails a run without it, naming install.sh. The plugin's write hook runs the check
+# again, after the plan. A template's exec runs beside this file. So the check moves to cwd, the
+# run's directory, where a nested mise loads the side's roles as the run does. A run elsewhere, as
+# from /opt/ws or the Mac's macos, loads no role of the host. The check looks for the
+# frame's own file through the run's link. It fails a run without it before any phase, with no
+# write, and names the run directory.
+[bootstrap.files."/etc/ws/units.verified"]
+template = true
+content = '''{{ exec(command="cd '" ~ cwd ~ "' && { [ -f mise/conf.d/frame/mise.host.toml ] || { echo 'mise runs in " ~ cwd ~ ", which loads no role of the host: run it as mise -C /opt/ws/ubuntu/host' >&2; exit 1; }; [ -x /usr/local/bin/ws ] || { echo '/usr/local/bin/ws is missing: install.sh writes it' >&2; exit 1; }; /usr/local/bin/ws unit verify; }") }}
+'''
+
+# The check of the values: ws ubuntu host values check fails the plan and the run on a bad value of
+# /etc/ws/values.yml, before any phase writes. It runs /usr/local/bin/ws, and fails a run without
+# it, naming install.sh. A pass prints one line, so that the next plan finds the file unchanged.
+[bootstrap.files."/etc/ws/values.checked"]
+template = true
+content = '''{{ exec(command="[ -x /usr/local/bin/ws ] || { echo '/usr/local/bin/ws is missing: install.sh writes it' >&2; exit 1; }; /usr/local/bin/ws ubuntu host values check") }}
+'''
+
+# ws's own directory, which a first run with no values.yml lacks: mise makes no missing parent.
+[bootstrap.directories."/etc/ws"]
+mode = "0755"

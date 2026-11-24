@@ -65,7 +65,27 @@ func TestUnitValuesRefuseAnUnknownKey(t *testing.T) {
 }
 
 func TestUnitRunDirIsWhereSetupBootstraps(t *testing.T) {
-	if runDir != rootRoles || runDir != "/opt/ws/ubuntu/guest" {
-		t.Errorf("runDir = %q, rootRoles = %q, want both /opt/ws/ubuntu/guest", runDir, rootRoles)
+	if runDir != guestSetup.dir() || runDir != "/opt/ws/ubuntu/guest" {
+		t.Errorf("runDir = %q, the guest's setup runs in %q, want both /opt/ws/ubuntu/guest", runDir, guestSetup.dir())
+	}
+	if hostRunDir != hostSetup.dir() || hostRunDir != "/opt/ws/ubuntu/host" {
+		t.Errorf("hostRunDir = %q, the host's setup runs in %q, want both /opt/ws/ubuntu/host", hostRunDir, hostSetup.dir())
+	}
+}
+
+func TestHostSideLoadsTheHostsValues(t *testing.T) {
+	side := hostSide("/v.yml")
+	if !side.Root || side.RoleFile != "mise.host.toml" || side.RunDir != "/opt/ws/ubuntu/host" || side.Dir != unitsDir {
+		t.Errorf("side = %+v, want root's, at /opt/ws, run in ubuntu/host", side)
+	}
+	fake := effecttest.NewMachine()
+	fake.Files["/v.yml"] = []byte("WS_BASE_LOCALE: C\n")
+	data, err := side.Values(t.Context(), fake)
+	if v, ok := data.(values.Host); err != nil || !ok || v.Base.Locale != "C" {
+		t.Errorf("values = %+v, %v, want the host's, with the file's locale", data, err)
+	}
+	fake.Files["/v.yml"] = []byte("WS_ZED_NOFILE: 1\n")
+	if _, err := side.Values(t.Context(), fake); err == nil {
+		t.Error("a guest's key loaded on the host")
 	}
 }

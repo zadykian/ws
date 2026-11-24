@@ -25,7 +25,8 @@ Each Go template ends in `.tmpl`, the spec's name and the name of each `template
   error. The spec's text fills as it loads, with `add`, `mul`, `div`,
   `has_prefix TEXT PREFIX`, `json VALUE`, which quotes a value as Go's JSON encoder does, and
   `fail MSG`, which stops the render with MSG. It takes `self` too, the path of the ws that runs the
-  units, so that a command of ws runs that ws, wherever its file is. A unit's template
+  units, so that a command of ws runs that ws, wherever its file is. It takes `side`, the name of
+  the side that `ws unit` serves, as in `ws ubuntu {{ side }} signoz`. A unit's template
   fills as it plans, as an earlier unit may make the file that it reads. It takes
   `envvar FILE NAME` and the facts `mem_mib`, `cpus`, `fs_bytes PATH...`,
   `installed_version NAME`, `kernel_release` and `root_file PATH` too.
@@ -54,6 +55,7 @@ Each Go template ends in `.tmpl`, the spec's name and the name of each `template
   | `gpu_vendor` | The PCI vendor of a device of class `0x03`, from `/sys/bus/pci/devices`: `0x` and four hex digits in lower case, such as `0x1234` |
   | `interface` | A network interface of that name, of any state, from `/sys/class/net`: a name the kernel takes, with no `/` |
   | `set` | Any WANT, so that a value of the side's turns the unit on where set and off where empty; `"!WANT"` fails the load |
+  | `side` | The side that `ws unit` serves, a lower-case word. A unit of another side is no unit of this one: the load leaves it out, so that mise's file for the side needs no line for it |
 
 - **Load and plan.** Each kind checks its fields as the spec loads, so a bad field fails before any
   unit runs. The resources are made as each unit plans.
@@ -285,6 +287,12 @@ ws at `/usr/local/bin/ws`, which is there before any run. The write hook runs `w
 - **The run directory.** The failures of `verify` and `--whole` name the side's run directory,
   the specs' parent where it names none, as `run mise in /opt/ws/ubuntu/guest`
   ([The check](../../../ubuntu/roles/frame/README.md#the-check-against-a-silent-skip)).
+- **The sides.** Ubuntu's `ws unit` serves two, the guest and the host, which share the specs'
+  directory. It picks the side whose run directory mise runs in. In any other it fails and names
+  both, as a side has its own values and a pick by anything else would read the wrong file. A
+  side's specs are those of the roles that hold its mise file, `mise.guest.toml` or
+  `mise.host.toml`. A unit with `when = { side = "host" }` is no unit of the guest's, so the
+  guest's file needs no line for it. The fact `side` is the side's name.
 - **Exit codes.** 0 done. 1 a failure: a spec or values that fail to load, a plan, an apply, a
   refused check, a SHA-256 or a skipped unit. `read` and `write` as a user other than root fail
   too. So do the server's on a system other than Ubuntu 26.04. 2 a usage error, such as a unit

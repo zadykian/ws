@@ -8,13 +8,23 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
+// miseFiles are the mise files that every side of the role holds.
+var miseFiles = []string{"mise.guest.toml", "mise.host.toml"}
+
 // gitCorePrint is Launchpad's fingerprint of the git-core PPA's signing key.
 const gitCorePrint = "F911AB184317630C59970973E363C90F8F1B6217"
 
 // A git below 2.54 lacks the hooks that git's config holds, so git comes from the PPA, whose key
 // the source pins by the fingerprint that Launchpad lists.
 func TestGitComesFromThePPAByItsPinnedKey(t *testing.T) {
-	text, err := os.ReadFile("mise.guest.toml")
+	for _, file := range miseFiles {
+		t.Run(file, func(t *testing.T) { testGitComesFromThePPAByItsPinnedKey(t, file) })
+	}
+}
+
+// testGitComesFromThePPAByItsPinnedKey is TestGitComesFromThePPAByItsPinnedKey for the mise file named file.
+func testGitComesFromThePPAByItsPinnedKey(t *testing.T, file string) {
+	text, err := os.ReadFile(file) //nolint:gosec // a mise file of the role, named by the test
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,7 +60,14 @@ func TestGitComesFromThePPAByItsPinnedKey(t *testing.T) {
 // Unattended upgrades take a package from an origin that their config allows. The PPA's git is
 // above Ubuntu's, so without the PPA's origin git would stay at its first install.
 func TestUpgradesAllowThePPAsOrigin(t *testing.T) {
-	text, err := os.ReadFile("mise.guest.toml")
+	for _, file := range miseFiles {
+		t.Run(file, func(t *testing.T) { testUpgradesAllowThePPAsOrigin(t, file) })
+	}
+}
+
+// testUpgradesAllowThePPAsOrigin is TestUpgradesAllowThePPAsOrigin for the mise file named file.
+func testUpgradesAllowThePPAsOrigin(t *testing.T, file string) {
+	text, err := os.ReadFile(file) //nolint:gosec // a mise file of the role, named by the test
 	if err != nil {
 		t.Fatal(err)
 	}

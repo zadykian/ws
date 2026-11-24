@@ -11,7 +11,10 @@ import (
 	"github.com/zadykian/ws/ubuntu/roles/signoz"
 )
 
-// miseFile is what the test reads of an entry of mise.guest.toml.
+// miseFiles are the mise files that every side of the role holds.
+var miseFiles = []string{"mise.guest.toml", "mise.host.toml"}
+
+// miseFile is what the test reads of an entry of a mise file.
 type miseFile struct {
 	Source string `toml:"source"`
 	Owner  string `toml:"owner"`
@@ -22,7 +25,14 @@ type miseFile struct {
 // TestEachForgedFileIsMises holds foundryctl's files and mise's entries together, as mise copies
 // no tree: a file that a new forge adds has its entry, and an entry its file.
 func TestEachForgedFileIsMises(t *testing.T) {
-	text, err := os.ReadFile("mise.guest.toml")
+	for _, file := range miseFiles {
+		t.Run(file, func(t *testing.T) { testEachForgedFileIsMises(t, file) })
+	}
+}
+
+// testEachForgedFileIsMises is TestEachForgedFileIsMises for the mise file named file.
+func testEachForgedFileIsMises(t *testing.T, file string) {
+	text, err := os.ReadFile(file) //nolint:gosec // a mise file of the role, named by the test
 	if err != nil {
 		t.Fatal(err)
 	}

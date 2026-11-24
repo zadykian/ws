@@ -55,7 +55,7 @@ type FanControl struct {
 	Percent *float64 `yaml:"percent,omitempty"`
 }
 
-// JSON returns the text of /etc/ws/fans.json, which ws ubuntu guest fans reads, without its last
+// JSON returns the text of /etc/ws/fans.json, which ws ubuntu host fans reads, without its last
 // newline. The daemon's own loader checks it first, so that a config the daemon would refuse fails
 // the plan and never replaces a good one.
 func (f Fans) JSON() (string, error) {

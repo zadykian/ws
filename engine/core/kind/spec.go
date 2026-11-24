@@ -62,7 +62,7 @@ type spec struct {
 	Launchd map[string]launchdSpec `toml:"launchd"`
 }
 
-// parse fills the spec's text, named name in errors, with e.Data, pure's funcs and self, and
+// parse fills the spec's text, named name in errors, with e.Data, pure's funcs, self and side, and
 // decodes it. A field that no kind has is an error.
 func parse(e Env, name string, text []byte) (spec, error) {
 	funcs := pure()
@@ -72,6 +72,13 @@ func parse(e Env, name string, text []byte) (spec, error) {
 			return "", errors.New("self: the path of the running ws is unknown")
 		}
 		return e.Self, nil
+	}
+	// side is the name of the side that ws unit serves, for a command that the side's group holds.
+	funcs["side"] = func() (string, error) {
+		if e.Side == "" {
+			return "", errors.New("side: ws unit names no side here")
+		}
+		return e.Side, nil
 	}
 	filled, err := fill(name, text, funcs, e.Data)
 	if err != nil {

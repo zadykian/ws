@@ -13,7 +13,7 @@ import (
 )
 
 // unitRead returns ws unit read.
-func unitRead(p Env, s UnitSide) *cobra.Command {
+func unitRead(p Env, ss sides) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "read UNIT...",
 		Short: "print each unit's state: " + InSync + ", or the first change that write would make",
@@ -29,6 +29,14 @@ func unitRead(p Env, s UnitSide) *cobra.Command {
 	}
 	whole := c.Flags().Bool("whole", false, "fail each UNIT where they lack a unit of the specs with a change")
 	c.RunE = func(c *cobra.Command, names []string) error {
+		s, err := ss.pick(p.Pwd)
+		if err != nil && *whole {
+			// mise runs in no side's run directory, which loads none of the specs' lines.
+			return failEach(c, names, err)
+		}
+		if err != nil {
+			return err
+		}
 		if err := s.refuse(p); err != nil {
 			return err
 		}
@@ -81,6 +89,16 @@ func unitRead(p Env, s UnitSide) *cobra.Command {
 		return err
 	}
 	return c
+}
+
+// failEach prints each unit as failing with why, which is a read that cannot load any unit.
+func failEach(c *cobra.Command, names []string, why error) error {
+	var sb strings.Builder
+	for _, name := range names {
+		sb.WriteString(name + "\tfails: " + why.Error() + "\n")
+	}
+	_, err := fmt.Fprint(c.OutOrStdout(), sb.String())
+	return err
 }
 
 // sameDir reports whether a and b name one directory, through any link. A path that does not
@@ -137,7 +155,7 @@ func unitState(r step.Report) string {
 }
 
 // unitWrite returns ws unit write.
-func unitWrite(p Env, s UnitSide) *cobra.Command {
+func unitWrite(p Env, ss sides) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "write UNIT...",
 		Short: "apply the units, in the order they run",
@@ -150,6 +168,10 @@ func unitWrite(p Env, s UnitSide) *cobra.Command {
 	}
 	dry := c.Flags().Bool("dry-run", false, "plan the units and apply none")
 	c.RunE = func(c *cobra.Command, names []string) error {
+		s, err := ss.pick(p.Pwd)
+		if err != nil {
+			return err
+		}
 		if err := s.refuse(p); err != nil {
 			return err
 		}

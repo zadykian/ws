@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/kind"
 	"github.com/zadykian/ws/engine/core/step"
@@ -16,7 +17,7 @@ import (
 // pciDevices holds a directory per PCI device, as sysfs lists them.
 const pciDevices = "/sys/bus/pci/devices"
 
-// specUnits loads the roles' specs with the defaults' values on m, and returns each unit's step by
+// specUnits loads the guest's specs with the defaults' values on m, and returns each unit's step by
 // its name.
 func specUnits(t *testing.T, m *effecttest.Machine, out *effecttest.Out) map[string]step.Step {
 	v, err := values.Parse(nil)
@@ -24,15 +25,40 @@ func specUnits(t *testing.T, m *effecttest.Machine, out *effecttest.Out) map[str
 		t.Fatal(err)
 	}
 	steps := map[string]step.Step{}
-	for _, u := range loadSpecs(t, kind.Env{M: m, U: &effecttest.Units{}, Out: out, Data: v, Self: selfPath}) {
+	for _, u := range loadSpecs(t, kind.Env{M: m, U: &effecttest.Units{}, Out: out, Data: v, Side: "guest", Self: selfPath}) {
 		steps[u.Name] = u.Step
 	}
 	return steps
 }
 
-// loadSpecs loads the roles' specs on e, and returns their units in the order they run.
+// hostSteps is specUnits for the host: its specs over the host's default values.
+func hostSteps(t *testing.T, m *effecttest.Machine, out *effecttest.Out) map[string]step.Step {
+	v, err := values.ParseHost(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	steps := map[string]step.Step{}
+	for _, u := range loadSpecs(t, kind.Env{M: m, U: &effecttest.Units{}, Out: out, Data: v, Side: "host", Self: selfPath}) {
+		steps[u.Name] = u.Step
+	}
+	return steps
+}
+
+// guestUnits loads the guest's specs for the values in yml on m, and returns their units in the
+// order they run, with what they say on out.
+func guestUnits(t *testing.T, m *effecttest.Machine, yml string) ([]kind.Unit, *effecttest.Out) {
+	v, err := values.Parse([]byte(yml))
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := &effecttest.Out{}
+	return loadSpecs(t, kind.Env{M: m, U: &effecttest.Units{}, Out: out, Data: v, Side: "guest", Self: selfPath}), out
+}
+
+// loadSpecs loads the specs of the roles that hold the mise file of e's side, on e, and returns
+// their units in the order they run.
 func loadSpecs(t *testing.T, e kind.Env) []kind.Unit {
-	units, err := kind.Load(e, os.DirFS(rolesDir))
+	units, err := kind.Load(e, enginecli.SideRoles(os.DirFS(rolesDir), "mise."+e.Side+".toml"))
 	if err != nil {
 		t.Fatalf("the specs: %v", err)
 	}

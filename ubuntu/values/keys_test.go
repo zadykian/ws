@@ -22,14 +22,14 @@ func TestKeysHoldEachKindAndNoTable(t *testing.T) {
 		kinds[k.Name] = k.Kind
 	}
 	for name, want := range map[string]Kind{
-		"WS_BASE_TIMEZONE": Text, "WS_BASE_SWAPPINESS": Number, "WS_BASE_SWAP_SIZE_MB": Number, "WS_FANS_INTERVAL": Decimal,
+		"WS_BASE_TIMEZONE": Text, "WS_BASE_SWAPPINESS": Number, "WS_BASE_SWAP_SIZE_MB": Number,
 		"WS_IKEWARD_DOMAINS": List, "WS_ZED_NOFILE": Number,
 	} {
 		if got, ok := kinds[name]; !ok || got != want {
 			t.Errorf("%s: kind = %v, %t, want %v", name, got, ok, want)
 		}
 	}
-	for _, table := range []string{"WS_FANS_CURVES", "WS_FANS_STEP", "WS_CLAUDE_TELEMETRY_ENV", "WS_TUNNEL_PEERS", ""} {
+	for _, table := range []string{"WS_CLAUDE_TELEMETRY_ENV", "WS_TUNNEL_PEERS", ""} {
 		if _, ok := kinds[table]; ok {
 			t.Errorf("key %q is a table, or has no name", table)
 		}
@@ -42,14 +42,10 @@ func TestCheckRefusesWhatTheKindCantTake(t *testing.T) {
 	}{
 		{"WS_BASE_SWAPPINESS", "ten", "a whole number"},
 		{"WS_BASE_SWAPPINESS", "1.5", "a whole number"},
-		{"WS_FANS_INTERVAL", "soon", "a number"},
-		{"WS_FANS_INTERVAL", "NaN", "a number"},
-		{"WS_FANS_INTERVAL", "Inf", "a number"},
 		{"WS_BASE_TIMEZONE", "a\nb", "one line"},
 		{"WS_IKEWARD_DOMAINS", "a\rb", "one line"},
 		{"WS_BASE_SWAPPINESS", "20", ""},
 		{"WS_BASE_SWAPPINESS", "", ""},
-		{"WS_FANS_INTERVAL", "2.5", ""},
 		{"WS_BASE_TIMEZONE", "Asia/Tbilisi", ""},
 	} {
 		err := keyOf(t, tc.key).Check(tc.value)
@@ -63,12 +59,12 @@ func TestCheckRefusesWhatTheKindCantTake(t *testing.T) {
 }
 
 func TestTextGivesTheValueAsALine(t *testing.T) {
-	v, err := Parse([]byte("WS_IKEWARD_DOMAINS: [a.example, b.example]\nWS_FANS_INTERVAL: 1.5\n"))
+	v, err := Parse([]byte("WS_IKEWARD_DOMAINS: [a.example, b.example]\n"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	for name, want := range map[string]string{
-		"WS_IKEWARD_DOMAINS": "a.example, b.example", "WS_FANS_INTERVAL": "1.5",
+		"WS_IKEWARD_DOMAINS": "a.example, b.example",
 		"WS_BASE_SWAPPINESS": "10", "WS_BASE_SWAP_SIZE_MB": "", "WS_GIT_SIGNING_PUB_KEY": "/root/.ssh/id_ed25519_signing.pub", "WS_IKEWARD_DNS": "",
 	} {
 		if got := v.Text(keyOf(t, name)); got != want {
@@ -90,7 +86,6 @@ func TestLineQuotesWhatReadsAsAnotherType(t *testing.T) {
 		{"WS_BASE_TIMEZONE", "a #b", "WS_BASE_TIMEZONE: 'a #b'\n"},
 		{"WS_IKEWARD_DOMAINS", ",", "WS_IKEWARD_DOMAINS: []\n"},
 		{"WS_IKEWARD_DOMAINS", "a.example , b.example", "WS_IKEWARD_DOMAINS: [a.example, b.example]\n"},
-		{"WS_FANS_INTERVAL", "1.50", "WS_FANS_INTERVAL: 1.5\n"},
 		{"WS_BASE_SWAPPINESS", "20", "WS_BASE_SWAPPINESS: 20\n"},
 	} {
 		if got, err := keyOf(t, tc.key).line(tc.value); err != nil || got != tc.want {
