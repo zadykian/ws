@@ -48,7 +48,7 @@ func dockerValues(t *testing.T, yaml string) values.Values {
 // the machine.
 func dockerWrites(t *testing.T, v values.Values) *effecttest.Machine {
 	m := dockerMachine()
-	units, err := kind.Load(kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v, Self: selfPath}, os.DirFS(rolesDir))
+	units, err := kind.Load(kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: v, Side: "guest", Self: selfPath}, os.DirFS(rolesDir))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -157,7 +157,7 @@ func TestDockerForwardPolicyUndoesDrop(t *testing.T) {
 	m := dockerMachine()
 	m.Results[forwardIsAccept] = effecttest.Result{Err: errors.New("exit status 1")}
 	m.Results[forwardToAccept] = effecttest.Result{}
-	units, err := kind.Load(kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: dockerValues(t, ""), Self: selfPath}, os.DirFS(rolesDir))
+	units, err := kind.Load(kind.Env{M: m, U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: dockerValues(t, ""), Side: "guest", Self: selfPath}, os.DirFS(rolesDir))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -173,7 +173,7 @@ func TestDockerForwardPolicyUndoesDrop(t *testing.T) {
 
 // The policy is set after Docker's first start, which is what sets it to drop.
 func TestDockerForwardPolicyComesAfterTheService(t *testing.T) {
-	units, err := kind.Load(kind.Env{M: dockerMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: dockerValues(t, ""), Self: selfPath}, os.DirFS(rolesDir))
+	units, err := kind.Load(kind.Env{M: dockerMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: dockerValues(t, ""), Side: "guest", Self: selfPath}, os.DirFS(rolesDir))
 	if err != nil {
 		t.Fatal(err)
 	}

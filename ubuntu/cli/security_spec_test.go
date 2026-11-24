@@ -39,7 +39,7 @@ func securityUnits(t *testing.T, m *effecttest.Machine, u *effecttest.Units) []k
 	if err != nil {
 		t.Fatal(err)
 	}
-	all := loadSpecs(t, kind.Env{M: m, U: u, Out: &effecttest.Out{}, Data: v, Self: selfPath})
+	all := loadSpecs(t, kind.Env{M: m, U: u, Out: &effecttest.Out{}, Data: v, Side: "guest", Self: selfPath})
 	return slices.DeleteFunc(all, func(u kind.Unit) bool { return !strings.Contains(u.Name, "/security-") })
 }
 

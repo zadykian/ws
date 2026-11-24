@@ -24,7 +24,7 @@ func specUnits(t *testing.T, m *effecttest.Machine, out *effecttest.Out) map[str
 		t.Fatal(err)
 	}
 	steps := map[string]step.Step{}
-	for _, u := range loadSpecs(t, kind.Env{M: m, U: &effecttest.Units{}, Out: out, Data: v, Self: selfPath}) {
+	for _, u := range loadSpecs(t, kind.Env{M: m, U: &effecttest.Units{}, Out: out, Data: v, Side: "guest", Self: selfPath}) {
 		steps[u.Name] = u.Step
 	}
 	return steps

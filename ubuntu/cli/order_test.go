@@ -32,7 +32,7 @@ func TestOtelcolRunsAfterSignoz(t *testing.T) {
 // A read takes a unit as pending where a unit it waits on, by its chain of after, has changes. The
 // collector's service starts after SigNoz's sync, so its chain holds it.
 func TestOtelcolWaitsOnSignoz(t *testing.T) {
-	e := kind.Env{M: effecttest.NewMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: defaults(t), Self: selfPath}
+	e := kind.Env{M: effecttest.NewMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: defaults(t), Side: "guest", Self: selfPath}
 	units, err := kind.Load(e, os.DirFS(rolesDir))
 	if err != nil {
 		t.Fatal(err)

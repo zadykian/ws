@@ -54,7 +54,7 @@ func fansValues(t *testing.T) values.Values {
 // fansSpecs loads the specs with the values v on m, and returns each unit's step by its name.
 func fansSpecs(t *testing.T, m *effecttest.Machine, u *effecttest.Units, out *effecttest.Out, v values.Values) map[string]step.Step {
 	steps := map[string]step.Step{}
-	for _, unit := range loadSpecs(t, kind.Env{M: m, U: u, Out: out, Data: v, Self: selfPath}) {
+	for _, unit := range loadSpecs(t, kind.Env{M: m, U: u, Out: out, Data: v, Side: "guest", Self: selfPath}) {
 		steps[unit.Name] = unit.Step
 	}
 	return steps
@@ -72,7 +72,7 @@ func apply(t *testing.T, steps map[string]step.Step, name string) {
 }
 
 func TestFansUnitsRunInOrder(t *testing.T) {
-	units := loadSpecs(t, kind.Env{M: fansMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: fansValues(t), Self: selfPath})
+	units := loadSpecs(t, kind.Env{M: fansMachine(), U: &effecttest.Units{}, Out: &effecttest.Out{}, Data: fansValues(t), Side: "guest", Self: selfPath})
 	names := kind.Names(units)
 	first, then := slices.Index(names, "packages/fans"), slices.Index(names, "dkms/fans")
 	if first < 0 || then < first {

@@ -32,7 +32,7 @@ func baseUnits(t *testing.T, m *effecttest.Machine, u *effecttest.Units) ([]kind
 		t.Fatal(err)
 	}
 	out := &effecttest.Out{}
-	return loadSpecs(t, kind.Env{M: m, U: u, Out: out, Data: v, Self: selfPath}), out
+	return loadSpecs(t, kind.Env{M: m, U: u, Out: out, Data: v, Side: "guest", Self: selfPath}), out
 }
 
 func TestBaseUpgradesFileIsTodays(t *testing.T) {

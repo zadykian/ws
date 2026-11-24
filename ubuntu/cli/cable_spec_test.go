@@ -43,7 +43,7 @@ func cableUnits(t *testing.T, m *effecttest.Machine, yml string) ([]kind.Unit, *
 		t.Fatal(err)
 	}
 	out := &effecttest.Out{}
-	return loadSpecs(t, kind.Env{M: m, U: &effecttest.Units{}, Out: out, Data: v, Self: selfPath}), out
+	return loadSpecs(t, kind.Env{M: m, U: &effecttest.Units{}, Out: out, Data: v, Side: "guest", Self: selfPath}), out
 }
 
 // cableMachine is a machine with the cable's port.
