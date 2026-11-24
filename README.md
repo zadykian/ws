@@ -196,7 +196,8 @@ release whose ws `install.sh` installs, and `vX.Y.Z-rc.N` a pre-release of a `fe
 pull request breaks the rules of zadykian/toolkit's skills, and the issues workflow where an issue
 strays from its issue form. The hooks in `.githooks` check each commit before git makes it.
 [Checks](.github/workflows) and [The gates](.tools) have the details. What only a real host and its
-guests show is [checked by hand](ubuntu/checks/README.md), with scripts.
+guests show is [checked by hand](ubuntu/checks/README.md), with scripts, as is what a clean macOS 27
+shows of [the Mac](macos/checks/README.md).
 
 ## Pull requests
 
