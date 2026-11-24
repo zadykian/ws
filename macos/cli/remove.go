@@ -69,6 +69,13 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string, skip bool
 	if len(names) == 1 {
 		return fmt.Errorf("%s is the Mac's one server: with none, the bootstrap prunes no daemon, so remove leaves it", name)
 	}
+	guests, err := values.GuestsOf(p.Machine, mac, name)
+	if err != nil {
+		return err
+	}
+	if len(guests) > 0 {
+		return fmt.Errorf("%s is the host of %s: remove them first, as a guest names its host in WS_HOST", name, values.List(guests))
+	}
 	// The units below skip a server whose file ws refuses, so such a file stops the removal before
 	// it starts. NAME's own file is out of the count: a clash with it ends with the removal.
 	if err := refuseBadSibling(without{p.Machine, values.ServerPath(mac, name)}, mac, name); err != nil {

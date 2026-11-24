@@ -41,6 +41,16 @@ func TestServersListsEachServerWithItsTunnel(t *testing.T) {
 	}
 }
 
+func TestServersListsAGuestByItsTarget(t *testing.T) {
+	m, run := serversFixture()
+	m.Files["/e/servers/g1/values.yml"] = []byte(values.Text("WS_HOST", "ws", "WS_SLOT", "2", "WS_TUNNEL_PORT", "51822"))
+	withServerDirs(m)
+	_, stdout, stderr := run()
+	if want := "g1    guest   2     absent\n"; !strings.Contains(stdout, want) || stderr != "" {
+		t.Errorf("stdout = %q, stderr = %q; want it to hold %q", stdout, stderr, want)
+	}
+}
+
 func TestServersShowsAStoppedTunnel(t *testing.T) {
 	m, run := serversFixture()
 	m.Results["launchctl print system/com.github.zadykian.ws-tunnel.ws"] = effecttest.Result{Err: errors.New("not loaded")}
