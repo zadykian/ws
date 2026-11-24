@@ -15,7 +15,8 @@ import (
 )
 
 // ufwRule is one rule of a ufw state, in ufw.Rule's fields. An address or a port left out is any.
-// With Out, the rule routes (ufw.Route): what comes in on Interface from From may go out by Out.
+// With Out, the rule routes (ufw.Route): what comes in on Interface from From may go out by Out, or
+// by any interface where Out is "any" (ufw.RouteIn).
 type ufwRule struct {
 	Action    string `toml:"action"`
 	Proto     string `toml:"proto"`
@@ -41,6 +42,9 @@ func (r ufwRule) rule(comment string) (ufw.Rule, error) {
 	case r.Proto != "" || r.To != "" || r.ToPort != "" || r.FromPort != "" || r.Dir != "":
 		// ufw.Route fixes these, and Parse reads its rules back in that form alone.
 		return ufw.Rule{}, errors.New("a route rule takes action, interface, out and from alone")
+	}
+	if r.Out == "any" {
+		return ufw.RouteIn(r.Action, r.Interface, cmp.Or(r.From, "any"), comment), nil
 	}
 	return ufw.Route(r.Action, r.Interface, r.Out, cmp.Or(r.From, "any"), comment), nil
 }

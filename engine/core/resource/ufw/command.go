@@ -18,6 +18,15 @@ func Route(action, in, out, from, comment string) Rule {
 		From: from, Dir: "in", Interface: in + "!out_" + out, Comment: comment}
 }
 
+// RouteIn makes the rule of ufw's route command that lets what comes in on one interface go out
+// by any other, as `ufw route allow in on IN`. A rule that Parse reads from user.rules has the
+// same form.
+func RouteIn(action, in, from, comment string) Rule {
+	r := Route(action, in, "", from, comment)
+	r.Interface = in
+	return r
+}
+
 // command is the ufw command's arguments after --force, which a delete alone takes. They are
 // route's keyword and delete's verb, where they apply, then the rule in its full form.
 func (r Rule) command(del bool) []string {
