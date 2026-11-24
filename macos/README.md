@@ -15,8 +15,10 @@ as nothing forwards TCP to it: the Mac reaches its host first, which runs the gu
 
 The Mac's side is mise's config and ws's units, as the server's is, which `go test` checks on each
 pull request. It runs as the user, with sudo where it needs root. `mise bootstrap` sets up Ghostty,
-cld and a zsh hook ([Ghostty and cld on the Mac](roles/ghostty/README.md)). It turns the firewall
-on and has it block all incoming, as the server reaches the Mac past no router
+cld and a zsh hook ([Ghostty and cld on the Mac](roles/ghostty/README.md)). mise clones oh-my-zsh and
+its plugins, and the zsh settings load them ([zsh](roles/zsh/README.md)). It keeps the display on
+while on power and stops the App Store's updates ([power](roles/power/README.md)). It turns the
+firewall on and has it block all incoming, as the server reaches the Mac past no router
 ([the firewall](roles/firewall/README.md)). mise installs Ghostty, Zed
 and a font as casks, and gh, fnox and age-plugin-yubikey by its lock, with no Homebrew
 ([the runbook](runbook.md)). ws's units install .NET's SDKs ([dotnet](roles/dotnet/README.md)).

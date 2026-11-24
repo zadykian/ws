@@ -2,6 +2,7 @@ package zsh_test
 
 import (
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -70,5 +71,41 @@ func TestZshLineRefusesALinkedZshrcThatLacksIt(t *testing.T) {
 	}
 	if got := string(m.Files["/Users/v/dots/zshrc"]); got != "export A=1\n" {
 		t.Errorf("the link's file = %q, want it left", got)
+	}
+}
+
+// pluginsLine is the line of files/zshrc that names oh-my-zsh's plugins.
+var pluginsLine = regexp.MustCompile(`(?m)^\s*plugins=\((.*)\)$`)
+
+func TestZshrcLoadsThePluginsThatMiseClones(t *testing.T) {
+	rc, err := os.ReadFile("files/zshrc")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := pluginsLine.FindSubmatch(rc)
+	if m == nil {
+		t.Fatal("files/zshrc has no plugins line")
+	}
+	plugins := strings.Fields(string(m[1]))
+	if got := plugins[len(plugins)-1]; got != "zsh-syntax-highlighting" {
+		t.Errorf("plugins = %q, want zsh-syntax-highlighting last", plugins)
+	}
+	if !strings.Contains(string(rc), "zstyle ':omz:update' mode disabled") {
+		t.Error("files/zshrc leaves oh-my-zsh's update on, which would move the checkout off its pin")
+	}
+	spec, err := os.ReadFile("mise.macos.toml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// mise clones in the file's order, and refuses a directory with files in it.
+	omz := strings.Index(string(spec), `"~/.oh-my-zsh" =`)
+	for _, name := range plugins {
+		if name == "git" {
+			continue // oh-my-zsh's own
+		}
+		at := strings.Index(string(spec), `"~/.oh-my-zsh/custom/plugins/`+name+`" =`)
+		if at < 0 || omz < 0 || at < omz {
+			t.Errorf("mise.macos.toml does not clone %s after oh-my-zsh", name)
+		}
 	}
 }

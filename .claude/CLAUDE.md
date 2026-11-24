@@ -54,8 +54,8 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
 - `macos/`: the Mac's side ([The Mac](../macos/README.md)), its roles in `macos/roles/`.
   Above them sit the packages that serve them all, `cli`, `values`, `facts` and `internal`, and
   the runbook. Its roles' units write `ghostty/files/ws.ghostty`, Ghostty's settings,
-  `zed/files/`, Zed's settings and keymap, and `zsh/files/zshrc`, the zsh hook that turns off the
-  modes that a drop leaves on.
+  `zed/files/`, Zed's settings and keymap, and `zsh/files/zshrc`, the zsh settings and the hook
+  that turns off the modes that a drop leaves on.
 - `internal/`: what both sides share, as `setup` and `gitcfg`. It names neither side.
 - The pages sit beside their code, as the `README.md` of a role or a package. A second page stands
   beside one where the cap keeps two apart, as [docs.md](rules/docs.md) lists them.
@@ -174,7 +174,9 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([ghostty](../macos/roles/ghostty/README.md#ghostty)). The Mac's formulae, devtools' and docker's,
   take their latest by mise's `brew`, each checked by the SHA-256 of Homebrew's own bottle
   ([devtools](../macos/roles/devtools/README.md#the-formulae),
-  [docker](../macos/roles/docker/README.md#the-formulae)). Go is checked against the
+  [docker](../macos/roles/docker/README.md#the-formulae)). So is each of the Mac's clones, oh-my-zsh
+  and its two plugins, by the full commit SHA that mise checks it out at
+  ([zsh](../macos/roles/zsh/README.md#the-clones)). Go is checked against the
   SHA-256 its publisher lists, on the Mac too
   ([mise.macos.lock](../macos/mise/mise.macos.lock)), and the postgres-language-server and
   docker-language-server against theirs. mise's lock holds each for its platform

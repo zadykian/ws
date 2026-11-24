@@ -1,0 +1,4 @@
+# The power role's two lines, units of ws's.
+[bootstrap.packages]
+"ws:state/power-display" = "in-sync"
+"ws:state/power-store" = "in-sync"
