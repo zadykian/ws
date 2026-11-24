@@ -46,6 +46,23 @@ without the file, which is a host: bare metal.
 5. Run `ws ubuntu guest setup` as root on a guest, a cloud VM, and `ws ubuntu host setup` on a
    host. A host holds no secret, so the secrets below are a guest's alone.
 
+## The guests of a host
+
+A host runs guests, Incus's system containers ([incus](roles/incus/README.md#the-guests)).
+
+1. List each guest in `WS_INCUS_GUESTS` of the host's `/etc/ws/values.yml`, and write its own
+   values, where any differ from the defaults, to `/etc/ws/guests/NAME/values.yml`, root's and
+   mode 600.
+2. Run `ws ubuntu host setup`. The unit `state/incus-guests` launches each guest from the image
+   and sets it up, without the secrets.
+3. Where the guest needs the secrets, make its host key a recipient as for any server
+   ([the secrets](../macos/runbook.md#the-secrets)), then run
+   `ws ubuntu host guests setup NAME --secrets` on the host. `ws ubuntu host guests list` shows
+   each guest's state.
+4. To take a guest away, take it out of the list, then run
+   `ws ubuntu host guests remove NAME`, which asks first. Run `ws macos remove NAME` on the Mac
+   where it knows the guest as a server.
+
 ## Setup, the secrets and the runs
 
 `ws ubuntu guest setup`, run as root, sets the machine up. Before any write it refuses

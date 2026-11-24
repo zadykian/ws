@@ -14,6 +14,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/kind"
+	"github.com/zadykian/ws/ubuntu/roles/incus"
 )
 
 const incusPoolCommand = asRoot + selfPath + " ubuntu host incus pool"
@@ -45,7 +46,7 @@ func TestIncusPoolIsInSyncWhereItsCheckPasses(t *testing.T) {
 	}
 }
 
-func TestIncusUnitsRunTheAclThePoolTheBridgeThenTheProfile(t *testing.T) {
+func TestIncusUnitsRunTheObjectsThenTheSetThenTheGuests(t *testing.T) {
 	units := incusUnits(t, effecttest.NewMachine())
 	var order []string
 	for _, u := range units {
@@ -53,14 +54,14 @@ func TestIncusUnitsRunTheAclThePoolTheBridgeThenTheProfile(t *testing.T) {
 			order = append(order, u.Name)
 		}
 	}
-	want := []string{"state/incus-acl", "state/incus-pool", "state/incus-bridge", "state/incus-profile"}
+	want := []string{"state/incus-acl", "state/incus-pool", "state/incus-bridge", "state/incus-profile", "state/incus-image", "state/incus-owned", "state/incus-guests"}
 	if !slices.Equal(order, want) {
 		t.Errorf("units %q, want %q", order, want)
 	}
 }
 
 func TestEachIncusUnitRunsItsOwnCommand(t *testing.T) {
-	for _, object := range []string{"acl", "bridge", "profile"} {
+	for _, object := range []string{"acl", "bridge", "profile", "image", "owned", "guests"} {
 		command := asRoot + selfPath + " ubuntu host incus " + object
 		m := effecttest.NewMachine()
 		m.Results[command+" --check"] = effecttest.Result{Err: errors.New("to do")}
@@ -98,6 +99,23 @@ func TestIncusCommandsCheckAndMakeTheirObject(t *testing.T) {
 		if err := runIncus(m, tc.object); err != nil || len(m.Inputs) != 1 {
 			t.Errorf("%s = %v, with %d writes, want one create", tc.object, err, len(m.Inputs))
 		}
+	}
+}
+
+func TestIncusImageChecksTheAliasOfItsMetadata(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
+	m.Results["incus image list --format json"] = effecttest.Result{Out: []byte("[]")}
+	if err := runIncus(m, "image", "--check"); !errors.Is(err, enginecli.ErrDue) {
+		t.Errorf("image --check with no image = %v, want a change due", err)
+	}
+	alias, err := incus.Image{M: m}.Alias(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	m.Results["incus image list --format json"] = effecttest.Result{Out: []byte(`[{"aliases":[{"name":"` + alias + `"}]}]`)}
+	if err := runIncus(m, "image", "--check"); err != nil {
+		t.Errorf("image --check with the image = %v, want none due", err)
 	}
 }
 

@@ -37,5 +37,8 @@ root:1000000:1000000000
 "ws:state/incus-pool" = "in-sync"
 "ws:state/incus-bridge" = "in-sync"
 "ws:state/incus-profile" = "in-sync"
+"ws:state/incus-image" = "in-sync"
 "ws:state/incus-ufw" = "in-sync"
 "ws:service/incus-sources" = "in-sync"
+"ws:state/incus-owned" = "in-sync"
+"ws:state/incus-guests" = "in-sync"

@@ -17,6 +17,8 @@ type Incus struct {
 	BridgeAddress string `yaml:"WS_INCUS_BRIDGE_ADDRESS"`
 	// BridgeDNS are the resolvers that the bridge's DHCP hands to the guests.
 	BridgeDNS []string `yaml:"WS_INCUS_BRIDGE_DNS"`
+	// Guests are the guests that the host runs, each with its address and limits.
+	Guests []Guest `yaml:"WS_INCUS_GUESTS"`
 }
 
 // PrivateRanges are the IPv4 destinations that a guest never reaches: the private and shared
@@ -92,5 +94,5 @@ func (i Incus) check() error {
 			return fmt.Errorf("WS_INCUS_BRIDGE_DNS holds %s, a private address: the egress ACL drops it, so no guest could resolve", s)
 		}
 	}
-	return nil
+	return guestsCheck(i.Guests, parsed)
 }
