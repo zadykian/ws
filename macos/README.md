@@ -15,37 +15,31 @@ as nothing forwards TCP to it: the Mac reaches its host first, which runs the gu
 
 The Mac's side is mise's config and ws's units, as the server's is, which `go test` checks on each
 pull request. It runs as the user, with sudo where it needs root. `mise bootstrap` sets up Ghostty,
-cld and a zsh hook ([Ghostty and cld on the Mac](roles/ghostty/README.md)). mise clones oh-my-zsh and
-its plugins, and the zsh settings load them ([zsh](roles/zsh/README.md)). It keeps the display on
-while on power and stops the App Store's updates ([power](roles/power/README.md)). It turns the
-firewall on and has it block all incoming, as the server reaches the Mac past no router
-([the firewall](roles/firewall/README.md)). mise installs Ghostty, Zed
-and a font as casks, and gh, fnox and age-plugin-yubikey by its lock, with no Homebrew
-([the runbook](runbook.md)). ws's units install .NET's SDKs ([dotnet](roles/dotnet/README.md)).
-mise installs Go by its lock, and gnupg, ripgrep and other tools as formulae
-([devtools](roles/devtools/README.md)). It installs Docker's command line and colima the same way
-([docker](roles/docker/README.md)). It sets the Dock, Finder, windows and sounds as preferences,
-and the wallpaper to Stone ([desktop](roles/desktop/README.md)). It makes Caps Lock a Control key,
-sets the symbolic hotkeys and installs the keyboard layout ([keyboard](roles/keyboard/README.md)). The second run installs the
-Mac's apps as casks, pins some in the Dock and opens six at login ([apps](roles/apps/README.md)).
-The runbook runs `install.sh`, which puts `ws` in `/usr/local/bin` from a release, checked against
-its `ws.sha256` ([Releases](../.github/workflows/release.md)).
-Write each server's values below first, and the Mac's `values.yml`, which stands empty on a new
-Mac ([The two files](values/README.md#the-two-files)). Then:
+cld and a zsh hook ([Ghostty and cld on the Mac](roles/ghostty/README.md)). mise clones oh-my-zsh and its plugins, and the
+zsh settings load them ([zsh](roles/zsh/README.md)). It keeps the display on while on power and stops the App Store's
+updates ([power](roles/power/README.md)). It turns the firewall on and has it block all incoming, as the server reaches the
+Mac past no router ([the firewall](roles/firewall/README.md)). mise installs Ghostty, Zed and a font as casks, and gh, fnox
+and age-plugin-yubikey by its lock, with no Homebrew ([the runbook](runbook.md)). ws's units install .NET's SDKs
+([dotnet](roles/dotnet/README.md)). mise installs Go by its lock, and gnupg, ripgrep and other tools as formulae
+([devtools](roles/devtools/README.md)). It installs Docker's command line and colima the same way ([docker](roles/docker/README.md)). It sets the
+Dock, Finder, windows and sounds as preferences, and the wallpaper to Stone ([desktop](roles/desktop/README.md)). It makes
+Caps Lock a Control key, sets the symbolic hotkeys and installs the keyboard layout ([keyboard](roles/keyboard/README.md)).
+The second run installs the Mac's apps as casks, pins some in the Dock and opens six at login
+([apps](roles/apps/README.md)). The runbook runs `install.sh`, which puts `ws` in `/usr/local/bin` from a release, checked
+against its `ws.sha256` ([Releases](../.github/workflows/release.md)). Write each server's values below first, and the Mac's
+`values.yml`, which stands empty on a new Mac ([The two files](values/README.md#the-two-files)). Then:
 
 ```sh
 ws macos setup
 ```
 
-Setup takes the steps before mise ([Setup](#setup)). Then it runs mise's bootstrap, which sets up
-every role of the Mac, and once more with the env `apps`, which installs the apps. It runs on the
-tree in `/opt/ws`, from the side's run directory, `macos` ([The Mac's frame](roles/frame/README.md)).
-Its units read as the user, and ask sudo for a change alone. `ws macos` holds the Mac's
-commands, darwin alone, which the units and the tunnel's daemons run. The user runs
-`ws macos secrets init` too, which sets up the secrets repository
-([init](roles/secrets/README.md#ws-macos-secrets-init)), and
-`ws macos secrets add NAME`, which adds a server to it
-([add](roles/secrets/README.md#ws-macos-secrets-add)). `ws version` prints its version.
+Setup takes the steps before mise ([Setup](#setup)). Then it runs mise's bootstrap, which sets up every role
+of the Mac, and once more with the env `apps`, which installs the apps. It runs on the tree in
+`/opt/ws`, from the side's run directory, `macos` ([The Mac's frame](roles/frame/README.md)). Its units read as the user,
+and ask sudo for a change alone. `ws macos` holds the Mac's commands, darwin alone, which the units
+and the tunnel's daemons run. The user runs `ws macos secrets init` too, which sets up the secrets
+repository ([init](roles/secrets/README.md#ws-macos-secrets-init)), and `ws macos secrets add NAME`, which adds a server to it ([add](roles/secrets/README.md#ws-macos-secrets-add)). `ws
+version` prints its version.
 
 ## Setup
 
@@ -81,10 +75,9 @@ steps are those of the server's setup, which `internal/setup` holds, with the Ma
 both envs, then runs `mise -E ws,apps bootstrap status --missing --json`, which covers the
 preferences, the Dock and the login items that the plan leaves out. Its exit 1 is a difference,
 which has a report in JSON, or an error, which has none, so setup tells them apart and exits 2 for
-the difference.
-`ws macos servers` shows each server's tunnel. A cable's service that is disabled, which no run
-turns on, draws a warning from `ws macos cable` and its `--check` alone: a bootstrap shows no
-check's output. No unit reads a private key: the key's unit looks for the file alone.
+the difference. `ws macos servers` shows each server's tunnel. A cable's service that is disabled,
+which no run turns on, draws a warning from `ws macos cable` and its `--check` alone: a bootstrap
+shows no check's output. No unit reads a private key: the key's unit looks for the file alone.
 
 ## The Mac's values.yml
 
@@ -296,13 +289,11 @@ domain's names to nameservers behind it. It calls `ws`, which changes only what 
   the daemon is loaded, so that the script can stop with "run mise -C /opt/ws/macos bootstrap
   first".
 
-With no network or address, each removes its file, `ws macos resolver` only a file it wrote.
-`tunnel routes` signals the daemons itself, but launchd's unit keeps the sum of `routes.d` in its
-stamp. So the next bootstrap plans a reload and the stamp's write through sudo, which asks a
-password.
-The files outlive the daemon. While the daemon is stopped, the routes go with its utun, and the
-domain's lookups go out by the Mac's own network and fail. ws forwards what the tunnel sends to its
-VPN, where the `ikeward` role sets that up ([Forwarding](../ubuntu/roles/ikeward/README.md#forwarding)). Any
-other network behind ws needs its side set up on ws too. A network the Mac is on, inside one sent
-into the tunnel, keeps its part off the tunnel: macOS routes the narrower network to the Mac's own
-interface.
+With no network or address, each removes its file, `ws macos resolver` only a file it wrote. `tunnel
+routes` signals the daemons itself, but launchd's unit keeps the sum of `routes.d` in its stamp. So
+the next bootstrap plans a reload and the stamp's write through sudo, which asks a password. The
+files outlive the daemon. While the daemon is stopped, the routes go with its utun, and the domain's
+lookups go out by the Mac's own network and fail. ws forwards what the tunnel sends to its VPN,
+where the `ikeward` role sets that up ([Forwarding](../ubuntu/roles/ikeward/README.md#forwarding)). Any other network behind ws needs its side set
+up on ws too. A network the Mac is on, inside one sent into the tunnel, keeps its part off the
+tunnel: macOS routes the narrower network to the Mac's own interface.
