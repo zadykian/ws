@@ -26,10 +26,13 @@ AppleEnabledThirdPartyInputSources = [
     { InputSourceKind = "Keyboard Layout", "KeyboardLayout ID" = -21268, "KeyboardLayout Name" = "RUS" },
 ]
 
-# The sources that macOS enables, with no layout of Apple's: the character palette and the
-# press-and-hold menu alone. The two layouts above are the only ones that remain.
+# The sources that macOS enables: the layout's two, first, as macOS lists a layout before a method,
+# then the character palette and the press-and-hold menu. So no layout of Apple's stays on. No key
+# names the source in use, as macOS rewrites it at each switch.
 [bootstrap.settings.macos.defaults."com.apple.HIToolbox"]
 AppleEnabledInputSources = [
+    { InputSourceKind = "Keyboard Layout", "KeyboardLayout ID" = -20611, "KeyboardLayout Name" = "ENG" },
+    { InputSourceKind = "Keyboard Layout", "KeyboardLayout ID" = -21268, "KeyboardLayout Name" = "RUS" },
     { "Bundle ID" = "com.apple.CharacterPaletteIM", InputSourceKind = "Non Keyboard Input Method" },
     { "Bundle ID" = "com.apple.PressAndHold", InputSourceKind = "Non Keyboard Input Method" },
 ]

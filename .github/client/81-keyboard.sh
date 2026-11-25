@@ -75,15 +75,17 @@ input_source() {
     fi
 }
 
-# The two layouts, each by its ID and name, and no layout of Apple's.
+# The two layouts, each by its ID and name, in both arrays, and no layout of Apple's.
 ids=(-20611 -21268)
 names=(ENG RUS)
 for i in 0 1; do
     input_source com.apple.inputsources "AppleEnabledThirdPartyInputSources.$i.KeyboardLayout ID" "${ids[i]}" integer
     input_source com.apple.inputsources "AppleEnabledThirdPartyInputSources.$i.KeyboardLayout Name" "${names[i]}"
     input_source com.apple.inputsources "AppleEnabledThirdPartyInputSources.$i.InputSourceKind" "Keyboard Layout"
+    input_source com.apple.HIToolbox "AppleEnabledInputSources.$i.KeyboardLayout ID" "${ids[i]}" integer
+    input_source com.apple.HIToolbox "AppleEnabledInputSources.$i.KeyboardLayout Name" "${names[i]}"
 done
-input_source com.apple.HIToolbox "AppleEnabledInputSources" 2 array
-input_source com.apple.HIToolbox "AppleEnabledInputSources.0.Bundle ID" com.apple.CharacterPaletteIM
-input_source com.apple.HIToolbox "AppleEnabledInputSources.1.Bundle ID" com.apple.PressAndHold
+input_source com.apple.HIToolbox "AppleEnabledInputSources" 4 array
+input_source com.apple.HIToolbox "AppleEnabledInputSources.2.Bundle ID" com.apple.CharacterPaletteIM
+input_source com.apple.HIToolbox "AppleEnabledInputSources.3.Bundle ID" com.apple.PressAndHold
 exit "$fail"

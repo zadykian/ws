@@ -176,8 +176,8 @@ func TestTheHotkeysThatGoOff(t *testing.T) {
 
 // TestTheInputSourcesAreTheLayoutsAlone holds the two arrays to their whole value. mise writes
 // each whole and compares it by element, in order, and by type: an ID is an integer, as macOS
-// stores it, and a key order is no difference. The first array names the layout's two sources and
-// the second no layout of Apple's.
+// stores it, and a key order is no difference. The first array names the layout's two sources, and
+// the second the same two and Apple's two methods, so that no layout of Apple's stays on.
 func TestTheInputSourcesAreTheLayoutsAlone(t *testing.T) {
 	layout := func(id int64, name string) any {
 		return map[string]any{"InputSourceKind": "Keyboard Layout", "KeyboardLayout ID": id, "KeyboardLayout Name": name}
@@ -189,7 +189,7 @@ func TestTheInputSourcesAreTheLayoutsAlone(t *testing.T) {
 	want := map[string]map[string]any{
 		"com.apple.inputsources": {"AppleEnabledThirdPartyInputSources": []any{layout(-20611, "ENG"), layout(-21268, "RUS")}},
 		"com.apple.HIToolbox": {"AppleEnabledInputSources": []any{
-			method("com.apple.CharacterPaletteIM"), method("com.apple.PressAndHold"),
+			layout(-20611, "ENG"), layout(-21268, "RUS"), method("com.apple.CharacterPaletteIM"), method("com.apple.PressAndHold"),
 		}},
 	}
 	for domain, w := range want {

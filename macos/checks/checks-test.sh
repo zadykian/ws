@@ -218,7 +218,7 @@ stub defaults 'case "$1" in export) echo plist ;; read) echo "$IN_USE" ;; esac'
     echo "type:AppleEnabledThirdPartyInputSources.0.KeyboardLayout ID=integer"
     echo "AppleEnabledThirdPartyInputSources.1.KeyboardLayout Name=RUS"
     echo "type:AppleEnabledThirdPartyInputSources.1.KeyboardLayout Name=integer"
-    echo "AppleEnabledInputSources=2"
+    echo "AppleEnabledInputSources=4"
     echo "type:AppleEnabledInputSources=array"
 } >"$tmp/sources"
 sources() { PLUTIL_DB=$tmp/sources inside prefs.sh input_source "$@"; }
@@ -230,8 +230,8 @@ expect "an input source ID that is a string" fail sources com.apple.inputsources
     "AppleEnabledThirdPartyInputSources.0.KeyboardLayout ID" -20611
 expect "a name that is the wrong type" fail sources com.apple.inputsources \
     "AppleEnabledThirdPartyInputSources.1.KeyboardLayout Name" RUS
-expect "two enabled sources" ok sources com.apple.HIToolbox AppleEnabledInputSources 2 array
-expect "three enabled sources" fail sources com.apple.HIToolbox AppleEnabledInputSources 3 array
+expect "four enabled sources" ok sources com.apple.HIToolbox AppleEnabledInputSources 4 array
+expect "two enabled sources" fail sources com.apple.HIToolbox AppleEnabledInputSources 2 array
 layout_id=$(grep -A1 '<key>TISInputSourceID</key>' "$dir/../roles/keyboard/files/ws.bundle/Contents/Info.plist" |
     sed -n 's/.*<string>\(.*\)<\/string>.*/\1/p' | tail -n 1)
 IN_USE=$layout_id expect "the layout's input source in use" ok inside prefs.sh in_use
