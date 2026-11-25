@@ -1,7 +1,6 @@
 #!/bin/bash
-# Tries the functions of setup.sh, prefs.sh and tools.sh against stand-ins for the Mac's tools.
-# The stand-ins print what defaults, plutil, pmset and sfltool print. The test reads the real roles'
-# files of the tree. CI's lint job runs it. The scripts themselves run on the Mac alone.
+# Tries the checks' functions against stand-ins for the Mac's tools, on the tree's real roles.
+# CI's lint job runs it. The checks themselves run on the Mac alone: macos/checks/README.md.
 # shellcheck disable=SC2016 # each stand-in's body expands its variables when it runs, not here
 set -uo pipefail
 

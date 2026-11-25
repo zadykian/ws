@@ -1,11 +1,7 @@
 #!/bin/bash
-# The real Mac's checks of its preferences: macos/checks/README.md. Run as the Mac's user as
-#
-#   prefs.sh [CHECK...]
-#
-# CHECK is a trial's number on the page. 2 is the preferences' types, 3 the layout, 4 the hotkeys,
-# 6 the updates and the display, and 7 the wallpaper. Without one, it runs each. It prints a line a
-# check, ok or FAIL, and exits 1 where any fails. It changes nothing.
+# The real Mac's checks of its preferences: trials 2, 3, 4, 6 and 7. Run as the Mac's user, as
+# `prefs.sh [CHECK...]`, a trial's number each or none for all five. It changes nothing. The
+# page is macos/checks/README.md.
 set -uo pipefail
 
 dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)

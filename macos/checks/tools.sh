@@ -1,15 +1,7 @@
 #!/bin/bash
-# The real Mac's checks of its containers, claude and gpg: macos/checks/README.md. Run as the Mac's
-# user as
-#
-#   tools.sh 8 [DOWNLOAD]
-#   tools.sh 9 [SHA256]
-#
-# Check 8 reads the state that the by-hand steps leave. Colima runs under the firewall's block-all,
-# docker has the image that docker run pulled, and DOWNLOAD, the torrent's file, is there. Check 9
-# reads claude's binary and gpg's pinentry. SHA256 is the binary's sum from before claude's own
-# update, which the script prints on each run. It prints a line a check, ok or FAIL, and exits 1
-# where any fails. It starts and pulls nothing.
+# The Mac's checks of its containers, claude and gpg: trials 8 and 9. Run as the Mac's user, as
+# `tools.sh 8 [DOWNLOAD]` or `tools.sh 9 [SHA256]`. It starts and pulls nothing. The page,
+# macos/checks/README.md, says what to pass.
 set -uo pipefail
 
 dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)

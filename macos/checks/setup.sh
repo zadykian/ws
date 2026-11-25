@@ -1,12 +1,7 @@
 #!/bin/bash
-# The real Mac's checks of its first run, its login items and its shell: macos/checks/README.md.
-# Run as the Mac's user, not root, as
-#
-#   setup.sh [CHECK...]
-#
-# CHECK is a trial's number on the page. 1 is the first run's end state, 5 the login items and 10
-# the shell. Without one, it runs each. It prints a line a check, ok or FAIL, and exits 1 where any
-# fails. It changes nothing: the first run and the second are by hand, as the page says.
+# The real Mac's checks of its first run, its login items and its shell: trials 1, 5 and 10.
+# Run as the Mac's user, not root, as `setup.sh [CHECK...]`, a trial's number each or none for
+# all three. It changes nothing. The page is macos/checks/README.md.
 set -uo pipefail
 
 dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
