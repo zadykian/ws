@@ -284,4 +284,4 @@ The unit passes no `--secrets`, as a host holds no secret. The secrets come by h
 | --- | --- |
 | `ws ubuntu host guests list` | Each guest of the list with its address and its state, then each guest of ws's that the list lacks. |
 | `ws ubuntu host guests setup NAME [--secrets]` | The push and the setup above, whatever the guest's plan says. `--secrets` runs the task `secrets`. |
-| `ws ubuntu host guests remove NAME` | Asks, then deletes the guest with its disk and snapshots. It refuses a guest that the list names, and prints `ws macos remove NAME`. |
+| `ws ubuntu host guests remove NAME` | Asks, then deletes the guest with its disk and snapshots, and its tunnel `wgN` on the host with its key and peers ([tunnel](../tunnel/README.md#the-firewall-of-a-host)). It refuses a guest that the list names, and prints `ws macos remove NAME`. |

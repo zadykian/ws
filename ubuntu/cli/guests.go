@@ -12,6 +12,7 @@ import (
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/ubuntu/roles/incus"
+	"github.com/zadykian/ws/ubuntu/roles/tunnel"
 	"github.com/zadykian/ws/ubuntu/values"
 )
 
@@ -103,9 +104,11 @@ func guestsRemove(p enginecli.Env) *cobra.Command {
 		Use:   "remove NAME",
 		Short: "delete a guest with its disk and snapshots, after asking",
 		Long: "It deletes the instance of a guest of ws's, which takes the profile ws, after it asks. The disk and " +
-			"the snapshots go with it. It refuses a guest that WS_INCUS_GUESTS still names, as the next run of " +
-			"the guests unit would launch it again, so take it out of the list first. It leaves the guest's values " +
-			"in /etc/ws/guests, and prints the command that removes the guest on the Mac.",
+			"the snapshots go with it, and so does the guest's tunnel on the host: the interface wgN of the slot " +
+			"that its values name, its key and its peers' keys, so that the next guest of the slot gets a key of " +
+			"its own and none of the old peers. It refuses a guest that WS_INCUS_GUESTS still names, as the next " +
+			"run of the guests unit would launch it again, so take it out of the list first. It leaves the guest's " +
+			"values in /etc/ws/guests, and prints the command that removes the guest on the Mac.",
 		Args: cobra.ExactArgs(1),
 		RunE: func(c *cobra.Command, args []string) error {
 			name := args[0]
@@ -123,7 +126,16 @@ func guestsRemove(p enginecli.Env) *cobra.Command {
 			if !incus.IsGuest(held, name) {
 				return fmt.Errorf("no guest of ws's named %s in Incus", name)
 			}
-			_, _ = fmt.Fprintf(c.ErrOrStderr(), "Delete the guest %s, with its disk and its snapshots? (yes/no) [no]: ", name)
+			t, noTunnel := removedTunnel(p.Machine, name)
+			holder := slices.IndexFunc(v.Incus.Guests, func(g values.Guest) bool { return noTunnel == nil && g.Link() == t.Link() })
+			what := "its disk and its snapshots"
+			switch {
+			case holder >= 0:
+				what = fmt.Sprintf("its disk, its snapshots and its tunnel %s on the host, which %s holds now", t.Link(), v.Incus.Guests[holder].Name)
+			case noTunnel == nil:
+				what = "its disk, its snapshots and its tunnel " + t.Link() + " on the host"
+			}
+			_, _ = fmt.Fprintf(c.ErrOrStderr(), "Delete the guest %s, with %s? (yes/no) [no]: ", name, what)
 			answer, err := bufio.NewReader(c.InOrStdin()).ReadString('\n')
 			if err != nil && answer == "" {
 				return errors.New("no answer, so nothing changed")
@@ -134,8 +146,36 @@ func guestsRemove(p enginecli.Env) *cobra.Command {
 			if err := incus.Remove(c.Context(), p.Machine, name); err != nil {
 				return err
 			}
-			_, _ = fmt.Fprintf(c.OutOrStdout(), "deleted the guest %s\nOn the Mac, run: ws macos remove %s\n", name, name)
+			_, _ = fmt.Fprintf(c.OutOrStdout(), "deleted the guest %s\n", name)
+			if noTunnel != nil {
+				_, _ = fmt.Fprintf(c.ErrOrStderr(), "warning: %v, so no tunnel is deleted. Where %s held a slot N, delete "+
+					"/etc/systemd/network/60-wgN.*, /etc/wireguard/wgN and the interface wgN by hand, or the next guest of the slot takes its key and peers\n", noTunnel, name)
+			} else {
+				if err := tunnel.RemoveGuest(c.Context(), p.Machine, t); err != nil {
+					return fmt.Errorf("the guest %s is deleted, but not its tunnel %s: %w", name, t.Link(), err)
+				}
+				_, _ = fmt.Fprintf(c.OutOrStdout(), "deleted its tunnel %s, with its key and its peers' keys\n", t.Link())
+			}
+			if holder >= 0 {
+				_, _ = fmt.Fprintf(c.OutOrStdout(), "The next ws ubuntu host setup gives %s a new key for %s, and %s's peers' keys go in %s again\n",
+					t.Link(), v.Incus.Guests[holder].Name, v.Incus.Guests[holder].Name, t.PeersDir())
+			}
+			_, _ = fmt.Fprintf(c.OutOrStdout(), "On the Mac, run: ws macos remove %s\n", name)
 			return nil
 		},
 	}
+}
+
+// removedTunnel returns the tunnel that the host ended for the guest name, from the values that
+// remove leaves in /etc/ws/guests. The error says why the values name none.
+func removedTunnel(m effect.Machine, name string) (values.GuestTunnel, error) {
+	g := values.Guest{Name: name}
+	data, v, err := g.Read(m)
+	switch {
+	case err != nil:
+		return values.GuestTunnel{}, err
+	case data == nil:
+		return values.GuestTunnel{}, fmt.Errorf("%s is missing", g.File())
+	}
+	return g.Tunnel(v)
 }
