@@ -4,6 +4,7 @@ import (
 	"os"
 	"reflect"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/pelletier/go-toml/v2"
@@ -169,6 +170,47 @@ func TestTheHotkeysThatGoOff(t *testing.T) {
 	for _, id := range []string{"34", "98"} {
 		if _, ok := all[id]; ok {
 			t.Errorf("hotkey %s has an entry, and none is wanted", id)
+		}
+	}
+}
+
+// TestTheInputSourcesAreTheLayoutsAlone holds the two arrays to their whole value. mise writes
+// each whole and compares it by element, in order, and by type: an ID is an integer, as macOS
+// stores it, and a key order is no difference. The first array names the layout's two sources and
+// the second no layout of Apple's.
+func TestTheInputSourcesAreTheLayoutsAlone(t *testing.T) {
+	layout := func(id int64, name string) any {
+		return map[string]any{"InputSourceKind": "Keyboard Layout", "KeyboardLayout ID": id, "KeyboardLayout Name": name}
+	}
+	method := func(bundle string) any {
+		return map[string]any{"Bundle ID": bundle, "InputSourceKind": "Non Keyboard Input Method"}
+	}
+	got := load(t).Bootstrap.Settings.Macos.Defaults
+	want := map[string]map[string]any{
+		"com.apple.inputsources": {"AppleEnabledThirdPartyInputSources": []any{layout(-20611, "ENG"), layout(-21268, "RUS")}},
+		"com.apple.HIToolbox": {"AppleEnabledInputSources": []any{
+			method("com.apple.CharacterPaletteIM"), method("com.apple.PressAndHold"),
+		}},
+	}
+	for domain, w := range want {
+		if !reflect.DeepEqual(got[domain], w) {
+			t.Errorf("%s = %#v, want %#v", domain, got[domain], w)
+		}
+	}
+}
+
+// TestTheInputSourcesNameTheBundlesLayouts keeps each source's ID and name to the layout that the
+// bundle's files hold: a keylayout's id and name, and the bundle's info for it.
+func TestTheInputSourcesNameTheBundlesLayouts(t *testing.T) {
+	const resources = "files/KeyboardLayout.bundle/Contents/"
+	info := roleFile(t, resources+"Info.plist")
+	for name, id := range map[string]string{"ENG": "-20611", "RUS": "-21268"} {
+		layout := roleFile(t, resources+"Resources/"+name+".keylayout")
+		if want := `id="` + id + `" name="` + name + `"`; !strings.Contains(string(layout), want) {
+			t.Errorf("%s.keylayout lacks %s", name, want)
+		}
+		if want := "<key>KLInfo_" + name + "</key>"; !strings.Contains(string(info), want) {
+			t.Errorf("Info.plist lacks %s", want)
 		}
 	}
 }
