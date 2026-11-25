@@ -32,7 +32,7 @@ A command's `--check` fails where a change is due, and its plan shows the change
 | Unit | Object | Keys |
 | --- | --- | --- |
 | `state/incus-acl` | The ACL `ws-egress` | Egress: the private ranges dropped, the rest allowed. |
-| `state/incus-pool` | The ZFS pool `ws` | `source`, on a create alone: `WS_INCUS_POOL_SOURCE`. Always `volume.zfs.use_refquota` and `volume.zfs.remove_snapshots`. |
+| `state/incus-pool` | The ZFS pool `ws` | `source`, on a create alone: `WS_INCUS_POOL_SOURCE`. Always `volume.zfs.use_refquota`, `volume.zfs.reserve_space` and `volume.zfs.remove_snapshots`. |
 | `state/incus-ingress` | The ACL `ws-ingress` | Ingress: each guest's tunnel peers allowed in. |
 | `state/incus-bridge` | The bridge `incusbr0` | The subnet, DHCP's resolvers, NAT, no IPv6 and the ACLs. |
 | `state/incus-profile` | The profile `ws` | Unprivileged, nesting, isolated IDs, autostart, daily snapshots, an isolated NIC and the disk. |
@@ -254,11 +254,18 @@ name a slot but slot 0, which is the host's. A later change of the slot reaches 
 
 ## Storage
 
-The pool counts each volume's quota by `refquota`, and a restore of an older snapshot drops the newer
-ones, as ZFS restores the latest alone: `volume.zfs.use_refquota` and `volume.zfs.remove_snapshots`.
-So a guest's snapshots stay out of its disk quota. The profile takes a daily snapshot of each guest,
+The pool counts each volume's quota by `refquota` and reserves it by `refreservation`, and a restore
+of an older snapshot drops the newer ones, as ZFS restores the latest alone:
+`volume.zfs.use_refquota`, `volume.zfs.reserve_space` and `volume.zfs.remove_snapshots`. So a
+guest's snapshots stay out of its disk quota. The profile takes a daily snapshot of each guest,
 which expires after two weeks, as a schedule with no expiry keeps every snapshot. Docker's data
 stays on the guest's root dataset.
+
+A guest's live data stays within its quota, and the pool keeps that much for it alone, so no other
+guest's snapshots take it. Its snapshots sit outside the quota, in the space that no guest
+reserves, which the guests' snapshots share. ZFS takes a snapshot only where that space holds as
+much as the guest's data, so a full pool fails the next snapshot, never a guest's write. Incus fails
+to create a guest whose quota the pool cannot reserve: the quotas together must fit in the pool.
 
 ## A guest's setup
 

@@ -80,8 +80,9 @@ as root on the host. A cloud VM is a guest in the self-contained mode, out of an
     A live NIC `ipv4.address` edit applies: change a guest's `address` in the list, run the
     setup, and `incus list NAME -c 4` shows it. Ubuntu's root tarball imports with ws's metadata,
     and cloud-init takes the seed: `incus image list`, and in the guest `cloud-init status`.
-26. `volume.zfs.use_refquota` reaches the guest's root volume, and the root `size` is the quota.
-    `zfs get refquota ws/containers/NAME` prints the disk's size. Daily snapshots expire:
+26. `volume.zfs.use_refquota` and `volume.zfs.reserve_space` reach the guest's root volume, and
+    the root `size` is the quota. `zfs get refquota,refreservation ws/containers/NAME` prints the
+    disk's size twice. Daily snapshots expire:
     `incus config get NAME snapshots.expiry`.
 27. The idmap range with `security.idmap.isolated` holds. So does overlayfs for Docker in a
     nested unprivileged guest. `cat /proc/self/uid_map` in each guest shows a range apart from

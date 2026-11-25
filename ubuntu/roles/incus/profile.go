@@ -57,7 +57,7 @@ func Profile(m effect.Machine) object.Object {
 }
 
 // A guest's disk is snapshotted every day, and a snapshot expires after two weeks. A schedule with
-// no expiry keeps every snapshot, and a quota that counts them (see Pool) fills.
+// no expiry keeps every snapshot, which fill the pool's space outside the quotas (see Pool).
 const (
 	snapshotSchedule = "@daily"
 	snapshotExpiry   = "2w"
