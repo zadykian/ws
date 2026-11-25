@@ -6,7 +6,8 @@ has `ws ubuntu host setup` and its own roles. Its roles set up packages,
 SSH by key, the links to the Mac, an IKEv2 VPN where a profile is given, and the
 fans. Then the shell, git,
 tmux, lazygit, Fresh, Docker, claude, SigNoz with its collector, and Zed's server. `macos/`
-sets up the Mac that works on the server. The rest is the docs, the lint gates' tools and CI.
+sets up the Mac whole: its apps, tools and settings. The rest is the docs, the lint gates' tools
+and CI.
 
 ## Layout
 
@@ -53,9 +54,9 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   ([Releases](../.github/workflows/release.md)).
 - `macos/`: the Mac's side ([The Mac](../macos/README.md)), its roles in `macos/roles/`.
   Above them sit the packages that serve them all, `cli`, `values`, `facts` and `internal`, and
-  the runbook. Its roles' units write `ghostty/files/ws.ghostty`, Ghostty's settings,
-  `zed/files/`, Zed's settings and keymap, and `zsh/files/zshrc`, the zsh settings and the hook
-  that turns off the modes that a drop leaves on.
+  the runbook. A role's `files/` holds what its units write, as Ghostty's settings and Zed's
+  keymap. `checks/` holds the trials that only a real Mac settles
+  ([The Mac's checks](../macos/checks/README.md)).
 - `internal/`: what both sides share, as `setup` and `gitcfg`. It names neither side.
 - The pages sit beside their code, as the `README.md` of a role or a package. A second page stands
   beside one where the cap keeps two apart, as [docs.md](rules/docs.md) lists them.
