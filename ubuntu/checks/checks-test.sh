@@ -1,6 +1,6 @@
 #!/bin/bash
-# Tries the functions of host.sh, guests.sh and guest.sh against stand-ins for the tools they call,
-# on the outputs the real tools print. CI's lint job runs it. The scripts themselves run on the
+# Tries the functions of host.sh, guests.sh and guest.sh, and lan.sh whole, against stand-ins for
+# the tools they call, on the outputs the real tools print. CI's lint job runs it. The scripts themselves run on the
 # real machine alone.
 set -uo pipefail
 
@@ -93,6 +93,19 @@ case "$*" in
 "addr add "*" dev eth0") : >"$IP_STATE/added" ;;
 "addr del "*" dev eth0") rm -f "$IP_STATE/added" ;;
 "neigh flush dev eth0") : >"$IP_STATE/flushed" ;;
+"route add "*" via "*)
+    [ ! -e "$IP_STATE/route-$3" ] || {
+        echo "RTNETLINK answers: File exists" >&2
+        exit 2
+    }
+    echo "$5" >"$IP_STATE/route-$3"
+    ;;
+"route delete "*" via "*) rm "$IP_STATE/route-$3" ;;
+"route get "*)
+    via=192.168.1.1
+    [ ! -e "$IP_STATE/route-$3" ] || via=$(cat "$IP_STATE/route-$3")
+    printf '%s via %s dev eth0 src 192.168.1.20 uid 1000 \n    cache \n' "$3" "$via"
+    ;;
 *)
     echo "ip: the stand-in knows no call $*" >&2
     exit 1
@@ -185,6 +198,32 @@ SOURCES=open expect "a table that passes another guest's address" fail guest spo
     echo "checks-test: spoofed_addr left 10.100.0.11 on eth0" >&2
     failed=1
 }
+rm -f "$IP_STATE"/*
+
+# lan.sh runs whole, on Linux, against a host at 192.168.1.10 that answers SSH alone. sudo either
+# runs the command or wants a password that the run cannot give.
+cat >"$tmp/bin/sudo" <<'STUB'
+#!/bin/sh
+[ "${SUDO:-}" = no ] || exec "$@"
+echo "sudo: a terminal is required to read the password" >&2
+exit 1
+STUB
+printf '#!/bin/sh\necho Linux\n' >"$tmp/bin/uname"
+printf '#!/bin/sh\n[ "$*" = "-z -w 3 192.168.1.10 22" ]\n' >"$tmp/bin/nc"
+chmod +x "$tmp/bin/sudo" "$tmp/bin/uname" "$tmp/bin/nc"
+# lan runs lan.sh, and fails where it leaves a route it added, or removes one it found.
+lan() {
+    local before=no after=no
+    [ ! -e "$IP_STATE/route-10.100.0.10" ] || before=yes
+    sh "$dir/lan.sh" 192.168.1.10 10.100.0.10 || return 1
+    [ ! -e "$IP_STATE/route-10.100.0.10" ] || after=yes
+    [ "$before" = "$after" ] || echo "the route to the guest was there $before, and $after after"
+    [ "$before" = "$after" ]
+}
+expect "a guest that answers nothing through the host" ok lan
+SUDO=no expect "a route that sudo cannot add" fail lan
+echo 192.168.1.10 >"$IP_STATE/route-10.100.0.10"
+expect "a route through the host that was there" ok lan
 rm -f "$IP_STATE"/*
 
 # ws-fans' cgroup holds a process named nvidia-smi, or not.

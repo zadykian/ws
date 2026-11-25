@@ -7,7 +7,8 @@
 # HOST_ADDRESS is the host's address on the LAN, and GUEST_ADDRESS a guest's address on the bridge.
 # The host must answer SSH and no other TCP port that the list holds. No guest may answer a ping or
 # SSH, even where this machine routes its address through the host: for that it adds a host route
-# by sudo, and removes it. It prints a line a check, ok or FAIL, and exits 1 where any fails.
+# by sudo, and removes it. A guest with no such route fails, as a probe without it proves nothing.
+# It prints a line a check, ok or FAIL, and exits 1 where any fails.
 set -u
 
 fails=0
@@ -34,6 +35,14 @@ route_to() {
     esac
 }
 
+# routes_via succeeds where this machine routes the guest's address through the host's.
+routes_via() {
+    case $(uname) in
+    Darwin) route -n get "$1" 2>/dev/null | awk -v h="$2" '$1 == "gateway:" && $2 == h { f = 1 } END { exit !f }' ;;
+    *) ip route get "$1" 2>/dev/null | awk -v h="$2" '{ for (i = 1; i < NF; i++) if ($i == "via" && $(i + 1) == h) f = 1 } END { exit !f }' ;;
+    esac
+}
+
 cleanup() {
     for g in $routed; do route_to delete "$g" "$host"; done
 }
@@ -51,7 +60,12 @@ for p in $ports; do
     if open "$host" "$p"; then fail "8 the host takes TCP $p" "$host:$p connects"; else pass "8 the host takes no TCP $p"; fi
 done
 for g in "$@"; do
-    if route_to add "$g" "$host"; then routed="$routed $g"; fi
+    if route_to add "$g" "$host"; then
+        routed="$routed $g"
+    elif ! routes_via "$g" "$host"; then
+        fail "8 this machine routes the guest $g through the host" "no route to $g through $host, and sudo could not add one"
+        continue
+    fi
     if pings "$g"; then fail "8 the guest $g answers no ping" "it answered"; else pass "8 the guest $g answers no ping"; fi
     if open "$g" 22; then fail "8 the guest $g answers no SSH" "it connected"; else pass "8 the guest $g answers no SSH"; fi
 done
