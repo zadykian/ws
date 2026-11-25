@@ -34,18 +34,23 @@ with the server, and loads no file of the server's.
 ## Root's paths
 
 mise reads a file of root's as the user, and through sudo only where the user cannot read it. It
-asks before a write only on a terminal, in a run with no `--yes`. The Mac's config still holds no
-path of root's: no `[bootstrap.files]` with an owner, a group or a target outside `~/`, and no
-`[bootstrap.directories]`. ws's units hold them, with the first guard below, as mise takes any
-mode. Nor does the config hold `[dotfiles]`, which replace the user's own file or link with no
-guard. mise expands a `~/` target, reads and writes it as the user, and uses sudo only where that
-is denied. It makes no missing parent.
+asks before a write only on a terminal, in a run with no `--yes`. It expands a `~/` target, reads
+and writes it as the user, and uses sudo only where that is denied. It makes a directory's missing
+parents, and none of a file's. The Mac's config still holds no path of root's: no
+`[bootstrap.files]` or `[bootstrap.directories]` with an owner, a group or a target outside `~/`.
+ws's units hold them, with the first guard below, as mise takes any mode.
 
 - A read needs no password. The Mac's `ws unit` reads root's paths as the user, and a run state's
   check runs as the user too. A file of root's is readable by all, or its spec fails to load
   ([file](../../../engine/core/kind/file.md)).
 - ws asks sudo for a change alone. A run that changes nothing
   asks no password. A change needs a terminal, or a sudo that asks none, as CI's runner has.
+
+A `[dotfiles]` entry stands under `~/`, where it never replaces the user's own file: one made
+where missing alone (`create_if_missing`), one that sets the permissions alone, or a line edit. A
+copy, a template or inline content overwrites the file on each apply, and a link stops the run
+where a file stands. `bootstrap plan` shows no such entry, and `bootstrap status --missing` does,
+which setup's plan reads too ([Setup](../../README.md#setup)).
 
 ## A role's layout
 
@@ -61,7 +66,8 @@ role's `mise.macos.toml`. The lines follow no server: a spec loops over `.Server
 as a unit a server would come and go with its line ([The facts](../../facts/README.md)).
 [`TestMacSpecsMatchMiseLines`](../../cli/specs_test.go) fails on a line missing or extra.
 `TestTheMacLinksItsRoles` fails where the link leads elsewhere or its directory holds a file, and
-`TestMacConfigHoldsNoRootPath` on mise's own root path or a dotfile.
+`TestMacConfigHoldsNoRootPath` on mise's own root path, or a `[dotfiles]` entry that may replace
+the user's file.
 
 ## The apps' env
 

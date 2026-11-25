@@ -16,5 +16,16 @@ go = "1.27.3"
 "brew:ykman" = "latest"
 "ws:file/devtools-go" = "in-sync"
 "ws:file/devtools-path" = "in-sync"
-"ws:file/gpg-agent-conf" = "in-sync"
-"ws:state/gnupg-dir" = "in-sync"
+
+# ~/.gnupg, the user's and 0700, as gpg makes it. mise makes it before ws's units run, and keeps
+# its mode on each run.
+[bootstrap.directories."~/.gnupg"]
+mode = "0700"
+
+# gpg-agent's settings, written where none is and the user's after. The status shows a missing
+# file, and the plan shows none (README.md).
+[dotfiles."~/.gnupg/gpg-agent.conf"]
+source = "files/gpg-agent.conf"
+mode = "copy"
+permissions = "0600"
+create_if_missing = true
