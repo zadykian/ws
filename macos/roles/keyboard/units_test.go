@@ -16,8 +16,8 @@ import (
 
 // bundle is where the layout lives on the Mac, and where the role keeps its copy of the files.
 const (
-	bundle = "/Library/Keyboard Layouts/KeyboardLayout.bundle/"
-	source = "files/KeyboardLayout.bundle/"
+	bundle = "/Library/Keyboard Layouts/ws.bundle/"
+	source = "files/ws.bundle/"
 )
 
 // layoutFiles are the bundle's files, by their path below the bundle.
@@ -95,8 +95,8 @@ func TestTheUnitsAreTheBundlesFiles(t *testing.T) {
 	}
 }
 
-// TestTheBundleSaysItsNameOnce holds the bundle to the name KeyboardLayout, in its paths and in
-// the two files that name it, and to no mark of ws's.
+// TestTheBundleSaysItsNameOnce holds the bundle to the name ws, in its paths and in the two files
+// that name it, and to no mark of ws's.
 func TestTheBundleSaysItsNameOnce(t *testing.T) {
 	for _, f := range layoutFiles {
 		text := roleFile(t, source+f)
@@ -104,7 +104,7 @@ func TestTheBundleSaysItsNameOnce(t *testing.T) {
 			t.Errorf("%s holds a mark of ws's", f)
 		}
 		named := strings.HasSuffix(f, ".plist")
-		if has := bytes.Contains(text, []byte("<string>KeyboardLayout</string>")); named != has {
+		if has := bytes.Contains(text, []byte("<string>ws</string>")); named != has {
 			t.Errorf("%s names the bundle: %v, want %v", f, has, named)
 		}
 	}
