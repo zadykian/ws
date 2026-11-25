@@ -130,3 +130,19 @@ func TestEachMapTypesTheFunctionKeys(t *testing.T) {
 		}
 	}
 }
+
+// TestNoKeyTypesNothing keeps each key of each map to an output or an action. An empty output
+// would leave the key dead under that map's modifiers, where the other maps type a character.
+func TestNoKeyTypesNothing(t *testing.T) {
+	for _, name := range []string{"ENG", "RUS"} {
+		for _, s := range readLayout(t, name).Sets {
+			for i, m := range s.Maps {
+				for _, key := range m.Keys {
+					if key.Output == "" && key.Action == "" {
+						t.Errorf("%s: map %d types nothing on code %s", name, i, key.Code)
+					}
+				}
+			}
+		}
+	}
+}

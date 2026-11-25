@@ -51,7 +51,8 @@ five dead keys, which no key reached, their accents in the actions, their termin
 key map set, which no layout named. So no key types two units, and its `maxout` is 1.
 
 Each key map types F1 to F20 as `&#x0010;`, the code of a function key, and a test keeps it so.
-Ukelele's files left F17 to F20 out of most maps, where those keys typed no character.
+Ukelele's files left F17 to F20 out of most maps, where those keys typed no character. No key of a
+map types nothing: RUS's map for Command, Option and Control types ENG's `§` and the keypad's `.`.
 
 ## The icons
 
