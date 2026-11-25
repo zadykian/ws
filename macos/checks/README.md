@@ -5,7 +5,8 @@ and never logs out. So what no doc settles is tried on the Mac itself, reset to 
 one sitting, once every sub-issue of #1533 is on `main`. These are the ten trials of #1578. None has
 run: the build had no Mac. A failure changes the role that its trial names, never the trial.
 The scripts run nothing in CI, but [checks-test.sh](checks-test.sh) tries their functions in `lint`,
-against stand-ins for the tools and on the real roles' files.
+against stand-ins for the tools and on the real roles' files. It sources prefs.sh's cases from
+[prefs-test.sh](prefs-test.sh).
 
 ## The scripts
 
