@@ -44,17 +44,36 @@ status_zero() {
     }
 }
 
-# apps_of FILE HEADER prints the apps of a table of mise's settings, a path a line.
-apps_of() {
-    awk -v h="[$2]" '
-        $0 == h { on = 1; next }
-        /^\[/ { on = 0 }
-        on && /^ *"\/.*\.app",$/ { gsub(/^ *"|",$/, ""); print }
+# toml_strings FILE TABLE KEY prints each string of the array KEY in TABLE, a line each. It reads
+# the array by its brackets, quotes and comments, not its lines, as tombi may lay it out either way.
+toml_strings() {
+    awk -v table="[$2]" -v key="$3" '
+        function bare(s) { sub(/#.*/, "", s); gsub(/[ \t"]/, "", s); return s }
+        function scan(s,   i, c) {
+            for (i = 1; i <= length(s); i++) {
+                c = substr(s, i, 1)
+                if (q != "") {
+                    if (q == "\"" && c == "\\") { i++; c = substr(s, i, 1) }
+                    else if (c == q) { print str; q = ""; continue }
+                    str = str c
+                } else if (c == "\"" || c == "'\''") { q = c; str = "" }
+                else if (c == "#") return
+                else if (c == "[") depth++
+                else if (c == "]" && --depth == 0) return
+            }
+        }
+        BEGIN { table = bare(table) }
+        depth > 0 { scan($0); next }
+        /^[ \t]*\[/ { on = bare($0) == table; next }
+        on && index($0, "=") {
+            eq = index($0, "=")
+            if (bare(substr($0, 1, eq - 1)) == key) scan(substr($0, eq + 1))
+        }
     ' "$1"
 }
 
 apps_file=$tree/macos/roles/apps/mise.apps.toml
-dock_apps() { apps_of "$apps_file" bootstrap.settings.macos.dock; }
-login_apps() { apps_of "$apps_file" bootstrap.settings.macos.login_items; }
+dock_apps() { toml_strings "$apps_file" bootstrap.settings.macos.dock apps; }
+login_apps() { toml_strings "$apps_file" bootstrap.settings.macos.login_items apps; }
 
 finish() { [ "$fails" -eq 0 ]; }

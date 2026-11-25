@@ -71,19 +71,30 @@ for f in $(inside setup.sh formulae); do mkdir "$tmp/brew/opt/$f"; done
 expect "formulae that all stand" ok inside setup.sh missing_formulae
 expect "apps that stand nowhere" fail inside setup.sh missing_apps
 
-# A tree of the test's own, whose apps stand under its directory.
-mkdir -p "$tmp/tree/macos/roles/apps" "$tmp/tree/macos/roles/devtools" "$tmp/apps/Dock.app" "$tmp/apps/Login Item.app"
+# A tree of the test's own, whose apps stand under its directory. Its arrays take the layouts that
+# TOML allows: on one line, an element on a bracket's line, no last comma, a comment.
+mkdir -p "$tmp/tree/macos/roles/apps" "$tmp/tree/macos/roles/devtools" "$tmp/apps/Dock.app" \
+    "$tmp/apps/Login Item.app" "$tmp/apps/Quote \"A\".app"
 cat >"$tmp/tree/macos/roles/apps/mise.apps.toml" <<APPS
 [bootstrap.settings.macos.dock]
-apps = [
-    "$tmp/apps/Dock.app",
+other = ["/x.app"]
+apps = ["$tmp/apps/Dock.app", "$tmp/apps/Login Item.app"] # a comment, "/y.app"
+
+[ bootstrap.settings.macos.login_items ] # the login items
+exclusive = true
+apps = [ "$tmp/apps/Login Item.app",
+    # "/z.app",
+    '$tmp/apps/Quote "A".app',
+    "$tmp/apps/Quote \\"A\\".app"
 ]
 
-[bootstrap.settings.macos.login_items]
-apps = [
-    "$tmp/apps/Login Item.app",
-]
+[bootstrap.settings.macos.next]
+apps = ["/w.app"]
 APPS
+dock_want=$(printf '%s\n' "$tmp/apps/Dock.app" "$tmp/apps/Login Item.app")
+login_want=$(printf '%s\n' "$tmp/apps/Login Item.app" "$tmp/apps/Quote \"A\".app" "$tmp/apps/Quote \"A\".app")
+expect "an array on one line" ok test "$(WS_TREE=$tmp/tree inside setup.sh dock_apps)" = "$dock_want"
+expect "an array of any layout" ok test "$(WS_TREE=$tmp/tree inside setup.sh login_apps)" = "$login_want"
 WS_TREE=$tmp/tree expect "apps that all stand" ok inside setup.sh missing_apps
 rmdir "$tmp/apps/Login Item.app"
 WS_TREE=$tmp/tree expect "a login item's app that is gone" fail inside setup.sh missing_apps
