@@ -17,6 +17,9 @@ func differs(want, have any, path string) []string {
 	switch w := want.(type) {
 	case map[string]any:
 		h, ok := have.(map[string]any)
+		if have == nil && len(w) == 0 {
+			return nil
+		}
 		if !ok {
 			return []string{cmpPath(path, "")}
 		}

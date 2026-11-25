@@ -74,6 +74,16 @@ func TestDiffersTakesAnEmptyListForANullOne(t *testing.T) {
 	}
 }
 
+func TestDiffersTakesAnEmptyMapForANullOne(t *testing.T) {
+	have := decode(t, `{"config":null}`)
+	if got := differs(map[string]any{"config": map[string]any{}}, have, ""); got != nil {
+		t.Errorf("differs = %q, want none: incus says null for no keys", got)
+	}
+	if got := differs(map[string]any{"config": map[string]any{"a": "1"}}, have, ""); !slices.Equal(got, []string{"config"}) {
+		t.Errorf("differs = %q, want config", got)
+	}
+}
+
 func TestMergeLaysTheDeclaredKeysOnTheBase(t *testing.T) {
 	base := map[string]any{"config": map[string]any{"a": "1", "volatile.x": "9"}, "ingress": []any{"old"}}
 	over := map[string]any{"config": map[string]any{"a": "2", "b": "3"}, "ingress": []any{"new"}}
