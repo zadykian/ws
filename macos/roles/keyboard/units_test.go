@@ -26,6 +26,8 @@ var layoutFiles = []string{
 	"Contents/version.plist",
 	"Contents/Resources/ENG.keylayout",
 	"Contents/Resources/RUS.keylayout",
+	"Contents/Resources/ENG.icns",
+	"Contents/Resources/RUS.icns",
 }
 
 // roleFile reads a file of the role, which the test names.
@@ -71,7 +73,10 @@ func TestTheUnitsAreTheBundlesFiles(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Dirs["/Library"] = 0o755
 	units := layoutUnits(t, m)
-	want := []string{"file/layout-eng", "file/layout-info", "file/layout-rus", "file/layout-version"}
+	want := []string{
+		"file/layout-eng", "file/layout-eng-icon", "file/layout-info", "file/layout-rus",
+		"file/layout-rus-icon", "file/layout-version",
+	}
 	if got := kind.Names(units); !slices.Equal(got, want) {
 		t.Fatalf("the units are %v, want %v", got, want)
 	}

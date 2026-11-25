@@ -9,6 +9,8 @@
 "ws:file/layout-version" = "in-sync"
 "ws:file/layout-eng" = "in-sync"
 "ws:file/layout-rus" = "in-sync"
+"ws:file/layout-eng-icon" = "in-sync"
+"ws:file/layout-rus-icon" = "in-sync"
 
 # The language indicator that macOS shows on each input source's switch. Its value is the string
 # "0", as the Mac holds it.
