@@ -113,7 +113,10 @@ a Mac, where the runner's image may differ. It sets up
 ssh, git and cld too, but not [the apps](../../macos/roles/apps/README.md): the case drops that
 role from the tree, as no run of CI needs its 15 casks. It drops
 [the wallpaper](../../macos/roles/desktop/README.md#the-wallpaper) of desktop too, as a runner has no
-screen for `wallpaper get` to read. The plan must exit 0 after the first run,
+screen for `wallpaper get` to read. Before the first run, case 25 takes from the image what setup
+makes on a clean Mac. It removes Homebrew's gnupg, its dependencies kept, and sets the display's
+timer on power to 10. So cases 83 and 88 read mise's pour of gnupg and power's unit. The plan must
+exit 0 after the first run,
 a second run must call no sudo, and `/usr/local/bin/ws` must be root:wheel at 755. A spec whose
 unit no line names must fail the plan, and so must a plan from `/opt/ws` with every unit in sync.
 After the first run the firewall must be on and block all incoming ([the Mac's firewall](../../macos/roles/firewall/README.md)).
