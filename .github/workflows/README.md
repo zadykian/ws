@@ -77,7 +77,10 @@ checks [Zed's files](../../macos/roles/zed/README.md): `global_settings.json` mu
 `macos/roles/zed/files/`'s whole, a `settings.json` there must stay byte for byte through
 another bootstrap, and a login shell must find the cask's `zed`. Case 48 checks `keymap.json`:
 `macos/roles/zed/files/`'s whole, a foreign one left with the warning of its unit's read, and
-ws's back once it goes. Case 58 checks [the secrets' tools](../../macos/roles/secrets/README.md):
+ws's back once it goes. Case 49 checks setup's status, which covers what mise's plan leaves out.
+With one of desktop's preferences written another value, `ws macos setup --plan` must exit 2 and
+name it as differs in mise's status. With the role's value back by its type, it must exit 0. Case
+58 checks [the secrets' tools](../../macos/roles/secrets/README.md):
 `/usr/local/bin/fnox` and `age-plugin-yubikey` must be mise's, root's and 0755, at their pins. A
 stand-in in place of each must give way to mise's at the next bootstrap, whose plan then changes
 nothing. fnox must encrypt a value to the Nano's recipient with no YubiKey, and read it back by an
