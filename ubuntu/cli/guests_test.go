@@ -2,6 +2,8 @@ package cli
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
@@ -40,9 +42,14 @@ func TestGuestsSetupRunsTheGuestsSetupWhateverItsPlanSays(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files[hostVars] = []byte(guestsFile)
 	m.Files["/usr/local/bin/ws"] = []byte("binary")
-	m.Results["incus list --format json"] = effecttest.Result{Out: []byte(`[{"name":"lab","status":"Stopped","profiles":["ws"]}]`)}
-	m.Results["incus file push --create-dirs --uid 0 --gid 0 --mode 0755 /usr/local/bin/ws lab/usr/local/bin/ws"] = effecttest.Result{}
+	// lab runs and is in sync: it holds the host's ws, and its own plan finds no change. So only a
+	// forced setup runs its setup.
+	m.Results["incus list --format json"] = effecttest.Result{Out: []byte(`[{"name":"lab","status":"Running","profiles":["ws"]}]`)}
+	m.Results[`incus exec lab -- sh -c test -e "$1" || exit 3; sha256sum -- "$1" sh /usr/local/bin/ws`] = effecttest.Result{
+		Out: fmt.Appendf(nil, "%x  /usr/local/bin/ws\n", sha256.Sum256([]byte("binary"))),
+	}
 	m.Results["incus exec lab -- sh -c systemctl is-system-running --wait >/dev/null 2>&1; cloud-init status --wait >/dev/null sh"] = effecttest.Result{}
+	m.Results[`incus exec lab -- sh -c test -x "$1" || exit 3; ws=$1; shift; exec "$ws" ubuntu guest setup --plan "$@" sh /usr/local/bin/ws --secrets`] = effecttest.Result{}
 	m.Results["incus exec lab -- /usr/local/bin/ws ubuntu guest setup --secrets"] = effecttest.Result{}
 	if _, err := runGuests(m, "", "setup", "lab", "--secrets"); err != nil {
 		t.Fatal(err)
