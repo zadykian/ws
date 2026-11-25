@@ -38,10 +38,13 @@ type ipRule struct {
 	Table    string `json:"table"`
 }
 
+// ipRoute is a route of `ip -j -4 route show table all`, which names the table of each route but
+// main's.
 type ipRoute struct {
 	Dst     string `json:"dst"`
 	Gateway string `json:"gateway"`
 	Dev     string `json:"dev"`
+	Table   string `json:"table"`
 }
 
 // readJSON runs ip with -j -4 and decodes its answer.
@@ -63,15 +66,16 @@ func (f Forward) Plan(ctx context.Context) ([]resource.Change, error) {
 	if err := f.readJSON(ctx, &rules, "rule", "show"); err != nil {
 		return nil, err
 	}
+	// All tables at once: ip exits 2 on a table that holds no route, as before the first run and
+	// after a boot. A read of that table alone would stop the plan.
+	var routes []ipRoute
+	if err := f.readJSON(ctx, &routes, "route", "show", "table", "all"); err != nil {
+		return nil, err
+	}
 	var changes []resource.Change
 	for _, t := range f.Tunnels {
 		table := strconv.Itoa(t.Table())
-		var routes []ipRoute
-		if err := f.readJSON(ctx, &routes, "route", "show", "table", table); err != nil {
-			return nil, err
-		}
-		gateway := t.Guest.Address
-		if !hasRoute(routes, gateway, f.Bridge) {
+		if !hasRoute(routes, table, t.Guest.Address, f.Bridge) {
 			changes = append(changes, addRoute{f.M, t, f.Bridge})
 		}
 		if !hasRule(rules, t) {
@@ -86,9 +90,9 @@ func (f Forward) Plan(ctx context.Context) ([]resource.Change, error) {
 	return changes, nil
 }
 
-func hasRoute(routes []ipRoute, gateway, dev string) bool {
+func hasRoute(routes []ipRoute, table, gateway, dev string) bool {
 	for _, r := range routes {
-		if r.Dst == "default" && r.Gateway == gateway && r.Dev == dev {
+		if r.Table == table && r.Dst == "default" && r.Gateway == gateway && r.Dev == dev {
 			return true
 		}
 	}
