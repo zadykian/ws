@@ -70,7 +70,8 @@ func (g Guest) Tunnel(own Values) (GuestTunnel, error) {
 
 // GuestTunnels reads each guest's own values on m and returns the tunnels that the host ends, in the
 // guests' order. It refuses a slot or a port that two tunnels share, the host's own among them: two
-// tunnels with one slot want one interface, one address and one port. Peers of one name in two
+// tunnels with one slot want one interface, one address and one port. The host's own holds each
+// slot that its subnet overlaps, as its peers may take any address of it. Peers of one name in two
 // tunnels are no clash, as each tunnel has its own directory of keys.
 func GuestTunnels(m effect.Machine, own Tunnel, guests []Guest) ([]GuestTunnel, error) {
 	var tunnels []GuestTunnel
@@ -88,19 +89,20 @@ func GuestTunnels(m effect.Machine, own Tunnel, guests []Guest) ([]GuestTunnel, 
 	return tunnels, tunnelsCheck(own, tunnels)
 }
 
-// tunnelsCheck refuses the tunnels whose slot or port another holds, or the host's own tunnel.
+// tunnelsCheck refuses the tunnels whose slot or port another holds, or the host's own tunnel. Its
+// slots are those of its whole subnet: a guest's slot inside it would take its peers' routes.
 func tunnelsCheck(own Tunnel, tunnels []GuestTunnel) error {
 	var problems []string
-	ownSlot, hasOwnSlot := slot.Slot(0), false
+	ownNet, hasOwnNet := netip.Prefix{}, false
 	if p, err := netip.ParsePrefix(own.Address); err == nil {
-		ownSlot, hasOwnSlot = slot.Find(p.Addr())
+		ownNet, hasOwnNet = p.Masked(), true
 	}
 	slots := map[slot.Slot]string{}
 	ports := map[int]string{own.Port: "the host's own tunnel"}
-	if hasOwnSlot {
-		slots[ownSlot] = "the host's own tunnel"
-	}
 	for _, t := range tunnels {
+		if hasOwnNet && ownNet.Overlaps(t.Slot.Net()) {
+			problems = append(problems, fmt.Sprintf("%s holds slot %d, %s, inside the host's own tunnel's %s.", t.Guest.Name, t.Slot, t.Slot.Net(), ownNet))
+		}
 		if holder, taken := slots[t.Slot]; taken {
 			problems = append(problems, fmt.Sprintf("%s holds slot %d, which %s holds too.", t.Guest.Name, t.Slot, holder))
 		}

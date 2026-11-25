@@ -54,10 +54,11 @@ rules = [{ action = "allow", proto = "udp", to_port = "{{ .Tunnel.Port }}", dir 
 
 # Refuses two tunnels of one slot or port, a networkd that does not run, and a peer's key file that
 # holds no key, before the guests' interfaces change. It says each interface's public key. After the
-# guests: the routes below lead to them.
+# guests' table of the way out, which guards wgN, and ahead of the guests' setups, so that a guest
+# whose setup fails holds back no tunnel's change.
 [guard.tunnel-guests]
 command = ["{{ self }}", "ubuntu", "host", "tunnel", "guests", "check"]
-after = "state/incus-guests"
+after = "state/incus-owned"
 when = { side = "host" }
 
 # Each guest's interface key, made once and never shown, root:systemd-network 0640.
@@ -85,8 +86,8 @@ when = { side = "host" }
 path = "/etc/systemd/networkd.conf.d/60-ws-tunnel.conf"
 source = "networkd-foreign.conf"
 
-# The rule and the route of each guest's tunnel at boot: they live in the kernel alone, and the guests
-# start with Incus.
+# The rule and the routes of each guest's tunnel, at boot and at each start of Incus. They live in
+# the kernel alone, the guests start with Incus, and its start flushes the bridge and their routes.
 [service.tunnel-forward]
 unit = "tunnel-forward.service"
 enabled = true

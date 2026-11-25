@@ -32,8 +32,9 @@ func TestTheHostRunsItsOwnTunnelAndEachGuestsInOrder(t *testing.T) {
 			t.Fatalf("units %q, want %s before %s", names, order[i-1], order[i])
 		}
 	}
-	if at("guard/tunnel-guests") < at("state/incus-guests") {
-		t.Errorf("units %q, want the guests' tunnels after the guests", names)
+	// A guest can fail its own setup: the tunnels' changes, a peer's new key among them, come first.
+	if at("guard/tunnel-guests") < at("state/incus-owned") || at("state/tunnel-guest-ufw") > at("state/incus-guests") {
+		t.Errorf("units %q, want the guests' tunnels after the guests' tables, and before the guests' setups", names)
 	}
 }
 
@@ -75,6 +76,13 @@ func TestTheForwardServiceWritesItsUnitFile(t *testing.T) {
 	got := string(m.Files["/etc/systemd/system/tunnel-forward.service"])
 	if !strings.Contains(got, "ExecStart=/usr/local/bin/ws ubuntu host tunnel guests forward\n") {
 		t.Errorf("the unit file:\n%s", got)
+	}
+	// Incus's start flushes the bridge, with each guest's route: a restart, and a start by its
+	// socket, must run the forward again.
+	for _, want := range []string{"\nPartOf=incus.service\n", "\nWantedBy=multi-user.target incus.service\n"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("the unit file lacks %q:\n%s", strings.TrimSpace(want), got)
+		}
 	}
 }
 

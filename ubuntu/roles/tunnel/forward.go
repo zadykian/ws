@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"slices"
 	"strconv"
 	"strings"
@@ -14,9 +15,11 @@ import (
 )
 
 // Forward sends all that arrives on a guest's interface to that guest, whatever its destination. A
-// rule on the interface selects a table of the slot, whose one route leads to the guest's address
-// on Bridge. No NAT, so the guest sees the peer's tunnel address. Without the rule, as at boot or
-// after a flush, the main table would route a peer's packets to any guest. A rule or a route of a
+// rule on the interface selects a table of the slot, whose route leads to the guest's address on
+// Bridge. No NAT, so the guest sees the peer's tunnel address. Without the rule, as at boot or
+// after a flush, the main table would route a peer's packets to any guest. So would an empty table:
+// Incus flushes the bridge as it starts, which takes the route. So an unreachable route of the
+// highest metric, on no device, lies beneath it and outlives the flush. A rule or a route of a
 // slot's priority range that no tunnel wants is deleted, one of the right priority but another
 // interface or table among them.
 type Forward struct {
@@ -32,16 +35,24 @@ const (
 	lastPriority  = firstPriority + 15
 )
 
+// floorMetric is the unreachable route's, the highest, so that the guest's route always comes first.
+const floorMetric = math.MaxUint32
+
 type ipRule struct {
 	Priority int    `json:"priority"`
 	IIF      string `json:"iif"`
 	Table    string `json:"table"`
 }
 
+// ipRoute is a route of `ip -j -4 route show table all`, which names the table of each route but
+// main's.
 type ipRoute struct {
 	Dst     string `json:"dst"`
 	Gateway string `json:"gateway"`
 	Dev     string `json:"dev"`
+	Table   string `json:"table"`
+	Type    string `json:"type"`
+	Metric  uint32 `json:"metric"`
 }
 
 // readJSON runs ip with -j -4 and decodes its answer.
@@ -56,23 +67,27 @@ func (f Forward) readJSON(ctx context.Context, into any, args ...string) error {
 	return nil
 }
 
-// Plan plans the rule and the route of each tunnel that lack, and the deletion of a rule of a
-// slot's priority that no tunnel wants.
+// Plan plans the rule and the routes of each tunnel that lack, the rule last, and the deletion of a
+// rule of a slot's priority that no tunnel wants.
 func (f Forward) Plan(ctx context.Context) ([]resource.Change, error) {
 	var rules []ipRule
 	if err := f.readJSON(ctx, &rules, "rule", "show"); err != nil {
 		return nil, err
 	}
+	// All tables at once: ip exits 2 on a table that holds no route, as before the first run and
+	// after a boot. A read of that table alone would stop the plan.
+	var routes []ipRoute
+	if err := f.readJSON(ctx, &routes, "route", "show", "table", "all"); err != nil {
+		return nil, err
+	}
 	var changes []resource.Change
 	for _, t := range f.Tunnels {
 		table := strconv.Itoa(t.Table())
-		var routes []ipRoute
-		if err := f.readJSON(ctx, &routes, "route", "show", "table", table); err != nil {
-			return nil, err
-		}
-		gateway := t.Guest.Address
-		if !hasRoute(routes, gateway, f.Bridge) {
+		if !hasRoute(routes, table, t.Guest.Address, f.Bridge) {
 			changes = append(changes, addRoute{f.M, t, f.Bridge})
+		}
+		if !hasFloor(routes, table) {
+			changes = append(changes, addFloor{f.M, t})
 		}
 		if !hasRule(rules, t) {
 			changes = append(changes, addRule{f.M, t})
@@ -86,13 +101,19 @@ func (f Forward) Plan(ctx context.Context) ([]resource.Change, error) {
 	return changes, nil
 }
 
-func hasRoute(routes []ipRoute, gateway, dev string) bool {
+func hasRoute(routes []ipRoute, table, gateway, dev string) bool {
 	for _, r := range routes {
-		if r.Dst == "default" && r.Gateway == gateway && r.Dev == dev {
+		if r.Table == table && r.Dst == "default" && r.Gateway == gateway && r.Dev == dev {
 			return true
 		}
 	}
 	return false
+}
+
+func hasFloor(routes []ipRoute, table string) bool {
+	return slices.ContainsFunc(routes, func(r ipRoute) bool {
+		return r.Table == table && r.Type == "unreachable" && r.Dst == "default" && r.Metric == floorMetric
+	})
 }
 
 // isRuleOf is whether r is the rule that sends t's interface to t's table, at t's priority.
@@ -122,6 +143,20 @@ func (c addRoute) String() string {
 
 func (c addRoute) Apply(ctx context.Context) error {
 	_, err := c.m.RunRoot(ctx, "ip", "-4", "route", "replace", "default", "via", c.t.Guest.Address, "dev", c.bridge, "onlink", "table", strconv.Itoa(c.t.Table()))
+	return err
+}
+
+type addFloor struct {
+	m effect.Machine
+	t values.GuestTunnel
+}
+
+func (c addFloor) String() string {
+	return fmt.Sprintf("unreachable route in table %d beneath %s's, so that it never falls through to main", c.t.Table(), c.t.Guest.Name)
+}
+
+func (c addFloor) Apply(ctx context.Context) error {
+	_, err := c.m.RunRoot(ctx, "ip", "-4", "route", "replace", "unreachable", "default", "metric", strconv.FormatUint(floorMetric, 10), "table", strconv.Itoa(c.t.Table()))
 	return err
 }
 

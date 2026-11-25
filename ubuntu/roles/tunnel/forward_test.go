@@ -1,8 +1,10 @@
 package tunnel
 
 import (
+	"os/exec"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
@@ -10,16 +12,34 @@ import (
 )
 
 const (
-	noRules  = `[{"priority":0,"src":"all","table":"local"},{"priority":32766,"src":"all","table":"main"}]`
-	labRule  = `{"priority":1001,"src":"all","iif":"wg1","table":"1001"}`
-	labRoute = `[{"dst":"default","gateway":"10.100.0.10","dev":"incusbr0","flags":["onlink"]}]`
+	noRules    = `[{"priority":0,"src":"all","table":"local"},{"priority":32766,"src":"all","table":"main"}]`
+	labRule    = `{"priority":1001,"src":"all","iif":"wg1","table":"1001"}`
+	labGateway = `{"dst":"default","gateway":"10.100.0.10","dev":"incusbr0","table":"1001","flags":["onlink"]}`
+	labFloor   = `{"type":"unreachable","dst":"default","table":"1001","metric":4294967295,"flags":[]}`
+	labRoute   = `[` + labGateway + `,` + labFloor + `]`
+	// mainRoutes are the main table's, which ip names no table of.
+	mainRoutes = `{"dst":"default","gateway":"192.168.1.1","dev":"enp5s0"},{"dst":"10.100.0.0/24","dev":"incusbr0","scope":"link"}`
 )
 
-// forwardMachine answers ip with the rules, and the routes of table 1001, that it gets.
+const labFloorLine = "unreachable route in table 1001 beneath lab's, so that it never falls through to main"
+
+// exitTwo is ip's error on a table that holds no route. An ExitError needs a process.
+var exitTwo = sync.OnceValue(func() error {
+	return exec.Command("sh", "-c", "exit 2").Run()
+})
+
+// forwardMachine answers ip as iproute2 does, with the rules, and the routes of table 1001, that it
+// gets. A table that holds no route does not exist: ip prints [] for it and exits 2.
 func forwardMachine(rules, routes string) *effecttest.Machine {
 	m := effecttest.NewMachine()
 	m.Results["ip -j -4 rule show"] = effecttest.Result{Out: []byte(rules)}
-	m.Results["ip -j -4 route show table 1001"] = effecttest.Result{Out: []byte(routes)}
+	all := "[" + mainRoutes + "," + strings.TrimPrefix(routes, "[")
+	table := effecttest.Result{Out: []byte(routes)}
+	if routes == "[]" {
+		all, table = "["+mainRoutes+"]", effecttest.Result{Out: []byte("[]\n"), Err: exitTwo()}
+	}
+	m.Results["ip -j -4 route show table all"] = effecttest.Result{Out: []byte(all)}
+	m.Results["ip -j -4 route show table 1001"] = table
 	return m
 }
 
@@ -32,15 +52,26 @@ func labGuestTunnel() values.GuestTunnel {
 func TestAMissingRuleAndRouteArePlannedRouteFirst(t *testing.T) {
 	m := forwardMachine(noRules, "[]")
 	got := headlines(t, Forward{M: m, Tunnels: []values.GuestTunnel{labGuestTunnel()}, Bridge: "incusbr0"})
-	want := []string{"route table 1001 to lab's address 10.100.0.10 on incusbr0", "send what arrives on wg1 to table 1001, lab's"}
+	want := []string{"route table 1001 to lab's address 10.100.0.10 on incusbr0", labFloorLine, "send what arrives on wg1 to table 1001, lab's"}
 	if !slices.Equal(got, want) {
 		t.Errorf("plan = %q, want %q: a rule with no route would fall through to the main table", got, want)
+	}
+}
+
+func TestTheGuestsRouteInAnotherTableIsNoRouteOfTheSlot(t *testing.T) {
+	m := forwardMachine("["+labRule+"]", "[]")
+	m.Results["ip -j -4 route show table all"] = effecttest.Result{Out: []byte(`[` + mainRoutes + `,` +
+		`{"dst":"default","gateway":"10.100.0.10","dev":"incusbr0"},{"dst":"default","gateway":"10.100.0.10","dev":"incusbr0","table":"1002"}]`)}
+	got := headlines(t, Forward{M: m, Tunnels: []values.GuestTunnel{labGuestTunnel()}, Bridge: "incusbr0"})
+	if want := []string{"route table 1001 to lab's address 10.100.0.10 on incusbr0", labFloorLine}; !slices.Equal(got, want) {
+		t.Errorf("plan = %q, want %q: the routes of main and of table 1002 are not table 1001's", got, want)
 	}
 }
 
 func TestTheRuleAndTheRouteAreAppliedAsIpTakesThem(t *testing.T) {
 	m := forwardMachine(noRules, "[]")
 	m.Results["ip -4 route replace default via 10.100.0.10 dev incusbr0 onlink table 1001"] = effecttest.Result{}
+	m.Results["ip -4 route replace unreachable default metric 4294967295 table 1001"] = effecttest.Result{}
 	m.Results["ip -4 rule add iif wg1 lookup 1001 priority 1001"] = effecttest.Result{}
 	cs, err := Forward{M: m, Tunnels: []values.GuestTunnel{labGuestTunnel()}, Bridge: "incusbr0"}.Plan(t.Context())
 	if err != nil {
@@ -60,9 +91,31 @@ func TestARuleAndARouteAsWantedPlanNothing(t *testing.T) {
 	}
 }
 
+// Incus flushes the bridge as it starts, which takes the guest's route and leaves the floor.
+func TestATableThatIncusEmptiedGetsItsRouteAgainAndKeepsItsFloor(t *testing.T) {
+	m := forwardMachine("["+labRule+"]", "["+labFloor+"]")
+	got := headlines(t, Forward{M: m, Tunnels: []values.GuestTunnel{labGuestTunnel()}, Bridge: "incusbr0"})
+	if want := []string{"route table 1001 to lab's address 10.100.0.10 on incusbr0"}; !slices.Equal(got, want) {
+		t.Errorf("plan = %q, want %q", got, want)
+	}
+}
+
+func TestAFloorIsAddedBeneathTheGuestsRoute(t *testing.T) {
+	for _, routes := range []string{
+		"[" + labGateway + "]",
+		"[" + labGateway + `,{"type":"unreachable","dst":"default","table":"1002","metric":4294967295,"flags":[]}]`,
+	} {
+		m := forwardMachine("["+labRule+"]", routes)
+		got := headlines(t, Forward{M: m, Tunnels: []values.GuestTunnel{labGuestTunnel()}, Bridge: "incusbr0"})
+		if want := []string{labFloorLine}; !slices.Equal(got, want) {
+			t.Errorf("routes %s: plan = %q, want %q: an empty table would fall through to main", routes, got, want)
+		}
+	}
+}
+
 func TestARouteToAnotherGuestIsReplacedAndAStaleRuleIsDeleted(t *testing.T) {
 	m := forwardMachine(`[`+labRule+`,{"priority":1002,"src":"all","iif":"wg2","table":"1002"},{"priority":1005,"src":"all","iif":"eth0","table":"7"}]`,
-		`[{"dst":"default","gateway":"10.100.0.11","dev":"incusbr0"}]`)
+		`[{"dst":"default","gateway":"10.100.0.11","dev":"incusbr0","table":"1001"},`+labFloor+`]`)
 	got := headlines(t, Forward{M: m, Tunnels: []values.GuestTunnel{labGuestTunnel()}, Bridge: "incusbr0"})
 	want := []string{"route table 1001 to lab's address 10.100.0.10 on incusbr0", "delete the rule of priority 1002 for wg2, which no guest's tunnel wants"}
 	if !slices.Equal(got, want) {
