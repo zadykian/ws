@@ -109,3 +109,18 @@ func TestTheBundleSaysItsNameOnce(t *testing.T) {
 		}
 	}
 }
+
+// TestTheBundleIsVersion1 holds each of the bundle's three version fields to 1.0.0.
+func TestTheBundleIsVersion1(t *testing.T) {
+	for f, keys := range map[string][]string{
+		"Contents/Info.plist":    {"CFBundleVersion"},
+		"Contents/version.plist": {"BuildVersion", "SourceVersion"},
+	} {
+		text := string(roleFile(t, source+f))
+		for _, k := range keys {
+			if want := "<key>" + k + "</key>\n\t<string>1.0.0</string>"; !strings.Contains(text, want) {
+				t.Errorf("%s: %s is not 1.0.0", f, k)
+			}
+		}
+	}
+}
