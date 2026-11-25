@@ -11,9 +11,9 @@ import (
 	"github.com/zadykian/ws/ubuntu/values"
 )
 
-// guestChain fills the table of sources for two guests, lab in slot 1 and build in none, and
-// returns the rules of its chain from_guest, a line each.
-func guestChain(t *testing.T) []string {
+// sourcesTable fills the table of sources for two guests, lab in slot 1 and build in none.
+func sourcesTable(t *testing.T) string {
+	t.Helper()
 	m := effecttest.NewMachine()
 	m.Files["/etc/ws/values.yml"] = []byte("WS_INCUS_GUESTS:\n" +
 		"  - {name: lab, address: 10.100.0.10, cpu: 4, memory: 8GiB, disk: 200GiB}\n" +
@@ -27,7 +27,13 @@ func guestChain(t *testing.T) []string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, chain, _ := strings.Cut(string(table), "chain from_guest {\n")
+	return string(table)
+}
+
+// guestChain returns the rules of the table's chain from_guest, a line each.
+func guestChain(t *testing.T) []string {
+	t.Helper()
+	_, chain, _ := strings.Cut(sourcesTable(t), "chain from_guest {\n")
 	chain, _, _ = strings.Cut(chain, "\n    }\n")
 	var rules []string
 	for line := range strings.Lines(chain) {
@@ -50,5 +56,15 @@ func TestSourcesTablePassesAForeignSourceTowardTheGuestsSlotAlone(t *testing.T) 
 	}
 	if len(got) < len(want) || !slices.Equal(got[len(got)-len(want):], want) {
 		t.Errorf("the chain ends with:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+}
+
+// The table's hooks see the frames of every bridge of the host, Docker's too. A frame enters the
+// chain from Incus's bridge alone, as the chain's last rule would cut Docker's containers off.
+func TestSourcesTableFiltersIncusBridgeAlone(t *testing.T) {
+	table := sourcesTable(t)
+	scoped := `meta ibrname "` + BridgeName + `" jump from_guest`
+	if jumps, ours := strings.Count(table, "jump from_guest"), strings.Count(table, scoped); jumps != 2 || ours != 2 {
+		t.Errorf("%d of the %d jumps to from_guest are %q, want both hooks' jumps", ours, jumps, scoped)
 	}
 }

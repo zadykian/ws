@@ -139,14 +139,15 @@ Incus's MAC filter holds a guest's MAC, and `security.port_isolation` keeps it f
 guests' ports. Neither holds its IP address. Incus's IPv4 filter would, but it drops the replies of
 the VPN, which leave a guest under a source that is not its own. So `ws_sources`, a table in
 nftables' bridge family, filters at the bridge, with no `br_netfilter`. It acts on a guest's port.
-It drops a frame of any ether type but ARP, IPv4 and IPv6 first: a VLAN tag would hide a source
-from the rules, and the host strips the tag. An ARP sender or a source address in the bridge's
-subnet or in the tunnel's slots, `10.99.0.0/20`, must be an address that the port owns. Another
-IPv4 source passes toward the guest's own slot, `10.99.N.0/24`, alone, as the VPN's reply to a peer,
-and so does a lease asked from `0.0.0.0`. The rest drops: Incus's NAT rewrites the bridge's subnet
-alone, so such a source would reach the LAN unchanged. A guest's own addresses are its address on
-the bridge and its slot's `10.99.N.1`, which it holds on `eth0`, so that a peer's replies leave from
-it.
+Its hooks see every bridge of the host, so they take the frames of Incus's bridge alone, and those
+of Docker's bridges pass untouched. It drops a frame of any ether type but ARP, IPv4 and IPv6 first:
+a VLAN tag would hide a source from the rules, and the host strips the tag. An ARP sender or a
+source address in the bridge's subnet or in the tunnel's slots, `10.99.0.0/20`, must be an address
+that the port owns. Another IPv4 source passes toward the guest's own slot, `10.99.N.0/24`, alone,
+as the VPN's reply to a peer, and so does a lease asked from `0.0.0.0`. The rest drops: Incus's NAT
+rewrites the bridge's subnet alone, so such a source would reach the LAN unchanged. A guest's own
+addresses are its address on the bridge and its slot's `10.99.N.1`, which it holds on `eth0`, so
+that a peer's replies leave from it.
 
 What comes in by a guest's port takes the guest's mark, 4096 + N, before any accept. The table
 `ws_guest_out`, in the `ip` family at the same priority, drops what leaves by `wgN` with another mark
