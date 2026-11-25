@@ -14,11 +14,12 @@ in Homebrew's API ([devtools](../devtools/README.md#the-formulae) says what that
 - `docker-buildx` and `docker-compose`, Docker's plugins;
 - `docker-credential-helper`, which holds `docker-credential-osxkeychain`.
 
-Homebrew keeps the latest bottle only, so each formula takes `latest`, and `mise bootstrap packages
-upgrade` upgrades them. One manager holds the five: `docker` finds buildx and compose in brew's
-`cli-plugins` directory, which `config.json` names, and the other commands are in
-`/opt/homebrew/bin`, on a login shell's `PATH`. As tools of mise's, each plugin would take a link of
-ws's into a `cli-plugins` directory, and each other command one onto the `PATH`.
+Homebrew keeps the latest bottle only, so each formula takes `latest`, and the command in
+[the runbook](../../runbook.md#what-stays-by-hand) upgrades them. One manager holds the five:
+`docker` finds buildx and compose in brew's `cli-plugins` directory, which `config.json` names, and
+the other commands are in `/opt/homebrew/bin`, on a login shell's `PATH`. As tools of mise's, each
+plugin would take a link of ws's into a `cli-plugins` directory, and each other command one onto
+the `PATH`.
 
 `colima start` stays by hand: the machine's size and its start at login are the user's.
 
