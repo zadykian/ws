@@ -21,9 +21,10 @@ func TestValidRefusesAnIncompleteRule(t *testing.T) {
 		t.Errorf("complete rule: %v", err)
 	}
 	for name, bad := range map[string]ufw.Rule{
-		"direction": func() ufw.Rule { r := ok; r.Dir = "up"; return r }(),
-		"comment":   func() ufw.Rule { r := ok; r.Comment = ""; return r }(),
-		"field":     func() ufw.Rule { r := ok; r.To = ""; return r }(),
+		"direction":  func() ufw.Rule { r := ok; r.Dir = "up"; return r }(),
+		"comment":    func() ufw.Rule { r := ok; r.Comment = ""; return r }(),
+		"apostrophe": func() ufw.Rule { r := ok; r.Comment = "the guests' DHCP"; return r }(),
+		"field":      func() ufw.Rule { r := ok; r.To = ""; return r }(),
 	} {
 		if bad.Valid() == nil {
 			t.Errorf("%s: rule %+v passed", name, bad)
@@ -45,5 +46,15 @@ func TestRouteFromSlotOneIsTheRouteCommand(t *testing.T) {
 	r := ufw.Route("allow", "wg0", "ikeward0", "10.99.1.2", "ikeward")
 	if got, want := r.String(), "route allow in on wg0 out on ikeward0 from 10.99.1.2 to any"; got != want {
 		t.Errorf("String = %q, want %q", got, want)
+	}
+}
+
+func TestRouteInNamesNoOutInterface(t *testing.T) {
+	r := ufw.RouteIn("allow", "incusbr0", "any", "guests")
+	if got, want := r.String(), "route allow in on incusbr0 from any to any"; got != want {
+		t.Errorf("String = %q, want %q", got, want)
+	}
+	if err := r.Valid(); err != nil {
+		t.Error(err)
 	}
 }

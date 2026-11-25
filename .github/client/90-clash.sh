@@ -40,7 +40,7 @@ refused() {
         echo "::error::mise bootstrap's plan exited $status, printing '$out', where a failure and server $2's '$1' were due"
         exit 1
     fi
-    printf '%s\n' "$out" | grep -qF "fix its file, or ws client remove $2" || {
+    printf '%s\n' "$out" | grep -qF "fix its file, or ws macos remove $2" || {
         echo "::error::mise bootstrap's plan named no way out of server $2's file: '$out'"
         exit 1
     }
@@ -66,3 +66,12 @@ server lab 'WS_SLOT: 1' 'WS_REMOTE: localhost' 'WS_REMOTE_PORT: 22023' 'WS_TUNNE
 refused "WS_TUNNEL_PORT=51820 is server ws's too, behind WS_REMOTE localhost" lab
 server lab 'WS_SLOT: 1' 'WS_REMOTE: localhost' 'WS_REMOTE_PORT: 22022' 'WS_TUNNEL_PORT: 51821'
 refused "WS_REMOTE_PORT=22022 is server ws's too, behind WS_REMOTE localhost" lab
+
+# A guest names its host, and holds none of the host's ways. The tunnel port clash of a guest and
+# its host, which share ws's WS_REMOTE, stays.
+server lab 'WS_HOST: ws' 'WS_SLOT: 1' 'WS_TUNNEL_PORT: 51821' 'WS_REMOTE_PORT: 22023'
+refused "WS_HOST=ws names the host's way: a guest holds none of" lab
+server lab 'WS_HOST: nobody' 'WS_SLOT: 1' 'WS_TUNNEL_PORT: 51821'
+refused "WS_HOST=nobody names no server" lab
+server lab 'WS_HOST: ws' 'WS_SLOT: 1' 'WS_TUNNEL_PORT: 51820'
+refused "WS_TUNNEL_PORT=51820 is server ws's too, behind WS_REMOTE" lab

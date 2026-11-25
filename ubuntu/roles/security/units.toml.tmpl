@@ -1,0 +1,23 @@
+# The security role's units. mise installs the packages and sets up fail2ban first. The lockout
+# guard comes before the unit that could close a login. sshd's waits on it, and a guard fails before
+# a change, never after.
+
+# root must hold a key that sshd takes, in /root, before SSH by key alone.
+[guard.security-keys]
+login_key = "root"
+home = "/root"
+
+# SSH by key alone. sshd -G parses the drop-in alone before it goes in place, as sshd -t needs a
+# /run/sshd that exists only once ssh.service has started since boot. A refused drop-in leaves the
+# live one. ssh reloads in this unit where the drop-in changed, so a later failure leaves no sshd
+# that takes passwords. ssh.socket starts sshd at the first login; before that, the unit starts it.
+[service.security-sshd]
+unit = "ssh.service"
+run = "running"
+reload = true
+after = "guard/security-keys"
+
+[[service.security-sshd.file]]
+path = "/etc/ssh/sshd_config.d/10-keys-only.conf"
+template = "files/10-keys-only.conf.tmpl"
+check = ["/usr/sbin/sshd", "-G", "-f", "{}"]

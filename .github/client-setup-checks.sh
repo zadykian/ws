@@ -1,5 +1,5 @@
 #!/bin/sh
-# The client job's checks of ws client cable, which the cable's unit runs. They use the job's
+# The client job's checks of ws macos cable, which the cable's unit runs. They use the job's
 # values.yml. client-conf-checks.sh runs it last, from the repository's root. By then mise bootstrap
 # has set up the Mac (.github/workflows/client.yml). As it runs the cable's command, sudo included,
 # and edits the job's values.yml, it stops without the job's TUNNEL. It puts the file back as it exits,
@@ -7,7 +7,7 @@
 
 set -eu
 if [ -z "${TUNNEL-}" ]; then
-    echo "::error::TUNNEL is unset: this runs ws client cable, with sudo, in client.yml's job alone"
+    echo "::error::TUNNEL is unset: this runs ws macos cable, with sudo, in client.yml's job alone"
     exit 1
 fi
 conf=/etc/ws/values.yml
@@ -36,28 +36,28 @@ with() {
     [ $# = 0 ] || conf_set "$conf" "$@"
 }
 
-# setup [ARG] runs ws client cable, and sets out to what it printed.
+# setup [ARG] runs ws macos cable, and sets out to what it printed.
 setup() {
-    out=$(ws client cable "$@" 2>&1)
+    out=$(ws macos cable "$@" 2>&1)
 }
 
-# prints TEXT [ARG] runs ws client cable, which must print TEXT alone.
+# prints TEXT [ARG] runs ws macos cable, which must print TEXT alone.
 prints() {
     text=$1
     shift
-    setup "$@" || error "ws client cable${*:+ $*} failed: $out"
-    [ "$out" = "$text" ] || error "ws client cable${*:+ $*} printed '$out', not '$text'"
+    setup "$@" || error "ws macos cable${*:+ $*} failed: $out"
+    [ "$out" = "$text" ] || error "ws macos cable${*:+ $*} printed '$out', not '$text'"
 }
 
-# stops TEXT [ARG] runs ws client cable, which must stop with one line that starts with TEXT.
+# stops TEXT [ARG] runs ws macos cable, which must stop with one line that starts with TEXT.
 stops() {
     text=$1
     shift
-    ! setup "$@" || error "ws client cable${*:+ $*} went on where it should stop: $out"
+    ! setup "$@" || error "ws macos cable${*:+ $*} went on where it should stop: $out"
     case $out in
-    *"$nl"*) error "ws client cable${*:+ $*} printed more than one line: $out" ;;
+    *"$nl"*) error "ws macos cable${*:+ $*} printed more than one line: $out" ;;
     "$text"*) ;;
-    *) error "ws client cable${*:+ $*} stopped on '$out', not '$text'" ;;
+    *) error "ws macos cable${*:+ $*} stopped on '$out', not '$text'" ;;
     esac
 }
 
@@ -105,7 +105,7 @@ PATH=$tmp/bin:$PATH
 args='10.77.0.2 255.255.255.252'
 
 # logged LINE... checks that the stand-in logged LINE..., a line each, since the last check. Where
-# it logged other calls, ws client cable may reach another networksetup, so the script stops
+# it logged other calls, ws macos cable may reach another networksetup, so the script stops
 # there.
 logged() {
     got=$(cat "$tmp/setmanual.log")
@@ -115,11 +115,11 @@ logged() {
     exit 1
 }
 
-# differs WHAT LINE... gives the no-op service the settings LINE..., on which ws client cable
+# differs WHAT LINE... gives the no-op service the settings LINE..., on which ws macos cable
 # must run one -setmanual and stop, naming WHAT.
 differs() {
     line="networksetup -setmanual \"ws stand-in no-op\" $args"
-    what="ws client cable: networksetup -getinfo \"ws stand-in no-op\" shows $1 after"
+    what="ws macos cable: networksetup -getinfo \"ws stand-in no-op\" shows $1 after"
     shift
     printf '%s\n' "$@" >"$tmp/info-ws_stand_in_no_op"
     stops "$what $line: "
@@ -134,34 +134,34 @@ if [ "$(command -v networksetup)" != "$tmp/bin/networksetup" ]; then
 fi
 service='ws stand-in 10/100/1G/2.5G LAN'
 with "WS_CABLE_SERVICE: $service"
-stops "ws client cable: to do: run networksetup -setmanual \"$service\" $args" --check
+stops "ws macos cable: to do: run networksetup -setmanual \"$service\" $args" --check
 logged
-prints "ws client cable: run networksetup -setmanual \"$service\" $args"
+prints "ws macos cable: run networksetup -setmanual \"$service\" $args"
 logged "4 -setmanual $service $args"
 prints ''
 prints '' --check
 logged
 # A disabled service draws a warning on every run, and still gets the settings.
 with 'WS_CABLE_SERVICE: ws stand-in bridge'
-warning="ws client cable: warning: networksetup lists \"ws stand-in bridge\", WS_CABLE_SERVICE in"
+warning="ws macos cable: warning: networksetup lists \"ws stand-in bridge\", WS_CABLE_SERVICE in"
 warning="$warning the server's values.yml, as disabled, so the cable carries nothing: turn it on in"
 warning="$warning System Settings › Network"
-prints "$warning${nl}ws client cable: run networksetup -setmanual \"ws stand-in bridge\" $args"
+prints "$warning${nl}ws macos cable: run networksetup -setmanual \"ws stand-in bridge\" $args"
 prints "$warning"
 logged "4 -setmanual ws stand-in bridge $args"
-# A service the list lacks stops ws client cable, though its name begins or ends one listed,
+# A service the list lacks stops ws macos cable, though its name begins or ends one listed,
 # or is a glob that matches one.
 for service in 'ws stand-in absent' 'ws stand-in' 'stand-in 10/100/1G/2.5G LAN' 'ws stand-in*'; do
     with "WS_CABLE_SERVICE: $service"
-    stops "ws client cable: networksetup -listallnetworkservices lacks \"$service\", WS_CABLE_SERVICE in the server's values.yml"
+    stops "ws macos cable: networksetup -listallnetworkservices lacks \"$service\", WS_CABLE_SERVICE in the server's values.yml"
 done
 logged
-# A -setmanual that fails stops ws client cable.
+# A -setmanual that fails stops ws macos cable.
 with 'WS_CABLE_SERVICE: ws stand-in failing'
-stops "ws client cable: networksetup -setmanual \"ws stand-in failing\" $args failed: "
+stops "ws macos cable: networksetup -setmanual \"ws stand-in failing\" $args failed: "
 logged "4 -setmanual ws stand-in failing $args"
 # The no-op's -setmanual exits 0 and changes nothing, which only the check after it catches.
-# So ws client cable must stop on each setting that differs, and name it. The cable's address
+# So ws macos cable must stop on each setting that differs, and name it. The cable's address
 # alone, with no mask or router line, must pass.
 with 'WS_CABLE_SERVICE: ws stand-in no-op'
 differs 'DHCP Configuration' 'DHCP Configuration' 'IP address: 10.77.0.2'
@@ -184,9 +184,9 @@ echo 'networksetup: a diagnostic' >"$tmp/info-ws_stand_in_no_op.err"
 prints 'networksetup: a diagnostic'
 rm "$tmp/info-ws_stand_in_no_op.err"
 logged
-# A router outside the cable's /30, an uplink's, stops ws client cable before any -setmanual.
+# A router outside the cable's /30, an uplink's, stops ws macos cable before any -setmanual.
 printf '%s\n' 'DHCP Configuration' 'IP address: 192.0.2.10' 'Router: 192.0.2.1' \
     >"$tmp/info-ws_stand_in_no_op"
-stops 'ws client cable: networksetup -getinfo "ws stand-in no-op" shows Router: 192.0.2.1, so the'
+stops 'ws macos cable: networksetup -getinfo "ws stand-in no-op" shows Router: 192.0.2.1, so the'
 logged
 exit "$fail"

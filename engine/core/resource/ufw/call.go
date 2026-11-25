@@ -37,3 +37,17 @@ func (r Rule) normal() Rule {
 	}
 	return r
 }
+
+// ufwFront adds a rule first, ahead of every other, where ufw adds one last. A route rule has no
+// front, so the owner makes it a ufwCall.
+type ufwFront struct{ ufwCall }
+
+func (c ufwFront) String() string {
+	return "ufw " + strings.Join(append([]string{"insert", "1"}, c.rule.command(false)...), " ")
+}
+
+func (c ufwFront) Apply(ctx context.Context) error {
+	args := append([]string{"insert", "1"}, c.rule.command(false)...)
+	_, err := c.m.RunRoot(ctx, "ufw", append(args, "comment", c.rule.Comment)...)
+	return err
+}

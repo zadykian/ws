@@ -26,7 +26,7 @@ type miseStatus map[string]struct {
 }
 
 // unitVerify returns ws unit verify.
-func unitVerify(p Env, s UnitSide) *cobra.Command {
+func unitVerify(p Env, ss sides) *cobra.Command {
 	return &cobra.Command{
 		Use:   "verify",
 		Short: "fail where mise's plan lacks a unit of the specs",
@@ -36,6 +36,10 @@ func unitVerify(p Env, s UnitSide) *cobra.Command {
 			"that does not change.",
 		Args: cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error {
+			s, err := ss.pick(p.Pwd)
+			if err != nil {
+				return err
+			}
 			r, err := loadUnits(c, p, s)
 			defer r.term.Flush()
 			if err != nil {

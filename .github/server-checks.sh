@@ -1,12 +1,11 @@
 #!/bin/bash
-# The server job's cases, as root on a runner that booted (.github/workflows/server.md): the
-# setup on a booted machine, what it wrote, and the firewall around Docker.
+# The server job's cases, as root on a runner that booted (.github/workflows/server.md). They check
+# the setup on a booted machine, what it wrote, Docker's forward policy and its published ports.
 # Each case that expects a refusal has a control, as a broken setup refuses everything. Run as
 # `server-checks.sh`, with .tools/install-build's ws in /usr/local/bin and the tree in /opt/ws.
 set -euo pipefail
 
 image=alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
-target=10.250.0.2:8000
 web='while true; do printf "HTTP/1.0 200 OK\r\n\r\nhi\n" | nc -l -p 80; done'
 # The runner's sudo keeps the runner's environment, which a real sudo drops, and its
 # /etc/environment, which PAM gives each session, names the runner's own directories. They would
@@ -24,11 +23,9 @@ fail() {
     exit 1
 }
 
-# finish ends the lab's listener, which the cases start below, and prints the log on a failure.
+# finish prints Docker's log on a failure.
 finish() {
     local status=$?
-    if [ -n "${lab_pid:-}" ]; then kill "$lab_pid" 2>/dev/null || true; fi
-    if [ -n "${host_pid:-}" ]; then kill "$host_pid" 2>/dev/null || true; fi
     [ "$status" = 0 ] || journalctl -n 80 --no-pager -u docker.service || true
     return "$status"
 }
@@ -94,7 +91,8 @@ ssh-keygen -q -t ed25519 -N '' -f "$keys/key"
 install -d -m 700 /root/.ssh
 install -m 600 "$keys/key.pub" /root/.ssh/authorized_keys
 
-# A private address that answers, in a namespace of its own: the runner has no other.
+# A second network, in a namespace of its own: the runner has no other. The cases below publish
+# ports and reach them from there.
 ip netns add lab
 ip link add veth0 type veth peer name veth1
 ip link set veth1 netns lab
@@ -103,13 +101,11 @@ ip link set veth0 up
 ip netns exec lab ip addr add 10.250.0.2/24 dev veth1
 ip netns exec lab ip link set veth1 up
 ip netns exec lab ip link set lo up
-ip netns exec lab bash -c \
-    'while true; do printf "HTTP/1.0 200 OK\r\n\r\nlan\n" | nc -l -N 8000; done' >/dev/null 2>&1 &
-lab_pid=$!
 
 install -d -m 755 /etc/ws
-# The swap file is small, as the runner's disk has no room for one the size of its RAM.
-printf '%s\n' --- 'WS_BASE_SWAP_SIZE_MB: 64' >/etc/ws/values.yml
+# The swap file is small, as the runner's disk has no room for one the size of its RAM. The runner is
+# no container and has no host, so the guest runs SigNoz and its tunnel itself, as a cloud VM does.
+printf '%s\n' --- 'WS_BASE_SWAP_SIZE_MB: 64' 'WS_SELF_CONTAINED: true' >/etc/ws/values.yml
 chmod 600 /etc/ws/values.yml
 values_kept=$(mktemp)
 cp /etc/ws/values.yml "$values_kept"
@@ -151,15 +147,17 @@ apt_quiet() {
     return "$status"
 }
 
-# The controls: each of these holds before ws, and the opposite after it.
-must "the private address answers before the table" up "http://$target/"
+# A cloud VM starts with forwarding off and the policy at accept. The first run starts Docker, which
+# turns forwarding on and sets the policy to drop. That cuts wg0 off ikeward0 until a reboot.
+sysctl -qw net.ipv4.ip_forward=0
+iptables -P FORWARD ACCEPT
 
-# As on a new machine: ws server setup installs mise and runs the bootstrap. The build is already
-# /usr/local/bin/ws. The bootstrap sets up the firewall before Docker's ufw rules. It runs twice, and
-# the second run must change nothing. Its plan must exit 2 before the first run, which has mise, the
-# plugin and the bootstrap to do, and 0 after each run. The tree must be root's alone for setup's
-# guard. So must /opt and /usr/share, as on a machine, for mise's. The runner's image lets others
-# write both, and mise refuses a system plugin below either.
+# As on a new machine: ws ubuntu guest setup installs mise and runs the bootstrap. The build is already
+# /usr/local/bin/ws. It runs twice, and the second run must change nothing. Its plan must exit 2
+# before the first run, which has mise, the plugin and the bootstrap to do, and 0 after each run.
+# The tree must be root's alone for setup's guard. So must /opt and /usr/share, as on a machine,
+# for mise's. The runner's image lets others write both, and mise refuses a system plugin below
+# either.
 chown -R 0:0 /opt/ws
 chmod -R go-w /opt/ws
 chmod go-w /opt /usr/share
@@ -181,6 +179,14 @@ fi
 must "no upgrade ran, and no apt command waited for dpkg's lock" apt_quiet "$log" "$since"
 must "the first setup leaves nothing to do" setup --plan
 must "the first setup prints no warning" "$check" "$log"
+# docker/README.md#the-forward-policy: the policy is read with no reboot after the first run.
+forward_policy() {
+    local policy
+    policy=$(iptables -S FORWARD | head -n 1)
+    echo "$policy, ip_forward $(cat /proc/sys/net/ipv4/ip_forward)"
+    [ "$policy" = '-P FORWARD ACCEPT' ] && [ "$(cat /proc/sys/net/ipv4/ip_forward)" = 1 ]
+}
+must "Docker's forward policy is accept after the first run, with forwarding on" forward_policy
 must "the second setup runs" setup
 must "the second setup leaves nothing to do" setup --plan
 
@@ -240,30 +246,12 @@ must "docker pulls the image" docker pull -q "$image"
 must "docker runs a container" docker run --rm "$image" true
 must "a container reaches the internet" \
     docker run --rm "$image" wget -qO /dev/null --timeout=10 http://example.com
+# Docker's containers send OTLP/gRPC to the bridge address, and the collector takes it
+# (ubuntu/roles/otelcol/README.md#dockers-containers).
+must "a container's OTLP reaches the collector on the bridge address" "$(dirname "$0")/otlp-checks.sh" "$image"
 
-# The firewall must hold under the system daemon. Root's own programs meet the table too.
-refused "a bridged container reaches a private address" \
-    docker run --rm "$image" wget -qO /dev/null --timeout=5 "http://$target/"
-refused "a host-network container reaches a private address" \
-    docker run --rm --net=host "$image" wget -qO /dev/null --timeout=5 "http://$target/"
-refused "root reaches a private address" curl --silent --fail --max-time 5 "http://$target/"
-
-# ufw judges what a host program listens on, and refuses another network's packets to it. The
-# listener stops by its pid, and by its timeout where a case fails first.
-timeout 120 bash -c 'while true; do printf "HTTP/1.0 200 OK\r\n\r\nhost\n" | nc -l -N 8084; done' \
-    >/dev/null 2>&1 &
-host_pid=$!
-must "a host listener answers on loopback" up http://127.0.0.1:8084/
-refused "a host listener on every address answers on another network" \
-    ip netns exec lab curl --silent --fail --max-time 5 --output /dev/null http://10.250.0.1:8084/
-ufw --force disable
-must "the same listener answers with ufw off" ip netns exec lab curl --silent --fail --max-time 5 \
-    --output /dev/null http://10.250.0.1:8084/
-ufw --force enable
-kill "$host_pid"
-
-# A port published with no address goes on loopback, as Docker's ports get past ufw
-# (roles/server/ubuntu/docker/README.md#published-ports). It answers on the host, not on the
+# A port published with no address goes on loopback, as a guest holds no filter
+# (ubuntu/roles/docker/README.md#published-ports). It answers on the host, not on the
 # address of another network. The control publishes on every address, which the lab reaches.
 docker run -d --rm --name ws-web -p 0.0.0.0:8083:80 "$image" sh -c "$web" >/dev/null
 must "a port published on every address answers on loopback" up http://127.0.0.1:8083/
@@ -285,7 +273,8 @@ docker stop -t 0 ws-probe >/dev/null
 # The shell's line refuses a link at ~/.bashrc. A dry run is enough, as the refusal is in the plan.
 mv /root/.bashrc /root/.bashrc.orig
 ln -s /etc/hostname /root/.bashrc
-if out=$(WS_UNITS=roles/server/ubuntu ws unit write --dry-run file/shell-bashrc-line 2>&1); then
+# ws unit picks its side by the directory mise runs in, so the call runs in the guest's.
+if out=$(cd /opt/ws/ubuntu/guest && ws unit write --dry-run file/shell-bashrc-line 2>&1); then
     fail "ws unit write planned through a link at ~/.bashrc"
 fi
 must "a link at ~/.bashrc is refused" grep -q 'is a link to /etc/hostname' <<<"$out"

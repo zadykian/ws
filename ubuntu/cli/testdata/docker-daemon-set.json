@@ -1,0 +1,44 @@
+{
+  "bip": "172.17.0.1/16",
+  "builder": {
+    "gc": {
+      "enabled": true,
+      "policy": [
+        {
+          "reservedSpace": "2GB",
+          "maxUsedSpace": "9GB",
+          "minFreeSpace": "3GB"
+        },
+        {
+          "all": true,
+          "reservedSpace": "2GB",
+          "maxUsedSpace": "9GB",
+          "minFreeSpace": "3GB"
+        }
+      ]
+    }
+  },
+  "cgroup-parent": "docker.slice",
+  "default-address-pools": [
+    {
+      "base": "172.16.0.0/12",
+      "size": 20
+    }
+  ],
+  "default-network-opts": {
+    "bridge": {
+      "com.docker.network.bridge.host_binding_ipv4": "127.0.0.1"
+    }
+  },
+  "dns": [
+    "172.17.0.1"
+  ],
+  "ip": "127.0.0.1",
+  "ip-forward-no-drop": true,
+  "live-restore": true,
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-file": "3",
+    "max-size": "10m"
+  }
+}

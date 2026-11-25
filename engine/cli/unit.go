@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -25,8 +27,16 @@ const InSync = "in-sync"
 // UnitSide is what a side gives ws unit: where its specs sit, the values that fill them, and the
 // units of its service manager.
 type UnitSide struct {
+	// Name is the side's name, which a unit's side fact names. Empty is a machine with one side.
+	Name string
 	// Dir is the root of the side's specs, DIR/ROLE/units.toml.tmpl, where WS_UNITS names none.
 	Dir string
+	// RoleFile is the file that a role holds where the side runs it, as mise.host.toml: the side's
+	// specs are those of the roles that hold it. Empty is every role.
+	RoleFile string
+	// RunDir is the directory mise runs in, which holds the side's conf.d link, lock and tasks.
+	// Empty is the parent of Dir. It tells the sides of one ws unit apart, so each names its own.
+	RunDir string
 	// Values loads the side's values.
 	Values func(ctx context.Context, m effect.Machine) (any, error)
 	// Units is the service manager's units.
@@ -50,39 +60,65 @@ type UnitSide struct {
 	Task string
 }
 
-// unitRun is one call of ws unit: the units of the specs, in the order they run, ws's lines,
-// which go to stderr, and the specs' directory.
+// unitRun is one call of ws unit. It holds the units of the specs in run order, ws's lines, which go
+// to stderr, the specs' directory and the directory mise runs in.
 type unitRun struct {
 	all  []kind.Unit
 	term *effect.Terminal
 	out  engine.Lines
 	dir  string
+	run  string
 }
 
-// runDir is the directory mise runs in for the side: the parent of the specs, whose mise/conf.d
-// links them. A run elsewhere loads none of their lines, so a failure for a line names it.
+// runDir is the directory mise runs in for the side, whose mise/conf.d links the specs. A run
+// elsewhere loads none of their lines, so a failure for a line names it.
 func (r unitRun) runDir() string {
-	return filepath.Dir(filepath.Clean(r.dir))
+	return r.run
+}
+
+// sides are the sides that one ws unit serves.
+type sides []UnitSide
+
+// pick returns the side whose run directory is pwd. One side serves a run anywhere. With several,
+// a pwd in none of their run directories is an error that names them.
+func (ss sides) pick(pwd string) (UnitSide, error) {
+	if len(ss) == 1 {
+		return ss[0], nil
+	}
+	dirs := make([]string, 0, len(ss))
+	for _, s := range ss {
+		if sameDir(pwd, s.RunDir) {
+			return s, nil
+		}
+		dirs = append(dirs, s.RunDir)
+	}
+	return UnitSide{}, fmt.Errorf("mise runs in %s, which is no side's run directory: run mise in %s", pwd,
+		strings.Join(dirs, " or "))
 }
 
 // Unit returns ws unit: the units of ws's kinds, KIND/NAME, which a tool such as mise plans and
-// applies through it.
-func Unit(p Env, s UnitSide) *cobra.Command {
+// applies through it. With several sides it serves the one whose run directory mise runs in.
+func Unit(p Env, first UnitSide, more ...UnitSide) *cobra.Command {
+	ss := append(sides{first}, more...)
 	return Group("unit", "plan and apply the units of ws's kinds, KIND/NAME, for mise",
-		unitList(p, s), unitRead(p, s), unitWrite(p, s), unitVerify(p, s))
+		unitList(p, ss), unitRead(p, ss), unitWrite(p, ss), unitVerify(p, ss))
 }
 
 // unitList returns ws unit list.
-func unitList(p Env, s UnitSide) *cobra.Command {
+func unitList(p Env, ss sides) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "list",
 		Short: "print each unit, KIND/NAME, in the order the units run",
-		Long: "The specs are each units.toml.tmpl one level below WS_UNITS, or below " + s.Dir + " where it is " +
+		Long: "The specs are each units.toml.tmpl one level below WS_UNITS, or below " + ss[0].Dir + " where it is " +
 			"unset. --toml prints each unit as a line of mise's [bootstrap.packages].",
 		Args: cobra.NoArgs,
 	}
 	asTOML := c.Flags().Bool("toml", false, "print the units as lines of mise's [bootstrap.packages]")
 	c.RunE = func(c *cobra.Command, _ []string) error {
+		s, err := ss.pick(p.Pwd)
+		if err != nil {
+			return err
+		}
 		r, err := loadUnits(c, p, s)
 		defer r.term.Flush()
 		if err != nil {
@@ -116,7 +152,8 @@ func loadUnits(c *cobra.Command, p Env, s UnitSide) (unitRun, error) {
 		dir = filepath.Join(p.Pwd, dir)
 	}
 	r.dir = dir
-	specs := os.DirFS(dir)
+	r.run = cmp.Or(s.RunDir, filepath.Dir(filepath.Clean(dir)))
+	specs := SideRoles(os.DirFS(dir), s.RoleFile)
 	// fs.Glob passes over a directory it cannot read, which would give no unit and no error.
 	if _, err := fs.Stat(specs, "."); err != nil {
 		return r, fmt.Errorf("the specs: %w", err)
@@ -125,8 +162,8 @@ func loadUnits(c *cobra.Command, p Env, s UnitSide) (unitRun, error) {
 	if err != nil {
 		return r, fmt.Errorf("finding the file ws runs from: %w", err)
 	}
-	env := kind.Env{M: p.Machine, U: s.Units, Out: r.out, Data: data, System: s.System, Self: self, Hidden: s.Hidden,
-		LookupEnv: p.TaskEnv(s.Task)}
+	env := kind.Env{M: p.Machine, U: s.Units, Out: r.out, Data: data, System: s.System, Side: s.Name, Self: self,
+		Hidden: s.Hidden, LookupEnv: p.TaskEnv(s.Task)}
 	if s.User != nil {
 		env.User = s.User(data)
 	}
@@ -158,4 +195,31 @@ func (s UnitSide) refuse(p Env) error {
 		return s.Platform(p.Machine)
 	}
 	return nil
+}
+
+// SideRoles returns the specs' root with the roles that lack file left out of its listing, so that
+// kind.Load finds the specs of a side's roles alone. Empty file leaves none out.
+func SideRoles(specs fs.FS, file string) fs.FS {
+	if file == "" {
+		return specs
+	}
+	return sideRoles{specs, file}
+}
+
+// sideRoles is a root of specs that lists the roles holding file alone.
+type sideRoles struct {
+	fs.FS
+	file string
+}
+
+// ReadDir lists the root without the roles that lack the side's file.
+func (r sideRoles) ReadDir(name string) ([]fs.DirEntry, error) {
+	entries, err := fs.ReadDir(r.FS, name)
+	if err != nil || name != "." {
+		return entries, err
+	}
+	return slices.DeleteFunc(entries, func(e fs.DirEntry) bool {
+		_, err := fs.Stat(r.FS, path.Join(e.Name(), r.file))
+		return err != nil
+	}), nil
 }

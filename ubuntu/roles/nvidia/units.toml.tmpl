@@ -1,0 +1,63 @@
+{{- /* A guest's switch is the guest's own value. The host's file has none, and holds no such unit. */ -}}
+{{- $gpu := false }}{{ if eq side "guest" }}{{ $gpu = .Nvidia.GPU }}{{ end -}}
+# nvidia's units, in two modes. On a kernel of its own, a machine installs the driver where a PCI
+# display device is NVIDIA's: README.md says why. A container shares its host's kernel and loads no
+# module. So it takes the userspace alone, where its switch WS_NVIDIA_GPU is on, and the host's
+# card goes to it by a device. The branch 595-server is named in packages.tmpl, archive.tmpl,
+# userspace.tmpl and the reboot's package.
+
+# apt finds each name of the branch, on a machine without the GPU, so that CI fails where the
+# archive drops one. The GPU's machine installs its own flavor's names whatever the archive holds of
+# the others, so the check never blocks its driver.
+[packages.nvidia-archive]
+template = "archive.tmpl"
+simulate = true
+when = { gpu_vendor = "!0x10de" }
+
+# A container shows its host's PCI devices, so its own kernel decides here, not the card.
+[packages.nvidia]
+template = "packages.tmpl"
+when = { container = "!yes", gpu_vendor = "0x10de" }
+
+# A new driver loads at the next boot: until then, this says a reboot is due.
+[state.nvidia-reboot]
+after = "packages/nvidia"
+when = { container = "!yes", gpu_vendor = "0x10de" }
+
+[state.nvidia-reboot.reboot]
+module = "nvidia"
+package = "nvidia-utils-595-server"
+hint = "Until then, ws-fans reads no GPU."
+
+# A container's userspace, at the version of the module that the host loads: nvidia-smi fails on
+# any other. A run after the host's reboot pins it again.
+[packages.nvidia-userspace]
+template = "userspace.tmpl"
+when = { side = "guest", container = "yes", set = "{{ if $gpu }}yes{{ end }}" }
+
+# The pin holds that version against an upgrade, as unattended upgrades would move it before the
+# host's reboot loads a new module.
+[file.nvidia-userspace-pin]
+path = "/etc/apt/preferences.d/ws-nvidia"
+template = "pin.tmpl"
+after = "packages/nvidia-userspace"
+when = { side = "guest", container = "yes", set = "{{ if $gpu }}yes{{ end }}" }
+
+# Incus passes /dev/nvidia* to a guest as they exist when it starts. This waits for udev's coldplug,
+# which loads the module, then for the nodes, and the drop-in orders incus.service after it. Each
+# wait ends after a minute, and a host that loads no module waits for no node, so a missing card
+# never keeps Incus down.
+[service.nvidia-devices]
+unit = "ws-nvidia-devices.service"
+enabled = true
+run = "running"
+after = "state/nvidia-reboot"
+when = { side = "host", gpu_vendor = "0x10de" }
+
+[[service.nvidia-devices.file]]
+path = "/etc/systemd/system/ws-nvidia-devices.service"
+source = "files/ws-nvidia-devices.service"
+
+[[service.nvidia-devices.file]]
+path = "/etc/systemd/system/incus.service.d/ws-nvidia.conf"
+source = "files/incus-nvidia.conf"

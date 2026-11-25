@@ -45,21 +45,22 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: The words, warnings and update checks
+      - name: The words, warnings, update and real-machine checks
         run: |
           sh .github/words-check-test.sh
           .github/warnings-check-test.sh
           .github/update-checks-test.sh
+          ubuntu/checks/checks-test.sh
       - name: make lint
         run: make lint
         env:
           # zizmor's online audits, which look the actions up on GitHub, need a token.
           GH_TOKEN: ${{ github.token }}
 
-  # ws server setup, as on a new machine, on a runner that booted, as a server that root alone
+  # ws ubuntu guest setup, as on a new machine, on a runner that booted, as a server that root alone
   # logs in to. It runs twice: setup's plan before the first run must exit 2, and after each run
-  # it must change nothing. Last, it runs twice more with the outbound table off, as a cloud VM
-  # has it. The firewall around Docker needs the booted systemd. In a stack, it
+  # it must change nothing. Docker's forward policy and its published ports need the booted
+  # systemd. In a stack, it
   # runs on the top pull request alone, which holds every change below it, and only where the
   # stack rests on main.
   # A pull request onto another branch, such as an integration branch, skips it: that branch's
@@ -98,10 +99,40 @@ jobs:
         run: sudo bash .github/server-checks.sh
       - name: The secrets task
         run: sudo bash .github/secrets-checks.sh
-      # Last, as no step after it may need the table that it takes off.
-      - name: The outbound table off
-        run: sudo bash .github/outbound-off-checks.sh
       # A failed start only points to the daemon's log.
+      - name: The daemon's log
+        if: failure()
+        run: sudo journalctl -n 80 --no-pager -u docker.service
+
+  # The host's setup, as server is the guest's. It runs ws ubuntu host setup on the tree twice, on a
+  # booted runner. Then it runs the cases of host-checks.sh. As a try, continue-on-error keeps its
+  # failure from failing release.yml's call or a pull request's checks. That holds until a run
+  # shows that the job passes. Gated as server. Its pool is a loop device, and its one guest stops
+  # the second part of the run, as host-checks.sh says.
+  host:
+    if: >-
+      (github.event.action != 'opened' || !github.event.pull_request.draft) &&
+      github.event.pull_request.stack.position == github.event.pull_request.stack.size &&
+      (github.event_name != 'pull_request' ||
+      (github.event.pull_request.stack.base.ref || github.event.pull_request.base.ref) ==
+      github.event.repository.default_branch)
+    continue-on-error: true
+    runs-on: ubuntu-26.04
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        env: { GIT_CONFIG_COUNT: 1, GIT_CONFIG_KEY_0: init.defaultBranch, GIT_CONFIG_VALUE_0: main }
+        with:
+          persist-credentials: false
+      # As in server: CI runs the tree's build as /usr/local/bin/ws, never a release's.
+      - name: Build ws
+        run: |
+          sudo setfacl -k /opt && sudo install -d -o "$(id -un)" /opt/ws && cp -a . /opt/ws
+          .tools/install-build
+      - name: The cases
+        run: sudo bash .github/host-checks.sh
       - name: The daemon's log
         if: failure()
         run: sudo journalctl -n 80 --no-pager -u docker.service
@@ -149,7 +180,7 @@ jobs:
               apt-get install -qq -y --no-install-recommends cloud-init >/dev/null
               .github/autoinstall-checks.sh'
 
-  # SigNoz's compose files in roles/server/ubuntu/signoz are foundryctl's, forged from the casting
+  # SigNoz's compose files in ubuntu/roles/signoz are foundryctl's, forged from the casting
   # there. Forged again into an empty directory, as foundryctl never removes a file, they must be
   # the same. Only what it forges is compared, so the package may keep other files beside them.
   # Gated as install.
@@ -187,11 +218,11 @@ jobs:
         run: |
           forged="$RUNNER_TEMP/forged"
           mkdir "$forged"
-          cp roles/server/ubuntu/signoz/casting.yaml "$forged"
+          cp ubuntu/roles/signoz/casting.yaml "$forged"
           foundryctl forge --no-ledger --no-updater -f "$forged/casting.yaml" -p "$forged"
           status=0
           for file in "$forged"/*; do
-              diff -r "roles/server/ubuntu/signoz/${file##*/}" "$file" || status=1
+              diff -r "ubuntu/roles/signoz/${file##*/}" "$file" || status=1
           done
           if [ "$status" -ne 0 ]; then
               echo '::error::foundryctl forges other files from casting.yaml: forge them again.'

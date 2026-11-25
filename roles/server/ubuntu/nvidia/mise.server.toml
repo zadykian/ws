@@ -1,5 +1,0 @@
-# nvidia's lines for every server. Without NVIDIA's GPU, the archive's check alone does anything.
-[bootstrap.packages]
-"ws:packages/nvidia" = "in-sync"
-"ws:packages/nvidia-archive" = "in-sync"
-"ws:state/nvidia-reboot" = "in-sync"

@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"slices"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/cli/clitest"
+	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
@@ -57,7 +59,11 @@ func updateEnv(version, url string, euid int) (cli.Env, *effecttest.Machine) {
 }
 
 func runUpdate(p cli.Env, side string, root bool, args ...string) (status int, stdout, stderr string) {
-	return clitest.Run(p, []*cobra.Command{cli.Update(p, side, root)}, "", append([]string{"update"}, args...)...)
+	return runUpdateOf(p, cli.FixedSetup(side, "setup"), root, args...)
+}
+
+func runUpdateOf(p cli.Env, s cli.Setups, root bool, args ...string) (status int, stdout, stderr string) {
+	return clitest.Run(p, []*cobra.Command{cli.Update(p, root, s)}, "", append([]string{"update"}, args...)...)
 }
 
 func TestUpdateRunsTheSetupOfTheWsItWrote(t *testing.T) {
@@ -75,15 +81,15 @@ func TestUpdateRunsTheSetupOfTheWsItWrote(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			p, m := updateEnv(tc.version, serveRelease(t, tc.tag, "new ws"), 0)
 			m.Results[copied+" version"] = effecttest.Result{Out: []byte(tc.tag + "\n")}
-			status, stdout, stderr := runUpdate(p, "server", true, tc.args...)
+			status, stdout, stderr := runUpdate(p, "ubuntu", true, tc.args...)
 			if status != 0 || stdout != "Updated ws "+tc.version+" to "+tc.tag+": "+installed+"\n" {
 				t.Fatalf("status = %d, stdout = %q, stderr = %q; want the report", status, stdout, stderr)
 			}
 			if got := string(m.Files[installed]); got != "new ws" {
 				t.Errorf("%s holds %q, want the release's", installed, got)
 			}
-			if last := m.Calls[len(m.Calls)-1]; last != "exec "+installed+" server setup" {
-				t.Errorf("the last call is %q, want the server's setup of the new ws", last)
+			if last := m.Calls[len(m.Calls)-1]; last != "exec "+installed+" ubuntu setup" {
+				t.Errorf("the last call is %q, want the setup of the new ws", last)
 			}
 		})
 	}
@@ -92,10 +98,10 @@ func TestUpdateRunsTheSetupOfTheWsItWrote(t *testing.T) {
 func TestUpdateOfTheMacRunsItsSetup(t *testing.T) {
 	p, m := updateEnv("v0.9.0", serveRelease(t, "v0.10.0", "new ws"), 501)
 	m.Results[copied+" version"] = effecttest.Result{Out: []byte("v0.10.0\n")}
-	if status, _, stderr := runUpdate(p, "client", false); status != 0 {
+	if status, _, stderr := runUpdate(p, "macos", false); status != 0 {
 		t.Fatalf("status = %d, stderr = %q", status, stderr)
 	}
-	if last := m.Calls[len(m.Calls)-1]; last != "exec "+installed+" client setup" {
+	if last := m.Calls[len(m.Calls)-1]; last != "exec "+installed+" macos setup" {
 		t.Errorf("the last call is %q, want the Mac's setup", last)
 	}
 }
@@ -103,11 +109,11 @@ func TestUpdateOfTheMacRunsItsSetup(t *testing.T) {
 func TestUpdateOfTheReleaseAloneRunsSetup(t *testing.T) {
 	// The release holds no file: a download would fail.
 	p, m := updateEnv("v0.10.0-rc.1", serveRelease(t, "v0.10.0-rc.1", ""), 0)
-	status, stdout, stderr := runUpdate(p, "server", true, "--version", "0.10.0-rc.1")
+	status, stdout, stderr := runUpdate(p, "ubuntu", true, "--version", "0.10.0-rc.1")
 	if status != 0 || stdout != installed+" is ws v0.10.0-rc.1 already\n" {
 		t.Fatalf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
-	if got := strings.Join(m.Calls, "\n"); got != "run "+installed+" version\nexec "+installed+" server setup" {
+	if got := strings.Join(m.Calls, "\n"); got != "run "+installed+" version\nexec "+installed+" ubuntu setup" {
 		t.Errorf("calls = %q, want setup of the installed ws alone", got)
 	}
 }
@@ -133,7 +139,7 @@ func TestUpdateBringsTheInstalledWs(t *testing.T) {
 				m.Results[installed+" version"] = effecttest.Result{Err: errors.New("no such file or directory")}
 			}
 			m.Results[copied+" version"] = effecttest.Result{Out: []byte(tc.latest + "\n")}
-			status, stdout, stderr := runUpdate(p, "server", true)
+			status, stdout, stderr := runUpdate(p, "ubuntu", true)
 			if status != tc.status || !strings.Contains(stdout+stderr, tc.report) {
 				t.Fatalf("status = %d, stdout = %q, stderr = %q; want %d and %q", status, stdout, stderr, tc.status, tc.report)
 			}
@@ -143,7 +149,7 @@ func TestUpdateBringsTheInstalledWs(t *testing.T) {
 				}
 				return
 			}
-			if string(m.Files[installed]) != "new ws" || m.Calls[len(m.Calls)-1] != "exec "+installed+" server setup" {
+			if string(m.Files[installed]) != "new ws" || m.Calls[len(m.Calls)-1] != "exec "+installed+" ubuntu setup" {
 				t.Errorf("file %q, calls %v; want the release, then setup of the installed ws", m.Files[installed], m.Calls)
 			}
 		})
@@ -169,7 +175,7 @@ func TestUpdateRefusesBeforeItRunsSetup(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			p, m := updateEnv(tc.version, serveRelease(t, tc.latest, "new ws"), tc.euid)
-			status, _, stderr := runUpdate(p, "server", true, tc.args...)
+			status, _, stderr := runUpdate(p, "ubuntu", true, tc.args...)
 			if status != tc.status || !strings.Contains(stderr, tc.fails) {
 				t.Errorf("status = %d, stderr = %q; want %d and %q", status, stderr, tc.status, tc.fails)
 			}
@@ -182,18 +188,67 @@ func TestUpdateRefusesBeforeItRunsSetup(t *testing.T) {
 
 func TestUpdateOfTheMacRefusesRoot(t *testing.T) {
 	p, m := updateEnv("v0.9.0", serveRelease(t, "v0.10.0", "new ws"), 0)
-	if status, _, stderr := runUpdate(p, "client", false); status != 1 || !strings.Contains(stderr, "not root") || len(m.Calls) != 0 {
+	if status, _, stderr := runUpdate(p, "macos", false); status != 1 || !strings.Contains(stderr, "not root") || len(m.Calls) != 0 {
 		t.Errorf("status = %d, stderr = %q, calls %v; want the refusal and no call", status, stderr, m.Calls)
 	}
 }
 
 func TestUpdateOfAWrongSumRunsNoSetup(t *testing.T) {
 	p, m := updateEnv("v0.9.0", serveRelease(t, "v0.10.0", "another ws", "new ws"), 0)
-	status, _, stderr := runUpdate(p, "server", true, "--version", "0.10.0")
+	status, _, stderr := runUpdate(p, "ubuntu", true, "--version", "0.10.0")
 	if status != 1 || !strings.Contains(stderr, "does not match") {
 		t.Errorf("status = %d, stderr = %q; want the checksum's refusal", status, stderr)
 	}
 	if string(m.Files[installed]) != "old ws" || strings.Join(m.Calls, "\n") != "run "+installed+" version" {
 		t.Errorf("file %q, calls %v; want the old ws, and no call but its version", m.Files[installed], m.Calls)
+	}
+}
+
+// sideOf picks the setup that its miserc names, as a side does.
+func sideOf(envs map[string][]string, names ...string) cli.Setups {
+	return cli.Setups{Names: names, Pick: func(m effect.Machine) ([]string, error) {
+		text, err := m.ReadFile("/etc/mise/miserc.toml")
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, nil
+		}
+		return envs[string(text)], err
+	}}
+}
+
+func TestUpdateWithNoSideRunsNoSetupAndNamesTheOnesToRun(t *testing.T) {
+	p, m := updateEnv("v0.9.0", serveRelease(t, "v0.10.0", "new ws"), 0)
+	m.Results[copied+" version"] = effecttest.Result{Out: []byte("v0.10.0\n")}
+	s := sideOf(map[string][]string{"a": {"a", "setup"}}, "ws a setup", "ws b setup")
+	status, stdout, stderr := runUpdateOf(p, s, true)
+	want := "Updated ws v0.9.0 to v0.10.0: " + installed + "\nNo side is set up here: run ws a setup or ws b setup\n"
+	if status != 0 || stdout != want {
+		t.Errorf("status = %d, stdout = %q, stderr = %q; want %q", status, stdout, stderr, want)
+	}
+	if string(m.Files[installed]) != "new ws" || indexOf(m.Calls, "exec ") >= 0 {
+		t.Errorf("file %q, calls %v; want the release and no setup", m.Files[installed], m.Calls)
+	}
+}
+
+func TestUpdateRunsTheSetupOfTheSideThatTheMachineHolds(t *testing.T) {
+	p, m := updateEnv("v0.9.0", serveRelease(t, "v0.10.0", "new ws"), 0)
+	m.Results[copied+" version"] = effecttest.Result{Out: []byte("v0.10.0\n")}
+	m.Files["/etc/mise/miserc.toml"] = []byte("a")
+	s := sideOf(map[string][]string{"a": {"a", "setup"}}, "ws a setup")
+	if status, _, stderr := runUpdateOf(p, s, true); status != 0 {
+		t.Fatalf("status = %d, stderr = %q", status, stderr)
+	}
+	if last := m.Calls[len(m.Calls)-1]; last != "exec "+installed+" a setup" {
+		t.Errorf("the last call is %q, want the setup of the side", last)
+	}
+}
+
+func TestUpdateHelpSaysNoSetupOnlyWhereASideMayBeMissing(t *testing.T) {
+	p, _ := updateEnv("v0.9.0", serveRelease(t, "v0.10.0", "new ws"), 0)
+	const none = "and none where it has no side yet"
+	if _, stdout, _ := runUpdateOf(p, cli.FixedSetup("a", "setup"), true, "--help"); strings.Contains(stdout, none) {
+		t.Errorf("help = %q, want no clause for a missing side where the setup is fixed", stdout)
+	}
+	if _, stdout, _ := runUpdateOf(p, sideOf(nil, "ws a setup"), true, "--help"); !strings.Contains(stdout, none) {
+		t.Errorf("help = %q, want the clause for a missing side", stdout)
 	}
 }

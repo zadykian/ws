@@ -1,0 +1,16 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+#
+# Incus gives a guest the NVIDIA device nodes that exist as it starts. At boot, udev's coldplug
+# loads the module and the driver's rules make the nodes. So this waits for udev's queue, then for
+# the nodes, up to a minute each. It never fails, so a missing card never keeps Incus down.
+[Unit]
+Description=Wait for NVIDIA's device nodes before Incus starts a guest
+Documentation=https://github.com/zadykian/ws/blob/main/ubuntu/roles/nvidia/README.md#the-device-nodes
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c 'udevadm settle --timeout=60; test -d /sys/module/nvidia || exit 0; timeout 60 sh -c "until test -e /dev/nvidia0 && test -e /dev/nvidia-uvm; do sleep 1; done" || echo "/dev/nvidia0 or /dev/nvidia-uvm is missing: a guest starts without it"'
+
+[Install]
+WantedBy=multi-user.target

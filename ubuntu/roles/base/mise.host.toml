@@ -1,0 +1,55 @@
+# base's lines for every host: git's source and its upgrades, the packages every machine gets, then
+# the role's units.
+
+# Ubuntu 26.04 ships git 2.53, and the hooks that git's config holds came in 2.54. The git-core PPA
+# gives a newer git. mise takes the PPA's key only where its primary fingerprint is this one,
+# Launchpad's. A changed key then fails the run rather than being trusted unseen.
+[bootstrap.apt.sources.git-core]
+ppa = "git-core/ppa"
+fingerprint = "F911 AB18 4317 630C 5997 0973 E363 C90F 8F1B 6217"
+
+# unattended-upgrades installs each release of the PPA's git within a day.
+[bootstrap.files."/etc/apt/apt.conf.d/52unattended-upgrades-git-core"]
+source = "files/52unattended-upgrades-git-core"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.packages]
+"apt:btop" = "latest"
+"apt:bubblewrap" = "latest"
+"apt:build-essential" = "latest"
+"apt:ca-certificates" = "latest"
+"apt:chrony" = "latest"
+"apt:curl" = "latest"
+"apt:fd-find" = "latest"
+"apt:git" = "latest"
+"apt:gnupg" = "latest"
+"apt:gzip" = "latest"
+"apt:htop" = "latest"
+"apt:iotop" = "latest"
+"apt:jq" = "latest"
+"apt:locales" = "latest"
+"apt:lsb-release" = "latest"
+"apt:ncdu" = "latest"
+"apt:pkg-config" = "latest"
+"apt:poppler-utils" = "latest"
+"apt:python3-pip" = "latest"
+"apt:python3-venv" = "latest"
+"apt:ripgrep" = "latest"
+"apt:tar" = "latest"
+"apt:tzdata" = "latest"
+"apt:unattended-upgrades" = "latest"
+"apt:unzip" = "latest"
+"apt:wget" = "latest"
+"apt:xz-utils" = "latest"
+"apt:zip" = "latest"
+"ws:file/base-swappiness" = "in-sync"
+"ws:file/base-upgrades" = "in-sync"
+"ws:service/base-apt-daily" = "in-sync"
+"ws:service/base-apt-daily-upgrade" = "in-sync"
+"ws:service/base-sysctl" = "in-sync"
+"ws:service/base-unattended-upgrades" = "in-sync"
+"ws:state/base-locale" = "in-sync"
+"ws:state/base-swap" = "in-sync"
+"ws:state/base-timezone" = "in-sync"

@@ -1,0 +1,8 @@
+# nvidia's lines for every guest. Without NVIDIA's GPU, the archive's check alone does anything. A
+# container takes the userspace units alone, and only where WS_NVIDIA_GPU is on.
+[bootstrap.packages]
+"ws:packages/nvidia" = "in-sync"
+"ws:packages/nvidia-archive" = "in-sync"
+"ws:packages/nvidia-userspace" = "in-sync"
+"ws:file/nvidia-userspace-pin" = "in-sync"
+"ws:state/nvidia-reboot" = "in-sync"

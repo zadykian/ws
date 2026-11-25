@@ -1,0 +1,45 @@
+# incus's part for the host: Zabbly's repository, its packages, the ID range, and the units of its
+# spec. Only a host runs guests, so the role has no mise.guest.toml.
+
+# Incus's LTS repository, as Zabbly's README gives it. mise takes the key only where its primary
+# fingerprint is this one, so that a changed key fails the run rather than being trusted unseen.
+[bootstrap.apt.sources.incus]
+uris = "https://pkgs.zabbly.com/incus/lts-7.0"
+components = "main"
+key = "https://pkgs.zabbly.com/key.asc"
+fingerprint = "4EFC 5906 96CB 15B8 7C73 A3AD 82CC 8797 C838 DCFD"
+
+# root's ID range for the guests, which Incus reads as it first starts. A later write would not
+# reach a daemon that holds none: it maps root's guests from the range alone. The files hold this
+# range alone, as the host's users take none: root runs the guests.
+[bootstrap.files."/etc/subuid"]
+phase = "pre-packages"
+owner = "root"
+group = "root"
+mode = "0644"
+content = """
+root:1000000:1000000000
+"""
+
+[bootstrap.files."/etc/subgid"]
+phase = "pre-packages"
+owner = "root"
+group = "root"
+mode = "0644"
+content = """
+root:1000000:1000000000
+"""
+
+[bootstrap.packages]
+"apt:incus" = "latest"
+"apt:zfsutils-linux" = "latest"
+"ws:state/incus-acl" = "in-sync"
+"ws:state/incus-ingress" = "in-sync"
+"ws:state/incus-pool" = "in-sync"
+"ws:state/incus-bridge" = "in-sync"
+"ws:state/incus-profile" = "in-sync"
+"ws:state/incus-image" = "in-sync"
+"ws:state/incus-ufw" = "in-sync"
+"ws:service/incus-sources" = "in-sync"
+"ws:state/incus-owned" = "in-sync"
+"ws:state/incus-guests" = "in-sync"

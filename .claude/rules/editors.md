@@ -1,16 +1,16 @@
 ---
 paths:
-  - "roles/client/macos/zed/files/**"
-  - "roles/server/ubuntu/zed/files/settings.json"
-  - "roles/server/ubuntu/fresh/files/config.json"
-  - "roles/server/ubuntu/lazygit/files/config.yml"
+  - "macos/roles/zed/files/**"
+  - "ubuntu/roles/zed/files/settings.json"
+  - "ubuntu/roles/fresh/files/config.json"
+  - "ubuntu/roles/lazygit/files/config.yml"
 ---
 
 # editors
 
-Zed and Fresh each have a plain file for their settings and keys: `roles/client/macos/zed/files/` and
-`roles/server/ubuntu/zed/files/settings.json` for Zed, and
-`roles/server/ubuntu/fresh/files/config.json` for Fresh. No code renders them. The Mac's
+Zed and Fresh each have a plain file for their settings and keys: `macos/roles/zed/files/` and
+`ubuntu/roles/zed/files/settings.json` for Zed, and
+`ubuntu/roles/fresh/files/config.json` for Fresh. No code renders them. The Mac's
 `settings.json.tmpl` beside them is Zed's seed of `settings.json`, its servers alone, and shares
 nothing.
 
@@ -25,11 +25,11 @@ They share:
   defaults, but for Cmd+T, its new terminal. Fresh's stay its defaults, but for four guards in its
   terminal. No Cmd key reaches Fresh, so it has no Cmd+T.
 
-lazygit's `roles/server/ubuntu/lazygit/files/config.yml` takes the theme's colours too, each beside
+lazygit's `ubuntu/roles/lazygit/files/config.yml` takes the theme's colours too, each beside
 the Zed key it comes from, so a change of theme goes to it as well
-([lazygit](../../roles/server/ubuntu/lazygit/README.md#the-theme)).
+([lazygit](../../ubuntu/roles/lazygit/README.md#the-theme)).
 
-Fresh spells its keys as follows ([Fresh](../../roles/server/ubuntu/fresh/README.md#the-keys)):
+Fresh spells its keys as follows ([Fresh](../../ubuntu/roles/fresh/README.md#the-keys)):
 
 - A stroke with Shift and a sign gets two forms: tmux sends the sign without Shift, and a direct
   terminal sends the key with Shift.

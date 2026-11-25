@@ -8,8 +8,8 @@ import (
 )
 
 func TestMacGroupIsUnknownHere(t *testing.T) {
-	status, _, stderr := runGroups(fakeProcess(), "client")
-	if status != 2 || !strings.Contains(stderr, `unknown command "client"`) {
+	status, _, stderr := runGroups(fakeProcess(), "macos")
+	if status != 2 || !strings.Contains(stderr, `unknown command "macos"`) {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
 	if _, stdout, _ := runGroups(fakeProcess()); strings.Contains(stdout, "\n  client ") {

@@ -1,0 +1,8 @@
+# tunnel's units for a guest in the self-contained mode: a guest under a host has the host's tunnel.
+# mise.self-contained.toml holds the packages. A guest under a host loads the spec with no line for
+# these units, which fails ws unit verify, so their lines stay here under the units' when.
+[bootstrap.packages]
+"ws:guard/tunnel" = "in-sync"
+"ws:service/tunnel" = "in-sync"
+"ws:state/tunnel-key" = "in-sync"
+"ws:state/tunnel-wg0" = "in-sync"

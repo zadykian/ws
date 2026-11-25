@@ -1,12 +1,12 @@
 # Checks
 
-In a stack, CI runs `server`, `client` and `client-cld`, its longest jobs, on
+In a stack, CI runs `server`, `host`, `client` and `client-cld`, its longest jobs, on
 the top pull request alone, as it holds every change below it, and only where the stack rests on
 `main`. `install` and `signoz` run on each pull request of such a stack, and `lint` on every pull
 request. So a pull request onto another branch, such as an integration branch, takes `lint` alone
-of the six: that branch's pull request to `main` runs the rest.
+of the seven: that branch's pull request to `main` runs the rest.
 A stack opens as drafts, as a pull request opens before its link, and only a later event
-names the stack. So the longest three skip a draft's `opened` run and start on `ready_for_review`,
+names the stack. So the longest four skip a draft's `opened` run and start on `ready_for_review`,
 which `lint` skips. `install` and `signoz` start there too above a stack's bottom, and skip it
 where they ran as the pull request opened. A newer push to a pull request cancels the runs of
 the push before it.
@@ -26,6 +26,25 @@ keeps its own exit code.
 It allows no line. Its test, [warnings-check-test.sh](../warnings-check-test.sh), runs in
 `lint`, on a log with warnings and on one without.
 
+## The host job
+
+`host` is `server` for the host: it runs `ws ubuntu host setup` on the tree twice, on a booted
+`ubuntu-26.04` runner, and then the cases of [host-checks.sh](../host-checks.sh). The plan must exit 2
+before the first run and 0 after each, and no run or plan may print a warning. The runner's board
+is no fans' board, so no `ws-fans` service, config or driver may be there. ufw must be on, with
+incoming denied, outgoing allowed, SSH in and Docker's rules for its resolver and the collector.
+sshd must take keys alone, and a container must resolve a name through the bridge and send OTLP
+to the collector ([otlp-checks.sh](../otlp-checks.sh)). Incus's pool is a sparse file on a loop
+device, which `WS_INCUS_POOL_SOURCE` names. After the two runs the job checks the pool, the
+bridge, its ACLs, the profile, the image and the table of sources. Then it declares one guest,
+`ci`, and runs setup a third time. The guest's own setup runs the build of the tree, which names
+no release. So the run must fail there. By then the guest runs, with its NIC's port, its address
+in the table of sources and its quota reserved in the pool. So the plan with a guest stays due on
+a runner: [the real machine's checks](../../ubuntu/checks/README.md) run it with a release. The job is a try, so its failure
+fails no pull request: `continue-on-error` keeps it from `release.yml`'s call as well. It sets the
+runner up as `server` does, in [server](server.md), and runs it as
+[bootstrap.sh](../bootstrap.sh) does with `WS_SIDE=host`.
+
 ## The install script
 
 CI runs `install.sh` with a stub of ws for each target, served on loopback. It checks that
@@ -43,30 +62,30 @@ the tree's build ([16-install.sh](../client/16-install.sh)).
 ## SigNoz's compose files
 
 CI forges SigNoz's compose files again from their casting, with foundryctl pinned by its checksum,
-and fails where they differ from the repository's, in `roles/server/ubuntu/signoz`.
+and fails where they differ from the repository's, in `ubuntu/roles/signoz`.
 
 ## The Mac
 
 Cases 46 to 87 read what the first `mise bootstrap` wrote. Case 46 checks
-[Ghostty's files](../../roles/client/macos/ghostty/README.md#ghosttys-settings): `/etc/ws/ghostty`
+[Ghostty's files](../../macos/roles/ghostty/README.md#ghosttys-settings): `/etc/ws/ghostty`
 must be `ws.ghostty` whole, and Ghostty's config must end with the line that reads it. Case 47
-checks [Zed's files](../../roles/client/macos/zed/README.md): `global_settings.json` must be
-`roles/client/macos/zed/files/`'s whole, a `settings.json` there must stay byte for byte through
+checks [Zed's files](../../macos/roles/zed/README.md): `global_settings.json` must be
+`macos/roles/zed/files/`'s whole, a `settings.json` there must stay byte for byte through
 another bootstrap, and a login shell must find the cask's `zed`. Case 48 checks `keymap.json`:
-`roles/client/macos/zed/files/`'s whole, a foreign one left with the warning of its unit's read, and
-ws's back once it goes. Case 58 checks [the secrets' tools](../../roles/client/macos/secrets/README.md):
+`macos/roles/zed/files/`'s whole, a foreign one left with the warning of its unit's read, and
+ws's back once it goes. Case 58 checks [the secrets' tools](../../macos/roles/secrets/README.md):
 `/usr/local/bin/fnox` and `age-plugin-yubikey` must be mise's, root's and 0755, at their pins. A
 stand-in in place of each must give way to mise's at the next bootstrap, whose plan then changes
 nothing. fnox must encrypt a value to the Nano's recipient with no YubiKey, and read it back by an
-SSH key that is a recipient too. Case 86 checks [.NET's SDKs](../../roles/client/macos/dotnet/README.md):
+SSH key that is a recipient too. Case 86 checks [.NET's SDKs](../../macos/roles/dotnet/README.md):
 `dotnet` in `/usr/local/share/dotnet` must be root's and list 10.0.404 and 11.0.100 alone, and
-`/etc/paths.d/dotnet` must name that directory. Case 87 checks [the zsh hook](../../roles/client/macos/ghostty/README.md#the-zsh-hook): `zsh -i` must
+`/etc/paths.d/dotnet` must name that directory. Case 87 checks [the zsh hook](../../macos/roles/ghostty/README.md#the-zsh-hook): `zsh -i` must
 reset at each prompt, and the alternate screen after a 255 from `ssh` or from `cld --host` alone.
 
 CI also sets up a Mac, by [its cases](../client), in the order of [The
-Mac](../../roles/client/README.md). A stand-in cld, which cld's unit leaves alone, spares the
-job's runs its download. Then `ws client setup --in-place` with
-[the Mac's frame](../../roles/client/macos/frame/README.md) runs as the runbook runs it, on the
+Mac](../../macos/README.md). A stand-in cld, which cld's unit leaves alone, spares the
+job's runs its download. Then `ws macos setup --in-place` with
+[the Mac's frame](../../macos/roles/frame/README.md) runs as the runbook runs it, on the
 tree in `/opt/ws`, with ws's build in `/usr/local/bin` ([client-mise.sh](../client-mise.sh)). Its plan
 before the first run must exit 2. Setup installs mise and links the tree's plugin as the runbook
 does. The case makes `/opt` and `/usr/local/share` root's and 755 first, as on
@@ -74,7 +93,7 @@ a Mac, where the runner's image may differ. It sets up
 ssh, git and cld too. The plan must exit 0 after the first run, a second run must call no sudo,
 and `/usr/local/bin/ws` must be root:wheel at 755. A spec whose unit no line names must fail the plan,
 and so must a plan from `/opt/ws` with every unit in sync. After the first run the firewall must
-be on and block all incoming ([the Mac's firewall](../../roles/client/macos/firewall/README.md)).
+be on and block all incoming ([the Mac's firewall](../../macos/roles/firewall/README.md)).
 The cases after it, whose stand-ins listen on loopback, pass unchanged under it.
 The job's `values.yml` names a file key, made in case 20, as ws's
 login key and git's. Without ws's WireGuard key, the bootstrap must make the Mac's key, with
@@ -82,17 +101,17 @@ login key and git's. Without ws's WireGuard key, the bootstrap must make the Mac
 With a stand-in's key it must load and run the daemon, which runs `/usr/local/bin/ws`. A second
 run must call no sudo, and its plan exit 0. The stand-in for ws is a second wireguard-go on the
 runner, with the Mac's key as its peer. It answers on loopback both as the LAN and as
-`WS_REMOTE`, and `ws client tunnel status` must show a handshake on each in turn. The daemon
+`WS_REMOTE`, and `ws macos tunnel status` must show a handshake on each in turn. The daemon
 must take the SIGHUPs for a new `tunnel.conf` and its `routes.d` in place, with the same pid. Then
-a network that `ws client tunnel routes --server ws` adds must be routed into the daemon's
-utun, and a domain `ws client resolver` adds must show in `scutil --dns`. `ws client
-tunnel loaded`, `ws client tunnel routes` and `ws client resolver` must do the same,
+a network that `ws macos tunnel routes --server ws` adds must be routed into the daemon's
+utun, and a domain `ws macos resolver` adds must show in `scutil --dns`. `ws macos
+tunnel loaded`, `ws macos tunnel routes` and `ws macos resolver` must do the same,
 with `--check` showing the diff and writing nothing ([client-ws-checks.sh](../client-ws-checks.sh)).
 Next, the server's `WS_TUNNEL_NETWORKS` and `WS_RESOLVERS` must give a route and a resolver
-through the bootstrap, each named by `ws client networks --check` first. The plan after it
+through the bootstrap, each named by `ws macos networks --check` first. The plan after it
 must exit 0, and a fourth nameserver must be refused. Emptied or removed, the keys must take both
 back, and spare a script's own ([client-conf-checks.sh](../client-conf-checks.sh)). With
-`WS_CABLE_SERVICE` empty, `ws client cable` must print nothing. Set, it must run one
+`WS_CABLE_SERVICE` empty, `ws macos cable` must print nothing. Set, it must run one
 `networksetup -setmanual`, a stand-in's, through sudo, and then none. It must warn of a disabled
 service. It must stop on one networksetup lacks, or one with a router outside the cable's `/30`.
 It must stop too on a `-setmanual` that fails or changes nothing, and name what differs

@@ -86,8 +86,8 @@ func TestMirrorOf(t *testing.T) {
 func TestUnchecked(t *testing.T) {
 	for file, want := range map[string]bool{
 		"docs/a.md": true, ".tools/lint/vale/styles/a.yml": true, ".github/ISSUE_TEMPLATE/change.yml": true, "go.sum": true,
-		"roles/server/ubuntu/signoz/deployment/a.yaml": true, "roles/server/ubuntu/signoz/casting.yaml.lock": true,
-		"roles/server/ubuntu/signoz/casting.yaml": false, "x/LICENSE": true, "x/package-lock.json": true,
+		"ubuntu/roles/signoz/deployment/a.yaml": true, "ubuntu/roles/signoz/casting.yaml.lock": true,
+		"ubuntu/roles/signoz/casting.yaml": false, "x/LICENSE": true, "x/package-lock.json": true,
 		"go.mod": false, ".github/lint-requirements.in": false, "a.mdx": false,
 	} {
 		if got := unchecked.MatchString(file); got != want {

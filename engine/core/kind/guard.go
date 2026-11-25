@@ -50,9 +50,9 @@ func (s guardSpec) parts(e Env, _ fs.FS) (func(context.Context) ([]resource.Reso
 	return func(context.Context) ([]resource.Resource, error) { return []resource.Resource{r}, nil }, nil
 }
 
-// inContainer reports whether the machine is a container: Docker, Podman and systemd leave these
+// InContainer reports whether the machine is a container: Docker, Podman and systemd leave these
 // marks. A container may boot systemd and run sshd, so the key guard does not skip one.
-func inContainer(m effect.Machine) bool {
+func InContainer(m effect.Machine) bool {
 	for _, p := range []string{"/.dockerenv", "/run/.containerenv", "/run/systemd/container"} {
 		if _, err := m.Stat(p); err == nil {
 			return true

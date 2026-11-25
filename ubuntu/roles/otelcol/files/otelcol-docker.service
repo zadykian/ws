@@ -1,0 +1,18 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here. The socket
+# starts it at the first connection, and it passes each connection on to the collector's receiver
+# on loopback, which no container can reach.
+[Unit]
+Description=OTLP from Docker's containers, to the collector
+# A restart of the socket stops it, as systemd refuses to listen while its service runs.
+Requires=otelcol-docker.socket
+After=otelcol-docker.socket
+
+[Service]
+ExecStart=/usr/lib/systemd/systemd-socket-proxyd 127.0.0.1:4317
+DynamicUser=yes
+NoNewPrivileges=yes
+PrivateDevices=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+RestrictAddressFamilies=AF_INET

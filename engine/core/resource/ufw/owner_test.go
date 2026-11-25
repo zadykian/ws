@@ -63,3 +63,19 @@ func TestRulesRefuseARuleWithoutDirection(t *testing.T) {
 		t.Error("a rule with no direction passed")
 	}
 }
+
+func TestFrontRulesAreInsertedFirstAndRoutesLast(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files[ufw.UserRules] = []byte("")
+	r := ufw.Rules{M: m, Comment: comment, Front: true, Want: []ufw.Rule{
+		{Action: "deny", Proto: "any", ToPort: "any", To: "any", FromPort: "any", From: "any", Dir: "in", Interface: "wg1"},
+		ufw.Route("allow", "wg1", "incusbr0", "any", comment),
+	}}
+	want := []string{
+		"ufw insert 1 deny in on wg1 from any to any",
+		"ufw route allow in on wg1 out on incusbr0 from any to any",
+	}
+	if got := plan(t, r); !slices.Equal(got, want) {
+		t.Errorf("plan = %q, want %q", got, want)
+	}
+}

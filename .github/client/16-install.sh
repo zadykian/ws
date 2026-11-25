@@ -6,7 +6,7 @@
 # none. The case then tags HEAD v0.2.0 in the clone for its build. At its end it puts the job's
 # build back, so that the cases after it run as before. ws is removed first, so that the run writes
 # it. The file must be root:wheel and 755, as launchd needs for the tunnel's daemon. The last line
-# must name ws client setup, and no download may stay.
+# must name ws macos setup, and no download may stay.
 
 set -eo pipefail
 
@@ -52,7 +52,7 @@ out=$(echo | sudo env "${settings[@]}" sh install.sh 2>&1) || {
     exit 1
 }
 echo "$out"
-[ "${out##*$'\n'}" = "install.sh: next, run: ws client setup" ] || {
+[ "${out##*$'\n'}" = "install.sh: next, run: ws macos setup" ] || {
     echo "::error::install.sh's last line is not the next command"
     exit 1
 }

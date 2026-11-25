@@ -41,7 +41,7 @@ check files take `FILES`, as in `make vale FILES=README.md`:
   `govulncheck` is the module's `tool` directive, so go.mod pins it. `gotest` runs
   `go test -race -count=1` on both, and cgo is on for the race detector alone, as ws builds with
   `CGO_ENABLED=0`. `LAZYGIT_SCHEMA` names lazygit's config schema, for
-  [the lazygit role's test](../roles/server/ubuntu/lazygit/README.md#the-config).
+  [the lazygit role's test](../ubuntu/roles/lazygit/README.md#the-config).
 
 `lint/` holds each linter's config, and the Makefile passes it by flag, so that no linter takes
 one it finds in another directory. tombi takes no such flag, so the Makefile runs it in `lint/`,

@@ -1,6 +1,6 @@
 #!/bin/bash
 # The frame's check of the values. With the server's WS_LAN_ADDRESS dropped, which WS_LAN needs
-# beside it, mise bootstrap's plan must fail and name the key and its file, as ws client values
+# beside it, mise bootstrap's plan must fail and name the key and its file, as ws macos values
 # check does. The key goes back with the case, even on a failure, and the plan must pass again.
 # Its detailed exit code is not asked: 76-subcommands.sh wrote the tunnel's routes, so the plan
 # holds the daemon's reload until 96-converged.sh's bootstrap.

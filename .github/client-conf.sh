@@ -4,7 +4,7 @@
 # conf is YAML, a KEY: value a line, and a case writes each value as the file holds it, in quotes
 # where YAML needs them. They source this file and never run it. A conf's layout lives here alone:
 # the Mac's values.yml holds the Mac's three keys, and servers/ws/values.yml, beside it, every other
-# key. roles/client/values/scope.go lists the three keys too.
+# key. macos/values/scope.go lists the three keys too.
 
 # conf_server names the server whose file goes with a conf. A case sets it to another name, and
 # sets it back, where it works on a second server.
@@ -35,7 +35,7 @@ conf_split() {
 }
 
 # conf_as FILE CMD... runs CMD through sudo where FILE is in /etc/ws, root's, and as the runner
-# elsewhere, as ws client does.
+# elsewhere, as ws macos does.
 conf_as() {
     case $1 in
     /etc/ws/*)

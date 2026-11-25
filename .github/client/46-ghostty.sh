@@ -7,9 +7,9 @@ set -eo pipefail
 
 config="$HOME/Library/Application Support/com.mitchellh.ghostty/config.ghostty"
 fail=0
-cmp -s /etc/ws/ghostty roles/client/macos/ghostty/files/ws.ghostty ||
+cmp -s /etc/ws/ghostty macos/roles/ghostty/files/ws.ghostty ||
     {
-        echo '::error::/etc/ws/ghostty is not roles/client/macos/ghostty/files/ws.ghostty'
+        echo '::error::/etc/ws/ghostty is not macos/roles/ghostty/files/ws.ghostty'
         fail=1
     }
 owner=$(stat -f '%Su %Lp' /etc/ws/ghostty)

@@ -1,0 +1,35 @@
+{{- /* The mode is a guest's own value. The host's file has none, and a host always runs SigNoz. */ -}}
+{{- $own := true }}{{ if eq side "guest" }}{{ $own = .SelfContained }}{{ end -}}
+# signoz's units: the password, the Compose project and the sync, in that order, after mise's
+# files. A guest runs them in the self-contained mode alone. The project runs on the system's
+# daemon, which docker's units set up. This chain is a root that sorts after state/docker-routes, so
+# service/docker runs before it: TestSignozRunsAfterDocker holds that. otelcol's units below the
+# sync read /etc/ws/env, which mise's files step writes before any unit.
+
+# root.env, drawn once and read by root alone. Its check repairs the owner and mode of one there.
+[state.signoz-password]
+when = { set = "{{ if $own }}yes{{ end }}" }
+
+[state.signoz-password.run]
+user = "root"
+command = ["/usr/local/bin/ws", "ubuntu", "{{ side }}", "signoz", "password"]
+check = ["/usr/local/bin/ws", "ubuntu", "{{ side }}", "signoz", "password", "--check"]
+
+# The kind sums every file in the directory, root.env included, so a new password or a changed
+# compose file recreates the containers.
+[compose.signoz]
+dir = "/opt/signoz"
+project = "signoz"
+after = "state/signoz-password"
+when = { set = "{{ if $own }}yes{{ end }}" }
+
+# The wait for SigNoz's API, then its retention and dashboards, which go in before the collector
+# sends: a retention applies only to data that comes in after it.
+[state.signoz-sync]
+after = "compose/signoz"
+when = { set = "{{ if $own }}yes{{ end }}" }
+
+[state.signoz-sync.run]
+user = "root"
+command = ["/usr/local/bin/ws", "ubuntu", "{{ side }}", "signoz", "sync"]
+check = ["/usr/local/bin/ws", "ubuntu", "{{ side }}", "signoz", "sync", "--check"]

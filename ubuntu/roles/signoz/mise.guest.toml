@@ -1,0 +1,6 @@
+# signoz's units, which a guest runs in the self-contained mode alone. Their lines stay here, under
+# the units' when. A guest under a host loads the spec and needs a line for each unit.
+[bootstrap.packages]
+"ws:state/signoz-password" = "in-sync"
+"ws:compose/signoz" = "in-sync"
+"ws:state/signoz-sync" = "in-sync"

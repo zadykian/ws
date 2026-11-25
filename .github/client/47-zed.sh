@@ -1,6 +1,6 @@
 #!/bin/bash
 # mise bootstrap (28-bootstrap.sh) wrote Zed's global_settings.json, which is
-# roles/client/macos/zed/files's file whole, and settings.json, the seed, where none existed. A
+# macos/roles/zed/files's file whole, and settings.json, the seed, where none existed. A
 # settings.json that is there is left byte for byte by the next bootstrap, whose plan then shows no
 # change. /etc/paths.d/ws puts the cask's zed on a login shell's PATH.
 
@@ -15,9 +15,9 @@ head -n 1 "$dir/global_settings.json" | grep -qxF '// Written by github.com/zady
         echo '::error::global_settings.json has no ws header'
         fail=1
     }
-cmp -s "$dir/global_settings.json" roles/client/macos/zed/files/global_settings.json ||
+cmp -s "$dir/global_settings.json" macos/roles/zed/files/global_settings.json ||
     {
-        echo '::error::global_settings.json is not roles/client/macos/zed/files/global_settings.json'
+        echo '::error::global_settings.json is not macos/roles/zed/files/global_settings.json'
         fail=1
     }
 tail -n +2 "$dir/global_settings.json" | jq -e . >/dev/null ||

@@ -46,3 +46,11 @@ func TestParseReadsARouteRuleOfSlotOne(t *testing.T) {
 		t.Errorf("Parse = %+v, want %+v", got, want)
 	}
 }
+
+func TestParseReadsARouteRuleWithNoOutAsRouteInDoes(t *testing.T) {
+	text := "### tuple ### route:allow any any 0.0.0.0/0 any 0.0.0.0/0 in_incusbr0 comment=677565737473\n"
+	got := ufw.Parse(text)
+	if want := []ufw.Rule{ufw.RouteIn("allow", "incusbr0", ufw.Any, "guests")}; !slices.Equal(got, want) {
+		t.Errorf("Parse = %+v, want %+v", got, want)
+	}
+}

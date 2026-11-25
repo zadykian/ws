@@ -1,0 +1,51 @@
+# ikeward's units: the server on an IKEv2 VPN, from the profile that the run's secrets give, and the
+# WireGuard peers' way into it. Each is off without WS_IKEWARD_PROFILE, and leaves the VPN and the
+# file as they are. README.md says why each stands.
+
+# Fails where the run's secrets hold no profile for WS_IKEWARD_PROFILE, as install would: before
+# the binary downloads, and in a plan. A run without the secrets passes, and keeps the VPN.
+[guard.ikeward]
+command = ["{{ self }}", "ubuntu", "guest", "ikeward", "check"]
+when = { set = "{{ .Ikeward.Profile }}" }
+
+# ikeward's release binary, where its install.sh would put it: install refuses any other program.
+[binary.ikeward]
+after = "guard/ikeward"
+version = "0.3.0"
+url = "https://github.com/zadykian/ikeward/releases/download/v{version}/ikeward-linux-{arch}"
+sha256 = { amd64 = "b78ba9456f246ddaa5f08f34706cf96b975ad3717a69f142cbcbd893294b2d23", arm64 = "711b9a1c72b59ce7bc453d94c790855588b529803b8789abc72ed3b405e83e3b" }
+path = "/usr/local/sbin/ikeward"
+when = { set = "{{ .Ikeward.Profile }}" }
+
+# IPv4 forwarding at boot, for the peers of WS_IKEWARD_FORWARD_FROM. With no peer the file goes.
+[file.ikeward-sysctl]
+after = "guard/ikeward"
+path = "/etc/sysctl.d/99-ikeward.conf"
+{{ if .Ikeward.ForwardFrom -}}
+source = "99-ikeward.conf"
+{{- else -}}
+absent = true
+{{- end }}
+when = { set = "{{ .Ikeward.Profile }}" }
+
+# The file's value in force now, as boot puts it, and nothing else. --strict fails where /proc/sys
+# is read-only, instead of going on as if the value were set.
+[state.ikeward-sysctl]
+after = "file/ikeward-sysctl"
+run = { user = "root", command = ["/usr/lib/systemd/systemd-sysctl", "--strict", "--prefix=net.ipv4.ip_forward"], check = ["grep", "-qx", "1", "/proc/sys/net/ipv4/ip_forward"] }
+when = { set = "{{ if .Ikeward.ForwardFrom }}{{ .Ikeward.Profile }}{{ end }}" }
+
+# ikeward install from the profile of the run's secrets, where its dry run says it would change
+# anything. The profile reaches it by the run's env, which keeps the secret inputs for ws's own
+# commands alone.
+[state.ikeward-install]
+after = "binary/ikeward"
+run = { user = "root", command = ["{{ self }}", "ubuntu", "guest", "ikeward", "install"], check = ["{{ self }}", "ubuntu", "guest", "ikeward", "install", "--check"] }
+when = { set = "{{ .Ikeward.Profile }}" }
+
+# The wait for the VPN, about 2 minutes, where ikeward status fails: a later unit may need it. A run
+# without the secrets installs no VPN, so it waits for none, as wait --check says.
+[state.ikeward-status]
+after = "state/ikeward-install"
+run = { user = "root", command = ["{{ self }}", "ubuntu", "guest", "ikeward", "wait"], check = ["{{ self }}", "ubuntu", "guest", "ikeward", "wait", "--check"] }
+when = { set = "{{ .Ikeward.Profile }}" }

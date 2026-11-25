@@ -3,7 +3,7 @@
 # bash .github/client-cld-checks.sh VERB [ARG]. Each failure is an ::error::, and the status 1.
 #
 # - setup puts this commit's tree in /opt/ws, as the runbook's clone does (client-mise.sh).
-# - bootstrap [N] runs ws client setup N times, once by default.
+# - bootstrap [N] runs ws macos setup N times, once by default.
 # - installed checks what the bootstrap set up: Ghostty, Zed and the font, as mise's casks, cld,
 #   and the files of Ghostty and Zed.
 # - lines yes|no: ssh -G gives ws the two lines that start cld's watcher with yes, and neither
@@ -36,11 +36,11 @@ setup() {
     client_tree || exit 1
 }
 
-# bootstrap N runs ws client setup N times, and stops at the first that fails.
+# bootstrap N runs ws macos setup N times, and stops at the first that fails.
 bootstrap() {
     for run in $(seq "$1"); do
         client_bootstrap || {
-            error "ws client setup failed, at run $run of $1"
+            error "ws macos setup failed, at run $run of $1"
             return
         }
     done
@@ -67,12 +67,12 @@ installed() {
         error 'zed --version is not Zed N – /Applications/Zed.app'
     [ -f ~/Library/Fonts/"${FONT:?}" ] || error "mise bootstrap installed no $FONT"
     ~/.local/bin/cld version || error "$HOME/.local/bin/cld version failed"
-    wsghostty=roles/client/macos/ghostty/files/ws.ghostty
+    wsghostty=macos/roles/ghostty/files/ws.ghostty
     cmp -s /etc/ws/ghostty "$wsghostty" || error "/etc/ws/ghostty is not $wsghostty"
     support="$HOME/Library/Application Support/com.mitchellh.ghostty"
     [ "$(grep -cx 'config-file = ?/etc/ws/ghostty' "$support/config.ghostty")" = 1 ] ||
         error 'config.ghostty does not read /etc/ws/ghostty once'
-    plain=roles/client/macos/zed/files
+    plain=macos/roles/zed/files
     zed=~/.config/zed
     [ "$(head -n 1 "$zed/global_settings.json")" = "// $mark" ] ||
         error 'global_settings.json has no ws header'
@@ -162,12 +162,12 @@ ssh_hosts() {
 quiet() {
     client_mark
     client_bootstrap || {
-        error 'ws client setup failed'
+        error 'ws macos setup failed'
         return
     }
     calls=$(client_calls)
-    [ "$calls" = 0 ] || error "ws client setup called sudo $calls times, not once"
-    client_bootstrap plan --detailed-exitcode || error "ws client setup's plan exited $?, not 0"
+    [ "$calls" = 0 ] || error "ws macos setup called sudo $calls times, not once"
+    client_bootstrap plan --detailed-exitcode || error "ws macos setup's plan exited $?, not 0"
 }
 
 case ${1-} in

@@ -198,3 +198,21 @@ func TestSelfWithoutAPathFailsTheLoad(t *testing.T) {
 		t.Errorf("load = %v, want self's error", err)
 	}
 }
+
+func TestSideIsEnvSide(t *testing.T) {
+	e, m, _, _ := testEnv()
+	m.Dirs["/etc"] = 0o755
+	e.Side = "host"
+	units := loadOne(t, e, "[file.a]\npath = \"/etc/{{ side }}\"\nsource = \"a\"\n", map[string]string{"a": "x"})
+	if got := headlines(t, units[0].Step); len(got) == 0 || !strings.Contains(got[len(got)-1], "/etc/host") {
+		t.Errorf("plan = %q, want the file at /etc/host", got)
+	}
+}
+
+func TestSideWithoutASideFailsTheLoad(t *testing.T) {
+	e, _, _, _ := testEnv()
+	_, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": "[file.a]\npath = \"/{{ side }}\"\nsource = \"a\"\n", "r/a": "x"}))
+	if err == nil || !strings.Contains(err.Error(), "side: ws unit names no side here") {
+		t.Errorf("load = %v, want side's error", err)
+	}
+}

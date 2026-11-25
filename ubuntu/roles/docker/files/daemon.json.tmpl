@@ -1,0 +1,58 @@
+{{- /* The system daemon's daemon.json, as Go's encoder wrote it. The build cache's limits are the
+values', or 10%, 80% and 20% of Docker's disk in whole GiB plus one, as BuildKit rounds them. */ -}}
+{{- $disk := fs_bytes "/var/lib/docker" "/var/lib" -}}
+{{- $reserved := or .Docker.BuildCacheReservedSpace (printf "%dGB" (add (div (mul $disk 10) 107374182400) 1)) -}}
+{{- $maxUsed := or .Docker.BuildCacheMaxUsedSpace (printf "%dGB" (add (div (mul $disk 80) 107374182400) 1)) -}}
+{{- $minFree := or .Docker.BuildCacheMinFreeSpace (printf "%dGB" (add (div (mul $disk 20) 107374182400) 1)) -}}
+{
+  "bip": {{ json (printf "%s/%d" .Docker.BridgeIP .Docker.BridgePrefixLength) }},
+  "builder": {
+    "gc": {
+      "enabled": true,
+      "policy": [
+{{- if gt .Docker.BuildCacheKeepDays 0 }}
+        {
+          "all": true,
+          "filter": [
+            {{ json (printf "until=%dh" (mul .Docker.BuildCacheKeepDays 24)) }}
+          ]
+        },
+{{- end }}
+        {
+          "reservedSpace": {{ json $reserved }},
+          "maxUsedSpace": {{ json $maxUsed }},
+          "minFreeSpace": {{ json $minFree }}
+        },
+        {
+          "all": true,
+          "reservedSpace": {{ json $reserved }},
+          "maxUsedSpace": {{ json $maxUsed }},
+          "minFreeSpace": {{ json $minFree }}
+        }
+      ]
+    }
+  },
+  "cgroup-parent": "docker.slice",
+  "default-address-pools": [
+    {
+      "base": {{ json .Docker.AddressPool }},
+      "size": {{ .Docker.AddressPoolSize }}
+    }
+  ],
+  "default-network-opts": {
+    "bridge": {
+      "com.docker.network.bridge.host_binding_ipv4": {{ json .Docker.PublishIP }}
+    }
+  },
+  "dns": [
+    {{ json .Docker.BridgeIP }}
+  ],
+  "ip": {{ json .Docker.PublishIP }},
+  "ip-forward-no-drop": true,
+  "live-restore": true,
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-file": {{ json (print .Docker.LogMaxFile) }},
+    "max-size": {{ json .Docker.LogMaxSize }}
+  }
+}

@@ -26,7 +26,8 @@ linters:
             - "$all"
             - "!${base-path}/cmd/**"
             - "!${base-path}/engine/cli/**"
-            - "!${base-path}/roles/*/cli/**"
+            - "!${base-path}/macos/cli/**"
+            - "!${base-path}/ubuntu/cli/**"
             - "!${base-path}/.tools/**"
           deny:
             - pkg: github.com/spf13/cobra
@@ -49,12 +50,19 @@ linters:
           deny:
             - pkg: github.com/zadykian/ws/cmd
               desc: the engine composes no command, as cmd composes the engine
-            - pkg: github.com/zadykian/ws/roles
+            - pkg: github.com/zadykian/ws/ubuntu
               desc: the engine names no side, as a side's cli package hands it the side
+            - pkg: github.com/zadykian/ws/macos
+              desc: the engine names no side, as a side's cli package hands it the side
+            - pkg: github.com/zadykian/ws/internal
+              desc: the engine names no side, and internal holds what the sides share
         roles:
           files:
-            - "${base-path}/roles/**"
-            - "!${base-path}/roles/*/cli/**"
+            - "${base-path}/ubuntu/**"
+            - "${base-path}/macos/**"
+            - "${base-path}/internal/**"
+            - "!${base-path}/macos/cli/**"
+            - "!${base-path}/ubuntu/cli/**"
           deny:
             - pkg: github.com/zadykian/ws/cmd
               desc: a role reaches no command, as cmd composes the roles
@@ -62,42 +70,47 @@ linters:
               desc: a role imports engine/core, as the exit codes and lines are the cli packages'
             - pkg: github.com/zadykian/ws/engine/cli
               desc: a role builds no command, as its side's cli package does
-            - pkg: github.com/zadykian/ws/roles/client/cli
+            - pkg: github.com/zadykian/ws/macos/cli
               desc: a role reaches no command, as its side's cli package wires the role
-            - pkg: github.com/zadykian/ws/roles/server/cli
+            - pkg: github.com/zadykian/ws/ubuntu/cli
               desc: a role reaches no command, as its side's cli package wires the role
         roleimports:
           list-mode: lax
           files:
-            - "${base-path}/roles/**"
-            - "!${base-path}/roles/*/cli/**"
+            - "${base-path}/ubuntu/**"
+            - "${base-path}/macos/**"
+            - "${base-path}/internal/**"
+            - "!${base-path}/macos/cli/**"
+            - "!${base-path}/ubuntu/cli/**"
           allow:
             - github.com/zadykian/ws/engine/core/
-            - github.com/zadykian/ws/roles/
+            - github.com/zadykian/ws/macos/
+            - github.com/zadykian/ws/ubuntu/
+            - github.com/zadykian/ws/internal/
           deny:
             - pkg: github.com/zadykian/ws/
               desc: a role imports engine/core and roles alone, as the rest sits above the roles
-        client:
+        macos:
           list-mode: lax
           files:
-            - "${base-path}/roles/client/**"
+            - "${base-path}/macos/**"
           deny:
-            - pkg: github.com/zadykian/ws/roles/server
-              desc: the Mac imports nothing of the server, so that the sides change apart
-        server:
+            - pkg: github.com/zadykian/ws/ubuntu
+              desc: the Mac imports nothing of Ubuntu's side, so that the sides change apart
+        ubuntu:
           files:
-            - "${base-path}/roles/server/**"
+            - "${base-path}/ubuntu/**"
           deny:
-            - pkg: github.com/zadykian/ws/roles/client
-              desc: the server imports nothing of the Mac, so that the sides change apart
+            - pkg: github.com/zadykian/ws/macos
+              desc: Ubuntu's side imports nothing of the Mac, so that the sides change apart
         shared:
           files:
-            - "${base-path}/roles/internal/**"
+            - "${base-path}/internal/**"
           deny:
-            - pkg: github.com/zadykian/ws/roles/client
-              desc: roles/internal holds what both sides share, and names neither side
-            - pkg: github.com/zadykian/ws/roles/server
-              desc: roles/internal holds what both sides share, and names neither side
+            - pkg: github.com/zadykian/ws/macos
+              desc: internal holds what both sides share, and names neither side
+            - pkg: github.com/zadykian/ws/ubuntu
+              desc: internal holds what both sides share, and names neither side
         cmd:
           list-mode: lax
           files:
@@ -106,8 +119,8 @@ linters:
             - github.com/zadykian/ws/cmd$
             - github.com/zadykian/ws/engine/cli
             - github.com/zadykian/ws/engine/core/effect/local$
-            - github.com/zadykian/ws/roles/client/cli
-            - github.com/zadykian/ws/roles/server/cli
+            - github.com/zadykian/ws/macos/cli
+            - github.com/zadykian/ws/ubuntu/cli
           deny:
             - pkg: github.com/zadykian/ws/
               desc: cmd composes the cli packages, and effect/local's machine at the root

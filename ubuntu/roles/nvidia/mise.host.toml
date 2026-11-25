@@ -1,0 +1,7 @@
+# nvidia's lines for the host, which holds the kernel modules and nvidia-smi. Without NVIDIA's GPU,
+# the archive's check alone does anything.
+[bootstrap.packages]
+"ws:packages/nvidia" = "in-sync"
+"ws:packages/nvidia-archive" = "in-sync"
+"ws:state/nvidia-reboot" = "in-sync"
+"ws:service/nvidia-devices" = "in-sync"

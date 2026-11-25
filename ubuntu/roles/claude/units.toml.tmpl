@@ -1,0 +1,57 @@
+# claude's units, one after another in the order of the role's old steps, so that cld's version
+# settles before each later use. The installers run without the secret inputs. The rest are
+# commands of ws, each with --check as its check. README.md says what each sets up.
+
+# claude, from its native installer, where missing: it updates itself. The whole script comes before
+# any of it runs, so a failed fetch runs none. The installer refuses root where SUDO_USER is set, so
+# the unit says that root is meant. It warns where PATH lacks ~/.local/bin, which the unit puts
+# first. After git's tokens, which a private marketplace's host may need.
+[state.claude-install]
+after = "state/git-tokens"
+run = { user = "root", path = ["/root/.local/bin"], creates = ["/root/.local/bin/claude"], command = ["sh", "-c", 'script=$(curl -fsSL --retry 3 "$1") && printf "%s\n" "$script" | env "$2" "$3"', "sh", "https://claude.ai/install.sh", "CLAUDE_INSTALL_ALLOW_SUDO=1", "bash"] }
+
+# cld, from its latest release, where missing: the next unit updates it. Its installer would
+# take the caller's CLD_INSTALL_DIR over ~/.local/bin, so the unit sets it, and puts it first on
+# PATH, without which the installer warns.
+[state.claude-cld-install]
+after = "state/claude-install"
+run = { user = "root", path = ["/root/.local/bin"], creates = ["/root/.local/bin/cld"], command = ["sh", "-c", 'script=$(curl -fsSL --retry 3 "$1") && printf "%s\n" "$script" | env "$2" "$3"', "sh", "https://github.com/zadykian/cld/releases/latest/download/install.sh", "CLD_INSTALL_DIR=/root/.local/bin", "sh"] }
+
+[state.claude-update]
+after = "state/claude-cld-install"
+run = { user = "root", command = ["{{ self }}", "ubuntu", "guest", "claude", "update"], check = ["{{ self }}", "ubuntu", "guest", "claude", "update", "--check"] }
+
+[state.claude-completion]
+after = "state/claude-update"
+run = { user = "root", command = ["{{ self }}", "ubuntu", "guest", "claude", "completion"], check = ["{{ self }}", "ubuntu", "guest", "claude", "completion", "--check"] }
+
+[state.claude-settings]
+after = "state/claude-completion"
+run = { user = "root", command = ["{{ self }}", "ubuntu", "guest", "claude", "settings"], check = ["{{ self }}", "ubuntu", "guest", "claude", "settings", "--check"] }
+
+# claude's own attribution off, for the machine account's one trailer of git ([User settings]). A
+# managed file, as cld keeps a value already in the user's, and the user's file could change it.
+# Root's at 644, as claude reads it as any user.
+[file.claude-managed-settings]
+after = "state/claude-settings"
+path = "/etc/claude-code/managed-settings.json"
+source = "files/managed-settings.json"
+
+[state.claude-telemetry]
+after = "file/claude-managed-settings"
+run = { user = "root", command = ["{{ self }}", "ubuntu", "guest", "claude", "telemetry"], check = ["{{ self }}", "ubuntu", "guest", "claude", "telemetry", "--check"] }
+
+# Every machine has the unit: an empty WS_CLAUDE_MARKETPLACES asks claude nothing.
+[state.claude-marketplaces]
+after = "state/claude-telemetry"
+run = { user = "root", command = ["{{ self }}", "ubuntu", "guest", "claude", "marketplaces"], check = ["{{ self }}", "ubuntu", "guest", "claude", "marketplaces", "--check"] }
+
+# The account's systemd starts at boot, not at the first login, so that it restores cld's sessions.
+[state.claude-linger]
+after = "state/claude-marketplaces"
+linger = "root"
+
+# The account's systemd runs, and restores cld's sessions as it starts.
+[state.claude-restore]
+after = "state/claude-linger"
+run = { user = "root", command = ["{{ self }}", "ubuntu", "guest", "claude", "restore"], check = ["{{ self }}", "ubuntu", "guest", "claude", "restore", "--check"] }

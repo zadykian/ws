@@ -39,6 +39,9 @@ type Env struct {
 	Out    effect.Out
 	Data   any
 	System System
+	// Side is the side that ws unit serves, which a unit's side fact names. A unit of another side
+	// is left out of the load. Empty is a machine with no sides.
+	Side string
 	// Self is the path of the ws that runs the units. A spec names it by self to run a command of
 	// ws by that ws, wherever its file is.
 	Self string
@@ -86,6 +89,12 @@ func Load(e Env, specs fs.FS) ([]Unit, error) {
 			return nil, err
 		}
 		for name, k := range s.units() {
+			if err := k.condition().check(); err != nil {
+				return nil, fmt.Errorf("%s: unit %s: %w", f, name, err)
+			}
+			if !k.condition().onSide(e.Side) {
+				continue
+			}
 			kind, n, _ := strings.Cut(name, "/")
 			if !unitName.MatchString(n) {
 				return nil, fmt.Errorf("%s: unit %s: a name takes letters, digits, '.', '_' and '-'", f, name)
@@ -111,9 +120,6 @@ func Load(e Env, specs fs.FS) ([]Unit, error) {
 			return nil, err
 		}
 		parts, err := k.parts(e, dir)
-		if err == nil {
-			err = k.condition().check()
-		}
 		if err != nil {
 			return nil, fmt.Errorf("%s: unit %s: %w", where[name], name, err)
 		}

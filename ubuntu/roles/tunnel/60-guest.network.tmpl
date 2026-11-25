@@ -1,0 +1,16 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+#
+# {{ .Link }} holds no address: the guest {{ .Guest }} holds {{ .SlotAddress }}, which the host routes to the guest's NIC.
+# The route below sends the replies to the peers back into the tunnel. IPv4Forwarding lets what
+# the peers send pass on to the guest.
+[Match]
+Name={{ .Link }}
+
+[Link]
+RequiredForOnline=no
+
+[Network]
+IPv4Forwarding=yes
+
+[Route]
+Destination={{ .Subnet }}

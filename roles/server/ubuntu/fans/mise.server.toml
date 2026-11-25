@@ -1,5 +1,0 @@
-# fans' lines for every server. Off the board that WS_FANS_BOARD_VENDOR names, none does anything.
-[bootstrap.packages]
-"ws:dkms/fans" = "in-sync"
-"ws:packages/fans" = "in-sync"
-"ws:service/fans" = "in-sync"

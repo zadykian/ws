@@ -1,0 +1,87 @@
+package sshcfg_test
+
+import (
+	"net/netip"
+	"strings"
+	"testing"
+
+	"github.com/zadykian/ws/internal/sshcfg"
+)
+
+func inputs() sshcfg.Inputs {
+	return sshcfg.Inputs{
+		Hosts:    []sshcfg.Host{{Name: "ws", Addr: netip.MustParseAddr("10.99.0.1")}},
+		Patterns: "UseKeychain", IdentityPub: "~/.ssh/id_ed25519.pub",
+	}
+}
+
+func TestConfigHoldsOneHostAtTheTunnelsEnd(t *testing.T) {
+	got := sshcfg.Config(inputs())
+	for _, want := range []string{
+		"IgnoreUnknown UseKeychain\n",
+		"Host ws\n    HostName 10.99.0.1\n    Port 22\n    User root\n    HostKeyAlias ws\n",
+		"    IdentityFile ~/.ssh/id_ed25519\n    IdentitiesOnly yes\n    UseKeychain yes\n",
+		"    ServerAliveInterval 30\n",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("Config lacks %q:\n%s", want, got)
+		}
+	}
+	if n := strings.Count(got, "\nHost "); n != 1 || strings.Contains(got, "Match") || strings.Contains(got, "PermitLocalCommand") {
+		t.Errorf("Config holds %d hosts, a Match or cld's lines; want one host alone:\n%s", n, got)
+	}
+}
+
+func TestConfigWithAgent(t *testing.T) {
+	in := inputs()
+	in.IdentityPub, in.IdentityAgent = "~/k.pub", "~/agent.sock"
+	got := sshcfg.Config(in)
+	want := "    IdentityFile ~/k.pub\n    IdentitiesOnly yes\n    IdentityAgent \"~/agent.sock\"\n"
+	if !strings.Contains(got, want) {
+		t.Errorf("Config lacks %q:\n%s", want, got)
+	}
+}
+
+func TestConfigCldTabs(t *testing.T) {
+	in := inputs()
+	in.CldTabs = true
+	got := sshcfg.Config(in)
+	if !strings.Contains(got, "    PermitLocalCommand yes\n    LocalCommand [ \"$TERM_PROGRAM\" != ghostty ]") {
+		t.Errorf("Config lacks cld's lines:\n%s", got)
+	}
+}
+
+func TestConfigOneHostRendersItsWholeBlock(t *testing.T) {
+	want := "# ws through the tunnel. One known_hosts entry, ws's. 30 s between checks, 3 of them unanswered\n" +
+		"# before ssh gives up.\nHost ws\n    HostName 10.99.0.1\n    Port 22\n    User root\n    HostKeyAlias ws\n" +
+		"    IdentityFile ~/.ssh/id_ed25519\n    IdentitiesOnly yes\n    UseKeychain yes\n    AddKeysToAgent yes\n" +
+		"    ServerAliveInterval 30\n"
+	if got := sshcfg.Config(inputs()); !strings.HasSuffix(got, "\n\n"+want) {
+		t.Errorf("Config does not end with today's block:\n%s", got)
+	}
+}
+
+func TestConfigTwoHostsInNameOrder(t *testing.T) {
+	in := inputs()
+	in.CldTabs = true
+	in.Hosts = []sshcfg.Host{
+		{Name: "ws", Addr: netip.MustParseAddr("10.99.0.1")},
+		{Name: "lab", Addr: netip.MustParseAddr("10.99.1.1")},
+	}
+	got := sshcfg.Config(in)
+	lab, ws := strings.Index(got, "\nHost lab\n"), strings.Index(got, "\nHost ws\n")
+	if lab < 0 || ws < lab {
+		t.Fatalf("Config does not put lab before ws:\n%s", got)
+	}
+	for _, want := range []string{
+		"Host lab\n    HostName 10.99.1.1\n    Port 22\n    User root\n    HostKeyAlias lab\n",
+		"# lab through the tunnel. One known_hosts entry, lab's.",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("Config lacks %q:\n%s", want, got)
+		}
+	}
+	if n := strings.Count(got, "PermitLocalCommand yes"); n != 2 {
+		t.Errorf("Config holds cld's lines %d times, want once a host:\n%s", n, got)
+	}
+}

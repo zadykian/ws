@@ -1,0 +1,15 @@
+# tunnel's units for every host, those of the host's own wg0 and of each guest's tunnel. The packages
+# are in mise.self-contained.toml, which the host loads.
+[bootstrap.packages]
+"ws:guard/tunnel" = "in-sync"
+"ws:service/tunnel" = "in-sync"
+"ws:state/tunnel-key" = "in-sync"
+"ws:state/tunnel-wg0" = "in-sync"
+"ws:state/tunnel-ufw" = "in-sync"
+"ws:guard/tunnel-guests" = "in-sync"
+"ws:state/tunnel-guest-keys" = "in-sync"
+"ws:state/tunnel-guest-links" = "in-sync"
+"ws:service/tunnel-networkd" = "in-sync"
+"ws:service/tunnel-forward" = "in-sync"
+"ws:state/tunnel-guest-forward" = "in-sync"
+"ws:state/tunnel-guest-ufw" = "in-sync"

@@ -1,5 +1,5 @@
 #!/bin/bash
-# ws client setup with the Mac's frame, as the runbook runs it, on the tree in /opt/ws as it stands.
+# ws macos setup with the Mac's frame, as the runbook runs it, on the tree in /opt/ws as it stands.
 # Its plan before the first run must exit 2. The first run installs mise and links the plugin, and
 # runs the build in /usr/local/bin. It sets up ssh, git and cld from the job's
 # values.yml, with the stand-ins of cld and the stand-in ws's tools (client-standins.sh). It makes the
@@ -9,7 +9,7 @@
 # --whole sees. One in sync passes, as mise reads again without the lines in sync. A plan from
 # /opt/ws, which loads no role, must fail too, with every unit in sync, by the frame's line at the
 # root, and name the run directory. The first run turns the firewall on and has it block all incoming
-# (roles/client/macos/firewall/README.md): both states must read as on. The later cases, whose
+# (macos/roles/firewall/README.md): both states must read as on. The later cases, whose
 # stand-ins listen on loopback, then run under block-all, which shows that the firewall spares loopback.
 
 set -eo pipefail
@@ -26,7 +26,7 @@ if [ "$status" != 2 ]; then
 fi
 client_mark
 client_bootstrap || {
-    echo '::error::the first ws client setup failed'
+    echo '::error::the first ws macos setup failed'
     exit 1
 }
 echo "setup's first run called sudo $(client_calls) times"
@@ -47,12 +47,12 @@ socketfilterfw=/usr/libexec/ApplicationFirewall/socketfilterfw
 }
 client_mark
 client_bootstrap || {
-    echo '::error::the second ws client setup failed'
+    echo '::error::the second ws macos setup failed'
     exit 1
 }
 calls=$(client_calls)
 if [ "$calls" != 0 ]; then
-    echo "::error::the second ws client setup called sudo $calls times, not once"
+    echo "::error::the second ws macos setup called sudo $calls times, not once"
     fail=1
 fi
 owner=$(stat -f '%Su:%Sg %Lp' /usr/local/bin/ws)
@@ -64,12 +64,12 @@ owner=$(stat -f '%Su:%Sg %Lp' /usr/local/bin/ws)
 root=0
 (cd / && mise -C /opt/ws bootstrap plan </dev/null) 2>&1 |
     tee "$RUNNER_TEMP/root.out" || root=$?
-if [ "$root" != 1 ] || ! grep -qF "run mise in /opt/ws/roles/client" "$RUNNER_TEMP/root.out"; then
-    echo "::error::the plan from /opt/ws exited $root, not 1 naming /opt/ws/roles/client"
+if [ "$root" != 1 ] || ! grep -qF "run mise in /opt/ws/macos" "$RUNNER_TEMP/root.out"; then
+    echo "::error::the plan from /opt/ws exited $root, not 1 naming /opt/ws/macos"
     fail=1
 fi
 # A spec of a unit that no line names, beside the frame's, with a change: its read fails each line.
-probe=/opt/ws/roles/client/macos/probe
+probe=/opt/ws/macos/roles/probe
 sudo mkdir -p "$probe"
 printf '[state.probe.run]\nuser = "root"\ncommand = ["true"]\ncheck = ["false"]\n' | sudo tee "$probe/units.toml.tmpl" >/dev/null
 status=0

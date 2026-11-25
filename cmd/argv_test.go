@@ -15,19 +15,19 @@ import (
 
 // specArgv is a ws command in a spec's argv form: a list that opens with the running ws, by self
 // or by its path, then the side.
-var specArgv = regexp.MustCompile(`\[\s*"(?:\{\{ self \}\}|/usr/local/bin/ws)",\s*"((?:client|server)"(?:,\s*"[^"]*")*)\s*\]`)
+var specArgv = regexp.MustCompile(`\[\s*"(?:\{\{ self \}\}|/usr/local/bin/ws)",\s*"((?:macos|ubuntu)"(?:,\s*"[^"]*")*)\s*\]`)
 
 // wordArgv is a ws command in a file's text: the side, then the words that name its commands.
-var wordArgv = regexp.MustCompile(`\bws ((?:client|server)(?: [a-z][a-z-]*)*)`)
+var wordArgv = regexp.MustCompile(`\bws ((?:macos|ubuntu)(?: [a-z][a-z-]*)*)`)
 
 // quoted is one string of an argv.
 var quoted = regexp.MustCompile(`"([^"]*)"`)
 
 // commandFiles are the files outside the specs that a machine runs ws from.
 var commandFiles = []string{
-	"../roles/server/ubuntu/fans/files/ws-fans.service",
-	"../roles/server/ubuntu/git/files/tokens.gitconfig.tmpl",
-	"../roles/server/mise-tasks/secrets",
+	"../ubuntu/roles/fans/files/ws-fans.service",
+	"../ubuntu/roles/git/files/tokens.gitconfig.tmpl",
+	"../ubuntu/guest/mise-tasks/secrets",
 }
 
 // TestSpecsRunCommandsThatExist finds each ws command that a role's spec or a file runs in the
@@ -35,8 +35,8 @@ var commandFiles = []string{
 // machine and the jobs that set one up.
 func TestSpecsRunCommandsThatExist(t *testing.T) {
 	p := fakeProcess()
-	root := cli.Root(p, clientCmd(p), serverCmd(p), unitCmd(p))
-	specs, err := filepath.Glob("../roles/*/*/*/units.toml.tmpl")
+	root := cli.Root(p, macosCmd(p), ubuntuCmd(p), unitCmd(p))
+	specs, err := filepath.Glob("../*/roles/*/units.toml.tmpl")
 	if err != nil || len(specs) == 0 {
 		t.Fatalf("specs = %q, err = %v; want the roles' specs", specs, err)
 	}
@@ -56,18 +56,38 @@ func TestSpecsRunCommandsThatExist(t *testing.T) {
 				argvs = append(argvs, strings.Fields(m[1]))
 			}
 		}
-		for _, argv := range argvs {
+		for _, argv := range sidesOf(argvs) {
 			seen[argv[0]]++
 			if err := resolves(root, argv); err != "" {
 				t.Errorf("%s: ws %s: %s", file, strings.Join(argv, " "), err)
 			}
 		}
 	}
-	for _, side := range []string{"client", "server"} {
+	for _, side := range []string{"macos", "ubuntu"} {
 		if seen[side] == 0 {
 			t.Errorf("no ws %s command found in the specs: the pattern reads none", side)
 		}
 	}
+}
+
+// sideFunc is the template func that gives a command its side's name, as ws unit serves the side.
+const sideFunc = "{{ side }}"
+
+// sidesOf returns argvs with each that names {{ side }} once for each side of ubuntu: the command
+// must exist on both.
+func sidesOf(argvs [][]string) [][]string {
+	var all [][]string
+	for _, argv := range argvs {
+		at := slices.Index(argv, sideFunc)
+		if at < 0 {
+			all = append(all, argv)
+			continue
+		}
+		for _, side := range []string{"guest", "host"} {
+			all = append(all, slices.Replace(slices.Clone(argv), at, at+1, side))
+		}
+	}
+	return all
 }
 
 // quotedWords returns the strings of an argv's text.

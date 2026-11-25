@@ -1,0 +1,5 @@
+# signoz's units for every host. mise.self-contained.toml holds mise's own lines, which the host loads.
+[bootstrap.packages]
+"ws:state/signoz-password" = "in-sync"
+"ws:compose/signoz" = "in-sync"
+"ws:state/signoz-sync" = "in-sync"

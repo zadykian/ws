@@ -1,6 +1,0 @@
-# cable's lines for every server. Without WS_CABLE_PORT the file goes, and without its interface the
-# guard and the file are off.
-[bootstrap.packages]
-"ws:file/cable" = "in-sync"
-"ws:guard/cable" = "in-sync"
-"ws:state/cable-reload" = "in-sync"
