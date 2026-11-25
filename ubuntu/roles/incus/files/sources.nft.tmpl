@@ -49,15 +49,17 @@ table bridge ws_sources {
     }
 
     # The two hooks that a guest's frame meets: input for the host, and forward for another port.
-    # Incus's own tables hold priority -200, so this one runs first.
+    # Incus's own tables hold priority -200, so this one runs first. The hooks see every bridge of
+    # the host, Docker's too, whose containers the chain's last rule would cut off. So a frame
+    # enters the chain from a port of Incus's bridge alone.
     chain input {
         type filter hook input priority -300; policy accept;
-        jump from_guest
+        meta ibrname "incusbr0" jump from_guest
     }
 
     chain forward {
         type filter hook forward priority -300; policy accept;
-        jump from_guest
+        meta ibrname "incusbr0" jump from_guest
     }
 }
 

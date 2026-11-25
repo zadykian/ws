@@ -101,7 +101,8 @@ as root on the host. A cloud VM is a guest in the self-contained mode, out of an
     own with `unshare --net`: `systemctl status incus-sources`.
 31. The table and Incus's MAC filter hold together on one port. A guest's ARP and IP from its own
     address pass. A forged one in the subnet or the slots drops. A lease from `0.0.0.0` passes.
-    `guests.sh 3` covers the forged ones, and a new guest's lease is check 11.
+    `guests.sh 3` covers the forged ones, and a new guest's lease is check 11. The table leaves
+    Docker's bridges on the host alone: SigNoz's containers stay healthy, `docker ps`.
 32. ufw's `user.rules` holds `route:allow any any 0.0.0.0/0 any 0.0.0.0/0 in_incusbr0`, so a
     second run changes nothing: `grep in_incusbr0 /etc/ufw/user.rules`, and `host.sh 10`.
 33. No `br_netfilter` loads, which `host.sh 7` shows. A guest's Docker network with ICC off
