@@ -194,8 +194,6 @@ of its guests tries it at its own port.
   permissions that an app asks for.
 - The menu bar, Translate for Safari, and Logi's and Safari's settings.
 - GPG's and the YubiKey's keys ([devtools](roles/devtools/README.md)).
-- The keyboard layout EngRusSimple and the input sources that name it, which wait for the layout's
-  files ([keyboard](roles/keyboard/README.md#the-layout-and-the-input-sources)).
 - The screen saver, Macintosh, in System Settings › Screen Saver. macOS keeps the choice in a
   file that Apple documents nowhere, so no unit sets it.
 - `colima start`, as the machine's size and its start at login are the user's

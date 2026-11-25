@@ -1,9 +1,9 @@
 # The Mac's keyboard
 
-The `keyboard` role sets Caps Lock, the language indicator and the symbolic hotkeys by
-[`mise.macos.toml`](mise.macos.toml). mise writes each preference that is missing or differs, as the
-user, with no sudo. The role has no unit of ws's. The keys read the values after a log out, as the
-runbook says ([what stays by hand](../../runbook.md)).
+The `keyboard` role sets Caps Lock, the language indicator, the symbolic hotkeys and the input
+sources by [`mise.macos.toml`](mise.macos.toml). mise writes each preference that is missing or
+differs, as the user, with no sudo. Six units of ws's write the layout that the input sources name.
+The keys read the values after a log out, as the runbook says ([what stays by hand](../../runbook.md)).
 
 ## Caps Lock
 
@@ -31,9 +31,24 @@ rest. A path that names an ID macOS lacks makes it.
 
 mise rejects two entries where one path holds the other, so no ID is on and off.
 
-## The layout and the input sources
+## The layout
 
-The layout `EngRusSimple.bundle`, with its six files, and the input sources that name it are on the
-maintainer's Mac alone. They wait for the bundle's files, under #1536: the role holds none of them.
-The enabled input sources hold Apple's layouts until then, as turning those off would leave no layout
-of ws's to take their place.
+`/Library/Keyboard Layouts/KeyboardLayout.bundle` is the maintainer's English and Russian layout, as
+Ukelele wrote it. Its six files are in [`files/`](files/KeyboardLayout.bundle): `Info.plist`,
+`version.plist`, `ENG.keylayout` and `RUS.keylayout`, and an `InfoPlist.strings` for `en.lproj` and
+`ru.lproj`. Each is a `file` unit of [`units.toml.tmpl`](units.toml.tmpl), root's, readable by all
+and copied byte for byte, with no mark of ws's, as a layout takes none. The two `.strings` files
+are UTF-16 with a byte order mark, as macOS reads them, so nothing converts them. The test pins
+the six units and each file's bytes.
+
+## The input sources
+
+`com.apple.inputsources` names the layout's two sources in `AppleEnabledThirdPartyInputSources`:
+`ENG`, -20611, and `RUS`, -21268, each an `InputSourceKind` of `Keyboard Layout`. The IDs and names
+are those of the two keylayout files. `com.apple.HIToolbox`'s `AppleEnabledInputSources` holds the
+character palette and press-and-hold alone, so that no layout of Apple's stays on.
+
+mise writes each array whole, and compares it element by element, in order, and by type: an ID is
+an integer, and a key order is no difference. It writes the preferences before the packages, so
+that the sources name the layout for a moment before its files exist, and the log in reads both.
+Whether macOS writes the arrays back is for the first run on a real Mac to show.
