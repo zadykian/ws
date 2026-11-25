@@ -1,7 +1,7 @@
 #!/bin/bash
-# mise bootstrap (28-bootstrap.sh) wrote macos/roles/keyboard's preferences. The later plans and
-# statuses say that each is in sync. This case reads some back, as defaults and plutil print them,
-# so that a hotkey or a mapping of another type or value has a name here.
+# mise bootstrap (28-bootstrap.sh) wrote macos/roles/keyboard's preferences and units. The later
+# plans and statuses say that each is in sync. This case reads some back, as defaults and plutil
+# print them, so that a hotkey, a mapping or an array of another type or value has a name here.
 
 set -eo pipefail
 
@@ -45,4 +45,45 @@ if [ "$type" != string ] || [ "$value" != 0 ]; then
     echo "::error::TSMLanguageIndicatorEnabled is $value ($type), want 0 (string)"
     fail=1
 fi
+
+# The layout's six files are root's at 644 and equal the role's, byte for byte.
+bundle='/Library/Keyboard Layouts/KeyboardLayout.bundle'
+for file in Contents/Info.plist Contents/version.plist Contents/Resources/ENG.keylayout \
+    Contents/Resources/RUS.keylayout Contents/Resources/en.lproj/InfoPlist.strings \
+    Contents/Resources/ru.lproj/InfoPlist.strings; do
+    cmp -s "$bundle/$file" "macos/roles/keyboard/files/KeyboardLayout.bundle/$file" || {
+        echo "::error::$bundle/$file is not the role's file"
+        fail=1
+    }
+    owner=$(stat -f '%Su %Lp' "$bundle/$file" 2>/dev/null) || owner=
+    [ "$owner" = "root 644" ] || {
+        echo "::error::$bundle/$file is '$owner', not root 644"
+        fail=1
+    }
+done
+
+# input_source DOMAIN KEYPATH WANT [TYPE]: the value at KEYPATH of a preference, and its type,
+# which is string unless TYPE says another.
+input_source() {
+    local plist got type
+    plist=$(defaults export "$1" -) || plist=
+    got=$(plutil -extract "$2" raw -o - - <<<"$plist" 2>/dev/null) || got=
+    type=$(plutil -type "$2" - <<<"$plist" 2>/dev/null) || type=
+    if [ "$got" != "$3" ] || [ "$type" != "${4:-string}" ]; then
+        echo "::error::$1 $2 is '$got' ($type), want '$3' (${4:-string})"
+        fail=1
+    fi
+}
+
+# The two layouts, each by its ID and name, and no layout of Apple's.
+ids=(-20611 -21268)
+names=(ENG RUS)
+for i in 0 1; do
+    input_source com.apple.inputsources "AppleEnabledThirdPartyInputSources.$i.KeyboardLayout ID" "${ids[i]}" integer
+    input_source com.apple.inputsources "AppleEnabledThirdPartyInputSources.$i.KeyboardLayout Name" "${names[i]}"
+    input_source com.apple.inputsources "AppleEnabledThirdPartyInputSources.$i.InputSourceKind" "Keyboard Layout"
+done
+input_source com.apple.HIToolbox "AppleEnabledInputSources" 2 array
+input_source com.apple.HIToolbox "AppleEnabledInputSources.0.Bundle ID" com.apple.CharacterPaletteIM
+input_source com.apple.HIToolbox "AppleEnabledInputSources.1.Bundle ID" com.apple.PressAndHold
 exit "$fail"
