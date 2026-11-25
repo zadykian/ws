@@ -195,6 +195,48 @@ printf '{\n    ModifierMappingDst = 30064771300;\n}\n' >"$tmp/map-half"
 MAP=$tmp/map expect "Caps Lock as Control" ok inside prefs.sh capslock
 MAP=$tmp/map-half expect "a mapping with no source" fail inside prefs.sh capslock
 
+# The layout's files are the role's, root's at 644. stat prints the owner and mode that OWNER says.
+cp -R "$dir/../roles/keyboard/files/KeyboardLayout.bundle" "$tmp/layout"
+export WS_LAYOUT=$tmp/layout
+stub stat 'echo "${OWNER:-root 644}"'
+expect "a file of the layout as the role has it" ok inside prefs.sh layout_file ./Contents/Info.plist
+OWNER="v 644" expect "a file of the layout that v owns" fail inside prefs.sh layout_file ./Contents/Info.plist
+OWNER="root 600" expect "a file of the layout at 600" fail inside prefs.sh layout_file ./Contents/Info.plist
+expect "a bundle of the role's six files alone" ok inside prefs.sh layout_alone
+printf x >>"$tmp/layout/Contents/Info.plist"
+expect "a file that differs from the role's" fail inside prefs.sh layout_file ./Contents/Info.plist
+cp "$dir/../roles/keyboard/files/KeyboardLayout.bundle/Contents/Info.plist" "$tmp/layout/Contents/Info.plist"
+printf x >"$tmp/layout/Contents/extra"
+expect "a bundle with a file more" fail inside prefs.sh layout_alone
+rm "$tmp/layout/Contents/extra" "$tmp/layout/Contents/version.plist"
+expect "a bundle with a file less" fail inside prefs.sh layout_alone
+
+# plutil prints the input sources' values and types, and defaults the one in use.
+stub defaults 'case "$1" in export) echo plist ;; read) echo "$IN_USE" ;; esac'
+{
+    echo "AppleEnabledThirdPartyInputSources.0.KeyboardLayout ID=-20611"
+    echo "type:AppleEnabledThirdPartyInputSources.0.KeyboardLayout ID=integer"
+    echo "AppleEnabledThirdPartyInputSources.1.KeyboardLayout Name=RUS"
+    echo "type:AppleEnabledThirdPartyInputSources.1.KeyboardLayout Name=integer"
+    echo "AppleEnabledInputSources=2"
+    echo "type:AppleEnabledInputSources=array"
+} >"$tmp/sources"
+sources() { PLUTIL_DB=$tmp/sources inside prefs.sh input_source "$@"; }
+expect "an input source of the ID and type" ok sources com.apple.inputsources \
+    "AppleEnabledThirdPartyInputSources.0.KeyboardLayout ID" -20611 integer
+expect "an input source of another ID" fail sources com.apple.inputsources \
+    "AppleEnabledThirdPartyInputSources.0.KeyboardLayout ID" -21268 integer
+expect "an input source ID that is a string" fail sources com.apple.inputsources \
+    "AppleEnabledThirdPartyInputSources.0.KeyboardLayout ID" -20611
+expect "a name that is the wrong type" fail sources com.apple.inputsources \
+    "AppleEnabledThirdPartyInputSources.1.KeyboardLayout Name" RUS
+expect "two enabled sources" ok sources com.apple.HIToolbox AppleEnabledInputSources 2 array
+expect "three enabled sources" fail sources com.apple.HIToolbox AppleEnabledInputSources 3 array
+layout_id=$(grep -A1 '<key>TISInputSourceID</key>' "$dir/../roles/keyboard/files/KeyboardLayout.bundle/Contents/Info.plist" |
+    sed -n 's/.*<string>\(.*\)<\/string>.*/\1/p' | tail -n 1)
+IN_USE=$layout_id expect "the layout's input source in use" ok inside prefs.sh in_use
+IN_USE=com.apple.keylayout.ABC expect "an input source of Apple's in use" fail inside prefs.sh in_use
+
 # pmset prints a source's settings under its own heading.
 printf 'Battery Power:\n displaysleep 2\nAC Power:\n displaysleep 0\n sleep 0\n' >"$tmp/pmset-on"
 printf 'Battery Power:\n displaysleep 0\nAC Power:\n displaysleep 10\n' >"$tmp/pmset-off"
