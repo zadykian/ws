@@ -55,12 +55,34 @@ fans_nvidia() {
     [ -n "$pids" ] && ps -o comm= -p "$pids" | grep -qx nvidia-smi
 }
 
+# fans_problems prints each sensor or fan whose last line in ws-fans' log, since the unit started, is
+# a problem. The daemon logs a problem once, as it begins, and "back" as it ends, so an old line can
+# still stand. A log with no start line proves nothing, and fails.
+fans_problems() {
+    local id log
+    id=$(systemctl show -p InvocationID --value ws-fans.service)
+    [ -n "$id" ] || {
+        echo "ws-fans.service has no invocation"
+        return 1
+    }
+    log=$(journalctl -q -o cat --no-pager "_SYSTEMD_INVOCATION_ID=$id") || {
+        echo "journalctl failed"
+        return 1
+    }
+    printf '%s\n' "$log" | awk '
+        /^[0-9]+ fans, every .* s$/ { started = 1; next }
+        { i = index($0, ": "); if (i == 0) next; k = substr($0, 1, i - 1); last[k] = $0
+          back[k] = substr($0, i + 2) == "back" }
+        END { if (!started) { print "no start line of ws-fans in its log"; exit 1 }
+              for (k in last) if (!back[k]) { print last[k]; bad = 1 }
+              exit bad }'
+}
+
 check2() {
     check "2 the host's nvidia-smi answers" nvidia-smi -L
     check "2 ws-fans runs" systemctl is-active --quiet ws-fans.service
     check "2 ws-fans' nvidia-smi, which feeds it, runs" fans_nvidia
-    check "2 ws-fans logs no failure of it since the last minute" bash -c \
-        "! journalctl -u ws-fans.service --since -1min --no-pager | grep -iE 'nvidia.*(fail|error)'"
+    check "2 no sensor or fan of ws-fans' is left in a problem since it started" fans_problems
 }
 
 snapshots() {
@@ -143,15 +165,23 @@ deny_first() {
     [ -n "$deny" ] && [ -n "$ssh" ] && [ "$deny" -lt "$ssh" ]
 }
 
-# public_listeners prints each socket that listens on every address or on the uplink's, but SSH and
-# the DHCP client. The tunnels' UDP ports are the kernel's and show in no listing. A socket on a
-# bridge's address, such as Incus's dnsmasq or the collector's socket, is the bridge's alone.
+# public_listeners prints each socket that listens on every address or on the uplink's, but SSH, the
+# DHCP client and the tunnels' UDP ports. The kernel's WireGuard sockets list with no process, so
+# their ports are those wg reports. A socket on a bridge's address, such as Incus's dnsmasq or the
+# collector's socket, is the bridge's alone.
 public_listeners() {
-    local uplink
+    local uplink tunnels
+    tunnels=$(wg show all listen-port | awk '{ printf "%s ", $2 }') || {
+        echo "wg show all listen-port failed"
+        return
+    }
     uplink=$(ip -4 route show default | awk '{ print $5; exit }')
     uplink=$(ip -4 -o addr show dev "$uplink" | awk '{ split($4, a, "/"); print a[1]; exit }')
-    ss -Hlntu | awk -v up="$uplink" '{ n = split($5, a, ":"); h = substr($5, 1, length($5) - length(a[n]) - 1);
-        if (h == "*" || h == "0.0.0.0" || h == "[::]" || h == up) print $1, $5 }' |
+    ss -Hlntu | awk -v up="$uplink" -v tunnels="$tunnels" '
+        BEGIN { n = split(tunnels, t, " "); for (i = 1; i <= n; i++) tunnel[t[i]] = 1 }
+        { n = split($5, a, ":"); h = substr($5, 1, length($5) - length(a[n]) - 1)
+          if ($1 == "udp" && a[n] in tunnel) next
+          if (h == "*" || h == "0.0.0.0" || h == "[::]" || h == up) print $1, $5 }' |
         grep -vE ' [^ ]*:(22|68)$' || true
 }
 

@@ -41,9 +41,10 @@ reopens the design where it fails.
 GPU.** Again after a driver update and a cold boot.
 
 - Where: the host, `host.sh 2` and `guests.sh 2`.
-- It checks: the host's `nvidia-smi` answers, ws-fans runs and logs no failure, and its `nvidia-smi`
-  stream is in its cgroup. Then `libcuda` initialises in each guest that holds the GPU, both at
-  once, with the driver of the host's module.
+- It checks: the host's `nvidia-smi` answers, ws-fans runs, and its `nvidia-smi` stream is in its
+  cgroup. Each problem that ws-fans logged since it started, such as no NVML or no reading of the
+  GPU, is followed by its `back` line. Then `libcuda` initialises in each guest that holds the
+  GPU, both at once, with the driver of the host's module.
 - Passes: every line is `ok`, `guests.sh 2` with two guests.
 - By hand, for the driver update: `apt-get install --only-upgrade` the host's driver, and reboot.
   Then run `apt-cache policy` of the guest's `nvidia-*-server` package, which must name the host's
@@ -58,7 +59,8 @@ GPU.** Again after a driver update and a cold boot.
   slot's address. They are the Mac's LAN, cable and tunnel addresses too. A ping answered, or a
   TCP port that connects or refuses, fails it. Then the internet passes: a ping, a name and
   HTTPS. Then a packet under another guest's address, and a frame under another guest's MAC,
-  reach nothing. The script puts the address and the MAC back.
+  reach nothing. The guest flushes its neighbour cache first, so that a reply would come back to
+  it. The script puts the address and the MAC back.
 - Passes: every line is `ok`.
 
 **4. From the Mac, SSH reaches each guest through its tunnel, by each way.**
@@ -115,10 +117,11 @@ nothing to a guest's peer.**
 - Where: another machine on the LAN, `lan.sh HOST_ADDRESS GUEST_ADDRESS...`. Then the host,
   `host.sh 8`.
 - It checks: SSH answers, a list of other TCP ports does not, and no guest answers a ping or
-  SSH, even with a route to it through the host. On the host, ufw denies incoming and holds no
+  SSH, even with a route to it through the host. A guest fails where the script can neither add
+  that route by sudo nor find it in place. On the host, ufw denies incoming and holds no
   allow that ws's roles do not open. It denies each tunnel's `wgN` ahead of SSH. Nothing listens
-  on every address but SSH and the DHCP client. The tunnels' UDP ports answer a peer with a valid
-  key alone, which `mac.sh 4` shows by the handshake.
+  on every address but SSH, the DHCP client and the tunnels' UDP ports, which `wg show` names.
+  Those answer a peer with a valid key alone, which `mac.sh 4` shows by the handshake.
 - Passes: every line is `ok`. On a peer: from the Mac, with its tunnel up to a guest, SSH to the
   host's LAN address through that tunnel's route times out.
 
