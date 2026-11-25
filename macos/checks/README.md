@@ -87,13 +87,15 @@ Run them in this order. Trials 1 and 2 first, as a first run puts every later tr
 - Where: the Mac, after the log out of trial 1. `prefs.sh 3`.
 - It checks: the files of `/Library/Keyboard Layouts/ws.bundle` are root's at 644
   and equal the role's, and the bundle holds no other. `com.apple.inputsources` lists `ENG`,
-  -20611, and `RUS`, -21268, as integers and strings. `com.apple.HIToolbox` lists two sources.
+  -20611, and `RUS`, -21268, as integers and strings. `com.apple.HIToolbox` lists four sources, the
+  layout's two by their IDs first.
   The input source in use is one of the layout's two. Setup's plan exits 0.
 - Passes: every line is `ok`. By hand, type at the login window, then after the log in. Switch
   the input source with Command+Space, and run `prefs.sh 3` again. The plan must still exit 0.
-- Open: whether macOS keeps both arrays as mise wrote them after a log in and a switch. The role
-  takes `InputSourceKind` of `com.apple.PressAndHold` to be `Non Keyboard Input Method`: read what
-  macOS writes. `prefs.sh 3` prints the input source in use.
+- Open: whether macOS keeps both arrays as mise wrote them after a log in and a switch, or adds
+  a layout of Apple's back to `com.apple.HIToolbox`. The role takes `InputSourceKind` of
+  `com.apple.PressAndHold` to be `Non Keyboard Input Method`: read what macOS writes.
+  `prefs.sh 3` prints the input source in use.
 - A failure changes: [keyboard](../roles/keyboard/README.md)'s input sources. If macOS rewrites an
   array of `com.apple.HIToolbox` or `com.apple.inputsources`, the role drops that key from its
   entries, and the runbook names the sources by hand.

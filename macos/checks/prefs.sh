@@ -149,9 +149,11 @@ check3() {
             "AppleEnabledThirdPartyInputSources.$i.KeyboardLayout ID" "${ids[i]}" integer
         check "3 input source $i is named ${names[i]}" input_source com.apple.inputsources \
             "AppleEnabledThirdPartyInputSources.$i.KeyboardLayout Name" "${names[i]}"
+        check "3 HIToolbox's source $i is ${names[i]}" input_source com.apple.HIToolbox \
+            "AppleEnabledInputSources.$i.KeyboardLayout ID" "${ids[i]}" integer
     done
-    check "3 HIToolbox enables two sources, no layout of Apple's" input_source com.apple.HIToolbox \
-        AppleEnabledInputSources 2 array
+    check "3 HIToolbox enables four sources, no layout of Apple's" input_source com.apple.HIToolbox \
+        AppleEnabledInputSources 4 array
     check "3 the input source in use is the layout's" in_use
     info "input source: $(defaults read com.apple.HIToolbox AppleCurrentKeyboardLayoutInputSourceID 2>&1)"
     check "3 setup's plan still exits 0" plan_zero

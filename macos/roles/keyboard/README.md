@@ -67,8 +67,13 @@ pixels in PNG, for a Retina screen. A test checks each entry, its side and its b
 
 `com.apple.inputsources` names the layout's two sources in `AppleEnabledThirdPartyInputSources`:
 `ENG`, -20611, and `RUS`, -21268, each an `InputSourceKind` of `Keyboard Layout`. The IDs and names
-are those of the two keylayout files. `com.apple.HIToolbox`'s `AppleEnabledInputSources` holds the
-character palette and press-and-hold alone, so that no layout of Apple's stays on.
+are those of the two keylayout files. macOS reads a third party's layout there from macOS 12 on.
+`com.apple.HIToolbox`'s `AppleEnabledInputSources` holds the same two first, as macOS lists a
+layout before a method. The character palette and press-and-hold follow, as neither types a
+letter. So `ENG` and `RUS` are the only layouts on, and no layout of Apple's stays.
+
+The role sets no key of the source in use or of the last ones used. macOS rewrites each at a
+switch, and mise would find it changed at the next run.
 
 mise writes each array whole, and compares it element by element, in order, and by type: an ID is
 an integer, and a key order is no difference. It writes the preferences before the packages, so
