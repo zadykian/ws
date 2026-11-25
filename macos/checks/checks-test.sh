@@ -144,11 +144,19 @@ cat >"$tmp/btm" <<'BTM'
                  Name: Claude
                  Type: login item (0x4)
                   URL: file:///Applications/Claude.app/
+ #5:
+                 UUID: E
+                 Name: Stats
+                 Type: login item (0x4)
+                  URL: file:///Applications/Stats.app/Contents/Library/LoginItems/Launcher.app/
 BTM
 count() { inside setup.sh btm_count "$1" "$(cat "$tmp/btm")"; }
-expect "one login item of Discord" ok test "$(count Discord.app)" -eq 1
-expect "two login items of Claude" ok test "$(count Claude.app)" -eq 2
-expect "no login item of Mail" ok test "$(count Mail.app)" -eq 0
+expect "one login item of Discord" ok test "$(count /Applications/Discord.app)" -eq 1
+expect "two login items of Claude" ok test "$(count /Applications/Claude.app)" -eq 2
+expect "no login item of Mail" ok test "$(count /System/Applications/Mail.app)" -eq 0
+expect "a bundle inside Stats's, apart from Stats" ok test "$(count /Applications/Stats.app)" -eq 0
+expect "the bundle inside Stats's" ok test \
+    "$(count /Applications/Stats.app/Contents/Library/LoginItems/Launcher.app)" -eq 1
 
 # A file URL writes a space as %20: one record of each login app, Claude's twice in the second dump.
 n=0
@@ -160,7 +168,7 @@ done >"$tmp/btm-once"
     cat "$tmp/btm-once"
     printf ' #9:\n Type: login item (0x4)\n URL: file:///Applications/Claude.app/\n'
 } >"$tmp/btm-twice"
-expect "one login item of Rectangle Pro" ok test "$(inside setup.sh btm_count "Rectangle Pro.app" "$(cat "$tmp/btm-once")")" -eq 1
+expect "one login item of Rectangle Pro" ok test "$(inside setup.sh btm_count "/Applications/Rectangle Pro.app" "$(cat "$tmp/btm-once")")" -eq 1
 
 cat >"$tmp/zsh-ok" <<'OUT'
 plugins=git zsh-autosuggestions zsh-syntax-highlighting

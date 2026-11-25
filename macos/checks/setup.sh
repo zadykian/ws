@@ -88,16 +88,21 @@ docker_cli() {
         docker compose version >/dev/null && docker buildx version >/dev/null
 }
 
-# btm_count APP prints the records of sfltool's dump that name APP as a login item. The URL is a
-# file URL, which writes a space as %20.
-btm_count() {
-    awk -v app="/$1/" '
-        /^ *#[0-9]+:/ { if (url != "" && login) n++; url = ""; login = 0 }
-        /^ *URL:/ { u = $0; gsub(/%20/, " ", u); if (index(u, app)) url = u }
+# btm_logins DUMP prints the URL of each login item in sfltool's dump, a line each. A file URL
+# writes a space as %20.
+btm_logins() {
+    awk '
+        function item() { if (url != "" && login) print url; url = ""; login = 0 }
+        /^ *#[0-9]+:/ { item() }
+        /^ *URL:/ { url = $0; sub(/^ *URL: */, "", url); sub(/ *$/, "", url); gsub(/%20/, " ", url) }
         /^ *Type:.*login item/ { login = 1 }
-        END { if (url != "" && login) n++; print n + 0 }
-    ' <<<"$2"
+        END { item() }
+    ' <<<"$1"
 }
+
+# btm_count APP DUMP prints the login items whose URL is APP's path whole, so that a bundle inside
+# APP's own counts apart.
+btm_count() { btm_logins "$2" | grep -cxF "file://$1/"; }
 
 check5() {
     local dump app name n
@@ -108,7 +113,7 @@ check5() {
     check "5 mise's status holds the login items" status_zero
     while IFS= read -r app; do
         name=${app##*/}
-        n=$(btm_count "$name" "$dump")
+        n=$(btm_count "$app" "$dump")
         if [ "$n" -eq 1 ]; then pass "5 $name opens once at login"; else
             fail "5 $name opens once at login" "$n records name it as a login item"
         fi
