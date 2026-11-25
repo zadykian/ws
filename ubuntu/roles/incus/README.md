@@ -32,8 +32,8 @@ A command's `--check` fails where a change is due, and its plan shows the change
 | Unit | Object | Keys |
 | --- | --- | --- |
 | `state/incus-acl` | The ACL `ws-egress` | Egress: the private ranges dropped, the rest allowed. |
-| `state/incus-pool` | The ZFS pool `ws` | `source`, on a create alone: `WS_INCUS_POOL_SOURCE`. Always `volume.zfs.use_refquota`, `volume.zfs.reserve_space` and `volume.zfs.remove_snapshots`. |
 | `state/incus-ingress` | The ACL `ws-ingress` | Ingress: each guest's tunnel peers allowed in. |
+| `state/incus-pool` | The ZFS pool `ws` | `source`, on a create alone: `WS_INCUS_POOL_SOURCE`. Always `volume.zfs.use_refquota`, `volume.zfs.reserve_space` and `volume.zfs.remove_snapshots`. |
 | `state/incus-bridge` | The bridge `incusbr0` | The subnet, DHCP's resolvers, NAT, no IPv6 and the ACLs. |
 | `state/incus-profile` | The profile `ws` | Unprivileged, nesting, isolated IDs, autostart, daily snapshots, an isolated NIC and the disk. |
 | `state/incus-image` | The image of the guests | Ubuntu's root tarball, with ws's metadata. |
