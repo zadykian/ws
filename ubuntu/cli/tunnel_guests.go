@@ -42,8 +42,8 @@ func newTunnelGuestsCmd(p enginecli.Env, u effect.Units) *cobra.Command {
 				return []resource.Resource{tunnel.Links{M: p.Machine, Out: out, Tunnels: t, Tries: 10, Pause: time.Second}}
 			}),
 		guestsProcedure(p, "forward", "send what arrives on each guest's interface to that guest",
-			"A rule on wgN selects the table of slot N, whose one route leads to the guest's address on the bridge. "+
-				"The unit tunnel-forward.service runs it at boot, as the rule and the route do not outlive a reboot.",
+			"A rule on wgN selects the table of slot N, whose route leads to the guest's address on the bridge, above an unreachable one. "+
+				"The unit tunnel-forward.service runs it at boot, as the rule and the routes do not outlive a reboot, and at each start of Incus, which flushes the bridge.",
 			func(_ effect.Out, t []values.GuestTunnel) []resource.Resource {
 				return []resource.Resource{tunnel.Forward{M: p.Machine, Tunnels: t, Bridge: incus.BridgeName}}
 			}),

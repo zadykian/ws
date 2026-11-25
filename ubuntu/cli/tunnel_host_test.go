@@ -76,6 +76,13 @@ func TestTheForwardServiceWritesItsUnitFile(t *testing.T) {
 	if !strings.Contains(got, "ExecStart=/usr/local/bin/ws ubuntu host tunnel guests forward\n") {
 		t.Errorf("the unit file:\n%s", got)
 	}
+	// Incus's start flushes the bridge, with each guest's route: a restart, and a start by its
+	// socket, must run the forward again.
+	for _, want := range []string{"\nPartOf=incus.service\n", "\nWantedBy=multi-user.target incus.service\n"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("the unit file lacks %q:\n%s", strings.TrimSpace(want), got)
+		}
+	}
 }
 
 // networkd removes a foreign rule or route as it reconfigures a link. Without the drop-in, a guest's

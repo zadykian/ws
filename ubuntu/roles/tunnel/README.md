@@ -95,7 +95,7 @@ no slot. These units run `ws ubuntu host tunnel guests`:
 | `state/tunnel-guest-keys` | Makes each interface's key, `60-wgN.key`, on the host. |
 | `state/tunnel-guest-links` | Writes `60-wgN.netdev` and `.network`, and has networkd create `wgN`. |
 | `service/tunnel-networkd` | Writes a drop-in of networkd's, so that it keeps the rules and routes that `ip` adds, and restarts it where the drop-in changes. |
-| `service/tunnel-forward` | Runs `forward` at boot, as the kernel keeps its rules and routes in memory alone. |
+| `service/tunnel-forward` | Runs `forward` at boot, as the kernel keeps its rules and routes in memory alone, and at each start of Incus. |
 | `state/tunnel-guest-forward` | Runs `forward` again where a rule or a route is lost. |
 | `state/tunnel-guest-ufw` | Sets each tunnel's ufw rules. |
 
@@ -108,10 +108,13 @@ public half is shown.
 
 ### The forward
 
-A rule on `wgN` selects the table 1000 + N, whose one route leads to the guest's address on the
+A rule on `wgN` selects the table 1000 + N, whose route leads to the guest's address on the
 bridge. So the packets of a peer go to that guest whatever their destination, with no NAT: the
 guest sees the peer's tunnel address. Without the rule, the main table would route them to any
-guest. The command deletes a rule of a slot's priority that no tunnel wants, one of another
+guest. So would an empty table: Incus flushes the bridge's addresses as it starts, and the kernel
+takes the guest's route with them. So an unreachable route, of the highest metric and on no device,
+lies beneath it and drops the packets until `service/tunnel-forward` adds the route again. The
+command deletes a rule of a slot's priority that no tunnel wants, one of another
 interface or table among them. networkd removes a rule or a route that no `.network` file names,
 as it starts or reconfigures a link, so `service/tunnel-networkd` sets `ManageForeignRoutingPolicyRules=no`
 and `ManageForeignRoutes=no`.

@@ -85,8 +85,8 @@ when = { side = "host" }
 path = "/etc/systemd/networkd.conf.d/60-ws-tunnel.conf"
 source = "networkd-foreign.conf"
 
-# The rule and the route of each guest's tunnel at boot: they live in the kernel alone, and the guests
-# start with Incus.
+# The rule and the routes of each guest's tunnel, at boot and at each start of Incus. They live in
+# the kernel alone, the guests start with Incus, and its start flushes the bridge and their routes.
 [service.tunnel-forward]
 unit = "tunnel-forward.service"
 enabled = true
