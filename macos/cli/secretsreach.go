@@ -60,13 +60,15 @@ func (r reach) setup() []string {
 
 // hostTrusted refuses a guest whose host known_hosts holds no key of. Each ssh to the guest goes to
 // the host, so that ssh's first-use prompt would decide the host and the console's proof is lost.
+// The hint is the runbook's console check, as add refuses a host.
 func hostTrusted(c *cobra.Command, p enginecli.Env, r reach) error {
 	key, err := secrets.HostKey(c.Context(), p.Machine, p.Getenv("HOME"), r.host)
 	if err != nil {
 		return err
 	}
 	if key == "" {
-		return fmt.Errorf("%s holds no host key of %s, the host of %s: run ws macos secrets add %s first",
+		return fmt.Errorf("%s holds no host key of %s, the host of %s: check the host's key at its console "+
+			"and append it there under %s, as the Mac's runbook says in ws's host key",
 			secrets.KnownHosts(p.Getenv("HOME")), r.host, r.name, r.host)
 	}
 	return nil

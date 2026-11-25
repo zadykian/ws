@@ -78,6 +78,9 @@ func runSecretsAdd(c *cobra.Command, p enginecli.Env, server, name, address stri
 	if err := knownServer(p, name); err != nil {
 		return err
 	}
+	if err := refuseHost(p, name); err != nil {
+		return err
+	}
 	keyFile, err := secrets.KeyFile(p.Getenv)
 	if err != nil {
 		return err
@@ -131,6 +134,20 @@ func knownServer(p enginecli.Env, name string) error {
 	if !slices.Contains(names, name) {
 		return fmt.Errorf("no server named %s in %s, which holds %s", name,
 			path.Dir(path.Dir(values.ServerPath(mac, name))), values.List(names))
+	}
+	return nil
+}
+
+// refuseHost refuses a server that a guest names as its host. A host holds no secret, and its setup
+// takes no --secrets, so its key as a recipient would open every shared value to no end.
+func refuseHost(p enginecli.Env, name string) error {
+	guests, err := values.GuestsOf(p.Machine, values.Path(p.Getenv, p.Pwd), name)
+	if err != nil {
+		return err
+	}
+	if len(guests) > 0 {
+		return fmt.Errorf("%s is the host of %s, and a host holds no secret: run add for each guest", name,
+			values.List(guests))
 	}
 	return nil
 }

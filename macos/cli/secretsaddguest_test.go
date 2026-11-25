@@ -66,10 +66,26 @@ func TestSecretsAddRefusesAGuestWhoseHostKnownHostsLacks(t *testing.T) {
 		t.Errorf("status = %d, stderr = %q, cloned = %v; want 1, no host key and no clone", status, stderr,
 			cloned(mac.Calls))
 	}
+	// add refuses the host, so the hint is the runbook's check at the host's console.
+	if strings.Contains(stderr, "secrets add ws") || !strings.Contains(stderr, "ws's host key") {
+		t.Errorf("stderr = %q, want the runbook's console check and no add of the host", stderr)
+	}
 	for _, call := range mac.Calls {
 		if strings.HasPrefix(call, "run ssh ") || strings.HasPrefix(call, "run ssh -t ") {
 			t.Errorf("add reached a host that known_hosts does not hold: %q", call)
 		}
+	}
+}
+
+func TestSecretsAddRefusesAHost(t *testing.T) {
+	p, mac := addFixture(nil)
+	mac.Machine.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_HOST", "ws", "WS_SLOT", "1"))
+	status, _, stderr := addWs(p, "", "ws")
+	if status != 1 || !strings.Contains(stderr, "ws is the host of lab") {
+		t.Errorf("add of a host: status = %d, stderr = %q; want 1 and the host refused", status, stderr)
+	}
+	if i := callAt(mac.Calls, "run "); i >= 0 {
+		t.Errorf("add of a host ran %q, want nothing run", mac.Calls[i])
 	}
 }
 
