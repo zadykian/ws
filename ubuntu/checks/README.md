@@ -41,9 +41,10 @@ reopens the design where it fails.
 GPU.** Again after a driver update and a cold boot.
 
 - Where: the host, `host.sh 2` and `guests.sh 2`.
-- It checks: the host's `nvidia-smi` answers, ws-fans runs and logs no failure, and its `nvidia-smi`
-  stream is in its cgroup. Then `libcuda` initialises in each guest that holds the GPU, both at
-  once, with the driver of the host's module.
+- It checks: the host's `nvidia-smi` answers, ws-fans runs, and its `nvidia-smi` stream is in its
+  cgroup. Each problem that ws-fans logged since it started, such as no NVML or no reading of the
+  GPU, is followed by its `back` line. Then `libcuda` initialises in each guest that holds the
+  GPU, both at once, with the driver of the host's module.
 - Passes: every line is `ok`, `guests.sh 2` with two guests.
 - By hand, for the driver update: `apt-get install --only-upgrade` the host's driver, and reboot.
   Then run `apt-cache policy` of the guest's `nvidia-*-server` package, which must name the host's

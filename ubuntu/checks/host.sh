@@ -55,12 +55,34 @@ fans_nvidia() {
     [ -n "$pids" ] && ps -o comm= -p "$pids" | grep -qx nvidia-smi
 }
 
+# fans_problems prints each sensor or fan whose last line in ws-fans' log, since the unit started, is
+# a problem. The daemon logs a problem once, as it begins, and "back" as it ends, so an old line can
+# still stand. A log with no start line proves nothing, and fails.
+fans_problems() {
+    local id log
+    id=$(systemctl show -p InvocationID --value ws-fans.service)
+    [ -n "$id" ] || {
+        echo "ws-fans.service has no invocation"
+        return 1
+    }
+    log=$(journalctl -q -o cat --no-pager "_SYSTEMD_INVOCATION_ID=$id") || {
+        echo "journalctl failed"
+        return 1
+    }
+    printf '%s\n' "$log" | awk '
+        /^[0-9]+ fans, every .* s$/ { started = 1; next }
+        { i = index($0, ": "); if (i == 0) next; k = substr($0, 1, i - 1); last[k] = $0
+          back[k] = substr($0, i + 2) == "back" }
+        END { if (!started) { print "no start line of ws-fans in its log"; exit 1 }
+              for (k in last) if (!back[k]) { print last[k]; bad = 1 }
+              exit bad }'
+}
+
 check2() {
     check "2 the host's nvidia-smi answers" nvidia-smi -L
     check "2 ws-fans runs" systemctl is-active --quiet ws-fans.service
     check "2 ws-fans' nvidia-smi, which feeds it, runs" fans_nvidia
-    check "2 ws-fans logs no failure of it since the last minute" bash -c \
-        "! journalctl -u ws-fans.service --since -1min --no-pager | grep -iE 'nvidia.*(fail|error)'"
+    check "2 no sensor or fan of ws-fans' is left in a problem since it started" fans_problems
 }
 
 snapshots() {

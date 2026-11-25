@@ -102,9 +102,23 @@ STUB
 printf '#!/bin/sh\necho Linux\n' >"$bin/uname"
 printf '#!/bin/sh\n[ "$*" = "-z -w 3 192.168.1.10 22" ]\n' >"$bin/nc"
 
-# nvidia-smi runs until the test kills it. systemctl names ws-fans' cgroup.
+# nvidia-smi runs until the test kills it. systemctl names ws-fans' cgroup and its run's ID.
+# journalctl prints the messages of one run alone, the one its filter names, from JOURNAL. Each
+# line there is a run's ID, a tab and the message.
 printf '#!/bin/sh\nwhile :; do sleep 1; done\n' >"$bin/nvidia-smi"
-printf '#!/bin/sh\necho /ws-fans.slice/ws-fans.service\n' >"$bin/systemctl"
+cat >"$bin/systemctl" <<'STUB'
+#!/bin/sh
+case "$*" in
+"show -p ControlGroup --value ws-fans.service") echo /ws-fans.slice/ws-fans.service ;;
+"show -p InvocationID --value ws-fans.service") echo 5f0c3e7a9d2b4c1e8f6a0b3d7c9e2f41 ;;
+*) exit 1 ;;
+esac
+STUB
+cat >"$bin/journalctl" <<'STUB'
+#!/bin/sh
+[ "$1 $2 $3 $4" = "-q -o cat --no-pager" ] || exit 1
+awk -F '\t' -v id="${5#_SYSTEMD_INVOCATION_ID=}" '$1 == id { print $2 }' "$JOURNAL"
+STUB
 
 # incus pushes a file and runs a guest's script as PUSH and RUN say. ws lists no guest.
 cat >"$bin/incus" <<'STUB'

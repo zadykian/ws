@@ -151,6 +151,27 @@ expect "ws-fans runs an nvidia-smi" ok host fans_nvidia
 echo "$$" >"$tmp/cg/ws-fans.slice/ws-fans.service/cgroup.procs"
 expect "ws-fans runs another program" fail host fans_nvidia
 
+# The journal holds ws-fans' lines of an earlier run and of this one.
+earlier=0a1b2c3d4e5f60718293a4b5c6d7e8f9
+this=5f0c3e7a9d2b4c1e8f6a0b3d7c9e2f41
+nvml="no NVML: Failed to initialize NVML: Driver/library version mismatch"
+{
+    printf '%s\t%s\n' "$earlier" "3 fans, every 2 s" "$earlier" "gpu: $nvml"
+    printf '%s\t%s\n' "$this" "3 fans, every 2 s" "$this" "gpu: no reading of GPU 0 in 10s"
+    printf '%s\t%s\n' "$this" "GPU Fans: no reading of GPU 0 in 10s; the fan goes back to the board's curve"
+    printf '%s\t%s\n' "$this" "gpu: back" "$this" "GPU Fans: back"
+} >"$tmp/journal-back"
+{
+    printf '%s\t%s\n' "$this" "3 fans, every 2 s" "$this" "gpu: $nvml"
+    printf '%s\t%s\n' "$this" "GPU Fans: $nvml; the fan goes back to the board's curve"
+} >"$tmp/journal-nvml"
+printf '%s\t%s\n' "$this" "3 fans, every 2 s" "$this" "gpu: no NVML: nvidia-smi ended" >"$tmp/journal-ended"
+printf '%s\t%s\n' "$earlier" "3 fans, every 2 s" >"$tmp/journal-none"
+JOURNAL=$tmp/journal-back expect "ws-fans' problems of this run, each back" ok host fans_problems
+JOURNAL=$tmp/journal-nvml expect "ws-fans with no NVML" fail host fans_problems
+JOURNAL=$tmp/journal-ended expect "ws-fans whose nvidia-smi ended" fail host fans_problems
+JOURNAL=$tmp/journal-none expect "a journal with no line of this run" fail host fans_problems
+
 # A guest's run is a failure where incus fails or the script exits non-zero, with no FAIL line.
 # fails_after runs a check on guest g1 and prints the count of failures.
 fails_after() {
