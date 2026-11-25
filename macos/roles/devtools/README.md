@@ -29,6 +29,10 @@ upgrades it by itself: `mise bootstrap packages upgrade` does. So the formulae a
 SHA-256 rule of the pinned downloads ([CLAUDE.md](../../../.claude/CLAUDE.md)). A first run pours
 about 30 bottles, as `gnupg` has 10 dependencies.
 
+mise could lock `ripgrep` as a tool of its own, by its SHA-256. But such a tool is on no `PATH` on
+the Mac, and each would take a link of ws's. `tokei` has no build to lock, as mise's registry builds
+it from source by cargo. So brew's latest stands for both, its bottles checked as above.
+
 ## The PATH
 
 `file/devtools-path` writes `/etc/paths.d/ws`, root's, with the two directories that the tools
