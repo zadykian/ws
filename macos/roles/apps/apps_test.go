@@ -21,6 +21,7 @@ var appOf = map[string]string{
 	"Ghostty.app":          "ghostty",
 	"Yandex Telemost.app":  "yandextelemost",
 	"Rectangle Pro.app":    "rectangle-pro",
+	"Stats.app":            "stats",
 }
 
 type appsFile struct {
@@ -101,11 +102,11 @@ func TestEachDockAppIsInstalledBeforeTheDockIsWritten(t *testing.T) {
 }
 
 // TestEachLoginItemIsAnInstalledApp holds the login items to apps that the system or a cask
-// installs, as the list is the maintainer's six and no other.
+// installs, as the list is the maintainer's seven and no other.
 func TestEachLoginItemIsAnInstalledApp(t *testing.T) {
 	items := read(t, "mise.apps.toml").Bootstrap.Settings.MacOS.LoginItems
-	if len(items.Apps) != 6 {
-		t.Errorf("login items = %q, want six apps", items.Apps)
+	if len(items.Apps) != 7 {
+		t.Errorf("login items = %q, want seven apps", items.Apps)
 	}
 	for _, p := range missingApps(t, "the login items", items.Apps) {
 		t.Error(p)

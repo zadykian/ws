@@ -171,7 +171,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([mise.macos.toml](../macos/roles/ssh/mise.macos.toml)), and its notarization, by `spctl` where `ws macos setup` installs it
   ([setupkey.go](../macos/cli/setupkey.go)). The
   Mac's casks, Ghostty, Zed and their font, take their latest by mise's `brew-cask`, outside the rule
-  ([ghostty](../macos/roles/ghostty/README.md#ghostty)). So do the apps' fourteen, whose cask holds a
+  ([ghostty](../macos/roles/ghostty/README.md#ghostty)). So do the apps' fifteen, whose cask holds a
   SHA-256 but for four that Homebrew lists with none: mise checks no signature there
   ([apps](../macos/roles/apps/README.md#the-casks)). The Mac's formulae, devtools', docker's and
   desktop's, take their latest by mise's `brew`, each checked by the SHA-256 of Homebrew's own bottle

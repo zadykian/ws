@@ -61,7 +61,7 @@ the server. Its [`devtools`](macos/roles/devtools) installs Go and the command-l
 sets the Dock, Finder, windows, sounds, screenshots and the wallpaper. Its [`zsh`](macos/roles/zsh) sets up
 oh-my-zsh and its plugins, with the settings that load them. Its [`power`](macos/roles/power) keeps the
 display on while on power and stops the App Store's updates. Its [`apps`](macos/roles/apps) installs
-the Mac's apps, as mise's casks, pins some in the Dock and opens six at login. Its
+the Mac's apps, as mise's casks, pins some in the Dock and opens seven at login. Its
 [`keyboard`](macos/roles/keyboard) makes Caps Lock a Control key, sets the symbolic hotkeys and
 installs the maintainer's keyboard layout.
 

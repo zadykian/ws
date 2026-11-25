@@ -111,7 +111,7 @@ before the first run must exit 2. Setup installs mise and links the tree's plugi
 does. The case makes `/opt` and `/usr/local/share` root's and 755 first, as on
 a Mac, where the runner's image may differ. It sets up
 ssh, git and cld too, but not [the apps](../../macos/roles/apps/README.md): the case drops that
-role from the tree, as no run of CI needs its 14 casks. It drops
+role from the tree, as no run of CI needs its 15 casks. It drops
 [the wallpaper](../../macos/roles/desktop/README.md#the-wallpaper) of desktop too, as a runner has no
 screen for `wallpaper get` to read. The plan must exit 0 after the first run,
 a second run must call no sudo, and `/usr/local/bin/ws` must be root:wheel at 755. A spec whose

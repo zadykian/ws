@@ -112,6 +112,7 @@ check5() {
     check "5 Secretive's agent runs" pgrep -x SecretAgent
     check "5 Logi's agent runs" pgrep -f logioptionsplus_agent
     check "5 Rectangle Pro runs" pgrep -x "Rectangle Pro"
+    check "5 Stats runs" pgrep -x Stats
     info "login items in the dump: $(grep -c 'Type:.*login item' <<<"$dump")"
 }
 

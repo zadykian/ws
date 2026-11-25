@@ -8,6 +8,7 @@
 "brew-cask:logi-options+" = "latest"
 "brew-cask:rectangle-pro" = "latest"
 "brew-cask:spotify" = "latest"
+"brew-cask:stats" = "latest"
 "brew-cask:steam" = "latest"
 "brew-cask:telegram-desktop" = "latest"
 "brew-cask:transmission" = "latest"
@@ -41,6 +42,7 @@ apps = [
     "/Applications/Discord.app",
     "/System/Applications/Mail.app",
     "/Applications/Rectangle Pro.app",
+    "/Applications/Stats.app",
     "/Applications/Telegram Desktop.app",
     "/Applications/Yandex Telemost.app",
 ]
