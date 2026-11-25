@@ -248,6 +248,22 @@ printf '{\n    ModifierMappingDst = 30064771300;\n}\n' >"$tmp/map-half"
 MAP=$tmp/map expect "Caps Lock as Control" ok inside prefs.sh capslock
 MAP=$tmp/map-half expect "a mapping with no source" fail inside prefs.sh capslock
 
+# check4 reads each hotkey and its keys from keyboard's file. The plist holds them as mise writes.
+on_read() { inside prefs.sh hotkey_entries | awk '$2 == "on" && NF == 5 && $3 $4 $5 ~ /^[0-9]+$/' | wc -l; }
+expect "the three on hotkeys are read with their keys" ok test "$(on_read)" -eq 3
+inside prefs.sh hotkey_entries | while read -r id state code key mods; do
+    k=AppleSymbolicHotKeys.$id
+    if [ "$state" = on ]; then
+        printf '%s\n' "$k.enabled=true" "$k.value.type=standard" "$k.value.parameters.0=$code" \
+            "$k.value.parameters.1=$key" "$k.value.parameters.2=$mods" "type:$k.enabled=bool"
+    else
+        printf '%s\n' "$k.enabled=false" "$k.value=x"
+    fi
+done >"$tmp/hotkeys"
+sed 's/^\(AppleSymbolicHotKeys\.64\.value\.parameters\.2=\).*/\10/' "$tmp/hotkeys" >"$tmp/hotkeys-64"
+MAP=$tmp/map PLUTIL_DB=$tmp/hotkeys expect "the hotkeys as keyboard writes them" ok nofail prefs.sh check4
+MAP=$tmp/map PLUTIL_DB=$tmp/hotkeys-64 expect "hotkey 64 at other keys" fail nofail prefs.sh check4
+
 # The layout's files are the role's, root's at 644. stat prints the owner and mode that OWNER says.
 cp -R "$dir/../roles/keyboard/files/ws.bundle" "$tmp/layout"
 export WS_LAYOUT=$tmp/layout

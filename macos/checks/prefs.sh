@@ -12,8 +12,6 @@ dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck source=macos/checks/lib.sh
 . "$dir/lib.sh"
 
-keyboard=$tree/macos/roles/keyboard/mise.macos.toml
-
 # pref DOMAIN KEY TYPE VALUE succeeds where defaults read-type prints TYPE and the value is VALUE.
 pref() {
     local type value
@@ -198,16 +196,16 @@ hotkey_on() {
         hotkey "$1" value.parameters.2 "$4"
 }
 
-# off_ids prints the ID of each hotkey that keyboard turns off.
-off_ids() { sed -n 's/^path = \["\([0-9]*\)", "enabled"\]$/\1/p' "$keyboard"; }
-
 check4() {
-    local id lacked=
+    local id state code key mods on='' lacked=''
     hotkeys=$(defaults export com.apple.symbolichotkeys - 2>&1)
-    check "4 Command+Space is on, for the next input source" hotkey_on 61 32 49 1048576
-    check "4 Option+Space is on, for Spotlight" hotkey_on 64 32 49 524288
-    check "4 Command+L is on, hotkey 160" hotkey_on 160 108 37 1048576
-    check "4 enabled is a boolean" hotkey_bool 61
+    while read -r id state code key mods; do
+        [ "$state" = on ] || continue
+        on="$on $id"
+        check "4 hotkey $id is on at keyboard's keys $code $key $mods" hotkey_on "$id" "$code" "$key" "$mods"
+        check "4 hotkey $id's enabled is a boolean" hotkey_bool "$id"
+    done < <(hotkey_entries)
+    [ -n "$on" ] || fail "4 keyboard turns hotkeys on" "no entry read from $keyboard"
     check "4 Caps Lock acts as Control" capslock
     for id in $(off_ids); do
         check "4 hotkey $id is off" hotkey "$id" enabled false

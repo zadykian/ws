@@ -18,7 +18,7 @@ reads. The first run, the second and each step by hand are the person's, as the 
 | [setup.sh](setup.sh) `[CHECK...]` | As the user. `sudo` reads the login items. | 1, 5, 10. |
 | [prefs.sh](prefs.sh) `[CHECK...]` | As the user. | 2, 3, 4, 6, 7. |
 | [tools.sh](tools.sh) `8 [FILE]`, `9 [SHA256]` | As the user. | 8, 9. |
-| [lib.sh](lib.sh) | Sourced by the three. | Setup's plan and status, the roles' apps. |
+| [lib.sh](lib.sh) | Sourced by the three. | Setup's plan and status, the roles' apps and hotkeys. |
 
 `WS_TREE` names ws's tree, `/opt/ws` by default. The scripts read the Dock's apps, the login items,
 the formulae and the hotkeys from its roles' files, so a change of a role reaches them.
@@ -103,8 +103,9 @@ Run them in this order. Trials 1 and 2 first, as a first run puts every later tr
 **4. Each hotkey holds.**
 
 - Where: the Mac, after a log in. `prefs.sh 4`.
-- It checks: IDs 61, 64 and 160 are on at their keys, `enabled` is a boolean, Caps Lock maps to
-  Control, and each of the 63 off IDs reads `enabled` false.
+- It checks: each hotkey that keyboard's file turns on, 61, 64 and 160, is on at the file's keys,
+  with `enabled` a boolean. Caps Lock maps to Control, and each of the file's 63 off IDs reads
+  `enabled` false.
   It prints the off IDs that macOS lacked, which mise made.
 - Passes: every line is `ok`. By hand, Command+Space switches the input source, Option+Space opens
   Spotlight, and Caps Lock acts as Control.
