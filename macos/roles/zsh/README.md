@@ -2,7 +2,7 @@
 
 The `zsh` role sets up the Mac's shell: oh-my-zsh and two plugins, as mise's clones, and ws's
 settings, which `~/.zshrc` sources. The hook that resets the terminal's modes has
-[its own page](../ghostty/README.md#ghostty).
+[its own page](../ghostty/README.md#the-zsh-hook).
 
 ## The clones
 
