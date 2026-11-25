@@ -43,9 +43,10 @@ template = "pin.tmpl"
 after = "packages/nvidia-userspace"
 when = { side = "guest", container = "yes", set = "{{ if $gpu }}yes{{ end }}" }
 
-# Incus passes /dev/nvidia* to a guest as they exist when it starts. This waits for the nodes
-# before Incus starts, and the drop-in orders incus.service after it. The wait ends after a minute,
-# and a host that loads no module waits for none, so a missing card never keeps Incus down.
+# Incus passes /dev/nvidia* to a guest as they exist when it starts. This waits for udev's coldplug,
+# which loads the module, then for the nodes, and the drop-in orders incus.service after it. Each
+# wait ends after a minute, and a host that loads no module waits for no node, so a missing card
+# never keeps Incus down.
 [service.nvidia-devices]
 unit = "ws-nvidia-devices.service"
 enabled = true

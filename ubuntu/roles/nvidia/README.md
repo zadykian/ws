@@ -103,6 +103,11 @@ switch: the card cannot reach the guest. The container has no `state/nvidia-rebo
 Incus passes `/dev/nvidia*` to a guest only as they exist when the guest starts. The host's
 `ws-nvidia-devices.service` is a oneshot that waits up to a minute for `/dev/nvidia0` and
 `/dev/nvidia-uvm`. The drop-in `incus.service.d/ws-nvidia.conf` wants it and orders `incus.service`
-after it. The unit never fails, so no missing card keeps Incus down. A host whose module is not
-loaded, as before the reboot, waits for nothing. A missing node gets a line in the journal. The unit
-runs where the host holds the GPU alone.
+after it. The unit never fails, so no missing card keeps Incus down.
+
+At boot, the unit starts after udev's coldplug trigger, which queues the card's event but waits
+for none. udev loads the module as it handles that event, and `71-nvidia.rules`, of
+`nvidia-kernel-common-595-server`, makes the nodes. So the unit first runs `udevadm settle`, up to
+a minute, and only then reads `/sys/module/nvidia`. A host whose module is still not loaded, as
+before the reboot, waits for no node: udev's queue is empty there, and the unit ends at once. A
+missing node gets a line in the journal. The unit runs where the host holds the GPU alone.
