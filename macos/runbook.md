@@ -59,7 +59,8 @@ file. It then does what a person did by hand, in this order:
    roles ([The Mac's frame](roles/frame/README.md)). It makes the Mac's WireGuard key, whose public
    half is `/etc/ws/tunnel.pub`.
 6. It runs the bootstrap again with `-E ws,apps`, which installs the apps and sets the login items.
-   A failure there leaves ws's units set up, and fails setup.
+   A failure there leaves ws's units set up, and fails setup, as mise ends a run at its first
+   failed step ([The apps' env](roles/frame/README.md#the-apps-env)).
 
 A second run changes nothing and asks no password. `ws macos setup --plan` plans these steps, and
 mise's bootstrap where none is due, in both envs, by its plan and then its status. The plan covers no
@@ -188,8 +189,8 @@ of its guests tries it at its own port.
 - The server's lease, made static, and the router's forwards where `WS_REMOTE` is set
   ([The router](../ubuntu/roles/cable/router.md)).
 - git's signing key on GitHub, and ws's in `@zadykiand`'s settings, which no run adds.
-- A reboot and a log out after the first run. The Dock, Finder, sounds and keyboard read their
-  preferences at the next log out, and Logi's installer asks a reboot.
+- A log out after the first run, before any app opens, and a reboot. The Dock, Finder, sounds and
+  keyboard read their preferences at the next log out, and Logi's installer asks a reboot.
 - Apple's sign-in, the language and region, FileVault, the apps' licences and the privacy
   permissions that an app asks for.
 - The menu bar, Translate for Safari, and Logi's and Safari's settings.
@@ -199,4 +200,5 @@ of its guests tries it at its own port.
 - `colima start`, as the machine's size and its start at login are the user's
   ([docker](roles/docker/README.md)).
 - The upgrades. Setup installs each cask and formula at its latest and never upgrades it:
-  `mise -C /opt/ws/macos -E ws,apps bootstrap packages upgrade` does, as the user.
+  `mise -C /opt/ws/macos -E ws,apps bootstrap packages upgrade` does, as the user. A cask that
+  updates itself is left to itself.

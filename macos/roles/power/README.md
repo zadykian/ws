@@ -24,7 +24,8 @@ defaults write /Library/Preferences/com.apple.commerce AutoUpdate -bool false
 
 The key stops the App Store's automatic updates of apps. `defaults read` prints a false boolean
 as `0`, and fails where the key is missing, which the check reads as on. The tools that mise
-installs are not the App Store's: `mise bootstrap packages upgrade` updates them.
+installs are not the App Store's: [the runbook](../../runbook.md#what-stays-by-hand) gives
+their upgrade.
 
 ## macOS 27
 

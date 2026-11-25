@@ -38,16 +38,19 @@ entry with `host = "current"`.
 
 ## The wallpaper
 
-mise pours the formula `wallpaper`, 2.3.4 at this writing, with its `brew` manager, which needs no
-Homebrew. The formula takes `latest`, as Homebrew keeps the current bottle alone, and mise checks
-it against the SHA-256 of that bottle ([devtools](../devtools/README.md#the-formulae)).
-`mise bootstrap packages upgrade` upgrades it.
+mise pours the formula `wallpaper` with its `brew` manager, which needs no Homebrew. The formula
+takes `latest`, as Homebrew keeps the current bottle alone, and mise checks it against the SHA-256
+of that bottle ([devtools](../devtools/README.md#the-formulae)). [The runbook](../../runbook.md#what-stays-by-hand)
+gives its upgrade.
 
 [`state/wallpaper`](units.toml.tmpl) runs `wallpaper set` with Stone, the system's
 `/System/Library/Desktop Pictures/Solid Colors/Stone.png`, as the user. A unit's `PATH` lacks
 `/opt/homebrew/bin`, so the unit's `path` names it. The check runs `wallpaper get`, which prints a
 line for each screen, and wants one line at least and each line Stone's. So a first run sets Stone
 on every screen, and a run with Stone there changes nothing and asks no password.
+
+The unit needs the login session. A run outside it, as over ssh before anyone logs in, sees no
+screen: `wallpaper get` prints no line and the check fails.
 
 Both cover each screen's current Space alone, the one of a clean Mac.
 
@@ -57,4 +60,4 @@ so `wallpaper get` prints no line and the check fails each run.
 ## The restart
 
 mise restarts neither the Dock nor Finder. They read their preferences again at the next log out, so
-the first run's values show after one.
+the first run's values show after one. The first run ends with a log out, before any app opens.

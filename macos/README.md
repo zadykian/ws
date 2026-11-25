@@ -23,7 +23,8 @@ and age-plugin-yubikey by its lock, with no Homebrew ([the runbook](runbook.md))
 ([dotnet](roles/dotnet/README.md)). mise installs Go by its lock, and gnupg, ripgrep and other tools as formulae
 ([devtools](roles/devtools/README.md)). It installs Docker's command line and colima the same way ([docker](roles/docker/README.md)). It sets the
 Dock, Finder, windows and sounds as preferences, and the wallpaper to Stone ([desktop](roles/desktop/README.md)). It makes
-Caps Lock a Control key, sets the symbolic hotkeys and installs the keyboard layout ([keyboard](roles/keyboard/README.md)).
+the built-in keyboard's Caps Lock a Control key, sets the symbolic hotkeys and installs the keyboard
+layout ([keyboard](roles/keyboard/README.md)).
 The second run installs the Mac's apps as casks, pins some in the Dock, opens seven at login and
 sets Stats's settings ([apps](roles/apps/README.md)). The runbook runs `install.sh`, which puts `ws` in `/usr/local/bin`
 from a release, checked against its `ws.sha256` ([Releases](../.github/workflows/release.md)). Write each server's values below
@@ -63,9 +64,8 @@ steps are those of the server's setup, which `internal/setup` holds, with the Ma
   the bootstrap, checks it and waits for a key made in it, which it names in `values.yml`
   ([Secretive](roles/ssh/README.md#secretive)). `--key NAME` takes a key that Secretive held
   before. A plan with the key due plans no more.
-- The bootstrap runs twice, with the env `macos` and then with `-E ws,apps`. mise ends a run at
-  its first failed step, and packages come before ws's units, so a failed cask would stop the
-  tunnel's units. Here ws's units are set up by then, and setup fails, naming the apps.
+- The bootstrap runs twice, with the env `macos` and then with `-E ws,apps`. A failed cask fails
+  setup, with ws's units set up ([The apps' env](roles/frame/README.md#the-apps-env)).
 - A second run reads as the user, writes nothing and asks no password. `--in-place` and `--plan`
   work as on the server ([The server's runbook](../ubuntu/runbook.md)).
 
