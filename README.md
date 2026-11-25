@@ -99,7 +99,8 @@ Then do what stays by hand, below.
 
 A host is the machine that runs the guests. `ws ubuntu host setup` sets it up as `ws ubuntu guest
 setup` sets up a guest, on its own run directory, `ubuntu/host`. It runs the roles that hold a
-`mise.host.toml`: `frame`, `base`, `security`, `docker`, `signoz`, `otelcol`, `fans`, `cable` and `incus`.
+`mise.host.toml`: `frame`, `base`, `security`, `docker`, `nvidia`, `signoz`, `otelcol`, `fans`,
+`cable`, `incus` and `tunnel`, which ends its own tunnel and each guest's.
 Its values are `/etc/ws/values.yml` too, with its own type: `ws ubuntu host values check` and
 `set`. The installer's first boot runs `ws update`, then `ws ubuntu host setup`
 ([the runbook](ubuntu/runbook.md)).
