@@ -128,8 +128,8 @@ func TestRemoveRunsTheBootstrap(t *testing.T) {
 		t.Errorf("status = %d, stderr = %q; want 1 and %q", status, stderr, want)
 	}
 	p, m := removeFixture()
-	m.Results["mise -C /opt/ws/macos bootstrap"] = effecttest.Result{}
-	if status, _, stderr := runWs(p, "macos", "remove", "lab"); status != 0 || !slices.Contains(m.Calls, "run mise -C /opt/ws/macos bootstrap") {
+	m.Results[bootstrapLine] = effecttest.Result{}
+	if status, _, stderr := runWs(p, "macos", "remove", "lab"); status != 0 || !slices.Contains(m.Calls, "run mise -C /opt/ws/macos bootstrap --yes") {
 		t.Errorf("status = %d, stderr = %q, calls %q; want 0, the bootstrap run", status, stderr, m.Calls)
 	}
 }
