@@ -2,10 +2,37 @@
 # type too, and restarts nothing: the keys read them at the next log in. README.md says why each
 # value stands.
 
+# The layout's six files, which ws's units write. mise writes the preferences first, as it applies
+# the defaults before the packages.
+[bootstrap.packages]
+"ws:file/layout-info" = "in-sync"
+"ws:file/layout-version" = "in-sync"
+"ws:file/layout-eng" = "in-sync"
+"ws:file/layout-rus" = "in-sync"
+"ws:file/layout-en-strings" = "in-sync"
+"ws:file/layout-ru-strings" = "in-sync"
+
 # The language indicator that macOS shows on each input source's switch. Its value is the string
 # "0", as the Mac holds it.
 [bootstrap.settings.macos.defaults.NSGlobalDomain]
 TSMLanguageIndicatorEnabled = "0"
+
+# The input sources that the layout names, each a keyboard layout of the bundle by its ID and
+# name, which its keylayout file holds. Each array is written whole, in this order: mise compares
+# an array element by element and never merges one.
+[bootstrap.settings.macos.defaults."com.apple.inputsources"]
+AppleEnabledThirdPartyInputSources = [
+    { InputSourceKind = "Keyboard Layout", "KeyboardLayout ID" = -20611, "KeyboardLayout Name" = "ENG" },
+    { InputSourceKind = "Keyboard Layout", "KeyboardLayout ID" = -21268, "KeyboardLayout Name" = "RUS" },
+]
+
+# The sources that macOS enables, with no layout of Apple's: the character palette and the
+# press-and-hold menu alone. The two layouts above are the only ones that remain.
+[bootstrap.settings.macos.defaults."com.apple.HIToolbox"]
+AppleEnabledInputSources = [
+    { "Bundle ID" = "com.apple.CharacterPaletteIM", InputSourceKind = "Non Keyboard Input Method" },
+    { "Bundle ID" = "com.apple.PressAndHold", InputSourceKind = "Non Keyboard Input Method" },
+]
 
 # Caps Lock acts as Control on the built-in keyboard, 0-0-0. macOS keeps that mapping per host.
 [[bootstrap.settings.macos.defaults_entries]]

@@ -17,7 +17,7 @@ fail() {
     fails=$((fails + 1))
 }
 info() { printf 'info %s\n' "$*"; }
-# waits says that a check waits for a build that is not here yet. It fails nothing.
+# waits says that a check needs a value or a step by hand first. It fails nothing.
 waits() { printf 'wait %s\n' "$*"; }
 
 # check runs the command and prints ok where it succeeds, else FAIL with the last line it printed.

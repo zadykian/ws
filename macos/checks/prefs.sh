@@ -88,8 +88,71 @@ check2() {
     check "2 mise's status finds the preferences in sync" status_zero
 }
 
+# layout_src is the role's copy of the layout, and bundle is where the Mac keeps it.
+layout_src=$tree/macos/roles/keyboard/files/KeyboardLayout.bundle
+bundle=${WS_LAYOUT:-/Library/Keyboard Layouts/KeyboardLayout.bundle}
+
+# layout_file FILE succeeds where the Mac's FILE of the bundle is root's at 644 and the role's.
+layout_file() {
+    local owner
+    cmp -s "$bundle/$1" "$layout_src/$1" || {
+        echo "$bundle/$1 is not the role's file"
+        return 1
+    }
+    owner=$(stat -f '%Su %Lp' "$bundle/$1" 2>&1)
+    [ "$owner" = "root 644" ] || {
+        echo "$bundle/$1 is '$owner', not root 644"
+        return 1
+    }
+}
+
+# layout_alone succeeds where the bundle holds the role's files and no other.
+layout_alone() {
+    [ "$(cd "$bundle" && find . -type f | sort)" = "$(cd "$layout_src" && find . -type f | sort)" ] || {
+        echo "the bundle's files differ from the role's"
+        return 1
+    }
+}
+
+# input_source DOMAIN KEYPATH WANT [TYPE] succeeds where the preference at KEYPATH reads WANT, of
+# the type string unless TYPE says another.
+input_source() {
+    local plist got type
+    plist=$(defaults export "$1" - 2>&1) || plist=
+    got=$(plutil -extract "$2" raw -o - - <<<"$plist" 2>/dev/null) || got=
+    type=$(plutil -type "$2" - <<<"$plist" 2>/dev/null) || type=
+    [ "$got" = "$3" ] && [ "$type" = "${4:-string}" ] || {
+        echo "$1 $2 is '$got' ($type), not '$3' (${4:-string})"
+        return 1
+    }
+}
+
+# in_use succeeds where the input source in use is one of the layout's two, by the IDs of its plist.
+in_use() {
+    local got
+    got=$(defaults read com.apple.HIToolbox AppleCurrentKeyboardLayoutInputSourceID 2>&1)
+    grep -A1 '<key>TISInputSourceID</key>' "$layout_src/Contents/Info.plist" |
+        sed -n 's/.*<string>\(.*\)<\/string>.*/\1/p' | grep -qxF "$got" || {
+        echo "the input source in use is '$got', not one of the layout's"
+        return 1
+    }
+}
+
 check3() {
-    waits "3 the layout and the input sources wait for the bundle's files, under #1536"
+    local file i ids=(-20611 -21268) names=(ENG RUS)
+    for file in $(cd "$layout_src" && find . -type f | sort); do
+        check "3 $file is the role's, root's at 644" layout_file "$file"
+    done
+    check "3 the bundle holds the role's six files alone" layout_alone
+    for i in 0 1; do
+        check "3 input source $i of the layout is ${names[i]}" input_source com.apple.inputsources \
+            "AppleEnabledThirdPartyInputSources.$i.KeyboardLayout ID" "${ids[i]}" integer
+        check "3 input source $i is named ${names[i]}" input_source com.apple.inputsources \
+            "AppleEnabledThirdPartyInputSources.$i.KeyboardLayout Name" "${names[i]}"
+    done
+    check "3 HIToolbox enables two sources, no layout of Apple's" input_source com.apple.HIToolbox \
+        AppleEnabledInputSources 2 array
+    check "3 the input source in use is the layout's" in_use
     info "input source: $(defaults read com.apple.HIToolbox AppleCurrentKeyboardLayoutInputSourceID 2>&1)"
     check "3 setup's plan still exits 0" plan_zero
 }
