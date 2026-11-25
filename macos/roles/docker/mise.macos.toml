@@ -1,7 +1,6 @@
-# Docker's command line and colima, as mise's formulae, which need no Homebrew. A formula takes
-# the latest alone. docker-buildx and docker-compose are Docker's plugins, which config.json finds,
-# and docker-credential-helper holds osxkeychain's program. mise's registry lacks the last two, so
-# brew holds all five.
+# Docker's command line, its two plugins, osxkeychain's program and colima, as mise's formulae,
+# which need no Homebrew. A formula takes the latest alone. One manager holds the five, and docker
+# finds its plugins in brew's cli-plugins directory, which config.json names (README.md).
 [bootstrap.packages]
 "brew:colima" = "latest"
 "brew:docker" = "latest"
