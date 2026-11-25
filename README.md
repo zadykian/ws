@@ -108,8 +108,9 @@ Its values are `/etc/ws/values.yml` too, with its own type: `ws ubuntu host valu
 ## Running it again
 
 Each release holds the roles it sets up, so run `ws update` as root. It brings ws to the latest
-release and runs that ws's `ws ubuntu guest setup`, which checks the release's tree out and runs the
-bootstrap. `--version X.Y.Z` picks a release, and `X.Y.Z-rc.N` a pre-release
+release, then runs that ws's setup of the machine's side: `ws ubuntu guest setup` on a guest,
+`ws ubuntu host setup` on a host. The setup checks the release's tree out and runs the bootstrap.
+`--version X.Y.Z` picks a release, and `X.Y.Z-rc.N` a pre-release
 ([Update](.github/workflows/release.md#update)).
 
 The units read their secrets from mise's secret inputs, which the task `secrets` fetches and
