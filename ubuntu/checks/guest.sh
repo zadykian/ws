@@ -124,18 +124,22 @@ restore() {
     [ -z "$work" ] || rm -rf "$work"
 }
 
-# spoof sends from the NIC under a source that is not its own: a ping to the internet that a table
-# of sources or the MAC filter must drop.
+# spoofed_addr pings the internet under another guest's address, which the table of sources must
+# drop. The host sends a reply to the MAC it last took for that address. So the flush makes the
+# ping ask for the gateway under it, and a table that passes both draws the reply here.
 spoofed_addr() {
-    local own
+    local own status=0
     own=$(ip -4 -o addr show dev "$nic" scope global | awk 'NR == 1 { split($4, a, "/"); print a[1] }')
     ip addr add "$1/24" dev "$nic" || return 1
     addr_added="$1/24"
-    local status=0
-    ping -c 2 -W 2 -I "$1" "$internet" >/dev/null 2>&1 && status=1
+    if ! ip neigh flush dev "$nic"; then
+        status=1
+    elif ping -c 2 -W 2 -I "$1" "$internet" >/dev/null 2>&1; then
+        status=1
+        echo "a packet from $1 reached $internet, as $own's own"
+    fi
     ip addr del "$addr_added" dev "$nic"
     addr_added=
-    [ $status -eq 0 ] || echo "a packet from $1 reached $internet, as $own's own"
     return $status
 }
 

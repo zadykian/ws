@@ -1,5 +1,5 @@
 #!/bin/bash
-# Tries the functions of host.sh and guests.sh against stand-ins for ufw, ip, systemctl and incus,
+# Tries the functions of host.sh, guests.sh and guest.sh against stand-ins for the tools they call,
 # on the outputs the real tools print. CI's lint job runs it. The scripts themselves run on the
 # real machine alone.
 set -uo pipefail
@@ -33,6 +33,11 @@ host() { (
 guest_side() { (
     # shellcheck disable=SC1091 # the path is the test's variable
     . "$dir/guests.sh"
+    "$@"
+); }
+guest() { (
+    # shellcheck disable=SC1091 # the path is the test's variable
+    . "$dir/guest.sh"
     "$@"
 ); }
 
@@ -69,8 +74,10 @@ UFW_STATUS=$tmp/ufw-late expect "deny of wg10 stands after SSH" fail host deny_f
 UFW_STATUS=$tmp/ufw-late expect "wg1's deny is not wg10's" fail host deny_first 11
 export UFW_STATUS=$tmp/ufw-first
 
-# A tunnel of slot 12 routes by table 1012, as the code's 1000 + slot. The host's uplink is enp5s0.
-# A call the stand-in does not know fails, and never reaches the machine's own ip.
+# A tunnel of slot 12 routes by table 1012, as the code's 1000 + slot. The host's uplink is enp5s0,
+# and a guest's NIC eth0. What ip changes it keeps in IP_STATE. A call the stand-in does not know
+# fails, and never reaches the machine's own ip.
+export IP_STATE=$tmp/ip
 cat >"$tmp/bin/ip" <<'IP'
 #!/bin/sh
 case "$*" in
@@ -80,6 +87,12 @@ case "$*" in
 "-4 -o addr show dev enp5s0")
     printf '%s\n' '2: enp5s0    inet 192.168.1.10/24 metric 100 brd 192.168.1.255 scope global dynamic enp5s0\       valid_lft 85841sec preferred_lft 85841sec'
     ;;
+"-4 -o addr show dev eth0 scope global")
+    printf '%s\n' '2: eth0    inet 10.100.0.10/24 metric 1024 brd 10.100.0.255 scope global dynamic eth0\       valid_lft 3591sec preferred_lft 3591sec'
+    ;;
+"addr add "*" dev eth0") : >"$IP_STATE/added" ;;
+"addr del "*" dev eth0") rm -f "$IP_STATE/added" ;;
+"neigh flush dev eth0") : >"$IP_STATE/flushed" ;;
 *)
     echo "ip: the stand-in knows no call $*" >&2
     exit 1
@@ -139,6 +152,40 @@ SS_LISTING=$tmp/ss-host expect "the tunnels' UDP ports listen on every address" 
 SS_LISTING=$tmp/ss-mdns expect "a UDP port that is no tunnel's" fail host listens
 SS_LISTING=$tmp/ss-tcp expect "TCP on a tunnel's port" fail host listens
 SS_LISTING=$tmp/ss-host WG_DENIED=1 expect "wg that names no port" fail host listens
+
+# A guest's ping under a borrowed source has its answer where the table of sources passes it and
+# the host took that source for this guest's MAC. The host does so when the guest, its neighbour
+# cache flushed, asks for the gateway's MAC under that source. Any other ping has no answer.
+cat >"$tmp/bin/ping" <<'STUB'
+#!/bin/sh
+src=
+while [ $# -gt 1 ]; do
+    case $1 in
+    -I)
+        src=$2
+        shift 2
+        ;;
+    -c | -W) shift 2 ;;
+    *) shift ;;
+    esac
+done
+[ -n "$src" ] && [ "${SOURCES:-}" = open ] || exit 1
+[ ! -e "$IP_STATE/flushed" ] || {
+    rm "$IP_STATE/flushed"
+    : >"$IP_STATE/mine-$src"
+}
+[ -e "$IP_STATE/mine-$src" ]
+STUB
+chmod +x "$tmp/bin/ping"
+mkdir "$IP_STATE"
+SOURCES=closed expect "a table of sources that drops another guest's address" ok guest spoofed_addr 10.100.0.11
+rm -f "$IP_STATE"/*
+SOURCES=open expect "a table that passes another guest's address" fail guest spoofed_addr 10.100.0.11
+[ ! -e "$IP_STATE/added" ] || {
+    echo "checks-test: spoofed_addr left 10.100.0.11 on eth0" >&2
+    failed=1
+}
+rm -f "$IP_STATE"/*
 
 # ws-fans' cgroup holds a process named nvidia-smi, or not.
 printf '#!/bin/sh\nwhile :; do sleep 1; done\n' >"$tmp/bin/nvidia-smi"

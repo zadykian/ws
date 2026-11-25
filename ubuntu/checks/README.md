@@ -58,7 +58,8 @@ GPU.** Again after a driver update and a cold boot.
   slot's address. They are the Mac's LAN, cable and tunnel addresses too. A ping answered, or a
   TCP port that connects or refuses, fails it. Then the internet passes: a ping, a name and
   HTTPS. Then a packet under another guest's address, and a frame under another guest's MAC,
-  reach nothing. The script puts the address and the MAC back.
+  reach nothing. The guest flushes its neighbour cache first, so that a reply would come back to
+  it. The script puts the address and the MAC back.
 - Passes: every line is `ok`.
 
 **4. From the Mac, SSH reaches each guest through its tunnel, by each way.**
