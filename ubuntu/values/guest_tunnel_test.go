@@ -83,6 +83,37 @@ func TestATunnelClashIsRefused(t *testing.T) {
 	}
 }
 
+// The host's own tunnel may take any subnet where it has no peer mac. Each slot inside that subnet
+// is the host's, whatever wg0's own address: lab's slot 3 is in each, build's slot 12 in the /20
+// alone.
+func TestAGuestsSlotInsideTheHostsOwnSubnetIsRefused(t *testing.T) {
+	for address, want := range map[string][]string{
+		"10.99.3.1/24": {"lab holds slot 3, 10.99.3.0/24, inside the host's own tunnel's 10.99.3.0/24."},
+		"10.99.3.5/24": {"lab holds slot 3, 10.99.3.0/24, inside the host's own tunnel's 10.99.3.0/24."},
+		"10.99.0.1/20": {"lab holds slot 3, 10.99.3.0/24, inside the host's own tunnel's 10.99.0.0/20.",
+			"build holds slot 12, 10.99.12.0/24, inside the host's own tunnel's 10.99.0.0/20."},
+	} {
+		h, err := ParseHost([]byte(labAndBuild + "WS_TUNNEL_ADDRESS: " + address + "\nWS_TUNNEL_PORT: 51830\nWS_TUNNEL_PEERS: []\n"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		m := guestMachine(map[string]string{
+			"lab":   "WS_TUNNEL_ADDRESS: 10.99.3.1/24\nWS_TUNNEL_PORT: 51821\n",
+			"build": "WS_TUNNEL_ADDRESS: 10.99.12.1/24\nWS_TUNNEL_PORT: 51822\n",
+		})
+		_, err = GuestTunnels(m, h.Tunnel, h.Incus.Guests)
+		if err == nil || strings.Count(err.Error(), " holds ") != len(want) {
+			t.Errorf("host %s: err = %v, want %q", address, err, want)
+			continue
+		}
+		for _, w := range want {
+			if !strings.Contains(err.Error(), w) {
+				t.Errorf("host %s: err = %v, want it to say %q", address, err, w)
+			}
+		}
+	}
+}
+
 func TestPeersOfOneNameInTwoTunnelsAreNoClash(t *testing.T) {
 	h := hostGuests(t)
 	m := guestMachine(map[string]string{

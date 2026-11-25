@@ -86,7 +86,8 @@ A host ends the tunnel of each guest in `WS_INCUS_GUESTS`, not the guest. The gu
 `/etc/ws/guests/NAME/values.yml`, give its slot, `WS_TUNNEL_ADDRESS`, its port and its peers. The
 address is the slot's `10.99.N.1/24`, N from 1: slot 0 is the host's own `wg0`. The values' check
 refuses a slot or a port that two tunnels share, the host's own among them, and a guest that sets
-no slot. These units run `ws ubuntu host tunnel guests`:
+no slot. The host's own tunnel holds each slot that its subnet overlaps. These units run
+`ws ubuntu host tunnel guests`:
 
 | Unit | What it does |
 | --- | --- |
