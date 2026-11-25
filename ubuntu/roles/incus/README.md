@@ -119,8 +119,9 @@ Root can open the file, on purpose alone. The host keeps `127.0.0.1:14317` open 
 process, as it does `14318`: Docker publishes a port and no socket. Closing it would take a filter
 by user, which a guest does not hold.
 
-**The socket's owner.** The device's own defaults, 0, 0 and 0644, would let any process open it, so
-the profile sets them by number. They are the IDs of `values.OtelcolID`, and the profile is shared,
+**The socket's owner.** The device's own defaults, 0, 0 and 0644, would admit root alone, as a
+connect needs write on the socket, and `otelcol-contrib` is not root. So the profile sets them by
+number. They are the IDs of `values.OtelcolID`, and the profile is shared,
 so they are fixed: the guest's role [otelcol](../otelcol/README.md) makes
 the account with them before the `.deb`.
 
