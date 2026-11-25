@@ -50,6 +50,9 @@ Each keylayout holds what its keys reach, and a test keeps it so. `ENG.keylayout
 five dead keys, which no key reached, their accents in the actions, their terminators and the JIS
 key map set, which no layout named. So no key types two units, and its `maxout` is 1.
 
+Each key map types F1 to F20 as `&#x0010;`, the code of a function key, and a test keeps it so.
+Ukelele's files left F17 to F20 out of most maps, where those keys typed no character.
+
 ## The icons
 
 `ENG.icns` and `RUS.icns` are the layouts' icons. macOS finds each by its keylayout's name, in
