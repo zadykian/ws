@@ -49,7 +49,8 @@ fi
 # The layout's files are root's at 644 and equal the role's, byte for byte.
 bundle='/Library/Keyboard Layouts/ws.bundle'
 for file in Contents/Info.plist Contents/version.plist Contents/Resources/ENG.keylayout \
-    Contents/Resources/RUS.keylayout; do
+    Contents/Resources/RUS.keylayout Contents/Resources/ENG.icns \
+    Contents/Resources/RUS.icns; do
     cmp -s "$bundle/$file" "macos/roles/keyboard/files/ws.bundle/$file" || {
         echo "::error::$bundle/$file is not the role's file"
         fail=1

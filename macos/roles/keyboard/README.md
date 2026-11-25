@@ -35,8 +35,9 @@ mise rejects two entries where one path holds the other, so no ID is on and off.
 
 `/Library/Keyboard Layouts/ws.bundle` is the maintainer's English and Russian layout, which
 Ukelele first wrote. Its files are in [`files/`](files/ws.bundle): `Info.plist`, `version.plist`,
-`ENG.keylayout` and `RUS.keylayout`. Each is a `file` unit of [`units.toml.tmpl`](units.toml.tmpl),
-root's, readable by all and copied byte for byte, with no mark of ws's, as a layout takes none.
+`ENG.keylayout`, `RUS.keylayout` and their icons. Each is a `file` unit of
+[`units.toml.tmpl`](units.toml.tmpl), root's, readable by all and copied byte for byte, with no
+mark of ws's, as a layout takes none.
 The test pins the units and each file's bytes. The bundle holds no `InfoPlist.strings`: Ukelele's
 two named each layout by its own name, which changed nothing.
 
@@ -48,6 +49,19 @@ trial 3 reads it so.
 Each keylayout holds what its keys reach, and a test keeps it so. `ENG.keylayout` lost Ukelele's
 five dead keys, which no key reached, their accents in the actions, their terminators and the JIS
 key map set, which no layout named. So no key types two units, and its `maxout` is 1.
+
+## The icons
+
+`ENG.icns` and `RUS.icns` are the layouts' icons. macOS finds each by its keylayout's name, in
+`Resources`, as Apple's TN2056 says. Each draws a square with round corners and cuts its letters
+out of it: `A` for ENG and `РУ` for RUS, as Apple's ABC and Russian icons do. Each is a template, as
+`TISIconIsTemplate` says: black with alpha, which macOS tints to fit the menu bar.
+
+A Go program drew them once, from DejaVu Sans Bold 2.37, and ws keeps the icons alone. The square
+fills the side, and its corners' radius is 7/32 of it. The letters stand in its middle, their cap
+height half the side. `РУ` is narrowed to 0.79 of its width, so that its ink spans 3/4 of the side.
+Each file holds `ic04` and `ic05`, 16 and 32 pixels in ARGB, and `ic11` and `ic12`, 32 and 64
+pixels in PNG, for a Retina screen. A test checks each entry, its side and its black.
 
 ## The input sources
 
