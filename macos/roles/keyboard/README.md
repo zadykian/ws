@@ -82,4 +82,10 @@ switch, and mise would find it changed at the next run.
 mise writes each array whole, and compares it element by element, in order, and by type: an ID is
 an integer, and a key order is no difference. It writes the preferences before ws's units, so
 that the sources name the layout for a moment before its files exist, and the log in reads both.
-Whether macOS writes the arrays back is for the first run on a real Mac to show.
+
+A layout of Apple's would come back from the login window's sources. The login window and
+FileVault's unlock type with the system's, such as Setup Assistant's ABC, which
+`/Library/Preferences/com.apple.HIToolbox.plist` holds. Neither ws nor mise writes that file: mise
+writes the user's preferences alone. If a log in carries ABC into the user's array, the array
+differs, and setup's plan says so after each log in.
+[Trial 3](../../checks/README.md#the-trials) shows whether macOS does so.
