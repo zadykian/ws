@@ -47,9 +47,8 @@ value = [
 ]
 
 # The hotkeys that stay on, each as its whole value of the type standard: [code, key, modifiers].
-# 64 is Spotlight on Option+Space and 61 the next input source on Command+Space. 160 takes
-# Command+L. A path into AppleSymbolicHotKeys keeps the IDs that macOS adds, which the whole
-# dictionary would drop.
+# 61 is the next input source, 64 Spotlight and 160 Launchpad. A path into AppleSymbolicHotKeys
+# keeps the IDs that macOS adds, which the whole dictionary would drop.
 [[bootstrap.settings.macos.defaults_entries]]
 domain = "com.apple.symbolichotkeys"
 key = "AppleSymbolicHotKeys"
@@ -69,7 +68,7 @@ path = ["160"]
 value = { enabled = true, value = { parameters = [108, 37, 1048576], type = "standard" } }
 
 # The hotkeys that go off, by their `enabled` alone: each keeps its `value`, and an ID that macOS
-# lacks gets a dictionary with `enabled` alone. 34 and 98 get no entry.
+# lacks gets a dictionary with `enabled` alone. 34 and 98 get no entry, and keep macOS's value.
 
 [[bootstrap.settings.macos.defaults_entries]]
 domain = "com.apple.symbolichotkeys"

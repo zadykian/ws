@@ -28,12 +28,19 @@ hotkey is an entry with a `path` into the dictionary, and mise changes that one 
 rest. A path that names an ID macOS lacks makes it.
 
 - On, by the ID's whole value, of the type `standard`: 61, the next input source, on Command+Space,
-  64, Spotlight, on Option+Space, and 160, on Command+L. mise compares the whole dictionary of an
-  ID, so a value with one key more reads as different, and a run writes it again.
+  64, Spotlight, on Option+Space, and 160, Launchpad, on Command+L. mise compares the whole
+  dictionary of an ID, so a value with one key more reads as different, and a run writes it again.
 - Off, by `enabled` alone: 63 IDs, which the test lists. The path ends in `enabled`, so the hotkey
-  keeps its `value` and turns on again with the key it had. 34 and 98 get no entry.
+  keeps its `value` and turns on again with the key it had.
+- As macOS has them, by no entry: 34 and 98. The maintainer keeps both on at macOS's own value and
+  key, which an entry would replace with ws's.
 
 mise rejects two entries where one path holds the other, so no ID is on and off.
+
+Launchpad is Apps since macOS 26. A hotkey of the system comes before an app's key, so Command+L
+no longer opens Safari's location or selects Zed's line. Only a Mac shows what Command+L opens on
+macOS 27, and what Safari and Zed lose: trial 4 of [the checks](../../checks/README.md#the-trials)
+notes both.
 
 ## The layout
 
