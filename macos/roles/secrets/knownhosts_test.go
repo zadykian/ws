@@ -138,6 +138,47 @@ func TestRecordHostKeyRefusesAKeyOfAnotherForm(t *testing.T) {
 	}
 }
 
+// dropLine is ssh-keygen's removal of lab's lines from the home /h's known_hosts.
+const dropLine = "ssh-keygen -R lab -f " + knownHosts
+
+func TestReplaceHostKeyDropsTheOldLinesFirst(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files[knownHosts] = []byte("box " + otherHost + "\nlab " + hostKey + "\n")
+	m.Results[dropLine] = effecttest.Result{}
+	if err := secrets.ReplaceHostKey(context.Background(), m, "/h", "lab", newerKey); err != nil {
+		t.Fatal(err)
+	}
+	drop, write := slices.Index(m.Calls, "run "+dropLine), slices.Index(m.Calls, "write "+knownHosts+" 600")
+	if drop < 0 || write < drop || !strings.HasSuffix(string(m.Files[knownHosts]), "\nlab "+newerKey+"\n") {
+		t.Errorf("calls %q, known_hosts %q: want lab's lines dropped, then its new line appended", m.Calls,
+			m.Files[knownHosts])
+	}
+}
+
+func TestReplaceHostKeyWritesNothingWhereItCannotDrop(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files[knownHosts] = []byte("lab " + hostKey + "\n")
+	m.Results[dropLine] = effecttest.Result{Err: errors.New("exit 255")}
+	err := secrets.ReplaceHostKey(context.Background(), m, "/h", "lab", newerKey)
+	if err == nil || slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "write") }) {
+		t.Errorf("ReplaceHostKey gives %v, calls %q; want the failed drop and no write", err, m.Calls)
+	}
+}
+
+func TestReplaceHostKeyRefusesALink(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/h/dotfiles/known_hosts"] = []byte("lab " + hostKey + "\n")
+	m.Links[knownHosts] = "/h/dotfiles/known_hosts"
+	err := secrets.ReplaceHostKey(context.Background(), m, "/h", "lab", newerKey)
+	if err == nil || !strings.Contains(err.Error(), "by hand") {
+		t.Errorf("ReplaceHostKey gives %v, want the link left by hand", err)
+	}
+	acts := func(c string) bool { return strings.HasPrefix(c, "run") || strings.HasPrefix(c, "write") }
+	if slices.ContainsFunc(m.Calls, acts) {
+		t.Errorf("ReplaceHostKey ran or wrote through a link: %q", m.Calls)
+	}
+}
+
 func TestScanHostKeyTakesTheEd25519Line(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results[scanLine] = effecttest.Result{Out: []byte("[192.0.2.7]:22022 " + hostKey + "\n")}

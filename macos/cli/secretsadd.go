@@ -47,6 +47,7 @@ func newSecretsAddCmd(p enginecli.Env, server *string) *cobra.Command {
 			"repository's read-only deploy key, titled with the hostname, and lands the change by a pull request " +
 			"once its checks pass. It then runs ws ubuntu guest setup --secrets on the server over ssh -t, which fetches " +
 			"the secrets on a first run. A guest has no address: its host reads its key and hostname, by incus exec, " +
+			"the key on each run and in place of an older one in known_hosts, " +
 			"and runs ws ubuntu host guests setup NAME --secrets, and --address and --port reach the host. Last, it prints each host key that the secrets hold and known_hosts " +
 			"gives no host, to drop by hand where no server holds it now. " +
 			"Each step changes nothing where it is done, so run it again where one fails.",
@@ -180,7 +181,7 @@ func addFlags(name, address string, port int) []string {
 // hostKey is the server's ed25519 host key that known_hosts holds under name. Where it holds none,
 // it scans the server at ssh's address. It records the scanned key once the user says that the
 // server's console prints the same fingerprint, as nothing else proves the key the server's. A
-// guest's host reads the guest's key, which known_hosts trusts as it trusts the host.
+// guest's host reads the guest's key on each run, which known_hosts trusts as it trusts the host.
 func hostKey(c *cobra.Command, p enginecli.Env, r reach) (string, error) {
 	ctx, m, home, name := c.Context(), p.Machine, p.Getenv("HOME"), r.name
 	if home == "" {
@@ -190,12 +191,10 @@ func hostKey(c *cobra.Command, p enginecli.Env, r reach) (string, error) {
 		if err := hostTrusted(c, p, r); err != nil {
 			return "", err
 		}
+		return guestHostKey(c, p, r)
 	}
 	if key, err := secrets.HostKey(ctx, m, home, name); err != nil || key != "" {
 		return key, err
-	}
-	if r.host != "" {
-		return guestHostKey(c, p, r)
 	}
 	host, port, err := sshAddress(ctx, m, r.target)
 	if err != nil {

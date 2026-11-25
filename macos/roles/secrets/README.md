@@ -180,8 +180,9 @@ a guest's file names, as a host holds no secret. The command:
 1. Takes NAME's ed25519 key from `~/.ssh/known_hosts`. Where it holds none, it scans the server,
    prints the key's fingerprint, and asks whether the server's console prints the same. A `yes`
    records the key under NAME, and any other answer, or a Ctrl-C, stops it with no change. A
-   guest's host reads the guest's key instead, and the Mac records it with no question, as it
-   trusts the host. It stops where `known_hosts` holds no key of the host: check the host's at its
+   guest's host reads the guest's key instead, on each run, and the Mac records it with no
+   question, as it trusts the host. The key read replaces an older one, as of a guest made again,
+   by `ssh-keygen -R`. It stops where `known_hosts` holds no key of the host: check the host's at its
    console first, as [ws's host key](../../runbook.md#wss-host-key) says.
 2. Reads the server's hostname by `ssh NAME hostname`, which must serve as a profile, as above.
 3. Lists the repository's deploy keys by gh, so that gh's login fails before a touch.

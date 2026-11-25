@@ -76,9 +76,10 @@ func hostTrusted(c *cobra.Command, p enginecli.Env, r reach) error {
 
 // guestHostKey reads the guest's ed25519 host key through its host, and records it in known_hosts
 // under the guest's name. No fingerprint is compared: the host that known_hosts trusts runs the
-// guest.
+// guest. So the key read replaces one that known_hosts holds, as of a guest made again.
 func guestHostKey(c *cobra.Command, p enginecli.Env, r reach) (string, error) {
-	out, err := p.Machine.Run(c.Context(), "ssh", r.command("cat", guestKeyFile)...)
+	ctx, home := c.Context(), p.Getenv("HOME")
+	out, err := p.Machine.Run(ctx, "ssh", r.command("cat", guestKeyFile)...)
 	if err != nil {
 		return "", fmt.Errorf("cannot read the host key of %s through %s by ssh: %w", r.name, r.host, err)
 	}
@@ -89,10 +90,25 @@ func guestHostKey(c *cobra.Command, p enginecli.Env, r reach) (string, error) {
 	if key == "" {
 		return "", fmt.Errorf("the guest %s offers no ed25519 host key", r.name)
 	}
-	if err := secrets.RecordHostKey(p.Machine, p.Getenv("HOME"), r.name, key); err != nil {
+	known, err := secrets.HostKey(ctx, p.Machine, home, r.name)
+	switch {
+	case err != nil:
+		return "", err
+	case known == key:
+		return key, nil
+	case known == "":
+		err = secrets.RecordHostKey(p.Machine, home, r.name, key)
+	default:
+		err = secrets.ReplaceHostKey(ctx, p.Machine, home, r.name, key)
+	}
+	if err != nil {
 		return "", err
 	}
-	_, _ = fmt.Fprintf(c.ErrOrStderr(), "recorded the host key of %s, which %s read, in %s\n", r.name, r.host,
-		secrets.KnownHosts(p.Getenv("HOME")))
+	done := "recorded"
+	if known != "" {
+		done = "replaced the older key by"
+	}
+	_, _ = fmt.Fprintf(c.ErrOrStderr(), "%s the host key of %s, which %s read, in %s\n", done, r.name, r.host,
+		secrets.KnownHosts(home))
 	return key, nil
 }
