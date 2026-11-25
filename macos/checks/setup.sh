@@ -58,6 +58,10 @@ dock_order() {
 go_of_mise() {
     local want out
     want=$(sed -n 's/^go = "\([^"]*\)".*/\1/p' "$tree/macos/roles/devtools/mise.macos.toml")
+    [ -n "$want" ] || {
+        echo "devtools' file names no Go version"
+        return 1
+    }
     out=$(cd "$HOME" && zsh -lc 'go version') || return 1
     case $out in
     "go version go$want darwin/arm64") ;;

@@ -39,12 +39,20 @@ inside() {
 # stub NAME BODY writes a program that the scripts find first on the PATH.
 stub() { printf '#!/bin/sh\n%s\n' "$2" >"$tmp/bin/$1" && chmod +x "$tmp/bin/$1"; }
 
-# nofail NAME... runs a script's check and succeeds where it prints no FAIL line.
+# nofail NAME... runs a script's check, and succeeds where it ends with 0, prints an ok line and
+# no FAIL line. A check that crashes, or that is not there, exits other than 0.
 nofail() {
     local out
-    out=$(inside "$@" 2>&1)
-    ! grep -q '^FAIL' <<<"$out"
+    out=$(inside "$@" 2>&1) || return 1
+    grep -q '^ok ' <<<"$out" && ! grep -q '^FAIL' <<<"$out"
 }
+dies() {
+    pass "a first check"
+    # shellcheck disable=SC2154 # unset on purpose, so that set -u ends the check
+    : "$no_such_variable"
+}
+expect "a check that dies under set -u" fail nofail setup.sh dies
+expect "a check that is not there" fail nofail setup.sh check_none
 
 # ws and mise exit as the variables say.
 stub ws 'exit "${PLAN:-0}"'
@@ -63,6 +71,23 @@ for f in $(inside setup.sh formulae); do mkdir "$tmp/brew/opt/$f"; done
 expect "formulae that all stand" ok inside setup.sh missing_formulae
 expect "apps that stand nowhere" fail inside setup.sh missing_apps
 
+# A tree of the test's own, whose apps stand under its directory.
+mkdir -p "$tmp/tree/macos/roles/apps" "$tmp/tree/macos/roles/devtools" "$tmp/apps/Dock.app" "$tmp/apps/Login Item.app"
+cat >"$tmp/tree/macos/roles/apps/mise.apps.toml" <<APPS
+[bootstrap.settings.macos.dock]
+apps = [
+    "$tmp/apps/Dock.app",
+]
+
+[bootstrap.settings.macos.login_items]
+apps = [
+    "$tmp/apps/Login Item.app",
+]
+APPS
+WS_TREE=$tmp/tree expect "apps that all stand" ok inside setup.sh missing_apps
+rmdir "$tmp/apps/Login Item.app"
+WS_TREE=$tmp/tree expect "a login item's app that is gone" fail inside setup.sh missing_apps
+
 # defaults prints the Dock's apps URL-encoded, a pair of lines each.
 inside setup.sh dock_apps | while IFS= read -r app; do
     printf '                "_CFURLString" = "file://%s/";\n' "$(printf '%s' "$app" | sed 's/ /%20/g')"
@@ -73,11 +98,17 @@ stub defaults 'cat "$DOCK"'
 DOCK=$tmp/dock expect "the Dock in order" ok inside setup.sh dock_order
 DOCK=$tmp/dock-back expect "the Dock in another order" fail inside setup.sh dock_order
 
-go_want=$(sed -n 's/^go = "\([^"]*\)".*/\1/p' "$dir/../roles/devtools/mise.macos.toml")
-stub zsh 'case "$1" in -lc) echo "go version go'"$go_want"' darwin/arm64" ;; *) cat "$ZSH_OUT" ;; esac'
+# The lock's Go, read apart from the script's read of devtools' file, which must find the same.
+go_lock=$(awk '/^\[\[tools\.go\]\]/ { on = 1; next } on && /^version/ { gsub(/^[^"]*"|".*$/, ""); print; exit }' \
+    "$dir/../mise/mise.macos.lock")
+expect "the lock names Go's version" ok test -n "$go_lock"
+stub zsh 'case "$1" in -lc) echo "go version go'"$go_lock"' darwin/arm64" ;; *) cat "$ZSH_OUT" ;; esac'
 expect "the lock's Go in a login shell" ok inside setup.sh go_of_mise
 stub zsh 'echo "go version go0.0.1 darwin/arm64"'
 expect "another Go in a login shell" fail inside setup.sh go_of_mise
+printf '[tools]\ngo = { version = "%s" }\n' "$go_lock" >"$tmp/tree/macos/roles/devtools/mise.macos.toml"
+stub zsh 'echo "go version go darwin/arm64"'
+WS_TREE=$tmp/tree expect "a Go pin that the script cannot read" fail inside setup.sh go_of_mise
 
 # sfltool's dump holds a record a login item, and the app's own record apart.
 cat >"$tmp/btm" <<'BTM'
@@ -155,6 +186,7 @@ DEF
 inside prefs.sh types >"$tmp/types"
 TYPES=$tmp/types expect "preferences of the types the roles write" ok nofail prefs.sh check2
 sed 's/|tilesize|integer|/|tilesize|float|/' "$tmp/types" >"$tmp/types-float"
+TYPES=$tmp/types-float expect "preferences with one of another type" fail nofail prefs.sh check2
 TYPES=$tmp/types-float expect "a tilesize of another type" fail inside prefs.sh pref com.apple.dock tilesize integer 74
 TYPES=$tmp/types expect "a mismatched value" fail inside prefs.sh pref com.apple.dock tilesize integer 75
 
