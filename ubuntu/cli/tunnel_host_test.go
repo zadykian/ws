@@ -32,8 +32,9 @@ func TestTheHostRunsItsOwnTunnelAndEachGuestsInOrder(t *testing.T) {
 			t.Fatalf("units %q, want %s before %s", names, order[i-1], order[i])
 		}
 	}
-	if at("guard/tunnel-guests") < at("state/incus-guests") {
-		t.Errorf("units %q, want the guests' tunnels after the guests", names)
+	// A guest can fail its own setup: the tunnels' changes, a peer's new key among them, come first.
+	if at("guard/tunnel-guests") < at("state/incus-owned") || at("state/tunnel-guest-ufw") > at("state/incus-guests") {
+		t.Errorf("units %q, want the guests' tunnels after the guests' tables, and before the guests' setups", names)
 	}
 }
 
