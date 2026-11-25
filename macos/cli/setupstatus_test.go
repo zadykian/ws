@@ -44,6 +44,9 @@ func TestSetupPlanAsksMisesStatusAfterAPlanWithNothingToDo(t *testing.T) {
 				t.Errorf("stderr = %q", stderr)
 			}
 			noWrites(t, m)
+			if slices.Contains(m.Calls, "run "+appsLine) {
+				t.Errorf("the plan ran the apps: %q", m.Calls)
+			}
 		})
 	}
 }
@@ -58,5 +61,8 @@ func TestSetupPlanAsksNoStatusWhereThePlanHasAChange(t *testing.T) {
 	}
 	if indexOf(m, "run "+appsBase+" status") >= 0 {
 		t.Errorf("the status ran: %q", m.Calls)
+	}
+	if slices.Contains(m.Calls, "run "+appsLine) {
+		t.Errorf("the plan ran the apps: %q", m.Calls)
 	}
 }
