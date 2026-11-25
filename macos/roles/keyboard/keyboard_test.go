@@ -202,7 +202,7 @@ func TestTheInputSourcesAreTheLayoutsAlone(t *testing.T) {
 // TestTheInputSourcesNameTheBundlesLayouts keeps each source's ID and name to the layout that the
 // bundle's files hold: a keylayout's id and name, and the bundle's info for it.
 func TestTheInputSourcesNameTheBundlesLayouts(t *testing.T) {
-	const resources = "files/KeyboardLayout.bundle/Contents/"
+	const resources = source + "Contents/"
 	info := roleFile(t, resources+"Info.plist")
 	for name, id := range map[string]string{"ENG": "-20611", "RUS": "-21268"} {
 		layout := roleFile(t, resources+"Resources/"+name+".keylayout")

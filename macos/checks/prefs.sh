@@ -89,8 +89,8 @@ check2() {
 }
 
 # layout_src is the role's copy of the layout, and bundle is where the Mac keeps it.
-layout_src=$tree/macos/roles/keyboard/files/KeyboardLayout.bundle
-bundle=${WS_LAYOUT:-/Library/Keyboard Layouts/KeyboardLayout.bundle}
+layout_src=$tree/macos/roles/keyboard/files/ws.bundle
+bundle=${WS_LAYOUT:-/Library/Keyboard Layouts/ws.bundle}
 
 # layout_file FILE succeeds where the Mac's FILE of the bundle is root's at 644 and the role's.
 layout_file() {
