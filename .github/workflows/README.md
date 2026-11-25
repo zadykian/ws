@@ -93,7 +93,8 @@ Keychain's program in `/opt/homebrew/bin`, and `docker compose` and `docker buil
 [desktop](../../macos/roles/desktop/README.md): some of its preferences must read back with the type
 that mise wrote, the current host's screen saver delay among them. Case 81 checks
 [the keyboard](../../macos/roles/keyboard/README.md): the hotkeys that stay on and some that go off
-must read back. So must Caps Lock's mapping to Control and the indicator's string. The layout's
+must read back with their types, and so must the indicator's string. Caps Lock's mapping to Control
+must read back by value, as `defaults` prints its integers with no type. The layout's
 files must be root's at 644 and equal the role's, and the two arrays of input sources must read back
 with their types. Case 86 checks
 [.NET's SDKs](../../macos/roles/dotnet/README.md):

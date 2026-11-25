@@ -1,8 +1,7 @@
 #!/bin/bash
-# mise bootstrap (28-bootstrap.sh) wrote macos/roles/desktop's preferences. The later plans and
-# statuses say that each is in sync. This case reads some back with their types, as defaults
-# prints them, so that a preference of another type has a name here. The Dock and Finder stay as
-# they are: mise restarts neither.
+# mise bootstrap (28-bootstrap.sh) wrote macos/roles/desktop's preferences, which later plans call
+# in sync. This case reads some back with their types, as defaults read-type prints them, the
+# current host's screen saver delay among them. The Dock and Finder run on: mise restarts neither.
 
 set -eo pipefail
 
@@ -39,9 +38,10 @@ NSGlobalDomain|com.apple.sound.uiaudio.enabled|integer|0
 EOT
 
 # The screen saver's delay is the current host's.
+type=$(defaults -currentHost read-type com.apple.screensaver idleTime 2>/dev/null | sed 's/^Type is //') || type=
 idle=$(defaults -currentHost read com.apple.screensaver idleTime 2>/dev/null) || idle=
-[ "$idle" = 7200 ] || {
-    echo "::error::the current host's screen saver idleTime is '$idle', not 7200"
+[ "$type" = integer ] && [ "$idle" = 7200 ] || {
+    echo "::error::the current host's screen saver idleTime is '$idle' ($type), not 7200 (integer)"
     fail=1
 }
 exit "$fail"
