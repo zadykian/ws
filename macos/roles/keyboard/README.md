@@ -41,6 +41,10 @@ mark of ws's, as a layout takes none. The test pins the units and each file's by
 holds no `InfoPlist.strings`: Ukelele's two named each layout by its own name, which changed
 nothing.
 
+Each keylayout holds what its keys reach, and a test keeps it so. `ENG.keylayout` lost Ukelele's
+five dead keys, which no key reached, their accents in the actions, their terminators and the JIS
+key map set, which no layout named. So no key types two units, and its `maxout` is 1.
+
 ## The input sources
 
 `com.apple.inputsources` names the layout's two sources in `AppleEnabledThirdPartyInputSources`:
