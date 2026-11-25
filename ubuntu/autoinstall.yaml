@@ -15,7 +15,7 @@ autoinstall:
   drivers:
     install: false
   # No identity and no network. The installer's default is DHCP on each wired port, which fits
-  # the cable's port: its check refuses a glob that fits other ports (ubuntu/cable/README.md).
+  # the cable's port: its check refuses a glob that fits other ports (ubuntu/roles/cable/README.md).
   ssh:
     install-server: true
     allow-pw: false

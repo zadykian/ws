@@ -132,8 +132,9 @@ ufw opens each tunnel's UDP port, the host's own included, and routes each inter
 It denies any input on `wgN`, inserted first, so no service of the host's answers a peer, SSH
 included. ufw's own rules for ICMP echo and DHCP come ahead of the deny. Each tunnel's rules carry a
 comment of their own, `tunnel wgN: ...`. A tunnel that no guest holds loses its port and route
-rules, but not its deny: the interface and its peers stay. What a peer reaches in the guest is the
-ingress ACL's ([incus](../incus/README.md#the-ingress-acl)).
+rules, but not its deny. Its interface, key and peers stay until `ws ubuntu host guests remove`
+deletes them with the guest, so that the next guest of the slot takes none of them. What a peer
+reaches in the guest is the ingress ACL's ([incus](../incus/README.md#the-ingress-acl)).
 
 ## The firewall
 

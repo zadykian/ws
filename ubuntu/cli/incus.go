@@ -65,10 +65,12 @@ func incusIngress(p enginecli.Env) *cobra.Command {
 // incusGuests returns ws ubuntu host incus guests. It launches or edits each guest of the host's
 // list, starts a stopped one, and sets each up.
 func incusGuests(p enginecli.Env) *cobra.Command {
-	return procedure("guests", "launch, edit and start each guest of WS_INCUS_GUESTS",
+	return procedure("guests", "launch, edit, start and set up each guest of WS_INCUS_GUESTS",
 		"It reads each guest from incus, launches the one that is missing from the image, and edits the keys "+
 			"that ws declares where they differ: its limits, its NIC at its address and its disk's quota. It starts "+
-			"a guest that is stopped. A guest of ws's that the list lacks gets a warning, and is never deleted.",
+			"a guest that is stopped. A guest of ws's that the list lacks gets a warning, and is never deleted.\n\n"+
+			"It then pushes the host's ws and the guest's own values into each guest where they differ, and runs "+
+			"the guest's ws ubuntu guest setup where the guest's own plan finds a change, for up to an hour.",
 		func(ctx context.Context, out effect.Out) ([]resource.Resource, error) {
 			v, err := values.LoadHost(p.Machine, hostVars)
 			if err != nil {

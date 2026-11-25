@@ -48,7 +48,8 @@ func newValuesCmd(p enginecli.Env, side valuesSide) *cobra.Command {
 		Short: "write one key of " + side.file,
 		Long: "An empty VALUE takes the key's line out, which gives its default back. A list's VALUE is split by " +
 			"commas. A table stays the file's to edit by hand.\n\n" +
-			"The next mise bootstrap takes the key.",
+			"The next mise bootstrap takes the key. WS_SELF_CONTAINED waits for the next ws ubuntu guest setup, " +
+			"as the units read the mode from the miserc that setup alone writes.",
 		Args: cobra.ExactArgs(2),
 		RunE: func(c *cobra.Command, args []string) error { return runValuesSet(c, p, side, args[0], args[1]) },
 	})
