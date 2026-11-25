@@ -54,9 +54,9 @@ dies() {
 expect "a check that dies under set -u" fail nofail setup.sh dies
 expect "a check that is not there" fail nofail setup.sh check_none
 
-# ws and mise exit as the variables say.
+# ws and mise exit as the variables say, and mise prints MISE_OUT's file where one is named.
 stub ws 'exit "${PLAN:-0}"'
-stub mise 'exit "${STATUS:-0}"'
+stub mise '[ -z "${MISE_OUT:-}" ] || cat "$MISE_OUT"; exit "${STATUS:-0}"'
 PLAN=0 expect "a plan that exits 0" ok inside setup.sh plan_zero
 PLAN=2 expect "a plan that exits 2" fail inside setup.sh plan_zero
 STATUS=1 expect "a status that exits 1" fail inside setup.sh status_zero
@@ -190,10 +190,37 @@ for ask in "[oh-my-zsh] Insecure completion-dependent directories detected:" \
     printf '%s\n' "$(cat "$tmp/zsh-ok")" "$ask" >"$tmp/zsh-ask"
     ZSH_OUT=$tmp/zsh-ask expect "a shell that prints: $ask" fail nofail setup.sh check10
 done
+
+# mise's status prints a row a login item, its state last, with no heading off a terminal.
+inside setup.sh login_apps | while IFS= read -r app; do
+    printf 'login items  %s    set\n' "$app"
+done >"$tmp/status-set"
+printf 'packages     brew-cask:spotify  latest  missing\n' >>"$tmp/status-set"
+{
+    cat "$tmp/status-set"
+    printf 'login items  /Applications/Spotify.app    undeclared\n'
+} >"$tmp/status-undeclared"
+sed 's|^\(login items  /Applications/Claude.app *\)set$|\1missing|' "$tmp/status-set" >"$tmp/status-missing"
+grep -v '^login items' "$tmp/status-set" >"$tmp/status-none"
+MISE_OUT=$tmp/status-set expect "each login item set" ok inside setup.sh login_status
+MISE_OUT=$tmp/status-undeclared expect "an app's own login item" fail inside setup.sh login_status
+MISE_OUT=$tmp/status-missing expect "a login item that is missing" fail inside setup.sh login_status
+MISE_OUT=$tmp/status-none expect "a status with no login item" fail inside setup.sh login_status
+MISE_OUT=$tmp/status-set STATUS=1 expect "a status that fails" fail inside setup.sh login_status
+
+export MISE_OUT=$tmp/status-set
 BTM=$tmp/btm-once expect "seven login items that open once" ok nofail setup.sh check5
 BTM=$tmp/btm-twice expect "a login item that opens twice" fail nofail setup.sh check5
 only_claude() { [ "$(inside setup.sh check5 2>&1 | grep '^FAIL 5 .* opens once')" = "FAIL 5 Claude.app opens once at login: 2 records name it as a login item" ]; }
 BTM=$tmp/btm-twice expect "only Claude opens twice" ok only_claude
+{
+    cat "$tmp/btm-once"
+    printf ' #10:\n Type: login item (0x4)\n URL: file:///Applications/Spotify.app/\n'
+} >"$tmp/btm-other"
+other() { inside setup.sh check5 | grep -qxF "info 5 the dump's login items outside the role: file:///Applications/Spotify.app/;"; }
+BTM=$tmp/btm-other expect "an item outside the role, noted" ok other
+BTM=$tmp/btm-other expect "an item outside the role, which fails nothing" ok nofail setup.sh check5
+unset MISE_OUT
 
 # The preferences' types come from defaults read-type, as the real tool prints them.
 cat >"$tmp/bin/defaults" <<'DEF'

@@ -104,13 +104,33 @@ btm_logins() {
 # APP's own counts apart.
 btm_count() { btm_logins "$2" | grep -cxF "file://$1/"; }
 
+# login_status succeeds where mise's status finds each login item set, and none undeclared. An
+# undeclared one is an app's own item of the shared list, which exclusive takes away at each run.
+login_status() {
+    local out rows
+    out=$("$mise" -C "$tree/macos" -E ws,apps bootstrap status 2>&1) || {
+        printf '%s\n' "$out" | tail -n 1
+        return 1
+    }
+    rows=$(grep '^login items' <<<"$out")
+    [ -n "$rows" ] || {
+        echo "mise's status lists no login item"
+        return 1
+    }
+    rows=$(grep -v ' set$' <<<"$rows")
+    [ -z "$rows" ] || {
+        printf '%s\n' "$rows" | tr -s ' ' | tr '\n' ';'
+        return 1
+    }
+}
+
 check5() {
-    local dump app name n
+    local dump app name n others
     dump=$(sudo sfltool dumpbtm 2>&1) || {
         fail "5 sfltool dumpbtm answers" "$(printf '%s' "$dump" | tail -n 1)"
         return
     }
-    check "5 mise's status holds the login items" status_zero
+    check "5 mise's status finds each login item set, and none undeclared" login_status
     while IFS= read -r app; do
         name=${app##*/}
         n=$(btm_count "$app" "$dump")
@@ -122,7 +142,8 @@ check5() {
     check "5 Logi's agent runs" pgrep -f logioptionsplus_agent
     check "5 Rectangle Pro runs" pgrep -x "Rectangle Pro"
     check "5 Stats runs" pgrep -x Stats
-    info "login items in the dump: $(grep -c 'Type:.*login item' <<<"$dump")"
+    others=$(btm_logins "$dump" | grep -vxF -f <(login_apps | sed 's|.*|file://&/|') | sort -u | tr '\n' ';')
+    info "5 the dump's login items outside the role: ${others:-none}"
 }
 
 check10() {

@@ -116,19 +116,28 @@ Run them in this order. Trials 1 and 2 first, as a first run puts every later tr
   160 would leave the status different for good: `prefs.sh 2` shows it.
 - A failure changes: keyboard's entries. A hotkey that macOS keeps on goes out of the off list.
 
-**5. The login items open once, and the agents run.**
+**5. The login items open once, the agents run, and no app adds an item of its own.**
 
-- Where: the Mac, after a log in. `setup.sh 5`.
-- It checks: `sudo sfltool dumpbtm` holds one login item for each of the seven apps. mise's status
-  holds them. Secretive's agent, Logi's, Rectangle Pro and Stats run.
-- Passes: every line is `ok`. By hand, System Settings, General, Login Items shows the seven items,
-  and an item that Rectangle Pro or Claude added at its first launch is gone: `exclusive` removed it.
-  Stats opens no setup window, and shows in one item of the menu bar the CPU and the memory as bar
-  charts and the network's speed.
+- Where: the Mac. Start each app that a cask of `apps` installs once, and quit it. Log out and in,
+  then run `setup.sh 5`.
+- It checks: `sudo sfltool dumpbtm` holds one login item for each of the seven apps, whose URL is
+  the app's path whole. mise's status finds each of the seven `set`, and no item `undeclared`.
+  Secretive's agent, Logi's, Rectangle Pro and Stats run. It prints the dump's login items that the
+  role does not name.
+- Passes: every line is `ok`. By hand, System Settings, General, Login Items shows the seven items.
+  An app's own item of the shared list, `LSSharedFileList`, is gone: `exclusive` removed it. An item
+  that an app registered by `SMAppService` stays, as [apps](../roles/apps/README.md) says: note it
+  from the `info` line. Stats opens no setup window, and shows in one item of the menu bar the CPU
+  and the memory as bar charts and the network's speed.
+- Record: each cask whose app added an item at its first start, and by which of the two. An
+  `undeclared` row names an item of the shared list. Run `ws macos setup`, start that app again,
+  and run `setup.sh 5`. Where the row comes back, the app adds it at each start, and setup's plan
+  never reads 0.
 - If Secretive's agent is a login item that `sfltool` shows and mise's status does not, add its app
   to `apps` in `mise.apps.toml`. mise reads `LSSharedFileList` alone. The records' format is
   macOS's, so where every count is 0, read the dump first: the match is the script's.
-- A failure changes: [apps](../roles/apps/README.md)'s `login_items`.
+- A failure changes: [apps](../roles/apps/README.md)'s `login_items`. An app that adds its item
+  back at each start has its own open-at-login turned off, or the role drops `exclusive`.
 
 **6. Updates are off, and the display stays on.**
 
