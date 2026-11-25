@@ -144,6 +144,31 @@ func RecordHostKey(m effect.Machine, home, name, key string) error {
 	return nil
 }
 
+// ReplaceHostKey puts name's line with key in place of the lines that home's known_hosts holds of
+// name. ssh-keygen -R drops them, a hashed one too, before the line is appended. A link is left
+// to the maintainer, as ssh-keygen would put a file in its place.
+func ReplaceHostKey(ctx context.Context, m effect.Machine, home, name, key string) error {
+	if !values.IsName(name) {
+		return fmt.Errorf("%s is not a server's name: %s", name, values.NameForm)
+	}
+	if !hostKeyForm.MatchString(key) {
+		return fmt.Errorf("the host key of %s is not ssh-ed25519 BASE64", name)
+	}
+	file := KnownHosts(home)
+	info, err := m.Stat(file)
+	if err != nil {
+		return fmt.Errorf("cannot stat %s: %w", file, err)
+	}
+	if info.Link != "" {
+		return fmt.Errorf("%s is a link to %s: put the line %s %s there in place of %s's by hand", file, info.Link,
+			name, key, name)
+	}
+	if _, err := m.Run(ctx, "ssh-keygen", "-R", name, "-f", file); err != nil {
+		return fmt.Errorf("ssh-keygen cannot drop %s from %s: %w", name, file, err)
+	}
+	return RecordHostKey(m, home, name, key)
+}
+
 // ScanHostKey reads the ed25519 host key that the server at host and port offers, as
 // "ssh-ed25519 BASE64". Nothing proves it the server's yet: the maintainer compares its
 // fingerprint at the server's console.

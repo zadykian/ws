@@ -96,8 +96,9 @@ before it. A cloud VM takes the keys its provider holds, which must be the accou
    Give the value on standard input, never as an argument. Commit the changed file, signed, push
    the branch and open a pull request by `gh pr create`. Once `values` and `gitleaks` pass, merge
    it by `gh pr merge --merge --delete-branch`. Then, for each server NAME that reads the value,
-   run `ws macos secrets add NAME`, which runs `ws ubuntu guest setup --secrets` there
-   ([The task](../ubuntu/roles/secrets/README.md#the-task)).
+   run `ws macos secrets add NAME`, which runs the setup with the secrets there, through its host
+   for a guest ([ws macos secrets add](roles/secrets/README.md#ws-macos-secrets-add),
+   [The task](../ubuntu/roles/secrets/README.md#the-task)).
 
 ## ws's host key
 

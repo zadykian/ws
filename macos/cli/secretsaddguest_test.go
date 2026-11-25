@@ -66,6 +66,10 @@ func TestSecretsAddRefusesAGuestWhoseHostKnownHostsLacks(t *testing.T) {
 		t.Errorf("status = %d, stderr = %q, cloned = %v; want 1, no host key and no clone", status, stderr,
 			cloned(mac.Calls))
 	}
+	// add refuses the host, so the hint is the runbook's check at the host's console.
+	if strings.Contains(stderr, "secrets add ws") || !strings.Contains(stderr, "ws's host key") {
+		t.Errorf("stderr = %q, want the runbook's console check and no add of the host", stderr)
+	}
 	for _, call := range mac.Calls {
 		if strings.HasPrefix(call, "run ssh ") || strings.HasPrefix(call, "run ssh -t ") {
 			t.Errorf("add reached a host that known_hosts does not hold: %q", call)
@@ -73,15 +77,45 @@ func TestSecretsAddRefusesAGuestWhoseHostKnownHostsLacks(t *testing.T) {
 	}
 }
 
-func TestSecretsAddTakesTheKnownKeyOfAGuest(t *testing.T) {
+func TestSecretsAddRefusesAHost(t *testing.T) {
+	p, mac := addFixture(nil)
+	mac.Machine.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_HOST", "ws", "WS_SLOT", "1"))
+	status, _, stderr := addWs(p, "", "ws")
+	if status != 1 || !strings.Contains(stderr, "ws is the host of lab") {
+		t.Errorf("add of a host: status = %d, stderr = %q; want 1 and the host refused", status, stderr)
+	}
+	if i := callAt(mac.Calls, "run "); i >= 0 {
+		t.Errorf("add of a host ran %q, want nothing run", mac.Calls[i])
+	}
+}
+
+func TestSecretsAddKeepsTheKnownKeyOfAGuest(t *testing.T) {
 	mac, add := guestFixture()
 	mac.Machine.Files[knownHosts] = []byte("ws " + wsKey + "\nlab " + labKey + "\n")
 	mac.Results[findLab] = effecttest.Result{Out: []byte("# Host lab found: line 2\nlab " + labKey + "\n")}
 	if status, _, stderr := add(""); status != 0 {
 		t.Fatalf("add of a guest: status = %d, stderr = %q", status, stderr)
 	}
-	if slices.Contains(mac.Calls, "run "+guestKeyLine) {
-		t.Errorf("add read the key of a guest that known_hosts holds: %q", mac.Calls)
+	if !slices.Contains(mac.Calls, "run "+guestKeyLine) || callAt(mac.Calls, "write "+knownHosts) >= 0 {
+		t.Errorf("calls %q: want the guest's key read through its host, and known_hosts left as it is", mac.Calls)
+	}
+}
+
+// A guest made again under its name offers a new key, which its host reads in place of the older
+// one that known_hosts holds. The older one would land nothing, and the guest could not decrypt.
+func TestSecretsAddReplacesTheChangedKeyOfAGuest(t *testing.T) {
+	mac, add := guestFixture()
+	mac.Machine.Files[knownHosts] = []byte("ws " + wsKey + "\nlab " + olderKey + "\n")
+	mac.Results[findLab] = effecttest.Result{Out: []byte("# Host lab found: line 2\nlab " + olderKey + "\n")}
+	drop := "ssh-keygen -R lab -f " + knownHosts
+	mac.Results[drop] = effecttest.Result{}
+	status, _, stderr := add("")
+	if status != 0 || !strings.Contains(stderr, "replaced the older key by the host key of lab") {
+		t.Fatalf("add of a rebuilt guest: status = %d, stderr = %q", status, stderr)
+	}
+	at := callAt(mac.Calls, drop)
+	if at < 0 || callAt(mac.Calls, "write "+knownHosts) < at || !slices.Contains(mac.Calls, "run "+postLine) {
+		t.Errorf("calls %q: want lab's older key dropped, its new one recorded and kept as the deploy key", mac.Calls)
 	}
 }
 
