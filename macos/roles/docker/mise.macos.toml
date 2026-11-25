@@ -1,11 +1,18 @@
 # Docker's command line and colima, as mise's formulae, which need no Homebrew. A formula takes
 # the latest alone. docker-buildx and docker-compose are Docker's plugins, which config.json finds,
 # and docker-credential-helper holds osxkeychain's program. mise's registry lacks the last two, so
-# brew holds all five. A unit of ws's seeds the CLI's config.
+# brew holds all five.
 [bootstrap.packages]
 "brew:colima" = "latest"
 "brew:docker" = "latest"
 "brew:docker-buildx" = "latest"
 "brew:docker-compose" = "latest"
 "brew:docker-credential-helper" = "latest"
-"ws:file/docker-config" = "in-sync"
+
+# The CLI's config, written where none is and the user's after. A JSON file takes no comment, so
+# README.md says what it holds, and that the status shows a missing one where the plan does not.
+[dotfiles."~/.docker/config.json"]
+source = "files/config.json"
+mode = "copy"
+permissions = "0600"
+create_if_missing = true

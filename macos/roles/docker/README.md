@@ -21,11 +21,10 @@ upgrade` upgrades them. mise's registry lacks the last two of the list, so brew 
 
 ## The CLI's config
 
-`file/docker-config` seeds `~/.docker/config.json`, the user's and 0600, where none is, and never
-reads it after. It holds two keys. `cliPluginsExtraDirs` is `["/opt/homebrew/lib/docker/cli-plugins"]`,
-where the formulae link buildx and compose, and `docker` finds them nowhere else. `credsStore`
-is `osxkeychain`, which keeps registry logins in the Keychain through
-`docker-credential-osxkeychain`.
-
-The unit is no `[dotfiles]` entry, as the Mac's config holds none
-([specs_test.go](../../cli/specs_test.go)), and a clean Mac has no file to keep.
+A `[dotfiles]` entry seeds `~/.docker/config.json`, the user's and 0600. As
+`create_if_missing`, mise writes where no file is and leaves the user's changes. The file holds two
+keys. `cliPluginsExtraDirs` is `["/opt/homebrew/lib/docker/cli-plugins"]`, where the formulae link
+buildx and compose, and `docker` finds them nowhere else. `credsStore` is `osxkeychain`, which
+keeps registry logins in the Keychain through `docker-credential-osxkeychain`.
+`bootstrap status --missing` shows a missing file, and the plan does not
+([Root's paths](../frame/README.md#roots-paths)).
