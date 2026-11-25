@@ -202,7 +202,7 @@ stub stat 'echo "${OWNER:-root 644}"'
 expect "a file of the layout as the role has it" ok inside prefs.sh layout_file ./Contents/Info.plist
 OWNER="v 644" expect "a file of the layout that v owns" fail inside prefs.sh layout_file ./Contents/Info.plist
 OWNER="root 600" expect "a file of the layout at 600" fail inside prefs.sh layout_file ./Contents/Info.plist
-expect "a bundle of the role's six files alone" ok inside prefs.sh layout_alone
+expect "a bundle of the role's files alone" ok inside prefs.sh layout_alone
 printf x >>"$tmp/layout/Contents/Info.plist"
 expect "a file that differs from the role's" fail inside prefs.sh layout_file ./Contents/Info.plist
 cp "$dir/../roles/keyboard/files/KeyboardLayout.bundle/Contents/Info.plist" "$tmp/layout/Contents/Info.plist"

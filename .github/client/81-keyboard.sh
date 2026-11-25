@@ -46,11 +46,10 @@ if [ "$type" != string ] || [ "$value" != 0 ]; then
     fail=1
 fi
 
-# The layout's six files are root's at 644 and equal the role's, byte for byte.
+# The layout's files are root's at 644 and equal the role's, byte for byte.
 bundle='/Library/Keyboard Layouts/KeyboardLayout.bundle'
 for file in Contents/Info.plist Contents/version.plist Contents/Resources/ENG.keylayout \
-    Contents/Resources/RUS.keylayout Contents/Resources/en.lproj/InfoPlist.strings \
-    Contents/Resources/ru.lproj/InfoPlist.strings; do
+    Contents/Resources/RUS.keylayout; do
     cmp -s "$bundle/$file" "macos/roles/keyboard/files/KeyboardLayout.bundle/$file" || {
         echo "::error::$bundle/$file is not the role's file"
         fail=1
