@@ -237,19 +237,29 @@ installed. `/var/log/ws-tunnel.NAME.log` has a line for each switch and failure.
 A connection to `ws` outlives a switch. Zed has [its page](roles/zed/README.md).
 
 The tunnel's end on the Mac runs in userspace, and wireguard-go on macOS moves one packet a read and
-a write. So the tunnel may fall short of the cable's 2.5 Gbit/s. To measure it, on ws, install
-iperf3 from apt, and run the server on the tunnel's address alone, so that no other network reaches
+a write. So the tunnel may fall short of the cable's 2.5 Gbit/s. To measure it, use a guest,
+which holds no filter ([No filter](../ubuntu/roles/security/README.md#no-filter)). Install iperf3
+there from apt, and run the server on the tunnel's address alone, so that no other network reaches
 it:
 
 ```sh
 iperf3 -s -B 10.99.N.1
 ```
 
-then, on the Mac, run `iperf3 -c 10.99.N.1`, and with `-R` too. Stop the server and start it again
-with `-B 10.77.0.1`, for the same two runs against `10.77.0.1`. Bulk copies run at that speed: for
-faster ones, give rsync a direct way, such as
+then, on the Mac, run `iperf3 -c 10.99.N.1`, and with `-R` too. The cable ends at the host, whose
+ufw lets in no TCP but SSH ([The host's firewall](../ubuntu/roles/security/README.md#the-hosts-firewall)).
+For the same two runs against `10.77.0.1`, install iperf3 there, let its port in on the cable for
+the runs alone, and delete the rule after:
+
+```sh
+ufw allow in on CABLE_INTERFACE to 10.77.0.1 port 5201 proto tcp
+iperf3 -s -B 10.77.0.1
+ufw delete allow in on CABLE_INTERFACE to 10.77.0.1 port 5201 proto tcp
+```
+
+Bulk copies run at that speed: for faster ones, give rsync a direct way, such as
 `rsync -e 'ssh -o HostName=ADDRESS -o Port=PORT' -a DIR ws:`. Besides, check `ws macos tunnel status`
-docked, on the home Wi-Fi and on a phone's hotspot, and `ethtool CABLE_INTERFACE` on ws, for
+docked, on the home Wi-Fi and on a phone's hotspot, and `ethtool CABLE_INTERFACE` on the host, for
 2500Mb/s.
 
 ## Routes and resolvers of another repository
