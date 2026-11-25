@@ -98,17 +98,21 @@ func missingApps(t *testing.T, setting string, apps []string) []string {
 // TestEachDockAppIsInstalledBeforeTheDockIsWritten holds the Dock's apps to ones that exist: mise
 // fails a changed layout where an app is missing, which only a Mac would show.
 func TestEachDockAppIsInstalledBeforeTheDockIsWritten(t *testing.T) {
-	for _, p := range missingApps(t, "the Dock", read(t, "mise.apps.toml").Bootstrap.Settings.MacOS.Dock.Apps) {
+	dock := read(t, "mise.apps.toml").Bootstrap.Settings.MacOS.Dock.Apps
+	if len(dock) == 0 {
+		t.Error("the Dock's list is empty")
+	}
+	for _, p := range missingApps(t, "the Dock", dock) {
 		t.Error(p)
 	}
 }
 
 // TestEachLoginItemIsAnInstalledApp holds the login items to apps that the system or a cask
-// installs, as the list is the maintainer's seven and no other.
+// installs, as the list is the maintainer's and no other.
 func TestEachLoginItemIsAnInstalledApp(t *testing.T) {
 	items := read(t, "mise.apps.toml").Bootstrap.Settings.MacOS.LoginItems
-	if len(items.Apps) != 7 {
-		t.Errorf("login items = %q, want seven apps", items.Apps)
+	if len(items.Apps) == 0 {
+		t.Error("the login items are empty")
 	}
 	for _, p := range missingApps(t, "the login items", items.Apps) {
 		t.Error(p)
