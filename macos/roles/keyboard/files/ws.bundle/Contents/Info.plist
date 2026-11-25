@@ -7,7 +7,7 @@
 	<key>CFBundleName</key>
 	<string>ws</string>
 	<key>CFBundleVersion</key>
-	<string></string>
+	<string>1.0.0</string>
 	<key>KLInfo_ENG</key>
 	<dict>
 		<key>TICapsLockLanguageSwitchCapable</key>

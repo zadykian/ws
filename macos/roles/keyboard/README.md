@@ -40,9 +40,10 @@ root's, readable by all and copied byte for byte, with no mark of ws's, as a lay
 The test pins the units and each file's bytes. The bundle holds no `InfoPlist.strings`: Ukelele's
 two named each layout by its own name, which changed nothing.
 
-The bundle is `ws`, by its path, its `CFBundleName` and its `ProjectName`. Its
-`CFBundleIdentifier` and the two layouts' `TISInputSourceID` keep Ukelele's: macOS names an input
-source in use by its ID, and trial 3 reads it so.
+The bundle is `ws` 1.0.0. Its path, its `CFBundleName` and its `ProjectName` say `ws`. Its
+`CFBundleVersion`, `BuildVersion` and `SourceVersion` say 1.0.0. Its `CFBundleIdentifier` and the
+two layouts' `TISInputSourceID` keep Ukelele's: macOS names an input source in use by its ID, and
+trial 3 reads it so.
 
 Each keylayout holds what its keys reach, and a test keeps it so. `ENG.keylayout` lost Ukelele's
 five dead keys, which no key reached, their accents in the actions, their terminators and the JIS
