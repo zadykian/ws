@@ -24,10 +24,10 @@ and age-plugin-yubikey by its lock, with no Homebrew ([the runbook](runbook.md))
 ([devtools](roles/devtools/README.md)). It installs Docker's command line and colima the same way ([docker](roles/docker/README.md)). It sets the
 Dock, Finder, windows and sounds as preferences, and the wallpaper to Stone ([desktop](roles/desktop/README.md)). It makes
 Caps Lock a Control key, sets the symbolic hotkeys and installs the keyboard layout ([keyboard](roles/keyboard/README.md)).
-The second run installs the Mac's apps as casks, pins some in the Dock and opens six at login
-([apps](roles/apps/README.md)). The runbook runs `install.sh`, which puts `ws` in `/usr/local/bin` from a release, checked
-against its `ws.sha256` ([Releases](../.github/workflows/release.md)). Write each server's values below first, and the Mac's
-`values.yml`, which stands empty on a new Mac ([The two files](values/README.md#the-two-files)). Then:
+The second run installs the Mac's apps as casks, pins some in the Dock, opens seven at login and
+sets Stats's settings ([apps](roles/apps/README.md)). The runbook runs `install.sh`, which puts `ws` in `/usr/local/bin`
+from a release, checked against its `ws.sha256` ([Releases](../.github/workflows/release.md)). Write each server's values below
+first, and the Mac's `values.yml`, which stands empty on a new Mac ([The two files](values/README.md#the-two-files)). Then:
 
 ```sh
 ws macos setup

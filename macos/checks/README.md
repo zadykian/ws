@@ -118,10 +118,12 @@ Run them in this order. Trials 1 and 2 first, as a first run puts every later tr
 **5. The login items open once, and the agents run.**
 
 - Where: the Mac, after a log in. `setup.sh 5`.
-- It checks: `sudo sfltool dumpbtm` holds one login item for each of the six apps. mise's status
-  holds them. Secretive's agent, Logi's and Rectangle Pro run.
-- Passes: every line is `ok`. By hand, System Settings, General, Login Items shows the six items,
+- It checks: `sudo sfltool dumpbtm` holds one login item for each of the seven apps. mise's status
+  holds them. Secretive's agent, Logi's, Rectangle Pro and Stats run.
+- Passes: every line is `ok`. By hand, System Settings, General, Login Items shows the seven items,
   and an item that Rectangle Pro or Claude added at its first launch is gone: `exclusive` removed it.
+  Stats opens no setup window, and shows in one item of the menu bar the CPU and the memory as bar
+  charts and the network's speed.
 - If Secretive's agent is a login item that `sfltool` shows and mise's status does not, add its app
   to `apps` in `mise.apps.toml`. mise reads `LSSharedFileList` alone. The records' format is
   macOS's, so where every count is 0, read the dump first: the match is the script's.

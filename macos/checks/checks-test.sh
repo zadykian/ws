@@ -57,7 +57,7 @@ expect "a status that exits 0" ok inside setup.sh status_zero
 # The roles' files name the formulae, the Dock's apps and the login items.
 expect "the formulae are read" ok grep -qx colima <(inside setup.sh formulae)
 expect "the Dock's nine apps are read" ok test "$(inside setup.sh dock_apps | wc -l)" -eq 9
-expect "the six login items are read" ok test "$(inside setup.sh login_apps | wc -l)" -eq 6
+expect "the seven login items are read" ok test "$(inside setup.sh login_apps | wc -l)" -eq 7
 expect "formulae that stand nowhere" fail inside setup.sh missing_formulae
 for f in $(inside setup.sh formulae); do mkdir "$tmp/brew/opt/$f"; done
 expect "formulae that all stand" ok inside setup.sh missing_formulae
@@ -138,7 +138,7 @@ ZSH_OUT=$tmp/zsh-bad expect "a shell without highlighting" fail nofail setup.sh 
     echo "Insecure directories: /x"
 } >"$tmp/zsh-ask"
 ZSH_OUT=$tmp/zsh-ask expect "a shell that asks about insecure directories" fail nofail setup.sh check10
-BTM=$tmp/btm-once expect "six login items that open once" ok nofail setup.sh check5
+BTM=$tmp/btm-once expect "seven login items that open once" ok nofail setup.sh check5
 BTM=$tmp/btm-twice expect "a login item that opens twice" fail nofail setup.sh check5
 only_claude() { [ "$(inside setup.sh check5 2>&1 | grep '^FAIL 5 .* opens once')" = "FAIL 5 Claude.app opens once at login: 2 records name it as a login item" ]; }
 BTM=$tmp/btm-twice expect "only Claude opens twice" ok only_claude
