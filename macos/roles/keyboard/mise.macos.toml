@@ -3,7 +3,7 @@
 # value stands.
 
 # The layout's files, which ws's units write. mise writes the preferences first, as it applies the
-# defaults before the packages.
+# defaults before ws's units.
 [bootstrap.packages]
 "ws:file/layout-info" = "in-sync"
 "ws:file/layout-version" = "in-sync"

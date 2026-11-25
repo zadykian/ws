@@ -80,6 +80,6 @@ The role sets no key of the source in use or of the last ones used. macOS rewrit
 switch, and mise would find it changed at the next run.
 
 mise writes each array whole, and compares it element by element, in order, and by type: an ID is
-an integer, and a key order is no difference. It writes the preferences before the packages, so
+an integer, and a key order is no difference. It writes the preferences before ws's units, so
 that the sources name the layout for a moment before its files exist, and the log in reads both.
 Whether macOS writes the arrays back is for the first run on a real Mac to show.
