@@ -26,13 +26,15 @@ var poolKind = object.Kind{
 // Pool is the ZFS pool on the partition of WS_INCUS_POOL_SOURCE. Incus never moves a pool, and
 // ZFS's create wipes the partition, so a pool on another partition is refused, not remade. A
 // host that holds its pool needs no value. Its volumes count a quota by refquota, so that the
-// snapshots stay out of a guest's disk quota. A restore of an older snapshot drops the newer ones,
-// as ZFS restores the latest alone.
+// snapshots stay out of a guest's disk quota. They reserve it too, so that no guest's snapshots
+// take another's space. A restore of an older snapshot drops the newer ones, as ZFS restores the
+// latest alone.
 func Pool(m effect.Machine, v values.Incus) object.Object {
 	return object.Object{
 		M: m, Kind: poolKind, Name: PoolName, Args: []string{"zfs"},
 		Want: map[string]any{"description": "ws's pool", "config": map[string]any{
-			"volume.zfs.use_refquota": "true", "volume.zfs.remove_snapshots": "true",
+			"volume.zfs.use_refquota": "true", "volume.zfs.reserve_space": "true",
+			"volume.zfs.remove_snapshots": "true",
 		}},
 		First: map[string]any{"config": map[string]any{"source": v.PoolSource}},
 		OnCreate: func() error {

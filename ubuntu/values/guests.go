@@ -65,6 +65,16 @@ func (g Guest) Link() string {
 	return g.tunnel.Link()
 }
 
+// SlotNet is the subnet of the guest's slot, where its tunnel's peers are, or empty where it has no
+// slot. A source of no guest's may leave the guest's port toward it alone: a reply that the guest
+// forwards to a peer.
+func (g Guest) SlotNet() string {
+	if g.tunnel == nil {
+		return ""
+	}
+	return g.tunnel.Slot.Net().String()
+}
+
 // Mark is the firewall mark that what comes in by the guest's NIC takes, and that the way out by
 // its tunnel interface asks for. Zero where the guest has no slot.
 func (g Guest) Mark() int {

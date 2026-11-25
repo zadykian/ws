@@ -57,7 +57,7 @@ func Profile(m effect.Machine) object.Object {
 }
 
 // A guest's disk is snapshotted every day, and a snapshot expires after two weeks. A schedule with
-// no expiry keeps every snapshot, and a quota that counts them (see Pool) fills.
+// no expiry keeps every snapshot, which fill the pool's space outside the quotas (see Pool).
 const (
 	snapshotSchedule = "@daily"
 	snapshotExpiry   = "2w"
@@ -90,9 +90,9 @@ const proxyUser = "65534"
 // otlpDevice is the link from a guest's collector to the host's SigNoz. The device listens in the
 // guest on a Unix socket, which only otelcol-contrib may open, and connects from the host to the
 // intake on its loopback. No ACL or ufw rule sees it: the guest's connection ends in the guest, and
-// the host's side is a new one on lo. The device's ids and mode are the socket's, which its defaults,
-// 0, 0 and 0644, would give to every process. security.uid and security.gid keep the proxy from
-// running as the host's root.
+// the host's side is a new one on lo. The device's ids and mode are the socket's. Its defaults, 0, 0
+// and 0644, would admit root alone, as a connect needs write, and otelcol-contrib is not root.
+// security.uid and security.gid keep the proxy from running as the host's root.
 func otlpDevice() map[string]any {
 	id := strconv.Itoa(values.OtelcolID)
 	return map[string]any{

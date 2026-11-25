@@ -44,9 +44,10 @@ install -d -m 700 /root/.ssh
 install -m 600 "$keys/key.pub" /root/.ssh/authorized_keys
 
 # Incus's pool is a sparse file on a loop device, as the runner has no spare partition. ZFS makes the
-# pool on the device itself, which ws's values name as a host's installer leaves a partition.
+# pool on the device itself, which ws's values name as a host's installer leaves a partition. Its
+# size passes the guest's quota, which the pool reserves whole.
 pool_file=/mnt/ws-pool.img
-truncate -s 4G "$pool_file"
+truncate -s 16G "$pool_file"
 loop=$(losetup --find --show "$pool_file")
 # The swap file is small, as the runner's disk has no room for one the size of its RAM.
 install -d -m 755 /etc/ws
@@ -122,6 +123,8 @@ tail -n 5 "$log"
 must "a run with a guest stops at the guest's own setup, which refuses this build" \
     bash -c "[ $status -ne 0 ] && grep -q 'names no release tag' '$log'"
 must "the guest is launched and runs" bash -c "incus list ci --format csv -c s | grep -qx RUNNING"
+must "the guest's root volume holds its quota as refquota and refreservation" \
+    bash -c "[ \"\$(zfs get -Hp -o value refquota,refreservation ws/containers/ci | sort -u)\" = 8589934592 ]"
 must "the guest takes the profile ws and its NIC's port" \
     bash -c "incus config show ci | grep -q -- '- ws' && [ \"\$(incus config device get ci eth0 host_name)\" = ws-ci ]"
 must "the guest's address is in the table of sources" bash -c "nft list set bridge ws_sources owned4 | grep -qF 10.100.0.10"

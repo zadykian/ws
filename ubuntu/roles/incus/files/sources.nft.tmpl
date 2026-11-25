@@ -2,11 +2,12 @@
 #
 # A guest sends from its own address alone, in the bridge's subnet. Incus's MAC filter holds its
 # MAC, and this table holds its addresses. Incus's IPv4 filter would drop the VPN's replies, which
-# leave a guest under a source that is not its own. So the table lists what a guest may not claim,
-# and passes the rest. It filters at the bridge, from a guest's port, before any ACL. An ARP sender
-# or a source address in the bridge's subnet or the tunnel's slots must be one that the port owns.
-# The slot's address of a guest is its own. So a guest takes a lease from 0.0.0.0, and reaches the
-# internet from its own address.
+# leave a guest under a source that is not its own. So the table passes such a source toward the
+# guest's own slot alone, where its tunnel's peers are. It filters at the bridge, from a guest's
+# port, before any ACL. An ARP sender or a source address in the bridge's subnet or the tunnel's
+# slots must be one that the port owns. The slot's address of a guest is its own. A lease asked
+# from 0.0.0.0 passes too. Any other IPv4 source drops: Incus's NAT rewrites the bridge's subnet
+# alone, so it would leave the host unchanged.
 #
 # What comes in by a guest's port takes the guest's mark. The way out by a guest's tunnel interface
 # asks for that mark, in a table of its own. So no guest sends into another guest's tunnel under a
@@ -40,6 +41,11 @@ table bridge ws_sources {
         ether type arp arp saddr ip { {{ .Incus.BridgeSubnet }}, {{ .Incus.TunnelSlots }} } drop
         ether type ip ip saddr . iifname @owned4 accept
         ether type ip ip saddr { {{ .Incus.BridgeSubnet }}, {{ .Incus.TunnelSlots }} } drop
+        ether type ip ip saddr 0.0.0.0 ip daddr 255.255.255.255 udp dport 67 accept
+{{- range .Incus.Guests }}{{ if .SlotNet }}
+        iifname "{{ .Port }}" ether type ip ip daddr {{ .SlotNet }} accept
+{{- end }}{{ end }}
+        ether type ip drop
     }
 
     # The two hooks that a guest's frame meets: input for the host, and forward for another port.
