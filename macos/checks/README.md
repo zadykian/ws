@@ -34,12 +34,12 @@ the formulae and the hotkeys from its roles' files, so a change of a role reache
 
 ## What the runner proved
 
-The runner is macOS 26.7.2 on arm64. Its probes P0 to P2 ran the first run twice, with `--plan` at 0
-after the first and no sudo in the second (cases 28 and 96). They read back desktop's preferences by
-type (82), devtools (83), docker's config (84), the zsh clones and the hook (87) and power's units
-(88). Case 81, the hotkeys, landed after the last probe: the runner has not read it back. The runner
-holds no login item and no display, so the wallpaper and the apps are proved on the Mac alone. A
-trial below names what the runner leaves open.
+The runner is macOS 26.7.2 on arm64. Trial runs of the client job on scratch branches ran the
+first run twice, with `--plan` at 0 after the first and no sudo in the second (cases 28 and 96).
+The client job reads back the hotkeys (81), desktop's preferences (82), devtools (83), docker's
+config (84), the zsh clones and the hook (87) and power's units (88). The runner holds no login
+item and no display, so the wallpaper and the apps are proved on the Mac alone. A trial below
+names what the runner leaves open.
 
 ## The trials
 
@@ -48,13 +48,16 @@ Run them in this order. Trials 1 and 2 first, as a first run puts every later tr
 **1. The first run installs everything, and the Mac then converges.**
 
 - Where: the Mac. Run `ws macos setup` as the user, on a terminal, and answer no prompt: it passes
-  `--yes`. After the first run's end, reboot as logi-options+ asks, log in, log out and in once
-  more, and run `setup.sh 1`. Then `sudo -k` and run `ws macos setup` a second time.
+  `--yes`. After the first run's end, open no app. Reboot as logi-options+ asks, log in, log out and
+  in once more, as the runbook says, and run `setup.sh 1`. Then open an app outside the Dock, switch
+  the input source with Command+Space, log out and in, and run `setup.sh 1` again. Then `sudo -k`
+  and run `ws macos setup` a second time.
 - It checks: setup's plan exits 0 in both envs. mise's status finds nothing missing. Each formula
   stands in `/opt/homebrew/opt`, each app of the Dock and the login items is installed, and the
   Dock holds its nine apps in order. A login shell's `go` is mise's Go 1.27.3, asked from the home
   directory. `ykman` runs, and docker's command line and plugins answer.
-- Passes: every line is `ok`, and the second run asks for no password and ends with the plan at 0.
+- Passes: every line is `ok` both times, and the second run asks for no password and ends with the
+  plan at 0.
 - By hand: a shell that was open before the first run finds no `go` or `rg` until its user logs in
   again. `ykman list` shows the YubiKey. logi-options+ asks for sudo and a reboot, which is a
   prompt of its installer. The apps are `Telegram Desktop.app` and `Yandex Telemost.app`, as the
@@ -64,7 +67,9 @@ Run them in this order. Trials 1 and 2 first, as a first run puts every later tr
   of `wallpaper` must pour.
 - A failure changes: the role named by status, or the formula's pin in its `mise.macos.toml`. If
   `-E ws,apps` does not expand the set `ws` as the server's `-E ws,secrets` does, setup's two runs
-  ([setup.go](../cli/setup.go)). If `/usr/local/go` fails as the user, devtools.
+  ([setup.go](../cli/setup.go)). If `/usr/local/go` fails as the user, devtools. Where the plan
+  reads 0 after the log out and differs after the app or the switch, the running Dock or the input
+  system wrote its own copy back. Then desktop or keyboard restarts it after a run that changes it.
 
 **2. Each preference has the type that its role writes, and a second status finds them in sync.**
 
@@ -84,7 +89,8 @@ Run them in this order. Trials 1 and 2 first, as a first run puts every later tr
 
 **3. The layout types at the login window and after it.**
 
-- Where: the Mac, after the log out of trial 1. `prefs.sh 3`.
+- Where: the Mac, after the log out of trial 1, and again after a reboot that FileVault's screen
+  unlocks. `prefs.sh 3` each time.
 - It checks: the files of `/Library/Keyboard Layouts/ws.bundle` are root's at 644
   and equal the role's, and the bundle holds no other. `com.apple.inputsources` lists `ENG`,
   -20611, and `RUS`, -21268, as integers and strings. `com.apple.HIToolbox` lists four sources, the
@@ -93,12 +99,17 @@ Run them in this order. Trials 1 and 2 first, as a first run puts every later tr
 - Passes: every line is `ok`. By hand, type at the login window, then after the log in. Switch
   the input source with Command+Space, and run `prefs.sh 3` again. The plan must still exit 0.
 - Open: whether macOS keeps both arrays as mise wrote them after a log in and a switch, or adds
-  a layout of Apple's back to `com.apple.HIToolbox`. The role takes `InputSourceKind` of
-  `com.apple.PressAndHold` to be `Non Keyboard Input Method`: read what macOS writes.
-  `prefs.sh 3` prints the input source in use.
+  a source back to `com.apple.HIToolbox`. The login window and FileVault's screen type with the
+  system's source: ABC from Setup Assistant, in root's
+  `/Library/Preferences/com.apple.HIToolbox.plist`. Neither ws nor mise writes that file. Where
+  ABC, or dictation's input method, comes back into the user's array after a log out or the
+  unlock, the plan exits 2 after each log in. The role takes `InputSourceKind` of
+  `com.apple.PressAndHold` to be `Non Keyboard Input Method`: read what macOS writes. `prefs.sh 3`
+  prints the input source in use, and the user's sources and the login window's.
 - A failure changes: [keyboard](../roles/keyboard/README.md)'s input sources. If macOS rewrites an
   array of `com.apple.HIToolbox` or `com.apple.inputsources`, the role drops that key from its
-  entries, and the runbook names the sources by hand.
+  entries, and the runbook names the sources by hand. Where the source that comes back is the login
+  window's, the role writes that file's sources too, or keeps ABC in its array.
 
 **4. Each hotkey holds.**
 
@@ -152,12 +163,15 @@ Run them in this order. Trials 1 and 2 first, as a first run puts every later tr
 
 **7. The wallpaper is Stone on a second Space and on a second screen.**
 
-- Where: the Mac. `prefs.sh 7`, on the first Space, on a second Space, and with a second screen.
+- Where: the Mac, in a terminal of the user's login session, which the wallpaper's unit needs.
+  `prefs.sh 7`, on the first Space, on a second Space, and with a second screen.
 - It checks: `wallpaper get` prints a line a screen, each Stone.
 - Passes: every line is `ok` on each Space and with both screens. `wallpaper set` shows Stone by
   eye, after the first run.
 - Open: the unit sets Stone on the current Space alone. A second Space and a screen that joins
   later may keep macOS's picture. Then the unit sets it again for each, or the page says so.
+  Outside the login session, as over ssh, `wallpaper get` prints no screen and the unit's check
+  fails, so the plan exits 2 there. Run `ws macos setup --plan` over ssh once, and note its exit.
 - A failure changes: the `state/wallpaper` unit of [desktop](../roles/desktop/README.md).
 
 **8. Containers run under the firewall, and a torrent downloads.**
