@@ -117,8 +117,8 @@ nothing to a guest's peer.**
 - It checks: SSH answers, a list of other TCP ports does not, and no guest answers a ping or
   SSH, even with a route to it through the host. On the host, ufw denies incoming and holds no
   allow that ws's roles do not open. It denies each tunnel's `wgN` ahead of SSH. Nothing listens
-  on every address but SSH and the DHCP client. The tunnels' UDP ports answer a peer with a valid
-  key alone, which `mac.sh 4` shows by the handshake.
+  on every address but SSH, the DHCP client and the tunnels' UDP ports, which `wg show` names.
+  Those answer a peer with a valid key alone, which `mac.sh 4` shows by the handshake.
 - Passes: every line is `ok`. On a peer: from the Mac, with its tunnel up to a guest, SSH to the
   host's LAN address through that tunnel's route times out.
 

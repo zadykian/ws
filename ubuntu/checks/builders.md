@@ -29,7 +29,7 @@ as root on the host. A cloud VM is a guest in the self-contained mode, out of an
 7. With ufw and Docker on the host, a published port on another address is open on every
    network, as Docker's rules come first. Check that no container of ws's publishes one:
    `docker ps --format '{{.Ports}}'` lists none beyond loopback, and `host.sh 8` finds no
-   listener on every address but SSH and the DHCP client.
+   listener on every address but SSH, the DHCP client and the tunnels' UDP ports.
 8. The container proof was not run: `units.verified` is made by the bootstrap and a real run.
    `host.sh 10` after two setups shows it.
 9. On a real host, a container on `docker0` and one on a compose network (`br-+`) both reach

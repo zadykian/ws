@@ -143,15 +143,23 @@ deny_first() {
     [ -n "$deny" ] && [ -n "$ssh" ] && [ "$deny" -lt "$ssh" ]
 }
 
-# public_listeners prints each socket that listens on every address or on the uplink's, but SSH and
-# the DHCP client. The tunnels' UDP ports are the kernel's and show in no listing. A socket on a
-# bridge's address, such as Incus's dnsmasq or the collector's socket, is the bridge's alone.
+# public_listeners prints each socket that listens on every address or on the uplink's, but SSH, the
+# DHCP client and the tunnels' UDP ports. The kernel's WireGuard sockets list with no process, so
+# their ports are those wg reports. A socket on a bridge's address, such as Incus's dnsmasq or the
+# collector's socket, is the bridge's alone.
 public_listeners() {
-    local uplink
+    local uplink tunnels
+    tunnels=$(wg show all listen-port | awk '{ printf "%s ", $2 }') || {
+        echo "wg show all listen-port failed"
+        return
+    }
     uplink=$(ip -4 route show default | awk '{ print $5; exit }')
     uplink=$(ip -4 -o addr show dev "$uplink" | awk '{ split($4, a, "/"); print a[1]; exit }')
-    ss -Hlntu | awk -v up="$uplink" '{ n = split($5, a, ":"); h = substr($5, 1, length($5) - length(a[n]) - 1);
-        if (h == "*" || h == "0.0.0.0" || h == "[::]" || h == up) print $1, $5 }' |
+    ss -Hlntu | awk -v up="$uplink" -v tunnels="$tunnels" '
+        BEGIN { n = split(tunnels, t, " "); for (i = 1; i <= n; i++) tunnel[t[i]] = 1 }
+        { n = split($5, a, ":"); h = substr($5, 1, length($5) - length(a[n]) - 1)
+          if ($1 == "udp" && a[n] in tunnel) next
+          if (h == "*" || h == "0.0.0.0" || h == "[::]" || h == up) print $1, $5 }' |
         grep -vE ' [^ ]*:(22|68)$' || true
 }
 

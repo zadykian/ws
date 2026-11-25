@@ -69,12 +69,21 @@ UFW_STATUS=$tmp/ufw-late expect "deny of wg10 stands after SSH" fail host deny_f
 UFW_STATUS=$tmp/ufw-late expect "wg1's deny is not wg10's" fail host deny_first 11
 export UFW_STATUS=$tmp/ufw-first
 
-# A tunnel of slot 12 routes by table 1012, as the code's 1000 + slot.
+# A tunnel of slot 12 routes by table 1012, as the code's 1000 + slot. The host's uplink is enp5s0.
+# A call the stand-in does not know fails, and never reaches the machine's own ip.
 cat >"$tmp/bin/ip" <<'IP'
 #!/bin/sh
 case "$*" in
 "-4 rule show") echo "32000: from all iif wg12 lookup 1012" ;;
 "-4 route show table 1012") echo "default via 10.100.0.12 dev incusbr0 onlink" ;;
+"-4 route show default") echo "default via 192.168.1.1 dev enp5s0 proto dhcp src 192.168.1.10 metric 100" ;;
+"-4 -o addr show dev enp5s0")
+    printf '%s\n' '2: enp5s0    inet 192.168.1.10/24 metric 100 brd 192.168.1.255 scope global dynamic enp5s0\       valid_lft 85841sec preferred_lft 85841sec'
+    ;;
+*)
+    echo "ip: the stand-in knows no call $*" >&2
+    exit 1
+    ;;
 esac
 IP
 chmod +x "$tmp/bin/ip"
@@ -84,6 +93,52 @@ slot12() {
     forwarding g
 }
 expect "a tunnel of slot 12 forwards by table 1012" ok host slot12
+
+# ss lists the kernel's WireGuard sockets on every address, with no process, as any other. wg
+# names their ports, and refuses a user who is not root.
+cat >"$tmp/ss-host" <<'SS'
+udp   UNCONN 0      0             127.0.0.54:53           0.0.0.0:*
+udp   UNCONN 0      0          127.0.0.53%lo:53           0.0.0.0:*
+udp   UNCONN 0      0             10.100.0.1:53           0.0.0.0:*
+udp   UNCONN 0      0       0.0.0.0%incusbr0:67           0.0.0.0:*
+udp   UNCONN 0      0    192.168.1.10%enp5s0:68           0.0.0.0:*
+udp   UNCONN 0      0                0.0.0.0:51820        0.0.0.0:*
+udp   UNCONN 0      0                0.0.0.0:51832        0.0.0.0:*
+udp   UNCONN 0      0                   [::]:51820           [::]:*
+udp   UNCONN 0      0                   [::]:51832           [::]:*
+tcp   LISTEN 0      4096          127.0.0.54:53           0.0.0.0:*
+tcp   LISTEN 0      4096       127.0.0.53%lo:53           0.0.0.0:*
+tcp   LISTEN 0      32            10.100.0.1:53           0.0.0.0:*
+tcp   LISTEN 0      4096             0.0.0.0:22           0.0.0.0:*
+tcp   LISTEN 0      4096                [::]:22              [::]:*
+SS
+{ cat "$tmp/ss-host" && echo "udp   UNCONN 0      0                0.0.0.0:5353         0.0.0.0:*"; } >"$tmp/ss-mdns"
+{ cat "$tmp/ss-host" && echo "tcp   LISTEN 0      4096             0.0.0.0:51820        0.0.0.0:*"; } >"$tmp/ss-tcp"
+cat >"$tmp/bin/ss" <<'STUB'
+#!/bin/sh
+cat "$SS_LISTING"
+STUB
+cat >"$tmp/bin/wg" <<'STUB'
+#!/bin/sh
+[ "$*" = "show all listen-port" ] || exit 1
+[ -z "${WG_DENIED:-}" ] || {
+    echo "Unable to access interface: Operation not permitted" >&2
+    exit 1
+}
+printf 'wg0\t51820\nwg12\t51832\n'
+STUB
+chmod +x "$tmp/bin/ss" "$tmp/bin/wg"
+# listens prints what listens on every address beyond SSH, DHCP and the tunnels, and fails on any.
+listens() {
+    local out
+    out=$(public_listeners)
+    printf '%s\n' "$out"
+    [ -z "$out" ]
+}
+SS_LISTING=$tmp/ss-host expect "the tunnels' UDP ports listen on every address" ok host listens
+SS_LISTING=$tmp/ss-mdns expect "a UDP port that is no tunnel's" fail host listens
+SS_LISTING=$tmp/ss-tcp expect "TCP on a tunnel's port" fail host listens
+SS_LISTING=$tmp/ss-host WG_DENIED=1 expect "wg that names no port" fail host listens
 
 # ws-fans' cgroup holds a process named nvidia-smi, or not.
 printf '#!/bin/sh\nwhile :; do sleep 1; done\n' >"$tmp/bin/nvidia-smi"
