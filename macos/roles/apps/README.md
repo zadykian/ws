@@ -96,7 +96,7 @@ not list.
     with the screen's size;
   - `NSOSPLastRootDirectory`, the last folder of its Open and Save panels: a bookmark that holds the
     Mac's account and a volume's ID, as data, which mise does not write.
-- `Battery_state` is true, from a MacBook. On a Mac with no battery, Stats writes it false as it
-  starts, and each run writes it back.
+- `Battery_state` is false: the battery module is off. The other `Battery_` keys stay, as the
+  export holds them, and apply if the module is turned on.
 - The export sets no `update-interval`, so Stats installs its updates itself, as the cask's
   `auto_updates` says.
