@@ -140,50 +140,65 @@ const statsDomain = "eu.exelban.Stats"
 // statsKeys names each key of Stats's that the role writes, by its value's type in the
 // maintainer's export. Stats reads a value of another type as missing, and takes its default.
 var statsKeys = map[string][]string{
+	"array": {
+		"CombinedModules_modifierKeys",
+	},
 	"bool": {
 		"Battery_battery_color", "Battery_battery_xlSize", "Battery_state", "Bluetooth_state",
 		"CPU_bar_chart_box", "CPU_bar_chart_frame", "CPU_bar_chart_label", "CPU_clustersGroup",
 		"CPU_hyperhreading", "CPU_line_chart_box", "CPU_line_chart_frame", "CPU_line_chart_label",
 		"CPU_line_chart_value", "CPU_splitValue", "CPU_state", "CPU_usagePerCore", "Clock_state",
-		"Disk_state", "GPU_state", "Network_state", "RAM_bar_chart_label", "RAM_combinedProcesses",
-		"RAM_splitValue", "RAM_state", "Sensors_state", "setupProcess",
+		"CombinedModules", "CombinedModules_alternateDetails", "CombinedModules_separator",
+		"Disk_state", "GPU_state", "Network_oneView", "Network_speed_monochrome", "Network_speed_value",
+		"Network_state", "RAM_bar_chart_label", "RAM_combinedProcesses", "RAM_splitValue", "RAM_state",
+		"Sensors_state", "sensor_CPU Power", "sensor_Hottest CPU", "sensor_Hottest GPU", "sensor_PPBR",
+		"sensor_TH0x", "sensor_TaLP", "sensor_Total System Consumption", "setupProcess",
 	},
 	"int": {
-		"CPU_barChart_position", "CPU_icon_position", "CPU_label_position", "CPU_lineChart_position",
-		"CPU_mini_position", "CPU_pieChart_position", "CPU_tachometer_position", "CPU_updateInterval",
-		"CPU_updateTopInterval", "Clock_icon_position", "Clock_label_position", "Clock_stack_position",
+		"Battery_position", "Bluetooth_position", "CPU_barChart_position", "CPU_icon_position",
+		"CPU_label_position", "CPU_lineChart_position", "CPU_mini_position", "CPU_pieChart_position",
+		"CPU_position", "CPU_tachometer_position", "CPU_updateInterval", "CPU_updateTopInterval",
+		"Clock_icon_position", "Clock_label_position", "Clock_position", "Clock_stack_position",
 		"Disk_barChart_position", "Disk_icon_position", "Disk_label_position", "Disk_memory_position",
-		"Disk_mini_position", "Disk_networkChart_position", "Disk_pieChart_position",
+		"Disk_mini_position", "Disk_networkChart_position", "Disk_pieChart_position", "Disk_position",
 		"Disk_speed_position", "Disk_text_position", "GPU_barChart_position", "GPU_icon_position",
-		"GPU_label_position", "GPU_lineChart_position", "GPU_mini_position", "GPU_tachometer_position",
-		"GPU_text_position", "GPU_updateInterval", "Network_icon_position", "Network_label_position",
-		"Network_networkChart_position", "Network_speed_position", "Network_state_position",
-		"Network_text_position", "RAM_barChart_position", "RAM_icon_position", "RAM_label_position",
-		"RAM_lineChart_position", "RAM_memory_position", "RAM_mini_position", "RAM_pieChart_position",
-		"RAM_state_position", "RAM_tachometer_position", "RAM_text_position",
+		"GPU_label_position", "GPU_lineChart_position", "GPU_mini_position", "GPU_position",
+		"GPU_tachometer_position", "GPU_text_position", "GPU_updateInterval", "Network_icon_position",
+		"Network_label_position", "Network_networkChart_position", "Network_position",
+		"Network_speed_position", "Network_state_position", "Network_text_position",
+		"Network_updateICMPInterval", "RAM_barChart_position", "RAM_icon_position",
+		"RAM_label_position", "RAM_lineChart_position", "RAM_memory_position", "RAM_mini_position",
+		"RAM_pieChart_position", "RAM_position", "RAM_state_position", "RAM_tachometer_position",
+		"RAM_text_position", "Remote_position", "Sensors_barChart_position", "Sensors_icon_position",
+		"Sensors_label_position", "Sensors_mini_position", "Sensors_position", "Sensors_stack_position",
 	},
 	"string": {
 		"Battery_battery_additional", "CPU_bar_chart_color", "CPU_line_chart_color", "CPU_widget",
-		"Clock_widget", "Disk_widget", "GPU_widget", "Network_widget", "RAM_bar_chart_color",
-		"RAM_widget",
+		"Clock_widget", "CombinedModules_display", "Disk_widget", "GPU_widget", "Network_speedUnit",
+		"Network_speed_icon", "Network_speed_valueColor", "Network_widget", "RAM_bar_chart_color",
+		"RAM_widget", "Sensors_widget",
 	},
 }
 
-// statsState holds the keys of the export that Stats writes itself: times, its version, records of
-// a step done and AppKit's frames of its window. A run would write each back after Stats changed it.
+// statsState holds the keys of the export that Stats or AppKit writes: times, its version, records
+// of a step done, its window's frames and its panels' last folder. A run would write each back
+// after Stats changed it.
 var statsState = []string{
 	"support_ts", "updater_check_ts", "version", "runAtLoginInitialized",
 	"remote_tokens_migrated_to_keychain", "NSWindow Frame eu.exelban.Stats.Settings.WindowFrame",
-	"NSToolbar Configuration eu.exelban.Stats.Settings.Toolbar",
+	"NSToolbar Configuration eu.exelban.Stats.Settings.Toolbar", "NSOSPLastRootDirectory",
 }
 
 func stats(t *testing.T) map[string]any {
 	return read(t, "mise.apps.toml").Bootstrap.Settings.MacOS.Defaults[statsDomain]
 }
 
-// kindOf names a value's type as statsKeys does. go-toml reads TOML's integer as int64.
+// kindOf names a value's type as statsKeys does. go-toml reads TOML's integer as int64, and its
+// array as []any.
 func kindOf(value any) string {
 	switch value.(type) {
+	case []any:
+		return "array"
 	case bool:
 		return "bool"
 	case int64:

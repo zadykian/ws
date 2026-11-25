@@ -64,9 +64,10 @@ Mail, and [`TestEachLoginItemIsAnInstalledApp`](apps_test.go) fails on one that 
 ## Stats
 
 Stats shows the load of the CPU and the memory in the menu bar.
-`[bootstrap.settings.macos.defaults."eu.exelban.Stats"]` holds 81 keys of the maintainer's export,
-each of the type that the export holds: a bool, an integer or a string. Stats reads a value of
-another type as missing, and mise compares the type too.
+`[bootstrap.settings.macos.defaults."eu.exelban.Stats"]` holds 116 keys of the maintainer's
+export, each of the type that the export holds: a bool, an integer, a string, or an array for
+`CombinedModules_modifierKeys`. Stats reads a value of another type as missing, and mise compares
+the type too.
 [`TestStatsKeysKeepTheExportsTypes`](apps_test.go) fails on a key of another type or one it does
 not list.
 
@@ -74,7 +75,15 @@ not list.
   opens with them at the next login. A key that a later run changes applies when Stats opens again.
 - `setupProcess` skips its setup window, whose first page would set each module's state and widget
   again on a click.
-- Stats writes seven keys of the export itself, so they stay out, and
+- `CombinedModules` shows the modules in one item of the menu bar, the CPU, the memory and the
+  network's speed. Its `CombinedModules_modifierKeys` is an empty array, where Stats's default is
+  Option. mise writes an empty array and finds it equal to one of no items, so a second run changes
+  nothing.
+- Each `NAME_position` key orders a module or a widget, as a drag in Stats's window does.
+- The seven `sensor_` keys pick the sensors that the Sensors module shows, which is off. They hold
+  on the maintainer's Mac alone: `TH0x`, `TaLP` and `PPBR` are codes of its hardware's sensors. On
+  another Mac, Stats reads no key of a sensor it lacks.
+- Stats or AppKit writes eight keys of the export, so they stay out, and
   [`TestStatsHoldsNoStateKey`](apps_test.go) fails on one. A run would write each back after Stats
   changed it:
   - `version`, at its first start after each update;
@@ -84,7 +93,9 @@ not list.
     item to `SMAppService`, and ws sets the login item here;
   - `remote_tokens_migrated_to_keychain`, set once its account's tokens are in the keychain;
   - the `NSWindow Frame` and `NSToolbar Configuration` of its settings window, which AppKit writes,
-    with the screen's size.
+    with the screen's size;
+  - `NSOSPLastRootDirectory`, the last folder of its Open and Save panels: a bookmark that holds the
+    Mac's account and a volume's ID, as data, which mise does not write.
 - `Battery_state` is true, from a MacBook. On a Mac with no battery, Stats writes it false as it
   starts, and each run writes it back.
 - The export sets no `update-interval`, so Stats installs its updates itself, as the cask's
