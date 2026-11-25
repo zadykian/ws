@@ -1,6 +1,7 @@
 package apps_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -36,6 +37,7 @@ type appsFile struct {
 					Exclusive bool     `toml:"exclusive"`
 					Apps      []string `toml:"apps"`
 				} `toml:"login_items"`
+				Defaults map[string]map[string]any `toml:"defaults"`
 			} `toml:"macos"`
 		} `toml:"settings"`
 	} `toml:"bootstrap"`
@@ -128,5 +130,109 @@ func TestTheAppsHoldNoUnitAndNoFormula(t *testing.T) {
 		if !strings.HasPrefix(pkg, "brew-cask:") {
 			t.Errorf("%s is no cask: mise.apps.toml holds casks alone", pkg)
 		}
+	}
+}
+
+// statsDomain is Stats's bundle ID. Stats runs outside the sandbox, so its preferences sit in
+// ~/Library/Preferences, where mise writes them.
+const statsDomain = "eu.exelban.Stats"
+
+// statsKeys names each key of Stats's that the role writes, by its value's type in the
+// maintainer's export. Stats reads a value of another type as missing, and takes its default.
+var statsKeys = map[string][]string{
+	"bool": {
+		"Battery_battery_color", "Battery_battery_xlSize", "Battery_state", "Bluetooth_state",
+		"CPU_bar_chart_box", "CPU_bar_chart_frame", "CPU_bar_chart_label", "CPU_clustersGroup",
+		"CPU_hyperhreading", "CPU_line_chart_box", "CPU_line_chart_frame", "CPU_line_chart_label",
+		"CPU_line_chart_value", "CPU_splitValue", "CPU_state", "CPU_usagePerCore", "Clock_state",
+		"Disk_state", "GPU_state", "Network_state", "RAM_bar_chart_label", "RAM_combinedProcesses",
+		"RAM_splitValue", "RAM_state", "Sensors_state", "setupProcess",
+	},
+	"int": {
+		"CPU_barChart_position", "CPU_icon_position", "CPU_label_position", "CPU_lineChart_position",
+		"CPU_mini_position", "CPU_pieChart_position", "CPU_tachometer_position", "CPU_updateInterval",
+		"CPU_updateTopInterval", "Clock_icon_position", "Clock_label_position", "Clock_stack_position",
+		"Disk_barChart_position", "Disk_icon_position", "Disk_label_position", "Disk_memory_position",
+		"Disk_mini_position", "Disk_networkChart_position", "Disk_pieChart_position",
+		"Disk_speed_position", "Disk_text_position", "GPU_barChart_position", "GPU_icon_position",
+		"GPU_label_position", "GPU_lineChart_position", "GPU_mini_position", "GPU_tachometer_position",
+		"GPU_text_position", "GPU_updateInterval", "Network_icon_position", "Network_label_position",
+		"Network_networkChart_position", "Network_speed_position", "Network_state_position",
+		"Network_text_position", "RAM_barChart_position", "RAM_icon_position", "RAM_label_position",
+		"RAM_lineChart_position", "RAM_memory_position", "RAM_mini_position", "RAM_pieChart_position",
+		"RAM_state_position", "RAM_tachometer_position", "RAM_text_position",
+	},
+	"string": {
+		"Battery_battery_additional", "CPU_bar_chart_color", "CPU_line_chart_color", "CPU_widget",
+		"Clock_widget", "Disk_widget", "GPU_widget", "Network_widget", "RAM_bar_chart_color",
+		"RAM_widget",
+	},
+}
+
+// statsState holds the keys of the export that Stats writes itself: times, its version, records of
+// a step done and AppKit's frames of its window. A run would write each back after Stats changed it.
+var statsState = []string{
+	"support_ts", "updater_check_ts", "version", "runAtLoginInitialized",
+	"remote_tokens_migrated_to_keychain", "NSWindow Frame eu.exelban.Stats.Settings.WindowFrame",
+	"NSToolbar Configuration eu.exelban.Stats.Settings.Toolbar",
+}
+
+func stats(t *testing.T) map[string]any {
+	return read(t, "mise.apps.toml").Bootstrap.Settings.MacOS.Defaults[statsDomain]
+}
+
+// kindOf names a value's type as statsKeys does. go-toml reads TOML's integer as int64.
+func kindOf(value any) string {
+	switch value.(type) {
+	case bool:
+		return "bool"
+	case int64:
+		return "int"
+	case string:
+		return "string"
+	}
+	return fmt.Sprintf("%T", value)
+}
+
+// TestStatsKeysKeepTheExportsTypes holds each key of Stats's to its type in the export. mise
+// compares the type too, so a key of another type would stay different for good.
+func TestStatsKeysKeepTheExportsTypes(t *testing.T) {
+	got := stats(t)
+	pinned := map[string]bool{}
+	for kind, keys := range statsKeys {
+		for _, key := range keys {
+			pinned[key] = true
+			value, ok := got[key]
+			switch {
+			case !ok:
+				t.Errorf("Stats's %s is not set", key)
+			case kindOf(value) != kind:
+				t.Errorf("Stats's %s is %s, want %s as in the export", key, kindOf(value), kind)
+			}
+		}
+	}
+	for key := range got {
+		if !pinned[key] {
+			t.Errorf("Stats's %s is set, and this test does not pin its type", key)
+		}
+	}
+}
+
+// TestStatsHoldsNoStateKey keeps out the keys that Stats writes itself, which would leave the
+// plan different after each start of Stats.
+func TestStatsHoldsNoStateKey(t *testing.T) {
+	got := stats(t)
+	for _, key := range statsState {
+		if _, ok := got[key]; ok {
+			t.Errorf("Stats's %q is set: Stats writes it itself", key)
+		}
+	}
+}
+
+// TestStatsSkipsItsSetupWindow holds setupProcess true. Without it Stats opens its setup window,
+// whose first page sets each module's state and widget again.
+func TestStatsSkipsItsSetupWindow(t *testing.T) {
+	if stats(t)["setupProcess"] != true {
+		t.Error("Stats's setupProcess is not true: Stats would show its setup window")
 	}
 }

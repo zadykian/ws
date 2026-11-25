@@ -1,7 +1,7 @@
 # apps on the Mac
 
-The `apps` role installs the Mac's apps, as mise's casks by `brew-cask`, which needs no Homebrew,
-pins some of them in the Dock and opens seven at login. Its one file,
+The `apps` role installs the Mac's apps, as mise's casks by `brew-cask`, which needs no Homebrew.
+It pins some of them in the Dock, opens seven at login and sets Stats's settings. Its one file,
 [`mise.apps.toml`](mise.apps.toml), holds no unit of ws's.
 
 ## The env
@@ -60,3 +60,32 @@ Mail, and [`TestEachLoginItemIsAnInstalledApp`](apps_test.go) fails on one that 
   is outside the list, and `exclusive` leaves it.
 - Stats opens by its item here. Its own Start at login registers it by `SMAppService`, and only a
   click in its window does that, so that box stays off.
+
+## Stats
+
+Stats shows the load of the CPU and the memory in the menu bar.
+`[bootstrap.settings.macos.defaults."eu.exelban.Stats"]` holds 81 keys of the maintainer's export,
+each of the type that the export holds: a bool, an integer or a string. Stats reads a value of
+another type as missing, and mise compares the type too.
+[`TestStatsKeysKeepTheExportsTypes`](apps_test.go) fails on a key of another type or one it does
+not list.
+
+- Stats reads its settings as it starts. The first run installs it and writes them, and Stats
+  opens with them at the next login. A key that a later run changes applies when Stats opens again.
+- `setupProcess` skips its setup window, whose first page would set each module's state and widget
+  again on a click.
+- Stats writes seven keys of the export itself, so they stay out, and
+  [`TestStatsHoldsNoStateKey`](apps_test.go) fails on one. A run would write each back after Stats
+  changed it:
+  - `version`, at its first start after each update;
+  - `support_ts` and `updater_check_ts`, the times of its support window and of its check for
+    updates;
+  - `runAtLoginInitialized`, set by a click on its Start at login. Its start then moves the login
+    item to `SMAppService`, and ws sets the login item here;
+  - `remote_tokens_migrated_to_keychain`, set once its account's tokens are in the keychain;
+  - the `NSWindow Frame` and `NSToolbar Configuration` of its settings window, which AppKit writes,
+    with the screen's size.
+- `Battery_state` is true, from a MacBook. On a Mac with no battery, Stats writes it false as it
+  starts, and each run writes it back.
+- The export sets no `update-interval`, so Stats installs its updates itself, as the cask's
+  `auto_updates` says.
