@@ -45,6 +45,13 @@ func TestNvidiaDeviceNodesFilesOrderIncusAfterTheWait(t *testing.T) {
 	if strings.ContainsAny(strings.SplitN(string(unit), "ExecStart=", 2)[1], "$%") {
 		t.Errorf("the unit's command holds $ or %%, which systemd expands:\n%s", unit)
 	}
+	// At boot, udev loads the module as it handles the card's event, after the unit may start. A
+	// check before udev's queue drains would skip the wait on a host whose module is about to load.
+	command := strings.SplitN(string(unit), "ExecStart=", 2)[1]
+	settle, gate := strings.Index(command, "udevadm settle --timeout=60;"), strings.Index(command, "test -d /sys/module/nvidia")
+	if settle < 0 || gate < settle {
+		t.Errorf("the unit reads /sys/module/nvidia before udevadm settle, bounded:\n%s", command)
+	}
 	drop, err := os.ReadFile(rolesDir + "/nvidia/files/incus-nvidia.conf")
 	if err != nil {
 		t.Fatal(err)

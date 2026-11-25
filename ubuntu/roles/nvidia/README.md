@@ -44,7 +44,7 @@ The role pins the branch `595-server`, which `ubuntu-drivers install --gpgpu` pi
 
 The branch is named in three places: `packages.tmpl`, `archive.tmpl` and the reboot's `package` in
 the spec. `TestNvidiaNamesOneBranch` fails where they differ. `userspace.tmpl` and `pin.tmpl` name
-`nvidia-utils-595-server` too, and the container tests' `nvidiaSMI` catches a drift there.
+the userspace's three packages of the branch too, and the container tests catch a drift there.
 
 FLAVOR is that of each installed `linux-image-generic*`: `generic`, `generic-7.0`,
 `generic-hwe-26.04` or `generic-hwe-26.04-edge`. Its metapackage pulls the modules of each new
@@ -85,20 +85,29 @@ hold the card at once, time-sliced and with no memory isolation between them. Wi
 device is removed. The host's profile does not set `nvidia.runtime`, as it needs NVIDIA's container
 toolkit on the host.
 
-In the container, `packages/nvidia-userspace` installs the branch's userspace package at the
-upstream version that the host's `/sys/module/nvidia/version` gives. `file/nvidia-userspace-pin`
-writes `/etc/apt/preferences.d/ws-nvidia`, which pins that version at priority 1001. An upgrade of
-the host's driver moves the host's `nvidia-smi` and its module only at the host's reboot. Until
-then the guest keeps the old userspace, which matches the module that runs. A run of the guest's
-setup after the reboot pins the new version, in the units' order. Where the host loads no module,
-the plan fails and names the switch: the card cannot reach the guest. The container has no
-`state/nvidia-reboot` or driver.
+In the container, `packages/nvidia-userspace` installs the branch's userspace at the upstream
+version that the host's `/sys/module/nvidia/version` gives. That is `nvidia-smi`'s package, with
+`libnvidia-compute-595-server` and `nvidia-kernel-common-595-server`, which it needs at its own
+version. apt would pick the newest of those two, which an older `nvidia-smi` cannot take, so the
+install names each at the version. `file/nvidia-userspace-pin` writes
+`/etc/apt/preferences.d/ws-nvidia`, which pins the three at that version at priority 1001. An
+upgrade of the host's driver moves the host's `nvidia-smi` and its module only at the host's
+reboot. Until then the guest keeps the old userspace, which matches the module that runs. A run of
+the guest's setup after the reboot installs and pins the new version, in the units' order. A
+version that the archive no longer holds fails the install, with apt's error that names it: the
+host's upgrade and reboot mend it. Where the host loads no module, the plan fails and names the
+switch: the card cannot reach the guest. The container has no `state/nvidia-reboot` or driver.
 
 ## The device nodes
 
 Incus passes `/dev/nvidia*` to a guest only as they exist when the guest starts. The host's
 `ws-nvidia-devices.service` is a oneshot that waits up to a minute for `/dev/nvidia0` and
 `/dev/nvidia-uvm`. The drop-in `incus.service.d/ws-nvidia.conf` wants it and orders `incus.service`
-after it. The unit never fails, so no missing card keeps Incus down. A host whose module is not
-loaded, as before the reboot, waits for nothing. A missing node gets a line in the journal. The unit
-runs where the host holds the GPU alone.
+after it. The unit never fails, so no missing card keeps Incus down.
+
+At boot, the unit starts after udev's coldplug trigger, which queues the card's event but waits
+for none. udev loads the module as it handles that event, and `71-nvidia.rules`, of
+`nvidia-kernel-common-595-server`, makes the nodes. So the unit first runs `udevadm settle`, up to
+a minute, and only then reads `/sys/module/nvidia`. A host whose module is still not loaded, as
+before the reboot, waits for no node: udev's queue is empty there, and the unit ends at once. A
+missing node gets a line in the journal. The unit runs where the host holds the GPU alone.

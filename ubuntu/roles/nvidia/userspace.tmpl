@@ -1,6 +1,9 @@
 {{- /* The userspace of the branch, at the upstream version of the module that the host loads. The
-dash and the star match the archive's revision of it. A host that loads none fails the plan: the
-guest's switch is on, and no card can reach it. */ -}}
+dash and the star match the archive's revision of it. nvidia-smi's package needs libnvidia-compute
+and nvidia-kernel-common at its own version, and apt would pick their newest, so each takes it too.
+A host that loads none fails the plan: the guest's switch is on, and no card can reach it. */ -}}
 {{ $v := root_file "/sys/module/nvidia/version" -}}
 {{ if not $v }}{{ fail "WS_NVIDIA_GPU is on, but the kernel loads no nvidia module: the host's GPU must be set up and its reboot done first" }}{{ end -}}
 nvidia-utils-595-server={{ $v }}-*
+libnvidia-compute-595-server={{ $v }}-*
+nvidia-kernel-common-595-server={{ $v }}-*
