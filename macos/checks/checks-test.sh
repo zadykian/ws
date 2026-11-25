@@ -183,11 +183,13 @@ stub pgrep 'exit 0'
 ZSH_OUT=$tmp/zsh-ok expect "a shell that loads the plugins" ok nofail setup.sh check10
 sed 's/highlighting=1/highlighting=0/' "$tmp/zsh-ok" >"$tmp/zsh-bad"
 ZSH_OUT=$tmp/zsh-bad expect "a shell without highlighting" fail nofail setup.sh check10
-{
-    cat "$tmp/zsh-ok"
-    echo "Insecure directories: /x"
-} >"$tmp/zsh-ask"
-ZSH_OUT=$tmp/zsh-ask expect "a shell that asks about insecure directories" fail nofail setup.sh check10
+# oh-my-zsh's own lines, as its pinned commit prints them.
+for ask in "[oh-my-zsh] Insecure completion-dependent directories detected:" \
+    "[oh-my-zsh] Would you like to update? [Y/n] " \
+    "[oh-my-zsh] It's time to update! You can do that by running \`omz update\`"; do
+    printf '%s\n' "$(cat "$tmp/zsh-ok")" "$ask" >"$tmp/zsh-ask"
+    ZSH_OUT=$tmp/zsh-ask expect "a shell that prints: $ask" fail nofail setup.sh check10
+done
 BTM=$tmp/btm-once expect "seven login items that open once" ok nofail setup.sh check5
 BTM=$tmp/btm-twice expect "a login item that opens twice" fail nofail setup.sh check5
 only_claude() { [ "$(inside setup.sh check5 2>&1 | grep '^FAIL 5 .* opens once')" = "FAIL 5 Claude.app opens once at login: 2 records name it as a login item" ]; }

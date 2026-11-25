@@ -177,7 +177,8 @@ Run them in this order. Trials 1 and 2 first, as a first run puts every later tr
 
 - Where: the Mac. `setup.sh 10`, in a terminal that opened after the first run.
 - It checks: `plugins` is git, zsh-autosuggestions and zsh-syntax-highlighting, both plugins' own
-  functions exist, oh-my-zsh's update is `disabled`, and the shell prints no compaudit warning.
+  functions exist, and oh-my-zsh's update is `disabled`. The shell prints neither compfix's warning
+  of insecure directories nor the update's prompt, as oh-my-zsh's pinned commit words them.
 - Passes: every line is `ok`. By hand, in Ghostty, drop an ssh and see that the tab resets the
   terminal's modes. The hook runs first of `precmd`.
 - A failure changes: [zsh](../roles/zsh/README.md)'s `zshrc` or its clones' pins.

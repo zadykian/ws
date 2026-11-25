@@ -126,7 +126,8 @@ check5() {
 }
 
 check10() {
-    local out
+    # What oh-my-zsh prints at its pinned commit: compfix's warning, and the update's prompt.
+    local out asks='insecure (completion-dependent )?directories|would you like to update|time to update'
     out=$(zsh -ic 'print -r "plugins=${plugins[*]}"
         print -r "autosuggestions=${+functions[_zsh_autosuggest_start]}"
         print -r "highlighting=${+functions[_zsh_highlight]}"
@@ -135,8 +136,8 @@ check10() {
     check "10 zsh-autosuggestions is loaded" grep -qx 'autosuggestions=1' <<<"$out"
     check "10 zsh-syntax-highlighting is loaded" grep -qx 'highlighting=1' <<<"$out"
     check "10 oh-my-zsh's update is off" grep -qx 'update=disabled' <<<"$out"
-    if grep -qi 'insecure directories\|update oh my zsh' <<<"$out"; then
-        fail "10 the shell asks nothing" "$(grep -i 'insecure directories\|update oh my zsh' <<<"$out" | head -n 1)"
+    if grep -Eqi "$asks" <<<"$out"; then
+        fail "10 the shell asks nothing" "$(grep -Ei "$asks" <<<"$out" | head -n 1)"
     else
         pass "10 the shell asks nothing"
     fi
