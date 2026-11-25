@@ -11,6 +11,10 @@ On the built-in keyboard, `0-0-0`, Caps Lock acts as Control. macOS keeps the ma
 `NSGlobalDomain`'s `com.apple.keyboard.modifiermapping.0-0-0`, so the entry has `host = "current"`.
 Its two codes, 30064771129 for Caps Lock and 30064771300 for Control, are integers.
 
+The mapping is the built-in keyboard's alone: macOS keys it by a keyboard's vendor and product. So
+another keyboard, such as one that Logi Options+ pairs, keeps its Caps Lock until the role gets an
+entry for its key. That `0-0-0` names the built-in keyboard is for trial 4 to show on the Mac.
+
 ## The language indicator
 
 `TSMLanguageIndicatorEnabled` is the string `"0"`, which hides the indicator that macOS shows when
