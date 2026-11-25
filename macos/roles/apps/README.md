@@ -7,9 +7,8 @@ It pins some of them in the Dock, opens seven at login and sets Stats's settings
 ## The env
 
 Only the env `apps` loads the file. `ws macos setup` runs the bootstrap, then `mise -E ws,apps
-bootstrap` ([The Mac's frame](../frame/README.md#the-apps-env)). mise ends a run at its first
-failed step, and casks come before ws's units. With the casks in the first run, a failed one
-would stop the tunnel's units. Here it fails setup, with ws's units set up.
+bootstrap`. A failed cask fails setup, with ws's units set up
+([The Mac's frame](../frame/README.md#the-apps-env)).
 
 CI's `client_tree` drops the role from the tree it unpacks, so that neither Mac job downloads the
 15 casks ([Checks](../../../.github/workflows/README.md#the-mac)).
@@ -18,19 +17,21 @@ CI's `client_tree` drops the role from the tree it unpacks, so that neither Mac 
 
 `claude`, `claude-code`, `discord`, `google-chrome`, `logi-options+`, `rectangle-pro`,
 `spotify`, `stats`, `steam`, `telegram-desktop`, `transmission`, `vlc`, `whatsapp`,
-`winbox` and `yandextelemost`. Each takes `latest`: a cask exists at its current version alone,
-and `mise bootstrap packages upgrade` upgrades them.
+`winbox` and `yandextelemost`. Each takes `latest`: a cask exists at its current version alone.
+[The runbook](../../runbook.md#what-stays-by-hand) gives the upgrade. A cask that updates itself
+is left to itself.
 
-- mise checks each download against the SHA-256 of its cask, but for four that list none:
-  `google-chrome`, `logi-options+`, `spotify` and `yandextelemost`. There it
-  checks no signature, and the file it downloads carries no quarantine. So these four are outside
-  the rule of the pinned downloads, as is each cask at its latest
+- mise strips the quarantine from every cask's download and app, and checks no signature on any,
+  so Gatekeeper assesses none. It checks eleven downloads against the SHA-256 that Homebrew's API
+  gives at run time, an unsigned document. Four list none: `google-chrome`, `logi-options+`,
+  `spotify` and `yandextelemost`. All fifteen are outside the rule of the pinned downloads
   ([CLAUDE.md](../../../.claude/CLAUDE.md)).
 - `claude-code` is a cask, not a role: it has a SHA-256 and links `claude` into
   `/opt/homebrew/bin`, which devtools' `/etc/paths.d/ws` puts on the `PATH`. The server's
   installer has none.
-- Logi's installer calls sudo on a first run, and asks for a reboot. A run with no terminal needs a
-  sudo that asks no password.
+- Logi Options+ stays a cask. Its installer is a download with no SHA-256 and no quarantine,
+  which mise runs through sudo on a first run, and it asks for a reboot. A run with no terminal
+  needs a sudo that asks no password.
 - Not send-to-kindle: its download is refused (403), and mise ends a run at the first failed cask.
 - Not qBittorrent: Homebrew disabled its cask on 2026-09-01, as it fails Gatekeeper.
 - No firewall exception: replies pass block-all
@@ -57,7 +58,9 @@ Mail, and [`TestEachLoginItemIsAnInstalledApp`](apps_test.go) fails on one that 
 - `exclusive = true` makes the list ws's alone. ws sets up the Mac, so an item that someone added
   by hand goes at the next run.
 - mise reads the list by `LSSharedFileList` alone. An app that registers itself by `SMAppService`
-  is outside the list, and `exclusive` leaves it.
+  is outside the list, and `exclusive` leaves it. An app that adds its own item to the list at
+  each start loses it at each run, and the plan exits 2 until then. Trial 5 records which casks
+  do it ([the trials](../../checks/README.md)).
 - Stats opens by its item here. Its own Start at login registers it by `SMAppService`, and only a
   click in its window does that, so that box stays off.
 
