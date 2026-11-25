@@ -154,6 +154,10 @@ check3() {
         AppleEnabledInputSources 4 array
     check "3 the input source in use is the layout's" in_use
     info "input source: $(defaults read com.apple.HIToolbox AppleCurrentKeyboardLayoutInputSourceID 2>&1)"
+    # The login window types with the sources of root's file, which neither ws nor mise writes.
+    info "the user's sources: $(defaults read com.apple.HIToolbox AppleEnabledInputSources 2>&1 | tr -s ' \n' ' ')"
+    info "the login window's sources: $(defaults read /Library/Preferences/com.apple.HIToolbox \
+        AppleEnabledInputSources 2>&1 | tr -s ' \n' ' ')"
     check "3 setup's plan still exits 0" plan_zero
 }
 
