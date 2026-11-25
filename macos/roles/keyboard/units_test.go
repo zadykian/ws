@@ -2,13 +2,11 @@ package keyboard_test
 
 import (
 	"bytes"
-	"encoding/binary"
 	"os"
 	"slices"
 	"strings"
 	"testing"
 	"testing/fstest"
-	"unicode/utf16"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/kind"
@@ -22,14 +20,12 @@ const (
 	source = "files/KeyboardLayout.bundle/"
 )
 
-// layoutFiles are the bundle's six files, by their path below the bundle.
+// layoutFiles are the bundle's files, by their path below the bundle.
 var layoutFiles = []string{
 	"Contents/Info.plist",
 	"Contents/version.plist",
 	"Contents/Resources/ENG.keylayout",
 	"Contents/Resources/RUS.keylayout",
-	"Contents/Resources/en.lproj/InfoPlist.strings",
-	"Contents/Resources/ru.lproj/InfoPlist.strings",
 }
 
 // roleFile reads a file of the role, which the test names.
@@ -69,14 +65,13 @@ func sources() []string {
 	return names
 }
 
-// TestTheUnitsAreTheBundlesSixFiles holds the role's units to the bundle's six files. Each is
-// written where macOS reads a layout, root's at 0644, byte for byte as the role keeps it.
-func TestTheUnitsAreTheBundlesSixFiles(t *testing.T) {
+// TestTheUnitsAreTheBundlesFiles holds the role's units to the bundle's files. Each is written
+// where macOS reads a layout, root's at 0644, byte for byte as the role keeps it.
+func TestTheUnitsAreTheBundlesFiles(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Dirs["/Library"] = 0o755
 	units := layoutUnits(t, m)
-	want := []string{"file/layout-en-strings", "file/layout-eng", "file/layout-info",
-		"file/layout-ru-strings", "file/layout-rus", "file/layout-version"}
+	want := []string{"file/layout-eng", "file/layout-info", "file/layout-rus", "file/layout-version"}
 	if got := kind.Names(units); !slices.Equal(got, want) {
 		t.Fatalf("the units are %v, want %v", got, want)
 	}
@@ -96,21 +91,6 @@ func TestTheUnitsAreTheBundlesSixFiles(t *testing.T) {
 		p, err := u.Step.Plan(t.Context())
 		if err != nil || len(p.Changes) > 0 {
 			t.Errorf("%s: second plan = %v, %v; want none", u.Name, p.Changes, err)
-		}
-	}
-}
-
-// TestTheStringsStayUTF16 keeps the two InfoPlist.strings as the maintainer sent them: UTF-16
-// with a byte order mark. macOS reads each file whole, and a conversion would change the bytes.
-func TestTheStringsStayUTF16(t *testing.T) {
-	want := []byte{0xff, 0xfe}
-	for _, unit := range utf16.Encode([]rune("\"ENG\" = \"ENG\";\n\"RUS\" = \"RUS\";\n")) {
-		want = binary.LittleEndian.AppendUint16(want, unit)
-	}
-	for _, lang := range []string{"en", "ru"} {
-		text := roleFile(t, source+"Contents/Resources/"+lang+".lproj/InfoPlist.strings")
-		if !bytes.Equal(text, want) {
-			t.Errorf("%s.lproj/InfoPlist.strings = % x, want % x", lang, text, want)
 		}
 	}
 }

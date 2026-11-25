@@ -2,15 +2,13 @@
 # type too, and restarts nothing: the keys read them at the next log in. README.md says why each
 # value stands.
 
-# The layout's six files, which ws's units write. mise writes the preferences first, as it applies
-# the defaults before the packages.
+# The layout's files, which ws's units write. mise writes the preferences first, as it applies the
+# defaults before the packages.
 [bootstrap.packages]
 "ws:file/layout-info" = "in-sync"
 "ws:file/layout-version" = "in-sync"
 "ws:file/layout-eng" = "in-sync"
 "ws:file/layout-rus" = "in-sync"
-"ws:file/layout-en-strings" = "in-sync"
-"ws:file/layout-ru-strings" = "in-sync"
 
 # The language indicator that macOS shows on each input source's switch. Its value is the string
 # "0", as the Mac holds it.

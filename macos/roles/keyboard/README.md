@@ -2,7 +2,7 @@
 
 The `keyboard` role sets Caps Lock, the language indicator, the symbolic hotkeys and the input
 sources by [`mise.macos.toml`](mise.macos.toml). mise writes each preference that is missing or
-differs, as the user, with no sudo. Six units of ws's write the layout that the input sources name.
+differs, as the user, with no sudo. ws's units write the layout that the input sources name.
 The keys read the values after a log out, as the runbook says ([what stays by hand](../../runbook.md)).
 
 ## Caps Lock
@@ -33,13 +33,13 @@ mise rejects two entries where one path holds the other, so no ID is on and off.
 
 ## The layout
 
-`/Library/Keyboard Layouts/KeyboardLayout.bundle` is the maintainer's English and Russian layout, as
-Ukelele wrote it. Its six files are in [`files/`](files/KeyboardLayout.bundle): `Info.plist`,
-`version.plist`, `ENG.keylayout` and `RUS.keylayout`, and an `InfoPlist.strings` for `en.lproj` and
-`ru.lproj`. Each is a `file` unit of [`units.toml.tmpl`](units.toml.tmpl), root's, readable by all
-and copied byte for byte, with no mark of ws's, as a layout takes none. The two `.strings` files
-are UTF-16 with a byte order mark, as macOS reads them, so nothing converts them. The test pins
-the six units and each file's bytes.
+`/Library/Keyboard Layouts/KeyboardLayout.bundle` is the maintainer's English and Russian layout,
+which Ukelele first wrote. Its files are in [`files/`](files/KeyboardLayout.bundle): `Info.plist`,
+`version.plist`, `ENG.keylayout` and `RUS.keylayout`. Each is a `file` unit of
+[`units.toml.tmpl`](units.toml.tmpl), root's, readable by all and copied byte for byte, with no
+mark of ws's, as a layout takes none. The test pins the units and each file's bytes. The bundle
+holds no `InfoPlist.strings`: Ukelele's two named each layout by its own name, which changed
+nothing.
 
 ## The input sources
 

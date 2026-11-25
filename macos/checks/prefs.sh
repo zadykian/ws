@@ -143,7 +143,7 @@ check3() {
     for file in $(cd "$layout_src" && find . -type f | sort); do
         check "3 $file is the role's, root's at 644" layout_file "$file"
     done
-    check "3 the bundle holds the role's six files alone" layout_alone
+    check "3 the bundle holds the role's files alone" layout_alone
     for i in 0 1; do
         check "3 input source $i of the layout is ${names[i]}" input_source com.apple.inputsources \
             "AppleEnabledThirdPartyInputSources.$i.KeyboardLayout ID" "${ids[i]}" integer

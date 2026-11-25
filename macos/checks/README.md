@@ -85,7 +85,7 @@ Run them in this order. Trials 1 and 2 first, as a first run puts every later tr
 **3. The layout types at the login window and after it.**
 
 - Where: the Mac, after the log out of trial 1. `prefs.sh 3`.
-- It checks: the six files of `/Library/Keyboard Layouts/KeyboardLayout.bundle` are root's at 644
+- It checks: the files of `/Library/Keyboard Layouts/KeyboardLayout.bundle` are root's at 644
   and equal the role's, and the bundle holds no other. `com.apple.inputsources` lists `ENG`,
   -20611, and `RUS`, -21268, as integers and strings. `com.apple.HIToolbox` lists two sources.
   The input source in use is one of the layout's two. Setup's plan exits 0.
