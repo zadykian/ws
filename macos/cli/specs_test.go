@@ -144,9 +144,8 @@ func TestNoMacRoleSetsAFramesKey(t *testing.T) {
 }
 
 // TestMacConfigHoldsNoRootPath keeps mise's own root paths and dotfiles out of the Mac's config.
-// mise reads its files of root's through sudo on every run, which would ask a password of a run
-// that changes nothing. Its dotfiles replace the user's own file with no guard. ws's units hold
-// both. A file under ~/ with no owner or group is the user's: mise reads and writes it as the user.
+// ws's units hold root's files, readable by all, which no read takes sudo for (frame/README.md).
+// A file under ~/ with no owner or group is the user's: mise reads and writes it as the user.
 func TestMacConfigHoldsNoRootPath(t *testing.T) {
 	for _, f := range append(macMiseFiles(t), macTreeRoot+"/"+macRoleFile) {
 		text, err := os.ReadFile(f) //nolint:gosec // a file of the tree, found by the test
@@ -167,7 +166,7 @@ func TestMacConfigHoldsNoRootPath(t *testing.T) {
 			_, owner := part["owner"]
 			_, group := part["group"]
 			if !strings.HasPrefix(target, "~/") || owner || group {
-				t.Errorf("%s: [bootstrap.files.%q] is root's, read through sudo: make it a unit of ws's, or a path under ~/ with no owner or group", f, target)
+				t.Errorf("%s: [bootstrap.files.%q] is root's, where mise takes any mode and reads one the user cannot through sudo: make it a unit of ws's, or a path under ~/ with no owner or group", f, target)
 			}
 		}
 		if len(c.Bootstrap.Directories) > 0 {
