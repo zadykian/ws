@@ -1,9 +1,6 @@
 # Written by github.com/zadykian/ws, whose next run replaces any change made here.
-#
-# ~/.zshrc sources this file, as its last line. It sets up oh-my-zsh and the shell's paths and
-# aliases (macos/roles/zsh/README.md), and then the hook. tmux, Fresh and cld's sessions turn modes
-# on in the terminal, and a dropped ssh leaves them on: the mouse would type escape codes at the
-# prompt. So, before each prompt, the hook turns them off (macos/roles/ghostty/README.md).
+# ~/.zshrc sources this file. It sets up oh-my-zsh, paths and aliases (macos/roles/zsh/README.md).
+# Then the hook turns off the modes that a dropped ssh leaves on (macos/roles/ghostty/README.md).
 
 # oh-my-zsh, where mise has cloned it. Its own update is off, as it would move the checkout off its
 # pin. zsh-syntax-highlighting must come last of the plugins.

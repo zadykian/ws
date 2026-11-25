@@ -1,7 +1,6 @@
-# zsh's hook and the line of ~/.zshrc that sources it, as ws's units. oh-my-zsh and two plugins are
-# mise's clones, each at a full commit and with no depth.
+# zsh's hook, a file of root's, as a unit of ws's, and the line of ~/.zshrc that sources it as mise's
+# edit. oh-my-zsh and two plugins are mise's clones, each at a full commit and with no depth.
 [bootstrap.packages]
-"ws:file/zsh-line" = "in-sync"
 "ws:file/zsh-rc" = "in-sync"
 
 # mise clones in this order, and refuses a directory with files in it, so oh-my-zsh comes first.
@@ -10,3 +9,8 @@
 "~/.oh-my-zsh" = { url = "https://github.com/ohmyzsh/ohmyzsh.git", ref = "93b87c9c9aaae2f56b41a1f7fdf64fc1d603a9b7" }
 "~/.oh-my-zsh/custom/plugins/zsh-autosuggestions" = { url = "https://github.com/zsh-users/zsh-autosuggestions.git", ref = "85919cd1ffa7d2d5412f6d3fe437ebdbeeec4fc5" }
 "~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" = { url = "https://github.com/zsh-users/zsh-syntax-highlighting.git", ref = "e6683f20e5c38d3e5447f45845d04ddda75d0f23" }
+
+# The line that sources the hook, added at the end of ~/.zshrc where that exact line is missing, and
+# left where it stands after. The status shows a missing one, and the plan does not (README.md).
+[dotfiles]
+"~/.zshrc/ws" = { line = "source /etc/ws/zshrc" }
