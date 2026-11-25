@@ -1,8 +1,7 @@
 #!/bin/bash
-# mise bootstrap (28-bootstrap.sh) wrote Zed's global_settings.json, which is
-# macos/roles/zed/files's file whole, and settings.json, the seed, where none existed. A
-# settings.json that is there is left byte for byte by the next bootstrap, whose plan then shows no
-# change. /etc/paths.d/ws, which devtools writes, puts the cask's zed on a login shell's PATH.
+# mise bootstrap (28-bootstrap.sh) wrote Zed's global_settings.json, macos/roles/zed/files's whole,
+# and the seed settings.json where none was. The next leaves that one byte for byte, with no change
+# in its plan. devtools' /etc/paths.d/ws puts the cask's zed on a login shell's PATH.
 
 set -eo pipefail
 # shellcheck source=.github/client-mise.sh
