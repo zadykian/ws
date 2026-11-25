@@ -14,7 +14,7 @@ set -uo pipefail
 image=alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
 internet=9.9.9.9
 fails=0
-work=$(mktemp -d)
+work=
 nic=eth0
 mac_before=
 addr_added=
@@ -121,7 +121,7 @@ check2() {
 restore() {
     [ -z "$addr_added" ] || ip addr del "$addr_added" dev "$nic" 2>/dev/null
     [ -z "$mac_before" ] || ip link set "$nic" address "$mac_before"
-    rm -rf "$work"
+    [ -z "$work" ] || rm -rf "$work"
 }
 
 # spoof sends from the NIC under a source that is not its own: a ping to the internet that a table
@@ -214,22 +214,29 @@ check9() {
     check "9 the collector's socket is its own, mode 600" socket_owner
 }
 
-trap restore EXIT
-[ $# -gt 0 ] || {
-    echo "usage: guest.sh CHECK... [NAME=ADDRESS...]" >&2
-    exit 2
-}
-for arg in "$@"; do
-    case $arg in
-    1) check1 ;;
-    2) check2 ;;
-    3) check3 "$@" ;;
-    9) check9 "$@" ;;
-    *=*) ;;
-    *)
-        echo "guest.sh: no check $arg" >&2
+main() {
+    local arg
+    [ $# -gt 0 ] || {
+        echo "usage: guest.sh CHECK... [NAME=ADDRESS...]" >&2
         exit 2
-        ;;
-    esac
-done
-[ "$fails" -eq 0 ]
+    }
+    work=$(mktemp -d)
+    trap restore EXIT
+    for arg in "$@"; do
+        case $arg in
+        1) check1 ;;
+        2) check2 ;;
+        3) check3 "$@" ;;
+        9) check9 "$@" ;;
+        *=*) ;;
+        *)
+            echo "guest.sh: no check $arg" >&2
+            exit 2
+            ;;
+        esac
+    done
+    [ "$fails" -eq 0 ]
+}
+
+# checks-test.sh sources the file for its functions.
+[ "${BASH_SOURCE[0]}" != "$0" ] || main "$@"
