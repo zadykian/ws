@@ -1,12 +1,14 @@
 #!/bin/bash
-# Tries the functions of host.sh, guests.sh and guest.sh, and lan.sh whole, against stand-ins for
-# the tools they call, on the outputs the real tools print. CI's lint job runs it. The scripts themselves run on the
-# real machine alone.
+# Tries the functions of host.sh, guests.sh and guest.sh, and lan.sh whole, against the stand-ins
+# for the tools they call that stand-ins.sh writes. CI's lint job runs it. The scripts themselves
+# run on the real machine alone.
 set -uo pipefail
 
-dir=${CHECKS_DIR:-$(cd "$(dirname "$0")" && pwd)}
+here=$(cd "$(dirname "$0")" && pwd)
+dir=${CHECKS_DIR:-$here}
 tmp=$(mktemp -d)
 mkdir "$tmp/bin"
+"$here/stand-ins.sh" "$tmp/bin" || exit 1
 pid=
 trap '[ -z "$pid" ] || kill "$pid" 2>/dev/null; rm -rf "$tmp"' EXIT
 export PATH="$tmp/bin:$PATH"
@@ -62,11 +64,6 @@ Status: active
 [ 2] Anywhere on wg1            DENY IN     Anywhere
 [10] Anywhere on wg10           DENY IN     Anywhere
 UFW
-cat >"$tmp/bin/ufw" <<'STUB'
-#!/bin/sh
-cat "$UFW_STATUS"
-STUB
-chmod +x "$tmp/bin/ufw"
 
 UFW_STATUS=$tmp/ufw-first expect "deny of wg1 stands before SSH" ok host deny_first 1
 UFW_STATUS=$tmp/ufw-late expect "deny of wg1 stands after SSH" fail host deny_first 1
@@ -74,45 +71,9 @@ UFW_STATUS=$tmp/ufw-late expect "deny of wg10 stands after SSH" fail host deny_f
 UFW_STATUS=$tmp/ufw-late expect "wg1's deny is not wg10's" fail host deny_first 11
 export UFW_STATUS=$tmp/ufw-first
 
-# A tunnel of slot 12 routes by table 1012, as the code's 1000 + slot. The host's uplink is enp5s0,
-# and a guest's NIC eth0. What ip changes it keeps in IP_STATE. A call the stand-in does not know
-# fails, and never reaches the machine's own ip.
+# A tunnel of slot 12 routes by table 1012, as the code's 1000 + slot. What ip changes it keeps
+# in IP_STATE.
 export IP_STATE=$tmp/ip
-cat >"$tmp/bin/ip" <<'IP'
-#!/bin/sh
-case "$*" in
-"-4 rule show") echo "32000: from all iif wg12 lookup 1012" ;;
-"-4 route show table 1012") echo "default via 10.100.0.12 dev incusbr0 onlink" ;;
-"-4 route show default") echo "default via 192.168.1.1 dev enp5s0 proto dhcp src 192.168.1.10 metric 100" ;;
-"-4 -o addr show dev enp5s0")
-    printf '%s\n' '2: enp5s0    inet 192.168.1.10/24 metric 100 brd 192.168.1.255 scope global dynamic enp5s0\       valid_lft 85841sec preferred_lft 85841sec'
-    ;;
-"-4 -o addr show dev eth0 scope global")
-    printf '%s\n' '2: eth0    inet 10.100.0.10/24 metric 1024 brd 10.100.0.255 scope global dynamic eth0\       valid_lft 3591sec preferred_lft 3591sec'
-    ;;
-"addr add "*" dev eth0") : >"$IP_STATE/added" ;;
-"addr del "*" dev eth0") rm -f "$IP_STATE/added" ;;
-"neigh flush dev eth0") : >"$IP_STATE/flushed" ;;
-"route add "*" via "*)
-    [ ! -e "$IP_STATE/route-$3" ] || {
-        echo "RTNETLINK answers: File exists" >&2
-        exit 2
-    }
-    echo "$5" >"$IP_STATE/route-$3"
-    ;;
-"route delete "*" via "*) rm "$IP_STATE/route-$3" ;;
-"route get "*)
-    via=192.168.1.1
-    [ ! -e "$IP_STATE/route-$3" ] || via=$(cat "$IP_STATE/route-$3")
-    printf '%s via %s dev eth0 src 192.168.1.20 uid 1000 \n    cache \n' "$3" "$via"
-    ;;
-*)
-    echo "ip: the stand-in knows no call $*" >&2
-    exit 1
-    ;;
-esac
-IP
-chmod +x "$tmp/bin/ip"
 slot12() {
     # shellcheck disable=SC2329 # forwarding calls it
     slot_of() { echo 12; }
@@ -120,8 +81,7 @@ slot12() {
 }
 expect "a tunnel of slot 12 forwards by table 1012" ok host slot12
 
-# ss lists the kernel's WireGuard sockets on every address, with no process, as any other. wg
-# names their ports, and refuses a user who is not root.
+# ss lists the kernel's WireGuard sockets on every address, with no process, as any other.
 cat >"$tmp/ss-host" <<'SS'
 udp   UNCONN 0      0             127.0.0.54:53           0.0.0.0:*
 udp   UNCONN 0      0          127.0.0.53%lo:53           0.0.0.0:*
@@ -140,20 +100,6 @@ tcp   LISTEN 0      4096                [::]:22              [::]:*
 SS
 { cat "$tmp/ss-host" && echo "udp   UNCONN 0      0                0.0.0.0:5353         0.0.0.0:*"; } >"$tmp/ss-mdns"
 { cat "$tmp/ss-host" && echo "tcp   LISTEN 0      4096             0.0.0.0:51820        0.0.0.0:*"; } >"$tmp/ss-tcp"
-cat >"$tmp/bin/ss" <<'STUB'
-#!/bin/sh
-cat "$SS_LISTING"
-STUB
-cat >"$tmp/bin/wg" <<'STUB'
-#!/bin/sh
-[ "$*" = "show all listen-port" ] || exit 1
-[ -z "${WG_DENIED:-}" ] || {
-    echo "Unable to access interface: Operation not permitted" >&2
-    exit 1
-}
-printf 'wg0\t51820\nwg12\t51832\n'
-STUB
-chmod +x "$tmp/bin/ss" "$tmp/bin/wg"
 # listens prints what listens on every address beyond SSH, DHCP and the tunnels, and fails on any.
 listens() {
     local out
@@ -166,30 +112,7 @@ SS_LISTING=$tmp/ss-mdns expect "a UDP port that is no tunnel's" fail host listen
 SS_LISTING=$tmp/ss-tcp expect "TCP on a tunnel's port" fail host listens
 SS_LISTING=$tmp/ss-host WG_DENIED=1 expect "wg that names no port" fail host listens
 
-# A guest's ping under a borrowed source has its answer where the table of sources passes it and
-# the host took that source for this guest's MAC. The host does so when the guest, its neighbour
-# cache flushed, asks for the gateway's MAC under that source. Any other ping has no answer.
-cat >"$tmp/bin/ping" <<'STUB'
-#!/bin/sh
-src=
-while [ $# -gt 1 ]; do
-    case $1 in
-    -I)
-        src=$2
-        shift 2
-        ;;
-    -c | -W) shift 2 ;;
-    *) shift ;;
-    esac
-done
-[ -n "$src" ] && [ "${SOURCES:-}" = open ] || exit 1
-[ ! -e "$IP_STATE/flushed" ] || {
-    rm "$IP_STATE/flushed"
-    : >"$IP_STATE/mine-$src"
-}
-[ -e "$IP_STATE/mine-$src" ]
-STUB
-chmod +x "$tmp/bin/ping"
+# Another guest's address drops, or passes and draws the reply.
 mkdir "$IP_STATE"
 SOURCES=closed expect "a table of sources that drops another guest's address" ok guest spoofed_addr 10.100.0.11
 rm -f "$IP_STATE"/*
@@ -200,18 +123,8 @@ SOURCES=open expect "a table that passes another guest's address" fail guest spo
 }
 rm -f "$IP_STATE"/*
 
-# lan.sh runs whole, on Linux, against a host at 192.168.1.10 that answers SSH alone. sudo either
-# runs the command or wants a password that the run cannot give.
-cat >"$tmp/bin/sudo" <<'STUB'
-#!/bin/sh
-[ "${SUDO:-}" = no ] || exec "$@"
-echo "sudo: a terminal is required to read the password" >&2
-exit 1
-STUB
-printf '#!/bin/sh\necho Linux\n' >"$tmp/bin/uname"
-printf '#!/bin/sh\n[ "$*" = "-z -w 3 192.168.1.10 22" ]\n' >"$tmp/bin/nc"
-chmod +x "$tmp/bin/sudo" "$tmp/bin/uname" "$tmp/bin/nc"
-# lan runs lan.sh, and fails where it leaves a route it added, or removes one it found.
+# lan runs lan.sh whole, against the host 192.168.1.10. It fails where the script leaves a route
+# it added, or removes one it found.
 lan() {
     local before=no after=no
     [ ! -e "$IP_STATE/route-10.100.0.10" ] || before=yes
@@ -227,12 +140,8 @@ expect "a route through the host that was there" ok lan
 rm -f "$IP_STATE"/*
 
 # ws-fans' cgroup holds a process named nvidia-smi, or not.
-printf '#!/bin/sh\nwhile :; do sleep 1; done\n' >"$tmp/bin/nvidia-smi"
-chmod +x "$tmp/bin/nvidia-smi"
 "$tmp/bin/nvidia-smi" &
 pid=$!
-printf '#!/bin/sh\necho /ws-fans.slice/ws-fans.service\n' >"$tmp/bin/systemctl"
-chmod +x "$tmp/bin/systemctl"
 mkdir -p "$tmp/cg/ws-fans.slice/ws-fans.service"
 export CGROUP_ROOT=$tmp/cg
 : >"$tmp/cg/ws-fans.slice/ws-fans.service/cgroup.procs"
@@ -243,16 +152,6 @@ echo "$$" >"$tmp/cg/ws-fans.slice/ws-fans.service/cgroup.procs"
 expect "ws-fans runs another program" fail host fans_nvidia
 
 # A guest's run is a failure where incus fails or the script exits non-zero, with no FAIL line.
-cat >"$tmp/bin/incus" <<'STUB'
-#!/bin/sh
-case "$*" in
-"file push"*) exit "${PUSH:-0}" ;;
-*bash*) echo "ok   fine" && exit "${RUN:-0}" ;;
-esac
-STUB
-chmod +x "$tmp/bin/incus"
-printf '#!/bin/sh\necho 1\n' >"$tmp/bin/docker"
-chmod +x "$tmp/bin/docker"
 # fails_after runs a check on guest g1 and prints the count of failures.
 fails_after() {
     # shellcheck disable=SC2329 # the checks call it
@@ -271,8 +170,6 @@ no_guest() {
     ws=$tmp/bin/ws
     main 1
 }
-printf '#!/bin/sh\n' >"$tmp/bin/ws"
-chmod +x "$tmp/bin/ws"
 expect "a host that lists no guest" fail guest_side no_guest
 
 [ "$failed" -eq 0 ] || exit 1
