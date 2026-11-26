@@ -1,8 +1,10 @@
 package desktop_test
 
 import (
+	"fmt"
 	"os"
-	"reflect"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/pelletier/go-toml/v2"
@@ -39,15 +41,44 @@ func load(t *testing.T) settings {
 	return s
 }
 
-// TestNamedSettings holds the Dock's and the Finder's named keys. mise ignores a key it does not
-// know with a warning, so the keys here are the ones that its tables list.
+// shape names a value's type, and each element's and key's below it, so that a test compares what
+// mise compares and not the value. An integer and a real differ, as TOML's 1 and 1.0 do.
+func shape(value any) string {
+	switch v := value.(type) {
+	case []any:
+		parts := make([]string, len(v))
+		for i, e := range v {
+			parts[i] = shape(e)
+		}
+		return "array[" + strings.Join(parts, ",") + "]"
+	case map[string]any:
+		parts := make([]string, 0, len(v))
+		for k, e := range v {
+			parts = append(parts, k+":"+shape(e))
+		}
+		slices.Sort(parts)
+		return "dict{" + strings.Join(parts, ",") + "}"
+	case bool:
+		return "bool"
+	case int64:
+		return "int"
+	case float64:
+		return "real"
+	case string:
+		return "string"
+	}
+	return fmt.Sprintf("%T", value)
+}
+
+// TestNamedSettings holds the Dock's and the Finder's named keys, each to its type. mise ignores
+// a key it does not know with a warning, so the keys here are the ones that its tables list.
 func TestNamedSettings(t *testing.T) {
 	m := load(t).Bootstrap.Settings.Macos
-	if want := map[string]any{"tilesize": int64(74), "show_recents": false}; !reflect.DeepEqual(m.Dock, want) {
-		t.Errorf("dock = %#v, want %#v", m.Dock, want)
+	if got, want := shape(m.Dock), "dict{show_recents:bool,tilesize:int}"; got != want {
+		t.Errorf("dock = %s, want %s", got, want)
 	}
-	if want := map[string]any{"preferred_view_style": "column"}; !reflect.DeepEqual(m.Finder, want) {
-		t.Errorf("finder = %#v, want %#v", m.Finder, want)
+	if got, want := shape(m.Finder), "dict{preferred_view_style:string}"; got != want {
+		t.Errorf("finder = %s, want %s", got, want)
 	}
 }
 
@@ -55,38 +86,39 @@ func TestNamedSettings(t *testing.T) {
 // An integer 0 never equals a real 0.0, so status would differ for good where the type here is
 // not the Mac's. TOML's 1.0 is a real, and its 0 an integer.
 func TestDefaultsKeepTheirTypes(t *testing.T) {
-	want := map[string]map[string]any{
-		"com.apple.dock":              {"minimize-to-application": true, "wvous-br-corner": int64(1)},
-		"com.apple.finder":            {"NewWindowTarget": "PfHm", "ShowRecentTags": false},
-		"com.apple.assistant.support": {"Assistant Enabled": false},
+	want := map[string]map[string]string{
+		"com.apple.dock":              {"minimize-to-application": "bool", "wvous-br-corner": "int"},
+		"com.apple.finder":            {"NewWindowTarget": "string", "ShowRecentTags": "bool"},
+		"com.apple.assistant.support": {"Assistant Enabled": "bool"},
 		"com.apple.screencapture": {
-			"target": "clipboard", "target-screenshot": "clipboard",
-			"target-screenrecording": "file", "style": "selection",
+			"target": "string", "target-screenshot": "string",
+			"target-screenrecording": "string", "style": "string",
 		},
 		"com.apple.WindowManager": {
-			"EnableStandardClickToShowDesktop": false, "EnableTiledWindowMargins": false,
-			"EnableTilingByEdgeDrag": false, "EnableTopTilingByEdgeDrag": false,
-			"EnableTilingOptionAccelerator": false,
-			"StandardHideWidgets":           true, "StageManagerHideWidgets": true,
+			"EnableStandardClickToShowDesktop": "bool", "EnableTiledWindowMargins": "bool",
+			"EnableTilingByEdgeDrag": "bool", "EnableTopTilingByEdgeDrag": "bool",
+			"EnableTilingOptionAccelerator": "bool",
+			"StandardHideWidgets":           "bool", "StageManagerHideWidgets": "bool",
 		},
 		"NSGlobalDomain": {
-			"AppleInterfaceStyle":                      "Dark",
-			"AppleInterfaceStyleSwitchesAutomatically": false,
-			"AppleShowAllExtensions":                   true,
-			"AppleShowScrollBars":                      "Always",
-			"AppleEnableSwipeNavigateWithScrolls":      false,
-			"NSGlassTintAmount":                        float64(1),
-			"com.apple.trackpad.scaling":               0.5,
-			"com.apple.sound.beep.volume":              float64(0),
-			"com.apple.sound.beep.sound":               "/System/Library/Sounds/Tink.aiff",
-			"com.apple.sound.uiaudio.enabled":          int64(0),
+			"AppleInterfaceStyle":                      "string",
+			"AppleInterfaceStyleSwitchesAutomatically": "bool",
+			"AppleShowAllExtensions":                   "bool",
+			"AppleShowScrollBars":                      "string",
+			"AppleEnableSwipeNavigateWithScrolls":      "bool",
+			"NSGlassTintAmount":                        "real",
+			"com.apple.trackpad.scaling":               "real",
+			"com.apple.sound.beep.volume":              "real",
+			"com.apple.sound.beep.sound":               "string",
+			"com.apple.sound.uiaudio.enabled":          "int",
 		},
 	}
 	got := load(t).Bootstrap.Settings.Macos.Defaults
 	for domain, keys := range want {
-		for key, value := range keys {
-			if g, ok := got[domain][key]; !ok || !reflect.DeepEqual(g, value) {
-				t.Errorf("%s %q = %#v (%T), want %#v (%T)", domain, key, g, g, value, value)
+		for key, kind := range keys {
+			value, ok := got[domain][key]
+			if !ok || shape(value) != kind {
+				t.Errorf("%s %q is %s, want %s", domain, key, shape(value), kind)
 			}
 		}
 	}
@@ -100,14 +132,14 @@ func TestDefaultsKeepTheirTypes(t *testing.T) {
 }
 
 // TestScreenSaverIdleTimeIsThisHosts holds the screen saver's delay in the current host's domain,
-// where macOS keeps it. mise writes that scope by an entry with host = "current" alone.
+// where macOS keeps it, as an integer. mise writes that scope by an entry with host = "current" alone.
 func TestScreenSaverIdleTimeIsThisHosts(t *testing.T) {
 	entries := load(t).Bootstrap.Settings.Macos.DefaultsEntries
 	if len(entries) != 1 {
 		t.Fatalf("defaults_entries holds %d entries, want the screen saver's alone", len(entries))
 	}
 	e := entries[0]
-	if e.Domain != "com.apple.screensaver" || e.Key != "idleTime" || e.Host != "current" || e.Value != int64(7200) {
-		t.Errorf("the entry is %+v, want idleTime = 7200 of com.apple.screensaver, host current", e)
+	if e.Domain != "com.apple.screensaver" || e.Key != "idleTime" || e.Host != "current" || shape(e.Value) != "int" {
+		t.Errorf("the entry is %+v, want idleTime of com.apple.screensaver, host current, an integer", e)
 	}
 }

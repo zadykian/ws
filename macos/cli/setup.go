@@ -188,10 +188,9 @@ func setupSteps(m effect.Machine, out effect.Out, cfg setupConfig, tag string) (
 	return first, append(rest, setup.Plugin(m, setup.TreeDir, macPluginDir, 0)...)
 }
 
-// planSetup says each change that setup's steps would make, and exits 2 where there is one. The
-// steps after the command line tools plan once the tools stand. Where there is none, it asks mise's
-// bootstrap for its plan in both envs, whose exit 2 is setup's. Then it asks the status, which
-// covers what the plan does not.
+// planSetup says each change that setup's steps would make, and exits 2 where there is one. Once
+// the steps have nothing due, it asks mise's plan in both envs, then the status, which covers what
+// the plan does not.
 func planSetup(ctx context.Context, m effect.Machine, out effect.Out, first, rest []resource.Resource) error {
 	for _, steps := range [][]resource.Resource{first, rest} {
 		due, err := setup.PlanSteps(ctx, out, steps)
@@ -217,10 +216,8 @@ func planSetup(ctx context.Context, m effect.Machine, out effect.Out, first, res
 	return err
 }
 
-// runBootstrap runs mise's bootstrap in the Mac's roles, then again with the env apps. With --yes,
-// mise asks nothing on a terminal before it writes the preferences and the login items: a "no"
-// would skip them, and the run pass. The second run keeps one failed cask from stopping ws's units,
-// as mise ends a run at its first failed step.
+// runBootstrap runs mise's bootstrap, then the env apps apart, so a failed cask stops no unit of
+// ws's. --yes spares a terminal's question: a "no" would skip the preferences and the login items.
 func runBootstrap(ctx context.Context, m effect.Machine) error {
 	if err := runMise(ctx, m, "bootstrap", "--yes"); err != nil {
 		return err

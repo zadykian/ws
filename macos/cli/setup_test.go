@@ -182,8 +182,8 @@ func TestSetupAgainChangesNothingAndAsksNoSudo(t *testing.T) {
 		t.Fatalf("status = %d, stderr = %q", status, stderr)
 	}
 	noWrites(t, m)
-	if indexOf(m, "run "+miseLine) < 0 {
-		t.Errorf("no bootstrap: %q", m.Calls)
+	if indexOf(m, "run "+miseLine) < 0 || indexOf(m, "run "+appsLine) < 0 {
+		t.Errorf("no bootstrap of both envs: %q", m.Calls)
 	}
 }
 
@@ -269,7 +269,8 @@ func TestSetupPlanAsksMisesPlanWhereTheStepsHaveNothingToDo(t *testing.T) {
 			if status != tc.status {
 				t.Errorf("status = %d, want %d", status, tc.status)
 			}
-			if indexOf(m, "run "+planLine) < 0 || slices.Contains(m.Calls, "run "+miseLine) {
+			if indexOf(m, "run "+planLine) < 0 || slices.Contains(m.Calls, "run "+miseLine) ||
+				slices.Contains(m.Calls, "run "+appsLine) {
 				t.Errorf("calls = %q", m.Calls)
 			}
 		})

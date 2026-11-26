@@ -73,7 +73,7 @@ func TestWallpaperAsksNoSudoWhereTheCheckHolds(t *testing.T) {
 }
 
 // TestCheckReadsEachScreen runs the check on canned output of wallpaper get, a line per screen,
-// and on its failure.
+// and on a failure. The pipe has no pipefail, so awk's exit alone decides.
 func TestCheckReadsEachScreen(t *testing.T) {
 	other := "/System/Library/Desktop Pictures/Solid Colors/Black.png"
 	for _, tc := range []struct {
@@ -86,7 +86,7 @@ func TestCheckReadsEachScreen(t *testing.T) {
 		{"one of two on another", stone + "\n" + other + "\n", 0, false},
 		{"another picture", other + "\n", 0, false},
 		{"no screen", "", 0, false},
-		{"wallpaper fails", "", 1, false},
+		{"wallpaper exits 1 after Stone's path", stone + "\n", 1, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			dir := t.TempDir()

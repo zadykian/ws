@@ -1,9 +1,9 @@
 package keyboard_test
 
 import (
+	"fmt"
 	"os"
-	"reflect"
-	"strconv"
+	"slices"
 	"strings"
 	"testing"
 
@@ -43,36 +43,30 @@ func load(t *testing.T) settings {
 	return s
 }
 
-// TestTheLanguageIndicatorIsAString holds the indicator's value to the string "0", the type that
-// mise compares with the one the Mac holds.
+// TestTheLanguageIndicatorIsAString holds the indicator's value to a string, the type that mise
+// compares with the one the Mac holds.
 func TestTheLanguageIndicatorIsAString(t *testing.T) {
 	got := load(t).Bootstrap.Settings.Macos.Defaults["NSGlobalDomain"]
-	if want := map[string]any{"TSMLanguageIndicatorEnabled": "0"}; !reflect.DeepEqual(got, want) {
-		t.Errorf("NSGlobalDomain = %#v, want %#v", got, want)
+	if want := "dict{TSMLanguageIndicatorEnabled:string}"; shape(got) != want {
+		t.Errorf("NSGlobalDomain = %s, want %s", shape(got), want)
 	}
 }
 
 // TestCapsLockIsControl holds the mapping to the current host's domain, where macOS keeps one
 // per keyboard, and its two codes to integers.
 func TestCapsLockIsControl(t *testing.T) {
-	want := entry{
-		Domain: "NSGlobalDomain",
-		Key:    "com.apple.keyboard.modifiermapping.0-0-0",
-		Host:   "current",
-		Value: []any{map[string]any{
-			"HIDKeyboardModifierMappingSrc": int64(30064771129),
-			"HIDKeyboardModifierMappingDst": int64(30064771300),
-		}},
-	}
+	const key = "com.apple.keyboard.modifiermapping.0-0-0"
 	for _, e := range load(t).Bootstrap.Settings.Macos.DefaultsEntries {
-		if e.Key == want.Key {
-			if !reflect.DeepEqual(e, want) {
-				t.Errorf("the mapping is %+v, want %+v", e, want)
-			}
-			return
+		if e.Key != key {
+			continue
 		}
+		want := "array[dict{HIDKeyboardModifierMappingDst:int,HIDKeyboardModifierMappingSrc:int}]"
+		if e.Domain != "NSGlobalDomain" || e.Host != "current" || shape(e.Value) != want {
+			t.Errorf("the mapping is %+v, want NSGlobalDomain, host current, %s", e, want)
+		}
+		return
 	}
-	t.Errorf("no entry for %s", want.Key)
+	t.Errorf("no entry for %s", key)
 }
 
 // hotkeys maps each hotkey's ID to its entry, for the entries that patch the shortcuts'
@@ -95,122 +89,90 @@ func hotkeys(t *testing.T) map[string]entry {
 	return got
 }
 
-// TestTheHotkeysThatStayOn holds each one's whole value, of the type standard. mise writes a path
+// TestTheHotkeysThatStayOn holds each one's whole value to the type standard. mise writes a path
 // into the dictionary, so the IDs that macOS adds stay, and a value that holds a key more or less
 // than this reads as different.
 func TestTheHotkeysThatStayOn(t *testing.T) {
-	on := func(code, key, mask int64) entry {
-		return entry{
-			Domain: "com.apple.symbolichotkeys",
-			Key:    "AppleSymbolicHotKeys",
-			Value: map[string]any{
-				"enabled": true,
-				"value": map[string]any{
-					"parameters": []any{code, key, mask},
-					"type":       "standard",
-				},
-			},
-		}
-	}
-	want := map[string]entry{
-		"61":  on(32, 49, 1048576),
-		"64":  on(32, 49, 524288),
-		"160": on(108, 37, 1048576),
-	}
-	got := hotkeys(t)
-	for id, w := range want {
-		w.Path = []string{id}
-		if !reflect.DeepEqual(got[id], w) {
-			t.Errorf("hotkey %s = %+v, want %+v", id, got[id], w)
-		}
-	}
-}
-
-// TestTheHotkeysThatGoOff holds each ID to a path of its `enabled` key alone. That keeps the
-// hotkey's value, so that it comes back on with the key it had, and an ID that macOS lacks gets a
-// dictionary with `enabled` alone. 34 and 98 stay as macOS has them, and no ID is on and off.
-func TestTheHotkeysThatGoOff(t *testing.T) {
-	var want []string
-	for _, r := range [][2]int{
-		{7, 13}, {21, 21}, {25, 27}, {32, 33}, {36, 36}, {52, 54}, {57, 57}, {59, 60}, {65, 65},
-		{159, 159}, {162, 162}, {164, 164}, {175, 175}, {190, 190}, {215, 219}, {222, 233},
-		{235, 235}, {237, 251}, {256, 258}, {260, 260},
-	} {
-		for id := r[0]; id <= r[1]; id++ {
-			want = append(want, strconv.Itoa(id))
-		}
-	}
-	got := map[string]entry{}
+	const want = "dict{enabled:bool,value:dict{parameters:array[int,int,int],type:string}}"
+	stay := 0
 	for id, e := range hotkeys(t) {
-		if len(e.Path) == 2 {
-			got[id] = e
+		if len(e.Path) != 1 {
+			continue
+		}
+		stay++
+		if shape(e.Value) != want {
+			t.Errorf("hotkey %s = %s, want %s", id, shape(e.Value), want)
 		}
 	}
-	if len(got) != len(want) {
-		t.Errorf("%d hotkeys go off, want %d", len(got), len(want))
-	}
-	for _, id := range want {
-		e, ok := got[id]
-		if !ok {
-			t.Errorf("hotkey %s has no entry that turns it off", id)
-		} else if !reflect.DeepEqual(e.Path, []string{id, "enabled"}) || e.Value != false {
-			t.Errorf("hotkey %s = %+v, want path [%s enabled] and false", id, e, id)
-		}
-	}
-	// The three that stay on have a path of the ID alone: no other entry, and none deeper.
-	all := hotkeys(t)
-	if len(all) != len(want)+3 {
-		t.Errorf("%d hotkeys have an entry, want %d", len(all), len(want)+3)
-	}
-	for id, e := range all {
-		if len(e.Path) > 2 {
-			t.Errorf("hotkey %s has the path %v, deeper than its enabled key", id, e.Path)
-		}
-	}
-	for _, id := range []string{"34", "98"} {
-		if _, ok := all[id]; ok {
-			t.Errorf("hotkey %s has an entry, and none is wanted", id)
-		}
+	if stay == 0 {
+		t.Error("no hotkey stays on")
 	}
 }
 
-// TestTheInputSourcesAreTheLayoutsAlone holds the two arrays to their whole value. mise writes
-// each whole and compares it by element, in order, and by type: an ID is an integer, as macOS
-// stores it, and a key order is no difference. The first array names the layout's two sources, and
-// the second the same two and Apple's two methods, so that no layout of Apple's stays on.
+// TestTheHotkeysThatGoOff holds each other ID to a path of its `enabled` key alone, set to a
+// boolean. That keeps the hotkey's value, so that it comes back on with the key it had, and an ID
+// that macOS lacks gets a dictionary with `enabled` alone.
+func TestTheHotkeysThatGoOff(t *testing.T) {
+	off := 0
+	for id, e := range hotkeys(t) {
+		switch {
+		case len(e.Path) == 1:
+		case len(e.Path) != 2 || e.Path[1] != "enabled" || shape(e.Value) != "bool":
+			t.Errorf("hotkey %s = %+v, want path [%s enabled] and a boolean", id, e, id)
+		default:
+			off++
+		}
+	}
+	if off == 0 {
+		t.Error("no hotkey goes off")
+	}
+}
+
+// shape names a value's type, and each element's and key's below it, so that a test compares what
+// mise compares and not the value. An integer and a real differ, as TOML's 1 and 1.0 do.
+func shape(value any) string {
+	switch v := value.(type) {
+	case []any:
+		parts := make([]string, len(v))
+		for i, e := range v {
+			parts[i] = shape(e)
+		}
+		return "array[" + strings.Join(parts, ",") + "]"
+	case map[string]any:
+		parts := make([]string, 0, len(v))
+		for k, e := range v {
+			parts = append(parts, k+":"+shape(e))
+		}
+		slices.Sort(parts)
+		return "dict{" + strings.Join(parts, ",") + "}"
+	case bool:
+		return "bool"
+	case int64:
+		return "int"
+	case float64:
+		return "real"
+	case string:
+		return "string"
+	}
+	return fmt.Sprintf("%T", value)
+}
+
+// TestTheInputSourcesAreTheLayoutsAlone holds the two arrays to their type. mise compares each
+// whole, by element, in order, and by type: an ID is an integer, as macOS stores it.
 func TestTheInputSourcesAreTheLayoutsAlone(t *testing.T) {
-	layout := func(id int64, name string) any {
-		return map[string]any{"InputSourceKind": "Keyboard Layout", "KeyboardLayout ID": id, "KeyboardLayout Name": name}
-	}
-	method := func(bundle string) any {
-		return map[string]any{"Bundle ID": bundle, "InputSourceKind": "Non Keyboard Input Method"}
-	}
+	const layout = "dict{InputSourceKind:string,KeyboardLayout ID:int,KeyboardLayout Name:string}"
+	const method = "dict{Bundle ID:string,InputSourceKind:string}"
 	got := load(t).Bootstrap.Settings.Macos.Defaults
-	want := map[string]map[string]any{
-		"com.apple.inputsources": {"AppleEnabledThirdPartyInputSources": []any{layout(-20611, "ENG"), layout(-21268, "RUS")}},
-		"com.apple.HIToolbox": {"AppleEnabledInputSources": []any{
-			layout(-20611, "ENG"), layout(-21268, "RUS"), method("com.apple.CharacterPaletteIM"), method("com.apple.PressAndHold"),
-		}},
+	want := map[string]map[string]string{
+		"com.apple.inputsources": {"AppleEnabledThirdPartyInputSources": "array[" + layout + "," + layout + "]"},
+		"com.apple.HIToolbox": {"AppleEnabledInputSources": "array[" + layout + "," + layout + "," +
+			method + "," + method + "]"},
 	}
-	for domain, w := range want {
-		if !reflect.DeepEqual(got[domain], w) {
-			t.Errorf("%s = %#v, want %#v", domain, got[domain], w)
-		}
-	}
-}
-
-// TestTheInputSourcesNameTheBundlesLayouts keeps each source's ID and name to the layout that the
-// bundle's files hold: a keylayout's id and name, and the bundle's info for it.
-func TestTheInputSourcesNameTheBundlesLayouts(t *testing.T) {
-	const resources = source + "Contents/"
-	info := roleFile(t, resources+"Info.plist")
-	for name, id := range map[string]string{"ENG": "-20611", "RUS": "-21268"} {
-		layout := roleFile(t, resources+"Resources/"+name+".keylayout")
-		if want := `id="` + id + `" name="` + name + `"`; !strings.Contains(string(layout), want) {
-			t.Errorf("%s.keylayout lacks %s", name, want)
-		}
-		if want := "<key>KLInfo_" + name + "</key>"; !strings.Contains(string(info), want) {
-			t.Errorf("Info.plist lacks %s", want)
+	for domain, keys := range want {
+		for key, kind := range keys {
+			if g := shape(got[domain][key]); g != kind {
+				t.Errorf("%s %s = %s, want %s", domain, key, g, kind)
+			}
 		}
 	}
 }

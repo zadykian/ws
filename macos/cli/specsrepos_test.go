@@ -2,7 +2,6 @@ package cli
 
 import (
 	"os"
-	"path/filepath"
 	"regexp"
 	"testing"
 
@@ -14,11 +13,7 @@ var fullCommit = regexp.MustCompile(`^[0-9a-f]{40}$`)
 // TestMacClonesArePinnedToACommit keeps each clone of the Mac's roles at a full commit SHA, with no
 // depth. So a run never takes a branch's moving head, and each clone holds the history of its pin.
 func TestMacClonesArePinnedToACommit(t *testing.T) {
-	files, err := filepath.Glob(macRolesDir + "/*/" + macRoleFile)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, f := range files {
+	for _, f := range macMiseFiles(t) {
 		text, err := os.ReadFile(f) //nolint:gosec // a file of the tree, found by the test
 		if err != nil {
 			t.Fatal(err)
