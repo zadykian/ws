@@ -1,0 +1,14 @@
+# devtools' units. README.md says why each stands.
+
+# Go's directory, which a path that names no version reaches. The link names its version, which a
+# bump of [tools] changes with it. The server links its Go the same way.
+[file.devtools-go]
+path = "/usr/local/go"
+link = "{{ .Home }}/.local/share/mise/installs/go/1.27.3"
+
+# /opt/homebrew/bin and /usr/local/go/bin are on no shell's PATH where Homebrew is not set up. A
+# login shell adds each line of /etc/paths.d to its PATH (README.md). The file takes no mark, as
+# each line names a directory.
+[file.devtools-path]
+path = "/etc/paths.d/ws"
+source = "files/paths"

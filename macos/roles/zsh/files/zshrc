@@ -1,8 +1,28 @@
 # Written by github.com/zadykian/ws, whose next run replaces any change made here.
-#
-# ~/.zshrc sources this file. tmux, Fresh and cld's sessions turn modes on in the terminal, and a
-# dropped ssh leaves them on: the mouse would type escape codes at the prompt. So, before each
-# prompt, the hook turns them off (macos/roles/ghostty/README.md).
+# ~/.zshrc sources this file. It sets up oh-my-zsh, paths and aliases (macos/roles/zsh/README.md).
+# Then the hook turns off the modes that a dropped ssh leaves on (macos/roles/ghostty/README.md).
+
+# oh-my-zsh, where mise has cloned it. Its own update is off, as it would move the checkout off its
+# pin. zsh-syntax-highlighting must come last of the plugins.
+if [[ -r $HOME/.oh-my-zsh/oh-my-zsh.sh ]]; then
+    export ZSH=$HOME/.oh-my-zsh
+    ZSH_THEME=robbyrussell
+    zstyle ':omz:update' mode disabled
+    plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
+    source $ZSH/oh-my-zsh.sh
+fi
+
+# ~/.local/bin first, and once in a nest of shells. gpg-agent's pinentry asks on this terminal.
+typeset -U path
+path=($HOME/.local/bin $path)
+export GPG_TTY=$(tty 2>/dev/null)
+alias genpass='pwgen -s 24 1'
+
+# Secretive's agent, where its socket exists: a Mac with a key in a file has none, and keeps the
+# agent that macOS starts. ssh and git reach Secretive's agent by their own settings.
+ws_agent=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh
+[[ -S $ws_agent ]] && export SSH_AUTH_SOCK=$ws_agent
+unset ws_agent
 
 # The reports of the mouse, focus and the colour scheme; modifyOtherKeys and kitty's flags; cursor
 # keys and keypad; the cursor's style and visibility.
@@ -29,3 +49,6 @@ ws_precmd() {
 autoload -Uz add-zsh-hook
 add-zsh-hook preexec ws_preexec
 add-zsh-hook precmd ws_precmd
+
+# oh-my-zsh's hooks come before ours, so ours moves to the front, where $? is still the command's.
+precmd_functions=(ws_precmd ${precmd_functions:#ws_precmd})

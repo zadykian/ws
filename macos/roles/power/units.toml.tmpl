@@ -1,0 +1,25 @@
+# power's units. README.md says why each stands. A check runs as the user and the command through
+# sudo, so that a run that changes nothing asks no password.
+
+# The display stays on while the Mac is on power. pmset -g custom lists each source's settings under
+# its own heading, "AC Power:" for the mains, and a setting's line starts with a space. The check
+# reads displaysleep under that heading alone.
+[state.power-display.run]
+user = "root"
+command = ["pmset", "-c", "displaysleep", "0"]
+check = [
+    "sh",
+    "-c",
+    "pmset -g custom | awk '/^AC Power:/ {ac = 1; next} /^[^ ]/ {ac = 0} ac && $1 == \"displaysleep\" && $2 == 0 {found = 1} END {exit !found}'",
+]
+
+# The App Store's updates stay off. defaults prints a false boolean as 0, and fails where the key
+# is missing, which reads as on.
+[state.power-store.run]
+user = "root"
+command = ["defaults", "write", "/Library/Preferences/com.apple.commerce", "AutoUpdate", "-bool", "false"]
+check = [
+    "sh",
+    "-c",
+    "[ \"$(defaults read /Library/Preferences/com.apple.commerce AutoUpdate 2>/dev/null)\" = 0 ]",
+]

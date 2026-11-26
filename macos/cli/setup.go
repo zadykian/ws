@@ -29,6 +29,9 @@ const (
 	// macPluginDir is mise's system directory of plugins on macOS, which mise loads a plugin from as
 	// it stands.
 	macPluginDir = "/usr/local/share/mise/plugins"
+	// appsEnvs are the envs of the run that follows the bootstrap: the Mac's own, as the set ws, and
+	// apps, whose files install the apps. The plan and the status read them too, so they cover both.
+	appsEnvs = "ws,apps"
 )
 
 // macosRoles is where mise's bootstrap runs: the Mac's roles, in the tree.
@@ -78,7 +81,7 @@ func newSetupCmd(p enginecli.Env, server *string, cfg setupConfig) *cobra.Comman
 			"Ctrl-C stops. It installs mise at the version ws pins, checked against its SHA-256, where mise " +
 			"--version differs, and writes " + setup.MisercPath + " and " + setup.ConfigPath + ". It checks this ws's " +
 			"release tag out in " + setup.TreeDir + ", cleans the tree, links its plugin into mise's, and runs mise's " +
-			"bootstrap in the Mac's roles. Where values.yml names no WS_IDENTITY_PUB_KEY, it installs Secretive by mise's " +
+			"bootstrap in the Mac's roles, then the env apps' bootstrap, which installs the apps. Where values.yml names no WS_IDENTITY_PUB_KEY, it installs Secretive by mise's " +
 			"pin first, checks it by spctl, opens it and waits for a P-256 key made in it, which it names in values.yml " +
 			"for ws's login and git's signing, and takes no key that was there before: --key NAME names one. It asks sudo for what root's paths need, and for no more where a " +
 			"run changes nothing, which a second run does.\n\n" +
@@ -86,9 +89,10 @@ func newSetupCmd(p enginecli.Env, server *string, cfg setupConfig) *cobra.Comman
 			"in " + setup.TreeDir + " as it stands, after the guard. So is a ws of another version than " +
 			update.File + ", which the units run, or one where that file is missing, --in-place included: " +
 			"ws update --version installs a release there.\n\n" +
-			"--plan plans these steps, and mise's bootstrap where none of them is due. Where the command " +
-			"line tools are due, it plans no more, as git needs them. It exits 0 where nothing would " +
-			"change and 2 where something would.",
+			"--plan plans these steps, and mise's bootstrap where none of them is due, by its plan and then " +
+			"its status, which covers the preferences, the Dock and the login items that the plan leaves " +
+			"out. Where the command line tools are due, it plans no more, as git needs them. It exits 0 " +
+			"where nothing would change and 2 where something would.",
 		Args: cobra.NoArgs,
 	}
 	inPlace := c.Flags().Bool("in-place", false, "run the tree in "+setup.TreeDir+" as it stands, after the guard")
@@ -184,9 +188,9 @@ func setupSteps(m effect.Machine, out effect.Out, cfg setupConfig, tag string) (
 	return first, append(rest, setup.Plugin(m, setup.TreeDir, macPluginDir, 0)...)
 }
 
-// planSetup says each change that setup's steps would make, and exits 2 where there is one. The
-// steps after the command line tools plan once the tools stand. Where there is none, it asks mise's
-// bootstrap for its plan, whose exit 2 is setup's.
+// planSetup says each change that setup's steps would make, and exits 2 where there is one. Once
+// the steps have nothing due, it asks mise's plan in both envs, then the status, which covers what
+// the plan does not.
 func planSetup(ctx context.Context, m effect.Machine, out effect.Out, first, rest []resource.Resource) error {
 	for _, steps := range [][]resource.Resource{first, rest} {
 		due, err := setup.PlanSteps(ctx, out, steps)
@@ -197,17 +201,31 @@ func planSetup(ctx context.Context, m effect.Machine, out effect.Out, first, res
 			return engine.ExitStatus{Code: 2}
 		}
 	}
-	err := runMise(ctx, m, "bootstrap", "plan", "--detailed-exitcode")
+	err := runMise(ctx, m, "-E", appsEnvs, "bootstrap", "plan", "--detailed-exitcode")
 	var exit interface{ ExitCode() int }
 	if errors.As(err, &exit) && exit.ExitCode() == 2 {
+		return engine.ExitStatus{Code: 2}
+	}
+	if err != nil {
+		return err
+	}
+	differs, err := bootstrapDiffers(ctx, m, out)
+	if differs {
 		return engine.ExitStatus{Code: 2}
 	}
 	return err
 }
 
-// runBootstrap runs mise's bootstrap in the Mac's roles.
+// runBootstrap runs mise's bootstrap, then the env apps apart, so a failed cask stops no unit of
+// ws's. --yes spares a terminal's question: a "no" would skip the preferences and the login items.
 func runBootstrap(ctx context.Context, m effect.Machine) error {
-	return runMise(ctx, m, "bootstrap")
+	if err := runMise(ctx, m, "bootstrap", "--yes"); err != nil {
+		return err
+	}
+	if err := runMise(ctx, m, "-E", appsEnvs, "bootstrap", "--yes"); err != nil {
+		return fmt.Errorf("the apps failed, with ws's units set up: %w", err)
+	}
+	return nil
 }
 
 // runMise runs the mise that setup installs, in the Mac's roles, as the user.

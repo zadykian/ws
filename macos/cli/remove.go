@@ -108,7 +108,7 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string, skip bool
 	}
 	// The bootstrap takes the rest off. The unit of the tunnel's files boots the daemon out and
 	// removes its files. The networks' unit takes its resolvers, launchd's its plist, ssh's its host.
-	if err = p.Machine.Pass(c.Context(), false, "mise", "-C", "/opt/ws/macos", "bootstrap"); err != nil {
+	if err = p.Machine.Pass(c.Context(), false, "mise", "-C", "/opt/ws/macos", "bootstrap", "--yes"); err != nil {
 		err = fmt.Errorf("mise -C /opt/ws/macos bootstrap: %w: run it again to take %s's daemon, routes and host off", err, name)
 	}
 	if byHand != "" {

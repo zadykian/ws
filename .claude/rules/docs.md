@@ -33,7 +33,14 @@ What each document holds. How to write them is in the `writing` skill and [writi
   cld's unit. [Its values](../../macos/values/README.md) is
   the Mac's values files, [the tunnel's](../../macos/roles/tunnel/README.md) the daemons' rules, and [ghostty](../../macos/roles/ghostty/README.md) its Ghostty
   and what cld does there, [zed](../../macos/roles/zed/README.md) its Zed,
-  [firewall](../../macos/roles/firewall/README.md) its firewall. [Its secrets](../../macos/roles/secrets/README.md)
+  [firewall](../../macos/roles/firewall/README.md) its firewall.
+  [Its zsh](../../macos/roles/zsh/README.md) is its shell: oh-my-zsh, its plugins and ws's settings.
+  [Its power](../../macos/roles/power/README.md) is its display and the App Store's updates.
+  [Its devtools](../../macos/roles/devtools/README.md) is its command-line tools, and
+  [its docker](../../macos/roles/docker/README.md) its Docker, and
+  [its desktop](../../macos/roles/desktop/README.md) its Dock, Finder, sounds and wallpaper.
+  [Its keyboard](../../macos/roles/keyboard/README.md) is its Caps Lock, its hotkeys and its layout.
+  [Its apps](../../macos/roles/apps/README.md) are its apps, the Dock's apps, its login items and Stats's settings. [Its secrets](../../macos/roles/secrets/README.md)
   is the secrets' tools, fnox and age-plugin-yubikey, `ws macos secrets`, and remove's part.
   [The server's secrets](../../ubuntu/roles/secrets/README.md#the-repository) is the fnox
   repository: its files, its recipients and the inputs of ws's roles. [The router](../../ubuntu/roles/cable/router.md)
@@ -41,7 +48,8 @@ What each document holds. How to write them is in the `writing` skill and [writi
   and [the server's](../../ubuntu/runbook.md) are each side's steps by hand.
 - [The real machine's checks](../../ubuntu/checks/README.md) list what a person runs on a host, its
   guests, the Mac and the LAN, with the scripts beside the page. [builders.md](../../ubuntu/checks/builders.md)
-  holds the open points that the builds left.
+  holds the open points that the builds left. [The Mac's checks](../../macos/checks/README.md) are
+  the ten trials of a clean macOS 27, with the scripts beside the page.
 - [The kind package's README](../../engine/core/kind/README.md) says what a unit and a kind are:
   the spec, each kind's fields, and where the specs sit.
 - [release.md](../../.github/workflows/release.md), beside `release.yml`, says how to install ws,

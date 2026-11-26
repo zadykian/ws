@@ -1,8 +1,7 @@
 #!/bin/bash
-# mise bootstrap (28-bootstrap.sh) wrote /etc/ws/zshrc, as root, macos/roles/zsh/files/zshrc
-# whole, and ended ~/.zshrc with the line that sources it. An interactive zsh prints the resets
-# before each prompt, and the alternate screen's reset after a 255 from ssh, or from cld with
-# --host, alone. Functions stand in for both.
+# mise bootstrap (28-bootstrap.sh) wrote macos/roles/zsh/files/zshrc as /etc/ws/zshrc, and added
+# the line that sources it to ~/.zshrc. It cloned oh-my-zsh and its plugins at their pins, which an
+# interactive zsh loads. That zsh prints the resets before each prompt, as prompt below checks.
 
 set -eo pipefail
 
@@ -15,6 +14,32 @@ cmp -s /etc/ws/zshrc macos/roles/zsh/files/zshrc ||
 [ "$(tail -n 1 ~/.zshrc)" = 'source /etc/ws/zshrc' ] ||
     {
         echo '::error::~/.zshrc does not end with the line that sources the hook'
+        fail=1
+    }
+
+# pin PATH is the commit that mise.macos.toml names for ~/PATH, and the clone's head.
+pin() {
+    want=$(grep -F "\"~/$1\"" macos/roles/zsh/mise.macos.toml | sed -E 's/.*ref = "([0-9a-f]{40})".*/\1/')
+    [ -n "$want" ] && [ "$(git -C ~/"$1" rev-parse HEAD)" = "$want" ] ||
+        {
+            echo "::error::~/$1 is not at the commit of macos/roles/zsh/mise.macos.toml"
+            fail=1
+        }
+}
+pin .oh-my-zsh
+pin .oh-my-zsh/custom/plugins/zsh-autosuggestions
+pin .oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+
+# An interactive zsh with only a home loads the git plugin and the two others. It keeps oh-my-zsh's
+# update off, and has ~/.local/bin first on PATH.
+# shellcheck disable=SC2016 # zsh expands the script's variables, not bash
+env -i HOME="$HOME" zsh -ic '
+    alias gst >/dev/null && alias genpass >/dev/null &&
+        whence -w _zsh_autosuggest_start >/dev/null && whence -w _zsh_highlight >/dev/null &&
+        zstyle -s ":omz:update" mode mode && [[ $mode == disabled ]] &&
+        [[ ${path[1]} == $HOME/.local/bin ]]' </dev/null ||
+    {
+        echo '::error::zsh -i lacks a plugin, an alias, the update setting or ~/.local/bin first on PATH'
         fail=1
     }
 

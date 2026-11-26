@@ -1,8 +1,7 @@
 #!/bin/bash
 # The Mac converged, after every case before it: one more mise bootstrap must change nothing and
 # call sudo not once, as a run that changes nothing asks no password. Its plan must exit 0. So must
-# mise dot status --missing: the Mac's config holds no dotfile of mise's, as ws's units hold the
-# user's files.
+# mise dot status --missing: each of the roles' [dotfiles] entries stands in the user's home.
 
 set -eo pipefail
 # shellcheck source=.github/client-mise.sh

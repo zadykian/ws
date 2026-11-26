@@ -1,0 +1,14 @@
+# desktop's unit. README.md says why it stands. The run is the user's, and /opt/homebrew/bin comes
+# first on its PATH, as a unit's PATH lacks it and mise's formula puts wallpaper there.
+
+# The wallpaper is Stone on each screen. wallpaper get prints a line per screen, the image of its
+# current Space, and the check wants one line at least and each line Stone's.
+[state.wallpaper.run]
+user = "{{ .User }}"
+path = ["/opt/homebrew/bin"]
+command = ["wallpaper", "set", "/System/Library/Desktop Pictures/Solid Colors/Stone.png"]
+check = [
+    "sh",
+    "-c",
+    "wallpaper get | awk '$0 != \"/System/Library/Desktop Pictures/Solid Colors/Stone.png\" {bad = 1} END {exit bad || NR == 0}'",
+]

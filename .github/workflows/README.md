@@ -26,6 +26,10 @@ keeps its own exit code.
 It allows no line. Its test, [warnings-check-test.sh](../warnings-check-test.sh), runs in
 `lint`, on a log with warnings and on one without.
 
+`lint` tries the scripts of [the Mac's checks](../../macos/checks/README.md) too, by
+[checks-test.sh](../../macos/checks/checks-test.sh), against stand-ins for the Mac's tools. The
+scripts themselves run on a clean macOS 27 alone, which no runner is.
+
 ## The host job
 
 `host` is `server` for the host: it runs `ws ubuntu host setup` on the tree twice, on a booted
@@ -66,21 +70,41 @@ and fails where they differ from the repository's, in `ubuntu/roles/signoz`.
 
 ## The Mac
 
-Cases 46 to 87 read what the first `mise bootstrap` wrote. Case 46 checks
+Cases 46 to 88 read what the first `mise bootstrap` wrote. Case 46 checks
 [Ghostty's files](../../macos/roles/ghostty/README.md#ghosttys-settings): `/etc/ws/ghostty`
 must be `ws.ghostty` whole, and Ghostty's config must end with the line that reads it. Case 47
 checks [Zed's files](../../macos/roles/zed/README.md): `global_settings.json` must be
 `macos/roles/zed/files/`'s whole, a `settings.json` there must stay byte for byte through
 another bootstrap, and a login shell must find the cask's `zed`. Case 48 checks `keymap.json`:
 `macos/roles/zed/files/`'s whole, a foreign one left with the warning of its unit's read, and
-ws's back once it goes. Case 58 checks [the secrets' tools](../../macos/roles/secrets/README.md):
+ws's back once it goes. Case 49 checks setup's status, which covers what mise's plan leaves out.
+With one of desktop's preferences written another value, `ws macos setup --plan` must exit 2 and
+name it as differs in mise's status. With the role's value back by its type, it must exit 0. Case
+58 checks [the secrets' tools](../../macos/roles/secrets/README.md):
 `/usr/local/bin/fnox` and `age-plugin-yubikey` must be mise's, root's and 0755, at their pins. A
 stand-in in place of each must give way to mise's at the next bootstrap, whose plan then changes
 nothing. fnox must encrypt a value to the Nano's recipient with no YubiKey, and read it back by an
-SSH key that is a recipient too. Case 86 checks [.NET's SDKs](../../macos/roles/dotnet/README.md):
+SSH key that is a recipient too. Case 83 checks [devtools](../../macos/roles/devtools/README.md): `/usr/local/go` must link to
+mise's Go 1.27.3. A login shell must find it, and each formula's command in `/opt/homebrew/bin`.
+`~/.gnupg` must be 0700, and `gpg-agent.conf` must name pinentry-mac. Case 84 checks
+[docker](../../macos/roles/docker/README.md): a login shell must find `docker`, `colima` and the
+Keychain's program in `/opt/homebrew/bin`, and `docker compose` and `docker buildx` must run.
+`~/.docker/config.json` must name the plugins and osxkeychain, at 0600. Case 82 checks
+[desktop](../../macos/roles/desktop/README.md): some of its preferences must read back with the type
+that mise wrote, the current host's screen saver delay among them. Case 81 checks
+[the keyboard](../../macos/roles/keyboard/README.md): the hotkeys that stay on and some that go off
+must read back with their types, and so must the indicator's string. Caps Lock's mapping to Control
+must read back by value, as `defaults` prints its integers with no type. The layout's
+files must be root's at 644 and equal the role's, and the two arrays of input sources must read back
+with their types. Case 86 checks
+[.NET's SDKs](../../macos/roles/dotnet/README.md):
 `dotnet` in `/usr/local/share/dotnet` must be root's and list 10.0.404 and 11.0.100 alone, and
 `/etc/paths.d/dotnet` must name that directory. Case 87 checks [the zsh hook](../../macos/roles/ghostty/README.md#the-zsh-hook): `zsh -i` must
 reset at each prompt, and the alternate screen after a 255 from `ssh` or from `cld --host` alone.
+It checks [oh-my-zsh and its plugins](../../macos/roles/zsh/README.md) too: each clone at its pinned
+commit, and a shell that loads the plugins and puts `~/.local/bin` first. Case 88 checks
+[the power settings](../../macos/roles/power/README.md): `pmset -g custom` must show `displaysleep 0`
+under `AC Power`, and the App Store's `AutoUpdate` must read 0.
 
 CI also sets up a Mac, by [its cases](../client), in the order of [The
 Mac](../../macos/README.md). A stand-in cld, which cld's unit leaves alone, spares the
@@ -90,10 +114,16 @@ tree in `/opt/ws`, with ws's build in `/usr/local/bin` ([client-mise.sh](../clie
 before the first run must exit 2. Setup installs mise and links the tree's plugin as the runbook
 does. The case makes `/opt` and `/usr/local/share` root's and 755 first, as on
 a Mac, where the runner's image may differ. It sets up
-ssh, git and cld too. The plan must exit 0 after the first run, a second run must call no sudo,
-and `/usr/local/bin/ws` must be root:wheel at 755. A spec whose unit no line names must fail the plan,
-and so must a plan from `/opt/ws` with every unit in sync. After the first run the firewall must
-be on and block all incoming ([the Mac's firewall](../../macos/roles/firewall/README.md)).
+ssh, git and cld too, but not [the apps](../../macos/roles/apps/README.md): the case drops that
+role from the tree, as no run of CI needs its 15 casks. It drops
+[the wallpaper](../../macos/roles/desktop/README.md#the-wallpaper) of desktop too, as a runner has no
+screen for `wallpaper get` to read. Before the first run, case 25 takes from the image what setup
+makes on a clean Mac. It removes Homebrew's gnupg, its dependencies kept, and sets the display's
+timer on power to 10. So cases 83 and 88 read mise's pour of gnupg and power's unit. The plan must
+exit 0 after the first run,
+a second run must call no sudo, and `/usr/local/bin/ws` must be root:wheel at 755. A spec whose
+unit no line names must fail the plan, and so must a plan from `/opt/ws` with every unit in sync.
+After the first run the firewall must be on and block all incoming ([the Mac's firewall](../../macos/roles/firewall/README.md)).
 The cases after it, whose stand-ins listen on loopback, pass unchanged under it.
 The job's `values.yml` names a file key, made in case 20, as ws's
 login key and git's. Without ws's WireGuard key, the bootstrap must make the Mac's key, with

@@ -111,6 +111,16 @@ keeps the old file as `PATH.TIME~`. At a link that lacks them, or lines out of p
 or stops. Core's `file.UserLines` hold them on the Mac, and `file.HomeLines`, read and written as
 root, on ws. _Avoid_: include line
 
+**Apps' env**:
+The mise env `apps`, which loads each role's `mise.apps.toml` and no other run does. Setup runs it
+last, and CI drops it ([The apps' env](macos/roles/frame/README.md#the-apps-env)).
+_Avoid_: apps stage
+
+**Trial**:
+One of the ten tries of `macos/checks` that only a clean macOS 27 settles, which none has run
+([The Mac's checks](macos/checks/README.md)).
+_Avoid_: test
+
 **server's name**:
 What `--server` takes, and the directory `servers/NAME/` of the server's file: a lower-case letter,
 then up to 11 lower-case letters, digits and `-`, other than `direct`, `first` and `key`.

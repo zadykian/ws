@@ -52,11 +52,18 @@ it has any:
   terminals' tmux wrapper, and the open-file limit that it needs.
   [A project's settings](ubuntu/roles/zed/projects.md) cover SQL Server and Ansible.
 
-`macos/` sets up the Mac that works on the server, and Ghostty and Zed on it: [The Mac](macos).
+`macos/` sets up the Mac whole, its apps, tools and settings: [The Mac](macos).
 Its [`frame`](macos/roles/frame) is what the Mac's roles of mise's config lean on, and
 `/usr/local/bin/ws`. Its [`firewall`](macos/roles/firewall) turns the Application Firewall on
 and has it block all incoming. Its [`dotnet`](macos/roles/dotnet) installs .NET's SDKs, as `devtools` does on
-the server.
+the server. Its [`devtools`](macos/roles/devtools) installs Go and the command-line tools, and its
+[`docker`](macos/roles/docker) the command line of Docker and colima. Its [`desktop`](macos/roles/desktop)
+sets the Dock, Finder, windows, sounds, screenshots and the wallpaper. Its [`zsh`](macos/roles/zsh) sets up
+oh-my-zsh and its plugins, with the settings that load them. Its [`power`](macos/roles/power) keeps the
+display on while on power and stops the App Store's updates. Its [`apps`](macos/roles/apps) installs
+the Mac's apps, as mise's casks, pins some in the Dock, opens seven at login and sets Stats's
+settings. Its [`keyboard`](macos/roles/keyboard) makes the built-in keyboard's Caps Lock a Control key, sets the symbolic
+hotkeys and installs the maintainer's keyboard layout.
 
 A new Mac with Apple silicon follows [the Mac's runbook](macos/runbook.md). It runs
 `install.sh` through `sudo`, which installs ws's binary, checked against its SHA-256, and writes the
@@ -192,7 +199,8 @@ release whose ws `install.sh` installs, and `vX.Y.Z-rc.N` a pre-release of a `fe
 pull request breaks the rules of zadykian/toolkit's skills, and the issues workflow where an issue
 strays from its issue form. The hooks in `.githooks` check each commit before git makes it.
 [Checks](.github/workflows) and [The gates](.tools) have the details. What only a real host and its
-guests show is [checked by hand](ubuntu/checks/README.md), with scripts.
+guests show is [checked by hand](ubuntu/checks/README.md), with scripts, as is what a clean macOS 27
+shows of [the Mac](macos/checks/README.md).
 
 ## Pull requests
 

@@ -54,12 +54,18 @@ file. It then does what a person did by hand, in this order:
    it opened Secretive, as one made for another use would go to GitHub. To take one, stop setup
    with Ctrl-C and run `ws macos setup --key NAME`, NAME being the name that the wait prints
    ([Secretive](roles/ssh/README.md#secretive)).
-5. It runs mise's bootstrap in `/opt/ws/macos`, which installs gh and sets up ssh, git, cld
-   and the Mac's other roles ([The Mac's frame](roles/frame/README.md)). It makes the Mac's
-   WireGuard key, whose public half is `/etc/ws/tunnel.pub`.
+5. It runs mise's bootstrap in `/opt/ws/macos` with `--yes`, so that it asks nothing before it
+   writes the preferences. The bootstrap installs gh and sets up ssh, git, cld and the Mac's other
+   roles ([The Mac's frame](roles/frame/README.md)). It makes the Mac's WireGuard key, whose public
+   half is `/etc/ws/tunnel.pub`.
+6. It runs the bootstrap again with `-E ws,apps`, which installs the apps and sets the login items.
+   A failure there leaves ws's units set up, and fails setup, as mise ends a run at its first
+   failed step ([The apps' env](roles/frame/README.md#the-apps-env)).
 
 A second run changes nothing and asks no password. `ws macos setup --plan` plans these steps, and
-mise's bootstrap where none is due, and exits 0 where nothing would change. A ws that names no
+mise's bootstrap where none is due, in both envs, by its plan and then its status. The plan covers no
+preference, Dock app or login item, and the status does, with the tools, repositories and
+packages. It exits 0 where nothing would change and 2 where something would. A ws that names no
 release tag is refused: `--in-place` runs the tree in `/opt/ws` as it stands, after the guard. So
 is a ws of another version than `/usr/local/bin/ws`, which the units run, or a missing file there:
 `ws update --version X.Y.Z` installs that release there. A tree, or a directory above it, that
@@ -183,3 +189,16 @@ of its guests tries it at its own port.
 - The server's lease, made static, and the router's forwards where `WS_REMOTE` is set
   ([The router](../ubuntu/roles/cable/router.md)).
 - git's signing key on GitHub, and ws's in `@zadykiand`'s settings, which no run adds.
+- A log out after the first run, before any app opens, and a reboot. The Dock, Finder, sounds and
+  keyboard read their preferences at the next log out, and Logi's installer asks a reboot.
+- Apple's sign-in, the language and region, FileVault, the apps' licences and the privacy
+  permissions that an app asks for.
+- The menu bar, Translate for Safari, and Logi's and Safari's settings.
+- GPG's and the YubiKey's keys ([devtools](roles/devtools/README.md)).
+- The screen saver, Macintosh, in System Settings › Screen Saver. macOS keeps the choice in a
+  file that Apple documents nowhere, so no unit sets it.
+- `colima start`, as the machine's size and its start at login are the user's
+  ([docker](roles/docker/README.md)).
+- The upgrades. Setup installs each cask and formula at its latest and never upgrades it:
+  `mise -C /opt/ws/macos -E ws,apps bootstrap packages upgrade` does, as the user. A cask that
+  updates itself is left to itself.

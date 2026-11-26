@@ -24,11 +24,3 @@ path = "{{ .Home }}/.config/zed/settings.json"
 owner = "{{ .User }}"
 template = "files/settings.json.tmpl"
 seed = true
-
-# Zed's cask links its CLI into /opt/homebrew/bin, which no shell's PATH holds where Homebrew is
-# not set up. A login shell's /etc/zprofile runs /usr/libexec/path_helper, which adds each line of
-# /etc/paths.d to PATH, so that zed ssh://ws/PATH runs. The file takes no mark, as each line names
-# a directory.
-[file.zed-path]
-path = "/etc/paths.d/ws"
-source = "files/paths"

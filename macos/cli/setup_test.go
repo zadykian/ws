@@ -20,11 +20,17 @@ import (
 )
 
 const (
-	miseBody  = "a mise that a test serves"
-	treeRepo  = "https://example.org/ws"
-	miseLine  = "/usr/local/bin/mise -C /opt/ws/macos bootstrap"
-	planLine  = miseLine + " plan --detailed-exitcode"
-	toolsLine = "xcode-select -p"
+	miseBody = "a mise that a test serves"
+	treeRepo = "https://example.org/ws"
+	miseBase = "/usr/local/bin/mise -C /opt/ws/macos bootstrap"
+	miseLine = miseBase + " --yes"
+	// appsBase is the bootstrap of both envs, which the run of the apps, the plan and the status use.
+	appsBase = "/usr/local/bin/mise -C /opt/ws/macos -E ws,apps bootstrap"
+	appsLine = appsBase + " --yes"
+	planLine = appsBase + " plan --detailed-exitcode"
+	// statusLine is the status that follows a plan with nothing to do.
+	statusLine = appsBase + " status --missing --json"
+	toolsLine  = "xcode-select -p"
 )
 
 // miseExit is an error that carries a command's exit code, as an exec.ExitError does.
@@ -58,6 +64,7 @@ func setupProcess(rel setup.MiseRelease) (enginecli.Env, *effecttest.Machine) {
 		"git -C /opt/ws -c advice.detachedHead=false checkout -q --force --detach refs/tags/v1.2.3",
 		"git -C /opt/ws clean -q -ffdx",
 		miseLine,
+		appsLine,
 	} {
 		m.Results[line] = effecttest.Result{}
 	}
@@ -121,7 +128,7 @@ func leftNothing(t *testing.T, m *effecttest.Machine) {
 			t.Errorf("%s was written", path)
 		}
 	}
-	if indexOf(m, "run "+miseLine) >= 0 {
+	if indexOf(m, "run "+miseLine) >= 0 || indexOf(m, "run "+appsLine) >= 0 {
 		t.Error("the bootstrap ran")
 	}
 }
@@ -140,7 +147,7 @@ func TestSetupInstallsMiseWritesItsFilesAndRunsTheBootstrapLast(t *testing.T) {
 	}
 	order := []string{"download " + rel.URL("macos-arm64"), "atomic /etc/mise/config.toml", "root git -c init.defaultBranch=ws init",
 		"root git -C /opt/ws fetch", "root git -C /opt/ws -c advice.detachedHead=false checkout", "root git -C /opt/ws clean",
-		"symlink /opt/ws/plugins/ws " + macPluginDir + "/ws", "run " + miseLine}
+		"symlink /opt/ws/plugins/ws " + macPluginDir + "/ws", "run " + miseLine, "run " + appsLine}
 	last := -1
 	for _, call := range order {
 		at := indexOf(m, call)
@@ -175,8 +182,8 @@ func TestSetupAgainChangesNothingAndAsksNoSudo(t *testing.T) {
 		t.Fatalf("status = %d, stderr = %q", status, stderr)
 	}
 	noWrites(t, m)
-	if indexOf(m, "run "+miseLine) < 0 {
-		t.Errorf("no bootstrap: %q", m.Calls)
+	if indexOf(m, "run "+miseLine) < 0 || indexOf(m, "run "+appsLine) < 0 {
+		t.Errorf("no bootstrap of both envs: %q", m.Calls)
 	}
 }
 
@@ -214,6 +221,22 @@ func TestSetupStopsWhereTheBootstrapFails(t *testing.T) {
 	if status != 1 || !strings.Contains(stderr, "a unit failed") {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
+	if indexOf(m, "run "+appsLine) >= 0 {
+		t.Error("the apps ran after a failed bootstrap")
+	}
+}
+
+func TestSetupFailsWhereTheAppsFailAfterTheUnits(t *testing.T) {
+	rel := setupRelease(miseBody)
+	p, m := setupProcess(rel)
+	m.Results[appsLine] = effecttest.Result{Err: errors.New("a cask failed")}
+	status, stderr := runSetup(p, rel)
+	if status != 1 || !strings.Contains(stderr, "a cask failed") || !strings.Contains(stderr, "ws's units set up") {
+		t.Errorf("status = %d, stderr = %q", status, stderr)
+	}
+	if indexOf(m, "run "+miseLine) < 0 {
+		t.Error("the units did not run before the apps")
+	}
 }
 
 func TestSetupPlanSaysWhatItWouldDoAndChangesNothing(t *testing.T) {
@@ -241,11 +264,13 @@ func TestSetupPlanAsksMisesPlanWhereTheStepsHaveNothingToDo(t *testing.T) {
 			p, m := setupProcess(rel)
 			standing(m, rel)
 			m.Results[planLine] = tc.result
+			m.Results[statusLine] = effecttest.Result{Out: []byte("{}")}
 			status, _ := runSetup(p, rel, "--plan")
 			if status != tc.status {
 				t.Errorf("status = %d, want %d", status, tc.status)
 			}
-			if indexOf(m, "run "+planLine) < 0 || slices.Contains(m.Calls, "run "+miseLine) {
+			if indexOf(m, "run "+planLine) < 0 || slices.Contains(m.Calls, "run "+miseLine) ||
+				slices.Contains(m.Calls, "run "+appsLine) {
 				t.Errorf("calls = %q", m.Calls)
 			}
 		})

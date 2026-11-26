@@ -1,9 +1,8 @@
 # Zed, as mise's cask, which needs no Homebrew. A cask takes the latest alone, and Zed then
 # updates itself. The font that the settings name comes with Ghostty's role. ws's units write
-# the settings, the keymap, the seed of settings.json and the PATH of Zed's CLI.
+# the settings, the keymap and the seed of settings.json.
 [bootstrap.packages]
 "brew-cask:zed" = "latest"
 "ws:file/zed-global" = "in-sync"
 "ws:file/zed-keymap" = "in-sync"
-"ws:file/zed-path" = "in-sync"
 "ws:file/zed-settings" = "in-sync"

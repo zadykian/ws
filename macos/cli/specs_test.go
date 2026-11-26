@@ -24,9 +24,24 @@ const (
 	macTreeRoot = "../.."
 	macConfDir  = "../mise/conf.d"
 	macLock     = "../mise/mise.macos.lock"
-	// macRoleFile is a role's one mise file: the env macos loads it, and no env of the server's.
+	// macRoleFile is a role's mise file: the env macos loads it, and no env of the server's.
 	macRoleFile = "mise.macos.toml"
+	// appsFile is the one other file a role holds: the env apps loads it, after the bootstrap's own run.
+	appsFile = "mise.apps.toml"
 )
+
+// macMiseFiles returns the mise files of the Mac's roles, of the env macos and of the env apps.
+func macMiseFiles(t *testing.T) []string {
+	var files []string
+	for _, name := range []string{macRoleFile, appsFile} {
+		found, err := filepath.Glob(macRolesDir + "/*/" + name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		files = append(files, found...)
+	}
+	return files
+}
 
 // macFacts are the facts of a Mac with the servers given and Ghostty's default config.
 func macFacts(servers ...facts.Server) facts.Mac {
@@ -73,8 +88,16 @@ func TestMacSpecsMatchMiseLines(t *testing.T) {
 	clitest.CompareLines(t, "the Mac (mise.macos.toml)", want, lines)
 }
 
+// TestTheAppsEnvHoldsNoUnit keeps ws's units out of the env apps' files. The units run in the first
+// bootstrap, and a unit's line that only the second loads would fail the run that lacks it.
+func TestTheAppsEnvHoldsNoUnit(t *testing.T) {
+	if lines := clitest.MiseLines(t, macRolesDir+"/*/"+appsFile); len(lines) > 0 {
+		t.Errorf("a file %s holds the units' lines %v: they belong in %s", appsFile, lines, macRoleFile)
+	}
+}
+
 // macRoleDirs returns the directories of the Mac's roles that hold a spec or a mise file, and
-// fails the test on a mise file other than mise.macos.toml.
+// fails the test on any mise file but those two.
 func macRoleDirs(t *testing.T) []string {
 	entries, err := os.ReadDir(macRolesDir)
 	if err != nil {
@@ -91,8 +114,8 @@ func macRoleDirs(t *testing.T) []string {
 			t.Fatal(err)
 		}
 		for _, f := range files {
-			if filepath.Base(f) != macRoleFile {
-				t.Errorf("%s: a role of the Mac's holds %s alone", f, macRoleFile)
+			if base := filepath.Base(f); base != macRoleFile && base != appsFile {
+				t.Errorf("%s: a role of the Mac's holds %s and %s alone", f, macRoleFile, appsFile)
 			}
 		}
 		if _, err := os.Stat(filepath.Join(dir, "units.toml.tmpl")); err == nil || len(files) > 0 {
@@ -115,47 +138,84 @@ func TestTheMacLinksItsRoles(t *testing.T) {
 // TestNoMacRoleSetsAFramesKey keeps each of the Mac's roles off the keys of its frame, which loads
 // before the roles through the side's link.
 func TestNoMacRoleSetsAFramesKey(t *testing.T) {
-	clitest.FrameKeys(t, []string{macTreeRoot + "/mise.toml", macTreeRoot + "/" + macRoleFile}, macRolesDir+"/*/"+macRoleFile)
+	for _, name := range []string{macRoleFile, appsFile} {
+		clitest.FrameKeys(t, []string{macTreeRoot + "/mise.toml", macTreeRoot + "/" + macRoleFile}, macRolesDir+"/*/"+name)
+	}
 }
 
-// TestMacConfigHoldsNoRootPath keeps mise's own root paths and dotfiles out of the Mac's config.
-// mise reads its files of root's through sudo on every run, which would ask a password of a run
-// that changes nothing. Its dotfiles replace the user's own file with no guard. ws's units hold
-// both. A file under ~/ with no owner or group is the user's: mise reads and writes it as the user.
+// TestMacConfigHoldsNoRootPath keeps mise's own root paths out of the Mac's config, and the dotfiles
+// that may replace the user's own file. ws's units hold root's files, readable by all, which no
+// read takes sudo for. mise reads and writes a path under ~/ with no owner or group as the user.
 func TestMacConfigHoldsNoRootPath(t *testing.T) {
-	files, err := filepath.Glob(macRolesDir + "/*/" + macRoleFile)
+	for _, f := range append(macMiseFiles(t), macTreeRoot+"/"+macRoleFile) {
+		c := macHomeParts(t, f)
+		for table, paths := range map[string]map[string]map[string]any{"files": c.Bootstrap.Files, "directories": c.Bootstrap.Directories} {
+			for target, part := range paths {
+				_, owner := part["owner"]
+				_, group := part["group"]
+				if !strings.HasPrefix(target, "~/") || owner || group {
+					t.Errorf("%s: [bootstrap.%s.%q] is root's, where mise takes any mode and reads one the user cannot through sudo: make it a unit of ws's, or a path under ~/ with no owner or group", f, table, target)
+				}
+			}
+		}
+		for target, entry := range c.Dotfiles {
+			switch {
+			case !strings.HasPrefix(target, "~/"):
+				t.Errorf("%s: [dotfiles.%q] is outside ~/, where mise writes the entry as the user, with no sudo: make it a unit of ws's", f, target)
+			case !keepsTheUsersFile(entry):
+				t.Errorf("%s: [dotfiles.%q] overwrites the user's own file on each apply, or stops the run on it: make it one made where missing alone (create_if_missing), its permissions alone, or a line", f, target)
+			}
+		}
+	}
+}
+
+// TestMacDotfilesNameTheirSource fails on a [dotfiles] source that is not beside its mise file,
+// where mise looks for a relative one, through macos/mise/conf.d.
+func TestMacDotfilesNameTheirSource(t *testing.T) {
+	for _, f := range append(macMiseFiles(t), macTreeRoot+"/"+macRoleFile) {
+		for target, entry := range macHomeParts(t, f).Dotfiles {
+			part, _ := entry.(map[string]any)
+			if source, ok := part["source"].(string); ok {
+				if _, err := os.Stat(filepath.Join(filepath.Dir(f), source)); err != nil {
+					t.Errorf("%s: [dotfiles.%q]: %v", f, target, err)
+				}
+			}
+		}
+	}
+}
+
+// macHomeConfig holds the parts of a mise file that may name a path under ~/.
+type macHomeConfig struct {
+	Bootstrap struct {
+		Files       map[string]map[string]any `toml:"files"`
+		Directories map[string]map[string]any `toml:"directories"`
+	} `toml:"bootstrap"`
+	Dotfiles map[string]any `toml:"dotfiles"`
+}
+
+// macHomeParts reads those parts of the mise file f.
+func macHomeParts(t *testing.T, f string) macHomeConfig {
+	text, err := os.ReadFile(f) //nolint:gosec // a file of the tree, found by the test
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, f := range append(files, macTreeRoot+"/"+macRoleFile) {
-		text, err := os.ReadFile(f) //nolint:gosec // a file of the tree, found by the test
-		if err != nil {
-			t.Fatal(err)
-		}
-		var c struct {
-			Bootstrap struct {
-				Files       map[string]map[string]any `toml:"files"`
-				Directories map[string]any            `toml:"directories"`
-			} `toml:"bootstrap"`
-			Dotfiles map[string]any `toml:"dotfiles"`
-		}
-		if err := toml.Unmarshal(text, &c); err != nil {
-			t.Fatalf("%s: %v", f, err)
-		}
-		for target, part := range c.Bootstrap.Files {
-			_, owner := part["owner"]
-			_, group := part["group"]
-			if !strings.HasPrefix(target, "~/") || owner || group {
-				t.Errorf("%s: [bootstrap.files.%q] is root's, read through sudo: make it a unit of ws's, or a path under ~/ with no owner or group", f, target)
-			}
-		}
-		if len(c.Bootstrap.Directories) > 0 {
-			t.Errorf("%s: [bootstrap.directories] is mise's, and mise makes no missing parent: make it a unit of ws's", f)
-		}
-		if len(c.Dotfiles) > 0 {
-			t.Errorf("%s: [dotfiles] replaces the user's own file with no guard: make it a unit of ws's", f)
-		}
+	var c macHomeConfig
+	if err := toml.Unmarshal(text, &c); err != nil {
+		t.Fatalf("%s: %v", f, err)
 	}
+	return c
+}
+
+// keepsTheUsersFile reports whether a [dotfiles] entry leaves the user's own file alone. Three do:
+// one made where missing alone, one that sets the permissions alone, and a line edit.
+func keepsTheUsersFile(entry any) bool {
+	part, ok := entry.(map[string]any)
+	if !ok {
+		return false
+	}
+	_, line := part["line"]
+	_, mode := part["permissions"]
+	return part["create_if_missing"] == true || line || mode && len(part) == 1
 }
 
 // TestMacLockHoldsEachTool keeps macos/mise/mise.macos.lock beside the Mac's tools. The
@@ -173,12 +233,8 @@ func TestMacLockHoldsEachTool(t *testing.T) {
 	if err := toml.Unmarshal(text, &lock); err != nil {
 		t.Fatalf("mise.macos.lock: %v", err)
 	}
-	files, err := filepath.Glob(macRolesDir + "/*/" + macRoleFile)
-	if err != nil {
-		t.Fatal(err)
-	}
 	pinned := map[string]bool{}
-	for _, f := range files {
+	for _, f := range macMiseFiles(t) {
 		text, err := os.ReadFile(f) //nolint:gosec // a file of the tree, found by the test
 		if err != nil {
 			t.Fatal(err)
