@@ -84,7 +84,7 @@ signers file without a key. The file's write, after the key's, puts the key in.
 ## The co-author trailer
 
 A commit that `git commit` or a merge makes on ws, by claude, lazygit, Zed or the shell, carries
-one trailer, `Co-authored-by: zadykian <me@zadykian.dev>`: the maintainer, whom the machine account
+one `Co-authored-by: zadykian <me@zadykian.dev>` trailer: the maintainer, whom the machine account
 commits for. A squash is the one exception: it joins the messages of its commits, and each keeps
 its trailer, so the result can hold two. The push check passes it.
 The name and the email are the Mac's identity, `gitcfg.Mac()`. A hook of git's config adds it,
@@ -102,7 +102,8 @@ alone. With an editor, ws cuts the scissors section, git's comment string, a spa
 and 24 dashes, whatever `core.commentChar` is, and then the comments, by
 `git stripspace --strip-comments`. It cannot see an explicit `--cleanup` or `commit.cleanup`, nor a
 `core.commentChar` that `git -c` sets: ws passes none of git's own variables to its commands.
-claude's own trailers are off ([Attribution](../claude/README.md#attribution)).
+A commit that claude makes holds claude's own trailers too, above the maintainer's
+([Attribution](../claude/README.md#attribution)).
 
 The hook runs before a repository's own `commit-msg`, `.githooks` of ws included, and a failing
 one, such as a `ws` missing at its path, refuses the commit. A commit that skips hooks, with

@@ -42,7 +42,7 @@ it has any:
 - [`incus`](ubuntu/roles/incus): Incus from Zabbly's repository on the host, with its ID range, ZFS
   pool, bridge, egress ACL and profile. A table of the guests' sources and ufw's rules, as units. The
   guests of the host's list, from an image with a pinned SHA-256, and `ws ubuntu host guests`.
-- [`claude`](ubuntu/roles/claude): claude, its user settings and telemetry, its attribution off, its sessions after a
+- [`claude`](ubuntu/roles/claude): claude, its user settings and telemetry, its sessions after a
   reboot, and plugin marketplaces from a list.
 - [`signoz`](ubuntu/roles/signoz): SigNoz in Docker, which keeps the machine's telemetry for 90 days.
 - [`otelcol`](ubuntu/roles/otelcol): the OpenTelemetry Collector on the host, which feeds SigNoz.
