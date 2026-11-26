@@ -1,18 +1,12 @@
 #!/bin/bash
-# The real Mac's checks of its preferences: macos/checks/README.md. Run as the Mac's user as
-#
-#   prefs.sh [CHECK...]
-#
-# CHECK is a trial's number on the page. 2 is the preferences' types, 3 the layout, 4 the hotkeys,
-# 6 the updates and the display, and 7 the wallpaper. Without one, it runs each. It prints a line a
-# check, ok or FAIL, and exits 1 where any fails. It changes nothing.
+# The real Mac's checks of its preferences: trials 2, 3, 4, 6 and 7. Run as the Mac's user, as
+# `prefs.sh [CHECK...]`, a trial's number each or none for all five. It changes nothing. The
+# page is macos/checks/README.md.
 set -uo pipefail
 
 dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck source=macos/checks/lib.sh
 . "$dir/lib.sh"
-
-keyboard=$tree/macos/roles/keyboard/mise.macos.toml
 
 # pref DOMAIN KEY TYPE VALUE succeeds where defaults read-type prints TYPE and the value is VALUE.
 pref() {
@@ -156,6 +150,10 @@ check3() {
         AppleEnabledInputSources 4 array
     check "3 the input source in use is the layout's" in_use
     info "input source: $(defaults read com.apple.HIToolbox AppleCurrentKeyboardLayoutInputSourceID 2>&1)"
+    # The login window types with the sources of root's file, which neither ws nor mise writes.
+    info "the user's sources: $(defaults read com.apple.HIToolbox AppleEnabledInputSources 2>&1 | tr -s ' \n' ' ')"
+    info "the login window's sources: $(defaults read /Library/Preferences/com.apple.HIToolbox \
+        AppleEnabledInputSources 2>&1 | tr -s ' \n' ' ')"
     check "3 setup's plan still exits 0" plan_zero
 }
 
@@ -198,16 +196,16 @@ hotkey_on() {
         hotkey "$1" value.parameters.2 "$4"
 }
 
-# off_ids prints the ID of each hotkey that keyboard turns off.
-off_ids() { sed -n 's/^path = \["\([0-9]*\)", "enabled"\]$/\1/p' "$keyboard"; }
-
 check4() {
-    local id lacked=
+    local id state code key mods on='' lacked=''
     hotkeys=$(defaults export com.apple.symbolichotkeys - 2>&1)
-    check "4 Command+Space is on, for the next input source" hotkey_on 61 32 49 1048576
-    check "4 Option+Space is on, for Spotlight" hotkey_on 64 32 49 524288
-    check "4 Command+L is on, hotkey 160" hotkey_on 160 108 37 1048576
-    check "4 enabled is a boolean" hotkey_bool 61
+    while read -r id state code key mods; do
+        [ "$state" = on ] || continue
+        on="$on $id"
+        check "4 hotkey $id is on at keyboard's keys $code $key $mods" hotkey_on "$id" "$code" "$key" "$mods"
+        check "4 hotkey $id's enabled is a boolean" hotkey_bool "$id"
+    done < <(hotkey_entries)
+    [ -n "$on" ] || fail "4 keyboard turns hotkeys on" "no entry read from $keyboard"
     check "4 Caps Lock acts as Control" capslock
     for id in $(off_ids); do
         check "4 hotkey $id is off" hotkey "$id" enabled false

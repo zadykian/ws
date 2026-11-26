@@ -1,12 +1,7 @@
 #!/bin/bash
-# The real Mac's checks of its first run, its login items and its shell: macos/checks/README.md.
-# Run as the Mac's user, not root, as
-#
-#   setup.sh [CHECK...]
-#
-# CHECK is a trial's number on the page. 1 is the first run's end state, 5 the login items and 10
-# the shell. Without one, it runs each. It prints a line a check, ok or FAIL, and exits 1 where any
-# fails. It changes nothing: the first run and the second are by hand, as the page says.
+# The real Mac's checks of its first run, its login items and its shell: trials 1, 5 and 10.
+# Run as the Mac's user, not root, as `setup.sh [CHECK...]`, a trial's number each or none for
+# all three. It changes nothing. The page is macos/checks/README.md.
 set -uo pipefail
 
 dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -58,6 +53,10 @@ dock_order() {
 go_of_mise() {
     local want out
     want=$(sed -n 's/^go = "\([^"]*\)".*/\1/p' "$tree/macos/roles/devtools/mise.macos.toml")
+    [ -n "$want" ] || {
+        echo "devtools' file names no Go version"
+        return 1
+    }
     out=$(cd "$HOME" && zsh -lc 'go version') || return 1
     case $out in
     "go version go$want darwin/arm64") ;;
@@ -84,27 +83,52 @@ docker_cli() {
         docker compose version >/dev/null && docker buildx version >/dev/null
 }
 
-# btm_count APP prints the records of sfltool's dump that name APP as a login item. The URL is a
-# file URL, which writes a space as %20.
-btm_count() {
-    awk -v app="/$1/" '
-        /^ *#[0-9]+:/ { if (url != "" && login) n++; url = ""; login = 0 }
-        /^ *URL:/ { u = $0; gsub(/%20/, " ", u); if (index(u, app)) url = u }
+# btm_logins DUMP prints the URL of each login item in sfltool's dump, a line each. A file URL
+# writes a space as %20.
+btm_logins() {
+    awk '
+        function item() { if (url != "" && login) print url; url = ""; login = 0 }
+        /^ *#[0-9]+:/ { item() }
+        /^ *URL:/ { url = $0; sub(/^ *URL: */, "", url); sub(/ *$/, "", url); gsub(/%20/, " ", url) }
         /^ *Type:.*login item/ { login = 1 }
-        END { if (url != "" && login) n++; print n + 0 }
-    ' <<<"$2"
+        END { item() }
+    ' <<<"$1"
+}
+
+# btm_count APP DUMP prints the login items whose URL is APP's path whole, so that a bundle inside
+# APP's own counts apart.
+btm_count() { btm_logins "$2" | grep -cxF "file://$1/"; }
+
+# login_status succeeds where mise's status finds each login item set, and none undeclared. An
+# undeclared one is an app's own item of the shared list, which exclusive takes away at each run.
+login_status() {
+    local out rows
+    out=$("$mise" -C "$tree/macos" -E ws,apps bootstrap status 2>&1) || {
+        printf '%s\n' "$out" | tail -n 1
+        return 1
+    }
+    rows=$(grep '^login items' <<<"$out")
+    [ -n "$rows" ] || {
+        echo "mise's status lists no login item"
+        return 1
+    }
+    rows=$(grep -v ' set$' <<<"$rows")
+    [ -z "$rows" ] || {
+        printf '%s\n' "$rows" | tr -s ' ' | tr '\n' ';'
+        return 1
+    }
 }
 
 check5() {
-    local dump app name n
+    local dump app name n others
     dump=$(sudo sfltool dumpbtm 2>&1) || {
         fail "5 sfltool dumpbtm answers" "$(printf '%s' "$dump" | tail -n 1)"
         return
     }
-    check "5 mise's status holds the login items" status_zero
+    check "5 mise's status finds each login item set, and none undeclared" login_status
     while IFS= read -r app; do
         name=${app##*/}
-        n=$(btm_count "$name" "$dump")
+        n=$(btm_count "$app" "$dump")
         if [ "$n" -eq 1 ]; then pass "5 $name opens once at login"; else
             fail "5 $name opens once at login" "$n records name it as a login item"
         fi
@@ -113,11 +137,13 @@ check5() {
     check "5 Logi's agent runs" pgrep -f logioptionsplus_agent
     check "5 Rectangle Pro runs" pgrep -x "Rectangle Pro"
     check "5 Stats runs" pgrep -x Stats
-    info "login items in the dump: $(grep -c 'Type:.*login item' <<<"$dump")"
+    others=$(btm_logins "$dump" | grep -vxF -f <(login_apps | sed 's|.*|file://&/|') | sort -u | tr '\n' ';')
+    info "5 the dump's login items outside the role: ${others:-none}"
 }
 
 check10() {
-    local out
+    # What oh-my-zsh prints at its pinned commit: compfix's warning, and the update's prompt.
+    local out asks='insecure (completion-dependent )?directories|would you like to update|time to update'
     out=$(zsh -ic 'print -r "plugins=${plugins[*]}"
         print -r "autosuggestions=${+functions[_zsh_autosuggest_start]}"
         print -r "highlighting=${+functions[_zsh_highlight]}"
@@ -126,8 +152,8 @@ check10() {
     check "10 zsh-autosuggestions is loaded" grep -qx 'autosuggestions=1' <<<"$out"
     check "10 zsh-syntax-highlighting is loaded" grep -qx 'highlighting=1' <<<"$out"
     check "10 oh-my-zsh's update is off" grep -qx 'update=disabled' <<<"$out"
-    if grep -qi 'insecure directories\|update oh my zsh' <<<"$out"; then
-        fail "10 the shell asks nothing" "$(grep -i 'insecure directories\|update oh my zsh' <<<"$out" | head -n 1)"
+    if grep -Eqi "$asks" <<<"$out"; then
+        fail "10 the shell asks nothing" "$(grep -Ei "$asks" <<<"$out" | head -n 1)"
     else
         pass "10 the shell asks nothing"
     fi
