@@ -1,35 +1,37 @@
 #!/bin/bash
-# mise bootstrap (28-bootstrap.sh) wrote macos/roles/keyboard's preferences and units. The later
-# plans and statuses say that each is in sync. This case reads some back, as defaults and plutil
-# print them, so that a hotkey, a mapping or an array of another type or value has a name here.
+# mise bootstrap (28-bootstrap.sh) wrote macos/roles/keyboard's preferences and units, which later
+# plans call in sync. This case reads some back with their types, as plutil and defaults read-type
+# print them. Caps Lock's mapping reads by value: defaults prints its integers with no type.
 
 set -eo pipefail
 
 fail=0
 hotkeys=$(defaults export com.apple.symbolichotkeys -)
 
-# hotkey ID PATH WANT: the value at AppleSymbolicHotKeys.ID.PATH, as plutil prints it raw.
+# hotkey ID PATH WANT TYPE: the value at AppleSymbolicHotKeys.ID.PATH, as plutil prints it raw,
+# and its type, as plutil -type prints it.
 hotkey() {
-    local got
+    local got type
     got=$(plutil -extract "AppleSymbolicHotKeys.$1.$2" raw -o - - <<<"$hotkeys" 2>/dev/null) || got=
-    if [ "$got" != "$3" ]; then
-        echo "::error::hotkey $1 $2 is '$got', want $3"
+    type=$(plutil -type "AppleSymbolicHotKeys.$1.$2" - <<<"$hotkeys" 2>/dev/null) || type=
+    if [ "$got" != "$3" ] || [ "$type" != "$4" ]; then
+        echo "::error::hotkey $1 $2 is '$got' ($type), want $3 ($4)"
         fail=1
     fi
 }
 
-hotkey 61 enabled true
-hotkey 61 value.type standard
-hotkey 61 value.parameters.2 1048576
-hotkey 64 enabled true
-hotkey 64 value.parameters.2 524288
-hotkey 160 enabled true
-hotkey 160 value.parameters.0 108
+hotkey 61 enabled true bool
+hotkey 61 value.type standard string
+hotkey 61 value.parameters.2 1048576 integer
+hotkey 64 enabled true bool
+hotkey 64 value.parameters.2 524288 integer
+hotkey 160 enabled true bool
+hotkey 160 value.parameters.0 108 integer
 for id in 7 21 60 65 164 190 215 260; do
-    hotkey "$id" enabled false
+    hotkey "$id" enabled false bool
 done
 
-# Caps Lock is Control, in the current host's domain.
+# Caps Lock is Control, in the current host's domain, by value.
 map=$(defaults -currentHost read NSGlobalDomain com.apple.keyboard.modifiermapping.0-0-0 2>/dev/null) || map=
 for want in 'ModifierMappingSrc = 30064771129;' 'ModifierMappingDst = 30064771300;'; do
     grep -q "$want" <<<"$map" || {

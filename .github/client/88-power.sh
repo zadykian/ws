@@ -1,6 +1,7 @@
 #!/bin/bash
 # mise bootstrap (28-bootstrap.sh) ran macos/roles/power's units: the display stays on while the
-# Mac is on power, and the App Store's automatic updates are off. Both read as the user.
+# Mac is on power, and the App Store's automatic updates are off. Both read as the user. The
+# display's timer read 10 before setup (25-image.sh), so its 0 is the unit's.
 
 set -eo pipefail
 

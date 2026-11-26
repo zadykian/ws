@@ -7,12 +7,9 @@
 # client_trace holds the sudo that counts its calls.
 client_trace=$RUNNER_TEMP/ws-trace
 
-# client_tree puts this commit's tree in /opt/ws, root's and writable by root alone, as setup's guard
-# asks. setup refuses a directory above the tree or the plugin that anyone but root or the user may
-# change, as mise ignores a system plugin below one. So /opt and /usr/local/share are root's and
-# 755, as on a Mac with Homebrew in /opt/homebrew, where the runner's image may differ. It drops the
-# role apps, whose 14 casks setup's second run would download in each job. It drops desktop's
-# wallpaper too: a runner has no screen, so wallpaper get prints nothing and the check fails.
+# client_tree puts this commit's tree in /opt/ws, under /opt and /usr/local/share at root's 755, as
+# on a Mac. setup's guard refuses a directory that others may change. It drops the role apps, whose
+# casks each job would download, and desktop's wallpaper, which a runner with no screen cannot read.
 client_tree() {
     sudo mkdir -p /opt /usr/local/share
     sudo chown root:wheel /opt /usr/local/share

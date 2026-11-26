@@ -77,7 +77,10 @@ checks [Zed's files](../../macos/roles/zed/README.md): `global_settings.json` mu
 `macos/roles/zed/files/`'s whole, a `settings.json` there must stay byte for byte through
 another bootstrap, and a login shell must find the cask's `zed`. Case 48 checks `keymap.json`:
 `macos/roles/zed/files/`'s whole, a foreign one left with the warning of its unit's read, and
-ws's back once it goes. Case 58 checks [the secrets' tools](../../macos/roles/secrets/README.md):
+ws's back once it goes. Case 49 checks setup's status, which covers what mise's plan leaves out.
+With one of desktop's preferences written another value, `ws macos setup --plan` must exit 2 and
+name it as differs in mise's status. With the role's value back by its type, it must exit 0. Case
+58 checks [the secrets' tools](../../macos/roles/secrets/README.md):
 `/usr/local/bin/fnox` and `age-plugin-yubikey` must be mise's, root's and 0755, at their pins. A
 stand-in in place of each must give way to mise's at the next bootstrap, whose plan then changes
 nothing. fnox must encrypt a value to the Nano's recipient with no YubiKey, and read it back by an
@@ -90,7 +93,8 @@ Keychain's program in `/opt/homebrew/bin`, and `docker compose` and `docker buil
 [desktop](../../macos/roles/desktop/README.md): some of its preferences must read back with the type
 that mise wrote, the current host's screen saver delay among them. Case 81 checks
 [the keyboard](../../macos/roles/keyboard/README.md): the hotkeys that stay on and some that go off
-must read back. So must Caps Lock's mapping to Control and the indicator's string. The layout's
+must read back with their types, and so must the indicator's string. Caps Lock's mapping to Control
+must read back by value, as `defaults` prints its integers with no type. The layout's
 files must be root's at 644 and equal the role's, and the two arrays of input sources must read back
 with their types. Case 86 checks
 [.NET's SDKs](../../macos/roles/dotnet/README.md):
@@ -113,7 +117,10 @@ a Mac, where the runner's image may differ. It sets up
 ssh, git and cld too, but not [the apps](../../macos/roles/apps/README.md): the case drops that
 role from the tree, as no run of CI needs its 15 casks. It drops
 [the wallpaper](../../macos/roles/desktop/README.md#the-wallpaper) of desktop too, as a runner has no
-screen for `wallpaper get` to read. The plan must exit 0 after the first run,
+screen for `wallpaper get` to read. Before the first run, case 25 takes from the image what setup
+makes on a clean Mac. It removes Homebrew's gnupg, its dependencies kept, and sets the display's
+timer on power to 10. So cases 83 and 88 read mise's pour of gnupg and power's unit. The plan must
+exit 0 after the first run,
 a second run must call no sudo, and `/usr/local/bin/ws` must be root:wheel at 755. A spec whose
 unit no line names must fail the plan, and so must a plan from `/opt/ws` with every unit in sync.
 After the first run the firewall must be on and block all incoming ([the Mac's firewall](../../macos/roles/firewall/README.md)).
