@@ -33,17 +33,24 @@ with the server, and loads no file of the server's.
 
 ## Root's paths
 
-mise reads its own files of root's through sudo on every run, and asks before it writes them on a
-terminal. So the Mac's config holds none of root's: no `[bootstrap.files]` with an owner, a group
-or a target outside `~/`, and no `[bootstrap.directories]`. Nor does it hold `[dotfiles]`, which
-replace the user's own file or link with no guard. ws's units hold these. mise expands a `~/`
-target, reads and writes it as the user, and uses sudo only where that is denied. It makes no
-missing parent.
+mise reads a file of root's as the user, and through sudo only where the user cannot read it. It
+asks before a write only on a terminal, in a run with no `--yes`. It expands a `~/` target, reads
+and writes it as the user, and uses sudo only where that is denied. It makes a directory's missing
+parents, and none of a file's. The Mac's config still holds no path of root's: no
+`[bootstrap.files]` or `[bootstrap.directories]` with an owner, a group or a target outside `~/`.
+ws's units hold them, with the first guard below, as mise takes any mode.
 
 - A read needs no password. The Mac's `ws unit` reads root's paths as the user, and a run state's
-  check runs as the user too. A file of root's is readable by all, or its spec fails to load.
+  check runs as the user too. A file of root's is readable by all, or its spec fails to load
+  ([file](../../../engine/core/kind/file.md)).
 - ws asks sudo for a change alone. A run that changes nothing
   asks no password. A change needs a terminal, or a sudo that asks none, as CI's runner has.
+
+A `[dotfiles]` entry stands under `~/`, where it never replaces the user's own file: one made
+where missing alone (`create_if_missing`), one that sets the permissions alone, or a line edit. A
+copy, a template or inline content overwrites the file on each apply, and a link stops the run
+where a file stands. `bootstrap plan` shows no such entry, and `bootstrap status --missing` does,
+which setup's plan reads too ([Setup](../../README.md#setup)).
 
 ## A role's layout
 
@@ -59,7 +66,8 @@ role's `mise.macos.toml`. The lines follow no server: a spec loops over `.Server
 as a unit a server would come and go with its line ([The facts](../../facts/README.md)).
 [`TestMacSpecsMatchMiseLines`](../../cli/specs_test.go) fails on a line missing or extra.
 `TestTheMacLinksItsRoles` fails where the link leads elsewhere or its directory holds a file, and
-`TestMacConfigHoldsNoRootPath` on mise's own root path or a dotfile.
+`TestMacConfigHoldsNoRootPath` on mise's own root path, or a `[dotfiles]` entry that may replace
+the user's file.
 
 ## The apps' env
 
@@ -88,7 +96,7 @@ sync passes. mise calls the hook for a line alone, so the frame's own line keeps
 line sits in the root's `mise.macos.toml`, not in the role. A run from `/opt/ws` loads no role, but
 still calls the hook. Outside the run directory, `/opt/ws/macos`, the read fails every
 line, in sync too, and names that directory. The server's check, a file that runs `ws unit verify`,
-is one of mise's root files, which mise reads through sudo, so the Mac holds none. Its one file,
+is one of mise's root files, which the Mac's config holds none of ([Root's paths](#roots-paths)). Its one file,
 the user's under `~/`, holds [the check of the values](#the-check-of-the-values). Nor can a unit
 run `verify`: it calls mise, whose read would call that unit again.
 
@@ -99,7 +107,7 @@ run `verify`: it calls mise, whose read would call that unit again.
 `/etc/ws/values.yml` or a server's file holds a bad key or lacks one. The message names each key
 with its file. The file is the user's, with no owner or group, so mise reads and writes it as the
 user and asks no password. macOS always has that directory. The file is not under `/etc/ws`, whose
-files are root's and read through sudo. Nor is it a unit of ws's: a unit runs in the packages'
+files are root's and ws's units'. Nor is it a unit of ws's: a unit runs in the packages'
 phase, and a template renders before it.
 
 The template runs `/usr/local/bin/ws`, and fails a run without it, naming `install.sh`. A pass

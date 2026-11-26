@@ -114,9 +114,9 @@ A dropped ssh leaves Ghostty in the modes that Fresh, tmux and cld's sessions tu
 resets never reach the Mac. Each mouse move then types `^[[<35;42;17M` at the prompt, and some Ctrl
 keys arrive as escape codes. `mise bootstrap` writes
 [`macos/roles/zsh/files/zshrc`](../zsh/files/zshrc) as `/etc/ws/zshrc`, by
-[zsh's units](../zsh/units.toml.tmpl), and adds `source /etc/ws/zshrc` at the end of `~/.zshrc`. The file holds
-[zsh's settings](../zsh/README.md#the-settings) above the hook. It
-keeps the old file as `~/.zshrc.TIME~`, and stops where `~/.zshrc` is a link that lacks the line.
+[zsh's units](../zsh/units.toml.tmpl). The file holds [zsh's settings](../zsh/README.md#the-settings)
+above the hook. mise adds `source /etc/ws/zshrc` at the end of `~/.zshrc`, keeps no copy of the old
+file, and stops where `~/.zshrc` is a link ([The line in ~/.zshrc](../zsh/README.md#the-line-in-zshrc)).
 
 Before each prompt, the hook turns off the reports of the mouse, focus and the colour scheme, and
 modifyOtherKeys. It resets kitty's keyboard flags, the cursor keys, the keypad, and the cursor's

@@ -1,9 +1,7 @@
 #!/bin/bash
-# mise bootstrap (28-bootstrap.sh) wrote /etc/ws/zshrc, as root, macos/roles/zsh/files/zshrc
-# whole, and ended ~/.zshrc with the line that sources it. It cloned oh-my-zsh and its plugins at
-# the commits of macos/roles/zsh/mise.macos.toml, which an interactive zsh loads. That zsh prints
-# the resets before each prompt, and the alternate screen's reset after a 255 from ssh, or from
-# cld with --host, alone. Functions stand in for both.
+# mise bootstrap (28-bootstrap.sh) wrote macos/roles/zsh/files/zshrc as /etc/ws/zshrc, and added
+# the line that sources it to ~/.zshrc. It cloned oh-my-zsh and its plugins at their pins, which an
+# interactive zsh loads. That zsh prints the resets before each prompt, as prompt below checks.
 
 set -eo pipefail
 

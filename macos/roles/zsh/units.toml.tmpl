@@ -5,12 +5,3 @@
 path = "/etc/ws/zshrc"
 source = "files/zshrc"
 ours = true
-
-# The line that sources the file, last in ~/.zshrc, so that the hook's own prompt functions come
-# after the user's. The old file stays as ~/.zshrc.TIME~, and a ~/.zshrc that is a link stops the
-# unit.
-[file.zsh-line]
-path = "{{ .Home }}/.zshrc"
-owner = "{{ .User }}"
-line = "source /etc/ws/zshrc"
-line_at = "end"

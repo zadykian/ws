@@ -25,9 +25,14 @@ bottle into `/opt/homebrew`, each dependency first, and checks its SHA-256 again
 - `ripgrep`, `tokei`, `tree` and `pwgen`.
 
 A formula takes the latest alone, as Homebrew keeps the current bottle only, and mise never
-upgrades it by itself: `mise bootstrap packages upgrade` does. So the formulae are outside the
-SHA-256 rule of the pinned downloads ([CLAUDE.md](../../../.claude/CLAUDE.md)). A first run pours
-about 30 bottles, as `gnupg` has 10 dependencies.
+upgrades it by itself: the command in [the runbook](../../runbook.md#what-stays-by-hand) does. So
+the formulae are outside the SHA-256 rule of the pinned downloads
+([CLAUDE.md](../../../.claude/CLAUDE.md)). A first run pours about 30 bottles, as `gnupg` has 10
+dependencies.
+
+mise could lock `ripgrep` as a tool of its own, by its SHA-256. But such a tool is on no `PATH` on
+the Mac, and each would take a link of ws's. `tokei` has no build to lock, as mise's registry builds
+it from source by cargo. So brew's latest stands for both, its bottles checked as above.
 
 ## The PATH
 
@@ -39,8 +44,10 @@ again.
 
 ## gpg's agent
 
-`state/gnupg-dir` makes `~/.gnupg`, the user's and 0700, where missing, as gpg makes it.
-`file/gpg-agent-conf` seeds `gpg-agent.conf` there, at 0600, with `pinentry-program /opt/homebrew/bin/pinentry-mac`:
-gnupg's own pinentry is a curses program, which finds no terminal where an agent asks. The unit
-writes where no file is, and never reads it after, so the user's changes stay. The keys, gpg's and
-the YubiKey's, are made by hand.
+`[bootstrap.directories]` makes `~/.gnupg`, the user's and 0700, as gpg makes it, and mise keeps
+its mode on each run. A `[dotfiles]` entry seeds `gpg-agent.conf` there, at 0600, with
+`pinentry-program /opt/homebrew/bin/pinentry-mac`: gnupg's own pinentry is a curses program, which
+finds no terminal where an agent asks. The entry is `create_if_missing`, so mise writes where no
+file is and leaves the user's changes. `bootstrap status --missing` shows a missing one, and the
+plan does not ([Root's paths](../frame/README.md#roots-paths)). The keys, gpg's and the YubiKey's,
+are made by hand.
