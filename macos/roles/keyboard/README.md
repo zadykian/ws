@@ -11,6 +11,10 @@ On the built-in keyboard, `0-0-0`, Caps Lock acts as Control. macOS keeps the ma
 `NSGlobalDomain`'s `com.apple.keyboard.modifiermapping.0-0-0`, so the entry has `host = "current"`.
 Its two codes, 30064771129 for Caps Lock and 30064771300 for Control, are integers.
 
+The mapping is the built-in keyboard's alone: macOS keys it by a keyboard's vendor and product. So
+another keyboard, such as one that Logi Options+ pairs, keeps its Caps Lock until the role gets an
+entry for its key. That `0-0-0` names the built-in keyboard is for trial 4 to show on the Mac.
+
 ## The language indicator
 
 `TSMLanguageIndicatorEnabled` is the string `"0"`, which hides the indicator that macOS shows when
@@ -24,12 +28,19 @@ hotkey is an entry with a `path` into the dictionary, and mise changes that one 
 rest. A path that names an ID macOS lacks makes it.
 
 - On, by the ID's whole value, of the type `standard`: 61, the next input source, on Command+Space,
-  64, Spotlight, on Option+Space, and 160, on Command+L. mise compares the whole dictionary of an
-  ID, so a value with one key more reads as different, and a run writes it again.
+  64, Spotlight, on Option+Space, and 160, Launchpad, on Command+L. mise compares the whole
+  dictionary of an ID, so a value with one key more reads as different, and a run writes it again.
 - Off, by `enabled` alone: 63 IDs, which the test lists. The path ends in `enabled`, so the hotkey
-  keeps its `value` and turns on again with the key it had. 34 and 98 get no entry.
+  keeps its `value` and turns on again with the key it had.
+- As macOS has them, by no entry: 34 and 98. The maintainer keeps both on at macOS's own value and
+  key, which an entry would replace with ws's.
 
 mise rejects two entries where one path holds the other, so no ID is on and off.
+
+Launchpad is Apps since macOS 26. A hotkey of the system comes before an app's key, so Command+L
+no longer opens Safari's location or selects Zed's line. Only a Mac shows what Command+L opens on
+macOS 27, and what Safari and Zed lose: trial 4 of [the checks](../../checks/README.md#the-trials)
+notes both.
 
 ## The layout
 
@@ -49,6 +60,10 @@ trial 3 reads it so.
 Each keylayout holds what its keys reach, and a test keeps it so. `ENG.keylayout` lost Ukelele's
 five dead keys, which no key reached, their accents in the actions, their terminators and the JIS
 key map set, which no layout named. So no key types two units, and its `maxout` is 1.
+
+Each key map types F1 to F20 as `&#x0010;`, the code of a function key, and a test keeps it so.
+Ukelele's files left F17 to F20 out of most maps, where those keys typed no character. No key of a
+map types nothing: RUS's map for Command, Option and Control types ENG's `§` and the keypad's `.`.
 
 ## The icons
 
@@ -76,6 +91,12 @@ The role sets no key of the source in use or of the last ones used. macOS rewrit
 switch, and mise would find it changed at the next run.
 
 mise writes each array whole, and compares it element by element, in order, and by type: an ID is
-an integer, and a key order is no difference. It writes the preferences before the packages, so
+an integer, and a key order is no difference. It writes the preferences before ws's units, so
 that the sources name the layout for a moment before its files exist, and the log in reads both.
-Whether macOS writes the arrays back is for the first run on a real Mac to show.
+
+A layout of Apple's would come back from the login window's sources. The login window and
+FileVault's unlock type with the system's, such as Setup Assistant's ABC, which
+`/Library/Preferences/com.apple.HIToolbox.plist` holds. Neither ws nor mise writes that file: mise
+writes the user's preferences alone. If a log in carries ABC into the user's array, the array
+differs, and setup's plan says so after each log in.
+[Trial 3](../../checks/README.md#the-trials) shows whether macOS does so.

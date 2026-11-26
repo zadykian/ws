@@ -20,6 +20,7 @@ type keylayout struct {
 		Maps []struct {
 			Base string `xml:"baseMapSet,attr"`
 			Keys []struct {
+				Code   string `xml:"code,attr"`
 				Output string `xml:"output,attr"`
 				Action string `xml:"action,attr"`
 			} `xml:"key"`
@@ -41,6 +42,13 @@ type when struct {
 
 // control is a reference to a control code that XML 1.1 allows and XML 1.0 does not.
 var control = regexp.MustCompile(`(?i)&#x00(0[0-8bcef]|1[0-9a-f]);`)
+
+// functionKeys are the key codes of F1 to F20, in order. Each types the function key's code 0x10,
+// which readLayout reads as U+E010.
+var functionKeys = []string{
+	"122", "120", "99", "118", "96", "97", "98", "100", "101", "109",
+	"103", "111", "105", "107", "113", "106", "64", "79", "80", "90",
+}
 
 // readLayout parses the role's keylayout NAME. Go reads XML 1.0 alone, so the declaration says
 // 1.0, and each control code becomes a private use character, one UTF-16 unit as the code is.
@@ -99,6 +107,42 @@ func TestTheLayoutsHoldWhatTheirKeysReach(t *testing.T) {
 		}
 		if k.MaxOut != longest {
 			t.Errorf("%s: maxout is %d, and the longest output %d", name, k.MaxOut, longest)
+		}
+	}
+}
+
+// TestEachMapTypesTheFunctionKeys keeps F1 to F20 in each key map of each layout, so that no
+// modifier and no keyboard with F17 to F19 leaves a function key typing nothing.
+func TestEachMapTypesTheFunctionKeys(t *testing.T) {
+	for _, name := range []string{"ENG", "RUS"} {
+		for _, s := range readLayout(t, name).Sets {
+			for i, m := range s.Maps {
+				typed := map[string]string{}
+				for _, key := range m.Keys {
+					typed[key.Code] = key.Output
+				}
+				for n, code := range functionKeys {
+					if typed[code] != "\uE010" {
+						t.Errorf("%s: map %d types %q on F%d, code %s", name, i, typed[code], n+1, code)
+					}
+				}
+			}
+		}
+	}
+}
+
+// TestNoKeyTypesNothing keeps each key of each map to an output or an action. An empty output
+// would leave the key dead under that map's modifiers, where the other maps type a character.
+func TestNoKeyTypesNothing(t *testing.T) {
+	for _, name := range []string{"ENG", "RUS"} {
+		for _, s := range readLayout(t, name).Sets {
+			for i, m := range s.Maps {
+				for _, key := range m.Keys {
+					if key.Output == "" && key.Action == "" {
+						t.Errorf("%s: map %d types nothing on code %s", name, i, key.Code)
+					}
+				}
+			}
 		}
 	}
 }
