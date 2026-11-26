@@ -1,11 +1,9 @@
 package claude_test
 
 import (
-	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"reflect"
 	"regexp"
 	"slices"
 	"strings"
@@ -28,7 +26,7 @@ const (
 func specs(t *testing.T) fstest.MapFS {
 	fsys := fstest.MapFS{}
 	for _, name := range []string{"claude/units.toml.tmpl", "git/units.toml.tmpl", "git/files/ws.gitconfig.tmpl",
-		"git/files/allowed_signers.tmpl", "frame/units.toml.tmpl", "frame/files/values.yml.tmpl", "claude/files/managed-settings.json"} {
+		"git/files/allowed_signers.tmpl", "frame/units.toml.tmpl", "frame/files/values.yml.tmpl"} {
 		text, err := os.ReadFile(filepath.Join("..", name)) //nolint:gosec // a file of the roles, named above
 		if err != nil {
 			t.Fatal(err)
@@ -98,7 +96,7 @@ func apply(t *testing.T, u kind.Unit) {
 func TestClaudeUnitsChainInTheStepsOrder(t *testing.T) {
 	_, e := machine(t)
 	want := []string{"state/claude-install", "state/claude-cld-install", "state/claude-update",
-		"state/claude-completion", "state/claude-settings", "file/claude-managed-settings", "state/claude-telemetry",
+		"state/claude-completion", "state/claude-settings", "state/claude-telemetry",
 		"state/claude-marketplaces",
 		"state/claude-linger", "state/claude-restore"}
 	if got := kind.Names(units(t, e)); !slices.Equal(got, want) {
@@ -215,39 +213,5 @@ func TestClaudeLingerIsRootsAndRestoreRunsAsRoot(t *testing.T) {
 	apply(t, unit(t, e, "state/claude-restore"))
 	if !slices.Contains(m.Calls, "run "+line) {
 		t.Errorf("calls %q, want restore run as root", m.Calls)
-	}
-}
-
-// managed is claude's managed file on a Linux machine.
-const managed = "/etc/claude-code/managed-settings.json"
-
-func TestClaudeManagedSettingsTurnOffEachAttribution(t *testing.T) {
-	m, e := machine(t)
-	apply(t, unit(t, e, "file/claude-managed-settings"))
-	var got map[string]map[string]any
-	if err := json.Unmarshal(m.Files[managed], &got); err != nil {
-		t.Fatalf("the file %q is no JSON object: %v", m.Files[managed], err)
-	}
-	want := map[string]map[string]any{"attribution": {"commit": "", "pr": "", "sessionUrl": false}}
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("settings = %v, want %v", got, want)
-	}
-	if mode, owner := m.Modes[managed], m.Owners[managed]; mode != 0o644 || owner != [2]int{} {
-		t.Errorf("file mode %o, owner %v; want root's at 644", mode, owner)
-	}
-	if mode, owner := m.Dirs["/etc/claude-code"], m.Owners["/etc/claude-code"]; mode != 0o755 || owner != [2]int{} {
-		t.Errorf("directory mode %o, owner %v; want root's at 755", mode, owner)
-	}
-	if got := changes(t, unit(t, e, "file/claude-managed-settings")); got != nil {
-		t.Errorf("second plan = %q, want none", got)
-	}
-}
-
-func TestClaudeManagedSettingsReplaceWhatDiffers(t *testing.T) {
-	m, e := machine(t)
-	m.Dirs["/etc"], m.Dirs["/etc/claude-code"] = 0o755, 0o755
-	m.Files[managed] = []byte(`{"attribution":{"commit":"x"}}`)
-	if got := changes(t, unit(t, e, "file/claude-managed-settings")); !slices.Equal(got, []string{"write " + managed}) {
-		t.Errorf("plan = %q, want a write of the file alone", got)
 	}
 }
