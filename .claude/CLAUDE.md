@@ -6,7 +6,8 @@ has `ws ubuntu host setup` and its own roles. Its roles set up packages,
 SSH by key, the links to the Mac, an IKEv2 VPN where a profile is given, and the
 fans. Then the shell, git,
 tmux, lazygit, Fresh, Docker, claude, SigNoz with its collector, and Zed's server. `macos/`
-sets up the Mac that works on the server. The rest is the docs, the lint gates' tools and CI.
+sets up the Mac whole: its apps, tools and settings. The rest is the docs, the lint gates' tools
+and CI.
 
 ## Layout
 
@@ -53,9 +54,9 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   ([Releases](../.github/workflows/release.md)).
 - `macos/`: the Mac's side ([The Mac](../macos/README.md)), its roles in `macos/roles/`.
   Above them sit the packages that serve them all, `cli`, `values`, `facts` and `internal`, and
-  the runbook. Its roles' units write `ghostty/files/ws.ghostty`, Ghostty's settings,
-  `zed/files/`, Zed's settings and keymap, and `zsh/files/zshrc`, the zsh settings and the hook
-  that turns off the modes that a drop leaves on.
+  the runbook. A role's `files/` holds what its units write, as Ghostty's settings and Zed's
+  keymap. `checks/` holds the trials that only a real Mac settles
+  ([The Mac's checks](../macos/checks/README.md)).
 - `internal/`: what both sides share, as `setup` and `gitcfg`. It names neither side.
 - The pages sit beside their code, as the `README.md` of a role or a package. A second page stands
   beside one where the cap keeps two apart, as [docs.md](rules/docs.md) lists them.
@@ -171,11 +172,12 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([mise.macos.toml](../macos/roles/ssh/mise.macos.toml)), and its notarization, by `spctl` where `ws macos setup` installs it
   ([setupkey.go](../macos/cli/setupkey.go)). The
   Mac's casks, Ghostty, Zed and their font, take their latest by mise's `brew-cask`, outside the rule
-  ([ghostty](../macos/roles/ghostty/README.md#ghostty)). So do the apps' fifteen, whose cask holds a
-  SHA-256 but for four that Homebrew lists with none: mise checks no signature there
-  ([apps](../macos/roles/apps/README.md#the-casks)). The Mac's formulae, devtools', docker's and
-  desktop's, take their latest by mise's `brew`, each checked by the SHA-256 of Homebrew's own bottle
-  ([devtools](../macos/roles/devtools/README.md#the-formulae),
+  ([ghostty](../macos/roles/ghostty/README.md#ghostty)). So do the apps' fifteen. mise checks no
+  signature on them and strips their quarantine, and eleven take the SHA-256 of Homebrew's API at
+  run time, four none. Logi's installer runs as root,
+  unchecked ([apps](../macos/roles/apps/README.md#the-casks)). The Mac's formulae, devtools',
+  docker's and desktop's, take their latest by mise's `brew`, outside the rule too. mise checks
+  each bottle against the SHA-256 of Homebrew's API at run time, and ws pins none ([devtools](../macos/roles/devtools/README.md#the-formulae),
   [docker](../macos/roles/docker/README.md#the-formulae),
   [desktop](../macos/roles/desktop/README.md#the-wallpaper)). So is each of the Mac's clones, oh-my-zsh
   and its two plugins, by the full commit SHA that mise checks it out at

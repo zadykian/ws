@@ -52,7 +52,7 @@ it has any:
   terminals' tmux wrapper, and the open-file limit that it needs.
   [A project's settings](ubuntu/roles/zed/projects.md) cover SQL Server and Ansible.
 
-`macos/` sets up the Mac that works on the server, and Ghostty and Zed on it: [The Mac](macos).
+`macos/` sets up the Mac whole, its apps, tools and settings: [The Mac](macos).
 Its [`frame`](macos/roles/frame) is what the Mac's roles of mise's config lean on, and
 `/usr/local/bin/ws`. Its [`firewall`](macos/roles/firewall) turns the Application Firewall on
 and has it block all incoming. Its [`dotnet`](macos/roles/dotnet) installs .NET's SDKs, as `devtools` does on
@@ -62,7 +62,7 @@ sets the Dock, Finder, windows, sounds, screenshots and the wallpaper. Its [`zsh
 oh-my-zsh and its plugins, with the settings that load them. Its [`power`](macos/roles/power) keeps the
 display on while on power and stops the App Store's updates. Its [`apps`](macos/roles/apps) installs
 the Mac's apps, as mise's casks, pins some in the Dock, opens seven at login and sets Stats's
-settings. Its [`keyboard`](macos/roles/keyboard) makes Caps Lock a Control key, sets the symbolic
+settings. Its [`keyboard`](macos/roles/keyboard) makes the built-in keyboard's Caps Lock a Control key, sets the symbolic
 hotkeys and installs the maintainer's keyboard layout.
 
 A new Mac with Apple silicon follows [the Mac's runbook](macos/runbook.md). It runs
