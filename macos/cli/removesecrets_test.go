@@ -14,7 +14,7 @@ import (
 )
 
 // The bootstrap that remove runs last.
-const bootstrapLine = "mise -C /opt/ws/macos bootstrap"
+const bootstrapLine = "mise -C /opt/ws/macos bootstrap --yes"
 
 // removeSecretsFixture is removeFixture on a Mac that ran init, whose known_hosts holds lab's key,
 // and whose secrets repository holds files. rm only records its calls, so the clone's files stay
