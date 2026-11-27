@@ -1,7 +1,5 @@
 // Package file puts files, directories, links and lines on the machine, and removes paths, each
-// as a resource that plans its changes. The User types do the same in the
-// user's home. They read and write as the user: a whole file, a directory, or ws's lines in a file
-// that holds other text.
+// as a resource that plans its changes. HomeLines adds ws's lines to a file of the account's home.
 package file
 
 import (

@@ -18,20 +18,20 @@ func homeLinesIn(m *effecttest.Machine, top bool) HomeLines {
 		M: m, Path: "/home/ws/f", Lines: "ws\n", Shown: "ws", Top: top, Mode: 0o600,
 		Now: func() time.Time { return time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC) },
 		Has: func(_ context.Context, _ effect.Machine, _ string, text []byte) (bool, error) {
-			if bytes.HasPrefix(text, []byte("late")) {
-				return false, Misplaced("ws is below %q", "late")
-			}
 			return bytes.Contains(text, []byte("ws\n")), nil
 		},
 		UID: 1000, GID: 1001, Home: "/home/ws",
 	}
 }
 
-func TestHomeLinesRefusesLinesOutOfPlace(t *testing.T) {
+func TestHomeLinesFailsOnAHasError(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/home/ws/f"] = []byte("late\nws\n")
-	if _, err := homeLinesIn(m, true).Plan(context.Background()); !errors.Is(err, ErrMisplaced) {
-		t.Errorf("err = %v, want ErrMisplaced", err)
+	l := homeLinesIn(m, true)
+	boom := errors.New("boom")
+	l.Has = func(context.Context, effect.Machine, string, []byte) (bool, error) { return false, boom }
+	if _, err := l.Plan(context.Background()); !errors.Is(err, boom) {
+		t.Errorf("err = %v, want boom", err)
 	}
 }
 

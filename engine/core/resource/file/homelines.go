@@ -15,11 +15,8 @@ import (
 )
 
 // ErrLinked is a plan's error for a link that lacks ws's lines: a run would replace the link with a
-// file. ErrMisplaced is its error for lines that sit where the file's own text wins over them.
-var (
-	ErrLinked    = errors.New("a link that lacks ws's lines")
-	ErrMisplaced = errors.New("ws's lines out of place")
-)
+// file.
+var ErrLinked = errors.New("a link that lacks ws's lines")
 
 // linesError is a plan's stop, with an error kind to match and the words to show.
 type linesError struct {
@@ -30,11 +27,6 @@ type linesError struct {
 func (e linesError) Error() string { return e.text }
 
 func (e linesError) Unwrap() error { return e.kind }
-
-// Misplaced is the error of a Has that finds ws's lines out of place.
-func Misplaced(format string, a ...any) error {
-	return linesError{ErrMisplaced, fmt.Sprintf(format, a...)}
-}
 
 // HomeLines is ws's lines in a file of the account's home that holds other text too. A run adds
 // them once, at the top or the end, and keeps the old file, read and written as root as File is. The
@@ -51,7 +43,7 @@ type HomeLines struct {
 	Top bool
 	// Mode is the mode of a new file.
 	Mode fs.FileMode
-	// Has says whether text holds the lines. It returns Misplaced where they sit out of place.
+	// Has says whether text holds the lines. Its error fails the plan.
 	Has func(ctx context.Context, m effect.Machine, path string, text []byte) (bool, error)
 	// Now stamps the copy of the old file. Nil means time.Now.
 	Now func() time.Time
@@ -101,7 +93,7 @@ func (l HomeLines) keptName() string {
 // read reads the file as root, through one open below the home that fails at a link, as the user
 // may swap one in after the check. A link at the file gives link, and no text unless Follow reads
 // through it. A link on the way gives an error. holds says whether the file has the lines. err is
-// Misplaced where they sit out of place.
+// Has's error, which fails the plan.
 func (l HomeLines) read(ctx context.Context) (found Found, got effect.Attrs, link string, holds bool, err error) {
 	info, err := l.M.Stat(l.Path)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
@@ -219,8 +211,5 @@ func (w homeWrite) Title() string { return fmt.Sprintf("%s %s", w.why, w.f.Path)
 // Excerpt is the diff of what ws adds to a file it keeps the text of. Such a file is the user's, and
 // the lines beside ws's may hold a secret.
 func (w homeWrite) Excerpt() string {
-	if len(w.before) == 0 || !bytes.Contains(w.f.Content, w.before) {
-		return effect.DiffAs(w.f.Path, w.f.Path, w.before, w.f.Content)
-	}
 	return effect.DiffAs(w.f.Path, w.f.Path, nil, bytes.Replace(w.f.Content, w.before, nil, 1))
 }
