@@ -1,10 +1,8 @@
 package cli
 
 import (
-	"context"
 	"fmt"
 	"slices"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -49,7 +47,7 @@ func addHostKey(c *cobra.Command, p enginecli.Env, name, hostname, key, keyFile 
 	if err := secrets.WriteFiles(m, clone.Dir, files, changed); err != nil {
 		return nil, err
 	}
-	if err := reencrypt(ctx, clone, files, changed); err != nil {
+	if err := secrets.Reencrypt(ctx, clone, files, changed); err != nil {
 		return nil, err
 	}
 	// GitHub changes no deploy key in place, so an older key goes before the new one comes.
@@ -86,28 +84,4 @@ func addHostKey(c *cobra.Command, p enginecli.Env, name, hostname, key, keyFile 
 		return nil, err
 	}
 	return byHand, nil
-}
-
-// reencrypt encrypts the values of each changed fnox file again, to the recipients its table holds
-// now: fnox.toml's by the shared provider, a profile's under its profile. A file of no value has
-// nothing to encrypt, so fnox runs on none. fnox asks for the Nano's PIN and touch on the terminal.
-func reencrypt(ctx context.Context, c *secrets.Clone, f secrets.Files, changed []string) error {
-	for _, name := range changed {
-		held, err := secrets.HasSecrets(f[name])
-		if err != nil {
-			return fmt.Errorf("cannot read %s: %w", name, err)
-		}
-		if !held {
-			continue
-		}
-		args := []string{"reencrypt", "-p", secrets.SharedProvider, "-f"}
-		if name != secrets.SharedFile {
-			profile := strings.TrimSuffix(strings.TrimPrefix(name, "fnox."), ".toml")
-			args = []string{"-P", profile, "reencrypt", "-p", secrets.ProfileProvider, "-f"}
-		}
-		if err := c.FnoxPass(ctx, args...); err != nil {
-			return fmt.Errorf("cannot encrypt the values of %s again: %w", name, err)
-		}
-	}
-	return nil
 }

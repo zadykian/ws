@@ -1,6 +1,7 @@
 package secrets_test
 
 import (
+	"context"
 	"maps"
 	"slices"
 	"strings"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/macos/roles/secrets"
+	"github.com/zadykian/ws/macos/roles/secrets/secretstest"
 )
 
 func TestCheckHostname(t *testing.T) {
@@ -61,5 +63,31 @@ func TestWriteFilesWritesTheNamedFiles(t *testing.T) {
 	}
 	if err := secrets.WriteFiles(m, cloneDir, f, []string{"fnox.ws-b.toml"}); err == nil {
 		t.Error("WriteFiles of a file it lacks gives no error")
+	}
+}
+
+func TestReencryptRunsFnoxUnderTheProviderOfEachFileThatHoldsAValue(t *testing.T) {
+	ctx := context.Background()
+	const value = "[secrets]\nA = { provider = \"age\", value = \"YWdl\" }\n"
+	mac := secretstest.New(effecttest.NewMachine(), map[string]string{})
+	repo, err := secrets.RepoOf(mac, secrets.Tree)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, err := secrets.Open(ctx, mac, repo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close(ctx)
+	f := secrets.Files{secrets.SharedFile: []byte(value), secrets.ProfileFile("ws-a"): []byte(value),
+		secrets.ProfileFile("ws-b"): []byte("[secrets]\n")}
+	if err := secrets.Reencrypt(ctx, c, f, []string{secrets.SharedFile, secrets.ProfileFile("ws-a"),
+		secrets.ProfileFile("ws-b")}); err != nil {
+		t.Fatal(err)
+	}
+	want := [][]string{{"reencrypt", "-p", secrets.SharedProvider, "-f"},
+		{"-P", "ws-a", "reencrypt", "-p", secrets.ProfileProvider, "-f"}}
+	if got := mac.Fnoxed(); !slices.EqualFunc(got, want, slices.Equal) {
+		t.Errorf("Reencrypt ran fnox %q, want %q: ws-b's file holds no value", got, want)
 	}
 }

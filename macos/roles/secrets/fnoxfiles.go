@@ -1,6 +1,7 @@
 package secrets
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"regexp"
@@ -79,6 +80,29 @@ func CheckHostname(h string) error {
 	if !hostnameForm.MatchString(h) || slices.Contains([]string{NanoLabel, BackupLabel, "local", "default"}, h) {
 		return fmt.Errorf("the hostname %q names no profile: set a hostname of one label at ws, "+
 			"lowercase letters, digits and -, other than %s, %s, local and default", h, NanoLabel, BackupLabel)
+	}
+	return nil
+}
+
+// Reencrypt encrypts the values of each changed file of f again, to the recipients its table holds
+// now. fnox.toml takes the shared provider, and a profile's file its own. A file of no value has
+// nothing to encrypt, so fnox runs on none. fnox asks for the Nano's PIN and touch on the terminal.
+func Reencrypt(ctx context.Context, c *Clone, f Files, changed []string) error {
+	for _, name := range changed {
+		held, err := HasSecrets(f[name])
+		if err != nil {
+			return fmt.Errorf("cannot read %s: %w", name, err)
+		}
+		if !held {
+			continue
+		}
+		args := []string{"reencrypt", "-p", SharedProvider, "-f"}
+		if m := profileFileName.FindStringSubmatch(name); m != nil {
+			args = []string{"-P", m[1], "reencrypt", "-p", ProfileProvider, "-f"}
+		}
+		if err := c.FnoxPass(ctx, args...); err != nil {
+			return fmt.Errorf("cannot encrypt the values of %s again: %w", name, err)
+		}
 	}
 	return nil
 }

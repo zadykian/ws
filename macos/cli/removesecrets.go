@@ -87,7 +87,7 @@ func dropHostKey(c *cobra.Command, p enginecli.Env, name, key, keyFile string) e
 	if err := secrets.WriteFiles(m, clone.Dir, files, changed); err != nil {
 		return err
 	}
-	if err := reencrypt(ctx, clone, files, changed); err != nil {
+	if err := secrets.Reencrypt(ctx, clone, files, changed); err != nil {
 		return err
 	}
 	if len(changed) == 0 {
