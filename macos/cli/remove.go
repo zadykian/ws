@@ -58,6 +58,10 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string, skip bool
 		return fmt.Errorf("%s is not a server's name: %s", name, values.NameForm)
 	}
 	fleet := values.ReadFleet(p.Machine, mac)
+	// A bad values.yml is refused first and alone: no server is at fault.
+	if fleet.MacErr != nil {
+		return fleet.MacErr
+	}
 	if fleet.NamesErr != nil {
 		return fleet.NamesErr
 	}
@@ -73,11 +77,7 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string, skip bool
 		return fmt.Errorf("%s is the host of %s: remove them first, as a guest names its host in WS_HOST", name, values.List(guests))
 	}
 	// The units below skip a server whose file ws refuses, so such a file stops the removal before
-	// it starts. NAME's own file is out of the count: a clash with it ends with the removal. A bad
-	// values.yml is refused first and alone: no server is at fault.
-	if fleet.MacErr != nil {
-		return fleet.MacErr
-	}
+	// it starts. NAME's own file is out of the count: a clash with it ends with the removal.
 	for _, s := range fleet.Without(name).Servers {
 		if s.Err != nil {
 			return values.RefuseSibling(s.Name, s.Err)
