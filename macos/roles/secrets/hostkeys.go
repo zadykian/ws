@@ -86,7 +86,7 @@ func (h HostKeys) Add(ctx context.Context, server, hostname, key string) (byHand
 func (h HostKeys) Drop(ctx context.Context, server, key string) error {
 	var labels []string
 	drop := func(f Files) (out Files, changed []string, err error) {
-		out, changed, labels, err = DropKey(f, key)
+		out, changed, labels, err = dropKey(f, key)
 		return out, changed, err
 	}
 	return h.change(ctx, drop, func(e edited) error {
@@ -121,12 +121,12 @@ func (h HostKeys) change(ctx context.Context, edit func(Files) (Files, []string,
 		return err
 	}
 	defer clone.Close(ctx)
-	clone.FnoxEnv = FnoxEnv(h.Getenv, h.KeyFile)
-	keys, err := DeployKeys(ctx, h.M, GH, repo.Slug())
+	clone.FnoxEnv = fnoxEnv(h.Getenv, h.KeyFile)
+	keys, err := deployKeys(ctx, h.M, GH, repo.Slug())
 	if err != nil {
 		return err
 	}
-	files, err := ReadFiles(h.M, clone.Dir)
+	files, err := readFiles(h.M, clone.Dir)
 	if err != nil {
 		return err
 	}
@@ -134,10 +134,10 @@ func (h HostKeys) change(ctx context.Context, edit func(Files) (Files, []string,
 	if err != nil {
 		return err
 	}
-	if err := WriteFiles(h.M, clone.Dir, files, changed); err != nil {
+	if err := writeFiles(h.M, clone.Dir, files, changed); err != nil {
 		return err
 	}
-	if err := Reencrypt(ctx, clone, files, changed); err != nil {
+	if err := reencrypt(ctx, clone, files, changed); err != nil {
 		return err
 	}
 	return finish(edited{clone: clone, repo: repo, keys: keys, files: files, changed: changed})
@@ -145,7 +145,7 @@ func (h HostKeys) change(ctx context.Context, edit func(Files) (Files, []string,
 
 // deleteKey deletes the deploy key k of the repository and says so.
 func (h HostKeys) deleteKey(ctx context.Context, repo Repo, k DeployKey) error {
-	if err := DeleteDeployKey(ctx, h.M, GH, repo.Slug(), k.ID); err != nil {
+	if err := deleteDeployKey(ctx, h.M, GH, repo.Slug(), k.ID); err != nil {
 		return err
 	}
 	_, _ = fmt.Fprintf(h.Out, "deleted the deploy key %s of %s\n", k.Title, repo.Slug())

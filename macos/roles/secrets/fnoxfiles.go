@@ -35,8 +35,8 @@ func isProfileFile(name string) bool {
 	return m != nil && m[1] != "local"
 }
 
-// ReadFiles reads the fnox files at the top of the clone's directory dir.
-func ReadFiles(m effect.Machine, dir string) (Files, error) {
+// readFiles reads the fnox files at the top of the clone's directory dir.
+func readFiles(m effect.Machine, dir string) (Files, error) {
 	names, err := m.ReadDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("cannot list the clone %s: %w", dir, err)
@@ -55,8 +55,8 @@ func ReadFiles(m effect.Machine, dir string) (Files, error) {
 	return f, nil
 }
 
-// WriteFiles writes the files of f that names lists into the clone's directory dir.
-func WriteFiles(m effect.Machine, dir string, f Files, names []string) error {
+// writeFiles writes the files of f that names lists into the clone's directory dir.
+func writeFiles(m effect.Machine, dir string, f Files, names []string) error {
 	for _, name := range names {
 		data, ok := f[name]
 		if !ok {
@@ -84,12 +84,12 @@ func CheckHostname(h string) error {
 	return nil
 }
 
-// Reencrypt encrypts the values of each changed file of f again, to the recipients its table holds
+// reencrypt encrypts the values of each changed file of f again, to the recipients its table holds
 // now. fnox.toml takes the shared provider, and a profile's file its own. A file of no value has
 // nothing to encrypt, so fnox runs on none. fnox asks for the Nano's PIN and touch on the terminal.
-func Reencrypt(ctx context.Context, c *Clone, f Files, changed []string) error {
+func reencrypt(ctx context.Context, c *Clone, f Files, changed []string) error {
 	for _, name := range changed {
-		held, err := HasSecrets(f[name])
+		held, err := hasSecrets(f[name])
 		if err != nil {
 			return fmt.Errorf("cannot read %s: %w", name, err)
 		}
@@ -107,9 +107,9 @@ func Reencrypt(ctx context.Context, c *Clone, f Files, changed []string) error {
 	return nil
 }
 
-// HasSecrets says whether a fnox file holds a secret, as fnox's reencrypt has nothing to do in one
+// hasSecrets says whether a fnox file holds a secret, as fnox's reencrypt has nothing to do in one
 // that holds none.
-func HasSecrets(text []byte) (bool, error) {
+func hasSecrets(text []byte) (bool, error) {
 	var conf struct {
 		Secrets map[string]any `toml:"secrets"`
 	}

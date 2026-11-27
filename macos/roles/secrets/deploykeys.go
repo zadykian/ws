@@ -25,9 +25,9 @@ const deployKeysJq = ".[] | [.id, .title, .key, .read_only] | @tsv"
 // tsvField undoes @tsv's escapes.
 var tsvField = strings.NewReplacer(`\\`, `\`, `\t`, "\t", `\n`, "\n", `\r`, "\r")
 
-// DeployKeys lists the deploy keys of the repository slug by gh, its path gh. A key keeps its
+// deployKeys lists the deploy keys of the repository slug by gh, its path gh. A key keeps its
 // type and base64 alone, as a recipient does.
-func DeployKeys(ctx context.Context, m effect.Machine, gh, slug string) ([]DeployKey, error) {
+func deployKeys(ctx context.Context, m effect.Machine, gh, slug string) ([]DeployKey, error) {
 	out, err := m.Run(ctx, gh, "api", "--paginate", "repos/"+slug+"/keys", "--jq", deployKeysJq)
 	switch {
 	case err != nil && strings.Contains(err.Error(), "HTTP 404"):
@@ -86,8 +86,8 @@ func addDeployKey(ctx context.Context, m effect.Machine, gh, slug, title, key st
 	return nil
 }
 
-// DeleteDeployKey deletes the deploy key id of the repository slug.
-func DeleteDeployKey(ctx context.Context, m effect.Machine, gh, slug string, id int64) error {
+// deleteDeployKey deletes the deploy key id of the repository slug.
+func deleteDeployKey(ctx context.Context, m effect.Machine, gh, slug string, id int64) error {
 	if _, err := m.Run(ctx, gh, "api", "-X", "DELETE", "repos/"+slug+"/keys/"+strconv.FormatInt(id, 10)); err != nil {
 		return fmt.Errorf("cannot delete the deploy key %d of %s by gh: %w", id, slug, err)
 	}

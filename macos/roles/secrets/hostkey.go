@@ -67,11 +67,11 @@ func setHostKey(f Files, hostname, key string) (out Files, changed []string, err
 	return e.out, sharedFirst(e.changed), nil
 }
 
-// DropKey takes key from every table of recipients: fnox.toml's and each profile file's. A file
+// dropKey takes key from every table of recipients: fnox.toml's and each profile file's. A file
 // stays, with its values, so that a rebuilt server takes its profile again. changed lists the
 // files whose recipients changed, as setHostKey's does, and labels the labels that held key.
 // Neither holds a name where key is no recipient.
-func DropKey(f Files, key string) (out Files, changed, labels []string, err error) {
+func dropKey(f Files, key string) (out Files, changed, labels []string, err error) {
 	if !hostKeyForm.MatchString(key) {
 		return nil, nil, nil, errors.New("the host key is not of the form ssh-ed25519 BASE64")
 	}
