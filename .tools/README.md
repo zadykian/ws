@@ -42,8 +42,8 @@ check files take `FILES`, as in `make vale FILES=README.md`:
   `go test -race -count=1` on both, and cgo is on for the race detector alone, as ws builds with
   `CGO_ENABLED=0`. `LAZYGIT_SCHEMA` names lazygit's config schema, for
   [the lazygit role's test](../ubuntu/roles/lazygit/README.md#the-config).
-- `checks`: the five tests of the checks, shell, which `make lint` runs whole, as CI's lint job ran
-  them in a step of its own: `.github/words-check-test.sh`, `.github/warnings-check-test.sh`,
+- `checks`: the five tests of the checks, shell, which `make lint` runs whole:
+  `.github/words-check-test.sh`, `.github/warnings-check-test.sh`,
   `.github/update-checks-test.sh`, `ubuntu/checks/checks-test.sh` and `macos/checks/checks-test.sh`.
   `gotest` leaves them out, as they are no Go.
 

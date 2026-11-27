@@ -22,7 +22,7 @@ The rules a change to the ws CLI keeps, in `cmd/`, `engine/`, `ubuntu/`, `macos/
   ([step.go](../../engine/core/step/step.go)).
 - A step is pure wherever it can be: it reads, a pure function turns what it read into `Change`
   values that apply themselves. Tests compare the plan's headlines (`step.Headline`).
-- ws's lines in a user's file are `file.HomeLines`, on both sides. Its step warns or stops at a link
+- ws's lines in a user's file are `file.HomeLines`, on both sides. Its step stops at a link
   or at misplaced lines. On the Mac the read is the user's, and follows a link whose target holds
   the lines ([homelines.go](../../engine/core/resource/file/homelines.go)).
 - Effects are passed in: a step holds `effect.Out` and `effect.Machine` as fields
