@@ -117,12 +117,20 @@ func TestBinaryRefusesARelativePath(t *testing.T) {
 func TestBinaryRefusesABadSum(t *testing.T) {
 	e, _, _, _ := testEnv()
 	for spec, want := range map[string]string{
-		"[binary.x]\nversion = \"1\"\nurl = \"u\"\npath = \"/x\"\n":                             "a sha256 for each",
-		"[binary.x]\nversion = \"1\"\nurl = \"u\"\npath = \"/x\"\nsha256 = { amd64 = \"X\" }\n": "64 lowercase hex",
-		binarySpecText("mode = 0o1777\n"):                                                       "permission bits",
+		"[binary.x]\nversion = \"1\"\nurl = \"https://u\"\npath = \"/x\"\n":                             "a sha256 for each",
+		"[binary.x]\nversion = \"1\"\nurl = \"https://u\"\npath = \"/x\"\nsha256 = { amd64 = \"X\" }\n": "64 lowercase hex",
+		binarySpecText("mode = 0o1777\n"):                                                               "permission bits",
 	} {
 		if _, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": spec})); err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("load of\n%s= %v, want %q", spec, err, want)
 		}
+	}
+}
+
+func TestBinaryRefusesAnHTTPURL(t *testing.T) {
+	e, _, _, _ := testEnv()
+	spec := strings.Replace(binarySpecText(""), "https://", "http://", 1)
+	if _, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": spec})); err == nil || !strings.Contains(err.Error(), "is no https URL") {
+		t.Errorf("load with an http url = %v, want https asked", err)
 	}
 }

@@ -44,3 +44,16 @@ func TestUnitReadWholeRunsInTheDirectoryTheSideNames(t *testing.T) {
 		t.Errorf("in the run directory: status = %d, stdout = %q; want the unit read", status, stdout)
 	}
 }
+
+func TestUnitVerifyRunsInTheDirectoryTheSideNames(t *testing.T) {
+	e, _ := unitEnv(t, map[string]string{
+		"r/units.toml.tmpl": fileUnit("a", "/etc/a", ""), "r/a": "1\n",
+	})
+	runDir := filepath.Join(filepath.Dir(filepath.Dir(e.Getenv("WS_UNITS"))), "guest")
+	e.Pwd = filepath.Dir(e.Getenv("WS_UNITS"))
+	want := "mise runs in " + e.Pwd + ", which loads none of the specs' lines: run mise in " + runDir
+	status, stdout, stderr := runUnitAt(e, runDir, "verify")
+	if status != 1 || stdout != "" || !strings.Contains(stderr, want) || strings.Contains(stderr, "file/a") {
+		t.Errorf("in the specs' parent: status = %d, stdout = %q, stderr = %q; want %q alone", status, stdout, stderr, want)
+	}
+}

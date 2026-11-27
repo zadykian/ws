@@ -24,13 +24,6 @@ type Forced interface {
 	Forced() bool
 }
 
-// Warned is a Change whose failure Group.Apply leaves as the warning that the change said, as a
-// cask's install is. The step goes on, and the next run tries again. Holds says whether the changes
-// after it wait on it. The server has no such change, so its runs hold at a failure.
-type Warned interface {
-	Warned() (holds bool)
-}
-
 // Early is a Change that Group.Plan puts before the changes of all parts. That is for the mark of
 // an owed restart, which must be on disk before the change that owes it.
 type Early interface {
@@ -95,24 +88,17 @@ func (g Group) Plan(ctx context.Context) (step.Plan, error) {
 }
 
 // Apply applies the changes of a plan that Plan made, in order. After the first failure it applies
-// the Forced changes alone, and returns the errors. The failure of a Warned change is no error:
-// where it holds, the changes after it wait but for the Warned and the Forced ones.
+// the Forced changes alone, and returns the errors.
 func (Group) Apply(ctx context.Context, p step.Plan) error {
 	var failed error
-	held := false
 	for _, c := range p.Changes {
 		f, forced := c.(Forced)
 		forced = forced && f.Forced()
-		_, warned := c.(Warned)
-		if (failed != nil && !forced) || (held && !forced && !warned) {
+		if failed != nil && !forced {
 			continue
 		}
 		err := c.(Change).Apply(ctx)
 		if err == nil {
-			continue
-		}
-		if w, ok := c.(Warned); ok {
-			held = held || w.Warned()
 			continue
 		}
 		failed = errors.Join(failed, fmt.Errorf("%s: %w", step.Headline(c), err))

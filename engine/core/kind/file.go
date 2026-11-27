@@ -68,7 +68,7 @@ func (f filePart) check(dir fs.FS) error {
 		return f.checkLink()
 	case f.Line != "" || len(f.Has) > 0:
 		return f.checkLine()
-	case f.Absent && (f.Template != "" || f.Source != "" || len(f.Check) > 0 || f.Secret || f.Mode != 0 || f.Group != ""):
+	case f.Absent && (f.Template != "" || f.Source != "" || len(f.Check) > 0 || f.Secret || f.Mode != 0 || f.Group != "" || f.AbsentWhenEmpty):
 		return errors.New("an absent file takes a path, an owner and ours alone")
 	case f.Absent:
 		return nil
@@ -83,6 +83,18 @@ func (f filePart) check(dir fs.FS) error {
 	}
 	_, err := fs.Stat(dir, f.Template+f.Source)
 	return err
+}
+
+// checkService refuses a line and a link where a service watches the file: a line's file is its
+// owner's, and a link has no content to change. A file of the file kind and one of a service take it.
+func (f filePart) checkService() error {
+	switch {
+	case f.Line != "":
+		return errors.New("a line takes no service, as the file is its owner's")
+	case f.Link != "":
+		return errors.New("a link takes no service, as it has no content to change")
+	}
+	return nil
 }
 
 // content is the file's text: its template filled as it plans, or its source unchanged.
@@ -233,11 +245,10 @@ func (s fileSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.Res
 	case s.Enabled || s.Reload:
 		return nil, errors.New("enabled and reload go with service")
 	}
-	if s.Line != "" && s.Service != "" {
-		return nil, errors.New("a line takes no service, as the file is its owner's")
-	}
-	if s.Link != "" && s.Service != "" {
-		return nil, errors.New("a link takes no service, as it has no content to change")
+	if s.Service != "" {
+		if err := s.checkService(); err != nil {
+			return nil, err
+		}
 	}
 	return func(ctx context.Context) ([]resource.Resource, error) {
 		b, err := s.resources(ctx, e, dir)

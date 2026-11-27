@@ -45,13 +45,11 @@ func unitRead(p Env, ss sides) *cobra.Command {
 		if err != nil {
 			return err
 		}
-		if *whole && !sameDir(p.Pwd, r.runDir()) {
-			// A run outside the run directory loads none of the specs' lines but the root's. Such a
-			// run would skip every role, so the read fails each line, in sync or not.
+		if why := r.outsideRun(p.Pwd); *whole && why != "" {
+			// Such a run would skip every role, so the read fails each line, in sync or not.
 			var sb strings.Builder
 			for _, name := range names {
-				sb.WriteString(name + "\tfails: mise runs in " + p.Pwd + ", which loads none of the specs' lines: " +
-					"run mise in " + r.runDir() + "\n")
+				sb.WriteString(name + "\tfails: " + why + "\n")
 			}
 			_, err = fmt.Fprint(c.OutOrStdout(), sb.String())
 			return err

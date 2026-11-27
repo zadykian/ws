@@ -55,6 +55,9 @@ func (s treeSpec) parts(e Env, _ fs.FS) (func(context.Context) ([]resource.Resou
 		if a.Version == "" || a.URL == "" || len(a.SHA256) == 0 {
 			return nil, errors.New("an archive takes a version, a url and a sha256 for each architecture")
 		}
+		if err := checkURL(a.URL); err != nil {
+			return nil, err
+		}
 		if err := checkSums(a.SHA256); err != nil {
 			return nil, err
 		}

@@ -3,6 +3,7 @@ package kind
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/fs"
 	"strings"
 
@@ -31,6 +32,9 @@ func (s debSpec) parts(e Env, _ fs.FS) (func(context.Context) ([]resource.Resour
 	if s.Package == "" || s.Version == "" || s.URL == "" || len(s.SHA256) == 0 {
 		return nil, errors.New("a deb takes a package, a version, a url and a sha256 for each architecture")
 	}
+	if err := checkURL(s.URL); err != nil {
+		return nil, err
+	}
 	if err := checkSums(s.SHA256); err != nil {
 		return nil, err
 	}
@@ -48,6 +52,14 @@ func (s debSpec) parts(e Env, _ fs.FS) (func(context.Context) ([]resource.Resour
 		r = held{pkg: pkg, u: e.U, unit: s.Stop}
 	}
 	return func(context.Context) ([]resource.Resource, error) { return []resource.Resource{r}, nil }, nil
+}
+
+// checkURL refuses a pin's url that is not https, as the kinds that download share one rule.
+func checkURL(url string) error {
+	if !strings.HasPrefix(url, "https://") {
+		return fmt.Errorf("url %q is no https URL", url)
+	}
+	return nil
 }
 
 // checkSums refuses a pin that is no SHA-256 in lowercase hex, naming its architecture.

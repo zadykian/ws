@@ -16,7 +16,7 @@ type Said struct {
 }
 
 // Plan plans the part's changes, each wrapped to say its headline, keeping its kind and its item.
-// The wrapper forwards no marker, so Plan refuses a change that carries one: Forced, Warned, Early,
+// The wrapper forwards no marker, so Plan refuses a change that carries one: Forced, Early,
 // Titled or Excerpted. The part's own error is kept.
 func (s Said) Plan(ctx context.Context) ([]Change, error) {
 	changes, err := s.Part.Plan(ctx)
@@ -38,8 +38,6 @@ func markerOf(c Change) string {
 	switch c.(type) {
 	case Forced:
 		return "Forced"
-	case Warned:
-		return "Warned"
 	case Early:
 		return "Early"
 	case step.Titled:

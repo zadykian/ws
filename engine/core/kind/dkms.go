@@ -50,13 +50,14 @@ type dkmsSpec struct {
 
 // check refuses the fields that no plan could take. dir holds the conf.
 func (s dkmsSpec) check(dir fs.FS) error {
+	if err := checkURL(s.URL); err != nil {
+		return err
+	}
 	switch {
 	case !dkmsWord.MatchString(s.Module):
 		return fmt.Errorf("module %q is no DKMS module's name", s.Module)
 	case !dkmsWord.MatchString(s.Version):
 		return fmt.Errorf("version %q is no DKMS version", s.Version)
-	case !strings.HasPrefix(s.URL, "https://"):
-		return fmt.Errorf("url %q is no https URL", s.URL)
 	case len(s.SHA256) != 64 || strings.Trim(s.SHA256, "0123456789abcdef") != "":
 		return errors.New("sha256 is not 64 lowercase hex digits")
 	case s.Strip < 0:
