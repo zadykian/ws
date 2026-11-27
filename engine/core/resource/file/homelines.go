@@ -108,7 +108,7 @@ func (l HomeLines) Plan(ctx context.Context) ([]resource.Change, error) {
 	}
 	return []resource.Change{
 		keep,
-		homeWrite{writeFile{f: f, before: found.Text, why: "write", got: &got}},
+		homeWrite{writeFile{f: f, before: found.Text, why: "write"}},
 	}, nil
 }
 
@@ -144,7 +144,7 @@ func (k homeKeep) Apply(ctx context.Context) error {
 	return k.M.WriteAtomic(k.To, text, a)
 }
 
-// homeWrite is File's write of the file with ws's lines. A report shows ws's lines alone, as the
+// homeWrite is File's write of the file with ws's lines. A log shows ws's lines alone, as the
 // rest of the file is the user's and may hold a secret.
 type homeWrite struct{ writeFile }
 
@@ -153,14 +153,6 @@ func (w homeWrite) String() string { return fmt.Sprintf("%s %s\n%s", w.why, w.f.
 
 // Title names the file, which the first line of ws's lines in a diff leaves out.
 func (w homeWrite) Title() string { return fmt.Sprintf("%s %s", w.why, w.f.Path) }
-
-// Item is the file's item without its diff, as the state report and its JSON hold no other line of
-// the file.
-func (w homeWrite) Item() step.Item {
-	item := w.writeFile.Item()
-	item.Diff = ""
-	return item
-}
 
 // Excerpt is the diff of what ws adds, as UserWrite's.
 func (w homeWrite) Excerpt() string {

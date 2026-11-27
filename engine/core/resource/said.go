@@ -9,13 +9,13 @@ import (
 )
 
 // Said is a part whose changes say their headline to Out once they apply, as the Mac's do.
-// Its changes carry no marker but Kind and Item.
+// Its changes carry no marker but Kind.
 type Said struct {
 	Out  effect.Out
 	Part Resource
 }
 
-// Plan plans the part's changes, each wrapped to say its headline, keeping its kind and its item.
+// Plan plans the part's changes, each wrapped to say its headline, keeping its kind.
 // The wrapper forwards no marker, so Plan refuses a change that carries one: Forced, Early,
 // Titled or Excerpted. The part's own error is kept.
 func (s Said) Plan(ctx context.Context) ([]Change, error) {
@@ -26,9 +26,6 @@ func (s Said) Plan(ctx context.Context) ([]Change, error) {
 			return nil, fmt.Errorf("say %q: the change is %s, and a said change drops that", c, marker)
 		}
 		said[i] = speaking{s.Out, c}
-		if _, ok := c.(step.Itemized); ok {
-			said[i] = saidItem{speaking{s.Out, c}}
-		}
 	}
 	return said, err
 }
@@ -62,7 +59,3 @@ func (s speaking) Apply(ctx context.Context) error {
 	s.out.Say("%s", step.Headline(s.Change))
 	return nil
 }
-
-type saidItem struct{ speaking }
-
-func (s saidItem) Item() step.Item { return s.Change.(step.Itemized).Item() }

@@ -201,21 +201,20 @@ func TestHomeLinesShowsOnlyWsLines(t *testing.T) {
 	}
 }
 
-func TestHomeLinesDryRunAndItemShowOnlyWsLines(t *testing.T) {
+func TestHomeLinesDryRunAndReadShowOnlyWsLines(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/home/ws/f"] = []byte("[http]\n\textraHeader = bearer T\n")
 	cs, err := homeLinesIn(m, true).Plan(context.Background())
 	if err != nil || len(cs) != 2 {
 		t.Fatalf("%v, %v", cs, err)
 	}
-	item := cs[1].(step.Itemized).Item()
-	for name, got := range map[string]string{"String": cs[1].String(), "Diff": item.Diff} {
+	for name, got := range map[string]string{"String": cs[1].String(), "Pending": step.PendingOf(cs[1]).Text} {
 		if strings.Contains(got, "bearer") || strings.Contains(got, "[http]") {
 			t.Errorf("%s shows the user's lines: %q", name, got)
 		}
 	}
-	if !strings.Contains(cs[1].String(), "+ws") || item.Name != "/home/ws/f" {
-		t.Errorf("String %q, item %+v", cs[1].String(), item)
+	if !strings.Contains(cs[1].String(), "+ws") {
+		t.Errorf("String %q, want the lines ws adds", cs[1].String())
 	}
 	if got := step.Headline(cs[1]); got != "write /home/ws/f" {
 		t.Errorf("Headline = %q, want write /home/ws/f", got)

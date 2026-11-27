@@ -13,7 +13,6 @@ import (
 type kindly struct{ change }
 
 func (kindly) Kind() step.ChangeKind { return step.Restart }
-func (kindly) Item() step.Item       { return step.Item{Name: "an item"} }
 
 func TestSaidSaysEachHeadlineOnceApplied(t *testing.T) {
 	var log []string
@@ -32,11 +31,11 @@ func TestSaidSaysEachHeadlineOnceApplied(t *testing.T) {
 	}
 }
 
-func TestSaidKeepsAChangesKindAndItem(t *testing.T) {
+func TestSaidKeepsAChangesKind(t *testing.T) {
 	var log []string
 	changes, _ := resource.Said{Out: &effecttest.Out{}, Part: part{kindly{change{"k", &log, nil}}}}.Plan(context.Background())
-	if it, ok := changes[0].(step.Itemized); !ok || it.Item().Name != "an item" || step.KindOf(changes[0]) != step.Restart {
-		t.Errorf("%T: kind %s, itemized %v; want restart and an item", changes[0], step.KindOf(changes[0]), ok)
+	if step.KindOf(changes[0]) != step.Restart {
+		t.Errorf("%T: kind %s; want restart", changes[0], step.KindOf(changes[0]))
 	}
 }
 
