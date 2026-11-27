@@ -18,7 +18,7 @@ func newServersCmd(p enginecli.Env, server *string) *cobra.Command {
 		Short: "list the Mac's servers with their target, slot and tunnel",
 		Long: "It lists each server of servers/ beside values.yml: its target, its slot, and its tunnel, which is absent, " +
 			"stopped, starting, unreadable, or the tier and endpoint it holds. A server whose file ws refuses shows - and its errors " +
-			"follow the list, with exit code 1. It reads alone, as the user, and takes no --server.",
+			"follow the list, with exit code 1. A bad values.yml prints its refusal alone, with no row. It reads alone, as the user, and takes no --server.",
 		Args: cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error {
 			if *server != "" {
