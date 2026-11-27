@@ -47,7 +47,7 @@ func (f filePart) lines(e Env, owner account.Account, rel string) file.HomeLines
 	return l
 }
 
-// shown is the text on one line, as a report and a remedy quote it.
+// shown is the text on one line, as the remedy quotes it.
 func shown(text string) string {
 	var parts []string
 	for l := range strings.Lines(text) {
