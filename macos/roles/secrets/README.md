@@ -175,7 +175,7 @@ the Mac's. Before the tunnel is up, `--address` and `--port` reach the server as
 and `Port`. A guest, whose file names its `WS_HOST`, has no address, so they reach its host. The host
 answers for it: it reads the guest's key and hostname by `incus exec`, and runs the setup
 ([The guests of a host](../../../ubuntu/runbook.md#the-guests-of-a-host)). add refuses a host that
-a guest's file names, as a host holds no secret. The command:
+a guest's file names, as a host holds no secret, and a server whose own file ws refuses. The command:
 
 1. Takes NAME's ed25519 key from `~/.ssh/known_hosts`. Where it holds none, it scans the server,
    prints the key's fingerprint, and asks whether the server's console prints the same. A `yes`

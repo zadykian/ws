@@ -19,7 +19,13 @@ type Server struct {
 	Err error
 	// fileErr is Err before the clashes between servers.
 	fileErr error
+	// ownErr is fileErr for the server's own file alone: no other server's file, no clash.
+	ownErr error
 }
+
+// FileErr returns the refusal of the server's own file, which is missing, bad or names the server
+// as its own host. It holds no other server's refusal, as its host's, and no clash.
+func (s Server) FileErr() error { return s.ownErr }
 
 // Fleet is values.yml and each server's file beside it, read once.
 type Fleet struct {
@@ -53,11 +59,14 @@ func ReadFleet(m effect.Machine, mac string) Fleet {
 	}
 	for _, n := range names {
 		p := parsed[n]
-		s := Server{Name: n, File: ServerPath(mac, n), fileErr: p.err}
+		s := Server{Name: n, File: ServerPath(mac, n), fileErr: p.err, ownErr: p.err}
 		if p.err == nil {
 			s.Conf = join(f.Mac, p.conf)
 			if msg := resolveHost(&s.Conf, n, mac, parsed); msg != "" {
 				s.fileErr = errors.New(Error{Msg: msg}.In(s.File))
+				if s.Conf.Host == n {
+					s.ownErr = s.fileErr
+				}
 			}
 		}
 		f.Servers = append(f.Servers, s)

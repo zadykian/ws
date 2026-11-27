@@ -27,17 +27,17 @@ type reach struct {
 	host string
 }
 
-// reachOf returns how add reaches the server called name, from the host that its file names.
-func reachOf(p enginecli.Env, name, address string, port int) (reach, error) {
-	c, err := values.Read(p.Machine, values.ServerPath(values.Path(p.Getenv, p.Pwd), name))
-	if err != nil {
+// reachOf returns how add reaches the server s, from the host that its file names. It refuses a
+// server whose own file is refused.
+func reachOf(s values.Server, address string, port int) (reach, error) {
+	if err := s.FileErr(); err != nil {
 		return reach{}, err
 	}
-	login := name
-	if c.Host != "" {
-		login = c.Host
+	login := s.Name
+	if s.Conf.Host != "" {
+		login = s.Conf.Host
 	}
-	return reach{name: name, ssh: login, target: sshTarget(login, address, port), host: c.Host}, nil
+	return reach{name: s.Name, ssh: login, target: sshTarget(login, address, port), host: s.Conf.Host}, nil
 }
 
 // command returns ssh's arguments that run args at the server: in the guest by incus exec, where
