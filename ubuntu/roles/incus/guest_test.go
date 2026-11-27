@@ -1,6 +1,7 @@
 package incus
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -13,6 +14,19 @@ const (
 	guestAlias = "ws-ubuntu-26.04-20261108-0a1b2c3d"
 )
 
+// slotted is the tunnel of guest g whose own values hold slot 1.
+func slotted(t *testing.T, g values.Guest) values.GuestTunnel {
+	own, err := values.Parse([]byte("WS_TUNNEL_ADDRESS: 10.99.1.1/24\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	tunnel, err := g.Tunnel(own)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return tunnel
+}
+
 var lab = values.Guest{Name: "lab", Address: "10.100.0.10", CPU: 4, Memory: "8GiB", Disk: "200GiB"}
 
 // heldGuest is what incus lists for a guest ws made. It holds the declared keys and Incus's own,
@@ -21,14 +35,14 @@ const heldGuest = `[{"name":"other","status":"Running","profiles":["default"]},
 {"name":"lab","description":"ws's guest lab","status":"Running","architecture":"x86_64","ephemeral":false,"stateful":false,
 "profiles":["ws"],"expanded_config":{"boot.autostart":"true"},
 "config":{"limits.cpu":"4","limits.memory":"8GiB","cloud-init.network-config":"version: 2\n","image.os":"Ubuntu","volatile.idmap.base":"1000000","volatile.eth0.hwaddr":"00:16:3e:aa:bb:cc"},
-"devices":{"eth0":{"type":"nic","network":"incusbr0","name":"eth0","host_name":"ws-lab","ipv4.address":"10.100.0.10","security.mac_filtering":"true","security.port_isolation":"true"},
+"devices":{"eth0":{"type":"nic","network":"incusbr0","name":"eth0","host_name":"ws-lab","ipv4.address":"10.100.0.10","ipv4.routes":"10.99.1.1/32","security.mac_filtering":"true","security.port_isolation":"true"},
 "root":{"type":"disk","path":"/","pool":"ws","size":"200GiB"}}}]`
 
 func TestAMissingGuestIsLaunchedWithItsLimitsItsNICAndItsSeed(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results[guestList] = effecttest.Result{Out: []byte("[]")}
 	m.Results["incus launch local:"+guestAlias+" lab"] = effecttest.Result{}
-	changes, err := Guest(m, lab, values.Default(), guestAlias).Plan(t.Context())
+	changes, err := Guest(m, slotted(t, lab), false, guestAlias).Plan(t.Context())
 	if err != nil || len(changes) != 1 {
 		t.Fatalf("changes = %v, err = %v", changes, err)
 	}
@@ -46,26 +60,15 @@ func TestAMissingGuestIsLaunchedWithItsLimitsItsNICAndItsSeed(t *testing.T) {
 			t.Errorf("the guest's YAML lacks %q:\n%s", want, m.Inputs[0])
 		}
 	}
-	if strings.Contains(m.Inputs[0], "10.99.") {
-		t.Errorf("the default values name slot 0, which is the host's own, and the seed holds it:\n%s", m.Inputs[0])
-	}
-}
-
-func TestTheSeedHoldsTheSlotOfAGuestThatNamesOne(t *testing.T) {
-	own, err := values.Parse([]byte("WS_TUNNEL_ADDRESS: 10.99.3.1/24\n"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	want := "version: 2\nethernets:\n  eth0:\n    dhcp4: true\n    addresses: [10.99.3.1/32]\n"
-	if got := seedNetwork(own); got != want {
-		t.Errorf("seed = %q, want %q", got, want)
+	if !strings.Contains(m.Inputs[0], "addresses: [10.99.1.1/32]") {
+		t.Errorf("the seed lacks the slot's address:\n%s", m.Inputs[0])
 	}
 }
 
 func TestAGuestWithItsKeysIsLeftAlone(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results[guestList] = effecttest.Result{Out: []byte(heldGuest)}
-	if changes, err := Guest(m, lab, values.Default(), guestAlias).Plan(t.Context()); err != nil || len(changes) != 0 {
+	if changes, err := Guest(m, slotted(t, lab), false, guestAlias).Plan(t.Context()); err != nil || len(changes) != 0 {
 		t.Errorf("changes = %v, err = %v, want none: the seed's key and Incus's own differ from nothing", changes, err)
 	}
 }
@@ -76,7 +79,7 @@ func TestAGuestWithAnotherLimitIsEditedAndKeepsIncusKeys(t *testing.T) {
 	m.Results["incus config edit lab"] = effecttest.Result{}
 	more := lab
 	more.Memory, more.Disk = "16GiB", "300GiB"
-	changes, err := Guest(m, more, values.Default(), guestAlias).Plan(t.Context())
+	changes, err := Guest(m, slotted(t, more), false, guestAlias).Plan(t.Context())
 	if err != nil || len(changes) != 1 {
 		t.Fatalf("changes = %v, err = %v", changes, err)
 	}
@@ -101,7 +104,7 @@ func TestAGuestWithAnotherAddressOrPortIsEdited(t *testing.T) {
 	m.Results[guestList] = effecttest.Result{Out: []byte(heldGuest)}
 	moved := lab
 	moved.Address = "10.100.0.11"
-	changes, err := Guest(m, moved, values.Default(), guestAlias).Plan(t.Context())
+	changes, err := Guest(m, slotted(t, moved), false, guestAlias).Plan(t.Context())
 	if err != nil || len(changes) != 1 {
 		t.Fatalf("changes = %v, err = %v", changes, err)
 	}
@@ -113,18 +116,9 @@ func TestAGuestWithAnotherAddressOrPortIsEdited(t *testing.T) {
 func TestAnInstanceOfAnotherProfileIsNoGuestOfWs(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results[guestList] = effecttest.Result{Out: []byte(`[{"name":"lab","profiles":["default"]}]`)}
-	if _, err := Guest(m, lab, values.Default(), guestAlias).Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "no guest of ws's") {
+	if _, err := Guest(m, slotted(t, lab), false, guestAlias).Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "no guest of ws's") {
 		t.Errorf("plan = %v, want the instance refused as no guest of ws's", err)
 	}
-}
-
-// withCard is a guest's own values with the switch for the host's GPU on.
-func withCard(t *testing.T) values.Values {
-	own, err := values.Parse([]byte("WS_NVIDIA_GPU: true\n"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	return own
 }
 
 func TestAGuestWithTheSwitchOnLaunchesWithNVIDIAsCardAndWithoutItNone(t *testing.T) {
@@ -132,9 +126,7 @@ func TestAGuestWithTheSwitchOnLaunchesWithNVIDIAsCardAndWithoutItNone(t *testing
 		m := effecttest.NewMachine()
 		m.Results[guestList] = effecttest.Result{Out: []byte("[]")}
 		m.Results["incus launch local:"+guestAlias+" lab"] = effecttest.Result{}
-		v := values.Default()
-		v.Nvidia.GPU = own
-		changes, err := Guest(m, lab, v, guestAlias).Plan(t.Context())
+		changes, err := Guest(m, slotted(t, lab), own, guestAlias).Plan(t.Context())
 		if err != nil || len(changes) != 1 {
 			t.Fatalf("switch %t: changes = %v, err = %v", own, changes, err)
 		}
@@ -154,7 +146,7 @@ func TestAGuestWhoseSwitchTurnsOnGetsTheCardAndKeepsItsOtherDevices(t *testing.T
 	m := effecttest.NewMachine()
 	m.Results[guestList] = effecttest.Result{Out: []byte(heldGuest)}
 	m.Results["incus config edit lab"] = effecttest.Result{}
-	changes, err := Guest(m, lab, withCard(t), guestAlias).Plan(t.Context())
+	changes, err := Guest(m, slotted(t, lab), true, guestAlias).Plan(t.Context())
 	if err != nil || len(changes) != 1 {
 		t.Fatalf("changes = %v, err = %v", changes, err)
 	}
@@ -176,10 +168,10 @@ func TestAGuestWhoseSwitchTurnsOffLosesTheCard(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results[guestList] = effecttest.Result{Out: []byte(held)}
 	m.Results["incus config edit lab"] = effecttest.Result{}
-	if changes, err := Guest(m, lab, withCard(t), guestAlias).Plan(t.Context()); err != nil || len(changes) != 0 {
+	if changes, err := Guest(m, slotted(t, lab), true, guestAlias).Plan(t.Context()); err != nil || len(changes) != 0 {
 		t.Fatalf("with the switch on: changes = %v, err = %v, want none", changes, err)
 	}
-	changes, err := Guest(m, lab, values.Default(), guestAlias).Plan(t.Context())
+	changes, err := Guest(m, slotted(t, lab), false, guestAlias).Plan(t.Context())
 	if err != nil || len(changes) != 1 {
 		t.Fatalf("changes = %v, err = %v", changes, err)
 	}
@@ -198,9 +190,7 @@ func TestAGuestOfASlotGetsTheSlotsAddressAsARouteOnItsNIC(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results[guestList] = effecttest.Result{Out: []byte("[]")}
 	m.Results["incus launch local:"+guestAlias+" lab"] = effecttest.Result{}
-	own := values.Default()
-	own.Tunnel.Address = "10.99.1.1/24"
-	changes, err := Guest(m, lab, own, guestAlias).Plan(t.Context())
+	changes, err := Guest(m, slotted(t, lab), false, guestAlias).Plan(t.Context())
 	if err != nil || len(changes) != 1 {
 		t.Fatalf("changes = %v, err = %v", changes, err)
 	}
@@ -209,5 +199,63 @@ func TestAGuestOfASlotGetsTheSlotsAddressAsARouteOnItsNIC(t *testing.T) {
 	}
 	if !strings.Contains(m.Inputs[0], "ipv4.routes: 10.99.1.1/32") {
 		t.Errorf("the NIC lacks the slot's route:\n%s", m.Inputs[0])
+	}
+}
+
+// ownFile is a guest's own values on the host, which Guests reads as the guest's.
+func ownFile(m *effecttest.Machine, g values.Guest, text string) {
+	m.Files[g.File()] = []byte(text)
+}
+
+func TestGuestsRefuseAnAddressOfAnotherPrefixLengthBeforeAnyInstance(t *testing.T) {
+	m := effecttest.NewMachine()
+	ownFile(m, lab, "WS_TUNNEL_ADDRESS: 10.99.3.1/25\nWS_TUNNEL_PEERS: []\n")
+	_, err := Guests(t.Context(), m, []values.Guest{lab}, &effecttest.Out{})
+	if err == nil || !strings.Contains(err.Error(), "not a slot's 10.99.N.1/24") {
+		t.Fatalf("err = %v, want the tunnel's refusal of the /25", err)
+	}
+	if slices.ContainsFunc(m.Calls, func(c string) bool { return !strings.HasPrefix(c, "read ") }) {
+		t.Errorf("calls = %q, want files read alone: the plan fails before it asks Incus", m.Calls)
+	}
+}
+
+func TestGuestsRefuseAGuestOfSlotZeroAmongSeveral(t *testing.T) {
+	m := effecttest.NewMachine()
+	other := values.Guest{Name: "other", Address: "10.100.0.11", CPU: 2, Memory: "4GiB", Disk: "100GiB"}
+	ownFile(m, lab, "WS_TUNNEL_ADDRESS: 10.99.1.1/24\n")
+	_, err := Guests(t.Context(), m, []values.Guest{lab, other}, &effecttest.Out{})
+	if err == nil || !strings.Contains(err.Error(), "other: WS_TUNNEL_ADDRESS is 10.99.0.1/24, slot 0") {
+		t.Fatalf("err = %v, want the refusal of other's slot 0", err)
+	}
+	if slices.ContainsFunc(m.Calls, func(c string) bool { return !strings.HasPrefix(c, "read ") }) {
+		t.Errorf("calls = %q, want files read alone", m.Calls)
+	}
+}
+
+func TestGuestsMakeTheInstanceOfAGuestOfASlotFromItsTunnel(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
+	m.Results[guestList] = effecttest.Result{Out: []byte("[]")}
+	ownFile(m, lab, "WS_TUNNEL_ADDRESS: 10.99.3.1/24\n")
+	alias, err := Image{M: m}.Alias(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	m.Results["incus launch local:"+alias+" lab"] = effecttest.Result{}
+	steps, err := Guests(t.Context(), m, []values.Guest{lab}, &effecttest.Out{})
+	if err != nil || len(steps) != 5 {
+		t.Fatalf("steps = %d, err = %v", len(steps), err)
+	}
+	changes, err := steps[0].Plan(t.Context())
+	if err != nil || len(changes) != 1 {
+		t.Fatalf("changes = %v, err = %v", changes, err)
+	}
+	if err := changes[0].Apply(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"ipv4.routes: 10.99.3.1/32", "addresses: [10.99.3.1/32]"} {
+		if !strings.Contains(m.Inputs[0], want) {
+			t.Errorf("the guest's YAML lacks %q:\n%s", want, m.Inputs[0])
+		}
 	}
 }

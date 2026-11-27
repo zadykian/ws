@@ -26,7 +26,7 @@ func Check(ctx context.Context, m effect.Machine, u effect.Units, c values.Cable
 	} else if err != nil {
 		return err
 	}
-	port, err := readPort(ctx, m, c.Port, c.Address)
+	port, err := readPort(ctx, m, c.Port)
 	if err != nil {
 		return err
 	}

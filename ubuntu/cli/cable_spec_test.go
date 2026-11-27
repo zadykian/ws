@@ -54,7 +54,7 @@ func cableMachine() *effecttest.Machine {
 	return m
 }
 
-const cableValues = "---\nWS_CABLE_PORT: enp5s0\nWS_CABLE_ADDRESS: 10.77.0.1/30\n"
+const cableValues = "---\nWS_CABLE_PORT: enp5s0\n"
 
 // applyUnit plans the unit name of units and applies its changes.
 func applyUnit(t *testing.T, units []kind.Unit, name string) []string {

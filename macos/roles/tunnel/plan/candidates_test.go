@@ -4,6 +4,8 @@ import (
 	"net/netip"
 	"reflect"
 	"testing"
+
+	"github.com/zadykian/ws/internal/cablenet"
 )
 
 func TestCandidates(t *testing.T) {
@@ -11,7 +13,7 @@ func TestCandidates(t *testing.T) {
 	lan.Cable = true
 	remote := lan
 	remote.Remote = "ws.example.com"
-	cable := Iface{"en5", netip.MustParseAddr("10.77.0.2")}
+	cable := Iface{"en5", cablenet.Mac()}
 	home := Iface{"en0", netip.MustParseAddr("192.168.1.50")}
 	away := Iface{"en0", netip.MustParseAddr("172.20.0.5")}
 	ws := netip.MustParseAddr("203.0.113.9")
@@ -26,7 +28,7 @@ func TestCandidates(t *testing.T) {
 		why    int
 	}{
 		{"cable, LAN and remote", []Iface{cable, home}, remote, ws, []Candidate{
-			{TierCable, CableServer}, {TierLAN, lan.LANServer}, {TierRemote, ws}}, 0},
+			{TierCable, cablenet.Server()}, {TierLAN, lan.LANServer}, {TierRemote, ws}}, 0},
 		{"the cable of another server", []Iface{cable, home}, Conf{LAN: lan.LAN, LANServer: lan.LANServer}, netip.Addr{},
 			[]Candidate{{TierLAN, lan.LANServer}}, 0},
 		{"LAN and remote", []Iface{home}, remote, ws, []Candidate{{TierLAN, lan.LANServer}, {TierRemote, ws}}, 0},

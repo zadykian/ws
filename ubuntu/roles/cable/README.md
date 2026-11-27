@@ -25,8 +25,9 @@ WS_CABLE_PORT: enp5s0
 The file lives outside ws, so a new release keeps it. Every run reads it,
 so none removes the cable for want of the value.
 
-The file `/etc/netplan/60-cable.yaml` gives that interface `10.77.0.1/30`
-(`WS_CABLE_ADDRESS`), and no DHCP, gateway or DNS. netplan merges the file with the other
+The file `/etc/netplan/60-cable.yaml` gives that interface `10.77.0.1/30`,
+and no DHCP, gateway or DNS. No key sets the /30: both sides fix it once in `internal/cablenet`,
+so the Mac's end stays in the server's subnet. netplan merges the file with the other
 files' entries of the port's name, as the installer's: its settings win, and its address joins
 theirs. Boot doesn't wait for the link, which is up only while the Mac is docked. The Mac takes
 `10.77.0.2/30`, with no router, from `mise -C /opt/ws/macos bootstrap` ([The cable](../../../macos/README.md#the-cable)). A host's
@@ -34,11 +35,10 @@ ufw lets SSH in on any interface, so over the cable sshd takes every login that 
 ([The host's firewall](../security/README.md#the-hosts-firewall)).
  The guard stops the run where the port looks like an uplink. Such a port carries a default route,
 in any routing table, or holds an IPv4 lease outside the cable's subnet. A static address outside
-it, as an
-earlier run's, doesn't count, so `WS_CABLE_ADDRESS` can change.
+it, as an earlier run's, doesn't count.
 
 ws refuses a name with a slash, a space or a character that JSON escapes as it reads the values, as
-no interface has one. It refuses an address other than an IPv4 one with its prefix there too.
+no interface has one.
  Before the file lands, its check merges it with netplan's other files in a scratch copy. A plan
 runs no such check, as the file kind checks a file where it changes. The run stops where netplan
 rejects them, and where an entry of another name fits the port. It fits by a `match:` of the port's

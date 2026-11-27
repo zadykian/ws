@@ -4,8 +4,8 @@ import (
 	"strconv"
 
 	"github.com/zadykian/ws/engine/core/check"
+	"github.com/zadykian/ws/internal/cablenet"
 	"github.com/zadykian/ws/internal/slot"
-	tunnel "github.com/zadykian/ws/macos/roles/tunnel/plan"
 )
 
 // defaultPort is the UDP port of wg0 where WS_TUNNEL_PORT is empty, and forwardPort the TCP port that a
@@ -60,7 +60,7 @@ type key struct {
 
 // keptNames names the networks that the cable and the tunnel keep, for the forms of WS_LAN and
 // WS_TUNNEL_NETWORKS.
-var keptNames = tunnel.CableNet.String() + " and " + slot.Range.String()
+var keptNames = cablenet.Net.String() + " and " + slot.Range.String()
 
 // port is the form of both ports.
 const port = "a port, 1 to 65535"
@@ -89,7 +89,7 @@ var keys = []key{
 	{"WS_REMOTE_PORT", func(c *Conf) *string { return &c.RemotePort }, check.Port, port},
 	{"WS_TUNNEL_PORT", func(c *Conf) *string { return &c.Port }, check.Port, port},
 	{"WS_TUNNEL_NETWORKS", func(c *Conf) *string { return &c.TunnelNetworks },
-		func(v string) bool { return check.Networks(v, tunnel.CableNet, slot.Range) },
+		func(v string) bool { return check.Networks(v, cablenet.Net, slot.Range) },
 		"IPv4 networks split by blanks, as 10.20.0.0/16, each clear of " + keptNames},
 	{"WS_RESOLVERS", func(c *Conf) *string { return &c.Resolvers }, check.Resolvers,
 		"DOMAIN=ADDRESS[,ADDRESS...] split by blanks, as example.internal=10.20.0.53, each " +
@@ -107,5 +107,5 @@ var keys = []key{
 // isLAN reports whether v is a network clear of the cable's and the slots' subnets.
 func isLAN(v string) bool {
 	p, ok := check.CIDR(v)
-	return ok && !p.Overlaps(tunnel.CableNet) && !p.Overlaps(slot.Range)
+	return ok && !p.Overlaps(cablenet.Net) && !p.Overlaps(slot.Range)
 }
