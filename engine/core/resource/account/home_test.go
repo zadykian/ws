@@ -245,9 +245,8 @@ func TestHomeDirFixesAWrongModeAndOwner(t *testing.T) {
 func TestLinesSetsTheMachinePathOwnerAndHome(t *testing.T) {
 	m := effecttest.NewMachine()
 	a := account.Account{User: ws, UID: 1000, GID: 1001}
-	got := a.Lines(m, ".bashrc", file.UserLines{Lines: "x\n", Shown: "x", Top: true, Mode: 0o644})
-	r := got.Rules
-	if r.M != m || r.Path != "/home/ws/.bashrc" || r.Lines != "x\n" || !r.Top || r.Mode != 0o644 ||
+	got := a.Lines(m, ".bashrc", file.HomeLines{Lines: "x\n", Shown: "x", Top: true, Mode: 0o644})
+	if got.M != m || got.Path != "/home/ws/.bashrc" || got.Lines != "x\n" || !got.Top || got.Mode != 0o644 ||
 		got.UID != 1000 || got.GID != 1001 || got.Home != "/home/ws" {
 		t.Errorf("Lines = %+v", got)
 	}

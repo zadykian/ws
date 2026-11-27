@@ -6,6 +6,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
@@ -13,9 +14,17 @@ import (
 )
 
 func homeLinesIn(m *effecttest.Machine, top bool) HomeLines {
-	r := linesIn(m, top)
-	r.Path = "/home/ws/f"
-	return HomeLines{Rules: r, UID: 1000, GID: 1001, Home: "/home/ws"}
+	return HomeLines{
+		M: m, Path: "/home/ws/f", Lines: "ws\n", Shown: "ws", Top: top, Mode: 0o600,
+		Now: func() time.Time { return time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC) },
+		Has: func(_ context.Context, _ effect.Machine, _ string, text []byte) (bool, error) {
+			if bytes.HasPrefix(text, []byte("late")) {
+				return false, Misplaced("ws is below %q", "late")
+			}
+			return bytes.Contains(text, []byte("ws\n")), nil
+		},
+		UID: 1000, GID: 1001, Home: "/home/ws",
+	}
 }
 
 func TestHomeLinesRefusesLinesOutOfPlace(t *testing.T) {
@@ -30,7 +39,7 @@ func TestHomeLinesReadsNothingThroughALinkAtTheFileThatHoldsTheLines(t *testing.
 	m := effecttest.NewMachine()
 	m.Files["/h/real"], m.Links["/home/ws/f"] = []byte("ws\n"), "/h/real"
 	l := homeLinesIn(m, false)
-	l.Rules.Has = func(context.Context, effect.Machine, string, []byte) (bool, error) {
+	l.Has = func(context.Context, effect.Machine, string, []byte) (bool, error) {
 		t.Error("Has read through a link")
 		return true, nil
 	}
@@ -49,7 +58,7 @@ func TestHomeLinesRefusesALinkOnTheWay(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Links["/home/ws"] = "/srv"
 	l := homeLinesIn(m, true)
-	l.Rules.Path = "/home/ws/d/f"
+	l.Path = "/home/ws/d/f"
 	m.Links["/home/ws/d"] = "/srv/d"
 	if _, err := l.Plan(context.Background()); err == nil {
 		t.Error("a link on the way was read")
@@ -73,11 +82,11 @@ func TestHomeLinesReadsNoFileThroughALinkSwappedInAfterTheCheck(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/etc/shadow"], m.Links["/home/ws/f"] = []byte("root:x\n"), "/etc/shadow"
 	l := homeLinesIn(m, true)
-	l.Rules.M = linkHidden{m, "/home/ws/f"}
+	l.M = linkHidden{m, "/home/ws/f"}
 	if _, err := l.Plan(context.Background()); err == nil {
 		t.Error("Plan read through a link swapped in after the check")
 	}
-	keep := homeKeep{M: l.Rules.M, Path: "/home/ws/f", To: "/home/ws/f.kept~", Home: "/home/ws"}
+	keep := homeKeep{M: l.M, Path: "/home/ws/f", To: "/home/ws/f.kept~", Home: "/home/ws"}
 	if err := keep.Apply(context.Background()); err == nil || len(m.Files["/home/ws/f.kept~"]) != 0 {
 		t.Errorf("the keep copied through a link: %v, %q", err, m.Files["/home/ws/f.kept~"])
 	}
