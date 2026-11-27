@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"io"
 	"slices"
+	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/macos/values"
 )
 
-// HostKeys changes the host keys that the secrets repository holds, as ws macos secrets add does.
-// Each change runs in a temporary clone of the repository and lands by a pull request.
+// HostKeys changes the host keys that the secrets repository holds, as ws macos secrets add and
+// remove do. Each change runs in a temporary clone of the repository and lands by a pull request.
 type HostKeys struct {
 	M      effect.Machine
 	Getenv func(string) string
@@ -77,6 +78,35 @@ func (h HostKeys) Add(ctx context.Context, server, hostname, key string) (byHand
 		return nil, err
 	}
 	return byHand, nil
+}
+
+// Drop takes key out of the recipients in the secrets and lands the change. Then it deletes each
+// deploy key that holds key, whatever its title, as a server whose hostname changed may hold it
+// under another. server is the Mac's name for the machine.
+func (h HostKeys) Drop(ctx context.Context, server, key string) error {
+	var labels []string
+	drop := func(f Files) (out Files, changed []string, err error) {
+		out, changed, labels, err = DropKey(f, key)
+		return out, changed, err
+	}
+	return h.change(ctx, drop, func(e edited) error {
+		if len(e.changed) == 0 {
+			_, _ = fmt.Fprintf(h.Out, "the secrets' recipients hold no host key of %s\n", server)
+		} else if _, err := e.clone.Land(ctx, h.Out, Change{Topic: "remove-" + strings.Join(labels, "-"),
+			Title: "chore: remove the host key of " + values.List(labels),
+			Body:  "Removed by ws macos remove " + server + ".", Files: e.changed}); err != nil {
+			return err
+		}
+		for _, k := range e.keys {
+			if k.Key != key {
+				continue
+			}
+			if err := h.deleteKey(ctx, e.repo, k); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 // change clones the repository, edits its fnox files by edit, writes them and encrypts their values
