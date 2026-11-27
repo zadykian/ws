@@ -183,7 +183,7 @@ run = "running"             # "stopped", "triggered", or "" to leave the unit as
 reload = false
 in_force = ["cmd"]          # with loads: where their outputs differ, the unit restarts
 loads = ["cmd"]
-[[service.NAME.file]]       # a file's own fields, from path to absent
+[[service.NAME.file]]       # a file's own fields, but no line or link
 path = "/abs/path"
 source = "name"
 ```
