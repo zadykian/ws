@@ -12,9 +12,9 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/internal/cablenet"
 	"github.com/zadykian/ws/internal/slot"
 	"github.com/zadykian/ws/macos/roles/tunnel"
-	tunnelplan "github.com/zadykian/ws/macos/roles/tunnel/plan"
 )
 
 const routesAbsent = "once routes.d is made"
@@ -109,8 +109,8 @@ func (r *Routes) validate() error {
 		if p.Overlaps(slot.Range) {
 			return fmt.Errorf("%s: %s overlaps the tunnels' %s", r.Set, n, slot.Range)
 		}
-		if p.Overlaps(tunnelplan.CableNet) {
-			return fmt.Errorf("%s: %s overlaps the cable's %s", r.Set, n, tunnelplan.CableNet)
+		if p.Overlaps(cablenet.Net) {
+			return fmt.Errorf("%s: %s overlaps the cable's %s", r.Set, n, cablenet.Net)
 		}
 	}
 	return nil

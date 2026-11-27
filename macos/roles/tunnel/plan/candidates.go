@@ -3,6 +3,8 @@ package plan
 import (
 	"fmt"
 	"net/netip"
+
+	"github.com/zadykian/ws/internal/cablenet"
 )
 
 // Tier is a kind of path to ws.
@@ -32,8 +34,8 @@ type Candidate struct {
 // resolved is invalid where the name has no IPv4 address, and then why says so. The caller resolves
 // the name anew before each choice, as an address may change.
 func Candidates(ifaces []Iface, c Conf, resolved netip.Addr) (found []Candidate, why []string) {
-	if c.Cable && within(ifaces, CableNet) {
-		found = append(found, Candidate{TierCable, CableServer})
+	if c.Cable && within(ifaces, cablenet.Net) {
+		found = append(found, Candidate{TierCable, cablenet.Server()})
 	}
 	if c.LAN.IsValid() && c.LANServer.IsValid() && within(ifaces, c.LAN) {
 		found = append(found, Candidate{TierLAN, c.LANServer})

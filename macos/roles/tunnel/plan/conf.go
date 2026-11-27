@@ -10,12 +10,6 @@ import (
 	"github.com/zadykian/ws/internal/slot"
 )
 
-// The cable's subnet and ws's end of it.
-var (
-	CableNet    = netip.MustParsePrefix("10.77.0.0/30")
-	CableServer = netip.MustParseAddr("10.77.0.1")
-)
-
 // DefaultPort is WireGuard's, for a tunnel.conf with no WS_TUNNEL_PORT.
 const DefaultPort = 51820
 

@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/check"
-	tunnel "github.com/zadykian/ws/macos/roles/tunnel/plan"
+	"github.com/zadykian/ws/internal/cablenet"
 )
 
 // uplinkRouter returns the router that info shows outside the cable's /30, which is an uplink's:
@@ -17,7 +17,7 @@ func uplinkRouter(info string) string {
 			continue
 		}
 		a, err := netip.ParseAddr(router)
-		if !check.IPv4(router) || err != nil || !tunnel.CableNet.Contains(a) {
+		if !check.IPv4(router) || err != nil || !cablenet.Net.Contains(a) {
 			return router
 		}
 	}
