@@ -29,6 +29,16 @@ func TestClientGivesUpOnAServerThatNeverAnswers(t *testing.T) {
 	}
 }
 
+func TestClientShipsTheThirtySecondHeaderTimeout(t *testing.T) {
+	tr, ok := Client().Transport.(*http.Transport)
+	if !ok || tr != Transport {
+		t.Fatalf("Client().Transport = %T, want Transport", Client().Transport)
+	}
+	if tr.ResponseHeaderTimeout != 30*time.Second {
+		t.Errorf("ResponseHeaderTimeout = %v, want 30s", tr.ResponseHeaderTimeout)
+	}
+}
+
 func TestClientFollowsHTTPSRedirectsAlone(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/file", http.StatusFound)
