@@ -48,11 +48,11 @@ func (t GuestTunnel) PeersDir() string { return path.Join("/etc/wireguard", t.Li
 // the rule that selects it. Both name the slot, and sit clear of the tables of WireGuard's tools.
 func (t GuestTunnel) Table() int { return 1000 + int(t.Slot) }
 
-// Tunnel returns the tunnel that the host ends for the guest, from the guest's own values. The
+// tunnelOf returns the tunnel that the host ends for the guest, from the guest's own values. The
 // address must be a slot's 10.99.N.1/24, N from 1 to slot.Last. The host routes it to the guest,
 // and slot 0 is wg0's, the host's own. A guest that sets no tunnel holds the defaults, which the
 // host's own tunnel holds too, so the clash refuses it.
-func (g Guest) Tunnel(own Values) (GuestTunnel, error) {
+func (g Guest) tunnelOf(own Values) (GuestTunnel, error) {
 	p, err := netip.ParsePrefix(own.Tunnel.Address)
 	if err != nil {
 		return GuestTunnel{}, fmt.Errorf("%s: WS_TUNNEL_ADDRESS %q is no address with its prefix length", g.Name, own.Tunnel.Address)

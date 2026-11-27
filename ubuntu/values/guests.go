@@ -39,8 +39,9 @@ type Guest struct {
 	Memory string `yaml:"memory"`
 	Disk   string `yaml:"disk"`
 
-	// tunnel is the guest's tunnel, and noTunnel the reason it has none, as LoadHost works them out
-	// from the guest's own values. Both are unset on a guest that no load has resolved.
+	// own is the guest's own values, and tunnel its tunnel or noTunnel the reason it has none, as
+	// LoadHost works them out. All are unset on a guest that no load has resolved.
+	own      *Values
 	tunnel   *GuestTunnel
 	noTunnel error
 }
@@ -91,7 +92,7 @@ func (g Guest) Mark() int {
 func (g Guest) Load(m effect.Machine) Guest {
 	_, own, err := g.Read(m)
 	if err != nil {
-		g.tunnel, g.noTunnel = nil, err
+		g.own, g.tunnel, g.noTunnel = nil, nil, err
 		return g
 	}
 	return g.Resolve(own)
@@ -99,13 +100,23 @@ func (g Guest) Load(m effect.Machine) Guest {
 
 // Resolve returns the guest with the tunnel that its own values give, or the reason they give none.
 func (g Guest) Resolve(own Values) Guest {
-	t, err := g.Tunnel(own)
+	g.own = &own
+	t, err := g.tunnelOf(own)
 	if err != nil {
 		g.tunnel, g.noTunnel = nil, err
 		return g
 	}
 	g.tunnel, g.noTunnel = &t, nil
 	return g
+}
+
+// Own returns the guest's own values as the load read them: the defaults where its file is missing,
+// and none where it did not read.
+func (g Guest) Own() Values {
+	if g.own == nil {
+		return Values{}
+	}
+	return *g.own
 }
 
 // Resolved returns the guest's tunnel, or the reason it has none: its own values did not read or name
