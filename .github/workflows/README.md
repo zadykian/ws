@@ -24,7 +24,7 @@ finds and exits 1. A plan's exit 2, its answer, turns to 1 as well, but a comman
 keeps its own exit code.
 
 It allows no line. Its test, [warnings-check-test.sh](../warnings-check-test.sh), runs in
-`lint`, on a log with warnings and on one without.
+`lint`, as the `checks` gate of `make lint`, on a log with warnings and on one without.
 
 `lint` tries the scripts of [the Mac's checks](../../macos/checks/README.md) too, by
 [checks-test.sh](../../macos/checks/checks-test.sh), against stand-ins for the Mac's tools. The

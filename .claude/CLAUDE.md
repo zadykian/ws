@@ -91,9 +91,9 @@ make gotest                       # the Go gates run at the root, the module; so
 ```
 
 The gates are `shell`, `yamllint`, `tombi`, `stylua`, `sizecheck`, `vale`, `lychee`, `rumdl`,
-`actionlint`, `zizmor`, `gitleaks`, `gofmt`, `govet`, `golangci-lint`, `govulncheck` and `gotest`
-([The gates](../.tools/README.md)). `make lint` needs Python 3.12 to 3.14 and unzip, on Linux or
-on macOS on arm64.
+`actionlint`, `zizmor`, `gitleaks`, `gofmt`, `govet`, `golangci-lint`, `govulncheck`,
+`gotest` and `checks` ([The gates](../.tools/README.md)). `make lint` needs Python 3.12 to 3.14 and
+unzip, on Linux or on macOS on arm64.
 It installs yamllint into `.cache`, and `.tools/run` downloads the rest there.
 
 The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `server` builds ws and runs

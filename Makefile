@@ -35,10 +35,10 @@ TOOLS_GO := $(patsubst %/,./%,$(sort $(dir \
 	$(shell find .tools -name '*.go' ! -path '*/testdata/*'))))
 
 .PHONY: lint shell yamllint tombi stylua sizecheck vale lychee rumdl actionlint zizmor \
-	gitleaks gofmt govet golangci-lint govulncheck gotest lint-file lint-tree
+	gitleaks gofmt govet golangci-lint govulncheck gotest checks lint-file lint-tree
 
 lint: shell yamllint tombi stylua sizecheck vale lychee rumdl actionlint zizmor gitleaks \
-	gofmt govet golangci-lint govulncheck gotest
+	gofmt govet golangci-lint govulncheck gotest checks
 
 # Nothing here runs uv, which writes lint-requirements.txt from lint-requirements.in. So the install
 # stops where the .txt lacks a pin of the .in, rather than keep the old pin unseen. pip takes a file
@@ -144,6 +144,15 @@ gotest:
 	@set -ef; go=$$(.tools/run -path go); schema=$$(.tools/run -path lazygit-schema); \
 		LAZYGIT_SCHEMA=$$schema CGO_ENABLED=1 "$$go" test -race -count=1 ./... $(TOOLS_GO)
 
+# The checks' own tests, which CI's lint job ran in a step of its own. They are shell and run whole,
+# whatever FILES holds, so that an edit to a check or to its test runs them.
+checks:
+	sh .github/words-check-test.sh
+	.github/warnings-check-test.sh
+	.github/update-checks-test.sh
+	ubuntu/checks/checks-test.sh
+	macos/checks/checks-test.sh
+
 # The gates of each file of FILES, by its kind, as the lint plugin runs them after Claude edits a
 # file (.github/workflows/README.md). A workflow takes actionlint and zizmor too. Every file takes
 # vale, which reads the comments alone of a file other than Markdown. A file of no kind passes, as
@@ -161,6 +170,9 @@ lint-file:
 		units.toml.tmpl | */units.toml.tmpl) gates='vale' ;; \
 		*.toml) gates='tombi vale' ;; \
 		*.lua) gates='stylua vale sizecheck' ;; \
+		.github/*-check-test.sh | .github/*-checks-test.sh | .github/*-check.sh | \
+		.github/*-checks.sh | ubuntu/checks/* | macos/checks/*) \
+			gates='shell vale sizecheck checks' ;; \
 		*) gates='shell vale sizecheck' ;; \
 		esac; \
 		$(MAKE) --no-print-directory $$gates FILES="$$file" || status=1; \
