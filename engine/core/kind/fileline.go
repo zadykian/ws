@@ -19,8 +19,8 @@ func (f filePart) checkLine() error {
 	switch {
 	case f.Line == "":
 		return errors.New("has goes with line")
-	case f.Template != "" || f.Source != "" || f.Secret || f.Absent || f.Ours:
-		return errors.New("a line takes owner, mode, check, has, after and when alone")
+	case f.Template != "" || f.Source != "" || f.Group != "" || f.Secret || f.Absent || f.AbsentWhenEmpty || f.Ours:
+		return errors.New("a line takes owner, mode, line_at, check, has, after and when alone")
 	case strings.Contains(strings.TrimSuffix(f.Line, "\n"), "\n") && len(f.Has) == 0:
 		return errors.New("a line of more than one line takes has, as no line of the file equals it")
 	}
