@@ -4,7 +4,6 @@ package facts
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"path"
 	"strings"
@@ -75,13 +74,12 @@ func Read(ctx context.Context, m effect.Machine, getenv func(string) string, pwd
 	}
 	f.Ghostty.Config = ghostty.ConfigPath(m, f.Home)
 	mac := values.Path(getenv, pwd)
-	own, err := values.LoadMac(m, mac)
-	if err != nil {
+	fleet := values.ReadFleet(m, mac)
+	var err error
+	if f.Servers, err = serversOf(fleet); err != nil {
 		return Mac{}, err
 	}
-	if f.Servers, err = servers(m, mac); err != nil {
-		return Mac{}, err
-	}
+	own := fleet.Mac
 	if f.SSH, err = f.readSSH(ctx, m, own); err != nil {
 		return Mac{}, err
 	}
@@ -99,29 +97,22 @@ func Read(ctx context.Context, m effect.Machine, getenv func(string) string, pwd
 // runs the whole check of the values: a bad value, a bad name or a clash between two servers fails
 // it, naming each server it refuses. A Mac with no server yet has none.
 func Servers(m effect.Machine, mac string) ([]Server, error) {
-	if _, err := values.LoadMac(m, mac); err != nil {
-		return nil, err
-	}
-	return servers(m, mac)
+	return serversOf(values.ReadFleet(m, mac))
 }
 
-// servers reads each server's file, which values.yml's own check has passed.
-func servers(m effect.Machine, mac string) ([]Server, error) {
-	names, err := values.Servers(m, mac)
-	if err != nil {
-		return nil, err
+// serversOf returns the servers that nothing refuses, with the refusal of each that something does.
+func serversOf(fleet values.Fleet) ([]Server, error) {
+	if fleet.MacErr != nil {
+		return nil, fleet.MacErr
+	}
+	if fleet.NamesErr != nil {
+		return nil, fleet.NamesErr
 	}
 	var servers []Server
-	var all []error
-	for _, name := range names {
-		c, err := values.Load(m, mac, values.ServerPath(mac, name))
-		if err != nil {
-			all = append(all, values.RefuseSibling(name, err))
-			continue
-		}
-		servers = append(servers, Server{Name: name, Conf: c})
+	for _, s := range fleet.Accepted() {
+		servers = append(servers, Server{Name: s.Name, Conf: s.Conf})
 	}
-	return servers, errors.Join(all...)
+	return servers, fleet.Refused()
 }
 
 // readSSH reads the login key and returns ssh's text, a block for each server.

@@ -143,8 +143,33 @@ func TestRemoveRefusesWhereAServerThatStaysHasABadFile(t *testing.T) {
 		!strings.Contains(stderr, want) {
 		t.Errorf("status = %d, stderr = %q; want 1 and %q", status, stderr, want)
 	}
-	if slices.Contains(m.Calls, "root rm -rf /etc/ws/servers/lab") {
-		t.Error("remove deleted lab's files though abc's steps would skip a server")
+	for _, call := range m.Calls {
+		if !slices.Contains([]string{"read", "readdir", "stat"}, strings.Fields(call)[0]) {
+			t.Errorf("call %q ran before the refusal", call)
+		}
+	}
+}
+
+// TestRemoveNamesTheFirstServerThatStaysAndIsRefused checks that the refusal names one server, the
+// first, as the guard did before the one read.
+func TestRemoveNamesTheFirstServerThatStaysAndIsRefused(t *testing.T) {
+	p, m := removeFixture()
+	for _, name := range []string{"abc", "def"} {
+		m.Files["/etc/ws/servers/"+name+"/values.yml"] = []byte(values.Text("WS_SLOT", "99"))
+		m.Dirs["/etc/ws/servers/"+name] = 0o755
+	}
+	status, _, stderr := runWs(p, "macos", "remove", "lab")
+	if status != 1 || !strings.Contains(stderr, "server abc: ") || strings.Contains(stderr, "server def: ") {
+		t.Errorf("status = %d, stderr = %q; want 1 and abc's refusal alone", status, stderr)
+	}
+}
+
+// TestRemoveTakesAServerWhoseOwnFileIsRefused checks that remove is the way out of a bad file.
+func TestRemoveTakesAServerWhoseOwnFileIsRefused(t *testing.T) {
+	p, m := removeFixture()
+	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_SLOT", "99"))
+	if _, stdout, stderr := runWs(p, "macos", "remove", "lab"); !strings.HasPrefix(stdout, "removed lab\n") {
+		t.Errorf("stdout = %q, stderr = %q; want removed lab", stdout, stderr)
 	}
 }
 

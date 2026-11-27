@@ -55,6 +55,13 @@ and the server's file is `servers/ws/values.yml` beside it. Each key's meaning i
 missing key with its file, then exits 1. Where all pass, it prints one line. The frame's bootstrap
 runs it first ([The check of the values](../roles/frame/README.md#the-check-of-the-values)).
 
+The check, the facts, `ws macos servers`, `remove`, `secrets add`, `values print` and setup ask one
+read of `values.yml` and every server's file. It works the clashes out once, and gives each server
+as accepted or refused, with its refusal. The check, the facts, setup and `remove` refuse on a bad
+server's file, `remove NAME` on any but NAME's. `values print` refuses its server for its own file
+or a clash with another's good file, never for another's bad file. `secrets add` asks the read for
+the server and its host alone.
+
 ## The server's name
 
 `--server NAME` picks the server, and its file is `servers/NAME/values.yml`. A name is a lower-case
