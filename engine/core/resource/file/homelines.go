@@ -14,6 +14,28 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
+// ErrLinked is a plan's error for a link that lacks ws's lines: a run would replace the link with a
+// file. ErrMisplaced is its error for lines that sit where the file's own text wins over them.
+var (
+	ErrLinked    = errors.New("a link that lacks ws's lines")
+	ErrMisplaced = errors.New("ws's lines out of place")
+)
+
+// linesError is a plan's stop, with an error kind to match and the words to show.
+type linesError struct {
+	kind error
+	text string
+}
+
+func (e linesError) Error() string { return e.text }
+
+func (e linesError) Unwrap() error { return e.kind }
+
+// Misplaced is the error of a Has that finds ws's lines out of place.
+func Misplaced(format string, a ...any) error {
+	return linesError{ErrMisplaced, fmt.Sprintf(format, a...)}
+}
+
 // HomeLines is ws's lines in a file of the account's home that holds other text too. A run adds
 // them once, at the top or the end, and keeps the old file, read and written as root as File is. The
 // user owns the home, so root refuses a link at the file or on the way, even where the file holds
@@ -86,7 +108,7 @@ func (l HomeLines) read(ctx context.Context) (found Found, got effect.Attrs, lin
 		return Found{}, got, "", false, err
 	}
 	if info.Link != "" {
-		return l.readLink(ctx, Found{Exists: true, Mode: info.Mode}, info.Link)
+		return l.readLink(ctx, Found{Exists: true}, info.Link)
 	}
 	if err = paths.GuardHome(l.M, l.Home, l.Path); err != nil {
 		return Found{}, got, "", false, err
@@ -98,7 +120,7 @@ func (l HomeLines) read(ctx context.Context) (found Found, got effect.Attrs, lin
 	if err != nil {
 		return Found{}, got, "", false, err
 	}
-	found = Found{Exists: true, Mode: got.Mode, Text: text}
+	found = Found{Exists: true, Text: text}
 	holds, err = l.Has(ctx, l.M, l.Path, text)
 	return found, got, "", holds, err
 }

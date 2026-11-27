@@ -176,6 +176,8 @@ func TestHomeLinesKeepsAndRewritesAFileThatLacksTheLines(t *testing.T) {
 	}{
 		{"top", "a\n", "ws\n\na\n", true},
 		{"end", "a", "a\nws\n", false},
+		{"end after a newline", "a\n", "a\nws\n", false},
+		{"end of an empty file", "", "ws\n", false},
 	} {
 		m := effecttest.NewMachine()
 		m.Files["/home/ws/f"], m.Modes["/home/ws/f"] = []byte(c.old), 0o640
