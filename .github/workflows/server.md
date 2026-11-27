@@ -47,6 +47,19 @@ PPA's version, so the setup moved it up
 ([dotnet-checks.sh](../dotnet-checks.sh), [The .NET SDKs](../../ubuntu/roles/devtools/README.md#the-net-sdks)).
 A failure prints the system daemon's log.
 
+apt's packages come from GitHub's cache, as a source that is down fails the first setup.
+Launchpad's 503s did so four times on 2026-11-23 (#1511).
+
+- Each run gives apt the newest save before the cases, a release's call too. A push to `main`
+  saves the packages after the cases, and a pull request saves none. So only a writer of ws
+  writes the cache.
+- A cached package is trusted by its name and size alone. apt 2.6.1 gave dpkg one with a byte
+  changed, and 26.04's apt is untried.
+- apt's lists stay out, as apt trusts a list on disk. A 503 on a source's index still fails the
+  job.
+- A run of the versions that the cache holds downloads none. So the job doesn't prove that the
+  setup's downloads work.
+
 The run leaves checks that need no container. With the frame's line of `file/ws-values` dropped,
 the plan must exit 1 ([server-plan.sh](../server-plan.sh)): the check against a silent skip holds.
 A plan from `/opt/ws`, which loads no role, must exit 1 too, and name the run directory. A plan
