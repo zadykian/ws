@@ -80,20 +80,16 @@ func seedNetwork(t values.GuestTunnel) string {
 }
 
 // Guests returns the resources that settle each guest of the list, in order: its instance, its
-// start, and its setup. It fails where a guest's own values give no tunnel, before it reads Incus:
-// every guest needs a slot. A guest of ws's that the list lacks gets a warning on out, and no deletion.
+// start, and its setup. The guests are the host's load's, each with its tunnel. It fails where a
+// guest has none, before it reads Incus: every guest needs a slot. A guest of ws's that the list
+// lacks gets a warning on out, and no deletion.
 func Guests(ctx context.Context, m effect.Machine, guests []values.Guest, out effect.Out) ([]resource.Resource, error) {
 	tunnels := make([]values.GuestTunnel, len(guests))
-	gpus := make([]bool, len(guests))
 	for i, g := range guests {
-		_, own, err := g.Read(m)
-		if err != nil {
+		var err error
+		if tunnels[i], err = g.Resolved(); err != nil {
 			return nil, err
 		}
-		if tunnels[i], err = g.Tunnel(own); err != nil {
-			return nil, err
-		}
-		gpus[i] = own.Nvidia.GPU
 	}
 	alias, err := Image{M: m}.Alias(ctx)
 	if err != nil {
@@ -108,7 +104,7 @@ func Guests(ctx context.Context, m effect.Machine, guests []values.Guest, out ef
 	}
 	var steps []resource.Resource
 	for i, g := range guests {
-		steps = append(steps, Guest(m, tunnels[i], gpus[i], alias), Running{M: m, Name: g.Name})
+		steps = append(steps, Guest(m, tunnels[i], g.Own().Nvidia.GPU, alias), Running{M: m, Name: g.Name})
 		steps = append(steps, SetUp(m, g, false, false, out)...)
 	}
 	return steps, nil

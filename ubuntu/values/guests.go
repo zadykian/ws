@@ -39,9 +39,11 @@ type Guest struct {
 	Memory string `yaml:"memory"`
 	Disk   string `yaml:"disk"`
 
-	// tunnel is the guest's tunnel, as LoadHost reads the slot from the guest's own values. Unset
-	// where that file names no slot of a guest's.
-	tunnel *GuestTunnel
+	// own is the guest's own values, and tunnel its tunnel or noTunnel the reason it has none, as
+	// LoadHost works them out. All are unset on a guest that no load has resolved.
+	own      *Values
+	tunnel   *GuestTunnel
+	noTunnel error
 }
 
 // Source is an address that a guest may send from, with the name of the port that carries it.
@@ -84,14 +86,49 @@ func (g Guest) Mark() int {
 	return g.tunnel.Mark()
 }
 
-// withTunnel returns the guest with its tunnel, where its own values file names a slot.
-func (g Guest) withTunnel(m effect.Machine) Guest {
-	if _, v, err := g.Read(m); err == nil {
-		if t, err := g.Tunnel(v); err == nil {
-			g.tunnel = &t
-		}
+// Load returns the guest resolved: its own values read on m, and from them its tunnel or the reason
+// it has none. A file that fails to read leaves the reason, not an error, so that a host runs with
+// one bad guest file where a role does not need its tunnel.
+func (g Guest) Load(m effect.Machine) Guest {
+	_, own, err := g.Read(m)
+	if err != nil {
+		g.own, g.tunnel, g.noTunnel = nil, nil, err
+		return g
 	}
+	return g.Resolve(own)
+}
+
+// Resolve returns the guest with the tunnel that its own values give, or the reason they give none.
+func (g Guest) Resolve(own Values) Guest {
+	g.own = &own
+	t, err := g.tunnelOf(own)
+	if err != nil {
+		g.tunnel, g.noTunnel = nil, err
+		return g
+	}
+	g.tunnel, g.noTunnel = &t, nil
 	return g
+}
+
+// Own returns the guest's own values as the load read them: the defaults where its file is missing,
+// and none where it did not read.
+func (g Guest) Own() Values {
+	if g.own == nil {
+		return Values{}
+	}
+	return *g.own
+}
+
+// Resolved returns the guest's tunnel, or the reason it has none: its own values did not read or name
+// no slot, or no load has resolved the guest.
+func (g Guest) Resolved() (GuestTunnel, error) {
+	switch {
+	case g.tunnel != nil:
+		return *g.tunnel, nil
+	case g.noTunnel != nil:
+		return GuestTunnel{}, g.noTunnel
+	}
+	return GuestTunnel{}, fmt.Errorf("%s: its own values are not loaded", g.Name)
 }
 
 // File is the guest's own values on the host, which the host pushes into the guest.

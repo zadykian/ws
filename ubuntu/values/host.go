@@ -64,7 +64,10 @@ func decodeHost(data []byte) (Host, error) {
 	return h, nil
 }
 
-// LoadHost reads the host's values at path on m. A file that does not exist gives DefaultHost.
+// LoadHost reads the host's values at path on m, and resolves each guest from its own values. A
+// file that does not exist gives DefaultHost. A guest's file that does not read or names no slot
+// fails nothing here: the guest holds the reason, and GuestTunnels asks for it. The self-contained
+// mode fails the load, as no guest under a host may turn it on.
 func LoadHost(m effect.Machine, path string) (Host, error) {
 	data, err := m.ReadFile(path)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
@@ -75,10 +78,11 @@ func LoadHost(m effect.Machine, path string) (Host, error) {
 		return Host{}, fmt.Errorf("%s: %w", path, err)
 	}
 	for i, g := range h.Incus.Guests {
-		if _, _, err := g.Read(m); errors.Is(err, errSelfContained) {
-			return Host{}, fmt.Errorf("%s: %w", path, err)
+		g = g.Load(m)
+		if errors.Is(g.noTunnel, errSelfContained) {
+			return Host{}, fmt.Errorf("%s: %w", path, g.noTunnel)
 		}
-		h.Incus.Guests[i] = g.withTunnel(m)
+		h.Incus.Guests[i] = g
 	}
 	return h, nil
 }

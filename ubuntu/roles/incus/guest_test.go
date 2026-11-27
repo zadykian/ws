@@ -1,7 +1,6 @@
 package incus
 
 import (
-	"slices"
 	"strings"
 	"testing"
 
@@ -20,7 +19,7 @@ func slotted(t *testing.T, g values.Guest) values.GuestTunnel {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tunnel, err := g.Tunnel(own)
+	tunnel, err := g.Resolve(own).Resolved()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -202,33 +201,37 @@ func TestAGuestOfASlotGetsTheSlotsAddressAsARouteOnItsNIC(t *testing.T) {
 	}
 }
 
-// ownFile is a guest's own values on the host, which Guests reads as the guest's.
-func ownFile(m *effecttest.Machine, g values.Guest, text string) {
-	m.Files[g.File()] = []byte(text)
+// resolvedWith is guest g resolved from the own values that text gives, as the host's load does.
+func resolvedWith(t *testing.T, g values.Guest, text string) values.Guest {
+	own, err := values.Parse([]byte(text))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return g.Resolve(own)
 }
 
 func TestGuestsRefuseAnAddressOfAnotherPrefixLengthBeforeAnyInstance(t *testing.T) {
 	m := effecttest.NewMachine()
-	ownFile(m, lab, "WS_TUNNEL_ADDRESS: 10.99.3.1/25\nWS_TUNNEL_PEERS: []\n")
-	_, err := Guests(t.Context(), m, []values.Guest{lab}, &effecttest.Out{})
+	guest := resolvedWith(t, lab, "WS_TUNNEL_ADDRESS: 10.99.3.1/25\nWS_TUNNEL_PEERS: []\n")
+	_, err := Guests(t.Context(), m, []values.Guest{guest}, &effecttest.Out{})
 	if err == nil || !strings.Contains(err.Error(), "not a slot's 10.99.N.1/24") {
 		t.Fatalf("err = %v, want the tunnel's refusal of the /25", err)
 	}
-	if slices.ContainsFunc(m.Calls, func(c string) bool { return !strings.HasPrefix(c, "read ") }) {
-		t.Errorf("calls = %q, want files read alone: the plan fails before it asks Incus", m.Calls)
+	if len(m.Calls) != 0 {
+		t.Errorf("calls = %q, want none: the plan fails before it asks Incus", m.Calls)
 	}
 }
 
 func TestGuestsRefuseAGuestOfSlotZeroAmongSeveral(t *testing.T) {
 	m := effecttest.NewMachine()
 	other := values.Guest{Name: "other", Address: "10.100.0.11", CPU: 2, Memory: "4GiB", Disk: "100GiB"}
-	ownFile(m, lab, "WS_TUNNEL_ADDRESS: 10.99.1.1/24\n")
-	_, err := Guests(t.Context(), m, []values.Guest{lab, other}, &effecttest.Out{})
+	guests := []values.Guest{resolvedWith(t, lab, "WS_TUNNEL_ADDRESS: 10.99.1.1/24\n"), resolvedWith(t, other, "")}
+	_, err := Guests(t.Context(), m, guests, &effecttest.Out{})
 	if err == nil || !strings.Contains(err.Error(), "other: WS_TUNNEL_ADDRESS is 10.99.0.1/24, slot 0") {
 		t.Fatalf("err = %v, want the refusal of other's slot 0", err)
 	}
-	if slices.ContainsFunc(m.Calls, func(c string) bool { return !strings.HasPrefix(c, "read ") }) {
-		t.Errorf("calls = %q, want files read alone", m.Calls)
+	if len(m.Calls) != 0 {
+		t.Errorf("calls = %q, want none", m.Calls)
 	}
 }
 
@@ -236,13 +239,13 @@ func TestGuestsMakeTheInstanceOfAGuestOfASlotFromItsTunnel(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	m.Results[guestList] = effecttest.Result{Out: []byte("[]")}
-	ownFile(m, lab, "WS_TUNNEL_ADDRESS: 10.99.3.1/24\n")
+	guest := resolvedWith(t, lab, "WS_TUNNEL_ADDRESS: 10.99.3.1/24\n")
 	alias, err := Image{M: m}.Alias(t.Context())
 	if err != nil {
 		t.Fatal(err)
 	}
 	m.Results["incus launch local:"+alias+" lab"] = effecttest.Result{}
-	steps, err := Guests(t.Context(), m, []values.Guest{lab}, &effecttest.Out{})
+	steps, err := Guests(t.Context(), m, []values.Guest{guest}, &effecttest.Out{})
 	if err != nil || len(steps) != 5 {
 		t.Fatalf("steps = %d, err = %v", len(steps), err)
 	}
@@ -257,5 +260,41 @@ func TestGuestsMakeTheInstanceOfAGuestOfASlotFromItsTunnel(t *testing.T) {
 		if !strings.Contains(m.Inputs[0], want) {
 			t.Errorf("the guest's YAML lacks %q:\n%s", want, m.Inputs[0])
 		}
+	}
+}
+
+// A guest that no load resolved has no tunnel to give, and the plan fails before it asks Incus.
+func TestGuestsRefuseAGuestThatNoLoadResolved(t *testing.T) {
+	m := effecttest.NewMachine()
+	_, err := Guests(t.Context(), m, []values.Guest{lab}, &effecttest.Out{})
+	if err == nil || !strings.Contains(err.Error(), "not loaded") || len(m.Calls) != 0 {
+		t.Errorf("err = %v, calls = %q, want the guest named as not loaded and no call", err, m.Calls)
+	}
+}
+
+// A guest's GPU switch is its own values': Guests reads it off the resolved guest.
+func TestGuestsGiveTheGPUToAGuestWhoseValuesSetIt(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
+	m.Results[guestList] = effecttest.Result{Out: []byte("[]")}
+	guest := resolvedWith(t, lab, "WS_TUNNEL_ADDRESS: 10.99.3.1/24\nWS_NVIDIA_GPU: true\n")
+	alias, err := Image{M: m}.Alias(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	m.Results["incus launch local:"+alias+" lab"] = effecttest.Result{}
+	steps, err := Guests(t.Context(), m, []values.Guest{guest}, &effecttest.Out{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	changes, err := steps[0].Plan(t.Context())
+	if err != nil || len(changes) != 1 {
+		t.Fatalf("changes = %v, err = %v", changes, err)
+	}
+	if err := changes[0].Apply(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(m.Inputs[0], "vendorid") {
+		t.Errorf("the guest's YAML lacks the gpu device:\n%s", m.Inputs[0])
 	}
 }
