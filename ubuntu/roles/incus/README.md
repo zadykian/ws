@@ -60,11 +60,11 @@ shows that Incus takes the YAML as written: CI's `host` job runs the units.
 
 ## The bridge
 
-`incusbr0` is managed and NATed, with no IPv6. Its subnet is `WS_INCUS_BRIDGE_ADDRESS`, `10.100.0.1/24`
-by default, in the private ranges below and off the tunnel's slots `10.99.0.0/20`. Its DHCP hands out
-`WS_INCUS_BRIDGE_DNS`, as `9.9.9.9` and `1.1.1.1`, so that no guest asks the host's resolver. A
-resolver in the private ranges is refused: the ACL drops it, so no guest could resolve by it. The ACL
-is on the bridge, and egress is dropped by default. Ingress is the ingress ACL's.
+`incusbr0` is managed and NATed, with no IPv6. Its subnet is `WS_INCUS_BRIDGE_ADDRESS`,
+`10.100.0.1/24` by default, in the private ranges below and off the tunnel's slots `10.99.0.0/20`
+and the cable's `10.77.0.0/30`. Its DHCP hands out `WS_INCUS_BRIDGE_DNS`, as `9.9.9.9` and
+`1.1.1.1`, so no guest asks the host's resolver. The ACL drops a resolver in the private ranges, so
+one is refused. Egress is dropped by default, and ingress is the ingress ACL's.
 
 The egress ACL drops `10.0.0.0/8`, `100.64.0.0/10`, `169.254.0.0/16`, `172.16.0.0/12`, `192.168.0.0/16`,
 `224.0.0.0/4` and `255.255.255.255`, then allows the rest. The host's own addresses must sit among

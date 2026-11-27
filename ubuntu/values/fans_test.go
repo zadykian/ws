@@ -2,6 +2,7 @@ package values
 
 import (
 	"encoding/json"
+	"slices"
 	"testing"
 
 	"go.yaml.in/yaml/v3"
@@ -23,11 +24,10 @@ func TestFansJSONOfTheDefaultsPassesTheDaemonsLoader(t *testing.T) {
 	}
 }
 
-// TestFansJSONIsTodaysText holds the file byte for byte: the config indented by two spaces, as the
-// role wrote it before, with the last newline left to the template.
+// TestFansJSONIsTodaysText holds the file's form: two spaces of indent, and the names of its keys
+// level by level, which the daemon reads. A renamed JSON tag fails it.
 func TestFansJSONIsTodaysText(t *testing.T) {
-	f := DefaultHost().Fans
-	text, err := f.JSON()
+	text, err := DefaultHost().Fans.JSON()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,12 +35,44 @@ func TestFansJSONIsTodaysText(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want, err := json.MarshalIndent(c, "", "  ")
-	if err != nil {
+	if want, err := json.MarshalIndent(c, "", "  "); err != nil || text != string(want) {
+		t.Errorf("JSON = %q, want the indent of two spaces: %q, %v", text, want, err)
+	}
+	var top map[string]any
+	if err := json.Unmarshal([]byte(text), &top); err != nil {
 		t.Fatal(err)
 	}
-	if text != string(want) {
-		t.Errorf("JSON = %q, want %q", text, want)
+	// Each level's keys, over all its entries: the optional ones show in some entry of the defaults.
+	union := func(entries ...map[string]any) []string {
+		var keys []string
+		for _, e := range entries {
+			for k := range e {
+				if !slices.Contains(keys, k) {
+					keys = append(keys, k)
+				}
+			}
+		}
+		slices.Sort(keys)
+		return keys
+	}
+	list := func(key string) []map[string]any {
+		var out []map[string]any
+		for _, e := range top[key].([]any) {
+			out = append(out, e.(map[string]any))
+		}
+		return out
+	}
+	curves := list("curves")
+	for level, c := range map[string]struct{ got, want []string }{
+		"file":    {union(top), []string{"controls", "curves", "interval", "sensors", "step"}},
+		"step":    {union(top["step"].(map[string]any)), []string{"down", "up"}},
+		"sensor":  {union(list("sensors")...), []string{"average", "hwmon", "label", "max", "name", "nvidia", "seconds"}},
+		"curve":   {union(curves...), []string{"hysteresis", "name", "points", "response", "sensor"}},
+		"control": {union(list("controls")...), []string{"curve", "hwmon", "label", "name", "percent"}},
+	} {
+		if !slices.Equal(c.got, c.want) {
+			t.Errorf("%s keys = %q, want %q", level, c.got, c.want)
+		}
 	}
 }
 

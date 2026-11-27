@@ -6,6 +6,8 @@ import (
 	"net/netip"
 	"slices"
 	"strings"
+
+	"github.com/zadykian/ws/internal/cablenet"
 )
 
 // Incus is roles/incus's keys, which a host reads alone.
@@ -85,6 +87,9 @@ func (i Incus) check() error {
 	}
 	if slots := netip.MustParsePrefix(tunnelSlots); bridge.Overlaps(slots) {
 		return fmt.Errorf("WS_INCUS_BRIDGE_ADDRESS %s overlaps %s, the tunnel's slots", i.BridgeAddress, tunnelSlots)
+	}
+	if bridge.Overlaps(cablenet.Net) {
+		return fmt.Errorf("WS_INCUS_BRIDGE_ADDRESS %s overlaps %s, the cable's subnet", i.BridgeAddress, cablenet.Net)
 	}
 	if len(i.BridgeDNS) == 0 {
 		return errors.New("WS_INCUS_BRIDGE_DNS is empty: the guests need a resolver, as 9.9.9.9")
