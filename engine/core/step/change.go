@@ -1,7 +1,6 @@
 package step
 
-// ChangeKind says what a Change does to a machine, so that a screen tells changes apart. The
-// values are those of --json.
+// ChangeKind says what a Change does to a machine, so that a screen tells changes apart.
 type ChangeKind string
 
 // The kinds of change.

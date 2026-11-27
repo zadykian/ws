@@ -16,7 +16,7 @@ import (
 	"github.com/zadykian/ws/engine/core/web"
 )
 
-// client gives up on a server that stays silent, and follows redirects to HTTPS alone.
+// client gives up on a server that sends no header within the timeout, and follows redirects to HTTPS alone.
 var client = web.Client()
 
 // Download streams the URL through SHA-256 into a pending file, and renames it over path only
