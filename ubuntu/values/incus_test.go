@@ -31,6 +31,8 @@ func TestParseHostRefusesABadIncusValue(t *testing.T) {
 		"WS_INCUS_BRIDGE_DNS: [100.64.0.1]\n":                                         "a private address",
 		"WS_INCUS_BRIDGE_ADDRESS: 10.99.4.1/24\n":                                     "overlaps 10.99.0.0/20",
 		"WS_INCUS_BRIDGE_ADDRESS: 10.98.0.1/15\n":                                     "overlaps 10.99.0.0/20",
+		"WS_INCUS_BRIDGE_ADDRESS: 10.77.0.1/24\n":                                     "overlaps 10.77.0.0/30",
+		"WS_INCUS_BRIDGE_ADDRESS: 10.76.0.1/15\n":                                     "overlaps 10.77.0.0/30",
 		"WS_INCUS_BRIDGE_DNS: []\n":                                                   "WS_INCUS_BRIDGE_DNS",
 		"WS_INCUS_BRIDGE_DNS: [9.9.9.9, dns.example]\n":                               "WS_INCUS_BRIDGE_DNS",
 		"WS_INCUS_BRIDGE_DNS: [\"2620:fe::fe\"]\n":                                    "WS_INCUS_BRIDGE_DNS",
@@ -42,6 +44,12 @@ func TestParseHostRefusesABadIncusValue(t *testing.T) {
 		if _, err := ParseHost([]byte(data)); err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("ParseHost(%q) = %v, want %q", data, err, want)
 		}
+	}
+}
+
+func TestParseHostTakesABridgeBesideTheCable(t *testing.T) {
+	if _, err := ParseHost([]byte("WS_INCUS_BRIDGE_ADDRESS: 10.77.1.1/24\n")); err != nil {
+		t.Errorf("a bridge off the cable's /30 = %v, want it loaded", err)
 	}
 }
 
