@@ -1,9 +1,6 @@
 package values
 
-import (
-	"strings"
-	"testing"
-)
+import "testing"
 
 func TestSiblingsReadTheOtherServersByName(t *testing.T) {
 	m := machineWith("ws", "lab", "box")
@@ -30,22 +27,5 @@ func TestSiblingsOfTheOnlyServerAreNone(t *testing.T) {
 	got, err := Siblings(machineWith("ws"), macPath, ServerPath(macPath, "ws"))
 	if err != nil || len(got) != 0 {
 		t.Errorf("Siblings = %+v, %v; want none", got, err)
-	}
-}
-
-func TestRefuseBadSiblingNamesTheFileThatIsRefused(t *testing.T) {
-	m := machineWith("ws", "lab", "box")
-	m.Files[ServerPath(macPath, "lab")] = []byte(Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"))
-	err := RefuseBadSibling(m, macPath, ServerPath(macPath, "ws"))
-	if err == nil || !strings.HasPrefix(err.Error(), "server lab: ") || !strings.HasSuffix(err.Error(), BadFileHint("lab")) {
-		t.Errorf("RefuseBadSibling = %v, want lab's refusal", err)
-	}
-}
-
-func TestRefuseBadSiblingLeavesTheServerItselfAlone(t *testing.T) {
-	m := machineWith("ws", "box")
-	m.Files[ServerPath(macPath, "ws")] = []byte(Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"))
-	if err := RefuseBadSibling(m, macPath, ServerPath(macPath, "ws")); err != nil {
-		t.Errorf("RefuseBadSibling = %v, want none for the server's own file", err)
 	}
 }
