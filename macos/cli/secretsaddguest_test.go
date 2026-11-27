@@ -77,6 +77,46 @@ func TestSecretsAddRefusesAGuestWhoseHostKnownHostsLacks(t *testing.T) {
 	}
 }
 
+// Add refuses for a guest's own file alone. Its host's bad file stops it at no step but the host's
+// key, which known_hosts lacks here.
+func TestSecretsAddTakesAGuestWhoseHostFileTheFleetRefuses(t *testing.T) {
+	for name, tc := range map[string]struct {
+		host    string
+		files   map[string]string
+		wantKey string
+	}{
+		"host that is no server": {"nope", nil, "no host key of nope"},
+		"host whose file is bad": {"ws", map[string]string{"ws": values.Text("WS_SLOT", "999")}, "no host key of ws"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			mac, add := guestFixture()
+			mac.Machine.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_HOST", tc.host, "WS_SLOT", "1"))
+			for server, text := range tc.files {
+				mac.Machine.Files["/etc/ws/servers/"+server+"/values.yml"] = []byte(text)
+			}
+			delete(mac.Machine.Files, knownHosts)
+			status, _, stderr := add("")
+			if status != 1 || !strings.Contains(stderr, tc.wantKey) || strings.Contains(stderr, "server ws: ") {
+				t.Errorf("status = %d, stderr = %q; want 1 and %q, the host's file not named", status, stderr, tc.wantKey)
+			}
+		})
+	}
+}
+
+// A server that names itself as its host is no host of itself: add refuses its file.
+func TestSecretsAddRefusesAServerThatNamesItselfAsItsHostForItsFile(t *testing.T) {
+	p, mac := addFixture(nil)
+	mac.Machine.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_HOST", "lab", "WS_SLOT", "1"))
+	status, _, stderr := addWs(p, "", "lab")
+	if want := "WS_HOST=lab names the guest's own server"; status != 1 || !strings.Contains(stderr, want) ||
+		strings.Contains(stderr, "is the host of") {
+		t.Errorf("status = %d, stderr = %q; want 1 and %q", status, stderr, want)
+	}
+	if i := callAt(mac.Calls, "run "); i >= 0 {
+		t.Errorf("add ran %q, want nothing run", mac.Calls[i])
+	}
+}
+
 func TestSecretsAddRefusesAHost(t *testing.T) {
 	p, mac := addFixture(nil)
 	mac.Machine.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_HOST", "ws", "WS_SLOT", "1"))

@@ -173,6 +173,21 @@ func TestSecretsAddStopsWhereTheFingerprintDiffers(t *testing.T) {
 	}
 }
 
+func TestSecretsAddOpensNoPullRequestWhereNothingChanged(t *testing.T) {
+	p, mac := addFixture(heldBy(labKey))
+	mac.Keys = []secrets.DeployKey{{ID: 5, Title: "ws-a", Key: labKey, ReadOnly: true}}
+	status, stdout, stderr := addWs(p, "", "lab")
+	if status != 0 || !strings.Contains(stdout, "the secrets already hold the host key of ws-a") {
+		t.Fatalf("add of a key in place: status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
+	}
+	if len(mac.Fnoxed()) != 0 || len(mac.Landed()) != 0 || callAt(mac.Calls, " -X ") >= 0 {
+		t.Errorf("add of a key in place ran fnox, landed or changed a deploy key: %q", mac.Calls)
+	}
+	if !slices.Contains(mac.Calls, "run "+runLine) {
+		t.Errorf("add of a key in place ran nothing on lab: %q", mac.Calls)
+	}
+}
+
 func TestSecretsAddRefuses(t *testing.T) {
 	for _, c := range []struct {
 		name, want string

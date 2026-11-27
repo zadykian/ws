@@ -53,11 +53,24 @@ func TestFleetRefusesEachRefusedServerInTheSiblingsWords(t *testing.T) {
 	f := fleetOf(map[string]string{"ws": Text("WS_SLOT", "999")})
 	err := f.Refused()
 	if want := "server ws: " + ServerPath(macPath, "ws") + ", line 1: WS_SLOT=999"; err == nil ||
-		!strings.HasPrefix(err.Error(), want) || !strings.HasSuffix(err.Error(), BadFileHint("ws")) {
+		!strings.HasPrefix(err.Error(), want) || !strings.HasSuffix(err.Error(), BadFileHint("ws", nil)) {
 		t.Errorf("Refused = %v, want %q first and the hint last", err, want)
 	}
 	if fleetOf(map[string]string{"ws": ""}).Refused() != nil {
 		t.Error("Refused names a server that nothing refuses")
+	}
+}
+
+// TestFleetHintsAtNoRemovalForAHostWithGuests: a host with guests cannot go, and no guest can while
+// its host's file is refused, so the way out is its file alone.
+func TestFleetHintsAtNoRemovalForAHostWithGuests(t *testing.T) {
+	f := fleetOf(map[string]string{"ws": Text("WS_SLOT", "999"), "g1": guestText, "g2": Text("WS_HOST", "ws", "WS_SLOT", "3")})
+	err := f.Refused()
+	if err == nil || !strings.Contains(err.Error(), "server ws: ") || !strings.HasSuffix(err.Error(), ": fix its file") {
+		t.Errorf("Refused = %v, want ws's refusal and the hint to fix its file alone", err)
+	}
+	if err := f.Without("g1").Without("g2").Refused(); err == nil || !strings.HasSuffix(err.Error(), BadFileHint("ws", nil)) {
+		t.Errorf("Refused with no guest left = %v, want the plain hint last", err)
 	}
 }
 
@@ -116,6 +129,19 @@ func TestFleetNamesAGuestWhoseHostIsRefusedAndKeepsItsHost(t *testing.T) {
 	}
 }
 
+// TestFleetCountsNoServerAsItsOwnGuest: a file that names itself as its host is refused for it, and
+// is no guest of itself.
+func TestFleetCountsNoServerAsItsOwnGuest(t *testing.T) {
+	f := fleetOf(map[string]string{"ws": hostText, "lab": Text("WS_HOST", "lab", "WS_SLOT", "1")})
+	lab, _ := f.Server("lab")
+	if want := "WS_HOST=lab names the guest's own server"; lab.Err == nil || !strings.Contains(lab.Err.Error(), want) {
+		t.Errorf("lab = %v, want %q", lab.Err, want)
+	}
+	if got := f.GuestsOf("lab"); len(got) != 0 {
+		t.Errorf("GuestsOf(lab) = %v, want none", got)
+	}
+}
+
 func TestFleetLoadJoinsTheMacsKeysAndRefusesBothFiles(t *testing.T) {
 	m := machineWith("ws")
 	m.Files[macPath] = []byte(Text("WS_GIT_SIGNING_PUB_KEY", "~/g.pub"))
@@ -137,6 +163,7 @@ func TestFleetLoadJoinsTheMacsKeysAndRefusesBothFiles(t *testing.T) {
 
 func TestFleetReadsNoServerBesideAMissingServersDir(t *testing.T) {
 	m := machineWith()
+	delete(m.Dirs, serversDirPath)
 	m.Files[macPath] = nil
 	if f := ReadFleet(m, macPath); len(f.Servers) != 0 || f.NamesErr != nil || f.MacErr != nil || errors.Join(f.Refused()) != nil {
 		t.Errorf("ReadFleet = %+v, want an empty fleet", f)

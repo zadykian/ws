@@ -19,7 +19,13 @@ type Server struct {
 	Err error
 	// fileErr is Err before the clashes between servers.
 	fileErr error
+	// ownErr is fileErr for the server's own file alone: no other server's file, no clash.
+	ownErr error
 }
+
+// FileErr returns the refusal of the server's own file, which is missing, bad or names the server
+// as its own host. It holds no other server's refusal, as its host's, and no clash.
+func (s Server) FileErr() error { return s.ownErr }
 
 // Fleet is values.yml and each server's file beside it, read once.
 type Fleet struct {
@@ -53,11 +59,14 @@ func ReadFleet(m effect.Machine, mac string) Fleet {
 	}
 	for _, n := range names {
 		p := parsed[n]
-		s := Server{Name: n, File: ServerPath(mac, n), fileErr: p.err}
+		s := Server{Name: n, File: ServerPath(mac, n), fileErr: p.err, ownErr: p.err}
 		if p.err == nil {
 			s.Conf = join(f.Mac, p.conf)
 			if msg := resolveHost(&s.Conf, n, mac, parsed); msg != "" {
 				s.fileErr = errors.New(Error{Msg: msg}.In(s.File))
+				if s.Conf.Host == n {
+					s.ownErr = s.fileErr
+				}
 			}
 		}
 		f.Servers = append(f.Servers, s)
@@ -151,7 +160,7 @@ func (f Fleet) Refused() error {
 	var all []error
 	for _, s := range f.Servers {
 		if s.Err != nil {
-			all = append(all, RefuseSibling(s.Name, s.Err))
+			all = append(all, RefuseSibling(s.Name, s.Err, f.GuestsOf(s.Name)))
 		}
 	}
 	return errors.Join(all...)
@@ -164,11 +173,12 @@ func (f Fleet) Refusal() error {
 }
 
 // GuestsOf returns the servers whose WS_HOST names host, in order. A file that does not parse
-// names none: the check says why.
+// names none: the check says why. The server called host is none of its own guests: its file is
+// refused, and remove takes it.
 func (f Fleet) GuestsOf(host string) []string {
 	var guests []string
 	for _, s := range f.Servers {
-		if s.Conf.Host == host {
+		if s.Conf.Host == host && s.Name != host {
 			guests = append(guests, s.Name)
 		}
 	}
@@ -177,7 +187,8 @@ func (f Fleet) GuestsOf(host string) []string {
 
 // Load returns the joined values of the server called name, as a command for one server reads them.
 // Where values.yml or the server's file is refused, it returns both refusals, each in its own file's
-// words. Else it returns the server's clash, if any. Another server's file never refuses it.
+// words. Else it returns the server's clash, if any. No server's bad file refuses it but its own and,
+// for a guest, its host's.
 func (f Fleet) Load(name string) (Conf, error) {
 	s, ok := f.Server(name)
 	if !ok {

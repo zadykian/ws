@@ -20,12 +20,14 @@ func TestServiceListed(t *testing.T) {
 func TestCableOther(t *testing.T) {
 	const set = "Manual Configuration\nIP address: 10.77.0.2\nSubnet mask: 255.255.255.252\nRouter: (null)\n"
 	for name, tc := range map[string]struct{ info, want string }{
-		"set":       {set, ""},
-		"no lines":  {"", "nothing"},
-		"left out":  {"Manual Configuration\n", ""},
-		"dhcp":      {"DHCP Configuration\nIP address: 192.168.1.5\nSubnet mask: 255.255.255.0\nRouter: 192.168.1.1\n", "DHCP Configuration; IP address: 192.168.1.5; Subnet mask: 255.255.255.0; Router: 192.168.1.1"},
-		"our alias": {"Manual Configuration\nIP address: 10.1.1.1\nIP address: 10.77.0.2\n", ""},
-		"a router":  {"Manual Configuration\nIP address: 10.77.0.2\r\nRouter: 10.77.0.1\n", "Router: 10.77.0.1"},
+		"set":                              {set, ""},
+		"no lines":                         {"", "nothing"},
+		"left out":                         {"Manual Configuration\n", ""},
+		"dhcp":                             {"DHCP Configuration\nIP address: 192.168.1.5\nSubnet mask: 255.255.255.0\nRouter: 192.168.1.1\n", "DHCP Configuration; IP address: 192.168.1.5; Subnet mask: 255.255.255.0; Router: 192.168.1.1"},
+		"our alias":                        {"Manual Configuration\nIP address: 10.1.1.1\nIP address: 10.77.0.2\n", ""},
+		"a cable address that is not ours": {"Manual Configuration\nIP address: 10.77.0.1\n", "IP address: 10.77.0.1"},
+		"an address that starts as ours":   {"Manual Configuration\nIP address: 10.77.0.20\n", "IP address: 10.77.0.20"},
+		"a router":                         {"Manual Configuration\nIP address: 10.77.0.2\r\nRouter: 10.77.0.1\n", "Router: 10.77.0.1"},
 	} {
 		if got := cableOther(tc.info); got != tc.want {
 			t.Errorf("%s: cableOther = %q, want %q", name, got, tc.want)

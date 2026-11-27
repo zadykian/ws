@@ -18,7 +18,7 @@ func newServersCmd(p enginecli.Env, server *string) *cobra.Command {
 		Short: "list the Mac's servers with their target, slot and tunnel",
 		Long: "It lists each server of servers/ beside values.yml: its target, its slot, and its tunnel, which is absent, " +
 			"stopped, starting, unreadable, or the tier and endpoint it holds. A server whose file ws refuses shows - and its errors " +
-			"follow the list, with exit code 1. It reads alone, as the user, and takes no --server.",
+			"follow the list, with exit code 1. A bad values.yml prints its refusal alone, with no row. It reads alone, as the user, and takes no --server.",
 		Args: cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error {
 			if *server != "" {
@@ -26,14 +26,15 @@ func newServersCmd(p enginecli.Env, server *string) *cobra.Command {
 			}
 			mac := values.Path(p.Getenv, p.Pwd)
 			fleet := values.ReadFleet(p.Machine, mac)
+			// A bad values.yml is refused first and alone: no server is at fault.
+			if fleet.MacErr != nil {
+				return fleet.MacErr
+			}
 			if fleet.NamesErr != nil {
 				return fleet.NamesErr
 			}
 			if len(fleet.Servers) == 0 {
 				return fmt.Errorf("no server beside %s: write NAME/values.yml there, as macos/README.md says", mac)
-			}
-			if fleet.MacErr != nil {
-				return fleet.MacErr
 			}
 			var refused []error
 			w := tabwriter.NewWriter(c.OutOrStdout(), 0, 0, 2, ' ', 0)

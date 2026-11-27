@@ -1,5 +1,5 @@
 // Package values reads /etc/ws/values.yml, the Mac's settings, as YAML without running it. Parse
-// and Lines take its text; File and Read reach the file through a machine.
+// and Lines take its text; ReadFleet reaches the files through a machine.
 package values
 
 import "fmt"

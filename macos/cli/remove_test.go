@@ -150,6 +150,24 @@ func TestRemoveRefusesWhereAServerThatStaysHasABadFile(t *testing.T) {
 	}
 }
 
+// TestRemoveHintsAtNoRemovalThatItRefuses checks that a host whose file is refused is named with
+// no removal. Remove refuses the host and each guest while its file stays refused.
+func TestRemoveHintsAtNoRemovalThatItRefuses(t *testing.T) {
+	for name, gone := range map[string]string{"another server": "lab", "its own guest": "zed"} {
+		t.Run(name, func(t *testing.T) {
+			p, m := removeFixture()
+			m.Files["/etc/ws/servers/ws/values.yml"] = []byte(values.Text("WS_SLOT", "99"))
+			m.Files["/etc/ws/servers/zed/values.yml"] = []byte(values.Text("WS_HOST", "ws", "WS_SLOT", "2"))
+			m.Dirs["/etc/ws/servers/zed"] = 0o755
+			status, _, stderr := runWs(p, "macos", "remove", gone)
+			if !strings.HasSuffix(strings.TrimSpace(stderr), ": fix its file") || status != 1 ||
+				!strings.Contains(stderr, "server ws: ") {
+				t.Errorf("status = %d, stderr = %q; want 1, ws's refusal and the hint to fix its file alone", status, stderr)
+			}
+		})
+	}
+}
+
 // TestRemoveNamesTheFirstServerThatStaysAndIsRefused checks that the refusal names one server, the
 // first, as the guard did before the one read.
 func TestRemoveNamesTheFirstServerThatStaysAndIsRefused(t *testing.T) {
@@ -187,6 +205,19 @@ func TestRemoveRefusesABadMacFileOnce(t *testing.T) {
 	}
 }
 
+// TestRemoveRefusesABadMacFileBeforeABadName checks that values.yml is refused first and alone,
+// as the values page says, where servers/ holds a bad name too.
+func TestRemoveRefusesABadMacFileBeforeABadName(t *testing.T) {
+	p, m := removeFixture()
+	m.Files["/etc/ws/servers/Abc/values.yml"] = []byte(values.Text("WS_SLOT", "2"))
+	m.Dirs["/etc/ws/servers/Abc"] = 0o755
+	m.Files["/etc/ws/values.yml"] = []byte(values.Text("WS_SLOT", "3"))
+	status, _, stderr := runWs(p, "macos", "remove", "lab")
+	if status != 1 || strings.Count(stderr, "/etc/ws/values.yml") != 1 || strings.Contains(stderr, "not a server's name") {
+		t.Errorf("status = %d, stderr = %q; want 1 and one refusal of values.yml alone", status, stderr)
+	}
+}
+
 // TestRemoveTakesAServerThatClashesWithOneThatStays checks that a clash with the gone server's file does
 // not stop its removal, which is the way out of the clash.
 func TestRemoveTakesAServerThatClashesWithOneThatStays(t *testing.T) {
@@ -211,53 +242,13 @@ func TestRemoveNamesTheCableOfTheGoneServer(t *testing.T) {
 	}
 }
 
-func TestRemoveRefusesAHostThatHasGuests(t *testing.T) {
+// TestRemoveTakesAServerThatNamesItselfAsItsHost checks that such a server is no host of itself, so
+// that the removal that its refusal names is the way out.
+func TestRemoveTakesAServerThatNamesItselfAsItsHost(t *testing.T) {
 	p, m := removeFixture()
-	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_HOST", "ws", "WS_SLOT", "1"))
-	status, _, stderr := runWs(p, "macos", "remove", "ws")
-	if want := "ws is the host of lab: remove them first"; status != 1 || !strings.Contains(stderr, want) {
-		t.Errorf("status = %d, stderr = %q; want 1 and %q", status, stderr, want)
-	}
-	for _, call := range m.Calls {
-		if strings.HasPrefix(call, "run rm") {
-			t.Errorf("a refused remove ran %q", call)
-		}
-	}
-}
-
-func TestRemoveRefusesTheLastServerAndAWrongName(t *testing.T) {
-	for name, tc := range map[string]struct {
-		arg, want string
-		last      bool
-	}{
-		"last server":  {"ws", "ws is the Mac's one server: with none, the bootstrap prunes no daemon, so remove leaves it", true},
-		"unknown name": {"nope", "no server named nope in /etc/ws/servers, which holds lab and ws", false},
-		"bad name":     {"Bad_Name", "Bad_Name is not a server's name: " + values.NameForm, false},
-		"path":         {"../ws", "../ws is not a server's name: " + values.NameForm, false},
-	} {
-		t.Run(name, func(t *testing.T) {
-			p, m := removeFixture()
-			if tc.last {
-				delete(m.Files, "/etc/ws/servers/lab/values.yml")
-				delete(m.Dirs, "/etc/ws/servers/lab")
-			}
-			status, _, stderr := runWs(p, "macos", "remove", tc.arg)
-			if status != 1 || !strings.Contains(stderr, tc.want) || strings.Contains(stderr, "--server") {
-				t.Errorf("status = %d, stderr = %q; want 1 and %q", status, stderr, tc.want)
-			}
-			for _, call := range m.Calls {
-				if strings.HasPrefix(call, "run rm") {
-					t.Errorf("a refused remove ran %q", call)
-				}
-			}
-		})
-	}
-}
-
-func TestRemoveRefusesAServerFlag(t *testing.T) {
-	p, _ := removeFixture()
-	status, _, stderr := runWs(p, "macos", "--server", "ws", "remove", "lab")
-	if status != 1 || !strings.Contains(stderr, "remove takes the server's name alone") {
-		t.Errorf("status = %d, stderr = %q", status, stderr)
+	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_HOST", "lab", "WS_SLOT", "1"))
+	status, stdout, stderr := runWs(p, "macos", "remove", "lab")
+	if !strings.HasPrefix(stdout, "removed lab\n") || strings.Contains(stderr, "is the host of") {
+		t.Errorf("status = %d, stdout = %q, stderr = %q; want removed lab", status, stdout, stderr)
 	}
 }

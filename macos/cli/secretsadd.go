@@ -93,7 +93,8 @@ func runSecretsAdd(c *cobra.Command, p enginecli.Env, server, name, address stri
 	} else if err != nil {
 		return fmt.Errorf("cannot stat fnox's key file %s: %w", keyFile, err)
 	}
-	r, err := reachOf(p, name, address, port)
+	known, _ := fleet.Server(name)
+	r, err := reachOf(known, address, port)
 	if err != nil {
 		return err
 	}
