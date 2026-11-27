@@ -135,12 +135,9 @@ func unitState(r step.Report) string {
 	if r.After != "" {
 		return "after " + r.After
 	}
-	for _, it := range r.Items {
-		if it.Kind == step.CheckItem {
-			why := strings.TrimPrefix(it.Conflict, r.Step+": planning: ")
-			line, _, _ := strings.Cut(why, "\n")
-			return "fails: " + line
-		}
+	if r.Err != nil {
+		line, _, _ := strings.Cut(r.Err.Error(), "\n")
+		return "fails: " + line
 	}
 	if len(r.Changes) == 0 {
 		return InSync

@@ -25,12 +25,12 @@ func TestGroupJoinsTheReportsOfItsParts(t *testing.T) {
 	g := resource.Group{Title: "T", Parts: []resource.Resource{
 		reported{items: []step.Item{item("a")}}, part{}, reported{items: []step.Item{item("b")}},
 	}}
-	got, err := step.Read(t.Context(), []step.Step{g})
+	got, err := g.Report(t.Context())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := []step.Item{item("a"), item("b")}; !reflect.DeepEqual(got[0].Items, want) {
-		t.Errorf("items = %+v, want %+v", got[0].Items, want)
+	if want := []step.Item{item("a"), item("b")}; !reflect.DeepEqual(got, want) {
+		t.Errorf("items = %+v, want %+v", got, want)
 	}
 }
 
@@ -49,12 +49,12 @@ func TestLazyReportsThePartsItMakes(t *testing.T) {
 	l := resource.Lazy{Title: "L", Parts: func(context.Context) ([]resource.Resource, error) {
 		return []resource.Resource{reported{items: []step.Item{item("a")}}}, nil
 	}}
-	got, err := step.Read(t.Context(), []step.Step{l})
+	got, err := l.Report(t.Context())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(got[0].Items, []step.Item{item("a")}) {
-		t.Errorf("items = %+v, want the part's", got[0].Items)
+	if !reflect.DeepEqual(got, []step.Item{item("a")}) {
+		t.Errorf("items = %+v, want the part's", got)
 	}
 	l.Parts = func(context.Context) ([]resource.Resource, error) { return nil, errors.New("no disk") }
 	if _, err := l.Report(t.Context()); err == nil {

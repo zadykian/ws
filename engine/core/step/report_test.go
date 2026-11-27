@@ -64,15 +64,18 @@ func TestPendingOfHoldsAnExcerpt(t *testing.T) {
 	}
 }
 
-func TestReadTakesTheItemsOfAReporter(t *testing.T) {
+func TestReadAsksNoReporterForItsItems(t *testing.T) {
 	log := []string{}
 	items := []step.Item{{Kind: step.FileItem, Name: "/a", Want: "present", Found: "missing"}}
 	got, err := step.Read(t.Context(), []step.Step{reporting{&fake{name: "a", log: &log}, items, nil}})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := []step.Report{{Step: "a", Items: items}}; !reflect.DeepEqual(got, want) {
+	if want := []step.Report{{Step: "a"}}; !reflect.DeepEqual(got, want) {
 		t.Errorf("reports = %+v, want %+v", got, want)
+	}
+	if want := []string{"plan a"}; !reflect.DeepEqual(log, want) {
+		t.Errorf("log = %v, want the plan alone", log)
 	}
 }
 
@@ -95,8 +98,9 @@ func TestReadSkipsAStepWhoseAwaitedStepHasChanges(t *testing.T) {
 
 func TestReadGoesPastAFailure(t *testing.T) {
 	log := []string{}
+	boom := errors.New("two routes")
 	got, err := step.Read(t.Context(), []step.Step{
-		&fake{name: "a", planErr: errors.New("two routes"), log: &log},
+		&fake{name: "a", planErr: boom, log: &log},
 		&fake{name: "b", waitsOn: "a", log: &log},
 		&fake{name: "c", todo: []step.Change{change("x")}, log: &log},
 	})
@@ -104,8 +108,7 @@ func TestReadGoesPastAFailure(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := []step.Report{
-		{Step: "a", Items: []step.Item{{Kind: step.CheckItem, Name: "a", Want: "passes", Found: "fails",
-			Conflict: "a: planning: two routes"}}},
+		{Step: "a", Err: boom},
 		{Step: "b", After: "a"},
 		{Step: "c", Changes: []step.Pending{{Kind: step.OtherChange, Text: "x"}}},
 	}
@@ -114,46 +117,14 @@ func TestReadGoesPastAFailure(t *testing.T) {
 	}
 }
 
-func TestReadShowsOneFailureOfAStep(t *testing.T) {
+func TestReadNamesAStepWaitingOnNoEarlierOne(t *testing.T) {
 	log := []string{}
-	found := []step.Item{{Kind: step.FileItem, Name: "/a"}}
-	both := reporting{&fake{name: "a", planErr: errors.New("plan"), log: &log}, found, errors.New("report")}
-	alone := reporting{&fake{name: "b", log: &log}, nil, errors.New("report")}
-	got, err := step.Read(t.Context(), []step.Step{both, alone})
+	got, err := step.Read(t.Context(), []step.Step{&fake{name: "a", waitsOn: "z", log: &log}})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(got[0].Items) != 1 || got[0].Items[0].Conflict != "a: planning: plan" {
-		t.Errorf("items = %+v, want the plan's failure alone", got[0].Items)
-	}
-	if want := []string{"plan a", "plan b", "report b"}; !reflect.DeepEqual(log, want) {
-		t.Errorf("log = %v, want %v: a failed plan keeps its step from being reported", log, want)
-	}
-	if len(got[1].Items) != 1 || got[1].Items[0].Conflict != "report" {
-		t.Errorf("items = %+v, want the report's failure", got[1].Items)
-	}
-}
-
-// itemized is a change that stands as an item.
-type itemized string
-
-func (i itemized) String() string { return "write " + string(i) }
-func (i itemized) Item() step.Item {
-	return step.Item{Kind: step.FileItem, Name: string(i), Found: "planned"}
-}
-
-func TestReadShowsTheItemsOfChangesNoReportNamed(t *testing.T) {
-	log := []string{}
-	named := step.Item{Kind: step.FileItem, Name: "/a", Found: "reported"}
-	s := reporting{&fake{name: "s", todo: []step.Change{itemized("/a"), itemized("/b"), change("c")}, log: &log},
-		[]step.Item{named}, nil}
-	got, err := step.Read(t.Context(), []step.Step{s})
-	if err != nil {
-		t.Fatal(err)
-	}
-	want := []step.Item{named, itemized("/b").Item()}
-	if !reflect.DeepEqual(got[0].Items, want) {
-		t.Errorf("items = %+v, want %+v", got[0].Items, want)
+	if want := `a waits on "z", which is not an earlier step`; got[0].Err == nil || got[0].Err.Error() != want {
+		t.Errorf("err = %v, want %q", got[0].Err, want)
 	}
 }
 

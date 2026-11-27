@@ -100,7 +100,7 @@ func TestUnitReadStates(t *testing.T) {
 	status, stdout, stderr := runUnit(e, "read", "file/bad", "file/behind", "file/same", "file/new")
 	lines := strings.Split(strings.TrimSuffix(stdout, "\n"), "\n")
 	if status != 0 || len(lines) != 4 || !strings.HasPrefix(lines[0], "file/bad\tfails: ") ||
-		!strings.Contains(lines[0], "Missing") {
+		!strings.Contains(lines[0], "Missing") || strings.Contains(lines[0], "planning") {
 		t.Fatalf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
 	if lines[1] != "file/behind\tafter file/new" || lines[2] != "file/same\tin-sync" ||

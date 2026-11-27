@@ -1,14 +1,12 @@
 package file_test
 
 import (
-	"context"
 	"fmt"
 	"io/fs"
 	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -59,61 +57,5 @@ func TestFileReportKeepsASecretOut(t *testing.T) {
 	got := fmt.Sprintf("%+v", reportOf(t, f))
 	if strings.Contains(got, "value") {
 		t.Errorf("item = %s, want neither value", got)
-	}
-}
-
-// built is a part that builds its resource as it plans, as a role's wrapper does.
-type built struct{ r resource.Resource }
-
-func (b built) Plan(ctx context.Context) ([]resource.Change, error) { return b.r.Plan(ctx) }
-
-func TestAResourceBuiltInPlanStandsAsAnItem(t *testing.T) {
-	const written = "differs from what ws writes: a change by hand, or another version of ws"
-	m := effecttest.NewMachine()
-	m.Files["/a"] = []byte("old\n")
-	f := file.File{M: m, Path: "/a", Content: []byte("new\n"), Mode: 0o644}
-	secret := f
-	secret.Secret = true
-	mode := f
-	mode.Content, mode.Mode = []byte("old\n"), 0o600
-	tests := []struct {
-		name     string
-		r        resource.Resource
-		conflict string
-		diff     bool
-	}{
-		{"file", f, written, true},
-		{"checked", file.Validated{File: f}, written, true},
-		{"secret", secret, written, false},
-		{"line", file.Line{M: m, Path: "/a", Text: "new", Mode: 0o644}, "a line differs from what ws sets", true},
-		{"mode", mode, "its owner or mode changed", false},
-	}
-	for _, tt := range tests {
-		got, err := step.Read(t.Context(), []step.Step{resource.Group{Title: "T", Parts: []resource.Resource{built{tt.r}}}})
-		if err != nil || len(got[0].Items) != 1 {
-			t.Fatalf("%s: reports = %+v, %v", tt.name, got, err)
-		}
-		it := got[0].Items[0]
-		if it.Name != "/a" || it.Conflict != tt.conflict || (it.Diff != "") != tt.diff {
-			t.Errorf("%s: item = %+v, want conflict %q, a diff: %v", tt.name, it, tt.conflict, tt.diff)
-		}
-	}
-}
-
-func TestAMissingFileBuiltInPlanStandsAgainstNothing(t *testing.T) {
-	f := file.File{M: effecttest.NewMachine(), Path: "/a", Content: []byte("new\n"), Mode: 0o644}
-	got, err := step.Read(t.Context(), []step.Step{resource.Group{Title: "T", Parts: []resource.Resource{built{f}}}})
-	if err != nil || len(got[0].Items) != 1 || got[0].Items[0].Found != "missing" || got[0].Items[0].Conflict != "" {
-		t.Errorf("reports = %+v, %v", got, err)
-	}
-}
-
-func TestAFileInAGroupStandsOnce(t *testing.T) {
-	m := effecttest.NewMachine()
-	m.Files["/a"] = []byte("old\n")
-	f := file.File{M: m, Path: "/a", Content: []byte("new\n"), Mode: 0o644}
-	got, err := step.Read(t.Context(), []step.Step{resource.Group{Title: "T", Parts: []resource.Resource{f}}})
-	if err != nil || len(got[0].Items) != 1 {
-		t.Errorf("reports = %+v, %v", got, err)
 	}
 }

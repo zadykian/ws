@@ -43,8 +43,7 @@ func TestGuardLoginKeyPasses(t *testing.T) {
 		t.Errorf("plan = %v, want none", err)
 	}
 	reports, err := step.Read(t.Context(), Steps(loadOne(t, e, loginGuard, nil)))
-	if err != nil || len(reports) != 1 || reports[0].Changes != nil || slices.ContainsFunc(reports[0].Items,
-		func(it step.Item) bool { return it.Kind == step.CheckItem }) {
+	if err != nil || len(reports) != 1 || reports[0].Changes != nil || reports[0].Err != nil {
 		t.Errorf("read = %+v, %v; want the guard in sync", reports, err)
 	}
 }
