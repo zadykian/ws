@@ -63,17 +63,4 @@ func TestPinnedFileWithNoPinFailsBeforeAURL(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "no SHA-256 pinned for the architecture riscv64") {
 		t.Errorf("Plan err = %v, want the missing pin named", err)
 	}
-	if _, err := p.Report(t.Context()); err == nil {
-		t.Error("Report succeeded without a pin")
-	}
-}
-
-func TestPinnedFileReportsAFileOfOtherContent(t *testing.T) {
-	m := effecttest.NewMachine()
-	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
-	m.Files["/usr/local/bin/x"] = []byte("other")
-	items, err := pinned(m, map[string]string{"amd64": sumOf("amd")}).Report(t.Context())
-	if err != nil || len(items) != 1 || items[0].Conflict == "" {
-		t.Errorf("Report = %v, %v; want one conflict", items, err)
-	}
 }

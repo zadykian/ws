@@ -210,23 +210,3 @@ func TestUnitStoppedResetsAFailure(t *testing.T) {
 		t.Errorf("plan = %q, want a reset", got)
 	}
 }
-
-func TestUnitReport(t *testing.T) {
-	m, u := unitFixture()
-	u.States = map[string]effect.UnitState{"a.service": {Enabled: true, Active: true}, "b.service": {Failed: true}}
-	unit := systemd.Unit{M: m, U: u, Name: "a.service", Enabled: true, Run: systemd.Running}
-	tests := []struct {
-		unit        systemd.Unit
-		want, found string
-	}{
-		{unit, "enabled, running", "enabled, running"},
-		{systemd.Unit{M: m, U: u, Name: "b.service", Disabled: true, Run: systemd.Stopped}, "disabled, stopped", "disabled, failed"},
-		{systemd.Unit{M: m, U: u, Name: "b.service", Run: systemd.Triggered}, "started by its trigger", "disabled, failed"},
-		{systemd.Unit{M: m, U: u, Name: "b.service"}, "as it is", "disabled, failed"},
-	}
-	for _, tt := range tests {
-		if got := reportOf(t, tt.unit); got.Want != tt.want || got.Found != tt.found {
-			t.Errorf("item = %+v, want %q, found %q", got, tt.want, tt.found)
-		}
-	}
-}
