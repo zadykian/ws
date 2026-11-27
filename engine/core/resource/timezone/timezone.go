@@ -12,7 +12,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
-	"github.com/zadykian/ws/engine/core/step"
 )
 
 // zoneinfo holds a file per zone, which /etc/localtime links to.
@@ -37,9 +36,6 @@ func Check(name string) error {
 
 // Plan plans the link, then /etc/timezone.
 func (z Zone) Plan(ctx context.Context) ([]resource.Change, error) { return z.parts().Plan(ctx) }
-
-// Report reports the parts.
-func (z Zone) Report(ctx context.Context) ([]step.Item, error) { return z.parts().Report(ctx) }
 
 func (z Zone) parts() resource.Joined { return resource.Joined{zoneLink(z), legacyZone(z)} }
 

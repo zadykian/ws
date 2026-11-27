@@ -124,13 +124,11 @@ func newSetupCmd(p enginecli.Env, server *string, cfg setupConfig) *cobra.Comman
 			return err
 		}
 		file := values.Path(p.Getenv, p.Pwd)
-		if err := values.Check(p.Machine, file); err != nil {
+		fleet := values.ReadFleet(p.Machine, file)
+		if err := fleet.Refusal(); err != nil {
 			return err
 		}
-		conf, err := values.LoadMac(p.Machine, file)
-		if err != nil {
-			return err
-		}
+		conf := fleet.Mac
 		if *pick != "" && conf.IdentityPubKey != "" {
 			if err := keptKey(c.Context(), p.Machine, conf, p.Getenv("HOME"), file, *pick); err != nil {
 				return err

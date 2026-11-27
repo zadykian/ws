@@ -74,19 +74,6 @@ func TestPublicReadsAsRootWhereTheUserCannot(t *testing.T) {
 		t.Errorf("plan = %q, calls %q; want none, read as root", got, m.Calls)
 	}
 }
-func TestPublicReportsFromTheUsersRead(t *testing.T) {
-	m := effecttest.NewMachine()
-	p := file.Public{M: m, Path: "/etc/x", Content: []byte("a\n"), Mode: 0o644}
-	items, err := p.Report(context.Background())
-	if err != nil || len(items) != 1 || items[0].Found != "missing" {
-		t.Fatalf("missing report = %+v, %v", items, err)
-	}
-	m.Files["/etc/x"] = []byte("b\n")
-	items, err = p.Report(context.Background())
-	if err != nil || len(items) != 1 || items[0].Conflict == "" || len(rootCalls(m)) != 0 {
-		t.Errorf("report = %+v, %v, root calls %q; want a conflict, none as root", items, err, rootCalls(m))
-	}
-}
 
 func TestPublicDir(t *testing.T) {
 	m := effecttest.NewMachine()

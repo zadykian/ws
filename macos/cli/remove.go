@@ -12,7 +12,6 @@ import (
 	"github.com/spf13/cobra"
 
 	enginecli "github.com/zadykian/ws/engine/cli"
-	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/internal/etcws"
 	"github.com/zadykian/ws/macos/values"
 )
@@ -58,10 +57,15 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string, skip bool
 	if !values.IsName(name) {
 		return fmt.Errorf("%s is not a server's name: %s", name, values.NameForm)
 	}
-	names, err := values.Servers(p.Machine, mac)
-	if err != nil {
-		return err
+	fleet := values.ReadFleet(p.Machine, mac)
+	// A bad values.yml is refused first and alone: no server is at fault.
+	if fleet.MacErr != nil {
+		return fleet.MacErr
 	}
+	if fleet.NamesErr != nil {
+		return fleet.NamesErr
+	}
+	names := fleet.Names()
 	if !slices.Contains(names, name) {
 		return fmt.Errorf("no server named %s in %s, which holds %s", name,
 			path.Dir(path.Dir(values.ServerPath(mac, name))), values.List(names))
@@ -69,22 +73,22 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string, skip bool
 	if len(names) == 1 {
 		return fmt.Errorf("%s is the Mac's one server: with none, the bootstrap prunes no daemon, so remove leaves it", name)
 	}
-	guests, err := values.GuestsOf(p.Machine, mac, name)
-	if err != nil {
-		return err
-	}
-	if len(guests) > 0 {
+	if guests := fleet.GuestsOf(name); len(guests) > 0 {
 		return fmt.Errorf("%s is the host of %s: remove them first, as a guest names its host in WS_HOST", name, values.List(guests))
 	}
 	// The units below skip a server whose file ws refuses, so such a file stops the removal before
-	// it starts. NAME's own file is out of the count: a clash with it ends with the removal.
-	if err := refuseBadSibling(without{p.Machine, values.ServerPath(mac, name)}, mac, name); err != nil {
-		return err
+	// it starts. NAME's own file is out of the count: a clash with it ends with the removal. The hint
+	// counts NAME among the guests, as it stays a guest until the file is fixed.
+	stays := fleet.Without(name)
+	for _, s := range stays.Servers {
+		if s.Err != nil {
+			return values.RefuseSibling(s.Name, s.Err, fleet.GuestsOf(s.Name))
+		}
 	}
 	// A file that ws refuses goes all the same, as remove is the way out of it, and names no cable.
 	var cable string
-	if gone, err := values.Load(p.Machine, mac, values.ServerPath(mac, name)); err == nil {
-		cable = gone.CableService
+	if gone, _ := fleet.Server(name); gone.Err == nil {
+		cable = gone.Conf.CableService
 	}
 	// The secrets go first, as they read the host's key, then the host: a failure of either leaves
 	// the server whole, and remove runs again.
@@ -119,21 +123,6 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string, skip bool
 			"WS_CABLE_SERVICE, or delete it in System Settings\n", cable)
 	}
 	return err
-}
-
-// without is the Mac's machine with the server's file at file out of sight. values.Servers leaves
-// that server out, so the others load as they will once it goes.
-type without struct {
-	effect.Machine
-	file string
-}
-
-// Stat reports the hidden file as missing.
-func (w without) Stat(file string) (effect.Info, error) {
-	if file == w.file {
-		return effect.Info{}, fs.ErrNotExist
-	}
-	return w.Machine.Stat(file)
 }
 
 // forgetHost drops name's entry from known_hosts, where ssh keeps the key under the server's name.

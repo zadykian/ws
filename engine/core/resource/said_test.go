@@ -13,7 +13,6 @@ import (
 type kindly struct{ change }
 
 func (kindly) Kind() step.ChangeKind { return step.Restart }
-func (kindly) Item() step.Item       { return step.Item{Name: "an item"} }
 
 func TestSaidSaysEachHeadlineOnceApplied(t *testing.T) {
 	var log []string
@@ -32,21 +31,17 @@ func TestSaidSaysEachHeadlineOnceApplied(t *testing.T) {
 	}
 }
 
-func TestSaidKeepsAChangesKindAndItem(t *testing.T) {
+func TestSaidKeepsAChangesKind(t *testing.T) {
 	var log []string
 	changes, _ := resource.Said{Out: &effecttest.Out{}, Part: part{kindly{change{"k", &log, nil}}}}.Plan(context.Background())
-	if it, ok := changes[0].(step.Itemized); !ok || it.Item().Name != "an item" || step.KindOf(changes[0]) != step.Restart {
-		t.Errorf("%T: kind %s, itemized %v; want restart and an item", changes[0], step.KindOf(changes[0]), ok)
+	if step.KindOf(changes[0]) != step.Restart {
+		t.Errorf("%T: kind %s; want restart", changes[0], step.KindOf(changes[0]))
 	}
 }
 
 type forcedChange struct{ change }
 
 func (forcedChange) Forced() bool { return true }
-
-type warnedChange struct{ change }
-
-func (warnedChange) Warned() bool { return false }
 
 type earlyChange struct{ change }
 
@@ -64,7 +59,7 @@ func TestSaidRefusesAChangeWithAMarkerItWouldDrop(t *testing.T) {
 	var log []string
 	c := change{"m", &log, nil}
 	for name, marked := range map[string]resource.Change{
-		"forced": forcedChange{c}, "warned": warnedChange{c}, "early": earlyChange{c},
+		"forced": forcedChange{c}, "early": earlyChange{c},
 		"titled": titledChange{c}, "excerpted": excerptedChange{c},
 	} {
 		changes, err := resource.Said{Out: &effecttest.Out{}, Part: part{marked}}.Plan(context.Background())

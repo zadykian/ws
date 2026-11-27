@@ -67,3 +67,23 @@ func TestATableThatIsNotLoadedFailsTheRun(t *testing.T) {
 		t.Errorf("plan found no error where nft could not list the set")
 	}
 }
+
+// A guest that holds a slot owns its slot's address too. The guests come resolved, as the load
+// gives them, so no file is read.
+func TestAGuestOfASlotOwnsItsSlotAddressToo(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results[ownedList] = effecttest.Result{Out: []byte(`{"nftables":[{"set":{"name":"owned4"}}]}`)}
+	m.Results["nft -f -"] = effecttest.Result{}
+	guest := resolvedWith(t, values.Guest{Name: "lab", Address: "10.100.0.10"}, "WS_TUNNEL_ADDRESS: 10.99.2.1/24\n")
+	changes, err := Owned{M: m, Guests: []values.Guest{guest, {Name: "build", Address: "10.100.0.11"}}}.Plan(t.Context())
+	if err != nil || len(changes) != 1 {
+		t.Fatalf("changes = %v, err = %v", changes, err)
+	}
+	if err := changes[0].Apply(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	want := "add element bridge ws_sources owned4 { 10.100.0.10 . \"ws-lab\", 10.99.2.1 . \"ws-lab\", 10.100.0.11 . \"ws-build\" }\n"
+	if m.Inputs[0] != want {
+		t.Errorf("nft got %q, want %q", m.Inputs[0], want)
+	}
+}

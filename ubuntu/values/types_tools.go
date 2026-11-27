@@ -1,5 +1,11 @@
 package values
 
+import (
+	"net/netip"
+
+	"github.com/zadykian/ws/internal/cablenet"
+)
+
 // Zed is roles/zed's keys.
 type Zed struct {
 	// Nofile is the soft limit of open files for root's logins. Zed's server busy-loops past
@@ -33,6 +39,9 @@ type Ikeward struct {
 type Cable struct {
 	// Port is the cable's port. Empty, the role sets up no cable.
 	Port string `yaml:"WS_CABLE_PORT"`
-	// Address is the server's address on the cable, with its prefix length.
-	Address string `yaml:"WS_CABLE_ADDRESS"`
+}
+
+// Address is the server's address on the cable, fixed with the Mac's end: 10.77.0.1/30.
+func (Cable) Address() netip.Prefix {
+	return cablenet.ServerPrefix()
 }

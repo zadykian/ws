@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io/fs"
 	"slices"
 	"strings"
 
@@ -170,12 +171,8 @@ func guestsRemove(p enginecli.Env) *cobra.Command {
 // remove leaves in /etc/ws/guests. The error says why the values name none.
 func removedTunnel(m effect.Machine, name string) (values.GuestTunnel, error) {
 	g := values.Guest{Name: name}
-	data, v, err := g.Read(m)
-	switch {
-	case err != nil:
-		return values.GuestTunnel{}, err
-	case data == nil:
+	if _, err := m.Stat(g.File()); errors.Is(err, fs.ErrNotExist) {
 		return values.GuestTunnel{}, fmt.Errorf("%s is missing", g.File())
 	}
-	return g.Tunnel(v)
+	return g.Load(m).Resolved()
 }

@@ -34,8 +34,8 @@ and CI.
   `effect`, with `effect/effecttest`, `effect/local` and `effect/units`, and `resource`, with
   `resource/resourcetest`, the resources the kinds share, `kind`, the kinds that a role's
   `units.toml.tmpl` names as units ([kind](../engine/core/kind/README.md)), and `update`, the
-  download, checksum and replace of `ws update`. They are public, as the roles
-  import them from outside `engine/`.
+  download, checksum and replace of `ws update`. `web` holds the timeout and the redirects that
+  a checked download keeps. They are public, as the roles import them from outside `engine/`.
 - `mise.toml`: mise's config that both sides share, its settings. ws is no tool of mise's: the
   machine's one ws is `/usr/local/bin/ws`. `mise.guest.toml` is
   the guest's part and `mise.host.toml` the host's, and `plugins/ws` the plugin that hands ws's
@@ -91,9 +91,9 @@ make gotest                       # the Go gates run at the root, the module; so
 ```
 
 The gates are `shell`, `yamllint`, `tombi`, `stylua`, `sizecheck`, `vale`, `lychee`, `rumdl`,
-`actionlint`, `zizmor`, `gitleaks`, `gofmt`, `govet`, `golangci-lint`, `govulncheck` and `gotest`
-([The gates](../.tools/README.md)). `make lint` needs Python 3.12 to 3.14 and unzip, on Linux or
-on macOS on arm64.
+`actionlint`, `zizmor`, `gitleaks`, `gofmt`, `govet`, `golangci-lint`, `govulncheck`,
+`gotest` and `checks` ([The gates](../.tools/README.md)). `make lint` needs Python 3.12 to 3.14 and
+unzip, on Linux or on macOS on arm64.
 It installs yamllint into `.cache`, and `.tools/run` downloads the rest there.
 
 The tests are CI's jobs ([Checks](../.github/workflows/README.md)). `server` builds ws and runs

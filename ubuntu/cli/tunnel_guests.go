@@ -14,14 +14,14 @@ import (
 	"github.com/zadykian/ws/ubuntu/values"
 )
 
-// guestTunnels reads the host's values and each guest's own, and returns the tunnels that the host
-// ends. It refuses a slot or a port that two tunnels share.
+// guestTunnels loads the host's values, with each guest resolved, and returns the tunnels that the
+// host ends. It refuses a guest with no tunnel, and a slot or a port that two tunnels share.
 func guestTunnels(p enginecli.Env) ([]values.GuestTunnel, error) {
 	h, err := values.LoadHost(p.Machine, hostVars)
 	if err != nil {
 		return nil, err
 	}
-	return values.GuestTunnels(p.Machine, h.Tunnel, h.Incus.Guests)
+	return h.GuestTunnels()
 }
 
 // newTunnelGuestsCmd returns ws ubuntu host tunnel guests: the commands that end each guest's

@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/internal/cablenet"
 	"github.com/zadykian/ws/macos/values"
 )
 
@@ -75,7 +76,7 @@ func (c Cable) plan(ctx context.Context) (step.Plan, error) {
 			service, router)
 	}
 	return step.Plan{Changes: []step.Change{setManual{c, resource.Command{
-		M: c.M, Root: true, Name: program, Args: []string{"-setmanual", service, cableClient, cableMask},
-		Label: fmt.Sprintf("networksetup -setmanual %q %s %s", service, cableClient, cableMask),
+		M: c.M, Root: true, Name: program, Args: []string{"-setmanual", service, cablenet.Mac().String(), cablenet.Mask()},
+		Label: fmt.Sprintf("networksetup -setmanual %q %s %s", service, cablenet.Mac(), cablenet.Mask()),
 	}}}}, nil
 }

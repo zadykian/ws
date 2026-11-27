@@ -55,6 +55,13 @@ and the server's file is `servers/ws/values.yml` beside it. Each key's meaning i
 missing key with its file, then exits 1. Where all pass, it prints one line. The frame's bootstrap
 runs it first ([The check of the values](../roles/frame/README.md#the-check-of-the-values)).
 
+The check, the facts, `ws macos servers`, `remove`, `secrets add`, `values print` and setup ask one
+read of `values.yml` and every server's file. It works the clashes out once, and gives each server
+as accepted or refused, with its refusal. The check, the facts, setup and `remove` refuse on a bad
+server's file, `remove NAME` on any but NAME's. `values print` refuses its server for its own file,
+for a clash with another's good file, and, for a guest, for its host's bad file. It never refuses
+for another's. `secrets add` refuses for the server's own file alone, and never for its host's.
+
 ## The server's name
 
 `--server NAME` picks the server, and its file is `servers/NAME/values.yml`. A name is a lower-case
@@ -107,7 +114,8 @@ The tunnel is `absent` before the bootstrap sets its daemon up, and `stopped` wh
 not loaded it. Before the daemon writes its state, it reads `starting`, and `unreadable` where ws
 can't read the state. Else the column shows the tier and endpoint that the state holds. A server
 whose file ws refuses shows `-` for its target and slot. Its errors follow the rows, with exit
-code 1. The command takes no `--server`.
+code 1. A refusal of `values.yml` comes first and alone, with no row. The command takes no
+`--server`.
 
 `ws macos remove NAME` takes a server off the Mac, as the user. It refuses the Mac's last
 server, as the bootstrap takes a Mac with none for a stray `WS_VALUES` and prunes no daemon. It
@@ -117,7 +125,8 @@ server whole where that fails. `--skip-secrets` leaves the secrets, and prints t
 hand. It then deletes `servers/NAME` and NAME's entry in
 `known_hosts`, and runs `mise -C /opt/ws/macos bootstrap`, whose units take
 NAME's daemon, hosts and routes away. A server that stays and whose file ws refuses, NAME's clashes
-aside, stops it before it deletes anything, as those units would fail. Where the bootstrap fails,
+aside, stops it before it deletes anything, as those units would fail. A refusal of `values.yml`
+stops it first and alone. Where the bootstrap fails,
 run it again to end the removal. Where NAME held the cable, it prints a line to do by hand: the
 cable's service keeps `10.77.0.2`. The server itself is not changed.
 

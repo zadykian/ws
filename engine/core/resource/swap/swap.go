@@ -9,7 +9,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
-	"github.com/zadykian/ws/engine/core/step"
 )
 
 // fstabLine swaps to the file at boot.
@@ -30,11 +29,8 @@ func (f File) Plan(ctx context.Context) ([]resource.Change, error) {
 	return f.parts(osDisk{}).Plan(ctx)
 }
 
-// Report reports the parts.
-func (f File) Report(ctx context.Context) ([]step.Item, error) { return f.parts(osDisk{}).Report(ctx) }
-
 // swap reads the machine's swap and plans /swapfile from planSwap's result. It holds the File's
-// fields, not the File, whose Report would make it a part of itself.
+// fields, not the File, which would make it a part of itself.
 type swap struct {
 	M       effect.Machine
 	SizeMiB *int

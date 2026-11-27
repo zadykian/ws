@@ -8,7 +8,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/step"
 )
 
 // CacheDir is where the pinned file of a package waits for its install.
@@ -65,15 +64,6 @@ func (p PinnedFile) Plan(ctx context.Context) ([]resource.Change, error) {
 		return nil, err
 	}
 	return d.Plan(ctx)
-}
-
-// Report reports what Download reports for the file of the machine's architecture.
-func (p PinnedFile) Report(ctx context.Context) ([]step.Item, error) {
-	d, err := p.download(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return d.Report(ctx)
 }
 
 // Cached is download for a package's source: its file waits in CacheDir, named by its URL.

@@ -69,6 +69,8 @@ func incusGuests(p enginecli.Env) *cobra.Command {
 		"It reads each guest from incus, launches the one that is missing from the image, and edits the keys "+
 			"that ws declares where they differ: its limits, its NIC at its address and its disk's quota. It starts "+
 			"a guest that is stopped. A guest of ws's that the list lacks gets a warning, and is never deleted.\n\n"+
+			"It fails before it makes or edits any instance where a guest's own values name no slot from 1 to 15, "+
+			"or where a guest that Incus holds was made at another slot.\n\n"+
 			"It then pushes the host's ws and the guest's own values into each guest where they differ, and runs "+
 			"the guest's ws ubuntu guest setup where the guest's own plan finds a change, for up to an hour.",
 		func(ctx context.Context, out effect.Out) ([]resource.Resource, error) {

@@ -1,67 +1,25 @@
 package values
 
-import (
-	"fmt"
+import "fmt"
 
-	"github.com/zadykian/ws/engine/core/effect"
-)
-
-// Sibling is another server's file beside values.yml, parsed by the server's scope.
+// Sibling is a server that another server's values are checked against for a clash.
 type Sibling struct {
 	Name, File string
 	Conf       Conf
 }
 
-// Siblings returns the servers of servers/ beside values.yml at mac, other than the one whose file is
-// at server, sorted by name. It leaves out a file that is missing or refused: the facts refuse such
-// a file before a unit runs. This is the one way to read the other servers.
-func Siblings(m effect.Machine, mac, server string) ([]Sibling, error) {
-	names, err := Servers(m, mac)
-	if err != nil {
-		return nil, err
+// BadFileHint is the way out of a server's file that ws refuses: fixing it, or removing the server.
+// Where the server has guests, remove refuses its removal and theirs while its file stays refused,
+// so fixing the file is the one way.
+func BadFileHint(name string, guests []string) string {
+	if len(guests) > 0 {
+		return "fix its file"
 	}
-	var others []Sibling
-	for _, n := range names {
-		file := ServerPath(mac, n)
-		if file == server {
-			continue
-		}
-		c, err := loadServer(m, mac, file)
-		if err != nil {
-			continue
-		}
-		others = append(others, Sibling{Name: n, File: file, Conf: c})
-	}
-	return others, nil
-}
-
-// RefuseBadSibling returns the refusal of the first server at mac, other than the one whose file is
-// at server, whose file is missing or refused. A step that places a server beside the others stops
-// on it, where [Siblings] would skip the file and hand its slot and ports to the new server.
-func RefuseBadSibling(m effect.Machine, mac, server string) error {
-	names, err := Servers(m, mac)
-	if err != nil {
-		return err
-	}
-	for _, n := range names {
-		file := ServerPath(mac, n)
-		if file == server {
-			continue
-		}
-		if _, err := loadServer(m, mac, file); err != nil {
-			return RefuseSibling(n, err)
-		}
-	}
-	return nil
-}
-
-// BadFileHint is the way out of a server's file that ws refuses.
-func BadFileHint(name string) string {
 	return "fix its file, or ws macos remove " + name
 }
 
 // RefuseSibling words the refusal of the server called name, whose file is unreadable or refused
-// for cause. A run and a dry run refuse in these words.
-func RefuseSibling(name string, cause error) error {
-	return fmt.Errorf("server %s: %w: %s", name, cause, BadFileHint(name))
+// for cause, and which hosts guests. A run and a dry run refuse in these words.
+func RefuseSibling(name string, cause error, guests []string) error {
+	return fmt.Errorf("server %s: %w: %s", name, cause, BadFileHint(name, guests))
 }

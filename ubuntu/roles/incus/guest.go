@@ -3,13 +3,14 @@ package incus
 import (
 	"context"
 	"fmt"
-	"net/netip"
 	"slices"
 	"strconv"
+	"strings"
+
+	"go.yaml.in/yaml/v3"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/internal/slot"
 	"github.com/zadykian/ws/ubuntu/roles/incus/object"
 	"github.com/zadykian/ws/ubuntu/values"
 )
@@ -26,13 +27,12 @@ func guestKind(alias string) object.Kind {
 	}
 }
 
-// Guest is the instance of a guest of the host's list. It takes the profile ws, its limits, its NIC
-// at its address on the port that the table of sources names, and its disk with its quota. It
-// takes the host's NVIDIA card as well where its WS_NVIDIA_GPU is on, and none otherwise.
-// Each device is whole, as a device of an instance replaces the profile's of its name. The seed's
-// network is a key of the create alone, as cloud-init reads the seed once. An instance that holds
-// no profile ws is refused, as that instance is no guest of ws's.
-func Guest(m effect.Machine, g values.Guest, own values.Values, alias string) object.Object {
+// Guest is the instance of the guest that tunnel t names. It holds the profile ws, its limits, its
+// NIC with its slot's address as a route, and its disk. Where gpu is on, it holds the host's NVIDIA
+// card too. Each device is whole, as a device of an instance replaces the profile's. The seed is
+// a key of the create alone. An instance with no profile ws is no guest of ws's.
+func Guest(m effect.Machine, t values.GuestTunnel, gpu bool, alias string) object.Object {
+	g := t.Guest
 	return object.Object{
 		M: m, Kind: guestKind(alias), Name: g.Name,
 		Want: map[string]any{
@@ -40,12 +40,12 @@ func Guest(m effect.Machine, g values.Guest, own values.Values, alias string) ob
 			"profiles":    []any{ProfileName},
 			"config":      map[string]any{"limits.cpu": strconv.Itoa(g.CPU), "limits.memory": g.Memory},
 			"devices": map[string]any{
-				"eth0": nicDevice(nicKeys(g, own)),
+				"eth0": nicDevice(nicKeys(t)),
 				"root": rootDevice(g.Disk),
-				"gpu":  gpuDevice(own.Nvidia.GPU),
+				"gpu":  gpuDevice(gpu),
 			},
 		},
-		First: map[string]any{"config": map[string]any{"cloud-init.network-config": seedNetwork(own)}},
+		First: map[string]any{"config": map[string]any{seedKey: seedNetwork(t)}},
 		Check: func(have map[string]any) error {
 			if profiles, _ := have["profiles"].([]any); !slices.Contains(profiles, any(ProfileName)) {
 				return fmt.Errorf("it takes no profile %s: it is no guest of ws's, and ws never turns an instance into one", ProfileName)
@@ -54,6 +54,9 @@ func Guest(m effect.Machine, g values.Guest, own values.Values, alias string) ob
 		},
 	}
 }
+
+// seedKey is the instance's key that holds its network-config, which the image's template reads.
+const seedKey = "cloud-init.network-config"
 
 // nvidiaVendor is NVIDIA's PCI vendor ID, as Incus's gpu device names it.
 const nvidiaVendor = "10de"
@@ -69,32 +72,32 @@ func gpuDevice(on bool) any {
 }
 
 // nicKeys are the NIC's own keys: its port's name and its address, and the slot's address as a
-// route, where the guest's values name a slot. Incus then sends that address to this NIC, which is
-// where the host's tunnel for the guest delivers.
-func nicKeys(g values.Guest, own values.Values) map[string]any {
-	keys := map[string]any{"host_name": g.Port(), "ipv4.address": g.Address}
-	if t, err := g.Tunnel(own); err == nil {
-		keys["ipv4.routes"] = t.SlotAddress().String() + "/32"
-	}
-	return keys
+// route. Incus then sends that address to this NIC, which is where the host's tunnel for the guest
+// delivers.
+func nicKeys(t values.GuestTunnel) map[string]any {
+	return map[string]any{"host_name": t.Guest.Port(), "ipv4.address": t.Guest.Address, "ipv4.routes": t.SlotAddress().String() + "/32"}
 }
 
 // seedNetwork is the guest's network-config. It holds DHCP on eth0, which gives the NIC's address,
-// and the slot's address where the guest's own values name a slot. The tunnel ends on the host,
-// which routes that address to the guest. So the guest holds it as a host route.
-func seedNetwork(v values.Values) string {
-	text := "version: 2\nethernets:\n  eth0:\n    dhcp4: true\n"
-	if p, err := netip.ParsePrefix(v.Tunnel.Address); err == nil {
-		if s, ok := slot.Find(p.Addr()); ok && s != 0 {
-			text += fmt.Sprintf("    addresses: [%s/32]\n", p.Addr())
-		}
-	}
-	return text
+// and the slot's address. The tunnel ends on the host, which routes that address to the guest. So
+// the guest holds it as a host route.
+func seedNetwork(t values.GuestTunnel) string {
+	return fmt.Sprintf("version: 2\nethernets:\n  eth0:\n    dhcp4: true\n    addresses: [%s/32]\n", t.SlotAddress())
 }
 
 // Guests returns the resources that settle each guest of the list, in order: its instance, its
-// start, and its setup. A guest of ws's that the list lacks gets a warning on out, and no deletion.
+// start, and its setup. The guests are the host's load's, each with its tunnel. It fails where a
+// guest has none, before it reads Incus: every guest needs a slot. It fails too where a held
+// guest's seed names another slot, before any instance is made or edited. A guest of ws's that the
+// list lacks gets a warning on out, and no deletion.
 func Guests(ctx context.Context, m effect.Machine, guests []values.Guest, out effect.Out) ([]resource.Resource, error) {
+	tunnels := make([]values.GuestTunnel, len(guests))
+	for i, g := range guests {
+		var err error
+		if tunnels[i], err = g.Resolved(); err != nil {
+			return nil, err
+		}
+	}
 	alias, err := Image{M: m}.Alias(ctx)
 	if err != nil {
 		return nil, err
@@ -103,19 +106,57 @@ func Guests(ctx context.Context, m effect.Machine, guests []values.Guest, out ef
 	if err != nil {
 		return nil, err
 	}
+	if err := refuseChangedSlots(held, guests, tunnels); err != nil {
+		return nil, err
+	}
 	for _, name := range Strays(held, guests) {
 		out.Warn("the guest %s is not in WS_INCUS_GUESTS: ws deletes none, so remove it by hand with ws ubuntu host guests remove %s", name, name)
 	}
 	var steps []resource.Resource
-	for _, g := range guests {
-		_, own, err := g.Read(m)
-		if err != nil {
-			return nil, err
-		}
-		steps = append(steps, Guest(m, g, own, alias), Running{M: m, Name: g.Name})
+	for i, g := range guests {
+		steps = append(steps, Guest(m, tunnels[i], g.Own().Nvidia.GPU, alias), Running{M: m, Name: g.Name})
 		steps = append(steps, SetUp(m, g, false, false, out)...)
 	}
 	return steps, nil
+}
+
+// refuseChangedSlots fails where a guest of ws's that Incus holds has a seed that names another
+// slot's address than its values do. The seed is the create's alone, so an edit of the route would
+// send the tunnel's traffic to an address that the guest does not hold.
+func refuseChangedSlots(held []Instance, guests []values.Guest, tunnels []values.GuestTunnel) error {
+	for i, g := range guests {
+		for _, inst := range held {
+			if inst.Name != g.Name || !slices.Contains(inst.Profiles, ProfileName) {
+				continue
+			}
+			have, ok := seedAddress(inst.Config[seedKey])
+			if want := tunnels[i].SlotAddress().String(); ok && have != want {
+				return fmt.Errorf("the guest %s holds %s from its seed and its values name %s: "+
+					"name its old slot again in %s, or take it out of WS_INCUS_GUESTS, run ws ubuntu host guests remove %s "+
+					"with the old slot still in %s, then set the new slot and list it again",
+					g.Name, have, want, g.File(), g.Name, g.File())
+			}
+		}
+	}
+	return nil
+}
+
+// seedAddress reads the slot's address off a guest's network-config, and reports whether it holds one.
+func seedAddress(seed string) (string, bool) {
+	var cfg struct {
+		Ethernets map[string]struct {
+			Addresses []string `yaml:"addresses"`
+		} `yaml:"ethernets"`
+	}
+	if yaml.Unmarshal([]byte(seed), &cfg) != nil {
+		return "", false
+	}
+	for _, addr := range cfg.Ethernets["eth0"].Addresses {
+		if ip, _, ok := strings.Cut(addr, "/"); ok {
+			return ip, true
+		}
+	}
+	return "", false
 }
 
 // guestValuesPath is where a guest reads its values, as a host does.

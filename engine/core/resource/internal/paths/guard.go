@@ -1,3 +1,4 @@
+// Package paths holds what the resource packages share: the parents and guards of a user's home.
 package paths
 
 import (

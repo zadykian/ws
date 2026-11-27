@@ -13,7 +13,8 @@ import (
 // percentFull is the top of a speed, in %.
 const percentFull = 100
 
-// Config is /etc/ws/fans.json. Interval is the tick in seconds and Step the most a fan's speed
+// Config is /etc/ws/fans.json, and its types carry the YAML tags of ws's values, which hold the
+// same sensors, curves and fans. Interval is the tick in seconds and Step the most a fan's speed
 // moves in a tick, in %.
 type Config struct {
 	Interval float64         `json:"interval"`
@@ -25,40 +26,40 @@ type Config struct {
 
 // Pair is a value for rising and a value for falling.
 type Pair struct {
-	Up   float64 `json:"up"`
-	Down float64 `json:"down"`
+	Up   float64 `json:"up" yaml:"up"`
+	Down float64 `json:"down" yaml:"down"`
 }
 
 // SensorConfig reads one temperature, from one source: the hwmon device's channel labelled Label,
 // or the NVIDIA GPU of index Nvidia. The other sources are the average over Seconds of the sensor
 // named Average, and the highest of the sensors named in Max. A sensor names only sensors above it.
 type SensorConfig struct {
-	Name    string   `json:"name"`
-	Hwmon   string   `json:"hwmon,omitempty"`
-	Label   string   `json:"label,omitempty"`
-	Nvidia  *int     `json:"nvidia,omitempty"`
-	Average string   `json:"average,omitempty"`
-	Seconds float64  `json:"seconds,omitempty"`
-	Max     []string `json:"max,omitempty"`
+	Name    string   `json:"name" yaml:"name,omitempty"`
+	Hwmon   string   `json:"hwmon,omitempty" yaml:"hwmon,omitempty"`
+	Label   string   `json:"label,omitempty" yaml:"label,omitempty"`
+	Nvidia  *int     `json:"nvidia,omitempty" yaml:"nvidia,omitempty"`
+	Average string   `json:"average,omitempty" yaml:"average,omitempty"`
+	Seconds float64  `json:"seconds,omitempty" yaml:"seconds,omitempty"`
+	Max     []string `json:"max,omitempty" yaml:"max,omitempty"`
 }
 
 // CurveConfig is a graph of speed by temperature. Each point is [°C, %].
 type CurveConfig struct {
-	Name       string       `json:"name"`
-	Sensor     string       `json:"sensor"`
-	Points     [][2]float64 `json:"points"`
-	Hysteresis Pair         `json:"hysteresis"`
-	Response   Pair         `json:"response"`
+	Name       string       `json:"name" yaml:"name,omitempty"`
+	Sensor     string       `json:"sensor" yaml:"sensor,omitempty"`
+	Points     [][2]float64 `json:"points" yaml:"points,omitempty"`
+	Hysteresis Pair         `json:"hysteresis" yaml:"hysteresis,omitempty"`
+	Response   Pair         `json:"response" yaml:"response,omitempty"`
 }
 
 // ControlConfig is a fan, the header of the hwmon device whose fan channel is labelled Label. It
 // runs on the curve named Curve, or at Percent.
 type ControlConfig struct {
-	Name    string   `json:"name"`
-	Hwmon   string   `json:"hwmon"`
-	Label   string   `json:"label"`
-	Curve   string   `json:"curve,omitempty"`
-	Percent *float64 `json:"percent,omitempty"`
+	Name    string   `json:"name" yaml:"name,omitempty"`
+	Hwmon   string   `json:"hwmon" yaml:"hwmon,omitempty"`
+	Label   string   `json:"label" yaml:"label,omitempty"`
+	Curve   string   `json:"curve,omitempty" yaml:"curve,omitempty"`
+	Percent *float64 `json:"percent,omitempty" yaml:"percent,omitempty"`
 }
 
 // Parse reads and checks a config. It refuses a key it does not know.

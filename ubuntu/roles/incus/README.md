@@ -60,17 +60,17 @@ shows that Incus takes the YAML as written: CI's `host` job runs the units.
 
 ## The bridge
 
-`incusbr0` is managed and NATed, with no IPv6. Its subnet is `WS_INCUS_BRIDGE_ADDRESS`, `10.100.0.1/24`
-by default, in the private ranges below and off the tunnel's slots `10.99.0.0/20`. Its DHCP hands out
-`WS_INCUS_BRIDGE_DNS`, as `9.9.9.9` and `1.1.1.1`, so that no guest asks the host's resolver. A
-resolver in the private ranges is refused: the ACL drops it, so no guest could resolve by it. The ACL
-is on the bridge, and egress is dropped by default. Ingress is the ingress ACL's.
+`incusbr0` is managed and NATed, with no IPv6. Its subnet is `WS_INCUS_BRIDGE_ADDRESS`,
+`10.100.0.1/24` by default, in the private ranges below and off the tunnel's slots `10.99.0.0/20`
+and the cable's `10.77.0.0/30`. Its DHCP hands out `WS_INCUS_BRIDGE_DNS`, as `9.9.9.9` and
+`1.1.1.1`, so no guest asks the host's resolver. The ACL drops a resolver in the private ranges, so
+one is refused. Egress is dropped by default, and ingress is the ingress ACL's.
 
 The egress ACL drops `10.0.0.0/8`, `100.64.0.0/10`, `169.254.0.0/16`, `172.16.0.0/12`, `192.168.0.0/16`,
 `224.0.0.0/4` and `255.255.255.255`, then allows the rest. The host's own addresses must sit among
-them, or a guest would reach the host's services: the values refuse a bridge address or a cable
-address outside them. Incus applies each drop before any allow. A network named `incusbr0` that is no
-managed bridge fails the run.
+them, or a guest would reach the host's services. The values refuse a bridge address outside
+them, and the cable's /30 sits among them. Incus applies each drop before any allow. A network
+named `incusbr0` that is no managed bridge fails the run.
 
 ## The ingress ACL
 
@@ -190,8 +190,10 @@ The values refuse a name or an address that two guests share. They refuse a fiel
 not take. So a name reaches a command, a path or YAML once checked.
 
 A guest's own values sit on the host, in `/etc/ws/guests/NAME/values.yml`, root's and 600. The host
-reads each file as the guest's values, and refuses one that does not parse, or one that sets
-`WS_SELF_CONTAINED`. A missing file gives the guest its defaults.
+reads each file once, as the guest's values, and the load resolves the guest's tunnel from them or
+holds the reason it has none. The guests' unit and the tunnels' list refuse one that does not parse,
+or one that sets `WS_SELF_CONTAINED`. The load refuses the self-contained mode alone, so that the
+fans, the cable and SigNoz run with a bad file. A missing file gives the guest its defaults.
 
 ## The image
 
@@ -237,7 +239,7 @@ holds with no profile `ws` fails the run: ws never turns another instance into a
 | --- | --- |
 | `profiles` | `ws` alone. |
 | `config` | `limits.cpu` and `limits.memory`, from the list. |
-| `devices.eth0` | The profile's NIC, whole, with `host_name` `ws-NAME`, `ipv4.address` from the list, and `ipv4.routes`, the slot's `10.99.N.1/32`, where the guest's values name a slot but slot 0. |
+| `devices.eth0` | The profile's NIC, whole, with `host_name` `ws-NAME`, `ipv4.address` from the list, and `ipv4.routes`, the slot's `10.99.N.1/32`. |
 | `devices.root` | The profile's disk, whole, with `size`, the quota, from the list. |
 | `devices.gpu` | `type: gpu` and `vendorid: 10de`, where the guest's own values set `WS_NVIDIA_GPU`. Removed where they do not. |
 
@@ -251,9 +253,10 @@ address is the lease that the bridge's DHCP gives, and the port's name is the on
 host. A guest of ws's that the list lacks gets a warning, and no deletion: remove it with
 `ws ubuntu host guests remove NAME`.
 
-The create alone sets `cloud-init.network-config`, which the image's template writes into the seed.
-It holds DHCP on `eth0`. It adds the slot's address as a host route where the guest's own values
-name a slot but slot 0, which is the host's. A later change of the slot reaches no existing guest.
+The create alone sets the seed, `cloud-init.network-config`: DHCP on `eth0` and the slot's address
+as a host route. A guest needs a slot from 1 to 15. Another address, or slot 0, the host's, fails
+the plan before any instance. So does a guest whose seed holds another slot than its values. Set the
+old slot again, or unlist it, remove it with its old slot, then list it with the new.
 
 ## Storage
 

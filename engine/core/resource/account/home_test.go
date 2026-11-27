@@ -78,16 +78,13 @@ func TestReadHomeRefusesAPathThatIsNotLocalBeforeAnyCall(t *testing.T) {
 
 var owner = account.Account{User: ws, UID: 1000, GID: 1001}
 
-func TestHomeFileRefusesALinkAsItPlansAndReports(t *testing.T) {
+func TestHomeFileRefusesALink(t *testing.T) {
 	for _, link := range []string{"/home/ws/.config", "/home/ws/.config/x", "/home/ws/.config/x/f"} {
 		m := effecttest.NewMachine()
 		m.Links[link] = "/srv/target"
 		f := owner.File(m, ".config/x/f", []byte("a"), 0o644)
 		if _, err := f.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), link+" is a link to") {
 			t.Errorf("link at %s: Plan = %v", link, err)
-		}
-		if _, err := f.Report(t.Context()); err == nil {
-			t.Errorf("link at %s: Report found no error", link)
 		}
 	}
 }
@@ -211,9 +208,6 @@ func TestHomeDirRefusesALink(t *testing.T) {
 		if _, err := d.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), link+" is a link to") {
 			t.Errorf("link at %s: Plan = %v", link, err)
 		}
-		if _, err := d.Report(t.Context()); err == nil {
-			t.Errorf("link at %s: Report found no error", link)
-		}
 	}
 }
 
@@ -251,9 +245,8 @@ func TestHomeDirFixesAWrongModeAndOwner(t *testing.T) {
 func TestLinesSetsTheMachinePathOwnerAndHome(t *testing.T) {
 	m := effecttest.NewMachine()
 	a := account.Account{User: ws, UID: 1000, GID: 1001}
-	got := a.Lines(m, ".bashrc", file.UserLines{Lines: "x\n", Shown: "x", Top: true, Mode: 0o644})
-	r := got.Rules
-	if r.M != m || r.Path != "/home/ws/.bashrc" || r.Lines != "x\n" || !r.Top || r.Mode != 0o644 ||
+	got := a.Lines(m, ".bashrc", file.HomeLines{Lines: "x\n", Shown: "x", Top: true, Mode: 0o644})
+	if got.M != m || got.Path != "/home/ws/.bashrc" || got.Lines != "x\n" || !got.Top || got.Mode != 0o644 ||
 		got.UID != 1000 || got.GID != 1001 || got.Home != "/home/ws" {
 		t.Errorf("Lines = %+v", got)
 	}

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/check"
+	"github.com/zadykian/ws/internal/cablenet"
 	"github.com/zadykian/ws/internal/slot"
 )
 
@@ -26,7 +27,7 @@ func ParseRoutes(files map[string][]byte) (nets []netip.Prefix, warnings []strin
 				continue
 			}
 			p, ok := check.CIDR(line)
-			if !ok || p.Overlaps(slot.Range) || p.Overlaps(CableNet) {
+			if !ok || p.Overlaps(slot.Range) || p.Overlaps(cablenet.Net) {
 				warnings = append(warnings,
 					fmt.Sprintf("routes.d/%s: leaves out '%s', not a network it can route", name, line))
 				continue

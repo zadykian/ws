@@ -79,7 +79,7 @@ Its keys and rules are on [its own page](file.md).
 [deb.NAME]
 package = "name"
 version = "1.2.3"
-url = "https://host/{version}/name_{version}_{arch}.deb"
+url = "https://host/{version}/name_{version}_{arch}.deb"  # https alone
 sha256 = { amd64 = "…", arm64 = "…" }  # by dpkg's architecture
 stop = "name.service"                   # kept stopped and disabled where the package installs
 ```
@@ -92,7 +92,7 @@ checked before apt-get installs it. Where the version that dpkg lists is the pin
 ```toml
 [binary.NAME]
 version = "1.2.3"
-url = "https://host/v{version}/name-linux-{arch}"
+url = "https://host/v{version}/name-linux-{arch}"      # https alone
 sha256 = { amd64 = "…", arm64 = "…" }   # by dpkg's architecture, or all = "…" for one file
 arch_names = { amd64 = "x86_64" }        # the asset's spelling of an architecture, where it differs
 path = "/usr/local/sbin/name"            # root's, at mode = 0o755 where unset
@@ -112,7 +112,7 @@ arch_names = { amd64 = "x64" }          # the archives' spelling of an architect
 
 [[tree.NAME.archive]]                   # one table an archive, unpacked in this order
 version = "1.2.3"
-url = "https://host/{version}/name-{version}-linux-{arch}.tar.gz"
+url = "https://host/{version}/name-{version}-linux-{arch}.tar.gz"  # https alone
 sha256 = { amd64 = "…", arm64 = "…" }   # by dpkg's architecture, uname -m's on macOS
 ```
 
@@ -150,7 +150,7 @@ simulate = false            # check that apt finds each name, and install none
 [dkms.NAME]
 module = "name"             # DKMS's name of the source, as its dkms.conf gives it
 version = "1.0"             # DKMS's version of the pin
-url = "https://host/name.tar.gz"
+url = "https://host/name.tar.gz"   # https alone
 sha256 = "…"
 strip = 1                   # leading parts of each name dropped as the tarball unpacks
 conf = "dkms.conf"          # a source written as the tree's dkms.conf, {version} for version
@@ -183,7 +183,7 @@ run = "running"             # "stopped", "triggered", or "" to leave the unit as
 reload = false
 in_force = ["cmd"]          # with loads: where their outputs differ, the unit restarts
 loads = ["cmd"]
-[[service.NAME.file]]       # a file's own fields, from path to absent
+[[service.NAME.file]]       # a file's own fields, but no line or link
 path = "/abs/path"
 source = "name"
 ```
@@ -276,8 +276,8 @@ ws at `/usr/local/bin/ws`, which is there before any run. The write hook runs `w
   The values are the side's file, `/etc/ws/values.yml` on the server.
 - **verify.** mise drops the units of a plugin that it refuses, with a warning and exit 0. `verify`
   reads `mise bootstrap packages status --json`, and fails where the `ws` manager is missing or not
-  available, or lacks a unit of the specs. With every unit there, it prints one line that never
-  changes, for a file whose template runs it.
+  available, or lacks a unit of the specs, or runs outside the run directory. With every unit
+  there, it prints one line that never changes, for a file whose template runs it.
 - **--whole.** The read hook gets every line of mise's plan, and passes `--whole`. Where the specs
   hold a unit that the lines lack, and it has a change, each unit reads `fails: mise's plan lacks
   ws:KIND/NAME`, so the hook fails every plan and run. A lacking unit in sync passes: mise reads

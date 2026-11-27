@@ -98,9 +98,9 @@ func makeDirs(m effect.Machine, dir string) error {
 	return nil
 }
 
-// FnoxEnv is the environment that ws sets for fnox: /usr/local/bin first on PATH, where fnox
+// fnoxEnv is the environment that ws sets for fnox: /usr/local/bin first on PATH, where fnox
 // finds age-plugin-yubikey, and the key file. env sets PATH as given, so ws expands it here.
-func FnoxEnv(getenv func(string) string, keyFile string) []string {
+func fnoxEnv(getenv func(string) string, keyFile string) []string {
 	path := "/usr/local/bin"
 	if p := getenv("PATH"); p != "" {
 		path += ":" + p

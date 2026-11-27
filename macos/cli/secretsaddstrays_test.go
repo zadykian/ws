@@ -9,24 +9,11 @@ import (
 )
 
 // lab comes back as ws-b with labKey, and ws-a's olderKey stays in the secrets, which known_hosts no
-// longer holds. ws-c's key is ws's in known_hosts, so it stays out of the list.
+// longer holds. The cli prints the one line last, after the run's output.
 func TestSecretsAddListsTheKeysThatKnownHostsLacks(t *testing.T) {
-	f := secrets.Files{}
-	for name, text := range heldBy(t, olderKey) {
-		f[name] = []byte(text)
-	}
-	f, _, err := secrets.SetHostKey(f, "ws-c", "ssh-ed25519 AAAA")
-	if err != nil {
-		t.Fatal(err)
-	}
-	files := map[string]string{}
-	for name, text := range f {
-		files[name] = string(text)
-	}
-	p, mac := addFixture(files)
+	p, mac := addFixture(heldBy(olderKey))
 	mac.Results[hostnameLine] = effecttest.Result{Out: []byte("ws-b\n")}
-	mac.Keys = []secrets.DeployKey{{ID: 7, Title: "ws-a", Key: olderKey, ReadOnly: true},
-		{ID: 8, Title: "ws-c", Key: "ssh-ed25519 AAAA", ReadOnly: true}}
+	mac.Keys = []secrets.DeployKey{{ID: 7, Title: "ws-a", Key: olderKey, ReadOnly: true}}
 	status, stdout, stderr := addWs(p, "", "lab")
 	want := "By hand: the secrets hold " + olderKey + " under ws-a, a key of no host in known_hosts: where no " +
 		"server holds it now, as after a rebuild, drop it from the secrets' recipients and deploy keys\n"

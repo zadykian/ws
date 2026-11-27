@@ -107,9 +107,9 @@ _Avoid_: dotfile
 
 **User's lines**: ws's lines in a user's file that holds other text too, such as `Include
 /etc/ws/ssh_config` at the top of `~/.ssh/config`. A run adds them once, at the top or the end, and
-keeps the old file as `PATH.TIME~`. At a link that lacks them, or lines out of place, the unit warns
-or stops. Core's `file.UserLines` hold them on the Mac, and `file.HomeLines`, read and written as
-root, on ws. _Avoid_: include line
+keeps the old file as `PATH.TIME~`. At a link that lacks them, or lines out of place, the unit
+stops. Core's `file.HomeLines` hold them on both sides. On the Mac the read is the user's, and
+follows a link whose target holds the lines. _Avoid_: include line
 
 **Apps' env**:
 The mise env `apps`, which loads each role's `mise.apps.toml` and no other run does. Setup runs it

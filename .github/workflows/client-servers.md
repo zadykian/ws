@@ -23,7 +23,8 @@ Four cases of the `client` job work on a second server:
   that names no host, and one whose tunnel port is its host's.
 - `client/92-second.sh` gives lab a third wireguard-go on UDP 51821. `mise -C /opt/ws/macos
   bootstrap` must then give lab a daemon and a utun of its own, at 10.99.1.1, and leave ws's daemon
-  with its handshake. A second bootstrap must call no sudo.
+  with its handshake. The plan after lab's first bootstrap and the plan after the second must each
+  exit 0. A second bootstrap must call no sudo.
 - `client/94-remove.sh` runs `remove lab`: its files, daemon, host and `known_hosts` line must go, and
   ws's stay. The runner has no fnox key file, so remove must print its line that names lab's key,
   to drop it from the secrets by hand. `remove box` and `remove ws` must refuse, and the plan then

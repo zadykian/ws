@@ -13,7 +13,11 @@ import (
 	"github.com/google/renameio/v2"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/web"
 )
+
+// client gives up on a server that sends no header within the timeout, and follows redirects to HTTPS alone.
+var client = web.Client()
 
 // Download streams the URL through SHA-256 into a pending file, and renames it over path only
 // where the sum, in hex, matches. Otherwise nothing is left and path is unchanged. Where ws runs as
@@ -24,7 +28,7 @@ func (m OSMachine) Download(ctx context.Context, url, path, sum string, a effect
 	if err != nil {
 		return err
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}

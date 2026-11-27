@@ -9,7 +9,6 @@ import (
 	"io/fs"
 	"os/signal"
 	"path"
-	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -76,10 +75,12 @@ func runSecretsAdd(c *cobra.Command, p enginecli.Env, server, name, address stri
 	if port < 0 || port > 65535 {
 		return fmt.Errorf("--port %d is not a port", port)
 	}
-	if err := knownServer(p, name); err != nil {
+	mac := values.Path(p.Getenv, p.Pwd)
+	fleet := values.ReadFleet(p.Machine, mac)
+	if err := knownServer(fleet, mac, name); err != nil {
 		return err
 	}
-	if err := refuseHost(p, name); err != nil {
+	if err := refuseHost(fleet, name); err != nil {
 		return err
 	}
 	keyFile, err := secrets.KeyFile(p.Getenv)
@@ -92,7 +93,8 @@ func runSecretsAdd(c *cobra.Command, p enginecli.Env, server, name, address stri
 	} else if err != nil {
 		return fmt.Errorf("cannot stat fnox's key file %s: %w", keyFile, err)
 	}
-	r, err := reachOf(p, name, address, port)
+	known, _ := fleet.Server(name)
+	r, err := reachOf(known, address, port)
 	if err != nil {
 		return err
 	}
@@ -104,7 +106,8 @@ func runSecretsAdd(c *cobra.Command, p enginecli.Env, server, name, address stri
 	if err != nil {
 		return err
 	}
-	byHand, err := addHostKey(c, p, name, hostname, key, keyFile)
+	keys := secrets.HostKeys{M: p.Machine, Getenv: p.Getenv, Out: c.OutOrStdout(), KeyFile: keyFile}
+	byHand, err := keys.Add(c.Context(), name, hostname, key)
 	if err != nil {
 		return err
 	}
@@ -123,30 +126,24 @@ func runSecretsAdd(c *cobra.Command, p enginecli.Env, server, name, address stri
 }
 
 // knownServer refuses a name that is no server of the Mac's.
-func knownServer(p enginecli.Env, name string) error {
+func knownServer(fleet values.Fleet, mac, name string) error {
 	if !values.IsName(name) {
 		return fmt.Errorf("%s is not a server's name: %s", name, values.NameForm)
 	}
-	mac := values.Path(p.Getenv, p.Pwd)
-	names, err := values.Servers(p.Machine, mac)
-	if err != nil {
-		return err
+	if fleet.NamesErr != nil {
+		return fleet.NamesErr
 	}
-	if !slices.Contains(names, name) {
+	if _, ok := fleet.Server(name); !ok {
 		return fmt.Errorf("no server named %s in %s, which holds %s", name,
-			path.Dir(path.Dir(values.ServerPath(mac, name))), values.List(names))
+			path.Dir(path.Dir(values.ServerPath(mac, name))), values.List(fleet.Names()))
 	}
 	return nil
 }
 
 // refuseHost refuses a server that a guest names as its host. A host holds no secret, and its setup
 // takes no --secrets, so its key as a recipient would open every shared value to no end.
-func refuseHost(p enginecli.Env, name string) error {
-	guests, err := values.GuestsOf(p.Machine, values.Path(p.Getenv, p.Pwd), name)
-	if err != nil {
-		return err
-	}
-	if len(guests) > 0 {
+func refuseHost(fleet values.Fleet, name string) error {
+	if guests := fleet.GuestsOf(name); len(guests) > 0 {
 		return fmt.Errorf("%s is the host of %s, and a host holds no secret: run add for each guest", name,
 			values.List(guests))
 	}

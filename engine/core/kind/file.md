@@ -58,6 +58,7 @@ after = "KIND/NAME"
 - A `link` takes `after` and `when` alone, beside its path. Root owns it, and its missing parents
   are made as a file's. A link to another target is pointed again, and a file or a link in its
   place is replaced, but a directory there fails the run.
+- A file with a `service`, and a file of a service unit, take no `line` and no `link`.
 - With `ours`, a file whose first line lacks `# Written by github.com/zadykian/ws` fails the
   plan, a dry run's too, before a write or a removal. A file by hand is never lost, and the error
   names its path alone. `mark` sets the sign before those words. An account's file is read below

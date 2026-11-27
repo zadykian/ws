@@ -8,7 +8,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -27,17 +26,8 @@ func ownsFile(m effect.Machine, file string) (bool, error) {
 	return first == resolverHeader, nil
 }
 
-// removal is the removal of a resolver that no server's file names. It says what the file's report
-// would.
-type removal struct {
-	resource.Change
-	path string
-}
+// removal is the removal of a resolver that no server's file names, of kind Removal.
+type removal struct{ resource.Change }
 
 // Kind is removal.
 func (removal) Kind() step.ChangeKind { return step.Removal }
-
-// Item says that the file is to go.
-func (r removal) Item() step.Item {
-	return step.Item{Kind: step.FileItem, Name: r.path, Want: file.StateMissing, Found: file.StatePresent}
-}

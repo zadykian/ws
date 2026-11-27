@@ -1,7 +1,5 @@
 // Package file puts files, directories, links and lines on the machine, and removes paths, each
-// as a resource that plans its changes and reports its state. The User types do the same in the
-// user's home. They read and write as the user: a whole file, a directory, or ws's lines in a file
-// that holds other text.
+// as a resource that plans its changes. HomeLines adds ws's lines to a file of the account's home.
 package file
 
 import (
@@ -42,8 +40,6 @@ type writeFile struct {
 	f      File
 	before []byte
 	why    string
-	// got is the file's owner and mode, nil for a file that is missing.
-	got *effect.Attrs
 }
 
 func (c writeFile) String() string {
@@ -54,9 +50,6 @@ func (c writeFile) String() string {
 }
 
 func (writeFile) Kind() step.ChangeKind { return step.Write }
-
-// Item is what the File's Report would show: a role's wrapper builds its File as it plans.
-func (c writeFile) Item() step.Item { return c.f.item(c.before, c.got) }
 
 // Apply looks for a link on the way again, as the user may make one after Plan. A backup or an edit
 // reads as root, a home file through one open below the home, as the writes keep their bound.
@@ -118,58 +111,9 @@ func (f File) Plan(context.Context) ([]resource.Change, error) {
 	}
 	switch {
 	case !bytes.Equal(before, f.Content):
-		return []resource.Change{writeFile{f, before, "write", &got}}, nil
+		return []resource.Change{writeFile{f, before, "write"}}, nil
 	case got != f.attrs():
-		return []resource.Change{writeFile{f, before, fmt.Sprintf("set owner %d:%d and mode %o of", f.UID, f.GID, f.Mode.Perm()), &got}}, nil
+		return []resource.Change{writeFile{f, before, fmt.Sprintf("set owner %d:%d and mode %o of", f.UID, f.GID, f.Mode.Perm())}}, nil
 	}
 	return nil, nil
-}
-
-// Report compares the file as Plan does.
-func (f File) Report(context.Context) ([]step.Item, error) {
-	if err := f.guard(); err != nil {
-		return nil, err
-	}
-	before, got, err := f.read()
-	if errors.Is(err, fs.ErrNotExist) {
-		return []step.Item{f.item(nil, nil)}, nil
-	}
-	if err != nil {
-		return []step.Item{f.item(nil, nil)}, err
-	}
-	return []step.Item{f.item(before, &got)}, nil
-}
-
-// item compares what the file holds with what ws writes, got being nil for a file that is missing.
-// A file that exists and differs stands against ws. A secret shows no diff and no sum, as a sum
-// would let a guess be checked.
-func (f File) item(before []byte, got *effect.Attrs) step.Item {
-	item := step.Item{Kind: step.FileItem, Name: f.Path, Want: paths.AttrsText(f.attrs()), Found: paths.Missing}
-	if got == nil {
-		return item
-	}
-	item.Found = paths.AttrsText(*got)
-	switch {
-	case !bytes.Equal(before, f.Content):
-		item.Found += ", other content"
-		item.Conflict = f.conflict(before)
-		if !f.Secret {
-			item.Diff = effect.Diff(f.Path, before, f.Content)
-		}
-	case *got != f.attrs():
-		item.Conflict = paths.AttrsChanged
-	}
-	return item
-}
-
-// conflict says how the file's content stands against ws. ws keeps no sum of what it wrote, so a
-// change by hand reads the same as a file from another version of ws.
-func (f File) conflict(before []byte) string {
-	switch {
-	case f.edit != nil:
-		return "a line differs from what ws sets"
-	case bytes.Contains(f.Content, []byte(Mark)) && !bytes.Contains(before, []byte(Mark)):
-		return "holds no Written by line: ws did not write it"
-	}
-	return "differs from what ws writes: a change by hand, or another version of ws"
 }

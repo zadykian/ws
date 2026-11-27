@@ -3,12 +3,8 @@ package cable
 
 import (
 	"strings"
-)
 
-// The Mac's end of the cable, in the cable's /30, and that /30's mask.
-const (
-	cableClient = "10.77.0.2"
-	cableMask   = "255.255.255.252"
+	"github.com/zadykian/ws/internal/cablenet"
 )
 
 // serviceListed reports whether networksetup -listallnetworkservices lists the service, and whether
@@ -46,11 +42,11 @@ func cableOther(info string) string {
 			}
 		}
 		switch {
-		case line == "IP address: "+cableClient:
+		case line == "IP address: "+cablenet.Mac().String():
 			ours = true
 		case strings.HasPrefix(line, "IP address: "):
 			ips += "; " + line
-		case strings.HasPrefix(line, "Subnet mask: ") && line != "Subnet mask: "+cableMask:
+		case strings.HasPrefix(line, "Subnet mask: ") && line != "Subnet mask: "+cablenet.Mask():
 			masks += "; " + line
 		case len(line) > len("Router: ") && strings.HasPrefix(line, "Router: ") && line[8] >= '0' && line[8] <= '9':
 			routers += "; " + line

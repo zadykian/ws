@@ -116,3 +116,19 @@ func TestMacReadWholeNamesTheRunDirectory(t *testing.T) {
 		t.Errorf("from the root: status = %d, stdout = %q, stderr = %q; want %q", status, stdout, stderr, want)
 	}
 }
+
+// TestMacVerifyRefusesOutsideTheRunDirectory runs verify from the root, where mise loads none of
+// the specs' lines. It fails with the directory's line before it asks mise, and names no unit.
+func TestMacVerifyRefusesOutsideTheRunDirectory(t *testing.T) {
+	p, m := macUnitEnv(t, strings.ReplaceAll(runOfTheUser, "mine", "a"))
+	runDir := p.Pwd
+	p.Pwd = filepath.Dir(runDir)
+	status, stdout, stderr := runUnit(p, "verify")
+	want := "mise runs in " + p.Pwd + ", which loads none of the specs' lines: run mise in " + runDir
+	if status != 1 || stdout != "" || !strings.Contains(stderr, want) || strings.Contains(stderr, "state/a") {
+		t.Errorf("status = %d, stdout = %q, stderr = %q; want the line %q alone", status, stdout, stderr, want)
+	}
+	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "run mise bootstrap") }) {
+		t.Errorf("mise was asked: %v", m.Calls)
+	}
+}

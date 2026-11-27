@@ -51,7 +51,11 @@ func (s serviceSpec) parts(e Env, dir fs.FS) (func(context.Context) ([]resource.
 	}
 	var paths []string
 	for i, f := range s.File {
-		if err := f.check(dir); err != nil {
+		err := f.check(dir)
+		if err == nil {
+			err = f.checkService()
+		}
+		if err != nil {
 			return nil, fmt.Errorf("file %d: %w", i+1, err)
 		}
 		if !f.Absent {

@@ -36,7 +36,7 @@ func runValuesPrint(c *cobra.Command, p enginecli.Env, server *string, args []st
 		if err != nil {
 			return err
 		}
-		settings, err := values.Load(p.Machine, file, values.ServerPath(file, name))
+		settings, err := values.ReadFleet(p.Machine, file).Load(name)
 		if err != nil {
 			return err
 		}
