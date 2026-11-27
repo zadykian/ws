@@ -71,7 +71,7 @@ func (i Init) Run(ctx context.Context) error {
 		return err
 	}
 	defer c.Close(ctx)
-	c.FnoxEnv, c.Sleep, c.Now = FnoxEnv(i.Getenv, keyFile), i.Sleep, i.Now
+	c.FnoxEnv, c.Sleep, c.Now = fnoxEnv(i.Getenv, keyFile), i.Sleep, i.Now
 	open, err := c.OpenPulls(ctx, initTopic)
 	if err != nil {
 		return err

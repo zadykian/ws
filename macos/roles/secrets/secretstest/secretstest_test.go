@@ -24,8 +24,10 @@ func TestMacLandsAChangeOfTheClone(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer c.Close(ctx)
-	if keys, err := secrets.DeployKeys(ctx, mac, secrets.GH, repo.Slug()); err != nil || !slices.Equal(keys, mac.Keys) {
-		t.Errorf("DeployKeys gives %v, %v, want %v", keys, err, mac.Keys)
+	out, err := mac.Run(ctx, secrets.GH, "api", "--paginate", "repos/"+repo.Slug()+"/keys", "--jq",
+		".[] | [.id, .title, .key, .read_only] | @tsv")
+	if want := "5\tws-a\tssh-ed25519 AAAA\ttrue\n"; err != nil || string(out) != want {
+		t.Errorf("gh lists the deploy keys as %q, %v, want %q", out, err, want)
 	}
 	if _, err := c.Fnox(ctx, nil, "set", "S1", "--provider", "age"); err != nil {
 		t.Fatal(err)

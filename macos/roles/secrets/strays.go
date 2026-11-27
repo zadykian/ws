@@ -7,19 +7,19 @@ import (
 	"strings"
 )
 
-// Stray is a host key that the secrets hold and that known_hosts gives no host, with the labels and
+// stray is a host key that the secrets hold and that known_hosts gives no host, with the labels and
 // the deploy keys' titles it sits under, sorted. A server that came back with another hostname and
 // another key leaves its older ones so. Once ssh-keygen -R drops its line, nothing on the Mac ties
 // them to the server.
-type Stray struct {
+type stray struct {
 	Key   string
 	Names []string
 }
 
-// Strays are the ed25519 keys that a table of recipients of f or a deploy key of keys holds, and
+// strays are the ed25519 keys that a table of recipients of f or a deploy key of keys holds, and
 // that known lacks, sorted by their first name. A recipient that is no host key, as the Nano's, is
 // none.
-func Strays(f Files, keys []DeployKey, known map[string]bool) ([]Stray, error) {
+func strays(f Files, keys []DeployKey, known map[string]bool) ([]stray, error) {
 	names := map[string][]string{}
 	note := func(key, name string) {
 		if hostKeyForm.MatchString(key) && !known[key] && !slices.Contains(names[key], name) {
@@ -46,12 +46,12 @@ func Strays(f Files, keys []DeployKey, known map[string]bool) ([]Stray, error) {
 	for _, k := range keys {
 		note(k.Key, k.Title)
 	}
-	strays := make([]Stray, 0, len(names))
+	strays := make([]stray, 0, len(names))
 	for key, n := range names {
 		slices.Sort(n)
-		strays = append(strays, Stray{Key: key, Names: n})
+		strays = append(strays, stray{Key: key, Names: n})
 	}
-	slices.SortFunc(strays, func(a, b Stray) int {
+	slices.SortFunc(strays, func(a, b stray) int {
 		return cmp.Or(strings.Compare(a.Names[0], b.Names[0]), strings.Compare(a.Key, b.Key))
 	})
 	return strays, nil

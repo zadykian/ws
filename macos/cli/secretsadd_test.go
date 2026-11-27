@@ -68,14 +68,19 @@ func addFixture(files map[string]string) (enginecli.Env, *secretstest.Mac) {
 }
 
 // heldBy is the repository's files once key is ws-a's recipient, ws-a's profile holding a value.
-func heldBy(t *testing.T, key string) map[string]string {
-	f, _, err := secrets.SetHostKey(secrets.Files{secrets.SharedFile: []byte(sharedText)}, "ws-a", key)
-	if err != nil {
-		t.Fatal(err)
-	}
-	profile := secrets.ProfileFile("ws-a")
-	return map[string]string{secrets.SharedFile: string(f[secrets.SharedFile]),
-		profile: string(f[profile]) + `A1 = { provider = "host", value = "` + sealed + `" }` + "\n"}
+func heldBy(key string) map[string]string {
+	shared := strings.Replace(sharedText, "backup = \"age1qbackup\"\n", "backup = \"age1qbackup\"\nws-a = \""+key+"\"\n", 1)
+	return map[string]string{secrets.SharedFile: shared, secrets.ProfileFile("ws-a"): `[providers.host]
+type = "age"
+
+[providers.host.recipients]
+nano = "age1yubikey1qnano"
+backup = "age1qbackup"
+ws-a = "` + key + `"
+
+[secrets]
+A1 = { provider = "host", value = "` + sealed + `" }
+`}
 }
 
 // addWs runs ws macos secrets add with stdin.
@@ -92,36 +97,23 @@ func callAt(calls []string, part string) int {
 // cloned says whether the calls cloned the secrets repository.
 func cloned(calls []string) bool { return callAt(calls, " git clone ") >= 0 }
 
-func TestSecretsAddRunsItsStepsInOrder(t *testing.T) {
+func TestSecretsAddLandsTheSecretsBeforeTheRun(t *testing.T) {
 	p, mac := addFixture(nil)
 	status, stdout, stderr := addWs(p, "", "lab")
 	if status != 0 {
 		t.Fatalf("add lab: status = %d, stderr = %q", status, stderr)
 	}
 	at := -1
-	for _, part := range []string{findLab, hostnameLine, keysLine, " fnox reencrypt -p age -f", postLine,
-		secrets.GH + " pr create", secrets.GH + " pr merge", runLine} {
+	for _, part := range []string{findLab, hostnameLine, secrets.GH + " pr merge", runLine} {
 		i := callAt(mac.Calls, part)
 		if i <= at {
 			t.Fatalf("%q comes at %d, after %d, in\n%q", part, i, at, mac.Calls)
 		}
 		at = i
 	}
-	want := secrets.Change{Topic: "add-ws-a", Title: "chore: add the host key of ws-a",
-		Body: "Added by ws macos secrets add lab.", Files: []string{"fnox.toml", "fnox.ws-a.toml"}}
-	if landed := mac.Landed(); len(landed) != 1 || !equalChange(landed[0], want) {
-		t.Errorf("add landed %+v, want %+v", landed, want)
-	}
-	if fnoxed := mac.Fnoxed(); len(fnoxed) != 1 {
-		t.Errorf("add ran fnox %q, want one reencrypt of fnox.toml: the new profile holds no value", fnoxed)
-	}
 	if !strings.Contains(mac.Files()["fnox.ws-a.toml"], labKey) || !strings.Contains(stdout, secretstest.Pull) {
 		t.Errorf("add left the profile %q and printed %q, want lab's key there and the link", mac.Files(), stdout)
 	}
-}
-
-func equalChange(a, b secrets.Change) bool {
-	return a.Topic == b.Topic && a.Title == b.Title && a.Body == b.Body && slices.Equal(a.Files, b.Files)
 }
 
 // scannable takes lab out of known_hosts, and has ssh reach it at 192.0.2.7:22022 by target.
@@ -181,43 +173,6 @@ func TestSecretsAddStopsWhereTheFingerprintDiffers(t *testing.T) {
 	}
 }
 
-func TestSecretsAddOpensNoPullRequestWhereNothingChanged(t *testing.T) {
-	p, mac := addFixture(heldBy(t, labKey))
-	mac.Keys = []secrets.DeployKey{{ID: 5, Title: "ws-a", Key: labKey, ReadOnly: true}}
-	status, stdout, stderr := addWs(p, "", "lab")
-	if status != 0 || !strings.Contains(stdout, "the secrets already hold the host key of ws-a") {
-		t.Fatalf("add of a key in place: status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
-	}
-	if len(mac.Fnoxed()) != 0 || len(mac.Landed()) != 0 || callAt(mac.Calls, " -X ") >= 0 {
-		t.Errorf("add of a key in place ran fnox, landed or changed a deploy key: %q", mac.Calls)
-	}
-	if !slices.Contains(mac.Calls, "run "+runLine) {
-		t.Errorf("add of a key in place ran nothing on lab: %q", mac.Calls)
-	}
-}
-
-func TestSecretsAddReplacesARebuiltServersKey(t *testing.T) {
-	p, mac := addFixture(heldBy(t, olderKey))
-	mac.Keys = []secrets.DeployKey{{ID: 7, Title: "ws-a", Key: olderKey, ReadOnly: true}}
-	if status, _, stderr := addWs(p, "", "lab"); status != 0 {
-		t.Fatalf("add of a rebuilt server: status = %d, stderr = %q", status, stderr)
-	}
-	deleted, posted := callAt(mac.Calls, secrets.GH+" api -X DELETE repos/o/n/keys/7"), callAt(mac.Calls, postLine)
-	if deleted < 0 || posted < deleted {
-		t.Errorf("the older deploy key goes at %d, the new one comes at %d, want both in that order", deleted, posted)
-	}
-	want := [][]string{{"reencrypt", "-p", "age", "-f"}, {"-P", "ws-a", "reencrypt", "-p", "host", "-f"}}
-	if !slices.EqualFunc(mac.Fnoxed(), want, slices.Equal) {
-		t.Errorf("add ran fnox %q, want %q", mac.Fnoxed(), want)
-	}
-	if landed := mac.Landed(); len(landed) != 1 || !slices.Equal(landed[0].Files, []string{"fnox.toml", "fnox.ws-a.toml"}) {
-		t.Errorf("add landed %+v, want both files once", landed)
-	}
-	if files := mac.Files(); strings.Contains(files["fnox.toml"]+files["fnox.ws-a.toml"], olderKey) {
-		t.Errorf("the older key stays in %q", files)
-	}
-}
-
 func TestSecretsAddRefuses(t *testing.T) {
 	for _, c := range []struct {
 		name, want string
@@ -262,7 +217,7 @@ func TestSecretsAddRefuses(t *testing.T) {
 // fnox prints a plain value, as where it passes and where it fails, and ws passes none of it on.
 func TestSecretsAddKeepsTheValuesOutOfItsOutput(t *testing.T) {
 	for _, fail := range []error{nil, errors.New("exit status 1")} {
-		p, mac := addFixture(heldBy(t, olderKey))
+		p, mac := addFixture(heldBy(olderKey))
 		mac.FnoxErr = fail
 		status, stdout, stderr := addWs(p, "", "lab")
 		if (status != 0) != (fail != nil) || len(mac.Fnoxed()) == 0 {

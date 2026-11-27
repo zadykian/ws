@@ -25,9 +25,9 @@ const deployKeysJq = ".[] | [.id, .title, .key, .read_only] | @tsv"
 // tsvField undoes @tsv's escapes.
 var tsvField = strings.NewReplacer(`\\`, `\`, `\t`, "\t", `\n`, "\n", `\r`, "\r")
 
-// DeployKeys lists the deploy keys of the repository slug by gh, its path gh. A key keeps its
+// deployKeys lists the deploy keys of the repository slug by gh, its path gh. A key keeps its
 // type and base64 alone, as a recipient does.
-func DeployKeys(ctx context.Context, m effect.Machine, gh, slug string) ([]DeployKey, error) {
+func deployKeys(ctx context.Context, m effect.Machine, gh, slug string) ([]DeployKey, error) {
 	out, err := m.Run(ctx, gh, "api", "--paginate", "repos/"+slug+"/keys", "--jq", deployKeysJq)
 	switch {
 	case err != nil && strings.Contains(err.Error(), "HTTP 404"):
@@ -70,9 +70,9 @@ func deployKeyOf(line string) (DeployKey, error) {
 	return DeployKey{ID: id, Title: tsvField.Replace(f[1]), Key: strings.Join(key, " "), ReadOnly: readOnly}, nil
 }
 
-// AddDeployKey adds key to the repository slug as a read-only deploy key titled title. -f passes
+// addDeployKey adds key to the repository slug as a read-only deploy key titled title. -f passes
 // each field as a string, so that none reads a file by @.
-func AddDeployKey(ctx context.Context, m effect.Machine, gh, slug, title, key string) error {
+func addDeployKey(ctx context.Context, m effect.Machine, gh, slug, title, key string) error {
 	if !hostKeyForm.MatchString(key) {
 		return fmt.Errorf("the deploy key %s is not ssh-ed25519 BASE64", title)
 	}
@@ -86,19 +86,19 @@ func AddDeployKey(ctx context.Context, m effect.Machine, gh, slug, title, key st
 	return nil
 }
 
-// DeleteDeployKey deletes the deploy key id of the repository slug.
-func DeleteDeployKey(ctx context.Context, m effect.Machine, gh, slug string, id int64) error {
+// deleteDeployKey deletes the deploy key id of the repository slug.
+func deleteDeployKey(ctx context.Context, m effect.Machine, gh, slug string, id int64) error {
 	if _, err := m.Run(ctx, gh, "api", "-X", "DELETE", "repos/"+slug+"/keys/"+strconv.FormatInt(id, 10)); err != nil {
 		return fmt.Errorf("cannot delete the deploy key %d of %s by gh: %w", id, slug, err)
 	}
 	return nil
 }
 
-// PlanDeployKeys says which of keys to delete, and whether to add key under title, so that one
+// planDeployKeys says which of keys to delete, and whether to add key under title, so that one
 // read-only deploy key titled title holds key. GitHub changes no deploy key in place, and refuses
 // a key that the repository holds already. So an older key under title, key under another title
 // and key with write access each go before the add.
-func PlanDeployKeys(keys []DeployKey, title, key string) (drop []DeployKey, add bool) {
+func planDeployKeys(keys []DeployKey, title, key string) (drop []DeployKey, add bool) {
 	add = true
 	for _, k := range keys {
 		switch {

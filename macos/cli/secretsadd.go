@@ -105,7 +105,8 @@ func runSecretsAdd(c *cobra.Command, p enginecli.Env, server, name, address stri
 	if err != nil {
 		return err
 	}
-	byHand, err := addHostKey(c, p, name, hostname, key, keyFile)
+	keys := secrets.HostKeys{M: p.Machine, Getenv: p.Getenv, Out: c.OutOrStdout(), KeyFile: keyFile}
+	byHand, err := keys.Add(c.Context(), name, hostname, key)
 	if err != nil {
 		return err
 	}
