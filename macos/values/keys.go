@@ -22,12 +22,12 @@ type Conf struct {
 	TunnelNetworks, Resolvers, CableService, CablePort                       string
 	GitSigningPubKey, IdentityPubKey, IdentityAgent                          string
 
-	// HostCable is set by Load alone, for a guest whose host has a cable: the guest tries the cable's
-	// address too. A guest holds no WS_CABLE_SERVICE, as one cable serves one service.
+	// HostCable is set by ReadFleet alone, for a guest whose host has a cable: the guest tries the
+	// cable's address too. A guest holds no WS_CABLE_SERVICE, as one cable serves one service.
 	HostCable bool
 }
 
-// TunnelSlot gives the slot that c.Slot names. Load has checked it, and an empty one is slot 0.
+// TunnelSlot gives the slot that c.Slot names. ReadFleet has checked it, and an empty one is slot 0.
 func (c Conf) TunnelSlot() slot.Slot {
 	s, _ := slot.Parse(c.Slot)
 	return s

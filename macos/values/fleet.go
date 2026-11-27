@@ -56,7 +56,7 @@ func ReadFleet(m effect.Machine, mac string) Fleet {
 		s := Server{Name: n, File: ServerPath(mac, n), fileErr: p.err}
 		if p.err == nil {
 			s.Conf = join(f.Mac, p.conf)
-			if msg := applyHost(&s.Conf, n, mac, parsed); msg != "" {
+			if msg := resolveHost(&s.Conf, n, mac, parsed); msg != "" {
 				s.fileErr = errors.New(Error{Msg: msg}.In(s.File))
 			}
 		}
@@ -65,10 +65,10 @@ func ReadFleet(m effect.Machine, mac string) Fleet {
 	return f.clash()
 }
 
-// applyHost gives the guest c, the server called name, the way of its host: the LAN, the address
+// resolveHost gives the guest c, the server called name, the way of its host: the LAN, the address
 // on it, the router's name and the cable. A host that is no server, that is refused or that is a
 // guest too gives the refusal. A server with no WS_HOST stays as it stands.
-func applyHost(c *Conf, name, mac string, parsed map[string]parsedFile) string {
+func resolveHost(c *Conf, name, mac string, parsed map[string]parsedFile) string {
 	if c.Host == "" {
 		return ""
 	}
