@@ -116,6 +116,19 @@ func TestFleetNamesAGuestWhoseHostIsRefusedAndKeepsItsHost(t *testing.T) {
 	}
 }
 
+// TestFleetCountsNoServerAsItsOwnGuest: a file that names itself as its host is refused for it, and
+// is no guest of itself.
+func TestFleetCountsNoServerAsItsOwnGuest(t *testing.T) {
+	f := fleetOf(map[string]string{"ws": hostText, "lab": Text("WS_HOST", "lab", "WS_SLOT", "1")})
+	lab, _ := f.Server("lab")
+	if want := "WS_HOST=lab names the guest's own server"; lab.Err == nil || !strings.Contains(lab.Err.Error(), want) {
+		t.Errorf("lab = %v, want %q", lab.Err, want)
+	}
+	if got := f.GuestsOf("lab"); len(got) != 0 {
+		t.Errorf("GuestsOf(lab) = %v, want none", got)
+	}
+}
+
 func TestFleetLoadJoinsTheMacsKeysAndRefusesBothFiles(t *testing.T) {
 	m := machineWith("ws")
 	m.Files[macPath] = []byte(Text("WS_GIT_SIGNING_PUB_KEY", "~/g.pub"))

@@ -103,6 +103,20 @@ func TestSecretsAddTakesAGuestWhoseHostFileTheFleetRefuses(t *testing.T) {
 	}
 }
 
+// A server that names itself as its host is no host of itself: add refuses its file.
+func TestSecretsAddRefusesAServerThatNamesItselfAsItsHostForItsFile(t *testing.T) {
+	p, mac := addFixture(nil)
+	mac.Machine.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_HOST", "lab", "WS_SLOT", "1"))
+	status, _, stderr := addWs(p, "", "lab")
+	if want := "WS_HOST=lab names the guest's own server"; status != 1 || !strings.Contains(stderr, want) ||
+		strings.Contains(stderr, "is the host of") {
+		t.Errorf("status = %d, stderr = %q; want 1 and %q", status, stderr, want)
+	}
+	if i := callAt(mac.Calls, "run "); i >= 0 {
+		t.Errorf("add ran %q, want nothing run", mac.Calls[i])
+	}
+}
+
 func TestSecretsAddRefusesAHost(t *testing.T) {
 	p, mac := addFixture(nil)
 	mac.Machine.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_HOST", "ws", "WS_SLOT", "1"))

@@ -173,11 +173,12 @@ func (f Fleet) Refusal() error {
 }
 
 // GuestsOf returns the servers whose WS_HOST names host, in order. A file that does not parse
-// names none: the check says why.
+// names none: the check says why. The server called host is none of its own guests: its file is
+// refused, and remove takes it.
 func (f Fleet) GuestsOf(host string) []string {
 	var guests []string
 	for _, s := range f.Servers {
-		if s.Conf.Host == host {
+		if s.Conf.Host == host && s.Name != host {
 			guests = append(guests, s.Name)
 		}
 	}

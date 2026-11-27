@@ -225,6 +225,17 @@ func TestRemoveRefusesAHostThatHasGuests(t *testing.T) {
 	}
 }
 
+// TestRemoveTakesAServerThatNamesItselfAsItsHost checks that such a server is no host of itself, so
+// that the removal that its refusal names is the way out.
+func TestRemoveTakesAServerThatNamesItselfAsItsHost(t *testing.T) {
+	p, m := removeFixture()
+	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_HOST", "lab", "WS_SLOT", "1"))
+	status, stdout, stderr := runWs(p, "macos", "remove", "lab")
+	if !strings.HasPrefix(stdout, "removed lab\n") || strings.Contains(stderr, "is the host of") {
+		t.Errorf("status = %d, stdout = %q, stderr = %q; want removed lab", status, stdout, stderr)
+	}
+}
+
 func TestRemoveRefusesTheLastServerAndAWrongName(t *testing.T) {
 	for name, tc := range map[string]struct {
 		arg, want string
