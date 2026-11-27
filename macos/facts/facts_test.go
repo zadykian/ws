@@ -76,6 +76,21 @@ func TestReadRefusesABadValue(t *testing.T) {
 	}
 }
 
+// TestReadRefusesABadMacFileOnce checks that values.yml is read before any server. Two servers
+// and a bad values.yml give one refusal, in that file's words.
+func TestReadRefusesABadMacFileOnce(t *testing.T) {
+	m := mac(map[string]string{"ws": values.Text("WS_SLOT", "0"), "lab": values.Text("WS_SLOT", "1")})
+	m.Files["/etc/ws/values.yml"] = []byte(values.Text("WS_SLOT", "3"))
+	_, err := Read(t.Context(), m, env, "/p")
+	if err == nil || strings.Count(err.Error(), "/etc/ws/values.yml") != 1 || strings.Contains(err.Error(), "server ") ||
+		strings.Contains(err.Error(), "fix its file") {
+		t.Errorf("read = %v, want one refusal of values.yml, naming no server", err)
+	}
+	if _, err := Servers(m, "/etc/ws/values.yml"); err == nil || strings.Contains(err.Error(), "fix its file") {
+		t.Errorf("servers = %v, want values.yml's refusal alone", err)
+	}
+}
+
 func TestReadWithoutServers(t *testing.T) {
 	m := mac(nil)
 	delete(m.Dirs, "/etc/ws/servers")

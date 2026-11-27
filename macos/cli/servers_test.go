@@ -95,3 +95,12 @@ func TestServersSaysAMissingMacConfOnce(t *testing.T) {
 		t.Errorf("stderr says values.yml is missing %d times, want once: %q", n, stderr)
 	}
 }
+
+func TestServersRefusesABadMacFileOnce(t *testing.T) {
+	m, run := serversFixture()
+	m.Files["/e/values.yml"] = []byte(values.Text("WS_SLOT", "3"))
+	status, stdout, stderr := run()
+	if status != 1 || stdout != "" || strings.Count(stderr, "/e/values.yml") != 1 || strings.Contains(stderr, "fix its file") {
+		t.Errorf("status = %d, stdout = %q, stderr = %q; want 1 and one refusal of values.yml alone", status, stdout, stderr)
+	}
+}
