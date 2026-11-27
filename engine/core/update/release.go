@@ -4,31 +4,22 @@ package update
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"path"
 	"strings"
-	"time"
 
 	"github.com/zadykian/ws/engine/core/check"
+	"github.com/zadykian/ws/engine/core/web"
 )
-
-// transport is Go's default, which takes a proxy from the environment, but gives up on a server
-// that has not begun to answer within 30 seconds.
-var transport = func() *http.Transport {
-	t := http.DefaultTransport.(*http.Transport).Clone() //nolint:forcetypeassert // Go's default is a *http.Transport
-	t.ResponseHeaderTimeout = 30 * time.Second
-	return t
-}()
 
 // latest returns the tag that the redirect of releases/latest names. It reads the redirect rather
 // than GitHub's API, which allows 60 calls an hour without a token.
 func latest(ctx context.Context, releases string) (string, error) {
 	address := releases + "/latest"
 	client := &http.Client{
-		Transport:     transport,
+		Transport:     web.Transport,
 		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, address, nil)
@@ -53,18 +44,7 @@ func latest(ctx context.Context, releases string) (string, error) {
 
 // get returns the file at address. It follows a redirect to HTTPS alone.
 func get(ctx context.Context, address string) ([]byte, error) {
-	client := &http.Client{
-		Transport: transport,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			if req.URL.Scheme != "https" {
-				return fmt.Errorf("redirected to %s, which is not HTTPS", req.URL)
-			}
-			if len(via) >= 10 {
-				return errors.New("stopped after 10 redirects")
-			}
-			return nil
-		},
-	}
+	client := web.Client()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, address, nil)
 	if err != nil {
 		return nil, fmt.Errorf("downloading %s: %w", address, err)

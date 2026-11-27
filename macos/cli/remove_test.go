@@ -148,6 +148,20 @@ func TestRemoveRefusesWhereAServerThatStaysHasABadFile(t *testing.T) {
 	}
 }
 
+func TestRemoveRefusesABadMacFileOnce(t *testing.T) {
+	p, m := removeFixture()
+	m.Files["/etc/ws/servers/abc/values.yml"] = []byte(values.Text("WS_SLOT", "2"))
+	m.Dirs["/etc/ws/servers/abc"] = 0o755
+	m.Files["/etc/ws/values.yml"] = []byte(values.Text("WS_SLOT", "3"))
+	status, _, stderr := runWs(p, "macos", "remove", "lab")
+	if status != 1 || strings.Count(stderr, "/etc/ws/values.yml") != 1 || strings.Contains(stderr, "fix its file") {
+		t.Errorf("status = %d, stderr = %q; want 1 and one refusal of values.yml alone", status, stderr)
+	}
+	if strings.Contains(stderr, "server ") {
+		t.Errorf("stderr = %q, want no server blamed", stderr)
+	}
+}
+
 // TestRemoveTakesAServerThatClashesWithOneThatStays checks that a clash with the gone server's file does
 // not stop its removal, which is the way out of the clash.
 func TestRemoveTakesAServerThatClashesWithOneThatStays(t *testing.T) {

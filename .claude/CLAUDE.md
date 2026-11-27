@@ -34,8 +34,8 @@ and CI.
   `effect`, with `effect/effecttest`, `effect/local` and `effect/units`, and `resource`, with
   `resource/resourcetest`, the resources the kinds share, `kind`, the kinds that a role's
   `units.toml.tmpl` names as units ([kind](../engine/core/kind/README.md)), and `update`, the
-  download, checksum and replace of `ws update`. They are public, as the roles
-  import them from outside `engine/`.
+  download, checksum and replace of `ws update`. `web` holds the timeout and the redirects that
+  a checked download keeps. They are public, as the roles import them from outside `engine/`.
 - `mise.toml`: mise's config that both sides share, its settings. ws is no tool of mise's: the
   machine's one ws is `/usr/local/bin/ws`. `mise.guest.toml` is
   the guest's part and `mise.host.toml` the host's, and `plugins/ws` the plugin that hands ws's

@@ -6,8 +6,12 @@ import (
 )
 
 // refuseBadSibling refuses where the file of a server other than name, beside mac, is refused.
-// remove's steps read the other servers, and a file they skip loses its traces.
+// remove's steps read the other servers, and a file they skip loses its traces. A bad values.yml
+// is refused first and alone: no server is at fault.
 func refuseBadSibling(m effect.Machine, mac, name string) error {
+	if _, err := values.LoadMac(m, mac); err != nil {
+		return err
+	}
 	names, err := values.Servers(m, mac)
 	if err != nil {
 		return err

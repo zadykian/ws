@@ -32,13 +32,16 @@ func newServersCmd(p enginecli.Env, server *string) *cobra.Command {
 			if len(names) == 0 {
 				return fmt.Errorf("no server beside %s: write NAME/values.yml there, as macos/README.md says", mac)
 			}
+			if _, err := values.LoadMac(p.Machine, mac); err != nil {
+				return err
+			}
 			var refused []error
 			w := tabwriter.NewWriter(c.OutOrStdout(), 0, 0, 2, ' ', 0)
 			fmt.Fprintln(w, "NAME\tTARGET\tSLOT\tTUNNEL") //nolint:errcheck // tabwriter buffers, and Flush returns the error
 			for _, name := range names {
 				target, slot := "-", "-"
 				if s, err := values.Load(p.Machine, mac, values.ServerPath(mac, name)); err != nil {
-					refused = appendNew(refused, err)
+					refused = append(refused, err)
 				} else {
 					target, slot = s.Target, fmt.Sprint(s.TunnelSlot())
 				}
@@ -47,16 +50,6 @@ func newServersCmd(p enginecli.Env, server *string) *cobra.Command {
 			return errors.Join(append(refused, w.Flush())...)
 		},
 	}
-}
-
-// appendNew adds err to errs unless one says the same: a bad values.yml fails every server's load.
-func appendNew(errs []error, err error) []error {
-	for _, e := range errs {
-		if e.Error() == err.Error() {
-			return errs
-		}
-	}
-	return append(errs, err)
 }
 
 // pickServer returns the name of the server that --server names, or of the only one.
