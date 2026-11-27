@@ -6,45 +6,7 @@ import (
 	"strings"
 )
 
-// ItemKind says what an Item is. The values are those of --json.
-type ItemKind string
-
-// The kinds of item.
-const (
-	PackageItem ItemKind = "package"
-	ServiceItem ItemKind = "service"
-	FileItem    ItemKind = "file"
-	LinkItem    ItemKind = "link"
-	DirItem     ItemKind = "directory"
-	// CheckItem is what stops a run.
-	CheckItem ItemKind = "check"
-)
-
-// Item is a part of what a step manages, as a report shows it. It holds no secret.
-type Item struct {
-	Kind ItemKind `json:"kind"`
-	Name string   `json:"name"`
-	// Want is the state ws sets and Found the state on the machine, as a person reads them.
-	Want  string `json:"want"`
-	Found string `json:"found"`
-	// Conflict says why Found stands against ws, where it does.
-	Conflict string `json:"conflict,omitempty"`
-	// Diff is a file's diff to what ws writes, empty for a secret.
-	Diff string `json:"diff,omitempty"`
-}
-
-// Reporter is a Step, or a part of one, that says what it manages.
-type Reporter interface {
-	// Report reads alone, as Plan does, and follows a Plan that passed: what Plan refuses stays unread.
-	Report(ctx context.Context) ([]Item, error)
-}
-
-// Itemized is a Change that stands as an Item.
-type Itemized interface {
-	Item() Item
-}
-
-// Pending is a Change as data: a Change holds what it applies with, and a report crosses a wire.
+// Pending is a Change as data: a Change holds what it applies with, and a read keeps its text alone.
 type Pending struct {
 	Kind ChangeKind `json:"kind"`
 	Text string     `json:"text"`
