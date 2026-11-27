@@ -36,27 +36,27 @@ type edited struct {
 // for the machine. byHand is a line for each host key that the secrets keep and that known_hosts
 // gives no host. A server that came back with another hostname leaves its older key so.
 func (h HostKeys) Add(ctx context.Context, server, hostname, key string) (byHand []string, err error) {
-	known, err := KnownKeys(h.M, h.Getenv("HOME"))
+	known, err := knownKeys(h.M, h.Getenv("HOME"))
 	if err != nil {
 		return nil, err
 	}
-	set := func(f Files) (Files, []string, error) { return SetHostKey(f, hostname, key) }
+	set := func(f Files) (Files, []string, error) { return setHostKey(f, hostname, key) }
 	err = h.change(ctx, set, func(e edited) error {
 		// GitHub changes no deploy key in place, so an older key goes before the new one comes.
-		drop, add := PlanDeployKeys(e.keys, hostname, key)
+		drop, add := planDeployKeys(e.keys, hostname, key)
 		for _, k := range drop {
 			if err := h.deleteKey(ctx, e.repo, k); err != nil {
 				return err
 			}
 		}
 		if add {
-			if err := AddDeployKey(ctx, h.M, GH, e.repo.Slug(), hostname, key); err != nil {
+			if err := addDeployKey(ctx, h.M, GH, e.repo.Slug(), hostname, key); err != nil {
 				return err
 			}
 			_, _ = fmt.Fprintf(h.Out, "added the read-only deploy key %s to %s\n", hostname, e.repo.Slug())
 		}
 		kept := slices.DeleteFunc(e.keys, func(k DeployKey) bool { return slices.Contains(drop, k) })
-		left, err := Strays(e.files, kept, known)
+		left, err := strays(e.files, kept, known)
 		if err != nil {
 			return err
 		}

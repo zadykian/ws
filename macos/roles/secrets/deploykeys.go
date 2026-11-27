@@ -70,9 +70,9 @@ func deployKeyOf(line string) (DeployKey, error) {
 	return DeployKey{ID: id, Title: tsvField.Replace(f[1]), Key: strings.Join(key, " "), ReadOnly: readOnly}, nil
 }
 
-// AddDeployKey adds key to the repository slug as a read-only deploy key titled title. -f passes
+// addDeployKey adds key to the repository slug as a read-only deploy key titled title. -f passes
 // each field as a string, so that none reads a file by @.
-func AddDeployKey(ctx context.Context, m effect.Machine, gh, slug, title, key string) error {
+func addDeployKey(ctx context.Context, m effect.Machine, gh, slug, title, key string) error {
 	if !hostKeyForm.MatchString(key) {
 		return fmt.Errorf("the deploy key %s is not ssh-ed25519 BASE64", title)
 	}
@@ -94,11 +94,11 @@ func DeleteDeployKey(ctx context.Context, m effect.Machine, gh, slug string, id 
 	return nil
 }
 
-// PlanDeployKeys says which of keys to delete, and whether to add key under title, so that one
+// planDeployKeys says which of keys to delete, and whether to add key under title, so that one
 // read-only deploy key titled title holds key. GitHub changes no deploy key in place, and refuses
 // a key that the repository holds already. So an older key under title, key under another title
 // and key with write access each go before the add.
-func PlanDeployKeys(keys []DeployKey, title, key string) (drop []DeployKey, add bool) {
+func planDeployKeys(keys []DeployKey, title, key string) (drop []DeployKey, add bool) {
 	add = true
 	for _, k := range keys {
 		switch {

@@ -14,12 +14,12 @@ var hostKeyForm = regexp.MustCompile(`^ssh-ed25519 [A-Za-z0-9+/]+={0,2}$`)
 // errNotSetUp stops a change to a repository that init has not set up.
 var errNotSetUp = errors.New("the secrets repository is not set up: run ws macos secrets init")
 
-// SetHostKey makes key the recipient of hostname's label in fnox.toml and in hostname's profile
+// setHostKey makes key the recipient of hostname's label in fnox.toml and in hostname's profile
 // file. It makes that file where missing, with the Nano's and the backup's recipients of
 // fnox.toml. It takes key from any other label first, as a server whose hostname changed keeps
 // its key. changed lists the files whose recipients changed, fnox.toml first, then by name: none
 // where key was in place.
-func SetHostKey(f Files, hostname, key string) (out Files, changed []string, err error) {
+func setHostKey(f Files, hostname, key string) (out Files, changed []string, err error) {
 	if err := CheckHostname(hostname); err != nil {
 		return nil, nil, err
 	}
@@ -69,7 +69,7 @@ func SetHostKey(f Files, hostname, key string) (out Files, changed []string, err
 
 // DropKey takes key from every table of recipients: fnox.toml's and each profile file's. A file
 // stays, with its values, so that a rebuilt server takes its profile again. changed lists the
-// files whose recipients changed, as SetHostKey's does, and labels the labels that held key.
+// files whose recipients changed, as setHostKey's does, and labels the labels that held key.
 // Neither holds a name where key is no recipient.
 func DropKey(f Files, key string) (out Files, changed, labels []string, err error) {
 	if !hostKeyForm.MatchString(key) {

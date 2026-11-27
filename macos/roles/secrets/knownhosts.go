@@ -48,9 +48,9 @@ func HostKey(ctx context.Context, m effect.Machine, home, name string) (string, 
 	return key, nil
 }
 
-// KnownKeys are the ed25519 keys that home's known_hosts gives any host, as "ssh-ed25519 BASE64". A
+// knownKeys are the ed25519 keys that home's known_hosts gives any host, as "ssh-ed25519 BASE64". A
 // missing file gives none. A line that is not of ssh's form gives none, as ssh trusts no key there.
-func KnownKeys(m effect.Machine, home string) (map[string]bool, error) {
+func knownKeys(m effect.Machine, home string) (map[string]bool, error) {
 	file := KnownHosts(home)
 	text, err := m.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
