@@ -1,8 +1,6 @@
 package values
 
 import (
-	"errors"
-
 	"github.com/zadykian/ws/engine/core/effect"
 )
 
@@ -11,6 +9,5 @@ import (
 // refusal names the server and the way out of its file, as the facts' do. A Mac with no server yet
 // has values.yml alone to check.
 func Check(m effect.Machine, mac string) error {
-	f := ReadFleet(m, mac)
-	return errors.Join(f.MacErr, f.NamesErr, f.Refused())
+	return ReadFleet(m, mac).Refusal()
 }

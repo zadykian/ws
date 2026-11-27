@@ -157,6 +157,12 @@ func (f Fleet) Refused() error {
 	return errors.Join(all...)
 }
 
+// Refusal returns every refusal of the read once: values.yml's, servers/'s and each server's, in the
+// words of its own file. A Mac with no server yet has values.yml's alone.
+func (f Fleet) Refusal() error {
+	return errors.Join(f.MacErr, f.NamesErr, f.Refused())
+}
+
 // GuestsOf returns the servers whose WS_HOST names host, in order. A file that does not parse
 // names none: the check says why.
 func (f Fleet) GuestsOf(host string) []string {
