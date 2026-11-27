@@ -163,6 +163,7 @@ func TestFleetLoadJoinsTheMacsKeysAndRefusesBothFiles(t *testing.T) {
 
 func TestFleetReadsNoServerBesideAMissingServersDir(t *testing.T) {
 	m := machineWith()
+	delete(m.Dirs, serversDirPath)
 	m.Files[macPath] = nil
 	if f := ReadFleet(m, macPath); len(f.Servers) != 0 || f.NamesErr != nil || f.MacErr != nil || errors.Join(f.Refused()) != nil {
 		t.Errorf("ReadFleet = %+v, want an empty fleet", f)
