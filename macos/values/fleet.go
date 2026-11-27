@@ -187,7 +187,8 @@ func (f Fleet) GuestsOf(host string) []string {
 
 // Load returns the joined values of the server called name, as a command for one server reads them.
 // Where values.yml or the server's file is refused, it returns both refusals, each in its own file's
-// words. Else it returns the server's clash, if any. Another server's file never refuses it.
+// words. Else it returns the server's clash, if any. No server's bad file refuses it but its own and,
+// for a guest, its host's.
 func (f Fleet) Load(name string) (Conf, error) {
 	s, ok := f.Server(name)
 	if !ok {
