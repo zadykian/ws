@@ -44,10 +44,6 @@ type forcedChange struct{ change }
 
 func (forcedChange) Forced() bool { return true }
 
-type warnedChange struct{ change }
-
-func (warnedChange) Warned() bool { return false }
-
 type earlyChange struct{ change }
 
 func (earlyChange) Early() bool { return true }
@@ -64,7 +60,7 @@ func TestSaidRefusesAChangeWithAMarkerItWouldDrop(t *testing.T) {
 	var log []string
 	c := change{"m", &log, nil}
 	for name, marked := range map[string]resource.Change{
-		"forced": forcedChange{c}, "warned": warnedChange{c}, "early": earlyChange{c},
+		"forced": forcedChange{c}, "early": earlyChange{c},
 		"titled": titledChange{c}, "excerpted": excerptedChange{c},
 	} {
 		changes, err := resource.Said{Out: &effecttest.Out{}, Part: part{marked}}.Plan(context.Background())
