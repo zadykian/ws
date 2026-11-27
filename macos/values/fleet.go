@@ -160,7 +160,7 @@ func (f Fleet) Refused() error {
 	var all []error
 	for _, s := range f.Servers {
 		if s.Err != nil {
-			all = append(all, RefuseSibling(s.Name, s.Err))
+			all = append(all, RefuseSibling(s.Name, s.Err, f.GuestsOf(s.Name)))
 		}
 	}
 	return errors.Join(all...)

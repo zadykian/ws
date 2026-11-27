@@ -79,7 +79,7 @@ func TestCheckNamesTheServerAndTheWayOutOfItsFile(t *testing.T) {
 	if err == nil {
 		t.Fatal("Check passed a bad file")
 	}
-	for _, want := range []string{"server lab: ", BadFileHint("lab")} {
+	for _, want := range []string{"server lab: ", BadFileHint("lab", nil)} {
 		if !strings.Contains(err.Error(), want) {
 			t.Errorf("Check = %q, want it to contain %q", err, want)
 		}

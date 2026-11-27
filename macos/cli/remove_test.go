@@ -150,6 +150,24 @@ func TestRemoveRefusesWhereAServerThatStaysHasABadFile(t *testing.T) {
 	}
 }
 
+// TestRemoveHintsAtNoRemovalThatItRefuses checks that a host whose file is refused is named with
+// no removal. Remove refuses the host and each guest while its file stays refused.
+func TestRemoveHintsAtNoRemovalThatItRefuses(t *testing.T) {
+	for name, gone := range map[string]string{"another server": "lab", "its own guest": "zed"} {
+		t.Run(name, func(t *testing.T) {
+			p, m := removeFixture()
+			m.Files["/etc/ws/servers/ws/values.yml"] = []byte(values.Text("WS_SLOT", "99"))
+			m.Files["/etc/ws/servers/zed/values.yml"] = []byte(values.Text("WS_HOST", "ws", "WS_SLOT", "2"))
+			m.Dirs["/etc/ws/servers/zed"] = 0o755
+			status, _, stderr := runWs(p, "macos", "remove", gone)
+			if !strings.HasSuffix(strings.TrimSpace(stderr), ": fix its file") || status != 1 ||
+				!strings.Contains(stderr, "server ws: ") {
+				t.Errorf("status = %d, stderr = %q; want 1, ws's refusal and the hint to fix its file alone", status, stderr)
+			}
+		})
+	}
+}
+
 // TestRemoveNamesTheFirstServerThatStaysAndIsRefused checks that the refusal names one server, the
 // first, as the guard did before the one read.
 func TestRemoveNamesTheFirstServerThatStaysAndIsRefused(t *testing.T) {
