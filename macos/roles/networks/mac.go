@@ -97,7 +97,7 @@ func (n Mac) resolvers(ctx context.Context) ([]step.Change, error) {
 			return nil, err
 		}
 		for _, c := range gone {
-			cs = append(cs, removal{c, resolverFile})
+			cs = append(cs, removal{c})
 		}
 	}
 	return cs, nil

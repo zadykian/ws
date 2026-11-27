@@ -1,13 +1,9 @@
 package resource
 
-import (
-	"context"
-
-	"github.com/zadykian/ws/engine/core/step"
-)
+import "context"
 
 // Joined is one resource of several parts, for a unit whose kind takes one: their changes in the
-// parts' order, and their reports joined as Group's.
+// parts' order.
 type Joined []Resource
 
 // Plan joins the parts' changes. A part's error stops it, as in Group.
@@ -22,6 +18,3 @@ func (j Joined) Plan(ctx context.Context) ([]Change, error) {
 	}
 	return all, nil
 }
-
-// Report joins what the parts report.
-func (j Joined) Report(ctx context.Context) ([]step.Item, error) { return Group{Parts: j}.Report(ctx) }

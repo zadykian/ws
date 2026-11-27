@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/resource/internal/paths"
 )
 
 // PackageState is what dpkg-query says of a package: its version and its status, such as ii, rc or
@@ -20,7 +19,7 @@ type PackageState struct {
 // dpkgFormat is the one format of dpkg-query that ws reads.
 const dpkgFormat = "${Package} ${Version} ${db:Status-Abbrev}\n"
 
-// PackageStates asks dpkg for the packages of patterns, names or globs, and no others, as a report
+// PackageStates asks dpkg for the packages of patterns, names or globs, and no others, as a plan
 // covers what ws manages. No pattern runs nothing: dpkg-query lists every package for none.
 func PackageStates(ctx context.Context, m effect.Machine, patterns ...string) (map[string]PackageState, error) {
 	states := map[string]PackageState{}
@@ -52,25 +51,10 @@ func PackageStates(ctx context.Context, m effect.Machine, patterns ...string) (m
 	return states, nil
 }
 
-// Installed is true for ii alone: plans and reports count a package in any other state, such as
-// iU or hi, as not installed.
+// Installed is true for ii alone: a plan counts a package in any other state, such as iU or hi,
+// as not installed.
 func (s PackageState) Installed() bool { return s.Status == "ii" }
-
-// settingsLeft is true for a package that was removed and kept its settings.
-func (s PackageState) settingsLeft() bool { return len(s.Status) >= 2 && s.Status[1] == 'c' }
 
 // present is true for a package with anything of it on the machine: the status's second letter
 // is n for nothing.
 func (s PackageState) present() bool { return len(s.Status) >= 2 && s.Status[1] != 'n' }
-
-func (s PackageState) text() string {
-	switch {
-	case s.Installed():
-		return s.Version
-	case s.settingsLeft():
-		return "settings left"
-	case !s.present():
-		return paths.Missing
-	}
-	return s.Version + " (" + s.Status + ")"
-}

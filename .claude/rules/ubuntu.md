@@ -72,11 +72,10 @@ steps, and each role's README says what it sets up.
 - A role's test states dpkg's database by effecttest's package table, never by a `dpkg-query` line
   in Results, so apt's read can change under it
   ([machine_dpkg.go](../../engine/core/effect/effecttest/machine_dpkg.go)).
-- A package is installed where dpkg lists it `ii`, in plans and reports alike, and a step reads dpkg
+- A package is installed where dpkg lists it `ii`, in a plan, and a step reads dpkg
   in one run ([dpkg.go](../../engine/core/resource/apt/dpkg.go)). A role reads dpkg through `apt.PackageStates`.
-- A report reads as Plan does and holds no secret: a `Secret` file shows no diff and no sum
-  ([report.go](../../engine/core/step/report.go)). A `File` that a role builds in `Plan` shows by its change
-  alone, so a healthy one has no item.
+- A change's text holds no secret: a `Secret` file shows no diff and no sum
+  ([file.go](../../engine/core/resource/file/file.go)).
 - Where a dry run skips a step, a step beside it shows what the run would change
   ([claude's marketplaces](../../ubuntu/roles/claude/marketplaces.go)).
 - A file ws writes whole, on the server or the Mac, has one line at its top, where its format

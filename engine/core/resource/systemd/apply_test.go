@@ -6,5 +6,3 @@ import (
 
 // applyAll applies a resource, as resourcetest does.
 var applyAll = resourcetest.ApplyAll
-
-var reportOf = resourcetest.ReportOf

@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/resource/internal/paths"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -48,21 +47,4 @@ func (p Purged) Plan(ctx context.Context) ([]resource.Change, error) {
 		return nil, nil
 	}
 	return []resource.Change{purge{p.M, present}}, nil
-}
-
-// Report shows each package as dpkg knows it. One that is installed stands against ws, as a run
-// purges it.
-func (p Purged) Report(ctx context.Context) ([]step.Item, error) {
-	states, err := PackageStates(ctx, p.M, p.Names...)
-	if err != nil {
-		return nil, err
-	}
-	items := make([]step.Item, len(p.Names))
-	for i, name := range p.Names {
-		items[i] = step.Item{Kind: step.PackageItem, Name: name, Want: paths.Missing, Found: states[name].text()}
-		if states[name].Installed() {
-			items[i].Conflict = "installed, and ws purges it"
-		}
-	}
-	return items, nil
 }

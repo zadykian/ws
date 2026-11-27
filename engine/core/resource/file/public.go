@@ -8,10 +8,9 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/step"
 )
 
-// Public is a root's file that everyone may read. Plan and Report read it, with its owner and mode,
+// Public is a root's file that everyone may read. Plan reads it, with its owner and mode,
 // as the user, so that a run that changes nothing asks for no password. Only a change goes
 // through sudo, as File's does.
 type Public struct {
@@ -56,19 +55,6 @@ func (p Public) Plan(ctx context.Context) ([]resource.Change, error) {
 	return f.Plan(ctx)
 }
 
-// Report compares the file as File's does, from what the user reads.
-func (p Public) Report(ctx context.Context) ([]step.Item, error) {
-	f := p.file()
-	before, got, ok, err := p.look()
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
-		return f.Report(ctx)
-	}
-	return []step.Item{f.item(before, got)}, nil
-}
-
 // PublicDir is a root's directory that everyone may enter, read as Public's file is.
 type PublicDir struct {
 	M    effect.Machine
@@ -84,9 +70,4 @@ func (d PublicDir) Plan(ctx context.Context) ([]resource.Change, error) {
 		return nil, nil
 	}
 	return dir.Plan(ctx)
-}
-
-// Report is Dir's: the sudo stat shows what the user's may not.
-func (d PublicDir) Report(ctx context.Context) ([]step.Item, error) {
-	return Dir{M: d.M, Path: d.Path, Mode: d.Mode}.Report(ctx)
 }

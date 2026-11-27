@@ -41,7 +41,7 @@ func (f filePart) lines(e Env, owner account.Account, rel string) file.HomeLines
 	if mode == 0 {
 		mode = 0o644
 	}
-	l := owner.Lines(e.M, rel, file.UserLines{Lines: text, Shown: shown(text), Top: f.LineAt != "end", Mode: mode, Has: f.holds()})
+	l := owner.Lines(e.M, rel, file.HomeLines{Lines: text, Shown: shown(text), Top: f.LineAt != "end", Mode: mode, Has: f.holds()})
 	l.Check = f.checker()
 	l.Follow = e.System == MacOS
 	return l

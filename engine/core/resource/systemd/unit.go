@@ -2,11 +2,9 @@
 package systemd
 
 import (
-	"cmp"
 	"context"
 	"fmt"
 	"github.com/zadykian/ws/engine/core/resource"
-	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
@@ -24,8 +22,6 @@ const (
 	// timer or a path unit starts.
 	Triggered
 )
-
-var runWords = map[Run]string{Running: "running", Stopped: "stopped", Triggered: "started by its trigger"}
 
 // Unit is a systemd unit that is enabled or not, and running or not.
 type Unit struct {
@@ -147,45 +143,6 @@ func (u Unit) Plan(ctx context.Context) ([]resource.Change, error) {
 		call("reset failed state of", u.U.ResetFailed)
 	}
 	return cs, nil
-}
-
-// Report reads the unit's state.
-func (u Unit) Report(ctx context.Context) ([]step.Item, error) {
-	item := step.Item{Kind: step.ServiceItem, Name: u.Name, Want: u.wanted()}
-	s, err := u.U.State(ctx, u.Name)
-	if err != nil {
-		return nil, fmt.Errorf("unit %s: %w", u.Name, err)
-	}
-	item.Found = unitState(s)
-	return []step.Item{item}, nil
-}
-
-func (u Unit) wanted() string {
-	var want []string
-	if u.Enabled {
-		want = append(want, "enabled")
-	}
-	if u.Disabled {
-		want = append(want, "disabled")
-	}
-	if run, ok := runWords[u.Run]; ok {
-		want = append(want, run)
-	}
-	return cmp.Or(strings.Join(want, ", "), "as it is")
-}
-
-func unitState(s effect.UnitState) string {
-	boot, run := "disabled", "stopped"
-	if s.Enabled {
-		boot = "enabled"
-	}
-	switch {
-	case s.Active:
-		run = "running"
-	case s.Failed:
-		run = "failed"
-	}
-	return boot + ", " + run
 }
 
 // ByRestart is a watched change that the restart itself settles, such as a service's drift from

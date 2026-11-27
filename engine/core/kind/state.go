@@ -12,7 +12,6 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/account"
 	"github.com/zadykian/ws/engine/core/resource/apt"
 	"github.com/zadykian/ws/engine/core/resource/systemd"
-	"github.com/zadykian/ws/engine/core/step"
 )
 
 // userName is a user's or a group's name as a state takes it: no option for the command it goes
@@ -128,15 +127,6 @@ func (l lingered) Plan(ctx context.Context) ([]resource.Change, error) {
 	}
 	more, err := u.Plan(ctx)
 	return append(cs, more...), err
-}
-
-// Report reads the manager's state.
-func (l lingered) Report(ctx context.Context) ([]step.Item, error) {
-	u, err := l.manager(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return u.Report(ctx)
 }
 
 // purgedState is a package removed with its settings, where dpkg holds anything of it.

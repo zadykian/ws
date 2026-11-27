@@ -12,7 +12,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/resource/internal/paths"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -104,23 +103,4 @@ func (d Download) Plan(context.Context) ([]resource.Change, error) {
 		return []resource.Change{setAttrs{d}}, nil
 	}
 	return nil, nil
-}
-
-// Report compares the file as Plan does, and one that differs stands against ws. Its content is a
-// release's, so no diff shows it.
-func (d Download) Report(context.Context) ([]step.Item, error) {
-	item := step.Item{Kind: step.FileItem, Name: d.Path, Want: paths.AttrsText(d.attrs()), Found: paths.Missing}
-	body, got, ok, err := paths.ReadRoot(d.M, d.Path)
-	if !ok {
-		return []step.Item{item}, err
-	}
-	item.Found = paths.AttrsText(got)
-	switch {
-	case fmt.Sprintf("%x", sha256.Sum256(body)) != d.SHA256:
-		item.Found += ", other content"
-		item.Conflict = "differs from the download ws pins: a change by hand, or another version of ws"
-	case got != d.attrs():
-		item.Conflict = paths.AttrsChanged
-	}
-	return []step.Item{item}, nil
 }

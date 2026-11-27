@@ -23,7 +23,7 @@ func (rootReads) RootAttrs(string) (effect.Attrs, error) { return effect.Attrs{M
 func TestHomeLinesPlansACreateWithNoSecondRead(t *testing.T) {
 	m := effecttest.NewMachine()
 	l := homeLinesIn(m, true)
-	l.Rules.M = rootReads{m}
+	l.M = rootReads{m}
 	cs, err := l.Plan(context.Background())
 	if err != nil || len(cs) != 1 {
 		t.Fatalf("Plan = %v, %v; want one create", cs, err)
