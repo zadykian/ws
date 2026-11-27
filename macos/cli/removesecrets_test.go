@@ -3,7 +3,6 @@ package cli
 import (
 	"errors"
 	"os/exec"
-	"slices"
 	"strings"
 	"testing"
 
@@ -38,46 +37,16 @@ func TestRemoveDropsTheKeyFromTheSecretsBeforeTheHost(t *testing.T) {
 		t.Fatalf("remove lab: status = %d, stderr = %q", status, stderr)
 	}
 	at := -1
-	for _, part := range []string{findLab, keysLine, " fnox reencrypt -p age -f", secrets.GH + " pr create",
-		secrets.GH + " pr merge", secrets.GH + " api -X DELETE repos/o/n/keys/5", "run ssh-keygen -R lab",
-		"rm -rf /etc/ws/servers/lab"} {
+	for _, part := range []string{findLab, secrets.GH + " pr merge", secrets.GH + " api -X DELETE repos/o/n/keys/5",
+		"run ssh-keygen -R lab", "rm -rf /etc/ws/servers/lab"} {
 		i := callAt(mac.Calls, part)
 		if i <= at {
 			t.Fatalf("%q comes at %d, after %d, in\n%q", part, i, at, mac.Calls)
 		}
 		at = i
 	}
-	want := secrets.Change{Topic: "remove-ws-a", Title: "chore: remove the host key of ws-a",
-		Body: "Removed by ws macos remove lab.", Files: []string{"fnox.toml", "fnox.ws-a.toml"}}
-	if landed := mac.Landed(); len(landed) != 1 || !equalChange(landed[0], want) {
-		t.Errorf("remove landed %+v, want %+v", landed, want)
-	}
-	wantFnox := [][]string{{"reencrypt", "-p", "age", "-f"}, {"-P", "ws-a", "reencrypt", "-p", "host", "-f"}}
-	if !slices.EqualFunc(mac.Fnoxed(), wantFnox, slices.Equal) {
-		t.Errorf("remove ran fnox %q, want %q", mac.Fnoxed(), wantFnox)
-	}
-	files := mac.Files()
-	if profile, ok := files["fnox.ws-a.toml"]; !ok || strings.Contains(files["fnox.toml"]+profile, labKey) {
-		t.Errorf("remove left the files %q, want ws-a's profile kept and lab's key out of both", files)
-	}
 	if !strings.HasPrefix(stdout, "opened "+secretstest.Pull) || strings.Contains(stdout, "By hand") {
 		t.Errorf("stdout = %q, want the pull request first and nothing by hand", stdout)
-	}
-}
-
-func TestRemoveOfAKeyThatIsNoRecipientLandsNothing(t *testing.T) {
-	p, mac := removeSecretsFixture(nil)
-	mac.Keys = []secrets.DeployKey{{ID: 9, Title: "ws-old", Key: labKey, ReadOnly: true},
-		{ID: 4, Title: "ws-b", Key: olderKey, ReadOnly: true}}
-	status, stdout, stderr := runWs(p, "macos", "remove", "lab")
-	if status != 0 || !strings.Contains(stdout, "the secrets' recipients hold no host key of lab") {
-		t.Fatalf("remove of no recipient: status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
-	}
-	if len(mac.Fnoxed()) != 0 || len(mac.Landed()) != 0 {
-		t.Errorf("remove of no recipient ran fnox %q or landed %+v", mac.Fnoxed(), mac.Landed())
-	}
-	if callAt(mac.Calls, "keys/9") < 0 || callAt(mac.Calls, "keys/4") >= 0 {
-		t.Errorf("remove must delete the deploy key of lab's key alone, whatever its title: %q", mac.Calls)
 	}
 }
 

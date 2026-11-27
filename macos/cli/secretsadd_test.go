@@ -116,10 +116,6 @@ func TestSecretsAddLandsTheSecretsBeforeTheRun(t *testing.T) {
 	}
 }
 
-func equalChange(a, b secrets.Change) bool {
-	return a.Topic == b.Topic && a.Title == b.Title && a.Body == b.Body && slices.Equal(a.Files, b.Files)
-}
-
 // scannable takes lab out of known_hosts, and has ssh reach it at 192.0.2.7:22022 by target.
 func scannable(m *secretstest.Mac, target string) {
 	delete(m.Machine.Files, knownHosts)
