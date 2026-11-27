@@ -276,8 +276,8 @@ ws at `/usr/local/bin/ws`, which is there before any run. The write hook runs `w
   The values are the side's file, `/etc/ws/values.yml` on the server.
 - **verify.** mise drops the units of a plugin that it refuses, with a warning and exit 0. `verify`
   reads `mise bootstrap packages status --json`, and fails where the `ws` manager is missing or not
-  available, or lacks a unit of the specs. With every unit there, it prints one line that never
-  changes, for a file whose template runs it.
+  available, or lacks a unit of the specs, or runs outside the run directory. With every unit
+  there, it prints one line that never changes, for a file whose template runs it.
 - **--whole.** The read hook gets every line of mise's plan, and passes `--whole`. Where the specs
   hold a unit that the lines lack, and it has a change, each unit reads `fails: mise's plan lacks
   ws:KIND/NAME`, so the hook fails every plan and run. A lacking unit in sync passes: mise reads

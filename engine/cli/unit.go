@@ -76,6 +76,15 @@ func (r unitRun) runDir() string {
 	return r.run
 }
 
+// outsideRun returns why a run of mise in pwd loads none of the specs' lines but the root's, or ""
+// in the run directory. read --whole and verify both fail with it, before they ask mise.
+func (r unitRun) outsideRun(pwd string) string {
+	if sameDir(pwd, r.runDir()) {
+		return ""
+	}
+	return "mise runs in " + pwd + ", which loads none of the specs' lines: run mise in " + r.runDir()
+}
+
 // sides are the sides that one ws unit serves.
 type sides []UnitSide
 

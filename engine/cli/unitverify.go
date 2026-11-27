@@ -45,6 +45,9 @@ func unitVerify(p Env, ss sides) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if why := r.outsideRun(p.Pwd); why != "" {
+				return errors.New(why)
+			}
 			text, err := p.Machine.Run(c.Context(), "mise", "bootstrap", "packages", "status", "--json")
 			if errors.Is(err, exec.ErrNotFound) {
 				return errors.New("mise is not on PATH")
