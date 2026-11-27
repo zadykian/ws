@@ -253,10 +253,10 @@ address is the lease that the bridge's DHCP gives, and the port's name is the on
 host. A guest of ws's that the list lacks gets a warning, and no deletion: remove it with
 `ws ubuntu host guests remove NAME`.
 
-The create alone sets `cloud-init.network-config`, which the image's template writes into the seed.
-It holds DHCP on `eth0`, and the slot's address as a host route. A guest needs a slot from 1 to 15,
-as its tunnel reads it: `10.99.N.1/24`. Another address, or slot 0, the host's, fails the plan
-before any instance. A later change of the slot reaches no existing guest.
+The create alone sets the seed, `cloud-init.network-config`: DHCP on `eth0` and the slot's address
+as a host route. A guest needs a slot from 1 to 15. Another address, or slot 0, the host's, fails
+the plan before any instance. So does a guest whose seed holds another slot than its values. Set the
+old slot again, or unlist it, remove it with its old slot, then list it with the new.
 
 ## Storage
 

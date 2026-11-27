@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"slices"
 	"strconv"
+	"strings"
+
+	"go.yaml.in/yaml/v3"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
@@ -42,7 +45,7 @@ func Guest(m effect.Machine, t values.GuestTunnel, gpu bool, alias string) objec
 				"gpu":  gpuDevice(gpu),
 			},
 		},
-		First: map[string]any{"config": map[string]any{"cloud-init.network-config": seedNetwork(t)}},
+		First: map[string]any{"config": map[string]any{seedKey: seedNetwork(t)}},
 		Check: func(have map[string]any) error {
 			if profiles, _ := have["profiles"].([]any); !slices.Contains(profiles, any(ProfileName)) {
 				return fmt.Errorf("it takes no profile %s: it is no guest of ws's, and ws never turns an instance into one", ProfileName)
@@ -51,6 +54,9 @@ func Guest(m effect.Machine, t values.GuestTunnel, gpu bool, alias string) objec
 		},
 	}
 }
+
+// seedKey is the instance's key that holds its network-config, which the image's template reads.
+const seedKey = "cloud-init.network-config"
 
 // nvidiaVendor is NVIDIA's PCI vendor ID, as Incus's gpu device names it.
 const nvidiaVendor = "10de"
@@ -81,8 +87,9 @@ func seedNetwork(t values.GuestTunnel) string {
 
 // Guests returns the resources that settle each guest of the list, in order: its instance, its
 // start, and its setup. The guests are the host's load's, each with its tunnel. It fails where a
-// guest has none, before it reads Incus: every guest needs a slot. A guest of ws's that the list
-// lacks gets a warning on out, and no deletion.
+// guest has none, before it reads Incus: every guest needs a slot. It fails too where a held
+// guest's seed names another slot, before any instance is made or edited. A guest of ws's that the
+// list lacks gets a warning on out, and no deletion.
 func Guests(ctx context.Context, m effect.Machine, guests []values.Guest, out effect.Out) ([]resource.Resource, error) {
 	tunnels := make([]values.GuestTunnel, len(guests))
 	for i, g := range guests {
@@ -99,6 +106,9 @@ func Guests(ctx context.Context, m effect.Machine, guests []values.Guest, out ef
 	if err != nil {
 		return nil, err
 	}
+	if err := refuseChangedSlots(held, guests, tunnels); err != nil {
+		return nil, err
+	}
 	for _, name := range Strays(held, guests) {
 		out.Warn("the guest %s is not in WS_INCUS_GUESTS: ws deletes none, so remove it by hand with ws ubuntu host guests remove %s", name, name)
 	}
@@ -108,6 +118,45 @@ func Guests(ctx context.Context, m effect.Machine, guests []values.Guest, out ef
 		steps = append(steps, SetUp(m, g, false, false, out)...)
 	}
 	return steps, nil
+}
+
+// refuseChangedSlots fails where a guest of ws's that Incus holds has a seed that names another
+// slot's address than its values do. The seed is the create's alone, so an edit of the route would
+// send the tunnel's traffic to an address that the guest does not hold.
+func refuseChangedSlots(held []Instance, guests []values.Guest, tunnels []values.GuestTunnel) error {
+	for i, g := range guests {
+		for _, inst := range held {
+			if inst.Name != g.Name || !slices.Contains(inst.Profiles, ProfileName) {
+				continue
+			}
+			have, ok := seedAddress(inst.Config[seedKey])
+			if want := tunnels[i].SlotAddress().String(); ok && have != want {
+				return fmt.Errorf("the guest %s holds %s from its seed and its values name %s: "+
+					"name its old slot again in %s, or take it out of WS_INCUS_GUESTS, run ws ubuntu host guests remove %s "+
+					"with the old slot still in %s, then set the new slot and list it again",
+					g.Name, have, want, g.File(), g.Name, g.File())
+			}
+		}
+	}
+	return nil
+}
+
+// seedAddress reads the slot's address off a guest's network-config, and reports whether it holds one.
+func seedAddress(seed string) (string, bool) {
+	var cfg struct {
+		Ethernets map[string]struct {
+			Addresses []string `yaml:"addresses"`
+		} `yaml:"ethernets"`
+	}
+	if yaml.Unmarshal([]byte(seed), &cfg) != nil {
+		return "", false
+	}
+	for _, addr := range cfg.Ethernets["eth0"].Addresses {
+		if ip, _, ok := strings.Cut(addr, "/"); ok {
+			return ip, true
+		}
+	}
+	return "", false
 }
 
 // guestValuesPath is where a guest reads its values, as a host does.
