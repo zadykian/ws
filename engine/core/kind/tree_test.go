@@ -85,7 +85,8 @@ func TestTreeRefusesABadSpec(t *testing.T) {
 		"[tree.t]\npath = \"/usr\"\n" + archive:               "not a clean absolute path below a directory of /",
 		"[tree.t]\npath = \"opt/t\"\n" + archive:              "not a clean absolute path",
 		"[tree.t]\npath = \"/opt/t\"\nstrip = -1\n" + archive: "strip is below 0",
-		"[tree.t]\npath = \"/opt/t\"\n":                       "an archive at least",
+		"[tree.t]\npath = \"/opt/t\"\n[[tree.t.archive]]\nversion = \"1\"\nurl = \"http://x/t.tar\"\nsha256 = { all = \"" + sum + "\" }\n": "is no https URL",
+		"[tree.t]\npath = \"/opt/t\"\n": "an archive at least",
 		"[tree.t]\npath = \"/opt/t\"\n[[tree.t.archive]]\nurl = \"https://x/t.tar\"\nsha256 = { all = \"" + sum + "\" }\n":        "takes a version",
 		"[tree.t]\npath = \"/opt/t\"\n[[tree.t.archive]]\nversion = \"1\"\nurl = \"https://x/t.tar\"\nsha256 = { all = \"A\" }\n": "64 lowercase hex",
 	} {

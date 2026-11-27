@@ -79,7 +79,7 @@ Its keys and rules are on [its own page](file.md).
 [deb.NAME]
 package = "name"
 version = "1.2.3"
-url = "https://host/{version}/name_{version}_{arch}.deb"
+url = "https://host/{version}/name_{version}_{arch}.deb"  # https alone
 sha256 = { amd64 = "…", arm64 = "…" }  # by dpkg's architecture
 stop = "name.service"                   # kept stopped and disabled where the package installs
 ```
@@ -92,7 +92,7 @@ checked before apt-get installs it. Where the version that dpkg lists is the pin
 ```toml
 [binary.NAME]
 version = "1.2.3"
-url = "https://host/v{version}/name-linux-{arch}"
+url = "https://host/v{version}/name-linux-{arch}"      # https alone
 sha256 = { amd64 = "…", arm64 = "…" }   # by dpkg's architecture, or all = "…" for one file
 arch_names = { amd64 = "x86_64" }        # the asset's spelling of an architecture, where it differs
 path = "/usr/local/sbin/name"            # root's, at mode = 0o755 where unset
@@ -112,7 +112,7 @@ arch_names = { amd64 = "x64" }          # the archives' spelling of an architect
 
 [[tree.NAME.archive]]                   # one table an archive, unpacked in this order
 version = "1.2.3"
-url = "https://host/{version}/name-{version}-linux-{arch}.tar.gz"
+url = "https://host/{version}/name-{version}-linux-{arch}.tar.gz"  # https alone
 sha256 = { amd64 = "…", arm64 = "…" }   # by dpkg's architecture, uname -m's on macOS
 ```
 
@@ -150,7 +150,7 @@ simulate = false            # check that apt finds each name, and install none
 [dkms.NAME]
 module = "name"             # DKMS's name of the source, as its dkms.conf gives it
 version = "1.0"             # DKMS's version of the pin
-url = "https://host/name.tar.gz"
+url = "https://host/name.tar.gz"   # https alone
 sha256 = "…"
 strip = 1                   # leading parts of each name dropped as the tarball unpacks
 conf = "dkms.conf"          # a source written as the tree's dkms.conf, {version} for version

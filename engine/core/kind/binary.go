@@ -37,6 +37,9 @@ func (s binarySpec) parts(e Env, _ fs.FS) (func(context.Context) ([]resource.Res
 	case s.Mode > 0o777:
 		return nil, errors.New("mode is not a file's permission bits")
 	}
+	if err := checkURL(s.URL); err != nil {
+		return nil, err
+	}
 	if err := checkSums(s.SHA256); err != nil {
 		return nil, err
 	}

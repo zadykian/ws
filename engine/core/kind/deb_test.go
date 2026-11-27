@@ -90,9 +90,10 @@ func TestDebStopKeepsTheServiceStopped(t *testing.T) {
 func TestDebRefusesFieldsNoPlanTakes(t *testing.T) {
 	e, _, _, _ := testEnv()
 	for spec, want := range map[string]string{
-		"[deb.a]\npackage = \"a\"\nversion = \"1\"\nurl = \"u\"\n":                             "a sha256 for each",
-		"[deb.a]\npackage = \"a\"\nversion = \"1\"\nurl = \"u\"\nsha256 = { amd64 = \"x\" }\n": "64 lowercase hex",
-		debSpecText("stop = \"a\"\n"):                                                          "type's suffix",
+		"[deb.a]\npackage = \"a\"\nversion = \"1\"\nurl = \"https://u\"\n":                             "a sha256 for each",
+		"[deb.a]\npackage = \"a\"\nversion = \"1\"\nurl = \"https://u\"\nsha256 = { amd64 = \"x\" }\n": "64 lowercase hex",
+		strings.Replace(debSpecText(""), "https://", "http://", 1):                                     "is no https URL",
+		debSpecText("stop = \"a\"\n"):                                                                  "type's suffix",
 	} {
 		if _, err := Load(e, tree(map[string]string{"r/units.toml.tmpl": spec})); err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("load of\n%s= %v, want %q", spec, err, want)
