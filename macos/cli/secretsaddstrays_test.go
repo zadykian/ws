@@ -11,18 +11,7 @@ import (
 // lab comes back as ws-b with labKey, and ws-a's olderKey stays in the secrets, which known_hosts no
 // longer holds. ws-c's key is ws's in known_hosts, so it stays out of the list.
 func TestSecretsAddListsTheKeysThatKnownHostsLacks(t *testing.T) {
-	f := secrets.Files{}
-	for name, text := range heldBy(t, olderKey) {
-		f[name] = []byte(text)
-	}
-	f, _, err := secrets.SetHostKey(f, "ws-c", "ssh-ed25519 AAAA")
-	if err != nil {
-		t.Fatal(err)
-	}
-	files := map[string]string{}
-	for name, text := range f {
-		files[name] = string(text)
-	}
+	files := heldBy(olderKey, "ws-c", "ssh-ed25519 AAAA")
 	p, mac := addFixture(files)
 	mac.Results[hostnameLine] = effecttest.Result{Out: []byte("ws-b\n")}
 	mac.Keys = []secrets.DeployKey{{ID: 7, Title: "ws-a", Key: olderKey, ReadOnly: true},

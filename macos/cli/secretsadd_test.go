@@ -68,14 +68,25 @@ func addFixture(files map[string]string) (enginecli.Env, *secretstest.Mac) {
 }
 
 // heldBy is the repository's files once key is ws-a's recipient, ws-a's profile holding a value.
-func heldBy(t *testing.T, key string) map[string]string {
-	f, _, err := secrets.SetHostKey(secrets.Files{secrets.SharedFile: []byte(sharedText)}, "ws-a", key)
-	if err != nil {
-		t.Fatal(err)
+// more are the labels and keys of other recipients that fnox.toml holds too.
+func heldBy(key string, more ...string) map[string]string {
+	shared := sharedText
+	extra := "ws-a = \"" + key + "\"\n"
+	for i := 0; i+1 < len(more); i += 2 {
+		extra += more[i] + " = \"" + more[i+1] + "\"\n"
 	}
-	profile := secrets.ProfileFile("ws-a")
-	return map[string]string{secrets.SharedFile: string(f[secrets.SharedFile]),
-		profile: string(f[profile]) + `A1 = { provider = "host", value = "` + sealed + `" }` + "\n"}
+	shared = strings.Replace(shared, "backup = \"age1qbackup\"\n", "backup = \"age1qbackup\"\n"+extra, 1)
+	return map[string]string{secrets.SharedFile: shared, secrets.ProfileFile("ws-a"): `[providers.host]
+type = "age"
+
+[providers.host.recipients]
+nano = "age1yubikey1qnano"
+backup = "age1qbackup"
+ws-a = "` + key + `"
+
+[secrets]
+A1 = { provider = "host", value = "` + sealed + `" }
+`}
 }
 
 // addWs runs ws macos secrets add with stdin.
@@ -182,7 +193,7 @@ func TestSecretsAddStopsWhereTheFingerprintDiffers(t *testing.T) {
 }
 
 func TestSecretsAddOpensNoPullRequestWhereNothingChanged(t *testing.T) {
-	p, mac := addFixture(heldBy(t, labKey))
+	p, mac := addFixture(heldBy(labKey))
 	mac.Keys = []secrets.DeployKey{{ID: 5, Title: "ws-a", Key: labKey, ReadOnly: true}}
 	status, stdout, stderr := addWs(p, "", "lab")
 	if status != 0 || !strings.Contains(stdout, "the secrets already hold the host key of ws-a") {
@@ -197,7 +208,7 @@ func TestSecretsAddOpensNoPullRequestWhereNothingChanged(t *testing.T) {
 }
 
 func TestSecretsAddReplacesARebuiltServersKey(t *testing.T) {
-	p, mac := addFixture(heldBy(t, olderKey))
+	p, mac := addFixture(heldBy(olderKey))
 	mac.Keys = []secrets.DeployKey{{ID: 7, Title: "ws-a", Key: olderKey, ReadOnly: true}}
 	if status, _, stderr := addWs(p, "", "lab"); status != 0 {
 		t.Fatalf("add of a rebuilt server: status = %d, stderr = %q", status, stderr)
@@ -262,7 +273,7 @@ func TestSecretsAddRefuses(t *testing.T) {
 // fnox prints a plain value, as where it passes and where it fails, and ws passes none of it on.
 func TestSecretsAddKeepsTheValuesOutOfItsOutput(t *testing.T) {
 	for _, fail := range []error{nil, errors.New("exit status 1")} {
-		p, mac := addFixture(heldBy(t, olderKey))
+		p, mac := addFixture(heldBy(olderKey))
 		mac.FnoxErr = fail
 		status, stdout, stderr := addWs(p, "", "lab")
 		if (status != 0) != (fail != nil) || len(mac.Fnoxed()) == 0 {

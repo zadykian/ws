@@ -36,7 +36,7 @@ func TestSecretsAddRemovesTheCloneOnASignal(t *testing.T) {
 
 func TestRemoveRemovesTheCloneOnASignal(t *testing.T) {
 	for _, sig := range stops {
-		p, mac := removeSecretsFixture(heldBy(t, labKey))
+		p, mac := removeSecretsFixture(heldBy(labKey))
 		mac.Results[checksLine] = effecttest.Result{Out: []byte(pending)}
 		p.Machine = &signaled{Mac: mac, sig: sig, at: checksLine}
 		status, _, stderr := runWs(p, "macos", "remove", "lab")
