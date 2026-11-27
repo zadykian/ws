@@ -254,10 +254,9 @@ host. A guest of ws's that the list lacks gets a warning, and no deletion: remov
 `ws ubuntu host guests remove NAME`.
 
 The create alone sets `cloud-init.network-config`, which the image's template writes into the seed.
-It holds DHCP on `eth0`, and the slot's address as a host route. Each guest needs a slot from 1 to
-15, as its tunnel reads it: `10.99.N.1/24`. Where its own values name another address, or slot 0,
-which is the host's, the plan fails before any instance. A later change of the slot reaches no
-existing guest.
+It holds DHCP on `eth0`, and the slot's address as a host route. A guest needs a slot from 1 to 15,
+as its tunnel reads it: `10.99.N.1/24`. Another address, or slot 0, the host's, fails the plan
+before any instance. A later change of the slot reaches no existing guest.
 
 ## Storage
 
