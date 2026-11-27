@@ -29,7 +29,7 @@ type Host struct {
 func DefaultHost() Host {
 	d := Default()
 	return Host{
-		Base: d.Base, Docker: d.Docker, Fans: defaultFans(), Cable: Cable{Address: "10.77.0.1/30"}, Signoz: d.Signoz, Incus: defaultIncus(), Tunnel: d.Tunnel,
+		Base: d.Base, Docker: d.Docker, Fans: defaultFans(), Cable: Cable{}, Signoz: d.Signoz, Incus: defaultIncus(), Tunnel: d.Tunnel,
 	}
 }
 

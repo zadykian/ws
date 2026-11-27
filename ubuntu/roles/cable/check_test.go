@@ -12,8 +12,8 @@ import (
 // newFile is the netplan file that the file unit checks, beside the live one.
 const newFile = "/etc/netplan/60-cable.yaml.ws-check"
 
-// cableOf is the cable on the port enp5s0, at the default address.
-var cableOf = values.Cable{Port: "enp5s0", Address: "10.77.0.1/30"}
+// cableOf is the cable on the port enp5s0, at the fixed address.
+var cableOf = values.Cable{Port: "enp5s0"}
 
 func TestCableCheckRefusesTheUplink(t *testing.T) {
 	for name, tc := range map[string]struct {
@@ -69,10 +69,10 @@ func TestCableCheckWantsNetworkd(t *testing.T) {
 
 func TestCableCheckWithoutAPortOrItsInterface(t *testing.T) {
 	m, u := portMachine()
-	if err := Check(t.Context(), m, u, values.Cable{Address: "10.77.0.1/30"}, ""); err != nil || len(m.Calls) > 0 {
+	if err := Check(t.Context(), m, u, values.Cable{}, ""); err != nil || len(m.Calls) > 0 {
 		t.Errorf("no port: check = %v, calls %q; want none", err, m.Calls)
 	}
-	if err := Check(t.Context(), m, u, values.Cable{Port: "enp9s0", Address: "10.77.0.1/30"}, ""); err == nil ||
+	if err := Check(t.Context(), m, u, values.Cable{Port: "enp9s0"}, ""); err == nil ||
 		!strings.Contains(err.Error(), "this machine has no interface enp9s0") {
 		t.Errorf("no interface: check = %v, want the port named", err)
 	}

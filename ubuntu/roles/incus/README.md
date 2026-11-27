@@ -68,9 +68,9 @@ is on the bridge, and egress is dropped by default. Ingress is the ingress ACL's
 
 The egress ACL drops `10.0.0.0/8`, `100.64.0.0/10`, `169.254.0.0/16`, `172.16.0.0/12`, `192.168.0.0/16`,
 `224.0.0.0/4` and `255.255.255.255`, then allows the rest. The host's own addresses must sit among
-them, or a guest would reach the host's services: the values refuse a bridge address or a cable
-address outside them. Incus applies each drop before any allow. A network named `incusbr0` that is no
-managed bridge fails the run.
+them, or a guest would reach the host's services. The values refuse a bridge address outside
+them, and the cable's /30 sits among them. Incus applies each drop before any allow. A network
+named `incusbr0` that is no managed bridge fails the run.
 
 ## The ingress ACL
 

@@ -1,5 +1,5 @@
 // Package cable sets up the server's end of the cable to the Mac: an address on the cable's
-// port, from a netplan file of its own. The values' check refuses a bad port or address first.
+// port, from a netplan file of its own. The values' check refuses a bad port first.
 package cable
 
 import (
@@ -7,6 +7,8 @@ import (
 	"net/netip"
 	"slices"
 	"strings"
+
+	"github.com/zadykian/ws/internal/cablenet"
 )
 
 // Route is one default route of `ip -j route show default table all`.
@@ -53,15 +55,11 @@ func (r Route) devices() []string {
 
 // UplinkProblems returns why the interfaces of links look like an uplink. routes are the default
 // routes of every table, for both families. An uplink carries a default route, in any table, or
-// holds an IPv4 address from DHCP, which ip calls dynamic, outside the subnet of address, the
-// cable's. A static address outside it, as an earlier run's address, does not count: DHCP's
-// are the ones the file takes away.
-func UplinkProblems(links []Link, routes []Route, address string) ([]string, error) {
-	own, err := netip.ParsePrefix(address)
-	if err != nil {
-		return nil, fmt.Errorf("the cable's address: %w", err)
-	}
-	subnet := own.Masked()
+// holds an IPv4 address from DHCP, which ip calls dynamic, outside the cable's subnet. A static
+// address outside it, as an earlier run's address, does not count: DHCP's are the ones the file
+// takes away.
+func UplinkProblems(links []Link, routes []Route) ([]string, error) {
+	subnet := cablenet.Net
 	var problems []string
 	for _, link := range links {
 		var tables []string

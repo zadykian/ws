@@ -6,8 +6,6 @@ import (
 	"testing"
 )
 
-const ownAddress = "10.77.0.1/30"
-
 func parse(t *testing.T, links, routes string) ([]Link, []Route) {
 	var l []Link
 	var r []Route
@@ -46,7 +44,7 @@ func TestUplinkProblems(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			links, routes := parse(t, tt.links, tt.routes)
-			got, err := UplinkProblems(links, routes, ownAddress)
+			got, err := UplinkProblems(links, routes)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -59,10 +57,7 @@ func TestUplinkProblems(t *testing.T) {
 
 func TestUplinkRefusesWhatItCannotRead(t *testing.T) {
 	links, routes := parse(t, `[{"ifname":"enp5s0","addr_info":[{"family":"inet","local":"nope","prefixlen":24,"scope":"global","dynamic":true}]}]`, `[]`)
-	if _, err := UplinkProblems(links, routes, ownAddress); err == nil {
+	if _, err := UplinkProblems(links, routes); err == nil {
 		t.Error("an unreadable lease: want an error")
-	}
-	if _, err := UplinkProblems(links, routes, "10.77.0.1"); err == nil {
-		t.Error("an address with no prefix: want an error")
 	}
 }
