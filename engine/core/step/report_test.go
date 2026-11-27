@@ -17,7 +17,7 @@ func TestReadShowsAPlan(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := []step.Report{{Step: "a", Changes: []step.Pending{
-		{Kind: step.Removal, Text: "remove /a"}, {Kind: step.OtherChange, Text: "b"}}}}
+		{Text: "remove /a"}, {Text: "b"}}}}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("reports = %+v, want %+v", got, want)
 	}
@@ -93,7 +93,7 @@ func TestReadGoesPastAFailure(t *testing.T) {
 	want := []step.Report{
 		{Step: "a", Err: boom},
 		{Step: "b", After: "a"},
-		{Step: "c", Changes: []step.Pending{{Kind: step.OtherChange, Text: "x"}}},
+		{Step: "c", Changes: []step.Pending{{Text: "x"}}},
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("reports = %+v, want %+v", got, want)

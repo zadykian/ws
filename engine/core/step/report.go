@@ -8,8 +8,7 @@ import (
 
 // Pending is a Change as data: a Change holds what it applies with, and a read keeps its text alone.
 type Pending struct {
-	Kind ChangeKind `json:"kind"`
-	Text string     `json:"text"`
+	Text string
 }
 
 // PendingOf returns the change as data. Its first line says what changes.
@@ -18,7 +17,7 @@ func PendingOf(c Change) Pending {
 	if t, ok := c.(Titled); ok {
 		text = t.Title() + "\n" + text
 	}
-	return Pending{KindOf(c), text}
+	return Pending{text}
 }
 
 // Headline is a change's first line, what changes. An error or an event names a change by it. The
@@ -30,12 +29,12 @@ func Headline(c Change) string {
 
 // Report is what Read finds of one step.
 type Report struct {
-	Step string `json:"step"`
+	Step string
 	// After names the awaited step that kept this one from being read.
-	After   string    `json:"after,omitempty"`
-	Changes []Pending `json:"changes,omitempty"`
-	// Err is why the step's plan failed, as the step returned it, or nil.
-	Err error `json:"-"`
+	After   string
+	Changes []Pending
+	// Err is why the step failed: its plan's own error, or the wait that settle refused.
+	Err error
 }
 
 // Read plans each step in order and applies none. It goes as a run under check does, so it plans no
