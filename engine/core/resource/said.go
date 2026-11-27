@@ -48,14 +48,6 @@ func markerOf(c Change) string {
 	return ""
 }
 
-// Report is the part's, where it reports.
-func (s Said) Report(ctx context.Context) ([]step.Item, error) {
-	if r, ok := s.Part.(step.Reporter); ok {
-		return r.Report(ctx)
-	}
-	return nil, nil
-}
-
 type speaking struct {
 	out effect.Out
 	Change

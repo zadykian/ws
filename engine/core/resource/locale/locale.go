@@ -9,7 +9,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
-	"github.com/zadykian/ws/engine/core/step"
 )
 
 // Locale is the locale Name, generated and the system's. /etc/locale.gen names it, and locale-gen
@@ -23,9 +22,6 @@ type Locale struct {
 
 // Plan plans the generated locale, then LANG.
 func (l Locale) Plan(ctx context.Context) ([]resource.Change, error) { return l.parts().Plan(ctx) }
-
-// Report reports the parts.
-func (l Locale) Report(ctx context.Context) ([]step.Item, error) { return l.parts().Report(ctx) }
 
 func (l Locale) parts() resource.Joined {
 	return resource.Joined{
