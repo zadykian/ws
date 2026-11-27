@@ -2,7 +2,8 @@
 # A second server, lab, at slot 1. A third wireguard-go stands in for it on 51821. The Mac's key is
 # its peer, as in 35-standin.sh. lab shares ws's WS_REMOTE, so its ports differ from ws's. mise
 # bootstrap must give lab a daemon and a utun of its own, and ssh's host at its slot. ws's daemon
-# and host stay. ws macos servers must list both. A second bootstrap must call sudo not once.
+# and host stay. ws macos servers must list both. A second bootstrap must call sudo not once, and
+# setup's plan with both servers must exit 0.
 
 set -eo pipefail
 # shellcheck source=.github/client-conf.sh
@@ -110,3 +111,7 @@ if [ "$calls" != 0 ]; then
     echo "::error::a second mise bootstrap with lab called sudo $calls times, not once"
     exit 1
 fi
+client_bootstrap plan --detailed-exitcode || {
+    echo "::error::the plan with lab exited $?, not 0"
+    exit 1
+}

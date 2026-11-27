@@ -42,6 +42,10 @@ check files take `FILES`, as in `make vale FILES=README.md`:
   `go test -race -count=1` on both, and cgo is on for the race detector alone, as ws builds with
   `CGO_ENABLED=0`. `LAZYGIT_SCHEMA` names lazygit's config schema, for
   [the lazygit role's test](../ubuntu/roles/lazygit/README.md#the-config).
+- `checks`: the five tests of the checks, shell, which `make lint` runs whole, as CI's lint job ran
+  them in a step of its own: `.github/words-check-test.sh`, `.github/warnings-check-test.sh`,
+  `.github/update-checks-test.sh`, `ubuntu/checks/checks-test.sh` and `macos/checks/checks-test.sh`.
+  `gotest` leaves them out, as they are no Go.
 
 `lint/` holds each linter's config, and the Makefile passes it by flag, so that no linter takes
 one it finds in another directory. tombi takes no such flag, so the Makefile runs it in `lint/`,
@@ -74,6 +78,8 @@ After each edit, `make lint-file FILES=PATH` runs the gates of the file's kind o
 - Go: `gofmt`, `govet`, `golangci-lint`, `govulncheck`, `gotest`, `vale` and `sizecheck`;
 - TOML: `tombi` and `vale`, but a spec, `vale` alone;
 - Lua: `stylua`, `vale` and `sizecheck`;
+- a check's script or its test, in `.github/` or in a `checks/`: `shell`, `vale`, `sizecheck` and
+  `checks`;
 - any other file: `shell` on a script, by extension or shebang, `vale` and `sizecheck`.
 
 [writing]: https://github.com/zadykian/toolkit/blob/main/skills/writing/SKILL.md#the-caps-and-vale
