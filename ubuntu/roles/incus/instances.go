@@ -14,9 +14,10 @@ import (
 
 // Instance is what incus list prints of an instance that ws reads.
 type Instance struct {
-	Name     string   `json:"name"`
-	Status   string   `json:"status"`
-	Profiles []string `json:"profiles"`
+	Name     string            `json:"name"`
+	Status   string            `json:"status"`
+	Profiles []string          `json:"profiles"`
+	Config   map[string]string `json:"config"`
 }
 
 // Instances lists every instance that Incus holds.
