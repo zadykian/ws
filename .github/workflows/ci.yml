@@ -96,8 +96,42 @@ jobs:
         run: |
           sudo setfacl -k /opt && sudo install -d -o "$(id -un)" /opt/ws && cp -a . /opt/ws
           .tools/install-build
+      # apt's packages from main's last save, as a source that is down failed the first setup:
+      # Launchpad's 503s, in #1511. The run's ID matches no key, so the newest save of the prefix
+      # comes back. The action can't write apt's directory, root's, so the files wait in temp.
+      - name: Restore apt's packages
+        id: apt
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/apt
+          key: server-apt-run-${{ github.run_id }}
+          restore-keys: server-apt-
+      - name: Give apt the packages
+        if: steps.apt.outputs.cache-matched-key != ''
+        run: sudo cp -t /var/cache/apt/archives "$RUNNER_TEMP"/apt/*.deb
       - name: The cases
         run: sudo bash .github/server-checks.sh
+      # A push to main saves the packages, and a pull request none, so only a writer of ws writes
+      # the cache. autoclean drops each version that no source lists now. The key hashes the files'
+      # names and sizes, so a run that downloaded nothing saves nothing.
+      - name: Keep apt's packages
+        id: kept
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          sudo apt-get autoclean
+          rm -rf "$RUNNER_TEMP/apt" && mkdir "$RUNNER_TEMP/apt" && cd "$RUNNER_TEMP/apt"
+          sudo cp -t . /var/cache/apt/archives/*.deb
+          sudo chown -R "$(id -u):$(id -g)" .
+          sum=$(stat -c '%n %s' -- *.deb | sha256sum | cut -c 1-16)
+          echo "key=server-apt-$sum" >>"$GITHUB_OUTPUT"
+      - name: Save apt's packages
+        if: >-
+          steps.kept.outputs.key != '' &&
+          steps.kept.outputs.key != steps.apt.outputs.cache-matched-key
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/apt
+          key: ${{ steps.kept.outputs.key }}
       - name: The secrets task
         run: sudo bash .github/secrets-checks.sh
       # A failed start only points to the daemon's log.
