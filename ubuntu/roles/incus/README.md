@@ -190,10 +190,10 @@ The values refuse a name or an address that two guests share. They refuse a fiel
 not take. So a name reaches a command, a path or YAML once checked.
 
 A guest's own values sit on the host, in `/etc/ws/guests/NAME/values.yml`, root's and 600. The host
-reads each file as the guest's values. The guests' unit and the tunnels' list refuse one that does
-not parse, or one that sets `WS_SELF_CONTAINED`. The host's own load refuses the self-contained
-mode alone and passes a file that does not parse, so that the fans, the cable and SigNoz still
-run. A missing file gives the guest its defaults.
+reads each file once, as the guest's values, and the load resolves the guest's tunnel from them or
+holds the reason it has none. The guests' unit and the tunnels' list refuse one that does not parse,
+or one that sets `WS_SELF_CONTAINED`. The load refuses the self-contained mode alone, so that the
+fans, the cable and SigNoz run with a bad file. A missing file gives the guest its defaults.
 
 ## The image
 

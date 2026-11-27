@@ -162,6 +162,23 @@ func TestGuestsRemoveNamesTheListedGuestThatHoldsTheSlotNow(t *testing.T) {
 	}
 }
 
+// The host's values load with a clash of the listed guests' tunnels, and with one bad file: only the
+// strict list refuses them, so remove still runs.
+func TestGuestsRemoveRunsWhereTheListedGuestsClashOrHoldABadFile(t *testing.T) {
+	m := removeMachine()
+	m.Files[hostVars] = []byte(guestsFile + "  - {name: build, address: 10.100.0.11, cpu: 2, memory: 4GiB, disk: 100GiB}\n")
+	m.Files["/etc/ws/guests/lab/values.yml"] = []byte(slotThree)
+	m.Files["/etc/ws/guests/build/values.yml"] = []byte(slotThree)
+	if out, _, err := removeOld(m, "yes\n"); err != nil || !strings.Contains(out, "deleted its tunnel wg3") {
+		t.Errorf("a clash: remove = %q, %v", out, err)
+	}
+	m = removeMachine()
+	m.Files["/etc/ws/guests/lab/values.yml"] = []byte("WS_NOPE: 1\n")
+	if out, _, err := removeOld(m, "yes\n"); err != nil || !strings.Contains(out, "deleted the guest old") {
+		t.Errorf("a bad file: remove = %q, %v", out, err)
+	}
+}
+
 func TestGuestsRemoveWithNoSlotWarnsAndDeletesNoTunnel(t *testing.T) {
 	m := removeMachine()
 	delete(m.Files, "/etc/ws/guests/old/values.yml")
