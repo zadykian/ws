@@ -67,7 +67,7 @@ Mail, and [`TestEachLoginItemIsAnInstalledApp`](apps_test.go) fails on one that 
 ## Stats
 
 Stats shows the load of the CPU and the memory in the menu bar.
-`[bootstrap.settings.macos.defaults."eu.exelban.Stats"]` holds 116 keys of the maintainer's
+`[bootstrap.settings.macos.defaults."eu.exelban.Stats"]` holds 125 keys of the maintainer's
 export, each of the type that the export holds: a bool, an integer, a string, or an array for
 `CombinedModules_modifierKeys`. Stats reads a value of another type as missing, and mise compares
 the type too.
@@ -78,11 +78,18 @@ not list.
   opens with them at the next login. A key that a later run changes applies when Stats opens again.
 - `setupProcess` skips its setup window, whose first page would set each module's state and widget
   again on a click.
-- `CombinedModules` shows the modules in one item of the menu bar, the CPU, the memory and the
-  network's speed. Its `CombinedModules_modifierKeys` is an empty array, where Stats's default is
-  Option. mise writes an empty array and finds it equal to one of no items, so a second run changes
-  nothing.
+- `CombinedModules` is false: the CPU, the memory and the network's speed each take their own item
+  in the menu bar. The other `CombinedModules_` keys stay, as the export holds them, and apply if
+  the combined item is turned on. `CombinedModules_modifierKeys` is an empty array, where Stats's
+  default is Option. mise writes an empty array and finds it equal to one of no items, so a second
+  run changes nothing.
 - Each `NAME_position` key orders a module or a widget, as a drag in Stats's window does.
+- Each `NAME_processes` key is 10, the count of top processes that a module's popup lists.
+- The network's popup shows the public address, which Stats fetches each hour by
+  `Network_publicIPRefreshInterval`. Stats checks the connection by ICMP every 5 seconds, by
+  `Network_connectivityMode` and `Network_updateICMPInterval`. Its notification of a lost
+  connection is off, and `Network_notifications_connection_threshold` applies if the notification
+  is turned on.
 - The seven `sensor_` keys pick the sensors that the Sensors module shows, which is off. They hold
   on the maintainer's Mac alone: `TH0x`, `TaLP` and `PPBR` are codes of its hardware's sensors. On
   another Mac, Stats reads no key of a sensor it lacks.
