@@ -78,16 +78,13 @@ func TestReadHomeRefusesAPathThatIsNotLocalBeforeAnyCall(t *testing.T) {
 
 var owner = account.Account{User: ws, UID: 1000, GID: 1001}
 
-func TestHomeFileRefusesALinkAsItPlansAndReports(t *testing.T) {
+func TestHomeFileRefusesALink(t *testing.T) {
 	for _, link := range []string{"/home/ws/.config", "/home/ws/.config/x", "/home/ws/.config/x/f"} {
 		m := effecttest.NewMachine()
 		m.Links[link] = "/srv/target"
 		f := owner.File(m, ".config/x/f", []byte("a"), 0o644)
 		if _, err := f.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), link+" is a link to") {
 			t.Errorf("link at %s: Plan = %v", link, err)
-		}
-		if _, err := f.Report(t.Context()); err == nil {
-			t.Errorf("link at %s: Report found no error", link)
 		}
 	}
 }
@@ -210,9 +207,6 @@ func TestHomeDirRefusesALink(t *testing.T) {
 		d := owner.Dir(m, ".local/share", 0o700)
 		if _, err := d.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), link+" is a link to") {
 			t.Errorf("link at %s: Plan = %v", link, err)
-		}
-		if _, err := d.Report(t.Context()); err == nil {
-			t.Errorf("link at %s: Report found no error", link)
 		}
 	}
 }

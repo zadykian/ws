@@ -32,27 +32,6 @@ func TestHomeFilePlanReadsThroughTheOneOpen(t *testing.T) {
 	}
 }
 
-func TestHomeFileReportReadsThroughTheOneOpen(t *testing.T) {
-	m := effecttest.NewMachine()
-	items, err := homeFileAt(m).Report(context.Background())
-	if err != nil || len(items) != 1 {
-		t.Fatalf("Report = %v, %v", items, err)
-	}
-	if items[0].Diff != "" && strings.Contains(items[0].Diff, "root:x") || strings.Contains(items[0].Found, "777") {
-		t.Errorf("the report holds the target of a link: %+v", items[0])
-	}
-}
-
-func TestHomeFileReportOfAMissingFileIsNoError(t *testing.T) {
-	m := effecttest.NewMachine()
-	f := homeFileAt(m)
-	delete(m.Files, f.Path)
-	items, err := f.Report(context.Background())
-	if err != nil || len(items) != 1 || items[0].Found == "" {
-		t.Errorf("Report = %+v, %v; want a missing file and no error", items, err)
-	}
-}
-
 func TestHomeFileBackupCopiesTheBytesAndAttributesOfOneRead(t *testing.T) {
 	defer FixBackupName("1")()
 	m := effecttest.NewMachine()

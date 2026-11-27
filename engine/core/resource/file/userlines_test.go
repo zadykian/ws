@@ -29,7 +29,7 @@ func linesIn(m *effecttest.Machine, top bool) UserLines {
 	}
 }
 
-func TestUserLinesPlanAgreesWithReport(t *testing.T) {
+func TestUserLinesPlanSortsTheFile(t *testing.T) {
 	put := func(text string) func(*effecttest.Machine) {
 		return func(m *effecttest.Machine) { m.Files["/h/f"], m.Modes["/h/f"] = []byte(text), 0o640 }
 	}
@@ -53,10 +53,6 @@ func TestUserLinesPlanAgreesWithReport(t *testing.T) {
 		c.setUp(m)
 		l := linesIn(m, c.top)
 		cs, planErr := l.Plan(context.Background())
-		items, err := l.Report(context.Background())
-		if err != nil {
-			t.Fatalf("%s: report: %v", c.name, err)
-		}
 		got := "nothing"
 		switch {
 		case errors.Is(planErr, ErrLinked):
@@ -66,9 +62,8 @@ func TestUserLinesPlanAgreesWithReport(t *testing.T) {
 		case len(cs) > 0:
 			got = "write"
 		}
-		it := items[0]
-		if got != c.want || (it.Conflict != "") != (planErr != nil) || (it.Found != it.Want) != (got != "nothing") {
-			t.Errorf("%s: plan %v, %v, report %+v; want %s", c.name, cs, planErr, it, c.want)
+		if got != c.want {
+			t.Errorf("%s: plan %v, %v; want %s", c.name, cs, planErr, c.want)
 		}
 	}
 }

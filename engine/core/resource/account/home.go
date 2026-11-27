@@ -22,7 +22,7 @@ func (u User) ReadHome(m effect.Machine, rel string) ([]byte, error) {
 	return body, err
 }
 
-// File is a file at rel below the account's home, owned by the account. Plan and Report refuse a
+// File is a file at rel below the account's home, owned by the account. Plan refuses a
 // link on the way, as ReadHome does, and a rel that is not local. The caller sets Backup or Secret.
 func (a Account) File(m effect.Machine, rel string, content []byte, mode fs.FileMode) file.File {
 	return file.File{
@@ -39,13 +39,13 @@ func (a Account) Dir(m effect.Machine, rel string, mode fs.FileMode) file.Dir {
 }
 
 // Absent is a path at rel below the account's home that does not exist. It refuses a link on the
-// way as File does, as it plans, reports and applies.
+// way as File does, as it plans and applies.
 func (a Account) Absent(m effect.Machine, rel string) file.Absent {
 	return file.Absent{M: m, Path: a.Home + "/" + rel, Home: a.Home}
 }
 
 // Lines is ws's lines in the file at rel below the account's home, by l's rules. l gives Lines,
-// Shown, Name, Top, Mode, Has and Now. Lines sets the machine, the path, the owner and the home.
+// Shown, Top, Mode, Has and Now. Lines sets the machine, the path, the owner and the home.
 // It refuses any link at the file or on the way, as File does.
 func (a Account) Lines(m effect.Machine, rel string, l file.UserLines) file.HomeLines {
 	l.M, l.Path = m, a.Home+"/"+rel

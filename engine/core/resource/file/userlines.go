@@ -1,7 +1,6 @@
 package file
 
 import (
-	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -20,7 +19,7 @@ var (
 	ErrMisplaced = errors.New("ws's lines out of place")
 )
 
-// linesError is a plan's stop with the words that a report prints too.
+// linesError is a plan's stop, with an error kind to match and the words to show.
 type linesError struct {
 	kind error
 	text string
@@ -36,7 +35,7 @@ func Misplaced(format string, a ...any) error {
 }
 
 // UserLines is ws's lines in a file of the user's that holds other text too. A run adds them once,
-// at the top or the end, and keeps the old file. One read gives the plan and the report.
+// at the top or the end, and keeps the old file.
 type UserLines struct {
 	M    effect.Machine
 	Out  effect.Out
@@ -45,8 +44,6 @@ type UserLines struct {
 	Lines string
 	// Shown is Lines on one line, as the remedy quotes it.
 	Shown string
-	// Name is what the report calls the lines. Empty means Shown.
-	Name string
 	// Top puts Lines, a blank line and the text. Else the text, a newline if it lacks one, and Lines.
 	Top bool
 	// Mode is the mode of a new file.
@@ -120,27 +117,6 @@ func (l UserLines) Plan(ctx context.Context) ([]resource.Change, error) {
 	found, link, holds, err := l.Read(ctx)
 	cs, err := l.Changes(found, link, holds, err)
 	return applying(cs), err
-}
-
-// Item says how the file stands against what read found. A conflict is where the plan stops.
-func (l UserLines) Item(found Found, link string, holds bool, err error) (step.Item, error) {
-	item := lineItem(l.Path, cmp.Or(l.Name, l.Shown), found.Exists, holds)
-	switch {
-	case errors.Is(err, ErrMisplaced):
-		item.Found, item.Conflict = "out of place", err.Error()
-	case err != nil:
-		return item, err
-	case link != "" && !holds:
-		item.Conflict = "a link to " + link + ": " + l.remedy()
-	}
-	return item, nil
-}
-
-// Report reads the file as a plan does.
-func (l UserLines) Report(ctx context.Context) ([]step.Item, error) {
-	found, link, holds, err := l.Read(ctx)
-	item, err := l.Item(found, link, holds, err)
-	return []step.Item{item}, err
 }
 
 // Keep copies the old file to PATH.TIME~. This is the one stamp of the copies.

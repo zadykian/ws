@@ -1,5 +1,5 @@
 // Package file puts files, directories, links and lines on the machine, and removes paths, each
-// as a resource that plans its changes and reports its state. The User types do the same in the
+// as a resource that plans its changes. The User types do the same in the
 // user's home. They read and write as the user: a whole file, a directory, or ws's lines in a file
 // that holds other text.
 package file
@@ -123,21 +123,6 @@ func (f File) Plan(context.Context) ([]resource.Change, error) {
 		return []resource.Change{writeFile{f, before, fmt.Sprintf("set owner %d:%d and mode %o of", f.UID, f.GID, f.Mode.Perm()), &got}}, nil
 	}
 	return nil, nil
-}
-
-// Report compares the file as Plan does.
-func (f File) Report(context.Context) ([]step.Item, error) {
-	if err := f.guard(); err != nil {
-		return nil, err
-	}
-	before, got, err := f.read()
-	if errors.Is(err, fs.ErrNotExist) {
-		return []step.Item{f.item(nil, nil)}, nil
-	}
-	if err != nil {
-		return []step.Item{f.item(nil, nil)}, err
-	}
-	return []step.Item{f.item(before, &got)}, nil
 }
 
 // item compares what the file holds with what ws writes, got being nil for a file that is missing.

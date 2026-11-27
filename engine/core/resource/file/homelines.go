@@ -80,13 +80,6 @@ func (l HomeLines) readLink(ctx context.Context, found Found, link string) (Foun
 	return found, effect.Attrs{}, link, holds, err
 }
 
-// Report reads the file as a plan does.
-func (l HomeLines) Report(ctx context.Context) ([]step.Item, error) {
-	found, _, link, holds, err := l.read(ctx)
-	item, err := l.Rules.Item(found, link, holds, err)
-	return []step.Item{item}, err
-}
-
 // Plan writes the lines where missing: none, a new file, or the old file kept and rewritten.
 func (l HomeLines) Plan(ctx context.Context) ([]resource.Change, error) {
 	found, got, link, holds, err := l.read(ctx)

@@ -72,7 +72,4 @@ func TestHomeAbsentRefusesALink(t *testing.T) {
 	if _, err := gone.Plan(t.Context()); err == nil {
 		t.Error("Plan found no error")
 	}
-	if _, err := gone.Report(t.Context()); err == nil {
-		t.Error("Report found no error")
-	}
 }
