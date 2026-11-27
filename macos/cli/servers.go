@@ -25,27 +25,27 @@ func newServersCmd(p enginecli.Env, server *string) *cobra.Command {
 				return errors.New("servers lists every server: leave out --server")
 			}
 			mac := values.Path(p.Getenv, p.Pwd)
-			names, err := values.Servers(p.Machine, mac)
-			if err != nil {
-				return err
+			fleet := values.ReadFleet(p.Machine, mac)
+			if fleet.NamesErr != nil {
+				return fleet.NamesErr
 			}
-			if len(names) == 0 {
+			if len(fleet.Servers) == 0 {
 				return fmt.Errorf("no server beside %s: write NAME/values.yml there, as macos/README.md says", mac)
 			}
-			if _, err := values.LoadMac(p.Machine, mac); err != nil {
-				return err
+			if fleet.MacErr != nil {
+				return fleet.MacErr
 			}
 			var refused []error
 			w := tabwriter.NewWriter(c.OutOrStdout(), 0, 0, 2, ' ', 0)
 			fmt.Fprintln(w, "NAME\tTARGET\tSLOT\tTUNNEL") //nolint:errcheck // tabwriter buffers, and Flush returns the error
-			for _, name := range names {
+			for _, s := range fleet.Servers {
 				target, slot := "-", "-"
-				if s, err := values.Load(p.Machine, mac, values.ServerPath(mac, name)); err != nil {
-					refused = append(refused, err)
+				if s.Err != nil {
+					refused = append(refused, s.Err)
 				} else {
-					target, slot = s.Target, fmt.Sprint(s.TunnelSlot())
+					target, slot = s.Conf.Target, fmt.Sprint(s.Conf.TunnelSlot())
 				}
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", name, target, slot, tunnelOf(c.Context(), p.Machine, name)) //nolint:errcheck // as above
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", s.Name, target, slot, tunnelOf(c.Context(), p.Machine, s.Name)) //nolint:errcheck // as above
 			}
 			return errors.Join(append(refused, w.Flush())...)
 		},
