@@ -32,7 +32,8 @@ func unitVerify(p Env, ss sides) *cobra.Command {
 		Short: "fail where mise's plan lacks a unit of the specs",
 		Long: "It reads mise's packages, by mise bootstrap packages status --json, and fails where the ws " +
 			"plugin is not loaded or a unit of the specs is not among its packages: mise drops a refused " +
-			"plugin's units with no error. It changes nothing. Where each unit is there, it prints a line " +
+			"plugin's units with no error. It fails too where ws runs outside the side's run directory, " +
+			"which mise must run in. It changes nothing. Where each unit is there, it prints a line " +
 			"that does not change.",
 		Args: cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error {
