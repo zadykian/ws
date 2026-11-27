@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
+	"go.yaml.in/yaml/v3"
+
 	daemon "github.com/zadykian/ws/ubuntu/roles/fans/daemon"
 )
 
@@ -42,17 +44,22 @@ func TestFansJSONIsTodaysText(t *testing.T) {
 	}
 }
 
-func TestFansJSONKeepsFractionsOfAPercent(t *testing.T) {
+func TestFansJSONSurvivesTheValuesFile(t *testing.T) {
 	f := DefaultHost().Fans
-	f.Curves[0].Hysteresis.Up = 1.5
-	f.Step.Down = 0.5
-	text, err := f.JSON()
+	want, err := f.JSON()
 	if err != nil {
 		t.Fatal(err)
 	}
-	c, err := daemon.Parse([]byte(text))
-	if err != nil || c.Curves[0].Hysteresis.Up != 1.5 || c.Step.Down != 0.5 {
-		t.Errorf("Parse = %+v, %v; want 1.5 and 0.5 kept", c, err)
+	data, err := yaml.Marshal(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var back Fans
+	if err := yaml.Unmarshal(data, &back); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := back.JSON(); err != nil || got != want {
+		t.Errorf("JSON after YAML = %q, %v; want %q", got, err, want)
 	}
 }
 
