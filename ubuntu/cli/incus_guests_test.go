@@ -31,6 +31,7 @@ func TestIncusGuestsLaunchesWhatTheListDeclaresAndWarnsOfTheRest(t *testing.T) {
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	m.Results["incus list --format json"] = effecttest.Result{Out: []byte(`[{"name":"old","status":"Running","profiles":["ws"]}]`)}
 	m.Files[hostVars] = []byte("WS_INCUS_GUESTS:\n  - {name: lab, address: 10.100.0.10, cpu: 4, memory: 8GiB, disk: 200GiB}\n")
+	m.Files["/etc/ws/guests/lab/values.yml"] = []byte("WS_TUNNEL_ADDRESS: 10.99.1.1/24\n")
 	alias, err := incus.Image{M: m}.Alias(t.Context())
 	if err != nil {
 		t.Fatal(err)
@@ -38,6 +39,7 @@ func TestIncusGuestsLaunchesWhatTheListDeclaresAndWarnsOfTheRest(t *testing.T) {
 	m.Results["incus launch local:"+alias+" lab"] = effecttest.Result{}
 	m.Files["/usr/local/bin/ws"] = []byte("binary")
 	m.Results["incus file push --create-dirs --uid 0 --gid 0 --mode 0755 /usr/local/bin/ws lab/usr/local/bin/ws"] = effecttest.Result{}
+	m.Results["incus file push --create-dirs --uid 0 --gid 0 --mode 0600 /etc/ws/guests/lab/values.yml lab/etc/ws/values.yml"] = effecttest.Result{}
 	m.Results["incus exec lab -- sh -c systemctl is-system-running --wait >/dev/null 2>&1; cloud-init status --wait >/dev/null sh"] = effecttest.Result{}
 	m.Results["incus exec lab -- /usr/local/bin/ws ubuntu guest setup"] = effecttest.Result{}
 	if err := runIncus(m, "guests", "--check"); !errors.Is(err, enginecli.ErrDue) || !strings.Contains(err.Error(), "create the guest lab") {

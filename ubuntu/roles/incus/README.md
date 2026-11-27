@@ -239,7 +239,7 @@ holds with no profile `ws` fails the run: ws never turns another instance into a
 | --- | --- |
 | `profiles` | `ws` alone. |
 | `config` | `limits.cpu` and `limits.memory`, from the list. |
-| `devices.eth0` | The profile's NIC, whole, with `host_name` `ws-NAME`, `ipv4.address` from the list, and `ipv4.routes`, the slot's `10.99.N.1/32`, where the guest's values name a slot but slot 0. |
+| `devices.eth0` | The profile's NIC, whole, with `host_name` `ws-NAME`, `ipv4.address` from the list, and `ipv4.routes`, the slot's `10.99.N.1/32`. |
 | `devices.root` | The profile's disk, whole, with `size`, the quota, from the list. |
 | `devices.gpu` | `type: gpu` and `vendorid: 10de`, where the guest's own values set `WS_NVIDIA_GPU`. Removed where they do not. |
 
@@ -254,8 +254,10 @@ host. A guest of ws's that the list lacks gets a warning, and no deletion: remov
 `ws ubuntu host guests remove NAME`.
 
 The create alone sets `cloud-init.network-config`, which the image's template writes into the seed.
-It holds DHCP on `eth0`. It adds the slot's address as a host route where the guest's own values
-name a slot but slot 0, which is the host's. A later change of the slot reaches no existing guest.
+It holds DHCP on `eth0`, and the slot's address as a host route. Each guest needs a slot from 1 to
+15, as its tunnel reads it: `10.99.N.1/24`. Where its own values name another address, or slot 0,
+which is the host's, the plan fails before any instance. A later change of the slot reaches no
+existing guest.
 
 ## Storage
 
