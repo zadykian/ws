@@ -118,7 +118,7 @@ says. Under a host, the tunnel ends on the host. Its ingress ACL admits the list
 destination, and any other peer to the guest's own addresses alone
 ([The ingress ACL](../incus/README.md#the-ingress-acl)). A server's values.yml sends the VPN's
 networks and domains into the tunnel, as `WS_TUNNEL_NETWORKS` and `WS_RESOLVERS`
-([the two files](../../../macos/values/README.md#the-two-files)). A private repository's script
+([the server's file](../../../macos/values/README.md#the-servers-file)). A private repository's script
 may do it instead
 ([Routes and resolvers of another repository](../../../macos/README.md#routes-and-resolvers-of-another-repository)).
 

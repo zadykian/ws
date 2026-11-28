@@ -15,7 +15,7 @@ set -eo pipefail
 pid() { sudo launchctl print "system/$LABEL" | awk '$1 == "pid" { print $3; exit }'; }
 was=$(pid) || true
 lines=$(sudo awk 'END { print NR }' /var/log/ws-tunnel.ws.log)
-conf_set /etc/ws/values.yml 'WS_LAN_ADDRESS: 127.0.0.2'
+conf_set /etc/ws 'WS_LAN_ADDRESS: 127.0.0.2'
 client_bootstrap || {
     echo '::error::mise bootstrap with a new WS_LAN_ADDRESS failed'
     exit 1

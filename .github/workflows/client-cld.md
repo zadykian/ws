@@ -5,8 +5,7 @@ and cld on the Mac](../../macos/roles/ghostty/README.md) and [Zed on the
 Mac](../../macos/roles/zed/README.md) say. It runs `ws macos setup`
 as the runbook does, on the tree that
 [client-mise.sh](../client-mise.sh) puts in place, on a runner without Ghostty, Zed, its font, Secretive or cld. It
-has a stand-in for ws's key, and `values.yml` names seward's two keys, which the units make, so
-that setup's key step plans nothing.
+has a stand-in for ws's key.
 
 - Two runs must install Ghostty, Zed and the font as mise's casks, which `mise bootstrap packages
   status` names as mise's, and cld from its release. The facts read Ghostty's app and cld as a run

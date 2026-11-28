@@ -56,9 +56,6 @@ func TestKeys(t *testing.T) {
 		{"WS_CABLE_PORT", "-enp5s0", false},
 		{"WS_CABLE_SERVICE", "USB 10/100/1G/2.5G LAN", true},
 		{"WS_CABLE_SERVICE", "*Ethernet", false},
-		{"WS_IDENTITY_AGENT", "~/Library/Group Containers/a/s.sock", true},
-		{"WS_GIT_SIGNING_PUB_KEY", "~/.ssh/ws.pub", true},
-		{"WS_IDENTITY_PUB_KEY", "~/.ssh/ws", false},
 	}
 	for _, tt := range tests {
 		if got := find(t, tt.key).ok(tt.value); got != tt.want {

@@ -75,9 +75,9 @@ func runSecretsAdd(c *cobra.Command, p enginecli.Env, server, name, address stri
 	if port < 0 || port > 65535 {
 		return fmt.Errorf("--port %d is not a port", port)
 	}
-	mac := values.Path(p.Getenv, p.Pwd)
-	fleet := values.ReadFleet(p.Machine, mac)
-	if err := knownServer(fleet, mac, name); err != nil {
+	dir := values.Dir(p.Getenv, p.Pwd)
+	fleet := values.ReadFleet(p.Machine, dir)
+	if err := knownServer(fleet, dir, name); err != nil {
 		return err
 	}
 	if err := refuseHost(fleet, name); err != nil {
@@ -126,7 +126,7 @@ func runSecretsAdd(c *cobra.Command, p enginecli.Env, server, name, address stri
 }
 
 // knownServer refuses a name that is no server of the Mac's.
-func knownServer(fleet values.Fleet, mac, name string) error {
+func knownServer(fleet values.Fleet, dir, name string) error {
 	if !values.IsName(name) {
 		return fmt.Errorf("%s is not a server's name: %s", name, values.NameForm)
 	}
@@ -135,7 +135,7 @@ func knownServer(fleet values.Fleet, mac, name string) error {
 	}
 	if _, ok := fleet.Server(name); !ok {
 		return fmt.Errorf("no server named %s in %s, which holds %s", name,
-			path.Dir(path.Dir(values.ServerPath(mac, name))), values.List(fleet.Names()))
+			path.Dir(path.Dir(values.ServerPath(dir, name))), values.List(fleet.Names()))
 	}
 	return nil
 }

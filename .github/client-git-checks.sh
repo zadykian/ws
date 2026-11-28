@@ -2,7 +2,7 @@
 # The client job's checks of mise bootstrap's units of git. They read /etc/ws/gitconfig, its allowed
 # signers, the wrapper that gives ssh-keygen seward's agent, the include in ~/.gitconfig and mise's gh
 # in /usr/local/bin. 56-keys.sh sources them after ws's key's, so that they run with its functions.
-# Git signs with seward's ~/.ssh/ws-sign, whatever values.yml names. The runner's ~/.gitconfig goes
+# Git signs with seward's ~/.ssh/ws-sign. The runner's ~/.gitconfig goes
 # aside, and comes back as the case exits, on a signal too, with the job's files.
 #
 # shellcheck disable=SC2154 # tmp, restores and the functions are 56-keys.sh's
@@ -93,6 +93,5 @@ rm ~/.gitconfig
 ln -s "$tmp/linked" ~/.gitconfig
 refuses "$HOME/.gitconfig is a link to $tmp/linked"
 rm -f ~/.gitconfig ~/.gitconfig.*~
-# The signing key that values.yml names is read by nothing: left empty, it stops no bootstrap.
-with 'WS_GIT_SIGNING_PUB_KEY: ""'
+# With the refusals' files gone, the bootstrap passes again and its plan changes nothing.
 boots

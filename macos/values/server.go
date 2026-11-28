@@ -12,28 +12,15 @@ import (
 // FirstServer is the name of the one server that ws sets up for now.
 const FirstServer = "ws"
 
-// ServerPath returns the path of the server called name's file, in a directory beside values.yml.
-func ServerPath(mac, name string) string {
-	return path.Join(path.Dir(mac), "servers", name, "values.yml")
+// ServerPath returns the path of the server called name's file, below dir, the directory that
+// holds servers/.
+func ServerPath(dir, name string) string {
+	return path.Join(dir, "servers", name, "values.yml")
 }
 
-// LoadLines reads values.yml at mac and a server's file at server, and joins them as the read of
-// the fleet does. It checks each line alone, as Scope.Lines does, so a pair of keys may stand
-// apart. Each file refuses the other's keys, and no other server is read.
-func LoadLines(m effect.Machine, mac, server string) (Conf, error) {
-	macConf, macErr := load(m, mac, MacFile.Lines)
-	c, serverErr := load(m, server, ServerFile.Lines)
-	if err := errors.Join(macErr, serverErr); err != nil {
-		return Conf{}, err
-	}
-	return join(macConf, c), nil
-}
-
-// join returns the keys of a server's file with the Mac's keys from values.yml.
-func join(mac, server Conf) Conf {
-	server.GitSigningPubKey, server.IdentityPubKey, server.IdentityAgent = mac.GitSigningPubKey, mac.IdentityPubKey, mac.IdentityAgent
-	return server
-}
+// LoadLines reads the server's file at file. It checks each line alone, as Lines does, so a pair of
+// keys may stand apart.
+func LoadLines(m effect.Machine, file string) (Conf, error) { return load(m, file, Lines) }
 
 // load reads the file at file, which parse checks.
 func load(m effect.Machine, file string, parse func(string) (Conf, []Error)) (Conf, error) {
@@ -51,7 +38,3 @@ func load(m effect.Machine, file string, parse func(string) (Conf, []Error)) (Co
 	}
 	return c, errors.Join(all...)
 }
-
-// LoadMac reads values.yml at mac alone, which takes the Mac's keys alone: the keys of a Mac with
-// no server yet, or of every server.
-func LoadMac(m effect.Machine, mac string) (Conf, error) { return load(m, mac, MacFile.Parse) }

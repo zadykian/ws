@@ -1,15 +1,12 @@
 package cli
 
 import (
-	"io/fs"
 	"slices"
 	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/internal/sshcfg"
-	"github.com/zadykian/ws/macos/internal/mactest"
 	"github.com/zadykian/ws/macos/values"
 )
 
@@ -58,41 +55,12 @@ func TestCldCheckFollowsTheLatestRelease(t *testing.T) {
 	}
 }
 
-func TestKeysCopyTheAgentsKeyOnce(t *testing.T) {
-	m := effecttest.NewMachine()
-	socket := "/h/" + sshcfg.SecretiveData + "/socket.ssh"
-	m.Files[socket], m.Modes[socket] = nil, fs.ModeSocket
-	m.Results["env SSH_AUTH_SOCK="+socket+" ssh-add -L"] = effecttest.Result{Out: []byte(mactest.AgentGit)}
-	pub := sshcfg.AgentKeys(mactest.AgentGit)[0].Pub()
-	m.Files["/etc/ws/values.yml"] = []byte(values.Text("WS_IDENTITY_PUB_KEY", pub, "WS_GIT_SIGNING_PUB_KEY", pub))
-	run := partEnv(m)
-	if status, stdout, stderr := run("keys", "--check"); status != 1 || stdout != "" || strings.Count(stderr, pub) != 1 {
-		t.Errorf("keys --check: status = %d, stdout = %q, stderr = %q; want 1, one copy due", status, stdout, stderr)
-	}
-	if status, _, stderr := run("keys"); status != 0 || string(m.Files[pub]) != mactest.AgentGit {
-		t.Errorf("keys: status = %d, stderr = %q, copy %q; want the agent's line", status, stderr, m.Files[pub])
-	}
-	if status, _, stderr := run("keys", "--check"); status != 0 {
-		t.Errorf("second keys --check: status = %d, stderr = %q; want 0", status, stderr)
-	}
-}
-
-func TestKeysOfAFileKeyHaveNoCopy(t *testing.T) {
-	m := effecttest.NewMachine()
-	m.Files["/etc/ws/values.yml"] = []byte(values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id.pub", "WS_GIT_SIGNING_PUB_KEY", "~/.ssh/id.pub"))
-	m.Files["/h/.ssh/id.pub"] = []byte("ssh-ed25519 AAAA me\n")
-	m.Results["ssh-keygen -l -f /h/.ssh/id.pub"] = effecttest.Result{}
-	if status, stdout, stderr := partEnv(m)("keys", "--check"); status != 0 || stdout != "" {
-		t.Errorf("keys --check: status = %d, stdout = %q, stderr = %q; want 0", status, stdout, stderr)
-	}
-}
-
 // wgKey is a WireGuard key's form, as values.yml takes WS_PUBLIC_KEY.
 const wgKey = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 
 func TestCableLeavesAMacWithNoCable(t *testing.T) {
 	m := effecttest.NewMachine()
-	writeConfs(m, "", values.Text("WS_SLOT", "0"))
+	writeConfs(m, values.Text("WS_SLOT", "0"))
 	if status, stdout, stderr := partEnv(m)("cable", "--check"); status != 0 || stdout != "" {
 		t.Errorf("cable --check: status = %d, stdout = %q, stderr = %q; want 0", status, stdout, stderr)
 	}
@@ -105,7 +73,7 @@ func TestCableLeavesAMacWithNoCable(t *testing.T) {
 
 func TestCableReadsTheServersService(t *testing.T) {
 	m := effecttest.NewMachine()
-	writeConfs(m, "", values.Text("WS_SLOT", "0", "WS_CABLE_SERVICE", "Dock"))
+	writeConfs(m, values.Text("WS_SLOT", "0", "WS_CABLE_SERVICE", "Dock"))
 	// networksetup is macOS's: where PATH lacks it, the read names it.
 	if status, _, stderr := partEnv(m)("cable", "--check"); status != 1 || !strings.Contains(stderr, "networksetup") {
 		t.Errorf("cable --check: status = %d, stderr = %q; want 1, networksetup asked for", status, stderr)
@@ -114,7 +82,7 @@ func TestCableReadsTheServersService(t *testing.T) {
 
 func TestNetworksSetUpEachServer(t *testing.T) {
 	m := effecttest.NewMachine()
-	writeConfs(m, "", values.Text("WS_SLOT", "0", "WS_PUBLIC_KEY", wgKey,
+	writeConfs(m, values.Text("WS_SLOT", "0", "WS_PUBLIC_KEY", wgKey,
 		"WS_TUNNEL_NETWORKS", "198.51.100.0/24", "WS_RESOLVERS", "a.test=198.51.100.53"))
 	m.Root["/etc/ws/tunnel/ws/routes.d"] = effect.Attrs{Mode: 0o755}
 	run := partEnv(m)

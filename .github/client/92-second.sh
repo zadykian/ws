@@ -11,7 +11,7 @@ set -eo pipefail
 # shellcheck source=.github/client-mise.sh
 . .github/client-mise.sh
 
-conf=/etc/ws/values.yml
+conf=/etc/ws
 lab=${LABEL%.ws}.lab
 wg=$(brew --prefix wireguard-tools)/bin/wg
 go=$(brew --prefix wireguard-go)/bin/wireguard-go
@@ -29,7 +29,6 @@ sudo ifconfig "$utun" up
 
 conf_server=lab
 {
-    cat "$conf"
     printf '%s\n' 'WS_SLOT: 1' 'WS_REMOTE: localhost' 'WS_REMOTE_PORT: 22023' 'WS_TUNNEL_PORT: 51821' \
         "WS_PUBLIC_KEY: $(cat "$RUNNER_TEMP/lab.pub")"
 } | conf_write "$conf"

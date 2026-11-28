@@ -2,7 +2,7 @@
 
 `mise -C /opt/ws/macos bootstrap` sets up ssh's hosts on the Mac by [ssh's units](units.toml.tmpl): one host
 for each server, through the tunnel ([The Mac](../../README.md)). The facts build the text from
-`values.yml` and the servers' files, and check it, before any unit runs
+the servers' files, and check it, before any unit runs
 ([The facts](../../facts/README.md)). A refusal there stops the whole bootstrap, and changes nothing.
 
 ## Secretive
@@ -13,22 +13,6 @@ installs it into `/Applications`, after mise checks the zip against the SHA-256.
 the same build where it stands, as a person may have installed it. It refuses another build
 and leaves it alone, so remove that copy once. `macos-app` finds no release: a new one changes
 `version` and `sha256`, which GitHub's release and Homebrew's cask list.
-
-`ws macos setup` installs it before the first bootstrap where `values.yml` names no login key. It
-runs `mise bootstrap packages apply --yes macos-app:secretive`, checks the app by `spctl -a -vv`
-([setupkey.go](../../cli/setupkey.go)), which must say `accepted` and `Notarized Developer ID`, and
-opens it. The `origin` must name Secretive's team, `Z72PRUAWF6`, which signs the pinned zip, as
-any developer may notarize an app. A release that another team signs changes `pinnedTeam` there
-too. It then waits for a P-256 key, as ws's OpenSSH reads no ML-DSA one. It writes
-`WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_PUB_KEY` into `values.yml`, each
-one that is not there. Setup lists the keys of Secretive's agent before it opens Secretive, and
-the wait takes the sole P-256 key that comes after. ws picks no key that was there before, as one
-made for another use would go to GitHub. Where no agent answers until Secretive runs, the agent's
-first answer stands for the list before, as setup cannot tell whether a key in it came in this
-run. The wait lists such keys by NAME, and says to press Ctrl-C and run setup again with
-`--key NAME` to take one. Once `values.yml` names the login key, `--key` that names
-it runs as no `--key` does, so a failed run may run again as it stood. `--key` that names another
-key is refused.
 
 ## seward
 

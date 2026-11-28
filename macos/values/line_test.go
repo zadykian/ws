@@ -11,7 +11,6 @@ func TestLine(t *testing.T) {
 		{"WS_REMOTE_PORT", "22022", "WS_REMOTE_PORT: 22022"},
 		{"WS_CABLE_SERVICE", "USB LAN", "WS_CABLE_SERVICE: USB LAN"},
 		{"WS_CABLE_SERVICE", "USB 10/100/1G/2.5G LAN", "WS_CABLE_SERVICE: USB 10/100/1G/2.5G LAN"},
-		{"WS_IDENTITY_PUB_KEY", "~/.ssh/k.pub", "WS_IDENTITY_PUB_KEY: ~/.ssh/k.pub"},
 		{"WS_RESOLVERS", "example.internal=10.20.0.53", "WS_RESOLVERS: example.internal=10.20.0.53"},
 		{"WS_PUBLIC_KEY", "ab+/cd=", "WS_PUBLIC_KEY: ab+/cd="},
 		{"WS_LAN", "", `WS_LAN: ""`},

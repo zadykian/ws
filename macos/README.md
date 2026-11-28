@@ -28,7 +28,7 @@ layout ([keyboard](roles/keyboard/README.md)).
 The second run installs the Mac's apps as casks, pins some in the Dock, opens seven at login and
 sets Stats's settings ([apps](roles/apps/README.md)). The runbook runs `install.sh`, which puts `ws` in `/usr/local/bin`
 from a release, checked against its `ws.sha256` ([Releases](../.github/workflows/release.md)). Write each server's values below
-first, and the Mac's `values.yml`, which stands empty on a new Mac ([The two files](values/README.md#the-two-files)). Then:
+first ([The server's file](values/README.md#the-servers-file)). Then:
 
 ```sh
 ws macos setup
@@ -60,10 +60,6 @@ steps are those of the server's setup, which `internal/setup` holds, with the Ma
 - The tree is root's. Setup reads its tag and status as the user by `git -c
   safe.directory=/opt/ws`, as git refuses a repository that another user owns. It runs git
   through sudo to fetch, check out and clean, and the plugin's link too.
-- Where `values.yml` names no `WS_IDENTITY_PUB_KEY`, setup installs Secretive by mise's pin before
-  the bootstrap, checks it and waits for a key made in it, which it names in `values.yml`
-  ([Secretive](roles/ssh/README.md#secretive)). `--key NAME` takes a key that Secretive held
-  before. A plan with the key due plans no more.
 - The bootstrap runs twice, with the env `macos` and then with `-E ws,apps`. A failed cask fails
   setup, with ws's units set up ([The apps' env](roles/frame/README.md#the-apps-env)).
 - A second run reads as the user, writes nothing and asks no password. `--in-place` and `--plan`
@@ -79,13 +75,12 @@ the difference. `ws macos servers` shows each server's tunnel. A cable's service
 which no run turns on, draws a warning from `ws macos cable` and its `--check` alone: a bootstrap
 shows no check's output. No unit reads a private key: the key's unit looks for the file alone.
 
-## The Mac's values.yml
+## The servers' values
 
-The repository names no server, so the values go in two YAML files of `KEY: value` lines that the script
-reads without running them. `/etc/ws/values.yml` holds the Mac's keys: `WS_GIT_SIGNING_PUB_KEY`,
-`WS_IDENTITY_PUB_KEY` and `WS_IDENTITY_AGENT`. `/etc/ws/servers/ws/values.yml` holds every other key,
-and a key in the other file is refused. Both are root's, written through sudo. A `WS_VALUES` file
-outside `/etc/ws` is the user's. [The two files](values/README.md#the-two-files) shows both.
+The repository names no server, so the values go in a YAML file of `KEY: value` lines for each
+server, which the script reads without running it. `/etc/ws/servers/ws/values.yml` holds every key
+of ws, root's, written through sudo. A `WS_VALUES` directory outside `/etc/ws` is the
+user's. [The server's file](values/README.md#the-servers-file) shows one.
 `--server NAME` picks the server that a `ws macos` command acts on, and may be left out
 where there is one ([The server's name](values/README.md#the-servers-name)). `remove`,
 `secrets add` and `secrets init` refuse it: remove and add take the server's name as their
@@ -101,8 +96,7 @@ router's side is in [The router](../ubuntu/roles/cable/router.md). `WS_PUBLIC_KE
 once ws has the Mac's key, in the order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE`
 names the network service of the display's adapter, and `WS_CABLE_PORT` ws's port of the cable: [The
 cable](#the-cable). ssh offers ws seward's `~/.ssh/ws-auth.pub`, and git signs with its
-`~/.ssh/ws-sign.pub`, whatever `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and
-`WS_GIT_SIGNING_PUB_KEY` name: [ssh's hosts](#sshs-hosts), [git on the
+`~/.ssh/ws-sign.pub`: [ssh's hosts](#sshs-hosts), [git on the
 Mac](roles/git/README.md). `WS_HOST` makes a server a guest of another, its host, and takes the host's
 LAN, address and router for the guest's ([A guest](values/README.md#a-guest)). The bootstrap makes
 `/etc/ws` through sudo, at mode 755, for the tunnel's key, git's files and ssh's hosts.
@@ -208,13 +202,12 @@ its `tunnel.conf`, from the server's file, and its `routes.d` ([the daemons](rol
 the daemon reads no file the user can write. In System Settings › General › Login Items &
 Extensions, its "Allow in the Background" must stay on.
 
-A server with no directory beside `values.yml` has its daemon removed at the next bootstrap, by
+A server with no directory in `servers/` has its daemon removed at the next bootstrap, by
 `ws macos tunnel conf`: booted out where loaded, then `/etc/ws/tunnel/NAME`, its state file
-and log. launchd's unit removes its plist. Nothing goes where `values.yml`'s directory lists no
-server.
+and log. launchd's unit removes its plist. Nothing goes where `servers/` lists no server.
 
 The tunnel's ends are `10.99.N.2` on the Mac, on a utun of wireguard-go's, and `10.99.N.1` on ws, N
-being `WS_SLOT`. A moved slot restarts the daemon. Name the pair in ws's values.yml ([The
+being `WS_SLOT`. A moved slot restarts the daemon. Name the pair in ws's values ([The
 tunnel](../ubuntu/roles/tunnel/README.md#the-tunnel)). The daemon points the Mac's end at the
 first of these that answers, each on UDP 51820:
 

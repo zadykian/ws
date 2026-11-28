@@ -12,9 +12,8 @@ import (
 func TestServerFlagNamesTheServerOfConf(t *testing.T) {
 	m := effecttest.NewMachine()
 	for slot, name := range []string{"ws", "box"} {
-		m.Files[values.ServerPath("/etc/ws/values.yml", name)] = []byte(values.Text("WS_SLOT", strconv.Itoa(slot)))
+		m.Files[values.ServerPath("/etc/ws", name)] = []byte(values.Text("WS_SLOT", strconv.Itoa(slot)))
 	}
-	m.Files["/etc/ws/values.yml"] = nil
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = withServerDirs(m)
 	if status, stdout, _ := runWs(p, "macos", "values", "print", "--server", "box"); status != 0 || !strings.HasPrefix(stdout, "WS_TARGET='lan'\nWS_HOST=''\nWS_SLOT='1'\n") {

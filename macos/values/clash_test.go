@@ -11,8 +11,8 @@ func sibling(keys string) []Sibling {
 	if keys != "" && !strings.Contains(keys, "WS_SLOT") {
 		keys = Text("WS_SLOT", "15") + keys
 	}
-	c, _ := ServerFile.Parse(keys)
-	return []Sibling{{Name: "lab", File: ServerPath(macPath, "lab"), Conf: c}}
+	c, _ := Parse(keys)
+	return []Sibling{{Name: "lab", File: ServerPath(dirPath, "lab"), Conf: c}}
 }
 
 func TestClashesRefuseWhatTwoServersCannotShare(t *testing.T) {
@@ -90,7 +90,7 @@ func TestClashesIgnoreAServerWithNoKeys(t *testing.T) {
 
 // parse returns the server's file's keys, which the test means to hold no refusal.
 func parse(t *testing.T, keys string) Conf {
-	c, errs := ServerFile.Parse(keys + "\n")
+	c, errs := Parse(keys + "\n")
 	if len(errs) > 0 {
 		t.Fatalf("Parse(%q) = %+v", keys, errs)
 	}

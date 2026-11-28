@@ -5,29 +5,14 @@ A server of the Mac's is a host or a cloud VM, one of two targets that the serve
 defaults, and what a few units do. A guest, a container under a host, names its host and takes the
 host's way ([A guest](#a-guest)).
 
-## The two files
+## The server's file
 
-`/etc/ws/values.yml`, root's, holds the Mac's keys, which no server changes. On a new Mac it stands
-empty before the first `ws macos setup`, which installs Secretive, waits for a key made in it and
-writes the three keys ([Secretive](../roles/ssh/README.md#secretive)):
+Each server has a file, root's, `/etc/ws/servers/NAME/values.yml`. The Mac has no values file of its
+own. The file of ws, the first server:
 
 ```sh
 sudo mkdir -p /etc/ws/servers/ws
-sudo touch /etc/ws/values.yml
 ```
-
-Setup then writes these, NAME being the name of the key that its wait prints:
-
-```yaml
-WS_IDENTITY_PUB_KEY: /etc/ws/secretive/NAME.pub
-WS_IDENTITY_AGENT: ~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh
-WS_GIT_SIGNING_PUB_KEY: /etc/ws/secretive/NAME.pub
-```
-
-Where the file names `WS_IDENTITY_PUB_KEY` already, as `~/.ssh/KEY.pub` for a key in a file,
-setup installs no Secretive and writes none of them.
-
-`/etc/ws/servers/ws/values.yml`, beside it, holds every other key:
 
 ```yaml
 WS_SLOT: 0
@@ -41,22 +26,21 @@ WS_TUNNEL_NETWORKS: 10.20.0.0/16 198.51.100.0/24
 WS_RESOLVERS: example.internal=10.20.0.53,10.20.0.54
 ```
 
-Both are YAML files of `KEY: value` lines, one a line. The key is at the line's start with its colon
+The file is YAML, `KEY: value` lines, one a line. The key is at the line's start with its colon
 right after it, and the value fits the line, in quotes where YAML needs them. Comments and blank
 lines stay. ws reads that form alone. A quoted key, a space before
 the colon, a flow map, a value wrapped over lines and a `---` marker are refused, with their line.
-A key in the other file is refused, with the file it goes in. `WS_VALUES` names `values.yml`,
-and the server's file is `servers/ws/values.yml` beside it. Each key's meaning is in
-[values.yml](../README.md#the-macs-valuesyml).
+`WS_VALUES` names the directory that holds `servers/`, `/etc/ws` if unset. Each key's
+meaning is in [The servers' values](../README.md#the-servers-values).
 
 ## The check
 
-`ws macos values check` reads `values.yml` and each server's file beside it, and names each bad or
+`ws macos values check` reads each server's file, and names each bad or
 missing key with its file, then exits 1. Where all pass, it prints one line. The frame's bootstrap
 runs it first ([The check of the values](../roles/frame/README.md#the-check-of-the-values)).
 
 The check, the facts, `ws macos servers`, `remove`, `secrets add`, `values print` and setup ask one
-read of `values.yml` and every server's file. It works the clashes out once, and gives each server
+read of every server's file. It works the clashes out once, and gives each server
 as accepted or refused, with its refusal. The check, the facts, setup and `remove` refuse on a bad
 server's file, `remove NAME` on any but NAME's. `values print` refuses its server for its own file,
 for a clash with another's good file, and, for a guest, for its host's bad file. It never refuses
@@ -114,7 +98,7 @@ The tunnel is `absent` before the bootstrap sets its daemon up, and `stopped` wh
 not loaded it. Before the daemon writes its state, it reads `starting`, and `unreadable` where ws
 can't read the state. Else the column shows the tier and endpoint that the state holds. A server
 whose file ws refuses shows `-` for its target and slot. Its errors follow the rows, with exit
-code 1. A refusal of `values.yml` comes first and alone, with no row. The command takes no
+code 1. A bad name in `servers/` is refused first and alone, with no row. The command takes no
 `--server`.
 
 `ws macos remove NAME` takes a server off the Mac, as the user. It refuses the Mac's last
@@ -125,7 +109,7 @@ server whole where that fails. `--skip-secrets` leaves the secrets, and prints t
 hand. It then deletes `servers/NAME` and NAME's entry in
 `known_hosts`, and runs `mise -C /opt/ws/macos bootstrap`, whose units take
 NAME's daemon, hosts and routes away. A server that stays and whose file ws refuses, NAME's clashes
-aside, stops it before it deletes anything, as those units would fail. A refusal of `values.yml`
+aside, stops it before it deletes anything, as those units would fail. A bad name in `servers/`
 stops it first and alone. Where the bootstrap fails,
 run it again to end the removal. Where NAME held the cable, it prints a line to do by hand: the
 cable's service keeps `10.77.0.2`. The server itself is not changed.

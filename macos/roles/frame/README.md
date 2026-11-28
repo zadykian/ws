@@ -104,7 +104,7 @@ run `verify`: it calls mise, whose read would call that unit again.
 
 `~/Library/Caches/ws-values.checked`, in the root's `mise.macos.toml`, is a template that runs
 `ws macos values check`. The plan and the run fail, before any unit reads a value, where
-`/etc/ws/values.yml` or a server's file holds a bad key or lacks one. The message names each key
+a server's file holds a bad key or lacks one. The message names each key
 with its file. The file is the user's, with no owner or group, so mise reads and writes it as the
 user and asks no password. macOS always has that directory. The file is not under `/etc/ws`, whose
 files are root's and ws's units'. Nor is it a unit of ws's: a unit runs in the packages'

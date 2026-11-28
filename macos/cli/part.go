@@ -11,7 +11,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/macos/facts"
-	"github.com/zadykian/ws/macos/internal/keys"
 	"github.com/zadykian/ws/macos/roles/cable"
 	"github.com/zadykian/ws/macos/roles/cld"
 	"github.com/zadykian/ws/macos/roles/networks"
@@ -33,25 +32,6 @@ func newCldCmd(p enginecli.Env) *cobra.Command {
 				return nil, err
 			}
 			return []resource.Resource{&cld.Cld{Home: home, M: p.Machine, Out: out}}, nil
-		})
-}
-
-// newKeysCmd returns ws macos keys.
-func newKeysCmd(p enginecli.Env) *cobra.Command {
-	return enginecli.Procedure("keys", "copy the .pub of each key of Secretive's that values.yml names into /etc/ws",
-		"ssh and git name a key that Secretive's agent holds by its .pub, which macOS keeps ws from "+
-			"reading in Secretive's container. So ws keeps a copy, from the agent, in /etc/ws/secretive. "+
-			"A key in a file has none.",
-		func(ctx context.Context, out effect.Out) ([]resource.Resource, error) {
-			home, err := homeOf(p)
-			if err != nil {
-				return nil, err
-			}
-			c, err := values.LoadMac(p.Machine, values.Path(p.Getenv, p.Pwd))
-			if err != nil {
-				return nil, err
-			}
-			return keys.Copies(ctx, p.Machine, out, c, home)
 		})
 }
 
@@ -90,7 +70,7 @@ func newNetworksCmd(p enginecli.Env) *cobra.Command {
 
 // serversOf reads each server's values, checked as the units' facts are.
 func serversOf(p enginecli.Env) ([]facts.Server, error) {
-	return facts.Servers(p.Machine, values.Path(p.Getenv, p.Pwd))
+	return facts.Servers(p.Machine, values.Dir(p.Getenv, p.Pwd))
 }
 
 // homeOf returns the user's home from HOME.

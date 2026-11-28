@@ -23,8 +23,6 @@ func TestPairs(t *testing.T) {
 			"WS_LAN_ADDRESS", "10.88.0.2",
 			"WS_CABLE_PORT", "en1",
 		), "has another target's key: WS_LAN WS_CABLE_PORT (macos"},
-		{"signing alone", Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"), ""},
-		{"agent alone", Text("WS_IDENTITY_AGENT", "~/a.sock"), "WS_IDENTITY_AGENT needs WS_IDENTITY_PUB_KEY"},
 	}
 	for _, tt := range tests {
 		_, errs := Parse(tt.text + "\n")

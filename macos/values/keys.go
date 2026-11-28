@@ -20,7 +20,6 @@ const (
 type Conf struct {
 	Target, Host, Slot, PublicKey, LAN, LANAddress, Remote, RemotePort, Port string
 	TunnelNetworks, Resolvers, CableService, CablePort                       string
-	GitSigningPubKey, IdentityPubKey, IdentityAgent                          string
 
 	// HostCable is set by ReadFleet alone, for a guest whose host has a cable: the guest tries the
 	// cable's address too. A guest holds no WS_CABLE_SERVICE, as one cable serves one service.
@@ -65,10 +64,6 @@ var keptNames = cablenet.Net.String() + " and " + slot.Range.String()
 // port is the form of both ports.
 const port = "a port, 1 to 65535"
 
-// keyFile is the form of both keys' files.
-const keyFile = "a public key's file, as ~/.ssh/NAME.pub: a path from / or ~/ to .pub, " +
-	"of letters, digits and ._/@+-"
-
 // keys is values.yml's keys in the order of the file's docs, with their checks.
 var keys = []key{
 	{"WS_TARGET", func(c *Conf) *string { return &c.Target },
@@ -98,10 +93,6 @@ var keys = []key{
 		"a network service as networksetup -listallnetworkservices prints it, no * first"},
 	{"WS_CABLE_PORT", func(c *Conf) *string { return &c.CablePort }, check.CablePort,
 		"a port of ws's, as enp5s0: up to 15 letters, digits and ._-, no - first"},
-	{"WS_GIT_SIGNING_PUB_KEY", func(c *Conf) *string { return &c.GitSigningPubKey }, check.KeyFile, keyFile},
-	{"WS_IDENTITY_PUB_KEY", func(c *Conf) *string { return &c.IdentityPubKey }, check.KeyFile, keyFile},
-	{"WS_IDENTITY_AGENT", func(c *Conf) *string { return &c.IdentityAgent }, check.Socket,
-		"an agent's socket: a path from / or ~/, of letters, digits, blanks and ._/@+-"},
 }
 
 // isLAN reports whether v is a network clear of the cable's and the slots' subnets.

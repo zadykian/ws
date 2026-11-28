@@ -50,7 +50,7 @@ S1 = { provider = "age", value = "` + sealed + `" }
 // secrets repository holds files, or fnox.toml alone where files is nil.
 func addFixture(files map[string]string) (enginecli.Env, *secretstest.Mac) {
 	m := effecttest.NewMachine()
-	keyed(m)
+	oneServer(m)
 	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_SLOT", "1"))
 	m.Dirs["/etc/ws/servers/lab"] = 0o755
 	m.Files[fnoxKeyFile] = []byte("AGE-PLUGIN-YUBIKEY-1QQQ\n")

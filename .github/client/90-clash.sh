@@ -10,8 +10,8 @@ set -eo pipefail
 # shellcheck source=.github/client-mise.sh
 . .github/client-mise.sh
 
-conf=/etc/ws/values.yml
-trap 'sudo rm -rf "${conf%/*}/servers/lab" "${conf%/*}/servers/box"' EXIT
+conf=/etc/ws
+trap 'sudo rm -rf "$conf/servers/lab" "$conf/servers/box"' EXIT
 
 # ws's own ports, which the slot and port cases clash with.
 for line in 'WS_REMOTE: localhost' 'WS_REMOTE_PORT: 22022' 'WS_TUNNEL_PORT: 51820'; do
@@ -25,10 +25,7 @@ done
 server() {
     conf_server=$1
     shift
-    {
-        cat "$conf"
-        printf '%s\n' "$@"
-    } | conf_write "$conf"
+    printf '%s\n' "$@" | conf_write "$conf"
     conf_server=ws
 }
 
@@ -58,7 +55,7 @@ server box 'WS_SLOT: 2' 'WS_CABLE_SERVICE: Box'
 server lab 'WS_SLOT: 1' 'WS_CABLE_SERVICE: Lab'
 refused "WS_CABLE_SERVICE names a cable, as server box's does" lab
 
-sudo rm -rf "${conf%/*}/servers/box"
+sudo rm -rf "$conf/servers/box"
 server lab 'WS_SLOT: 0'
 refused "WS_SLOT=0 is server ws's slot too" lab
 
