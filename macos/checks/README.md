@@ -138,7 +138,7 @@ Run them in this order. Trials 1 and 2 first, as a first run puts every later tr
   then run `setup.sh 5`.
 - It checks: `sudo sfltool dumpbtm` holds one login item for each of the seven apps, whose URL is
   the app's path whole. mise's status finds each of the seven `set`, and no item `undeclared`.
-  Secretive's agent, Logi's, Rectangle Pro and Stats run. It prints the dump's login items that the
+  seward's agent, Logi's, Rectangle Pro and Stats run. It prints the dump's login items that the
   role does not name.
 - Passes: every line is `ok`. By hand, System Settings, General, Login Items shows the seven items.
   An app's own item of the shared list, `LSSharedFileList`, is gone: `exclusive` removed it. An item
@@ -149,9 +149,8 @@ Run them in this order. Trials 1 and 2 first, as a first run puts every later tr
   `undeclared` row names an item of the shared list. Run `ws macos setup`, start that app again,
   and run `setup.sh 5`. Where the row comes back, the app adds it at each start, and setup's plan
   never reads 0.
-- If Secretive's agent is a login item that `sfltool` shows and mise's status does not, add its app
-  to `apps` in `mise.apps.toml`. mise reads `LSSharedFileList` alone. The records' format is
-  macOS's, so where every count is 0, read the dump first: the match is the script's.
+- mise reads `LSSharedFileList` alone. The records' format is macOS's, so where every count is 0,
+  read the dump first: the match is the script's.
 - A failure changes: [apps](../roles/apps/README.md)'s `login_items`. An app that adds its item
   back at each start has its own open-at-login turned off, or the role drops `exclusive`.
 
