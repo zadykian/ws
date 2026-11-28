@@ -89,7 +89,11 @@ and the plan must exit 0. Case 58 checks
 `/usr/local/bin/fnox` and `age-plugin-yubikey` must be mise's, root's and 0755, at their pins. A
 stand-in in place of each must give way to mise's at the next bootstrap, whose plan then changes
 nothing. fnox must encrypt a value to the Nano's recipient with no YubiKey, and read it back by an
-SSH key that is a recipient too. Case 83 checks [devtools](../../macos/roles/devtools/README.md): `/usr/local/go` must link to
+SSH key that is a recipient too. Case 59 checks
+[the keys' commands](../../macos/roles/ssh/README.md#the-keys-commands): a scratch key made by
+`ws macos ssh keygen --store file` must show in `list` with that store. `remove` with no terminal
+and no `--yes` must exit 2 and delete nothing, `remove --yes` must delete both files, and a bad
+name must exit 2. Case 83 checks [devtools](../../macos/roles/devtools/README.md): `/usr/local/go` must link to
 mise's Go 1.27.3. A login shell must find it, and each formula's command in `/opt/homebrew/bin`.
 `~/.gnupg` must be 0700, and `gpg-agent.conf` must name pinentry-mac. Case 84 checks
 [docker](../../macos/roles/docker/README.md): a login shell must find `docker`, `colima` and the
