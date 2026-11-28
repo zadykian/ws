@@ -1,6 +1,7 @@
 package secrets
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -102,6 +103,27 @@ func (c *Clone) Fnox(ctx context.Context, stdin []byte, args ...string) ([]byte,
 // asks there for the Nano's PIN and touch. fnox's output goes to stderr.
 func (c *Clone) FnoxPass(ctx context.Context, args ...string) error {
 	return c.M.Pass(ctx, false, "env", c.fnoxArgv(args)...)
+}
+
+// FnoxGet reads the value of name under the profile, a server's hostname, by fnox get. The Nano
+// asks its PIN and touch on the terminal, and the value comes back unshown, less fnox's newline.
+// An empty one stops it: fnox.toml declares each input empty, for a server that sets none.
+func (c *Clone) FnoxGet(ctx context.Context, profile, name string) ([]byte, error) {
+	if err := CheckHostname(profile); err != nil {
+		return nil, err
+	}
+	if !inputName.MatchString(name) {
+		return nil, fmt.Errorf("%q is no input's name, of A-Z, 0-9 and _", name)
+	}
+	out, err := c.M.RunTerminal(ctx, "env", c.fnoxArgv([]string{"-P", profile, "get", name})...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read %s of %s by fnox get: %w", name, profile, err)
+	}
+	if value := bytes.TrimSuffix(out, []byte("\n")); len(value) > 0 {
+		return value, nil
+	}
+	return nil, fmt.Errorf("%s of %s is empty: set it in a clone of %s, by fnox -P %s set %s --provider %s",
+		name, profile, c.Repo.Slug(), profile, name, ProfileProvider)
 }
 
 // fnoxArgv is env's arguments that run fnox with args in the clone.
