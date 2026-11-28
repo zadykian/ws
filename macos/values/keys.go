@@ -20,6 +20,7 @@ const (
 type Conf struct {
 	Target, Host, Slot, PublicKey, LAN, LANAddress, Remote, RemotePort, Port string
 	TunnelNetworks, Resolvers, CableService, CablePort                       string
+	IkewardDNS, IkewardDomains, IkewardFloors                                string
 	GitSigningPubKey, IdentityPubKey, IdentityAgent                          string
 
 	// HostCable is set by ReadFleet alone, for a guest whose host has a cable: the guest tries the
@@ -94,6 +95,13 @@ var keys = []key{
 	{"WS_RESOLVERS", func(c *Conf) *string { return &c.Resolvers }, check.Resolvers,
 		"DOMAIN=ADDRESS[,ADDRESS...] split by blanks, as example.internal=10.20.0.53, each " +
 			"domain once and in lower case, with up to 3 IPv4 addresses"},
+	{"WS_IKEWARD_DNS", func(c *Conf) *string { return &c.IkewardDNS }, check.IPv4,
+		"the VPN's resolver, an IPv4 address inside WS_IKEWARD_FLOORS"},
+	{"WS_IKEWARD_DOMAINS", func(c *Conf) *string { return &c.IkewardDomains }, check.Domains,
+		"domains split by blanks, as corp.example, each once and in lower case"},
+	{"WS_IKEWARD_FLOORS", func(c *Conf) *string { return &c.IkewardFloors },
+		func(v string) bool { return check.Networks(v, cablenet.Net, slot.Range) },
+		"IPv4 networks split by blanks, as 10.20.0.0/16, each clear of " + keptNames},
 	{"WS_CABLE_SERVICE", func(c *Conf) *string { return &c.CableService }, check.CableService,
 		"a network service as networksetup -listallnetworkservices prints it, no * first"},
 	{"WS_CABLE_PORT", func(c *Conf) *string { return &c.CablePort }, check.CablePort,
