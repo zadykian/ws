@@ -55,14 +55,3 @@ func TestSettingsQuotesTheKeyAndNamesNoProgramWithoutOne(t *testing.T) {
 		t.Errorf("Settings names a program with none given:\n%s", got)
 	}
 }
-
-func TestAllowedSignersTrustsTheKeyForTheEmail(t *testing.T) {
-	for id, want := range map[gitcfg.Identity]string{
-		gitcfg.Mac(): "# h\nme@zadykian.dev ssh-ed25519 AAAA\n",
-		gitcfg.WS():  "# h\nsu@zadykian.dev ssh-ed25519 AAAA\n",
-	} {
-		if got := gitcfg.AllowedSigners(id, "# h", "ssh-ed25519 AAAA"); got != want {
-			t.Errorf("AllowedSigners(%v) = %q, want %q", id, got, want)
-		}
-	}
-}

@@ -44,7 +44,7 @@ func TestGitConfigOfRootIsGitcfgsSettings(t *testing.T) {
 	if err := write(t, e, units(t, e, "file/git-config")); err != nil {
 		t.Fatal(err)
 	}
-	settings := gitcfg.Settings(gitcfg.WS(), gitcfg.Inputs{Key: "/root/.ssh/id_ed25519_signing.pub", Gh: "/usr/bin/gh"})
+	settings := gitcfg.Settings(gitcfg.WS(), gitcfg.Inputs{Key: "/root/.ssh/ws-sign.pub", Gh: "/usr/bin/gh"})
 	got := string(m.Files["/etc/ws/gitconfig"])
 	if _, rest, ok := strings.Cut(got, "at its top.\n"); !ok || !strings.HasPrefix(rest, settings) {
 		t.Errorf("gitconfig = %q, want gitcfg's settings below the header", got)
@@ -99,8 +99,8 @@ func TestGitCheckStopsAllButSigning(t *testing.T) {
 	m.Results[check] = effecttest.Result{Out: []byte("a clone holds a token\n"), Err: errors.New("exit status 1")}
 	m.Results[included] = effecttest.Result{Err: exits(t, 1, "")}
 	m.Dirs["/root/.ssh"], m.Owners["/root/.ssh"] = 0o700, [2]int{}
-	m.Files["/root/.ssh/id_ed25519_signing"] = []byte("key")
-	m.Files["/root/.ssh/id_ed25519_signing.pub"] = []byte(pub)
+	m.Files["/root/.ssh/ws-sign"] = []byte("key")
+	m.Files["/root/.ssh/ws-sign.pub"] = []byte(pub)
 	us, err := kind.Closure(loaded(t, e), kind.Names(units(t, e)))
 	if err != nil {
 		t.Fatal(err)
@@ -120,7 +120,7 @@ func TestGitCheckStopsAllButSigning(t *testing.T) {
 	if _, ok := m.Files["/root/.gitconfig"]; ok {
 		t.Error("the include went in after a failed check")
 	}
-	want := gitcfg.AllowedSigners(gitcfg.WS(), file.Header("#"), "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGit")
+	want := file.Header("#") + "\nsu@zadykian.dev ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGit\n"
 	if got := string(m.Files["/etc/ws/allowed_signers"]); got != want {
 		t.Errorf("allowed_signers after a failed check = %q, want %q", got, want)
 	}
@@ -133,11 +133,16 @@ func TestGitKeyIsMadeOnce(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !slices.ContainsFunc(m.Calls, func(call string) bool { return strings.HasSuffix(call, " "+keygen) }) {
-		t.Errorf("calls %q, want ssh-keygen as root", m.Calls)
+		t.Errorf("calls %q, want ws ubuntu ssh keygen ws-sign", m.Calls)
 	}
-	m.Files["/root/.ssh/id_ed25519_signing"] = []byte("key")
+	m.Files["/root/.ssh/ws-sign"] = []byte("key")
+	m.Files["/root/.ssh/ws-sign.pub"] = []byte(pub)
 	if got := changes(t, units(t, e, "state/git-key")[0]); got != nil {
 		t.Errorf("second plan = %q, want none", got)
+	}
+	delete(m.Files, "/root/.ssh/ws-sign.pub")
+	if got := changes(t, units(t, e, "state/git-key")[0]); got == nil {
+		t.Error("plan with a lost .pub = none, want the key's command")
 	}
 }
 
@@ -151,11 +156,11 @@ func TestGitSignersTrustTheKey(t *testing.T) {
 		t.Errorf("without the key: %s = %q, want the header alone", p, got)
 	}
 	m.Dirs["/root/.ssh"], m.Owners["/root/.ssh"] = 0o700, [2]int{}
-	m.Files["/root/.ssh/id_ed25519_signing.pub"] = []byte(pub)
+	m.Files["/root/.ssh/ws-sign.pub"] = []byte(pub)
 	if err := apply(t, units(t, e, "file/git-signers")[0]); err != nil {
 		t.Fatal(err)
 	}
-	want := gitcfg.AllowedSigners(gitcfg.WS(), file.Header("#"), "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGit")
+	want := file.Header("#") + "\nsu@zadykian.dev ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGit\n"
 	if got := string(m.Files[p]); got != want || m.Modes[p] != 0o644 {
 		t.Errorf("%s = %q, mode %o; want %q, 644", p, got, m.Modes[p], want)
 	}

@@ -55,17 +55,6 @@ func TestSetTwiceChangesNothing(t *testing.T) {
 	}
 }
 
-// The new line holds no home of its own: /root judges its path.
-func TestSetTakesAKeyBelowRootsHome(t *testing.T) {
-	if _, err := Set([]byte("---\n"), "WS_GIT_SIGNING_PUB_KEY", "/root/.ssh/k.pub"); err != nil {
-		t.Errorf("a key below /root: %v", err)
-	}
-	if _, err := Set([]byte("---\n"), "WS_GIT_SIGNING_PUB_KEY", "/home/ada/k.pub"); err == nil ||
-		!strings.Contains(err.Error(), "is outside /root") {
-		t.Errorf("a key outside /root: %v", err)
-	}
-}
-
 func TestSetRefuses(t *testing.T) {
 	for _, tc := range []struct {
 		name, data, key, value, want string

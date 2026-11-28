@@ -18,9 +18,9 @@ pull request. It runs as the user, with sudo where it needs root. `mise bootstra
 cld and a zsh hook ([Ghostty and cld on the Mac](roles/ghostty/README.md)). mise clones oh-my-zsh and its plugins, and the
 zsh settings load them ([zsh](roles/zsh/README.md)). It keeps the display on while on power and stops the App Store's
 updates ([power](roles/power/README.md)). It turns the firewall on and has it block all incoming, as the server reaches the
-Mac past no router ([the firewall](roles/firewall/README.md)). mise installs Ghostty, Zed and a font as casks, and gh, fnox
-and age-plugin-yubikey by its lock, with no Homebrew ([the runbook](runbook.md)). ws's units install .NET's SDKs
-([dotnet](roles/dotnet/README.md)). mise installs Go by its lock, and gnupg, ripgrep and other tools as formulae
+Mac past no router ([the firewall](roles/firewall/README.md)). mise installs Ghostty, Zed and a font as casks, and gh, fnox,
+age-plugin-yubikey and seward by its lock, with no Homebrew ([the runbook](runbook.md)). ws's units install
+.NET's SDKs ([dotnet](roles/dotnet/README.md)). mise installs Go by its lock, and gnupg, ripgrep and other tools as formulae
 ([devtools](roles/devtools/README.md)). It installs Docker's command line and colima the same way ([docker](roles/docker/README.md)). It sets the
 Dock, Finder, windows and sounds as preferences, and the wallpaper to Stone ([desktop](roles/desktop/README.md)). It makes
 the built-in keyboard's Caps Lock a Control key, sets the symbolic hotkeys and installs the keyboard
@@ -28,7 +28,7 @@ layout ([keyboard](roles/keyboard/README.md)).
 The second run installs the Mac's apps as casks, pins some in the Dock, opens seven at login and
 sets Stats's settings ([apps](roles/apps/README.md)). The runbook runs `install.sh`, which puts `ws` in `/usr/local/bin`
 from a release, checked against its `ws.sha256` ([Releases](../.github/workflows/release.md)). Write each server's values below
-first, and the Mac's `values.yml`, which stands empty on a new Mac ([The two files](values/README.md#the-two-files)). Then:
+first ([The server's file](values/README.md#the-servers-file)). Then:
 
 ```sh
 ws macos setup
@@ -60,10 +60,6 @@ steps are those of the server's setup, which `internal/setup` holds, with the Ma
 - The tree is root's. Setup reads its tag and status as the user by `git -c
   safe.directory=/opt/ws`, as git refuses a repository that another user owns. It runs git
   through sudo to fetch, check out and clean, and the plugin's link too.
-- Where `values.yml` names no `WS_IDENTITY_PUB_KEY`, setup installs Secretive by mise's pin before
-  the bootstrap, checks it and waits for a key made in it, which it names in `values.yml`
-  ([Secretive](roles/ssh/README.md#secretive)). `--key NAME` takes a key that Secretive held
-  before. A plan with the key due plans no more.
 - The bootstrap runs twice, with the env `macos` and then with `-E ws,apps`. A failed cask fails
   setup, with ws's units set up ([The apps' env](roles/frame/README.md#the-apps-env)).
 - A second run reads as the user, writes nothing and asks no password. `--in-place` and `--plan`
@@ -79,13 +75,12 @@ the difference. `ws macos servers` shows each server's tunnel. A cable's service
 which no run turns on, draws a warning from `ws macos cable` and its `--check` alone: a bootstrap
 shows no check's output. No unit reads a private key: the key's unit looks for the file alone.
 
-## The Mac's values.yml
+## The servers' values
 
-The repository names no server, so the values go in two YAML files of `KEY: value` lines that the script
-reads without running them. `/etc/ws/values.yml` holds the Mac's keys: `WS_GIT_SIGNING_PUB_KEY`,
-`WS_IDENTITY_PUB_KEY` and `WS_IDENTITY_AGENT`. `/etc/ws/servers/ws/values.yml` holds every other key,
-and a key in the other file is refused. Both are root's, written through sudo. A `WS_VALUES` file
-outside `/etc/ws` is the user's. [The two files](values/README.md#the-two-files) shows both.
+The repository names no server, so the values go in a YAML file of `KEY: value` lines for each
+server, which the script reads without running it. `/etc/ws/servers/ws/values.yml` holds every key
+of ws, root's, written through sudo. A `WS_VALUES` directory outside `/etc/ws` is the
+user's. [The server's file](values/README.md#the-servers-file) shows one.
 `--server NAME` picks the server that a `ws macos` command acts on, and may be left out
 where there is one ([The server's name](values/README.md#the-servers-name)). `remove`,
 `secrets add` and `secrets init` refuse it: remove and add take the server's name as their
@@ -100,17 +95,14 @@ it forwards to ws's 22. The tunnel takes UDP 51820 every way, which the router f
 router's side is in [The router](../ubuntu/roles/cable/router.md). `WS_PUBLIC_KEY` goes in last,
 once ws has the Mac's key, in the order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE`
 names the network service of the display's adapter, and `WS_CABLE_PORT` ws's port of the cable: [The
-cable](#the-cable). `WS_GIT_SIGNING_PUB_KEY` is the `.pub` of the key that signs git's commits on
-the Mac, by its path from `/` or `~/`: [git on the Mac](roles/git/README.md). `WS_IDENTITY_PUB_KEY` is the
-`.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the socket of its agent: [ssh's
-hosts](#sshs-hosts). `WS_HOST` makes a server a guest of another, its host, and takes the host's
+cable](#the-cable). ssh offers ws seward's `~/.ssh/ws-auth.pub`, and git signs with its
+`~/.ssh/ws-sign.pub`: [ssh's hosts](#sshs-hosts), [git on the
+Mac](roles/git/README.md). `WS_HOST` makes a server a guest of another, its host, and takes the host's
 LAN, address and router for the guest's ([A guest](values/README.md#a-guest)). The bootstrap makes
 `/etc/ws` through sudo, at mode 755, for the tunnel's key, git's files and ssh's hosts.
 
 ssh logs in to every server as root, so no key names a user. A key with an empty value, as
 `WS_REMOTE: ""`, takes its default, as a missing line does: 51820 for `WS_TUNNEL_PORT`.
-`WS_IDENTITY_PUB_KEY` has none: the bootstrap stops without it
-([ssh's hosts](#sshs-hosts)). Nor has `WS_GIT_SIGNING_PUB_KEY` ([git on the Mac](roles/git/README.md)).
 
 `WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
 sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split by blanks. Each
@@ -132,9 +124,10 @@ may not change stops the run: sudo would leave root's files where the user's go.
 
 `mise -C /opt/ws/macos bootstrap` writes `/etc/ws/ssh_config`, root's and 644, with a host
 for each server through its tunnel, and puts its Include first in `~/.ssh/config` ([ssh on the
-Mac](roles/ssh/README.md)). ssh offers ws the key of `WS_IDENTITY_PUB_KEY` alone. Failed logins over
-the tunnel ban the Mac's `10.99.N.2` for an hour: `ssh -o HostName=ADDRESS -o Port=PORT ws` comes
-from another address, and from there `fail2ban-client set sshd unbanip 10.99.N.2` lifts the ban.
+Mac](roles/ssh/README.md)). ssh offers ws seward's `~/.ssh/ws-auth.pub` alone, through seward's
+agent. Failed logins over the tunnel ban the Mac's `10.99.N.2` for an hour:
+`ssh -o HostName=ADDRESS -o Port=PORT ws` comes from another address, and from there
+`fail2ban-client set sshd unbanip 10.99.N.2` lifts the ban.
 
 ## The cable
 
@@ -209,13 +202,12 @@ its `tunnel.conf`, from the server's file, and its `routes.d` ([the daemons](rol
 the daemon reads no file the user can write. In System Settings › General › Login Items &
 Extensions, its "Allow in the Background" must stay on.
 
-A server with no directory beside `values.yml` has its daemon removed at the next bootstrap, by
+A server with no directory in `servers/` has its daemon removed at the next bootstrap, by
 `ws macos tunnel conf`: booted out where loaded, then `/etc/ws/tunnel/NAME`, its state file
-and log. launchd's unit removes its plist. Nothing goes where `values.yml`'s directory lists no
-server.
+and log. launchd's unit removes its plist. Nothing goes where `servers/` lists no server.
 
 The tunnel's ends are `10.99.N.2` on the Mac, on a utun of wireguard-go's, and `10.99.N.1` on ws, N
-being `WS_SLOT`. A moved slot restarts the daemon. Name the pair in ws's values.yml ([The
+being `WS_SLOT`. A moved slot restarts the daemon. Name the pair in ws's values ([The
 tunnel](../ubuntu/roles/tunnel/README.md#the-tunnel)). The daemon points the Mac's end at the
 first of these that answers, each on UDP 51820:
 

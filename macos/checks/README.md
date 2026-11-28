@@ -2,8 +2,9 @@
 
 GitHub's runner is macOS 26.7.2. It drops the `apps` role and the wallpaper's unit, has no display,
 and never logs out. So what no doc settles is tried on the Mac itself, reset to a clean macOS 27, in
-one sitting, once every sub-issue of #1533 is on `main`. These are the ten trials of #1578. None has
-run: the build had no Mac. A failure changes the role that its trial names, never the trial.
+one sitting, once every sub-issue of #1533 is on `main`. These are the ten trials of #1578 and the
+eleventh of #1712. None has run: the build had no Mac, and trial 11 waits for the releases of ws
+and seward. A failure changes the role that its trial names, never the trial.
 The scripts run nothing in CI, but [checks-test.sh](checks-test.sh) tries their functions in `lint`,
 against stand-ins for the tools and on the real roles' files. It sources prefs.sh's cases from
 [prefs-test.sh](prefs-test.sh).
@@ -19,7 +20,8 @@ reads. The first run, the second and each step by hand are the person's, as the 
 | [setup.sh](setup.sh) `[CHECK...]` | As the user. `sudo` reads the login items. | 1, 5, 10. |
 | [prefs.sh](prefs.sh) `[CHECK...]` | As the user. | 2, 3, 4, 6, 7. |
 | [tools.sh](tools.sh) `8 [FILE]`, `9 [SHA256]` | As the user. | 8, 9. |
-| [lib.sh](lib.sh) | Sourced by the three. | Setup's plan and status, the roles' apps and hotkeys. |
+| [keys.sh](keys.sh) `[REPO SHA]` | As the user, in a terminal of the login session, in the clone. | 11. |
+| [lib.sh](lib.sh) | Sourced by the four. | Setup's plan and status, the roles' apps and hotkeys. |
 
 `WS_TREE` names ws's tree, `/opt/ws` by default. The scripts read the Dock's apps, the login items,
 the formulae and the hotkeys from its roles' files, so a change of a role reaches them.
@@ -40,7 +42,9 @@ first run twice, with `--plan` at 0 after the first and no sudo in the second (c
 The client job reads back the hotkeys (81), desktop's preferences (82), devtools (83), docker's
 config (84), the zsh clones and the hook (87) and power's units (88). The runner holds no login
 item and no display, so the wallpaper and the apps are proved on the Mac alone. A trial below
-names what the runner leaves open.
+names what the runner leaves open. For trial 11 the client job reads `ssh -G ws`, seward's socket
+and `git verify-commit` on software keys, as a VM has no Secure Enclave. It logs in nowhere, so the
+enclave's keys, a login and GitHub's reading of a commit are proved on the Mac alone.
 
 ## The trials
 
@@ -134,7 +138,7 @@ Run them in this order. Trials 1 and 2 first, as a first run puts every later tr
   then run `setup.sh 5`.
 - It checks: `sudo sfltool dumpbtm` holds one login item for each of the seven apps, whose URL is
   the app's path whole. mise's status finds each of the seven `set`, and no item `undeclared`.
-  Secretive's agent, Logi's, Rectangle Pro and Stats run. It prints the dump's login items that the
+  seward's agent, Logi's, Rectangle Pro and Stats run. It prints the dump's login items that the
   role does not name.
 - Passes: every line is `ok`. By hand, System Settings, General, Login Items shows the seven items.
   An app's own item of the shared list, `LSSharedFileList`, is gone: `exclusive` removed it. An item
@@ -145,9 +149,8 @@ Run them in this order. Trials 1 and 2 first, as a first run puts every later tr
   `undeclared` row names an item of the shared list. Run `ws macos setup`, start that app again,
   and run `setup.sh 5`. Where the row comes back, the app adds it at each start, and setup's plan
   never reads 0.
-- If Secretive's agent is a login item that `sfltool` shows and mise's status does not, add its app
-  to `apps` in `mise.apps.toml`. mise reads `LSSharedFileList` alone. The records' format is
-  macOS's, so where every count is 0, read the dump first: the match is the script's.
+- mise reads `LSSharedFileList` alone. The records' format is macOS's, so where every count is 0,
+  read the dump first: the match is the script's.
 - A failure changes: [apps](../roles/apps/README.md)'s `login_items`. An app that adds its item
   back at each start has its own open-at-login turned off, or the role drops `exclusive`.
 
@@ -207,3 +210,22 @@ Run them in this order. Trials 1 and 2 first, as a first run puts every later tr
 - Passes: every line is `ok`. By hand, in Ghostty, drop an ssh and see that the tab resets the
   terminal's modes. The hook runs first of `precmd`.
 - A failure changes: [zsh](../roles/zsh/README.md)'s `zshrc` or its clones' pins.
+
+**11. seward's keys log in, sign and list, in a terminal of the login session.**
+
+- Where: the Mac, once ws and seward are released and the first run is done. The login and GitHub
+  checks also need the keys on GitHub ([the runbook](../runbook.md#github)), root on ws to have
+  imported them ([the server's runbook](../../ubuntu/runbook.md#the-steps-by-hand)), and the tunnel
+  up ([The tunnel](../runbook.md#the-tunnel)). Make a commit by hand that `ws-sign` signs, and push
+  it to a scratch branch. Run `keys.sh REPO SHA` as the user in a terminal of the login session,
+  where alone a key signs. Run it inside the clone that holds the commit, as git refuses root's
+  `/opt/ws`. `keys.sh` alone reads all but the commit.
+- It checks: `seward list` exits 0, so every key file loads, and its fourth column is `enclave` for
+  `ws-auth` and `ws-sign`. `ssh-add -L` through `~/.ssh/seward.sock` lists the key of each `.pub`,
+  and `ssh -o BatchMode=yes ws true` logs in with no prompt. With `REPO SHA`, `git verify-commit`
+  passes and `gh api repos/REPO/commits/SHA` reads the commit as verified. Without them, a `wait`
+  line.
+- Passes: every line is `ok`. By hand, log in to ws from Zed, sign a commit with the screen locked,
+  and see that the agent answers after a reboot and a login.
+- A failure goes to seward as an issue, or changes [ssh](../roles/ssh/README.md)'s units, as the
+  keys' units are there.

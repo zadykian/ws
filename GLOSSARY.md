@@ -93,12 +93,6 @@ _Avoid_: package, step
 
 ## The Mac's side
 
-**Named key**:
-The key whose `.pub` `values.yml` names for a use: ws's login, by `WS_IDENTITY_PUB_KEY`, or git's
-signing, by `WS_GIT_SIGNING_PUB_KEY`. Either ws's copy of a key of Secretive's agent, or a file
-key.
-_Avoid_: picked key, git key
-
 **User's file**:
 A whole file below the Mac's home that ws writes as the user, not root, such as Zed's
 `~/.config/zed/global_settings.json`. The `file` kind writes it, with the user as its `owner`.
@@ -117,7 +111,7 @@ last, and CI drops it ([The apps' env](macos/roles/frame/README.md#the-apps-env)
 _Avoid_: apps stage
 
 **Trial**:
-One of the ten tries of `macos/checks` that only a clean macOS 27 settles, which none has run
+One of the eleven tries of `macos/checks` that only a clean macOS 27 settles, which none has run
 ([The Mac's checks](macos/checks/README.md)).
 _Avoid_: test
 
@@ -138,7 +132,7 @@ values. The guest holds none of its own ([A guest](macos/values/README.md#a-gues
 
 **ws's directory**:
 `/etc/ws`, root's and 755 on both sides, holds git's `gitconfig` and `allowed_signers`. On the Mac
-it also holds `values.yml` and `servers/`, which only sudo writes, and the script
-`secretive-ssh-keygen`. On ws it also holds `values.yml`, the fans' `fans.json`, and the files that
+it also holds `servers/`, which only sudo writes, and the script
+`ssh-keygen`. On ws it also holds `values.yml`, the fans' `fans.json`, and the files that
 mise writes from the secret inputs: gh's `gh-token`, git's `git-tokens.toml` and the shell's `env`.
 _Avoid_: config directory

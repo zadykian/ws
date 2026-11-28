@@ -109,7 +109,6 @@ func exits(t *testing.T, code int, why string) error {
 	return err
 }
 
-// keygen is the command line that makes the key of root's default path, as the fake records it.
+// keygen is the command line that makes the signing key, as the fake records it.
 const keygen = "env HOME=/root env -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS " +
-	"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin " +
-	"sh -c mkdir -p -m 700 \"${1%/*}\" && ssh-keygen -q -t ed25519 -N '' -f \"$1\" sh /root/.ssh/id_ed25519_signing"
+	"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin " + self + " ubuntu ssh keygen ws-sign"

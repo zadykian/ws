@@ -29,7 +29,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   config: its files by env, the link, its lines, their order, the miserc and ws's path.
 - [The Mac's README](../../macos/README.md) is the Mac's side, `macos/`
   and the ws CLI. [Its git](../../macos/roles/git/README.md) is its git and gh.
-  [Its ssh](../../macos/roles/ssh/README.md) is its hosts, and [its cld](../../macos/roles/cld/README.md)
+  [Its ssh](../../macos/roles/ssh/README.md) is its hosts and seward's keys, and [its cld](../../macos/roles/cld/README.md)
   cld's unit. [Its values](../../macos/values/README.md) is
   the Mac's values files, [the tunnel's](../../macos/roles/tunnel/README.md) the daemons' rules, and [ghostty](../../macos/roles/ghostty/README.md) its Ghostty
   and what cld does there, [zed](../../macos/roles/zed/README.md) its Zed,
@@ -49,7 +49,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
 - [The real machine's checks](../../ubuntu/checks/README.md) list what a person runs on a host, its
   guests, the Mac and the LAN, with the scripts beside the page. [builders.md](../../ubuntu/checks/builders.md)
   holds the open points that the builds left. [The Mac's checks](../../macos/checks/README.md) are
-  the ten trials of a clean macOS 27, with the scripts beside the page.
+  the eleven trials of a clean macOS 27, with the scripts beside the page.
 - [The kind package's README](../../engine/core/kind/README.md) says what a unit and a kind are:
   the spec, each kind's fields, and where the specs sit.
 - [release.md](../../.github/workflows/release.md), beside `release.yml`, says how to install ws,
@@ -65,7 +65,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   for SQL Server and Ansible.
 - [The dashboards](../../ubuntu/roles/signoz/internal/dashboards/dashboards/README.md) says what each dashboard reads,
   and how to refresh them from SigNoz.
-- ws is public, and names no server ([values.yml](../../macos/README.md#the-macs-valuesyml)). So no doc holds a
+- ws is public, and names no server ([values.yml](../../macos/README.md#the-servers-values)). So no doc holds a
   server's address, a secret or a word of the local list (CLAUDE.md).
 - A change goes together across the role, its comments, its page, its line in the README, and
   `.github/workflows/README.md` where CI changes.

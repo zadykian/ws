@@ -17,9 +17,8 @@ refuses a `/usr/local` or `/usr/local/bin` that another user owns or may write: 
 
 ## Answers
 
-Make the Mac's `/etc/ws/values.yml`, as root, through sudo: empty on a new Mac, as setup writes
-its keys. Write each server's values in `/etc/ws/servers/NAME/values.yml`, as root too ([The two
-files](values/README.md#the-two-files)). The files' check refuses a clash.
+Write each server's values in `/etc/ws/servers/NAME/values.yml`, as root, through sudo ([The server's
+file](values/README.md#the-servers-file)). The files' check refuses a clash.
 
 1. Pick a slot, 0 to 15, that no server has: `WS_SLOT`.
 2. Pick the ports: 51820 for the tunnel and 22022 for the router's forward to ws's 22. Where
@@ -35,9 +34,10 @@ files](values/README.md#the-two-files)). The files' check refuses a clash.
 
 ## The bootstrap
 
-Run `ws macos setup` as the user, after the values above, and not as root: it asks
-sudo for what root's paths need. It refuses a bad value before any write, naming the key and its
-file. It then does what a person did by hand, in this order:
+Run `ws macos setup` as the user, after the values above, and not as root. Log in at the console
+first, as seward's agent loads into that session. Setup asks sudo for what root's paths need. It
+refuses a bad value before any write, naming the key and its file. It then does what a
+person did by hand, in this order:
 
 1. Where `xcode-select -p` finds no command line tools, it runs `xcode-select --install`, which
    opens Apple's dialog, and waits until the tools stand. Ctrl-C stops the wait.
@@ -45,20 +45,11 @@ file. It then does what a person did by hand, in this order:
    `/etc/mise/miserc.toml` and `/etc/mise/config.toml`, which trusts the tree.
 3. It checks this ws's release tag out in `/opt/ws`, root's, which no one else may write, and links
    the tree's plugin into `/usr/local/share/mise/plugins`.
-4. Where `values.yml` names no `WS_IDENTITY_PUB_KEY`, it installs Secretive by [ssh's
-   pin](roles/ssh/mise.macos.toml), checks it by `spctl -a -vv`, which must say `accepted`,
-   `Notarized Developer ID` and Secretive's team, and opens it. It then waits for a P-256 key.
-   Make one in Secretive at Notify, as it then signs git's commits with no prompt.
-   Setup names the key that comes in `values.yml`, as `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and
-   `WS_GIT_SIGNING_PUB_KEY`, and keeps a value that is there. It takes no key that was there before
-   it opened Secretive, as one made for another use would go to GitHub. To take one, stop setup
-   with Ctrl-C and run `ws macos setup --key NAME`, NAME being the name that the wait prints
-   ([Secretive](roles/ssh/README.md#secretive)).
-5. It runs mise's bootstrap in `/opt/ws/macos` with `--yes`, so that it asks nothing before it
+4. It runs mise's bootstrap in `/opt/ws/macos` with `--yes`, so that it asks nothing before it
    writes the preferences. The bootstrap installs gh and sets up ssh, git, cld and the Mac's other
    roles ([The Mac's frame](roles/frame/README.md)). It makes the Mac's WireGuard key, whose public
    half is `/etc/ws/tunnel.pub`.
-6. It runs the bootstrap again with `-E ws,apps`, which installs the apps and sets the login items.
+5. It runs the bootstrap again with `-E ws,apps`, which installs the apps and sets the login items.
    A failure there leaves ws's units set up, and fails setup, as mise ends a run at its first
    failed step ([The apps' env](roles/frame/README.md#the-apps-env)).
 
@@ -76,8 +67,8 @@ to the latest release, or to `--version`'s, and runs that ws's setup, with sudo 
 ## GitHub
 
 1. Run `gh auth login --scopes write:public_key,write:ssh_signing_key`, at github.com's device flow.
-2. Add the key for ws with `gh ssh-key add` and the login key's `.pub`.
-3. Add git's signing key with `gh ssh-key add --type signing` and its `.pub`, titled with the
+2. Add the key for ws with `gh ssh-key add ~/.ssh/ws-auth.pub`, which seward made in the bootstrap.
+3. Add git's signing key with `gh ssh-key add --type signing ~/.ssh/ws-sign.pub`, titled with the
    Mac's name ([The signing key](roles/git/README.md#the-signing-key)).
 
 GitHub is the only source of the server's keys: nothing copies a key to the server. Root takes the

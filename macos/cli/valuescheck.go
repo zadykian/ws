@@ -18,15 +18,15 @@ const valuesChecked = "ws values: checked"
 func newValuesCheckCmd(p enginecli.Env, server *string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "check",
-		Short: "check values.yml and each server's file, and name each bad or missing key",
-		Long: "It reads $WS_VALUES, else /etc/ws/values.yml, and each server's file beside it. It exits 1 " +
+		Short: "check each server's values.yml, and name each bad or missing key",
+		Long: "It reads each server's file in servers/ of $WS_VALUES, else of /etc/ws. It exits 1 " +
 			"with each bad or missing key and its file, and prints one line where all pass. It checks every server, and takes no --server.",
 		Args: cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error {
 			if *server != "" {
 				return errors.New("values check checks every server: leave out --server")
 			}
-			if err := values.Check(p.Machine, values.Path(p.Getenv, p.Pwd)); err != nil {
+			if err := values.Check(p.Machine, values.Dir(p.Getenv, p.Pwd)); err != nil {
 				return err
 			}
 			_, err := fmt.Fprintln(c.OutOrStdout(), valuesChecked)

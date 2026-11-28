@@ -143,13 +143,13 @@ func tunnelKey(ctx context.Context, p enginecli.Env) (string, error) {
 func newTunnelConfCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Procedure("conf", "write each server's tunnel.conf, and take a gone server's daemon away",
 		"Each server with WS_PUBLIC_KEY gets its directory under /etc/ws/tunnel, routes.d and tunnel.conf, "+
-			"written through sudo and readable by all. A daemon whose server has no directory beside "+
-			"values.yml is booted out, its files go, and the daemons left read their files again.",
+			"written through sudo and readable by all. A daemon whose server has no directory in "+
+			"servers/ is booted out, its files go, and the daemons left read their files again.",
 		func(_ context.Context, out effect.Out) ([]resource.Resource, error) {
 			servers, err := serversOf(p)
 			if err != nil {
 				return nil, err
 			}
-			return tunnel.Conf{Servers: servers, MacConf: values.Path(p.Getenv, p.Pwd), M: p.Machine, Out: out}.Resources(), nil
+			return tunnel.Conf{Servers: servers, Dir: values.Dir(p.Getenv, p.Pwd), M: p.Machine, Out: out}.Resources(), nil
 		})
 }

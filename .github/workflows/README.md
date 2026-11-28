@@ -80,11 +80,22 @@ another bootstrap, and a login shell must find the cask's `zed`. Case 48 checks 
 ws's back once it goes. Case 49 checks setup's status, which covers what mise's plan leaves out.
 With one of desktop's preferences written another value, `ws macos setup --plan` must exit 2 and
 name it as differs in mise's status. With the role's value back by its type, it must exit 0. Case
-58 checks [the secrets' tools](../../macos/roles/secrets/README.md):
+57 checks [seward](../../macos/roles/ssh/README.md#seward): `/usr/local/bin/seward` must be mise's,
+root's and 0755. `seward --version` must print 0.1.0. Its agent must run that copy, by the inode
+`lsof` lists for its pid, and `ssh-add -L` on `~/.ssh/seward.sock` must exit 0 or 1, not 2. After
+`plutil` changes the plist's `WS_SEWARD_VERSION`, a run must start the agent again under a new pid.
+On the runner, a virtual machine, `seward list` must name `ws-auth` and `ws-sign` with the store
+`file`, both made by the user's units. Their files must be 0600 and 0644, and `ssh-add -L` through
+the socket must list both. The plan must then exit 0. Case 58 checks
+[the secrets' tools](../../macos/roles/secrets/README.md):
 `/usr/local/bin/fnox` and `age-plugin-yubikey` must be mise's, root's and 0755, at their pins. A
 stand-in in place of each must give way to mise's at the next bootstrap, whose plan then changes
 nothing. fnox must encrypt a value to the Nano's recipient with no YubiKey, and read it back by an
-SSH key that is a recipient too. Case 83 checks [devtools](../../macos/roles/devtools/README.md): `/usr/local/go` must link to
+SSH key that is a recipient too. Case 59 checks
+[the keys' commands](../../macos/roles/ssh/README.md#the-keys-commands): a scratch key made by
+`ws macos ssh keygen --store file` must show in `list` with that store. `remove` with no terminal
+and no `--yes` must exit 2 and delete nothing, `remove --yes` must delete both files, and a bad
+name must exit 2. Case 83 checks [devtools](../../macos/roles/devtools/README.md): `/usr/local/go` must link to
 mise's Go 1.27.3. A login shell must find it, and each formula's command in `/opt/homebrew/bin`.
 `~/.gnupg` must be 0700, and `gpg-agent.conf` must name pinentry-mac. Case 84 checks
 [docker](../../macos/roles/docker/README.md): a login shell must find `docker`, `colima` and the
@@ -125,9 +136,9 @@ a second run must call no sudo, and `/usr/local/bin/ws` must be root:wheel at 75
 unit no line names must fail the plan, and so must a plan from `/opt/ws` with every unit in sync.
 After the first run the firewall must be on and block all incoming ([the Mac's firewall](../../macos/roles/firewall/README.md)).
 The cases after it, whose stand-ins listen on loopback, pass unchanged under it.
-The job's `values.yml` names a file key, made in case 20, as ws's
-login key and git's. Without ws's WireGuard key, the bootstrap must make the Mac's key, with
-`/etc/ws/tunnel.pub` its public half, and load no daemon, and `ssh -G ws` gives the tunnel's end.
+The job's server file is made in case 20. Without ws's WireGuard key, the
+bootstrap must make the Mac's key, with `/etc/ws/tunnel.pub` its public half, and load no daemon,
+and `ssh -G ws` gives the tunnel's end.
 With a stand-in's key it must load and run the daemon, which runs `/usr/local/bin/ws`. A second
 run must call no sudo, and its plan exit 0. The stand-in for ws is a second wireguard-go on the
 runner, with the Mac's key as its peer. It answers on loopback both as the LAN and as
@@ -146,25 +157,20 @@ back, and spare a script's own ([client-conf-checks.sh](../client-conf-checks.sh
 service. It must stop on one networksetup lacks, or one with a router outside the cable's `/30`.
 It must stop too on a `-setmanual` that fails or changes nothing, and name what differs
 ([client-setup-checks.sh](../client-setup-checks.sh)).
-The cases of the keys run mise's bootstrap with an edited `values.yml`, and
-read the files it writes ([56-keys.sh](../client/56-keys.sh)). A refusal must fail the bootstrap and
-its plan with its reason, and change no file. With the server's `WS_LAN_ADDRESS` dropped, the plan
+The cases of the keys run mise's bootstrap and read the files it writes
+([56-keys.sh](../client/56-keys.sh)). A refusal must fail the bootstrap and its plan with its
+reason, and change no file. With the server's `WS_LAN_ADDRESS` dropped, the plan
 must fail and name it and its file, as the frame's check of the values does
-([89-values-check.sh](../client/89-values-check.sh)). `ssh -G` must give `ws` the file key that the job's
-`values.yml` names, by its four lines, and the file or the agent that `WS_IDENTITY_PUB_KEY` and
-`WS_IDENTITY_AGENT` name. An empty `WS_IDENTITY_PUB_KEY` must stop, though an agent at Secretive's
-socket holds a P-256 key. It gives the line that names each P-256 key by ws's copy of its `.pub`.
-`PublicKeys` is closed, as macOS 27 denies ws the files of Secretive's container. With that line,
-`ssh -G` must give `ws` the agent and the copy, which a run writes where none exists. A `.pub` that
-is missing or unreadable must stop too. So must one that holds a private key, a certificate, a line
-that is no key, or a key that ws's OpenSSH lacks
+([89-values-check.sh](../client/89-values-check.sh)). `ssh -G` must give `ws` seward's login key
+`~/.ssh/ws-auth.pub` and its socket `~/.ssh/seward.sock` alone, by three lines in `/etc/ws/ssh_config`
+with no file key's, as the runner runs no sshd
 ([client-identity-checks.sh](../client-identity-checks.sh)). `/usr/local/bin/gh` must be mise's gh, root's
-and 0755, in place of one there, and a bootstrap that changes nothing must call no sudo. With a file
-key, git must sign a commit and verify it, with gh as GitHub's credential command. A `~/.gitconfig`
-must get the include of `/etc/ws/gitconfig` at its top, once, and keep its own lines, its mode and a
-copy. An include below them, a second one or a link must stop the bootstrap, as must a signing key
-that is empty, missing or more than a public key. With a key of Secretive's, git must sign through
-ws's wrapper whatever `SSH_AUTH_SOCK` names, and `ws` keep the file key
+and 0755, in place of one there, and a bootstrap that changes nothing must call no sudo. Git must
+name seward's `ws-sign` as its signing key and `/etc/ws/ssh-keygen`, root's and 0755, as its
+program, and the allowed signers must trust the key's `.pub`. It must sign a commit and `git
+verify-commit` it, whatever `SSH_AUTH_SOCK` names, with gh as GitHub's credential command. A
+`~/.gitconfig` must get the include of `/etc/ws/gitconfig` at its top, once, and keep its own lines,
+its mode and a copy. An include below them, a second one or a link must stop the bootstrap
 ([client-git-checks.sh](../client-git-checks.sh)). Last, after a second server's cases, one more bootstrap
 must call no sudo, and its plan and `mise dot status --missing` must exit 0
 ([96-converged.sh](../client/96-converged.sh)). Where wireguard-go makes no utun, the job fails, as the

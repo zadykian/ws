@@ -30,31 +30,22 @@ func TestValuesPrintCommand(t *testing.T) {
 		wantErr    string
 	}{
 		{"home", nil, "", 0, "WS_TARGET='lan'\nWS_HOST=''\nWS_SLOT='0'\n", ""},
-		{"env", nil, "/e/values.yml", 0, "WS_TARGET='lan'\nWS_HOST=''\nWS_SLOT='3'\n", ""},
-		{"argument", []string{"/a/values.yml"}, "/e/values.yml", 0, "WS_TARGET='lan'\nWS_HOST=''\nWS_SLOT='5'\n", ""},
-		{"missing", []string{"/none"}, "", 1, "", "ws macos values print: /none is missing: macos/values/README.md"},
-		{"refused", []string{"/bad"}, "", 1, "", "ws macos values print: /bad, line 2: unknown key WS_NOPE"},
-		{"lines", []string{"--lines", "/lines/values.yml"}, "", 0, "WS_TARGET='lan'\nWS_HOST=''\nWS_SLOT='0'\nWS_PUBLIC_KEY=''\nWS_LAN='10.88.0.0/24'\n", ""},
+		{"env", nil, "/e", 0, "WS_TARGET='lan'\nWS_HOST=''\nWS_SLOT='3'\n", ""},
+		{"argument", []string{"/a"}, "/e", 0, "WS_TARGET='lan'\nWS_HOST=''\nWS_SLOT='5'\n", ""},
+		{"missing", []string{"/none"}, "", 1, "", "ws macos values print: no server in /none/servers: write NAME/values.yml there"},
+		{"refused", []string{"/bad"}, "", 1, "", "ws macos values print: /bad/servers/ws/values.yml, line 2: unknown key WS_NOPE"},
+		{"lines", []string{"--lines", "/lines"}, "", 0, "WS_TARGET='lan'\nWS_HOST=''\nWS_SLOT='0'\nWS_PUBLIC_KEY=''\nWS_LAN='10.88.0.0/24'\n", ""},
 		{"lines of the server's file", []string{"--lines"}, "", 0, "WS_TARGET='lan'\nWS_HOST=''\nWS_SLOT='0'\n", ""},
-		{"lines refuse a server's key in values.yml", []string{"--lines", "/lines/bad/values.yml"}, "", 1, "", "/lines/bad/values.yml, line 1: WS_LAN is a server's key"},
-		{"pair", []string{"/pairs/values.yml"}, "", 1, "", "WS_LAN and WS_LAN_ADDRESS go together"},
+		{"pair", []string{"/pairs"}, "", 1, "", "WS_LAN and WS_LAN_ADDRESS go together"},
 		{"two files", []string{"a", "b"}, "", 2, "", "ws macos values print: accepts at most 1 arg(s), received 2"},
 	}
 	m := effecttest.NewMachine()
-	m.Files["/etc/ws/values.yml"] = []byte("")
 	m.Files["/etc/ws/servers/ws/values.yml"] = []byte(values.Text("WS_SLOT", "0"))
-	m.Files["/e/values.yml"] = []byte("")
 	m.Files["/e/servers/ws/values.yml"] = []byte(values.Text("WS_SLOT", "3"))
-	m.Files["/a/values.yml"] = []byte("")
 	m.Files["/a/servers/ws/values.yml"] = []byte(values.Text("WS_SLOT", "5"))
-	m.Files["/lines/values.yml"] = []byte(values.Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"))
 	m.Files["/lines/servers/ws/values.yml"] = []byte(values.Text("WS_LAN", "10.88.0.0/24"))
-	m.Files["/lines/bad/values.yml"] = []byte(values.Text("WS_LAN", "10.88.0.0/24"))
-	m.Files["/lines/bad/servers/ws/values.yml"] = []byte("")
-	m.Files["/pairs/values.yml"] = []byte("")
 	m.Files["/pairs/servers/ws/values.yml"] = []byte(values.Text("WS_LAN", "10.88.0.0/24"))
-	m.Files["/bad"] = []byte(values.Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub", "WS_NOPE", "1"))
-	m.Files["/servers/ws/values.yml"] = []byte("")
+	m.Files["/bad/servers/ws/values.yml"] = []byte(values.Text("WS_SLOT", "1", "WS_NOPE", "1"))
 	withServerDirs(m)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -78,11 +69,10 @@ func TestValuesPrintCommand(t *testing.T) {
 func TestValuesPrintReportsEachLineOfARefusedFile(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{})
 	m := effecttest.NewMachine()
-	m.Files["/bad"] = []byte(values.Text("WS_NOPE", "1", "WS_NOPE2", "1"))
-	m.Files["/servers/ws/values.yml"] = []byte("")
+	m.Files["/bad/servers/ws/values.yml"] = []byte(values.Text("WS_NOPE", "1", "WS_NOPE2", "1"))
 	p.Machine = withServerDirs(m)
 	status, _, stderr := runWs(p, "macos", "values", "print", "/bad")
-	want := "ws macos values print: /bad, line 1: unknown key WS_NOPE\nws macos values print: /bad, line 2: unknown key WS_NOPE2\n"
+	want := "ws macos values print: /bad/servers/ws/values.yml, line 1: unknown key WS_NOPE\nws macos values print: /bad/servers/ws/values.yml, line 2: unknown key WS_NOPE2\n"
 	if status != 1 || stderr != want {
 		t.Errorf("status = %d, stderr = %q; want 1, %q", status, stderr, want)
 	}

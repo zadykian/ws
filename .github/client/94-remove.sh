@@ -27,7 +27,8 @@ fails() {
 fails 'no server named box in' box
 
 # known_hosts holds an entry for each server, as ssh's first connection writes it.
-key=$(cut -d ' ' -f 1,2 ~/.ssh/id_ed25519.pub)
+ssh-keygen -q -t ed25519 -N '' -C lab -f "$RUNNER_TEMP/host-key" </dev/null
+key=$(cut -d ' ' -f 1,2 "$RUNNER_TEMP/host-key.pub")
 printf '%s %s\n' lab "$key" ws "$key" >>~/.ssh/known_hosts
 
 ws macos remove lab </dev/null | tee "$RUNNER_TEMP/remove.out" || {

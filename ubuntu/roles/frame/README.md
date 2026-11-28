@@ -163,9 +163,8 @@ included, as a `seed` file ([file](../../../engine/core/kind/file.md)). The file
 600, goes in whole under that mode. `Values.YAML` gives its text from the struct, so that a role's
 new key needs no second list. It names each key of `values.Values` on a guest, and of `values.Host`
 on a host, a table too, at the value a missing file gives. A key whose default is derived holds its
-value as the file is made: `WS_GIT_SIGNING_PUB_KEY` is under root's home, `WS_TUNNEL_PEERS` the Mac
-at the tunnel's next address. A key that a run reads from the machine, such as the swap's size,
-stays empty or `null`.
+value as the file is made: `WS_TUNNEL_PEERS` the Mac at the tunnel's next address. A key that a
+run reads from the machine, such as the swap's size, stays empty or `null`.
 
 The file is then the owner's: no run reads it as ws's, or changes it. Each call of ws reads the
 values as it starts, and the text reads as no file does, so the unit needs no `after`. CI's

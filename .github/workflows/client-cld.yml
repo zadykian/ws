@@ -58,15 +58,14 @@ jobs:
       # ws, built by .tools/install-build into /usr/local/bin, which setup runs.
       - name: Build ws
         run: sh .tools/install-build darwin arm64
-      # Any 32 bytes in base64 pass for ws's key: the daemon loads, and no handshake is needed. The
-      # facts need a login key that values.yml names: a file key, made here. Git signs with it too.
-      - name: values.yml, with a stand-in for ws's key, on a runner without the apps or cld
+      # Any 32 bytes in base64 pass for ws's key: the daemon loads, and no handshake is needed.
+      - name: ws's values.yml, with a stand-in for ws's key, on a runner without the apps or cld
         run: |
           fail=0
           for path in /Applications/Ghostty.app ~/Applications/Ghostty.app /Applications/Zed.app \
-              ~/Applications/Zed.app /Applications/Secretive.app ~/.config/zed ~/.local/bin/cld \
+              ~/Applications/Zed.app ~/.config/zed ~/.local/bin/cld \
               ~/.config/ghostty "$HOME/Library/Application Support/com.mitchellh.ghostty" \
-              ~/Library/Fonts/"$FONT" /Library/Fonts/"$FONT" ~/.ssh/id_ed25519; do
+              ~/Library/Fonts/"$FONT" /Library/Fonts/"$FONT" ~/.ssh/ws-auth ~/.ssh/ws-sign; do
               if [ -e "$path" ]; then
                   echo "::error::the runner has $path already"
                   fail=1
@@ -74,12 +73,8 @@ jobs:
           done
           # shellcheck source=.github/client-conf.sh
           . .github/client-conf.sh
-          mkdir -p ~/.ssh
-          ssh-keygen -q -t ed25519 -N '' -C ws -f ~/.ssh/id_ed25519 </dev/null
-          printf '%s\n' "WS_PUBLIC_KEY: $(openssl rand -base64 32)" \
-              'WS_IDENTITY_PUB_KEY: ~/.ssh/id_ed25519.pub' \
-              'WS_GIT_SIGNING_PUB_KEY: ~/.ssh/id_ed25519.pub' |
-              conf_write /etc/ws/values.yml
+          printf '%s\n' "WS_PUBLIC_KEY: $(openssl rand -base64 32)" |
+              conf_write /etc/ws
           exit "$fail"
       # The facts read Ghostty's app and cld as a bootstrap starts, so the first run installs them,
       # and the second adds ssh's lines.

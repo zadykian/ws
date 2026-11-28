@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/kind"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/macos/facts"
 	"github.com/zadykian/ws/macos/roles/git"
 )
@@ -25,13 +26,13 @@ const (
 		"mv -f /usr/local/bin/.gh.new /usr/local/bin/gh sh " + misesGh
 )
 
-// macUnits loads the role's units, but state/keys, which ssh's role holds, on a Mac of the user v,
-// whose ws is /ws, with git's texts.
+// macUnits loads the role's units on a Mac of the user v, whose ws is /ws, with git's texts. A
+// stand-in holds state/ssh-sign-key, which ssh's role has.
 func macUnits(t *testing.T, m *effecttest.Machine, texts git.Texts) []kind.Unit {
-	fsys := fstest.MapFS{"keys/units.toml.tmpl": &fstest.MapFile{Data: []byte(
-		"[state.keys.run]\nuser = \"v\"\ncreates = [\"/\"]\ncommand = [\"true\"]\n")}}
+	fsys := fstest.MapFS{"ssh/units.toml.tmpl": &fstest.MapFile{Data: []byte(
+		"[state.ssh-sign-key.run]\nuser = \"v\"\ncreates = [\"/\"]\ncommand = [\"true\"]\n")}}
 	for _, name := range []string{"units.toml.tmpl", "files/gitconfig.tmpl", "files/allowed_signers.tmpl",
-		"files/secretive-ssh-keygen.tmpl"} {
+		"files/ssh-keygen.tmpl"} {
 		text, err := os.ReadFile(name) //nolint:gosec // a file of the role, named above
 		if err != nil {
 			t.Fatal(err)
@@ -69,22 +70,29 @@ func exitOne() error {
 	return exec.Command("sh", "-c", "exit 1").Run()
 }
 
+// signingKey is the .pub that seward made for git, and the line that trusts it.
+const signingKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGit"
+
+// keyMade puts the signing key's .pub where seward's unit leaves it, in the user's own ~/.ssh.
+func keyMade(m *effecttest.Machine) {
+	m.Dirs["/Users/v/.ssh"], m.Owners["/Users/v/.ssh"] = 0o700, [2]int{501, 20}
+	m.Files["/Users/v/.ssh/ws-sign.pub"], m.Owners["/Users/v/.ssh/ws-sign.pub"] = []byte(signingKey+" ws-sign\n"), [2]int{501, 20}
+}
+
 func TestGitUnitsWriteTheFilesAndTheInclude(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results["/ws macos git included"] = effecttest.Result{Err: exitOne()}
 	m.Results[ghCheck] = effecttest.Result{}
-	m.Files["/etc/ws/secretive-ssh-keygen"] = []byte("# Written by github.com/zadykian/ws\n")
-	texts := git.Texts{Config: "[user]\n\tname = me\n", Signers: "me@zadykian.dev ssh-ed25519 AAAA\n"}
+	keyMade(m)
+	texts := git.Texts{Config: "[user]\n\tname = me\n", Keygen: "#!/bin/sh\nexec ssh-keygen \"$@\"\n"}
 	units := macUnits(t, m, texts)
 	apply(t, units)
-	for path, want := range map[string]string{"/etc/ws/gitconfig": texts.Config, "/etc/ws/allowed_signers": texts.Signers,
-		"/Users/v/.gitconfig": "[include]\n\tpath = /etc/ws/gitconfig\n"} {
+	signers := file.Header("#") + "\nme@zadykian.dev " + signingKey + "\n"
+	for path, want := range map[string]string{"/etc/ws/gitconfig": texts.Config, "/etc/ws/allowed_signers": signers,
+		"/etc/ws/ssh-keygen": texts.Keygen, "/Users/v/.gitconfig": "[include]\n\tpath = /etc/ws/gitconfig\n"} {
 		if got := string(m.Files[path]); got != want {
 			t.Errorf("%s = %q, want %q", path, got, want)
 		}
-	}
-	if _, ok := m.Files["/etc/ws/secretive-ssh-keygen"]; ok {
-		t.Error("the script stays for a key in a file, want it gone")
 	}
 	m.Results["/ws macos git included"] = effecttest.Result{}
 	for _, u := range units {
@@ -94,13 +102,34 @@ func TestGitUnitsWriteTheFilesAndTheInclude(t *testing.T) {
 	}
 }
 
+// TestGitSignersFollowTheSigningKey: the file names the key that seward's unit makes, so it runs
+// after that unit, and before the key's .pub exists it holds the header alone.
+func TestGitSignersFollowTheSigningKey(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["/ws macos git included"] = effecttest.Result{}
+	m.Results[ghCheck] = effecttest.Result{}
+	m.Dirs["/Users/v/.ssh"], m.Owners["/Users/v/.ssh"] = 0o700, [2]int{501, 20}
+	units := macUnits(t, m, git.Texts{Config: "[gpg]\n"})
+	var names []string
+	for _, u := range units {
+		names = append(names, u.Name)
+	}
+	if key, signers := slices.Index(names, "state/ssh-sign-key"), slices.Index(names, "file/git-signers"); key < 0 || signers < key {
+		t.Errorf("units run in the order %q, want state/ssh-sign-key before file/git-signers", names)
+	}
+	apply(t, units)
+	if got, want := string(m.Files["/etc/ws/allowed_signers"]), file.Header("#")+"\n"; got != want {
+		t.Errorf("allowed_signers with no key = %q, want the header alone", got)
+	}
+}
+
 func TestGitKeygenIsExecutable(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results["/ws macos git included"] = effecttest.Result{}
 	m.Results[ghCheck] = effecttest.Result{}
-	apply(t, macUnits(t, m, git.Texts{Config: "[gpg]\n", Signers: "x\n", Keygen: "#!/bin/sh\nexec ssh-keygen \"$@\"\n"}))
-	if m.Modes["/etc/ws/secretive-ssh-keygen"]&0o777 != 0o755 {
-		t.Errorf("the script's mode = %v, want 0755", m.Modes["/etc/ws/secretive-ssh-keygen"])
+	apply(t, macUnits(t, m, git.Texts{Config: "[gpg]\n", Keygen: "#!/bin/sh\nexec ssh-keygen \"$@\"\n"}))
+	if m.Modes["/etc/ws/ssh-keygen"]&0o777 != 0o755 {
+		t.Errorf("the script's mode = %v, want 0755", m.Modes["/etc/ws/ssh-keygen"])
 	}
 }
 
@@ -109,7 +138,7 @@ func TestGhUnitCopiesMisesGh(t *testing.T) {
 	m.Results["/ws macos git included"] = effecttest.Result{}
 	m.Results[ghCheck] = effecttest.Result{Err: exitOne()}
 	m.Results[ghCopy] = effecttest.Result{}
-	apply(t, macUnits(t, m, git.Texts{Config: "[gpg]\n", Signers: "x\n"}))
+	apply(t, macUnits(t, m, git.Texts{Config: "[gpg]\n"}))
 	if !slices.Contains(m.Calls, "run "+ghCheck) || !slices.Contains(m.Calls, "root "+ghCopy) {
 		t.Errorf("calls = %q, want the check as the user and the copy through sudo", m.Calls)
 	}

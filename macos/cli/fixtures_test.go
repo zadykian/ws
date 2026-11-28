@@ -20,16 +20,13 @@ func runWs(p enginecli.Env, args ...string) (status int, stdout, stderr string) 
 	return clitest.Run(p, []*cobra.Command{Command(p)}, "", args...)
 }
 
-// keyed gives the Mac a values.yml that names the file key it has for ws's login, as ssh's step needs.
-func keyed(m *effecttest.Machine) {
-	writeConfs(m, values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id_ed25519.pub"), values.Text("WS_SLOT", "0"))
-	m.Files["/h/.ssh/id_ed25519.pub"] = []byte("ssh-ed25519 AAAA ada\n")
-	m.Results["ssh-keygen -l -f /h/.ssh/id_ed25519.pub"] = effecttest.Result{}
+// oneServer gives the Mac the file of its one server, ws.
+func oneServer(m *effecttest.Machine) {
+	writeConfs(m, values.Text("WS_SLOT", "0"))
 }
 
-// writeConfs puts the Mac's values.yml and the server's file at their paths in the home.
-func writeConfs(m *effecttest.Machine, mac, server string) {
-	m.Files["/etc/ws/values.yml"] = []byte(mac)
+// writeConfs puts the server ws's file at its path in /etc/ws.
+func writeConfs(m *effecttest.Machine, server string) {
 	m.Files["/etc/ws/servers/ws/values.yml"] = []byte(server)
 	m.Dirs["/etc/ws/servers"], m.Dirs["/etc/ws/servers/ws"] = 0o755, 0o755
 }

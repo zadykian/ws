@@ -15,7 +15,6 @@ import (
 	"github.com/zadykian/ws/engine/cli/clitest"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/internal/setup"
-	"github.com/zadykian/ws/macos/internal/mactest"
 	"github.com/zadykian/ws/macos/values"
 )
 
@@ -48,13 +47,13 @@ func setupRelease(body string) setup.MiseRelease {
 // setupProcess returns the process of a user on a Mac on arm64 with the command line tools, good
 // values and no tree yet, which serves miseBody. The process is of ws v1.2.3, as is the installed ws.
 func setupProcess(rel setup.MiseRelease) (enginecli.Env, *effecttest.Machine) {
-	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "", "HOME": mactest.AgentHome})
+	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "", "HOME": "/h"})
 	m := effecttest.NewMachine()
 	p.Machine = m
 	for _, dir := range []string{"/", "/usr", "/usr/local", "/usr/local/bin", "/usr/local/share", "/opt"} {
 		m.Dirs[dir] = 0o755
 	}
-	writeConfs(m, values.Text("WS_GIT_SIGNING_PUB_KEY", "~/g.pub", "WS_IDENTITY_PUB_KEY", "~/i.pub"), values.Text("WS_SLOT", "0"))
+	writeConfs(m, values.Text("WS_SLOT", "0"))
 	m.Results["uname -sm"] = effecttest.Result{Out: []byte("Darwin arm64\n")}
 	m.Results[toolsLine] = effecttest.Result{Out: []byte("/Library/Developer/CommandLineTools\n")}
 	m.Results["git --version"] = effecttest.Result{Out: []byte("git version 2.50.0\n")}

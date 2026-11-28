@@ -7,14 +7,13 @@ set -eo pipefail
 # shellcheck source=.github/client-conf.sh
 . .github/client-conf.sh
 
-conf=/etc/ws/values.yml
-second=${conf%/*}/servers/lab
+conf=/etc/ws
+second=$conf/servers/lab
 trap 'sudo rm -rf "$second"' EXIT
 
-# Lab's file, as a second server's: conf_server names it, and values.yml keeps its lines.
+# Lab's file, as a second server's: conf_server names it.
 conf_server=lab
 {
-    cat "$conf"
     echo 'WS_SLOT: 1'
 } | conf_write "$conf"
 conf_server=ws

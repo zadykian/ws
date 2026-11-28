@@ -11,7 +11,7 @@ set -eo pipefail
 # shellcheck source=.github/client-mise.sh
 . .github/client-mise.sh
 
-conf=/etc/ws/values.yml
+conf=/etc/ws
 line=$(conf_print "$conf" | grep -x 'WS_LAN_ADDRESS: .*')
 trap 'conf_set "$conf" "$line"' EXIT
 

@@ -1,6 +1,8 @@
 package file_test
 
 import (
+	"errors"
+	"io/fs"
 	"strings"
 	"testing"
 
@@ -31,6 +33,25 @@ func TestFile(t *testing.T) {
 	f.Mode = 0o644
 	if got := applyAll(t, f); len(got) != 1 || !strings.HasPrefix(got[0], "set owner 5:6 and mode 644 of /srv/a") {
 		t.Errorf("mode plan = %q", got)
+	}
+}
+
+func TestFileCreateFailsWhereAFileStandsAtPlanAndAtApply(t *testing.T) {
+	m := effecttest.NewMachine()
+	f := file.File{M: m, Path: "/srv/a", Content: []byte("new\n"), Mode: 0o600, Create: true}
+	changes, err := f.Plan(t.Context())
+	if err != nil || len(changes) != 1 {
+		t.Fatalf("plan = %v, %v; want a create", changes, err)
+	}
+	m.Files["/srv/a"] = []byte("theirs\n") // made by another run after the plan
+	if err := changes[0].Apply(t.Context()); !errors.Is(err, fs.ErrExist) {
+		t.Errorf("apply = %v, want fs.ErrExist", err)
+	}
+	if string(m.Files["/srv/a"]) != "theirs\n" {
+		t.Errorf("file = %q, want the other run's", m.Files["/srv/a"])
+	}
+	if _, err := f.Plan(t.Context()); !errors.Is(err, fs.ErrExist) {
+		t.Errorf("plan over a file = %v, want fs.ErrExist", err)
 	}
 }
 

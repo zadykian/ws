@@ -20,14 +20,14 @@ import (
 // Conf is what each server's daemon reads, which ws macos tunnel conf sets up. Each server
 // with WS_PUBLIC_KEY gets its directory under /etc/ws/tunnel, routes.d and tunnel.conf. All are
 // root's and readable by all. So a run that changes nothing asks for no password, and a root
-// daemon reads no file the user can write. A server whose directory beside values.yml is gone has
+// daemon reads no file the user can write. A server whose directory in servers/ is gone has
 // its daemon taken away. launchd's unit of the tunnel loads and signals the daemons of the rest.
 type Conf struct {
 	Servers []facts.Server
-	// MacConf is values.yml's path, beside which the servers' directories are.
-	MacConf string
-	M       effect.Machine
-	Out     effect.Out
+	// Dir is the directory that holds servers/.
+	Dir string
+	M   effect.Machine
+	Out effect.Out
 }
 
 // Resources returns /etc/ws, where a server has WS_PUBLIC_KEY, then each keyed server's files, each directory before what it holds,
@@ -49,7 +49,7 @@ func (c Conf) Resources() []resource.Resource {
 }
 
 // gone returns the servers whose daemon has a trace on the Mac, and which have no entry in
-// values.yml's directory. Any entry keeps its daemon, whether it holds a values.yml file or not.
+// servers/. Any entry keeps its daemon, whether it holds a values.yml file or not.
 // One moved aside for an edit, or behind a link to a volume not mounted, leaves the server there.
 // A listing with no server is not this Mac's, as remove keeps the last one. So a stray WS_VALUES
 // removes no live daemon.
@@ -57,7 +57,7 @@ func (c Conf) gone() ([]string, error) {
 	if len(c.Servers) == 0 {
 		return nil, nil
 	}
-	beside, err := c.M.ReadDir(path.Dir(path.Dir(values.ServerPath(c.MacConf, c.Servers[0].Name))))
+	beside, err := c.M.ReadDir(path.Dir(path.Dir(values.ServerPath(c.Dir, c.Servers[0].Name))))
 	if err != nil {
 		return nil, err
 	}

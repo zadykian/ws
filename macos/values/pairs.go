@@ -30,14 +30,6 @@ func pairs(c Conf) []Error {
 		return refuse("WS_TARGET=" + c.Target + " has another target's key: " +
 			strings.Join(away, " ") + " (macos/values/README.md)")
 	}
-	return agentPairs(c)
-}
-
-// agentPairs checks the keys of the agent, as pairs checks the rest.
-func agentPairs(c Conf) []Error {
-	if c.IdentityAgent != "" && c.IdentityPubKey == "" {
-		return []Error{{0, "WS_IDENTITY_AGENT needs WS_IDENTITY_PUB_KEY"}}
-	}
 	return nil
 }
 
@@ -60,7 +52,7 @@ func guestPairs(c Conf) []Error {
 		return []Error{{0, "WS_HOST=" + c.Host + " names the host's way: a guest holds none of " +
 			strings.Join(own, " ") + " (macos/values/README.md)"}}
 	}
-	return agentPairs(c)
+	return nil
 }
 
 // foreign lists the keys of another target's way, which would lead ssh and the tunnel to a host

@@ -133,7 +133,7 @@ check5() {
             fail "5 $name opens once at login" "$n records name it as a login item"
         fi
     done < <(login_apps)
-    check "5 Secretive's agent runs" pgrep -x SecretAgent
+    check "5 seward's agent runs" pgrep -x seward
     check "5 Logi's agent runs" pgrep -f logioptionsplus_agent
     check "5 Rectangle Pro runs" pgrep -x "Rectangle Pro"
     check "5 Stats runs" pgrep -x Stats
