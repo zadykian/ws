@@ -22,12 +22,14 @@ type Paths struct{ Conf, Key, Routes, State, Log, Root, Yield string }
 
 // Settings are tunnel.conf and routes.d as read. Routes leaves out the bad lines of routes.d, the
 // networks that another server's routes.d holds, and those that the yield holds. Others are the
-// other servers' directories, and Yield the yield's networks.
+// other servers' directories, and Yield the yield's networks. Held are the yielded networks that
+// hold one of the routes.d's, where a daemon leaves a -reject route.
 type Settings struct {
 	Conf     tunnel.Conf
 	Routes   []netip.Prefix
 	Others   []Other
 	Yield    []netip.Prefix
+	Held     []netip.Prefix
 	Warnings []string
 }
 
@@ -49,6 +51,7 @@ func ReadSettings(ctx context.Context, m effect.Machine, p Paths) (Settings, err
 	s.Warnings = append(s.Warnings, apart...)
 	s.Yield, skipped = readYield(m, p.Yield)
 	s.Warnings = append(s.Warnings, skipped...)
+	s.Held = tunnel.Holders(s.Routes, s.Yield)
 	s.Routes, apart = tunnel.Yield(s.Routes, s.Yield)
 	s.Warnings = append(s.Warnings, apart...)
 	text, err := m.ReadFile(p.Conf)

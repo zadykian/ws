@@ -60,10 +60,11 @@ func (d *Daemon) keepOut(a tunnel.Allowed) {
 
 // route routes the networks that a wants into the tunnel, and stops routing what it no longer
 // holds. A network it cannot route, as one another route already takes, is logged once and tried
-// again each time. The settings' yield is then the one the routes took, for status.
+// again each time. A yield's route leaves a -reject route, and status the yield that it took.
 func (d *Daemon) route(ctx context.Context, a tunnel.Allowed) {
-	plan := tunnel.Routes(a.Want, d.routed)
-	ran := routing.RunRoutes(ctx, d.M, plan, d.Tun, nil)
+	plan := tunnel.Routes(a.Want, d.routed).WithRejects(d.set.Held, d.set.Yield, d.rejects)
+	ran := routing.RunRoutes(ctx, d.M, plan, d.Tun, d.rejects)
+	d.rejects = ran.Rejects
 	var applied []string
 	d.routed, d.unroutable, applied = plan.Applied(ran.Failed, a.Out, d.unroutable, d.Tun)
 	d.yielded = d.set.Yield
