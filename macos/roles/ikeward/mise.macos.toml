@@ -1,0 +1,7 @@
+# ikeward's role for the Mac: strongSwan, whose charon and swanctl ikeward runs, and the line of the
+# unit that copies ikeward to root's. README.md says why each stands where it does.
+
+# strongSwan as a formula, the latest: Homebrew keeps the current bottle alone.
+[bootstrap.packages]
+"brew:strongswan" = "latest"
+"ws:state/ikeward" = "in-sync"

@@ -1,0 +1,22 @@
+# ikeward's unit: the binary that mise installs for the tree, copied to root's, on no PATH.
+# README.md says why it stands in /usr/local/sbin.
+
+# The copy makes /usr/local/sbin where a clean Mac lacks it, and keeps it root:wheel and 0755. It
+# goes in under a temporary name first, as fnox's does. With no ikeward of mise's this unit alone
+# fails. The check runs as the user.
+[state.ikeward.run]
+user = "root"
+command = [
+    "sh",
+    "-c",
+    "test -x \"$1\" && mkdir -p /usr/local/sbin && chown root:wheel /usr/local/sbin && chmod 0755 /usr/local/sbin && install -o root -g wheel -m 0755 \"$1\" /usr/local/sbin/.ikeward.new && mv -f /usr/local/sbin/.ikeward.new /usr/local/sbin/ikeward",
+    "sh",
+    "{{ .Ikeward.From }}",
+]
+check = [
+    "sh",
+    "-c",
+    "cmp -s \"$1\" /usr/local/sbin/ikeward && [ \"$(stat -f %u:%g:%Lp /usr/local/sbin /usr/local/sbin/ikeward | tr '\\n' ' ')\" = '0:0:755 0:0:755 ' ]",
+    "sh",
+    "{{ .Ikeward.From }}",
+]
