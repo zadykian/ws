@@ -61,6 +61,9 @@ claude commit unattended. It names both files in `creates`, so that a lost `.pub
 key only signs. The role does not register it with GitHub:
 [The signing key](../devtools/README.md#the-signing-key).
 
+Where the key is lost and its `.pub` stays, keygen exits 1, and the unit fails each run until
+`ws ubuntu ssh remove ws-sign` clears the `.pub`.
+
 To revoke the key, delete it in `@zadykiand`'s settings on GitHub, then run
 `ws ubuntu ssh remove ws-sign`. The next run makes a new key, and its `.pub` goes to
 `@zadykiand` by hand. A key deleted on GitHub alone needs that too.
