@@ -16,7 +16,8 @@ signing.
   must read it once. Ghostty's `+validate-config` must take the config, and `+list-fonts` find its
   font. Zed's files must be those of `macos/roles/zed/files/`, with the seed of
   `settings.json`.
-- A third run must call no sudo, and its plan exit 0, with seward's agent, mise's user service, running.
+- A third run must call no sudo, and its plan exit 0, with seward's agent, mise's user service,
+  running. The same units make `ws-auth` and `ws-sign` in the file store.
 - `ssh -G ws` must give the watcher's lines where Ghostty's app is there and cld is a release or
   has `restore tabs`. A stub of an older release must be updated by its unit, keep the lines, and
   have its line start the watcher in a Ghostty pane alone.

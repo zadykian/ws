@@ -1,7 +1,9 @@
 #!/bin/bash
 # seward, which mise bootstrap (28-bootstrap.sh) copied into /usr/local/bin: it must be mise's,
 # root's and 0755, at its pin, which --version prints. Its agent must run that copy as mise's user
-# service, answer on its socket, and restart where a new pin changes the plist.
+# service, answer on its socket, and restart where a new pin changes the plist. The runner is a
+# virtual machine, so ws-auth and ws-sign must be the user's own files in the file store, and the
+# agent must list both.
 
 set -eo pipefail
 # shellcheck source=.github/client-mise.sh
@@ -36,7 +38,7 @@ runs_copy() {
 }
 
 # serves waits up to 30 s for the agent's socket to answer ssh-add -L with 0 or 1. Exit 2 says that
-# no agent answered, and 1 that it holds no key, as no key exists yet.
+# no agent answered, and 1 that it holds no key.
 serves() {
     local status
     for _ in $(seq 1 30); do
@@ -84,5 +86,24 @@ version=$(plutil -extract EnvironmentVariables.WS_SEWARD_VERSION raw "$plist")
 [ "$version" = 0.1.0 ] || error "the plist's WS_SEWARD_VERSION is '$version', not '0.1.0'"
 runs_copy "$second" || error "the restarted agent's pid $second does not run /usr/local/bin/seward"
 serves || error "ssh-add -L on $sock exits 2 after the restart"
+
+# keys checks each key. seward list must name it with the store file, which the fact .VM chose on
+# this runner. The user must own its files, and the agent's socket must list it.
+keys() {
+    local name file list agent
+    list=$(/usr/local/bin/seward list) || error "seward list exits $?"
+    agent=$(SSH_AUTH_SOCK=$sock ssh-add -L) || error "ssh-add -L on $sock exits $?"
+    for name in ws-auth ws-sign; do
+        printf '%s\n' "$list" | awk -F'\t' -v n="$name" '$1 == n && $4 == "file" { found = 1 } END { exit !found }' ||
+            error "seward list names no $name with the store file: $list"
+        for file in "$HOME/.ssh/$name" "$HOME/.ssh/$name.pub"; do
+            [ "$(stat -f %Su "$file")" = "$(id -un)" ] || error "$file is not the user's"
+        done
+        printf '%s\n' "$agent" | grep -qF "$(awk '{ print $2 }' "$HOME/.ssh/$name.pub")" ||
+            error "the agent on $sock does not list $name"
+    done
+}
+keys
+
 client_bootstrap plan --detailed-exitcode || error "the plan after the restart exited $?, not 0"
 exit "$fail"
