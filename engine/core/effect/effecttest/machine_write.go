@@ -76,6 +76,14 @@ func (m *Machine) RunRoot(_ context.Context, name string, args ...string) ([]byt
 	return m.run("root", name, args)
 }
 
+// RunRootInput records the command as RunRoot's, and its input in Inputs.
+func (m *Machine) RunRootInput(_ context.Context, stdin []byte, name string, args ...string) ([]byte, error) {
+	m.mu.Lock()
+	m.Inputs = append(m.Inputs, string(stdin))
+	m.mu.Unlock()
+	return m.run("root", name, args)
+}
+
 // RunShown records the command as Run's or RunRoot's and returns its result from the table.
 func (m *Machine) RunShown(_ context.Context, root bool, name string, args ...string) ([]byte, error) {
 	if root {

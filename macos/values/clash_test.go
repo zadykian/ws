@@ -82,6 +82,37 @@ func TestClashesAllowTheServersOfEachTargetAndOfTwoServersOfOne(t *testing.T) {
 	}
 }
 
+// vpn returns a file's ikeward keys.
+func vpn(dns, domains string) string {
+	return Text("WS_IKEWARD_DNS", dns, "WS_IKEWARD_DOMAINS", domains, "WS_IKEWARD_FLOORS", "10.20.0.0/16 10.30.0.0/16")
+}
+
+func TestClashesRefuseTwoVPNsAndADomainThatTwoFilesAnswerApart(t *testing.T) {
+	for name, tc := range map[string]struct{ own, theirs, want string }{
+		"two profiles": {vpn("10.20.0.53", "a.test"), vpn("10.30.0.53", "b.test"),
+			"WS_IKEWARD_DNS names a VPN, as server lab's does: ikeward serves one server's profile"},
+		"own domain answered apart": {vpn("10.20.0.53", "a.test"), Text("WS_RESOLVERS", "a.test=10.0.0.1"),
+			"WS_IKEWARD_DOMAINS's a.test is in server lab's WS_RESOLVERS, which lacks WS_IKEWARD_DNS=10.20.0.53"},
+		"their domain answered apart": {Text("WS_RESOLVERS", "a.test=10.0.0.1"), vpn("10.20.0.53", "a.test"),
+			"WS_RESOLVERS's a.test is in server lab's WS_IKEWARD_DOMAINS, whose WS_IKEWARD_DNS=10.20.0.53 it lacks"},
+	} {
+		got := clashes(parse(t, tc.own), sibling(tc.theirs))
+		if len(got) != 1 || !strings.Contains(got[0].Msg, tc.want) {
+			t.Errorf("%s: clashes = %+v, want %q", name, got, tc.want)
+		}
+	}
+}
+
+func TestClashesAllowADomainThatBothFilesAnswerAlike(t *testing.T) {
+	vpnFile := vpn("10.20.0.53", "a.test")
+	resolvers := Text("WS_RESOLVERS", "a.test=10.0.0.1,10.20.0.53")
+	for _, pair := range [][2]string{{vpnFile, resolvers}, {resolvers, vpnFile}, {vpnFile, Text("WS_RESOLVERS", "b.test=10.0.0.1")}} {
+		if got := clashes(parse(t, pair[0]), sibling(pair[1])); len(got) != 0 {
+			t.Errorf("%q beside %q: clashes = %+v, want none", pair[0], pair[1], got)
+		}
+	}
+}
+
 func TestClashesIgnoreAServerWithNoKeys(t *testing.T) {
 	if got := clashes(parse(t, Text("WS_SLOT", "1", "WS_TUNNEL_NETWORKS", "10.1.0.0/24", "WS_RESOLVERS", "a.test=10.0.0.1")), sibling("")); len(got) != 0 {
 		t.Errorf("clashes = %+v, want none", got)

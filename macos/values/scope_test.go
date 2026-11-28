@@ -11,6 +11,10 @@ func TestScopeRefusesTheOtherFilesKeys(t *testing.T) {
 		{Both, Text("WS_TARGET", "lan", "WS_GIT_SIGNING_PUB_KEY", "~/k.pub"), ""},
 		{MacFile, Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"), ""},
 		{ServerFile, Text("WS_TARGET", "lan"), ""},
+		{ServerFile, Text("WS_IKEWARD_DNS", "10.20.0.53"), ""},
+		{MacFile, Text("WS_IKEWARD_DNS", "10.20.0.53"), "WS_IKEWARD_DNS is a server's key: it goes in servers/NAME/values.yml, beside the Mac's values.yml"},
+		{MacFile, Text("WS_IKEWARD_DOMAINS", "a.test"), "WS_IKEWARD_DOMAINS is a server's key: it goes in servers/NAME/values.yml, beside the Mac's values.yml"},
+		{MacFile, Text("WS_IKEWARD_FLOORS", "10.20.0.0/16"), "WS_IKEWARD_FLOORS is a server's key: it goes in servers/NAME/values.yml, beside the Mac's values.yml"},
 		{MacFile, Text("WS_TARGET", "lan"), "WS_TARGET is a server's key: it goes in servers/NAME/values.yml, beside the Mac's values.yml"},
 		{ServerFile, Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"), "WS_GIT_SIGNING_PUB_KEY is the Mac's key: it goes in the Mac's values.yml"},
 	} {

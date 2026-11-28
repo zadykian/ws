@@ -105,9 +105,15 @@ type Machine interface {
 	RunRoot(ctx context.Context, name string, args ...string) ([]byte, error)
 	// RunInput is Run with the bytes as standard input.
 	RunInput(ctx context.Context, stdin []byte, name string, args ...string) ([]byte, error)
+	// RunRootInput is RunRoot with the bytes as standard input. sudo asks its password on the
+	// terminal, past the input.
+	RunRootInput(ctx context.Context, stdin []byte, name string, args ...string) ([]byte, error)
 	// RunShown is Run, or RunRoot where root is set, with the command's standard error passed to
 	// ws's own, as a shell script lets it through.
 	RunShown(ctx context.Context, root bool, name string, args ...string) ([]byte, error)
+	// RunTerminal is RunShown with ws's standard input too, for a command that asks there, as for
+	// a PIN. Its output is captured, never shown.
+	RunTerminal(ctx context.Context, name string, args ...string) ([]byte, error)
 	// PassInput is Run with the bytes as standard input, and with standard output and error sent to
 	// Stderr as they come, for a command that goes on for minutes.
 	PassInput(ctx context.Context, stdin []byte, name string, args ...string) error

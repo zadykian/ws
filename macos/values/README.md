@@ -39,6 +39,9 @@ WS_REMOTE: ws.example.com
 WS_REMOTE_PORT: 22022
 WS_TUNNEL_NETWORKS: 10.20.0.0/16 198.51.100.0/24
 WS_RESOLVERS: example.internal=10.20.0.53,10.20.0.54
+WS_IKEWARD_DNS: 10.30.0.53
+WS_IKEWARD_DOMAINS: corp.example lab.corp.example
+WS_IKEWARD_FLOORS: 10.30.0.0/16 192.0.2.0/24
 ```
 
 Both are YAML files of `KEY: value` lines, one a line. The key is at the line's start with its colon
@@ -77,6 +80,22 @@ likewise. A LAN and `WS_TUNNEL_NETWORKS` stay clear of the slots' `10.99.0.0/20`
 bad name that holds A server's `values.yml` is refused too. Where another server's file names a
 `WS_CABLE_SERVICE`, leave a server's own empty.
 
+## The VPN's keys
+
+`WS_IKEWARD_DNS`, `WS_IKEWARD_DOMAINS` and `WS_IKEWARD_FLOORS` name the networks that ikeward
+takes on the Mac, from the profile of the server whose file holds them. No command sets them.
+
+- `WS_IKEWARD_DNS` is the VPN's resolver, an IPv4 address.
+- `WS_IKEWARD_DOMAINS` are the domains whose names go to it, split by blanks, each once and in
+  lower case.
+- `WS_IKEWARD_FLOORS` are the networks that ikeward holds while on and that the daemons yield,
+  split by blanks. Each is clear of the cable's network and the slots', and the resolver lies
+  in one. A floor takes every range the VPN grants, as ikeward routes a grant inside a floor alone.
+
+The three come together, each on one line: a YAML list is refused. A domain that the server's own
+`WS_RESOLVERS` names too must name `WS_IKEWARD_DNS` there, and so for another server's, as the next
+section says. The keys are a server's, never the Mac's.
+
 ## What two servers may not share
 
 `mise -C /opt/ws/macos bootstrap` reads every server's file, and refuses a server whose file
@@ -85,6 +104,9 @@ takes what another's takes. Each of the two refuses until one changes, in its ow
 - `WS_TUNNEL_NETWORKS`: a network that overlaps one of the other's, as a network goes through one
   server's tunnel.
 - `WS_RESOLVERS`: a domain the other names, as `/etc/resolver` holds one file a domain.
+- `WS_IKEWARD_DNS`: a VPN of its own, as ikeward serves the profile of one server. A domain of
+  `WS_IKEWARD_DOMAINS` that the other's `WS_RESOLVERS` names, or the reverse, must name the VPN's
+  `WS_IKEWARD_DNS` there. A file that answers a domain both ways is ws's own, and ikeward leaves it.
 - `WS_CABLE_SERVICE`: a cable the other names. Leave it empty in all but one server's file: the
   cable reaches that server alone ([the tunnel](../roles/tunnel/README.md#the-cable)).
 - `WS_SLOT`: the other's slot, as each server's tunnel is the subnet of its slot.

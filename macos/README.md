@@ -127,6 +127,7 @@ domain another server names stays. Its `--check` names each change, or that the 
 `routes.d` is missing. Root's files go through sudo, by the kinds' code that writes the server's.
 Sudo never changes a file in the home, nor one a link names. A file there that the user
 may not change stops the run: sudo would leave root's files where the user's go.
+The `WS_IKEWARD_*` keys are in [The VPN's keys](values/README.md#the-vpns-keys).
 
 ## ssh's hosts
 
