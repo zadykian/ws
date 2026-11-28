@@ -241,6 +241,15 @@ signed_commit() {
 }
 must "root signs a commit, git verifies it, and it holds one co-author trailer" signed_commit
 
+# The signing key is made by ws ubuntu ssh keygen, so list shows it, from a file, and exits 0.
+signing_key_listed() {
+    local keys
+    keys=$(ws ubuntu ssh list) || return 1
+    echo "$keys"
+    awk -F'\t' '$1 == "ws-sign" && $4 == "file" { found = 1 } END { exit !found }' <<<"$keys"
+}
+must "ws ubuntu ssh list shows the signing key ws-sign, from a file" signing_key_listed
+
 # The pulls ahead of the runs, as a run of an image not yet pulled warns.
 must "docker pulls the image" docker pull -q "$image"
 must "docker runs a container" docker run --rm "$image" true
