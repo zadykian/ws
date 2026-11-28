@@ -23,6 +23,11 @@ func TestFormat(t *testing.T) {
 			"tier: lan\nendpoint: 192.168.1.10:51820\ninterface: utun4\nsince: 0 s ago\n" +
 				"latest handshake: none\ntransfer: 0 B received, 0 B sent\nroutes: 10.1.0.0/16 10.2.0.0/16\n" +
 				"left out, as they hold the endpoint: 192.168.1.0/24\n"},
+		{"yielded", State{Tier: TierCable, Endpoint: "10.77.0.1:51820", Interface: "utun4", Since: now,
+			Routes: nets("10.1.0.0/16"), Yielded: nets("10.20.0.0/16", "10.30.0.0/16")}, Stats{},
+			"tier: cable\nendpoint: 10.77.0.1:51820\ninterface: utun4\nsince: 0 s ago\n" +
+				"latest handshake: none\nroutes: 10.1.0.0/16\n" +
+				"yielded to another owner: 10.20.0.0/16 10.30.0.0/16\n"},
 		{"no path", State{Tier: TierNone, Interface: "utun4", Since: now}, Stats{},
 			"tier: none, as no path to ws answers\nendpoint: none\ninterface: utun4\nsince: 0 s ago\n" +
 				"latest handshake: none\nroutes: none\n"},

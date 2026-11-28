@@ -36,6 +36,9 @@ func (s State) Format(now time.Time, peer Stats) string {
 	if len(s.LeftOut) > 0 {
 		fmt.Fprintf(&b, "left out, as they hold the endpoint: %s\n", JoinNets(s.LeftOut))
 	}
+	if len(s.Yielded) > 0 {
+		fmt.Fprintf(&b, "yielded to another owner: %s\n", JoinNets(s.Yielded))
+	}
 	return b.String()
 }
 
