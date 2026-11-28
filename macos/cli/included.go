@@ -16,9 +16,9 @@ import (
 // the file holds ws's line in its place, and 1 where it lacks it. It exits 2 with the reason where
 // the line sits out of place, which the unit refuses.
 
-// newSSHCmd returns ws macos ssh, with ssh's has command.
-func newSSHCmd() *cobra.Command {
-	return enginecli.Group("ssh", "the commands of ssh's units", hasCmd("included",
+// newSSHIncludedCmd returns ws macos ssh included.
+func newSSHIncludedCmd() *cobra.Command {
+	return hasCmd("included",
 		"say by the exit status whether the ssh config on stdin includes /etc/ws/ssh_config at its top",
 		"It exits 0 where the Include of /etc/ws/ssh_config comes before any setting, and 1 where the text "+
 			"lacks it. It exits 2 where the Include sits below a setting, which ssh would take first. "+
@@ -30,7 +30,7 @@ func newSSHCmd() *cobra.Command {
 					"which ssh would take first: move it to the top", line, sshcfg.File)
 			}
 			return place == sshcfg.First, nil
-		}))
+		})
 }
 
 // newGitCmd returns ws macos git, with git's has command.
