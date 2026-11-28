@@ -18,9 +18,9 @@ path=($HOME/.local/bin $path)
 export GPG_TTY=$(tty 2>/dev/null)
 alias genpass='pwgen -s 24 1'
 
-# Secretive's agent, where its socket exists: a Mac with a key in a file has none, and keeps the
-# agent that macOS starts. ssh and git reach Secretive's agent by their own settings.
-ws_agent=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh
+# seward's agent, where its socket exists: until the agent runs there is none, and the shell keeps
+# the agent that macOS starts. ssh and git reach seward's agent by their own settings.
+ws_agent=$HOME/.ssh/seward.sock
 [[ -S $ws_agent ]] && export SSH_AUTH_SOCK=$ws_agent
 unset ws_agent
 
