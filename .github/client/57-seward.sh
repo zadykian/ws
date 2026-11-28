@@ -109,9 +109,9 @@ keys() {
             [ "$(stat -f %Lp "$file")" = "$mode" ] || error "$file is $(stat -f %Lp "$file"), not $mode"
         done
         # An empty body would match every line, so the .pub must hold one.
-        body=$(awk '{ print $2 }' "$HOME/.ssh/$name.pub")
+        body=$(awk '{ print $2 }' "$HOME/.ssh/$name.pub") || body=
         if [ -z "$body" ]; then
-            error "$HOME/.ssh/$name.pub holds no key"
+            error "$HOME/.ssh/$name.pub holds no key, or cannot be read"
         else
             printf '%s\n' "$agent" | grep -qF "$body" || error "the agent on $sock does not list $name"
         fi
