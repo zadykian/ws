@@ -60,7 +60,7 @@ const wgKey = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 
 func TestCableLeavesAMacWithNoCable(t *testing.T) {
 	m := effecttest.NewMachine()
-	writeConfs(m, "", values.Text("WS_SLOT", "0"))
+	writeConfs(m, values.Text("WS_SLOT", "0"))
 	if status, stdout, stderr := partEnv(m)("cable", "--check"); status != 0 || stdout != "" {
 		t.Errorf("cable --check: status = %d, stdout = %q, stderr = %q; want 0", status, stdout, stderr)
 	}
@@ -73,7 +73,7 @@ func TestCableLeavesAMacWithNoCable(t *testing.T) {
 
 func TestCableReadsTheServersService(t *testing.T) {
 	m := effecttest.NewMachine()
-	writeConfs(m, "", values.Text("WS_SLOT", "0", "WS_CABLE_SERVICE", "Dock"))
+	writeConfs(m, values.Text("WS_SLOT", "0", "WS_CABLE_SERVICE", "Dock"))
 	// networksetup is macOS's: where PATH lacks it, the read names it.
 	if status, _, stderr := partEnv(m)("cable", "--check"); status != 1 || !strings.Contains(stderr, "networksetup") {
 		t.Errorf("cable --check: status = %d, stderr = %q; want 1, networksetup asked for", status, stderr)
@@ -82,7 +82,7 @@ func TestCableReadsTheServersService(t *testing.T) {
 
 func TestNetworksSetUpEachServer(t *testing.T) {
 	m := effecttest.NewMachine()
-	writeConfs(m, "", values.Text("WS_SLOT", "0", "WS_PUBLIC_KEY", wgKey,
+	writeConfs(m, values.Text("WS_SLOT", "0", "WS_PUBLIC_KEY", wgKey,
 		"WS_TUNNEL_NETWORKS", "198.51.100.0/24", "WS_RESOLVERS", "a.test=198.51.100.53"))
 	m.Root["/etc/ws/tunnel/ws/routes.d"] = effect.Attrs{Mode: 0o755}
 	run := partEnv(m)

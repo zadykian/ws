@@ -19,10 +19,8 @@ const (
 )
 
 // macKeys are the keys of values.yml. Every other key is a server's, so a new key is one unless it
-// is listed here.
-var macKeys = []string{
-	"WS_GIT_SIGNING_PUB_KEY", "WS_IDENTITY_PUB_KEY", "WS_IDENTITY_AGENT",
-}
+// is listed here. The Mac's file takes none now.
+var macKeys []string
 
 // refuse returns the message for the key name where the scope is the other file's, else nothing.
 func (s Scope) refuse(name string) string {

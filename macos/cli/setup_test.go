@@ -53,7 +53,7 @@ func setupProcess(rel setup.MiseRelease) (enginecli.Env, *effecttest.Machine) {
 	for _, dir := range []string{"/", "/usr", "/usr/local", "/usr/local/bin", "/usr/local/share", "/opt"} {
 		m.Dirs[dir] = 0o755
 	}
-	writeConfs(m, values.Text("WS_GIT_SIGNING_PUB_KEY", "~/g.pub", "WS_IDENTITY_PUB_KEY", "~/i.pub"), values.Text("WS_SLOT", "0"))
+	writeConfs(m, values.Text("WS_SLOT", "0"))
 	m.Results["uname -sm"] = effecttest.Result{Out: []byte("Darwin arm64\n")}
 	m.Results[toolsLine] = effecttest.Result{Out: []byte("/Library/Developer/CommandLineTools\n")}
 	m.Results["git --version"] = effecttest.Result{Out: []byte("git version 2.50.0\n")}

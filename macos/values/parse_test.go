@@ -70,11 +70,11 @@ func TestLines(t *testing.T) {
 }
 
 func TestValue(t *testing.T) {
-	c, errs := Lines(Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"))
+	c, errs := Lines(Text("WS_REMOTE", "r.example"))
 	if len(errs) > 0 {
 		t.Fatal(errs)
 	}
-	for name, want := range map[string]string{"WS_GIT_SIGNING_PUB_KEY": "~/k.pub", "WS_TARGET": "lan", "WS_LAN": "", "NOT_A_KEY": ""} {
+	for name, want := range map[string]string{"WS_REMOTE": "r.example", "WS_TARGET": "lan", "WS_LAN": "", "NOT_A_KEY": ""} {
 		if got := c.Value(name); got != want {
 			t.Errorf("Value(%s) = %q; want %q", name, got, want)
 		}

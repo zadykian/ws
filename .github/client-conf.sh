@@ -3,8 +3,7 @@
 # names, through these functions. A conf in /etc/ws is root's, and they write it through sudo. A
 # conf is YAML, a KEY: value a line, and a case writes each value as the file holds it, in quotes
 # where YAML needs them. They source this file and never run it. A conf's layout lives here alone:
-# the Mac's values.yml holds the Mac's three keys, and servers/ws/values.yml, beside it, every other
-# key. macos/values/scope.go lists the three keys too.
+# the Mac's values.yml holds no key, and servers/ws/values.yml, beside it, every other key.
 
 # conf_server names the server whose file goes with a conf. A case sets it to another name, and
 # sets it back, where it works on a second server.
@@ -19,17 +18,8 @@ conf_server_file() {
 # with no key stays with values.yml.
 conf_split() {
     awk -v scope="$1" '
-        BEGIN {
-            n = split("WS_GIT_SIGNING_PUB_KEY WS_IDENTITY_PUB_KEY WS_IDENTITY_AGENT", keys, " ")
-            for (i = 1; i <= n; i++) mac[keys[i]] = 1
-        }
         {
-            key = $0
-            server = 0
-            if (key ~ /^[A-Za-z_][A-Za-z0-9_]*:/) {
-                sub(/:.*/, "", key)
-                server = !(key in mac)
-            }
+            server = $0 ~ /^[A-Za-z_][A-Za-z0-9_]*:/
             if (server == (scope == "server")) print
         }'
 }

@@ -21,18 +21,12 @@ func ServerPath(mac, name string) string {
 // the fleet does. It checks each line alone, as Scope.Lines does, so a pair of keys may stand
 // apart. Each file refuses the other's keys, and no other server is read.
 func LoadLines(m effect.Machine, mac, server string) (Conf, error) {
-	macConf, macErr := load(m, mac, MacFile.Lines)
+	_, macErr := load(m, mac, MacFile.Lines)
 	c, serverErr := load(m, server, ServerFile.Lines)
 	if err := errors.Join(macErr, serverErr); err != nil {
 		return Conf{}, err
 	}
-	return join(macConf, c), nil
-}
-
-// join returns the keys of a server's file with the Mac's keys from values.yml.
-func join(mac, server Conf) Conf {
-	server.GitSigningPubKey, server.IdentityPubKey, server.IdentityAgent = mac.GitSigningPubKey, mac.IdentityPubKey, mac.IdentityAgent
-	return server
+	return c, nil
 }
 
 // load reads the file at file, which parse checks.

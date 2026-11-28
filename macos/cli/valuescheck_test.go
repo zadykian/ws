@@ -10,7 +10,7 @@ import (
 
 func TestValuesCheckPrintsOneLineForFilesThatPass(t *testing.T) {
 	m := effecttest.NewMachine()
-	writeConfs(m, values.Text("WS_GIT_SIGNING_PUB_KEY", "~/g.pub"), values.Text("WS_SLOT", "0"))
+	writeConfs(m, values.Text("WS_SLOT", "0"))
 	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": ""})
 	p.Machine = m
 	status, stdout, stderr := runWs(p, "macos", "values", "check")
@@ -21,7 +21,7 @@ func TestValuesCheckPrintsOneLineForFilesThatPass(t *testing.T) {
 
 func TestValuesCheckNamesEachBadKeyWithItsFile(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Files["/bad/values.yml"] = []byte(values.Text("WS_IDENTITY_AGENT", "agent.sock"))
+	m.Files["/bad/values.yml"] = []byte(values.Text("WS_TARGET", "lan"))
 	m.Files["/bad/servers/ws/values.yml"] = []byte(values.Text("WS_SLOT", "999"))
 	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/bad/values.yml"})
 	p.Machine = withServerDirs(m)
@@ -30,7 +30,7 @@ func TestValuesCheckNamesEachBadKeyWithItsFile(t *testing.T) {
 		t.Errorf("status = %d, want 1", status)
 	}
 	for _, want := range []string{
-		"/bad/values.yml, line 1: WS_IDENTITY_AGENT=agent.sock is not an agent's socket",
+		"/bad/values.yml, line 1: WS_TARGET is a server's key",
 		"/bad/servers/ws/values.yml, line 1: WS_SLOT=999 is not a number from 0 to",
 	} {
 		if !strings.Contains(stderr, want) {
@@ -41,7 +41,7 @@ func TestValuesCheckNamesEachBadKeyWithItsFile(t *testing.T) {
 
 func TestValuesCheckRefusesAServerFlag(t *testing.T) {
 	m := effecttest.NewMachine()
-	writeConfs(m, values.Text("WS_GIT_SIGNING_PUB_KEY", "~/g.pub"), values.Text("WS_SLOT", "0"))
+	writeConfs(m, values.Text("WS_SLOT", "0"))
 	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": ""})
 	p.Machine = m
 	status, stdout, stderr := runWs(p, "macos", "--server", "ws", "values", "check")

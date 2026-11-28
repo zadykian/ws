@@ -7,25 +7,12 @@ host's way ([A guest](#a-guest)).
 
 ## The two files
 
-`/etc/ws/values.yml`, root's, holds the Mac's keys, which no server changes. On a new Mac it stands
-empty before the first `ws macos setup`, which installs Secretive, waits for a key made in it and
-writes the three keys ([Secretive](../roles/ssh/README.md#secretive)):
+`/etc/ws/values.yml`, root's, holds no key now, and stands empty:
 
 ```sh
 sudo mkdir -p /etc/ws/servers/ws
 sudo touch /etc/ws/values.yml
 ```
-
-Setup then writes these, NAME being the name of the key that its wait prints:
-
-```yaml
-WS_IDENTITY_PUB_KEY: /etc/ws/secretive/NAME.pub
-WS_IDENTITY_AGENT: ~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh
-WS_GIT_SIGNING_PUB_KEY: /etc/ws/secretive/NAME.pub
-```
-
-Where the file names `WS_IDENTITY_PUB_KEY` already, as `~/.ssh/KEY.pub` for a key in a file,
-setup installs no Secretive and writes none of them.
 
 `/etc/ws/servers/ws/values.yml`, beside it, holds every other key:
 

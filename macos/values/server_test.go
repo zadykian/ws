@@ -21,7 +21,7 @@ func TestServerPathIsBesideMacConf(t *testing.T) {
 func TestLoadJoinsTheTwoFiles(t *testing.T) {
 	m := machineWith("ws")
 	server := ServerPath(macPath, FirstServer)
-	m.Files[macPath] = []byte(Text("WS_GIT_SIGNING_PUB_KEY", "~/g.pub", "WS_IDENTITY_AGENT", "~/a.sock", "WS_IDENTITY_PUB_KEY", "~/k.pub"))
+	m.Files[macPath] = nil
 	m.Files[server] = []byte(Text(
 		"WS_TARGET", "cloud",
 		"WS_REMOTE", "r.example",
@@ -31,7 +31,7 @@ func TestLoadJoinsTheTwoFiles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c.GitSigningPubKey != "~/g.pub" || c.IdentityAgent != "~/a.sock" || c.IdentityPubKey != "~/k.pub" || c.Target != "cloud" {
+	if c.Target != "cloud" || c.Remote != "r.example" || c.RemotePort != "22" {
 		t.Errorf("Load = %+v", c)
 	}
 }
@@ -46,17 +46,13 @@ func TestLoadKeepsADefaultWhereAFileHasNoLine(t *testing.T) {
 	}
 }
 
-func TestLoadRefusesEachFilesStrayKeyInItsOwnWords(t *testing.T) {
+func TestLoadRefusesAServersKeyInTheMacsFile(t *testing.T) {
 	m := machineWith("ws")
-	server := ServerPath(macPath, FirstServer)
 	m.Files[macPath] = []byte(Text("WS_TARGET", "lan"))
-	m.Files[server] = []byte(Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"))
+	m.Files[ServerPath(macPath, FirstServer)] = nil
 	_, err := loadNamed(m, FirstServer)
-	want := []string{
-		macPath + ", line 1: WS_TARGET is a server's key: it goes in servers/NAME/values.yml, beside the Mac's values.yml",
-		server + ", line 1: WS_GIT_SIGNING_PUB_KEY is the Mac's key: it goes in the Mac's values.yml",
-	}
-	if err == nil || err.Error() != strings.Join(want, "\n") {
+	want := macPath + ", line 1: WS_TARGET is a server's key: it goes in servers/NAME/values.yml, beside the Mac's values.yml"
+	if err == nil || err.Error() != want {
 		t.Errorf("err = %v, want %q", err, want)
 	}
 }

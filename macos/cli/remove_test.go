@@ -42,7 +42,7 @@ func (m rmMachine) take(name string, args []string, err error) {
 // of lab runs. The Mac has no fnox key file, as where init never ran.
 func removeFixture() (enginecli.Env, *effecttest.Machine) {
 	m := effecttest.NewMachine()
-	keyed(m)
+	oneServer(m)
 	m.Files["/etc/ws/servers/lab/values.yml"] = []byte(values.Text("WS_SLOT", "1"))
 	m.Dirs["/etc/ws/servers/lab"] = 0o755
 	m.Files["/h/.ssh/known_hosts"] = []byte("ws ssh-ed25519 AAAA\nlab ssh-ed25519 BBBB\n")

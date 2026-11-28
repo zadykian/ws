@@ -7,7 +7,7 @@ import (
 
 func TestCheckPassesFilesThatHoldNoRefusal(t *testing.T) {
 	m := machineWith("ws", "lab")
-	m.Files[macPath] = []byte(Text("WS_GIT_SIGNING_PUB_KEY", "~/g.pub"))
+	m.Files[macPath] = nil
 	m.Files[ServerPath(macPath, "ws")] = []byte(Text("WS_SLOT", "0"))
 	m.Files[ServerPath(macPath, "lab")] = []byte(Text("WS_SLOT", "1"))
 	if err := Check(m, macPath); err != nil {
@@ -35,14 +35,14 @@ func TestCheckNamesAMissingValuesFile(t *testing.T) {
 func TestCheckNamesEachBadKeyWithItsFileOnce(t *testing.T) {
 	m := machineWith("ws", "lab")
 	lab, ws := ServerPath(macPath, "lab"), ServerPath(macPath, "ws")
-	m.Files[macPath] = []byte(Text("WS_IDENTITY_AGENT", "agent.sock"))
+	m.Files[macPath] = []byte(Text("WS_TARGET", "lan"))
 	m.Files[ws] = []byte(Text("WS_SLOT", "999"))
 	m.Files[lab] = []byte(Text("WS_REMOTE_PORT", "0"))
 	err := Check(m, macPath)
 	if err == nil {
 		t.Fatal("Check passed files that hold bad keys")
 	}
-	for _, want := range []string{macPath + ", line 1: WS_IDENTITY_AGENT=agent.sock", ws + ", line 1: WS_SLOT=999", lab + ", line 1: WS_REMOTE_PORT=0"} {
+	for _, want := range []string{macPath + ", line 1: WS_TARGET is a server's key", ws + ", line 1: WS_SLOT=999", lab + ", line 1: WS_REMOTE_PORT=0"} {
 		if got := strings.Count(err.Error(), want); got != 1 {
 			t.Errorf("Check = %q holds %q %d times, want once", err, want, got)
 		}

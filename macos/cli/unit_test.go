@@ -13,7 +13,6 @@ import (
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/cli/clitest"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/macos/values"
 )
 
 // runOfTheUser is a spec whose run state is the Mac's user's, with a check that passes.
@@ -30,10 +29,7 @@ func macUnitEnv(t *testing.T, spec string) (enginecli.Env, *effecttest.Machine) 
 		t.Fatal(err)
 	}
 	m := effecttest.NewMachine()
-	m.Files["/etc/ws/values.yml"] = []byte(values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id.pub",
-		"WS_GIT_SIGNING_PUB_KEY", "~/.ssh/id.pub"))
-	m.Files["/Users/v/.ssh/id.pub"] = []byte("ssh-ed25519 AAAA me\n")
-	m.Results["ssh-keygen -l -f /Users/v/.ssh/id.pub"] = effecttest.Result{}
+	m.Files["/etc/ws/values.yml"] = nil
 	p := withEnv(fakeProcess(), map[string]string{"WS_UNITS": dir, "USER": "v", "HOME": "/Users/v"})
 	// ws runs in the specs' parent, as the plugin's hooks do in mise's run directory.
 	p.Machine, p.Pwd = m, filepath.Dir(dir)

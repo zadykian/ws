@@ -15,12 +15,11 @@ func env(k string) string {
 	return map[string]string{"USER": "v", "HOME": "/Users/v"}[k]
 }
 
-// mac is a machine with values.yml, which names a key for login and signing, and a file for
-// each server, its text by name. ssh takes each server's block, and mise has no gh yet.
+// mac is a machine with an empty values.yml and a file for each server, its text by name. ssh takes
+// each server's block, and mise has no gh yet.
 func mac(servers map[string]string) *effecttest.Machine {
 	m := effecttest.NewMachine()
-	m.Files["/etc/ws/values.yml"] = []byte(values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id.pub",
-		"WS_GIT_SIGNING_PUB_KEY", "~/.ssh/id.pub"))
+	m.Files["/etc/ws/values.yml"] = nil
 	m.Results["mktemp -d"] = effecttest.Result{Out: []byte("/tmp/x\n")}
 	m.Results["rm -rf /tmp/x"] = effecttest.Result{}
 	m.Dirs["/etc/ws/servers"] = 0o755
@@ -52,9 +51,6 @@ func TestReadListsEachServer(t *testing.T) {
 	}
 	if want := "/Users/v/Library/Application Support/com.mitchellh.ghostty/config.ghostty"; f.Ghostty.Config != want {
 		t.Errorf("Ghostty's config = %q, want %q, as none is there", f.Ghostty.Config, want)
-	}
-	if lab.IdentityPubKey != "~/.ssh/id.pub" {
-		t.Errorf("lab's IdentityPubKey = %q, want the Mac's key joined in", lab.IdentityPubKey)
 	}
 }
 
@@ -106,23 +102,6 @@ func TestReadNeedsValuesYml(t *testing.T) {
 	delete(m.Files, "/etc/ws/values.yml")
 	if _, err := Read(t.Context(), m, env, "/p"); err == nil || !strings.Contains(err.Error(), "values.yml is missing") {
 		t.Errorf("read = %v, want values.yml asked for", err)
-	}
-}
-
-// TestSSHFactsReadNoKey pins that ssh's text names seward's login key whatever values.yml names:
-// the key's .pub is made by a unit, after the facts are read.
-func TestSSHFactsReadNoKey(t *testing.T) {
-	m := mac(map[string]string{"ws": values.Text("WS_SLOT", "0")})
-	m.Files["/etc/ws/values.yml"] = []byte(values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/other.pub",
-		"WS_GIT_SIGNING_PUB_KEY", "~/.ssh/id.pub"))
-	f, err := Read(t.Context(), m, env, "/p")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, want := range []string{"IdentityFile ~/.ssh/ws-auth.pub\n", "IdentityAgent \"~/.ssh/seward.sock\"\n"} {
-		if !strings.Contains(f.SSH.Config, want) {
-			t.Errorf("ssh_config lacks %q:\n%s", want, f.SSH.Config)
-		}
 	}
 }
 

@@ -61,7 +61,7 @@ func ReadFleet(m effect.Machine, mac string) Fleet {
 		p := parsed[n]
 		s := Server{Name: n, File: ServerPath(mac, n), fileErr: p.err, ownErr: p.err}
 		if p.err == nil {
-			s.Conf = join(f.Mac, p.conf)
+			s.Conf = p.conf
 			if msg := resolveHost(&s.Conf, n, mac, parsed); msg != "" {
 				s.fileErr = errors.New(Error{Msg: msg}.In(s.File))
 				if s.Conf.Host == n {

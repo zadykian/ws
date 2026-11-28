@@ -18,7 +18,7 @@ func labelOf(name string) string { return "com.github.zadykian.ws-tunnel." + nam
 // /etc/ws/tunnel for each of names.
 func keyedMac(names ...string) *effecttest.Machine {
 	m := effecttest.NewMachine()
-	writeConfs(m, "", values.Text("WS_SLOT", "0", "WS_PUBLIC_KEY", wgKey, "WS_REMOTE", "198.51.100.7"))
+	writeConfs(m, values.Text("WS_SLOT", "0", "WS_PUBLIC_KEY", wgKey, "WS_REMOTE", "198.51.100.7"))
 	if len(names) > 0 {
 		m.Dirs["/etc/ws/tunnel"] = 0o755
 		m.Root["/etc/ws/tunnel"] = effect.Attrs{Mode: 0o755}
@@ -57,7 +57,7 @@ func TestTunnelConfWritesEachServer(t *testing.T) {
 
 func TestTunnelConfLeavesAServerWithNoKey(t *testing.T) {
 	m := effecttest.NewMachine()
-	writeConfs(m, "", values.Text("WS_SLOT", "0"))
+	writeConfs(m, values.Text("WS_SLOT", "0"))
 	if status, _, stderr := partEnv(m)("tunnel", "conf"); status != 0 {
 		t.Fatalf("tunnel conf: status = %d, stderr = %q; want 0", status, stderr)
 	}

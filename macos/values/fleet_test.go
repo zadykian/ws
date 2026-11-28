@@ -76,7 +76,7 @@ func TestFleetHintsAtNoRemovalForAHostWithGuests(t *testing.T) {
 
 func TestFleetKeepsAValuesFileRefusalApartFromTheServers(t *testing.T) {
 	m := machineWith("ws")
-	m.Files[macPath] = []byte(Text("WS_IDENTITY_AGENT", "agent.sock"))
+	m.Files[macPath] = []byte(Text("WS_TARGET", "lan"))
 	f := ReadFleet(m, macPath)
 	if f.MacErr == nil || f.Refused() != nil {
 		t.Errorf("MacErr = %v, Refused = %v; want the Mac's refusal alone", f.MacErr, f.Refused())
@@ -142,16 +142,16 @@ func TestFleetCountsNoServerAsItsOwnGuest(t *testing.T) {
 	}
 }
 
-func TestFleetLoadJoinsTheMacsKeysAndRefusesBothFiles(t *testing.T) {
+func TestFleetLoadRefusesTheMacsFileAndTheServers(t *testing.T) {
 	m := machineWith("ws")
-	m.Files[macPath] = []byte(Text("WS_GIT_SIGNING_PUB_KEY", "~/g.pub"))
+	m.Files[macPath] = nil
 	m.Files[ServerPath(macPath, "ws")] = []byte(Text("WS_TARGET", "cloud", "WS_REMOTE", "r.example", "WS_REMOTE_PORT", "22"))
 	c, err := ReadFleet(m, macPath).Load("ws")
-	if err != nil || c.GitSigningPubKey != "~/g.pub" || c.Target != "cloud" {
+	if err != nil || c.Target != "cloud" {
 		t.Errorf("Load = %+v, %v", c, err)
 	}
 	m.Files[macPath] = []byte(Text("WS_TARGET", "lan"))
-	m.Files[ServerPath(macPath, "ws")] = []byte(Text("WS_GIT_SIGNING_PUB_KEY", "~/k.pub"))
+	m.Files[ServerPath(macPath, "ws")] = []byte(Text("WS_NOPE", "1"))
 	_, err = ReadFleet(m, macPath).Load("ws")
 	if err == nil || strings.Count(err.Error(), "\n") != 1 {
 		t.Errorf("Load = %v, want one refusal of each file", err)
