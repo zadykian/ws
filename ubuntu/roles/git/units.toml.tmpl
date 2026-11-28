@@ -23,11 +23,10 @@ owner = "root"
 line = "[include]\n\tpath = /etc/ws/gitconfig"
 has = ["{{ self }}", "ubuntu", "guest", "git", "included"]
 
-# The key that signs commits, made once by the account, with no passphrase: tools and claude commit
-# unattended, and the key only signs. ssh-keygen refuses a missing directory, as a container's
-# ~/.ssh may be, so the directory comes first, 0700.
+# The key that signs commits, made by ws's own ssh command, with no passphrase: tools and claude
+# commit unattended, and the key only signs. Both files are named, so that a lost .pub comes back.
 [state.git-key]
-run = { user = "root", creates = ["{{ trim_suffix .GitSigningPubKey ".pub" }}"], command = ["sh", "-c", "mkdir -p -m 700 \"${1%/*}\" && ssh-keygen -q -t ed25519 -N '' -f \"$1\"", "sh", "{{ trim_suffix .GitSigningPubKey ".pub" }}"] }
+run = { user = "root", creates = ["/root/.ssh/ws-sign", "/root/.ssh/ws-sign.pub"], command = ["{{ self }}", "ubuntu", "ssh", "keygen", "ws-sign"] }
 
 # The file that trusts the key for the email of each commit, in git verify-commit, root's and 644.
 [file.git-signers]

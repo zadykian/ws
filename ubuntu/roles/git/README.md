@@ -54,15 +54,15 @@ the remote deleted, a landed pull request's say. A `false` in `~/.gitconfig` kee
 ## Signing
 
 `/etc/ws/gitconfig` signs each commit with an SSH key of the machine's own: the `.pub`
-that `WS_GIT_SIGNING_PUB_KEY` names in the values file, `~/.ssh/id_ed25519_signing.pub` by default.
-The private key lies beside it, without `.pub`. The `.pub` lies below `/root`, or the run fails,
-and its path holds no `"`, `\` or control character, as the values refuse them. `state/git-key`
-makes the pair once, as root, an ed25519 key with no passphrase, as tools and claude commit
-unattended. It makes the key's missing directory first, 0700. The key only signs. The
-role does not register it with GitHub: [The signing key](../devtools/README.md#the-signing-key).
+at `/root/.ssh/ws-sign.pub`, a constant. The private key lies beside it, as `ws-sign`.
+`state/git-key` runs `ws ubuntu ssh keygen ws-sign` as root
+([The SSH keys](../../runbook.md#the-ssh-keys)): an ed25519 key with no passphrase, as tools and
+claude commit unattended. It names both files in `creates`, so that a lost `.pub` comes back. The
+key only signs. The role does not register it with GitHub:
+[The signing key](../devtools/README.md#the-signing-key).
 
-To revoke the key, delete it in `@zadykiand`'s settings on GitHub, then delete
-`~/.ssh/id_ed25519_signing` and its `.pub`. The next run makes a new key, and its `.pub` goes to
+To revoke the key, delete it in `@zadykiand`'s settings on GitHub, then run
+`ws ubuntu ssh remove ws-sign`. The next run makes a new key, and its `.pub` goes to
 `@zadykiand` by hand. A key deleted on GitHub alone needs that too.
 
 Each commit there is by the machine account, `zadykiand <su@zadykian.dev>`, from

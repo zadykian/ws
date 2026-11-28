@@ -51,48 +51,10 @@ func TestParseKeepsDefaultsBesideAGivenKey(t *testing.T) {
 	}
 }
 
-func TestParseDerivesTheSigningKeyBelowRoot(t *testing.T) {
-	got, err := Parse(nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if want := "/root/.ssh/id_ed25519_signing.pub"; got.GitSigningPubKey != want {
-		t.Errorf("Parse(nil) = %q, want %q", got.GitSigningPubKey, want)
-	}
-}
-
-func TestParseKeepsAKeyBelowRoot(t *testing.T) {
-	for _, in := range []string{
-		"WS_GIT_SIGNING_PUB_KEY: /root/k.pub\n",
-		"WS_GIT_SIGNING_PUB_KEY: /root/a/../b/k.pub\n",
-	} {
-		if _, err := Parse([]byte(in)); err != nil {
-			t.Errorf("Parse(%q): %v", in, err)
-		}
-	}
-}
-
-func TestParseRefusesAKeyOutsideRoot(t *testing.T) {
-	tests := map[string]string{
-		"outside":   "WS_GIT_SIGNING_PUB_KEY: /etc/key\n",
-		"dot dot":   "WS_GIT_SIGNING_PUB_KEY: /root/../home/key\n",
-		"the home":  "WS_GIT_SIGNING_PUB_KEY: /root\n",
-		"a sibling": "WS_GIT_SIGNING_PUB_KEY: /root2/key\n",
-		"relative":  "WS_GIT_SIGNING_PUB_KEY: key\n",
-		"a user's":  "WS_GIT_SIGNING_PUB_KEY: /home/ada/key\n",
-	}
-	for name, in := range tests {
-		_, err := Parse([]byte(in))
-		if err == nil || !strings.Contains(err.Error(), "is outside /root") {
-			t.Errorf("%s: Parse(%q) = %v", name, in, err)
-		}
-	}
-}
-
 func TestParseRefusesAnOldKey(t *testing.T) {
 	for _, old := range []string{
 		"docker_log_max_size: 1m", "ws_user: ada", "WS_USER: root", "WS_HOME: /root", "wireguard_peers: []",
-		"network_direct_link_interface: enp5s0", "WS_SHELL_GIT_CLONES: []",
+		"network_direct_link_interface: enp5s0", "WS_SHELL_GIT_CLONES: []", "WS_GIT_SIGNING_PUB_KEY: /root/.ssh/k.pub",
 	} {
 		key, _, _ := strings.Cut(old, ":")
 		if _, err := Parse([]byte(old + "\n")); err == nil || !strings.Contains(err.Error(), key) {
@@ -120,28 +82,5 @@ func TestParseRefuses(t *testing.T) {
 		} else if strings.Contains(err.Error(), "hunter2") {
 			t.Errorf("%s: the error shows the value: %v", name, err)
 		}
-	}
-}
-
-func TestSigningPubRefusesAQuoteABackslashOrAControl(t *testing.T) {
-	for _, key := range []string{`/root/a\"b.pub`, `/root/a\\b.pub`, `/root/a\tb.pub`} {
-		if _, err := Parse([]byte("WS_GIT_SIGNING_PUB_KEY: \"" + key + "\"\n")); err == nil ||
-			!strings.Contains(err.Error(), "a quote, a backslash or a control character") {
-			t.Errorf("%s: %v", key, err)
-		}
-	}
-	if _, err := Parse([]byte("WS_GIT_SIGNING_PUB_KEY: /root/.ssh/a b.pub\n")); err != nil {
-		t.Errorf("a space: %v", err)
-	}
-}
-
-func TestParseRefusesASigningKeyThatIsNoPub(t *testing.T) {
-	_, err := Parse([]byte("WS_GIT_SIGNING_PUB_KEY: /root/.ssh/k\n"))
-	if err == nil || !strings.Contains(err.Error(), ".pub") {
-		t.Errorf("a key with no .pub: %v", err)
-	}
-	_, err = Parse([]byte("WS_GIT_SIGNING_KEY: /root/.ssh/k\n"))
-	if err == nil || !strings.Contains(err.Error(), "WS_GIT_SIGNING_KEY") {
-		t.Errorf("the old key: %v", err)
 	}
 }
