@@ -21,6 +21,8 @@ import (
 type Mac struct {
 	// User is the account that ws runs as, and Home its home.
 	User, Home string
+	// VM is true on a virtual machine, which has no Secure Enclave: seward's keys go in a file there.
+	VM bool
 	// Servers holds each server of servers/ beside values.yml, by name.
 	Servers []Server
 	// Ghostty is what Ghostty's units need of the Mac.
@@ -75,6 +77,7 @@ func Read(ctx context.Context, m effect.Machine, getenv func(string) string, pwd
 	if f.User == "" || !path.IsAbs(f.Home) {
 		return Mac{}, fmt.Errorf("USER %q and HOME %q name no user: run it from the user's own shell", f.User, f.Home)
 	}
+	f.VM = onVM(ctx, m)
 	f.Ghostty.Config = ghostty.ConfigPath(m, f.Home)
 	mac := values.Path(getenv, pwd)
 	fleet := values.ReadFleet(m, mac)
@@ -131,6 +134,13 @@ func (f Mac) readSSH(ctx context.Context, m effect.Machine, own values.Conf) (SS
 	}
 	text, err := ssh.Text(ctx, m, f.Home, login, hosts)
 	return SSH{Config: text}, err
+}
+
+// onVM reports whether the hypervisor bit is set, as sysctl kern.hv_vmm_present prints 1. A sysctl
+// that fails or prints anything else reads as a real Mac.
+func onVM(ctx context.Context, m effect.Machine) bool {
+	out, err := m.Run(ctx, "sysctl", "-n", "kern.hv_vmm_present")
+	return err == nil && strings.TrimSpace(string(out)) == "1"
 }
 
 // toolFrom returns where mise installed the tool name for the tree, as the user's mise finds it,

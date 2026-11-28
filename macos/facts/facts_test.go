@@ -231,6 +231,19 @@ func TestSSHFactsSewardFromMise(t *testing.T) {
 	}
 }
 
+func TestVMFactIsTheHypervisorBit(t *testing.T) {
+	for out, want := range map[string]bool{"1\n": true, "0\n": false, "": false} {
+		m := mac(nil)
+		m.Results["sysctl -n kern.hv_vmm_present"] = effecttest.Result{Out: []byte(out)}
+		if f, err := Read(t.Context(), m, env, "/p"); err != nil || f.VM != want {
+			t.Errorf("sysctl prints %q: VM = %v, %v; want %v", out, f.VM, err, want)
+		}
+	}
+	if f, err := Read(t.Context(), mac(nil), env, "/p"); err != nil || f.VM {
+		t.Errorf("with no sysctl answer: VM = %v, %v; want false and no error", f.VM, err)
+	}
+}
+
 func TestReadNeedsTheUser(t *testing.T) {
 	if _, err := Read(t.Context(), effecttest.NewMachine(), func(string) string { return "" }, "/p"); err == nil {
 		t.Error("read with no USER and HOME = nil, want a refusal")
