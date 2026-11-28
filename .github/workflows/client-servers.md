@@ -1,14 +1,13 @@
 # A Mac's servers in CI
 
 The Mac's jobs work on one server named `ws`, at slot 0, as the Mac's side says
-([The two files](../../macos/values/README.md)). The cases write its files through
-[client-conf.sh](../client-conf.sh): `conf_write` splits the lines of stdin between `values.yml` and
-`servers/NAME/values.yml`, and `conf_print` joins them. Both sit in `/etc/ws`, so `conf_write` writes
-them through sudo. `conf_server` names the server, `ws` by
+([The server's file](../../macos/values/README.md#the-servers-file)). The cases write its file through
+[client-conf.sh](../client-conf.sh): `conf_write` puts the lines of stdin in `servers/NAME/values.yml`
+of the conf, and `conf_print` prints them. The conf is `/etc/ws`, so `conf_write` writes through sudo. `conf_server` names the server, `ws` by
 default, and a case that works on a second one sets it, then sets it back to `ws`.
 
 A server's file that `conf_write` makes gets `WS_SLOT: 0` first, and `WS_TUNNEL_PORT: 51820` after it,
-unless the lines hold them, as values.yml holds them. So a case that compares a file with the
+unless the lines hold them. So a case that compares a file with the
 lines it wrote lists no slot and no port.
 
 Four cases of the `client` job work on a second server:

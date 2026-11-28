@@ -1,8 +1,8 @@
 #!/bin/sh
 # The client job's checks of ws macos cable, which the cable's unit runs. They use the job's
-# values.yml. client-conf-checks.sh runs it last, from the repository's root. By then mise bootstrap
+# server file. client-conf-checks.sh runs it last, from the repository's root. By then mise bootstrap
 # has set up the Mac (.github/workflows/client.yml). As it runs the cable's command, sudo included,
-# and edits the job's values.yml, it stops without the job's TUNNEL. It puts the file back as it exits,
+# and edits the job's server file, it stops without the job's TUNNEL. It puts the file back as it exits,
 # on a signal too. Each failure prints an ::error:: line, and any fails the script at its end.
 
 set -eu
@@ -10,7 +10,7 @@ if [ -z "${TUNNEL-}" ]; then
     echo "::error::TUNNEL is unset: this runs ws macos cable, with sudo, in client.yml's job alone"
     exit 1
 fi
-conf=/etc/ws/values.yml
+conf=/etc/ws
 # shellcheck source=.github/client-conf.sh
 . .github/client-conf.sh
 # macOS's TMPDIR ends in a slash, which would put // in $tmp.
@@ -29,10 +29,10 @@ error() {
     fail=1
 }
 
-# with 'KEY: value'... gives conf, the job's values.yml, those lines in place of the job's of the same
+# with 'KEY: value'... gives conf, the job's server file, those lines in place of the job's of the same
 # keys, as the strict reader takes a key once.
 with() {
-    conf_print "$tmp/job.conf" | conf_write "$conf"
+    conf_write "$conf" <"$tmp/job.conf"
     [ $# = 0 ] || conf_set "$conf" "$@"
 }
 

@@ -19,7 +19,7 @@ if [ -z "${TUNNEL-}" ]; then
 fi
 tunnel_dir=/etc/ws/tunnel
 ws_resolvers=/etc/resolver
-conf=/etc/ws/values.yml
+conf=/etc/ws
 fail=0
 # shellcheck source=.github/client-conf.sh
 . .github/client-conf.sh

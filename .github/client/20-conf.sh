@@ -1,5 +1,5 @@
 #!/bin/bash
-# values.yml, without ws's WireGuard key.
+# ws's server file, without its WireGuard key.
 
 set -eo pipefail
 # shellcheck source=.github/client-conf.sh
@@ -8,7 +8,7 @@ set -eo pipefail
 mkdir -p ~/.ssh
 printf '%s\n' 'WS_LAN: 127.0.0.0/8' 'WS_LAN_ADDRESS: 127.0.0.1' 'WS_REMOTE: localhost' \
     'WS_REMOTE_PORT: 22022' |
-    conf_write /etc/ws/values.yml
+    conf_write /etc/ws
 # A config of the user's own, which the Include must go above.
 if [ ! -e ~/.ssh/config ]; then
     printf 'Host *\n    ServerAliveInterval 60\n' >~/.ssh/config

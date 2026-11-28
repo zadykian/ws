@@ -8,7 +8,7 @@ set -eo pipefail
 # shellcheck source=.github/client-mise.sh
 . .github/client-mise.sh
 
-conf_set /etc/ws/values.yml "WS_PUBLIC_KEY: $(cat "$RUNNER_TEMP/ws.pub")"
+conf_set /etc/ws "WS_PUBLIC_KEY: $(cat "$RUNNER_TEMP/ws.pub")"
 client_bootstrap || {
     echo "::error::mise bootstrap with ws's key failed"
     exit 1

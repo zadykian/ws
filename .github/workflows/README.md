@@ -136,7 +136,7 @@ a second run must call no sudo, and `/usr/local/bin/ws` must be root:wheel at 75
 unit no line names must fail the plan, and so must a plan from `/opt/ws` with every unit in sync.
 After the first run the firewall must be on and block all incoming ([the Mac's firewall](../../macos/roles/firewall/README.md)).
 The cases after it, whose stand-ins listen on loopback, pass unchanged under it.
-The job's `values.yml` is made in case 20. Without ws's WireGuard key, the
+The job's server file is made in case 20. Without ws's WireGuard key, the
 bootstrap must make the Mac's key, with `/etc/ws/tunnel.pub` its public half, and load no daemon,
 and `ssh -G ws` gives the tunnel's end.
 With a stand-in's key it must load and run the daemon, which runs `/usr/local/bin/ws`. A second
@@ -157,9 +157,9 @@ back, and spare a script's own ([client-conf-checks.sh](../client-conf-checks.sh
 service. It must stop on one networksetup lacks, or one with a router outside the cable's `/30`.
 It must stop too on a `-setmanual` that fails or changes nothing, and name what differs
 ([client-setup-checks.sh](../client-setup-checks.sh)).
-The cases of the keys run mise's bootstrap with an edited `values.yml`, and
-read the files it writes ([56-keys.sh](../client/56-keys.sh)). A refusal must fail the bootstrap and
-its plan with its reason, and change no file. With the server's `WS_LAN_ADDRESS` dropped, the plan
+The cases of the keys run mise's bootstrap and read the files it writes
+([56-keys.sh](../client/56-keys.sh)). A refusal must fail the bootstrap and its plan with its
+reason, and change no file. With the server's `WS_LAN_ADDRESS` dropped, the plan
 must fail and name it and its file, as the frame's check of the values does
 ([89-values-check.sh](../client/89-values-check.sh)). `ssh -G` must give `ws` seward's login key
 `~/.ssh/ws-auth.pub` and its socket `~/.ssh/seward.sock` alone, by three lines in `/etc/ws/ssh_config`
