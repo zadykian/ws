@@ -80,7 +80,9 @@ another bootstrap, and a login shell must find the cask's `zed`. Case 48 checks 
 ws's back once it goes. Case 49 checks setup's status, which covers what mise's plan leaves out.
 With one of desktop's preferences written another value, `ws macos setup --plan` must exit 2 and
 name it as differs in mise's status. With the role's value back by its type, it must exit 0. Case
-58 checks [the secrets' tools](../../macos/roles/secrets/README.md):
+57 checks [seward](../../macos/roles/ssh/README.md#seward): `/usr/local/bin/seward` must be mise's,
+root's and 0755. `seward --version` must print 0.1.0. Case 58 checks
+[the secrets' tools](../../macos/roles/secrets/README.md):
 `/usr/local/bin/fnox` and `age-plugin-yubikey` must be mise's, root's and 0755, at their pins. A
 stand-in in place of each must give way to mise's at the next bootstrap, whose plan then changes
 nothing. fnox must encrypt a value to the Nano's recipient with no YubiKey, and read it back by an
