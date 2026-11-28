@@ -29,3 +29,29 @@ func ParseYield(text string) (nets []netip.Prefix, warnings []string) {
 	}
 	return nets, warnings
 }
+
+// Yield returns the networks of own that no yielded network holds, and a warning for each it
+// leaves out. A network holds those equal to it or narrower. A wider one of own stays, as the
+// other owner's narrower routes win over it by length.
+func Yield(own, yielded []netip.Prefix) (kept []netip.Prefix, warnings []string) {
+	for _, n := range own {
+		y, ok := heldBy(n, yielded)
+		if !ok {
+			kept = append(kept, n)
+			continue
+		}
+		warnings = append(warnings, fmt.Sprintf("leaves %s out, as it yields %s to another owner", n, y))
+	}
+	return kept, warnings
+}
+
+// heldBy returns the narrowest network of nets that holds n, equal to it or wider.
+func heldBy(n netip.Prefix, nets []netip.Prefix) (netip.Prefix, bool) {
+	var best netip.Prefix
+	for _, y := range nets {
+		if y.Bits() <= n.Bits() && y.Contains(n.Addr()) && (!best.IsValid() || y.Bits() > best.Bits()) {
+			best = y
+		}
+	}
+	return best, best.IsValid()
+}
