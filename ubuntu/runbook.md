@@ -68,6 +68,24 @@ A host runs guests, Incus's system containers ([incus](roles/incus/README.md#the
    `ws ubuntu host guests remove NAME`, which asks first. Run `ws macos remove NAME` on the Mac
    where it knows the guest as a server.
 
+## The SSH keys
+
+`ws ubuntu ssh` keeps root's keys in `/root/.ssh`, on a host and on a guest. A key is a file of
+OpenSSH's ed25519 type with no passphrase, at mode 600, beside its `.pub` at 644. Each command
+refuses a link at a file or at `/root/.ssh`. A name holds letters, digits, `.`, `_` and `-`, the
+first a letter or a digit, and ends in none of `.pub`, `.sock` and `.lock`. A bad name exits 2.
+
+- `ws ubuntu ssh keygen NAME` makes the key and its `.pub`, and `/root/.ssh` at mode 700 where
+  missing. Where the key is there and its `.pub` is not, it writes the `.pub` again by
+  `ssh-keygen -y`. Where both are there, or the `.pub` alone is, it changes nothing and exits 1.
+- `ws ubuntu ssh list` prints a line for each `.pub` whose name passes the rule: `NAME`, `TYPE`,
+  `FINGERPRINT` as `ssh-keygen -l` prints it and `STORE`, which is `file`, tab-separated, with no
+  header. A `.pub` with no OpenSSH key beside it gets `-`, `-` and `error`, its reason goes to
+  standard error, and `list` exits 1.
+- `ws ubuntu ssh remove NAME` deletes the key and its `.pub`, whichever exist, once you type the name
+  again. `--yes` skips the question, which a run with no terminal must pass. It deletes nothing
+  and exits 1 where `NAME` is no OpenSSH private key.
+
 ## The checks on the real machine
 
 No doc settles some of what a host and its guests do, and CI has no runner of the host's kind.
