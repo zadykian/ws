@@ -88,3 +88,12 @@ func TestOSMachineRunTerminalShowsThePromptAndKeepsTheOutput(t *testing.T) {
 		t.Errorf("a failed RunTerminal gave %v, and showed %q; want an error without its output", err, shown.String())
 	}
 }
+
+// The input goes to the command that sudo runs, as a password that ikeward reads on stdin.
+func TestOSMachineRunRootInputGivesTheCommandItsInput(t *testing.T) {
+	m := local.OSMachine{Sudo: []string{"env", "WS_TEST=1"}}
+	out, err := m.RunRootInput(t.Context(), []byte("pw\n"), "sh", "-c", `read -r p; echo "$WS_TEST $p"`)
+	if err != nil || string(out) != "1 pw\n" {
+		t.Errorf("RunRootInput = %q, %v; want 1 pw, as root with the input", out, err)
+	}
+}

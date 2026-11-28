@@ -104,3 +104,14 @@ func TestMachineRunTerminalRecordsItsOwnKind(t *testing.T) {
 		t.Errorf("Calls = %q, want the terminal's line", m.Calls)
 	}
 }
+
+func TestMachineRunRootInputRecordsRootsLineAndTheInput(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["ikeward install"] = effecttest.Result{}
+	if _, err := m.RunRootInput(context.Background(), []byte("pw"), "ikeward", "install"); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(m.Calls, []string{"root ikeward install"}) || !slices.Equal(m.Inputs, []string{"pw"}) {
+		t.Errorf("Calls = %q, Inputs = %q; want root's line and the input", m.Calls, m.Inputs)
+	}
+}
