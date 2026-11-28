@@ -51,3 +51,38 @@ func TestYield(t *testing.T) {
 		})
 	}
 }
+
+func TestHolders(t *testing.T) {
+	got := Holders(
+		nets("10.20.5.0/24", "10.20.6.0/24", "10.30.0.0/16", "10.40.0.0/16", "10.0.0.0/8"),
+		nets("10.0.0.0/8", "10.20.0.0/16", "10.30.0.0/16", "10.99.0.0/16"))
+	if want := nets("10.20.0.0/16", "10.30.0.0/16", "10.0.0.0/8"); !reflect.DeepEqual(got, want) {
+		t.Errorf("Holders = %v, want %v: the narrowest holder of each, once", got, want)
+	}
+}
+
+func TestWithRejects(t *testing.T) {
+	tests := []struct {
+		name                 string
+		held, yield, rejects []string
+		reject, unreject     []string
+	}{
+		{"none held", nil, nil, nil, nil, nil},
+		{"held", []string{"10.20.0.0/16"}, []string{"10.20.0.0/16"}, nil, []string{"10.20.0.0/16"}, nil},
+		{"held twice", []string{"10.20.0.0/16", "10.20.0.0/16"}, []string{"10.20.0.0/16"}, nil, []string{"10.20.0.0/16"}, nil},
+		{"one it left", []string{"10.20.0.0/16"}, []string{"10.20.0.0/16"}, []string{"10.20.0.0/16"}, nil, nil},
+		// The network stays out of its routes, so only the yield's prefix says where its reject goes.
+		{"a yield that moved", []string{"10.0.0.0/8"}, []string{"10.0.0.0/8"}, []string{"10.20.0.0/16"},
+			[]string{"10.0.0.0/8"}, []string{"10.20.0.0/16"}},
+		{"one it left, no longer yielded", nil, []string{"10.30.0.0/16"}, []string{"10.20.0.0/16", "10.30.0.0/16"},
+			nil, []string{"10.20.0.0/16"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := RoutePlan{}.WithRejects(nets(tt.held...), nets(tt.yield...), nets(tt.rejects...))
+			if !reflect.DeepEqual(got.Reject, nets(tt.reject...)) || !reflect.DeepEqual(got.Unreject, nets(tt.unreject...)) {
+				t.Errorf("Reject = %v, Unreject = %v; want %v, %v", got.Reject, got.Unreject, tt.reject, tt.unreject)
+			}
+		})
+	}
+}
