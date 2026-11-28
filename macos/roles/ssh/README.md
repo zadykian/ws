@@ -26,8 +26,7 @@ the wait takes the sole P-256 key that comes after. ws picks no key that was the
 made for another use would go to GitHub. Where no agent answers until Secretive runs, the agent's
 first answer stands for the list before, as setup cannot tell whether a key in it came in this
 run. The wait lists such keys by NAME, and says to press Ctrl-C and run setup again with
-`--key NAME` to take one. A key made at Notify signs git's commits with no prompt ([The signing
-key](../git/README.md#the-signing-key)). Once `values.yml` names the login key, `--key` that names
+`--key NAME` to take one. Once `values.yml` names the login key, `--key` that names
 it runs as no `--key` does, so a failed run may run again as it stood. `--key` that names another
 key is refused.
 
@@ -87,10 +86,6 @@ exits 2 and runs nothing.
 
 ## The units
 
-- `state.keys` runs `ws macos keys`, which copies the `.pub` of each key of Secretive's that
-  `values.yml` names into `/etc/ws/secretive`, through sudo ([Secretive's
-  keys](../git/README.md#secretives-keys)). ssh and git name such a key by that copy. A key in a
-  file has none. The unit runs a command, as the copy comes from the agent.
 - `state.seward` copies seward to `/usr/local/bin/seward`, root:wheel and 755. The check runs as
   the user, so a bootstrap that changes nothing asks for no password.
 - `state.ssh-auth-key` and `state.ssh-sign-key` make `~/.ssh/ws-auth` and `ws-sign` by seward
