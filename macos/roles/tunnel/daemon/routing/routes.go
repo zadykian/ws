@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
+	"slices"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -12,22 +13,38 @@ import (
 )
 
 // Ran is what RunRoutes did. Failed holds the networks it could not add, in the plan's order,
-// and Logs a line for each route it could not delete or left alone.
+// and Rejects the -reject routes that the daemon left once it ran. Logs hold a line for each
+// route it could not add or delete, or left alone.
 type Ran struct {
-	Failed []netip.Prefix
-	Logs   []string
+	Failed, Rejects []netip.Prefix
+	Logs            []string
 }
 
-// RunRoutes carries out a plan of routes into the utun tun. It deletes first, as an old route may
-// be in the way of a new one.
-func RunRoutes(ctx context.Context, m effect.Machine, plan tunnel.RoutePlan, tun string) Ran {
-	r := runner{ctx: ctx, m: m, tun: tun}
+// RunRoutes carries out a plan into the utun tun, given the daemon's rejects. It deletes first, as
+// an old route may be in the way of a new one. A reject comes before a delete, or right after the
+// delete at its own prefix, and the unrejects go last: one network goes in clear for a step.
+func RunRoutes(ctx context.Context, m effect.Machine, plan tunnel.RoutePlan, tun string, rejects []netip.Prefix) Ran {
+	r := runner{ctx: ctx, m: m, tun: tun, ran: Ran{Rejects: slices.Clone(rejects)}}
+	for _, y := range plan.Reject {
+		if !slices.Contains(plan.Delete, y) {
+			r.reject(y)
+		}
+	}
 	for _, n := range plan.Delete {
 		r.delete(n)
+		if slices.Contains(plan.Reject, n) {
+			r.reject(n)
+		}
 	}
 	for _, n := range plan.Add {
-		if !r.route("add", n, "-interface", tun) {
+		if !r.route("add", n, "-interface", tun) && !r.replace(n) {
 			r.ran.Failed = append(r.ran.Failed, n)
+		}
+	}
+	for _, y := range plan.Unreject {
+		// A reject that a failed take-back put back stays, as its network would go in clear.
+		if !slices.Contains(r.ran.Failed, y) {
+			r.unreject(y)
 		}
 	}
 	return r.ran
@@ -79,10 +96,11 @@ func (r *runner) log(format string, a ...any) {
 }
 
 // answer is what route -n get says of a network's best route: its network, from its destination
-// and mask, and its interface.
+// and mask, its interface, and whether it rejects.
 type answer struct {
-	route netip.Prefix
-	iface string
+	route  netip.Prefix
+	iface  string
+	reject bool
 }
 
 // answerOf reads route -n get's answer. A host route's answer may hold no mask line, so a
@@ -102,6 +120,8 @@ func answerOf(out string) (a answer) {
 			masked = true
 		case "interface":
 			a.iface = v
+		case "flags":
+			a.reject = slices.Contains(strings.Split(strings.Trim(v, "<>"), ","), "REJECT")
 		}
 	}
 	bits := 32

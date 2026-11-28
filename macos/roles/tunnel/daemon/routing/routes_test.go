@@ -24,7 +24,7 @@ func TestRunRoutes(t *testing.T) {
 	m.Results["route -q -n add -inet 10.3.0.0/16 -interface utun4"] = effecttest.Result{Err: errors.New("exists")}
 	m.Results["route -q -n add -inet 10.4.0.0/16 -interface utun4"] = effecttest.Result{}
 	d := netip.MustParsePrefix("10.4.0.0/16")
-	ran := RunRoutes(context.Background(), m, tunnel.RoutePlan{Delete: []netip.Prefix{a, b}, Add: []netip.Prefix{c, d}}, "utun4")
+	ran := RunRoutes(context.Background(), m, tunnel.RoutePlan{Delete: []netip.Prefix{a, b}, Add: []netip.Prefix{c, d}}, "utun4", nil)
 	if !slices.Equal(ran.Failed, []netip.Prefix{c}) {
 		t.Errorf("failed = %v, want [%v]", ran.Failed, c)
 	}
@@ -34,7 +34,9 @@ func TestRunRoutes(t *testing.T) {
 	want := []string{
 		"run route -n get -inet 10.1.0.0/16", "run route -q -n delete -inet 10.1.0.0/16",
 		"run route -n get -inet 10.2.0.0/16", "run route -q -n delete -inet 10.2.0.0/16",
-		"run route -q -n add -inet 10.3.0.0/16 -interface utun4", "run route -q -n add -inet 10.4.0.0/16 -interface utun4",
+		// A failed add looks for a -reject route in its place, to take the network back.
+		"run route -q -n add -inet 10.3.0.0/16 -interface utun4", "run route -n get -inet 10.3.0.0/16",
+		"run route -q -n add -inet 10.4.0.0/16 -interface utun4",
 	}
 	if !slices.Equal(m.Calls, want) {
 		t.Errorf("calls = %q, want %q", m.Calls, want)
@@ -65,7 +67,7 @@ func TestRunRoutesDeletesOnTheDaemonsOwnUtunAlone(t *testing.T) {
 	m.Results["route -n get -inet 10.5.0.0/16"] = effecttest.Result{Out: []byte(getOn(netip.MustParsePrefix("10.0.0.0/8"), "utun4"))}
 	m.Results["route -n get -inet 10.6.0.0/16"] = effecttest.Result{Out: []byte(getOn(mac, "en0"))}
 	plan := tunnel.RoutePlan{Delete: []netip.Prefix{own, other, none, deflt, wider, mac}}
-	ran := RunRoutes(context.Background(), m, plan, "utun4")
+	ran := RunRoutes(context.Background(), m, plan, "utun4", nil)
 	if len(ran.Failed) != 0 {
 		t.Errorf("failed = %v", ran.Failed)
 	}
@@ -93,7 +95,7 @@ func TestRunRoutesDeletesAHostRoute(t *testing.T) {
 	m.Results["route -n get -inet 10.7.0.10/32"] = effecttest.Result{Out: []byte(getOn(ones, "utun4"))}
 	m.Results["route -q -n delete -inet 10.7.0.9/32"] = effecttest.Result{}
 	m.Results["route -q -n delete -inet 10.7.0.10/32"] = effecttest.Result{}
-	ran := RunRoutes(context.Background(), m, tunnel.RoutePlan{Delete: []netip.Prefix{bare, ones}}, "utun4")
+	ran := RunRoutes(context.Background(), m, tunnel.RoutePlan{Delete: []netip.Prefix{bare, ones}}, "utun4", nil)
 	if len(ran.Failed) != 0 || len(ran.Logs) != 0 {
 		t.Errorf("failed = %v, logs = %q", ran.Failed, ran.Logs)
 	}

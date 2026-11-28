@@ -63,7 +63,7 @@ func (d *Daemon) keepOut(a tunnel.Allowed) {
 // again each time. The settings' yield is then the one the routes took, for status.
 func (d *Daemon) route(ctx context.Context, a tunnel.Allowed) {
 	plan := tunnel.Routes(a.Want, d.routed)
-	ran := routing.RunRoutes(ctx, d.M, plan, d.Tun)
+	ran := routing.RunRoutes(ctx, d.M, plan, d.Tun, nil)
 	var applied []string
 	d.routed, d.unroutable, applied = plan.Applied(ran.Failed, a.Out, d.unroutable, d.Tun)
 	d.yielded = d.set.Yield
