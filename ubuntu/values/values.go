@@ -9,9 +9,6 @@ import (
 	"io"
 	"io/fs"
 	"net/netip"
-	"path"
-	"strings"
-	"unicode"
 
 	"go.yaml.in/yaml/v3"
 
@@ -35,9 +32,6 @@ type Values struct {
 
 // Shared holds the keys that the roles share.
 type Shared struct {
-	// GitSigningPubKey is the public key's path of the SSH key that signs git's commits. The private
-	// key lies beside it, without .pub. Left empty, it defaults to /root/.ssh/id_ed25519_signing.pub.
-	GitSigningPubKey string `yaml:"WS_GIT_SIGNING_PUB_KEY"`
 	// SelfContained is a guest's mode, off by default: the guest runs SigNoz and its own tunnel,
 	// where a guest under a host takes both from the host. A cloud VM has no host, so it runs so.
 	// The host's own file takes no such key.
@@ -45,19 +39,12 @@ type Shared struct {
 }
 
 // Parse returns the values that data gives over Default. It refuses a key that no role knows, a key
-// twice, and a path that underHome refuses. It refuses a signing key that is no .pub's path and a
-// build cache value that dockerd cannot read. It refuses a swap size or a swappiness that the
+// twice, and a build cache value that dockerd cannot read. It refuses a swap size or a swappiness that the
 // kernel cannot take, and a tunnel or an ikeward that its role cannot set up. Empty data
 // gives Default.
 func Parse(data []byte) (Values, error) {
 	v, err := decode(data)
 	if err != nil {
-		return Values{}, err
-	}
-	if err := v.underHome(); err != nil {
-		return Values{}, err
-	}
-	if err := v.signingPub(); err != nil {
 		return Values{}, err
 	}
 	if err := v.Base.check(); err != nil {
@@ -104,14 +91,8 @@ func Load(m effect.Machine, path string) (Values, error) {
 	return v, nil
 }
 
-// home is root's, the only user the roles set the machine up for.
-const home = "/root"
-
-// derive fills the signing key when the file leaves it empty, and the tunnel's peers.
+// derive fills the tunnel's peers.
 func (v *Values) derive() {
-	if v.GitSigningPubKey == "" {
-		v.GitSigningPubKey = home + "/.ssh/id_ed25519_signing.pub"
-	}
 	v.Tunnel.derive()
 }
 
@@ -136,27 +117,4 @@ func (t *Tunnel) derive() {
 			t.Peers = []TunnelPeer{{Name: macPeer, Address: p.Addr().Next().String()}}
 		}
 	}
-}
-
-// underHome refuses a signing key that is not below /root, root's home, the one home on the server.
-// A role reads the key at that path and must refuse a link there, which a path outside the home
-// would leave open (ubuntu/roles/security/README.md).
-func (v *Values) underHome() error {
-	if !strings.HasPrefix(path.Clean(v.GitSigningPubKey), home+"/") {
-		return fmt.Errorf("WS_GIT_SIGNING_PUB_KEY: %s is outside %s", v.GitSigningPubKey, home)
-	}
-	return nil
-}
-
-// signingPub refuses a signing key that is no .pub's path: ws finds the private key by cutting the
-// suffix, as the Mac's check does. It refuses a quote, a backslash and a control character too,
-// as git's unit writes the path between quotes in /etc/ws/gitconfig, with no escape.
-func (v *Values) signingPub() error {
-	if !strings.HasSuffix(v.GitSigningPubKey, ".pub") {
-		return fmt.Errorf("WS_GIT_SIGNING_PUB_KEY: %s is not a .pub's path", v.GitSigningPubKey)
-	}
-	if strings.ContainsFunc(v.GitSigningPubKey, func(r rune) bool { return r == '"' || r == '\\' || unicode.IsControl(r) }) {
-		return fmt.Errorf("WS_GIT_SIGNING_PUB_KEY: %q holds a quote, a backslash or a control character", v.GitSigningPubKey)
-	}
-	return nil
 }

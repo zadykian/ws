@@ -27,6 +27,9 @@ type File struct {
 	Secret bool
 	// Backup keeps the old file beside the new one, as PATH.PID.TIME~, where the content changes.
 	Backup bool
+	// Create makes the file through WriteNew, so that Apply fails where anything stands there by
+	// then, and Plan fails where it stands now. It leaves Backup and edit unused.
+	Create bool
 	// edit, where set, makes the content from the file as Apply finds it, so that two resources
 	// of one file, planned together, keep each other's edit.
 	edit func(before []byte) []byte
@@ -72,6 +75,9 @@ func (c writeFile) Apply(context.Context) error {
 			return err
 		}
 	}
+	if c.f.Create {
+		return c.f.M.WriteNew(c.f.Path, c.f.Content, c.f.attrs())
+	}
 	return c.f.M.WriteAtomic(c.f.Path, c.f.Content, c.f.attrs())
 }
 
@@ -108,6 +114,9 @@ func (f File) Plan(context.Context) ([]resource.Change, error) {
 	}
 	if err != nil {
 		return nil, err
+	}
+	if f.Create {
+		return nil, fmt.Errorf("%s exists already: %w", f.Path, fs.ErrExist)
 	}
 	switch {
 	case !bytes.Equal(before, f.Content):

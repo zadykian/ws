@@ -22,9 +22,10 @@ steps, and each role's README says what it sets up.
   load. `mise.secrets.toml` is under the env `secrets`, which the secrets task adds. The role
   `secrets` has no spec. Each side's one link, `ubuntu/guest/mise/conf.d` and
   `ubuntu/host/mise/conf.d`, loads them, and `ws unit` serves a side the specs of the roles that
-  hold its file. A spec runs a command of its side's group as `ws ubuntu {{ side }} NAME`, and a
-  unit of one side holds `when = { side = "host" }`. A role holds no plain `mise.toml`, which every
-  env would load ([specs_test.go](../../ubuntu/cli/specs_test.go)).
+  hold its file. A spec runs a command of its side's group as `ws ubuntu {{ side }} NAME`, or one of
+  `ws ubuntu ssh`, which both sides share, and a unit of one side holds `when = { side = "host" }`.
+  A role holds no plain `mise.toml`, which every env would load
+  ([specs_test.go](../../ubuntu/cli/specs_test.go)).
 - Each unit of a spec is a line `"ws:KIND/NAME" = "in-sync"` of its role's `mise.guest.toml`
   and `mise.host.toml`, whichever side runs it, never of `mise.secrets.toml` or
   `mise.self-contained.toml`.

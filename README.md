@@ -125,8 +125,7 @@ decrypts on ws ([The repository](ubuntu/roles/secrets/README.md#the-repository))
 values of a machine go in `/etc/ws/values.yml`, which only root reads, and every run reads them.
 The first run writes it where none is, each key at its default, and no run changes it after
 ([The values file](ubuntu/roles/frame/README.md#the-values-file)). The server's user is
-root, in `/root`: no value names either. `WS_GIT_SIGNING_PUB_KEY` is `/root/.ssh/id_ed25519_signing.pub`
-by default, and lies below `/root`, or the run fails. `ws ubuntu guest
+root, in `/root`: no value names either. `ws ubuntu guest
 values set KEY VALUE` writes one key, and an empty VALUE gives its default back. `ws ubuntu guest
 values check` and each plan refuse a bad value before any write
 ([The check of the values](ubuntu/roles/frame/README.md#the-check-of-the-values)). A second

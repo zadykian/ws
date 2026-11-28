@@ -1,5 +1,6 @@
-// Package cli is Ubuntu's side of ws: its commands under ws ubuntu, of which the guest's are ws
-// ubuntu guest and the host's ws ubuntu host. Its roles' units and the maintainer run them.
+// Package cli is Ubuntu's side of ws: its commands under ws ubuntu. The guest's are ws ubuntu
+// guest, the host's ws ubuntu host, and both sides' ws ubuntu ssh. Its roles' units and the
+// maintainer run them.
 package cli
 
 import (
@@ -21,9 +22,9 @@ const (
 var rootUser = account.User{Name: "root", Home: "/root"}
 
 // Command returns ws ubuntu, the commands of Ubuntu's side. ws ubuntu guest is for a guest's units
-// and its maintainer, and ws ubuntu host for a host's.
+// and its maintainer, and ws ubuntu host for a host's. ws ubuntu ssh serves both.
 func Command(p enginecli.Env) *cobra.Command {
-	return enginecli.Group("ubuntu", "the commands for an Ubuntu machine", guestCmd(p), hostCmd(p))
+	return enginecli.Group("ubuntu", "the commands for an Ubuntu machine", guestCmd(p), hostCmd(p), newSSHCmd(p))
 }
 
 // hostCmd returns ws ubuntu host, the commands of a host: the machine that runs the guests.

@@ -70,8 +70,10 @@ file](../../ubuntu/roles/frame/README.md#the-values-file)). A run with no file i
 `values_file_test.go`'s. The Zed wrapper's [checks](../zed-terminal-checks.sh) run on the files the
 bootstrap installed, and Fresh's on the config it loaded. Root's empty commit must sign and
 verify, and hold one `Co-authored-by` trailer, which [git's hook](../../ubuntu/roles/git/README.md#the-co-author-trailer)
-adds. With no NVIDIA GPU, `nvidia` checks its names alone, and with no MSI board, `fans` leaves
-its fans alone. Without a VPN profile, `ikeward` does nothing.
+adds. `ws ubuntu ssh list` must exit 0 and show the key `ws-sign`, whose store is `file`
+([The SSH keys](../../ubuntu/runbook.md#the-ssh-keys)). With no NVIDIA GPU, `nvidia` checks its
+names alone, and with no MSI board, `fans` leaves its fans
+alone. Without a VPN profile, `ikeward` does nothing.
 
 Docker must pull the image, as a run of an image it lacks warns, and run a container that reaches
 the internet. A guest holds no filter, so the cases hold no table. Then:

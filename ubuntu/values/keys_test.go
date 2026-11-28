@@ -65,7 +65,7 @@ func TestTextGivesTheValueAsALine(t *testing.T) {
 	}
 	for name, want := range map[string]string{
 		"WS_IKEWARD_DOMAINS": "a.example, b.example",
-		"WS_BASE_SWAPPINESS": "10", "WS_BASE_SWAP_SIZE_MB": "", "WS_GIT_SIGNING_PUB_KEY": "/root/.ssh/id_ed25519_signing.pub", "WS_IKEWARD_DNS": "",
+		"WS_BASE_SWAPPINESS": "10", "WS_BASE_SWAP_SIZE_MB": "", "WS_IKEWARD_DNS": "",
 	} {
 		if got := v.Text(keyOf(t, name)); got != want {
 			t.Errorf("%s = %q, want %q", name, got, want)
@@ -95,13 +95,13 @@ func TestLineQuotesWhatReadsAsAnotherType(t *testing.T) {
 }
 
 func TestLineKeepsALongValueOnOneLine(t *testing.T) {
-	long := "/root/" + strings.Repeat("word ", 60) + "end.pub"
-	line, err := keyOf(t, "WS_GIT_SIGNING_PUB_KEY").line(long)
+	long := "Etc/" + strings.Repeat("word ", 60) + "end"
+	line, err := keyOf(t, "WS_BASE_TIMEZONE").line(long)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if v, err := Parse([]byte(line)); err != nil || v.GitSigningPubKey != long {
-		t.Errorf("reads %q, %v", v.GitSigningPubKey, err)
+	if v, err := Parse([]byte(line)); err != nil || v.Base.Timezone != long {
+		t.Errorf("reads %q, %v", v.Base.Timezone, err)
 	}
 }
 
