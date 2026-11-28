@@ -77,11 +77,11 @@ shows no check's output. No unit reads a private key: the key's unit looks for t
 
 ## The Mac's values.yml
 
-The repository names no server, so the values go in two YAML files of `KEY: value` lines that the script
-reads without running them. `/etc/ws/values.yml` holds the Mac's keys: `WS_GIT_SIGNING_PUB_KEY`,
-`WS_IDENTITY_PUB_KEY` and `WS_IDENTITY_AGENT`. `/etc/ws/servers/ws/values.yml` holds every other key,
-and a key in the other file is refused. Both are root's, written through sudo. A `WS_VALUES` file
-outside `/etc/ws` is the user's. [The two files](values/README.md#the-two-files) shows both.
+The repository names no server, so the values go in two YAML files of `KEY: value` lines that the
+script reads without running them. `/etc/ws/values.yml` holds no key.
+`/etc/ws/servers/ws/values.yml` holds every key, and a key in the other file is refused. Both are
+root's, written through sudo. A `WS_VALUES` file outside `/etc/ws` is the user's. [The two
+files](values/README.md#the-two-files) shows both.
 `--server NAME` picks the server that a `ws macos` command acts on, and may be left out
 where there is one ([The server's name](values/README.md#the-servers-name)). `remove`,
 `secrets add` and `secrets init` refuse it: remove and add take the server's name as their
@@ -97,8 +97,7 @@ router's side is in [The router](../ubuntu/roles/cable/router.md). `WS_PUBLIC_KE
 once ws has the Mac's key, in the order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE`
 names the network service of the display's adapter, and `WS_CABLE_PORT` ws's port of the cable: [The
 cable](#the-cable). ssh offers ws seward's `~/.ssh/ws-auth.pub`, and git signs with its
-`~/.ssh/ws-sign.pub`, whatever `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and
-`WS_GIT_SIGNING_PUB_KEY` name: [ssh's hosts](#sshs-hosts), [git on the
+`~/.ssh/ws-sign.pub`: [ssh's hosts](#sshs-hosts), [git on the
 Mac](roles/git/README.md). `WS_HOST` makes a server a guest of another, its host, and takes the host's
 LAN, address and router for the guest's ([A guest](values/README.md#a-guest)). The bootstrap makes
 `/etc/ws` through sudo, at mode 755, for the tunnel's key, git's files and ssh's hosts.

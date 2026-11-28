@@ -136,8 +136,7 @@ a second run must call no sudo, and `/usr/local/bin/ws` must be root:wheel at 75
 unit no line names must fail the plan, and so must a plan from `/opt/ws` with every unit in sync.
 After the first run the firewall must be on and block all incoming ([the Mac's firewall](../../macos/roles/firewall/README.md)).
 The cases after it, whose stand-ins listen on loopback, pass unchanged under it.
-The job's `values.yml`, made in case 20, makes no key. It names seward's `~/.ssh/ws-auth.pub`
-and `~/.ssh/ws-sign.pub`, which the bootstrap's units make. Without ws's WireGuard key, the
+The job's `values.yml` is made in case 20. Without ws's WireGuard key, the
 bootstrap must make the Mac's key, with `/etc/ws/tunnel.pub` its public half, and load no daemon,
 and `ssh -G ws` gives the tunnel's end.
 With a stand-in's key it must load and run the daemon, which runs `/usr/local/bin/ws`. A second
@@ -171,8 +170,7 @@ name seward's `ws-sign` as its signing key and `/etc/ws/ssh-keygen`, root's and 
 program, and the allowed signers must trust the key's `.pub`. It must sign a commit and `git
 verify-commit` it, whatever `SSH_AUTH_SOCK` names, with gh as GitHub's credential command. A
 `~/.gitconfig` must get the include of `/etc/ws/gitconfig` at its top, once, and keep its own lines,
-its mode and a copy. An include below them, a second one or a link must stop the bootstrap. An
-empty `WS_GIT_SIGNING_PUB_KEY` must stop nothing
+its mode and a copy. An include below them, a second one or a link must stop the bootstrap
 ([client-git-checks.sh](../client-git-checks.sh)). Last, after a second server's cases, one more bootstrap
 must call no sudo, and its plan and `mise dot status --missing` must exit 0
 ([96-converged.sh](../client/96-converged.sh)). Where wireguard-go makes no utun, the job fails, as the

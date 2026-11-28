@@ -93,12 +93,6 @@ _Avoid_: package, step
 
 ## The Mac's side
 
-**Named key**:
-The key whose `.pub` `values.yml` names for a use: ws's login, by `WS_IDENTITY_PUB_KEY`, or git's
-signing, by `WS_GIT_SIGNING_PUB_KEY`. Either ws's copy of a key of Secretive's agent, or a file
-key.
-_Avoid_: picked key, git key
-
 **User's file**:
 A whole file below the Mac's home that ws writes as the user, not root, such as Zed's
 `~/.config/zed/global_settings.json`. The `file` kind writes it, with the user as its `owner`.
