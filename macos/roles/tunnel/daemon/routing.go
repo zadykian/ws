@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/zadykian/ws/macos/roles/tunnel/daemon/routing"
+	"github.com/zadykian/ws/macos/roles/tunnel/daemon/settings"
 	tunnel "github.com/zadykian/ws/macos/roles/tunnel/plan"
 )
 
@@ -69,6 +70,17 @@ func (d *Daemon) route(ctx context.Context, a tunnel.Allowed) {
 	d.routed, d.unroutable, applied = plan.Applied(ran.Failed, a.Out, d.unroutable, d.Tun)
 	d.yielded = d.set.Yield
 	for _, line := range append(ran.Logs, applied...) {
+		d.say("%s", line)
+	}
+}
+
+// unreject removes the -reject routes that the daemon left and the yield, read again, no longer
+// holds. One that it holds stays, as the other owner's floor too, for that owner's off or a reboot.
+func (d *Daemon) unreject(ctx context.Context) {
+	yield, _ := settings.ReadYield(d.M, d.Paths.Yield)
+	ran := routing.RunRoutes(ctx, d.M, tunnel.RoutePlan{}.WithRejects(nil, yield, d.rejects), d.Tun, d.rejects)
+	d.rejects = ran.Rejects
+	for _, line := range ran.Logs {
 		d.say("%s", line)
 	}
 }

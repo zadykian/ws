@@ -172,3 +172,25 @@ func TestADaemonThatRestartsUnderAYieldTakesTheRejectThatStands(t *testing.T) {
 		t.Errorf("commands = %q, want the reject removed at the take-back", r.m.runs)
 	}
 }
+
+func TestStopRemovesTheRejectsThatTheYieldNoLongerHolds(t *testing.T) {
+	r := onTheCable(t)
+	withOffice(r)
+	ctx := context.Background()
+	r.reload(ctx)
+	r.m.table["route -n get -inet 10.20.0.0/16"] = effecttest.Result{Out: []byte(ownCorp)}
+	r.m.Files[paths.Yield] = []byte("10.20.0.0/16\n")
+	r.reload(ctx)
+	r.m.table["route -n get -inet 10.20.0.0/16"] = effecttest.Result{Out: []byte(rejectCorp)}
+	r.m.runs = nil
+	// The yield still holds it, so the reject is the other owner's floor as well, and stays.
+	r.stop()
+	if slices.Contains(r.m.runs, "route -q -n delete -inet 10.20.0.0/16") {
+		t.Errorf("removed a reject that the yield holds: commands = %q", r.m.runs)
+	}
+	delete(r.m.Files, paths.Yield)
+	r.stop()
+	if !slices.Contains(r.m.runs, "route -q -n delete -inet 10.20.0.0/16") {
+		t.Errorf("kept a reject that no yield holds: commands = %q", r.m.runs)
+	}
+}

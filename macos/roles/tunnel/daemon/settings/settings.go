@@ -49,7 +49,7 @@ func ReadSettings(ctx context.Context, m effect.Machine, p Paths) (Settings, err
 	var apart []string
 	s.Routes, apart = tunnel.Apart(s.Routes, held)
 	s.Warnings = append(s.Warnings, apart...)
-	s.Yield, skipped = readYield(m, p.Yield)
+	s.Yield, skipped = ReadYield(m, p.Yield)
 	s.Warnings = append(s.Warnings, skipped...)
 	s.Held = tunnel.Holders(s.Routes, s.Yield)
 	s.Routes, apart = tunnel.Yield(s.Routes, s.Yield)
@@ -74,8 +74,9 @@ func readRoutes(ctx context.Context, m effect.Machine, dir string) ([]netip.Pref
 	return tunnel.ParseRoutes(files)
 }
 
-// readYield reads the yield at file. A missing file yields nothing.
-func readYield(m effect.Machine, file string) ([]netip.Prefix, []string) {
+// ReadYield reads the yield at file, with a warning for each line it skips. A missing file
+// yields nothing.
+func ReadYield(m effect.Machine, file string) ([]netip.Prefix, []string) {
 	if file == "" {
 		return nil, nil
 	}
