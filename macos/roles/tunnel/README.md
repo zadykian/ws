@@ -34,6 +34,16 @@ yields YIELDED to another owner`. It deletes that network's route by the rule ab
 network stays routed, as the other owner's narrower routes win by length. Once the file is gone, a
 read routes the networks again.
 
+A daemon leaves a `-reject` route to `127.0.0.1` at each yielded network that holds one of its
+networks, also one that it left out before. No packet goes in clear before the other owner's floor
+stands there. One step is the exception: a network that equals its yielded one goes in clear
+between the delete of its route and its reject. The reject sits at the yielded prefix, not a
+narrower one, which would win over the other owner's routes by length. A reject that stands there
+already stays, and the daemon takes it as its own, as after a restart. A daemon routes a network
+again over a reject at its prefix, whoever added it. Where that add fails, it puts the reject
+back. It removes the rejects that it left once the yield no longer holds them, and at its stop. A
+reject that the yield still holds stays at a stop, as the other owner's floor too.
+
 A missing file yields nothing, and a daemon skips a line that is no IPv4 network. A reboot clears
 the file. `ws macos tunnel status` prints the yield that the routes took, as `yielded to another
 owner: NETWORKS`.
