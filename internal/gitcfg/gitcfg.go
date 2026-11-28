@@ -54,11 +54,6 @@ func Settings(id Identity, in Inputs) string {
 	return b.String()
 }
 
-// AllowedSigners returns the file that trusts the key for id's email, under its header.
-func AllowedSigners(id Identity, header, key string) string {
-	return header + "\n" + id.Email + " " + key + "\n"
-}
-
 // quote puts s in quotes for a git config file, with \ and " escaped.
 func quote(s string) string {
 	return `"` + strings.NewReplacer(`\`, `\\`, `"`, `\"`).Replace(s) + `"`

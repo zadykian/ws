@@ -10,7 +10,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/kind"
 	"github.com/zadykian/ws/engine/core/resource/file"
-	"github.com/zadykian/ws/internal/gitcfg"
 	"github.com/zadykian/ws/macos/facts"
 	"github.com/zadykian/ws/macos/roles/git"
 )
@@ -88,7 +87,7 @@ func TestGitUnitsWriteTheFilesAndTheInclude(t *testing.T) {
 	texts := git.Texts{Config: "[user]\n\tname = me\n", Keygen: "#!/bin/sh\nexec ssh-keygen \"$@\"\n"}
 	units := macUnits(t, m, texts)
 	apply(t, units)
-	signers := gitcfg.AllowedSigners(gitcfg.Mac(), file.Header("#"), signingKey)
+	signers := file.Header("#") + "\nme@zadykian.dev " + signingKey + "\n"
 	for path, want := range map[string]string{"/etc/ws/gitconfig": texts.Config, "/etc/ws/allowed_signers": signers,
 		"/etc/ws/ssh-keygen": texts.Keygen, "/Users/v/.gitconfig": "[include]\n\tpath = /etc/ws/gitconfig\n"} {
 		if got := string(m.Files[path]); got != want {
