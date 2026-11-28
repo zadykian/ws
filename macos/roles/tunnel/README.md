@@ -25,6 +25,35 @@ in its place counts as gone. A /32 counts with no mask line, as a host route's a
 none. A daemon leaves a route that goes through another utun or the Mac's own interface alone, and
 logs `leaves the route to NETWORK alone: it goes through IFACE, not UTUN`.
 
+## A yield
+
+`/var/run/ws-tunnel.yield`, root's, holds the networks that another owner routes in place of the
+tunnels, a network a line. Each daemon reads it at its start and at each read. It leaves out each
+of its networks that a yielded one holds, equal or narrower, and logs `leaves NETWORK out, as it
+yields YIELDED to another owner`. It deletes that network's route by the rule above. A wider
+network stays routed, as the other owner's narrower routes win by length. Once the file is gone, a
+read routes the networks again.
+
+A daemon leaves a `-reject` route to `127.0.0.1` at each yielded network that holds one of its
+networks, also one that it left out before. No packet goes in clear before the other owner's floor
+stands there. One step is the exception: a network that equals its yielded one goes in clear
+between the delete of its route and its reject. The reject sits at the yielded prefix, not a
+narrower one, which would win over the other owner's routes by length. A reject that stands there
+already stays, and the daemon takes it as its own, as after a restart. A daemon routes a network
+again over a reject at its prefix, whoever added it. Where that add fails, it puts the reject
+back. It removes the rejects that it left once the yield no longer holds them, and at its stop. A
+reject that the yield still holds stays at a stop, as the other owner's floor too.
+
+A missing file yields nothing, and a daemon skips a line that is no IPv4 network. A reboot clears
+the file. `ws macos tunnel status` prints the yield that the routes took, as `yielded to another
+owner: NETWORKS`.
+
+`sudo /usr/local/bin/ws macos tunnel yield [CIDR...]` refuses a network that is no IPv4 network,
+writes the file whole and has every loaded daemon read it, by SIGHUP. With no network it removes
+the file. It returns once each daemon's state shows the change, as a caller that goes on at once
+races the daemons. It fails after 5 s, or on a failed signal, and names the daemon. The yield is
+no file of `routes.d`, which only adds networks, and whose sum launchd's unit keeps in its stamp.
+
 ## Reading again
 
 Each daemon's job in launchd's unit of the tunnel lists every server's `tunnel.conf` and

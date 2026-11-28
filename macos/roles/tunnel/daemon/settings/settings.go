@@ -15,17 +15,21 @@ import (
 )
 
 // Paths are the daemon's files. Conf is tunnel.conf, which setup copies from the server's file. Key
-// is private.key, the Mac's key. Routes is routes.d, whose files hold a network a line. State is
+// is private.key, the Mac's key. Routes is routes.d, and Yield the yield, empty for none. State is
 // what the daemon writes for status, Log launchd's file for its output. Root holds the directory
 // of each server, the daemon's own among them, beside the key; none reads no other server.
-type Paths struct{ Conf, Key, Routes, State, Log, Root string }
+type Paths struct{ Conf, Key, Routes, State, Log, Root, Yield string }
 
-// Settings are tunnel.conf and routes.d as read, with the lines of routes.d left out and the
-// networks that another server's routes.d holds. Others are the other servers' directories.
+// Settings are tunnel.conf and routes.d as read. Routes leaves out the bad lines of routes.d, the
+// networks that another server's routes.d holds, and those that the yield holds. Others are the
+// other servers' directories, and Yield the yield's networks. Held are the yielded networks that
+// hold one of the routes.d's, where a daemon leaves a -reject route.
 type Settings struct {
 	Conf     tunnel.Conf
 	Routes   []netip.Prefix
 	Others   []Other
+	Yield    []netip.Prefix
+	Held     []netip.Prefix
 	Warnings []string
 }
 
@@ -45,6 +49,11 @@ func ReadSettings(ctx context.Context, m effect.Machine, p Paths) (Settings, err
 	var apart []string
 	s.Routes, apart = tunnel.Apart(s.Routes, held)
 	s.Warnings = append(s.Warnings, apart...)
+	s.Yield, skipped = ReadYield(m, p.Yield)
+	s.Warnings = append(s.Warnings, skipped...)
+	s.Held = tunnel.Holders(s.Routes, s.Yield)
+	s.Routes, apart = tunnel.Yield(s.Routes, s.Yield)
+	s.Warnings = append(s.Warnings, apart...)
 	text, err := m.ReadFile(p.Conf)
 	if err != nil {
 		return s, fmt.Errorf("cannot read %s: run mise -C /opt/ws/macos bootstrap", p.Conf)
@@ -63,6 +72,19 @@ func readRoutes(ctx context.Context, m effect.Machine, dir string) ([]netip.Pref
 		}
 	}
 	return tunnel.ParseRoutes(files)
+}
+
+// ReadYield reads the yield at file, with a warning for each line it skips. A missing file
+// yields nothing.
+func ReadYield(m effect.Machine, file string) ([]netip.Prefix, []string) {
+	if file == "" {
+		return nil, nil
+	}
+	text, err := m.ReadFile(file)
+	if err != nil {
+		return nil, nil
+	}
+	return tunnel.ParseYield(string(text))
 }
 
 // ReadKey reads the Mac's private key, in base64, from file.

@@ -30,6 +30,8 @@ type Mac struct {
 	Git Git
 	// Secrets is the secrets' tools that mise installed for the tree.
 	Secrets Secrets
+	// Ikeward is ikeward as mise installed it for the tree.
+	Ikeward Ikeward
 }
 
 // SSH is /etc/ws/ssh_config's text, checked as ssh reads it.
@@ -50,6 +52,12 @@ type Git struct {
 // empty where mise has none: that tool's unit alone fails then.
 type Secrets struct {
 	FnoxFrom, PluginFrom string
+}
+
+// Ikeward is ikeward as mise installed it for the tree, which its unit copies into /usr/local/sbin.
+// From is empty where mise has none: that unit alone fails then.
+type Ikeward struct {
+	From string
 }
 
 // Ghostty is the config that the line reading /etc/ws/ghostty goes in, which the Mac's files pick.
@@ -89,6 +97,7 @@ func Read(ctx context.Context, m effect.Machine, getenv func(string) string, pwd
 	}
 	f.Git = Git{Texts: git.TextsOf(f.Home, signing), GhFrom: toolFrom(ctx, m, "gh")}
 	f.Secrets = Secrets{FnoxFrom: toolFrom(ctx, m, "fnox"), PluginFrom: toolFrom(ctx, m, "age-plugin-yubikey")}
+	f.Ikeward = Ikeward{From: toolFrom(ctx, m, "ikeward")}
 	return f, nil
 }
 

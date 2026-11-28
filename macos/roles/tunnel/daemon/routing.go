@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/zadykian/ws/macos/roles/tunnel/daemon/routing"
+	"github.com/zadykian/ws/macos/roles/tunnel/daemon/settings"
 	tunnel "github.com/zadykian/ws/macos/roles/tunnel/plan"
 )
 
@@ -60,13 +61,26 @@ func (d *Daemon) keepOut(a tunnel.Allowed) {
 
 // route routes the networks that a wants into the tunnel, and stops routing what it no longer
 // holds. A network it cannot route, as one another route already takes, is logged once and tried
-// again each time.
+// again each time. A yield's route leaves a -reject route, and status the yield that it took.
 func (d *Daemon) route(ctx context.Context, a tunnel.Allowed) {
-	plan := tunnel.Routes(a.Want, d.routed)
-	failed, logs := routing.RunRoutes(ctx, d.M, plan, d.Tun)
+	plan := tunnel.Routes(a.Want, d.routed).WithRejects(d.set.Held, d.set.Yield, d.rejects)
+	ran := routing.RunRoutes(ctx, d.M, plan, d.Tun, d.rejects)
+	d.rejects = ran.Rejects
 	var applied []string
-	d.routed, d.unroutable, applied = plan.Applied(failed, a.Out, d.unroutable, d.Tun)
-	for _, line := range append(logs, applied...) {
+	d.routed, d.unroutable, applied = plan.Applied(ran.Failed, a.Out, d.unroutable, d.Tun)
+	d.yielded = d.set.Yield
+	for _, line := range append(ran.Logs, applied...) {
+		d.say("%s", line)
+	}
+}
+
+// unreject removes the -reject routes that the daemon left and the yield, read again, no longer
+// holds. One that it holds stays, as the other owner's floor too, for that owner's off or a reboot.
+func (d *Daemon) unreject(ctx context.Context) {
+	yield, _ := settings.ReadYield(d.M, d.Paths.Yield)
+	ran := routing.RunRoutes(ctx, d.M, tunnel.RoutePlan{}.WithRejects(nil, yield, d.rejects), d.Tun, d.rejects)
+	d.rejects = ran.Rejects
+	for _, line := range ran.Logs {
 		d.say("%s", line)
 	}
 }
@@ -76,6 +90,7 @@ func (d *Daemon) route(ctx context.Context, a tunnel.Allowed) {
 func (d *Daemon) writeState(ctx context.Context) {
 	s := tunnel.State{
 		Tier: d.inUse.Tier, Interface: d.Tun, Since: d.since, Routes: d.routed, LeftOut: d.allowed.Out,
+		Yielded: d.yielded,
 	}
 	if d.inUse.Host.IsValid() {
 		s.Endpoint = netip.AddrPortFrom(d.inUse.Host, d.set.Conf.Port).String()

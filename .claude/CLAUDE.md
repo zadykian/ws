@@ -164,9 +164,10 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   So is the server's fnox:
   GitHub's digest of its release asset for each platform is in `ubuntu/guest/mise/mise.guest.lock`
   ([secrets](../ubuntu/roles/secrets/README.md#fnox)). So is
-  yamllint ([lint-requirements.in](../.github/lint-requirements.in)), and so are the Mac's gh, fnox
-  and age-plugin-yubikey, by `macos/mise/mise.macos.lock` ([git](../macos/roles/git/README.md#gh),
-  [secrets](../macos/roles/secrets/README.md#the-tools)). The lock's SHA-256 of
+  yamllint ([lint-requirements.in](../.github/lint-requirements.in)), and so are the Mac's gh, fnox,
+  age-plugin-yubikey and ikeward, by `macos/mise/mise.macos.lock` ([git](../macos/roles/git/README.md#gh),
+  [secrets](../macos/roles/secrets/README.md#the-tools),
+  [ikeward](../macos/roles/ikeward/README.md#ikeward)). The lock's SHA-256 of
   age-plugin-yubikey is GitHub's digest, as its publisher lists none. So is Secretive's
   `Secretive.zip`, by the SHA-256 that mise's `macos-app` pin holds
   ([mise.macos.toml](../macos/roles/ssh/mise.macos.toml)), and its notarization, by `spctl` where `ws macos setup` installs it
@@ -176,10 +177,11 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   signature on them and strips their quarantine, and eleven take the SHA-256 of Homebrew's API at
   run time, four none. Logi's installer runs as root,
   unchecked ([apps](../macos/roles/apps/README.md#the-casks)). The Mac's formulae, devtools',
-  docker's and desktop's, take their latest by mise's `brew`, outside the rule too. mise checks
-  each bottle against the SHA-256 of Homebrew's API at run time, and ws pins none ([devtools](../macos/roles/devtools/README.md#the-formulae),
+  docker's, desktop's and ikeward's strongSwan, take their latest by mise's `brew`, outside the rule
+  too. mise checks each bottle against the SHA-256 of Homebrew's API at run time, and ws pins none ([devtools](../macos/roles/devtools/README.md#the-formulae),
   [docker](../macos/roles/docker/README.md#the-formulae),
-  [desktop](../macos/roles/desktop/README.md#the-wallpaper)). So is each of the Mac's clones, oh-my-zsh
+  [desktop](../macos/roles/desktop/README.md#the-wallpaper),
+  [ikeward](../macos/roles/ikeward/README.md#strongswan)). So is each of the Mac's clones, oh-my-zsh
   and its two plugins, by the full commit SHA that mise checks it out at
   ([zsh](../macos/roles/zsh/README.md#the-clones)). Go is checked against the
   SHA-256 its publisher lists, on the Mac too

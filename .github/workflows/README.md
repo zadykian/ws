@@ -84,7 +84,11 @@ name it as differs in mise's status. With the role's value back by its type, it 
 `/usr/local/bin/fnox` and `age-plugin-yubikey` must be mise's, root's and 0755, at their pins. A
 stand-in in place of each must give way to mise's at the next bootstrap, whose plan then changes
 nothing. fnox must encrypt a value to the Nano's recipient with no YubiKey, and read it back by an
-SSH key that is a recipient too. Case 83 checks [devtools](../../macos/roles/devtools/README.md): `/usr/local/go` must link to
+SSH key that is a recipient too. Case 59 checks [ikeward's role](../../macos/roles/ikeward/README.md):
+`/usr/local/sbin/ikeward` must be mise's, and it and its directory root's and 0755. Homebrew's
+strongSwan must stand. A
+stand-in in its place must give way at the next bootstrap, whose plan then changes nothing. Case 83
+checks [devtools](../../macos/roles/devtools/README.md): `/usr/local/go` must link to
 mise's Go 1.27.3. A login shell must find it, and each formula's command in `/opt/homebrew/bin`.
 `~/.gnupg` must be 0700, and `gpg-agent.conf` must name pinentry-mac. Case 84 checks
 [docker](../../macos/roles/docker/README.md): a login shell must find `docker`, `colima` and the

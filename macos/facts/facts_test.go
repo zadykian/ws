@@ -219,6 +219,19 @@ func TestSecretsFactsFromMise(t *testing.T) {
 	}
 }
 
+func TestIkewardFactFromMise(t *testing.T) {
+	m := mac(nil)
+	if f, err := Read(t.Context(), m, env, "/p"); err != nil || f.Ikeward != (Ikeward{}) {
+		t.Errorf("read = %+v, %v; want no tool, and no error, where mise has none", f.Ikeward, err)
+	}
+	ikeward := "/Users/v/.local/share/mise/installs/github-zadykian-ikeward/0.4.0/ikeward"
+	m.Results["mise -C /opt/ws/macos which ikeward"] = effecttest.Result{Out: []byte(ikeward + "\n")}
+	f, err := Read(t.Context(), m, env, "/p")
+	if err != nil || f.Ikeward.From != ikeward {
+		t.Errorf("read = %+v, %v; want mise's %s", f.Ikeward, err, ikeward)
+	}
+}
+
 func TestReadNeedsTheUser(t *testing.T) {
 	if _, err := Read(t.Context(), effecttest.NewMachine(), func(string) string { return "" }, "/p"); err == nil {
 		t.Error("read with no USER and HOME = nil, want a refusal")

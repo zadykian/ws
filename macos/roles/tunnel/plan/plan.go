@@ -7,8 +7,10 @@ import (
 )
 
 // RoutePlan is the routes to delete and to add so that the routes in place are the networks wanted.
+// Reject and Unreject are the -reject routes to add and to delete at a yield (WithRejects).
 type RoutePlan struct {
 	Want, Delete, Add []netip.Prefix
+	Reject, Unreject  []netip.Prefix
 }
 
 // Routes compares the networks wanted with the routes in place. It runs no route.

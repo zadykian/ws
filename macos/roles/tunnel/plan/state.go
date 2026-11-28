@@ -19,12 +19,13 @@ type State struct {
 	Since     time.Time // when the way last changed
 	Routes    []netip.Prefix
 	LeftOut   []netip.Prefix // the networks of routes.d that hold the endpoint
+	Yielded   []netip.Prefix // the networks yielded to another owner, as the routes last took them
 }
 
 // Encode is the state file's text: a key=value line each, the networks joined by spaces.
 func (s State) Encode() string {
-	return fmt.Sprintf("tier=%s\nendpoint=%s\ninterface=%s\nsince=%d\nroutes=%s\nleft_out=%s\n",
-		s.Tier, s.Endpoint, s.Interface, s.Since.Unix(), JoinNets(s.Routes), JoinNets(s.LeftOut))
+	return fmt.Sprintf("tier=%s\nendpoint=%s\ninterface=%s\nsince=%d\nroutes=%s\nleft_out=%s\nyielded=%s\n",
+		s.Tier, s.Endpoint, s.Interface, s.Since.Unix(), JoinNets(s.Routes), JoinNets(s.LeftOut), JoinNets(s.Yielded))
 }
 
 // ParseState reads what Encode wrote. It leaves out a line it does not know.
@@ -44,7 +45,7 @@ func ParseState(text string) (s State, err error) {
 				return State{}, fmt.Errorf("state: since is '%s'", value)
 			}
 			s.Since = time.Unix(n, 0)
-		case "routes", "left_out":
+		case "routes", "left_out", "yielded":
 			var nets []netip.Prefix
 			for _, each := range strings.Fields(value) {
 				p, err := netip.ParsePrefix(each)
@@ -53,10 +54,13 @@ func ParseState(text string) (s State, err error) {
 				}
 				nets = append(nets, p)
 			}
-			if name == "routes" {
+			switch name {
+			case "routes":
 				s.Routes = nets
-			} else {
+			case "left_out":
 				s.LeftOut = nets
+			default:
+				s.Yielded = nets
 			}
 		}
 	}

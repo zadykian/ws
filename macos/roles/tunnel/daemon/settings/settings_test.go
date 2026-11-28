@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/netip"
+	"slices"
 	"strings"
 	"testing"
 
@@ -59,6 +60,39 @@ func TestReadSettingsNoRoutes(t *testing.T) {
 	got, err := ReadSettings(context.Background(), m, paths)
 	if err != nil || len(got.Routes) != 0 {
 		t.Errorf("got %+v, %v; want no routes", got, err)
+	}
+}
+
+func TestReadSettingsYield(t *testing.T) {
+	p := paths
+	p.Yield = "/var/run/ws-tunnel.yield"
+	m := machine(map[string]string{
+		dir + "/tunnel.conf":       conf,
+		dir + "/routes.d/a":        "10.20.0.0/16\n10.30.5.0/24\n172.16.0.0/12\n",
+		"/var/run/ws-tunnel.yield": "10.20.0.0/16\n172.20.0.0/16\nnope\n10.30.0.0/16\n",
+	})
+	m.Results["ls -1 "+dir+"/routes.d"] = effecttest.Result{Out: []byte("a\n")}
+	got, err := ReadSettings(context.Background(), m, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(got.Routes, []netip.Prefix{netip.MustParsePrefix("172.16.0.0/12")}) {
+		t.Errorf("Routes = %v, want the wider network alone", got.Routes)
+	}
+	if want := []netip.Prefix{netip.MustParsePrefix("10.20.0.0/16"), netip.MustParsePrefix("172.20.0.0/16"), netip.MustParsePrefix("10.30.0.0/16")}; !slices.Equal(got.Yield, want) {
+		t.Errorf("Yield = %v, want %v", got.Yield, want)
+	}
+	want := []string{
+		"the yield's line 'nope' is no IPv4 network; skips it",
+		"leaves 10.20.0.0/16 out, as it yields 10.20.0.0/16 to another owner",
+		"leaves 10.30.5.0/24 out, as it yields 10.30.0.0/16 to another owner",
+	}
+	if !slices.Equal(got.Warnings, want) {
+		t.Errorf("Warnings = %q, want %q", got.Warnings, want)
+	}
+	delete(m.Files, p.Yield)
+	if got, _ := ReadSettings(context.Background(), m, p); len(got.Routes) != 3 || got.Yield != nil {
+		t.Errorf("without the file: Routes = %v, Yield = %v; want all routed and none yielded", got.Routes, got.Yield)
 	}
 }
 

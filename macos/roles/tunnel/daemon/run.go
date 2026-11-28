@@ -103,8 +103,10 @@ func (d *Daemon) replaced() bool {
 	return err == nil && !os.SameFile(d.program, now)
 }
 
-// stop removes the state file, which says that the daemon runs.
+// stop removes the state file, which says that the daemon runs, and the rejects that the daemon
+// left where no yield holds them now.
 func (d *Daemon) stop() {
+	d.unreject(context.Background())
 	_ = d.run(context.Background(), "rm", "-f", d.Paths.State, d.Paths.State+".new")
 	d.say("stopped")
 }
