@@ -161,14 +161,9 @@ The cases of the keys run mise's bootstrap with an edited `values.yml`, and
 read the files it writes ([56-keys.sh](../client/56-keys.sh)). A refusal must fail the bootstrap and
 its plan with its reason, and change no file. With the server's `WS_LAN_ADDRESS` dropped, the plan
 must fail and name it and its file, as the frame's check of the values does
-([89-values-check.sh](../client/89-values-check.sh)). `ssh -G` must give `ws` the file key that the job's
-`values.yml` names, by its four lines, and the file or the agent that `WS_IDENTITY_PUB_KEY` and
-`WS_IDENTITY_AGENT` name. An empty `WS_IDENTITY_PUB_KEY` must stop, though an agent at Secretive's
-socket holds a P-256 key. It gives the line that names each P-256 key by ws's copy of its `.pub`.
-`PublicKeys` is closed, as macOS 27 denies ws the files of Secretive's container. With that line,
-`ssh -G` must give `ws` the agent and the copy, which a run writes where none exists. A `.pub` that
-is missing or unreadable must stop too. So must one that holds a private key, a certificate, a line
-that is no key, or a key that ws's OpenSSH lacks
+([89-values-check.sh](../client/89-values-check.sh)). `ssh -G` must give `ws` seward's login key
+`~/.ssh/ws-auth.pub` and its socket `~/.ssh/seward.sock` alone, by three lines in `/etc/ws/ssh_config`
+with no file key's, as the runner runs no sshd
 ([client-identity-checks.sh](../client-identity-checks.sh)). `/usr/local/bin/gh` must be mise's gh, root's
 and 0755, in place of one there, and a bootstrap that changes nothing must call no sudo. With a file
 key, git must sign a commit and verify it, with gh as GitHub's credential command. A `~/.gitconfig`

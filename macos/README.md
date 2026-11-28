@@ -101,16 +101,16 @@ router's side is in [The router](../ubuntu/roles/cable/router.md). `WS_PUBLIC_KE
 once ws has the Mac's key, in the order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE`
 names the network service of the display's adapter, and `WS_CABLE_PORT` ws's port of the cable: [The
 cable](#the-cable). `WS_GIT_SIGNING_PUB_KEY` is the `.pub` of the key that signs git's commits on
-the Mac, by its path from `/` or `~/`: [git on the Mac](roles/git/README.md). `WS_IDENTITY_PUB_KEY` is the
-`.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the socket of its agent: [ssh's
+the Mac, by its path from `/` or `~/`: [git on the Mac](roles/git/README.md). ssh offers ws seward's
+`~/.ssh/ws-auth.pub` whatever `WS_IDENTITY_PUB_KEY` and `WS_IDENTITY_AGENT` name: [ssh's
 hosts](#sshs-hosts). `WS_HOST` makes a server a guest of another, its host, and takes the host's
 LAN, address and router for the guest's ([A guest](values/README.md#a-guest)). The bootstrap makes
 `/etc/ws` through sudo, at mode 755, for the tunnel's key, git's files and ssh's hosts.
 
 ssh logs in to every server as root, so no key names a user. A key with an empty value, as
 `WS_REMOTE: ""`, takes its default, as a missing line does: 51820 for `WS_TUNNEL_PORT`.
-`WS_IDENTITY_PUB_KEY` has none: the bootstrap stops without it
-([ssh's hosts](#sshs-hosts)). Nor has `WS_GIT_SIGNING_PUB_KEY` ([git on the Mac](roles/git/README.md)).
+`WS_GIT_SIGNING_PUB_KEY` has none: the bootstrap stops without it
+([git on the Mac](roles/git/README.md)).
 
 `WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
 sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split by blanks. Each
@@ -132,9 +132,10 @@ may not change stops the run: sudo would leave root's files where the user's go.
 
 `mise -C /opt/ws/macos bootstrap` writes `/etc/ws/ssh_config`, root's and 644, with a host
 for each server through its tunnel, and puts its Include first in `~/.ssh/config` ([ssh on the
-Mac](roles/ssh/README.md)). ssh offers ws the key of `WS_IDENTITY_PUB_KEY` alone. Failed logins over
-the tunnel ban the Mac's `10.99.N.2` for an hour: `ssh -o HostName=ADDRESS -o Port=PORT ws` comes
-from another address, and from there `fail2ban-client set sshd unbanip 10.99.N.2` lifts the ban.
+Mac](roles/ssh/README.md)). ssh offers ws seward's `~/.ssh/ws-auth.pub` alone, through seward's
+agent. Failed logins over the tunnel ban the Mac's `10.99.N.2` for an hour:
+`ssh -o HostName=ADDRESS -o Port=PORT ws` comes from another address, and from there
+`fail2ban-client set sshd unbanip 10.99.N.2` lifts the ban.
 
 ## The cable
 

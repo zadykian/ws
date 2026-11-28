@@ -112,16 +112,11 @@ the key below, and checks the server's host key under its name (`HostKeyAlias`).
 server whose `values.yml` fails to load stops the bootstrap. A session ends after 120 s without
 word from the server, far longer than a switch of the tunnel takes.
 
-ssh offers ws one key alone (`IdentitiesOnly`): the one whose `.pub` `WS_IDENTITY_PUB_KEY` names, as
-ws's copy of a key of Secretive's or a file key. ws picks none by itself, not even the agent's sole
-key, as a key made for another use would go to GitHub unasked. Without the key, or with it empty,
-the bootstrap stops, and gives the lines to add to `values.yml`. They name each P-256 key that
-Secretive's agent lists, by its comment and SHA256 fingerprint. The agent is the one whose socket
-`WS_IDENTITY_AGENT` names, else Secretive's where the `.pub` is there. Else ssh reads the file
-beside the `.pub`, its passphrase kept in the Keychain. The bootstrap stops where that `.pub` is
-missing or unreadable. It stops too where the `.pub` holds other than one public key's line, as a
-private key or a certificate does. So does a key that ssh-keygen cannot read, or one of a type
-that ws's OpenSSH lacks, as Secretive's ML-DSA keys on macOS 26.
+ssh offers ws one key alone (`IdentitiesOnly`): seward's `~/.ssh/ws-auth.pub`, through its agent,
+`IdentityAgent ~/.ssh/seward.sock`. ssh asks the agent for the key that the `.pub` names, so no
+private key is read. No value names the key, and the facts read none: `state.ssh-auth-key` makes
+it ([The keys](#the-keys)), and the file goes in after that unit. ws picks no other key, as a key
+made for another use would go to GitHub unasked. Until the agent runs, `ssh NAME` finds no key.
 
 The Include goes first in `~/.ssh/config`, as ssh keeps the first value it reads for each key. So
 neither the file's own settings nor those of other files override ws's. Where the line is missing,
@@ -133,11 +128,11 @@ and its `Include` stay as they are. The bootstrap stops where a `Host` or `Match
 `~/.ssh/config`'s own names a server, whose settings would come after those of
 `/etc/ws/ssh_config`: remove it, as its `IdentityFile` would add a key to ws's.
 
-ssh keeps the first `IgnoreUnknown` it reads too. `/etc/ws/ssh_config` needs one for the file key's
-`UseKeychain`, which only Apple's ssh knows, and keeps it with an agent's key. So it carries the
-patterns of every `IgnoreUnknown` in `~/.ssh/config`. Run the bootstrap again after a change to
-those. A pattern in a file that `~/.ssh/config` includes must be in `~/.ssh/config` too, as ws reads
-no other file.
+ssh keeps the first `IgnoreUnknown` it reads too. `/etc/ws/ssh_config` gives one for `UseKeychain`,
+which only Apple's ssh knows and a user's file may set. So it carries that, and the patterns of
+every `IgnoreUnknown` in `~/.ssh/config`. Run the bootstrap again after a change to those. A
+pattern in a file that `~/.ssh/config` includes must be in `~/.ssh/config` too, as ws reads no
+other file.
 
 The facts have `ssh -G`, for each server, read the new text alone. Then they read it first,
 `~/.ssh/config` next, without its own Include of the old file, and the system's file last. Where ssh
