@@ -35,6 +35,26 @@ check = [
     "{{ .SSH.SewardFrom }}",
 ]
 
+# The login key and the signing key, made by seward as the user and never as root. A key that
+# root's session made fails to sign in the user's. creates names each key and its .pub, so a lost
+# .pub comes back: keygen writes it again. A .pub with no key fails keygen, which says to remove it.
+# A virtual machine has no Secure Enclave, so its keys go in a file (facts .VM).
+[state.ssh-auth-key]
+after = "state/seward"
+
+[state.ssh-auth-key.run]
+user = "{{ .User }}"
+creates = ["{{ .Home }}/.ssh/ws-auth", "{{ .Home }}/.ssh/ws-auth.pub"]
+command = ["/usr/local/bin/seward", "keygen", "ws-auth"{{ if .VM }}, "--store", "file"{{ end }}]
+
+[state.ssh-sign-key]
+after = "state/seward"
+
+[state.ssh-sign-key.run]
+user = "{{ .User }}"
+creates = ["{{ .Home }}/.ssh/ws-sign", "{{ .Home }}/.ssh/ws-sign.pub"]
+command = ["/usr/local/bin/seward", "keygen", "ws-sign"{{ if .VM }}, "--store", "file"{{ end }}]
+
 # The servers' hosts, root's and readable by all (facts.SSH). The facts checked the text as ssh
 # reads it whole, with ~/.ssh/config; ssh checks the new file alone once more before it goes in.
 [file.ssh-config]
