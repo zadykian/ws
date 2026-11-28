@@ -40,6 +40,36 @@ func (m OSMachine) WriteAtomic(path string, data []byte, a effect.Attrs) error {
 	return f.CloseAtomicallyReplace()
 }
 
+// WriteNew fills a pending file beside path, as WriteAtomic does, and links it to path, which
+// fails where anything stands there. So two writers of one path never replace each other's file.
+// It writes as ws's own user, and refuses another owner, which only sudo could give.
+func (OSMachine) WriteNew(path string, data []byte, a effect.Attrs) error {
+	if a.UID >= 0 && a.UID != euid() {
+		return fmt.Errorf("write %s: only ws's own owner, %d, not %d", path, euid(), a.UID)
+	}
+	f, err := os.CreateTemp(filepath.Dir(path), "."+filepath.Base(path)+".new-*")
+	if err != nil {
+		return err
+	}
+	defer func() { _ = os.Remove(f.Name()) }()
+	if _, err := f.Write(data); err != nil {
+		_ = f.Close()
+		return err
+	}
+	if err := f.Chmod(a.Mode.Perm()); err != nil {
+		_ = f.Close()
+		return err
+	}
+	if err := f.Chown(a.UID, a.GID); err != nil {
+		_ = f.Close()
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+	return os.Link(f.Name(), path)
+}
+
 // Chown sets the owner of the file a link points to. It needs root for another owner than ws's,
 // which sudo gives where ws runs as a user.
 func (m OSMachine) Chown(path string, uid, gid int) error {

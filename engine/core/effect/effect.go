@@ -82,6 +82,10 @@ type Machine interface {
 	// where ws runs as a user, sudo gives it outside the home, never through a link. A
 	// UID and GID of -1 keep ws's own, as chown(2) leaves them, and need no root.
 	WriteAtomic(path string, data []byte, a Attrs) error
+	// WriteNew is WriteAtomic for a path where nothing stands. It returns fs.ErrExist where
+	// anything does, even a file made after a look, and replaces nothing. The owner must be ws's
+	// own, as sudo's write replaces what it finds.
+	WriteNew(path string, data []byte, a Attrs) error
 	// Download fetches the URL into path through a pending file, which replaces path only where the
 	// SHA-256 of the body, in hex, is sum. It sets the owner and mode of a.
 	Download(ctx context.Context, url, path, sum string, a Attrs) error
