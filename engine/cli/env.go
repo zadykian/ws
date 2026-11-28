@@ -21,6 +21,8 @@ type Env struct {
 	// secrets task sets each secret input, empty where it has no value.
 	LookupEnv func(string) (string, bool)
 	Euid      int
+	// Terminal tells whether standard input is a terminal, where a command may ask a question.
+	Terminal bool
 	// Pid names the copy that ws update checks beside the file it replaces.
 	Pid  int
 	GOOS string
@@ -45,6 +47,7 @@ func NewEnv() Env {
 		Getenv:    os.Getenv,
 		LookupEnv: os.LookupEnv,
 		Euid:      os.Geteuid(),
+		Terminal:  isTerminal(int(os.Stdin.Fd())),
 		Pid:       os.Getpid(),
 		GOOS:      runtime.GOOS,
 		GOARCH:    runtime.GOARCH,
