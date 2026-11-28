@@ -48,7 +48,7 @@ func touched(m *effecttest.Machine) []string {
 func TestSSHRefusesABadNameAsAWrongCallBeforeAnyPath(t *testing.T) {
 	// "--" ends the flags, so that a name such as -a reaches the rule.
 	for _, name := range []string{"../../etc/ssh/ssh_host_ed25519_key", "a/b", "-a", "a.pub", "seward.sock", "x.lock", " "} {
-		for _, verb := range []string{"keygen"} {
+		for _, verb := range []string{"keygen", "remove"} {
 			p, m := sshProcess()
 			status, _, stderr := runWs(p, "", "ubuntu", "ssh", verb, "--", name)
 			if status != 2 || !strings.Contains(stderr, "key's name") || len(m.Calls) != 0 {
