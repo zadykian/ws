@@ -5,6 +5,7 @@
 "ws:file/ssh-config" = "in-sync"
 "ws:file/ssh-include" = "in-sync"
 "ws:state/keys" = "in-sync"
+"ws:state/seward" = "in-sync"
 "ws:state/ssh-dir" = "in-sync"
 
 [bootstrap.packages."macos-app:secretive"]

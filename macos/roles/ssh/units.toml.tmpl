@@ -15,6 +15,26 @@ user = "{{ .User }}"
 creates = ["{{ .Home }}/.ssh"]
 command = ["mkdir", "-m", "700", "{{ .Home }}/.ssh"]
 
+# seward's copy goes in /usr/local/bin, which /etc/paths puts on every shell's, root:wheel and 0755,
+# as fnox's does, under a temporary name first. With no seward of mise's this unit alone fails. The
+# check runs as the user.
+[state.seward.run]
+user = "root"
+command = [
+    "sh",
+    "-c",
+    "test -x \"$1\" && mkdir -p /usr/local/bin && install -o root -g wheel -m 0755 \"$1\" /usr/local/bin/.seward.new && mv -f /usr/local/bin/.seward.new /usr/local/bin/seward",
+    "sh",
+    "{{ .SSH.SewardFrom }}",
+]
+check = [
+    "sh",
+    "-c",
+    "cmp -s \"$1\" /usr/local/bin/seward && [ \"$(stat -f %u:%g:%Lp /usr/local/bin/seward)\" = 0:0:755 ]",
+    "sh",
+    "{{ .SSH.SewardFrom }}",
+]
+
 # The servers' hosts, root's and readable by all (facts.SSH). The facts checked the text as ssh
 # reads it whole, with ~/.ssh/config; ssh checks the new file alone once more before it goes in.
 [file.ssh-config]

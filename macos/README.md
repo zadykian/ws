@@ -18,9 +18,9 @@ pull request. It runs as the user, with sudo where it needs root. `mise bootstra
 cld and a zsh hook ([Ghostty and cld on the Mac](roles/ghostty/README.md)). mise clones oh-my-zsh and its plugins, and the
 zsh settings load them ([zsh](roles/zsh/README.md)). It keeps the display on while on power and stops the App Store's
 updates ([power](roles/power/README.md)). It turns the firewall on and has it block all incoming, as the server reaches the
-Mac past no router ([the firewall](roles/firewall/README.md)). mise installs Ghostty, Zed and a font as casks, and gh, fnox
-and age-plugin-yubikey by its lock, with no Homebrew ([the runbook](runbook.md)). ws's units install .NET's SDKs
-([dotnet](roles/dotnet/README.md)). mise installs Go by its lock, and gnupg, ripgrep and other tools as formulae
+Mac past no router ([the firewall](roles/firewall/README.md)). mise installs Ghostty, Zed and a font as casks, and gh, fnox,
+age-plugin-yubikey and seward by its lock, with no Homebrew ([the runbook](runbook.md)). ws's units install
+.NET's SDKs ([dotnet](roles/dotnet/README.md)). mise installs Go by its lock, and gnupg, ripgrep and other tools as formulae
 ([devtools](roles/devtools/README.md)). It installs Docker's command line and colima the same way ([docker](roles/docker/README.md)). It sets the
 Dock, Finder, windows and sounds as preferences, and the wallpaper to Stone ([desktop](roles/desktop/README.md)). It makes
 the built-in keyboard's Caps Lock a Control key, sets the symbolic hotkeys and installs the keyboard
