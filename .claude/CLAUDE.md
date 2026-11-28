@@ -164,9 +164,10 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   So is the server's fnox:
   GitHub's digest of its release asset for each platform is in `ubuntu/guest/mise/mise.guest.lock`
   ([secrets](../ubuntu/roles/secrets/README.md#fnox)). So is
-  yamllint ([lint-requirements.in](../.github/lint-requirements.in)), and so are the Mac's gh, fnox
-  and age-plugin-yubikey, by `macos/mise/mise.macos.lock` ([git](../macos/roles/git/README.md#gh),
-  [secrets](../macos/roles/secrets/README.md#the-tools)). The lock's SHA-256 of
+  yamllint ([lint-requirements.in](../.github/lint-requirements.in)), and so are the Mac's gh, fnox,
+  age-plugin-yubikey and seward, by `macos/mise/mise.macos.lock`
+  ([git](../macos/roles/git/README.md#gh), [secrets](../macos/roles/secrets/README.md#the-tools),
+  [seward](../macos/roles/ssh/README.md#seward)). The lock's SHA-256 of
   age-plugin-yubikey is GitHub's digest, as its publisher lists none. So is Secretive's
   `Secretive.zip`, by the SHA-256 that mise's `macos-app` pin holds
   ([mise.macos.toml](../macos/roles/ssh/mise.macos.toml)), and its notarization, by `spctl` where `ws macos setup` installs it
