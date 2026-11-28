@@ -5,15 +5,6 @@ for each server, through the tunnel ([The Mac](../../README.md)). The facts buil
 the servers' files, and check it, before any unit runs
 ([The facts](../../facts/README.md)). A refusal there stops the whole bootstrap, and changes nothing.
 
-## Secretive
-
-[`mise.macos.toml`](mise.macos.toml) pins Secretive, which holds the Mac's keys, by mise's `macos-app`
-package: a version, the URL and SHA-256 of its `Secretive.zip`, and the bundle in it. Each bootstrap
-installs it into `/Applications`, after mise checks the zip against the SHA-256. `adopt` takes over
-the same build where it stands, as a person may have installed it. It refuses another build
-and leaves it alone, so remove that copy once. `macos-app` finds no release: a new one changes
-`version` and `sha256`, which GitHub's release and Homebrew's cask list.
-
 ## seward
 
 [`mise.macos.toml`](mise.macos.toml) pins seward 0.1.0, the Mac's ssh agent and keys' tool, by mise's
