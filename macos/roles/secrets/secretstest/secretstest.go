@@ -23,7 +23,8 @@ const (
 )
 
 // Plain is what every fnox call in the clone prints: a value in the clear, which a test looks for in
-// what ws prints and runs. ws leaves fnox's output to the terminal, so Plain reaches neither.
+// what ws prints and runs. ws leaves fnox's output to the terminal, or gives FnoxGet's to its
+// caller alone, so Plain reaches neither.
 const Plain = "S1=the-plain-value-of-S1"
 
 // Mac is a Mac whose tree names o/n and whose gh reads it as private. Its clone holds the files
@@ -89,6 +90,12 @@ func (f *Mac) Run(ctx context.Context, name string, args ...string) ([]byte, err
 func (f *Mac) RunInput(ctx context.Context, stdin []byte, name string, args ...string) ([]byte, error) {
 	f.answer(name, args)
 	return f.Machine.RunInput(ctx, stdin, name, args...)
+}
+
+// RunTerminal answers the clone's lines, then runs the command on the Machine.
+func (f *Mac) RunTerminal(ctx context.Context, name string, args ...string) ([]byte, error) {
+	f.answer(name, args)
+	return f.Machine.RunTerminal(ctx, name, args...)
 }
 
 // Pass answers the clone's lines, then passes the command on the Machine.

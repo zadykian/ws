@@ -52,3 +52,19 @@ func TestMacLandsAChangeOfTheClone(t *testing.T) {
 		t.Errorf("the clone's fnox.toml is %q", got)
 	}
 }
+
+func TestMacAnswersFnoxGet(t *testing.T) {
+	ctx := context.Background()
+	mac := secretstest.New(effecttest.NewMachine(), map[string]string{"fnox.toml": "root = true\n"})
+	c, err := secrets.Open(ctx, mac, secrets.Repo{Owner: "o", Name: "n"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close(ctx)
+	if got, err := c.FnoxGet(ctx, "ws-a", "S1"); err != nil || string(got) != secretstest.Plain {
+		t.Errorf("FnoxGet gives %q, %v, want Plain", got, err)
+	}
+	if fnoxed := mac.Fnoxed(); len(fnoxed) != 1 || !slices.Equal(fnoxed[0], []string{"-P", "ws-a", "get", "S1"}) {
+		t.Errorf("the fake ran fnox %q, want the one get", fnoxed)
+	}
+}
