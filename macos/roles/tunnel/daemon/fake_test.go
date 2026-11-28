@@ -24,7 +24,7 @@ const dir = "/etc/ws/tunnel"
 // paths are the daemon's files under dir.
 var paths = settings.Paths{
 	Conf: dir + "/tunnel.conf", Key: dir + "/private.key", Routes: dir + "/routes.d",
-	State: "/var/run/ws-tunnel.state",
+	State: "/var/run/ws-tunnel.state", Yield: "/var/run/ws-tunnel.yield",
 }
 
 var errTest = errors.New("no")

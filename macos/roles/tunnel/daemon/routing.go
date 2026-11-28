@@ -60,12 +60,13 @@ func (d *Daemon) keepOut(a tunnel.Allowed) {
 
 // route routes the networks that a wants into the tunnel, and stops routing what it no longer
 // holds. A network it cannot route, as one another route already takes, is logged once and tried
-// again each time.
+// again each time. The settings' yield is then the one the routes took, for status.
 func (d *Daemon) route(ctx context.Context, a tunnel.Allowed) {
 	plan := tunnel.Routes(a.Want, d.routed)
 	failed, logs := routing.RunRoutes(ctx, d.M, plan, d.Tun)
 	var applied []string
 	d.routed, d.unroutable, applied = plan.Applied(failed, a.Out, d.unroutable, d.Tun)
+	d.yielded = d.set.Yield
 	for _, line := range append(logs, applied...) {
 		d.say("%s", line)
 	}
@@ -76,6 +77,7 @@ func (d *Daemon) route(ctx context.Context, a tunnel.Allowed) {
 func (d *Daemon) writeState(ctx context.Context) {
 	s := tunnel.State{
 		Tier: d.inUse.Tier, Interface: d.Tun, Since: d.since, Routes: d.routed, LeftOut: d.allowed.Out,
+		Yielded: d.yielded,
 	}
 	if d.inUse.Host.IsValid() {
 		s.Endpoint = netip.AddrPortFrom(d.inUse.Host, d.set.Conf.Port).String()

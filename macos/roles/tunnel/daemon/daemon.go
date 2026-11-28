@@ -61,6 +61,7 @@ type Daemon struct {
 	routed     []netip.Prefix
 	unroutable []netip.Prefix
 	told       []netip.Prefix
+	yielded    []netip.Prefix // the yield that the routes last took
 }
 
 // Event is what the loop reacts to.
