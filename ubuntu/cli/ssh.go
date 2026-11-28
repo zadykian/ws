@@ -22,7 +22,7 @@ var privateKeyHead = []byte("-----BEGIN OPENSSH PRIVATE KEY-----")
 // newSSHCmd returns ws ubuntu ssh: the keys in root's ~/.ssh, for a host and a guest alike.
 func newSSHCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("ssh", "the SSH keys in root's ~/.ssh, of a host and of a guest",
-		newSSHKeygenCmd(p))
+		newSSHKeygenCmd(p), newSSHListCmd(p))
 }
 
 // sshNameArg checks that a command takes one name that internal/sshkey allows, before any path is
