@@ -1,7 +1,7 @@
 #!/bin/bash
-# The keys that mise bootstrap's units of ssh and git set up from values.yml. The login key of ws
-# goes in /etc/ws/ssh_config, and git's signing key in /etc/ws/gitconfig and its allowed signers.
-# Each case edits the job's values.yml, runs the bootstrap and reads the files. A refusal must fail
+# The keys that mise bootstrap's units of ssh and git set up. seward's login key goes in
+# /etc/ws/ssh_config, and git's signing key, from values.yml, in /etc/ws/gitconfig and its allowed
+# signers. A case edits the job's values.yml, runs the bootstrap and reads the files. A refusal must fail
 # the bootstrap and its plan, with the reason, and change none of the files. This file holds the
 # functions, and sources the cases of ws's key and git's: client-identity-checks.sh and
 # client-git-checks.sh. The job's values.yml comes back as it exits, on a signal too, and the cases

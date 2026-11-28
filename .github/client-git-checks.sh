@@ -12,6 +12,11 @@ signers=/etc/ws/allowed_signers
 secretive=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent
 tab=$(printf '\t')
 
+# pubname PUB prints the name that Secretive gives the .pub, and ws's copy keeps: its MD5 in hex.
+pubname() {
+    ssh-keygen -E md5 -l -f "$1" | sed -e 's/^[0-9]* MD5://' -e 's/ .*//' -e 's/://g' -e 's/$/.pub/'
+}
+
 # git_restore stops the stand-in agent, removes the files that git's cases made, and puts the
 # runner's ~/.gitconfig back. The job's values.yml then gives the job's files at the next bootstrap.
 git_restore() {
@@ -126,8 +131,8 @@ cmp -s "$copy" "$tmp/p256-git.pub" || error "mise bootstrap wrote no $copy"
     error "$keygen is missing, or not root:wheel 755"
 grep -qxF "${tab}program = \"$keygen\"" "$gitconfig" || error "$gitconfig names no gpg.ssh.program $keygen"
 (SSH_AUTH_SOCK=$tmp/none && export SSH_AUTH_SOCK && signed && exit "$fail") || fail=1
-# ws keeps the file key that the job's values.yml names as ws's, though Secretive's one key is there.
-[ "$(ssh -T -G ws | awk '$1 == "identityfile" { print $2 }')" = \~/.ssh/id_ed25519 ] ||
+# ws keeps seward's login key as ws's, though Secretive's one key is git's.
+[ "$(ssh -T -G ws | awk '$1 == "identityfile" { print $2 }' | sed "s|^$HOME/|~/|")" = \~/.ssh/ws-auth.pub ] ||
     error "ssh -G ws gives git's signing key, Secretive's one key, as ws's"
 # With the job's file key again, the wrapper must go.
 git_restore
