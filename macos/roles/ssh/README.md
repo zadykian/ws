@@ -57,6 +57,18 @@ plist differs, and the run that sees the new pin restarts the agent. With an age
 on the socket, the service's own exits 1, and the default `restart` starts another every 10 s:
 stop the one by hand first.
 
+### The keys
+
+`state.ssh-auth-key` and `state.ssh-sign-key` run `/usr/local/bin/seward keygen ws-auth` and
+`ws-sign` as the user, after `state.seward`. They run in the user's own session and never as root,
+as a key that root's session made fails to sign in the user's. Each makes `~/.ssh/NAME` and `NAME.pub`.
+`creates` names both files, so a lost `.pub` comes back, as keygen writes it again from the key.
+With the `.pub` alone, keygen exits 1 and the unit fails: run `seward remove NAME`.
+
+On a real Mac the keys are in the Secure Enclave, and a Mac with none fails the unit. The fact `.VM`
+([The facts](../../facts/README.md)) is true on a virtual machine, which has no Secure Enclave, and
+both units add `--store file` there: its keys are files, as CI's runner holds them.
+
 ## The keys' commands
 
 `ws macos ssh keygen NAME`, `list` and `remove NAME` hand the call to `/usr/local/bin/seward`, which
@@ -81,6 +93,8 @@ exits 2 and runs nothing.
   file has none. The unit runs a command, as the copy comes from the agent.
 - `state.seward` copies seward to `/usr/local/bin/seward`, root:wheel and 755. The check runs as
   the user, so a bootstrap that changes nothing asks for no password.
+- `state.ssh-auth-key` and `state.ssh-sign-key` make `~/.ssh/ws-auth` and `ws-sign` by seward
+  ([The keys](#the-keys)).
 - `services.seward` runs seward's agent as mise's own user service, no unit of ws's
   ([The agent](#the-agent)).
 - `file.ssh-config` writes `/etc/ws/ssh_config`, root's and 644, from the facts' text. ssh reads
