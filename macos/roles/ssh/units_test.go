@@ -50,7 +50,6 @@ func unitsOn(t *testing.T, m *effecttest.Machine, vm bool) []kind.Unit {
 
 func TestSSHUnitsWriteTheHostsAndTheInclude(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Results[userPath+"/ws macos keys --check"] = effecttest.Result{}
 	m.Results[userPath+"mkdir -m 700 /Users/v/.ssh"] = effecttest.Result{}
 	m.Results["ssh -G -F /etc/ws/ssh_config.ws-check localhost"] = effecttest.Result{}
 	m.Results["/ws macos ssh included"] = effecttest.Result{Err: exited("exit 1")}

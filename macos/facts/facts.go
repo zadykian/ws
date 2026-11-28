@@ -10,7 +10,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/internal/sshcfg"
-	"github.com/zadykian/ws/macos/internal/keys"
 	"github.com/zadykian/ws/macos/roles/ghostty"
 	"github.com/zadykian/ws/macos/roles/git"
 	"github.com/zadykian/ws/macos/roles/ssh"
@@ -70,8 +69,8 @@ type Server struct {
 
 // Read reads the facts from the environment, Ghostty's configs and the values' files. It reads
 // values.yml from WS_VALUES or /etc/ws first, then each server's file beside it. A bad values.yml
-// fails the read alone. Any other refusal, a missing key or a config that ssh refuses fails it
-// too, and mise stops before a change. A Mac with no server yet reads none.
+// fails the read alone. Any other refusal, or a config that ssh refuses, fails it too, and mise
+// stops before a change. A Mac with no server yet reads none.
 func Read(ctx context.Context, m effect.Machine, getenv func(string) string, pwd string) (Mac, error) {
 	f := Mac{User: getenv("USER"), Home: getenv("HOME")}
 	if f.User == "" || !path.IsAbs(f.Home) {
@@ -85,16 +84,11 @@ func Read(ctx context.Context, m effect.Machine, getenv func(string) string, pwd
 	if f.Servers, err = serversOf(fleet); err != nil {
 		return Mac{}, err
 	}
-	own := fleet.Mac
 	if f.SSH, err = f.readSSH(ctx, m); err != nil {
 		return Mac{}, err
 	}
 	f.SSH.SewardFrom = toolFrom(ctx, m, "seward")
-	signing, err := keys.ReadKey(ctx, m, own, f.Home, keys.SigningKey)
-	if err != nil {
-		return Mac{}, err
-	}
-	f.Git = Git{Texts: git.TextsOf(f.Home, signing), GhFrom: toolFrom(ctx, m, "gh")}
+	f.Git = Git{Texts: git.TextsOf(f.Home), GhFrom: toolFrom(ctx, m, "gh")}
 	f.Secrets = Secrets{FnoxFrom: toolFrom(ctx, m, "fnox"), PluginFrom: toolFrom(ctx, m, "age-plugin-yubikey")}
 	return f, nil
 }

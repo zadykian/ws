@@ -2,13 +2,11 @@ package facts
 
 import (
 	"errors"
-	"io/fs"
 	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/internal/sshcfg"
-	"github.com/zadykian/ws/macos/internal/mactest"
 	"github.com/zadykian/ws/macos/values"
 )
 
@@ -17,14 +15,12 @@ func env(k string) string {
 	return map[string]string{"USER": "v", "HOME": "/Users/v"}[k]
 }
 
-// mac is a machine with values.yml, which names a file key for login and signing, and a file for
+// mac is a machine with values.yml, which names a key for login and signing, and a file for
 // each server, its text by name. ssh takes each server's block, and mise has no gh yet.
 func mac(servers map[string]string) *effecttest.Machine {
 	m := effecttest.NewMachine()
 	m.Files["/etc/ws/values.yml"] = []byte(values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id.pub",
 		"WS_GIT_SIGNING_PUB_KEY", "~/.ssh/id.pub"))
-	m.Files["/Users/v/.ssh/id.pub"] = []byte("ssh-ed25519 AAAA me\n")
-	m.Results["ssh-keygen -l -f /Users/v/.ssh/id.pub"] = effecttest.Result{}
 	m.Results["mktemp -d"] = effecttest.Result{Out: []byte("/tmp/x\n")}
 	m.Results["rm -rf /tmp/x"] = effecttest.Result{}
 	m.Dirs["/etc/ws/servers"] = 0o755
@@ -174,34 +170,29 @@ func TestSSHFactsPredictCldsTabs(t *testing.T) {
 	}
 }
 
-func TestGitFactsNameUsrLocalGh(t *testing.T) {
+func TestGitFactsSignWithSewardsKey(t *testing.T) {
 	f, err := Read(t.Context(), mac(nil), env, "/p")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(f.Git.Config, "!/usr/local/bin/gh auth git-credential") || f.Git.Keygen != "" {
-		t.Errorf("gitconfig = %q, keygen %q; want the credential command at /usr/local/bin/gh, and no script for a file key",
-			f.Git.Config, f.Git.Keygen)
+	for _, want := range []string{"!/usr/local/bin/gh auth git-credential", "\tsigningkey = \"/Users/v/.ssh/ws-sign.pub\"\n",
+		"\tprogram = \"/etc/ws/ssh-keygen\"\n"} {
+		if !strings.Contains(f.Git.Config, want) {
+			t.Errorf("gitconfig lacks %q:\n%s", want, f.Git.Config)
+		}
 	}
-	if !strings.Contains(f.Git.Signers, "ssh-ed25519 AAAA") {
-		t.Errorf("allowed_signers = %q, want the key", f.Git.Signers)
+	if !strings.Contains(f.Git.Keygen, "SSH_AUTH_SOCK='/Users/v/.ssh/seward.sock'") {
+		t.Errorf("keygen = %q, want seward's socket", f.Git.Keygen)
 	}
 }
 
-func TestGitFactsWithSecretive(t *testing.T) {
+// TestGitFactsReadNoKey pins that git's text names seward's signing key whatever values.yml names:
+// the key is made by a unit, after the facts are read.
+func TestGitFactsReadNoKey(t *testing.T) {
 	m := mac(nil)
-	socket := "/Users/v/" + sshcfg.SecretiveData + "/socket.ssh"
-	m.Files[socket], m.Modes[socket] = nil, fs.ModeSocket
-	m.Results["env SSH_AUTH_SOCK="+socket+" ssh-add -L"] = effecttest.Result{Out: []byte(mactest.AgentGit)}
-	pub := sshcfg.AgentKeys(mactest.AgentGit)[0].Pub()
-	m.Files["/etc/ws/values.yml"] = []byte(values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id.pub", "WS_GIT_SIGNING_PUB_KEY", pub))
-	f, err := Read(t.Context(), m, env, "/p")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(f.Git.Keygen, "SSH_AUTH_SOCK='/Users/v/"+sshcfg.SecretiveData+"/socket.ssh'") ||
-		!strings.Contains(f.Git.Config, "/etc/ws/secretive-ssh-keygen") {
-		t.Errorf("keygen = %q, gitconfig = %q; want the script, named as git's program", f.Git.Keygen, f.Git.Config)
+	m.Files["/etc/ws/values.yml"] = []byte(values.Text())
+	if f, err := Read(t.Context(), m, env, "/p"); err != nil || !strings.Contains(f.Git.Config, "/Users/v/.ssh/ws-sign.pub") {
+		t.Errorf("read = %q, %v; want seward's key with no key named", f.Git.Config, err)
 	}
 }
 

@@ -1,11 +1,10 @@
 # git's units. ~/.gitconfig includes ws's settings, in /etc/ws/gitconfig, at its top. The signing
-# key has a file that trusts it, and git's credential command runs gh, which mise installs for the
+# key, seward's, has a file that trusts it, and git's credential command runs gh, which mise installs for the
 # tree. README.md says why each stands.
 
 # ws's settings, root's and readable by all (facts.Git): git's identity, the signing key, and gh as
-# GitHub's credential command. The key's copy, for a key of Secretive's, comes first.
+# GitHub's credential command.
 [file.git-config]
-after = "state/keys"
 path = "/etc/ws/gitconfig"
 template = "files/gitconfig.tmpl"
 
@@ -19,17 +18,17 @@ owner = "{{ .User }}"
 line = "[include]\n\tpath = /etc/ws/gitconfig"
 has = ["{{ self }}", "macos", "git", "included"]
 
-# git's gpg.ssh.program for a key of Secretive's: ssh-keygen with Secretive's agent. A terminal and
-# an IDE then sign alike, whatever agent the app that runs git has. A key in a file has none, and
-# the script goes.
+# git's gpg.ssh.program: ssh-keygen with seward's agent, which holds the signing key. A terminal and
+# an IDE then sign alike, whatever agent the app that runs git has.
 [file.git-keygen]
-path = "/etc/ws/secretive-ssh-keygen"
+path = "/etc/ws/ssh-keygen"
 mode = 0o755
-template = "files/secretive-ssh-keygen.tmpl"
-absent_when_empty = true
+template = "files/ssh-keygen.tmpl"
 
-# The file that trusts the signing key for git's email, in git verify-commit, root's and 644.
+# The file that trusts the signing key for git's email, in git verify-commit, root's and 644. It
+# reads the key's .pub once the user's unit has made it.
 [file.git-signers]
+after = "state/ssh-sign-key"
 path = "/etc/ws/allowed_signers"
 template = "files/allowed_signers.tmpl"
 
