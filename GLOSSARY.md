@@ -117,7 +117,7 @@ last, and CI drops it ([The apps' env](macos/roles/frame/README.md#the-apps-env)
 _Avoid_: apps stage
 
 **Trial**:
-One of the ten tries of `macos/checks` that only a clean macOS 27 settles, which none has run
+One of the eleven tries of `macos/checks` that only a clean macOS 27 settles, which none has run
 ([The Mac's checks](macos/checks/README.md)).
 _Avoid_: test
 
