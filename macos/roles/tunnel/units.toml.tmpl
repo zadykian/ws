@@ -10,7 +10,7 @@ creates = ["/etc/ws/tunnel/private.key", "/etc/ws/tunnel.pub"]
 command = ["/usr/local/bin/ws", "macos", "tunnel", "key"]
 
 # What each keyed server's daemon reads: its directory, routes.d and tunnel.conf, root's and
-# readable by all. A server gone from beside values.yml has its daemon booted out and its files
+# readable by all. A server gone from servers/ has its daemon booted out and its files
 # removed.
 [state.tunnel-conf]
 after = "state/tunnel-key"
