@@ -24,7 +24,7 @@ no role pins.
 
 fnox encrypts a value to the Nano's `age1yubikey1` recipient by running age-plugin-yubikey from
 `PATH`, and needs no YubiKey for it. To decrypt one, the plugin asks for the Nano, its PIN once a
-session and a touch each time. Without the plugin on `PATH`, fnox fails either way.
+fnox process and a touch at each decrypt. Without the plugin on `PATH`, fnox fails either way.
 
 ## The units
 
@@ -66,7 +66,8 @@ it by `age-plugin-yubikey --list`:
   YubiKey without it stops, and asks for the Nano that made it, as the values open to no other.
 - Where `fnox.toml` names none, it takes the lowest slot that holds an age identity. Where none
   does, age-plugin-yubikey makes one, named `ws-secrets`, on the terminal. Its PIN policy is
-  `once`, a PIN once a session, and its touch policy `always`, a touch each time it decrypts.
+  `once`, a PIN once a session, which a fnox process holds, and its touch policy `always`, a touch
+  at each decrypt.
 
 The list prints a blank line for each YubiKey it reads, and nothing where none is plugged in. So a
 list of nothing stops init with `no YubiKey found`, before it would read the Nano as empty.
@@ -166,6 +167,22 @@ title. So it must be one DNS label: lowercase letters, digits and `-`, 63 at mos
 nor ending with `-`. `nano` and `backup` are labels, `local` names `fnox.local.toml`, fnox's local
 override, and `default` is fnox's profile without `-P`, so none of them serves. The server's task
 refuses the same names.
+
+## A server's value
+
+The Go package here reads a server's value on the Mac, in a temporary clone, for a command that
+sets the Mac up with it:
+
+- The profile is the server's hostname: the one label in `fnox.toml` whose recipient is the key
+  that `~/.ssh/known_hosts` gives the Mac's name for the server. Where no one label holds that key,
+  ws reads the hostname from the server, as add does. Either must serve as a profile, as above.
+- `fnox -P HOSTNAME get NAME` reads the value on the terminal. Each value is one fnox process and
+  one decrypt, so each asks the Nano's PIN and a touch.
+- The value goes to ws alone. It shows on no terminal, and enters no argument, environment, file of
+  yours, error or log. A command that root runs takes it on its standard input, while sudo asks
+  its password on the terminal.
+- An empty value stops the read. `fnox.toml` declares each input empty, so a server without a value
+  of its own reads one. Set it in a clone by `fnox -P HOSTNAME set NAME --provider host`.
 
 ## ws macos secrets add
 
