@@ -81,7 +81,10 @@ ws's back once it goes. Case 49 checks setup's status, which covers what mise's 
 With one of desktop's preferences written another value, `ws macos setup --plan` must exit 2 and
 name it as differs in mise's status. With the role's value back by its type, it must exit 0. Case
 57 checks [seward](../../macos/roles/ssh/README.md#seward): `/usr/local/bin/seward` must be mise's,
-root's and 0755. `seward --version` must print 0.1.0. Case 58 checks
+root's and 0755. `seward --version` must print 0.1.0. Its agent must run that copy, by the inode
+`lsof` lists for its pid, and `ssh-add -L` on `~/.ssh/seward.sock` must exit 0 or 1, not 2. After
+`plutil` changes the plist's `WS_SEWARD_VERSION`, a run must start the agent again under a new pid,
+and the plan must exit 0. Case 58 checks
 [the secrets' tools](../../macos/roles/secrets/README.md):
 `/usr/local/bin/fnox` and `age-plugin-yubikey` must be mise's, root's and 0755, at their pins. A
 stand-in in place of each must give way to mise's at the next bootstrap, whose plan then changes
