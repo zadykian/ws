@@ -133,7 +133,7 @@ func TestGitKeyIsMadeOnce(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !slices.ContainsFunc(m.Calls, func(call string) bool { return strings.HasSuffix(call, " "+keygen) }) {
-		t.Errorf("calls %q, want ssh-keygen as root", m.Calls)
+		t.Errorf("calls %q, want ws ubuntu ssh keygen ws-sign", m.Calls)
 	}
 	m.Files["/root/.ssh/ws-sign"] = []byte("key")
 	m.Files["/root/.ssh/ws-sign.pub"] = []byte(pub)
