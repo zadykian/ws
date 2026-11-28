@@ -170,8 +170,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   [seward](../macos/roles/ssh/README.md#seward)). The lock's SHA-256 of
   age-plugin-yubikey is GitHub's digest, as its publisher lists none. So is Secretive's
   `Secretive.zip`, by the SHA-256 that mise's `macos-app` pin holds
-  ([mise.macos.toml](../macos/roles/ssh/mise.macos.toml)), and its notarization, by `spctl` where `ws macos setup` installs it
-  ([setupkey.go](../macos/cli/setupkey.go)). The
+  ([mise.macos.toml](../macos/roles/ssh/mise.macos.toml)). The
   Mac's casks, Ghostty, Zed and their font, take their latest by mise's `brew-cask`, outside the rule
   ([ghostty](../macos/roles/ghostty/README.md#ghostty)). So do the apps' fifteen. mise checks no
   signature on them and strips their quarantine, and eleven take the SHA-256 of Homebrew's API at

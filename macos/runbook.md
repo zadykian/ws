@@ -45,20 +45,11 @@ file. It then does what a person did by hand, in this order:
    `/etc/mise/miserc.toml` and `/etc/mise/config.toml`, which trusts the tree.
 3. It checks this ws's release tag out in `/opt/ws`, root's, which no one else may write, and links
    the tree's plugin into `/usr/local/share/mise/plugins`.
-4. Where `values.yml` names no `WS_IDENTITY_PUB_KEY`, it installs Secretive by [ssh's
-   pin](roles/ssh/mise.macos.toml), checks it by `spctl -a -vv`, which must say `accepted`,
-   `Notarized Developer ID` and Secretive's team, and opens it. It then waits for a P-256 key.
-   Make one in Secretive at Notify, as it then signs git's commits with no prompt.
-   Setup names the key that comes in `values.yml`, as `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and
-   `WS_GIT_SIGNING_PUB_KEY`, and keeps a value that is there. It takes no key that was there before
-   it opened Secretive, as one made for another use would go to GitHub. To take one, stop setup
-   with Ctrl-C and run `ws macos setup --key NAME`, NAME being the name that the wait prints
-   ([Secretive](roles/ssh/README.md#secretive)).
-5. It runs mise's bootstrap in `/opt/ws/macos` with `--yes`, so that it asks nothing before it
+4. It runs mise's bootstrap in `/opt/ws/macos` with `--yes`, so that it asks nothing before it
    writes the preferences. The bootstrap installs gh and sets up ssh, git, cld and the Mac's other
    roles ([The Mac's frame](roles/frame/README.md)). It makes the Mac's WireGuard key, whose public
    half is `/etc/ws/tunnel.pub`.
-6. It runs the bootstrap again with `-E ws,apps`, which installs the apps and sets the login items.
+5. It runs the bootstrap again with `-E ws,apps`, which installs the apps and sets the login items.
    A failure there leaves ws's units set up, and fails setup, as mise ends a run at its first
    failed step ([The apps' env](roles/frame/README.md#the-apps-env)).
 
