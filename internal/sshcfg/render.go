@@ -1,5 +1,5 @@
-// Package sshcfg holds the text of /etc/ws/ssh_config, the reading of ssh_config files and of a
-// .pub's line, all pure.
+// Package sshcfg holds the text of /etc/ws/ssh_config and the reading of an ssh_config file's
+// Include, IgnoreUnknown and own Host lines, all pure.
 package sshcfg
 
 import (
