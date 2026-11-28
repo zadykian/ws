@@ -25,6 +25,19 @@ in its place counts as gone. A /32 counts with no mask line, as a host route's a
 none. A daemon leaves a route that goes through another utun or the Mac's own interface alone, and
 logs `leaves the route to NETWORK alone: it goes through IFACE, not UTUN`.
 
+## A yield
+
+`/var/run/ws-tunnel.yield`, root's, holds the networks that another owner routes in place of the
+tunnels, a network a line. Each daemon reads it at its start and at each read. It leaves out each
+of its networks that a yielded one holds, equal or narrower, and logs `leaves NETWORK out, as it
+yields YIELDED to another owner`. It deletes that network's route by the rule above. A wider
+network stays routed, as the other owner's narrower routes win by length. Once the file is gone, a
+read routes the networks again.
+
+A missing file yields nothing, and a daemon skips a line that is no IPv4 network. A reboot clears
+the file. `ws macos tunnel status` prints the yield that the routes took, as `yielded to another
+owner: NETWORKS`.
+
 ## Reading again
 
 Each daemon's job in launchd's unit of the tunnel lists every server's `tunnel.conf` and

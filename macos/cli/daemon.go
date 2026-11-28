@@ -29,8 +29,8 @@ func daemonOf(m effect.Machine, server string) (tunnel.Daemon, error) {
 	return tunnel.For(names[0]), nil
 }
 
-// daemonPaths names the files of d. The key is the Mac's, whatever the server.
+// daemonPaths names the files of d. The key and the yield are the Mac's, whatever the server.
 func daemonPaths(d tunnel.Daemon) settings.Paths {
 	return settings.Paths{Conf: d.Conf, Key: tunnel.Dir + "/private.key", Routes: d.Routes, State: d.State, Log: d.Log,
-		Root: tunnel.Dir}
+		Root: tunnel.Dir, Yield: tunnel.YieldFile}
 }

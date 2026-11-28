@@ -23,6 +23,10 @@ const (
 	LabelPrefix = "com.github.zadykian.ws-tunnel."
 )
 
+// YieldFile holds the networks that each daemon yields to another owner, a network a line. It
+// sits in /var/run, as a reboot that clears it takes the other owner's routes too.
+const YieldFile = "/var/run/ws-tunnel.yield"
+
 // Daemon is one server's tunnel daemon: its launchd job and the files it keeps.
 type Daemon struct{ Name, Label, Plist, Dir, Routes, Conf, State, Log string }
 
