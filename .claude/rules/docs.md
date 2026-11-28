@@ -49,7 +49,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
 - [The real machine's checks](../../ubuntu/checks/README.md) list what a person runs on a host, its
   guests, the Mac and the LAN, with the scripts beside the page. [builders.md](../../ubuntu/checks/builders.md)
   holds the open points that the builds left. [The Mac's checks](../../macos/checks/README.md) are
-  the ten trials of a clean macOS 27, with the scripts beside the page.
+  the eleven trials of a clean macOS 27, with the scripts beside the page.
 - [The kind package's README](../../engine/core/kind/README.md) says what a unit and a kind are:
   the spec, each kind's fields, and where the specs sit.
 - [release.md](../../.github/workflows/release.md), beside `release.yml`, says how to install ws,

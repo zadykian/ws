@@ -258,5 +258,38 @@ printf 'x' >"$tmp/torrent"
 expect "a downloaded file" ok inside tools.sh downloaded "$tmp/torrent"
 expect "an empty file" fail inside tools.sh downloaded "$tmp/torrent-empty"
 
+# Trial 11's stand-ins: seward lists the file LIST, and the agent lists AGENT through its socket alone.
+mkdir -p "$HOME/.ssh"
+for k in ws-auth ws-sign; do
+    printf 'ecdsa-sha2-nistp256 KEY%s %s\n' "$k" "$k" >"$HOME/.ssh/$k.pub"
+done
+printf 'ws-auth\tecdsa-sha2-nistp256\tSHA256:a\tenclave\nws-sign\tecdsa-sha2-nistp256\tSHA256:b\tenclave\n' >"$tmp/list"
+sed 's/enclave$/file/' "$tmp/list" >"$tmp/list-file"
+sed '2s/.*/ws-sign\t-\t-\terror/' "$tmp/list" >"$tmp/list-error"
+cat "$HOME/.ssh/ws-auth.pub" "$HOME/.ssh/ws-sign.pub" >"$tmp/agent"
+head -n 1 "$tmp/agent" >"$tmp/agent-one"
+export SEWARD_BIN=$tmp/bin/seward
+stub seward 'cat "$LIST"; exit "${LIST_STATUS:-0}"'
+stub ssh-add '[ "${SSH_AUTH_SOCK:-}" = "$HOME/.ssh/seward.sock" ] || exit 2; cat "$AGENT"'
+stub ssh '[ "$*" = "-o BatchMode=yes ws true" ] || exit 255; exit "${SSH_STATUS:-0}"'
+stub git '[ "$1 $2" = "verify-commit abc123" ] || exit 128; exit "${GIT_STATUS:-0}"'
+stub gh '[ "$2" = "repos/o/r/commits/abc123" ] || exit 1; echo "$GH_OUT"'
+export LIST=$tmp/list AGENT=$tmp/agent GH_OUT="true valid"
+expect "keys that all hold" ok nofail keys.sh check11
+expect "keys that all hold, with a commit" ok nofail keys.sh check11 o/r abc123
+wait_line() { inside keys.sh check11 | grep -q '^wait 11 sign a commit'; }
+expect "a wait line where no commit is given" ok wait_line
+LIST_STATUS=1 expect "a list that exits 1" fail nofail keys.sh check11
+LIST=$tmp/list-error LIST_STATUS=1 expect "a key that cannot load" fail nofail keys.sh check11
+LIST=$tmp/list-file expect "keys of the file store" fail nofail keys.sh check11
+file_store() { LIST=$tmp/list-file inside keys.sh check11 | grep -c '^FAIL 11 .* is a key of the Secure Enclave: .* is in the store .file., not enclave'; }
+expect "each key of the file store fails" ok test "$(file_store)" -eq 2
+AGENT=$tmp/agent-one expect "an agent without the signing key" fail nofail keys.sh check11
+SSH_STATUS=255 expect "a login that fails" fail nofail keys.sh check11
+GIT_STATUS=1 expect "a commit that git does not verify" fail nofail keys.sh check11 o/r abc123
+GH_OUT="false unsigned" expect "a commit that GitHub does not verify" fail nofail keys.sh check11 o/r abc123
+expect "a commit of another SHA" fail nofail keys.sh check11 o/r def456
+expect "a repository with no SHA" fail inside keys.sh main o/r
+
 [ "$failed" -eq 0 ] || exit 1
 echo "checks-test: ok"
