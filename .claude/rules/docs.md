@@ -29,7 +29,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   config: its files by env, the link, its lines, their order, the miserc and ws's path.
 - [The Mac's README](../../macos/README.md) is the Mac's side, `macos/`
   and the ws CLI. [Its git](../../macos/roles/git/README.md) is its git and gh.
-  [Its ssh](../../macos/roles/ssh/README.md) is its hosts, and [its cld](../../macos/roles/cld/README.md)
+  [Its ssh](../../macos/roles/ssh/README.md) is its hosts and seward's keys, and [its cld](../../macos/roles/cld/README.md)
   cld's unit. [Its values](../../macos/values/README.md) is
   the Mac's values files, [the tunnel's](../../macos/roles/tunnel/README.md) the daemons' rules, and [ghostty](../../macos/roles/ghostty/README.md) its Ghostty
   and what cld does there, [zed](../../macos/roles/zed/README.md) its Zed,

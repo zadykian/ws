@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # The client job's check of ws's login key in /etc/ws/ssh_config. The key is seward's
-# ~/.ssh/ws-auth.pub, whatever values.yml names, and its agent serves it. The runner runs no sshd,
+# ~/.ssh/ws-auth.pub, which no value names, and its agent serves it. The runner runs no sshd,
 # so ssh -G is the proof. 56-keys.sh sources this file before git's.
 #
 # shellcheck disable=SC2154 # error is 56-keys.sh's

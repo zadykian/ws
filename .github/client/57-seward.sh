@@ -72,7 +72,10 @@ runs_copy "$first" || error "the agent's pid $first does not run /usr/local/bin/
 serves || error "ssh-add -L on $sock exits 2: no agent answers"
 
 # A new pin changes WS_SEWARD_VERSION in the plist: mise restarts the agent in the run that sees it.
-plutil -replace EnvironmentVariables.WS_SEWARD_VERSION -string 0.0.0 "$plist"
+plutil -replace EnvironmentVariables.WS_SEWARD_VERSION -string 0.0.0 "$plist" || {
+    echo "::error::plutil could not change WS_SEWARD_VERSION in $plist"
+    exit 1
+}
 client_bootstrap || {
     echo "::error::mise bootstrap with the plist's version changed failed"
     exit 1
@@ -82,15 +85,18 @@ second=$(up) || {
     exit 1
 }
 [ "$second" != "$first" ] || error "the agent kept pid $first where its plist changed"
-version=$(plutil -extract EnvironmentVariables.WS_SEWARD_VERSION raw "$plist")
+version=$(plutil -extract EnvironmentVariables.WS_SEWARD_VERSION raw "$plist") || {
+    echo "::error::plutil could not read WS_SEWARD_VERSION in $plist"
+    exit 1
+}
 [ "$version" = 0.1.0 ] || error "the plist's WS_SEWARD_VERSION is '$version', not '0.1.0'"
 runs_copy "$second" || error "the restarted agent's pid $second does not run /usr/local/bin/seward"
 serves || error "ssh-add -L on $sock exits 2 after the restart"
 
 # keys checks each key. seward list must name it with the store file, which the fact .VM chose on
-# this runner. The user must own its files, and the agent's socket must list it.
+# this runner. The user must own its files, at 600 and 644, and the agent's socket must list it.
 keys() {
-    local name file list agent
+    local name file mode body list agent
     list=$(/usr/local/bin/seward list) || error "seward list exits $?"
     agent=$(SSH_AUTH_SOCK=$sock ssh-add -L) || error "ssh-add -L on $sock exits $?"
     for name in ws-auth ws-sign; do
@@ -98,9 +104,17 @@ keys() {
             error "seward list names no $name with the store file: $list"
         for file in "$HOME/.ssh/$name" "$HOME/.ssh/$name.pub"; do
             [ "$(stat -f %Su "$file")" = "$(id -un)" ] || error "$file is not the user's"
+            mode=600
+            [ "$file" = "$HOME/.ssh/$name" ] || mode=644
+            [ "$(stat -f %Lp "$file")" = "$mode" ] || error "$file is $(stat -f %Lp "$file"), not $mode"
         done
-        printf '%s\n' "$agent" | grep -qF "$(awk '{ print $2 }' "$HOME/.ssh/$name.pub")" ||
-            error "the agent on $sock does not list $name"
+        # An empty body would match every line, so the .pub must hold one.
+        body=$(awk '{ print $2 }' "$HOME/.ssh/$name.pub")
+        if [ -z "$body" ]; then
+            error "$HOME/.ssh/$name.pub holds no key"
+        else
+            printf '%s\n' "$agent" | grep -qF "$body" || error "the agent on $sock does not list $name"
+        fi
     done
 }
 keys

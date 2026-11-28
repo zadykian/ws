@@ -34,9 +34,10 @@ file](values/README.md#the-servers-file)). The files' check refuses a clash.
 
 ## The bootstrap
 
-Run `ws macos setup` as the user, after the values above, and not as root: it asks
-sudo for what root's paths need. It refuses a bad value before any write, naming the key and its
-file. It then does what a person did by hand, in this order:
+Run `ws macos setup` as the user, after the values above, and not as root. Log in at the console
+first, as seward's agent loads into that session. Setup asks sudo for what root's paths need. It
+refuses a bad value before any write, naming the key and its file. It then does what a
+person did by hand, in this order:
 
 1. Where `xcode-select -p` finds no command line tools, it runs `xcode-select --install`, which
    opens Apple's dialog, and waits until the tools stand. Ctrl-C stops the wait.
@@ -66,8 +67,8 @@ to the latest release, or to `--version`'s, and runs that ws's setup, with sudo 
 ## GitHub
 
 1. Run `gh auth login --scopes write:public_key,write:ssh_signing_key`, at github.com's device flow.
-2. Add the key for ws with `gh ssh-key add` and the login key's `.pub`.
-3. Add git's signing key with `gh ssh-key add --type signing` and its `.pub`, titled with the
+2. Add the key for ws with `gh ssh-key add ~/.ssh/ws-auth.pub`, which seward made in the bootstrap.
+3. Add git's signing key with `gh ssh-key add --type signing ~/.ssh/ws-sign.pub`, titled with the
    Mac's name ([The signing key](roles/git/README.md#the-signing-key)).
 
 GitHub is the only source of the server's keys: nothing copies a key to the server. Root takes the
