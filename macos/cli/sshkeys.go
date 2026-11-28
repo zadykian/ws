@@ -16,7 +16,7 @@ const sewardPath = "/usr/local/bin/seward"
 // seward the call.
 func newSSHCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Group("ssh", "the commands of ssh's units and of the Mac's keys",
-		newSSHIncludedCmd(), newSSHListCmd(p))
+		newSSHIncludedCmd(), newSSHListCmd(p), newSSHKeygenCmd(p))
 }
 
 // newSSHListCmd returns ws macos ssh list.
