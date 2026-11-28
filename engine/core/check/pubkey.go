@@ -28,7 +28,7 @@ var (
 	ErrNotAKey     = errors.New("holds no public key alone, as ssh-keygen -y prints one")
 )
 
-// TypeError is a key of a type that ws's OpenSSH lacks, as an ML-DSA key of Secretive's. Its name
+// TypeError is a key of a type that ws's OpenSSH lacks, as an ML-DSA key. Its name
 // starts with ssh-, ecdsa-sha2- or sk-.
 type TypeError struct{ Type string }
 

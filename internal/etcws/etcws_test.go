@@ -64,7 +64,7 @@ func TestFilesMakeEachDirectoryBetween(t *testing.T) {
 func TestInsideLeavesOutTheTop(t *testing.T) {
 	m := effecttest.NewMachine()
 	var got []string
-	for _, r := range etcws.Inside(m, etcws.Dir+"/secretive/a.pub", []byte("a\n")) {
+	for _, r := range etcws.Inside(m, etcws.Dir+"/guests/a/x.pub", []byte("a\n")) {
 		changes, err := r.Plan(context.Background())
 		if err != nil {
 			t.Fatal(err)
@@ -73,7 +73,8 @@ func TestInsideLeavesOutTheTop(t *testing.T) {
 			got = append(got, strings.SplitN(c.String(), "\n", 2)[0])
 		}
 	}
-	want := []string{"create directory /etc/ws/secretive, owner 0:0, mode 755", "create /etc/ws/secretive/a.pub"}
+	want := []string{"create directory /etc/ws/guests, owner 0:0, mode 755",
+		"create directory /etc/ws/guests/a, owner 0:0, mode 755", "create /etc/ws/guests/a/x.pub"}
 	if strings.Join(got, "|") != strings.Join(want, "|") {
 		t.Errorf("changes = %q, want %q", got, want)
 	}
