@@ -17,6 +17,7 @@ func clashes(c Conf, others []Sibling) []Error {
 		errs = append(errs, domainClashes(c, o)...)
 		errs = append(errs, slotClashes(c, o)...)
 		errs = append(errs, portClashes(c, o)...)
+		errs = append(errs, ikewardClashes(c, o)...)
 		if c.CableService != "" && o.Conf.CableService != "" {
 			errs = append(errs, Error{Msg: fmt.Sprintf(
 				"WS_CABLE_SERVICE names a cable, as server %s's does: the cable reaches one server", o.Name)})
