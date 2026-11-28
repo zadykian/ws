@@ -86,7 +86,7 @@ func Read(ctx context.Context, m effect.Machine, getenv func(string) string, pwd
 		return Mac{}, err
 	}
 	own := fleet.Mac
-	if f.SSH, err = f.readSSH(ctx, m, own); err != nil {
+	if f.SSH, err = f.readSSH(ctx, m); err != nil {
 		return Mac{}, err
 	}
 	f.SSH.SewardFrom = toolFrom(ctx, m, "seward")
@@ -122,17 +122,13 @@ func serversOf(fleet values.Fleet) ([]Server, error) {
 	return servers, fleet.Refused()
 }
 
-// readSSH reads the login key and returns ssh's text, a block for each server.
-func (f Mac) readSSH(ctx context.Context, m effect.Machine, own values.Conf) (SSH, error) {
-	login, err := keys.ReadKey(ctx, m, own, f.Home, keys.LoginKey)
-	if err != nil {
-		return SSH{}, err
-	}
+// readSSH returns ssh's text, a block for each server.
+func (f Mac) readSSH(ctx context.Context, m effect.Machine) (SSH, error) {
 	hosts := make([]sshcfg.Host, 0, len(f.Servers))
 	for _, s := range f.Servers {
 		hosts = append(hosts, sshcfg.Host{Name: s.Name, Addr: s.TunnelSlot().Server()})
 	}
-	text, err := ssh.Text(ctx, m, f.Home, login, hosts)
+	text, err := ssh.Text(ctx, m, f.Home, hosts)
 	return SSH{Config: text}, err
 }
 

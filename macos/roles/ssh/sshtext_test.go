@@ -6,7 +6,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/internal/sshcfg"
-	"github.com/zadykian/ws/macos/internal/keys"
 	"github.com/zadykian/ws/macos/roles/ssh"
 	"github.com/zadykian/ws/macos/values"
 )
@@ -31,7 +30,7 @@ func host(slot string) sshcfg.Host {
 // the wire, so a change to the slot's end must change these lines on purpose.
 func TestTextNamesTheTunnelsAddress(t *testing.T) {
 	for slot, want := range map[string]string{"0": "HostName 10.99.0.1\n", "1": "HostName 10.99.1.1\n"} {
-		text, err := ssh.Text(t.Context(), textMachine(), "/h", keys.NamedKey{Pub: "~/.ssh/id.pub"}, []sshcfg.Host{host(slot)})
+		text, err := ssh.Text(t.Context(), textMachine(), "/h", []sshcfg.Host{host(slot)})
 		if err != nil || !strings.Contains(text, want) {
 			t.Errorf("slot %s: Text = %q, %v; want %q", slot, text, err, want)
 		}
@@ -41,7 +40,7 @@ func TestTextNamesTheTunnelsAddress(t *testing.T) {
 func TestTextRefusesAHostThatSSHLogsInAsAnotherUser(t *testing.T) {
 	m := textMachine()
 	m.Results["ssh -T -G -F /tmp/x/whole ws"] = effecttest.Result{Out: []byte("user me\nhostname 10.99.0.1\n")}
-	_, err := ssh.Text(t.Context(), m, "/h", keys.NamedKey{Pub: "~/.ssh/id.pub"}, []sshcfg.Host{host("0")})
+	_, err := ssh.Text(t.Context(), m, "/h", []sshcfg.Host{host("0")})
 	if err == nil || !strings.Contains(err.Error(), "ssh reads ws as user me") {
 		t.Errorf("Text = %v, want a refusal of the user", err)
 	}
@@ -50,7 +49,7 @@ func TestTextRefusesAHostThatSSHLogsInAsAnotherUser(t *testing.T) {
 func TestTextRefusesAHostThatSSHReadsElsewhere(t *testing.T) {
 	m := textMachine()
 	m.Results["ssh -T -G -F /tmp/x/whole ws"] = effecttest.Result{Out: []byte("user root\nhostname 10.99.7.1\n")}
-	_, err := ssh.Text(t.Context(), m, "/h", keys.NamedKey{Pub: "~/.ssh/id.pub"}, []sshcfg.Host{host("0")})
+	_, err := ssh.Text(t.Context(), m, "/h", []sshcfg.Host{host("0")})
 	if err == nil || !strings.Contains(err.Error(), "ssh reads ws as hostname 10.99.7.1") {
 		t.Errorf("Text = %v, want a refusal of ws's address", err)
 	}
@@ -62,7 +61,7 @@ func TestTextRefusesAHostThatSSHReadsElsewhere(t *testing.T) {
 func TestTextChecksTheUsersConfigWithoutItsInclude(t *testing.T) {
 	m := textMachine()
 	m.Files["/h/.ssh/config"] = []byte("Include /etc/ws/ssh_config\nHost *\n    User me\n")
-	if _, err := ssh.Text(t.Context(), m, "/h", keys.NamedKey{Pub: "~/.ssh/id.pub"}, []sshcfg.Host{host("0")}); err != nil {
+	if _, err := ssh.Text(t.Context(), m, "/h", []sshcfg.Host{host("0")}); err != nil {
 		t.Fatal(err)
 	}
 	if got := string(m.Files["/tmp/x/user"]); got != "\nHost *\n    User me\n" {

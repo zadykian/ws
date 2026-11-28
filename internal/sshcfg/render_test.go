@@ -11,7 +11,7 @@ import (
 func inputs() sshcfg.Inputs {
 	return sshcfg.Inputs{
 		Hosts:    []sshcfg.Host{{Name: "ws", Addr: netip.MustParseAddr("10.99.0.1")}},
-		Patterns: "UseKeychain", IdentityPub: "~/.ssh/id_ed25519.pub",
+		Patterns: "UseKeychain", IdentityPub: "~/.ssh/k.pub", IdentityAgent: "~/.ssh/a.sock",
 	}
 }
 
@@ -20,7 +20,7 @@ func TestConfigHoldsOneHostAtTheTunnelsEnd(t *testing.T) {
 	for _, want := range []string{
 		"IgnoreUnknown UseKeychain\n",
 		"Host ws\n    HostName 10.99.0.1\n    Port 22\n    User root\n    HostKeyAlias ws\n",
-		"    IdentityFile ~/.ssh/id_ed25519\n    IdentitiesOnly yes\n    UseKeychain yes\n",
+		"    IdentityFile ~/.ssh/k.pub\n    IdentitiesOnly yes\n    IdentityAgent \"~/.ssh/a.sock\"\n",
 		"    ServerAliveInterval 30\n",
 	} {
 		if !strings.Contains(got, want) {
@@ -29,16 +29,6 @@ func TestConfigHoldsOneHostAtTheTunnelsEnd(t *testing.T) {
 	}
 	if n := strings.Count(got, "\nHost "); n != 1 || strings.Contains(got, "Match") || strings.Contains(got, "PermitLocalCommand") {
 		t.Errorf("Config holds %d hosts, a Match or cld's lines; want one host alone:\n%s", n, got)
-	}
-}
-
-func TestConfigWithAgent(t *testing.T) {
-	in := inputs()
-	in.IdentityPub, in.IdentityAgent = "~/k.pub", "~/agent.sock"
-	got := sshcfg.Config(in)
-	want := "    IdentityFile ~/k.pub\n    IdentitiesOnly yes\n    IdentityAgent \"~/agent.sock\"\n"
-	if !strings.Contains(got, want) {
-		t.Errorf("Config lacks %q:\n%s", want, got)
 	}
 }
 
@@ -54,7 +44,7 @@ func TestConfigCldTabs(t *testing.T) {
 func TestConfigOneHostRendersItsWholeBlock(t *testing.T) {
 	want := "# ws through the tunnel. One known_hosts entry, ws's. 30 s between checks, 3 of them unanswered\n" +
 		"# before ssh gives up.\nHost ws\n    HostName 10.99.0.1\n    Port 22\n    User root\n    HostKeyAlias ws\n" +
-		"    IdentityFile ~/.ssh/id_ed25519\n    IdentitiesOnly yes\n    UseKeychain yes\n    AddKeysToAgent yes\n" +
+		"    IdentityFile ~/.ssh/k.pub\n    IdentitiesOnly yes\n    IdentityAgent \"~/.ssh/a.sock\"\n" +
 		"    ServerAliveInterval 30\n"
 	if got := sshcfg.Config(inputs()); !strings.HasSuffix(got, "\n\n"+want) {
 		t.Errorf("Config does not end with today's block:\n%s", got)

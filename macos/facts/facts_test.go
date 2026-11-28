@@ -105,15 +105,28 @@ func TestReadWithoutServers(t *testing.T) {
 	}
 }
 
-func TestReadNeedsTheKeys(t *testing.T) {
+func TestReadNeedsValuesYml(t *testing.T) {
 	m := mac(nil)
-	m.Files["/etc/ws/values.yml"] = []byte(values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id.pub"))
-	if _, err := Read(t.Context(), m, env, "/p"); err == nil || !strings.Contains(err.Error(), "WS_GIT_SIGNING_PUB_KEY") {
-		t.Errorf("read = %v, want the signing key asked for", err)
-	}
 	delete(m.Files, "/etc/ws/values.yml")
 	if _, err := Read(t.Context(), m, env, "/p"); err == nil || !strings.Contains(err.Error(), "values.yml is missing") {
 		t.Errorf("read = %v, want values.yml asked for", err)
+	}
+}
+
+// TestSSHFactsReadNoKey pins that ssh's text names seward's login key whatever values.yml names:
+// the key's .pub is made by a unit, after the facts are read.
+func TestSSHFactsReadNoKey(t *testing.T) {
+	m := mac(map[string]string{"ws": values.Text("WS_SLOT", "0")})
+	m.Files["/etc/ws/values.yml"] = []byte(values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/other.pub",
+		"WS_GIT_SIGNING_PUB_KEY", "~/.ssh/id.pub"))
+	f, err := Read(t.Context(), m, env, "/p")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"IdentityFile ~/.ssh/ws-auth.pub\n", "IdentityAgent \"~/.ssh/seward.sock\"\n"} {
+		if !strings.Contains(f.SSH.Config, want) {
+			t.Errorf("ssh_config lacks %q:\n%s", want, f.SSH.Config)
+		}
 	}
 }
 
@@ -126,7 +139,7 @@ func TestSSHFactsMatchSshcfg(t *testing.T) {
 	want := sshcfg.Config(sshcfg.Inputs{
 		Hosts:       []sshcfg.Host{{Name: "ws", Addr: f.Servers[0].TunnelSlot().Server()}},
 		Patterns:    "UseKeychain",
-		IdentityPub: "~/.ssh/id.pub",
+		IdentityPub: "~/.ssh/ws-auth.pub", IdentityAgent: "~/.ssh/seward.sock",
 	})
 	if f.SSH.Config != want {
 		t.Errorf("ssh_config = %q, want sshcfg's %q", f.SSH.Config, want)

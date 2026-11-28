@@ -164,6 +164,18 @@ func TestSSHKeyUnitsMakeTheKeysAsTheUser(t *testing.T) {
 	}
 }
 
+// TestSSHConfigFollowsTheLoginKey: ssh's text names the login key's .pub, so the file goes in once
+// the unit that makes the key has run.
+func TestSSHConfigFollowsTheLoginKey(t *testing.T) {
+	var names []string
+	for _, u := range macUnits(t, effecttest.NewMachine()) {
+		names = append(names, u.Name)
+	}
+	if key, config := slices.Index(names, "state/ssh-auth-key"), slices.Index(names, "file/ssh-config"); key < 0 || config < key {
+		t.Errorf("units run in the order %q, want state/ssh-auth-key before file/ssh-config", names)
+	}
+}
+
 // hasOwnTest is true of the units that seward's tests plan and apply on their own.
 func hasOwnTest(name string) bool {
 	return slices.Contains([]string{"state/seward", "state/ssh-auth-key", "state/ssh-sign-key"}, name)

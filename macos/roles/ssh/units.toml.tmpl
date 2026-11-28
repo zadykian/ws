@@ -55,10 +55,11 @@ user = "{{ .User }}"
 creates = ["{{ .Home }}/.ssh/ws-sign", "{{ .Home }}/.ssh/ws-sign.pub"]
 command = ["/usr/local/bin/seward", "keygen", "ws-sign"{{ if .VM }}, "--store", "file"{{ end }}]
 
-# The servers' hosts, root's and readable by all (facts.SSH). The facts checked the text as ssh
-# reads it whole, with ~/.ssh/config; ssh checks the new file alone once more before it goes in.
+# The servers' hosts, root's and readable by all (facts.SSH), which offer the login key through
+# seward's agent. The facts checked the text as ssh reads it whole, with ~/.ssh/config; ssh checks
+# the new file alone once more before it goes in.
 [file.ssh-config]
-after = "state/keys"
+after = "state/ssh-auth-key"
 path = "/etc/ws/ssh_config"
 template = "files/ssh_config.tmpl"
 check = ["ssh", "-G", "-F", "{}", "localhost"]
