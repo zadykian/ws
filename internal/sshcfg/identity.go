@@ -35,9 +35,6 @@ func KeyCopy(pub string) bool {
 	return pathpkg.Clean(pub) == pub && strings.HasPrefix(pub, KeyCopies+"/")
 }
 
-// File is where ws keeps ssh's hosts: root's, and read by the Include that heads ~/.ssh/config.
-const File = etcws.Dir + "/ssh_config"
-
 // AgentKey is a key that Secretive's agent lists.
 type AgentKey struct {
 	// Name is its .pub's, as Secretive's own: its MD5 fingerprint in hex.
@@ -72,14 +69,6 @@ func AgentKeys(list string) []AgentKey {
 // container, under the home, or ws's copy.
 func SecretiveKey(pub, home string) bool {
 	return strings.HasPrefix(pub, home+"/"+SecretiveData+"/PublicKeys/") || KeyCopy(pub)
-}
-
-// Expand returns path with a leading ~/ replaced by the home.
-func Expand(path, home string) string {
-	if rest, ok := strings.CutPrefix(path, "~/"); ok {
-		return home + "/" + rest
-	}
-	return path
 }
 
 // NamedIdentity is the key of values.yml's WS_IDENTITY_PUB_KEY and WS_IDENTITY_AGENT. A key of
