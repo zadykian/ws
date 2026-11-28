@@ -1,6 +1,6 @@
 #!/bin/bash
 # The keys that mise bootstrap's units of ssh and git set up. seward's login key goes in
-# /etc/ws/ssh_config, and git's signing key, from values.yml, in /etc/ws/gitconfig and its allowed
+# /etc/ws/ssh_config, and git's signing key, seward's, in /etc/ws/gitconfig and its allowed
 # signers. A case edits the job's values.yml, runs the bootstrap and reads the files. A refusal must fail
 # the bootstrap and its plan, with the reason, and change none of the files. This file holds the
 # functions, and sources the cases of ws's key and git's: client-identity-checks.sh and
@@ -56,7 +56,7 @@ boots() {
 
 # files prints the SHA-256 of the files that ssh's and git's units write, a line each.
 files() {
-    for each in /etc/ws/ssh_config /etc/ws/gitconfig /etc/ws/allowed_signers /etc/ws/secretive-ssh-keygen \
+    for each in /etc/ws/ssh_config /etc/ws/gitconfig /etc/ws/allowed_signers /etc/ws/ssh-keygen \
         ~/.ssh/config ~/.gitconfig; do
         sum=none
         [ ! -e "$each" ] || sum=$(shasum -a 256 <"$each")
