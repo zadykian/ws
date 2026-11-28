@@ -85,8 +85,8 @@ root's and 0755. `seward --version` must print 0.1.0. Its agent must run that co
 `lsof` lists for its pid, and `ssh-add -L` on `~/.ssh/seward.sock` must exit 0 or 1, not 2. After
 `plutil` changes the plist's `WS_SEWARD_VERSION`, a run must start the agent again under a new pid.
 On the runner, a virtual machine, `seward list` must name `ws-auth` and `ws-sign` with the store
-`file`, both made by the user's units, and `ssh-add -L` through the socket must list both. The plan
-must then exit 0. Case 58 checks
+`file`, both made by the user's units. Their files must be 0600 and 0644, and `ssh-add -L` through
+the socket must list both. The plan must then exit 0. Case 58 checks
 [the secrets' tools](../../macos/roles/secrets/README.md):
 `/usr/local/bin/fnox` and `age-plugin-yubikey` must be mise's, root's and 0755, at their pins. A
 stand-in in place of each must give way to mise's at the next bootstrap, whose plan then changes
