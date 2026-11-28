@@ -132,7 +132,7 @@ values. The guest holds none of its own ([A guest](macos/values/README.md#a-gues
 
 **ws's directory**:
 `/etc/ws`, root's and 755 on both sides, holds git's `gitconfig` and `allowed_signers`. On the Mac
-it also holds `values.yml` and `servers/`, which only sudo writes, and the script
+it also holds `servers/`, which only sudo writes, and the script
 `ssh-keygen`. On ws it also holds `values.yml`, the fans' `fans.json`, and the files that
 mise writes from the secret inputs: gh's `gh-token`, git's `git-tokens.toml` and the shell's `env`.
 _Avoid_: config directory

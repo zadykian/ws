@@ -17,9 +17,8 @@ refuses a `/usr/local` or `/usr/local/bin` that another user owns or may write: 
 
 ## Answers
 
-Make the Mac's `/etc/ws/values.yml`, as root, through sudo: empty, as it holds no key. Write each
-server's values in `/etc/ws/servers/NAME/values.yml`, as root too ([The two
-files](values/README.md#the-two-files)). The files' check refuses a clash.
+Write each server's values in `/etc/ws/servers/NAME/values.yml`, as root, through sudo ([The server's
+file](values/README.md#the-servers-file)). The files' check refuses a clash.
 
 1. Pick a slot, 0 to 15, that no server has: `WS_SLOT`.
 2. Pick the ports: 51820 for the tunnel and 22022 for the router's forward to ws's 22. Where

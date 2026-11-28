@@ -28,7 +28,7 @@ layout ([keyboard](roles/keyboard/README.md)).
 The second run installs the Mac's apps as casks, pins some in the Dock, opens seven at login and
 sets Stats's settings ([apps](roles/apps/README.md)). The runbook runs `install.sh`, which puts `ws` in `/usr/local/bin`
 from a release, checked against its `ws.sha256` ([Releases](../.github/workflows/release.md)). Write each server's values below
-first, and the Mac's `values.yml`, which stands empty on a new Mac ([The two files](values/README.md#the-two-files)). Then:
+first ([The server's file](values/README.md#the-servers-file)). Then:
 
 ```sh
 ws macos setup
@@ -75,13 +75,12 @@ the difference. `ws macos servers` shows each server's tunnel. A cable's service
 which no run turns on, draws a warning from `ws macos cable` and its `--check` alone: a bootstrap
 shows no check's output. No unit reads a private key: the key's unit looks for the file alone.
 
-## The Mac's values.yml
+## The servers' values
 
-The repository names no server, so the values go in two YAML files of `KEY: value` lines that the
-script reads without running them. `/etc/ws/values.yml` holds no key.
-`/etc/ws/servers/ws/values.yml` holds every key, and a key in the other file is refused. Both are
-root's, written through sudo. A `WS_VALUES` file outside `/etc/ws` is the user's. [The two
-files](values/README.md#the-two-files) shows both.
+The repository names no server, so the values go in a YAML file of `KEY: value` lines for each
+server, which the script reads without running it. `/etc/ws/servers/ws/values.yml` holds every key
+of ws, root's, written through sudo. A `WS_VALUES` directory outside `/etc/ws` is the
+user's. [The server's file](values/README.md#the-servers-file) shows one.
 `--server NAME` picks the server that a `ws macos` command acts on, and may be left out
 where there is one ([The server's name](values/README.md#the-servers-name)). `remove`,
 `secrets add` and `secrets init` refuse it: remove and add take the server's name as their
@@ -203,13 +202,12 @@ its `tunnel.conf`, from the server's file, and its `routes.d` ([the daemons](rol
 the daemon reads no file the user can write. In System Settings › General › Login Items &
 Extensions, its "Allow in the Background" must stay on.
 
-A server with no directory beside `values.yml` has its daemon removed at the next bootstrap, by
+A server with no directory in `servers/` has its daemon removed at the next bootstrap, by
 `ws macos tunnel conf`: booted out where loaded, then `/etc/ws/tunnel/NAME`, its state file
-and log. launchd's unit removes its plist. Nothing goes where `values.yml`'s directory lists no
-server.
+and log. launchd's unit removes its plist. Nothing goes where `servers/` lists no server.
 
 The tunnel's ends are `10.99.N.2` on the Mac, on a utun of wireguard-go's, and `10.99.N.1` on ws, N
-being `WS_SLOT`. A moved slot restarts the daemon. Name the pair in ws's values.yml ([The
+being `WS_SLOT`. A moved slot restarts the daemon. Name the pair in ws's values ([The
 tunnel](../ubuntu/roles/tunnel/README.md#the-tunnel)). The daemon points the Mac's end at the
 first of these that answers, each on UDP 51820:
 
