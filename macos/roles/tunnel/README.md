@@ -48,6 +48,12 @@ A missing file yields nothing, and a daemon skips a line that is no IPv4 network
 the file. `ws macos tunnel status` prints the yield that the routes took, as `yielded to another
 owner: NETWORKS`.
 
+`sudo /usr/local/bin/ws macos tunnel yield [CIDR...]` refuses a network that is no IPv4 network,
+writes the file whole and has every loaded daemon read it, by SIGHUP. With no network it removes
+the file. It returns once each daemon's state shows the change, as a caller that goes on at once
+races the daemons. It fails after 5 s, or on a failed signal, and names the daemon. The yield is
+no file of `routes.d`, which only adds networks, and whose sum launchd's unit keeps in its stamp.
+
 ## Reading again
 
 Each daemon's job in launchd's unit of the tunnel lists every server's `tunnel.conf` and
