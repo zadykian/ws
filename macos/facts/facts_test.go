@@ -219,6 +219,18 @@ func TestSecretsFactsFromMise(t *testing.T) {
 	}
 }
 
+func TestSSHFactsSewardFromMise(t *testing.T) {
+	m := mac(nil)
+	if f, err := Read(t.Context(), m, env, "/p"); err != nil || f.SSH.SewardFrom != "" {
+		t.Errorf("read = %q, %v; want no seward, and no error, where mise has none", f.SSH.SewardFrom, err)
+	}
+	seward := "/Users/v/.local/share/mise/installs/github-zadykian-seward/0.1.0/seward"
+	m.Results["mise -C /opt/ws/macos which seward"] = effecttest.Result{Out: []byte(seward + "\n")}
+	if f, err := Read(t.Context(), m, env, "/p"); err != nil || f.SSH.SewardFrom != seward {
+		t.Errorf("read = %q, %v; want mise's seward", f.SSH.SewardFrom, err)
+	}
+}
+
 func TestReadNeedsTheUser(t *testing.T) {
 	if _, err := Read(t.Context(), effecttest.NewMachine(), func(string) string { return "" }, "/p"); err == nil {
 		t.Error("read with no USER and HOME = nil, want a refusal")

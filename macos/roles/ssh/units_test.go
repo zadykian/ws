@@ -3,6 +3,7 @@ package ssh_test
 import (
 	"os"
 	"os/exec"
+	"slices"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -17,6 +18,9 @@ const userPath = "env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sb
 
 // unitsConfig is the text that the facts give /etc/ws/ssh_config.
 const unitsConfig = "# Written by github.com/zadykian/ws\nHost ws\n"
+
+// misesSeward is where mise installs the tree's seward.
+const misesSeward = "/Users/v/.local/share/mise/installs/github-zadykian-seward/0.1.0/seward"
 
 // macUnits loads the role's units on a Mac of the user v, whose ws is /ws.
 func macUnits(t *testing.T, m *effecttest.Machine) []kind.Unit {
@@ -34,7 +38,7 @@ func macUnits(t *testing.T, m *effecttest.Machine) []kind.Unit {
 	m.Dirs["/Users/v"], m.Dirs["/etc"] = 0o750, 0o755
 	m.Owners["/Users/v"] = [2]int{501, 20}
 	units, err := kind.Load(kind.Env{M: m, Out: &effecttest.Out{}, Self: "/ws", System: kind.MacOS, User: "v",
-		Data: facts.Mac{User: "v", Home: "/Users/v", SSH: facts.SSH{Config: unitsConfig}}}, fsys)
+		Data: facts.Mac{User: "v", Home: "/Users/v", SSH: facts.SSH{Config: unitsConfig, SewardFrom: misesSeward}}}, fsys)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,8 +55,11 @@ func TestSSHUnitsWriteTheHostsAndTheInclude(t *testing.T) {
 	m.Dirs["/Users/v/.ssh"], m.Owners["/Users/v/.ssh"] = 0o700, [2]int{501, 20}
 	units := macUnits(t, m)
 	// The fake's has answers alike whatever the file holds, so each unit applies once, and has
-	// answers 0 after.
+	// answers 0 after. state/seward has a test of its own.
 	for _, u := range units {
+		if u.Name == "state/seward" {
+			continue
+		}
 		p, err := u.Step.Plan(t.Context())
 		if err == nil {
 			err = u.Step.Apply(t.Context(), p)
@@ -70,10 +77,48 @@ func TestSSHUnitsWriteTheHostsAndTheInclude(t *testing.T) {
 	}
 	m.Results["/ws macos ssh included"] = effecttest.Result{}
 	for _, u := range units {
+		if u.Name == "state/seward" {
+			continue
+		}
 		if p, err := u.Step.Plan(t.Context()); err != nil || len(p.Changes) > 0 {
 			t.Errorf("%s: second plan = %v, %v; want none", u.Name, p.Changes, err)
 		}
 	}
+}
+
+func TestSSHUnitCopiesSewardAsRoot(t *testing.T) {
+	const runs = "env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh -c "
+	check := runs + "cmp -s \"$1\" /usr/local/bin/seward && [ \"$(stat -f %u:%g:%Lp /usr/local/bin/seward)\" = 0:0:755 ] sh " + misesSeward
+	cp := runs + "test -x \"$1\" && mkdir -p /usr/local/bin && install -o root -g wheel -m 0755 \"$1\" " +
+		"/usr/local/bin/.seward.new && mv -f /usr/local/bin/.seward.new /usr/local/bin/seward sh " + misesSeward
+	m := effecttest.NewMachine()
+	m.Results[check] = effecttest.Result{Err: exited("exit 1")}
+	m.Results[cp] = effecttest.Result{}
+	m.After = map[string]map[string]effecttest.Result{cp: {check: {}}}
+	for _, u := range macUnits(t, m) {
+		if u.Name != "state/seward" {
+			continue
+		}
+		p, err := u.Step.Plan(t.Context())
+		if err != nil || len(p.Changes) == 0 {
+			t.Fatalf("plan = %v, %v; want the copy, as the check fails", p.Changes, err)
+		}
+		if err := u.Step.Apply(t.Context(), p); err != nil {
+			t.Fatal(err)
+		}
+		if !slices.Contains(m.Calls, "run "+check) || !slices.Contains(m.Calls, "root "+cp) {
+			t.Errorf("calls = %q, want the check as the user and the copy through sudo", m.Calls)
+		}
+		m.Calls = nil
+		if p, err := u.Step.Plan(t.Context()); err != nil || len(p.Changes) > 0 {
+			t.Errorf("second plan = %v, %v; want none", p.Changes, err)
+		}
+		if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "root ") }) {
+			t.Errorf("the second plan ran %q, want no copy", m.Calls)
+		}
+		return
+	}
+	t.Error("the role has no state/seward")
 }
 
 func TestSSHIncludeRefusesAnIncludeBelow(t *testing.T) {

@@ -1,10 +1,11 @@
-# ssh's lines for the Mac: Secretive, the copies of its keys, /etc/ws/ssh_config and its Include.
+# ssh's lines for the Mac: Secretive, seward's agent, the copies of its keys and the hosts.
 # mise's macos-app installs the one build that the SHA-256 names. adopt takes over that build where
 # it stands, and refuses another, which it leaves alone. A new release changes version and sha256.
 [bootstrap.packages]
 "ws:file/ssh-config" = "in-sync"
 "ws:file/ssh-include" = "in-sync"
 "ws:state/keys" = "in-sync"
+"ws:state/seward" = "in-sync"
 "ws:state/ssh-dir" = "in-sync"
 
 [bootstrap.packages."macos-app:secretive"]
@@ -13,3 +14,11 @@ url = "https://github.com/maxgoedjen/secretive/releases/download/v{{version}}/Se
 sha256 = "877517e212938ffb7048bc7b6811e992194ba4b3eaa4dae36405b6303d1ac1fa"
 artifact = "Secretive.app"
 adopt = true
+
+# seward's agent, a LaunchAgent in the user's login session, after ws's units, which copy seward.
+# A new pin changes the plist through WS_SEWARD_VERSION, and mise restarts the agent then alone.
+[bootstrap.services.seward]
+scope = "user"
+command = "/usr/local/bin/seward agent"
+requires_tools = true
+environment = { WS_SEWARD_VERSION = "0.1.0" }

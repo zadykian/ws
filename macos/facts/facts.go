@@ -32,9 +32,12 @@ type Mac struct {
 	Secrets Secrets
 }
 
-// SSH is /etc/ws/ssh_config's text, checked as ssh reads it.
+// SSH is /etc/ws/ssh_config's text, checked as ssh reads it, and the seward that mise installed for
+// the tree, which its unit copies into /usr/local/bin.
 type SSH struct {
 	Config string
+	// SewardFrom is mise's seward, or empty where mise has none: seward's unit alone fails then.
+	SewardFrom string
 }
 
 // Git is git's files in /etc/ws, and the gh that mise installed for the tree, which its unit copies
@@ -83,6 +86,7 @@ func Read(ctx context.Context, m effect.Machine, getenv func(string) string, pwd
 	if f.SSH, err = f.readSSH(ctx, m, own); err != nil {
 		return Mac{}, err
 	}
+	f.SSH.SewardFrom = toolFrom(ctx, m, "seward")
 	signing, err := keys.ReadKey(ctx, m, own, f.Home, keys.SigningKey)
 	if err != nil {
 		return Mac{}, err

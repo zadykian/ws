@@ -8,6 +8,7 @@ The Mac's specs, each role's `units.toml.tmpl` under `macos/roles`, are filled w
 | `.User`, `.Home` | The account that ws runs as and its home, from `USER` and `HOME`. |
 | `.Servers` | Each server of `servers/` beside `values.yml`, by name: its `.Name` and its values. |
 | `.Secrets.FnoxFrom`, `.Secrets.PluginFrom` | fnox and age-plugin-yubikey as mise installed them for the tree, by `mise -C /opt/ws/macos which`, or empty where mise has none. |
+| `.SSH.SewardFrom` | seward as mise installed it for the tree, by `mise -C /opt/ws/macos which`, or empty where mise has none. |
 | `.Ghostty.Config` | The config that Ghostty's menu opens: the first of its four that holds anything, else the first there, else its default. |
 
 Each server's values are `values.Conf`'s fields, the Mac's own keys joined in, as
