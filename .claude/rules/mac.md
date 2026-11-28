@@ -31,7 +31,10 @@ The rules a change to the ws CLI keeps, in `cmd/`, `engine/`, `ubuntu/`, `macos/
 - The Mac's units, of `mise -C /opt/ws/macos bootstrap`, read as the user and never through
   sudo, so that a run that changes nothing asks no password. A file of root's that a unit writes is
   readable by all, and the Mac's config holds no root path of mise's own ([The Mac's
-  frame](../../macos/roles/frame/README.md#roots-paths)).
+  frame](../../macos/roles/frame/README.md#roots-paths)). The role `ikeward` breaks [the tunnel's
+  rule](../../macos/README.md#the-macs-tunnel), where root runs no file of the user's. Root runs
+  Homebrew's charon and swanctl, on a person's command alone
+  ([the departure](../../macos/roles/ikeward/README.md#root-runs-the-users-files)).
 - No cgo: ws builds with `CGO_ENABLED=0`. The race detector's cgo is the tests' alone
   ([Makefile](../../Makefile)).
 - `--server NAME` is `ws macos`'s persistent flag, bound once in `Command` and read through a

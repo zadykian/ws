@@ -34,6 +34,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   the Mac's values files, [the tunnel's](../../macos/roles/tunnel/README.md) the daemons' rules, and [ghostty](../../macos/roles/ghostty/README.md) its Ghostty
   and what cld does there, [zed](../../macos/roles/zed/README.md) its Zed,
   [firewall](../../macos/roles/firewall/README.md) its firewall.
+  [Its ikeward](../../macos/roles/ikeward/README.md) is its strongSwan and ikeward.
   [Its zsh](../../macos/roles/zsh/README.md) is its shell: oh-my-zsh, its plugins and ws's settings.
   [Its power](../../macos/roles/power/README.md) is its display and the App Store's updates.
   [Its devtools](../../macos/roles/devtools/README.md) is its command-line tools, and

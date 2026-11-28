@@ -63,7 +63,8 @@ oh-my-zsh and its plugins, with the settings that load them. Its [`power`](macos
 display on while on power and stops the App Store's updates. Its [`apps`](macos/roles/apps) installs
 the Mac's apps, as mise's casks, pins some in the Dock, opens seven at login and sets Stats's
 settings. Its [`keyboard`](macos/roles/keyboard) makes the built-in keyboard's Caps Lock a Control key, sets the symbolic
-hotkeys and installs the maintainer's keyboard layout.
+hotkeys and installs the maintainer's keyboard layout. Its [`ikeward`](macos/roles/ikeward) installs
+strongSwan and ikeward, the VPN's second way to its networks, which the user starts by hand.
 
 A new Mac with Apple silicon follows [the Mac's runbook](macos/runbook.md). It runs
 `install.sh` through `sudo`, which installs ws's binary, checked against its SHA-256, and writes the

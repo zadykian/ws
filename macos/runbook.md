@@ -197,6 +197,8 @@ of its guests tries it at its own port.
 - GPG's and the YubiKey's keys ([devtools](roles/devtools/README.md)).
 - The screen saver, Macintosh, in System Settings › Screen Saver. macOS keeps the choice in a
   file that Apple documents nowhere, so no unit sets it.
+- ikeward's start. Setup installs strongSwan and ikeward alone, and ikeward is
+  `/usr/local/sbin/ikeward`, on no PATH ([ikeward](roles/ikeward/README.md)).
 - `colima start`, as the machine's size and its start at login are the user's
   ([docker](roles/docker/README.md)).
 - The upgrades. Setup installs each cask and formula at its latest and never upgrades it:
