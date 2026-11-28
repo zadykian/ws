@@ -39,7 +39,23 @@ macOS on arm64, and the bootstrap runs locked, so mise refuses a seward that the
 mise installs it for the tree alone, on no shell's `PATH`, so `state.seward` copies it to
 `/usr/local/bin/seward`, which `/etc/paths` puts on every shell's. Each copy goes in under a
 temporary name first, and one there that differs is replaced. Where mise has no seward, that
-unit alone fails. To move seward on, change the pin and lock it again.
+unit alone fails. To move seward on, change the pin, lock it again and change `WS_SEWARD_VERSION`
+in the service below.
+
+### The agent
+
+`[bootstrap.services.seward]` runs `/usr/local/bin/seward agent` as mise's user service: a
+LaunchAgent, `~/Library/LaunchAgents/dev.mise.seward.plist`, loaded in the user's login session.
+`requires_tools` starts it after ws's units, which copy seward. The agent answers on
+`~/.ssh/seward.sock` and logs to the unified log: `log stream --predicate 'subsystem == "seward"'`
+reads it. Setup needs the user logged in at the console, as `launchctl bootstrap gui/UID` loads
+the agent into that session alone.
+
+mise restarts a user service where its plist changed or its job stopped, and renders no template
+there. So the service's `environment` holds `WS_SEWARD_VERSION`, which a new pin changes: the
+plist differs, and the run that sees the new pin restarts the agent. With an agent started by hand
+on the socket, the service's own exits 1, and the default `restart` starts another every 10 s:
+stop the one by hand first.
 
 ## The units
 
@@ -49,6 +65,8 @@ unit alone fails. To move seward on, change the pin and lock it again.
   file has none. The unit runs a command, as the copy comes from the agent.
 - `state.seward` copies seward to `/usr/local/bin/seward`, root:wheel and 755. The check runs as
   the user, so a bootstrap that changes nothing asks for no password.
+- `services.seward` runs seward's agent as mise's own user service, no unit of ws's
+  ([The agent](#the-agent)).
 - `file.ssh-config` writes `/etc/ws/ssh_config`, root's and 644, from the facts' text. ssh reads
   the new file alone once more before it goes in.
 - `state.ssh-dir` makes `~/.ssh`, the user's and 0700, where missing, as ssh makes it.
