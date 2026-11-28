@@ -72,3 +72,19 @@ func TestOSMachineStdinStopsGitAndSSHAsking(t *testing.T) {
 		t.Errorf("Pass gave %q, %v; want %q", passed.String(), err, want)
 	}
 }
+
+// A PIN that a command asks for comes from ws's own stdin, nil Stdin as the Mac's, and its prompt
+// shows. The value it prints comes back, never shown and never in an error.
+func TestOSMachineRunTerminalShowsThePromptAndKeepsTheOutput(t *testing.T) {
+	typed(t, "1234\n")
+	var shown bytes.Buffer
+	m := local.OSMachine{Stderr: &shown}
+	out, err := m.RunTerminal(t.Context(), "sh", "-c", `read -r pin; echo asked >&2; echo "value of $pin"`)
+	if err != nil || string(out) != "value of 1234\n" || shown.String() != "asked\n" {
+		t.Errorf("RunTerminal = %q, %v, and showed %q; want the value, and asked shown", out, err, shown.String())
+	}
+	_, err = m.RunTerminal(t.Context(), "sh", "-c", `echo "$1$1"; echo failed >&2; exit 3`, "sh", "ab")
+	if err == nil || strings.Contains(err.Error(), "abab") || strings.Contains(shown.String(), "abab") {
+		t.Errorf("a failed RunTerminal gave %v, and showed %q; want an error without its output", err, shown.String())
+	}
+}

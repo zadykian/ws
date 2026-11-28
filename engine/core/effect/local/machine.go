@@ -106,6 +106,14 @@ func (m OSMachine) RunShown(ctx context.Context, root bool, name string, args ..
 	return output(cmd)
 }
 
+// RunTerminal runs the command with Stdin as its standard input and its standard error sent to
+// Stderr, and returns its standard output.
+func (m OSMachine) RunTerminal(ctx context.Context, name string, args ...string) ([]byte, error) {
+	cmd := m.command(ctx, append([]string{name}, args...))
+	cmd.Stdin, cmd.Stderr = m.stdin(), m.stderr()
+	return output(cmd)
+}
+
 // PassInput runs the command with stdin as its standard input, and its standard output and error
 // sent to Stderr.
 func (m OSMachine) PassInput(ctx context.Context, stdin []byte, name string, args ...string) error {

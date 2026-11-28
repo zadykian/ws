@@ -93,3 +93,14 @@ func TestMachineReadHomeFileRefusesLinksDirectoriesAndOversize(t *testing.T) {
 		}
 	}
 }
+
+func TestMachineRunTerminalRecordsItsOwnKind(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["fnox get A"] = effecttest.Result{Out: []byte("v\n")}
+	if out, err := m.RunTerminal(context.Background(), "fnox", "get", "A"); err != nil || string(out) != "v\n" {
+		t.Errorf("RunTerminal = %q, %v; want the result's", out, err)
+	}
+	if !slices.Equal(m.Calls, []string{"terminal fnox get A"}) {
+		t.Errorf("Calls = %q, want the terminal's line", m.Calls)
+	}
+}
