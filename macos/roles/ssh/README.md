@@ -57,6 +57,22 @@ plist differs, and the run that sees the new pin restarts the agent. With an age
 on the socket, the service's own exits 1, and the default `restart` starts another every 10 s:
 stop the one by hand first.
 
+## The keys' commands
+
+`ws macos ssh keygen NAME`, `list` and `remove NAME` hand the call to `/usr/local/bin/seward`, which
+owns the keys in `~/.ssh` ([seward](#seward)). Each replaces ws with seward, so its lines, its
+terminal and its exit status are seward's. Each refuses root, as the keys and the agent are the
+user's. Where seward cannot start, as before setup copies it, the command exits 1 and names setup.
+ws checks NAME by [the rule of a key's name](../../../internal/sshkey/sshkey.go) first: a bad name
+exits 2 and runs nothing.
+
+- `keygen` makes `~/.ssh/NAME` and `NAME.pub`. `--store enclave|file` goes to seward as given: seward
+  owns its values and its default, `enclave`, which keeps the key in the Secure Enclave and fails
+  where the Mac has none. `file` keeps it in the file, as on a virtual machine.
+- `list` prints a line for each key: `NAME`, `TYPE`, `FINGERPRINT` and `STORE`, tab-separated.
+- `remove` asks on the terminal before it deletes the key and its `.pub`. `--yes` skips the
+  question, which a run with no terminal must pass.
+
 ## The units
 
 - `state.keys` runs `ws macos keys`, which copies the `.pub` of each key of Secretive's that
